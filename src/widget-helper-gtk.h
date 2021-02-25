@@ -20,6 +20,12 @@
 #include "giw/giwled.h"
 #endif
 
+#ifdef LIVES_DIR_SEP
+#undef LIVES_DIR_SEP
+#endif
+
+#define LIVES_DIR_SEP G_DIR_SEPARATOR_S
+
 // a bug where gtk_radio_menu_item_set_active() does not update visually
 // workaround: use check menuitems and update manually
 #define GTK_RADIO_MENU_BUG
@@ -247,6 +253,9 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_utf8_strup(a, b) g_utf8_strup(a, b)
 
 #define lives_find_program_in_path(a) g_find_program_in_path(a)
+
+#define lives_set_prgname(a) g_set_prgname(a)
+#define lives_get_prgname() g_get_prgname()
 
 #define lives_set_application_name(a) g_set_application_name(a)
 #define lives_get_application_name() g_get_application_name()

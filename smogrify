@@ -601,35 +601,47 @@ if (1) {
 	    exit 1;
 	}
 
-
 	if ($command eq "new") {
 	    # write mini-info file
 	    my $handle;
-	    my $key;
-	    my $infofile;
+	    if (defined $ARGV[1]) {
+		$alt_dir = $ARGV[1];
+	    }
 	    do {
+		$alt_in_use = 0;
 		$handle=int(rand 1000000000) + 65536;
 		$curworkdir="$workdir/$handle";
-	    } while (-d $curworkdir);
+		if ($alt_dir) {
+		    $alt_clipdir ="$alt_dir/$handle";
+		    if (-e $alt_clipdir) {
+			$alt_in_use = 1;
+		    }
+		}
+	    } while (-d $curworkdir || $alt_in_use);
 
 	    unless (mkdir $curworkdir) {
 		&sig_system_error("Creating directory \"$curworkdir\"", 0);
 		exit 1;
 	    }
 
-	    if (defined $ARGV[1]) {
-		$key=$ARGV[1];
-		$infofile="$workdir/.info.$key";
-		if (!defined(open OUT, ">", $infofile)) {
-		    &sig_write_error($infofile, 0);
-		    exit 1;
+	    if ($alt_dir) {
+		if (! -d $alt_clipdir) {
+		    my @created = make_path $alt_clipdir;
+		    my $found = 0;
+		    foreach my $dir (@created) {
+			if ($dir eq $alt_clipdir) {
+			    $found = 1;
+			    last;
+			}
+		    }
+		    unless ($found) {
+			print STDERR "Failed creating directory \"$alt_dir/$handle\"\n";
+			exit 1;
+		    }
 		}
-		print OUT $handle;
-		close OUT;
 	    }
-	    else {
-		print $handle;
-	    }
+
+	    print $handle;
 	    exit 0;
 	}
 

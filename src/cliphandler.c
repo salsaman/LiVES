@@ -64,7 +64,6 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
   return key;
 }
 
-
 boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_t maxlen) {
   lives_clip_t *sfile = mainw->files[which];
   char *clipdir, *lives_header = NULL;
@@ -220,6 +219,9 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   sfile = mainw->files[which];
 
+  // make sure we don't try to write in the brief moment when the metadata is being copied
+  pthread_mutex_lock(&sfile->transform_mutex);
+
   /// ascrap_file now uses a different header name; this is to facilitate diskspace cleanup
   /// otherwise it may be wrongly classified as a recoverable clip
   clipdir = get_clip_dir(which);
@@ -236,6 +238,7 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
     LIVES_ERROR(tmp);
     lives_free(tmp);
     lives_free(lives_header);
+    pthread_mutex_unlock(&sfile->transform_mutex);
     return FALSE;
   }
 
@@ -298,6 +301,7 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
   case CLIP_DETAILS_HEADER_VERSION:
     myval = lives_strdup_printf("%d", *(int *)val); break;
   default:
+    pthread_mutex_unlock(&sfile->transform_mutex);
     return FALSE;
   }
 
@@ -311,18 +315,24 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
     lives_free(keystr_end);
   } else {
     char *lives_header_bak = lives_strdup_printf("%s.%s", lives_header, LIVES_FILE_EXT_BAK);
+    char *temp_backend = use_staging_dir_for(which);
     if (!mainw->signals_deferred) {
       set_signal_handlers((SignalHandlerPointer)defer_sigint);
       needs_sigs = TRUE;
     }
-    com = lives_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"", prefs->backend_sync, lives_header, key, myval);
+    com = lives_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"",
+                              temp_backend, lives_header, key, myval);
     lives_system(com, FALSE);
     lives_cp(lives_header, lives_header_bak);
+    pthread_mutex_unlock(&sfile->transform_mutex);
     if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
     if (needs_sigs) set_signal_handlers((SignalHandlerPointer)catch_sigint);
+    lives_free(temp_backend);
     lives_free(com);
     lives_free(lives_header_bak);
   }
+
+  pthread_mutex_unlock(&sfile->transform_mutex);
 
   lives_free(lives_header);
   lives_free(myval);
@@ -456,7 +466,6 @@ boolean read_file_details(const char *file_name, boolean is_audio, boolean is_im
   // therefore it is IMPORTANT to set it when loading new audio for an existing clip !
 
   // is_img will force unpacking of img into frames and return the count
-
   char *tmp, *com = lives_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d", prefs->backend_sync, cfile->handle,
                                         (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
                                         get_image_ext_for_type(IMG_TYPE_BEST), mainw->opening_loc ? 3 :
@@ -508,10 +517,9 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
               } else dsize = cursize;
               bytes += lives_read_buffered(fd, xloaded + 24, dsize - 24, TRUE);
               if (bytes < dsize) badsize = TRUE;
-            }
-          }
-        }
-      }
+	      // *INDENT-OFF*
+            }}}}
+      // *INDENT-ON*
       lives_close_buffered(fd);
       //if (!forensic) lives_rm(fname);
       lives_free(fname);
@@ -1152,10 +1160,33 @@ LIVES_GLOBAL_INLINE char *get_clip_dir(int clipno) {
   if (IS_VALID_CLIP(clipno)) {
     lives_clip_t *sfile = mainw->files[clipno];
     if (IS_NORMAL_CLIP(clipno) || sfile->clip_type == CLIP_TYPE_TEMP) {
+      if (*sfile->staging_dir) return lives_build_path(sfile->staging_dir, sfile->handle, NULL);
       return lives_build_path(prefs->workdir, sfile->handle, NULL);
     }
   }
   return NULL;
+}
+
+
+void migrate_from_staging(int clipno) {
+  if (IS_NORMAL_CLIP(clipno) || IS_TEMP_CLIP(clipno)) {
+    lives_clip_t *sfile = mainw->files[clipno];
+    if (*sfile->staging_dir) {
+      char *old_clipdir, *new_clipdir, *stfile;
+      old_clipdir = get_clip_dir(clipno);
+      pthread_mutex_lock(&sfile->transform_mutex);
+      *sfile->staging_dir = 0;
+      new_clipdir = get_clip_dir(clipno);
+      lives_cp_recursive(old_clipdir, new_clipdir, FALSE);
+      lives_rmdir(old_clipdir, TRUE);
+      lives_free(old_clipdir);
+      stfile = lives_build_filename(new_clipdir, LIVES_STATUS_FILE_NAME, NULL);
+      lives_free(new_clipdir);
+      lives_snprintf(sfile->info_file, PATH_MAX, "%s", stfile);
+      lives_free(stfile);
+      pthread_mutex_unlock(&sfile->transform_mutex);
+    }
+  }
 }
 
 

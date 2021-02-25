@@ -444,6 +444,19 @@ char *get_md5sum(const char *filename) {
 }
 
 
+LIVES_GLOBAL_INLINE
+char *use_staging_dir_for(int clipno) {
+  if (clipno > 0 && IS_VALID_CLIP(clipno)) {
+    lives_clip_t *sfile = mainw->files[clipno];
+    if (*sfile->staging_dir) {
+      return lives_strdup_printf("%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGFILE=\"%s\" --", EXEC_PERL,
+                                 capable->backend_path, sfile->staging_dir, prefs->configfile);
+    }
+  }
+  return lives_strdup(prefs->backend_sync);
+}
+
+
 char *lives_format_storage_space_string(uint64_t space) {
   char *fmt;
 
@@ -495,12 +508,13 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
 static lives_proc_thread_t running = NULL;
 static char *running_for = NULL;
 
-boolean disk_monitor_running(const char *dir) {return (running != NULL && (!dir || !lives_strcmp(dir, running_for)));}
+boolean disk_monitor_running(const char *dir)
+{return (running && (!dir || !lives_strcmp(dir, running_for)));}
 
 lives_proc_thread_t disk_monitor_start(const char *dir) {
   if (disk_monitor_running(dir)) disk_monitor_forget();
-  running = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
-                                     dir);
+  running = lives_proc_thread_create(LIVES_THRDATTR_NONE,
+                                     (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s", dir);
   mainw->dsu_valid = TRUE;
   running_for = lives_strdup(dir);
   return running;
@@ -581,7 +595,7 @@ uint64_t get_ds_free(const char *dir) {
 
   // result is block size * blocks available
   bytes = sbuf.f_bsize * sbuf.f_bavail;
-  if (!strcmp(dir, prefs->workdir)) {
+  if (!lives_strcmp(dir, prefs->workdir)) {
     capable->ds_free = bytes;
     capable->ds_tot = sbuf.f_bsize * sbuf.f_blocks;
   }
@@ -598,14 +612,16 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t o
 #if _POSIX_TIMERS
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  ret = ((ts.tv_sec * ONE_BILLION + ts.tv_nsec) - (origsecs * ONE_BILLION + orignsecs)) / TICKS_TO_NANOSEC;
+  ret = ((ts.tv_sec * ONE_BILLION + ts.tv_nsec)
+         - (origsecs * ONE_BILLION + orignsecs)) / TICKS_TO_NANOSEC;
 #else
 #ifdef USE_MONOTONIC_TIME
   ret = (lives_get_monotonic_time() - orignsecs) / 10;
 #else
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  ret = ((tv.tv_sec * ONE_MILLLION + tv.tv_usec) - (origsecs * ONE_MILLION + orignsecs / 1000)) * USEC_TO_TICKS;
+  ret = ((tv.tv_sec * ONE_MILLLION + tv.tv_usec)
+         - (origsecs * ONE_MILLION + orignsecs / 1000)) * USEC_TO_TICKS;
 #endif
 #endif
   mainw->wall_ticks = ret;
@@ -909,7 +925,8 @@ int stat_to_file_dets(const char *fname, lives_file_dets_t *fdets) {
 }
 
 
-static char *file_to_file_details(const char *filename, lives_file_dets_t *fdets, lives_proc_thread_t tinfo, uint64_t extra) {
+static char *file_to_file_details(const char *filename, lives_file_dets_t *fdets,
+                                  lives_proc_thread_t tinfo, uint64_t extra) {
   char *tmp, *tmp2;
   char *extra_details = lives_strdup("");
 
@@ -1136,14 +1153,16 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
 */
 lives_proc_thread_t dir_to_file_details(LiVESList **listp, const char *dir,
                                         const char *orig_loc, uint64_t extra) {
-  return lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_item_to_file_details, -1, "vssIi",
+  return lives_proc_thread_create(LIVES_THRDATTR_NONE,
+                                  (lives_funcptr_t)_item_to_file_details, -1, "vssIi",
                                   listp, dir, orig_loc, extra, 0);
 }
 
 
 lives_proc_thread_t ordfile_to_file_details(LiVESList **listp, const char *ofname,
     const char *orig_loc, uint64_t extra) {
-  return lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_item_to_file_details, -1, "vssIi",
+  return lives_proc_thread_create(LIVES_THRDATTR_NONE,
+                                  (lives_funcptr_t)_item_to_file_details, -1, "vssIi",
                                   listp, ofname, orig_loc, extra, 1);
 }
 
@@ -1183,7 +1202,8 @@ int check_for_bad_ffmpeg(void) {
   if (!maybeok) {
     widget_opts.non_modal = TRUE;
     do_error_dialog(
-      _("Your version of mplayer/ffmpeg may be broken !\nSee http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n\n"
+      _("Your version of mplayer/ffmpeg may be broken !\n"
+        "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n\n"
         "You can work around this temporarily by switching to jpeg output in Preferences/Decoding.\n\n"
         "Try running Help/Troubleshoot for more information."));
     widget_opts.non_modal = FALSE;
@@ -1465,13 +1485,9 @@ LIVES_GLOBAL_INLINE pid_t lives_getpid(void) {
 #endif
 }
 
-LIVES_GLOBAL_INLINE int lives_getuid(void) {
-  return geteuid();
-}
+LIVES_GLOBAL_INLINE int lives_getuid(void) {return geteuid();}
 
-LIVES_GLOBAL_INLINE int lives_getgid(void) {
-  return getegid();
-}
+LIVES_GLOBAL_INLINE int lives_getgid(void) {return getegid();}
 
 static uint16_t swabtab[65536];
 static boolean swabtab_inited = FALSE;
@@ -1950,7 +1966,8 @@ LiVESResponseType send_to_trash(const char *item) {
     /// TODO...
 #endif
     if (!retval) {
-      char *msg = lives_strdup_printf(_("LiVES was unable to send the item to trash.\n%s"), reason ? reason : "");
+      char *msg = lives_strdup_printf(_("LiVES was unable to send the item to trash.\n%s"),
+				      reason ? reason : "");
       lives_freep((void **)&reason);
       resp = do_abort_cancel_retry_dialog(msg);
       lives_free(msg);
@@ -2131,7 +2148,8 @@ int get_window_stack_level(LiVESXWindow *xwin, int *nwins) {
   return -1;
 #else
   int mywin = -1, i = 0;
-  LiVESList *winlist = gdk_screen_get_window_stack(mainw->mgeom[widget_opts.monitor].screen), *list = winlist;
+  LiVESList *winlist = gdk_screen_get_window_stack(mainw->mgeom[widget_opts.monitor].screen),
+    *list = winlist;
   for (; list; list = list->next, i++) {
     if ((LiVESXWindow *)list->data == xwin) mywin = i;
     lives_widget_object_unref(list->data);

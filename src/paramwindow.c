@@ -2103,15 +2103,17 @@ boolean update_widget_vis(lives_rfx_t *rfx, int key, int mode) {
   if (!mainw->multitrack) {
     if (fx_dialog[1]) {
       rfx = fx_dialog[1]->rfx;
-      if (!rfx->is_template) {
+      if (rfx && !rfx->is_template) {
         keyw = fx_dialog[1]->key;
         modew = fx_dialog[1]->mode;
+        if (key != keyw || mode != modew) return FALSE;
       }
-      if (!rfx->is_template && (key != keyw && mode != modew)) return FALSE;
     }
   }
 
-  if ((!fx_dialog[1] && !mainw->multitrack) || !rfx || rfx->status != RFX_STATUS_WEED) {
+  if (!rfx) return FALSE;
+
+  if ((!fx_dialog[1] && !mainw->multitrack) || rfx->status != RFX_STATUS_WEED) {
     for (int i = 0; i < rfx->num_params; i++) {
       param = &rfx->params[i];
       for (int j = 0; j < RFX_MAX_NORM_WIDGETS; j++) {

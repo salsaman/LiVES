@@ -330,7 +330,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog * dialog, boo
   // returns LIVES_RESPONSE_RETRY or LIVES_RESPONSE_OK
   char cdir[PATH_MAX];
   uint64_t freesp;
-  size_t chklen = strlen(LIVES_DEF_WORK_NAME) + strlen(LIVES_DIR_SEP) * 2;
+  size_t chklen = strlen(LIVES_DEF_WORK_SUBDIR) + strlen(LIVES_DIR_SEP) * 2;
   char *tmp;
 
   if (!pdirname || !*pdirname) return LIVES_RESPONSE_RETRY;
@@ -355,8 +355,8 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog * dialog, boo
     // if it's an existing dir, append "livesprojects" to the end unless it is already
     if (lives_file_test(*pdirname, LIVES_FILE_TEST_EXISTS) &&
         (strlen(*pdirname) < chklen || strncmp(*pdirname + strlen(*pdirname) - chklen,
-            LIVES_DIR_SEP LIVES_DEF_WORK_NAME LIVES_DIR_SEP, chklen))) {
-      tmp = lives_build_path(*pdirname, LIVES_DEF_WORK_NAME, NULL);
+            LIVES_DIR_SEP LIVES_DEF_WORK_SUBDIR LIVES_DIR_SEP, chklen))) {
+      tmp = lives_build_path(*pdirname, LIVES_DEF_WORK_SUBDIR, NULL);
       lives_free(*pdirname);
       *pdirname = tmp;
     }
@@ -484,7 +484,8 @@ boolean do_workdir_query(void) {
   }
 
   lives_snprintf(prefs->workdir, PATH_MAX, "%s", dirname);
-  lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGFILE=\"%s\" --", EXEC_PERL,
+  lives_snprintf(prefs->backend, PATH_MAX * 4,
+                 "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGFILE=\"%s\" --", EXEC_PERL,
                  capable->backend_path, prefs->workdir, prefs->configfile);
   lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
 
@@ -1345,6 +1346,7 @@ boolean do_startup_tests(boolean tshoot) {
   char *com, *rname, *afile, *tmp;
   char *image_ext = lives_strdup(prefs->image_ext);
   char *title, *msg;
+  char *temp_backend = NULL;
 
   const char *mp_cmd;
   const char *lookfor;
@@ -1487,9 +1489,9 @@ boolean do_startup_tests(boolean tshoot) {
 
     if (!THREADVAR(write_failed)) {
       afile = lives_build_filename(prefs->workdir, cfile->handle, "testout.wav", NULL);
-
-      com = lives_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 1 22050 \"%s\"", prefs->backend_sync,
-                                cfile->handle, afile);
+      temp_backend = use_staging_dir_for(mainw->current_file);
+      com = lives_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 1 22050 \"%s\"",
+                                temp_backend, cfile->handle, afile);
       lives_system(com, TRUE);
       if (THREADVAR(com_failed)) {
         THREADVAR(com_failed) = FALSE;
@@ -1536,7 +1538,7 @@ boolean do_startup_tests(boolean tshoot) {
       mt_sensitise(mainw->multitrack);
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
-
+    lives_freep((void **)&temp_backend);
     return FALSE;
   }
 
@@ -1547,7 +1549,8 @@ boolean do_startup_tests(boolean tshoot) {
 
   if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
     success2 = fail_test(table, testcase,
-                         _("You should install mplayer, mplayer2 or mpv to be able to use all the decoding features in LiVES"));
+                         _("You should install mplayer, mplayer2 or mpv to be able to use "
+                           "all the decoding features in LiVES"));
   }
 
   if (!success && !capable->has_mplayer2 && !capable->has_mplayer) {
@@ -1595,12 +1598,13 @@ boolean do_startup_tests(boolean tshoot) {
   if (success2) {
     // TODO - add a timeout
 #ifndef IS_MINGW
-    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -ao help | %s pcm >/dev/null 2>&1", prefs->video_open_command,
-                              capable->grep_cmd);
+    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -ao help | %s pcm >/dev/null 2>&1",
+                              prefs->video_open_command, capable->grep_cmd);
     res = lives_system(com, TRUE);
     lives_free(com);
 #else
-    com = lives_strdup_printf("%s -ao help | %s pcm >NUL 2>&1", prefs->video_open_command, capable->grep_cmd);
+    com = lives_strdup_printf("%s -ao help | %s pcm >NUL 2>&1",
+                              prefs->video_open_command, capable->grep_cmd);
     res = lives_system(com, TRUE);
     lives_free(com);
 #endif
@@ -1671,9 +1675,10 @@ boolean do_startup_tests(boolean tshoot) {
 
     rname = get_resource(LIVES_TEST_VIDEO_NAME);
 
-    com = lives_strdup_printf("%s open_test \"%s\" %s \"%s\" 0 png", prefs->backend_sync, cfile->handle,
+    com = lives_strdup_printf("%s open_test \"%s\" %s \"%s\" 0 png", temp_backend, cfile->handle,
                               prefs->video_open_command,
                               (tmp = lives_filename_from_utf8(rname, -1, NULL, NULL, NULL)));
+    lives_free(temp_backend);
     lives_free(tmp);
     lives_free(rname);
 
@@ -1710,7 +1715,7 @@ boolean do_startup_tests(boolean tshoot) {
         success3 = TRUE;
       }
     }
-  }
+  } else lives_freep((void **)&temp_backend);
 
   if (mainw->cancelled != CANCEL_NONE) {
     mainw->cancelled = CANCEL_NONE;

@@ -4314,7 +4314,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
   mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
-  init_random();
 #ifdef ENABLE_DIAGNOSTICS
   run_weed_startup_tests();
   check_random();
@@ -4351,9 +4350,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   //show_widgets_info();
 #endif
 
+  // non-localised name
+  lives_set_prgname("LIVES");
+
   /* TRANSLATORS: localised name may be used here */
   lives_set_application_name(_("LiVES"));
-  widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ", lives_get_application_name(), LiVES_VERSION);
+  widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ",
+                             lives_get_application_name(), LiVES_VERSION);
 
   // init prefs
   prefs = (_prefs *)lives_calloc(1, sizeof(_prefs));
@@ -8042,11 +8045,13 @@ void close_current_file(int file_to_switch_to) {
       char *clipd = lives_build_path(prefs->workdir, cfile->handle, NULL);
       if (lives_file_test(clipd, LIVES_FILE_TEST_EXISTS)) {
         // as a safety feature we create a special file which allows the back end to delete the directory
+        char *temp_backend;
         char *permitname = lives_build_filename(clipd, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
         lives_touch(permitname);
         lives_free(permitname);
-
-        com = lives_strdup_printf("%s close \"%s\"", prefs->backend_sync, cfile->handle);
+        temp_backend = use_staging_dir_for(mainw->current_file);
+        com = lives_strdup_printf("%s close \"%s\"", temp_backend, cfile->handle);
+        lives_free(temp_backend);
         lives_system(com, TRUE);
         lives_free(com);
       }

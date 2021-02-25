@@ -38,15 +38,17 @@ LIVES_GLOBAL_INLINE char *get_achannel_name(int totchans, int idx) {
 LIVES_GLOBAL_INLINE char *get_audio_file_name(int fnum, boolean opening) {
   char *fname;
   if (!opening) {
-    if (IS_VALID_CLIP(fnum))
-      fname = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, CLIP_AUDIO_FILENAME, NULL);
-    else
-      fname = lives_build_filename(prefs->workdir, CLIP_AUDIO_FILENAME, NULL);
+    if (IS_VALID_CLIP(fnum)) {
+      char *clipdir = get_clip_dir(fnum);
+      fname = lives_build_filename(clipdir, CLIP_AUDIO_FILENAME, NULL);
+      lives_free(clipdir);
+    } else fname = lives_build_filename(prefs->workdir, CLIP_AUDIO_FILENAME, NULL);
   } else {
-    if (IS_VALID_CLIP(fnum))
-      fname = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, CLIP_TEMP_AUDIO_FILENAME, NULL);
-    else
-      fname = lives_build_filename(prefs->workdir, CLIP_TEMP_AUDIO_FILENAME, NULL);
+    if (IS_VALID_CLIP(fnum)) {
+      char *clipdir = get_clip_dir(fnum);
+      fname = lives_build_filename(clipdir, CLIP_TEMP_AUDIO_FILENAME, NULL);
+      lives_free(clipdir);
+    } else fname = lives_build_filename(prefs->workdir, CLIP_TEMP_AUDIO_FILENAME, NULL);
   }
   return fname;
 }

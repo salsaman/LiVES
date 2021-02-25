@@ -601,16 +601,18 @@ enum {
 #define SHARE_DIR "share"
 #define LIVES_DIR_LITERAL "lives"
 #define DATA_DIR SHARE_DIR "/" LIVES_DIR_LITERAL
-#define LIVES_DEVICE_DIR "/dev/" // TODO - remove last /
+#define LIVES_DEVICE_DIR "/dev"
+#define LIVES_RUN_DIR "/run"
+#define LIVES_SHM_DIR "shm"
 #define LIVES_DEVNULL LIVES_DEVICE_DIR "/null"
 
 // system-wide defaults in prefs->prefix_dir
 #define THEME_DIR DATA_DIR "/themes/"
-#define PLUGIN_SCRIPTS_DIR "/share/lives/plugins/"
-#define PLUGIN_COMPOUND_DIR "/share/lives/plugins/"
-#define DOC_DIR "/share/doc/lives-"
-#define PLUGIN_EXEC_DIR "/lives/plugins/"
-#define ICON_DIR "/share/lives/icons/"
+#define PLUGIN_SCRIPTS_DIR "/" SHARE_DIR "/" LIVES_DIR_LITERAL "/plugins"
+#define PLUGIN_COMPOUND_DIR PLUGIN_SCRIPTS_DIR
+#define DOC_DIR "/" SHARE_DIR "/doc/" LIVES_DIR_LITERAL
+#define PLUGIN_EXEC_DIR LIVES_DIR_LITERAL "/plugins/"
+#define ICON_DIR "/" SHARE_DIR "/" LIVES_DIR_LITERAL "/icons"
 #define DESKTOP_ICON_DIR "/share/icons/hicolor/256x256/apps"
 
 // per-user defaults
@@ -625,7 +627,7 @@ enum {
 #define STOCK_ICONS_DIR "stock-icons"
 
 #define LIVES_DEVICEMAP_DIR "devicemaps"
-#define LIVES_DEF_WORK_NAME "livesprojects"
+#define LIVES_DEF_WORK_SUBDIR "livesprojects"
 #define LIVES_RESOURCES_DIR "resources"
 
 #define LAYOUTS_DIRNAME "layouts"

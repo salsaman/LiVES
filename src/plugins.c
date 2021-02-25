@@ -2937,20 +2937,24 @@ void sort_rfx_array(lives_rfx_t **in, int num) {
 }
 
 
+void free_rfx_params(lives_param_t *params, int num_params) {
+  for (int i = 0; i < num_params; i++) {
+    if (params[i].type == LIVES_PARAM_UNDISPLAYABLE
+        || params[i].type == LIVES_PARAM_UNKNOWN) continue;
+    lives_free(params[i].name);
+    lives_freep((void **)&params[i].def);
+    lives_freep((void **)&params[i].value);
+    lives_freep((void **)&params[i].label);
+    lives_freep((void **)&params[i].desc);
+    if (params[i].vlist && params[i].vlist != params[i].list)
+      lives_list_free_all(&params[i].vlist);
+    lives_list_free_all(&params[i].list);
+  }
+}
+
 void rfx_params_free(lives_rfx_t *rfx) {
   if (!rfx) return;
-  for (int i = 0; i < rfx->num_params; i++) {
-    if (rfx->params[i].type == LIVES_PARAM_UNDISPLAYABLE
-        || rfx->params[i].type == LIVES_PARAM_UNKNOWN) continue;
-    lives_free(rfx->params[i].name);
-    lives_freep((void **)&rfx->params[i].def);
-    lives_freep((void **)&rfx->params[i].value);
-    lives_freep((void **)&rfx->params[i].label);
-    lives_freep((void **)&rfx->params[i].desc);
-    if (rfx->params[i].vlist && rfx->params[i].vlist != rfx->params[i].list)
-      lives_list_free_all(&rfx->params[i].vlist);
-    lives_list_free_all(&rfx->params[i].list);
-  }
+  free_rfx_params(rfx->params, rfx->num_params);
 }
 
 
@@ -3045,7 +3049,13 @@ void param_copy(lives_param_t *dest, lives_param_t *src, boolean full) {
 
 }
 
+LIVES_GLOBAL_INLINE
+char *get_string_param(void *value) {
+  return lives_strdup((const char *)value);
+}
 
+
+LIVES_GLOBAL_INLINE
 boolean get_bool_param(void *value) {
   boolean ret;
   lives_memcpy(&ret, value, 4);
@@ -3053,6 +3063,7 @@ boolean get_bool_param(void *value) {
 }
 
 
+LIVES_GLOBAL_INLINE
 int get_int_param(void *value) {
   int ret;
   lives_memcpy(&ret, value, sizint);
@@ -3060,6 +3071,7 @@ int get_int_param(void *value) {
 }
 
 
+LIVES_GLOBAL_INLINE
 double get_double_param(void *value) {
   double ret;
   lives_memcpy(&ret, value, sizdbl);
@@ -3067,38 +3079,44 @@ double get_double_param(void *value) {
 }
 
 
+LIVES_GLOBAL_INLINE
 void get_colRGB24_param(void *value, lives_colRGB48_t *rgb) {
   lives_memcpy(rgb, value, sizeof(lives_colRGB48_t));
 }
 
 
+LIVES_GLOBAL_INLINE
 void get_colRGBA32_param(void *value, lives_colRGBA64_t *rgba) {
   lives_memcpy(rgba, value, sizeof(lives_colRGBA64_t));
 }
 
 
+LIVES_GLOBAL_INLINE
 void set_bool_param(void *value, boolean _const) {
   set_int_param(value, !!_const);
 }
 
 
+LIVES_GLOBAL_INLINE
 void set_string_param(void **value_ptr, const char *_const, size_t maxlen) {
   lives_freep(value_ptr);
   *value_ptr = lives_strndup(_const, maxlen);
 }
 
 
+LIVES_GLOBAL_INLINE
 void set_int_param(void *value, int _const) {
   lives_memcpy(value, &_const, sizint);
 }
 
 
+LIVES_GLOBAL_INLINE
 void set_double_param(void *value, double _const) {
   lives_memcpy(value, &_const, sizdbl);
 }
 
 
-boolean set_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, const char *value, boolean update_visual) {
+boolean set_rfx_value_by_name_string(lives_rfx_t *rfx, const char *name, const char *value, boolean update_visual) {
   size_t len = strlen(value);
   lives_param_t *param = find_rfx_param_by_name(rfx, name);
   if (!param) return FALSE;
@@ -3115,7 +3133,7 @@ boolean set_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, const c
 }
 
 
-boolean get_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, char **return_value) {
+boolean get_rfx_value_by_name_string(lives_rfx_t *rfx, const char *name, char **return_value) {
   lives_param_t *param = find_rfx_param_by_name(rfx, name);
   if (!param) return FALSE;
   *return_value = lives_strndup(param->value, RFX_MAXSTRINGLEN);
@@ -3161,15 +3179,20 @@ int find_rfx_plugin_by_name(const char *name, short status) {
 }
 
 
-lives_param_t *find_rfx_param_by_name(lives_rfx_t *rfx, const char *name) {
-  int i;
-  if (!rfx) return NULL;
-  for (i = 0; i < rfx->num_params; i++) {
-    if (!lives_strcmp(name, rfx->params[i].name)) {
-      return &rfx->params[i];
+LIVES_GLOBAL_INLINE
+lives_param_t *rfx_param_from_name(lives_param_t *params, int nparams, const char *name) {
+  for (int i = 0; i < nparams; i++) {
+    if (!lives_strcmp(name, params[i].name)) {
+      return &params[i];
     }
   }
   return NULL;
+}
+
+
+lives_param_t *find_rfx_param_by_name(lives_rfx_t *rfx, const char *name) {
+  if (!rfx) return NULL;
+  return rfx_param_from_name(rfx->params, rfx->num_params, name);
 }
 
 

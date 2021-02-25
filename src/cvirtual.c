@@ -56,15 +56,16 @@ static boolean extend_frame_index(int fileno, frames_t start, frames_t end) {
 boolean save_frame_index(int fileno) {
   int fd, i;
   int retval;
-  char *fname, *fname_new;
+  char *fname, *fname_new, *clipdir;
   lives_clip_t *sfile = mainw->files[fileno];
 
   if (fileno == 0) return TRUE;
 
   if (!sfile || !sfile->frame_index) return FALSE;
 
-  fname = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME "." LIVES_FILE_EXT_BACK, NULL);
-  fname_new = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME, NULL);
+  clipdir = get_clip_dir(fileno);
+  fname = lives_build_filename(clipdir, FRAME_INDEX_FNAME "." LIVES_FILE_EXT_BACK, NULL);
+  fname_new = lives_build_filename(clipdir, FRAME_INDEX_FNAME, NULL);
 
   do {
     retval = 0;
@@ -115,17 +116,17 @@ frames_t load_frame_index(int fileno) {
   lives_clip_t *sfile = mainw->files[fileno];
   off_t filesize;
   char *fname, *fname_back;
+  char *clipdir;
   boolean backuptried = FALSE;
   int fd, retval;
   frames_t maxframe = -1;
-
-  int i;
 
   if (!sfile || sfile->frame_index) return -1;
 
   lives_freep((void **)&sfile->frame_index);
 
-  fname = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME, NULL);
+  clipdir = get_clip_dir(fileno);
+  fname = lives_build_filename(clipdir, FRAME_INDEX_FNAME, NULL);
   filesize = sget_file_size(fname);
 
   if (filesize <= 0) {
@@ -134,7 +135,7 @@ frames_t load_frame_index(int fileno) {
   }
 
   if (filesize >> 2 > (off_t)sfile->frames) sfile->frames = (frames_t)(filesize >> 2);
-  fname_back = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME "." LIVES_FILE_EXT_BACK, NULL);
+  fname_back = lives_build_filename(clipdir, FRAME_INDEX_FNAME "." LIVES_FILE_EXT_BACK, NULL);
 
   do {
     retval = 0;
@@ -177,7 +178,7 @@ frames_t load_frame_index(int fileno) {
         break;
       }
 
-      for (i = 0; i < sfile->frames; i++) {
+      for (int i = 0; i < sfile->frames; i++) {
         lives_read_le_buffered(fd, &sfile->frame_index[i], sizeof(frames_t), FALSE);
         if (THREADVAR(read_failed) == fd + 1) {
           break;
@@ -200,7 +201,8 @@ frames_t load_frame_index(int fileno) {
           LiVESList *list = NULL;
           frames_t vframe;
           int count = 0;
-          for (; lives_read_le_buffered(fd, &vframe, sizeof(frames_t), TRUE) == sizeof(frames_t); count++) {
+          for (; lives_read_le_buffered(fd, &vframe,
+                                        sizeof(frames_t), TRUE) == sizeof(frames_t); count++) {
             if (THREADVAR(read_failed) == fd + 1) break;
             list = lives_list_prepend(list, LIVES_INT_TO_POINTER(vframe));
           }
@@ -235,11 +237,14 @@ frames_t load_frame_index(int fileno) {
 }
 
 
-void del_frame_index(lives_clip_t *sfile) {
+void del_frame_index(int fileno) {
   // physically delete the frame_index for a clip
   // only done once all
-
+  lives_clip_t *sfile;
   char *idxfile;
+
+  if (!IS_VALID_CLIP(fileno)) return;
+  sfile = mainw->files[fileno];
 
   // cannot call check_if_non_virtual() else we end up recursing
 
@@ -253,9 +258,11 @@ void del_frame_index(lives_clip_t *sfile) {
   }
 
   if (sfile != clipboard) {
-    idxfile = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME, NULL);
+    char *clipdir = get_clip_dir(fileno);
+    idxfile = lives_build_filename(clipdir, FRAME_INDEX_FNAME, NULL);
     lives_rm(idxfile);
     lives_free(idxfile);
+    lives_free(clipdir);
   }
 
   lives_freep((void **)&sfile->frame_index);
@@ -667,7 +674,7 @@ boolean check_if_non_virtual(int fileno, frames_t start, frames_t end) {
   // no virtual frames in entire clip - change to CLIP_TYPE_DISK
 
   sfile->clip_type = CLIP_TYPE_DISK;
-  del_frame_index(sfile);
+  del_frame_index(fileno);
   close_clip_decoder(fileno);
 
   if (sfile->interlace != LIVES_INTERLACE_NONE) {
@@ -1085,7 +1092,7 @@ void delete_frames_from_virtual(int sfileno, frames_t start, frames_t end) {
   sfile->frame_index = NULL;
 
   if (nframes - frames == 0) {
-    del_frame_index(sfile);
+    del_frame_index(sfileno);
     return;
   }
 
@@ -1146,7 +1153,7 @@ void restore_frame_index_back(int sfileno) {
     sfile->clip_type = CLIP_TYPE_FILE;
     save_frame_index(sfileno);
   } else {
-    del_frame_index(sfile);
+    del_frame_index(sfileno);
     sfile->clip_type = CLIP_TYPE_DISK;
   }
 }

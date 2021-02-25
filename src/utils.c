@@ -2241,8 +2241,10 @@ int lives_cp_recursive(const char *from, const char *to, boolean incl_dir) {
   // may not fail
   int retval;
   char *com;
-  if (incl_dir) com = lives_strdup_printf("%s -r \"%s\" \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
-  else com = lives_strdup_printf("%s -rf \"%s\"/* \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
+  if (incl_dir) com = lives_strdup_printf("%s -r \"%s\" \"%s\" >\"%s\" 2>&1",
+                                            capable->cp_cmd, from, to, prefs->cmd_log);
+  else com = lives_strdup_printf("%s -rf \"%s\"/* \"%s\" >\"%s\" 2>&1",
+                                   capable->cp_cmd, from, to, prefs->cmd_log);
   if (!lives_file_test(to, LIVES_FILE_TEST_EXISTS))
     lives_mkdir_with_parents(to, capable->umask);
   retval = lives_system(com, FALSE);
@@ -2362,7 +2364,7 @@ boolean check_dir_access(const char *dir, boolean leaveit) {
   // we test here by actually creating a (mkstemp) file and writing to it
   // dir is in locale encoding
 
-  // see also is_writeable_dir() which uses statvfs
+  // see also is_writeable_dir() which uses access() to check directory permissions
 
   // WARNING: may leave some parents around
   char test[5] = "1234";
@@ -2373,6 +2375,8 @@ boolean check_dir_access(const char *dir, boolean leaveit) {
   if (!exists) lives_mkdir_with_parents(dir, capable->umask);
 
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return FALSE;
+
+  if (!is_writeable_dir(dir)) return FALSE;
 
   testfile = lives_build_filename(dir, "livestst-XXXXXX", NULL);
   fp = g_mkstemp(testfile);

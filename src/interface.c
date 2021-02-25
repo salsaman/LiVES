@@ -2960,7 +2960,7 @@ _entryw *create_rename_dialog(int type) {
     if (type == 6) {
       LiVESWidget *dirbutton;
       if (*prefs->workdir) workdir = lives_strdup(prefs->workdir);
-      else workdir = lives_build_path(capable->home_dir, LIVES_DEF_WORK_NAME, NULL);
+      else workdir = lives_build_path(capable->home_dir, LIVES_DEF_WORK_SUBDIR, NULL);
       renamew->entry = lives_standard_direntry_new("", (tmp = F2U8(workdir)),
                        LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                        (tmp2 = (_("LiVES working directory."))));
@@ -4081,9 +4081,11 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
     }
 
     if (filesel_type == LIVES_FILE_SELECTION_OPEN)
-      dirname = choose_file(def_dir ? def_dir : dirnamex, fnamex, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, NULL, NULL);
+      dirname = choose_file(def_dir ? def_dir : dirnamex, fnamex, filt,
+                            LIVES_FILE_CHOOSER_ACTION_OPEN, NULL, NULL);
     else
-      dirname = choose_file(def_dir ? def_dir : dirnamex, fnamex, filt, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
+      dirname = choose_file(def_dir ? def_dir : dirnamex, fnamex, filt,
+                            LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
 
     if (free_filt) {
       lives_free(filt[0]);
@@ -4132,13 +4134,29 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
 }
 
 
+#if 0
 static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
+  static boolean norecurse = FALSE;
   char *tmp;
   char *fname = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
                                        -1, NULL, NULL, NULL);
   lives_free(tmp);
+
+  if (norecurse) return;
+  norecurse = TRUE;
+
+  if (!lives_file_test(fname, LIVES_FILE_TEST_IS_DIR)) {
+    gtk_file_chooser_set_filename(LIVES_FILE_CHOOSER(chooser), fname);
+    gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname);
+  } else {
+    gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser), fname);
+    gtk_file_chooser_set_filename(LIVES_FILE_CHOOSER(chooser), fname);
+  }
+
   gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname);
+  norecurse = FALSE;
 }
+#endif
 
 
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
@@ -4221,12 +4239,15 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
             gtk_file_chooser_set_filename(LIVES_FILE_CHOOSER(chooser), fname);
           }
         }
-        lives_signal_sync_connect(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(fc_sel_changed), NULL);
-
+        /* lives_signal_sync_connect(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL, */
+        /*                           LIVES_GUI_CALLBACK(fc_sel_changed), NULL); */
       }
     }
   }
+
+
+  //g_signal_connect (chooser, "confirm-overwrite", G_CALLBACK (cocf), NULL);
+
 
   /* if (extra_widget && extra_widget != LIVES_MAIN_WINDOW_WIDGET) { */
   /*   gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser), extra_widget); */

@@ -20,7 +20,7 @@ lives_img_type_t resolve_img_type(lives_clip_t *);
 frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean update_progress, LiVESPixbuf **pbr);
 void delete_frames_from_virtual(int sfileno, frames_t start, frames_t end);
 void insert_images_in_virtual(int sfileno, frames_t where, frames_t frames, frames_t *frame_index, frames_t start);
-void del_frame_index(lives_clip_t *);
+void del_frame_index(int sfileno);
 void reverse_frame_index(int sfileno);
 
 boolean realize_all_frames(int clipno, const char *msg, boolean enough, frames_t start, frames_t end);

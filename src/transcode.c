@@ -89,7 +89,7 @@ boolean transcode_get_params(char **fnameptr) {
   vppa->keep_rfx = TRUE;
 
   // set the default value in the param window
-  set_rfx_param_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, *fnameptr, TRUE);
+  set_rfx_value_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, *fnameptr, TRUE);
   lives_freep((void **)fnameptr);
 
   retvals = do_onchange_init(rfx);
@@ -117,7 +117,7 @@ boolean transcode_get_params(char **fnameptr) {
   mainw->cancelled = CANCEL_NONE;
 
   // get the value of the "filename" param (this is only so we can display it in status messages)
-  get_rfx_param_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, fnameptr);
+  get_rfx_value_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, fnameptr);
 
   rfx_free(rfx);
   lives_free(rfx);

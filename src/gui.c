@@ -2760,8 +2760,10 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_select_last_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->lock_selwidth), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_lock_selwidth_activate), NULL);
-  mainw->record_perf_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->record_perf), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_record_perf_activate), NULL);
+  mainw->record_perf_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->record_perf),
+                            LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_record_perf_activate),
+                            NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->playall), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_playall_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->rewind), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2929,19 +2931,23 @@ void create_LiVES(void) {
                             LIVES_GUI_CALLBACK(on_devicemap_load_activate), NULL);
 #endif
 
-  mainw->toy_func_none = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->toy_none), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  mainw->toy_func_none = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->toy_none),
+                         LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(on_toy_activate), NULL);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->autolives), LIVES_WIDGET_ACTIVATE_SIGNAL,
                                   LIVES_GUI_CALLBACK(autolives_toggle), NULL);
 
-  mainw->toy_func_random_frames = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->toy_random_frames),
-                                  LIVES_WIDGET_ACTIVATE_SIGNAL,
-                                  LIVES_GUI_CALLBACK(on_toy_activate),
-                                  LIVES_INT_TO_POINTER(LIVES_TOY_MAD_FRAMES));
+  mainw->toy_func_random_frames =
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->toy_random_frames),
+                                    LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_toy_activate),
+                                    LIVES_INT_TO_POINTER(LIVES_TOY_MAD_FRAMES));
 
-  mainw->toy_func_lives_tv = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->toy_tv), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_toy_activate), LIVES_INT_TO_POINTER(LIVES_TOY_TV));
+  mainw->toy_func_lives_tv = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->toy_tv),
+                             LIVES_WIDGET_ACTIVATE_SIGNAL,
+                             LIVES_GUI_CALLBACK(on_toy_activate),
+                             LIVES_INT_TO_POINTER(LIVES_TOY_TV));
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(about), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_about_activate), NULL);
@@ -3016,7 +3022,8 @@ void create_LiVES(void) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_forward), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_forward_pressed), NULL);
 
-  mainw->mouse_fn1 = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
+  mainw->mouse_fn1 = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->eventbox2),
+                     LIVES_WIDGET_MOTION_NOTIFY_EVENT,
                      LIVES_GUI_CALLBACK(on_mouse_sel_update), NULL);
   lives_signal_handler_block(mainw->eventbox2, mainw->mouse_fn1);
   mainw->mouse_blocked = TRUE;
@@ -3077,10 +3084,12 @@ void show_lives(void) {
 
   if (prefs->show_gui) {
     if (palette->style & STYLE_1) {
-      set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars, \
+      set_colours(&palette->normal_fore, &palette->normal_back,
+                  &palette->menu_and_bars_fore, &palette->menu_and_bars, \
                   &palette->info_text, &palette->info_base);
     } else {
-      set_colours(&palette->normal_fore, &palette->normal_back, &palette->normal_fore, &palette->normal_back, \
+      set_colours(&palette->normal_fore, &palette->normal_back,
+                  &palette->normal_fore, &palette->normal_back,		\
                   &palette->normal_fore, &palette->normal_back);
     }
   }
@@ -3195,7 +3204,8 @@ void set_interactive(boolean interactive) {
     if (mainw->multitrack) {
       lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR, mainw->multitrack->timeline);
       if (!lives_widget_get_parent(mainw->multitrack->menubar)) {
-        lives_box_pack_start(LIVES_BOX(mainw->multitrack->menu_hbox), mainw->multitrack->menubar, FALSE, FALSE, 0);
+        lives_box_pack_start(LIVES_BOX(mainw->multitrack->menu_hbox),
+                             mainw->multitrack->menubar, FALSE, FALSE, 0);
         lives_widget_object_unref(mainw->multitrack->menubar);
       }
       lives_widget_show_all(mainw->multitrack->menubar);
@@ -3221,7 +3231,8 @@ void set_interactive(boolean interactive) {
         lives_widget_hide(mainw->multitrack->aparam_separator);
       }
 
-      if (mainw->multitrack->opts.back_audio_tracks == 0) lives_widget_hide(mainw->multitrack->view_audio);
+      if (mainw->multitrack->opts.back_audio_tracks == 0)
+        lives_widget_hide(mainw->multitrack->view_audio);
 
       lives_widget_set_sensitive(mainw->multitrack->menubar, TRUE);
 
@@ -3251,7 +3262,9 @@ void set_interactive(boolean interactive) {
     }
     lives_widget_set_sensitive(mainw->spinbutton_start, TRUE);
     lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
-    lives_widget_set_sensitive(mainw->sa_button, CURRENT_CLIP_HAS_VIDEO && (cfile->start > 1 || cfile->end < cfile->frames));
+    lives_widget_set_sensitive(mainw->sa_button,
+                               CURRENT_CLIP_HAS_VIDEO
+                               && (cfile->start > 1 || cfile->end < cfile->frames));
 
     if (CURRENT_CLIP_IS_VALID && mainw->proc_ptr) {
       lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, TRUE);
@@ -3290,7 +3303,8 @@ void fade_background(void) {
     }
   }
 
-  set_colours(&palette->normal_fore, &palette->fade_colour, &palette->menu_and_bars_fore, &palette->menu_and_bars,
+  set_colours(&palette->normal_fore, &palette->fade_colour,
+              &palette->menu_and_bars_fore, &palette->menu_and_bars,
               &palette->info_base, &palette->info_text);
 
   clear_widget_bg(mainw->play_image, mainw->play_surface);

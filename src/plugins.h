@@ -16,17 +16,21 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
-// generic plugins
+typedef struct _param_t lives_param_t;
 
-#define PLUGIN_SUBTYPE_DLL 		"dll"
-#define PLUGIN_SUBTYPE_BINARY 		"exe"
-#define PLUGIN_SUBTYPE_SCRIPT 		"script"
+#include "intents.h"
 
-#define PLUGIN_TYPE_DECODER			"decoder"
-#define PLUGIN_TYPE_ENCODER			"encoder"
-#define PLUGIN_TYPE_FILTER			"filter"
-#define PLUGIN_TYPE_SOURCE			"source"
-#define PLUGIN_TYPE_PLAYER 			"player"
+// generic objects / plugins
+
+#define PLUGIN_TYPE_DECODER		256//		"decoder"
+#define PLUGIN_TYPE_ENCODER		257//		"encoder"
+#define PLUGIN_TYPE_FILTER		258//		"filter"
+#define PLUGIN_TYPE_SOURCE		259//		"source"
+#define PLUGIN_TYPE_VIDEO_PLAYER 	260//		"player"
+
+#define PLUGIN_SUBTYPE_DLL 		128//	"dll"
+#define PLUGIN_SUBTYPE_BINARY 		129//	"exe"
+#define PLUGIN_SUBTYPE_SCRIPT 		130//	"script"
 
 #define PLUGIN_CHANNEL_NONE	0ul
 #define PLUGIN_CHANNEL_VIDEO	(1<<0)ul
@@ -38,57 +42,17 @@
 #define PLUGIN_CHANNEL_TTY    		(1<<34)ul
 #define PLUGIN_CHANNEL_FILE    		(1<<35)ul
 
-typedef enum {
-  LIVES_INTENTION_UNKNOWN,
-
-  // video players
-  LIVES_INTENTION_PLAY,
-  LIVES_INTENTION_STREAM,
-  LIVES_INTENTION_TRANSCODE,  // encode / data in
-  LIVES_INTENTION_RENDER,
-
-  //LIVES_INTENTION_ENCODE, // encode / file in
-  LIVES_INTENTION_BACKUP,
-  LIVES_INTENTION_RESTORE,
-  LIVES_INTENTION_DOWNLOAD,
-  LIVES_INTENTION_UPLOAD,
-  LIVES_INTENTION_EFFECT,
-  LIVES_INTENTION_EFFECT_REALTIME, // or make cap ?
-  LIVES_INTENTION_ANALYSE,
-  LIVES_INTENTION_CONVERT,
-  LIVES_INTENTION_MIX,
-  LIVES_INTENTION_SPLIT,
-  LIVES_INTENTION_DUPLICATE,
-  LIVES_INTENTION_OTHER = 65536
-} lives_intention_t;
-
-/// type specific caps
-// vpp
-#define VPP_CAN_RESIZE    (1<<0)
-#define VPP_CAN_RETURN    (1<<1)
-#define VPP_LOCAL_DISPLAY (1<<2)
-#define VPP_LINEAR_GAMMA  (1<<3)
-#define VPP_CAN_RESIZE_WINDOW          		(1<<4)   /// can resize the image to fit the play window
-#define VPP_CAN_LETTERBOX                  	(1<<5)
-#define VPP_CAN_CHANGE_PALETTE			(1<<6)
-
 typedef struct {
-  uint64_t intent;
-  uint64_t in_chan_types; ///< channel types accepted
-  uint64_t out_chan_types; ///< channel types produced
-  uint64_t intents; ///<
-  uint64_t capabilities; ///< type specific capabilities
-} lives_intentcaps_t;
-
-typedef struct {
-  char type[16];  ///< e.g. "decoder"
-  char subtype[16];  ///< e.g. "dll"
+  uint64_t uid; // fixed enumeration
+  uint64_t type;  ///< e.g. "decoder"
+  uint64_t subtype;  ///< e.g. "dll"
   int api_version_major; ///< version of interface API
   int api_version_minor;
   char name[64];  ///< e.g. "mkv_decoder"
   int pl_version_major; ///< version of plugin
   int pl_version_minor;
-  lives_intentcaps_t *capabilities;  ///< for future use
+  int n_intencaps;
+  lives_intentcap_t *intentcaps;  /// array of intentcaps[n_intentcaps]
 } lives_plugin_id_t;
 
 LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex,
@@ -236,28 +200,7 @@ typedef struct {
   // match with bitmaps in the encoder plugins
   // and also anames array in plugins.c (see below)
 
-#define AUDIO_CODEC_MP3 0
-#define AUDIO_CODEC_PCM 1
-#define AUDIO_CODEC_MP2 2
-#define AUDIO_CODEC_VORBIS 3
-#define AUDIO_CODEC_AC3 4
-#define AUDIO_CODEC_AAC 5
-#define AUDIO_CODEC_AMR_NB 6
-#define AUDIO_CODEC_RAW 7       // reserved
-#define AUDIO_CODEC_WMA2 8
-#define AUDIO_CODEC_OPUS 9
-
-#define AUDIO_CODEC_MAX 31
-  //
-#define AUDIO_CODEC_NONE 32
-#define AUDIO_CODEC_UNKNOWN 33
-
   uint32_t capabilities;
-
-#define HAS_RFX (1<<0)
-
-#define CAN_ENCODE_PNG (1<<2)
-#define ENCODER_NON_NATIVE (1<<3)
 
   // current output format
   char of_name[64];
@@ -291,14 +234,6 @@ extern const char *const anames[AUDIO_CODEC_MAX];
 // decoder plugins
 
 // seek_flags is a bitmap
-
-/// good
-#define LIVES_SEEK_FAST (1<<0)
-#define LIVES_SEEK_FAST_REV (1<<1)
-
-/// not so good
-#define LIVES_SEEK_NEEDS_CALCULATION (1<<2)
-#define LIVES_SEEK_QUALITY_LOSS (1<<3)
 
 typedef struct _lives_clip_data {
   // fixed part
@@ -380,18 +315,9 @@ typedef struct _lives_clip_data {
   /// plugin can change per frame
   int seek_flag; ///< bitmap of seek properties
 
-#define SYNC_HINT_AUDIO_TRIM_START (1<<0)
-#define SYNC_HINT_AUDIO_PAD_START (1<<1)
-#define SYNC_HINT_AUDIO_TRIM_END (1<<2)
-#define SYNC_HINT_AUDIO_PAD_END (1<<3)
-
-#define SYNC_HINT_VIDEO_PAD_START (1<<4)
-#define SYNC_HINT_VIDEO_PAD_END (1<<5)
-
   int sync_hint;
 
   adv_timing_t adv_timing;
-
 } lives_clip_data_t;
 
 
@@ -523,7 +449,7 @@ typedef enum {
   LIVES_PARAM_SPECIAL_TYPE_ASPECT_RATIO
 } lives_param_special_t;
 
-typedef struct {
+struct _param_t {
   // weed style part
   char *name;
   char *desc;
@@ -603,7 +529,7 @@ typedef struct {
   // this may change
   lives_param_special_t special_type; // the visual modification type (see paramspecial.h)
   int special_type_index; // index within special_type (e.g for DEMASK, 0==left, 1==top, 2==width, 3==height)
-} lives_param_t;
+};
 
 typedef enum {
   RFX_STATUS_BUILTIN, ///< factory presets
@@ -629,15 +555,6 @@ typedef struct {
   lives_rfx_status_t status;
 
   uint32_t props;
-#define RFX_PROPS_SLOW        0x0001  ///< hint to GUI
-#define RFX_PROPS_MAY_RESIZE  0x0002 ///< is a tool (can only be applied to entire clip)
-#define RFX_PROPS_BATCHG      0x0004 ///< is a batch generator
-#define RFX_PROPS_NO_PREVIEWS 0x0008 ///< no previews possible (e.g. effect has long prep. time)
-
-#define RFX_PROPS_RESERVED1   0x1000
-#define RFX_PROPS_RESERVED2   0x2000
-#define RFX_PROPS_RESERVED3   0x4000
-#define RFX_PROPS_AUTO_BUILT  0x8000
 
   LiVESWidget *menuitem;  ///< the menu item which activates this effect
   int num_params;
@@ -668,6 +585,8 @@ void sort_rfx_array(lives_rfx_t **in_array, int num_elements);
 
 int find_rfx_plugin_by_name(const char *name, short status);
 
+void free_rfx_params(lives_param_t *params, int num_params);
+
 void rfx_params_free(lives_rfx_t *);
 
 void rfx_free(lives_rfx_t *);
@@ -678,9 +597,12 @@ void param_copy(lives_param_t *dest, lives_param_t *src, boolean full);
 
 lives_param_t *find_rfx_param_by_name(lives_rfx_t *, const char *name);
 
-boolean set_rfx_param_by_name_string(lives_rfx_t *, const char *name, const char *value, boolean update_visual);
+lives_param_t *rfx_param_from_name(lives_param_t *, int nparams, const char *name);
 
-boolean get_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, char **return_value);
+boolean set_rfx_value_by_name_string(lives_rfx_t *, const char *name,
+                                     const char *value, boolean update_visual);
+
+boolean get_rfx_value_by_name_string(lives_rfx_t *rfx, const char *name, char **return_value);
 
 typedef struct {
   LiVESList *list; ///< list of filter_idx from which user can delegate
@@ -696,12 +618,14 @@ typedef struct {
 
 #define MAX_FX_CANDIDATE_TYPES 3
 
+char *get_string_param(void *value);
 boolean get_bool_param(void *value);
 int get_int_param(void *value);
 double get_double_param(void *value);
 void get_colRGB24_param(void *value, lives_colRGB48_t *rgb);
 void get_colRGBA32_param(void *value, lives_colRGBA64_t *rgba);
 
+void set_string_param(void **value_ptr, const char *_const, size_t maxlen);
 void set_bool_param(void *value, boolean);
 void set_int_param(void *value, int);
 void set_double_param(void *value, double);

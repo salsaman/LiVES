@@ -500,10 +500,14 @@ typedef struct {
   lives_checkstatus_t has_notify_send;
   lives_checkstatus_t has_snap;
 
+  lives_checkstatus_t writeable_shmdir;
+
   /// home directory - default location for config file - locale encoding
   char home_dir[PATH_MAX];
 
   char backend_path[PATH_MAX];
+
+  char shmdir_path[PATH_MAX];
 
   char *xdg_data_home; // e.g $HOME/.local/share
   char *xdg_current_desktop; // e.g XFCE
@@ -994,6 +998,9 @@ typedef struct _lives_clip_t {
 
   // current and last played index frames for internal player
   frames_t saved_frameno;
+  char staging_dir[PATH_MAX];
+
+  pthread_mutex_t transform_mutex;
 
   /////////////////////////////////////////////////////////////
   // see resample.c for new events system

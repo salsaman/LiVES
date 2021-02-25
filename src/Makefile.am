@@ -231,6 +231,7 @@ lives_exe_SOURCES = \
 	callbacks.c callbacks.h \
 	colourspace.c colourspace.h\
 	keyboard.c keyboard.h\
+	intents.c intents.h\
 	utils.c \
         main.h \
         mainwindow.h \

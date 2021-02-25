@@ -104,7 +104,7 @@ boolean is_writeable_dir(const char *dir) {
   // dir should be in locale encoding
   // WARNING: this will actually create the directory (since we dont know if its parents are needed)
 
-  struct statvfs sbuf;
+  //struct statvfs sbuf;
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
     lives_mkdir_with_parents(dir, capable->umask);
     if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
@@ -112,10 +112,13 @@ boolean is_writeable_dir(const char *dir) {
     }
   }
 
-  // use statvfs to get fs details
-  if (statvfs(dir, &sbuf) == -1) return FALSE;
-  if (sbuf.f_flag & ST_RDONLY) return FALSE;
-  return TRUE;
+  if (!access(dir, R_OK | W_OK | X_OK)) return TRUE;
+  return FALSE;
+
+  /* // use statvfs to get fs details */
+  /* if (statvfs(dir, &sbuf) == -1) return FALSE; */
+  /* if (sbuf.f_flag & ST_RDONLY) return FALSE; */
+  /* return TRUE; */
 }
 
 

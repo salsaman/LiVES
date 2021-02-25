@@ -4995,7 +4995,7 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
         cfile->clip_type = CLIP_TYPE_DISK;
         lives_freep((void **)&cfile->frame_index_back);
         cfile->frame_index_back = cfile->frame_index;  // save for undo :: TODO
-        del_frame_index(cfile);
+        del_frame_index(mainw->current_file);
       } else {
         char *what = (_("a new file index"));
         LiVESResponseType response;

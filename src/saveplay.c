@@ -188,6 +188,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   char *isubfname = NULL;
   char *fname = lives_strdup(file_name), *msgstr;
   char *com, *what;
+  char *temp_backend;
 
   int withsound = 1;
   int old_file = mainw->current_file;
@@ -225,13 +226,13 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     if (frames == 0) {
       com = lives_strdup_printf(_("Opening %s"), file_name);
     } else {
-      com = lives_strdup_printf(_("Opening %s start time %.2f sec. frames %d"), file_name, start, frames);
+      com = lives_strdup_printf(_("Opening %s start time %.2f sec. frames %d"),
+                                file_name, start, frames);
     }
     d_print(""); // exhaust "switch" message
 
     d_print(com);
     lives_free(com);
-
     if (!mainw->save_with_sound) {
       d_print(_(" without sound"));
       withsound = 0;
@@ -242,7 +243,9 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     /// probe the file to see what it might be...
     read_file_details(file_name, FALSE, FALSE);
     lives_rm(cfile->info_file);
-    if (THREADVAR(com_failed)) return 0;
+    if (THREADVAR(com_failed)) {
+      return 0;
+    }
 
     if (*mainw->msg) add_file_info(cfile->handle, FALSE);
 
@@ -342,7 +345,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         cfile->achans = cdata->achans;
         cfile->asampsize = cdata->asamps;
 
-        cfile->signed_endian = get_signed_endian(cdata->asigned, capable->byte_order == LIVES_LITTLE_ENDIAN);
+        cfile->signed_endian =
+          get_signed_endian(cdata->asigned, capable->byte_order == LIVES_LITTLE_ENDIAN);
 
         if (cfile->achans > 0 && (dplug->decoder->rip_audio) && withsound == 1) {
           // call rip_audio() in the decoder plugin
@@ -408,17 +412,20 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
             mainw->file_open_params = lives_strdup("");
 #endif
           }
-          com = lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d %d \"%s\"", prefs->backend, cfile->handle,
-                                    (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), -1,
-                                    prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST), start, frames, probed_achans,
-                                    mainw->file_open_params);
-
+          temp_backend = use_staging_dir_for(mainw->current_file);
+          com = lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d %d \"%s\"",
+                                    temp_backend, cfile->handle,
+                                    (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
+                                    -1, prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST),
+                                    start, frames, probed_achans, mainw->file_open_params);
+          lives_free(temp_backend);
           lives_free(tmp);
           lives_system(com, FALSE);
           lives_free(com);
 
           // if we have a quick-opening file, display the first and last frames now
-          // for some codecs this can be helpful since we can locate the last frame while audio is loading
+          // for some codecs this can be helpful since we can locate the last frame
+          // while audio is loading
           if (cfile->clip_type == CLIP_TYPE_FILE && !LIVES_IS_PLAYING) resize(1);
 
           mainw->effects_paused = FALSE; // set to TRUE if user clicks "Enough"
@@ -436,6 +443,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
             }
 
             if (mainw->cancelled == CANCEL_NO_PROPOGATE) {
+              use_staging_dir_for(0);
               lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
               mainw->cancelled = CANCEL_NONE;
               return 0;
@@ -486,7 +494,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                                      && (double)cfile->frames / cfile->fps < cfile->laudio_time)) {
               // pad with blank frames at end
               if (cdata->sync_hint & SYNC_HINT_VIDEO_PAD_END) {
-                int xextra_frames = (cfile->laudio_time - (double)cfile->frames / cfile->fps) * cfile->fps;
+                int xextra_frames =
+                  (cfile->laudio_time - (double)cfile->frames / cfile->fps) * cfile->fps;
                 if (xextra_frames > extra_frames) extra_frames = xextra_frames;
               }
               insert_blank_frames(mainw->current_file, extra_frames, cfile->frames, WEED_PALETTE_RGB24);
@@ -506,7 +515,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
             if (cfile->laudio_time > cfile->video_time + AV_TRACK_MIN_DIFF && cfile->frames > 0) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_TRIM_END) {
                 cfile->end = cfile->frames;
-                d_print(_("Auto trimming %.4f seconds of audio at end..."), cfile->laudio_time - cfile->video_time);
+                d_print(_("Auto trimming %.4f seconds of audio at end..."),
+                        cfile->laudio_time - cfile->video_time);
                 if (on_trim_audio_activate(NULL, LIVES_INT_TO_POINTER(0))) d_print_done();
                 else d_print("\n");
                 cfile->changed = FALSE;
@@ -545,7 +555,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         cfile->deinterlace = TRUE;
         cfile->interlace = LIVES_INTERLACE_TOP_FIRST; // guessing
         save_clip_value(mainw->current_file, CLIP_DETAILS_INTERLACE, &cfile->interlace);
-        if (THREADVAR(com_failed) || THREADVAR(write_failed)) do_header_write_error(mainw->current_file);
+        if (THREADVAR(com_failed) || THREADVAR(write_failed))
+          do_header_write_error(mainw->current_file);
       }
     } else {
       // be careful, here we switch from mainw->opening_loc to cfile->opening_loc
@@ -557,8 +568,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           char *fsize_ds = lives_format_storage_space_string((uint64_t)cfile->f_size);
           char *warn = lives_strdup_printf(
                          _("\nLiVES cannot Instant Open this file, it may take some time to load.\n"
-                           "Are you sure you wish to continue ?"),
-                         fsize_ds);
+                           "Are you sure you wish to continue ?"), fsize_ds);
           lives_free(fsize_ds);
           if (!do_warning_dialog_with_check(warn, WARN_MASK_FSIZE)) {
             lives_free(warn);
@@ -625,6 +635,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     mainw->effects_paused = FALSE;
 
     if (!cfile->ext_src) {
+      migrate_from_staging(mainw->current_file);
+
       if (!mainw->file_open_params) mainw->file_open_params = lives_strdup("");
 
       tmp = lives_strconcat(mainw->file_open_params, get_deinterlace_string(), NULL);
@@ -636,11 +648,14 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         d_print(_("Forcing audio channels to %d\n"), MAX_ACHANS);
       }
 
-      com = lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d %d \"%s\"", prefs->backend, cfile->handle,
-                                (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), withsound,
-                                prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST), start, frames, cfile->achans,
-                                mainw->file_open_params);
+      temp_backend = use_staging_dir_for(mainw->current_file);
+      com = lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d %d \"%s\"",
+                                temp_backend, cfile->handle,
+                                (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
+                                withsound, prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST),
+                                start, frames, cfile->achans, mainw->file_open_params);
       lives_free(tmp);
+      lives_free(temp_backend);
       lives_system(com, FALSE);
       lives_free(com);
 
@@ -800,7 +815,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                       "Please check the terminal window for more details.\n"));
 
       if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
-        lives_strappend(msg, 256, _("\n\nYou may need to install mplayer, mplayer2 or mpv to open this file.\n"));
+        lives_strappend(msg, 256, _("\n\nYou may need to install mplayer, "
+                                    "mplayer2 or mpv to open this file.\n"));
       } else {
         if (capable->has_mplayer) {
           get_location(EXEC_MPLAYER, loc, PATH_MAX);
@@ -850,13 +866,15 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     if (prefs->auto_trim_audio || prefs->keep_all_audio) {
       if (cfile->laudio_time > cfile->video_time && cfile->frames > 0) {
         if (!prefs->keep_all_audio || start != 0. || extra_frames <= 0) {
-          d_print(_("Auto trimming %.2f seconds of audio at end..."), cfile->laudio_time - cfile->video_time);
+          d_print(_("Auto trimming %.2f seconds of audio at end..."),
+                  cfile->laudio_time - cfile->video_time);
           if (on_trim_audio_activate(NULL, LIVES_INT_TO_POINTER(0))) d_print_done();
           else d_print("\n");
           cfile->changed = FALSE;
         } else {
           /// insert blank frames
-          if (prefs->keep_all_audio && (cfile->laudio_time - cfile->video_time) * cfile->fps > extra_frames)
+          if (prefs->keep_all_audio && (cfile->laudio_time - cfile->video_time)
+              * cfile->fps > extra_frames)
             extra_frames = (cfile->laudio_time - cfile->video_time) * cfile->fps;
           insert_blank_frames(mainw->current_file, extra_frames, cfile->frames, WEED_PALETTE_RGB24);
           cfile->video_time += extra_frames / cfile->fps;
@@ -937,6 +955,7 @@ img_load:
   }
 
   if ((!strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) || !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG))) {
+    migrate_from_staging(mainw->current_file);
     if (mainw->img_concat_clip == -1) {
       cfile->img_type = lives_image_type_to_img_type(cfile->type);
       mainw->img_concat_clip = mainw->current_file;
@@ -948,13 +967,13 @@ img_load:
       cfile->is_loaded = TRUE;
     } else if (prefs->concat_images) {
       // insert this image into our image clip, close this file
-
       com = lives_strdup_printf("%s insert \"%s\" \"%s\" %d 1 1 \"%s\" 0 %d %d %d", prefs->backend,
                                 mainw->files[mainw->img_concat_clip]->handle,
                                 get_image_ext_for_type(mainw->files[mainw->img_concat_clip]->img_type),
                                 mainw->files[mainw->img_concat_clip]->frames,
                                 cfile->handle, mainw->files[mainw->img_concat_clip]->frames,
-                                mainw->files[mainw->img_concat_clip]->hsize, mainw->files[mainw->img_concat_clip]->vsize);
+                                mainw->files[mainw->img_concat_clip]->hsize,
+                                mainw->files[mainw->img_concat_clip]->vsize);
 
       mainw->current_file = mainw->img_concat_clip;
       lives_system(com, FALSE);
@@ -1008,6 +1027,11 @@ load_done:
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     mt_clip_select(mainw->multitrack, TRUE);
   }
+  if (*cfile->staging_dir) {
+    lives_proc_thread_create(LIVES_THRDATTR_NONE,
+                             (lives_funcptr_t)migrate_from_staging,
+                             0, "i", mainw->current_file);
+  }
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   check_storage_space(-1, FALSE);
   return cfile->unique_id;
@@ -1053,12 +1077,31 @@ static void save_subs_to_file(lives_clip_t *sfile, char *fname) {
 boolean get_handle_from_info_file(int index) {
   // called from get_new_handle to get the 'real' file handle
   // because until we know the handle we can't use the normal info file yet
-  char *com = lives_strdup_printf("%s new", prefs->backend_sync);
+  //char *com = lives_strdup_printf("%s new %s", prefs->backend_sync, capable->shm_dir);
+  char *com, *shm_path = NULL;
+
+  // optionally we can stage the clip open in an alt directory
+  lives_intentparams_t *iparams = get_txparams_for_clip(index, LIVES_INTENTION_IMPORT_LOCAL);
+  if (iparams) {
+    lives_param_t *adir_param =
+      rfx_param_from_name(iparams->params, iparams->n_params, "staging directory");
+    if (adir_param) shm_path = get_string_param(adir_param->value);
+    g_print("CAP val was %s\n", shm_path);
+    free_rfx_params(iparams->params, iparams->n_params);
+    lives_free(iparams->params);
+    lives_free(iparams);
+  }
+
+  if (shm_path)
+    com = lives_strdup_printf("%s new \"%s\"", prefs->backend_sync, shm_path);
+  else
+    com = lives_strdup_printf("%s new", prefs->backend_sync);
 
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
 
-  if (!strncmp(mainw->msg, "error|", 6)) {
+  if (!lives_strncmp(mainw->msg, "error|", 6)) {
+    lives_free(shm_path);
     handle_backend_errors(FALSE);
     return FALSE;
   }
@@ -1067,7 +1110,21 @@ boolean get_handle_from_info_file(int index) {
     mainw->files[index] = (lives_clip_t *)(lives_calloc(1, sizeof(lives_clip_t)));
     mainw->files[index]->clip_type = CLIP_TYPE_DISK; // the default
   }
+
   lives_snprintf(mainw->files[index]->handle, 256, "%s", mainw->msg);
+
+  if (shm_path) {
+    if (capable->writeable_shmdir != MISSING) {
+      capable->writeable_shmdir = MISSING;
+      if (lives_file_test(shm_path, LIVES_FILE_TEST_IS_DIR)) {
+        if (check_dir_access(shm_path, TRUE)) {
+          capable->writeable_shmdir = PRESENT;
+          lives_snprintf(mainw->files[index]->staging_dir, PATH_MAX, "%s", shm_path);
+        }
+      }
+    }
+    lives_free(shm_path);
+  }
 
   return TRUE;
 }
@@ -1228,8 +1285,8 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
         // initialise new plugin
 
         if (enc_exec_name) lives_free(enc_exec_name);
-        enc_exec_name = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, prefs->encoder.name, NULL);
-
+        enc_exec_name = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR,
+                                             PLUGIN_ENCODERS, prefs->encoder.name, NULL);
         com = lives_strdup_printf("\"%s\" init", enc_exec_name);
         lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
         lives_free(com);
@@ -1426,9 +1483,12 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
     nfile->signed_endian = sfile->signed_endian;
     nfile->img_type = sfile->img_type;
 
-    com = lives_strdup_printf("%s link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d \"%s\"", prefs->backend, nfile->handle,
-                              start, end, aud_start, aud_end, nfile->arate, nfile->achans, nfile->asampsize,
-                              !(nfile->signed_endian & AFORM_UNSIGNED), !(nfile->signed_endian & AFORM_BIG_ENDIAN),
+    com = lives_strdup_printf("%s link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d \"%s\"",
+                              prefs->backend, nfile->handle,
+                              start, end, aud_start, aud_end, nfile->arate,
+                              nfile->achans, nfile->asampsize,
+                              !(nfile->signed_endian & AFORM_UNSIGNED),
+                              !(nfile->signed_endian & AFORM_BIG_ENDIAN),
                               sfile->handle);
 
     lives_rm(nfile->info_file);
@@ -1527,9 +1587,12 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
       }
     }
 
-    com = lives_strdup_printf("%s link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d", prefs->backend, sfile->handle,
-                              start, end, aud_start, aud_end, sfile->arate, sfile->achans, sfile->asampsize,
-                              !(sfile->signed_endian & AFORM_UNSIGNED), !(sfile->signed_endian & AFORM_BIG_ENDIAN));
+    com = lives_strdup_printf("%s link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d",
+                              prefs->backend, sfile->handle,
+                              start, end, aud_start, aud_end, sfile->arate,
+                              sfile->achans, sfile->asampsize,
+                              !(sfile->signed_endian & AFORM_UNSIGNED),
+                              !(sfile->signed_endian & AFORM_BIG_ENDIAN));
 
     lives_system(com, FALSE);
     lives_free(com);
@@ -1570,7 +1633,8 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
       return;
     }
 
-    // cfile->arate, etc., would have been reset by calls to do_progress_dialog() which calls get_total_time() [since cfile->afilesize==0]
+    // cfile->arate, etc., would have been reset by calls to do_progress_dialog()
+    // which calls get_total_time() [since cfile->afilesize==0]
     // so we need to set these again now that link_frames has provided an actual audio clip
 
     sfile->arps = xarps;
@@ -1611,11 +1675,13 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
 
   if (!save_all) {
     mesg = lives_strdup_printf(_("Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."),
-                               start, end, bit, full_file_name, prefs->encoder.name, prefs->encoder.of_desc);
+                               start, end, bit, full_file_name, prefs->encoder.name,
+                               prefs->encoder.of_desc);
   } // end selection
   else {
     mesg = lives_strdup_printf(_("Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."),
-                               sfile->frames, bit, full_file_name, prefs->encoder.name, prefs->encoder.of_desc);
+                               sfile->frames, bit, full_file_name, prefs->encoder.name,
+                               prefs->encoder.of_desc);
   }
   lives_free(bit);
 
@@ -1633,7 +1699,8 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
 
     do {
       retval = 0;
-      new_stderr = lives_open3(new_stderr_name, O_CREAT | O_RDONLY | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR);
+      new_stderr = lives_open3(new_stderr_name, O_CREAT | O_RDONLY | O_TRUNC
+                               | O_SYNC, S_IRUSR | S_IWUSR);
       if (new_stderr < 0) {
         retval = do_write_failed_error_s_with_retry(new_stderr_name, lives_strerror(errno));
         if (retval == LIVES_RESPONSE_CANCEL) redir = lives_strdup("1>&2");
@@ -1672,7 +1739,8 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
     redir = lives_strdup("1>&2");
   }
 
-  if (lives_file_test((tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)), LIVES_FILE_TEST_EXISTS)) {
+  if (lives_file_test((tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)),
+                      LIVES_FILE_TEST_EXISTS)) {
     lives_rm(tmp);
   }
   lives_free(tmp);
@@ -1692,18 +1760,23 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
   // for save_all, cfile will be sfile
 
   if (prefs->encoder.capabilities & ENCODER_NON_NATIVE) {
-    com = lives_strdup_printf("%s save \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s", prefs->backend,
+    com = lives_strdup_printf("%s save \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %d %d %d "
+                              "%.4f %.4f %s %s", prefs->backend,
                               cfile->handle,
-                              enc_exec_name, fps_string, (tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)),
+                              enc_exec_name, fps_string,
+                              (tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)),
                               startframe, cfile->frames, arate, cfile->achans, cfile->asampsize,
-                              asigned | aendian, aud_start, aud_end, (extra_params == NULL) ? "" : extra_params, redir);
+                              asigned | aendian, aud_start, aud_end, (extra_params == NULL) ? ""
+                              : extra_params, redir);
   } else {
-    com = lives_strdup_printf("%s save \"%s\" \"native:%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s", prefs->backend,
+    com = lives_strdup_printf("%s save \"%s\" \"native:%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f "
+                              "%.4f %s %s", prefs->backend,
                               cfile->handle,
-                              enc_exec_name, fps_string, (tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)),
+                              enc_exec_name, fps_string,
+                              (tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)),
                               startframe, cfile->frames, arate, cfile->achans, cfile->asampsize,
-                              asigned | aendian, aud_start, aud_end, (extra_params == NULL) ? "" : extra_params, redir);
-
+                              asigned | aendian, aud_start, aud_end, (extra_params == NULL) ? ""
+                              : extra_params, redir);
   }
   lives_free(tmp);
   lives_free(fps_string);
@@ -1810,7 +1883,8 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
       lives_free(full_file_name);
       if (!save_all && !safe_symlinks) {
         permit_close(mainw->current_file);
-        lives_system((com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle)), TRUE);
+        lives_system((com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle)),
+                     TRUE);
         lives_free(com);
         lives_freep((void **)&cfile);
         if (mainw->first_free_file == ALL_USED || mainw->first_free_file > mainw->current_file)
@@ -1828,7 +1902,8 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
       return;
     }
 
-    if (lives_file_test((tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)), LIVES_FILE_TEST_EXISTS)) {
+    if (lives_file_test((tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)),
+                        LIVES_FILE_TEST_EXISTS)) {
       lives_free(tmp);
       stat((tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)), &filestat);
       if (filestat.st_size > 0) output_exists = TRUE;
@@ -1935,7 +2010,8 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
     } else {
       if (!safe_symlinks) {
         permit_close(new_file);
-        lives_system((com = lives_strdup_printf("%s close \"%s\"", prefs->backend, nfile->handle)), TRUE);
+        lives_system((com = lives_strdup_printf("%s close \"%s\"",
+                                                prefs->backend, nfile->handle)), TRUE);
         lives_free(com);
         lives_free(nfile);
         mainw->files[new_file] = NULL;
@@ -2038,7 +2114,8 @@ char *prep_audio_player(char *com2, char *com3, frames_t audio_end, int arate, i
       if (cfile->achans > 0 || (!cfile->is_loaded && !mainw->is_generating)) {
         if (loop) {
           lives_free(com3);
-          com3 = lives_strdup_printf("%s \"%s\" 2>\"%s\" 1>&2", capable->touch_cmd, stfile, prefs->cmd_log);
+          com3 = lives_strdup_printf("%s \"%s\" 2>\"%s\" 1>&2", capable->touch_cmd,
+                                     stfile, prefs->cmd_log);
         }
 
         if (com2) {
@@ -2063,12 +2140,14 @@ char *prep_audio_player(char *com2, char *com3, frames_t audio_end, int arate, i
     // PLAY
 
     if (cfile->clip_type == CLIP_TYPE_DISK && cfile->opening) {
-      com = lives_strdup_printf("%s play_opening_preview \"%s\" %.3f %d %d %d %d %d %d %d %d", prefs->backend,
+      com = lives_strdup_printf("%s play_opening_preview \"%s\" %.3f %d %d %d %d %d %d %d %d",
+                                prefs->backend,
                                 cfile->handle, cfile->fps, mainw->audio_start, audio_end, 0,
                                 arate, cfile->achans, cfile->asampsize, asigned, aendian);
     } else {
       // this is only used now for sox or mplayer audio player
-      com = lives_strdup_printf("%s play %s %.3f %d %d %d %d %d %d %d %d", prefs->backend, cfile->handle,
+      com = lives_strdup_printf("%s play %s %.3f %d %d %d %d %d %d %d %d",
+                                prefs->backend, cfile->handle,
                                 cfile->fps, mainw->audio_start, audio_end, loop,
                                 arate, cfile->achans, cfile->asampsize, asigned, aendian);
     }
@@ -2084,7 +2163,8 @@ static void post_playback(void) {
   if (prefs->show_player_stats) {
     if (mainw->fps_measure > 0) {
       d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"), fps_med, mainw->fps_measure,
-              (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) / TICKS_PER_SECOND_DBL);
+              (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs)
+              / TICKS_PER_SECOND_DBL);
     }
   }
 
@@ -2123,14 +2203,11 @@ static void post_playback(void) {
     }
   }
 
-  if (!mainw->multitrack) {
-    //lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
-  }
-
   if (prefs->show_gui && ((mainw->multitrack  && mainw->double_size) ||
-                          (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_HEIGHT ||
-                           lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_WIDTH))) {
-    //if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
+                          (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET)
+                           > GUI_SCREEN_HEIGHT ||
+                           lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET)
+                           > GUI_SCREEN_WIDTH))) {
     if (prefs->open_maximised)
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
@@ -2251,12 +2328,13 @@ void play_file(void) {
 
   /// enable the freeze button
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_BackSpace,
-                            (LiVESXModifierType)LIVES_CONTROL_MASK,
-                            (LiVESAccelFlags)0, (freeze_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback),
+                            (LiVESXModifierType)LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                            (freeze_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL)));
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_BackSpace,
                             (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
-                            (LiVESAccelFlags)0, (bg_freeze_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback),
+                            (LiVESAccelFlags)0,
+                            (bg_freeze_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL)));
 
   /// disable ctrl-q since it can be activated by user error
@@ -2286,7 +2364,8 @@ void play_file(void) {
       d_print(_("Recording performance..."));
       needsadone = TRUE;
       // TODO
-      if (mainw->current_file > 0 && (cfile->undo_action == UNDO_RESAMPLE || cfile->undo_action == UNDO_RENDER)) {
+      if (mainw->current_file > 0 && (cfile->undo_action == UNDO_RESAMPLE
+                                      || cfile->undo_action == UNDO_RENDER)) {
         lives_widget_set_sensitive(mainw->undo, FALSE);
         lives_widget_set_sensitive(mainw->redo, FALSE);
         cfile->undoable = cfile->redoable = FALSE;
@@ -2324,8 +2403,10 @@ void play_file(void) {
         !(mainw->preview && mainw->is_rendering) &&
         !(mainw->multitrack && mainw->preview && mainw->multitrack->is_rendering)) {
       /// play performance data
-      if (event_list_get_end_secs(mainw->event_list) > cfile->frames / cfile->fps && !mainw->playing_sel) {
-        mainw->audio_end = (event_list_get_end_secs(mainw->event_list) * cfile->fps + 1.) * cfile->arate / cfile->arps;
+      if (event_list_get_end_secs(mainw->event_list) > cfile->frames
+          / cfile->fps && !mainw->playing_sel) {
+        mainw->audio_end = (event_list_get_end_secs(mainw->event_list) * cfile->fps + 1.)
+                           * cfile->arate / cfile->arps;
       }
     }
 
@@ -2467,15 +2548,6 @@ void play_file(void) {
       if (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
         make_play_window();
       } else {
-        if (!mainw->multitrack) {
-          if (mainw->preview_controls) {
-            lives_widget_hide(mainw->preview_controls);
-            /* mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT, */
-            /*                         LIVES_GUI_CALLBACK(on_mouse_scroll), */
-            /*                         NULL); */
-          }
-        }
-
         if (!mainw->multitrack || mainw->fs) {
           resize_play_window();
         }
@@ -2508,18 +2580,6 @@ void play_file(void) {
       else resize(1);
     }
 
-    /* if (mainw->vpp && mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) { */
-    /*   // fixed o/p size for stream */
-    /*   if (mainw->vpp->fwidth * mainw->vpp->fheight == 0) { */
-    /*     mainw->vpp->fwidth = DEF_VPP_HSIZE; */
-    /*     mainw->vpp->fheight = DEF_VPP_VSIZE; */
-    /*   } */
-    /*   if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) { */
-    /*     mainw->pwidth = mainw->vpp->fwidth; */
-    /*     mainw->pheight = mainw->vpp->fheight; */
-    /*   } */
-    /* } */
-
     if (mainw->fs && !mainw->sep_win && cfile->frames > 0) {
       fullscreen_internal();
     }
@@ -2538,8 +2598,8 @@ void play_file(void) {
     com2 = lives_strdup("xset s off 2>/dev/null; xset -dpms 2>/dev/null ;");
 
     if (capable->has_gconftool_2) {
-      char *xnew = lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled "
-                                "false 2>/dev/null ;");
+      char *xnew = lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/"
+                                "idle_activation_enabled false 2>/dev/null ;");
       tmp = lives_concat(com2, xnew);
       com2 = tmp;
     }
@@ -2550,7 +2610,8 @@ void play_file(void) {
     }
 #else
     if (capable->has_gconftool_2) {
-      com2 = lives_strdup("gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled false 2>/dev/null ;");
+      com2 = lives_strdup("gconftool-2 --set --type bool /apps/gnome-screensaver/"
+                          "idle_activation_enabled false 2>/dev/null ;");
     } else com2 = lives_strdup("");
 #endif
     if (!com2) com2 = lives_strdup("");
@@ -2807,8 +2868,10 @@ void play_file(void) {
         if (!has_audio_buffers) {
           // no audio buffering
           // get just effects state
-          get_audio_and_effects_state_at(mainw->multitrack->event_list, mainw->multitrack->pb_start_event, 0,
-                                         LIVES_PREVIEW_TYPE_VIDEO_ONLY, mainw->multitrack->exact_preview);
+          get_audio_and_effects_state_at(mainw->multitrack->event_list,
+                                         mainw->multitrack->pb_start_event, 0,
+                                         LIVES_PREVIEW_TYPE_VIDEO_ONLY,
+                                         mainw->multitrack->exact_preview);
         }
 
         do_progress_dialog(FALSE, FALSE, NULL);
@@ -2877,8 +2940,9 @@ void play_file(void) {
   // play completed
   if (prefs->show_player_stats) {
     if (mainw->fps_measure > 0) {
-      fps_med = (double)mainw->fps_measure / ((double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs)
-                                              / TICKS_PER_SECOND_DBL);
+      fps_med = (double)mainw->fps_measure
+                / ((double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs)
+                   / TICKS_PER_SECOND_DBL);
     }
   }
   mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
@@ -3030,8 +3094,8 @@ void play_file(void) {
     com = lives_strdup("xset s on 2>/dev/null; xset +dpms 2>/dev/null ;");
 
     if (capable->has_gconftool_2) {
-      char *xnew = lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled "
-                                "true 2>/dev/null ;");
+      char *xnew = lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/"
+                                "idle_activation_enabled true 2>/dev/null ;");
       tmp = lives_strconcat(com, xnew, NULL);
       lives_free(com);
       lives_free(xnew);
@@ -3046,7 +3110,8 @@ void play_file(void) {
     }
 #else
     if (capable->has_gconftool_2) {
-      com = lives_strdup("gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled true 2>/dev/null ;");
+      com = lives_strdup("gconftool-2 --set --type bool /apps/gnome-screensaver/"
+                         "idle_activation_enabled true 2>/dev/null ;");
     } else com = lives_strdup("");
 #endif
 
@@ -3194,7 +3259,8 @@ void play_file(void) {
           make_preview_box();
         }
         // and add it to the play window
-        if (!lives_widget_get_parent(mainw->preview_box) && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
+        if (!lives_widget_get_parent(mainw->preview_box)
+            && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
           lives_widget_queue_draw(mainw->play_window);
           lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
           play_window_set_title();
@@ -3241,7 +3307,8 @@ void play_file(void) {
 
   if (CURRENT_CLIP_IS_VALID) cfile->play_paused = FALSE;
 
-  if (mainw->blend_file != -1 && mainw->blend_file != mainw->current_file && mainw->files[mainw->blend_file] &&
+  if (mainw->blend_file != -1 && mainw->blend_file != mainw->current_file
+      && mainw->files[mainw->blend_file] &&
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
     int xcurrent_file = mainw->current_file;
     weed_bg_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
@@ -3286,10 +3353,12 @@ void play_file(void) {
   mainw->is_processing = mainw->preview;
   /////////////////
 
-  if (prefs->volume != (double)future_prefs->volume) pref_factory_float(PREF_MASTER_VOLUME, future_prefs->volume, TRUE);
+  if (prefs->volume != (double)future_prefs->volume)
+    pref_factory_float(PREF_MASTER_VOLUME, future_prefs->volume, TRUE);
 
   // TODO - ????
-  if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK && cfile->frames == 0 && mainw->record_perf) {
+  if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK
+      && cfile->frames == 0 && mainw->record_perf) {
     lives_signal_handler_block(mainw->record_perf, mainw->record_perf_func);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf), FALSE);
     lives_signal_handler_unblock(mainw->record_perf, mainw->record_perf_func);
@@ -3376,6 +3445,7 @@ void play_file(void) {
    returns new_clip */
 int close_temp_handle(int new_clip) {
   char *com;
+  char *temp_backend;
   int clipno = mainw->current_file;
 
   if (!IS_VALID_CLIP(new_clip)) new_clip = -1;
@@ -3391,9 +3461,11 @@ int close_temp_handle(int new_clip) {
 
   permit_close(mainw->current_file);
 
-  com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle);
+  temp_backend = use_staging_dir_for(mainw->current_file);
+  com = lives_strdup_printf("%s close \"%s\"", temp_backend, cfile->handle);
   lives_system(com, TRUE);
   lives_free(com);
+  lives_free(temp_backend);
   lives_freep((void **)&mainw->files[clipno]);
 
   mainw->current_file = new_clip;
@@ -3632,6 +3704,8 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->checked = FALSE;
   cfile->has_binfmt = TRUE;
 
+  pthread_mutex_init(&cfile->transform_mutex, NULL);
+
   if (!strcmp(prefs->image_ext, LIVES_FILE_EXT_JPG)) cfile->img_type = IMG_TYPE_JPEG;
   else cfile->img_type = IMG_TYPE_PNG;
 
@@ -3750,6 +3824,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
   char **array;
   char *test_fps_string1;
   char *test_fps_string2;
+  char *temp_backend;
 
   if (aud_only && !mainw->save_with_sound) {
     cfile->arps = cfile->arate = cfile->achans = cfile->asampsize = 0;
@@ -3757,15 +3832,17 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
     return TRUE;
   }
 
+  temp_backend = use_staging_dir_for(mainw->current_file);
   if (!strcmp(mainw->msg, "killed")) {
     char *com;
     // user pressed "enough"
-    // just in case last frame is damaged, we delete it (physically, otherwise it will get dragged in when the file is opened)
+    // just in case last frame is damaged, we delete it (physically,
+    // otherwise it will get dragged in when the file is opened)
     if (!cfile->ext_src) {
       cfile->frames = get_frame_count(mainw->current_file, cfile->opening_frames);
       if (cfile->frames > 1) {
         com = lives_strdup_printf("%s cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",
-                                  prefs->backend, cfile->handle, cfile->frames, cfile->frames,
+                                  temp_backend, cfile->handle, cfile->frames, cfile->frames,
                                   FALSE, cfile->frames, get_image_ext_for_type(cfile->img_type),
                                   0., 0, 0, 0);
         lives_system(com, FALSE);
@@ -3775,7 +3852,8 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
     }
 
     // commit audio
-    com = lives_strdup_printf("%s commit_audio \"%s\" 1", prefs->backend, cfile->handle);
+    com = lives_strdup_printf("%s commit_audio \"%s\" 1", temp_backend, cfile->handle);
+    lives_free(temp_backend);
     lives_system(com, TRUE);
     lives_free(com);
 
@@ -3786,7 +3864,8 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
     if (prefs->auto_trim_audio) {
       if (cfile->laudio_time > cfile->video_time) {
-        d_print(_("Auto trimming %.2f seconds of audio at end..."), cfile->laudio_time - cfile->video_time);
+        d_print(_("Auto trimming %.2f seconds of audio at end..."),
+                cfile->laudio_time - cfile->video_time);
         if (on_trim_audio_activate(NULL, LIVES_INT_TO_POINTER(0))) d_print_done();
         else d_print("\n");
         cfile->changed = FALSE;
@@ -3816,7 +3895,8 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
       // (this should never happen...)
       if (strcmp(check_handle, array[1])) {
         LIVES_ERROR("Handle!=statusfile !");
-        mesg = lives_strdup_printf(_("\nError getting file info for clip %s.\nBad things may happen with this clip.\n"),
+        mesg = lives_strdup_printf(_("\nError getting file info for clip %s.\n"
+                                     "Bad things may happen with this clip.\n"),
                                    check_handle);
         widget_opts.non_modal = TRUE;
         do_error_dialog(mesg);
@@ -3947,7 +4027,8 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
   if (cfile->achans == 0) {
     mesg = lives_strdup_printf(_("%s none\n"), mesg1);
   } else {
-    mesg = lives_strdup_printf(P_("%s %d Hz %d channel %d bps\n", "%s %d Hz %d channels %d bps\n", cfile->achans),
+    mesg = lives_strdup_printf(P_("%s %d Hz %d channel %d bps\n", "%s %d Hz %d channels %d bps\n",
+                                  cfile->achans),
                                mesg1, cfile->arate, cfile->achans, cfile->asampsize);
   }
   d_print(mesg);
@@ -5846,7 +5927,8 @@ boolean check_for_recovery_files(boolean auto_recover) {
   lives_pgid_t lpid = capable->mainpid;
 
   // ask backend to find the latest recovery file which is not owned by a running version of LiVES
-  com = lives_strdup_printf("%s get_recovery_file %d %d %s recovery %d", prefs->backend_sync, luid, lgid,
+  com = lives_strdup_printf("%s get_recovery_file %d %d %s recovery %d",
+                            prefs->backend_sync, luid, lgid,
                             capable->myname, capable->mainpid);
 
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
@@ -5867,12 +5949,14 @@ boolean check_for_recovery_files(boolean auto_recover) {
     return FALSE;
   }
 
-  retval = recover_files((recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, luid,
+  retval = recover_files((recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d",
+                                          prefs->workdir, luid,
                                           lgid, recpid)), auto_recover);
   lives_free(recovery_file);
 
   if (!retval || prefs->vj_mode) {
-    com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d %d", prefs->backend_sync, luid, lgid, capable->myname,
+    com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d %d",
+                              prefs->backend_sync, luid, lgid, capable->myname,
                               capable->mainpid, prefs->vj_mode);
     lives_system(com, FALSE);
     lives_free(com);
@@ -5962,14 +6046,16 @@ boolean check_for_recovery_files(boolean auto_recover) {
     return FALSE;
   }
 
-  com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d 0", prefs->backend_sync, luid, lgid, capable->myname,
+  com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d 0",
+                            prefs->backend_sync, luid, lgid, capable->myname,
                             capable->mainpid);
   lives_system(com, FALSE);
   lives_free(com);
 
-  recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, lpid,
-                                      LIVES_FILE_EXT_LAYOUT);
-  recovery_numbering_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid, lpid);
+  recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir,
+                                      LAYOUT_FILENAME, luid, lgid, lpid, LIVES_FILE_EXT_LAYOUT);
+  recovery_numbering_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir,
+                            LAYOUT_NUMBERING_FILENAME, luid, lgid, lpid);
 
   if (mainw->recoverable_layout) {
     // move files back

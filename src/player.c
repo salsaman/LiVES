@@ -2682,7 +2682,7 @@ switch_point:
                 int64_t pred_frame;
 
                 getahead = test_getahead;
-                bungle_frames -= getahead;
+                //bungle_frames -= getahead;
                 pred_frame = getahead;
                 //pred_frame = requested_frame;
 
@@ -2719,8 +2719,8 @@ switch_point:
                 if (getahead < 1) getahead = 1;
                 if (getahead > sfile->frames) getahead = sfile->frames;
 
-                bungle_frames += getahead;
-                if (bungle_frames < 1) bungle_frames = 1;
+                //bungle_frames += getahead;
+                //if (bungle_frames < 1) bungle_frames = 1;
 
                 //g_print("xxxEST %d\n", getahead);
 
@@ -2882,11 +2882,44 @@ switch_point:
         // load and display the new frame
         if (prefs->dev_show_caching) {
           g_print("playing frame %d / %d at %ld (%ld : %ld) %.2f %ld %ld\n", sfile->frameno, requested_frame, mainw->currticks,
-                  mainw->startticks, new_ticks, (mainw->pulsed->in_use && IS_VALID_CLIP(mainw->pulsed->playing_file)
-                                                 && mainw->files[mainw->pulsed->playing_file]->arate != 0)
-                  ? (double)mainw->pulsed->seek_pos
-                  / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4. * sfile->fps + 1. : 0. * sfile->fps + 1,
-                  lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs), mainw->pulsed->seek_pos);
+
+                  mainw->startticks, new_ticks,
+#ifdef HAVE_PULSE_AUDIO
+                  prefs->audio_player == AUD_PLAYER_PULSE ?
+                  ((mainw->pulsed->in_use && IS_VALID_CLIP(mainw->pulsed->playing_file)
+                    && mainw->files[mainw->pulsed->playing_file]->arate != 0)
+                   ? (double)mainw->pulsed->seek_pos
+                   / (double)mainw->files[mainw->pulsed->playing_file]->arate
+                   / 4. * sfile->fps + 1. : 0. * sfile->fps + 1) :
+
+#endif
+#ifdef ENABLE_JACK
+                  prefs->audio_player == AUD_PLAYER_JACK ?
+                  ((mainw->jackd->in_use && IS_VALID_CLIP(mainw->jackd->playing_file)
+                    && mainw->files[mainw->jackd->playing_file]->arate != 0)
+                   ? (double)mainw->jackd->seek_pos
+                   / (double)mainw->files[mainw->jackd->playing_file]->arate
+                   / 4. * sfile->fps + 1. : 0. * sfile->fps + 1) :
+#endif
+                  0,
+#ifdef HAVE_PULSE_AUDIO
+                  prefs->audio_player == AUD_PLAYER_JACK ?
+                  lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) :
+#endif
+#ifdef ENABLE_JACK
+                  prefs->audio_player == AUD_PLAYER_JACK ?
+                  lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) :
+#endif
+                  0,
+#ifdef HAVE_PULSE_AUDIO
+                  prefs->audio_player == AUD_PLAYER_PULSE ?
+                  mainw->pulsed->seek_pos :
+#endif
+#ifdef ENABLE_JACK
+                  prefs->audio_player == AUD_PLAYER_JACK ?
+                  mainw->jackd->seek_pos :
+#endif
+                  0);
         }
 #ifdef HAVE_PULSE_AUDIO
         if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) last_seek_pos = mainw->pulsed->seek_pos;

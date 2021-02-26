@@ -750,16 +750,24 @@ void on_open_loc_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   /// get a system tmpdir
-
+  lives_intentparams_t *iparams;
   lives_remote_clip_request_t *req = NULL, *req2;
-  char *tmpdir;
+  char *tmpdir = NULL;
+
   if (!check_for_executable(&capable->has_mktemp, EXEC_MKTEMP)) {
     do_program_not_found_error(EXEC_MKTEMP);
     return;
   }
 
+  iparams = get_txparams_for_clip(-1, LIVES_INTENTION_IMPORT_REMOTE);
+  if (iparams) {
+    lives_param_t *adir_param =
+      rfx_param_from_name(iparams->params, iparams->n_params, CLIP_PARAM_STAGING_DIR);
+    if (adir_param) tmpdir = get_string_param(adir_param->value);
+    lives_intentparams_free(&iparams);
+  }
 
-  tmpdir = get_systmp("ytdl", TRUE);
+  //tmpdir = get_systmp("ytdl", TRUE);
   if (!tmpdir) return;
 
   mainw->mt_needs_idlefunc = FALSE;

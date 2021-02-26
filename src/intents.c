@@ -1,6 +1,8 @@
-
-
-
+// intents.c
+// LiVES
+// (c) G. Finch 2003-2021 <salsaman+lives@gmail.com>
+// released under the GNU GPL 3 or later
+// see file ../COPYING or www.gnu.org for licensing details
 
 #include "main.h"
 
@@ -47,7 +49,7 @@ lives_intentparams_t *_get_params_for_clip_tx(lives_object_t *obj, int state,
     iparams->n_params = 1;
     iparams->params = (lives_param_t *)lives_calloc(sizeof(lives_param_t), 1);
     param = &iparams->params[0];
-    param->name = lives_strdup("staging directory");
+    param->name = lives_strdup(CLIP_PARAM_STAGING_DIR);
     param->type = LIVES_PARAM_STRING;
     param->max = PATH_MAX;
     param->label = lives_strdup(param->name);
@@ -64,7 +66,7 @@ lives_intentparams_t *_get_params_for_clip_tx(lives_object_t *obj, int state,
     iparams->n_params = 1;
     iparams->params = (lives_param_t *)lives_calloc(sizeof(lives_param_t), 1);
     param = &iparams->params[0];
-    param->name = lives_strdup("staging directory");
+    param->name = lives_strdup(CLIP_PARAM_STAGING_DIR);
     param->type = LIVES_PARAM_STRING;
     param->max = PATH_MAX;
     param->label = lives_strdup(param->name);
@@ -75,6 +77,14 @@ lives_intentparams_t *_get_params_for_clip_tx(lives_object_t *obj, int state,
     lives_free(tmpdir);
   }
   return iparams;
+}
+
+
+void lives_intentparams_free(lives_intentparams_t **iparams_pp) {
+  free_rfx_params((*iparams_pp)->params, (*iparams_pp)->n_params);
+  lives_free((*iparams_pp)->params);
+  lives_free(*iparams_pp);
+  *iparams_pp = NULL;
 }
 
 

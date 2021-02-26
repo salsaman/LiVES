@@ -1084,12 +1084,9 @@ boolean get_handle_from_info_file(int index) {
   lives_intentparams_t *iparams = get_txparams_for_clip(index, LIVES_INTENTION_IMPORT_LOCAL);
   if (iparams) {
     lives_param_t *adir_param =
-      rfx_param_from_name(iparams->params, iparams->n_params, "staging directory");
+      rfx_param_from_name(iparams->params, iparams->n_params, CLIP_PARAM_STAGING_DIR);
     if (adir_param) shm_path = get_string_param(adir_param->value);
-    g_print("CAP val was %s\n", shm_path);
-    free_rfx_params(iparams->params, iparams->n_params);
-    lives_free(iparams->params);
-    lives_free(iparams);
+    lives_intentparams_free(&iparams);
   }
 
   if (shm_path)

@@ -34,6 +34,8 @@ typedef struct  {
 
   int64_t found_pts;
 
+  int64_t last_pts;
+
   int64_t last_frame;
 
   size_t pkt_offs;

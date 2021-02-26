@@ -236,6 +236,8 @@ void lives_object_status_free(lives_object_status_t **status_pp);
 
 #endif
 
+void lives_intentparams_free(lives_intentparams_t **iparams_pp);
+
 lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intention_t intent);
 
 #endif

@@ -1165,7 +1165,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     else ((lives_clip_data_t *)cdata)->adv_timing.seekback_time = (cdata->adv_timing.seekback_time + (double)xtimex) / 2.;
   } else {
     if (cdata->fps)
-      MyPts = (double)(priv->last_frame + 1) / cdata->fps * (double)AV_TIME_BASE;
+      MyPts = priv->last_pts;//(double)(priv->last_frame + 1) / cdata->fps * (double)AV_TIME_BASE;
     timex = get_current_ticks();
   }
 #ifdef HAVE_AVCODEC_SEND_PACKET
@@ -1320,6 +1320,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     //fprintf(stderr, "VALS %ld -> %ld, %d\n", MyPts, target_pts, gotFrame);
     if (MyPts >= target_pts - 1) {
       //fprintf(stderr, "frame found !\n");
+      if (cdata->fps) {
+        MyPts += (double)AV_TIME_BASE / cdata->fps;
+        priv->last_pts = MyPts;
+      }
       hit_target = TRUE;
       xtimex = timex;
       break;

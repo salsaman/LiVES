@@ -1097,7 +1097,6 @@ static jack_driver_t indev[JACK_MAX_INDEVICES];
   return 0.;
   }*/
 
-
 void jack_get_rec_avals(jack_driver_t *jackd) {
   mainw->rec_aclip = jackd->playing_file;
   if (mainw->rec_aclip != -1) {
@@ -1332,6 +1331,10 @@ static int audio_process(nframes_t nframes, void *arg) {
     jackd->is_silent = FALSE;
 
     if (!mainw->audio_seek_ready) {
+      double dqnt;
+      size_t qnt;
+      int64_t rnd_samp;
+      frames_t rnd_frame;
       if (!mainw->video_seek_ready) {
         if (!jackd->is_silent) {
           output_silence(0, nframes, jackd, out_buffer);
@@ -1340,6 +1343,21 @@ static int audio_process(nframes_t nframes, void *arg) {
         fwd_seek_pos = jackd->real_seek_pos = jackd->seek_pos;
         return 0;
       }
+
+      dqnt = (double)afile->achans * afile->asampsize / 8.;
+      qnt = afile->achans * (afile->asampsize >> 3);
+
+      rnd_frame = (frames_t)((double)jackd->seek_pos / (double)afile->arate / dqnt * afile->fps
+                             + (afile->last_play_sequence != mainw->play_sequence ? .000001 : .5));
+
+      rnd_frame += afile->adirection
+                   * (mainw->switch_during_pb && afile->last_play_sequence == mainw->play_sequence ? 1 : 0);
+      mainw->switch_during_pb = FALSE;
+      rnd_samp = (int64_t)((double)(rnd_frame + .00001) / afile->fps * (double)afile->arate + .5);
+      jackd->seek_pos = (ssize_t)(rnd_samp * qnt);
+      //g_print("rndfr = %d rnt = %ld skpo = %ld\n", rnd_frame + 1, rnd_samp, pulsed->seek_pos);
+      jackd->seek_pos = ALIGN_CEIL64(jackd->seek_pos, qnt);
+      fwd_seek_pos = jackd->real_seek_pos = jackd->seek_pos;
 
       // preload the buffer for first read
       in_bytes = ABS((in_frames = ((double)jackd->sample_in_rate / (double)jackd->sample_out_rate *
@@ -1453,7 +1471,8 @@ static int audio_process(nframes_t nframes, void *arg) {
                   jackd->seek_pos = seek_start;
                 } else {
                   jackd->seek_pos += jackd->seek_end;
-                  if (jackd->seek_pos > jackd->seek_end - in_bytes) jackd->seek_pos = jackd->seek_end - in_bytes;
+                  if (jackd->seek_pos > jackd->seek_end - in_bytes)
+                    jackd->seek_pos = jackd->seek_end - in_bytes;
                 }
               }
               fwd_seek_pos = jackd->real_seek_pos = jackd->seek_pos;
@@ -1488,7 +1507,8 @@ static int audio_process(nframes_t nframes, void *arg) {
           jackd->is_silent = TRUE;
 
           if (jackd->seek_pos < 0. && jackd->playing_file > -1 && xfile) {
-            jackd->seek_pos += nframes * xfile->achans * xfile->asampsize / 8;
+            jackd->seek_pos += (double)(jackd->sample_in_rate / jackd->sample_out_rate)
+                               * nframes * xfile->achans * xfile->asampsize / 8;
           }
           return 0;
         }
@@ -1588,8 +1608,8 @@ static int audio_process(nframes_t nframes, void *arg) {
                          mainw->files[mainw->ascrap_file]->asampsize >> 3;
 
                 rbytes = audio_read_inner(jackd, out_buffer, mainw->ascrap_file, numFramesToWrite, 1.0,
-                                          !(mainw->files[mainw->ascrap_file]->signed_endian & AFORM_BIG_ENDIAN),
-                                          out_unsigned, rbytes);
+                                          !(mainw->files[mainw->ascrap_file]->signed_endian
+                                            & AFORM_BIG_ENDIAN), out_unsigned, rbytes);
 
                 mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
               }
@@ -2043,7 +2063,8 @@ static int audio_read(nframes_t nframes, void *arg) {
 
   if (mainw->playing_file != mainw->ascrap_file && IS_VALID_CLIP(mainw->playing_file))
     mainw->files[mainw->playing_file]->aseek_pos += rbytes;
-  if (mainw->ascrap_file != -1 && !mainw->record_paused) mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
+  if (mainw->ascrap_file != -1 && !mainw->record_paused)
+    mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
 
   jackd->seek_pos += rbytes;
 
@@ -2566,7 +2587,7 @@ int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes, lives_clip_t 
   if (seekstart < 0) seekstart = 0;
   if (seekstart > sfile->afilesize) seekstart = sfile->afilesize;
   jack_message2.command = ASERVER_CMD_FILE_SEEK;
-  jack_message2.tc = lives_get_current_ticks();
+  jack_message2.tc = 0;//lives_get_current_ticks();
   jack_message2.next = NULL;
   jack_message2.data = lives_strdup_printf("%"PRId64, seekstart);
   if (!jackd->msgq) jackd->msgq = &jack_message2;
@@ -2658,16 +2679,16 @@ void jack_aud_pb_ready(int fileno) {
         jack_message.next = NULL;
         mainw->jackd->msgq = &jack_message;
 
-        mainw->jackd->in_use = TRUE;
         jack_audio_seek_bytes(mainw->jackd, sfile->aseek_pos, sfile);
-        mainw->jackd->in_use = FALSE;
+
         if (seek_err) {
           if (jack_try_reconnect()) jack_audio_seek_bytes(mainw->jackd, sfile->aseek_pos, sfile);
         }
 
         mainw->rec_aclip = fileno;
         mainw->rec_avel = sfile->arate / sfile->arps;
-        mainw->rec_aseek = (double)sfile->aseek_pos / (double)(sfile->arps * sfile->achans * (sfile->asampsize / 8));
+        mainw->rec_aseek = (double)sfile->aseek_pos
+                           / (double)(sfile->arps * sfile->achans * (sfile->asampsize / 8));
       }
     }
     if ((mainw->agen_key != 0 || mainw->agen_needs_reinit)

@@ -980,7 +980,6 @@ static int matroska_parse_seekhead_entry(const lives_clip_data_t *cdata, int idx
 
 
 static void matroska_add_index_entries(const lives_clip_data_t *cdata) {
-
   lives_mkv_priv_t *priv = cdata->priv;
   MatroskaDemuxContext *matroska = &priv->matroska;
 
@@ -1071,9 +1070,11 @@ static void matroska_execute_seekhead(const lives_clip_data_t *cdata) {
 
 //////////////////////////////////////////////
 
-static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {return (int64_t)((double)(frame) * 1000. / cdata->fps);}
+static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame)
+{return (int64_t)((double)(frame) * 1000. / cdata->fps);}
 
-static int64_t dts_to_frame(const lives_clip_data_t *cdata, int64_t dts) { return (int64_t)((double)dts / 1000. * cdata->fps - .5);}
+static int64_t dts_to_frame(const lives_clip_data_t *cdata, int64_t dts)
+{ return (int64_t)((double)dts / 1000. * cdata->fps - .5);}
 
 //////////////////////////////////////////////////////////////////
 
@@ -1309,13 +1310,11 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
         track->type != MATROSKA_TRACK_TYPE_SUBTITLE) {
       continue;
     }
-    if (track->codec_id == NULL)
-      continue;
+    if (track->codec_id == NULL) continue;
 
     //fprintf(stderr, "codid is %s\n", track->codec_id);
 
     if (track->type == MATROSKA_TRACK_TYPE_VIDEO) {
-
       if (priv->has_video) {
 #ifdef DEBUG
         fprintf(stderr, "mkv_decoder: duplicate video streams found\n");
@@ -1349,9 +1348,8 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       cdata->frame_height = track->video.display_height;
 
       if (cdata->width != cdata->frame_width || cdata->height != cdata->frame_height)
-        fprintf(stderr, "mkv_decoder: info frame size=%d x %d, pixel size=%d x %d\n", cdata->frame_width, cdata->frame_height,
-                cdata->width,
-                cdata->height);
+        fprintf(stderr, "mkv_decoder: info frame size=%d x %d, pixel size=%d x %d\n",
+                cdata->frame_width, cdata->frame_height, cdata->width, cdata->height);
 
       if (track->video.flag_interlaced) cdata->interlace = LIVES_INTERLACE_BOTTOM_FIRST;
 
@@ -1427,8 +1425,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
     st = track->stream = av_new_stream(s, 0);
     if (!st) {
-      fprintf(stderr,
-              "mkv_decoder: Out of memory\n");
+      fprintf(stderr, "mkv_decoder: Out of memory\n");
       return -4;
     }
 
@@ -1537,14 +1534,11 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
                  matroska_video_stereo_plane[planes[j].type], i);
         for (k = 0; k < matroska->tracks.nb_elem; k++)
           if (planes[j].uid == tracks[k].uid) {
-            av_dict_set(&s->streams[k]->metadata,
-                        "stereo_mode", buf, 0);
+            av_dict_set(&s->streams[k]->metadata, "stereo_mode", buf, 0);
             break;
           }
       }
-    } else {
-      avcodec_close(st->codec);
-    }
+    } else avcodec_close(st->codec);
   }
 
   if (!priv->vidst) {
@@ -1815,7 +1809,8 @@ skip_probe:
   }
 
   if (!got_picture) {
-    fprintf(stderr, "mkv_decoder: could not get picture.\n PLEASE SEND A PATCH FOR %s FORMAT.\n", cdata->video_name);
+    fprintf(stderr, "mkv_decoder: could not get picture.\n"
+            "PLEASE SEND A PATCH FOR %s FORMAT.\n", cdata->video_name);
     detach_stream(cdata);
     return FALSE;
   }
@@ -1863,8 +1858,7 @@ skip_probe:
   cdata->YUV_subspace = WEED_YUV_SUBSPACE_YCBCR;
   if (ctx->colorspace == AVCOL_SPC_BT709) cdata->YUV_subspace = WEED_YUV_SUBSPACE_BT709;
 
-  cdata->palettes[0] = avi_pix_fmt_to_weed_palette(ctx->pix_fmt,
-                       &cdata->YUV_clamping);
+  cdata->palettes[0] = avi_pix_fmt_to_weed_palette(ctx->pix_fmt, &cdata->YUV_clamping);
 
   if (cdata->palettes[0] == WEED_PALETTE_END) {
     fprintf(stderr, "mkv_decoder: Could not find a usable palette for (%d) %s\n", ctx->pix_fmt, cdata->URI);
@@ -1877,8 +1871,8 @@ skip_probe:
   // re-get fps, width, height, nframes - actually avcodec is pretty useless at getting this
   // so we fall back on the values we obtained ourselves
 
-  if (cdata->width == 0) cdata->width = ctx->width - cdata->offs_x * 2;
-  if (cdata->height == 0) cdata->height = ctx->height - cdata->offs_y * 2;
+  if (!cdata->width) cdata->width = ctx->width - cdata->offs_x * 2;
+  if (!cdata->height) cdata->height = ctx->height - cdata->offs_y * 2;
 
   if (cdata->width * cdata->height == 0) {
     fprintf(stderr, "mkv_decoder: invalid width and height (%d X %d)\n", cdata->width, cdata->height);
@@ -1916,7 +1910,8 @@ skip_probe:
   }
 
   if (cdata->fps == 0. || cdata->fps == 1000.) {
-    fprintf(stderr, "mkv_decoder: invalid framerate %.4f (%d / %d)\n", cdata->fps, ctx->time_base.den, ctx->time_base.num);
+    fprintf(stderr, "mkv_decoder: invalid framerate %.4f (%d / %d)\n",
+            cdata->fps, ctx->time_base.den, ctx->time_base.num);
     detach_stream(cdata);
     return FALSE;
   }
@@ -1943,7 +1938,7 @@ skip_probe:
 
   ldts = get_last_video_dts(cdata);
 
-  if (ldts == 0) ldts = duration * 1000.;
+  if (!ldts) ldts = duration * 1000.;
 
   if (ldts == -1) {
     fprintf(stderr, "mkv_decoder: could not read last dts\n");
@@ -2058,7 +2053,8 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata) {
       clone->offs_x = (clone->frame_width - clone->width) / 2;
     }
 
-    if (clone->frame_height == 0 || clone->frame_height < clone->height) clone->frame_height = clone->height;
+    if (clone->frame_height == 0 || clone->frame_height < clone->height)
+      clone->frame_height = clone->height;
     else {
       clone->offs_y = (clone->frame_height - clone->height) / 2;
     }
@@ -2145,7 +2141,8 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     cdata->offs_x = (cdata->frame_width - cdata->width) / 2;
   }
 
-  if (cdata->frame_height == 0 || cdata->frame_height < cdata->height) cdata->frame_height = cdata->height;
+  if (cdata->frame_height == 0 || cdata->frame_height < cdata->height)
+    cdata->frame_height = cdata->height;
   else {
     cdata->offs_y = (cdata->frame_height - cdata->height) / 2;
   }
@@ -2560,13 +2557,15 @@ boolean chill_out(const lives_clip_data_t *cdata) {
 
 static double est_noseek;
 
-boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
+boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
+                  int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
   lives_mkv_priv_t *priv = cdata->priv;
   int64_t target_pts = frame_to_dts(cdata, tframe);
   int64_t nextframe = 0;
   int64_t timex, xtimex, sbtime;
-  int xheight = cdata->frame_height, pal = cdata->current_palette, nplanes = 1, dstwidth = cdata->width, psize = 1;
+  int xheight = cdata->frame_height, pal = cdata->current_palette;
+  int nplanes = 1, dstwidth = cdata->width, psize = 1;
   int rowstride, xrowstride;
   int btop = cdata->offs_y, bbot = xheight - btop;
   int bleft = cdata->offs_x, bright = cdata->frame_width - cdata->width - bleft;
@@ -2597,7 +2596,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) psize = 3;
     if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32
         || pal == WEED_PALETTE_UYVY8888 ||
-        pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888) psize = 4;
+        pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV888
+        || pal == WEED_PALETTE_YUVA8888) psize = 4;
     if (pal == WEED_PALETTE_YUV411) psize = 6;
     if (pal == WEED_PALETTE_A1) dstwidth >>= 3;
 
@@ -2667,7 +2667,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
       timex += get_current_ticks();
       if (!rev)((lives_clip_data_t *)cdata)->fwd_seek_time = (cdata->fwd_seek_time + timex) / 2;
-      else ((lives_clip_data_t *)cdata)->adv_timing.seekback_time = (cdata->adv_timing.seekback_time + (double)timex) / 2.;
+      else ((lives_clip_data_t *)cdata)->adv_timing.seekback_time =
+          (cdata->adv_timing.seekback_time + (double)timex) / 2.;
     } else nextframe = priv->last_frame + 1;
 
     xtimex = get_current_ticks();
@@ -2743,7 +2744,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
         priv->avpkt.data += ret;
         priv->avpkt.size -= ret;
 #else
-        avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
+        avcodec_decode_video(priv->ctx, priv->picture, &got_picture,
+                             priv->avpkt.data, priv->avpkt.size);
 #endif
 #endif
         if (got_picture) break;
@@ -2756,7 +2758,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       xtimex = (timex = get_current_ticks()) - xtimex;
 
       if (cdata->max_decode_fps > 0.) {
-        ((lives_clip_data_t *)cdata)->max_decode_fps = (cdata->max_decode_fps + 1000000. / (double)xtimex) / 2.;
+        ((lives_clip_data_t *)cdata)->max_decode_fps =
+          (cdata->max_decode_fps + 1000000. / (double)xtimex) / 2.;
       } else ((lives_clip_data_t *)cdata)->max_decode_fps = 1000000. / (double)xtimex;
 
       is_keyframe = FALSE;
@@ -2768,26 +2771,26 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       if (did_seek) {
         if (is_keyframe) {
           if (cdata->adv_timing.k_time > 0.)
-            ((lives_clip_data_t *)cdata)->adv_timing.ks_time = (cdata->adv_timing.ks_time + (double)xtimex) / 2.;
-          else
-            ((lives_clip_data_t *)cdata)->adv_timing.ks_time = (double)xtimex;
+            ((lives_clip_data_t *)cdata)->adv_timing.ks_time =
+              (cdata->adv_timing.ks_time + (double)xtimex) / 2.;
+          else ((lives_clip_data_t *)cdata)->adv_timing.ks_time = (double)xtimex;
         } else {
           if (cdata->adv_timing.ib_time > 0.)
-            ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
-          else
-            ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
+            ((lives_clip_data_t *)cdata)->adv_timing.ib_time =
+              (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
+          else ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
         }
       } else {
         if (is_keyframe) {
           if (cdata->adv_timing.k_time > 0.)
-            ((lives_clip_data_t *)cdata)->adv_timing.k_time = (cdata->adv_timing.k_time + (double)xtimex) / 2.;
-          else
-            ((lives_clip_data_t *)cdata)->adv_timing.k_time = (double)xtimex;
+            ((lives_clip_data_t *)cdata)->adv_timing.k_time
+              = (cdata->adv_timing.k_time + (double)xtimex) / 2.;
+          else ((lives_clip_data_t *)cdata)->adv_timing.k_time = (double)xtimex;
         } else {
           if (cdata->adv_timing.ib_time > 0.)
-            ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
-          else
-            ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
+            ((lives_clip_data_t *)cdata)->adv_timing.ib_time
+              = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
+          else ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
         }
       }
       xtimex = timex;
@@ -2830,7 +2833,8 @@ framedone2:
   // yuv_subspace, yuv_clamping, yuv_sampling, frame_gamma and interlace
 
   if (priv->picture->interlaced_frame) {
-    if (priv->picture->top_field_first)((lives_clip_data_t *)cdata)->interlace = LIVES_INTERLACE_TOP_FIRST;
+    if (priv->picture->top_field_first)((lives_clip_data_t *)cdata)->interlace =
+        LIVES_INTERLACE_TOP_FIRST;
     else ((lives_clip_data_t *)cdata)->interlace = LIVES_INTERLACE_BOTTOM_FIRST;
   } else ((lives_clip_data_t *)cdata)->interlace = LIVES_INTERLACE_NONE;
 
@@ -2870,7 +2874,8 @@ framedone2:
       goto cleanup;
     }
     if ((rowstride = rowstrides[p]) <= 0) {
-      fprintf(stderr, "avformat decoder: rowstride was %d for frame %ld plane %d\n", rowstride, tframe, p);
+      fprintf(stderr, "avformat decoder: rowstride was %d for frame %ld plane %d\n",
+              rowstride, tframe, p);
       goto cleanup;
     }
 
@@ -2908,7 +2913,8 @@ framedone2:
         src += priv->picture->linesize[p];
       }
     }
-    if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P)) {
+    if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P
+                   || pal == WEED_PALETTE_YUV422P)) {
       dstwidth >>= 1;
       bleft >>= 1;
       bright >>= 1;
@@ -2921,7 +2927,8 @@ framedone2:
 
   xtimex = get_current_ticks() - xtimex;
   if (cdata->adv_timing.const_time > 0.)
-    ((lives_clip_data_t *)cdata)->adv_timing.const_time = (cdata->adv_timing.const_time + (double)xtimex) / 2.;
+    ((lives_clip_data_t *)cdata)->adv_timing.const_time =
+      (cdata->adv_timing.const_time + (double)xtimex) / 2.;
   else
     ((lives_clip_data_t *)cdata)->adv_timing.const_time = (double)xtimex;
   return TRUE;
@@ -2963,7 +2970,8 @@ static void dump_kframes(const lives_clip_data_t *cdata) {
     //fprintf(stderr, "VALS %ld %ld\n", pts, xidx->dts);
     //if (xidx->next)
     //fprintf(stderr, "VALS2 %ld\n", xidx->next->dts);
-    fprintf(stderr, "KFRAME %ld -> %ld\n", (int64_t)((double)xidx->dts / (double)TIME_SCALE * cdata->fps - .5), xidx->offs);
+    fprintf(stderr, "KFRAME %ld -> %ld\n",
+            (int64_t)((double)xidx->dts / (double)TIME_SCALE * cdata->fps - .5), xidx->offs);
     xidx = xidx->next;
   }
 }

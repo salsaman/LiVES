@@ -71,7 +71,7 @@ void weed_add_plant_flags(weed_plant_t *plant, uint32_t flags, const char *ign_p
     char **leaves = weed_plant_list_leaves(plant, NULL);
     if (leaves) {
       if (ign_prefix) ign_prefix_len = strlen(ign_prefix);
-      for (register int i = 0; leaves[i]; i++) {
+      for (int i = 0; leaves[i]; i++) {
         if (!ign_prefix || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
           weed_leaf_set_flagbits(plant, leaves[i], flags);
         }
@@ -611,6 +611,22 @@ WEED_GLOBAL_INLINE weed_plant_t **weed_instance_get_out_params(weed_plant_t *ins
   if (!WEED_PLANT_IS_FILTER_INSTANCE(instance)) return NULL;
   return weed_get_plantptr_array_counted(instance, WEED_LEAF_OUT_PARAMETERS, nparams);
 }
+
+
+WEED_GLOBAL_INLINE
+weed_plant_t *weed_param_from_name(weed_plant_t **params, int n_params, const char *name) {
+  char *pname;
+  for (int i = 0; i < n_params; i++) {
+    pname = weed_get_string_value(params[i], WEED_LEAF_NAME, NULL);
+    if (!strcmp(pname, name)) {
+      free(pname);
+      return params[i];
+    }
+    free(pname);
+  }
+  return NULL;
+}
+
 
 WEED_GLOBAL_INLINE int weed_param_get_value_int(weed_plant_t *param) {
   if (!WEED_PLANT_IS_PARAMETER(param)) return 0;

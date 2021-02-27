@@ -761,10 +761,10 @@ void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   iparams = get_txparams_for_clip(-1, LIVES_INTENTION_IMPORT_REMOTE);
   if (iparams) {
-    lives_param_t *adir_param =
-      rfx_param_from_name(iparams->params, iparams->n_params, CLIP_PARAM_STAGING_DIR);
-    if (adir_param) tmpdir = get_string_param(adir_param->value);
-    lives_intentparams_free(&iparams);
+    weed_param_t *adir_param =
+      weed_param_from_name(iparams->params, iparams->n_params, CLIP_PARAM_STAGING_DIR);
+    if (adir_param) tmpdir = weed_param_get_value_string(adir_param);
+    lives_intentparams_free(iparams);
   }
 
   //tmpdir = get_systmp("ytdl", TRUE);

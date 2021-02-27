@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 typedef struct _param_t lives_param_t;
+typedef weed_plant_t weed_param_t;
 
 #include "intents.h"
 
@@ -455,7 +456,12 @@ struct _param_t {
   char *desc;
 
   char *label;
-  int flags;
+  uint64_t flags;
+  // parameter is "optional:
+#define PARAM_FLAGS_OPTIONAL 	0x00000001
+  // the 'value' has been set
+#define PARAM_FLAGS_VALUE_SET	0x00000002
+
   boolean use_mnemonic;
   uint32_t hidden;
 
@@ -474,7 +480,7 @@ struct _param_t {
 #define HIDDEN_TEMPORARY (0xFF00)
 
   double step_size;
-  //int copy_to;
+
   boolean transition;
 
 #define REINIT_FUNCTIONAL 	1
@@ -487,9 +493,12 @@ struct _param_t {
   lives_param_type_t type;
 
   int dp;  ///<decimals, 0 for int and bool
+
+  int nvalues; // if > 0, value is an array of n itemss, for colRG24i int[n][3], etc.
+
   void *value;  ///< current value(s)
 
-  double min;
+  double min; //< display len for strring
   double max; ///< for string this is max characters
 
   void *def; ///< default values
@@ -516,9 +525,6 @@ struct _param_t {
   /// TODO - change to LiVESWidget **widgets, terminated with a NULL
   LiVESWidget *widgets[MAX_PARAM_WIDGETS]; ///< widgets which hold value/RGBA settings
   boolean onchange; ///< is there a trigger ?
-
-  boolean changed;
-  boolean edited;
 
   boolean change_blocked;
 
@@ -558,11 +564,12 @@ typedef struct {
 
   LiVESWidget *menuitem;  ///< the menu item which activates this effect
   int num_params;
-  uint32_t flags; /// internal use
-#define RFX_FLAGS_NO_SLIDERS 	0x0001
-#define RFX_FLAGS_NO_RESET 	0x0002
-#define RFX_FLAGS_UPD_FROM_GUI 	0x0004
-#define RFX_FLAGS_UPD_FROM_VAL 	0x0008
+  uint64_t flags; /// internal use
+  // internal vals.
+#define RFX_FLAGS_NO_SLIDERS 	0x10000001
+#define RFX_FLAGS_NO_RESET 	0x10000002
+#define RFX_FLAGS_UPD_FROM_GUI 	0x10000004
+#define RFX_FLAGS_UPD_FROM_VAL 	0x10000008
 
   lives_param_t *params;
   lives_rfx_source_t source_type;
@@ -593,6 +600,21 @@ void rfx_free(lives_rfx_t *);
 
 void rfx_free_all(void);
 
+lives_rfx_t *rfx_init(int status, int src_type, void *src);
+
+lives_param_t *rfx_init_params(lives_rfx_t *, int nparams);
+
+lives_param_t *lives_param_string_init(lives_param_t *, const char *name, const char *def,
+                                       int disp_len, int maxlen);
+
+lives_param_t *lives_param_double_init(lives_param_t *, const char *name, double def,
+                                       double min, double max);
+
+lives_param_t *lives_param_integer_init(lives_param_t *p, const char *name, int def,
+                                        int min, int max);
+
+lives_param_t *lives_param_boolean_init(lives_param_t *p, const char *name, int def);
+
 void param_copy(lives_param_t *dest, lives_param_t *src, boolean full);
 
 lives_param_t *find_rfx_param_by_name(lives_rfx_t *, const char *name);
@@ -622,6 +644,7 @@ char *get_string_param(void *value);
 boolean get_bool_param(void *value);
 int get_int_param(void *value);
 double get_double_param(void *value);
+float get_float_param(void *value);
 void get_colRGB24_param(void *value, lives_colRGB48_t *rgb);
 void get_colRGBA32_param(void *value, lives_colRGBA64_t *rgba);
 
@@ -629,8 +652,11 @@ void set_string_param(void **value_ptr, const char *_const, size_t maxlen);
 void set_bool_param(void *value, boolean);
 void set_int_param(void *value, int);
 void set_double_param(void *value, double);
+void set_float_param(void *value, float);
 void set_colRGB24_param(void *value, short red, short green, short blue);
 void set_colRGBA32_param(void *value, short red, short green, short blue, short alpha);
+
+void set_float_array_param(void **value_ptr, float *values, int nvals);
 
 /// return an array of parameter values
 void **store_rfx_params(lives_rfx_t *);

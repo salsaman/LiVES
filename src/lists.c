@@ -5,6 +5,87 @@
 
 #include "main.h"
 
+typedef struct {
+  int64_t idx;
+  void *data;
+} idx_list_data_t;
+
+LIVES_LOCAL_INLINE
+LiVESList *create_idx_list_element(int idx, void *data) {
+  idx_list_data_t *newdata = (idx_list_data_t *)lives_malloc(sizeof(idx_list_data_t));
+  LiVESList *newlist = lives_list_append(NULL, newdata);
+  newdata->idx = idx;
+  newdata->data = data;
+  return newlist;
+}
+
+
+LiVESList *idx_list_update(LiVESList *idxlist, int64_t idx, void *data) {
+  LiVESList *lptr = idxlist, *lptrnext, *newlist;
+  idx_list_data_t *ldata;
+
+  for (; lptr; lptr = lptrnext) {
+    lptrnext = lptr->next;
+    ldata = (idx_list_data_t *)lptr->data;
+    if (ldata->idx < idx) {
+      if (!lptrnext) break;
+      continue;
+    }
+    if (ldata->idx == idx) {
+      ldata->data = data;
+      return idxlist;
+    } else {
+      newlist = create_idx_list_element(idx, data);
+      if (lptr->prev) {
+        lptr->prev->next = newlist;
+        newlist->prev = lptr->prev;
+      } else idxlist = newlist;
+      newlist->next = lptr;
+      lptr->prev = newlist;
+      return idxlist;
+    }
+  }
+  newlist = create_idx_list_element(idx, data);
+  if (lptr) {
+    lptr->next = newlist;
+    newlist->prev = lptr;
+  } else idxlist = newlist;
+  return idxlist;
+}
+
+
+LiVESList *idx_list_remove(LiVESList *idxlist, int idx, boolean free_data) {
+  LiVESList *lptr = idxlist;
+  idx_list_data_t *ldata;
+  for (; lptr; lptr = lptr->next) {
+    ldata = (idx_list_data_t *)lptr->data;
+    if (ldata->idx < idx) continue;
+    if (ldata->idx > idx) break;
+    if (free_data && ldata->data) lives_free(ldata->data);
+    if (lptr->prev) lptr->prev->next = lptr->next;
+    else idxlist = lptr->next;
+    if (lptr->next) lptr->next->prev = lptr->prev;
+    lives_free(lptr->data);
+    lives_free(lptr);
+  }
+  return idxlist;
+}
+
+
+boolean idx_list_get_data(LiVESList *idxlist, int idx, void **val_locn) {
+  LiVESList *lptr = idxlist;
+  idx_list_data_t *ldata;
+  for (; lptr; lptr = lptr->next) {
+    ldata = (idx_list_data_t *)lptr->data;
+    if (ldata->idx < idx) continue;
+    if (ldata->idx > idx) break;
+    if (val_locn) *val_locn = ldata->data;
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
 #define BL_LIM 128
 LIVES_GLOBAL_INLINE LiVESList *buff_to_list(const char *buffer, const char *delim, boolean allow_blanks, boolean strip) {
   LiVESList *list = NULL;

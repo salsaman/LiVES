@@ -141,7 +141,7 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
   } else if (!strcmp(array[0], "filewrite")) {
     int idx = atoi(array[1]);
     filewrite = lives_list_append(filewrite, (livespointer)&rfx->params[idx]);
-    rfx->params[idx].edited = TRUE;
+    rfx->params[idx].flags |= PARAM_FLAGS_VALUE_SET;
 
     // ensure we get an entry and not a text_view
     if ((int)rfx->params[idx].max > RFX_TEXT_MAGIC) rfx->params[idx].max = (double)RFX_TEXT_MAGIC;
@@ -642,7 +642,7 @@ boolean check_filewrite_overwrites(void) {
     LiVESList *slist = filewrite;
     while (slist) {
       lives_param_t *param = (lives_param_t *)(slist->data);
-      if (param->edited) {
+      if (param->flags & PARAM_FLAGS_VALUE_SET) {
         // check for overwrite
         if (LIVES_IS_ENTRY(param->widgets[0])) {
           if (*(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])))) {

@@ -599,13 +599,15 @@ static lives_thread_data_t *get_thread_data_by_id(uint64_t idx) {
   return NULL;
 }
 
+
 lives_thread_data_t *lives_thread_data_create(uint64_t idx) {
   lives_thread_data_t *tdata = (lives_thread_data_t *)lives_calloc(1, sizeof(lives_thread_data_t));
   if (idx != 0) tdata->ctx = lives_widget_context_new();
   else tdata->ctx = lives_widget_context_default();
-  tdata->idx = idx;
+  tdata->vars.var_id = tdata->idx = idx;
   tdata->vars.var_rowstride_alignment = ALIGN_DEF;
   tdata->vars.var_last_sws_block = -1;
+  tdata->vars.var_uid = gen_unique_id();
   tdata->vars.var_mydata = tdata;
   allctxs = lives_list_prepend(allctxs, (livespointer)tdata);
   return tdata;
@@ -619,11 +621,14 @@ static boolean gsrc_wrapper(livespointer data) {
 }
 
 
+//static pthread_mutex_t cpusel_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 boolean do_something_useful(lives_thread_data_t *tdata) {
   /// yes, why don't you lend a hand instead of just lying around nanosleeping...
   LiVESList *list;
   thrd_work_t *mywork;
   uint64_t myflags = 0;
+  //boolean didlock = FALSE;
 
   if (!tdata->idx) abort();
 
@@ -649,8 +654,20 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
     lives_nanosleep_until_nonzero(mywork->sync_ready);
   }
 
+  /* if (pthread_mutex_trylock(&cpusel_mutex)) { */
+  /*   didlock = FALSE; */
+  /*   tdata->vars.var_core_load_ptr = NULL; */
+  /*   tdata->vars.var_core_id = set_thread_cpuid(pthread_self()); */
+  /*   if (tdata->vars.var_core_id >= 0) { */
+  /*     tdata->vars.var_core_load_ptr = get_core_loadvar(tdata->vars.var_core_id); */
+  /*     //g_print("thread id %ld assigned to core %d with current load %f\n", */
+  /*     //	      tdata->idx, tdata->vars.var_core_id, *tdata->vars.var_core_load_ptr); */
+  /*   } */
+  /* } */
+
   lives_widget_context_invoke(tdata->ctx, gsrc_wrapper, mywork);
-  //(*mywork->func)(mywork->arg);
+
+  //if (didlock) pthread_mutex_unlock(&cpusel_mutex);
 
   if (myflags & LIVES_THRDFLAG_AUTODELETE) {
     lives_free(mywork); lives_free(list);
@@ -775,7 +792,8 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
     pthread_mutex_lock(&tcond_mutex);
     pthread_cond_broadcast(&tcond);
     pthread_mutex_unlock(&tcond_mutex);
-    poolthrds = (pthread_t **)lives_realloc(poolthrds, (npoolthreads + MINPOOLTHREADS) * sizeof(pthread_t *));
+    poolthrds =
+      (pthread_t **)lives_realloc(poolthrds, (npoolthreads + MINPOOLTHREADS) * sizeof(pthread_t *));
     for (int i = npoolthreads; i < npoolthreads + MINPOOLTHREADS; i++) {
       lives_thread_data_t *tdata = lives_thread_data_create(i + 1);
       poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));

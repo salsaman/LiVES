@@ -2769,9 +2769,8 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
     cparam->step_size = 1.;
     cparam->group = 0;
     cparam->max = 0.;
+    cparam->flags = 0;
     cparam->reinit = FALSE;
-    cparam->changed = FALSE;
-    cparam->edited = FALSE;
     cparam->change_blocked = FALSE;
     cparam->source = NULL;
     cparam->source_type = LIVES_RFX_SOURCE_RFX;
@@ -3049,6 +3048,74 @@ void param_copy(lives_param_t *dest, lives_param_t *src, boolean full) {
 
 }
 
+
+LIVES_GLOBAL_INLINE
+lives_rfx_t *rfx_init(int status, int src_type, void *src) {
+  lives_rfx_t *rfx = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t));
+  rfx->status = status;
+  rfx->source_type = src_type;
+  rfx->source = src;
+  return rfx;
+}
+
+LIVES_GLOBAL_INLINE
+lives_param_t *rfx_init_params(lives_rfx_t *rfx, int nparams) {
+  lives_param_t *rpar = (lives_param_t *)lives_calloc(nparams, sizeof(lives_param_t));
+  rfx->num_params = nparams;
+  rfx->params = rpar;
+  return rpar;
+}
+
+LIVES_GLOBAL_INLINE
+lives_param_t *lives_param_string_init(lives_param_t *p, const char *name, const char *def,
+                                       int disp_len, int maxlen) {
+  p->name = lives_strdup(name);
+  p->type = LIVES_PARAM_STRING;
+  if (disp_len) p->min = (double)disp_len;
+  if (maxlen) p->max = (double)maxlen;
+  if (def) set_string_param(p->def, def, maxlen);
+  //cparam->step_size = 1.;
+  return p;
+}
+
+LIVES_GLOBAL_INLINE
+lives_param_t *lives_param_double_init(lives_param_t *p, const char *name, double def,
+                                       double min, double max) {
+  p->name = lives_strdup(name);
+  p->type = LIVES_PARAM_NUM;
+  p->dp = 2;
+  if (max > min) {
+    p->min = min;
+    p->max = max;
+    if (def) set_double_param(p->def, def);
+  }
+  p->step_size = 1.;
+  return p;
+}
+
+LIVES_GLOBAL_INLINE
+lives_param_t *lives_param_integer_init(lives_param_t *p, const char *name, int def,
+                                        int min, int max) {
+  p->name = lives_strdup(name);
+  p->type = LIVES_PARAM_NUM;
+  p->dp = 0;
+  if (max > min) {
+    p->min = (double)min;
+    p->max = (double)max;
+  }
+  if (def >= min && def <= max) set_int_param(p->def, def);
+  p->step_size = 1.;
+  return p;
+}
+
+LIVES_GLOBAL_INLINE
+lives_param_t *lives_param_boolean_init(lives_param_t *p, const char *name, int def) {
+  p->name = lives_strdup(name);
+  p->type = LIVES_PARAM_BOOL;
+  set_int_param(p->def, def);
+  return p;
+}
+
 LIVES_GLOBAL_INLINE
 char *get_string_param(void *value) {
   return lives_strdup((const char *)value);
@@ -3076,6 +3143,13 @@ double get_double_param(void *value) {
   double ret;
   lives_memcpy(&ret, value, sizdbl);
   return ret;
+}
+
+LIVES_GLOBAL_INLINE
+float get_float_param(void *value) {
+  double ret;
+  lives_memcpy(&ret, value, sizdbl);
+  return (float)ret;
 }
 
 
@@ -3113,6 +3187,24 @@ void set_int_param(void *value, int _const) {
 LIVES_GLOBAL_INLINE
 void set_double_param(void *value, double _const) {
   lives_memcpy(value, &_const, sizdbl);
+}
+
+
+LIVES_GLOBAL_INLINE
+void set_float_param(void *value, float _const) {
+  double d = (double)_const;
+  lives_memcpy(value, &d, sizdbl);
+}
+
+LIVES_GLOBAL_INLINE
+void set_float_array_param(void **value_ptr, float * values, int nvals) {
+  double *dptr;
+  lives_freep(value_ptr);
+  dptr = lives_malloc(sizdbl * 8);
+  for (int i = 0; i < nvals; i++) {
+    dptr[i] = (double)values[i];
+  }
+  *value_ptr = dptr;
 }
 
 
@@ -3253,7 +3345,8 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
     rpar[i].use_mnemonic = FALSE;
     rpar[i].hidden = 0;
     rpar[i].step_size = 1.;
-    if (enabled_in_channels(filter, FALSE) == 2 && get_transition_param(filter, FALSE) == i) rpar[i].transition = TRUE;
+    if (enabled_in_channels(filter, FALSE) == 2
+        && get_transition_param(filter, FALSE) == i) rpar[i].transition = TRUE;
     else rpar[i].transition = FALSE;
     rpar[i].wrap = FALSE;
     rpar[i].reinit = FALSE;

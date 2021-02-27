@@ -4125,11 +4125,12 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
 
   if ((rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), RFX_KEY)) != NULL) {
     /// if running inside a parameter window, reflect update in related parameter values
-    int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), PARAM_NUMBER_KEY));
+    int param_number =
+      LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), PARAM_NUMBER_KEY));
     after_param_text_changed(tentry, rfx);
 
-    /// set to FALSE since no unapplied edits have been made
-    rfx->params[param_number].edited = FALSE;
+    /// clear flag bit since no unapplied edits have been made
+    rfx->params[param_number].flags &= ~PARAM_FLAGS_VALUE_SET;
   }
 }
 

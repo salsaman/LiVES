@@ -26,4 +26,9 @@ void lives_slist_free_all(LiVESSList **);
 
 LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add);
 
+LiVESList *idx_list_update(LiVESList *idxlist, int64_t idx, void *data);
+LiVESList *idx_list_update(LiVESList *idxlist, int64_t idx, void *data);
+LiVESList *idx_list_remove(LiVESList *idxlist, int idx, boolean free_data);
+boolean idx_list_get_data(LiVESList *idxlist, int idx, void **val_locn);
+
 #endif

@@ -6,6 +6,10 @@
 
 // functions for dealing with externalities
 
+#ifdef _GNU_SOURCE
+#include <sched.h>
+#endif
+
 #include <sys/statvfs.h>
 #include "main.h"
 #include "callbacks.h"
@@ -2427,6 +2431,10 @@ int get_num_cpus(void) {
 #else
   char buffer[1024];
   char command[PATH_MAX];
+#ifdef _SC_NPROCESSORS_ONLN
+  int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+  if (num_cores > 0) return num_cores;
+#endif
 #ifdef IS_FREEBSD
   lives_snprintf(command, PATH_MAX, "sysctl -n kern.smp.cpus");
 #else
@@ -2443,7 +2451,8 @@ boolean get_machine_dets(void) {
 #ifdef IS_FREEBSD
   char *com = lives_strdup("sysctl -n hw.model");
 #else
-  char *com = lives_strdup_printf("%s -m1 \"^model name\" /proc/cpuinfo | %s -e \"s/.*: //\" -e \"s:\\s\\+:/:g\"",
+  char *com = lives_strdup_printf("%s -m1 \"^model name\" /proc/cpuinfo | "
+				  "%s -e \"s/.*: //\" -e \"s:\\s\\+:/:g\"",
 				  capable->grep_cmd, capable->sed_cmd);
 #endif
   capable->cpu_name = mini_popen(com);
@@ -2507,7 +2516,8 @@ double get_disk_load(const char *mp) {
 	else clock_ticks = lives_get_current_ticks();
 	if (lticks > 0 && clock_ticks > lticks && val > lval) {
 	  ret = (double)(val - lval) / ((double)(clock_ticks - lticks) / TICKS_PER_SECOND_DBL);
-	  g_print("AND %f %f %f\n", ret, (double)(val - lval), ((double)(clock_ticks - lticks) / TICKS_PER_SECOND_DBL));
+	  g_print("AND %f %f %f\n", ret, (double)(val - lval),
+		  ((double)(clock_ticks - lticks) / TICKS_PER_SECOND_DBL));
 	  lticks = clock_ticks;
 	  lval = val;
 	}
@@ -2531,9 +2541,45 @@ LIVES_GLOBAL_INLINE double check_disk_pressure(double current) {
   /*   if (dload < 1.) dload = 0.; */
   /* } */
   /* if (dload > current) current = dload; */
+  get_proc_loads(FALSE);
   return current;
 }
 
+
+int set_thread_cpuid(pthread_t pth) {
+#ifdef CPU_ZERO
+  cpu_set_t cpuset;
+  int mincore = 0;
+  float minload = 1000.;
+  int ret = 0;
+  for (int i = 1; i <= capable->ncpus; i++) {
+    float load = *(get_core_loadvar(i));
+    if (load > 0. && load < minload) {
+      minload = load;
+      mincore = i;
+    }
+  }
+  if (mincore) {
+    int err;
+    CPU_ZERO(&cpuset);
+    CPU_SET(--mincore, &cpuset);
+    err = pthread_setaffinity_np(pth, sizeof(cpu_set_t), &cpuset);
+    if (err) {LIVES_ERROR("pthread aff error");}
+    else {
+      ret = mincore;
+    }
+  }
+#endif
+  return ret;
+}
+
+
+typedef struct {
+  uint64_t tot, idlet;
+  int64_t ret;
+} oldvalues;
+
+static LiVESList *cpuloadlist = NULL;
 
 #define CPU_STATS_FILE "/proc/stat"
 
@@ -2541,43 +2587,174 @@ int64_t get_cpu_load(int cpun) {
   /// return reported load for CPU cpun (% * 1 million)
   /// as a bonus, if cpun == -1, returns boot time
   // returns -1 if the value cannot be read
-  static uint64_t lidle = 0, lsum = 0;
+  oldvalues *ovals = NULL;
+  FILE *file;
+  char buffer[1024];
+  unsigned long long boottime = 0;
+  unsigned long long user = 0, nice = 0, system = 0, idle = 0;
+  unsigned long long iowait = 0, irq = 0, softirq = 0, steal = 0;
+  uint64_t idlet, sum, tot;
   int64_t ret = -1;
-  char *res, *target, *com;
+  int xcpun = 0;
+
   if (!lives_file_test(CPU_STATS_FILE, LIVES_FILE_TEST_EXISTS)) return -1;
-  if (cpun > 0) target = lives_strdup_printf("cpu%d", --cpun);
-  else if (cpun == 0) target = lives_strdup_printf("cpu");
-  else target = lives_strdup_printf("btime");
-  com = lives_strdup_printf("%s -n $(%s %s %s)", capable->echo_cmd, capable->grep_cmd, target, CPU_STATS_FILE);
-  if ((res = mini_popen(com))) {
-    int xbits = get_token_count(res, ' ');
-    char **array = lives_strsplit(res, " ", xbits);
-    lives_free(res);
-    if (cpun == -1) {
-      // get boot time
-      if (xbits > 1) {
-	ret = atoll(array[1]);
+
+  file = fopen(CPU_STATS_FILE, "r");
+  if (!file) return -1;
+
+  if (cpun < 0) {
+    while (1) {
+      if (!fgets(buffer, 1024, file)) {
+	fclose(file);
+	return -1;
       }
-    }
-    else {
-      if (xbits > 7) {
-	uint64_t user = atoll(array[1]);
-	uint64_t nice = atoll(array[2]);
-	uint64_t sys = atoll(array[3]);
-	uint64_t idle = atoll(array[4]);
-	uint64_t iowait = atoll(array[5]);
-	uint64_t irq = atoll(array[6]);
-	uint64_t softirq = atoll(array[7]);
-	uint64_t sum = user + nice + sys + idle + iowait + irq + softirq;
-	if (lsum) {
-	  double load = 1. - (double)(idle - lidle) / (double)(sum - lsum);
-	  ret = load * (double)MILLIONS(1);
-	}
-	lsum = sum;
-	lidle = idle;
+      if (sscanf(buffer, "btime %16llu", &boottime) > 0) {
+	fclose(file);
+	return boottime;
       }
-      lives_strfreev(array);
     }
   }
+
+  if (!fgets(buffer, 1024, file)) {
+    fclose(file);
+    return -1;
+  }
+  if (!cpun) {
+    if (fscanf(file,
+	     "cpu  %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu %*s %*s\n",
+	       &user, &nice, &system, &idle, &iowait, &irq, &softirq, &steal) <= 0) {
+      fclose(file);
+      return -1;
+    }
+  }
+  else {
+    while (1) {
+      if (!fgets(buffer, 1024, file)) {
+	fclose(file);
+	return -1;
+      }
+      if (sscanf(buffer,
+		 "cpu%d %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu %*s %*s\n",
+		 &xcpun, &user, &nice, &system, &idle, &iowait, &irq,
+		 &softirq, &steal) < 0) {
+	fclose(file);
+	return -1;
+      }
+      if (++xcpun == cpun) break;
+    }
+  }
+  fclose(file);
+
+  idlet = idle + iowait;
+  sum = user + nice + system + irq + softirq + steal;
+  tot = sum + idlet;
+
+  if (idx_list_get_data(cpuloadlist, cpun, (void **)&ovals)) {
+    if (tot != ovals->tot) {
+      float totd = (float)(tot - ovals->tot);
+      float idled = (float)(idlet - ovals->idlet);
+      float load = (totd - idled) / totd;
+      ret = load * (float)MILLIONS(1);
+    }
+    else ret = ovals->ret;
+  }
+  else ovals = (oldvalues *)lives_malloc(sizeof(oldvalues));
+  ovals->tot = tot;
+  ovals->idlet = idlet;
+  ovals->ret = ret;
+  cpuloadlist = idx_list_update(cpuloadlist, cpun, ovals);
   return ret;
+}
+
+#define N_CPU_MEAS 64
+
+static volatile float **vals = NULL;
+static void *proc_load_stats = NULL;
+static size_t nfill = 0; // will go away
+
+volatile float **const get_proc_loads(boolean reset) {
+  boolean doinit = FALSE;
+
+  if (!vals || reset) {
+    running_average(NULL, capable->ncpus + 1, &proc_load_stats);
+    running_average(NULL, N_CPU_MEAS, &proc_load_stats);
+  }
+  if (!vals) {
+    doinit = TRUE;
+    vals = (volatile float **)lives_calloc(sizeof(float *), capable->ncpus + 1);
+  }
+  for (int i = 0; i <= capable->ncpus; i++) {
+    float load = (float)get_cpu_load(i) / (float)10000.;
+    nfill = running_average(&load, i, &proc_load_stats);
+    if (doinit) vals[i] = (volatile float *)lives_malloc(4);
+    *vals[i] = load;
+  }
+  return vals;
+}
+
+
+volatile float *get_core_loadvar(int corenum) {
+  return vals[corenum];
+}
+
+
+double analyse_cpu_stats(void) {
+#if 0
+  static lives_object_instance_t *statsinst = NULL;
+  volatile float *cpuvals = vals[0];
+  weed_param_t *param, **rparams;
+  lives_object_transform_t *tx;
+  lives_object_status_t *st;
+  int nparams;
+
+  // we should either create or update statsinst
+  if (!statsinst) {
+    const lives_object_t *math_obj = lives_object_template_for_type(OBJECT_TYPE_MATH,
+								    MATH_OBJECT_SUBTYPE_STATS);
+    // get the math.stats template
+    // we want to know how to get an instantc of it, we can look for the transform for
+    // the LIVES_INTENTION_CREATE_INSTANCE intent
+    tx = find_transform_for_intent(LIVES_OBJECT(math_obj), LIVES_INTENTION_CREATE_INSTANCE);
+    if (requirements_met(tx)) {
+      transform(LIVES_OBJECT(math_obj), tx, &statsinst);
+    }
+    else {
+      // display unmet reqts.
+    }
+  }
+  // now we have a few things we can do with the maths stats instance
+  // in this case, look for deviance from the mean
+  tx = find_transform_for_intent(statsinst, MATH_INTENTION_DEV_FROM_MEAN);
+  rparams = tx->prereqs->reqs;
+  nparams = tx->prereqs->n_reqs;
+
+  // we could check but requts. are a value and an array of data
+  // check if data can be satisifed internally from running_averags
+  if (rules_lack_param(tx->prereqs, MATH_PARAM_DATA)) {
+    param = weed_param_from_name(rparams, nparams, MATH_PARAM_DATA);
+    //set_float_array_param(&param->value, proc_load_stats, get_tab_size());
+    weed_set_voidptr_value(param, WEED_LEAF_VALUE, proc_load_stats);
+    param = weed_param_from_name(rparams, nparams, MATH_PARAM_DATA_SIZE);
+    weed_set_int_value(param, WEED_LEAF_VALUE, nfill);
+  }
+  // need to set the value too
+  //param = rfx_param_from_name(tx->prereqs->reqs,
+  param = weed_param_from_name(rparams, nparams, MATH_PARAM_VALUE);
+  weed_set_double_value(param, WEED_LEAF_VALUE, cpuvals[nfill - 1]);
+
+  // call transform and check status
+  st = transform(statsinst, tx, NULL);
+  if (*st->status != LIVES_OBJECT_STATUS_NORMAL) {
+    lives_object_status_free(st);
+    lives_object_transform_free(tx);
+    return 0.;
+  }
+  lives_object_transform_free(tx);
+  lives_object_status_free(st);
+
+  // now just get result
+  param = weed_param_from_name(statsinst->params, statsinst->n_params, MATH_PARAM_RESULT);
+  return (float)weed_param_get_value_double(param);
+#endif
+  return 0.;
 }

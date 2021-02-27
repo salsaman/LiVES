@@ -184,6 +184,8 @@ double weed_param_get_value_double(weed_plant_t *param);
 int64_t weed_param_get_value_int64(weed_plant_t *param);
 char *weed_param_get_value_string(weed_plant_t *param);
 
+weed_plant_t *weed_param_from_name(weed_plant_t **params, int n_params, const char *name);
+
 /* if param is WEED_SEED_STRING and WEED_LEAF_CHOICES is set in param or template, returns the length, else returns 0 */
 int weed_param_get_nchoices(weed_plant_t *param);
 

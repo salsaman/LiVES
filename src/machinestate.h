@@ -274,6 +274,13 @@ double get_disk_load(const char *mp);
 double check_disk_pressure(double current);
 
 int64_t get_cpu_load(int cpun); ///< percent * 1 million
+volatile float **const get_proc_loads(boolean reset);
+
+int set_thread_cpuid(pthread_t pth);
+
+volatile float *get_core_loadvar(int corenum);
+
+double analyse_cpu_stats(void);
 
 char *get_systmp(const char *suff, boolean is_dir);
 char *get_worktmp(const char *prefix);

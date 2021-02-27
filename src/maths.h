@@ -54,4 +54,41 @@ uint64_t get_near2pow(uint64_t val) GNU_CONST;
 
 int hextodec(const char *string);
 
+//// statistics ///
+#define OBJECT_TYPE_MATH		IMkType("obj.MATH")
+#define MATH_OBJECT_SUBTYPE_STATS			IMkType("MATHstat")
+
+enum {
+  SUBTYPE_STATS,
+};
+
+#define MATH_PARAM_DATA "data"
+#define MATH_PARAM_DATA_SIZE "data_size"
+#define MATH_PARAM_VALUE "value"
+
+#define MATH_PARAM_RESULT "result"
+
+enum {
+  MATH_INTENTION_RUNNING_AVG = 1,
+  MATH_INTENTION_DEV_FROM_MEAN
+};
+
+const lives_object_template_t *maths_object_with_subtype(uint64_t subtype);
+lives_object_transform_t *math_transform_for_intent(lives_object_t *obj, lives_intention intent);
+
+// to init, call twice with newval NULL, 1st call sets nvals from idx, second sets maxsize
+// the call with data in newval and idx from 0 - nvals, neval will be replaced withh running avg.
+// data is used by the functions and not to be messed with:
+//
+// static stats_pkt stats = NULL;
+// runung_average(NULL, 4, &stats);   // analyze 4 values
+// runung_average(NULL, 64, &stats); // use sliding window size 64
+
+// then:
+// float fval = 0.5;
+// size_t nentries = running_average(&fval, 0, &stats);
+// appends value 0.5 to the series for variable 0. and returns the running avg in fval.
+
+size_t running_average(float *newval, int idx, void **data);
+
 #endif

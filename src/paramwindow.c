@@ -134,7 +134,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   if (mainw->did_rfx_preview) {
     if (def_ok) {
       for (i = 0; i < rfx->num_params; i++) {
-        if (rfx->params[i].changed) {
+        if (rfx->params[i].flags | PARAM_FLAGS_VALUE_SET) {
           mainw->keep_pre = FALSE;
           break;
         }
@@ -1342,7 +1342,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
           // parameter, eg. p1 ////////////////////////////
           param = &rfx->params[pnum];
           if (!chk_params && !(rfx->flags & RFX_FLAGS_NO_RESET)) {
-            rfx->params[pnum].changed = FALSE;
+            rfx->params[pnum].flags &= ~PARAM_FLAGS_VALUE_SET;
           }
           if (rfx->source_type == LIVES_RFX_SOURCE_WEED) {
             check_hidden_gui((weed_plant_t *)rfx->source, param, pnum);
@@ -1497,7 +1497,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     for (i = 0; i < rfx->num_params; i++) {
       param = &rfx->params[i];
       if (!chk_params && !(rfx->flags & RFX_FLAGS_NO_RESET)) {
-        param->changed = FALSE;
+        param->flags &= ~PARAM_FLAGS_VALUE_SET;
         if (used[i]) continue;
       }
 
@@ -2210,7 +2210,7 @@ static void after_any_changed_2(lives_rfx_t *rfx, lives_param_t *param, boolean 
 
   /// only the first param in the chain can reinit
   if (--ireinit > 0) {
-    param->changed = TRUE;
+    param->flags |= PARAM_FLAGS_VALUE_SET;
     param->change_blocked = FALSE;
     return;
   }
@@ -2261,7 +2261,7 @@ static void after_any_changed_2(lives_rfx_t *rfx, lives_param_t *param, boolean 
   }
 
   if (!weed_param_value_irrelevant(wparam)) {
-    param->changed = TRUE;
+    param->flags |= PARAM_FLAGS_VALUE_SET;
   }
 
   if (mainw->multitrack && rfx->status == RFX_STATUS_WEED) {

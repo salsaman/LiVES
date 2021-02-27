@@ -337,7 +337,6 @@ weed_leaf_delete_f _weed_leaf_delete;
 
 #include "weed-effects-utils.h"
 #include "support.h"
-#include "maths.h"
 #include "widget-helper.h"
 
 #include "filesystem.h"
@@ -1091,6 +1090,9 @@ typedef struct {
 
 // common defs for mainwindow (retain this order)
 #include "plugins.h"
+
+#include "intents.h"
+#include "maths.h"
 
 #ifdef ENABLE_JACK
 #include "jack.h"

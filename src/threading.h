@@ -17,8 +17,10 @@ typedef weed_plantptr_t lives_proc_thread_t;
 typedef uint64_t funcsig_t;
 
 typedef struct {
+  uint64_t var_uid;
   lives_proc_thread_t var_tinfo;
   lives_thread_data_t *var_mydata;
+  int var_id;
   boolean var_com_failed;
   int var_write_failed, var_read_failed;
   boolean var_chdir_failed;
@@ -28,6 +30,8 @@ typedef struct {
   int var_last_sws_block;
   boolean var_no_gui;
   uint64_t var_random_seed;
+  int var_core_id;
+  volatile float *var_core_load_ptr; // pointer to value that monitors core load
 } lives_threadvars_t;
 
 struct _lives_thread_data_t {
@@ -191,8 +195,7 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_
     int return_type, const char *args_fmt, ...);
 
 lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, lives_funcptr_t func,
-    int return_type, const char *args_fmt,
-    va_list xargs);
+    int return_type, const char *args_fmt, va_list xargs);
 
 void call_funcsig(lives_proc_thread_t info);
 

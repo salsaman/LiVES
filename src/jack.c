@@ -76,21 +76,14 @@ static boolean check_zero_buff(size_t check_size) {
 
 
 lives_rfx_t *jack_params_to_rfx(const JSList *dparams, void *source) {
-  lives_rfx_t *rfx = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t));
+  lives_rfx_t *rfx = rfx_init(RFX_STATUS_INTERFACE, LIVES_RFX_SOURCE_EXTERNAL, source);
   lives_param_t *rpar;
   JSList *zdparams = (JSList *)dparams;
   union jackctl_parameter_value val, def;
   int pcount = 0;
 
-  rfx->source_type = LIVES_RFX_SOURCE_EXTERNAL;
-  rfx->source = source;
-
   for (; zdparams; zdparams = zdparams->next) pcount++;
-  rfx->status = RFX_STATUS_INTERFACE;
-  rfx->num_params = pcount;
-  rpar = (lives_param_t *)lives_calloc(pcount, sizeof(lives_param_t));
-  rfx->params = rpar;
-  rfx->num_in_channels = 1;
+  rpar = rfx_init_params(rfx, pcount);
   pcount = 0;
   for (zdparams = (JSList *)dparams; zdparams; zdparams = zdparams->next) {
     lives_param_t *param = &rpar[pcount];

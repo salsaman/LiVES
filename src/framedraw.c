@@ -90,11 +90,12 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
     do_rfx_cleanup(rfx);
   }
 
-  com = lives_strdup_printf("%s clear_pre_files \"%s\" 2>%s", prefs->backend_sync, cfile->handle, LIVES_DEVNULL);
+  com = lives_strdup_printf("%s clear_pre_files \"%s\" 2>%s",
+                            prefs->backend_sync, cfile->handle, LIVES_DEVNULL);
   lives_system(com, TRUE); // clear any .pre files from before
 
   for (i = 0; i < rfx->num_params; i++) {
-    rfx->params[i].changed = FALSE;
+    rfx->params[i].flags &= ~PARAM_FLAGS_VALUE_SET;
   }
 
   mainw->cancelled = CANCEL_NONE;

@@ -677,7 +677,8 @@ static boolean pre_init(void) {
       msg = lives_strdup_printf(
               _("\nAn error occurred when writing to the configuration files\n%s*\n\n"
                 "Please check the file permissions for this file and directory\nand try again.\n"),
-              (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)),
+              (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(prefs->configfile,
+                                              -1, NULL, NULL, NULL)),
                                        LIVES_FILE_EXT_NEW)));
       lives_free(tmp);
       lives_free(tmp2);
@@ -766,6 +767,10 @@ static boolean pre_init(void) {
   lives_threadpool_init();
 
   capable->gui_thread = pthread_self();
+
+  // initialise cpu load monitoring
+  get_proc_loads(TRUE);
+  get_proc_loads(FALSE);
 
   /// check disk storage status /////////////////////////////////////
   mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
@@ -3640,8 +3645,9 @@ boolean lazy_startup_checks(void *data) {
       mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
       if (capable->ds_used > prefs->disk_quota * .9 || (mainw->ds_status != LIVES_STORAGE_STATUS_NORMAL
           && mainw->ds_status != LIVES_STORAGE_STATUS_UNKNOWN)) {
-        if (capable->ds_used > prefs->disk_quota * .9 && (mainw->ds_status == LIVES_STORAGE_STATUS_NORMAL
-            || mainw->ds_status == LIVES_STORAGE_STATUS_UNKNOWN)) {
+        if (capable->ds_used > prefs->disk_quota * .9
+            && (mainw->ds_status == LIVES_STORAGE_STATUS_NORMAL
+                || mainw->ds_status == LIVES_STORAGE_STATUS_UNKNOWN)) {
           mainw->ds_status = LIVES_STORAGE_STATUS_OVER_QUOTA;
         }
         do_show_quota = TRUE;
@@ -4141,7 +4147,8 @@ static boolean lives_startup2(livespointer data) {
 
   if (!prefs->vj_mode && !prefs->startup_phase) {
     mainw->helper_procthreads[PT_LAZY_RFX] =
-      lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
+      lives_proc_thread_create(LIVES_THRDATTR_NONE,
+                               (lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
   }
 
   mainw->lazy = lives_idle_add_simple(lazy_startup_checks, NULL);

@@ -64,3 +64,102 @@ LIVES_GLOBAL_INLINE int hextodec(const char *string) {
   return tot;
 }
 
+
+// statistics
+
+static boolean inited = FALSE;
+static const lives_object_template_t tmpls[1];
+
+static void init_templates(void) {
+  lives_object_template_t tmpl;
+  if (inited) return;
+  inited = TRUE;
+  tmpl = tmpls[0];
+  tmpl.uid = tmpl.subtype = SUBTYPE_STATS;
+  tmpl.type = OBJECT_TYPE_MATH;
+}
+
+
+typedef struct {
+  int nvals, maxsize;
+  size_t fill;
+  float **res;
+} tab_data;
+
+// to init, call twice with newval NULL, 1st call sets nvals from idx, second sets maxsize
+// the call with data in newval and idx from 0 - nvals, neval will be replaced withh running avg.
+// tab_data is used by the functionand not to be messed with
+size_t running_average(float *newval, int idx, void **data) {
+  size_t nfill;
+  if (!data) return 0;
+  else {
+    tab_data **tdatap = (tab_data **)data;
+    tab_data *tdata = *tdatap;
+    float tot = 0.;
+    if (!newval) {
+      if (!tdata) {
+        tdata = (tab_data *)lives_calloc(sizeof(tab_data), 1);
+        *tdatap = tdata;
+      }
+      if (!tdata->nvals) {
+        tdata->nvals = idx;
+        tdata->res = (float **)lives_calloc(sizeof(float *), tdata->nvals);
+      } else {
+        tdata->maxsize = idx;
+        for (int i = 0; i < tdata->nvals; i++) {
+          tdata->res[i] = (float *)lives_calloc(4, tdata->maxsize + 1);
+        }
+      }
+      return 0;
+    }
+    tot = tdata->res[idx][tdata->maxsize];
+    if (tdata->fill > tdata->maxsize - 2) {
+      tot -= tdata->res[idx][0];
+      lives_memmove(&tdata->res[idx][0], &tdata->res[idx][1], (tdata->maxsize - 1) * 4);
+    }
+    tot += *newval;
+    tdata->res[idx][tdata->fill] = *newval;
+    tdata->res[idx][tdata->maxsize] = tot;
+    *newval = tot / (tdata->fill + 1);
+    nfill = tdata->fill + 1;
+    if (idx == tdata->nvals - 1 && tdata->fill < tdata->maxsize - 1) tdata->fill++;
+  }
+  return nfill;
+}
+
+
+lives_object_transform_t *math_transform_for_intent(lives_object_t *obj, lives_intention intent) {
+  if (obj->subtype == MATH_OBJECT_SUBTYPE_STATS) {
+    if (intent == MATH_INTENTION_DEV_FROM_MEAN) {
+      lives_req_t *req;
+      lives_object_transform_t *tx =
+        (lives_object_transform_t *)lives_calloc(sizeof(lives_object_transform_t), 1);
+      tx->prereqs = (lives_rules_t *)lives_calloc(sizeof(lives_rules_t), 1);
+      tx->prereqs->n_reqs = 3;
+      tx->prereqs->reqs = (lives_req_t **)lives_calloc(sizeof(lives_req_t *), tx->prereqs->n_reqs);
+
+      tx->prereqs->reqs[0] = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+      weed_set_string_value(tx->prereqs->reqs[0], WEED_LEAF_NAME, MATH_PARAM_DATA);
+      weed_set_int_value(tx->prereqs->reqs[0], WEED_LEAF_PARAM_TYPE, WEED_PARAM_UNSPECIFIED);
+
+      tx->prereqs->reqs[1] = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+      weed_set_string_value(tx->prereqs->reqs[1], WEED_LEAF_NAME, MATH_PARAM_DATA_SIZE);
+      weed_set_int_value(tx->prereqs->reqs[1], WEED_LEAF_PARAM_TYPE, WEED_PARAM_INTEGER);
+
+      tx->prereqs->reqs[2] = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+      weed_set_string_value(tx->prereqs->reqs[2], WEED_LEAF_NAME, MATH_PARAM_VALUE);
+      weed_set_int_value(tx->prereqs->reqs[2], WEED_LEAF_PARAM_TYPE, WEED_PARAM_FLOAT);
+      return tx;
+    }
+    return NULL;
+  }
+  return NULL;
+}
+
+
+const lives_object_template_t *maths_object_with_subtype(uint64_t subtype) {
+  if (!inited) init_templates();
+  if (subtype == MATH_OBJECT_SUBTYPE_STATS) return &tmpls[SUBTYPE_STATS];
+  return NULL;
+}
+

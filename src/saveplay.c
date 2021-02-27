@@ -1083,10 +1083,10 @@ boolean get_handle_from_info_file(int index) {
   // optionally we can stage the clip open in an alt directory
   lives_intentparams_t *iparams = get_txparams_for_clip(index, LIVES_INTENTION_IMPORT_LOCAL);
   if (iparams) {
-    lives_param_t *adir_param =
-      rfx_param_from_name(iparams->params, iparams->n_params, CLIP_PARAM_STAGING_DIR);
-    if (adir_param) shm_path = get_string_param(adir_param->value);
-    lives_intentparams_free(&iparams);
+    weed_param_t *adir_param =
+      weed_param_from_name(iparams->params, iparams->n_params, CLIP_PARAM_STAGING_DIR);
+    if (adir_param) shm_path = weed_param_get_value_string(adir_param);
+    lives_intentparams_free(iparams);
   }
 
   if (shm_path)

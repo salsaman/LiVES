@@ -87,7 +87,6 @@ char *get_clip_dir(int clipno);
 
 void permit_close(int clipno);
 
-lives_intentcap_t *get_caps_for_clip(int clipno, lives_intention_t intent);
 void migrate_from_staging(int clipno);
 
 #endif

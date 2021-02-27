@@ -25,9 +25,12 @@ char *get_stats_msg(boolean calc_only) {
   static ticks_t last_curr_tc = 0, currticks;
   static ticks_t last_mini_ticks = 0;
   static frames_t last_mm = 0;
+  volatile float *load;
+
   boolean have_avsync = FALSE;
   char *msg, *audmsg = NULL, *bgmsg = NULL, *fgpal = NULL;
   char *tmp, *tmp2;
+  char *msg2 = lives_strdup("");
 
   if (!LIVES_IS_PLAYING) return NULL;
   //currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
@@ -100,14 +103,25 @@ char *get_stats_msg(boolean calc_only) {
 
   fgpal = get_palette_name_for_clip(mainw->current_file);
 
+  //get_proc_loads(FALSE);
+
+  /* for (int cp = 0; cp < capable->ncpus; cp++) { */
+  /*   load = get_core_loadvar(cp + 1); */
+  /*   tmp = lives_strdup_printf("%sCore %d, load = %f  ", msg2, cp, *load); */
+  /*   lives_free(msg2); */
+  /*   msg2 = tmp; */
+  /*   tmp = NULL; */
+  /* }
+  */
+  load = get_core_loadvar(0);
   msg = lives_strdup_printf(_("%sFrame %d / %d, fps %.3f (target: %.3f)\n"
-                              "CPU0 load %.2f %% : Disk load: %f\n"
+                              "CPU load %.2f %% : Disk load: %f\n"
                               "Effort: %d / %d, quality: %d, %s (%s)\n%s\n"
-                              "Fg clip: %d X %d, palette: %s\n%s"),
+                              "Fg clip: %d X %d, palette: %s\n%s\n%s"),
                             audmsg ? audmsg : "",
                             mainw->actual_frame, cfile->frames,
                             inst_fps * sig(cfile->pb_fps), cfile->pb_fps,
-                            get_cpu_load(0) / 10000., mainw->disk_pressure,
+                            *load, mainw->disk_pressure,
                             mainw->effort, EFFORT_RANGE_MAX,
                             prefs->pb_quality,
                             tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
@@ -115,8 +129,8 @@ char *get_stats_msg(boolean calc_only) {
                             tmp2 = lives_strdup(prefs->pbq_adaptive ? _("adaptive") : _("fixed")),
                             get_cache_stats(),
                             cfile->hsize, cfile->vsize,
-                            fgpal, bgmsg ? bgmsg : "");
-
+                            fgpal, bgmsg ? bgmsg : "", msg2);
+  lives_freep((void **)&msg2);
   lives_freep((void **)&bgmsg); lives_freep((void **)&audmsg);
   lives_freep((void **)&tmp); lives_freep((void **)&tmp2);
   return msg;

@@ -6,10 +6,62 @@
 
 #include "main.h"
 
-static weed_plant_t *weed_integer_init(const char *name, int def, int min, int max) {
-  weed_plant_t *paramt = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+weed_param_t *weed_param_from_iparams(lives_intentparams_t *iparams, const char *name) {
+  // find param by NAME, if it lacks a VALUE, set it from default
+  // and also set the plant type to WEED_PLANT_PARAMETER - this is to allow
+  // other functions to use the weed_parameter_get_*_value() functions etc.
+  for (int i = 0; i < iparams->n_params; i++) {
+    char *pname = weed_get_string_value(iparams->params[i], WEED_LEAF_NAME, NULL);
+    if (!lives_strcmp(name, pname)) {
+      free(pname);
+      weed_set_int_value(iparams->params[i], WEED_LEAF_TYPE, WEED_PLANT_PARAMETER);
+      if (!weed_plant_has_leaf(iparams->params[i], WEED_LEAF_VALUE)) {
+        if (weed_plant_has_leaf(iparams->params[i], WEED_LEAF_DEFAULT)) {
+          weed_leaf_copy(iparams->params[i], WEED_LEAF_VALUE, iparams->params[i], WEED_LEAF_DEFAULT);
+        }
+      }
+      return iparams->params[i];
+    }
+  }
+  return NULL;
+}
+
+
+static weed_param_t *iparam_from_name(weed_param_t **params, int nparams, const char *name) {
+  // weed need to find the param by (voidptr) name
+  // and also set the plant type to WEED_PLANT_PARAMETER - this is to allow
+  // other functions to use the weed_parameter_get_*_value() functions etc.
+  for (int i = 0; i < nparams; i++) {
+    char *pname = weed_get_string_value(params[i], WEED_LEAF_NAME, NULL);
+    if (!lives_strcmp(name, pname)) {
+      free(pname);
+      return params[i];
+    }
+  }
+  return NULL;
+}
+
+
+static weed_param_t *iparam_match_name(weed_param_t **params, int nparams, weed_param_t *param) {
+  // weed need to find the param by (voidptr) name
+  // and also set the plant type to WEED_PLANT_PARAMETER - this is to allow
+  // other functions to use the weed_parameter_get_*_value() functions etc.
+  char *name = weed_get_string_value(param, WEED_LEAF_NAME, NULL);
+  for (int i = 0; i < nparams; i++) {
+    char *pname = weed_get_string_value(params[i], WEED_LEAF_NAME, NULL);
+    if (!lives_strcmp(name, pname)) {
+      free(name); free(pname);
+      return params[i];
+    }
+    free(name); free(pname);
+  }
+  return NULL;
+}
+
+
+static weed_plant_t *int_req_init(const char *name, int def, int min, int max) {
+  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
   int ptype = WEED_PARAM_INTEGER;
-  weed_plant_t *gui;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
   weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_INT, 1, &def);
@@ -18,20 +70,18 @@ static weed_plant_t *weed_integer_init(const char *name, int def, int min, int m
   return paramt;
 }
 
-static weed_plant_t *weed_switch_init(const char *name, int def) {
-  weed_plant_t *paramt = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+static weed_plant_t *boolean_req_init(const char *name, int def) {
+  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
   int ptype = WEED_PARAM_SWITCH;
-  weed_plant_t *gui;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
   weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_BOOLEAN, 1, &def);
   return paramt;
 }
 
-static weed_plant_t *weed_float_init(const char *name, double def, double min, double max) {
-  weed_plant_t *paramt = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+static weed_plant_t *double_req_init(const char *name, double def, double min, double max) {
+  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
   int ptype = WEED_PARAM_FLOAT;
-  weed_plant_t *gui;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
   weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_DOUBLE, 1, &def);
@@ -40,10 +90,9 @@ static weed_plant_t *weed_float_init(const char *name, double def, double min, d
   return paramt;
 }
 
-static weed_plant_t *weed_text_init(const char *name, const char *def) {
-  weed_plant_t *paramt = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+static weed_plant_t *string_req_init(const char *name, const char *def) {
+  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
   int ptype = WEED_PARAM_TEXT;
-  weed_plant_t *gui;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
   weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_STRING, 1, &def);
@@ -59,11 +108,17 @@ const lives_object_template_t *lives_object_template_for_type(uint64_t type, uin
 
 
 boolean rules_lack_param(lives_rules_t *prereq, const char *pname) {
-  weed_param_t *param = weed_param_from_name(prereq->reqs, prereq->n_reqs, pname);
-  int flags = weed_get_int_value(param, WEED_LEAF_FLAGS, NULL);
-  if ((flags & PARAM_FLAGS_VALUE_SET) || (flags & PARAM_FLAGS_OPTIONAL)) return FALSE;
-  param = weed_param_from_name(prereq->oinst->params, prereq->oinst->n_params, pname);
-  if (param) return FALSE;
+  weed_param_t *iparam = iparam_from_name(prereq->reqs, prereq->n_reqs, pname);
+  if (iparam) {
+    if (!weed_plant_has_leaf(iparam, WEED_LEAF_VALUE)
+        && !weed_plant_has_leaf(iparam, WEED_LEAF_DEFAULT)) {
+      int flags = weed_get_int_value(iparam, WEED_LEAF_FLAGS, NULL);
+      if (flags & PARAM_FLAGS_OPTIONAL) return TRUE;
+      return FALSE;
+    }
+  }
+  iparam = iparam_from_name(prereq->oinst->params, prereq->oinst->n_params, pname);
+  if (iparam) return TRUE;
   return TRUE;
 }
 
@@ -80,15 +135,17 @@ void lives_object_status_free(lives_object_status_t *st) {
 
 boolean requirements_met(lives_object_transform_t *tx) {
   lives_req_t *req;
-  int flags;
-  char *name;
   for (int i = 0; i < tx->prereqs->n_reqs; i++) {
     req = tx->prereqs->reqs[i];
-    flags = weed_get_int_value(req, WEED_LEAF_FLAGS, NULL);
-    if ((flags & PARAM_FLAGS_VALUE_SET) || (flags & PARAM_FLAGS_OPTIONAL)) continue;
-    name = weed_get_string_value(req, WEED_LEAF_NAME, NULL);
-    req = weed_param_from_name(tx->prereqs->oinst->params, tx->prereqs->oinst->n_params, name);
-    weed_free(name);
+    if (req) {
+      if (!weed_plant_has_leaf(req, WEED_LEAF_VALUE) &&
+          !weed_plant_has_leaf(req, WEED_LEAF_DEFAULT)) {
+        int flags = weed_get_int_value(req, WEED_LEAF_FLAGS, NULL);
+        if (!(flags & PARAM_FLAGS_OPTIONAL)) return FALSE;
+      }
+      continue;
+    }
+    req = iparam_match_name(tx->prereqs->oinst->params, tx->prereqs->oinst->n_params, req);
     if (!req) return FALSE;
   }
   for (int i = 0; i < tx->prereqs->n_conditions; i++) {
@@ -135,15 +192,19 @@ lives_object_status_t *transform(lives_object_t *obj, lives_object_transform_t *
   /* } */
   /* for (int i = 0; i < tx->prereqs->n_reqs; i++) { */
   /*   param = &tx->prereqs->reqs[i]; */
-  /*   flags = weed_get_int_value(param, WEED_LEAF_FLAGS, NULL);  */
+  /*   flags = weed_get_int_value(param, WEED_LEAF_FLAGS, NULL); */
   /*   if (!(flags & PARAM_FLAGS_VALUE_SET) && !(flags & PARAM_FLAGS_OPTIONAL)) { */
   /*     xparam = weed_param_from_name(prereq->oinst->params, prereq->oinst->n_params, param->name); */
   /*     weed_leaf_dup(param, xparam, WEED_LEAF_VALUE); */
   /*   } */
-  /* } */
+
+  /*   switch ( */
+
+
+
 
   /* pth = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD, funcinf->function, */
-  /* 				       WEED_SEED_DOUBLE, funcinf->args_fmt, xargs); */
+  /* 				       WEED_SEED_DOUBLE, args_fmt, xargs); */
 
 
   return NULL;
@@ -159,7 +220,6 @@ typedef struct {
 lives_intentparams_t *_get_params_for_clip_tx(lives_object_t *obj, int state,
     lives_intention intent) {
   lives_intentparams_t *iparams = NULL;
-  weed_param_t *param;
   clip_priv_data_t *priv = (clip_priv_data_t *)obj->priv;
   if (intent == LIVES_INTENTION_IMPORT_LOCAL) {
     if (prefs->startup_phase != 0) return NULL;
@@ -194,10 +254,11 @@ lives_intentparams_t *_get_params_for_clip_tx(lives_object_t *obj, int state,
     iparams->n_params = 1;
     iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 1);
 
+    // TODO - need to mark
     if (state == CLIP_STATE_READY) {
-      iparams->params[0] = weed_text_init(CLIP_PARAM_STAGING_DIR, priv->sfile->staging_dir);
+      iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, priv->sfile->staging_dir);
     } else {
-      iparams->params[0] = weed_text_init(CLIP_PARAM_STAGING_DIR, capable->shmdir_path);
+      iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, capable->shmdir_path);
     }
   } else if (intent == LIVES_INTENTION_IMPORT_REMOTE) {
     char *uidstr, *tmpdir;
@@ -207,7 +268,7 @@ lives_intentparams_t *_get_params_for_clip_tx(lives_object_t *obj, int state,
     iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 1);
     uidstr = lives_strdup_printf("%lu", gen_unique_id());
     tmpdir = get_systmp(uidstr, TRUE);
-    iparams->params[0] = weed_text_init(CLIP_PARAM_STAGING_DIR, tmpdir);
+    iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, tmpdir);
     lives_free(tmpdir);
   }
   return iparams;
@@ -241,14 +302,14 @@ LiVESTransformList *list_transformations(lives_object_t *obj, int state) {
       tx->prereqs->n_reqs = 4;
       tx->prereqs->reqs = (lives_req_t **)lives_calloc(sizeof(lives_req_t *), tx->prereqs->n_reqs);
 
-      tx->prereqs->req[0] = weed_text_init("filename", NULL);
+      tx->prereqs->req[0] = string_req_init("filename", NULL);
 
-      tx->prereqs->req[1] = weed_float_init("start_time", -1., 0., 0.);
+      tx->prereqs->req[1] = double_req_init("start_time", -1., 0., 0.);
 
-      tx->prereqs->req[2] = weed_integer_init("frames", NULL, -1, 0, -0);
+      tx->prereqs->req[2] = int_req_init("frames", NULL, -1, 0, -0);
       weed_set_int_value(req, WEED_LEAF_FLAGS, LIVES_REQ_FLAGS_OPTIONAL);
 
-      tx->prereqs->req[3] = weed_switch_init("with_audio", TRUE);
+      tx->prereqs->req[3] = boolean_req_init("with_audio", TRUE);
       weed_set_int_value(req, WEED_LEAF_FLAGS, LIVES_REQ_FLAGS_OPTIONAL);
 
       req->new_state = CLIP_STATE_LOADED;

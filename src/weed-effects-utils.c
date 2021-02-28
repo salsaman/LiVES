@@ -612,22 +612,6 @@ WEED_GLOBAL_INLINE weed_plant_t **weed_instance_get_out_params(weed_plant_t *ins
   return weed_get_plantptr_array_counted(instance, WEED_LEAF_OUT_PARAMETERS, nparams);
 }
 
-
-WEED_GLOBAL_INLINE
-weed_plant_t *weed_param_from_name(weed_plant_t **params, int n_params, const char *name) {
-  char *pname;
-  for (int i = 0; i < n_params; i++) {
-    pname = weed_get_string_value(params[i], WEED_LEAF_NAME, NULL);
-    if (!strcmp(pname, name)) {
-      free(pname);
-      return params[i];
-    }
-    free(pname);
-  }
-  return NULL;
-}
-
-
 WEED_GLOBAL_INLINE int weed_param_get_value_int(weed_plant_t *param) {
   if (!WEED_PLANT_IS_PARAMETER(param)) return 0;
   return weed_get_int_value(param, WEED_LEAF_VALUE, NULL);

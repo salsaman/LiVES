@@ -264,6 +264,8 @@ boolean rules_lack_param(lives_rules_t *req, const char *pname);
 
 boolean requirements_met(lives_object_transform_t *tx);
 
+weed_param_t *weed_param_from_iparams(lives_intentparams_t *iparams, const char *name);
+
 #if 0
 const lives_object_status_t *get_current_status(lives_object_t *obj);
 void lives_intentcaps_free(lives_intcaps_t **icap_pp);

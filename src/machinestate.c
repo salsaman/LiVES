@@ -2702,10 +2702,9 @@ double analyse_cpu_stats(void) {
 #if 0
   static lives_object_instance_t *statsinst = NULL;
   volatile float *cpuvals = vals[0];
-  weed_param_t *param, **rparams;
+  weed_param_t *param;
   lives_object_transform_t *tx;
   lives_object_status_t *st;
-  int nparams;
 
   // we should either create or update statsinst
   if (!statsinst) {
@@ -2725,25 +2724,25 @@ double analyse_cpu_stats(void) {
   // now we have a few things we can do with the maths stats instance
   // in this case, look for deviance from the mean
   tx = find_transform_for_intent(statsinst, MATH_INTENTION_DEV_FROM_MEAN);
-  rparams = tx->prereqs->reqs;
-  nparams = tx->prereqs->n_reqs;
 
   // we could check but requts. are a value and an array of data
   // check if data can be satisifed internally from running_averags
   if (rules_lack_param(tx->prereqs, MATH_PARAM_DATA)) {
-    param = weed_param_from_name(rparams, nparams, MATH_PARAM_DATA);
+    param = weed_param_from_prereqs(tx->prereqs, MATH_PARAM_DATA);
     //set_float_array_param(&param->value, proc_load_stats, get_tab_size());
     weed_set_voidptr_value(param, WEED_LEAF_VALUE, proc_load_stats);
-    param = weed_param_from_name(rparams, nparams, MATH_PARAM_DATA_SIZE);
+
+    param = weed_param_from_prereqs(tx->prereqs, MATH_PARAM_DATA_SIZE);
     weed_set_int_value(param, WEED_LEAF_VALUE, nfill);
   }
   // need to set the value too
   //param = rfx_param_from_name(tx->prereqs->reqs,
-  param = weed_param_from_name(rparams, nparams, MATH_PARAM_VALUE);
+  param = weed_param_from_prereqs(tx->prereqs, MATH_PARAM_VALUE);
   weed_set_double_value(param, WEED_LEAF_VALUE, cpuvals[nfill - 1]);
 
   // call transform and check status
   st = transform(statsinst, tx, NULL);
+
   if (*st->status != LIVES_OBJECT_STATUS_NORMAL) {
     lives_object_status_free(st);
     lives_object_transform_free(tx);
@@ -2753,7 +2752,7 @@ double analyse_cpu_stats(void) {
   lives_object_status_free(st);
 
   // now just get result
-  param = weed_param_from_name(statsinst->params, statsinst->n_params, MATH_PARAM_RESULT);
+  param = weed_param_from_object(statsinst, MATH_PARAM_RESULT);
   return (float)weed_param_get_value_double(param);
 #endif
   return 0.;

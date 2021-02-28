@@ -399,9 +399,9 @@ static inline weed_data_t **weed_data_new(uint32_t seed_type, weed_size_t num_el
       } else {
         data[i]->size = weed_seed_get_size(seed_type, 0);
         if (seed_type == WEED_SEED_FUNCPTR)
-	  memcpy(&data[i]->value.funcptr, &valuef[i], WEED_FUNCPTR_SIZE);
+	  data[i]->value.funcptr = valuef[i];
         else {
-          if (is_ptr) memcpy(&data[i]->value.voidptr, &valuep[i], WEED_VOIDPTR_SIZE);
+          if (is_ptr) data[i]->value.voidptr = valuep[i];
           else data[i]->value.voidptr =
 		 (weed_voidptr_t)(weed_malloc_and_copy(data[i]->size,
 						       (char *)values + i * data[i]->size));
@@ -828,9 +828,9 @@ static weed_error_t _weed_leaf_get(weed_plant_t *plant, const char *key, int32_t
   type = leaf->seed_type;
   data = leaf->data;
 
-  if (type == WEED_SEED_FUNCPTR) memcpy(value, &(data[idx])->value.funcptr, WEED_FUNCPTR_SIZE);
+  if (type == WEED_SEED_FUNCPTR) *((weed_funcptr_t *)value) = data[idx]->value.funcptr;
   else {
-    if (weed_seed_is_ptr(type)) memcpy(value, &(data[idx])->value.voidptr, WEED_VOIDPTR_SIZE);
+    if (weed_seed_is_ptr(type)) *((weed_voidptr_t *)value) = data[idx]->value.voidptr;
     else {
       if (type == WEED_SEED_STRING) {
 	size_t size = (size_t)data[idx]->size;

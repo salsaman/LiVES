@@ -500,6 +500,7 @@ boolean do_workdir_query(void) {
 }
 
 
+#ifdef ENABLE_JACK
 static void chk_setenv_conf(LiVESToggleButton * b, livespointer data) {
   // warn if setting this for audio client and is already set for trans client, and trans
   // client is enabled, and !jack_srv_dup
@@ -530,7 +531,7 @@ void chk_jack_cfgx(LiVESWidget * e, livespointer data) {
   show_warn_image(e, _("The specified file should be executable"));
 }
 
-#ifdef ENABLE_JACK
+
 boolean do_jack_config(boolean is_setup, boolean is_trans) {
   LiVESSList *rb_group = NULL;
   LiVESAccelGroup *accel_group;
@@ -1055,7 +1056,9 @@ boolean do_audio_choice_dialog(short startup_phase) {
     txt0 = lives_strdup("");
   }
 
+#ifdef ENABLE_JACK
 reloop:
+#endif
 
   txt1 = lives_strdup(
            _("Before starting LiVES, you need to choose an audio player.\n\nPULSE AUDIO is recommended for most users"));
@@ -1851,8 +1854,7 @@ jpgdone:
 void do_startup_interface_query(void) {
   // prompt for startup ce or startup mt
   LiVESWidget *dialog, *dialog_vbox, *radiobutton, *label;
-  /* LiVESWidget *okbutton; */
-  /* LiVESWidget *quotabutton; */
+  LiVESWidget *okbutton;
   LiVESWidget *hbox;
   LiVESSList *radiobutton_group = NULL;
   LiVESResponseType resp;
@@ -1902,11 +1904,11 @@ void do_startup_interface_query(void) {
                                      _("Set Quota Limits (Optional)"), LIVES_RESPONSE_SHOW_DETAILS);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
-                                     _("Finish"), LIVES_RESPONSE_OK);
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
+             _("Finish"), LIVES_RESPONSE_OK);
 
-  /* lives_button_grab_default_special(okbutton); */
-  /* lives_widget_grab_focus(okbutton); */
+  lives_button_grab_default_special(okbutton);
+  lives_widget_grab_focus(okbutton);
 
   lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
   lives_widget_show_now(dialog);

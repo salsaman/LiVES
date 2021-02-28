@@ -304,6 +304,7 @@ void defer_sigint(int signum) {
   sigaction(signum, &sact, NULL);
 
   switch (mainw->crash_possible) {
+#ifdef ENABLE_JACK
   case 1:
     // crash in jack_client_open() - transport
     jack_warn(TRUE);
@@ -314,6 +315,7 @@ void defer_sigint(int signum) {
     jack_warn(FALSE);
     norecurse = TRUE;
     abort();
+#endif
   default:
     break;
   }
@@ -1027,7 +1029,6 @@ static boolean pre_init(void) {
     }
 #endif
   }
-#endif
 
   get_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg, PATH_MAX);
   lives_snprintf(future_prefs->jack_aserver_cfg, PATH_MAX, "%s", prefs->jack_aserver_cfg);
@@ -1041,6 +1042,7 @@ static boolean pre_init(void) {
                         | JACK_OPTS_START_TSERVER | JACK_OPTS_TIMEBASE_START
                         | JACK_OPTS_TIMEBASE_CLIENT | JACK_OPTS_TIMEBASE_MASTER
                         | JACK_OPTS_TIMEBASE_LSTART | JACK_OPTS_ENABLE_TCLIENT);
+#endif
 #endif
 
 #ifdef GUI_GTK
@@ -2191,11 +2193,8 @@ static void lives_init(_ign_opts *ign_opts) {
                            lives_getgid(), capable->mainpid);
 
     if (prefs->startup_phase > 0 && prefs->startup_phase <= 4) {
-      /* if (capable->has_jackd) naudp++; */
-      /* if (capable->has_pulse_audio) naudp++; */
-      /* if (capable->has_sox_play) naudp++; */
-
       splash_end();
+      lives_widget_context_update();
       while (!do_audio_choice_dialog(prefs->startup_phase)) {
         prefs->startup_phase = 1;
         if (!do_workdir_query()) {
@@ -2304,8 +2303,8 @@ static void lives_init(_ign_opts *ign_opts) {
 	  // *INDENT-OFF*
 	}}
     // *INDENT-ON*
-#endif
     }
+#endif
 
 #ifdef HAVE_PULSE_AUDIO
     if (prefs->audio_player == AUD_PLAYER_PULSE) {
@@ -4009,6 +4008,7 @@ static boolean lives_startup(livespointer data) {
     if (upgrade_error) {
       do_upgrade_error_dialog();
     }
+    prefs->startup_phase = 0;
   }
 
   // splash_end() will start up multitrack if in STARTUP_MT mode

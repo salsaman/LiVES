@@ -336,3 +336,6 @@ uninstall-local:
 	rm -rf "$(includedir)/liblives"
 
 endif
+
+clean-local:
+	-rm $(srcdir)/.deps/*

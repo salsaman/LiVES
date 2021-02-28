@@ -3060,11 +3060,12 @@ static boolean check_txtsize(LiVESWidget * combo) {
   return FALSE;
 }
 
+#ifdef ENABLE_JACK
 static void copy_entry_text(LiVESEntry * e1, LiVESEntry * e2) {
   if (lives_toggle_button_get_active(prefsw->jack_srv_dup))
     lives_entry_set_text(e2, lives_entry_get_text(e1));
 }
-
+#endif
 
 /*
   Function creates preferences dialog
@@ -3091,7 +3092,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   LiVESWidget *ins_resample;
   LiVESWidget *hbox;
+#ifdef ENABLE_JACK
   LiVESWidget *widget;
+#endif
 
   LiVESWidget *layout;
 
@@ -3120,7 +3123,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   LiVESWidget *label;
 
   // radio button groups
+#ifdef ENABLE_JACK
   LiVESSList *rb_group = NULL;
+#endif
   LiVESSList *jpeg_png = NULL;
   LiVESSList *mt_enter_prompt = NULL;
   LiVESSList *rb_group2 = NULL;

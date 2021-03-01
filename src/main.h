@@ -564,6 +564,14 @@ typedef struct {
   char *extra_icon_path;
   LiVESList *all_icons;
 
+  char *def_fontstring;
+  char *font_name;
+  char *font_fam;
+  int font_size;
+  char *font_stretch;
+  char *font_style;
+  char *font_weight;
+
   char *wm_type; ///< window manager type, e.g. x11
   char *wm_name; ///< window manager name, may be different from wm_caps.wwm_name
   boolean has_wm_caps;

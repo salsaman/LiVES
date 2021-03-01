@@ -1013,6 +1013,13 @@ static boolean pre_init(void) {
 
   prefs->warning_mask = (uint64_t)get_int64_prefd(PREF_LIVES_WARNING_MASK, DEF_WARNING_MASK);
 
+  get_utf8_pref(PREF_INTERFACE_FONT, buff, 256);
+
+  if (*buff && (!*capable->def_fontstring || lives_strcmp(buff, capable->def_fontstring)))
+    pref_factory_utf8(PREF_INTERFACE_FONT, buff, FALSE);
+  else
+    pref_factory_utf8(PREF_INTERFACE_FONT, capable->def_fontstring, FALSE);
+
 #ifdef ENABLE_JACK
   if (!ign_opts.ign_jackopts) {
     prefs->jack_opts = future_prefs->jack_opts = get_int_prefd(PREF_JACK_OPTS, 16);
@@ -2616,8 +2623,6 @@ static void do_start_messages(void) {
 
 static void set_toolkit_theme(int prefer) {
   char *lname, *ic_dir;
-  //  LiVESList *list;
-  char *tmp;
 
   lives_widget_object_get(gtk_settings_get_default(), "gtk-double-click-time", &capable->dclick_time);
   if (capable->dclick_time <= 0) capable->dclick_time = LIVES_DEF_DCLICK_TIME;
@@ -2625,11 +2630,8 @@ static void set_toolkit_theme(int prefer) {
   lives_widget_object_get(gtk_settings_get_default(), "gtk-double-click-distance", &capable->dclick_dist);
   if (capable->dclick_dist <= 0) capable->dclick_dist = LIVES_DEF_DCLICK_DIST;
 
-  lives_widget_object_get(gtk_settings_get_default(), "gtk-font-name", &tmp);
-
-  /// stretch, style, weight not used
-  lives_parse_font_string(tmp, &widget_opts.font_name, &widget_opts.font_size, NULL, NULL, NULL);
-  lives_free(tmp);
+  // default unless overwritten by pref
+  lives_widget_object_get(gtk_settings_get_default(), "gtk-font-name", &capable->def_fontstring);
 
   lives_widget_object_get(gtk_settings_get_default(), "gtk-alternative-button-order", &widget_opts.alt_button_order);
 

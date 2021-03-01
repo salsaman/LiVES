@@ -479,7 +479,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
   // xpos:
   // aligned to left (offs_x), unless "center" is TRUE
 
-  LingoFontDescription *font = NULL;
+  LingoFontDesc *font = NULL;
   LingoLayout *layout;
 
   int x_pos = 0, y_pos = 0;
@@ -495,10 +495,10 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
     layout = pango_cairo_create_layout(cr);
     if (!layout) return NULL;
 
-    font = lingo_font_description_new();
-    pango_font_description_set_family(font, fontname);
-    pango_font_description_set_absolute_size(font, size * LINGO_SCALE);
-    pango_layout_set_font_description(layout, font);
+    font = lingo_fontdesc_new();
+    lingo_fontdesc_set_fam(font, fontname);
+    lingo_fontdesc_set_size(font, size);
+    lingo_layout_set_fontdesc(layout, font);
   }
 
   lingo_layout_set_markup(layout, text, -1);
@@ -527,7 +527,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
     lives_painter_rectangle(cr,offs_x,0,width,height);
     lives_painter_clip(cr);*/
 
-  if (font) lingo_font_description_free(font);
+  if (font) lingo_fontdesc_free(font);
 
   if (mode == LIVES_TEXT_MODE_PRECALCULATE) {
     *dheight = lheight;
@@ -545,7 +545,7 @@ LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_layer_t *layer, const
   else {
     lives_colRGBA64_t col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
     lives_colRGBA64_t col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
-    const char *font_name = widget_opts.font_name;
+    const char *font_name = capable->font_name;
     int font_size = weed_layer_get_width(layer) / 32;
     boolean fake_gamma = FALSE;
 
@@ -1198,33 +1198,69 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
 }
 
 
-boolean lives_parse_font_string(const char *string, char **font, int *size, char **stretch,
+// font param returned is the string minus the size
+boolean lives_parse_font_string(const char *xstring, char **font, char **family, int *xsize, char **stretch,
                                 char **style, char **weight) {
-  if (!string) return FALSE;
+
+  if (!xstring) return FALSE;
   else {
-    int numtok = get_token_count(string, ' ') ;
-    char **array = lives_strsplit(string, " ", numtok);
-    //int xsize = -1;
-    if (font) {
-      *font = 0;
-      for (int i = 0; i < numtok - 1; i++) {
-        char *tmp;
-        if (*font) {
-          tmp = lives_strdup_printf("%s %s", *font, array[i]);
-          lives_free(*font);
-          *font = tmp;
-        } else *font = lives_strdup(array[i]);
+    LingoFontDesc *lfd = lingo_fontdesc_from_string(xstring), *xlfd;
+    int n;
+    if (family) {
+      *family = lives_strdup(lingo_fontdesc_get_fam(lfd));
+    }
+    if (xsize) {
+      *xsize = lingo_fontdesc_get_size(lfd);
+      if (lingo_fontdesc_size_scaled(lfd)) *xsize /= LINGO_SCALE;
+    }
+    if (stretch) {
+      n = lingo_fontdesc_get_stretch(lfd);
+      xlfd = lingo_fontdesc_new();
+      lingo_fontdesc_set_stretch(xlfd, n);
+      *stretch = lingo_fontdesc_to_string(xlfd);
+      lingo_fontdesc_free(xlfd);
+    }
+    if (style) {
+      n = lingo_fontdesc_get_style(lfd);
+      xlfd = lingo_fontdesc_new();
+      lingo_fontdesc_set_style(xlfd, n);
+      *style = lingo_fontdesc_to_string(xlfd);
+      lingo_fontdesc_free(xlfd);
+    }
+    if (weight) {
+      n = lingo_fontdesc_get_weight(lfd);
+      xlfd = lingo_fontdesc_new();
+      lingo_fontdesc_set_weight(xlfd, n);
+      *weight = lingo_fontdesc_to_string(xlfd);
+      lingo_fontdesc_free(xlfd);
+    }
+    lingo_fontdesc_free(lfd);
+
+    if (xsize || font) {
+      int numtok = get_token_count(xstring, ' ') ;
+      char **array = lives_strsplit(xstring, " ", numtok);
+      int zsize = atoi(array[numtok - 1]);
+      if (xsize && zsize * LINGO_SCALE == *xsize) *xsize /= LINGO_SCALE;
+      if (font) {
+        *font = 0;
+        for (int i = 0; i < numtok - 1; i++) {
+          char *tmp;
+          if (*font) {
+            tmp = lives_strdup_printf("%s %s", *font, array[i]);
+            lives_free(*font);
+            *font = tmp;
+          } else *font = lives_strdup(array[i]);
+        }
+        if (zsize) {
+          if (*font) {
+            char *tmp = lives_strdup_printf("%s %s", *font, array[numtok - 1]);
+            lives_free(*font);
+            *font = tmp;
+          } else *font = lives_strdup(array[numtok - 1]);
+        }
       }
+      lives_strfreev(array);
     }
-    if (size && numtok > 1 && atoi(array[numtok - 1])) *size = atoi(array[numtok - 1]);
-    if (font && !atoi(array[numtok - 1])) {
-      if (*font) {
-        char *tmp = lives_strdup_printf("%s %s", *font, array[numtok - 1]);
-        lives_free(*font);
-        *font = tmp;
-      } else *font = lives_strdup(array[numtok - 1]);
-    }
-    lives_strfreev(array);
   }
   return TRUE;
 }

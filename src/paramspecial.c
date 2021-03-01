@@ -65,7 +65,7 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
     if (num_widgets > 0 && *array[2]) fchooser.size_param = &rfx->params[atoi(array[2])];
     else fchooser.size_param = NULL;
     if (!((char *)fchooser.font_param->value) || !*((char *)fchooser.font_param->value))
-      set_rfx_value_by_name_string(rfx, fchooser.font_param->name, widget_opts.font_name, TRUE);
+      set_rfx_value_by_name_string(rfx, fchooser.font_param->name, capable->font_name, TRUE);
 #endif
   } else if (!strcmp(array[0], "mergealign")) {
     mergealign.start_param = &rfx->params[atoi(array[1])];
@@ -192,8 +192,9 @@ static void reset_aspect(LiVESButton * button, livespointer user_data) {
 static void font_set_cb(LiVESFontButton * button, livespointer data) {
   lives_rfx_t *rfx = (lives_rfx_t *)data;
   char *fname = lives_font_chooser_get_font(LIVES_FONT_CHOOSER(button));
-  LingoFontDescription *lfd = lives_font_chooser_get_font_desc(LIVES_FONT_CHOOSER(button));
-  int size = lingo_font_description_get_size(lfd);
+  LingoFontDesc *lfd = lives_font_chooser_get_font_desc(LIVES_FONT_CHOOSER(button));
+  int size = lingo_fontdesc_get_size(lfd);
+  if (lingo_fontdesc_size_scaled(lfd)) size /= LINGO_SCALE;
 
   lives_signal_handler_block(fchooser.font_param->widgets[0], fchooser.entry_func);
   lives_entry_set_text(LIVES_ENTRY(fchooser.font_param->widgets[0]), fname);
@@ -206,16 +207,16 @@ static void font_set_cb(LiVESFontButton * button, livespointer data) {
     lives_signal_handler_unblock(fchooser.size_param->widgets[0], fchooser.size_paramfunc);
   }
   lives_free(fname);
-  lingo_font_description_free(lfd);
+  lingo_fontdesc_free(lfd);
 }
 
 static void text_size_cb(LiVESSpinButton * button, livespointer data) {
   int sval = lives_spin_button_get_value_as_int(button);
-  LingoFontDescription *lfd =
+  LingoFontDesc *lfd =
     lives_font_chooser_get_font_desc(LIVES_FONT_CHOOSER(fchooser.font_param->widgets[1]));
-  lingo_font_description_set_size(lfd, sval * LINGO_SCALE);
+  lingo_fontdesc_set_size(lfd, sval * LINGO_SCALE);
   lives_font_chooser_set_font_desc(LIVES_FONT_CHOOSER(fchooser.font_param->widgets[1]), lfd);
-  lingo_font_description_free(lfd);
+  lingo_fontdesc_free(lfd);
 }
 
 static void font_entry_cb(LiVESEntry * entry, livespointer data) {
@@ -397,8 +398,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       if (!box) return;
 
       idx = get_box_child_index(LIVES_BOX(box), tbox);
-      param->widgets[2] = buttond = lives_standard_font_chooser_new();
-      lives_font_chooser_set_font(LIVES_FONT_CHOOSER(buttond), param->value);
+      param->widgets[2] = buttond = lives_standard_font_chooser_new(param->value);
 
       lives_box_pack_start(LIVES_BOX(box), buttond, TRUE, TRUE, 0);
       lives_box_reorder_child(LIVES_BOX(box), buttond, idx);

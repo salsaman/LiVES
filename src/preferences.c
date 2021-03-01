@@ -705,24 +705,6 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
   }
 #endif
 
-  if (!lives_strcmp(prefidx, PREF_OMC_JS_FNAME)) {
-    if (lives_strncmp(newval, prefs->omc_js_fname, PATH_MAX)) {
-      lives_snprintf(prefs->omc_js_fname, PATH_MAX, "%s", newval);
-      if (permanent) set_utf8_pref(PREF_OMC_JS_FNAME, prefs->omc_js_fname);
-      goto success1;
-    }
-    goto fail1;
-  }
-
-  if (!lives_strcmp(prefidx, PREF_OMC_MIDI_FNAME)) {
-    if (lives_strncmp(newval, prefs->omc_midi_fname, PATH_MAX)) {
-      lives_snprintf(prefs->omc_midi_fname, PATH_MAX, "%s", newval);
-      if (permanent) set_utf8_pref(PREF_OMC_MIDI_FNAME, prefs->omc_midi_fname);
-      goto success1;
-    }
-    goto fail1;
-  }
-
   if (!lives_strcmp(prefidx, PREF_MIDI_RCV_CHANNEL)) {
     if (strlen(newval) > 2) {
       if (prefs->midi_rcv_channel != -1) {
@@ -749,6 +731,71 @@ success1:
   }
   return TRUE;
 }
+
+
+boolean pref_factory_utf8(const char *prefidx, const char *newval, boolean permanent) {
+  if (prefsw) prefsw->ignore_apply = TRUE;
+
+  if (!lives_strcmp(prefidx, PREF_INTERFACE_FONT)) {
+    if (*newval && (!*capable->def_fontstring || !permanent || lives_strcmp(newval, capable->def_fontstring))) {
+#if GTK_CHECK_VERSION(3, 16, 0)
+      char *tmp;
+#endif
+      if (newval != capable->def_fontstring) {
+        lives_freep((void **)&capable->def_fontstring);
+        capable->def_fontstring = lives_strdup(newval);
+      }
+      lives_freep((void **)&capable->font_name);
+      lives_freep((void **)&capable->font_fam);
+      lives_freep((void **)&capable->font_stretch);
+      lives_freep((void **)&capable->font_style);
+      lives_freep((void **)&capable->font_weight);
+      lives_parse_font_string(capable->def_fontstring, &capable->font_name, &capable->font_fam, &capable->font_size,
+                              &capable->font_stretch,
+                              &capable->font_style, &capable->font_weight);
+#if GTK_CHECK_VERSION(3, 16, 0)
+      tmp = lives_strdup_printf("%dpx", capable->font_size);
+      set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "*", "font-size", tmp);
+      lives_free(tmp);
+      set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "*", "font-family", capable->font_fam);
+      set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "*", "font-stretch", capable->font_stretch);
+      set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "*", "font-style", capable->font_style);
+      set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "*", "font-weight", capable->font_weight);
+#endif
+      goto success;
+    }
+    goto fail;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_OMC_JS_FNAME)) {
+    if (lives_strncmp(newval, prefs->omc_js_fname, PATH_MAX)) {
+      lives_snprintf(prefs->omc_js_fname, PATH_MAX, "%s", newval);
+      goto success;
+    }
+    goto fail;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_OMC_MIDI_FNAME)) {
+    if (lives_strncmp(newval, prefs->omc_midi_fname, PATH_MAX)) {
+      lives_snprintf(prefs->omc_midi_fname, PATH_MAX, "%s", newval);
+      goto success;
+    }
+    goto fail;
+  }
+
+fail:
+  if (prefsw) prefsw->ignore_apply = FALSE;
+  return FALSE;
+
+success:
+  if (prefsw) {
+    lives_widget_process_updates(prefsw->prefs_dialog);
+    prefsw->ignore_apply = FALSE;
+  }
+  if (permanent) set_utf8_pref(prefidx, newval);
+  return TRUE;
+}
+
 
 
 boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent) {
@@ -1421,6 +1468,10 @@ boolean apply_prefs(boolean skip_warn) {
   boolean stream_audio_out = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio));
   boolean rec_after_pb = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb));
 
+#if GTK_CHECK_VERSION(3, 2, 0)
+  char *fontname = lives_font_chooser_get_font(LIVES_FONT_CHOOSER(prefsw->fontbutton));
+#endif
+
   int max_msgs = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->nmessages_spin));
   const char *msgtextsize = lives_combo_get_active_text(LIVES_COMBO(prefsw->msg_textsize_combo));
   boolean msgs_unlimited = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_unlimited));
@@ -1805,6 +1856,8 @@ boolean apply_prefs(boolean skip_warn) {
   ulist = get_textsizes_list();
   pref_factory_string_choice(PREF_MSG_TEXTSIZE, ulist, msgtextsize, TRUE);
   lives_list_free_all(&ulist);
+
+  pref_factory_utf8(PREF_INTERFACE_FONT, fontname, TRUE);
 
   if (fsize_to_warn != prefs->warn_file_size) {
     prefs->warn_file_size = fsize_to_warn;
@@ -2283,14 +2336,14 @@ boolean apply_prefs(boolean skip_warn) {
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
-  pref_factory_string(PREF_OMC_JS_FNAME, omc_js_fname, TRUE);
+  pref_factory_utf8(PREF_OMC_JS_FNAME, omc_js_fname, TRUE);
   if (pref_factory_bitmapped(PREF_OMC_DEV_OPTS, OMC_DEV_JS, omc_js_enable, FALSE))
     set_omc_dev_opts = TRUE;
 #endif
 
 #ifdef OMC_MIDI_IMPL
   pref_factory_string(PREF_MIDI_RCV_CHANNEL, midichan, TRUE);
-  pref_factory_string(PREF_OMC_MIDI_FNAME, omc_midi_fname, TRUE);
+  pref_factory_utf8(PREF_OMC_MIDI_FNAME, omc_midi_fname, TRUE);
 
   pref_factory_int(PREF_MIDI_CHECK_RATE, midicr, TRUE);
   pref_factory_int(PREF_MIDI_RPT, midirpt, TRUE);
@@ -3045,6 +3098,30 @@ static void theme_widgets_set_sensitive(LiVESCombo * combo, livespointer xprefsw
   lives_widget_set_sensitive(prefsw->cbutton_fsur, theme_set);
 }
 
+#if GTK_CHECK_VERSION(3, 2, 0)
+static void font_set_cb(LiVESFontButton * button, LiVESSpinButton * spin) {
+  char *fname = lives_font_chooser_get_font(LIVES_FONT_CHOOSER(button));
+  LingoFontDesc *lfd = lives_font_chooser_get_font_desc(LIVES_FONT_CHOOSER(button));
+  int size = lingo_fontdesc_get_size(lfd);
+  if (lingo_fontdesc_size_scaled(lfd)) size /= LINGO_SCALE;
+
+  lives_signal_handler_block(spin, prefsw->font_size_func);
+  lives_spin_button_set_value(spin, size / LINGO_SCALE);
+  lives_signal_handler_unblock(spin, prefsw->font_size_func);
+
+  lives_free(fname);
+  lingo_fontdesc_free(lfd);
+}
+
+static void font_size_cb(LiVESSpinButton * button, LiVESFontChooser * fchoose) {
+  int sval = lives_spin_button_get_value_as_int(button);
+  LingoFontDesc *lfd =
+    lives_font_chooser_get_font_desc(fchoose);
+  lingo_fontdesc_set_size(lfd, sval * LINGO_SCALE);
+  lives_font_chooser_set_font_desc(fchoose, lfd);
+  lingo_fontdesc_free(lfd);
+}
+#endif
 
 static boolean check_txtsize(LiVESWidget * combo) {
   LiVESList *list = get_textsizes_list();
@@ -3109,6 +3186,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   LiVESWidget *mt_enter_defs;
 
   LiVESWidget *advbutton;
+#if GTK_CHECK_VERSION(3, 2, 0)
+  LiVESWidget *scale;
+  LiVESAdjustment *adj;
+#endif
 
   LiVESWidget *sp_red, *sp_green, *sp_blue;
 
@@ -3278,7 +3359,48 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   prefsw->right_shown = prefsw->vbox_right_gui;
 
   layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_gui));
+  tmp = lives_big_and_bold(_("Default interface font"));
+  widget_opts.use_markup = TRUE;
+  lives_layout_add_label(LIVES_LAYOUT(layout), tmp, TRUE);
+  lives_free(tmp);
+  widget_opts.use_markup = FALSE;
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+#if GTK_CHECK_VERSION(3, 2, 0)
+  prefsw->fontbutton = lives_standard_font_chooser_new(capable->font_name);
+  lives_standard_font_chooser_set_size(LIVES_FONT_CHOOSER(prefsw->fontbutton), capable->font_size);
+
+  lives_layout_pack(LIVES_BOX(hbox), prefsw->fontbutton);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  prefsw->font_size_spin = lives_standard_spin_button_new(_("Size"), capable->font_size,
+                           1., 128., 1., 1, 0, LIVES_BOX(hbox), NULL);
+  adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(prefsw->font_size_spin));
+
+  ACTIVE(fontbutton, FONT_SET);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->fontbutton), LIVES_WIDGET_FONT_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(font_set_cb), prefsw->font_size_spin);
+
+  ACTIVE(font_size_spin, VALUE_CHANGED);
+
+  prefsw->font_size_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->font_size_spin),
+                           LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                           LIVES_GUI_CALLBACK(font_size_cb),
+                           (livespointer)prefsw->fontbutton);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(adj));
+  lives_layout_pack(LIVES_BOX(hbox), scale);
+  lives_widget_set_size_request(scale, DEF_SLIDER_WIDTH, -1);
+
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_gui));
+
+  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_gui));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+#endif
 
   prefsw->fs_max_check =
     lives_standard_check_button_new(_("Open file selection maximised"), prefs->fileselmax, LIVES_BOX(hbox), NULL);

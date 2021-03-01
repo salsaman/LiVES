@@ -391,9 +391,6 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   mainw->framedraw_scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
-  if (palette->style & STYLE_1) {
-    lives_widget_set_fg_color(mainw->framedraw_scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
   lives_box_pack_start(LIVES_BOX(hbox), mainw->framedraw_scale, TRUE, TRUE, widget_opts.border_width);
   if (!(rfx->props & RFX_PROPS_MAY_RESIZE)) {
     gtk_range_set_show_fill_level(GTK_RANGE(mainw->framedraw_scale), TRUE);

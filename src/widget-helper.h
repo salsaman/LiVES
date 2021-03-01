@@ -63,7 +63,7 @@ typedef PangoLayout LingoLayout;
 typedef PangoContext LingoContext;
 typedef PangoWrapMode LingoWrapMode;
 typedef PangoEllipsizeMode LingoEllipsizeMode;
-typedef PangoFontDescription LingoFontDescription;
+typedef PangoFontDescription LingoFontDesc;
 #define lingo_layout_set_alignment(a, b) pango_layout_set_alignment(a, b)
 
 #define LINGO_ALIGN_LEFT PANGO_ALIGN_LEFT
@@ -95,11 +95,23 @@ typedef PangoFontDescription LingoFontDescription;
 #define lingo_layout_set_markup(a, b, c) pango_layout_set_markup(a, b, c)
 #define lingo_layout_set_width(a, b) pango_layout_set_width(a, b)
 #define lingo_layout_set_height(a, b) pango_layout_set_height(a, b)
+#define lingo_layout_set_fontdesc(a, b) pango_layout_set_font_description(a, b)
 
-#define lingo_font_description_new(a) pango_font_description_new()
-#define lingo_font_description_get_size(a) pango_font_description_get_size(a)
-#define lingo_font_description_set_size(a, b) pango_font_description_set_size(a, b)
-#define lingo_font_description_free(a) pango_font_description_free(a)
+#define lingo_fontdesc_new(a) pango_font_description_new()
+#define lingo_fontdesc_get_size(a) pango_font_description_get_size(a)
+#define lingo_fontdesc_size_scaled(a) pango_font_description_get_size_is_absolute(a)
+#define lingo_fontdesc_set_size(a, b) pango_font_description_set_size(a, b)
+#define lingo_fontdesc_free(a) pango_font_description_free(a)
+#define lingo_fontdesc_get_fam(a) pango_font_description_get_family(a)
+#define lingo_fontdesc_set_fam(a, b) pango_font_description_set_family(a, b)
+#define lingo_fontdesc_get_stretch(a) pango_font_description_get_stretch(a)
+#define lingo_fontdesc_set_stretch(a, b) pango_font_description_set_stretch(a, b)
+#define lingo_fontdesc_get_style(a) pango_font_description_get_style(a)
+#define lingo_fontdesc_set_style(a, b) pango_font_description_set_style(a, b)
+#define lingo_fontdesc_get_weight(a) pango_font_description_get_weight(a)
+#define lingo_fontdesc_set_weight(a, b) pango_font_description_set_weight(a, b)
+#define lingo_fontdesc_from_string(a) pango_font_description_from_string(a)
+#define lingo_fontdesc_to_string(a) pango_font_description_to_string(a)
 
 #define LINGO_IS_LAYOUT(a) PANGO_IS_LAYOUT(a)
 #define LINGO_IS_CONTEXT(a) PANGO_IS_CONTEXT(a)
@@ -867,8 +879,8 @@ boolean lives_grid_remove_row(LiVESGrid *, int posn);
 #if GTK_CHECK_VERSION(3,2,0)
 char *lives_font_chooser_get_font(LiVESFontChooser *);
 boolean lives_font_chooser_set_font(LiVESFontChooser *, const char *fontname);
-LingoFontDescription *lives_font_chooser_get_font_desc(LiVESFontChooser *);
-boolean lives_font_chooser_set_font_desc(LiVESFontChooser *, LingoFontDescription *lfd);
+LingoFontDesc *lives_font_chooser_get_font_desc(LiVESFontChooser *);
+boolean lives_font_chooser_set_font_desc(LiVESFontChooser *, LingoFontDesc *lfd);
 #endif
 
 LiVESWidget *lives_frame_new(const char *label);
@@ -1119,7 +1131,8 @@ LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt
 
 LiVESWidget *lives_standard_progress_bar_new(void);
 
-LiVESWidget *lives_standard_font_chooser_new(void);
+LiVESWidget *lives_standard_font_chooser_new(const char *fontname);
+boolean lives_standard_font_chooser_set_size(LiVESFontChooser *, int fsize);
 
 LiVESToolItem *lives_menu_tool_button_new(LiVESWidget *icon, const char *label);
 
@@ -1463,8 +1476,6 @@ typedef struct {
   int css_min_width;
   int css_min_height;
   int icon_size; ///< icon size for tooltips image, warn image, toolbar img, etc.
-  char *font_name; ///< readonly for now
-  int font_size; ///< ditto
   boolean no_gui; ///< show nothing !
   double scale; ///< scale factor for all sizes
   boolean alt_button_order; ///< unused for now
@@ -1503,8 +1514,6 @@ const widget_opts_t _def_widget_opts = {
   W_CSS_MIN_WIDTH, ///< css_min_width
   W_CSS_MIN_HEIGHT, ///< css_min_height
   LIVES_ICON_SIZE_LARGE_TOOLBAR, ///< icon_size
-  NULL, ///< font name
-  -1, ///< font size
   FALSE, ///< no_gui
   1.0, ///< default scale
   FALSE, ///< alt button order

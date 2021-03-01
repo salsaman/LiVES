@@ -131,7 +131,7 @@ size_t running_average(float *newval, int idx, void **data) {
 lives_object_transform_t *math_transform_for_intent(lives_object_t *obj, lives_intention intent) {
   if (obj->subtype == MATH_OBJECT_SUBTYPE_STATS) {
     if (intent == MATH_INTENTION_DEV_FROM_MEAN) {
-      lives_req_t *req;
+      //lives_req_t *req;
       lives_object_transform_t *tx =
         (lives_object_transform_t *)lives_calloc(sizeof(lives_object_transform_t), 1);
       tx->prereqs = (lives_rules_t *)lives_calloc(sizeof(lives_rules_t), 1);

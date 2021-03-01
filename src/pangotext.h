@@ -83,7 +83,7 @@ boolean get_subt_text(lives_clip_t *sfile, double xtime);
 boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
 boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
 
-boolean lives_parse_font_string(const char *string, char **font, int *size, char **stretch,
+boolean lives_parse_font_string(const char *string, char **font, char **family, int *size, char **stretch,
                                 char **style, char **weight);
 
 #endif

@@ -1848,7 +1848,6 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
           lives_box_pack_start(LIVES_BOX(hbox), scale, TRUE, TRUE, widget_opts.packing_width >> 1);
           if (!LIVES_IS_HBOX(LIVES_WIDGET(box))) add_fill_to_box(LIVES_BOX(hbox));
         }
-        lives_widget_apply_theme(scale, LIVES_WIDGET_STATE_NORMAL);
         if (param->desc) lives_widget_set_tooltip_text(scale, param->desc);
         param->widgets[++wcount] = scale;
       }

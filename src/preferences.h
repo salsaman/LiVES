@@ -574,6 +574,7 @@ typedef struct {
   ulong encoder_ofmt_fn;
   ulong encoder_name_fn;
   ulong close_func;
+  ulong font_size_func;
   LiVESAccelGroup *accel_group;
 
   LiVESWidget *prefs_dialog;
@@ -663,6 +664,8 @@ typedef struct {
   LiVESWidget *spinbutton_crit_ds;
   LiVESWidget *dsl_label;
   LiVESWidget *dsc_label;
+  LiVESWidget *fontbutton;
+  LiVESWidget *font_size_spin;
   LiVESWidget *checkbutton_warn_fps;
   LiVESWidget *checkbutton_warn_mplayer;
   LiVESWidget *checkbutton_warn_save_set;
@@ -1039,6 +1042,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_RECENT "recent"
 
+#define PREF_INTERFACE_FONT "def_GUI_font"
+
 /////////////////// integer64 values
 #define PREF_DS_WARN_LEVEL "ds_warn_level"
 #define PREF_DS_CRIT_LEVEL "ds_crit_level"
@@ -1187,6 +1192,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent);
 boolean pref_factory_string(const char *prefidx, const char *newval, boolean permanent);
+boolean pref_factory_utf8(const char *prefidx, const char *newval, boolean permanent);
 boolean pref_factory_int(const char *prefidx, int newval, boolean permanent);
 boolean pref_factory_int64(const char *prefidx, int64_t newval, boolean permanent);
 boolean pref_factory_float(const char *prefidx, float newval, boolean permanent);

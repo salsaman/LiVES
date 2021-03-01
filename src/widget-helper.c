@@ -1946,7 +1946,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
 
     // setting context provider for screen is VERY slow, so this should be used sparingly
     gtk_style_context_add_provider_for_screen(mainw->mgeom[widget_opts.monitor].screen, GTK_STYLE_PROVIDER
-        (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+        (provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
   } else {
     if (!LIVES_IS_WIDGET(widget)) return FALSE;
     selector = (char *)xselector;
@@ -2059,7 +2059,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
   lives_free(widget_name);
   css_string = g_strdup_printf(" %s {\n %s: %s;}\n", wname, detail, value);
 
-  if (show_css) g_print("running CSS %s\n", css_string);
+  if (show_css && !widget) g_print("running CSS %s\n", css_string);
 
 #if GTK_CHECK_VERSION(4, 0, 0)
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
@@ -6715,12 +6715,12 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_font_chooser_set_font(LiVESFontChooser
   return TRUE;
 }
 
-WIDGET_HELPER_GLOBAL_INLINE LingoFontDescription *lives_font_chooser_get_font_desc(LiVESFontChooser *fc) {
+WIDGET_HELPER_GLOBAL_INLINE LingoFontDesc *lives_font_chooser_get_font_desc(LiVESFontChooser *fc) {
   return gtk_font_chooser_get_font_desc(fc);
 }
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_font_chooser_set_font_desc(LiVESFontChooser *fc,
-    LingoFontDescription *lfd) {
+    LingoFontDesc *lfd) {
   gtk_font_chooser_set_font_desc(fc, lfd);
   return TRUE;
 }
@@ -8397,7 +8397,6 @@ static LiVESWidget *_lives_standard_button_set_full(LiVESWidget * sbutt, LiVESBo
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(LIVES_WIDGET_OBJECT(sbutt)),
                                    SBUTT_FAKEDEF_KEY, sbutt);
     }
-    sbutt_render(sbutt, 0, NULL);
 #endif
   }
   return sbutt;
@@ -10145,7 +10144,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_font_chooser_new(void) {
+LiVESWidget *lives_standard_font_chooser_new(const char *fontname) {
   LiVESWidget *font_choo = NULL;
   int width = DEF_BUTTON_WIDTH, height = ((widget_opts.css_min_height * 3 + 3) >> 2) << 1;
 #ifdef GUI_GTK
@@ -10158,6 +10157,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_font_chooser_new(void) {
   ttl = lives_strdup_printf("%s%s", widget_opts.title_prefix, _("Choose a Font..."));
   gtk_font_button_set_title(GTK_FONT_BUTTON(font_choo), ttl);
   lives_free(ttl);
+
+  if (fontname) lives_font_chooser_set_font(LIVES_FONT_CHOOSER(font_choo), fontname);
 
   if (widget_opts.apply_theme) {
     set_standard_widget(font_choo, TRUE);
@@ -10188,6 +10189,16 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_font_chooser_new(void) {
 #endif
 #endif
   return font_choo;
+}
+
+
+LIVES_GLOBAL_INLINE
+boolean lives_standard_font_chooser_set_size(LiVESFontChooser * fchoo, int fsize) {
+  LingoFontDesc *lfd = lives_font_chooser_get_font_desc(fchoo);
+  lingo_fontdesc_set_size(lfd, fsize * LINGO_SCALE);
+  lives_font_chooser_set_font_desc(LIVES_FONT_CHOOSER(fchoo), lfd);
+  lingo_fontdesc_free(lfd);
+  return TRUE;
 }
 
 
@@ -10261,6 +10272,7 @@ LiVESWidget *lives_standard_hscale_new(LiVESAdjustment * adj) {
   hscale = gtk_scale_new(LIVES_ORIENTATION_HORIZONTAL, adj);
 
   if (widget_opts.apply_theme) {
+    lives_widget_apply_theme(hscale, LIVES_WIDGET_STATE_NORMAL);
 #if GTK_CHECK_VERSION(3, 16, 0)
     char *colref = gdk_rgba_to_string(&palette->white);
     char *tmp = lives_strdup_printf("image(%s)", colref);
@@ -10534,6 +10546,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_file_button_new(boolean 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), ISDIR_KEY, LIVES_INT_TO_POINTER(is_dir));
   if (def_dir) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), DEFDIR_KEY, (livespointer)def_dir);
   lives_standard_button_set_image(LIVES_BUTTON(fbutton), image);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(LIVES_WIDGET_OBJECT(fbutton)),
+                               SBUTT_FAKEDEF_KEY, fbutton);
   return fbutton;
 }
 
@@ -10582,6 +10596,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_lock_button_new(boolean 
   lockbutton = lives_standard_button_new_with_label(label, 2, height);
   lives_button_set_focus_on_click(LIVES_BUTTON(lockbutton), FALSE);
   if (tooltip) lives_widget_set_tooltip_text(lockbutton, tooltip);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(LIVES_WIDGET_OBJECT(lockbutton)),
+                               SBUTT_FAKEDEF_KEY, lockbutton);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(lockbutton), ISLOCKED_KEY, LIVES_INT_TO_POINTER(!is_locked));
   lives_signal_sync_connect(lockbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(_on_lock_button_clicked), NULL);
   _on_lock_button_clicked(LIVES_BUTTON(lockbutton), LIVES_INT_TO_POINTER(widget_opts.apply_theme));

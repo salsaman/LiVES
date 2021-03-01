@@ -4135,35 +4135,104 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
 }
 
 
-#if 0
+
+#if GTK_CHECK_VERSION(3, 10, 0)
+#define DETECTOR_STRING "a0b1c2d3e4f5"
+#endif
+
 static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
-  static boolean norecurse = FALSE;
+  // what should happen with gtkfilechooser, but doesnt (!)
+  // setting mode to CREATE_DIRECTORY should allow creatiung a new directory or entering an existing one
+  //        - this is fine
+  // when first shown or after a double-clisk (enter directory), the directory path should be shown in the file name bar
+  // the select (activate) button should be sensitive, clicking it should select the current directory
+  // gtk enters the parent directory and shows the target dir as selected - this is fine, except nothing is show in the entry
+  // and the select button is insensitive !
+  // you have to actually click a few times for the "select" button to light up. still nothing in file entry
+
+  // -  what happens: directory name is not shown in the file entry, select button is insensitive
+  // single clicking on a directory with should show its path in the filentry box, the select button should be sensitive
+  // also the directory should appear as "selected"
+
+  // double clisking on a subdir, opens the subdir, but still nothing in the entry. and select button is insensitive
+  // - creating a directory makes the filechooser enter the directory but the select button is off, you have to go up one dir to the parent
+  // so what is the point of entering the empty dir ?
+
+  // this callback fixes all of this
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 10, 0)
+  struct fc_dissection *diss = (struct fc_dissection *)user_data;
+#else
+  void *diss = NULL;
+#endif
+#endif
   char *tmp;
-  char *fname = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
-                                       -1, NULL, NULL, NULL);
+
+  char *fold = NULL, *fname = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
+                              -1, NULL, NULL, NULL);
   lives_free(tmp);
 
-  if (norecurse) return;
-  norecurse = TRUE;
+  fold = lives_filename_to_utf8((tmp = gtk_file_chooser_get_current_folder(LIVES_FILE_CHOOSER(chooser))),
+                                -1, NULL, NULL, NULL);
+  lives_free(tmp);
 
-  if (!lives_file_test(fname, LIVES_FILE_TEST_IS_DIR)) {
-    gtk_file_chooser_set_filename(LIVES_FILE_CHOOSER(chooser), fname);
-    gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname);
-  } else {
-    gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser), fname);
-    gtk_file_chooser_set_filename(LIVES_FILE_CHOOSER(chooser), fname);
+  if (!fname && !fold) return;
+
+  if (lives_file_test(fname, LIVES_FILE_TEST_IS_REGULAR)) {
+    if (diss) lives_widget_set_sensitive(diss->selbut, FALSE);
+    return;
   }
 
-  gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname);
-  norecurse = FALSE;
-}
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 10, 0)
+  if (diss) {
+    char *path;
+    char buff[PATH_MAX];
+    size_t s1 = lives_strlen(fname);
+    size_t s2 = lives_strlen(fold);
+    boolean folhas = FALSE, fnahas = FALSE;
+
+    if (lives_string_ends_with(fname, "%s", LIVES_DEF_WORK_SUBDIR)) {
+      fnahas = TRUE;
+      s1 -= 14;
+    }
+    if (lives_string_ends_with(fold, "%s", LIVES_DEF_WORK_SUBDIR)) {
+      folhas = TRUE;
+      s2 -= 14;
+    }
+    if (s1 > s2) {
+      if (!fnahas) path = lives_build_path(fname, LIVES_DEF_WORK_SUBDIR, NULL);
+      else path = fname;
+    } else {
+      if (!folhas) path = lives_build_path(fold, LIVES_DEF_WORK_SUBDIR, NULL);
+      else path = fold;
+    }
+    lives_snprintf(buff, PATH_MAX, "%s", path);
+    if (path != fname && path != fold) lives_free(path);
+
+    if (!lives_file_test(buff, LIVES_FILE_TEST_IS_DIR)) {
+      ensure_isdir(buff);
+    }
+    if (diss->new_entry) lives_entry_set_text(LIVES_ENTRY(diss->new_entry), buff);
+
+    lives_widget_set_sensitive(diss->selbut, TRUE);
+  }
 #endif
+#endif
+}
 
 
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
                   const char *title, LiVESWidget * extra_widget) {
   // new style file chooser
 
+#if GTK_CHECK_VERSION(3, 10, 0)
+  struct fc_dissection *diss;
+  LiVESList *elist = NULL;
+  char *oldname;
+#else
+  void *diss = NULL;
+#endif
   // in/out values are in utf8 encoding
   LiVESWidget *chooser;
 
@@ -4187,12 +4256,16 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 #ifdef GUI_GTK
   if (act != LIVES_FILE_CHOOSER_ACTION_SAVE) {
     const char *stocklabel;
+    LiVESResponseType resp = LIVES_RESPONSE_ACCEPT;
     if (act == LIVES_FILE_CHOOSER_ACTION_OPEN) {
       stocklabel = LIVES_STOCK_LABEL_OPEN;
-    } else stocklabel = LIVES_STOCK_LABEL_SELECT;
+    } else {
+      resp = LIVES_RESPONSE_NO;
+      stocklabel = LIVES_STOCK_LABEL_SELECT;
+    }
     chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                           LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
-                                          stocklabel, LIVES_RESPONSE_ACCEPT, NULL);
+                                          stocklabel, resp, NULL);
   } else {
     chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                           LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
@@ -4210,6 +4283,39 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   }
 
   gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser), TRUE);
+
+  if (mainw->is_ready && palette->style & STYLE_1) {
+    lives_widget_set_bg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  }
+
+#if GTK_CHECK_VERSION(3, 10, 0)
+  diss = set_child_colour(chooser, FALSE);
+  diss->selbut = gtk_dialog_get_widget_for_response(GTK_DIALOG(chooser), LIVES_RESPONSE_NO);
+  oldname = gtk_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
+  gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), DETECTOR_STRING);
+  elist = diss->entry_list;
+  for (; elist; elist = elist->next) {
+    if (!lives_strcmp(lives_entry_get_text((LiVESEntry *)elist->data), DETECTOR_STRING)) {
+      diss->old_entry = (LiVESWidget *)elist->data;
+      break;
+    }
+  }
+  if (oldname) {
+    gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), oldname);
+    lives_free(oldname);
+  }
+
+  else gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), "");
+  gtk_widget_hide(diss->old_entry);
+
+  diss->new_entry = lives_entry_new();
+  lives_widget_set_hexpand(diss->new_entry, TRUE);
+  lives_grid_attach_next_to(LIVES_GRID(lives_widget_get_parent(diss->old_entry)),
+                            diss->new_entry, diss->old_entry, LIVES_POS_RIGHT, 1, 1);
+  lives_entry_set_text(LIVES_ENTRY(diss->new_entry), fname);
+  lives_widget_show(diss->new_entry);
+#endif
 
   if (filt) {
     if (filt[0] && !strcmp(filt[0], ".") && !filt[1]) {
@@ -4240,35 +4346,11 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
             gtk_file_chooser_set_filename(LIVES_FILE_CHOOSER(chooser), fname);
           }
         }
-        /* lives_signal_sync_connect(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL, */
-        /*                           LIVES_GUI_CALLBACK(fc_sel_changed), NULL); */
+        lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL,
+                                        LIVES_GUI_CALLBACK(fc_sel_changed), diss);
       }
     }
   }
-
-
-  //g_signal_connect (chooser, "confirm-overwrite", G_CALLBACK (cocf), NULL);
-
-
-  /* if (extra_widget && extra_widget != LIVES_MAIN_WINDOW_WIDGET) { */
-  /*   gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser), extra_widget); */
-  /*   if (palette->style & STYLE_1) { */
-  /*     LiVESWidget *parent = lives_widget_get_parent(extra_widget); */
-
-  /*     while (parent) { */
-  /*       lives_widget_set_fg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore); */
-  /*       lives_widget_set_bg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back); */
-  /*       parent = lives_widget_get_parent(parent); */
-  /*     } */
-  /*   } */
-  /* } */
-
-  if (mainw->is_ready && palette->style & STYLE_1) {
-    lives_widget_set_bg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    set_child_colour(chooser, FALSE);
-  }
-
 #endif
 
   lives_container_set_border_width(LIVES_CONTAINER(chooser), widget_opts.border_width);
@@ -4300,9 +4382,12 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 rundlg:
   if ((response = lives_dialog_run(LIVES_DIALOG(chooser))) != LIVES_RESPONSE_CANCEL) {
     char *tmp;
-    filename = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
-                                      -1, NULL, NULL, NULL);
-    lives_free(tmp);
+    if (diss->new_entry) filename = lives_strdup(lives_entry_get_text(LIVES_ENTRY(diss->new_entry)));
+    else {
+      filename = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
+                                        -1, NULL, NULL, NULL);
+      lives_free(tmp);
+    }
   } else filename = NULL;
 
   if (response && filename && act == LIVES_FILE_CHOOSER_ACTION_SAVE) {
@@ -4316,6 +4401,13 @@ rundlg:
   lives_free(mytitle);
   lives_widget_destroy(chooser);
   mainw->fc_buttonresponse = response;
+
+#if GTK_CHECK_VERSION(3, 10, 0)
+  if (diss) {
+    if (diss->entry_list) lives_list_free(diss->entry_list);
+    lives_free(diss);
+  }
+#endif
   return filename;
 }
 

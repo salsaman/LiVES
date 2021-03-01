@@ -11822,9 +11822,50 @@ WIDGET_HELPER_GLOBAL_INLINE double lives_spin_button_get_snapval(LiVESSpinButton
 }
 
 
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 10, 0)
+static void dissect_filechooser(LiVESWidget * widget, livespointer user_data) {
+  static boolean set_allx = FALSE;
+  static boolean get_entry  = FALSE;
+  boolean set_all = set_allx;
+  boolean get_e = get_entry;
+  struct fc_dissection *diss = (struct fc_dissection *)user_data;
+
+  if (LIVES_IS_PLACES_SIDEBAR(widget)) {
+    diss->sidebar = widget;
+    set_allx = TRUE;
+  }
+  if (GTK_IS_GRID(widget)) {
+    get_entry = TRUE;
+  } else if (get_entry && LIVES_IS_ENTRY(widget)) {
+    diss->entry_list = lives_list_append(diss->entry_list, widget);
+  } else if (!lives_strcmp(gtk_widget_get_name(widget), "browser_files_stack")) {
+    set_allx = TRUE;
+  } else if (LIVES_IS_BUTTON_BOX(widget)) {
+    diss->bbox = widget;
+  } else if (GTK_IS_LIST_BOX(widget)) {
+    diss->treeview = widget;
+  } else if (GTK_IS_REVEALER(widget) && !lives_strcmp(gtk_widget_get_name(widget), "browser_header_revealer")) {
+    diss->revealer = widget;
+  }
+
+  if (!set_all && LIVES_IS_BUTTON(widget)) return; // avoids a problem with filechooser
+  if (set_all || LIVES_IS_LABEL(widget)) {
+    lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_NORMAL);
+    if (!LIVES_IS_LABEL(widget))
+      lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_INSENSITIVE);
+  }
+  if (LIVES_IS_CONTAINER(widget)) {
+    lives_container_forall(LIVES_CONTAINER(widget), dissect_filechooser, user_data);
+  }
+  set_allx = set_all;
+  get_entry = get_e;
+}
+#endif
+#endif
+
 static void set_child_colour_internal(LiVESWidget * widget, livespointer set_allx) {
   boolean set_all = LIVES_POINTER_TO_INT(set_allx);
-
   if (!set_all && LIVES_IS_BUTTON(widget)) return; // avoids a problem with filechooser
   if (set_all || LIVES_IS_LABEL(widget)) {
     lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_NORMAL);
@@ -11837,10 +11878,20 @@ static void set_child_colour_internal(LiVESWidget * widget, livespointer set_all
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE void set_child_colour(LiVESWidget * widget, boolean set_all) {
+WIDGET_HELPER_GLOBAL_INLINE void *set_child_colour(LiVESWidget * widget, boolean set_all) {
   // set widget and all children widgets
   // if set_all is FALSE, we only set labels (and ignore labels in buttons)
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 10, 0)
+  if (LIVES_IS_FILE_CHOOSER(widget)) {
+    struct fc_dissection *diss = (struct fc_dissection *)lives_calloc(sizeof(struct fc_dissection), 1);
+    dissect_filechooser(widget, diss);
+    return diss;
+  }
+#endif
+#endif
   set_child_colour_internal(widget, LIVES_INT_TO_POINTER(set_all));
+  return NULL;
 }
 
 
@@ -11890,9 +11941,9 @@ static void set_child_alt_colour_internal(LiVESWidget * widget, livespointer set
 
   if (set_all || LIVES_IS_LABEL(widget)) {
     lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_INSENSITIVE, TRUE);
-    lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_NORMAL, TRUE);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget),
-                                 THEME_KEY, LIVES_INT_TO_POINTER(2));
+    lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_NORMAL, TRUE),
+                              lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget),
+                                  THEME_KEY, LIVES_INT_TO_POINTER(2));
   }
 
   if (LIVES_IS_CONTAINER(widget)) {

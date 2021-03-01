@@ -2260,9 +2260,9 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   /// do not popup warning if set name is changed
   mainw->suppress_layout_warnings = TRUE;
 
-  if ((!mainw->clips_available || (future_prefs->vj_mode && !mainw->no_exit))
-      && !(*future_prefs->workdir
-           && lives_strcmp(future_prefs->workdir, prefs->workdir))) {
+  if (!mainw->clips_available || (future_prefs->vj_mode && !mainw->no_exit
+                                  && !(*future_prefs->workdir
+                                       && lives_strcmp(future_prefs->workdir, prefs->workdir)))) {
     lives_exit(0);
   } else {
     if (prompt_for_set_save() != LIVES_RESPONSE_CANCEL && !mainw->no_exit) lives_exit(0);

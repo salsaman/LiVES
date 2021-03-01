@@ -143,6 +143,8 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_TABLE_IS_GRID 1
 #endif
 
+#define LIVES_IS_PLACES_SIDEBAR(w) GTK_IS_PLACES_SIDEBAR(w)
+
 #define LIVES_ACCEL_PATH_QUIT "<LiVES>/quit"
 #define LIVES_ACCEL_PATH_SAVE "<LiVES>/save"
 
@@ -773,7 +775,6 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #define LIVES_ALIGN_END 2
 #define LIVES_ALIGN_CENTER 3
 #endif
-
 
 #if GTK_CHECK_VERSION(3, 10, 0)
 #define LIVES_ALIGN_BASELINE GTK_ALIGN_BASELINE
@@ -1410,6 +1411,18 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #define LIVES_INT_TO_POINTER  GINT_TO_POINTER
 #define LIVES_UINT_TO_POINTER GUINT_TO_POINTER
 #define LIVES_POINTER_TO_INT  GPOINTER_TO_INT
+
+#if GTK_CHECK_VERSION(3, 10, 0)
+  struct fc_dissection {
+    LiVESList *entry_list;
+    LiVESWidget *sidebar;
+    LiVESWidget *bbox;
+    LiVESWidget *revealer;
+    LiVESWidget *treeview;
+    LiVESWidget *selbut;
+    LiVESWidget *old_entry, *new_entry;
+  };
+#endif
 
 #endif
 

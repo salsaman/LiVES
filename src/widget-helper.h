@@ -1181,7 +1181,7 @@ void lives_widget_apply_theme_dimmed(LiVESWidget *, LiVESWidgetState state, int 
 void set_child_dimmed_colour(LiVESWidget *, int dim); // dimmed normal theme for children (insensitive state only)
 
 // if set_all, set the widget itself (labels always set_all; buttons are ignored if set_all is FALSE)
-void set_child_colour(LiVESWidget *, boolean set_all); // normal theme, sensitive and insensitive
+void *set_child_colour(LiVESWidget *, boolean set_all); // normal theme, sensitive and insensitive
 
 void lives_widget_apply_theme2(LiVESWidget *, LiVESWidgetState state, boolean set_fg); // menu and bars colours
 void lives_widget_apply_theme_dimmed2(LiVESWidget *, LiVESWidgetState state, int dimval);

@@ -737,7 +737,8 @@ boolean pref_factory_utf8(const char *prefidx, const char *newval, boolean perma
   if (prefsw) prefsw->ignore_apply = TRUE;
 
   if (!lives_strcmp(prefidx, PREF_INTERFACE_FONT)) {
-    if (*newval && (!*capable->def_fontstring || !permanent || lives_strcmp(newval, capable->def_fontstring))) {
+    if (*newval && (!capable->def_fontstring || !*capable->def_fontstring || !permanent ||
+                    lives_strcmp(newval, capable->def_fontstring))) {
 #if GTK_CHECK_VERSION(3, 16, 0)
       char *tmp;
 #endif
@@ -751,8 +752,7 @@ boolean pref_factory_utf8(const char *prefidx, const char *newval, boolean perma
       lives_freep((void **)&capable->font_style);
       lives_freep((void **)&capable->font_weight);
       lives_parse_font_string(capable->def_fontstring, &capable->font_name, &capable->font_fam, &capable->font_size,
-                              &capable->font_stretch,
-                              &capable->font_style, &capable->font_weight);
+                              &capable->font_stretch, &capable->font_style, &capable->font_weight);
 #if GTK_CHECK_VERSION(3, 16, 0)
       tmp = lives_strdup_printf("%dpx", capable->font_size);
       set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "*", "font-size", tmp);
@@ -1857,6 +1857,11 @@ boolean apply_prefs(boolean skip_warn) {
   pref_factory_string_choice(PREF_MSG_TEXTSIZE, ulist, msgtextsize, TRUE);
   lives_list_free_all(&ulist);
 
+  if (future_prefs->def_fontstring) {
+    lives_freep((void **)&capable->def_fontstring);
+    capable->def_fontstring = future_prefs->def_fontstring;
+    future_prefs->def_fontstring = NULL;
+  }
   pref_factory_utf8(PREF_INTERFACE_FONT, fontname, TRUE);
 
   if (fsize_to_warn != prefs->warn_file_size) {
@@ -3098,7 +3103,31 @@ static void theme_widgets_set_sensitive(LiVESCombo * combo, livespointer xprefsw
   lives_widget_set_sensitive(prefsw->cbutton_fsur, theme_set);
 }
 
+
 #if GTK_CHECK_VERSION(3, 2, 0)
+static void font_preview_clicked(LiVESButton * button, LiVESFontChooser * fontbutton) {
+  if (GET_INT_DATA(button, PREVIEW_KEY)) {
+    char *fontname = lives_font_chooser_get_font(fontbutton);
+    lives_button_set_label(button, "_Revert to previous font");
+    lives_button_set_image_from_stock(button, LIVES_STOCK_UNDO);
+    future_prefs->def_fontstring = capable->def_fontstring;
+    capable->def_fontstring = NULL;
+    pref_factory_utf8(PREF_INTERFACE_FONT, fontname, FALSE);
+    SET_INT_DATA(button, PREVIEW_KEY, FALSE);
+  } else {
+    lives_button_set_label(button, "_Preview font");
+    lives_button_set_image_from_stock(button, LIVES_STOCK_APPLY);
+    if (future_prefs->def_fontstring) {
+      lives_freep((void **)&capable->def_fontstring);
+      capable->def_fontstring = future_prefs->def_fontstring;
+      future_prefs->def_fontstring = NULL;
+      pref_factory_utf8(PREF_INTERFACE_FONT, capable->def_fontstring, FALSE);
+    } else lives_widget_set_sensitive(LIVES_WIDGET(button), FALSE);
+    SET_INT_DATA(button, PREVIEW_KEY, TRUE);
+  }
+}
+
+
 static void font_set_cb(LiVESFontButton * button, LiVESSpinButton * spin) {
   char *fname = lives_font_chooser_get_font(LIVES_FONT_CHOOSER(button));
   LingoFontDesc *lfd = lives_font_chooser_get_font_desc(LIVES_FONT_CHOOSER(button));
@@ -3111,6 +3140,7 @@ static void font_set_cb(LiVESFontButton * button, LiVESSpinButton * spin) {
 
   lives_free(fname);
   lingo_fontdesc_free(lfd);
+  lives_widget_set_sensitive(prefsw->font_pre_button, TRUE);
 }
 
 static void font_size_cb(LiVESSpinButton * button, LiVESFontChooser * fchoose) {
@@ -3120,6 +3150,7 @@ static void font_size_cb(LiVESSpinButton * button, LiVESFontChooser * fchoose) {
   lingo_fontdesc_set_size(lfd, sval * LINGO_SCALE);
   lives_font_chooser_set_font_desc(fchoose, lfd);
   lingo_fontdesc_free(lfd);
+  lives_widget_set_sensitive(prefsw->font_pre_button, TRUE);
 }
 #endif
 
@@ -3365,12 +3396,21 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_free(tmp);
   widget_opts.use_markup = FALSE;
 
-  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  //lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
 #if GTK_CHECK_VERSION(3, 2, 0)
+  prefsw->font_pre_button =
+    lives_standard_button_new_from_stock_full(LIVES_STOCK_APPLY, NULL, -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
   prefsw->fontbutton = lives_standard_font_chooser_new(capable->font_name);
   lives_standard_font_chooser_set_size(LIVES_FONT_CHOOSER(prefsw->fontbutton), capable->font_size);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->font_pre_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(font_preview_clicked), prefsw->fontbutton);
+  font_preview_clicked(LIVES_BUTTON(prefsw->font_pre_button), LIVES_FONT_CHOOSER(prefsw->fontbutton));
 
   lives_layout_pack(LIVES_BOX(hbox), prefsw->fontbutton);
 
@@ -6472,6 +6512,14 @@ void on_prefs_revert_clicked(LiVESButton * button, livespointer user_data) {
   lives_freep((void **)&prefsw);
 
   future_prefs->jack_opts = prefs->jack_opts;
+
+  if (future_prefs->def_fontstring) {
+    if (!capable->def_fontstring) {
+      pref_factory_utf8(PREF_INTERFACE_FONT, future_prefs->def_fontstring, FALSE);
+    }
+    if (future_prefs->def_fontstring != capable->def_fontstring) lives_free(future_prefs->def_fontstring);
+    future_prefs->def_fontstring = NULL;
+  }
 
   on_preferences_activate(NULL, saved_dialog);
 

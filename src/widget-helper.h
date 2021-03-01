@@ -278,6 +278,10 @@ void lives_widget_object_set_data_list(LiVESWidgetObject *, const char *key, LiV
 void lives_widget_object_set_data_widget_object(LiVESWidgetObject *, const char *key, livespointer other);
 // lives_pixbuf functions
 
+#define GET_INT_DATA(widg, key) (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT((widg)), (key))))
+
+#define SET_INT_DATA(widg, key, val) (lives_widget_object_set_data(LIVES_WIDGET_OBJECT((widg)), ((key)), LIVES_INT_TO_POINTER((val))))
+
 int lives_pixbuf_get_width(const LiVESPixbuf *);
 int lives_pixbuf_get_height(const LiVESPixbuf *);
 boolean lives_pixbuf_get_has_alpha(const LiVESPixbuf *);

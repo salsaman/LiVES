@@ -2964,6 +2964,7 @@ _entryw *create_rename_dialog(int type) {
       renamew->entry = lives_standard_direntry_new("", (tmp = F2U8(workdir)),
                        LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                        (tmp2 = (_("LiVES working directory."))));
+      lives_entry_set_editable(LIVES_ENTRY(renamew->entry), TRUE);
 
       dirbutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), FILESEL_TYPE_KEY,
@@ -4222,6 +4223,14 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
 }
 
 
+static void fc_folder_changed(LiVESFileChooser * chooser, livespointer user_data) {
+#if GTK_CHECK_VERSION(3, 10, 0)
+  struct fc_dissection *diss = (struct fc_dissection *)user_data;
+  if (diss) set_child_colour(diss->treeview, TRUE);
+#endif
+}
+
+
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
                   const char *title, LiVESWidget * extra_widget) {
   // new style file chooser
@@ -4291,30 +4300,32 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
 #if GTK_CHECK_VERSION(3, 10, 0)
   diss = set_child_colour(chooser, FALSE);
-  diss->selbut = gtk_dialog_get_widget_for_response(GTK_DIALOG(chooser), LIVES_RESPONSE_NO);
-  oldname = gtk_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
-  gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), DETECTOR_STRING);
-  elist = diss->entry_list;
-  for (; elist; elist = elist->next) {
-    if (!lives_strcmp(lives_entry_get_text((LiVESEntry *)elist->data), DETECTOR_STRING)) {
-      diss->old_entry = (LiVESWidget *)elist->data;
-      break;
+  if (diss) {
+    diss->selbut = gtk_dialog_get_widget_for_response(GTK_DIALOG(chooser), LIVES_RESPONSE_NO);
+    oldname = gtk_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
+    gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), DETECTOR_STRING);
+    elist = diss->entry_list;
+    for (; elist; elist = elist->next) {
+      if (!lives_strcmp(lives_entry_get_text((LiVESEntry *)elist->data), DETECTOR_STRING)) {
+        diss->old_entry = (LiVESWidget *)elist->data;
+        break;
+      }
     }
-  }
-  if (oldname) {
-    gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), oldname);
-    lives_free(oldname);
-  }
+    if (oldname) {
+      gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), oldname);
+      lives_free(oldname);
+    }
 
-  else gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), "");
-  gtk_widget_hide(diss->old_entry);
+    else gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), "");
+    gtk_widget_hide(diss->old_entry);
 
-  diss->new_entry = lives_entry_new();
-  lives_widget_set_hexpand(diss->new_entry, TRUE);
-  lives_grid_attach_next_to(LIVES_GRID(lives_widget_get_parent(diss->old_entry)),
-                            diss->new_entry, diss->old_entry, LIVES_POS_RIGHT, 1, 1);
-  lives_entry_set_text(LIVES_ENTRY(diss->new_entry), fname);
-  lives_widget_show(diss->new_entry);
+    diss->new_entry = lives_entry_new();
+    lives_widget_set_hexpand(diss->new_entry, TRUE);
+    lives_grid_attach_next_to(LIVES_GRID(lives_widget_get_parent(diss->old_entry)),
+                              diss->new_entry, diss->old_entry, LIVES_POS_RIGHT, 1, 1);
+    lives_entry_set_text(LIVES_ENTRY(diss->new_entry), fname);
+    lives_widget_show(diss->new_entry);
+  }
 #endif
 
   if (filt) {
@@ -4348,6 +4359,8 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
         }
         lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL,
                                         LIVES_GUI_CALLBACK(fc_sel_changed), diss);
+        lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), "folder-changed",
+                                        LIVES_GUI_CALLBACK(fc_folder_changed), diss);
       }
     }
   }
@@ -4382,7 +4395,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 rundlg:
   if ((response = lives_dialog_run(LIVES_DIALOG(chooser))) != LIVES_RESPONSE_CANCEL) {
     char *tmp;
-    if (diss->new_entry) filename = lives_strdup(lives_entry_get_text(LIVES_ENTRY(diss->new_entry)));
+    if (diss && diss->new_entry) filename = lives_strdup(lives_entry_get_text(LIVES_ENTRY(diss->new_entry)));
     else {
       filename = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
                                         -1, NULL, NULL, NULL);

@@ -665,6 +665,7 @@ typedef struct {
   LiVESWidget *dsl_label;
   LiVESWidget *dsc_label;
   LiVESWidget *fontbutton;
+  LiVESWidget *font_pre_button;
   LiVESWidget *font_size_spin;
   LiVESWidget *checkbutton_warn_fps;
   LiVESWidget *checkbutton_warn_mplayer;
@@ -917,6 +918,7 @@ typedef struct {
   int msg_textsize;
   boolean pref_trash; ///< user prefers trash to delete (future / present swapped)
   boolean letterbox_mt;
+  char *def_fontstring; ///< preview of capable->def_fontstring
 } _future_prefs;
 
 _prefs *prefs;
@@ -1242,6 +1244,9 @@ void toggle_sets_pref(LiVESWidget *widget, livespointer prefidx);
 #if 0
 void optimize(void);
 #endif
+
+// toggle for widget object data (widget is in preview state)
+#define PREVIEW_KEY "_prefw_preview"
 
 // permissions
 

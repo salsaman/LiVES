@@ -151,10 +151,14 @@ enum {
 #define RFX_PROPS_RESERVED3   0x4000
 #define RFX_PROPS_AUTO_BUILT  0x8000
 
+// generic states which can be alter by *transforms*
 #define OBJECT_STATE_NULL	0
 #define OBJECT_STATE_NORMAL	1
+#define OBJECT_STATE_PREVIEW	2
 
-// object states
+// TODO - move into cliphandler.c
+
+// aliases for object states
 #define CLIP_STATE_NOT_LOADED 	OBJECT_STATE_NULL
 #define CLIP_STATE_READY	OBJECT_STATE_NORMAL
 
@@ -170,39 +174,33 @@ struct _obj_status {
   int refcount;
 };
 
-#define LIVES_INTENTION_TYPE_PASSIVE 0 /// intention to do something passive like get / set data
-#define LIVES_INTENTION_TYPE_ACTIVE (1 << 1) /// intentnion has one or more related state transforms
-
 typedef uint64_t lives_intention;
-typedef uint64_t lives_intention_type;
 
 typedef struct {
   lives_intention intent;
   int n_caps;
   int *capabilities; ///< type specific capabilities
-  lives_intention_type type; ///< the type of tntention
 } lives_intentcap_t;
 
 // intentparams along with the requirements can be used to guide the transformation
 typedef struct {
   lives_intention intent;
   int n_params;
-  weed_param_t **params; ///< params for the transform
+  weed_param_t **params; ///< params for the transform (can be converted to normal params via weed_param_from_iparams)
 } lives_intentparams_t;
 
 /// NOT YET FULLY IMPLEMENTED
 
-// object status
+// object status (these differ from states in that they are dynamic and under control of the object itself)
 #define LIVES_OBJECT_ERROR_COND -3
 #define LIVES_OBJECT_ERROR_PREREQ -2
 #define LIVES_OBJECT_ERROR_INTENT -1
-#define LIVES_OBJECT_STATUS_NONE 0 ///< status for uninitialised instances uncreated instances
-#define LIVES_OBJECT_STATUS_NORMAL 1 ///< status for passive instances
-#define LIVES_OBJECT_STATUS_WAIT 2 ///< object is doing internal processing not in final state yet
-#define LIVES_OBJECT_STATUS_PREP 3 ///< object is in a preparatory status and has new requirements
-#define LIVES_OBJECT_STATUS_READY 4
-#define LIVES_OBJECT_STATUS_RUNNING 5
-#define LIVES_OBJECT_STATUS_NEEDS_DATA 6
+#define LIVES_OBJECT_STATUS_NORMAL 0 ///< normal / success
+#define LIVES_OBJECT_STATUS_WAIT 1 ///< object is doing internal processing not in final state yet
+#define LIVES_OBJECT_STATUS_PREP 2 ///< object is in a preparatory status and has new param requirements
+#define LIVES_OBJECT_STATUS_READY 3 ///< object is ready but has new conditions
+#define LIVES_OBJECT_STATUS_RUNNING 4 ///< object is "running" and the state cannot be changed
+#define LIVES_OBJECT_STATUS_NEEDS_DATA 6 ///< object is running but has param / data requirements
 #define LIVES_OBJECT_STATUS_DESTROYED 32768
 
 typedef weed_param_t lives_req_t;
@@ -256,14 +254,15 @@ lives_object_status_t *transform(lives_object_t *obj, lives_object_transform_t *
 //////
 // derived functions
 
-lives_object_transform_t *find_transform_for_intent(lives_object_t *obj, lives_intention intent);
-
 const lives_object_template_t *lives_object_template_for_type(uint64_t type, uint64_t subtype);
+
+lives_object_transform_t *find_transform_for_intent(lives_object_t *obj, lives_intention intent);
 
 boolean rules_lack_param(lives_rules_t *req, const char *pname);
 
-boolean requirements_met(lives_object_transform_t *tx);
+//boolean rules_lack_condition(lives_rules_t *req, int condition number);
 
+// convert an iparam to a regular weed_param
 weed_param_t *weed_param_from_iparams(lives_intentparams_t *iparams, const char *name);
 
 #if 0

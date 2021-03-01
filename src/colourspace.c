@@ -1194,6 +1194,7 @@ boolean pick_nice_colour(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_
       return TRUE;
     }
   }
+  g_print("FAILED TO GET COL\n");
   return FALSE;
 }
 

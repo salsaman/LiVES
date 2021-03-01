@@ -4323,6 +4323,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
   mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
+  init_random();
+
 #ifdef ENABLE_DIAGNOSTICS
   run_weed_startup_tests();
   check_random();

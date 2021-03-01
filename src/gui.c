@@ -220,7 +220,7 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
 
     lives_widget_apply_theme2(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, TRUE);
 #if GTK_CHECK_VERSION(3, 16, 0)
-    if (mainw->pretty_colours) {
+    if (prefs->extra_colours) {
       char *colref2 = gdk_rgba_to_string(&palette->menu_and_bars);
       char *colref = gdk_rgba_to_string(&palette->normal_back);
       char *tmp = lives_strdup_printf("linear-gradient(%s, %s)", colref2, colref);
@@ -1992,7 +1992,7 @@ void create_LiVES(void) {
   mainw->framecounter = lives_standard_entry_new("", "", FCWIDTHCHARS, FCWIDTHCHARS, NULL, NULL);
 
 #if GTK_CHECK_VERSION(3, 16, 0)
-  if (mainw->pretty_colours) {
+  if (prefs->extra_colours) {
     set_css_value_direct(LIVES_WIDGET(mainw->framecounter), LIVES_WIDGET_STATE_NORMAL, "", "border-top-left-radius", "16px");
     set_css_value_direct(LIVES_WIDGET(mainw->framecounter), LIVES_WIDGET_STATE_NORMAL, "", "border-top-right-radius", "16px");
     set_css_value_direct(LIVES_WIDGET(mainw->framecounter), LIVES_WIDGET_STATE_NORMAL, "", "border-bottom-right-radius", "16px");

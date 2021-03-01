@@ -3211,7 +3211,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_hbox_new(boolean homogeneous, int
   hbox = gtk_hbox_new(homogeneous, spacing);
 #endif
 #endif
-  if (hbox && LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox)) lives_widget_set_hexpand(hbox, TRUE);
+  //if (hbox && LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox)) lives_widget_set_hexpand(hbox, TRUE);
   return hbox;
 }
 
@@ -3226,7 +3226,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_vbox_new(boolean homogeneous, int
   vbox = gtk_vbox_new(homogeneous, spacing);
 #endif
 #endif
-  if (vbox && LIVES_SHOULD_EXPAND_EXTRA_FOR(vbox)) lives_widget_set_vexpand(vbox, TRUE);
+  //if (vbox && LIVES_SHOULD_EXPAND_EXTRA_FOR(vbox)) lives_widget_set_vexpand(vbox, TRUE);
   return vbox;
 }
 

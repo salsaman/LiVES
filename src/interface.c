@@ -2987,12 +2987,16 @@ _entryw *create_rename_dialog(int type) {
 
   if (type == 3) {
     /// add set details expander
-    int winsize_h = RFX_WINSIZE_H * 2;
+    int winsize_h = RFX_WINSIZE_H;
     int winsize_v = RFX_WINSIZE_V / 2;
     LiVESWidget *layout;
     LiVESWidget *scrolledwindow;
     LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
     int woat = widget_opts.apply_theme;
+
+    if (GUI_SCREEN_WIDTH >= SCREEN_SCALE_DEF_WIDTH) {
+      winsize_h *= 2;
+    }
 
     layout = lives_layout_new(LIVES_BOX(vbox));
     lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);

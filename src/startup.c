@@ -414,6 +414,23 @@ LIVES_LOCAL_INLINE boolean confirm_exit(void) {
   return do_yesno_dialog(_("Are you sure you want to quit from LiVES setup ?"));
 }
 
+static void workdir_entry_check(LiVESEntry * entry, livespointer data) {
+  const char *last_parentdir = NULL, *parentdir;
+  const char *mydir = lives_entry_get_text(entry);
+  if (!*mydir) return;
+
+  parentdir = get_dir(mydir);
+  if (!parentdir) return;
+  if (!dirs_equal(last_parentdir, parentdir)) {
+    if (!lives_file_test(parentdir, LIVES_FILE_TEST_IS_DIR)) {
+      show_warn_image(LIVES_WIDGET(entry), _("WARNING: The parent directory does not exist !"));
+    } else {
+      hide_warn_image(LIVES_WIDGET(entry));
+    }
+  }
+  last_parentdir = lives_strdup(parentdir);
+}
+
 
 boolean do_workdir_query(void) {
   LiVESWidget *dirbutton;
@@ -443,6 +460,10 @@ boolean do_workdir_query(void) {
                                         ACTIVATE_KEY, lives_strdup(wid));
     if (wid) lives_free(wid);
   }
+
+  lives_entry_set_editable(LIVES_ENTRY(wizard->entry), TRUE);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(wizard->entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(workdir_entry_check), NULL);
 
   do {
     lives_freep((void **)&dirname);

@@ -5529,7 +5529,9 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
   }
 
   if (mainw->num_sets > -1) mainw->num_sets++;
-  if (!*old_set) mainw->set_list = lives_list_prepend(mainw->set_list, mainw->set_name);
+  else mainw->num_sets = 1;
+
+  if (!*old_set) mainw->set_list = lives_list_prepend(mainw->set_list, lives_strdup(mainw->set_name));
 
   if (got_new_handle && !*old_set) migrate_layouts(NULL, mainw->set_name);
 

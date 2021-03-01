@@ -3211,6 +3211,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_hbox_new(boolean homogeneous, int
   hbox = gtk_hbox_new(homogeneous, spacing);
 #endif
 #endif
+  if (hbox && LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox)) lives_widget_set_hexpand(hbox, TRUE);
   return hbox;
 }
 
@@ -3225,6 +3226,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_vbox_new(boolean homogeneous, int
   vbox = gtk_vbox_new(homogeneous, spacing);
 #endif
 #endif
+  if (vbox && LIVES_SHOULD_EXPAND_EXTRA_FOR(vbox)) lives_widget_set_vexpand(vbox, TRUE);
   return vbox;
 }
 
@@ -9776,8 +9778,8 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
   if (dispwidth != -1) lives_entry_set_width_chars(LIVES_ENTRY(entry), dispwidth);
   else {
-    if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH) lives_entry_set_width_chars(LIVES_ENTRY(entry), MEDIUM_ENTRY_WIDTH);
-    else if (LIVES_SHOULD_EXPAND_WIDTH) lives_entry_set_width_chars(LIVES_ENTRY(entry), MEDIUM_ENTRY_WIDTH);
+    if (!LIVES_SHOULD_EXPAND_EXTRA_WIDTH) lives_entry_set_width_chars(LIVES_ENTRY(entry), MEDIUM_ENTRY_WIDTH);
+    else lives_widget_set_hexpand(entry, TRUE);
   }
 
   if (maxchars != -1) lives_entry_set_max_length(LIVES_ENTRY(entry), maxchars);

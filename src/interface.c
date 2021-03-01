@@ -2964,7 +2964,6 @@ _entryw *create_rename_dialog(int type) {
       renamew->entry = lives_standard_direntry_new("", (tmp = F2U8(workdir)),
                        LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                        (tmp2 = (_("LiVES working directory."))));
-      lives_entry_set_editable(LIVES_ENTRY(renamew->entry), TRUE);
 
       dirbutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), FILESEL_TYPE_KEY,
@@ -4234,16 +4233,18 @@ static void fc_folder_changed(LiVESFileChooser * chooser, livespointer user_data
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
                   const char *title, LiVESWidget * extra_widget) {
   // new style file chooser
+  LiVESWidget *chooser;
 
 #if GTK_CHECK_VERSION(3, 10, 0)
   struct fc_dissection *diss;
   LiVESList *elist = NULL;
+  LiVESWidget *hbox;
   char *oldname;
 #else
   void *diss = NULL;
 #endif
   // in/out values are in utf8 encoding
-  LiVESWidget *chooser;
+
 
   char *mytitle;
   char *filename = NULL;
@@ -4319,12 +4320,14 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     else gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), "");
     gtk_widget_hide(diss->old_entry);
 
-    diss->new_entry = lives_entry_new();
-    lives_widget_set_hexpand(diss->new_entry, TRUE);
+    hbox = lives_hbox_new(FALSE, 0);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
+    diss->new_entry = lives_standard_entry_new(NULL, fname, -1, PATH_MAX, LIVES_BOX(hbox),
+                      H_("Select an existing directory or create a new one"));
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
     lives_grid_attach_next_to(LIVES_GRID(lives_widget_get_parent(diss->old_entry)),
-                              diss->new_entry, diss->old_entry, LIVES_POS_RIGHT, 1, 1);
-    lives_entry_set_text(LIVES_ENTRY(diss->new_entry), fname);
-    lives_widget_show(diss->new_entry);
+                              hbox, diss->old_entry, LIVES_POS_RIGHT, 1, 1);
+    lives_widget_show_all(hbox);
   }
 #endif
 

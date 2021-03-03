@@ -2357,6 +2357,8 @@ static void lives_init(_ign_opts *ign_opts) {
     set_int_pref(PREF_STARTUP_PHASE, 6);
     prefs->startup_phase = 6;
 
+    reset_font_size();
+
     if (prefs->show_disk_quota && !prefs->vj_mode) {
       if (!disk_monitor_running(prefs->workdir))
         disk_monitor_start(prefs->workdir);
@@ -2529,7 +2531,7 @@ static void do_start_messages(void) {
     d_print(_("(Set by -workdir commandline option)\n"));
   } else {
     if (initial_startup_phase != -1) {
-      if (!strcmp(mainw->version_hash, mainw->old_vhash)) {
+      if (!lives_strcmp(mainw->version_hash, mainw->old_vhash)) {
         lives_free(old_vhash);
         old_vhash = lives_strdup(LiVES_VERSION);
       }
@@ -4161,7 +4163,7 @@ static boolean lives_startup2(livespointer data) {
   if (!CURRENT_CLIP_IS_VALID) lives_ce_update_timeline(0, 0.);
 
   if (newconfigfile) {
-    cleanup_old_config();
+    cleanup_old_config(atoll(mainw->old_vhash));
     lives_free(newconfigfile);
   }
 
@@ -4324,6 +4326,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
   init_random();
+
 #ifdef ENABLE_DIAGNOSTICS
   run_weed_startup_tests();
   check_random();
@@ -5076,7 +5079,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 void startup_message_fatal(char *msg) {
   if (mainw) {
     if (mainw->splash_window) splash_end();
-
     lives_freep((void **)&mainw->old_vhash);
     lives_freep((void **)&old_vhash);
   }
@@ -8310,7 +8312,6 @@ void switch_to_file(int old_file, int new_file) {
 
     lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
     lives_widget_show_all(mainw->preview_box);
-    lives_widget_show_now(mainw->preview_box);
     lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
 
     // and resize it

@@ -1142,6 +1142,7 @@ boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number
 boolean do_yesno_dialog(const char *text);
 boolean do_yesno_dialogf(const char *fmt, ...);
 boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number);
+boolean do_yesno_dialogf_with_countdown(int nclicks, const char *fmt, ...);
 
 void maybe_abort(boolean do_check);
 void do_abort_dialog(const char *text);
@@ -1202,6 +1203,7 @@ void do_mt_backup_space_error(lives_mt *, int memreq_mb);
 LiVESResponseType do_resize_dlg(int cwidth, int cheight, int fwidth, int fheight);
 LiVESResponseType do_imgfmts_error(lives_img_type_t imgtype);
 
+boolean check_del_workdir(const char *dirname);
 char *workdir_ch_warning(void);
 void do_shutdown_msg(void);
 
@@ -1281,7 +1283,7 @@ boolean do_existing_subs_warning(void);
 void do_invalid_subs_error(void);
 boolean do_erase_subs_warning(void);
 boolean do_sub_type_warning(const char *ext, const char *type_ext);
-int do_move_workdir_dialog(void);
+boolean do_move_workdir_dialog(void);
 boolean do_set_locked_warning(const char *setname);
 void do_no_in_vdevs_error(void);
 void do_locked_in_vdevs_error(void);

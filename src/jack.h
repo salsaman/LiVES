@@ -24,7 +24,7 @@ typedef enum {
   JACK_CLIENT_TYPE_MIDI,
   JACK_CLIENT_TYPE_SLAVE,
   JACK_CLIENT_TYPE_OTHER
-} lives_jack_client_t;
+} lives_jack_client_type;
 
 typedef struct _lives_jack_driver_t jack_driver_t;
 
@@ -38,7 +38,7 @@ void jack_drivers_config(LiVESWidget *b, const JSList *drivers);
 void jack_server_config(LiVESWidget *b, lives_rfx_t *rfx);
 
 // connect client or start server
-boolean lives_jack_init(lives_jack_client_t client_type, jack_driver_t *jackd);
+boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd);
 boolean lives_jack_poll(void); /** poll function to check transport state */
 void lives_jack_end(void);
 
@@ -52,17 +52,30 @@ void jack_pb_stop(void);  /** pause playback transport master */
 
 #include "audio.h"
 
-#ifndef IS_DARWIN
-#define JACK_DRIVER_NAME "alsa"
-#else
-#ifdef IS_SOLARIS
-// use OSS on Solaris
-#define JACK_DRIVER_NAME "oss"
-#else
-// use coreaudio on Darwin
-#define JACK_DRIVER_NAME "coreaudio"
-#endif
-#endif
+// mapping of jack_opts pref
+#define JACK_OPTS_TRANSPORT_CLIENT	(1 << 0)   ///< jack can start/stop
+#define JACK_OPTS_TRANSPORT_MASTER	(1 << 1)  ///< transport master (start and stop)
+#define JACK_OPTS_START_TSERVER		(1 << 2)     ///< start transport server if unable to connect
+#define JACK_OPTS_NOPLAY_WHEN_PAUSED	(1 << 3) ///< do not play audio when transport is paused
+#define JACK_OPTS_START_ASERVER		(1 << 4)     ///< start audio server if unable to connect
+
+#define JACK_OPTS_TIMEBASE_START	(1 << 5)    ///< jack sets play start position
+#define JACK_OPTS_TIMEBASE_CLIENT	(1 << 6)    ///< full timebase client (position updates)
+#define JACK_OPTS_TIMEBASE_MASTER	(1 << 7)   ///< timebase master (not implemented yet)
+#define JACK_OPTS_NO_READ_AUTOCON	(1 << 8)   ///< do not auto con. rd clients when playing ext aud
+#define JACK_OPTS_TIMEBASE_LSTART	(1 << 9)    ///< LiVES sets play start position
+
+#define JACK_OPTS_ENABLE_TCLIENT      	(1 << 10)     ///< enable transport client (global setting)
+
+// sever is only killed if LiVES started it
+// conflicts if both clients want to start same server and vals differ
+#define JACK_OPTS_PERM_ASERVER      	(1 << 11)     ///< leave audio srvr running even if we started
+#define JACK_OPTS_PERM_TSERVER      	(1 << 12)     ///< leave transport running even if we started it
+
+// only one or other should be set...
+#define JACK_OPTS_SETENV_ASERVER      	(1 << 13)     ///< setenv $JACK_DEFAULT_SERVER to aserver_sname
+#define JACK_OPTS_SETENV_TSERVER      	(1 << 14)     ///< setenv $JACK_DEFAULT_SERVER to tserver_sname
+
 
 #define JACK_MAX_OUTPUT_PORTS 10
 #define JACK_MAX_INPUT_PORTS 10
@@ -71,6 +84,8 @@ void jack_pb_stop(void);  /** pause playback transport master */
 
 #define JACK_DEFAULT_SERVER "JACK_DEFAULT_SERVER"
 #define JACK_DEFAULT_SERVER_NAME "default"
+
+#define JACKD_RC_NAME "jackdrc"
 
 typedef jack_nframes_t nframes_t;
 
@@ -155,7 +170,9 @@ typedef struct _lives_jack_driver_t {
 
 jack_driver_t *jack_get_driver(int dev_idx, boolean is_output); ///< get driver
 
-int jack_audio_init(void); ///< init jack for host output
+boolean jack_get_cfg_file(boolean is_trans, char **pserver_cfgx);
+
+int jack_audio_init(void); ///< init jack for host outputy
 int jack_audio_read_init(void); ///< init jack for host input
 
 boolean jack_create_client_writer(jack_driver_t *); ///< open device for host output

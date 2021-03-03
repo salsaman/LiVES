@@ -1865,7 +1865,7 @@ void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_response(LiVESDialog *dialog, int response) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_response(LiVESDialog *dialog, LiVESResponseType response) {
 #ifdef GUI_GTK
   gtk_dialog_response(dialog, response);
   return TRUE;
@@ -1874,7 +1874,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_response(LiVESDialog *dialog, i
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE int lives_dialog_get_response_for_widget(LiVESDialog *dialog, LiVESWidget *widget) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_get_response_for_widget(LiVESDialog *dialog, LiVESWidget *widget) {
 #ifdef GUI_GTK
   if (is_standard_widget(LIVES_WIDGET(dialog))) {
     LiVESWidget *action = lives_standard_dialog_get_action_area(dialog);
@@ -1887,6 +1887,23 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_dialog_get_response_for_widget(LiVESDialog
   } else return gtk_dialog_get_response_for_widget(dialog, widget);
 #endif
   return LIVES_RESPONSE_NONE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE
+LiVESWidget *lives_dialog_get_widget_for_response(LiVESDialog *dialog, LiVESResponseType response) {
+#ifdef GUI_GTK
+  if (is_standard_widget(LIVES_WIDGET(dialog))) {
+    LiVESWidget *action = lives_standard_dialog_get_action_area(dialog);
+    LiVESList *children = lives_container_get_children(LIVES_CONTAINER(action)), *list = children;
+    for (; list; list = list->next) {
+      LiVESWidget *w = (LiVESWidget *)list->data;
+      if (GET_INT_DATA(w, RESPONSE_KEY) == response) return w;
+    }
+    return NULL;
+  } else return gtk_dialog_get_widget_for_response(dialog, response);
+#endif
+  return NULL;
 }
 
 
@@ -7961,6 +7978,7 @@ static LiVESWidget *make_inner_hbox(LiVESBox * box, boolean start) {
       lives_box_pack_end(LIVES_BOX(box), hbox, LIVES_SHOULD_EXPAND_EXTRA_WIDTH,
                          LIVES_SHOULD_EXPAND_WIDTH, LIVES_SHOULD_EXPAND_FOR(box)
                          ? widget_opts.packing_width : 0);
+    if (widget_opts.justify == LIVES_JUSTIFY_END) lives_widget_set_halign(hbox, LIVES_ALIGN_END);
   } else {
     lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box)
                          ? widget_opts.packing_height : 0);
@@ -8704,6 +8722,7 @@ char *lives_big_and_bold(const char *fmt, ...) {
 LiVESWidget *lives_standard_formatted_label_new(const char *text) {
   LiVESWidget *label;
   char *form_text;
+  int woml = widget_opts.mnemonic_label;
   form_text = lives_strdup_printf("\n%s\n", text);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
@@ -8713,7 +8732,7 @@ LiVESWidget *lives_standard_formatted_label_new(const char *text) {
     lives_label_set_markup(LIVES_LABEL(label), form_text);
   else
     lives_label_set_text(LIVES_LABEL(label), form_text);
-  widget_opts.mnemonic_label = TRUE;
+  widget_opts.mnemonic_label = woml;
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   if (lives_strlen(text) < MIN_MSG_WIDTH_CHARS) {
     lives_label_set_width_chars(LIVES_LABEL(label), MIN_MSG_WIDTH_CHARS);
@@ -10031,12 +10050,19 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_set_button_layout(LiVESDialog *
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESAccelGroup *lives_dialog_add_escape(LiVESDialog * dlg, LiVESWidget * button) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESAccelGroup *lives_window_add_escape(LiVESWindow * win, LiVESWidget * button) {
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_widget_add_accelerator(button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-  lives_window_add_accel_group(LIVES_WINDOW(dlg), accel_group);
+  lives_window_add_accel_group(win, accel_group);
   return accel_group;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE ulong lives_window_block_delete(LiVESWindow * win) {
+  ulong func = lives_signal_sync_connect(LIVES_GUI_OBJECT(win), LIVES_WIDGET_DELETE_EVENT,
+                                         LIVES_GUI_CALLBACK(return_true), NULL);
+  return func;
 }
 
 
@@ -10103,8 +10129,6 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   if (add_std_buttons) {
     // cancel button will automatically destroy the dialog
     // ok button needs manual destruction
-
-    LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     LiVESWidget *cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
                                 LIVES_STOCK_CANCEL, NULL, LIVES_RESPONSE_CANCEL);
 
@@ -10116,8 +10140,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
 
-    lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+    lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
+    lives_window_block_delete(LIVES_WINDOW(dialog));
 
     if (widget_opts.apply_theme) {
 #if !GTK_CHECK_VERSION(3, 16, 0)
@@ -10130,12 +10154,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
       widget_state_cb(LIVES_WIDGET_OBJECT(okbutton), NULL, NULL);
 #endif
     }
-
-    lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
   }
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(dialog), LIVES_WIDGET_DELETE_EVENT,
-                            LIVES_GUI_CALLBACK(return_true), NULL);
 
   if (!widget_opts.non_modal) {
     lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
@@ -12965,7 +12984,7 @@ const char *lives_textsize_to_string(int val) {
 #include "paramwindow.h"
 
 #define LIVES_LEAF_KLASS_ROLE "klass_role"
-#define LIVES_LEAF_WIDGET_FUNC "widget_func_"
+#define LIVES_LEAF_INTENTION "lives_intention_"
 #define LIVES_LEAF_WIDGET "widget"
 #define LIVES_LEAF_KLASS "klass"
 #define LIVES_LEAF_KLASS_IDX "klass_idx"
@@ -13024,9 +13043,9 @@ WIDGET_HELPER_LOCAL_INLINE void widget_klass_set_role(lives_widget_klass_t *k, i
 
 
 static lives_func_info_t *get_func_with_rettype(lives_widget_instance_t *winst,
-    int functype, uint32_t rettype) {
+    lives_intention intent, uint32_t rettype) {
   int n_info;
-  char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, functype);
+  char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_INTENTION, intent);
   lives_func_info_t *funcinf = NULL;
   lives_func_info_t **afuncinf
     = (lives_func_info_t **)weed_get_voidptr_array_counted((weed_plant_t *)winst, lname, &n_info);
@@ -13056,11 +13075,11 @@ static lives_func_info_t *get_func_with_rettype(lives_widget_instance_t *winst,
 }
 
 WIDGET_HELPER_LOCAL_INLINE
-void add_method(lives_widget_klass_t *k, int functype, lives_funcptr_t func, uint32_t rettype,
+void add_method(lives_widget_klass_t *k, lives_intention intent, lives_funcptr_t func, uint32_t rettype,
                 const char *fmt_args) {
   lives_func_info_t *func_info = lives_func_info_new(0, func, rettype, fmt_args, k);
-  char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, functype);
-  weed_set_voidptr_value(k, lname, func_info);
+  char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_INTENTION, intent);
+  weed_set_voidptr_value(k, lname, intent);
   lives_free(lname);
 }
 
@@ -13082,7 +13101,7 @@ boolean widget_klasses_init(lives_toolkit_t tk) {
         = lives_widget_klass_new(LIVES_PARAM_WIDGET_SPINBUTTON);
 
     // CREATE
-    add_method(k, LIVES_WIDGET_CREATE_FUNC, (lives_funcptr_t)lives_spin_button_new,
+    add_method(k, LIVES_INTENT_CREATE_INSTANCE, (lives_funcptr_t)lives_spin_button_new,
                WEED_SEED_VOIDPTR, "Vdi");
 
     // GET_VALUE - method with multiple return value types
@@ -13093,12 +13112,12 @@ boolean widget_klasses_init(lives_toolkit_t tk) {
       = lives_func_info_new(0, (lives_funcptr_t)lives_spin_button_get_value_as_int,
                             WEED_SEED_INT, "V", (void *)k);
 
-    lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, LIVES_WIDGET_GET_VALUE_FUNC);
+    lname = lives_strdup_printf("%s%d", LIVES_LEAF_INTENTION, LIVES_INTENTION_GET_VALUE);
     weed_set_voidptr_array(k, lname, 2, (void **)afunc_info);
     lives_free(lname);
 
     // SET_VALUE
-    add_method(k, LIVES_WIDGET_SET_VALUE_FUNC, (lives_funcptr_t)lives_spin_button_set_value,
+    add_method(k, LIVES_INTENTION_SET_VALUE, (lives_funcptr_t)lives_spin_button_set_value,
                WEED_SEED_BOOLEAN, "Vd");
 
     widget_klass_set_role(k, KLASS_ROLE_WIDGET);
@@ -13123,7 +13142,7 @@ lives_widget_instance_t *widget_instance_from_klass(const lives_widget_klass_t *
   else {
     lives_func_info_t *funcinf
       = get_func_with_rettype((lives_widget_instance_t *)k,
-                              LIVES_WIDGET_CREATE_FUNC, WEED_SEED_VOIDPTR);
+                              LIVES_INTENTION_CREATE_INSTANCE, WEED_SEED_VOIDPTR);
     if (!funcinf) return NULL;
     else {
       // create fake proc_thread, which we will pass to run_funsig
@@ -13157,10 +13176,11 @@ const lives_widget_klass_t *widget_instance_get_klass(lives_widget_instance_t *w
 }
 
 
-double widget_func_double(lives_widget_instance_t *winst, int functype, ...) {
+double widget_func_double(lives_widget_instance_t *winst, lives_intention intent, ...) {
   if (!winst || !weed_get_voidptr_value(winst, LIVES_LEAF_WIDGET, NULL)) return 0.;
   else {
-    lives_func_info_t *funcinf = get_func_with_rettype(winst, functype, WEED_SEED_DOUBLE);
+    // get transform with ouptu
+    lives_func_info_t *funcinf = get_intent_with_rettype(winst, intent, WEED_SEED_DOUBLE);
     if (!funcinf) return 0.;
     else {
       // create fake proc_thread, which we will pass to run_funsig
@@ -13181,7 +13201,7 @@ double widget_func_double(lives_widget_instance_t *winst, int functype, ...) {
 }
 
 
-int widget_func_boolean(lives_widget_instance_t *winst, int functype, ...) {
+int widget_func_boolean(lives_widget_instance_t *winst, lives_intention intent, ...) {
   if (!winst || !weed_get_voidptr_value(winst, LIVES_LEAF_WIDGET, NULL)) return 0.;
   else {
     lives_func_info_t *funcinf = get_func_with_rettype(winst, functype, WEED_SEED_BOOLEAN);
@@ -13205,29 +13225,29 @@ int widget_func_boolean(lives_widget_instance_t *winst, int functype, ...) {
 }
 
 
-LiVESList *widget_klass_list_funcs(const lives_widget_klass_t *k, boolean list_all) {
+LiVESList *widget_klass_list_intentions(const lives_widget_klass_t *k, boolean list_all) {
   // list_all ignored for now, until inheritance is implemented
-  LiVESList *funclist = NULL;
+  LiVESList *intentlist = NULL;
   weed_size_t nleaves;
   char **leaves = weed_plant_list_leaves((weed_plant_t *)k, &nleaves);
-  size_t fnlen = lives_strlen(LIVES_LEAF_WIDGET_FUNC);
+  size_t intentlen = lives_strlen(LIVES_LEAF_INTENTION);
   while (nleaves) {
-    if (!lives_strncmp(leaves[--nleaves], LIVES_LEAF_WIDGET_FUNC, fnlen)) {
-      funclist = lives_list_prepend(funclist, LIVES_INT_TO_POINTER(atoi(leaves[nleaves] + fnlen)));
+    if (!lives_strncmp(leaves[--nleaves], LIVES_LEAF_INTENTION, intentlen)) {
+      intentlist = lives_list_prepend(intentlist, LIVES_INT_TO_POINTER(atoi(leaves[nleaves] + fnlen)));
     }
     free(leaves[nleaves]);
   }
   free(leaves);
-  funclist = lives_list_reverse(funclist);
-  return funclist;
+  intentlist = lives_list_reverse(intentlist);
+  return intentlist;
 }
 
 
 lives_func_info_t **get_widget_funcs_for_klass(const lives_widget_klass_t *k,
-    int functype, int *nfuncs) {
+    lives_intention intent, int *nfuncs) {
   // TODO - when inheritance is implemented, check inherited klasses, and create
   // unified set but avoiding duplicates with same return types
-  char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, functype);
+  char *lname = lives_strdup_printf("%s%ld", LIVES_LEAF_INTENTION, intent);
   lives_func_info_t **afuncinf
     = (lives_func_info_t **)weed_get_voidptr_array_counted((weed_plant_t *)k, lname, nfuncs);
   lives_free(lname);
@@ -13263,8 +13283,8 @@ const char *klass_role_get_name(lives_toolkit_t tk, int role) {
   }
 }
 
-const char *widget_functype_get_name(int func_type) {
-  switch (func_type) {
+const char *widget_intention_get_name(lives_intention intent) {
+  switch (intent) {
   case LIVES_WIDGET_CREATE_FUNC: return "LIVES_WIDGET_CREATE_FUNC";
   case LIVES_WIDGET_DESTROY_FUNC: return "LIVES_WIDGET_DESTROY_FUNC";
   case LIVES_WIDGET_REF_FUNC: return "LIVES_WIDGET_REF_FUNC";

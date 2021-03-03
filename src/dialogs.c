@@ -609,6 +609,37 @@ LIVES_GLOBAL_INLINE LiVESWindow *get_transient_full(void) {
 }
 
 
+boolean do_yesno_dialogf_with_countdown(int nclicks, const char *fmt, ...) {
+  // show Yes/No, returns TRUE if Yes is clicked nclicks times
+  LiVESWidget *warning, *yesbutton;
+  int response = LIVES_RESPONSE_YES;
+  va_list xargs;
+  char *textx;
+  const char *btext;
+
+  va_start(xargs, fmt);
+  textx = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+
+  warning = create_message_dialog(LIVES_DIALOG_YESNO, textx, 0);
+  lives_free(textx);
+  yesbutton = lives_dialog_get_widget_for_response(LIVES_DIALOG(warning), LIVES_RESPONSE_YES);
+  btext = lives_strdup(lives_standard_button_get_label(LIVES_BUTTON(yesbutton)));
+  for (; nclicks > 0; nclicks--) {
+    char *tmp = lives_strdup_printf(P_("%s\n(Click %d more time)", "%s\n(Click %d more times)", nclicks),
+                                    btext, nclicks);
+    lives_standard_button_set_label(LIVES_BUTTON(yesbutton), tmp);
+    lives_free(tmp);
+    response = lives_dialog_run(LIVES_DIALOG(warning));
+    if (response == LIVES_RESPONSE_NO) break;
+  }
+
+  lives_widget_destroy(warning);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+  return (response == LIVES_RESPONSE_YES);
+}
+
+
 boolean do_yesno_dialogf(const char *fmt, ...) {
   // show Yes/No, returns TRUE if Yes
   LiVESWidget *warning;
@@ -3561,25 +3592,11 @@ boolean do_sub_type_warning(const char *ext, const char *type_ext) {
 }
 
 
-LIVES_GLOBAL_INLINE int do_move_workdir_dialog(void) {
-  LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
-  LiVESWidget *cln_cb = lives_standard_check_button_new(_("Clean and check old work directory"),
-                        TRUE, LIVES_BOX(hbox), NULL);
-  boolean cleanup = TRUE;
-  int bitmap = 0;
-
-  add_fill_to_box(LIVES_BOX(hbox));
-
-  extra_cb_key = 3;
-  extra_cb_data = hbox;
-  toggle_toggles_var(LIVES_TOGGLE_BUTTON(cln_cb), &cleanup, FALSE);
-
-  if (do_yesno_dialog(_("\nDo you wish to move the contents of the old working directory "
-                        "to the new directory ?\n"
-                        "(If unsure, click Yes)\n\nIn either case it is advisable to clean up\n"
-                        "the old working directory before proceeding."))) bitmap = 1;
-  if (cleanup) bitmap |= 2;
-  return bitmap;
+LIVES_GLOBAL_INLINE boolean do_move_workdir_dialog(void) {
+  return do_yesno_dialogf(_("\nThe contents of the working directory currently located in\n%s\n"
+                            "are about to moved to the new working directory at\n%s\n"
+                            "Would you like for LiVES to check and clean the contents of the current directory\n"
+                            "prior to transferring them ?"), prefs->workdir, future_prefs->workdir);
 }
 
 
@@ -3770,21 +3787,27 @@ LIVES_GLOBAL_INLINE void do_bad_theme_import_error(const char *theme_file) {
 }
 
 
-boolean do_close_changed_warn(void) {
-  extra_cb_key = 2;
-  del_cb_key = 2;
+LIVES_GLOBAL_INLINE boolean do_close_changed_warn(void) {
+  extra_cb_key = del_cb_key = 2;
   return do_warning_dialog(_("Changes made to this clip have not been saved or backed up.\n\n"
                              "Really close it ?"));
 }
 
 
+LIVES_GLOBAL_INLINE boolean check_del_workdir(const char *dirname) {
+  return do_yesno_dialogf_with_countdown(3, "%s",  _("All files will be irrevocably deleted from the working directory\n%s\n"
+                                         "Are you certain you wish to continue ?\n"
+                                         "Click 3 times on the 'Yes' button to confirm you understand\n"));
+}
+
+
 LIVES_GLOBAL_INLINE char *workdir_ch_warning(void) {
   return lives_strdup(
-           _("You have chosen to change the working directory.\n"
-             "Please make sure you have no other copies of LiVES open.\n\n"
-             "If you do have other copies of LiVES open, please close them now, "
-             "*before* pressing OK.\n\n"
-             "Alternatively, press Cancel to restore the working directory to its original setting."));
+           _("<big>You have chosen to change the working directory.\n"
+             "<b>Please make sure you have no other copies of LiVES open before proceeding.</b>\n\n"
+             "You can opt whether to move the contents of the old directory into the new one, "
+             "leave them where thay are, or delete them.\nPlease choose from the options below.\n"
+             "or clicking on Cancel to leave the current value unchanged.</big>"));
 }
 
 

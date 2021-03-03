@@ -70,6 +70,8 @@ void do_mt_keys_window(void);
 
 LiVESWidget *create_cleardisk_advanced_dialog(void);
 
+boolean workdir_change_dialog(void);
+
 LiVESWidget *make_autoreload_check(LiVESHBox *parent, boolean is_active);
 
 LiVESWidget *add_list_expander(LiVESBox *, const char *title, int width, int height, LiVESList *xlist);

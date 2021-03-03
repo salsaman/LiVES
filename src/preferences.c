@@ -1594,23 +1594,22 @@ boolean apply_prefs(boolean skip_warn) {
   boolean show_quota = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->cb_show_quota));
   boolean autoclean = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->cb_autoclean));
 
+#ifndef ENABLE_JACK
+  boolean jack_tstart = FALSE;
+  boolean jack_master = FALSE;
+  boolean jack_client = FALSE;
+  boolean jack_tb_start = FALSE, jack_mtb_start = FALSE;
+  boolean jack_tb_client = FALSE;
+#else
+
 #ifdef ENABLE_JACK_TRANSPORT
   boolean jack_master = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master));
   boolean jack_client = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client));
   boolean jack_tb_start = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start));
   boolean jack_mtb_start = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_start));
   boolean jack_tb_client = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client));
-#else
-#ifdef ENABLE_JACK
-  boolean jack_tstart = FALSE;
-  boolean jack_master = FALSE;
-  boolean jack_client = FALSE;
-  boolean jack_tb_start = FALSE, jack_mtb_start = FALSE;
-  boolean jack_tb_client = FALSE;
-#endif
 #endif
 
-#ifdef ENABLE_JACK
   boolean jack_pwp = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_pwp));
   boolean jack_read_autocon = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_read_autocon));
 
@@ -2157,12 +2156,6 @@ boolean apply_prefs(boolean skip_warn) {
   //playback plugin
   set_vpp(TRUE);
 
-  /* // audio play command */
-  /* if (strcmp(prefs->audio_play_command, audio_play_command)) { */
-  /*   lives_snprintf(prefs->audio_play_command, PATH_MAX * 2, "%s", audio_play_command); */
-  /*   set_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command); */
-  /* } */
-
   // cd play device
   if (lives_strcmp(prefs->cdplay_device, cdplay_device)) {
     lives_snprintf(prefs->cdplay_device, PATH_MAX, "%s", cdplay_device);
@@ -2498,9 +2491,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (lives_strcmp(prefworkdir, workdir)) {
     char *xworkdir = lives_strdup(workdir);
     if (check_workdir_valid(&xworkdir, LIVES_DIALOG(prefsw->prefs_dialog), FALSE) == LIVES_RESPONSE_OK) {
-      char *msg = workdir_ch_warning();
-
-      if (do_warning_dialog(msg)) {
+      if (workdir_change_dialog()) {
         lives_snprintf(workdir, PATH_MAX, "%s", xworkdir);
         set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label), xworkdir);
         lives_free(xworkdir);
@@ -2514,7 +2505,6 @@ boolean apply_prefs(boolean skip_warn) {
         future_prefs->workdir[0] = '\0';
         mainw->prefs_changed |= PREFS_NEEDS_REVERT;
       }
-      lives_free(msg);
     }
   }
 
@@ -2682,7 +2672,6 @@ static void on_mtbackevery_toggled(LiVESToggleButton *tbutton, livespointer user
 
   if (user_data) xprefsw = (_prefsw *)user_data;
   else xprefsw = prefsw;
-
   lives_widget_set_sensitive(xprefsw->spinbutton_mt_ab_time, lives_toggle_button_get_active(tbutton));
 
 }
@@ -3280,6 +3269,11 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   boolean pfsm;
   boolean has_ap_rec = FALSE;
+
+#ifdef ENABLE_JACK
+  boolean ajack_cfg_exists = FALSE;
+  boolean tjack_cfg_exists = FALSE;
+#endif
 
   int woph;
 
@@ -5475,6 +5469,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   show_warn_image(prefsw->jack_aplabel,
                   _("LiVES must be compiled with jack/jack.h present to use jack audio"));
 #else
+  ajack_cfg_exists = jack_get_cfg_file(FALSE, NULL);
+
   layout = prefsw->jack_aplayout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_jack));
   show_warn_image(prefsw->jack_aplabel, _("You MUST set the audio player to \"jack\""
                                           "in the Playback tab to use jack audio"));
@@ -5507,16 +5503,30 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   rb_group = NULL;
 
   prefsw->jack_acerror =
-    lives_standard_radio_button_new(_("Produce an _error"), &rb_group, LIVES_BOX(hbox), NULL);
+    lives_standard_radio_button_new(_("Do nothing"), &rb_group, LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-  widget = lives_standard_radio_button_new(_("_Start a jack server"), &rb_group, LIVES_BOX(hbox),
-           H_("Checking this will cause LiVES to "
-              "start up a jackd server if it is\n"
-              "unable to connect to a running "
-              "instance.\n"));
+  lives_standard_radio_button_new(_("_Start a jack server"), &rb_group, LIVES_BOX(hbox),
+                                  H_("Checking this will cause LiVES to "
+                                     "start up a jackd server if it is\n"
+                                     "unable to connect to a running "
+                                     "instance.\n"));
   hbox = widget_opts.last_container;
+
+  if (!ajack_cfg_exists) {
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->jack_acerror), TRUE);
+  }
+
+  //if (1 || !ajack_cfg_exists)
+  //lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(widget), FALSE);
+
+  /* if (!cfg_exists) show_warn_image(cfg_entry, _("The specified file does not exist")); */
+  /* else { */
+  /*   if (!lives_file_test(server_cfgx, LIVES_FILE_TEST_IS_EXECUTABLE)) { */
+  /*     show_warn_image(cfg_entry, _("The specified file should be executable")); */
+  /*   } */
+  /* } */
 
   advbutton =
     lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
@@ -5527,8 +5537,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(jack_srv_startup_config), LIVES_INT_TO_POINTER(FALSE));
 
-  if (future_prefs->jack_opts & JACK_OPTS_START_ASERVER)
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(widget), TRUE);
+  /* if (future_prefs->jack_opts & JACK_OPTS_START_ASERVER) */
+  /*   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(widget), TRUE); */
 
   layout = prefsw->jack_aplayout2 = lives_layout_new(LIVES_BOX(prefsw->vbox_right_jack));
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Audio Options"), FALSE);
@@ -5636,7 +5646,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   rb_group = NULL;
 
   prefsw->jack_tcerror =
-    lives_standard_radio_button_new(_("Produce an _error"), &rb_group, LIVES_BOX(hbox), NULL);
+    lives_standard_radio_button_new(_("Do nothing"), &rb_group, LIVES_BOX(hbox), NULL);
 
   toggle_sets_active_cond(LIVES_TOGGLE_BUTTON(prefsw->jack_acerror), prefsw->jack_tcerror,
                           (condfuncptr_t)lives_toggle_button_get_active, prefsw->jack_srv_dup,
@@ -5657,6 +5667,14 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                           (condfuncptr_t)lives_toggle_button_get_active, prefsw->jack_srv_dup,
                           TRUE);
 
+  if (!prefs->jack_srv_dup)
+    tjack_cfg_exists = jack_get_cfg_file(TRUE, NULL);
+  else
+    tjack_cfg_exists = ajack_cfg_exists;
+
+  if (!tjack_cfg_exists)
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tcerror), TRUE);
+
   hbox = widget_opts.last_container;
 
   advbutton =
@@ -5667,9 +5685,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(jack_srv_startup_config), LIVES_INT_TO_POINTER(TRUE));
-
-  if (future_prefs->jack_opts & JACK_OPTS_START_TSERVER)
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(widget), TRUE);
 
   lives_widget_show_all(layout);
   lives_widget_set_no_show_all(layout, TRUE);

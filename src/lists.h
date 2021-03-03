@@ -24,6 +24,8 @@ void lives_list_free_strings(LiVESList *);
 void lives_list_free_all(LiVESList **);
 void lives_slist_free_all(LiVESSList **);
 
+LiVESList *lives_list_remove_node(LiVESList *list, LiVESList *node, boolean free_data);
+
 LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add);
 
 LiVESList *idx_list_update(LiVESList *idxlist, int64_t idx, void *data);

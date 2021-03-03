@@ -3992,7 +3992,6 @@ static void _make_play_window(void) {
     if (CURRENT_CLIP_IS_VALID && cfile->is_loaded && prefs->show_gui) {
       lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
       lives_widget_show_all(mainw->preview_box);
-      lives_widget_show_now(mainw->preview_box);
       lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
     }
     load_preview_image(FALSE);

@@ -57,34 +57,48 @@ struct _object_t {
 // or the static object may have only static intents
 
 enum {
-  // some default intentions
   LIVES_INTENTION_UNKNOWN,
+  LIVES_INTENTION_IDENTITY, // do nothing
+
+  // some default intentions
+  // function like
   LIVES_INTENTION_CREATE_INSTANCE,
   LIVES_INTENTION_DESTROY,
 
+  LIVES_INTENTION_ADDREF,
+  LIVES_INTENTION_UNREF,
+
+  LIVES_INTENTION_GET_VALUE,
+  LIVES_INTENTION_SET_VALUE,
+
   // video players
-  LIVES_INTENTION_PLAY,
-  LIVES_INTENTION_STREAM,
-  LIVES_INTENTION_TRANSCODE,  // encode / data in
-  LIVES_INTENTION_RENDER,
+  LIVES_INTENTION_PLAY = 0x00000200,
+  LIVES_INTENTION_STREAM,  // encode / data in -> remote stream
+  LIVES_INTENTION_TRANSCODE,  // encode / data in -> external file format
+  LIVES_INTENTION_ENCODE, // encode / file in -> external file format
+  LIVES_INTENTION_RENDER, // data -> internal clip
 
-  //LIVES_INTENTION_ENCODE, // encode / file in
-  LIVES_INTENTION_IMPORT_LOCAL, // import from local filesystem, i.e "open"
-  LIVES_INTENTION_IMPORT_REMOTE, // import from online source "download"
+  LIVES_INTENTION_IMPORT_LOCAL, // import from local filesystem, -> internal clips  i.e "open"
+  LIVES_INTENTION_IMPORT_REMOTE, // import from online source  -> internal clip "download"
+  LIVES_INTENTION_EXPORT_LOCAL, // export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
+  LIVES_INTENTION_EXPORT_REMOTE, // export raw format to online location, e.g. export audio, save frame
 
-  LIVES_INTENTION_BACKUP,
-  LIVES_INTENTION_RESTORE,
-  LIVES_INTENTION_DOWNLOAD,
-  LIVES_INTENTION_UPLOAD,
+  LIVES_INTENTION_BACKUP, // internal clip -> restorable object
+  LIVES_INTENTION_RESTORE, // restore from object -> internal clip
+
+  // use caps to further refine e.g REALTIMNE / NON_REALTIME
   LIVES_INTENTION_EFFECT,
-  LIVES_INTENTION_EFFECT_REALTIME, // or make cap ?
   LIVES_INTENTION_ANALYSE,
   LIVES_INTENTION_CONVERT,
   LIVES_INTENTION_MIX,
   LIVES_INTENTION_SPLIT,
   LIVES_INTENTION_DUPLICATE,
-  LIVES_INTENTION_OTHER = 65536
+
+  LiVES_INTENTION_FIRST_CUSTOM = 0x80000000,
+  LIVES_INTENTION_MAX = 0xFFFFFFFF
 };
+
+typedef uint32_t lives_intention;
 
 /// type specific caps
 // vpp
@@ -174,8 +188,6 @@ struct _obj_status {
   int refcount;
 };
 
-typedef uint64_t lives_intention;
-
 typedef struct {
   lives_intention intent;
   int n_caps;
@@ -207,6 +219,8 @@ typedef weed_param_t lives_req_t;
 
 typedef boolean lives_cond_t;
 
+// possibly - req type param value, req type condition, req type ...
+
 typedef struct {
   lives_object_instance_t *oinst;
   int n_reqs;
@@ -225,11 +239,30 @@ typedef struct {
 #define TR_FLAGS_DIRECT (1 << 32) // function may be called directly (this is a transitional stoep
 // which may be deprecated
 
+typedef weed_param_t out_params_t;
+
+// this is linked
+typedef struct {
+  // negative mapping values may have special meanings, e.g self, fundamental
+  int n_in_mappings;
+  int *in_mappings; // array that maps function parameters to req. params (0 == first param, etc)
+  lives_func_info_t func_info; /// function(s) to perform the transformation
+  int n_out_mappings;
+  int *out_mapping; // index of the out_parameters which will be updated by this function
+  lives_funcptr_t callback_hook; // optional callback which may be called after each step for multi step transforms
+  /// type is void (*callback_hook)(lives_object_instance_t *self, void *user_data);
+} tx_map;
+
+
 typedef struct {
   int start_state;
   lives_rules_t *prereqs; // pointer to the prerequisites for carrying out the transform (can be NULL)
-  int n_funcinfo; /// size of funcinfo array (functions to be called in order)
-  lives_func_info_t *funcinfo; /// function to perform the transformation (alt to calling transform)
+  int n_mappings; // mappings
+  tx_map *mappings;
+  int n_out_params;
+  // output parameters created / updated in the transformation; this is actually array of pointers
+  // and may even point to params in other objects
+  out_params_t **oparams;
   int new_state; // the state after, assuming success (can be same as start_state)
   uint64_t flags;
 } lives_object_transform_t;
@@ -270,6 +303,7 @@ const lives_object_status_t *get_current_status(lives_object_t *obj);
 void lives_intentcaps_free(lives_intcaps_t **icap_pp);
 void lives_rules_ref(lives_rules_t *rules_pp);
 void lives_transform_list_free(LiVESTransformList **transform_list_pp);
+void lives_tx_map_free(LiVESTransformList **transform_list_pp);
 #endif
 
 void lives_intentparams_free(lives_intentparams_t *p);

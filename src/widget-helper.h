@@ -446,8 +446,9 @@ LiVESWidget *lives_spin_button_new(LiVESAdjustment *, double climb_rate, uint32_
 
 LiVESWidget *lives_dialog_new(void);
 LiVESResponseType lives_dialog_run(LiVESDialog *);
-boolean lives_dialog_response(LiVESDialog *, int response);
-int lives_dialog_get_response_for_widget(LiVESDialog *, LiVESWidget *);
+boolean lives_dialog_response(LiVESDialog *, LiVESResponseType response);
+LiVESResponseType lives_dialog_get_response_for_widget(LiVESDialog *, LiVESWidget *);
+LiVESWidget *lives_dialog_get_widget_for_response(LiVESDialog *, LiVESResponseType response);
 
 boolean lives_widget_set_bg_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
 boolean lives_widget_set_fg_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
@@ -558,7 +559,6 @@ boolean lives_button_center(LiVESWidget *);
 boolean lives_button_uncenter(LiVESWidget *, int normal_width);
 boolean lives_button_box_make_first(LiVESButtonBox *, LiVESWidget *);
 boolean lives_dialog_make_widget_first(LiVESDialog *, LiVESWidget *);
-LiVESAccelGroup *lives_dialog_add_escape(LiVESDialog *dlg, LiVESWidget *button);
 
 LiVESWidget *lives_standard_toolbar_new(void);
 
@@ -1147,6 +1147,9 @@ boolean lives_lock_button_toggle(LiVESButton *);
 
 boolean lives_dialog_set_button_layout(LiVESDialog *, LiVESButtonBoxStyle bstyle);
 
+LiVESAccelGroup *lives_window_add_escape(LiVESWindow *, LiVESWidget *button);
+ulong lives_window_block_delete(LiVESWindow *);
+
 LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height);
 
 LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog *, const char *stock_id,
@@ -1563,24 +1566,31 @@ typedef enum {
 } lives_toolkit_t;
 
 // must be called once only, before any other functions for the toolkit
+// analogoue to lives_object_template_init(type)
 boolean widget_klasses_init(lives_toolkit_t);
 
 // return list of initialised toolkits (data is LIVES_IN_TO_POINTER(tk_idx))
 // list should not be freed
+// lives_object_types_available
 const LiVESList *widget_toolkits_available(void);
 
+// lives_object_type_get_name
 const char *widget_toolkit_get_name(lives_toolkit_t);
 
 typedef weed_plant_t lives_widget_klass_t;
 typedef weed_plant_t lives_widget_instance_t;
 
+// object_type_templates
 // return read-only list of lives_widget_klass_t * : list must not be freed
+//lives_object_type_get_subtypes
 const LiVESList *widget_toolkit_klasses_list(lives_toolkit_t);
 
 // returns LIVES_PARAM_WIDGET_* value
+// can be done with IMkTypes
 int widget_klass_get_idx(const lives_widget_klass_t *);
 
 // returns the human readable name for a klass_idx, e.g "spin button", "scale"
+// object_subtype_get_name
 const char *klass_idx_get_name(int klass_idx);
 
 enum {
@@ -1599,7 +1609,10 @@ enum {
 };
 
 // wtype is a LIVES_PARAM_TYPE_* from paramwindow.h
+// subtype_for_tag ?
 const lives_widget_klass_t *widget_klass_for_type(lives_toolkit_t, int wtype);
+
+// subtype_get_type ?
 lives_toolkit_t widget_klass_get_toolkit(const lives_widget_klass_t *); // TODO
 int widget_klass_get_role(const lives_widget_klass_t *);
 
@@ -1607,44 +1620,37 @@ int widget_klass_get_role(const lives_widget_klass_t *);
 const char *klass_role_get_name(lives_toolkit_t, int role);
 
 // list should be freed after use
+// subtype_inherits_from ??
 LiVESList *widget_klass_inherits_from(const lives_widget_klass_t *); // TODO
 
-enum {
-  LIVES_WIDGET_FUNC_INVALID,
-  LIVES_WIDGET_CREATE_FUNC,
-  LIVES_WIDGET_DESTROY_FUNC,
-  LIVES_WIDGET_REF_FUNC,
-  LIVES_WIDGET_UNREF_FUNC,
-  LIVES_WIDGET_GET_VALUE_FUNC,
-  LIVES_WIDGET_SET_VALUE_FUNC,
-  LIVES_WIDGET_N_FUNCS
-};
-
-// returns list of LIVES_WIDGET_FUNC_* using LIVES_INT_TO_POINTER
+// returns list of LIVES_INENTION_* using LIVES_INT_TO_POINTER
 // list all is TRUE, also lists inherited functions
 // free after use
-LiVESList *widget_klass_list_funcs(const lives_widget_klass_t *, boolean list_all);
+LiVESList *widget_klass_list_intentions(const lives_widget_klass_t *, boolean list_all);
 
 // returns human readable name of function, e.g "create", "destroy", "get value", "set value"
-const char *widget_functype_get_name(int func_type);
+const char *widget_intention_get_name(lives_intention intent);
 
 // defn. in threading.h, "data" points to function source, either self or an inherited klass
 // functions are searched for in order: klass, inherited klasses
 // may return multiple values with differing return types, however there can only be one per type
 // nfuncs tells how many were found, if nfuncs is zero, the function was not found and NULL is returned
 // the returned array should be freed if non-NULL, but not the actual array elements
-lives_func_info_t **get_widget_funcs_for_klass(const lives_widget_klass_t *, int functype, int *nfuncs);
+// intents_for_type
+lives_func_info_t **get_widget_funcs_for_klass(const lives_widget_klass_t *, lives_intention intent, int *nfuncs);
 
 // calls LIVES_WIDGET_CREATE_FUNC
 lives_widget_instance_t *widget_instance_from_klass(const lives_widget_klass_t *, ...);
 const lives_widget_klass_t *widget_instance_get_klass(lives_widget_instance_t *);
 
+// lives_object_instance_get_fundamental
 void *widget_instance_get_widget(lives_widget_instance_t *);
 
 // returns list of LIVES_WIDGET_FUNC_* using LIVES_INT_TO_POINTER
 // if inherited is TRUE, only list functions inherited from the klass
 // if inherited is FALSE, only list functions overriden for instance
 // free after use
+// object_instance_list_intents
 LiVESList *widget_instance_list_funcs(lives_widget_instance_t *, boolean inherited); // TODO
 
 // defn. in threading.h, "data" points to the function source, either a klass or the instance itself
@@ -1652,18 +1658,19 @@ LiVESList *widget_instance_list_funcs(lives_widget_instance_t *, boolean inherit
 // may return multiple values with differing return types, however there can only be one per type
 // nfuncs tells how many were found, if nfuncs is zero, the function was not found and NULL is returned
 // the returned array should be freed if non-NULL, but not the actual array elements
+// c.f transforms for intent
 const lives_func_info_t **get_widget_funcs_for_instance(lives_widget_instance_t *,
-    int functype, int *nfuncs); // TODO
+    lives_intention intent, int *nfuncs); // TODO
 
-void widget_func_void(lives_widget_instance_t *, int functype);
-int widget_func_int(lives_widget_instance_t *, int functype);
-double widget_func_double(lives_widget_instance_t *, int functype, ...);
-int widget_func_boolean(lives_widget_instance_t *, int functype, ...);
-int64_t widget_func_int64(lives_widget_instance_t *, int functype);
-char *widget_func_string(lives_widget_instance_t *, int functype);
-lives_funcptr_t widget_func_funcptr(lives_widget_instance_t *, int functype);
-void *widget_func_voidptr(lives_widget_instance_t *, int functype);
-weed_plantptr_t widget_func_plantptr(lives_widget_instance_t *, int functype);
+void widget_func_void(lives_widget_instance_t *, lives_intention intent);
+int widget_func_int(lives_widget_instance_t *, lives_intention intent);
+double widget_func_double(lives_widget_instance_t *, lives_intention intent, ...);
+int widget_func_boolean(lives_widget_instance_t *, lives_intention intent, ...);
+int64_t widget_func_int64(lives_widget_instance_t *, lives_intention intent);
+char *widget_func_string(lives_widget_instance_t *, lives_intention intent);
+lives_funcptr_t widget_func_funcptr(lives_widget_instance_t *, lives_intention intent);
+void *widget_func_voidptr(lives_widget_instance_t *, lives_intention intent);
+weed_plantptr_t widget_func_plantptr(lives_widget_instance_t *, lives_intention intent);
 
 boolean lives_widget_klass_show_info(const lives_widget_klass_t *);
 

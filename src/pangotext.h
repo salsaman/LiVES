@@ -53,7 +53,10 @@ typedef enum {
   LIVES_TEXT_MODE_PRECALCULATE
 } lives_text_mode_t;
 
+void reset_font_size(void);
+
 char **get_font_list(void);
+void guess_font_size(LiVESWidget *window, LiVESLabel *xlabel, LiVESLabel *ylabel, double guess);
 
 weed_plant_t *render_text_overlay(weed_layer_t *layer, const char *text);
 

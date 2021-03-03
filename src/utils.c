@@ -2174,28 +2174,50 @@ boolean check_file(const char *file_name, boolean check_existing) {
 int lives_rmdir(const char *dir, boolean force) {
   // if force is TRUE, removes non-empty dirs, otherwise leaves them
   // may fail
-  if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
-    char *com, *cmd;
-    int retval;
-
-    if (force) {
-      cmd = lives_strdup_printf("%s -rf", capable->rm_cmd);
-    } else {
-      cmd = lives_strdup(capable->rmdir_cmd);
+  if (!dir) return 1;
+  else {
+    size_t dirlen = lives_strlen(dir);
+    // will abort if dir length < 7, if dir is $HOME, does not start with dir sep. or ends with a '*'
+    if (dirlen < 7 || !lives_strcmp(dir, capable->home_dir)
+        || lives_strncmp(dir, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP)) || dir[dirlen - 1] == '*') {
+      LIVES_FATAL("Refusing to lives_rmdir the following directory:");
+      LIVES_FATAL(dir);
+      abort();
     }
+    if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
+      char *com, *cmd;
+      int retval;
 
-    com = lives_strdup_printf("%s \"%s/\" >\"%s\" 2>&1", cmd, dir, prefs->cmd_log);
-    retval = lives_system(com, TRUE);
-    lives_free(com);
-    lives_free(cmd);
-    return retval;
+      if (force) {
+        cmd = lives_strdup_printf("%s -rf", capable->rm_cmd);
+      } else {
+        cmd = lives_strdup(capable->rmdir_cmd);
+      }
+
+      com = lives_strdup_printf("%s \"%s/\" >\"%s\" 2>&1", cmd, dir, prefs->cmd_log);
+      retval = lives_system(com, TRUE);
+      lives_free(com);
+      lives_free(cmd);
+      return retval;
+    }
   }
   return 1;
 }
 
 
 int lives_rmdir_with_parents(const char *dir) {
-  // may fail, will not remove (non ?) empty dirs
+  // may fail, will not remove non empty dirs
+  if (!dir) return 1;
+  else {
+    size_t dirlen = lives_strlen(dir);
+    // will abort if dir length < 7, if dir is $HOME, does not start with dir sep. or ends with a '*'
+    if (dirlen < 7 || !lives_strcmp(dir, capable->home_dir)
+        || lives_strncmp(dir, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP)) || dir[dirlen - 1] == '*') {
+      LIVES_FATAL("Refusing to lives_rmdir_with_parents the following directory:");
+      LIVES_FATAL(dir);
+      abort();
+    }
+  }
   if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
     char *com = lives_strdup_printf("%s -p \"%s\" >\"%s\" 2>&1", capable->rmdir_cmd, dir, prefs->cmd_log);
     int retval = lives_system(com, TRUE);
@@ -2206,8 +2228,10 @@ int lives_rmdir_with_parents(const char *dir) {
 }
 
 
+
 int lives_rm(const char *file) {
   // may fail - will not remove directories or symlinks
+  if (!file) return 1;
   if (lives_file_test(file, LIVES_FILE_TEST_IS_REGULAR)) {
     char *com = lives_strdup_printf("%s -f \"%s\" >\"%s\" 2>&1", capable->rm_cmd, file, prefs->cmd_log);
     int retval = lives_system(com, TRUE);
@@ -2221,10 +2245,18 @@ int lives_rm(const char *file) {
 int lives_rmglob(const char *files) {
   // delete files with name "files"*
   // may fail
-  char *com = lives_strdup_printf("%s \"%s\"* >\"%s\" 2>&1", capable->rm_cmd, files, prefs->cmd_log);
-  int retval = lives_system(com, TRUE);
-  lives_free(com);
-  return retval;
+  // should chdir first to target dir
+  if (!files) return 1;
+  else {
+    // files may not be empty string, or start with a '.' or dir separator
+    if (!*files || *files == '.' || !lives_strncmp(files, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP))) return 2;
+    else {
+      char *com = lives_strdup_printf("%s \"%s\"* >\"%s\" 2>&1", capable->rm_cmd, files, prefs->cmd_log);
+      int retval = lives_system(com, TRUE);
+      lives_free(com);
+      return retval;
+    }
+  }
 }
 
 

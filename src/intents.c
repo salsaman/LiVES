@@ -171,7 +171,8 @@ static void lives_rules_unref(lives_rules_t *rules) {
 
 void lives_object_transform_free(lives_object_transform_t *tx) {
   lives_rules_unref(tx->prereqs);
-  if (tx->funcinfo) lives_free(tx->funcinfo);
+  //if (tx->mappings) tx_mappings_free(tx->mappings);
+  //if (tx->oparams) tx_oparams_free(tx->oparams);
   lives_free(tx);
 }
 

@@ -572,7 +572,7 @@ enum {
 
 #define CLIP_ORDER_FILENAME "order"
 
-#define SET_LOCK_FILENAME "lock"
+#define SET_LOCK_FILENAME "lock."
 
 #define CLIP_ARCHIVE_NAME "__CLIP_ARCHIVE-"
 
@@ -634,17 +634,23 @@ enum {
 #define CLIPS_DIRNAME "clips"
 #define IMPORTS_DIRNAME "imports"
 
-#define SET_LOCK_FILE(set_name, lockfile) lives_build_filename(prefs->workdir, set_name, lockfile, NULL);
-#define SET_LOCK_FILES(set_name) SET_LOCK_FILE(set_name, SET_LOCK_FILENAME);
+#define SET_DIR(set_name) (lives_build_path(prefs->workdir, (set_name), NULL))
+#define CURRENT_SET_DIR SET_DIR(mainw->set_name)
+
+#define SET_LOCK_FILE(set_name, lockfile) lives_build_filename(SET_DIR((set_name)), (lockfile), NULL)
+#define SET_LOCK_FILES_PREFIX(set_name) SET_LOCK_FILE((set_name), SET_LOCK_FILENAME);
 
 // directory where we store 1 clip / all clips if handle is NULL
-#define MAKE_CLIPS_DIRNAME(set, handle) lives_build_filename(prefs->workdir, set, CLIPS_DIRNAME, handle, NULL);
-
-// directory of a clip in the current set
-#define SET_CLIPDIR(handle) MAKE_CLIPS_DIRNAME(mainw->set_name, handle)
+#define _MAKE_CLIPS_DIRNAME_(set, handle) lives_build_filename(SET_DIR((set)), CLIPS_DIRNAME, handle, NULL)
 
 // directory for all clips in set
-#define CLIPS_DIR(set) MAKE_CLIPS_DIRNAME(set, NULL)
+#define CLIPS_DIR(set) (_MAKE_CLIPS_DIRNAME_((set), NULL))
+
+// directory of a clip in the current set
+#define CURRENT_SET_CLIP_DIR(handle) (_MAKE_CLIPS_DIRNAME_(mainw->set_name, (handle)))
+
+#define LAYOUTS_DIR(set) (lives_build_path(SET_DIR((set)), LAYOUTS_DIRNAME, NULL))
+#define CURRENT_SET_LAYOUTS_DIR(set) (LAYAOUTS_DIR(mainw->set_name))
 
 // filters
 #define LIVES_SUBS_FILTER  {"*.srt", "*.sub", NULL}
@@ -1603,6 +1609,8 @@ typedef struct {
 
   int write_abuf; ///< audio buffer number to write to (for multitrack)
   volatile int abufs_to_fill;
+
+  boolean first_shown;
 
   /// splash window
   LiVESWidget *splash_window, *splash_label, *splash_progress;

@@ -138,15 +138,15 @@ lives_object_transform_t *math_transform_for_intent(lives_object_t *obj, lives_i
       tx->prereqs->n_reqs = 3;
       tx->prereqs->reqs = (lives_req_t **)lives_calloc(sizeof(lives_req_t *), tx->prereqs->n_reqs);
 
-      tx->prereqs->reqs[0] = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+      tx->prereqs->reqs[0] = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
       weed_set_string_value(tx->prereqs->reqs[0], WEED_LEAF_NAME, MATH_PARAM_DATA);
       weed_set_int_value(tx->prereqs->reqs[0], WEED_LEAF_PARAM_TYPE, WEED_PARAM_UNSPECIFIED);
 
-      tx->prereqs->reqs[1] = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+      tx->prereqs->reqs[1] = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
       weed_set_string_value(tx->prereqs->reqs[1], WEED_LEAF_NAME, MATH_PARAM_DATA_SIZE);
       weed_set_int_value(tx->prereqs->reqs[1], WEED_LEAF_PARAM_TYPE, WEED_PARAM_INTEGER);
 
-      tx->prereqs->reqs[2] = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+      tx->prereqs->reqs[2] = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
       weed_set_string_value(tx->prereqs->reqs[2], WEED_LEAF_NAME, MATH_PARAM_VALUE);
       weed_set_int_value(tx->prereqs->reqs[2], WEED_LEAF_PARAM_TYPE, WEED_PARAM_FLOAT);
       return tx;

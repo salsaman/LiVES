@@ -507,7 +507,7 @@ static void jack_error_func(const char *desc) {
 #endif
 
 
-static const char *get_type_name(lives_jack_client_t type) {
+static const char *get_type_name(lives_jack_client_type type) {
   if (type == JACK_CLIENT_TYPE_TRANSPORT) return "transport";
   if (type == JACK_CLIENT_TYPE_AUDIO_WRITER) return "audio writer";
   if (type == JACK_CLIENT_TYPE_AUDIO_READER) return "audio reader";
@@ -559,7 +559,7 @@ static char *parse_script(const char *fname) {
   return NULL;
 }
 
-
+#ifdef DEBUG_MODE
 void jack_test(const char *snm) {
   char *sn = parse_script(snm);
   if (sn) {
@@ -567,6 +567,32 @@ void jack_test(const char *snm) {
     lives_free(sn);
   }
   g_print("no name found\n");
+}
+#endif
+
+
+boolean jack_get_cfg_file(boolean is_trans, char **pserver_cfgx) {
+  char *server_cfgx = NULL;
+  boolean cfg_exists = FALSE;
+  if (is_trans) server_cfgx = lives_strdup(prefs->jack_tserver_cfg);
+  else server_cfgx = lives_strdup(prefs->jack_tserver_cfg);
+  if (!server_cfgx || !*server_cfgx) {
+    if (server_cfgx) lives_free(server_cfgx);
+    server_cfgx = lives_build_filename(capable->home_dir, "." JACKD_RC_NAME, NULL);
+    if (!lives_file_test(server_cfgx, LIVES_FILE_TEST_EXISTS)) {
+      char *server_cfgx2 = lives_build_filename("etc", JACKD_RC_NAME, NULL);
+      if (lives_file_test(server_cfgx2, LIVES_FILE_TEST_EXISTS)) {
+        lives_free(server_cfgx);
+        server_cfgx = server_cfgx2;
+        cfg_exists = TRUE;
+      } else lives_free(server_cfgx2);
+    } else cfg_exists = TRUE;
+  } else {
+    if (lives_file_test(server_cfgx, LIVES_FILE_TEST_EXISTS))
+      cfg_exists = TRUE;
+  }
+  if (pserver_cfgx) *pserver_cfgx = server_cfgx;
+  return cfg_exists;
 }
 
 
@@ -591,7 +617,7 @@ void jack_test(const char *snm) {
 // - server startup fails, backup config available
 // -- resolutions: on fatal error, restore previous (working). abort
 // --              on less sever errors, allow choice of reverting settings or altering current ones
-boolean lives_jack_init(lives_jack_client_t client_type, jack_driver_t *jackd) {
+boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd) {
   jack_options_t options = JackServerName | JackUseExactName;
   jack_status_t status;
   jackctl_driver_t *driver = NULL;
@@ -655,6 +681,8 @@ boolean lives_jack_init(lives_jack_client_t client_type, jack_driver_t *jackd) {
   }
 
 retry_connect:
+  /// TODO - give up after n re-attempts
+
   jackserver = NULL;
 
   if (is_trans) {

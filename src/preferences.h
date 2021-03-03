@@ -82,10 +82,11 @@ typedef struct {
   uint64_t warning_mask;
 
   /// bits 10, 11, 13, 18 and 19 set (off by default)
-  // (should have been done by reversing the sense of these bits, but it is too late now
+  // (should have been done by reversing the sense of these bits (so the default would be 0), but it is too late now
 #define DEF_WARNING_MASK 0x000C2C04ul
 
   // if these bits are set, we do not show the warning
+  // i.e default value of zero is ON
 #define WARN_MASK_FPS 	       					(1ull << 0)
 #define WARN_MASK_FSIZE 	       				(1ull << 1)
 #define WARN_MASK_UNUSED1ull 	       				(1ull << 2)  ///< was "save_quality"
@@ -94,28 +95,30 @@ typedef struct {
 #define WARN_MASK_RENDERED_FX 					(1ull << 5)
 #define WARN_MASK_NO_ENCODERS 					(1ull << 6)
 #define WARN_MASK_LAYOUT_MISSING_CLIPS 				(1ull << 7)
+
 #define WARN_MASK_LAYOUT_CLOSE_FILE 				(1ull << 8)
 #define WARN_MASK_LAYOUT_DELETE_FRAMES 				(1ull << 9)
 
   /** off by default on a fresh install */
-#define WARN_MASK_LAYOUT_SHIFT_FRAMES 				(1ull << 10)
+#define WARN_MASK_LAYOUT_SHIFT_FRAMES 				(1ull << 10) // off by default
 
   /** off by default on a fresh install */
-#define WARN_MASK_LAYOUT_ALTER_FRAMES 				(1ull << 11)
+#define WARN_MASK_LAYOUT_ALTER_FRAMES 				(1ull << 11) // off by default
+
 #define WARN_MASK_DUPLICATE_SET        				(1ull << 12)
 
   /** off by default on a fresh install */
-#define WARN_MASK_EXIT_MT 		       			(1ull << 13)
+#define WARN_MASK_EXIT_MT 		       			(1ull << 13) // off by default
 #define WARN_MASK_DISCARD_SET 					(1ull << 14)
 #define WARN_MASK_AFTER_DVGRAB 					(1ull << 15)
 #define WARN_MASK_MT_ACHANS 			       		(1ull << 16)
 #define WARN_MASK_LAYOUT_DELETE_AUDIO 				(1ull << 17)
 
   /** off by default on a fresh install */
-#define WARN_MASK_LAYOUT_SHIFT_AUDIO 				(1ull << 18)
+#define WARN_MASK_LAYOUT_SHIFT_AUDIO 				(1ull << 18) // off by default
 
   /** off by default on a fresh install */
-#define WARN_MASK_LAYOUT_ALTER_AUDIO 				(1ull << 19)
+#define WARN_MASK_LAYOUT_ALTER_AUDIO 				(1ull << 19) // off by default
 
 #define WARN_MASK_MT_NO_JACK 			       		(1ull << 20)
 #define WARN_MASK_OPEN_YUV4M 					(1ull << 21)
@@ -131,7 +134,7 @@ typedef struct {
 #define WARN_MASK_JACK_SCRPT		       			(1ull << 31)
 #define WARN_MASK_DMGD_AUDIO					(1ull << 32)
 
-  // reserved (on / unset by default)
+  // reserved (on / unset by default) -> i.e sense is reversed so 0 is OFF (by default)
 #define WARN_MASK_RSVD_14					(1ull << 33)
 #define WARN_MASK_RSVD_13					(1ull << 34)
 #define WARN_MASK_RSVD_12					(1ull << 35)
@@ -148,7 +151,7 @@ typedef struct {
 #define WARN_MASK_RSVD_1					(1ull << 46)
 #define WARN_MASK_RSVD_0					(1ull << 47)
 
-  // for bits 48 - 63, the sense will be reversed, in case we need anything else off
+  // for bits 48 - 63, the sense will be reversed, in case we need anything else ON
   // by default
 #define WARN_MASK_RSVD_OFF_15					(1ull << 48)
 #define WARN_MASK_RSVD_OFF_14					(1ull << 49)
@@ -214,6 +217,8 @@ typedef struct {
   boolean omc_noisy; ///< send success/fail
   boolean omc_events; ///< send other events
 
+  lives_intention workdir_tx_intent;
+
   /// 0 = normal , -1 or 1: fresh install, 2: workdir set, 3: startup tests passed, 4: aud pl chosen, 5: pre interface seln., 100 setup complete
   short startup_phase;
   int ocp; ///< open_compression_percent : get/set in prefs
@@ -232,28 +237,6 @@ typedef struct {
   double fpschange_amount;
 
   uint32_t jack_opts;
-#define JACK_OPTS_TRANSPORT_CLIENT	(1 << 0)   ///< jack can start/stop
-#define JACK_OPTS_TRANSPORT_MASTER	(1 << 1)  ///< transport master (start and stop)
-#define JACK_OPTS_START_TSERVER		(1 << 2)     ///< start transport server if unable to connect
-#define JACK_OPTS_NOPLAY_WHEN_PAUSED	(1 << 3) ///< do not play audio when transport is paused
-#define JACK_OPTS_START_ASERVER		(1 << 4)     ///< start audio server if unable to connect
-
-#define JACK_OPTS_TIMEBASE_START	(1 << 5)    ///< jack sets play start position
-#define JACK_OPTS_TIMEBASE_CLIENT	(1 << 6)    ///< full timebase client (position updates)
-#define JACK_OPTS_TIMEBASE_MASTER	(1 << 7)   ///< timebase master (not implemented yet)
-#define JACK_OPTS_NO_READ_AUTOCON	(1 << 8)   ///< do not auto con. rd clients when playing ext aud
-#define JACK_OPTS_TIMEBASE_LSTART	(1 << 9)    ///< LiVES sets play start position
-
-#define JACK_OPTS_ENABLE_TCLIENT      	(1 << 10)     ///< enable transport client (global setting)
-
-  // sever is only killed if LiVES started it
-  // conflicts if both clients want to start same server and vals differ
-#define JACK_OPTS_PERM_ASERVER      	(1 << 11)     ///< leave audio srvr running even if we started
-#define JACK_OPTS_PERM_TSERVER      	(1 << 12)     ///< leave transport running even if we started it
-
-  // only one or other should be set...
-#define JACK_OPTS_SETENV_ASERVER      	(1 << 13)     ///< setenv $JACK_DEFAULT_SERVER to aserver_sname
-#define JACK_OPTS_SETENV_TSERVER      	(1 << 14)     ///< setenv $JACK_DEFAULT_SERVER to tserver_sname
 
 #ifdef ENABLE_JACK
   // config files to use instead of using internal settings
@@ -428,7 +411,7 @@ typedef struct {
 #define DEF_MAX_MSGS 10000
 
 #define LIVES_CDISK_LEAVE_ORPHAN_SETS		(1 << 0)
-#define LIVES_CDISK_LEAVE_BFILES		(1 << 1)
+#define LIVES_CDISK_LEAVE_BFILES		(1 << 1) /// leave clip .bak files
 #define LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS	(1 << 2)
 #define LIVES_CDISK_LEAVE_MARKER_FILES		(1 << 3)
 #define LIVES_CDISK_LEAVE_MISC_FILES		(1 << 4)

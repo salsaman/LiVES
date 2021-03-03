@@ -3232,7 +3232,6 @@ void play_file(void) {
           if (prefs->show_gui) {
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
             lives_widget_show_all(mainw->preview_box);
-            lives_widget_show_now(mainw->preview_box);
             lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
             //lives_widget_grab_focus(mainw->preview_spinbutton);
           }
@@ -3270,7 +3269,6 @@ void play_file(void) {
             unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
             lives_widget_show_all(mainw->preview_box);
-            lives_widget_show_now(mainw->preview_box);
             lives_widget_grab_focus(mainw->preview_spinbutton);
             lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
             lives_widget_process_updates(mainw->play_window);
@@ -3552,7 +3550,7 @@ boolean get_temp_handle(int index) {
     }
 
     if (*mainw->set_name) {
-      char *setclipdir = SET_CLIPDIR(mainw->files[index]->handle);
+      char *setclipdir = CURRENT_SET_CLIP_DIR(mainw->files[index]->handle);
       if (lives_file_test(setclipdir, LIVES_FILE_TEST_IS_DIR)) is_unique = FALSE;
       lives_free(setclipdir);
     }

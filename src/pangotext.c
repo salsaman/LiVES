@@ -24,6 +24,57 @@ static void fill_bckg(lives_painter_t *cr, double x, double y, double dx, double
 }
 
 
+LIVES_GLOBAL_INLINE void reset_font_size(void) {
+  char *tmp = lives_strdup_printf("%dpx", capable->font_size);
+  set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "*", "font-size", tmp);
+  lives_free(tmp);
+}
+
+
+void guess_font_size(LiVESWidget *window, LiVESLabel *xlabel, LiVESLabel *ylabel, double guess) {
+  // startup callibration - try to set an appropriate text size
+  int w_, h_, w2_, h2_;
+  double fitw, fith, scaling;
+  if (!window || !xlabel) return;
+  else {
+    LingoLayout *layout = gtk_label_get_layout(xlabel);
+    lingo_layout_get_size(layout, &w_, &h_);
+    if (ylabel) {
+      layout = gtk_label_get_layout(ylabel);
+      lingo_layout_get_size(layout, &w2_, &h2_);
+      w_ += w2_;
+      h_ += h2_;
+    }
+    w_ /= LINGO_SCALE * 2;
+    h_ /= LINGO_SCALE;
+
+    lives_widget_show_all(window);
+    lives_widget_context_update();
+    fitw = (double)lives_widget_get_allocation_width(window) / (double)w_;
+    fith = (double)lives_widget_get_allocation_height(window) / (double)h_;
+    if (fitw < fith) scaling = fitw;
+    else scaling = fith;
+    if (scaling > 2. && scaling < 4.) scaling /= 2.;
+    scaling *= guess;
+    if (scaling > .8 && scaling < 2.) {
+      char *tmp;
+      int ofontsize = capable->font_size;
+      capable->font_size *= scaling;
+      tmp = lives_strdup_printf("%dpx", capable->font_size);
+      set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "*", "font-size", tmp);
+      lives_free(tmp);
+      capable->font_size = ofontsize;
+      if (mainw->splash_label) {
+        tmp = lives_strdup_printf("%dpx", capable->font_size);
+        set_css_value_direct(mainw->splash_label, LIVES_WIDGET_STATE_NORMAL, "*", "font-size", tmp);
+        lives_free(tmp);
+      }
+      mainw->first_shown = TRUE;
+    }
+  }
+}
+
+
 static void getxypos(LingoLayout *layout, int *px, int *py, int width, int height, boolean cent, double *pw, double *ph) {
   // calc coords of text, text will fit so it goes to bottom. Set cent to center text.
 

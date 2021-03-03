@@ -723,6 +723,8 @@ static void detach_stream(lives_clip_data_t *cdata) {
 const char *module_check_init(void) {
   lives_avcodec_lock();
   av_register_all(); /* Can be called several times */
+  //avcodec_register_all();
+  //avformat_network_init();
   lives_avcodec_unlock();
   return NULL;
 }

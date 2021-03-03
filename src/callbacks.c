@@ -61,23 +61,28 @@ static void cleanup_set_dir(const char *set_name) {
   // - when the last clip in a set is closed
 
   char *lfiles, *ofile, *sdir;
+  char *cwd = lives_get_current_dir();
 
-  sdir = lives_build_path(prefs->workdir, set_name, LAYOUTS_DIRNAME, NULL);
+  sdir = LAYOUTS_DIR(set_name);
   if (lives_file_test(sdir, LIVES_FILE_TEST_IS_DIR))
     lives_rmdir(sdir, FALSE);
   lives_free(sdir);
 
-  sdir = lives_build_filename(prefs->workdir, set_name, CLIPS_DIRNAME, NULL);
+  sdir = CLIPS_DIR(set_name);
   if (lives_file_test(sdir, LIVES_FILE_TEST_IS_DIR))
     lives_rmdir(sdir, FALSE);
   lives_free(sdir);
 
   // remove any stale lockfiles
-  lfiles = SET_LOCK_FILES(set_name);
-  lives_rmglob(lfiles);
+  lfiles = SET_LOCK_FILES_PREFIX(set_name);
+
+  if (!lives_chdir(SET_DIR(set_name), TRUE)) {
+    lives_rmglob(lfiles);
+    lives_chdir(cwd, TRUE);
+  }
   lives_free(lfiles);
 
-  ofile = lives_build_filename(prefs->workdir, set_name, CLIP_ORDER_FILENAME, NULL);
+  ofile = lives_build_filename(SET_DIR(set_name), CLIP_ORDER_FILENAME, NULL);
   lives_rm(ofile);
   lives_free(ofile);
 
@@ -261,22 +266,31 @@ void lives_exit(int signum) {
           && lives_strcmp(future_prefs->workdir, prefs->workdir)) {
         // if we are changing the workdir, remove everything but sets from the old dir
         // create the new directory, and then move any sets over
-        int ret;
-        end_threaded_dialog();
-        ret = do_move_workdir_dialog();
-        if (ret & 2) {
-          mainw->is_exiting = FALSE;
-          on_cleardisk_activate(NULL, NULL);
-          mainw->is_exiting = TRUE;
-          // we may have recovered additional clips in this process
-          if (mainw->clips_available) {
-            if (prompt_for_set_save() == LIVES_RESPONSE_CANCEL) {
-              *future_prefs->workdir = 0;
-              return;
+        if (prefs->workdir_tx_intent == LIVES_INTENTION_DESTROY) {
+          // delete the old workdir
+          save_future_prefs();
+          //lives_rmdir(prefs->workdir, TRUE);
+          exit(0);
+        }
+        if (prefs->workdir_tx_intent == LIVES_INTENTION_IDENTITY) {
+          save_future_prefs();
+          exit(0);
+        }
+        if (prefs->workdir_tx_intent == LIVES_INTENTION_EXPORT_LOCAL) {
+          end_threaded_dialog();
+          if (do_move_workdir_dialog()) {
+            mainw->is_exiting = FALSE;
+            on_cleardisk_activate(NULL, NULL);
+            mainw->is_exiting = TRUE;
+            // we may have recovered additional clips in this process
+            if (mainw->clips_available) {
+              if (prompt_for_set_save() == LIVES_RESPONSE_CANCEL) {
+                *future_prefs->workdir = 0;
+                prefs->workdir_tx_intent = LIVES_INTENTION_UNKNOWN;
+                return;
+              }
             }
           }
-        }
-        if (ret & 1) {
           do_do_not_close_d();
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
@@ -2145,6 +2159,12 @@ static LiVESResponseType prompt_for_set_save(void) {
   do {
     legal_set_name = TRUE;
     lives_widget_show_all(cdsw->dialog);
+
+    // we have three additional options when chnaging workdir
+    // - save set then update workdir, with no migration (save to current workdir - use new workdir)
+    // - update workidr first, then save current clipset, no further migration (save to new workdr, use it)
+    // - save in new work, then old is wiped (transfer current clips, erase)
+
     resp = lives_dialog_run(LIVES_DIALOG(cdsw->dialog));
 
     if (resp == LIVES_RESPONSE_RETRY) continue;
@@ -2154,8 +2174,10 @@ static LiVESResponseType prompt_for_set_save(void) {
       lives_free(cdsw);
       return resp;
     }
-    if (resp == LIVES_RESPONSE_ACCEPT) {
+
+    if (resp == LIVES_RESPONSE_ACCEPT || resp == LIVES_RESPONSE_YES) {
       // save set
+      char *old_workdir = NULL;
       if ((legal_set_name =
              is_legal_set_name((set_name = U82F(lives_entry_get_text(LIVES_ENTRY(cdsw->entry)))),
                                TRUE, FALSE))) {
@@ -2167,10 +2189,19 @@ static LiVESResponseType prompt_for_set_save(void) {
 
         mainw->leave_recovery = FALSE;
 
+        if (resp == LIVES_RESPONSE_YES) {
+          // save in new workdir
+          old_workdir = lives_strdup(prefs->workdir);
+          lives_snprintf(prefs->workdir, PATH_MAX, "%s", future_prefs->workdir);
+        }
         on_save_set_activate(NULL, (tmp = U82F(set_name)));
         lives_free(tmp);
         lives_free(set_name);
-
+        if (old_workdir) {
+          lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
+          lives_snprintf(prefs->workdir, PATH_MAX, "%s", old_workdir);
+          lives_free(old_workdir);
+        }
         return resp;
       }
       resp = LIVES_RESPONSE_RETRY;
@@ -2178,24 +2209,26 @@ static LiVESResponseType prompt_for_set_save(void) {
       lives_free(set_name);
     }
     if (resp == LIVES_RESPONSE_RESET) {
-      char *what, *expl;
-      // TODO
-      //if (check_for_executable(&capable->has_gio, EXEC_GIO)) mainw->add_trash_rb = TRUE;
-      if (mainw->was_set) {
-        what = lives_strdup_printf(_("Set '%s'"), mainw->set_name);
-        expl = lives_strdup("");
-      } else {
-        what = (_("All currently open clips"));
-        expl = (_("<b>(Note: original source material will NOT be affected !)</b>"));
-        widget_opts.use_markup = TRUE;
+      if (prefs->workdir_tx_intent != LIVES_INTENTION_DESTROY) {
+        char *what, *expl;
+        // TODO
+        //if (check_for_executable(&capable->has_gio, EXEC_GIO)) mainw->add_trash_rb = TRUE;
+        if (mainw->was_set) {
+          what = lives_strdup_printf(_("Set '%s'"), mainw->set_name);
+          expl = lives_strdup("");
+        } else {
+          what = (_("All currently open clips"));
+          expl = (_("<b>(Note: original source material will NOT be affected !)</b>"));
+          widget_opts.use_markup = TRUE;
+        }
+        if (!do_warning_dialogf(_("\n\n%s will be permanently deleted from the disk.\n"
+                                  "Are you sure ?\n\n%s"), what, expl)) {
+          resp = LIVES_RESPONSE_ABORT;
+        }
+        widget_opts.use_markup = FALSE;
+        lives_free(what); lives_free(expl);
+        //mainw->add_trash_rb = FALSE;
       }
-      if (!do_warning_dialogf(_("\n\n%s will be permanently deleted from the disk.\n"
-                                "Are you sure ?\n\n%s"), what, expl)) {
-        resp = LIVES_RESPONSE_ABORT;
-      }
-      widget_opts.use_markup = FALSE;
-      lives_free(what); lives_free(expl);
-      //mainw->add_trash_rb = FALSE;
     }
   } while (resp == LIVES_RESPONSE_ABORT || resp == LIVES_RESPONSE_RETRY);
 
@@ -2209,6 +2242,7 @@ static LiVESResponseType prompt_for_set_save(void) {
 
 
 void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  // called from Quit menutiem and also from prefs (workdir changed)
 
   mainw->mt_needs_idlefunc = FALSE;
 
@@ -5503,7 +5537,7 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
     }
   } else {
     // saving as same name (or as new set)
-    dfile = lives_build_filename(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, NULL);
+    dfile = lives_build_path(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, NULL);
     if (!lives_make_writeable_dir(dfile)) {
       // abort if we cannot create the new subdir
       LIVES_ERROR("Could not create directory");
@@ -5668,7 +5702,7 @@ void lock_set_file(const char *set_name) {
   // function is called when a set is opened, to prevent multiple access to the same set
   char *setdir = lives_build_path(prefs->workdir, set_name, NULL);
   if (lives_file_test(setdir, LIVES_FILE_TEST_IS_DIR)) {
-    char *set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
+    char *set_lock_file = lives_strdup_printf("%s%d", SET_LOCK_FILENAME, capable->mainpid);
     char *set_locker = SET_LOCK_FILE(set_name, set_lock_file);
     lives_touch(set_locker);
     lives_free(set_locker);
@@ -5679,7 +5713,7 @@ void lock_set_file(const char *set_name) {
 
 
 void unlock_set_file(const char *set_name) {
-  char *set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
+  char *set_lock_file = lives_strdup_printf("%s%d", SET_LOCK_FILENAME, capable->mainpid);
   char *set_locker = SET_LOCK_FILE(set_name, set_lock_file);
   lives_rm(set_locker);
   lives_free(set_lock_file);
@@ -6102,7 +6136,7 @@ static boolean handle_remnants(LiVESList * recnlist, const char *trashremdir, Li
                                      "What would you like to do with them ?"), unrecdir);
   LiVESWidget *dialog = create_question_dialog(_("Unrecoverable Clips"), text), *bbox, *cancelbutton;
 
-  lives_free(text);
+  lives_free(text); lives_free(unrecdir);
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, _("Ignore"),
                  LIVES_RESPONSE_CANCEL);
@@ -6110,12 +6144,12 @@ static boolean handle_remnants(LiVESList * recnlist, const char *trashremdir, Li
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_DELETE, _("Delete them"),
                                      LIVES_RESPONSE_NO);
 
-  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_SAVE, _("Move them"),
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("Move them"),
                                      LIVES_RESPONSE_OK);
 
   bbox = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
   trash_rb(LIVES_BUTTON_BOX(bbox));
-  lives_dialog_add_escape(LIVES_DIALOG(dialog), cancelbutton);
+  lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
 
   resp = lives_dialog_run(LIVES_DIALOG(dialog));
   lives_widget_destroy(dialog);
@@ -6129,7 +6163,10 @@ static boolean handle_remnants(LiVESList * recnlist, const char *trashremdir, Li
     char *from, *to, *norem;
     char *ucdir = lives_build_path(prefs->workdir, UNREC_CLIPS_DIR, NULL);
     lives_mkdir_with_parents(ucdir, capable->umask);
-    if (!lives_file_test(ucdir, LIVES_FILE_TEST_IS_DIR)) return FALSE;
+    if (!lives_file_test(ucdir, LIVES_FILE_TEST_IS_DIR)) {
+      lives_free(ucdir);
+      return FALSE;
+    }
     norem = lives_build_filename(ucdir, LIVES_FILENAME_NOREMOVE, NULL);
     lives_touch(norem);
     lives_free(norem);
@@ -6355,7 +6392,6 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
   } else {
-    LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     LiVESWidget *button, *accb, *hbox, *label;
     lives_proc_thread_t recinfo, reminfo, leaveinfo;
     char *remtrashdir, *op, *from, *to;
@@ -6388,8 +6424,6 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH;
     textwindow = create_text_window(_("Disk Analysis Log"), NULL, tbuff, FALSE);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;;
-
-    lives_window_add_accel_group(LIVES_WINDOW(textwindow->dialog), accel_group);
 
     top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
 
@@ -6429,8 +6463,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
                                          LIVES_STOCK_CANCEL, nitems ? NULL :
                                          LIVES_STOCK_LABEL_CLOSE_WINDOW, LIVES_RESPONSE_CANCEL);
 
-    lives_widget_add_accelerator(button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+    lives_window_add_escape(LIVES_WINDOW(textwindow->dialog), button);
 
     widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
     accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
@@ -6548,12 +6581,8 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
         int clipno = LIVES_POINTER_TO_INT(list->data);
         LiVESList *list2 = recnlist;
         for (; list2; list2 = list2->next) {
-          if (!strcmp(mainw->files[clipno]->handle, (char *)list2->data)) {
-            if (list2->prev) list2->prev->next = list2->next;
-            if (list2->next) list2->next->prev = list2->prev;
-            if (recnlist == list2) recnlist = list2->next;
-            list2->next = list2->prev = NULL;
-            lives_list_free(list2);
+          if (!lives_strcmp(mainw->files[clipno]->handle, (char *)list2->data)) {
+            recnlist = lives_list_remove_node(recnlist, list2, TRUE);
             break;
           }
         }

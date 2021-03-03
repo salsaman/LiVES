@@ -2835,7 +2835,7 @@ _entryw *create_rename_dialog(int type) {
 
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
-  LiVESWidget *label;
+  LiVESWidget *label, *xlabel = NULL, *ylabel = NULL;
   LiVESWidget *checkbutton;
   LiVESWidget *set_combo;
 
@@ -2894,20 +2894,24 @@ _entryw *create_rename_dialog(int type) {
     lives_free(tmp);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
-    label = lives_standard_label_new
-            (_("This startup wizard will guide you through the\n"
-               "initial install so that you can get the most from this application."));
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+    ylabel = lives_standard_label_new
+             (_("This startup wizard will guide you through the\n"
+                "initial install so that you can get the most from this application."));
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), ylabel, FALSE, FALSE, widget_opts.packing_height);
 
-    label = lives_standard_label_new
-            (_("First of all you need to choose a working directory for LiVES.\n"
-               "This should be a directory with plenty of disk space available."));
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+    widget_opts.use_markup = TRUE;
+    xlabel = lives_standard_label_new
+             (_("First of all you need to <b>choose a working directory</b> for LiVES.\n"
+                "This should be a directory with plenty of disk space available."));
+    widget_opts.use_markup = FALSE;
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), xlabel, FALSE, FALSE, widget_opts.packing_height);
   }
 
   if (type == 6 && mainw->is_ready) {
-    label = lives_standard_label_new(_("If the value of the working directory is changed, the contents of the existing\n"
-                                       "working directory will be moved and if applicable added to the new location\n"));
+    label = lives_standard_label_new(_("If the value of the working directory is changed, you can choose whether \n"
+                                       "the contents of the current"
+                                       "directory should be left, deleted, or moved \n- and if applicable, they may be combined \n"
+                                       "with an existing LiVES directory\n"));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
   }
 
@@ -3076,6 +3080,11 @@ _entryw *create_rename_dialog(int type) {
   lives_widget_show_all(renamew->dialog);
   lives_widget_grab_focus(renamew->entry);
 
+
+  if (type == 6 && !mainw->first_shown) {
+    guess_font_size(renamew->dialog, LIVES_LABEL(xlabel), LIVES_LABEL(ylabel), .8);
+    mainw->first_shown = TRUE;
+  }
   return renamew;
 }
 
@@ -4306,7 +4315,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 #if GTK_CHECK_VERSION(3, 10, 0)
   diss = set_child_colour(chooser, FALSE);
   if (diss) {
-    diss->selbut = gtk_dialog_get_widget_for_response(GTK_DIALOG(chooser), LIVES_RESPONSE_NO);
+    diss->selbut = lives_dialog_get_widget_for_response(LIVES_DIALOG(chooser), LIVES_RESPONSE_NO);
     oldname = gtk_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
     gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), DETECTOR_STRING);
     elist = diss->entry_list;
@@ -4557,16 +4566,17 @@ _entryw *create_cds_dialog(int type) {
   // values for type are:
   // 0 == leave multitrack, user pref is warn when leave multitrack
   // 1 == exit from LiVES, or save set
-  // 2 == ?
+  //    -- called from function prompt_for_save_set()
+  // 2 == for layouts loaded from disk, prompts for delete disk copy
   // 3 == wipe layout confirmation
   // 4 == prompt for render after recording / viewing in mt
+  // called from
+  //     check_for_layout_del()
 
   LiVESWidget *dialog_vbox;
   LiVESWidget *cancelbutton;
   LiVESWidget *discardbutton;
   LiVESWidget *savebutton = NULL;
-
-  LiVESAccelGroup *accel_group;
 
   char *labeltext = NULL;
 
@@ -4631,8 +4641,6 @@ _entryw *create_cds_dialog(int type) {
       prefs->ar_clipset = !mainw->only_close;
       checkbutton = make_autoreload_check(LIVES_HBOX(hbox), prefs->ar_clipset);
 
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), "cdsw", (livespointer)cdsw);
-
       lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                 LIVES_GUI_CALLBACK(toggle_sets_pref), (livespointer)PREF_AR_CLIPSET);
     }
@@ -4641,14 +4649,10 @@ _entryw *create_cds_dialog(int type) {
     add_warn_check(LIVES_BOX(dialog_vbox), WARN_MASK_EXIT_MT);
   }
 
-  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-  lives_window_add_accel_group(LIVES_WINDOW(cdsw->dialog), accel_group);
-
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_CANCEL, NULL,
                  LIVES_RESPONSE_CANCEL);
 
-  lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+  lives_window_add_escape(LIVES_WINDOW(cdsw->dialog), cancelbutton);
 
   discardbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_DELETE, NULL,
                   (type == 2) ? LIVES_RESPONSE_ABORT : LIVES_RESPONSE_RESET);
@@ -4657,19 +4661,30 @@ _entryw *create_cds_dialog(int type) {
     lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Wipe layout"));
   else if (type == 0) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Ignore changes"));
   else if (type == 1) {
-    if (mainw->was_set)
+    if (mainw->was_set && prefs->workdir_tx_intent != LIVES_INTENTION_DESTROY)
       lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete clip set"));
     else
       lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Discard all clips"));
   } else if (type == 2) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete layout"));
 
-  if (type != 4) savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_SAVE, NULL,
-                                (type == 2) ? LIVES_RESPONSE_RETRY : LIVES_RESPONSE_ACCEPT);
-  if (type == 0 || type == 3) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save layout"));
-  else if (type == 1) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save clip set"));
-  else if (type == 2) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Wipe layout"));
-  if (type == 1 || type == 2) lives_button_grab_default_special(savebutton);
+  if (prefs->workdir_tx_intent != LIVES_INTENTION_UNKNOWN) {
+    if (prefs->workdir_tx_intent == LIVES_INTENTION_IDENTITY) {
+      savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog),
+                   LIVES_STOCK_SAVE, _("Save in _Current Work Directory"),
+                   LIVES_RESPONSE_ACCEPT);
+    }
 
+    lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog),
+                                       LIVES_STOCK_GO_FORWARD, _("Transfer to _New Directory"),
+                                       LIVES_RESPONSE_YES);
+  } else {
+    if (type != 4) savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_SAVE, NULL,
+                                  (type == 2) ? LIVES_RESPONSE_RETRY : LIVES_RESPONSE_ACCEPT);
+    if (type == 0 || type == 3) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save layout"));
+    else if (type == 1) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save clip set"));
+    else if (type == 2) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Wipe layout"));
+    if (type == 1 || type == 2) lives_button_grab_default_special(savebutton);
+  }
   lives_widget_show_all(cdsw->dialog);
 
   if (type == 1) {
@@ -5920,6 +5935,56 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
 }
 
 
+boolean workdir_change_dialog(void) {
+  // show a dialog with message and buttons, set the relevant prefs.
+  // return FALSE on Cancel
+  LiVESWidget *dialog = lives_standard_dialog_new(_("Options for Changing Working Directory"), FALSE, DEF_DIALOG_WIDTH,
+                        DEF_DIALOG_HEIGHT);
+  LiVESWidget *dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  LiVESWidget *label;
+  LiVESWidget *cancel_button;
+  char *msg = workdir_ch_warning();
+
+  widget_opts.use_markup = TRUE;
+  label = lives_standard_formatted_label_new(msg);
+  lives_free(msg);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
+  //
+  cancel_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                  LIVES_RESPONSE_CANCEL);
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_DELETE, _("_Delete the directory"),
+                                     LIVES_RESPONSE_NO);
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_KEEP, _("_Leave the files"),
+                                     LIVES_RESPONSE_ACCEPT);
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("Move all to the new directory"),
+                                     LIVES_RESPONSE_YES);
+
+  lives_window_add_escape(LIVES_WINDOW(dialog), cancel_button);
+  lives_window_block_delete(LIVES_WINDOW(dialog));
+
+  while (1) {
+    LiVESResponseType resp = lives_dialog_run(LIVES_DIALOG(dialog));
+    if (resp == LIVES_RESPONSE_CANCEL) {
+      lives_widget_destroy(dialog);
+      return FALSE;
+    }
+    if (resp == LIVES_RESPONSE_NO) {
+      lives_widget_hide(dialog);
+      if (!check_del_workdir(prefs->workdir)) {
+        lives_widget_show_all(dialog);
+        continue;
+      }
+      prefs->workdir_tx_intent = LIVES_INTENTION_DESTROY;
+    }
+    if (resp == LIVES_RESPONSE_ACCEPT) prefs->workdir_tx_intent = LIVES_INTENTION_IDENTITY;
+    if (resp == LIVES_RESPONSE_YES) prefs->workdir_tx_intent = LIVES_INTENTION_EXPORT_LOCAL;
+    break;
+  }
+  lives_widget_destroy(dialog);
+  return TRUE;
+}
+
+
 /// disk quota window
 
 static void lives_show_after(LiVESWidget * button, livespointer data) {
@@ -5929,18 +5994,19 @@ static void lives_show_after(LiVESWidget * button, livespointer data) {
 }
 
 static void workdir_query_cb(LiVESWidget * w, LiVESWidget * dlg) {
+  // called from disk quota window to change the working directory
   lives_widget_hide(dlg);
+  // prompt for new dir.
   if (do_workdir_query()) {
     if (lives_strcmp(prefs->workdir, future_prefs->workdir)) {
-      char *msg = workdir_ch_warning();
-      if (do_warning_dialog(msg)) {
-        lives_free(msg);
+      // not Cancelled, and value was changed
+      if (workdir_change_dialog()) {
         do_shutdown_msg();
         lives_widget_destroy(dlg);
         on_quit_activate(NULL, NULL);
+      } else {
+        do_info_dialog(_("\nDirectory was not changed\n"));
       }
-    } else {
-      do_info_dialog(_("\nDirectory was not changed\n"));
     }
     *future_prefs->workdir = 0;
   }

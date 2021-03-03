@@ -10,7 +10,7 @@
 #define LIVES_TEST_VIDEO_NAME "vidtest.avi"
 
 boolean migrate_config(const char *old_vhash, const char *newconfigfile);
-void cleanup_old_config(void);
+void cleanup_old_config(uint64_t oldver);
 boolean build_init_config(const char *config_datadir, boolean prompt);
 
 boolean do_workdir_query(void);

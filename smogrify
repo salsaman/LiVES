@@ -1237,8 +1237,11 @@ if (1) {
 
 
 	if ($command eq "move_workdir") {
-	    ## TODO: make bg
-	    $new_work = $ARGV[1];
+	    my $new_work = $ARGV[1];
+	    my $single_set = "";
+	    if (defined $ARGV[2]) {
+		$single_set = $ARGV[2];
+	    }
 	    unless ($new_work eq "") {
 		# here is where we create a new work directory
 		unless (-d $new_work || (mkdir $new_work)) {
@@ -1252,7 +1255,7 @@ if (1) {
 		print STDERR "Smogrify: ERROR - no destination directory given !\n";
 		exit 1;
 	    }
-	    &clean_workdir(0, "", $new_work);
+	    &clean_workdir(0, "", $new_work, $single_set);
 	    exit 0;
 	}
 
@@ -9810,7 +9813,7 @@ sub clean_workdir {
     ### a commentary is produced both on STDERR and STDOUT. The latter would be picked up
     ### using popen from the front end.
 
-    my ($opts, $trashsubdir, $new_work) = @_;
+    my ($opts, $trashsubdir, $new_work, $single_set) = @_;
 
     &smog_chdir($workdir);
 
@@ -9845,13 +9848,21 @@ sub clean_workdir {
 	print "\n\n\n\nsmogrify: running diskspace analysis in $workdir\n\n";
     }
     else {
-	print STDERR "\n\n\n\nsmogrify: migrating contents of $workdir to $new_work\n";
+	if (!$single_set) {
+	    print STDERR "\n\n\n\nsmogrify: migrating contents of $workdir to $new_work\n";
+	    print "migrating contents of $workdir to $new_work\n";
+	}
+	else {
+	    print STDERR "\n\n\n\nsmogrify: migrating set $single_set from $workdir to $new_work\n";
+	    print "migrating set $single_set from $workdir to $new_work\n";
+	}
 	make_path $new_work;
     }
 
     #print STDERR "smogrify: size of directory at start is $start_total bytes\n";
     opendir DIR, $workdir;
     while ($file = readdir(DIR)) {
+	next if ($single_set && $file ne $single_set);
 	next if $file eq "." || $file eq ".." || $file eq ".$DEFTRASH" || $file eq $trashsubdir;
 	print STDERR "\nFile entry: $file:\n";
 	print "\nFile entry: $file:\n";
@@ -9864,23 +9875,46 @@ sub clean_workdir {
 		print "\n$file is marked for manual removal only\n";
 		if ($new_work) {
 		    print STDERR "smogrify: moving contents of $workdir/$file\nto\n$new_work/$file\n";
+		    print "moving contents of $workdir/$file\nto\n$new_work/$file\n";
 		    # we are to move this set
 		    if (-d "$new_work/$file") {
-			opendir DIR2, "$workdir/$file";
-			while (my $file2 = readdir(DIR2)) {
-			    if (-e "$new_work/$file/$file2" && $file2 ne ".noremove") {
-				&smog_rename("$new_work/$file/$file2", "$new_work/$file/$file2.bak");
-				unless ($file2 eq ".noremove" && -e "$new_work/$file/$file2") {
+			print STDERR "smogrify: target directory $new_work/$file already exists so\n";
+			print "target directory $new_work/$file already exists so\n";
+			if ($single_set) {
+			    ## unlikely we would be asked to move a single dir marked as noremove, but anyway
+			    print STDERR "smogrify: renaming $new_work/$file to $new_work/_$file\n";
+			    print "renaming $new_work/$file to $new_work/_$file\n";
+			    &smog_rename("$new_work/$file", "$new_work/_$file");
+			    print STDERR "smogrify: moving $workdir/$file to $new_work/$file\n";
+			    print "moving $workdir/$file to $new_work/$file\n";
+			    &smog_rename("$workdir/$file", "$new_work/$file");
+			    last;
+			}
+			else {
+			    print STDERR "smogrify: will back up duplicate targets in $new_work/$file instead of overwriting\n";
+			    print "will back up duplicate targets in $new_work/$file instead of overwriting\n";
+			    opendir DIR2, "$workdir/$file";
+			    while (my $file2 = readdir(DIR2)) {
+				unless ($file2 eq ".noremove") {
+				    if (-e "$new_work/$file/$file2") {
+					&smog_rename("$new_work/$file/$file2", "$new_work/$file/$file2.bak");
+				    }
 				    &smog_rename("$workdir/$file/$file2", "$new_work/$file/$file2");
 				}
 			    }
+			    closedir DIR2;
 			}
-			closedir DIR2;
+			print STDERR "smogrify: clearing any remnants in $workdir/$file\n";
+			print "clearing any remnants in $workdir/$file\n";
 			remove_tree("$workdir/$file");
+			last if $single_set;
 		    }
 		    else {
+			print STDERR "smogrify: target $new_work/$file does not exist, safe to move $workdir/$file\n";
+			print "target $new_work/$file does not exist, safe to move $workdir/$file\n";
 			&smog_rename("$workdir/$file", "$new_work/$file");
 		    }
+		    last if $single_set;
 		}
 		else {
 		    &smog_system("$SYSBIN" . "touch $leavedir/$file");
@@ -9890,6 +9924,7 @@ sub clean_workdir {
 		push (@left, $file);
 		next;
 	    }
+
 	    my $ignfile = "$file/.inuse";
 	    if (-f $ignfile && -s $ignfile) {
 		if (defined(open IN, "<", $ignfile)) {
@@ -9923,17 +9958,28 @@ sub clean_workdir {
 	    if (!($opts & 0x80)) {
 		$is_empty = !(&is_non_empty_dir("$workdir/$file"));
 	    }
+
 	    # remove a set unlesss it has clips OR (layouts AND NOT (opts & 0x04))
 	    if (!$is_empty && &is_non_empty_dir("$workdir/$file/clips")
 		|| (&is_non_empty_dir("$workdir/$file/layouts") && !($opts & 0x04))) {
 		# new style sets, check clips and optionally layouts
 		if ($new_work) {
 		    print STDERR "smogrify: moving $workdir/$file\nto\n$new_work/$file\n";
+		    print "moving $workdir/$file\nto\n$new_work/$file\n";
 		    # we are to move this set
 		    if (-d "$new_work/$file") {
 			print STDERR "smogrify: backing up $new_work/$file to " .
 			    "$new_work/$file.bak first\n";
-			&smog_rename("$new_work/$file", "$new_work/$file.bak");
+			print "backing up $new_work/$file to " .
+			    "$new_work/$file.bak first\n";
+			if (! -e "$new_work/$file.bak") {
+			    &smog_rename("$new_work/$file", "$new_work/$file.bak");
+			}
+			else {
+			    print STDERR "smogrify: $new_work/$file.bak already exists - aborting\n";
+			    print "$new_work/$file.bak already exists - aborting\n";
+			    last;
+			}
 		    }
 		    unless ($opts & 0x02) {
 			unless (-f "$file/.noclean") {
@@ -9956,8 +10002,15 @@ sub clean_workdir {
 			print "(can be overridden by disabling option 'Remove Lock Files')\n";
 			unlink glob "$file/lock.*";
 		    }
-		    move($file, $new_work) or die $!;
+		    ##use move here as it can work across differing file systems
+		    if (!move($file, $new_work)) {
+			print STDERR "smogrify: problem encountered moving $workdir/$file to\n$new_work/$file, aborting\n";
+			print "problem encountered moving $workdir/$file to\n$new_work/$file, aborting\n";
+			last;
+		    }
 		    print STDERR "smogrify: moved $workdir/$file to $new_work/$file\n";
+		    print "moved $workdir/$file to $new_work/$file\n";
+		    last if $single_set;
 		}
 		else {
 		    print STDERR "smogrify: directory contains clips or layouts, skipping it\n";

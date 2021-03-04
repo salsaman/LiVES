@@ -359,6 +359,7 @@ boolean lives_grab_remove(LiVESWidget *);
 #ifdef GUI_GTK
 boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *selector,
                              const char *detail, const char *value);
+void set_css_min_size(LiVESWidget *, int mw, int mh);
 #endif
 
 boolean lives_widget_set_sensitive(LiVESWidget *, boolean state);
@@ -559,6 +560,8 @@ boolean lives_button_center(LiVESWidget *);
 boolean lives_button_uncenter(LiVESWidget *, int normal_width);
 boolean lives_button_box_make_first(LiVESButtonBox *, LiVESWidget *);
 boolean lives_dialog_make_widget_first(LiVESDialog *, LiVESWidget *);
+
+LiVESWidget *lives_standard_spinner_new(boolean start);
 
 LiVESWidget *lives_standard_toolbar_new(void);
 

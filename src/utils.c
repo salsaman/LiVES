@@ -1406,7 +1406,7 @@ void remove_layout_files(LiVESList *map) {
         if (!lives_strncmp(fname, prefs->workdir, lives_strlen(prefs->workdir))) {
           // is in workdir, safe to remove parents
 
-          char *protect_file = lives_build_filename(prefs->workdir, "noremove", NULL);
+          char *protect_file = lives_build_filename(prefs->workdir, LIVES_FILENAME_NOREMOVE, NULL);
 
           // touch a file in tpmdir, so we cannot remove workdir itself
           lives_touch(protect_file);
@@ -1414,10 +1414,12 @@ void remove_layout_files(LiVESList *map) {
           if (!THREADVAR(com_failed)) {
             // ok, the "touch" worked
             // now we call rmdir -p : remove directory + any empty parents
-            fdir = lives_path_get_dirname(fname);
-            lives_rmdir_with_parents(fdir);
-            lives_free(fdir);
-          }
+	    if (lives_file_test(protect_file, LIVES_FILE_TEST_IS_REGULAR)) {
+	      fdir = lives_path_get_dirname(fname);
+	      lives_rmdir_with_parents(fdir);
+	      lives_free(fdir);
+	    }
+	  }
 
           // remove the file we touched to clean up
           lives_rm(protect_file);

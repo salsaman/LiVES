@@ -3137,6 +3137,8 @@ void show_lives(void) {
 
   if (prefs->present && prefs->show_gui)
     lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+
+  mainw->lives_shown = TRUE;
 }
 
 

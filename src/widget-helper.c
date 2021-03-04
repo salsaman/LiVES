@@ -7602,7 +7602,7 @@ static void _set_css_min_size(LiVESWidget *w, const char *sel, int mw, int mh) {
 #endif
 }
 
-static void set_css_min_size(LiVESWidget *w, int mw, int mh) {
+void set_css_min_size(LiVESWidget *w, int mw, int mh) {
   _set_css_min_size(w, "", mw, mh);
   _set_css_min_size(w, "*", mw, mh);
 }
@@ -9935,6 +9935,7 @@ LiVESWidget *lives_standard_progress_bar_new(void) {
 #endif
 
   if (widget_opts.apply_theme) {
+    set_standard_widget(pbar, TRUE);
     lives_widget_apply_theme(pbar, LIVES_WIDGET_STATE_NORMAL);
 #if GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(3, 16, 0)
@@ -10112,6 +10113,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   if (LIVES_SHOULD_EXPAND_HEIGHT) lives_widget_set_vexpand(dialog, TRUE);
 
   if (widget_opts.apply_theme) {
+    set_standard_widget(dialog, TRUE);
     lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
     funkify_dialog(dialog);
 #if GTK_CHECK_VERSION(2, 18, 0)
@@ -10274,6 +10276,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_fileentry_new(const char
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_toolbar_new(void) {
   LiVESWidget *toolbar = lives_toolbar_new();
+  set_standard_widget(toolbar, TRUE);
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(toolbar), TRUE);
   lives_toolbar_set_style(LIVES_TOOLBAR(toolbar), LIVES_TOOLBAR_ICONS);
   lives_toolbar_set_icon_size(LIVES_TOOLBAR(toolbar), widget_opts.icon_size);
@@ -10293,6 +10296,7 @@ LiVESWidget *lives_standard_hscale_new(LiVESAdjustment * adj) {
   hscale = gtk_scale_new(LIVES_ORIENTATION_HORIZONTAL, adj);
 
   if (widget_opts.apply_theme) {
+    set_standard_widget(hscale, TRUE);
     lives_widget_apply_theme(hscale, LIVES_WIDGET_STATE_NORMAL);
 #if GTK_CHECK_VERSION(3, 16, 0)
     char *colref = gdk_rgba_to_string(&palette->white);
@@ -10340,6 +10344,7 @@ LiVESWidget *lives_standard_hruler_new(void) {
 #else
   hruler = gtk_hruler_new();
   lives_widget_apply_theme(hruler, LIVES_WIDGET_STATE_INSENSITIVE);
+  set_standard_widget(hruler, TRUE);
 #endif
 
 #endif
@@ -10372,6 +10377,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   LiVESWidget *swchild;
 
   scrolledwindow = lives_scrolled_window_new();
+  set_standard_widget(scrolledwindow, TRUE);
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(scrolledwindow),
                                    LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
 
@@ -10438,6 +10444,22 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 }
 
 
+LiVESWidget *lives_standard_spinner_new(boolean start) {
+  LiVESWidget *spinner = lives_spinner_new();
+  if (widget_opts.apply_theme) {
+    set_standard_widget(spinner, TRUE);
+#ifdef GUI_GTK
+#if !GTK_CHECK_VERSION(3, 16, 0)
+    set_css_value_direct(spinner, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+#endif
+#endif
+    lives_widget_apply_theme(spinner, LIVES_WIDGET_STATE_NORMAL);
+  }
+  if (start) lives_spinner_start(LIVES_SPINNER(spinner));
+  return spinner;
+}
+
+
 LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox * box, LiVESWidget * child) {
   LiVESWidget *expander = NULL, *container = NULL, *label = NULL;
 
@@ -10481,6 +10503,7 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox * box, LiVE
   }
 
   if (widget_opts.apply_theme) {
+    set_standard_widget(expander, TRUE);
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3, 16, 0)
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(expander), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
@@ -10510,6 +10533,7 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox * box, LiVE
 LiVESWidget *lives_standard_table_new(uint32_t rows, uint32_t cols, boolean homogeneous) {
   LiVESWidget *table = lives_table_new(rows, cols, homogeneous);
   lives_widget_apply_theme(table, LIVES_WIDGET_STATE_NORMAL);
+  set_standard_widget(table, TRUE);
   if (LIVES_SHOULD_EXPAND_WIDTH) lives_table_set_row_spacings(LIVES_TABLE(table),
         LIVES_SHOULD_EXPAND_EXTRA_WIDTH ? (widget_opts.packing_width << 2) : widget_opts.packing_width);
   else lives_table_set_row_spacings(LIVES_TABLE(table), 0);
@@ -10539,6 +10563,7 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer * tb
   }
 
   if (widget_opts.apply_theme) {
+    set_standard_widget(textview, TRUE);
     lives_widget_apply_theme3(textview, LIVES_WIDGET_STATE_NORMAL);
     if (prefs->extra_colours && mainw->pretty_colours) {
       char *colref = gdk_rgba_to_string(&palette->menu_and_bars);

@@ -19074,9 +19074,15 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
   size_t chlen;
 
   if (old_set_name) {
-    changefrom = lives_build_path(prefs->workdir, old_set_name, LAYOUTS_DIRNAME, NULL);
+    changefrom = LAYOUTS_DIR(old_set_name);
     chlen = strlen(changefrom);
-  } else chlen = 0;
+  } else {
+    if (*future_prefs->workdir) {
+      changefrom = LAYOUTS_DIR(mainw->set_name);
+      chlen = strlen(changefrom);
+    }
+    else chlen = 0;
+  }
 
   while (map) {
     if (old_set_name) {
@@ -19116,12 +19122,16 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
 
     if (old_set_name && !lives_strncmp((char *)map->data, changefrom, chlen)) {
       // update entries in mainw->current_layouts_map
-      tmp = lives_build_filename(prefs->workdir, new_set_name, LAYOUTS_DIRNAME, (char *)map->data + chlen, NULL);
+      tmp = lives_build_filename(LAYOUTS_DIR(new_set_name), (char *)map->data + chlen, NULL);
       if (lives_file_test(tmp, LIVES_FILE_TEST_EXISTS)) {
         // prevent duplication of layouts
         lives_free(tmp);
-        tmp = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
-                                  prefs->workdir, new_set_name, old_set_name, (char *)map->data + chlen);
+	if (*future_prefs->workdir)
+	  tmp = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
+				    future_prefs->workdir, new_set_name, old_set_name, (char *)map->data + chlen);
+	else
+	  tmp = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
+				    prefs->workdir, new_set_name, old_set_name, (char *)map->data + chlen);
         lives_mv((const char *)map->data, tmp);
       }
       lives_free((livespointer)map->data);

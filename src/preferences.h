@@ -19,9 +19,6 @@
 #define PREFS_MONITOR_CHANGED		(1 << 6)
 #define PREFS_NEEDS_REVERT		(1 << 7)
 
-#define PULSE_AUDIO_URL "http://www.pulseaudio.org"
-#define JACK_URL "http://jackaudio.org"
-
 typedef struct {
   char bgcolour[256];
   boolean stop_screensaver;
@@ -89,7 +86,7 @@ typedef struct {
   // i.e default value of zero is ON
 #define WARN_MASK_FPS 	       					(1ull << 0)
 #define WARN_MASK_FSIZE 	       				(1ull << 1)
-#define WARN_MASK_UNUSED1ull 	       				(1ull << 2)  ///< was "save_quality"
+#define WARN_MASK_UNUSED 	       				(1ull << 2)  ///< was "save_quality"
 #define WARN_MASK_SAVE_SET 		       			(1ull << 3)
 #define WARN_MASK_NO_MPLAYER 			       		(1ull << 4)
 #define WARN_MASK_RENDERED_FX 					(1ull << 5)

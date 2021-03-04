@@ -7,6 +7,8 @@
 #ifndef HAS_LIVES_JACK_H
 #define HAS_LIVES_JACK_H
 
+#define JACK_URL "http://jackaudio.org"
+
 #ifdef ENABLE_JACK
 
 /////////////////////////////////////////////////////////////////
@@ -94,6 +96,8 @@ typedef jack_nframes_t nframes_t;
 #define JackTReset 1025
 #define JackTStopped 1026
 
+#define STMSGLEN 1024
+
 typedef struct _lives_jack_driver_t {
   int      dev_idx;                      /**< id of this device ??? */
   int     sample_out_rate;                   /**< samples(frames) per second */
@@ -161,6 +165,8 @@ typedef struct _lives_jack_driver_t {
   volatile int astream_fd;
 
   volatile float abs_maxvol_heard;
+
+  char status_msg[STMSGLEN];
 } jack_driver_t;
 
 #define JACK_MAX_OUTDEVICES 10

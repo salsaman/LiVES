@@ -4,6 +4,11 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
+#ifndef HAS_LIVES_PULSE_H
+#define HAS_LIVES_PULSE_H
+
+#define PULSE_AUDIO_URL "http://www.pulseaudio.org"
+
 #ifdef HAVE_PULSE_AUDIO
 
 #include <pulse/context.h>
@@ -159,3 +164,6 @@ boolean pulse_audio_seek_frame(pulse_driver_t *, double frame);  ///< seek to (v
 void pulse_get_rec_avals(pulse_driver_t *);
 
 #endif
+
+#endif
+

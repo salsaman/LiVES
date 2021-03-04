@@ -4,6 +4,28 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
+// this is highly experimental code, and may change radically
+
+// features (potential)
+// - formalises function prototypes so their argument types and return types can be know at runtime
+// - using intents allows different subtypes to call different functions for the same intent
+// - within one object, same intent can be mapped to various functions depending on the arguments and return type
+// - provides a convenient location for gathering function arguments and storing the return value(s)
+// - objects can be "smart" and provide defaults for arguments, query other objects, or get missing values from the user
+// - arguments can be mapped to things other than simple parameters, for example "self", "self.fundamental"
+// - allows functions to be chained in sequence with outputs from one feeding into the next
+// - provides for verifying that a set of conditions is satisfied before the function(s) are called
+// - objects can list capabilities which depend on the intent and object state
+// - a status can be returned after any step in the transform - new requirements and conditions can be added
+// - the transform returns a status which can be updated dynamically (e,g waiting, needs_data)
+// - allows for the possibility of object - object communication and data sharing
+// - enables goal based activities based on a sequence of state changes from the current state to the goal state
+// - permits the creation of functions which can handle various object types / subtypes differently
+// - allows for "factory" type templates which can create instances of various subtypes
+// - modular implementation allows for the various components to be used independantly (e.g "intention" can be used anywhere
+//		like an enum)
+//
+
 #ifndef HAS_LIVES_INTENTS_H
 #define HAS_LIVES_INTENTS_H
 
@@ -16,45 +38,31 @@
 
 #define LIVES_OBJECT(o) ((lives_object_t *)((o)))
 
+// for external object data (e.g g_obect)
+#define INTENTION_KEY "intention_"
+
 // example types
 #define OBJECT_TYPE_CLIP		IMkType("obj.CLIP")
 #define OBJECT_TYPE_PLUGIN		IMkType("obj.PLUG"
 #define OBJECT_TYPE_WIDGET		IMkType("obj.WIDG")
-
-// if object is an instance, then template is a pointer to the template
-// the template "data" also relates to this instance
-// the difference is that templates are static, and the same uid always refers to the same object
-// instances have limited scope. there may be multiple instances created for a single template,
-// and the uid will vary each time the instance is created
-// there is a generic lives_template_none which may be used as the template for instances
-// which have no real template. For static objects, tenplate should be left NULL
-
-// the fields should not be accessed directly, only via accessor functions below
 
 typedef struct _object_t lives_object_t;
 typedef struct _object_t lives_object_template_t;
 typedef struct _object_t lives_object_instance_t;
 typedef struct _obj_status lives_object_status_t;
 
+// lives_object_t
 struct _object_t {
-  uint64_t uid; // object ID
-  uint64_t type; // object type
+  uint64_t uid; // unique id for this object, for static objects (templates), should be a fixed value
+  		// for other objects should be randomly generated for the lifetime of the object
+  uint64_t type; // object type - from IMkType
   uint64_t subtype; // object subtype, can change during a transformation
-  lives_object_t *template; // pointer
-  lives_object_status_t *status; // pointer to static
-  int n_params;
+  const lives_object_t *template; // pointer to template class, or NULL
+  lives_object_status_t *status; // pointer to status struct
+  int n_params;  // internal params for the object - may be mapped to transform reqs. / out params
   weed_param_t **params;
-  void *priv;
+  void *priv; // internal data belonging to the object
 };
-
-// for object obj, in state state, set *intents to an array of intents offered
-// the return value is the size of *intents, which may be zero
-
-// a state of 0 is the "uncreated" state.
-// get_intents may be called with a staic object, and a state of 0
-// the object handler may return an intent
-// LIVES_INTENTION_CREATE if the object can be instantiated
-// or the static object may have only static intents
 
 enum {
   LIVES_INTENTION_UNKNOWN,
@@ -71,6 +79,10 @@ enum {
   LIVES_INTENTION_GET_VALUE,
   LIVES_INTENTION_SET_VALUE,
 
+  // internal type actions
+  LIVES_INTENTION_UNDO,
+  LIVES_INTENTION_REDO,
+
   // video players
   LIVES_INTENTION_PLAY = 0x00000200,
   LIVES_INTENTION_STREAM,  // encode / data in -> remote stream
@@ -78,6 +90,7 @@ enum {
   LIVES_INTENTION_ENCODE, // encode / file in -> external file format
   LIVES_INTENTION_RENDER, // data -> internal clip
 
+  // clip-like objects (TBD. - part of clip object or should there be a clip_manager static object ?)
   LIVES_INTENTION_IMPORT_LOCAL, // import from local filesystem, -> internal clips  i.e "open"
   LIVES_INTENTION_IMPORT_REMOTE, // import from online source  -> internal clip "download"
   LIVES_INTENTION_EXPORT_LOCAL, // export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
@@ -98,6 +111,7 @@ enum {
   LIVES_INTENTION_MAX = 0xFFFFFFFF
 };
 
+// avoiding using an enum allows the list to be extended in other headers
 typedef uint32_t lives_intention;
 
 /// type specific caps
@@ -165,7 +179,7 @@ typedef uint32_t lives_intention;
 #define RFX_PROPS_RESERVED3   0x4000
 #define RFX_PROPS_AUTO_BUILT  0x8000
 
-// generic states which can be alter by *transforms*
+// generic STATES which can be altered by *transforms*
 #define OBJECT_STATE_NULL	0
 #define OBJECT_STATE_NORMAL	1
 #define OBJECT_STATE_PREVIEW	2
@@ -179,26 +193,25 @@ typedef uint32_t lives_intention;
 // txparams
 #define CLIP_PARAM_STAGING_DIR "staging_dir"
 
-// all instances should create a separate static object status and return a pointer to it when
-// treansforming via an intent, when freeing itself it should point to status to a static int with
-// value 32768
+// when object is destroyed it should add a ref to status to be returned, and set state to DESTROYED before freeing itself
 struct _obj_status {
   int state;
   int *status; /// pointer to an int (some states are dynamic)
   int refcount;
 };
 
+// pretty straightforward - object enumerates type / subtype specific capabilites for a given intention
 typedef struct {
   lives_intention intent;
   int n_caps;
   int *capabilities; ///< type specific capabilities
 } lives_intentcap_t;
 
-// intentparams along with the requirements can be used to guide the transformation
+// values which are used to perform the transformation, part of the requirement rules
 typedef struct {
   lives_intention intent;
   int n_params;
-  weed_param_t **params; ///< params for the transform (can be converted to normal params via weed_param_from_iparams)
+  weed_param_t **params; ///< (can be converted to normal params via weed_param_from_iparams)
 } lives_intentparams_t;
 
 /// NOT YET FULLY IMPLEMENTED
@@ -217,10 +230,12 @@ typedef struct {
 
 typedef weed_param_t lives_req_t;
 
+// may become functions
 typedef boolean lives_cond_t;
 
 // possibly - req type param value, req type condition, req type ...
 
+// rules which must be satisfied before the transformation can succeed
 typedef struct {
   lives_object_instance_t *oinst;
   int n_reqs;
@@ -230,18 +245,19 @@ typedef struct {
   int refcount;
 } lives_rules_t;
 
-// flagbits for list_transformations
+// flagbits for transformations
 #define TR_FLAGS_CREATES_CHILD (1 << 0) // creates child instance from template
 #define TR_FLAGS_CREATES_COPY  (1 << 1) // creates a copy of an instance with a different uid
-#define TR_FLAGS_FINAL (1 << 2) // state is final after tx, no further transformations possible
-#define TR_FLAGS_INSTANT (1 << 3) // must immediately be followed by another transformation
+#define TR_FLAGS_CHANGES_SUBTYPE  (1 << 2) // object subtype may change during the transformation
+#define TR_FLAGS_FINAL (1 << 3) // state is final after tx, no further transformations possible
+#define TR_FLAGS_INSTANT (1 << 4) // must immediately be followed by another transformation
 
-#define TR_FLAGS_DIRECT (1 << 32) // function may be called directly (this is a transitional stoep
-// which may be deprecated
+#define TR_FLAGS_DIRECT (1 << 32) // function may be called directly (this is a transitional step
+					// which may be deprecated
 
 typedef weed_param_t out_params_t;
 
-// this is linked
+// maps in / out params to actual function parameters
 typedef struct {
   // negative mapping values may have special meanings, e.g self, fundamental
   int n_in_mappings;
@@ -253,7 +269,19 @@ typedef struct {
   /// type is void (*callback_hook)(lives_object_instance_t *self, void *user_data);
 } tx_map;
 
-
+// a transform(ation) is a function or sequence of functions which correspond to satistying some intention for the object
+// they will do one or more of the following:
+// - change the state of the obejct from start_state to new_state (active transform)
+// - change the object subtype (active)
+// - alter the values of one or more out_params (passive transform)
+// prereqs defines the rules which must be satisfied before the transform can be performed succesfully
+// mappings defines the mapping of object params to actual function params
+// there may be more than 1 mapping if the transform calls several functions in sequence
+// out_params may have values updated by the tx
+// flags gives additional info about the transform (e.g it create a new object)
+//
+// after examining the transform object, caller should endure that all of the reqmt. rules are satisfied
+// and may then activate the transform for the object in question
 typedef struct {
   int start_state;
   lives_rules_t *prereqs; // pointer to the prerequisites for carrying out the transform (can be NULL)

@@ -145,6 +145,8 @@ typedef struct {
 } text_window;
 
 
+void do_logger_dialog(const char *title, const char *text, const char *buff, boolean add_abort);
+
 text_window *create_text_window(const char *title_part, const char *text, LiVESTextBuffer *,
                                 boolean add_buttons);
 
@@ -283,6 +285,7 @@ typedef struct {
   LiVESWidget *note_label;
   LiVESWidget *checkbutton;
   LiVESWidget *vlabel;
+  LiVESWidget *noqlabel;
   LiVESWidget *vvlabel;
   LiVESWidget *pculabel;
   LiVESWidget *slider;

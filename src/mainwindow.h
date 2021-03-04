@@ -635,6 +635,7 @@ enum {
 #define IMPORTS_DIRNAME "imports"
 
 #define SET_DIR(set_name) (lives_build_path(prefs->workdir, (set_name), NULL))
+#define FUTURE_SET_DIR(set_name) (lives_build_path(future_prefs->workdir, (set_name), NULL))
 #define CURRENT_SET_DIR SET_DIR(mainw->set_name)
 
 #define SET_LOCK_FILE(set_name, lockfile) lives_build_filename(SET_DIR((set_name)), (lockfile), NULL)
@@ -643,14 +644,24 @@ enum {
 // directory where we store 1 clip / all clips if handle is NULL
 #define _MAKE_CLIPS_DIRNAME_(set, handle) lives_build_filename(SET_DIR((set)), CLIPS_DIRNAME, handle, NULL)
 
+// directory where we store 1 clip / all clips if handle is NULL
+#define _MAKE_FUTURE_CLIPS_DIRNAME_(set, handle) lives_build_filename(FUTURE_SET_DIR((set)), CLIPS_DIRNAME, handle, NULL)
+
 // directory for all clips in set
 #define CLIPS_DIR(set) (_MAKE_CLIPS_DIRNAME_((set), NULL))
+
+#define FUTURE_CLIPS_DIR(set) (_MAKE_FUTURE_CLIPS_DIRNAME_((set), NULL))
 
 // directory of a clip in the current set
 #define CURRENT_SET_CLIP_DIR(handle) (_MAKE_CLIPS_DIRNAME_(mainw->set_name, (handle)))
 
 #define LAYOUTS_DIR(set) (lives_build_path(SET_DIR((set)), LAYOUTS_DIRNAME, NULL))
-#define CURRENT_SET_LAYOUTS_DIR(set) (LAYAOUTS_DIR(mainw->set_name))
+#define FUTURE_LAYOUTS_DIR(set) (lives_build_path(FUTURE_SET_DIR((set)), LAYOUTS_DIRNAME, NULL))
+
+#define CURRENT_SET_LAYOUTS_DIR (LAYOUTS_DIR(mainw->set_name))
+
+#define LAYOUT_MAP_FILE(set) (lives_build_filename(LAYOUTS_DIR((set)), LAYOUT_MAP_FILENAME, NULL))
+#define FUTURE_LAYOUT_MAP_FILE(set) (lives_build_filename(FUTURE_LAYOUTS_DIR((set)), LAYOUT_MAP_FILENAME, NULL))
 
 // filters
 #define LIVES_SUBS_FILTER  {"*.srt", "*.sub", NULL}
@@ -1610,7 +1621,8 @@ typedef struct {
   int write_abuf; ///< audio buffer number to write to (for multitrack)
   volatile int abufs_to_fill;
 
-  boolean first_shown;
+  boolean first_shown; // used during setup phase
+  boolean lives_shown; // ensures we always show the main window
 
   /// splash window
   LiVESWidget *splash_window, *splash_label, *splash_progress;

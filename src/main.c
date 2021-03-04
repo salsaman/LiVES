@@ -1005,7 +1005,7 @@ static boolean pre_init(void) {
     widget_opts.apply_theme = 1;
   }
   if (!mainw->foreign) {
-    if (prefs->startup_phase == -1 && prefs->show_splash) splash_init();
+    if (prefs->startup_phase == 0 && prefs->show_splash) splash_init();
     print_notice();
   }
 
@@ -2196,18 +2196,18 @@ static void lives_init(_ign_opts *ign_opts) {
       }
     }
 
+    if (prefs->startup_phase == 0) mainw->first_shown = TRUE;
+    
     mainw->recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, lives_getuid(),
                            lives_getgid(), capable->mainpid);
 
     if (prefs->startup_phase > 0 && prefs->startup_phase <= 4) {
       splash_end();
       lives_widget_context_update();
-      while (!do_audio_choice_dialog(prefs->startup_phase)) {
-        prefs->startup_phase = 1;
-        if (!do_workdir_query()) {
-          lives_exit(0);
-        }
-        prefs->startup_phase = 3;
+      if (!do_audio_choice_dialog(prefs->startup_phase)) {
+	prefs->startup_phase = 3;
+	set_int_pref(PREF_STARTUP_PHASE, 3);
+	lives_exit(0);
       }
 
       prefs->startup_phase = 4;
@@ -2358,6 +2358,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->startup_phase = 6;
 
     reset_font_size();
+    mainw->first_shown = TRUE;
 
     if (prefs->show_disk_quota && !prefs->vj_mode) {
       if (!disk_monitor_running(prefs->workdir))
@@ -4012,7 +4013,8 @@ static boolean lives_startup(livespointer data) {
     if (upgrade_error) {
       do_upgrade_error_dialog();
     }
-    prefs->startup_phase = 0;
+    // do not reset prefs->startup_phase yet, as the current value will temporarily
+    // block the "after a crash.." warning
   }
 
   // splash_end() will start up multitrack if in STARTUP_MT mode
@@ -4025,7 +4027,7 @@ static boolean lives_startup(livespointer data) {
     splash_end();
   }
 
-  if (prefs->startup_phase == 0) show_lives();
+  if (!mainw->lives_shown) show_lives();
   mainw->is_ready = TRUE;
 
   if (!strcmp(buff, AUDIO_PLAYER_SOX)) {

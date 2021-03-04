@@ -257,7 +257,7 @@ static LiVESResponseType prompt_existing_dir(const char *dirname, uint64_t frees
     } else {
       msg = lives_format_storage_space_string(freespace);
       boolean res = do_yesno_dialogf(
-                      _("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"),
+                      _("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space in volume = %s)\n"),
                       dirname, msg);
       lives_free(msg);
       if (!res) return LIVES_RESPONSE_CANCEL;
@@ -450,8 +450,9 @@ boolean do_workdir_query(void) {
   if (mainw->splash_window) {
     lives_widget_hide(mainw->splash_window);
     lives_widget_show_all(wizard->dialog);
-    //lives_widget_show_now(wizard->dialog);
+    lives_widget_show_now(wizard->dialog);
   }
+  lives_widget_context_update();
   if (!mainw->is_ready) {
     char *wid;
     gtk_window_set_urgency_hint(LIVES_WINDOW(wizard->dialog), TRUE); // dont know if this actually does anything...
@@ -563,7 +564,7 @@ boolean do_jack_config(boolean is_setup, boolean is_trans) {
   LiVESWidget *acdef, *acname, *astart;
   LiVESWidget *asdef, *asname;
   LiVESWidget *okbutton, *cancelbutton, *filebutton;
-  LiVESWidget *scrpt_rb, *cfg_entry;
+  LiVESWidget *scrpt_rb, *cfg_entry, *expander = NULL;
   LiVESResponseType response;
   char *show_hid[2] = {".", NULL};
   char *title, *text;
@@ -692,8 +693,8 @@ set_config:
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   if (is_setup) {
-    lives_standard_expander_new(_("_LiVES Settings"), LIVES_BOX(hbox),
-                                (layout = lives_layout_new(NULL)));
+    expander = lives_standard_expander_new(_("_LiVES Settings"), LIVES_BOX(hbox),
+					   (layout = lives_layout_new(NULL)));
   }
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -777,6 +778,7 @@ set_config:
                                             "file)\n"));
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), hbox, FALSE);
+  if (expander) toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), expander, FALSE);
 
   if (!is_setup) {
     LiVESWidget *advbutton;
@@ -986,7 +988,7 @@ retry:
         if (*prefs->jack_aserver_cname)
           srvname = lives_strdup_printf(_("jack server '%s'"), prefs->jack_aserver_cname);
         else
-          srvname = _("the default server");
+          srvname = _("the default jack server");
         if (!do_warning_dialogf(_("Please ensure that %s "
                                   "is running before clicking OK\n"
                                   "Otherwise, click Cancel to select a different option\n"),
@@ -1080,7 +1082,8 @@ reloop:
 #endif
 
   txt1 = lives_strdup(
-           _("Before starting LiVES, you need to choose an audio player.\n\n<big><b>PULSE AUDIO</b></big> is recommended for most users"));
+           _("Before starting LiVES, you need to choose an audio player.\n\n"
+	     "<big><b>PULSE AUDIO</b></big> is recommended for most users"));
 
 #ifndef HAVE_PULSE_AUDIO
   txt2 = (_(", but this version of LiVES was not compiled with pulse audio support.\n\n"));
@@ -1209,6 +1212,8 @@ reloop:
   radiobutton3 = lives_standard_radio_button_new(_("Use _<b>none</b> audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
   widget_opts.use_markup = FALSE;
 
+  add_fill_to_box(LIVES_BOX(dialog_vbox));
+  
 #ifdef HAVE_PULSE_AUDIO
   lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton0), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
@@ -1232,7 +1237,10 @@ reloop:
                             LIVES_INT_TO_POINTER(AUD_PLAYER_NONE));
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
-                 _("Back"), LIVES_RESPONSE_CANCEL);
+						    _("Quit from Setup"), LIVES_RESPONSE_CANCEL);
+
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
+				     _("Back"), LIVES_RESPONSE_RETRY);
 
   lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
 
@@ -1261,7 +1269,7 @@ reloop:
     guess_font_size(dialog, LIVES_LABEL(label), NULL, .22);
   }
   if (!mainw->first_shown) {
-    guess_font_size(dialog, LIVES_LABEL(label), NULL, 1.25);
+    guess_font_size(dialog, LIVES_LABEL(label), NULL, 1.22);
   }
 
   lives_widget_show_all(dialog);
@@ -1271,7 +1279,13 @@ reloop:
   if (!wid || !activate_x11_window(wid) || 1) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
   if (wid) lives_free(wid);
 
-  response = lives_dialog_run(LIVES_DIALOG(dialog));
+  while (1) {
+    response = lives_dialog_run(LIVES_DIALOG(dialog));
+    if (response == LIVES_RESPONSE_CANCEL) {
+      if (!confirm_exit()) continue;
+    }
+    break;
+  }
 
   lives_widget_destroy(dialog);
 
@@ -1286,6 +1300,15 @@ reloop:
     }
   }
 #endif
+  
+  if (response == LIVES_RESPONSE_RETRY) {
+    if (!do_startup_tests(FALSE)) response = LIVES_RESPONSE_CANCEL;
+    else {
+        txt0 = lives_strdup("");
+        radiobutton_group = NULL;
+        goto reloop;
+    }
+  }
 
   if (mainw->splash_window) {
     lives_widget_show(mainw->splash_window);
@@ -1301,72 +1324,147 @@ reloop:
 }
 
 
-static void add_test(LiVESWidget * table, int row, char *ttext, boolean noskip) {
-  LiVESWidget *label = lives_standard_label_new(ttext);
+#define MAX_TESTS 64
+static LiVESWidget *test_labels[MAX_TESTS];
+static LiVESWidget *test_reslabels[MAX_TESTS];
+static LiVESWidget *test_spinners[MAX_TESTS];
 
-  lives_table_attach(LIVES_TABLE(table), label, 0, 1, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
-  lives_widget_show(label);
-
-  if (!noskip) {
-    LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_REMOVE, LIVES_ICON_SIZE_LARGE_TOOLBAR);
-    // TRANSLATORS - as in "skipped test"
-    label = lives_standard_label_new(_("Skipped"));
-
-    lives_table_attach(LIVES_TABLE(table), label, 1, 2, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
-    lives_widget_show(label);
-
-    lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
-    lives_widget_show(image);
+static void prep_test(LiVESWidget *table, int row) {
+  LiVESWidget *label = test_reslabels[row];
+  if (label) lives_label_set_text(LIVES_LABEL(label), _("Checking..."));
+#if LIVES_HAS_SPINNER_WIDGET
+  if (test_spinners[row]) {
+    lives_spinner_start(LIVES_SPINNER(test_spinners[row]));
   }
-
-  lives_widget_context_update();
+#endif
+  for (int i = 0; i < 100; i++) {
+    lives_widget_context_update();
+    lives_usleep(4000);
+  }
 }
 
+static void add_test(LiVESWidget * table, int row, const char *ttext, boolean noskip) {
+  LiVESWidget *label = test_labels[row];
+  boolean add_spinner = FALSE;
+
+  if (!label) {
+    label = lives_standard_label_new(ttext);
+    lives_table_attach(LIVES_TABLE(table), label, 0, 1, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
+    //lives_widget_show(label);
+    test_labels[row] = label;
+    if (!test_spinners[row] || !test_reslabels[row]) add_spinner = TRUE;
+  }
+  else {
+    lives_label_set_text(LIVES_LABEL(label), ttext);
+  }
+
+  if (!noskip) {
+    LiVESWidget *image = NULL;
+    label = test_reslabels[row];
+    if (add_spinner) {
+      if (!label) label = lives_standard_label_new(_("Waiting..."));
+#if LIVES_HAS_SPINNER_WIDGET
+      if (!test_spinners[row]) {
+	image = test_spinners[row] = lives_standard_spinner_new(FALSE);
+      }
+#endif
+    }
+    else {
+      char *txt;
+      if (test_spinners[row]) {
+	lives_widget_unparent(test_spinners[row]);
+	test_spinners[row] = NULL;
+      }
+      
+      image = lives_image_new_from_stock(LIVES_STOCK_REMOVE, LIVES_ICON_SIZE_LARGE_TOOLBAR);
+
+      // TRANSLATORS - as in "skipped test"
+      txt = _("Skipped");
+      if (!label) label = lives_standard_label_new(txt);
+      else lives_label_set_text(LIVES_LABEL(label), txt);
+      lives_free(txt);
+    }
+
+    if (!test_reslabels[row]) {
+      lives_table_attach(LIVES_TABLE(table), label, 1, 2, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
+      //lives_widget_show(label);
+      test_reslabels[row] = label;
+    }
+      
+    if (image) {
+      lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
+    }
+  }
+}
 
 static boolean pass_test(LiVESWidget * table, int row) {
   // TRANSLATORS - as in "passed test"
-  LiVESWidget *label = lives_standard_label_new(_("Passed"));
-
-#if GTK_CHECK_VERSION(3, 10, 0)
-  LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_ADD, LIVES_ICON_SIZE_LARGE_TOOLBAR);
-#else
+  LiVESWidget *label = test_reslabels[row];
+  char *txt;
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_APPLY, LIVES_ICON_SIZE_LARGE_TOOLBAR);
-#endif
+  set_css_min_size(image, widget_opts.css_min_width, widget_opts.css_min_height);
+  if (test_spinners[row]) {
+    lives_widget_unparent(test_spinners[row]);
+    test_spinners[row] = NULL;
+  }
 
-  lives_table_attach(LIVES_TABLE(table), label, 1, 2, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
-  lives_widget_show(label);
+  txt = _("Passed");
+  if (!label) label = lives_standard_label_new(txt);
+  else lives_label_set_text(LIVES_LABEL(label), txt);
+  lives_free(txt);
 
+  if (!test_reslabels[row]) {
+    lives_table_attach(LIVES_TABLE(table), label, 1, 2, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
+    lives_widget_show(label);
+    test_reslabels[row] = label;
+  }
+      
   lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
-  lives_widget_context_update();
+  lives_widget_show_all(table);
+  for (int i = 0; i < 100; i++) {
+    lives_widget_context_update();
+    lives_usleep(2000);
+  }
   return TRUE;
 }
 
-
 static boolean _fail_test(LiVESWidget * table, int row, char *ftext, const char *type) {
-  LiVESWidget *label;
+  LiVESWidget *label = test_reslabels[row];
 #if GTK_CHECK_VERSION(3, 10, 0)
-  LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_REMOVE, LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_WARNING, LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #else
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_CANCEL, LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #endif
+
+  if (test_spinners[row]) {
+    lives_widget_unparent(test_spinners[row]);
+    test_spinners[row] = NULL;
+  }
+
+  if (!label) label = lives_standard_label_new(type);
+  else lives_label_set_text(LIVES_LABEL(label), type);
+
+  if (!test_reslabels[row]) {
+    lives_table_attach(LIVES_TABLE(table), label, 1, 2, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
+    test_reslabels[row] = label;
+  }
 
   label = lives_standard_label_new(ftext);
 
   lives_table_attach(LIVES_TABLE(table), label, 3, 4, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
   lives_widget_show(label);
 
-  // TRANSLATORS - as in "failed test"
-  label = lives_standard_label_new(type);
-
-  lives_table_attach(LIVES_TABLE(table), label, 1, 2, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
-  lives_widget_show(label);
-
   lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
-  lives_widget_context_update();
+  lives_widget_show_all(table);
+
+  for (int i = 0; i < 100; i++) {
+    lives_widget_context_update();
+    lives_usleep(2000);
+  }
   return FALSE;
 }
 
@@ -1383,15 +1481,32 @@ LIVES_LOCAL_INLINE char *get_resource(char *fname) {
   return lives_build_filename(prefs->prefix_dir, DATA_DIR, LIVES_RESOURCES_DIR, fname, NULL);
 }
 
+static void quit_from_tests(LiVESWidget *dialog, livespointer button) {
+  lives_widget_hide(dialog);
+  if (confirm_exit()) {
+    SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_DESTROY);
+    mainw->cancelled = CANCEL_USER;
+  }
+  else {
+    SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_UNKNOWN);
+    lives_widget_show(dialog);
+  }
+}
+
+static void back_from_tests(LiVESWidget *dialog, livespointer button) {
+  SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_UNDO);
+  mainw->cancelled = CANCEL_USER;
+}
+
 
 boolean do_startup_tests(boolean tshoot) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
 
-  LiVESWidget *label;
+  LiVESWidget *label, *xlabel = NULL;
   LiVESWidget *table;
   LiVESWidget *okbutton;
-  LiVESWidget *cancelbutton;
+  LiVESWidget *cancelbutton, *backbutton = NULL;
 
   char mppath[PATH_MAX];
 
@@ -1404,22 +1519,20 @@ boolean do_startup_tests(boolean tshoot) {
   const char *lookfor;
 
   uint8_t *abuff;
+  ulong quitfunc, backfunc = 0;
 
   off_t fsize;
 
   boolean success, success2, success3, success4;
-  boolean imgext_switched = FALSE;
+  boolean imgext_switched;
+  boolean add_skip = FALSE;
 
   LiVESResponseType response;
   int res;
   int current_file = mainw->current_file;
 
+  int intent;
   int out_fd, info_fd, testcase = 0;
-
-  allpassed = TRUE;
-
-  mainw->suppress_dprint = TRUE;
-  mainw->cancelled = CANCEL_NONE;
 
   if (mainw->multitrack) {
     if (mainw->multitrack->idlefunc > 0) {
@@ -1429,6 +1542,19 @@ boolean do_startup_tests(boolean tshoot) {
     mt_desensitise(mainw->multitrack);
   }
 
+ rerun:
+  mainw->cancelled = CANCEL_NONE;
+  
+  for (int i = 0; i < MAX_TESTS; i++) {
+    test_labels[i] = test_reslabels[i] = test_spinners[i] = NULL;
+  }
+  
+  testcase = 0;
+  imgext_switched = FALSE;
+  allpassed = TRUE;
+  mainw->suppress_dprint = TRUE;
+  mainw->cancelled = CANCEL_NONE;
+  
   if (!tshoot) {
     title = (_("Testing Configuration"));
   } else {
@@ -1444,12 +1570,25 @@ boolean do_startup_tests(boolean tshoot) {
   label = lives_standard_label_new(_("LiVES will now run some basic configuration tests\n"));
   lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
 
-  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-                 LIVES_RESPONSE_CANCEL);
+  if (!tshoot)
+    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, _("Quit from Setup"),
+						      LIVES_RESPONSE_CANCEL);
+  else
+    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+						      LIVES_RESPONSE_CANCEL);
+    
+  quitfunc = lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+					       LIVES_GUI_CALLBACK(quit_from_tests), dialog);
 
   lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
 
   if (!tshoot) {
+    backbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK, _("_Back to directory selection"),
+						    LIVES_RESPONSE_RETRY);
+
+    backfunc = lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(backbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+						 LIVES_GUI_CALLBACK(back_from_tests), dialog);
+
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
                LIVES_RESPONSE_OK);
   } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
@@ -1464,25 +1603,70 @@ boolean do_startup_tests(boolean tshoot) {
   lives_container_add(LIVES_CONTAINER(dialog_vbox), table);
 
   if (!tshoot) {
-    char *wid;
-    if (mainw->splash_window) {
+      if (mainw->splash_window) {
       lives_widget_hide(mainw->splash_window);
     }
+  }
 
-    lives_widget_show_all(dialog);
-    lives_widget_context_update();
+  add_test(table, testcase, _("Checking for \"sox\" presence"), FALSE);
 
+  // test if sox can convert raw 44100 -> wav 22050
+  add_test(table, ++testcase, _("Checking if sox can convert audio"), FALSE);
+
+  add_test(table, ++testcase, _("Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"), FALSE);
+
+  add_test(table, ++testcase, _("Checking if ???? can convert audio"), FALSE);
+
+#ifdef ALLOW_PNG24
+  msg = lives_strdup_printf(_("Checking if %s can decode to png"), "????");
+#else
+  msg = lives_strdup_printf(_("Checking if %s can decode to png/alpha"), "????");
+#endif
+  add_test(table, ++testcase, msg, FALSE);
+  lives_free(msg);
+
+  add_test(table, ++testcase, NULL, TRUE);
+
+  add_test(table, ++testcase, _("Checking if ???? can decode to jpeg"), FALSE);
+
+  add_test(table, ++testcase, _("Checking for \"convert\" presence"), FALSE);
+
+  if (!tshoot) {
+    xlabel = lives_standard_label_new(
+				     _("\n\n\tClick 'Quit from Setup' to exit and install any missing components, or Next to continue\t\n"));
+    lives_container_add(LIVES_CONTAINER(dialog_vbox), xlabel);
+    lives_widget_show(xlabel);
+    lives_widget_set_opacity(xlabel, 0.);
+  }
+
+  lives_widget_show_all(dialog);
+  if (!mainw->first_shown) {
+    guess_font_size(dialog, LIVES_LABEL(xlabel), NULL, .88);
+  }
+  if (!mainw->first_shown) {
+    guess_font_size(dialog, LIVES_LABEL(xlabel), NULL, 0.18);
+  }
+
+  lives_widget_context_update();
+
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
+
+  if (!tshoot) {
+    char *wid;
     gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE); // dont know if this actually does anything...
     wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
     if (!wid || !activate_x11_window(wid) || 1) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
     if (wid) lives_free(wid);
   }
 
-  lives_widget_context_update();
+  // begin tests... //////
+
+  testcase = 0;
 
   // check for sox presence
 
-  add_test(table, testcase, _("Checking for \"sox\" presence"), TRUE);
+  prep_test(table, testcase);
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
   if (!capable->has_sox_sox) {
     success = fail_test(table, testcase, _("You should install sox to be able to use all the audio features in LiVES"));
@@ -1491,8 +1675,8 @@ boolean do_startup_tests(boolean tshoot) {
     success = pass_test(table, testcase);
   }
 
-  // test if sox can convert raw 44100 -> wav 22050
-  add_test(table, ++testcase, _("Checking if sox can convert audio"), success);
+  prep_test(table, ++testcase);
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
   if (!tshoot) set_string_pref(PREF_DEFAULT_IMAGE_TYPE, LIVES_IMAGE_TYPE_PNG);
   lives_snprintf(prefs->image_ext, 16, "%s", LIVES_FILE_EXT_PNG);
@@ -1570,29 +1754,16 @@ boolean do_startup_tests(boolean tshoot) {
     }
   }
 
+  prep_test(table, ++testcase);
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
+
   if (tshoot) {
     lives_snprintf(prefs->image_ext, 16, "%s", image_ext);
     lives_snprintf(prefs->image_type, 16, "%s", image_ext_to_lives_image_type(prefs->image_ext));
   }
 
-  if (mainw->cancelled != CANCEL_NONE) {
-    mainw->cancelled = CANCEL_NONE;
-    close_file(current_file, tshoot);
-    lives_widget_destroy(dialog);
-    mainw->suppress_dprint = FALSE;
-
-    if (!mainw->multitrack) {
-      mt_sensitise(mainw->multitrack);
-      mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
-    }
-    lives_freep((void **)&temp_backend);
-    return FALSE;
-  }
-
   // check for mplayer presence
   success2 = TRUE;
-
-  add_test(table, ++testcase, _("Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"), TRUE);
 
   if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
     success2 = fail_test(table, testcase,
@@ -1624,6 +1795,7 @@ boolean do_startup_tests(boolean tshoot) {
     success2 = pass_test(table, testcase);
   }
 
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
   // if present
 
   // check if mplayer can decode audio
@@ -1639,6 +1811,8 @@ boolean do_startup_tests(boolean tshoot) {
   msg = lives_strdup_printf(_("Checking if %s can convert audio"), mp_cmd);
   add_test(table, ++testcase, msg, success2);
   lives_free(msg);
+  prep_test(table, testcase);
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
   res = 1;
 
@@ -1662,6 +1836,7 @@ boolean do_startup_tests(boolean tshoot) {
   } else {
     fail_test(table, testcase, _("You should install mplayer,mplayer2 or mpv with pcm/wav support"));
   }
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
   // check if mplayer can decode to png/(alpha)
 
@@ -1677,8 +1852,11 @@ boolean do_startup_tests(boolean tshoot) {
 #else
   msg = lives_strdup_printf(_("Checking if %s can decode to png/alpha"), mp_cmd);
 #endif
+
   add_test(table, ++testcase, msg, success2);
   lives_free(msg);
+  prep_test(table, testcase);
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
   success3 = FALSE;
 
@@ -1711,8 +1889,10 @@ boolean do_startup_tests(boolean tshoot) {
       success3 = TRUE;
     }
   }
+  else add_skip = TRUE;
 
   lives_free(rname);
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
   // try to open resource vidtest.avi
   if (!success3 && success2 && success4) {
@@ -1725,7 +1905,7 @@ boolean do_startup_tests(boolean tshoot) {
     com = lives_strdup_printf("%s open_test \"%s\" %s \"%s\" 0 png", temp_backend, cfile->handle,
                               prefs->video_open_command,
                               (tmp = lives_filename_from_utf8(rname, -1, NULL, NULL, NULL)));
-    lives_free(temp_backend);
+    lives_freep((void **)&temp_backend);
     lives_free(tmp);
     lives_free(rname);
 
@@ -1764,24 +1944,19 @@ boolean do_startup_tests(boolean tshoot) {
     }
   } else lives_freep((void **)&temp_backend);
 
-  if (mainw->cancelled != CANCEL_NONE) {
-    mainw->cancelled = CANCEL_NONE;
-    close_file(current_file, tshoot);
-    lives_widget_destroy(dialog);
-    mainw->suppress_dprint = FALSE;
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
-    if (mainw->multitrack) {
-      mt_sensitise(mainw->multitrack);
-      mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
-    }
-
-    return FALSE;
+  if (add_skip) {
+    testcase++;
+    add_skip = FALSE;
   }
 
   // check if mplayer can decode to jpeg
+  prep_test(table, ++testcase);
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
   msg = lives_strdup_printf(_("Checking if %s can decode to jpeg"), mp_cmd);
-  add_test(table, ++testcase, msg, success2);
+  add_test(table, testcase, msg, success2);
   lives_free(msg);
   res = 1;
 
@@ -1808,6 +1983,7 @@ boolean do_startup_tests(boolean tshoot) {
     lives_free(com);
 #endif
   }
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
   if (res == 0) {
     pass_test(table, testcase);
@@ -1838,7 +2014,8 @@ boolean do_startup_tests(boolean tshoot) {
 jpgdone:
   // check for convert
 
-  add_test(table, ++testcase, _("Checking for \"convert\" presence"), TRUE);
+  prep_test(table, ++testcase);
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
   if (!capable->has_convert) {
     success = fail_test(table, testcase, _("Install imageMagick to be able to use all of the rendered effects"));
@@ -1866,25 +2043,38 @@ jpgdone:
       lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
     }
     lives_widget_show(label);
-  } else {
-    label = lives_standard_label_new(
-              _("\n\n\tClick Cancel to exit and install any missing components, or Next to continue\t\n"));
-    lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
-    lives_widget_show(label);
   }
 
-  if (!mainw->first_shown) {
-    guess_font_size(dialog, LIVES_LABEL(label), NULL, 0.4);
-  }
-  if (!mainw->first_shown) {
-    guess_font_size(dialog, LIVES_LABEL(label), NULL, 0.8);
+  if (xlabel) lives_widget_set_opacity(xlabel, 1.);
+
+  lives_signal_handler_block(cancelbutton, quitfunc);
+  if (backfunc) lives_signal_handler_block(backbutton, backfunc);
+
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
+
+  while (1) {
+    response = lives_dialog_run(LIVES_DIALOG(dialog));
+
+    if (response == LIVES_RESPONSE_CANCEL) {
+      lives_widget_hide(dialog);
+      if (confirm_exit()) {
+	goto cancld;
+      }
+      lives_widget_show(dialog);
+      lives_widget_context_update();
+      continue;
+    }
+    break;
   }
 
-  response = lives_dialog_run(LIVES_DIALOG(dialog));
+  if (response == LIVES_RESPONSE_RETRY) {
+    SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_UNDO);
+    goto cancld;
+  }
 
   lives_widget_destroy(dialog);
   mainw->suppress_dprint = FALSE;
-
+  
   if (mainw->splash_window) {
     lives_widget_show(mainw->splash_window);
   }
@@ -1894,11 +2084,28 @@ jpgdone:
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
 
-  if (response != LIVES_RESPONSE_OK) {
-    if (!confirm_exit()) return TRUE;
+  return (response == LIVES_RESPONSE_OK);
+
+ cancld:
+  mainw->cancelled = CANCEL_NONE;
+
+  close_file(current_file, tshoot);
+  intent = GET_INT_DATA(dialog, INTENTION_KEY);
+  lives_widget_destroy(dialog);
+  mainw->suppress_dprint = FALSE;
+
+  lives_freep((void **)&temp_backend);
+
+  if (intent == LIVES_INTENTION_UNDO) {
+    if (do_workdir_query()) goto rerun;
   }
 
-  return (response == LIVES_RESPONSE_OK);
+  if (mainw->multitrack) {
+    mt_sensitise(mainw->multitrack);
+    mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+  }
+
+  return FALSE;
 }
 
 
@@ -1910,6 +2117,36 @@ void do_startup_interface_query(void) {
   LiVESSList *radiobutton_group = NULL;
   LiVESResponseType resp;
   char *txt1, *txt2, *txt3, *msg, *wid;
+  boolean add_hsep = FALSE;
+
+  dialog = lives_standard_dialog_new(_("Choose the Startup Interface"), FALSE, -1, -1);
+
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+
+#ifdef ENABLE_JACK
+  if (mainw->jackd && *mainw->jackd->status_msg) {
+    label = lives_standard_label_new("JACK status:");
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+    label = lives_standard_label_new(mainw->jackd->status_msg);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+    add_hsep = TRUE;
+  }
+  if (mainw->jackd_read && *mainw->jackd_read->status_msg) {
+    if (!add_hsep) {
+      label = lives_standard_label_new("JACK status:");
+      lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+    }
+    label = lives_standard_label_new(mainw->jackd_read->status_msg);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+    add_hsep = TRUE;
+  }
+#endif
+
+  if (add_hsep) {
+    widget_opts.expand = LIVES_EXPAND_NONE;
+    add_hsep_to_box(LIVES_BOX(dialog_vbox));
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  }
 
   txt1 = (_("\n\nFinally, you can choose the default startup interface for LiVES.\n"));
   txt2 = (_("\n\nLiVES has two main interfaces and you can start up with either of them.\n"));
@@ -1919,18 +2156,16 @@ void do_startup_interface_query(void) {
 
   lives_free(txt1); lives_free(txt2); lives_free(txt3);
 
-  dialog = lives_standard_dialog_new(_("Choose the Startup Interface"), FALSE, -1, -1);
-  //if (transient) lives_window_set_transient_for(LIVES_WINDOW(dialog), NULL);
-
-  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-
   xlabel = lives_standard_label_new(msg);
-  lives_container_add(LIVES_CONTAINER(dialog_vbox), xlabel);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), xlabel, FALSE, FALSE, add_hsep ? 0 : widget_opts.packing_height);
   lives_free(msg);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  lives_standard_radio_button_new(_("Start in _Clip Edit mode"), &radiobutton_group, LIVES_BOX(hbox), NULL);
+
+  widget_opts.use_markup = TRUE;
+  lives_standard_radio_button_new(_("Start in _<b>Clip Edit</b> mode"), &radiobutton_group, LIVES_BOX(hbox), NULL);
+  widget_opts.use_markup = FALSE;
 
   label = lives_standard_label_new(_("This is the best choice for simple editing tasks and for VJs\n"));
 
@@ -1938,7 +2173,10 @@ void do_startup_interface_query(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  radiobutton = lives_standard_radio_button_new(_("Start in _Multitrack mode"), &radiobutton_group, LIVES_BOX(hbox), NULL);
+
+  widget_opts.use_markup = TRUE;
+  radiobutton = lives_standard_radio_button_new(_("Start in _<b>Multitrack</b> mode"), &radiobutton_group, LIVES_BOX(hbox), NULL);
+  widget_opts.use_markup = FALSE;
 
   label = lives_standard_label_new(_("This is a better choice for complex editing tasks involving multiple clips.\n"));
 
@@ -1947,6 +2185,14 @@ void do_startup_interface_query(void) {
   if (prefs->startup_interface == STARTUP_MT) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
   }
+
+  add_fill_to_box(LIVES_BOX(dialog_vbox));
+
+  widget_opts.use_markup = TRUE;
+  label = lives_standard_label_new(_("You may optionally set quota limits here if you want to manage how much disk space LiVES may use.\n"
+				     "<small>(You can also do this later from within the application, should you wish)</small>"));
+  widget_opts.use_markup = FALSE;
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   add_fill_to_box(LIVES_BOX(dialog_vbox));
 
@@ -1973,14 +2219,16 @@ void do_startup_interface_query(void) {
     lives_widget_hide(mainw->splash_window);
   }
 
-  if (!mainw->first_shown) {
-    guess_font_size(dialog, LIVES_LABEL(xlabel), NULL, 5.5);
-    mainw->first_shown = TRUE;
+   if (!mainw->first_shown) {
+    guess_font_size(dialog, LIVES_LABEL(xlabel), NULL, 0.7);
+  }
+ if (!mainw->first_shown) {
+    guess_font_size(dialog, LIVES_LABEL(xlabel), NULL, 0.32);
   }
 
   resp = lives_dialog_run(LIVES_DIALOG(dialog));
-  if (resp == LIVES_RESPONSE_SHOW_DETAILS) prefs->show_disk_quota = TRUE;
-  else prefs->show_disk_quota = FALSE;
+  if (resp == LIVES_RESPONSE_SHOW_DETAILS) pref_factory_bool(PREF_SHOW_QUOTA, TRUE, TRUE);
+  else pref_factory_bool(PREF_SHOW_QUOTA, FALSE, TRUE);
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton)))
     future_prefs->startup_interface = prefs->startup_interface = STARTUP_MT;

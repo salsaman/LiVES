@@ -636,7 +636,10 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
   boolean is_reader = FALSE;
   boolean was_started = FALSE;
 #ifndef JACK_V2
+  int jackver = 1;
   boolean needs_sigs = FALSE;
+#else
+  int jackver = 2;
 #endif
 
   if (!defservname) defservname = JACK_DEFAULT_SERVER_NAME;
@@ -676,11 +679,15 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
         twins = TRUE;
       }
     }
-    if (as_running) goto do_connect;
+    if (as_running) {
+      lives_snprintf(jackd->status_msg, STMSGLEN, "client '%s' successfully connected to running jack v%d server called '%s'\n",
+		     client_name, jackver, server_name);
+      goto do_connect;
+    }
     twins = FALSE;
   }
 
-retry_connect:
+ retry_connect:
   /// TODO - give up after n re-attempts
 
   jackserver = NULL;
@@ -692,6 +699,8 @@ retry_connect:
     jack_transport_client = jack_client_open(client_name, xoptions, &status, server_name);
     if (jack_transport_client) {
       ts_running = server_name;
+      lives_snprintf(jackd->status_msg, STMSGLEN, "client '%s' successfully connected to running jack v%d server called '%s'\n",
+		     client_name, jackver, server_name);
       lives_free(client_name);
       goto connect_done;
     }
@@ -702,6 +711,8 @@ retry_connect:
     jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
     if (jackd->client) {
       as_running = server_name;
+      lives_snprintf(jackd->status_msg, STMSGLEN, "client '%s' successfully connected to running jack v%d server called '%s'\n",
+		     client_name, jackver, server_name);
       lives_free(client_name);
       goto connect_done;
     }
@@ -727,6 +738,8 @@ retry_connect:
       ts_running = server_name;
       ts_started = as_started;
       twins = TRUE;
+      lives_snprintf(jackd->status_msg, STMSGLEN, "client '%s' successfully connected to running jack v%d server called '%s'\n",
+		     client_name, jackver, server_name);
       goto do_connect;
     }
     twins = FALSE;
@@ -737,6 +750,8 @@ retry_connect:
       as_running = server_name;
       as_started = ts_started;
       twins = TRUE;
+      lives_snprintf(jackd->status_msg, STMSGLEN, "client '%s' successfully connected to running jack v%d server called '%s'\n",
+		     client_name, jackver, server_name);
       goto do_connect;
     }
     twins = FALSE;
@@ -938,6 +953,10 @@ retry_connect:
             server_name, type_name, jackctl_driver_get_name(driver));
   }
 
+  if ((is_trans && (prefs->jack_opts & JACK_OPTS_SETENV_TSERVER)) ||
+      (!is_trans && (prefs->jack_opts & JACK_OPTS_SETENV_ASERVER)))
+    lives_setenv(JACK_DEFAULT_SERVER, server_name);
+   
   // startup the transport client now; we will open another later for audio
 do_connect:
   if (is_trans) {
@@ -967,7 +986,7 @@ do_connect:
 connect_done:
   if (!is_trans && ts_started && twins) {
     // if ts_started and driver is wrong then we can change it
-    //jackctl_server_switch_master(server, driver);
+    // jackctl_server_switch_master(server, driver);
   }
 
   // add slaves
@@ -2445,6 +2464,7 @@ int jack_audio_init(void) {
     jackd->read_abuf = -1;
     jackd->playing_file = -1;
     jackd->frames_written = 0;
+    *jackd->status_msg = 0;
   }
   return 0;
 }
@@ -2476,6 +2496,7 @@ int jack_audio_read_init(void) {
     jackd->is_output = FALSE;
     jackd->playing_file = -1;
     jackd->frames_written = 0;
+    *jackd->status_msg = 0;
   }
   return 0;
 }

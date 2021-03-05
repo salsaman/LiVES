@@ -1176,6 +1176,8 @@ knob_calculate_angle_with_value(GiwKnob *knob, gdouble value) {
   g_return_val_if_fail(GIW_IS_KNOB(knob), 0.0);
   g_return_val_if_fail(knob->adjustment != NULL, 0.0);
 
+  if (fabs(lives_adjustment_get_upper(knob->adjustment) - lives_adjustment_get_lower(knob->adjustment)) == 0.) return 0.;
+
   if (!knob->wrap) {
     angle = (value - lives_adjustment_get_lower(knob->adjustment)) *
             (3.0 * M_PI / 2.0) / fabs(lives_adjustment_get_upper(knob->adjustment) - lives_adjustment_get_lower(knob->adjustment));

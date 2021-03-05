@@ -54,7 +54,7 @@ typedef struct _obj_status lives_object_status_t;
 // lives_object_t
 struct _object_t {
   uint64_t uid; // unique id for this object, for static objects (templates), should be a fixed value
-  		// for other objects should be randomly generated for the lifetime of the object
+  // for other objects should be randomly generated for the lifetime of the object
   uint64_t type; // object type - from IMkType
   uint64_t subtype; // object subtype, can change during a transformation
   const lives_object_t *template; // pointer to template class, or NULL
@@ -253,7 +253,7 @@ typedef struct {
 #define TR_FLAGS_INSTANT (1 << 4) // must immediately be followed by another transformation
 
 #define TR_FLAGS_DIRECT (1 << 32) // function may be called directly (this is a transitional step
-					// which may be deprecated
+// which may be deprecated
 
 typedef weed_param_t out_params_t;
 

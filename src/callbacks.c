@@ -268,34 +268,34 @@ void lives_exit(int signum) {
           && lives_strcmp(future_prefs->workdir, prefs->workdir)) {
         // if we are changing the workdir, remove everything but sets from the old dir
         // create the new directory, and then move any sets over
-	// for some cases we only move a single set
+        // for some cases we only move a single set
 
         if (prefs->workdir_tx_intent == LIVES_INTENTION_EXPORT_LOCAL) {
-	  end_threaded_dialog();
-	  // ask user if they want to clean the old directory and recover clips
-	  if (do_move_workdir_dialog()) {
-	    mainw->is_exiting = FALSE;
-	    on_cleardisk_activate(NULL, NULL);
-	    mainw->is_exiting = TRUE;
+          end_threaded_dialog();
+          // ask user if they want to clean the old directory and recover clips
+          if (do_move_workdir_dialog()) {
+            mainw->is_exiting = FALSE;
+            on_cleardisk_activate(NULL, NULL);
+            mainw->is_exiting = TRUE;
             // we may have recovered additional clips in this process
-	    if (mainw->clips_available) {
-	      while (1) {
-		if (prompt_for_set_save() == LIVES_RESPONSE_CANCEL) {
-		  if (do_noworkdirchange_dialog()) {
-		    *future_prefs->workdir = 0;
-		    prefs->workdir_tx_intent = LIVES_INTENTION_UNKNOWN;
-		    return;
-		  }
-		  continue;
-		}
-		break;
-	      }
-	    }
-	  }
-	}
-	// TODO *** - check for namespace collisions between sets in old dir and sets in new dir
-	do_do_not_close_d();
-	lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+            if (mainw->clips_available) {
+              while (1) {
+                if (prompt_for_set_save() == LIVES_RESPONSE_CANCEL) {
+                  if (do_noworkdirchange_dialog()) {
+                    *future_prefs->workdir = 0;
+                    prefs->workdir_tx_intent = LIVES_INTENTION_UNKNOWN;
+                    return;
+                  }
+                  continue;
+                }
+                break;
+              }
+            }
+          }
+        }
+        // TODO *** - check for namespace collisions between sets in old dir and sets in new dir
+        do_do_not_close_d();
+        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
       }
 
       if (mainw->leave_files && !mainw->fatal) {
@@ -430,50 +430,47 @@ void lives_exit(int signum) {
 
       if (!signum && *future_prefs->workdir
           && lives_strcmp(future_prefs->workdir, prefs->workdir)) {
-	// use backend to move the sets
-	com = NULL;
-	if (prefs->workdir_tx_intent != LIVES_INTENTION_EXPORT_LOCAL) {
-	  if (mainw->set_name && mainw->fx1_bool) {
-	    // delete or leave old workdir - user wants to move current set to new location
-	    com = lives_strdup_printf("%s move_workdir \"%s\" \"%s\"", prefs->backend_sync,
-				      future_prefs->workdir, mainw->set_name);
-	  }
-	}
-	else
-	  com = lives_strdup_printf("%s move_workdir \"%s\"", prefs->backend_sync,
-				    future_prefs->workdir);
-	if (com) {
-	  char log_buff[LOG_BUFF_SIZE];
-	  char *msg, *from;
-	  boolean abortit = FALSE;
-	  mainw->error = FALSE;
-	  lives_popen(com, FALSE, log_buff, LOG_BUFF_SIZE);
-	  lives_free(com);
-	  if (mainw->fx1_bool) {
-	    from = lives_strdup_printf(_("the set %s in directory %s"), mainw->set_name, prefs->workdir);
-	  }
-	  else {
-	    from = lives_strdup_printf(_("the contents of directory %s"), prefs->workdir);
-	  }
-	  if (THREADVAR(com_failed)) {
-	    abortit = TRUE;
-	    THREADVAR(com_failed) = FALSE;
-	    msg = lives_strdup_printf(_("A problem was encountered while moving %s to\n%s\n"
-					"Please review the log check your system for possible errors\n"), from, future_prefs->workdir);
-	  }
-	  else {
-	    msg = lives_strdup_printf(_("Successfully migrated %s to\%s\nDetails may be viewed in the log file\n"), from,
-				      future_prefs->workdir);
+        // use backend to move the sets
+        com = NULL;
+        if (prefs->workdir_tx_intent != LIVES_INTENTION_EXPORT_LOCAL) {
+          if (mainw->set_name && mainw->fx1_bool) {
+            // delete or leave old workdir - user wants to move current set to new location
+            com = lives_strdup_printf("%s move_workdir \"%s\" \"%s\"", prefs->backend_sync,
+                                      future_prefs->workdir, mainw->set_name);
+          }
+        } else
+          com = lives_strdup_printf("%s move_workdir \"%s\"", prefs->backend_sync,
+                                    future_prefs->workdir);
+        if (com) {
+          char log_buff[LOG_BUFF_SIZE];
+          char *msg, *from;
+          boolean abortit = FALSE;
+          mainw->error = FALSE;
+          lives_popen(com, FALSE, log_buff, LOG_BUFF_SIZE);
+          lives_free(com);
+          if (mainw->fx1_bool) {
+            from = lives_strdup_printf(_("the set %s in directory %s"), mainw->set_name, prefs->workdir);
+          } else {
+            from = lives_strdup_printf(_("the contents of directory %s"), prefs->workdir);
+          }
+          if (THREADVAR(com_failed)) {
+            abortit = TRUE;
+            THREADVAR(com_failed) = FALSE;
+            msg = lives_strdup_printf(_("A problem was encountered while moving %s to\n%s\n"
+                                        "Please review the log check your system for possible errors\n"), from, future_prefs->workdir);
+          } else {
+            msg = lives_strdup_printf(_("Successfully migrated %s to\%s\nDetails may be viewed in the log file\n"), from,
+                                      future_prefs->workdir);
 
-	  }
-	  lives_free(from);
-	  do_logger_dialog(_("Results of work directory migration"), msg, log_buff, abortit);
-	  lives_free(msg);
-	}
+          }
+          lives_free(from);
+          do_logger_dialog(_("Results of work directory migration"), msg, log_buff, abortit);
+          lives_free(msg);
+        }
       }
- 
+
       if (mainw->only_close) {
-	mainw->suppress_dprint = FALSE;
+        mainw->suppress_dprint = FALSE;
         if (!mainw->multitrack) resize(1);
         mainw->was_set = FALSE;
         lives_memset(mainw->set_name, 0, 1);
@@ -2204,7 +2201,7 @@ static LiVESResponseType prompt_for_set_save(void) {
   // when moving workdir: - save set as usual
   // then on return we either move everything, or just the saved set
   // the maybe delete old workdir
-  
+
   _entryw *cdsw = create_cds_dialog(1);
   char *set_name, *tmp;
   LiVESResponseType resp;
@@ -2242,7 +2239,7 @@ static LiVESResponseType prompt_for_set_save(void) {
 
         mainw->leave_recovery = FALSE;
 
-	// here we actually move any new directories into the set directory
+        // here we actually move any new directories into the set directory
         on_save_set_activate(NULL, (tmp = U82F(set_name)));
 
         lives_free(tmp);
@@ -2350,17 +2347,16 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     while (1) {
       LiVESResponseType response;
       if ((response = prompt_for_set_save()) != LIVES_RESPONSE_CANCEL && !mainw->no_exit) {
-	if (response == LIVES_RESPONSE_YES) mainw->fx1_bool = TRUE;
-	else mainw->fx1_bool = FALSE;
-	lives_exit(0);
+        if (response == LIVES_RESPONSE_YES) mainw->fx1_bool = TRUE;
+        else mainw->fx1_bool = FALSE;
+        lives_exit(0);
       }
 
       if (response == LIVES_RESPONSE_CANCEL && *future_prefs->workdir) {
-	if (do_noworkdirchange_dialog()) {
-	  *future_prefs->workdir = 0;
-	  prefs->workdir_tx_intent = LIVES_INTENTION_UNKNOWN;
-	}
-	else continue;
+        if (do_noworkdirchange_dialog()) {
+          *future_prefs->workdir = 0;
+          prefs->workdir_tx_intent = LIVES_INTENTION_UNKNOWN;
+        } else continue;
       }
       break;
     }
@@ -5416,8 +5412,8 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
 
           if (lives_strcmp(new_handle, mainw->files[i]->handle)) {
             if (!add) continue;
-	    
-	    new_dir = lives_build_path(prefs->workdir, new_handle, NULL);
+
+            new_dir = lives_build_path(prefs->workdir, new_handle, NULL);
 
             if (lives_file_test(new_dir, LIVES_FILE_TEST_IS_DIR)) {
               // get a new unique handle
@@ -5542,7 +5538,7 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
   lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 
   lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", new_set_name);
-  
+
   if (lives_strcmp(mainw->set_name, old_set)) {
     // The user CHANGED the set name or the working dir
     // we must migrate all physical files for the set, and possibly merge with another set
@@ -5551,7 +5547,7 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
     // check if target clips dir exists, ask if user wants to append files
 
     // TODO - target may be in new workdir
-    
+
     if (lives_file_test(new_clips_dir, LIVES_FILE_TEST_IS_DIR)) {
       lives_free(new_clips_dir);
       if (mainw->osc_auto == 0) {
@@ -5571,9 +5567,9 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
         if (do_set_rename_old_layouts_warning(mainw->set_name)) {
           // user answered "yes" - delete
           // clear _old_layout maps
-	  laydir = LAYOUTS_DIR(mainw->set_name);
+          laydir = LAYOUTS_DIR(mainw->set_name);
           lives_rmdir(laydir, TRUE);
-	  lives_free(laydir);
+          lives_free(laydir);
         }
       }
       lives_free(layout_map_file);
@@ -5621,16 +5617,19 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
 
   // here we actually move the directories and update the order file for the set
   retval = rewrite_orderfile(is_append, TRUE, &got_new_handle);
-  
+
   if (retval == LIVES_RESPONSE_CANCEL) {
     end_threaded_dialog();
     return FALSE;
   }
 
-  if (mainw->num_sets > -1) mainw->num_sets++;
-  else mainw->num_sets = 1;
-
-  if (!*old_set) mainw->set_list = lives_list_prepend(mainw->set_list, lives_strdup(mainw->set_name));
+  if (mainw->num_sets > -1) {
+    mainw->num_sets++;
+    if (!*old_set) mainw->set_list = lives_list_prepend(mainw->set_list, lives_strdup(mainw->set_name));
+  } else {
+    mainw->num_sets = 1;
+    mainw->set_list = lives_list_prepend(mainw->set_list, lives_strdup(mainw->set_name));
+  }
 
   if (got_new_handle && !*old_set) migrate_layouts(NULL, mainw->set_name);
 
@@ -5678,6 +5677,8 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
     // remove the old set (should be empty now)
     cleanup_set_dir(old_set);
   }
+
+
 
   if (!mainw->was_set && !lives_strcmp(old_set, mainw->set_name)) {
     // set name was set by export or save layout, now we need to update our layout map
@@ -5919,6 +5920,7 @@ boolean reload_set(const char *set_name) {
           }
           // force a redraw
           update_play_times();
+          redraw_timeline(mainw->current_file);
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
         }
       } else {

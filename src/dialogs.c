@@ -1106,7 +1106,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
 
   if (IS_VALID_CLIP(clipno)) sfile = mainw->files[clipno];
 
-  do { 
+  do {
     if (mainw->dsu_valid && capable->ds_used > -1) {
       dsval = capable->ds_used;
     } else if (prefs->disk_quota) {
@@ -2803,9 +2803,9 @@ LIVES_GLOBAL_INLINE void do_mt_backup_space_error(lives_mt * mt, int memreq_mb) 
 LIVES_GLOBAL_INLINE boolean do_set_rename_old_layouts_warning(const char *new_set) {
   return do_yesno_dialogf(
            _("\nSome old layouts for the set %s already exist.\n"
-	     "However no matching clips were encountered\n"
+             "However no matching clips were encountered\n"
              "It is recommended that you delete these old layouts since they will not be usable\n"
-	     "with the newly imported clips.\nDo you wish to do so ?\n"),
+             "with the newly imported clips.\nDo you wish to do so ?\n"),
            new_set);
 }
 
@@ -3605,7 +3605,7 @@ LIVES_GLOBAL_INLINE boolean do_move_workdir_dialog(void) {
 
 LIVES_GLOBAL_INLINE boolean do_noworkdirchange_dialog(void) {
   return do_yesno_dialog(_("You must choose an action in order to change to the new work directory.\n"
-			   "Do you still want to proceed with the directory change ?\n"));
+                           "Do you still want to proceed with the directory change ?\n"));
 }
 
 

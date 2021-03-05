@@ -101,6 +101,7 @@ typedef PangoFontDescription LingoFontDesc;
 #define lingo_fontdesc_get_size(a) pango_font_description_get_size(a)
 #define lingo_fontdesc_size_scaled(a) pango_font_description_get_size_is_absolute(a)
 #define lingo_fontdesc_set_size(a, b) pango_font_description_set_size(a, b)
+#define lingo_fontdesc_set_absolute_size(a, b) pango_font_description_set_absolute_size(a, b)
 #define lingo_fontdesc_free(a) pango_font_description_free(a)
 #define lingo_fontdesc_get_fam(a) pango_font_description_get_family(a)
 #define lingo_fontdesc_set_fam(a, b) pango_font_description_set_family(a, b)

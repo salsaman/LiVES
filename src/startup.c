@@ -694,7 +694,7 @@ set_config:
 
   if (is_setup) {
     expander = lives_standard_expander_new(_("_LiVES Settings"), LIVES_BOX(hbox),
-					   (layout = lives_layout_new(NULL)));
+                                           (layout = lives_layout_new(NULL)));
   }
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -745,7 +745,8 @@ set_config:
                                           ? TRUE : FALSE, LIVES_BOX(hbox),
                                           H_("If checked, the specified server name will be exported "
                                               "as\n$JACK_DEFAULT_SERVER, which will cause other jack "
-                                              "clients to also use the same value as their "
+                                              "clients in the same process environment\n"
+                                              "to also use the exported value as their "
                                               "default server name"));
     text = lives_strdup_printf(_("WARNING: this option is already enabled for the %s client\n"
                                  "Enabling this value as well may cause undesired results\n"),
@@ -1083,7 +1084,7 @@ reloop:
 
   txt1 = lives_strdup(
            _("Before starting LiVES, you need to choose an audio player.\n\n"
-	     "<big><b>PULSE AUDIO</b></big> is recommended for most users"));
+             "<big><b>PULSE AUDIO</b></big> is recommended for most users"));
 
 #ifndef HAVE_PULSE_AUDIO
   txt2 = (_(", but this version of LiVES was not compiled with pulse audio support.\n\n"));
@@ -1213,7 +1214,7 @@ reloop:
   widget_opts.use_markup = FALSE;
 
   add_fill_to_box(LIVES_BOX(dialog_vbox));
-  
+
 #ifdef HAVE_PULSE_AUDIO
   lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton0), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
@@ -1237,10 +1238,10 @@ reloop:
                             LIVES_INT_TO_POINTER(AUD_PLAYER_NONE));
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
-						    _("Quit from Setup"), LIVES_RESPONSE_CANCEL);
+                 _("Quit from Setup"), LIVES_RESPONSE_CANCEL);
 
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
-				     _("Back"), LIVES_RESPONSE_RETRY);
+                                     _("Back"), LIVES_RESPONSE_RETRY);
 
   lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
 
@@ -1300,13 +1301,13 @@ reloop:
     }
   }
 #endif
-  
+
   if (response == LIVES_RESPONSE_RETRY) {
     if (!do_startup_tests(FALSE)) response = LIVES_RESPONSE_CANCEL;
     else {
-        txt0 = lives_strdup("");
-        radiobutton_group = NULL;
-        goto reloop;
+      txt0 = lives_strdup("");
+      radiobutton_group = NULL;
+      goto reloop;
     }
   }
 
@@ -1329,7 +1330,7 @@ static LiVESWidget *test_labels[MAX_TESTS];
 static LiVESWidget *test_reslabels[MAX_TESTS];
 static LiVESWidget *test_spinners[MAX_TESTS];
 
-static void prep_test(LiVESWidget *table, int row) {
+static void prep_test(LiVESWidget * table, int row) {
   LiVESWidget *label = test_reslabels[row];
   if (label) lives_label_set_text(LIVES_LABEL(label), _("Checking..."));
 #if LIVES_HAS_SPINNER_WIDGET
@@ -1353,8 +1354,7 @@ static void add_test(LiVESWidget * table, int row, const char *ttext, boolean no
     //lives_widget_show(label);
     test_labels[row] = label;
     if (!test_spinners[row] || !test_reslabels[row]) add_spinner = TRUE;
-  }
-  else {
+  } else {
     lives_label_set_text(LIVES_LABEL(label), ttext);
   }
 
@@ -1365,17 +1365,16 @@ static void add_test(LiVESWidget * table, int row, const char *ttext, boolean no
       if (!label) label = lives_standard_label_new(_("Waiting..."));
 #if LIVES_HAS_SPINNER_WIDGET
       if (!test_spinners[row]) {
-	image = test_spinners[row] = lives_standard_spinner_new(FALSE);
+        image = test_spinners[row] = lives_standard_spinner_new(FALSE);
       }
 #endif
-    }
-    else {
+    } else {
       char *txt;
       if (test_spinners[row]) {
-	lives_widget_unparent(test_spinners[row]);
-	test_spinners[row] = NULL;
+        lives_widget_unparent(test_spinners[row]);
+        test_spinners[row] = NULL;
       }
-      
+
       image = lives_image_new_from_stock(LIVES_STOCK_REMOVE, LIVES_ICON_SIZE_LARGE_TOOLBAR);
 
       // TRANSLATORS - as in "skipped test"
@@ -1390,7 +1389,7 @@ static void add_test(LiVESWidget * table, int row, const char *ttext, boolean no
       //lives_widget_show(label);
       test_reslabels[row] = label;
     }
-      
+
     if (image) {
       lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
     }
@@ -1418,7 +1417,7 @@ static boolean pass_test(LiVESWidget * table, int row) {
     lives_widget_show(label);
     test_reslabels[row] = label;
   }
-      
+
   lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
@@ -1481,19 +1480,18 @@ LIVES_LOCAL_INLINE char *get_resource(char *fname) {
   return lives_build_filename(prefs->prefix_dir, DATA_DIR, LIVES_RESOURCES_DIR, fname, NULL);
 }
 
-static void quit_from_tests(LiVESWidget *dialog, livespointer button) {
+static void quit_from_tests(LiVESWidget * dialog, livespointer button) {
   lives_widget_hide(dialog);
   if (confirm_exit()) {
     SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_DESTROY);
     mainw->cancelled = CANCEL_USER;
-  }
-  else {
+  } else {
     SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_UNKNOWN);
     lives_widget_show(dialog);
   }
 }
 
-static void back_from_tests(LiVESWidget *dialog, livespointer button) {
+static void back_from_tests(LiVESWidget * dialog, livespointer button) {
   SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_UNDO);
   mainw->cancelled = CANCEL_USER;
 }
@@ -1506,7 +1504,7 @@ boolean do_startup_tests(boolean tshoot) {
   LiVESWidget *label, *xlabel = NULL;
   LiVESWidget *table;
   LiVESWidget *okbutton;
-  LiVESWidget *cancelbutton, *backbutton = NULL;
+  LiVESWidget *cancelbutton = NULL, *backbutton = NULL;
 
   char mppath[PATH_MAX];
 
@@ -1519,7 +1517,7 @@ boolean do_startup_tests(boolean tshoot) {
   const char *lookfor;
 
   uint8_t *abuff;
-  ulong quitfunc, backfunc = 0;
+  ulong quitfunc = 0, backfunc = 0;
 
   off_t fsize;
 
@@ -1542,26 +1540,29 @@ boolean do_startup_tests(boolean tshoot) {
     mt_desensitise(mainw->multitrack);
   }
 
- rerun:
+rerun:
   mainw->cancelled = CANCEL_NONE;
-  
+
   for (int i = 0; i < MAX_TESTS; i++) {
     test_labels[i] = test_reslabels[i] = test_spinners[i] = NULL;
   }
-  
+
   testcase = 0;
   imgext_switched = FALSE;
   allpassed = TRUE;
   mainw->suppress_dprint = TRUE;
   mainw->cancelled = CANCEL_NONE;
-  
+
   if (!tshoot) {
     title = (_("Testing Configuration"));
   } else {
     title = (_("Troubleshoot"));
   }
 
-  dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
+  if (!tshoot)
+    dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
+  else
+    dialog = lives_standard_dialog_new(title, FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
 
   lives_free(title);
 
@@ -1570,24 +1571,20 @@ boolean do_startup_tests(boolean tshoot) {
   label = lives_standard_label_new(_("LiVES will now run some basic configuration tests\n"));
   lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
 
-  if (!tshoot)
-    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, _("Quit from Setup"),
-						      LIVES_RESPONSE_CANCEL);
-  else
-    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-						      LIVES_RESPONSE_CANCEL);
-    
-  quitfunc = lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-					       LIVES_GUI_CALLBACK(quit_from_tests), dialog);
-
-  lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
-
   if (!tshoot) {
+    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, _("Quit from Setup"),
+                   LIVES_RESPONSE_CANCEL);
+
+    quitfunc = lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+               LIVES_GUI_CALLBACK(quit_from_tests), dialog);
+
+    lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
+
     backbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK, _("_Back to directory selection"),
-						    LIVES_RESPONSE_RETRY);
+                 LIVES_RESPONSE_RETRY);
 
     backfunc = lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(backbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-						 LIVES_GUI_CALLBACK(back_from_tests), dialog);
+               LIVES_GUI_CALLBACK(back_from_tests), dialog);
 
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
                LIVES_RESPONSE_OK);
@@ -1603,7 +1600,7 @@ boolean do_startup_tests(boolean tshoot) {
   lives_container_add(LIVES_CONTAINER(dialog_vbox), table);
 
   if (!tshoot) {
-      if (mainw->splash_window) {
+    if (mainw->splash_window) {
       lives_widget_hide(mainw->splash_window);
     }
   }
@@ -1633,21 +1630,22 @@ boolean do_startup_tests(boolean tshoot) {
 
   if (!tshoot) {
     xlabel = lives_standard_label_new(
-				     _("\n\n\tClick 'Quit from Setup' to exit and install any missing components, or Next to continue\t\n"));
+               _("\n\n\tClick 'Quit from Setup' to exit and install any missing components, or Next to continue\t\n"));
     lives_container_add(LIVES_CONTAINER(dialog_vbox), xlabel);
     lives_widget_show(xlabel);
     lives_widget_set_opacity(xlabel, 0.);
-  }
-
+  } else add_fill_to_box(LIVES_BOX(dialog_vbox));
   lives_widget_show_all(dialog);
-  if (!mainw->first_shown) {
-    guess_font_size(dialog, LIVES_LABEL(xlabel), NULL, .88);
-  }
-  if (!mainw->first_shown) {
-    guess_font_size(dialog, LIVES_LABEL(xlabel), NULL, 0.18);
-  }
 
-  lives_widget_context_update();
+  if (!tshoot) {
+    if (!mainw->first_shown) {
+      guess_font_size(dialog, LIVES_LABEL(xlabel), NULL, .88);
+    }
+    if (!mainw->first_shown) {
+      guess_font_size(dialog, LIVES_LABEL(xlabel), NULL, 0.18);
+    }
+    lives_widget_context_update();
+  }
 
   if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
@@ -1888,8 +1886,7 @@ boolean do_startup_tests(boolean tshoot) {
       pass_test(table, testcase);
       success3 = TRUE;
     }
-  }
-  else add_skip = TRUE;
+  } else add_skip = TRUE;
 
   lives_free(rname);
   if (mainw->cancelled != CANCEL_NONE) goto cancld;
@@ -2036,21 +2033,20 @@ jpgdone:
   /* } */
 
   if (tshoot) {
-    lives_widget_hide(cancelbutton);
     if (imgext_switched) {
       label = lives_standard_label_new(
                 _("\n\n\tImage decoding type has been switched to jpeg. You can revert this in Preferences/Decoding.\t\n"));
       lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
     }
     lives_widget_show(label);
+  } else {
+    if (xlabel) lives_widget_set_opacity(xlabel, 1.);
+
+    lives_signal_handler_block(cancelbutton, quitfunc);
+    if (backfunc) lives_signal_handler_block(backbutton, backfunc);
+
+    if (mainw->cancelled != CANCEL_NONE) goto cancld;
   }
-
-  if (xlabel) lives_widget_set_opacity(xlabel, 1.);
-
-  lives_signal_handler_block(cancelbutton, quitfunc);
-  if (backfunc) lives_signal_handler_block(backbutton, backfunc);
-
-  if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
   while (1) {
     response = lives_dialog_run(LIVES_DIALOG(dialog));
@@ -2058,7 +2054,7 @@ jpgdone:
     if (response == LIVES_RESPONSE_CANCEL) {
       lives_widget_hide(dialog);
       if (confirm_exit()) {
-	goto cancld;
+        goto cancld;
       }
       lives_widget_show(dialog);
       lives_widget_context_update();
@@ -2074,7 +2070,7 @@ jpgdone:
 
   lives_widget_destroy(dialog);
   mainw->suppress_dprint = FALSE;
-  
+
   if (mainw->splash_window) {
     lives_widget_show(mainw->splash_window);
   }
@@ -2086,7 +2082,7 @@ jpgdone:
 
   return (response == LIVES_RESPONSE_OK);
 
- cancld:
+cancld:
   mainw->cancelled = CANCEL_NONE;
 
   close_file(current_file, tshoot);
@@ -2189,8 +2185,9 @@ void do_startup_interface_query(void) {
   add_fill_to_box(LIVES_BOX(dialog_vbox));
 
   widget_opts.use_markup = TRUE;
-  label = lives_standard_label_new(_("You may optionally set quota limits here if you want to manage how much disk space LiVES may use.\n"
-				     "<small>(You can also do this later from within the application, should you wish)</small>"));
+  label = lives_standard_label_new(
+            _("You may optionally set quota limits here if you want to manage how much disk space LiVES may use.\n"
+              "<small>(You can also do this later from within the application, should you wish)</small>"));
   widget_opts.use_markup = FALSE;
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
@@ -2219,10 +2216,10 @@ void do_startup_interface_query(void) {
     lives_widget_hide(mainw->splash_window);
   }
 
-   if (!mainw->first_shown) {
+  if (!mainw->first_shown) {
     guess_font_size(dialog, LIVES_LABEL(xlabel), NULL, 0.7);
   }
- if (!mainw->first_shown) {
+  if (!mainw->first_shown) {
     guess_font_size(dialog, LIVES_LABEL(xlabel), NULL, 0.32);
   }
 

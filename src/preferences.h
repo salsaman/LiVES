@@ -729,6 +729,7 @@ typedef struct {
   LiVESWidget *jack_acdef;
   LiVESWidget *jack_acname;
   LiVESWidget *jack_acerror;
+  LiVESWidget *jack_apstats;
   LiVESWidget *jack_aplabel;
   LiVESWidget *jack_aplayout;
   LiVESWidget *jack_aplayout2;

@@ -1476,8 +1476,9 @@ typedef struct {
   /// jack audio player / transport
 #ifdef ENABLE_JACK
   boolean jack_trans_poll;
-  jack_driver_t *jackd; ///< jack audio playback device
-  jack_driver_t *jackd_read; ///< jack audio recorder device
+  jack_driver_t *jackd; ///< jack audio playback client
+  jack_driver_t *jackd_read; ///< jack audio recorder client
+  jack_driver_t *jackd_trans; ///< jack transport client
 #define RT_AUDIO
 #else
   void *jackd;  ///< dummy

@@ -1472,7 +1472,7 @@ void do_logger_dialog(const char *title, const char *text, const char *buff, boo
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   lives_standard_expander_new(_("Show _Log"), LIVES_BOX(top_vbox),
-			      textwindow->vbox);
+                              textwindow->vbox);
 
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_widget_object_unref(textwindow->vbox);
@@ -1482,15 +1482,14 @@ void do_logger_dialog(const char *title, const char *text, const char *buff, boo
   if (!add_abort) {
     LiVESWidget *button =
       lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
-					 LIVES_STOCK_OK, LIVES_STOCK_LABEL_CLOSE_WINDOW, LIVES_RESPONSE_OK);
+                                         LIVES_STOCK_OK, LIVES_STOCK_LABEL_CLOSE_WINDOW, LIVES_RESPONSE_OK);
     lives_window_add_escape(LIVES_WINDOW(textwindow->dialog), button);
-  }
-  else {
+  } else {
     lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
-				       LIVES_STOCK_QUIT, _("_Abort"), LIVES_RESPONSE_ABORT);
+                                       LIVES_STOCK_QUIT, _("_Abort"), LIVES_RESPONSE_ABORT);
 
   }
-  
+
   lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
   lives_widget_destroy(textwindow->dialog);
   lives_free(textwindow);
@@ -3051,11 +3050,12 @@ _entryw *create_rename_dialog(int type) {
 
   if (!(type == 4 && !LIVES_IS_INTERACTIVE)) {
     if (type == 6 && !mainw->is_ready)
-      renamew->cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_CANCEL, _("Quit from Setup"),
-								 LIVES_RESPONSE_CANCEL);
+      renamew->cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_CANCEL,
+                              _("Quit from Setup"),
+                              LIVES_RESPONSE_CANCEL);
     else
       renamew->cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_CANCEL, NULL,
-								 LIVES_RESPONSE_CANCEL);
+                              LIVES_RESPONSE_CANCEL);
     lives_window_add_escape(LIVES_WINDOW(renamew->dialog), renamew->cancelbutton);
   }
 
@@ -6016,31 +6016,31 @@ boolean workdir_change_dialog(void) {
       char *fpmp;
       if (!capable->mountpoint) capable->mountpoint = get_mountpoint_for(prefs->workdir);
       if (lives_strcmp((fpmp = get_mountpoint_for(future_prefs->workdir)), capable->mountpoint)) {
-	// show spinner and label
-	uint64_t fsp1;
-	msg = lives_strdup_printf(_("Checking free space in %s"), future_prefs->workdir);
-	lives_label_set_text(LIVES_LABEL(warn_label), msg);
-	lives_free(msg);
+        // show spinner and label
+        uint64_t fsp1;
+        msg = lives_strdup_printf(_("Checking free space in %s"), future_prefs->workdir);
+        lives_label_set_text(LIVES_LABEL(warn_label), msg);
+        lives_free(msg);
 #if LIVES_HAS_SPINNER_WIDGET
-	lives_spinner_start(LIVES_SPINNER(spinner));
+        lives_spinner_start(LIVES_SPINNER(spinner));
 #endif
-	lives_widget_context_update();
-	if (!workdir_change_spacecheck(future_prefs->workdir, &fsp1)) {
-	  char *fsz1 = lives_format_storage_space_string(fsp1);
-	  char *fsz2 = lives_format_storage_space_string(capable->ds_free);
-	  // show error
-	  msg = lives_strdup_printf(_("Insuffient space in volume containing %s !\n"
-				      "(free space in %s = %s\n work directory size is %s)\n"
-				      "Please free up some disk space in %s or choose another action"),
-				    future_prefs->workdir, fpmp, fsz1, fsz2, fpmp);
-	  lives_label_set_text(LIVES_LABEL(warn_label), msg);
+        lives_widget_context_update();
+        if (!workdir_change_spacecheck(future_prefs->workdir, &fsp1)) {
+          char *fsz1 = lives_format_storage_space_string(fsp1);
+          char *fsz2 = lives_format_storage_space_string(capable->ds_free);
+          // show error
+          msg = lives_strdup_printf(_("Insuffient space in volume containing %s !\n"
+                                      "(free space in %s = %s\n work directory size is %s)\n"
+                                      "Please free up some disk space in %s or choose another action"),
+                                    future_prefs->workdir, fpmp, fsz1, fsz2, fpmp);
+          lives_label_set_text(LIVES_LABEL(warn_label), msg);
 #if LIVES_HAS_SPINNER_WIDGET
-	  lives_spinner_stop(LIVES_SPINNER(spinner));
+          lives_spinner_stop(LIVES_SPINNER(spinner));
 #endif
-	  lives_free(msg);
-	  lives_free(fpmp); lives_free(fsz1); lives_free(fsz2);
-	  continue;
-	}
+          lives_free(msg);
+          lives_free(fpmp); lives_free(fsz1); lives_free(fsz2);
+          continue;
+        }
       }
       lives_free(fpmp);
       prefs->workdir_tx_intent = LIVES_INTENTION_EXPORT_LOCAL;
@@ -7144,7 +7144,7 @@ void run_diskspace_dialog(void) {
     lives_standard_check_button_new(_("Show this dialog on startup"), prefs->show_disk_quota, aar,
                                     (tmp = lives_strdup(H_("These settings can also be changed "
                                         "in Preferences / Warnings"))));
-  
+
   lives_signal_sync_connect(LIVES_GUI_OBJECT(rembutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_SHOW_QUOTA);
 

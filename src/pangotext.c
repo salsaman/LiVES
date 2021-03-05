@@ -551,7 +551,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 
     font = lingo_fontdesc_new();
     lingo_fontdesc_set_fam(font, fontname);
-    lingo_fontdesc_set_size(font, size);
+    lingo_fontdesc_set_absolute_size(font, size * LINGO_SCALE);
     lingo_layout_set_fontdesc(layout, font);
   }
 
@@ -594,13 +594,15 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 }
 
 
+#define RENDER_TEXT_SCALE 48.
+
 LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_layer_t *layer, const char *text) {
   if (!text) return layer;
   else {
     lives_colRGBA64_t col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
     lives_colRGBA64_t col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
-    const char *font_name = capable->font_name;
-    int font_size = weed_layer_get_width(layer) / 32;
+    const char *font_name = capable->font_fam;
+    int font_size = weed_layer_get_width(layer) / RENDER_TEXT_SCALE;
     boolean fake_gamma = FALSE;
 
     if (prefs->apply_gamma) {

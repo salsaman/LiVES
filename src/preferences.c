@@ -2770,10 +2770,12 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
   }
 #ifdef ENABLE_JACK
   if (!strcmp(audp, AUDIO_PLAYER_JACK)) {
+    lives_widget_set_sensitive(prefsw->jack_apstats, TRUE);
     lives_widget_set_sensitive(prefsw->jack_aplayout, TRUE);
     lives_widget_set_sensitive(prefsw->jack_aplayout2, TRUE);
     hide_warn_image(prefsw->jack_aplabel);
   } else {
+    lives_widget_set_sensitive(prefsw->jack_apstats, FALSE);
     lives_widget_set_sensitive(prefsw->jack_aplayout, FALSE);
     lives_widget_set_sensitive(prefsw->jack_aplayout2, FALSE);
     show_warn_image(prefsw->jack_aplabel, NULL);
@@ -3158,6 +3160,38 @@ static boolean check_txtsize(LiVESWidget * combo) {
 }
 
 #ifdef ENABLE_JACK
+static void show_jack_status(LiVESButton * button, livespointer is_transp) {
+  boolean is_trans = LIVES_POINTER_TO_INT(is_transp);
+  text_window *textwindow;
+  char *title, *text;
+  if (is_trans) {
+    title = _("Status for jack transport client");
+    if (mainw->jackd_trans)
+      text = mainw->jackd_trans->status_msg;
+    else text = lives_strdup(_("Jack transport client not running"));
+  } else {
+    char *txt1, *txt2;
+    if (mainw->jackd)
+      txt1 = mainw->jackd->status_msg;
+    else txt1 = lives_strdup(_("Jack writer not running"));
+    if (mainw->jackd)
+      txt2 = mainw->jackd_read->status_msg;
+    else txt2 = lives_strdup(_("Jack reader not running"));
+
+    text = lives_strdup_printf("%s\n\n%s", txt1, txt2);
+
+    if (!mainw->jackd) lives_free(txt1);
+    if (!mainw->jackd_read) lives_free(txt2);
+
+    title = _("Status for jack audio write and audio read clients");
+  }
+  textwindow = create_text_window(title, text, NULL, TRUE);
+  lives_free(title);
+  if (!is_trans || !mainw->jackd_trans) lives_free(text);
+  lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
+}
+
+
 static void copy_entry_text(LiVESEntry * e1, LiVESEntry * e2) {
   if (lives_toggle_button_get_active(prefsw->jack_srv_dup))
     lives_entry_set_text(e2, lives_entry_get_text(e1));
@@ -5463,12 +5497,24 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   prefsw->scrollw_right_jack = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_jack);
 
   layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_jack));
-  prefsw->jack_aplabel = lives_layout_add_label(LIVES_LAYOUT(layout), _("Jack Audio"), FALSE);
+  tmp = lives_big_and_bold("%s", _("Jack Audio"));
+  widget_opts.use_markup = TRUE;
+  prefsw->jack_aplabel = lives_layout_add_label(LIVES_LAYOUT(layout), tmp, TRUE);
+  widget_opts.use_markup = FALSE;
+  lives_free(tmp);
 
 #ifndef ENABLE_JACK
   show_warn_image(prefsw->jack_aplabel,
                   _("LiVES must be compiled with jack/jack.h present to use jack audio"));
 #else
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  prefsw->jack_apstats = lives_standard_button_new_with_label(_("Show Client Status"), -1, -1);
+  lives_box_pack_start(LIVES_BOX(hbox), prefsw->jack_apstats, FALSE, TRUE, widget_opts.packing_width);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->jack_apstats), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(show_jack_status), LIVES_INT_TO_POINTER(FALSE));
+
   ajack_cfg_exists = jack_get_cfg_file(FALSE, NULL);
 
   layout = prefsw->jack_aplayout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_jack));
@@ -5577,10 +5623,17 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                        "jack transport capable applications.\n"
                                        "Can be configured independently of the jack audio player"));
 
+  widget = lives_standard_button_new_with_label(_("Show Client Status"), -1, -1);
+  lives_box_pack_start(LIVES_BOX(hbox), widget, FALSE, TRUE, widget_opts.packing_width);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(show_jack_status), LIVES_INT_TO_POINTER(TRUE));
+
   vbox = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), vbox,
                        FALSE, FALSE, widget_opts.packing_height);
 
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->jack_trans), widget, FALSE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->jack_trans), label, FALSE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->jack_trans), vbox, FALSE);
 
@@ -5777,17 +5830,17 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
 #endif
 
-  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_jack));
+  /* add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_jack)); */
 
-  tmp = lives_big_and_bold(_("Jack MIDI"));
-  widget_opts.use_markup = TRUE;
-  label = lives_standard_label_new_with_tooltips(tmp, LIVES_BOX(prefsw->vbox_right_jack), NULL);
-  widget_opts.use_markup = FALSE;
-  lives_free(tmp);
+  /* tmp = lives_big_and_bold(_("Jack MIDI")); */
+  /* widget_opts.use_markup = TRUE; */
+  /* label = lives_standard_label_new_with_tooltips(tmp, LIVES_BOX(prefsw->vbox_right_jack), NULL); */
+  /* widget_opts.use_markup = FALSE; */
+  /* lives_free(tmp); */
 
-  label = lives_standard_label_new(_("Coming soon..."));
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), label,
-                       FALSE, FALSE, widget_opts.packing_height);
+  /* label = lives_standard_label_new(_("Coming soon...")); */
+  /* lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), label, */
+  /*                      FALSE, FALSE, widget_opts.packing_height); */
 #endif
 
   pixbuf_jack =

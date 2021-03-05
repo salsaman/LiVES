@@ -2197,7 +2197,7 @@ static void lives_init(_ign_opts *ign_opts) {
     }
 
     if (prefs->startup_phase == 0) mainw->first_shown = TRUE;
-    
+
     mainw->recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, lives_getuid(),
                            lives_getgid(), capable->mainpid);
 
@@ -2205,9 +2205,9 @@ static void lives_init(_ign_opts *ign_opts) {
       splash_end();
       lives_widget_context_update();
       if (!do_audio_choice_dialog(prefs->startup_phase)) {
-	prefs->startup_phase = 3;
-	set_int_pref(PREF_STARTUP_PHASE, 3);
-	lives_exit(0);
+        prefs->startup_phase = 3;
+        set_int_pref(PREF_STARTUP_PHASE, 3);
+        lives_exit(0);
       }
 
       prefs->startup_phase = 4;

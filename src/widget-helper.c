@@ -972,6 +972,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_stop_emission_by_name(livespoin
 
 
 static volatile boolean gov_running = FALSE;
+static volatile boolean gov_will_run = FALSE;
 //static volatile LiVESResponseType dlgresp = LIVES_RESPONSE_NONE;
 static volatile boolean was_dest = FALSE;
 static volatile lives_proc_thread_t lpttorun = NULL;
@@ -1015,6 +1016,59 @@ static lives_sigdata_t *tasks_running(void) {
   return NULL;
 }
 
+
+// this loop is called when a gtk+ callback triggers a background task
+// the background task runs and this loop stays in the foreground
+// this primarily accomplished via a proxy signal / timer handler which calls the loop, pasisng the real callback function
+// and the user data. On entering, sigdata contains the data for this, the function is called as a bg thread, then
+// the loop blocks here until the background thread iehter completes or requests a gtk update / foreground task
+// the loop will run the task and then exit, adding itself as an idle function
+// this allows gtk to run its normal loop and then we come back here
+// the background task is monitored, and when it completes then we can return without re-adding this function
+//
+// there are anumber of complications which need to be handled here:
+// - firstly a background thread can launch another thread, thus we need to maintain a stack of tasks and only return from the final (first) one
+// -- to simpolify this, the function is not allowed to be called recursively (g_main_depth() is checked)
+/// -- instead the new thread is added to the stack, and montirede - when it completes we pop the stack until we find another task still runniong
+///
+// - for timers and idle function there is special handling - since the value returned from here is actually the return value
+// -- of the timer or idlefunc, - thus we must ensure that the loop does not exit until we get the actual return value from the timer
+// -- which then becomes our return value
+// - next, if a thread is running in bg, it can request a specific task to be run in fg, this is done by setting lpttorun
+// - the task is run and the return value is set
+//
+// - there are some limitations - for example a foreground task passed via this method cannot recursivley call another fg task
+// -- this is not generally an issue since fg tasks are generally very simple graphical updates
+// - some tasks are automatically rerouted to the fg:- g_main_context_iteration, gtk_dialog_run, gtk_widget_show_all, gtk_widget_destroy,
+//     and gtk_entry_set_text seem to be the main offenders, as well as anything to do with the file_chooser.
+//     all other gtk functions appear to be fine, which is just as well as it would be a laborious task to ensure that every single minor upadate
+//     is fed to the fg thread - however some threads are particularly sensitive to graphical updates, for example long running threads that
+//     may run in parallel with other threads which are also doing widget updates. In this case the thread can be created with the attribute
+//    LIVES_THRDATTR_NO_GUI, and particular care can be taken with these threads to avoid gui updates (though this is not automatic)
+
+// for performance reasons the loop only runs when necessary - there are various ways it can be triggered
+// -- when a signal handler is added via lives_signal_handler_connect, the handler is actuually sent to a proxy which will run this loop
+// -- signals can be connected normally by calling lives_signal_handler_sync_connecct instead
+//
+// -- anther way is if a non-signal-callback bg. func wants to run a function in the fg thread, the threads can either call
+/// main_thread_execute() which in addition will check whether it is being called by a bg thread or the fg thread react appropriately
+// -- for bg threads this eventually call lives_fg_run_func() [not to be confused with fg_run_func, which is the fg version]
+// lives_fg_run_func will then either signal the loop governor or else add an a new instance via an idle func call
+//
+// during playback this loop runs continually, and the player is run in the bg. There is virutally only one place where the player calls
+// lives_widget_context_update() - this ensures for example that key presses are handled in a convenient place as well as allowing for
+// the high precision timer to take precedence over gui updates
+
+// mainw->clutch : this is a shared variable which helps definee the thread / loop status.
+// before entering its inner loop, the governor sets this to true. A thread can reset this which will cause the governor to enter "freewheel
+// allowing GUI updates, once all updates are done then it is set back to TRUE for the next cycle Setting the value to FALSE is analagous
+// to the bg thread calling widget_context_update, however it shpuld be done via the accessor functions.
+//
+// gov_running - another shared variable - bg threads can check this to see if the governor loop is running or not
+// if not running, then the thread can add the loop via and idle func, however care must be taken to ensure that only one thread does this,
+// else we could end up with several copies of this function running concurrently
+
+
 static boolean governor_loop(livespointer data) {
   volatile boolean clutch;
   static boolean lpt_recurse = FALSE;
@@ -1022,35 +1076,42 @@ static boolean governor_loop(livespointer data) {
   boolean is_timer = FALSE;
   lives_sigdata_t *sigdata = NULL;
   lives_sigdata_t *new_sigdata = (lives_sigdata_t *)data;
-  /// this loop runs in the main thread while callbacks are being run in bg.
+  gov_will_run = TRUE;
+  // reloop - for timers we cannot exit until we have the return code from the function
+  // instead we loop back to here
 reloop:
 
   if (g_main_depth() > 1 && !lpttorun) {
+    // prevent recursion UNLESS a specific function is called
     mainw->clutch = TRUE;
     //g_print("gov1\n");
-    return TRUE;
+    return FALSE;
   }
   if (mainw->is_exiting) return FALSE;
 
   if (lpt_recurse2) {
+    // prevent super-recursion
     //g_print("gov2\n");
     return TRUE;
   }
 
   if (!new_sigdata) {
+    // sigdata is set when called from a (retouted) signal handler callback
     // here we ar either re-entering as an idlefunc, or we are in a timer and looped back
     if (lpttorun) {
       // check if there is a foreground task to run
-      lpt_recurse2 = TRUE;
+      lpt_recurse2 = TRUE; // prevent super-recursion
+      // call fg task directly, bg thread will wait for lpttorun == NULL and read lpt_result
       lpt_result = fg_run_func(lpttorun, (void *)lpt_retval);
       if (!is_timer) {
         lpttorun = NULL;
         lpt_recurse2 = FALSE;
+
+        // some handling that needed to be added to prevent multiplle idelfuncs
         if (!lpt_recurse) {
           //g_print("gov3\n");
           return FALSE;
         } else {
-          //gov_running = FALSE;
           lpt_recurse = FALSE;
           //g_print("gov4\n");
           return TRUE;
@@ -1063,10 +1124,11 @@ reloop:
       lpt_recurse2 = FALSE;
     }
 
+    // some other handling for timers from trial and error
     if (timer_running) {
       mainw->clutch = FALSE;
       //g_print("gov5\n");
-      return TRUE;
+      return FALSE;
     }
   }
 
@@ -1091,6 +1153,7 @@ reloop:
         }
       }
       // signal that ww are in the loop
+
       gov_running = TRUE;
 
       if (new_sigdata) {
@@ -1102,6 +1165,8 @@ reloop:
         goto reloop;
       }
 
+      // use clutch and mainw->clutch - at one point it seemed like the value wasnt updating, but it may have
+      // been a mistaken impression
       clutch = mainw->clutch;
       while (task_list && !lpttorun && clutch && !mainw->is_exiting && !(sigdata = tasks_running())) {
         // while any signal handler is running in the bg, we just loop here until either:
@@ -1121,7 +1186,8 @@ reloop:
   if (mainw->is_exiting) return FALSE; // app exit
 
   if (!task_list && !lpttorun && !sigdata) {
-    gov_running = FALSE;
+    // seems there is nothing left to do, so exit
+    gov_will_run = gov_running = FALSE;
     //g_print("gov7\n");
     return FALSE;
   }
@@ -1133,7 +1199,8 @@ reloop:
     if (sigdata && sigdata->is_timer) {
       // this is also complicated. We are running in a timer and we need to run mainloop
       is_timer = TRUE;
-      /* if (!lpttorun) */
+
+      // here we try to simulate the effect of exiting with TRUE after re-adding
       while (!lives_proc_thread_check(sigdata->proc) && lives_widget_context_iteration(NULL, FALSE));
       sigdata = NULL;
       goto reloop;
@@ -1141,26 +1208,30 @@ reloop:
 
     // if not running a timer, update the context, then add ourself again as an idle function
     // set lpt_recurse which will trigger the fg task
-    if (lpttorun) lpt_recurse = TRUE;
+    // this part ensures that the idlefunc isnt called right away before any gui updates have a chance
     while (count++ < EV_LIM && lives_widget_context_iteration(NULL, FALSE)
            && !(sigdata && lives_proc_thread_check(sigdata->proc)));
 
+    // add ourselves as an idlefunc and then return FALSE
     lives_idle_add_simple(governor_loop, NULL);
+
     gov_running = FALSE;
+
+    // need to check for lpttorun here, after running all the context_iterations
+    if (lpttorun) lpt_recurse = TRUE;
     //g_print("gov8\n");
     return FALSE;
   }
 
-  /// something else might have removed the clutch, so check again
+  /// something else might have removed the clutch, so check again if the handler is still running
   if (!lives_proc_thread_check(sigdata->proc)) goto reloop;
 
-  /// something else might have removed the clutch, so check again
-  //if (!lives_proc_thread_check(sigdata->proc)) goto reloop;
-  //if (!(sigdata = tasks_running())) goto reloop;
 
-  // bg handler finished
-  gov_running = FALSE;
-  // if a timer, set sigdata->swapped
+  // if we arrive here it means that some signal handler initiated the loops, and it's
+  // actual callback has finished, now we can return to the proxy signal handler
+
+  gov_will_run = gov_running = FALSE;
+  // if a timer, set sigdata->swapped, this signals that the bg thread completed
   if (sigdata->is_timer) {
     if (sigdata) sigdata->swapped = TRUE;
     /// timer handler will free sigdata
@@ -1722,6 +1793,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *wi
     if (!was_modal) lives_window_set_modal(win, TRUE);
   }
 
+  while (gov_will_run && !gov_running) {
+    lives_nanosleep(NSLEEP_TIME);
+  }
+
   if (gov_running) {
     mainw->clutch = FALSE;
     if (!mainw->is_exiting) {
@@ -1847,13 +1922,13 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
 
 void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
   boolean waitgov = FALSE;
+  while (gov_will_run && !gov_running) {
+    lives_nanosleep(NSLEEP_TIME);
+  }
   lpttorun = lpt;
   lpt_retval = (volatile void *)retval;
   if (!gov_running) {
     lives_idle_add_simple(governor_loop, NULL);
-    /* while (!gov_running) { */
-    /*   lives_nanosleep(NSLEEP_TIME); */
-    /* } */
   } else {
     waitgov = TRUE;
     mainw->clutch = FALSE;
@@ -12237,11 +12312,17 @@ boolean lives_widget_context_update(void) {
   if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
   else {
     do_some_things();
-    if (!is_fg_thread() && gov_running) {
-      clutch = mainw->clutch = FALSE;
-      while (!clutch && !mainw->is_exiting) {
+    if (!is_fg_thread()) {
+      while (gov_will_run && !gov_running) {
         lives_nanosleep(NSLEEP_TIME);
-        clutch = mainw->clutch;
+      }
+
+      if (gov_running) {
+        clutch = mainw->clutch = FALSE;
+        while (!clutch && !mainw->is_exiting) {
+          lives_nanosleep(NSLEEP_TIME);
+          clutch = mainw->clutch;
+        }
       }
     } else {
       int count = 0;
@@ -12253,8 +12334,8 @@ boolean lives_widget_context_update(void) {
         //lives_nanosleep(NSLEEP_TIME);
       }
     }
-    do_more_stuff();
   }
+  do_more_stuff();
   pthread_mutex_unlock(&ctx_mutex);
   return TRUE;
 }

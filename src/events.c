@@ -4452,13 +4452,14 @@ filterinit2:
 
       lives_system(com, FALSE);
       lives_free(com);
+
       mainw->is_rendering = mainw->internal_messaging = FALSE;
 
       if (THREADVAR(com_failed)) {
         read_write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
         // cfile->may_be_damaged = TRUE;
-      }
-    } else lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "completed");
+      } else lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "completed");
+    }
 
     if (r_audio) {
       render_audio_segment(1, NULL, mainw->multitrack != NULL

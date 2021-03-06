@@ -932,7 +932,7 @@ boolean get_frames_sizes(int fileno, frames_t frame, int *hsize, int *vsize) {
   *hsize = weed_layer_get_width(layer);
   *vsize = weed_layer_get_height(layer);
   weed_layer_free(layer);
-  return FALSE;
+  return TRUE;
 }
 
 
@@ -2253,8 +2253,13 @@ int lives_rmglob(const char *files) {
     // files may not be empty string, or start with a '.' or dir separator
     if (!*files || *files == '.' || !lives_strncmp(files, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP))) return 2;
     else {
-      char *com = lives_strdup_printf("%s \"%s\"* >\"%s\" 2>&1", capable->rm_cmd, files, prefs->cmd_log);
-      int retval = lives_system(com, TRUE);
+      int retval;
+      char *com;
+      if (!lives_strcmp(files, "*"))
+        com = lives_strdup_printf("%s * >\"%s\" 2>&1", capable->rm_cmd, files, prefs->cmd_log);
+      else
+        com = lives_strdup_printf("%s \"%s\"* >\"%s\" 2>&1", capable->rm_cmd, files, prefs->cmd_log);
+      retval = lives_system(com, TRUE);
       lives_free(com);
       return retval;
     }

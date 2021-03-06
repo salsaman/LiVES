@@ -383,7 +383,9 @@ boolean save_clip_values(int which) {
       do {
         retval = 0;
         if (!save_clip_value(which, CLIP_DETAILS_HEADER_VERSION, &sfile->header_version)) break;
-        if (!save_clip_value(which, CLIP_DETAILS_BPP, &sfile->bpp)) break;
+
+        if (!save_clip_value(which, CLIP_DETAILS_UNIQUE_ID, &sfile->unique_id)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_FRAMES, &sfile->frames)) break;
         if (sfile->clip_type == CLIP_TYPE_FILE && sfile->ext_src) {
           lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
           double dfps = (double)cdata->fps;
@@ -396,7 +398,7 @@ boolean save_clip_values(int which) {
         if (!save_clip_value(which, CLIP_DETAILS_WIDTH, &sfile->hsize)) break;
         if (!save_clip_value(which, CLIP_DETAILS_HEIGHT, &sfile->vsize)) break;
         if (!save_clip_value(which, CLIP_DETAILS_INTERLACE, &sfile->interlace)) break;
-        if (!save_clip_value(which, CLIP_DETAILS_UNIQUE_ID, &sfile->unique_id)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_BPP, &sfile->bpp)) break;
         if (!save_clip_value(which, CLIP_DETAILS_ARATE, &sfile->arps)) break;
         if (!save_clip_value(which, CLIP_DETAILS_PB_ARATE, &sfile->arate)) break;
         if (!save_clip_value(which, CLIP_DETAILS_ACHANS, &sfile->achans)) break;
@@ -405,7 +407,6 @@ boolean save_clip_values(int which) {
           if (!save_clip_value(which, CLIP_DETAILS_AENDIAN, &endian)) break;
         }
         if (!save_clip_value(which, CLIP_DETAILS_ASAMPS, &sfile->asampsize)) break;
-        if (!save_clip_value(which, CLIP_DETAILS_FRAMES, &sfile->frames)) break;
         if (!save_clip_value(which, CLIP_DETAILS_GAMMA_TYPE, &sfile->gamma_type)) break;
         if (!save_clip_value(which, CLIP_DETAILS_TITLE, sfile->title)) break;
         if (!save_clip_value(which, CLIP_DETAILS_AUTHOR, sfile->author)) break;
@@ -486,11 +487,71 @@ boolean read_file_details(const char *file_name, boolean is_audio, boolean is_im
 
 #define DSIZE_MAX 100000
 
+
+static boolean recover_from_forensics(int fileno, lives_clip_t *recovered) {
+  // tgry to regenerate file details from the binfmt dump,
+  // used if header.lives is missing
+  lives_clip_t *sfile = mainw->files[fileno];
+  frames_t cframes;
+  if (!lives_strcmp(recovered->handle, sfile->handle)) {
+    if (recovered->clip_type == CLIP_TYPE_DISK) {
+      sfile->clip_type = recovered->clip_type;
+      sfile->frames = recovered->frames;
+      sfile->img_type = recovered->img_type;
+
+      // see if all frames are present
+      cframes = get_frame_count(fileno, 1);
+      if (sfile->frames == cframes) {
+        int hsize, vsize;
+        if (get_frames_sizes(fileno, 1, &hsize, &vsize)) {
+          if (hsize == recovered->hsize && vsize == recovered->vsize) {
+            sfile->hsize = recovered->hsize;
+            sfile->vsize = recovered->vsize;
+            sfile->fps = recovered->fps;
+            sfile->ratio_fps = recovered->ratio_fps;
+            sfile->interlace = recovered->interlace;
+            sfile->bpp = recovered->bpp;
+            sfile->deinterlace = recovered->deinterlace;
+            sfile->gamma_type = recovered->gamma_type;
+            lives_snprintf(sfile->name, CLIP_NAME_MAXLEN, "%s", recovered->name);
+            lives_snprintf(sfile->file_name, PATH_MAX, "%s", recovered->file_name);
+            lives_snprintf(sfile->save_file_name, PATH_MAX, "%s", recovered->save_file_name);
+            sfile->is_untitled = recovered->is_untitled;
+            lives_snprintf(sfile->mime_type, 256, "%s", recovered->mime_type);
+            lives_snprintf(sfile->type, 64, "%s", recovered->type);
+            sfile->changed = TRUE;
+            sfile->orig_file_name = recovered->orig_file_name;
+            sfile->was_renamed = recovered->was_renamed;
+            sfile->start = 1;
+            sfile->end = sfile->frames;
+            sfile->arps = recovered->arps;
+            sfile->arate = recovered->arate;
+            sfile->achans = recovered->achans;
+            sfile->asampsize = recovered->asampsize;
+            sfile->signed_endian = recovered->signed_endian;
+            sfile->arate = recovered->arate;
+            sfile->vol = recovered->vol;
+            sfile->afilesize = recovered->afilesize;
+            sfile->f_size = recovered->f_size;
+            lives_snprintf(sfile->title, 1024, "%s", recovered->title);
+            lives_snprintf(sfile->author, 1024, "%s", recovered->author);
+            lives_snprintf(sfile->comment, 1024, "%s", recovered->comment);
+            lives_snprintf(sfile->keywords, 1024, "%s", recovered->keywords);
+            sfile->unique_id = recovered->unique_id;
+            return TRUE;
+	    // *INDENT-OFF*
+	  }}}}}
+  // *INDENT-ON*
+  return TRUE;
+}
+
+
+
 static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
   if (IS_NORMAL_CLIP(clipno)) {
     lives_clip_t *sfile = mainw->files[clipno];
     char *clipdir = get_clip_dir(clipno);
-    char *fname = lives_build_filename(clipdir, TOTALSAVE_NAME, NULL);
+    char *fname = lives_build_filename(clipdir, "." TOTALSAVE_NAME, NULL);
     lives_free(clipdir);
     if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
       ssize_t bytes;
@@ -566,8 +627,9 @@ boolean restore_clip_binfmt(int clipno) {
   return TRUE;
 }
 
-lives_clip_t *clip_forensic(int clipno) {
-  return  _restore_binfmt(clipno, TRUE);
+
+LIVES_GLOBAL_INLINE lives_clip_t *clip_forensic(int clipno) {
+  return _restore_binfmt(clipno, TRUE);
 }
 
 
@@ -680,6 +742,29 @@ void remove_old_headers(int clipno) {
 }
 
 
+boolean update_clips_version(int fileno) {
+  if (IS_VALID_CLIP(fileno)) {
+    lives_clip_t *sfile = mainw->files[fileno];
+    // in newer header versions, fps holds the value from the decoder
+    // whereas pb_fps holds the actual value (e.g if the clip framerate was adjusted or resampled)
+    // in version < 102, pb_fps was playback fps, which was not very useful
+    // this is analagous to arps / arate where arps holds the file sample rate and arate holds the resampled rate
+    if (sfile->clip_type == CLIP_TYPE_FILE && sfile->header_version >= 102)
+      sfile->fps = sfile->pb_fps;
+    if (sfile->header_version < 103) {
+      char *clipdir = get_clip_dir(fileno);
+      char *binfmt = lives_build_filename(clipdir, TOTALSAVE_NAME, NULL);
+      if (lives_file_test(binfmt, LIVES_FILE_TEST_EXISTS)) {
+        // this is mainly for aesthetic reasons
+        char *binfmt_to = lives_build_filename(clipdir, "." TOTALSAVE_NAME, NULL);
+        lives_mv(binfmt, binfmt_to);
+      }
+    }
+  }
+  return FALSE;
+}
+
+
 boolean write_headers(int clipno) {
   // this function is included only for backwards compatibility with ancient builds of LiVES
   //
@@ -757,6 +842,95 @@ boolean write_headers(int clipno) {
 }
 
 
+LIVES_GLOBAL_INLINE boolean ignore_clip(int clipno) {
+  boolean do_ignore = TRUE;
+  if (IS_VALID_CLIP(clipno)) {
+    char *clipdir = get_clip_dir(clipno);
+    char *ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
+    if (lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) do_ignore = TRUE;
+    lives_free(ignore);
+    lives_free(clipdir);
+  }
+  return do_ignore;
+}
+
+// returns TRUE if we delete
+static boolean do_delete_or_mark(int clipno) {
+  char *clipdir;
+  boolean rember = FALSE, ret = FALSE;
+  LiVESResponseType resp = LIVES_RESPONSE_NONE;
+  if (clipno > 0) clipdir = get_clip_dir(clipno);
+  if (clipno < 0 || prefs->badfile_intent == LIVES_INTENTION_UNKNOWN) {
+    LiVESWidget *vbox, *check;
+    LiVESWidget *dialog;
+    if (clipno > 0) {
+      dialog = create_question_dialog(_("Cleanup options"), _("LiVES was unable to load a clip which seems to be "
+                                      "damaged byond repair\n"
+                                      "This clip can be deleted or marked as unopenable "
+                                      "and ignored\n"
+                                      "What would you like to do ?\n"));
+    } else {
+    }
+
+    lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_ADD,
+                                       _("Leave it and mark as 'unopenable'"), LIVES_RESPONSE_NO);
+
+    lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL,
+                                       _("Delete LiVES' copy of the clip"), LIVES_RESPONSE_YES);
+
+    vbox = lives_dialog_get_action_area((LIVES_DIALOG(dialog)));
+
+    check = lives_standard_check_button_new(_("Always do this for unopenable clips"),
+                                            FALSE, LIVES_BOX(vbox), NULL);
+    toggle_toggles_var(LIVES_TOGGLE_BUTTON(check), &rember, FALSE);
+
+    resp = lives_dialog_run_with_countdown(LIVES_DIALOG(dialog), LIVES_RESPONSE_YES, 2);
+    lives_widget_destroy(dialog);
+  }
+  if (prefs->badfile_intent == LIVES_INTENTION_DELETE || resp == LIVES_RESPONSE_CANCEL) {
+    lives_rmdir(clipdir, TRUE);
+    if (rember) pref_factory_int(PREF_BADFILE_INTENT, &prefs->badfile_intent, LIVES_INTENTION_DELETE, TRUE);
+    ret = TRUE;
+  } else {
+    char *ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
+    lives_touch(ignore);
+    lives_free(ignore);
+    if (rember) pref_factory_int(PREF_BADFILE_INTENT, &prefs->badfile_intent, LIVES_INTENTION_IGNORE, TRUE);
+  }
+  lives_free(clipdir);
+  return ret;
+}
+
+
+static boolean recover_details(int fileno, char *hdr, char *hdrback, char *binfmt) {
+  boolean ret = do_yesno_dialog(_("LiVES was unable to find the data header for a clip to be reloaded.\n"
+                                  "Recovery from backup sources can be attempted. Click Yes to try this,\n"
+                                  "or No to skip this and delete it or mark it as ignored\n"));
+  if (ret) {
+    if (hdrback) {
+      lives_cp(hdrback, hdr);
+      return TRUE;
+    } else {
+      lives_clip_t *recovered = clip_forensic(fileno);
+      if (recovered) {
+        if (recover_from_forensics(fileno, recovered)) {
+          char *clipdir = get_clip_dir(fileno);
+          char *binfmt_to = lives_build_filename(clipdir, "." TOTALSAVE_NAME, NULL);
+          if (lives_strcmp(binfmt_to, binfmt)) {
+            lives_mv(binfmt, binfmt_to);
+          }
+          lives_free(recovered);
+          lives_free(binfmt_to);
+          return TRUE;
+        }
+        lives_free(recovered);
+      }
+    }
+  }
+  return FALSE;
+}
+
+
 boolean read_headers(int fileno, const char *dir, const char *file_name) {
   // file_name is only used to get the file size on the disk
   lives_clip_t *sfile;
@@ -805,6 +979,8 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
 
   sfile->checked_for_old_header = TRUE;
   sfile->img_type = IMG_TYPE_UNKNOWN;
+
+frombak:
 
   if (lives_file_test(lives_header, LIVES_FILE_TEST_EXISTS)) {
     do {
@@ -985,8 +1161,6 @@ old_check:
     if (!stat(lives_header, &mystat)) new_time = mystat.st_mtime;
   }
 
-  lives_free(lives_header);
-  lives_header = NULL;
   ///////////////
 
   if (sfile->has_old_header && old_time <= new_time) {
@@ -1043,10 +1217,9 @@ old_check:
     header_fd = lives_open2(old_hdrfile, O_RDONLY);
 
     if (header_fd < 0) {
-      if (fileno != mainw->current_file) {
-        goto rhd_failed;
-      }
-      retval = do_read_failed_error_s_with_retry(old_hdrfile, lives_strerror(errno));
+      // sfile->has_old_header should already be FALSE, but we checked anyway
+      sfile->has_old_header = FALSE;
+      goto rhd_failed;
     } else {
       THREADVAR(read_failed) = FALSE;
       header_size = get_file_size(header_fd);
@@ -1150,8 +1323,55 @@ old_check:
   return TRUE;
 
 rhd_failed:
+
+  // header file (lives_header) missing or damaged -- see if we can recover ///////////////
+  if (fileno == mainw->current_file) {
+    char *clipdir = get_clip_dir(fileno);
+    char *hdrback = lives_strdup_printf("%s.%s", lives_header, LIVES_FILE_EXT_BAK);
+    char *binfmt = NULL;
+
+    lives_free(clipdir);
+    if (!lives_file_test(hdrback, LIVES_FILE_TEST_EXISTS)) {
+      lives_free(hdrback);
+      hdrback = NULL;
+      binfmt = lives_build_filename(clipdir, "." TOTALSAVE_NAME, NULL);
+      if (!lives_file_test(binfmt, LIVES_FILE_TEST_EXISTS)) {
+        char *binfmt2 = lives_build_filename(clipdir, TOTALSAVE_NAME, NULL);
+        if (lives_file_test(binfmt2, LIVES_FILE_TEST_EXISTS)) {
+          lives_mv(binfmt2, binfmt);
+          lives_free(binfmt);
+          binfmt = binfmt2;
+        } else {
+          lives_free(binfmt2); lives_free(binfmt);
+          binfmt = NULL;
+        }
+      }
+    }
+    if (hdrback || binfmt) {
+      if (recover_details(fileno, lives_header, hdrback, binfmt)) {
+        if (hdrback) {
+          lives_free(hdrback);
+          if (binfmt) lives_free(binfmt);
+          lives_free(clipdir);
+          goto frombak;
+        }
+        lives_free(binfmt); lives_free(clipdir);
+        save_clip_values(fileno);
+        return TRUE;
+      }
+    }
+    do_delete_or_mark(fileno);
+
+    // set this to force updating of the set details (e.g. order file)
+    // if it is the last clip in the set, we can also mark the set as .ignore
+    if (sfile->was_in_set) mainw->invalid_clips = TRUE;
+  }
+
+  ////////////////////////////////////
+
   lives_freep((void **)&lives_header);
   lives_freep((void **)&old_hdrfile);
+
   return FALSE;
 }
 

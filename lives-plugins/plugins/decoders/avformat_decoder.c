@@ -5,6 +5,9 @@
 //
 // some code adapted from vlc (GPL v2 or higher)
 
+
+#define PLUGIN_UID 0x6465636C69626176ull
+
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
 #endif
@@ -62,10 +65,9 @@
 
 #include "avformat_decoder.h"
 
-static const char *plname = "lives_libav";
 static int vmaj = 1;
 static int vmin = 1;
-static const char *plugin_version = "LiVES avformat decoder version 1.1";
+static const char *plugin_name = "LiVES avformat";
 
 static pthread_mutex_t avcodec_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -730,8 +732,8 @@ const char *module_check_init(void) {
 }
 
 
-const char *version(void) {
-  return plugin_version;
+const lives_plugin_id_t *get_plugin_id(void) {
+  return _get_plugin_id(plugin_name, vmaj, vmin);
 }
 
 
@@ -741,7 +743,6 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
 
   if (!data) {
     cdata = cdata_new(NULL);
-    cdata_stamp(cdata, plname, vmaj, vmin);
     cdata->palettes = malloc(2 * sizeof(int));
     cdata->palettes[1] = WEED_PALETTE_END;
     cdata->priv = calloc(1, sizeof(lives_av_priv_t));
@@ -772,8 +773,6 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
 static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
   lives_clip_data_t *clone = clone = clone_cdata(cdata);
   lives_av_priv_t *dpriv, *spriv;
-
-  cdata_stamp(clone, plname, vmaj, vmin);
 
   // create "priv" elements
   spriv = cdata->priv;
@@ -1269,7 +1268,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       if (gotFrame) break;
     }
 #ifdef DEBUG
-    fprintf(stderr, "pt 1 %ld %d %ld %ld %d %d\n", tframe, gotFrame, MyPts, gotFrame ? priv->pFrame->best_effort_timestamp : 0,
+    fprintf(stderr, "pt 1 %ld %d %ld %ld %d %d\n", tframe, gotFrame, MyPts, gotFrame ? priv->pFrame->best_effort_timestampy : 0,
             priv->pFrame->color_trc, priv->pFrame->color_range);
 #endif
 

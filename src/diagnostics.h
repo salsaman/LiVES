@@ -29,4 +29,7 @@ void hash_test(void);
 #ifdef WEED_WIDGETS
 void show_widgets_info(void);
 #endif
+
+void show_struct_sizes(void);
+
 #endif

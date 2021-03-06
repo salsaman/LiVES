@@ -4371,8 +4371,14 @@ void backup_file(int clip, int start, int end, const char *file_name) {
 
 void open_set_file(int clipnum) {
   char name[CLIP_NAME_MAXLEN];
+  lives_clip_t *sfile;
 
-  if (mainw->current_file < 1) return;
+  if (!IS_VALID_CLIP(clipnum)) return;
+  sfile = mainw->files[clipnum];
+
+  if (!mainw->hdrs_cache && sfile->checked_for_old_header && !sfile->has_old_header)
+    // probably restored from binfmt
+    return;
 
   lives_memset(name, 0, CLIP_NAME_MAXLEN);
 
@@ -4380,33 +4386,33 @@ void open_set_file(int clipnum) {
     boolean retval;
     // LiVES 0.9.6+
 
-    retval = get_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->pb_fps, 0);
+    retval = get_clip_value(clipnum, CLIP_DETAILS_PB_FPS, &sfile->pb_fps, 0);
     if (!retval) {
-      cfile->pb_fps = cfile->fps;
+      sfile->pb_fps = sfile->fps;
     }
-    retval = get_clip_value(mainw->current_file, CLIP_DETAILS_PB_FRAMENO, &cfile->frameno, 0);
+    retval = get_clip_value(clipnum, CLIP_DETAILS_PB_FRAMENO, &sfile->frameno, 0);
     if (!retval) {
-      cfile->frameno = 1;
+      sfile->frameno = 1;
     }
 
-    retval = get_clip_value(mainw->current_file, CLIP_DETAILS_CLIPNAME, name, CLIP_NAME_MAXLEN);
+    retval = get_clip_value(clipnum, CLIP_DETAILS_CLIPNAME, name, CLIP_NAME_MAXLEN);
     if (!retval) {
       char *tmp;
       lives_snprintf(name, CLIP_NAME_MAXLEN, "%s", (tmp = get_untitled_name(mainw->untitled_number++)));
       lives_free(tmp);
-      cfile->needs_update = TRUE;
+      sfile->needs_update = TRUE;
     }
-    retval = get_clip_value(mainw->current_file, CLIP_DETAILS_UNIQUE_ID, &cfile->unique_id, 0);
+    retval = get_clip_value(clipnum, CLIP_DETAILS_UNIQUE_ID, &sfile->unique_id, 0);
     if (!retval) {
-      cfile->unique_id = gen_unique_id();
-      cfile->needs_silent_update = TRUE;
+      sfile->unique_id = gen_unique_id();
+      sfile->needs_silent_update = TRUE;
     }
-    retval = get_clip_value(mainw->current_file, CLIP_DETAILS_INTERLACE, &cfile->interlace, 0);
+    retval = get_clip_value(clipnum, CLIP_DETAILS_INTERLACE, &sfile->interlace, 0);
     if (!retval) {
-      cfile->interlace = LIVES_INTERLACE_NONE;
-      cfile->needs_silent_update = TRUE;
+      sfile->interlace = LIVES_INTERLACE_NONE;
+      sfile->needs_silent_update = TRUE;
     }
-    if (cfile->interlace != LIVES_INTERLACE_NONE) cfile->deinterlace = TRUE;
+    if (sfile->interlace != LIVES_INTERLACE_NONE) sfile->deinterlace = TRUE;
   } else {
     // pre 0.9.6 <- ancient code
     ssize_t nlen;
@@ -4414,7 +4420,7 @@ void open_set_file(int clipnum) {
     int pb_fps;
     int retval;
 
-    char *clipdir = get_clip_dir(mainw->current_file);
+    char *clipdir = get_clip_dir(clipnum);
     char *xsetfile = lives_strdup_printf("set.%s", mainw->set_name);
     char *setfile = lives_build_path(clipdir, xsetfile, NULL);
 
@@ -4425,8 +4431,8 @@ void open_set_file(int clipnum) {
       if ((set_fd = lives_open2(setfile, O_RDONLY)) > -1) {
         // get perf_start
         if ((nlen = lives_read_le(set_fd, &pb_fps, 4, TRUE)) > 0) {
-          cfile->pb_fps = pb_fps / 1000.;
-          lives_read_le(set_fd, &cfile->frameno, 4, TRUE);
+          sfile->pb_fps = pb_fps / 1000.;
+          lives_read_le(set_fd, &sfile->frameno, 4, TRUE);
           lives_read(set_fd, name, CLIP_NAME_MAXLEN, TRUE);
         }
         close(set_fd);
@@ -4434,7 +4440,7 @@ void open_set_file(int clipnum) {
     } while (retval == LIVES_RESPONSE_RETRY);
 
     lives_free(setfile);
-    cfile->needs_silent_update = TRUE;
+    sfile->needs_silent_update = TRUE;
   }
 
   if (!*name) {
@@ -4445,9 +4451,9 @@ void open_set_file(int clipnum) {
       char *remove = lives_strdup_printf(" (%s)", mainw->set_name);
       if (strlen(name) > strlen(remove)) name[strlen(name) - strlen(remove)] = 0;
       lives_free(remove);
-      cfile->needs_silent_update = TRUE;
+      sfile->needs_silent_update = TRUE;
     }
-    lives_snprintf(cfile->name, CLIP_NAME_MAXLEN, "%s", name);
+    lives_snprintf(sfile->name, CLIP_NAME_MAXLEN, "%s", name);
   }
 }
 
@@ -5389,7 +5395,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   FILE *rfile = NULL;
 
   char buff[256], *buffptr;
-  char *clipdir;
+  char *clipdir, *ignore;
 
   LiVESResponseType resp;
 
@@ -5541,6 +5547,14 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       clipdir = lives_build_path(prefs->workdir, buffptr, NULL);
 
+      ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
+      if (lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) {
+        lives_free(clipdir);
+        lives_free(ignore);
+        continue;
+      }
+      lives_free(ignore)
+      ;
       if (!lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
         lives_free(clipdir);
         continue;
@@ -5627,7 +5641,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
             }
             cfile->checked = TRUE;
           }
-          if (cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
         }
       } else {
         /// CLIP_TYPE_DISK
@@ -5652,7 +5665,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
         if (!check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
           cfile->needs_update = TRUE;
-          if (cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
         }
       }
 
@@ -5671,7 +5683,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       if (mainw->current_file < 1) continue;
 
-      if (cfile->clip_type == CLIP_TYPE_FILE && cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
       get_total_time(cfile);
 
       if (CLIP_TOTAL_TIME(mainw->current_file) == 0.) {
@@ -5680,6 +5691,8 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
 
       last_good_file = mainw->current_file;
+
+      if (update_clips_version(mainw->current_file)) cfile->needs_silent_update = TRUE;
 
       if (cfile->needs_update || cfile->needs_silent_update) {
         if (cfile->needs_update) do_clip_divergence_error(mainw->current_file);
@@ -5794,9 +5807,9 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   if (recovery_file) fclose(rfile);
 
 recovery_done:
-
   end_threaded_dialog();
 
+  mainw->invalid_clips = FALSE;
   mainw->suppress_dprint = FALSE;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   mainw->recovering_files = FALSE;

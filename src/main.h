@@ -918,7 +918,7 @@ typedef struct _lives_clip_t {
   boolean deinterlace; ///< auto deinterlace
 
   int header_version;
-#define LIVES_CLIP_HEADER_VERSION 102
+#define LIVES_CLIP_HEADER_VERSION 103
 
   // extended info (not saved)
 
@@ -1163,6 +1163,8 @@ LiVESResponseType do_info_dialog_with_expander(const char *text, const char *exp
 LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int warn_mask_number);
 LiVESWidget *create_question_dialog(const char *title, const char *text);
 
+LiVESResponseType lives_dialog_run_with_countdown(LiVESDialog *dialog, LiVESResponseType target, int nclicks);
+
 LiVESWindow *get_transient_full();
 
 void do_abortblank_error(const char *what);
@@ -1289,6 +1291,7 @@ boolean do_set_locked_warning(const char *setname);
 void do_no_in_vdevs_error(void);
 void do_locked_in_vdevs_error(void);
 void do_do_not_close_d(void);
+boolean do_set_noclips_query(const char *set_name);
 void do_set_noclips_error(const char *setname);
 boolean do_foundclips_query(void);
 void do_no_autolives_error(void);

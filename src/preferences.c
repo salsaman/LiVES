@@ -1134,44 +1134,40 @@ boolean pref_factory_color_button(lives_colRGBA64_t *pcol, LiVESColorButton *cbu
 }
 
 
-boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
+boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean permanent) {
   if (prefsw) prefsw->ignore_apply = TRUE;
+  if (newval == *pref) goto fail3;
 
   if (!lives_strcmp(prefidx, PREF_MT_AUTO_BACK)) {
-    if (newval == prefs->mt_auto_back) goto fail3;
     if (mainw->multitrack) {
-      if (newval <= 0 && prefs->mt_auto_back > 0) {
+      if (newval <= 0 && *pref > 0) {
         if (mainw->multitrack->idlefunc > 0) {
           lives_source_remove(mainw->multitrack->idlefunc);
           mainw->multitrack->idlefunc = 0;
         }
         if (newval == 0) {
-          prefs->mt_auto_back = newval;
+          *pref = newval;
           mt_auto_backup(mainw->multitrack);
         }
       }
-      if (newval > 0 && prefs->mt_auto_back <= 0 && mainw->multitrack->idlefunc > 0) {
+      if (newval > 0 && *pref <= 0 && mainw->multitrack->idlefunc > 0) {
         mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
       }
     }
-    prefs->mt_auto_back = newval;
     goto success3;
   }
 
   if (!lives_strcmp(prefidx, PREF_MAX_MSGS)) {
-    if (newval == prefs->max_messages) goto fail3;
     if (newval < mainw->n_messages && newval >= 0) {
       free_n_msgs(mainw->n_messages - newval);
       if (prefs->show_msg_area)
         msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
     }
-    prefs->max_messages = newval;
+    //prefs->max_messages = newval;
     goto success3;
   }
 
   if (!lives_strcmp(prefidx, PREF_SEPWIN_TYPE)) {
-    if (prefs->sepwin_type == newval) goto fail3;
-    prefs->sepwin_type = newval;
     if (newval == SEPWIN_TYPE_STICKY) {
       if (mainw->sep_win) {
         if (!LIVES_IS_PLAYING) {
@@ -1192,13 +1188,13 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
       }
     }
 
-    if (permanent) future_prefs->sepwin_type = prefs->sepwin_type;
+    if (permanent) future_prefs->sepwin_type = newval;
     goto success3;
   }
 
   if (!lives_strcmp(prefidx, PREF_RRQMODE)) {
     if (newval != prefs->rr_qmode) {
-      prefs->rr_qmode = newval;
+      //prefs->rr_qmode = newval;
       goto success3;
     }
     goto fail3;
@@ -1206,7 +1202,7 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
 
   if (!lives_strcmp(prefidx, PREF_RRFSTATE)) {
     if (newval != prefs->rr_fstate) {
-      prefs->rr_fstate = newval;
+      //prefs->rr_fstate = newval;
       goto success3;
     }
     goto fail3;
@@ -1214,7 +1210,15 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
 
   if (!lives_strcmp(prefidx, PREF_MIDI_CHECK_RATE)) {
     if (newval != prefs->midi_check_rate) {
-      prefs->midi_check_rate = newval;
+      //prefs->midi_check_rate = newval;
+      goto success3;
+    }
+    goto fail3;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_BADFILE_INTENT)) {
+    if (newval != prefs->midi_check_rate) {
+      //prefs->midi_check_rate = newval;
       goto success3;
     }
     goto fail3;
@@ -1222,7 +1226,7 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
 
   if (!lives_strcmp(prefidx, PREF_MIDI_RPT)) {
     if (newval != prefs->midi_rpt) {
-      prefs->midi_rpt = newval;
+      //prefs->midi_rpt = newval;
       goto success3;
     }
     goto fail3;
@@ -1234,6 +1238,7 @@ fail3:
   return FALSE;
 
 success3:
+  *pref = newval;
   if (prefsw) {
     lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
@@ -1838,9 +1843,9 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   if (msgs_unlimited) {
-    pref_factory_int(PREF_MAX_MSGS, -max_msgs, TRUE);
+    pref_factory_int(PREF_MAX_MSGS, &prefs->max_messages, -max_msgs, TRUE);
   } else {
-    pref_factory_int(PREF_MAX_MSGS, max_msgs, TRUE);
+    pref_factory_int(PREF_MAX_MSGS, &prefs->max_messages, max_msgs, TRUE);
   }
 
   pref_factory_bool(PREF_MSG_PBDIS, msgs_pbdis, TRUE);
@@ -1895,8 +1900,8 @@ boolean apply_prefs(boolean skip_warn) {
   pref_factory_bool(PREF_RRAMICRO, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rr_amicro)), TRUE);
   pref_factory_bool(PREF_RRRAMICRO, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rr_ramicro)), TRUE);
 
-  pref_factory_int(PREF_RRQMODE, lives_combo_get_active_index(LIVES_COMBO(prefsw->rr_combo)), TRUE);
-  pref_factory_int(PREF_RRFSTATE, lives_combo_get_active_index(LIVES_COMBO(prefsw->rr_scombo)), TRUE);
+  pref_factory_int(PREF_RRQMODE, &prefs->rr_qmode, lives_combo_get_active_index(LIVES_COMBO(prefsw->rr_combo)), TRUE);
+  pref_factory_int(PREF_RRFSTATE, &prefs->rr_fstate, lives_combo_get_active_index(LIVES_COMBO(prefsw->rr_scombo)), TRUE);
 
   pref_factory_bool(PREF_PUSH_AUDIO_TO_GENS, pa_gens, TRUE);
 
@@ -2343,8 +2348,8 @@ boolean apply_prefs(boolean skip_warn) {
   pref_factory_string(PREF_MIDI_RCV_CHANNEL, midichan, TRUE);
   pref_factory_utf8(PREF_OMC_MIDI_FNAME, omc_midi_fname, TRUE);
 
-  pref_factory_int(PREF_MIDI_CHECK_RATE, midicr, TRUE);
-  pref_factory_int(PREF_MIDI_RPT, midirpt, TRUE);
+  pref_factory_int(PREF_MIDI_CHECK_RATE, &prefs->midi_check_rate, midicr, TRUE);
+  pref_factory_int(PREF_MIDI_RPT, &prefs->midi_rpt, midirpt, TRUE);
 
   if (omc_midi_enable && !(prefs->omc_dev_opts & OMC_DEV_MIDI)) needs_midi_restart = TRUE;
   if (pref_factory_bitmapped(PREF_OMC_DEV_OPTS, OMC_DEV_MIDI, omc_midi_enable, FALSE))
@@ -2466,7 +2471,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (mt_autoback_always) mt_autoback_time = 0;
   else if (mt_autoback_never) mt_autoback_time = -1;
 
-  pref_factory_int(PREF_MT_AUTO_BACK, mt_autoback_time, TRUE);
+  pref_factory_int(PREF_MT_AUTO_BACK, &prefs->mt_auto_back, mt_autoback_time, TRUE);
 
   if (max_disp_vtracks != prefs->max_disp_vtracks) {
     prefs->max_disp_vtracks = max_disp_vtracks;

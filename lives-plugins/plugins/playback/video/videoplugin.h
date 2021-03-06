@@ -96,17 +96,17 @@ boolean set_palette(int palette);
 /// host will call this
 uint64_t get_capabilities(int palette);
 
-#define LIVES_INTENTION_PLAY               	1
-#define LIVES_INTENTION_STREAM          	2
-#define LIVES_INTENTION_TRANSCODE    	3
+#define LIVES_INTENTION_PLAY               	512
+#define LIVES_INTENTION_STREAM          	513
+#define LIVES_INTENTION_TRANSCODE    		514
 
-#define VPP_CAN_RESIZE				(1<<0)   ///< can resize the image to fit the play window / letterbox
-#define VPP_CAN_RETURN			(1<<1)   ///< can return pixel_data after playing
-#define VPP_LOCAL_DISPLAY			(1<<2)   ///< displays to the local monitor
-#define VPP_LINEAR_GAMMA			(1<<3)   ///< input RGB data should be in linear gamma (not v. useful)
-#define VPP_CAN_RESIZE_WINDOW          (1<<4)   ///< can resize the play window on the fly (without init_screen / exit_screen)
-#define VPP_CAN_LETTERBOX                  (1<<5)   ///< player can center at xoffset, yoffset (values set in frame in play_frame)
-#define VPP_CAN_CHANGE_PALETTE                  (1<<6)   ///< host can switch palette overriding settings
+#define VPP_CAN_RESIZE	       		(1<<0)   ///< can resize the image to fit the play window / letterbox
+#define VPP_CAN_RETURN	       		(1<<1)   ///< can return pixel_data after playing
+#define VPP_LOCAL_DISPLAY      		(1<<2)   ///< displays to the local monitor
+#define VPP_LINEAR_GAMMA       		(1<<3)   ///< input RGB data should be in linear gamma (not v. useful)
+#define VPP_CAN_RESIZE_WINDOW          	(1<<4)   ///< can resize the play window on the fly (without init_screen / exit_screen)
+#define VPP_CAN_LETTERBOX     		(1<<5)   ///< player can center at xoffset, yoffset (values set in frame in play_frame)
+#define VPP_CAN_CHANGE_PALETTE 		(1<<6)   ///< host can switch palette overriding settings
 // bit combinations: 0 & 5: can resize and letterbox; 5 without 0: cannot resize image, but it can offset the top left pixel
 
 /// ready the screen to play (optional)
@@ -121,7 +121,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 /// hsize and vsize are width and height of the pixel data (in macropixels)
 /// no extra padding (rowstrides) is allowed
 /// play_params should be cast to weed_plant_t ** (if the plugin exports get_play_paramtmpls() )
-/// otherwise it can be ignored (deprecated)
+/// otherwise it can be ignored **** (deprecated) *****
 boolean render_frame(int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
                      void **play_params);
 

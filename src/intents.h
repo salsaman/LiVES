@@ -84,23 +84,28 @@ enum {
   LIVES_INTENTION_REDO,
 
   // video players
-  LIVES_INTENTION_PLAY = 0x00000200,
+  LIVES_INTENTION_PLAY = 0x00000400, // value fixed for all time, order of followin must not change (see videoplugin.h)
   LIVES_INTENTION_STREAM,  // encode / data in -> remote stream
   LIVES_INTENTION_TRANSCODE,  // encode / data in -> external file format
-  LIVES_INTENTION_ENCODE, // encode / file in -> external file format
-  LIVES_INTENTION_RENDER, // data -> internal clip
+
+  LIVES_INTENTION_ENCODE = 0x00000899, // encode / file in -> external file format
 
   // clip-like objects (TBD. - part of clip object or should there be a clip_manager static object ?)
-  LIVES_INTENTION_IMPORT_LOCAL, // import from local filesystem, -> internal clips  i.e "open"
+  LIVES_INTENTION_IMPORT_LOCAL = 0x00000C00, // import from local filesystem, -> internal clips  i.e "open"
   LIVES_INTENTION_IMPORT_REMOTE, // import from online source  -> internal clip "download"
   LIVES_INTENTION_EXPORT_LOCAL, // export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
   LIVES_INTENTION_EXPORT_REMOTE, // export raw format to online location, e.g. export audio, save frame
 
+  LIVES_INTENTION_RENDER, // data -> internal clip
+
   LIVES_INTENTION_BACKUP, // internal clip -> restorable object
   LIVES_INTENTION_RESTORE, // restore from object -> internal clip
 
+  // decoders
+  LIVES_INTENTION_DECODE = 0x00001000,
+
   // use caps to further refine e.g REALTIMNE / NON_REALTIME
-  LIVES_INTENTION_EFFECT,
+  LIVES_INTENTION_EFFECT = 0x00001400,
   LIVES_INTENTION_ANALYSE,
   LIVES_INTENTION_CONVERT,
   LIVES_INTENTION_MIX,
@@ -111,8 +116,19 @@ enum {
   LIVES_INTENTION_MAX = 0xFFFFFFFF
 };
 
+// aliases
+#define LIVES_INTENTION_IGNORE LIVES_INTENTION_IDENTITY
+#define LIVES_INTENTION_LEAVE LIVES_INTENTION_IDENTITY
+
+#define LIVES_INTENTION_MOVE LIVES_INTENTION_EXPORT_LOCAL
+
+#define LIVES_INTENTION_UPLOAD LIVES_INTENTION_EXPORT_REMOTE
+#define LIVES_INTENTION_DOWNLOAD LIVES_INTENTION_IMPORT_REMOTE
+
+#define LIVES_INTENTION_DELETE LIVES_INTENTION_DESTROY
+
 // avoiding using an enum allows the list to be extended in other headers
-typedef uint32_t lives_intention;
+typedef int32_t lives_intention;
 
 /// type specific caps
 // vpp

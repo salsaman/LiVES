@@ -584,6 +584,8 @@ enum {
 
 #define COMMENT_FILENAME ".comment"
 
+#define LIVES_FILENAME_IGNORE ".ignore"
+
 // trash removal
 #define LIVES_FILENAME_NOREMOVE ".noremove"
 #define LIVES_FILENAME_INUSE ".inuse"
@@ -1725,6 +1727,8 @@ typedef struct {
   lives_audio_buf_t *afb[2]; ///< used for buffering / feeding audio to video generators
   int afbuffer_clients; /// # of registered clients for the audio frame buffer
   int afbuffer_clients_read; /// current read count. When this reaches abuffer_clients, we swap the read / write buffers
+
+  pthread_t noted[16];
 
   pthread_t *libthread;  /// GUI thread for liblives
 

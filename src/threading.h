@@ -48,6 +48,7 @@ typedef struct {
   volatile uint64_t done;
   void *ret;
   volatile boolean sync_ready;
+  pthread_t self;
 } thrd_work_t;
 
 typedef struct {
@@ -56,6 +57,7 @@ typedef struct {
   char *args_fmt; // definition of the params, e.g. "idV" (int, double, void *)
   uint32_t rettype; // weed_seed type e.g. WEED_SEED_INT, a value of 0 implies a void *(fuunc)
   void *data; // category specific data, may be NULL
+  uint64_t padding[3];
 } lives_func_info_t;
 
 #define WEED_LEAF_NOTIFY "notify"
@@ -92,6 +94,7 @@ typedef uint64_t lives_thread_attr_t;
 #define LIVES_THRDATTR_WAIT_SYNC	(1 << 2)
 #define LIVES_THRDATTR_FG_THREAD	(1 << 3)
 #define LIVES_THRDATTR_NO_GUI		(1 << 4)
+#define LIVES_THRDATTR_KILLABLE		(1 << 5)
 
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);

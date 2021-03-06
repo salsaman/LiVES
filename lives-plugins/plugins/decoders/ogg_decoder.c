@@ -32,6 +32,8 @@
 // finalise (clip_data_free)
 ///----------------------------------------------------------
 
+#define PLUGIN_UID 0x646563702E6F6767ull
+
 #define NEED_CLONEFUNC
 
 #include "decplugin.h"
@@ -69,10 +71,9 @@
 
 static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boolean cont);
 
-static const char *plname = "lives_ogg";
 static int vmaj = 1;
 static int vmin = 2;
-static const char *plugin_version = "LiVES ogg decoder version 1.2";
+static const char *plugin_name = "LiVES ogg";
 
 static index_container_t **indices;
 static int nidxc;
@@ -2134,8 +2135,8 @@ static int64_t ogg_seek(lives_clip_data_t *cdata, int64_t tframe, int64_t ppos_l
 //////////////////////////////////////////
 // std functions
 
-const char *version(void) {
-  return plugin_version;
+const lives_plugin_id_t *get_plugin_id(void) {
+  return _get_plugin_id(plugin_name, vmaj, vmin);
 }
 
 
@@ -2152,7 +2153,6 @@ lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
 
   if (!data) {
     cdata = cdata_new(NULL);
-    cdata_stamp(cdata, plname, vmaj, vmin);
     cdata->palettes = malloc(4 * sizeof(int));
     cdata->palettes[3] = WEED_PALETTE_END;
   } else cdata = data;
@@ -2169,8 +2169,6 @@ lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
 static lives_clip_data_t *ogg_clone(lives_clip_data_t *cdata) {
   lives_clip_data_t *clone = clone_cdata(cdata);
   lives_ogg_priv_t *dpriv, *spriv;
-
-  cdata_stamp(clone, plname, vmaj, vmin);
 
   // create "priv" elements
   spriv = cdata->priv;

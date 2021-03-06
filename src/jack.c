@@ -1329,14 +1329,15 @@ static int audio_process(nframes_t nframes, void *arg) {
     if (cache_buffer && cache_buffer->in_achans > 0 && !cache_buffer->is_ready) wait_cache_buffer = TRUE;
   }
 
-  jackd->state = jack_transport_query(jackd->client, &pos);
+  if (!jackd->play_when_stopped) {
+    jackd->state = jack_transport_query(jackd->client, &pos);
 
 #ifdef DEBUG_AJACK
-  lives_printerr("STATE is %d %d\n", jackd->state, jackd->play_when_stopped);
+    lives_printerr("STATE is %d %d\n", jackd->state, jackd->play_when_stopped);
 #endif
-
+  }
   /* handle playing state */
-  if (jackd->state == JackTransportRolling || jackd->play_when_stopped) {
+  if (jackd->play_when_stopped || jackd->state == JackTransportRolling) {
     uint64_t jackFramesAvailable = nframes; /* frames we have left to write to jack */
     uint64_t inputFramesAvailable;          /* frames we have available this loop */
     uint64_t numFramesToWrite;              /* num frames we are writing this loop */
@@ -2154,7 +2155,7 @@ static void jack_reset_driver(jack_driver_t *jackd) {
 void jack_close_device(jack_driver_t *jackd) {
   //lives_printerr("closing the jack client thread\n");
   if (jackd->client) {
-    //jack_client_close(jackd->client);
+    jack_client_close(jackd->client);
   }
 
   jack_reset_driver(jackd);

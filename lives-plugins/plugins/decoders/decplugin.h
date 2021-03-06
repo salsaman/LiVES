@@ -71,6 +71,10 @@ typedef struct {
   double xvals[64];  /// extra values which may be stored depending on codec
 } adv_timing_t;
 
+// these now become intentcaps
+
+#define LIVES_INTENTION_DECODE 0x00001000
+
 /// good
 #define LIVES_SEEK_FAST (1<<0)
 #define LIVES_SEEK_FAST_REV (1<<1)
@@ -87,7 +91,6 @@ typedef void *(*memcpy_f)(void *, const void *, size_t);
 typedef void *(*realloc_f)(void *, size_t);
 typedef void *(*calloc_f)(size_t, size_t);
 typedef void *(*memmove_f)(void *, const void *, size_t);
-
 
 #if defined NEED_TIMING || !defined HAVE_GETENTROPY
 
@@ -135,25 +138,33 @@ static inline void myrand(void *ptr, size_t size) {
 
 #include "../../../src/lsd.h"
 
-#define PLUGIN_TYPE_DECODER			"decoder"
-#define PLUGIN_SUBTYPE_DLL 		"dll"
+#define DEC_PLUGIN_TYPE_DECODER		256 // "decoder"
+#define DEC_PLUGIN_SUBTYPE_DLL 		128 // "dll"
+
+typedef int lives_intention;
 
 typedef struct {
-  char type[16];  ///< e.g. "decoder"
-  char subtype[16];  ///< e.g. "dll"
+  lives_intention intent;
+  int n_caps;
+  int *capabilities; ///< type specific capabilities
+} lives_intentcap_t;
+
+typedef struct {
+  uint64_t uid; // fixed enumeration
+  uint64_t type;  ///< e.g. "decoder"
+  uint64_t subtype;  ///< e.g. "dll"
   int api_version_major; ///< version of interface API
   int api_version_minor;
   char name[64];  ///< e.g. "mkv_decoder"
   int pl_version_major; ///< version of plugin
   int pl_version_minor;
-  void *capabilities;  ///< for future use
+  int n_intentcaps;
+  int *intentcaps;  /// array of intentcaps[n_intentcaps]
 } lives_plugin_id_t;
 
-
 typedef struct _lives_clip_data {
-  // fixed part
+  // fixed parLUt
   lives_struct_def_t lsd;
-  lives_plugin_id_t plugin_id;
 
   malloc_f  *ext_malloc;
   free_f    *ext_free;
@@ -244,7 +255,32 @@ typedef struct _lives_clip_data {
 } lives_clip_data_t;
 
 // std functions
-const char *version(void);
+const lives_plugin_id_t *get_plugin_id(void);
+
+static lives_plugin_id_t plugin_id;
+
+static inline lives_plugin_id_t *_get_plugin_id(const char *name, int vmaj, int vmin) {
+  static int inited = 0;
+  if (!inited) {
+    inited = 1;
+    plugin_id.uid = PLUGIN_UID;
+    plugin_id.type = DEC_PLUGIN_TYPE_DECODER;
+    plugin_id.subtype = DEC_PLUGIN_SUBTYPE_DLL;
+    plugin_id.api_version_major = DEC_PLUGIN_VERSION_MAJOR;
+    plugin_id.api_version_major = DEC_PLUGIN_VERSION_MINOR;
+    snprintf(plugin_id.name, 32, "%s", name);
+    plugin_id.pl_version_major = vmaj;
+    plugin_id.pl_version_minor = vmin;
+#ifndef PLUGIN_INTENTCAPS
+#define PLUGIN_N_INTENTCAPS 0
+#define PLUGIN_INTENTCAPS NULL
+#endif
+    plugin_id.n_intentcaps = PLUGIN_N_INTENTCAPS;
+    plugin_id.intentcaps = PLUGIN_INTENTCAPS;
+  }
+  return &plugin_id;
+}
+
 
 /// pass in NULL clip_data for the first call, subsequent calls (if the URI, current_clip or current_palette changes)
 /// should reuse the previous value. If URI or current_clip are invalid, clip_data will be freed and NULL returned.
@@ -336,20 +372,9 @@ static lives_clip_data_t *cdata_new(lives_clip_data_t *data) {
     cdata = calloc(1, sizeof(lives_clip_data_t));
 #endif
   }
-  if (cdata) {
-    snprintf(cdata->plugin_id.type, 16, "%s", PLUGIN_TYPE_DECODER);
-    snprintf(cdata->plugin_id.subtype, 16, "%s", PLUGIN_SUBTYPE_DLL);
-    cdata->plugin_id.api_version_major = DEC_PLUGIN_VERSION_MAJOR;
-    cdata->plugin_id.api_version_major = DEC_PLUGIN_VERSION_MINOR;
-  }
   return cdata;
 }
 
-static void cdata_stamp(lives_clip_data_t *cdata, const char *name, int vmaj, int vmin) {
-  snprintf(cdata->plugin_id.name, 32, "%s", name);
-  cdata->plugin_id.pl_version_major = vmaj;
-  cdata->plugin_id.pl_version_minor = vmin;
-}
 
 #ifdef NEED_CLONEFUNC
 static lives_clip_data_t *clone_cdata(const lives_clip_data_t *cdata) {

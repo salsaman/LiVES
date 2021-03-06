@@ -423,6 +423,8 @@ typedef struct {
 
   uint32_t clear_disk_opts;
 
+  lives_intention badfile_intent;
+
 #ifdef HAVE_YUV4MPEG
   char yuvin[PATH_MAX];
 #endif
@@ -930,19 +932,23 @@ void pref_change_colours(void);
 
 void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
-// TODO:
-/*typedef struct {
-  const char *pref_name;
-  int type;
-  } lives_preference;
+// ADDING A PREFS
+/*  add a field to prefs, eg int new_int;
+    add a widget in prefsw:  LiVESWidget *new_int_spin;
+    add a new pref_id eg. #define PREF_NEW_INT "new_int"
 
-  const lives_preference [] = {
-  {PREF_REC_EXT_AUDIO, WEED_SEED_BOOL},
-  };
+    in main.c:
 
-  then:
+    prefs->new_int = get_int_prefd(PREF_NEW_INT, 100);
 
-  widget = lives_standard_widget_for_pref(const char *prefname, const char *label, val, min, max, step, page, dp, box, rb_group_or_combo_list, tooltip);
+    in preferences.c:
+    create the widget: prefsw->new_int_spin = lives_standard_spin_button(.....)
+    ACTIVE(new_int, VALUE_CHANGED);
+
+    in apply:
+    pref_factory_int(PREF_NEW_INT, &prefs->new_int, liuves_spin_button_get_value_as_int(), TRUE)
+
+    -done
 */
 
 // NOTE: the following definitions must match with equivalent keys in smogrify
@@ -1098,6 +1104,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_RRQMODE "recrender_quant_mode"
 #define PREF_RRFSTATE "recrender_fx_posn_state"
 
+#define PREF_BADFILE_INTENT "badfile_intent"
+
 ////////// boolean values
 #define PREF_SHOW_RECENT_FILES "show_recent_files"
 #define PREF_FORCE_SINGLE_MONITOR "force_single_monitor"
@@ -1176,7 +1184,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent);
 boolean pref_factory_string(const char *prefidx, const char *newval, boolean permanent);
 boolean pref_factory_utf8(const char *prefidx, const char *newval, boolean permanent);
-boolean pref_factory_int(const char *prefidx, int newval, boolean permanent);
+boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean permanent);
 boolean pref_factory_int64(const char *prefidx, int64_t newval, boolean permanent);
 boolean pref_factory_float(const char *prefidx, float newval, boolean permanent);
 boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval, boolean permanent);

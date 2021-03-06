@@ -1159,4 +1159,16 @@ void show_widgets_info(void) {
 }
 #endif
 
+#define show_size(s) fprintf(stderr, "sizeof s is %lu\n", sizeof(s))
+
+void show_struct_sizes(void) {
+  show_size(lives_plugin_id_t);
+  show_size(thrd_work_t);
+  show_size(lives_func_info_t);
+  show_size(struct _lives_thread_data_t);
+  show_size(thrd_work_t);
+  show_size(lives_cc_params);
+  show_size(lives_sw_params);
+}
+
 #endif

@@ -2355,7 +2355,8 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled,
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
   if (dplug) {
-    d_print(_(" using %s"), dplug->decoder->version());
+    d_print(_(" using %s version %d.%d"), dplug->decoder->id->name, dplug->decoder->id->pl_version_major,
+            dplug->decoder->id->pl_version_minor);
     sfile->ext_src = dplug;
     sfile->ext_src_type = LIVES_EXT_SRC_DECODER;
     return dplug->cdata;
@@ -2472,7 +2473,7 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
     return NULL;
   }
 
-  if ((dplug->version = (const char *(*)())dlsym(dplug->handle, "version")) == NULL) {
+  if ((dplug->get_plugin_id = (const lives_plugin_id_t *(*)())dlsym(dplug->handle, "get_plugin_id")) == NULL) {
     OK = FALSE;
   }
   if ((dplug->get_clip_data = (lives_clip_data_t *(*)(char *, const lives_clip_data_t *))
@@ -2516,6 +2517,7 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
     }
   }
 
+  dplug->id = (*dplug->get_plugin_id)();
   dplug->name = lives_strdup(plname);
   return dplug;
 }
@@ -2596,7 +2598,7 @@ void on_decplug_advanced_clicked(LiVESButton * button, livespointer user_data) {
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
-  char *ltext;
+  char *ltext, *tmp;
   char *decplugdir = lives_strdup_printf("%s%s%s", prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_DECODERS);
 
   if (!mainw->decoders_loaded) {
@@ -2623,12 +2625,17 @@ void on_decplug_advanced_clicked(LiVESButton * button, livespointer user_data) {
     lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-    ltext = lives_strdup_printf("%s   (%s)", dpsys->name, (*dpsys->version)());
+    ltext = lives_strdup_printf("<big><b>%s</b></big> decoder plugin version %d.%d",
+                                (tmp = lives_markup_escape_text(dpsys->id->name, -1)),
+                                dpsys->id->pl_version_major, dpsys->id->pl_version_minor);
+    lives_free(tmp);
 
     widget_opts.mnemonic_label = FALSE;
+    widget_opts.use_markup = TRUE;
     checkbutton = lives_standard_check_button_new(ltext, lives_list_strcmp_index(future_prefs->disabled_decoders,
                   dpsys->name,
                   FALSE) == -1, LIVES_BOX(hbox), NULL);
+    widget_opts.use_markup = FALSE;
     widget_opts.mnemonic_label = TRUE;
 
     lives_free(ltext);

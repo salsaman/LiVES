@@ -5,6 +5,8 @@
 
 // NOTE: interlace is bottom first
 
+#define PLUGIN_UID 0x646563706C2E6476
+
 #define NEED_CLONEFUNC
 
 #include "decplugin.h"
@@ -21,10 +23,9 @@
 
 #include "dv_decoder.h"
 
-static const char *plname = "lives_dv";
 static int vmaj = 1;
 static int vmin = 3;
-const char *plugin_version = "LiVES dv decoder version 1.3";
+const char *plugin_name = "LiVES dvr";
 
 static FILE *nulfile;
 
@@ -185,8 +186,8 @@ const char *module_check_init(void) {
 }
 
 
-const char *version(void) {
-  return plugin_version;
+lives_plugin_id_t get_plugin_id(void) {
+  return _get_plugin_id(plugin_name, vmaj, vmin);
 }
 
 
@@ -204,7 +205,6 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
     cdata->palettes[1] = WEED_PALETTE_RGB24;
     cdata->palettes[2] = WEED_PALETTE_BGR24;
     cdata->palettes[3] = WEED_PALETTE_END;
-    cdata_stamp(cdata, plname, vmaj, vmin);
   } else cdata = data;
 
   cdata->priv = priv = malloc(sizeof(lives_dv_priv_t));
@@ -224,8 +224,6 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
 static lives_clip_data_t *dv_clone(lives_clip_data_t *cdata) {
   lives_clip_data_t *clone = clone_cdata(cdata);
   lives_dv_priv_t *dpriv, *spriv;
-
-  cdata_stamp(clone, plname, vmaj, vmin);
 
   // create "priv" elements
   spriv = cdata->priv;

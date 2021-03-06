@@ -345,7 +345,13 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
           if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
             if (isfirst) {
               empirical_img_type = ximgtype;
-              if (oemp == IMG_TYPE_UNKNOWN) oemp = ximgtype;
+              if (oemp == IMG_TYPE_UNKNOWN) {
+                if (prefs->show_dev_opts) {
+                  g_printerr("file integrity: guessing img type is %s\n",
+                             image_ext_to_lives_image_type(get_image_ext_for_type(ximgtype)));
+                }
+                oemp = ximgtype;
+              }
             } else {
               if (ximgtype == oemp) empirical_img_type = oemp;
               bad_imgfmts = TRUE;

@@ -7116,7 +7116,7 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
     load_end_image(0);
   }
 
-  pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
+  pref_factory_int(PREF_SEPWIN_TYPE, (int *)&prefs->sepwin_type, future_prefs->sepwin_type, FALSE);
 
   lives_free(mt);
 
@@ -8790,7 +8790,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   multi = multitrack(event_list, orig_file, cfile->fps); // also frees rdet
   ////////////////////////////////////////////////
 
-  pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_NON_STICKY, FALSE);
+  pref_factory_int(PREF_SEPWIN_TYPE, (int *)&prefs->sepwin_type, SEPWIN_TYPE_NON_STICKY, FALSE);
 
   if (mainw->stored_event_list) {
     mainw->stored_event_list = NULL;

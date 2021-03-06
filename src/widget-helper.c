@@ -3527,7 +3527,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_arrow_new(LiVESArrowType arrow_ty
   }
 
   arrow = gtk_label_new("");
-  markup = g_markup_printf_escaped(format, str);
+  markup = lives_markup_printf_escaped(format, str);
   gtk_label_set_markup(GTK_LABEL(arrow), markup);
   lives_free(markup);
 

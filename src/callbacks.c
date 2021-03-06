@@ -289,13 +289,14 @@ void lives_exit(int signum) {
                   continue;
                 }
                 break;
-              }
-            }
-          }
-        }
+		// *INDENT-OFF*
+              }}}}
+	  // *INDENT-ON*
+
         // TODO *** - check for namespace collisions between sets in old dir and sets in new dir
         do_do_not_close_d();
         lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+        lives_widget_context_update();
       }
 
       if (mainw->leave_files && !mainw->fatal) {
@@ -381,7 +382,7 @@ void lives_exit(int signum) {
               }
               if (IS_NORMAL_CLIP(i)) {
                 char *fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
-                                                   TOTALSAVE_NAME, NULL);
+                                                   "." TOTALSAVE_NAME, NULL);
                 int fd = lives_create_buffered(fname, DEF_FILE_PERMS);
                 lives_write_buffered(fd, (const char *)mainw->files[i], sizeof(lives_clip_t), TRUE);
                 lives_close_buffered(fd);
@@ -582,7 +583,7 @@ void lives_exit(int signum) {
 
   if (prefs->workdir_tx_intent == LIVES_INTENTION_DESTROY) {
     // delete the old workdir
-    //lives_rmdir(prefs->workdir, TRUE);
+    lives_rmdir(prefs->workdir, TRUE);
   }
 
   tmp = lives_strdup_printf("signal: %d", signum);
@@ -980,9 +981,12 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
     }
     if (!keep_old_dir) {
       LiVESResponseType resp;
-      char *xdir = lives_build_path(tmpdir, "*", NULL);
-      lives_rmdir(xdir, TRUE);
-      lives_free(xdir);
+      char *cwd = lives_get_current_dir();
+      if (lives_chdir(tmpdir, FALSE)) {
+        goto cleanup_ut;
+      }
+      lives_rmglob("*");
+      lives_chdir(cwd, FALSE);
       do {
         resp = LIVES_RESPONSE_NONE;
         if (!lives_make_writeable_dir(ddir)) {
@@ -5360,6 +5364,21 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 }
 
 
+
+// the name of this function is abit deceptive,
+// if "add" is TRUE, we dont just rewrite the orde file
+// in fact we also move any floating clips into the set directory and include them in the order file
+// thus making them official members of the set
+// if add is FALSE then the function does what it says, recreates order file with only the clips which are already in the set
+// for example after closing one of them
+// if append is TRUE then the clips are appended, this is done for example when merging two sets together
+// got_new_handle points to a boolean to receive a value, if TRUE then one or more clips were added to the set directory
+// the return value is normally OK, but it can be CANCEL if writing failed and the user cancelled from error
+//
+// in any case, since this is an important file, updates are made to a new copy of the file, and only if everything succeeds
+// will it be copied to the original (the backup is also retained, so it can be used for recovery purposes)
+// it ought to be easy to recreate htis by parsing the subdirectories of /clips in the set but lack of time,,,
+// - also reordering via interface would be nice...
 static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boolean * got_new_handle) {
   char *ordfile = lives_build_filename(prefs->workdir, mainw->set_name, CLIP_ORDER_FILENAME, NULL);
   char *ordfile_new = lives_build_filename(prefs->workdir, mainw->set_name, CLIP_ORDER_FILENAME "." LIVES_FILE_EXT_NEW, NULL);
@@ -5402,6 +5421,7 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
 
         i = LIVES_POINTER_TO_INT(cliplist->data);
         if (IS_NORMAL_CLIP(i) && i != mainw->scrap_file && i != mainw->ascrap_file) {
+          if (ignore_clip(i)) continue;
           lives_snprintf(buff, PATH_MAX, "%s", mainw->files[i]->handle);
           get_basename(buff);
           if (*buff) {
@@ -5410,6 +5430,8 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
             lives_snprintf(new_handle, 256, "%s/%s/%s", mainw->set_name, CLIPS_DIRNAME, mainw->files[i]->handle);
           }
 
+          // compare the clip's handle with what it would be if it were already in the set directory
+          // if the values differ then this is a candidate for moving
           if (lives_strcmp(new_handle, mainw->files[i]->handle)) {
             if (!add) continue;
 
@@ -5454,7 +5476,7 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
           }
 
           ord_entry = lives_strdup_printf("%s\n", mainw->files[i]->handle);
-          lives_write(ord_fd, ord_entry, strlen(ord_entry), FALSE);
+          lives_write(ord_fd, ord_entry, lives_strlen(ord_entry), FALSE);
           lives_free(ord_entry);
         }
       }
@@ -5469,7 +5491,7 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
   close(ord_fd);
 
   if (retval == LIVES_RESPONSE_CANCEL) lives_rm(ordfile_new);
-  else  lives_cp(ordfile_new, ordfile);
+  else lives_cp(ordfile_new, ordfile);
 
   lives_free(ordfile);
   lives_free(ordfile_new);
@@ -5800,6 +5822,7 @@ boolean reload_set(const char *set_name) {
   lives_clip_t *sfile;
 
   char *msg, *com, *ordfile, *cwd, *clipdir, *handle = NULL;
+  char *ignore;
 
   boolean added_recovery = FALSE;
   boolean keep_threaded_dialog = FALSE;
@@ -5809,6 +5832,7 @@ boolean reload_set(const char *set_name) {
   int current_file = mainw->current_file;
   int clipnum = 0;
   int maxframe;
+  int ignored = 0;
   mainw->mt_needs_idlefunc = FALSE;
 
   if (mainw->multitrack) {
@@ -5892,7 +5916,24 @@ boolean reload_set(const char *set_name) {
       }
 
       if (clipnum == 0) {
-        do_set_noclips_error(set_name);
+        char *dirname = lives_build_path(prefs->workdir, set_name, NULL);
+        // if dir exists, and there are no subdirs, ask user if they want to delete
+        if (lives_file_test(dirname, LIVES_FILE_TEST_IS_DIR)) {
+          //// todo test if no subdirs
+          if (ignored) {
+            char *ignore = lives_build_filename(CURRENT_SET_DIR, LIVES_FILENAME_IGNORE, NULL);
+            lives_touch(ignore);
+            lives_free(ignore);
+          } else {
+            if (do_set_noclips_query(set_name)) {
+              lives_rmdir(dirname, TRUE);
+              lives_free(dirname);
+            }
+          }
+        } else {
+          // this is appropriate if the dir doens not exist, an !recovery
+          do_set_noclips_error(set_name);
+        }
       } else {
         char *tmp;
         reset_clipmenu();
@@ -5950,6 +5991,15 @@ boolean reload_set(const char *set_name) {
     }
 
     clipdir = lives_build_filename(prefs->workdir, mainw->msg, NULL);
+    ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
+    if (lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) {
+      lives_free(clipdir);
+      lives_free(ignore);
+      ignored++;
+      continue;
+    }
+    lives_free(ignore);
+
     if (orderfile) {
       // newer style (0.9.6+)
 
@@ -5990,12 +6040,19 @@ boolean reload_set(const char *set_name) {
       return FALSE;
     }
 
+    // set this here, as some functions like to know
+    cfile->was_in_set = TRUE;
+
     // get file details
     if (!read_headers(mainw->current_file, clipdir, NULL)) {
-      /// set clip failed to load, we need to do something with it
+      /// set clip failed to load, when this happens
+      // the user can choose to delete it or mark it as ignored
       /// else it will keep trying to reload each time.
-      /// for now we shall just move it out of the set
-      /// this is fine as the user can try to recover it at a later time
+      ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
+      if (lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) {
+        ignored++;
+      }
+      lives_free(ignore);
       lives_free(clipdir);
       lives_free(mainw->files[mainw->current_file]);
       mainw->files[mainw->current_file] = NULL;
@@ -6036,7 +6093,6 @@ boolean reload_set(const char *set_name) {
         if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
         continue;
       }
-      if (cfile->clip_type == CLIP_TYPE_FILE && cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
 
       /** if the image type is still unknown it means either there were no decoded frames, or the final decoded frame was absent
         so we count the virtual frames. If all are virtual then we set img_type to prefs->img_type and assume all is OK
@@ -6098,8 +6154,9 @@ boolean reload_set(const char *set_name) {
     /// if this is set then it means we are auto reloading the clipset from the previous session, so restore full details
     if (future_prefs->ar_clipset) restore_clip_binfmt(mainw->current_file);
 
+    if (update_clips_version(mainw->current_file)) cfile->needs_silent_update = TRUE;
+
     threaded_dialog_spin(0.);
-    cfile->was_in_set = TRUE;
 
     if (cfile->frameno > cfile->frames) cfile->frameno = cfile->last_frameno = 1;
 
@@ -6545,7 +6602,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
     if (nitems) {
       LiVESWidget *bbox = lives_dialog_get_action_area(LIVES_DIALOG(textwindow->dialog));
       lives_button_box_set_child_non_homogeneous(LIVES_BUTTON_BOX(bbox), button, TRUE);
-      lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_START);
+      lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_EDGE);
     }
 
     retval = lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
@@ -6928,8 +6985,11 @@ void on_show_file_info_activate(LiVESMenuItem * menuitem, livespointer user_data
     if (cfile->clip_type == CLIP_TYPE_FILE) {
       lives_decoder_t *dplug = (lives_decoder_t *)cfile->ext_src;
       lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->decoder;
-      const char *decname = dpsys->name;
+      char *decname = lives_strdup_printf("%s plugin v %d.%d", dpsys->id->name,
+                                          dpsys->id->pl_version_major, dpsys->id->pl_version_minor);
+
       lives_strappendf(buff, 512, _("\ndecoder: %s"), decname);
+      lives_free(decname);
     }
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_type), buff, -1);
     // fps
@@ -8381,9 +8441,9 @@ void on_sticky_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // or SEPWIN_TYPE_NON_STICKY (shown only when playing)
   boolean make_perm = (prefs->sepwin_type == future_prefs->sepwin_type);
   if (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
-    pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_STICKY, make_perm);
+    pref_factory_int(PREF_SEPWIN_TYPE, (int *)&prefs->sepwin_type, SEPWIN_TYPE_STICKY, make_perm);
   } else {
-    pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_NON_STICKY, make_perm);
+    pref_factory_int(PREF_SEPWIN_TYPE, (int *)&prefs->sepwin_type, SEPWIN_TYPE_NON_STICKY, make_perm);
   }
 }
 

@@ -77,7 +77,11 @@ boolean read_file_details(const char *file_name, boolean only_check_for_audio, b
 boolean restore_clip_binfmt(int clipno);
 lives_clip_t *clip_forensic(int clipno);
 
+boolean update_clips_version(int clipno);
+
 int save_event_frames(void);
+
+boolean ignore_clip(int clipno);
 
 void remove_old_headers(int clipno);
 boolean write_headers(int clipno);

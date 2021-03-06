@@ -4329,19 +4329,19 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     if (oldname) {
       gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), oldname);
       lives_free(oldname);
+    } else gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), "");
+    if (diss->old_entry) {
+      gtk_widget_hide(diss->old_entry);
+
+      hbox = lives_hbox_new(FALSE, 0);
+      widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
+      diss->new_entry = lives_standard_entry_new(NULL, fname, -1, PATH_MAX, LIVES_BOX(hbox),
+                        H_("Select an existing directory or create a new one"));
+      widget_opts.expand = LIVES_EXPAND_DEFAULT;
+      lives_grid_attach_next_to(LIVES_GRID(lives_widget_get_parent(diss->old_entry)),
+                                hbox, diss->old_entry, LIVES_POS_RIGHT, 1, 1);
+      lives_widget_show_all(hbox);
     }
-
-    else gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), "");
-    gtk_widget_hide(diss->old_entry);
-
-    hbox = lives_hbox_new(FALSE, 0);
-    widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
-    diss->new_entry = lives_standard_entry_new(NULL, fname, -1, PATH_MAX, LIVES_BOX(hbox),
-                      H_("Select an existing directory or create a new one"));
-    widget_opts.expand = LIVES_EXPAND_DEFAULT;
-    lives_grid_attach_next_to(LIVES_GRID(lives_widget_get_parent(diss->old_entry)),
-                              hbox, diss->old_entry, LIVES_POS_RIGHT, 1, 1);
-    lives_widget_show_all(hbox);
   }
 #endif
 

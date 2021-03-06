@@ -609,13 +609,28 @@ LIVES_GLOBAL_INLINE LiVESWindow *get_transient_full(void) {
 }
 
 
+LiVESResponseType lives_dialog_run_with_countdown(LiVESDialog *dialog, LiVESResponseType target, int nclicks) {
+  LiVESWidget *button = lives_dialog_get_widget_for_response(dialog, target);
+  char *btext = lives_strdup(lives_standard_button_get_label(LIVES_BUTTON(button)));
+  LiVESResponseType response = LIVES_RESPONSE_NONE;
+  for (; nclicks > 0; nclicks--) {
+    char *tmp = lives_strdup_printf(P_("%s\n(Click %d more time)", "%s\n(Click %d more times)", nclicks),
+                                    btext, nclicks);
+    lives_standard_button_set_label(LIVES_BUTTON(button), tmp);
+    lives_free(tmp);
+    response = lives_dialog_run(LIVES_DIALOG(dialog));
+    if (response != target) break;
+  }
+  return response;
+}
+
+
 boolean do_yesno_dialogf_with_countdown(int nclicks, const char *fmt, ...) {
   // show Yes/No, returns TRUE if Yes is clicked nclicks times
-  LiVESWidget *warning, *yesbutton;
-  int response = LIVES_RESPONSE_YES;
+  LiVESWidget *warning;
+  LiVESResponseType response;
   va_list xargs;
   char *textx;
-  const char *btext;
 
   va_start(xargs, fmt);
   textx = lives_strdup_vprintf(fmt, xargs);
@@ -623,16 +638,8 @@ boolean do_yesno_dialogf_with_countdown(int nclicks, const char *fmt, ...) {
 
   warning = create_message_dialog(LIVES_DIALOG_YESNO, textx, 0);
   lives_free(textx);
-  yesbutton = lives_dialog_get_widget_for_response(LIVES_DIALOG(warning), LIVES_RESPONSE_YES);
-  btext = lives_strdup(lives_standard_button_get_label(LIVES_BUTTON(yesbutton)));
-  for (; nclicks > 0; nclicks--) {
-    char *tmp = lives_strdup_printf(P_("%s\n(Click %d more time)", "%s\n(Click %d more times)", nclicks),
-                                    btext, nclicks);
-    lives_standard_button_set_label(LIVES_BUTTON(yesbutton), tmp);
-    lives_free(tmp);
-    response = lives_dialog_run(LIVES_DIALOG(warning));
-    if (response == LIVES_RESPONSE_NO) break;
-  }
+
+  response = lives_dialog_run_with_countdown(LIVES_DIALOG(warning), LIVES_RESPONSE_YES, 3);
 
   lives_widget_destroy(warning);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
@@ -3739,6 +3746,14 @@ LIVES_GLOBAL_INLINE void do_set_noclips_error(const char *setname) {
                 setname);
   d_print(msg);
   lives_free(msg);
+}
+
+
+
+boolean do_set_noclips_query(const char *set_name) {
+  return do_yesno_dialogf(_("LiVES was unable to find any clips in the set %s\n"
+                            "Would you like to delete this set ?\nIt is no longer usable"),
+                          set_name);
 }
 
 

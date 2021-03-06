@@ -52,8 +52,9 @@ typedef struct {
   char name[64];  ///< e.g. "mkv_decoder"
   int pl_version_major; ///< version of plugin
   int pl_version_minor;
-  int n_intencaps;
+  int n_intentcaps;
   lives_intentcap_t *intentcaps;  /// array of intentcaps[n_intentcaps]
+  void *unused;
 } lives_plugin_id_t;
 
 LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex,
@@ -239,7 +240,6 @@ extern const char *const anames[AUDIO_CODEC_MAX];
 typedef struct _lives_clip_data {
   // fixed part
   lives_struct_def_t lsd;
-  lives_plugin_id_t plugin_id;
 
   malloc_f  *ext_malloc;
   free_f    *ext_free;
@@ -328,7 +328,9 @@ typedef struct {
   void *handle; ///< may be shared between several instances
 
   // mandatory
-  const char *(*version)(void);
+  const lives_plugin_id_t *(*get_plugin_id)(void);
+
+  const lives_plugin_id_t *id;
 
   /// call first time with NULL cdata
   /// subsequent calls should re-use cdata
@@ -685,7 +687,7 @@ typedef struct {
   LiVESWidget *pal_entry;
   lives_rfx_t *rfx;
   boolean keep_rfx;
-  int intention;
+  lives_intention intention;
 } _vppaw;
 
 _vppaw *on_vpp_advanced_clicked(LiVESButton *, livespointer);

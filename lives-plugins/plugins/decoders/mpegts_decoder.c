@@ -21,6 +21,8 @@
    Copyright (c) 2002-2003 Fabrice Bellard
 */
 
+#define PLUGIN_UID 0x646563702E6D7473ull
+
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
@@ -33,10 +35,9 @@
 #include <endian.h>
 #endif
 
-static const char *plname = "lives_mpegts";
 static int vmaj = 1;
 static int vmin = 4;
-const char *plugin_version = "LiVES mpegts decoder version 1.4";
+const char *plugin_name = "LiVES mpegts";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -2558,8 +2559,8 @@ const char *module_check_init(void) {
 }
 
 
-const char *version(void) {
-  return plugin_version;
+const lives_plugin_id_t *get_plugin_id(void) {
+  return _get_plugin_id(plugin_name, vmaj, vmin);
 }
 
 
@@ -2569,7 +2570,6 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
 
   if (!data) {
     cdata = cdata_new(NULL);
-    cdata_stamp(cdata, plname, vmaj, vmin);
     cdata->palettes = (int *)malloc(2 * sizeof(int));
     cdata->palettes[1] = WEED_PALETTE_END;
   } else cdata = data;
@@ -3248,8 +3248,6 @@ skip_det:
 static lives_clip_data_t *mpegts_clone(lives_clip_data_t *cdata) {
   lives_clip_data_t *clone = clone_cdata(cdata);
   lives_mpegts_priv_t *dpriv, *spriv;
-
-  cdata_stamp(clone, plname, vmaj, vmin);
 
   // create "priv" elements
   spriv = cdata->priv;

@@ -5261,7 +5261,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
 
   if (prefs->gui_monitor == 0) {
     // avoid an annoyance
-    pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_NON_STICKY, FALSE);
+    pref_factory_int(PREF_SEPWIN_TYPE, (int *)&prefs->sepwin_type, SEPWIN_TYPE_NON_STICKY, FALSE);
   }
 
   // crash recovery -> backup the event list
@@ -5372,7 +5372,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
         stored_event_list_free_all(TRUE);
       }
       mainw->unordered_blocks = TRUE;
-      pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
+      pref_factory_int(PREF_SEPWIN_TYPE, (int *)&prefs->sepwin_type, future_prefs->sepwin_type, FALSE);
       if (info) {
         lives_proc_thread_join(info);
         info = NULL;
@@ -5426,7 +5426,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
 
   /// multitrack will set this itself
   if (render_choice != RENDER_CHOICE_MULTITRACK)
-    pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
+    pref_factory_int(PREF_SEPWIN_TYPE, (int *)&prefs->sepwin_type, future_prefs->sepwin_type, FALSE);
 
   sensitize();
 

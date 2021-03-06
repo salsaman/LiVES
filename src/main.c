@@ -1013,6 +1013,8 @@ static boolean pre_init(void) {
 
   prefs->warning_mask = (uint64_t)get_int64_prefd(PREF_LIVES_WARNING_MASK, DEF_WARNING_MASK);
 
+  prefs->badfile_intent = get_int_prefd(PREF_BADFILE_INTENT, LIVES_INTENTION_UNKNOWN);
+
   get_utf8_pref(PREF_INTERFACE_FONT, buff, 256);
 
   if (*buff && (!*capable->def_fontstring || lives_strcmp(buff, capable->def_fontstring)))
@@ -2266,9 +2268,33 @@ static void lives_init(_ign_opts *ign_opts) {
       // get first OUTPUT driver
       mainw->jackd = jack_get_driver(0, TRUE);
 
+      pthread_t other;
+
       if (mainw->jackd) {
         /// try to connect, and possibly start a server
-        if (!jack_create_client_writer(mainw->jackd)) mainw->jackd = NULL;
+        //if (!jack_create_client_writer(mainw->jackd)) mainw->jackd = NULL;
+        lives_alarm_t alarm_handle;
+        ticks_t timeout;
+        // activate the writer and connect ports
+        lives_proc_thread_t info = lives_proc_thread_create(LIVES_THRDATTR_KILLABLE,
+                                   (lives_funcptr_t)jack_create_client_writer, WEED_SEED_BOOLEAN, "v",
+                                   mainw->jackd);
+
+        alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
+        lives_nanosleep_until_nonzero(lives_proc_thread_check(info)
+                                      || (timeout = lives_alarm_check(alarm_handle)) == 0);
+
+        lives_alarm_clear(alarm_handle);
+        if (timeout == 0) {
+          other = (pthread_t)weed_get_voidptr_value(info, "self", NULL);
+          if (other) {
+            pthread_cancel(other);
+            mainw->jackd = NULL;
+          } else lives_proc_thread_join_boolean(info);
+        } else lives_proc_thread_join_boolean(info);
+
+        // failed to connect
+        if (mainw->jackd && !mainw->jackd->sample_out_rate) mainw->jackd = NULL;
 
         if (!mainw->jackd) {
           if (prefs->jack_opts & JACK_OPTS_START_ASERVER)
@@ -2297,7 +2323,6 @@ static void lives_init(_ign_opts *ign_opts) {
         mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED)
                                           ? FALSE : TRUE;
 
-        // activate the writer and connect ports
         jack_write_driver_activate(mainw->jackd);
 
         if (prefs->perm_audio_reader) {
@@ -2307,12 +2332,12 @@ static void lives_init(_ign_opts *ign_opts) {
           // (first param is -1), we do not actually prepare for recording yet
           // however we do connect the ports (unless JACK_OPTS_NO_READ_AUTOCON is set)
           jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
-	  // *INDENT-OFF*
-	}}
-    // *INDENT-ON*
-    }
+	    // *INDENT-OFF*
+	  }
+	  // *INDENT-ON*
+      }
 #endif
-
+    }
 #ifdef HAVE_PULSE_AUDIO
     if (prefs->audio_player == AUD_PLAYER_PULSE) {
       splash_msg(_("Starting pulseaudio server..."), SPLASH_LEVEL_LOAD_APLAYER);
@@ -2401,8 +2426,10 @@ static void show_detected_or_not(boolean cap, const char *pname) {
 }
 
 #define SHOWDETx(cap, exec) show_detected_or_not(capable->has_##cap, exec)
-#define SHOWDET(cap) SHOWDETx(cap, QUOTEME(cap))
-//   SHOWDET(, EXEC_);
+#define SHOWDET_EXEC(cap, exec) SHOWDETx(cap, EXEC_##exec)
+#define SHOWDET_ALTS(check1, exec1, check2, exec2) if (!check_for_executable(&capable->has_##check1, EXEC_##exec1) \
+						       && check_for_executable(&capable->has_##check2, EXEC_##exec2)) { \
+    SHOWDET_EXEC(check2, exec2);} else SHOWDET_EXEC(check1, exec1)
 
 static void do_start_messages(void) {
   int w, h;
@@ -2411,9 +2438,9 @@ static void do_start_messages(void) {
   if (prefs->vj_mode) {
     d_print(_("Starting in VJ MODE: Skipping most startup checks\n"));
 #ifndef IS_MINGW
-    SHOWDET(wmctrl);
-    SHOWDET(xdotool);
-    SHOWDET(xwininfo);
+    SHOWDET_EXEC(wmctrl, WMCTRL);
+    SHOWDET_EXEC(xdotool, XDOTOOL);
+    SHOWDET_EXEC(xwininfo, XWININFO);
 #endif
     d_print("\n\n");
     return;
@@ -2587,42 +2614,37 @@ static void do_start_messages(void) {
 
   d_print(_("\nChecking RECOMMENDED dependencies: "));
 
-  SHOWDET(mplayer);
-  if (!capable->has_mplayer) {
-    SHOWDET(mplayer2);
-    if (!capable->has_mplayer2) {
-      SHOWDET(mpv);
-    }
+  SHOWDET_ALTS(mplayer, MPLAYER, mplayer2, MPLAYER2);
+  if (!capable->has_mplayer && !capable->has_mplayer2) {
+    SHOWDET_EXEC(mpv, MPV);
   }
   //SHOWDET(file);
-  SHOWDET(identify);
+  SHOWDET_EXEC(identify, IDENTIFY);
   if (!capable->has_jackd)
-    SHOWDETx(pulse_audio, EXEC_PULSEAUDIO);
-  SHOWDETx(sox_sox, EXEC_SOX);
-  SHOWDET(convert);
-  SHOWDET(composite);
-  SHOWDET(ffprobe);
-  SHOWDET(gzip);
-  SHOWDET(md5sum);
-  if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL)
-      && check_for_executable(&capable->has_youtube_dlc, EXEC_YOUTUBE_DLC)) {
-    SHOWDETx(youtube_dlc, EXEC_YOUTUBE_DLC);
-  } else SHOWDETx(youtube_dl, EXEC_YOUTUBE_DL);
+    SHOWDET_EXEC(pulse_audio, PULSEAUDIO);
+  SHOWDET_EXEC(sox_sox, SOX);
+  SHOWDET_EXEC(convert, CONVERT);
+  SHOWDET_EXEC(composite, COMPOSITE);
+  SHOWDET_EXEC(ffprobe, FFPROBE);
+  SHOWDET_EXEC(gzip, GZIP);
+  SHOWDET_EXEC(md5sum, MD5SUM);
+  SHOWDET_ALTS(youtube_dl, YOUTUBE_DL, youtube_dlc, YOUTUBE_DLC);
 
   d_print(_("\n\nChecking OPTIONAL dependencies: "));
-  SHOWDET(jackd);
-  SHOWDET(python);
-  SHOWDET(xwininfo);
-  SHOWDETx(cdda2wav, "cdda2wav/icedax");
-  SHOWDET(dvgrab);
-  SHOWDET(gdb);
-  SHOWDETx(gconftool_2, EXEC_GCONFTOOL_2);
-  SHOWDETx(xdg_screensaver, EXEC_XDG_SCREENSAVER);
+  SHOWDET_EXEC(jackd, JACKD);
+  SHOWDET_ALTS(python, PYTHON, python3, PYTHON3);
+  SHOWDET_EXEC(xwininfo, XWININFO);
+  SHOWDET_ALTS(icedax, ICEDAX, cdda2wav, CDDA2WAV);
+  SHOWDET_EXEC(dvgrab, DVGRAB);
+  SHOWDET_EXEC(gdb, GDB);
+  SHOWDET_EXEC(gconftool_2, GCONFTOOL_2);
+  SHOWDET_EXEC(xdg_screensaver, XDG_SCREENSAVER);
 
   d_print("\n\n");
 }
 #undef SHOWDETx
-#undef SHOWDET
+#undef SHOWDET_EXEC
+#undef SHOWDET_ALTS
 
 static void set_toolkit_theme(int prefer) {
   char *lname, *ic_dir;
@@ -3758,6 +3780,7 @@ static boolean lives_startup(livespointer data) {
       set_int_pref(PREF_STARTUP_PHASE, 2);
     }
   }
+
   if (prefs->startup_phase > 0 && prefs->startup_phase < 3) {
     if (!do_startup_tests(FALSE)) {
       lives_exit(0);
@@ -4212,7 +4235,15 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 
   if (mainw) {
     if (sigfunc == defer_sigint) mainw->signals_deferred = TRUE;
-    else mainw->signals_deferred = FALSE;
+    else {
+      sigemptyset(&smask);
+      sigaddset(&smask, LIVES_SIGHUP);
+      sact.sa_handler = SIG_IGN;
+      sact.sa_flags = 0;
+      sact.sa_mask = smask;
+      sigaction(LIVES_SIGHUP, &sact, NULL);
+      mainw->signals_deferred = FALSE;
+    }
   }
 }
 

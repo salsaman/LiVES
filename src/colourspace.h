@@ -123,6 +123,7 @@ typedef struct {
   boolean is_422;
   void *lut;
   int thread_id;
+  uint64_t padding[6];
 } lives_cc_params;
 
 #ifdef USE_SWSCALE

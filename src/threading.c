@@ -49,6 +49,9 @@ lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, liv
     }
     lives_free(pkey);
   }
+  if (!(attr & LIVES_THRDATTR_KILLABLE)) {
+    weed_set_int_value(thread_info, "noted_at", 12);
+  }
   weed_set_int64_value(thread_info, WEED_LEAF_FUNCSIG, make_funcsig(thread_info));
   if (!(attr & LIVES_THRDATTR_FG_THREAD)) {
     resubmit_proc_thread(thread_info, attr);
@@ -326,6 +329,12 @@ void call_funcsig(lives_proc_thread_t info) {
   lives_free(thefunc);
 }
 
+void thread_signal_func(int signum) {
+  pthread_exit(NULL);
+}
+
+
+
 LIVES_GLOBAL_INLINE void lives_proc_thread_sync_ready(lives_proc_thread_t tinfo) {
   volatile boolean *sync_ready = (volatile boolean *)weed_get_voidptr_value(tinfo, "sync_ready", NULL);
   if (sync_ready) *sync_ready = TRUE;
@@ -368,6 +377,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t tinfo) 
   lives_proc_thread_join(tinfo);
   return TRUE;
 }
+
 
 boolean lives_proc_thread_dontcare(lives_proc_thread_t tinfo) {
   /// if thread is running, tell it we no longer care about return value, so it can free itself
@@ -452,7 +462,10 @@ static void *_plant_thread_func(void *args) {
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
   THREADVAR(tinfo) = info;
   if (weed_get_boolean_value(info, "no_gui", NULL) == WEED_TRUE) THREADVAR(no_gui) = TRUE;
+  weed_set_voidptr_value(info, "self", pthread_self());
+
   call_funcsig(info);
+  weed_set_voidptr_value(info, "self", 0);
 
   if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL) == WEED_TRUE) {
     boolean dontcare;
@@ -540,6 +553,7 @@ void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_attr_t a
   attr |= LIVES_THRDATTR_AUTODELETE;
   lives_thread_create(thread, attr, _plant_thread_func, (void *)thread_info);
   work = (thrd_work_t *)thread->data;
+  weed_set_voidptr_value(thread_info, "work", work);
   if (attr & LIVES_THRDATTR_WAIT_SYNC) {
     weed_set_voidptr_value(thread_info, "sync_ready", (void *) & (work->sync_ready));
   }
@@ -647,6 +661,7 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   pthread_mutex_unlock(&twork_mutex);
 
   mywork = (thrd_work_t *)list->data;
+  mywork->self =  pthread_self();
   mywork->busy = tdata->idx;
   myflags = mywork->flags;
 

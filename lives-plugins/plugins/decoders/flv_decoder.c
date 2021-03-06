@@ -25,6 +25,8 @@
 
 */
 
+#define PLUGIN_UID 0X646563702E666C76ull
+
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
@@ -35,10 +37,9 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
-static const char *plname = "lives_flv";
 static int vmaj = 1;
 static int vmin = 1;
-const char *plugin_version = "LiVES flv decoder version 1.1";
+const char *plugin_name = "LiVES flv";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -1317,8 +1318,8 @@ const char *module_check_init(void) {
 }
 
 
-const char *version(void) {
-  return plugin_version;
+const lives_plugin_id_t *get_plugin_id(void) {
+  return _get_plugin_id(plugin_name, vmaj, vmin);
 }
 
 
@@ -1327,7 +1328,6 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
 
   if (!data) {
     cdata = cdata_new(NULL);
-    cdata_stamp(cdata, plname, vmaj, vmin);
     cdata->palettes = (int *)malloc(2 * sizeof(int));
     cdata->palettes[1] = WEED_PALETTE_END;
   } else cdata = data;
@@ -1341,8 +1341,6 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
 static lives_clip_data_t *flv_clone(lives_clip_data_t *cdata) {
   lives_clip_data_t *clone = clone_cdata(cdata);
   lives_flv_priv_t *dpriv, *spriv;
-
-  cdata_stamp(clone, plname, vmaj, vmin);
 
   // create "priv" elements
   spriv = cdata->priv;

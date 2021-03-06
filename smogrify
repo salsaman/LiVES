@@ -9866,13 +9866,24 @@ sub clean_workdir {
 	next if $file eq "." || $file eq ".." || $file eq ".$DEFTRASH" || $file eq $trashsubdir;
 	print STDERR "\nFile entry: $file:\n";
 	print "\nFile entry: $file:\n";
+	if ($single_set) {
+	    print STDERR "was designated a specific target for migration\n";
+	    print "was designated a specific target for migration\n";
+	}
 	if (-d "$workdir/$file") {
 	    print STDERR "is a directory...";
 	    print "is a directory...";
 	    my $norem = "$file/.noremove";
-	    if (-f $norem) {
-		print STDERR "\nsmogrify: $file is marked for manual removal only\n";
-		print "\n$file is marked for manual removal only\n";
+	    my $ignore = "$file/.ignore";
+	    if (-f $norem || -f $ignore) {
+		if (-f $norem) {
+		    print STDERR "\nsmogrify: $file is marked for manual removal only\n";
+		    print "\n$file is marked for manual removal only\n";
+		}
+		else {
+		    print STDERR "\nsmogrify: $file is marked as ignored\n";
+		    print "\n$file is marked as ignored\n";
+		}
 		if ($new_work) {
 		    print STDERR "smogrify: moving contents of $workdir/$file\nto\n$new_work/$file\n";
 		    print "moving contents of $workdir/$file\nto\n$new_work/$file\n";

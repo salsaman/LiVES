@@ -121,7 +121,7 @@ LIVES_GLOBAL_INLINE boolean lives_structs_same_type(lives_struct_def_t *lsd,
 }
 
 
-#define CHECK_VERBOSE 0
+#define CHECK_VERBOSE 1
 #if CHECK_VERBOSE
 #define errprint(...) fprintf(stderr, __VA_ARGS__)
 #else

@@ -1399,7 +1399,7 @@ void load_preview_image(boolean update_always);
 boolean resize_message_area(livespointer data);
 boolean lazy_startup_checks(void *data);
 
-#define is_layer_ready(layer) (weed_get_boolean_value((layer), WEED_LEAF_THREAD_PROCESSING, NULL) == WEED_FALSE \
+#define is_layer_ready(layer) (weed_get_boolean_value((layer), LIVES_LEAF_THREAD_PROCESSING, NULL) == WEED_FALSE \
 			       && weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL) == NULL)
 
 boolean pull_frame(weed_layer_t *, const char *image_ext, ticks_t tc);

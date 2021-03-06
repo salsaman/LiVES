@@ -60,26 +60,29 @@ typedef struct {
   uint64_t padding[3];
 } lives_func_info_t;
 
-#define WEED_LEAF_NOTIFY "notify"
-#define WEED_LEAF_DONE "done"
-#define WEED_LEAF_THREADFUNC "tfunction"
-#define WEED_LEAF_THREAD_PROCESSING "t_processing"
-#define WEED_LEAF_THREAD_CANCELLABLE "t_can_cancel"
-#define WEED_LEAF_THREAD_CANCELLED "t_cancelled"
-#define WEED_LEAF_RETURN_VALUE "return_value"
-#define WEED_LEAF_DONTCARE "dontcare"  ///< tell proc_thread with return value that we n o longer need return val.
-#define WEED_LEAF_DONTCARE_MUTEX "dontcare_mutex" ///< ensures we can set dontcare without it finishing while doing so
+#define LIVES_LEAF_NOTIFY "notify"
+#define LIVES_LEAF_DONE "done"
+#define LIVES_LEAF_NO_GUI "no_gui"
+#define LIVES_LEAF_SYNC_READY "sync_ready"
+#define LIVES_LEAF_THREADFUNC "tfunction"
+#define LIVES_LEAF_PTHREAD_SELF "pthread_self"
+#define LIVES_LEAF_THREAD_PROCESSING "t_processing"
+#define LIVES_LEAF_THREAD_CANCELLABLE "t_can_cancel"
+#define LIVES_LEAF_THREAD_CANCELLED "t_cancelled"
+#define LIVES_LEAF_RETURN_VALUE "return_value"
+#define LIVES_LEAF_DONTCARE "dontcare"  ///< tell proc_thread with return value that we n o longer need return val.
+#define LIVES_LEAF_DONTCARE_MUTEX "dontcare_mutex" ///< ensures we can set dontcare without it finishing while doing so
 
-#define WEED_LEAF_FUNCSIG "funcsig"
+#define LIVES_LEAF_FUNCSIG "funcsig"
 
-#define WEED_LEAF_SIGNALLED "signalled"
-#define WEED_LEAF_SIGNAL_DATA "signal_data"
+#define LIVES_LEAF_SIGNALLED "signalled"
+#define LIVES_LEAF_SIGNAL_DATA "signal_data"
 
-#define WEED_LEAF_THREAD_PARAM "thrd_param"
-#define _WEED_LEAF_THREAD_PARAM(n) WEED_LEAF_THREAD_PARAM  n
-#define WEED_LEAF_THREAD_PARAM0 _WEED_LEAF_THREAD_PARAM("0")
-#define WEED_LEAF_THREAD_PARAM1 _WEED_LEAF_THREAD_PARAM("1")
-#define WEED_LEAF_THREAD_PARAM2 _WEED_LEAF_THREAD_PARAM("2")
+#define LIVES_LEAF_THREAD_PARAM "thrd_param"
+#define _LIVES_LEAF_THREAD_PARAM(n) LIVES_LEAF_THREAD_PARAM  n
+#define LIVES_LEAF_THREAD_PARAM0 _LIVES_LEAF_THREAD_PARAM("0")
+#define LIVES_LEAF_THREAD_PARAM1 _LIVES_LEAF_THREAD_PARAM("1")
+#define LIVES_LEAF_THREAD_PARAM2 _LIVES_LEAF_THREAD_PARAM("2")
 
 #define LIVES_THRDFLAG_AUTODELETE	(1 << 0)
 #define LIVES_THRDFLAG_TUNING		(1 << 1)
@@ -89,12 +92,13 @@ typedef LiVESList lives_thread_t;
 typedef uint64_t lives_thread_attr_t;
 
 #define LIVES_THRDATTR_NONE		0
-#define LIVES_THRDATTR_AUTODELETE	(1 << 0)
-#define LIVES_THRDATTR_PRIORITY		(1 << 1)
+#define LIVES_THRDATTR_PRIORITY		(1 << 0)
+
+// proc_thread flags
+#define LIVES_THRDATTR_AUTODELETE	(1 << 1)
 #define LIVES_THRDATTR_WAIT_SYNC	(1 << 2)
 #define LIVES_THRDATTR_FG_THREAD	(1 << 3)
 #define LIVES_THRDATTR_NO_GUI		(1 << 4)
-#define LIVES_THRDATTR_KILLABLE		(1 << 5)
 
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);
@@ -103,7 +107,7 @@ uint64_t lives_thread_join(lives_thread_t work, void **retval);
 
 // lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define _RV_ WEED_LEAF_RETURN_VALUE
+#define _RV_ LIVES_LEAF_RETURN_VALUE
 
 typedef int(*funcptr_int_t)();
 typedef double(*funcptr_dbl_t)();
@@ -114,18 +118,18 @@ typedef weed_funcptr_t(*funcptr_funcptr_t)();
 typedef void *(*funcptr_voidptr_t)();
 typedef weed_plant_t(*funcptr_plantptr_t)();
 
-#define GETARG(type, n, m) (p##m = WEED_LEAF_GET(info, _WEED_LEAF_THREAD_PARAM(n), type))
+#define GETARG(type, n) (p##n = WEED_LEAF_GET(info, _LIVES_LEAF_THREAD_PARAM(QUOTEME(n)), type))
 
-#define ARGS1(t1) GETARG(t1, "0", 0)
-#define ARGS2(t1, t2) ARGS1(t1), GETARG(t2, "1", 1)
-#define ARGS3(t1, t2, t3) ARGS2(t1, t2), GETARG(t3, "2", 2)
-#define ARGS4(t1, t2, t3, t4) ARGS3(t1, t2, t3), GETARG(t4, "3", 3)
-#define ARGS5(t1, t2, t3, t4, t5) ARGS4(t1, t2, t3, t4), GETARG(t5, "4", 4)
-#define ARGS6(t1, t2, t3, t4, t5, t6) ARGS5(t1, t2, t3, t4, t5), GETARG(t6, "5", 5)
-#define ARGS7(t1, t2, t3, t4, t5, t6, t7) ARGS6(t1, t2, t3, t4, t5, t6), GETARG(t7, "6", 6)
-#define ARGS8(t1, t2, t3, t4, t5, t6, t7, t8) ARGS7(t1, t2, t3, t4, t5, t6, t7), GETARG(t8, "7", 7)
-#define ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9) ARGS8(t1, t2, t3, t4, t5, t6, t7. t8), GETARG(t9, "8", 8)
-#define ARGS10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9), GETARG(t10, "9", 9)
+#define ARGS1(t1) GETARG(t1, 0)
+#define ARGS2(t1, t2) ARGS1(t1), GETARG(t2, 1)
+#define ARGS3(t1, t2, t3) ARGS2(t1, t2), GETARG(t3, 2)
+#define ARGS4(t1, t2, t3, t4) ARGS3(t1, t2, t3), GETARG(t4, 3)
+#define ARGS5(t1, t2, t3, t4, t5) ARGS4(t1, t2, t3, t4), GETARG(t5, 4)
+#define ARGS6(t1, t2, t3, t4, t5, t6) ARGS5(t1, t2, t3, t4, t5), GETARG(t6, 5)
+#define ARGS7(t1, t2, t3, t4, t5, t6, t7) ARGS6(t1, t2, t3, t4, t5, t6), GETARG(t7, 6)
+#define ARGS8(t1, t2, t3, t4, t5, t6, t7, t8) ARGS7(t1, t2, t3, t4, t5, t6, t7), GETARG(t8, 7)
+#define ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9) ARGS8(t1, t2, t3, t4, t5, t6, t7. t8), GETARG(t9, 8)
+#define ARGS10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9), GETARG(t10, 9)
 
 #define CALL_VOID_10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) (*thefunc->func)(ARGS10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10))
 #define CALL_VOID_9(t1, t2, t3, t4, t5, t6, t7, t8, t9) (*thefunc->func)(ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9))
@@ -200,6 +204,9 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_
 lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, lives_funcptr_t func,
     int return_type, const char *args_fmt, va_list xargs);
 
+lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
+    int return_type, const char *args_fmt, ...);
+
 void call_funcsig(lives_proc_thread_t info);
 
 void lives_proc_thread_free(lives_proc_thread_t lpt);
@@ -220,6 +227,7 @@ lives_thread_data_t *lives_thread_data_create(uint64_t idx);
 void lives_proc_thread_set_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_cancel(lives_proc_thread_t);
+boolean lives_proc_thread_cancel_immediate(lives_proc_thread_t tinfo);
 boolean lives_proc_thread_cancelled(lives_proc_thread_t);
 
 /// tell a threead with return value that we no longer need the value so it can free itself

@@ -856,21 +856,18 @@ LIVES_GLOBAL_INLINE boolean ignore_clip(int clipno) {
 
 // returns TRUE if we delete
 static boolean do_delete_or_mark(int clipno) {
-  char *clipdir;
+  char *clipdir = NULL;
   boolean rember = FALSE, ret = FALSE;
   LiVESResponseType resp = LIVES_RESPONSE_NONE;
-  if (clipno > 0) clipdir = get_clip_dir(clipno);
-  if (clipno < 0 || prefs->badfile_intent == LIVES_INTENTION_UNKNOWN) {
+  clipdir = get_clip_dir(clipno);
+  if (prefs->badfile_intent == LIVES_INTENTION_UNKNOWN) {
     LiVESWidget *vbox, *check;
     LiVESWidget *dialog;
-    if (clipno > 0) {
-      dialog = create_question_dialog(_("Cleanup options"), _("LiVES was unable to load a clip which seems to be "
-                                      "damaged byond repair\n"
-                                      "This clip can be deleted or marked as unopenable "
-                                      "and ignored\n"
-                                      "What would you like to do ?\n"));
-    } else {
-    }
+    dialog = create_question_dialog(_("Cleanup options"), _("LiVES was unable to load a clip which seems to be "
+                                    "damaged byond repair\n"
+                                    "This clip can be deleted or marked as unopenable "
+                                    "and ignored\n"
+                                    "What would you like to do ?\n"));
 
     lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_ADD,
                                        _("Leave it and mark as 'unopenable'"), LIVES_RESPONSE_NO);
@@ -888,6 +885,7 @@ static boolean do_delete_or_mark(int clipno) {
     lives_widget_destroy(dialog);
   }
   if (prefs->badfile_intent == LIVES_INTENTION_DELETE || resp == LIVES_RESPONSE_CANCEL) {
+
     lives_rmdir(clipdir, TRUE);
     if (rember) pref_factory_int(PREF_BADFILE_INTENT, &prefs->badfile_intent, LIVES_INTENTION_DELETE, TRUE);
     ret = TRUE;

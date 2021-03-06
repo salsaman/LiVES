@@ -2256,7 +2256,7 @@ int lives_rmglob(const char *files) {
       int retval;
       char *com;
       if (!lives_strcmp(files, "*"))
-        com = lives_strdup_printf("%s * >\"%s\" 2>&1", capable->rm_cmd, files, prefs->cmd_log);
+        com = lives_strdup_printf("%s * >\"%s\" 2>&1", capable->rm_cmd, prefs->cmd_log);
       else
         com = lives_strdup_printf("%s \"%s\"* >\"%s\" 2>&1", capable->rm_cmd, files, prefs->cmd_log);
       retval = lives_system(com, TRUE);

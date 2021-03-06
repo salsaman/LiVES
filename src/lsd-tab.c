@@ -121,7 +121,7 @@ LIVES_GLOBAL_INLINE boolean lives_structs_same_type(lives_struct_def_t *lsd,
 }
 
 
-#define CHECK_VERBOSE 1
+//#define CHECK_VERBOSE 1
 #if CHECK_VERBOSE
 #define errprint(...) fprintf(stderr, __VA_ARGS__)
 #else
@@ -157,10 +157,10 @@ uint64_t lsd_check_struct(lives_struct_def_t *lsd) {
              "0X%016lX 0X%016lX should be 0X%016lX\n", lsd, id, eid, id ^ 0xFFFFFFFFFFFFFFFF);
 
   uid = lives_struct_get_uid(lsd);
-  if (!uid)
+  if (!uid) {
     errprint("lsd_check: lsd (%p) has no unique_id\n", lsd);
-
-  else if (uid < (1 << 20))
+    break_me("no uid");
+  } else if (uid < (1 << 20))
     errprint("lsd_check: lsd (%p) has unique_id 0X%016lX\n"
              "The probability of this is < 1 in 17.5 trillion\n", lsd, uid);
 

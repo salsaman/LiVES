@@ -1728,8 +1728,6 @@ typedef struct {
   int afbuffer_clients; /// # of registered clients for the audio frame buffer
   int afbuffer_clients_read; /// current read count. When this reaches abuffer_clients, we swap the read / write buffers
 
-  pthread_t noted[16];
-
   pthread_t *libthread;  /// GUI thread for liblives
 
 #define LIVES_SENSE_STATE_UNKNOWN 0

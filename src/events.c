@@ -5266,7 +5266,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
 
   // crash recovery -> backup the event list
   if (prefs->crash_recovery && prefs->rr_crash) {
-    info = lives_proc_thread_create(LIVES_THRDATTR_NO_GUI, (lives_funcptr_t)backup_recording, -1, "vv",
+    info = lives_proc_thread_create(LIVES_THRDATTR_NO_GUI | LIVES_THRDATTR_PRIORITY,
+                                    (lives_funcptr_t)backup_recording, -1, "vv",
                                     &esave_file, &asave_file);
   }
   mainw->no_interp = TRUE;

@@ -481,7 +481,7 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
       if (mainw->disk_pressure > 0.) mainw->disk_pressure = check_disk_pressure(0.);
     }
   }
-  fbuff->eof = TRUE;
+  if (fbuff) fbuff->eof = TRUE;
   return TRUE;
 }
 

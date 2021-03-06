@@ -336,8 +336,8 @@ void catch_sigint(int signum) {
 
   if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
     lives_proc_thread_t lpt = THREADVAR(tinfo);
-    weed_set_int_value(lpt, WEED_LEAF_SIGNALLED, signum);
-    weed_set_voidptr_value(lpt, WEED_LEAF_SIGNAL_DATA, THREADVAR(mydata));
+    weed_set_int_value(lpt, LIVES_LEAF_SIGNALLED, signum);
+    weed_set_voidptr_value(lpt, LIVES_LEAF_SIGNAL_DATA, THREADVAR(mydata));
     g_print("Thread got signal %d\n", signum);
     sleep(3600);
     pthread_exit(NULL);
@@ -2268,35 +2268,23 @@ static void lives_init(_ign_opts *ign_opts) {
       // get first OUTPUT driver
       mainw->jackd = jack_get_driver(0, TRUE);
 
-      pthread_t other;
-
       if (mainw->jackd) {
+        boolean success;
+        lives_proc_thread_t info;
         /// try to connect, and possibly start a server
-        //if (!jack_create_client_writer(mainw->jackd)) mainw->jackd = NULL;
-        lives_alarm_t alarm_handle;
-        ticks_t timeout;
         // activate the writer and connect ports
-        lives_proc_thread_t info = lives_proc_thread_create(LIVES_THRDATTR_KILLABLE,
-                                   (lives_funcptr_t)jack_create_client_writer, WEED_SEED_BOOLEAN, "v",
-                                   mainw->jackd);
+        if (!(info = lives_proc_thread_create_with_timeout(LIVES_SHORT_TIMEOUT, 0,
+                     (lives_funcptr_t)jack_create_client_writer,
+                     WEED_SEED_BOOLEAN, "v", mainw->jackd)))
+          success = FALSE;
+        else
+          success = lives_proc_thread_join_boolean(info);
 
-        alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-        lives_nanosleep_until_nonzero(lives_proc_thread_check(info)
-                                      || (timeout = lives_alarm_check(alarm_handle)) == 0);
-
-        lives_alarm_clear(alarm_handle);
-        if (timeout == 0) {
-          other = (pthread_t)weed_get_voidptr_value(info, "self", NULL);
-          if (other) {
-            pthread_cancel(other);
-            mainw->jackd = NULL;
-          } else lives_proc_thread_join_boolean(info);
-        } else lives_proc_thread_join_boolean(info);
-
-        // failed to connect
+        if (!success) mainw->jackd = NULL;
         if (mainw->jackd && !mainw->jackd->sample_out_rate) mainw->jackd = NULL;
 
         if (!mainw->jackd) {
+          // failed to connect
           if (prefs->jack_opts & JACK_OPTS_START_ASERVER)
             // TODO - allow disable auto start and + manual start
             // or reconfig
@@ -2326,11 +2314,12 @@ static void lives_init(_ign_opts *ign_opts) {
         jack_write_driver_activate(mainw->jackd);
 
         if (prefs->perm_audio_reader) {
-          // will also attempt to connect, and possibly start server
+          // connect the reader - will also attempt to connect, and possibly start server
           // however the server should always be running since we already connected the writer client
           // also activates the cliebt, but since the reader is not attatched to any clip
           // (first param is -1), we do not actually prepare for recording yet
           // however we do connect the ports (unless JACK_OPTS_NO_READ_AUTOCON is set)
+          // so if needed we can monitor incoming audio
           jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
 	    // *INDENT-OFF*
 	  }
@@ -7830,7 +7819,7 @@ static void *pft_thread(void *in) {
   } else {
     pull_frame_at_size(layer, img_ext, tc, width, height, WEED_PALETTE_END);
   }
-  weed_set_boolean_value(layer, WEED_LEAF_THREAD_PROCESSING, WEED_FALSE);
+  weed_set_boolean_value(layer, LIVES_LEAF_THREAD_PROCESSING, WEED_FALSE);
   return NULL;
 }
 
@@ -7863,7 +7852,7 @@ void pull_frame_threaded(weed_layer_t *layer, const char *img_ext, weed_timecode
 	  }}}}}
 #endif
   // *INDENT-ON*
-  weed_set_boolean_value(layer, WEED_LEAF_THREAD_PROCESSING, WEED_TRUE);
+  weed_set_boolean_value(layer, LIVES_LEAF_THREAD_PROCESSING, WEED_TRUE);
   if (1) {
     lives_thread_attr_t attr = LIVES_THRDATTR_PRIORITY;
     pft_priv_data *in = (pft_priv_data *)lives_calloc(1, sizeof(pft_priv_data));

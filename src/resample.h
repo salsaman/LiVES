@@ -48,15 +48,15 @@ _resaudw *resaudw;
 
 /// convert (double)seek_time to an integer number of audio samples
 #define quant_asamps(seek, arate) (((seek) <= 0. || (arate) <= 0) ? (size_t)0 \
-				   : (size_t)((seek) - remainder((seek), 1. / (arate))))
+				   : (size_t)((seek * (arate)) - remainder((seek), 1. / (arate))))
 
 /// quantise (double) seek_time to the nearest audio sample
 #define quant_aseek(seek, arate) (((arate) <= 0) ? 0. : (double)quant_asamps((seek), (arate)) \
 				  / (double)(arate))
 
 // quantise (double)seek to byte accurate offset: asampsize is in bytes
-#define quant_abytes(seek, arate, achans, asampsize) ((off_t)((quant_asamps((seek), (arate)) * \
-							       (off_t)((achans) * (asampsize)))))
+#define quant_abytes(seek, arate, achans, asampsize) ((off_t)quant_asamps((seek), (arate)) * \
+						      (off_t)((achans) * (asampsize)))
 
 ticks_t q_gint64_floor(ticks_t in, double fps);
 

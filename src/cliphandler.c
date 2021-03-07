@@ -884,8 +884,7 @@ static boolean do_delete_or_mark(int clipno) {
     resp = lives_dialog_run_with_countdown(LIVES_DIALOG(dialog), LIVES_RESPONSE_YES, 2);
     lives_widget_destroy(dialog);
   }
-  if (prefs->badfile_intent == LIVES_INTENTION_DELETE || resp == LIVES_RESPONSE_CANCEL) {
-
+  if (prefs->badfile_intent == LIVES_INTENTION_DELETE || resp == LIVES_RESPONSE_YES) {
     lives_rmdir(clipdir, TRUE);
     if (rember) pref_factory_int(PREF_BADFILE_INTENT, &prefs->badfile_intent, LIVES_INTENTION_DELETE, TRUE);
     ret = TRUE;

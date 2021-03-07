@@ -4977,10 +4977,12 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
         retval = FALSE;
         goto rtc_done;
       }
+      migrate_from_staging(current_file);
       if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
       if (!mainw->multitrack) {
         switch_clip(1, current_file, TRUE);
       }
+      lives_rm(cfile->info_file);
       d_print((tmp = lives_strdup_printf(_("rendered %d frames to new clip.\n"), cfile->frames)));
       lives_free(tmp);
       mainw->pre_src_file = mainw->current_file; // if a generator started playback, we will switch back to this file after

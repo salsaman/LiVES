@@ -381,11 +381,25 @@ void lives_exit(int signum) {
                 lives_free(com);
               }
               if (IS_NORMAL_CLIP(i)) {
-                char *fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
-                                                   "." TOTALSAVE_NAME, NULL);
-                int fd = lives_create_buffered(fname, DEF_FILE_PERMS);
+                int fd;
+                char *fname;
+                if (i == mainw->ascrap_file)
+                  fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+                                               LIVES_ACLIP_HEADER, NULL);
+                else
+                  fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+                                               LIVES_CLIP_HEADER, NULL);
+                if (!lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+                  break_me("lives_header missing from clip");
+                  save_clip_values(i);
+                }
+                lives_free(fname);
+                fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+                                             "." TOTALSAVE_NAME, NULL);
+                fd = lives_create_buffered(fname, DEF_FILE_PERMS);
                 lives_write_buffered(fd, (const char *)mainw->files[i], sizeof(lives_clip_t), TRUE);
                 lives_close_buffered(fd);
+                lives_free(fname);
               }
             }
             if (mainw->files[i]->frameno != mainw->files[i]->saved_frameno) {

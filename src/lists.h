@@ -12,6 +12,7 @@ LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) WARN_UNUSE
 LiVESList *lives_list_delete_string(LiVESList *, const char *string) WARN_UNUSED;
 LiVESList *lives_list_copy_strings(LiVESList *list);
 boolean string_lists_differ(LiVESList *, LiVESList *);
+boolean lists_differ(LiVESList *, LiVESList *, boolean ordered);
 LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add);
 LiVESList *buff_to_list(const char *buffer, const char *delim, boolean allow_blanks, boolean strip);
 int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean case_sensitive);

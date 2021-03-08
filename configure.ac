@@ -1054,7 +1054,7 @@ fi
 
 if test "$DISABLE_GSLICE" = "false"; then
 if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED_GSLICE, libweed_gslice >= 2.0.0, NEED_LOCAL_WEED_GSLICE=false, NEED_LOCAL_WEED_GSLICE=true)
+PKG_CHECK_MODULES(WEED_GSLICE, libweed_gslice >= 2.0.1, NEED_LOCAL_WEED_GSLICE=false, NEED_LOCAL_WEED_GSLICE=true)
 else
 echo "Check for system libweed_gslice is disabled"
 fi
@@ -1070,7 +1070,7 @@ else
 echo "gslice allocator disabled, so..."
 
 if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED, libweed >= 2.0.0, NEED_LOCAL_WEED=false, NEED_LOCAL_WEED=true)
+PKG_CHECK_MODULES(WEED, libweed >= 2.0.1, NEED_LOCAL_WEED=false, NEED_LOCAL_WEED=true)
 else
 echo "Check for system libweed is disabled"
 fi
@@ -1086,7 +1086,7 @@ fi
 AC_SUBST(WEED_CFLAGS)
 
 if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 2.0.0, NEED_LOCAL_WEED_UTILS=false, NEED_LOCAL_WEED_UTILS=true)
+PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 2.0.1, NEED_LOCAL_WEED_UTILS=false, NEED_LOCAL_WEED_UTILS=true)
 else
 echo "Check for system libweed-utils is disabled"
 fi

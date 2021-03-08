@@ -135,8 +135,7 @@ endif
 
 if DISABLE_GSLICE
 if !NEED_LOCAL_WEED
-#libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@
-libweed_LDADD = $(libdir)/libweed/libweed.la $(libdir)/libweed/libweed-utils.la
+libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@
 libweed_CFLAGS = @WEED_CFLAGS@
 else
 libweed_LDADD = $(abs_top_srcdir)/libweed/libweed.la $(abs_top_srcdir)/libweed/libweed-utils.la

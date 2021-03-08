@@ -46,8 +46,11 @@ extern "C"
 #include <stddef.h>
 #include <inttypes.h>
 
-/* API / ABI version * 200 */
-#define WEED_ABI_VERSION 		200
+/* API / ABI version * 201 */
+  // changes in 200 -> 201: weed_leaf_element_size now returns (strlen + 1) for WEED_SEED_STRING values,
+  // allowing NULL strings, which return size 0; prior to this, strlen was returned, and NULLS
+  // were treated like empty strings.
+#define WEED_ABI_VERSION 		201
 #define WEED_API_VERSION 		WEED_ABI_VERSION
 
 #define WEED_TRUE	1

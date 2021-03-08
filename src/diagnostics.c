@@ -80,61 +80,69 @@ char *get_stats_msg(boolean calc_only) {
   }
 
   if (calc_only) return NULL;
-
-  if (have_avsync) {
-    audmsg = lives_strdup_printf(_("Audio is %s video by %.4f secs.\n"),
-                                 tmp = lives_strdup(avsync >= 0. ? _("ahead of") : _("behind")), fabs(avsync));
-    lives_free(tmp);
-  } else {
-    if (prefs->audio_src == AUDIO_SRC_INT) audmsg = (_("Clip has no audio.\n"));
-    else audmsg = (_("Audio source external.\n"));
-  }
-
-  if (mainw->blend_file != mainw->current_file && IS_VALID_CLIP(mainw->blend_file)) {
-    char *bgpal = get_palette_name_for_clip(mainw->blend_file);
-    bgmsg = lives_strdup_printf(_("Bg clip: %d X %d, frame: %d / %d, palette: %s\n"),
-                                mainw->files[mainw->blend_file]->hsize,
-                                mainw->files[mainw->blend_file]->vsize,
-                                mainw->files[mainw->blend_file]->frameno,
-                                mainw->files[mainw->blend_file]->frames,
-                                bgpal);
-    lives_free(bgpal);
-  }
-
-  fgpal = get_palette_name_for_clip(mainw->current_file);
-
-  //get_proc_loads(FALSE);
-
-  /* for (int cp = 0; cp < capable->ncpus; cp++) { */
-  /*   load = get_core_loadvar(cp + 1); */
-  /*   tmp = lives_strdup_printf("%sCore %d, load = %f  ", msg2, cp, *load); */
-  /*   lives_free(msg2); */
-  /*   msg2 = tmp; */
-  /*   tmp = NULL; */
-  /* }
-  */
   load = get_core_loadvar(0);
-  msg = lives_strdup_printf(_("%sFrame %d / %d, fps %.3f (target: %.3f)\n"
-                              "CPU load %.2f %% : Disk load: %f\n"
-                              "Effort: %d / %d, quality: %d, %s (%s)\n%s\n"
-                              "Fg clip: %d X %d, palette: %s\n%s\n%s"),
-                            audmsg ? audmsg : "",
-                            mainw->actual_frame, cfile->frames,
-                            inst_fps * sig(cfile->pb_fps), cfile->pb_fps,
-                            *load, mainw->disk_pressure,
-                            mainw->effort, EFFORT_RANGE_MAX,
-                            prefs->pb_quality,
-                            tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
-                                  : prefs->pb_quality == 2 ? _("Med") : _("High")),
-                            tmp2 = lives_strdup(prefs->pbq_adaptive ? _("adaptive") : _("fixed")),
-                            get_cache_stats(),
-                            cfile->hsize, cfile->vsize,
-                            fgpal, bgmsg ? bgmsg : "", msg2);
-  lives_freep((void **)&msg2);
-  lives_freep((void **)&bgmsg); lives_freep((void **)&audmsg);
-  lives_freep((void **)&tmp); lives_freep((void **)&tmp2);
+
+  if (!prefs->vj_mode) {
+    if (have_avsync) {
+      audmsg = lives_strdup_printf(_("Audio is %s video by %.4f secs.\n"),
+                                   tmp = lives_strdup(avsync >= 0. ? _("ahead of") : _("behind")), fabs(avsync));
+      lives_free(tmp);
+    } else {
+      if (prefs->audio_src == AUDIO_SRC_INT) audmsg = (_("Clip has no audio.\n"));
+      else audmsg = (_("Audio source external.\n"));
+    }
+
+    if (mainw->blend_file != mainw->current_file && IS_VALID_CLIP(mainw->blend_file)) {
+      char *bgpal = get_palette_name_for_clip(mainw->blend_file);
+      bgmsg = lives_strdup_printf(_("Bg clip: %d X %d, frame: %d / %d, palette: %s\n"),
+                                  mainw->files[mainw->blend_file]->hsize,
+                                  mainw->files[mainw->blend_file]->vsize,
+                                  mainw->files[mainw->blend_file]->frameno,
+                                  mainw->files[mainw->blend_file]->frames,
+                                  bgpal);
+      lives_free(bgpal);
+    }
+
+    fgpal = get_palette_name_for_clip(mainw->current_file);
+
+    msg = lives_strdup_printf(_("%sFrame %d / %d, fps %.3f (target: %.3f)\n"
+                                "CPU load %.2f %% : Disk load: %f\n"
+                                "Effort: %d / %d, quality: %d, %s (%s)\n%s\n"
+                                "Fg clip: %d X %d, palette: %s\n%s\n%s"),
+                              audmsg ? audmsg : "",
+                              mainw->actual_frame, cfile->frames,
+                              inst_fps * sig(cfile->pb_fps), cfile->pb_fps,
+                              *load, mainw->disk_pressure,
+                              mainw->effort, EFFORT_RANGE_MAX,
+                              prefs->pb_quality,
+                              tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
+                                    : prefs->pb_quality == 2 ? _("Med") : _("High")),
+                              tmp2 = lives_strdup(prefs->pbq_adaptive ? _("adaptive") : _("fixed")),
+                              get_cache_stats(),
+                              cfile->hsize, cfile->vsize,
+                              fgpal, bgmsg ? bgmsg : "", msg2);
+    lives_freep((void **)&msg2);
+    lives_freep((void **)&bgmsg); lives_freep((void **)&audmsg);
+    lives_freep((void **)&tmp); lives_freep((void **)&tmp2);
+  } else {
+    if (mainw->blend_file > 0)
+      bgmsg = lives_strdup_printf(_("bg: %d/%d "),
+                                  mainw->files[mainw->blend_file]->frameno,
+                                  mainw->files[mainw->blend_file]->frames);
+
+    msg = lives_strdup_printf("fg: %d/%d, fps %.3f / %.3f, CPU: %.2f, Eff. %d/%d, Q: %s %s",
+                              mainw->actual_frame, cfile->frames,
+                              inst_fps * sig(cfile->pb_fps), cfile->pb_fps,
+                              *load, mainw->effort, EFFORT_RANGE_MAX,
+                              tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
+                                    : prefs->pb_quality == 2 ? _("Med") : _("High")),
+                              bgmsg ? bgmsg : "");
+    lives_freep((void **)&bgmsg);
+    lives_freep((void **)&tmp);
+  }
   return msg;
 }
+
 
 #ifdef WEED_STARTUP_TESTS
 
@@ -214,10 +222,13 @@ void check_random(void) {
 
 ticks_t timerinfo;
 
-static void show_timer_info(void) {
+static double show_timer_info(void) {
+  ticks_t xtimerinfo = lives_get_current_ticks();
+  double timesecs;
   g_print("\n\nTest completed in %.4f seconds\n\n",
-          ((double)lives_get_current_ticks() - (double)timerinfo) / TICKS_PER_SECOND_DBL);
-  timerinfo = lives_get_current_ticks();
+          (timesecs = ((double)xtimerinfo - (double)timerinfo) / TICKS_PER_SECOND_DBL));
+  timerinfo = xtimerinfo;
+  return timesecs;
 }
 
 static char *randstrg(size_t len) {
@@ -227,7 +238,7 @@ static char *randstrg(size_t len) {
 }
 
 
-
+#ifdef HASH_TEST
 void hash_test(void) {
   char *str;
   int i;
@@ -247,6 +258,7 @@ void hash_test(void) {
   }
   show_timer_info();
 }
+#endif
 
 #include "lsd.h"
 
@@ -342,7 +354,7 @@ int run_weed_startup_tests(void) {
   int pint[4];//, zint[4];
   weed_error_t werr;
   char **keys;
-  void *ptr, *ptr2;
+  void *ptr;;//, *ptr2;
   void *ptra[4];
   char *s[4];
   int n;
@@ -486,6 +498,13 @@ int run_weed_startup_tests(void) {
 
   fprintf(stderr, "checking get / set values\n");
 
+  weed_plant_t *plant2 = weed_plant_new(0);
+  weed_set_string_value(plant2, "astr", "hello");
+
+  weed_set_voidptr_value(plant2, "vptr", &flags);
+
+  fprintf(stderr, "read x1 %s %p\n", weed_get_string_value(plant2, "astr", NULL), weed_get_voidptr_value(plant2, "vptr", NULL));
+
   weed_set_int_value(plant, "Test", 99);
   fprintf(stderr, "Set 'Test' = 99\n");
 
@@ -495,7 +514,7 @@ int run_weed_startup_tests(void) {
 
   a = weed_get_int_value(plant, "Test", &werr);
 
-  fprintf(stderr, "value read was %d, err was %d\n", a, werr);
+  fprintf(stderr, "value 1 read was %d, err was %d\n", a, werr);
 
   fprintf(stderr, "\n");
   show_quadstate(plant);
@@ -517,7 +536,7 @@ int run_weed_startup_tests(void) {
   weed_set_int_value(plant, "Test", 143);
   a = weed_get_int_value(plant, "Test", &werr);
 
-  fprintf(stderr, "value read was %d, err was %d\n", a, werr);
+  fprintf(stderr, "value 2 read was %d, err was %d\n", a, werr);
 
   keys = weed_plant_list_leaves(plant, &nleaves);
   n = 0;
@@ -534,7 +553,7 @@ int run_weed_startup_tests(void) {
   weed_set_string_value(plant, "Test2", "abc");
   str = weed_get_string_value(plant, "Test2", &werr);
 
-  fprintf(stderr, "value read was %s, err was %d\n", str, werr);
+  fprintf(stderr, "value 3 read was %s, err was %d\n", str, werr);
 
   keys = weed_plant_list_leaves(plant, &nleaves);
   n = 0;
@@ -548,7 +567,7 @@ int run_weed_startup_tests(void) {
   weed_set_string_value(plant, "Test2", "12345");
   str = weed_get_string_value(plant, "Test2", &werr);
 
-  fprintf(stderr, "value read was %s, err was %d\n", str, werr);
+  fprintf(stderr, "value 4 read was %s, err was %d\n", str, werr);
 
   keys = weed_plant_list_leaves(plant, &nleaves);
   n = 0;
@@ -565,7 +584,7 @@ int run_weed_startup_tests(void) {
   weed_set_string_value(plant, "Test2", "");
   str = weed_get_string_value(plant, "Test2", &werr);
 
-  fprintf(stderr, "value read was %s, err was %d\n", str, werr);
+  fprintf(stderr, "value 5 read was %s, err was %d\n", str, werr);
 
   keys = weed_plant_list_leaves(plant, &nleaves);
   n = 0;
@@ -577,10 +596,14 @@ int run_weed_startup_tests(void) {
   free(keys);
 
   weed_set_string_value(plant, "Test2", NULL);
-  str = weed_get_string_value(plant, "Test2", &werr);
 
-  fprintf(stderr, "value read was %s, err was %d\n", str, werr);
-
+  werr = weed_leaf_get(plant, "Test2", WEED_SEED_STRING, &str);
+  if (!str) {
+    fprintf(stderr, "red 6 was NULL\n");
+  } else {
+    str = weed_get_string_value(plant, "Test2", &werr);
+    fprintf(stderr, "value 6 read was %s, err was %d\n", str, werr);
+  }
   keys = weed_plant_list_leaves(plant, &nleaves);
   n = 0;
   while (keys[n] != NULL) {
@@ -596,7 +619,7 @@ int run_weed_startup_tests(void) {
   weed_set_string_value(plant, "Test3", NULL);
   str = weed_get_string_value(plant, "Test3", &werr);
 
-  fprintf(stderr, "value read was %s, err was %d\n", str, werr);
+  fprintf(stderr, "value 7 read was %s, err was %d\n", str, werr);
 
   keys = weed_plant_list_leaves(plant, &nleaves);
   n = 0;
@@ -613,7 +636,7 @@ int run_weed_startup_tests(void) {
   weed_set_string_value(plant, NULL, NULL);
   str = weed_get_string_value(NULL, NULL, &werr);
 
-  fprintf(stderr, "value read was %s, err was %d\n", str, werr);
+  fprintf(stderr, "value 8 read was %s, err was %d\n", str, werr);
 
   keys = weed_plant_list_leaves(plant, &nleaves);
   n = 0;
@@ -746,7 +769,7 @@ int run_weed_startup_tests(void) {
   weed_set_string_value(plant, "Test2", "abcde");
   str = weed_get_string_value(plant, "Test2", &werr);
 
-  fprintf(stderr, "value read was %s, err was %d\n", str, werr);
+  fprintf(stderr, "value 9 read was %s, err was %d\n", str, werr);
 
   keys = weed_plant_list_leaves(plant, &nleaves);
   n = 0;
@@ -760,7 +783,7 @@ int run_weed_startup_tests(void) {
   weed_set_string_value(plant, "Test2", "888888");
   str = weed_get_string_value(plant, "Test2", &werr);
 
-  fprintf(stderr, "value read was %s, err was %d\n", str, werr);
+  fprintf(stderr, "value 10 read was %s, err was %d\n", str, werr);
 
   weed_leaf_set_flags(plant, "Test2", WEED_FLAG_IMMUTABLE);
 
@@ -769,14 +792,14 @@ int run_weed_startup_tests(void) {
 
   str = weed_get_string_value(plant, "Test2", &werr);
 
-  fprintf(stderr, "value read was %s, err was %d\n", str, werr);
+  fprintf(stderr, "value 11 read was %s, err was %d\n", str, werr);
 
   weed_leaf_set_flags(plant, "Test2", 0);
 
   weed_set_string_value(plant, "Test2", "OK");
   str = weed_get_string_value(plant, "Test2", &werr);
 
-  fprintf(stderr, "value read was %s, err was %d\n", str, werr);
+  fprintf(stderr, "value 12 read was %s, err was %d\n", str, werr);
 
   weed_set_string_value(plant, "string1", "abccc");
   weed_set_string_value(plant, "string2", "xyyyyzz");
@@ -784,7 +807,7 @@ int run_weed_startup_tests(void) {
 
   werr = weed_set_string_value(plant, "string2", "xxxxx");
   str = weed_get_string_value(plant, "string2", &werr);
-  fprintf(stderr, "value read was %s, err was %d\n", str, werr);
+  fprintf(stderr, "value 13 read was %s, err was %d\n", str, werr);
 
 
   fprintf(stderr, "\n");
@@ -1032,37 +1055,93 @@ int run_weed_startup_tests(void) {
   g_print("Big plant test: \n");
   g_print("adding %d leaves\n", BPLANT_LEAVES);
   plant = weed_plant_new(WEED_PLANT_EVENT);
-  for (int i = 0; i < BPLANT_LEAVES; i++) {
+  for (int i = 1; i <= BPLANT_LEAVES; i++) {
     int num = fastrand() >> 32;
-    char *key = lives_strdup_printf("leaf_number_%d", i);
-    weed_set_int_value(plant, key, num);
+    int r = i * 1873;
+    char *key = lives_strdup_printf("%dln%dum%d", r, r % 3, r % 7);
+    weed_set_int_value(plant, key, i);
     free(key);
   }
+  int z;
   g_print("done\n");
-  g_print("test %d random reads\n", BPLANT_LEAVES * 10);
+  /* g_print("test %d random reads\n", BPLANT_LEAVES * 10); */
   n = 0;
+  double fhit, phit, time1, time2;
   for (int i = 0; i < BPLANT_LEAVES * 10; i++) {
-    char *key = lives_strdup_printf("leaf_number_%d", (int)((double)fastrand() / (double)LIVES_MAXUINT64 * BPLANT_LEAVES * 2.));
-    weed_get_int_value(plant, key, &werr);
-    if (werr == WEED_SUCCESS) n++;
+    int x = fastrand_int(20000);
+    int r = x * 1873;
+    char *key = lives_strdup_printf("%dln%dum%d", r, r % 3, r % 7);
+    z = weed_get_int_value(plant, key, &werr);
+    if (werr == WEED_SUCCESS) {
+      n++;
+      if (z != x) abort();
+    }
     free(key);
   }
-  g_print("done, hit percentage was %.2f\n", (double)n / (double)BPLANT_LEAVES * 10);
-  show_timer_info();
+  g_print("done, hit percentage was %.2f\n", (phit = (double)n / (double)BPLANT_LEAVES * 10.));
+  time1 = show_timer_info();
 
+  fhit = phit / 100.;
+
+  int dist = 1;
   g_print("test %d last-leaf reads\n", BPLANT_LEAVES * 10);
   n = 0;
-  for (int i = 0; i < BPLANT_LEAVES * 10; i++) {
-    const char *key = "leaf_number_0";
-    weed_get_int_value(plant, key, &werr);
-    if (werr == WEED_SUCCESS) n++;
-  }
-  g_print("done, hit percentage was %.2f\n", (double)n / (double)BPLANT_LEAVES * 10);
-  show_timer_info();
-
+  int mm = BPLANT_LEAVES * 2;
+  do {
+    for (int i = 0; i < 0 * BPLANT_LEAVES * 5; i++) {
+      int i = mm;
+      int r = i * 1873;
+      char *key = lives_strdup_printf("%dln%dum%d", r, r % 3, r % 7);
+      z = weed_get_int_value(plant, key, &werr);
+      if (werr == WEED_SUCCESS) n++;
+      free(key);
+    }
+    time2 = show_timer_info();
+    mm = 1;
+    for (int i = 0; i < BPLANT_LEAVES * 10; i++) {
+      int i = mm;
+      int r = i * 1873;
+      char *key = lives_strdup_printf("%dln%dum%d", r, r % 3, r % 7);
+      z = weed_get_int_value(plant, key, &werr);
+      if (werr == WEED_SUCCESS) n++;
+      free(key);
+    }
+    //g_print("done, hit percentage was %.2f\n", (double)n / (double)BPLANT_LEAVES * 10.);
+    g_print("search for leaf %d\n", BPLANT_LEAVES - mm);
+    time2 = show_timer_info();
+    mm += dist;
+    dist++;
+  } while (mm < BPLANT_LEAVES);
   g_print("freeing big plant\n");
   weed_plant_free(plant);
   g_print("done\n");
+
+  // now, fhit * BPLANT_LEAVES * 10 hits in test 1
+  // (1. - fhit) * BPLANT_LEAVES * 10 misses in test 1
+  // let n = BPLANT_LEAVES * 10
+
+  // from test2 we know that n seeks + n reads = time2
+  // from test 1 we know n * (1 - fhit) seeks  + n * fhit reads + n * fhit / 2 seeks took time1
+  // since test1 hits were random, the avg should be half the length
+  // dividing time1 by fhit and subtracting from time2. we get:
+  // n seeks - (n * (1. - fhit) / fhit seeks + n / 2 seeks) = time2 - time1 / fhit
+  // div by n: seek (1 - (1 - fhit) / fhit - 1 / 2) = (time2 - time1 / fhit) / n
+  // seek = (time2 - time1 / fhit) / n / (1 - (1. - fhit) / fhit - 1 / 2)
+
+  /* double sktm = ((double)time2 - (double)time1 / fhit) / (double)BPLANT_LEAVES / 10. / (1. - (1. - fhit) / fhit - .5); */
+  /* fprintf(stderr, "avg seek to end is %f\n", sktm); */
+
+  /* double rdtm = (double)time2 / ((double)BPLANT_LEAVES * 10.) - sktm; */
+  /* fprintf(stderr, "avg read time is %f\n", rdtm); */
+
+  /* double res = (1. - fhit) * BPLANT_LEAVES * 10. * sktm + (fhit * BPLANT_LEAVES * 10.) * .5  * sktm + */
+  /*   (fhit * BPLANT_LEAVES * 10.) * rdtm; */
+
+  /* fprintf(stderr, "%f = %d seeks + %d / 2 seeks + %d reads = %f\n", time1, (int)((1. - fhit) * BPLANT_LEAVES * 10.), */
+  /* 	  (int)(fhit * BPLANT_LEAVES * 10.), (int)(fhit * BPLANT_LEAVES * 10.), res); */
+
+  /* fprintf(stderr, "%f = %d seeks + %d reads = %f\n", time2, BPLANT_LEAVES * 10, */
+  /* 	  BPLANT_LEAVES * 10, BPLANT_LEAVES * 10. *(rdtm + sktm)); */
 
   weed_threadsafe = FALSE;
   plant = weed_plant_new(0);

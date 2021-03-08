@@ -56,6 +56,8 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
     key = lives_strdup("interlace"); break;
   case CLIP_DETAILS_DECODER_NAME:
     key = lives_strdup("decoder"); break;
+  case CLIP_DETAILS_DECODER_UID:
+    key = lives_strdup("decoder_uid"); break;
   case CLIP_DETAILS_GAMMA_TYPE:
     key = lives_strdup("gamma_type"); break;
   default: break;
@@ -172,12 +174,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     if (*(double *)retval == 0.) *(double *)retval = sfile->fps;
     break;
   case CLIP_DETAILS_UNIQUE_ID:
-    if (capable->cpu_bits == 32) {
-      *(uint64_t *)retval = (uint64_t)atoll(val);
-    } else {
-      *(uint64_t *)retval = (uint64_t)atol(val);
-    }
-    break;
+    *(uint64_t *)retval = (uint64_t)atoll(val);
   case CLIP_DETAILS_AENDIAN:
     *(int *)retval = atoi(val) * 2; break;
   case CLIP_DETAILS_TITLE:
@@ -191,6 +188,9 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   case CLIP_DETAILS_DECODER_NAME:
     lives_snprintf((char *)retval, maxlen, "%s", (tmp = F2U8(val)));
     lives_free(tmp);
+    break;
+  case CLIP_DETAILS_DECODER_UID:
+    *(uint64_t *)retval = (uint64_t)atoll(val);
     break;
   default:
     lives_free(val);
@@ -298,6 +298,9 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
     myval = U82F((const char *)val); break;
   case CLIP_DETAILS_DECODER_NAME:
     myval = U82F((const char *)val); break;
+  // header v. 104
+  case CLIP_DETAILS_DECODER_UID:
+    myval = lives_strdup_printf("%"PRIu64, *(uint64_t *)val); break;
   case CLIP_DETAILS_HEADER_VERSION:
     myval = lives_strdup_printf("%d", *(int *)val); break;
   default:
@@ -418,6 +421,7 @@ boolean save_clip_values(int which) {
         if (sfile->clip_type == CLIP_TYPE_FILE && sfile->ext_src) {
           lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
           if (!save_clip_value(which, CLIP_DETAILS_DECODER_NAME, (void *)dplug->decoder->name)) break;
+          if (!save_clip_value(which, CLIP_DETAILS_DECODER_UID, (void *)&sfile->decoder_uid)) break;
         }
         all_ok = TRUE;
       } while (FALSE);
@@ -1327,7 +1331,6 @@ rhd_failed:
     char *hdrback = lives_strdup_printf("%s.%s", lives_header, LIVES_FILE_EXT_BAK);
     char *binfmt = NULL;
 
-    lives_free(clipdir);
     if (!lives_file_test(hdrback, LIVES_FILE_TEST_EXISTS)) {
       lives_free(hdrback);
       hdrback = NULL;
@@ -1344,12 +1347,12 @@ rhd_failed:
         }
       }
     }
+    lives_free(clipdir);
     if (hdrback || binfmt) {
       if (recover_details(fileno, lives_header, hdrback, binfmt)) {
         if (hdrback) {
           lives_free(hdrback);
           if (binfmt) lives_free(binfmt);
-          lives_free(clipdir);
           goto frombak;
         }
         lives_free(binfmt); lives_free(clipdir);

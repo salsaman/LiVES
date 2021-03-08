@@ -918,7 +918,10 @@ typedef struct _lives_clip_t {
   boolean deinterlace; ///< auto deinterlace
 
   int header_version;
-#define LIVES_CLIP_HEADER_VERSION 103
+#define LIVES_CLIP_HEADER_VERSION 104
+
+  // uid of decoder plugin
+  uint64_t decoder_uid;
 
   // extended info (not saved)
 
@@ -1742,7 +1745,7 @@ void break_me(const char *dtl);
 #endif
 
 #endif
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

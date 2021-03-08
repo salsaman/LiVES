@@ -242,8 +242,11 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
   char *colref;
 
+  boolean woum = widget_opts.use_markup;
   int cb_key = extra_cb_key;
   int del_key = del_cb_key;
+
+  widget_opts.use_markup = FALSE;
   extra_cb_key = 0;
   del_cb_key = 0;
 
@@ -433,7 +436,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width * 2);
   }
 
+  widget_opts.use_markup = woum;
   label = lives_standard_formatted_label_new(text);
+  widget_opts.use_markup = FALSE;
   widget_opts.last_label = label;
 
   if (palette) {

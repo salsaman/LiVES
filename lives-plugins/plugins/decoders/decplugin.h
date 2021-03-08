@@ -259,7 +259,7 @@ const lives_plugin_id_t *get_plugin_id(void);
 
 static lives_plugin_id_t plugin_id;
 
-static inline lives_plugin_id_t *_get_plugin_id(const char *name, int vmaj, int vmin) {
+static inline lives_plugin_id_t *_make_plugin_id(const char *name, int vmaj, int vmin) {
   static int inited = 0;
   if (!inited) {
     inited = 1;

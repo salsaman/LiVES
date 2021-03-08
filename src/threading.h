@@ -175,6 +175,7 @@ typedef weed_plant_t(*funcptr_plantptr_t)();
 // 3p
 #define FUNCSIG_VOIDP_DOUBLE_INT 		        		0X00000D21
 #define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
+#define FUNCSIG_STRING_VOIDP_VOIDP 		        		0X000004DD
 #define FUNCSIG_BOOL_BOOL_STRING 		        		0X00000334
 #define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
 // 4p

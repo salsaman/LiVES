@@ -327,6 +327,15 @@ void call_funcsig(lives_proc_thread_t info) {
     }
     break;
   }
+  case FUNCSIG_STRING_VOIDP_VOIDP: {
+    char *p0; void *p1, *p2;
+    switch (ret_type) {
+    case WEED_SEED_VOIDPTR: CALL_3(voidptr, string, voidptr, voidptr); break;
+    default: CALL_VOID_3(string, voidptr, voidptr); break;
+    }
+    lives_free(p0); lives_free(p1);
+    break;
+  }
   case FUNCSIG_VOIDP_DOUBLE_INT: {
     void *p0; double p1; int p2;
     switch (ret_type) {

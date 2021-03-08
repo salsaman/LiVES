@@ -372,7 +372,7 @@ int set_list_pref(const char *key, LiVESList *values) {
   int ret;
 
   while (xlist) {
-    if (string == NULL) string = lives_strdup((char *)xlist->data);
+    if (!string) string = lives_strdup((char *)xlist->data);
     else {
       tmp = lives_strdup_printf("%s\n%s", string, (char *)xlist->data);
       lives_free(string);
@@ -381,7 +381,7 @@ int set_list_pref(const char *key, LiVESList *values) {
     xlist = xlist->next;
   }
 
-  if (string == NULL) string = lives_strdup("");
+  if (!string) string = lives_strdup("");
 
   ret = set_string_pref(key, string);
 
@@ -1414,6 +1414,54 @@ success7:
 }
 
 
+boolean pref_factory_list(const char *prefidx, LiVESList *list) {
+  if (prefsw) prefsw->ignore_apply = TRUE;
+  if (!list) {
+    delete_pref(prefidx);
+    goto success;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_DISABLED_DECODERS)) {
+    // ste through prefs->disabled_decoders
+    // first write the names (for backwards compat) and then the UIDs
+    lives_decoder_sys_t *dpsys;
+    char *string1 = NULL, *string2 = NULL, *tmp, *string;
+    for (; list; list = list->next) {
+      dpsys = (lives_decoder_sys_t *)list->data;
+      if (prefs->back_compat) {
+        tmp = lives_strdup(dpsys->name);
+        if (!string2) string2 = tmp;
+        else string2 = lives_concat_sep(string2, "\n", tmp);
+      }
+      tmp = lives_strdup_printf("0X%016lX", dpsys->id->uid);
+      if (!string1) string = tmp;
+      else string1 = lives_concat_sep(string1, "\n", tmp);
+    }
+    if (string2) {
+      if (string1) string2 = lives_concat_sep(string2, "\n", string1);
+      string = string2;
+    } else {
+      if (string1) string = string1;
+      else string = lives_strdup("");
+    }
+
+    set_string_pref(prefidx, string);
+
+    lives_free(string);
+    goto success;
+  }
+
+  set_list_pref(prefidx, list);
+
+success:
+  if (prefsw) {
+    lives_widget_process_updates(prefsw->prefs_dialog);
+    prefsw->ignore_apply = FALSE;
+  }
+  return TRUE;
+}
+
+
 boolean apply_prefs(boolean skip_warn) {
   // set current prefs from prefs dialog
   char prefworkdir[PATH_MAX]; /// locale encoding
@@ -1985,11 +2033,11 @@ boolean apply_prefs(boolean skip_warn) {
   ensure_isdir(workdir);
 
   // disabled_decoders
-  if (string_lists_differ(prefs->disabled_decoders, future_prefs->disabled_decoders)) {
-    lives_list_free_all(&prefs->disabled_decoders);
-    prefs->disabled_decoders = lives_list_copy_strings(future_prefs->disabled_decoders);
-    if (prefs->disabled_decoders) set_list_pref(PREF_DISABLED_DECODERS, prefs->disabled_decoders);
-    else delete_pref(PREF_DISABLED_DECODERS);
+  if (lists_differ(prefs->disabled_decoders, future_prefs->disabled_decoders, FALSE)) {
+    lives_list_free(prefs->disabled_decoders);
+    prefs->disabled_decoders = future_prefs->disabled_decoders;
+    future_prefs->disabled_decoders = NULL;
+    pref_factory_list(PREF_DISABLED_DECODERS, prefs->disabled_decoders);
   }
 
   // stop xscreensaver
@@ -6361,7 +6409,7 @@ void on_preferences_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     return;
   }
 
-  future_prefs->disabled_decoders = lives_list_copy_strings(prefs->disabled_decoders);
+  future_prefs->disabled_decoders = lives_list_copy(prefs->disabled_decoders);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_widget_context_update();
 
@@ -6384,7 +6432,8 @@ void on_prefs_close_clicked(LiVESButton * button, livespointer user_data) {
   lives_free(prefsw->audp_name);
   lives_free(prefsw->orig_audp_name);
   lives_freep((void **)&resaudw);
-  lives_list_free_all(&future_prefs->disabled_decoders);
+  lives_list_free(future_prefs->disabled_decoders);
+  future_prefs->disabled_decoders = NULL;
 
   lives_general_button_clicked(button, user_data);
 
@@ -6572,7 +6621,8 @@ void on_prefs_revert_clicked(LiVESButton * button, livespointer user_data) {
   lives_free(prefsw->audp_name);
   lives_free(prefsw->orig_audp_name);
 
-  lives_list_free_all(&future_prefs->disabled_decoders);
+  lives_list_free(future_prefs->disabled_decoders);
+  future_prefs->disabled_decoders = NULL;
 
   saved_dialog = prefsw->prefs_dialog;
   saved_revertbutton = prefsw->revertbutton;

@@ -1714,8 +1714,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->unstable_fx = get_boolean_prefd(PREF_UNSTABLE_FX, TRUE);
 
-  prefs->disabled_decoders = get_list_pref(PREF_DISABLED_DECODERS);
-
   prefs->enc_letterbox = FALSE;
 
   prefs->clear_disk_opts = get_int_prefd(PREF_CLEAR_DISK_OPTS, 0);
@@ -3515,18 +3513,21 @@ void print_opthelp(void) {
   if (capable->has_sox_play) lives_printerr(", '%s'", AUDIO_PLAYER_SOX); // comma after jack
   fprintf(stderr, " or '%s')\n", AUDIO_PLAYER_NONE);
   fprintf(stderr, "%s",
-          _("-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options (default is 16, "
+          _("\n-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options (default is 16, "
             "unless set in Preferences)\n"
-            "Main options are: \n"
-            "\t\t\t\t\t 1 = LiVES is jack transport slave, \n"
-            "\t\t\t\t\t 2 = LiVES is jack transport master, \n"
-            "\t\t\t\t\t 4 = create jack transport server on startup (if needed)\n"
-            "\t\t\t\t\t 8 = pause jack transport when video paused (and vice-versa)\n"
-            "\t\t\t\t\t\t(must be transport master / slave),\n"
-            "\t\t\t\t\t16 = create jack audio server on startup (if needed)\n"
-            "\t\t\t\t\t\t(only if audio player is jack)) \n"
-            "\t\t\t\t\t1024 = create / connect jack transport client\n"
-            "\t\t\t\t\t\t(must be set to use all other transport functions)) \n"
+            "\tUseful options are: \n"
+            "\t\t\t\t\t   4 = launch jack transport server on startup (if unable to connect)\n"
+            "\t\t\t\t\t  16 = launch jack audio server on startup (if unable to connect)\n"
+            "\t\t\t\t\t\t(ignored if audio player is not jack)\n"
+            "\t\t\t\t\t1024 = enable jack transport client\n"
+            "\t\t\t\t\t\t(must be set to use all other transport functions)\n"
+            "\tSummary of options: 0 - do not start any servers, only connect audio, no transport client\n"
+            "\t\t\t   16 - start audio server if connection fails, no transport client\n"
+            "\t\t\t 1024 - create audio and transport clients, only connect\n"
+            "\t\t\t 1028 - create audio and transport clients, transport client may start a server if it fails to connect,\n"
+            "\t\t\t\t(audio wpuld normally connect to whatever server the transport client connects to)\n"
+            "\t\t\t\tother combinations are possible but unlikely to be useful on startup\n"
+            "\t\t\t\tFurther options exist but seting them is best done via Preferences / Jack Integration\n\n"
            ));
 #else // no jack
   if (capable->has_sox_play) {
@@ -4244,6 +4245,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   boolean toolong = FALSE;
   char *tmp, *dir, *msg;
   pthread_mutexattr_t mattr;
+  int winitopts = 0;
 #ifndef IS_LIBLIVES
   weed_plant_t *test_plant;
 #endif
@@ -4321,13 +4323,17 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // start up the Weed system
   weed_abi_version = weed_get_abi_version();
   if (weed_abi_version > WEED_ABI_VERSION) weed_abi_version = WEED_ABI_VERSION;
-  //werr = weed_init(weed_abi_version, WEED_INIT_DEBUGMODE);
-  werr = weed_init(weed_abi_version, 0);
+#ifdef WEED_STARTUP_TESTS
+  winitopts |= WEED_INIT_DEBUGMODE;
+#endif
+
+  werr = weed_init(weed_abi_version, winitopts);
   if (werr != WEED_SUCCESS) {
     lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
     LIVES_FATAL("Failed to init Weed");
     _exit(1);
   }
+
 #ifndef USE_STD_MEMFUNCS
   weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
 #endif
@@ -4349,8 +4355,30 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
   init_random();
 
-#ifdef ENABLE_DIAGNOSTICS
+#ifdef WEED_STARTUP_TESTS
   run_weed_startup_tests();
+#if 0
+  fprintf(stderr, "\n\nRetesting with API 200, bugfix mode\n");
+  werr = weed_init(200, winitopts | WEED_INIT_ALLBUGFIXES);
+  if (werr != WEED_SUCCESS) {
+    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
+    LIVES_FATAL("Failed to init Weed");
+    _exit(1);
+  }
+  run_weed_startup_tests();
+  fprintf(stderr, "\n\nRetesting with API 200, epecting problesm libweed-utils\n");
+  werr = weed_init(200, winitopts);
+  if (werr != WEED_SUCCESS) {
+    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
+    LIVES_FATAL("Failed to init Weed");
+    _exit(1);
+  }
+  run_weed_startup_tests();
+#endif
+  abort();
+#endif
+
+#ifdef ENABLE_DIAGNOSTICS
   check_random();
   lives_struct_test();
   test_palette_conversions();

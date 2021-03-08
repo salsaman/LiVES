@@ -5206,16 +5206,16 @@ boolean reload_clip(int fileno, int maxframe) {
   // cd to clip directory - so decoder plugins can write temp files
   LiVESList *odeclist;
   lives_clip_t *sfile = mainw->files[fileno];
-
+  char decoder_name[PATH_MAX];
   const lives_clip_data_t *cdata = NULL;
   lives_clip_data_t *fake_cdata = (lives_clip_data_t *)lives_calloc(sizeof(lives_clip_data_t), 1);
 
   double orig_fps = sfile->fps;
 
-  char decoder_name[PATH_MAX];
   char *orig_filename = lives_strdup(sfile->file_name);
   char *cwd = lives_get_current_dir();
   char *clipdir = get_clip_dir(fileno);
+  uint64_t dec_uid = 0;
 
   LiVESResponseType response;
   boolean was_renamed = FALSE, retb = FALSE;
@@ -5242,11 +5242,13 @@ boolean reload_clip(int fileno, int maxframe) {
 
   ///< retain original order to restore for freshly opened clips
   odeclist = lives_list_copy(mainw->decoder_list);
-  retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decoder_name, PATH_MAX);
-  if (retb && *decoder_name) {
-    decoder_plugin_move_to_first(decoder_name);
+  retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_UID, &dec_uid, 8);
+  if (!retb) {
+    retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decoder_name, PATH_MAX);
   }
-  retb = FALSE;
+  if (retb && *decoder_name) {
+    decoder_plugin_move_to_first(decoder_name, dec_uid);
+  }
   lives_chdir(clipdir, FALSE);
   lives_free(clipdir);
 
@@ -5373,7 +5375,10 @@ manual_locate:
       lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
       if (dplug) {
         lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->decoder;
-        if (dpsys && *dpsys->name && strcmp(dpsys->name, decoder_name)) {
+        sfile->decoder_uid = dpsys->id->uid;
+        save_clip_value(fileno, CLIP_DETAILS_DECODER_UID, (void *)&sfile->decoder_uid);
+        if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
+        else {
           save_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, (void *)dpsys->name);
           if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
         }

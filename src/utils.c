@@ -2535,22 +2535,6 @@ boolean create_event_space(int length) {
 }
 
 
-LIVES_GLOBAL_INLINE int lives_list_strcmp_index(LiVESList * list,
-    livesconstpointer data, boolean case_sensitive) {
-  // find data in list, using strcmp
-  if (case_sensitive) {
-    for (int i = 0; list; list = list->next, i++) {
-      if (!lives_strcmp((const char *)list->data, (const char *)data)) return i;
-    }
-  } else {
-    for (int i = 0; list; list = list->next, i++) {
-      if (!lives_utf8_strcasecmp((const char *)list->data, (const char *)data)) return i;
-    }
-  }
-  return -1;
-}
-
-
 void add_to_recent(const char *filename, double start, frames_t frames, const char *extra_params) {
   const char *mtext;
   char buff[PATH_MAX * 2];
@@ -2781,7 +2765,6 @@ LiVESList *cache_file_contents(const char *filename) {
   size_t kelen;
   char buff[65536];
   char *key = NULL, *keystr_end = NULL, *cptr, *tmp, *data = NULL;
-
   if (!(hfile = fopen(filename, "r"))) return NULL;
   while (fgets(buff, 65536, hfile)) {
     if (!*buff) continue;

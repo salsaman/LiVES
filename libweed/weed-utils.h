@@ -69,7 +69,7 @@ weed_error_t weed_set_double_value(weed_plant_t *, const char *key, double);
 weed_error_t weed_set_boolean_value(weed_plant_t *, const char *key, int32_t);
 weed_error_t weed_set_int64_value(weed_plant_t *, const char *key, int64_t);
 weed_error_t weed_set_string_value(weed_plant_t *, const char *key, const char *);
-weed_error_t weed_set_funcptr_value(weed_plant_t *, const char *key, void *);
+weed_error_t weed_set_funcptr_value(weed_plant_t *, const char *key, weed_funcptr_t);
 weed_error_t weed_set_voidptr_value(weed_plant_t *, const char *key, void *);
 weed_error_t weed_set_plantptr_value(weed_plant_t *, const char *key, weed_plant_t *);
 weed_error_t weed_set_custom_value(weed_plant_t *, const char *key, uint32_t seed_type, void *);

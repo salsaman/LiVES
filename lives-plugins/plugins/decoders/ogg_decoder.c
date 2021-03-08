@@ -2136,7 +2136,7 @@ static int64_t ogg_seek(lives_clip_data_t *cdata, int64_t tframe, int64_t ppos_l
 // std functions
 
 const lives_plugin_id_t *get_plugin_id(void) {
-  return _get_plugin_id(plugin_name, vmaj, vmin);
+  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
 

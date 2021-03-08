@@ -891,7 +891,6 @@ typedef struct {
   short sepwin_type;
 
   LiVESList *disabled_decoders;
-  LiVESList *disabled_decoders_new;
 
   volatile float volume; ///< audio volume level (for jack and pulse)
 

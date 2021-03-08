@@ -112,7 +112,7 @@ weed_error_t weed_set_string_value(weed_plant_t *plant, const char *key, const c
 }
 
 
-weed_error_t weed_set_funcptr_value(weed_plant_t *plant, const char *key, weed_voidptr_t value) {
+weed_error_t weed_set_funcptr_value(weed_plant_t *plant, const char *key, weed_funcptr_t value) {
   return weed_leaf_set(plant, key, WEED_SEED_FUNCPTR, 1, (weed_voidptr_t)&value);
 }
 
@@ -184,7 +184,12 @@ int64_t weed_get_int64_value(weed_plant_t *plant, const char *key, weed_error_t 
 
 
 char *weed_get_string_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
+#if WEED_ABI_VERSION < 201
+  fprintf(stderr, "This version of libweed-utils requires compilation with libweed WEED_ABI_VERSION 201 or higher\n");
+  abort();
+#endif
   char *retval = NULL;
+  weed_size_t es;
   weed_error_t err = weed_check_leaf(plant, key);
   if (err != WEED_SUCCESS) {
     if (error) *error = err;
@@ -194,9 +199,12 @@ char *weed_get_string_value(weed_plant_t *plant, const char *key, weed_error_t *
     if (error) *error = WEED_ERROR_WRONG_SEED_TYPE;
     return NULL;
   }
-  if ((retval = (char *)(*_malloc_func)(weed_leaf_element_size(plant, key, 0) + 1)) == NULL) {
-    if (error) *error = WEED_ERROR_MEMORY_ALLOCATION;
-    return NULL;
+  es = weed_leaf_element_size(plant, key, 0);
+  if (es > 0) {
+    if ((retval = (char *)(*_malloc_func)(es)) == NULL) {
+      if (error) *error = WEED_ERROR_MEMORY_ALLOCATION;
+      return NULL;
+    }
   }
   if ((err = weed_value_get(plant, key, WEED_SEED_STRING, &retval)) != WEED_SUCCESS) {
     if (retval) {
@@ -310,7 +318,11 @@ int64_t *weed_get_int64_array(weed_plant_t *plant, const char *key, weed_error_t
 
 
 char **__weed_get_string_array__(weed_plant_t *plant, const char *key, weed_error_t *error, int *count) {
-  weed_size_t num_elems;
+#if WEED_ABI_VERSION < 201
+  fprintf(stderr, "This version of libweed-utils requires compilation with libweed WEED_ABI_VERSION 201 or higher\n");
+  abort();
+#endif
+  weed_size_t num_elems, es;
   char **retvals = NULL;
 
   weed_error_t err = weed_leaf_check(plant, key, WEED_SEED_STRING);
@@ -328,14 +340,17 @@ char **__weed_get_string_array__(weed_plant_t *plant, const char *key, weed_erro
   }
 
   for (int i = 0; i < num_elems; i++) {
-    if ((retvals[i] = (char *)(*_malloc_func)(weed_leaf_element_size(plant, key, i) + 1)) == NULL) {
-      for (--i; i >= 0; i--)(*_free_func)(retvals[i]);
-      if (error) *error = WEED_ERROR_MEMORY_ALLOCATION;
-      (*_free_func)(retvals);
-      return NULL;
+    es = weed_leaf_element_size(plant, key, 0);
+    if (es > 0) {
+      if ((retvals[i] = (char *)(*_malloc_func)(weed_leaf_element_size(plant, key, i) + 1)) == NULL) {
+	for (--i; i >= 0; i--)(*_free_func)(retvals[i]);
+	if (error) *error = WEED_ERROR_MEMORY_ALLOCATION;
+	(*_free_func)(retvals);
+	return NULL;
+      }
     }
     if ((err = weed_leaf_get(plant, key, i, &retvals[i])) != WEED_SUCCESS) {
-      for (--i; i >= 0; i--)(*_free_func)(retvals[i]);
+      for (--i; i >= 0; i--) if (retvals[i]) (*_free_func)(retvals[i]);
       if (error) *error = err;
       (*_free_func)(retvals);
       return NULL;

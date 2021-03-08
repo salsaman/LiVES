@@ -6818,10 +6818,12 @@ cleanup:
 
     d_print_done();
 
-    msg = lives_strdup_printf(_("%s of disk space was recovered.\n"),
+    msg = lives_strdup_printf(_("<big><b>%s</b></big> of disk space was recovered.\n"),
                               lives_format_storage_space_string((uint64_t)bytes));
 
+    widget_opts.use_markup = TRUE;
     dialog = create_message_dialog(LIVES_DIALOG_INFO, msg, 0);
+    widget_opts.use_markup = FALSE;
     lives_free(msg);
 
     list = *rem_list;

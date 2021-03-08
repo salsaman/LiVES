@@ -8,6 +8,24 @@
 
 #include "main.h"
 
+// global-dynamic, local-dynamic, initial-exec, local-exec
+/* #define TLS_MODEL __attribute__((tls_model("initial-exec"))) */
+
+/* #if !defined(__clang__) && defined(__GNUC__) */
+/* #define _Thread_local __thread */
+/* #endif */
+
+/* static _Thread_local uint64_t _thread_id TLS_MODEL; */
+
+/* void set_thread_id(uint64_t id) { */
+/*   _thread_id = id; */
+/* } */
+
+/* uint64_t get_thread_id(void) { */
+/*   return _thread_id; */
+/* } */
+
+
 LIVES_GLOBAL_INLINE boolean lives_freep(void **ptr) {
   // free a pointer and nullify it, only if it is non-null to start with
   // pass the address of the pointer in

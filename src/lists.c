@@ -168,29 +168,63 @@ boolean string_lists_differ(LiVESList *alist, LiVESList *blist) {
   // for long lists this would be quicker if we sorted the lists first; however this function
   // is designed to deal with short lists only
 
-  LiVESList *plist, *rlist = blist;
+  LiVESList *rlist = blist;
 
   if (lives_list_length(alist) != lives_list_length(blist)) return TRUE; // check the simple case first
 
   // run through alist and see if we have a mismatch
 
-  plist = alist;
-  while (plist) {
+  for (; alist; alist = alist->next) {
     LiVESList *qlist = rlist;
     boolean matched = TRUE;
     while (qlist) {
-      if (!(lives_utf8_strcasecmp((char *)plist->data, (char *)qlist->data))) {
+      if (!(lives_utf8_strcasecmp((char *)alist->data, (char *)qlist->data))) {
         if (matched) rlist = qlist->next;
         break;
       }
-      matched = FALSE;
       qlist = qlist->next;
+      if (!qlist) return TRUE;
+      matched = FALSE;
     }
-    if (!qlist) return TRUE;
-    plist = plist->next;
   }
 
-  // since both lists were of the same length, there is no need to check blist
+  // since both lists were of the same length, there is no need to further check blist
+
+  return FALSE;
+}
+
+
+boolean lists_differ(LiVESList *alist, LiVESList *blist, boolean order) {
+  // compare 2 and see if they are different (with or without ordering)
+  // for long lists this would be quicker if we sorted the lists first; however this function
+  // is designed to deal with short lists only
+
+  LiVESList *rlist = blist;
+
+  if (lives_list_length(alist) != lives_list_length(blist)) return TRUE; // check the simple case first
+
+  // run through alist and see if we have a mismatch
+
+  for (; alist; alist = alist->next) {
+    if (order) {
+      if (alist->data != blist->data) return TRUE;
+      blist = blist->next;
+      continue;
+    } else {
+      LiVESList *qlist = rlist;
+      boolean matched = TRUE;
+      while (qlist) {
+        if (alist->data == qlist->data) {
+          if (matched) rlist = qlist->next;
+          break;
+        }
+        qlist = qlist->next;
+        if (!qlist) return TRUE;
+        matched = FALSE;
+      }
+    }
+  }
+  // since both lists were of the same length, there is no need to further check blist
 
   return FALSE;
 }
@@ -241,3 +275,18 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_remove_node(LiVESList *list, LiVESList
   return list;
 }
 
+
+LIVES_GLOBAL_INLINE int lives_list_strcmp_index(LiVESList *list,
+    livesconstpointer data, boolean case_sensitive) {
+  // find data in list, using strcmp
+  if (case_sensitive) {
+    for (int i = 0; list; list = list->next, i++) {
+      if (!lives_strcmp((const char *)list->data, (const char *)data)) return i;
+    }
+  } else {
+    for (int i = 0; list; list = list->next, i++) {
+      if (!lives_utf8_strcasecmp((const char *)list->data, (const char *)data)) return i;
+    }
+  }
+  return -1;
+}

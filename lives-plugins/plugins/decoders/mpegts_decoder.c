@@ -2560,7 +2560,7 @@ const char *module_check_init(void) {
 
 
 const lives_plugin_id_t *get_plugin_id(void) {
-  return _get_plugin_id(plugin_name, vmaj, vmin);
+  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
 

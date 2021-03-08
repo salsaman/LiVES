@@ -11665,7 +11665,7 @@ boolean toggle_sets_sensitive_cond(LiVESWidget * tb, LiVESWidget * widget,
       /// set sensitive only if *condsens > 0
       char *keyvalf = lives_strdup_printf("%p_sens_cond_f", widget);
       char *keyvald = lives_strdup_printf("%p_sens_cond_data", widget);
-      weed_set_funcptr_value(cond_plant, keyvalf, condsens_f);
+      weed_set_funcptr_value(cond_plant, keyvalf, (weed_funcptr_t)condsens_f);
       weed_set_voidptr_value(cond_plant, keyvald, condsens_data);
       lives_free(keyvalf);
       lives_free(keyvald);
@@ -11674,7 +11674,7 @@ boolean toggle_sets_sensitive_cond(LiVESWidget * tb, LiVESWidget * widget,
       /// set sensitive only if *condsens > 0
       char *keyvalf = lives_strdup_printf("%p_insens_cond_f", widget);
       char *keyvald = lives_strdup_printf("%p_insens_cond_data", widget);
-      weed_set_funcptr_value(cond_plant, keyvalf, condinsens_f);
+      weed_set_funcptr_value(cond_plant, keyvalf, (weed_funcptr_t)condinsens_f);
       weed_set_voidptr_value(cond_plant, keyvald, condinsens_data);
       lives_free(keyvalf);
       lives_free(keyvald);
@@ -11711,7 +11711,7 @@ boolean toggle_sets_visible_cond(LiVESWidget * tb, LiVESWidget * widget,
       /// set sensitive only if *condsens > 0
       char *keyvalf = lives_strdup_printf("%p_visi_cond_f", widget);
       char *keyvald = lives_strdup_printf("%p_visi_cond_data", widget);
-      weed_set_funcptr_value(cond_plant, keyvalf, condvisi_f);
+      weed_set_funcptr_value(cond_plant, keyvalf, (weed_funcptr_t)condvisi_f);
       weed_set_voidptr_value(cond_plant, keyvald, condvisi_data);
       lives_free(keyvalf);
       lives_free(keyvald);
@@ -11720,7 +11720,7 @@ boolean toggle_sets_visible_cond(LiVESWidget * tb, LiVESWidget * widget,
       /// set sensitive only if *condsens > 0
       char *keyvalf = lives_strdup_printf("%p_invisi_cond_f", widget);
       char *keyvald = lives_strdup_printf("%p_invisi_cond_data", widget);
-      weed_set_funcptr_value(cond_plant, keyvalf, condinvisi_f);
+      weed_set_funcptr_value(cond_plant, keyvalf, (weed_funcptr_t)condinvisi_f);
       weed_set_voidptr_value(cond_plant, keyvald, condinvisi_data);
       lives_free(keyvalf);
       lives_free(keyvald);
@@ -11757,7 +11757,7 @@ boolean toggle_sets_active_cond(LiVESWidget * tb, LiVESWidget * widget,
       /// set sensitive only if *condsens > 0
       char *keyvalf = lives_strdup_printf("%p_act_cond_f", widget);
       char *keyvald = lives_strdup_printf("%p_act_cond_data", widget);
-      weed_set_funcptr_value(cond_plant, keyvalf, condact_f);
+      weed_set_funcptr_value(cond_plant, keyvalf, (weed_funcptr_t)condact_f);
       weed_set_voidptr_value(cond_plant, keyvald, condact_data);
       lives_free(keyvalf);
       lives_free(keyvald);
@@ -11766,7 +11766,7 @@ boolean toggle_sets_active_cond(LiVESWidget * tb, LiVESWidget * widget,
       /// set sensitive only if *condsens > 0
       char *keyvalf = lives_strdup_printf("%p_inact_cond_f", widget);
       char *keyvald = lives_strdup_printf("%p_inact_cond_data", widget);
-      weed_set_funcptr_value(cond_plant, keyvalf, condinact_f);
+      weed_set_funcptr_value(cond_plant, keyvalf, (weed_funcptr_t)condinact_f);
       weed_set_voidptr_value(cond_plant, keyvald, condinact_data);
       lives_free(keyvalf);
       lives_free(keyvald);

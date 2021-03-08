@@ -495,6 +495,7 @@ WEED_SETUP_START(200, 200) {
   int oninps, onoutps = 0, oninchs = 0, onoutchs = 0;
   int cninps, cnoutps;
   int stcount, stcount2;
+  int numstr;
 
   int dual;
 
@@ -615,9 +616,10 @@ WEED_SETUP_START(200, 200) {
         if (ninchs == 0) stcount2 = 3;
         else stcount2 = 4;
 
-        rfx_strings = weed_malloc((ninps + stcount2 + stcount) * sizeof(char *));
-        for (pnum = 0; pnum < ninps + stcount2 + stcount; pnum++) {
-          rfx_strings[pnum] = (char *)weed_malloc(256);
+        numstr = ninps + stcount2 + stcount;
+        rfx_strings = weed_malloc(numstr * sizeof(char *));
+        for (pnum = 0; pnum < numstr; pnum++) {
+          rfx_strings[pnum] = (char *)weed_calloc(256, 1);
         }
 
         if (ninchs == 0) {
@@ -899,7 +901,7 @@ WEED_SETUP_START(200, 200) {
             weed_set_string_value(gui, "layout_rfx_delim", "|");
 
             // subtract 1 from ninps since we incremented it
-            weed_set_string_array(gui, "layout_rfx_strings", ninps + stcount2 + stcount - 1, rfx_strings);
+            weed_set_string_array(gui, "layout_rfx_strings", numstr, rfx_strings);
 
           }
         } else weed_set_boolean_value(filter_class, "plugin_dual", WEED_FALSE);

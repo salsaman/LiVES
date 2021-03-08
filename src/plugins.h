@@ -370,7 +370,7 @@ typedef struct {
 
 LiVESList *load_decoders(void);
 boolean chill_decoder_plugin(int fileno);
-boolean decoder_plugin_move_to_first(const char *name);
+boolean decoder_plugin_move_to_first(const char *name, uint64_t uid);
 const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, const lives_clip_data_t *fake_cdata);
 void close_decoder_plugin(lives_decoder_t *);
 void close_clip_decoder(int clipno);

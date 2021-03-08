@@ -694,15 +694,17 @@ static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
   lives_av_priv_t *priv = cdata->priv;
 
+  if (cdata->palettes) free(cdata->palettes);
+  cdata->palettes = NULL;
+
+  if (!priv) return;
+
+  priv->ctx = NULL;
+
   // will close and free the context
   if (priv->ic) {
     avformat_close_input(&priv->ic);
   }
-
-  if (cdata->palettes) free(cdata->palettes);
-  cdata->palettes = NULL;
-
-  priv->ctx = NULL;
 
   if (!priv->needs_packet)
     av_packet_unref(&priv->packet);
@@ -733,7 +735,7 @@ const char *module_check_init(void) {
 
 
 const lives_plugin_id_t *get_plugin_id(void) {
-  return _get_plugin_id(plugin_name, vmaj, vmin);
+  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
 
@@ -1681,7 +1683,7 @@ void clip_data_free(lives_clip_data_t *cdata) {
   if (cdata->URI) {
     detach_stream(cdata);
   }
-  if (priv->idxc) idxc_release(cdata, priv->idxc);
+  if (priv && priv->idxc) idxc_release(cdata, priv->idxc);
   lives_struct_free(&cdata->lsd);
 }
 

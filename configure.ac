@@ -352,6 +352,17 @@ AC_SUBST(XRENDER_LIBS)
 fi
 AM_CONDITIONAL(HAVE_XRENDER,$HAVE_XRENDER)
 
+DISABLE_RPMALLOC=true
+AC_ARG_ENABLE(rpmalloc, [  --disable-rpmalloc           Disable rpmalloc memory allocator.] , disable_rpmalloc=yes)
+if test "x$disable_rpmalloc" != "xyes" ; then
+DISABLE_RPMALLOC=false
+echo "building with rpmalloc memory allocator features enabled"
+else
+echo "rpmalloc memory allocator features disabled"
+fi
+
+AM_CONDITIONAL(DISABLE_RPMALLOC,$DISABLE_RPMALLOC)
+
 HAVE_GTK_VERSION3=false
 GTK310_WARN=false
 

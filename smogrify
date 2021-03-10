@@ -5444,6 +5444,8 @@ sub insert {
     $j = $start;
     while ($times_inserted < $times) {
 	for ($i = $nstart; $i <= $nend; $i++) {
+	    &sig_progress(int($new_frames - $where + $j++ - $start + 1));
+
 	    $from = &mkname($i);
 	    $to = &mkname($nwhere + $i - $nstart + 1);
 
@@ -5454,7 +5456,7 @@ sub insert {
 		}
 	    } else {
 		if (! -f "$fromdir/$from$img_ext2") {
-		    next if ($allow_missing);
+		    next if $allow_missing;
 		    while (! -f "$fromdir/$from$img_ext2") {
 			print STDERR "waiting on image $fromdir/$from$img_ext2\n";
 			sleep 1;
@@ -5499,8 +5501,6 @@ sub insert {
 			    $panic = 1;
 			    return;
 			}}}}
-
-	    &sig_progress(int($new_frames - $where + $j++ -$start + 1));
 	}
 
 	$times_inserted += $factor;
@@ -7694,15 +7694,9 @@ sub open_single_image {
 	return 0;
     }
 
-    if (!defined($file_exec)) {
-	$file_exec = &location("file");
-    }
-
-    if ($file_exec) {
-	if (&file_examine($file) eq "video") {
-	    $height = $width = $bpp = 0;
-	    return;
-	}
+    if (&file_examine($file) eq "video") {
+	$height = $width = $bpp = 0;
+	return;
     }
 
     if (!defined($file_ext)) {
@@ -7778,12 +7772,21 @@ sub open_single_image {
 
 sub file_examine {
     my $target = shift;
-    if (!defined($file_exec)) {
-	$file_exec = &location("file");
-    }
-    return "" if $file_exec eq "";
     return "" if  ! -f $target;
-    my $cmd = "$file_exec -bi \"$target\"";
+    my $cmd;
+    if (!defined($xdg_mime_exec)) {
+	$xdg_mime_exec = &location("xdg-mime");
+    }
+    if ($xdg_mime_exec) {
+	$cmd = "xdg-mime query filetype $target";
+    }
+    else {
+	if (!defined($file_exec)) {
+	    $file_exec = &location("file");
+	}
+	return "" if !$file_exec;
+	$cmd = "$file_exec -bi \"$target\"";
+    }
     my $res = &smog_system_direct($cmd);
     $res = (split /\//, (split /\;/, $res)[0])[0];
     $res;
@@ -7799,14 +7802,9 @@ sub get_image_size {
     my $i;
     my $shrink;
 
-    if (!defined($file_exec)) {
-	$file_exec = &location("file");
-    }
-    if ($file_exec) {
-	if (&file_examine($file) eq "video") {
-	    $height = $width = $bpp = 0;
-	    return;
-	}
+    if (&file_examine($file) eq "video") {
+	$height = $width = $bpp = 0;
+	return;
     }
     else {
 	#identify hangs if the file extension is ".avi" or ".mp4"...maybe more...

@@ -270,7 +270,7 @@ void lives_exit(int signum) {
         // create the new directory, and then move any sets over
         // for some cases we only move a single set
 
-        if (prefs->workdir_tx_intent == LIVES_INTENTION_EXPORT_LOCAL) {
+        if (prefs->workdir_tx_intent == LIVES_INTENTION_MOVE) {
           end_threaded_dialog();
           // ask user if they want to clean the old directory and recover clips
           if (do_move_workdir_dialog()) {
@@ -362,7 +362,7 @@ void lives_exit(int signum) {
               threaded_dialog_spin(0.);
               lives_kill_subprocesses(mainw->files[i]->handle, TRUE);
               temp_backend = use_staging_dir_for(i);
-              com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->files[i]->handle);
+              com = lives_strdup_printf("%s close \"%s\"", temp_backend, mainw->files[i]->handle);
               lives_system(com, FALSE);
               lives_free(com);
               lives_free(temp_backend);
@@ -370,6 +370,7 @@ void lives_exit(int signum) {
             }
           } else {
             threaded_dialog_spin(0.);
+            migrate_from_staging(i);
             // or just clean them up -
             // remove the following: "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
             if (!prefs->vj_mode) {
@@ -430,7 +431,7 @@ void lives_exit(int signum) {
           mainw->close_keep_frames = FALSE;
         }
 
-        if (*mainw->set_name && prefs->workdir_tx_intent != LIVES_INTENTION_DESTROY) {
+        if (*mainw->set_name && prefs->workdir_tx_intent != LIVES_INTENTION_DELETE) {
           if (!mainw->leave_files && !mainw->leave_recovery) {
             // delete the current set (this is for DELETE_SET)
             cleanup_set_dir(mainw->set_name);
@@ -447,7 +448,7 @@ void lives_exit(int signum) {
           && lives_strcmp(future_prefs->workdir, prefs->workdir)) {
         // use backend to move the sets
         com = NULL;
-        if (prefs->workdir_tx_intent != LIVES_INTENTION_EXPORT_LOCAL) {
+        if (prefs->workdir_tx_intent != LIVES_INTENTION_MOVE) {
           if (mainw->set_name && mainw->fx1_bool) {
             // delete or leave old workdir - user wants to move current set to new location
             com = lives_strdup_printf("%s move_workdir \"%s\" \"%s\"", prefs->backend_sync,
@@ -595,7 +596,7 @@ void lives_exit(int signum) {
     unload_decoder_plugins();
   }
 
-  if (prefs->workdir_tx_intent == LIVES_INTENTION_DESTROY) {
+  if (prefs->workdir_tx_intent == LIVES_INTENTION_DELETE) {
     // delete the old workdir
     lives_rmdir(prefs->workdir, TRUE);
   }
@@ -828,7 +829,7 @@ void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     return;
   }
 
-  iparams = get_txparams_for_clip(-1, LIVES_INTENTION_IMPORT_REMOTE);
+  iparams = get_txparams_for_clip(-1, LIVES_INTENTION_DOWNLOAD);
   if (iparams) {
     weed_param_t *adir_param =
       weed_param_from_iparams(iparams, CLIP_PARAM_STAGING_DIR);
@@ -836,7 +837,6 @@ void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     lives_intentparams_free(iparams);
   }
 
-  //tmpdir = get_systmp("ytdl", TRUE);
   if (!tmpdir) return;
 
   mainw->mt_needs_idlefunc = FALSE;
@@ -907,8 +907,6 @@ void on_recent_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     }
     mt_desensitise(mainw->multitrack);
   }
-
-  //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
   pref = lives_strdup_printf("%s%d", PREF_RECENT, pno);
 
@@ -1014,6 +1012,9 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
   if (capable->mountpoint && *capable->mountpoint) {
     /// if tempdir is on same volume as workdir, or if not using tmpdir and final is on same
     // then we monitor continuously
+
+    // TODO: if tempdir is on a different mountpoint from workdir, and there is sufficient space in workdir's volume
+    // and we are monitoring workdir's volume too, then we could consider downloading it there
     mpf = get_mountpoint_for(ddir);
     if (mpf && *mpf && !lives_strcmp(mpf, capable->mountpoint)) {
       manage_ds = 1;
@@ -1077,36 +1078,12 @@ retry:
         d_print_failed();
         goto cleanup_ut;
       } else {
-        //#ifdef YTDL_URL
-        /// if youtube-dl has a fixed download location, we can let the backend install it for us
-        /// TODO: pass URL as argv[15]
         if (mainw->permmgr && mainw->permmgr->key) {
           /// force fresh install of local youtube-dl
           overrdkey = mainw->permmgr->key;
         }
-        //#else
-        /// else copy system binary to $HOME/.local/bin
-        /* if (capable->has_youtube_dl != LOCAL) { */
-        /*   char *todir = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, "bin", NULL); */
-        /*   char *to = lives_build_filename(todir, EXEC_YOUTUBE_DL, NULL); */
-        /*   if (!lives_file_test(to, LIVES_FILE_TEST_IS_EXECUTABLE)) { */
-        /*     char from[PATH_MAX]; */
-        /*     if (check_for_executable(&capable->has_youtube_dlc, EXEC_YOUTUBE_DLC)) */
-        /*       get_location(EXEC_YOUTUBE_DLC, from, PATH_MAX); */
-        /*     else */
-        /*       get_location(EXEC_YOUTUBE_DL, from, PATH_MAX); */
-        /*     if (lives_strlen(from) > 10) { */
-        /*       if (check_dir_access(todir, TRUE)) { */
-        /*         lives_cp(from, to); */
-        /*       } */
-        /*     } */
-        /*   } */
-        /*   lives_free(todir); lives_free(to); */
-        /*   check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL); */
-        /* } */
       }
     }
-    //#endif
 
     // get format list
 
@@ -2270,7 +2247,7 @@ static LiVESResponseType prompt_for_set_save(void) {
     }
     if (resp == LIVES_RESPONSE_RESET) {
       // wipe from disk
-      if (prefs->workdir_tx_intent != LIVES_INTENTION_DESTROY) {
+      if (prefs->workdir_tx_intent != LIVES_INTENTION_DELETE) {
         char *what, *expl;
         // TODO
         //if (check_for_executable(&capable->has_gio, EXEC_GIO)) mainw->add_trash_rb = TRUE;
@@ -3301,7 +3278,7 @@ void on_paste_as_new_activate(LiVESMenuItem * menuitem, livespointer user_data) 
     mainw->current_file = old_file;
     return;
   }
-
+  migrate_from_staging(mainw->current_file);
   lframe = cbframes = clipboard->frames;
 
   //set file details
@@ -12762,6 +12739,7 @@ void on_recaudclip_ok_clicked(LiVESButton * button, livespointer user_data) {
   }
 
   asigned = !asigned;
+  migrate_from_staging(mainw->current_file);
 
   if (type == 0) {
     lives_snprintf(cfile->type, 40, "Audio");

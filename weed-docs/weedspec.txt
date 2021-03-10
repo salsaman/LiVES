@@ -375,6 +375,7 @@ Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
 
 == WEED CORE FUNCTIONS ==
 
+
  * weed_plant_t *weed_plant_new (int32_t plant_type) : allocates and returns a new Weed plant
    with a single leaf, "type" with a single element of type WEED_SEED_INT, whose value defines
    the type of the plant.
@@ -458,15 +459,14 @@ Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
     If key is NULL or zero length, it is equivalent to getting the "type" leaf.
 
     If the leaf exists but the element does not exist, then WEED_ERROR_NOSUCH_ELEMENT is returned.
-    Note: prior to API version 200, this would erroneously return WEED_ERROR_NOSUCH_LEAF. In the unlikely case that this behaviour
-    is still required (e.g. for backwards compatibility), then set the api version < 200 in weed_init().
 
     the value of the leaf element will be copied to value (IF value is non-NULL) using standard memcpy(),
     and WEED_SUCCESS will be returned.
 
     Note:
     For WEED_SEED_STRING, it may be necessary to first call weed_leaf_element size()
-    and allocate a char array of at least the returned value + 1 (to hold the terminating NUL) in which to receive the value.
+    and allocate a char array of at least the returned number in which to receive the value.
+    A returned value of zero indicates a NULL string has been stored.
 
     
     Note:
@@ -527,7 +527,10 @@ Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
 
    If key is NULL or zero length, it is considered equivalent to the "type" leaf.
 
-   For WEED_SEED_STRING, returns the string length in bytes (without any terminating NUL); equivalent to strlen().
+   NOTE: THE FOLLOWING BEHAVIOR CHANGED IN ABI 201 (see the NOTES below)
+   - For WEED_SEED_STRING, returns the string length in bytes (INCLUDING the terminating NUL); equivalent to strlen() + 1.
+   - A size of 1 indicates an empty string, a size of 0 indicates a NULL string.
+
 
    if the seed_type is WEED_SEED_VOIDPTR or WEED_SEED_FUNCPTR and the value is NULL, weed_size_t(0) is returned.
    otherwise it will return WEED_VOIDPTR_SIZE or WEED_FUNCPTR_SIZE respectively.
@@ -645,6 +648,15 @@ A Weed host has access to additional functions which are not defined for or inte
 
 ** Note that the threadsafe version of libweed requires exclusive use of the private data,
 and trying to set it with that version of the library will return an error.
+
+
+NOTE about weed_leaf_element_size():
+   Prior to ABI 201, the length returned for a WEED_SEED_STRING element was the byte length without the terminating NUL byte.
+   However this was an oversight, as it did not allow for NULL strings to be stored. In view of this, the spec. was amended so that
+   the value returned for WEED_SEED_STRING is now the length INCLUDING the terminating NUL. This means that empty strings have a length of 1,
+   and NULL strings have a length of 0.
+   The section about libweed below discusses how this impacts code implementations.
+
 
 
 == LEAF FLAGS ==
@@ -826,6 +838,18 @@ on an average linux system and the weed.h header contains roughly 250 lines
 (including whitespace, comments and preamble).
 
 
+== LIBWEED 1.X AND LIBWEED 2.X ==
+libweed 2.0 and above implement the change in weed_seed_element_size() for WEED_SEED_STRING introduced in Weed API 201,
+as explained above. In libweed 1.x, the size returned for a string is the byte size MINUS the teminating NUL, and
+NULL strings are handled as if they were empty strings.
+
+However this eventually turned out to be an ovesight, as extended use of libweed
+required NULL strings to be handled separately. In view of this, the major version number of libweed was increased from 1 to 2.
+- libweed 1.0 will always adhere to the old behvaior, whereas libweed 2.0 adopts the new behavior selectively.
+If api vesion 201 or higher is passed into weed_init(), then the new behaviour is enabled.
+If api 200 or lower is passed, then the old behaviour is retained, UNLESS the flagbit WEED_INIT_ALLBUGFIXES is set, in which
+case the new behaviour is backported to the older API.
+
 
 
 == GETTING/SETTING LEAF VALUES ==
@@ -860,9 +884,38 @@ If the minimum version which the host supports is higher than this, then the imp
 After a successful call to weed_init(), this function returns the ABI version which was specified in that function.
 
 
+The following two functions were added in libweed 2.0:
+
+    int weed_set_memory_funcs(weed_malloc_f malloc_func, weed_free_f free_func);
+
+example: weed_set_memory_funcs(my_malloc, my_free);
+
+This function allows the host to define the memory functions to be utilized internally in libweed. Use of this function is
+optional and it may be called at any time. weed_plants created with one set of functions may not function correctly
+if the new functions are incompatible. The return value is always zero.
+
+   int weed_set_slab_funcs(libweed_slab_alloc_f slab_alloc, libweed_slab_unalloc_f slab_unalloc,
+				 libweed_slab_alloc_and_copy_f slab_alloc_and_copy);
+
+example: weed_set_slab_funcs(g_slice_alloc, g_slice_free1, g_slice_copy);
+
+This function allows the host to define the memory functions to be utilized internally in libweed. The difference
+between this function and the previous one is that this version is intended for slab memory allocators. The only
+functional difference is that slab_unalloc takes a size_t parameter as its second argument. This MUST be the same size
+passed to slab_alloc when initializing the pointer. slab_alloc_and_copy, is an optional function. If NULL then
+a fallback function will be used which first calls slab_alloc and then memcpy. The function needs to be set in the case that
+memcpy cannot be used.
+
+Use of this function is optional and it may be called at any time;
+weed_plants created with one set of functions may not function correctly if the new functions are incompatible.
+The return value is always zero.
+
+
+
+
 == weed_init() ==
 
-   Prior to calling any other Weed functions in the reference libweed, a program (host, but not a plugin) must call:
+   Prior to calling any libweed functions other than those listed above, a program (host, but not a plugin) must call:
 
  * weed_error_t weed_init(int32_t api_version, uint64_t flags)
 
@@ -877,14 +930,16 @@ After a successful call to weed_init(), this function returns the ABI version wh
      detailed above.
 
 Flags:
-	as of Weed ABI version 200, the current flag bits are defined for the flags passed to weed_init().
+	as of Weed ABI version 201, the flag bits defined for the flags passed to weed_init() are:
 
-	WEED_INIT_FLAG_STD_STRINGFUNCS		(1<<0) ::
-	may be set during development to avoid spurious error warnings in valgrind etc.
-	may have a minor detrimental affect on performanc
-
-	WEED_INIT_FLAG_ALLBUGFIXES			(1<<1)
+	WEED_INIT_ALLBUGFIXES			(1 << 0)
 	set this flagbit to enable potential backported bugfixes which may theoretically impact existing behaviour, as explained below
+
+
+	WEED_INIT_DEBUG_MODE			(1 << 1)
+	outputs debug information on stderr.
+
+	Additional flagbits may be added in future versions of the ABI.
 
 
  == BUGFIXES ==
@@ -896,7 +951,7 @@ Flags:
 
      If a code amendment is likely to affect the behaviour of existing programs in an adverse way - for example if programs
      rely on the old buggy implementation to function correctly, then the ABI version will be increased and the bugfix applied in the
-     new ABI version. Such amendments will only be applied in prior ABI versions if WEED_INIT_FLAGS_ALLBUGFIXES is set
+     new ABI version. Such amendments will only be applied in prior ABI versions if WEED_INIT_ALLBUGFIXES is set
      in the flags when calling weed_init().
      Use of this flagbit allows a host to use the bugfixed version without updating the ABI version and thus continue using existing plugins.
      There is a chance that this  may cause problems with older plugins in cases where they rely on the buggy implementation to function
@@ -1188,10 +1243,10 @@ weed/weed-effects.h // AFTER weed.h
 and for a video effect:
 weed/weed-palettes.h // before or after any other headers
 
-If plugins wish to use weed-utils then they should #include weed/weed-utils AFTER weed-plugin.h.
+If plugins wish to use weed-utils then they should #include weed/weed-utils.h AFTER weed-plugin.h.
 
-Plugins should NOT be linked directly with libweed or libweed-utils, as they would be using the host version of the core
-functions. weed-utils.h contains a small amount of C code, which replicates some of the functions of libweed-utils for plugins.
+Plugins should NOT be linked directly with libweed or libweed-utils, as they will automaticlly use the functions loaded by the host.
+weed-utils.h contains a small amount of C code, which replicates some of the functions of libweed-utils for plugins.
 The inclusion of this header is optional, but it provides typecast getters and setters for for single values and arrays.
 
 TODO: allow disabling of the code inclusion.
@@ -1202,10 +1257,15 @@ The reason for including the code is due to the fact that if the plugins dynamic
 be running the host versions of the core functions. In addition, dynamic libraries (i.e. plugins) cannot easily be linked with static
 libraries.
 
-weed-plugin-utils.c is crafted in such a way that it does not require any Weed headers or libriaries other than weed-plugin-utils.h
+weed-plugin-utils.c is crafted in such a way that it does not REQUIRE any Weed headers or libriaries other than weed-plugin-utils.h
+weed-plugin-utils.h itself includes weed.h, weed-palettes.h and weed-effects.h
 
 In addition, #defines are used to enable / disable specific groups of functions, so that the plugins are not bloated with unnecessary
 code. The typical size of a stripped plugin on compiled with gcc on Linux is 10 -30 kilobytes.
+
+If weed-plugin-utils.h is included, then it is only necessary for a plugin to #include weed/weed-plugin.h first.
+
+
 
 
 == WEED-COMPAT.H ==

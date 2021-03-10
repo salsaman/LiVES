@@ -1962,8 +1962,16 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
       if (prefs->pb_quality == PB_QUALITY_LOW) {
         // for low quality we pick the smallest dimensions
-        if (mininwidth == -1 || inwidth < mininwidth) mininwidth = inwidth;
-        if (mininheight == -1 || inheight < mininheight) mininheight = inheight;
+        if (mininwidth == -1) {
+          mininwidth = inwidth;
+          mininheight = inheight;
+        }
+        if (inwidth < mininwidth || inheight < mininheight) {
+          // use a smaller size for one dimension, but maintain aspect ratio
+          calc_midspect(mininwidth, mininheight, &inwidth, &inheight);
+          mininwidth = inwidth;
+          mininheight = inheight;
+        }
       }
     }
     j++;
@@ -7652,7 +7660,6 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   palette = WEED_PALETTE_END;
 
   if (clipno == mainw->current_file) is_bg = FALSE;
-
   /*
     - just as with normal filters,
     - if the channel template flags have WEED_FILTER_REINIT_ON_PALETTE_CHANGE, then we want to minimise palette changes,
@@ -7725,41 +7732,56 @@ matchvals:
   }
 
   xwidth = width = weed_channel_get_width(channel);
-  //cpalette = weed_channel_get_palette(channel);
-  //xwidth = width /= weed_palette_get_pixels_per_macropixel(cpalette); // convert width to channel macropixels (????)
   xheight = height = weed_channel_get_height(channel);
 
   if (can_change || (!(channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE) && !(channel_flags
                      & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE))) {
-    // if it's in the bg, and letterboxing, set size to the fg clip
+    // if it's in the bg, and letterboxing, set size to maxspect fg clip
     // or if it's fg or bg and we are playing high quality
     if (mainw->num_tr_applied > 0 && !num_in_alpha) {
       if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
           && mainw->files[mainw->blend_file]->ext_src == inst) {
-        boolean is_lbox = FALSE;
         int lb_width = mainw->files[mainw->playing_file]->hsize;
         int lb_height = mainw->files[mainw->playing_file]->vsize;
+        int opwidth, opheight;
+        boolean can_resize = FALSE;
+
+        if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) != 0) can_resize = TRUE;
+
+        get_player_size(&opwidth, &opheight);
+
         if ((mainw->multitrack && !mainw->multitrack->is_rendering && prefs->letterbox_mt)
             || (!mainw->multitrack && prefs->letterbox && (!mainw->is_rendering || mainw->preview_rendering))) {
-          boolean can_resize = FALSE;
-          int opwidth, opheight;
-          get_player_size(&opwidth, &opheight);
           if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) != 0) can_resize = TRUE;
+
           get_letterbox_sizes(&opwidth, &opheight, &lb_width, &lb_height, can_resize);
-          is_lbox = TRUE;
+
+          opwidth = lb_width;
+          opheight = lb_height;
+          can_resize = FALSE;
+
+          if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_WIDTH)) {
+            lb_width = weed_get_int_value(chantmpl, WEED_LEAF_HOST_WIDTH, NULL);
+          } else lb_width = DEF_GEN_WIDTH;
+          if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_HEIGHT)) {
+            lb_height = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
+          } else lb_height = DEF_GEN_HEIGHT;
         }
-        if (is_lbox || (prefs->pb_quality == PB_QUALITY_HIGH && (lb_width > width || lb_height > height))) {
+
+        if ((mainw->multitrack && !mainw->multitrack->is_rendering && prefs->letterbox_mt)
+            || (!mainw->multitrack && prefs->letterbox && (!mainw->is_rendering || mainw->preview_rendering))) {
+          get_letterbox_sizes(&opwidth, &opheight, &lb_width, &lb_height, can_resize);
           xwidth = lb_width;
           xheight = lb_height;
         }
       }
     } else {
-      if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
-          && prefs->pb_quality == PB_QUALITY_HIGH && (mainw->files[mainw->blend_file]->hsize > width
-              || mainw->files[mainw->blend_file]->vsize > height)) {
-        xwidth = mainw->files[mainw->blend_file]->hsize;
-        xheight = mainw->files[mainw->blend_file]->vsize;
-      }
+      if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_WIDTH)) {
+        xwidth = weed_get_int_value(chantmpl, WEED_LEAF_HOST_WIDTH, NULL);
+      } else xwidth = DEF_GEN_WIDTH;
+      if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_HEIGHT)) {
+        xheight = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
+      } else xheight = DEF_GEN_HEIGHT;
     }
   }
 
@@ -7787,9 +7809,11 @@ matchvals:
         xheight != weed_channel_get_height(channel)) {
       int nplanes;
       void **pd = weed_channel_get_pixel_data_planar(channel, &nplanes);
+      g_print("size is %d X %d\n", xwidth, xheight);
       for (int j = 0; j < nplanes; j++) lives_free(pd[j]);
       lives_free(pd);
       weed_set_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
+      g_print("set channel size to %d X %d\n", xwidth, xheight);
       set_channel_size(filter, channel, xwidth, xheight);
     }
   }
@@ -11111,12 +11135,13 @@ static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, 
           weed_leaf_get(plant, key, j, value);
         }
       } else {
+        if (vlen == 0) value = NULL;
         // need to create a buffer to receive the string + terminating NULL
-        value = lives_malloc((size_t)(vlen + 1));
+        value = lives_malloc((size_t)(vlen));
         // weed_leaf_get() will assume it's a pointer to a variable of the correct type, and fill in the value
         weed_leaf_get(plant, key, j, &value);
+        vlen--; // for backwards compat
       }
-
       if (!mem && weed_leaf_seed_type(plant, key) > 64) {
         // save voidptr as 64 bit
         valuer = (uint64_t *)lives_malloc(sizeof(uint64_t));

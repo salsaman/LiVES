@@ -454,23 +454,42 @@ LIVES_GLOBAL_INLINE int lives_open_buffered_rdonly(const char *pathname) {
 }
 
 
+#ifdef TEST_MMAP
+#include <sys/mman.h>
+#endif
+
 boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   off_t fsize = get_file_size(fd) - skip, bufsize = smbytes, res;
   if (fsize > 0) {
-    fbuff->orig_size = fsize + skip;
+#ifdef TEST_MMAP
+    off_t offs = skip;
+    void *p = mmap(NULL, fsize, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (p == MAP_FAILED) {
+      perror("fubar");
+      abort();
+    }
+#else
     lseek(fd, skip, SEEK_SET);
+#endif
+    fbuff->orig_size = fsize + skip;
     fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
     //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
     while (fsize > 0) {
       if (!fbuff->slurping) break; // file was closed
       if (bufsize > fsize) bufsize = fsize;
+#ifdef TEST_MMAP
+      lives_memcpy(fbuff->buffer + fbuff->offset, p + offs, bufsize);
+      res = bufsize;
+      offs += bufsize;
+#else
       res = lives_read(fbuff->fd, fbuff->buffer + fbuff->offset, bufsize, TRUE);
-      //g_printerr("slurp for %d, %s with size %ld, read %lu bytes, remain\n", fd, fbuff->pathname, res, fsize);
+      //g_printerr("slurp for %d, %s with size %ld, read %lu bytes, remain\n", fd, fbuff->pathname, bufsize, fsize);
       if (res < 0) {
         fbuff->eof = TRUE;
         return FALSE;
       }
+#endif
       if (res > fsize) res = fsize;
       fbuff->offset += res;
       fsize -= res;
@@ -478,8 +497,11 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
       else if (fsize >= medbytes && bufsize >= smedbytes) bufsize = medbytes;
       else if (fsize >= smedbytes) bufsize = smedbytes;
       //g_printerr("slurp %d oof %ld %ld remain %lu  \n", fd, fbuff->offset, fsize, ofsize);
-      if (mainw->disk_pressure > 0.) mainw->disk_pressure = check_disk_pressure(0.);
+      //if (mainw->disk_pressure > 0.) mainw->disk_pressure = check_disk_pressure(0.);
     }
+#ifdef TEST_MMAP
+    munmap(p, fsize);
+#endif
   }
   if (fbuff) fbuff->eof = TRUE;
   return TRUE;

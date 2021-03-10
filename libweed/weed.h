@@ -175,6 +175,8 @@ int32_t weed_get_abi_version(void);
 
 #ifdef __WEED_HOST__
 weed_error_t weed_init(int32_t abi, uint64_t init_flags);
+int weed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_free);
+int weed_set_slab_funcs(void *alloc, void *unalloc, void *alloc_and_copy);
 #endif
 
 #endif

@@ -445,6 +445,7 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     old_file = mainw->current_file; // we could have rendered to a new file
 
   mainw->current_file = new_file;
+  migrate_from_staging(mainw->current_file);
 
   // close this temporary clip
   close_current_file(old_file);

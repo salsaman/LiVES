@@ -250,6 +250,9 @@ typedef struct {
   // may cause problems if equal to aserver_cname and drivers differ
   char jack_tserver_sname[JACK_PARAM_STRING_MAX];
 
+  // for info only
+  char jack_def_server_name[JACK_PARAM_STRING_MAX];
+
   const char *jack_tdriver, *jack_adriver;
   LiVESList *jack_tslaves, *jack_aslaves;
 

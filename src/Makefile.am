@@ -136,7 +136,7 @@ endif
 if DISABLE_GSLICE
 if !NEED_LOCAL_WEED
 libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@
-libweed_CFLAGS = @WEED_CFLAGS@
+libweed_CFLAGS = @WEED_CFLAGS@ -DDISABLE_GSLICE=1
 else
 libweed_LDADD = $(abs_top_srcdir)/libweed/libweed.la $(abs_top_srcdir)/libweed/libweed-utils.la
 libweed_CFLAGS = -DNEED_LOCAL_WEED=1
@@ -197,8 +197,13 @@ giw_LDADD = -lm
 giw_CFLAGS = -DENABLE_GIW=1
 endif
 
+if !DISABLE_RPMALLOC
+rpmalloc_SOURCES = rpmalloc.c rpmalloc.h
+rpmalloc_CFLAGS = -DUSE_RPMALLOC=1
+endif
+
 lives_exe_SOURCES = \
-	rpmalloc.c rpmalloc.h \
+	$(rpmalloc_SOURCES)\
 	widget-helper.c widget-helper.h \
 	widget-helper-gtk.h widget-helper-qt.h \
 	alarms.c alarms.h \

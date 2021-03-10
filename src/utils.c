@@ -306,6 +306,8 @@ void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
   // calculate maxspect (maximum size which maintains aspect ratio)
   // of cwidth, cheight - given restrictions rwidth * rheight
 
+  // i.e both dimensions will expand or shrink to fit in the bounding rectangle
+
   double aspect;
   if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
 
@@ -327,6 +329,8 @@ void calc_minspect(int rwidth, int rheight, int *cwidth, int *cheight) {
   // calculate minspect (maximum size which conforms to aspect ratio of
   // of rwidth, rheight) - given restrictions cwidth * cheight
 
+  // i.e. one dimension will remain the same. the other will shrink
+
   double aspect, dheight;
 
   if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
@@ -347,6 +351,8 @@ void calc_minspect(int rwidth, int rheight, int *cwidth, int *cheight) {
 void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight) {
   // calculate midspect (minimum size which conforms to aspect ratio of
   // of rwidth, rheight) - which contains cwidth, cheight
+
+  // ie. one of the dimensions will stay unchanged, the other will grow
 
   double aspect, dheight;
 
@@ -377,6 +383,7 @@ void init_clipboard(void) {
       mainw->error = TRUE;
       return;
     }
+    migrate_from_staging(CLIPBOARD_FILE);
   } else {
     // experimental feature - we can have duplicate copies of the clipboard with different palettes / gamma
     for (int i = 0; i < mainw->ncbstores; i++) {
@@ -857,6 +864,13 @@ LIVES_GLOBAL_INLINE char *make_image_file_name(lives_clip_t *sfile, frames_t fra
   ret = lives_build_filename(prefs->workdir, sfile->handle, fname, NULL);
   lives_free(fname);
   return ret;
+}
+
+
+LIVES_GLOBAL_INLINE char *make_image_short_name(lives_clip_t *sfile, frames_t frame, const char *img_ext) {
+  const char *ximg_ext = img_ext;
+  if (!ximg_ext) ximg_ext = get_image_ext_for_type(sfile->img_type);
+  return lives_strdup_printf("%08d.%s", frame, ximg_ext);
 }
 
 
@@ -1891,6 +1905,7 @@ boolean prepare_to_play_foreign(void) {
   }
 
   mainw->current_file = new_file;
+  migrate_from_staging(mainw->current_file);
 
   if (mainw->rec_achans > 0) {
     cfile->arate = cfile->arps = mainw->rec_arate;

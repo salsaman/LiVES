@@ -726,9 +726,6 @@ LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, live
   fxdialog = on_fx_pre_activate(rfx, FALSE, NULL);
   if (fxdialog) {
     if (menuitem == LIVES_MENU_ITEM(mainw->resize_menuitem)) add_resnn_label(LIVES_DIALOG(fxdialog->dialog));
-    /* do { */
-    /*   resp = lives_dialog_run(LIVES_DIALOG(fxdialog->dialog)); */
-    /* } while (resp == LIVES_RESPONSE_RETRY); */
   }
 }
 
@@ -1011,6 +1008,7 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     param_demarshall(rfx, retvals, TRUE, TRUE);
     lives_list_free_all(&retvals);
   }
+  migrate_from_staging(mainw->current_file);
   return fx_dialog[didx];
 }
 

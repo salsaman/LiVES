@@ -458,8 +458,6 @@ static void save_mt_autoback(lives_mt *mt) {
   // this is called from an idle function - if the specified amount of time has passed and
   // the clip has been altered
 
-  struct timeval otv;
-
   char *fname = lives_strdup_printf("%s.%d.%d.%d.%s", LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
                                     capable->mainpid, LIVES_FILE_EXT_LAYOUT);
   char *asave_file = lives_build_filename(prefs->workdir, fname, NULL);
@@ -515,8 +513,8 @@ static void save_mt_autoback(lives_mt *mt) {
 
   mt->auto_back_time = lives_get_current_ticks();
 
-  gettimeofday(&otv, NULL);
-  tmp = lives_datetime(otv.tv_sec, TRUE);
+  tmp = get_current_timestamp();
+
   d_print("Auto backup of timeline at %s\n", tmp);
   lives_free(tmp);
 }
@@ -13593,12 +13591,14 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     mt->pr_audio = TRUE;
     had_audio = mt->has_audio_file;
     if (had_audio) {
+      char *temp_backend = use_staging_dir_for(mt->render_file);
       lives_rm(mainw->files[mt->render_file]->info_file);
       mainw->error = FALSE;
       mainw->cancelled = CANCEL_NONE;
-      com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, mainw->files[mt->render_file]->handle);
+      com = lives_strdup_printf("%s backup_audio \"%s\"", temp_backend, mainw->files[mt->render_file]->handle);
       lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
       lives_free(com);
+      lives_free(temp_backend);
       handle_backend_errors(FALSE);
       if (mainw->error) return FALSE;
     }
@@ -13710,6 +13710,9 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 	}}}}
   // *INDENT-ON*
 
+
+  migrate_from_staging(mt->render_file);
+
   if (render_to_clip(FALSE, FALSE)) {
     // rendering was successful
 
@@ -13817,14 +13820,16 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
     mainw->event_list = NULL;
     if (mt->pr_audio) {
-      com = lives_strdup_printf("%s undo_audio \"%s\"", prefs->backend_sync, cfile->handle);
+      char *temp_backend = use_staging_dir_for(mt->render_file);
+      com = lives_strdup_printf("%s undo_audio \"%s\"", temp_backend, cfile->handle);
       lives_system(com, FALSE);
       lives_free(com);
+      lives_free(temp_backend);
       mt->has_audio_file = had_audio;
     } else {
       // remove subdir
       do_threaded_dialog(_("Cleaning up..."), FALSE);
-      curworkdir = lives_build_filename(prefs->workdir, cfile->handle, NULL);
+      curworkdir = get_clip_dir(mainw->current_file);
       lives_rmdir(curworkdir, TRUE);
       end_threaded_dialog();
     }
@@ -19124,13 +19129,10 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
       tmp = lives_build_filename(LAYOUTS_DIR(new_set_name), (char *)map->data + chlen, NULL);
       if (lives_file_test(tmp, LIVES_FILE_TEST_EXISTS)) {
         // prevent duplication of layouts
+        char *flnm = lives_strdup_printf("%s-%s", old_set_name, (char *)map->data + chlen);
         lives_free(tmp);
-        if (*future_prefs->workdir)
-          tmp = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
-                                    future_prefs->workdir, new_set_name, old_set_name, (char *)map->data + chlen);
-        else
-          tmp = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
-                                    prefs->workdir, new_set_name, old_set_name, (char *)map->data + chlen);
+        tmp = lives_build_filename(prefs->workdir, new_set_name, flnm, NULL);
+        lives_free(flnm);
         lives_mv((const char *)map->data, tmp);
       }
       lives_free((livespointer)map->data);
@@ -19153,8 +19155,9 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
               size_t origlen = strlen(array[0]);
               char *tmp2 = lives_build_filename(prefs->workdir, new_set_name, LAYOUTS_DIRNAME, array[0] + chlen, NULL);
               if (lives_file_test(tmp2, LIVES_FILE_TEST_EXISTS)) {
-                tmp2 = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
-                                           prefs->workdir, new_set_name, old_set_name, array[0] + chlen);
+                char *flnm = lives_strdup_printf("%s-%s", old_set_name, array[0] + chlen);
+                tmp2 = lives_build_filename(prefs->workdir, new_set_name, flnm, NULL);
+                lives_free(flnm);
               }
               tmp = lives_strdup_printf("%s%s", tmp2, (char *)map->data + origlen);
               lives_free(tmp2);
@@ -19176,9 +19179,10 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
       if (strcmp(mainw->string_constants[LIVES_STRING_CONSTANT_CL], (char *)map->data + chlen)) {
         tmp = lives_build_filename(prefs->workdir, new_set_name, LAYOUTS_DIRNAME, (char *)map->data + chlen, NULL);
         if (lives_file_test(tmp, LIVES_FILE_TEST_EXISTS)) {
+          char *flnm = lives_strdup_printf("%s-%s", old_set_name, (char *)map->data + chlen);
+          tmp = lives_build_filename(prefs->workdir, new_set_name, flnm, NULL);
+          lives_free(flnm);
           lives_free(tmp);
-          tmp = lives_strdup_printf("%s" LIVES_DIR_SEP "%s" LIVES_DIR_SEP LAYOUTS_DIRNAME LIVES_DIR_SEP "%s-%s",
-                                    prefs->workdir, new_set_name, old_set_name, (char *)map->data + chlen);
         }
         lives_free((livespointer)map->data);
         map->data = tmp;

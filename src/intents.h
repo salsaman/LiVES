@@ -65,10 +65,13 @@ struct _object_t {
 };
 
 enum {
+  // some common intentions
+  // internal or (possibly) non-functional types
   LIVES_INTENTION_UNKNOWN,
-  LIVES_INTENTION_IDENTITY, // do nothing
+  LIVES_INTENTION_NOTHING,
+  LIVES_INTENTION_UNDO,
+  LIVES_INTENTION_REDO,
 
-  // some default intentions
   // function like
   LIVES_INTENTION_CREATE_INSTANCE,
   LIVES_INTENTION_DESTROY,
@@ -79,9 +82,7 @@ enum {
   LIVES_INTENTION_GET_VALUE,
   LIVES_INTENTION_SET_VALUE,
 
-  // internal type actions
-  LIVES_INTENTION_UNDO,
-  LIVES_INTENTION_REDO,
+  // specialised intentions
 
   // video players
   LIVES_INTENTION_PLAY = 0x00000400, // value fixed for all time, order of followin must not change (see videoplugin.h)
@@ -117,8 +118,9 @@ enum {
 };
 
 // aliases
-#define LIVES_INTENTION_IGNORE LIVES_INTENTION_IDENTITY
-#define LIVES_INTENTION_LEAVE LIVES_INTENTION_IDENTITY
+#define LIVES_INTENTION_IGNORE LIVES_INTENTION_NOTHING
+#define LIVES_INTENTION_LEAVE LIVES_INTENTION_NOTHING
+#define LIVES_INTENTION_SKIP LIVES_INTENTION_NOTHING
 
 #define LIVES_INTENTION_MOVE LIVES_INTENTION_EXPORT_LOCAL
 
@@ -202,13 +204,6 @@ typedef int32_t lives_intention;
 
 // TODO - move into cliphandler.c
 
-// aliases for object states
-#define CLIP_STATE_NOT_LOADED 	OBJECT_STATE_NULL
-#define CLIP_STATE_READY	OBJECT_STATE_NORMAL
-
-// txparams
-#define CLIP_PARAM_STAGING_DIR "staging_dir"
-
 // when object is destroyed it should add a ref to status to be returned, and set state to DESTROYED before freeing itself
 struct _obj_status {
   int state;
@@ -245,6 +240,11 @@ typedef struct {
 #define LIVES_OBJECT_STATUS_DESTROYED 32768
 
 typedef weed_param_t lives_req_t;
+
+weed_plant_t *int_req_init(const char *name, int def, int min, int max);
+weed_plant_t *boolean_req_init(const char *name, int def);
+weed_plant_t *double_req_init(const char *name, double def, double min, double max);
+weed_plant_t *string_req_init(const char *name, const char *def);
 
 // may become functions
 typedef boolean lives_cond_t;
@@ -353,8 +353,6 @@ void lives_tx_map_free(LiVESTransformList **transform_list_pp);
 void lives_intentparams_free(lives_intentparams_t *p);
 void lives_object_status_free(lives_object_status_t *st);
 void lives_object_transform_free(lives_object_transform_t *tx);
-
-lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intention intent);
 
 #endif
 

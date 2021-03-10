@@ -272,11 +272,11 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 
 #ifdef ENABLE_JACK
 LIVES_LOCAL_INLINE void jack_warn(boolean is_trans) {
-  do_jack_noopen_warn(is_trans);
+  do_jack_no_startup_warn(is_trans);
   if (prefs->startup_phase == 4) {
-    do_jack_noopen_warn2();
+    do_jack_setup_warn();
   } else {
-    do_jack_noopen_warn4(-1);
+    if (prefs->startup_phase == 0) do_jack_restart_warn(-1);
     // if we have backup config, restore from it
   }
   set_int_pref(PREF_JACK_OPTS, 0);
@@ -2239,16 +2239,20 @@ static void lives_init(_ign_opts *ign_opts) {
           // TODO - allow disable auto start and + manual start
           // or reconfig
           // if we have backup config, allow restore
-          do_jack_noopen_warn(TRUE);
+          do_jack_no_startup_warn(TRUE);
+          future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
+          set_int_pref(PREF_JACK_OPTS, 0);
         } else {
-          // TODO - allow retry connection, change srevr name / config
-          do_jack_noopen_warn3(TRUE);
+          // TODO - allow retry connection, change server name / config
+          do_jack_no_connect_warn(TRUE);
+          if (prefs->startup_phase == 0)
+            do_jack_restart_warn(prefs->jack_opts == 0 ?
+                                 JACK_OPTS_START_TSERVER | JACK_OPTS_ENABLE_TCLIENT : -1);
         }
         if (prefs->startup_phase == 4) {
-          do_jack_noopen_warn2();
+          // this should never happen, unless the user ran first setup and pssed -jackopts on the cmdline
+          do_jack_setup_warn();
         }
-        future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
-        set_int_pref(PREF_JACK_OPTS, 0);
         lives_exit(0);
       }
       if (ign_opts->ign_jackopts) set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
@@ -2283,21 +2287,22 @@ static void lives_init(_ign_opts *ign_opts) {
 
         if (!mainw->jackd) {
           // failed to connect
-          if (prefs->jack_opts & JACK_OPTS_START_ASERVER)
+          if (prefs->jack_opts & JACK_OPTS_START_ASERVER) {
             // TODO - allow disable auto start and + manual start
             // or reconfig
             // if we have backup config, allow restore
-            do_jack_noopen_warn(FALSE);
-          else {
+            do_jack_no_startup_warn(FALSE);
+            future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
+            set_int_pref(PREF_JACK_OPTS, 0);
+          } else {
             // TODO - allow retry connection, change serevr name / config
-            do_jack_noopen_warn3(FALSE);
-            do_jack_noopen_warn4(prefs->jack_opts == 0 ? JACK_OPTS_START_ASERVER : -1);
+            do_jack_no_connect_warn(FALSE);
+            if (prefs->startup_phase == 0)
+              do_jack_restart_warn(prefs->jack_opts == 0 ? JACK_OPTS_START_ASERVER : -1);
           }
           if (prefs->startup_phase == 4) {
-            do_jack_noopen_warn2();
+            do_jack_setup_warn();
           }
-          future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
-          set_int_pref(PREF_JACK_OPTS, 0);
           lives_exit(0);
         }
 
@@ -3199,7 +3204,7 @@ retry_configfile:
     if (xs < 5) return capable;
 
     lives_chomp(buffer);
-    numtok = get_token_count(buffer, ' ') ;
+    numtok = get_token_count(buffer, ' ');
     if (numtok < 2) return capable;
 
     array = lives_strsplit(buffer, " ", numtok);
@@ -3771,18 +3776,19 @@ static boolean lives_startup(livespointer data) {
     }
   }
 
+  // will advance startup phase to 3, unless skipped
   if (prefs->startup_phase > 0 && prefs->startup_phase < 3) {
     if (!do_startup_tests(FALSE)) {
       lives_exit(0);
     }
-    prefs->startup_phase = 3;
-    set_int_pref(PREF_STARTUP_PHASE, 3);
+
+    if (prefs->startup_phase == 3) set_int_pref(PREF_STARTUP_PHASE, prefs->startup_phase);
 
     // we can show this now
     if (prefs->show_splash) splash_init();
   }
 
-  if (newconfigfile || prefs->startup_phase == 3) {
+  if (newconfigfile || prefs->startup_phase == 3 || prefs->startup_phase == 2) {
     /// CREATE prefs->config_datadir, and default items inside it
     build_init_config(prefs->config_datadir, ign_opts.ign_config_datadir);
   }
@@ -4335,9 +4341,22 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   }
 
 #ifndef USE_STD_MEMFUNCS
+#ifdef USE_RPMALLOC
+  weed_set_memory_funcs(rpmalloc, rpfree);
+#else
+#ifndef DISABLE_GSLICE
+#if GLIB_CHECK_VERSION(2, 14, 0)
+  weed_set_slab_funcs(lives_slice_alloc, lives_slice_unalloc, lives_slice_alloc_and_copy);
+#else
+  weed_set_slab_funcs(lives_slice_alloc, lives_slice_unalloc, NULL);
+#endif
+#else
+  weed_set_memory_funcs(lives_malloc, lives_free);
+#endif // DISABLE_GSLICE
+#endif // USE_RPMALLOC
   weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
-#endif
-#endif
+#endif // USE_STD_MEMFUNCS
+#endif //IS_LIBLIVES
 
   // backup the core functions so we can override them
   _weed_plant_new = weed_plant_new;
@@ -7183,6 +7202,7 @@ boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char 
     int height, int tpalette, const char *img_ext) {
   LiVESPixbuf *pixbuf = NULL;
   LiVESError *gerror = NULL;
+  char *shmpath = NULL;
   boolean ret = TRUE;
 #ifndef VALGRIND_ON
   boolean is_png = FALSE;
@@ -7204,6 +7224,9 @@ boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char 
   fd = lives_open_buffered_rdonly(fname);
   if (fd < 0) break_me(fname);
   if (fd < 0) return FALSE;
+#ifdef HAVE_POSIX_FADVISE
+  posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+#endif
 #ifndef VALGRIND_ON
   if (is_png) lives_buffered_rdonly_slurp(fd, 8);
   else lives_buffered_rdonly_slurp(fd, 0);
@@ -7317,7 +7340,10 @@ fndone:
 #else
   if (fd >= 0) close(fd);
 #endif
-
+  if (shmpath) {
+    lives_rm(fname);
+    lives_rmdir_with_parents(shmpath);
+  }
   return ret;
 }
 
@@ -8116,6 +8142,11 @@ void close_current_file(int file_to_switch_to) {
         lives_free(temp_backend);
         lives_system(com, TRUE);
         lives_free(com);
+        temp_backend = lives_build_path(LIVES_DEVICE_DIR, LIVES_SHM_DIR, cfile->handle, NULL);
+        if (!lives_file_test(temp_backend, LIVES_FILE_TEST_IS_DIR)) {
+          lives_rmdir_with_parents(temp_backend);
+        }
+        lives_free(temp_backend);
       }
       lives_free(clipd);
       if (cfile->event_list_back) event_list_free(cfile->event_list_back);

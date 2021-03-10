@@ -3085,8 +3085,8 @@ switch_point:
           if (mainw->pred_frame > 0 && mainw->pred_frame < sfile->frames) {
             const char *img_ext = get_image_ext_for_type(sfile->img_type);
             if (!is_virtual_frame(mainw->pred_clip, mainw->pred_frame)) {
-              mainw->frame_layer_preload = lives_layer_new_for_frame(mainw->pred_clip, mainw->pred_frame);
-              pull_frame_threaded(mainw->frame_layer_preload, img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
+              /* mainw->frame_layer_preload = lives_layer_new_for_frame(mainw->pred_clip, mainw->pred_frame); */
+              /* pull_frame_threaded(mainw->frame_layer_preload, img_ext, (weed_timecode_t)mainw->currticks, 0, 0); */
             } else {
               // if the target is a clip-frame we have to decode it now, since we cannot simply decode 2 frames simultaneously
               // (although it could be possible in the future to have 2 clone decoders and have them leapfrog...)

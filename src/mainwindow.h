@@ -431,8 +431,13 @@ enum {
 #define EXEC_GDB "gdb"
 #define EXEC_XWININFO "xwininfo"
 #define EXEC_GCONFTOOL_2 "gconftool-2"
+
 #define EXEC_XDG_SCREENSAVER "xdg-screensaver"
-//#define EXEC_XDG_OPEN "xdg-open"
+#define EXEC_XDG_OPEN "xdg-open"
+#define EXEC_XDG_MIME "xdg-mime"
+#define EXEC_XDG_DESKTOP_ICON "xdg-desktop-icon"
+#define EXEC_XDG_DESKTOP_MENU "xdg-desktop-menu"
+
 #define EXEC_WMCTRL "wmctrl"
 #define EXEC_XDOTOOL "xdotool"
 #define EXEC_PLAY "play"
@@ -599,22 +604,26 @@ enum {
 #define UNREC_CLIPS_DIR "unrecoverable_clips"
 #define UNREC_LAYOUTS_DIR "unrecoverable_layouts"
 
-// directory names
-#define SHARE_DIR "share"
+// directory / subdir names
+#define LIVES_SHARE_DIR "/share"
 #define LIVES_DIR_LITERAL "lives"
-#define DATA_DIR SHARE_DIR "/" LIVES_DIR_LITERAL
+#define LIVES_DATA_DIR LIVES_SHARE_DIR "/" LIVES_DIR_LITERAL
 #define LIVES_DEVICE_DIR "/dev"
 #define LIVES_RUN_DIR "/run"
-#define LIVES_SHM_DIR "shm"
+#define LIVES_SHM_DIR "/shm"
 #define LIVES_DEVNULL LIVES_DEVICE_DIR "/null"
+#define LIVES_USR_DIR "/run"
+
+#define DEF_PREFIX_DIR "/usr"
 
 // system-wide defaults in prefs->prefix_dir
-#define THEME_DIR DATA_DIR "/themes/"
-#define PLUGIN_SCRIPTS_DIR "/" SHARE_DIR "/" LIVES_DIR_LITERAL "/plugins"
+#define THEME_DIR LIVES_DATA_DIR "/themes/"
+#define PLUGIN_SCRIPTS_DIR "/" LIVES_SHARE_DIR "/" LIVES_DIR_LITERAL "/plugins"
 #define PLUGIN_COMPOUND_DIR PLUGIN_SCRIPTS_DIR
-#define DOC_DIR "/" SHARE_DIR "/doc/" LIVES_DIR_LITERAL
+#define DOC_DIR "/" LIVES_SHARE_DIR "/doc/" LIVES_DIR_LITERAL
+#define APPLICATIONS_DIR "/" LIVES_SHARE_DIR "/applications/"
 #define PLUGIN_EXEC_DIR LIVES_DIR_LITERAL "/plugins/"
-#define ICON_DIR "/" SHARE_DIR "/" LIVES_DIR_LITERAL "/icons"
+#define ICON_DIR "/" LIVES_SHARE_DIR "/" LIVES_DIR_LITERAL "/icons"
 #define DESKTOP_ICON_DIR "/share/icons/hicolor/256x256/apps"
 
 // per-user defaults

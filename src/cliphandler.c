@@ -1424,3 +1424,80 @@ void permit_close(int clipno) {
     lives_free(permitname);
   }
 }
+
+
+///////////////////////////// intents ////////////////////////
+typedef struct {
+  int idx;
+  lives_clip_t *sfile;
+} clip_priv_data_t;
+
+
+lives_intentparams_t *_get_params_for_clip_tx(lives_object_t *obj, int state,
+    lives_intention intent) {
+  lives_intentparams_t *iparams = NULL;
+  clip_priv_data_t *priv = (clip_priv_data_t *)obj->priv;
+  if (intent == LIVES_INTENTION_IMPORT_LOCAL) {
+    if (prefs->startup_phase != 0) return NULL;
+    if (capable->writeable_shmdir == MISSING) return NULL;
+    if (state == CLIP_STATE_READY) {
+      if (!*priv->sfile->staging_dir) return NULL;
+    } else get_shmdir();
+    iparams = (lives_intentparams_t *)lives_calloc(sizeof(lives_intentparams_t), 1);
+    iparams->intent = intent;
+    iparams->n_params = 1;
+    iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 1);
+
+    // TODO - need to mark
+    if (state == CLIP_STATE_READY) {
+      iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, priv->sfile->staging_dir);
+    } else {
+      iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, capable->shmdir_path);
+    }
+  } else if (intent == LIVES_INTENTION_DOWNLOAD) {
+    char *uidstr, *tmpdir;
+    iparams = (lives_intentparams_t *)lives_calloc(sizeof(lives_intentparams_t), 1);
+    iparams->intent = intent;
+    iparams->n_params = 1;
+    iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 1);
+
+    // eventually 'ytdl' should come from a param CLIP_STAGING_PARAM and be part of the reqs
+    // go from state none -> state ready / prepared, and in turn, being in state ready will be
+    // a precondition to perform the IMPORT_REMOTE transformation
+    uidstr = lives_strdup_printf("ytdl-%lu", gen_unique_id());
+    tmpdir = get_systmp(uidstr, TRUE);
+    iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, tmpdir);
+    lives_free(tmpdir);
+  }
+  return iparams;
+}
+
+
+// TODO - merge with transform for intent, or whatever it ends up being...
+LIVES_LOCAL_INLINE
+lives_intentparams_t *get_txparams_for_intent(lives_object_t *obj, lives_intention intent) {
+  if (obj->type == OBJECT_TYPE_CLIP) {
+    return _get_params_for_clip_tx(obj, obj->status->state, intent);
+  }
+  return NULL;
+}
+
+
+// placeholder function, until we have proper objects for clips
+lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intention intent) {
+  lives_object_t obj;
+  lives_object_status_t ostat;
+  clip_priv_data_t priv;
+  obj.type = OBJECT_TYPE_CLIP;
+  obj.status = &ostat;
+  obj.priv = &priv;
+  priv.idx = clipno;
+  if (!IS_VALID_CLIP(clipno)) {
+    priv.sfile = NULL;
+    ostat.state = CLIP_STATE_NOT_LOADED;
+  } else {
+    priv.sfile = mainw->files[clipno];
+    ostat.state = CLIP_STATE_READY;
+  }
+  return get_txparams_for_intent(&obj, intent);
+}

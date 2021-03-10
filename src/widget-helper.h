@@ -1210,8 +1210,8 @@ boolean lives_widget_set_show_hide_with(LiVESWidget *, LiVESWidget *other);
 
 boolean lives_image_scale(LiVESImage *, int width, int height, LiVESInterpType interp_type);
 
-LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int x, int y);
-LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int x, int y);
+LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int custom_size);
+LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int custom_size);
 
 boolean lives_widget_queue_draw_if_visible(LiVESWidget *);
 boolean lives_widget_queue_draw_and_update(LiVESWidget *);

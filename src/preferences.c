@@ -288,6 +288,7 @@ int delete_pref(const char *key) {
 
 
 int set_string_pref(const char *key, const char *value) {
+  if (!strcmp(key, PREF_AUDIO_PLAYER)) break_me("apl");
   char *com = lives_strdup_printf("%s set_pref \"%s\" \"%s\"", prefs->backend_sync, key, value);
   int ret = run_prefs_command(com);
   lives_free(com);
@@ -587,21 +588,11 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         do_error_dialogf(_("\nUnable to switch audio players to %s\n%s must be installed first.\n"
                            "See %s\n"), AUDIO_PLAYER_JACK, EXEC_JACKD, JACK_URL);
         goto fail1;
-      } else {
-        if (prefs->audio_player == AUD_PLAYER_JACK && lives_strcmp(audio_player, AUDIO_PLAYER_JACK)) {
-          do_error_dialogf(_("\nSwitching audio players requires restart "
-                             "(%s must not be running)\n"), EXEC_JACKD);
-          // revert text
-          if (prefsw) {
-            lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-            lives_widget_process_updates(prefsw->prefs_dialog);
-          }
-          goto fail1;
-        }
       }
       if (!switch_aud_to_jack(permanent)) {
         // failed
-        do_jack_noopen_warn(FALSE);
+        if (prefs->jack_opts & JACK_OPTS_START_ASERVER) do_jack_no_startup_warn(FALSE);
+        else do_jack_no_connect_warn(FALSE);
         // revert text
         if (prefsw) {
           lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
@@ -678,7 +669,14 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     if (lives_strncmp(newval, prefs->jack_aserver_cfg, PATH_MAX)) {
       lives_snprintf(prefs->jack_aserver_cfg, PATH_MAX, "%s", newval);
       lives_snprintf(future_prefs->jack_aserver_cfg, PATH_MAX, "%s", newval);
-      if (permanent) set_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg);
+      if (prefs->jack_srv_dup) {
+        lives_snprintf(prefs->jack_tserver_cfg, PATH_MAX, "%s", newval);
+        lives_snprintf(future_prefs->jack_tserver_cfg, PATH_MAX, "%s", newval);
+      }
+      if (permanent) {
+        set_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg);
+        mainw->prefs_changed |= PREFS_JACK_CHANGED;
+      }
       goto success1;
     }
     goto fail1;
@@ -688,7 +686,14 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     if (lives_strncmp(newval, prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX)) {
       lives_snprintf(prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX, "%s", newval);
       lives_snprintf(future_prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX, "%s", newval);
-      if (permanent) set_string_pref(PREF_JACK_ACSERVER, prefs->jack_aserver_cname);
+      if (prefs->jack_srv_dup) {
+        lives_snprintf(prefs->jack_tserver_cname, PATH_MAX, "%s", newval);
+        lives_snprintf(future_prefs->jack_tserver_cname, PATH_MAX, "%s", newval);
+      }
+      if (permanent) {
+        set_string_pref(PREF_JACK_ACSERVER, prefs->jack_aserver_cname);
+        mainw->prefs_changed |= PREFS_JACK_CHANGED;
+      }
       goto success1;
     }
     goto fail1;
@@ -698,7 +703,14 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     if (lives_strncmp(newval, prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX)) {
       lives_snprintf(prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX, "%s", newval);
       lives_snprintf(future_prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX, "%s", newval);
-      if (permanent) set_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname);
+      if (prefs->jack_srv_dup) {
+        lives_snprintf(prefs->jack_tserver_sname, PATH_MAX, "%s", newval);
+        lives_snprintf(future_prefs->jack_tserver_sname, PATH_MAX, "%s", newval);
+      }
+      if (permanent) {
+        set_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname);
+        mainw->prefs_changed |= PREFS_JACK_CHANGED;
+      }
       goto success1;
     }
     goto fail1;
@@ -2379,6 +2391,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (prefs->jack_opts != jack_opts) {
     set_int_pref(PREF_JACK_OPTS, jack_opts);
     future_prefs->jack_opts = prefs->jack_opts = jack_opts;
+    mainw->prefs_changed |= PREFS_JACK_CHANGED;
   }
   pref_factory_string(PREF_JACK_ACONFIG, future_prefs->jack_aserver_cfg, TRUE);
   pref_factory_string(PREF_JACK_ACSERVER, future_prefs->jack_aserver_cname, TRUE);
@@ -3707,7 +3720,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                        prefs->msgs_pbdis, LIVES_BOX(hbox), NULL);
   ACTIVE(msgs_pbdis, TOGGLED);
 
-  pixbuf_gui = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_GUI, LIVES_ICON_SIZE_CUSTOM, -1, -1);
+  pixbuf_gui = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_GUI, LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_gui, _("GUI"), LIST_ENTRY_GUI);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_gui);
@@ -3834,7 +3847,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                         prefs->max_disp_vtracks, 5., 15.,
                                         1., 1., 0, LIVES_BOX(hbox), NULL);
 
-  pixbuf_multitrack = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_MULTITRACK, LIVES_ICON_SIZE_CUSTOM, -1, -1);
+  pixbuf_multitrack = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_MULTITRACK, LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_multitrack, _("Multitrack/Render"), LIST_ENTRY_MULTITRACK);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_multitrack);
@@ -3962,7 +3975,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                       (tmp2 = H_("Choose whether multiple images are opened as separate clips or "
                                           "combined into a single clip.\n")));
 
-  pixbuf_decoding = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_DECODING, LIVES_ICON_SIZE_CUSTOM, -1, -1);
+  pixbuf_decoding = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_DECODING, LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_decoding, _("Decoding"), LIST_ENTRY_DECODING);
 
@@ -4270,7 +4283,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_widget_set_sensitive(prefsw->rextaudio, FALSE);
   }
 
-  pixbuf_playback = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_PLAYBACK, LIVES_ICON_SIZE_CUSTOM, -1, -1);
+  pixbuf_playback = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_PLAYBACK, LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_playback, _("Playback"), LIST_ENTRY_PLAYBACK);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_playback);
@@ -4509,7 +4522,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rr_super), prefsw->rr_amicro, FALSE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rr_super), prefsw->rr_ramicro, FALSE);
 
-  pixbuf_recording = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_RECORD, LIVES_ICON_SIZE_CUSTOM, -1, -1);
+  pixbuf_recording = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_RECORD, LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_recording, _("Recording"), LIST_ENTRY_RECORDING);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_recording);
@@ -4584,7 +4597,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   } else prefsw->acodec_combo = NULL;
   widget_opts.packing_height >>= 2;
 
-  pixbuf_encoding = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_ENCODING, LIVES_ICON_SIZE_CUSTOM, -1, -1);
+  pixbuf_encoding = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_ENCODING, LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_encoding, _("Encoding"), LIST_ENTRY_ENCODING);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_encoding);
@@ -4714,7 +4727,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   show_warn_image(prefsw->libvis_entry, _("LiVES was compiled without libvisual support"));
 #endif
 
-  pixbuf_effects = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_EFFECTS, LIVES_ICON_SIZE_CUSTOM, -1, -1);
+  pixbuf_effects = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_EFFECTS, LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_effects, _("Effects"), LIST_ENTRY_EFFECTS);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_effects);
@@ -4897,7 +4910,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_signal_sync_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
                             prefsw->proj_dir_entry);
 
-  pixbuf_directories = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_DIRECTORY, LIVES_ICON_SIZE_CUSTOM, -1, -1);
+  pixbuf_directories = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_DIRECTORY, LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_directories, _("Directories"), LIST_ENTRY_DIRECTORIES);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_directories);
@@ -5146,7 +5159,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                          LIVES_BOX(hbox), NULL);
 
   pixbuf_warnings = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_WARNING,
-                    LIVES_ICON_SIZE_CUSTOM, -1, -1);
+                    LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_warnings, _("Warnings"), LIST_ENTRY_WARNINGS);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_warnings);
@@ -5191,7 +5204,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                LIVES_BOX(hbox), (tmp2 = (_("Frames per second to use when none is specified"))));
   lives_free(tmp); lives_free(tmp2);
 
-  pixbuf_misc = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_MISC, LIVES_ICON_SIZE_CUSTOM, -1, -1);
+  pixbuf_misc = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_MISC, LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_misc, _("Misc"), LIST_ENTRY_MISC);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_misc);
@@ -5474,7 +5487,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_combo_set_active_string(LIVES_COMBO(prefsw->theme_combo), theme);
   lives_free(theme);
 
-  pixbuf_themes = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_THEMES, LIVES_ICON_SIZE_CUSTOM, -1, -1);
+  pixbuf_themes = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_THEMES, LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_themes, _("Themes/Colors"), LIST_ENTRY_THEMES);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_themes);
@@ -5534,7 +5547,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   }
 #endif
 
-  pixbuf_net = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_NET, LIVES_ICON_SIZE_CUSTOM, -1, -1);
+  pixbuf_net = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_NET, LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_net, _("Streaming/Networking"), LIST_ENTRY_NET);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_net);
@@ -5897,7 +5910,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #endif
 
   pixbuf_jack =
-    lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_JACK, LIVES_ICON_SIZE_CUSTOM, -1, -1);
+    lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_JACK, LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_jack, _("Jack Integration"), LIST_ENTRY_JACK);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_jack);
@@ -6067,7 +6080,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   lives_widget_set_sensitive(prefsw->check_midi, capable->has_midistartstop);
 
-  pixbuf_midi = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_MIDI, LIVES_ICON_SIZE_CUSTOM, -1, -1);
+  pixbuf_midi = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_MIDI, LIVES_ICON_SIZE_CUSTOM, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_midi, _("MIDI/Joystick learner"), LIST_ENTRY_MIDI);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_midi);
@@ -6505,6 +6518,10 @@ void pref_change_colours(void) {
 void on_prefs_apply_clicked(LiVESButton * button, livespointer user_data) {
   boolean needs_restart = FALSE;
 
+  if (mainw->prefs_changed & PREFS_NEEDS_REVERT) {
+    on_prefs_revert_clicked(button, NULL);
+    goto done;
+  }
   lives_set_cursor_style(LIVES_CURSOR_BUSY, prefsw->prefs_dialog);
 
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), FALSE);
@@ -6532,7 +6549,7 @@ void on_prefs_apply_clicked(LiVESButton * button, livespointer user_data) {
     lives_widget_set_sensitive(mainw->export_theme, TRUE);
 
   if (mainw->prefs_changed & PREFS_JACK_CHANGED) {
-    do_info_dialog(_("Jack options will not take effect until the next time you start LiVES."));
+    do_info_dialog(_("Some jack options require a restart of LiVES to take effect."));
   }
 
   if (!(mainw->prefs_changed & PREFS_THEME_CHANGED) &&
@@ -6563,6 +6580,7 @@ void on_prefs_apply_clicked(LiVESButton * button, livespointer user_data) {
     on_prefs_revert_clicked(button, NULL);
   }
 
+done:
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, prefsw->prefs_dialog);
 

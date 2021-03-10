@@ -59,7 +59,7 @@ static weed_param_t *iparam_match_name(weed_param_t **params, int nparams, weed_
 }
 
 
-static weed_plant_t *int_req_init(const char *name, int def, int min, int max) {
+weed_plant_t *int_req_init(const char *name, int def, int min, int max) {
   weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
   int ptype = WEED_PARAM_INTEGER;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
@@ -70,7 +70,7 @@ static weed_plant_t *int_req_init(const char *name, int def, int min, int max) {
   return paramt;
 }
 
-static weed_plant_t *boolean_req_init(const char *name, int def) {
+weed_plant_t *boolean_req_init(const char *name, int def) {
   weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
   int ptype = WEED_PARAM_SWITCH;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
@@ -79,7 +79,7 @@ static weed_plant_t *boolean_req_init(const char *name, int def) {
   return paramt;
 }
 
-static weed_plant_t *double_req_init(const char *name, double def, double min, double max) {
+weed_plant_t *double_req_init(const char *name, double def, double min, double max) {
   weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
   int ptype = WEED_PARAM_FLOAT;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
@@ -90,7 +90,7 @@ static weed_plant_t *double_req_init(const char *name, double def, double min, d
   return paramt;
 }
 
-static weed_plant_t *string_req_init(const char *name, const char *def) {
+weed_plant_t *string_req_init(const char *name, const char *def) {
   weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
   int ptype = WEED_PARAM_TEXT;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
@@ -212,70 +212,6 @@ lives_object_status_t *transform(lives_object_t *obj, lives_object_transform_t *
 }
 
 
-
-typedef struct {
-  int idx;
-  lives_clip_t *sfile;
-} clip_priv_data_t;
-
-lives_intentparams_t *_get_params_for_clip_tx(lives_object_t *obj, int state,
-    lives_intention intent) {
-  lives_intentparams_t *iparams = NULL;
-  clip_priv_data_t *priv = (clip_priv_data_t *)obj->priv;
-  if (intent == LIVES_INTENTION_IMPORT_LOCAL) {
-    if (prefs->startup_phase != 0) return NULL;
-    if (capable->writeable_shmdir == MISSING) return NULL;
-    if (state == CLIP_STATE_READY) {
-      if (!*priv->sfile->staging_dir) return NULL;
-    } else {
-      if (!*capable->shmdir_path) {
-        char *xshmdir, *shmdir = lives_build_path(LIVES_DEVICE_DIR, LIVES_SHM_DIR, NULL);
-        if (!lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)) {
-          lives_free(shmdir);
-          shmdir = lives_build_path(LIVES_RUN_DIR, LIVES_SHM_DIR, NULL);
-          if (!lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)) {
-            lives_free(shmdir);
-            capable->writeable_shmdir = MISSING;
-            return NULL;
-          }
-        }
-        if (!is_writeable_dir(shmdir)) {
-          lives_free(shmdir);
-          capable->writeable_shmdir = MISSING;
-          return NULL;
-        }
-        xshmdir = lives_build_path(shmdir, LIVES_DEF_WORK_SUBDIR, NULL);
-        lives_free(shmdir);
-        lives_snprintf(capable->shmdir_path, PATH_MAX, "%s", xshmdir);
-        lives_free(xshmdir);
-      }
-    }
-    iparams = (lives_intentparams_t *)lives_calloc(sizeof(lives_intentparams_t), 1);
-    iparams->intent = intent;
-    iparams->n_params = 1;
-    iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 1);
-
-    // TODO - need to mark
-    if (state == CLIP_STATE_READY) {
-      iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, priv->sfile->staging_dir);
-    } else {
-      iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, capable->shmdir_path);
-    }
-  } else if (intent == LIVES_INTENTION_IMPORT_REMOTE) {
-    char *uidstr, *tmpdir;
-    iparams = (lives_intentparams_t *)lives_calloc(sizeof(lives_intentparams_t), 1);
-    iparams->intent = intent;
-    iparams->n_params = 1;
-    iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 1);
-    uidstr = lives_strdup_printf("%lu", gen_unique_id());
-    tmpdir = get_systmp(uidstr, TRUE);
-    iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, tmpdir);
-    lives_free(tmpdir);
-  }
-  return iparams;
-}
-
-
 void lives_intentparams_free(lives_intentparams_t *iparams) {
   for (int i = 0; i < iparams->n_params; i++) {
     weed_plant_free(iparams->params[i]);
@@ -329,32 +265,3 @@ LiVESTransformList *list_transformations(lives_object_t *obj, int state) {
 #endif
 
 
-// TODO - merge with transform for intent
-
-LIVES_LOCAL_INLINE
-lives_intentparams_t *get_txparams_for_intent(lives_object_t *obj, lives_intention intent) {
-  if (obj->type == OBJECT_TYPE_CLIP) {
-    return _get_params_for_clip_tx(obj, obj->status->state, intent);
-  }
-  return NULL;
-}
-
-
-// kind of a fake function, until we habe proper objects for clips
-lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intention intent) {
-  lives_object_t obj;
-  lives_object_status_t ostat;
-  clip_priv_data_t priv;
-  obj.type = OBJECT_TYPE_CLIP;
-  obj.status = &ostat;
-  obj.priv = &priv;
-  priv.idx = clipno;
-  if (!IS_VALID_CLIP(clipno)) {
-    priv.sfile = NULL;
-    ostat.state = CLIP_STATE_NOT_LOADED;
-  } else {
-    priv.sfile = mainw->files[clipno];
-    ostat.state = CLIP_STATE_READY;
-  }
-  return get_txparams_for_intent(&obj, intent);
-}

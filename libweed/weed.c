@@ -220,8 +220,15 @@ static int debugmode = 0;
 
 static int32_t _abi_ = WEED_ABI_VERSION;
 
+typedef void *(*libweed_slab_alloc_f)(size_t);
+typedef void *(*libweed_slab_alloc_and_copy_f)(size_t, void *);
+typedef void (*libweed_slab_unalloc_f)(size_t, void *);
+typedef void (*libweed_unmalloc_and_copy_f)(size_t, void *);
+
 EXPORTED int32_t weed_get_abi_version(void);
 EXPORTED weed_error_t weed_init(int32_t abi, uint64_t init_flags);
+EXPORTED int weed_set_memory_funcs(weed_malloc_f, weed_free_f);
+EXPORTED int weed_set_slab_funcs(libweed_slab_alloc_f, libweed_slab_unalloc_f, libweed_slab_alloc_and_copy_f);
 
 static weed_plant_t *_weed_plant_new(int32_t plant_type) GNU_FLATTEN;
 static weed_error_t _weed_plant_free(weed_plant_t *) GNU_FLATTEN;
@@ -256,32 +263,61 @@ static weed_size_t weed_strlen(const char *) GNU_PURE;
 static uint32_t weed_hash(const char *) GNU_PURE;
 
 #ifdef USE_GSLICE
-#define weed_malloc g_slice_alloc
-#define weed_malloc_sizeof g_slice_new
-#define weed_unmalloc_sizeof g_slice_free
-#define weed_unmalloc_and_copy g_slice_free1
+#define _weed_malloc g_slice_alloc
+#define _weed_unmalloc_and_copy g_slice_free1
 
 #if GLIB_CHECK_VERSION(2, 14, 0)
-#define weed_malloc_and_copy(bsize, block) g_slice_copy(bsize, block)
+#define _weed_malloc_and_copy(bsize, block) g_slice_copy(bsize, block)
 #endif
 
 #else
-#define weed_malloc malloc
-#define weed_malloc_sizeof(t) malloc(sizeof(t))
-#define weed_unmalloc_sizeof(t, ptr) free(ptr)
-#define weed_unmalloc_and_copy(size, ptr) free(ptr)
+#define _weed_malloc malloc
+#define _weed_unmalloc_and_copy(size, ptr) free(ptr)
 #endif
 
-#ifndef weed_malloc_and_copy
-#define weed_malloc_and_copy(size, src) memcpy(malloc(size), src, size)
+static weed_malloc_f weed_malloc = _weed_malloc;
+
+static void *def_malloc_and_copy(size_t sz,  void *p) {return memcpy(weed_malloc(sz), p, sz);}
+
+#ifndef _weed_malloc_and_copy
+#define _weed_malloc_and_copy(size, src) def_malloc_and_copy(size, src)
 #endif
+
+static void _weed_unmalloc_and_copy_(size_t s, void *p) {_weed_unmalloc_and_copy(s, p);}
+static void *_weed_malloc_and_copy_(size_t s, void *p) {return _weed_malloc_and_copy(s, p);}
+
+static weed_free_f weed_free = NULL;
+static libweed_unmalloc_and_copy_f weed_unmalloc_and_copy = _weed_unmalloc_and_copy_;
+static libweed_slab_alloc_and_copy_f weed_malloc_and_copy = _weed_malloc_and_copy_;
+
+#define weed_malloc_sizeof(t) weed_malloc(sizeof(t))
+#define weed_unmalloc_sizeof(t, ptr) weed_unmalloc_and_copy(sizeof(t), ptr)
 
 #define weed_strdup(oldstring, size) (!oldstring ? (char *)NULL :	\
 				      size < _WEED_PADBYTES_ ? memcpy(leaf->padding, key, size + 1) : \
-				      (char *)(weed_malloc_and_copy(size + 1, \
-								    oldstring)))
+				      (char *)(weed_malloc_and_copy(size + 1, (void *)oldstring)))
 
 #define IS_VALID_SEED_TYPE(seed_type) ((seed_type >=64 || (seed_type >= 1 && seed_type <= 5) ? 1 : 0))
+
+static void free_no_size(size_t s, void *p) {weed_free(p);}
+
+EXPORTED int weed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_free) {
+  weed_malloc = my_malloc;
+  weed_free = my_free;
+  weed_unmalloc_and_copy = free_no_size;
+  weed_malloc_and_copy = def_malloc_and_copy;
+  return 0;
+}
+
+EXPORTED int weed_set_slab_funcs(libweed_slab_alloc_f my_slab_alloc, libweed_slab_unalloc_f my_slab_unalloc,
+				 libweed_slab_alloc_and_copy_f my_slab_alloc_and_copy) {
+  weed_malloc = my_slab_alloc;
+  weed_unmalloc_and_copy = my_slab_unalloc;
+  if (my_slab_alloc_and_copy) {
+    weed_malloc_and_copy = my_slab_alloc_and_copy;
+  }
+  return 0;
+}
 
 EXPORTED int32_t weed_get_abi_version(void) {return _abi_;}
 

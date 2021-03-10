@@ -461,6 +461,34 @@ char *use_staging_dir_for(int clipno) {
 }
 
 
+const char *get_shmdir(void) {
+  if (!*capable->shmdir_path) {
+    char *xshmdir, *shmdir = lives_build_path(LIVES_DEVICE_DIR, LIVES_SHM_DIR, NULL);
+    if (!lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)) {
+      lives_free(shmdir);
+      shmdir = lives_build_path(LIVES_RUN_DIR, LIVES_SHM_DIR, NULL);
+      if (!lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)) {
+        lives_free(shmdir);
+        capable->writeable_shmdir = MISSING;
+        return NULL;
+      }
+    }
+    if (!is_writeable_dir(shmdir)) {
+      lives_free(shmdir);
+      capable->writeable_shmdir = MISSING;
+      return NULL;
+    }
+    capable->writeable_shmdir = PRESENT;
+    xshmdir = lives_build_path(shmdir, LIVES_DEF_WORK_SUBDIR, NULL);
+    lives_free(shmdir);
+    lives_snprintf(capable->shmdir_path, PATH_MAX, "%s", xshmdir);
+    lives_free(xshmdir);
+  }
+  if (capable->writeable_shmdir) return capable->shmdir_path;
+  return NULL;
+}
+
+
 char *lives_format_storage_space_string(uint64_t space) {
   char *fmt;
 
@@ -673,6 +701,13 @@ char *lives_datetime(uint64_t secs, boolean use_local) {
     }
   }
   return datetime;
+}
+
+
+LIVES_GLOBAL_INLINE char *get_current_timestamp(void) {
+  struct timeval otv;
+  gettimeofday(&otv, NULL);
+  return lives_datetime(otv.tv_sec, TRUE);
 }
 
 
@@ -2329,7 +2364,7 @@ LIVES_GLOBAL_INLINE char *get_localsharedir(const char *subdir) {
   if (!capable->xdg_data_home) capable->xdg_data_home = getenv(XDG_DATA_HOME);
   if (!capable->xdg_data_home) capable->xdg_data_home = lives_strdup("");
   if (!*capable->xdg_data_home)
-    localshare = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, SHARE_DIR, subdir, NULL);
+    localshare = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, LIVES_SHARE_DIR, subdir, NULL);
   else localshare = lives_build_path(capable->xdg_data_home, subdir, NULL);
   return localshare;
 }

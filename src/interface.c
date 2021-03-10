@@ -2900,13 +2900,13 @@ _entryw *create_rename_dialog(int type) {
     vbox = lives_vbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(hbox), vbox, FALSE, FALSE, widget_opts.packing_width);
 
-    logo = lives_image_new_from_stock("livestock-lives", LIVES_ICON_SIZE_DIALOG);
+    logo = lives_image_new_from_stock_at_size("livestock-lives", LIVES_ICON_SIZE_CUSTOM, 128);
     lives_box_pack_start(LIVES_BOX(hbox), logo, TRUE, TRUE, widget_opts.packing_width);
     lives_widget_set_valign(logo, LIVES_ALIGN_START);
 
     ylabel = lives_standard_label_new
              (_("This startup wizard will guide you through the\n"
-                "initial install so that you can get the most from this application."));
+                "initial setup so that you can get the most from this application."));
     lives_box_pack_start(LIVES_BOX(vbox), ylabel, FALSE, FALSE, widget_opts.packing_height);
 
     widget_opts.use_markup = TRUE;
@@ -2914,7 +2914,7 @@ _entryw *create_rename_dialog(int type) {
              (_("First of all you need to <b>choose a working directory</b> for LiVES.\n"
                 "This should be a directory with plenty of disk space available."));
     widget_opts.use_markup = FALSE;
-    lives_box_pack_start(LIVES_BOX(vbox), xlabel, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_end(LIVES_BOX(vbox), xlabel, FALSE, FALSE, widget_opts.packing_height);
   }
 
   if (type == 6 && mainw->is_ready) {
@@ -2982,7 +2982,6 @@ _entryw *create_rename_dialog(int type) {
       dirbutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), FILESEL_TYPE_KEY,
                                    LIVES_INT_TO_POINTER(LIVES_DIR_SELECTION_WORKDIR));
-
 
       lives_free(tmp);
       lives_free(workdir);
@@ -3091,10 +3090,15 @@ _entryw *create_rename_dialog(int type) {
   lives_widget_show_all(renamew->dialog);
   lives_widget_grab_focus(renamew->entry);
 
+  if (type == 6) {
+    LiVESWidget *bbox = lives_dialog_get_action_area(LIVES_DIALOG(renamew->dialog));
+    lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_EDGE);
+  }
+
   if (type == 6 && !mainw->first_shown) {
     guess_font_size(renamew->dialog, LIVES_LABEL(xlabel), LIVES_LABEL(ylabel), .8);
     if (!mainw->first_shown) {
-      guess_font_size(renamew->dialog, LIVES_LABEL(xlabel), LIVES_LABEL(ylabel), .26);
+      guess_font_size(renamew->dialog, LIVES_LABEL(xlabel), LIVES_LABEL(ylabel), .22);
     }
   }
   return renamew;
@@ -4662,14 +4666,14 @@ _entryw *create_cds_dialog(int type) {
     lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Wipe layout"));
   else if (type == 0) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Ignore changes"));
   else if (type == 1) {
-    if (mainw->was_set && prefs->workdir_tx_intent != LIVES_INTENTION_DESTROY)
+    if (mainw->was_set && prefs->workdir_tx_intent != LIVES_INTENTION_DELETE)
       lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete clip set"));
     else
       lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Discard all clips"));
   } else if (type == 2) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete layout"));
 
   if (prefs->workdir_tx_intent != LIVES_INTENTION_UNKNOWN) {
-    if (prefs->workdir_tx_intent == LIVES_INTENTION_IDENTITY) {
+    if (prefs->workdir_tx_intent == LIVES_INTENTION_LEAVE) {
       savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog),
                    LIVES_STOCK_SAVE, _("Save in _Current Work Directory"),
                    LIVES_RESPONSE_ACCEPT);
@@ -6009,9 +6013,9 @@ boolean workdir_change_dialog(void) {
         lives_widget_show_all(dialog);
         continue;
       }
-      prefs->workdir_tx_intent = LIVES_INTENTION_DESTROY;
+      prefs->workdir_tx_intent = LIVES_INTENTION_DELETE;
     }
-    if (resp == LIVES_RESPONSE_ACCEPT) prefs->workdir_tx_intent = LIVES_INTENTION_IDENTITY;
+    if (resp == LIVES_RESPONSE_ACCEPT) prefs->workdir_tx_intent = LIVES_INTENTION_LEAVE;
     if (resp == LIVES_RESPONSE_YES) {
       char *fpmp;
       if (!capable->mountpoint) capable->mountpoint = get_mountpoint_for(prefs->workdir);
@@ -6043,7 +6047,7 @@ boolean workdir_change_dialog(void) {
         }
       }
       lives_free(fpmp);
-      prefs->workdir_tx_intent = LIVES_INTENTION_EXPORT_LOCAL;
+      prefs->workdir_tx_intent = LIVES_INTENTION_MOVE;
     }
     break;
   }

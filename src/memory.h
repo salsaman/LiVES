@@ -22,8 +22,6 @@ typedef void *(*calloc_f)(size_t, size_t);
 typedef void *(*malloc_and_copy_f)(size_t, const void *);
 typedef void (*unmalloc_and_copy_f)(size_t, void *);
 
-#define USE_RPMALLOC
-
 #ifdef USE_RPMALLOC
 #include "rpmalloc.h"
 #endif
@@ -43,6 +41,20 @@ void lives_free_check(void *p);
 #ifdef USE_RPMALLOC
 void *quick_calloc(size_t n, size_t s);
 void quick_free(void *p);
+#endif
+
+#ifdef THRD_SPECIFIC
+void set_thread_id(uint64_t id);
+uint64_t get_thread_id(void);
+#endif
+
+void dump_memstats(void);
+
+void *lives_slice_alloc(size_t sz);
+void lives_slice_unalloc(size_t sz, void *p);
+
+#if GLIB_CHECK_VERSION(2, 14, 0)
+void *lives_slice_alloc_and_copy(size_t sz, void *p);
 #endif
 
 #ifndef lives_malloc
@@ -146,11 +158,19 @@ void *_ext_calloc(size_t, size_t) GNU_MALLOC_SIZE2(1, 2) GNU_ALIGN(2);
 #define OVERRIDE_MEMFUNCS
 static void *(*_lsd_memcpy)(void *dest, const void *src, size_t n) = _ext_memcpy;
 static void *(*_lsd_memset)(void *s, int c, size_t n) = _ext_memset;
+#ifdef USE_RPMALLOC
 static void (*_lsd_free)(void *ptr) = rpfree;
+#else
+static void (*_lsd_free)(void *ptr) = _ext_free;
+#endif
+#ifdef USE_RPMALLOC
 #define OVERRIDE_CALLOC_ALIGNED
 static inline int _lsd_calloc_aligned_(void **memptr, size_t nmemb, size_t size) {
   return !memptr ? 0 : (!(*memptr = (rpaligned_calloc)(64, nmemb, size))) ? ENOMEM : 0;
 }
+#else
+#define _lsd_calloc _ext_calloc
+#endif
 #if !HAVE_GETENTROPY
 #define LSD_RANDFUNC(ptr, size) (lives_get_randbytes((ptr), (size)))
 #endif

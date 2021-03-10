@@ -4187,11 +4187,11 @@ static void _resize_play_window(void) {
       // leave this alone * !
       if (!(mainw->vpp && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
         mainw->ignore_screen_size = TRUE;
-        /* if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY) */
-        /*     && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) && */
-        /*     capable->wm_caps.pan_res & RESTYPE_ACTION) { */
-        hide_desktop_panel();
-        //0}
+        if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
+            && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
+            capable->wm_caps.pan_res & RESTYPE_ACTION) {
+          hide_desktop_panel();
+        }
 #if GTK_CHECK_VERSION(3, 18, 0)
         LiVESXWindow *xwin = lives_widget_get_xwindow(mainw->play_window);
         if (pmonitor == 0)
@@ -4211,7 +4211,8 @@ static void _resize_play_window(void) {
         lives_window_set_position(LIVES_WINDOW(mainw->play_window), LIVES_WIN_POS_NONE);
         lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
         lives_widget_queue_resize(mainw->play_window);
-        lives_widget_context_update();
+        lives_widget_process_updates(mainw->play_window);
+        //lives_widget_context_update();
       }
 
       // init the playback plugin, unless the player cannot resize and there is a possibility of

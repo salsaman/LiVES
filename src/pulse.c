@@ -329,6 +329,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
   sync_ready = FALSE;
 
+#ifdef USE_RPMALLOC
+  if (!rpmalloc_is_thread_initialized()) {
+    rpmalloc_thread_initialize();
+  }
+#endif
   //pa_thread_make_realtime(50);
   //g_print("PA\n");
   pulsed->real_seek_pos = pulsed->seek_pos;

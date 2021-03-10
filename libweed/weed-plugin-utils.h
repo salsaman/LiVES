@@ -34,10 +34,6 @@
 #error This header is intended only for Weed plugins
 #endif
 
-#ifndef __WEED_PLUGIN__
-#error weed-plugin.h should be included first
-#endif
-
 #ifndef __WEED_PLUGIN_UTILS_H__
 #define __WEED_PLUGIN_UTILS_H__
 
@@ -47,10 +43,12 @@ extern "C"
 #endif /* __cplusplus */
 
 #ifndef NEED_LOCAL_WEED
+#include <weed/weed-plugin.h>
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
 #else
+#include "weed-plugin.h"
 #include "weed.h"
 #include "weed-palettes.h"
 #include "weed-effects.h"

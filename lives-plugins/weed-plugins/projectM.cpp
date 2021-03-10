@@ -59,7 +59,7 @@ static int verbosity = WEED_VERBOSITY_ERROR;
 #include <X11/extensions/Xrender.h>
 #include <X11/Xatom.h>
 
-#define PREF_FPS 50.
+#define PREF_FPS 25.
 #define MESHSIZE 128
 
 static int copies = 0;
@@ -351,9 +351,7 @@ static int render_frame(_sdata *sd) {
     sd->needs_more = true;
   }
 
-  glFlush();
-
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   //glEnable(GL_DEPTH_TEST);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
@@ -1050,9 +1048,11 @@ WEED_SETUP_START(200, 200) {
                         WEED_PALETTE_BGR24, WEED_PALETTE_END
                        };
   const char *xlist[3] = {"- Random -", "Choose...", NULL};
-  weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist), weed_integer_init("ctime", "_Random pattern hold time (seconds - 0 for never change)", 20, 0, 100000), NULL};
+  weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist),
+                               weed_integer_init("ctime", "_Random pattern hold time (seconds - 0 for never change)", 20, 0, 100000), NULL
+                              };
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1,
                                0, palette_list, projectM_init,
                                projectM_process, projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);

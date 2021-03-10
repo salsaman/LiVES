@@ -1465,6 +1465,11 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   widget_opts.use_markup = FALSE;
 
+  if (*cfile->staging_dir) {
+    break_me("Should not processing a clip while in staging !");
+    migrate_from_staging(mainw->current_file);
+  }
+
   // translation issues
   if (visible && text) mytext = lives_strdup(text);
 
@@ -1797,7 +1802,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         if (mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
           mainw->proc_ptr->frac_done = atof(mainw->msg);
         else
-          mainw->proc_ptr->frames_done = atoi(mainw->msg);
+          mainw->proc_ptr->frames_done = frames_done;
       }
       if (!mainw->effects_paused) {
         if (prog_fs_check-- <= 0) {
@@ -2745,15 +2750,28 @@ LIVES_GLOBAL_INLINE boolean do_jack_scripts_warn(const char *scrptx) {
 }
 
 
-LIVES_GLOBAL_INLINE void do_jack_noopen_warn(boolean is_trans) {
-  do_error_dialogf(_("\nLiVES was unable to start up jack. "
+LIVES_GLOBAL_INLINE void do_jack_no_startup_warn(boolean is_trans) {
+  char *tmp;
+  if ((is_trans && *prefs->jack_tserver_cfg) ||
+      (!is_trans && *prefs->jack_aserver_cfg)) {
+    tmp = lives_strdup_printf(_("using the configuration file\n%s"),
+                              is_trans ? prefs->jack_tserver_cfg : prefs->jack_aserver_cfg);
+  } else {
+    if (is_trans)
+      tmp = lives_strdup_printf("'%s'", prefs->jack_tserver_sname);
+    else
+      tmp = lives_strdup_printf("'%s'", prefs->jack_aserver_sname);
+  }
+
+  do_error_dialogf(_("\nLiVES was unable to start up the jack server %s\n. "
                      "Please ensure that %s is set up correctly on your machine\n"
                      "and also that the soundcard is not in use by another program\n"
-                     "Automatic jack startup will be disabled now.\n"),
+                     "<big><b>Automatic jack startup will be disabled for now</b></big>.\n"), tmp,
                    is_trans ? prefs->jack_tdriver : prefs->jack_adriver);
+  lives_free(tmp);
 }
 
-LIVES_GLOBAL_INLINE void do_jack_noopen_warn3(boolean is_trans) {
+LIVES_GLOBAL_INLINE void do_jack_no_connect_warn(boolean is_trans) {
   char *extra = "", *tmp;
   if (is_trans && (prefs->jack_opts & JACK_OPTS_START_TSERVER)) {
     if (prefs->jack_tdriver && *prefs->jack_tdriver) {
@@ -2761,24 +2779,33 @@ LIVES_GLOBAL_INLINE void do_jack_noopen_warn3(boolean is_trans) {
                                   (tmp = lives_markup_escape_text(prefs->jack_tdriver, -1)));
       lives_free(tmp);
     }
-  } else if (prefs->jack_opts & JACK_OPTS_START_ASERVER) {
+  } else {
     if (prefs->jack_adriver && *prefs->jack_adriver) {
       extra = lives_strdup_printf(_("\nThere may be a problem with the <b>'%s'</b> driver."),
                                   (tmp = lives_markup_escape_text(prefs->jack_adriver, -1)));
       lives_free(tmp);
     }
   }
+  if (is_trans && *prefs->jack_tserver_cname)
+    tmp = lives_markup_escape_text(prefs->jack_tserver_cname, -1);
+  else {
+    if (!is_trans && *prefs->jack_aserver_cname)
+      tmp = lives_markup_escape_text(prefs->jack_aserver_cname, -1);
+    else
+      tmp = lives_markup_escape_text(prefs->jack_def_server_name, -1);
+  }
+
   widget_opts.use_markup = TRUE;
   do_error_dialogf(_("\nLiVES was unable to establish a connection to jack server <b>'%s'</b>.%s"
-                     "\nPlease start jack before restarting LiVES\n"),
-                   (tmp = lives_markup_escape_text(is_trans ? prefs->jack_tserver_sname
-                          : prefs->jack_aserver_sname, -1)), extra);
+                     "\nPlease start the jack server before restarting LiVES\n"), tmp, extra);
   lives_free(tmp);
   widget_opts.use_markup = FALSE;
   if (*extra) lives_free(extra);
 }
 
-LIVES_GLOBAL_INLINE void do_jack_noopen_warn4(int suggest_opts) {
+LIVES_GLOBAL_INLINE void do_jack_restart_warn(int suggest_opts) {
+  // suggest_opts is a hint for the -jackopts value to use on restart
+  // a value of -1 will not add any recommendation
   const char *otherbit;
   char *firstbit;
   if (suggest_opts != -1) {
@@ -2796,7 +2823,7 @@ LIVES_GLOBAL_INLINE void do_jack_noopen_warn4(int suggest_opts) {
   if (*firstbit) lives_free(firstbit);
 }
 
-LIVES_GLOBAL_INLINE void do_jack_noopen_warn2(void) {
+LIVES_GLOBAL_INLINE void do_jack_setup_warn(void) {
   do_info_dialog(_("\nAlternately, you can restart LiVES and select another audio player.\n"));
 }
 #endif
@@ -2996,7 +3023,7 @@ LIVES_GLOBAL_INLINE void do_vpp_fps_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_after_crash_warning(void) {
-  if (prefs->vj_mode || prefs->show_dev_opts) return;
+  if (prefs->vj_mode || prefs->show_dev_opts || prefs->startup_phase != -1) return;
   do_error_dialog_with_check(_("After a crash, it is advisable to clean up the disk with\nFile|Clean up disk space\n"),
                              WARN_MASK_CLEAN_AFTER_CRASH);
 }

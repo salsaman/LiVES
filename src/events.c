@@ -261,11 +261,8 @@ weed_event_t *lives_event_list_new(weed_event_t *elist, const char *cdate) {
     error = weed_set_int_value(evelist, WEED_LEAF_FILTER_API_VERSION, WEED_FILTER_API_VERSION);
   if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
 
-  if (!xdate) {
-    struct timeval otv;
-    gettimeofday(&otv, NULL);
-    xdate = lives_datetime(otv.tv_sec, FALSE);
-  }
+  if (!xdate) xdate = get_current_timestamp();
+
   cversion = lives_strdup_printf("LiVES version %s", LiVES_VERSION);
 
   if (!weed_plant_has_leaf(evelist, WEED_LEAF_LIVES_CREATED_VERSION)) {

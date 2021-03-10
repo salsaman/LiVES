@@ -150,6 +150,7 @@ ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
 ticks_t lives_get_current_ticks(void);
 char *lives_datetime(uint64_t secs, boolean use_local);
 char *lives_datetime_rel(const char *datetime);
+char *get_current_timestamp(void);
 
 #define lives_nanosleep(nanosec) {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
@@ -282,6 +283,8 @@ int set_thread_cpuid(pthread_t pth);
 volatile float *get_core_loadvar(int corenum);
 
 double analyse_cpu_stats(void);
+
+const char *get_shmdir(void);
 
 char *get_systmp(const char *suff, boolean is_dir);
 char *get_worktmp(const char *prefix);

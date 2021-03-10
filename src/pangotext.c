@@ -32,9 +32,13 @@ LIVES_GLOBAL_INLINE void reset_font_size(void) {
 
 
 void guess_font_size(LiVESWidget *window, LiVESLabel *xlabel, LiVESLabel *ylabel, double guess) {
-  // startup callibration - try to set an appropriate text size
+  // during startup, adjust the font size slightly so the text is more visible
+  // this is done by comparing the size of a fixed label with the dialog box size
+  // and multiplying by guess, which has been calibrated somewhat to produce a comfortable size
+  // the resulting size will be clamped to within .8 - 2.0 of the default size
+  // and must end up between 8px and 14px, otherwise we give up
   int w_, h_, w2_, h2_;
-  double fitw, fith, scaling;
+  double fitw, fith, scaling, fontsize;
   if (!window || !xlabel) return;
   else {
     LingoLayout *layout = gtk_label_get_layout(xlabel);
@@ -58,7 +62,10 @@ void guess_font_size(LiVESWidget *window, LiVESLabel *xlabel, LiVESLabel *ylabel
     //g_print("scaling %f\n", scaling);
     scaling *= guess;
     //g_print("adj scaling %f\n", scaling);
-    if (scaling > .8 && scaling < 2.) {
+    if (scaling < .8) scaling = .8;
+    if (scaling > 2.) scaling = 2.;
+    fontsize = capable->font_size * scaling;
+    if (fontsize >= 8. && fontsize <= 14.) {
       char *tmp;
       int ofontsize = capable->font_size;
       capable->font_size *= scaling;

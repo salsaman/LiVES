@@ -183,8 +183,6 @@ typedef int lives_pgid_t;
 /// max files is actually 1 more than this, since file 0 is the clipboard
 #define MAX_FILES 65535
 
-/// this must match AC_PREFIX_DEFAULT in configure.in
-/// TODO - when lives-plugins is a separate package, use pkg-config to get PREFIX and remove PREFIX_DEFAULT
 #ifndef PREFIX_DEFAULT
 #define PREFIX_DEFAULT "/usr"
 #endif
@@ -484,7 +482,10 @@ typedef struct {
   lives_checkstatus_t has_rfx_builder_multi;
   lives_checkstatus_t has_gconftool_2;
   lives_checkstatus_t has_xdg_screensaver;
-  //lives_checkstatus_t has_xdg_open;
+  lives_checkstatus_t has_xdg_open;
+  lives_checkstatus_t has_xdg_mime;
+  lives_checkstatus_t has_xdg_desktop_icon;
+  lives_checkstatus_t has_xdg_desktop_menu;
   lives_checkstatus_t has_wmctrl;
   lives_checkstatus_t has_xdotool;
   lives_checkstatus_t has_youtube_dl;
@@ -1270,10 +1271,10 @@ void do_no_loadfile_error(const char *fname);
 #ifdef ENABLE_JACK
 boolean do_jack_scripts_warn(const char *scrptx);
 boolean do_jack_nonex_warn(const char *server_config_file);
-void do_jack_noopen_warn(boolean is_trans);
-void do_jack_noopen_warn2(void);
-void do_jack_noopen_warn3(boolean is_trans);
-void do_jack_noopen_warn4(int suggest_opts);
+void do_jack_no_startup_warn(boolean is_trans);
+void do_jack_setup_warn(void);
+void do_jack_no_connect_warn(boolean is_trans);
+void do_jack_restart_warn(int suggest_opts);
 #endif
 LiVESResponseType do_file_perm_error(const char *file_name, boolean allow_cancel);
 LiVESResponseType do_dir_perm_error(const char *dir_name, boolean allow_cancel);
@@ -1549,7 +1550,8 @@ boolean do_please_install(const char *more, const char *exec, uint64_t guidance_
 boolean do_please_install_either(const char *exec, const char *exec2);
 
 /// lives_image_type can be a string, lives_img_type_t is an enumeration
-char *make_image_file_name(lives_clip_t *clip, frames_t frame, const char *img_ext);
+char *make_image_file_name(lives_clip_t *, frames_t frame, const char *img_ext);// /workdir/handle/00000001.png
+char *make_image_short_name(lives_clip_t *, frames_t frame, const char *img_ext);// e.g. 00000001.png
 const char *get_image_ext_for_type(lives_img_type_t imgtype);
 lives_img_type_t lives_image_ext_to_img_type(const char *img_ext);
 lives_img_type_t lives_image_type_to_img_type(const char *lives_image_type);
@@ -1745,7 +1747,7 @@ void break_me(const char *dtl);
 #endif
 
 #endif
-#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

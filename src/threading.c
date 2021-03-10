@@ -683,6 +683,7 @@ static LiVESList *twork_first, *twork_last; /// FIFO list of tasks
 static volatile int ntasks;
 static boolean threads_die;
 
+// TODO - use THRD_SPECIFIC
 static LiVESList *allctxs = NULL;
 
 lives_thread_data_t *get_thread_data(void) {
@@ -766,6 +767,8 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   mywork->busy = tdata->idx;
   myflags = mywork->flags;
 
+  //fprintf(stderr, "thread id %ld reporting\n", get_thread_id());
+
   if (myflags & LIVES_THRDFLAG_WAIT_SYNC) {
     lives_nanosleep_until_nonzero(mywork->sync_ready);
   }
@@ -792,8 +795,9 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   pthread_mutex_lock(&twork_count_mutex);
   ntasks--;
   pthread_mutex_unlock(&twork_count_mutex);
-
+#ifdef USE_RPMALLOC
   rpmalloc_thread_collect();
+#endif
   return TRUE;
 }
 
@@ -801,11 +805,17 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
 static void *thrdpool(void *arg) {
   boolean skip_wait = FALSE;
   lives_thread_data_t *tdata = (lives_thread_data_t *)arg;
+#ifdef USE_RPMALLOC
   if (!rpmalloc_is_thread_initialized()) {
     rpmalloc_thread_initialize();
   }
+#endif
 
   lives_widget_context_push_thread_default(tdata->ctx);
+
+#ifdef THRD_SPECIFIC
+  set_thread_id(gen_unique_id());
+#endif
 
   while (!threads_die) {
     if (!skip_wait) {
@@ -815,13 +825,17 @@ static void *thrdpool(void *arg) {
     }
     if (LIVES_UNLIKELY(threads_die)) break;
     skip_wait = do_something_useful(tdata);
+#ifdef USE_RPMALLOC
     if (rpmalloc_is_thread_initialized()) {
       rpmalloc_thread_collect();
     }
+#endif
   }
+#ifdef USE_RPMALLOC
   if (rpmalloc_is_thread_initialized()) {
     rpmalloc_thread_finalize();
   }
+#endif
   return NULL;
 }
 

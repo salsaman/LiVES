@@ -396,7 +396,7 @@ LiVESPixbuf *mt_make_thumb(lives_mt *mt, int file, int width, int height, frames
       thumbnail = pull_lives_pixbuf_at_size(file, frame, get_image_ext_for_type(sfile->img_type), tc,
                                             width, height, LIVES_INTERP_FAST, TRUE);
     } else {
-      pixbuf = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_AUDIO, LIVES_ICON_SIZE_CUSTOM, width, height);
+      pixbuf = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_AUDIO, LIVES_ICON_SIZE_CUSTOM, width);
       if (error || !pixbuf) {
         lives_error_free(error);
         if (mt && (needs_idlefunc || (!did_backup && mt->auto_changed))) {

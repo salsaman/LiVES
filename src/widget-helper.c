@@ -817,8 +817,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_ref(livespointer object)
 #ifdef GUI_GTK
   if (LIVES_IS_WIDGET_OBJECT(object)) g_object_ref(object);
   else {
-    LIVES_WARN("Ref of non-object");
-    break_me("ref of nomobj");
+    LIVES_WARN("Attempted ref of non-object");
+    break_me("ref of nonobj");
     return FALSE;
   }
   return TRUE;
@@ -831,7 +831,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_unref(livespointer objec
 #ifdef GUI_GTK
   if (LIVES_IS_WIDGET_OBJECT(object)) g_object_unref(object);
   else {
-    LIVES_WARN("Unref of non-object");
+    LIVES_WARN("Attempted unref of non-object");
     break_me("unref of nonobj");
     return FALSE;
   }
@@ -845,7 +845,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_unref(livespointer objec
 #if GTK_CHECK_VERSION(3, 0, 0)
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_ref_sink(livespointer object) {
   if (!LIVES_IS_WIDGET_OBJECT(object)) {
-    LIVES_WARN("Ref_sink of non-object");
+    LIVES_WARN("Attempted ref_sink of non-object");
     break_me("ref sink of nonobj");
     return FALSE;
   }
@@ -856,7 +856,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_ref_sink(livespointer ob
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_ref_sink(livespointer object) {
   GtkObject *gtkobject;
   if (!LIVES_IS_WIDGET_OBJECT(object)) {
-    LIVES_WARN("Ref_sink of non-object");
+    LIVES_WARN("Attempted ref_sink of non-object");
     return FALSE;
   }
   gtkobject = (GtkObject *)object;
@@ -2460,20 +2460,18 @@ WIDGET_HELPER_LOCAL_INLINE int get_real_size_from_icon_size(LiVESIconSize size) 
 }
 
 
-LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int x, int y) {
+LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int csize) {
   LiVESPixbuf *pixbuf = NULL;
   LiVESWidget *image = NULL;
   if (size == LIVES_ICON_SIZE_CUSTOM) {
-    if (x == y) {
-      if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_MENU)) size = LIVES_ICON_SIZE_MENU;
-      if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_SMALL_TOOLBAR))
-        size = LIVES_ICON_SIZE_SMALL_TOOLBAR;
-      if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_LARGE_TOOLBAR))
-        size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
-      if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_BUTTON)) size = LIVES_ICON_SIZE_BUTTON;
-      if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DND)) size = LIVES_ICON_SIZE_DND;
-      if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DIALOG)) size = LIVES_ICON_SIZE_DIALOG;
-    }
+    if (csize == get_real_size_from_icon_size(LIVES_ICON_SIZE_MENU)) size = LIVES_ICON_SIZE_MENU;
+    if (csize == get_real_size_from_icon_size(LIVES_ICON_SIZE_SMALL_TOOLBAR))
+      size = LIVES_ICON_SIZE_SMALL_TOOLBAR;
+    if (csize == get_real_size_from_icon_size(LIVES_ICON_SIZE_LARGE_TOOLBAR))
+      size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
+    if (csize == get_real_size_from_icon_size(LIVES_ICON_SIZE_BUTTON)) size = LIVES_ICON_SIZE_BUTTON;
+    if (csize == get_real_size_from_icon_size(LIVES_ICON_SIZE_DND)) size = LIVES_ICON_SIZE_DND;
+    if (csize == get_real_size_from_icon_size(LIVES_ICON_SIZE_DIALOG)) size = LIVES_ICON_SIZE_DIALOG;
   }
 
   if (size != LIVES_ICON_SIZE_CUSTOM) {
@@ -2488,6 +2486,14 @@ LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIcon
 #endif
     }
     if (image) return lives_image_get_pixbuf(LIVES_IMAGE(image));
+  } else {
+#if GTK_CHECK_VERSION(3, 10, 0)
+    if (csize > 0) {
+      pixbuf = gtk_icon_theme_load_icon((LiVESIconTheme *)widget_opts.icon_theme, stock_id,
+                                        csize, GTK_ICON_LOOKUP_FORCE_SIZE, NULL);
+      if (pixbuf) return pixbuf;
+    }
+#endif
   }
 
   // custom size, or failed at specified size
@@ -2522,9 +2528,9 @@ LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIcon
 }
 
 
-LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int x, int y) {
+LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int csize) {
   LiVESWidget *image = NULL;
-  LiVESPixbuf *pixbuf = lives_pixbuf_new_from_stock_at_size(stock_id, size, x, y);
+  LiVESPixbuf *pixbuf = lives_pixbuf_new_from_stock_at_size(stock_id, size, csize);
   if (pixbuf) {
     image = lives_image_new_from_pixbuf(pixbuf);
     lives_widget_object_unref(pixbuf);
@@ -2535,8 +2541,7 @@ LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconS
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id,
     LiVESIconSize size) {
-  return lives_image_new_from_stock_at_size(stock_id, size, get_real_size_from_icon_size(size),
-         get_real_size_from_icon_size(size));
+  return lives_image_new_from_stock_at_size(stock_id, size, get_real_size_from_icon_size(size));
 }
 
 
@@ -4211,7 +4216,7 @@ LIVES_GLOBAL_INLINE boolean lives_button_set_image_from_stock(LiVESButton *butto
 #ifdef USE_SPECIAL_BUTTONS
   else {
     if (stock_id) {
-      LiVESPixbuf *pixbuf = lives_pixbuf_new_from_stock_at_size(stock_id, LIVES_ICON_SIZE_BUTTON, 0, 0);
+      LiVESPixbuf *pixbuf = lives_pixbuf_new_from_stock_at_size(stock_id, LIVES_ICON_SIZE_BUTTON, 0);
       if (LIVES_IS_PIXBUF(pixbuf))
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), SBUTT_PIXBUF_KEY, (livespointer)pixbuf);
       else return FALSE;
@@ -7945,6 +7950,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_fill(LiVESLayout * lay
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_separator(LiVESLayout * layout, boolean horizontal) {
+  // here, horizontal means on the same line as other widgets, ie. a vseparator
+  // vertical means below preceding widgets, ie. an hseparator
   LiVESWidget *separator;
   LiVESJustification woj = widget_opts.justify;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
@@ -8382,6 +8389,13 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
 
   button = lives_button_new();
 
+  da = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), pbsurf);
+  lives_widget_object_set_data_psurface(LIVES_WIDGET_OBJECT(da),
+                                        SBUTT_SURFACE_KEY, (livespointer)pbsurf);
+
+  lives_container_add(LIVES_CONTAINER(button), da);
+  lives_widget_set_show_hide_with(button, da);
+
   if (widget_opts.apply_theme) {
     set_standard_widget(button, TRUE);
 
@@ -8393,7 +8407,7 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
                                    LIVES_INT_TO_POINTER(widget_opts.apply_theme));
 
 #if GTK_CHECK_VERSION(3, 16, 0)
-    set_css_min_size(button, width, height);
+    set_css_min_size(da, width, height);
     set_css_value_direct(button, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
 
     lives_widget_set_padding(button, 0);
@@ -8401,13 +8415,6 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
     set_css_value_direct(button, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "0px");
 #endif
   }
-
-  da = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), pbsurf);
-  lives_widget_object_set_data_psurface(LIVES_WIDGET_OBJECT(da),
-                                        SBUTT_SURFACE_KEY, (livespointer)pbsurf);
-
-  lives_container_add(LIVES_CONTAINER(button), da);
-  lives_widget_set_show_hide_with(button, da);
 
   lives_widget_set_can_focus_and_default(button);
 
@@ -8418,7 +8425,7 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
 #endif
   lives_widget_set_app_paintable(button, TRUE);
   lives_widget_set_app_paintable(da, TRUE);
-  lives_widget_set_size_request(button, width, height);
+  lives_widget_set_size_request(da, width, height);
 
   return button;
 }
@@ -10662,8 +10669,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_file_button_new(boolean 
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_OPEN, LIVES_ICON_SIZE_LARGE_TOOLBAR);
 
   /// height X height is correct
-  int height = ((widget_opts.css_min_height * 3 + 3) >> 2) << 1;
-  fbutton = lives_standard_button_new(height, height);
+  int height = ((widget_opts.css_min_height * 3 + 3) >> 2);
+  fbutton = lives_standard_button_new(height, height * 4);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), ISDIR_KEY, LIVES_INT_TO_POINTER(is_dir));
   if (def_dir) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), DEFDIR_KEY, (livespointer)def_dir);
   lives_standard_button_set_image(LIVES_BUTTON(fbutton), image);
@@ -11464,6 +11471,7 @@ boolean lives_window_center(LiVESWindow * window) {
     lives_window_set_position(LIVES_WINDOW(window), LIVES_WIN_POS_CENTER_ALWAYS);
 
     width = lives_widget_get_allocation_width(LIVES_WIDGET(window));
+
     if (width == 0) width = ((int)(620. * widget_opts.scale)); // MIN_MSGBOX_WIDTH in interface.h
     height = lives_widget_get_allocation_height(LIVES_WIDGET(window));
 
@@ -11474,6 +11482,7 @@ boolean lives_window_center(LiVESWindow * window) {
     xcen = mainw->mgeom[widget_opts.monitor].x + ((mainw->mgeom[widget_opts.monitor].width - width) >> 1);
 
     ycen = mainw->mgeom[widget_opts.monitor].y + ((mainw->mgeom[widget_opts.monitor].height - height) >> 1);
+
     lives_window_move(LIVES_WINDOW(window), xcen, ycen);
   }
   return TRUE;

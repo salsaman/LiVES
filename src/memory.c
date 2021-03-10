@@ -8,23 +8,48 @@
 
 #include "main.h"
 
-// global-dynamic, local-dynamic, initial-exec, local-exec
-/* #define TLS_MODEL __attribute__((tls_model("initial-exec"))) */
+#ifdef THRD_SPECIFIC
+//global-dynamic, local-dynamic, initial-exec, local-exec
+#define TLS_MODEL __attribute__((tls_model("initial-exec")))
 
-/* #if !defined(__clang__) && defined(__GNUC__) */
-/* #define _Thread_local __thread */
-/* #endif */
+#if !defined(__clang__) && defined(__GNUC__)
+#define _Thread_local __thread
+#endif
 
-/* static _Thread_local uint64_t _thread_id TLS_MODEL; */
+static _Thread_local uint64_t _thread_id TLS_MODEL;
 
-/* void set_thread_id(uint64_t id) { */
-/*   _thread_id = id; */
-/* } */
 
-/* uint64_t get_thread_id(void) { */
-/*   return _thread_id; */
-/* } */
+void set_thread_id(uint64_t id) {
+  _thread_id = id;
+}
 
+uint64_t get_thread_id(void) {
+  return _thread_id;
+}
+#endif
+
+
+static uint64_t totalloc = 0, totfree = 0;
+
+void dump_memstats(void) {
+  g_print("Total allocated: %lu, total freed %lu\n", totalloc, totfree);
+}
+
+void *lives_slice_alloc(size_t sz) {
+  totalloc += sz;
+  return g_slice_alloc(sz);
+}
+
+void lives_slice_unalloc(size_t sz, void *p) {
+  totfree += sz;
+  return g_slice_free1(sz, p);
+}
+
+#if GLIB_CHECK_VERSION(2, 14, 0)
+void *lives_slice_alloc_and_copy(size_t sz, void *p) {
+  return g_slice_copy(sz, p);
+}
+#endif
 
 LIVES_GLOBAL_INLINE boolean lives_freep(void **ptr) {
   // free a pointer and nullify it, only if it is non-null to start with
@@ -187,7 +212,6 @@ void *_ext_realloc(void *p, size_t n) {
   return rprealloc(p, n);
 #else
   return lives_realloc(p, n);
-}
 #endif
 }
 
@@ -196,7 +220,6 @@ void *_ext_calloc(size_t nmemb, size_t msize) {
   return quick_calloc(nmemb, msize);
 #else
   return lives_calloc(nmemb, msize);
-}
 #endif
 }
 
@@ -233,9 +256,13 @@ LIVES_GLOBAL_INLINE void *lives_recalloc(void *p, size_t nmemb, size_t omemb, si
   return np;
 }
 
+#ifdef USE_RPMALLOC
 void quick_free(void *p) {rpfree(p);}
+#endif
 
+#ifdef USE_RPMALLOC
 void *quick_calloc(size_t n, size_t s) {return rpaligned_calloc(DEF_ALIGN, n, s);}
+#endif
 
 boolean init_memfuncs(void) {
 #ifdef USE_RPMALLOC

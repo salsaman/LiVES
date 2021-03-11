@@ -313,7 +313,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
   int afd = -1;
   int bar_height;
 
-  register int i;
+  int i;
 
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
 

@@ -5969,7 +5969,7 @@ check_stcache:
 
     if (LIVES_IS_PIXBUF(start_pixbuf)) {
       set_drawing_area_from_pixbuf(mainw->start_image, start_pixbuf, mainw->si_surface);
-      if (!cache_it || weed_layer_get_pixel_data_packed(layer) || !(pixbuf_to_layer(layer, start_pixbuf)))
+      if (!cache_it || weed_layer_get_pixel_data(layer) || !(pixbuf_to_layer(layer, start_pixbuf)))
         lives_widget_object_unref(start_pixbuf);
     } else cache_it = FALSE;
 
@@ -6070,7 +6070,7 @@ check_stcache:
   }
 
   if (LIVES_IS_PIXBUF(orig_pixbuf)) {
-    if (!cache_it || weed_layer_get_pixel_data_packed(layer) || !(pixbuf_to_layer(layer, orig_pixbuf)))
+    if (!cache_it || weed_layer_get_pixel_data(layer) || !(pixbuf_to_layer(layer, orig_pixbuf)))
       lives_widget_object_unref(orig_pixbuf);
   } else cache_it = FALSE;
 
@@ -6242,7 +6242,7 @@ check_encache:
 
     if (LIVES_IS_PIXBUF(end_pixbuf)) {
       set_drawing_area_from_pixbuf(mainw->end_image, end_pixbuf, mainw->ei_surface);
-      if (!cache_it || weed_layer_get_pixel_data_packed(layer) || !(pixbuf_to_layer(layer, end_pixbuf)))
+      if (!cache_it || weed_layer_get_pixel_data(layer) || !(pixbuf_to_layer(layer, end_pixbuf)))
         lives_widget_object_unref(end_pixbuf);
     } else cache_it = FALSE;
 
@@ -6344,7 +6344,7 @@ check_encache:
     }
 
     if (LIVES_IS_PIXBUF(orig_pixbuf)) {
-      if (!cache_it || weed_layer_get_pixel_data_packed(layer) || !(pixbuf_to_layer(layer, orig_pixbuf)))
+      if (!cache_it || weed_layer_get_pixel_data(layer) || !(pixbuf_to_layer(layer, orig_pixbuf)))
         lives_widget_object_unref(orig_pixbuf);
     } else cache_it = FALSE;
 
@@ -6563,7 +6563,7 @@ check_prcache:
         lives_widget_set_size_request(mainw->preview_image, MAX(width, mainw->sepwin_minwidth), height);
         set_drawing_area_from_pixbuf(mainw->preview_image, pr_pixbuf, mainw->pi_surface);
         if (pr_pixbuf != pixbuf) lives_widget_object_unref(pr_pixbuf);
-        if (!layer || !cache_it || weed_layer_get_pixel_data_packed(layer) || !(pixbuf_to_layer(layer, pixbuf)))
+        if (!layer || !cache_it || weed_layer_get_pixel_data(layer) || !(pixbuf_to_layer(layer, pixbuf)))
           lives_widget_object_unref(pixbuf);
       } else cache_it = FALSE;
     } else cache_it = FALSE;
@@ -6984,7 +6984,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
   // TODO: rowstride must be at least png_get_rowbytes(png_ptr, info_ptr)
 
   rowstride = weed_layer_get_rowstride(layer);
-  ptr = weed_layer_get_pixel_data_packed(layer);
+  ptr = weed_layer_get_pixel_data(layer);
 
   // libpng needs pointers to each row
   row_ptrs = (unsigned char **)lives_calloc(height,  sizeof(unsigned char *));
@@ -7156,7 +7156,7 @@ static boolean save_to_png_inner(FILE * fp, weed_layer_t *layer, int comp) {
 
   png_write_info(png_ptr, info_ptr);
 
-  ptr = (unsigned char *)weed_layer_get_pixel_data_packed(layer);
+  ptr = (unsigned char *)weed_layer_get_pixel_data(layer);
 
   // Write image data
 
@@ -7544,7 +7544,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 #ifdef USE_REC_RS
           weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
 #endif
-          pixel_data = weed_layer_get_pixel_data(layer, NULL);
+          pixel_data = weed_layer_get_pixel_data_planar(layer, NULL);
         } else {
 #ifdef USE_REC_RS
           weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
@@ -8130,7 +8130,7 @@ void close_current_file(int file_to_switch_to) {
     lives_freep((void **)&cfile->frame_index_back);
 
     if (cfile->clip_type != CLIP_TYPE_GENERATOR && !mainw->close_keep_frames) {
-      char *clipd = lives_build_path(prefs->workdir, cfile->handle, NULL);
+      char *clipd = get_clip_dir(mainw->current_file);
       if (lives_file_test(clipd, LIVES_FILE_TEST_EXISTS)) {
         // as a safety feature we create a special file which allows the back end to delete the directory
         char *temp_backend;

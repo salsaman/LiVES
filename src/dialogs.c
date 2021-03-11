@@ -347,7 +347,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
       lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
     break;
 
-  case LIVES_DIALOG_ABORT_CANCEL_RETRY:
+  case LIVES_DIALOG_ABORT_RETRY_CANCEL:
   case LIVES_DIALOG_RETRY_CANCEL:
   case LIVES_DIALOG_ABORT_RETRY:
   case LIVES_DIALOG_ABORT_OK:
@@ -358,12 +358,12 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
       abortbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
                     LIVES_STOCK_QUIT, _("_Abort"), LIVES_RESPONSE_ABORT);
 
-      if (diat == LIVES_DIALOG_ABORT_CANCEL_RETRY) {
+      if (diat == LIVES_DIALOG_ABORT_RETRY_CANCEL) {
         lives_window_set_title(LIVES_WINDOW(dialog), _("File Error"));
-        cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-                       LIVES_RESPONSE_CANCEL);
         okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
                    _("_Retry"), LIVES_RESPONSE_RETRY);
+        cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                       LIVES_RESPONSE_CANCEL);
       }
       if (diat == LIVES_DIALOG_ABORT_OK) {
         okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
@@ -723,8 +723,8 @@ static LiVESResponseType _do_abort_cancel_retry_dialog(const char *mytext, lives
 
 
 // returns LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY
-LIVES_GLOBAL_INLINE LiVESResponseType do_abort_cancel_retry_dialog(const char *text) {
-  return _do_abort_cancel_retry_dialog(text, LIVES_DIALOG_ABORT_CANCEL_RETRY);
+LIVES_GLOBAL_INLINE LiVESResponseType do_abort_retry_cancel_dialog(const char *text) {
+  return _do_abort_cancel_retry_dialog(text, LIVES_DIALOG_ABORT_RETRY_CANCEL);
 }
 
 
@@ -928,10 +928,11 @@ LiVESResponseType do_memory_error_dialog(char *op, size_t bytes) {
     sizestr = lives_strdup("");
   }
   msg = lives_strdup_printf(_("\n\nLiVES encountered a memory error when %s%s.\n"
-                              "Click Abort to exit from LiVES, Cancel to abandon the operation\n"
-                              "or Retry to try again. You may need to close some other applications first.\n"), op, sizestr);
+                              "Click Abort to exit from LiVES, "
+                              "Retry to try again, or Cancel to abandon the operation\n"
+                              "You may need to close some other applications first.\n"), op, sizestr);
   lives_free(sizestr);
-  response = do_abort_cancel_retry_dialog(msg);
+  response = do_abort_retry_cancel_dialog(msg);
   lives_free(msg);
   return response;
 }
@@ -1172,7 +1173,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
       }
       lives_free(tmp);
       widget_opts.use_markup = TRUE;
-      retval = do_abort_cancel_retry_dialog(msg);
+      retval = do_abort_retry_cancel_dialog(msg);
       widget_opts.use_markup = FALSE;
       lives_free(msg);
       if (retval == LIVES_RESPONSE_CANCEL) {
@@ -1465,7 +1466,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   widget_opts.use_markup = FALSE;
 
-  if (*cfile->staging_dir) {
+  if (*cfile->staging_dir && lives_strncmp(cfile->info_file, cfile->staging_dir,
+      lives_strlen(cfile->staging_dir))) {
     break_me("Should not processing a clip while in staging !");
     migrate_from_staging(mainw->current_file);
   }
@@ -2929,7 +2931,8 @@ LIVES_GLOBAL_INLINE void do_lb_convert_error(void) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean do_please_install(const char *info, const char *exec, uint64_t gflags) {
+LiVESResponseType do_please_install(const char *info, const char *exec, uint64_t gflags) {
+  LiVESResponseType ret;
   char *extra = lives_strdup(""), *msg;
   if (gflags & INSTALL_CANLOCAL) {
     lives_free(extra);
@@ -2947,30 +2950,35 @@ LIVES_GLOBAL_INLINE boolean do_please_install(const char *info, const char *exec
     }
   }
 
-  msg = lives_strdup_printf(_("%s'%s' is necessary for this feature to work.\n"
+  msg = lives_strdup_printf(_("%s '%s' is necessary for this feature to work.\n"
                               "If possible, kindly install %s before continuing.%s"), info, exec, exec, extra);
 
   if (gflags & INSTALL_CANLOCAL) {
     LiVESWidget *dlg = create_question_dialog(NULL, msg);
-    LiVESResponseType ret;
     lives_free(msg);
-    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+
     lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_CANCEL,
                                        _("Cancel / Install Later"), LIVES_RESPONSE_CANCEL);
     lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_ADD,
                                        _("Continue"), LIVES_RESPONSE_YES);
-    widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
     lives_dialog_set_button_layout(LIVES_DIALOG(dlg), LIVES_BUTTONBOX_SPREAD);
 
     ret = lives_dialog_run(LIVES_DIALOG(dlg));
     lives_widget_destroy(dlg);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-    return (ret == LIVES_RESPONSE_YES);
+    return ret;
+  }
+
+  if (gflags & INSTALL_IMPORTANT) {
+    char *msg2 = lives_strdup_printf(_("IMPORTANT !\n\n%s"), msg);
+    ret = do_abort_retry_cancel_dialog(msg2);
+    lives_free(msg2); lives_free(msg);
+    return ret;
   }
   do_info_dialog(msg);
   lives_free(msg);
-  return FALSE;
+  return LIVES_RESPONSE_NONE;
 }
 
 
@@ -3344,7 +3352,7 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
 LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const char *errtext) {
   // err can be errno from open/fopen etc.
 
-  // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
+  // return same as do_abort_retry_cancel_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
 
   LiVESResponseType ret;
   char *msg, *emsg, *tmp;
@@ -3392,7 +3400,7 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
   lives_free(emsg);
 
   widget_opts.use_markup = TRUE;
-  ret = do_abort_cancel_retry_dialog(msg);
+  ret = do_abort_retry_cancel_dialog(msg);
   widget_opts.use_markup = FALSE;
 
   lives_free(dsmsg);
@@ -3427,7 +3435,7 @@ LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const cha
   LIVES_ERROR(emsg);
   lives_free(emsg);
 
-  ret = do_abort_cancel_retry_dialog(msg);
+  ret = do_abort_retry_cancel_dialog(msg);
 
   lives_free(msg);
   lives_free(sutf);
@@ -3523,7 +3531,7 @@ LiVESResponseType  do_file_perm_error(const char *file_name, boolean allow_cance
   if (!allow_cancel)
     resp = do_abort_retry_dialog(msg);
   else
-    resp = do_abort_cancel_retry_dialog(msg);
+    resp = do_abort_retry_cancel_dialog(msg);
   lives_free(msg);
   return resp;
 }
@@ -3545,7 +3553,7 @@ LiVESResponseType do_dir_perm_error(const char *dir_name, boolean allow_cancel) 
   if (!allow_cancel)
     resp = do_abort_retry_dialog(msg);
   else
-    resp = do_abort_cancel_retry_dialog(msg);
+    resp = do_abort_retry_cancel_dialog(msg);
 
   lives_free(msg);
   return resp;

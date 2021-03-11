@@ -763,7 +763,7 @@ void load_frame_image(frames_t frame) {
               /*         mainw->pred_frame, mainw->actual_frame, delta); */
               if (delta <= 0 || (mainw->pred_frame < 0 && delta > 0)) {
                 check_layer_ready(mainw->frame_layer_preload);
-                if (weed_layer_get_pixel_data_packed(mainw->frame_layer_preload) != NULL) {
+                if (weed_layer_get_pixel_data(mainw->frame_layer_preload) != NULL) {
                   //g_print("YAH !\n");
                   got_preload = TRUE;
                   if (mainw->pred_frame < 0) {
@@ -1042,7 +1042,7 @@ void load_frame_image(frames_t frame) {
         // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
         if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
         if (create_empty_pixel_data(return_layer, FALSE, TRUE))
-          retdata = weed_layer_get_pixel_data(return_layer, NULL);
+          retdata = weed_layer_get_pixel_data_planar(return_layer, NULL);
         else return_layer = NULL;
       }
 
@@ -1063,7 +1063,7 @@ void load_frame_image(frames_t frame) {
         g_print("gamma conv done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
       if (return_layer) weed_leaf_dup(return_layer, frame_layer, WEED_LEAF_GAMMA_TYPE);
-      pd_array = weed_layer_get_pixel_data(frame_layer, NULL);
+      pd_array = weed_layer_get_pixel_data_planar(frame_layer, NULL);
       lb_width = lwidth = weed_layer_get_width_pixels(frame_layer);
       lb_height = lheight = weed_layer_get_height(frame_layer);
       pwidth = mainw->pwidth;
@@ -1312,7 +1312,7 @@ void load_frame_image(frames_t frame) {
 
         if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1 ; /// special value to compact the rowstrides
         if (create_empty_pixel_data(return_layer, FALSE, TRUE)) {
-          retdata = weed_layer_get_pixel_data(return_layer, NULL);
+          retdata = weed_layer_get_pixel_data_planar(return_layer, NULL);
         } else return_layer = NULL;
       }
 
@@ -1338,7 +1338,7 @@ void load_frame_image(frames_t frame) {
 
       if (!avsync_check()) goto lfi_done;
 
-      pd_array = weed_layer_get_pixel_data(frame_layer, NULL);
+      pd_array = weed_layer_get_pixel_data_planar(frame_layer, NULL);
 
       if (player_v2) {
         weed_set_double_value(frame_layer, "x_range", 1.0);

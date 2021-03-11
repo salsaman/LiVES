@@ -482,7 +482,7 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
     if ((fd = lives_create_buffered(prefs->fxdefsfile, DEF_FILE_PERMS)) == -1) {
       end_threaded_dialog();
       msg = lives_strdup_printf(_("\n\nUnable to write defaults file\n%s\nError code %d\n"), prefs->fxdefsfile, errno);
-      retval = do_abort_cancel_retry_dialog(msg);
+      retval = do_abort_retry_cancel_dialog(msg);
       lives_free(msg);
     } else {
       msg = lives_strdup_printf("%s\n", FX_DEFS_VERSIONSTRING_1_1);
@@ -1222,7 +1222,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
       if (has_error) {
         msg = lives_strdup_printf(_("\n\nUnable to read from keymap file\n%s\nError code %d\n"), keymap_file, errno);
-        retval = do_abort_cancel_retry_dialog(msg);
+        retval = do_abort_retry_cancel_dialog(msg);
         lives_free(msg);
 
         if (retval == LIVES_RESPONSE_CANCEL) {

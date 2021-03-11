@@ -693,7 +693,7 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       boolean rbswapped = FALSE;
 
       // adjust pixel_data and height, then copy-by-ref to layer_slice
-      src = weed_layer_get_pixel_data_packed(layer);
+      src = weed_layer_get_pixel_data(layer);
       xsrc = src + (int)(top * height) * row;
       weed_layer_set_pixel_data_packed(layer, xsrc);
       weed_layer_set_height(layer, lheight);
@@ -745,7 +745,7 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       convert_layer_palette(layer_slice, pal, 0);
       weed_leaf_clear_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
 
-      pd = weed_layer_get_pixel_data_packed(layer_slice);
+      pd = weed_layer_get_pixel_data(layer_slice);
       if (pd != xsrc) lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
       else weed_layer_nullify_pixel_data(layer_slice);
       weed_layer_free(layer_slice);

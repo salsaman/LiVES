@@ -31,7 +31,7 @@ boolean send_layer(weed_layer_t *layer, _vid_playback_plugin *vpp, int64_t timec
   compact_rowstrides(layer);
 
   // get a void ** to the planar pixel_data
-  pd_array = weed_layer_get_pixel_data(layer, NULL);
+  pd_array = weed_layer_get_pixel_data_planar(layer, NULL);
 
   if (pd_array) {
     // send pixel data to the video frame renderer

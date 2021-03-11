@@ -162,9 +162,6 @@ int check_dev_busy(char *devstr);
 off_t get_file_size(int fd);
 off_t sget_file_size(const char *name);
 
-size_t reget_afilesize(int fileno);
-off_t reget_afilesize_inner(int fileno);
-
 off_t get_dir_size(const char *dirname);
 
 boolean compress_files_in_dir(const char *dir, int method, void *data);

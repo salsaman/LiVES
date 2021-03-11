@@ -186,11 +186,6 @@ endif
 endif
 endif
 
-if HAVE_FFTHUMB
-ffthumb_LDADD = @LIBFFMPEGTHUMBNAILER_LIBS@
-ffthumb_CFLAGS = @LIBFFMPEGTHUMBNAILER_CFLAGS@
-endif
-
 if ENABLE_GIW
 giw_SOURCES = giw/giwknob.c giw/giwknob.h giw/giwvslider.c giw/giwvslider.h giw/giwled.c giw/giwled.h giw/giwtimeline.c giw/giwtimeline.h
 giw_LDADD = -lm
@@ -291,10 +286,6 @@ endif
 
 if HAVE_PRCTL
 AM_CFLAGS += -DHAVE_PRCTL=1
-endif
-
-if HAVE_FFTHUMB
-AM_CFLAGS += -DHAVE_FFTHUMB
 endif
 
 if ENABLE_PROFILING

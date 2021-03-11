@@ -1,6 +1,6 @@
 // utils.c
 // LiVES
-// (c) G. Finch 2003 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2003 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -62,7 +62,7 @@ int lives_system(const char *com, boolean allow_error) {
 
   //g_print("doing: %s\n",com);
 
-  // lets us remove cfile->info_file witgh lives_rm
+  // lets us remove cfile->info_file with lives_rm
   if (shortcut) return system(com);
 
   if (mainw && mainw->is_ready && !mainw->is_exiting &&
@@ -2519,15 +2519,13 @@ void show_manual_section(const char *lang, const char *section) {
 void wait_for_bg_audio_sync(int fileno) {
   char *afile = lives_get_audio_file_name(fileno);
   lives_alarm_t alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
-  int fd;
+  ticks_t timeout;
 
-  while ((fd = open(afile, O_RDONLY)) < 0 && lives_alarm_check(alarm_handle) > 0) {
-    lives_sync(1);
-    lives_usleep(prefs->sleep_time);
-  }
+  lives_nanosleep_until_nonzero(!(sget_file_size(afile) <= 0 && (timeout = lives_alarm_check(alarm_handle)) > 0));
+
+  if (!timeout) break_me("no audio found");
   lives_alarm_clear(alarm_handle);
 
-  if (fd >= 0) close(fd);
   lives_free(afile);
 }
 

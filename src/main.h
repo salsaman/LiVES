@@ -341,6 +341,7 @@ weed_leaf_delete_f _weed_leaf_delete;
 
 /// install guidance flags
 #define INSTALL_CANLOCAL (1ul << 0)
+#define INSTALL_IMPORTANT (1ul << 1)
 
 typedef enum {
   MISSING = -1, ///< not yet implemented (TODO)
@@ -1009,6 +1010,7 @@ typedef struct _lives_clip_t {
 
   // current and last played index frames for internal player
   frames_t saved_frameno;
+
   char staging_dir[PATH_MAX];
 
   pthread_mutex_t transform_mutex;
@@ -1152,7 +1154,7 @@ void maybe_abort(boolean do_check);
 void do_abort_dialog(const char *text);
 LiVESResponseType do_abort_ok_dialog(const char *text);
 LiVESResponseType do_abort_retry_dialog(const char *text);
-LiVESResponseType do_abort_cancel_retry_dialog(const char *text) WARN_UNUSED;
+LiVESResponseType do_abort_retry_cancel_dialog(const char *text) WARN_UNUSED;
 
 LiVESResponseType do_retry_cancel_dialog(const char *text);
 
@@ -1546,7 +1548,7 @@ void cached_list_free(LiVESList **list);
 
 void get_location(const char *exe, char *val, int maxlen);
 boolean check_for_executable(lives_checkstatus_t *cap, const char *exec);
-boolean do_please_install(const char *more, const char *exec, uint64_t guidance_flags);
+LiVESResponseType  do_please_install(const char *more, const char *exec, uint64_t guidance_flags);
 boolean do_please_install_either(const char *exec, const char *exec2);
 
 /// lives_image_type can be a string, lives_img_type_t is an enumeration

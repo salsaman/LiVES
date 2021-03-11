@@ -414,7 +414,7 @@ LiVESPixbuf *mt_make_thumb(lives_mt *mt, int file, int width, int height, frames
 
     if (tried_all) noblanks = FALSE;
 
-    if (noblanks && thumbnail && !lives_pixbuf_is_all_black(thumbnail)) noblanks = FALSE;
+    if (noblanks && thumbnail && !lives_pixbuf_is_all_black(thumbnail, FALSE)) noblanks = FALSE;
     if (noblanks) {
       nframe = frame + sfile->frames / 10.;
       if (nframe == frame) nframe++;

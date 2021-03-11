@@ -299,7 +299,8 @@ boolean lives_painter_to_layer(lives_painter_t *cairo, weed_layer_t *);
 
 // pixbuf functions
 #define weed_palette_is_pixbuf_palette(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_RGBA32) ? TRUE : FALSE)
-boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf);
+boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf, boolean exact);
+boolean lives_layer_is_all_black(weed_layer_t *layer, boolean exact);
 void lives_pixbuf_set_opaque(LiVESPixbuf *pixbuf);
 
 LiVESPixbuf *layer_to_pixbuf(weed_layer_t *, boolean realpalette, boolean fordisp);
@@ -313,8 +314,8 @@ int weed_layer_get_palette_yuv(weed_layer_t *, int *clamping, int *sampling, int
 int weed_layer_get_yuv_clamping(weed_layer_t *);
 int weed_layer_get_yuv_sampling(weed_layer_t *);
 int weed_layer_get_yuv_subspace(weed_layer_t *);
-uint8_t *weed_layer_get_pixel_data_packed(weed_layer_t *);
-void **weed_layer_get_pixel_data(weed_layer_t *, int *nplanes);
+uint8_t *weed_layer_get_pixel_data(weed_layer_t *);
+void **weed_layer_get_pixel_data_planar(weed_layer_t *, int *nplanes);
 float **weed_layer_get_audio_data(weed_layer_t *, int *naudchans);
 int weed_layer_get_audio_rate(weed_layer_t *layer);
 int weed_layer_get_naudchans(weed_layer_t *layer);

@@ -13,6 +13,7 @@
 // - provides a convenient location for gathering function arguments and storing the return value(s)
 // - objects can be "smart" and provide defaults for arguments, query other objects, or get missing values from the user
 // - arguments can be mapped to things other than simple parameters, for example "self", "self.fundamental"
+// - objects can create and manage things other than object classes, for example and object class which manages the lifecyle of a C struct
 // - allows functions to be chained in sequence with outputs from one feeding into the next
 // - provides for verifying that a set of conditions is satisfied before the function(s) are called
 // - objects can list capabilities which depend on the intent and object state
@@ -201,8 +202,6 @@ typedef int32_t lives_intention;
 #define OBJECT_STATE_NULL	0
 #define OBJECT_STATE_NORMAL	1
 #define OBJECT_STATE_PREVIEW	2
-
-// TODO - move into cliphandler.c
 
 // when object is destroyed it should add a ref to status to be returned, and set state to DESTROYED before freeing itself
 struct _obj_status {

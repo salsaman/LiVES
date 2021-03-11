@@ -446,6 +446,7 @@ boolean save_clip_values(int which) {
           lives_free(lives_header_bak);
         }
         lives_free(lives_header);
+        dump_clip_binfmt(which);
       }
     }
   } while (retval == LIVES_RESPONSE_RETRY);
@@ -461,6 +462,51 @@ boolean save_clip_values(int which) {
   if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
 
   return TRUE;
+}
+
+
+size_t reget_afilesize(int fileno) {
+  // re-get the audio file size
+  lives_clip_t *sfile = mainw->files[fileno];
+  boolean bad_header = FALSE;
+  off_t res = reget_afilesize_inner(fileno);
+  if (res > 0) sfile->afilesize = res;
+  else sfile->afilesize = 0;
+  if (mainw->multitrack) return sfile->afilesize;
+
+  if (!sfile->afilesize) {
+    if (!sfile->opening && fileno != mainw->ascrap_file && fileno != mainw->scrap_file) {
+      if (sfile->arate != 0 || sfile->achans != 0 || sfile->asampsize != 0 || sfile->arps != 0) {
+        sfile->arate = sfile->achans = sfile->asampsize = sfile->arps = 0;
+        if (!save_clip_value(fileno, CLIP_DETAILS_ACHANS, &sfile->achans)) bad_header = TRUE;
+        if (!save_clip_value(fileno, CLIP_DETAILS_ARATE, &sfile->arps)) bad_header = TRUE;
+        if (!save_clip_value(fileno, CLIP_DETAILS_PB_ARATE, &sfile->arate)) bad_header = TRUE;
+        if (!save_clip_value(fileno, CLIP_DETAILS_ASAMPS, &sfile->asampsize)) bad_header = TRUE;
+        if (bad_header) do_header_write_error(fileno);
+      }
+    }
+  }
+
+  if (mainw->is_ready && fileno > 0 && fileno == mainw->current_file) {
+    // force a redraw
+    update_play_times();
+  }
+
+  return sfile->afilesize;
+}
+
+
+off_t reget_afilesize_inner(int fileno) {
+  // safe version that just returns the audio file size
+  off_t filesize;
+  char *afile = lives_get_audio_file_name(fileno);
+  lives_sync(1);
+  filesize = sget_file_size(afile);
+  lives_free(afile);
+  if (filesize < 0) {
+    filesize = 0;
+  }
+  return filesize;
 }
 
 
@@ -492,71 +538,119 @@ boolean read_file_details(const char *file_name, boolean is_audio, boolean is_im
 #define DSIZE_MAX 100000
 
 
-static boolean recover_from_forensics(int fileno, lives_clip_t *recovered) {
-  // tgry to regenerate file details from the binfmt dump,
+static boolean recover_from_forensics(int fileno, lives_clip_t *loaded) {
+  // try to regenerate file details from the binfmt dump,
   // used if header.lives is missing
   lives_clip_t *sfile = mainw->files[fileno];
   frames_t cframes;
-  if (!lives_strcmp(recovered->handle, sfile->handle)) {
-    if (recovered->clip_type == CLIP_TYPE_DISK) {
-      sfile->clip_type = recovered->clip_type;
-      sfile->frames = recovered->frames;
-      sfile->img_type = recovered->img_type;
+  if (!lives_strcmp(loaded->handle, sfile->handle)) {
+    _RELOAD(clip_type);
+    _RELOAD(frames);
+    _RELOAD(img_type);
+    _RELOAD(fps);
+    sfile->pb_fps = sfile->fps;
+    _RELOAD_STRING(file_name, PATH_MAX);
 
+    if (sfile->clip_type == CLIP_TYPE_DISK) {
       // see if all frames are present
       cframes = get_frame_count(fileno, 1);
-      if (sfile->frames == cframes) {
-        int hsize, vsize;
-        if (get_frames_sizes(fileno, 1, &hsize, &vsize)) {
-          if (hsize == recovered->hsize && vsize == recovered->vsize) {
-            sfile->hsize = recovered->hsize;
-            sfile->vsize = recovered->vsize;
-            sfile->fps = recovered->fps;
-            sfile->ratio_fps = recovered->ratio_fps;
-            sfile->interlace = recovered->interlace;
-            sfile->bpp = recovered->bpp;
-            sfile->deinterlace = recovered->deinterlace;
-            sfile->gamma_type = recovered->gamma_type;
-            lives_snprintf(sfile->name, CLIP_NAME_MAXLEN, "%s", recovered->name);
-            lives_snprintf(sfile->file_name, PATH_MAX, "%s", recovered->file_name);
-            lives_snprintf(sfile->save_file_name, PATH_MAX, "%s", recovered->save_file_name);
-            sfile->is_untitled = recovered->is_untitled;
-            lives_snprintf(sfile->mime_type, 256, "%s", recovered->mime_type);
-            lives_snprintf(sfile->type, 64, "%s", recovered->type);
-            sfile->changed = TRUE;
-            sfile->orig_file_name = recovered->orig_file_name;
-            sfile->was_renamed = recovered->was_renamed;
-            sfile->start = 1;
-            sfile->end = sfile->frames;
-            sfile->arps = recovered->arps;
-            sfile->arate = recovered->arate;
-            sfile->achans = recovered->achans;
-            sfile->asampsize = recovered->asampsize;
-            sfile->signed_endian = recovered->signed_endian;
-            sfile->arate = recovered->arate;
-            sfile->vol = recovered->vol;
-            sfile->afilesize = recovered->afilesize;
-            sfile->f_size = recovered->f_size;
-            lives_snprintf(sfile->title, 1024, "%s", recovered->title);
-            lives_snprintf(sfile->author, 1024, "%s", recovered->author);
-            lives_snprintf(sfile->comment, 1024, "%s", recovered->comment);
-            lives_snprintf(sfile->keywords, 1024, "%s", recovered->keywords);
-            sfile->unique_id = recovered->unique_id;
-            return TRUE;
+    } else {
+      if (!*sfile->file_name) return FALSE;
+      if ((cframes = load_frame_index(fileno)) == 0) return FALSE;
+      else {
+        if (sfile->header_version >= 102) sfile->fps = sfile->pb_fps;
+        _RELOAD(decoder_uid);;
+        if (!reload_clip(fileno, cframes)) return FALSE;
+        lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
+        if (sfile->img_type == IMG_TYPE_UNKNOWN) {
+          int fvirt = count_virtual_frames(sfile->frame_index, 1, sfile->frames);
+          if (fvirt < sfile->frames) {
+            if (!sfile->checked && !check_clip_integrity(fileno, cdata, sfile->frames)) {
+              sfile->checked = TRUE;
+		// *INDENT-OFF*
+	      }}
+	    if (!prefs->vj_mode && sfile->needs_update) do_clip_divergence_error(fileno);
+	  }}}
+      // *INDENT-ON*
+
+    if (sfile->frames == cframes) {
+      int hsize, vsize;
+      if (sfile->clip_type == CLIP_TYPE_FILE || get_frames_sizes(fileno, 1, &hsize, &vsize)) {
+        if (sfile->clip_type == CLIP_TYPE_FILE || (hsize == loaded->hsize && vsize == loaded->vsize)) {
+          sfile->start = 1;
+          sfile->end = sfile->frames;
+          _RELOAD(hsize); _RELOAD(vsize); _RELOAD(ratio_fps);
+          _RELOAD(interlace); _RELOAD(bpp); _RELOAD(deinterlace);
+          _RELOAD(gamma_type); _RELOAD(is_untitled);
+          _RELOAD_STRING(name, PATH_MAX); _RELOAD_STRING(save_file_name, PATH_MAX);
+          _RELOAD_STRING(mime_type, 256); _RELOAD_STRING(type, 64);
+          _RELOAD(changed); _RELOAD(orig_file_name);
+          _RELOAD(was_renamed); _RELOAD(arps); _RELOAD(arate);
+          _RELOAD(achans); _RELOAD(asampsize); _RELOAD(signed_endian);
+          _RELOAD(vol); _RELOAD(afilesize); _RELOAD(f_size);
+          _RELOAD_STRING(title, 1024); _RELOAD_STRING(author, 1024);
+          _RELOAD_STRING(comment, 1024); _RELOAD_STRING(keywords, 1024);
+          _RELOAD(unique_id);
 	    // *INDENT-OFF*
-	  }}}}}
+	  }}
+	return TRUE;
+      }}
   // *INDENT-ON*
-  return TRUE;
+  return FALSE;
 }
 
 
+void dump_clip_binfmt(int which) {
+  static boolean recurse = FALSE;
+  char *fname = lives_build_filename(prefs->workdir, mainw->files[which]->handle,
+                                     "." TOTALSAVE_NAME, NULL);
+  int fd = lives_create_buffered(fname, DEF_FILE_PERMS);
+  lives_write_buffered(fd, (const char *)mainw->files[which], sizeof(lives_clip_t), TRUE);
+  lives_close_buffered(fd);
+  if (recurse) return;
 
-static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
+  if (check_for_executable(&capable->has_gzip, EXEC_GZIP)) {
+    char *com = lives_strdup_printf("%s -f %s", EXEC_GZIP, fname), *gzname;
+    lives_system(com, TRUE);
+    lives_free(com);
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
+      recurse = TRUE;
+      dump_clip_binfmt(which);
+      recurse = FALSE;
+      gzname = lives_strdup_printf("%s.%s", fname, LIVES_FILE_EXT_GZIP);
+      if (lives_file_test(gzname, LIVES_FILE_TEST_EXISTS)) lives_rm(gzname);
+      lives_free(gzname);
+    }
+  }
+  lives_free(fname);
+}
+
+
+static lives_clip_t *_restore_binfmt(int clipno, boolean forensic, char *binfmtname) {
   if (IS_NORMAL_CLIP(clipno)) {
     lives_clip_t *sfile = mainw->files[clipno];
     char *clipdir = get_clip_dir(clipno);
     char *fname = lives_build_filename(clipdir, "." TOTALSAVE_NAME, NULL);
+    char *gzname = lives_strdup_printf("%s.%s", fname, LIVES_FILE_EXT_GZIP);
     lives_free(clipdir);
+    if ((binfmtname && !lives_strcmp(binfmtname, gzname)) || lives_file_test(gzname, LIVES_FILE_TEST_EXISTS)) {
+      char *com;
+      LiVESResponseType resp = LIVES_RESPONSE_NONE;
+      do {
+        if (!check_for_executable(&capable->has_gzip, EXEC_GZIP)) {
+          resp = do_please_install(_("Unable to restore this clip"), EXEC_GZIP, INSTALL_IMPORTANT);
+          if (resp == LIVES_RESPONSE_CANCEL) {
+            lives_free(gzname);
+            return NULL;
+          }
+        }
+      } while (resp == LIVES_RESPONSE_RETRY);
+      com = lives_strdup_printf("%s -df %s", EXEC_GZIP, gzname);
+      lives_system(com, TRUE);
+      lives_free(com);
+    }
+    lives_free(gzname);
     if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
       ssize_t bytes;
       size_t cursize = (size_t)((char *)&sfile->binfmt_end - (char *)sfile), dsize;
@@ -625,15 +719,15 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
 #undef _RELOAD_STRING
 
 boolean restore_clip_binfmt(int clipno) {
-  lives_clip_t *recov = _restore_binfmt(clipno, FALSE);
+  lives_clip_t *recov = _restore_binfmt(clipno, FALSE, NULL);
   if (!recov) return FALSE;
   lives_free(recov);
   return TRUE;
 }
 
 
-LIVES_GLOBAL_INLINE lives_clip_t *clip_forensic(int clipno) {
-  return _restore_binfmt(clipno, TRUE);
+LIVES_GLOBAL_INLINE lives_clip_t *clip_forensic(int clipno, char *binfmtname) {
+  return _restore_binfmt(clipno, TRUE, binfmtname);
 }
 
 
@@ -723,9 +817,7 @@ int save_event_frames(void) {
     }
   } while (retval == LIVES_RESPONSE_RETRY);
 
-  if (retval == LIVES_RESPONSE_CANCEL) {
-    i = -1;
-  }
+  if (retval == LIVES_RESPONSE_CANCEL) i = -1;
 
   lives_free(hdrfile);
   return i;
@@ -858,6 +950,7 @@ LIVES_GLOBAL_INLINE boolean ignore_clip(int clipno) {
   return do_ignore;
 }
 
+
 // returns TRUE if we delete
 static boolean do_delete_or_mark(int clipno) {
   char *clipdir = NULL;
@@ -912,12 +1005,12 @@ static boolean recover_details(int fileno, char *hdr, char *hdrback, char *binfm
       lives_cp(hdrback, hdr);
       return TRUE;
     } else {
-      lives_clip_t *recovered = clip_forensic(fileno);
+      lives_clip_t *recovered = clip_forensic(fileno, binfmt);
       if (recovered) {
         if (recover_from_forensics(fileno, recovered)) {
           char *clipdir = get_clip_dir(fileno);
           char *binfmt_to = lives_build_filename(clipdir, "." TOTALSAVE_NAME, NULL);
-          if (lives_strcmp(binfmt_to, binfmt)) {
+          if (lives_strncmp(binfmt_to, binfmt, lives_strlen(binfmt_to))) {
             lives_mv(binfmt, binfmt_to);
           }
           lives_free(recovered);
@@ -1288,8 +1381,7 @@ old_check:
                             !strcmp(file_name, "."));
 
   lives_popen(com, FALSE, buff, 1024);
-  lives_free(com);
-  lives_free(tmp);
+  lives_free(com); lives_free(tmp);
 
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
@@ -1329,24 +1421,31 @@ rhd_failed:
   if (fileno == mainw->current_file) {
     char *clipdir = get_clip_dir(fileno);
     char *hdrback = lives_strdup_printf("%s.%s", lives_header, LIVES_FILE_EXT_BAK);
-    char *binfmt = NULL;
+    char *binfmt = NULL, *gzbinfmt;
 
     if (!lives_file_test(hdrback, LIVES_FILE_TEST_EXISTS)) {
       lives_free(hdrback);
       hdrback = NULL;
       binfmt = lives_build_filename(clipdir, "." TOTALSAVE_NAME, NULL);
-      if (!lives_file_test(binfmt, LIVES_FILE_TEST_EXISTS)) {
-        char *binfmt2 = lives_build_filename(clipdir, TOTALSAVE_NAME, NULL);
-        if (lives_file_test(binfmt2, LIVES_FILE_TEST_EXISTS)) {
-          lives_mv(binfmt2, binfmt);
-          lives_free(binfmt);
-          binfmt = binfmt2;
-        } else {
-          lives_free(binfmt2); lives_free(binfmt);
-          binfmt = NULL;
-        }
-      }
-    }
+      gzbinfmt = lives_build_filename(clipdir, "." TOTALSAVE_NAME "." LIVES_FILE_EXT_GZIP, NULL);
+      if (lives_file_test(gzbinfmt, LIVES_FILE_TEST_EXISTS)) {
+        lives_free(binfmt);
+        binfmt = gzbinfmt;
+      } else {
+        lives_free(gzbinfmt);
+        if (!lives_file_test(binfmt, LIVES_FILE_TEST_EXISTS)) {
+          char *binfmt2 = lives_build_filename(clipdir, TOTALSAVE_NAME, NULL);
+          if (lives_file_test(binfmt2, LIVES_FILE_TEST_EXISTS)) {
+            lives_mv(binfmt2, binfmt);
+            lives_free(binfmt);
+            binfmt = binfmt2;
+          } else {
+            lives_free(binfmt2); lives_free(binfmt);
+            binfmt = NULL;
+	    // *INDENT-OFF*
+	  }}}}
+    // *INDENT-ON*
+
     lives_free(clipdir);
     if (hdrback || binfmt) {
       if (recover_details(fileno, lives_header, hdrback, binfmt)) {
@@ -1355,7 +1454,7 @@ rhd_failed:
           if (binfmt) lives_free(binfmt);
           goto frombak;
         }
-        lives_free(binfmt); lives_free(clipdir);
+        lives_free(binfmt);
         save_clip_values(fileno);
         return TRUE;
       }
@@ -1380,7 +1479,9 @@ LIVES_GLOBAL_INLINE char *get_clip_dir(int clipno) {
   if (IS_VALID_CLIP(clipno)) {
     lives_clip_t *sfile = mainw->files[clipno];
     if (IS_NORMAL_CLIP(clipno) || sfile->clip_type == CLIP_TYPE_TEMP) {
-      if (*sfile->staging_dir) return lives_build_path(sfile->staging_dir, sfile->handle, NULL);
+      if (*sfile->staging_dir) {
+        return lives_build_path(sfile->staging_dir, sfile->handle, NULL);
+      }
       return lives_build_path(prefs->workdir, sfile->handle, NULL);
     }
   }
@@ -1394,10 +1495,12 @@ void migrate_from_staging(int clipno) {
     if (*sfile->staging_dir) {
       char *old_clipdir, *new_clipdir, *stfile;
       old_clipdir = get_clip_dir(clipno);
+      if (sfile->achans) wait_for_bg_audio_sync(clipno);
       pthread_mutex_lock(&sfile->transform_mutex);
       *sfile->staging_dir = 0;
       new_clipdir = get_clip_dir(clipno);
       lives_cp_recursive(old_clipdir, new_clipdir, FALSE);
+      if (sfile->achans) wait_for_bg_audio_sync(clipno);
       lives_rmdir(old_clipdir, TRUE);
       lives_free(old_clipdir);
       stfile = lives_build_filename(new_clipdir, LIVES_STATUS_FILE_NAME, NULL);

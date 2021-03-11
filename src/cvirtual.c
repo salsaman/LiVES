@@ -612,7 +612,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 mismatch:
   // something mismatched - commence further investigation
 
-  if ((binf = clip_forensic(mainw->current_file))) {
+  if ((binf = clip_forensic(mainw->current_file, NULL))) {
     if (has_missing_frames) {
       if (cdata) {
         if (binf->frames == cdata->nframes  && binf->frames < sfile->frames) sfile->frames = binf->frames;

@@ -349,6 +349,10 @@ typedef struct {
 
   int num_rtaudiobufs;
 
+  // if no more than this value end frames are blank, trim the blanks
+  // value of 0 disables
+  int max_blank_trim;
+
   boolean safe_symlinks;
 
 #ifdef ALSA_MIDI

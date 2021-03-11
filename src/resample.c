@@ -1649,6 +1649,14 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     lives_box_pack_start(LIVES_BOX(dialog_vbox), vboxx, TRUE, TRUE, 0);
   } else vboxx = top_vbox;
 
+  if (type == 12) {
+    widget_opts.use_markup = TRUE;
+    label = lives_standard_formatted_label_new(_("<big><b>LiVES could not automatically determine the audio format for this clip.\n"
+            "Please enter the values to be used below\n</b></big>"));
+    widget_opts.use_markup = FALSE;
+    lives_box_pack_start(LIVES_BOX(vboxx), label, FALSE, TRUE, widget_opts.packing_height);
+  }
+
   if (type == 1) {
     resaudw->frame = lives_standard_frame_new(_("Current"), 0., FALSE);
 

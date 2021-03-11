@@ -70,28 +70,32 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
 
 boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
 boolean save_clip_value(int which, lives_clip_details_t, void *val);
-boolean save_clip_values(int which_file);
+boolean save_clip_values(int which);
+
+void dump_clip_binfmt(int which);
+boolean restore_clip_binfmt(int which);
+lives_clip_t *clip_forensic(int which, char *binfmtname);
+
+size_t reget_afilesize(int fileno);
+off_t reget_afilesize_inner(int fileno);
 
 boolean read_file_details(const char *file_name, boolean only_check_for_audio, boolean open_image);
 
-boolean restore_clip_binfmt(int clipno);
-lives_clip_t *clip_forensic(int clipno);
-
-boolean update_clips_version(int clipno);
+boolean update_clips_version(int which);
 
 int save_event_frames(void);
 
-boolean ignore_clip(int clipno);
+boolean ignore_clip(int which);
 
-void remove_old_headers(int clipno);
-boolean write_headers(int clipno);
-boolean read_headers(int clipno, const char *dir, const char *file_name);
+void remove_old_headers(int which);
+boolean write_headers(int which);
+boolean read_headers(int which, const char *dir, const char *file_name);
 
-char *get_clip_dir(int clipno);
+char *get_clip_dir(int which);
 
-void permit_close(int clipno);
+void permit_close(int which);
 
-void migrate_from_staging(int clipno);
+void migrate_from_staging(int which);
 
 /// intents ////
 
@@ -102,6 +106,6 @@ void migrate_from_staging(int clipno);
 // txparams
 #define CLIP_PARAM_STAGING_DIR "staging_dir"
 
-lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intention intent);
+lives_intentparams_t *get_txparams_for_clip(int which, lives_intention intent);
 
 #endif

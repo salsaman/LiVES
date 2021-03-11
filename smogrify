@@ -3529,7 +3529,6 @@ if (1) {
 
 	    #append silence to pad to end
 	    #print STDERR "filling audio to $audio_end\n";
-
 	    &append_silence(0, &align($audio_end * $arate * $align), $asamps, $achans, $asigned, $aendian);
 	    if ($panic) {
 		unlink $pidfile;
@@ -7443,7 +7442,6 @@ sub cut_audio {
 	    $panic = &sig_write_error($audio_in);
 	    return;
 	}
-
 	$fsize -= $epos;
 	$fdd_in = $audio_temp;
 	$fdd_out = $audio_in;

@@ -1902,7 +1902,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     layer = layers[in_tracks[i]];
     clip = weed_get_int_value(layer, WEED_LEAF_CLIP, NULL);
 
-    if (!weed_layer_get_pixel_data_packed(layer)) {
+    if (!weed_layer_get_pixel_data(layer)) {
       //check_layer_ready(layer);
       /* /// wait for thread to pull layer pixel_data */
       if (!is_layer_ready(layer)) {
@@ -1918,7 +1918,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           retval = FILTER_ERROR_MISSING_FRAME;
           goto done_video;
         }
-        if (!weed_layer_get_pixel_data_packed(layer)) {
+        if (!weed_layer_get_pixel_data(layer)) {
           retval = FILTER_ERROR_MISSING_FRAME;
           goto done_video;
         }
@@ -2759,7 +2759,7 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
     else layer = NULL;
 
     if (!layer || ((weed_layer_is_audio(layer) && !weed_layer_get_audio_data(layer, NULL)) ||
-                   (weed_layer_is_video(layer) && (pixdata = weed_layer_get_pixel_data(layer, NULL)) == NULL))) {
+                   (weed_layer_is_video(layer) && (pixdata = weed_layer_get_pixel_data_planar(layer, NULL)) == NULL))) {
       // if the layer data is NULL and it maps to a repeating channel, then disable the channel temporarily
       chantmpl = weed_channel_get_template(channel);
       if (weed_chantmpl_get_max_repeats(chantmpl) != 1) {
@@ -11075,7 +11075,7 @@ static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, 
     size_t padding = 0;
     size_t pdsize = 0;
 
-    uint8_t **pixel_data = (uint8_t **)weed_layer_get_pixel_data(layer, NULL);
+    uint8_t **pixel_data = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
     /// new style: we will write 4 bytes 0, then possibly further padding bytes,
     /// following this, a 4 byte identifier: 0x57454544, and 4 bytes version *little endian. The current version is 0x01000000
     /// this is then followed by 4 bytes nplanes, 4 bytes palette, 4 bytes width, 4 bytes height.

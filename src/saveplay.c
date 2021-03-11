@@ -139,6 +139,7 @@ ulong open_file(const char *file_name) {
 }
 
 
+#if 0
 static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event,
                                    boolean mt_has_audio_file) {
 
@@ -163,7 +164,7 @@ static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   return FALSE;
 }
-
+#endif
 
 void pad_init_silence(void) {
   cfile->undo1_dbl = 0.;
@@ -294,7 +295,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       lives_free(cwd);
 
       if (cfile->ext_src) {
-        lives_decoder_t *dplug = (lives_decoder_t *)cfile->ext_src;
+        //lives_decoder_t *dplug = (lives_decoder_t *)cfile->ext_src;
         cfile->opening = TRUE;
         cfile->clip_type = CLIP_TYPE_FILE;
         cfile->img_type = IMG_TYPE_BEST; // override the pref
@@ -340,65 +341,66 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         if (response == LIVES_RESPONSE_CANCEL) {
           return 0;
         }
-        probed_achans = cfile->achans;
+        probed_achans = cdata->achans;
         cfile->arate = cfile->arps = cdata->arate;
-        cfile->achans = cdata->achans;
+        //cfile->achans = cdata->achans;
         cfile->asampsize = cdata->asamps;
 
         cfile->signed_endian =
           get_signed_endian(cdata->asigned, capable->byte_order == LIVES_LITTLE_ENDIAN);
 
-        if (cfile->achans > 0 && (dplug->decoder->rip_audio) && withsound == 1) {
-          // call rip_audio() in the decoder plugin
-          // the plugin gets a chance to do any internal cleanup in rip_audio_cleanup()
+        /* if (cfile->achans > 0 && (dplug->decoder->rip_audio) && withsound == 1) { */
+        /*   // call rip_audio() in the decoder plugin */
+        /*   // the plugin gets a chance to do any internal cleanup in rip_audio_cleanup() */
 
-          int64_t stframe = cfile->fps * start + .5;
-          int64_t maxframe = (stframe + (frames == 0)) ? cfile->frames : frames;
-          int64_t nframes = AUDIO_FRAMES_TO_READ;
-          char *afile = get_audio_file_name(mainw->current_file, TRUE);
+        /*   int64_t stframe = cfile->fps * start + .5; */
+        /*   int64_t maxframe = (stframe + (frames == 0)) ? cfile->frames : frames; */
+        /*   int64_t nframes = AUDIO_FRAMES_TO_READ; */
+        /*   char *afile = get_audio_file_name(mainw->current_file, TRUE); */
 
-          msgstr = lives_strdup_printf(_("Opening audio for %s"), file_name);
+        /*   msgstr = lives_strdup_printf(_("Opening audio for %s"), file_name); */
 
-          if (!LIVES_IS_PLAYING) resize(1);
+        /*   if (!LIVES_IS_PLAYING) resize(1); */
 
-          mainw->cancelled = CANCEL_NONE;
+        /*   mainw->cancelled = CANCEL_NONE; */
 
-          if (!LIVES_IS_PLAYING) {
-            mainw->cancel_type = CANCEL_SOFT;
-            do_threaded_dialog(msgstr, TRUE);
-            mainw->cancel_type = CANCEL_KILL;
-          }
+        /*   if (!LIVES_IS_PLAYING) { */
+        /*     mainw->cancel_type = CANCEL_SOFT; */
+        /*     do_threaded_dialog(msgstr, TRUE); */
+        /*     mainw->cancel_type = CANCEL_KILL; */
+        /*   } */
 
-          do {
-            if (stframe + nframes > maxframe) nframes = maxframe - stframe;
-            if (nframes <= 0) break;
-            (dplug->decoder->rip_audio)(cdata, afile, stframe, nframes, NULL);
-            threaded_dialog_spin(0.);
-            stframe += nframes;
-          } while (mainw->cancelled == CANCEL_NONE);
+        /*   do { */
+        /*     if (stframe + nframes > maxframe) nframes = maxframe - stframe; */
+        /*     if (nframes <= 0) break; */
+        /*     (dplug->decoder->rip_audio)(cdata, afile, stframe, nframes, NULL); */
+        /*     threaded_dialog_spin(0.); */
+        /*     stframe += nframes; */
+        /*   } while (mainw->cancelled == CANCEL_NONE); */
 
-          if (dplug->decoder->rip_audio_cleanup) {
-            (dplug->decoder->rip_audio_cleanup)(cdata);
-          }
+        /*   if (dplug->decoder->rip_audio_cleanup) { */
+        /*     (dplug->decoder->rip_audio_cleanup)(cdata); */
+        /*   } */
 
-          if (mainw->cancelled != CANCEL_NONE) {
-            if (!rip_audio_cancelled(old_file, mt_pb_start_event, mt_has_audio_file)) {
-              lives_free(afile);
-              return 0;
-            }
-          }
-          end_threaded_dialog();
-          lives_free(msgstr);
-          lives_free(afile);
-        } else {
-          cfile->arate = 0.;
-          cfile->achans = cfile->asampsize = 0;
-        }
+        /*   if (mainw->cancelled != CANCEL_NONE) { */
+        /*     if (!rip_audio_cancelled(old_file, mt_pb_start_event, mt_has_audio_file)) { */
+        /*       lives_free(afile); */
+        /*       return 0; */
+        /*     } */
+        /*   } */
+        /*   end_threaded_dialog(); */
+        /*   lives_free(msgstr); */
+        /*   lives_free(afile); */
+        /* } else { */
+        /*   cfile->arate = 0.; */
+        /*   cfile->achans = cfile->asampsize = 0; */
+        /* } */
+
 
         cfile->fps = cfile->pb_fps = cdata->fps;
         d_print("\n");
 
-        if (cfile->achans == 0 && probed_achans > 0 && withsound == 1) {
+        if ((cfile->achans > 0 || probed_achans > 0) && withsound == 1) {
           // plugin returned no audio, try with mplayer / mpv
           if (probed_achans > MAX_ACHANS) {
             probed_achans = MAX_ACHANS;
@@ -432,6 +434,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
           msgstr = lives_strdup_printf(_("Opening audio"), file_name);
           if (!do_progress_dialog(TRUE, TRUE, msgstr)) {
+            use_staging_dir_for(0);
             // error or user cancelled or switched to another clip
             lives_free(msgstr);
 
@@ -443,7 +446,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
             }
 
             if (mainw->cancelled == CANCEL_NO_PROPOGATE) {
-              use_staging_dir_for(0);
               lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
               mainw->cancelled = CANCEL_NONE;
               return 0;
@@ -465,11 +467,21 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
             sensitize();
             return 0;
           }
+          use_staging_dir_for(0);
+
           lives_free(msgstr);
 
           cfile->opening = FALSE;
 
+          if (prefs->max_blank_trim) {
+
+
+
+
+          }
+
           wait_for_bg_audio_sync(mainw->current_file);
+
           if (mainw->error == 0) add_file_info(cfile->handle, TRUE);
           mainw->error = 0;
           get_total_time(cfile);
@@ -490,8 +502,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               extra_frames = (cfile->laudio_time - (double)cfile->frames / cfile->fps) * cfile->fps;
             }
 
-            if (extra_frames > 0 || ((cdata->sync_hint & SYNC_HINT_VIDEO_PAD_END)
-                                     && (double)cfile->frames / cfile->fps < cfile->laudio_time)) {
+            if ((cdata->sync_hint & SYNC_HINT_VIDEO_PAD_END)
+                && (double)cfile->frames / cfile->fps < cfile->laudio_time) {
               // pad with blank frames at end
               if (cdata->sync_hint & SYNC_HINT_VIDEO_PAD_END) {
                 int xextra_frames =
@@ -648,14 +660,12 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         d_print(_("Forcing audio channels to %d\n"), MAX_ACHANS);
       }
 
-      temp_backend = use_staging_dir_for(mainw->current_file);
       com = lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d %d \"%s\"",
-                                temp_backend, cfile->handle,
+                                prefs->backend, cfile->handle,
                                 (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
                                 withsound, prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST),
                                 start, frames, cfile->achans, mainw->file_open_params);
       lives_free(tmp);
-      lives_free(temp_backend);
       lives_system(com, FALSE);
       lives_free(com);
 
@@ -735,6 +745,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   }
 
   if (cfile->ext_src && cfile->achans > 0) {
+    // unneccessary ?
     char *afile = get_audio_file_name(mainw->current_file, TRUE);
     char *ofile = get_audio_file_name(mainw->current_file, FALSE);
     rename(afile, ofile);
@@ -805,6 +816,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
   // now file should be loaded...get full details
   if (!cfile->ext_src) add_file_info(cfile->handle, FALSE);
+
   cfile->is_loaded = TRUE;
 
   if (cfile->frames <= 0) {
@@ -904,30 +916,40 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     d_print(_("Loaded subtitle file: %s\n"), isubfname);
     lives_free(isubfname);
   }
+
   if (mainw->save_with_sound && !cfile->achans && probed_achans) {
     char *afname = get_audio_file_name(mainw->current_file, FALSE);
     if (lives_file_test(afname, LIVES_FILE_TEST_EXISTS)) {
       off_t fsize = sget_file_size(afname);
       if (fsize > 0) {
         LiVESResponseType resp;
-        if (do_yesno_dialog_with_check(_("This clip may have damaged audio.\n"
-                                         "Should I attempt to load it anyway ?\n"),
-                                       WARN_MASK_DMGD_AUDIO));
-        mainw->fx3_val = cfile->asampsize ? cfile->asampsize : DEFAULT_AUDIO_SAMPS;
-        if (!cfile->achans && !cfile->signed_endian) {
-          mainw->fx4_val = (mainw->fx3_val == 8) ? DEFAULT_AUDIO_SIGNED8 :
-                           DEFAULT_AUDIO_SIGNED16 | ((capable->byte_order == LIVES_BIG_ENDIAN)
-                               ? AFORM_BIG_ENDIAN : 0);
-        }
-        mainw->fx2_val = cfile->achans ? cfile->achans : DEFAULT_AUDIO_CHANS;
-        mainw->fx1_val = cfile->arate ? cfile->arate : DEFAULT_AUDIO_RATE;
-        resaudw = create_resaudw(12, NULL, NULL);
-        resp = lives_dialog_run(LIVES_DIALOG(resaudw->dialog));
-        if (resp == LIVES_RESPONSE_OK) {
-          audio_details_clicked(NULL, LIVES_INT_TO_POINTER(mainw->current_file));
-          redraw_timeline(mainw->current_file);
-        }
-        lives_freep((void **)&resaudw);
+        do {
+          if (!do_yesno_dialog_with_check(_("This clip may have damaged audio.\n"
+                                            "Should I attempt to load it anyway ?\n"),
+                                          WARN_MASK_DMGD_AUDIO)) {
+            d_print_cancelled();
+            close_current_file(old_file);
+            lives_freep((void **)&mainw->file_open_params);
+            lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+            return 0;
+          }
+          mainw->fx3_val = cfile->asampsize ? cfile->asampsize : DEFAULT_AUDIO_SAMPS;
+          if (!cfile->achans && !cfile->signed_endian) {
+            mainw->fx4_val = (mainw->fx3_val == 8) ? DEFAULT_AUDIO_SIGNED8 :
+                             DEFAULT_AUDIO_SIGNED16 | ((capable->byte_order == LIVES_BIG_ENDIAN)
+                                 ? AFORM_BIG_ENDIAN : 0);
+
+            mainw->fx2_val = cfile->achans ? cfile->achans : DEFAULT_AUDIO_CHANS;
+            mainw->fx1_val = cfile->arate ? cfile->arate : DEFAULT_AUDIO_RATE;
+            resaudw = create_resaudw(12, NULL, NULL);
+            resp = lives_dialog_run(LIVES_DIALOG(resaudw->dialog));
+            if (resp == LIVES_RESPONSE_OK) {
+              audio_details_clicked(NULL, LIVES_INT_TO_POINTER(mainw->current_file));
+              redraw_timeline(mainw->current_file);
+            } else lives_widget_destroy(resaudw->dialog);
+            lives_freep((void **)&resaudw);
+          }
+        } while (resp == LIVES_RESPONSE_CANCEL);
       }
     }
   }
@@ -940,8 +962,6 @@ img_load:
 #endif
 
   // TODO - prompt for copy to origs (unless it is already there)
-
-  lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
 
   if (prefs->show_recent && !mainw->is_generating) {
     add_to_recent(file_name, start, frames, mainw->file_open_params);
@@ -1009,6 +1029,11 @@ img_load:
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
 
 load_done:
+
+  if (*cfile->staging_dir) {
+    migrate_from_staging(mainw->current_file);
+  }
+
   if (!mainw->multitrack) {
     // update widgets
     switch_to_file((mainw->current_file = 0), current_file);
@@ -1027,13 +1052,11 @@ load_done:
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     mt_clip_select(mainw->multitrack, TRUE);
   }
-  if (*cfile->staging_dir) {
-    lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                             (lives_funcptr_t)migrate_from_staging,
-                             0, "i", mainw->current_file);
-  }
+
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   check_storage_space(-1, FALSE);
+
+  lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
   return cfile->unique_id;
 }
 
@@ -3447,7 +3470,7 @@ void play_file(void) {
    returns new_clip */
 int close_temp_handle(int new_clip) {
   char *com;
-  char *temp_backend;
+  char *temp_backend, *clipd;
   int clipno = mainw->current_file;
 
   if (!IS_VALID_CLIP(new_clip)) new_clip = -1;
@@ -3461,13 +3484,16 @@ int close_temp_handle(int new_clip) {
     return new_clip;
   }
 
-  permit_close(mainw->current_file);
+  clipd = get_clip_dir(mainw->current_file);
+  if (lives_file_test(clipd, LIVES_FILE_TEST_EXISTS)) {
+    permit_close(mainw->current_file);
 
-  temp_backend = use_staging_dir_for(mainw->current_file);
-  com = lives_strdup_printf("%s close \"%s\"", temp_backend, cfile->handle);
-  lives_system(com, TRUE);
-  lives_free(com);
-  lives_free(temp_backend);
+    temp_backend = use_staging_dir_for(mainw->current_file);
+    com = lives_strdup_printf("%s close \"%s\"", temp_backend, cfile->handle);
+    lives_system(com, TRUE);
+    lives_free(com);
+    lives_free(temp_backend);
+  }
   lives_freep((void **)&mainw->files[clipno]);
 
   mainw->current_file = new_clip;
@@ -3869,15 +3895,15 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
     reget_afilesize(mainw->current_file);
     d_print_enough(cfile->frames);
 
-    if (prefs->auto_trim_audio) {
-      if (cfile->laudio_time > cfile->video_time) {
-        d_print(_("Auto trimming %.2f seconds of audio at end..."),
-                cfile->laudio_time - cfile->video_time);
-        if (on_trim_audio_activate(NULL, LIVES_INT_TO_POINTER(0))) d_print_done();
-        else d_print("\n");
-        cfile->changed = FALSE;
-      }
-    }
+    /* if (prefs->auto_trim_audio) { */
+    /*   if (cfile->laudio_time > cfile->video_time) { */
+    /*     d_print(_("Auto trimming %.2f seconds of audio at end..."), */
+    /*             cfile->laudio_time - cfile->video_time); */
+    /*     if (on_trim_audio_activate(NULL, LIVES_INT_TO_POINTER(0))) d_print_done(); */
+    /*     else d_print("\n"); */
+    /*     cfile->changed = FALSE; */
+    /*   } */
+    /* } */
   } else {
     if (check_handle) {
       int npieces = get_token_count(mainw->msg, '|');
@@ -4003,7 +4029,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
       cfile->pb_fps = cfile->fps = prefs->default_fps;
     } else {
       cfile->laudio_time = cfile->raudio_time = cfile->afilesize / cfile->asampsize * 8. / cfile->arate / cfile->achans;
-      cfile->pb_fps = cfile->fps = 1.*(int)(cfile->frames / cfile->laudio_time);
+      cfile->pb_fps = cfile->fps = 1. * (int)(cfile->frames / cfile->laudio_time);
       if (cfile->fps > FPS_MAX || cfile->fps < 1.) {
         cfile->pb_fps = cfile->fps = prefs->default_fps;
       }
@@ -5254,9 +5280,11 @@ boolean reload_clip(int fileno, int maxframe) {
 
   ///< retain original order to restore for freshly opened clips
   odeclist = lives_list_copy(mainw->decoder_list);
-  retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_UID, &dec_uid, 8);
-  if (!retb) {
-    retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decoder_name, PATH_MAX);
+  if (!sfile->decoder_uid) {
+    retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_UID, &dec_uid, 8);
+    if (!retb) {
+      retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decoder_name, PATH_MAX);
+    }
   }
   if (retb && *decoder_name) {
     decoder_plugin_move_to_first(decoder_name, dec_uid);
@@ -5526,7 +5554,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       do {
         resp = LIVES_RESPONSE_OK;
         if (!is_legal_set_name(buff, TRUE, TRUE)) {
-          resp = do_abort_cancel_retry_dialog(_("Click Abort to exit LiVES immediately, Retry to try again,"
+          resp = do_abort_retry_cancel_dialog(_("Click Abort to exit LiVES immediately, Retry to try again,"
                                                 " or Cancel to continue without reloading the set.\n"));
         }
       } while (resp == LIVES_RESPONSE_RETRY);
@@ -5711,8 +5739,8 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       if (update_clips_version(mainw->current_file)) cfile->needs_silent_update = TRUE;
 
-      if (cfile->needs_update || cfile->needs_silent_update) {
-        if (cfile->needs_update) do_clip_divergence_error(mainw->current_file);
+      if (!prefs->vj_mode || (cfile->needs_update || cfile->needs_silent_update)) {
+        if (!prefs->vj_mode && cfile->needs_update) do_clip_divergence_error(mainw->current_file);
         save_clip_values(mainw->current_file);
         cfile->needs_silent_update = cfile->needs_update = FALSE;
       }

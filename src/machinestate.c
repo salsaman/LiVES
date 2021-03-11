@@ -452,6 +452,11 @@ LIVES_GLOBAL_INLINE
 char *use_staging_dir_for(int clipno) {
   if (clipno > 0 && IS_VALID_CLIP(clipno)) {
     lives_clip_t *sfile = mainw->files[clipno];
+    char *clipdir = get_clip_dir(clipno);
+    char *stfile = lives_build_filename(clipdir, LIVES_STATUS_FILE_NAME, NULL);
+    lives_free(clipdir);
+    lives_snprintf(sfile->info_file, PATH_MAX, "%s", stfile);
+    lives_free(stfile);
     if (*sfile->staging_dir) {
       return lives_strdup_printf("%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGFILE=\"%s\" --", EXEC_PERL,
                                  capable->backend_path, sfile->staging_dir, prefs->configfile);
@@ -804,48 +809,6 @@ off_t sget_file_size(const char *name) {
   res = stat(name, &xstat);
   if (res < 0) return res;
   return xstat.st_size;
-}
-
-
-size_t reget_afilesize(int fileno) {
-  // re-get the audio file size
-  lives_clip_t *sfile = mainw->files[fileno];
-  boolean bad_header = FALSE;
-  off_t res = reget_afilesize_inner(fileno);
-  if (res > 0) sfile->afilesize = res;
-  else sfile->afilesize = 0;
-  if (mainw->multitrack) return sfile->afilesize;
-
-  if (!sfile->afilesize) {
-    if (!sfile->opening && fileno != mainw->ascrap_file && fileno != mainw->scrap_file) {
-      if (sfile->arate != 0 || sfile->achans != 0 || sfile->asampsize != 0 || sfile->arps != 0) {
-        sfile->arate = sfile->achans = sfile->asampsize = sfile->arps = 0;
-        if (!save_clip_value(fileno, CLIP_DETAILS_ACHANS, &sfile->achans)) bad_header = TRUE;
-        if (!save_clip_value(fileno, CLIP_DETAILS_ARATE, &sfile->arps)) bad_header = TRUE;
-        if (!save_clip_value(fileno, CLIP_DETAILS_PB_ARATE, &sfile->arate)) bad_header = TRUE;
-        if (!save_clip_value(fileno, CLIP_DETAILS_ASAMPS, &sfile->asampsize)) bad_header = TRUE;
-        if (bad_header) do_header_write_error(fileno);
-      }
-    }
-  }
-
-  if (mainw->is_ready && fileno > 0 && fileno == mainw->current_file) {
-    // force a redraw
-    update_play_times();
-  }
-  return sfile->afilesize;
-}
-
-
-off_t reget_afilesize_inner(int fileno) {
-  // safe version that just returns the audio file size
-  off_t filesize;
-  char *afile = lives_get_audio_file_name(fileno);
-  lives_sync(1);
-  filesize = sget_file_size(afile);
-  lives_free(afile);
-  if (filesize < 0) filesize = 0;
-  return filesize;
 }
 
 
@@ -2008,7 +1971,7 @@ LiVESResponseType send_to_trash(const char *item) {
       char *msg = lives_strdup_printf(_("LiVES was unable to send the item to trash.\n%s"),
 				      reason ? reason : "");
       lives_freep((void **)&reason);
-      resp = do_abort_cancel_retry_dialog(msg);
+      resp = do_abort_retry_cancel_dialog(msg);
       lives_free(msg);
       if (resp == LIVES_RESPONSE_CANCEL) return resp;
     }
@@ -2413,6 +2376,7 @@ char *get_install_cmd(const char *distro, const char *exe) {
       else pkgname = "python py3-pip";
     }
   }
+  if (!strcmp(exe, EXEC_GZIP)) pkgname = EXEC_GZIP;
 
   if (!pkgname) return NULL;
 

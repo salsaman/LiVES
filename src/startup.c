@@ -138,7 +138,7 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
                            (_("Unable to create default keymap file: %s\nPlease make sure the directory\n%s\nis writable.\n"),
                             keymap_file, config_datadir)));
 
-            retval = do_abort_cancel_retry_dialog(tmp);
+            retval = do_abort_retry_cancel_dialog(tmp);
           }
         } while (retval == LIVES_RESPONSE_RETRY);
         lives_free(keymap_template);

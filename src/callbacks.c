@@ -367,6 +367,7 @@ void lives_exit(int signum) {
               lives_free(com);
               lives_free(temp_backend);
               threaded_dialog_spin(0.);
+              use_staging_dir_for(0);
             }
           } else {
             threaded_dialog_spin(0.);
@@ -6468,6 +6469,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   THREADVAR(com_failed) = FALSE;
 
   if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
+  use_staging_dir_for(0);
 
   tinfo = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)do_auto_dialog, -1,
                                    "si", _("Analysing Disk"), 0);
@@ -7386,6 +7388,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
 
         lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
         lives_free(com);
+        use_staging_dir_for(0);
 
         npieces = get_token_count(mainw->msg, '|');
         if (npieces < 3) {
@@ -7792,17 +7795,15 @@ void end_fs_preview(void) {
 
   if (mainw->in_fs_preview) {
     if (mainw->fsp_tmpdir) {
-      char *temp_backend = use_staging_dir_for(mainw->current_file);
       char *permitname = lives_build_filename(prefs->workdir, mainw->fsp_tmpdir,
                                               TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
       lives_kill_subprocesses(mainw->fsp_tmpdir, TRUE);
       lives_touch(permitname);
       lives_free(permitname);
-      com = lives_strdup_printf("%s close \"%s\"", temp_backend, mainw->fsp_tmpdir);
+      com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->fsp_tmpdir);
       lives_freep((void **)&mainw->fsp_tmpdir);
       lives_system(com, TRUE);
       lives_free(com);
-      lives_free(temp_backend);
     }
     mainw->in_fs_preview = FALSE;
   }
@@ -12311,16 +12312,19 @@ boolean on_trim_audio_activate(LiVESMenuItem * menuitem, livespointer user_data)
                             cfile->achans, cfile->asampsize, !(cfile->signed_endian & AFORM_UNSIGNED),
                             !(cfile->signed_endian & AFORM_BIG_ENDIAN));
   lives_free(temp_backend);
+  lives_rm(cfile->info_file);
   lives_system(com, FALSE);
   lives_free(com);
 
   if (THREADVAR(com_failed)) {
+    use_staging_dir_for(0);
     unbuffer_lmap_errors(FALSE);
     d_print_failed();
     return FALSE;
   }
 
   do_progress_dialog(TRUE, FALSE, _("Trimming/Padding audio"));
+  use_staging_dir_for(0);
 
   if (mainw->error) {
     d_print_failed();
@@ -13003,6 +13007,7 @@ boolean on_ins_silence_activate(LiVESMenuItem * menuitem, livespointer user_data
   lives_free(com);
 
   if (THREADVAR(com_failed)) {
+    use_staging_dir_for(0);
     d_print_failed();
     if (has_new_audio) cfile->achans = cfile->arate = cfile->asampsize = cfile->arps = 0;
     unbuffer_lmap_errors(FALSE);
@@ -13010,6 +13015,7 @@ boolean on_ins_silence_activate(LiVESMenuItem * menuitem, livespointer user_data
   }
 
   do_progress_dialog(TRUE, FALSE, _("Inserting Silence"));
+  use_staging_dir_for(0);
 
   if (mainw->error) {
     d_print_failed();

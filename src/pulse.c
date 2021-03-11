@@ -152,7 +152,7 @@ retry:
 
     if (!mainw->foreign) {
       if (startup_phase != 2) {
-        resp = do_abort_cancel_retry_dialog(
+        resp = do_abort_retry_cancel_dialog(
                  _("\nUnable to connect to the pulseaudio server.\n"
                    "Click Abort to exit from LiVES, Retry to try again,\n"
                    "or Cancel to run LiVES without audio features.\n"

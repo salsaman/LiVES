@@ -7622,14 +7622,16 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
     lives_painter_render_background(widget, cr2, 0., 0., rwidth, rheight);
 
     height = lives_widget_get_allocation_height(widget);
-
+    //bg.alpha = 0.5;
     layout_to_lives_painter(layout, cr2, LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &fg, &bg, rwidth, rheight,
                             0., 0., 0., height - lheight - 4);
     lingo_painter_show_layout(cr2, layout);
     lives_painter_destroy(cr2);
+
   }
   lives_painter_set_source_surface(cr, mainw->msg_surface, 0., 0.);
   lives_painter_paint(cr);
+
   return FALSE;
 }
 

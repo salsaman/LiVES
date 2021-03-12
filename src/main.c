@@ -595,10 +595,15 @@ void get_monitors(boolean reset) {
     prefs->screen_scale = (prefs->screen_scale - 1.) * 1.5 + 1.;
   }
 
-  if (!prefs->vj_mode && GUI_SCREEN_HEIGHT >= MIN_MSG_AREA_SCRNHEIGHT) prefs->show_msg_area = TRUE;
-  else prefs->show_msg_area = FALSE;
-
   widget_opts_rescale(prefs->screen_scale);
+
+  if (!prefs->vj_mode && GUI_SCREEN_HEIGHT >= MIN_MSG_AREA_SCRNHEIGHT) {
+    capable->can_show_msg_area = TRUE;
+    if (future_prefs->show_msg_area) prefs->show_msg_area = TRUE;
+  } else {
+    prefs->show_msg_area = FALSE;
+    capable->can_show_msg_area = FALSE;
+  }
 }
 
 
@@ -820,6 +825,8 @@ static boolean pre_init(void) {
     }
   }
 
+  prefs->show_msg_area = future_prefs->show_msg_area = get_boolean_prefd(PREF_SHOW_MSGS, TRUE);
+
   // get some prefs we need to set menu options
   prefs->gui_monitor = -1;
 
@@ -836,7 +843,7 @@ static boolean pre_init(void) {
   capable->primary_monitor = 0;
 
   // sets prefs->screen_scale, capable->nmonitors, mainw->mgeom, prefs->play_monitor, prefs->gui_monitor
-  // prefs->show_msg_area, mainw->old_screen_height, mainw->old_screen_width
+  // capable->can_show_msg_area, mainw->old_screen_height, mainw->old_screen_width
   // widget_opts.monitor, widget_opts.screen and various widget_opts sizes
   get_monitors(TRUE);
 
@@ -920,7 +927,12 @@ static boolean pre_init(void) {
   get_string_prefd(PREF_PASTARTOPTS, prefs->pa_start_opts, 255, "--high-priority");
 
   prefs->letterbox = get_boolean_prefd(PREF_LETTERBOX, TRUE);
-  future_prefs->letterbox_mt = prefs->letterbox_mt = get_boolean_prefd(PREF_LETTERBOXMT, TRUE);
+
+  future_prefs->letterbox_mt = prefs->letterbox_mt = get_boolean_prefd(PREF_LETTERBOX_MT, TRUE);
+
+  prefs->enc_letterbox = get_boolean_prefd(PREF_LETTERBOX_ENC, TRUE);
+
+  prefs->no_lb_gens = get_boolean_prefd(PREF_NO_LB_GENS, TRUE);
 
   prefs->rte_keys_virtual = get_int_prefd(PREF_RTE_KEYS_VIRTUAL, FX_KEYS_PHYSICAL_EXTRA);
   if (prefs->rte_keys_virtual < 0) prefs->rte_keys_virtual = 0;

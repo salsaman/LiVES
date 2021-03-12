@@ -1702,7 +1702,8 @@ boolean switch_aud_to_jack(boolean set_in_prefs) {
   lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
   lives_widget_set_sensitive(mainw->mute_audio, TRUE);
   lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
-  lives_widget_set_sensitive(mainw->p_mutebutton, TRUE);
+
+  if (mainw->p_mutebutton) lives_widget_set_sensitive(mainw->p_mutebutton, TRUE);
 
   return TRUE;
 #endif
@@ -1741,7 +1742,7 @@ boolean switch_aud_to_pulse(boolean set_in_prefs) {
 
 #ifdef ENABLE_JACK
     if (mainw->jackd_read) {
-      //jack_close_device(mainw->jackd_read);
+      jack_close_device(mainw->jackd_read);
       mainw->jackd_read = NULL;
     }
 

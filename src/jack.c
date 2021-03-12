@@ -1258,8 +1258,9 @@ static void output_silence(size_t offset, nframes_t nframes, jack_driver_t *jack
     afile->aseek_pos = jackd->seek_pos;
 }
 
-
+static volatile boolean in_ap = FALSE;
 static int audio_process(nframes_t nframes, void *arg) {
+  in_ap = TRUE;
   // JACK calls this periodically to get the next audio buffer
   float *out_buffer[JACK_MAX_OUTPUT_PORTS];
   jack_driver_t *jackd = (jack_driver_t *)arg;
@@ -1279,8 +1280,10 @@ static int audio_process(nframes_t nframes, void *arg) {
   lives_printerr("nframes %ld, sizeof(float) == %d\n", (int64_t)nframes, sizeof(float));
 #endif
 
-  if (!mainw->is_ready || !jackd || (!LIVES_IS_PLAYING && jackd->is_silent && !jackd->msgq)) return 0;
-
+  if (!mainw->is_ready || !jackd || (!LIVES_IS_PLAYING && jackd->is_silent && !jackd->msgq)) {
+    in_ap = FALSE;
+    return 0;
+  }
   /* process one message */
   while ((msg = (aserver_message_t *)jackd->msgq) != NULL) {
     got_cmd = TRUE;
@@ -1322,12 +1325,14 @@ static int audio_process(nframes_t nframes, void *arg) {
 
   if (got_cmd) {
     output_silence(0, nframes, jackd, out_buffer);
+    in_ap = FALSE;
     return 0;
   }
 
   fwd_seek_pos = jackd->real_seek_pos = jackd->seek_pos;
 
   if (nframes == 0) {
+    in_ap = FALSE;
     return 0;
   }
 
@@ -1344,6 +1349,7 @@ static int audio_process(nframes_t nframes, void *arg) {
           output_silence(0, nframes, jackd, out_buffer);
           jackd->is_silent = TRUE;
         }
+        in_ap = FALSE;
         return 0;
       }
       if (cache_buffer->fileno == -1) jackd->playing_file = -1;
@@ -1386,6 +1392,7 @@ static int audio_process(nframes_t nframes, void *arg) {
         output_silence(0, nframes, jackd, out_buffer);
         jackd->is_silent = TRUE;
       }
+      in_ap = FALSE;
       return 0;
     }
 
@@ -1402,6 +1409,7 @@ static int audio_process(nframes_t nframes, void *arg) {
           jackd->is_silent = TRUE;
         }
         fwd_seek_pos = jackd->real_seek_pos = jackd->seek_pos;
+        in_ap = FALSE;
         return 0;
       }
 
@@ -1551,6 +1559,7 @@ static int audio_process(nframes_t nframes, void *arg) {
             push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
           }
           output_silence(0, nframes, jackd, out_buffer);
+          in_ap = FALSE;
           return 0;
         } else {
           xin_bytes = 0;
@@ -1571,6 +1580,7 @@ static int audio_process(nframes_t nframes, void *arg) {
             jackd->seek_pos += (double)(jackd->sample_in_rate / jackd->sample_out_rate)
                                * nframes * xfile->achans * xfile->asampsize / 8;
           }
+          in_ap = FALSE;
           return 0;
         }
 
@@ -1772,6 +1782,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                     rbytes = numFramesToWrite * jackd->num_output_channels * 2;
                     if (check_zero_buff(rbytes))
                       audio_stream(zero_buff, rbytes, jackd->astream_fd);
+                    in_ap = FALSE;
                     return 0;
                   }
                   if (jackd->num_output_channels == 1) bysize = 2;
@@ -1823,6 +1834,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                 xbuf = (unsigned char *)lives_malloc(nbytes);
                 if (!xbuf) {
                   output_silence(0, numFramesToWrite, jackd, out_buffer);
+                  in_ap = FALSE;
                   return 0;
                 }
 
@@ -1905,6 +1917,7 @@ static int audio_process(nframes_t nframes, void *arg) {
 #ifdef DEBUG_AJACK
   lives_printerr("done\n");
 #endif
+  in_ap = FALSE;
 
   return 0;
 }
@@ -2177,6 +2190,9 @@ static void jack_reset_driver(jack_driver_t *jackd) {
 void jack_close_device(jack_driver_t *jackd) {
   //lives_printerr("closing the jack client thread\n");
   if (jackd->client) {
+    jack_deactivate(jackd->client);
+    jack_set_process_callback(jackd->client, NULL, jackd);
+    lives_nanosleep_until_nonzero(!in_ap);
     jack_client_close(jackd->client);
   }
 
@@ -2541,8 +2557,9 @@ void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
 ticks_t lives_jack_get_time(jack_driver_t *jackd) {
   // get the time in ticks since playback started
   volatile aserver_message_t *msg = jackd->msgq;
-  jack_nframes_t frames, retframes;
   static jack_nframes_t last_frames = 0;
+  jack_nframes_t frames, retframes;
+  int srate;
 
   if (!jackd->client) return -1;
 
@@ -2557,15 +2574,19 @@ ticks_t lives_jack_get_time(jack_driver_t *jackd) {
     if (timeout == 0) return -1;
   }
 
+
+  if (!jackd->client) return -1;
   frames = jack_frame_time(jackd->client);
+  if (!jackd->client) return -1;
+  srate = jack_get_sample_rate(jackd->client);
+  if (!jackd->client) return -1;
 
   retframes = frames;
   if (last_frames > 0 && frames <= last_frames) {
     retframes += jackd->frames_written;
   } else jackd->frames_written = 0;
   last_frames = frames;
-  return (ticks_t)((frames - jackd->nframes_start) * (1000000. / jack_get_sample_rate(
-                     jackd->client)) * USEC_TO_TICKS);
+  return (ticks_t)((frames - jackd->nframes_start) * (1000000. / srate)) * USEC_TO_TICKS;
 }
 
 

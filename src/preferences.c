@@ -288,7 +288,6 @@ int delete_pref(const char *key) {
 
 
 int set_string_pref(const char *key, const char *value) {
-  if (!strcmp(key, PREF_AUDIO_PLAYER)) break_me("apl");
   char *com = lives_strdup_printf("%s set_pref \"%s\" \"%s\"", prefs->backend_sync, key, value);
   int ret = run_prefs_command(com);
   lives_free(com);
@@ -924,6 +923,36 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto success2;
   }
 
+  if (!lives_strcmp(prefidx, PREF_SHOW_MSGS)) {
+    if (future_prefs->show_msg_area == newval) goto fail2;
+    future_prefs->show_msg_area = newval;
+    if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_mbdis), newval);
+    if (!newval || capable->can_show_msg_area) {
+      prefs->show_msg_area = newval;
+      if (!prefs->show_msg_area) {
+        lives_widget_hide(mainw->message_box);
+        lives_widget_set_no_show_all(mainw->message_box, TRUE);
+        if (mainw->multitrack) {
+          lives_widget_hide(mainw->multitrack->message_box);
+          lives_widget_set_no_show_all(mainw->multitrack->message_box, TRUE);
+        }
+      } else {
+        lives_widget_set_no_show_all(mainw->message_box, FALSE);
+        if (mainw->multitrack) {
+          lives_widget_set_no_show_all(mainw->multitrack->message_box, FALSE);
+          lives_widget_show(mainw->multitrack->message_box);
+          msg_area_scroll_to_end(mainw->multitrack->msg_area, mainw->multitrack->msg_adj);
+          lives_widget_queue_draw(mainw->multitrack->msg_area);
+        } else {
+          lives_widget_show_all(mainw->message_box);
+          msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
+          lives_widget_queue_draw(mainw->msg_area);
+        }
+      }
+    }
+    goto success2;
+  }
+
   if (!lives_strcmp(prefidx, PREF_USE_SCREEN_GAMMA)) {
     if (prefs->use_screen_gamma == newval) goto fail2;
     prefs->use_screen_gamma = newval;
@@ -943,15 +972,29 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto success2;
   }
 
-  if (!lives_strcmp(prefidx, PREF_LETTERBOXMT)) {
+  if (!lives_strcmp(prefidx, PREF_LETTERBOX_MT)) {
+    if (prefs->letterbox_mt == newval) goto fail2;
     prefs->letterbox_mt = newval;
     if (permanent) {
-      if (prefs->letterbox_mt == newval) goto fail2;
       future_prefs->letterbox_mt = newval;
       if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lbmt), newval);
     }
     if (mainw->multitrack && mainw->multitrack->event_list)
       mt_show_current_frame(mainw->multitrack, FALSE);
+    goto success2;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_NO_LB_GENS)) {
+    if (prefs->no_lb_gens == newval) goto fail2;
+    prefs->no_lb_gens = newval;
+    if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->no_lb_gens), newval);
+    goto success2;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_LETTERBOX_ENC)) {
+    if (prefs->enc_letterbox == newval) goto fail2;
+    prefs->enc_letterbox = newval;
+    if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lbenc), newval);
     goto success2;
   }
 
@@ -1521,6 +1564,8 @@ boolean apply_prefs(boolean skip_warn) {
 
   boolean lbox = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lb));
   boolean lboxmt = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lbmt));
+  boolean lboxenc = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lbenc));
+  boolean no_lb_gens = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->no_lb_gens));
   boolean scgamma = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_screengamma));
   double gamma = lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gamma));
 
@@ -1541,6 +1586,7 @@ boolean apply_prefs(boolean skip_warn) {
   const char *msgtextsize = lives_combo_get_active_text(LIVES_COMBO(prefsw->msg_textsize_combo));
   boolean msgs_unlimited = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_unlimited));
   boolean msgs_pbdis = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_pbdis));
+  boolean msgs_mbdis = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_mbdis));
 
   uint64_t ds_warn_level = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_ds)) * 1000000;
   uint64_t ds_crit_level = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_crit_ds)) * 1000000;
@@ -1908,12 +1954,15 @@ boolean apply_prefs(boolean skip_warn) {
     pref_factory_int(PREF_MAX_MSGS, &prefs->max_messages, max_msgs, TRUE);
   }
 
+  pref_factory_bool(PREF_SHOW_MSGS, msgs_mbdis, TRUE);
   pref_factory_bool(PREF_MSG_PBDIS, msgs_pbdis, TRUE);
   pref_factory_bool(PREF_MSG_START, show_msgstart, TRUE);
   pref_factory_bool(PREF_SHOW_QUOTA, show_quota, TRUE);
   pref_factory_bool(PREF_AUTOCLEAN_TRASH, autoclean, TRUE);
   pref_factory_bool(PREF_LETTERBOX, lbox, TRUE);
-  pref_factory_bool(PREF_LETTERBOXMT, lboxmt, TRUE);
+  pref_factory_bool(PREF_LETTERBOX_MT, lboxmt, TRUE);
+  pref_factory_bool(PREF_LETTERBOX_ENC, lboxenc, TRUE);
+  pref_factory_bool(PREF_NO_LB_GENS, no_lb_gens, TRUE);
   pref_factory_bool(PREF_USE_SCREEN_GAMMA, scgamma, TRUE);
   pref_factory_float(PREF_SCREEN_GAMMA, gamma, TRUE);
 
@@ -2818,7 +2867,7 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
   }
 
 #ifdef RT_AUDIO
-  if (!strcmp(audp, AUDIO_PLAYER_JACK) || !strcmp(audp, AUDIO_PLAYER_PULSE_AUDIO)) {
+  if (!strcmp(audp, AUDIO_PLAYER_JACK) || !strncmp(audp, AUDIO_PLAYER_PULSE_AUDIO, strlen(AUDIO_PLAYER_PULSE_AUDIO))) {
     lives_widget_set_sensitive(prefsw->checkbutton_aclips, TRUE);
     lives_widget_set_sensitive(prefsw->checkbutton_afollow, TRUE);
     lives_widget_set_sensitive(prefsw->checkbutton_aresync, TRUE);
@@ -2840,15 +2889,19 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
     lives_widget_set_sensitive(prefsw->jack_aplayout, TRUE);
     lives_widget_set_sensitive(prefsw->jack_aplayout2, TRUE);
     hide_warn_image(prefsw->jack_aplabel);
+    lives_widget_set_no_show_all(prefsw->jack_int_label, FALSE);
+    lives_widget_show_all(prefsw->jack_int_label);
   } else {
     lives_widget_set_sensitive(prefsw->jack_apstats, FALSE);
     lives_widget_set_sensitive(prefsw->jack_aplayout, FALSE);
     lives_widget_set_sensitive(prefsw->jack_aplayout2, FALSE);
+    lives_widget_set_no_show_all(prefsw->jack_int_label, TRUE);
+    lives_widget_hide(prefsw->jack_int_label);
     show_warn_image(prefsw->jack_aplabel, NULL);
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (!strcmp(audp, AUDIO_PLAYER_PULSE_AUDIO)) {
+  if (!strncmp(audp, AUDIO_PLAYER_PULSE_AUDIO, strlen(AUDIO_PLAYER_PULSE_AUDIO))) {
     lives_widget_set_sensitive(prefsw->checkbutton_parestart, TRUE);
     lives_widget_set_sensitive(prefsw->audio_command_entry,
                                lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart)));
@@ -3182,6 +3235,19 @@ static void font_preview_clicked(LiVESButton * button, LiVESFontChooser * fontbu
     } else lives_widget_set_sensitive(LIVES_WIDGET(button), FALSE);
     SET_INT_DATA(button, PREVIEW_KEY, TRUE);
   }
+
+  LiVESSpinButton *spin = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "spin");
+  lives_font_chooser_set_font(fontbutton, capable->def_fontstring);
+  lives_spin_button_set_value(spin, capable->font_size);
+}
+
+
+static void font_scale_changed(LiVESRange * scale, LiVESSpinButton * spin) {
+  lives_spin_button_set_value(spin, lives_range_get_value(scale));
+}
+
+static void font_spin_changed(LiVESRange * scale, LiVESSpinButton * spin) {
+  lives_range_set_value(scale, lives_spin_button_get_value(spin));
 }
 
 
@@ -3202,8 +3268,7 @@ static void font_set_cb(LiVESFontButton * button, LiVESSpinButton * spin) {
 
 static void font_size_cb(LiVESSpinButton * button, LiVESFontChooser * fchoose) {
   int sval = lives_spin_button_get_value_as_int(button);
-  LingoFontDesc *lfd =
-    lives_font_chooser_get_font_desc(fchoose);
+  LingoFontDesc *lfd = lives_font_chooser_get_font_desc(fchoose);
   lingo_fontdesc_set_size(lfd, sval * LINGO_SCALE);
   lives_font_chooser_set_font_desc(fchoose, lfd);
   lingo_fontdesc_free(lfd);
@@ -3308,7 +3373,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   LiVESWidget *advbutton;
 #if GTK_CHECK_VERSION(3, 2, 0)
   LiVESWidget *scale;
-  LiVESAdjustment *adj;
 #endif
 
   LiVESWidget *sp_red, *sp_green, *sp_blue;
@@ -3504,14 +3568,15 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->font_pre_button), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(font_preview_clicked), prefsw->fontbutton);
-  font_preview_clicked(LIVES_BUTTON(prefsw->font_pre_button), LIVES_FONT_CHOOSER(prefsw->fontbutton));
 
   lives_layout_pack(LIVES_BOX(hbox), prefsw->fontbutton);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->font_size_spin = lives_standard_spin_button_new(_("Size"), capable->font_size,
-                           1., 128., 1., 1, 0, LIVES_BOX(hbox), NULL);
-  adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(prefsw->font_size_spin));
+                           4., 128., 1., 1, 0, LIVES_BOX(hbox), NULL);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(prefsw->font_pre_button), "spin",
+                               prefsw->font_size_spin);
+  font_preview_clicked(LIVES_BUTTON(prefsw->font_pre_button), LIVES_FONT_CHOOSER(prefsw->fontbutton));
 
   ACTIVE(fontbutton, FONT_SET);
 
@@ -3526,9 +3591,21 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                            (livespointer)prefsw->fontbutton);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(adj));
+  scale = lives_standard_hscale_new(NULL);
+  lives_range_set_range(LIVES_RANGE(scale), 6., 24.);
+  lives_range_set_value(LIVES_RANGE(scale), capable->font_size);
+  label = lives_standard_label_new("6px");
+  lives_layout_pack(LIVES_BOX(hbox), label);
   lives_layout_pack(LIVES_BOX(hbox), scale);
+  label = lives_standard_label_new("24px");
+  lives_layout_pack(LIVES_BOX(hbox), label);
   lives_widget_set_size_request(scale, DEF_SLIDER_WIDTH, -1);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(scale), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(font_scale_changed), prefsw->font_size_spin);
+
+  lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(prefsw->font_size_spin), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(font_spin_changed), scale);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_gui));
 
@@ -3539,31 +3616,37 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   prefsw->fs_max_check =
     lives_standard_check_button_new(_("Open file selection maximised"), prefs->fileselmax, LIVES_BOX(hbox), NULL);
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->recent_check =
     lives_standard_check_button_new(_("Show recent files in the File menu"), prefs->show_recent, LIVES_BOX(hbox), NULL);
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->stop_screensaver_check =
     lives_standard_check_button_new(_("Stop screensaver on playback    "), prefs->stop_screensaver, LIVES_BOX(hbox), NULL);
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->open_maximised_check = lives_standard_check_button_new(_("Open main window maximised"), prefs->open_maximised,
                                  LIVES_BOX(hbox), NULL);
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->show_tool =
     lives_standard_check_button_new(_("Show toolbar when background is blanked"), prefs->show_tool, LIVES_BOX(hbox), NULL);
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->mouse_scroll =
     lives_standard_check_button_new(_("Allow mouse wheel to switch clips"), prefs->mouse_scroll_clips, LIVES_BOX(hbox), NULL);
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->checkbutton_ce_maxspect =
@@ -3571,11 +3654,13 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                     (tmp = H_("Setting is assumed automatically if letterbox playback is enabled")));
   lives_free(tmp);
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->checkbutton_hfbwnp =
     lives_standard_check_button_new(_("Hide framebar when not playing"), prefs->hfbwnp, LIVES_BOX(hbox), NULL);
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
 #if GTK_CHECK_VERSION(2, 12, 0)
@@ -3585,6 +3670,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   prefsw->checkbutton_show_ttips = NULL;
 #endif
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->checkbutton_show_asrc =
@@ -3685,24 +3771,44 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_gui));
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
+  // workaround for idiosyncracy of lives_layout
+  widget_opts.pack_end = TRUE;
+  prefsw->msgs_unlimited = lives_standard_check_button_new(_("_Unlimited"),
+                           prefs->max_messages < 0, LIVES_BOX(hbox), NULL);
+  widget_opts.pack_end = FALSE;
+
+  ACTIVE(msgs_unlimited, TOGGLED);
+
   prefsw->nmessages_spin = lives_standard_spin_button_new(_("Number of _Info Messages to Buffer"),
                            ABS(prefs->max_messages), 0., 100000., 1., 1., 0,
                            LIVES_BOX(hbox), NULL);
   ACTIVE(nmessages_spin, VALUE_CHANGED);
 
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  prefsw->msgs_unlimited = lives_standard_check_button_new(_("_Unlimited"),
-                           prefs->max_messages < 0, LIVES_BOX(hbox), NULL);
-
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_unlimited), prefsw->nmessages_spin, TRUE);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->nmessages_spin), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(widget_inact_toggle), prefsw->msgs_unlimited);
-  ACTIVE(msgs_unlimited, TOGGLED);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  prefsw->msgs_mbdis = lives_standard_check_button_new(_("Show _message area in the interface"),
+                       future_prefs->show_msg_area, LIVES_BOX(hbox), NULL);
+  ACTIVE(msgs_mbdis, TOGGLED);
+
+  if (!capable->can_show_msg_area) show_warn_image(prefsw->msgs_mbdis, _("Due to screen size restrictions, "
+        "messages cannot currently be shown in the interface"));
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  prefsw->msgs_pbdis = lives_standard_check_button_new(_("_Pause message output during playback"),
+                       prefs->msgs_pbdis, LIVES_BOX(hbox), H_("Setting this can improve performance "
+                           "of the player engine during playback"));
+  ACTIVE(msgs_pbdis, TOGGLED);
 
   textsizes_list = get_textsizes_list();
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->msg_textsize_combo = lives_standard_combo_new(_("Message Area _Font Size"), textsizes_list,
+  prefsw->msg_textsize_combo = lives_standard_combo_new(_("Message Area _Text Size"), textsizes_list,
                                LIVES_BOX(hbox), NULL);
 
   lives_combo_set_active_index(LIVES_COMBO(prefsw->msg_textsize_combo), prefs->msg_textsize);
@@ -3715,10 +3821,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   ACTIVE(msg_textsize_combo, CHANGED);
 
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->msgs_pbdis = lives_standard_check_button_new(_("_Disable message output during playback"),
-                       prefs->msgs_pbdis, LIVES_BOX(hbox), NULL);
-  ACTIVE(msgs_pbdis, TOGGLED);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_mbdis), prefsw->msgs_pbdis, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_mbdis), prefsw->msgs_unlimited, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_mbdis), prefsw->nmessages_spin, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_mbdis), prefsw->msg_textsize_combo, FALSE);
 
   pixbuf_gui = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_GUI, LIVES_ICON_SIZE_CUSTOM, -1);
 
@@ -4055,7 +4161,21 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_lbmt = lives_standard_check_button_new(_("In Multitrack Mode"),
                              future_prefs->letterbox_mt, LIVES_BOX(hbox),
-                             (tmp = H_("This setting only affects newly created layouts.\nTo change the current layout, use menu option\n'Tools' / 'Change Width, Height and Audio Values'\nin the multitrack window")));
+                             (tmp = H_("This setting only affects newly created layouts.\n"
+                                       "To change the current layout, use menu option\n'Tools' / 'Change Width, Height and Audio Values'\n"
+                                       "in the multitrack window")));
+  lives_free(tmp);
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  prefsw->no_lb_gens = lives_standard_check_button_new(_("Avoid letterboxing generators"),
+                       !prefs->no_lb_gens, LIVES_BOX(hbox),
+                       (tmp = H_("If this is set, generator plugins will try to resize their output\n"
+                                 "to fit blended clips, rather than letterboxing inside them.\n"
+                                 "If unset, generators will maintain their default aspect ratio,"
+                                 "but may not entirely fill blended frames.")));
+
   lives_free(tmp);
 
   lives_layout_add_row(LIVES_LAYOUT(layout));
@@ -4165,8 +4285,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   has_ap_rec = FALSE;
 
-  lives_layout_add_row(LIVES_LAYOUT(layout));
-
   prefsw->jack_int_label =
     lives_layout_add_label(LIVES_LAYOUT(layout),
                            _("(See also the Jack Integration tab for jack startup options)"), TRUE);
@@ -4256,7 +4374,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
-  label = lives_standard_label_new(_("Audio Source (clip editor only):"));
+  label = lives_standard_label_new(_("Audio Source at start up (clip editor only):"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
   add_fill_to_box(LIVES_BOX(hbox));
   add_fill_to_box(LIVES_BOX(vbox));
@@ -4292,7 +4410,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK) {
-    lives_widget_show(prefsw->jack_int_label);
+    lives_widget_set_no_show_all(prefsw->jack_int_label, FALSE);
+    lives_widget_show_all(prefsw->jack_int_label);
   }
 #endif
 
@@ -4594,6 +4713,11 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
     set_acodec_list_from_allowed(prefsw, rdet);
 
+    lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+    prefsw->checkbutton_lbenc = lives_standard_check_button_new(_("Apply letterboxing when encoding or transcoding"),
+                                prefs->enc_letterbox, LIVES_BOX(hbox), NULL);
   } else prefsw->acodec_combo = NULL;
   widget_opts.packing_height >>= 2;
 
@@ -6212,6 +6336,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(checkbutton_concat_images, TOGGLED);
   ACTIVE(checkbutton_lb, TOGGLED);
   ACTIVE(checkbutton_lbmt, TOGGLED);
+  ACTIVE(checkbutton_lbenc, TOGGLED);
+  ACTIVE(no_lb_gens, TOGGLED);
   ACTIVE(checkbutton_screengamma, TOGGLED);
   ACTIVE(spinbutton_gamma, VALUE_CHANGED);
   ACTIVE(pbq_adaptive, TOGGLED);

@@ -3161,7 +3161,7 @@ static weed_plant_t *load_event_list_inner(lives_mt * mt, int fd, boolean show_e
     if ((letterbox == WEED_TRUE && !prefs->letterbox_mt)
         || (letterbox == WEED_FALSE && prefs->letterbox_mt)) {
       if (do_mt_lb_warn(letterbox == WEED_TRUE)) {
-        pref_factory_bool(PREF_LETTERBOXMT, letterbox == WEED_TRUE, FALSE);
+        pref_factory_bool(PREF_LETTERBOX_MT, letterbox == WEED_TRUE, FALSE);
       }
     }
   }

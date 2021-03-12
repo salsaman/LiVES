@@ -391,6 +391,7 @@ typedef struct {
   boolean letterbox; ///< playback with letterbox
   boolean letterbox_mt; ///< playback with letterbox (multitrack)
   boolean enc_letterbox; ///< encode with letterbox
+  boolean no_lb_gens; // do not letterbox generators
 
   boolean force_system_clock; /// < force system clock (rather than soundcard) for timing ( better for high framerates )
 
@@ -611,7 +612,8 @@ typedef struct {
   LiVESWidget *recent_check;
   LiVESWidget *checkbutton_lb; //< letterbox
   LiVESWidget *checkbutton_lbmt;
-  LiVESWidget *checkbutton_screengamma;
+  LiVESWidget *checkbutton_lbenc;
+  LiVESWidget *no_lb_gens;
   LiVESWidget *spinbutton_gamma;
   LiVESWidget *video_open_entry;
   LiVESWidget *audio_command_entry;
@@ -647,6 +649,7 @@ typedef struct {
   LiVESWidget *encoder_combo;
   LiVESWidget *checkbutton_load_rfx;
   LiVESWidget *checkbutton_apply_gamma;
+  LiVESWidget *checkbutton_screengamma;
   LiVESWidget *checkbutton_antialias;
   LiVESWidget *checkbutton_threads;
   LiVESWidget *spinbutton_warn_ds;
@@ -725,6 +728,7 @@ typedef struct {
   LiVESWidget *nmessages_spin;
   LiVESWidget *msgs_unlimited;
   LiVESWidget *msgs_pbdis;
+  LiVESWidget *msgs_mbdis;
   LiVESWidget *msg_textsize_combo;
   LiVESWidget *acodec_combo;
   LiVESWidget *spinbutton_osc_udp;
@@ -904,6 +908,7 @@ typedef struct {
   boolean vj_mode;
   boolean ar_clipset;
 
+  boolean show_msg_area;
   int msg_textsize;
   boolean pref_trash; ///< user prefers trash to delete (future / present swapped)
   boolean letterbox_mt;
@@ -1153,10 +1158,13 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_SHOW_DEVOPTS "show_developer_options"
 #define PREF_VJMODE "vj_mode_startup"
 #define PREF_LETTERBOX "letterbox_ce"
-#define PREF_LETTERBOXMT "letterbox_mt"
+#define PREF_LETTERBOX_MT "letterbox_mt"
+#define PREF_LETTERBOX_ENC "letterbox_encoding"
+#define PREF_NO_LB_GENS "no_letterbox_gens"
 #define PREF_PARESTART "pa_restart"
 #define PREF_PBQ_ADAPTIVE "pb_quality_adaptive"
-#define PREF_EXTRA_COLOURS "extra_colours" /// add to prefs window
+#define PREF_EXTRA_COLOURS "extra_colours"
+#define PREF_SHOW_MSGS "show_messages"
 #define PREF_SHOW_SUBS "show_subtitles" /// add to prefs window
 #define PREF_AUTOLOAD_SUBS "autoload_subtitles" /// add to prefs window
 #define PREF_AUTOCLEAN_TRASH "autoclean_trash" ///< remove unneeded files on shutdown / startup

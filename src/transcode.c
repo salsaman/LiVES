@@ -397,7 +397,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     width = weed_layer_get_width(frame_layer) * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(frame_layer));
     height = weed_layer_get_height(frame_layer);
 
-    if (prefs->letterbox && (pwidth != width || pheight != height)) {
+    if (prefs->enc_letterbox && (pwidth != width || pheight != height)) {
       get_letterbox_sizes(&pwidth, &pheight, &width, &height, (mainw->vpp->capabilities & VPP_CAN_RESIZE));
       if (!letterbox_layer(frame_layer, pwidth, pheight, width, height, interp, vpp->palette, vpp->YUV_clamping)) goto tr_err;
     }

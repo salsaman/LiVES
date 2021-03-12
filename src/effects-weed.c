@@ -7739,40 +7739,52 @@ matchvals:
     // if it's in the bg, and letterboxing, set size to maxspect fg clip
     // or if it's fg or bg and we are playing high quality
     if (mainw->num_tr_applied > 0 && !num_in_alpha) {
-      if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
-          && mainw->files[mainw->blend_file]->ext_src == inst) {
-        int lb_width = mainw->files[mainw->playing_file]->hsize;
-        int lb_height = mainw->files[mainw->playing_file]->vsize;
-        int opwidth, opheight;
-        boolean can_resize = FALSE;
-
-        if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) != 0) can_resize = TRUE;
-
-        get_player_size(&opwidth, &opheight);
-
-        if ((mainw->multitrack && !mainw->multitrack->is_rendering && prefs->letterbox_mt)
-            || (!mainw->multitrack && prefs->letterbox && (!mainw->is_rendering || mainw->preview_rendering))) {
-          if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) != 0) can_resize = TRUE;
-
-          get_letterbox_sizes(&opwidth, &opheight, &lb_width, &lb_height, can_resize);
-
-          opwidth = lb_width;
-          opheight = lb_height;
-          can_resize = FALSE;
-
-          if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_WIDTH)) {
-            lb_width = weed_get_int_value(chantmpl, WEED_LEAF_HOST_WIDTH, NULL);
-          } else lb_width = DEF_GEN_WIDTH;
-          if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_HEIGHT)) {
-            lb_height = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
-          } else lb_height = DEF_GEN_HEIGHT;
+      if ((mainw->multitrack && !mainw->multitrack->is_rendering && prefs->letterbox_mt)
+          || (!mainw->multitrack && prefs->letterbox && (!mainw->is_rendering || mainw->preview_rendering))) {
+        int lb_width, lb_height, opwidth, opheight;
+        boolean can_resize = FALSE, is_bg = FALSE;
+        if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
+            && mainw->files[mainw->blend_file]->ext_src == inst) {
+          is_bg = TRUE;
         }
+        if (is_bg || prefs->no_lb_gens) {
+          if (is_bg) {
+            lb_width = mainw->files[mainw->playing_file]->hsize;
+            lb_height = mainw->files[mainw->playing_file]->vsize;
+          } else {
+            lb_width = mainw->files[mainw->blend_file]->hsize;
+            lb_height = mainw->files[mainw->blend_file]->vsize;
+          }
 
-        if ((mainw->multitrack && !mainw->multitrack->is_rendering && prefs->letterbox_mt)
-            || (!mainw->multitrack && prefs->letterbox && (!mainw->is_rendering || mainw->preview_rendering))) {
+          if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) != 0) can_resize = TRUE;
+          get_player_size(&opwidth, &opheight);
+
+          // op size = fg frame in player
           get_letterbox_sizes(&opwidth, &opheight, &lb_width, &lb_height, can_resize);
-          xwidth = lb_width;
-          xheight = lb_height;
+
+          if (!is_bg || prefs->no_lb_gens) {
+            xwidth = lb_width;
+            xheight = lb_height;
+          } else {
+            opwidth = lb_width;
+            opheight = lb_height;
+            can_resize = FALSE;
+
+            if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_WIDTH)) {
+              lb_width = weed_get_int_value(chantmpl, WEED_LEAF_HOST_WIDTH, NULL);
+            } else lb_width = DEF_GEN_WIDTH;
+            if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_HEIGHT)) {
+              lb_height = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
+            } else lb_height = DEF_GEN_HEIGHT;
+          }
+        }
+        if (is_bg && !prefs->no_lb_gens) {
+          if ((mainw->multitrack && !mainw->multitrack->is_rendering && prefs->letterbox_mt)
+              || (!mainw->multitrack && prefs->letterbox && (!mainw->is_rendering || mainw->preview_rendering))) {
+            get_letterbox_sizes(&opwidth, &opheight, &lb_width, &lb_height, can_resize);
+            xwidth = lb_width;
+            xheight = lb_height;
+          }
         }
       }
     } else {

@@ -2311,7 +2311,7 @@ void create_LiVES(void) {
   lives_widget_set_hexpand(mainw->raudio_draw, TRUE);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, FALSE, FALSE, 0);
 
-  if (prefs->show_msg_area) {
+  if (1 || prefs->show_msg_area) {
     mainw->message_box = lives_hbox_new(FALSE, 0);
     lives_widget_set_app_paintable(mainw->message_box, TRUE);
     //lives_widget_set_vexpand(mainw->message_box, TRUE);
@@ -2336,6 +2336,10 @@ void create_LiVES(void) {
 
     lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_SCROLL_EVENT,
                               LIVES_GUI_CALLBACK(on_msg_area_scroll), (livespointer)mainw->msg_adj);
+    if (!prefs->show_msg_area) {
+      lives_widget_set_no_show_all(mainw->message_box, TRUE);
+      lives_widget_hide(mainw->message_box);
+    }
   } else {
     mainw->message_box = mainw->msg_area = mainw->msg_scrollbar = NULL;
     mainw->msg_adj = NULL;

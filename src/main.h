@@ -552,6 +552,7 @@ typedef struct {
   int xstdout;
   int nmonitors;
   int primary_monitor;
+  boolean can_show_msg_area;
 
   pid_t mainpid;
   pthread_t main_thread;

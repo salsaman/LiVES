@@ -6433,7 +6433,7 @@ render_details *create_render_details(int type) {
                                            "in order to preserve the original aspect ratio")));
     lives_free(tmp);
     lives_signal_sync_connect(LIVES_GUI_OBJECT(cb_letter), LIVES_WIDGET_TOGGLED_SIGNAL,
-                              LIVES_GUI_CALLBACK(toggle_sets_pref), (livespointer)PREF_LETTERBOXMT);
+                              LIVES_GUI_CALLBACK(toggle_sets_pref), (livespointer)PREF_LETTERBOX_MT);
   } else hbox = NULL;
 
   frame = add_video_options(&rdet->spinbutton_width, rdet->width, &rdet->spinbutton_height, rdet->height, &rdet->spinbutton_fps,

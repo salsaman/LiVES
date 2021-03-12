@@ -473,15 +473,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
           cfile->opening = FALSE;
 
-          if (prefs->max_blank_trim) {
-
-
-
-
-          }
-
-          wait_for_bg_audio_sync(mainw->current_file);
-
           if (mainw->error == 0) add_file_info(cfile->handle, TRUE);
           mainw->error = 0;
           get_total_time(cfile);
@@ -1030,10 +1021,6 @@ img_load:
 
 load_done:
 
-  if (*cfile->staging_dir) {
-    migrate_from_staging(mainw->current_file);
-  }
-
   if (!mainw->multitrack) {
     // update widgets
     switch_to_file((mainw->current_file = 0), current_file);
@@ -1051,6 +1038,12 @@ load_done:
     mt_init_clips(mainw->multitrack, current_file, TRUE);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     mt_clip_select(mainw->multitrack, TRUE);
+  }
+
+  if (*cfile->staging_dir) {
+    lives_proc_thread_create(LIVES_THRDATTR_NONE,
+                             (lives_funcptr_t)migrate_from_staging,
+                             0, "i", mainw->current_file);
   }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);

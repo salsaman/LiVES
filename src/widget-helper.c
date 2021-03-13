@@ -7922,7 +7922,7 @@ LiVESWidget *lives_layout_add_label(LiVESLayout * layout, const char *text, bool
     lives_widget_object_ref(conter);
     lives_widget_unparent(conter);
     lives_widget_destroy(hbox);
-    lives_layout_expansion_row_new(layout, conter);
+    hbox = lives_layout_expansion_row_new(layout, conter);
     lives_widget_object_ref(conter);
     widget_opts.last_container = hbox;
     if (widget_opts.apply_theme == 2) set_child_alt_colour(hbox, TRUE);
@@ -10566,11 +10566,11 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox * box, LiVE
 
     if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
 
-    if (widget_opts.justify == LIVES_JUSTIFY_CENTER || widget_opts.justify == LIVES_JUSTIFY_START)
+    if (widget_opts.justify == LIVES_JUSTIFY_CENTER || widget_opts.justify == LIVES_JUSTIFY_END)
       add_fill_to_box(LIVES_BOX(hbox));
 
     if (widget_opts.justify == LIVES_JUSTIFY_START) lives_widget_set_halign(expander, LIVES_ALIGN_START);
-    if (widget_opts.justify != LIVES_JUSTIFY_END) add_fill_to_box(LIVES_BOX(hbox));
+    //if (widget_opts.justify != LIVES_JUSTIFY_END) add_fill_to_box(LIVES_BOX(hbox));
 
     if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_widget_set_halign(expander, LIVES_ALIGN_CENTER);
     lives_box_pack_start(LIVES_BOX(hbox), expander, TRUE, TRUE, packing_width);
@@ -10578,7 +10578,8 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox * box, LiVE
     lives_widget_set_show_hide_parent(expander);
 
     if (widget_opts.justify == LIVES_JUSTIFY_END) lives_widget_set_halign(expander, LIVES_ALIGN_END);
-    if (widget_opts.justify != LIVES_JUSTIFY_START) add_fill_to_box(LIVES_BOX(hbox));
+
+    if (widget_opts.justify != LIVES_JUSTIFY_END) add_fill_to_box(LIVES_BOX(hbox));
 
     if (child) lives_container_add(LIVES_CONTAINER(expander), child);
     lives_container_set_border_width(LIVES_CONTAINER(expander), widget_opts.border_width);
@@ -11877,6 +11878,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_tool_button_toggle(LiVESToggleT
   else return lives_toggle_tool_button_set_active(tbutton, TRUE);
 }
 
+
+void entry_text_copy(LiVESEntry * e1, LiVESEntry * e2) {
+  // convenience callback
+  lives_entry_set_text(e2, lives_entry_get_text(e1));
+}
 
 static void _set_tooltips_state(LiVESWidget * widget, livespointer state) {
 #ifdef GUI_GTK

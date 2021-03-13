@@ -558,11 +558,18 @@ void chk_jack_cfgx(LiVESWidget * e, livespointer data) {
 }
 
 
+static void _close_exp(LiVESToggleButton * b, LiVESExpander * exp) {
+  if (!lives_toggle_button_get_active(b)) {
+    lives_expander_set_expanded(exp, FALSE);
+  }
+}
+
+
 boolean do_jack_config(boolean is_setup, boolean is_trans) {
   LiVESSList *rb_group = NULL;
   LiVESWidget *dialog, *dialog_vbox, *layout, *hbox, *rb, *cb2 = NULL, *cb3;
   LiVESWidget *acdef, *acname, *astart;
-  LiVESWidget *asdef, *asname;
+  LiVESWidget *asdef, *asname, *nsclabel;
   LiVESWidget *okbutton, *cancelbutton, *filebutton;
   LiVESWidget *scrpt_rb, *cfg_entry, *expander = NULL;
   LiVESResponseType response;
@@ -575,8 +582,6 @@ boolean do_jack_config(boolean is_setup, boolean is_trans) {
   boolean cfg_exists = FALSE;
 
   cfg_exists = jack_get_cfg_file(is_trans, &server_cfgx);
-
-  widget_opts.packing_height <<= 1;
 
 set_config:
   if (is_setup) title = _("Initial configuration for jack audio");
@@ -593,10 +598,19 @@ set_config:
     widget_opts.use_markup = TRUE;
     lives_layout_add_label(LIVES_LAYOUT(layout), _("</b></big>Please use the options below to define the "
                            "initial settings for jackd.\n"
-                           "<big><b>Once LiVES starts up, you can adjust the settings "
-                           "in Tools / Preferences / Jack Integration\n"), FALSE);
+                           "<big><b>Once LiVES starts up, you can access the full settings "
+                           "via Tools / Preferences / Jack Integration\n"), FALSE);
     widget_opts.use_markup = FALSE;
 
+    lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+    lives_layout_add_row(LIVES_LAYOUT(layout));
+
+    if (is_setup) {
+      widget_opts.use_markup = TRUE;
+      lives_layout_add_label(LIVES_LAYOUT(layout), _("<big><b>Connecting to a Server...</b></big>\n(LiVES will always "
+                             "try this first)"), TRUE);
+      widget_opts.use_markup = FALSE;
+    }
 
     hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
@@ -618,20 +632,22 @@ set_config:
 
     lives_layout_add_row(LIVES_LAYOUT(layout));
 
-    lives_layout_add_label(LIVES_LAYOUT(layout), _("What to do if connection fails..."), TRUE);
+    widget_opts.use_markup = TRUE;
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("<b>Action to take if the connection fails...</b>"), TRUE);
+    widget_opts.use_markup = FALSE;
 
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
     lives_standard_radio_button_new(_("...do nothing"), &rb_group, LIVES_BOX(hbox),
                                     H_("If this setting is active, LiVES will only ever attempt to connect a running jack server\n"
                                        "and will never try to start a server itself"));
-
     lives_layout_add_row(LIVES_LAYOUT(layout));
     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
 
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-    astart = lives_standard_radio_button_new(_("_...try to start the jack server"), &rb_group, LIVES_BOX(hbox),
+    astart = lives_standard_radio_button_new(_("_...try to start the jack server using the settings below"), &rb_group,
+             LIVES_BOX(hbox),
              H_("Checking this will cause LiVES to try to start up a jackd server itself\n"
                 "if it is unable to connect to a running instance."));
 
@@ -640,28 +656,37 @@ set_config:
   } else {
     lives_layout_add_label(LIVES_LAYOUT(layout), _("NOTE: if server start up fails, "
                            "LiVES will ALWAYS produce an error."), FALSE);
+    lives_layout_add_row(LIVES_LAYOUT(layout));
 
-    text = lives_strdup_printf(_("Consider: in the case that LiVES fails to connect to %s, it will try to start "
-                                 "a new server itself using the settings below.\n"
-                                 "<small>Should the new server fail to start, "
-                                 "this will generate an error condition\nwhich will require manual "
-                                 "intervention to resolve.\n</small>"), (is_trans && *prefs->jack_tserver_cname)
+    text = lives_strdup_printf(_("In the case that LiVES fails to connect to %s,\nan attempt will be made to start "
+                                 "a new server using the settings below."), (is_trans && *prefs->jack_tserver_cname)
                                ? prefs->jack_tserver_cname : (!is_trans && *prefs->jack_aserver_cname)
                                ? prefs->jack_aserver_cname : _("the default server"));
-
-    widget_opts.use_markup = TRUE;
-    lives_layout_add_label(LIVES_LAYOUT(layout), text, FALSE);
-    widget_opts.use_markup = FALSE;
+    lives_layout_add_label(LIVES_LAYOUT(layout), text, TRUE);
     lives_free(text);
+    lives_layout_add_row(LIVES_LAYOUT(layout));
+
+    lives_layout_add_label(LIVES_LAYOUT(layout), (_(" - if the new server fails to start, "
+                           "manual intervention will be required.")), TRUE);
   }
 
   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+
+  if (!is_setup) widget_opts.packing_height <<= 1;
+
+  if (is_setup) {
+    lives_layout_add_row(LIVES_LAYOUT(layout));
+    widget_opts.use_markup = TRUE;
+    nsclabel = lives_layout_add_label(LIVES_LAYOUT(layout), _("<big><b>New Server Configuration</b></big> (if connection fails)"),
+                                      TRUE);
+    widget_opts.use_markup = FALSE;
+  }
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   rb_group = NULL;
 
-  scrpt_rb = lives_standard_radio_button_new(_("_Use settings in config file"),
+  scrpt_rb = lives_standard_radio_button_new(_("_Use settings in config file:"),
              &rb_group, LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -672,8 +697,9 @@ set_config:
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(filebutton), FILTER_KEY, show_hid);
   lives_entry_set_editable(LIVES_ENTRY(cfg_entry), TRUE);
 
-  if (!cfg_exists) show_warn_image(cfg_entry, _("The specified file does not exist"));
-  else {
+  if (!cfg_exists) {
+    show_warn_image(cfg_entry, _("The specified file does not exist"));
+  } else {
     if (!lives_file_test(server_cfgx, LIVES_FILE_TEST_IS_EXECUTABLE)) {
       show_warn_image(cfg_entry, _("The specified file should be executable"));
     }
@@ -684,17 +710,30 @@ set_config:
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(scrpt_rb), cfg_entry, FALSE);
 
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-
-  rb = lives_standard_radio_button_new(_("Use settings from _LiVES"),
-                                       &rb_group, LIVES_BOX(hbox), NULL);
-  lives_widget_set_valign(hbox, LIVES_ALIGN_START);
-
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-
   if (is_setup) {
-    expander = lives_standard_expander_new(_("_LiVES Settings"), LIVES_BOX(hbox),
+    LiVESWidget *widget;
+    hbox = lives_layout_expansion_row_new(LIVES_LAYOUT(layout), NULL);
+
+    rb = lives_standard_radio_button_new(NULL, &rb_group, LIVES_BOX(hbox), NULL);
+    for (widget = lives_widget_get_parent(rb); widget != hbox; widget = lives_widget_get_parent(widget))
+      lives_widget_set_valign(widget, LIVES_ALIGN_START);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
+
+    expander = lives_standard_expander_new(_("Use settings from _LiVES"), LIVES_BOX(hbox),
                                            (layout = lives_layout_new(NULL)));
+
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(astart), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(_close_exp),
+                                    LIVES_EXPANDER(expander));
+
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(rb), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(_close_exp),
+                                    LIVES_EXPANDER(expander));
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  } else {
+    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+    rb = lives_standard_radio_button_new(_("Use settings from _LiVES"), &rb_group, LIVES_BOX(hbox), NULL);
   }
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -710,11 +749,10 @@ set_config:
                                               "variable\n$JACK_DEFAULT_SERVER.\nIf that variable is not "
                                               "set, then 'default' will be used instead"));
 
-  lives_layout_add_row(LIVES_LAYOUT(layout));
-  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  if (!is_setup) lives_layout_add_row(LIVES_LAYOUT(layout));
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), WH_LAYOUT_KEY, NULL);
+  //lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), WH_LAYOUT_KEY, NULL);
   asname = lives_standard_entry_new(_("Use _custom server name"),
                                     (is_trans && *future_prefs->jack_tserver_sname)
                                     ? future_prefs->jack_tserver_sname :
@@ -722,10 +760,18 @@ set_config:
                                     ? future_prefs->jack_aserver_sname :
                                     JACK_DEFAULT_SERVER_NAME, -1, JACK_PARAM_STRING_MAX,
                                     LIVES_BOX(hbox), NULL);
+  if (is_setup) {
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(asname), LIVES_WIDGET_CHANGED_SIGNAL,
+                              LIVES_GUI_CALLBACK(entry_text_copy), LIVES_ENTRY(acname));
+  }
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), asdef, FALSE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(asdef), asname, TRUE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), hbox, FALSE);
+
+  if (is_setup) {
+    if (!cfg_exists) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rb), TRUE);
+  }
 
   if (!is_setup) {
     if ((!is_trans && !*future_prefs->jack_aserver_cfg)
@@ -737,6 +783,7 @@ set_config:
   if (!is_setup) {
     // warn if setting this for audio client and is already set for trans client, and trans
     // client is enabled, and !jack_srv_dup
+    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
     cb2 = lives_standard_check_button_new(_("Set as _user default"),
                                           (is_trans && (future_prefs->jack_opts
                                               & JACK_OPTS_SETENV_TSERVER))
@@ -761,7 +808,7 @@ set_config:
   }
 
   lives_layout_add_row(LIVES_LAYOUT(layout));
-  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  if (is_setup) lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   cb3 = lives_standard_check_button_new(_("Create as temporary server"),
@@ -855,6 +902,8 @@ set_config:
     toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), scrpt_rb, FALSE);
     toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), cfg_entry, FALSE);
     toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), rb, FALSE);
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), nsclabel, FALSE);
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), expander, FALSE);
 
     lives_widget_show_all(dialog);
     lives_widget_grab_focus(okbutton);
@@ -1059,7 +1108,7 @@ static void on_init_aplayer_toggled(LiVESToggleButton * tbutton, livespointer us
 boolean do_audio_choice_dialog(short startup_phase) {
   LiVESWidget *dialog, *dialog_vbox, *radiobutton2 = NULL, *radiobutton3, *label;
   LiVESWidget *okbutton, *cancelbutton;
-  LiVESWidget *hbox;
+  LiVESWidget *hbox, *layout;
 
 #ifdef HAVE_PULSE_AUDIO
   LiVESWidget *radiobutton0;
@@ -1072,14 +1121,14 @@ boolean do_audio_choice_dialog(short startup_phase) {
   LiVESSList *radiobutton_group = NULL;
 
   char *txt0, *txt1, *txt2, *txt3, *txt4, *txt5, *txt6, *txt7, *msg, *wid;
-  char *tmp, *recstr;
+  char *recstr;
 
   LiVESResponseType response;
 
   if (startup_phase == 4) {
     txt0 = lives_big_and_bold(_("LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n\n"));
   } else {
-    prefs->audio_player = -1;
+    if (startup_phase != 5) prefs->audio_player = -1;
     txt0 = lives_strdup("");
   }
 
@@ -1113,7 +1162,7 @@ reloop:
   } else {
     txt4 = lives_strdup(
              _(", but may prevent LiVES from starting on some systems.\nIf LiVES will not start with jack,"
-               "you can restart and try with another audio player instead.\n\n"));
+               "you can restart LiVES and try another audio player instead.\n\n"));
   }
 #endif
 
@@ -1140,7 +1189,6 @@ reloop:
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
-  // TODO: add_param_label_to_box()
   widget_opts.use_markup = TRUE;
   label = lives_standard_label_new(msg);
   lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
@@ -1149,41 +1197,48 @@ reloop:
 
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
 
-  recstr = lives_strdup_printf(" (%s)", mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
+  recstr = lives_big_and_bold("(%s)", mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
+
+  widget_opts.packing_height <<= 1;
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+  widget_opts.packing_height >>= 1;
 
 #ifdef HAVE_PULSE_AUDIO
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
   widget_opts.use_markup = TRUE;
   radiobutton0 =
-    lives_standard_radio_button_new((tmp = lives_strdup_printf(_("Use _<b>pulseaudio</b> player%s"),
-                                     capable->has_pulse_audio ?
-                                     recstr : "")),
+    lives_standard_radio_button_new(_("Use _<b>pulseaudio</b> player"),
                                     &radiobutton_group, LIVES_BOX(hbox), NULL);
-  lives_free(tmp);
   widget_opts.use_markup = FALSE;
   if (!capable->has_pulse_audio) lives_widget_set_sensitive(radiobutton0, FALSE);
   else if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_PULSE;
+  if (capable->has_pulse_audio) {
+    widget_opts.use_markup = TRUE;
+    lives_layout_add_label(LIVES_LAYOUT(layout), recstr, TRUE);
+    widget_opts.use_markup = FALSE;
+  }
 #endif
 
 #ifdef ENABLE_JACK
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
   widget_opts.use_markup = TRUE;
   radiobutton1 =
-    lives_standard_radio_button_new((tmp = lives_strdup_printf(_("Use _<b>jack</b> audio player%s"),
-                                     capable->has_jackd
-                                     && !capable->has_pulse_audio
-                                     ? recstr : "")),
+    lives_standard_radio_button_new(_("Use _<b>jack</b> audio player"),
                                     &radiobutton_group, LIVES_BOX(hbox), NULL);
-  lives_free(tmp);
   widget_opts.use_markup = FALSE;
   if (!capable->has_jackd) lives_widget_set_sensitive(radiobutton1, FALSE);
+  else if (!capable->has_pulse_audio) {
+    widget_opts.use_markup = TRUE;
+    lives_layout_add_label(LIVES_LAYOUT(layout), recstr, TRUE);
+    widget_opts.use_markup = FALSE;
+  }
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("(click 'Next' to view and adjust initial server settings)"), TRUE);
 #endif
 
   lives_free(recstr);
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   widget_opts.use_markup = TRUE;
   radiobutton2 = lives_standard_radio_button_new(_("Use _<b>sox</b> audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
   widget_opts.use_markup = FALSE;
@@ -1212,8 +1267,7 @@ reloop:
     }
   }
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   widget_opts.use_markup = TRUE;
   radiobutton3 = lives_standard_radio_button_new(_("Use _<b>none</b> audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
   widget_opts.use_markup = FALSE;
@@ -1264,7 +1318,7 @@ reloop:
 
   if (prefs->audio_player == -1) {
     do_no_mplayer_sox_error();
-    return LIVES_RESPONSE_CANCEL;
+    return FALSE;
   }
 
   if (mainw->splash_window) {
@@ -2155,7 +2209,7 @@ cancld:
 }
 
 
-void do_startup_interface_query(void) {
+boolean do_startup_interface_query(void) {
   // prompt for startup ce or startup mt
   LiVESWidget *dialog, *dialog_vbox, *radiobutton, *label, *xlabel, *layout;
   LiVESWidget *okbutton;
@@ -2166,6 +2220,11 @@ void do_startup_interface_query(void) {
   char *dskfile, *com;
 
   boolean add_hsep = FALSE;
+
+retry:
+  add_hsep = FALSE;
+  cb_desk = cb_menus = NULL;
+  radiobutton_group = NULL;
 
   dialog = lives_standard_dialog_new(_("Startup Options"), FALSE, -1, -1);
 
@@ -2268,14 +2327,15 @@ void do_startup_interface_query(void) {
       }
     }
   }
+
   add_hsep = TRUE;
-  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
 
   if (dskfile) {
     if (check_for_executable(&capable->has_xdg_desktop_menu, EXEC_XDG_DESKTOP_MENU)) {
       widget_opts.expand = LIVES_EXPAND_NONE;
-      lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+      add_hsep_to_box(LIVES_BOX(dialog_vbox));
       widget_opts.expand = LIVES_EXPAND_DEFAULT;
+      layout = lives_layout_new(LIVES_BOX(dialog_vbox));
       lives_layout_add_row(LIVES_LAYOUT(layout));
       lives_layout_add_label(LIVES_LAYOUT(layout), _("Desktop options:"), TRUE);
       hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -2286,8 +2346,9 @@ void do_startup_interface_query(void) {
     if (check_for_executable(&capable->has_xdg_desktop_icon, EXEC_XDG_DESKTOP_ICON)) {
       if (add_hsep) {
         widget_opts.expand = LIVES_EXPAND_NONE;
-        lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+        add_hsep_to_box(LIVES_BOX(dialog_vbox));
         widget_opts.expand = LIVES_EXPAND_DEFAULT;
+        layout = lives_layout_new(LIVES_BOX(dialog_vbox));
         lives_layout_add_row(LIVES_LAYOUT(layout));
         lives_layout_add_label(LIVES_LAYOUT(layout), _("Desktop options:"), TRUE);
         lives_layout_add_row(LIVES_LAYOUT(layout));
@@ -2301,8 +2362,9 @@ void do_startup_interface_query(void) {
 
   if (add_hsep) {
     widget_opts.expand = LIVES_EXPAND_NONE;
-    lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+    add_hsep_to_box(LIVES_BOX(dialog_vbox));
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    layout = lives_layout_new(LIVES_BOX(dialog_vbox));
   }
 
   lives_layout_add_row(LIVES_LAYOUT(layout));
@@ -2317,20 +2379,24 @@ void do_startup_interface_query(void) {
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-  widget_opts.use_markup = TRUE;
-  label = lives_standard_label_new(
-            _("You may optionally set quota limits now if you want to\nmanage how much disk space LiVES may use.\n"
-              "<small>(You can also do this later from within the application)</small>"));
-  widget_opts.use_markup = FALSE;
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
 
-  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+  widget_opts.use_markup = TRUE;
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("You can set quota limits now if you want to\n"
+                         "manage how much disk space LiVES may use.\n"
+                         "<small>(You can also do this later from within the application)</small>"), TRUE);
+  widget_opts.use_markup = FALSE;
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
+                                     _("Back to Audio Selection"), LIVES_RESPONSE_NO);
+
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL,
                                      _("Set _Quota Limits (Optional)"), LIVES_RESPONSE_SHOW_DETAILS);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
-             _("_Finish Setup and Start LiVES"), LIVES_RESPONSE_OK);
+             _("_FINISH SETUP and START LiVES"), LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);
@@ -2355,6 +2421,16 @@ void do_startup_interface_query(void) {
   }
 
   resp = lives_dialog_run(LIVES_DIALOG(dialog));
+
+  if (resp == LIVES_RESPONSE_NO) {
+    lives_widget_destroy(dialog);
+    if (!do_audio_choice_dialog(5)) {
+      prefs->startup_phase = 3;
+      return FALSE;
+    }
+    goto retry;
+  }
+
   if (resp == LIVES_RESPONSE_SHOW_DETAILS) pref_factory_bool(PREF_SHOW_QUOTA, TRUE, TRUE);
   else pref_factory_bool(PREF_SHOW_QUOTA, FALSE, TRUE);
 
@@ -2385,6 +2461,7 @@ void do_startup_interface_query(void) {
   if (mainw->splash_window) {
     lives_widget_show(mainw->splash_window);
   }
+  return TRUE;
 }
 
 

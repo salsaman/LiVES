@@ -22,7 +22,7 @@ boolean do_jack_config(boolean is_setup, boolean is_trans);
 
 boolean do_audio_choice_dialog(short startup_phase);
 boolean do_startup_tests(boolean tshoot);
-void do_startup_interface_query(void);
+boolean do_startup_interface_query(void);
 
 void run_lives_setup_wizard(int page);
 

@@ -2381,7 +2381,10 @@ static void lives_init(_ign_opts *ign_opts) {
     splash_end();
     set_int_pref(PREF_STARTUP_PHASE, 5);
     prefs->startup_phase = 5;
-    do_startup_interface_query();
+    if (!do_startup_interface_query()) {
+      set_int_pref(PREF_STARTUP_PHASE, prefs->startup_phase);
+      lives_exit(0);
+    }
 
     set_int_pref(PREF_STARTUP_PHASE, 6);
     prefs->startup_phase = 6;

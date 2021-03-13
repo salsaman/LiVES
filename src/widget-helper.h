@@ -708,6 +708,8 @@ boolean lives_toggle_tool_button_get_active(LiVESToggleToolButton *);
 boolean lives_toggle_tool_button_set_active(LiVESToggleToolButton *, boolean active);
 boolean lives_toggle_tool_button_toggle(LiVESToggleToolButton *);
 
+void entry_text_copy(LiVESEntry *, LiVESEntry *);
+
 int lives_utf8_strcmpfunc(livesconstpointer, livesconstpointer, livespointer fwd);
 
 LiVESList *add_sorted_list_to_menu(LiVESMenu *, LiVESList *);

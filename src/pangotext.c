@@ -59,9 +59,9 @@ void guess_font_size(LiVESWidget *window, LiVESLabel *xlabel, LiVESLabel *ylabel
     if (fitw < fith) scaling = fitw;
     else scaling = fith;
     if (scaling > 2. && scaling < 4.) scaling /= 2.;
-    g_print("scaling %f\n", scaling);
+    //g_print("scaling %f\n", scaling);
     scaling *= guess;
-    g_print("adj scaling %f\n", scaling);
+    //g_print("adj scaling %f\n", scaling);
     if (scaling < 1.) scaling = 1;
     if (scaling > 2.) scaling = 2.;
     fontsize = capable->font_size * scaling;
@@ -70,7 +70,7 @@ void guess_font_size(LiVESWidget *window, LiVESLabel *xlabel, LiVESLabel *ylabel
       int ofontsize = capable->font_size;
       capable->font_size *= scaling;
       tmp = lives_strdup_printf("%dpx", capable->font_size);
-      g_print("scaled to %s\n", tmp);
+      //g_print("scaled to %s\n", tmp);
       set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "*", "font-size", tmp);
       lives_free(tmp);
       capable->font_size = ofontsize;

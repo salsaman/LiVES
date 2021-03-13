@@ -5783,8 +5783,11 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   prefsw->checkbutton_jack_read_autocon =
     lives_standard_check_button_new
-    (_("Automatically connect to System Out ports when 'playing' External Audio"),
-     (future_prefs->jack_opts & JACK_OPTS_NO_READ_AUTOCON) ? FALSE : TRUE, LIVES_BOX(hbox), NULL);
+    (_("Automatically connect to System Out ports"),
+     (future_prefs->jack_opts & JACK_OPTS_NO_READ_AUTOCON) ? FALSE : TRUE, LIVES_BOX(hbox),
+     H_("Setting this causes LiVES to automatically connect its input client ports to\n"
+        "available System Out ports.\nIf not set, then the input ports will need to be connected\n"
+        "manually each time LiVES is started with the jack audio player"));
 
   if (prefs->audio_player != AUD_PLAYER_JACK) lives_widget_set_sensitive(prefsw->jack_aplayout2, FALSE);
 

@@ -96,6 +96,7 @@ typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *entry;
   LiVESWidget *dir_entry;
+  LiVESWidget *dirbutton;
   LiVESWidget *name_entry;
   LiVESWidget *warn_checkbutton;
   LiVESWidget *okbutton;
@@ -103,6 +104,8 @@ typedef struct {
   LiVESWidget *expander;
   LiVESWidget *exp_label;
   LiVESWidget *exp_vbox;
+  LiVESWidget *xlabel;
+  LiVESWidget *ylabel;
   LiVESWidget *layouts_layout;
   LiVESWidget *clips_layout;
   LiVESWidget *parent;
@@ -177,6 +180,8 @@ typedef struct {
 #define LIVES_PREVIEW_TYPE_RANGE 4
 #define LIVES_PREVIEW_TYPE_IMAGE_ONLY 5
 
+// not to be confused with FILE_CHOOSER_ACTION
+//  **can be set in FILESEL_TYPE_KEY** for widget objects
 #define LIVES_FILE_SELECTION_UNDEFINED 0
 #define LIVES_FILE_SELECTION_VIDEO_AUDIO 1
 #define LIVES_FILE_SELECTION_AUDIO_ONLY 2
@@ -191,6 +196,9 @@ typedef struct {
 #define LIVES_DIR_SELECTION_WORKDIR 2048
 #define LIVES_DIR_SELECTION_WORKDIR_INIT 2049
 #define LIVES_DIR_SELECTION_DEVICES 4096
+
+// flags
+#define LIVES_SELECTION_SHOW_HIDDEN 65536
 
 aud_dialog_t *create_audfade_dialog(int type);
 LiVESWidget *create_combo_dialog(int type, LiVESList *list);

@@ -741,6 +741,7 @@ typedef struct {
   // jack audio
   LiVESWidget *jack_acdef;
   LiVESWidget *jack_acname;
+  LiVESWidget *jack_asname;
   LiVESWidget *jack_acerror;
   LiVESWidget *jack_apstats;
   LiVESWidget *jack_aplabel;

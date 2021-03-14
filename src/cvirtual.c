@@ -768,16 +768,16 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
 
   for (i = sframe; i <= eframe; i++) {
     if (i > sfile->frames) break;
-    if (lives_proc_thread_cancelled(tinfo)) break;
+    if (lives_proc_thread_get_cancelled(tinfo)) break;
 
     retval = i;
 
     if (sfile->pumper) {
       if (mainw->effects_paused || mainw->preview) {
         lives_nanosleep_until_nonzero((!mainw->effects_paused && !mainw->preview)
-                                      || lives_proc_thread_cancelled(sfile->pumper));
+                                      || lives_proc_thread_get_cancelled(sfile->pumper));
       }
-      if (lives_proc_thread_cancelled(sfile->pumper)) break;
+      if (lives_proc_thread_get_cancelled(sfile->pumper)) break;
     }
 
     if (update_progress) {

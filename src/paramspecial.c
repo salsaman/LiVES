@@ -516,7 +516,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
         lives_entry_set_editable(LIVES_ENTRY(widget), FALSE);
         if (param->widgets[1] &&
             LIVES_IS_LABEL(param->widgets[1]) &&
-            lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])) != NULL)
+            lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])))
           lives_label_set_mnemonic_widget(LIVES_LABEL(param->widgets[1]), buttond);
         lives_entry_set_max_length(LIVES_ENTRY(widget), PATH_MAX);
 
@@ -555,7 +555,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
         lives_entry_set_editable(LIVES_ENTRY(widget), TRUE);
         if (param->widgets[1] &&
             LIVES_IS_LABEL(param->widgets[1]) &&
-            lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])) != NULL)
+            lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])))
           lives_label_set_mnemonic_widget(LIVES_LABEL(param->widgets[1]), buttond);
         lives_entry_set_max_length(LIVES_ENTRY(widget), PATH_MAX);
         widget_opts.expand |= LIVES_EXPAND_EXTRA_WIDTH;

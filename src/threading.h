@@ -7,14 +7,45 @@
 #define _THREADING_H_
 
 typedef void (*lives_funcptr_t)();
-
 typedef void *(*lives_thread_func_t)(void *);
-
 typedef struct _lives_thread_data_t lives_thread_data_t;
-
 typedef weed_plantptr_t lives_proc_thread_t;
-
 typedef uint64_t funcsig_t;
+
+// thread internals
+
+typedef int(*funcptr_int_t)();
+typedef double(*funcptr_dbl_t)();
+typedef int(*funcptr_bool_t)();
+typedef char *(*funcptr_string_t)();
+typedef int64_t(*funcptr_int64_t)();
+typedef weed_funcptr_t(*funcptr_funcptr_t)();
+typedef void *(*funcptr_voidptr_t)();
+typedef weed_plant_t(*funcptr_plantptr_t)();
+
+typedef union {
+  weed_funcptr_t func;
+  funcptr_int_t funcint;
+  funcptr_dbl_t funcdouble;
+  funcptr_bool_t funcboolean;
+  funcptr_int64_t funcint64;
+  funcptr_string_t funcstring;
+  funcptr_funcptr_t funcfuncptr;
+  funcptr_voidptr_t funcvoidptr;
+  funcptr_plantptr_t funcplantptr;
+} allfunc_t;
+
+typedef struct {
+  livespointer instance;
+  lives_funcptr_t callback;
+  livespointer user_data;
+  volatile boolean swapped;
+  unsigned long funcid;
+  char *detsig;
+  boolean is_timer;
+  boolean added;
+  lives_proc_thread_t proc;
+} lives_sigdata_t;
 
 typedef struct {
   uint64_t var_uid;
@@ -37,16 +68,17 @@ typedef struct {
 struct _lives_thread_data_t {
   LiVESWidgetContext *ctx;
   int64_t idx;
+  int signum;
   lives_threadvars_t vars;
 };
 
 typedef struct {
   lives_thread_func_t func;
   void *arg;
+  void *ret;
   uint64_t flags;
   volatile uint64_t busy;
   volatile uint64_t done;
-  void *ret;
   volatile boolean sync_ready;
   pthread_t self;
 } thrd_work_t;
@@ -60,23 +92,13 @@ typedef struct {
   uint64_t padding[3];
 } lives_func_info_t;
 
-#define LIVES_LEAF_NOTIFY "notify"
-#define LIVES_LEAF_DONE "done"
-#define LIVES_LEAF_NO_GUI "no_gui"
-#define LIVES_LEAF_SYNC_READY "sync_ready"
 #define LIVES_LEAF_THREADFUNC "tfunction"
 #define LIVES_LEAF_PTHREAD_SELF "pthread_self"
 #define LIVES_LEAF_THREAD_PROCESSING "t_processing"
-#define LIVES_LEAF_THREAD_CANCELLABLE "t_can_cancel"
-#define LIVES_LEAF_THREAD_CANCELLED "t_cancelled"
 #define LIVES_LEAF_RETURN_VALUE "return_value"
-#define LIVES_LEAF_DONTCARE "dontcare"  ///< tell proc_thread with return value that we n o longer need return val.
-#define LIVES_LEAF_DONTCARE_MUTEX "dontcare_mutex" ///< ensures we can set dontcare without it finishing while doing so
+#define _RV_ LIVES_LEAF_RETURN_VALUE
 
 #define LIVES_LEAF_FUNCSIG "funcsig"
-
-#define LIVES_LEAF_SIGNALLED "signalled"
-#define LIVES_LEAF_SIGNAL_DATA "signal_data"
 
 #define LIVES_LEAF_THREAD_PARAM "thrd_param"
 #define _LIVES_LEAF_THREAD_PARAM(n) LIVES_LEAF_THREAD_PARAM  n
@@ -85,38 +107,14 @@ typedef struct {
 #define LIVES_LEAF_THREAD_PARAM2 _LIVES_LEAF_THREAD_PARAM("2")
 
 #define LIVES_THRDFLAG_AUTODELETE	(1 << 0)
-#define LIVES_THRDFLAG_TUNING		(1 << 1)
-#define LIVES_THRDFLAG_WAIT_SYNC	(1 << 2)
+#define LIVES_THRDFLAG_WAIT_SYNC	(1 << 1)
+#define LIVES_THRDFLAG_NO_GUI		(1 << 2)
+#define LIVES_THRDFLAG_TUNING		(1 << 3)
 
 typedef LiVESList lives_thread_t;
 typedef uint64_t lives_thread_attr_t;
 
-#define LIVES_THRDATTR_NONE		0
-#define LIVES_THRDATTR_PRIORITY		(1 << 0)
-
-// proc_thread flags
-#define LIVES_THRDATTR_AUTODELETE	(1 << 1)
-#define LIVES_THRDATTR_WAIT_SYNC	(1 << 2)
-#define LIVES_THRDATTR_FG_THREAD	(1 << 3)
-#define LIVES_THRDATTR_NO_GUI		(1 << 4)
-
-void lives_threadpool_init(void);
-void lives_threadpool_finish(void);
-int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr, lives_thread_func_t func, void *arg);
-uint64_t lives_thread_join(lives_thread_t work, void **retval);
-
-// lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#define _RV_ LIVES_LEAF_RETURN_VALUE
-
-typedef int(*funcptr_int_t)();
-typedef double(*funcptr_dbl_t)();
-typedef int(*funcptr_bool_t)();
-typedef char *(*funcptr_string_t)();
-typedef int64_t(*funcptr_int64_t)();
-typedef weed_funcptr_t(*funcptr_funcptr_t)();
-typedef void *(*funcptr_voidptr_t)();
-typedef weed_plant_t(*funcptr_plantptr_t)();
+// internals
 
 #define GETARG(type, n) (p##n = WEED_LEAF_GET(info, _LIVES_LEAF_THREAD_PARAM(QUOTEME(n)), type))
 
@@ -175,6 +173,7 @@ typedef weed_plant_t(*funcptr_plantptr_t)();
 // 3p
 #define FUNCSIG_VOIDP_DOUBLE_INT 		        		0X00000D21
 #define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
+#define FUNCSIG_VOIDP_VOIDP_BOOL 		        		0X00000DD3
 #define FUNCSIG_STRING_VOIDP_VOIDP 		        		0X000004DD
 #define FUNCSIG_BOOL_BOOL_STRING 		        		0X00000334
 #define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
@@ -187,17 +186,57 @@ typedef weed_plant_t(*funcptr_plantptr_t)();
 // 6p
 #define FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP		       	0X0044D14D
 
-typedef union {
-  weed_funcptr_t func;
-  funcptr_int_t funcint;
-  funcptr_dbl_t funcdouble;
-  funcptr_bool_t funcboolean;
-  funcptr_int64_t funcint64;
-  funcptr_string_t funcstring;
-  funcptr_funcptr_t funcfuncptr;
-  funcptr_voidptr_t funcvoidptr;
-  funcptr_plantptr_t funcplantptr;
-} allfunc_t;
+////// lives_thread_t
+
+#define LIVES_THRDATTR_NONE		0
+#define LIVES_THRDATTR_PRIORITY		(1 << 0)
+#define LIVES_THRDATTR_AUTODELETE	(1 << 1)
+
+// worker pool threads
+void lives_threadpool_init(void);
+void lives_threadpool_finish(void);
+
+// lives_threads
+int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr, lives_thread_func_t func, void *arg);
+uint64_t lives_thread_join(lives_thread_t work, void **retval);
+
+// thread functions
+lives_thread_data_t *get_thread_data(void);
+lives_threadvars_t *get_threadvars(void);
+lives_thread_data_t *lives_thread_data_create(uint64_t idx);
+
+#define THREADVAR(var) (get_threadvars()->var_##var)
+
+// lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// lives_proc_thread state flags
+#define THRD_STATE_FINISHED 	(1ul << 0)
+#define THRD_STATE_CANCELLED 	(1ul << 1)
+#define THRD_STATE_SIGNALLED 	(1ul << 2)
+#define THRD_STATE_BUSY 	(1ul << 3)
+
+#define THRD_OPT_NOTIFY 	(1ul << 32)
+#define THRD_OPT_CANCELLABLE 	(1ul << 34)
+#define THRD_OPT_DONTCARE 	(1ul << 35)
+
+boolean lives_proc_thread_set_state(lives_proc_thread_t lpt, uint64_t state);
+uint64_t lives_proc_thread_get_state(lives_proc_thread_t lpt);
+boolean lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t state_bits);
+boolean lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state_bits);
+
+// proc_thread specific attributes
+#define LIVES_LEAF_THREAD_WORK "thread_work" // refers to underyling lives_thread
+
+#define LIVES_LEAF_STATE_MUTEX "state_mutex" ///< ensures state is accessed atomically
+#define LIVES_LEAF_THRD_STATE "thread_state" // proc_thread state
+
+#define LIVES_LEAF_SIGNAL_DATA "signal_data"
+
+// also LIVES_THRDATR_PRIORITY
+// also LIVES_THRDATR_AUTODELETE
+#define LIVES_THRDATTR_WAIT_SYNC	(1 << 2)
+#define LIVES_THRDATTR_FG_THREAD	(1 << 3)
+#define LIVES_THRDATTR_NO_GUI		(1 << 4)
 
 lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_t,
     int return_type, const char *args_fmt, ...);
@@ -208,28 +247,24 @@ lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, liv
 lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
     int return_type, const char *args_fmt, ...);
 
-void call_funcsig(lives_proc_thread_t info);
-
 void lives_proc_thread_free(lives_proc_thread_t lpt);
 
+// forces fg execution (safe to run in fg or bg)
+void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, const char *args_fmt, ...);
+
 /// returns FALSE while the thread is running, TRUE once it has finished
-boolean lives_proc_thread_check(lives_proc_thread_t);
-int lives_proc_thread_signalled(lives_proc_thread_t tinfo);
-int64_t lives_proc_thread_signalled_idx(lives_proc_thread_t tinfo);
-
-lives_thread_data_t *get_thread_data(void);
-lives_threadvars_t *get_threadvars(void);
-lives_thread_data_t *lives_thread_data_create(uint64_t idx);
-
-#define THREADVAR(var) (get_threadvars()->var_##var)
+boolean lives_proc_thread_check_finished(lives_proc_thread_t);
+boolean lives_proc_thread_get_signalled(lives_proc_thread_t tinfo);
+boolean lives_proc_thread_set_signalled(lives_proc_thread_t tinfo, int signum, void *data);
+int lives_proc_thread_get_signal_data(lives_proc_thread_t tinfo, int64_t *tidx_return, void **data_return);
 
 /// only threads with no return value can possibly be cancellable. For threads with a value, use
 /// lives_proc_thread_dontcare()
 void lives_proc_thread_set_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
-boolean lives_proc_thread_cancel(lives_proc_thread_t);
+boolean lives_proc_thread_cancel(lives_proc_thread_t, boolean can_block);
 boolean lives_proc_thread_cancel_immediate(lives_proc_thread_t tinfo);
-boolean lives_proc_thread_cancelled(lives_proc_thread_t);
+boolean lives_proc_thread_get_cancelled(lives_proc_thread_t);
 
 /// tell a threead with return value that we no longer need the value so it can free itself
 boolean lives_proc_thread_dontcare(lives_proc_thread_t);
@@ -249,11 +284,28 @@ void *lives_proc_thread_join_voidptr(lives_proc_thread_t);
 weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t) ;
 int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
-void resubmit_proc_thread(lives_proc_thread_t, lives_thread_attr_t);
+////
 
+// utility funcs (called from widget-helper.c)
 boolean is_fg_thread(void);
-
+void call_funcsig(lives_proc_thread_t info);
 void *fg_run_func(lives_proc_thread_t lpt, void *retval);
-void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, const char *args_fmt, ...);
+/////
+
+// intents - for future use
+// type = thread, subtype livesproc
+#define PROC_THREAD_INTENTION_CREATE LIVES_INTENTION_CREATE // timeout is an optional ivar, default 0, how to handle
+//						argc, argv in reqmts. ?
+#define PROC_THREAD_INTENTION_DESTROY LIVES_INTENTION_DESTROY // free func
+#define PROC_THREAD_INTENTION_CANCEL LIVES_INTENTION_CANCEL // -> cancel_immediate
+
+// main_thread_execute etc will be a transform to the running state
+
+// check will be the RUNNING status, cancelled will be CANCELLED status
+// sync_wait - set in flags, and waits in prep state
+//
+
+#define PROC_THREAD_INTENTION_GET_VALUE LIVES_INTENTION_GET_VALUE // e.g cancellable
+#define PROC_THREAD_INTENTION_SET_VALUE LIVES_INTENTION_SET_VALUE // e.g cancellable
 
 #endif

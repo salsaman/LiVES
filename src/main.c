@@ -272,54 +272,47 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 
 #ifdef ENABLE_JACK
 LIVES_LOCAL_INLINE void jack_warn(boolean is_trans) {
+  if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
   do_jack_no_startup_warn(is_trans);
-  if (prefs->startup_phase == 4) {
-    do_jack_setup_warn();
-  } else {
+  if (!prefs->startup_phase)
     if (prefs->startup_phase == 0) do_jack_restart_warn(-1);
-    // if we have backup config, restore from it
-  }
+  // if we have backup config, restore from it
   set_int_pref(PREF_JACK_OPTS, 0);
 }
 #endif
 
 
 void defer_sigint(int signum) {
-  sigset_t smask;
-  struct sigaction sact;
-  static boolean norecurse = FALSE;
-
-  if (norecurse) return;
-
-  sigemptyset(&smask);
-
-  mainw->signal_caught = signum;
-
-  sigaddset(&smask, signum);
-
-  sact.sa_handler = SIG_IGN;
-  sact.sa_flags = 0;
-  sact.sa_mask = smask;
-
-  sigaction(signum, &sact, NULL);
-
+  // here we can prepare for and handle specific fn calls which we know may crash / abort
+  // provided if we know ahead of time.
+  // The main reason would be to show an error dialog and then exit, or transmit some error code first,
+  // rather than simply doing nothing and aborting /exiting.
+  // we should do the minimum necessary and exit, as the stack may be corrupted.
   switch (mainw->crash_possible) {
 #ifdef ENABLE_JACK
   case 1:
     // crash in jack_client_open() - transport
     jack_warn(TRUE);
-    norecurse = TRUE; /// otherwise abort is trapped !
-    abort();
+    signal(signum, SIG_DFL);
+    pthread_detach(pthread_self());
   case 2:
     // crash in jack_client_open() - audio
     jack_warn(FALSE);
-    norecurse = TRUE;
-    abort();
+    signal(signum, SIG_DFL);
+    pthread_detach(pthread_self());
+  case 3:
+    // crash in jackctl_server_create() - transport
+    jack_warn(TRUE);
+    signal(signum, SIG_DFL);
+    pthread_detach(pthread_self());
+  case 4:
+    // crash in jackctl_server_create() - audio
+    jack_warn(FALSE);
 #endif
   default:
     break;
   }
-  return;
+  //return;
 }
 
 //#define QUICK_EXIT
@@ -336,11 +329,11 @@ void catch_sigint(int signum) {
 
   if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
     lives_proc_thread_t lpt = THREADVAR(tinfo);
-    weed_set_int_value(lpt, LIVES_LEAF_SIGNALLED, signum);
-    weed_set_voidptr_value(lpt, LIVES_LEAF_SIGNAL_DATA, THREADVAR(mydata));
+    lives_thread_data_t *mydata = THREADVAR(mydata);
+    //if (mydata) {
+    lives_proc_thread_set_signalled(lpt, signum, mydata);
     g_print("Thread got signal %d\n", signum);
-    sleep(3600);
-    pthread_exit(NULL);
+    pthread_detach(pthread_self());
   }
   if (mainw->record) backup_recording(NULL, NULL);
 #ifdef QUICK_EXIT
@@ -2213,6 +2206,7 @@ static void lives_init(_ign_opts *ign_opts) {
     mainw->recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, lives_getuid(),
                            lives_getgid(), capable->mainpid);
 
+audio_choice:
     if (prefs->startup_phase > 0 && prefs->startup_phase <= 4) {
       splash_end();
       lives_widget_context_update();
@@ -2247,6 +2241,7 @@ static void lives_init(_ign_opts *ign_opts) {
       splash_msg(_("Connecting to jack transport server..."),
                  SPLASH_LEVEL_LOAD_APLAYER);
       if (!lives_jack_init(JACK_CLIENT_TYPE_TRANSPORT, NULL)) {
+        if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
         if (prefs->jack_opts & JACK_OPTS_START_TSERVER) {
           // TODO - allow disable auto start and + manual start
           // or reconfig
@@ -2261,10 +2256,6 @@ static void lives_init(_ign_opts *ign_opts) {
             do_jack_restart_warn(prefs->jack_opts == 0 ?
                                  JACK_OPTS_START_TSERVER | JACK_OPTS_ENABLE_TCLIENT : -1);
         }
-        if (prefs->startup_phase == 4) {
-          // this should never happen, unless the user ran first setup and pssed -jackopts on the cmdline
-          do_jack_setup_warn();
-        }
         lives_exit(0);
       }
       if (ign_opts->ign_jackopts) set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
@@ -2277,7 +2268,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
       // set config for (LiVES) clients
       jack_audio_init();
-      jack_audio_read_init();
 
       // get first OUTPUT driver
       mainw->jackd = jack_get_driver(0, TRUE);
@@ -2287,18 +2277,29 @@ static void lives_init(_ign_opts *ign_opts) {
         lives_proc_thread_t info;
         /// try to connect, and possibly start a server
         // activate the writer and connect ports
-        if (!(info = lives_proc_thread_create_with_timeout(LIVES_SHORT_TIMEOUT, 0,
+        if (!(info = lives_proc_thread_create_with_timeout(LIVES_SHORTEST_TIMEOUT, 0,
                      (lives_funcptr_t)jack_create_client_writer,
-                     WEED_SEED_BOOLEAN, "v", mainw->jackd)))
+                     WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
+          if (mainw->cancelled) {
+            // go back to audio_choice
+            mainw->jackd = NULL;
+            if (prefs->startup_phase) {
+              prefs->startup_phase = 4;
+              goto audio_choice;
+            }
+            lives_exit(0);
+          }
           success = FALSE;
-        else
+        } else
           success = lives_proc_thread_join_boolean(info);
 
         if (!success) mainw->jackd = NULL;
+        //if (!jack_create_client_writer(mainw->jackd)) mainw->jackd = NULL;
         if (mainw->jackd && !mainw->jackd->sample_out_rate) mainw->jackd = NULL;
 
         if (!mainw->jackd) {
           // failed to connect
+          if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
           if (prefs->jack_opts & JACK_OPTS_START_ASERVER) {
             // TODO - allow disable auto start and + manual start
             // or reconfig
@@ -2311,9 +2312,6 @@ static void lives_init(_ign_opts *ign_opts) {
             do_jack_no_connect_warn(FALSE);
             if (prefs->startup_phase == 0)
               do_jack_restart_warn(prefs->jack_opts == 0 ? JACK_OPTS_START_ASERVER : -1);
-          }
-          if (prefs->startup_phase == 4) {
-            do_jack_setup_warn();
           }
           lives_exit(0);
         }
@@ -2335,6 +2333,7 @@ static void lives_init(_ign_opts *ign_opts) {
           // (first param is -1), we do not actually prepare for recording yet
           // however we do connect the ports (unless JACK_OPTS_NO_READ_AUTOCON is set)
           // so if needed we can monitor incoming audio
+          jack_audio_read_init();
           jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
 	    // *INDENT-OFF*
 	  }
@@ -4245,8 +4244,9 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
   sigaction(LIVES_SIGFPE, &sact, NULL);
 
   if (mainw) {
-    if (sigfunc == defer_sigint) mainw->signals_deferred = TRUE;
-    else {
+    if (sigfunc == defer_sigint) {
+      mainw->signals_deferred = TRUE;
+    } else {
       sigemptyset(&smask);
       sigaddset(&smask, LIVES_SIGHUP);
       sact.sa_handler = SIG_IGN;

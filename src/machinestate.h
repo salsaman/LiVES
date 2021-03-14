@@ -152,10 +152,19 @@ char *lives_datetime(uint64_t secs, boolean use_local);
 char *lives_datetime_rel(const char *datetime);
 char *get_current_timestamp(void);
 
+#define LIVES_QUICK_NAP 1000 // 1 uSec
+#define LIVES_SHORT_SLEEP 1000000 // 1 mSec
+#define LIVES_FORTY_WINKS 40000000 // 40 mSec
+#define LIVES_WAIT_A_SEC 1000000000 // 1 second
+
 #define lives_nanosleep(nanosec) {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
 								     errno != ETIMEDOUT);}
-#define lives_nanosleep_until_nonzero(condition) {while (!(condition)) lives_nanosleep(1000);}
+
+#define lives_nanosleep_until_nonzero(condition) {while (!(condition)) lives_nanosleep(LIVES_QUICK_NAP);}
+#define lives_nanosleep_until_zero(condition) {while ((condition)) lives_nanosleep(LIVES_QUICK_NAP);}
+#define lives_nanosleep_while_false(c) lives_nanosleep_until_nonzero(c)
+#define lives_nanosleep_while_true(c) lives_nanosleep_until_zero(c)
 
 int check_dev_busy(char *devstr);
 

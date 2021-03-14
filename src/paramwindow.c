@@ -145,7 +145,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
       lives_kill_subprocesses(cfile->handle, TRUE);
 
       if (cfile->pumper) {
-        lives_nanosleep_until_nonzero(lives_proc_thread_cancel(cfile->pumper));
+        lives_proc_thread_cancel(cfile->pumper, TRUE);
         cfile->pumper = NULL;
       }
 

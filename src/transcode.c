@@ -184,8 +184,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     vpp = mainw->vpp;
     mainw->transrend_ready = TRUE;
     lives_nanosleep_until_nonzero(!mainw->transrend_ready
-                                  || lives_proc_thread_cancelled(mainw->transrend_proc));
-    if (lives_proc_thread_cancelled(mainw->transrend_proc)) goto tr_err2;
+                                  || lives_proc_thread_get_cancelled(mainw->transrend_proc));
+    if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) goto tr_err2;
   }
 
   // (re)set these for the current clip
@@ -319,8 +319,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       }
     } else {
       lives_nanosleep_until_nonzero(mainw->transrend_ready
-                                    || lives_proc_thread_cancelled(mainw->transrend_proc));
-      if (lives_proc_thread_cancelled(mainw->transrend_proc)) goto tr_err;
+                                    || lives_proc_thread_get_cancelled(mainw->transrend_proc));
+      if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) goto tr_err;
       frame_layer = mainw->transrend_layer;
     }
 

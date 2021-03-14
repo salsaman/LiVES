@@ -1732,6 +1732,8 @@ boolean apply_prefs(boolean skip_warn) {
 
   boolean jack_trans = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jack_trans));
 
+  const char *jack_acname = lives_entry_get_text(LIVES_ENTRY(prefsw->jack_acname));
+
   uint32_t jack_opts =
     JACK_OPTS_TRANSPORT_CLIENT * jack_client + JACK_OPTS_TRANSPORT_MASTER * jack_master +
     JACK_OPTS_START_TSERVER * jack_tstart + JACK_OPTS_START_ASERVER
@@ -2443,8 +2445,7 @@ boolean apply_prefs(boolean skip_warn) {
     mainw->prefs_changed |= PREFS_JACK_CHANGED;
   }
   pref_factory_string(PREF_JACK_ACONFIG, future_prefs->jack_aserver_cfg, TRUE);
-  pref_factory_string(PREF_JACK_ACSERVER, future_prefs->jack_aserver_cname, TRUE);
-  pref_factory_string(PREF_JACK_ASSERVER, future_prefs->jack_aserver_sname, TRUE);
+  pref_factory_string(PREF_JACK_ACSERVER, jack_acname, TRUE);
 #endif
 
 #ifdef ENABLE_OSC
@@ -5507,7 +5508,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                              (tmp2 = (_("The frame image which is shown when there is no clip loaded."))));
   lives_free(tmp2);
 
-  prefsw->fb_filebutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
+  prefsw->fb_filebutton =
+    (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(prefsw->frameblank_entry), BUTTON_KEY);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(prefsw->fb_filebutton), FILTER_KEY, filt);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(prefsw->fb_filebutton), FILESEL_TYPE_KEY,
@@ -5522,8 +5524,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                          (tmp2 = (_("The image shown in the center of the interface."))));
   lives_free(tmp2);
 
-  prefsw->se_filebutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
-  lives_signal_sync_connect(prefsw->se_filebutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
+  prefsw->se_filebutton =
+    (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(prefsw->sepimg_entry), BUTTON_KEY);
+  lives_signal_sync_connect(prefsw->se_filebutton, LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_filesel_button_clicked),
                             prefsw->sepimg_entry);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(prefsw->se_filebutton), FILTER_KEY, filt);
@@ -5716,7 +5720,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->jack_acdef =
-    lives_standard_check_button_new(_("Connect using _default server name"), TRUE, LIVES_BOX(hbox),
+    lives_standard_check_button_new(_("Connect using _default server name"),
+                                    *future_prefs->jack_aserver_cname, LIVES_BOX(hbox),
                                     H_("The server name will be taken from the environment "
                                        "variable\n$JACK_DEFAULT_SERVER.\nIf that variable is not "
                                        "set, then the name 'default' will be used instead"));
@@ -5724,14 +5729,13 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), WH_LAYOUT_KEY, NULL);
   prefsw->jack_acname =
-    lives_standard_entry_new(_("Use _custom server name"), *prefs->jack_aserver_cname
-                             ? prefs->jack_aserver_cname : JACK_DEFAULT_SERVER_NAME,
+    lives_standard_entry_new(_("Use _custom server name"), *future_prefs->jack_aserver_cname
+                             ? future_prefs->jack_aserver_cname : JACK_DEFAULT_SERVER_NAME,
                              -1, JACK_PARAM_STRING_MAX, LIVES_BOX(hbox), NULL);
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->jack_acdef), prefsw->jack_acname, TRUE);
 
   lives_layout_add_row(LIVES_LAYOUT(layout));
-
   lives_layout_add_label(LIVES_LAYOUT(layout), _("If connection fails..."), TRUE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
@@ -6156,7 +6160,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   lives_free(tmp); lives_free(tmp2);
 
-  prefsw->button_midid = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
+  prefsw->button_midid =
+    (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(prefsw->omc_midi_entry), BUTTON_KEY);
 
   label = lives_standard_label_new(_("Advanced"));
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), label, FALSE, FALSE, widget_opts.packing_height);

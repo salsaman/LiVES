@@ -2526,7 +2526,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
                               EXTRA_DETAILS_CLIPHDR | EXTRA_DETAILS_DIRSIZE
                               | EXTRA_DETAILS_CHECK_MISSING);
 
-    if (lives_proc_thread_check(sizinfo)) totsize = lives_proc_thread_join_int64(sizinfo);
+    if (lives_proc_thread_check_finished(sizinfo)) totsize = lives_proc_thread_join_int64(sizinfo);
     txt = mkszlabel(set, totsize, -1, -1);
     lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
     lives_free(txt);
@@ -2554,7 +2554,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
     if (!lives_expander_get_expanded(LIVES_EXPANDER(exp))) goto thrdjoin;
 
     if (totsize == -1) {
-      if (lives_proc_thread_check(sizinfo)) totsize = lives_proc_thread_join_int64(sizinfo);
+      if (lives_proc_thread_check_finished(sizinfo)) totsize = lives_proc_thread_join_int64(sizinfo);
       txt = mkszlabel(set, totsize, -1, -1);
       lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
       lives_free(txt);
@@ -2587,7 +2587,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
           if (lives_expander_get_expanded(LIVES_EXPANDER(exp))) {
             if (!filedets->extra_details) lives_nanosleep(1000);
             if (totsize == -1) {
-              if (lives_proc_thread_check(sizinfo)) {
+              if (lives_proc_thread_check_finished(sizinfo)) {
                 totsize = lives_proc_thread_join_int64(sizinfo);
                 txt = mkszlabel(set, totsize, -1, lcount);
                 lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
@@ -2612,7 +2612,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
           lives_widget_process_updates(renamew->dialog);
           if (lives_expander_get_expanded(LIVES_EXPANDER(exp))) {
             if (totsize == -1) {
-              if (lives_proc_thread_check(sizinfo)) {
+              if (lives_proc_thread_check_finished(sizinfo)) {
                 totsize = lives_proc_thread_join_int64(sizinfo);
                 txt = mkszlabel(set, totsize, -1, lcount);
                 lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
@@ -2634,7 +2634,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
       lives_widget_process_updates(renamew->dialog);
       if (lives_expander_get_expanded(LIVES_EXPANDER(exp))) {
         if (totsize == -1) {
-          if (lives_proc_thread_check(sizinfo)) {
+          if (lives_proc_thread_check_finished(sizinfo)) {
             totsize = lives_proc_thread_join_int64(sizinfo);
             txt = mkszlabel(set, totsize, lcount, -1);
             lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
@@ -2774,7 +2774,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
           lives_widget_process_updates(renamew->dialog);
           if (lives_expander_get_expanded(LIVES_EXPANDER(exp)) && !pass && !list->next) lives_nanosleep(1000);
           if (totsize == -1) {
-            if (lives_proc_thread_check(sizinfo)) {
+            if (lives_proc_thread_check_finished(sizinfo)) {
               totsize = lives_proc_thread_join_int64(sizinfo);
               txt = mkszlabel(set, totsize, ccount, lcount);
               lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
@@ -2793,7 +2793,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
       }
     }
     while (lives_expander_get_expanded(LIVES_EXPANDER(exp)) && totsize == -1) {
-      if (lives_proc_thread_check(sizinfo)) {
+      if (lives_proc_thread_check_finished(sizinfo)) {
         totsize = lives_proc_thread_join_int64(sizinfo);
       }
       if (lives_expander_get_expanded(LIVES_EXPANDER(exp))) lives_widget_process_updates(renamew->dialog);
@@ -2806,9 +2806,9 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
   }
 
 thrdjoin:
-  lives_proc_thread_cancel(layinfo);
-  lives_proc_thread_cancel(clipsinfo);
-  lives_proc_thread_dontcare(sizinfo);
+  lives_proc_thread_cancel(layinfo, FALSE);
+  lives_proc_thread_cancel(clipsinfo, FALSE);
+  lives_proc_thread_cancel(sizinfo, FALSE);
   if (*laylist) free_fdets_list(laylist);
   if (*clipslist) free_fdets_list(clipslist);
 }
@@ -2838,8 +2838,8 @@ _entryw *create_rename_dialog(int type) {
   // type 8 = export theme
 
   LiVESWidget *dialog_vbox, *hbox, *vbox;
-  LiVESWidget *logo;
-  LiVESWidget *label, *xlabel = NULL, *ylabel = NULL;
+  LiVESWidget *logo = NULL;
+  LiVESWidget *label;
   LiVESWidget *checkbutton;
   LiVESWidget *set_combo;
 
@@ -2904,17 +2904,19 @@ _entryw *create_rename_dialog(int type) {
     lives_box_pack_start(LIVES_BOX(hbox), logo, TRUE, TRUE, widget_opts.packing_width);
     lives_widget_set_valign(logo, LIVES_ALIGN_START);
 
-    ylabel = lives_standard_label_new
-             (_("This startup wizard will guide you through the\n"
-                "initial setup so that you can get the most from this application."));
-    lives_box_pack_start(LIVES_BOX(vbox), ylabel, FALSE, FALSE, widget_opts.packing_height);
+    set_css_value_direct(logo, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "0.5");
+
+    renamew->ylabel = lives_standard_label_new
+                      (_("This startup wizard will guide you through the\n"
+                         "initial setup so that you can get the most from this application."));
+    lives_box_pack_start(LIVES_BOX(vbox), renamew->ylabel, FALSE, FALSE, widget_opts.packing_height);
 
     widget_opts.use_markup = TRUE;
-    xlabel = lives_standard_label_new
-             (_("First of all you need to <b>choose a working directory</b> for LiVES.\n"
-                "This should be a directory with plenty of disk space available."));
+    renamew->xlabel = lives_standard_label_new
+                      (_("First of all you need to <b>choose a working directory</b> for LiVES.\n"
+                         "This should be a directory with plenty of disk space available."));
     widget_opts.use_markup = FALSE;
-    lives_box_pack_end(LIVES_BOX(vbox), xlabel, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_end(LIVES_BOX(vbox), renamew->xlabel, FALSE, FALSE, widget_opts.packing_height);
   }
 
   if (type == 6 && mainw->is_ready) {
@@ -2972,15 +2974,15 @@ _entryw *create_rename_dialog(int type) {
     lives_entry_set_completion_from_list(LIVES_ENTRY(renamew->entry), mainw->set_list);
   } else {
     if (type == 6) {
-      LiVESWidget *dirbutton;
       if (*prefs->workdir) workdir = lives_strdup(prefs->workdir);
       else workdir = lives_build_path(capable->home_dir, LIVES_DEF_WORK_SUBDIR, NULL);
       renamew->entry = lives_standard_direntry_new("", (tmp = F2U8(workdir)),
                        LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                        (tmp2 = (_("LiVES working directory."))));
 
-      dirbutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), FILESEL_TYPE_KEY,
+      renamew->dirbutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(renamew->entry), BUTTON_KEY);
+
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renamew->dirbutton), FILESEL_TYPE_KEY,
                                    LIVES_INT_TO_POINTER(LIVES_DIR_SELECTION_WORKDIR));
 
       lives_free(tmp);
@@ -3093,14 +3095,9 @@ _entryw *create_rename_dialog(int type) {
   if (type == 6) {
     LiVESWidget *bbox = lives_dialog_get_action_area(LIVES_DIALOG(renamew->dialog));
     lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_EDGE);
+    if (logo) lives_widget_set_opacity(logo, .7);
   }
 
-  if (type == 6 && !mainw->first_shown) {
-    guess_font_size(renamew->dialog, LIVES_LABEL(xlabel), LIVES_LABEL(ylabel), .8);
-    if (!mainw->first_shown) {
-      guess_font_size(renamew->dialog, LIVES_LABEL(xlabel), LIVES_LABEL(ylabel), .22);
-    }
-  }
   return renamew;
 }
 
@@ -3992,7 +3989,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
   lives_rfx_t *rfx;
   char **filt = NULL;
   char *dirname = NULL, *fname, *tmp, *def_dir = NULL;
-  boolean is_dir = TRUE, free_def_dir = FALSE;
+  boolean is_dir = TRUE, free_def_dir = FALSE, show_hidden = FALSE, free_filt = FALSE;
   int filesel_type = LIVES_FILE_SELECTION_UNDEFINED;
 
   if (button) {
@@ -4005,7 +4002,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
     /// FILESEL_TYPE_KEY (int (enum))
 
     // selects between file mode and directory mode
-    is_dir = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), ISDIR_KEY));
+    is_dir = GET_INT_DATA(button, ISDIR_KEY);
 
     // default dir for directory mode
     def_dir = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), DEFDIR_KEY);
@@ -4014,8 +4011,10 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
     filt = (char **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), FILTER_KEY);
 
     /// fine tunes for the file selection / dir selection target
-    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), FILESEL_TYPE_KEY)) {
-      filesel_type = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), FILESEL_TYPE_KEY));
+    filesel_type = GET_INT_DATA(button, FILESEL_TYPE_KEY);
+    if (filesel_type & LIVES_SELECTION_SHOW_HIDDEN) {
+      show_hidden = TRUE;
+      filesel_type ^= LIVES_SELECTION_SHOW_HIDDEN;
     }
   }
 
@@ -4079,7 +4078,6 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
   case LIVES_FILE_SELECTION_OPEN:
   case LIVES_FILE_SELECTION_SAVE: {
     char fnamex[PATH_MAX], dirnamex[PATH_MAX];
-    boolean free_filt = FALSE;
 
     lives_snprintf(dirnamex, PATH_MAX, "%s", fname);
     lives_snprintf(fnamex, PATH_MAX, "%s", fname);
@@ -4087,27 +4085,28 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
     get_dirname(dirnamex);
     get_basename(fnamex);
 
-    if (!is_dir && !filt && *fnamex) {
-      /// for save and not is_dir, we break filename into directory, filename components
-      /// and set a filter with the filename extension (can be overridden by setting FILTER_KEY)
-      char *tmp;
-      filt = (char **)lives_malloc(2 * sizeof(char *));
-      filt[0] = lives_strdup_printf("*.%s", (tmp = get_extension(fnamex)));
-      filt[1] = NULL;
-      free_filt = TRUE;
-      lives_free(tmp);
-    }
+    if (filesel_type == LIVES_FILE_SELECTION_OPEN) {
+      if (!show_hidden)
+        dirname = choose_file(def_dir ? def_dir : dirnamex, fnamex, filt,
+                              LIVES_FILE_CHOOSER_ACTION_OPEN, NULL, NULL);
+      else  {
+        dirname = choose_file(def_dir ? def_dir : dirnamex, fnamex, filt,
+                              LIVES_FILE_CHOOSER_ACTION_SELECT_HIDDEN_FILE, NULL, NULL);
+      }
+    } else {
+      if (!is_dir && !filt && *fnamex) {
+        /// for save and not is_dir, we break filename into directory, filename components
+        /// and set a filter with the filename extension (can be overridden by setting FILTER_KEY)
+        char *tmp;
+        filt = (char **)lives_malloc(2 * sizeof(char *));
+        filt[0] = lives_strdup_printf("*.%s", (tmp = get_extension(fnamex)));
+        filt[1] = NULL;
+        free_filt = TRUE;
+        lives_free(tmp);
+      }
 
-    if (filesel_type == LIVES_FILE_SELECTION_OPEN)
-      dirname = choose_file(def_dir ? def_dir : dirnamex, fnamex, filt,
-                            LIVES_FILE_CHOOSER_ACTION_OPEN, NULL, NULL);
-    else
       dirname = choose_file(def_dir ? def_dir : dirnamex, fnamex, filt,
                             LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
-
-    if (free_filt) {
-      lives_free(filt[0]);
-      lives_free(filt);
     }
   }
   break;
@@ -4124,6 +4123,11 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
     }
     lives_widget_destroy(LIVES_WIDGET(chooser));
   }
+  }
+
+  if (free_filt) {
+    lives_free(filt[0]);
+    lives_free(filt);
   }
 
   if (!mainw->is_ready) restore_wm_stackpos(button);
@@ -4233,6 +4237,14 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
     }
     if (diss->new_entry) lives_entry_set_text(LIVES_ENTRY(diss->new_entry), buff);
 
+
+    for (LiVESWidget *widget = lives_widget_get_parent(diss->new_entry); widget;
+         widget = lives_widget_get_parent(widget)) {
+      if (LIVES_IS_GRID(widget)) {
+        set_child_alt_colour(widget, TRUE);
+        break;
+      }
+    }
     lives_widget_set_sensitive(diss->selbut, TRUE);
   }
 #endif
@@ -4245,6 +4257,11 @@ static void fc_folder_changed(LiVESFileChooser * chooser, livespointer user_data
   struct fc_dissection *diss = (struct fc_dissection *)user_data;
   if (diss) set_child_colour(diss->treeview, TRUE);
 #endif
+}
+
+
+static boolean dir_only_filt(const GtkFileFilterInfo * filter_info, livespointer data) {
+  return lives_file_test(filter_info->filename, LIVES_FILE_TEST_IS_DIR);
 }
 
 
@@ -4262,13 +4279,17 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   void *diss = NULL;
 #endif
   // in/out values are in utf8 encoding
-
+  static GtkFileFilter *custfilt = NULL;
 
   char *mytitle;
   char *filename = NULL;
+  boolean show_hidden = FALSE;
+  LiVESResponseType response;
 
-  int response;
-  int i;
+  if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_HIDDEN_FILE) {
+    show_hidden = TRUE;
+    act = LIVES_FILE_CHOOSER_ACTION_OPEN;
+  }
 
   if (!title) {
     if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE) {
@@ -4284,25 +4305,31 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 #ifdef GUI_GTK
   if (act != LIVES_FILE_CHOOSER_ACTION_SAVE) {
     const char *stocklabel;
-    LiVESResponseType resp = LIVES_RESPONSE_ACCEPT;
+    response = LIVES_RESPONSE_ACCEPT;
     if (act == LIVES_FILE_CHOOSER_ACTION_OPEN) {
       stocklabel = LIVES_STOCK_LABEL_OPEN;
     } else {
-      resp = LIVES_RESPONSE_NO;
+      response = LIVES_RESPONSE_NO;
       stocklabel = LIVES_STOCK_LABEL_SELECT;
     }
     chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                           LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
-                                          stocklabel, resp, NULL);
+                                          stocklabel, response, NULL);
   } else {
     chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                           LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
                                           LIVES_STOCK_LABEL_SAVE, LIVES_RESPONSE_ACCEPT, NULL);
   }
 
-  if (dir) {
-    gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser), dir);
+  if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER) {
+    if (!custfilt) {
+      custfilt = gtk_file_filter_new();
+      gtk_file_filter_add_custom(custfilt, GTK_FILE_FILTER_FILENAME, dir_only_filt, NULL, NULL);
+    }
+    gtk_file_chooser_add_filter(LIVES_FILE_CHOOSER(chooser), custfilt);
   }
+
+  if (dir) gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser), dir);
 
   lives_widget_show_all(chooser);
 
@@ -4348,21 +4375,20 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     }
   }
 #endif
+  gtk_file_chooser_set_show_hidden(LIVES_FILE_CHOOSER(chooser), show_hidden);
 
   if (filt) {
-    if (filt[0] && !strcmp(filt[0], ".") && !filt[1]) {
-      gtk_file_chooser_set_show_hidden(LIVES_FILE_CHOOSER(chooser), TRUE);
-    } else {
-      GtkFileFilter *filter = gtk_file_filter_new();
-      for (i = 0; filt[i]; i++) gtk_file_filter_add_pattern(filter, filt[i]);
-      gtk_file_chooser_set_filter(LIVES_FILE_CHOOSER(chooser), filter);
-      if (i == 1 && act == LIVES_FILE_CHOOSER_ACTION_SAVE)
-        gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), filt[0]); //utf-8
-    }
+    int i;
+    GtkFileFilter *filter = gtk_file_filter_new();
+    for (i = 0; filt[i]; i++) gtk_file_filter_add_pattern(filter, filt[i]);
+    gtk_file_chooser_set_filter(LIVES_FILE_CHOOSER(chooser), filter);
+    if (i == 1 && act == LIVES_FILE_CHOOSER_ACTION_SAVE)
+      gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), filt[0]); //utf-8
   }
 
   if (fname) {
-    if (act == LIVES_FILE_CHOOSER_ACTION_SAVE || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER) { // prevent assertion in gtk+
+    if (act == LIVES_FILE_CHOOSER_ACTION_SAVE || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER
+        || act == LIVES_FILE_CHOOSER_ACTION_OPEN) { // prevent assertion in gtk+
       if (fname) {
         if (dir) {
           char *ffname = lives_build_filename(dir, fname, NULL);

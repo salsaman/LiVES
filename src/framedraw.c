@@ -699,8 +699,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   if (mainw->cancelled) {
     if (cfile->pumper) {
-      lives_nanosleep_until_nonzero(lives_proc_thread_cancel(cfile->pumper));
-      weed_plant_free(cfile->pumper);
+      lives_proc_thread_cancel(cfile->pumper, TRUE);
       cfile->pumper = NULL;
     }
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
@@ -712,8 +711,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   while ((timeout = lives_alarm_check(alarm_handle)) > 0 && !(infofile = fopen(cfile->info_file, "r")) && !mainw->cancelled) {
     // wait until we get at least 1 frame
     //lives_widget_context_update();
-    lives_nanosleep(1000);
-    sched_yield();
+    lives_nanosleep(LIVES_QUICK_NAP);
   }
   lives_alarm_clear(alarm_handle);
 
@@ -726,8 +724,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     if (infofile) fclose(infofile);
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     if (cfile->pumper) {
-      lives_nanosleep_until_nonzero(lives_proc_thread_cancel(cfile->pumper));
-      weed_plant_free(cfile->pumper);
+      lives_proc_thread_cancel(cfile->pumper, TRUE);
       cfile->pumper = NULL;
     }
     return;

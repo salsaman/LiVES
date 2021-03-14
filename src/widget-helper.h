@@ -55,6 +55,8 @@ typedef struct {
 #include "widget-helper-gtk.h"
 #endif
 
+boolean governor_loop(livespointer data) GNU_RETURNS_TWICE;
+
 // basic functions (wrappers for Toolkit functions)
 
 #ifdef LIVES_LINGO_IS_PANGO
@@ -1462,6 +1464,8 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 char LIVES_STOCK_LABEL_CLOSE_WINDOW[32];
 char LIVES_STOCK_LABEL_SKIP[32];
 char LIVES_STOCK_LABEL_SELECT[32];
+char LIVES_STOCK_LABEL_BACK[32];
+char LIVES_STOCK_LABEL_NEXT[32];
 
 typedef struct {
   /// commonly adjusted values //////
@@ -1546,6 +1550,7 @@ const widget_opts_t _def_widget_opts = {
 #define ISDIR_KEY "is_dir"
 #define FILTER_KEY "filter"
 #define DEFDIR_KEY "def_dir"
+#define BUTTON_KEY "link_button"
 #define RFX_KEY "rfx"
 #define DISP_LABEL_KEY "disp_label"
 #define KEEPABOVE_KEY "keep_above"

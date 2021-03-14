@@ -3934,9 +3934,9 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             int lpal, width, height;
             boolean was_lbox = FALSE;
             if (mainw->transrend_proc) {
-              if (lives_proc_thread_check(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
+              if (lives_proc_thread_check_finished(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
               lives_nanosleep_until_nonzero(!mainw->transrend_ready);
-              if (lives_proc_thread_check(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
+              if (lives_proc_thread_check_finished(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
               mainw->transrend_layer = layer;
               mainw->transrend_ready = TRUE;
               // sig_progress...
@@ -4876,7 +4876,7 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
       d_print(_("Pre-rendering audio..."));
       if (!start_render_effect_events(mainw->event_list, FALSE, TRUE)) {
         mainw->transrend_ready = FALSE;
-        lives_proc_thread_cancel(mainw->transrend_proc);
+        lives_proc_thread_cancel(mainw->transrend_proc, TRUE);
         close_current_file(current_file);
         retval = FALSE;
         goto rtc_done;
@@ -4954,7 +4954,7 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
 
       if (transcode) {
         mainw->transrend_ready = TRUE;
-        lives_proc_thread_cancel(mainw->transrend_proc);
+        lives_proc_thread_cancel(mainw->transrend_proc, TRUE);
         mainw->transrend_proc = NULL;
         close_current_file(old_file);
         goto rtc_done;
@@ -5043,7 +5043,7 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
     retval = FALSE; // cancelled or error, so show the dialog again
     if (transcode) {
       mainw->transrend_ready = TRUE;
-      lives_proc_thread_cancel(mainw->transrend_proc);
+      lives_proc_thread_cancel(mainw->transrend_proc, TRUE);
       mainw->transrend_proc = NULL;
     }
     if (transcode || (new_clip && !mainw->multitrack)) {

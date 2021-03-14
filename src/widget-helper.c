@@ -20,7 +20,6 @@
 
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
-static boolean governor_loop(livespointer data) GNU_RETURNS_TWICE;
 static void async_sig_handler(livespointer instance, livespointer data);
 
 typedef void (*bifunc)(livespointer, livespointer);
@@ -869,18 +868,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_ref_sink(livespointer ob
 
 /// signal handling
 
-typedef struct {
-  livespointer instance;
-  lives_funcptr_t callback;
-  livespointer user_data;
-  volatile boolean swapped;
-  unsigned long funcid;
-  char *detsig;
-  boolean is_timer;
-  boolean added;
-  lives_proc_thread_t proc;
-} lives_sigdata_t;
-
 static LiVESList *active_sigdets = NULL;
 
 static void async_notify_redirect_handler(LiVESWidgetObject *object, livespointer pspec,
@@ -1003,7 +990,7 @@ static lives_sigdata_t *tasks_running(void) {
   list = task_list;
   if (!list) return NULL;
   sigdata = (lives_sigdata_t *)list->data;
-  if (lives_proc_thread_check(sigdata->proc)) {
+  if (lives_proc_thread_check_finished(sigdata->proc)) {
     task_list = task_list->next;
     if (task_list) task_list->prev = NULL;
     list->next = NULL;
@@ -1017,59 +1004,93 @@ static lives_sigdata_t *tasks_running(void) {
 }
 
 
-// this loop is called when a gtk+ callback triggers a background task
-// the background task runs and this loop stays in the foreground
-// this primarily accomplished via a proxy signal / timer handler which calls the loop, pasisng the real callback function
-// and the user data. On entering, sigdata contains the data for this, the function is called as a bg thread, then
-// the loop blocks here until the background thread iehter completes or requests a gtk update / foreground task
-// the loop will run the task and then exit, adding itself as an idle function
-// this allows gtk to run its normal loop and then we come back here
-// the background task is monitored, and when it completes then we can return without re-adding this function
+// this loop is designed to allow blocking background threads to run and to perform async graphical updates,
+// as well as any other function which may be restricted to the caller thread
+// (e.g. the thread which called gtk-main), referred to here as the "foreground" thread
 //
-// there are anumber of complications which need to be handled here:
-// - firstly a background thread can launch another thread, thus we need to maintain a stack of tasks and only return from the final (first) one
-// -- to simpolify this, the function is not allowed to be called recursively (g_main_depth() is checked)
-/// -- instead the new thread is added to the stack, and montirede - when it completes we pop the stack until we find another task still runniong
+// one entry is via a proxy signal / timer handler which calls this function after launching the real handler in the background,
+// thus allowing signal handlers to block without adversely affecting the GUI main loop.
+//
+// the function may be called either directly (for timers), or via an idlefunc, (for signal handlers)
+// (reason for the split is explained below)
+//
+// the background task is created so that it waits for this function to signal "sync_ready" before continuing, so we can ensure it
+// doesn't run and complete before we are ready.
+//
+// While it is running, the loop here monitors the task to see if it has completed, and can also respond to requests
+// to run the GUI main loop or to perform any other task which needs to be run in the foreground thread
+//
+// On entering, sigdata contains details of the background task allowing it to be monitored until it has completed.
+// the loop blocks until the background thread either completes or requests a graphic context update / foreground task
+// the loop will run the requested task and then exit, but not before adding itself again as an idle function
+// this allows the GUI (gtk) to run its normal loop, after which the loop may continue.
+// when the bg task completes then we exit without re-adding this function
+//
+// there are a number of complications which need to be handled here:
+// - firstly a background thread can in turn launch other bg threads, which can also launch threads, and so on,
+///   thus we need to maintain a stack of tasks and only return  definitively from the original (bottom-most) one
+//
+//    to accomplish this, this function is not allowed to be called recursively (g_main_depth() is checked)
+///   - instead the new task is pushed onto a stack, and becomes the one monitored - when it completes we pop the stack until we find
+///   either another running task, or all tasks in the stack have completed.
 ///
-// - for timers and idle function there is special handling - since the value returned from here is actually the return value
-// -- of the timer or idlefunc, - thus we must ensure that the loop does not exit until we get the actual return value from the timer
-// -- which then becomes our return value
-// - next, if a thread is running in bg, it can request a specific task to be run in fg, this is done by setting lpttorun
-// - the task is run and the return value is set
+// - for timers and idle functions there is special handling - this function cannot be called via an idle handler, since that would
+//    neccesitate first returning from the proxy timer handler, which we cannot do yet. Thus this function is called directly
+//    and there is special handling since we cannot simply re-add the loop as idle func and return.
+//    The return has to be done instead from the proxy handler which must pass on the return value (TRUE or FALSE) from the actual handler.
 //
-// - there are some limitations - for example a foreground task passed via this method cannot recursivley call another fg task
-// -- this is not generally an issue since fg tasks are generally very simple graphical updates
-// - some tasks are automatically rerouted to the fg:- g_main_context_iteration, gtk_dialog_run, gtk_widget_show_all, gtk_widget_destroy,
-//     and gtk_entry_set_text seem to be the main offenders, as well as anything to do with the file_chooser.
-//     all other gtk functions appear to be fine, which is just as well as it would be a laborious task to ensure that every single minor upadate
-//     is fed to the fg thread - however some threads are particularly sensitive to graphical updates, for example long running threads that
-//     may run in parallel with other threads which are also doing widget updates. In this case the thread can be created with the attribute
-//    LIVES_THRDATTR_NO_GUI, and particular care can be taken with these threads to avoid gui updates (though this is not automatic)
-
-// for performance reasons the loop only runs when necessary - there are various ways it can be triggered
-// -- when a signal handler is added via lives_signal_handler_connect, the handler is actuually sent to a proxy which will run this loop
-// -- signals can be connected normally by calling lives_signal_handler_sync_connecct instead
+// - if a thread is running in bg, it can request a specific task to be run in fg; this is done by setting lpttorun,
+//    the task is run, then lpttorun is reset to NULL, and seeing this the bg thread reads the return value(s)
 //
-// -- anther way is if a non-signal-callback bg. func wants to run a function in the fg thread, the threads can either call
-/// main_thread_execute() which in addition will check whether it is being called by a bg thread or the fg thread react appropriately
-// -- for bg threads this eventually call lives_fg_run_func() [not to be confused with fg_run_func, which is the fg version]
-// lives_fg_run_func will then either signal the loop governor or else add an a new instance via an idle func call
+// - there are some limitations - for simplicity, a foreground request passed via this method may not in turn call another fg task
+//     this generally is not an issue since fg tasks should only consist of simple graphical updates
 //
-// during playback this loop runs continually, and the player is run in the bg. There is virutally only one place where the player calls
-// lives_widget_context_update() - this ensures for example that key presses are handled in a convenient place as well as allowing for
-// the high precision timer to take precedence over gui updates
-
-// mainw->clutch : this is a shared variable which helps definee the thread / loop status.
-// before entering its inner loop, the governor sets this to true. A thread can reset this which will cause the governor to enter "freewheel
-// allowing GUI updates, once all updates are done then it is set back to TRUE for the next cycle Setting the value to FALSE is analagous
-// to the bg thread calling widget_context_update, however it shpuld be done via the accessor functions.
+//   some gui functions when called in a bg thread are automatically rerouted to the fg:-
+//   g_main_context_iteration, gtk_dialog_run, gtk_widget_show_all, gtk_widget_destroy, and gtk_entry_set_text
+//   seem to be the main offenders, as well as anything to do with gkt_file_chooser. Any other "problematic" functions can
+//   be handled in this fashion.
 //
-// gov_running - another shared variable - bg threads can check this to see if the governor loop is running or not
-// if not running, then the thread can add the loop via and idle func, however care must be taken to ensure that only one thread does this,
-// else we could end up with several copies of this function running concurrently
+//   other gtk functions appear to be fine - which is just as well as it would be a laborious task to ensure that every single widget function
+//   is fed to the fg thread - however some threads are particularly sensitive to graphical updates, for example long running threads that
+//   may continue to run in parallel with other threads which are themselves doing widget updates.
+//   In this case the former thread can be created with the attribute
+//    LIVES_THRDATTR_NO_GUI, and particular care can be taken with these threads to avoid gui updates, the flag is informational only
+//   but is designed be used in the case of functions which can be run both as a fg and a bg task
+//
+// for performance reasons this loop only runs when necessary:
+// -- when a signal handler is added via lives_signal_handler_connect, the handler is actually sent to a proxy which will run this loop
+//    as explained above.
+//    (signals can also be connected as normal without the proxy by calling lives_signal_handler_sync_connect_* instead)
+//
+// -- when a bg. thread wants to run a function in the fg thread, the thread can call
+/// main_thread_execute(), which will check whether it is being called by a bg thread or the fg thread and react appropriately
+// -- for bg threads this eventually call lives_fg_run_func() [not to be confused with fg_run_func, which is the fg equivalent !]
+//  lives_fg_run_func will then either signal the running loop governor by setting lpttorun,
+//  or else add an a new instance via an idle func call
+//
+// - during playback this loop runs continually, and the player is run in the bg,
+// otherwise the entire GUI and any other processing would have to block until playback finished.
+// There is a single place where the player calls
+// lives_widget_context_update() - this also ensures that key presses are handled in a specific place,
+// as well as allowing for the high precision timer to take precedence over gui updates
 
+// some related variables:
 
-static boolean governor_loop(livespointer data) {
+// mainw->clutch : this is a shared variable which helps define the thread / loop status.
+// before entering its inner loop, the governor sets this to TRUE. A thread can reset this which will cause the governor to enter "freewheel mode"
+// allowing GUI updates, once all updates are done then it is set back to TRUE for the next cycle. Setting the value to FALSE is analagous
+// to the bg thread calling widget_context_update, however it should only be done via the accessor functions.
+//
+// gov_really running - another shared variable - bg threads can check this to see if the governor loop is running or not
+// (including if it is not actually in the loop, but is queued as an idle func)
+// if not running, then the thread can add the loop via an idle func, however care must be taken to ensure that only one thread does this,
+// else undefined behaviour will result (there is no checking for this - as mentioned above, fg requests must be handled one at a time
+// at present the code is designed in such a way that this should not occur)
+
+// TODO - look into allowing for multiple "simultaneous" fg requests by add them to queue - this will also require some means to manage
+// multiple return values
+
+boolean governor_loop(livespointer data) {
   volatile boolean clutch;
   static boolean lpt_recurse = FALSE;
   static boolean lpt_recurse2 = FALSE;
@@ -1135,7 +1156,7 @@ reloop:
   // this is a shared variable which can be reset to interrupt us
   mainw->clutch = TRUE;
 
-  if (!new_sigdata || !lives_proc_thread_check(new_sigdata->proc)) {
+  if (!new_sigdata || !lives_proc_thread_check_finished(new_sigdata->proc)) {
     // either we rentered as an idle, or reloop for timer, or adding a new task
 
     // sigdata will be set if the last task on the stack completed
@@ -1201,7 +1222,7 @@ reloop:
       is_timer = TRUE;
 
       // here we try to simulate the effect of exiting with TRUE after re-adding
-      while (!lives_proc_thread_check(sigdata->proc) && lives_widget_context_iteration(NULL, FALSE));
+      while (!lives_proc_thread_check_finished(sigdata->proc) && lives_widget_context_iteration(NULL, FALSE));
       sigdata = NULL;
       goto reloop;
     }
@@ -1210,7 +1231,7 @@ reloop:
     // set lpt_recurse which will trigger the fg task
     // this part ensures that the idlefunc isnt called right away before any gui updates have a chance
     while (count++ < EV_LIM && lives_widget_context_iteration(NULL, FALSE)
-           && !(sigdata && lives_proc_thread_check(sigdata->proc)));
+           && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
 
     // add ourselves as an idlefunc and then return FALSE
     lives_idle_add_simple(governor_loop, NULL);
@@ -1224,7 +1245,7 @@ reloop:
   }
 
   /// something else might have removed the clutch, so check again if the handler is still running
-  if (!lives_proc_thread_check(sigdata->proc)) goto reloop;
+  if (!lives_proc_thread_check_finished(sigdata->proc)) goto reloop;
 
 
   // if we arrive here it means that some signal handler initiated the loops, and it's
@@ -1637,8 +1658,10 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_show_all(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_show_all(widget);
 
-  // recommended to center the window again after adding all its widgets
-  if (LIVES_IS_DIALOG(widget) && mainw->mgeom) lives_window_center(LIVES_WINDOW(widget));
+  if (mainw->is_ready) {
+    // recommended to center the window again after adding all its widgets
+    if (LIVES_IS_DIALOG(widget) && mainw->mgeom) lives_window_center(LIVES_WINDOW(widget));
+  }
 
   return TRUE;
 #endif
@@ -10323,6 +10346,8 @@ static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char
 
   // add dir, with filechooser button
   buttond = lives_standard_file_button_new(isdir, defdir);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(direntry), BUTTON_KEY, buttond);
+
   if (widget_opts.last_label) lives_label_set_mnemonic_widget(LIVES_LABEL(widget_opts.last_label), buttond);
   lives_box_pack_start(LIVES_BOX(lives_widget_get_parent(direntry)), buttond, FALSE, FALSE, widget_opts.packing_width);
 
@@ -10336,6 +10361,7 @@ static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char
 
   lives_signal_sync_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
                             (livespointer)direntry);
+
   lives_widget_set_sensitive_with(buttond, direntry);
   lives_widget_set_show_hide_with(buttond, direntry);
   lives_widget_set_sensitive_with(direntry, buttond);
@@ -10672,7 +10698,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_file_button_new(boolean 
   /// height X height is correct
   int height = ((widget_opts.css_min_height * 3 + 3) >> 2);
   fbutton = lives_standard_button_new(height, height * 4);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), ISDIR_KEY, LIVES_INT_TO_POINTER(is_dir));
+  SET_INT_DATA(fbutton, ISDIR_KEY, is_dir);
   if (def_dir) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), DEFDIR_KEY, (livespointer)def_dir);
   lives_standard_button_set_image(LIVES_BUTTON(fbutton), image);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(LIVES_WIDGET_OBJECT(fbutton)),
@@ -11154,6 +11180,8 @@ boolean widget_helper_init(void) {
   lives_snprintf(LIVES_STOCK_LABEL_CLOSE_WINDOW, 32, "%s", (_("_Close Window")));
   lives_snprintf(LIVES_STOCK_LABEL_SKIP, 32, "%s", (_("_Skip")));
   lives_snprintf(LIVES_STOCK_LABEL_SELECT, 32, "%s", (_("_Select")));
+  lives_snprintf(LIVES_STOCK_LABEL_BACK, 32, "%s", (_("_Back")));
+  lives_snprintf(LIVES_STOCK_LABEL_NEXT, 32, "%s", (_("_Next")));
 #endif
 
   def_widget_opts = _def_widget_opts;

@@ -562,7 +562,7 @@ int64_t disk_monitor_check_result(const char *dir) {
   int64_t bytes;
   if (!disk_monitor_running(dir)) disk_monitor_start(dir);
   if (!lives_strcmp(dir, running_for)) {
-    if (!lives_proc_thread_check(running)) {
+    if (!lives_proc_thread_check_finished(running)) {
       return -1;
     }
     bytes = lives_proc_thread_join_int64(running);
@@ -935,7 +935,7 @@ static char *file_to_file_details(const char *filename, lives_file_dets_t *fdets
   if (!stat_to_file_dets(filename, fdets)) {
     // if stat fails, we have set set size to -2, type to LIVES_FILE_TYPE_UNKNOWN
     // and here we set extra_details to ""
-    if (tinfo && lives_proc_thread_cancelled(tinfo)) {
+    if (tinfo && lives_proc_thread_get_cancelled(tinfo)) {
       lives_free(extra_details);
       return NULL;
     }
@@ -950,7 +950,7 @@ static char *file_to_file_details(const char *filename, lives_file_dets_t *fdets
           lives_free(extra_details);
           extra_details = tmp2;
         }
-        if (tinfo && lives_proc_thread_cancelled(tinfo)) {
+        if (tinfo && lives_proc_thread_get_cancelled(tinfo)) {
           lives_free(extra_details);
           return NULL;
         }
@@ -1057,9 +1057,9 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
 
     while (1) {
       tdirent = readdir(tldir);
-      if (lives_proc_thread_cancelled(tinfo) || !tdirent) {
+      if (lives_proc_thread_get_cancelled(tinfo) || !tdirent) {
         closedir(tldir);
-        if (lives_proc_thread_cancelled(tinfo)) return NULL;
+        if (lives_proc_thread_get_cancelled(tinfo)) return NULL;
         break;
       }
       if (tdirent->d_name[0] == '.'
@@ -1069,7 +1069,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
       //g_print("GOT %s\n", fdets->name);
       fdets->size = -1;
       *listp = lives_list_append(*listp, fdets);
-      if (lives_proc_thread_cancelled(tinfo)) {
+      if (lives_proc_thread_get_cancelled(tinfo)) {
         closedir(tldir);
         return NULL;
       }
@@ -1083,7 +1083,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
 
     if (!(orderfile = fopen(ofname, "r"))) return NULL;
     while (1) {
-      if (lives_proc_thread_cancelled(tinfo) || !orderfile) {
+      if (lives_proc_thread_get_cancelled(tinfo) || !orderfile) {
         if (orderfile) {
           fclose(orderfile);
         }
@@ -1100,7 +1100,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
       fdets->name = lives_strdup(buff);
       fdets->size = -1;
       *listp = lives_list_append(*listp, fdets);
-      if (lives_proc_thread_cancelled(tinfo)) {
+      if (lives_proc_thread_get_cancelled(tinfo)) {
         fclose(orderfile);
         return NULL;
       }
@@ -1113,12 +1113,12 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
   if (*listp) empty = FALSE;
   *listp = lives_list_append(*listp, NULL);
 
-  if (empty || lives_proc_thread_cancelled(tinfo)) return NULL;
+  if (empty || lives_proc_thread_get_cancelled(tinfo)) return NULL;
 
   // listing done, now get details for each entry
   list = *listp;
   while (list && list->data) {
-    if (lives_proc_thread_cancelled(tinfo)) return NULL;
+    if (lives_proc_thread_get_cancelled(tinfo)) return NULL;
 
     extra_details = lives_strdup("");
     fdets = (lives_file_dets_t *)list->data;
@@ -1135,7 +1135,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
 
     lives_free(subdirname);
 
-    if (tinfo && lives_proc_thread_cancelled(tinfo)) {
+    if (tinfo && lives_proc_thread_get_cancelled(tinfo)) {
       lives_free(extra_details);
       return NULL;
     }

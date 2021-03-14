@@ -15,6 +15,39 @@ static boolean allpassed;
 
 LiVESWidget *assist;
 
+void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
+#ifndef GUI_GTK
+  char *wid = NULL;
+  boolean activated = FALSE;
+#else
+  if (!mainw->is_ready) {
+    gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE); // dont know if this actually does anything...
+    gtk_window_set_type_hint(LIVES_WINDOW(dialog), GDK_WINDOW_TYPE_HINT_NORMAL);
+  }
+#endif
+
+  if (mainw->splash_window) {
+    lives_widget_hide(mainw->splash_window);
+  }
+
+  lives_widget_show_all(dialog);
+  lives_widget_context_update();
+
+#ifndef GUI_GTK
+  wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
+  activated = activate_x11_window(wid);
+  lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
+
+  if (extra) {
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(extra), KEEPABOVE_KEY, dialog);
+    if (activated)
+      lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(extra),
+                                        ACTIVATE_KEY, lives_strdup(wid));
+  }
+  if (wid) lives_free(wid);
+#endif
+}
+
 
 boolean migrate_config(const char *old_vhash, const char *newconfigfile) {
   // on a fresh install, we check if there is an older config file, and if so, migrate it
@@ -255,19 +288,27 @@ static LiVESResponseType prompt_existing_dir(const char *dirname, uint64_t frees
               "Click Yes if you REALLY want to continue, or No to create or select another directory.\n")))
         return LIVES_RESPONSE_CANCEL;
     } else {
+      boolean res;
+      char *xdir = lives_markup_escape_text(dirname, -1);
       msg = lives_format_storage_space_string(freespace);
-      boolean res = do_yesno_dialogf(
-                      _("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space in volume = %s)\n"),
-                      dirname, msg);
-      lives_free(msg);
+      widget_opts.use_markup = TRUE;
+      res = do_yesno_dialogf(
+              _("A directory named\n<b>%s</b>\nalready exists. "
+                "Do you wish to use this directory ?\n\n(Free space in volume = %s)\n"),
+              xdir, msg);
+      widget_opts.use_markup = FALSE;
+      lives_free(msg); lives_free(xdir);
       if (!res) return LIVES_RESPONSE_CANCEL;
       return LIVES_RESPONSE_OK;
     }
   } else {
-    msg = lives_strdup_printf(_("A directory named\n%s\nalready exists.\nHowever, LiVES could not write to this directory "
+    char *xdir = lives_markup_escape_text(dirname, -1);
+    widget_opts.use_markup = TRUE;
+    msg = lives_strdup_printf(_("A directory named\n<b>%s</b>\nalready exists.\nHowever, LiVES could not write to this directory "
                                 "or read its free space.\nClick Abort to exit from LiVES, or Retry to select another "
-                                "location.\n"), dirname);
-
+                                "location.\n"), xdir);
+    widget_opts.use_markup = FALSE;
+    lives_free(xdir);
     do_abort_retry_dialog(msg);
     lives_free(msg);
     return LIVES_RESPONSE_RETRY;
@@ -278,15 +319,20 @@ static LiVESResponseType prompt_existing_dir(const char *dirname, uint64_t frees
 
 static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable) {
   boolean res;
+  char *xdir = lives_markup_escape_text(dirname, -1);
+  widget_opts.use_markup = TRUE;
   if (wrtable) {
     char *fspstr = lives_format_storage_space_string(freespace);
-    res = do_warning_dialogf(_("\nCreate the directory\n%s\n?\n\n(Free space = %s)"), dirname, fspstr);
+    res = do_yesno_dialogf(_("\nLiVES will create the directory\n<b>%s</b>\n"
+                             "Is this OK ?\n\n(Free space in volume = %s)"), xdir, fspstr);
     lives_free(fspstr);
   } else {
-    res = do_error_dialogf(_("\nLiVES could not write to the directory\n%s\n"
+    res = do_error_dialogf(_("\nLiVES could not write to the directory\n<b>%s</b>\n"
                              "Please try again and choose a different location.\n"),
-                           dirname);
+                           xdir);
   }
+  widget_opts.use_markup = FALSE;
+  lives_free(xdir);
   return res;
 }
 
@@ -420,11 +466,19 @@ LIVES_LOCAL_INLINE boolean confirm_exit(void) {
 static void workdir_entry_check(LiVESEntry * entry, livespointer data) {
   const char *last_parentdir = NULL, *parentdir;
   const char *mydir = lives_entry_get_text(entry);
-  if (!*mydir) return;
+  char *mdir;
 
-  parentdir = get_dir(mydir);
-  if (!parentdir) return;
+  if (!*mydir) return;
+  mdir = lives_strdup(mydir);
+  mdir[lives_strlen(mdir) - 1] = 0;
+
+  parentdir = get_dir(mdir);
+  if (!parentdir) {
+    lives_free(mdir);
+    return;
+  }
   if (!dirs_equal(last_parentdir, parentdir)) {
+    g_print("CHECK %s\n", parentdir);
     if (!lives_file_test(parentdir, LIVES_FILE_TEST_IS_DIR)) {
       show_warn_image(LIVES_WIDGET(entry), _("WARNING: The parent directory does not exist !"));
     } else {
@@ -432,40 +486,25 @@ static void workdir_entry_check(LiVESEntry * entry, livespointer data) {
     }
   }
   last_parentdir = lives_strdup(parentdir);
+  lives_free(mdir);
 }
 
 
 boolean do_workdir_query(void) {
-  LiVESWidget *dirbutton;
   _entryw *wizard = create_rename_dialog(6);
   char *dirname = NULL, *mp;
   LiVESResponseType response;
-  boolean activated = FALSE;
 
   /// override FILESEL_TYPE_KEY, in case it was set to WORKDIR; we will do our own checking here
-  dirbutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), FILESEL_TYPE_KEY,
-                               LIVES_INT_TO_POINTER(LIVES_DIR_SELECTION_WORKDIR_INIT));
+  SET_INT_DATA(wizard->dirbutton, FILESEL_TYPE_KEY, LIVES_DIR_SELECTION_WORKDIR_INIT);
 
-  if (mainw->splash_window) {
-    lives_widget_hide(mainw->splash_window);
-    lives_widget_show_all(wizard->dialog);
-    lives_widget_show_now(wizard->dialog);
+  pop_to_front(wizard->dialog, wizard->dirbutton);
+
+  guess_font_size(wizard->dialog, LIVES_LABEL(wizard->xlabel), LIVES_LABEL(wizard->ylabel), .8);
+  if (!mainw->first_shown) {
+    guess_font_size(wizard->dialog, LIVES_LABEL(wizard->xlabel), LIVES_LABEL(wizard->ylabel), .22);
   }
-  lives_widget_context_update();
-  if (!mainw->is_ready) {
-    char *wid;
-    gtk_window_set_urgency_hint(LIVES_WINDOW(wizard->dialog), TRUE); // dont know if this actually does anything...
-    wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(wizard->dialog)));
-    if (!wid || (activated = !activate_x11_window(wid)) || 1) {
-      lives_window_set_keep_above(LIVES_WINDOW(wizard->dialog), TRUE);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), KEEPABOVE_KEY, wizard->dialog);
-    }
-    if (activated)
-      lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(dirbutton),
-                                        ACTIVATE_KEY, lives_strdup(wid));
-    if (wid) lives_free(wid);
-  }
+
   lives_entry_set_editable(LIVES_ENTRY(wizard->entry), TRUE);
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(wizard->entry), LIVES_WIDGET_CHANGED_SIGNAL,
                                   LIVES_GUI_CALLBACK(workdir_entry_check), NULL);
@@ -479,8 +518,11 @@ boolean do_workdir_query(void) {
         lives_widget_destroy(wizard->dialog);
         return FALSE;
       }
+
       lives_widget_show(wizard->dialog);
-      if (!mainw->is_ready) restore_wm_stackpos(LIVES_BUTTON(dirbutton));
+
+      // restore stack pos after showing file chooser
+      if (!mainw->is_ready) restore_wm_stackpos(LIVES_BUTTON(wizard->dirbutton));
     }
     // TODO: should we convert to locale encoding ??
     dirname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(wizard->entry)));
@@ -573,9 +615,7 @@ boolean do_jack_config(boolean is_setup, boolean is_trans) {
   LiVESWidget *okbutton, *cancelbutton, *filebutton;
   LiVESWidget *scrpt_rb, *cfg_entry, *expander = NULL;
   LiVESResponseType response;
-  char *show_hid[2] = {".", NULL};
   char *title, *text;
-  char *wid;
   char *server_cfgx;
   int woph = widget_opts.packing_height;
   int old_fprefs = future_prefs->jack_opts;
@@ -607,8 +647,8 @@ set_config:
 
     if (is_setup) {
       widget_opts.use_markup = TRUE;
-      lives_layout_add_label(LIVES_LAYOUT(layout), _("<big><b>Connecting to a Server...</b></big>\n(LiVES will always "
-                             "try this first)"), TRUE);
+      lives_layout_add_label(LIVES_LAYOUT(layout), _("<big><b>Connecting to a Server...</b></big>\n<small>(LiVES will always "
+                             "try this first)</small>"), TRUE);
       widget_opts.use_markup = FALSE;
     }
 
@@ -616,7 +656,7 @@ set_config:
 
     acdef =
       lives_standard_check_button_new(_("Connect to the default server"),
-                                      TRUE, LIVES_BOX(hbox),
+                                      !*prefs->jack_aserver_cname, LIVES_BOX(hbox),
                                       H_("The server name will be taken from the environment "
                                          "variable\n$JACK_DEFAULT_SERVER.\nIf that variable is not "
                                          "set, then the name 'default' will be used instead"));
@@ -651,7 +691,7 @@ set_config:
              H_("Checking this will cause LiVES to try to start up a jackd server itself\n"
                 "if it is unable to connect to a running instance."));
 
-    if (cfg_exists)
+    if (cfg_exists || (prefs->jack_opts & JACK_OPTS_START_ASERVER))
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(astart), TRUE);
   } else {
     lives_layout_add_label(LIVES_LAYOUT(layout), _("NOTE: if server start up fails, "
@@ -677,7 +717,9 @@ set_config:
   if (is_setup) {
     lives_layout_add_row(LIVES_LAYOUT(layout));
     widget_opts.use_markup = TRUE;
-    nsclabel = lives_layout_add_label(LIVES_LAYOUT(layout), _("<big><b>New Server Configuration</b></big> (if connection fails)"),
+    nsclabel = lives_layout_add_label(LIVES_LAYOUT(layout),
+                                      _("<big><b>New Server Configuration</b></big>\n"
+                                        "<small>(if connection fails)</small>"),
                                       TRUE);
     widget_opts.use_markup = FALSE;
   }
@@ -686,15 +728,18 @@ set_config:
 
   rb_group = NULL;
 
-  scrpt_rb = lives_standard_radio_button_new(_("_Use settings in config file:"),
+  scrpt_rb = lives_standard_radio_button_new(_("_Use settings from config file:"),
              &rb_group, LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   cfg_entry = lives_standard_fileentry_new(NULL, server_cfgx, capable->home_dir,
               MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
-  filebutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(filebutton), FILTER_KEY, show_hid);
+
+  filebutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cfg_entry), BUTTON_KEY);
+
+  SET_INT_DATA(filebutton, FILESEL_TYPE_KEY, LIVES_FILE_SELECTION_OPEN | LIVES_SELECTION_SHOW_HIDDEN);
+
   lives_entry_set_editable(LIVES_ENTRY(cfg_entry), TRUE);
 
   if (!cfg_exists) {
@@ -770,7 +815,10 @@ set_config:
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), hbox, FALSE);
 
   if (is_setup) {
-    if (!cfg_exists) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rb), TRUE);
+    if (!cfg_exists || (!*prefs->jack_aserver_cfg && *prefs->jack_aserver_sname))
+      lives_toggle_button_set_active(rb, TRUE);
+    else lives_toggle_button_set_active(scrpt_rb, TRUE);
+    if (*prefs->jack_aserver_sname) lives_toggle_button_set_active(asdef, FALSE);
   }
 
   if (!is_setup) {
@@ -884,7 +932,7 @@ set_config:
 
   if (is_setup)
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
-                   _("Back"), LIVES_RESPONSE_CANCEL);
+                   LIVES_STOCK_LABEL_BACK, LIVES_RESPONSE_CANCEL);
   else
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL,
                    NULL, LIVES_RESPONSE_CANCEL);
@@ -893,7 +941,7 @@ set_config:
 
   if (is_setup)
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
-               _("_Next"), LIVES_RESPONSE_OK);
+               LIVES_STOCK_LABEL_NEXT, LIVES_RESPONSE_OK);
   else
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK,
                NULL, LIVES_RESPONSE_OK);
@@ -905,13 +953,8 @@ set_config:
     toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), nsclabel, FALSE);
     toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), expander, FALSE);
 
-    lives_widget_show_all(dialog);
-    lives_widget_grab_focus(okbutton);
-
-    gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE); // dont know if this actually does anything...
-    wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
-    if (!wid || !activate_x11_window(wid) || 1) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
-    if (wid) lives_free(wid);
+    /* lives_widget_show_all(dialog); */
+    /* lives_widget_grab_focus(okbutton); */
   }
 
   if (is_setup) {
@@ -922,6 +965,12 @@ set_config:
   lives_button_grab_default_special(okbutton);
 
 retry:
+  if (is_setup) pop_to_front(dialog, NULL);
+
+  lives_widget_show_all(dialog);
+  lives_widget_show_now(dialog);
+  lives_widget_context_update();
+
   response = lives_dialog_run(LIVES_DIALOG(dialog));
 
   if (response == LIVES_RESPONSE_OK) {
@@ -1044,7 +1093,7 @@ retry:
           srvname = lives_strdup_printf(_("jack server '%s'"), prefs->jack_aserver_cname);
         else
           srvname = _("the default jack server");
-        if (!do_warning_dialogf(_("Youa have chosen to connect to %s\nPlease ensure that the server "
+        if (!do_warning_dialogf(_("You have chosen to connect to %s\nPlease ensure that the server "
                                   "is running before clicking OK\n"
                                   "Alternatively, click Cancel to change the jack client options\n"),
                                 srvname)) {
@@ -1058,7 +1107,10 @@ retry:
       set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
       set_string_pref(PREF_JACK_ACSERVER, prefs->jack_aserver_cname);
       set_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname);
-      set_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg);
+      if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(scrpt_rb)))
+        set_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg);
+      else
+        set_string_pref(PREF_JACK_ACONFIG, "");
     } else {
       if (future_prefs->jack_opts != old_fprefs
           || (is_trans
@@ -1120,7 +1172,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   LiVESSList *radiobutton_group = NULL;
 
-  char *txt0, *txt1, *txt2, *txt3, *txt4, *txt5, *txt6, *txt7, *msg, *wid;
+  char *txt0, *txt1, *txt2, *txt3, *txt4, *txt5, *txt6, *txt7, *msg;
   char *recstr;
 
   LiVESResponseType response;
@@ -1197,7 +1249,7 @@ reloop:
 
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
 
-  recstr = lives_big_and_bold("(%s)", mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
+  recstr = lives_strdup_printf("<b>(%s)</b>", mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
 
   widget_opts.packing_height <<= 1;
   layout = lives_layout_new(LIVES_BOX(dialog_vbox));
@@ -1300,30 +1352,29 @@ reloop:
                  _("Quit from Setup"), LIVES_RESPONSE_CANCEL);
 
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
-                                     _("Back"), LIVES_RESPONSE_RETRY);
+                                     LIVES_STOCK_LABEL_BACK, LIVES_RESPONSE_RETRY);
 
   lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-             LIVES_STOCK_GO_FORWARD, _("_Next"),
-             LIVES_RESPONSE_OK);
+             LIVES_STOCK_GO_FORWARD, LIVES_STOCK_LABEL_NEXT, LIVES_RESPONSE_OK);
 
-  lives_window_center(LIVES_WINDOW(dialog));
-
-  lives_widget_show_all(dialog);
-  lives_button_grab_default_special(okbutton);
-
-  //lives_widget_show_noyw(dialog);
-  lives_widget_grab_focus(okbutton);
+  //lives_widget_show_all(dialog);
 
   if (prefs->audio_player == -1) {
     do_no_mplayer_sox_error();
     return FALSE;
   }
 
-  if (mainw->splash_window) {
-    lives_widget_hide(mainw->splash_window);
-  }
+  /* if (mainw->splash_window) { */
+  /*   lives_widget_hide(mainw->splash_window); */
+  /* } */
+  pop_to_front(dialog, NULL);
+
+  lives_button_grab_default_special(okbutton);
+
+  //lives_widget_show_noyw(dialog);
+  lives_widget_grab_focus(okbutton);
 
   if (!mainw->first_shown) {
     if (prefs->startup_phase == 4)
@@ -1335,12 +1386,6 @@ reloop:
     guess_font_size(dialog, LIVES_LABEL(label), NULL, .22);
   }
 
-  lives_widget_show_all(dialog);
-  gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE);
-
-  wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
-  if (!wid || !activate_x11_window(wid) || 1) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
-  if (wid) lives_free(wid);
 
   while (1) {
     response = lives_dialog_run(LIVES_DIALOG(dialog));
@@ -1351,6 +1396,7 @@ reloop:
   }
 
   lives_widget_destroy(dialog);
+  lives_widget_context_update();
 
 #ifdef ENABLE_JACK
   if (response == LIVES_RESPONSE_OK) {
@@ -1542,7 +1588,7 @@ static boolean _fail_test(LiVESWidget * table, int row, char *ftext, const char 
     }
   }
 
-  msg = lives_big_and_bold(ftext);
+  msg = lives_strdup_printf("<b>%s</b>", ftext);
   widget_opts.use_markup = TRUE;
   lives_label_set_text(LIVES_LABEL(label), msg);
   widget_opts.use_markup = FALSE;
@@ -1747,13 +1793,7 @@ rerun:
 
   if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
-  if (!tshoot) {
-    char *wid;
-    gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE); // dont know if this actually does anything...
-    wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
-    if (!wid || !activate_x11_window(wid) || 1) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
-    if (wid) lives_free(wid);
-  }
+  if (!tshoot) pop_to_front(dialog, NULL);
 
   // begin tests... //////
 
@@ -2141,7 +2181,7 @@ jpgdone:
     if (skipfunc) lives_signal_handler_block(okbutton, skipfunc);
 
     if (mainw->cancelled != CANCEL_NONE) goto cancld;
-    lives_standard_button_set_label(LIVES_BUTTON(okbutton), _("Next"));
+    lives_standard_button_set_label(LIVES_BUTTON(okbutton), LIVES_STOCK_LABEL_NEXT);
   }
 
   while (1) {
@@ -2216,7 +2256,7 @@ boolean do_startup_interface_query(void) {
   LiVESWidget *hbox, *cb_desk = NULL, *cb_menus = NULL, *cb_msgs;
   LiVESSList *radiobutton_group = NULL;
   LiVESResponseType resp;
-  char *txt1, *txt2, *txt3, *msg, *wid;
+  char *txt1, *txt2, *txt3, *msg;
   char *dskfile, *com;
 
   boolean add_hsep = FALSE;
@@ -2401,17 +2441,7 @@ retry:
   lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);
 
-  lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
-  //  lives_widget_show_now(dialog);
-  lives_widget_show_all(dialog);
-
-  wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
-  if (!wid || !activate_x11_window(wid) || 1) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
-  if (wid) lives_free(wid);
-
-  if (mainw->splash_window) {
-    lives_widget_hide(mainw->splash_window);
-  }
+  pop_to_front(dialog, NULL);
 
   if (!mainw->first_shown) {
     guess_font_size(dialog, LIVES_LABEL(xlabel), NULL, 0.7);

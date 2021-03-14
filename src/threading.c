@@ -27,14 +27,13 @@
    - amongst the available attributes are:
 	- PRIORITY   - this is also a lives_thread flag: - the result is to add the job at the head of the pool queue
 			rather than at the tail end
-	- AUTODELETE - unlike setting return type of -1, removes the need to call proc_thread_join_*,
-			 but unlike a return type of 0, does not free the proc_thread itself
+	- AUTODELETE - tells the underlying thread to free it's resources automatically there is no need to set this for proc threads
+			is this done in the create function
 	- WAIT_SYNC  - the proc_thread will be created, but the worker will wait for the caller to set sync_ready before running
 	- NO_GUI:    - this has no functional effect, but will set a flag in the worker thread's environment, and this may be
 			checked for in the function code and used to bypass graphical updates
 	- FG_THREAD: - should not be used directly; main_thread_execute() uses this flag bit internally to ensure that the function is
 			always run by the fg thread; (it is safe for the fg thread to call that function)
-
 
    - the only requirements are to call lives_proc_thread_create() which will generate a lives_proc_thread_t and run it,
    and then (depending on the return_type parameter, call one of the lives_proc_thread_join_*() functions
@@ -46,7 +45,14 @@ typedef weed_plantptr_t lives_proc_thread_t;
 
 static funcsig_t make_funcsig(lives_proc_thread_t func_info);
 
-LIVES_GLOBAL_INLINE void lives_proc_thread_free(lives_proc_thread_t lpt) {weed_plant_free(lpt);}
+static void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_attr_t attr);
+
+LIVES_GLOBAL_INLINE void lives_proc_thread_free(lives_proc_thread_t lpt) {
+  pthread_mutex_t *state_mutex
+    = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+  if (state_mutex) lives_free(state_mutex);
+  weed_plant_free(lpt);
+}
 
 lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, lives_funcptr_t func,
     int return_type, const char *args_fmt, va_list xargs) {
@@ -56,10 +62,10 @@ lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, liv
   if (!thread_info) return NULL;
   weed_set_funcptr_value(thread_info, LIVES_LEAF_THREADFUNC, func);
   if (return_type) {
-    pthread_mutex_t *dcmutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
-    pthread_mutex_init(dcmutex, NULL);
-    weed_set_voidptr_value(thread_info, LIVES_LEAF_DONTCARE_MUTEX, dcmutex);
-    weed_set_boolean_value(thread_info, LIVES_LEAF_NOTIFY, WEED_TRUE);
+    pthread_mutex_t *state_mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
+    pthread_mutex_init(state_mutex, NULL);
+    weed_set_voidptr_value(thread_info, LIVES_LEAF_STATE_MUTEX, state_mutex);
+    lives_proc_thread_set_state(thread_info, THRD_OPT_NOTIFY);
     if (return_type > 0)  weed_leaf_set(thread_info, LIVES_LEAF_RETURN_VALUE, return_type, 0, NULL);
   }
   c = args_fmt;
@@ -97,7 +103,7 @@ lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, liv
    return_type is enumerated, e.g WEED_SEED_INT64. Return_type of 0 indicates no return value (void), then the thread
    will free its own resources and NULL is returned from this function (fire and forget)
    return_type of -1 has a special meaning, in this case no result is returned, but the thread can be monitored by calling:
-   lives_proc_thread_check() with the return : - this function is guaranteed to return FALSE whilst the thread is running
+   lives_proc_thread_check_finished() with the return : - this function is guaranteed to return FALSE whilst the thread is running
    and TRUE thereafter, the proc_thread should be freed once TRUE id returned and not before.
    for the other return_types, the appropriate join function should be called and it will block until the thread has completed its
    task and return a copy of the actual return value of the func
@@ -116,6 +122,9 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t attr, lives_fun
 
 
 // creates a proc_thread as above, then waits for timeout. If the proc_thread does not complete before timer expires,
+// since we do block here while waiting, we also launch the govenor_loop to service fg requests from the thread
+// we also need to update the GUI main loop because governor_loop may add itself as an idle func
+//
 // the underlying pthread is cancelled, the proc_thread is freed and and NULL is returned,
 // if the proc_thread completes before timeout, it is returned as normal and the return value
 // can be read via lives_proc_thread_join_*, and the proc_thread freed as normal
@@ -124,33 +133,55 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t attr, lives_fun
 // thus if there is a need to discover whether the function was cancelled or completed, some other mechanism must be used
 lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
     int return_type, const char *args_fmt, ...) {
-  lives_alarm_t alarm_handle;
-  ticks_t xtimeout;
-  lives_proc_thread_t lpt;
   va_list xargs;
+  lives_alarm_t alarm_handle;
+  lives_proc_thread_t lpt;
+  lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
+  ticks_t xtimeout = 1;
+  uint64_t tstate;
+  boolean tres;
+  lives_cancel_t cancel = CANCEL_NONE;
   int xreturn_type = return_type;
+
   if (xreturn_type == 0) xreturn_type--;
+
+  attr |= LIVES_THRDATTR_WAIT_SYNC;
 
   va_start(xargs, args_fmt);
   lpt = lives_proc_thread_create_vargs(attr, func, xreturn_type, args_fmt, xargs);
   va_end(xargs);
 
-  alarm_handle = lives_alarm_set(timeout);
-  lives_nanosleep_until_nonzero(lives_proc_thread_check(lpt)
-                                || (xtimeout = lives_alarm_check(alarm_handle)) == 0);
+  sigdata->proc = lpt;
+  sigdata->is_timer = TRUE;
 
-  lives_alarm_clear(alarm_handle);
-  if (xtimeout == 0) {
-    lives_proc_thread_cancel_immediate(lpt);
-    if (return_type) {
-      lives_proc_thread_join(lpt);
-      lives_proc_thread_free(lpt);
-      return NULL;
+  tres = governor_loop(sigdata);
+
+  alarm_handle = lives_alarm_set(timeout);
+
+  while (!(tres = lives_proc_thread_check_finished(lpt))
+         && (timeout == 0 || (xtimeout = lives_alarm_check(alarm_handle)) > 0)) {
+    lives_nanosleep(LIVES_SHORT_SLEEP);
+    tstate = lives_proc_thread_get_state(lpt);
+
+    // allow governor_loop to run its idle func
+    lives_widget_context_update();
+    if (tstate & THRD_STATE_BUSY) {
+      // thread MUST unavoidably block; stop the timer (e.g showing a UI)
+      // user or other condition may set cancelled
+      if ((cancel = mainw->cancelled)) break;
+      lives_alarm_reset(alarm_handle, timeout);
     }
   }
-  if (return_type == 0) {
+
+  lives_alarm_clear(alarm_handle);
+
+  if (!tres && xtimeout == 0) {
+    lives_proc_thread_cancel_immediate(lpt);
+    return NULL;
+  }
+
+  if (return_type == 0 || cancel) {
     lives_proc_thread_join(lpt);
-    lives_proc_thread_free(lpt);
     return NULL;
   }
   return lpt;
@@ -165,14 +196,11 @@ boolean is_fg_thread(void) {
 
 
 void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, const char *args_fmt, ...) {
-  void *dcmutex;
   lives_proc_thread_t lpt;
   va_list xargs;
   void *ret;
   va_start(xargs, args_fmt);
   lpt = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD, func, return_type, args_fmt, xargs);
-  dcmutex = weed_get_voidptr_value(lpt, LIVES_LEAF_DONTCARE_MUTEX, NULL);
-  if (dcmutex) lives_free(dcmutex);
   if (is_fg_thread()) {
     // run direct
     ret = fg_run_func(lpt, retval);
@@ -327,6 +355,14 @@ void call_funcsig(lives_proc_thread_t info) {
     }
     break;
   }
+  case FUNCSIG_VOIDP_VOIDP_BOOL: {
+    void *p0, *p1; int p2;
+    switch (ret_type) {
+    case WEED_SEED_VOIDPTR: CALL_3(voidptr, voidptr, voidptr, boolean); break;
+    default: CALL_VOID_3(voidptr, voidptr, boolean); break;
+    }
+    break;
+  }
   case FUNCSIG_STRING_VOIDP_VOIDP: {
     char *p0; void *p1, *p2;
     switch (ret_type) {
@@ -413,46 +449,88 @@ void call_funcsig(lives_proc_thread_t info) {
 }
 
 
-LIVES_GLOBAL_INLINE void lives_proc_thread_sync_ready(lives_proc_thread_t tinfo) {
-  volatile boolean *sync_ready = (volatile boolean *)weed_get_voidptr_value(tinfo, LIVES_LEAF_SYNC_READY, NULL);
-  if (sync_ready) *sync_ready = TRUE;
+LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_get_state(lives_proc_thread_t lpt) {
+  return lpt ? weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL) : 0;
 }
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_check(lives_proc_thread_t tinfo) {
-  /// returns FALSE while the thread is running, TRUE once it has finished
-  if (!tinfo) return TRUE;
-  if (weed_plant_has_leaf(tinfo, LIVES_LEAF_NOTIFY)
-      && weed_get_boolean_value(tinfo, LIVES_LEAF_DONE, NULL) == WEED_FALSE)
-    return FALSE;
-  return (weed_leaf_num_elements(tinfo, _RV_) > 0
-          || weed_get_boolean_value(tinfo, LIVES_LEAF_DONE, NULL) == WEED_TRUE);
+boolean lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t state_bits) {
+  if (lpt) {
+    boolean retval = FALSE;
+    pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+    pthread_mutex_lock(state_mutex);
+    if (!(lives_proc_thread_get_state(lpt) & THRD_STATE_FINISHED)) {
+      weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, lives_proc_thread_get_state(lpt) | state_bits);
+      retval = TRUE;
+    }
+    pthread_mutex_unlock(state_mutex);
+    return retval;
+  }
+  return FALSE;
 }
 
-LIVES_GLOBAL_INLINE int lives_proc_thread_signalled(lives_proc_thread_t tinfo) {
-  return (weed_get_int_value(tinfo, LIVES_LEAF_SIGNALLED, NULL) == WEED_TRUE);
+boolean lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state_bits) {
+  if (lpt) {
+    pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+    pthread_mutex_lock(state_mutex);
+    weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, lives_proc_thread_get_state(lpt) & ~state_bits);
+    pthread_mutex_unlock(state_mutex);
+    return TRUE;
+  }
+  return FALSE;
 }
 
-LIVES_GLOBAL_INLINE int64_t lives_proc_thread_signalled_idx(lives_proc_thread_t tinfo) {
+boolean lives_proc_thread_set_state(lives_proc_thread_t lpt, uint64_t state) {
+  if (lpt) {
+    pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+    pthread_mutex_lock(state_mutex);
+    weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, state);
+    pthread_mutex_unlock(state_mutex);
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_check_finished(lives_proc_thread_t tinfo) {
+  return (tinfo && (lives_proc_thread_get_state(tinfo) & THRD_STATE_FINISHED)) ? TRUE : FALSE;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_signalled(lives_proc_thread_t tinfo) {
+  return (tinfo && (lives_proc_thread_get_state(tinfo) & THRD_STATE_SIGNALLED)) ? TRUE : FALSE;
+}
+
+
+LIVES_GLOBAL_INLINE int lives_proc_thread_get_signal_data(lives_proc_thread_t tinfo, int64_t *tidx, void **data) {
   lives_thread_data_t *tdata
     = (lives_thread_data_t *)weed_get_voidptr_value(tinfo, LIVES_LEAF_SIGNAL_DATA, NULL);
-  if (tdata) return tdata->idx;
+  if (data) *data = tdata;
+  if (tdata) {
+    if (tidx) *tidx = tdata->idx;
+    return tdata->signum;
+  }
   return 0;
 }
 
+
 LIVES_GLOBAL_INLINE void lives_proc_thread_set_cancellable(lives_proc_thread_t tinfo) {
-  weed_set_boolean_value(tinfo, LIVES_LEAF_THREAD_CANCELLABLE, WEED_TRUE);
+  if (tinfo) lives_proc_thread_include_states(tinfo, THRD_OPT_CANCELLABLE);
 }
+
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancellable(lives_proc_thread_t tinfo) {
-  return weed_get_boolean_value(tinfo, LIVES_LEAF_THREAD_CANCELLABLE, NULL) == WEED_TRUE ? TRUE : FALSE;
+  return (tinfo && (lives_proc_thread_get_state(tinfo) & THRD_OPT_CANCELLABLE)) ? TRUE : FALSE;
 }
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t tinfo) {
-  if (!lives_proc_thread_get_cancellable(tinfo)) return FALSE;
-  weed_set_boolean_value(tinfo, LIVES_LEAF_THREAD_CANCELLED, WEED_TRUE);
-  lives_proc_thread_join(tinfo);
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t tinfo, boolean block) {
+  if (!tinfo || !lives_proc_thread_get_cancellable(tinfo)) return FALSE;
+  lives_proc_thread_include_states(tinfo, THRD_STATE_CANCELLED);
+  if (block) lives_proc_thread_join(tinfo);
+  else lives_proc_thread_dontcare(tinfo);
   return TRUE;
 }
+
 
 // calls pthread_cancel on underlying thread
 // - cleanup function casues the thread to the normal post cleanup, so lives_proc_thread_join_*
@@ -461,66 +539,84 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t tinfo) 
 // (except for auto / dontcare proc_threads)
 // there is a small chance the cancellation could occur either before or after the function is called
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel_immediate(lives_proc_thread_t lpt) {
-  pthread_t base_thread = (pthread_t)weed_get_voidptr_value(lpt, LIVES_LEAF_PTHREAD_SELF, NULL);
-  if (base_thread) {
-    pthread_cancel(base_thread);
-    return TRUE;
+  if (lpt) {
+    pthread_t base_thread = (pthread_t)weed_get_voidptr_value(lpt, LIVES_LEAF_PTHREAD_SELF, NULL);
+    if (base_thread) {
+      pthread_cancel(base_thread);
+      return TRUE;
+    }
   }
   return FALSE;
 }
 
+
 boolean lives_proc_thread_dontcare(lives_proc_thread_t tinfo) {
-  /// if thread is running, tell it we no longer care about return value, so it can free itself
-  /// if finished we just call lives_proc_thread_join() to free it
-  /// a mutex is used to ensure the proc_thread does not finish between setting the flag and checking if it has ifnished
-  if (tinfo) {
-    pthread_mutex_t *dcmutex = weed_get_voidptr_value(tinfo, LIVES_LEAF_DONTCARE_MUTEX, NULL);
-    if (dcmutex) {
-      pthread_mutex_lock(dcmutex);
-      if (!lives_proc_thread_check(tinfo)) {
-        weed_set_boolean_value(tinfo, LIVES_LEAF_DONTCARE, WEED_TRUE);
-        pthread_mutex_unlock(dcmutex);
-      } else {
-        pthread_mutex_unlock(dcmutex);
-        lives_proc_thread_join(tinfo);
-      }
-    }
+  if (!tinfo) return FALSE;
+  if (!lives_proc_thread_include_states(tinfo, THRD_OPT_DONTCARE)) {
+    // task FINISHED before we could set this, so we need to unblock and free it
+    // (otherwise it would do this itself when transitioning to FINISHED)
+    lives_proc_thread_join(tinfo);
   }
   return TRUE;
 }
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancelled(lives_proc_thread_t tinfo) {
-  return (tinfo && weed_get_boolean_value(tinfo, LIVES_LEAF_THREAD_CANCELLED, NULL) == WEED_TRUE)
-         ? TRUE : FALSE;
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancelled(lives_proc_thread_t tinfo) {
+  return (tinfo && (lives_proc_thread_get_state(tinfo) & THRD_STATE_CANCELLED)) ? TRUE : FALSE;
 }
 
-#define _join(stype) if (is_fg_thread()) {while (weed_get_boolean_value(tinfo, LIVES_LEAF_DONE, NULL) == WEED_FALSE) { \
-      if (get_lpttorun()) lives_widget_context_update(); lives_nanosleep(1000);}} \
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_set_signalled(lives_proc_thread_t lpt, int signum, void *data) {
+  if (!lpt) return FALSE;
+  else {
+    lives_thread_data_t *mydata = (lives_thread_data_t *)data;
+    if (mydata) mydata->signum = signum;
+    pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+    pthread_mutex_lock(state_mutex);
+    weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, lives_proc_thread_get_state(lpt) | THRD_STATE_SIGNALLED);
+    weed_set_voidptr_value(lpt, LIVES_LEAF_SIGNAL_DATA, data);
+    pthread_mutex_unlock(state_mutex);
+  }
+  return TRUE;
+}
+
+
+LIVES_GLOBAL_INLINE void lives_proc_thread_sync_ready(lives_proc_thread_t tinfo) {
+  // this cannot be handles via states as it affects the underlying lives_thread
+  if (!tinfo) return;
+  else {
+    thrd_work_t *work = (thrd_work_t *)weed_get_voidptr_value(tinfo, LIVES_LEAF_THREAD_WORK, NULL);;
+    if (work) work->sync_ready = TRUE;
+  }
+}
+
+
+#define _join(tinfo, stype) if (is_fg_thread()) {while (!(lives_proc_thread_get_state(tinfo) & THRD_STATE_FINISHED)) { \
+      if (get_lpttorun()) lives_widget_context_update(); lives_nanosleep(LIVES_QUICK_NAP * 10);}} \
   else lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, _RV_)); \
   return weed_get_##stype##_value(tinfo, _RV_, NULL);
 
+
 LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t tinfo) {
-  // WARNING !! version without a return value will free tinfo !
-  void *dcmutex;
+  // WARNING !! this version without a return value will free tinfo !
   if (is_fg_thread()) {
-    while (weed_get_boolean_value(tinfo, LIVES_LEAF_DONE, NULL) == WEED_FALSE) {
+    while (!lives_proc_thread_check_finished(tinfo)) {
       if (get_lpttorun()) lives_widget_context_update();
-      lives_nanosleep(1000);
+      lives_nanosleep(LIVES_QUICK_NAP * 10);
     }
-  } else lives_nanosleep_until_nonzero((weed_get_boolean_value(tinfo, LIVES_LEAF_DONE, NULL) == WEED_TRUE));
-  dcmutex = weed_get_voidptr_value(tinfo, LIVES_LEAF_DONTCARE_MUTEX, NULL);
-  if (dcmutex) lives_free(dcmutex);
+  } else lives_nanosleep_while_false(lives_proc_thread_check_finished(tinfo));
+
   lives_proc_thread_free(tinfo);
 }
 
-LIVES_GLOBAL_INLINE int lives_proc_thread_join_int(lives_proc_thread_t tinfo) { _join(int);}
-LIVES_GLOBAL_INLINE double lives_proc_thread_join_double(lives_proc_thread_t tinfo) {_join(double);}
-LIVES_GLOBAL_INLINE int lives_proc_thread_join_boolean(lives_proc_thread_t tinfo) { _join(boolean);}
-LIVES_GLOBAL_INLINE int64_t lives_proc_thread_join_int64(lives_proc_thread_t tinfo) {_join(int64);}
-LIVES_GLOBAL_INLINE char *lives_proc_thread_join_string(lives_proc_thread_t tinfo) {_join(string);}
-LIVES_GLOBAL_INLINE weed_funcptr_t lives_proc_thread_join_funcptr(lives_proc_thread_t tinfo) {_join(funcptr);}
-LIVES_GLOBAL_INLINE void *lives_proc_thread_join_voidptr(lives_proc_thread_t tinfo) {_join(voidptr);}
-LIVES_GLOBAL_INLINE weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t tinfo) {_join(plantptr);}
+LIVES_GLOBAL_INLINE int lives_proc_thread_join_int(lives_proc_thread_t tinfo) { _join(tinfo, int);}
+LIVES_GLOBAL_INLINE double lives_proc_thread_join_double(lives_proc_thread_t tinfo) {_join(tinfo, double);}
+LIVES_GLOBAL_INLINE int lives_proc_thread_join_boolean(lives_proc_thread_t tinfo) { _join(tinfo, boolean);}
+LIVES_GLOBAL_INLINE int64_t lives_proc_thread_join_int64(lives_proc_thread_t tinfo) {_join(tinfo, int64);}
+LIVES_GLOBAL_INLINE char *lives_proc_thread_join_string(lives_proc_thread_t tinfo) {_join(tinfo, string);}
+LIVES_GLOBAL_INLINE weed_funcptr_t lives_proc_thread_join_funcptr(lives_proc_thread_t tinfo) {_join(tinfo, funcptr);}
+LIVES_GLOBAL_INLINE void *lives_proc_thread_join_voidptr(lives_proc_thread_t tinfo) {_join(tinfo, voidptr);}
+LIVES_GLOBAL_INLINE weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t tinfo) {_join(tinfo, plantptr);}
 
 /**
    create a funcsig from a lives_proc_thread_t object
@@ -551,26 +647,16 @@ static funcsig_t make_funcsig(lives_proc_thread_t func_info) {
 static void pthread_cleanup_func(void *args) {
   lives_proc_thread_t info = (lives_proc_thread_t)args;
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
-  if (weed_get_boolean_value(info, LIVES_LEAF_NOTIFY, NULL) == WEED_TRUE) {
-    boolean dontcare;
-    pthread_mutex_t *dcmutex
-      = (pthread_mutex_t *)weed_get_voidptr_value(info, LIVES_LEAF_DONTCARE_MUTEX, NULL);
-    pthread_mutex_lock(dcmutex);
-    dontcare = weed_get_boolean_value(info, LIVES_LEAF_DONTCARE, NULL);
-    weed_set_boolean_value(info, LIVES_LEAF_DONE, WEED_TRUE);
-    if (dontcare == WEED_TRUE) {
-      pthread_mutex_unlock(dcmutex);
-      lives_free(dcmutex);
-      lives_proc_thread_free(info);
-    } else pthread_mutex_unlock(dcmutex);
-  } else if (!ret_type) lives_proc_thread_free(info);
+  boolean dontcare = lives_proc_thread_get_state(info) & THRD_OPT_DONTCARE;
+  if (dontcare || (!ret_type && !(lives_proc_thread_get_state(info) & THRD_OPT_NOTIFY))) {
+    lives_proc_thread_free(info);
+  } else lives_proc_thread_include_states(info, THRD_STATE_FINISHED);
 }
 
 
 static void *_plant_thread_func(void *args) {
   lives_proc_thread_t info = (lives_proc_thread_t)args;
   THREADVAR(tinfo) = info;
-  if (weed_get_boolean_value(info, LIVES_LEAF_NO_GUI, NULL) == WEED_TRUE) THREADVAR(no_gui) = TRUE;
 
   // ensures that tinfo is handled cleanly even if pthread_cancel is called on the underlying pthread
   pthread_cleanup_push(pthread_cleanup_func, args);
@@ -646,21 +732,14 @@ void *fg_run_func(lives_proc_thread_t lpt, void *retval) {
 /// (re)submission point, the function call is added to the threadpool tasklist
 /// if we have sufficient threads the task will be run at once, if all threads are busy then MINPOOLTHREADS new threads will be created
 /// and added to the pool
-void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_attr_t attr) {
+static void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_attr_t attr) {
   /// run any function as a lives_thread
   lives_thread_t *thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
-  thrd_work_t *work;
 
   /// tell the thread to clean up after itself [but it won't delete thread_info]
   attr |= LIVES_THRDATTR_AUTODELETE;
   lives_thread_create(thread, attr, _plant_thread_func, (void *)thread_info);
-  work = (thrd_work_t *)thread->data;
-  if (attr & LIVES_THRDATTR_WAIT_SYNC) {
-    weed_set_voidptr_value(thread_info, LIVES_LEAF_SYNC_READY, (void *) & (work->sync_ready));
-  }
-  if (attr & LIVES_THRDATTR_NO_GUI) {
-    weed_set_boolean_value(thread_info, LIVES_LEAF_NO_GUI, WEED_TRUE);
-  }
+  weed_set_voidptr_value(thread_info, LIVES_LEAF_THREAD_WORK, thread->data);
 }
 
 
@@ -769,24 +848,9 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
 
   //fprintf(stderr, "thread id %ld reporting\n", get_thread_id());
 
-  if (myflags & LIVES_THRDFLAG_WAIT_SYNC) {
-    lives_nanosleep_until_nonzero(mywork->sync_ready);
-  }
-
-  /* if (pthread_mutex_trylock(&cpusel_mutex)) { */
-  /*   didlock = FALSE; */
-  /*   tdata->vars.var_core_load_ptr = NULL; */
-  /*   tdata->vars.var_core_id = set_thread_cpuid(pthread_self()); */
-  /*   if (tdata->vars.var_core_id >= 0) { */
-  /*     tdata->vars.var_core_load_ptr = get_core_loadvar(tdata->vars.var_core_id); */
-  /*     //g_print("thread id %ld assigned to core %d with current load %f\n", */
-  /*     //	      tdata->idx, tdata->vars.var_core_id, *tdata->vars.var_core_load_ptr); */
-  /*   } */
-  /* } */
+  lives_nanosleep_until_nonzero(mywork->sync_ready);
 
   lives_widget_context_invoke(tdata->ctx, gsrc_wrapper, mywork);
-
-  //if (didlock) pthread_mutex_unlock(&cpusel_mutex);
 
   if (myflags & LIVES_THRDFLAG_AUTODELETE) {
     lives_free(mywork); lives_free(list);
@@ -888,11 +952,12 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
   list->data = work;
   work->func = func;
   work->arg = arg;
+  work->sync_ready = TRUE;
 
   if (!thread || (attr & LIVES_THRDATTR_AUTODELETE))
     work->flags |= LIVES_THRDFLAG_AUTODELETE;
+
   if (attr & LIVES_THRDATTR_WAIT_SYNC) {
-    work->flags |= LIVES_THRDFLAG_WAIT_SYNC;
     work->sync_ready = FALSE;
   }
 

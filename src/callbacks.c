@@ -6611,9 +6611,9 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       goto cleanup;
     }
 
-    lives_proc_thread_cancel(recinfo);
-    lives_proc_thread_cancel(reminfo);
-    lives_proc_thread_cancel(leaveinfo);
+    lives_proc_thread_cancel(recinfo, FALSE);
+    lives_proc_thread_cancel(reminfo, FALSE);
+    lives_proc_thread_cancel(leaveinfo, FALSE);
 
     if (retval == LIVES_RESPONSE_CANCEL) {
       com = lives_strdup_printf("%s restore_trash %s", temp_backend, trashdir);

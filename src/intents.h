@@ -7,25 +7,29 @@
 // this is highly experimental code, and may change radically
 
 // features (potential)
-// - formalises function prototypes so their argument types and return types can be know at runtime
-// - using intents allows different subtypes to call different functions for the same intent
-// - within one object, same intent can be mapped to various functions depending on the arguments and return type
-// - provides a convenient location for gathering function arguments and storing the return value(s)
-// - objects can be "smart" and provide defaults for arguments, query other objects, or get missing values from the user
-// - arguments can be mapped to things other than simple parameters, for example "self", "self.fundamental"
+// - formalises function prototypes so their argument types and return types can be known at runtime (introspection)
+// - using intents allows different subtypes to call different functions for the same intent (inheritance, polymorphism, namespaces)
+// - within one object, same intent can be mapped to various functions depending on the arguments and return type (function overloading)
+// - provides a convenient location for gathering function arguments and storing the return value(s) (pseudo classes)
+// - objects can be "smart" and provide defaults for arguments, query other objects, or get missing values from the user (defaults++)
+// - arguments can be mapped to things other than simple parameters, for example "self", "self.fundamental" (Decorator Pattern)
 // - objects can create and manage things other than object classes, for example and object class which manages the lifecyle of a C struct
-// - allows functions to be chained in sequence with outputs from one feeding into the next
-// - provides for verifying that a set of conditions is satisfied before the function(s) are called
-// - objects can list capabilities which depend on the intent and object state
-// - a status can be returned after any step in the transform - new requirements and conditions can be added
-// - the transform returns a status which can be updated dynamically (e,g waiting, needs_data)
-// - allows for the possibility of object - object communication and data sharing
-// - enables goal based activities based on a sequence of state changes from the current state to the goal state
-// - permits the creation of functions which can handle various object types / subtypes differently
-// - allows for "factory" type templates which can create instances of various subtypes
+//    (Prototype pattern)
+// - allows functions to be chained in sequence with outputs from one feeding into the next (function sequencing)
+// - provides for verifying that a set of conditions is satisfied before the function(s) are called (argument validation)
+// - objects can list capabilities which depend on the intent and object state (introspection, inheritance, polymorphism)
+// - a status can be returned after any step in the transform - new requirements and conditions can be added (function sequencing)
+// - the transform returns a status which can be updated dynamically (e,g waiting, needs_data) (dynamic returns)
+// - allows for the possibility of object - object communication and data sharing (AI like behaviours, swarming, nnets)
+// - enables goal based activities based on a sequence of state changes from the current state to the goal state (AI, goal oriented behaviours)
+// - allows for "factory" type templates which can create instances of various subtypes (inheritance)
 // - modular implementation allows for the various components to be used independantly (e.g "intention" can be used anywhere
-//		like an enum)
+//		like an enum) (modular design)
 //
+
+// ideas: a type / subtype can list a set of intentcaps, but can they also provide an interface
+// ie. an intentcap "play" would have init_screen, exit_screen...so "play" is a capability as well as an action
+// so the capability part can list sub-intentions...or perhaps a capability can be linked to one or more a intentions..
 
 #ifndef HAS_LIVES_INTENTS_H
 #define HAS_LIVES_INTENTS_H
@@ -43,9 +47,10 @@
 #define INTENTION_KEY "intention_"
 
 // example types
-#define OBJECT_TYPE_CLIP		IMkType("obj.CLIP")
+#define OBJECT_TYPE_CLIP		IMkType("obj.CLIP")  // could do with a more generic name
 #define OBJECT_TYPE_PLUGIN		IMkType("obj.PLUG"
-#define OBJECT_TYPE_WIDGET		IMkType("obj.WIDG")
+#define OBJECT_TYPE_WIDGET		IMkType("obj.WDGT")
+#define OBJECT_TYPE_THREAD		IMkType("obj.THRD")
 
 typedef struct _object_t lives_object_t;
 typedef struct _object_t lives_object_template_t;
@@ -72,6 +77,8 @@ enum {
   LIVES_INTENTION_NOTHING,
   LIVES_INTENTION_UNDO,
   LIVES_INTENTION_REDO,
+  LIVES_INTENTION_RUN, // request status update to "running"
+  LIVES_INTENTION_CANCEL, // requests an object with status "running" to transform to status "cancelled"
 
   // function like
   LIVES_INTENTION_CREATE_INSTANCE,
@@ -108,6 +115,8 @@ enum {
 
   // use caps to further refine e.g REALTIMNE / NON_REALTIME
   LIVES_INTENTION_EFFECT = 0x00001400,
+
+  // do we need so many ?
   LIVES_INTENTION_ANALYSE,
   LIVES_INTENTION_CONVERT,
   LIVES_INTENTION_MIX,
@@ -227,6 +236,9 @@ typedef struct {
 /// NOT YET FULLY IMPLEMENTED
 
 // object status (these differ from states in that they are dynamic and under control of the object itself)
+// depending on type / subtype there may be additional information (e.g. error code, cancel reason)
+// this also to reduce the number of states for an object, although some statuses (e.g. running) may also be states
+// if an external caller can request (so cancelled would also be a state)
 #define LIVES_OBJECT_ERROR_COND -3
 #define LIVES_OBJECT_ERROR_PREREQ -2
 #define LIVES_OBJECT_ERROR_INTENT -1
@@ -235,7 +247,10 @@ typedef struct {
 #define LIVES_OBJECT_STATUS_PREP 2 ///< object is in a preparatory status and has new param requirements
 #define LIVES_OBJECT_STATUS_READY 3 ///< object is ready but has new conditions
 #define LIVES_OBJECT_STATUS_RUNNING 4 ///< object is "running" and the state cannot be changed
-#define LIVES_OBJECT_STATUS_NEEDS_DATA 6 ///< object is running but has param / data requirements
+#define LIVES_OBJECT_STATUS_FINISHED 5 ///< object finished running and has data
+#define LIVES_OBJECT_STATUS_CANCELLED 6 ///< object was cancelled during running
+#define LIVES_OBJECT_STATUS_FAILED 7 ///< object encountered an error during running
+#define LIVES_OBJECT_STATUS_NEEDS_DATA 8 ///< object is running but has param / data requirements
 #define LIVES_OBJECT_STATUS_DESTROYED 32768
 
 typedef weed_param_t lives_req_t;
@@ -264,8 +279,9 @@ typedef struct {
 #define TR_FLAGS_CREATES_CHILD (1 << 0) // creates child instance from template
 #define TR_FLAGS_CREATES_COPY  (1 << 1) // creates a copy of an instance with a different uid
 #define TR_FLAGS_CHANGES_SUBTYPE  (1 << 2) // object subtype may change during the transformation
-#define TR_FLAGS_FINAL (1 << 3) // state is final after tx, no further transformations possible
-#define TR_FLAGS_INSTANT (1 << 4) // must immediately be followed by another transformation
+#define TR_FLAGS_FINAL (1 << 3) // state is final after tx, and can be destroyed
+#define TR_FLAGS_INSTANT (1 << 4) // must immediately be followed by another transformation (should the object be able to specify it
+/// 					e,g a cleanup to be run after processing, or just define it ?)
 
 #define TR_FLAGS_DIRECT (1 << 32) // function may be called directly (this is a transitional step
 // which may be deprecated

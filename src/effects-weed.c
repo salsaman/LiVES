@@ -4410,7 +4410,6 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t s
   weed_error_t err;
 
   if (!plant) return WEED_ERROR_NOSUCH_PLANT;
-
   do {
     err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
   } while (err == WEED_ERROR_CONCURRENCY);

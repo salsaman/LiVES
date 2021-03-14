@@ -16,6 +16,8 @@ boolean build_init_config(const char *config_datadir, boolean prompt);
 boolean do_workdir_query(void);
 LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *, boolean full);
 
+void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra);
+
 #ifdef ENABLE_JACK
 boolean do_jack_config(boolean is_setup, boolean is_trans);
 #endif

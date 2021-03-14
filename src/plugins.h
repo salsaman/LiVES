@@ -23,6 +23,8 @@ typedef weed_plant_t weed_param_t;
 
 // generic objects / plugins
 
+// perhaps intentions could be used instead, ie. each plugin just provides a set of intentcaps
+// and an interface for each one ?
 #define PLUGIN_TYPE_DECODER		256//		"decoder"
 #define PLUGIN_TYPE_ENCODER		257//		"encoder"
 #define PLUGIN_TYPE_FILTER		258//		"filter"

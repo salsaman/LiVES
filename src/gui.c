@@ -696,8 +696,8 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->vj_load_set);
 
   mainw->vj_save_set = lives_standard_menu_item_new_with_label(_("Close/Sa_ve All Clips"));
-  lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->vj_save_set);
+  lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
 
   lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
 
@@ -1134,7 +1134,6 @@ void create_LiVES(void) {
   mainw->custom_utilities_menu = NULL;
 
   mainw->custom_tools_separator = lives_standard_menu_item_new();
-  lives_widget_set_sensitive(mainw->custom_tools_separator, FALSE);
 
   mainw->gens_menu = NULL;
   mainw->gens_submenu = lives_standard_menu_item_new_with_label(_("_Generate"));
@@ -1327,6 +1326,12 @@ void create_LiVES(void) {
   mainw->show_messages = lives_standard_image_menu_item_new_with_label(_("Show _Messages"));
   lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_messages);
 
+#ifdef ENABLE_JACK
+  mainw->show_jackmsgs = lives_standard_image_menu_item_new_with_label(_("Show _Jack Messages"));
+  lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_jackmsgs);
+  if (prefs->audio_player != AUD_PLAYER_JACK) lives_widget_set_sensitive(mainw->show_jackmsgs, FALSE);
+#endif
+
   mainw->show_layout_errors = lives_standard_image_menu_item_new_with_label(_("Show _Layout Errors"));
   lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_layout_errors);
   lives_widget_set_sensitive(mainw->show_layout_errors, FALSE);
@@ -1411,15 +1416,15 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(rfx_menu), rebuild_rfx);
 
   mainw->open_lives2lives = lives_standard_menu_item_new_with_label(_("Receive _LiVES Stream from..."));
-  lives_widget_set_sensitive(mainw->open_lives2lives, FALSE); // buggy for now
 
   lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
 
   mainw->send_lives2lives = lives_standard_menu_item_new_with_label(_("_Send LiVES Stream to..."));
-  lives_widget_set_sensitive(mainw->send_lives2lives, FALSE); // buggy for now
 
   lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->send_lives2lives);
   lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->open_lives2lives);
+  lives_widget_set_sensitive(mainw->send_lives2lives, FALSE); // buggy for now
+  lives_widget_set_sensitive(mainw->open_lives2lives, FALSE); // buggy for now
 
   mainw->open_yuv4m = lives_standard_menu_item_new_with_label((tmp = (_("Open _yuv4mpeg stream..."))));
   lives_free(tmp);
@@ -1559,8 +1564,8 @@ void create_LiVES(void) {
 
   mainw->toy_tv = lives_standard_check_menu_item_new_with_label(_("_LiVES TV (broadband)"), FALSE);
 
-  if (0 && !prefs->vj_mode)
-    lives_container_add(LIVES_CONTAINER(mainw->toys_menu), mainw->toy_tv);
+  /* if (0 && !prefs->vj_mode) */
+  /*   lives_container_add(LIVES_CONTAINER(mainw->toys_menu), mainw->toy_tv); */
 
   menuitem = lives_standard_menu_item_new_with_label(_("_Help"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
@@ -2876,6 +2881,10 @@ void create_LiVES(void) {
                             LIVES_GUI_CALLBACK(on_show_clipboard_info_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_messages), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_show_messages_activate), NULL);
+#ifdef ENABLE_JACK
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_jackmsgs), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(show_jack_status), LIVES_INT_TO_POINTER(3));
+#endif
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_layout_errors), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(popup_lmap_errors), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_quota), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -3399,6 +3408,7 @@ void fade_background(void) {
   }
 
   lives_widget_queue_draw(mainw->top_vbox);
+  lives_widget_set_sensitive(mainw->custom_tools_separator, FALSE);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 }
 

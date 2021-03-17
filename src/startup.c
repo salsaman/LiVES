@@ -784,11 +784,12 @@ set_config:
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   asdef = lives_standard_check_button_new(_("Use _default server name"),
-                                          (is_setup
-                                              || (!is_setup
-                                                  && ((is_trans && !*future_prefs->jack_tserver_sname)
-                                                      || (!is_trans
-                                                          && !*future_prefs->jack_aserver_sname)))),
+                                          (!(prefs->jack_opts & JACK_INFO_TEMP_NAMES)
+                                              && (is_setup
+                                                  || (!is_setup
+                                                      && ((is_trans && !*future_prefs->jack_tserver_sname)
+                                                          || (!is_trans
+                                                              && !*future_prefs->jack_aserver_sname))))),
                                           LIVES_BOX(hbox),
                                           H_("The server name will be taken from the environment "
                                               "variable\n$JACK_DEFAULT_SERVER.\nIf that variable is not "
@@ -805,6 +806,8 @@ set_config:
                                     ? future_prefs->jack_aserver_sname :
                                     JACK_DEFAULT_SERVER_NAME, -1, JACK_PARAM_STRING_MAX,
                                     LIVES_BOX(hbox), NULL);
+
+  if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) show_warn_image(asname, _("Value was set from the commandline"));
   if (is_setup) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(asname), LIVES_WIDGET_CHANGED_SIGNAL,
                               LIVES_GUI_CALLBACK(entry_text_copy), LIVES_ENTRY(acname));
@@ -915,13 +918,13 @@ set_config:
       if (prefs->jack_tdrivers)
         lives_signal_sync_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                                   LIVES_GUI_CALLBACK(jack_drivers_config),
-                                  (livespointer)prefs->jack_tdrivers);
+                                  LIVES_INT_TO_POINTER(2));
       else lives_widget_set_sensitive(advbutton, FALSE);
     } else {
       if (prefs->jack_adrivers)
         lives_signal_sync_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                                   LIVES_GUI_CALLBACK(jack_drivers_config),
-                                  (livespointer)prefs->jack_adrivers);
+                                  LIVES_INT_TO_POINTER(3));
       else lives_widget_set_sensitive(advbutton, FALSE);
     }
 

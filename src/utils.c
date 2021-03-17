@@ -1661,8 +1661,10 @@ boolean switch_aud_to_jack(boolean set_in_prefs) {
       mainw->jackd->cancelled = &mainw->cancelled;
       mainw->jackd->in_use = FALSE;
       mainw->jackd->play_when_stopped = !(prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED);
-      jack_write_driver_activate(mainw->jackd);
+      jack_write_client_activate(mainw->jackd);
     }
+
+    lives_widget_set_sensitive(mainw->show_jackmsgs, TRUE);
 
     mainw->aplayer_broken = FALSE;
     lives_widget_show(mainw->vol_toolitem);
@@ -1742,14 +1744,15 @@ boolean switch_aud_to_pulse(boolean set_in_prefs) {
 
 #ifdef ENABLE_JACK
     if (mainw->jackd_read) {
-      jack_close_device(mainw->jackd_read);
+      jack_close_client(mainw->jackd_read);
       mainw->jackd_read = NULL;
     }
 
     if (mainw->jackd) {
-      jack_close_device(mainw->jackd);
+      jack_close_client(mainw->jackd);
       mainw->jackd = NULL;
     }
+    lives_widget_set_sensitive(mainw->show_jackmsgs, FALSE);
 #endif
 
     if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
@@ -1802,14 +1805,15 @@ boolean switch_aud_to_sox(boolean set_in_prefs) {
 
 #ifdef ENABLE_JACK
   if (mainw->jackd_read) {
-    jack_close_device(mainw->jackd_read);
+    jack_close_client(mainw->jackd_read);
     mainw->jackd_read = NULL;
   }
 
   if (mainw->jackd) {
-    jack_close_device(mainw->jackd);
+    jack_close_client(mainw->jackd);
     mainw->jackd = NULL;
   }
+  lives_widget_set_sensitive(mainw->show_jackmsgs, FALSE);
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
@@ -1857,15 +1861,16 @@ void switch_aud_to_none(boolean set_in_prefs) {
 
 #ifdef ENABLE_JACK
   if (mainw->jackd_read) {
-    jack_close_device(mainw->jackd_read);
+    jack_close_client(mainw->jackd_read);
     lives_nanosleep(100000000);
     mainw->jackd_read = NULL;
   }
 
   if (mainw->jackd) {
-    jack_close_device(mainw->jackd);
+    jack_close_client(mainw->jackd);
     mainw->jackd = NULL;
   }
+  lives_widget_set_sensitive(mainw->show_jackmsgs, FALSE);
 #endif
 
 #ifdef HAVE_PULSE_AUDIO

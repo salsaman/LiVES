@@ -236,10 +236,10 @@ void lives_exit(int signum) {
 #ifdef ENABLE_JACK
       lives_jack_end();
       if (mainw->jackd) {
-        jack_close_device(mainw->jackd);
+        jack_close_client(mainw->jackd);
       }
       if (mainw->jackd_read) {
-        jack_close_device(mainw->jackd_read);
+        jack_close_client(mainw->jackd_read);
       }
 #endif
     }

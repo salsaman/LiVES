@@ -806,7 +806,8 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
 
   if (has_cancel) {
     if (CURRENT_CLIP_IS_VALID && mainw->cancel_type == CANCEL_SOFT) {
-      LiVESWidget *enoughbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("_Enough"),
+      LiVESWidget *enoughbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing),
+                                  NULL, _("_Enough"),
                                   LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_default(enoughbutton, TRUE);
 
@@ -816,7 +817,8 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
       lives_window_add_escape(LIVES_WINDOW(procw->processing), enoughbutton);
       lives_button_uncenter(enoughbutton, DLG_BUTTON_WIDTH);
     } else {
-      procw->cancel_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), LIVES_STOCK_CANCEL, NULL,
+      procw->cancel_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing),
+                             LIVES_STOCK_CANCEL, NULL,
                              LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_default(procw->cancel_button, TRUE);
 
@@ -1437,6 +1439,11 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
     textwindow->button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
                          LIVES_STOCK_CLOSE, _("_Close Window"), LIVES_RESPONSE_CANCEL);
+
+    if (!textwindow->table) {
+      LiVESWidget *bbox = lives_dialog_get_action_area(LIVES_DIALOG(textwindow->dialog));
+      lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_SPREAD);
+    }
 
     lives_button_grab_default_special(textwindow->button);
 

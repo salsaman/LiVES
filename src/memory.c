@@ -197,7 +197,7 @@ void _ext_free(void *p) {
 }
 
 
-void *_ext_free_and_return(void *p) {_ext_free(p); return NULL;}
+void *_ext_free_and_return(void *p) {if (p) _ext_free(p); return NULL;}
 
 void *_ext_memcpy(void *dest, const void *src, size_t n) {return lives_memcpy(dest, src, n);}
 
@@ -223,7 +223,7 @@ void *_ext_calloc(size_t nmemb, size_t msize) {
 #endif
 }
 
-LIVES_GLOBAL_INLINE void *lives_free_and_return(void *p) {lives_free(p); return NULL;}
+LIVES_GLOBAL_INLINE void *lives_free_and_return(void *p) {if (p) lives_free(p); return NULL;}
 
 
 LIVES_GLOBAL_INLINE size_t get_max_align(size_t req_size, size_t align_max) {

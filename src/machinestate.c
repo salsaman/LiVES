@@ -1445,6 +1445,7 @@ LIVES_GLOBAL_INLINE char *lives_strstop(char *st, const char term) {
 
 
 LIVES_GLOBAL_INLINE char *lives_chomp(char *buff) {
+  /// chop off final newline
   /// see also lives_strchomp() which removes all whitespace
   if (buff) {
     size_t xs = lives_strlen(buff);

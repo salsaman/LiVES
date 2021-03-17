@@ -45,6 +45,7 @@ typedef struct {
   boolean is_timer;
   boolean added;
   lives_proc_thread_t proc;
+  lives_alarm_t alarm_handle;
 } lives_sigdata_t;
 
 typedef struct {
@@ -164,6 +165,7 @@ typedef uint64_t lives_thread_attr_t;
 #define FUNCSIG_VOIDP 				       			0X0000000D
 #define FUNCSIG_PLANTP 				       			0X0000000E
 #define FUNCSIG_INT_INT64 			       			0X00000015
+#define FUNCSIG_INT_VOIDP 			       			0X0000001D
 #define FUNCSIG_STRING_INT 			      			0X00000041
 #define FUNCSIG_STRING_BOOL 			      			0X00000043
 #define FUNCSIG_VOIDP_VOIDP 				       		0X000000DD
@@ -243,6 +245,14 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_
 
 lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, lives_funcptr_t func,
     int return_type, const char *args_fmt, va_list xargs);
+
+#define LPT_WITH_TIMEOUT(to, attr, func, rtype, args_fmt, ...) \
+      (lives_proc_thread_create_with_timeout_named((to), (attr),	\
+						   (lives_funcptr_t)(func), #func, \
+						   (rtype), (args_fmt), __VA_ARGS__))
+
+lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
+    const char *func_name, int return_type, const char *args_fmt, ...);
 
 lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
     int return_type, const char *args_fmt, ...);

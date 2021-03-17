@@ -59,7 +59,7 @@ typedef struct {
 
   char workdir[PATH_MAX];  ///< kept in locale encoding
 
-  char configfile[PATH_MAX];  ///< kept in locale encoding (config settings) [default ~/.local/config/lives)
+  char configfile[PATH_MAX];  ///< kept in locale encoding (config settings) [default ~/.local/config/lives/settings)
   char config_datadir[PATH_MAX];  ///< kept in locale encoding (general config files) (default ~/.local/share/lives)
 
   // utf8 encoding
@@ -253,7 +253,7 @@ typedef struct {
   // for info only
   char jack_def_server_name[JACK_PARAM_STRING_MAX];
 
-  const char *jack_tdriver, *jack_adriver;
+  char *jack_tdriver, *jack_adriver;
   LiVESList *jack_tslaves, *jack_aslaves;
 
   // may be invalid after client open
@@ -491,6 +491,7 @@ typedef struct {
   boolean vj_mode; // optimise for VJing (in progress, experimental)
 
   boolean allow_easing;
+  boolean jokes;
 
   boolean show_dev_opts;
   boolean dev_show_dabg;
@@ -841,6 +842,7 @@ typedef struct {
   boolean ign_layout;
   boolean ign_osc;
   boolean ign_jackopts;
+  boolean ign_jackserver;
   boolean ign_aplayer;
   boolean ign_asource;
   boolean ign_stmode;
@@ -894,6 +896,8 @@ typedef struct {
   char jack_tserver_cname[JACK_PARAM_STRING_MAX];
   char jack_aserver_sname[JACK_PARAM_STRING_MAX];
   char jack_tserver_sname[JACK_PARAM_STRING_MAX];
+  char *jack_tdriver, *jack_adriver;
+  LiVESList *jack_tslaves, *jack_aslaves;
 #endif
 
   int audio_src;
@@ -1019,6 +1023,12 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #ifdef ENABLE_JACK
 #define PREF_JACK_TDRIVER "jack_transport_driver"
 #define PREF_JACK_ADRIVER "jack_audio_driver"
+
+#define PREF_JACK_LAST_TDRIVER "last_jack_tdriver"
+#define PREF_JACK_LAST_TSERVER "last_jack_tserver"
+
+#define PREF_JACK_LAST_ADRIVER "last_jack_adriver"
+#define PREF_JACK_LAST_ASERVER "last_jack_aserver"
 
 #define PREF_JACK_ACSERVER "jack_audio_connect_server"
 #define PREF_JACK_ASSERVER "jack_audio_startup_server"

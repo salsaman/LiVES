@@ -4,6 +4,7 @@
 // see file ../COPYING for licensing details
 
 #include "main.h"
+static lives_proc_thread_t spcl_lpt = NULL;
 
 /**
    lives_proc_threads API
@@ -15,11 +16,15 @@
    - lives_threads are intended for lightweight function calls which may be split and run in parallel
 		(e.g palette conversions)
    - proc_threads are for more heavyweight functions where an etire function is wrapped to be run in the bg
+   - proc_threads can call literally any function, as as the function prototype
    - proc_threads have typed return values, (or no return)
    - proc_threads have a richer set of attributes to modify their behaviour
    - proc_threads can be cancelled, either at the code points, or the underlying pthread level
 	a running thread can disable or enable code level cancellation;; pthread level cancellation cannot be blocked
 	a cleanup function ensures even in case of pthread level cancellation, the pthread terminates cleanly
+   - proc_threads with a timeout can be created. If the task does not complete before the timer expires, the thread will be
+	instantly cancelled. The thread can request a temporary stay of execution by setting the BUSY state flag, then clearing
+	it later.
    - specifying a return type of 0 causes the proc_thread to automatically be freed when it completes
    - a return type of -1 implies a (void) return
    - calling lives_proc_thread_dontcare() has the effect to of turning any return type to type 0
@@ -130,9 +135,9 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t attr, lives_fun
 // can be read via lives_proc_thread_join_*, and the proc_thread freed as normal
 // providing a return_type of 0 should not in itself cause problems for this function,
 // however since NULL is always returned in this case,
-// thus if there is a need to discover whether the function was cancelled or completed, some other mechanism must be used
-lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
-    int return_type, const char *args_fmt, ...) {
+// if there is a need to discover whether the function was cancelled or completed, some other mechanism must be used
+lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
+    const char *func_name, int return_type, const char *args_fmt, ...) {
   va_list xargs;
   lives_alarm_t alarm_handle;
   lives_proc_thread_t lpt;
@@ -150,21 +155,31 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives
   va_start(xargs, args_fmt);
   lpt = lives_proc_thread_create_vargs(attr, func, xreturn_type, args_fmt, xargs);
   va_end(xargs);
-
+  spcl_lpt = lpt;
   sigdata->proc = lpt;
   sigdata->is_timer = TRUE;
 
+  alarm_handle = sigdata->alarm_handle = lives_alarm_set(timeout);
   tres = governor_loop(sigdata);
+  if (timeout > 0 && !(xtimeout = lives_alarm_check(alarm_handle)))
+    goto thrd_done;
 
-  alarm_handle = lives_alarm_set(timeout);
+  if (tstate & THRD_STATE_BUSY) {
+    // thread MUST unavoidably block; stop the timer (e.g showing a UI)
+    // user or other condition may set cancelled
+    if ((cancel = mainw->cancelled)) goto thrd_done;
+    lives_alarm_reset(alarm_handle, timeout);
+  }
 
   while (!(tres = lives_proc_thread_check_finished(lpt))
          && (timeout == 0 || (xtimeout = lives_alarm_check(alarm_handle)) > 0)) {
+
     lives_nanosleep(LIVES_SHORT_SLEEP);
     tstate = lives_proc_thread_get_state(lpt);
 
     // allow governor_loop to run its idle func
     lives_widget_context_update();
+
     if (tstate & THRD_STATE_BUSY) {
       // thread MUST unavoidably block; stop the timer (e.g showing a UI)
       // user or other condition may set cancelled
@@ -173,11 +188,16 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives
     }
   }
 
+thrd_done:
   lives_alarm_clear(alarm_handle);
-
-  if (!tres && xtimeout == 0) {
-    lives_proc_thread_cancel_immediate(lpt);
-    return NULL;
+  if (xtimeout == 0) {
+    if (!lives_proc_thread_check_finished(lpt)) {
+      if (prefs->jokes) {
+        g_print("function call to %s was shot down in cold blood !\n", func_name);
+      }
+      lives_proc_thread_cancel_immediate(lpt);
+      return NULL;
+    }
   }
 
   if (return_type == 0 || cancel) {
@@ -187,6 +207,15 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives
   return lpt;
 }
 
+lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
+    int return_type, const char *args_fmt, ...) {
+  lives_proc_thread_t ret;
+  va_list xargs;
+  va_start(xargs, args_fmt);
+  ret = lives_proc_thread_create_with_timeout_named(timeout, attr, func, "thefunc", return_type, args_fmt, xargs);
+  va_end(xargs);
+  return ret;
+}
 
 boolean is_fg_thread(void) {
   LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
@@ -248,21 +277,18 @@ void call_funcsig(lives_proc_thread_t info) {
     switch (ret_type) {
     case WEED_SEED_INT64: CALL_0(int64); break;
     default: CALL_VOID_0(); break;
-    }
-    break;
+    } break;
   case FUNCSIG_INT: {
     int p0;
     switch (ret_type) {
     default: CALL_VOID_1(int); break;
-    }
-    break;
+    } break;
   }
   case FUNCSIG_DOUBLE: {
     double p0;
     switch (ret_type) {
     default: CALL_VOID_1(double); break;
-    }
-    break;
+    } break;
   }
   case FUNCSIG_STRING: {
     char *p0;
@@ -281,23 +307,27 @@ void call_funcsig(lives_proc_thread_t info) {
     case WEED_SEED_INT: CALL_1(int, voidptr); break;
     case WEED_SEED_DOUBLE: CALL_1(double, voidptr); break;
     default: CALL_VOID_1(voidptr); break;
-    }
-    break;
+    } break;
   }
   case FUNCSIG_PLANTP: {
     weed_plant_t *p0;
     switch (ret_type) {
     case WEED_SEED_INT64: CALL_1(int64, plantptr); break;
     default: CALL_VOID_1(plantptr); break;
-    }
-    break;
+    } break;
   }
   case FUNCSIG_INT_INT64: {
     int p0; int64_t p1;
     switch (ret_type) {
     default: CALL_VOID_2(int, int64); break;
-    }
-    break;
+    } break;
+  }
+  case FUNCSIG_INT_VOIDP: {
+    int p0; void *p1;
+    switch (ret_type) {
+    case WEED_SEED_BOOLEAN: CALL_2(boolean, int, voidptr); break;
+    default: CALL_VOID_2(int, voidptr); break;
+    } break;
   }
   case FUNCSIG_STRING_INT: {
     char *p0; int p1;
@@ -320,16 +350,14 @@ void call_funcsig(lives_proc_thread_t info) {
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_2(boolean, voidptr, double); break;
     default: CALL_VOID_2(voidptr, double); break;
-    }
-    break;
+    } break;
   }
   case FUNCSIG_VOIDP_VOIDP: {
     void *p0, *p1;
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_2(boolean, voidptr, voidptr); break;
     default: CALL_VOID_2(voidptr, voidptr); break;
-    }
-    break;
+    } break;
   }
   case FUNCSIG_VOIDP_STRING: {
     void *p0; char *p1;
@@ -344,24 +372,21 @@ void call_funcsig(lives_proc_thread_t info) {
     weed_plant_t *p0; int p1;
     switch (ret_type) {
     default: CALL_VOID_2(plantptr, boolean); break;
-    }
-    break;
+    } break;
   }
   case FUNCSIG_VOIDP_VOIDP_VOIDP: {
     void *p0, *p1, *p2;
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_3(boolean, voidptr, voidptr, voidptr); break;
     default: CALL_VOID_3(voidptr, voidptr, voidptr); break;
-    }
-    break;
+    } break;
   }
   case FUNCSIG_VOIDP_VOIDP_BOOL: {
     void *p0, *p1; int p2;
     switch (ret_type) {
     case WEED_SEED_VOIDPTR: CALL_3(voidptr, voidptr, voidptr, boolean); break;
     default: CALL_VOID_3(voidptr, voidptr, boolean); break;
-    }
-    break;
+    } break;
   }
   case FUNCSIG_STRING_VOIDP_VOIDP: {
     char *p0; void *p1, *p2;
@@ -377,8 +402,7 @@ void call_funcsig(lives_proc_thread_t info) {
     switch (ret_type) {
     case WEED_SEED_VOIDPTR: CALL_3(voidptr, voidptr, double, int); break;
     default: CALL_VOID_3(voidptr, double, int); break;
-    }
-    break;
+    } break;
   }
   case FUNCSIG_BOOL_BOOL_STRING: {
     int p0, p1; char *p2;
@@ -394,8 +418,7 @@ void call_funcsig(lives_proc_thread_t info) {
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_3(boolean, plantptr, voidptr, int64); break;
     default: CALL_VOID_3(plantptr, voidptr, int64); break;
-    }
-    break;
+    } break;
   }
   case FUNCSIG_STRING_STRING_VOIDP_INT: {
     char *p0, *p1; void *p2; int p3;
@@ -411,8 +434,7 @@ void call_funcsig(lives_proc_thread_t info) {
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_4(boolean, int, int, boolean, voidptr); break;
     default: CALL_VOID_4(int, int, boolean, voidptr); break;
-    }
-    break;
+    } break;
   }
   case FUNCSIG_VOIDP_STRING_STRING_INT64_INT: {
     void *p0; char *p1, *p2; int64_t p3; int p4;
@@ -426,8 +448,7 @@ void call_funcsig(lives_proc_thread_t info) {
     int p0, p1, p2, p3; void *p4;
     switch (ret_type) {
     default: CALL_VOID_5(int, int, int, boolean, voidptr); break;
-    }
-    break;
+    } break;
   }
   case FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP: {
     char *p0, *p1, *p4; void *p2, *p5; int p3;
@@ -452,6 +473,7 @@ void call_funcsig(lives_proc_thread_t info) {
 LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_get_state(lives_proc_thread_t lpt) {
   return lpt ? weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL) : 0;
 }
+
 
 boolean lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t state_bits) {
   if (lpt) {
@@ -646,6 +668,7 @@ static funcsig_t make_funcsig(lives_proc_thread_t func_info) {
 
 static void pthread_cleanup_func(void *args) {
   lives_proc_thread_t info = (lives_proc_thread_t)args;
+  if (info == spcl_lpt) break_me("lpt");
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
   boolean dontcare = lives_proc_thread_get_state(info) & THRD_OPT_DONTCARE;
   if (dontcare || (!ret_type && !(lives_proc_thread_get_state(info) & THRD_OPT_NOTIFY))) {

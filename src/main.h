@@ -1274,10 +1274,10 @@ void do_no_loadfile_error(const char *fname);
 #ifdef ENABLE_JACK
 boolean do_jack_scripts_warn(const char *scrptx);
 boolean do_jack_nonex_warn(const char *server_config_file);
-void do_jack_no_startup_warn(boolean is_trans);
+boolean do_jack_no_startup_warn(boolean is_trans);
 void do_jack_setup_warn(void);
 void do_jack_no_connect_warn(boolean is_trans);
-void do_jack_restart_warn(int suggest_opts);
+void do_jack_restart_warn(int suggest_opts, const char *srvname);
 #endif
 LiVESResponseType do_file_perm_error(const char *file_name, boolean allow_cancel);
 LiVESResponseType do_dir_perm_error(const char *dir_name, boolean allow_cancel);

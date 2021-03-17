@@ -272,7 +272,9 @@ fi
 if test "$HAVE_JACK_SERVER" = "true"; then
 echo jack server libs found
 else
-echo jack server libs not found
+AC_MSG_ERROR([jack server libraries were not found. These are now required to compile lives with jack.
+Please make sure libjackserver-dev is installed and that jack/control.h is present.\n
+Alternately you can build lives without jack using the configure option --disable-jack.])
 fi
 
 else dnl HAVE_JACK
@@ -323,6 +325,17 @@ AM_CONDITIONAL(ENABLE_JACK,$HAVE_JACK)
 AM_CONDITIONAL(ENABLE_JACK_TRANSPORT,$HAVE_JACK_TRANSPORT)
 AM_CONDITIONAL(ENABLE_VJACK,$HAVE_JACK_VIDEO)
 AM_CONDITIONAL(JACK_V2,$JACK_V2)
+
+if test "$HAVE_JACK" = "true"; then
+if test "$JACK_V2" = "false"; then
+
+echo
+echo **********************************************************************************************************
+echo WARNING: jack1 was found on this system - this version will function perfectly well with LiVES
+echo but it lacks some user friendly features which are only available in jack2.
+echo For this reason it is recommended to compile LiVES with jack2 in order to provide a better user experience.
+echo **********************************************************************************************************
+echo
 
 PKG_CHECK_MODULES(X11,x11,HAVE_X11=true,HAVE_X11=false)
 

@@ -149,10 +149,14 @@ if (1) {
 	## when called from LiVES, configfile is always passed as a parameter
 	## this is just a cross-check
 
-	my @needs_configfile = ("report", "make_thumb", "play", "play_opening_preview", "set_pref_priority", "delete_pref",
+	## TODO - for efficiency only cmds: set_pref, get_pref, report, delete_pre, set_pref_priority
+	## should actually require this, if the backend needs a pref value we should a special mini-prefs file in workdir for example
+	## or even in /dev/shm if available
+
+	my @needs_configfile = ("report", "play", "play_opening_preview", "set_pref_priority", "delete_pref",
 				"set_pref", "get_pref",
 				"open", "open_test", "save", "append_audio", "trim_audio", "resample_audio", "commit_audio",
-				"cdopen", "insert", "get_details", "fill_and_redo_frames", "audioopen");
+				"cdopen");
 
 	if ($command eq "list_commands") {
 	    &listemall(@needs_configfile);
@@ -456,31 +460,12 @@ if (1) {
 
 	    if ($old_version_hash ne $ver_hash) {
 		if ($upd) {
-		    ## TODO: move all into front end
-
-		    my $video_open_command = "\"". &get_mplayer_location . "\"";
-
-		    my $audio_player = "sox";
-		    my $audio_play_command = &config_get_default("sox_command");
-
-		    if ($audio_play_command eq "") {
-			$audio_player = "mplayer";
-			$audio_play_command = &config_get_default("mplayer_audio_command");
-		    }
-
 		    if (defined($smogrify::dyneversion)) {
 			&config_set_if_not_set("lib_dir", "/opt/$smogrify::dyneversion/lib/");
 			&config_set_if_not_set("prefix_dir", "/opt/$smogrify::dyneversion/");
 		    }
-
-		    # NOTE: the following definitions must match with equivalent keys in preferences.h
-		    &config_set_if_not_set("video_open_command", $video_open_command); ## backend only
-		    &config_set_if_not_set("audio_play_command", $audio_play_command); ## backend only
-
 		    # resize action when opening images - can be either: "bound" or "none"
-		    &config_set_if_not_set("image_resize_action", "none"); ## backend only
-		    &config_set_if_not_set("encoder", $encoder); ## TODO: check for encoders, formats; pick best
-		    &config_set_if_not_set("gui_theme", "crayons"); ## TODO: check for available themes @ startup
+		    #&config_set_if_not_set("encoder", $encoder); ## TODO: check for encoders, formats; pick best
 		}
 		if ($old_version ne "") {
 		    if ($old_version_hash < $ver_hash) {
@@ -1014,11 +999,11 @@ if (1) {
 	    $name = &mkname(1);
 
 	    if ($antialias eq "false") {
-		smog_system("$smog_convert_command +antialias \"$file\" -scale $hsize" .
+		&smog_system("$smog_convert_command +antialias \"$file\" -scale $hsize" .
 			    "x$vsize\\! $img_prefix\"$curworkdir/$name$img_ext\" > $nulfile 2>&1");
 	    }
 	    else {
-		smog_system("$smog_convert_command -antialias \"$file\" -resize $hsize" .
+		&smog_system("$smog_convert_command -antialias \"$file\" -resize $hsize" .
 			    "x$vsize\\! $img_prefix\"$curworkdir/$name$img_ext\" > $nulfile 2>&1");
 	    }
 	    &sig_complete_stdout($hsize, $vsize);
@@ -1553,14 +1538,7 @@ if (1) {
 
 
 	if ($command eq "play") {
-	    ## now only used for audio playback with "sox"
-
-	    $audio_player = &config_get("audio_player");
-	    if ($audio_player ne "sox") {
-		unlink $pidfile;
-		exit 0;
-	    }
-
+	    ## only used for audio playback with "sox"
 	    $endian = &get_endian;
 
 	    $fps = $ARGV[2];
@@ -1610,6 +1588,7 @@ if (1) {
 
 	    $aformat = ".raw";
 
+	    ## TODO - should be passed from front end
 	    if (defined($opening_preview)) {
 		$audiofile = "$curworkdir/audiodump.pcm";
 	    } else {
@@ -1627,79 +1606,70 @@ if (1) {
 		    $mute = " -v 0 ";
 		}
 
-		$audio_play_command = &config_get("audio_play_command");
+		$audio_effect = &config_get("audio_effect");
+		$trimcom = " trim $audio_start";
 
-		if ($audio_play_command eq "" or $audio_play_command eq '""') {
-		    $time = ($audio_end - $audio_start);
-		    select(undef, undef, undef, $time);
+		if (($audio_end > $audio_start) && $end > 0) {
+		    $trimcom .= " ".($audio_end - $audio_start);
+		} else {
+		    $trimcom .= " 10000000";
 		}
 
-		elsif ($audio_player eq "sox") {
-		    $audio_effect = &config_get("audio_effect");
-		    $trimcom = " trim $audio_start";
+		## get_sox_format -
+		## call get_sox_signed with guessed format (u for 8, s for 16)
+		## returns signed e.g -e signed
 
-		    if (($audio_end > $audio_start) && $end > 0) {
-			$trimcom .= " ".($audio_end - $audio_start);
-		    } else {
-			$trimcom .= " 10000000";
-		    }
+		$xsigned = &get_sox_signed($signed);
 
-		    ## get_sox_format -
-		    ## call get_sox_signed with guessed format (u for 8, s for 16)
-		    ## returns signed e.g -e signed
-
-		    $xsigned = &get_sox_signed($signed);
-
-		    if ($aendian == $endian) {
-			$aendian = "";
-		    } else {
-			$aendian = "-x";
-		    }
-
-		    if ($audio_effect eq "flanger1") {
-			$audio_effect = "flanger 0.6 0.87 3.0 0.9 0.5 -s";
-		    }
-		    elsif($audio_effect eq "echo1") {
-			$audio_effect = "echo 0.8 0.9 1000.0 0.3";
-		    }
-		    elsif($audio_effect eq "chorus1") {
-			$audio_effect = "chorus 0.6 0.9 50.0 0.4 0.25 2.0 -t 60.0  0.32  0.4 1.3 -s";
-		    }
-		    elsif($audio_effect eq "reverb1") {
-			$audio_effect = "reverb 1.0 600.0 180.0 200.0";
-		    }
-		    elsif($audio_effect eq "phaser1") {
-			$audio_effect = "phaser 0.89 0.85 1.0 0.24 2.0 -t";
-		    }
-		    else {
-			$audio_effect = "";
-		    }
-
-		    $sox_version = &get_sox_version;
-		    $stype = &get_sox_samps($asamps);
-
-		    ## TODO0
-		    if ($sox_version < 13000000) {
-			$nodither = "";
-		    }
-		    else {
-			$nodither = "-D";
-		    }
-
-		    $syscom2 = "$audio_play_command $mute -c $achans -r $arate -$xsigned $aendian -t $aformat -$stype " .
-			"$audiofile $trimcom $audio_effect";
+		if ($aendian == $endian) {
+		    $aendian = "";
+		} else {
+		    $aendian = "-x";
 		}
+
+		if ($audio_effect eq "flanger1") {
+		    $audio_effect = "flanger 0.6 0.87 3.0 0.9 0.5 -s";
+		}
+		elsif($audio_effect eq "echo1") {
+		    $audio_effect = "echo 0.8 0.9 1000.0 0.3";
+		}
+		elsif($audio_effect eq "chorus1") {
+		    $audio_effect = "chorus 0.6 0.9 50.0 0.4 0.25 2.0 -t 60.0  0.32  0.4 1.3 -s";
+		}
+		elsif($audio_effect eq "reverb1") {
+		    $audio_effect = "reverb 1.0 600.0 180.0 200.0";
+		}
+		elsif($audio_effect eq "phaser1") {
+		    $audio_effect = "phaser 0.89 0.85 1.0 0.24 2.0 -t";
+		}
+		else {
+		    $audio_effect = "";
+		}
+
+		$sox_version = &get_sox_version;
+		$stype = &get_sox_samps($asamps);
+
+		## TODO0
+		if ($sox_version < 13000000) {
+		    $nodither = "";
+		}
+		else {
+		    $nodither = "-D";
+		}
+
+		$syscom2 = "sox $mute -c $achans -r $arate -$xsigned $aendian -t $aformat -$stype " .
+		    "$audiofile $trimcom $audio_effect";
 	    }
 
 	    my $showed_err = 0;
 
 	    do {
-		if (! -d "$curworkdir" || -f "$curworkdir/.stoploop"
+		if (! -d $curworkdir || -f "$curworkdir/.stoploop"
 		    || -f "$curworkdir/stoploop" || ! -f $audiofile) {
 		    $loop = 0;
 		} else {
 		    $syscom3 = $syscom2 . ">$nulfile 2>&1";
-		    $retval = smog_system("$syscom3");
+		    $retval = &smog_system($syscom3);
 		    if ($retval > 255) {
 			unless ($showed_err) {
 			    print STDERR "Error playing audio !\n";
@@ -1763,15 +1733,12 @@ if (1) {
 	    }
 	    if ($mplay_command eq "") {
 		my $mp_command = &config_get("video_open_command");
-		if ($mp_command ne "") {
-		    my $mpc1 = (split(" ", $mp_command))[0];
-		    if ($mpc1 =~ /mpv$/ || $mpc1 =~ /mpv\"$/) {
-			$is_mpv = 1;
-		    }
+		if ($mp_command =~ /mpv/) {
+		    $is_mpv = 1;
 		}
 		else {
 		    # sets $is_mpv
-		    $mp_command = "\"" . &get_mplayer_location . "\"";
+		    $mp_command = qq("${\get_mplayer_location()}");
 		}
 		if ($mp_command eq "") {
 		    $panic = 1;
@@ -1883,11 +1850,7 @@ if (1) {
 		}
 	    }
 
-	    $threads = &smog_system_direct("$SYSBIN" . "grep processor /proc/cpuinfo | wc -l");
-	    $threads = int($threads);
-	    if ($threads == 0) {
-		$threads = 1;
-	    }
+	    my $threads = &get_nthreads;
 
 	    if ($type eq "jpeg" || $type eq "png") {
 		$count = $frames;
@@ -2140,7 +2103,6 @@ if (1) {
 		if (&location("identify") ne "") {
 		    # double check image size
 		    $name = &mkname(1);
-		    $imresact = "none";
 		    &get_image_size("$name$img_ext");
 		    if ($panic || $hsize==-1) {
 			&sig_error("This file does not appear to be a valid video, audio " .
@@ -2276,7 +2238,7 @@ if (1) {
 		}
 	    }
 
-	    my $mp = "\"". &get_mplayer_location . "\"";
+	    my $mp = qq("${\get_mplayer_location()}");
 
 	    ## note does not function with mpv since it cannot convert to yuv4mpeg (complains about missing pixel_fmt)
 	    my $com = "$mp -really-quiet tv://$chanstr -tv device=$devstr$inputstr$driverstr$sizestr$outfmt$fpsstr " .
@@ -2293,7 +2255,7 @@ if (1) {
 	    my $cardno = $ARGV[2];
 	    #$cache = $ARGV[3];
 	    my $fifofile = $ARGV[4];
-	    my $mp = "\"". &get_mplayer_location . "\"";
+	    my $mp = qq("${\get_mplayer_location()}");
 	    ## note does not function with mpv since it cannot convert to yuv4mpeg (complains about missing pixel_fmt)
 	    my $com = "dvgrab -s 0 -noavc -card $cardno -o - 2>$nulfile | $mp - -really-quiet -demuxer lavf " .
 		"-vo yuv4mpeg:file=$fifofile >$nulfile 2>&1";
@@ -2399,6 +2361,8 @@ if (1) {
 		$aendian = &get_endian;
 	    }
 
+	    ## TODO - pass all this in from front end !!
+
 	    my $sox_version = &get_sox_version;
 	    my $asigned = &get_sox_signed(!$signed);
 	    my $aud_start;
@@ -2420,7 +2384,6 @@ if (1) {
 	    our $img_ext = &get_img_ext($curworkdir, $start);
 
 	    # get image size ($hsize x $vsize)
-	    $imresact = "none";
 
 	    my $firstframe = &mkname($start);
 
@@ -2470,12 +2433,7 @@ if (1) {
 			}
 
 			if ($aud_start != 0. && !($areq & 1)) {
-			    if (&config_get("conserve_space") eq "true") {
-				unlink $origaudio;
-			    }
-			    else {
-				&smog_rename( $origaudio, "$origaudio.origbak");
-			    }
+			    &smog_rename( $origaudio, "$origaudio.origbak");
 			    &smog_rename($audiofile, $origaudio);
 			    $audiofile = $audio_in = $origaudio;
 			}}
@@ -3249,12 +3207,9 @@ if (1) {
 	    $volume = $ARGV[7];
 	    $file = $ARGV[8];
 	    $extra_params = $ARGV[9];
-	    $mplayer_command = "\"". &get_mplayer_location . "\"";
-	    $threads = &smog_system_direct("$SYSBIN" . "grep processor /proc/cpuinfo | wc -l");
-	    $threads = int($threads);
-	    if ($threads == 0) {
-		$threads = 1;
-	    }
+	    $mplayer_command = &get_mplayer_location;
+	    my $threads = &get_nthreads;
+
 	    if ($preview_frames >= 0) {
 		if (!$is_mpv) {
 		    if ($preview_frames > 0) {
@@ -3263,7 +3218,7 @@ if (1) {
 			$framestr = "";
 		    }
 		    $threadopts = "-lavdopts o=threads=$threads";
-		    $com = "$mplayer_command -vo x11 -zoom -really-quiet -noconfig all -osdlevel 0 -wid $win $threadopts " .
+		    $com = "\"$mplayer_command\" -vo x11 -zoom -really-quiet -noconfig all -osdlevel 0 -wid $win $threadopts " .
 			"-vf dsize=$hsize:$vsize:0 -ss $start_time $framestr \"$file\" -volume $volume $extra_params " .
 			">$nulfile 2>&1 <$nulfile";
 		} else {
@@ -3273,16 +3228,16 @@ if (1) {
 			$framestr = "";
 		    }
 		    $threadopts="--vd-lavc-threads=$threads";
-		    $com = "$mplayer_command --no-config --vo=x11 --really-quiet --osd-level=0 --wid=$win $threadopts " .
+		    $com = "\"$mplayer_command\" --no-config --vo=x11 --really-quiet --osd-level=0 --wid=$win $threadopts " .
 			"--start=$start_time $framestr \"$file\" --volume=$volume $extra_params >$nulfile 2>&1";
 		}
 	    } else {
 		#audio only
 		if (!$is_mpv) {
-		    $com = "$mplayer_command -really-quiet -noconfig all -volume $volume -novideo -vo null \"$file\" " .
+		    $com = "\"$mplayer_command\" -really-quiet -noconfig all -volume $volume -novideo -vo null \"$file\" " .
 			"$extra_params >$nulfile 2>&1 <$nulfile";
 		} else {
-		    $com = "$mplayer_command --really-quiet --no-config --volume=$volume --no-video --vo=null \"$file\" " .
+		    $com = "\"$mplayer_command\" --really-quiet --no-config --volume=$volume --no-video --vo=null \"$file\" " .
 			"$extra_params >$nulfile 2>&1";
 		}
 	    }
@@ -3438,24 +3393,19 @@ if (1) {
 		#audio.new
 	    }
 
-	    unless(&config_get("conserve_space") eq "true") {
-		&smog_rename($audio_out, "keep_$audio_out");
-		&backup_audio(0);
-		if ($panic) {
-		    unlink "keep_$audio_out";
-		    unlink $pidfile;
-		    exit 1;
-		}
-		&smog_rename("keep_$audio_out", $audio_out);
-
-		&smog_copy("audio.bak", "audiodump");
-		if ($panic) {
-		    unlink $pidfile;
-		    exit 1;
-		}
+	    &smog_rename($audio_out, "keep_$audio_out");
+	    &backup_audio(0);
+	    if ($panic) {
+		unlink "keep_$audio_out";
+		unlink $pidfile;
+		exit 1;
 	    }
-	    else {
-		&smog_rename("audio", "audiodump");
+	    &smog_rename("keep_$audio_out", $audio_out);
+
+	    &smog_copy("audio.bak", "audiodump");
+	    if ($panic) {
+		unlink $pidfile;
+		exit 1;
 	    }
 
 	    # append audio audio.new -> audiodump
@@ -3590,10 +3540,6 @@ if (1) {
 	    if ($panic) {
 		unlink $pidfile;
 		exit 1;
-	    }
-
-	    if (&config_get("conserve_space") eq "true" && (-s $audio_out)) {
-		unlink $audio_in;
 	    }
 
 	    &sig_complete;
@@ -3742,14 +3688,12 @@ if (1) {
 	    my $f_size = -s $audio_in;
 	    if ($f_size > 0) {
 		# wav format
-		unless(&config_get("conserve_space") eq "true") {
-		    if (-f $audio_out) {
-			$smres = &smog_rename($audio_out, $audio_bak);
-		    } else {
-			unless (&is_writeable($audio_bak)) {
-			    &sig_write_error($audio_bak);
-			    exit 1;
-			}
+		if (-f $audio_out) {
+		    $smres = &smog_rename($audio_out, $audio_bak);
+		} else {
+		    unless (&is_writeable($audio_bak)) {
+			&sig_write_error($audio_bak);
+			exit 1;
 		    }
 		}
 		&get_file_info($file, 2, 0);
@@ -3772,15 +3716,13 @@ if (1) {
 		}
 		if ($gotit || -f $audio_in) {
 		    # raw format
-		    unless(&config_get("conserve_space") eq "true") {
-			if (-f $audio_out) {
-			    $smres = &smog_rename($audio_out, $audio_bak);
-			    #aborts on failure
-			} else {
-			    unless (&is_writeable($audio_bak, 0)) {
-				&sig_write_error($audio_bak);
-				exit 1;
-			    }
+		    if (-f $audio_out) {
+			$smres = &smog_rename($audio_out, $audio_bak);
+			#aborts on failure
+		    } else {
+			unless (&is_writeable($audio_bak, 0)) {
+			    &sig_write_error($audio_bak);
+			    exit 1;
 			}
 		    }
 		    &smog_rename($audio_in, $audio_out);
@@ -4554,9 +4496,6 @@ if (1) {
 
 		    $audio_to = "$curworkdir/audio";
 		    &insert_audio($asamps, $achans, $asigned, $aendian, $undo_cut);
-		    if (&config_get("conserve_space") eq "true") {
-			unlink "audio.bak";
-		    }
 		    if ($panic) {
 			unlink $pidfile;
 			exit 1;
@@ -5468,7 +5407,6 @@ sub insert {
 			if ($height * $width == 0) {
 			    $quick_copy = 1;
 			} else {
-			    $imresact = "none";
 			    &get_image_size("$fromdir/$from$img_ext2");
 			    return if $panic;
 
@@ -5699,7 +5637,6 @@ sub trim_center {
 	$input_ext = $img_ext;
     }
 
-    $imresact = "none";
     &get_image_size("$name$input_ext");
     return if ($panic || $hsize == -1);
 
@@ -6694,17 +6631,8 @@ sub get_file_info {
 
 	    if ($id_vid_form eq "") {
 		if ($mplay_command eq "") {
-		    my $mp_command = &config_get("video_open_command");
-		    if ($mp_command ne "") {
-			my $mpc1 = (split(" ", $mp_command))[0];
-			if ($mpc1 =~ /mpv$/ || $mpc1 =~ /mpv\"$/) {
-			    $is_mpv = 1;
-			}
-		    }
-		    else {
-			# sets $is_mpv
-			$mp_command = "\"" . &get_mplayer_location . "\"";
-		    }
+		    # sets $is_mpv
+		    $mp_command = qq("${\get_mplayer_location()}");
 
 		    if ($mp_command eq "") {
 			$panic = 1;
@@ -6764,7 +6692,6 @@ sub get_file_info {
 			$count++;
 			$count -= $origcount;
 			$origcount = 0;
-			$imresact = "none";
 			if ($only_first) {
 			    unlink glob "$curworkdir/*$ximg_ext";
 			    last;
@@ -6884,12 +6811,8 @@ sub convert_audio_to_raw {
 	}
     }
     else {
-	my $threads = &smog_system_direct("$SYSBIN" . "grep processor /proc/cpuinfo | wc -l");
-	$threads = int($threads);
-	if ($threads == 0) {
-	    $threads = 1;
-	}
-	$mp_com = "\"". &get_mplayer_location . "\"";
+	my $threads = &get_nthreads;
+	$mp_com = &get_mplayer_location;
 	$format = &get_mplayer_format;
 
 	if ($is_mpv) {
@@ -6900,12 +6823,12 @@ sub convert_audio_to_raw {
 		return;
 	    }
 	    my $threadopts = "--vd-lavc-threads=$threads";
-	    $smcom = "$mp_com --really-quiet --no-config --vo=null --no-video --ao=pcm --ao-pcm-waveheader=no " .
+	    $smcom = "\"$mp_com\" --really-quiet --no-config --vo=null --no-video --ao=pcm --ao-pcm-waveheader=no " .
 		"--ao-pcm-file=\"$audio_out\" $format";
 	}
 	else {
 	    my $threadopts = "-lavdopts o=threads=$threads";
-	    $smcom = "$mp_com -really-quiet -noconfig all -vo null -vc null -benchmark-novideo -ao pcm:fast:nowaveheader:" .
+	    $smcom = "\"$mp_com\" -really-quiet -noconfig all -vo null -vc null -benchmark-novideo -ao pcm:fast:nowaveheader:" .
 		"file=\"$audio_out\" $format <$nulfile";
 	}
     }
@@ -6922,6 +6845,19 @@ sub convert_audio_to_raw {
 }
 
 
+sub get_nthreads {
+    my $threads = &config_get("nfx_threads");
+    $threads = int($threads);
+    if ($threads < 0) {
+	$threads = -$threads;
+    }
+    elsif ($threads == 0) {
+	$threads = 1;
+    }
+    $threads;
+}
+
+
 sub convert_audio_to_wav {
     #convert raw to .wav
     my $smcom;
@@ -6929,23 +6865,19 @@ sub convert_audio_to_wav {
     &smog_chdir($curworkdir);
     if (&location("sox") eq "") {
 	my $aasamps = $asamps / 8;
-	my $mp_com = "\"". &get_mplayer_location . "\"";
+	my $mp_com = &get_mplayer_location;
 	my $format = &get_mplayer_format;
-	my $threads = &smog_system_direct("$SYSBIN" . "grep processor /proc/cpuinfo | wc -l");
-	$threads = int($threads);
-	if ($threads == 0) {
-	    $threads = 1;
-	}
+	my $threads = &get_nthreads;
 
 	if ($is_mpv) {
 	    my $threadopts = "--vd-lavc-threads=$threads";
-	    $smcom = "$mp_com --no-config --really-quiet --demuxer=rawaudio --demuxer-rawaudio-rate=$arate " .
+	    $smcom = "\"$mp_com\" --no-config --really-quiet --demuxer=rawaudio --demuxer-rawaudio-rate=$arate " .
 		"--demuxer-rawaudio-format=$format --demuxer-rawaudio-channels=$achans --vo=null --no-video " .
 		"--ao=pcm:waveheader \"$audio_in\"";
 	}
 	else {
 	    my $threadopts = "-lavdopts o=threads=$threads";
-	    $smcom = "$mp_com -noconfig all -really-quiet -demuxer rawaudio -rawaudio " .
+	    $smcom = "\"$mp_com\" -noconfig all -really-quiet -demuxer rawaudio -rawaudio " .
 		"rate=$arate:channels=$achans:samplesize=$aasamps $format -vo null -novideo " .
 		"-ao pcm:fast:waveheader:$format \"$audio_in\" >$nulfile 2>&1 <$nulfile";
 	}
@@ -7793,7 +7725,6 @@ sub file_examine {
 
 sub get_image_size {
     ## neds global $hsize, $vsize, $bpp, $inresact, $dheight ?, $dwidth ?, $ file_exec ?
-    ## needs $configfile if $imresact not defined
 
     # returns $hsize,$vsize and $bpp for $1
     my $file = shift;
@@ -7816,11 +7747,9 @@ sub get_image_size {
 
     $bpp = 8; # default for images
     if (!defined($imresact)) {
-	$imresact = &config_get("image_resize_action");
+	$imresact = "none";
     }
 
-    # imresact can be:
-    # default - resize all images to default
     # bound - use as max size but keep aspect (e.g. for thumbnails)
     # none - return actual size
 
@@ -7863,9 +7792,6 @@ sub get_image_size {
 	    }
 	    $hsize = int($hsize);
 	    $vsize = int($vsize);
-	}
-	elsif($imresact eq "default") {
-	    $hsize = $vsize = "";
 	}
     }
     if (!defined($hsize) || $hsize eq "") {
@@ -8073,7 +7999,7 @@ sub othera_open {
     $aendian = &get_endian;
     $asigned = 1;
 
-    $mplayer_command = "\"" . &get_mplayer_location . "\"";
+    $mplayer_command = &get_mplayer_location;
     $format = &get_mplayer_format;
 
     if ($is_mpv && $format eq "") {
@@ -8083,11 +8009,11 @@ sub othera_open {
     }
 
     if (!$is_mpv) {
-	$com = "$mplayer_command -really-quiet \"$file\" -ao pcm:fast:waveheader:file=\"$audio_in\" $format -channels " .
+	$com = "\"$mplayer_command\" -really-quiet \"$file\" -ao pcm:fast:waveheader:file=\"$audio_in\" $format -channels " .
 	    "$achans <$nulfile";
     }
     else {
-	$com = "$mplayer_command --really-quiet \"$file\" --ao=pcm:waveheader:file=\"$audio_in\" $format " .
+	$com = "\"$mplayer_command\" --really-quiet \"$file\" --ao=pcm:waveheader:file=\"$audio_in\" $format " .
 	    "--audio-channels=$achans";
     }
     my $smerr = &smog_system($com);
@@ -8105,8 +8031,7 @@ sub othera_open {
     $aendian = $endian;
 
     if ($arate == 0 && $achans == 0 && $asamps == 0) {
-	# TODO - find way to read these
-	# have to assume these for now
+	## should be very rare, get_file_info generally works well now
 	$arate = 44100;
 	$achans = 2;
 	$asamps = 16;
@@ -8539,13 +8464,25 @@ sub listemall {
     my %subsneed;
     my $usesrc = 0;
     my $lastline = "";
+
+    ## this is poorly coded. what we should do is create a kind of tree model
+    ## or 2 hashes, one of cmds, and one of subs, each with a list of subs it calls
+    ## any subs or commands which call config_get* or config_set* directly can be coloured
+    ## then continue recursively, any commands or subs which call a coloured sub also become coloured
+    ## and continue like so until we do a complete pass without colouring
+
+    ## however this is still not accurate since there are code paths to consider, e.g commit_audio calls get_file_info
+    ## which may call open_single_image which gets "antialias", even though this is not relevant for audio
+
     open (PS, $MYNAME);
     while (<PS>) {
 	my $xline = $_;
 	if ($xline =~ /\$command eq \"/) {
+	    ## command
 	    my $line = (split("\"", (split(" eq \"", $xline))[1]))[0];
 	    if ($line) {
 		if ($lastline) {
+		    ## we can now assume we have parsed the previous command
 		    $hash{$lastline} = $usesrc;
 		}
 		$lastline = $line;
@@ -8554,14 +8491,16 @@ sub listemall {
 	    next;
 	}
 	if ($xline =~ /^sub (.*) \{/) {
+	    ## subroutine
 	    if ($lastline) {
+		## we can now assume we have parsed the previous command
 		$hash{$lastline} = $usesrc;
 		$lastline = "";
 	    }
 	    $sub = $1;
 	    if ($lastsub) {
 		if ($lastsub =~ /config_get/ || $lastsub =~ /config_set/) {
-		    $usesrc = 0;
+		    $usesrc = 1;
 		}
 		else {
 		    $subs{$lastsub} = $usesrc;
@@ -8593,7 +8532,7 @@ sub listemall {
 	print "\n";
     }
 
-    return;
+    #return;
 
     print "\nsmogrify subroutine summary:\n";
     foreach my $sub (keys %subs) {
@@ -9542,32 +9481,6 @@ sub fndset {
 
     /^set\./ or return; ###/ fix formatting for EMACS...
 	$in_set = 1;
-}
-
-
-# get default values
-
-sub config_get_default {
-    # return a value from our .config file
-    my $key = shift;
-    my $ret = "";
-
-    if ($key eq "mplayer_play_video_command") {
-	$ret = "\"" . &get_mplayer_location . "\"";
-	if (!($ret eq "")) {
-	    $ret .= " -double";
-	}
-    }
-
-    elsif ($key eq "sox_command") {
-	$ret = "\"" . &location("play") . "\"";
-    }
-
-    elsif ($key eq "mplayer_audio_command") {
-	$ret = "\"". &get_mplayer_location . "\"";
-    }
-
-    $ret;
 }
 
 

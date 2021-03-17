@@ -4526,7 +4526,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     // recreate effects menu
     LiVESWidget *menuitem = lives_standard_menu_item_new_with_label(mainw->rendered_fx[0]->menu_text);
 
-    lives_widget_set_sensitive(menuitem, FALSE);
+    //lives_widget_set_sensitive(menuitem, FALSE);
     lives_widget_set_tooltip_text(menuitem, _("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."));
 
     lives_widget_add_accelerator(menuitem, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -4542,8 +4542,8 @@ void add_rfx_effects2(lives_rfx_status_t status) {
         ((has_video_filters(TRUE) && !has_video_filters(FALSE)) ||
          (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
          mainw->agen_key != 0)) {
-      lives_widget_set_sensitive(menuitem, TRUE);
-    } else lives_widget_set_sensitive(menuitem, FALSE);
+      //lives_widget_set_sensitive(menuitem, TRUE);
+    } //else lives_widget_set_sensitive(menuitem, FALSE);
   }
 
   if (mainw->num_rendered_effects_test) {
@@ -4575,8 +4575,8 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   if (status != RFX_STATUS_TEST) {
     lives_menu_shell_insert(LIVES_MENU_SHELL(mainw->effects_menu), mainw->custom_effects_submenu, 2);
     mainw->custom_effects_separator = lives_menu_item_new();
-    lives_widget_set_sensitive(mainw->custom_effects_separator, FALSE);
     lives_menu_shell_insert(LIVES_MENU_SHELL(mainw->effects_menu), mainw->custom_effects_separator, 3);
+    lives_widget_set_sensitive(mainw->custom_effects_separator, FALSE);
   }
 
   if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
@@ -4711,7 +4711,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
           }
 	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),
 				       LINKED_RFX_KEY, (livespointer)rfx);
-          if (rfx->min_frames >= 0) lives_widget_set_sensitive(menuitem, FALSE);
+          //if (rfx->min_frames >= 0) lives_widget_set_sensitive(menuitem, FALSE);
 	  // *INDENT-OFF*
 	}}}}
   // *INDENT-ON*

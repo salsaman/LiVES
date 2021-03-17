@@ -89,9 +89,10 @@ ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
   // offset of 1 was added for caller
   alarm = &mainw->alarms[--alarm_handle];
 
-  // alarm time was never set !
-  if (alarm->lastcheck == 0) {
-    LIVES_WARN("Alarm time not set");
+  if (alarm->tleft == 0) {
+    if (alarm->lastcheck == 0) {
+      LIVES_WARN("Alarm time not set");
+    }
     return 0;
   }
 
@@ -110,7 +111,8 @@ ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
 
   if (alarm->tleft <= 0) {
     // reached alarm time, free up this timer and return TRUE
-    alarm->lastcheck = 0;
+    //alarm->lastcheck = 0;
+    alarm->tleft = 0;
     LIVES_DEBUG("Alarm reached");
     return 0;
   }

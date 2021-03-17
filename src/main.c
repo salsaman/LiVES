@@ -77,6 +77,7 @@
 #endif
 
 #include <getopt.h>
+#include <wordexp.h>
 
 #ifdef IS_DARWIN
 #include <mach/mach.h>
@@ -204,9 +205,11 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
       return;
     }
 #endif
-#define NO_CRITICAL_ERRORS
+    //#define NO_CRITICAL_ERRORS
 #ifdef NO_CRITICAL_ERRORS
-    if (xlevel == LIVES_LOG_LEVEL_CRITICAL) return;
+    if (xlevel == LIVES_LOG_LEVEL_CRITICAL) {
+      return;
+    }
 #endif
 #endif
 
@@ -275,7 +278,7 @@ LIVES_LOCAL_INLINE void jack_warn(boolean is_trans) {
   if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
   do_jack_no_startup_warn(is_trans);
   if (!prefs->startup_phase)
-    if (prefs->startup_phase == 0) do_jack_restart_warn(-1);
+    if (prefs->startup_phase == 0) do_jack_restart_warn(-1, NULL);
   // if we have backup config, restore from it
   set_int_pref(PREF_JACK_OPTS, 0);
 }
@@ -612,7 +615,9 @@ static void print_notice(void) {
 static boolean pre_init(void) {
   // stuff which should be done *before* mainwindow is created
   // returns TRUE if we got an error loading the theme
-
+#ifdef ENABLE_JACK
+  char jbuff[JACK_PARAM_STRING_MAX];
+#endif
 #ifdef GUI_GTK
   LiVESError *gerr = NULL;
   char *icon;
@@ -630,6 +635,7 @@ static boolean pre_init(void) {
   lives_thread_data_create(0);
 
   // need to create directory for configfile before calling get_capabilities()
+  // NOTE: this is the one and only time we reference cfgdir, other than this it should be considered sacrosanct
   cfgdir = get_dir(prefs->configfile);
   lives_make_writeable_dir(cfgdir);
   lives_free(cfgdir);
@@ -758,7 +764,14 @@ static boolean pre_init(void) {
 
   /// kick off the thread pool ////////////////////////////////
   /// this must be done before we can check the disk status
-  future_prefs->nfx_threads = prefs->nfx_threads = get_int_prefd(PREF_NFX_THREADS, capable->ncpus);
+  future_prefs->nfx_threads = prefs->nfx_threads = get_int_pref(PREF_NFX_THREADS);
+  if (future_prefs->nfx_threads <= 0) {
+    prefs->nfx_threads = capable->ncpus;
+    // set this for the backend, but use a -ve value so we know it wasnt set by the user
+    if (prefs->nfx_threads != -future_prefs->nfx_threads)
+      set_int_pref(PREF_NFX_THREADS, -prefs->nfx_threads);
+    future_prefs->nfx_threads = prefs->nfx_threads;
+  }
 
 #ifdef VALGRIND_ON
   prefs->nfx_threads = 2;
@@ -995,7 +1008,7 @@ static boolean pre_init(void) {
   mainw->ref_message_n = 0;
   add_messages_to_list(_("Starting...\n"));
 
-  get_string_pref(PREF_GUI_THEME, prefs->theme, 64);
+  get_string_prefd(PREF_GUI_THEME, prefs->theme, 64, LIVES_DEF_THEME);
 
   if (!(*prefs->theme)) {
     lives_snprintf(prefs->theme, 64, LIVES_THEME_NONE);
@@ -1034,29 +1047,81 @@ static boolean pre_init(void) {
 
   prefs->jack_srv_dup = TRUE;
 
-  get_string_pref(PREF_JACK_ADRIVER, buff, MIN(256, JACK_PARAM_STRING_MAX));
-  if (*buff) {
-    prefs->jack_adriver = lives_strdup(buff);
-#ifdef ENABLE_JACK_TRANSPORT
-    if (prefs->jack_srv_dup) {
-      prefs->jack_tdriver = lives_strdup(buff);
-    }
-#endif
-  }
-
+  get_string_pref(PREF_JACK_ACSERVER, prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX);
+  get_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX);
   get_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg, PATH_MAX);
   lives_snprintf(future_prefs->jack_aserver_cfg, PATH_MAX, "%s", prefs->jack_aserver_cfg);
-  get_string_pref(PREF_JACK_ACSERVER, prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX);
-  lives_snprintf(future_prefs->jack_aserver_cname, PATH_MAX, "%s", prefs->jack_aserver_cname);
-  get_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX);
-  lives_snprintf(future_prefs->jack_aserver_sname, PATH_MAX, "%s", prefs->jack_aserver_sname);
 
-#ifndef ENABLE_JACK_TRANSPORT
-  prefs->jack_opts &= ~(JACK_OPTS_TRANSPORT_CLIENT | JACK_OPTS_TRANSPORT_MASTER
-                        | JACK_OPTS_START_TSERVER | JACK_OPTS_TIMEBASE_START
-                        | JACK_OPTS_TIMEBASE_CLIENT | JACK_OPTS_TIMEBASE_MASTER
-                        | JACK_OPTS_TIMEBASE_LSTART | JACK_OPTS_ENABLE_TCLIENT);
+  if (!ign_opts.ign_jackserver) {
+    lives_snprintf(future_prefs->jack_aserver_cname, PATH_MAX, "%s", prefs->jack_aserver_cname);
+    lives_snprintf(future_prefs->jack_aserver_sname, PATH_MAX, "%s", prefs->jack_aserver_sname);
+  }
+
+  get_string_pref(PREF_JACK_ADRIVER, jbuff, JACK_PARAM_STRING_MAX);
+
+  if (*jbuff) {
+    prefs->jack_adriver = lives_strdup(jbuff);
+    future_prefs->jack_adriver = lives_strdup(jbuff);
+#ifdef ENABLE_JACK_TRANSPORT
+    if (prefs->jack_srv_dup) {
+      prefs->jack_tdriver = lives_strdup(jbuff);
+      future_prefs->jack_tdriver = lives_strdup(jbuff);
+    }
+  }
+
+  if (prefs->jack_srv_dup) {
+    lives_snprintf(prefs->jack_tserver_cname, PATH_MAX, "%s", prefs->jack_aserver_cname);
+    lives_snprintf(prefs->jack_tserver_sname, PATH_MAX, "%s", prefs->jack_aserver_sname);
+    lives_snprintf(prefs->jack_tserver_cfg, PATH_MAX, "%s", prefs->jack_aserver_cfg);
+  } else {
+    get_string_pref(PREF_JACK_TCSERVER, prefs->jack_tserver_cname, JACK_PARAM_STRING_MAX);
+    get_string_pref(PREF_JACK_TSSERVER, prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX);
+    get_string_pref(PREF_JACK_TCONFIG, prefs->jack_tserver_cfg, PATH_MAX);
+    get_string_pref(PREF_JACK_TDRIVER, jbuff, JACK_PARAM_STRING_MAX);
+    if (*jbuff) {
+      prefs->jack_tdriver = lives_strdup(jbuff);
+      future_prefs->jack_tdriver = lives_strdup(jbuff);
+    }
+  }
+  lives_snprintf(future_prefs->jack_tserver_cfg, PATH_MAX, "%s", prefs->jack_tserver_cfg);
+  if (!ign_opts.ign_jackserver) {
+    lives_snprintf(future_prefs->jack_tserver_cname, PATH_MAX, "%s", prefs->jack_tserver_cname);
+    lives_snprintf(future_prefs->jack_tserver_sname, PATH_MAX, "%s", prefs->jack_tserver_sname);
+  }
+#else
+    prefs->jack_opts &= ~(JACK_OPTS_TRANSPORT_CLIENT | JACK_OPTS_TRANSPORT_MASTER
+                          | JACK_OPTS_START_TSERVER | JACK_OPTS_TIMEBASE_START
+                          | JACK_OPTS_TIMEBASE_CLIENT | JACK_OPTS_TIMEBASE_MASTER
+                          | JACK_OPTS_TIMEBASE_LSTART | JACK_OPTS_ENABLE_TCLIENT);
 #endif
+  if (ign_opts.ign_jackserver) {
+    prefs->jack_opts |= JACK_INFO_TEMP_NAMES;
+  }
+
+  if (lives_strcmp(future_prefs->jack_aserver_sname, prefs->jack_aserver_sname)) {
+    // server name to start up changed, so we should invalidate the old driver in case this changed
+    // but check first if it is equal to the last server set by cmdline opts and use its driver
+    // otherwise we would end up constantly prompting for the driver for the same options
+    get_string_pref(PREF_JACK_LAST_ASERVER, jbuff, JACK_PARAM_STRING_MAX);
+    if (*jbuff && !lives_strcmp(future_prefs->jack_aserver_sname, jbuff)) {
+      get_string_pref(PREF_JACK_LAST_ADRIVER, jbuff, JACK_PARAM_STRING_MAX);
+      prefs->jack_adriver = lives_strdup_free(prefs->jack_adriver, jbuff);
+      future_prefs->jack_adriver = lives_strdup_free(future_prefs->jack_adriver, jbuff);
+    }
+    // otherwise prompt for a new driver
+    else future_prefs->jack_adriver = NULL;
+  }
+
+  if (lives_strcmp(future_prefs->jack_tserver_sname, prefs->jack_tserver_sname)) {
+    // same for transport server
+    get_string_pref(PREF_JACK_LAST_TSERVER, jbuff, JACK_PARAM_STRING_MAX);
+    if (*jbuff && !lives_strcmp(future_prefs->jack_tserver_sname, jbuff)) {
+      get_string_pref(PREF_JACK_LAST_ADRIVER, jbuff, JACK_PARAM_STRING_MAX);
+      prefs->jack_tdriver = lives_strdup_free(prefs->jack_tdriver, jbuff);
+      future_prefs->jack_tdriver = lives_strdup_free(future_prefs->jack_tdriver, jbuff);
+    } else future_prefs->jack_tdriver = NULL;
+  }
+
 #endif
 
 #ifdef GUI_GTK
@@ -1238,7 +1303,10 @@ static void lives_init(_ign_opts *ign_opts) {
   char *msg;
 
   boolean needs_free;
-
+#ifdef ENABLE_JACK
+  boolean success;
+  lives_proc_thread_t info;
+#endif
   int i;
 
   for (i = 0; i <= MAX_FILES; mainw->files[i++] = NULL);
@@ -2101,7 +2169,7 @@ static void lives_init(_ign_opts *ign_opts) {
       if (!weed_plugin_path) {
         char *ppath1 = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR,
                                         PLUGIN_WEED_FX_BUILTIN, NULL);
-        char *ppath2 = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, "lib", "lives", "plugins",
+        char *ppath2 = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, "lib", PLUGIN_EXEC_DIR,
                                         PLUGIN_WEED_FX_BUILTIN, NULL);
         weed_plugin_path = lives_strdup_printf("%s:%s", ppath1, ppath2);
         lives_free(ppath1); lives_free(ppath2);
@@ -2225,40 +2293,71 @@ audio_choice:
 
 #ifdef ENABLE_JACK_TRANSPORT
     if (prefs->jack_srv_dup) {
-      if (prefs->jack_opts & JACK_OPTS_START_ASERVER)
-        prefs->jack_opts |= JACK_OPTS_START_TSERVER;
-      else
-        prefs->jack_opts &= ~JACK_OPTS_START_TSERVER;
-      if (prefs->jack_opts & JACK_OPTS_PERM_ASERVER)
-        prefs->jack_opts |= JACK_OPTS_PERM_TSERVER;
-      else
-        prefs->jack_opts &= ~JACK_OPTS_PERM_TSERVER;
-      future_prefs->jack_opts = prefs->jack_opts;
+      if (!ign_opts->ign_jackopts) {
+        if (prefs->jack_opts & JACK_OPTS_START_ASERVER)
+          prefs->jack_opts |= JACK_OPTS_START_TSERVER;
+        else
+          prefs->jack_opts &= ~JACK_OPTS_START_TSERVER;
+        if (prefs->jack_opts & JACK_OPTS_PERM_ASERVER)
+          prefs->jack_opts |= JACK_OPTS_PERM_TSERVER;
+        else
+          prefs->jack_opts &= ~JACK_OPTS_PERM_TSERVER;
+        future_prefs->jack_opts = prefs->jack_opts;
+      }
     }
+
 
     if (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
       // start jack transport polling
       splash_msg(_("Connecting to jack transport server..."),
                  SPLASH_LEVEL_LOAD_APLAYER);
-      if (!lives_jack_init(JACK_CLIENT_TYPE_TRANSPORT, NULL)) {
+jack_tcl_try:
+      success = TRUE;
+      if (!(info = LPT_WITH_TIMEOUT(LIVES_SHORTEST_TIMEOUT, 0,
+                                    (lives_funcptr_t)lives_jack_init,
+                                    WEED_SEED_BOOLEAN, "iv",
+                                    JACK_CLIENT_TYPE_TRANSPORT, NULL))) {
+        if (mainw->cancelled) {
+          lives_exit(0);
+        }
+        // timed out
+        success = FALSE;
+      } else success = lives_proc_thread_join_boolean(info);
+
+      if (!success) {
         if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
         if (prefs->jack_opts & JACK_OPTS_START_TSERVER) {
           // TODO - allow disable auto start and + manual start
-          // or reconfig
           // if we have backup config, allow restore
-          do_jack_no_startup_warn(TRUE);
+          if (do_jack_no_startup_warn(TRUE)) {
+            // reconfig drivers
+            goto jack_tcl_try;
+          }
           future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
           set_int_pref(PREF_JACK_OPTS, 0);
         } else {
           // TODO - allow retry connection, change server name / config
           do_jack_no_connect_warn(TRUE);
-          if (prefs->startup_phase == 0)
-            do_jack_restart_warn(prefs->jack_opts == 0 ?
-                                 JACK_OPTS_START_TSERVER | JACK_OPTS_ENABLE_TCLIENT : -1);
         }
         lives_exit(0);
       }
       if (ign_opts->ign_jackopts) set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
+
+      if ((prefs->jack_opts & JACK_INFO_TEMP_NAMES)
+          || lives_strcmp(future_prefs->jack_tdriver, prefs->jack_tdriver)) {
+        // if the driver has changed, update prefs
+        if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) {
+          pref_factory_string(PREF_JACK_LAST_TDRIVER, future_prefs->jack_tdriver, TRUE);
+          pref_factory_string(PREF_JACK_LAST_TSERVER, future_prefs->jack_tserver_sname, TRUE);
+        } else pref_factory_string(PREF_JACK_TDRIVER, future_prefs->jack_tdriver, TRUE);
+
+        if (prefs->jack_srv_dup) {
+          if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) {
+            pref_factory_string(PREF_JACK_LAST_ADRIVER, future_prefs->jack_tdriver, TRUE);
+            pref_factory_string(PREF_JACK_LAST_ASERVER, future_prefs->jack_tserver_sname, TRUE);
+          } else pref_factory_string(PREF_JACK_ADRIVER, future_prefs->jack_tdriver, TRUE);
+        }
+      }
     }
 #endif
 
@@ -2273,12 +2372,12 @@ audio_choice:
       mainw->jackd = jack_get_driver(0, TRUE);
 
       if (mainw->jackd) {
-        boolean success;
-        lives_proc_thread_t info;
         /// try to connect, and possibly start a server
         // activate the writer and connect ports
-        if (!(info = lives_proc_thread_create_with_timeout(LIVES_SHORTEST_TIMEOUT, 0,
-                     (lives_funcptr_t)jack_create_client_writer,
+jack_acl_try:
+        success = TRUE;
+        if (!(info = lives_proc_thread_create_with_timeout_named(LIVES_SHORTEST_TIMEOUT, 0,
+                     (lives_funcptr_t)jack_create_client_writer, "aa",
                      WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
           if (mainw->cancelled) {
             // go back to audio_choice
@@ -2290,33 +2389,46 @@ audio_choice:
             lives_exit(0);
           }
           success = FALSE;
-        } else
-          success = lives_proc_thread_join_boolean(info);
+        } else success = lives_proc_thread_join_boolean(info);
 
-        if (!success) mainw->jackd = NULL;
-        //if (!jack_create_client_writer(mainw->jackd)) mainw->jackd = NULL;
-        if (mainw->jackd && !mainw->jackd->sample_out_rate) mainw->jackd = NULL;
+        if (mainw->jackd && !mainw->jackd->sample_out_rate) success = FALSE;
 
-        if (!mainw->jackd) {
+        if (!success || !mainw->jackd) {
           // failed to connect
           if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
           if (prefs->jack_opts & JACK_OPTS_START_ASERVER) {
             // TODO - allow disable auto start and + manual start
             // or reconfig
             // if we have backup config, allow restore
-            do_jack_no_startup_warn(FALSE);
+            if (do_jack_no_startup_warn(FALSE)) {
+              goto jack_acl_try;
+            }
             future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
             set_int_pref(PREF_JACK_OPTS, 0);
           } else {
-            // TODO - allow retry connection, change serevr name / config
+            // TODO - allow retry connection, change server name / config
             do_jack_no_connect_warn(FALSE);
-            if (prefs->startup_phase == 0)
-              do_jack_restart_warn(prefs->jack_opts == 0 ? JACK_OPTS_START_ASERVER : -1);
           }
           lives_exit(0);
         }
 
         if (ign_opts->ign_jackopts) set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
+
+        if ((prefs->jack_opts & JACK_INFO_TEMP_NAMES)
+            || lives_strcmp(future_prefs->jack_adriver, prefs->jack_adriver)) {
+          // if the driver has changed, update prefs
+          if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) {
+            pref_factory_string(PREF_JACK_LAST_ADRIVER, future_prefs->jack_adriver, TRUE);
+            pref_factory_string(PREF_JACK_LAST_ASERVER, future_prefs->jack_aserver_sname, TRUE);
+          } else pref_factory_string(PREF_JACK_ADRIVER, future_prefs->jack_adriver, TRUE);
+
+          if (prefs->jack_srv_dup) {
+            if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) {
+              pref_factory_string(PREF_JACK_LAST_TDRIVER, future_prefs->jack_adriver, TRUE);
+              pref_factory_string(PREF_JACK_LAST_TSERVER, future_prefs->jack_aserver_sname, TRUE);
+            } else pref_factory_string(PREF_JACK_TDRIVER, future_prefs->jack_adriver, TRUE);
+          }
+        }
 
         mainw->jackd->whentostop = &mainw->whentostop;
         mainw->jackd->cancelled = &mainw->cancelled;
@@ -2324,7 +2436,7 @@ audio_choice:
         mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED)
                                           ? FALSE : TRUE;
 
-        jack_write_driver_activate(mainw->jackd);
+        jack_write_client_activate(mainw->jackd);
 
         if (prefs->perm_audio_reader) {
           // connect the reader - will also attempt to connect, and possibly start server
@@ -2335,9 +2447,7 @@ audio_choice:
           // so if needed we can monitor incoming audio
           jack_audio_read_init();
           jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
-	    // *INDENT-OFF*
-	  }
-	  // *INDENT-ON*
+        }
       }
 #endif
     }
@@ -2410,10 +2520,6 @@ audio_choice:
 
     set_int_pref(PREF_STARTUP_PHASE, 100); // tell backend to delete this
     prefs->startup_phase = 100;
-
-    /* if (prefs->show_splash) { */
-    /*   splash_init(); */
-    /* } */
   }
 
   if (strcmp(future_prefs->theme, prefs->theme)) {
@@ -3464,12 +3570,15 @@ retry_configfile:
 }
 
 
-void print_opthelp(void) {
+static void print_opthelp(const char *extracmds_file1, const char *extracmds_file2) {
   char *tmp;
   print_notice();
 
   lives_printerr(_("\nStartup syntax is: %s [OPTS] [filename [start_time] [frames]]\n"), capable->myname);
-  fprintf(stderr, "%s", _("Where: filename is the name of a media file or backup file to import\n"));
+  fprintf(stderr, _("\nIf the file %s exists, then the first line in it will be prepended to the commandline\n"
+                    "exactly as if it had been typed in by the user. If that file does not exist, then the file %s\n"
+                    "will be read in the same fashion\n\n"), extracmds_file1, extracmds_file2);
+  fprintf(stderr, "%s", _("filename is the name of a media file or backup file to import at startup\n"));
   fprintf(stderr, "%s", _("start_time : filename start time in seconds\n"));
   fprintf(stderr, "%s", _("frames : maximum number of frames to open\n"));
   fprintf(stderr, "%s", "\n");
@@ -3480,7 +3589,7 @@ void print_opthelp(void) {
                           "overriding any value set in preferences\n"));
   fprintf(stderr, "%s", _("\t\t\t\t\t(disables any disk quota checking)"));
   fprintf(stderr, "%s", _("-configfile <path_to_file>\t: override the default configuration file for the session\n"));
-  tmp = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, "lives", LIVES_DEF_CONFIG_FILE, NULL);
+  tmp = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, LIVES_DEF_CONFIG_FILE, NULL);
   fprintf(stderr, _("\t\t\t\t\t(default is %s)\n"), tmp);
   lives_free(tmp);
 
@@ -3532,22 +3641,19 @@ void print_opthelp(void) {
   if (capable->has_sox_play) lives_printerr(", '%s'", AUDIO_PLAYER_SOX); // comma after jack
   fprintf(stderr, " or '%s')\n", AUDIO_PLAYER_NONE);
   fprintf(stderr, "%s",
-          _("\n-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options (default is 16, "
-            "unless set in Preferences)\n"
-            "\tUseful options are: \n"
-            "\t\t\t\t\t   4 = launch jack transport server on startup (if unable to connect)\n"
-            "\t\t\t\t\t  16 = launch jack audio server on startup (if unable to connect)\n"
-            "\t\t\t\t\t\t(ignored if audio player is not jack)\n"
-            "\t\t\t\t\t1024 = enable jack transport client\n"
-            "\t\t\t\t\t\t(must be set to use all other transport functions)\n"
-            "\tSummary of options: 0 - do not start any servers, only connect audio, no transport client\n"
-            "\t\t\t   16 - start audio server if connection fails, no transport client\n"
-            "\t\t\t 1024 - create audio and transport clients, only connect\n"
-            "\t\t\t 1028 - create audio and transport clients, transport client may start a server if it fails to connect,\n"
-            "\t\t\t\t(audio wpuld normally connect to whatever server the transport client connects to)\n"
-            "\t\t\t\tother combinations are possible but unlikely to be useful on startup\n"
-            "\t\t\t\tFurther options exist but seting them is best done via Preferences / Jack Integration\n\n"
+          _("\n-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options\n"
+            "\t\t\t\t\t\t(audio options are ignored if audio player is not jack)\n\n"
+            "\tUseful values include:\t\t    0 - do not start any servers; only connect audio; no transport client\n"
+            "\t\t\t\t\t   16 - start audio server if connection fails; no transport client\n"
+            "\t\t\t\t\t 1024 - create audio and transport clients; only connect\n"
+            "\t\t\t\t\t 1028 - create audio and transport clients; transport client may start a server\n"
+            "\t\t\t\t\t\t\t\tif it fails to connect,\n"
            ));
+  fprintf(stderr, "%s",
+          _("-jackserver <server_name>\t: temporarily sets the jackd server for all connection / startup attemps\n"));
+  fprintf(stderr, _("\t\t\t\t\tif <server_name> is ommitted then LiVES will use the default server name:-\n"
+                    "\t\t\t\t\teither the value of $%s or '%s' if that enviromnent variable is unset\n\n"),
+          JACK_DEFAULT_SERVER, JACK_DEFAULT_SERVER_NAME);
 #else // no jack
   if (capable->has_sox_play) {
 #ifdef HAVE_PULSE_AUDIO
@@ -4260,13 +4366,19 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 
 
 int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
-  weed_error_t werr;
-  ssize_t mynsize;
-  char cdir[PATH_MAX];
-  boolean toolong = FALSE;
-  char *tmp, *dir, *msg;
   pthread_mutexattr_t mattr;
+  wordexp_t extra_cmds;
+  weed_error_t werr;
+  char cdir[PATH_MAX];
+  char **xargv = argv;
+  char *tmp, *dir, *msg;
+  char *extracmds_file, *extracmds_file1, *extracmds_file2;
+  ssize_t mynsize;
+  boolean toolong = FALSE;
   int winitopts = 0;
+  int xargc = argc;
+
+
 #ifndef IS_LIBLIVES
   weed_plant_t *test_plant;
 #endif
@@ -4347,7 +4459,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef WEED_STARTUP_TESTS
   winitopts |= WEED_INIT_DEBUGMODE;
 #endif
-
   werr = weed_init(weed_abi_version, winitopts);
   if (werr != WEED_SUCCESS) {
     lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
@@ -4547,18 +4658,53 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   get_location(EXEC_WC, capable->wc_cmd, PATH_MAX); // ditto
 
   // get opts first
-  if (argc > 1) {
-    if (!strcmp(argv[1], "-capture")) {
+  //
+  // we can read some pre-commands from a file, there is something of a chicken / egg problem as we dont know
+  // yet where config_datadir will be, so a fixed path is used: either
+  // $HOME/.config/lives/cmdline or /etc/lives/cmdline
+  extracmds_file = extracmds_file1 = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, EXTRA_CMD_FILE, NULL);
+  extracmds_file2 = lives_build_filename(LIVES_ETC_DIR, LIVES_DIR_LITERAL, EXTRA_CMD_FILE, NULL);
+
+  // before parsing cmdline we may also parse cmds in a file
+  if (!lives_file_test(extracmds_file1, LIVES_FILE_TEST_IS_REGULAR)) {
+    if (!lives_file_test(extracmds_file2, LIVES_FILE_TEST_IS_REGULAR)) {
+      extracmds_file = NULL;
+    } else extracmds_file = extracmds_file2;
+  }
+
+  if (extracmds_file) {
+    char extrabuff[2048];
+    size_t buflen;
+    if ((buflen = lives_fread_string(extrabuff, 2048, extracmds_file)) > 0) {
+      int weret, i, j = 1;
+      if (extrabuff[--buflen] == '\n') extrabuff[buflen] = 0;
+      if (!(weret = wordexp(extrabuff, &extra_cmds, 0))) {
+        if (extra_cmds.we_wordc) {
+          // create a new array with extra followed by cmdline
+          xargc += extra_cmds.we_wordc;
+          xargv = lives_calloc(xargc, sizeof(char *));
+          xargv[0] = argv[0];
+          for (i = 0; i < extra_cmds.we_wordc; i++) {
+            xargv[i + 1] = extra_cmds.we_wordv[i];
+          }
+          for (; i < xargc - 1; i++) {
+            xargv[i + 1] = argv[j++];
+	    // *INDENT-OFF*
+	  }}}}}
+  // *INDENT-ON*
+
+  if (xargc > 1) {
+    if (!strcmp(xargv[1], "-capture")) {
       // special mode for grabbing external window
       mainw->foreign = TRUE;
       future_prefs->audio_src = prefs->audio_src = AUDIO_SRC_EXT;
       ign_opts.ign_asource = TRUE;
-    } else if (!strcmp(argv[1], "-help") || !strcmp(argv[1], "--help")) {
+    } else if (!strcmp(xargv[1], "-help") || !strcmp(xargv[1], "--help")) {
       char string[256];
       get_location(EXEC_PLAY, string, 256);
       if (*string) capable->has_sox_play = TRUE;
 
-      capable->myname_full = lives_find_program_in_path(argv[0]);
+      capable->myname_full = lives_find_program_in_path(xargv[0]);
 
       if ((mynsize = lives_readlink(capable->myname_full, cdir, PATH_MAX)) != -1) {
         lives_memset(cdir + mynsize, 0, 1);
@@ -4570,9 +4716,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
       get_basename(cdir);
       capable->myname = lives_strdup(cdir);
 
-      print_opthelp();
+      print_opthelp(extracmds_file1, extracmds_file2);
       exit(0);
-    } else if (!strcmp(argv[1], "-version") || !strcmp(argv[1], "--version")) {
+    } else if (!strcmp(xargv[1], "-version") || !strcmp(xargv[1], "--version")) {
       print_notice();
       exit(0);
     } else {
@@ -4608,6 +4754,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 #ifdef ENABLE_JACK
         {"jackopts", 1, 0, 0},
+        {"jackserver", optional_argument, 0, 0},
 #endif
         // deprecated
         {"nothreaddialog", 0, 0, 0},
@@ -4623,11 +4770,12 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
       while (1) {
         count++;
-        c = getopt_long_only(argc, argv, "", longopts, &option_index);
-        if (c == -1) break; // end of options
+        c = getopt_long_only(xargc, xargv, "", longopts, &option_index);
+        if (c == -1) break;
+
         charopt = longopts[option_index].name;
         if (c == '?') {
-          msg = lives_strdup_printf(_("Invalid option %s on commandline\n"), argv[count]);
+          msg = lives_strdup_printf(_("Invalid option %s on commandline\n"), xargv[count]);
           LIVES_FATAL(msg);
         }
         if (!strcmp(charopt, "workdir") || !strcmp(charopt, "tmpdir")) {
@@ -5046,7 +5194,27 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           }
           // override jackopts in config file
           ign_opts.ign_jackopts = TRUE;
-          future_prefs->jack_opts = prefs->jack_opts = atoi(optarg);
+          prefs->jack_opts = atoi(optarg);
+          prefs->jack_opts |= JACK_INFO_TEMP_OPTS;
+          continue;
+        }
+
+        if (!strcmp(charopt, "jackserver")) {
+          char *srvname = xargv[optind++];
+          ign_opts.ign_jackserver = TRUE;
+
+          if (!srvname || !*srvname) {
+            continue;
+          }
+          if (*srvname == '-') {
+            optind--;
+            continue;
+          }
+
+          lives_snprintf(future_prefs->jack_aserver_cname, PATH_MAX, "%s", srvname);
+          lives_snprintf(future_prefs->jack_aserver_sname, PATH_MAX, "%s", srvname);
+          lives_snprintf(future_prefs->jack_tserver_cname, PATH_MAX, "%s", srvname);
+          lives_snprintf(future_prefs->jack_tserver_sname, PATH_MAX, "%s", srvname);
           continue;
         }
 #endif
@@ -5076,12 +5244,12 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }
       }
 
-      if (optind < argc) {
+      if (optind < xargc) {
         // remaining opts are filename [start_time] [end_frame]
         char *dir;
-        lives_snprintf(start_file, PATH_MAX, "%s", argv[optind++]); // filename
-        if (optind < argc) start = lives_strtod(argv[optind++]); // start time (seconds)
-        if (optind < argc) end = atoi(argv[optind++]); // number of frames
+        lives_snprintf(start_file, PATH_MAX, "%s", xargv[optind++]); // filename
+        if (optind < xargc) start = lives_strtod(xargv[optind++]); // start time (seconds)
+        if (optind < xargc) end = atoi(xargv[optind++]); // number of frames
 
         if (!lives_strrstr(start_file, "://")) {
           // prepend current directory if needed (unless file contains :// - eg. dvd:// or http://)
@@ -5094,8 +5262,16 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }}}}
   // *INDENT-ON*
 
+  if (xargv != argv) {
+    wordfree(&extra_cmds);
+    lives_free(xargv);
+  }
+
+  lives_free(extracmds_file1);
+  lives_free(extracmds_file2);
+
   if (!ign_opts.ign_configfile) {
-    tmp = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, "lives", LIVES_DEF_CONFIG_FILE, NULL);
+    tmp = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, LIVES_DEF_CONFIG_FILE, NULL);
     lives_snprintf(prefs->configfile, PATH_MAX, "%s", tmp);
     lives_free(tmp);
   }
@@ -5239,6 +5415,9 @@ void sensitize_rfx(void) {
       LiVESWidget *menuitem;
       for (int i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
            mainw->num_rendered_effects_test; i++) {
+        if (i == mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate) continue;
+        if (mainw->rendered_fx[i]->props & RFX_PROPS_MAY_RESIZE) continue;
+        if (mainw->rendered_fx[i]->num_in_channels == 2) continue;
         menuitem = mainw->rendered_fx[i]->menuitem;
         if (menuitem && LIVES_IS_WIDGET(menuitem)) {
           if (mainw->rendered_fx[i]->min_frames >= 0)
@@ -5353,9 +5532,12 @@ void sensitize(void) {
   if (!prefs->vj_mode)
     lives_widget_set_sensitive(mainw->mt_menu, TRUE);
   lives_widget_set_sensitive(mainw->unicap, TRUE);
+#ifdef HAVE_LDVGRAB
   lives_widget_set_sensitive(mainw->firewire, TRUE);
+#endif
+#ifdef HAVE_YUV4MPEG
   lives_widget_set_sensitive(mainw->tvdev, TRUE);
-
+#endif
   if (!prefs->vj_mode) {
     lives_widget_set_sensitive(mainw->export_proj, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
     lives_widget_set_sensitive(mainw->import_proj, TRUE);
@@ -5439,7 +5621,7 @@ void sensitize(void) {
                              cfile->frame_index != NULL);
   lives_widget_set_sensitive(mainw->midi_learn, TRUE);
   lives_widget_set_sensitive(mainw->midi_save, has_devicemap(-1));
-  lives_widget_set_sensitive(mainw->toy_tv, TRUE);
+  //lives_widget_set_sensitive(mainw->toy_tv, TRUE);
   lives_widget_set_sensitive(mainw->autolives, TRUE);
   lives_widget_set_sensitive(mainw->toy_random_frames, TRUE);
   //lives_widget_set_sensitive(mainw->open_lives2lives, TRUE);
@@ -5608,7 +5790,7 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->redo, FALSE);
   lives_widget_set_sensitive(mainw->paste_as_new, FALSE);
   lives_widget_set_sensitive(mainw->capture, FALSE);
-  lives_widget_set_sensitive(mainw->toy_tv, FALSE);
+  //lives_widget_set_sensitive(mainw->toy_tv, FALSE);
   lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
   lives_widget_set_sensitive(mainw->vj_load_set, FALSE);
   lives_widget_set_sensitive(mainw->vj_realize, FALSE);
@@ -5697,7 +5879,7 @@ void procw_desensitize(void) {
 
   lives_widget_set_sensitive(mainw->sa_button, FALSE);
   lives_widget_set_sensitive(mainw->select_submenu, FALSE);
-  lives_widget_set_sensitive(mainw->toy_tv, FALSE);
+  //lives_widget_set_sensitive(mainw->toy_tv, FALSE);
   lives_widget_set_sensitive(mainw->autolives, FALSE);
   lives_widget_set_sensitive(mainw->export_submenu, FALSE);
   lives_widget_set_sensitive(mainw->trim_submenu, FALSE);
@@ -8007,7 +8189,7 @@ boolean lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_img_type_t im
   fd = lives_open3(fname, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
   alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
   while (flock(fd, LOCK_EX) && (timeout = lives_alarm_check(alarm_handle)) > 0) {
-    lives_nanosleep(1000);
+    lives_nanosleep(LIVES_QUICK_NAP);
   }
   lives_alarm_clear(alarm_handle);
   if (timeout == 0) return FALSE;

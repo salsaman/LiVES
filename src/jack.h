@@ -28,16 +28,19 @@ typedef enum {
   JACK_CLIENT_TYPE_OTHER
 } lives_jack_client_type;
 
+// should really be lives_jack_client_t - TODO
 typedef struct _lives_jack_driver_t jack_driver_t;
 
 void jack_test(const char *snm);
 
 // GUI functions
-void jack_srv_startup_config(LiVESWidget *b, livespointer type_data);
+void jack_srv_startup_config(LiVESWidget *, livespointer type_data);
 
-void jack_drivers_config(LiVESWidget *b, const JSList *drivers);
+boolean jack_drivers_config(LiVESWidget *, livespointer ptype);
 
-void jack_server_config(LiVESWidget *b, lives_rfx_t *rfx);
+void jack_server_config(LiVESWidget *, lives_rfx_t *);
+
+void show_jack_status(LiVESButton *, livespointer is_transp);
 
 // connect client or start server
 boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd);
@@ -78,6 +81,8 @@ void jack_pb_stop(void);  /** pause playback transport master */
 #define JACK_OPTS_SETENV_ASERVER      	(1 << 13)     ///< setenv $JACK_DEFAULT_SERVER to aserver_sname
 #define JACK_OPTS_SETENV_TSERVER      	(1 << 14)     ///< setenv $JACK_DEFAULT_SERVER to tserver_sname
 
+#define JACK_INFO_TEMP_NAMES      	(1 << 30)     ///< -jackserver used
+#define JACK_INFO_TEMP_OPTS      	(1 << 31)     ///< -jackopts used
 
 #define JACK_MAX_OUTPUT_PORTS 10
 #define JACK_MAX_INPUT_PORTS 10
@@ -91,12 +96,12 @@ void jack_pb_stop(void);  /** pause playback transport master */
 
 typedef jack_nframes_t nframes_t;
 
-// let's hope these are well above the standard jack transport states...
-#define JackTClosed 1024
+// custom transport states (not very useful, may remove)
+#define JackTClosed 1024 // not activated
 #define JackTReset 1025
 #define JackTStopped 1026
 
-#define STMSGLEN 1024
+#define STMSGLEN 65536
 
 typedef struct _lives_jack_driver_t {
   int      dev_idx;                      /**< id of this device ??? */
@@ -110,13 +115,16 @@ typedef struct _lives_jack_driver_t {
 
   jack_port_t     *output_port[JACK_MAX_OUTPUT_PORTS]; /**< output ports */
   jack_port_t     *input_port[JACK_MAX_INPUT_PORTS]; /**< input ports */
-  jack_client_t   *client;                        /**< pointer to jack client */
+  jack_client_t   *client;                        /**< pointer to actual jack client */
+  char *client_name; // our name for the client
 
-  char             **jack_port_name;              /**< user given strings for the port names, can be NULL */
-  unsigned int     jack_port_name_count;          /**< the number of port names given */
-  uint64_t    jack_port_flags;               /**< flags to be passed to jack when opening the output ports */
+  boolean started_server; /// TRUE if the server this client is connected to was started by it
 
-  lives_audio_loop_t loop;
+  char             **jack_port_name;              /**< user given strings for the port names, can be NULL - unused*/
+  unsigned int     jack_port_name_count;          /**< the number of port names given - unused*/
+  uint64_t    jack_port_flags;               /**< flags to be passed to jack when opening the output ports - unused*/
+
+  lives_audio_loop_t loop;  ///< playback loop mode
 
   jack_transport_state_t state;
 
@@ -139,6 +147,7 @@ typedef struct _lives_jack_driver_t {
   /* variables used for trying to restart the connection to jack */
   boolean             jackd_died;                    /**< true if jackd has died and we should try to restart it */
 
+  // TODO - use jack_opts ??
   boolean play_when_stopped; ///< if we should play audio even when jack transport is stopped
 
   volatile jack_nframes_t nframes_start;
@@ -155,11 +164,11 @@ typedef struct _lives_jack_driver_t {
 
   boolean is_active;
 
-  int playing_file;
+  int playing_file;   ///< clip number we are playing from or recording to, can differ from video clip
 
-  volatile float jack_pulse[1024];
+  //volatile float jack_pulse[1024];  // unused
 
-  lives_audio_buf_t **abufs;
+  lives_audio_buf_t **abufs;    // ring buffer of audio buffers to read from / write to
   volatile int read_abuf;
 
   volatile int astream_fd;
@@ -173,6 +182,7 @@ typedef struct _lives_jack_driver_t {
 #define JACK_MAX_INDEVICES 10
 
 ////////////////////////////////////////////////////////////////////////////
+void jack_dump_metadata(void);
 
 jack_driver_t *jack_get_driver(int dev_idx, boolean is_output); ///< get driver
 
@@ -184,10 +194,10 @@ int jack_audio_read_init(void); ///< init jack for host input
 boolean jack_create_client_writer(jack_driver_t *); ///< open device for host output
 boolean jack_create_client_reader(jack_driver_t *); ///< open device for host input
 
-boolean jack_write_driver_activate(jack_driver_t *);  ///< activate for host playback
-boolean jack_read_driver_activate(jack_driver_t *, boolean autocon);  ///< activate for host recording
+boolean jack_write_client_activate(jack_driver_t *);  ///< activate for host playback
+boolean jack_read_client_activate(jack_driver_t *, boolean autocon);  ///< activate for host recording
 
-void jack_close_device(jack_driver_t *);
+void jack_close_client(jack_driver_t *);
 
 boolean jack_try_reconnect(void);
 

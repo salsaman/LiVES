@@ -207,6 +207,7 @@ static void extra_cb(LiVESWidget *dialog, int key) {
     lives_label_set_selectable(LIVES_LABEL(widget_opts.last_label), TRUE);
     break;
   case 2:
+    // add send to trash button
     trash_rb(LIVES_BUTTON_BOX(bbox));
     break;
   default:
@@ -830,9 +831,10 @@ LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mas
                                   LIVES_DIALOG_WARN, text, warn_mask_number);
 
   if (!widget_opts.non_modal) {
-    ret = lives_dialog_run(LIVES_DIALOG(err_box));
+    do {
+      ret = lives_dialog_run(LIVES_DIALOG(err_box));
+    } while (ret == LIVES_RESPONSE_NONE);
   }
-
   return ret;
 }
 
@@ -2752,29 +2754,71 @@ LIVES_GLOBAL_INLINE boolean do_jack_scripts_warn(const char *scrptx) {
 }
 
 
-LIVES_GLOBAL_INLINE void do_jack_no_startup_warn(boolean is_trans) {
-  char *tmp = NULL, *tmp2 = NULL, *tmp3, *tmp4;
+LIVES_LOCAL_INLINE char *get_jack_restart_warn(int suggest_opts, const char *srvname) {
+  // suggest_opts is a hint for the -jackopts value to use on restart
+  // a value of -1 will not add any recommendation
+  if (prefs->startup_phase == 0) {
+    const char *otherbit;
+    char *firstbit, *msg;
+    if (suggest_opts != -1) {
+      char *suggest_srv;
+      if (!srvname) suggest_srv = "";
+      else suggest_srv = lives_strdup_printf(" -jackserver '%s'", srvname);
+      firstbit = lives_strdup_printf("lives -jackopts %d%s\n(which will allow LiVES to start the server itself), "
+                                     "or\n\n", suggest_opts, suggest_srv);
+      if (srvname) lives_free(suggest_srv);
+    } else firstbit = "";
+#ifdef HAVE_PULSE_AUDIO
+    if (capable->has_pulse_audio == PRESENT) otherbit = "lives -aplayer pulse";
+    else
+#endif
+      otherbit = "lives -aplayer none";
+    msg = lives_strdup_printf(_("\nAlternatively, you may start lives with commandline option:\n\n"
+                                "%s%s\n(to avoid use of jack audio altogether)"),
+                              firstbit, otherbit);
+    if (*firstbit) lives_free(firstbit);
+    return msg;
+  }
+#endif
+  return lives_strdup("");
+}
+
+LIVES_GLOBAL_INLINE void do_jack_restart_warn(int suggest_opts, const char *srvname) {
+  char *msg = get_jack_restart_warn(suggest_opts, srvname);
+  do_info_dialog(msg);
+  lives_free(msg);
+}
+
+
+LIVES_GLOBAL_INLINE boolean do_jack_no_startup_warn(boolean is_trans) {
+  char *tmp = NULL, *tmp2 = NULL, *tmp3, *tmp4, *msg;
   if ((is_trans && *prefs->jack_tserver_cfg) ||
       (!is_trans && *prefs->jack_aserver_cfg)) {
     tmp = lives_strdup_printf(_("jackd using the configuration file\n%s"),
                               is_trans ? prefs->jack_tserver_cfg : prefs->jack_aserver_cfg);
   } else {
     if (is_trans) {
-      if (*prefs->jack_tserver_sname)
-        tmp = lives_strdup_printf(_("the jack server '%s'"), prefs->jack_tserver_sname);
+      if (*future_prefs->jack_tserver_sname) {
+        if (!lives_strcmp(future_prefs->jack_tserver_sname, future_prefs->jack_tserver_sname))
+          tmp = lives_strdup(_("it"));
+        else tmp = lives_strdup_printf(_("the jack server '%s'"), future_prefs->jack_tserver_sname);
+      }
     } else {
-      if (*prefs->jack_aserver_sname)
-        tmp = lives_strdup_printf(_("the jack server '%s'"), prefs->jack_aserver_sname);
+      if (*future_prefs->jack_aserver_sname) {
+        if (!lives_strcmp(future_prefs->jack_tserver_sname, future_prefs->jack_tserver_sname))
+          tmp = lives_strdup(_("it"));
+        else tmp = lives_strdup_printf(_("the jack server '%s'"), future_prefs->jack_aserver_sname);
+      }
     }
-    if (!tmp) tmp = _("the default jack server");
   }
+  if (!tmp) tmp = _("the default jack server");
 
   if (is_trans) {
-    if (*prefs->jack_tserver_cname)
-      tmp2 = lives_strdup_printf(_("the jack server '%s'"), prefs->jack_tserver_cname);
+    if (*future_prefs->jack_tserver_cname)
+      tmp2 = lives_strdup_printf(_("the jack server '%s'"), future_prefs->jack_tserver_cname);
   } else {
-    if (*prefs->jack_aserver_cname)
-      tmp2 = lives_strdup_printf(_("the jack server '%s'"), prefs->jack_aserver_cname);
+    if (*future_prefs->jack_aserver_cname)
+      tmp2 = lives_strdup_printf(_("the jack server '%s'"), future_prefs->jack_aserver_cname);
   }
   if (!tmp2) tmp2 = _("the default jack server");
 
@@ -2783,74 +2827,113 @@ LIVES_GLOBAL_INLINE void do_jack_no_startup_warn(boolean is_trans) {
                           "or select another audio player.\n"));
   } else tmp4 = lives_strdup("");
 
-  widget_opts.use_markup = TRUE;
-  do_error_dialogf(_("LiVES failed to connect to %s,\n"
-                     "and subsequently was unable to start %s.\n\n "
-                     "Please ensure that %s is set up correctly on your machine\n"
-                     "and also that the soundcard is not neing blocked by another program\n\n"
-                     "Also make sure that LiVES is not set to start up\n"
-                     "a jack server which is already running\n\n"
-                     "<b>Automatic jack startup will be disabled for now</b>.\n%s"), tmp2, tmp,
-                   (tmp3 = lives_markup_escape_text(is_trans ? (prefs->jack_tdriver ? prefs->jack_tdriver : _("audio"))
-                           : (prefs->jack_adriver ? prefs->jack_adriver
-                              : _("audio")), -1)), tmp4);
+  msg = lives_strdup_printf(_("LiVES failed to connect to %s,\n"
+                              "and in addition was unable to start %s.\n\n "
+                              "Please ensure that %s is set up correctly on your machine\n"
+                              "and also that the soundcard is not being blocked by another program, "
+                              "or another instance of jackd.\n\n"
+                              "Also make sure that LiVES is not trying to start up\n"
+                              "a server which is already running.\n\n"
+                              "<b>Automatic jack startup will be disabled for now</b>.\n%s"), tmp2, tmp,
+                            (tmp3 = is_trans ? (future_prefs->jack_tdriver
+                                    ? lives_markup_escape_text(future_prefs->jack_tdriver, -1) : _("audio"))
+                                    : (future_prefs->jack_adriver ? lives_markup_escape_text(future_prefs->jack_adriver, -1)
+                                       : _("audio"))), tmp4);
   widget_opts.use_markup = FALSE;
   lives_free(tmp); lives_free(tmp2); lives_free(tmp3); lives_free(tmp4);
+  if (prefsw || prefs->startup_phase) {
+    widget_opts.use_markup = TRUE;
+    do_error_dialog(msg);
+    widget_opts.use_markup = FALSE;
+    lives_free(msg);
+  } else {
+    LiVESWidget *dlg = lives_standard_dialog_new(_("JACK Startup Error"), FALSE, -1, -1);
+    LiVESWidget *dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dlg));
+    LiVESWidget *statbutton, *cancbutton, *cfgbutton;
+    LiVESWidget *label;
+
+    widget_opts.use_markup = TRUE;
+    label = lives_standard_formatted_label_new(msg);
+    widget_opts.use_markup = FALSE;
+    lives_free(msg);
+
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
+
+    statbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), NULL, _("View Status _Log"),
+                 LIVES_RESPONSE_BROWSE);
+
+    cfgbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_PREFERENCES,
+                _("_Driver Settings"), LIVES_RESPONSE_RETRY);
+
+    cancbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_QUIT, _("_Exit LiVES"),
+                 LIVES_RESPONSE_CANCEL);
+    lives_window_add_escape(LIVES_WINDOW(dlg), cancbutton);
+
+    while (1) {
+      LiVESResponseType resp = lives_dialog_run(LIVES_DIALOG(dlg));
+      if (resp == LIVES_RESPONSE_BROWSE)
+        show_jack_status(LIVES_BUTTON(statbutton), LIVES_INT_TO_POINTER(2));
+      else {
+        lives_widget_destroy(dlg);
+        if (resp == LIVES_RESPONSE_CANCEL) return FALSE;
+        return jack_drivers_config(cfgbutton, is_trans
+                                   ? LIVES_INT_TO_POINTER(2)
+                                   : LIVES_INT_TO_POINTER(3));
+      }
+    }
+  }
+  return FALSE;
 }
 
+
 LIVES_GLOBAL_INLINE void do_jack_no_connect_warn(boolean is_trans) {
-  char *extra = "", *tmp;
-  if (is_trans && (prefs->jack_opts & JACK_OPTS_START_TSERVER)) {
-    if (prefs->jack_tdriver && *prefs->jack_tdriver) {
+  char *extra = "", *tmp, *more, *warn;
+  if (is_trans && (future_prefs->jack_opts & JACK_OPTS_START_TSERVER)) {
+    if (future_prefs->jack_tdriver && future_prefs->jack_tdriver) {
       extra = lives_strdup_printf(_("\nThere may be a problem with the <b>'%s'</b> driver"),
-                                  (tmp = lives_markup_escape_text(prefs->jack_tdriver, -1)));
+                                  (tmp = lives_markup_escape_text(future_prefs->jack_tdriver, -1)));
       lives_free(tmp);
     }
   } else {
-    if (prefs->jack_adriver && *prefs->jack_adriver) {
+    if (future_prefs->jack_adriver && future_prefs->jack_adriver) {
       extra = lives_strdup_printf(_("\nThere may be a problem with the <b>'%s'</b> driver."),
-                                  (tmp = lives_markup_escape_text(prefs->jack_adriver, -1)));
+                                  (tmp = lives_markup_escape_text(future_prefs->jack_adriver, -1)));
       lives_free(tmp);
     }
   }
-  if (is_trans && *prefs->jack_tserver_cname)
-    tmp = lives_markup_escape_text(prefs->jack_tserver_cname, -1);
+  if (is_trans && *future_prefs->jack_tserver_cname)
+    tmp = lives_markup_escape_text(future_prefs->jack_tserver_cname, -1);
   else {
-    if (!is_trans && *prefs->jack_aserver_cname)
-      tmp = lives_markup_escape_text(prefs->jack_aserver_cname, -1);
+    if (!is_trans && *future_prefs->jack_aserver_cname)
+      tmp = lives_markup_escape_text(future_prefs->jack_aserver_cname, -1);
     else
       tmp = lives_markup_escape_text(prefs->jack_def_server_name, -1);
   }
 
+  if (!prefsw) {
+    if (prefs->audio_player == AUD_PLAYER_JACK)
+      more = get_jack_restart_warn(future_prefs->jack_opts == 0 ? JACK_OPTS_START_ASERVER : 16, *future_prefs->jack_aserver_cname
+                                   ? future_prefs->jack_aserver_cname : NULL);
+    else
+      more = get_jack_restart_warn(future_prefs->jack_opts == 0 ? JACK_OPTS_START_TSERVER : 1024, *future_prefs->jack_tserver_cname
+                                   ? future_prefs->jack_tserver_cname : NULL);
+  } else more = lives_strdup("");
+
+  if (!prefsw) warn = _("<big><b>Please start the jack server before restarting LiVES</b></big>s");
+  else warn = _("Please ensure the server is running before trying again");
+
+  extra_cb_key = 3; // add status button
   widget_opts.use_markup = TRUE;
-  do_error_dialogf(_("\nLiVES was unable to establish a connection to jack server <b>'%s'</b>.%s"
-                     "\nPlease start the jack server before restarting LiVES\n"), tmp, extra);
-  lives_free(tmp);
+  do_error_dialogf(_("\nLiVES was unable to establish %s to jack server <b>'%s'</b>.%s"
+                     "\n\n%s\n%s"),
+                   is_trans ? _("a transport client connection") : _("an audio connection"), tmp, extra, warn, more);
   widget_opts.use_markup = FALSE;
+  lives_free(tmp); lives_free(more);
+  lives_free(warn);
   if (*extra) lives_free(extra);
 }
 
-LIVES_GLOBAL_INLINE void do_jack_restart_warn(int suggest_opts) {
-  // suggest_opts is a hint for the -jackopts value to use on restart
-  // a value of -1 will not add any recommendation
-  const char *otherbit;
-  char *firstbit;
-  if (suggest_opts != -1) {
-    firstbit = lives_strdup_printf("lives -jackopts %d\nwhich will let LiVES start the server itself, "
-                                   "or\n", suggest_opts);
-  } else firstbit = "";
-#ifdef HAVE_PULSE_AUDIO
-  if (capable->has_pulse_audio == PRESENT) otherbit = "lives -aplayer pulse";
-  else
-#endif
-    otherbit = "lives -aplayer none";
-  do_info_dialogf(_("\nAlternatively, you may start lives with commandline option:\n\n"
-                    "%s%s\nto avoid use of jack audio altogether"),
-                  firstbit, otherbit);
-  if (*firstbit) lives_free(firstbit);
-}
 
-#endif
 
 LIVES_GLOBAL_INLINE void do_mt_backup_space_error(lives_mt * mt, int memreq_mb) {
   char *msg = lives_strdup_printf(

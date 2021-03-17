@@ -2039,7 +2039,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 
       // connect the client and activate it
       jack_create_client_reader(mainw->jackd_read);
-      jack_read_driver_activate(mainw->jackd_read, FALSE);
+      jack_read_client_activate(mainw->jackd_read, FALSE);
     }
     return;
   }
@@ -2068,10 +2068,6 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
   } else {
     if (!jackd_read_started) {
       mainw->jackd_read = jack_get_driver(0, FALSE);
-      /* jack_create_client_reader(mainw->jackd_read); */
-      /* jack_read_driver_activate(mainw->jackd_read, FALSE); */
-      /* mainw->jackd_read->is_paused = TRUE; */
-      /* jack_time_reset(mainw->jackd_read, 0); */
       mainw->jackd_read->playing_file = fileno;
       mainw->jackd_read->frames_written = 0;
     }
@@ -2123,11 +2119,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     else mainw->jackd_read->reverse_endian = FALSE;
 
     // start jack recording
-    /* mainw->jackd_read = jack_get_driver(0, FALSE); */
-    /* jack_create_client_reader(mainw->jackd_read); */
-    jack_read_driver_activate(mainw->jackd_read, TRUE);
-    /* mainw->jackd_read->is_paused = TRUE; */
-    /* jack_time_reset(mainw->jackd_read, 0); */
+    jack_read_client_activate(mainw->jackd_read, TRUE);
   }
 
   // in grab window mode, just return, we will call rec_audio_end on playback end
@@ -2164,7 +2156,7 @@ void jack_rec_audio_end(boolean close_device, boolean close_fd) {
 
   if (close_device) {
     // stop recording
-    if (mainw->jackd_read) jack_close_device(mainw->jackd_read);
+    if (mainw->jackd_read) jack_close_client(mainw->jackd_read);
     mainw->jackd_read = NULL;
   } else {
     mainw->jackd_read->in_use = FALSE;

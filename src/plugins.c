@@ -3331,6 +3331,51 @@ lives_param_t *find_rfx_param_by_name(lives_rfx_t *rfx, const char *name) {
 }
 
 
+#if 0
+// TODO
+weed_plant_t **rfx_params_to_weed(lives_rfx_t *rfx) {
+  weed_plant_t **wparams = NULL;
+  if (rfx) {
+    int nparms = rfx->num_params;
+    if (!nparms) return NULL;
+    else {
+      lives_param_t *rpar = rfx->params;
+      wparams = (weed_plant_t **)lives_calloc(nparms, sizeof(weed_plant_t *));
+      for (int i = 0; i < nparms; i++) {
+        weed_plant_t *wparam = wparams[i] = weed_plant_new(WEED_PLANT_PARAMETER);
+        int flags = 0;
+        if (rpar[i].hidden & HIDDEN_MULTI) {
+          if (rpar[i].multi == PVAL_MULTI_PER_CHANNEL) {
+            flags |= WEED_PARAMETER_VALUE_PER_CHANNEL;
+          } else if (rpar[i].multi == PVAL_MULTI_ANY) {
+            flags = WEED_PARAMETER_VARIABLE_SIZE;
+          }
+        }
+        switch (rpar[i].type) {
+        case LIVES_PARAM_NUM:
+          break;
+        case LIVES_PARAM_BOOL:
+          break;
+        case LIVES_PARAM_COLRGB24:
+          break;
+        case LIVES_PARAM_COLRGBA32:
+          break;
+        case LIVES_PARAM_STRING:
+          break;
+        case LIVES_PARAM_STRING_LIST:
+          break;
+        case LIVES_PARAM_UNDISPLAYABLE:
+          break;
+        case LIVES_PARAM_UNKNOWN:
+          break;
+        }
+      }
+    }
+  }
+  return wparams;
+}
+#endif
+
 lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_reinits) {
   int i, j;
   lives_param_t *rpar = (lives_param_t *)lives_calloc(npar, sizeof(lives_param_t));

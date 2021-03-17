@@ -992,6 +992,9 @@ LiVESWidget *lives_scrolled_window_new_with_adj(LiVESAdjustment *hadj, LiVESAdju
 LiVESAdjustment *lives_scrolled_window_get_hadjustment(LiVESScrolledWindow *);
 LiVESAdjustment *lives_scrolled_window_get_vadjustment(LiVESScrolledWindow *);
 
+LiVESWidget *lives_scrolled_window_get_hscrollbar(LiVESScrolledWindow *);
+LiVESWidget *lives_scrolled_window_get_vscrollbar(LiVESScrolledWindow *);
+
 boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *, LiVESPolicyType hpolicy, LiVESPolicyType vpolicy);
 boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow *, LiVESWidget *child);
 

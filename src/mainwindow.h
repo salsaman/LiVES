@@ -38,7 +38,7 @@
 #define USEC_TO_TICKS (TICKS_PER_SECOND / ONE_MILLION) ///< multiplying factor uSec -> ticks_t  (def. 100)
 #define TICKS_TO_NANOSEC (ONE_BILLION / TICKS_PER_SECOND) /// multiplying factor ticks_t -> nSec (def 10)
 
-#define LIVES_NEGLIGIBLE_TIMEOUT  (.5 * TICKS_PER_SECOND_DBL) // .5 sec timeout
+#define LIVES_NEGLIGIBLE_TIMEOUT  (.1 * TICKS_PER_SECOND_DBL) // .1 sec timeout
 #define LIVES_SHORTEST_TIMEOUT  (2. * TICKS_PER_SECOND_DBL) // 2 sec timeout
 #define LIVES_SHORT_TIMEOUT  (5. * TICKS_PER_SECOND_DBL) // 5 sec timeout
 #define LIVES_DEFAULT_TIMEOUT  (10. * TICKS_PER_SECOND_DBL) // 10 sec timeout
@@ -265,6 +265,8 @@ enum {
   LIVES_DEVICE_TV_CARD, // 4
   LIVES_DEVICE_FW_CARD, // 5
 };
+
+#define LIVES_DEF_THEME "crayons"
 
 #define USE_LIVES_THEMEING 	(1 << 0)
 #define LIVES_THEME_DARK 	(1 << 1)
@@ -613,7 +615,10 @@ enum {
 #define LIVES_RUN_DIR "/run"
 #define LIVES_SHM_DIR "/shm"
 #define LIVES_DEVNULL LIVES_DEVICE_DIR "/null"
-#define LIVES_USR_DIR "/run"
+#define LIVES_ETC_DIR "/etc"
+#define LIVES_USR_DIR "/usr"
+
+#define EXTRA_CMD_FILE "cmdline"
 
 #define DEF_PREFIX_DIR "/usr"
 
@@ -622,7 +627,7 @@ enum {
 #define PLUGIN_SCRIPTS_DIR "/" LIVES_SHARE_DIR "/" LIVES_DIR_LITERAL "/plugins"
 #define PLUGIN_COMPOUND_DIR PLUGIN_SCRIPTS_DIR
 #define DOC_DIR "/" LIVES_SHARE_DIR "/doc/" LIVES_DIR_LITERAL
-#define APPLICATIONS_DIR "/" LIVES_SHARE_DIR "/applications/"
+#define APPLICATIONS_DIR "/" LIVES_SHARE_DIR "/applications/"  // normally in LIVES_USR_DIR
 #define PLUGIN_EXEC_DIR LIVES_DIR_LITERAL "/plugins/"
 #define ICON_DIR "/" LIVES_SHARE_DIR "/" LIVES_DIR_LITERAL "/icons"
 #define DESKTOP_ICON_DIR "/share/icons/hicolor/256x256/apps"
@@ -630,7 +635,7 @@ enum {
 // per-user defaults
 #define LOCAL_HOME_DIR ".local"
 
-#define LIVES_DEF_CONFIG_DIR ".config" ///< in $HOME : used once to set configfile, and then discarded
+#define LIVES_DEF_CONFIG_DIR ".config/" LIVES_DIR_LITERAL ///< in $HOME : used once to set configfile, and then discarded
 #define LIVES_DEF_CONFIG_FILE "settings" ///< in LIVES_DEF_CONFIG_DIR unless overridden
 
 #define LIVES_DEF_CONFIG_FILE_OLD ".lives" ///< pre 3.2.0
@@ -1263,6 +1268,7 @@ typedef struct {
   LiVESWidget *show_file_comments;
   LiVESWidget *show_clipboard_info;
   LiVESWidget *show_messages;
+  LiVESWidget *show_jackmsgs;
   LiVESWidget *show_layout_errors;
   LiVESWidget *show_quota;
   LiVESWidget *sel_label;

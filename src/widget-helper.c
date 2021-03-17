@@ -1003,6 +1003,10 @@ static lives_sigdata_t *tasks_running(void) {
   return NULL;
 }
 
+LIVES_LOCAL_INLINE boolean sigdata_check_alarm(lives_sigdata_t *sigdata) {
+  return (!sigdata || sigdata->alarm_handle == LIVES_NO_ALARM
+          || lives_alarm_check(sigdata->alarm_handle) > 0);
+}
 
 // this loop is designed to allow blocking background threads to run and to perform async graphical updates,
 // as well as any other function which may be restricted to the caller thread
@@ -1091,7 +1095,7 @@ static lives_sigdata_t *tasks_running(void) {
 // multiple return values
 
 boolean governor_loop(livespointer data) {
-  volatile boolean clutch;
+  //volatile boolean clutch;
   static boolean lpt_recurse = FALSE;
   static boolean lpt_recurse2 = FALSE;
   boolean is_timer = FALSE;
@@ -1177,32 +1181,39 @@ reloop:
 
       gov_running = TRUE;
 
+      // if caller set alarm_handle the we dont push it to the stack, because that task has to be
+      // kept under the spotlight so we can know whether to terminate it
       if (new_sigdata) {
-        // push a new task to the stack
-        // signal bg that it can start now...
-        lives_proc_thread_sync_ready(new_sigdata->proc);
-        task_list = lives_list_prepend(task_list, new_sigdata);
-        new_sigdata = NULL;
-        goto reloop;
+        if (new_sigdata->alarm_handle == LIVES_NO_ALARM
+            || !task_list) {
+          // push a new task to the stack
+          // signal bg that it can start now...
+          lives_proc_thread_sync_ready(new_sigdata->proc);
+          task_list = lives_list_prepend(task_list, new_sigdata);
+          if (new_sigdata->alarm_handle == LIVES_NO_ALARM) new_sigdata = NULL;
+        }
+        if (new_sigdata->alarm_handle == LIVES_NO_ALARM) goto reloop;
       }
 
       // use clutch and mainw->clutch - at one point it seemed like the value wasnt updating, but it may have
       // been a mistaken impression
-      clutch = mainw->clutch;
-      while (task_list && !lpttorun && clutch && !mainw->is_exiting && !(sigdata = tasks_running())) {
+      //clutch = mainw->clutch;
+      while ((!new_sigdata || sigdata_check_alarm(new_sigdata))
+             && task_list && !lpttorun && mainw->clutch && !mainw->is_exiting && !(sigdata = tasks_running())) {
         // while any signal handler is running in the bg, we just loop here until either:
-        // the task completes, the task wants to run a main loop cycle, or the app exits
+        // any task completes, the task wants to run a main loop cycle, or the app exits
         lives_nanosleep(NSLEEP_TIME);
         /* if (lives_proc_thread_signalled(sigdata->proc)) { */
         /*   g_print("Thread %lu received signal %d\n", lives_proc_thread_signalled_idx(sigdata->proc), */
         /*           lives_proc_thread_signalled(sigdata->proc)); */
         /* } */
         //sched_yield();
-        clutch = mainw->clutch;
+        //clutch = mainw->clutch;
       }
     }
   }
   //else sigdata = new_sigdata;
+  if (new_sigdata && !sigdata_check_alarm(new_sigdata)) return FALSE;
 
   if (mainw->is_exiting) return FALSE; // app exit
 
@@ -1231,10 +1242,12 @@ reloop:
     // set lpt_recurse which will trigger the fg task
     // this part ensures that the idlefunc isnt called right away before any gui updates have a chance
     while (count++ < EV_LIM && lives_widget_context_iteration(NULL, FALSE)
-           && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
+           && !sigdata_check_alarm(sigdata) && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
+
+    if (sigdata_check_alarm(sigdata)) return FALSE;
 
     // add ourselves as an idlefunc and then return FALSE
-    lives_idle_add_simple(governor_loop, NULL);
+    lives_idle_add_simple(governor_loop, sigdata->alarm_handle ? sigdata : NULL);
 
     gov_running = FALSE;
 
@@ -1245,20 +1258,21 @@ reloop:
   }
 
   /// something else might have removed the clutch, so check again if the handler is still running
-  if (!lives_proc_thread_check_finished(sigdata->proc)) goto reloop;
-
+  if (!lives_proc_thread_check_finished(new_sigdata->proc)) goto reloop;
 
   // if we arrive here it means that some signal handler initiated the loops, and it's
   // actual callback has finished, now we can return to the proxy signal handler
 
   gov_will_run = gov_running = FALSE;
-  // if a timer, set sigdata->swapped, this signals that the bg thread completed
-  if (sigdata->is_timer) {
-    if (sigdata) sigdata->swapped = TRUE;
-    /// timer handler will free sigdata
-  } else {
-    lives_proc_thread_dontcare(sigdata->proc);
-    sigdata_free(sigdata, NULL);
+  if (sigdata->alarm_handle == LIVES_NO_ALARM) {
+    // if a timer, set sigdata->swapped, this signals that the bg thread completed
+    if (sigdata->is_timer) {
+      if (sigdata) sigdata->swapped = TRUE;
+      /// timer handler will free sigdata
+    } else {
+      lives_proc_thread_dontcare(sigdata->proc);
+      sigdata_free(sigdata, NULL);
+    }
   }
   //g_print("gov9\n");
   return FALSE;
@@ -6341,6 +6355,24 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESAdjustment *lives_scrolled_window_get_vadjustme
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_scrolled_window_get_hscrollbar(LiVESScrolledWindow *swindow) {
+  LiVESWidget *scroll = NULL;
+#ifdef GUI_GTK
+  scroll = gtk_scrolled_window_get_hscrollbar(swindow);
+#endif
+  return scroll;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_scrolled_window_get_vscrollbar(LiVESScrolledWindow *swindow) {
+  LiVESWidget *scroll = NULL;
+#ifdef GUI_GTK
+  scroll = gtk_scrolled_window_get_vscrollbar(swindow);
+#endif
+  return scroll;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *scrolledwindow,
     LiVESPolicyType hpolicy,
     LiVESPolicyType vpolicy) {
@@ -10099,7 +10131,7 @@ LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog * dialog, const char
                                LIVES_INT_TO_POINTER(widget_opts.apply_theme));
 
   if (dialog) {
-    /// if we have only ome button, center it
+    /// if we have only one button, center it
     if (!(first_button =
             (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(dialog), FBUTT_KEY))) {
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dialog), FBUTT_KEY, (livespointer)button);

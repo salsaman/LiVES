@@ -714,6 +714,59 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     }
     goto fail1;
   }
+
+#ifdef ENABLE_JACK_TRANSPORT
+  if (!lives_strcmp(prefidx, PREF_JACK_TCONFIG)) {
+    if (lives_strncmp(newval, prefs->jack_tserver_cfg, PATH_MAX)) {
+      lives_snprintf(prefs->jack_tserver_cfg, PATH_MAX, "%s", newval);
+      lives_snprintf(future_prefs->jack_tserver_cfg, PATH_MAX, "%s", newval);
+      if (prefs->jack_srv_dup) {
+        lives_snprintf(prefs->jack_aserver_cfg, PATH_MAX, "%s", newval);
+        lives_snprintf(future_prefs->jack_aserver_cfg, PATH_MAX, "%s", newval);
+      }
+      if (permanent) {
+        set_string_pref(PREF_JACK_ACONFIG, prefs->jack_tserver_cfg);
+        mainw->prefs_changed |= PREFS_JACK_CHANGED;
+      }
+      goto success1;
+    }
+    goto fail1;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_JACK_TCSERVER)) {
+    if (lives_strncmp(newval, prefs->jack_tserver_cname, JACK_PARAM_STRING_MAX)) {
+      lives_snprintf(prefs->jack_tserver_cname, JACK_PARAM_STRING_MAX, "%s", newval);
+      lives_snprintf(future_prefs->jack_tserver_cname, JACK_PARAM_STRING_MAX, "%s", newval);
+      if (prefs->jack_srv_dup) {
+        lives_snprintf(prefs->jack_aserver_cname, PATH_MAX, "%s", newval);
+        lives_snprintf(future_prefs->jack_aserver_cname, PATH_MAX, "%s", newval);
+      }
+      if (permanent) {
+        set_string_pref(PREF_JACK_ACSERVER, prefs->jack_tserver_cname);
+        mainw->prefs_changed |= PREFS_JACK_CHANGED;
+      }
+      goto success1;
+    }
+    goto fail1;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_JACK_TSSERVER)) {
+    if (lives_strncmp(newval, prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX)) {
+      lives_snprintf(prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX, "%s", newval);
+      lives_snprintf(future_prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX, "%s", newval);
+      if (prefs->jack_srv_dup) {
+        lives_snprintf(prefs->jack_aserver_sname, PATH_MAX, "%s", newval);
+        lives_snprintf(future_prefs->jack_aserver_sname, PATH_MAX, "%s", newval);
+      }
+      if (permanent) {
+        set_string_pref(PREF_JACK_TSSERVER, prefs->jack_tserver_sname);
+        mainw->prefs_changed |= PREFS_JACK_CHANGED;
+      }
+      goto success1;
+    }
+    goto fail1;
+  }
+#endif
 #endif
 
   if (!lives_strcmp(prefidx, PREF_MIDI_RCV_CHANNEL)) {
@@ -730,6 +783,30 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     }
     goto fail1;
   }
+
+  if (!lives_strcmp(prefidx, PREF_JACK_LAST_ASERVER)) {
+    set_string_pref(PREF_JACK_LAST_ASERVER, newval);
+    return TRUE;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_JACK_LAST_ADRIVER)) {
+    set_string_pref(PREF_JACK_LAST_ADRIVER, newval);
+    return TRUE;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_JACK_LAST_ASERVER)) {
+    set_string_pref(PREF_JACK_LAST_TSERVER, newval);
+    return TRUE;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_JACK_LAST_ADRIVER)) {
+    set_string_pref(PREF_JACK_LAST_TDRIVER, newval);
+    return TRUE;
+  }
+
+  // unfortunately we cannot automate setting the actual pref, we lack the pref buffer size
+  set_string_pref(prefidx, newval);
+  return TRUE;
 
 fail1:
   if (prefsw) prefsw->ignore_apply = FALSE;
@@ -1733,6 +1810,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean jack_trans = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jack_trans));
 
   const char *jack_acname = lives_entry_get_text(LIVES_ENTRY(prefsw->jack_acname));
+  const char *jack_tcname = lives_entry_get_text(LIVES_ENTRY(prefsw->jack_tcname));
 
   uint32_t jack_opts =
     JACK_OPTS_TRANSPORT_CLIENT * jack_client + JACK_OPTS_TRANSPORT_MASTER * jack_master +
@@ -2446,6 +2524,12 @@ boolean apply_prefs(boolean skip_warn) {
   }
   pref_factory_string(PREF_JACK_ACONFIG, future_prefs->jack_aserver_cfg, TRUE);
   pref_factory_string(PREF_JACK_ACSERVER, jack_acname, TRUE);
+  pref_factory_string(PREF_JACK_ASSERVER, future_prefs->jack_aserver_sname, TRUE);
+#ifdef ENABLE_JACK_TRANSPORT
+  pref_factory_string(PREF_JACK_TCONFIG, future_prefs->jack_tserver_cfg, TRUE);
+  pref_factory_string(PREF_JACK_TCSERVER, jack_tcname, TRUE);
+  pref_factory_string(PREF_JACK_TSSERVER, future_prefs->jack_tserver_sname, TRUE);
+#endif
 #endif
 
 #ifdef ENABLE_OSC
@@ -3040,6 +3124,7 @@ static void prefs_add_to_list(LiVESWidget * list, LiVESPixbuf * pix, const char 
 void on_prefs_page_changed(LiVESTreeSelection * widget, _prefsw * prefsw) {
   LiVESTreeIter iter;
   LiVESTreeModel *model;
+  //LiVESListStore *store;
   char *name, *tmp;
 
   for (int i = 0; i < 2; i++) {
@@ -3134,12 +3219,14 @@ void on_prefs_page_changed(LiVESTreeSelection * widget, _prefsw * prefsw) {
         }
         prefs_current_page = LIST_ENTRY_GUI;
       }
+      // get all for current row
       lives_tree_model_get(model, &iter, LIST_NUM, &prefs_current_page, LIST_ITEM, &name, -1);
       tmp = lives_strdup_printf("<big><b>%s</b></big>", name);
       widget_opts.use_markup = TRUE;
       lives_label_set_text(LIVES_LABEL(prefsw->tlabel), tmp);
       widget_opts.use_markup = FALSE;
       lives_free(tmp);
+      /// TODO - highlight the selected row in (LiSTStore *)
     }
   }
 
@@ -3292,43 +3379,29 @@ static boolean check_txtsize(LiVESWidget * combo) {
 }
 
 #ifdef ENABLE_JACK
-static void show_jack_status(LiVESButton * button, livespointer is_transp) {
-  boolean is_trans = LIVES_POINTER_TO_INT(is_transp);
-  text_window *textwindow;
-  char *title, *text;
-  if (is_trans) {
-    title = _("Status for jack transport client");
-    if (mainw->jackd_trans)
-      text = mainw->jackd_trans->status_msg;
-    else text = lives_strdup(_("Jack transport client not running"));
-  } else {
-    char *txt1, *txt2;
-    if (mainw->jackd)
-      txt1 = mainw->jackd->status_msg;
-    else txt1 = lives_strdup(_("Jack writer not running"));
-    if (mainw->jackd)
-      txt2 = mainw->jackd_read->status_msg;
-    else txt2 = lives_strdup(_("Jack reader not running"));
-
-    text = lives_strdup_printf("%s\n\n%s", txt1, txt2);
-
-    if (!mainw->jackd) lives_free(txt1);
-    if (!mainw->jackd_read) lives_free(txt2);
-
-    title = _("Status for jack audio write and audio read clients");
-  }
-  textwindow = create_text_window(title, text, NULL, TRUE);
-  lives_free(title);
-  if (!is_trans || !mainw->jackd_trans) lives_free(text);
-  lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
-}
-
-
 static void copy_entry_text(LiVESEntry * e1, LiVESEntry * e2) {
   if (lives_toggle_button_get_active(prefsw->jack_srv_dup))
     lives_entry_set_text(e2, lives_entry_get_text(e1));
 }
 #endif
+
+
+static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
+  int pos = lives_paned_get_position(p);
+  if (!gtk_widget_get_mapped(w)) {
+    while (!gtk_widget_get_mapped(w)) {
+      lives_paned_set_position(p, --pos);
+      lives_widget_context_update();
+    }
+    lives_paned_set_position(p, ++pos);
+  }
+  while (gtk_widget_get_mapped(w)) {
+    lives_paned_set_position(p, ++pos);
+    lives_widget_context_update();
+  }
+  lives_paned_set_position(p, pos);
+}
+
 
 /*
   Function creates preferences dialog
@@ -3455,7 +3528,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   if (!saved_dialog) {
     // Create new modal dialog window and set some attributes
+    int wobw = widget_opts.border_width;
+    widget_opts.border_width = 0;
     prefsw->prefs_dialog = lives_standard_dialog_new(_("Preferences"), FALSE, PREFWIN_WIDTH, PREFWIN_HEIGHT);
+    widget_opts.border_width = wobw;
     lives_window_add_accel_group(LIVES_WINDOW(prefsw->prefs_dialog), prefsw->accel_group);
     lives_window_set_default_size(LIVES_WINDOW(prefsw->prefs_dialog), PREFWIN_WIDTH, PREFWIN_HEIGHT);
   } else prefsw->prefs_dialog = saved_dialog;
@@ -3465,11 +3541,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   // Get dialog's vbox and show it
   dialog_vbox_main = lives_dialog_get_content_area(LIVES_DIALOG(prefsw->prefs_dialog));
-  lives_widget_show(dialog_vbox_main);
 
   // Create dialog horizontal panels
   prefsw->dialog_hpaned = lives_hpaned_new();
-  lives_widget_show(prefsw->dialog_hpaned);
+  lives_container_set_border_width(LIVES_CONTAINER(prefsw->dialog_hpaned), widget_opts.border_width * 2);
 
   // Create dialog table for the right panel controls placement
   dialog_table = lives_vbox_new(FALSE, 0);
@@ -3540,6 +3615,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #else
   lives_paned_set_position(LIVES_PANED(prefsw->dialog_hpaned), PREFS_PANED_POS / 2);
 #endif
+
   // -------------------,
   // gui controls       |
   // -------------------'
@@ -3555,7 +3631,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_free(tmp);
   widget_opts.use_markup = FALSE;
 
-  //lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
 #if GTK_CHECK_VERSION(3, 2, 0)
@@ -5707,7 +5782,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_box_pack_start(LIVES_BOX(hbox), prefsw->jack_apstats, FALSE, TRUE, widget_opts.packing_width);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->jack_apstats), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(show_jack_status), LIVES_INT_TO_POINTER(FALSE));
+                            LIVES_GUI_CALLBACK(show_jack_status), LIVES_INT_TO_POINTER(0));
 
   ajack_cfg_exists = jack_get_cfg_file(FALSE, NULL);
 
@@ -5721,7 +5796,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   prefsw->jack_acdef =
     lives_standard_check_button_new(_("Connect using _default server name"),
-                                    *future_prefs->jack_aserver_cname, LIVES_BOX(hbox),
+                                    !(*future_prefs->jack_aserver_cname || (prefs->jack_opts & JACK_INFO_TEMP_NAMES)),
+                                    LIVES_BOX(hbox),
                                     H_("The server name will be taken from the environment "
                                        "variable\n$JACK_DEFAULT_SERVER.\nIf that variable is not "
                                        "set, then the name 'default' will be used instead"));
@@ -5732,6 +5808,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_standard_entry_new(_("Use _custom server name"), *future_prefs->jack_aserver_cname
                              ? future_prefs->jack_aserver_cname : JACK_DEFAULT_SERVER_NAME,
                              -1, JACK_PARAM_STRING_MAX, LIVES_BOX(hbox), NULL);
+
+  if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) show_warn_image(prefsw->jack_acname, _("Value was set from the commandline"));
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->jack_acdef), prefsw->jack_acname, TRUE);
 
@@ -5757,16 +5835,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   if (!ajack_cfg_exists) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->jack_acerror), TRUE);
   }
-
-  //if (1 || !ajack_cfg_exists)
-  //lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(widget), FALSE);
-
-  /* if (!cfg_exists) show_warn_image(cfg_entry, _("The specified file does not exist")); */
-  /* else { */
-  /*   if (!lives_file_test(server_cfgx, LIVES_FILE_TEST_IS_EXECUTABLE)) { */
-  /*     show_warn_image(cfg_entry, _("The specified file should be executable")); */
-  /*   } */
-  /* } */
 
   advbutton =
     lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
@@ -5824,7 +5892,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_box_pack_start(LIVES_BOX(hbox), widget, FALSE, TRUE, widget_opts.packing_width);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(show_jack_status), LIVES_INT_TO_POINTER(TRUE));
+                            LIVES_GUI_CALLBACK(show_jack_status), LIVES_INT_TO_POINTER(1));
 
   vbox = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), vbox,
@@ -5879,8 +5947,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   prefsw->jack_tcname =
     lives_standard_entry_new(_("Use _custom server name"),
-                             *prefs->jack_tserver_cname ? prefs->jack_tserver_cname :
+                             *future_prefs->jack_tserver_cname ? future_prefs->jack_tserver_cname :
                              JACK_DEFAULT_SERVER_NAME, -1, 1024, LIVES_BOX(hbox), NULL);
+
+  if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) show_warn_image(prefsw->jack_tcname, _("Value was set from the commandline"));
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->jack_tcdef), prefsw->jack_tcname, TRUE);
 
@@ -5966,7 +6036,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                              lives_toggle_button_get_active
                              (LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master)));
 
-
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_jack_client =
     lives_standard_check_button_new(_("Jack transport _client (start and stop)  ---->"),
@@ -6016,7 +6085,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                     ? FALSE : TRUE, LIVES_BOX(hbox), NULL);
 
   lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp, prefs->audio_player == AUD_PLAYER_JACK);
-
 
   tmp = lives_big_and_bold(_("\n(See also Playback -> Audio follows video rate/direction)"));
   widget_opts.use_markup = TRUE;
@@ -6224,6 +6292,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                             (livespointer)prefsw);
 
   if (!saved_dialog) {
+    LiVESWidget *bbox = lives_dialog_get_action_area(LIVES_DIALOG(prefsw->prefs_dialog));
+    lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_SPREAD);
+
     widget_opts.expand |= LIVES_EXPAND_EXTRA_WIDTH;
     // Preferences 'Revert' button
     prefsw->revertbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(prefsw->prefs_dialog),
@@ -6530,6 +6601,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   main_thread_execute((lives_funcptr_t)on_prefs_page_changed, -1, NULL, "vv", prefsw->selection, prefsw);
   //on_prefs_page_changed(prefsw->selection, prefsw);
 
+  callibrate_paned(LIVES_PANED(prefsw->dialog_hpaned),
+                   lives_scrolled_window_get_hscrollbar(LIVES_SCROLLED_WINDOW(list_scroll)));
+
   lives_widget_queue_draw(prefsw->prefs_list);
   return prefsw;
 }
@@ -6742,6 +6816,7 @@ static void select_pref_list_row(uint32_t selected_idx, _prefsw * prefsw) {
     //
     if (idx == selected_idx) {
       lives_tree_selection_select_iter(prefsw->selection, &iter);
+      lives_tree_model_get(model, &iter, LIST_NUM, &idx, -1);
       break;
     }
     //

@@ -784,6 +784,16 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     goto fail1;
   }
 
+  if (!lives_strcmp(prefidx, PREF_JACK_ADRIVER)) {
+    set_string_pref(PREF_JACK_ADRIVER, newval);
+    return TRUE;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_JACK_TDRIVER)) {
+    set_string_pref(PREF_JACK_TDRIVER, newval);
+    return TRUE;
+  }
+
   if (!lives_strcmp(prefidx, PREF_JACK_LAST_ASERVER)) {
     set_string_pref(PREF_JACK_LAST_ASERVER, newval);
     return TRUE;
@@ -795,7 +805,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
   }
 
   if (!lives_strcmp(prefidx, PREF_JACK_LAST_ASERVER)) {
-    set_string_pref(PREF_JACK_LAST_TSERVER, newval);
+    if (prefsw) mainw->prefs_changed |= PREFS_JACK_CHANGED;
     return TRUE;
   }
 
@@ -1268,7 +1278,20 @@ boolean pref_factory_color_button(lives_colRGBA64_t *pcol, LiVESColorButton *cbu
 
 boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean permanent) {
   if (prefsw) prefsw->ignore_apply = TRUE;
-  if (newval == *pref) goto fail3;
+
+#ifdef ENABLE_JACK
+  if (!lives_strcmp(prefidx, PREF_JACK_OPTS)) {
+    newval |= (future_prefs->jack_opts & (JACK_INFO_TEMP_OPTS | JACK_INFO_TEMP_NAMES));
+    if (prefs->jack_opts != newval) {
+      newval &= ~JACK_INFO_TEMP_OPTS;
+      set_int_pref(PREF_JACK_OPTS, newval & ~JACK_INFO_TEMP_NAMES);
+      future_prefs->jack_opts = prefs->jack_opts = newval;
+      if (prefsw) mainw->prefs_changed |= PREFS_JACK_CHANGED;
+    }
+  }
+#endif
+
+  if (pref && newval == *pref) goto fail3;
 
   if (!lives_strcmp(prefidx, PREF_MT_AUTO_BACK)) {
     if (mainw->multitrack) {
@@ -1324,45 +1347,12 @@ boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean per
     goto success3;
   }
 
-  if (!lives_strcmp(prefidx, PREF_RRQMODE)) {
-    if (newval != prefs->rr_qmode) {
-      //prefs->rr_qmode = newval;
-      goto success3;
-    }
-    goto fail3;
-  }
-
-  if (!lives_strcmp(prefidx, PREF_RRFSTATE)) {
-    if (newval != prefs->rr_fstate) {
-      //prefs->rr_fstate = newval;
-      goto success3;
-    }
-    goto fail3;
-  }
-
-  if (!lives_strcmp(prefidx, PREF_MIDI_CHECK_RATE)) {
-    if (newval != prefs->midi_check_rate) {
-      //prefs->midi_check_rate = newval;
-      goto success3;
-    }
-    goto fail3;
-  }
-
   if (!lives_strcmp(prefidx, PREF_BADFILE_INTENT)) {
-    if (newval != prefs->midi_check_rate) {
-      //prefs->midi_check_rate = newval;
-      goto success3;
-    }
-    goto fail3;
+    permanent = FALSE;
+    goto success3;
   }
 
-  if (!lives_strcmp(prefidx, PREF_MIDI_RPT)) {
-    if (newval != prefs->midi_rpt) {
-      //prefs->midi_rpt = newval;
-      goto success3;
-    }
-    goto fail3;
-  }
+  goto success3;
 
 
 fail3:
@@ -1370,7 +1360,7 @@ fail3:
   return FALSE;
 
 success3:
-  *pref = newval;
+  if (pref) *pref = newval;
   if (prefsw) {
     lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
@@ -1825,6 +1815,9 @@ boolean apply_prefs(boolean skip_warn) {
                  | JACK_OPTS_START_TSERVER | JACK_OPTS_TIMEBASE_START
                  | JACK_OPTS_TIMEBASE_CLIENT | JACK_OPTS_TIMEBASE_MASTER
                  | JACK_OPTS_TIMEBASE_LSTART | JACK_OPTS_ENABLE_TCLIENT);
+#else
+  // ignore transport startup unless the client is enabled
+  if (!(jack_opts & JACK_OPTS_ENABLE_TCLIENT)) jack_opts &= ~(JACK_OPTS_START_TSERVER);
 #endif
 #endif
 
@@ -2517,18 +2510,23 @@ boolean apply_prefs(boolean skip_warn) {
   pref_factory_string(PREF_AUDIO_PLAYER, audio_player, TRUE);
 
 #ifdef ENABLE_JACK
-  if (prefs->jack_opts != jack_opts) {
-    set_int_pref(PREF_JACK_OPTS, jack_opts);
-    future_prefs->jack_opts = prefs->jack_opts = jack_opts;
-    mainw->prefs_changed |= PREFS_JACK_CHANGED;
-  }
+  pref_factory_int(PREF_JACK_OPTS, NULL, jack_opts, TRUE);
+
   pref_factory_string(PREF_JACK_ACONFIG, future_prefs->jack_aserver_cfg, TRUE);
-  pref_factory_string(PREF_JACK_ACSERVER, jack_acname, TRUE);
-  pref_factory_string(PREF_JACK_ASSERVER, future_prefs->jack_aserver_sname, TRUE);
+  if (!(future_prefs->jack_opts & JACK_INFO_TEMP_NAMES)) {
+    pref_factory_string(PREF_JACK_ACSERVER, jack_acname, TRUE);
+    pref_factory_string(PREF_JACK_ASSERVER, future_prefs->jack_aserver_sname, TRUE);
+    pref_factory_string(PREF_JACK_ADRIVER, future_prefs->jack_adriver, TRUE);
+  }
 #ifdef ENABLE_JACK_TRANSPORT
-  pref_factory_string(PREF_JACK_TCONFIG, future_prefs->jack_tserver_cfg, TRUE);
-  pref_factory_string(PREF_JACK_TCSERVER, jack_tcname, TRUE);
-  pref_factory_string(PREF_JACK_TSSERVER, future_prefs->jack_tserver_sname, TRUE);
+  if (future_prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
+    pref_factory_string(PREF_JACK_TCONFIG, future_prefs->jack_tserver_cfg, TRUE);
+    if (!(future_prefs->jack_opts & JACK_INFO_TEMP_NAMES)) {
+      pref_factory_string(PREF_JACK_TCSERVER, jack_tcname, TRUE);
+      pref_factory_string(PREF_JACK_TSSERVER, future_prefs->jack_tserver_sname, TRUE);
+      pref_factory_string(PREF_JACK_TDRIVER, future_prefs->jack_tdriver, TRUE);
+    }
+  }
 #endif
 #endif
 
@@ -3243,6 +3241,11 @@ void apply_button_set_enabled(LiVESWidget * widget, livespointer func_data) {
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->revertbutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), FALSE);
+#ifdef ENABLE_JACK
+  if ((future_prefs->jack_opts & JACK_INFO_TEMP_OPTS)
+      && !(future_prefs->jack_opts & JACK_INFO_TEMP_OPTS))
+    lives_widget_set_sensitive(prefsw->jack_apperm, FALSE);
+#endif
 }
 
 
@@ -3383,23 +3386,32 @@ static void copy_entry_text(LiVESEntry * e1, LiVESEntry * e2) {
   if (lives_toggle_button_get_active(prefsw->jack_srv_dup))
     lives_entry_set_text(e2, lives_entry_get_text(e1));
 }
+
+static void jack_make_perm(LiVESWidget * widget, livespointer data) {
+  future_prefs->jack_opts &= ~(JACK_INFO_TEMP_OPTS | JACK_INFO_TEMP_NAMES);
+  apply_button_set_enabled(NULL, NULL);
+  lives_widget_set_sensitive(widget, FALSE);
+  hide_warn_image(prefsw->jack_acname);
+  hide_warn_image(prefsw->jack_tcname);
+}
+
 #endif
 
 
 static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
   int pos = lives_paned_get_position(p);
-  if (!gtk_widget_get_mapped(w)) {
-    while (!gtk_widget_get_mapped(w)) {
-      lives_paned_set_position(p, --pos);
-      lives_widget_context_update();
-    }
-    lives_paned_set_position(p, ++pos);
-  }
-  while (gtk_widget_get_mapped(w)) {
-    lives_paned_set_position(p, ++pos);
+  while (!gtk_widget_get_mapped(w)) {
+    lives_paned_set_position(p, --pos);
     lives_widget_context_update();
   }
-  lives_paned_set_position(p, pos);
+  lives_paned_set_position(p, ++pos);
+  if (gtk_widget_get_mapped(w)) {
+    while (gtk_widget_get_mapped(w)) {
+      lives_paned_set_position(p, ++pos);
+      lives_widget_context_update();
+      lives_nanosleep(LIVES_SHORT_SLEEP);
+    }
+  }
 }
 
 
@@ -5425,7 +5437,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(cb_show_quota, TOGGLED);
   if (mainw->has_session_workdir)
     show_warn_image(prefsw->cb_show_quota, _("Quota checking is disabled when workdir is set\n"
-                    "via the commandline option"));
+                    "via commandline option"));
   else if (prefs->vj_mode)
     show_warn_image(prefsw->cb_show_quota, _("Disabled in VJ mode"));
 
@@ -5774,7 +5786,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
 #ifndef ENABLE_JACK
   show_warn_image(prefsw->jack_aplabel,
-                  _("LiVES must be compiled with jack/jack.h present to use jack audio"));
+                  _("LiVES must be compiled with libjack support to use jack audio"));
 #else
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
@@ -5786,11 +5798,26 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   ajack_cfg_exists = jack_get_cfg_file(FALSE, NULL);
 
+  if (future_prefs->jack_opts & (JACK_INFO_TEMP_OPTS | JACK_INFO_TEMP_NAMES)) {
+    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+    add_fill_to_box(LIVES_BOX(hbox));
+    widget_opts.use_markup = TRUE;
+    prefsw->jack_apperm =
+      lives_standard_button_new_from_stock_full(LIVES_STOCK_APPLY,
+          _("Some values were set via commandline - <b>Click Here</b> to make them permanent"),
+          -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+    widget_opts.use_markup = FALSE;
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->jack_apperm), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(jack_make_perm), NULL);
+  }
+
   layout = prefsw->jack_aplayout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_jack));
-  show_warn_image(prefsw->jack_aplabel, _("You MUST set the audio player to \"jack\""
+  show_warn_image(prefsw->jack_aplabel, _("You MUST set the audio player to 'jack'"
                                           "in the Playback tab to use jack audio"));
-  if (prefs->audio_player == AUD_PLAYER_JACK) hide_warn_image(prefsw->jack_aplabel);
-  else lives_widget_set_sensitive(prefsw->jack_aplayout, FALSE);
+
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
+    hide_warn_image(prefsw->jack_aplabel);
+  } else lives_widget_set_sensitive(prefsw->jack_aplayout, FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
@@ -5825,16 +5852,16 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-  lives_standard_radio_button_new(_("_Start a jack server"), &rb_group, LIVES_BOX(hbox),
-                                  H_("Checking this will cause LiVES to "
-                                     "start up a jackd server if it is\n"
-                                     "unable to connect to a running "
-                                     "instance.\n"));
+  widget = lives_standard_radio_button_new(_("_Start a jack server"), &rb_group, LIVES_BOX(hbox),
+           H_("Checking this will cause LiVES to "
+              "start up a jackd server if it is\n"
+              "unable to connect to a running "
+              "instance.\n"));
   hbox = widget_opts.last_container;
 
-  if (!ajack_cfg_exists) {
+  if (!(future_prefs->jack_opts & JACK_OPTS_START_ASERVER)) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->jack_acerror), TRUE);
-  }
+  } else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(widget), TRUE);
 
   advbutton =
     lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
@@ -5844,9 +5871,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(jack_srv_startup_config), LIVES_INT_TO_POINTER(FALSE));
-
-  /* if (future_prefs->jack_opts & JACK_OPTS_START_ASERVER) */
-  /*   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(widget), TRUE); */
 
   layout = prefsw->jack_aplayout2 = lives_layout_new(LIVES_BOX(prefsw->vbox_right_jack));
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Audio Options"), FALSE);
@@ -6648,18 +6672,19 @@ void on_preferences_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 */
 void on_prefs_close_clicked(LiVESButton * button, livespointer user_data) {
   lives_list_free_all(&prefs->acodec_list);
-  lives_list_free_all(&prefsw->pbq_list);
-  lives_tree_view_set_model(LIVES_TREE_VIEW(prefsw->prefs_list), NULL);
-  lives_free(prefsw->audp_name);
-  lives_free(prefsw->orig_audp_name);
-  lives_freep((void **)&resaudw);
-  lives_list_free(future_prefs->disabled_decoders);
-  future_prefs->disabled_decoders = NULL;
+  if (prefsw) {
+    lives_list_free_all(&prefsw->pbq_list);
+    lives_tree_view_set_model(LIVES_TREE_VIEW(prefsw->prefs_list), NULL);
+    lives_free(prefsw->audp_name);
+    lives_free(prefsw->orig_audp_name);
+    lives_freep((void **)&resaudw);
+    lives_list_free(future_prefs->disabled_decoders);
+    future_prefs->disabled_decoders = NULL;
 
-  lives_general_button_clicked(button, user_data);
+    lives_general_button_clicked(button, user_data);
 
-  prefsw = NULL;
-
+    prefsw = NULL;
+  }
   if (mainw->prefs_need_restart) {
     do_shutdown_msg();
     on_quit_activate(NULL, NULL);

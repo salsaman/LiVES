@@ -129,8 +129,8 @@ weed_plant_t *get_mandatory_channel(weed_plant_t *filter, int which, boolean is_
 boolean weed_instance_is_resizer(weed_plant_t *filt);
 weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_parent);
 
-#define PLUGIN_COMPOUND_EFFECTS_BUILTIN "effects/compound/"
-#define PLUGIN_COMPOUND_EFFECTS_CUSTOM "plugins/effects/compound/"
+#define PLUGIN_COMPOUND_EFFECTS_BUILTIN "effects" LIVES_DIR_SEP "compound"
+#define PLUGIN_COMPOUND_EFFECTS_CUSTOM "plugins" LIVES_DIR_SEP "effects" LIVES_DIR_SEP "compound"
 
 weed_plant_t *get_next_compound_inst(weed_plant_t *inst);
 

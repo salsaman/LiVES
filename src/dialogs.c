@@ -23,6 +23,7 @@
 #include "callbacks.h"
 #include "effects-weed.h"
 #include "diagnostics.h"
+#include "startup.h"
 
 extern void reset_frame_and_clip_index(void);
 
@@ -238,7 +239,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   LiVESWidget *okbutton = NULL, *defbutton = NULL;
   LiVESWidget *abortbutton = NULL;
 
-  LiVESAccelGroup *accel_group = NULL;
   LiVESWindow *transient = widget_opts.transient;
 
   char *colref;
@@ -478,23 +478,17 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     }
   }
 
-  if (okbutton || cancelbutton) {
-    accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-    lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
-  }
-
   if (cancelbutton) {
-    lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+    lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
   }
 
   if (okbutton && mainw && mainw->iochan) {
     lives_button_grab_default_special(okbutton);
     lives_widget_grab_focus(okbutton);
-  } else if (defbutton) lives_button_grab_default_special(defbutton);
-
-  lives_widget_show_all(dialog);
-  //gdk_window_show_unraised(lives_widget_get_xwindow(dialog));
+  } else if (defbutton) {
+    lives_button_grab_default_special(defbutton);
+    lives_widget_grab_focus(defbutton);
+  }
 
   if (mainw->mgeom)
     lives_window_center(LIVES_WINDOW(dialog));
@@ -503,13 +497,14 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
 
   if (!transient) {
-    char *wid =
-      lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
+    /* char *wid = */
+    /*   lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog))); */
 
-    /// MUST check if execs are MISSING, else we can get stuck in a loop of warning dialogs !!!
-    if (!wid || (capable->has_xdotool == MISSING && capable->has_wmctrl == MISSING)
-        || !activate_x11_window(wid) || 1)
-      lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
+    /* /// MUST check if execs are MISSING, else we can get stuck in a loop of warning dialogs !!! */
+    /* if (!wid || (capable->has_xdotool == MISSING && capable->has_wmctrl == MISSING) */
+    /*     || !activate_x11_window(wid) || 1) */
+    /*   lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE); */
+    pop_to_front(dialog, NULL);
   }
   if (cb_key) extra_cb(dialog, cb_key);
 
@@ -2566,13 +2561,14 @@ LIVES_GLOBAL_INLINE void do_upgrade_error_dialog(void) {
 
 LIVES_GLOBAL_INLINE void do_rendered_fx_dialog(void) {
   char *tmp;
+  char *encpath = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_RENDERED_EFFECTS_BUILTIN, NULL);
   char *msg = lives_strdup_printf(
                 _("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n"
-                  "%s%s%s\nor change the value of <lib_dir> in %s\n"),
-                prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_RENDERED_EFFECTS_BUILTIN,
+                  "%s\nor change the value of <lib_dir> in %s\n"), encpath,
                 (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
   do_error_dialog_with_check(msg, WARN_MASK_RENDERED_FX);
   lives_free(msg);
+  lives_free(encpath);
   lives_free(tmp);
 }
 

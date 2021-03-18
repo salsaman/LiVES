@@ -16,36 +16,35 @@ static boolean allpassed;
 LiVESWidget *assist;
 
 void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
-#ifndef GUI_GTK
   char *wid = NULL;
   boolean activated = FALSE;
-#else
-  if (!mainw->is_ready) {
-    gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE); // dont know if this actually does anything...
-    gtk_window_set_type_hint(LIVES_WINDOW(dialog), GDK_WINDOW_TYPE_HINT_NORMAL);
-  }
-#endif
+  if (prefs->startup_phase) {
+    if (!mainw->is_ready) {
+      gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE); // dont know if this actually does anything...
+      gtk_window_set_type_hint(LIVES_WINDOW(dialog), GDK_WINDOW_TYPE_HINT_NORMAL);
+    }
 
-  if (mainw->splash_window) {
-    lives_widget_hide(mainw->splash_window);
-  }
 
+    if (mainw->splash_window) {
+      lives_widget_hide(mainw->splash_window);
+    }
+  }
   lives_widget_show_all(dialog);
   lives_widget_context_update();
 
-#ifndef GUI_GTK
-  wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
-  activated = activate_x11_window(wid);
-  lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
+  if (!prefs->startup_phase) {
+    wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
+    activated = activate_x11_window(wid);
+    lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
 
-  if (extra) {
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(extra), KEEPABOVE_KEY, dialog);
-    if (activated)
-      lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(extra),
-                                        ACTIVATE_KEY, lives_strdup(wid));
+    if (extra) {
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(extra), KEEPABOVE_KEY, dialog);
+      if (activated)
+        lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(extra),
+                                          ACTIVATE_KEY, lives_strdup(wid));
+    }
+    if (wid) lives_free(wid);
   }
-  if (wid) lives_free(wid);
-#endif
 }
 
 

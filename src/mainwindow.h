@@ -608,34 +608,38 @@ enum {
 #define UNREC_LAYOUTS_DIR "unrecoverable_layouts"
 
 // directory / subdir names
-#define LIVES_SHARE_DIR "/share"
+#define LIVES_SHARE_DIR "share"
 #define LIVES_DIR_LITERAL "lives"
-#define LIVES_DATA_DIR LIVES_SHARE_DIR "/" LIVES_DIR_LITERAL
-#define LIVES_DEVICE_DIR "/dev"
-#define LIVES_RUN_DIR "/run"
-#define LIVES_SHM_DIR "/shm"
-#define LIVES_DEVNULL LIVES_DEVICE_DIR "/null"
-#define LIVES_ETC_DIR "/etc"
-#define LIVES_USR_DIR "/usr"
+#define LIVES_DEVICE_DIR "dev"
+#define LIVES_RUN_DIR "run"
+#define LIVES_SHM_DIR "shm"
+#define LIVES_ETC_DIR "etc"
+#define LIVES_USR_DIR "usr"
+#define LIVES_LOCAL_DIR "local"
+#define LIVES_LIB_DIR "lib" /// not to be confused with LIVES_LIBDIR !!!
 
 #define EXTRA_CMD_FILE "cmdline"
 
-#define DEF_PREFIX_DIR "/usr"
+#define DEF_PREFIX_DIR LIVES_USR_DIR
+
+#define LIVES_DEVNULL LIVES_DEVICE_DIR LIVES_DIR_SEP "null"
 
 // system-wide defaults in prefs->prefix_dir
-#define THEME_DIR LIVES_DATA_DIR "/themes/"
-#define PLUGIN_SCRIPTS_DIR "/" LIVES_SHARE_DIR "/" LIVES_DIR_LITERAL "/plugins"
+#define LIVES_DATA_DIR LIVES_SHARE_DIR LIVES_DIR_SEP LIVES_DIR_LITERAL
+#define THEME_DIR LIVES_DATA_DIR LIVES_DIR_SEP "themes"
+#define PLUGIN_EXEC_DIR LIVES_DIR_LITERAL LIVES_DIR_SEP "plugins"
+#define PLUGIN_SCRIPTS_DIR LIVES_SHARE_DIR LIVES_DIR_SEP LIVES_DIR_LITERAL LIVES_DIR_SEP "plugins"
 #define PLUGIN_COMPOUND_DIR PLUGIN_SCRIPTS_DIR
-#define DOC_DIR "/" LIVES_SHARE_DIR "/doc/" LIVES_DIR_LITERAL
-#define APPLICATIONS_DIR "/" LIVES_SHARE_DIR "/applications/"  // normally in LIVES_USR_DIR
-#define PLUGIN_EXEC_DIR LIVES_DIR_LITERAL "/plugins/"
-#define ICON_DIR "/" LIVES_SHARE_DIR "/" LIVES_DIR_LITERAL "/icons"
-#define DESKTOP_ICON_DIR "/share/icons/hicolor/256x256/apps"
+#define DOC_DIR LIVES_SHARE_DIR LIVES_DIR_SEP "doc" LIVES_DIR_SEP LIVES_DIR_LITERAL
+#define APPLICATIONS_DIR  LIVES_SHARE_DIR LIVES_DIR_SEP "applications"  // normally in LIVES_USR_DIR
+#define ICON_DIR LIVES_SHARE_DIR LIVES_DIR_SEP LIVES_DIR_LITERAL LIVES_DIR_SEP "icons"
+
+#define DESKTOP_ICON_DIR ICON_DIR LIVES_DIR_SEP "hicolor" LIVES_DIR_SEP "256x256" LIVES_DIR_SEP "apps"
 
 // per-user defaults
-#define LOCAL_HOME_DIR ".local"
+#define LOCAL_HOME_DIR "." LIVES_LOCAL_DIR
 
-#define LIVES_DEF_CONFIG_DIR ".config/" LIVES_DIR_LITERAL ///< in $HOME : used once to set configfile, and then discarded
+#define LIVES_DEF_CONFIG_DIR ".config" LIVES_DIR_SEP LIVES_DIR_LITERAL ///< in $HOME : used once to set configfile, and then discarded
 #define LIVES_DEF_CONFIG_FILE "settings" ///< in LIVES_DEF_CONFIG_DIR unless overridden
 
 #define LIVES_DEF_CONFIG_FILE_OLD ".lives" ///< pre 3.2.0

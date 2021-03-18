@@ -1042,7 +1042,7 @@ static boolean pre_init(void) {
 
 #ifdef ENABLE_JACK
   if (!ign_opts.ign_jackopts) {
-    prefs->jack_opts = future_prefs->jack_opts = get_int_prefd(PREF_JACK_OPTS, 16);
+    prefs->jack_opts = get_int_prefd(PREF_JACK_OPTS, 16);
   }
 
   prefs->jack_srv_dup = TRUE;
@@ -1055,6 +1055,10 @@ static boolean pre_init(void) {
   if (!ign_opts.ign_jackserver) {
     lives_snprintf(future_prefs->jack_aserver_cname, PATH_MAX, "%s", prefs->jack_aserver_cname);
     lives_snprintf(future_prefs->jack_aserver_sname, PATH_MAX, "%s", prefs->jack_aserver_sname);
+    if (has_pref(PREF_JACK_LAST_ASERVER)) delete_pref(PREF_JACK_LAST_ASERVER);
+    if (has_pref(PREF_JACK_LAST_TSERVER)) delete_pref(PREF_JACK_LAST_TSERVER);
+    if (has_pref(PREF_JACK_LAST_ADRIVER)) delete_pref(PREF_JACK_LAST_ADRIVER);
+    if (has_pref(PREF_JACK_LAST_TDRIVER)) delete_pref(PREF_JACK_LAST_TDRIVER);
   }
 
   get_string_pref(PREF_JACK_ADRIVER, jbuff, JACK_PARAM_STRING_MAX);
@@ -1097,6 +1101,11 @@ static boolean pre_init(void) {
   if (ign_opts.ign_jackserver) {
     prefs->jack_opts |= JACK_INFO_TEMP_NAMES;
   }
+  if (ign_opts.ign_jackopts) {
+    prefs->jack_opts |= JACK_INFO_TEMP_OPTS;
+  }
+
+  future_prefs->jack_opts = prefs->jack_opts;
 
   if (lives_strcmp(future_prefs->jack_aserver_sname, prefs->jack_aserver_sname)) {
     // server name to start up changed, so we should invalidate the old driver in case this changed
@@ -2187,9 +2196,12 @@ static void lives_init(_ign_opts *ign_opts) {
     if (!*prefs->frei0r_path) {
       frei0r_path = getenv("FREI0R_PATH");
       if (!frei0r_path) {
+        char *fp0 = lives_build_path(LIVES_USR_DIR, LIVES_LIB_DIR, FREI0R1_LITERAL, NULL);
+        char *fp1 = lives_build_path(LIVES_USR_DIR, LIVES_LOCAL_DIR, LIVES_LIB_DIR, FREI0R1_LITERAL, NULL);
+        char *fp2 = lives_build_path(capable->home_dir, FREI0R1_LITERAL, NULL);
         frei0r_path =
-          lives_strdup_printf("/usr/lib/frei0r-1:/usr/local/lib/frei0r-1:%s/frei0r-1",
-                              capable->home_dir);
+          lives_strdup_printf("%s:%s:%s", fp0, fp1, fp2);
+        lives_free(fp0); lives_free(fp1); lives_free(fp2);
         needs_free = TRUE;
       }
       lives_snprintf(prefs->frei0r_path, PATH_MAX, "%s", frei0r_path);
@@ -2205,7 +2217,7 @@ static void lives_init(_ign_opts *ign_opts) {
     if (!*prefs->ladspa_path) {
       ladspa_path = getenv("LADSPA_PATH");
       if (!ladspa_path) {
-        ladspa_path = lives_build_path(prefs->lib_dir, "ladspa", NULL);
+        ladspa_path = lives_build_path(LIVES_USR_DIR, LIVES_LIB_DIR, LADSPA_LITERAL, NULL);
         needs_free = TRUE;
       }
       lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
@@ -2302,10 +2314,8 @@ audio_choice:
           prefs->jack_opts |= JACK_OPTS_PERM_TSERVER;
         else
           prefs->jack_opts &= ~JACK_OPTS_PERM_TSERVER;
-        future_prefs->jack_opts = prefs->jack_opts;
       }
     }
-
 
     if (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
       // start jack transport polling
@@ -2345,12 +2355,13 @@ jack_tcl_try:
 
       if ((prefs->jack_opts & JACK_INFO_TEMP_NAMES)
           || lives_strcmp(future_prefs->jack_tdriver, prefs->jack_tdriver)) {
-        // if the driver has changed, update prefs
-        if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) {
-          pref_factory_string(PREF_JACK_LAST_TDRIVER, future_prefs->jack_tdriver, TRUE);
-          pref_factory_string(PREF_JACK_LAST_TSERVER, future_prefs->jack_tserver_sname, TRUE);
-        } else pref_factory_string(PREF_JACK_TDRIVER, future_prefs->jack_tdriver, TRUE);
-
+        if (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
+          // if the driver has changed, update prefs
+          if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) {
+            pref_factory_string(PREF_JACK_LAST_TDRIVER, future_prefs->jack_tdriver, TRUE);
+            pref_factory_string(PREF_JACK_LAST_TSERVER, future_prefs->jack_tserver_sname, TRUE);
+          } else pref_factory_string(PREF_JACK_TDRIVER, future_prefs->jack_tdriver, TRUE);
+        }
         if (prefs->jack_srv_dup) {
           if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) {
             pref_factory_string(PREF_JACK_LAST_ADRIVER, future_prefs->jack_tdriver, TRUE);
@@ -2376,9 +2387,9 @@ jack_tcl_try:
         // activate the writer and connect ports
 jack_acl_try:
         success = TRUE;
-        if (!(info = lives_proc_thread_create_with_timeout_named(LIVES_SHORTEST_TIMEOUT, 0,
-                     (lives_funcptr_t)jack_create_client_writer, "aa",
-                     WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
+        if (!(info = LPT_WITH_TIMEOUT(LIVES_SHORTEST_TIMEOUT, 0,
+                                      (lives_funcptr_t)jack_create_client_writer,
+                                      WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
           if (mainw->cancelled) {
             // go back to audio_choice
             mainw->jackd = NULL;
@@ -2422,11 +2433,13 @@ jack_acl_try:
             pref_factory_string(PREF_JACK_LAST_ASERVER, future_prefs->jack_aserver_sname, TRUE);
           } else pref_factory_string(PREF_JACK_ADRIVER, future_prefs->jack_adriver, TRUE);
 
-          if (prefs->jack_srv_dup) {
-            if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) {
-              pref_factory_string(PREF_JACK_LAST_TDRIVER, future_prefs->jack_adriver, TRUE);
-              pref_factory_string(PREF_JACK_LAST_TSERVER, future_prefs->jack_aserver_sname, TRUE);
-            } else pref_factory_string(PREF_JACK_TDRIVER, future_prefs->jack_adriver, TRUE);
+          if (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
+            if (prefs->jack_srv_dup) {
+              if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) {
+                pref_factory_string(PREF_JACK_LAST_TDRIVER, future_prefs->jack_adriver, TRUE);
+                pref_factory_string(PREF_JACK_LAST_TSERVER, future_prefs->jack_aserver_sname, TRUE);
+              } else pref_factory_string(PREF_JACK_TDRIVER, future_prefs->jack_adriver, TRUE);
+            }
           }
         }
 
@@ -2760,6 +2773,11 @@ static void do_start_messages(void) {
 
 static void set_toolkit_theme(int prefer) {
   char *lname, *ic_dir;
+  char buff[1024];
+  //lives_widget_object_set(gtk_settings_get_default(), "focus-new-windows", "strict");
+
+  lives_widget_object_get(gtk_settings_get_default(), "focus-new-windows", &buff);
+  g_print("VALL WAS %s\n", buff);
 
   lives_widget_object_get(gtk_settings_get_default(), "gtk-double-click-time", &capable->dclick_time);
   if (capable->dclick_time <= 0) capable->dclick_time = LIVES_DEF_DCLICK_TIME;
@@ -4058,14 +4076,15 @@ static boolean lives_startup(livespointer data) {
             WARN_MASK_NO_MPLAYER);
         }
         if (!capable->has_encoder_plugins) {
+          char *path = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, NULL);
           msg = lives_strdup_printf(
                   _("\nLiVES was unable to find any encoder plugins.\n"
-                    "Please check that you have them installed correctly in\n%s%s%s/\n"
+                    "Please check that you have them installed correctly in\n%s/\n"
                     "You will not be able to 'Save' without them.\n"
-                    "You may need to change the value of <lib_dir> in %s\n"),
-                  prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS,
+                    "You may need to change the value of <lib_dir> in %s\n"), path,
                   (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
           lives_free(tmp);
+          lives_free(path);
           startup_message_nonfatal_dismissable(msg, WARN_MASK_NO_ENCODERS);
           lives_free(msg);
           upgrade_error = TRUE;
@@ -5195,7 +5214,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           // override jackopts in config file
           ign_opts.ign_jackopts = TRUE;
           prefs->jack_opts = atoi(optarg);
-          prefs->jack_opts |= JACK_INFO_TEMP_OPTS;
           continue;
         }
 

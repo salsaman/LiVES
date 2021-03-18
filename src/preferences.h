@@ -9,6 +9,12 @@
 
 #define PREFS_PANED_POS ((int)(300.*widget_opts.scale))
 
+#ifdef HAVE_FREI0R
+#define FREI0R1_LITERAL "frei0r-1"
+#endif
+#if HAVE_LADSPA
+#define LADSPA_LITERAL "ladspa"
+#endif
 // for mainw->prefs_changed
 #define PREFS_THEME_CHANGED		(1 << 0)
 #define PREFS_JACK_CHANGED		(1 << 1)
@@ -745,6 +751,7 @@ typedef struct {
   LiVESWidget *jack_asname;
   LiVESWidget *jack_acerror;
   LiVESWidget *jack_apstats;
+  LiVESWidget *jack_apperm;
   LiVESWidget *jack_aplabel;
   LiVESWidget *jack_aplayout;
   LiVESWidget *jack_aplayout2;
@@ -948,7 +955,7 @@ void pref_change_colours(void);
 
 void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
-// ADDING A PREFS
+// ADDING A PREF
 /*  add a field to prefs, eg int new_int;
     add a widget in prefsw:  LiVESWidget *new_int_spin;
     add a new pref_id eg. #define PREF_NEW_INT "new_int"
@@ -1256,6 +1263,7 @@ void set_palette_prefs(boolean save);
 void toggle_sets_pref(LiVESWidget *widget, livespointer prefidx);
 
 #if 0
+// TODO provide customised suggestions for best performance
 void optimize(void);
 #endif
 

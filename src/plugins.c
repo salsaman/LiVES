@@ -76,7 +76,6 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
 
   LiVESList *reslist = NULL;
   char *com, *comfile;
-
   if (plugin_type) {
     if (!plugin_name || !*plugin_name) {
       return reslist;
@@ -93,15 +92,16 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
       comfile = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, plugin_type, plugin_name, NULL);
     }
 
-    //#define DEBUG_PLUGINS
+    //   #define DEBUG_PLUGINS
 #ifdef DEBUG_PLUGINS
     com = lives_strdup_printf("\"%s\" %s", comfile, request);
-    lives_printerr("will run: %s\n", com);
 #else
     com = lives_strdup_printf("\"%s\" %s 2>/dev/null", comfile, request);
 #endif
     lives_free(comfile);
-  } else com = lives_strdup(request);
+  } else {
+    com = lives_strdup(request);
+  }
   list_plugins = FALSE;
   reslist = get_plugin_result(com, delim, allow_blanks, TRUE);
   lives_free(com);
@@ -123,14 +123,16 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
 
   // format is: allow_nonex (0 or 1) allow_subdirs (0 or 1)  plugindir   ext
 
-  char *com, *tmp;
+  char *com, *tmp, *path;
   LiVESList *pluglist;
 
   const char *ext = (filter_ext == NULL) ? "" : filter_ext;
 
   if (!lives_strcmp(plugin_type, PLUGIN_THEMES)) {
     // must not allow_nonex, otherwise we get splash image etc (just want dirs)
-    com = lives_strdup_printf("%s list_plugins 0 1 \"%s%s\" \"\"", prefs->backend_sync, prefs->prefix_dir, THEME_DIR);
+    path = lives_build_path(prefs->prefix_dir, THEME_DIR, NULL);
+    com = lives_strdup_printf("%s list_plugins 0 1 \"%s\" \"\"", prefs->backend_sync, path);
+    lives_free(path);
   } else if (!lives_strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS) ||
              !lives_strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS) ||
              !lives_strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_CUSTOM) ||
@@ -154,14 +156,17 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
                               (tmp = lives_filename_from_utf8((char *)plugdir, -1, NULL, NULL, NULL)), ext);
     lives_free(tmp);
   } else if (!lives_strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS)) {
-    com = lives_strdup_printf("%s list_plugins %d 0 \"%s%s%s\" \"%s\"", prefs->backend_sync, allow_nonex, prefs->prefix_dir,
-                              PLUGIN_SCRIPTS_DIR, plugin_type, ext);
+    path = lives_build_path(prefs->prefix_dir, PLUGIN_SCRIPTS_DIR, plugin_type, NULL);
+    com = lives_strdup_printf("%s list_plugins %d 0 \"%s\" \"%s\"", prefs->backend_sync, allow_nonex, path, ext);
+    lives_free(path);
   } else if (!lives_strcmp(plugin_type, PLUGIN_COMPOUND_EFFECTS_BUILTIN)) {
-    com = lives_strdup_printf("%s list_plugins %d 0 \"%s%s%s\" \"%s\"", prefs->backend_sync, allow_nonex, prefs->prefix_dir,
-                              PLUGIN_COMPOUND_DIR, plugin_type, ext);
+    path = lives_build_path(prefs->prefix_dir, PLUGIN_COMPOUND_DIR, plugin_type, NULL);
+    com = lives_strdup_printf("%s list_plugins %d 0 \"%s\" \"%s\"", prefs->backend_sync, allow_nonex, path, ext);
+    lives_free(path);
   } else {
-    com = lives_strdup_printf("%s list_plugins %d 0 \"%s%s%s\" \"%s\"", prefs->backend_sync, allow_nonex, prefs->lib_dir,
-                              PLUGIN_EXEC_DIR, plugin_type, ext);
+    path = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR, plugin_type, NULL);
+    com = lives_strdup_printf("%s list_plugins %d 0 \"%s\" \"%s\"", prefs->backend_sync, allow_nonex, path, ext);
+    lives_free(path);
   }
   list_plugins = TRUE;
 

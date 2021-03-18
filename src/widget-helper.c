@@ -76,6 +76,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 
 #define SBUTT_SURFACE_KEY "_sbutt_surf"
 #define SBUTT_TXT_KEY "_sbutt_txt"
+#define SBUTT_MARKUP_KEY "_sbutt_markup"
 #define SBUTT_LAYOUT_KEY "_sbutt_layout"
 #define SBUTT_LW_KEY "_sbutt_lw"
 #define SBUTT_LH_KEY "_sbutt_lh"
@@ -1004,6 +1005,7 @@ static lives_sigdata_t *tasks_running(void) {
 }
 
 LIVES_LOCAL_INLINE boolean sigdata_check_alarm(lives_sigdata_t *sigdata) {
+  /// returns FALSE on timeout
   return (!sigdata || sigdata->alarm_handle == LIVES_NO_ALARM
           || lives_alarm_check(sigdata->alarm_handle) > 0);
 }
@@ -1095,7 +1097,7 @@ LIVES_LOCAL_INLINE boolean sigdata_check_alarm(lives_sigdata_t *sigdata) {
 // multiple return values
 
 boolean governor_loop(livespointer data) {
-  //volatile boolean clutch;
+  volatile boolean clutch;
   static boolean lpt_recurse = FALSE;
   static boolean lpt_recurse2 = FALSE;
   boolean is_timer = FALSE;
@@ -1192,14 +1194,14 @@ reloop:
           task_list = lives_list_prepend(task_list, new_sigdata);
           if (new_sigdata->alarm_handle == LIVES_NO_ALARM) new_sigdata = NULL;
         }
-        if (new_sigdata->alarm_handle == LIVES_NO_ALARM) goto reloop;
+        if (!new_sigdata || new_sigdata->alarm_handle == LIVES_NO_ALARM) goto reloop;
       }
 
-      // use clutch and mainw->clutch - at one point it seemed like the value wasnt updating, but it may have
-      // been a mistaken impression
-      //clutch = mainw->clutch;
+      // use clutch and mainw->clutch - not sure why but the value of mainw->clutch isnt always read correctly
+      // even though it is daeclared volatile
+      clutch = mainw->clutch;
       while ((!new_sigdata || sigdata_check_alarm(new_sigdata))
-             && task_list && !lpttorun && mainw->clutch && !mainw->is_exiting && !(sigdata = tasks_running())) {
+             && task_list && !lpttorun && clutch && !mainw->is_exiting && !(sigdata = tasks_running())) {
         // while any signal handler is running in the bg, we just loop here until either:
         // any task completes, the task wants to run a main loop cycle, or the app exits
         lives_nanosleep(NSLEEP_TIME);
@@ -1208,7 +1210,7 @@ reloop:
         /*           lives_proc_thread_signalled(sigdata->proc)); */
         /* } */
         //sched_yield();
-        //clutch = mainw->clutch;
+        clutch = mainw->clutch;
       }
     }
   }
@@ -1242,9 +1244,9 @@ reloop:
     // set lpt_recurse which will trigger the fg task
     // this part ensures that the idlefunc isnt called right away before any gui updates have a chance
     while (count++ < EV_LIM && lives_widget_context_iteration(NULL, FALSE)
-           && !sigdata_check_alarm(sigdata) && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
+           && sigdata_check_alarm(sigdata) && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
 
-    if (sigdata_check_alarm(sigdata)) return FALSE;
+    if (!sigdata_check_alarm(sigdata)) return FALSE;
 
     // add ourselves as an idlefunc and then return FALSE
     lives_idle_add_simple(governor_loop, sigdata->alarm_handle ? sigdata : NULL);
@@ -1258,7 +1260,7 @@ reloop:
   }
 
   /// something else might have removed the clutch, so check again if the handler is still running
-  if (!lives_proc_thread_check_finished(new_sigdata->proc)) goto reloop;
+  if (!lives_proc_thread_check_finished(sigdata->proc)) goto reloop;
 
   // if we arrive here it means that some signal handler initiated the loops, and it's
   // actual callback has finished, now we can return to the proxy signal handler
@@ -8202,6 +8204,7 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
       double offs_x = 0., offs_y = 0;
       boolean fake_default = (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(sbutt), SBUTT_FAKEDEF_KEY)
                               ? TRUE : FALSE);
+      boolean use_markup = GET_INT_DATA(sbutt, SBUTT_MARKUP_KEY);
       boolean prelit = (state & LIVES_WIDGET_STATE_PRELIGHT) == 0 ? FALSE : TRUE;
       boolean insens = (state & LIVES_WIDGET_STATE_INSENSITIVE) == 0 ? FALSE : TRUE;
       boolean focused = lives_widget_is_focus(sbutt);
@@ -8292,12 +8295,14 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
           layout = pango_layout_new(ctx);
           lingo_layout_set_alignment(layout, LINGO_ALIGN_CENTER);
 
-          markup = lives_markup_escape_text(text, -1);
+          if (!use_markup) markup = lives_markup_escape_text(text, -1);
+          else markup = (char *)text;
           full_markup = lives_strdup_printf("<span size=\"%s\">%s</span>", widget_opts.text_size,
                                             markup);
 
           lingo_layout_set_markup_with_accel(layout, full_markup, -1, '_', &acc);
-          lives_free(markup); lives_free(full_markup);
+          if (markup != text) lives_free(markup);
+          lives_free(full_markup);
           if (acc) {
             if (LIVES_IS_FRAME(toplevel)) topl = lives_bin_get_child(LIVES_BIN(toplevel));
             else topl = toplevel;
@@ -8489,6 +8494,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_standard_button_set_label(LiVESButton 
     const char *txt) {
   if (!is_standard_widget(LIVES_WIDGET(sbutt))) return lives_button_set_label(sbutt, txt);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(sbutt), SBUTT_LAYOUT_KEY, NULL);
+  SET_INT_DATA(sbutt, SBUTT_MARKUP_KEY, widget_opts.use_markup);
   lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(sbutt), SBUTT_TXT_KEY,
                                     txt ? lives_strdup(txt) : NULL);
   lives_widget_queue_draw(LIVES_WIDGET(sbutt));

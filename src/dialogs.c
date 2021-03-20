@@ -255,6 +255,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
   switch (diat) {
   case LIVES_DIALOG_WARN:
+    if (transient) wm_property_set("focus-new-window", "strict");
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
                                       LIVES_MESSAGE_WARNING, LIVES_BUTTONS_NONE, NULL);
 
@@ -271,6 +272,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     break;
   case LIVES_DIALOG_ERROR:
+    if (transient) wm_property_set("focus-new-window", "strict");
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
                                       LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
     if (palette && widget_opts.apply_theme)
@@ -301,6 +303,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     break;
 
   case LIVES_DIALOG_WARN_WITH_CANCEL:
+    if (transient) wm_property_set("focus-new-window", "strict");
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_WARNING,
                                       LIVES_BUTTONS_NONE, NULL);
 
@@ -497,15 +500,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
 
   if (!transient) {
-    /* char *wid = */
-    /*   lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog))); */
-
-    /* /// MUST check if execs are MISSING, else we can get stuck in a loop of warning dialogs !!! */
-    /* if (!wid || (capable->has_xdotool == MISSING && capable->has_wmctrl == MISSING) */
-    /*     || !activate_x11_window(wid) || 1) */
-    /*   lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE); */
     pop_to_front(dialog, NULL);
   }
+
   if (cb_key) extra_cb(dialog, cb_key);
 
   if (mainw && mainw->add_trash_rb)
@@ -559,6 +556,7 @@ boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number
   mytext = lives_strdup(text); // must copy this because of translation issues
 
   warning = create_message_dialog(LIVES_DIALOG_WARN_WITH_CANCEL, mytext, warn_mask_number);
+  wm_property_set("focus-new-window", capable->wm_caps.wm_focus);
 
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
@@ -769,6 +767,7 @@ LIVES_GLOBAL_INLINE LiVESResponseType do_error_dialog(const char *text) {
 static LiVESResponseType _do_info_dialog(const char *text, const char *exp_title, LiVESList *exp_list) {
   LiVESResponseType ret = LIVES_RESPONSE_NONE;
   LiVESWidget *info_box = create_message_dialog(LIVES_DIALOG_INFO, text, 0);
+  wm_property_set("focus-new-window", capable->wm_caps.wm_focus);
 
   if (exp_list) {
     LiVESWidget *dab = lives_dialog_get_content_area(LIVES_DIALOG(info_box));
@@ -824,6 +823,7 @@ LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mas
 
   err_box = create_message_dialog(warn_mask_number == 0 ? LIVES_DIALOG_ERROR :
                                   LIVES_DIALOG_WARN, text, warn_mask_number);
+  wm_property_set("focus-new-window", capable->wm_caps.wm_focus);
 
   if (!widget_opts.non_modal) {
     do {
@@ -1407,9 +1407,9 @@ static boolean reset_timebase(void) {
   mainw->orignsecs = lives_get_monotonic_time() * 1000;
 #else
 
-  /***************************************************/
+  / \ ***************************************************\ /
   gettimeofday(&tv, NULL);
-  /***************************************************/
+  / \ ***************************************************\ /
 
   mainw->origsecs = tv.tv_sec;
   mainw->orignsecs = tv.tv_usec * 1000;
@@ -1654,8 +1654,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     if (!jack_audio_seek_frame(mainw->jackd, mainw->aframeno)) {
       if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
       return FALSE;
-      /* if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, mainw->aframeno); */
-      /* else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE; */
     }
 
     if (!(mainw->record && (prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0 || mainw->agen_needs_reinit)))
@@ -1665,8 +1663,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       mainw->rec_avel = 1.;
       mainw->rec_aseek = 0;
     }
-    /* if (prefs->audio_src == AUDIO_SRC_INT) */
-    /*   mainw->jackd->in_use = TRUE; */
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
@@ -1745,11 +1741,11 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         return FALSE;
       }
 
-      /* if (mainw->disk_mon & MONITOR_GROWTH) { */
-      /* 	int64_t dsused = disk_monitor_check_result(mainw->monitor_dir); */
-      /* 	if (dsused >= 0) mainw->monitor_size = dsused; */
-      /* 	disk_monitor_start(mainw->monitor_dir); */
-      /* } */
+      /* if (mainw->disk_mon & MONITOR_GROWTH) { *\/
+        /\* 	int64_t dsused = disk_monitor_check_result(mainw->monitor_dir); *\/
+        /\* 	if (dsused >= 0) mainw->monitor_size = dsused; *\/
+        /\* 	disk_monitor_start(mainw->monitor_dir); *\/
+        /\* } */
       if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) {
         int64_t dsused = disk_monitor_check_result(prefs->workdir);
         if (dsused >= 0) {
@@ -2785,8 +2781,23 @@ LIVES_GLOBAL_INLINE void do_jack_restart_warn(int suggest_opts, const char *srvn
   lives_free(msg);
 }
 
+static LiVESWidget *statbutton, *drvbutton, *srvbutton;
 
-LIVES_GLOBAL_INLINE boolean do_jack_no_startup_warn(boolean is_trans) {
+static void diag_button_clicked(LiVESWidget * w, livespointer dta) {
+  lives_widget_set_no_show_all(statbutton, FALSE);
+  lives_widget_set_no_show_all(drvbutton, FALSE);
+  lives_widget_set_no_show_all(srvbutton, FALSE);
+
+  lives_widget_show_all(statbutton);
+  lives_widget_show_all(drvbutton);
+  lives_widget_show_all(srvbutton);
+
+  lives_widget_set_no_show_all(w, TRUE); // because lives_dlg_run
+  lives_widget_hide(w);
+}
+
+
+boolean do_jack_no_startup_warn(boolean is_trans) {
   char *tmp = NULL, *tmp2 = NULL, *tmp3, *tmp4, *msg;
   if ((is_trans && *prefs->jack_tserver_cfg) ||
       (!is_trans && *prefs->jack_aserver_cfg)) {
@@ -2845,8 +2856,7 @@ LIVES_GLOBAL_INLINE boolean do_jack_no_startup_warn(boolean is_trans) {
   } else {
     LiVESWidget *dlg = lives_standard_dialog_new(_("JACK Startup Error"), FALSE, -1, -1);
     LiVESWidget *dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dlg));
-    LiVESWidget *statbutton, *cancbutton, *cfgbutton;
-    LiVESWidget *label;
+    LiVESWidget *label, *diagbutton, *cancbutton;
 
     widget_opts.use_markup = TRUE;
     label = lives_standard_formatted_label_new(msg);
@@ -2858,21 +2868,49 @@ LIVES_GLOBAL_INLINE boolean do_jack_no_startup_warn(boolean is_trans) {
     statbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), NULL, _("View Status _Log"),
                  LIVES_RESPONSE_BROWSE);
 
-    cfgbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_PREFERENCES,
-                _("_Driver Settings"), LIVES_RESPONSE_RETRY);
+    if (!(prefs->jack_opts & JACK_INFO_TEMP_NAMES)) {
+      lives_widget_set_no_show_all(statbutton, TRUE);
+      lives_widget_hide(statbutton);
 
+      drvbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_PREFERENCES,
+                  _("_Driver Settings"), LIVES_RESPONSE_RETRY);
+
+      lives_widget_set_no_show_all(drvbutton, TRUE);
+      lives_widget_hide(drvbutton);
+
+      srvbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_PREFERENCES,
+                  _("Jack _Server Setup"), LIVES_RESPONSE_RESET);
+
+      lives_widget_set_no_show_all(srvbutton, TRUE);
+      lives_widget_hide(srvbutton);
+
+      diagbutton =  lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_PREFERENCES,
+                    _("Troubleshooting Options"), LIVES_RESPONSE_NONE);
+
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(diagbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                LIVES_GUI_CALLBACK(diag_button_clicked), NULL);
+    }
     cancbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_QUIT, _("_Exit LiVES"),
                  LIVES_RESPONSE_CANCEL);
     lives_window_add_escape(LIVES_WINDOW(dlg), cancbutton);
 
+    lives_widget_grab_focus(cancbutton);
+    lives_button_grab_default_special(cancbutton);
+
+    lives_dialog_set_button_layout(LIVES_DIALOG(dlg), LIVES_BUTTONBOX_EDGE);
+
     while (1) {
       LiVESResponseType resp = lives_dialog_run(LIVES_DIALOG(dlg));
+      if (resp == LIVES_RESPONSE_NONE) continue;
       if (resp == LIVES_RESPONSE_BROWSE)
         show_jack_status(LIVES_BUTTON(statbutton), LIVES_INT_TO_POINTER(2));
       else {
         lives_widget_destroy(dlg);
         if (resp == LIVES_RESPONSE_CANCEL) return FALSE;
-        return jack_drivers_config(cfgbutton, is_trans
+        if (resp == LIVES_RESPONSE_RESET) {
+          return do_jack_config(2, is_trans);
+        }
+        return jack_drivers_config(drvbutton, is_trans
                                    ? LIVES_INT_TO_POINTER(2)
                                    : LIVES_INT_TO_POINTER(3));
       }
@@ -2882,8 +2920,8 @@ LIVES_GLOBAL_INLINE boolean do_jack_no_startup_warn(boolean is_trans) {
 }
 
 
-LIVES_GLOBAL_INLINE void do_jack_no_connect_warn(boolean is_trans) {
-  char *extra = "", *tmp, *more, *warn;
+boolean do_jack_no_connect_warn(boolean is_trans) {
+  char *extra = "", *tmp, *more, *warn, *msg;
   if (is_trans && (future_prefs->jack_opts & JACK_OPTS_START_TSERVER)) {
     if (future_prefs->jack_tdriver && future_prefs->jack_tdriver) {
       extra = lives_strdup_printf(_("\nThere may be a problem with the <b>'%s'</b> driver"),
@@ -2908,35 +2946,80 @@ LIVES_GLOBAL_INLINE void do_jack_no_connect_warn(boolean is_trans) {
 
   if (!prefsw) {
     if (prefs->audio_player == AUD_PLAYER_JACK)
-      more = get_jack_restart_warn(future_prefs->jack_opts == 0 ? JACK_OPTS_START_ASERVER : 16, *future_prefs->jack_aserver_cname
+      more = get_jack_restart_warn(future_prefs->jack_opts == 0 ? JACK_OPTS_START_ASERVER
+                                   : 16, *future_prefs->jack_aserver_cname
                                    ? future_prefs->jack_aserver_cname : NULL);
     else
-      more = get_jack_restart_warn(future_prefs->jack_opts == 0 ? JACK_OPTS_START_TSERVER : 1024, *future_prefs->jack_tserver_cname
+      more = get_jack_restart_warn(future_prefs->jack_opts == 0 ? JACK_OPTS_START_TSERVER
+                                   : 1024, *future_prefs->jack_tserver_cname
                                    ? future_prefs->jack_tserver_cname : NULL);
   } else more = lives_strdup("");
 
   if (!prefsw) warn = _("<big><b>Please start the jack server before restarting LiVES</b></big>s");
   else warn = _("Please ensure the server is running before trying again");
 
-  extra_cb_key = 3; // add status button
-  widget_opts.use_markup = TRUE;
-  do_error_dialogf(_("\nLiVES was unable to establish %s to jack server <b>'%s'</b>.%s"
-                     "\n\n%s\n%s"),
-                   is_trans ? _("a transport client connection") : _("an audio connection"), tmp, extra, warn, more);
-  widget_opts.use_markup = FALSE;
+  msg = lives_strdup_printf(_("\nLiVES was unable to establish %s to jack server <b>'%s'</b>.%s"
+                              "\n\n%s\n%s"),
+                            is_trans ? _("a transport client connection") : _("an audio connection"),
+                            tmp, extra, warn, more);
   lives_free(tmp); lives_free(more);
   lives_free(warn);
   if (*extra) lives_free(extra);
-}
 
+  if (prefsw || prefs->startup_phase) {
+    widget_opts.use_markup = TRUE;
+    do_error_dialog(msg);
+    widget_opts.use_markup = FALSE;
+    lives_free(msg);
+  } else {
+    LiVESWidget *dlg = lives_standard_dialog_new(_("JACK Startup Error"), FALSE, -1, -1);
+    LiVESWidget *dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dlg));
+    LiVESWidget *label, *cancbutton;
+
+    widget_opts.use_markup = TRUE;
+    label = lives_standard_formatted_label_new(msg);
+    widget_opts.use_markup = FALSE;
+    lives_free(msg);
+
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
+
+    statbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), NULL, _("View Status _Log"),
+                 LIVES_RESPONSE_BROWSE);
+
+    srvbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_PREFERENCES,
+                _("Jack _Server Setup"), LIVES_RESPONSE_RESET);
+
+    cancbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_QUIT, _("_Exit LiVES"),
+                 LIVES_RESPONSE_CANCEL);
+
+    lives_window_add_escape(LIVES_WINDOW(dlg), cancbutton);
+
+    lives_widget_grab_focus(cancbutton);
+    lives_button_grab_default_special(cancbutton);
+
+    lives_dialog_set_button_layout(LIVES_DIALOG(dlg), LIVES_BUTTONBOX_EDGE);
+
+    while (1) {
+      LiVESResponseType resp = lives_dialog_run(LIVES_DIALOG(dlg));
+      if (resp == LIVES_RESPONSE_BROWSE)
+        show_jack_status(LIVES_BUTTON(statbutton), LIVES_INT_TO_POINTER(2));
+      else {
+        lives_widget_destroy(dlg);
+        if (resp == LIVES_RESPONSE_CANCEL) return FALSE;
+        if (resp == LIVES_RESPONSE_RESET) {
+          return do_jack_config(2, is_trans);
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
+  return FALSE;
+}
 
 
 LIVES_GLOBAL_INLINE void do_mt_backup_space_error(lives_mt * mt, int memreq_mb) {
   char *msg = lives_strdup_printf(
                 _("\n\nLiVES needs more backup space for this layout.\nYou can increase "
                   "the value in Preferences/Multitrack.\n"
-                  "It is recommended to increase it to at least %d MB"),
-                memreq_mb);
+                  "It is recommended to increase it to at least %d MB"), memreq_mb);
   do_error_dialog_with_check(msg, WARN_MASK_MT_BACKUP_SPACE);
   lives_free(msg);
 }
@@ -2947,8 +3030,7 @@ LIVES_GLOBAL_INLINE boolean do_set_rename_old_layouts_warning(const char *new_se
            _("\nSome old layouts for the set %s already exist.\n"
              "However no matching clips were encountered\n"
              "It is recommended that you delete these old layouts since they will not be usable\n"
-             "with the newly imported clips.\nDo you wish to do so ?\n"),
-           new_set);
+             "with the newly imported clips.\nDo you wish to do so ?\n"), new_set);
 }
 
 
@@ -2982,8 +3064,7 @@ LIVES_GLOBAL_INLINE void do_mt_set_mem_error(boolean has_mt) {
 LIVES_GLOBAL_INLINE void do_mt_audchan_error(int warn_mask) {
   do_error_dialog_with_check(
     _("Multitrack is set to 0 audio channels, but this layout has audio.\n"
-      "You should adjust the audio settings from the Tools menu.\n"),
-    warn_mask);
+      "You should adjust the audio settings from the Tools menu.\n"), warn_mask);
 }
 
 
@@ -2995,8 +3076,7 @@ LIVES_GLOBAL_INLINE void do_mt_no_audchan_error(void) {
 LIVES_GLOBAL_INLINE void do_mt_no_jack_error(int warn_mask) {
   do_error_dialog_with_check(
     _("Multitrack audio preview is only available with the\n\"jack\" or \"pulseaudio\" audio player.\n"
-      "You can set this in Tools|Preferences|Playback."),
-    warn_mask);
+      "You can set this in Tools|Preferences|Playback."), warn_mask);
 }
 
 
@@ -3060,6 +3140,7 @@ LiVESResponseType do_please_install(const char *info, const char *exec, uint64_t
 
     lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_CANCEL,
                                        _("Cancel / Install Later"), LIVES_RESPONSE_CANCEL);
+
     lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_ADD,
                                        _("Continue"), LIVES_RESPONSE_YES);
 
@@ -3813,6 +3894,7 @@ LIVES_GLOBAL_INLINE void do_do_not_close_d(void) {
   char *msg = (_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR "
                  "CLOSE LIVES !\n"));
   create_message_dialog(LIVES_DIALOG_WARN, msg, 0);
+  wm_property_set("focus-new-window", capable->wm_caps.wm_focus);
   lives_free(msg);
 }
 

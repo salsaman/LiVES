@@ -1108,7 +1108,7 @@ boolean governor_loop(livespointer data) {
   // instead we loop back to here
 reloop:
 
-  if (g_main_depth() > 1 && !lpttorun) {
+  if (g_main_depth() > 100 && !lpttorun) {
     // prevent recursion UNLESS a specific function is called
     mainw->clutch = TRUE;
     //g_print("gov1\n");

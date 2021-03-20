@@ -4,7 +4,6 @@
 // see file ../COPYING for licensing details
 
 #include "main.h"
-static lives_proc_thread_t spcl_lpt = NULL;
 
 /**
    lives_proc_threads API
@@ -155,14 +154,15 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
   va_start(xargs, args_fmt);
   lpt = lives_proc_thread_create_vargs(attr, func, xreturn_type, args_fmt, xargs);
   va_end(xargs);
-  spcl_lpt = lpt;
   sigdata->proc = lpt;
   sigdata->is_timer = TRUE;
 
+  mainw->cancelled = CANCEL_NONE;
+  lives_widget_context_update();
   alarm_handle = sigdata->alarm_handle = lives_alarm_set(timeout);
   tres = governor_loop(sigdata);
-  if (timeout > 0 && !(xtimeout = lives_alarm_check(alarm_handle)))
-    goto thrd_done;
+
+  tstate = lives_proc_thread_get_state(lpt);
 
   if (tstate & THRD_STATE_BUSY) {
     // thread MUST unavoidably block; stop the timer (e.g showing a UI)
@@ -192,7 +192,7 @@ thrd_done:
   lives_alarm_clear(alarm_handle);
   if (xtimeout == 0) {
     if (!lives_proc_thread_check_finished(lpt)) {
-      if (prefs->jokes) {
+      if (1 || prefs->jokes) {
         g_print("function call to %s was shot down in cold blood !\n", func_name);
       }
       lives_proc_thread_cancel_immediate(lpt);
@@ -207,6 +207,7 @@ thrd_done:
   return lpt;
 }
 
+
 lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
     int return_type, const char *args_fmt, ...) {
   lives_proc_thread_t ret;
@@ -216,6 +217,7 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives
   va_end(xargs);
   return ret;
 }
+
 
 boolean is_fg_thread(void) {
   LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
@@ -475,19 +477,19 @@ LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_get_state(lives_proc_thread_t lpt
 }
 
 
-boolean lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t state_bits) {
+uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t state_bits) {
   if (lpt) {
-    boolean retval = FALSE;
+    uint64_t tstate;
     pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
     pthread_mutex_lock(state_mutex);
-    if (!(lives_proc_thread_get_state(lpt) & THRD_STATE_FINISHED)) {
-      weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, lives_proc_thread_get_state(lpt) | state_bits);
-      retval = TRUE;
+    tstate = lives_proc_thread_get_state(lpt);
+    if (!(tstate & THRD_STATE_FINISHED)) {
+      weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate | state_bits);
     }
     pthread_mutex_unlock(state_mutex);
-    return retval;
+    return tstate & state_bits;
   }
-  return FALSE;
+  return 0;
 }
 
 boolean lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state_bits) {
@@ -668,7 +670,6 @@ static funcsig_t make_funcsig(lives_proc_thread_t func_info) {
 
 static void pthread_cleanup_func(void *args) {
   lives_proc_thread_t info = (lives_proc_thread_t)args;
-  if (info == spcl_lpt) break_me("lpt");
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
   boolean dontcare = lives_proc_thread_get_state(info) & THRD_OPT_DONTCARE;
   if (dontcare || (!ret_type && !(lives_proc_thread_get_state(info) & THRD_OPT_NOTIFY))) {

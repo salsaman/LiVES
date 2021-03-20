@@ -223,7 +223,7 @@ lives_thread_data_t *lives_thread_data_create(uint64_t idx);
 
 boolean lives_proc_thread_set_state(lives_proc_thread_t lpt, uint64_t state);
 uint64_t lives_proc_thread_get_state(lives_proc_thread_t lpt);
-boolean lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t state_bits);
+uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t state_bits);
 boolean lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state_bits);
 
 // proc_thread specific attributes

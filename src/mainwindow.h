@@ -434,6 +434,7 @@ enum {
 #define EXEC_GDB "gdb"
 #define EXEC_XWININFO "xwininfo"
 #define EXEC_GCONFTOOL_2 "gconftool-2"
+#define EXEC_GSETTINGS "gsettings"
 
 #define EXEC_XDG_SCREENSAVER "xdg-screensaver"
 #define EXEC_XDG_OPEN "xdg-open"

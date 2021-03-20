@@ -1902,7 +1902,7 @@ LiVESResponseType send_to_trash(const char *item) {
 #ifndef IMPL_TRASH
   do {
     resp = LIVES_RESPONSE_NONE;
-    if (!check_for_executable(&capable->has_gio, EXEC_GIO)) {
+    if (check_for_executable(&capable->has_gio, EXEC_GIO) != PRESENT) {
       reason = lives_strdup_printf(_("%s was not found\n"), EXEC_GIO);
       retval = FALSE;
     }
@@ -2011,7 +2011,8 @@ char *get_wid_for_name(const char *wname) {
     lives_free(cmd);
     if (THREADVAR(com_failed)
 	|| (!*buff || !(nlines = get_token_count(buff, '\n')))) {
-      if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
+      THREADVAR(com_failed) = FALSE;
+      return wid;
     }
     else {
       char buff2[1024];
@@ -2084,6 +2085,77 @@ boolean activate_x11_window(const char *wid) {
 }
 
 
+char *wm_property_get(const char *key, int *type_guess) {
+  char *com, *val = NULL, *res = NULL;
+  if (check_for_executable(&capable->has_gsettings, EXEC_GSETTINGS) == PRESENT) {
+    com = lives_strdup_printf("%s list-recursively | %s %s", EXEC_GSETTINGS, EXEC_GREP, key);
+    res = mini_popen(com);
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
+      if (res) lives_free(res);
+      return NULL;
+    }
+    if (!res) return NULL;
+    if (!*res) {
+      lives_free(res);
+      return NULL;
+    }
+    else {
+      char *separ = lives_strdup_printf(" %s ", key);
+      char **array = lives_strsplit(res, separ, 2);
+      lives_free(separ);
+      lives_free(res);
+      if (*array[1] == '\'') {
+	val = lives_strndup(array[1] + 1, lives_strlen(array[1]) - 2);
+	if (type_guess) *type_guess = WEED_SEED_STRING;
+      }
+      else {
+	val = lives_strdup(array[1]);
+	if (type_guess) {
+	  if (!lives_strcmp(val, "true") || !lives_strcmp(val, "false")) {
+	    *type_guess = WEED_SEED_BOOLEAN;
+	  }
+	  if (atoi(val)) {
+	    *type_guess = WEED_SEED_INT;
+	  // *INDENT-OFF*
+	  }}}
+      lives_strfreev(array);
+    }}
+  // *INDENT-OFF*
+  return val;
+}
+
+
+boolean wm_property_set(const char *key, const char *val) {
+  char *com, *res = NULL;
+  if (check_for_executable(&capable->has_gsettings, EXEC_GSETTINGS) == PRESENT) {
+    com = lives_strdup_printf("%s list-recursively | %s %s", EXEC_GSETTINGS, EXEC_GREP, key);
+    res = mini_popen(com);
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
+      if (res) lives_free(res);
+      return FALSE;
+    }
+    if (!res) return FALSE;
+    if (!*res) {
+      lives_free(res);
+      return FALSE;
+    }
+    else {
+      char *separ = lives_strdup_printf(" %s ", key);
+      char **array = lives_strsplit(res, separ, 2);
+      char *schema = array[0];
+      lives_free(separ);
+      lives_free(res);
+      com = lives_strdup_printf("%s set %s %s %s", EXEC_GSETTINGS, schema, key, val);
+      lives_free(com);
+      lives_strfreev(array);
+    }}
+  // *INDENT-OFF*
+  return TRUE;
+}
+
+
 boolean get_wm_caps(void) {
   char *wmname;
   if (capable->has_wm_caps) return TRUE;
@@ -2101,6 +2173,8 @@ boolean get_wm_caps(void) {
   capable->wm_caps.root_window = NULL;
 #endif
 #endif
+
+  capable->wm_caps.wm_focus = wm_property_get("focus-new-windows", NULL);
 
   capable->wm_type = getenv(XDG_SESSION_TYPE);
   wmname = getenv(XDG_CURRENT_DESKTOP);
@@ -2274,11 +2348,12 @@ static char *get_systmp_inner(const char *suff, boolean is_dir, const char *pref
 			      dirflg, tmp);
     lives_free(tmp);
     res = mini_popen(com);
-    if (!res) return NULL;
     if (THREADVAR(com_failed)) {
-      lives_free(res);
+      if (res) lives_free(res);
+      THREADVAR(com_failed) = FALSE;
       return NULL;
     }
+    if (!res) return NULL;
     if (lives_strlen(res) < slen) {
       lives_free(res);
       return NULL;

@@ -393,6 +393,8 @@ typedef struct {
   LiVESXWindow *root_window;
   boolean is_composited;
 
+  char *wm_focus;
+
 #define ANNOY_DISPLAY      	(1ull << 0)
 #define ANNOY_DISK		(1ull << 1)
 #define ANNOY_PROC		(1ull << 2)
@@ -482,6 +484,7 @@ typedef struct {
   lives_checkstatus_t has_rfx_builder;
   lives_checkstatus_t has_rfx_builder_multi;
   lives_checkstatus_t has_gconftool_2;
+  lives_checkstatus_t has_gsettings;
   lives_checkstatus_t has_xdg_screensaver;
   lives_checkstatus_t has_xdg_open;
   lives_checkstatus_t has_xdg_mime;
@@ -1276,7 +1279,7 @@ boolean do_jack_scripts_warn(const char *scrptx);
 boolean do_jack_nonex_warn(const char *server_config_file);
 boolean do_jack_no_startup_warn(boolean is_trans);
 void do_jack_setup_warn(void);
-void do_jack_no_connect_warn(boolean is_trans);
+boolean do_jack_no_connect_warn(boolean is_trans);
 void do_jack_restart_warn(int suggest_opts, const char *srvname);
 #endif
 LiVESResponseType do_file_perm_error(const char *file_name, boolean allow_cancel);

@@ -31,8 +31,6 @@ typedef enum {
 // should really be lives_jack_client_t - TODO
 typedef struct _lives_jack_driver_t jack_driver_t;
 
-void jack_test(const char *snm);
-
 // GUI functions
 void jack_srv_startup_config(LiVESWidget *, livespointer type_data);
 
@@ -81,8 +79,12 @@ void jack_pb_stop(void);  /** pause playback transport master */
 #define JACK_OPTS_SETENV_ASERVER      	(1 << 13)     ///< setenv $JACK_DEFAULT_SERVER to aserver_sname
 #define JACK_OPTS_SETENV_TSERVER      	(1 << 14)     ///< setenv $JACK_DEFAULT_SERVER to tserver_sname
 
+#define JACK_INFO_TEST_SETUP      	(1 << 29)     ///< -jackserver used
 #define JACK_INFO_TEMP_NAMES      	(1 << 30)     ///< -jackserver used
 #define JACK_INFO_TEMP_OPTS      	(1 << 31)     ///< -jackopts used
+
+#define JACK_OPTS_OPTS_MASK ((1 << 24) - 1)
+
 
 #define JACK_MAX_OUTPUT_PORTS 10
 #define JACK_MAX_INPUT_PORTS 10

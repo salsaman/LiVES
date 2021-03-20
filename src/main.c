@@ -1315,6 +1315,8 @@ static void lives_init(_ign_opts *ign_opts) {
 #ifdef ENABLE_JACK
   boolean success;
   lives_proc_thread_t info;
+  ticks_t timeout;
+  int orig_err = 0;
 #endif
   int i;
 
@@ -2323,7 +2325,9 @@ audio_choice:
                  SPLASH_LEVEL_LOAD_APLAYER);
 jack_tcl_try:
       success = TRUE;
-      if (!(info = LPT_WITH_TIMEOUT(LIVES_SHORTEST_TIMEOUT, 0,
+      timeout = LIVES_SHORTEST_TIMEOUT;
+      if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
+      if (!(info = LPT_WITH_TIMEOUT(timeout, 0,
                                     (lives_funcptr_t)lives_jack_init,
                                     WEED_SEED_BOOLEAN, "iv",
                                     JACK_CLIENT_TYPE_TRANSPORT, NULL))) {
@@ -2337,17 +2341,21 @@ jack_tcl_try:
       if (!success) {
         if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
         if (prefs->jack_opts & JACK_OPTS_START_TSERVER) {
-          // TODO - allow disable auto start and + manual start
-          // if we have backup config, allow restore
+rest2:
+          orig_err = 0;
           if (do_jack_no_startup_warn(TRUE)) {
-            // reconfig drivers
+            orig_err = 2;
             goto jack_tcl_try;
           }
           future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
           set_int_pref(PREF_JACK_OPTS, 0);
         } else {
-          // TODO - allow retry connection, change server name / config
-          do_jack_no_connect_warn(TRUE);
+rest1:
+          orig_err = 0;
+          if (do_jack_no_connect_warn(TRUE)) {
+            orig_err = 1;
+            goto jack_tcl_try;
+          }
         }
         lives_exit(0);
       }
@@ -2387,13 +2395,16 @@ jack_tcl_try:
         // activate the writer and connect ports
 jack_acl_try:
         success = TRUE;
-        if (!(info = LPT_WITH_TIMEOUT(LIVES_SHORTEST_TIMEOUT, 0,
+        timeout = LIVES_SHORTEST_TIMEOUT;
+        if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
+        if (!(info = LPT_WITH_TIMEOUT(timeout, 0,
                                       (lives_funcptr_t)jack_create_client_writer,
                                       WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
           if (mainw->cancelled) {
-            // go back to audio_choice
+            // user cancelled from driver selection
             mainw->jackd = NULL;
             if (prefs->startup_phase) {
+              // go back to audio_choice
               prefs->startup_phase = 4;
               goto audio_choice;
             }
@@ -2402,25 +2413,59 @@ jack_acl_try:
           success = FALSE;
         } else success = lives_proc_thread_join_boolean(info);
 
+        if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
+          if (textwindow) {
+            lives_grab_add(textwindow->button);
+            lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
+            lives_widget_destroy(textwindow->dialog);
+            lives_free(textwindow);
+            success = FALSE;
+          }
+        }
+
         if (mainw->jackd && !mainw->jackd->sample_out_rate) success = FALSE;
 
         if (!success || !mainw->jackd) {
           // failed to connect
           if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
           if (prefs->jack_opts & JACK_OPTS_START_ASERVER) {
-            // TODO - allow disable auto start and + manual start
-            // or reconfig
             // if we have backup config, allow restore
+rest4:
+            orig_err = 0;
             if (do_jack_no_startup_warn(FALSE)) {
+              orig_err = 4;
               goto jack_acl_try;
             }
             future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
             set_int_pref(PREF_JACK_OPTS, 0);
           } else {
-            // TODO - allow retry connection, change server name / config
-            do_jack_no_connect_warn(FALSE);
+rest3:
+            orig_err = 0;
+            if (do_jack_no_connect_warn(FALSE)) {
+              orig_err = 3;
+              goto jack_acl_try;
+            }
           }
           lives_exit(0);
+        }
+
+        if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
+          future_prefs->jack_opts &= ~JACK_INFO_TEST_SETUP;
+          lives_snprintf(future_prefs->jack_aserver_cfg, PATH_MAX, "%s", prefs->jack_aserver_cfg);
+          lives_snprintf(future_prefs->jack_aserver_cname, PATH_MAX, "%s", prefs->jack_aserver_cname);
+          lives_snprintf(future_prefs->jack_aserver_sname, PATH_MAX, "%s", prefs->jack_aserver_sname);
+          future_prefs->jack_adriver = lives_strdup_free(future_prefs->jack_adriver, prefs->jack_adriver);
+
+          lives_snprintf(future_prefs->jack_tserver_cfg, PATH_MAX, "%s", prefs->jack_tserver_cfg);
+          lives_snprintf(future_prefs->jack_tserver_cname, PATH_MAX, "%s", prefs->jack_tserver_cname);
+          lives_snprintf(future_prefs->jack_tserver_sname, PATH_MAX, "%s", prefs->jack_tserver_sname);
+          future_prefs->jack_tdriver = lives_strdup_free(future_prefs->jack_tdriver, prefs->jack_tdriver);
+
+          future_prefs->jack_opts = prefs->jack_opts;
+          if (orig_err == 1) goto rest1;
+          if (orig_err == 2) goto rest2;
+          if (orig_err == 3) goto rest3;
+          if (orig_err == 4) goto rest4;
         }
 
         if (ign_opts->ign_jackopts) set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
@@ -2498,6 +2543,12 @@ jack_acl_try:
     // *INDENT-ON*
 #endif
   }
+
+  if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
+    future_prefs->jack_opts &= ~JACK_INFO_TEST_SETUP;
+    abort();
+  }
+
 
   if (prefs->startup_phase != 0) {
     splash_end();
@@ -2773,11 +2824,6 @@ static void do_start_messages(void) {
 
 static void set_toolkit_theme(int prefer) {
   char *lname, *ic_dir;
-  char buff[1024];
-  //lives_widget_object_set(gtk_settings_get_default(), "focus-new-windows", "strict");
-
-  lives_widget_object_get(gtk_settings_get_default(), "focus-new-windows", &buff);
-  g_print("VALL WAS %s\n", buff);
 
   lives_widget_object_get(gtk_settings_get_default(), "gtk-double-click-time", &capable->dclick_time);
   if (capable->dclick_time <= 0) capable->dclick_time = LIVES_DEF_DCLICK_TIME;
@@ -5213,7 +5259,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           }
           // override jackopts in config file
           ign_opts.ign_jackopts = TRUE;
-          prefs->jack_opts = atoi(optarg);
+          prefs->jack_opts = atoi(optarg) & JACK_OPTS_OPTS_MASK;
           continue;
         }
 
@@ -5449,7 +5495,7 @@ void sensitize_rfx(void) {
                && has_audio_filters(AF_TYPE_ANY))
               || mainw->agen_key != 0)) {
         lives_widget_set_sensitive(menuitem, TRUE);
-      } else lives_widget_set_sensitive(menuitem, FALSE);
+      } //else lives_widget_set_sensitive(menuitem, FALSE);
 
       if (mainw->num_rendered_effects_test > 0) {
         lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
@@ -5722,9 +5768,10 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->open_yuv4m, FALSE);
 #endif
 
+#ifdef HAVE_LDVGRAB
   lives_widget_set_sensitive(mainw->firewire, FALSE);
   lives_widget_set_sensitive(mainw->tvdev, FALSE);
-
+#endif
   lives_widget_set_sensitive(mainw->recent_menu, FALSE);
   lives_widget_set_sensitive(mainw->restore, FALSE);
   lives_widget_set_sensitive(mainw->clear_ds, FALSE);

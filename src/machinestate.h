@@ -274,6 +274,9 @@ int get_window_stack_level(LiVESXWindow *, int *nwins);
 #define XDG_DATA_HOME "XDG_DATA_HOME"
 #define XDG_RUNTIME_DIR "XDG_RUNTIME_DIR"
 
+boolean wm_property_set(const char *key, const char *val);
+char *wm_property_get(const char *key, int *type_guess);
+
 boolean get_wm_caps(void);
 boolean get_distro_dets(void);
 boolean get_machine_dets(void);

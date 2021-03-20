@@ -555,7 +555,8 @@ static void set_workdir_label_text(LiVESLabel *label, const char *dir) {
 
 boolean pref_factory_string(const char *prefidx, const char *newval, boolean permanent) {
   if (prefsw) prefsw->ignore_apply = TRUE;
-
+  g_print("now %s, and %s\n", prefidx, future_prefs->jack_aserver_sname);
+  g_print("now %s\n", newval);
   if (!lives_strcmp(prefidx, PREF_AUDIO_PLAYER)) {
     const char *audio_player = newval;
 
@@ -698,17 +699,30 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     goto fail1;
   }
 
+  g_print("now 3%s, and %s\n", prefidx, future_prefs->jack_aserver_sname);
   if (!lives_strcmp(prefidx, PREF_JACK_ASSERVER)) {
+    g_print("now ddd%s, and %s\n", prefidx, future_prefs->jack_aserver_sname);
     if (lives_strncmp(newval, prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX)) {
+      g_print("now 4%s, and %s, {%s}\n", prefidx, future_prefs->jack_aserver_sname, newval);
+
       lives_snprintf(prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX, "%s", newval);
+      g_print("now sss4%s, and %s, {%s}\n", prefidx, future_prefs->jack_aserver_sname, newval);
+
+      ///...........
       lives_snprintf(future_prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX, "%s", newval);
+      //==============
+      g_print("now %s, sdfsdfsdand %s [%s]\n", prefidx, future_prefs->jack_aserver_sname, newval);
+#ifdef ENABLE_JACK_TRANSPORT
       if (prefs->jack_srv_dup) {
         lives_snprintf(prefs->jack_tserver_sname, PATH_MAX, "%s", newval);
         lives_snprintf(future_prefs->jack_tserver_sname, PATH_MAX, "%s", newval);
       }
+#endif
       if (permanent) {
+        g_print("now %s, dsadasand %s\n", prefidx, future_prefs->jack_aserver_sname);
         set_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname);
         mainw->prefs_changed |= PREFS_JACK_CHANGED;
+        g_print("now %s, aeeeend %s\n", prefidx, future_prefs->jack_aserver_sname);
       }
       goto success1;
     }
@@ -819,10 +833,12 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
   return TRUE;
 
 fail1:
+  g_print(" !!!!!!!!!then %s, and %s\n", prefidx, future_prefs->jack_aserver_sname);
   if (prefsw) prefsw->ignore_apply = FALSE;
   return FALSE;
 
 success1:
+  g_print("then %s, and %s\n", prefidx, future_prefs->jack_aserver_sname);
   if (prefsw) {
     lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
@@ -2512,19 +2528,29 @@ boolean apply_prefs(boolean skip_warn) {
 #ifdef ENABLE_JACK
   pref_factory_int(PREF_JACK_OPTS, NULL, jack_opts, TRUE);
 
-  pref_factory_string(PREF_JACK_ACONFIG, future_prefs->jack_aserver_cfg, TRUE);
+  tmp = lives_strdup(future_prefs->jack_aserver_cfg);
+  pref_factory_string(PREF_JACK_ACONFIG, tmp, TRUE);
+  lives_free(tmp);
   if (!(future_prefs->jack_opts & JACK_INFO_TEMP_NAMES)) {
     pref_factory_string(PREF_JACK_ACSERVER, jack_acname, TRUE);
-    pref_factory_string(PREF_JACK_ASSERVER, future_prefs->jack_aserver_sname, TRUE);
-    pref_factory_string(PREF_JACK_ADRIVER, future_prefs->jack_adriver, TRUE);
+    tmp = lives_strdup(future_prefs->jack_aserver_sname);
+    pref_factory_string(PREF_JACK_ASSERVER, tmp, TRUE);
+    lives_free(tmp);
+    tmp = lives_strdup(future_prefs->jack_adriver);
+    pref_factory_string(PREF_JACK_ADRIVER, tmp, TRUE);
+    lives_free(tmp);
   }
 #ifdef ENABLE_JACK_TRANSPORT
   if (future_prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
     pref_factory_string(PREF_JACK_TCONFIG, future_prefs->jack_tserver_cfg, TRUE);
     if (!(future_prefs->jack_opts & JACK_INFO_TEMP_NAMES)) {
       pref_factory_string(PREF_JACK_TCSERVER, jack_tcname, TRUE);
-      pref_factory_string(PREF_JACK_TSSERVER, future_prefs->jack_tserver_sname, TRUE);
-      pref_factory_string(PREF_JACK_TDRIVER, future_prefs->jack_tdriver, TRUE);
+      tmp = lives_strdup(future_prefs->jack_tserver_sname);
+      pref_factory_string(PREF_JACK_TSSERVER, tmp, TRUE);
+      lives_free(tmp);
+      tmp = lives_strdup(future_prefs->jack_tdriver);
+      pref_factory_string(PREF_JACK_TDRIVER, tmp, TRUE);
+      lives_free(tmp);
     }
   }
 #endif
@@ -3412,6 +3438,7 @@ static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
       lives_nanosleep(LIVES_SHORT_SLEEP);
     }
   }
+  lives_paned_set_position(p, pos + widget_opts.border_width);
 }
 
 
@@ -6620,6 +6647,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
       select_pref_list_row(LIST_ENTRY_MULTITRACK, prefsw);
   } else select_pref_list_row(prefs_current_page, prefsw);
 
+  lives_widget_set_opacity(prefsw->prefs_dialog, 0.);
   lives_widget_show_all(prefsw->prefs_dialog);
 
   main_thread_execute((lives_funcptr_t)on_prefs_page_changed, -1, NULL, "vv", prefsw->selection, prefsw);
@@ -6627,6 +6655,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   callibrate_paned(LIVES_PANED(prefsw->dialog_hpaned),
                    lives_scrolled_window_get_hscrollbar(LIVES_SCROLLED_WINDOW(list_scroll)));
+  lives_widget_set_opacity(prefsw->prefs_dialog, 1.);
 
   lives_widget_queue_draw(prefsw->prefs_list);
   return prefsw;

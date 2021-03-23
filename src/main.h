@@ -458,6 +458,9 @@ typedef struct {
 
   lives_checkstatus_t has_smogrify;
 
+  // MISSING if some subdirs not found
+  lives_checkstatus_t has_plugins_libdir;
+
   // the following may need checking before use
   lives_checkstatus_t has_perl;
   lives_checkstatus_t has_file;
@@ -1239,7 +1242,7 @@ void do_no_mplayer_sox_error(void);
 void do_need_mplayer_dialog(void);
 void do_need_mplayer_mpv_dialog(void);
 void do_aud_during_play_error(void);
-void do_rendered_fx_dialog(void);
+const char *miss_plugdirs_warn(const char *dirnm, LiVESList *subdirs);
 void do_layout_scrap_file_error(void);
 void do_layout_ascrap_file_error(void);
 void do_program_not_found_error(const char *progname);

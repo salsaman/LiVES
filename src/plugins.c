@@ -24,6 +24,64 @@ const char *const anames[AUDIO_CODEC_MAX] = {"mp3", "pcm", "mp2", "vorbis", "AC3
 
 static boolean list_plugins;
 
+static char *dir_to_pieces(const char *dirnm) {
+  char *pcs = subst(dirnm, LIVES_DIR_SEP, "|"), *pcs2;
+  size_t plen = lives_strlen(pcs), plen2;
+  for (; pcs[plen - 1] == '|'; plen--) pcs[plen - 1] = 0;
+  while (1) {
+    plen2 = plen;
+    pcs2 = subst(pcs, "||", "|");
+    plen = lives_strlen(pcs2);
+    if (plen == plen2) break;
+    lives_free(pcs);
+    pcs = pcs2;
+  }
+  return pcs2;
+}
+
+
+boolean check_for_plugins(const char *dirn) {
+  // check all are present in prefs->lib_dir;
+  // ret. FALSE if missing
+  const char *ret = NULL;
+  LiVESList *subdir_list;
+  char *pldirn;
+  boolean show_succ = FALSE;
+  if (prefs->warning_mask & (WARN_MASK_CHECK_PLUGINS1 | WARN_MASK_CHECK_PLUGINS2)) return TRUE;
+  pldirn = lives_build_path(dirn, PLUGIN_EXEC_DIR, NULL);
+  do {
+    subdir_list = NULL;
+    subdir_list = lives_list_prepend(subdir_list, lives_strdup(PLUGIN_DECODERS));
+    subdir_list = lives_list_prepend(subdir_list, lives_strdup(PLUGIN_ENCODERS));
+    subdir_list = lives_list_prepend(subdir_list, dir_to_pieces(PLUGIN_RENDERED_EFFECTS_BUILTIN));
+    subdir_list = lives_list_prepend(subdir_list, dir_to_pieces(PLUGIN_VID_PLAYBACK));
+    subdir_list = check_for_subdirs(pldirn, subdir_list);
+    if (!subdir_list) {
+      if (show_succ) {
+        do_info_dialog(_("All plugins were found !"));
+      }
+      return TRUE;
+    }
+    show_succ = TRUE;
+    // returns TRUE if we browsed, FALSE = skipped
+    ret = miss_plugdirs_warn(pldirn, subdir_list);
+    lives_list_free_all(&subdir_list);
+    if (ret) {
+      if (!lives_string_ends_with(ret, "%s", LIVES_DIR_SEP PLUGIN_EXEC_DIR)) {
+        do_error_dialogf(_("Path name must end with %s. Please try again or rename the directory"), PLUGIN_EXEC_DIR);
+      } else {
+        char *ret2 = lives_strndup(ret, lives_strlen(ret) - lives_strlen(LIVES_DIR_SEP PLUGIN_EXEC_DIR));
+        lives_free(pldirn);
+        pldirn = lives_build_path(ret2, PLUGIN_EXEC_DIR, NULL);
+        lives_free(ret2);
+      }
+    }
+  } while (ret);
+  lives_free(pldirn);
+  return FALSE;
+}
+
+
 ///////////////////////
 // command-line plugins
 
@@ -1532,42 +1590,26 @@ int64_t get_best_audio(_vid_playback_plugin * vpp) {
 // encoder plugins
 
 void do_plugin_encoder_error(const char *plugin_name) {
-  char *msg, *tmp;
-
-  if (!plugin_name) {
-    msg = lives_strdup_printf(
-            _("LiVES was unable to find its encoder plugins. Please make sure you have the plugins installed in\n"
-              "%s%s%s\nor change the value of <lib_dir> in %s\n"),
-            prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS,
-            (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
-    lives_free(tmp);
+  char *path = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, NULL);
+  if (!plugin_name || !*plugin_name) {
+    if (capable->has_plugins_libdir == UNCHECKED) check_for_plugins(prefs->lib_dir);
+  } else {
     widget_opts.non_modal = TRUE;
-    do_error_dialog(msg);
-    lives_free(msg);
-    return;
+    do_error_dialogf(_("LiVES did not receive a response from the encoder plugin called '%s'.\n"
+                       "Please make sure you have that plugin installed correctly in\n%s\n"
+                       "or switch to another plugin using Tools|Preferences|Encoding\n"), plugin_name, path);
+    widget_opts.non_modal = FALSE;
   }
-
-  msg = lives_strdup_printf(
-          _("LiVES did not receive a response from the encoder plugin called '%s'.\n"
-            "Please make sure you have that plugin installed correctly in\n%s%s%s\n"
-            "or switch to another plugin using Tools|Preferences|Encoding\n"),
-          plugin_name, prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS);
-  do_error_dialog(msg);
-  lives_free(msg);
 }
 
 
 boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, boolean save_all) {
   LiVESList *ofmt_all = NULL;
-  char **checks;
-  char **array = NULL;
-  char **array2;
+  char **checks, **array = NULL, **array2;
   char aspect_buffer[512];
 
   // for auto resizing/resampling
-  double best_fps = 0.;
-  double fps;
-  double best_fps_delta = 0.;
+  double best_fps = 0., fps, best_fps_delta = 0.;
 
   boolean sizer = FALSE;
   boolean allow_aspect_override = FALSE;
@@ -2641,7 +2683,7 @@ void on_decplug_advanced_clicked(LiVESButton * button, livespointer user_data) {
   LiVESWidget *okbutton;
 
   char *ltext, *tmp;
-  char *decplugdir = lives_strdup_printf("%s%s%s", prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_DECODERS);
+  char *decplugdir = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_DECODERS, NULL);
 
   if (!mainw->decoders_loaded) {
     mainw->decoder_list = load_decoders();

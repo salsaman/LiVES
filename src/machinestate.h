@@ -173,6 +173,9 @@ off_t sget_file_size(const char *name);
 
 off_t get_dir_size(const char *dirname);
 
+LiVESList *check_for_subdirs(const char *dirname, LiVESList *subdirs);
+boolean is_empty_dir(const char *dirname);
+
 boolean compress_files_in_dir(const char *dir, int method, void *data);
 LiVESResponseType send_to_trash(const char *item);
 

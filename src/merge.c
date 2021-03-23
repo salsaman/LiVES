@@ -72,10 +72,15 @@ void create_merge_dialog(void) {
   }
 
   if (!idx) {
-    do_rendered_fx_dialog();
-    lives_free(merge_opts->list_to_rfx_index);
-    lives_free(merge_opts);
-    return;
+    if (capable->has_plugins_libdir == UNCHECKED) {
+      if (!check_for_plugins(prefs->lib_dir)) capable->has_plugins_libdir = MISSING;
+      else capable->has_plugins_libdir = PRESENT;
+    }
+    if (capable->has_plugins_libdir == MISSING) {
+      lives_free(merge_opts->list_to_rfx_index);
+      lives_free(merge_opts);
+      return;
+    }
   }
 
   width = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;

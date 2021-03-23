@@ -283,6 +283,7 @@ void call_funcsig(lives_proc_thread_t info) {
   case FUNCSIG_INT: {
     int p0;
     switch (ret_type) {
+    case WEED_SEED_BOOLEAN: CALL_1(boolean, int); break;
     default: CALL_VOID_1(int); break;
     } break;
   }

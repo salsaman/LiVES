@@ -3100,11 +3100,13 @@ char *subst(const char *xstring, const char *from, const char *to) {
   for (char *cptr = (char *)xstring; *cptr; cptr++) {
     if (*cptr == from[match++]) {
       if (match == fromlen) {
+        // got complete match
         match = 0;
         if (bufil > tolim) xtolen = BSIZE - bufil;
         lives_memcpy(buff + bufil, to, xtolen);
         if ((bufil += xtolen) == BSIZE) {
           if (retfil > retlimit) {
+            // increase size of return string
             ret = lives_recalloc(ret, retsize * 2, retsize, BSIZE);
             retsize *= 2;
             retlimit = (retsize - 1) *  BSIZE;
@@ -3121,6 +3123,7 @@ char *subst(const char *xstring, const char *from, const char *to) {
       }
       continue;
     }
+
     if (--match > 0) {
       xtolen = match;
       if (bufil > BSIZE - match) xtolen = BSIZE - bufil;
@@ -3136,12 +3139,13 @@ char *subst(const char *xstring, const char *from, const char *to) {
         bufil = 0;
         if (xtolen < fromlen) {
           lives_memcpy(buff, from + xtolen, fromlen - xtolen);
-          bufil += fromlen - xtolen;
+          bufil += fromlen - xtolen - match;
           xtolen = tolen;
         }
       }
       match = 0;
     }
+    if (match < 0) match = 0;
     buff[bufil] = *cptr;
     if (++bufil == BSIZE) {
       if (retfil > retlimit) {

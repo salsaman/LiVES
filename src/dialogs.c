@@ -48,7 +48,7 @@ void on_warn_mask_toggled(LiVESToggleButton *togglebutton, livespointer user_dat
   LiVESWidget *tbutton;
 
   if (lives_toggle_button_get_active(togglebutton)) prefs->warning_mask |= LIVES_POINTER_TO_INT(user_data);
-  else prefs->warning_mask ^= LIVES_POINTER_TO_INT(user_data);
+  else prefs->warning_mask &= ~(LIVES_POINTER_TO_INT(user_data));
   set_int_pref(PREF_LIVES_WARNING_MASK, prefs->warning_mask);
 
   if ((tbutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(togglebutton), "auto")) != NULL) {
@@ -237,7 +237,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   LiVESWidget *label;
   LiVESWidget *cancelbutton = NULL;
   LiVESWidget *okbutton = NULL, *defbutton = NULL;
-  LiVESWidget *abortbutton = NULL;
 
   LiVESWindow *transient = widget_opts.transient;
 
@@ -359,8 +358,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
 
     if (diat != LIVES_DIALOG_RETRY_CANCEL) {
-      abortbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-                    LIVES_STOCK_QUIT, _("_Abort"), LIVES_RESPONSE_ABORT);
+      lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+                                         LIVES_STOCK_CLOSE, _("_Abort"), LIVES_RESPONSE_ABORT);
 
       if (diat == LIVES_DIALOG_ABORT_RETRY_CANCEL) {
         lives_window_set_title(LIVES_WINDOW(dialog), _("File Error"));
@@ -385,6 +384,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
       lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
     break;
 
+  case LIVES_DIALOG_ABORT_SKIP_BROWSE:
   case LIVES_DIALOG_SKIP_RETRY_BROWSE:
   case LIVES_DIALOG_CANCEL_RETRY_BROWSE:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_ERROR,
@@ -392,26 +392,31 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     lives_window_set_title(LIVES_WINDOW(dialog), _("Missing File or Directory"));
 
+    if (diat == LIVES_DIALOG_ABORT_SKIP_BROWSE)
+      lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+                                         LIVES_STOCK_CLOSE, _("_Abort"), LIVES_RESPONSE_ABORT);
+
     if (diat == LIVES_DIALOG_CANCEL_RETRY_BROWSE)
       cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                      LIVES_RESPONSE_CANCEL);
 
-    if (diat == LIVES_DIALOG_SKIP_RETRY_BROWSE)
-      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL,
+    if (diat == LIVES_DIALOG_SKIP_RETRY_BROWSE || diat == LIVES_DIALOG_ABORT_SKIP_BROWSE)
+      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
                      LIVES_STOCK_LABEL_SKIP, LIVES_RESPONSE_CANCEL);
 
-    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
-               _("_Retry"), LIVES_RESPONSE_RETRY);
 
-    abortbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_QUIT,
-                  _("_Browse"), LIVES_RESPONSE_BROWSE);
+    if (diat != LIVES_DIALOG_ABORT_SKIP_BROWSE)
+      okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
+                 _("_Retry"), LIVES_RESPONSE_RETRY);
+
+    lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OPEN,
+                                       _("_Browse"), LIVES_RESPONSE_BROWSE);
 
     if (palette && widget_opts.apply_theme)
       lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
     break;
 
   default:
-    cancelbutton = abortbutton; // stop compiler complaining
     return NULL;
   }
 
@@ -2554,18 +2559,97 @@ LIVES_GLOBAL_INLINE void do_upgrade_error_dialog(void) {
   lives_free(msg); lives_free(tmp);
 }
 
+static char *expl_missplug(const char *pltype) {
+  if (!lives_strcmp(pltype, PLUGIN_ENCODERS)) {
+    return (_("\nLiVES was unable to find any encoder plugins.\n"
+              "You will not be able to 'Save' (encode) clips without them.\n"));
+  }
 
-LIVES_GLOBAL_INLINE void do_rendered_fx_dialog(void) {
-  char *tmp;
-  char *encpath = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_RENDERED_EFFECTS_BUILTIN, NULL);
-  char *msg = lives_strdup_printf(
-                _("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n"
-                  "%s\nor change the value of <lib_dir> in %s\n"), encpath,
-                (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
-  do_error_dialog_with_check(msg, WARN_MASK_RENDERED_FX);
+  if (!lives_strcmp(pltype, PLUGIN_DECODERS)) {
+    return (_("\nLiVES was unable to find any decoder plugins.\n"
+              "The 'Instant Open' feature cannnot operate without them.\n"));
+  }
+
+  if (!lives_strcmp(pltype, PLUGIN_RENDERED_EFFECTS_BUILTIN)) {
+    return (_("\nLiVES was unable to find any rendered effect plugins.\n"
+              "Some editing tools and frame generators will be unvailable, "
+              "and effects will be limited to realtime effects only\n"));
+  }
+
+  if (!lives_strcmp(pltype, PLUGIN_VID_PLAYBACK)) {
+    return (_("\nLiVES was unable to find any video player plugins.\n"
+              "Optimised playback in fullscreen mode, as well as quick transcode and some "
+              "streaming features may not be usable without them\n"));
+  }
+  return lives_strdup("");
+}
+
+
+const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
+  char *msg1, *msg2, *msg3 = NULL, *msg;
+  LiVESWidget *dlg;
+  LiVESResponseType response;
+
+  if (prefs->warning_mask & (WARN_MASK_CHECK_PLUGINS1 | WARN_MASK_CHECK_PLUGINS2)) {
+    prefs->warning_mask |= (WARN_MASK_CHECK_PLUGINS1 | WARN_MASK_CHECK_PLUGINS2);
+    return NULL;
+  }
+
+  msg1 = lives_strdup_printf(_("LiVES was unable to find some of its standard plugins "
+                               "within the plugin library directory:\n%s\n\n"), dirnm);
+
+  if (lives_list_length(subdirs) == N_PLUGIN_SUBDIRS) {
+    msg2 = lives_strdup(_("<big><b>All of the plugin subdirectiories appear to be absent, including:</b></big>\n\n"));
+  } else {
+    msg2 = lives_strdup(_("The following directories could not be found:\n\n"));
+  }
+  for (LiVESList *list = subdirs; list; list = list->next) {
+    char *pltype = subst((const char *)list->data, "|", LIVES_DIR_SEP);
+    char *expl = expl_missplug(pltype), *tmp;
+    if (msg3)
+      tmp = lives_strdup_printf("%s %s%s\n", msg3, pltype, expl);
+    else
+      tmp = lives_strdup_printf("%s%s\n", pltype, expl);
+    lives_free(expl);
+    if (msg3) lives_free(msg3);
+    msg3 = tmp;
+    lives_free(pltype);
+  }
+
+  msg = lives_strdup_printf(_("%s%s%s\nClick 'Abort' to exit immediately from LiVES, 'Skip' to continue with the current value, "
+                              "or 'Browse' to locate the directory."), msg1, msg2, msg3);
+  lives_free(msg1); lives_free(msg2); lives_free(msg3);
+
+  while (1) {
+    widget_opts.use_markup = TRUE;
+    dlg = create_message_dialog(LIVES_DIALOG_ABORT_SKIP_BROWSE, msg, WARN_MASK_CHECK_PLUGINS1 | WARN_MASK_CHECK_PLUGINS2);
+    widget_opts.use_markup = FALSE;
+    if (!mainw->is_ready) pop_to_front(dlg, NULL);
+    response = lives_dialog_run(LIVES_DIALOG(dlg));
+    lives_widget_destroy(dlg);
+    lives_widget_context_update();
+
+    if (response == LIVES_RESPONSE_ABORT) {
+      maybe_abort(TRUE);
+      continue;
+    }
+    if (response == LIVES_RESPONSE_BROWSE) {
+      char *new_libdir = choose_file(prefs->lib_dir, PLUGINS_LITERAL, NULL,
+                                     LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
+      if (!new_libdir) continue;
+      lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", new_libdir);
+
+      lives_free(new_libdir);
+    }
+    break;
+  }
   lives_free(msg);
-  lives_free(encpath);
-  lives_free(tmp);
+  if (mainw->splash_window) {
+    lives_widget_show(mainw->splash_window);
+  }
+
+  if (response == LIVES_RESPONSE_BROWSE) return prefs->lib_dir;
+  return NULL;
 }
 
 

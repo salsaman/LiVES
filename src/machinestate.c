@@ -812,6 +812,61 @@ off_t sget_file_size(const char *name) {
 }
 
 
+// check with list like subdir1, subdir2|subsubdir2,.. for subdirs in dirname. Returns list wuth matched subdirs removed.
+LiVESList *check_for_subdirs(const char *dirname, LiVESList *subdirs) {
+  DIR *tldir, *xsubdir;
+  struct dirent *tdirent, *xtdirent;
+  LiVESList *xlist, *nlist;
+  char *xdirname, *xxdirname;
+  int part;
+  if (!dirname) return subdirs;
+  tldir = opendir(dirname);
+  if (!tldir) return subdirs;
+  while (subdirs && (tdirent = readdir(tldir))) {
+    if (tdirent->d_name[0] == '.'
+        && (!tdirent->d_name[1] || tdirent->d_name[1] == '.')) continue;
+    for (xlist = subdirs; xlist; xlist = nlist) {
+      int nparts = get_token_count((const char *)xlist->data, '|');
+      char **array = lives_strsplit((const char *)xlist->data, "|", nparts);
+      xtdirent = tdirent;
+      xdirname = (char *)dirname;
+      nlist = xlist->next;
+      for (part = 0; part < nparts; part++) {
+        if (part == 0) {
+          if (lives_strcmp(array[0], xtdirent->d_name)) {
+            lives_strfreev(array);
+            break;
+          }
+          continue;
+        }
+
+        // get next level of subdirs
+        xxdirname = lives_build_path(xdirname, xtdirent->d_name, NULL);
+        if (xdirname != dirname) lives_free(xdirname);
+        xdirname = xxdirname;
+        xsubdir = opendir(xdirname);
+        if (!xsubdir) break;
+        while ((xtdirent = readdir(xsubdir))) {
+          if (!lives_strcmp(array[part], xtdirent->d_name)) break;
+        }
+
+        closedir(xsubdir);
+        if (xtdirent) continue;
+        lives_strfreev(array);
+        if (xdirname != dirname) lives_free(xdirname);
+        break; // no match for array[part]
+      }
+      if (part == nparts) {
+        // matched, we can remove from the list
+        subdirs = lives_list_remove_node(subdirs, xlist, TRUE);
+      }
+    }
+  }
+  closedir(tldir);
+  return subdirs;
+}
+
+
 boolean is_empty_dir(const char *dirname) {
   DIR *tldir;
   struct dirent *tdirent;

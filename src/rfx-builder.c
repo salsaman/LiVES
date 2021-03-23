@@ -4185,7 +4185,35 @@ LiVESList *get_script_list(lives_rfx_status_t status) {
 }
 
 
-void add_rfx_effects(lives_rfx_status_t status) {
+static lives_rfx_t **setup_rfx0(lives_rfx_t **rendered_fx) {
+  if (!rendered_fx) {
+    rendered_fx = (lives_rfx_t **)lives_calloc(1, sizeof(lives_rfx_t *));
+  }
+
+  rendered_fx[0] = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t));
+  rendered_fx[0]->name = lives_strdup("realtime_fx");
+  rendered_fx[0]->menu_text = (_("_Apply Real Time Effects to Selection"));
+  rendered_fx[0]->action_desc = (_("Applying Current Real Time Effects to"));
+
+  rendered_fx[0]->props = 0;
+  rendered_fx[0]->rfx_version[0] = 0;
+  rendered_fx[0]->num_params = 0;
+  rendered_fx[0]->num_in_channels = 1;
+  rendered_fx[0]->menuitem = NULL;
+  rendered_fx[0]->params = NULL;
+  rendered_fx[0]->flags = 0;
+  rendered_fx[0]->gui_strings = NULL;
+  rendered_fx[0]->onchange_strings = NULL;
+  rendered_fx[0]->status = RFX_STATUS_WEED;
+  rendered_fx[0]->is_template = FALSE;
+  rendered_fx[0]->min_frames = 1;
+  rendered_fx[0]->source = NULL;
+  rendered_fx[0]->source_type = LIVES_RFX_SOURCE_RFX;
+  return rendered_fx;
+}
+
+
+boolean add_rfx_effects(lives_rfx_status_t status) {
   // scan render plugin directories, create a rfx array, and add each to the appropriate menu area
 
   // 0) destroy menus / entries
@@ -4197,7 +4225,6 @@ void add_rfx_effects(lives_rfx_status_t status) {
   // 4) copy sorted list -> mainw->rendered_fx
 
   // 5) recreate menus (add_rfx_effects2)
-
   LiVESList *rfx_builtin_list = NULL, *rfx_custom_list = NULL, *rfx_test_list = NULL;
   LiVESList *list;
   lives_rfx_t *rfx = NULL;
@@ -4271,7 +4298,9 @@ void add_rfx_effects(lives_rfx_status_t status) {
   if (prefs->load_rfx_builtin) {
     if (status == RFX_STATUS_ANY) {
       if (!(rfx_builtin_list = get_plugin_list(PLUGIN_RENDERED_EFFECTS_BUILTIN, FALSE, NULL, NULL))) {
-        do_rendered_fx_dialog();
+	// TODO - set [0]
+	mainw->rendered_fx = setup_rfx0(mainw->rendered_fx);
+	return FALSE;
       } else {
         rfx_builtin_list_length = lives_list_length(rfx_builtin_list);
       }
@@ -4301,25 +4330,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
     lives_free(mainw->rendered_fx);
     mainw->rendered_fx = NULL;
   } else {
-    rendered_fx[0] = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t));
-    rendered_fx[0]->name = lives_strdup("realtime_fx");
-    rendered_fx[0]->menu_text = (_("_Apply Real Time Effects to Selection"));
-    rendered_fx[0]->action_desc = (_("Applying Current Real Time Effects to"));
-
-    rendered_fx[0]->props = 0;
-    rendered_fx[0]->rfx_version[0] = 0;
-    rendered_fx[0]->num_params = 0;
-    rendered_fx[0]->num_in_channels = 1;
-    rendered_fx[0]->menuitem = NULL;
-    rendered_fx[0]->params = NULL;
-    rendered_fx[0]->flags = 0;
-    rendered_fx[0]->gui_strings = NULL;
-    rendered_fx[0]->onchange_strings = NULL;
-    rendered_fx[0]->status = RFX_STATUS_WEED;
-    rendered_fx[0]->is_template = FALSE;
-    rendered_fx[0]->min_frames = 1;
-    rendered_fx[0]->source = NULL;
-    rendered_fx[0]->source_type = LIVES_RFX_SOURCE_RFX;
+    setup_rfx0(rendered_fx);
     rfx_slot_count = 1;
   }
 
@@ -4503,16 +4514,8 @@ void add_rfx_effects(lives_rfx_status_t status) {
     }
   }
 
-  /* if (status != RFX_STATUS_CUSTOM) { */
-  /*   if (mainw->num_rendered_effects_test) { */
-  /*     lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE); */
-  /*     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->run_test_rfx_submenu), */
-  /* 				  mainw->run_test_rfx_menu); */
-  /*   } */
-  /*   else lives_widget_set_sensitive(mainw->run_test_rfx_submenu, FALSE); */
-  /* } */
-
   if (status != RFX_STATUS_ANY) add_rfx_effects2(status);
+  return TRUE;
 }
 
 
@@ -4526,7 +4529,6 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     // recreate effects menu
     LiVESWidget *menuitem = lives_standard_menu_item_new_with_label(mainw->rendered_fx[0]->menu_text);
 
-    //lives_widget_set_sensitive(menuitem, FALSE);
     lives_widget_set_tooltip_text(menuitem, _("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."));
 
     lives_widget_add_accelerator(menuitem, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -4542,8 +4544,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
         ((has_video_filters(TRUE) && !has_video_filters(FALSE)) ||
          (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
          mainw->agen_key != 0)) {
-      //lives_widget_set_sensitive(menuitem, TRUE);
-    } //else lives_widget_set_sensitive(menuitem, FALSE);
+    }
   }
 
   if (mainw->num_rendered_effects_test) {
@@ -4711,7 +4712,6 @@ void add_rfx_effects2(lives_rfx_status_t status) {
           }
 	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),
 				       LINKED_RFX_KEY, (livespointer)rfx);
-          //if (rfx->min_frames >= 0) lives_widget_set_sensitive(menuitem, FALSE);
 	  // *INDENT-OFF*
 	}}}}
   // *INDENT-ON*

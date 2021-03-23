@@ -62,21 +62,39 @@ typedef struct {
 LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex,
                            const char *plugdir, const char *filter_ext);
 
+#define PLUGINS_LITERAL "plugins"
+#define EFFECTS_LITERAL "effects"
+#define THEMES_LITERAL "themes"
+
+#define CUSTOM_LITERAL "custom"
+#define TEST_LITERAL "test"
+
+#define N_PLUGIN_SUBDIRS 4 // decoders, encoders, effects, playback
+
+boolean check_for_plugins(const char *dirn);
+
 // directory locations
-#define PLUGIN_ENCODERS "encoders"
-#define PLUGIN_DECODERS "decoders"
-#define PLUGIN_VID_PLAYBACK "playback/video"
-#define PLUGIN_AUDIO_STREAM "playback/audiostream"
+#define ENCODERS_LITERAL "encoders"
+#define DECODERS_LITERAL "decoders"
+
+#define PLUGIN_ENCODERS ENCODERS_LITERAL
+#define PLUGIN_DECODERS DECODERS_LITERAL
+
+#define PLUGIN_VID_PLAYBACK "playback" LIVES_DIR_SEP  "video"
+#define PLUGIN_AUDIO_STREAM "playback" LIVES_DIR_SEP "audiostream"
 
 #define AUDIO_STREAMER_NAME "audiostreamer.pl"
 
 /// smogrify handles the directory differently for themes
-#define PLUGIN_THEMES "themes"
-#define PLUGIN_THEMES_CUSTOM "custom/themes"
+#define PLUGIN_THEMES THEMES_LITERAL
+#define PLUGIN_THEMES_CUSTOM CUSTOM_LITERAL LIVES_DIR_SEP THEMES_LITERAL
+
+#define REALTIME_LITERAL "realtime"
 
 /// uses WEED_PLUGIN_PATH
-#define PLUGIN_EFFECTS_WEED "weed"
-#define PLUGIN_WEED_FX_BUILTIN "effects/realtime/weed"
+#define WEED_LITERAL "weed"
+#define PLUGIN_EFFECTS_WEED WEED_LITERAL
+#define PLUGIN_WEED_FX_BUILTIN EFFECTS_LITERAL LIVES_DIR_SEP REALTIME_LITERAL LIVES_DIR_SEP WEED_LITERAL
 
 LiVESList *get_plugin_result(const char *command, const char *delim, boolean allow_blanks, boolean strip);
 LiVESList *plugin_request(const char *plugin_type, const char *plugin_name, const char *request);
@@ -383,19 +401,24 @@ lives_decoder_t *clone_decoder(int fileno);
 
 // RFX plugins
 
+#define RENDERED_LITERAL "rendered"
+#define RFX_SCRIPTS_LITERAL "RFXscripts"
+
 /// external rendered fx plugins (RFX plugins)
-#define PLUGIN_RENDERED_EFFECTS_BUILTIN "effects/rendered/"
+#define RFX_PLUG_DIR EFFECTS_LITERAL LIVES_DIR_SEP RENDERED_LITERAL
+#define PLUGIN_RENDERED_EFFECTS_BUILTIN RFX_PLUG_DIR
 
 /// in the config directory
-#define PLUGIN_RENDERED_EFFECTS_CUSTOM "plugins/effects/rendered/custom/"
-#define PLUGIN_RENDERED_EFFECTS_TEST "plugins/effects/rendered/test/"
+#define PLUGIN_RENDERED_EFFECTS_CUSTOM PLUGINS_LITERAL LIVES_DIR_SEP RFX_PLUG_DIR LIVES_DIR_SEP CUSTOM_LITERAL
+#define PLUGIN_RENDERED_EFFECTS_TEST PLUGINS_LITERAL LIVES_DIR_SEP RFX_PLUG_DIR LIVES_DIR_SEP TEST_LITERAL
 
 /// rfx scripts for the SDK
-#define PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS "effects/RFXscripts/"
+#define RFX_SCRIPT_DIR EFFECTS_LITERAL LIVES_DIR_SEP RFX_SCRIPTS_LITERAL
+#define PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS RFX_SCRIPT_DIR
 
 /// in the config directory
-#define PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS "plugins/effects/RFXscripts/custom/"
-#define PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS "plugins/effects/RFXscripts/test/"
+#define PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS PLUGINS_LITERAL LIVES_DIR_SEP RFX_SCRIPT_DIR LIVES_DIR_SEP CUSTOM_LITERAL
+#define PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS PLUGINS_LITERAL LIVES_DIR_SEP RFX_SCRIPT_DIR LIVES_DIR_SEP TEST_LITERAL
 
 /// scraps are passed between programs to generate param windows
 #define PLUGIN_RFX_SCRAP ""

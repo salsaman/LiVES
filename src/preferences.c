@@ -555,8 +555,6 @@ static void set_workdir_label_text(LiVESLabel *label, const char *dir) {
 
 boolean pref_factory_string(const char *prefidx, const char *newval, boolean permanent) {
   if (prefsw) prefsw->ignore_apply = TRUE;
-  g_print("now %s, and %s\n", prefidx, future_prefs->jack_aserver_sname);
-  g_print("now %s\n", newval);
   if (!lives_strcmp(prefidx, PREF_AUDIO_PLAYER)) {
     const char *audio_player = newval;
 
@@ -799,16 +797,19 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
   }
 
   if (!lives_strcmp(prefidx, PREF_JACK_ADRIVER)) {
-    set_string_pref(PREF_JACK_ADRIVER, newval);
+    if (newval) set_string_pref(PREF_JACK_ADRIVER, newval);
+    else set_string_pref(PREF_JACK_ADRIVER, "");
     return TRUE;
   }
 
   if (!lives_strcmp(prefidx, PREF_JACK_TDRIVER)) {
-    set_string_pref(PREF_JACK_TDRIVER, newval);
+    if (newval) set_string_pref(PREF_JACK_TDRIVER, newval);
+    else set_string_pref(PREF_JACK_TDRIVER, "");
     return TRUE;
   }
 
   if (!lives_strcmp(prefidx, PREF_JACK_LAST_ASERVER)) {
+    if (prefsw) mainw->prefs_changed |= PREFS_JACK_CHANGED;
     set_string_pref(PREF_JACK_LAST_ASERVER, newval);
     return TRUE;
   }
@@ -818,13 +819,20 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     return TRUE;
   }
 
-  if (!lives_strcmp(prefidx, PREF_JACK_LAST_ASERVER)) {
+  if (!lives_strcmp(prefidx, PREF_JACK_LAST_TSERVER)) {
     if (prefsw) mainw->prefs_changed |= PREFS_JACK_CHANGED;
+    if (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+      set_string_pref(PREF_JACK_LAST_TSERVER, newval);
+    else
+      delete_pref(PREF_JACK_LAST_TSERVER);
     return TRUE;
   }
 
-  if (!lives_strcmp(prefidx, PREF_JACK_LAST_ADRIVER)) {
-    set_string_pref(PREF_JACK_LAST_TDRIVER, newval);
+  if (!lives_strcmp(prefidx, PREF_JACK_LAST_TDRIVER)) {
+    if (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+      set_string_pref(PREF_JACK_LAST_TDRIVER, newval);
+    else
+      delete_pref(PREF_JACK_LAST_TDRIVER);
     return TRUE;
   }
 
@@ -1678,8 +1686,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean warn_save_set = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_save_set));
   boolean warn_fsize = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_fsize));
   boolean warn_mplayer = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mplayer));
-  boolean warn_rendered_fx = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_rendered_fx));
-  boolean warn_encoders = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_encoders));
+  boolean warn_missplugs = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_missplugs));
   boolean warn_duplicate_set = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_dup_set));
   boolean warn_layout_missing_clips = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_clips));
   boolean warn_layout_close = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_close));
@@ -2013,8 +2020,8 @@ boolean apply_prefs(boolean skip_warn) {
 
   warn_mask = !warn_fps * WARN_MASK_FPS + !warn_save_set * WARN_MASK_SAVE_SET
               + !warn_fsize * WARN_MASK_FSIZE + !warn_mplayer *
-              WARN_MASK_NO_MPLAYER + !warn_rendered_fx * WARN_MASK_RENDERED_FX + !warn_encoders *
-              WARN_MASK_NO_ENCODERS + !warn_layout_missing_clips * WARN_MASK_LAYOUT_MISSING_CLIPS + !warn_duplicate_set *
+              WARN_MASK_NO_MPLAYER + !warn_missplugs * WARN_MASK_CHECK_PLUGINS1 + !warn_missplugs *
+              WARN_MASK_CHECK_PLUGINS2 + !warn_layout_missing_clips * WARN_MASK_LAYOUT_MISSING_CLIPS + !warn_duplicate_set *
               WARN_MASK_DUPLICATE_SET + !warn_layout_close * WARN_MASK_LAYOUT_CLOSE_FILE + !warn_layout_delete *
               WARN_MASK_LAYOUT_DELETE_FRAMES + !warn_layout_shift * WARN_MASK_LAYOUT_SHIFT_FRAMES + !warn_layout_alter *
               WARN_MASK_LAYOUT_ALTER_FRAMES + !warn_discard_layout * WARN_MASK_EXIT_MT + !warn_after_dvgrab *
@@ -4859,8 +4866,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     show_warn_image(prefsw->checkbutton_load_rfx, _("Disabled in VJ mode"));
 
   prefsw->checkbutton_antialias = lives_standard_check_button_new(_("Use _antialiasing when resizing"), prefs->antialias,
-                                  LIVES_BOX(hbox), NULL);
-
+                                  LIVES_BOX(hbox), H_("This setting applies to images imported into or\n"
+                                      "exported from LiVES, and for certain rendered effects\n"
+                                      "and Tools, such as Trim Frames"));
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_effects));
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -5247,14 +5255,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                       !(prefs->warning_mask & WARN_MASK_NO_MPLAYER), LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->checkbutton_warn_rendered_fx = lives_standard_check_button_new
-                                         (_("Show a warning if no _rendered effects are found at startup."),
-                                          !(prefs->warning_mask & WARN_MASK_RENDERED_FX), LIVES_BOX(hbox), NULL);
-
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->checkbutton_warn_encoders = lives_standard_check_button_new
-                                      (_("Show a warning if no _encoder plugins are found at startup."),
-                                       !(prefs->warning_mask & WARN_MASK_NO_ENCODERS), LIVES_BOX(hbox), NULL);
+  prefsw->checkbutton_warn_missplugs = lives_standard_check_button_new
+                                       (_("Show a warning if some plugin types are not found at startup."),
+                                        !(prefs->warning_mask & (WARN_MASK_CHECK_PLUGINS1 | WARN_MASK_CHECK_PLUGINS2)),
+                                        LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_warn_dup_set = lives_standard_check_button_new
@@ -5890,6 +5894,12 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->jack_acerror), TRUE);
   } else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(widget), TRUE);
 
+  widget_opts.use_markup = TRUE;
+  label = lives_standard_label_new("<b>------></b>");
+  widget_opts.use_markup = FALSE;
+
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+
   advbutton =
     lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
         _("Server and _Driver Configuration"), -1, -1, LIVES_BOX(hbox), TRUE, NULL);
@@ -6517,8 +6527,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(checkbutton_warn_fsize, TOGGLED);
   ACTIVE(checkbutton_warn_save_set, TOGGLED);
   ACTIVE(checkbutton_warn_mplayer, TOGGLED);
-  ACTIVE(checkbutton_warn_rendered_fx, TOGGLED);
-  ACTIVE(checkbutton_warn_encoders, TOGGLED);
+  ACTIVE(checkbutton_warn_missplugs, TOGGLED);
   ACTIVE(checkbutton_warn_dup_set, TOGGLED);
   ACTIVE(checkbutton_warn_layout_clips, TOGGLED);
   ACTIVE(checkbutton_warn_layout_close, TOGGLED);

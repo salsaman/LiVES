@@ -222,7 +222,7 @@ void on_export_rfx_ok(LiVESButton *, char *script_name);
 void on_import_rfx_ok(LiVESButton *, livespointer status);
 
 /// add dynamic menu entries
-void add_rfx_effects(lives_rfx_status_t status);
+boolean add_rfx_effects(lives_rfx_status_t status);
 void add_rfx_effects2(lives_rfx_status_t status);
 void update_rfx_menus(void);
 

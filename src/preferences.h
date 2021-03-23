@@ -95,8 +95,8 @@ typedef struct {
 #define WARN_MASK_UNUSED 	       				(1ull << 2)  ///< was "save_quality"
 #define WARN_MASK_SAVE_SET 		       			(1ull << 3)
 #define WARN_MASK_NO_MPLAYER 			       		(1ull << 4)
-#define WARN_MASK_RENDERED_FX 					(1ull << 5)
-#define WARN_MASK_NO_ENCODERS 					(1ull << 6)
+#define WARN_MASK_CHECK_PLUGINS1 	       			(1ull << 5)	// formerly "NO_RENDERED_FX"
+#define WARN_MASK_CHECK_PLUGINS2 	       			(1ull << 6)	// formerly "NO_ENCODERS"
 #define WARN_MASK_LAYOUT_MISSING_CLIPS 				(1ull << 7)
 
 #define WARN_MASK_LAYOUT_CLOSE_FILE 				(1ull << 8)
@@ -670,8 +670,7 @@ typedef struct {
   LiVESWidget *checkbutton_warn_mplayer;
   LiVESWidget *checkbutton_warn_save_set;
   LiVESWidget *checkbutton_warn_dup_set;
-  LiVESWidget *checkbutton_warn_rendered_fx;
-  LiVESWidget *checkbutton_warn_encoders;
+  LiVESWidget *checkbutton_warn_missplugs;
   LiVESWidget *checkbutton_warn_layout_clips;
   LiVESWidget *checkbutton_warn_layout_close;
   LiVESWidget *checkbutton_warn_layout_delete;
@@ -848,6 +847,7 @@ typedef struct {
   boolean ign_clipset;
   boolean ign_layout;
   boolean ign_osc;
+  boolean ign_libdir;
   boolean ign_jackopts;
   boolean ign_jackserver;
   boolean ign_aplayer;

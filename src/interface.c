@@ -4068,10 +4068,10 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
     dirname = choose_file(fname, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
     break;
   case LIVES_DIR_SELECTION_WORKDIR_INIT:
-    dirname = choose_file(NULL, fname, NULL, LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER, NULL, NULL);
+    dirname = choose_file(capable->home_dir, LIVES_DEF_WORK_SUBDIR, NULL, LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER, NULL, NULL);
     break;
   case LIVES_DIR_SELECTION_WORKDIR:
-    dirname = choose_file(NULL, fname, NULL, LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER, NULL, NULL);
+    dirname = choose_file(prefs->workdir, LIVES_DEF_WORK_SUBDIR, NULL, LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER, NULL, NULL);
 
     if (lives_strcmp(dirname, fname)) {
       /// apply extra validity checks (check writeable, warn if set to home dir, etc)
@@ -4171,7 +4171,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
 
 static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
   // what should happen with gtkfilechooser, but doesnt (!)
-  // setting mode to CREATE_DIRECTORY should allow creatiung a new directory or entering an existing one
+  // setting mode to CREATE_DIRECTORY should allow creating a new directory or entering an existing one
   //        - this is fine
   // when first shown or after a double-clisk (enter directory), the directory path should be shown in the file name bar
   // the select (activate) button should be sensitive, clicking it should select the current directory
@@ -4188,6 +4188,11 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
   // so what is the point of entering the empty dir ?
 
   // this callback fixes all of this
+  static boolean no = FALSE;
+  if (no) {
+    no = FALSE;
+    return;
+  }
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 10, 0)
   struct fc_dissection *diss = (struct fc_dissection *)user_data;
@@ -4197,19 +4202,29 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
 #endif
   char *tmp;
 
-  char *fold = NULL, *fname = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
-                              -1, NULL, NULL, NULL);
+  char *fold = NULL, *dirname = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
+                                -1, NULL, NULL, NULL);
+  char *extra_dir = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(chooser), DEF_FILE_KEY);
+
   lives_free(tmp);
 
   fold = lives_filename_to_utf8((tmp = gtk_file_chooser_get_current_folder(LIVES_FILE_CHOOSER(chooser))),
                                 -1, NULL, NULL, NULL);
   lives_free(tmp);
 
-  if (!fname && !fold) return;
+  g_print("name %s and fold %s\n", dirname, fold);
 
-  if (lives_file_test(fname, LIVES_FILE_TEST_IS_REGULAR)) {
+  if (!dirname && !fold) return;
+
+  if (lives_file_test(dirname, LIVES_FILE_TEST_IS_REGULAR)) {
     if (diss) lives_widget_set_sensitive(diss->selbut, FALSE);
     return;
+  }
+
+  tmp = lives_build_path(dirname, extra_dir, NULL);
+  if (lives_file_test(tmp, LIVES_FILE_TEST_IS_DIR)) {
+    no = TRUE;
+    gtk_file_chooser_select_filename(chooser, tmp);
   }
 
 #ifdef GUI_GTK
@@ -4217,33 +4232,36 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
   if (diss) {
     char *path;
     char buff[PATH_MAX];
-    size_t s1 = lives_strlen(fname);
+    size_t s1 = lives_strlen(dirname);
     size_t s2 = lives_strlen(fold);
     boolean folhas = FALSE, fnahas = FALSE;
 
-    if (lives_string_ends_with(fname, "%s", LIVES_DEF_WORK_SUBDIR)) {
-      fnahas = TRUE;
-      s1 -= 14;
-    }
-    if (lives_string_ends_with(fold, "%s", LIVES_DEF_WORK_SUBDIR)) {
-      folhas = TRUE;
-      s2 -= 14;
-    }
-    if (s1 > s2) {
-      if (!fnahas) path = lives_build_path(fname, LIVES_DEF_WORK_SUBDIR, NULL);
-      else path = fname;
-    } else {
-      if (!folhas) path = lives_build_path(fold, LIVES_DEF_WORK_SUBDIR, NULL);
-      else path = fold;
-    }
+    if (extra_dir) {
+      if (lives_string_ends_with(dirname, "%s", extra_dir)) {
+        fnahas = TRUE;
+        s1 -= lives_strlen(extra_dir) + 1;
+      }
+      if (lives_string_ends_with(fold, "%s", extra_dir)) {
+        folhas = TRUE;
+        s2 -= lives_strlen(extra_dir) + 1;
+      }
+
+      if (s1 > s2) {
+        if (!fnahas) path = lives_build_path(dirname, extra_dir, NULL);
+        else path = dirname;
+      } else {
+        if (!folhas) path = lives_build_path(fold, extra_dir, NULL);
+        else path = fold;
+      }
+    } else path = fold;
+
     lives_snprintf(buff, PATH_MAX, "%s", path);
-    if (path != fname && path != fold) lives_free(path);
+    if (path != dirname && path != fold) lives_free(path);
 
     if (!lives_file_test(buff, LIVES_FILE_TEST_IS_DIR)) {
       ensure_isdir(buff);
     }
     if (diss->new_entry) lives_entry_set_text(LIVES_ENTRY(diss->new_entry), buff);
-
 
     for (LiVESWidget *widget = lives_widget_get_parent(diss->new_entry); widget;
          widget = lives_widget_get_parent(widget)) {
@@ -4260,10 +4278,40 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
 
 
 static void fc_folder_changed(LiVESFileChooser * chooser, livespointer user_data) {
+  //struct fc_dissection *diss = (struct fc_dissection *)user_data;
+  static boolean no = FALSE;
+  if (no) {
+    // prevents recursion after updating selection; blocking signal seems not to work
+    no = FALSE;
+    return;
+  } else {
+    char *tmp;
+    char *extra_dir = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(chooser), DEF_FILE_KEY);
+    char *dirname = lives_file_chooser_get_filename(chooser);
+    int act = GET_INT_DATA(chooser, FC_ACTION_KEY);
+
 #if GTK_CHECK_VERSION(3, 10, 0)
-  struct fc_dissection *diss = (struct fc_dissection *)user_data;
-  if (diss) set_child_colour(diss->treeview, TRUE);
+    struct fc_dissection *diss = (struct fc_dissection *)user_data;
+    if (diss && diss->treeview) set_child_colour(diss->treeview, TRUE);
 #endif
+
+#if GTK_CHECK_VERSION(3, 10, 0)
+    if (diss && act == LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
+      lives_widget_set_sensitive(diss->selbut, FALSE);
+    }
+#endif
+    tmp = lives_build_path(dirname, extra_dir, NULL);
+    if (lives_file_test(tmp, LIVES_FILE_TEST_IS_DIR)) {
+      no = TRUE;
+      gtk_file_chooser_select_filename(chooser, tmp);
+#if GTK_CHECK_VERSION(3, 10, 0)
+      if (diss && act == LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
+        lives_widget_set_sensitive(diss->selbut, TRUE);
+      }
+#endif
+    }
+    lives_free(tmp);
+  }
 }
 
 
@@ -4286,7 +4334,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   void *diss = NULL;
 #endif
   // in/out values are in utf8 encoding
-  static GtkFileFilter *custfilt = NULL;
+  GtkFileFilter *custfilt = NULL;
 
   char *mytitle;
   char *filename = NULL;
@@ -4331,10 +4379,14 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER) {
     if (!custfilt) {
       custfilt = gtk_file_filter_new();
+      if (fname) gtk_file_filter_set_name(custfilt, fname);
+      else gtk_file_filter_set_name(custfilt, _("Directories"));
       gtk_file_filter_add_custom(custfilt, GTK_FILE_FILTER_FILENAME, dir_only_filt, NULL, NULL);
     }
     gtk_file_chooser_add_filter(LIVES_FILE_CHOOSER(chooser), custfilt);
   }
+
+  SET_INT_DATA(chooser, FC_ACTION_KEY, act);
 
   if (dir) gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser), dir);
 
@@ -4394,27 +4446,35 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   }
 
   if (fname) {
-    if (act == LIVES_FILE_CHOOSER_ACTION_SAVE || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER
-        || act == LIVES_FILE_CHOOSER_ACTION_OPEN) { // prevent assertion in gtk+
-      if (fname) {
-        if (dir) {
-          char *ffname = lives_build_filename(dir, fname, NULL);
-          gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname); // utf-8
-          gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser), ffname); // must be dir and file
-          lives_free(ffname);
-        } else {
-          if (!lives_file_test(fname, LIVES_FILE_TEST_IS_DIR)) {
-            gtk_file_chooser_set_filename(LIVES_FILE_CHOOSER(chooser), fname);
-            gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(chooser), DEF_FILE_KEY, (livespointer)fname);
+
+    if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
+      gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser), fname);
+      lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL,
+                                      LIVES_GUI_CALLBACK(fc_folder_changed), diss);
+    } else {
+      if (act == LIVES_FILE_CHOOSER_ACTION_SAVE || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER
+          || act == LIVES_FILE_CHOOSER_ACTION_OPEN) { // prevent assertion in gtk+
+        if (fname) {
+          if (dir) {
+            char *ffname = lives_build_filename(dir, fname, NULL);
+            gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname); // utf-8
+            gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser), ffname); // must be dir and file
+            lives_free(ffname);
           } else {
-            gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser), fname);
-            gtk_file_chooser_set_filename(LIVES_FILE_CHOOSER(chooser), fname);
+            if (!lives_file_test(fname, LIVES_FILE_TEST_IS_DIR)) {
+              gtk_file_chooser_set_filename(LIVES_FILE_CHOOSER(chooser), fname);
+              gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname);
+            } else {
+              gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser), fname);
+              gtk_file_chooser_set_filename(LIVES_FILE_CHOOSER(chooser), fname);
+            }
           }
+          lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL,
+                                          LIVES_GUI_CALLBACK(fc_sel_changed), diss);
+          lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL,
+                                          LIVES_GUI_CALLBACK(fc_folder_changed), diss);
         }
-        lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL,
-                                        LIVES_GUI_CALLBACK(fc_sel_changed), diss);
-        lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), "folder-changed",
-                                        LIVES_GUI_CALLBACK(fc_folder_changed), diss);
       }
     }
   }
@@ -4445,6 +4505,8 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   if (extra_widget == LIVES_MAIN_WINDOW_WIDGET && LIVES_MAIN_WINDOW_WIDGET) {
     return (char *)chooser; // kludge to allow custom adding of extra widgets
   }
+
+  if (!mainw->is_ready) pop_to_front(chooser, NULL);
 
 rundlg:
   if ((response = lives_dialog_run(LIVES_DIALOG(chooser))) != LIVES_RESPONSE_CANCEL) {

@@ -5374,10 +5374,6 @@ sub insert {
 
     $resize_ext = $img_ext;
 
-    if (!defined($antialias)) {
-	$antialias = "false";
-    }
-
     #move from $from_handle
     $j = $start;
     while ($times_inserted < $times) {

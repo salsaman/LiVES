@@ -625,7 +625,7 @@ static boolean pre_init(void) {
 
   pthread_mutexattr_t mattr;
 
-  char *msg, *tmp, *tmp2, *cfgdir;
+  char *msg, *tmp, *tmp2, *cfgdir, *old_libdir = NULL;
 
   boolean needs_update = FALSE;
 
@@ -984,13 +984,20 @@ static boolean pre_init(void) {
 
   needs_update = FALSE;
 
+  if (ign_opts.ign_libdir) old_libdir = lives_strdup(prefs->lib_dir);
   get_string_pref(PREF_LIB_DIR, prefs->lib_dir, PATH_MAX);
+  if (old_libdir) {
+    if (lives_strcmp(old_libdir, prefs->lib_dir)) {
+      lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", old_libdir);
+      needs_update = TRUE;
+    }
+    lives_free(old_libdir);
+  }
 
   if (!(*prefs->lib_dir)) {
     lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", LIVES_LIBDIR);
     needs_update = TRUE;
   }
-
   if (ensure_isdir(prefs->lib_dir)) needs_update = TRUE;
   if (needs_update) set_string_pref(PREF_LIB_DIR, prefs->lib_dir);
 
@@ -1071,6 +1078,15 @@ static boolean pre_init(void) {
       prefs->jack_tdriver = lives_strdup(jbuff);
       future_prefs->jack_tdriver = lives_strdup(jbuff);
     }
+#endif
+  } else {
+    prefs->jack_adriver = NULL;
+    future_prefs->jack_adriver = NULL;
+#ifdef ENABLE_JACK_TRANSPORT
+    if (prefs->jack_srv_dup) {
+      prefs->jack_tdriver = NULL;
+      future_prefs->jack_tdriver = NULL;
+    }
   }
 
   if (prefs->jack_srv_dup) {
@@ -1118,9 +1134,8 @@ static boolean pre_init(void) {
       future_prefs->jack_adriver = lives_strdup_free(future_prefs->jack_adriver, jbuff);
     }
     // otherwise prompt for a new driver
-    else future_prefs->jack_adriver = NULL;
+    else lives_freep((void **)&future_prefs->jack_adriver);
   }
-
   if (lives_strcmp(future_prefs->jack_tserver_sname, prefs->jack_tserver_sname)) {
     // same for transport server
     get_string_pref(PREF_JACK_LAST_TSERVER, jbuff, JACK_PARAM_STRING_MAX);
@@ -1128,7 +1143,7 @@ static boolean pre_init(void) {
       get_string_pref(PREF_JACK_LAST_ADRIVER, jbuff, JACK_PARAM_STRING_MAX);
       prefs->jack_tdriver = lives_strdup_free(prefs->jack_tdriver, jbuff);
       future_prefs->jack_tdriver = lives_strdup_free(future_prefs->jack_tdriver, jbuff);
-    } else future_prefs->jack_tdriver = NULL;
+    } else lives_freep((void **)&future_prefs->jack_tdriver);
   }
 
 #endif
@@ -2180,7 +2195,7 @@ static void lives_init(_ign_opts *ign_opts) {
       if (!weed_plugin_path) {
         char *ppath1 = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR,
                                         PLUGIN_WEED_FX_BUILTIN, NULL);
-        char *ppath2 = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, "lib", PLUGIN_EXEC_DIR,
+        char *ppath2 = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, LIVES_LIB_DIR, PLUGIN_EXEC_DIR,
                                         PLUGIN_WEED_FX_BUILTIN, NULL);
         weed_plugin_path = lives_strdup_printf("%s:%s", ppath1, ppath2);
         lives_free(ppath1); lives_free(ppath2);
@@ -2372,6 +2387,7 @@ rest1:
         }
         if (prefs->jack_srv_dup) {
           if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) {
+            // cross setting
             pref_factory_string(PREF_JACK_LAST_ADRIVER, future_prefs->jack_tdriver, TRUE);
             pref_factory_string(PREF_JACK_LAST_ASERVER, future_prefs->jack_tserver_sname, TRUE);
           } else pref_factory_string(PREF_JACK_ADRIVER, future_prefs->jack_tdriver, TRUE);
@@ -3876,10 +3892,24 @@ boolean lazy_startup_checks(void *data) {
 
   if (mainw->ldg_menuitem) {
     if (!RFX_LOADED) return TRUE;
-    lives_widget_destroy(mainw->ldg_menuitem);
-    mainw->ldg_menuitem = NULL;
-    add_rfx_effects2(RFX_STATUS_ANY);
-    if (LIVES_IS_SENSITIZED) sensitize(); // call fn again to sens. new menu entries
+    if (mainw->helper_procthreads[PT_LAZY_RFX]) {
+      if (!lives_proc_thread_join_boolean(mainw->helper_procthreads[PT_LAZY_RFX])) {
+        if (capable->has_plugins_libdir == UNCHECKED) {
+          if (check_for_plugins(prefs->lib_dir)) {
+            lives_proc_thread_free(mainw->helper_procthreads[PT_LAZY_RFX]);
+            mainw->helper_procthreads[PT_LAZY_RFX] =
+              lives_proc_thread_create(LIVES_THRDATTR_NONE,
+                                       (lives_funcptr_t)add_rfx_effects, WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY);
+            return TRUE;
+          }
+        }
+      } else {
+        lives_widget_destroy(mainw->ldg_menuitem);
+        mainw->ldg_menuitem = NULL;
+        add_rfx_effects2(RFX_STATUS_ANY);
+        if (LIVES_IS_SENSITIZED) sensitize(); // call fn again to sens. new menu entries
+      }
+    }
   }
 
   mainw->lazy = 0;
@@ -4122,17 +4152,7 @@ static boolean lives_startup(livespointer data) {
             WARN_MASK_NO_MPLAYER);
         }
         if (!capable->has_encoder_plugins) {
-          char *path = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, NULL);
-          msg = lives_strdup_printf(
-                  _("\nLiVES was unable to find any encoder plugins.\n"
-                    "Please check that you have them installed correctly in\n%s/\n"
-                    "You will not be able to 'Save' without them.\n"
-                    "You may need to change the value of <lib_dir> in %s\n"), path,
-                  (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
-          lives_free(tmp);
-          lives_free(path);
-          startup_message_nonfatal_dismissable(msg, WARN_MASK_NO_ENCODERS);
-          lives_free(msg);
+          startup_message_nonfatal_dismissable(msg, WARN_MASK_CHECK_PLUGINS1);
           upgrade_error = TRUE;
         }
 
@@ -4150,8 +4170,6 @@ static boolean lives_startup(livespointer data) {
 	    // *INDENT-OFF*
           }}}}
     // *INDENT-ON*
-    splash_msg(_("Loading rendered effect plugins..."), SPLASH_LEVEL_LOAD_RFX);
-    // must call this at least to set up rendered_fx[0]
   } else {
     // capture mode
     mainw->foreign_key = atoi(zargv[2]);
@@ -4358,7 +4376,7 @@ static boolean lives_startup2(livespointer data) {
   if (!prefs->vj_mode && !prefs->startup_phase) {
     mainw->helper_procthreads[PT_LAZY_RFX] =
       lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                               (lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
+                               (lives_funcptr_t)add_rfx_effects, WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY);
   }
 
   mainw->lazy = lives_idle_add_simple(lazy_startup_checks, NULL);
@@ -4793,6 +4811,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         {"workdir", 1, 0, 0},
         {"configfile", 1, 0, 0},
         {"configdatadir", 1, 0, 0},
+        {"plugins-libdir", 1, 0, 0},
         {"dscrit", 1, 0, 0},
         {"set", 1, 0, 0},
         {"noset", 0, 0, 0},
@@ -4876,6 +4895,37 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             capable->can_write_to_workdir = FALSE;
             break;
           }
+          continue;
+        }
+
+        if (!strcmp(charopt, "plugins-libdir")) {
+          if (!*optarg) {
+            do_abortblank_error(charopt);
+            continue;
+          }
+          if (optarg[0] == '-') {
+            do_abortblank_error(charopt);
+            optind--;
+            continue;
+          }
+          if (lives_strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
+            toolong = TRUE;
+          } else {
+            ensure_isdir(optarg);
+            if (lives_strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
+              toolong = TRUE;
+            }
+          }
+          if (toolong) {
+            dir_toolong_error(optarg, (tmp = (_("plugins lib directory"))), PATH_MAX - MAX_SET_NAME_LEN * 2, TRUE);
+            lives_free(tmp);
+            capable->can_write_to_workdir = FALSE;
+            break;
+          }
+          // check for subdirs decoders, effects/rendered, encoders, playback/video
+          check_for_plugins(optarg);
+          lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", optarg);
+          ign_opts.ign_libdir = TRUE;
           continue;
         }
 
@@ -5433,6 +5483,10 @@ boolean startup_message_info(const char *msg) {
 
 
 boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_mask) {
+  if (warning_mask == WARN_MASK_CHECK_PLUGINS1) {
+    check_for_plugins(prefs->lib_dir);
+    return TRUE;
+  }
   widget_opts.non_modal = TRUE;
   do_error_dialog_with_check(msg, warning_mask);
   widget_opts.non_modal = FALSE;
@@ -5522,6 +5576,7 @@ void sensitize_rfx(void) {
   }
 }
 
+static boolean has_rfx = FALSE;
 
 void sensitize(void) {
   // sensitize main window controls
@@ -5613,9 +5668,10 @@ void sensitize(void) {
   }
 
   if (!prefs->vj_mode) {
-    if (RFX_LOADED) {
-      sensitize_rfx();
+    if (!has_rfx && RFX_LOADED) {
+      has_rfx = TRUE;
     }
+    if (has_rfx) sensitize_rfx();
   }
   lives_widget_set_sensitive(mainw->record_perf, TRUE);
   if (!prefs->vj_mode) {
@@ -5739,6 +5795,12 @@ void sensitize(void) {
     lives_widget_set_sensitive(mainw->gens_submenu, FALSE);
     lives_widget_set_sensitive(mainw->utilities_submenu, FALSE);
   }
+  /* else { */
+  /*   if (!has_rfx && capable->has_plugins_libdir == UNCHECKED) { */
+  /*     if (!check_for_plugins(prefs->lib_dir)) capable->has_plugins_libdir = MISSING; */
+  /*     else capable->has_plugins_libdir = PRESENT; */
+  /*   } */
+  //}
 }
 
 
@@ -5797,7 +5859,7 @@ void desensitize(void) {
   }
   lives_widget_set_sensitive(mainw->rewind, FALSE);
   if (!prefs->vj_mode) {
-    if (RFX_LOADED) {
+    if (has_rfx) {
       if (!mainw->foreign) {
         for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
              mainw->num_rendered_effects_test; i++)

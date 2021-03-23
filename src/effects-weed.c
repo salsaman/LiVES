@@ -5497,7 +5497,7 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
   int nparams, nchans, pnum, pnum2, xpnum2, cnum, cnum2, ptype, pptype, pcspace, pflags;
   int error;
 
-  register int i;
+  int i;
 
   if ((cpdfile = fopen(plugin_path, "r"))) {
     while (fgets(buff, 16384, cpdfile)) {

@@ -1159,11 +1159,11 @@ boolean ensure_isdir(char *fname) {
 
   // returns TRUE if fname was altered
 
-  size_t tlen = lives_strlen(fname), slen, tlen2;
   size_t dslen = strlen(LIVES_DIR_SEP);
   ssize_t offs;
   boolean ret = FALSE;
-  char *tmp = lives_strdup(fname), *tmp2;
+  char *tmp = lives_strdup_printf("%s%s", LIVES_DIR_SEP, fname), *tmp2;
+  size_t tlen = lives_strlen(tmp), slen, tlen2;
 
   while (1) {
     // recursively remove double DIR_SEP
@@ -1778,7 +1778,6 @@ boolean switch_aud_to_sox(boolean set_in_prefs) {
   if (!capable->has_sox_play) return FALSE; // TODO - show error
 
   prefs->audio_player = AUD_PLAYER_SOX;
-  lives_snprintf(prefs->audio_play_command, 256, "%s", EXEC_PLAY);
   if (set_in_prefs) set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
   //set_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);

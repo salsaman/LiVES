@@ -1231,8 +1231,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 
 #endif
 
-  //#define LIVES_LIVES_STOCK_LOCKED "lives-locked"
-  //#define LIVES_LIVES_STOCK_UNLOCKED "lives-unlocked"
+#define LIVES_LIVES_STOCK_HELP_INFO "livestock-help-info"
 
 #if GTK_CHECK_VERSION(3, 2, 0)
 #define LIVES_LIVES_STOCK_LOCKED "changes-prevent"

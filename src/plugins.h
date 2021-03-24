@@ -72,6 +72,7 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex,
 #define N_PLUGIN_SUBDIRS 4 // decoders, encoders, effects, playback
 
 boolean check_for_plugins(const char *dirn);
+boolean find_prefix_dir(const char *predirn);
 
 // directory locations
 #define ENCODERS_LITERAL "encoders"

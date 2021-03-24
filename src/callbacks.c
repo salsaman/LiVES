@@ -597,6 +597,8 @@ void lives_exit(int signum) {
     unload_decoder_plugins();
   }
 
+  if (mainw->hook_funcs[EXIT_HOOK])(*mainw->hook_funcs[EXIT_HOOK])(mainw->hook_data[EXIT_HOOK]);
+
   if (prefs->workdir_tx_intent == LIVES_INTENTION_DELETE) {
     // delete the old workdir
     lives_rmdir(prefs->workdir, TRUE);
@@ -10565,15 +10567,6 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     }
 
     if (cfile->opening) mainw->effects_paused = TRUE;
-    else {
-      // stop effects processing (if preferred)
-      if (prefs->pause_effect_during_preview) {
-        if (!(mainw->effects_paused)) {
-          on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
-          resume_after = TRUE;
-        }
-      }
-    }
 
     if (button) lives_button_set_label(LIVES_BUTTON(button), _("Stop"));
     if (mainw->proc_ptr) {

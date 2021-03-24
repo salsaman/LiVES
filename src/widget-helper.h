@@ -26,9 +26,10 @@
 
 #define MIN_SPINBUTTON_SIZE 6 ///< min digits for spinbuttons
 
-#define LONG_ENTRY_WIDTH ((int)(100.*widget_opts.scale))
-#define SHORT_ENTRY_WIDTH ((int)(40.*widget_opts.scale))
-#define MEDIUM_ENTRY_WIDTH ((int)(60.*widget_opts.scale))
+#define LONGEST_ENTRY_WIDTH ((int)(150. * widget_opts.scale))
+#define LONG_ENTRY_WIDTH ((int)(100. * widget_opts.scale))
+#define MEDIUM_ENTRY_WIDTH ((int)(60. * widget_opts.scale))
+#define SHORT_ENTRY_WIDTH ((int)(40. * widget_opts.scale))
 #define SHORTER_ENTRY_WIDTH (MEDIUM_ENTRY_WIDTH >> 1)
 
 typedef enum {

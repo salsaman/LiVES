@@ -95,8 +95,8 @@ typedef struct {
 #define WARN_MASK_UNUSED 	       				(1ull << 2)  ///< was "save_quality"
 #define WARN_MASK_SAVE_SET 		       			(1ull << 3)
 #define WARN_MASK_NO_MPLAYER 			       		(1ull << 4)
-#define WARN_MASK_CHECK_PLUGINS1 	       			(1ull << 5)	// formerly "NO_RENDERED_FX"
-#define WARN_MASK_CHECK_PLUGINS2 	       			(1ull << 6)	// formerly "NO_ENCODERS"
+#define WARN_MASK_CHECK_PREFIX	 	       			(1ull << 5)	// formerly "NO_RENDERED_FX"
+#define WARN_MASK_CHECK_PLUGINS 	       			(1ull << 6)	// formerly "NO_ENCODERS"
 #define WARN_MASK_LAYOUT_MISSING_CLIPS 				(1ull << 7)
 
 #define WARN_MASK_LAYOUT_CLOSE_FILE 				(1ull << 8)
@@ -173,13 +173,12 @@ typedef struct {
 #define WARN_MASK_RSVD_OFF_1					(1ull << 62)
 #define WARN_MASK_RSVD_OFF_0					(1ull << 63)
 
+  char *cmdline_args; // defaults, prepended
+
   char cmd_log[PATH_MAX];
-  char effect_command[PATH_MAX * 2];
   char video_open_command[PATH_MAX * 2];
-  char audio_play_command[PATH_MAX * 2];
   char cdplay_device[PATH_MAX];  ///< locale encoding
   double default_fps;
-  boolean pause_effect_during_preview;
   boolean open_decorated;
   int sleep_time;
   boolean pause_during_pb;
@@ -188,7 +187,7 @@ typedef struct {
   int warn_file_size;
   boolean midisynch;
   int dl_bandwidth;
-  boolean conserve_space;
+  boolean conserve_space; // deprecated (always FALSE)
   boolean ins_resample;
   boolean show_tool;
   short sepwin_type;
@@ -538,6 +537,7 @@ typedef struct {
 } _prefs;
 
 enum {
+  LIST_ENTRY_RESET,
   LIST_ENTRY_GUI,
   LIST_ENTRY_DECODING,
   LIST_ENTRY_PLAYBACK,
@@ -576,9 +576,11 @@ typedef struct {
 
   LiVESWidget *prefs_dialog;
 
+  LiVESWidget *list_scroll;
   LiVESWidget *prefs_list;
   LiVESWidget *prefs_table;
   LiVESWidget *tlabel;
+  LiVESWidget *vbox_right_reset;
   LiVESWidget *vbox_right_gui;
   LiVESWidget *vbox_right_multitrack;
   LiVESWidget *vbox_right_decoding;
@@ -611,6 +613,8 @@ typedef struct {
   LiVESWidget *revertbutton;
   LiVESWidget *applybutton;
   LiVESWidget *closebutton;
+  LiVESWidget *the_button;
+  LiVESWidget *cmdline_entry;
   LiVESWidget *stop_screensaver_check;
   LiVESWidget *open_maximised_check;
   LiVESWidget *show_tool;
@@ -620,6 +624,7 @@ typedef struct {
   LiVESWidget *checkbutton_lb; //< letterbox
   LiVESWidget *checkbutton_lbmt;
   LiVESWidget *checkbutton_lbenc;
+  LiVESWidget *checkbutton_perm_workdir;
   LiVESWidget *no_lb_gens;
   LiVESWidget *spinbutton_gamma;
   LiVESWidget *video_open_entry;
@@ -671,6 +676,7 @@ typedef struct {
   LiVESWidget *checkbutton_warn_save_set;
   LiVESWidget *checkbutton_warn_dup_set;
   LiVESWidget *checkbutton_warn_missplugs;
+  LiVESWidget *checkbutton_warn_prefix;
   LiVESWidget *checkbutton_warn_layout_clips;
   LiVESWidget *checkbutton_warn_layout_close;
   LiVESWidget *checkbutton_warn_layout_delete;
@@ -993,6 +999,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_WORKING_DIR_OLD "tempdir"
 #define PREF_PREFIX_DIR "prefix_dir" // readonly
 #define PREF_LIB_DIR "lib_dir" // readonly
+
+#define PREF_CMDLINE_ARGS "cmdline_args" // special location
 
 #define PREF_AUDIO_PLAYER "audio_player"
 #define PREF_AUDIO_SRC "audio_src"

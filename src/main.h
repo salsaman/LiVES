@@ -605,6 +605,9 @@ typedef struct {
   int dclick_time;
   int dclick_dist;
   char *sysbindir;
+
+  char *extracmds_file[2];
+  int extracmds_idx;
 } capability;
 
 capability *capable;
@@ -1243,6 +1246,7 @@ void do_need_mplayer_dialog(void);
 void do_need_mplayer_mpv_dialog(void);
 void do_aud_during_play_error(void);
 const char *miss_plugdirs_warn(const char *dirnm, LiVESList *subdirs);
+const char *miss_prefix_warn(const char *dirnm, LiVESList *subdirs);
 void do_layout_scrap_file_error(void);
 void do_layout_ascrap_file_error(void);
 void do_program_not_found_error(const char *progname);

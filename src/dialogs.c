@@ -643,7 +643,7 @@ boolean do_yesno_dialogf_with_countdown(int nclicks, const char *fmt, ...) {
   warning = create_message_dialog(LIVES_DIALOG_YESNO, textx, 0);
   lives_free(textx);
 
-  response = lives_dialog_run_with_countdown(LIVES_DIALOG(warning), LIVES_RESPONSE_YES, 3);
+  response = lives_dialog_run_with_countdown(LIVES_DIALOG(warning), LIVES_RESPONSE_YES, nclicks);
 
   lives_widget_destroy(warning);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
@@ -693,7 +693,7 @@ void maybe_abort(boolean do_check) {
         lives_kill_subprocesses(cfile->handle, TRUE);
       }
     }
-    if (mainw->abort_hook_func)(*mainw->abort_hook_func)(NULL);
+    if (mainw->hook_funcs[ABORT_HOOK])(*mainw->hook_funcs[ABORT_HOOK])(mainw->hook_data[ABORT_HOOK]);
     LIVES_FATAL("Aborted");
     lives_notify(LIVES_OSC_NOTIFY_QUIT, "Aborted");
     exit(1);
@@ -2550,15 +2550,6 @@ LIVES_GLOBAL_INLINE void do_messages_window(boolean is_startup) {
 }
 
 
-LIVES_GLOBAL_INLINE void do_upgrade_error_dialog(void) {
-  char *tmp;
-  char *msg = lives_strdup_printf(
-                _("After upgrading/installing, you may need to adjust the <prefix_dir> setting in your %s file"),
-                (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
-  startup_message_info(msg);
-  lives_free(msg); lives_free(tmp);
-}
-
 static char *expl_missplug(const char *pltype) {
   if (!lives_strcmp(pltype, PLUGIN_ENCODERS)) {
     return (_("\nLiVES was unable to find any encoder plugins.\n"
@@ -2590,8 +2581,8 @@ const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
   LiVESWidget *dlg;
   LiVESResponseType response;
 
-  if (prefs->warning_mask & (WARN_MASK_CHECK_PLUGINS1 | WARN_MASK_CHECK_PLUGINS2)) {
-    prefs->warning_mask |= (WARN_MASK_CHECK_PLUGINS1 | WARN_MASK_CHECK_PLUGINS2);
+  if (prefs->warning_mask & WARN_MASK_CHECK_PLUGINS) {
+    prefs->warning_mask |= WARN_MASK_CHECK_PLUGINS;
     return NULL;
   }
 
@@ -2599,7 +2590,7 @@ const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
                                "within the plugin library directory:\n%s\n\n"), dirnm);
 
   if (lives_list_length(subdirs) == N_PLUGIN_SUBDIRS) {
-    msg2 = lives_strdup(_("<big><b>All of the plugin subdirectiories appear to be absent, including:</b></big>\n\n"));
+    msg2 = lives_strdup(_("<big><b>All of the plugin subdirectories appear to be absent, including:</b></big>\n\n"));
   } else {
     msg2 = lives_strdup(_("The following directories could not be found:\n\n"));
   }
@@ -2617,12 +2608,14 @@ const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
   }
 
   msg = lives_strdup_printf(_("%s%s%s\nClick 'Abort' to exit immediately from LiVES, 'Skip' to continue with the current value, "
-                              "or 'Browse' to locate the directory."), msg1, msg2, msg3);
+                              "or 'Browse' to locate the 'plugins' directory.\n"
+                              "E.g /usr/local/lib/lives/plugins (the 'plugins' directory MUST always be a subdirectory inside 'lives'"),
+                            msg1, msg2, msg3);
   lives_free(msg1); lives_free(msg2); lives_free(msg3);
 
   while (1) {
     widget_opts.use_markup = TRUE;
-    dlg = create_message_dialog(LIVES_DIALOG_ABORT_SKIP_BROWSE, msg, WARN_MASK_CHECK_PLUGINS1 | WARN_MASK_CHECK_PLUGINS2);
+    dlg = create_message_dialog(LIVES_DIALOG_ABORT_SKIP_BROWSE, msg, WARN_MASK_CHECK_PLUGINS);
     widget_opts.use_markup = FALSE;
     if (!mainw->is_ready) pop_to_front(dlg, NULL);
     response = lives_dialog_run(LIVES_DIALOG(dlg));
@@ -2649,6 +2642,67 @@ const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
   }
 
   if (response == LIVES_RESPONSE_BROWSE) return prefs->lib_dir;
+  return NULL;
+}
+
+
+const char *miss_prefix_warn(const char *dirnm, LiVESList * subdirs) {
+  char *msg1, *msg2, *msg3 = NULL, *msg, *tmp;
+  LiVESWidget *dlg;
+  LiVESResponseType response;
+
+  if (prefs->warning_mask & (WARN_MASK_CHECK_PREFIX)) {
+    return NULL;
+  }
+
+  msg1 = lives_strdup_printf(_("LiVES was unable to find some extra components"
+                               " within:\n%s\n\n"), dirnm);
+  msg2 = lives_strdup(_("<big><b>For example, the following subdirectories appear to be absent:</b></big>\n\n"));
+
+  for (LiVESList *list = subdirs; list; list = list->next) {
+    char *resource = subst((const char *)list->data, "|", LIVES_DIR_SEP);
+    if (msg3)
+      tmp = lives_strdup_printf("%s %s\n", msg3, resource);
+    else
+      tmp = lives_strdup_printf("%s\n", resource);
+    if (msg3) lives_free(msg3);
+    msg3 = tmp;
+    lives_free(resource);
+  }
+
+  msg = lives_strdup_printf(_("%s%s%s\nClick 'Abort' to exit immediately from LiVES, 'Skip' to continue with the current value, "
+                              "or 'Browse' to locate the prefix directory.\n"
+                              "E.g /usr/local"), msg1, msg2, msg3);
+  lives_free(msg1); lives_free(msg2); lives_free(msg3);
+
+  while (1) {
+    widget_opts.use_markup = TRUE;
+    dlg = create_message_dialog(LIVES_DIALOG_ABORT_SKIP_BROWSE, msg, WARN_MASK_CHECK_PLUGINS);
+    widget_opts.use_markup = FALSE;
+    if (!mainw->is_ready) pop_to_front(dlg, NULL);
+    response = lives_dialog_run(LIVES_DIALOG(dlg));
+    lives_widget_destroy(dlg);
+    lives_widget_context_update();
+
+    if (response == LIVES_RESPONSE_ABORT) {
+      maybe_abort(TRUE);
+      continue;
+    }
+    if (response == LIVES_RESPONSE_BROWSE) {
+      char *new_prefixdir = choose_file(prefs->prefix_dir, NULL, NULL,
+                                        LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
+      if (!new_prefixdir) continue;
+      lives_snprintf(prefs->prefix_dir, PATH_MAX, "%s", new_prefixdir);
+      lives_free(new_prefixdir);
+    }
+    break;
+  }
+  lives_free(msg);
+  if (mainw->splash_window) {
+    lives_widget_show(mainw->splash_window);
+  }
+
+  if (response == LIVES_RESPONSE_BROWSE) return prefs->prefix_dir;
   return NULL;
 }
 
@@ -4126,9 +4180,10 @@ LIVES_GLOBAL_INLINE boolean do_close_changed_warn(void) {
 
 
 LIVES_GLOBAL_INLINE boolean check_del_workdir(const char *dirname) {
-  return do_yesno_dialogf_with_countdown(3, "%s",  _("All files will be irrevocably deleted from the working directory\n%s\n"
+  return do_yesno_dialogf_with_countdown(3,  _("All files will be irrevocably deleted from the working directory\n%s\n"
                                          "Are you certain you wish to continue ?\n"
-                                         "Click 3 times on the 'Yes' button to confirm you understand\n"));
+                                         "Click 3 times on the 'Yes' button to confirm you understand\n"),
+                                         prefs->workdir);
 }
 
 

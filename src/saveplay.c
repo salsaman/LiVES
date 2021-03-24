@@ -6025,7 +6025,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   THREADVAR(com_failed) = FALSE;
 
   /// CRITICAL: make sure this gets called even on system failure and abort
-  if (prefs->crash_recovery) mainw->abort_hook_func = (lives_funcptr_t)rewrite_recovery_file;
+  if (prefs->crash_recovery) mainw->hook_funcs[ABORT_HOOK] = (lives_funcptr_t)rewrite_recovery_file;
 
   // check for layout recovery file
   recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, recpid,
@@ -6134,7 +6134,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   lives_free(recording_numbering_file);
 
   if (prefs->crash_recovery) rewrite_recovery_file();
-  mainw->abort_hook_func = NULL;
+  mainw->hook_funcs[ABORT_HOOK] = NULL;
 
   if (!mainw->recoverable_layout && !mainw->recording_recovered) {
     if (mainw->invalid_clips

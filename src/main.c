@@ -109,7 +109,6 @@ static char buff[256];
 static char devmap[PATH_MAX];
 
 static boolean no_recover = FALSE, auto_recover = FALSE;
-static boolean upgrade_error = FALSE;
 static boolean info_only;
 
 static char *newconfigfile = NULL;
@@ -664,10 +663,10 @@ static boolean pre_init(void) {
       startup_message_fatal(msg);
     }
     if (!capable->smog_version_correct) {
-      startup_message_fatal(lives_strdup(
-                              _("\nAn incorrect version of smogrify was found in your path.\n\n"
-                                "Please review the README file which came with this package\nbefore running LiVES."
-                                "\n\nThankyou.\n")));
+      startup_message_fatal
+      (lives_strdup(_("\nAn incorrect version of smogrify was found in your path.\n\n"
+                      "Please review the README file which came with this package\nbefore running LiVES."
+                      "\n\nThankyou.\n")));
     }
 
     if (!capable->can_read_from_config) {
@@ -693,10 +692,9 @@ static boolean pre_init(void) {
 
     if (!capable->can_write_to_workdir) {
       if (!mainw->has_session_workdir) {
-        tmp2 = lives_strdup_printf(_("Please check the %s setting in \n%s\nand try again.\n"),
-                                   (mainw->old_vhash && atoi(mainw->old_vhash) != 0 && atoi(mainw->old_vhash) < 3003003)
-                                   ? "<tempdir>" : "<workdir>",
-                                   (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
+        tmp2 = lives_strdup(_("Please try restarting lives with the -workdir <path_to_workdir> commandline option\n"
+                              "Where <path_to_workdir> points to a writeable directory.\n"
+                              "You can then change or set this value permanently from within Preferences / Directories"));
         lives_free(tmp);
       } else tmp2 = lives_strdup("");
 
@@ -974,9 +972,22 @@ static boolean pre_init(void) {
   if (needs_update) set_string_pref(PREF_PREFIX_DIR, prefs->prefix_dir);
 
 #ifdef GUI_GTK
-  icon = lives_build_filename(prefs->prefix_dir, DESKTOP_ICON_DIR, "lives." LIVES_FILE_EXT_PNG, NULL);
-  gtk_window_set_default_icon_from_file(icon, &gerr);
-  lives_free(icon);
+  icon = lives_build_filename(prefs->prefix_dir, DESKTOP_ICON_DIR, LIVES_DIR_LITERAL "." LIVES_FILE_EXT_PNG, NULL);
+  if (!lives_file_test(icon, LIVES_FILE_TEST_EXISTS)) {
+    lives_free(icon);
+    icon = NULL;
+    if (!dirs_equal(prefs->prefix_dir, LIVES_USR_DIR)) {
+      icon = lives_build_filename(LIVES_USR_DIR, DESKTOP_ICON_DIR, LIVES_DIR_LITERAL "." LIVES_FILE_EXT_PNG, NULL);
+      if (!lives_file_test(icon, LIVES_FILE_TEST_EXISTS)) {
+        lives_free(icon);
+        icon = NULL;
+      }
+    }
+  }
+  if (icon) {
+    gtk_window_set_default_icon_from_file(icon, &gerr);
+    lives_free(icon);
+  }
 
   if (gerr) lives_error_free(gerr);
 #endif
@@ -1756,8 +1767,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   lives_memset(mainw->set_name, 0, 1);
   mainw->clips_available = 0;
-
-  prefs->pause_effect_during_preview = FALSE;
 
   future_prefs->pb_quality = prefs->pb_quality = get_int_prefd(PREF_PB_QUALITY, PB_QUALITY_MED);
   if (prefs->pb_quality != PB_QUALITY_LOW && prefs->pb_quality != PB_QUALITY_HIGH &&
@@ -3667,7 +3676,7 @@ static void print_opthelp(const char *extracmds_file1, const char *extracmds_fil
   fprintf(stderr, "%s", _("-version | --version\t\t: print the LiVES version on stderr and exit\n"));
   fprintf(stderr, "%s", _("-workdir <workdir>\t\t: specify the working directory for the session, "
                           "overriding any value set in preferences\n"));
-  fprintf(stderr, "%s", _("\t\t\t\t\t(disables any disk quota checking)"));
+  fprintf(stderr, "%s", _("\t\t\t\t\t(disables any disk quota checking)\n"));
   fprintf(stderr, "%s", _("-configfile <path_to_file>\t: override the default configuration file for the session\n"));
   tmp = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, LIVES_DEF_CONFIG_FILE, NULL);
   fprintf(stderr, _("\t\t\t\t\t(default is %s)\n"), tmp);
@@ -3976,7 +3985,7 @@ static boolean got_files = FALSE;
 static boolean lives_startup2(livespointer data);
 static boolean lives_startup(livespointer data) {
   // this is run in an idlefunc
-  char *tmp, *tmp2, *msg;
+  char *tmp, *msg;
 
   // check the working directory
   if (needs_workdir) {
@@ -4099,19 +4108,21 @@ static boolean lives_startup(livespointer data) {
 
   if (theme_error && !mainw->foreign) {
     // non-fatal errors
+    char *old_prefix_dir = lives_strdup(prefs->prefix_dir);
+    char *themesdir = lives_build_path((tmp = lives_filename_to_utf8(prefs->prefix_dir, -1, NULL, NULL, NULL)), THEME_DIR, NULL);
     msg = lives_strdup_printf(
             _("\n\nThe theme you requested (%s) could not be located.\n"
-              "Please make sure you have the themes installed in\n%s/%s.\n"
-              "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"
-              "or you may be missing a custom theme.\n"), future_prefs->theme,
-            (tmp = lives_filename_to_utf8(prefs->prefix_dir, -1, NULL, NULL, NULL)), THEME_DIR,
-            (tmp2 = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
-    lives_free(tmp2);
-    lives_free(tmp);
-    startup_message_nonfatal(msg);
+              "Please make sure you have the themes installed in\n%s.\n"),
+            future_prefs->theme, themesdir);
+    lives_free(themesdir);
+    startup_message_nonfatal_dismissable(msg, WARN_MASK_CHECK_PREFIX);
     lives_free(msg);
-    lives_snprintf(prefs->theme, 64, LIVES_THEME_NONE);
-    upgrade_error = TRUE;
+    if (lives_strcmp(prefs->prefix_dir, old_prefix_dir)) {
+      lives_free(old_prefix_dir);
+      lives_snprintf(prefs->theme, 64, "%s", future_prefs->theme);
+      set_palette_colours(TRUE);
+    }
+    lives_free(old_prefix_dir);
   }
 
   lives_init(&ign_opts);
@@ -4151,10 +4162,8 @@ static boolean lives_startup(livespointer data) {
               "You should install 'sox'.\n"),
             WARN_MASK_NO_MPLAYER);
         }
-        if (!capable->has_encoder_plugins) {
-          startup_message_nonfatal_dismissable(msg, WARN_MASK_CHECK_PLUGINS1);
-          upgrade_error = TRUE;
-        }
+
+        startup_message_nonfatal_dismissable(msg, WARN_MASK_CHECK_PLUGINS);
 
         if (mainw->next_ds_warn_level > 0) {
           if (mainw->ds_status == LIVES_STORAGE_STATUS_WARNING) {
@@ -4230,14 +4239,6 @@ static boolean lives_startup(livespointer data) {
   if (mainw->prefs_cache) cached_list_free(&mainw->prefs_cache);
 
   if (!prefs->show_gui) lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
-
-  if (prefs->startup_phase == 100) {
-    if (upgrade_error) {
-      do_upgrade_error_dialog();
-    }
-    // do not reset prefs->startup_phase yet, as the current value will temporarily
-    // block the "after a crash.." warning
-  }
 
   // splash_end() will start up multitrack if in STARTUP_MT mode
   if (*start_file && strcmp(start_file, "-")) {
@@ -4455,7 +4456,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   char cdir[PATH_MAX];
   char **xargv = argv;
   char *tmp, *dir, *msg;
-  char *extracmds_file, *extracmds_file1, *extracmds_file2;
+  char *extracmds_file;
   ssize_t mynsize;
   boolean toolong = FALSE;
   int winitopts = 0;
@@ -4745,22 +4746,28 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // we can read some pre-commands from a file, there is something of a chicken / egg problem as we dont know
   // yet where config_datadir will be, so a fixed path is used: either
   // $HOME/.config/lives/cmdline or /etc/lives/cmdline
-  extracmds_file = extracmds_file1 = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, EXTRA_CMD_FILE, NULL);
-  extracmds_file2 = lives_build_filename(LIVES_ETC_DIR, LIVES_DIR_LITERAL, EXTRA_CMD_FILE, NULL);
+  capable->extracmds_file[0] = extracmds_file = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, EXTRA_CMD_FILE,
+                               NULL);
+  capable->extracmds_file[1] = lives_build_filename(LIVES_ETC_DIR, LIVES_DIR_LITERAL, EXTRA_CMD_FILE, NULL);
+  capable->extracmds_idx = 0;
 
   // before parsing cmdline we may also parse cmds in a file
-  if (!lives_file_test(extracmds_file1, LIVES_FILE_TEST_IS_REGULAR)) {
-    if (!lives_file_test(extracmds_file2, LIVES_FILE_TEST_IS_REGULAR)) {
+  if (!lives_file_test(capable->extracmds_file[0], LIVES_FILE_TEST_IS_REGULAR)) {
+    if (!lives_file_test(capable->extracmds_file[1], LIVES_FILE_TEST_IS_REGULAR)) {
       extracmds_file = NULL;
-    } else extracmds_file = extracmds_file2;
+      capable->extracmds_idx = -1;
+    } else {
+      extracmds_file = capable->extracmds_file[1];
+      capable->extracmds_idx = 1;
+    }
   }
-
   if (extracmds_file) {
     char extrabuff[2048];
     size_t buflen;
     if ((buflen = lives_fread_string(extrabuff, 2048, extracmds_file)) > 0) {
       int weret, i, j = 1;
       if (extrabuff[--buflen] == '\n') extrabuff[buflen] = 0;
+      prefs->cmdline_args = lives_strdup(extrabuff);
       if (!(weret = wordexp(extrabuff, &extra_cmds, 0))) {
         if (extra_cmds.we_wordc) {
           // create a new array with extra followed by cmdline
@@ -4799,7 +4806,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
       get_basename(cdir);
       capable->myname = lives_strdup(cdir);
 
-      print_opthelp(extracmds_file1, extracmds_file2);
+      print_opthelp(capable->extracmds_file[0], capable->extracmds_file[1]);
       exit(0);
     } else if (!strcmp(xargv[1], "-version") || !strcmp(xargv[1], "--version")) {
       print_notice();
@@ -5381,9 +5388,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     lives_free(xargv);
   }
 
-  lives_free(extracmds_file1);
-  lives_free(extracmds_file2);
-
   if (!ign_opts.ign_configfile) {
     tmp = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, LIVES_DEF_CONFIG_FILE, NULL);
     lives_snprintf(prefs->configfile, PATH_MAX, "%s", tmp);
@@ -5483,7 +5487,7 @@ boolean startup_message_info(const char *msg) {
 
 
 boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_mask) {
-  if (warning_mask == WARN_MASK_CHECK_PLUGINS1) {
+  if (warning_mask == WARN_MASK_CHECK_PLUGINS) {
     check_for_plugins(prefs->lib_dir);
     return TRUE;
   }

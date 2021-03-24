@@ -41,13 +41,13 @@ static char *dir_to_pieces(const char *dirnm) {
 
 
 boolean check_for_plugins(const char *dirn) {
-  // check all are present in prefs->lib_dir;
+  // check all are present in prefs->lib_dir
   // ret. FALSE if missing
   const char *ret = NULL;
   LiVESList *subdir_list;
   char *pldirn;
   boolean show_succ = FALSE;
-  if (prefs->warning_mask & (WARN_MASK_CHECK_PLUGINS1 | WARN_MASK_CHECK_PLUGINS2)) return TRUE;
+  if (prefs->warning_mask & WARN_MASK_CHECK_PLUGINS) return TRUE;
   pldirn = lives_build_path(dirn, PLUGIN_EXEC_DIR, NULL);
   do {
     subdir_list = NULL;
@@ -57,13 +57,14 @@ boolean check_for_plugins(const char *dirn) {
     subdir_list = lives_list_prepend(subdir_list, dir_to_pieces(PLUGIN_VID_PLAYBACK));
     subdir_list = check_for_subdirs(pldirn, subdir_list);
     if (!subdir_list) {
+      lives_free(pldirn);
       if (show_succ) {
         do_info_dialog(_("All plugins were found !"));
       }
       return TRUE;
     }
     show_succ = TRUE;
-    // returns TRUE if we browsed, FALSE = skipped
+    // returns new dir if we browsed, NULL = skipped
     ret = miss_plugdirs_warn(pldirn, subdir_list);
     lives_list_free_all(&subdir_list);
     if (ret) {
@@ -78,6 +79,39 @@ boolean check_for_plugins(const char *dirn) {
     }
   } while (ret);
   lives_free(pldirn);
+  return FALSE;
+}
+
+
+boolean find_prefix_dir(const char *predirn) {
+  // check all are present in prefs->prefix_dir;
+  // ret. FALSE if missing
+  if (prefs->warning_mask & WARN_MASK_CHECK_PREFIX) return TRUE;
+  else {
+    const char *ret = NULL;
+    LiVESList *subdir_list;
+    char *prdirn = lives_strdup(predirn);
+    boolean show_succ = FALSE;
+    do {
+      subdir_list = NULL;
+      subdir_list = lives_list_prepend(subdir_list, dir_to_pieces(THEME_DIR));
+      subdir_list = lives_list_prepend(subdir_list, dir_to_pieces(ICON_DIR));
+      subdir_list = check_for_subdirs(predirn, subdir_list);
+      if (!subdir_list) {
+        if (show_succ) {
+          do_info_dialog(_("Extra components found !"));
+        }
+        return TRUE;
+      }
+      show_succ = TRUE;
+      // returns new dir if we browsed, NULL = skipped
+      ret = miss_prefix_warn(predirn, subdir_list);
+      lives_list_free_all(&subdir_list);
+      lives_free(prdirn);
+      prdirn = lives_strdup(ret);
+    } while (ret);
+    lives_free(prdirn);
+  }
   return FALSE;
 }
 

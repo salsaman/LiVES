@@ -2427,7 +2427,7 @@ retry:
   if (!lives_file_test(dskfile, LIVES_FILE_TEST_EXISTS)) {
     lives_free(dskfile);
     dskfile = NULL;
-    if (lives_strcmp(prefs->prefix_dir, LIVES_USR_DIR)) {
+    if (!dirs_equal(prefs->prefix_dir, LIVES_USR_DIR)) {
       dskfile = lives_build_filename(LIVES_USR_DIR, APPLICATIONS_DIR, "LiVES.desktop", NULL);
       if (!lives_file_test(dskfile, LIVES_FILE_TEST_EXISTS)) {
         lives_free(dskfile);

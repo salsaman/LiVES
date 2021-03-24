@@ -626,15 +626,18 @@ enum {
 
 #define LIVES_DEVNULL LIVES_DEVICE_DIR LIVES_DIR_SEP "null"
 
+// system-wide defaults in prefs->lib_dir
+#define PLUGIN_EXEC_DIR LIVES_DIR_LITERAL LIVES_DIR_SEP PLUGINS_LITERAL
+
 // system-wide defaults in prefs->prefix_dir
 #define LIVES_DATA_DIR LIVES_SHARE_DIR LIVES_DIR_SEP LIVES_DIR_LITERAL
+
 #define THEME_DIR LIVES_DATA_DIR LIVES_DIR_SEP THEMES_LITERAL
-#define PLUGIN_EXEC_DIR LIVES_DIR_LITERAL LIVES_DIR_SEP PLUGINS_LITERAL
-#define PLUGIN_SCRIPTS_DIR LIVES_SHARE_DIR LIVES_DIR_SEP LIVES_DIR_LITERAL LIVES_DIR_SEP PLUGINS_LITERAL
+#define PLUGIN_SCRIPTS_DIR LIVES_DATA_DIR LIVES_DIR_SEP PLUGINS_LITERAL
 #define PLUGIN_COMPOUND_DIR PLUGIN_SCRIPTS_DIR
 #define DOC_DIR LIVES_SHARE_DIR LIVES_DIR_SEP "doc" LIVES_DIR_SEP LIVES_DIR_LITERAL
-#define APPLICATIONS_DIR  LIVES_SHARE_DIR LIVES_DIR_SEP "applications"  // normally in LIVES_USR_DIR
-#define ICON_DIR LIVES_SHARE_DIR LIVES_DIR_SEP LIVES_DIR_LITERAL LIVES_DIR_SEP "icons"
+#define APPLICATIONS_DIR LIVES_SHARE_DIR LIVES_DIR_SEP "applications"  // normally in LIVES_USR_DIR
+#define ICON_DIR LIVES_DATA_DIR LIVES_DIR_SEP "icons"
 
 #define DESKTOP_ICON_DIR ICON_DIR LIVES_DIR_SEP "hicolor" LIVES_DIR_SEP "256x256" LIVES_DIR_SEP "apps"
 
@@ -770,6 +773,14 @@ typedef struct {
   boolean is_ready;
   int owner;
 } xprocess;
+
+
+enum {
+  ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
+  EXIT_HOOK,
+  N_HOOK_FUNCS,
+};
+
 
 typedef struct {
   char msg[MAINW_MSG_SIZE];
@@ -1129,7 +1140,9 @@ typedef struct {
 
   lives_painter_surface_t *fsp_surface;
 
-  lives_funcptr_t abort_hook_func; ///< can be set to point to a function to be run before abort, for critical functions
+  /// hook functions
+  lives_funcptr_t hook_funcs[N_HOOK_FUNCS];
+  void *hook_data[N_HOOK_FUNCS];
 
   // selection pointers
   ulong mouse_fn1;

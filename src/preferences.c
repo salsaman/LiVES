@@ -16,6 +16,7 @@
 #include "rte_window.h"
 #include "interface.h"
 #include "startup.h"
+#include "rfx-builder.h"
 #include "effects-weed.h"
 
 #ifdef ENABLE_OSC
@@ -697,19 +698,10 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     goto fail1;
   }
 
-  g_print("now 3%s, and %s\n", prefidx, future_prefs->jack_aserver_sname);
   if (!lives_strcmp(prefidx, PREF_JACK_ASSERVER)) {
-    g_print("now ddd%s, and %s\n", prefidx, future_prefs->jack_aserver_sname);
     if (lives_strncmp(newval, prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX)) {
-      g_print("now 4%s, and %s, {%s}\n", prefidx, future_prefs->jack_aserver_sname, newval);
-
       lives_snprintf(prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX, "%s", newval);
-      g_print("now sss4%s, and %s, {%s}\n", prefidx, future_prefs->jack_aserver_sname, newval);
-
-      ///...........
       lives_snprintf(future_prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX, "%s", newval);
-      //==============
-      g_print("now %s, sdfsdfsdand %s [%s]\n", prefidx, future_prefs->jack_aserver_sname, newval);
 #ifdef ENABLE_JACK_TRANSPORT
       if (prefs->jack_srv_dup) {
         lives_snprintf(prefs->jack_tserver_sname, PATH_MAX, "%s", newval);
@@ -717,10 +709,8 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       }
 #endif
       if (permanent) {
-        g_print("now %s, dsadasand %s\n", prefidx, future_prefs->jack_aserver_sname);
         set_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname);
         mainw->prefs_changed |= PREFS_JACK_CHANGED;
-        g_print("now %s, aeeeend %s\n", prefidx, future_prefs->jack_aserver_sname);
       }
       goto success1;
     }
@@ -809,7 +799,6 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
   }
 
   if (!lives_strcmp(prefidx, PREF_JACK_LAST_ASERVER)) {
-    if (prefsw) mainw->prefs_changed |= PREFS_JACK_CHANGED;
     set_string_pref(PREF_JACK_LAST_ASERVER, newval);
     return TRUE;
   }
@@ -820,7 +809,6 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
   }
 
   if (!lives_strcmp(prefidx, PREF_JACK_LAST_TSERVER)) {
-    if (prefsw) mainw->prefs_changed |= PREFS_JACK_CHANGED;
     if (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
       set_string_pref(PREF_JACK_LAST_TSERVER, newval);
     else
@@ -836,17 +824,43 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     return TRUE;
   }
 
+  if (!lives_strcmp(prefidx, PREF_CMDLINE_ARGS)) {
+    // TODO - parse args format
+    if (lives_strncmp(newval, prefs->cmdline_args, 2048)) {
+      if (prefs->cmdline_args) lives_free(prefs->cmdline_args);
+      prefs->cmdline_args = lives_strndup(newval, 2048);
+      capable->extracmds_idx = 0;
+      if (permanent) {
+        if (*prefs->cmdline_args) {
+          FILE *cmdfile = fopen(capable->extracmds_file[0], "w");
+          lives_fputs(prefs->cmdline_args, cmdfile);
+          fclose(cmdfile);
+        } else {
+          lives_rm(capable->extracmds_file[0]);
+          capable->extracmds_idx = 1;
+          char extrabuff[2048];
+          size_t buflen;
+          if (lives_file_test(capable->extracmds_file[1], LIVES_FILE_TEST_EXISTS)) {
+            if ((buflen = lives_fread_string(extrabuff, 2048, capable->extracmds_file[1])) > 0) {
+              if (extrabuff[--buflen] == '\n') extrabuff[buflen] = 0;
+              prefs->cmdline_args = lives_strdup(extrabuff);
+	      // *INDENT-OFF*
+	    }}}}
+      // *INDENT-ON*
+      goto success1;
+    }
+    goto fail1;
+  }
+
   // unfortunately we cannot automate setting the actual pref, we lack the pref buffer size
   set_string_pref(prefidx, newval);
   return TRUE;
 
 fail1:
-  g_print(" !!!!!!!!!then %s, and %s\n", prefidx, future_prefs->jack_aserver_sname);
   if (prefsw) prefsw->ignore_apply = FALSE;
   return FALSE;
 
 success1:
-  g_print("then %s, and %s\n", prefidx, future_prefs->jack_aserver_sname);
   if (prefsw) {
     lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
@@ -1280,7 +1294,7 @@ success2:
 }
 
 
-boolean pref_factory_color_button(lives_colRGBA64_t *pcol, LiVESColorButton *cbutton) {
+boolean pref_factory_color_button(lives_colRGBA64_t *pcol, LiVESColorButton * cbutton) {
   LiVESWidgetColor col;
   lives_colRGBA64_t lcol;
 
@@ -1393,7 +1407,7 @@ success3:
   return TRUE;
 }
 
-boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const char *strval, boolean permanent) {
+boolean pref_factory_string_choice(const char *prefidx, LiVESList * list, const char *strval, boolean permanent) {
   int idx = lives_list_strcmp_index(list, (livesconstpointer)strval, TRUE);
   if (prefsw) prefsw->ignore_apply = TRUE;
 
@@ -1560,7 +1574,7 @@ success7:
 }
 
 
-boolean pref_factory_list(const char *prefidx, LiVESList *list) {
+boolean pref_factory_list(const char *prefidx, LiVESList * list) {
   if (prefsw) prefsw->ignore_apply = TRUE;
   if (!list) {
     delete_pref(prefidx);
@@ -1613,7 +1627,7 @@ boolean apply_prefs(boolean skip_warn) {
   char prefworkdir[PATH_MAX]; /// locale encoding
 
   const char *video_open_command = lives_entry_get_text(LIVES_ENTRY(prefsw->video_open_entry));
-  /* const char *audio_play_command = lives_entry_get_text(LIVES_ENTRY(prefsw->audio_command_entry)); */
+  const char *cmdline_args = lives_entry_get_text(LIVES_ENTRY(prefsw->cmdline_entry));
   const char *def_vid_load_dir = lives_entry_get_text(LIVES_ENTRY(prefsw->vid_load_dir_entry));
   const char *def_vid_save_dir = lives_entry_get_text(LIVES_ENTRY(prefsw->vid_save_dir_entry));
   const char *def_audio_dir = lives_entry_get_text(LIVES_ENTRY(prefsw->audio_dir_entry));
@@ -1687,6 +1701,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean warn_fsize = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_fsize));
   boolean warn_mplayer = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mplayer));
   boolean warn_missplugs = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_missplugs));
+  boolean warn_prefix = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_prefix));
   boolean warn_duplicate_set = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_dup_set));
   boolean warn_layout_missing_clips = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_clips));
   boolean warn_layout_close = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_close));
@@ -1794,6 +1809,8 @@ boolean apply_prefs(boolean skip_warn) {
   boolean show_msgstart = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->cb_show_msgstart));
   boolean show_quota = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->cb_show_quota));
   boolean autoclean = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->cb_autoclean));
+
+  boolean perm_workdir = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_perm_workdir));
 
 #ifndef ENABLE_JACK
   boolean jack_tstart = FALSE;
@@ -2020,8 +2037,8 @@ boolean apply_prefs(boolean skip_warn) {
 
   warn_mask = !warn_fps * WARN_MASK_FPS + !warn_save_set * WARN_MASK_SAVE_SET
               + !warn_fsize * WARN_MASK_FSIZE + !warn_mplayer *
-              WARN_MASK_NO_MPLAYER + !warn_missplugs * WARN_MASK_CHECK_PLUGINS1 + !warn_missplugs *
-              WARN_MASK_CHECK_PLUGINS2 + !warn_layout_missing_clips * WARN_MASK_LAYOUT_MISSING_CLIPS + !warn_duplicate_set *
+              WARN_MASK_NO_MPLAYER + !warn_missplugs * WARN_MASK_CHECK_PLUGINS + !warn_prefix *
+              WARN_MASK_CHECK_PREFIX + !warn_layout_missing_clips * WARN_MASK_LAYOUT_MISSING_CLIPS + !warn_duplicate_set *
               WARN_MASK_DUPLICATE_SET + !warn_layout_close * WARN_MASK_LAYOUT_CLOSE_FILE + !warn_layout_delete *
               WARN_MASK_LAYOUT_DELETE_FRAMES + !warn_layout_shift * WARN_MASK_LAYOUT_SHIFT_FRAMES + !warn_layout_alter *
               WARN_MASK_LAYOUT_ALTER_FRAMES + !warn_discard_layout * WARN_MASK_EXIT_MT + !warn_after_dvgrab *
@@ -2362,6 +2379,8 @@ boolean apply_prefs(boolean skip_warn) {
     lives_snprintf(prefs->video_open_command, PATH_MAX * 2, "%s", video_open_command);
     set_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command);
   }
+
+  pref_factory_string(PREF_CMDLINE_ARGS, cmdline_args, TRUE);
 
   //playback plugin
   set_vpp(TRUE);
@@ -2719,6 +2738,12 @@ boolean apply_prefs(boolean skip_warn) {
 
   mainw->no_context_update = FALSE;
 
+  if (perm_workdir && mainw->has_session_workdir) {
+    mainw->has_session_workdir = FALSE;
+    set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
+    set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
+  }
+
   if (lives_strcmp(prefworkdir, workdir)) {
     char *xworkdir = lives_strdup(workdir);
     if (check_workdir_valid(&xworkdir, LIVES_DIALOG(prefsw->prefs_dialog), FALSE) == LIVES_RESPONSE_OK) {
@@ -2766,7 +2791,7 @@ void save_future_prefs(void) {
 }
 
 
-void rdet_acodec_changed(LiVESCombo *acodec_combo, livespointer user_data) {
+void rdet_acodec_changed(LiVESCombo * acodec_combo, livespointer user_data) {
   int listlen = lives_list_length(prefs->acodec_list);
   int idx;
   const char *audio_codec = lives_combo_get_active_text(acodec_combo);
@@ -2786,7 +2811,7 @@ void rdet_acodec_changed(LiVESCombo *acodec_combo, livespointer user_data) {
 }
 
 
-void set_acodec_list_from_allowed(_prefsw *prefsw, render_details *rdet) {
+void set_acodec_list_from_allowed(_prefsw * prefsw, render_details * rdet) {
   // could be done better, but no time...
   // get settings for current format
 
@@ -2846,7 +2871,7 @@ void set_acodec_list_from_allowed(_prefsw *prefsw, render_details *rdet) {
 }
 
 
-void after_vpp_changed(LiVESWidget *vpp_combo, livespointer advbutton) {
+void after_vpp_changed(LiVESWidget * vpp_combo, livespointer advbutton) {
   const char *newvpp = lives_combo_get_active_text(LIVES_COMBO(vpp_combo));
   _vid_playback_plugin *tmpvpp;
 
@@ -2877,7 +2902,7 @@ void after_vpp_changed(LiVESWidget *vpp_combo, livespointer advbutton) {
 }
 
 
-static void on_forcesmon_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
+static void on_forcesmon_toggled(LiVESToggleButton * tbutton, livespointer user_data) {
   int gui_monitor = lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gmoni));
   int play_monitor = lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_pmoni));
   lives_widget_set_sensitive(prefsw->spinbutton_gmoni, !lives_toggle_button_get_active(tbutton));
@@ -2888,7 +2913,7 @@ static void on_forcesmon_toggled(LiVESToggleButton *tbutton, livespointer user_d
 }
 
 
-static void pmoni_gmoni_changed(LiVESWidget *sbut, livespointer user_data) {
+static void pmoni_gmoni_changed(LiVESWidget * sbut, livespointer user_data) {
   _prefsw *prefsw = (_prefsw *)user_data;
   int gui_monitor = lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gmoni));
   int play_monitor = lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_pmoni));
@@ -2898,7 +2923,7 @@ static void pmoni_gmoni_changed(LiVESWidget *sbut, livespointer user_data) {
 }
 
 
-static void on_mtbackevery_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
+static void on_mtbackevery_toggled(LiVESToggleButton * tbutton, livespointer user_data) {
   _prefsw *xprefsw;
 
   if (user_data) xprefsw = (_prefsw *)user_data;
@@ -2909,7 +2934,7 @@ static void on_mtbackevery_toggled(LiVESToggleButton *tbutton, livespointer user
 
 
 #ifdef ENABLE_JACK_TRANSPORT
-static void after_jack_client_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
+static void after_jack_client_toggled(LiVESToggleButton * tbutton, livespointer user_data) {
   if (!lives_toggle_button_get_active(tbutton)) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start), FALSE);
     lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_start, FALSE);
@@ -2921,7 +2946,7 @@ static void after_jack_client_toggled(LiVESToggleButton *tbutton, livespointer u
 }
 
 
-static void after_jack_tb_start_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
+static void after_jack_tb_start_toggled(LiVESToggleButton * tbutton, livespointer user_data) {
   if (!lives_toggle_button_get_active(tbutton)) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client), FALSE);
     lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_client, FALSE);
@@ -2934,7 +2959,7 @@ static void after_jack_tb_start_toggled(LiVESToggleButton *tbutton, livespointer
   }
 }
 
-static void after_jack_master_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
+static void after_jack_master_toggled(LiVESToggleButton * tbutton, livespointer user_data) {
   if (!lives_toggle_button_get_active(tbutton)) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_start), FALSE);
     lives_widget_set_sensitive(prefsw->checkbutton_jack_mtb_start, FALSE);
@@ -2950,7 +2975,7 @@ static void after_jack_master_toggled(LiVESToggleButton *tbutton, livespointer u
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
 #ifdef ALSA_MIDI
-static void on_alsa_midi_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
+static void on_alsa_midi_toggled(LiVESToggleButton * tbutton, livespointer user_data) {
   _prefsw *xprefsw;
 
   if (user_data) xprefsw = (_prefsw *)user_data;
@@ -2967,7 +2992,7 @@ static void on_alsa_midi_toggled(LiVESToggleButton *tbutton, livespointer user_d
 #endif
 
 
-static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
+static void on_audp_entry_changed(LiVESWidget * audp_combo, livespointer ptr) {
   const char *audp = lives_combo_get_active_text(LIVES_COMBO(audp_combo));
 
   if (!(*audp) || !strcmp(audp, prefsw->audp_name)) return;
@@ -3036,7 +3061,7 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
 }
 
 
-static void stream_audio_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
+static void stream_audio_toggled(LiVESToggleButton * togglebutton, livespointer user_data) {
   // if audio streaming is enabled, check requisites
 
   if (lives_toggle_button_get_active(togglebutton)) {
@@ -3168,6 +3193,10 @@ void on_prefs_page_changed(LiVESTreeSelection * widget, _prefsw * prefsw) {
       }
 
       switch (prefs_current_page) {
+      case LIST_ENTRY_RESET:
+        lives_widget_show_all(prefsw->vbox_right_reset);
+        prefsw->right_shown = prefsw->vbox_right_reset;
+        break;
       case LIST_ENTRY_MULTITRACK:
         lives_widget_show_all(prefsw->scrollw_right_multitrack);
         prefsw->right_shown = prefsw->scrollw_right_multitrack;
@@ -3431,6 +3460,41 @@ static void jack_make_perm(LiVESWidget * widget, livespointer data) {
 #endif
 
 
+static void _full_reset(char **pconfdir) {
+  char *config_file = lives_build_filename(*pconfdir, LIVES_DEF_CONFIG_FILE, NULL);
+  lives_rmdir(*pconfdir, TRUE);
+  lives_rmdir(prefs->config_datadir, TRUE);
+  lives_mkdir_with_parents(*pconfdir, capable->umask);
+  lives_free(*pconfdir);
+  lives_touch(config_file);
+  lives_free(config_file);
+}
+
+
+static void do_full_reset(LiVESWidget * widget, livespointer data) {
+  // TODO - save set
+  char *tmp, *tmp2;
+  char *config_dir = lives_build_path(capable->home_dir, LIVES_DEF_CONFIG_DIR, NULL);
+  widget_opts.use_markup = TRUE;
+  boolean ret = do_yesno_dialogf_with_countdown(2,  _("<big><b>LiVES will remove all settings and customizations</b></big>\n"
+                "\ncontained in %s\nand %s\n\n"
+                "Upon restart, you will be guided through the Setup process once more\n\n\n"
+                "Click 2 times on the 'Yes' button to confirm that this is waht you want\n"
+                "or click 'No' to cancel"),
+                (tmp = lives_markup_escape_text(config_dir, -1)),
+                (tmp2 = lives_markup_escape_text(prefs->config_datadir, -1)));
+  widget_opts.use_markup = FALSE;
+  lives_free(tmp); lives_free(tmp2);
+  if (!ret) {
+    lives_free(config_dir);
+    return;
+  }
+  mainw->hook_funcs[EXIT_HOOK] = _full_reset;
+  mainw->hook_data[EXIT_HOOK] = (void *)&config_dir;
+  lives_exit(0);
+}
+
+
 static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
   int pos = lives_paned_get_position(p);
   while (!gtk_widget_get_mapped(w)) {
@@ -3455,9 +3519,9 @@ static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
 _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   LiVESWidget *dialog_vbox_main;
   LiVESWidget *dialog_table;
-  LiVESWidget *list_scroll;
 
   LiVESPixbuf *pixbuf_multitrack;
+  LiVESPixbuf *pixbuf_reset;
   LiVESPixbuf *pixbuf_gui;
   LiVESPixbuf *pixbuf_decoding;
   LiVESPixbuf *pixbuf_playback;
@@ -3543,7 +3607,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   char **array, **filt;
   char *tmp, *tmp2, *tmp3;
-  char *theme;
+  char *theme, *msg;
 
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
@@ -3553,6 +3617,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   boolean pfsm;
   boolean has_ap_rec = FALSE;
+  boolean sel_last = FALSE;
 
 #ifdef ENABLE_JACK
   boolean ajack_cfg_exists = FALSE;
@@ -3635,12 +3700,12 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   // Place list on the left panel
   pref_init_list(prefsw->prefs_list);
 
-  list_scroll =
+  prefsw->list_scroll =
     lives_scrolled_window_new_with_adj
     (lives_tree_view_get_hadjustment(LIVES_TREE_VIEW(prefsw->prefs_list)), NULL);
-  lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(list_scroll), LIVES_POLICY_AUTOMATIC,
+  lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(prefsw->list_scroll), LIVES_POLICY_AUTOMATIC,
                                    LIVES_POLICY_AUTOMATIC);
-  lives_container_add(LIVES_CONTAINER(list_scroll), prefsw->prefs_list);
+  lives_container_add(LIVES_CONTAINER(prefsw->list_scroll), prefsw->prefs_list);
 
   if (palette->style & STYLE_1) {
     lives_widget_apply_theme3(prefsw->prefs_list, LIVES_WIDGET_STATE_NORMAL);
@@ -3651,7 +3716,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_widget_apply_theme(prefsw->dialog_hpaned, LIVES_WIDGET_STATE_NORMAL);
   }
 
-  lives_paned_pack(1, LIVES_PANED(prefsw->dialog_hpaned), list_scroll, TRUE, FALSE);
+  lives_paned_pack(1, LIVES_PANED(prefsw->dialog_hpaned), prefsw->list_scroll, TRUE, FALSE);
   // Place table on the right panel
 
   lives_paned_pack(2, LIVES_PANED(prefsw->dialog_hpaned), dialog_table, TRUE, FALSE);
@@ -3661,6 +3726,89 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #else
   lives_paned_set_position(LIVES_PANED(prefsw->dialog_hpaned), PREFS_PANED_POS / 2);
 #endif
+
+  prefsw->vbox_right_reset = lives_vbox_new(FALSE, 0);
+
+  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_reset));
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
+  msg = _("LiVES version details:");
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), msg, TRUE);
+  lives_free(msg);
+
+  msg = lives_strdup_printf(_("LiVES version %s using Weed ABI version %d, Weed Filter API version %d,\n"
+                              "RFX version %s, Clip Header Version %d"),
+                            LiVES_VERSION, WEED_ABI_VERSION, WEED_FILTER_API_VERSION, RFX_VERSION, LIVES_CLIP_HEADER_VERSION);
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), msg, TRUE);
+  lives_free(msg);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
+  msg = _("Location of LiVES executable:");
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), msg, TRUE);
+  lives_free(msg);
+
+  msg = lives_strdup_printf(_("%s\n"), capable->myname_full);
+  lives_layout_add_label(LIVES_LAYOUT(layout), msg, TRUE);
+  lives_free(msg);
+
+  msg = _("Current process ID:");
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), msg, TRUE);
+  lives_free(msg);
+
+  msg = lives_strdup_printf(_("%d"), capable->mainpid);
+  lives_layout_add_label(LIVES_LAYOUT(layout), msg, TRUE);
+  lives_free(msg);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_reset), hbox, TRUE, FALSE, widget_opts.packing_height >> 1);
+  prefsw->cmdline_entry = lives_standard_entry_new(_("Default startup arguments"),
+                          prefs->cmdline_args ? prefs->cmdline_args : NULL, LONGEST_ENTRY_WIDTH, PATH_MAX * 2,
+                          LIVES_BOX(hbox), NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_reset), hbox, TRUE, FALSE, widget_opts.packing_height >> 1);
+  msg = lives_strdup_printf(_("Default commandline arguments will be read from the first line of the file %s\n"
+                              "If that file does not exist, then system defaults will be read from %s "
+                              "(if that file exists)\nArguments entered on the commandline will be added "
+                              "AFTER any default arguments\n\nExample: -jackopts 16 -jackserver myserver\n"),
+                            capable->extracmds_file[0], capable->extracmds_file[1]);
+
+  label = lives_standard_label_new(msg);
+  lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, FALSE, widget_opts.packing_width);
+  lives_free(msg);
+
+  lives_standard_button_new_from_stock_full
+  (LIVES_LIVES_STOCK_HELP_INFO, _("Commandline reference (opens new window)"),
+   -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_reset));
+
+  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_reset));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Reset"), FALSE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  prefsw->the_button = lives_standard_button_new_from_stock_full(LIVES_STOCK_REFRESH,
+                       _("\t\tCLICK HERE TO COMPLETELY RESET LiVES \t (confirmation required)\t\t"), -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->the_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(do_full_reset), NULL);
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
+  pixbuf_reset = lives_pixbuf_new_from_stock_at_size(LIVES_STOCK_REFRESH, LIVES_ICON_SIZE_CUSTOM, -1);
+
+  prefs_add_to_list(prefsw->prefs_list, pixbuf_reset, _("Startup / Reset"), LIST_ENTRY_RESET);
+  lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->vbox_right_reset);
 
   // -------------------,
   // gui controls       |
@@ -5110,12 +5258,16 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                             LIVES_GUI_CALLBACK(on_filesel_button_clicked), prefsw->workdir_entry);
 
   if (mainw->has_session_workdir) {
-    show_warn_image(prefsw->workdir_entry, _("Value cannot be changed when workdir\nis set via commandline option"));
-    lives_widget_set_sensitive(dirbutton, FALSE);
+    show_warn_image(prefsw->workdir_entry, _("Value was set via commandline option"));
+    prefsw->checkbutton_perm_workdir = lives_standard_check_button_new
+                                       (_("Make ths value permanent"), !(prefs->warning_mask & WARN_MASK_FSIZE), LIVES_BOX(hbox),
+                                        H_("Check this to make the -workdir value supplied on the commnadline, the peramanent value"));
   } else if (prefs->vj_mode) {
     show_warn_image(prefsw->workdir_entry, _("Changes disabled in VJ mode"));
     lives_widget_set_sensitive(dirbutton, FALSE);
   }
+
+  ACTIVE(checkbutton_perm_workdir, TOGGLED);
 
   dirbutton = lives_standard_file_button_new(TRUE, NULL);
 
@@ -5218,21 +5370,20 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   //hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->checkbutton_warn_fps = lives_standard_check_button_new(
-                                   _("Warn on Insert / Merge if _frame rate of clipboard does "
-                                     "not match frame rate of selection"),
-                                   !(prefs->warning_mask & WARN_MASK_FPS), LIVES_BOX(hbox), NULL);
+  prefsw->checkbutton_warn_fps = lives_standard_check_button_new
+                                 (_("Warn on Insert / Merge if _frame rate of clipboard does "
+                                    "not match frame rate of selection"),
+                                  !(prefs->warning_mask & WARN_MASK_FPS), LIVES_BOX(hbox), NULL);
 
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->checkbutton_warn_fsize = lives_standard_check_button_new(
-                                     _("Warn on Open if Instant Opening is not available, and the file _size exceeds "),
-                                     !(prefs->warning_mask & WARN_MASK_FSIZE), LIVES_BOX(hbox), NULL);
+  prefsw->checkbutton_warn_fsize = lives_standard_check_button_new
+                                   (_("Warn on Open if Instant Opening is not available, and the file _size exceeds "),
+                                    !(prefs->warning_mask & WARN_MASK_FSIZE), LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  prefsw->spinbutton_warn_fsize = lives_standard_spin_button_new(NULL,
-                                  prefs->warn_file_size, 1., 2048., 1., 10., 0,
-                                  LIVES_BOX(hbox), NULL);
+  prefsw->spinbutton_warn_fsize = lives_standard_spin_button_new
+                                  (NULL, prefs->warn_file_size, 1., 2048., 1., 10., 0, LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   label = lives_standard_label_new(_(" MB"));
@@ -5245,8 +5396,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_warn_save_set =
-    lives_standard_check_button_new(_("Show a warning before saving a se_t"),
-                                    !(prefs->warning_mask & WARN_MASK_SAVE_SET), LIVES_BOX(hbox), NULL);
+    lives_standard_check_button_new
+    (_("Show a warning before saving a se_t"),
+     !(prefs->warning_mask & WARN_MASK_SAVE_SET), LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_warn_mplayer = lives_standard_check_button_new
@@ -5255,9 +5407,15 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                       !(prefs->warning_mask & WARN_MASK_NO_MPLAYER), LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->checkbutton_warn_prefix = lives_standard_check_button_new
+                                    (_("Show a warning if prefix__dir setting is wrong at startup"),
+                                     !(prefs->warning_mask & WARN_MASK_CHECK_PREFIX),
+                                     LIVES_BOX(hbox), NULL);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_warn_missplugs = lives_standard_check_button_new
-                                       (_("Show a warning if some plugin types are not found at startup."),
-                                        !(prefs->warning_mask & (WARN_MASK_CHECK_PLUGINS1 | WARN_MASK_CHECK_PLUGINS2)),
+                                       (_("Show a warning if some _plugin types are not found at startup."),
+                                        !(prefs->warning_mask & WARN_MASK_CHECK_PLUGINS),
                                         LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
@@ -6397,6 +6555,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(theme_style3, TOGGLED);
   ACTIVE(theme_style4, TOGGLED);
 
+  ACTIVE(cmdline_entry, CHANGED);
+
   ACTIVE(wpp_entry, CHANGED);
   ACTIVE(frei0r_entry, CHANGED);
   ACTIVE(libvis_entry, CHANGED);
@@ -6528,6 +6688,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(checkbutton_warn_save_set, TOGGLED);
   ACTIVE(checkbutton_warn_mplayer, TOGGLED);
   ACTIVE(checkbutton_warn_missplugs, TOGGLED);
+  ACTIVE(checkbutton_warn_prefix, TOGGLED);
   ACTIVE(checkbutton_warn_dup_set, TOGGLED);
   ACTIVE(checkbutton_warn_layout_clips, TOGGLED);
   ACTIVE(checkbutton_warn_layout_close, TOGGLED);
@@ -6652,8 +6813,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   if (prefs_current_page == -1) {
     if (!mainw->multitrack)
       select_pref_list_row(LIST_ENTRY_GUI, prefsw);
-    else
+    else {
+      sel_last = TRUE;
       select_pref_list_row(LIST_ENTRY_MULTITRACK, prefsw);
+    }
   } else select_pref_list_row(prefs_current_page, prefsw);
 
   lives_widget_set_opacity(prefsw->prefs_dialog, 0.);
@@ -6663,8 +6826,11 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   //on_prefs_page_changed(prefsw->selection, prefsw);
 
   callibrate_paned(LIVES_PANED(prefsw->dialog_hpaned),
-                   lives_scrolled_window_get_hscrollbar(LIVES_SCROLLED_WINDOW(list_scroll)));
+                   lives_scrolled_window_get_hscrollbar(LIVES_SCROLLED_WINDOW(prefsw->list_scroll)));
   lives_widget_set_opacity(prefsw->prefs_dialog, 1.);
+
+  if (sel_last)
+    lives_scrolled_window_scroll_to(LIVES_SCROLLED_WINDOW(prefsw->list_scroll), LIVES_POS_BOTTOM);
 
   lives_widget_queue_draw(prefsw->prefs_list);
   return prefsw;

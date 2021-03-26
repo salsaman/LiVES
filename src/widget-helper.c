@@ -11217,9 +11217,12 @@ boolean widget_helper_init(void) {
   // non-standard
   lives_snprintf(LIVES_STOCK_LABEL_CLOSE_WINDOW, 32, "%s", (_("_Close Window")));
   lives_snprintf(LIVES_STOCK_LABEL_SKIP, 32, "%s", (_("_Skip")));
+  lives_snprintf(LIVES_STOCK_LABEL_ABORT, 32, "%s", (_("_Abort")));
+  lives_snprintf(LIVES_STOCK_LABEL_BROWSE, 32, "%s", (_("B_rowse")));
   lives_snprintf(LIVES_STOCK_LABEL_SELECT, 32, "%s", (_("_Select")));
   lives_snprintf(LIVES_STOCK_LABEL_BACK, 32, "%s", (_("_Back")));
   lives_snprintf(LIVES_STOCK_LABEL_NEXT, 32, "%s", (_("_Next")));
+  lives_snprintf(LIVES_STOCK_LABEL_RETRY, 32, "%s", (_("_Retry")));
 #endif
 
   def_widget_opts = _def_widget_opts;

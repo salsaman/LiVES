@@ -1441,6 +1441,8 @@ const char *lives_textsize_to_string(int val);
 #define LIVES_TEXT_SIZE_NORMAL LIVES_TEXT_SIZE_MEDIUM
 #define N_TEXT_SIZES 7
 
+#define STOCK_LABEL_TEXT(text) (subst_quote(LIVES_STOCK_LABEL_##text, "'", "_", ""))
+
 /// stock labels, these are set up in widget_helper_init()
 char LIVES_STOCK_LABEL_CANCEL[32];
 char LIVES_STOCK_LABEL_OK[32];
@@ -1467,9 +1469,12 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 
 char LIVES_STOCK_LABEL_CLOSE_WINDOW[32];
 char LIVES_STOCK_LABEL_SKIP[32];
+char LIVES_STOCK_LABEL_ABORT[32];
+char LIVES_STOCK_LABEL_BROWSE[32];
 char LIVES_STOCK_LABEL_SELECT[32];
 char LIVES_STOCK_LABEL_BACK[32];
 char LIVES_STOCK_LABEL_NEXT[32];
+char LIVES_STOCK_LABEL_RETRY[32];
 
 typedef struct {
   /// commonly adjusted values //////

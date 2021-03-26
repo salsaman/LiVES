@@ -695,7 +695,6 @@ static boolean pre_init(void) {
         tmp2 = lives_strdup(_("Please try restarting lives with the -workdir <path_to_workdir> commandline option\n"
                               "Where <path_to_workdir> points to a writeable directory.\n"
                               "You can then change or set this value permanently from within Preferences / Directories"));
-        lives_free(tmp);
       } else tmp2 = lives_strdup("");
 
       msg = lives_strdup_printf(_("\nLiVES was unable to use the working directory\n%s\n\n%s"),
@@ -2574,7 +2573,6 @@ rest3:
     abort();
   }
 
-
   if (prefs->startup_phase != 0) {
     splash_end();
     set_int_pref(PREF_STARTUP_PHASE, 5);
@@ -3904,7 +3902,7 @@ boolean lazy_startup_checks(void *data) {
     if (mainw->helper_procthreads[PT_LAZY_RFX]) {
       if (!lives_proc_thread_join_boolean(mainw->helper_procthreads[PT_LAZY_RFX])) {
         if (capable->has_plugins_libdir == UNCHECKED) {
-          if (check_for_plugins(prefs->lib_dir)) {
+          if (check_for_plugins(prefs->lib_dir, FALSE)) {
             lives_proc_thread_free(mainw->helper_procthreads[PT_LAZY_RFX]);
             mainw->helper_procthreads[PT_LAZY_RFX] =
               lives_proc_thread_create(LIVES_THRDATTR_NONE,
@@ -4163,7 +4161,8 @@ static boolean lives_startup(livespointer data) {
             WARN_MASK_NO_MPLAYER);
         }
 
-        startup_message_nonfatal_dismissable(msg, WARN_MASK_CHECK_PLUGINS);
+        if (prefs->startup_phase || prefs->startup_phase > 1)
+          startup_message_nonfatal_dismissable(msg, WARN_MASK_CHECK_PLUGINS);
 
         if (mainw->next_ds_warn_level > 0) {
           if (mainw->ds_status == LIVES_STORAGE_STATUS_WARNING) {
@@ -4203,7 +4202,7 @@ static boolean lives_startup(livespointer data) {
 
     if (zargc > 14) {
       mainw->foreign_visual = lives_strdup(zargv[14]);
-      if (!strcmp(mainw->foreign_visual, "(null)")) {
+      if (!strcmp(mainw->foreign_visual, " (null)")) {
         lives_free(mainw->foreign_visual);
         mainw->foreign_visual = NULL;
       }
@@ -4930,8 +4929,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             break;
           }
           // check for subdirs decoders, effects/rendered, encoders, playback/video
-          check_for_plugins(optarg);
-          lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", optarg);
+          if (!check_for_plugins(optarg, FALSE)) lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", optarg);
           ign_opts.ign_libdir = TRUE;
           continue;
         }
@@ -5488,7 +5486,11 @@ boolean startup_message_info(const char *msg) {
 
 boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_mask) {
   if (warning_mask == WARN_MASK_CHECK_PLUGINS) {
-    check_for_plugins(prefs->lib_dir);
+    check_for_plugins(prefs->lib_dir, FALSE);
+    return TRUE;
+  }
+  if (warning_mask == WARN_MASK_CHECK_PREFIX) {
+    find_prefix_dir(prefs->prefix_dir, FALSE);
     return TRUE;
   }
   widget_opts.non_modal = TRUE;
@@ -5799,12 +5801,6 @@ void sensitize(void) {
     lives_widget_set_sensitive(mainw->gens_submenu, FALSE);
     lives_widget_set_sensitive(mainw->utilities_submenu, FALSE);
   }
-  /* else { */
-  /*   if (!has_rfx && capable->has_plugins_libdir == UNCHECKED) { */
-  /*     if (!check_for_plugins(prefs->lib_dir)) capable->has_plugins_libdir = MISSING; */
-  /*     else capable->has_plugins_libdir = PRESENT; */
-  /*   } */
-  //}
 }
 
 

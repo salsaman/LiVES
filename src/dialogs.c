@@ -359,7 +359,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     if (diat != LIVES_DIALOG_RETRY_CANCEL) {
       lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-                                         LIVES_STOCK_CLOSE, _("_Abort"), LIVES_RESPONSE_ABORT);
+                                         LIVES_STOCK_CLOSE, LIVES_STOCK_LABEL_ABORT, LIVES_RESPONSE_ABORT);
 
       if (diat == LIVES_DIALOG_ABORT_RETRY_CANCEL) {
         lives_window_set_title(LIVES_WINDOW(dialog), _("File Error"));
@@ -385,32 +385,45 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     break;
 
   case LIVES_DIALOG_ABORT_SKIP_BROWSE:
-  case LIVES_DIALOG_SKIP_RETRY_BROWSE:
-  case LIVES_DIALOG_CANCEL_RETRY_BROWSE:
+  case LIVES_DIALOG_CANCEL_BROWSE:
+  case LIVES_DIALOG_RETRY_SKIP_BROWSE:
+  case LIVES_DIALOG_RETRY_CANCEL_BROWSE:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_ERROR,
                                       LIVES_BUTTONS_NONE, NULL);
 
     lives_window_set_title(LIVES_WINDOW(dialog), _("Missing File or Directory"));
 
-    if (diat == LIVES_DIALOG_ABORT_SKIP_BROWSE)
-      lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-                                         LIVES_STOCK_CLOSE, _("_Abort"), LIVES_RESPONSE_ABORT);
+    if (diat == LIVES_DIALOG_ABORT_SKIP_BROWSE) {
+      if (!prefs->startup_phase)
+        lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+                                           LIVES_STOCK_CLOSE, LIVES_STOCK_LABEL_ABORT, LIVES_RESPONSE_ABORT);
+      else
+        lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+                                           LIVES_STOCK_CLOSE, _("_Exit Setup"), LIVES_RESPONSE_ABORT);
+    }
 
-    if (diat == LIVES_DIALOG_CANCEL_RETRY_BROWSE)
-      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-                     LIVES_RESPONSE_CANCEL);
-
-    if (diat == LIVES_DIALOG_SKIP_RETRY_BROWSE || diat == LIVES_DIALOG_ABORT_SKIP_BROWSE)
-      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
-                     LIVES_STOCK_LABEL_SKIP, LIVES_RESPONSE_CANCEL);
-
-
-    if (diat != LIVES_DIALOG_ABORT_SKIP_BROWSE)
+    if (diat != LIVES_DIALOG_ABORT_SKIP_BROWSE && diat != LIVES_DIALOG_CANCEL_BROWSE)
       okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
                  _("_Retry"), LIVES_RESPONSE_RETRY);
 
+    if (diat == LIVES_DIALOG_RETRY_CANCEL_BROWSE)
+      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                     LIVES_RESPONSE_CANCEL);
+
+    if (diat == LIVES_DIALOG_CANCEL_BROWSE) {
+      if (prefs->startup_phase)
+        cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK, LIVES_STOCK_LABEL_BACK,
+                       LIVES_RESPONSE_CANCEL);
+      else
+        cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                       LIVES_RESPONSE_CANCEL);
+    }
+    if (diat == LIVES_DIALOG_RETRY_SKIP_BROWSE || diat == LIVES_DIALOG_ABORT_SKIP_BROWSE)
+      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
+                     LIVES_STOCK_LABEL_SKIP, LIVES_RESPONSE_CANCEL);
+
     lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OPEN,
-                                       _("_Browse"), LIVES_RESPONSE_BROWSE);
+                                       LIVES_STOCK_LABEL_BROWSE, LIVES_RESPONSE_BROWSE);
 
     if (palette && widget_opts.apply_theme)
       lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
@@ -891,8 +904,9 @@ char *ds_warning_msg(const char *dir, char **mountpoint, uint64_t dsval, uint64_
 
 
 LIVES_GLOBAL_INLINE void do_abortblank_error(const char *what) {
-  char *msg = lives_strdup_printf(_("%s may not be blank.\nClick Abort to exit LiVES immediately or Ok "
-                                    "to continue with the default value."), what);
+  char *msg = lives_strdup_printf(_("%s may not be blank.\nClick %s to exit LiVES immediately or %s "
+                                    "to continue with the default value."), what,
+                                  STOCK_LABEL_TEXT(ABORT), STOCK_LABEL_TEXT(OK));
   do_abort_ok_dialog(msg);
   lives_free(msg);
 }
@@ -907,9 +921,10 @@ LIVES_GLOBAL_INLINE void do_optarg_blank_err(const char *what) {
 
 LIVES_GLOBAL_INLINE void do_clip_divergence_error(int fileno) {
   char *msg = lives_strdup_printf(_("Errors were encountered when reloading LiVES' copy of the clip %s\n"
-                                    "Please click Abort if you wish to exit from LiVES,\n"
-                                    "or OK to update the clip details in LiVES and continue anyway.\n"),
-                                  IS_VALID_CLIP(fileno) ? mainw->files[fileno]->name : "??????");
+                                    "Please click %s if you wish to exit from LiVES,\n"
+                                    "or %s to update the clip details in LiVES and continue anyway.\n"),
+                                  IS_VALID_CLIP(fileno) ? mainw->files[fileno]->name : "??????",
+                                  STOCK_LABEL_TEXT(ABORT), STOCK_LABEL_TEXT(OK));
   do_abort_ok_dialog(msg);
   lives_free(msg);
   check_storage_space(fileno, FALSE);
@@ -930,9 +945,10 @@ LiVESResponseType do_memory_error_dialog(char *op, size_t bytes) {
     sizestr = lives_strdup("");
   }
   msg = lives_strdup_printf(_("\n\nLiVES encountered a memory error when %s%s.\n"
-                              "Click Abort to exit from LiVES, "
-                              "Retry to try again, or Cancel to abandon the operation\n"
-                              "You may need to close some other applications first.\n"), op, sizestr);
+                              "Click %s to exit from LiVES, "
+                              "%s to try again, or %s to abandon the operation\n"
+                              "You may need to close some other applications first.\n"), op, sizestr,
+                            STOCK_LABEL_TEXT(ABORT), STOCK_LABEL_TEXT(RETRY), STOCK_LABEL_TEXT(CANCEL));
   lives_free(sizestr);
   response = do_abort_retry_cancel_dialog(msg);
   lives_free(msg);
@@ -2413,8 +2429,9 @@ boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_nu
   }
   msg_a = lives_strconcat(msg1, msg2, msg3, msg4, msg5, msg6, msg7, NULL);
   if (save_all) {
-    msg_b = lives_strdup(
-              _("\nYou will be able to undo these changes afterwards.\n\nClick `OK` to proceed, `Cancel` to abort.\n\n"));
+    msg_b = lives_strdup_printf(
+              _("\nYou will be able to undo these changes afterwards.\n\nClick %s to proceed, %s to abort.\n\n"),
+              STOCK_LABEL_TEXT(OK), STOCK_LABEL_TEXT(CANCEL));
   } else {
     msg_b = (_("\nChanges applied to the selection will not be permanent.\n\n"));
   }
@@ -2471,9 +2488,9 @@ boolean do_yuv4m_open_warning(void) {
   msg = lives_strdup_printf(
           _("When opening a yuvmpeg stream, you should first create a fifo file, and then write yuv4mpeg frames to it.\n"
             "Now you will get a chance to browse for the fifo file here.\nFollowing that,\n"
-            "LiVES will pause briefly until frames are received.\nYou should only click OK if you understand what you are doing, "
-            "otherwise, click Cancel."),
-          prefs->workdir);
+            "LiVES will pause briefly until frames are received.\nYou should only click %s if you understand what you are doing, "
+            "otherwise, click %s."),
+          prefs->workdir, STOCK_LABEL_TEXT(OK), STOCK_LABEL_TEXT(CANCEL));
   resp = do_warning_dialog_with_check(msg, WARN_MASK_OPEN_YUV4M);
   lives_free(msg);
   return resp;
@@ -2577,7 +2594,11 @@ static char *expl_missplug(const char *pltype) {
 
 
 const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
-  char *msg1, *msg2, *msg3 = NULL, *msg;
+  // IMPORTANT: part of the funcioning of the warning dialog may cause prefs->lib_dir to change !
+  // this always accompanied by its new value being returned
+  // in all other cases the pref is not updated, and NULL is returned instead
+
+  char *msg1, *msg2, *msg3 = NULL, *msg4, *msg;
   LiVESWidget *dlg;
   LiVESResponseType response;
 
@@ -2607,31 +2628,44 @@ const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
     lives_free(pltype);
   }
 
-  msg = lives_strdup_printf(_("%s%s%s\nClick 'Abort' to exit immediately from LiVES, 'Skip' to continue with the current value, "
-                              "or 'Browse' to locate the 'plugins' directory.\n"
-                              "E.g /usr/local/lib/lives/plugins (the 'plugins' directory MUST always be a subdirectory inside 'lives'"),
-                            msg1, msg2, msg3);
-  lives_free(msg1); lives_free(msg2); lives_free(msg3);
+  if (1 || !prefs->startup_phase) msg4 = lives_strdup_printf(_("Click %s to exit immediately from LiVES"),
+                                           STOCK_LABEL_TEXT(ABORT));
+  else msg4 = _("Click 'Exit Setup' to quit from LiVES setup");
+
+  msg = lives_strdup_printf(_("%s%s%s\n%s, %s to continue with the current value, "
+                              "or %s to locate the 'plugins' directory.\n"
+                              "E.g /usr/local/lib/lives/plugins (the 'plugins' directory MUST always be a subdirectory inside 'lives')"),
+                            msg1, msg2, msg3, msg4, STOCK_LABEL_TEXT(SKIP), STOCK_LABEL_TEXT(BROWSE));
+  lives_free(msg1); lives_free(msg2); lives_free(msg3); lives_free(msg4);
 
   while (1) {
     widget_opts.use_markup = TRUE;
-    dlg = create_message_dialog(LIVES_DIALOG_ABORT_SKIP_BROWSE, msg, WARN_MASK_CHECK_PLUGINS);
+    if (prefs->startup_phase != 2)
+      dlg = create_message_dialog(LIVES_DIALOG_ABORT_SKIP_BROWSE, msg, WARN_MASK_CHECK_PLUGINS);
+    else {
+      dlg = create_message_dialog(LIVES_DIALOG_CANCEL_BROWSE, msg, WARN_MASK_CHECK_PLUGINS);
+      lives_dialog_set_button_layout(LIVES_DIALOG(dlg), LIVES_BUTTONBOX_EDGE);
+    }
     widget_opts.use_markup = FALSE;
     if (!mainw->is_ready) pop_to_front(dlg, NULL);
     response = lives_dialog_run(LIVES_DIALOG(dlg));
-    lives_widget_destroy(dlg);
-    lives_widget_context_update();
 
     if (response == LIVES_RESPONSE_ABORT) {
       maybe_abort(TRUE);
+      lives_widget_destroy(dlg);
+      lives_widget_context_update();
       continue;
     }
     if (response == LIVES_RESPONSE_BROWSE) {
-      char *new_libdir = choose_file(prefs->lib_dir, PLUGINS_LITERAL, NULL,
-                                     LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
+      char *new_libdir;
+      lives_widget_hide(dlg);
+      lives_widget_context_update();
+      new_libdir = choose_file(prefs->lib_dir, PLUGINS_LITERAL, NULL,
+                               LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
+      lives_widget_destroy(dlg);
+      lives_widget_context_update();
       if (!new_libdir) continue;
       lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", new_libdir);
-
       lives_free(new_libdir);
     }
     break;
@@ -2647,7 +2681,11 @@ const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
 
 
 const char *miss_prefix_warn(const char *dirnm, LiVESList * subdirs) {
-  char *msg1, *msg2, *msg3 = NULL, *msg, *tmp;
+  // IMPORTANT: part of the funcioning of the warning dialog may cause prefs->prefix_dir to change !
+  // this always accompanied by its new value being returned
+  // in all other cases the pref is not updated, and NULL is returned instead
+
+  char *msg1, *msg2, *msg3 = NULL, *msg, *msg4, *tmp;
   LiVESWidget *dlg;
   LiVESResponseType response;
 
@@ -2670,14 +2708,25 @@ const char *miss_prefix_warn(const char *dirnm, LiVESList * subdirs) {
     lives_free(resource);
   }
 
-  msg = lives_strdup_printf(_("%s%s%s\nClick 'Abort' to exit immediately from LiVES, 'Skip' to continue with the current value, "
-                              "or 'Browse' to locate the prefix directory.\n"
-                              "E.g /usr/local"), msg1, msg2, msg3);
-  lives_free(msg1); lives_free(msg2); lives_free(msg3);
+
+  if (!prefs->startup_phase) msg4 = lives_strdup_printf(_("Click %s to exit immediately from LiVES"),
+                                      STOCK_LABEL_TEXT(ABORT));
+  else msg4 = _("Click 'Exit Setup' to quit from LiVES setup");
+
+  msg = lives_strdup_printf(_("%s%s%s\n%s, %s to continue with the current value,\n"
+                              "or %s to locate the prefix directory, "
+                              "E.g /usr/local"), msg1, msg2, msg3, msg4,
+                            STOCK_LABEL_TEXT(SKIP), STOCK_LABEL_TEXT(BROWSE));
+  lives_free(msg1); lives_free(msg2); lives_free(msg3); lives_free(msg4);
 
   while (1) {
     widget_opts.use_markup = TRUE;
-    dlg = create_message_dialog(LIVES_DIALOG_ABORT_SKIP_BROWSE, msg, WARN_MASK_CHECK_PLUGINS);
+    if (prefs->startup_phase != 2)
+      dlg = create_message_dialog(LIVES_DIALOG_ABORT_SKIP_BROWSE, msg, WARN_MASK_CHECK_PREFIX);
+    else {
+      dlg = create_message_dialog(LIVES_DIALOG_CANCEL_BROWSE, msg, WARN_MASK_CHECK_PREFIX);
+      lives_dialog_set_button_layout(LIVES_DIALOG(dlg), LIVES_BUTTONBOX_EDGE);
+    }
     widget_opts.use_markup = FALSE;
     if (!mainw->is_ready) pop_to_front(dlg, NULL);
     response = lives_dialog_run(LIVES_DIALOG(dlg));
@@ -2744,8 +2793,9 @@ LIVES_GLOBAL_INLINE boolean prompt_remove_layout_files(void) {
 boolean do_set_duplicate_warning(const char *new_set) {
   char *msg = lives_strdup_printf(
                 _("\nA set entitled %s already exists.\n"
-                  "Click OK to add the current clips and layouts to the existing set.\n"
-                  "Click Cancel to pick a new name.\n"), new_set);
+                  "Click %s to add the current clips and layouts to the existing set.\n"
+                  "Click %s to pick a new name.\n"), new_set,
+                STOCK_LABEL_TEXT(OK), STOCK_LABEL_TEXT(CANCEL));
   boolean retcode = do_warning_dialog_with_check(msg, WARN_MASK_DUPLICATE_SET);
   lives_free(msg);
   return retcode;
@@ -2791,10 +2841,10 @@ boolean do_mt_lb_warn(boolean lb) {
   msg = lives_strdup_printf((tmp = _("This layout was saved with letterboxing %s\n"
                                      "To preserve the original appearance, I can override\n"
                                      "the current setting and %s letterboxing for this layout\n\n"
-                                     "Click 'Yes' to proceed, or 'No' to keep the current setting\n\n"
+                                     "Click %s to proceed, or %s to keep the current setting\n\n"
                                      "(Note: the value for the current layout can be modified at any time\n"
                                      "via the menu option 'Tools' / 'Change Width, Height and Audio Values')\n")),
-                            endised, endis);
+                            endised, endis, STOCK_LABEL_TEXT(YES), STOCK_LABEL_TEXT(NO));
   lives_free(tmp); lives_free(endised); lives_free(endis);
   ret = do_yesno_dialog_with_check(msg, WARN_MASK_LAYOUT_LB);
   lives_free(msg);
@@ -2823,9 +2873,10 @@ static LiVESResponseType _do_df_notfound_dialog(const char *detail, const char *
     whatitis = (_("this directory"));
   }
   msg = lives_strdup_printf(_("\n%s\n%s\n%s\n"
-                              "Click Retry to try again, Browse to browse to the new location.\n"
-                              "otherwise click Skip to skip loading %s.\n"), xdetail, dfname, extra, whatitis);
-  warning = create_message_dialog(LIVES_DIALOG_SKIP_RETRY_BROWSE, msg, 0);
+                              "Click %s to try again, %s to browse to the new location.\n"
+                              "otherwise click %s to skip loading %s.\n"), xdetail, dfname, extra,
+                            STOCK_LABEL_TEXT(RETRY), STOCK_LABEL_TEXT(BROWSE), STOCK_LABEL_TEXT(SKIP), whatitis);
+  warning = create_message_dialog(LIVES_DIALOG_RETRY_SKIP_BROWSE, msg, 0);
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
   lives_widget_context_update();
@@ -3841,13 +3892,15 @@ LiVESResponseType  do_file_perm_error(const char *file_name, boolean allow_cance
   LiVESResponseType resp;
   char *msg, *can_cancel;
   if (allow_cancel)
-    can_cancel = (_(", click Cancel to continue regardless,\n"));
+    can_cancel = lives_strdup_printf(_(", click %s to continue regardless,\n"),
+                                     STOCK_LABEL_TEXT(CANCEL));
   else
     can_cancel = lives_strdup("");
 
   msg = lives_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\n"
                               "Please check the file permissions and try again."
-                              "%sor click Abort to exit from LiVES"), file_name, can_cancel);
+                              "%sor click %s to exit from LiVES"), file_name, can_cancel,
+                            STOCK_LABEL_TEXT(ABORT));
   if (!allow_cancel)
     resp = do_abort_retry_dialog(msg);
   else
@@ -3861,13 +3914,15 @@ LiVESResponseType do_dir_perm_error(const char *dir_name, boolean allow_cancel) 
   LiVESResponseType resp;
   char *msg, *can_cancel;
   if (allow_cancel)
-    can_cancel = (_("click Cancel to continue regardless, "));
+    can_cancel = lives_strdup_printf(_("click %s to continue regardless, "),
+                                     STOCK_LABEL_TEXT(CANCEL));
   else
     can_cancel = lives_strdup("");
 
   msg = lives_strdup_printf(_("\nLiVES was unable to either create or write to the directory:\n%s\n"
                               "Please check the directory permissions and try again,\n"
-                              "%sor click Abort to exit from LiVES"), dir_name, can_cancel);
+                              "%sor click %s to exit from LiVES"), dir_name, can_cancel,
+                            STOCK_LABEL_TEXT(ABORT));
   lives_free(can_cancel);
 
   if (!allow_cancel)
@@ -3888,7 +3943,10 @@ void do_dir_perm_access_error(const char *dir_name) {
 
 
 boolean do_abort_check(void) {
-  return do_yesno_dialog(_("\nAbort and exit immediately from LiVES\nAre you sure ?\n"));
+  if (!prefs->startup_phase)
+    return do_yesno_dialog(_("\nAbort and exit immediately from LiVES\nAre you sure ?\n"));
+  else
+    return do_yesno_dialog(_("\nAre are you sure you would like to exit from LiVES setup ?\n"));
 }
 
 
@@ -3953,8 +4011,8 @@ boolean do_sub_type_warning(const char *ext, const char *type_ext) {
   boolean ret;
   char *msg = lives_strdup_printf(
                 _("\nLiVES does not recognise the subtitle file type \"%s\".\n"
-                  "Click Cancel to set another file name\nor OK to continue and save as type \"%s\"\n"),
-                ext, type_ext);
+                  "Click %s to set another file name\nor %s to continue and save as type \"%s\"\n"),
+                ext, type_ext, STOCK_LABEL_TEXT(CANCEL), STOCK_LABEL_TEXT(OK));
   ret = do_warning_dialogf(msg);
   lives_free(msg);
   return ret;
@@ -3979,9 +4037,9 @@ LIVES_GLOBAL_INLINE boolean do_noworkdirchange_dialog(void) {
 LIVES_GLOBAL_INLINE boolean do_set_locked_warning(const char *setname) {
   return do_yesno_dialogf(
            _("\nWarning - the set %s\nis in use by another copy of LiVES.\n"
-             "You are strongly advised to close the other copy before clicking Yes to continue\n.\n"
-             "Click No to cancel loading the set.\n"),
-           setname);
+             "You are strongly advised to close the other copy before clicking %s to continue\n.\n"
+             "Click %s to cancel loading the set.\n"),
+           setname, STOCK_LABEL_TEXT(YES), STOCK_LABEL_TEXT(NO));
 }
 
 
@@ -4198,9 +4256,9 @@ LIVES_GLOBAL_INLINE char *workdir_ch_warning(void) {
 
 
 LIVES_GLOBAL_INLINE void do_shutdown_msg(void) {
-  do_info_dialog(
+  do_info_dialogf(
     _("\nLiVES will now shut down. You need to restart it for the new "
-      "preferences to take effect.\nClick OK to continue.\n"));
+      "preferences to take effect.\nClick %s to continue.\n"), STOCK_LABEL_TEXT(OK));
 }
 
 

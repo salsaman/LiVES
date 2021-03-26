@@ -3187,6 +3187,14 @@ char *subst(const char *xstring, const char *from, const char *to) {
 }
 
 
+char *subst_quote(const char *xstring, const char *quotes, const char *from, const char *to) {
+  char *res = subst(xstring, from, to);
+  char *res2 = lives_strdup_printf("%s%s%s", quotes, res, quotes);
+  lives_free(res);
+  return res2;
+}
+
+
 char *insert_newlines(const char *text, int maxwidth) {
   // crude formatting of strings, ensure a newline after every run of maxwidth chars
   // does not take into account for example utf8 multi byte chars

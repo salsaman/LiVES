@@ -1655,6 +1655,7 @@ LiVESInterpType get_interp_value(short quality, boolean low_for_mt);
 LiVESList *get_set_list(const char *dir, boolean utf8);
 
 char *subst(const char *string, const char *from, const char *to);
+char *subst_quote(const char *xstring, const char *quotes, const char *from, const char *to);
 char *insert_newlines(const char *text, int maxwidth);
 
 boolean get_screen_usable_size(int *w, int *h);

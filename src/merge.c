@@ -73,7 +73,7 @@ void create_merge_dialog(void) {
 
   if (!idx) {
     if (capable->has_plugins_libdir == UNCHECKED) {
-      if (!check_for_plugins(prefs->lib_dir)) capable->has_plugins_libdir = MISSING;
+      if (!check_for_plugins(prefs->lib_dir, FALSE)) capable->has_plugins_libdir = MISSING;
       else capable->has_plugins_libdir = PRESENT;
     }
     if (capable->has_plugins_libdir == MISSING) {

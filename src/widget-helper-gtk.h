@@ -687,12 +687,17 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #endif
 
   typedef int LiVESResponseType;
-#define LIVES_RESPONSE_NONE GTK_RESPONSE_NONE
-#define LIVES_RESPONSE_OK GTK_RESPONSE_OK     // -6
-#define LIVES_RESPONSE_CANCEL GTK_RESPONSE_CANCEL  // -5
-#define LIVES_RESPONSE_ACCEPT GTK_RESPONSE_ACCEPT  // 
+#define LIVES_RESPONSE_NONE GTK_RESPONSE_NONE // -1
+#define LIVES_RESPONSE_REJECT GTK_RESPONSE_REJECT  // -2
+#define LIVES_RESPONSE_ACCEPT GTK_RESPONSE_ACCEPT  // -3
+#define LIVES_RESPONSE_DELETE_EVENT GTK_RESPONSE_DELETE_EVENT  // -4
+#define LIVES_RESPONSE_OK GTK_RESPONSE_OK     // -5
+#define LIVES_RESPONSE_CANCEL GTK_RESPONSE_CANCEL  // -6
+#define LIVES_RESPONSE_CLOSE GTK_RESPONSE_CLOSE  // -7
 #define LIVES_RESPONSE_YES GTK_RESPONSE_YES  // -8
 #define LIVES_RESPONSE_NO GTK_RESPONSE_NO  // -9
+#define LIVES_RESPONSE_APPLY GTK_RESPONSE_APPLY  // -10
+#define LIVES_RESPONSE_HELP GTK_RESPONSE_HELP  // -11
 
   // positive values for custom responses
 #define LIVES_RESPONSE_INVALID 0
@@ -1077,6 +1082,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
 #define LIVES_IS_DIALOG(widget) GTK_IS_DIALOG(widget)
+#define LIVES_IS_FILE_CHOOSER_DIALOG(widget) GTK_IS_FILE_CHOOSER_DIALOG(widget)
 #define LIVES_IS_LABEL(widget) GTK_IS_LABEL(widget)
 #define LIVES_IS_BUTTON(widget) GTK_IS_BUTTON(widget)
 #define LIVES_IS_DRAWING_AREA(widget) GTK_IS_DRAWING_AREA(widget)

@@ -221,7 +221,15 @@ typedef struct {
 
   lives_intention workdir_tx_intent;
 
-  /// 0 = normal , -1 or 1: fresh install, 2: workdir set, 3: startup tests passed, 4: aud pl chosen, 5: pre interface seln., 100 setup complete
+  /// 0 = normal
+  // -1 or 1: fresh install, = prompt for workir,
+  // 2: workdir set, = run startup tests , if skipped, continue but do not advance the phase yet
+  // 3: startup tests passed,
+  // after 2 or 3, build init config
+  // select audio player
+  // 4: aud pl chosen, if we start in this phase we assume the audio player crashed
+  // 5: audio player started, pre interface seln. = select start i/f etc.
+  // , 100 setup complete
   short startup_phase;
   int ocp; ///< open_compression_percent : get/set in prefs
 

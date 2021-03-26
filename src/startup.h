@@ -35,4 +35,6 @@ void do_bad_dir_perms_error(const char *dirname);
 void dir_toolong_error(const char *dirname, const char *dirtype, size_t max, boolean can_retry);
 void filename_toolong_error(const char *fname, const char *ftype, size_t max, boolean can_retry);
 
+#define MISC_KEY "_misc_"
+
 #endif

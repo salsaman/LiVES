@@ -40,7 +40,7 @@ static char *dir_to_pieces(const char *dirnm) {
 }
 
 
-boolean check_for_plugins(const char *dirn) {
+boolean check_for_plugins(const char *dirn, boolean check_only) {
   // check all are present in prefs->lib_dir
   // ret. FALSE if missing
   const char *ret = NULL;
@@ -63,6 +63,11 @@ boolean check_for_plugins(const char *dirn) {
       }
       return TRUE;
     }
+    if (check_only) {
+      lives_free(pldirn);
+      lives_list_free_all(&subdir_list);
+      return FALSE;
+    }
     show_succ = TRUE;
     // returns new dir if we browsed, NULL = skipped
     ret = miss_plugdirs_warn(pldirn, subdir_list);
@@ -83,7 +88,7 @@ boolean check_for_plugins(const char *dirn) {
 }
 
 
-boolean find_prefix_dir(const char *predirn) {
+boolean find_prefix_dir(const char *predirn, boolean check_only) {
   // check all are present in prefs->prefix_dir;
   // ret. FALSE if missing
   if (prefs->warning_mask & WARN_MASK_CHECK_PREFIX) return TRUE;
@@ -96,12 +101,17 @@ boolean find_prefix_dir(const char *predirn) {
       subdir_list = NULL;
       subdir_list = lives_list_prepend(subdir_list, dir_to_pieces(THEME_DIR));
       subdir_list = lives_list_prepend(subdir_list, dir_to_pieces(ICON_DIR));
-      subdir_list = check_for_subdirs(predirn, subdir_list);
+      subdir_list = check_for_subdirs(prdirn, subdir_list);
       if (!subdir_list) {
         if (show_succ) {
           do_info_dialog(_("Extra components found !"));
         }
         return TRUE;
+      }
+      if (check_only) {
+        lives_free(prdirn);
+        lives_list_free_all(&subdir_list);
+        return FALSE;
       }
       show_succ = TRUE;
       // returns new dir if we browsed, NULL = skipped
@@ -1626,7 +1636,7 @@ int64_t get_best_audio(_vid_playback_plugin * vpp) {
 void do_plugin_encoder_error(const char *plugin_name) {
   char *path = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, NULL);
   if (!plugin_name || !*plugin_name) {
-    if (capable->has_plugins_libdir == UNCHECKED) check_for_plugins(prefs->lib_dir);
+    if (capable->has_plugins_libdir == UNCHECKED) check_for_plugins(prefs->lib_dir, FALSE);
   } else {
     widget_opts.non_modal = TRUE;
     do_error_dialogf(_("LiVES did not receive a response from the encoder plugin called '%s'.\n"

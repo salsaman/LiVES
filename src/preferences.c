@@ -3737,7 +3737,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_layout_add_label(LIVES_LAYOUT(layout), msg, TRUE);
   lives_free(msg);
 
-  msg = lives_strdup_printf(_("LiVES version %s using Weed ABI version %d, Weed Filter API version %d,\n"
+  msg = lives_strdup_printf(_("LiVES version %s powered by Weed ABI version %d, Weed Filter API version %d,\n"
                               "RFX version %s, Clip Header Version %d"),
                             LiVES_VERSION, WEED_ABI_VERSION, WEED_FILTER_API_VERSION, RFX_VERSION, LIVES_CLIP_HEADER_VERSION);
 

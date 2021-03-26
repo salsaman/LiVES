@@ -18,7 +18,7 @@ LiVESWidget *assist;
 void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
   char *wid = NULL;
   boolean activated = FALSE;
-  if (prefs->startup_phase) {
+  if (prefs->startup_phase && !LIVES_IS_FILE_CHOOSER_DIALOG(dialog)) {
     if (!mainw->is_ready) {
       gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE); // dont know if this actually does anything...
       gtk_window_set_type_hint(LIVES_WINDOW(dialog), GDK_WINDOW_TYPE_HINT_NORMAL);
@@ -31,7 +31,7 @@ void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
   lives_widget_show_all(dialog);
   lives_widget_context_update();
 
-  if (!prefs->startup_phase) {
+  if (!prefs->startup_phase || LIVES_IS_FILE_CHOOSER_DIALOG(dialog)) {
     if (capable->has_xdotool == MISSING && capable->has_wmctrl == MISSING) return;
     wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
     activated = activate_x11_window(wid);
@@ -281,10 +281,11 @@ static LiVESResponseType prompt_existing_dir(const char *dirname, uint64_t frees
   char *msg;
   if (wrtable) {
     if (dirs_equal(dirname, capable->home_dir)) {
-      if (!do_yesno_dialog(
+      if (!do_yesno_dialogf(
             _("You have chosen to use your home directory as the LiVES working directory.\n"
               "This is NOT recommended as it will possibly result in the loss of unrelated files.\n"
-              "Click Yes if you REALLY want to continue, or No to create or select another directory.\n")))
+              "Click %s if you REALLY want to continue, or %s to create or select another directory.\n"),
+            STOCK_LABEL_TEXT(YES), STOCK_LABEL_TEXT(NO)))
         return LIVES_RESPONSE_CANCEL;
     } else {
       boolean res;
@@ -304,8 +305,8 @@ static LiVESResponseType prompt_existing_dir(const char *dirname, uint64_t frees
     char *xdir = lives_markup_escape_text(dirname, -1);
     widget_opts.use_markup = TRUE;
     msg = lives_strdup_printf(_("A directory named\n<b>%s</b>\nalready exists.\nHowever, LiVES could not write to this directory "
-                                "or read its free space.\nClick Abort to exit from LiVES, or Retry to select another "
-                                "location.\n"), xdir);
+                                "or read its free space.\nClick %s to exit from LiVES, or %s to select another "
+                                "location.\n"), xdir, STOCK_LABEL_TEXT(ABORT), STOCK_LABEL_TEXT(RETRY));
     widget_opts.use_markup = FALSE;
     lives_free(xdir);
     do_abort_retry_dialog(msg);
@@ -338,8 +339,8 @@ static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable
 
 void filename_toolong_error(const char *fname, const char *ftype, size_t max, boolean can_retry) {
   char *rstr, *msg;
-  if (can_retry) rstr = _("\nPlease click Retry to select an alternative directory, or Abort to exit immediately"
-                            "from LiVES\n");
+  if (can_retry) rstr = lives_strdup_printf(_("\nPlease click %s to select an alternative directory, or Abort to exit immediately"
+                          "from LiVES\n"), STOCK_LABEL_TEXT(RETRY), STOCK_LABEL_TEXT(ABORT));
   else rstr = lives_strdup("");
 
   msg = lives_strdup_printf(_("The name of the %s provided\n(%s)\nis too long (maximum is %d characters)\n%s"),
@@ -351,8 +352,8 @@ void filename_toolong_error(const char *fname, const char *ftype, size_t max, bo
 
 void dir_toolong_error(const char *dirname, const char *dirtype, size_t max, boolean can_retry) {
   char *rstr, *msg;
-  if (can_retry) rstr = _("\nPlease click Retry to select an alternative directory, or Abort to exit immediately"
-                            "from LiVES\n");
+  if (can_retry) rstr = lives_strdup_printf(_("\nPlease click %s to select an alternative directory, or Abort to exit immediately"
+                          "from LiVES\n"), STOCK_LABEL_TEXT(RETRY), STOCK_LABEL_TEXT(ABORT));
   else rstr = lives_strdup("");
   msg = lives_strdup_printf(_("The name of the %s provided\n(%s)\nis too long (maximum is %d characters)\n%s"),
                             dirtype, dirname, max, rstr);
@@ -698,9 +699,9 @@ set_config:
              H_("Checking this will cause LiVES to try to start up a jackd server itself\n"
                 "if it is unable to connect to a running instance."));
 
-    if (cfg_exists || (prefs->jack_opts & JACK_OPTS_START_ASERVER))
+    if ((cfg_exists && is_setup) || (!is_trans && (prefs->jack_opts & JACK_OPTS_START_ASERVER))
+        || (is_trans && (prefs->jack_opts & JACK_OPTS_START_TSERVER)))
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(astart), TRUE);
-
     else {
       lives_layout_add_label(LIVES_LAYOUT(layout), _("NOTE: if server start up fails, "
                              "LiVES will ALWAYS produce an error."), FALSE);
@@ -826,15 +827,23 @@ set_config:
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(asdef), asname, TRUE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), hbox, FALSE);
 
-  if (type == 1) {
-    if (!cfg_exists || (!*prefs->jack_aserver_cfg && *prefs->jack_aserver_sname))
+  if (!is_trans) {
+    if ((is_setup && !cfg_exists) || (!is_setup && !*future_prefs->jack_aserver_cfg))
       lives_toggle_button_set_active(rb, TRUE);
     else lives_toggle_button_set_active(scrpt_rb, TRUE);
-    if (*prefs->jack_aserver_sname) lives_toggle_button_set_active(asdef, FALSE);
+    if (is_setup) {
+      if (*prefs->jack_aserver_sname) lives_toggle_button_set_active(asdef, FALSE);
+    } else {
+      if (*future_prefs->jack_aserver_sname) lives_toggle_button_set_active(asdef, FALSE);
+    }
   } else {
-    if ((!is_trans && !*future_prefs->jack_aserver_cfg)
-        || (is_trans && !*future_prefs->jack_tserver_cfg)) {
+    if ((is_setup && !cfg_exists) || (!is_setup && !*future_prefs->jack_tserver_cfg))
       lives_toggle_button_set_active(rb, TRUE);
+    else lives_toggle_button_set_active(scrpt_rb, TRUE);
+    if (is_setup) {
+      if (*prefs->jack_tserver_sname) lives_toggle_button_set_active(asdef, FALSE);
+    } else {
+      if (*future_prefs->jack_tserver_sname) lives_toggle_button_set_active(asdef, FALSE);
     }
   }
 
@@ -864,6 +873,7 @@ set_config:
                                     LIVES_INT_TO_POINTER(is_trans));
     chk_setenv_conf(cb2, LIVES_INT_TO_POINTER(is_trans));
     toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(asdef), cb2, TRUE);
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(scrpt_rb), cb2, TRUE);
   }
 
   lives_layout_add_row(LIVES_LAYOUT(layout));
@@ -1152,9 +1162,9 @@ retry:
         else
           srvname = _("the default jack server");
         if (!do_warning_dialogf(_("You have chosen to connect to %s\nPlease ensure that the server "
-                                  "is running before clicking OK\n"
-                                  "Alternatively, click Cancel to change the jack client options\n"),
-                                srvname)) {
+                                  "is running before clicking %s\n"
+                                  "Alternatively, click %s to change the jack client options\n"),
+                                srvname, STOCK_LABEL_TEXT(OK), STOCK_LABEL_TEXT(CANCEL))) {
           lives_free(srvname);
           rb_group = NULL;
           lives_widget_destroy(dialog);
@@ -1207,21 +1217,6 @@ static void on_init_aplayer_toggled(LiVESToggleButton * tbutton, livespointer us
   if (!lives_toggle_button_get_active(tbutton)) return;
 
   prefs->audio_player = audp;
-
-  switch (audp) {
-  case AUD_PLAYER_PULSE:
-    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
-    break;
-  case AUD_PLAYER_JACK:
-    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
-    break;
-  case AUD_PLAYER_SOX:
-    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
-    break;
-  default:
-    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_NONE);
-    break;
-  }
 }
 
 
@@ -1354,7 +1349,10 @@ reloop:
     lives_layout_add_label(LIVES_LAYOUT(layout), recstr, TRUE);
     widget_opts.use_markup = FALSE;
   }
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("(click 'Next' to view and adjust initial server settings)"), TRUE);
+  msg = lives_strdup_printf(_("(click %s to view and adjust initial server settings)"),
+                            STOCK_LABEL_TEXT(NEXT));
+  lives_layout_add_label(LIVES_LAYOUT(layout), msg, TRUE);
+  lives_free(msg);
 #endif
 
   lives_free(recstr);
@@ -1417,7 +1415,7 @@ reloop:
                             LIVES_INT_TO_POINTER(AUD_PLAYER_NONE));
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
-                 _("Quit from Setup"), LIVES_RESPONSE_CANCEL);
+                 _("Exit Setup"), LIVES_RESPONSE_CANCEL);
 
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
                                      LIVES_STOCK_LABEL_BACK, LIVES_RESPONSE_RETRY);
@@ -1427,21 +1425,14 @@ reloop:
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
              LIVES_STOCK_GO_FORWARD, LIVES_STOCK_LABEL_NEXT, LIVES_RESPONSE_OK);
 
-  //lives_widget_show_all(dialog);
-
   if (prefs->audio_player == -1) {
     do_no_mplayer_sox_error();
     return FALSE;
   }
-
-  /* if (mainw->splash_window) { */
-  /*   lives_widget_hide(mainw->splash_window); */
-  /* } */
   pop_to_front(dialog, NULL);
 
   lives_button_grab_default_special(okbutton);
 
-  //lives_widget_show_noyw(dialog);
   lives_widget_grab_focus(okbutton);
 
   if (!mainw->first_shown) {
@@ -1453,7 +1444,6 @@ reloop:
   if (!mainw->first_shown) {
     guess_font_size(dialog, LIVES_LABEL(label), NULL, .22);
   }
-
 
   while (1) {
     response = lives_dialog_run(LIVES_DIALOG(dialog));
@@ -1468,12 +1458,25 @@ reloop:
 
 #ifdef ENABLE_JACK
   if (response == LIVES_RESPONSE_OK) {
-    if (prefs->audio_player == AUD_PLAYER_JACK) {
+    switch (prefs->audio_player) {
+    case AUD_PLAYER_PULSE:
+      set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
+      break;
+    case AUD_PLAYER_JACK:
       if (!do_jack_config(1, FALSE)) {
         txt0 = lives_strdup("");
         radiobutton_group = NULL;
         goto reloop;
       }
+      set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
+      lives_widget_set_sensitive(mainw->show_jackmsgs, TRUE);
+      break;
+    case AUD_PLAYER_SOX:
+      set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
+      break;
+    default:
+      set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_NONE);
+      break;
     }
   }
 #endif
@@ -1491,13 +1494,15 @@ reloop:
     lives_widget_show(mainw->splash_window);
   }
 
-  if (!is_realtime_aplayer(prefs->audio_player)) {
-    lives_widget_hide(mainw->vol_toolitem);
-    if (mainw->vol_label) lives_widget_hide(mainw->vol_label);
-    lives_widget_hide(mainw->recaudio_submenu);
+  if (response == LIVES_RESPONSE_OK) {
+    if (!is_realtime_aplayer(prefs->audio_player)) {
+      lives_widget_hide(mainw->vol_toolitem);
+      if (mainw->vol_label) lives_widget_hide(mainw->vol_label);
+      lives_widget_hide(mainw->recaudio_submenu);
+    }
+    return TRUE;
   }
-
-  return (response == LIVES_RESPONSE_OK);
+  return FALSE;
 }
 
 
@@ -1572,6 +1577,7 @@ static void add_test(LiVESWidget * table, int row, const char *ttext, boolean no
     if (image) {
       lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
     }
+    lives_widget_show_all(table);
   }
 }
 
@@ -1600,7 +1606,6 @@ static boolean pass_test(LiVESWidget * table, int row) {
   }
 
   lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
-  lives_widget_show(image);
 
   lives_widget_show_all(table);
 
@@ -1614,13 +1619,14 @@ static boolean pass_test(LiVESWidget * table, int row) {
   return TRUE;
 }
 
-static boolean _fail_test(LiVESWidget * table, int row, char *ftext, const char *type) {
+static LiVESWidget *_fail_test(LiVESWidget * table, int row, char *ftext, const char *type) {
   LiVESWidget *label = test_reslabels[row];
 #if GTK_CHECK_VERSION(3, 10, 0)
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_WARNING, LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #else
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_CANCEL, LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #endif
+  LiVESWidget *hbox;
   char *msg;
 
   if (test_spinners[row]) {
@@ -1637,15 +1643,14 @@ static boolean _fail_test(LiVESWidget * table, int row, char *ftext, const char 
   }
 
   lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
-  lives_widget_show(image);
 
-  lives_widget_show_all(table);
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), MISC_KEY, (livespointer)image);
 
   label = lives_standard_label_new(_("checking"));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
 
-  lives_table_attach(LIVES_TABLE(table), label, 3, 4, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
-  lives_widget_show(label);
-
+  lives_table_attach(LIVES_TABLE(table), hbox, 3, 4, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
   lives_widget_show_all(table);
 
   if (!nowait) {
@@ -1662,8 +1667,6 @@ static boolean _fail_test(LiVESWidget * table, int row, char *ftext, const char 
   widget_opts.use_markup = FALSE;
   lives_free(msg);
 
-  lives_widget_show_all(table);
-
   if (!nowait) {
     for (int i = 0; i < 1500; i++) {
       lives_widget_context_update();
@@ -1671,15 +1674,15 @@ static boolean _fail_test(LiVESWidget * table, int row, char *ftext, const char 
       lives_usleep(2000);
     }
   }
-  return FALSE;
+  return hbox;
 }
 
-LIVES_LOCAL_INLINE boolean fail_test(LiVESWidget * table, int row, char *ftext) {
+LIVES_LOCAL_INLINE LiVESWidget *fail_test(LiVESWidget * table, int row, char *ftext) {
   allpassed = FALSE;
   return _fail_test(table, row, ftext, _("Failed"));
 }
 
-LIVES_LOCAL_INLINE boolean skip_test(LiVESWidget * table, int row, char *ftext) {
+LIVES_LOCAL_INLINE LiVESWidget *skip_test(LiVESWidget * table, int row, char *ftext) {
   return _fail_test(table, row, ftext, _("Skipped"));
 }
 
@@ -1709,12 +1712,44 @@ static void skip_tests(LiVESWidget * dialog, livespointer button) {
 }
 
 
+static void fix_plugins(LiVESWidget * b, LiVESWidget * table) {
+  LiVESWidget *dialog = lives_widget_get_toplevel(b);
+  lives_widget_hide(dialog);
+  if (check_for_plugins(prefs->lib_dir, FALSE)) {
+    LiVESWidget *w = lives_widget_get_parent(b), *image;
+    while (!LIVES_IS_TABLE(lives_widget_get_parent(w))) w = lives_widget_get_parent(w);
+    lives_widget_set_no_show_all(w, TRUE);
+    lives_widget_hide(w);
+    image = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(w), MISC_KEY);
+    lives_widget_destroy(image);
+    lives_widget_show(dialog);
+    pass_test(table, 0);
+  } else lives_widget_show(dialog);
+}
+
+static void fix_prefix(LiVESWidget * b, LiVESWidget * table) {
+  LiVESWidget *dialog = lives_widget_get_toplevel(b);
+  lives_widget_hide(dialog);
+  if (find_prefix_dir(prefs->prefix_dir, FALSE)) {
+    LiVESWidget *w = lives_widget_get_parent(b), *image;
+    while (!LIVES_IS_TABLE(lives_widget_get_parent(w))) w = lives_widget_get_parent(w);
+    lives_widget_set_no_show_all(w, TRUE);
+    lives_widget_hide(w);
+    image = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(w), MISC_KEY);
+    lives_widget_destroy(image);
+    lives_widget_show(dialog);
+    pass_test(table, 1);
+  } else lives_widget_show(dialog);
+}
+
+
 boolean do_startup_tests(boolean tshoot) {
   LiVESWidget *dialog;
-  LiVESWidget *dialog_vbox;
+  LiVESWidget *dialog_vbox, *hbox;
 
   LiVESWidget *label, *xlabel = NULL;
   LiVESWidget *table;
+  LiVESWidget *resolveb;
   LiVESWidget *okbutton;
   LiVESWidget *cancelbutton = NULL, *backbutton = NULL;
 
@@ -1786,7 +1821,7 @@ rerun:
   lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
 
   if (!tshoot) {
-    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, _("Quit from Setup"),
+    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, _("Exit Setup"),
                    LIVES_RESPONSE_CANCEL);
 
     quitfunc = lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -1794,7 +1829,7 @@ rerun:
 
     lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
 
-    backbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK, _("_Back to directory selection"),
+    backbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK, _("_Back to Directory Selection"),
                  LIVES_RESPONSE_RETRY);
 
     backfunc = lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(backbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -1817,7 +1852,13 @@ rerun:
   table = lives_table_new(10, 4, FALSE);
   lives_container_add(LIVES_CONTAINER(dialog_vbox), table);
 
-  add_test(table, testcase, _("Checking for \"sox\" presence"), FALSE);
+  add_test(table, testcase, _("Checking for plugin presence"), FALSE);
+
+  widget_opts.mnemonic_label = FALSE;
+  add_test(table, ++testcase, _("Checking for components under 'prefix_dir'"), FALSE);
+  widget_opts.mnemonic_label = TRUE;
+
+  add_test(table, ++testcase, _("Checking for \"sox\" presence"), FALSE);
 
   // test if sox can convert raw 44100 -> wav 22050
   add_test(table, ++testcase, _("Checking if sox can convert audio"), FALSE);
@@ -1841,13 +1882,18 @@ rerun:
   add_test(table, ++testcase, _("Checking for \"convert\" presence"), FALSE);
 
   if (!tshoot) {
-    xlabel = lives_standard_label_new(
-               _("\n\n\tClick 'Quit from Setup' to exit and install any missing components, or Next to continue\t\n"));
+    msg = lives_strdup_printf(
+            _("\n\n\tClick 'Exit Setup' to quit and install any missing components, %s to return to directory selection, "
+              "or %s to continue with the setup\t\n"), STOCK_LABEL_TEXT(BACK), STOCK_LABEL_TEXT(NEXT));
+    xlabel = lives_standard_label_new(msg);
     lives_container_add(LIVES_CONTAINER(dialog_vbox), xlabel);
+    lives_free(msg);
     lives_widget_show(xlabel);
     lives_widget_set_opacity(xlabel, 0.);
   } else add_fill_to_box(LIVES_BOX(dialog_vbox));
   lives_widget_show_all(dialog);
+
+  testcase = 0;
 
   if (!tshoot) {
     if (!mainw->first_shown) {
@@ -1858,7 +1904,6 @@ rerun:
     }
     lives_widget_context_update();
   }
-
   if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
   if (!tshoot) pop_to_front(dialog, NULL);
@@ -1867,14 +1912,55 @@ rerun:
 
   testcase = 0;
 
-  // check for sox presence
-
   prep_test(table, testcase);
   if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
-  if (!capable->has_sox_sox) {
-    success = fail_test(table, testcase, _("You should install sox to be able to use all the audio features in LiVES"));
+  if (!check_for_plugins(prefs->lib_dir, TRUE)) {
+    hbox = fail_test(table, testcase, _("Some plugin directories could not be located"));
+    widget_opts.use_markup = TRUE;
+    resolveb =
+      lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
+          _("<b>Fix this !</b>"), DEF_BUTTON_WIDTH, -1, LIVES_BOX(hbox), TRUE, NULL);
+    widget_opts.use_markup = FALSE;
+    lives_box_pack_start(LIVES_BOX(hbox), resolveb, FALSE, FALSE, widget_opts.packing_width);
     lives_widget_grab_focus(cancelbutton);
+    success = FALSE;
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(resolveb), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(fix_plugins), table);
+  } else {
+    success = pass_test(table, testcase);
+  }
+
+  prep_test(table, ++testcase);
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
+
+  if (!find_prefix_dir(prefs->prefix_dir, TRUE)) {
+    hbox = fail_test(table, testcase, _("Some default components such as themes and icons may be missing"));
+    widget_opts.use_markup = TRUE;
+    resolveb =
+      lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
+          _("<b>Fix this !</b>"), DEF_BUTTON_WIDTH, -1, LIVES_BOX(hbox), TRUE, NULL);
+    widget_opts.use_markup = FALSE;
+    lives_box_pack_start(LIVES_BOX(hbox), resolveb, FALSE, FALSE, widget_opts.packing_width);
+    lives_widget_grab_focus(cancelbutton);
+    lives_widget_show_all(resolveb);
+    success = FALSE;
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(resolveb), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(fix_prefix), table);
+  } else {
+    success = pass_test(table, testcase);
+  }
+
+  // check for sox presence
+
+  prep_test(table, ++testcase);
+
+  if (mainw->cancelled != CANCEL_NONE) goto cancld;
+
+  if (!capable->has_sox_sox) {
+    fail_test(table, testcase, _("sox is needed to resample audio and convert between some formats"));
+    lives_widget_grab_focus(cancelbutton);
+    success = FALSE;
   } else {
     success = pass_test(table, testcase);
   }
@@ -1970,9 +2056,11 @@ rerun:
   success2 = TRUE;
 
   if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
-    success2 = fail_test(table, testcase,
-                         _("You should install mplayer, mplayer2 or mpv to be able to use "
-                           "all the decoding features in LiVES"));
+    fail_test(table, testcase,
+              _("You should install mplayer, mplayer2 or mpv to be able to use "
+                "certain features related to decoding\n(such as loading the audio track "
+                "and as a fallback for formats which the decoder plugins cannot handle)"));
+    success2 = FALSE;
   }
 
   if (!success && !capable->has_mplayer2 && !capable->has_mplayer) {
@@ -2135,7 +2223,8 @@ rerun:
       cfile->frames = get_frame_count(mainw->current_file, 1);
 
       if (cfile->frames <= 0) {
-        msg = lives_strdup_printf(_("You may wish to upgrade %s to a newer version"), mp_cmd);
+        msg = lives_strdup_printf(_("You may wish to upgrade %s to a newer version\n"
+                                    "(optional; only files opened using the 'fallback' method are affected)"), mp_cmd);
         fail_test(table, testcase, msg);
         lives_free(msg);
       }
@@ -2206,7 +2295,7 @@ rerun:
       fail_test(table, testcase, msg);
       lives_free(msg);
     } else {
-      msg = lives_strdup_printf(_("You may wish to add jpeg output support to %s"), mp_cmd);
+      msg = lives_strdup_printf(_("jpeg support is not necessary, png decoding is a better choice"), mp_cmd);
       fail_test(table, testcase, msg);
       lives_free(msg);
     }
@@ -2223,7 +2312,8 @@ jpgdone:
   nowait = TRUE;
 
   if (!capable->has_convert) {
-    success = fail_test(table, testcase, _("Install imageMagick to be able to use all of the rendered effects"));
+    fail_test(table, testcase, _("Install imageMagick to be able to use all of the rendered effects"));
+    success = FALSE;
   } else {
     success = pass_test(table, testcase);
   }
@@ -2237,7 +2327,8 @@ jpgdone:
   if (tshoot) {
     if (imgext_switched) {
       label = lives_standard_label_new(
-                _("\n\n\tImage decoding type has been switched to jpeg. You can revert this in Preferences/Decoding.\t\n"));
+                _("\n\n\tImage decoding type has been switched to jpeg. You can revert this in Preferences/Decoding.\t\n"
+                  "Note: this only affects clips which are opened via the 'fallback' method"));
       lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
     }
     lives_widget_show(label);
@@ -2255,6 +2346,8 @@ jpgdone:
   while (1) {
     response = lives_dialog_run(LIVES_DIALOG(dialog));
 
+    // returned if dialog is hidden
+    if (response == LIVES_RESPONSE_NONE) continue;
     if (response == LIVES_RESPONSE_CANCEL) {
       lives_widget_hide(dialog);
       if (confirm_exit()) {
@@ -2264,6 +2357,15 @@ jpgdone:
       lives_widget_context_update();
       continue;
     }
+    if (!check_for_plugins(prefs->lib_dir, TRUE) || !find_prefix_dir(prefs->prefix_dir, TRUE)) {
+      lives_widget_hide(dialog);
+      if (!do_yesno_dialog(_("It may be possible to correct the problems marked 'Fix This' after clicking on the relevant buttons.\n"
+                             "Are you sure you wish to ignore those issues and continue anyway ?"))) {
+        lives_widget_show(dialog);
+        continue;
+      }
+    }
+    lives_widget_show(dialog);
     break;
   }
 
@@ -2356,9 +2458,9 @@ retry:
     }
   }
   if (mainw->jackd_read && *mainw->jackd_read->status_msg) {
-    int numtok = get_token_count(mainw->jackd->status_msg, '\n');
+    int numtok = get_token_count(mainw->jackd_read->status_msg, '\n');
     if (numtok > 1) {
-      char **array = lives_strsplit(mainw->jackd->status_msg, "\n", numtok);
+      char **array = lives_strsplit(mainw->jackd_read->status_msg, "\n", numtok);
       if (!add_hsep) {
         msg = lives_big_and_bold(_("JACK status:"));
         widget_opts.use_markup = TRUE;

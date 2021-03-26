@@ -4474,10 +4474,9 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
                                           LIVES_GUI_CALLBACK(fc_sel_changed), diss);
           lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL,
                                           LIVES_GUI_CALLBACK(fc_folder_changed), diss);
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
 #endif
 
   lives_container_set_border_width(LIVES_CONTAINER(chooser), widget_opts.border_width);

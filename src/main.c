@@ -3657,111 +3657,127 @@ retry_configfile:
 }
 
 
-static void print_opthelp(const char *extracmds_file1, const char *extracmds_file2) {
-  char *tmp;
-  print_notice();
+LIVES_LOCAL_INLINE void outp_help(LiVESTextBuffer * textbuf, const char *fmt, ...) {
+  va_list xargs;
+  va_start(xargs, fmt);
+  if (!textbuf) vfprintf(stderr, fmt, xargs);
+  else {
+    char *text = lives_strdup_vprintf(fmt, xargs);
+    lives_text_buffer_insert_at_cursor(textbuf, text, -1);
+    lives_free(text);
+  }
+  va_end(xargs);
+}
 
-  lives_printerr(_("\nStartup syntax is: %s [OPTS] [filename [start_time] [frames]]\n"), capable->myname);
-  fprintf(stderr, _("\nIf the file %s exists, then the first line in it will be prepended to the commandline\n"
-                    "exactly as if it had been typed in by the user. If that file does not exist, then the file %s\n"
-                    "will be read in the same fashion\n\n"), extracmds_file1, extracmds_file2);
-  fprintf(stderr, "%s", _("filename is the name of a media file or backup file to import at startup\n"));
-  fprintf(stderr, "%s", _("start_time : filename start time in seconds\n"));
-  fprintf(stderr, "%s", _("frames : maximum number of frames to open\n"));
-  fprintf(stderr, "%s", "\n");
-  fprintf(stderr, "%s", _("OPTS can be:\n"));
-  fprintf(stderr, "%s", _("-help | --help \t\t\t: print this help text on stderr and exit\n"));
-  fprintf(stderr, "%s", _("-version | --version\t\t: print the LiVES version on stderr and exit\n"));
-  fprintf(stderr, "%s", _("-workdir <workdir>\t\t: specify the working directory for the session, "
-                          "overriding any value set in preferences\n"));
-  fprintf(stderr, "%s", _("\t\t\t\t\t(disables any disk quota checking)\n"));
-  fprintf(stderr, "%s", _("-configfile <path_to_file>\t: override the default configuration file for the session\n"));
+
+void print_opthelp(LiVESTextBuffer * textbuf, const char *extracmds_file1, const char *extracmds_file2) {
+  char *tmp;
+  if (!textbuf) print_notice();
+  outp_help(textbuf, _("\nStartup syntax is: %s [OPTS] [filename [start_time] [frames]]\n"), capable->myname);
+  if (!textbuf) {
+    outp_help(textbuf, _("\nIf the file %s exists, then the first line in it will be prepended to the commandline\n"
+                         "exactly as if it had been typed in by the user. If that file does not exist, then the file %s\n"
+                         "will be read in the same fashion\n\n"), extracmds_file1, extracmds_file2);
+  }
+  outp_help(textbuf, "%s", _("filename is the name of a media file or backup file to import at startup\n"));
+  outp_help(textbuf, "%s", _("start_time : filename start time in seconds\n"));
+  outp_help(textbuf, "%s", _("frames : maximum number of frames to open\n"));
+  outp_help(textbuf, "%s", "\n");
+  outp_help(textbuf, "%s", _("OPTS can be:\n"));
+  outp_help(textbuf, "%s", _("-help | --help \t\t\t: print this help text on stderr and exit\n"));
+  outp_help(textbuf, "%s", _("-version | --version\t\t: print the LiVES version on stderr and exit\n"));
+  outp_help(textbuf, "%s", _("-workdir <workdir>\t\t: specify the working directory for the session, "
+                             "overriding any value set in preferences\n"));
+  outp_help(textbuf, "%s", _("\t\t\t\t\t(disables any disk quota checking)\n"));
+  outp_help(textbuf, "%s", _("-configfile <path_to_file>\t: override the default configuration file for the session\n"));
   tmp = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, LIVES_DEF_CONFIG_FILE, NULL);
-  fprintf(stderr, _("\t\t\t\t\t(default is %s)\n"), tmp);
+  outp_help(textbuf, _("\t\t\t\t\t(default is %s)\n"), tmp);
   lives_free(tmp);
 
   tmp = get_localsharedir(LIVES_DIR_LITERAL);
-  fprintf(stderr, "%s", _("-configdatadir <dir>\t\t: override the default configuration data directory for the session\n"));
-  fprintf(stderr, _("\t\t\t\t\t(default is %s\n"), tmp);
+  outp_help(textbuf, "%s", _("-configdatadir <dir>\t\t: override the default configuration data directory for the session\n"));
+  outp_help(textbuf, _("\t\t\t\t\t(default is %s\n"), tmp);
   lives_free(tmp);
 
-  fprintf(stderr, "%s", _("-dscrit <bytes>\t\t\t: temporarily sets the free disk space critical level for workdir to <bytes>\n"));
-  fprintf(stderr, "%s", _("\t\t\t\t\t(intended to allow correction of erroneous values within the app; "
-                          "<= 0 disables checks)\n"));
-  fprintf(stderr, "%s", _("-set <setname>\t\t\t: autoload clip set <setname>\n"));
-  fprintf(stderr, "%s", _("-noset\t\t\t\t: do not reload any clip set on startup (overrides -set)\n"));
-  fprintf(stderr, "%s", _("-layout <layout_name>\t\t: autoload multitrack layout <layout_name> (if successful, "
-                          "overrides -startup-ce)\n"));
-  fprintf(stderr, "%s", _("-nolayout\t\t\t: do not reload any multitrack layout on startup (overrides -layout)\n"));
-  fprintf(stderr, "%s", _("-norecover\t\t\t: force non-loading of crash recovery files (overrides -recover / -autorecover)\n"));
-  fprintf(stderr, "%s",
-          _("-recover | -autorecover\t\t: force reloading of any crash recovery files (may override -noset and -nolayout)\n"));
-  fprintf(stderr, "%s", _("-nogui\t\t\t\t: do not show the gui (still shows the play window when active)\n"));
-  fprintf(stderr, "%s", _("-nosplash\t\t\t: do not show the splash window\n"));
-  fprintf(stderr, "%s",
-          _("-noplaywin\t\t\t: do not show the play window (still shows the internal player; intended for remote streaming)\n"));
-  fprintf(stderr, "%s",
-          _("-noninteractive\t\t\t: disable menu interactivity (intended for scripting applications, e.g liblives)\n"));
-  fprintf(stderr, "%s", _("-startup-ce\t\t\t: start in clip editor mode (overrides -startup-mt)\n"));
-  fprintf(stderr, "%s", _("-startup-mt\t\t\t: start in multitrack mode\n"));
-  fprintf(stderr, "%s", _("-vjmode\t\t\t\t: start in VJ mode (implicitly sets -startup-ce -autorecover "
-                          "-nolayout -asource external)\n"));
-  fprintf(stderr, "%s",
-          _("-fxmodesmax <n>\t\t\t: allow <n> modes per effect key (overrides any value set in preferences; minimum is 1)\n"));
+  outp_help(textbuf, "%s",
+            _("-dscrit <bytes>\t\t\t: temporarily sets the free disk space critical level for workdir to <bytes>\n"));
+  outp_help(textbuf, "%s", _("\t\t\t\t\t(intended to allow correction of erroneous values within the app; "
+                             "<= 0 disables checks)\n"));
+  outp_help(textbuf, "%s", _("-set <setname>\t\t\t: autoload clip set <setname>\n"));
+  outp_help(textbuf, "%s", _("-noset\t\t\t\t: do not reload any clip set on startup (overrides -set)\n"));
+  outp_help(textbuf, "%s", _("-layout <layout_name>\t\t: autoload multitrack layout <layout_name> (if successful, "
+                             "overrides -startup-ce)\n"));
+  outp_help(textbuf, "%s", _("-nolayout\t\t\t: do not reload any multitrack layout on startup (overrides -layout)\n"));
+  outp_help(textbuf, "%s",
+            _("-norecover\t\t\t: force non-loading of crash recovery files (overrides -recover / -autorecover)\n"));
+  outp_help(textbuf, "%s",
+            _("-recover | -autorecover\t\t: force reloading of any crash recovery files (may override -noset and -nolayout)\n"));
+  outp_help(textbuf, "%s", _("-nogui\t\t\t\t: do not show the gui (still shows the play window when active)\n"));
+  outp_help(textbuf, "%s", _("-nosplash\t\t\t: do not show the splash window\n"));
+  outp_help(textbuf, "%s",
+            _("-noplaywin\t\t\t: do not show the play window (still shows the internal player; intended for remote streaming)\n"));
+  outp_help(textbuf, "%s",
+            _("-noninteractive\t\t\t: disable menu interactivity (intended for scripting applications, e.g liblives)\n"));
+  outp_help(textbuf, "%s", _("-startup-ce\t\t\t: start in clip editor mode (overrides -startup-mt)\n"));
+  outp_help(textbuf, "%s", _("-startup-mt\t\t\t: start in multitrack mode\n"));
+  outp_help(textbuf, "%s", _("-vjmode\t\t\t\t: start in VJ mode (implicitly sets -startup-ce -autorecover "
+                             "-nolayout -asource external)\n"));
+  outp_help(textbuf, "%s",
+            _("-fxmodesmax <n>\t\t\t: allow <n> modes per effect key (overrides any value set in preferences; minimum is 1)\n"));
 #ifdef ENABLE_OSC
-  fprintf(stderr,  _("-oscstart <port>\t\t: start OSC listener on UDP port <port> (default is %d)\n"), DEF_OSC_LISTEN_PORT);
-  fprintf(stderr, "%s",
-          _("-nooscstart\t\t\t: do not start the OSC listener (the default, unless set in preferences)\n"));
+  outp_help(textbuf,  _("-oscstart <port>\t\t: start OSC listener on UDP port <port> (default is %d)\n"), DEF_OSC_LISTEN_PORT);
+  outp_help(textbuf, "%s",
+            _("-nooscstart\t\t\t: do not start the OSC listener (the default, unless set in preferences)\n"));
 #endif
-  fprintf(stderr, "%s",
-          _("-asource <source>\t\t: set the initial audio source (<source> can be 'internal' or 'external')\n"));
-  fprintf(stderr, _("\t\t\t\t\t(only valid for %s and %s players)\n"), AUDIO_PLAYER_JACK, AUDIO_PLAYER_PULSE_AUDIO);
-  fprintf(stderr, "%s", _("-aplayer <ap>\t\t\t: start with the selected audio player (<ap> can be: "));
+  outp_help(textbuf, "%s",
+            _("-asource <source>\t\t: set the initial audio source (<source> can be 'internal' or 'external')\n"));
+  outp_help(textbuf, _("\t\t\t\t\t(only valid for %s and %s players)\n"), AUDIO_PLAYER_JACK, AUDIO_PLAYER_PULSE_AUDIO);
+  outp_help(textbuf, "%s", _("-aplayer <ap>\t\t\t: start with the selected audio player (<ap> can be: "));
 #ifdef HAVE_PULSE_AUDIO
-  fprintf(stderr, "'%s'", AUDIO_PLAYER_PULSE);
+  outp_help(textbuf, "'%s'", AUDIO_PLAYER_PULSE);
 #endif
 #ifdef ENABLE_JACK
 #ifdef HAVE_PULSE_AUDIO
-  fprintf(stderr, ", "); // comma after pulse
+  outp_help(textbuf, ", "); // comma after pulse
 #endif
-  fprintf(stderr, "'%s'", AUDIO_PLAYER_JACK);
+  outp_help(textbuf, "'%s'", AUDIO_PLAYER_JACK);
   if (capable->has_sox_play) lives_printerr(", '%s'", AUDIO_PLAYER_SOX); // comma after jack
-  fprintf(stderr, " or '%s')\n", AUDIO_PLAYER_NONE);
-  fprintf(stderr, "%s",
-          _("\n-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options\n"
-            "\t\t\t\t\t\t(audio options are ignored if audio player is not jack)\n\n"
-            "\tUseful values include:\t\t    0 - do not start any servers; only connect audio; no transport client\n"
-            "\t\t\t\t\t   16 - start audio server if connection fails; no transport client\n"
-            "\t\t\t\t\t 1024 - create audio and transport clients; only connect\n"
-            "\t\t\t\t\t 1028 - create audio and transport clients; transport client may start a server\n"
-            "\t\t\t\t\t\t\t\tif it fails to connect,\n"
-           ));
-  fprintf(stderr, "%s",
-          _("-jackserver <server_name>\t: temporarily sets the jackd server for all connection / startup attemps\n"));
-  fprintf(stderr, _("\t\t\t\t\tif <server_name> is ommitted then LiVES will use the default server name:-\n"
-                    "\t\t\t\t\teither the value of $%s or '%s' if that enviromnent variable is unset\n\n"),
-          JACK_DEFAULT_SERVER, JACK_DEFAULT_SERVER_NAME);
+  outp_help(textbuf, " or '%s')\n", AUDIO_PLAYER_NONE);
+  outp_help(textbuf, "%s",
+            _("\n-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options\n"
+              "\t\t\t\t\t\t(audio options are ignored if audio player is not jack)\n\n"
+              "\tUseful values include:\t\t    0 - do not start any servers; only connect audio; no transport client\n"
+              "\t\t\t\t\t   16 - start audio server if connection fails; no transport client\n"
+              "\t\t\t\t\t 1024 - create audio and transport clients; only connect\n"
+              "\t\t\t\t\t 1028 - create audio and transport clients; transport client may start a server\n"
+              "\t\t\t\t\t\t\t\tif it fails to connect,\n"
+             ));
+  outp_help(textbuf, "%s",
+            _("-jackserver <server_name>\t: temporarily sets the jackd server for all connection / startup attemps\n"));
+  outp_help(textbuf, _("\t\t\t\t\tif <server_name> is ommitted then LiVES will use the default server name:-\n"
+                       "\t\t\t\t\teither the value of $%s or '%s' if that enviromnent variable is unset\n\n"),
+            JACK_DEFAULT_SERVER, JACK_DEFAULT_SERVER_NAME);
 #else // no jack
   if (capable->has_sox_play) {
 #ifdef HAVE_PULSE_AUDIO
-    fprintf(stderr, ", "); // comma after pulse
+    outp_help(textbuf, ", "); // comma after pulse
 #endif
-    fprintf(stderr, _("'%s' or "), AUDIO_PLAYER_SOX);
+    outp_help(textbuf, _("'%s' or "), AUDIO_PLAYER_SOX);
   }
 #ifdef HAVE_PULSE_AUDIO
-  else fprintf(stderr, "%s", _(" or ")); // no sox, 'or' after pulse
+  else outp_help(textbuf, "%s", _(" or ")); // no sox, 'or' after pulse
 #endif
-  fprintf(stderr, "'%s')\n", AUDIO_PLAYER_NONE);
+  outp_help(textbuf, "'%s')\n", AUDIO_PLAYER_NONE);
 #endif
-  fprintf(stderr, "%s", _("-devicemap <mapname>\t\t: autoload devicemap <mapname> (for MIDI / joystick control)\n"));
-  fprintf(stderr, "%s", _("-vppdefaults <file>\t\t: load defaults for video playback plugin from <file>\n"
-                          "\t\t\t\t\t(Note: only affects the plugin settings, not the plugin type)\n"));
+  outp_help(textbuf, "%s", _("-devicemap <mapname>\t\t: autoload devicemap <mapname> (for MIDI / joystick control)\n"));
+  outp_help(textbuf, "%s", _("-vppdefaults <file>\t\t: load defaults for video playback plugin from <file>\n"
+                             "\t\t\t\t\t(Note: only affects the plugin settings, not the plugin type)\n"));
 #ifdef HAVE_YUV4MPEG
-  fprintf(stderr, "%s",  _("-yuvin <fifo>\t\t\t: autoplay yuv4mpeg from stream <fifo> on startup\n"));
-  fprintf(stderr, "%s", _("\t\t\t\t\t(only valid in clip edit startup mode)\n"));
+  outp_help(textbuf, "%s",  _("-yuvin <fifo>\t\t\t: autoplay yuv4mpeg from stream <fifo> on startup\n"));
+  outp_help(textbuf, "%s", _("\t\t\t\t\t(only valid in clip edit startup mode)\n"));
 #endif
-  fprintf(stderr, "%s", _("-debug\t\t\t\t: try to debug crashes (requires 'gdb' to be installed)\n"));
-  fprintf(stderr, "%s", "\n");
+  outp_help(textbuf, "%s", _("-debug\t\t\t\t: try to debug crashes (requires 'gdb' to be installed)\n"));
+  outp_help(textbuf, "%s", "\n");
 }
 
 //// things to do - on startup
@@ -4805,7 +4821,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
       get_basename(cdir);
       capable->myname = lives_strdup(cdir);
 
-      print_opthelp(capable->extracmds_file[0], capable->extracmds_file[1]);
+      print_opthelp(NULL, capable->extracmds_file[0], capable->extracmds_file[1]);
       exit(0);
     } else if (!strcmp(xargv[1], "-version") || !strcmp(xargv[1], "--version")) {
       print_notice();
@@ -5555,7 +5571,7 @@ void sensitize_rfx(void) {
                && has_audio_filters(AF_TYPE_ANY))
               || mainw->agen_key != 0)) {
         lives_widget_set_sensitive(menuitem, TRUE);
-      } //else lives_widget_set_sensitive(menuitem, FALSE);
+      }
 
       if (mainw->num_rendered_effects_test > 0) {
         lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
@@ -5862,12 +5878,15 @@ void desensitize(void) {
     if (has_rfx) {
       if (!mainw->foreign) {
         for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
-             mainw->num_rendered_effects_test; i++)
+             mainw->num_rendered_effects_test; i++) {
+          if (i == mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate) continue;
+          if (mainw->rendered_fx[i]->props & RFX_PROPS_MAY_RESIZE) continue;
+          if (mainw->rendered_fx[i]->num_in_channels == 2) continue;
           if (mainw->rendered_fx[i]->menuitem && mainw->rendered_fx[i]->min_frames >= 0)
             lives_widget_set_sensitive(mainw->rendered_fx[i]->menuitem, FALSE);
-      }
-    }
-  }
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
 
   if (mainw->resize_menuitem) {
     lives_widget_set_sensitive(mainw->resize_menuitem, FALSE);

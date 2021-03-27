@@ -492,6 +492,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #define LIVES_WIDGET_TOGGLED_SIGNAL "toggled"
 #define LIVES_WIDGET_CHANGED_SIGNAL "changed"
 #define LIVES_WIDGET_ACTIVATE_SIGNAL "activate"
+#define LIVES_WIDGET_ACTIVATE_ITEM_SIGNAL "activate-item"
 #define LIVES_WIDGET_VALUE_CHANGED_SIGNAL "value-changed"
 #define LIVES_WIDGET_SELECTION_CHANGED_SIGNAL "selection-changed"
 #define LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL "current-folder-changed"

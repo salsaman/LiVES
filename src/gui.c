@@ -1601,28 +1601,37 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
-  mainw->show_devopts = lives_standard_check_menu_item_new_with_label(_("Enable Developer Options"),
-                        prefs->show_dev_opts);
+  mainw->show_devopts = lives_standard_check_menu_item_new_with_label(_("Enable Developer Options"), prefs->show_dev_opts);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->show_devopts),  prefs->show_dev_opts);
 
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->show_devopts);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_devopts), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(toggle_sets_pref), (livespointer)PREF_SHOW_DEVOPTS);
+
+  // submenu cannot be added directly to check_menu_item, due to gtkmenuitem having a broken implementation:
+  // 	       		https://gitlab.gnome.org/GNOME/gtk/-/issues/3802
+  // (otherwise this could look a lot nicer)
+  menuitem = lives_standard_menu_item_new_with_label(_("Developer Options"));
+  lives_container_add(LIVES_CONTAINER(mainw->help_menu), menuitem);
+
+  submenu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), submenu);
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->show_devopts), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                  LIVES_GUI_CALLBACK(toggle_sets_pref), (livespointer)PREF_SHOW_DEVOPTS);
+
+  menu_sets_sensitive(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), submenu, FALSE);
+  menu_sets_visible(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), menuitem, FALSE);
 
   mainw->dev_dabg = lives_standard_check_menu_item_new_for_var(_("Show drawing area backgrounds"),
                     &prefs->dev_show_dabg, FALSE);
-  lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->dev_dabg);
-  menu_sets_visible(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), mainw->dev_dabg, FALSE);
+  lives_container_add(LIVES_CONTAINER(submenu), mainw->dev_dabg);
 
   mainw->dev_timing = lives_standard_check_menu_item_new_for_var(_("Show frame timings on console"),
                       &prefs->dev_show_timing, FALSE);
-  lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->dev_timing);
-  menu_sets_visible(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), mainw->dev_timing, FALSE);
+  lives_container_add(LIVES_CONTAINER(submenu), mainw->dev_timing);
 
   mainw->dev_caching = lives_standard_check_menu_item_new_for_var(_("Show cache predictions on console"),
                        &prefs->dev_show_caching, FALSE);
-  lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->dev_caching);
-  menu_sets_visible(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), mainw->dev_caching, FALSE);
+  lives_container_add(LIVES_CONTAINER(submenu), mainw->dev_caching);
 
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
@@ -3990,7 +3999,6 @@ static void _make_play_window(void) {
     make_preview_box();
   }
 
-  //lives_widget_show_all(mainw->play_window);
   lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
   lives_widget_object_ref(mainw->preview_box);
   pb_added = TRUE;

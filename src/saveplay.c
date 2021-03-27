@@ -2679,6 +2679,8 @@ void play_file(void) {
 
   lives_free(com3);
 
+  if (mainw->play_window && !mainw->multitrack) lives_widget_hide(mainw->preview_controls);
+
   // if recording, refrain from writing audio until we are ready
   if (mainw->record) mainw->record_paused = TRUE;
 
@@ -3242,10 +3244,6 @@ void play_file(void) {
       lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
     }
     if (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
-      /* if (!mainw->multitrack || !mainw->fs || */
-      /* 	  (mainw->cancelled != CANCEL_USER_PAUSED && */
-      /* 	   !((mainw->cancelled == CANCEL_NONE || */
-      /* 	      mainw->cancelled == CANCEL_NO_MORE_PREVIEW)))) { */
       kill_play_window();
     } else {
       /// or resize it back to single size
@@ -3257,7 +3255,6 @@ void play_file(void) {
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
             lives_widget_show_all(mainw->preview_box);
             lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
-            //lives_widget_grab_focus(mainw->preview_spinbutton);
           }
         }
         if (mainw->current_file != current_file) {

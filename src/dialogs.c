@@ -2650,20 +2650,18 @@ const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
     if (!mainw->is_ready) pop_to_front(dlg, NULL);
     response = lives_dialog_run(LIVES_DIALOG(dlg));
 
+    lives_widget_destroy(dlg);
+    lives_widget_context_update();
+
     if (response == LIVES_RESPONSE_ABORT) {
       maybe_abort(TRUE);
-      lives_widget_destroy(dlg);
-      lives_widget_context_update();
       continue;
     }
     if (response == LIVES_RESPONSE_BROWSE) {
       char *new_libdir;
-      lives_widget_hide(dlg);
       lives_widget_context_update();
       new_libdir = choose_file(prefs->lib_dir, PLUGINS_LITERAL, NULL,
                                LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
-      lives_widget_destroy(dlg);
-      lives_widget_context_update();
       if (!new_libdir) continue;
       lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", new_libdir);
       lives_free(new_libdir);

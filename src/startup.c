@@ -1715,7 +1715,7 @@ static void skip_tests(LiVESWidget * dialog, livespointer button) {
 static void fix_plugins(LiVESWidget * b, LiVESWidget * table) {
   LiVESWidget *dialog = lives_widget_get_toplevel(b);
   lives_widget_hide(dialog);
-  if (check_for_plugins(prefs->lib_dir, FALSE)) {
+  if (check_for_plugins(prefs->config_datadir, FALSE)) {
     LiVESWidget *w = lives_widget_get_parent(b), *image;
     while (!LIVES_IS_TABLE(lives_widget_get_parent(w))) w = lives_widget_get_parent(w);
     lives_widget_set_no_show_all(w, TRUE);
@@ -1726,6 +1726,7 @@ static void fix_plugins(LiVESWidget * b, LiVESWidget * table) {
     pass_test(table, 0);
   } else lives_widget_show(dialog);
 }
+
 
 static void fix_prefix(LiVESWidget * b, LiVESWidget * table) {
   LiVESWidget *dialog = lives_widget_get_toplevel(b);
@@ -1915,7 +1916,7 @@ rerun:
   prep_test(table, testcase);
   if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
-  if (!check_for_plugins(prefs->lib_dir, TRUE)) {
+  if (!check_for_plugins(prefs->config_datadir, TRUE)) {
     hbox = fail_test(table, testcase, _("Some plugin directories could not be located"));
     widget_opts.use_markup = TRUE;
     resolveb =

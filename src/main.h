@@ -1405,6 +1405,7 @@ boolean startup_message_choice(const char *msg, int msgtype);
 boolean startup_message_nonfatal(const char *msg);
 boolean startup_message_info(const char *msg);
 boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_mask);
+void print_opthelp(LiVESTextBuffer *, const char *extracmds_file1, const char *extracmds_file2);
 capability *get_capabilities(void);
 void get_monitors(boolean reset);
 void replace_with_delegates(void);

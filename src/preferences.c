@@ -1140,7 +1140,7 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
 
   if (!lives_strcmp(prefidx, PREF_SHOW_DEVOPTS)) {
     if (prefs->show_dev_opts == newval) goto fail2;
-    if (mainw && mainw->show_devopts !=  NULL)
+    if (mainw && mainw->show_devopts)
       lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), newval);
     prefs->show_dev_opts = newval;
     goto success2;
@@ -3513,6 +3513,17 @@ static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
 }
 
 
+static void show_cmdlinehelp(LiVESWidget * w, livespointer data) {
+  LiVESTextBuffer *textbuf = lives_text_buffer_new();
+  char *title = _("Commandline Options");
+  text_window *hlpwin = create_text_window(title, NULL, textbuf, FALSE);
+  lives_free(title);
+  print_opthelp(textbuf, NULL, NULL);
+  lives_dialog_run(LIVES_DIALOG(hlpwin->dialog));
+  lives_widget_destroy(hlpwin->dialog);
+}
+
+
 /*
   Function creates preferences dialog
 */
@@ -3555,6 +3566,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   LiVESWidget *mt_enter_defs;
 
   LiVESWidget *advbutton;
+  LiVESWidget *cmdhelp;
 #if GTK_CHECK_VERSION(3, 2, 0)
   LiVESWidget *scale;
 #endif
@@ -3782,9 +3794,12 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, FALSE, widget_opts.packing_width);
   lives_free(msg);
 
-  lives_standard_button_new_from_stock_full
-  (LIVES_LIVES_STOCK_HELP_INFO, _("Commandline reference (opens new window)"),
-   -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+  cmdhelp = lives_standard_button_new_from_stock_full
+            (LIVES_LIVES_STOCK_HELP_INFO, _("Commandline reference (opens in new window)"),
+             -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(cmdhelp), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(show_cmdlinehelp), NULL);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_reset));
 
@@ -5261,7 +5276,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     show_warn_image(prefsw->workdir_entry, _("Value was set via commandline option"));
     prefsw->checkbutton_perm_workdir = lives_standard_check_button_new
                                        (_("Make ths value permanent"), !(prefs->warning_mask & WARN_MASK_FSIZE), LIVES_BOX(hbox),
-                                        H_("Check this to make the -workdir value supplied on the commnadline, the peramanent value"));
+                                        H_("Check this to make the -workdir value supplied on the commandline become the permanent value"));
   } else if (prefs->vj_mode) {
     show_warn_image(prefsw->workdir_entry, _("Changes disabled in VJ mode"));
     lives_widget_set_sensitive(dirbutton, FALSE);

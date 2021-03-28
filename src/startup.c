@@ -31,20 +31,20 @@ void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
   lives_widget_show_all(dialog);
   lives_widget_context_update();
 
-  if (!prefs->startup_phase || LIVES_IS_FILE_CHOOSER_DIALOG(dialog)) {
-    if (capable->has_xdotool == MISSING && capable->has_wmctrl == MISSING) return;
-    wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
-    activated = activate_x11_window(wid);
-    lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
+  //if (!prefs->startup_phase || LIVES_IS_FILE_CHOOSER_DIALOG(dialog)) {
+  if (capable->has_xdotool == MISSING && capable->has_wmctrl == MISSING) return;
+  wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
+  activated = activate_x11_window(wid);
+  lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
 
-    if (extra) {
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(extra), KEEPABOVE_KEY, dialog);
-      if (activated)
-        lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(extra),
-                                          ACTIVATE_KEY, lives_strdup(wid));
-    }
-    if (wid) lives_free(wid);
+  if (extra) {
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(extra), KEEPABOVE_KEY, dialog);
+    if (activated)
+      lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(extra),
+                                        ACTIVATE_KEY, lives_strdup(wid));
   }
+  if (wid) lives_free(wid);
+  //}
 }
 
 
@@ -190,7 +190,7 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
     lives_free(keymap_file);
 
     devmapdir = lives_build_path(config_datadir, LIVES_DEVICEMAP_DIR, NULL);
-    if (1 || !lives_file_test(devmapdir, LIVES_FILE_TEST_IS_DIR)) {
+    if (!lives_file_test(devmapdir, LIVES_FILE_TEST_IS_DIR)) {
 #ifdef ENABLE_OSC
       char *sys_devmap_dir = lives_build_path(prefs->prefix_dir, LIVES_DATA_DIR, LIVES_DEVICEMAP_DIR, NULL);
       if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
@@ -1692,7 +1692,7 @@ LIVES_LOCAL_INLINE char *get_resource(char *fname) {
 
 static void quit_from_tests(LiVESWidget * dialog, livespointer button) {
   lives_widget_hide(dialog);
-  if (confirm_exit()) {
+  if (!prefs->startup_phase || confirm_exit()) {
     SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_DESTROY);
     mainw->cancelled = CANCEL_USER;
   } else {
@@ -1715,7 +1715,7 @@ static void skip_tests(LiVESWidget * dialog, livespointer button) {
 static void fix_plugins(LiVESWidget * b, LiVESWidget * table) {
   LiVESWidget *dialog = lives_widget_get_toplevel(b);
   lives_widget_hide(dialog);
-  if (check_for_plugins(prefs->config_datadir, FALSE)) {
+  if (check_for_plugins(prefs->lib_dir, FALSE)) {
     LiVESWidget *w = lives_widget_get_parent(b), *image;
     while (!LIVES_IS_TABLE(lives_widget_get_parent(w))) w = lives_widget_get_parent(w);
     lives_widget_set_no_show_all(w, TRUE);
@@ -1751,7 +1751,7 @@ boolean do_startup_tests(boolean tshoot) {
   LiVESWidget *label, *xlabel = NULL;
   LiVESWidget *table;
   LiVESWidget *resolveb;
-  LiVESWidget *okbutton;
+  LiVESWidget *okbutton = NULL, *defbutton;
   LiVESWidget *cancelbutton = NULL, *backbutton = NULL;
 
   char mppath[PATH_MAX];
@@ -1825,30 +1825,29 @@ rerun:
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, _("Exit Setup"),
                    LIVES_RESPONSE_CANCEL);
 
-    quitfunc = lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-               LIVES_GUI_CALLBACK(quit_from_tests), dialog);
-
-    lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
-
     backbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK, _("_Back to Directory Selection"),
                  LIVES_RESPONSE_RETRY);
 
     backfunc = lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(backbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                LIVES_GUI_CALLBACK(back_from_tests), dialog);
 
-    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Skip"),
-               LIVES_RESPONSE_OK);
+    defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Skip"),
+                           LIVES_RESPONSE_OK);
 
     skipfunc = lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                LIVES_GUI_CALLBACK(skip_tests), dialog);
 
-  } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
-                      LIVES_RESPONSE_OK);
+  } else {
+    defbutton = cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                               LIVES_RESPONSE_CANCEL);
+  }
+  quitfunc = lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+             LIVES_GUI_CALLBACK(quit_from_tests), dialog);
 
-  lives_button_grab_default_special(okbutton);
-  lives_widget_grab_focus(okbutton);
+  lives_button_grab_default_special(defbutton);
+  lives_widget_grab_focus(defbutton);
 
-  if (tshoot) lives_widget_set_sensitive(okbutton, FALSE);
+  lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
 
   table = lives_table_new(10, 4, FALSE);
   lives_container_add(LIVES_CONTAINER(dialog_vbox), table);
@@ -1916,14 +1915,14 @@ rerun:
   prep_test(table, testcase);
   if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
-  if (!check_for_plugins(prefs->config_datadir, TRUE)) {
+  if (!check_for_plugins(prefs->lib_dir, TRUE)) {
     hbox = fail_test(table, testcase, _("Some plugin directories could not be located"));
     widget_opts.use_markup = TRUE;
     resolveb =
       lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
           _("<b>Fix this !</b>"), DEF_BUTTON_WIDTH, -1, LIVES_BOX(hbox), TRUE, NULL);
     widget_opts.use_markup = FALSE;
-    lives_box_pack_start(LIVES_BOX(hbox), resolveb, FALSE, FALSE, widget_opts.packing_width);
+    //lives_box_pack_start(LIVES_BOX(hbox), resolveb, FALSE, FALSE, widget_opts.packing_width);
     lives_widget_grab_focus(cancelbutton);
     success = FALSE;
     lives_signal_sync_connect(LIVES_GUI_OBJECT(resolveb), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -1942,7 +1941,7 @@ rerun:
       lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
           _("<b>Fix this !</b>"), DEF_BUTTON_WIDTH, -1, LIVES_BOX(hbox), TRUE, NULL);
     widget_opts.use_markup = FALSE;
-    lives_box_pack_start(LIVES_BOX(hbox), resolveb, FALSE, FALSE, widget_opts.packing_width);
+    //lives_box_pack_start(LIVES_BOX(hbox), resolveb, FALSE, FALSE, widget_opts.packing_width);
     lives_widget_grab_focus(cancelbutton);
     lives_widget_show_all(resolveb);
     success = FALSE;
@@ -2296,7 +2295,7 @@ rerun:
       fail_test(table, testcase, msg);
       lives_free(msg);
     } else {
-      msg = lives_strdup_printf(_("jpeg support is not necessary, png decoding is a better choice"), mp_cmd);
+      msg = lives_strdup_printf(_("jpeg support is not obligatory, since png decoding is a better choice"), mp_cmd);
       fail_test(table, testcase, msg);
       lives_free(msg);
     }
@@ -2322,8 +2321,10 @@ jpgdone:
   close_file(current_file, tshoot);
   mainw->current_file = current_file;
 
-  lives_widget_set_sensitive(okbutton, TRUE);
-  lives_widget_grab_focus(okbutton);
+  if (!tshoot) {
+    lives_widget_set_sensitive(okbutton, TRUE);
+    lives_widget_grab_focus(okbutton);
+  }
 
   if (tshoot) {
     if (imgext_switched) {
@@ -2333,6 +2334,7 @@ jpgdone:
       lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
     }
     lives_widget_show(label);
+    lives_standard_button_set_label(LIVES_BUTTON(defbutton), LIVES_STOCK_LABEL_OK);
   } else {
     if (xlabel) lives_widget_set_opacity(xlabel, 1.);
 
@@ -2349,7 +2351,7 @@ jpgdone:
 
     // returned if dialog is hidden
     if (response == LIVES_RESPONSE_NONE) continue;
-    if (response == LIVES_RESPONSE_CANCEL) {
+    if (response == LIVES_RESPONSE_CANCEL && !tshoot) {
       lives_widget_hide(dialog);
       if (confirm_exit()) {
         goto cancld;

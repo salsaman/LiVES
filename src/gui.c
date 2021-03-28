@@ -2325,38 +2325,33 @@ void create_LiVES(void) {
   lives_widget_set_hexpand(mainw->raudio_draw, TRUE);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, FALSE, FALSE, 0);
 
-  if (1 || prefs->show_msg_area) {
-    mainw->message_box = lives_hbox_new(FALSE, 0);
-    lives_widget_set_app_paintable(mainw->message_box, TRUE);
-    //lives_widget_set_vexpand(mainw->message_box, TRUE);
-    lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, FALSE, TRUE, 0);
+  mainw->message_box = lives_hbox_new(FALSE, 0);
+  lives_widget_set_app_paintable(mainw->message_box, TRUE);
+  //lives_widget_set_vexpand(mainw->message_box, TRUE);
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, FALSE, TRUE, 0);
 
-    mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(reshow_msg_area), &mainw->msg_surface);
+  mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(reshow_msg_area), &mainw->msg_surface);
 
-    lives_widget_add_events(mainw->msg_area, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
+  lives_widget_add_events(mainw->msg_area, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
 
-    //lives_widget_set_vexpand(mainw->msg_area, TRUE);
-    lives_container_set_border_width(LIVES_CONTAINER(mainw->message_box), 0);
-    lives_widget_apply_theme3(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL);
-    lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->msg_area, TRUE, TRUE, 0);
+  //lives_widget_set_vexpand(mainw->msg_area, TRUE);
+  lives_container_set_border_width(LIVES_CONTAINER(mainw->message_box), 0);
+  lives_widget_apply_theme3(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL);
+  lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->msg_area, TRUE, TRUE, 0);
 
-    mainw->msg_scrollbar = lives_vscrollbar_new(NULL);
-    lives_box_pack_end(LIVES_BOX(mainw->message_box), mainw->msg_scrollbar, FALSE, TRUE, 0);
+  mainw->msg_scrollbar = lives_vscrollbar_new(NULL);
+  lives_box_pack_end(LIVES_BOX(mainw->message_box), mainw->msg_scrollbar, FALSE, TRUE, 0);
 
-    mainw->msg_adj = lives_range_get_adjustment(LIVES_RANGE(mainw->msg_scrollbar));
+  mainw->msg_adj = lives_range_get_adjustment(LIVES_RANGE(mainw->msg_scrollbar));
 
-    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->msg_adj), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                    LIVES_GUI_CALLBACK(msg_area_scroll), (livespointer)mainw->msg_area);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->msg_adj), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(msg_area_scroll), (livespointer)mainw->msg_area);
 
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_SCROLL_EVENT,
-                              LIVES_GUI_CALLBACK(on_msg_area_scroll), (livespointer)mainw->msg_adj);
-    if (!prefs->show_msg_area) {
-      lives_widget_set_no_show_all(mainw->message_box, TRUE);
-      lives_widget_hide(mainw->message_box);
-    }
-  } else {
-    mainw->message_box = mainw->msg_area = mainw->msg_scrollbar = NULL;
-    mainw->msg_adj = NULL;
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_SCROLL_EVENT,
+                            LIVES_GUI_CALLBACK(on_msg_area_scroll), (livespointer)mainw->msg_adj);
+  if (!prefs->show_msg_area) {
+    lives_widget_set_no_show_all(mainw->message_box, TRUE);
+    lives_widget_hide(mainw->message_box);
   }
 
   // accel keys

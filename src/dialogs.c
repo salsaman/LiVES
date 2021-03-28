@@ -385,6 +385,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     break;
 
   case LIVES_DIALOG_ABORT_SKIP_BROWSE:
+  case LIVES_DIALOG_ABORT_CANCEL_BROWSE:
   case LIVES_DIALOG_CANCEL_BROWSE:
   case LIVES_DIALOG_RETRY_SKIP_BROWSE:
   case LIVES_DIALOG_RETRY_CANCEL_BROWSE:
@@ -393,7 +394,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     lives_window_set_title(LIVES_WINDOW(dialog), _("Missing File or Directory"));
 
-    if (diat == LIVES_DIALOG_ABORT_SKIP_BROWSE) {
+    if (diat == LIVES_DIALOG_ABORT_SKIP_BROWSE || diat == LIVES_DIALOG_ABORT_CANCEL_BROWSE) {
       if (!prefs->startup_phase)
         lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
                                            LIVES_STOCK_CLOSE, LIVES_STOCK_LABEL_ABORT, LIVES_RESPONSE_ABORT);
@@ -402,15 +403,12 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
                                            LIVES_STOCK_CLOSE, _("_Exit Setup"), LIVES_RESPONSE_ABORT);
     }
 
-    if (diat != LIVES_DIALOG_ABORT_SKIP_BROWSE && diat != LIVES_DIALOG_CANCEL_BROWSE)
+    if (diat == LIVES_DIALOG_RETRY_SKIP_BROWSE && diat == LIVES_DIALOG_RETRY_CANCEL_BROWSE)
       okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
                  _("_Retry"), LIVES_RESPONSE_RETRY);
 
-    if (diat == LIVES_DIALOG_RETRY_CANCEL_BROWSE)
-      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-                     LIVES_RESPONSE_CANCEL);
-
-    if (diat == LIVES_DIALOG_CANCEL_BROWSE) {
+    if (diat == LIVES_DIALOG_CANCEL_BROWSE || diat == LIVES_DIALOG_RETRY_CANCEL_BROWSE
+        || diat == LIVES_DIALOG_ABORT_CANCEL_BROWSE) {
       if (prefs->startup_phase)
         cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK, LIVES_STOCK_LABEL_BACK,
                        LIVES_RESPONSE_CANCEL);
@@ -418,6 +416,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
         cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                        LIVES_RESPONSE_CANCEL);
     }
+
     if (diat == LIVES_DIALOG_RETRY_SKIP_BROWSE || diat == LIVES_DIALOG_ABORT_SKIP_BROWSE)
       cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
                      LIVES_STOCK_LABEL_SKIP, LIVES_RESPONSE_CANCEL);
@@ -2599,6 +2598,7 @@ const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
   // in all other cases the pref is not updated, and NULL is returned instead
 
   char *msg1, *msg2, *msg3 = NULL, *msg4, *msg;
+  char *new_libdir;
   LiVESWidget *dlg;
   LiVESResponseType response;
 
@@ -2628,8 +2628,8 @@ const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
     lives_free(pltype);
   }
 
-  if (1 || !prefs->startup_phase) msg4 = lives_strdup_printf(_("Click %s to exit immediately from LiVES"),
-                                           STOCK_LABEL_TEXT(ABORT));
+  if (!prefs->startup_phase) msg4 = lives_strdup_printf(_("Click %s to exit immediately from LiVES"),
+                                      STOCK_LABEL_TEXT(ABORT));
   else msg4 = _("Click 'Exit Setup' to quit from LiVES setup");
 
   msg = lives_strdup_printf(_("%s%s%s\n%s, %s to continue with the current value, "
@@ -2640,12 +2640,8 @@ const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
 
   while (1) {
     widget_opts.use_markup = TRUE;
-    if (prefs->startup_phase != 2)
-      dlg = create_message_dialog(LIVES_DIALOG_ABORT_SKIP_BROWSE, msg, WARN_MASK_CHECK_PLUGINS);
-    else {
-      dlg = create_message_dialog(LIVES_DIALOG_CANCEL_BROWSE, msg, WARN_MASK_CHECK_PLUGINS);
-      lives_dialog_set_button_layout(LIVES_DIALOG(dlg), LIVES_BUTTONBOX_EDGE);
-    }
+    dlg = create_message_dialog(LIVES_DIALOG_CANCEL_BROWSE, msg, WARN_MASK_CHECK_PLUGINS);
+    lives_dialog_set_button_layout(LIVES_DIALOG(dlg), LIVES_BUTTONBOX_EDGE);
     widget_opts.use_markup = FALSE;
     if (!mainw->is_ready) pop_to_front(dlg, NULL);
     response = lives_dialog_run(LIVES_DIALOG(dlg));
@@ -2658,13 +2654,10 @@ const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
       continue;
     }
     if (response == LIVES_RESPONSE_BROWSE) {
-      char *new_libdir;
       lives_widget_context_update();
       new_libdir = choose_file(prefs->lib_dir, PLUGINS_LITERAL, NULL,
                                LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
       if (!new_libdir) continue;
-      lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", new_libdir);
-      lives_free(new_libdir);
     }
     break;
   }
@@ -2673,7 +2666,7 @@ const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
     lives_widget_show(mainw->splash_window);
   }
 
-  if (response == LIVES_RESPONSE_BROWSE) return prefs->lib_dir;
+  if (response == LIVES_RESPONSE_BROWSE) return new_libdir;
   return NULL;
 }
 
@@ -2684,6 +2677,7 @@ const char *miss_prefix_warn(const char *dirnm, LiVESList * subdirs) {
   // in all other cases the pref is not updated, and NULL is returned instead
 
   char *msg1, *msg2, *msg3 = NULL, *msg, *msg4, *tmp;
+  char *new_prefixdir;
   LiVESWidget *dlg;
   LiVESResponseType response;
 
@@ -2719,12 +2713,8 @@ const char *miss_prefix_warn(const char *dirnm, LiVESList * subdirs) {
 
   while (1) {
     widget_opts.use_markup = TRUE;
-    if (prefs->startup_phase != 2)
-      dlg = create_message_dialog(LIVES_DIALOG_ABORT_SKIP_BROWSE, msg, WARN_MASK_CHECK_PREFIX);
-    else {
-      dlg = create_message_dialog(LIVES_DIALOG_CANCEL_BROWSE, msg, WARN_MASK_CHECK_PREFIX);
-      lives_dialog_set_button_layout(LIVES_DIALOG(dlg), LIVES_BUTTONBOX_EDGE);
-    }
+    dlg = create_message_dialog(LIVES_DIALOG_CANCEL_BROWSE, msg, WARN_MASK_CHECK_PREFIX);
+    lives_dialog_set_button_layout(LIVES_DIALOG(dlg), LIVES_BUTTONBOX_EDGE);
     widget_opts.use_markup = FALSE;
     if (!mainw->is_ready) pop_to_front(dlg, NULL);
     response = lives_dialog_run(LIVES_DIALOG(dlg));
@@ -2736,11 +2726,10 @@ const char *miss_prefix_warn(const char *dirnm, LiVESList * subdirs) {
       continue;
     }
     if (response == LIVES_RESPONSE_BROWSE) {
-      char *new_prefixdir = choose_file(prefs->prefix_dir, NULL, NULL,
-                                        LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
+      lives_widget_context_update();
+      new_prefixdir = choose_file(prefs->prefix_dir, NULL, NULL,
+                                  LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
       if (!new_prefixdir) continue;
-      lives_snprintf(prefs->prefix_dir, PATH_MAX, "%s", new_prefixdir);
-      lives_free(new_prefixdir);
     }
     break;
   }
@@ -2749,7 +2738,7 @@ const char *miss_prefix_warn(const char *dirnm, LiVESList * subdirs) {
     lives_widget_show(mainw->splash_window);
   }
 
-  if (response == LIVES_RESPONSE_BROWSE) return prefs->prefix_dir;
+  if (response == LIVES_RESPONSE_BROWSE) return new_prefixdir;
   return NULL;
 }
 

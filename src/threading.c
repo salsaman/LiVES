@@ -192,8 +192,11 @@ thrd_done:
   lives_alarm_clear(alarm_handle);
   if (xtimeout == 0) {
     if (!lives_proc_thread_check_finished(lpt)) {
-      if (1 || prefs->jokes) {
-        g_print("function call to %s was shot down in cold blood !\n", func_name);
+      if (prefs->jokes) {
+        // TODO - come up with some other "jokes". They should be debug messages that come up _rarely_,
+        // and should either insult the developer for doing something patently stupid,
+        // or output a debug message in a completely over the top fashion, e.g.:
+        g_print("function call to %s was ruthlessly shot down in cold blood !\nOh the humanity !", func_name);
       }
       lives_proc_thread_cancel_immediate(lpt);
       return NULL;
@@ -871,7 +874,9 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   mywork->busy = tdata->idx;
   myflags = mywork->flags;
 
-  //fprintf(stderr, "thread id %ld reporting\n", get_thread_id());
+  /* if (prefs->jokes) { */
+  /*   fprintf(stderr, "thread id %ld reporting for duty, Sir !\n", get_thread_id()); */
+  /* } */
 
   lives_nanosleep_until_nonzero(mywork->sync_ready);
 

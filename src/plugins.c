@@ -45,7 +45,7 @@ boolean check_for_plugins(const char *dirn, boolean check_only) {
   // ret. FALSE if missing
   const char *ret = NULL;
   LiVESList *subdir_list;
-  char *pldirn;
+  char *pldirn, *new_libdir = NULL;
   boolean show_succ = FALSE;
   if (prefs->warning_mask & WARN_MASK_CHECK_PLUGINS) return TRUE;
   pldirn = lives_build_path(dirn, PLUGIN_EXEC_DIR, NULL);
@@ -59,7 +59,14 @@ boolean check_for_plugins(const char *dirn, boolean check_only) {
     if (!subdir_list) {
       lives_free(pldirn);
       if (show_succ) {
-        do_info_dialog(_("All plugins were found !"));
+        char *msg;
+        if (!prefs->startup_phase)
+          msg = lives_strdup(_("\n\n<big><b>You to need to restart LiVES for the updated settings to take effect.</b></big>"));
+        else msg = lives_strdup("");
+        widget_opts.use_markup = TRUE;
+        do_info_dialogf(_("All plugins were found !%s"), msg);
+        widget_opts.use_markup = FALSE;
+        lives_free(msg);
       }
       return TRUE;
     }
@@ -76,14 +83,18 @@ boolean check_for_plugins(const char *dirn, boolean check_only) {
       if (!lives_string_ends_with(ret, "%s", LIVES_DIR_SEP PLUGIN_EXEC_DIR)) {
         do_error_dialogf(_("Path name must end with %s. Please try again or rename the directory"), PLUGIN_EXEC_DIR);
       } else {
-        char *ret2 = lives_strndup(ret, lives_strlen(ret) - lives_strlen(LIVES_DIR_SEP PLUGIN_EXEC_DIR));
+        if (new_libdir) lives_free(new_libdir);
+        new_libdir = lives_strndup(ret, lives_strlen(ret) - lives_strlen(LIVES_DIR_SEP PLUGIN_EXEC_DIR));
         lives_free(pldirn);
-        pldirn = lives_build_path(ret2, PLUGIN_EXEC_DIR, NULL);
-        lives_free(ret2);
+        pldirn = lives_build_path(new_libdir, PLUGIN_EXEC_DIR, NULL);
       }
     }
   } while (ret);
   lives_free(pldirn);
+  if (new_libdir) {
+    lives_snprintf(prefs->lib_dir, PATH_MAX, "%s", new_libdir);
+    lives_free(new_libdir);
+  }
   return FALSE;
 }
 
@@ -91,11 +102,12 @@ boolean check_for_plugins(const char *dirn, boolean check_only) {
 boolean find_prefix_dir(const char *predirn, boolean check_only) {
   // check all are present in prefs->prefix_dir;
   // ret. FALSE if missing
+  char *new_prefixdir = NULL;
   if (prefs->warning_mask & WARN_MASK_CHECK_PREFIX) return TRUE;
   else {
     const char *ret = NULL;
     LiVESList *subdir_list;
-    char *prdirn = lives_strdup(predirn);
+    char *prdirn = lives_strdup(prefs->prefix_dir);
     boolean show_succ = FALSE;
     do {
       subdir_list = NULL;
@@ -104,7 +116,14 @@ boolean find_prefix_dir(const char *predirn, boolean check_only) {
       subdir_list = check_for_subdirs(prdirn, subdir_list);
       if (!subdir_list) {
         if (show_succ) {
-          do_info_dialog(_("Extra components found !"));
+          char *msg;
+          if (!prefs->startup_phase)
+            msg = lives_strdup(_("\n\n<big><b>You to need to restart LiVES for the updated settings to take effect.</b></big>"));
+          else msg = lives_strdup("");
+          widget_opts.use_markup = TRUE;
+          do_info_dialogf(_("Extra components found !%s"), msg);
+          widget_opts.use_markup = FALSE;
+          lives_free(msg);
         }
         return TRUE;
       }
@@ -115,12 +134,18 @@ boolean find_prefix_dir(const char *predirn, boolean check_only) {
       }
       show_succ = TRUE;
       // returns new dir if we browsed, NULL = skipped
-      ret = miss_prefix_warn(predirn, subdir_list);
+      if (new_prefixdir) lives_free(new_prefixdir);
+      ret = miss_prefix_warn(prdirn, subdir_list);
       lives_list_free_all(&subdir_list);
       lives_free(prdirn);
       prdirn = lives_strdup(ret);
+      new_prefixdir = lives_strndup(ret, PATH_MAX);
     } while (ret);
     lives_free(prdirn);
+  }
+  if (new_prefixdir) {
+    lives_snprintf(prefs->prefix_dir, PATH_MAX, "%s", new_prefixdir);
+    lives_free(new_prefixdir);
   }
   return FALSE;
 }

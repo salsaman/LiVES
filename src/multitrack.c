@@ -8489,12 +8489,6 @@ void mt_init_clips(lives_mt * mt, int orig_file, boolean add) {
   while (add || cliplist) {
     if (add) i = orig_file;
     else i = LIVES_POINTER_TO_INT(cliplist->data);
-    if (0 && !IS_NORMAL_CLIP(i)) {
-      if (cliplist) {
-        cliplist = cliplist->next;
-        continue;
-      } else break;
-    }
     if (i != mainw->scrap_file && i != mainw->ascrap_file) {
       if (i == orig_file || (mt->clip_selected == -1 && i == mainw->pre_src_file)) {
         if (!add) mt->clip_selected = mt_clip_from_file(mt, i);

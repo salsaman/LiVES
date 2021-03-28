@@ -4407,30 +4407,34 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   diss = set_child_colour(chooser, FALSE);
   if (diss) {
     diss->selbut = lives_dialog_get_widget_for_response(LIVES_DIALOG(chooser), LIVES_RESPONSE_NO);
-    oldname = gtk_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
-    gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), DETECTOR_STRING);
-    elist = diss->entry_list;
-    for (; elist; elist = elist->next) {
-      if (!lives_strcmp(lives_entry_get_text((LiVESEntry *)elist->data), DETECTOR_STRING)) {
-        diss->old_entry = (LiVESWidget *)elist->data;
-        break;
-      }
-    }
-    if (oldname) {
-      gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), oldname);
-      lives_free(oldname);
-    } else gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), "");
-    if (diss->old_entry) {
-      gtk_widget_hide(diss->old_entry);
 
-      hbox = lives_hbox_new(FALSE, 0);
-      widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
-      diss->new_entry = lives_standard_entry_new(NULL, fname, -1, PATH_MAX, LIVES_BOX(hbox),
-                        H_("Select an existing directory or create a new one"));
-      widget_opts.expand = LIVES_EXPAND_DEFAULT;
-      lives_grid_attach_next_to(LIVES_GRID(lives_widget_get_parent(diss->old_entry)),
-                                hbox, diss->old_entry, LIVES_POS_RIGHT, 1, 1);
-      lives_widget_show_all(hbox);
+    if (act == LIVES_FILE_CHOOSER_ACTION_SAVE || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER) {
+      // only these actions are allowed to call set_current_name
+      oldname = gtk_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
+      gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), DETECTOR_STRING);
+      elist = diss->entry_list;
+      for (; elist; elist = elist->next) {
+        if (!lives_strcmp(lives_entry_get_text((LiVESEntry *)elist->data), DETECTOR_STRING)) {
+          diss->old_entry = (LiVESWidget *)elist->data;
+          break;
+        }
+      }
+      if (oldname) {
+        gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), oldname);
+        lives_free(oldname);
+      } else gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), "");
+      if (diss->old_entry) {
+        gtk_widget_hide(diss->old_entry);
+
+        hbox = lives_hbox_new(FALSE, 0);
+        widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
+        diss->new_entry = lives_standard_entry_new(NULL, fname, -1, PATH_MAX, LIVES_BOX(hbox),
+                          H_("Select an existing directory or create a new one"));
+        widget_opts.expand = LIVES_EXPAND_DEFAULT;
+        lives_grid_attach_next_to(LIVES_GRID(lives_widget_get_parent(diss->old_entry)),
+                                  hbox, diss->old_entry, LIVES_POS_RIGHT, 1, 1);
+        lives_widget_show_all(hbox);
+      }
     }
   }
 #endif

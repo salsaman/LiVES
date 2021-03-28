@@ -78,17 +78,8 @@ void get_player_size(int *opwidth, int *opheight) {
 
   if (!mainw->fs) {
     // embedded player
-    rwidth = lives_widget_get_allocation_width(mainw->play_image);// - H_RESIZE_ADJUST;
-    rheight = lives_widget_get_allocation_height(mainw->play_image);// - V_RESIZE_ADJUST;
-
-    if (0 && prefs->letterbox) {
-      *opwidth = cfile->hsize;
-      *opheight = cfile->vsize;
-      calc_maxspect(rwidth, rheight, opwidth, opheight);
-    } else {
-      *opwidth = rwidth;
-      *opheight = rheight;
-    }
+    *opwidth = rwidth = lives_widget_get_allocation_width(mainw->play_image);// - H_RESIZE_ADJUST;
+    *opheight = rheight = lives_widget_get_allocation_height(mainw->play_image);// - V_RESIZE_ADJUST;
   } else {
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), opwidth, opheight);

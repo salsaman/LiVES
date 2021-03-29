@@ -1686,10 +1686,6 @@ typedef struct {
   boolean has_custom_effects, has_custom_tools,  has_custom_gens, has_custom_utilities;
   boolean has_test_effects;
 
-  /// decoders
-  boolean decoders_loaded;
-  LiVESList *decoder_list;
-
   boolean go_away;
   boolean debug; ///< debug crashes and asserts
   void *debug_ptr;

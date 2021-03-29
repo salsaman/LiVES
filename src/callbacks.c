@@ -541,7 +541,7 @@ void lives_exit(int signum) {
 #ifdef VALGRIND_ON
     lives_list_free_all(&mainw->current_layouts_map);
 
-    if (capable->has_encoder_plugins) {
+    if (capable->has_encoder_plugins == PRESENT) {
       LiVESList *dummy_list = plugin_request("encoders", prefs->encoder.name, "finalise");
       lives_list_free_all(&dummy_list);
     }

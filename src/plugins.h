@@ -31,9 +31,13 @@ typedef weed_plant_t weed_param_t;
 #define PLUGIN_TYPE_SOURCE		259//		"source"
 #define PLUGIN_TYPE_VIDEO_PLAYER 	260//		"player"
 
-#define PLUGIN_SUBTYPE_DLL 		128//	"dll"
-#define PLUGIN_SUBTYPE_BINARY 		129//	"exe"
-#define PLUGIN_SUBTYPE_SCRIPT 		130//	"script"
+#define PLUGIN_TYPE_BASE_OFFSET		256 // subtract from types to get 0 base
+
+#define PLUGIN_TYPE_FIRST_CUSTOM	65536
+
+#define PLUGIN_SUBTYPE_DYNAMIC 		128//	dynamic library
+#define PLUGIN_SUBTYPE_EXE 		129//	binary executable
+#define PLUGIN_SUBTYPE_SCRIPT 		130//	interpreted script
 
 #define PLUGIN_CHANNEL_NONE	0ul
 #define PLUGIN_CHANNEL_VIDEO	(1<<0)ul
@@ -48,15 +52,16 @@ typedef weed_plant_t weed_param_t;
 typedef struct {
   uint64_t uid; // fixed enumeration
   uint64_t type;  ///< e.g. "decoder"
-  uint64_t subtype;  ///< e.g. "dll"
+  uint64_t subtype;  ///< e.g. dynamic
+  char script_lang[32];  ///< for scripted types only, the script interpreter, e.g. "perl", "python3"
   int api_version_major; ///< version of interface API
   int api_version_minor;
-  char name[64];  ///< e.g. "mkv_decoder"
+  char name[32];  ///< e.g. "mkv_decoder"
   int pl_version_major; ///< version of plugin
   int pl_version_minor;
   int n_intentcaps;
   lives_intentcap_t *intentcaps;  /// array of intentcaps[n_intentcaps]
-  void *unused;
+  void *unused; // padding
 } lives_plugin_id_t;
 
 LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex,

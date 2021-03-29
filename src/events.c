@@ -6310,15 +6310,12 @@ render_details *create_render_details(int type) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *scrollw = NULL;
   LiVESWidget *hbox;
-  LiVESWidget *vbox;
+  LiVESWidget *layout;
   LiVESWidget *frame;
   LiVESWidget *cancelbutton;
-  LiVESWidget *alabel;
   LiVESWidget *daa;
   LiVESWidget *cb_letter;
   LiVESWidget *spillover;
-
-  LiVESAccelGroup *rdet_accel_group;
 
   LiVESList *ofmt_all = NULL;
   LiVESList *ofmt = NULL;
@@ -6383,18 +6380,17 @@ render_details *create_render_details(int type) {
   maxheight = height = scrh - SCR_HEIGHT_SAFETY;
 
   if (type == 1) {
-    width /= 2;
-    height /= 2;
+    width >>= 1;
+    height >>= 1;
   }
+
+  if (type == 3) width = (width * 3) >> 2;
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   rdet->dialog = lives_standard_dialog_new(title, FALSE, width, height);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_free(title);
-
-  rdet_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-  lives_window_add_accel_group(LIVES_WINDOW(rdet->dialog), rdet_accel_group);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(rdet->dialog));
 
@@ -6435,6 +6431,15 @@ render_details *create_render_details(int type) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(cb_letter), LIVES_WIDGET_TOGGLED_SIGNAL,
                               LIVES_GUI_CALLBACK(toggle_sets_pref), (livespointer)PREF_LETTERBOX_MT);
   } else hbox = NULL;
+
+  if (type == 3) {
+    widget_opts.use_markup = TRUE;
+    label = lives_standard_label_new(_("<b>Before entering multitrack mode with an empty event list,"
+                                       "you need to define the format to used for rendering and previews</b>\n"
+                                       "The majority of these values can be amended later if so desired"));
+    widget_opts.use_markup = FALSE;
+    lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, TRUE, 0);
+  }
 
   frame = add_video_options(&rdet->spinbutton_width, rdet->width, &rdet->spinbutton_height, rdet->height, &rdet->spinbutton_fps,
                             rdet->fps, NULL, 0., TRUE, hbox);
@@ -6529,22 +6534,19 @@ render_details *create_render_details(int type) {
   }
 
   if (!no_opts) {
-#ifndef IS_MINGW
-    if (capable->has_encoder_plugins) encoders = get_plugin_list(PLUGIN_ENCODERS, FALSE, NULL, NULL);
-#else
-    if (capable->has_encoder_plugins) encoders = get_plugin_list(PLUGIN_ENCODERS, TRUE, NULL, NULL);
-#endif
-
-    if (type != 1) encoders = filter_encoders_by_img_ext(encoders, prefs->image_ext);
-    else {
-      LiVESList *encs = encoders = filter_encoders_by_img_ext(encoders, get_image_ext_for_type(cfile->img_type));
-      needs_new_encoder = TRUE;
-      while (encs) {
-        if (!strcmp((char *)encs->data, prefs->encoder.name)) {
-          needs_new_encoder = FALSE;
-          break;
+    if (capable->has_encoder_plugins == PRESENT) {
+      encoders = lives_list_copy_strings(capable->plugins_list[PLUGIN_TYPE_ENCODER]);
+      if (type != 1) encoders = filter_encoders_by_img_ext(encoders, prefs->image_ext);
+      else {
+        LiVESList *encs = encoders = filter_encoders_by_img_ext(encoders, get_image_ext_for_type(cfile->img_type));
+        needs_new_encoder = TRUE;
+        while (encs) {
+          if (!strcmp((char *)encs->data, prefs->encoder.name)) {
+            needs_new_encoder = FALSE;
+            break;
+          }
+          encs = encs->next;
         }
-        encs = encs->next;
       }
     }
 
@@ -6559,22 +6561,22 @@ render_details *create_render_details(int type) {
     /////////////////////// add expander ////////////////////////////
 
     if (type != 1) {
+      LiVESWidget *expd;
       hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, 0);
+      layout = lives_layout_new(NULL);
+      expd = lives_standard_expander_new(_("_Encoder preferences (optional)"), LIVES_BOX(hbox), layout);
+      lives_widget_set_tooltip_text(expd, H_("Setting these options will not affect the output directly\n"
+                                             "but a small number of formats may prefer specific video and audio\n"
+                                             "configurations, which may be used to adjust the values above"));
+    } else layout = lives_layout_new(LIVES_BOX(top_vbox));
 
-      vbox = lives_vbox_new(FALSE, 0);
-
-      widget_opts.justify = LIVES_JUSTIFY_CENTER;
-      lives_standard_expander_new(_("_Encoder preferences (optional)"), LIVES_BOX(hbox), vbox);
-      widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-    } else vbox = top_vbox;
-
-    add_fill_to_box(LIVES_BOX(vbox));
+    lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+    lives_layout_add_row(LIVES_LAYOUT(layout));
 
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
-    label = lives_standard_label_new(_("Target encoder"));
+    label = lives_layout_add_label(LIVES_LAYOUT(layout), _("Target encoder"), FALSE);
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-    lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
     if (type != 1) {
       rdet->encoder_name = lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]);
@@ -6583,12 +6585,10 @@ render_details *create_render_details(int type) {
       rdet->encoder_name = lives_strdup(prefs->encoder.name);
     }
 
-    hbox = lives_hbox_new(FALSE, 0);
-    add_spring_to_box(LIVES_BOX(hbox), 0);
+    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
     rdet->encoder_combo = lives_standard_combo_new(NULL, encoders, LIVES_BOX(hbox), NULL);
-    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
     lives_widget_set_halign(rdet->encoder_combo, LIVES_ALIGN_CENTER);
-    add_spring_to_box(LIVES_BOX(hbox), 0);
 
     rdet->encoder_name_fn = lives_signal_sync_connect_after(LIVES_COMBO(rdet->encoder_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_encoder_entry_changed), rdet);
@@ -6602,8 +6602,7 @@ render_details *create_render_details(int type) {
     if (type != 1) {
       ofmt = lives_list_append(ofmt, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
     } else {
-      add_fill_to_box(LIVES_BOX(vbox));
-      if (capable->has_encoder_plugins) {
+      if (capable->has_encoder_plugins == PRESENT) {
         // request formats from the encoder plugin
         if ((ofmt_all = plugin_request_by_line(PLUGIN_ENCODERS, prefs->encoder.name, "get_formats")) != NULL) {
           for (i = 0; i < lives_list_length(ofmt_all); i++) {
@@ -6623,28 +6622,27 @@ render_details *create_render_details(int type) {
       }
     }
 
-    widget_opts.justify = LIVES_JUSTIFY_CENTER;
-    label = lives_standard_label_new(_("Output format"));
-    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-    lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height);
+    lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 
-    hbox = lives_hbox_new(FALSE, 0);
-    add_spring_to_box(LIVES_BOX(hbox), 0);
+    widget_opts.justify = LIVES_JUSTIFY_CENTER;
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("Output format"), FALSE);
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+
+    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
     rdet->ofmt_combo = lives_standard_combo_new(NULL, ofmt, LIVES_BOX(hbox), NULL);
-    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
     lives_widget_set_halign(rdet->ofmt_combo, LIVES_ALIGN_CENTER);
-    add_spring_to_box(LIVES_BOX(hbox), 0);
 
     lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
-
     lives_list_free_all(&ofmt);
 
     rdet->encoder_ofmt_fn = lives_signal_sync_connect_after(LIVES_COMBO(rdet->ofmt_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_encoder_ofmt_changed), rdet);
 
-    widget_opts.justify = LIVES_JUSTIFY_CENTER;
+    lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 
-    alabel = lives_standard_label_new(_("Audio format"));
+    widget_opts.justify = LIVES_JUSTIFY_CENTER;
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("Audio format"), FALSE);
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
     if (type != 1) {
@@ -6652,33 +6650,27 @@ render_details *create_render_details(int type) {
       lives_list_free_all(&prefs->acodec_list);
 
       prefs->acodec_list = lives_list_append(prefs->acodec_list, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
-      lives_box_pack_start(LIVES_BOX(vbox), alabel, FALSE, FALSE, widget_opts.packing_height);
-      hbox = lives_hbox_new(FALSE, 0);
-      add_spring_to_box(LIVES_BOX(hbox), 0);
+
+      hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
       rdet->acodec_combo = lives_standard_combo_new(NULL, prefs->acodec_list, LIVES_BOX(hbox), NULL);
-      lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
       lives_widget_set_halign(rdet->acodec_combo, LIVES_ALIGN_CENTER);
-      add_spring_to_box(LIVES_BOX(hbox), 0);
     } else {
-      add_fill_to_box(LIVES_BOX(vbox));
-      lives_box_pack_start(LIVES_BOX(vbox), alabel, FALSE, FALSE, widget_opts.packing_height);
       lives_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
       lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo), prefs->encoder.of_desc);
       lives_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
-      hbox = lives_hbox_new(FALSE, 0);
-      add_spring_to_box(LIVES_BOX(hbox), 0);
+      hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
       rdet->acodec_combo = lives_standard_combo_new(NULL, NULL, LIVES_BOX(hbox), NULL);
-      lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
       lives_widget_set_halign(rdet->acodec_combo, LIVES_ALIGN_CENTER);
-      add_spring_to_box(LIVES_BOX(hbox), 0);
 
       check_encoder_restrictions(TRUE, FALSE, TRUE);
       future_prefs->encoder.of_allowed_acodecs = prefs->encoder.of_allowed_acodecs;
       set_acodec_list_from_allowed(NULL, rdet);
     }
-    add_fill_to_box(LIVES_BOX(vbox));
-  } else vbox = top_vbox;
+    lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+  }
 
   //////////////// end expander section ///////////////////
   rdet->debug = NULL;
@@ -6690,10 +6682,9 @@ render_details *create_render_details(int type) {
     rdet->debug = lives_standard_check_button_new((tmp = (_("Debug Mode"))), FALSE,
                   LIVES_BOX(hbox), (tmp2 = (_("Output diagnostic information to STDERR "
                                             "instead of to the GUI."))));
-    lives_free(tmp);
-    lives_free(tmp2);
+    lives_free(tmp); lives_free(tmp2);
 
-    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, 0);
     //lives_widget_set_halign(rdet->acodec_combo, LIVES_ALIGN_CENTER);
     add_spring_to_box(LIVES_BOX(hbox), 0);
   }
@@ -6730,9 +6721,7 @@ render_details *create_render_details(int type) {
 
   lives_button_grab_default_special(rdet->okbutton);
 
-  if (cancelbutton)
-    lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, rdet_accel_group,
-                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+  lives_window_add_escape(LIVES_WINDOW(rdet->dialog), cancelbutton);
 
   if (!no_opts) {
     if (needs_new_encoder) {

@@ -1810,8 +1810,6 @@ boolean apply_prefs(boolean skip_warn) {
   boolean show_quota = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->cb_show_quota));
   boolean autoclean = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->cb_autoclean));
 
-  boolean perm_workdir = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_perm_workdir));
-
 #ifndef ENABLE_JACK
   boolean jack_tstart = FALSE;
   boolean jack_master = FALSE;
@@ -1850,15 +1848,6 @@ boolean apply_prefs(boolean skip_warn) {
     + JACK_OPTS_NOPLAY_WHEN_PAUSED * !jack_pwp + JACK_OPTS_TIMEBASE_START * jack_tb_start +
     JACK_OPTS_TIMEBASE_LSTART * jack_mtb_start + JACK_OPTS_TIMEBASE_CLIENT * jack_tb_client
     + JACK_OPTS_NO_READ_AUTOCON * !jack_read_autocon;
-#ifndef ENABLE_JACK_TRANSPORT
-  jack_opts &= ~(JACK_OPTS_TRANSPORT_CLIENT | JACK_OPTS_TRANSPORT_MASTER
-                 | JACK_OPTS_START_TSERVER | JACK_OPTS_TIMEBASE_START
-                 | JACK_OPTS_TIMEBASE_CLIENT | JACK_OPTS_TIMEBASE_MASTER
-                 | JACK_OPTS_TIMEBASE_LSTART | JACK_OPTS_ENABLE_TCLIENT);
-#else
-  // ignore transport startup unless the client is enabled
-  if (!(jack_opts & JACK_OPTS_ENABLE_TCLIENT)) jack_opts &= ~(JACK_OPTS_START_TSERVER);
-#endif
 #endif
 
 #ifdef RT_AUDIO
@@ -1925,6 +1914,16 @@ boolean apply_prefs(boolean skip_warn) {
   char *tmp;
   char *cdplay_device = lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)),
                         -1, NULL, NULL, NULL);
+
+#ifndef ENABLE_JACK_TRANSPORT
+  jack_opts &= ~(JACK_OPTS_TRANSPORT_CLIENT | JACK_OPTS_TRANSPORT_MASTER
+                 | JACK_OPTS_START_TSERVER | JACK_OPTS_TIMEBASE_START
+                 | JACK_OPTS_TIMEBASE_CLIENT | JACK_OPTS_TIMEBASE_MASTER
+                 | JACK_OPTS_TIMEBASE_LSTART | JACK_OPTS_ENABLE_TCLIENT);
+#else
+  // ignore transport startup unless the client is enabled
+  if (!(jack_opts & JACK_OPTS_ENABLE_TCLIENT)) jack_opts &= ~(JACK_OPTS_START_TSERVER);
+#endif
 
   lives_snprintf(prefworkdir, PATH_MAX, "%s", prefs->workdir);
   ensure_isdir(prefworkdir);
@@ -1997,7 +1996,7 @@ boolean apply_prefs(boolean skip_warn) {
     mainw->prefs_changed |= PREFS_XCOLOURS_CHANGED;
   }
 
-  if (capable->has_encoder_plugins) {
+  if (ARE_PRESENT(encoder_plugins)) {
     audio_codec = lives_combo_get_active_text(LIVES_COMBO(prefsw->acodec_combo));
 
     for (idx = 0; idx < listlen && lives_strcmp((char *)lives_list_nth_data(prefs->acodec_list, idx), audio_codec); idx++);
@@ -2738,10 +2737,12 @@ boolean apply_prefs(boolean skip_warn) {
 
   mainw->no_context_update = FALSE;
 
-  if (perm_workdir && mainw->has_session_workdir) {
-    mainw->has_session_workdir = FALSE;
-    set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
-    set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
+  if (mainw->has_session_workdir) {
+    if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_perm_workdir))) {
+      mainw->has_session_workdir = FALSE;
+      set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
+      set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
+    }
   }
 
   if (lives_strcmp(prefworkdir, workdir)) {
@@ -3518,6 +3519,10 @@ static void show_cmdlinehelp(LiVESWidget * w, livespointer data) {
   char *title = _("Commandline Options");
   text_window *hlpwin = create_text_window(title, NULL, textbuf, FALSE);
   lives_free(title);
+
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
+                                     LIVES_STOCK_CLOSE, _("_Close Window"), LIVES_RESPONSE_CANCEL);
+
   print_opthelp(textbuf, NULL, NULL);
   lives_dialog_run(LIVES_DIALOG(hlpwin->dialog));
   lives_widget_destroy(hlpwin->dialog);
@@ -4482,7 +4487,14 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   layout = lives_layout_new(LIVES_BOX(vbox));
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-  vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-" DLL_NAME);
+  if (ARE_UNCHECKED(vid_playback_plugins)) {
+    capable->plugins_list[PLUGIN_TYPE_VIDEO_PLAYER] = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-" DLL_NAME);
+    if (capable->plugins_list[PLUGIN_TYPE_VIDEO_PLAYER]) capable->has_vid_playback_plugins = PRESENT;
+    else capable->has_vid_playback_plugins = MISSING;
+  }
+
+  vid_playback_plugins = lives_list_copy_strings(capable->plugins_list[PLUGIN_TYPE_VIDEO_PLAYER]);
+
   vid_playback_plugins = lives_list_prepend(vid_playback_plugins,
                          lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
 
@@ -4945,9 +4957,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_layout_add_label(LIVES_LAYOUT(layout),
                          _("You can also change these values when encoding a clip"), FALSE);
 
-  if (capable->has_encoder_plugins) {
+  if (ARE_PRESENT(encoder_plugins)) {
     // scan for encoder plugins
-    encoders = get_plugin_list(PLUGIN_ENCODERS, TRUE, NULL, NULL);
+    encoders = capable->plugins_list[PLUGIN_TYPE_ENCODER];
   }
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
@@ -4959,10 +4971,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   if (encoders) {
     lives_combo_set_active_string(LIVES_COMBO(prefsw->encoder_combo), prefs->encoder.name);
-    lives_list_free_all(&encoders);
   }
 
-  if (capable->has_encoder_plugins) {
+  if (ARE_PRESENT(encoder_plugins)) {
     // request formats from the encoder plugin
     if ((ofmt_all = plugin_request_by_line(PLUGIN_ENCODERS, prefs->encoder.name, "get_formats"))) {
       for (i = 0; i < lives_list_length(ofmt_all); i++) {
@@ -5277,12 +5288,12 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     prefsw->checkbutton_perm_workdir = lives_standard_check_button_new
                                        (_("Make ths value permanent"), !(prefs->warning_mask & WARN_MASK_FSIZE), LIVES_BOX(hbox),
                                         H_("Check this to make the -workdir value supplied on the commandline become the permanent value"));
+    ACTIVE(checkbutton_perm_workdir, TOGGLED);
   } else if (prefs->vj_mode) {
     show_warn_image(prefsw->workdir_entry, _("Changes disabled in VJ mode"));
     lives_widget_set_sensitive(dirbutton, FALSE);
   }
 
-  ACTIVE(checkbutton_perm_workdir, TOGGLED);
 
   dirbutton = lives_standard_file_button_new(TRUE, NULL);
 
@@ -6684,7 +6695,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   ACTIVE(encoder_combo, CHANGED);
 
-  if (capable->has_encoder_plugins) {
+  if (ARE_PRESENT(encoder_plugins)) {
     ACTIVE(ofmt_combo, CHANGED);
     ACTIVE(acodec_combo, CHANGED);
   }
@@ -6793,7 +6804,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #endif
 #endif
 
-  if (capable->has_encoder_plugins) {
+  if (ARE_PRESENT(encoder_plugins)) {
     prefsw->encoder_name_fn = lives_signal_sync_connect(LIVES_GUI_OBJECT(LIVES_COMBO(prefsw->encoder_combo)),
                               LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_encoder_entry_changed), NULL);
 

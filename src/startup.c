@@ -1429,11 +1429,12 @@ reloop:
     do_no_mplayer_sox_error();
     return FALSE;
   }
-  pop_to_front(dialog, NULL);
 
+  lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_SPREAD);
   lives_button_grab_default_special(okbutton);
-
   lives_widget_grab_focus(okbutton);
+
+  pop_to_front(dialog, NULL);
 
   if (!mainw->first_shown) {
     if (prefs->startup_phase == 4)
@@ -1837,6 +1838,7 @@ rerun:
     skipfunc = lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                LIVES_GUI_CALLBACK(skip_tests), dialog);
 
+    lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_SPREAD);
   } else {
     defbutton = cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                                LIVES_RESPONSE_CANCEL);
@@ -2426,7 +2428,7 @@ boolean do_startup_interface_query(void) {
   // prompt for startup ce or startup mt
   LiVESWidget *dialog, *dialog_vbox, *radiobutton, *label, *xlabel, *layout;
   LiVESWidget *okbutton;
-  LiVESWidget *hbox, *cb_desk = NULL, *cb_menus = NULL, *cb_msgs;
+  LiVESWidget *hbox, *cb_desk = NULL, *cb_menus = NULL, *cb_msgs, *cb_quota;
   LiVESSList *radiobutton_group = NULL;
   LiVESResponseType resp;
   char *txt1, *txt2, *txt3, *msg;
@@ -2588,28 +2590,26 @@ retry:
   cb_msgs = lives_standard_check_button_new
             (_("Show message window on startup"), prefs->show_msgs_on_startup, LIVES_BOX(hbox), NULL);
 
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  cb_quota = lives_standard_check_button_new
+             (_("Set quota limits now"), prefs->show_disk_quota, LIVES_BOX(hbox),
+              H_("You can set quota limits now if you want to manage how much disk space LiVES may use.\n"
+                 "(You can also do this later from within the application)"));
+
   widget_opts.expand = LIVES_EXPAND_NONE;
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
-  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-
-  widget_opts.use_markup = TRUE;
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("You can set quota limits now if you want to\n"
-                         "manage how much disk space LiVES may use.\n"
-                         "<small>(You can also do this later from within the application)</small>"), TRUE);
-  widget_opts.use_markup = FALSE;
-  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  add_fill_to_box(LIVES_BOX(dialog_vbox));
 
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
                                      _("Back to Audio Selection"), LIVES_RESPONSE_NO);
 
-  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL,
-                                     _("Set _Quota Limits (Optional)"), LIVES_RESPONSE_SHOW_DETAILS);
-
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
              _("_FINISH SETUP and START LiVES"), LIVES_RESPONSE_OK);
+
+  lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_EDGE);
 
   lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);
@@ -2634,16 +2634,16 @@ retry:
     goto retry;
   }
 
-  if (resp == LIVES_RESPONSE_SHOW_DETAILS) pref_factory_bool(PREF_SHOW_QUOTA, TRUE, TRUE);
-  else pref_factory_bool(PREF_SHOW_QUOTA, FALSE, TRUE);
-
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton)))
-    future_prefs->startup_interface = prefs->startup_interface = STARTUP_MT;
-
-  set_int_pref(PREF_STARTUP_INTERFACE, prefs->startup_interface);
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton))) {
+    pref_factory_int(PREF_STARTUP_INTERFACE, &prefs->startup_interface, STARTUP_MT, TRUE);
+    future_prefs->startup_interface = prefs->startup_interface;
+  }
 
   pref_factory_bool(PREF_MSG_START,
                     lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb_msgs)), TRUE);
+
+  pref_factory_bool(PREF_SHOW_QUOTA,
+                    lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb_quota)), TRUE);
 
   if (cb_desk && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb_desk))) {
     com = lives_strdup_printf("%s install --novendor %s", EXEC_XDG_DESKTOP_ICON, dskfile);

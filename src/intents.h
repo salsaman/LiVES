@@ -57,6 +57,8 @@ typedef struct _object_t lives_object_template_t;
 typedef struct _object_t lives_object_instance_t;
 typedef struct _obj_status lives_object_status_t;
 
+typedef weed_param_t lives_obj_param_t;
+
 // lives_object_t
 struct _object_t {
   uint64_t uid; // unique id for this object, for static objects (templates), should be a fixed value
@@ -66,7 +68,7 @@ struct _object_t {
   const lives_object_t *template; // pointer to template class, or NULL
   lives_object_status_t *status; // pointer to status struct
   int n_params;  // internal params for the object - may be mapped to transform reqs. / out params
-  weed_param_t **params;
+  lives_obj_param_t **params;
   void *priv; // internal data belonging to the object
 };
 
@@ -230,7 +232,7 @@ typedef struct {
 typedef struct {
   lives_intention intent;
   int n_params;
-  weed_param_t **params; ///< (can be converted to normal params via weed_param_from_iparams)
+  lives_obj_param_t **params; ///< (can be converted to normal params via weed_param_from_iparams)
 } lives_intentparams_t;
 
 /// NOT YET FULLY IMPLEMENTED
@@ -253,8 +255,6 @@ typedef struct {
 #define LIVES_OBJECT_STATUS_NEEDS_DATA 8 ///< object is running but has param / data requirements
 #define LIVES_OBJECT_STATUS_DESTROYED 32768
 
-typedef weed_param_t lives_req_t;
-
 weed_plant_t *int_req_init(const char *name, int def, int min, int max);
 weed_plant_t *boolean_req_init(const char *name, int def);
 weed_plant_t *double_req_init(const char *name, double def, double min, double max);
@@ -268,8 +268,10 @@ typedef boolean lives_cond_t;
 // rules which must be satisfied before the transformation can succeed
 typedef struct {
   lives_object_instance_t *oinst;
-  int n_reqs;
-  lives_req_t **reqs; ///< requirements. The values of non-optional reqs must be set
+  lives_intentparams_t *reqs;
+  char ui_schema; // schema for ui, eg. "RFX 1.x.x |"
+  int n_uistrings; // num ui strings; in case a value is notr defined, it can be enterd by user
+  char **uistrings; ///< strings to provide hints about constructing an interface for user entry
   int n_conditions;
   lives_cond_t **conditions; /// ptrs to conditions which must be satisfied (set to TRUE)
   int refcount;
@@ -285,8 +287,6 @@ typedef struct {
 
 #define TR_FLAGS_DIRECT (1 << 32) // function may be called directly (this is a transitional step
 // which may be deprecated
-
-typedef weed_param_t out_params_t;
 
 // maps in / out params to actual function parameters
 typedef struct {
@@ -321,7 +321,7 @@ typedef struct {
   int n_out_params;
   // output parameters created / updated in the transformation; this is actually array of pointers
   // and may even point to params in other objects
-  out_params_t **oparams;
+  lives_obj_param_t **oparams;
   int new_state; // the state after, assuming success (can be same as start_state)
   uint64_t flags;
 } lives_object_transform_t;

@@ -347,22 +347,7 @@ typedef enum {
   MISSING = -1, ///< not yet implemented (TODO)
   UNCHECKED = 0,
   PRESENT,
-  LOCAL
-} lives_presence_t;
-
-#ifdef NEW_CHECKSTATUS
-typedef enum {
-  CONFLICTING = -1,
-  MANDATORY, ///< mandatory for application
-  RECOMMENDED,
-  OPTIONAL,
-  NECESSARY ///< necessary for the function in question
-} lives_importance_t;
-
-typedef struct {
-  lives_presence_t present;
-  lives_importance_t import;
-  uint64_t flags;
+  LOCAL,
 } lives_checkstatus_t;
 
 #define XCAPABLE(foo, EXE_FOO) ((capable->has_##foo->present == UNCHECKED \
@@ -372,17 +357,21 @@ typedef struct {
 #define GET_EXE(foo) QUOTEME(foo)
 #define PRESENT(foo) (XCAPABLE(foo, GET_EXE(foo)) == PRESENT)
 #define MISSING(foo) (XCAPABLE(foo, GET_EXE(foo)) == MISSING)
-//TODO:
-// #define GET_EXE(mplayer) EXEC_MPLAYER
-// etc.
-// then: if (capable->has_mplayer) => if (PRESENT(mplayer)) etc.
-// and even:
 
-//#define IS_SHOW_STOPPER(foo) ((MISSING(foo) && MANDATORY(foo)))
+#define IS_PRESENT(item) (capable->has_##item == PRESENT)
+#define IS_MISSING(item) (capable->has_##item == MISSING)
+#define IS_UNCHECKED(item) (capable->has_##item == UNCHECKED)
+#define IS_LOCAL(item) (capable->has_##item == LOCAL)
 
-#else
-typedef lives_presence_t lives_checkstatus_t;
-#endif
+#define ARE_PRESENT(item) IS_PRESENT(item)
+#define ARE_MISSING(item) IS_MISSING(item)
+#define ARE_UNCHECKED(item) IS_UNCHECKED(item)
+
+#define IS_AVAILABLE(item) (IS_PRESENT(item) || IS_LOCAL(item))
+
+#define CHECK_AVAILABLE(item, EXEC) (IS_UNCHECKED(item) ? (((capable->has_##item = has_executable(EXEC)) \
+							    == PRESENT || IS_LOCAL(item)) ? TRUE : FALSE) \
+				     : IS_AVAILABLE(item))
 
 typedef struct {
   char wm_name[64];
@@ -443,174 +432,6 @@ typedef struct {
   char taskmgr[64];
   char sshot[64];
 } wm_caps_t;
-
-
-typedef struct {
-  // the following can be assumed TRUE / PRESENT, they are checked on startup
-  boolean smog_version_correct;
-  boolean can_read_from_config;
-
-  boolean can_write_to_config;
-  boolean can_write_to_config_new;
-
-  boolean can_write_to_config_backup;
-  boolean can_write_to_workdir;
-
-  lives_checkstatus_t has_smogrify;
-
-  // MISSING if some subdirs not found
-  lives_checkstatus_t has_plugins_libdir;
-
-  // the following may need checking before use
-  lives_checkstatus_t has_perl;
-  lives_checkstatus_t has_file;
-  lives_checkstatus_t has_dvgrab;
-  lives_checkstatus_t has_sox_play;
-  lives_checkstatus_t has_sox_sox;
-  lives_checkstatus_t has_autolives;
-  lives_checkstatus_t has_mplayer;
-  lives_checkstatus_t has_mplayer2;
-  lives_checkstatus_t has_mpv;
-  lives_checkstatus_t has_convert;
-  lives_checkstatus_t has_composite;
-  lives_checkstatus_t has_identify;
-  lives_checkstatus_t has_ffprobe;
-  lives_checkstatus_t has_ffmpeg;
-  lives_checkstatus_t has_cdda2wav;
-  lives_checkstatus_t has_icedax;
-  lives_checkstatus_t has_midistartstop;
-  lives_checkstatus_t has_jackd;
-  lives_checkstatus_t has_pulse_audio;
-  lives_checkstatus_t has_xwininfo;
-  lives_checkstatus_t has_gdb;
-  lives_checkstatus_t has_gzip;
-  lives_checkstatus_t has_rfx_builder;
-  lives_checkstatus_t has_rfx_builder_multi;
-  lives_checkstatus_t has_gconftool_2;
-  lives_checkstatus_t has_gsettings;
-  lives_checkstatus_t has_xdg_screensaver;
-  lives_checkstatus_t has_xdg_open;
-  lives_checkstatus_t has_xdg_mime;
-  lives_checkstatus_t has_xdg_desktop_icon;
-  lives_checkstatus_t has_xdg_desktop_menu;
-  lives_checkstatus_t has_wmctrl;
-  lives_checkstatus_t has_xdotool;
-  lives_checkstatus_t has_youtube_dl;
-  lives_checkstatus_t has_youtube_dlc;
-  lives_checkstatus_t has_pip;
-  lives_checkstatus_t has_du;
-  lives_checkstatus_t has_md5sum;
-  lives_checkstatus_t has_gio;
-  lives_checkstatus_t has_wget;
-  lives_checkstatus_t has_curl;
-  lives_checkstatus_t has_mktemp;
-  lives_checkstatus_t has_notify_send;
-  lives_checkstatus_t has_snap;
-
-  lives_checkstatus_t writeable_shmdir;
-
-  /// home directory - default location for config file - locale encoding
-  char home_dir[PATH_MAX];
-
-  char backend_path[PATH_MAX];
-
-  char shmdir_path[PATH_MAX];
-
-  char *xdg_data_home; // e.g $HOME/.local/share
-  char *xdg_current_desktop; // e.g XFCE
-  char *xdg_runtime_dir; // e.g /run/user/$uid
-
-  char touch_cmd[PATH_MAX];
-  char rm_cmd[PATH_MAX];
-  char mv_cmd[PATH_MAX];
-  char cp_cmd[PATH_MAX];
-  char ln_cmd[PATH_MAX];
-  char chmod_cmd[PATH_MAX];
-  char cat_cmd[PATH_MAX];
-  char grep_cmd[PATH_MAX];
-  char sed_cmd[PATH_MAX];
-  char wc_cmd[PATH_MAX];
-  char echo_cmd[PATH_MAX];
-  char eject_cmd[PATH_MAX];
-  char rmdir_cmd[PATH_MAX];
-
-  /// used for returning startup messages from the backend
-  char startup_msg[1024];
-
-  // plugins
-  lives_checkstatus_t has_encoder_plugins;
-
-  lives_checkstatus_t has_python;
-  lives_checkstatus_t has_python3;
-  uint64_t python_version;
-
-  int ncpus;
-  int byte_order;
-
-  char *myname_full;
-  char *myname;
-
-  char *cpu_name;
-  short cpu_bits;
-  int cacheline_size;
-
-  int64_t boot_time;
-  int xstdout;
-  int nmonitors;
-  int primary_monitor;
-  boolean can_show_msg_area;
-
-  pid_t mainpid;
-  pthread_t main_thread;
-  pthread_t gui_thread;
-
-  char *username;
-
-  mode_t umask;
-
-  char *gui_theme_name;
-  char *icon_theme_name;
-  char *extra_icon_path;
-  LiVESList *all_icons;
-
-  char *def_fontstring;
-  char *font_name;
-  char *font_fam;
-  int font_size;
-  char *font_stretch;
-  char *font_style;
-  char *font_weight;
-
-  char *wm_type; ///< window manager type, e.g. x11
-  char *wm_name; ///< window manager name, may be different from wm_caps.wwm_name
-  boolean has_wm_caps;
-  wm_caps_t wm_caps;
-
-  int64_t ds_used, ds_free, ds_tot;
-  char *mountpoint;  ///< utf-8
-
-  char *os_name;
-  char *os_release;
-  char *os_hardware;
-
-#define DISTRO_UBUNTU "Ubuntu"
-#define DISTRO_FREEBSD "FreeBSD"
-
-  char *distro_name;
-  char *distro_ver;
-  char *distro_codename;
-
-  char *mach_name;
-
-  int dclick_time;
-  int dclick_dist;
-  char *sysbindir;
-
-  char *extracmds_file[2];
-  int extracmds_idx;
-} capability;
-
-capability *capable;
 
 #define DEF_ALIGN (sizeof(void *) * 8)
 
@@ -1141,6 +962,179 @@ extern mainwindow *mainw;
 
 /// type sizes
 extern ssize_t sizint, sizdbl, sizshrt;
+
+// capabilities (MUST come after plugins.h)
+
+typedef struct {
+  // the following can be assumed TRUE / PRESENT, they are checked on startup
+  boolean smog_version_correct;
+  boolean can_read_from_config;
+
+  boolean can_write_to_config;
+  boolean can_write_to_config_new;
+
+  boolean can_write_to_config_backup;
+  boolean can_write_to_workdir;
+
+  lives_checkstatus_t has_smogrify;
+
+  // MISSING if some subdirs not found
+  lives_checkstatus_t has_plugins_libdir;
+
+  // the following may need checking before use
+  lives_checkstatus_t has_perl;
+  lives_checkstatus_t has_file;
+  lives_checkstatus_t has_dvgrab;
+  lives_checkstatus_t has_sox_play;
+  lives_checkstatus_t has_sox_sox;
+  lives_checkstatus_t has_autolives;
+  lives_checkstatus_t has_mplayer;
+  lives_checkstatus_t has_mplayer2;
+  lives_checkstatus_t has_mpv;
+  lives_checkstatus_t has_convert;
+  lives_checkstatus_t has_composite;
+  lives_checkstatus_t has_identify;
+  lives_checkstatus_t has_ffprobe;
+  lives_checkstatus_t has_ffmpeg;
+  lives_checkstatus_t has_cdda2wav;
+  lives_checkstatus_t has_icedax;
+  lives_checkstatus_t has_midistartstop;
+  lives_checkstatus_t has_jackd;
+  lives_checkstatus_t has_pulse_audio;
+  lives_checkstatus_t has_xwininfo;
+  lives_checkstatus_t has_gdb;
+  lives_checkstatus_t has_gzip;
+  lives_checkstatus_t has_rfx_builder;
+  lives_checkstatus_t has_rfx_builder_multi;
+  lives_checkstatus_t has_gconftool_2;
+  lives_checkstatus_t has_gsettings;
+  lives_checkstatus_t has_xdg_screensaver;
+  lives_checkstatus_t has_xdg_open;
+  lives_checkstatus_t has_xdg_mime;
+  lives_checkstatus_t has_xdg_desktop_icon;
+  lives_checkstatus_t has_xdg_desktop_menu;
+  lives_checkstatus_t has_wmctrl;
+  lives_checkstatus_t has_xdotool;
+  lives_checkstatus_t has_youtube_dl;
+  lives_checkstatus_t has_youtube_dlc;
+  lives_checkstatus_t has_pip;
+  lives_checkstatus_t has_du;
+  lives_checkstatus_t has_md5sum;
+  lives_checkstatus_t has_gio;
+  lives_checkstatus_t has_wget;
+  lives_checkstatus_t has_curl;
+  lives_checkstatus_t has_mktemp;
+  lives_checkstatus_t has_notify_send;
+  lives_checkstatus_t has_snap;
+
+  lives_checkstatus_t writeable_shmdir;
+
+  /// home directory - default location for config file - locale encoding
+  char home_dir[PATH_MAX];
+
+  char backend_path[PATH_MAX];
+
+  char shmdir_path[PATH_MAX];
+
+  char *xdg_data_home; // e.g $HOME/.local/share
+  char *xdg_current_desktop; // e.g XFCE
+  char *xdg_runtime_dir; // e.g /run/user/$uid
+
+  char touch_cmd[PATH_MAX];
+  char rm_cmd[PATH_MAX];
+  char mv_cmd[PATH_MAX];
+  char cp_cmd[PATH_MAX];
+  char ln_cmd[PATH_MAX];
+  char chmod_cmd[PATH_MAX];
+  char cat_cmd[PATH_MAX];
+  char grep_cmd[PATH_MAX];
+  char sed_cmd[PATH_MAX];
+  char wc_cmd[PATH_MAX];
+  char echo_cmd[PATH_MAX];
+  char eject_cmd[PATH_MAX];
+  char rmdir_cmd[PATH_MAX];
+
+  /// used for returning startup messages from the backend
+  char startup_msg[1024];
+
+  lives_checkstatus_t has_python;
+  lives_checkstatus_t has_python3;
+  uint64_t python_version;
+
+  int ncpus;
+  int byte_order;
+
+  char *myname_full;
+  char *myname;
+
+  char *cpu_name;
+  short cpu_bits;
+  int cacheline_size;
+
+  int64_t boot_time;
+  int xstdout;
+  int nmonitors;
+  int primary_monitor;
+  boolean can_show_msg_area;
+
+  pid_t mainpid;
+  pthread_t main_thread;
+  pthread_t gui_thread;
+
+  char *username;
+
+  mode_t umask;
+
+  char *gui_theme_name;
+  char *icon_theme_name;
+  char *extra_icon_path;
+  LiVESList *all_icons;
+
+  char *def_fontstring;
+  char *font_name;
+  char *font_fam;
+  int font_size;
+  char *font_stretch;
+  char *font_style;
+  char *font_weight;
+
+  char *wm_type; ///< window manager type, e.g. x11
+  char *wm_name; ///< window manager name, may be different from wm_caps.wwm_name
+  boolean has_wm_caps;
+  wm_caps_t wm_caps;
+
+  int64_t ds_used, ds_free, ds_tot;
+  char *mountpoint;  ///< utf-8
+
+  char *os_name;
+  char *os_release;
+  char *os_hardware;
+
+#define DISTRO_UBUNTU "Ubuntu"
+#define DISTRO_FREEBSD "FreeBSD"
+
+  char *distro_name;
+  char *distro_ver;
+  char *distro_codename;
+
+  char *mach_name;
+
+  int dclick_time;
+  int dclick_dist;
+  char *sysbindir;
+
+  char *extracmds_file[2];
+  int extracmds_idx;
+
+  // plugins
+  lives_checkstatus_t has_encoder_plugins;
+  lives_checkstatus_t has_decoder_plugins;
+  lives_checkstatus_t has_vid_playback_plugins;
+
+  LiVESList *plugins_list[PLUGIN_TYPE_FIRST_CUSTOM];
+} capability;
+
+capability *capable;
 
 // some useful functions
 

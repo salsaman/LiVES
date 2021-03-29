@@ -60,7 +60,7 @@ static weed_param_t *iparam_match_name(weed_param_t **params, int nparams, weed_
 
 
 weed_plant_t *int_req_init(const char *name, int def, int min, int max) {
-  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
+  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_OBJ_PARAM);
   int ptype = WEED_PARAM_INTEGER;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
@@ -71,7 +71,7 @@ weed_plant_t *int_req_init(const char *name, int def, int min, int max) {
 }
 
 weed_plant_t *boolean_req_init(const char *name, int def) {
-  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
+  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_OBJ_PARAM);
   int ptype = WEED_PARAM_SWITCH;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
@@ -80,7 +80,7 @@ weed_plant_t *boolean_req_init(const char *name, int def) {
 }
 
 weed_plant_t *double_req_init(const char *name, double def, double min, double max) {
-  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
+  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_OBJ_PARAM);
   int ptype = WEED_PARAM_FLOAT;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
@@ -91,7 +91,7 @@ weed_plant_t *double_req_init(const char *name, double def, double min, double m
 }
 
 weed_plant_t *string_req_init(const char *name, const char *def) {
-  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
+  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_OBJ_PARAM);
   int ptype = WEED_PARAM_TEXT;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
@@ -108,7 +108,7 @@ const lives_object_template_t *lives_object_template_for_type(uint64_t type, uin
 
 
 boolean rules_lack_param(lives_rules_t *prereq, const char *pname) {
-  weed_param_t *iparam = iparam_from_name(prereq->reqs, prereq->n_reqs, pname);
+  weed_param_t *iparam = iparam_from_name(prereq->reqs->params, prereq->reqs->n_params, pname);
   if (iparam) {
     if (!weed_plant_has_leaf(iparam, WEED_LEAF_VALUE)
         && !weed_plant_has_leaf(iparam, WEED_LEAF_DEFAULT)) {
@@ -134,9 +134,9 @@ void lives_object_status_free(lives_object_status_t *st) {
 
 
 boolean requirements_met(lives_object_transform_t *tx) {
-  lives_req_t *req;
-  for (int i = 0; i < tx->prereqs->n_reqs; i++) {
-    req = tx->prereqs->reqs[i];
+  lives_obj_param_t *req;
+  for (int i = 0; i < tx->prereqs->reqs->n_params; i++) {
+    req = tx->prereqs->reqs->params[i];
     if (req) {
       if (!weed_plant_has_leaf(req, WEED_LEAF_VALUE) &&
           !weed_plant_has_leaf(req, WEED_LEAF_DEFAULT)) {
@@ -158,8 +158,8 @@ boolean requirements_met(lives_object_transform_t *tx) {
 static void lives_rules_unref(lives_rules_t *rules) {
   if (--rules->refcount < 0) {
     if (rules->reqs) {
-      for (int i = 0; i < rules->n_reqs; i++) {
-        weed_plant_free(rules->reqs[i]);
+      for (int i = 0; i < rules->reqs->n_params; i++) {
+        weed_plant_free(rules->reqs->params[i]);
       }
       lives_free(rules->reqs);
     }

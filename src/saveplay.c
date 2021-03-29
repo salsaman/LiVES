@@ -281,9 +281,10 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       char *clipdir = get_clip_dir(mainw->current_file);
       char *cwd = lives_get_current_dir();
 
-      if (!mainw->decoders_loaded) {
-        mainw->decoder_list = load_decoders();
-        mainw->decoders_loaded = TRUE;
+      if (ARE_UNCHECKED(decoder_plugins)) {
+        capable->plugins_list[PLUGIN_TYPE_DECODER] = load_decoders();
+        if (capable->plugins_list[PLUGIN_TYPE_DECODER]) capable->has_decoder_plugins = PRESENT;
+        else capable->has_decoder_plugins = MISSING;
       }
 
       lives_chdir(clipdir, FALSE);
@@ -5263,13 +5264,14 @@ boolean reload_clip(int fileno, int maxframe) {
 
   fake_cdata = (lives_clip_data_t *)struct_from_template(LIVES_STRUCT_CLIP_DATA_T);
 
-  if (!mainw->decoders_loaded) {
-    mainw->decoder_list = load_decoders();
-    mainw->decoders_loaded = TRUE;
+  if (ARE_UNCHECKED(decoder_plugins)) {
+    capable->plugins_list[PLUGIN_TYPE_DECODER] = load_decoders();
+    if (capable->plugins_list[PLUGIN_TYPE_DECODER]) capable->has_decoder_plugins = PRESENT;
+    else capable->has_decoder_plugins = MISSING;
   }
 
   ///< retain original order to restore for freshly opened clips
-  odeclist = lives_list_copy(mainw->decoder_list);
+  odeclist = lives_list_copy(capable->plugins_list[PLUGIN_TYPE_DECODER]);
   if (!sfile->decoder_uid) {
     retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_UID, &dec_uid, 8);
     if (!retb) {
@@ -5335,8 +5337,8 @@ manual_locate:
       unref_struct(&fake_cdata->lsd);
 
       lives_free(orig_filename);
-      lives_list_free(mainw->decoder_list);
-      mainw->decoder_list = odeclist;
+      lives_list_free(capable->plugins_list[PLUGIN_TYPE_DECODER]);
+      capable->plugins_list[PLUGIN_TYPE_DECODER] = odeclist;
       return retb;
     }
 
@@ -5417,8 +5419,8 @@ manual_locate:
 
     if (bad_header) do_header_write_error(fileno);
   }
-  lives_list_free(mainw->decoder_list);
-  mainw->decoder_list = odeclist;
+  lives_list_free(capable->plugins_list[PLUGIN_TYPE_DECODER]);
+  capable->plugins_list[PLUGIN_TYPE_DECODER] = odeclist;
   if (prefs->autoload_subs) {
     reload_subs(fileno);
   }

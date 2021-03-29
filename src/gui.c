@@ -4823,7 +4823,7 @@ void splash_end(void) {
   mainw->threaded_dialog = FALSE;
   mainw->splash_window = NULL;
 
-  if (prefs->startup_interface == STARTUP_MT && prefs->startup_phase == 0 && !mainw->multitrack) {
+  if (prefs->startup_interface == STARTUP_MT && !mainw->multitrack) {
     on_multitrack_activate(NULL, NULL);
     mainw->is_ready = TRUE;
   }

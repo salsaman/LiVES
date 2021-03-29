@@ -1318,7 +1318,6 @@ void replace_with_delegates(void) {
 
 static void lives_init(_ign_opts *ign_opts) {
   // init mainwindow data
-  LiVESList *encoders = NULL;
   LiVESList *encoder_capabilities = NULL;
 
   char **array;
@@ -1583,9 +1582,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->aud_file_to_kill = -1;
 
   mainw->aud_rec_fd = -1;
-
-  mainw->decoders_loaded = FALSE;
-  mainw->decoder_list = NULL;
 
   mainw->subt_save_file = NULL;
 
@@ -1989,17 +1985,37 @@ static void lives_init(_ign_opts *ign_opts) {
       prefs->startup_interface = future_prefs->startup_interface;
     }
 
-    // scan for encoder plugins
-    if ((encoders = get_plugin_list(PLUGIN_ENCODERS, FALSE, NULL, NULL)) != NULL) {
-      capable->has_encoder_plugins = TRUE;
-      lives_list_free_all(&encoders);
+    if (!prefs->vj_mode) {
+      // scan for encoder plugins
+#ifndef IS_MINGW
+      capable->plugins_list[PLUGIN_TYPE_ENCODER] = get_plugin_list(PLUGIN_ENCODERS, FALSE, NULL, NULL);
+#else
+      capable->plugins_list[PLUGIN_TYPE_ENCODER] = get_plugin_list(PLUGIN_ENCODERS, TRUE, NULL, NULL);
+#endif
+      if (capable->plugins_list[PLUGIN_TYPE_ENCODER]) {
+        LiVESList *list, *dummy_list, *listnext;
+        for (list = capable->plugins_list[PLUGIN_TYPE_ENCODER]; list; list = listnext) {
+          listnext = list->next;
+          dummy_list = plugin_request("encoders", (const char *)list->data, "init");
+          if (!dummy_list) {
+            if (prefs->jokes)
+              g_print("oh my gawwwd, what happened to %s !?\n", (const char *)list->data);
+            capable->plugins_list[PLUGIN_TYPE_ENCODER]
+              = lives_list_remove_node(capable->plugins_list[PLUGIN_TYPE_ENCODER], list, TRUE);
+          }
+        }
+        if (capable->plugins_list[PLUGIN_TYPE_ENCODER])
+          capable->has_encoder_plugins = PRESENT;
+        else
+          capable->has_encoder_plugins = MISSING;
+      }
     }
 
     lives_memset(prefs->encoder.of_name, 0, 1);
     lives_memset(prefs->encoder.of_desc, 0, 1);
 
     if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)
-        && capable->has_encoder_plugins && capable->has_python) {
+        && capable->has_encoder_plugins == PRESENT && capable->has_python) {
       LiVESList *ofmt_all = NULL;
       char **array;
       if (check_for_executable(&capable->has_ffmpeg, EXEC_FFMPEG)) {
@@ -2059,7 +2075,7 @@ static void lives_init(_ign_opts *ign_opts) {
     lives_memset(future_prefs->encoder.of_restrict, 0, 1);
     lives_memset(prefs->encoder.of_restrict, 0, 1);
 
-    if (capable->has_encoder_plugins) {
+    if (capable->has_encoder_plugins == PRESENT) {
       char **array;
       int numtok;
       LiVESList *ofmt_all, *dummy_list;
@@ -2331,10 +2347,6 @@ audio_choice:
 #ifdef ENABLE_JACK_TRANSPORT
     if (prefs->jack_srv_dup) {
       if (!ign_opts->ign_jackopts) {
-        if (prefs->jack_opts & JACK_OPTS_START_ASERVER)
-          prefs->jack_opts |= JACK_OPTS_START_TSERVER;
-        else
-          prefs->jack_opts &= ~JACK_OPTS_START_TSERVER;
         if (prefs->jack_opts & JACK_OPTS_PERM_ASERVER)
           prefs->jack_opts |= JACK_OPTS_PERM_TSERVER;
         else
@@ -2570,11 +2582,13 @@ rest3:
 
   if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
     future_prefs->jack_opts &= ~JACK_INFO_TEST_SETUP;
+    // TODO
     abort();
   }
 
   if (prefs->startup_phase != 0) {
-    splash_end();
+    // splash_end() would normally kick us to MT mode, but we haven't queried for it yet
+    // splash_end();
     set_int_pref(PREF_STARTUP_PHASE, 5);
     prefs->startup_phase = 5;
     if (!do_startup_interface_query()) {
@@ -5627,14 +5641,14 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->restore, TRUE);
   lives_widget_set_sensitive(mainw->recent_menu, TRUE);
   lives_widget_set_sensitive(mainw->save_as, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID
-                             && capable->has_encoder_plugins);
+                             && capable->has_encoder_plugins == PRESENT);
 #ifdef LIBAV_TRANSCODE
   lives_widget_set_sensitive(mainw->transcode, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
 #endif
   if (!prefs->vj_mode) {
     lives_widget_set_sensitive(mainw->backup, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
     lives_widget_set_sensitive(mainw->save_selection, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO &&
-                               capable->has_encoder_plugins);
+                               capable->has_encoder_plugins == PRESENT);
   }
   lives_widget_set_sensitive(mainw->clear_ds, TRUE);
   lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);

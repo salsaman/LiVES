@@ -64,6 +64,45 @@ if ($command eq "version") {
     exit 0;
 }
 
+if ($command eq "get_plugin_id") {
+    ## to replace version
+    ## returns lines similar to plugin_id_t
+    # uint64_t uid; // fixed enumeration
+    # uint64_t type;  ///< e.g. "decoder"
+    # uint64_t subtype;  ///< e.g. dynamic
+    # char script_lang[32];  ///< for scripted types only, the script interpreter, e.g. "perl", "python3"
+    # int api_version_major; ///< version of interface API
+    # int api_version_minor;
+    # char name[32];  ///< e.g. "mkv_decoder"
+    # int pl_version_major; ///< version of plugin
+    # int pl_version_minor;
+    # int n_intentcaps;
+    # lives_intentcap_t *intentcaps;  /// array of intentcaps[n_intentcaps]
+
+    print "$UID\n";
+    print "257\n"; # encoder
+    print "130\n"; # script
+    print "perl\n"; # script lang
+    print "1\n"; # encoder API major
+    print "1\n"; # encoder API minor
+    printf "ffmpeg"; # name of encoder plugin
+    print "2\n"; # encoder ver major
+    print "16\n"; # encoder ver minor
+    print "1"; # n_intentcaps
+    print "encode|5";
+
+    ## future directions - return object template / instance, and set of transformations
+    ## values for template
+    #print "1"; # n_intentcaps
+    #print "create_instance|init"; # intentcap0 - need to convert return to status
+    ## values for instance
+    #print "2"; # n_intentcaps
+    # intentcap1 - need to set reqs: get_fmt_req, get_formats, get_rfx; call to clean
+    ## "format" can be a string list param, get_rfx can simply provide more reqs.
+    ## calling get_fmt_req can be a condition
+    #print "destroy|finalise";
+}
+
 if ($command eq "init") {
     # perform any initialisation needed
     # On error, print error message and exit 1

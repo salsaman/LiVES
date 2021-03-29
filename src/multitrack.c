@@ -8644,6 +8644,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
         lives_widget_grab_focus(rdet->okbutton);
       }
     }
+    lives_dialog_set_button_layout(LIVES_DIALOG(rdet->dialog), LIVES_BUTTONBOX_END);
     do {
       rdet->suggestion_followed = FALSE;
       if ((response = lives_dialog_run(LIVES_DIALOG(rdet->dialog))) == LIVES_RESPONSE_OK) {

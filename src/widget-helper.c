@@ -4686,6 +4686,7 @@ static LiVESWidget *make_ttips_image_for(LiVESWidget *widget, const char *text) 
     lives_widget_set_sensitive_with(widget, ttips_image);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), HAS_TTIPS_IMAGE_KEY, ttips_image);
   }
+  lives_widget_set_valign(ttips_image, LIVES_ALIGN_START);
   return ttips_image;
 }
 
@@ -7942,49 +7943,49 @@ WIDGET_HELPER_GLOBAL_INLINE void lives_layout_label_set_text(LiVESLabel * label,
 
 WIDGET_HELPER_GLOBAL_INLINE
 LiVESWidget *lives_layout_add_label(LiVESLayout * layout, const char *text, boolean horizontal) {
+  LiVESWidget *hbox, *label, *conter;
   if (horizontal) {
-    LiVESWidget *hbox = lives_layout_hbox_new(layout);
-    LiVESWidget *label = lives_standard_label_new_with_tooltips(text, LIVES_BOX(hbox), NULL);
-    LiVESWidget *conter = widget_opts.last_container;
-    widget_opts.last_label = label;
+    hbox = lives_layout_hbox_new(layout);
+    label = lives_standard_label_new_with_tooltips(text, LIVES_BOX(hbox), NULL);
+    conter = widget_opts.last_container;
     lives_widget_object_ref(conter);
     lives_widget_unparent(conter);
     lives_layout_pack(LIVES_HBOX(hbox), conter);
-    lives_widget_object_unref(conter);
     widget_opts.last_container = hbox;
-
-#if GTK_CHECK_VERSION(3, 0, 0)
-    if (LIVES_SHOULD_EXPAND_HEIGHT)
-      lives_widget_set_valign(label, LIVES_ALIGN_FILL);
-    else
-      lives_widget_set_valign(label, LIVES_ALIGN_CENTER);
-    if (widget_opts.justify == LIVES_JUSTIFY_CENTER)
-      lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
-    else if (widget_opts.justify == LIVES_JUSTIFY_END)
-      lives_widget_set_halign(label, LIVES_ALIGN_END);
-    else
-      lives_widget_set_halign(label, LIVES_ALIGN_START);
-    if (LIVES_SHOULD_EXPAND_WIDTH)
-      lives_widget_set_halign(hbox, LIVES_ALIGN_FILL);
-#endif
-
-    if (widget_opts.apply_theme == 2) set_child_alt_colour(hbox, TRUE);
-    return label;
   } else {
-    LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
-    LiVESWidget *label = lives_standard_label_new_with_tooltips(NULL, LIVES_BOX(hbox), NULL);
-    LiVESWidget *conter = widget_opts.last_container;
+    hbox = lives_hbox_new(FALSE, 0);
+    label = lives_standard_label_new_with_tooltips(NULL, LIVES_BOX(hbox), NULL);
+    conter = widget_opts.last_container;
     lives_layout_label_set_text(LIVES_LABEL(label), text);
-    widget_opts.last_label = label;
     lives_widget_object_ref(conter);
     lives_widget_unparent(conter);
     lives_widget_destroy(hbox);
-    hbox = lives_layout_expansion_row_new(layout, conter);
-    lives_widget_object_ref(conter);
-    widget_opts.last_container = hbox;
-    if (widget_opts.apply_theme == 2) set_child_alt_colour(hbox, TRUE);
-    return label;
+    lives_layout_expansion_row_new(layout, conter);
+    hbox = widget_opts.last_container;
   }
+
+  widget_opts.last_label = label;
+  lives_widget_object_unref(conter);
+  if (widget_opts.apply_theme == 2) set_child_alt_colour(hbox, TRUE);
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+  if (LIVES_SHOULD_EXPAND_HEIGHT)
+    lives_widget_set_valign(label, LIVES_ALIGN_FILL);
+  else
+    lives_widget_set_valign(label, LIVES_ALIGN_CENTER);
+
+  if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
+    lives_widget_set_halign(hbox, LIVES_ALIGN_CENTER);
+  } else {
+    if (widget_opts.justify == LIVES_JUSTIFY_END)
+      lives_widget_set_halign(hbox, LIVES_ALIGN_END);
+    else
+      lives_widget_set_halign(hbox, LIVES_ALIGN_START);
+  }
+  if (LIVES_SHOULD_EXPAND_WIDTH)
+    lives_widget_set_halign(label, LIVES_ALIGN_FILL);
+#endif
+  return label;
 }
 
 
@@ -10623,6 +10624,7 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox * box, LiVE
   lives_expander_set_use_markup(LIVES_EXPANDER(expander), TRUE);
 
   if (box) {
+    LiVESWidget *img_tips;
     int packing_width = 0;
 
     hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
@@ -10647,6 +10649,9 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox * box, LiVE
 
     if (child) lives_container_add(LIVES_CONTAINER(expander), child);
     lives_container_set_border_width(LIVES_CONTAINER(expander), widget_opts.border_width);
+    add_warn_image(expander, hbox);
+    img_tips = lives_widget_set_tooltip_text(expander, NULL);
+    if (img_tips) lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
   }
 
   if (widget_opts.apply_theme) {
@@ -12997,6 +13002,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_set_button_width(LiVESButto
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_make_first(LiVESButtonBox * bbox, LiVESWidget * widget) {
 #ifdef GUI_GTK
+  // any other layout seems to prevent this from working
+  lives_button_box_set_layout(bbox, LIVES_BUTTONBOX_END);
   gtk_button_box_set_child_secondary(bbox, widget, TRUE);
   gtk_button_box_set_child_non_homogeneous(bbox, widget, TRUE);
   if (LIVES_SHOULD_EXPAND_WIDTH) {

@@ -139,7 +139,7 @@ static inline void myrand(void *ptr, size_t size) {
 #include "../../../src/lsd.h"
 
 #define DEC_PLUGIN_TYPE_DECODER		256 // "decoder"
-#define DEC_PLUGIN_SUBTYPE_DLL 		128 // "dll"
+#define DEC_PLUGIN_SUBTYPE_DYNAMIC     	128 // dynamic library
 
 typedef int lives_intention;
 
@@ -152,10 +152,11 @@ typedef struct {
 typedef struct {
   uint64_t uid; // fixed enumeration
   uint64_t type;  ///< e.g. "decoder"
-  uint64_t subtype;  ///< e.g. "dll"
+  uint64_t subtype;  ///< e.g. dynamic
+  char script_lang[32];  ///< N/A only for scripted plugins
   int api_version_major; ///< version of interface API
   int api_version_minor;
-  char name[64];  ///< e.g. "mkv_decoder"
+  char name[32];  ///< e.g. "mkv_decoder"
   int pl_version_major; ///< version of plugin
   int pl_version_minor;
   int n_intentcaps;
@@ -265,7 +266,8 @@ static inline lives_plugin_id_t *_make_plugin_id(const char *name, int vmaj, int
     inited = 1;
     plugin_id.uid = PLUGIN_UID;
     plugin_id.type = DEC_PLUGIN_TYPE_DECODER;
-    plugin_id.subtype = DEC_PLUGIN_SUBTYPE_DLL;
+    plugin_id.subtype = DEC_PLUGIN_SUBTYPE_DYNAMIC;
+    *plugin_id.script_lang = 0;
     plugin_id.api_version_major = DEC_PLUGIN_VERSION_MAJOR;
     plugin_id.api_version_major = DEC_PLUGIN_VERSION_MINOR;
     snprintf(plugin_id.name, 32, "%s", name);

@@ -1228,7 +1228,7 @@ void get_location(const char *exe, char *val, int maxlen) {
 }
 
 
-LIVES_LOCAL_INLINE lives_presence_t has_executable(const char *exe) {
+LIVES_LOCAL_INLINE lives_checkstatus_t has_executable(const char *exe) {
   char *loc;
   if ((loc = lives_find_program_in_path(exe)) != NULL) {
     lives_free(loc);

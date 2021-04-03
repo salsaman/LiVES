@@ -206,8 +206,8 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
 }
 
 
-lives_pgid_t lives_fork(const char *com) {
-  // returns a number which is the pgid to use for lives_killpg
+lives_pid_t lives_fork(const char *com) {
+  // returns a number which is the pid to use for lives_killpg
 
   // mingw - return PROCESS_INFORMATION * to use in GenerateConsoleCtrlEvent (?)
 
@@ -217,12 +217,18 @@ lives_pgid_t lives_fork(const char *com) {
   pid_t ret;
 
   if (!(ret = fork())) {
-    setsid(); // create new session id
-    setpgid(capable->mainpid, 0); // create new pgid
+    // this runs in the forked process
+    setsid(); // create new session id, otherwise we inherit the parent's - THIS ALSO SETS US AS PGID leader of a new pgid
+    // thus by calling killpg(ret, SIGTERM) for example, we ensure that any child processes are also terminated
+    // anything which needs to survive after can be placed in a separate pgid or in a new session id
+    // if we had simply used setpgid instead then that would not be possible
+    // NOTE: this does not work for commands which run from the shell, as the shell itself will run the command in a
+    // new sid / pgid, and even killing the parent process just orphans the child and sets the parent to init.
     IGN_RET(system(com));
     _exit(0);
   }
 
+  // original (parent) process returns with child pid (which is now equal to child pgig)
   return ret;
 }
 
@@ -254,7 +260,7 @@ LIVES_GLOBAL_INLINE int lives_kill(lives_pid_t pid, int sig) {
 }
 
 
-LIVES_GLOBAL_INLINE int lives_killpg(lives_pgid_t pgrp, int sig) {return killpg(pgrp, sig);}
+LIVES_GLOBAL_INLINE int lives_killpg(lives_pid_t pid, int sig) {return killpg(getpgid(pid), sig);}
 
 
 LIVES_GLOBAL_INLINE void clear_mainw_msg(void) {lives_memset(mainw->msg, 0, MAINW_MSG_SIZE);}
@@ -1540,7 +1546,7 @@ void find_when_to_stop(void) {
   // a>v    stop on video end    stop on audio end           no stop
   // v>a    stop on video end    stop on video end           no stop
   // generator start - not playing : stop on vid_end, unless pure audio;
-  if (mainw->alives_pgid > 0) mainw->whentostop = NEVER_STOP;
+  if (mainw->alives_pid > 0) mainw->whentostop = NEVER_STOP;
   else if (mainw->aud_rec_fd != -1 &&
            mainw->ascrap_file == -1) mainw->whentostop = STOP_ON_VID_END;
   else if (mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) mainw->whentostop = STOP_ON_VID_END;
@@ -1694,11 +1700,7 @@ boolean switch_aud_to_jack(boolean set_in_prefs) {
 
   if (mainw->is_ready && mainw->vpp && mainw->vpp->get_audio_fmts)
     mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
-
-  if (prefs->perm_audio_reader) {
-    // reset and connect to server
-    jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
-  }
+  jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
 
   lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
   lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
@@ -1755,10 +1757,7 @@ boolean switch_aud_to_pulse(boolean set_in_prefs) {
     lives_widget_set_sensitive(mainw->show_jackmsgs, FALSE);
 #endif
 
-    if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
-      pulse_rec_audio_to_clip(-1, -1, RECA_MONITOR);
-      mainw->pulsed_read->in_use = FALSE;
-    }
+    pulse_rec_audio_to_clip(-1, -1, RECA_MONITOR);
 
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);

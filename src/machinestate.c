@@ -1294,6 +1294,17 @@ LIVES_GLOBAL_INLINE char *lives_concat(char *st, char *x) {
   return tmp;
 }
 
+
+LIVES_GLOBAL_INLINE char *lives_strcollate(char **strng, const char *sep, const char *xnew) {
+  // appends xnew to *string, if strlen(*string) > 0 appends sep first
+  //
+  char *tmp = (strng && *strng && **strng) ? *strng : lives_strdup("");
+  char *strng2 = lives_strdup_printf("%s%s%s", tmp, (sep && *tmp) ? sep : "", xnew);
+  lives_freep((void **)strng);
+  return strng2;
+}
+
+
 LIVES_GLOBAL_INLINE int lives_strappend(const char *string, int len, const char *xnew) {
   /// see also: lives_concat()
   size_t sz = lives_strlen(string);

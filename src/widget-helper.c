@@ -4103,6 +4103,17 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_insert(LiVESTextBuffer *tb
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_insert_markup(LiVESTextBuffer *tbuff, LiVESTextIter *iter,
+    const char *markup,
+    int len) {
+#ifdef GUI_GTK
+  gtk_text_buffer_insert_markup(tbuff, iter, markup, len);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_insert_at_cursor(LiVESTextBuffer *tbuff, const char *text, int len) {
 #ifdef GUI_GTK
   gtk_text_buffer_insert_at_cursor(tbuff, text, len);
@@ -10711,7 +10722,8 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer * tb
   lives_container_set_border_width(LIVES_CONTAINER(textview), 2);
 
   if (text) {
-    lives_text_view_set_text(LIVES_TEXT_VIEW(textview), text, -1);
+    if (widget_opts.use_markup) lives_text_view_set_markup(LIVES_TEXT_VIEW(textview), text);
+    else lives_text_view_set_text(LIVES_TEXT_VIEW(textview), text, -1);
   }
 
   if (widget_opts.apply_theme) {
@@ -12212,7 +12224,7 @@ WIDGET_HELPER_GLOBAL_INLINE void set_child_colour3(LiVESWidget * widget, boolean
 }
 
 
-char *lives_text_view_get_text(LiVESTextView * textview) {
+WIDGET_HELPER_GLOBAL_INLINE char *lives_text_view_get_text(LiVESTextView * textview) {
   LiVESTextIter siter, eiter;
   LiVESTextBuffer *textbuf = lives_text_view_get_buffer(textview);
   lives_text_buffer_get_start_iter(textbuf, &siter);
@@ -12221,18 +12233,32 @@ char *lives_text_view_get_text(LiVESTextView * textview) {
 }
 
 
-boolean lives_text_view_set_text(LiVESTextView * textview, const char *text, int len) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_view_set_text(LiVESTextView * textview, const char *text, int len) {
   LiVESTextBuffer *textbuf = lives_text_view_get_buffer(textview);
-  if (textbuf)
-    return lives_text_buffer_set_text(textbuf, text, len);
+  if (textbuf) return lives_text_buffer_set_text(textbuf, text, len);
   return FALSE;
 }
 
 
-boolean lives_text_buffer_insert_at_end(LiVESTextBuffer * tbuff, const char *text) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_view_set_markup(LiVESTextView * textview, const char *markup) {
+  LiVESTextBuffer *textbuf = lives_text_view_get_buffer(textview);
+  if (textbuf) return lives_text_buffer_insert_markup_at_end(textbuf, markup);
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_insert_at_end(LiVESTextBuffer * tbuff, const char *text) {
   LiVESTextIter xiter;
   if (lives_text_buffer_get_end_iter(tbuff, &xiter))
     return lives_text_buffer_insert(tbuff, &xiter, text, -1);
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_insert_markup_at_end(LiVESTextBuffer * tbuff, const char *markup) {
+  LiVESTextIter xiter;
+  if (lives_text_buffer_get_end_iter(tbuff, &xiter))
+    return lives_text_buffer_insert_markup(tbuff, &xiter, markup, -1);
   return FALSE;
 }
 

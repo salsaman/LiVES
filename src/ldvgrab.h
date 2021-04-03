@@ -20,7 +20,7 @@ typedef struct {
   int device;
   int format;
   boolean grabbed_clips;
-  lives_pgid_t pgid;
+  lives_pid_t pid;
 } s_cam;
 
 /////////////////////////

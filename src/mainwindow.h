@@ -943,7 +943,7 @@ typedef struct {
   int scrap_file; ///< we throw odd sized frames here when recording in real time; used if a source is a generator or stream
   int ascrap_file; ///< scrap file for recording audio scraps
 
-  lives_pgid_t alives_pgid; // 0, or procid for autolives
+  lives_pid_t alives_pid; // 0, or pid for autolives
 
   // copy/paste
   boolean insert_after;

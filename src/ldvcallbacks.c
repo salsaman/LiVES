@@ -44,8 +44,8 @@ void on_camstop_clicked(LiVESButton *button, livespointer user_data) {
   dvgrabw->playing = FALSE;
 
   if (cam->format == CAM_FORMAT_DV) {
-    if (cam->pgid != 0) lives_killpg(cam->pgid, LIVES_SIGTERM);
-    cam->pgid = 0;
+    if (cam->pid != 0) lives_killpg(cam->pid, LIVES_SIGTERM);
+    cam->pid = 0;
   }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, dvgrabw->dialog);

@@ -2909,19 +2909,6 @@ LIVES_GLOBAL_INLINE boolean do_jack_nonex_warn(const char *server_cfg) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean do_jack_scripts_warn(const char *scrptx) {
-  char *err =
-    lives_strdup_printf(_("\nMultiple jack clients (audio and transport) are set to use the same "
-                          "startup script file\n"
-                          "%s\nIf one client starts the server, then the other will fail.\n"
-                          "Are you sure you wish to continue with the current settings ?"),
-                        scrptx);
-  boolean ret = do_yesno_dialog_with_check(err, WARN_MASK_JACK_SCRPT);
-  lives_free(err);
-  return ret;
-}
-
-
 LIVES_LOCAL_INLINE char *get_jack_restart_warn(int suggest_opts, const char *srvname) {
   // suggest_opts is a hint for the -jackopts value to use on restart
   // a value of -1 will not add any recommendation
@@ -2974,27 +2961,42 @@ static void diag_button_clicked(LiVESWidget * w, livespointer dta) {
 
 
 boolean do_jack_no_startup_warn(boolean is_trans) {
-  char *tmp = NULL, *tmp2 = NULL, *tmp3, *tmp4, *msg;
+  char *tmp = NULL, *tmp2 = NULL, *tmp3 = NULL, *tmp4, *tmp5, *tmp6, *msg, *msg1;
+  boolean chkname = FALSE;
   if ((is_trans && *prefs->jack_tserver_cfg) ||
       (!is_trans && *prefs->jack_aserver_cfg)) {
-    tmp = lives_strdup_printf(_("jackd using the configuration file\n%s"),
-                              is_trans ? prefs->jack_tserver_cfg : prefs->jack_aserver_cfg);
+    char *srvname;
+
+    if (is_trans) {
+      srvname = jack_parse_script(prefs->jack_tserver_cfg);
+      if (lives_strcmp(srvname, future_prefs->jack_tserver_cname)) chkname = TRUE;
+    } else {
+      srvname = jack_parse_script(prefs->jack_aserver_cfg);
+      if (lives_strcmp(srvname, future_prefs->jack_aserver_cname)) chkname = TRUE;
+    }
+    if (chkname) tmp6 = lives_strdup_printf(_("\n\nPerhaps the server name should be set to '%s' ?\n"),
+                                              srvname);
+    else tmp6 = lives_strdup(".");
+
+    tmp = lives_strdup_printf(_("jackd using the configuration file\n%s%s"),
+                              is_trans ? prefs->jack_tserver_cfg : prefs->jack_aserver_cfg, tmp6);
+    lives_free(tmp6);
   } else {
     if (is_trans) {
       if (*future_prefs->jack_tserver_sname) {
         if (!lives_strcmp(future_prefs->jack_tserver_sname, future_prefs->jack_tserver_sname))
           tmp = lives_strdup(_("it"));
-        else tmp = lives_strdup_printf(_("the jack server '%s'"), future_prefs->jack_tserver_sname);
+        else tmp = lives_strdup_printf(_("the jack server '%s'."), future_prefs->jack_tserver_sname);
       }
     } else {
       if (*future_prefs->jack_aserver_sname) {
         if (!lives_strcmp(future_prefs->jack_tserver_sname, future_prefs->jack_tserver_sname))
           tmp = lives_strdup(_("it"));
-        else tmp = lives_strdup_printf(_("the jack server '%s'"), future_prefs->jack_aserver_sname);
+        else tmp = lives_strdup_printf(_("the jack server '%s'."), future_prefs->jack_aserver_sname);
       }
     }
   }
-  if (!tmp) tmp = _("the default jack server");
+  if (!tmp) tmp = _("the default jack server.");
 
   if (is_trans) {
     if (*future_prefs->jack_tserver_cname)
@@ -3010,20 +3012,30 @@ boolean do_jack_no_startup_warn(boolean is_trans) {
                           "or select another audio player.\n"));
   } else tmp4 = lives_strdup("");
 
-  msg = lives_strdup_printf(_("LiVES failed to connect to %s,\n"
-                              "and in addition was unable to start %s.\n\n "
-                              "Please ensure that %s is set up correctly on your machine\n"
-                              "and also that the soundcard is not being blocked by another program, "
-                              "or another instance of jackd.\n\n"
-                              "Also make sure that LiVES is not trying to start up\n"
-                              "a server which is already running.\n\n"
-                              "<b>Automatic jack startup will be disabled for now</b>.\n%s"), tmp2, tmp,
-                            (tmp3 = is_trans ? (future_prefs->jack_tdriver
-                                    ? lives_markup_escape_text(future_prefs->jack_tdriver, -1) : _("audio"))
-                                    : (future_prefs->jack_adriver ? lives_markup_escape_text(future_prefs->jack_adriver, -1)
-                                       : _("audio"))), tmp4);
-  widget_opts.use_markup = FALSE;
-  lives_free(tmp); lives_free(tmp2); lives_free(tmp3); lives_free(tmp4);
+  if (!prefs->startup_phase) tmp5 = lives_strdup_printf("\n<b>%s</b>\n", _("Automatic jack startup will be disabled for now."));
+  else tmp5 = lives_strdup("");
+
+  msg1 = lives_strdup_printf(_("LiVES failed to connect to %s,\n"
+                               "and in addition was unable to start %s\n\n"), tmp2, tmp);
+  if (!chkname) msg = lives_strdup_printf(_("%s"
+                                            "Please ensure that %s is set up correctly on your machine\n"
+                                            "and also that the soundcard is not being blocked by another program, "
+                                            "or another instance of jackd.\n\n"
+                                            "Also make sure that LiVES is not trying to start up\n"
+                                            "a server which is already running.\n\n"
+                                            "%s%s"), msg1, (tmp3 = is_trans ? (future_prefs->jack_tdriver
+                                                ? lives_markup_escape_text(future_prefs->jack_tdriver, -1)
+                                                : _("audio"))
+                                                : (future_prefs->jack_adriver
+                                                    ? lives_markup_escape_text(future_prefs->jack_adriver, -1)
+                                                    : _("audio"))), tmp5, tmp4);
+  else msg = lives_strdup_printf("%s%s", msg1, tmp5);
+  if (msg1) lives_free(msg1);
+  if (tmp) lives_free(tmp);
+  if (tmp2) lives_free(tmp2);
+  if (tmp3) lives_free(tmp3);
+  if (tmp4) lives_free(tmp4);
+  if (tmp5) lives_free(tmp5);
   if (prefsw || prefs->startup_phase) {
     widget_opts.use_markup = TRUE;
     do_error_dialog(msg);
@@ -3131,8 +3143,13 @@ boolean do_jack_no_connect_warn(boolean is_trans) {
                                    ? future_prefs->jack_tserver_cname : NULL);
   } else more = lives_strdup("");
 
-  if (!prefsw) warn = _("<big><b>Please start the jack server before restarting LiVES</b></big>s");
-  else warn = _("Please ensure the server is running before trying again");
+  if (!prefsw && !prefs->startup_phase) warn = _("<big><b>Please start the jack server before restarting LiVES</b></big>s");
+  else {
+    warn = _("Please ensure the server is running before trying again");
+    if (prefs->startup_phase) {
+      warn = lives_strcollate(&warn, ", ", _("or else adjust the jack configuration settings"));
+    }
+  }
 
   msg = lives_strdup_printf(_("\nLiVES was unable to establish %s to jack server <b>'%s'</b>.%s"
                               "\n\n%s\n%s"),

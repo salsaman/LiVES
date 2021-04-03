@@ -586,34 +586,30 @@ static void chk_setenv_conf(LiVESToggleButton * b, livespointer data) {
   // *INDENT-ON*
 }
 
-void chk_jack_cfgx(LiVESWidget * e, livespointer data) {
+void chk_jack_cfgx(LiVESWidget * w, LiVESEntry * e) {
   const char *server_cfgx = lives_entry_get_text(LIVES_ENTRY(e));
   if (lives_file_test(server_cfgx, LIVES_FILE_TEST_IS_EXECUTABLE)) {
-    hide_warn_image(e);
+    char *srv_name = jack_parse_script(server_cfgx);
+    hide_warn_image(w);
+    if (srv_name) lives_entry_set_text(e, srv_name);
+    lives_free(srv_name);
     return;
   }
   if (!lives_file_test(server_cfgx, LIVES_FILE_TEST_EXISTS)) {
-    show_warn_image(e, _("The specified file does not exist"));
+    show_warn_image(w, _("The specified file does not exist"));
     return;
   }
-  show_warn_image(e, _("The specified file should be executable"));
-}
-
-
-static void _close_exp(LiVESToggleButton * b, LiVESExpander * exp) {
-  if (!lives_toggle_button_get_active(b)) {
-    lives_expander_set_expanded(exp, FALSE);
-  }
+  show_warn_image(w, _("The specified file should be executable"));
 }
 
 
 boolean do_jack_config(int type, boolean is_trans) {
   LiVESSList *rb_group = NULL;
-  LiVESWidget *dialog, *dialog_vbox, *layout, *hbox, *rb, *cb2 = NULL, *cb3;
+  LiVESWidget *dialog, *dialog_vbox, *layout, *hbox, *cb2 = NULL, *cb3;
   LiVESWidget *acdef = NULL, *acname = NULL, *astart = NULL;
-  LiVESWidget *asdef, *asname, *nsclabel;
+  LiVESWidget *asdef, *asname;
   LiVESWidget *okbutton, *cancelbutton, *filebutton;
-  LiVESWidget *scrpt_rb, *cfg_entry, *expander = NULL;
+  LiVESWidget *scrpt_rb = NULL, *cfg_entry = NULL;
   LiVESResponseType response;
   char *title, *text;
   char *server_cfgx;
@@ -623,6 +619,7 @@ boolean do_jack_config(int type, boolean is_trans) {
   boolean usedefsrv = FALSE;
   boolean is_setup = FALSE;
   boolean is_test = FALSE;
+  boolean do_astart;
   // type 0 = from prefs, 1 = setup, 2 = from error dialog
 
   if (type) is_setup = TRUE;
@@ -644,9 +641,9 @@ set_config:
   if (type == 1) {
     widget_opts.use_markup = TRUE;
     lives_layout_add_label(LIVES_LAYOUT(layout), _("</b></big>Please use the options below to define the "
-                           "initial settings for jackd.\n"
-                           "<big><b>After the setup process, you can review and change the full settings "
-                           "from Preferences / Jack Integration\n"), FALSE);
+                           "basic yinitial settings for jackd.\n"
+                           "<big><b>After the setup process, you can review and update the full settings "
+                           "from within Preferences / Jack Integration\n"), FALSE);
     widget_opts.use_markup = FALSE;
 
     lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
@@ -664,7 +661,7 @@ set_config:
 
     acdef =
       lives_standard_check_button_new(_("Connect to the default server"),
-                                      !*prefs->jack_aserver_cname, LIVES_BOX(hbox),
+                                      !*future_prefs->jack_aserver_cname, LIVES_BOX(hbox),
                                       H_("The server name will be taken from the environment "
                                          "variable\n$JACK_DEFAULT_SERVER.\nIf that variable is not "
                                          "set, then the name 'default' will be used instead"));
@@ -678,70 +675,58 @@ set_config:
 
     toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(acdef), acname, TRUE);
 
-    lives_layout_add_row(LIVES_LAYOUT(layout));
-
-    widget_opts.use_markup = TRUE;
-    lives_layout_add_label(LIVES_LAYOUT(layout), _("<big><b>Action to take if the connection fails...</b></big>"), TRUE);
-    widget_opts.use_markup = FALSE;
-
-    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-
-    lives_standard_radio_button_new(_("...do nothing"), &rb_group, LIVES_BOX(hbox),
-                                    H_("If this setting is active, LiVES will only ever attempt to connect a running jack server\n"
-                                       "and will never try to start a server itself"));
-    lives_layout_add_row(LIVES_LAYOUT(layout));
-    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-
-    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-
-    astart = lives_standard_radio_button_new(_("_...try to start the jack server using the settings below"), &rb_group,
-             LIVES_BOX(hbox),
-             H_("Checking this will cause LiVES to try to start up a jackd server itself\n"
-                "if it is unable to connect to a running instance."));
-
-    if ((cfg_exists && is_setup) || (!is_trans && (prefs->jack_opts & JACK_OPTS_START_ASERVER))
-        || (is_trans && (prefs->jack_opts & JACK_OPTS_START_TSERVER)))
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(astart), TRUE);
-    else {
-      lives_layout_add_label(LIVES_LAYOUT(layout), _("NOTE: if server start up fails, "
-                             "LiVES will ALWAYS produce an error."), FALSE);
-      lives_layout_add_row(LIVES_LAYOUT(layout));
-
-      text = lives_strdup_printf(_(">>>> In the case that LiVES fails to connect to %s, an attempt will be made to start "
-                                   "a new server using the settings below:"), (is_trans && *prefs->jack_tserver_cname)
-                                 ? prefs->jack_tserver_cname : (!is_trans && *prefs->jack_aserver_cname)
-                                 ? prefs->jack_aserver_cname : _("the default server"));
-      lives_layout_add_label(LIVES_LAYOUT(layout), text, TRUE);
-      lives_free(text);
-      lives_layout_add_row(LIVES_LAYOUT(layout));
-
-      lives_layout_add_label(LIVES_LAYOUT(layout), (_("(if the new server fails to start, "
-                             "manual intervention will be required)")), TRUE);
+    if (type == 1 && cfg_exists && !*prefs->jack_aserver_cname) {
+      char *srvname = jack_parse_script(server_cfgx);
+      if (srvname) {
+        lives_entry_set_text(LIVES_ENTRY(acname), srvname);
+        lives_free(srvname);
+        //lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acdef), FALSE);
+      }
     }
 
+    lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
     lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
-    if (!is_setup) widget_opts.packing_height <<= 1;
-    layout = lives_layout_new(LIVES_BOX(dialog_vbox));
-  }
-
-
-  if (is_setup || !type) {
-    lives_layout_add_row(LIVES_LAYOUT(layout));
-    widget_opts.use_markup = TRUE;
-    nsclabel = lives_layout_add_label(LIVES_LAYOUT(layout),
-                                      _("<big><b>New Server Configuration</b></big>\n"
-                                        "<small>(if connection fails)</small>"),
-                                      TRUE);
-    widget_opts.use_markup = FALSE;
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("Action to take if the connection fails..."), FALSE);
 
     hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  } else hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-  rb_group = NULL;
+    lives_standard_radio_button_new(_("...do nothing"), &rb_group, LIVES_BOX(hbox),
+                                    H_("With this setting active, LiVES will only ever attempt "
+                                       "to connect to an existing jack server, "
+                                       "and will never try to start one itself\n"
+                                       "If the connection attempt does fail, an error will be generated."));
 
-  scrpt_rb = lives_standard_radio_button_new(_("_Use settings from config file:"),
-             &rb_group, LIVES_BOX(hbox), NULL);
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  }
+
+  if ((cfg_exists && is_setup) || (!is_trans && (prefs->jack_opts & JACK_OPTS_START_ASERVER))
+      || (is_trans && (prefs->jack_opts & JACK_OPTS_START_TSERVER)))
+    do_astart = TRUE;
+
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+
+  if (!is_setup) {
+    text = lives_strdup_printf(_("In the event that LiVES fails to connect to %s, an attempt will be made to start "
+                                 "a new server using the settings below:"), (is_trans && *prefs->jack_tserver_cname)
+                               ? prefs->jack_tserver_cname : (!is_trans && *prefs->jack_aserver_cname)
+                               ? prefs->jack_aserver_cname : _("the default server"));
+    lives_layout_add_label(LIVES_LAYOUT(layout), text, FALSE);
+    lives_free(text);
+    lives_layout_add_row(LIVES_LAYOUT(layout));
+
+    lives_layout_add_label(LIVES_LAYOUT(layout), (_("(if the new server fails to start, "
+                           "manual intervention will be required)")), TRUE);
+  }
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  scrpt_rb = lives_standard_radio_button_new(is_setup ? _("..._run the following script (once) and try again:")
+             : _("Run this script and retry connecting"),
+             &rb_group, LIVES_BOX(hbox), H_("With this setting active, if the first connection "
+                 "attempt fails,\nLiVES will run the specified "
+                 "jack startup script and try again to connect.\n"
+                 "Should the second attempt also fail, an error will be generated"));
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
@@ -763,36 +748,31 @@ set_config:
   }
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(cfg_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(chk_jack_cfgx), NULL);
+                            LIVES_GUI_CALLBACK(chk_jack_cfgx), LIVES_ENTRY(acname));
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(scrpt_rb), cfg_entry, FALSE);
 
-  if (is_setup) {
-    LiVESWidget *widget;
-    hbox = lives_layout_expansion_row_new(LIVES_LAYOUT(layout), NULL);
+  if (!is_setup) lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
-    rb = lives_standard_radio_button_new(NULL, &rb_group, LIVES_BOX(hbox), NULL);
-    for (widget = lives_widget_get_parent(rb); widget != hbox; widget = lives_widget_get_parent(widget))
-      lives_widget_set_valign(widget, LIVES_ALIGN_START);
-    widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-    expander = lives_standard_expander_new(_("Use settings from _LiVES"), LIVES_BOX(hbox),
-                                           (layout = lives_layout_new(NULL)));
+  astart = lives_standard_radio_button_new(is_setup ? _("..._try to start the jack server using the values below:")
+           : _("Start a server using these values"), &rb_group,
+           LIVES_BOX(hbox),
+           H_("With this setting active, should the connection attempt fail,\nLiVES will try to start up a jackd server itself,\n"
+              "using the values defined below."));
 
-    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(astart), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                    LIVES_GUI_CALLBACK(_close_exp),
-                                    LIVES_EXPANDER(expander));
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
 
-    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(rb), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                    LIVES_GUI_CALLBACK(_close_exp),
-                                    LIVES_EXPANDER(expander));
-    widget_opts.expand = LIVES_EXPAND_DEFAULT;
-    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-  } else {
-    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-    rb = lives_standard_radio_button_new(_("Use settings from _LiVES"), &rb_group, LIVES_BOX(hbox), NULL);
-  }
+  if (do_astart) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(astart), TRUE);
 
+  if (is_setup) lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+
+  if (!is_setup) widget_opts.packing_height <<= 1;
+
+  ////
+
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   if (!(prefs->jack_opts & JACK_INFO_TEMP_NAMES)
@@ -805,9 +785,12 @@ set_config:
                                               "variable\n$JACK_DEFAULT_SERVER.\nIf that variable is not "
                                               "set, then 'default' will be used instead"));
 
-  if (!is_setup) lives_layout_add_row(LIVES_LAYOUT(layout));
+  if (!is_setup) hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  else {
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+    lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  }
 
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   //lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), WH_LAYOUT_KEY, NULL);
   asname = lives_standard_entry_new(_("Use _custom server name"),
                                     (is_trans && *future_prefs->jack_tserver_sname)
@@ -818,28 +801,18 @@ set_config:
                                     LIVES_BOX(hbox), NULL);
 
   if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) show_warn_image(asname, _("Value was set from the commandline"));
-  /* if (is_setup) { */
-  /*   lives_signal_sync_connect(LIVES_GUI_OBJECT(asname), LIVES_WIDGET_CHANGED_SIGNAL, */
-  /*                             LIVES_GUI_CALLBACK(entry_text_copy), LIVES_ENTRY(acname)); */
-  /* } */
-
-  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), asdef, FALSE);
-  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(asdef), asname, TRUE);
-  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), hbox, FALSE);
 
   if (!is_trans) {
-    if ((is_setup && !cfg_exists) || (!is_setup && !*future_prefs->jack_aserver_cfg))
-      lives_toggle_button_set_active(rb, TRUE);
-    else lives_toggle_button_set_active(scrpt_rb, TRUE);
+    if ((is_setup && cfg_exists) || (!is_setup && *future_prefs->jack_aserver_cfg))
+      lives_toggle_button_set_active(scrpt_rb, TRUE);
     if (is_setup) {
       if (*prefs->jack_aserver_sname) lives_toggle_button_set_active(asdef, FALSE);
     } else {
       if (*future_prefs->jack_aserver_sname) lives_toggle_button_set_active(asdef, FALSE);
     }
   } else {
-    if ((is_setup && !cfg_exists) || (!is_setup && !*future_prefs->jack_tserver_cfg))
-      lives_toggle_button_set_active(rb, TRUE);
-    else lives_toggle_button_set_active(scrpt_rb, TRUE);
+    if ((is_setup && cfg_exists) || (!is_setup && *future_prefs->jack_tserver_cfg))
+      lives_toggle_button_set_active(scrpt_rb, TRUE);
     if (is_setup) {
       if (*prefs->jack_tserver_sname) lives_toggle_button_set_active(asdef, FALSE);
     } else {
@@ -858,12 +831,12 @@ set_config:
                                               & JACK_OPTS_SETENV_ASERVER))
                                           ? TRUE : FALSE, LIVES_BOX(hbox),
                                           H_("If checked, the specified server name will be exported "
-                                              "as\n$JACK_DEFAULT_SERVER, which will cause other jack "
+                                              "as\n$JACK_DEFAULT_SERVER,\nwhich will cause other jack "
                                               "clients in the same process environment\n"
                                               "to also use the exported value as their "
                                               "default server name"));
     text = lives_strdup_printf(_("WARNING: this option is already enabled for the %s client\n"
-                                 "Enabling this value as well may cause undesired results\n"),
+                                 "Enabling this option for multiple client types may produce undesired results"),
                                is_trans ? _("audio") : ("transport"));
     show_warn_image(cb2, text);
     lives_free(text);
@@ -876,41 +849,29 @@ set_config:
     toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(scrpt_rb), cb2, TRUE);
   }
 
-  lives_layout_add_row(LIVES_LAYOUT(layout));
-  if (is_setup) lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   cb3 = lives_standard_check_button_new(_("Create as temporary server"),
                                         is_trans ? !(future_prefs->jack_opts & JACK_OPTS_PERM_TSERVER) :
                                         !(future_prefs->jack_opts & JACK_OPTS_PERM_ASERVER),
-                                        LIVES_BOX(hbox), H_("Checking this will "
-                                            "make any jackd servers "
-                                            "started by LiVES\n"
-                                            "shut down when there are "
-                                            "no more clients connected "
-                                            "to them.\n(This option only"
-                                            " applies to servers created"
-                                            " by LiVES\nvia means other "
-                                            "than using a config "
-                                            "file)\n"));
+                                        LIVES_BOX(hbox), H_("Checking this will cause the server "
+                                            "to automatically shut down\n"
+                                            "when there are no longer any clients connected to it."));
 
-  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), hbox, FALSE);
-  if (expander) toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), expander, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), layout, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(asdef), asname, TRUE);
 
   if (!is_setup) {
     LiVESWidget *advbutton;
 
     lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
-    lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
-    lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 
     hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), WH_LAYOUT_KEY, NULL);
-    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), hbox, FALSE);
 
     advbutton =
       lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
-          _("Server Configuration (EXPERTS ONLY)"), -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+          _("Advanced Server Configuration"), -1, -1, LIVES_BOX(hbox), TRUE, NULL);
 
     if (is_trans) {
       if (prefs->jack_tsparams)
@@ -932,13 +893,16 @@ set_config:
       }
     }
 
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), WH_LAYOUT_KEY, NULL);
-    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), hbox, FALSE);
+
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), hbox, FALSE);
 
     advbutton =
       lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
-          _("Driver Configuration (EXPERTS ONLY)"), -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+          _("Advanced Driver Configuration"), -1, -1, LIVES_BOX(hbox), TRUE, NULL);
 
     if (is_trans) {
       if (prefs->jack_tdrivers)
@@ -964,6 +928,8 @@ set_config:
 
   widget_opts.packing_height = woph;
 
+  add_fill_to_box(LIVES_BOX(dialog_vbox));
+
   if (type == 1)
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
                    LIVES_STOCK_LABEL_BACK, LIVES_RESPONSE_CANCEL);
@@ -983,7 +949,7 @@ set_config:
 
   if (type == 1)
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
-               LIVES_STOCK_LABEL_NEXT, LIVES_RESPONSE_OK);
+               LIVES_STOCK_LABEL_NEXT, LIVES_RESPONSE_RETRY);
   else {
     if (type == 2)
       okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
@@ -993,14 +959,7 @@ set_config:
                  NULL, LIVES_RESPONSE_OK);
   }
 
-  if (is_setup) {
-    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), scrpt_rb, FALSE);
-    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), cfg_entry, FALSE);
-    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), rb, FALSE);
-    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), nsclabel, FALSE);
-    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(astart), expander, FALSE);
-    lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_EDGE);
-  }
+  if (is_setup) lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_EDGE);
 
   lives_button_grab_default_special(okbutton);
 
@@ -1015,7 +974,6 @@ retry:
 
   if (response == LIVES_RESPONSE_RETRY) {
     is_test = TRUE;
-    is_setup = FALSE;
     response = LIVES_RESPONSE_OK;
   }
 
@@ -1023,7 +981,8 @@ retry:
     boolean ignore = FALSE;
     if (is_setup) {
       future_prefs->jack_opts = 0;
-      if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(astart))) {
+      if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(astart)) ||
+          lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(scrpt_rb))) {
         future_prefs->jack_opts |= JACK_OPTS_START_ASERVER;
         if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(scrpt_rb))) {
           const char *server_cfg = lives_entry_get_text(LIVES_ENTRY(cfg_entry));
@@ -1032,44 +991,43 @@ retry:
               goto retry;
             }
           }
-          lives_snprintf(prefs->jack_aserver_cfg, PATH_MAX, "%s", server_cfg);
+          pref_factory_string(PREF_JACK_ACONFIG, server_cfg, TRUE);
+          pref_factory_string(PREF_JACK_TCONFIG, server_cfg, TRUE);
+        } else {
+          pref_factory_string(PREF_JACK_ACONFIG, "", TRUE);
+          pref_factory_string(PREF_JACK_TCONFIG, "", TRUE);
         }
       } else ignore = TRUE;
     } else {
+      // !setup
       if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(scrpt_rb))) {
-        boolean scrpt_conflict = FALSE;
         const char *server_cfg = lives_entry_get_text(LIVES_ENTRY(cfg_entry));
         if (is_trans) {
-          if (!prefs->jack_srv_dup && !lives_strcmp(server_cfg, prefs->jack_aserver_cfg))
-            scrpt_conflict = TRUE;
-          else lives_snprintf(future_prefs->jack_tserver_cfg, PATH_MAX, "%s", server_cfg);
+          if (prefs->jack_srv_dup || lives_strcmp(server_cfg, prefs->jack_aserver_cfg))
+            lives_snprintf(future_prefs->jack_tserver_cfg, PATH_MAX, "%s", server_cfg);
         } else {
-          if (!prefs->jack_srv_dup && !lives_strcmp(server_cfg, prefs->jack_tserver_cfg))
-            scrpt_conflict = TRUE;
-          else lives_snprintf(future_prefs->jack_aserver_cfg, PATH_MAX, "%s", server_cfg);
-        }
-        if (scrpt_conflict) {
-          if (do_jack_scripts_warn(server_cfg)) {
-            goto retry;
-          }
+          if (prefs->jack_srv_dup || lives_strcmp(server_cfg, prefs->jack_tserver_cfg))
+            lives_snprintf(future_prefs->jack_aserver_cfg, PATH_MAX, "%s", server_cfg);
         }
       } else {
-        if (!is_trans) {
-          *future_prefs->jack_aserver_cfg = 0;
-        } else {
-          *future_prefs->jack_tserver_cfg = 0;
-        }
+        if (!is_trans) *future_prefs->jack_aserver_cfg = 0;
+        else *future_prefs->jack_tserver_cfg = 0;
       }
     }
     if (is_setup) {
-      if (ignore || lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(acdef))) {
-        *prefs->jack_aserver_cname = 0;
-        *future_prefs->jack_aserver_cname = 0;
+      if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(acdef))) {
+        pref_factory_string(PREF_JACK_ACSERVER, "", TRUE);
+        pref_factory_string(PREF_JACK_TCSERVER, "", TRUE);
       } else {
-        lives_snprintf(prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX,
-                       "%s", lives_entry_get_text(LIVES_ENTRY(acname)));
-        lives_snprintf(future_prefs->jack_tserver_cname, JACK_PARAM_STRING_MAX,
-                       "%s", lives_entry_get_text(LIVES_ENTRY(acname)));
+        pref_factory_string(PREF_JACK_ACSERVER, lives_entry_get_text(LIVES_ENTRY(acname)), TRUE);
+        pref_factory_string(PREF_JACK_TCSERVER, lives_entry_get_text(LIVES_ENTRY(acname)), TRUE);
+      }
+      if (ignore || lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(asdef))) {
+        pref_factory_string(PREF_JACK_ASSERVER, "", TRUE);
+        pref_factory_string(PREF_JACK_TSSERVER, "", TRUE);
+      } else {
+        pref_factory_string(PREF_JACK_ASSERVER, lives_entry_get_text(LIVES_ENTRY(asname)), TRUE);
+        pref_factory_string(PREF_JACK_TSSERVER, lives_entry_get_text(LIVES_ENTRY(asname)), TRUE);
       }
     } else {
       if (type) {
@@ -1084,27 +1042,13 @@ retry:
         }
       }
     }
-    if (ignore || lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(asdef))) {
-      if (is_setup) *prefs->jack_aserver_sname = 0;
-      else {
-        if (!is_trans) *future_prefs->jack_aserver_sname = 0;
-        else *future_prefs->jack_tserver_sname = 0;
-      }
-    } else {
-      if (is_setup) {
-        lives_snprintf(prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX,
-                       "%s", lives_entry_get_text(LIVES_ENTRY(asname)));
+    if (!is_setup && !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(asdef))) {
+      if (!is_trans)
         lives_snprintf(future_prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX,
                        "%s", lives_entry_get_text(LIVES_ENTRY(asname)));
-      } else {
-        if (!is_trans)
-          lives_snprintf(future_prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX,
-                         "%s", lives_entry_get_text(LIVES_ENTRY(asname)));
-
-        else
-          lives_snprintf(future_prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX,
-                         "%s", lives_entry_get_text(LIVES_ENTRY(asname)));
-      }
+      else
+        lives_snprintf(future_prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX,
+                       "%s", lives_entry_get_text(LIVES_ENTRY(asname)));
     }
     if (!ignore) {
       if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb3))) {
@@ -1124,16 +1068,7 @@ retry:
         }
       }
       if (!is_trans && prefs->jack_srv_dup) {
-        if (is_setup) {
-          lives_snprintf(prefs->jack_tserver_cname, JACK_PARAM_STRING_MAX,
-                         "%s", prefs->jack_aserver_cname);
-          lives_snprintf(prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX,
-                         "%s", prefs->jack_aserver_sname);
-          lives_snprintf(future_prefs->jack_tserver_cname, JACK_PARAM_STRING_MAX,
-                         "%s", prefs->jack_tserver_cname);
-          lives_snprintf(future_prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX,
-                         "%s", prefs->jack_tserver_sname);
-        } else {
+        if (!is_setup) {
           lives_snprintf(future_prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX,
                          "%s", future_prefs->jack_aserver_sname);
         }
@@ -1155,31 +1090,29 @@ retry:
     if (is_setup) {
       prefs->jack_opts = future_prefs->jack_opts;
       if (!(prefs->jack_opts & JACK_OPTS_START_ASERVER)) {
-        char *srvname;
+        char *srvname, *tmp;
         future_prefs->jack_opts = prefs->jack_opts = 0;
-        if (*prefs->jack_aserver_cname)
-          srvname = lives_strdup_printf(_("jack server '%s'"), prefs->jack_aserver_cname);
-        else
+        if (*prefs->jack_aserver_cname) {
+          srvname = lives_strdup_printf(_("jack server '%s'"), (tmp = lives_markup_escape_text(prefs->jack_aserver_cname, -1)));
+          lives_free(tmp);
+        } else
           srvname = _("the default jack server");
-        if (!do_warning_dialogf(_("You have chosen to connect to %s\nPlease ensure that the server "
+        widget_opts.use_markup = TRUE;
+        if (!do_warning_dialogf(_("You have chosen <b>only</b> to connect to %s\nPlease ensure that the server "
                                   "is running before clicking %s\n"
                                   "Alternatively, click %s to change the jack client options\n"),
                                 srvname, STOCK_LABEL_TEXT(OK), STOCK_LABEL_TEXT(CANCEL))) {
+          widget_opts.use_markup = FALSE;
           lives_free(srvname);
           rb_group = NULL;
           lives_widget_destroy(dialog);
           goto set_config;
         }
+        widget_opts.use_markup = FALSE;
         lives_free(srvname);
         future_prefs->jack_opts = prefs->jack_opts = 0;
       }
-      set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
-      set_string_pref(PREF_JACK_ACSERVER, prefs->jack_aserver_cname);
-      set_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname);
-      if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(scrpt_rb)))
-        set_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg);
-      else
-        set_string_pref(PREF_JACK_ACONFIG, "");
+      pref_factory_int(PREF_JACK_OPTS, NULL, prefs->jack_opts, TRUE);
     } else {
       if (!type) {
         /* g_print("CEHCK %d %d %s and %s, %s and %s\n", future_prefs->jack_opts,  old_fprefs, */
@@ -2437,7 +2370,6 @@ boolean do_startup_interface_query(void) {
   boolean add_hsep = FALSE;
 
 retry:
-  add_hsep = FALSE;
   cb_desk = cb_menus = NULL;
   radiobutton_group = NULL;
 
@@ -2445,50 +2377,7 @@ retry:
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
-#ifdef ENABLE_JACK
-  if (mainw->jackd && *mainw->jackd->status_msg) {
-    int numtok = get_token_count(mainw->jackd->status_msg, '\n');
-    if (numtok > 1) {
-      char **array = lives_strsplit(mainw->jackd->status_msg, "\n", numtok);
-      msg = lives_big_and_bold(_("JACK status:"));
-      widget_opts.use_markup = TRUE;
-      label = lives_standard_label_new(msg);
-      lives_free(msg);
-      widget_opts.use_markup = FALSE;
-      lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height >> 1);
-      label = lives_standard_label_new(array[numtok - 2]);
-      lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height >> 1);
-      lives_strfreev(array);
-      add_hsep = TRUE;
-    }
-  }
-  if (mainw->jackd_read && *mainw->jackd_read->status_msg) {
-    int numtok = get_token_count(mainw->jackd_read->status_msg, '\n');
-    if (numtok > 1) {
-      char **array = lives_strsplit(mainw->jackd_read->status_msg, "\n", numtok);
-      if (!add_hsep) {
-        msg = lives_big_and_bold(_("JACK status:"));
-        widget_opts.use_markup = TRUE;
-        label = lives_standard_label_new(msg);
-        lives_free(msg);
-        widget_opts.use_markup = FALSE;
-        lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height >> 1);
-      }
-      label = lives_standard_label_new(array[numtok - 2]);
-      lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height >> 1);
-      lives_strfreev(array);
-      add_hsep = TRUE;
-    }
-  }
-#endif
-
-  if (add_hsep) {
-    widget_opts.expand = LIVES_EXPAND_NONE;
-    add_hsep_to_box(LIVES_BOX(dialog_vbox));
-    widget_opts.expand = LIVES_EXPAND_DEFAULT;
-  }
-
-  txt1 = (_("\n\nFinally, you can choose the <b>default startup interface</b> for LiVES.\n"));
+  txt1 = (_("Finally, you can choose the <b>default startup interface</b> for LiVES.\n"));
   txt2 = (_("LiVES has two main interfaces and you can start up with either of them.\n"));
   txt3 = (_("The default can always be changed later from Preferences.\n"));
 
@@ -2551,6 +2440,7 @@ retry:
       add_hsep_to_box(LIVES_BOX(dialog_vbox));
       widget_opts.expand = LIVES_EXPAND_DEFAULT;
       layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+      lives_layout_add_label(LIVES_LAYOUT(layout), _("Options"), FALSE);
       lives_layout_add_row(LIVES_LAYOUT(layout));
       lives_layout_add_label(LIVES_LAYOUT(layout), _("Desktop options:"), TRUE);
       hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -2630,6 +2520,10 @@ retry:
     if (!do_audio_choice_dialog(5)) {
       prefs->startup_phase = 3;
       return FALSE;
+    }
+    if (prefs->audio_player == AUD_PLAYER_JACK) {
+      prefs->startup_phase = 4;
+      return TRUE;
     }
     goto retry;
   }

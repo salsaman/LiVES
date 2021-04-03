@@ -1840,6 +1840,9 @@ boolean apply_prefs(boolean skip_warn) {
   const char *jack_acname = lives_entry_get_text(LIVES_ENTRY(prefsw->jack_acname));
   const char *jack_tcname = lives_entry_get_text(LIVES_ENTRY(prefsw->jack_tcname));
 
+  boolean jack_acdef = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jack_acdef));
+  boolean jack_tcdef = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tcdef));
+
   uint32_t jack_opts =
     JACK_OPTS_TRANSPORT_CLIENT * jack_client + JACK_OPTS_TRANSPORT_MASTER * jack_master +
     JACK_OPTS_START_TSERVER * jack_tstart + JACK_OPTS_START_ASERVER
@@ -2553,6 +2556,8 @@ boolean apply_prefs(boolean skip_warn) {
 #ifdef ENABLE_JACK
   pref_factory_int(PREF_JACK_OPTS, NULL, jack_opts, TRUE);
 
+  if (jack_acdef) jack_acname = "";
+
   tmp = lives_strdup(future_prefs->jack_aserver_cfg);
   pref_factory_string(PREF_JACK_ACONFIG, tmp, TRUE);
   lives_free(tmp);
@@ -2566,6 +2571,8 @@ boolean apply_prefs(boolean skip_warn) {
     lives_free(tmp);
   }
 #ifdef ENABLE_JACK_TRANSPORT
+  if (jack_tcdef) jack_tcname = "";
+
   if (future_prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
     pref_factory_string(PREF_JACK_TCONFIG, future_prefs->jack_tserver_cfg, TRUE);
     if (!(future_prefs->jack_opts & JACK_INFO_TEMP_NAMES)) {
@@ -6063,15 +6070,17 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   rb_group = NULL;
 
   prefsw->jack_acerror =
-    lives_standard_radio_button_new(_("Do nothing"), &rb_group, LIVES_BOX(hbox), NULL);
+    lives_standard_radio_button_new(_("Do nothing"), &rb_group, LIVES_BOX(hbox),
+                                    H_("With this setting active, LiVES will only ever attempt "
+                                       "to connect to an existing jack server, "
+                                       "and will never try to start one itself\n"
+                                       "If the connection attempt does fail, an error will be generated."));
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   widget = lives_standard_radio_button_new(_("_Start a jack server"), &rb_group, LIVES_BOX(hbox),
-           H_("Checking this will cause LiVES to "
-              "start up a jackd server if it is\n"
-              "unable to connect to a running "
-              "instance.\n"));
+           H_("With this setting active, should the connection attempt fail,\nLiVES will try to start up a jackd server itself,\n"
+              "Server values can be set by clicking on the 'Server and Driver Configuration' button."));
   hbox = widget_opts.last_container;
 
   if (!(future_prefs->jack_opts & JACK_OPTS_START_ASERVER)) {
@@ -6211,7 +6220,11 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   rb_group = NULL;
 
   prefsw->jack_tcerror =
-    lives_standard_radio_button_new(_("Do nothing"), &rb_group, LIVES_BOX(hbox), NULL);
+    lives_standard_radio_button_new(_("Do nothing"), &rb_group, LIVES_BOX(hbox),
+                                    H_("With this setting active, LiVES will only ever attempt "
+                                       "to connect to an existing jack server, "
+                                       "and will never try to start one itself\n"
+                                       "If the connection attempt does fail, an error will be generated."));
 
   toggle_sets_active_cond(LIVES_TOGGLE_BUTTON(prefsw->jack_acerror), prefsw->jack_tcerror,
                           (condfuncptr_t)lives_toggle_button_get_active, prefsw->jack_srv_dup,
@@ -6222,15 +6235,26 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   widget =
     lives_standard_radio_button_new(_("_Start a jack server"), &rb_group, LIVES_BOX(hbox),
-                                    H_("Checking this will cause LiVES to "
-                                       "start up a jackd server if it is\n"
-                                       "unable to connect to a running "
-                                       "instance.\n"));
+                                    H_("With this setting active, should the connection attempt fail,\n"
+                                       "LiVES will try to start up a jackd server itself,\n"
+                                       "Server values can be set by clicking on the 'Server and Driver Configuration' button."));
 
   toggle_sets_active_cond(LIVES_TOGGLE_BUTTON(prefsw->jack_acerror), widget,
                           (condfuncptr_t)lives_toggle_button_get_active, prefsw->jack_srv_dup,
                           (condfuncptr_t)lives_toggle_button_get_active, prefsw->jack_srv_dup,
                           TRUE);
+
+  hbox = widget_opts.last_container;
+
+  if (!(future_prefs->jack_opts & JACK_OPTS_START_TSERVER)) {
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tcerror), TRUE);
+  } else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(widget), TRUE);
+
+  widget_opts.use_markup = TRUE;
+  label = lives_standard_label_new("<b>------></b>");
+  widget_opts.use_markup = FALSE;
+
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   if (!prefs->jack_srv_dup)
     tjack_cfg_exists = jack_get_cfg_file(TRUE, NULL);
@@ -7116,7 +7140,15 @@ void on_prefs_revert_clicked(LiVESButton * button, livespointer user_data) {
   lives_widget_destroy(prefsw->dialog_hpaned);
   lives_freep((void **)&prefsw);
 
+#ifdef ENABLE_JACK
   future_prefs->jack_opts = prefs->jack_opts;
+  lives_snprintf(future_prefs->jack_aserver_cfg, PATH_MAX, "%s", prefs->jack_aserver_cfg);
+  lives_snprintf(future_prefs->jack_aserver_cname, PATH_MAX, "%s", prefs->jack_aserver_cname);
+  lives_snprintf(future_prefs->jack_aserver_sname, PATH_MAX, "%s", prefs->jack_aserver_sname);
+  lives_snprintf(future_prefs->jack_tserver_cfg, PATH_MAX, "%s", prefs->jack_tserver_cfg);
+  lives_snprintf(future_prefs->jack_tserver_cname, PATH_MAX, "%s", prefs->jack_tserver_cname);
+  lives_snprintf(future_prefs->jack_tserver_sname, PATH_MAX, "%s", prefs->jack_tserver_sname);
+#endif
 
   if (future_prefs->def_fontstring) {
     if (!capable->def_fontstring) {

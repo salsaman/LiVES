@@ -732,6 +732,12 @@ static boolean pre_init(void) {
   // now we can use PREFS properly
   mainw->prefs_cache = cache_file_contents(prefs->configfile);
 
+  capable->uid = get_int64_prefd(PREF_UID, 0);
+  if (!capable->uid) {
+    capable->uid = gen_unique_id();
+    set_int64_pref(PREF_UID, capable->uid);
+  }
+
   prefs->show_dev_opts = get_boolean_prefd(PREF_SHOW_DEVOPTS, FALSE);
 
   prefs->back_compat = get_boolean_prefd(PREF_BACK_COMPAT, TRUE);
@@ -1604,7 +1610,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->last_display_ticks = 0;
 
-  mainw->alives_pgid = 0;
+  mainw->alives_pid = 0;
 
   mainw->aplayer_broken = FALSE;
 
@@ -1837,8 +1843,6 @@ static void lives_init(_ign_opts *ign_opts) {
 #endif
 
   prefs->push_audio_to_gens = get_boolean_prefd(PREF_PUSH_AUDIO_TO_GENS, TRUE);
-
-  prefs->perm_audio_reader = TRUE;
 
   prefs->max_disp_vtracks = get_int_prefd(PREF_MAX_DISP_VTRACKS, DEF_MT_DISP_TRACKS);
 
@@ -2328,6 +2332,8 @@ static void lives_init(_ign_opts *ign_opts) {
                            lives_getgid(), capable->mainpid);
 
 audio_choice:
+    orig_err = 0;
+
     if (prefs->startup_phase > 0 && prefs->startup_phase <= 4) {
       splash_end();
       lives_widget_context_update();
@@ -2337,8 +2343,12 @@ audio_choice:
         lives_exit(0);
       }
 
+post_audio_choice:
       prefs->startup_phase = 4;
       set_int_pref(PREF_STARTUP_PHASE, 4);
+#ifdef ENABLE_JACK
+      future_prefs->jack_opts |= JACK_INFO_TEST_SETUP;
+#endif
     }
 
     // audio startup
@@ -2361,9 +2371,8 @@ audio_choice:
 jack_tcl_try:
       success = TRUE;
       timeout = LIVES_SHORTEST_TIMEOUT;
-      if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
-      if (!(info = LPT_WITH_TIMEOUT(timeout, 0,
-                                    (lives_funcptr_t)lives_jack_init,
+      if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 4;
+      if (!(info = LPT_WITH_TIMEOUT(timeout, 0, (lives_funcptr_t)lives_jack_init,
                                     WEED_SEED_BOOLEAN, "iv",
                                     JACK_CLIENT_TYPE_TRANSPORT, NULL))) {
         if (mainw->cancelled) {
@@ -2373,7 +2382,33 @@ jack_tcl_try:
         success = FALSE;
       } else success = lives_proc_thread_join_boolean(info);
 
+      if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
+        if (prefs->startup_phase) {
+          if (textwindow) {
+            lives_widget_set_sensitive(textwindow->button, TRUE);
+            lives_grab_add(textwindow->button);
+            lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
+            lives_widget_destroy(textwindow->dialog);
+            lives_free(textwindow);
+            lives_widget_context_update();
+          }
+          future_prefs->jack_opts &= ~JACK_INFO_TEST_SETUP;
+        } else {
+          if (textwindow) {
+            lives_widget_set_sensitive(textwindow->button, TRUE);
+            lives_grab_add(textwindow->button);
+            lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
+            lives_widget_destroy(textwindow->dialog);
+            lives_free(textwindow);
+            if (orig_err) success = FALSE;
+          }
+        }
+      }
       if (!success) {
+        if (mainw->cancelled == CANCEL_USER) {
+          if (prefs->startup_phase) goto audio_choice;
+          goto jack_tcl_try;
+        }
         if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
         if (prefs->jack_opts & JACK_OPTS_START_TSERVER) {
 rest2:
@@ -2382,6 +2417,7 @@ rest2:
             orig_err = 2;
             goto jack_tcl_try;
           }
+          if (prefs->startup_phase) goto audio_choice;
           future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
           set_int_pref(PREF_JACK_OPTS, 0);
         } else {
@@ -2391,6 +2427,7 @@ rest1:
             orig_err = 1;
             goto jack_tcl_try;
           }
+          if (prefs->startup_phase) goto audio_choice;
         }
         lives_exit(0);
       }
@@ -2432,36 +2469,50 @@ rest1:
 jack_acl_try:
         success = TRUE;
         timeout = LIVES_SHORTEST_TIMEOUT;
-        if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
+        if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 8;
         if (!(info = LPT_WITH_TIMEOUT(timeout, 0,
                                       (lives_funcptr_t)jack_create_client_writer,
                                       WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
-          if (mainw->cancelled) {
-            // user cancelled from driver selection
-            mainw->jackd = NULL;
-            if (prefs->startup_phase) {
-              // go back to audio_choice
-              prefs->startup_phase = 4;
-              goto audio_choice;
-            }
-            lives_exit(0);
-          }
           success = FALSE;
         } else success = lives_proc_thread_join_boolean(info);
 
         if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
-          if (textwindow) {
-            lives_grab_add(textwindow->button);
-            lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
-            lives_widget_destroy(textwindow->dialog);
-            lives_free(textwindow);
-            success = FALSE;
+          if (prefs->startup_phase) {
+            if (success) {
+              jack_audio_read_init();
+              jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
+            }
+            if (textwindow) {
+              lives_widget_set_sensitive(textwindow->button, TRUE);
+              lives_grab_add(textwindow->button);
+              lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
+              lives_widget_destroy(textwindow->dialog);
+              lives_free(textwindow);
+              lives_widget_context_update();
+            }
+            future_prefs->jack_opts &= ~JACK_INFO_TEST_SETUP;
+          } else {
+            if (textwindow) {
+              lives_widget_set_sensitive(textwindow->button, TRUE);
+              lives_grab_add(textwindow->button);
+              lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
+              lives_widget_destroy(textwindow->dialog);
+              lives_free(textwindow);
+              if (orig_err) success = FALSE;
+            }
           }
         }
 
         if (mainw->jackd && !mainw->jackd->sample_out_rate) success = FALSE;
 
         if (!success || !mainw->jackd) {
+          if (mainw->cancelled == CANCEL_USER) {
+            if (prefs->startup_phase) {
+              prefs->startup_phase = 4;
+              goto audio_choice;
+            }
+            goto jack_acl_try;
+          }
           // failed to connect
           if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
           if (prefs->jack_opts & JACK_OPTS_START_ASERVER) {
@@ -2469,8 +2520,16 @@ jack_acl_try:
 rest4:
             orig_err = 0;
             if (do_jack_no_startup_warn(FALSE)) {
+              if (prefs->startup_phase) {
+                prefs->startup_phase = 4;
+                goto audio_choice;
+              }
               orig_err = 4;
               goto jack_acl_try;
+            }
+            if (prefs->startup_phase) {
+              prefs->startup_phase = 4;
+              goto audio_choice;
             }
             future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
             set_int_pref(PREF_JACK_OPTS, 0);
@@ -2478,8 +2537,16 @@ rest4:
 rest3:
             orig_err = 0;
             if (do_jack_no_connect_warn(FALSE)) {
+              if (prefs->startup_phase) {
+                prefs->startup_phase = 4;
+                goto audio_choice;
+              }
               orig_err = 3;
               goto jack_acl_try;
+            }
+            if (prefs->startup_phase) {
+              prefs->startup_phase = 4;
+              goto audio_choice;
             }
           }
           lives_exit(0);
@@ -2496,7 +2563,6 @@ rest3:
           lives_snprintf(future_prefs->jack_tserver_cname, PATH_MAX, "%s", prefs->jack_tserver_cname);
           lives_snprintf(future_prefs->jack_tserver_sname, PATH_MAX, "%s", prefs->jack_tserver_sname);
           future_prefs->jack_tdriver = lives_strdup_free(future_prefs->jack_tdriver, prefs->jack_tdriver);
-
           future_prefs->jack_opts = prefs->jack_opts;
           if (orig_err == 1) goto rest1;
           if (orig_err == 2) goto rest2;
@@ -2532,13 +2598,13 @@ rest3:
 
         jack_write_client_activate(mainw->jackd);
 
-        if (prefs->perm_audio_reader) {
-          // connect the reader - will also attempt to connect, and possibly start server
+        if (!mainw->jackd_read) {
+          // connect the reader - will also attempt to connect, and possibly start a server
           // however the server should always be running since we already connected the writer client
-          // also activates the cliebt, but since the reader is not attatched to any clip
+          // also activates the client, but since the reader is not attatched to any clip
           // (first param is -1), we do not actually prepare for recording yet
           // however we do connect the ports (unless JACK_OPTS_NO_READ_AUTOCON is set)
-          // so if needed we can monitor incoming audio
+          // so if needed we can still monitor incoming audio
           jack_audio_read_init();
           jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
         }
@@ -2571,19 +2637,16 @@ rest3:
 
         pulse_driver_activate(mainw->pulsed);
 
-        if (prefs->perm_audio_reader) {
-          // create reader connection now, if permanent
-          pulse_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
-	  // *INDENT-OFF*
-        }}}
+        // create reader connection now, if permanent
+        pulse_rec_audio_to_clip(-1, -1, RECA_MONITOR);
+	// *INDENT-OFF*
+      }}
     // *INDENT-ON*
 #endif
   }
 
   if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
     future_prefs->jack_opts &= ~JACK_INFO_TEST_SETUP;
-    // TODO
-    abort();
   }
 
   if (prefs->startup_phase != 0) {
@@ -2595,6 +2658,7 @@ rest3:
       set_int_pref(PREF_STARTUP_PHASE, prefs->startup_phase);
       lives_exit(0);
     }
+    if (prefs->startup_phase == 4) goto post_audio_choice;
 
     set_int_pref(PREF_STARTUP_PHASE, 6);
     prefs->startup_phase = 6;

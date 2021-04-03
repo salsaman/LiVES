@@ -251,7 +251,7 @@ boolean rec(s_cam *cam) {
   char *tmp2, *tmp3, *com;
   char *splits;
 
-  if (cam->pgid != 0) return FALSE;
+  if (cam->pid != 0) return FALSE;
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(dvgrabw->split))) splits = lives_strdup("-autosplit ");
   else splits = lives_strdup("");
@@ -267,7 +267,7 @@ boolean rec(s_cam *cam) {
                               (tmp2 = lives_filename_from_utf8(dvgrabw->dirname, -1, NULL, NULL, NULL)),
                               (tmp3 = lives_filename_from_utf8(dvgrabw->filename, -1, NULL, NULL, NULL)));
 #endif
-    cam->pgid = lives_fork(com);
+    cam->pid = lives_fork(com);
     lives_free(com);
     lives_free(tmp2);
     lives_free(tmp3);
@@ -286,7 +286,7 @@ boolean rec(s_cam *cam) {
                             (tmp3 = lives_filename_from_utf8(dvgrabw->filename, -1, NULL, NULL, NULL)));
 #endif
 
-  cam->pgid = lives_fork(com);
+  cam->pid = lives_fork(com);
 
   lives_free(com);
   lives_free(tmp2);
@@ -334,7 +334,7 @@ void on_open_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   dvgrabw->cursor = NULL;
   cam->format = type;
   cam->grabbed_clips = FALSE;
-  cam->pgid = 0;
+  cam->pid = 0;
   dvgrabw->cam = cam;
 }
 

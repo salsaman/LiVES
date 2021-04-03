@@ -6987,7 +6987,7 @@ deinit2:
           // if playing external audio, switch over to internal for an audio gen
           jack_time_reset(mainw->jackd, mainw->currticks);
           // close the reader
-          jack_rec_audio_end(!prefs->perm_audio_reader, FALSE);
+          jack_rec_audio_end(FALSE);
         }
         if (mainw->jackd && (!mainw->jackd_read || !mainw->jackd_read->in_use)) {
           // enable writer
@@ -7006,7 +7006,7 @@ deinit2:
             return mainw->cancelled;
           }
           pa_time_reset(mainw->pulsed, -audio_ticks);
-          pulse_rec_audio_end(!prefs->perm_audio_reader, FALSE);
+          pulse_rec_audio_end(FALSE);
           pulse_driver_uncork(mainw->pulsed);
         }
         if (mainw->pulsed && (!mainw->pulsed_read || !mainw->pulsed_read->in_use)) {

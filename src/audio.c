@@ -2039,7 +2039,8 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 
       // connect the client and activate it
       jack_create_client_reader(mainw->jackd_read);
-      jack_read_client_activate(mainw->jackd_read, FALSE);
+      if (!(future_prefs->jack_opts & JACK_INFO_TEST_SETUP))
+        jack_read_client_activate(mainw->jackd_read, FALSE);
     }
     return;
   }
@@ -2143,25 +2144,19 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     mainw->current_file = current_file;
   }
   mainw->cancel_type = CANCEL_KILL;
-  jack_rec_audio_end(!prefs->perm_audio_reader, TRUE);
+  jack_rec_audio_end(TRUE);
 }
 
 
-void jack_rec_audio_end(boolean close_device, boolean close_fd) {
+void jack_rec_audio_end(boolean close_fd) {
   // recording ended
 
   pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
   if (mainw->jackd_read->playing_file > -1)
     jack_flush_read_data(0, NULL);
 
-  if (close_device) {
-    // stop recording
-    if (mainw->jackd_read) jack_close_client(mainw->jackd_read);
-    mainw->jackd_read = NULL;
-  } else {
-    mainw->jackd_read->in_use = FALSE;
-    mainw->jackd_read->playing_file = -1;
-  }
+  mainw->jackd_read->in_use = FALSE;
+  mainw->jackd_read->playing_file = -1;
   pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
 
   if (close_fd && mainw->aud_rec_fd != -1) {
@@ -2305,11 +2300,11 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     mainw->current_file = current_file;
   }
   mainw->cancel_type = CANCEL_KILL;
-  pulse_rec_audio_end(!prefs->perm_audio_reader, TRUE);
+  pulse_rec_audio_end(TRUE);
 }
 
 
-void pulse_rec_audio_end(boolean close_device, boolean close_fd) {
+void pulse_rec_audio_end(boolean close_fd) {
   // recording ended
 
   // stop recording
@@ -2318,14 +2313,8 @@ void pulse_rec_audio_end(boolean close_device, boolean close_fd) {
     pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
     if (mainw->pulsed_read->playing_file > -1)
       pulse_flush_read_data(mainw->pulsed_read, mainw->pulsed_read->playing_file, 0, mainw->pulsed_read->reverse_endian, NULL);
-
-    if (close_device) pulse_close_client(mainw->pulsed_read);
-
-    if (close_device) mainw->pulsed_read = NULL;
-    else {
-      mainw->pulsed_read->in_use = FALSE;
-      mainw->pulsed_read->playing_file = -1;
-    }
+    mainw->pulsed_read->in_use = FALSE;
+    mainw->pulsed_read->playing_file = -1;
     pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
   }
 
@@ -3817,7 +3806,7 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
 ////////////////////////////////////////
 // audio streaming, older API
 
-lives_pgid_t astream_pgid = 0;
+lives_pid_t astream_pid = 0;
 
 boolean start_audio_stream(void) {
   const char *playername = "audiostreamer.pl";
@@ -3867,7 +3856,7 @@ boolean start_audio_stream(void) {
                             arate);
   lives_free(astreamer);
 
-  astream_pgid = lives_fork(com);
+  astream_pid = lives_fork(com);
 
   alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
@@ -3899,7 +3888,7 @@ boolean start_audio_stream(void) {
 
 
 void stop_audio_stream(void) {
-  if (astream_pgid > 0) {
+  if (astream_pid > 0) {
     // if we were streaming audio, kill it
     const char *playername = "audiostreamer.pl";
     char *astname = lives_strdup_printf("livesaudio-%d.pcm", capable->mainpid);
@@ -3927,7 +3916,7 @@ void stop_audio_stream(void) {
     }
 #endif
 
-    lives_killpg(astream_pgid, LIVES_SIGKILL);
+    lives_killpg(astream_pid, LIVES_SIGKILL);
     lives_rm(astream_name);
     lives_free(astream_name);
 

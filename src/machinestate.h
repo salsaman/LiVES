@@ -100,6 +100,7 @@ char *lives_concat_sep(char *st, const char *sep, char *x);
 char *lives_strstop(char *, const char term) GNU_HOT;
 int lives_strappend(const char *string, int len, const char *xnew);
 const char *lives_strappendf(const char *string, int len, const char *fmt, ...);
+char *lives_strcollate(char **pstrng, const char *sep, const char *xnew);
 
 void swab2(const void *from, const void *to, size_t granularity) 	GNU_HOT;
 void swab4(const void *from, const void *to, size_t granularity) 	GNU_HOT;

@@ -115,7 +115,6 @@ typedef int64_t frames64_t; // will become the new standard
 #include <unistd.h>
 
 typedef pid_t lives_pid_t;
-typedef int lives_pgid_t;
 
 #ifdef GUI_GTK
 #ifndef GDK_WINDOWING_X11
@@ -1057,6 +1056,8 @@ typedef struct {
   /// used for returning startup messages from the backend
   char startup_msg[1024];
 
+  uint64_t uid; // non-volatile unique id
+
   lives_checkstatus_t has_python;
   lives_checkstatus_t has_python3;
   uint64_t python_version;
@@ -1276,7 +1277,6 @@ LiVESResponseType do_dir_notfound_dialog(const char *detail, const char *dirname
 void do_no_decoder_error(const char *fname);
 void do_no_loadfile_error(const char *fname);
 #ifdef ENABLE_JACK
-boolean do_jack_scripts_warn(const char *scrptx);
 boolean do_jack_nonex_warn(const char *server_config_file);
 boolean do_jack_no_startup_warn(boolean is_trans);
 void do_jack_setup_warn(void);
@@ -1512,7 +1512,7 @@ int lives_getuid(void);
 void lives_kill_subprocesses(const char *dirname, boolean kill_parent);
 void lives_suspend_resume_process(const char *dirname, boolean suspend);
 int lives_kill(lives_pid_t pid, int sig);
-int lives_killpg(lives_pgid_t pgrp, int sig);
+int lives_killpg(lives_pid_t pgrp, int sig);
 boolean lives_setenv(const char *name, const char *value);
 boolean lives_unsetenv(const char *name);
 int lives_rmdir(const char *dir, boolean force);

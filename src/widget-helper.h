@@ -639,6 +639,8 @@ boolean lives_text_buffer_set_text(LiVESTextBuffer *, const char *, int len);
 boolean lives_text_buffer_insert(LiVESTextBuffer *, LiVESTextIter *, const char *, int len);
 boolean lives_text_buffer_insert_at_cursor(LiVESTextBuffer *, const char *, int len);
 
+boolean lives_text_buffer_insert_markup(LiVESTextBuffer *, LiVESTextIter *, const char *markup, int len);
+
 boolean lives_text_buffer_get_start_iter(LiVESTextBuffer *, LiVESTextIter *);
 boolean lives_text_buffer_get_end_iter(LiVESTextBuffer *, LiVESTextIter *);
 
@@ -1252,8 +1254,10 @@ void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 
 char *lives_text_view_get_text(LiVESTextView *);
 boolean lives_text_view_set_text(LiVESTextView *, const char *text, int len);
+boolean lives_text_view_set_markup(LiVESTextView *, const char *markup);
 
 boolean lives_text_buffer_insert_at_end(LiVESTextBuffer *, const char *text);
+boolean lives_text_buffer_insert_markup_at_end(LiVESTextBuffer *, const char *markup);
 
 void lives_general_button_clicked(LiVESButton *, livespointer data_to_free);
 

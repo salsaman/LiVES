@@ -1327,7 +1327,7 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_messages);
 
 #ifdef ENABLE_JACK
-  mainw->show_jackmsgs = lives_standard_image_menu_item_new_with_label(_("Show _Jack Messages"));
+  mainw->show_jackmsgs = lives_standard_image_menu_item_new_with_label(_("Show _Jack Status Messages"));
   lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_jackmsgs);
   if (prefs->audio_player != AUD_PLAYER_JACK) lives_widget_set_sensitive(mainw->show_jackmsgs, FALSE);
 #endif

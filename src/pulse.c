@@ -1980,10 +1980,7 @@ boolean pulse_try_reconnect(void) {
   if (pulse_driver_activate(mainw->pulsed)) { // activate driver
     goto err123;
   }
-  if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
-    // create reader connection now, if permanent
-    pulse_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
-  }
+  pulse_rec_audio_to_clip(-1, -1, RECA_MONITOR);
   end_threaded_dialog();
   d_print(_("\nConnection to pulseaudio was reset.\n"));
   return TRUE;

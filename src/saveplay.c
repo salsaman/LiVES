@@ -2703,10 +2703,10 @@ void play_file(void) {
       if ((prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0 || mainw->agen_needs_reinit) && mainw->jackd) {
         if (mainw->agen_key != 0 || mainw->agen_needs_reinit) {
           mainw->jackd->playing_file = mainw->current_file;
-          if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
+          if (mainw->ascrap_file != -1)
             jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
         } else {
-          if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
+          if (mainw->ascrap_file != -1)
             jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
         }
         //mainw->jackd->in_use = TRUE;
@@ -2724,10 +2724,10 @@ void play_file(void) {
       if ((prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0  || mainw->agen_needs_reinit) && mainw->pulsed) {
         if (mainw->agen_key != 0 || mainw->agen_needs_reinit) {
           mainw->pulsed->playing_file = mainw->current_file;
-          if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
+          if (mainw->ascrap_file != -1)
             pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
         } else {
-          if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
+          if (mainw->ascrap_file != -1)
             pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
         }
         //mainw->pulsed->in_use = TRUE;
@@ -2977,7 +2977,7 @@ void play_file(void) {
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && (mainw->jackd || mainw->jackd_read)) {
     if (mainw->jackd_read || mainw->aud_rec_fd != -1)
-      jack_rec_audio_end(!prefs->perm_audio_reader, TRUE);
+      jack_rec_audio_end(TRUE);
 
     if (mainw->jackd_read) {
       mainw->jackd_read->in_use = FALSE;
@@ -3015,7 +3015,7 @@ void play_file(void) {
 #ifdef HAVE_PULSE_AUDIO
     if (audio_player == AUD_PLAYER_PULSE && (mainw->pulsed || mainw->pulsed_read)) {
       if (mainw->pulsed_read || mainw->aud_rec_fd != -1)
-        pulse_rec_audio_end(!prefs->perm_audio_reader, TRUE);
+        pulse_rec_audio_end(TRUE);
 
       if (mainw->pulsed_read) {
         mainw->pulsed_read->in_use = FALSE;
@@ -5969,7 +5969,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   int lgid = lives_getgid();
   int luid = lives_getuid();
 
-  lives_pgid_t lpid = capable->mainpid;
+  lives_pid_t lpid = capable->mainpid;
 
   // ask backend to find the latest recovery file which is not owned by a running version of LiVES
   com = lives_strdup_printf("%s get_recovery_file %d %d %s recovery %d",

@@ -173,7 +173,7 @@ void lives_exit(int signum) {
       on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
     }
 
-    if (mainw->alives_pgid > 0) {
+    if (mainw->alives_pid > 0) {
       autolives_toggle(NULL, NULL);
     }
 
@@ -9622,10 +9622,10 @@ void autolives_toggle(LiVESMenuItem * menuitem, livespointer user_data) {
   char *com = NULL;
   boolean cancelled = FALSE;
 
-  if (mainw->alives_pgid > 0) {
+  if (mainw->alives_pid > 0) {
     // already running, kill the old process
-    lives_killpg(mainw->alives_pgid, LIVES_SIGHUP);
-    mainw->alives_pgid = 0;
+    lives_killpg(mainw->alives_pid, LIVES_SIGHUP);
+    mainw->alives_pid = 0;
 
     // restore pre-playback rte state
     rte_keymodes_restore(prefs->rte_keys_virtual);
@@ -9710,7 +9710,7 @@ void autolives_toggle(LiVESMenuItem * menuitem, livespointer user_data) {
                             trigopt, mute,
                             debug);
 
-  mainw->alives_pgid = lives_fork(com);
+  mainw->alives_pid = lives_fork(com);
 
   lives_free(debug);
   lives_free(trigopt);

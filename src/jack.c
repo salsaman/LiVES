@@ -31,8 +31,13 @@ static boolean twins = FALSE;
 static boolean ts_started = FALSE;
 static boolean as_started = FALSE;
 
+static boolean ts_scripted = FALSE;
+static boolean as_scripted = FALSE;
+
 static char *ts_running = NULL;
 static char *as_running = NULL;
+
+static lives_pid_t aserver_pid = 0, tserver_pid = 0;
 
 static char last_errmsg[JACK_PARAM_STRING_MAX];
 
@@ -329,7 +334,9 @@ static void config_driver(LiVESWidget *b, jackctl_driver_t *driver) {
 }
 
 // logs errtxt and returns FALSE, or checks if last_errmsg has text,
-// if so, logs it, clears it,  and returns FALSE otherwise just returns TRUE
+// if so, logs it, clears it, and returns FALSE otherwise just returns TRUE
+// if errtxt starts with '#' then the message is printed as-is skipping the initial '#',
+// otherwise we add timestamp and formatting
 static boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
   if (!jackd || (!errtxt && !*last_errmsg)) return TRUE;
   else {
@@ -345,16 +352,33 @@ static boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
     tstamp = get_current_timestamp();
     if (tstwin) {
       lives_proc_thread_t lpt = THREADVAR(tinfo);
-      char *logmsg = lives_strdup_printf("%s:%s %s\n", tstamp, isjack, errmsg);
-      uint64_t ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
-      lives_text_buffer_insert_at_cursor(textbuf, logmsg, -1);
+      char *logmsg;
+      uint64_t ostate;
+      if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+      if (*errmsg == '#') logmsg = lives_strdup(errmsg + 1);
+      else logmsg = lives_strdup_printf("%s:%s %s\n", tstamp, isjack, errmsg);
+      if (!widget_opts.use_markup)
+        lives_text_buffer_insert_at_end(textbuf, logmsg);
+      else
+        lives_text_buffer_insert_markup_at_end(textbuf, logmsg);
+      lives_scrolled_window_scroll_to(LIVES_SCROLLED_WINDOW(tstwin->scrolledwindow), LIVES_POS_BOTTOM);
       lives_widget_queue_draw(tstwin->dialog);
-      mainw->clutch = FALSE;
+      if (jackd != mainw->jackd_read)
+        mainw->clutch = FALSE;
+      else
+        lives_widget_context_update();
       for (int tt = 0; tt < 1000; tt++) {
         lives_nanosleep(LIVES_SHORT_SLEEP);
       }
-      if (!(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
-    } else lives_snprintf(jackd->status_msg + offs, STMSGLEN - offs, "%s:%s %s\n", tstamp, isjack, errmsg);
+      lives_scrolled_window_scroll_to(LIVES_SCROLLED_WINDOW(tstwin->scrolledwindow), LIVES_POS_BOTTOM);
+      if (lpt && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+    } else {
+      char *mkup = "";
+      if (widget_opts.use_markup) mkup = "*";
+      if (*errmsg == '#') {
+        lives_snprintf(jackd->status_msg + offs, STMSGLEN - offs, "%s%s\n", mkup, errmsg + 1);
+      } else lives_snprintf(jackd->status_msg + offs, STMSGLEN - offs, "%s%s:%s %s\n", mkup, tstamp, isjack, errmsg);
+    }
     lives_free(tstamp);
     if (errmsg == last_errmsg) *last_errmsg = 0;
   }
@@ -365,26 +389,30 @@ static boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
 static void add_test_textwin(jack_driver_t *jackd) {
   char *logmsg;
   lives_proc_thread_t lpt = THREADVAR(tinfo);
-  char *title = lives_strdup(_("Testing jack configuration"));
-  uint64_t ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+  char *title = lives_strdup(_("Jack configuration test"));
+  uint64_t ostate;
+  if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
   textbuf = lives_text_buffer_new();
   tstwin = create_text_window(title, NULL, textbuf, FALSE);
   lives_free(title);
+  lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(tstwin->scrolledwindow),
+                                   LIVES_POLICY_AUTOMATIC, LIVES_POLICY_ALWAYS);
 
   tstwin->button =
     lives_dialog_add_button_from_stock(LIVES_DIALOG(tstwin->dialog),
                                        LIVES_STOCK_CLOSE, _("_Close Window"),
                                        LIVES_RESPONSE_CANCEL);
   lives_widget_set_sensitive(tstwin->button, FALSE);
+  lives_widget_show_all(tstwin->button);
   if (mainw->is_ready) pop_to_front(tstwin->dialog, NULL);
   mainw->clutch = FALSE;
-  logmsg = lives_strdup(_("Testing jack setup"));
+  logmsg = lives_strdup(_("Testing jack configuration..."));
   jack_log_errmsg(jackd, logmsg);
   lives_free(logmsg);
   ts_running = as_running = NULL;
   twins = as_started = ts_started = FALSE;
   jackserver = NULL;
-  if (!(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+  if (lpt && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
 }
 
 
@@ -432,35 +460,42 @@ void show_jack_status(LiVESButton * button, livespointer is_transp) {
     title = _("Status for jack transport client");
   }
   if (is_trans == 1 || is_trans == 3 || (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)) {
-    if (mainw->jackd_trans)
-      text = mainw->jackd_trans->status_msg;
+    if (mainw->jackd_trans) {
+      if (*mainw->jackd_trans->status_msg == '*') text = lives_strdup(mainw->jackd_trans->status_msg);
+      else text = lives_markup_escape_text(mainw->jackd_trans->status_msg, -1);
+    }
     else text = lives_strdup(_("Jack transport client was not started"));
     tmp = text;
   }
   if (is_trans != 1) {
     char *txt1, *txt2;
-    if (mainw->jackd)
-      txt1 = mainw->jackd->status_msg;
+    if (mainw->jackd) {
+      if (*mainw->jackd->status_msg == '*') txt1 = lives_strdup(mainw->jackd->status_msg + 1);
+      else txt1 = lives_markup_escape_text(mainw->jackd->status_msg, -1);
+    }
     else txt1 = lives_strdup(_("Jack audio writer client was not started"));
-    if (mainw->jackd_read)
-      txt2 = mainw->jackd_read->status_msg;
+    if (mainw->jackd_read) {
+      if (*mainw->jackd_read->status_msg == '*') txt2 = lives_strdup(mainw->jackd_read->status_msg + 1);
+      else txt2 = lives_markup_escape_text(mainw->jackd_read->status_msg, -1);
+    }
     else txt2 = lives_strdup(_("Jack audio reader client was not started"));
 
     if (tmp) {
       text = lives_strdup_printf("%s\n\n%s\n%s", tmp, txt1, txt2);
-      if (tmp != mainw->jackd_trans->status_msg)lives_free(tmp);
+      lives_free(tmp);
     }
     else text = lives_strdup_printf("%s\n\n%s", txt1, txt2);
 
-    if (!mainw->jackd) lives_free(txt1);
-    if (!mainw->jackd_read) lives_free(txt2);
+    lives_free(txt1); lives_free(txt2);
 
     if (!is_trans) title = _("Status for jack audio write and audio read clients");
   }
+  widget_opts.use_markup = TRUE;
   textwindow = create_text_window(title, text, NULL, TRUE);
-  lives_free(title);
-  if (!is_trans || ((is_trans == 1 || is_trans == 3 || (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT))
-		    && !mainw->jackd_trans)) lives_free(text);
+  widget_opts.use_markup = FALSE;
+  lives_free(title); lives_free(text);
+  /* if (!is_trans || ((is_trans == 1 || is_trans == 3 || (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)) */
+  /* 		    && !mainw->jackd_trans)) lives_free(text); */
   if (is_trans == 3) return;
 
   lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
@@ -798,7 +833,8 @@ static const char *get_type_name(lives_jack_client_type type) {
 
 
 #define SCRIPT_BUFFSIZE 8192
-static char *parse_script(const char *fname) {
+
+char *jack_parse_script(const char *fname) {
   char buff[SCRIPT_BUFFSIZE];
   int i;
   lives_fread_string(buff, SCRIPT_BUFFSIZE,  fname);
@@ -867,6 +903,168 @@ boolean jack_get_cfg_file(boolean is_trans, char **pserver_cfgx) {
 }
 
 
+static void err_discon(void) {
+  const char *type_name;
+  char *logmsg;
+  if (mainw->jackd) {
+    if (mainw->jackd->client) {
+      type_name = get_type_name(JACK_CLIENT_TYPE_AUDIO_WRITER);
+      logmsg = lives_strdup_printf(_("Disconnecting %s\n"), type_name);
+      jack_log_errmsg(mainw->jackd, logmsg);
+      lives_free(logmsg);
+      jack_client_close(mainw->jackd->client);
+      mainw->jackd->client = NULL;
+    }
+    if (*future_prefs->jack_aserver_cfg && as_scripted) {
+      char *server_name;
+      boolean still_running = FALSE;
+      jack_options_t options = JackNullOption | JackNoStartServer;
+
+      if (aserver_pid) {
+	// this will fail for scripts, because the actual command gets run by the shell in a new sid / pgid
+	if (!lives_kill(aserver_pid, 0)) lives_killpg(aserver_pid, SIGKILL);
+	aserver_pid = 0;
+      }
+
+      // try again to connect, without starting it, if the script is gone we should fail
+      server_name = jack_parse_script(future_prefs->jack_aserver_cfg);
+      mainw->jackd->client = jack_client_open("conx-test", options, NULL, server_name);
+      lives_free(server_name);
+      if (mainw->jackd->client) {
+	still_running = TRUE;
+	jack_client_close(mainw->jackd->client);
+      }
+      if (still_running) {
+	logmsg = _("#\n<b>LiVES was unable to stop the jack audio config script. You may wish to terminate the script manually "
+		   "now if you intend to continue testing.</b>\n\n");
+	widget_opts.use_markup = TRUE;
+	jack_log_errmsg(mainw->jackd, logmsg);
+	widget_opts.use_markup = FALSE;
+	lives_free(logmsg);
+      }
+    }
+  }
+
+  if (mainw->jackd_trans) {
+    if (mainw->jackd_trans->client) {
+      type_name = get_type_name(JACK_CLIENT_TYPE_TRANSPORT);
+      logmsg = lives_strdup_printf(_("Disconnecting %s\n"), type_name);
+      jack_log_errmsg(mainw->jackd_trans, logmsg);
+      lives_free(logmsg);
+      jack_client_close(mainw->jackd_trans->client);
+      mainw->jackd_trans->client = NULL;
+    }
+
+    if (*future_prefs->jack_tserver_cfg && ts_scripted) {
+      char *server_name;
+      boolean still_running = FALSE;
+      jack_options_t options = JackNullOption | JackNoStartServer;
+
+      if (tserver_pid) {
+	// this will fail for scripts, because the actual command gets run by the shell in a new sid / pgid
+	if (!lives_kill(tserver_pid, 0)) lives_killpg(tserver_pid, SIGKILL);
+	tserver_pid = 0;
+      }
+
+      // try again to connect, without starting it, if the script is gone we should fail
+      server_name = jack_parse_script(future_prefs->jack_tserver_cfg);
+      mainw->jackd_trans->client = jack_client_open("conx-test", options, NULL, server_name);
+      lives_free(server_name);
+      if (mainw->jackd_trans->client) {
+	still_running = TRUE;
+	jack_client_close(mainw->jackd_trans->client);
+      }
+      if (still_running) {
+	logmsg = _("#\n<b>LiVES was unable to stop the jack transport config script. You may wish to terminate the script manually "
+		   "now if you intend to continue testing.</b>\n\n");
+	widget_opts.use_markup = TRUE;
+	jack_log_errmsg(mainw->jackd_trans, logmsg);
+	widget_opts.use_markup = FALSE;
+	lives_free(logmsg);
+      }
+    }
+  }
+}
+
+static void finish_test(jack_driver_t *jackd, boolean success, boolean is_trans, boolean is_reader) {
+  // if servers started, make them temp always, so then we need to keep clients alive until
+  // after dealing with audio reader (+audio_writer if this is the transport server we started,
+  // and audio connect server is the same)
+  char *logmsg;
+  boolean close_client = TRUE;
+
+  // if we only connected, we can close the client
+  if (jackserver) {
+    // if this is transport client and we started a server, we can close it if either:
+    // audio client use different server names for connect and startup (or it is not set to startup)
+    // - if we are setup mode, keep all clients running as if we succeed they will be our proper clients
+    // unless we failed of course, then we can close the client and maybe killpg a script
+    if (prefs->startup_phase) close_client = !success;
+    else {
+      if (is_trans) {
+	if (!*future_prefs->jack_tserver_cfg) {
+	  // if aserver will connect to this server, we are fine, but we need to keep the tclient alive
+	  if (!lives_strcmp(future_prefs->jack_tserver_sname, future_prefs->jack_aserver_cname)
+	      || !lives_strcmp(future_prefs->jack_tserver_sname, future_prefs->jack_aserver_sname))
+	    close_client = FALSE;
+	}
+	else {
+	  if (!lives_strcmp(future_prefs->jack_tserver_cname, future_prefs->jack_aserver_cname) ||
+			    !lives_strcmp(future_prefs->jack_tserver_cname, future_prefs->jack_aserver_sname))
+	    close_client = FALSE;
+	  // *INDENT-OFF*
+	}}
+      else {
+	// for audio server, we need to keep the server alive until reader has connected
+	if (!is_reader) close_client = FALSE;
+      }}}
+  // *INDENT-ON*
+
+  if (!success) close_client = TRUE;
+
+  if (close_client || (prefs->startup_phase && is_reader)) {
+    if (!prefs->startup_phase) {
+      const char *type_name;
+
+      if (is_trans) type_name = get_type_name(JACK_CLIENT_TYPE_TRANSPORT);
+      else {
+        if (is_reader)
+          type_name = get_type_name(JACK_CLIENT_TYPE_AUDIO_READER);
+        else
+          type_name = get_type_name(JACK_CLIENT_TYPE_AUDIO_WRITER);
+      }
+
+      logmsg = lives_strdup_printf(_("Disconnecting %s\n"), type_name);
+      jack_log_errmsg(jackd, logmsg);
+      lives_free(logmsg);
+
+      jack_client_close(jackd->client);
+      jackd->client = NULL;
+    }
+    if (is_reader || !success) {
+      // if we are closing the reader client we can now close the writer client
+      // and if writer failed, we should close trans
+      err_discon();
+      logmsg = _("Testing complete.\n");
+      jack_log_errmsg(jackd, logmsg);
+      lives_free(logmsg);
+      if (!success)
+        logmsg = lives_strdup_printf("#<big><b>%s</b></big>", _(" - JACK CONFIGURATION TEST FAILED - "
+                                     "please review the log above,\n"
+                                     "and check if the startup configuration needs adjusting.\n"));
+      else
+        logmsg = lives_strdup_printf("#<big><b>%s</b></big>", _(" - JACK CONFIGURATION TEST COMPLETED SUCCESSFULLY -\n"));
+      widget_opts.use_markup = TRUE;
+      jack_log_errmsg(jackd, logmsg);
+      widget_opts.use_markup = FALSE;
+      lives_free(logmsg);
+      tstwin = NULL;
+    }
+  }
+  // else leave client running until audio_reader has connected
+}
+
+
 // connect to, or (optionally) start a jack server
 // for audio clients this should be called with is_trans = FALSE, and then followed with
 // jack_create_client_writer and / or jack_create_client_reader
@@ -900,7 +1098,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
   char *server_name;
   char *client_name = NULL;
   char *com = NULL;
-  char *logmsg;
+  char *logmsg, *logmsg2, *tmp, *tmp2;
 
   const char *driver_name;
   const char *type_name = get_type_name(client_type);
@@ -913,6 +1111,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
   boolean is_reader = FALSE;
   boolean was_started = FALSE;
   boolean needs_sigs = FALSE;
+  boolean test_ret = FALSE;
 
 #ifndef JACK_V2
   int jackver = 1;
@@ -920,8 +1119,9 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
   int jackver = 2;
 #endif
 
+  int con_attempts = 0;
+
   jack_set_error_function(jack_error_func);
-  tstwin = NULL;
 
   if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
     is_test = TRUE;
@@ -952,21 +1152,23 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
     }
     if (!jackd->client_name) {
       client_name = jackd->client_name = lives_strdup_printf("LiVES-transport-%d", capable->mainpid);
-    }
-    else client_name = jackd->client_name;
+    } else client_name = jackd->client_name;
 
     if (*future_prefs->jack_tserver_cname) server_name = lives_strdup(future_prefs->jack_tserver_cname);
     else server_name = lives_strdup(defservname);
 
     if (is_test) {
-      logmsg = lives_strdup_printf("Testing %s connection to server '%s'...",
-				   type_name, server_name);
+      logmsg = lives_strdup_printf("Trying %s connection to server '%s'",
+                                   type_name, server_name);
       jack_log_errmsg(jackd, logmsg);
       lives_free(logmsg);
     }
     // if we know for sure that the audio client is connected to the target server
     // then we will just connect
     if (as_running && !lives_strcmp(as_running, server_name)) {
+      logmsg = lives_strdup_printf(_("#\nserver named '%s' was already %s, new connection attempt by %s client should succeed\n\n"),
+                                   server_name, as_started ? _("created by us") : _("successfully connected to"),
+                                   type_name);
       ts_running = server_name;
       ts_started = as_started;
       was_started = TRUE;
@@ -977,17 +1179,16 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
   } else {
     if (!jackd->client_name) {
       if (is_reader)
-	client_name = jackd->client_name = lives_strdup_printf("LiVES-audio-in-%d", capable->mainpid);
+        client_name = jackd->client_name = lives_strdup_printf("LiVES-audio-in-%d", capable->mainpid);
       else
-	client_name = jackd->client_name = lives_strdup_printf("LiVES-audio-out-%d", capable->mainpid);
-    }
-    else client_name = jackd->client_name;
+        client_name = jackd->client_name = lives_strdup_printf("LiVES-audio-out-%d", capable->mainpid);
+    } else client_name = jackd->client_name;
     if (as_running) was_started = TRUE;
     if (*future_prefs->jack_aserver_cname) server_name = lives_strdup(future_prefs->jack_aserver_cname);
     else server_name = lives_strdup(defservname);
     if (is_test) {
-      logmsg = lives_strdup_printf("Testing %s connection to server '%s'...",
-				   type_name, server_name);
+      logmsg = lives_strdup_printf("Trying %s connection to server '%s'",
+                                   type_name, server_name);
       jack_log_errmsg(jackd, logmsg);
       lives_free(logmsg);
     }
@@ -995,13 +1196,14 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
       if (ts_running && !lives_strcmp(ts_running, server_name)) {
         as_running = server_name;
         as_started = ts_started;
-	twins = TRUE;
+        twins = TRUE;
       }
     }
     if (as_running) {
       // e.g reader startup after writer started server
-      logmsg = lives_strdup_printf("%s client '%s' successfully connected to running jack v%d server named '%s'",
-				   type_name, client_name, jackver, server_name);
+      logmsg = lives_strdup_printf(_("#\nserver named '%s' was already %s, new connection attempt by %s client should succeed\n\n"),
+                                   server_name, as_started ? _("created by us") : _("successfully connected to"),
+                                   type_name);
       jack_log_errmsg(jackd, logmsg);
       lives_free(logmsg);
       was_started = TRUE;
@@ -1010,7 +1212,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
     twins = FALSE;
   }
 
- retry_connect:
+retry_connect:
   jackserver = NULL;
 
   if (is_trans) {
@@ -1020,9 +1222,13 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
     jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
     if (jackd->client) {
       ts_running = server_name;
-      logmsg = lives_strdup_printf("%s client '%s' successfully connected to running jack v%d server named '%s'",
-				   type_name, client_name, jackver, server_name);
+      logmsg = lives_strdup_printf(_("%s client '%s' <b>successfully connected</b> to running jack v%d server named '%s'"),
+                                   type_name, (tmp = lives_markup_escape_text(client_name, -1)), jackver,
+                                   (tmp2 = lives_markup_escape_text(server_name, -1)));
+      lives_free(tmp); lives_free(tmp2);
+      widget_opts.use_markup = TRUE;
       jack_log_errmsg(jackd, logmsg);
+      widget_opts.use_markup = FALSE;
       lives_free(logmsg);
       was_started = TRUE;
       goto connect_done;
@@ -1035,9 +1241,13 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
     jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
     if (jackd->client) {
       as_running = server_name;
-      logmsg = lives_strdup_printf("%s client '%s' successfully connected to running jack v%d server named '%s'",
-                     type_name, client_name, jackver, server_name);
+      logmsg = lives_strdup_printf(_("%s client '%s' <b>successfully connected</b> to running jack v%d server named '%s'"),
+                                   type_name, (tmp = lives_markup_escape_text(client_name, -1)), jackver,
+                                   (tmp2 = lives_markup_escape_text(server_name, -1)));
+      lives_free(tmp); lives_free(tmp2);
+      widget_opts.use_markup = TRUE;
       jack_log_errmsg(jackd, logmsg);
+      widget_opts.use_markup = FALSE;
       lives_free(logmsg);
       was_started = TRUE;
       goto connect_done;
@@ -1045,23 +1255,39 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
     jack_log_errmsg(jackd, NULL);
   }
 
-  if ((is_trans && !(prefs->jack_opts & JACK_OPTS_START_TSERVER))
-      || (!is_trans && !(prefs->jack_opts & JACK_OPTS_START_ASERVER))) {
+  if ((is_trans && !(future_prefs->jack_opts & JACK_OPTS_START_TSERVER))
+      || (!is_trans && !(future_prefs->jack_opts & JACK_OPTS_START_ASERVER))) {
     // could not connect and we were not allowed to start a server
-    logmsg = lives_strdup_printf("%s client %s could not connect to jack server '%s'%s\n"
-				 "\t\t\t\tThis client is not configured to start up a server of its own ! BAILING !\n",
-				 type_name, client_name, server_name, (status & JackServerFailed) ?
-				 " (server not running)" : "");
+    logmsg = lives_strdup_printf("#\n<b>%s client could not connect</b> to jack server '%s'%s\n"
+                                 "\t\t\t\tThe client is not configured to start up a server of its own\n\n",
+                                 type_name, (tmp = lives_markup_escape_text(server_name, -1)), (status & JackServerFailed) ?
+                                 _(" (server not running)") : "");
+    lives_free(tmp);
+    widget_opts.use_markup = TRUE;
     jack_log_errmsg(jackd, logmsg);
+    widget_opts.use_markup = FALSE;
     LIVES_ERROR(logmsg);
     lives_free(logmsg);
     goto ret_failed;
   }
 
+  if (!con_attempts) logmsg2 = _(", proceding to next step.");
+  else logmsg2 = lives_strdup("");
+
+  // connect failed, try first with script if we have one
+  logmsg = lives_strdup_printf(_("#\n<b>%s client could not connect</b> to jack server named '%s'%s%s\n\n"),
+                               type_name, (tmp = lives_markup_escape_text(server_name, -1)), (status & JackServerFailed) ?
+                               _(" (server not running)") : "", logmsg2);
+  lives_free(tmp);
+  widget_opts.use_markup = TRUE;
+  jack_log_errmsg(jackd, logmsg);
+  widget_opts.use_markup = FALSE;
+  lives_free(logmsg); lives_free(logmsg2);
+
   // try to connect audio
   lives_free(server_name);
 
-  // check first, if we are asked to start a server and another client already started it
+  // check first, if we are asked to start a server and another client already started it or connected to it
   // just connect to that (e.g audio & transport clients have different connect servers, but the same startup server,
   // if both fail to connect, then audio should just connect to the server that transport started and
   // not try to start it again)
@@ -1072,52 +1298,95 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
       ts_running = server_name;
       ts_started = as_started;
       twins = TRUE;
-      logmsg = lives_strdup_printf("%s client '%s' successfully connected to running jack v%d server named '%s'",
-                     type_name, client_name, jackver, server_name);
+      logmsg = lives_strdup_printf("#\n%s client '%s' was configured to start a server named '%s'; a jack v%d server with this name "
+                                   "is already running, thus startup is unneccesary\n",
+                                   type_name, client_name, server_name, jackver);
       jack_log_errmsg(jackd, logmsg);
       lives_free(logmsg);
       goto do_connect;
     }
     twins = FALSE;
   } else {
-    if (*future_prefs->jack_aserver_sname) server_name = lives_strdup(future_prefs->jack_aserver_sname);
-    else server_name = lives_strdup(defservname);
-    if (ts_running && !lives_strcmp(ts_running, server_name)) {
-      as_running = server_name;
-      as_started = ts_started;
-      twins = TRUE;
-      logmsg = lives_strdup_printf("%s client '%s' successfully connected to running jack v%d server named '%s'",
-                     type_name, client_name, jackver, server_name);
-      jack_log_errmsg(jackd, logmsg);
-      lives_free(logmsg);
-      goto do_connect;
+    if (*future_prefs->jack_aserver_cfg) server_name = lives_strdup(future_prefs->jack_aserver_cname);
+    else {
+      if (*future_prefs->jack_aserver_sname) server_name = lives_strdup(future_prefs->jack_aserver_sname);
+      else server_name = lives_strdup(defservname);
+      if (ts_running && !lives_strcmp(ts_running, server_name)) {
+        as_running = server_name;
+        as_started = ts_started;
+        twins = TRUE;
+        logmsg = lives_strdup_printf("#\n%s client '%s' was configured to start a server named '%s'; a jack v%d server with this name "
+                                     "is already running, thus startup is unneccesary\n",
+                                     type_name, client_name, server_name, jackver);
+        jack_log_errmsg(jackd, logmsg);
+        lives_free(logmsg);
+        goto do_connect;
+      }
+      twins = FALSE;
     }
-    twins = FALSE;
   }
 
-  // connect failed, try first with script if we have one
-  logmsg = lives_strdup_printf("%s client could not connect to jack server named '%s'%s\n"
-			       "\t\t\t\tWill now attempt to start own server...",
-			       type_name, server_name, (status & JackServerFailed) ?
-			       " (server not running)" : "");
+  if (con_attempts++) {
+    logmsg = lives_strdup_printf("#failed to connect to the server named '%s', perhaps there was an error in the script "
+                                 "or the given server name does not match the one in the script\n", server_name);
+    jack_log_errmsg(jackd, logmsg);
+    lives_free(logmsg);
+    goto ret_failed;
+  }
+
+  if (!lives_strcmp(future_prefs->jack_aserver_cname, future_prefs->jack_aserver_sname)) logmsg2 = _("start it instead");
+  else logmsg2 = _("start a server of our own");
+
+  logmsg = lives_strdup_printf(_("failed to connect to the server. Will now attempt to %s..."), logmsg2);
   jack_log_errmsg(jackd, logmsg);
   LIVES_ERROR(logmsg);
-  lives_free(logmsg);
+  lives_free(logmsg); lives_free(logmsg2);
 
   // using a config file. We will run it via fork() and then try to connect
   // for this to work we need to parse the config file and try to extract the server name
   if (is_trans) {
-    if (*prefs->jack_tserver_cfg) com = prefs->jack_tserver_cfg;
+    if (*future_prefs->jack_tserver_cfg) com = future_prefs->jack_tserver_cfg;
   } else {
-    if (*prefs->jack_aserver_cfg) com = prefs->jack_aserver_cfg;
+    if (*future_prefs->jack_aserver_cfg) com = future_prefs->jack_aserver_cfg;
   }
   if (com) {
-    server_name = parse_script(com);
-    if (!server_name) server_name = lives_strdup(defservname);
-    lives_fork(com);
-    logmsg = lives_strdup_printf("LiVES: Script file %s deployed\nGuessing the server name is '%s',"
-				 "and attempting to connect to it.", com, server_name);
+    int pidchk;
+    lives_pid_t sc_pid;
+
+    if (is_trans) {
+      ts_scripted = FALSE;
+      if (*future_prefs->jack_tserver_cname) server_name = lives_strdup(future_prefs->jack_tserver_cname);
+      else server_name = lives_strdup(defservname);
+    } else {
+      as_scripted = FALSE;
+      if (*future_prefs->jack_aserver_cname) server_name = lives_strdup(future_prefs->jack_aserver_cname);
+      else server_name = lives_strdup(defservname);
+    }
+
+    logmsg = lives_strdup_printf("LiVES: Script file %s will be deployed", com);
+    jack_log_errmsg(jackd, logmsg);
+    lives_free(logmsg);
+
+    sc_pid = lives_fork(com);
+
+    if (is_trans) tserver_pid = sc_pid;
+    else aserver_pid = sc_pid;
+
+    pidchk = lives_kill(sc_pid, 0);
+    if (!pidchk) {
+      if (is_trans) ts_scripted = TRUE;
+      else as_scripted = TRUE;
+      logmsg = lives_strdup_printf("LiVES: script running, retrying connection attempt to server named '%s'", server_name);
+    } else
+      logmsg = lives_strdup_printf("LiVES: script not running, retrying connection attempt to server named '%s' anyway", server_name);
+
+    jack_log_errmsg(jackd, logmsg);
+    lives_free(logmsg);
+
     goto retry_connect;
+  } else {
+    if (is_trans) ts_scripted = FALSE;
+    else as_scripted = FALSE;
   }
 
   // start a server using internal settings
@@ -1141,10 +1410,12 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
 #ifdef JACK_SYNC_MODE
   set_server_sync = TRUE;
 #endif
-  if (is_trans && !(prefs->jack_opts & JACK_OPTS_PERM_TSERVER))
+  if (is_trans && !(future_prefs->jack_opts & JACK_OPTS_PERM_TSERVER))
     set_server_temp = TRUE;
-  if (!is_trans && !(prefs->jack_opts & JACK_OPTS_PERM_ASERVER))
+  if (!is_trans && !(future_prefs->jack_opts & JACK_OPTS_PERM_ASERVER))
     set_server_temp = TRUE;
+
+  if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) set_server_temp = TRUE;
 
   params = jackctl_server_get_parameters(jackserver);
 
@@ -1156,9 +1427,9 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
     while (params) {
       jackctl_parameter_t *parameter = (jackctl_parameter_t *)params->data;
       if (!strcmp(jackctl_parameter_get_name(parameter), "name")) {
-	union jackctl_parameter_value value;
-	snprintf(value.str, JACK_PARAM_STRING_MAX, "%s", server_name);
-	jackctl_parameter_set_value(parameter, &value);
+        union jackctl_parameter_value value;
+        snprintf(value.str, JACK_PARAM_STRING_MAX, "%s", server_name);
+        jackctl_parameter_set_value(parameter, &value);
       }
 
       if (set_server_sync) {
@@ -1197,17 +1468,18 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
     else tsname = defservname;
     if (!lives_strcmp(asname, tsname)) all_equal = TRUE;
     if (is_trans && !all_equal && !prefs->jack_srv_dup) {
-      uint64_t ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+      uint64_t ostate;
+      if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
       new_driver = (jackctl_driver_t *)main_thread_execute((lives_funcptr_t)get_def_drivers,
-							   WEED_SEED_VOIDPTR, &new_driver, "vvb", drivers, &slist, 4);
+                   WEED_SEED_VOIDPTR, &new_driver, "vvb", drivers, &slist, 4);
       if (!new_driver) {
-	if (mainw->cancelled) {
-	  logmsg = lives_strdup_printf("LiVES: User cancelled during driver selection for %s client", type_name);
-	  jack_log_errmsg(jackd, logmsg);
-	  lives_free(logmsg);
-	  goto ret_failed;
-	}
-	if (!(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+        if (mainw->cancelled) {
+          logmsg = lives_strdup_printf("LiVES: User cancelled during driver selection for %s client", type_name);
+          jack_log_errmsg(jackd, logmsg);
+          lives_free(logmsg);
+          goto ret_failed;
+        }
+        if (lpt && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
         goto retry_connect;
       }
       future_prefs->jack_tdriver = lives_strdup(jackctl_driver_get_name(new_driver));
@@ -1215,20 +1487,21 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
         lives_list_free(future_prefs->jack_tslaves);
       future_prefs->jack_tslaves = slist;
     } else {
-      uint64_t ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+      uint64_t ostate;
+      if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
       new_driver = (jackctl_driver_t *)main_thread_execute((lives_funcptr_t)get_def_drivers,
-							   WEED_SEED_VOIDPTR, &new_driver, "vvb", drivers, &slist, is_trans ? 4 : 5);
+                   WEED_SEED_VOIDPTR, &new_driver, "vvb", drivers, &slist, is_trans ? 4 : 5);
       if (!new_driver) {
-	if (mainw->cancelled) {
-	  logmsg = lives_strdup_printf("LiVES: User cancelled during driver selection for %s client", type_name);
-	  jack_log_errmsg(jackd, logmsg);
-	  lives_free(logmsg);
-	  goto ret_failed;
-	}
-	if (!(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
-	goto retry_connect;
+        if (mainw->cancelled) {
+          logmsg = lives_strdup_printf("LiVES: User cancelled during driver selection for %s client", type_name);
+          jack_log_errmsg(jackd, logmsg);
+          lives_free(logmsg);
+          goto ret_failed;
+        }
+        if (lpt && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+        goto retry_connect;
       }
-      if (!(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+      if (lpt && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
       future_prefs->jack_adriver = lives_strdup_free(future_prefs->jack_adriver, jackctl_driver_get_name(new_driver));
       if (future_prefs->jack_aslaves && future_prefs->jack_aslaves != future_prefs->jack_tslaves)
         lives_list_free(future_prefs->jack_aslaves);
@@ -1252,7 +1525,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
     driver = (jackctl_driver_t *)drivers->data;
     if (!lives_strcmp(driver_name, jackctl_driver_get_name(driver))) {
       logmsg = lives_strdup_printf("%s client has been configured to use '%s' driver",
-				   type_name, driver_name);
+                                   type_name, driver_name);
       jack_log_errmsg(jackd, logmsg);
       lives_free(logmsg);
       break;
@@ -1260,8 +1533,8 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
     drivers = jack_slist_next(drivers);
   }
   if (!drivers) {
-    logmsg = lives_strdup_printf("Could not find driver %s for jackd %s client in server named '%s'",
-                                    driver_name, type_name, server_name);
+    logmsg = lives_strdup_printf("#Could not find driver %s for jackd %s client in server named '%s'",
+                                 driver_name, type_name, server_name);
     jack_log_errmsg(jackd, logmsg);
     LIVES_ERROR(logmsg);
     lives_free(logmsg);
@@ -1282,7 +1555,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
 
   if (!jackctl_server_open(jackserver, driver)) {
     logmsg = lives_strdup_printf("Could not launch jack2 server named '%s' with %s driver",
-				 server_name, driver_name);
+                                 server_name, driver_name);
     jack_log_errmsg(jackd, logmsg);
     LIVES_ERROR(logmsg);
     lives_free(logmsg);
@@ -1296,7 +1569,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
       mainw->crash_possible = 0;
     }
     logmsg = lives_strdup_printf("Could not start jack2 server named '%s' for %s client",
-				 server_name, type_name);
+                                 server_name, type_name);
     jack_log_errmsg(jackd, logmsg);
     LIVES_ERROR(logmsg);
     lives_free(logmsg);
@@ -1323,7 +1596,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
     }
 
     logmsg = lives_strdup_printf("Could not start jack1 server named '%s' with driver %s",
-				 server_name, driver_name);
+                                 server_name, driver_name);
 
     jack_log_errmsg(jackd, logmsg);
     LIVES_ERROR(logmsg);
@@ -1348,14 +1621,14 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
   }
 
   logmsg = lives_strdup_printf(_("jack server named '%s' started for %s client using driver %s"),
-			       server_name, type_name, jackctl_driver_get_name(driver));
+                               server_name, type_name, jackctl_driver_get_name(driver));
 
   jack_log_errmsg(jackd, logmsg);
   lives_free(logmsg);
   jack_log_errmsg(jackd, NULL);
 
-  if ((is_trans && (prefs->jack_opts & JACK_OPTS_SETENV_TSERVER)) ||
-      (!is_trans && (prefs->jack_opts & JACK_OPTS_SETENV_ASERVER))) {
+  if ((is_trans && (future_prefs->jack_opts & JACK_OPTS_SETENV_TSERVER)) ||
+      (!is_trans && (future_prefs->jack_opts & JACK_OPTS_SETENV_ASERVER))) {
     lives_setenv(JACK_DEFAULT_SERVER, server_name);
     lives_snprintf(prefs->jack_def_server_name, JACK_PARAM_STRING_MAX,
                    "%s", server_name);
@@ -1368,7 +1641,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
 do_connect:
 
   jackd->client = jack_client_open(client_name, options, &status, server_name);
-  if (!jackd->client){
+  if (!jackd->client) {
     jack_log_errmsg(jackd, NULL);
     goto ret_failed;
   }
@@ -1388,29 +1661,7 @@ connect_done:
     // jackctl_server_switch_master(server, driver);
   }
 
-  if (is_test) {
-    if (!jackserver) {
-      logmsg = lives_strdup_printf(_("Disconnecting %s\n"), type_name);
-      jack_log_errmsg(jackd, logmsg);
-      lives_free(logmsg);
-      jack_client_close(jackd->client);
-      jackd->client = NULL;
-      logmsg = _("Testing complete.");
-      jack_log_errmsg(jackd, logmsg);
-      lives_free(logmsg);
-      logmsg = lives_strdup("");
-      jack_log_errmsg(jackd, logmsg);
-      lives_free(logmsg);
-    }
-    else {
-      // if servers started, make them temp always, so then we need to keep clients alive until
-      // after dealing with audio reader
-
-
-
-    }
-    goto ret_failed;
-  }
+  if (is_test) goto ret_success;
 
   // add slaves
   if (jackserver) {
@@ -1418,13 +1669,13 @@ connect_done:
     else slave_list = future_prefs->jack_aslaves;
     while (slave_list) {
       if (!jackctl_server_add_slave(jackserver, (jackctl_driver_t *)slave_list->data)) {
-	logmsg = lives_strdup_printf(_("jackctl : failed adding slave %s to server named '%s'"),
-				     jackctl_driver_get_name((jackctl_driver_t *)slave_list->data),
-				     server_name);
-	jack_log_errmsg(jackd, logmsg);
-	LIVES_ERROR(logmsg);
-	lives_free(logmsg);
-	jack_log_errmsg(jackd, NULL);
+        logmsg = lives_strdup_printf(_("jackctl : failed adding slave %s to server named '%s'"),
+                                     jackctl_driver_get_name((jackctl_driver_t *)slave_list->data),
+                                     server_name);
+        jack_log_errmsg(jackd, logmsg);
+        LIVES_ERROR(logmsg);
+        lives_free(logmsg);
+        jack_log_errmsg(jackd, NULL);
       }
       slave_list = slave_list->next;
     }
@@ -1443,18 +1694,22 @@ connect_done:
   jackd->client = NULL;
 #endif
 
- ret_success:
+ret_success:
   if (!is_test) return TRUE;
+  test_ret = TRUE;
 
- ret_failed:
+ret_failed:
   if (!is_test) return FALSE;
 
-  lives_widget_set_sensitive(tstwin->button, TRUE);
-  lives_widget_grab_focus(tstwin->button);
-  textwindow = tstwin;
-  return TRUE;
+  if (is_trans) finish_test(jackd, test_ret, TRUE, FALSE);
 
+  if (tstwin->button) {
+    lives_widget_grab_focus(tstwin->button);
+  }
+  textwindow = tstwin;
+  return test_ret;
 }
+
 
 /////////////////////////////////////////////////////////////////
 // transport handling
@@ -2616,21 +2871,32 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
   // lives_proc_thread_include_states(). This will have the effect of causing the timout to be continuously reset
   // After return, clear the BUSY state with lives_proc_thread_exclude_states(), which will retstart the timer
   lives_proc_thread_t lpt;
+  boolean is_test = FALSE;
 
   if (mainw->aplayer_broken) return FALSE;
 
-  jackd->is_active = FALSE;
-  if (!lives_jack_init(JACK_CLIENT_TYPE_AUDIO_WRITER, jackd)) {
-    return FALSE;
+  if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) is_test = TRUE;
+
+  if (!prefs->startup_phase || is_test) {
+    jackd->is_active = FALSE;
+    if (!lives_jack_init(JACK_CLIENT_TYPE_AUDIO_WRITER, jackd)) {
+      finish_test(jackd, FALSE, FALSE, FALSE);
+      return FALSE;
+    }
+
+    jackd->sample_out_rate = jackd->sample_in_rate = jack_get_sample_rate(jackd->client);
+
+    if (is_test) {
+      char *logmsg = lives_strdup_printf("engine sample rate: %d\n", jackd->sample_out_rate);
+      jack_log_errmsg(jackd, logmsg);
+      lives_free(logmsg);
+      finish_test(jackd, TRUE, FALSE, FALSE);
+      return TRUE;
+    }
   }
 
-  if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) return TRUE;
-
   lpt = THREADVAR(tinfo);
-  lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
-
-  jackd->sample_out_rate = jackd->sample_in_rate = jack_get_sample_rate(jackd->client);
-  //lives_printerr (lives_strdup_printf("engine sample rate: %ld\n",jackd->sample_rate));
+  if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
 
   for (int i = 0; i < jackd->num_output_channels; i++) {
     char portname[32];
@@ -2667,18 +2933,29 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
 boolean jack_create_client_reader(jack_driver_t *jackd) {
   // open a device to read audio from jack
   lives_proc_thread_t lpt;
+  boolean is_test = FALSE;
+
+  boolean res;
 
   if (mainw->aplayer_broken) return FALSE;
 
-  jackd->is_active = FALSE;
+  if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) is_test = TRUE;
 
-  // create a client and attach it to the server
-  if (!lives_jack_init(JACK_CLIENT_TYPE_AUDIO_READER, jackd)) return FALSE;
+  if (!prefs->startup_phase || is_test) {
+    jackd->is_active = FALSE;
 
-  if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) return TRUE;
+    // create a client and attach it to the server
+    res = lives_jack_init(JACK_CLIENT_TYPE_AUDIO_READER, jackd);
+
+    if (is_test) {
+      finish_test(jackd, res, FALSE, TRUE);
+      return res;
+    }
+    if (!res) return FALSE;
+  }
 
   lpt = THREADVAR(tinfo);
-  lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+  if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
 
   jackd->sample_in_rate = jackd->sample_out_rate = jack_get_sample_rate(jackd->client);
   //lives_printerr (lives_strdup_printf("engine sample rate: %ld\n",jackd->sample_rate));

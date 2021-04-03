@@ -468,8 +468,6 @@ typedef struct {
 
   boolean push_audio_to_gens;
 
-  boolean perm_audio_reader;
-
   boolean funky_widgets;
 
   int max_disp_vtracks;
@@ -1079,6 +1077,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_INTERFACE_FONT "def_GUI_font"
 
 /////////////////// integer64 values
+#define PREF_UID "unique_id"
 #define PREF_DS_WARN_LEVEL "ds_warn_level"
 #define PREF_DS_CRIT_LEVEL "ds_crit_level"
 #define PREF_DISK_QUOTA "disk_quota"

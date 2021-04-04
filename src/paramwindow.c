@@ -1142,6 +1142,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     // just check how many non-hidden params without displaying
     chk_params = TRUE;
   } else {
+    LiVESWidget *extraw;
     dummy_label = lives_label_new(NULL);
 
     mainw->textwidget_focus = NULL;
@@ -1160,6 +1161,9 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     lives_widget_set_halign(param_vbox, LIVES_ALIGN_FILL);
     lives_widget_set_valign(param_vbox, LIVES_ALIGN_CENTER);
     lives_box_pack_start(LIVES_BOX(top_hbox), param_vbox, TRUE, TRUE, widget_opts.packing_width);
+
+    extraw = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(top_vbox), EXTRA_WIDGET_KEY);
+    if (extraw) lives_box_pack_start(LIVES_BOX(param_vbox), extraw, FALSE, TRUE, widget_opts.packing_height);
 
     for (i = 0; i < rfx->num_params; i++) {
       used[i] = FALSE;
@@ -1578,6 +1582,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, 0);
   lives_widget_destroy(dummy_label);
+
   if (has_param) {
     rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
     update_widget_vis(rfx, -1, -1);

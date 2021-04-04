@@ -1921,7 +1921,7 @@ if (1) {
 			&sig_progress(0);
 		    }
 
-		    if (open (my $fh, "$syscomb |")) {
+		    if (open (my $fh, "-|", "$syscomb")) {
 			while (defined(my $line = <$fh>)) {
 			    if (!$has_vid && ($line =~ /^VO:/ || $line =~ /^VIDEO:/)) {
 				my @info = split /  /, $line;
@@ -1998,19 +1998,35 @@ if (1) {
 		    }
 
 		    if ($syscoma) {
-			if (open (my $fh, "$syscoma 2>$nulfile |")) {
+			if (open (my $fh, "-|", "$syscoma 2>$nulfile")) {
 			    ## write audio file first for opening preview
 			    while (defined(my $line = <$fh>)) {
-				if ($line =~ /^AO:/ || $line =~ /^AUDIO:/) {
-				    my @info2 = split /  /, $line;
-				    if (!$is_mpv) {
-					$xarate = int($info2[1]);
-					$xachans = int($info2[3]);
-				    } else {
-					$xarate = int($info2[2]);
-					$xachans = int($info2[4]);
+				if (!$xarate || !$xachans) {
+				    if ($line =~ /^AO:/ || $line =~ /^AUDIO:/) {
+					my @info2 = split / /, $line;
+					if (!$is_mpv) {
+					    if ($line =~ /^AUDIO:/) {
+						if (!$xarate) {
+						    $xarate = int(@info2[1]);
+						}
+						if (!$xachans) {
+						    $xachans = int(@info2[3]);
+						}
+					    }
+					    else {
+						if (!$xarate) {
+						    $xarate = int(@info2[2]);
+						}
+						if (!$xachans) {
+						    $xachans = int(@info2[3]);
+						}
+					    }
+					} else {
+					    ## TODO - recheck
+					    $xarate = int(@info2[2]);
+					    $xachans = int(@info2[4]);
+					}
 				    }
-				    $has_aud = 1;
 				}
 			    }
 			    close $fh;
@@ -2018,16 +2034,20 @@ if (1) {
 				unlink $pidfile;
 				exit 1;
 			    }
+			    if ($xachans && $xarate) {
+				$has_aud = 1;
+			    }
 			}
 		    }
 
 		    if ($syscomv) {
-			if (open (my $fh, "$syscomv 2> $nulfile |")) {
+			if (open (my $fh, "-|", "$syscomv 2> $nulfile")) {
 			    ## write audio file first for opening preview
 			    while (defined(my $line = <$fh>)) {
+				## TODO - recheck
 				if ($line =~ /^VO:/ || $line =~ /^VIDEO:/) {
 				    my @info = split /  /, $line;
-				    $size = $info[2];
+				    $size = @info[2];
 				    $hsize = (split /x/,$size)[0];
 				    $vsize = (split /x/,$size)[1];
 
@@ -3857,7 +3877,7 @@ if (1) {
 		}
 		if ($prog eq "") {
 		    $com = $youtube_dl;
-		    open (my $fh, "$com 2>&1 |");
+		    open (my $fh, "-|", "$com 2>&1");
 		    if ($fh) {
 			$line = <$fh>;
 			close $fh;
@@ -3912,7 +3932,7 @@ if (1) {
 		if ($debug) {
 		    print STDERR "\n\nUPDATING $prog WITH $com\n";
 		}
-		open (my $fh, "$com 2>&1 |");
+		open (my $fh, "-|", "$com 2>&1");
 		while (defined(my $line = <$fh>)) {
 		    if ($debug) {
 			print STDERR "got line: $line\n";
@@ -3972,7 +3992,7 @@ if (1) {
 		    print STDERR "DOING: '$prog' $vb --no-playlist -F '$url'\n";
 		}
 
-		my $OK = open(my $fh, "'$prog' $vb --no-playlist -F '$url' |");
+		my $OK = open(my $fh, "-|", "'$prog' $vb --no-playlist -F '$url'");
 		if ($OK) {
 		    while (defined($line = <$fh>)) {
 			if ($debug) {
@@ -4260,7 +4280,7 @@ if (1) {
 		unlink $xdfile;
 	    }
 
-	    if (open (my $fh, "$com |")) {
+	    if (open (my $fh, "-|", "$com")) {
 		while (defined(my $line = <$fh>)) {
 		    if ($debug) {
 			print STDERR "output: $line\n";
@@ -5771,7 +5791,7 @@ sub get_mpv_info {
 	print STDERR "EXECUTING: $com\n";
     }
 
-    open (my $fh, "$com |");
+    open (my $fh, "-|", "$com");
     while (defined(my $line = <$fh>)) {
 	if ($line =~ /^XDATA:duration=(.*)/ || $line =~ /^XDATA:length=(.*)/) {
 	    next if ($length);
@@ -5786,7 +5806,7 @@ sub get_mpv_info {
 		$com =
 		    "$mplay_command -noconfig all -nocache -demuxer lavf -identify -vo null -ao null -frames 0 \"$file\" " .
 		    "<$nulfile";
-		open ($fh, "$com |");
+		open ($fh, "-|", "$com");
 		$retried = 1;
 		if ($VERBOSE > 1) {
 		    print STDERR "retrying with demuxer lavf\n";
@@ -6028,7 +6048,7 @@ sub get_ffprobe_info {
 	if ($VERBOSE > 1) {
 	    print STDERR "running $com\n";
 	}
-	open (my $fh, "$com |");
+	open (my $fh, "-|", "$com");
 	while (defined(my $line = <$fh>)) {
 	    $line =~ s/\r\n//g;
 	    if ($line =~ /^\[FORMAT\]/) {
@@ -6293,7 +6313,7 @@ sub get_mplayer_info {
 	print STDERR "EXECUTING: $com\n";
     }
 
-    open (my $fh, "$com |");
+    open (my $fh, "-|", "$com");
     while (defined(my $line = <$fh>)) {
 	if ($line =~ /^ID_LENGTH=(.*)/) {
 	    next if ($length);
@@ -6307,7 +6327,7 @@ sub get_mplayer_info {
 		close $fh;
 		$com = "$mplay_command -noconfig all -nocache -demuxer lavf -identify -vo null -ao null -frames 0 \"$file\" " .
 		    "<$nulfile";
-		open ($fh, "$com |");
+		open ($fh, "-|", "$com");
 		$retried = 1;
 		if ($VERBOSE > 1) {
 		    print STDERR "retrying with demuxer lavf\n";

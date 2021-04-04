@@ -44,6 +44,7 @@ typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed
 #endif
 
 #define LINKED_RFX_KEY "linked_rfx"
+#define EXTRA_WIDGET_KEY "extra_widget"
 
 int get_param_widget_by_type(lives_param_t *, int wtype);
 

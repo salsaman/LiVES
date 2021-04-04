@@ -1505,34 +1505,34 @@ void update_play_times(void) {
 }
 
 
-void get_total_time(lives_clip_t *file) {
+void get_total_time(lives_clip_t *sfile) {
   // get times (video, left and right audio)
 
-  file->laudio_time = file->raudio_time = file->video_time = 0.;
+  sfile->laudio_time = sfile->raudio_time = sfile->video_time = 0.;
 
-  if (file->opening) {
+  if (sfile->opening) {
     int frames;
-    if (file->frames != 123456789) frames = file->frames;
-    else frames = file->opening_frames;
-    if (frames * file->fps > 0) {
-      file->video_time = file->frames / file->fps;
+    if (sfile->frames != 123456789) frames = sfile->frames;
+    else frames = sfile->opening_frames;
+    if (frames * sfile->fps > 0) {
+      sfile->video_time = sfile->frames / sfile->fps;
     }
     return;
   }
 
-  if (file->fps > 0.) {
-    file->video_time = file->frames / file->fps;
+  if (sfile->fps > 0.) {
+    sfile->video_time = sfile->frames / sfile->fps;
   }
 
-  if (file->asampsize >= 8 && file->arate > 0 && file->achans > 0) {
-    file->laudio_time = (double)(file->afilesize / (file->asampsize >> 3) / file->achans) / (double)file->arate;
-    if (file->achans > 1) {
-      file->raudio_time = file->laudio_time;
+  if (sfile->asampsize >= 8 && sfile->arate > 0 && sfile->achans > 0) {
+    sfile->laudio_time = (double)(sfile->afilesize / (sfile->asampsize >> 3) / sfile->achans) / (double)sfile->arate;
+    if (sfile->achans > 1) {
+      sfile->raudio_time = sfile->laudio_time;
     }
   }
 
-  if (file->laudio_time + file->raudio_time == 0. && !file->opening) {
-    file->achans = file->afilesize = file->asampsize = file->arate = file->arps = 0;
+  if (sfile->laudio_time + sfile->raudio_time == 0. && !sfile->opening) {
+    sfile->achans = sfile->afilesize = sfile->asampsize = sfile->arate = sfile->arps = 0;
   }
 }
 

@@ -3935,6 +3935,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
       cfile->asampsize = atoi(array[11]);
       cfile->signed_endian = get_signed_endian(atoi(array[12]), atoi(array[13]));
       cfile->afilesize = strtol(array[14], NULL, 10);
+
       if (aud_only) {
         lives_strfreev(array);
         return TRUE;

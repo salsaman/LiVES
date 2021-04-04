@@ -263,14 +263,15 @@ lives_rfx_t *jack_params_to_rfx(const JSList *dparams, void *source) {
 
 
 static boolean jack_params_edit(lives_rfx_t *rfx, boolean is_trans, boolean is_driver) {
-  LiVESWidget *dialog, *pbox, *label;
+  LiVESWidget *dialog, *pbox, *vbox, *label;
   LiVESResponseType resp;
   char *text;
   char *title = lives_strdup_printf(_("%s configuration for LiVES %s server"),
                                     is_driver ? _("Driver") : _("Server"),
                                     is_trans ? _("transport") : _("audio"));
-  dialog = lives_standard_dialog_new(title, TRUE, RFX_WINSIZE_H * 2, RFX_WINSIZE_V);
+  dialog = lives_standard_dialog_new(title, TRUE, is_driver ? (RFX_WINSIZE_H * 3) >> 1 : -1, (RFX_WINSIZE_V * 3) >> 1);
   pbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  vbox = lives_vbox_new(FALSE, 0);
   text = lives_strdup_printf(_("WARNING: Supplying incorrect %s settings may prevent "
                                "LiVES from\nstarting jack. "
                                "As an aid, LiVES will back up your current settings\n"
@@ -279,7 +280,16 @@ static boolean jack_params_edit(lives_rfx_t *rfx, boolean is_trans, boolean is_d
                              : _("server"));
   label = lives_standard_label_new(text);
   lives_free(text);
-  lives_box_pack_start(LIVES_BOX(pbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  if (!is_driver) {
+    text = _("<b>NOTE: some values (e.g. --temporary, --sync) may be overridden by other configuration settings</b>");
+    widget_opts.use_markup = TRUE;
+    label = lives_standard_label_new(text);
+    widget_opts.use_markup = FALSE;
+    lives_free(text);
+    lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  }
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pbox), EXTRA_WIDGET_KEY, (livespointer)vbox);
   make_param_box(LIVES_VBOX(pbox), rfx);
   resp = lives_dialog_run(LIVES_DIALOG(dialog));
   if (resp == LIVES_RESPONSE_OK) {
@@ -310,12 +320,12 @@ static void set_def_driver(LiVESWidget *rb, jackctl_driver_t *driver) {
 
 #ifndef JACK_V2
 static void onif1(LiVESToggleButton *tb, LiVESWidget *bt) {
-  int actv = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(bt), "actv"));
+  int actv = GET_INT_DATA(bt, "actv");
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tb))) actv++;
   else actv--;
   if (!actv) lives_widget_set_sensitive(bt, FALSE);
   else lives_widget_set_sensitive(bt, TRUE);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(bt), "actv", LIVES_INT_TO_POINTER(actv));
+  SET_INT_DATA(bt, "actv", actv);
 }
 #endif
 
@@ -373,11 +383,9 @@ static boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
       lives_scrolled_window_scroll_to(LIVES_SCROLLED_WINDOW(tstwin->scrolledwindow), LIVES_POS_BOTTOM);
       if (lpt && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
     } else {
-      char *mkup = "";
-      if (widget_opts.use_markup) mkup = "*";
       if (*errmsg == '#') {
-        lives_snprintf(jackd->status_msg + offs, STMSGLEN - offs, "%s%s\n", mkup, errmsg + 1);
-      } else lives_snprintf(jackd->status_msg + offs, STMSGLEN - offs, "%s%s:%s %s\n", mkup, tstamp, isjack, errmsg);
+        lives_snprintf(jackd->status_msg + offs, STMSGLEN - offs, "%s\n", errmsg + 1);
+      } else lives_snprintf(jackd->status_msg + offs, STMSGLEN - offs, "%s:%s %s\n", tstamp, isjack, errmsg);
     }
     lives_free(tstamp);
     if (errmsg == last_errmsg) *last_errmsg = 0;
@@ -403,7 +411,7 @@ static void add_test_textwin(jack_driver_t *jackd) {
                                        LIVES_STOCK_CLOSE, _("_Close Window"),
                                        LIVES_RESPONSE_CANCEL);
   lives_widget_set_sensitive(tstwin->button, FALSE);
-  lives_widget_show_all(tstwin->button);
+  lives_widget_show_all(tstwin->dialog);
   if (mainw->is_ready) pop_to_front(tstwin->dialog, NULL);
   mainw->clutch = FALSE;
   logmsg = lives_strdup(_("Testing jack configuration..."));
@@ -494,8 +502,6 @@ void show_jack_status(LiVESButton * button, livespointer is_transp) {
   textwindow = create_text_window(title, text, NULL, TRUE);
   widget_opts.use_markup = FALSE;
   lives_free(title); lives_free(text);
-  /* if (!is_trans || ((is_trans == 1 || is_trans == 3 || (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)) */
-  /* 		    && !mainw->jackd_trans)) lives_free(text); */
   if (is_trans == 3) return;
 
   lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
@@ -1044,7 +1050,9 @@ static void finish_test(jack_driver_t *jackd, boolean success, boolean is_trans,
     if (is_reader || !success) {
       // if we are closing the reader client we can now close the writer client
       // and if writer failed, we should close trans
-      err_discon();
+      if (!prefs->startup_phase || !success) {
+        err_discon();
+      }
       logmsg = _("Testing complete.\n");
       jack_log_errmsg(jackd, logmsg);
       lives_free(logmsg);
@@ -1683,16 +1691,15 @@ connect_done:
 
   if (!is_trans) goto ret_success;
 
-
-#ifdef ENABLE_JACK_TRANSPORT
-  jack_activate(jackd->client);
-  jack_set_sync_timeout(jackd->client, 5000000); // seems to not work
-  jack_set_sync_callback(jackd->client, lives_start_ready_callback, NULL);
-  mainw->jack_trans_poll = TRUE;
-#else
-  jack_client_close(jackd->client);
-  jackd->client = NULL;
-#endif
+  if (future_prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
+    jack_activate(jackd->client);
+    jack_set_sync_timeout(jackd->client, 5000000); // seems to not work
+    jack_set_sync_callback(jackd->client, lives_start_ready_callback, NULL);
+    mainw->jack_trans_poll = TRUE;
+  } else {
+    jack_client_close(jackd->client);
+    jackd->client = NULL;
+  }
 
 ret_success:
   if (!is_test) return TRUE;

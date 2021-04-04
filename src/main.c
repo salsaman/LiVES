@@ -2371,7 +2371,7 @@ post_audio_choice:
 jack_tcl_try:
       success = TRUE;
       timeout = LIVES_SHORTEST_TIMEOUT;
-      if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 4;
+      if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
       if (!(info = LPT_WITH_TIMEOUT(timeout, 0, (lives_funcptr_t)lives_jack_init,
                                     WEED_SEED_BOOLEAN, "iv",
                                     JACK_CLIENT_TYPE_TRANSPORT, NULL))) {
@@ -2469,7 +2469,7 @@ rest1:
 jack_acl_try:
         success = TRUE;
         timeout = LIVES_SHORTEST_TIMEOUT;
-        if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 8;
+        if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
         if (!(info = LPT_WITH_TIMEOUT(timeout, 0,
                                       (lives_funcptr_t)jack_create_client_writer,
                                       WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
@@ -2503,7 +2503,18 @@ jack_acl_try:
           }
         }
 
-        if (mainw->jackd && !mainw->jackd->sample_out_rate) success = FALSE;
+        if (mainw->jackd) {
+          if (!mainw->jackd->sample_out_rate) success = FALSE;
+          else {
+            mainw->jackd->whentostop = &mainw->whentostop;
+            mainw->jackd->cancelled = &mainw->cancelled;
+            mainw->jackd->in_use = FALSE;
+            mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED)
+                                              ? FALSE : TRUE;
+
+            success = jack_write_client_activate(mainw->jackd);
+          }
+        }
 
         if (!success || !mainw->jackd) {
           if (mainw->cancelled == CANCEL_USER) {
@@ -2589,14 +2600,6 @@ rest3:
             }
           }
         }
-
-        mainw->jackd->whentostop = &mainw->whentostop;
-        mainw->jackd->cancelled = &mainw->cancelled;
-        mainw->jackd->in_use = FALSE;
-        mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED)
-                                          ? FALSE : TRUE;
-
-        jack_write_client_activate(mainw->jackd);
 
         if (!mainw->jackd_read) {
           // connect the reader - will also attempt to connect, and possibly start a server

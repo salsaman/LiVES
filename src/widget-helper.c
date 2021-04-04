@@ -16,7 +16,7 @@
 
 // static defns
 
-#define EV_LIM 256
+#define EV_LIM 64
 
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
@@ -961,15 +961,24 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_stop_emission_by_name(livespoin
 
 static volatile boolean gov_running = FALSE;
 static volatile boolean gov_will_run = FALSE;
-//static volatile LiVESResponseType dlgresp = LIVES_RESPONSE_NONE;
 static volatile boolean was_dest = FALSE;
 static volatile lives_proc_thread_t lpttorun = NULL;
 static volatile void *lpt_result = NULL;
 static volatile void *lpt_retval = NULL;
 
-volatile lives_proc_thread_t get_lpttorun(void) {
+#if 0
+static volatile lives_proc_thread_t get_lpttorun(boolean runit) {
+  if (lpttorun) {
+    if (runit && !gov_will_run) {
+      lpt_result = fg_run_func(lpttorun, (void *)lpt_retval);
+      lpttorun = NULL;
+    }
+  }
   return lpttorun;
 }
+#endif
+
+boolean has_lpttorun(void) {return !!lpttorun;}
 
 static void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
   lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
@@ -1107,8 +1116,7 @@ boolean governor_loop(livespointer data) {
   // reloop - for timers we cannot exit until we have the return code from the function
   // instead we loop back to here
 reloop:
-
-  if (g_main_depth() > 100 && !lpttorun) {
+  if (g_main_depth() > 1 && !lpttorun) {
     // prevent recursion UNLESS a specific function is called
     mainw->clutch = TRUE;
     //g_print("gov1\n");
@@ -1134,7 +1142,7 @@ reloop:
         lpttorun = NULL;
         lpt_recurse2 = FALSE;
 
-        // some handling that needed to be added to prevent multiplle idelfuncs
+        // some handling that needed to be added to prevent multiple idlefuncs
         if (!lpt_recurse) {
           //g_print("gov3\n");
           return FALSE;
@@ -1144,12 +1152,11 @@ reloop:
           return TRUE;
         }
       }
-      /* if (!lpttorun) */
-      /*   while (lives_widget_context_iteration(NULL, FALSE)); */
       lpttorun = NULL;
-      lpt_recurse = FALSE;
-      lpt_recurse2 = FALSE;
     }
+
+    lpt_recurse = FALSE;
+    lpt_recurse2 = FALSE;
 
     // some other handling for timers from trial and error
     if (timer_running) {
@@ -1215,7 +1222,12 @@ reloop:
     }
   }
   //else sigdata = new_sigdata;
-  if (new_sigdata && !sigdata_check_alarm(new_sigdata)) return FALSE;
+  if (new_sigdata && !sigdata_check_alarm(new_sigdata)) {
+    // timed out
+    gov_will_run = gov_running = FALSE;
+    //g_print("gov10\n");
+    return FALSE;
+  }
 
   if (mainw->is_exiting) return FALSE; // app exit
 
@@ -1246,8 +1258,11 @@ reloop:
     while (count++ < EV_LIM && lives_widget_context_iteration(NULL, FALSE)
            && sigdata_check_alarm(sigdata) && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
 
-    if (!sigdata_check_alarm(sigdata)) return FALSE;
-
+    if (!sigdata_check_alarm(sigdata)) {
+      gov_will_run = gov_running = FALSE;
+      //g_print("gov11\n");
+      return FALSE;
+    }
     // add ourselves as an idlefunc and then return FALSE
     lives_idle_add_simple(governor_loop, sigdata->alarm_handle ? sigdata : NULL);
 
@@ -1260,7 +1275,10 @@ reloop:
   }
 
   /// something else might have removed the clutch, so check again if the handler is still running
-  if (!lives_proc_thread_check_finished(sigdata->proc)) goto reloop;
+  if (!lives_proc_thread_check_finished(sigdata->proc)) {
+    lpt_recurse = TRUE;
+    goto reloop;
+  }
 
   // if we arrive here it means that some signal handler initiated the loops, and it's
   // actual callback has finished, now we can return to the proxy signal handler
@@ -4104,8 +4122,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_insert(LiVESTextBuffer *tb
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_insert_markup(LiVESTextBuffer *tbuff, LiVESTextIter *iter,
-    const char *markup,
-    int len) {
+    const char *markup, int len) {
 #ifdef GUI_GTK
   gtk_text_buffer_insert_markup(tbuff, iter, markup, len);
   return TRUE;

@@ -1294,7 +1294,6 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
     if (!keymap_file2) {
       // old style
-
       line = (char *)lives_list_nth_data(list, i);
 
       if (get_token_count(line, '|') < 2) {

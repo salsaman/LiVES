@@ -1659,7 +1659,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   }
 
   // set initial audio seek position for current file
-  if (cfile->achans) {
+  // check rate rather than chans, as we can have chans but no rate during open
+  if (cfile->arps) {
     mainw->aframeno = calc_frame_from_time4(mainw->current_file,
                                             cfile->aseek_pos / cfile->arps / cfile->achans / (cfile->asampsize >> 3));
   }

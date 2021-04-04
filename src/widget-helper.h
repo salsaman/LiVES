@@ -1356,7 +1356,9 @@ boolean lives_widget_destroy_with(LiVESWidget *, LiVESWidget *dieplease);
 
 typedef weed_plantptr_t lives_proc_thread_t;
 void *lives_fg_run(lives_proc_thread_t lpt, void *retval);
-volatile lives_proc_thread_t get_lpttorun(void);
+
+//volatile lives_proc_thread_t get_lpttorun(boolean runit);
+boolean has_lpttorun(void);
 
 #define LIVES_JUSTIFY_DEFAULT (def_widget_opts.justify)
 

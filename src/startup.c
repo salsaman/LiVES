@@ -608,7 +608,7 @@ boolean do_jack_config(int type, boolean is_trans) {
   LiVESWidget *dialog, *dialog_vbox, *layout, *hbox, *cb2 = NULL, *cb3;
   LiVESWidget *acdef = NULL, *acname = NULL, *astart = NULL;
   LiVESWidget *asdef, *asname;
-  LiVESWidget *okbutton, *cancelbutton, *filebutton;
+  LiVESWidget *dfa_button, *okbutton, *cancelbutton, *filebutton;
   LiVESWidget *scrpt_rb = NULL, *cfg_entry = NULL;
   LiVESResponseType response;
   char *title, *text;
@@ -619,7 +619,7 @@ boolean do_jack_config(int type, boolean is_trans) {
   boolean usedefsrv = FALSE;
   boolean is_setup = FALSE;
   boolean is_test = FALSE;
-  boolean do_astart;
+  boolean do_astart = FALSE;
   // type 0 = from prefs, 1 = setup, 2 = from error dialog
 
   if (type) is_setup = TRUE;
@@ -641,9 +641,9 @@ set_config:
   if (type == 1) {
     widget_opts.use_markup = TRUE;
     lives_layout_add_label(LIVES_LAYOUT(layout), _("</b></big>Please use the options below to define the "
-                           "basic yinitial settings for jackd.\n"
+                           "basic initial settings for jackd.\n"
                            "<big><b>After the setup process, you can review and update the full settings "
-                           "from within Preferences / Jack Integration\n"), FALSE);
+                           "from within Preferences / Jack Integration\nMost of the time the default values should be fine.\n"), FALSE);
     widget_opts.use_markup = FALSE;
 
     lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
@@ -691,16 +691,16 @@ set_config:
 
     hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-    lives_standard_radio_button_new(_("...do nothing"), &rb_group, LIVES_BOX(hbox),
-                                    H_("With this setting active, LiVES will only ever attempt "
-                                       "to connect to an existing jack server, "
-                                       "and will never try to start one itself\n"
-                                       "If the connection attempt does fail, an error will be generated."));
+    dfa_button = lives_standard_radio_button_new(_("...do nothing"), &rb_group, LIVES_BOX(hbox),
+                 H_("With this setting active, LiVES will only ever attempt "
+                    "to connect to an existing jack server, "
+                    "and will never try to start one itself\n"
+                    "If the connection attempt does fail, an error will be generated."));
 
     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   }
 
-  if ((cfg_exists && is_setup) || (!is_trans && (prefs->jack_opts & JACK_OPTS_START_ASERVER))
+  if ((!is_trans && (prefs->jack_opts & JACK_OPTS_START_ASERVER))
       || (is_trans && (prefs->jack_opts & JACK_OPTS_START_TSERVER)))
     do_astart = TRUE;
 
@@ -764,8 +764,6 @@ set_config:
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
 
-  if (do_astart) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(astart), TRUE);
-
   if (is_setup) lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
   if (!is_setup) widget_opts.packing_height <<= 1;
@@ -780,7 +778,7 @@ set_config:
                                      || (!is_trans && !*future_prefs->jack_aserver_sname)))))
     usedefsrv = TRUE;
 
-  asdef = lives_standard_check_button_new(_("Use _default server name"), usedefsrv, LIVES_BOX(hbox),
+  asdef = lives_standard_check_button_new(_("Use '_default' server name"), usedefsrv, LIVES_BOX(hbox),
                                           H_("The server name will be taken from the environment "
                                               "variable\n$JACK_DEFAULT_SERVER.\nIf that variable is not "
                                               "set, then 'default' will be used instead"));
@@ -802,21 +800,26 @@ set_config:
 
   if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) show_warn_image(asname, _("Value was set from the commandline"));
 
-  if (!is_trans) {
-    if ((is_setup && cfg_exists) || (!is_setup && *future_prefs->jack_aserver_cfg))
-      lives_toggle_button_set_active(scrpt_rb, TRUE);
-    if (is_setup) {
-      if (*prefs->jack_aserver_sname) lives_toggle_button_set_active(asdef, FALSE);
+  if (do_astart) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(astart), TRUE);
+  else {
+    if (!is_trans) {
+      if ((is_setup && cfg_exists) || (!is_setup && *future_prefs->jack_aserver_cfg))
+        lives_toggle_button_set_active(scrpt_rb, TRUE);
+      else if (type) lives_toggle_button_set_active(dfa_button, TRUE);
+      if (is_setup) {
+        if (*prefs->jack_aserver_sname) lives_toggle_button_set_active(asdef, FALSE);
+      } else {
+        if (*future_prefs->jack_aserver_sname) lives_toggle_button_set_active(asdef, FALSE);
+      }
     } else {
-      if (*future_prefs->jack_aserver_sname) lives_toggle_button_set_active(asdef, FALSE);
-    }
-  } else {
-    if ((is_setup && cfg_exists) || (!is_setup && *future_prefs->jack_tserver_cfg))
-      lives_toggle_button_set_active(scrpt_rb, TRUE);
-    if (is_setup) {
-      if (*prefs->jack_tserver_sname) lives_toggle_button_set_active(asdef, FALSE);
-    } else {
-      if (*future_prefs->jack_tserver_sname) lives_toggle_button_set_active(asdef, FALSE);
+      if ((is_setup && cfg_exists) || (!is_setup && *future_prefs->jack_tserver_cfg))
+        lives_toggle_button_set_active(scrpt_rb, TRUE);
+      else if (type) lives_toggle_button_set_active(dfa_button, TRUE);
+      if (is_setup) {
+        if (*prefs->jack_tserver_sname) lives_toggle_button_set_active(asdef, FALSE);
+      } else {
+        if (*future_prefs->jack_tserver_sname) lives_toggle_button_set_active(asdef, FALSE);
+      }
     }
   }
 
@@ -949,7 +952,7 @@ set_config:
 
   if (type == 1)
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
-               LIVES_STOCK_LABEL_NEXT, LIVES_RESPONSE_RETRY);
+               _("Test the Configuration"), LIVES_RESPONSE_RETRY);
   else {
     if (type == 2)
       okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,

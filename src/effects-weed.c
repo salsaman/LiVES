@@ -11930,7 +11930,6 @@ boolean read_filter_defaults(int fd) {
 
   char *tmp;
 
-
   while (1) {
     if (lives_read_le_buffered(fd, &vleni, 4, TRUE) < 4) {
       break;

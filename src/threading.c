@@ -173,7 +173,6 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
 
   while (!(tres = lives_proc_thread_check_finished(lpt))
          && (timeout == 0 || (xtimeout = lives_alarm_check(alarm_handle)) > 0)) {
-
     lives_nanosleep(LIVES_SHORT_SLEEP);
     tstate = lives_proc_thread_get_state(lpt);
 
@@ -620,7 +619,7 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_sync_ready(lives_proc_thread_t tinfo)
 
 
 #define _join(tinfo, stype) if (is_fg_thread()) {while (!(lives_proc_thread_get_state(tinfo) & THRD_STATE_FINISHED)) { \
-      if (get_lpttorun()) lives_widget_context_update(); lives_nanosleep(LIVES_QUICK_NAP * 10);}} \
+      if (has_lpttorun()) lives_widget_context_update(); lives_nanosleep(LIVES_QUICK_NAP * 10);}} \
   else lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, _RV_)); \
   return weed_get_##stype##_value(tinfo, _RV_, NULL);
 
@@ -629,7 +628,7 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t tinfo) {
   // WARNING !! this version without a return value will free tinfo !
   if (is_fg_thread()) {
     while (!lives_proc_thread_check_finished(tinfo)) {
-      if (get_lpttorun()) lives_widget_context_update();
+      if (has_lpttorun()) lives_widget_context_update();
       lives_nanosleep(LIVES_QUICK_NAP * 10);
     }
   } else lives_nanosleep_while_false(lives_proc_thread_check_finished(tinfo));

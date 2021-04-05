@@ -898,20 +898,24 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
     }
 
     if (fbuff->bufsztype != bufsztype) fbuff->nseqreads = 0;
-    res = file_buffer_fill(fbuff, count);
-    if (res < 0)  {
-      retval = res;
-      goto rd_done;
-    }
 
-    // buffer is sufficient (or eof hit)
-    if (res > count) res = count;
-    lives_memcpy(ptr, fbuff->ptr, res);
-    retval += res;
-    fbuff->ptr += res;
-    fbuff->bytes -= res;
-    count -= res;
-    fbuff->totbytes += res;
+    while (count) {
+      res = file_buffer_fill(fbuff, count);
+      if (res < 0)  {
+	retval = res;
+	goto rd_done;
+      }
+
+      // buffer is sufficient (or eof hit)
+      if (res > count) res = count;
+      lives_memcpy(ptr, fbuff->ptr, res);
+      retval += res;
+      fbuff->ptr += res;
+      fbuff->bytes -= res;
+      if (res < count) count = 0;
+      else count -= res;
+      fbuff->totbytes += res;
+    }
   } else {
     // larger size -> direct read
     if (fbuff->bufsztype != bufsztype) {

@@ -16,7 +16,7 @@
 
 // static defns
 
-#define EV_LIM 64
+#define EV_LIM 256
 
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);

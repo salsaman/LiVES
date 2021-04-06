@@ -195,22 +195,30 @@ static int chain_lock_upgrade(weed_leaf_t *leaf, int have_rdlock, int is_del) {
   // if blocking is 0, then we return if we cannot get the mutex
   // return 0 if we got the write lock, otherwise
   if (leaf) {
-    if (!have_rdlock) {
-      // lock the leaf (plant)
-      structure_mutex_lock(leaf);
-    }
-    else chain_lock_unlock(leaf);
-    // now we have the mutex lock, we grab the writelock
-    // with the mutex held, other threads will be blocked
-    // and released their readlocks, allowing us to proceed
+    if (have_rdlock) chain_lock_unlock(leaf);
+    else structure_mutex_lock(leaf);
+
+    // for plants -
+    // now we have the structure mutex lock, we can be certain that other threads waiting to write will have dropped
+    // any readlocks. Thus as soon as there are no more readers we will get a write lock on chain_lock for plant
+
+    // there are two reasons why we would want this. If setting a leaf value we lock out other setters, thus avoiding the
+    // possibility that two threads might both add the same leaf. With the lock held, we check if the leaf already exists,
+    // and if so we get a write lock on data lock before releasing this; otherwise the lock is held until after the new leaf is added.
+    // since readers only use try_readlock, they are not blocked at all, the only overhead is that they will check leaf->flags
+
+    // when deleting a leaf, as well as locking out any setters or other deleters,
+    // we ensure that any readers from now on traverse the list in check-mode
+    // which allows the leaf to be deleted without locking the entire plant for readers
+
+    // check mode adds only a minute overhead, and we make the assumption the deleting leaves will occur relatively rarely
 
     chain_lock_writelock(leaf);
 
     // if it is a SET, then we release the mutex; the next writer
     // will block on writelock; subsequent writeers will block on the mutex
     if (is_del) leaf->flags |= WEED_FLAG_OP_DELETE;
-    else if (!have_rdlock) structure_mutex_unlock(leaf);
-
+    else structure_mutex_unlock(leaf);
   }
   return 0;
 }
@@ -469,10 +477,10 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
 
   if (key && *key) {
     // if hash_ret is set then this is a setter looking for leaf
-    // in this case it already has a rwt_writelock and does not need to check further
+    // in this case it already has a chain_lock writelock and does not need to check further
     if (!hash_ret) {
-      /// grab rwt mutex
-      /// if we get a readlock, then remove it at end
+      /// grab chain_lock readlock
+      /// if we get a readlock, then remove it
       /// otherwise check flagbits, if op. is !SET, run in checking mode
       if (chain_lock_try_readlock(plant)) {
 	// another thread has writelock
@@ -499,6 +507,7 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
     }
     if (leaf) data_lock_readlock(leaf);
     if (!hash_ret) {
+      // checkmode (and by extension chain_leaf) can only possibly be non-zero if hash_ret is 0
       chain_lock_unlock(chain_leaf);
       if (!checkmode) reader_count_sub(plant);
     }
@@ -583,11 +592,11 @@ static weed_error_t _weed_plant_free(weed_plant_t *plant) {
 
   // see: weed_leaf_delete
   chain_lock_upgrade(plant, 0, 1);
+  // structure mutex is locked
 
   reader_count_wait(plant);
 
-  /// hold on to mutex until we are done
-  //rwt_mutex_unlock(plant);
+  /// hold on to structure_mutex until we are done
   leafnext = plant->next;
   while ((leaf = leafnext)) {
     leafnext = leaf->next;
@@ -606,6 +615,7 @@ static weed_error_t _weed_plant_free(weed_plant_t *plant) {
     structure_mutex_unlock(plant);
 
     chain_lock_upgrade(plant, 0, 1);
+    // structure_mutex locked
     reader_count_wait(plant);
     chain_lock_unlock(plant);
     structure_mutex_unlock(plant);
@@ -662,15 +672,16 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   // we then know it is safe to delete leaf !
 
   chain_lock_upgrade(plant, 0, 1);
+  // structure_mutex locked
 
   leaf = plant;
 
   while (leaf && (leaf->key_hash != hash || weed_strcmp((char *)leaf->key, (char *)key))) {
     // no match
 
-    // still have rwtlock on leafprev
-    // still have rwtlock on leaf
-    // we will grab rwtlock on next leaf
+    // still have chain_lock readlock on leafprev
+    // still have chain_lock readlock on leaf
+    // we will grab chain_lock readlock on next leaf
     if (leaf != plant) {
       if (leafprev != plant) chain_lock_unlock(leafprev);
       leafprev = leaf; // leafprev is still locked
@@ -678,7 +689,7 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
     leaf = leaf->next;
     chain_lock_readlock(leaf); // does nothing if leaf is NULL
   }
-  // finish with rwtlock on prevprev. prev amd leaf
+  // finish with chain_lock readlock on prevprev. prev amd leaf
   if (!leaf || leaf == plant) {
     chain_lock_unlock(plant);
     if (leafprev != plant) chain_lock_unlock(leafprev);

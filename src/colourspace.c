@@ -12301,7 +12301,7 @@ static void *gamma_convert_layer_thread(void *data) {
   if (ccparams->alpha_first) start += 1;
   for (int i = 0; i < ccparams->vsize; i++) {
     //g_print("\n");
-    for (int j = start; j < widthx; j += psize) {
+    for (int j = start; j < start + widthx; j += psize) {
       for (int k = 0; k < px; k++) {
         //g_print("  PX %p + %d , %d  = %d\t", pixels, j + k, pixels[j + k], gamma_lut[pixels[k + j]]);
         pixels[rowstride * i + j + k] = gamma_lut[pixels[rowstride * i + j + k]];
@@ -12340,9 +12340,10 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *laye
         lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(nfx_threads,
                                     sizeof(lives_cc_params));
         int xdheight = CEIL((double)height / (double)nfx_threads, 4);
-        uint8_t *end = pixels + (y + height) * orowstride;
+        uint8_t *end;
 
         pixels += y * orowstride;
+        end = pixels + height * orowstride;
 
         if (gamma_type == WEED_GAMMA_VARIANT)
           gamma_lut = create_gamma_lut(fileg, lgamma_type, gamma_type);
@@ -12721,6 +12722,9 @@ static void *swscale_threadfunc(void *arg) {
    - setting opal_hint to WEED_PALETTE_END will attempt to minimise palette changes
 
    "current_palette" should be checked on return as it may change
+
+   NOTE: swscale may crash if widths are not even,
+         likes to have width in multiples of 8 (may only be when changing palettes)
 
    @return FALSE if we were unable to resize */
 boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint) {

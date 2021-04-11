@@ -10,6 +10,25 @@
 #include <sys/time.h>
 struct timeval tv;
 
+#define LIVES_STATUS_IDLE			0
+#define LIVES_STATUS_NOTREADY			(1 << 0)
+#define LIVES_STATUS_PLAYING			(1 << 1)
+#define LIVES_STATUS_PROCESSING			(1 << 2)
+#define LIVES_STATUS_PREVIEW			(1 << 3)
+#define LIVES_STATUS_RENDERING			(1 << 4)
+#define LIVES_STATUS_EXITING			(1 << 5)
+//
+#define LIVES_STATUS_ERROR 			(1 << 16)
+#define LIVES_STATUS_FATAL 			(1 << 17)
+
+// resizing ??
+// recording, record paused
+
+int lives_set_status(int status);
+int lives_unset_status(int status);
+boolean lives_has_status(int status);
+int lives_get_status(void);
+
 void get_player_size(int *opwidth, int *opheight);
 
 void player_desensitize(void);

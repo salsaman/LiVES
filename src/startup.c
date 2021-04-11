@@ -800,21 +800,24 @@ set_config:
 
   if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) show_warn_image(asname, _("Value was set from the commandline"));
 
-  if (do_astart) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(astart), TRUE);
-  else {
-    if (!is_trans) {
-      if ((is_setup && cfg_exists) || (!is_setup && *future_prefs->jack_aserver_cfg))
-        lives_toggle_button_set_active(scrpt_rb, TRUE);
-      else if (type) lives_toggle_button_set_active(dfa_button, TRUE);
+  if (!is_trans) {
+    if ((is_setup && cfg_exists) || (!is_setup && *future_prefs->jack_aserver_cfg))
+      lives_toggle_button_set_active(scrpt_rb, TRUE);
+    else if (type) {
+      if (do_astart) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(astart), TRUE);
+      else lives_toggle_button_set_active(dfa_button, TRUE);
       if (is_setup) {
         if (*prefs->jack_aserver_sname) lives_toggle_button_set_active(asdef, FALSE);
       } else {
         if (*future_prefs->jack_aserver_sname) lives_toggle_button_set_active(asdef, FALSE);
       }
-    } else {
-      if ((is_setup && cfg_exists) || (!is_setup && *future_prefs->jack_tserver_cfg))
-        lives_toggle_button_set_active(scrpt_rb, TRUE);
-      else if (type) lives_toggle_button_set_active(dfa_button, TRUE);
+    }
+  } else {
+    if ((is_setup && cfg_exists) || (!is_setup && *future_prefs->jack_tserver_cfg))
+      lives_toggle_button_set_active(scrpt_rb, TRUE);
+    else if (type) {
+      if (do_astart) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(astart), TRUE);
+      else lives_toggle_button_set_active(dfa_button, TRUE);
       if (is_setup) {
         if (*prefs->jack_tserver_sname) lives_toggle_button_set_active(asdef, FALSE);
       } else {
@@ -822,6 +825,7 @@ set_config:
       }
     }
   }
+
 
   if (!type) {
     // warn if setting this for audio client and is already set for trans client, and trans

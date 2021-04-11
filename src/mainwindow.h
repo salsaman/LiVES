@@ -792,10 +792,12 @@ enum {
 typedef struct {
   char msg[MAINW_MSG_SIZE];
 
-  // files
+  // clip files
   int current_file;
   int first_free_file;
   lives_clip_t *files[MAX_FILES + 1]; ///< +1 for the clipboard
+
+  // directories -> move to prefs
   char vid_load_dir[PATH_MAX];
   char vid_save_dir[PATH_MAX];
   char vid_dl_dir[PATH_MAX];
@@ -803,15 +805,20 @@ typedef struct {
   char image_dir[PATH_MAX];
   char proj_load_dir[PATH_MAX];
   char proj_save_dir[PATH_MAX];
-  char recent_file[PATH_MAX];
+
+  // files
+  char vpp_defs_file[PATH_MAX];
+
+  char recent_file[PATH_MAX]; // for liblives only
+
   int untitled_number;
-  int cap_number;
+  int cap_number; // capture device number
+
+  //
   int clips_available;
 
   /// hash table of clips in menu order
   LiVESList *cliplist;
-
-  LiVESSList *clips_group;
 
   /// sets
 #define MAX_SET_NAME_LEN 128
@@ -823,8 +830,6 @@ typedef struct {
 
   // playback state
   boolean playing_sel;
-  boolean preview;
-  boolean preview_rendering;
   boolean faded;
   boolean double_size;
   boolean sep_win;
@@ -842,8 +847,9 @@ typedef struct {
   boolean ext_playback; ///< using external video playback plugin
   volatile boolean ext_audio; ///< using external video playback plugin to stream audio
 
-  int ptr_x, ptr_y;
+  int ptr_x, ptr_y; // mouse posn. when switching to / from fullscreen
 
+  // playback fps
   frames_t fps_measure; ///< show fps stats after playback
   frames_t fps_mini_measure; ///< show fps stats during playback
   ticks_t fps_mini_ticks;
@@ -853,9 +859,6 @@ typedef struct {
   boolean save_with_sound;
   boolean ccpd_with_sound;
   boolean selwidth_locked;
-  boolean is_ready;
-  boolean configured;
-  boolean fatal; ///< got fatal signal
   boolean opening_loc;  ///< opening location (streaming)
   boolean dvgrab_preview;
   boolean switch_during_pb;
@@ -866,8 +869,6 @@ typedef struct {
   volatile boolean in_fs_preview;
   volatile lives_cancel_t cancelled;
   lives_cancel_type_t cancel_type;
-
-  boolean error;
 
   weed_event_t *event_list; ///< current event_list, for recording
   weed_event_t *stored_event_list; ///< stored mt -> clip editor
@@ -885,10 +886,24 @@ typedef struct {
 
   short endian;
 
+  boolean go_away;
+
   /// states
+  int status;
+
+  boolean is_ready;
+
+  boolean error; //  --> status
+  volatile boolean fatal; ///< got fatal signal --> status
+
   boolean is_processing;
   boolean is_rendering;
-  boolean resizing;
+  boolean resizing; // ignore frame size check during previews
+
+  boolean preview;
+  boolean preview_rendering;
+
+  //
 
   boolean foreign;  ///< for external window capture
   boolean record_foreign;
@@ -1000,7 +1015,7 @@ typedef struct {
   frames_t play_start, play_end;
 
   // for jack transport
-  boolean jack_can_stop, jack_can_start;
+  boolean jack_can_stop, jack_can_start, lives_can_stop, jack_master;
 
   // a/v seek synchronisation
   pthread_cond_t avseek_cond;
@@ -1090,7 +1105,7 @@ typedef struct {
   boolean cs_is_permitted; ///< set automatically when cs_permitted can update the clip
   int new_clip; ///< clip we should switch to during playback; switch will happen at the designated SWITCH POINT
   boolean ignore_clipswitch;
-  boolean preview_req;
+  boolean preview_req; // preview requested
 
   volatile short scratch;
 #define SCRATCH_NONE 0
@@ -1175,6 +1190,7 @@ typedef struct {
   LiVESPixbuf *imsep;
 
   /// menus
+  LiVESSList *clips_group;
   LiVESWidget *open;
   LiVESWidget *open_sel;
   LiVESWidget *open_vcd_menu;
@@ -1510,9 +1526,12 @@ typedef struct {
 
   LiVESWidget *resize_menuitem;
 
+  // TODO - can this be simplified ?
   boolean close_keep_frames; ///< special value for when generating to clipboard
   boolean only_close; ///< only close clips - do not exit
-  volatile boolean is_exiting; ///< set during shutdown (inverse of only_close then)
+  boolean no_exit; ///< if TRUE, do not exit after saving set
+
+  volatile boolean is_exiting; ///< set during shutdown (inverse of only_close then) --> status
 
   ulong pw_scroll_func;
   boolean msg_area_configed;
@@ -1561,8 +1580,6 @@ typedef struct {
   boolean recording_recovered;
 
   boolean unordered_blocks; ///< are we recording unordered blocks ?
-
-  boolean no_exit; ///< if TRUE, do not exit after saving set
 
   mt_opts multi_opts; ///< some multitrack options that survive between mt calls
 
@@ -1686,22 +1703,14 @@ typedef struct {
   boolean has_custom_effects, has_custom_tools,  has_custom_gens, has_custom_utilities;
   boolean has_test_effects;
 
-  boolean go_away;
   boolean debug; ///< debug crashes and asserts
   void *debug_ptr;
 
   char *subt_save_file; ///< name of file to save subtitles to
 
-  char **fonts_array;
-  int nfonts;
-
   LiVESTargetEntry *target_table; ///< drag and drop target table
 
-  LiVESList *videodevs;
-
-  char vpp_defs_file[PATH_MAX];
-
-  int log_fd; ///
+  int log_fd; /// unused for now
 
   lives_timeout_t alarms[LIVES_MAX_ALARMS]; ///< reserve 1 for emergency msgs
   lives_alarm_t next_free_alarm;
@@ -1712,7 +1721,7 @@ typedef struct {
 
   lives_alarm_t overlay_alarm;
 
-  // stuff specific to audio gens (will be extended to all rt audio fx)
+  // stuff specific to audio gens
   volatile int agen_key; ///< which fx key is generating audio [1 based] (or 0 for none)
   volatile boolean agen_needs_reinit;
   uint64_t agen_samps_count; ///< count of samples since init
@@ -1724,7 +1733,6 @@ typedef struct {
   boolean tried_ds_recover;
 
   boolean has_session_workdir;
-  boolean startup_error;
 
   int ce_frame_width, ce_frame_height;
 
@@ -1779,20 +1787,19 @@ typedef struct {
 
   uint32_t sense_state;
 
-  int fc_buttonresponse; /// ???
+  int fc_buttonresponse;
 
   char frameblank_path[PATH_MAX];
   char sepimg_path[PATH_MAX];
 
   uint64_t aud_data_written;
 
-  int crash_possible; // TODO - check this
+  int crash_possible; // set this to a number before defer_sigint
 
   LiVESPixbuf *scrap_pixbuf; ///< cached image for speeding up rendering
   weed_layer_t *scrap_layer; ///< cached image for speeding up rendering
 
   boolean no_context_update; ///< may be set temporarily to block wodget context updates
-  boolean no_expose;
 
   weed_plant_t *msg_list;
   weed_plant_t *ref_message; // weak ref
@@ -1807,6 +1814,8 @@ typedef struct {
   int assumed_height;
 #define DEF_IDLE_MAX 1
   int idlemax;
+
+  boolean configured;  // determines whether config_func is inital config or screen resize
 
   boolean reconfig; ///< set to TRUE if a monitor / screen size change is detected
 
@@ -1825,7 +1834,7 @@ typedef struct {
   char *version_hash;
   char *old_vhash;
 
-  /// experimental values, primarily for testing
+  /// experimental value, primarily for testing
   volatile int uflow_count;
 
   boolean force_show; /// if set to TRUE during playback then a new frame (or possibly the current one) will be displayed ASAP

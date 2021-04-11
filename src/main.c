@@ -273,13 +273,22 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 
 
 #ifdef ENABLE_JACK
-LIVES_LOCAL_INLINE void jack_warn(boolean is_trans) {
+LIVES_LOCAL_INLINE boolean jack_warn(boolean is_trans, boolean is_con) {
+  boolean ret = TRUE;
+
+  mainw->fatal = TRUE;
+
   if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
-  do_jack_no_startup_warn(is_trans);
-  if (!prefs->startup_phase)
-    if (prefs->startup_phase == 0) do_jack_restart_warn(-1, NULL);
+  if (!is_con) {
+    ret = do_jack_no_startup_warn(is_trans);
+    //if (!prefs->startup_phase) do_jack_restart_warn(-1, NULL);
+  } else {
+    ret = do_jack_no_connect_warn(is_trans);
+    //if (!prefs->startup_phase) do_jack_restart_warn(16, NULL);
+  }
   // if we have backup config, restore from it
   set_int_pref(PREF_JACK_OPTS, 0);
+  return ret;
 }
 #endif
 
@@ -290,26 +299,76 @@ void defer_sigint(int signum) {
   // The main reason would be to show an error dialog and then exit, or transmit some error code first,
   // rather than simply doing nothing and aborting /exiting.
   // we should do the minimum necessary and exit, as the stack may be corrupted.
+#ifdef ENABLE_JACK
+  char *logmsg;
+  boolean ret;
+#endif
   switch (mainw->crash_possible) {
 #ifdef ENABLE_JACK
   case 1:
-    // crash in jack_client_open() - transport
-    jack_warn(TRUE);
-    signal(signum, SIG_DFL);
-    pthread_detach(pthread_self());
+    if (mainw->jackd_trans) {
+      logmsg = lives_strdup(_("Connection attempt timed out, aborting."));
+      jack_log_errmsg(mainw->jackd_trans, logmsg);
+      lives_free(logmsg);
+    }
+    while (1) {
+      // crash in jack_client_open() con - transport
+      ret = jack_warn(TRUE, TRUE);
+      signal(signum, SIG_DFL);
+      pthread_detach(pthread_self());
+      if (!ret) break;
+    }
+    if (!ret) break;
   case 2:
-    // crash in jack_client_open() - audio
-    jack_warn(FALSE);
-    signal(signum, SIG_DFL);
-    pthread_detach(pthread_self());
+    if (mainw->jackd) {
+      logmsg = lives_strdup(_("Connection attempt timed out, aborting."));
+      jack_log_errmsg(mainw->jackd, logmsg);
+      lives_free(logmsg);
+    }
+    while (1) {
+      // crash in jack_client_open() con - audio
+      ret = jack_warn(FALSE, TRUE);
+      signal(signum, SIG_DFL);
+      pthread_detach(pthread_self());
+      if (!ret) break;
+    }
+    if (!ret) break;
   case 3:
-    // crash in jackctl_server_create() - transport
-    jack_warn(TRUE);
-    signal(signum, SIG_DFL);
-    pthread_detach(pthread_self());
+    while (1) {
+      // crash in jackctl_server_open() - transport
+      ret = jack_warn(TRUE, FALSE);
+      signal(signum, SIG_DFL);
+      pthread_detach(pthread_self());
+      if (!ret) break;
+    }
+    if (!ret) break;
   case 4:
-    // crash in jackctl_server_create() - audio
-    jack_warn(FALSE);
+    while (1) {
+      // crash in jackctl_server_open() - audio
+      ret = jack_warn(FALSE, FALSE);
+      signal(signum, SIG_DFL);
+      pthread_detach(pthread_self());
+      if (!ret) break;
+    }
+    if (!ret) break;
+  case 5:
+    while (1) {
+      // crash in jackctl_server_start() - transport
+      ret = jack_warn(TRUE, FALSE);
+      signal(signum, SIG_DFL);
+      pthread_detach(pthread_self());
+      if (!ret) break;
+    }
+    if (!ret) break;
+  case 6:
+    while (1) {
+      // crash in jackctl_server_start() - audio
+      ret = jack_warn(FALSE, FALSE);
+      signal(signum, SIG_DFL);
+      pthread_detach(pthread_self());
+      if (!ret) break;
+    }
+    if (!ret) break;
 #endif
   default:
     break;
@@ -1072,8 +1131,11 @@ static boolean pre_init(void) {
 
   get_string_pref(PREF_JACK_ACSERVER, prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX);
   get_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX);
-  get_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg, PATH_MAX);
-  lives_snprintf(future_prefs->jack_aserver_cfg, PATH_MAX, "%s", prefs->jack_aserver_cfg);
+
+  if (!ign_opts.ign_jackcfg) {
+    get_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg, PATH_MAX);
+    lives_snprintf(future_prefs->jack_aserver_cfg, PATH_MAX, "%s", prefs->jack_aserver_cfg);
+  }
 
   if (!ign_opts.ign_jackserver) {
     lives_snprintf(future_prefs->jack_aserver_cname, PATH_MAX, "%s", prefs->jack_aserver_cname);
@@ -1110,9 +1172,13 @@ static boolean pre_init(void) {
     lives_snprintf(prefs->jack_tserver_sname, PATH_MAX, "%s", prefs->jack_aserver_sname);
     lives_snprintf(prefs->jack_tserver_cfg, PATH_MAX, "%s", prefs->jack_aserver_cfg);
   } else {
-    get_string_pref(PREF_JACK_TCSERVER, prefs->jack_tserver_cname, JACK_PARAM_STRING_MAX);
-    get_string_pref(PREF_JACK_TSSERVER, prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX);
-    get_string_pref(PREF_JACK_TCONFIG, prefs->jack_tserver_cfg, PATH_MAX);
+    if (!ign_opts.ign_jackserver) {
+      get_string_pref(PREF_JACK_TCSERVER, prefs->jack_tserver_cname, JACK_PARAM_STRING_MAX);
+      get_string_pref(PREF_JACK_TSSERVER, prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX);
+    }
+    if (!ign_opts.ign_jackcfg) {
+      get_string_pref(PREF_JACK_TCONFIG, prefs->jack_tserver_cfg, PATH_MAX);
+    }
     get_string_pref(PREF_JACK_TDRIVER, jbuff, JACK_PARAM_STRING_MAX);
     if (*jbuff) {
       prefs->jack_tdriver = lives_strdup(jbuff);
@@ -1237,8 +1303,6 @@ static boolean pre_init(void) {
 
   mainw->ccpd_with_sound = TRUE;
   mainw->loop = TRUE;
-  mainw->loop_cont = FALSE;
-  mainw->fs = FALSE;
 
   if (prefs->vj_mode) {
     auto_recover = TRUE;
@@ -1322,7 +1386,7 @@ void replace_with_delegates(void) {
 }
 
 
-static void lives_init(_ign_opts *ign_opts) {
+static boolean lives_init(_ign_opts *ign_opts) {
   // init mainwindow data
   LiVESList *encoder_capabilities = NULL;
 
@@ -1350,56 +1414,23 @@ static void lives_init(_ign_opts *ign_opts) {
 #endif
   int i;
 
-  for (i = 0; i <= MAX_FILES; mainw->files[i++] = NULL);
-  mainw->prefs_changed = FALSE;
   mainw->insert_after = TRUE;
-  mainw->mute = FALSE;
-  mainw->faded = FALSE;
-  if (!prefs->vj_mode)
-    mainw->save_with_sound = TRUE;   // also affects loading
-  else
-    mainw->save_with_sound = FALSE;
-  mainw->preview = FALSE;
-  mainw->selwidth_locked = FALSE;
+  if (!prefs->vj_mode) mainw->save_with_sound = TRUE;   // also affects loading
   mainw->untitled_number = mainw->cap_number = 1;
-  mainw->sel_start = 0;
   mainw->sel_move = SEL_MOVE_AUTO;
-  mainw->record_foreign = FALSE;
-  mainw->play_window = NULL;
   mainw->opwx = mainw->opwy = -1;
-  mainw->frame_layer = NULL;
-  mainw->in_fs_preview = FALSE;
-  mainw->effects_paused = FALSE;
-  mainw->play_start = 0;
-  mainw->opening_loc = FALSE;
   mainw->toy_type = LIVES_TOY_NONE;
   mainw->framedraw = mainw->framedraw_spinbutton = NULL;
-  mainw->fd_layer = NULL;
-  mainw->fd_layer_orig = NULL;
-  mainw->is_processing = FALSE;
-  mainw->is_rendering = FALSE;
-  mainw->is_generating = FALSE;
-  mainw->resizing = FALSE;
-  mainw->switch_during_pb = FALSE;
-  mainw->playing_sel = FALSE;
-  mainw->aframeno = 0;
   if (capable->byte_order == LIVES_LITTLE_ENDIAN) {
     mainw->endian = 0;
   } else {
     mainw->endian = AFORM_BIG_ENDIAN;
   }
 
-  mainw->leave_files = FALSE;
-  mainw->was_set = FALSE;
-  mainw->toy_go_wild = FALSE;
-
   for (i = 0; i < FN_KEYS - 1; i++) {
     mainw->clipstore[i][0] = -1;
   }
 
-  mainw->ping_pong = FALSE;
-
-  mainw->nervous = FALSE;
   fx_dialog[0] = fx_dialog[1] = NULL;
 
   mainw->rte_keys = -1;
@@ -1407,11 +1438,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->rte = EFFECT_NONE;
 
-  mainw->preview_box = NULL;
   mainw->prv_link = PRV_PTR;
-
-  mainw->internal_messaging = FALSE;
-  mainw->progress_fn = NULL;
 
   mainw->last_grabbable_effect = -1;
   mainw->blend_file = -1;
@@ -1419,52 +1446,32 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->pre_src_file = -2;
   mainw->pre_src_audio_file = -1;
 
-  mainw->size_warn = 0;
-  mainw->dvgrab_preview = FALSE;
-
-  mainw->file_open_params = NULL;
   mainw->whentostop = NEVER_STOP;
-
-  mainw->audio_start = mainw->audio_end = 0;
-  mainw->cliplist = NULL;
 
   // rendered_fx number of last transition
   mainw->last_transition_idx = -1;
   mainw->last_transition_loops = 1;
   mainw->last_transition_align_start = TRUE;
-  mainw->last_transition_loop_to_fit = mainw->last_transition_ins_frames = FALSE;
-  mainw->num_tr_applied = 0;
-
-  mainw->blend_factor = 0.;
 
   mainw->fixed_fps_numer = -1;
   mainw->fixed_fps_denom = 1;
   mainw->fixed_fpsd = -1.;
-  mainw->noswitch = mainw->cs_permitted = mainw->cs_is_permitted = FALSE;
-  mainw->osc_block = FALSE;
 
   mainw->cancelled = CANCEL_NONE;
   mainw->cancel_type = CANCEL_KILL;
-
-  mainw->framedraw_reset = NULL;
 
   // setting this to TRUE can possibly increase smoothness for lower framerates
   // needs more testing and a preference in prefs window- TODO
   // can also be set through OSC: /output/nodrop/enable
   prefs->noframedrop = get_boolean_prefd(PREF_NOFRAMEDROP, FALSE);
 
-  prefs->omc_noisy = FALSE;
   prefs->omc_events = TRUE;
 
   if (!ign_opts->ign_osc) {
-    prefs->osc_udp_started = FALSE;
-    prefs->osc_udp_port = 0;
 #ifdef ENABLE_OSC
     if (!mainw->foreign) {
       prefs->osc_udp_port = get_int_prefd(PREF_OSC_PORT, DEF_OSC_LISTEN_PORT);
       future_prefs->osc_start = prefs->osc_start = get_boolean_prefd(PREF_OSC_START, FALSE);
-    } else {
-      future_prefs->osc_start = prefs->osc_start = FALSE;
     }
 #endif
   }
@@ -1480,21 +1487,11 @@ static void lives_init(_ign_opts *ign_opts) {
   prefs->rec_opts |= (REC_FPS + REC_FRAMES);
 
   mainw->new_clip = -1;
-  mainw->record = FALSE;
-  mainw->event_list = NULL;
-  mainw->clip_switched = FALSE;
   mainw->scrap_file = -1;
   mainw->ascrap_file = -1;
 
-  mainw->jack_can_stop = FALSE;
-  mainw->jack_can_start = TRUE;
-
   if (!mainw->foreign) mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
   else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-
-  mainw->filter_map = NULL; // filter map for video rendering
-  mainw->afilter_map = NULL; // filter map for audio rendering
-  mainw->audio_event = NULL;
 
   mainw->did_rfx_preview = FALSE;
 
@@ -1502,134 +1499,32 @@ static void lives_init(_ign_opts *ign_opts) {
   rdet = NULL;
   resaudw = NULL;
 
-  mainw->actual_frame = 0;
-
-  mainw->scratch = SCRATCH_NONE;
-
-  mainw->clip_index = NULL;
-  mainw->frame_index = NULL;
-
-  mainw->affected_layouts_map = mainw->current_layouts_map = NULL;
-
   mainw->leave_recovery = TRUE;
-
-  mainw->pchains = NULL;
-
-  mainw->preview_frame = 0;
-
-  mainw->unordered_blocks = FALSE;
-
-  mainw->only_close = FALSE;
-
-  mainw->no_exit = FALSE;
-
-  mainw->multi_opts.set = FALSE;
-
-  mainw->clip_header = NULL;
 
   mainw->new_blend_file = -1;
 
-  mainw->jackd = mainw->jackd_read = NULL;
-
-  mainw->pulsed = mainw->pulsed_read = NULL;
-
   mainw->show_procd = TRUE;
-
-  mainw->framedraw_preview = mainw->framedraw_reset = NULL;
-
-  mainw->block_param_updates = mainw->no_interp = FALSE;
-
-  mainw->cevent_tc = 0;
-
-  mainw->opening_multi = FALSE;
 
   mainw->img_concat_clip = -1;
 
   mainw->record_paused = mainw->record_starting = FALSE;
 
-  mainw->gen_to_clipboard = FALSE;
-
-  mainw->open_deint = FALSE;
-
-  mainw->write_vpp_file = FALSE;
-
   mainw->stream_ticks = -1;
-
-  mainw->keep_pre = FALSE;
-
-  mainw->reverse_pb = FALSE;
 
   mainw->osc_auto = 0;
   mainw->osc_enc_width = mainw->osc_enc_height = 0;
-
-  mainw->no_switch_dprint = FALSE;
-
-  mainw->rte_textparm = NULL;
-
-  mainw->abufs_to_fill = 0;
-
-  mainw->recoverable_layout = mainw->recording_recovered = FALSE;
-
-  mainw->iochan = NULL;
-
-  mainw->stored_event_list = NULL;
-  mainw->stored_event_list_changed = mainw->stored_event_list_auto_changed = FALSE;
   mainw->stored_layout_save_all_vals = TRUE;
 
-  mainw->affected_layout_marks = NULL;
-
-  mainw->stored_layout_undos = NULL;
-  mainw->sl_undo_mem = NULL;
-  mainw->sl_undo_buffer_used = 0;
-  mainw->sl_undo_offset = 0;
-
   mainw->go_away = TRUE;
+  mainw->status = LIVES_STATUS_NOTREADY;
 
   mainw->aud_file_to_kill = -1;
 
   mainw->aud_rec_fd = -1;
 
-  mainw->subt_save_file = NULL;
-
-  mainw->fonts_array = get_font_list();
-
-  mainw->nfonts = 0;
-  if (mainw->fonts_array)
-    while (mainw->fonts_array[mainw->nfonts++]);
-
-  mainw->videodevs = NULL;
-
-  mainw->camframe = NULL;
-
-  mainw->has_custom_effects = FALSE;
-  mainw->has_custom_tools = FALSE;
-  mainw->has_custom_gens = FALSE;
-  mainw->has_custom_utilities = FALSE;
-
   mainw->log_fd = -2;
 
-  mainw->last_display_ticks = 0;
-
-  mainw->alives_pid = 0;
-
-  mainw->aplayer_broken = FALSE;
-
   mainw->render_error = LIVES_RENDER_ERROR_NONE;
-
-  mainw->add_clear_ds_button = FALSE;
-  mainw->add_clear_ds_adv = FALSE;
-  mainw->tried_ds_recover = FALSE;
-
-  mainw->foreign_visual = NULL;
-
-  mainw->pconx = NULL;
-  mainw->cconx = NULL;
-
-  cached_key = cached_mod = 0;
-
-  mainw->agen_key = 0;
-  mainw->agen_needs_reinit = FALSE;
-  mainw->agen_samps_count = 0;
 
   mainw->ce_frame_height = mainw->ce_frame_width = -1;
 
@@ -1638,9 +1533,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->sepwin_minwidth = MIN_SEPWIN_WIDTH;
   mainw->sepwin_minheight = PREVIEW_BOX_HT;
 
-  mainw->signal_caught = 0;
-  mainw->signals_deferred = FALSE;
-
   mainw->n_screen_areas = SCREEN_AREA_USER_DEFINED1;
   mainw->screen_areas = (lives_screen_area_t *)lives_malloc(mainw->n_screen_areas * sizeof(lives_screen_area_t));
   mainw->screen_areas[SCREEN_AREA_FOREGROUND].name = (_("Foreground"));
@@ -1648,126 +1540,22 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->active_sa_clips = mainw->active_sa_fx = SCREEN_AREA_FOREGROUND;
 
-  mainw->file_buffers = NULL;
-
-  mainw->blend_layer = NULL;
-
-  mainw->ce_upd_clip = FALSE;
-
-  mainw->clips_group = NULL;
-
-  mainw->fx_is_auto = FALSE;
-  mainw->gen_started_play = FALSE;
-
-  mainw->audio_frame_buffer = NULL;
-  mainw->afbuffer_clients = mainw->afbuffer_clients_read = 0;
-  mainw->afb[0] = mainw->afb[1] = NULL;
-
-  lives_memset(mainw->recent_file, 0, 1);
-
-  mainw->aud_data_written = 0;
-
-  mainw->rendered_fx = NULL;
-
-  mainw->midi_channel_lock = FALSE;
-
-  mainw->crash_possible = 0;
-
-  mainw->scrap_pixbuf = NULL;
-  mainw->scrap_layer = NULL;
-
-  mainw->close_keep_frames = FALSE;
-
-#ifdef ENABLE_JACK
-  mainw->jack_trans_poll = FALSE;
-#endif
-
-  mainw->recovering_files = FALSE;
-
-  mainw->num_rendered_effects_builtin = mainw->num_rendered_effects_custom = mainw->num_rendered_effects_test = 0;
-
-  mainw->flush_audio_tc = 0;
-
-  mainw->idlemax = 0;
-  mainw->reconfig = FALSE;
-
-  mainw->fsp_func = 0;
-
   mainw->swapped_clip = -1;
 
-  mainw->urgency_msg = mainw->overlay_msg = NULL;
-
-  mainw->xlays = NULL;
-
-  mainw->preview_rendering = FALSE;
-
-  mainw->new_lmap_errors = NULL;
-
-  mainw->ncbstores = 0;
-
-  mainw->loop_locked = FALSE;
-
-  mainw->invalid_clips = FALSE;
-
   mainw->blend_palette = WEED_PALETTE_END;
-  mainw->blend_width = mainw->blend_height = 0;
-
-  mainw->force_show = FALSE;
-
-  mainw->effort = 0;
-
-  mainw->frame_layer_preload = NULL;
-  mainw->pred_frame = 0;
-  mainw->pred_clip = 0;
-
-  mainw->lockstats = FALSE;
 
   mainw->audio_stretch = 1.0;
 
-  mainw->play_sequence = 0;
-
   mainw->record_frame = -1;
-
-  mainw->debug_ptr = NULL;
-
-  mainw->inst_fps = 0.;
 
   mainw->pre_play_file = -1;
 
-  mainw->st_fcache = mainw->en_fcache = mainw->pr_fcache = NULL;
-
-  mainw->ptrtime = 0.;
-
-  mainw->proc_ptr = NULL;
-
-  mainw->permmgr = NULL;
-
-  mainw->set_list = NULL;
   mainw->num_sets = -1;
 
-  mainw->mt_needs_idlefunc = FALSE;
-
-  mainw->suppress_layout_warnings = FALSE;
-
-  mainw->add_trash_rb = FALSE;
-
-  mainw->cs_manage = FALSE;
-
-  mainw->dsu_valid = FALSE;
-  mainw->dsu_widget = NULL;
-
   mainw->drawsrc = -1;
-
-  mainw->lazy = 0;
-
-  mainw->disk_mon = 0;
-
   mainw->wall_ticks = -1;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
-
-  lives_memset(mainw->set_name, 0, 1);
-  mainw->clips_available = 0;
 
   future_prefs->pb_quality = prefs->pb_quality = get_int_prefd(PREF_PB_QUALITY, PB_QUALITY_MED);
   if (prefs->pb_quality != PB_QUALITY_LOW && prefs->pb_quality != PB_QUALITY_HIGH &&
@@ -1775,10 +1563,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->pbq_adaptive = get_boolean_prefd(PREF_PBQ_ADAPTIVE, TRUE);
 
-  mainw->ext_playback = mainw->ext_audio = FALSE;
-
   prefs->loop_recording = TRUE;
-  prefs->no_bandwidth = FALSE;
   prefs->ocp = get_int_prefd(PREF_OPEN_COMPRESSION_PERCENT, 15);
 
   prefs->stop_screensaver = get_boolean_prefd(PREF_STOP_SCREENSAVER, TRUE);
@@ -1803,8 +1588,6 @@ static void lives_init(_ign_opts *ign_opts) {
   prefs->event_window_show_frame_events = FALSE;
   if (!mainw->foreign) prefs->crash_recovery = TRUE;
   else prefs->crash_recovery = FALSE;
-
-  prefs->acodec_list = NULL;
 
   prefs->render_audio = TRUE;
   prefs->normalise_audio = TRUE;
@@ -2378,8 +2161,8 @@ jack_tcl_try:
         if (mainw->cancelled) {
           lives_exit(0);
         }
-        // timed out
-        success = FALSE;
+        lives_idle_priority(governor_loop, NULL);
+        return FALSE;
       } else success = lives_proc_thread_join_boolean(info);
 
       if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
@@ -2392,7 +2175,6 @@ jack_tcl_try:
             lives_free(textwindow);
             lives_widget_context_update();
           }
-          future_prefs->jack_opts &= ~JACK_INFO_TEST_SETUP;
         } else {
           if (textwindow) {
             lives_widget_set_sensitive(textwindow->button, TRUE);
@@ -2473,7 +2255,8 @@ jack_acl_try:
         if (!(info = LPT_WITH_TIMEOUT(timeout, 0,
                                       (lives_funcptr_t)jack_create_client_writer,
                                       WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
-          success = FALSE;
+          lives_idle_priority(governor_loop, NULL);
+          return FALSE;
         } else success = lives_proc_thread_join_boolean(info);
 
         if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
@@ -2491,6 +2274,7 @@ jack_acl_try:
               lives_widget_context_update();
             }
             future_prefs->jack_opts &= ~JACK_INFO_TEST_SETUP;
+            if (success) goto jack_acl_try;
           } else {
             if (textwindow) {
               lives_widget_set_sensitive(textwindow->button, TRUE);
@@ -2509,9 +2293,6 @@ jack_acl_try:
             mainw->jackd->whentostop = &mainw->whentostop;
             mainw->jackd->cancelled = &mainw->cancelled;
             mainw->jackd->in_use = FALSE;
-            mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED)
-                                              ? FALSE : TRUE;
-
             success = jack_write_client_activate(mainw->jackd);
           }
         }
@@ -2575,6 +2356,7 @@ rest3:
           lives_snprintf(future_prefs->jack_tserver_sname, PATH_MAX, "%s", prefs->jack_tserver_sname);
           future_prefs->jack_tdriver = lives_strdup_free(future_prefs->jack_tdriver, prefs->jack_tdriver);
           future_prefs->jack_opts = prefs->jack_opts;
+          if (!orig_err) goto jack_acl_try;
           if (orig_err == 1) goto rest1;
           if (orig_err == 2) goto rest2;
           if (orig_err == 3) goto rest3;
@@ -2697,6 +2479,7 @@ rest3:
   }
 
   if (mainw->vpp && mainw->vpp->get_audio_fmts) mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
+  return TRUE;
 } // end of lives_init
 
 
@@ -3826,8 +3609,8 @@ void print_opthelp(LiVESTextBuffer * textbuf, const char *extracmds_file1, const
   outp_help(textbuf, " or '%s')\n", AUDIO_PLAYER_NONE);
   outp_help(textbuf, "%s",
             _("\n-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options\n"
-              "\t\t\t\t\t\t(audio options are ignored if audio player is not jack)\n\n"
-              "\tUseful values include:\t\t    0 - do not start any servers; only connect audio; no transport client\n"
+              "\t\t\t\t\t\t(audio options are ignored if audio player is not jack)\n"
+              "\tUseful combinations include:\t\t    0 - do not start any servers; only connect audio; no transport client\n"
               "\t\t\t\t\t   16 - start audio server if connection fails; no transport client\n"
               "\t\t\t\t\t 1024 - create audio and transport clients; only connect\n"
               "\t\t\t\t\t 1028 - create audio and transport clients; transport client may start a server\n"
@@ -3838,6 +3621,12 @@ void print_opthelp(LiVESTextBuffer * textbuf, const char *extracmds_file1, const
   outp_help(textbuf, _("\t\t\t\t\tif <server_name> is ommitted then LiVES will use the default server name:-\n"
                        "\t\t\t\t\teither the value of $%s or '%s' if that enviromnent variable is unset\n\n"),
             JACK_DEFAULT_SERVER, JACK_DEFAULT_SERVER_NAME);
+  outp_help(textbuf, "%s",
+            _("-jackscript <script_file>\t: temporarily sets the path to the jack script file to run if a connection attempt fails\n"));
+  jack_get_cfg_file(FALSE, &tmp);
+  outp_help(textbuf, _("\t\t\t\t\tE.g: -jackscript %s\n\n"), tmp);
+  lives_free(tmp);
+
 #else // no jack
   if (capable->has_sox_play) {
 #ifdef HAVE_PULSE_AUDIO
@@ -4199,8 +3988,6 @@ static boolean lives_startup(livespointer data) {
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
   lives_widget_context_update();
 
-  mainw->startup_error = FALSE;
-
   if (theme_error && !mainw->foreign) {
     // non-fatal errors
     char *old_prefix_dir = lives_strdup(prefs->prefix_dir);
@@ -4220,7 +4007,7 @@ static boolean lives_startup(livespointer data) {
     lives_free(old_prefix_dir);
   }
 
-  lives_init(&ign_opts);
+  if (!lives_init(&ign_opts)) return FALSE;
 
   // non-fatal errors
 
@@ -4366,9 +4153,14 @@ static boolean lives_startup2(livespointer data) {
   char *ustr;
   boolean layout_recovered = FALSE;
 
-  if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
-  else lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+  // test
+  //lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)rec_desk, 0, "i", 100);
 
+  if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
+  else {
+    lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+    mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
+  }
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
     d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));
     if (!reload_set(prefs->ar_clipset_name) || mainw->current_file == -1) {
@@ -4495,6 +4287,10 @@ static boolean lives_startup2(livespointer data) {
   lives_widget_set_opacity(mainw->m_loopbutton, .75);
 
   if (prefs->interactive) set_interactive(TRUE);
+
+#ifdef ENABLE_JACK_TRANSPORT
+  mainw->jack_can_start = TRUE;
+#endif
 
   return FALSE;
 } // end lives_startup2()
@@ -4942,6 +4738,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef ENABLE_JACK
         {"jackopts", 1, 0, 0},
         {"jackserver", optional_argument, 0, 0},
+        {"jackscript", 1, 0, 0},
 #endif
         // deprecated
         {"nothreaddialog", 0, 0, 0},
@@ -5433,6 +5230,23 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           lives_snprintf(future_prefs->jack_tserver_sname, PATH_MAX, "%s", srvname);
           continue;
         }
+
+        if (!strcmp(charopt, "jackscript") && optarg) {
+          if (!*optarg) {
+            do_optarg_blank_err(charopt);
+            continue;
+          }
+          if (optarg[0] == '-') {
+            do_optarg_blank_err(charopt);
+            optind--;
+            continue;
+          }
+          // override jackopts in config file
+          ign_opts.ign_jackcfg = TRUE;
+          pref_factory_string(PREF_JACK_ACONFIG, optarg, FALSE);
+          pref_factory_string(PREF_JACK_TCONFIG, optarg, FALSE);
+          continue;
+        }
 #endif
         if (!strcmp(charopt, "startup-ce")) {
           // force start in clip editor mode
@@ -5646,7 +5460,7 @@ void sensitize_rfx(void) {
         }
       }
       menuitem = mainw->rendered_fx[0]->menuitem;
-      if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID
+      if (menuitem && !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID
           && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
               (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
                && has_audio_filters(AF_TYPE_ANY))
@@ -5898,6 +5712,11 @@ void sensitize(void) {
     lives_widget_set_sensitive(mainw->gens_submenu, FALSE);
     lives_widget_set_sensitive(mainw->utilities_submenu, FALSE);
   }
+#ifdef ENABLE_JACK_TRANSPORT
+  if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+      && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE))
+    jack_transport_make_strict_slave(mainw->jackd_trans, TRUE);
+#endif
 }
 
 
@@ -8906,9 +8725,13 @@ void switch_to_file(int old_file, int new_file) {
 }
 
 
-boolean  switch_audio_clip(int new_file, boolean activate) {
+boolean switch_audio_clip(int new_file, boolean activate) {
   ticks_t timeout;
   lives_alarm_t alarm_handle;
+
+  if (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP) {
+    mainw->scratch = SCRATCH_JUMP;
+  }
 
   if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
@@ -8947,7 +8770,7 @@ boolean  switch_audio_clip(int new_file, boolean activate) {
         mainw->jackd->msgq = &jack_message;
 
         alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
+        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd)) {
           // wait for seek
           lives_nanosleep(1000);
         }
@@ -9160,6 +8983,7 @@ boolean  switch_audio_clip(int new_file, boolean activate) {
     }
   }
 #endif
+
   return TRUE;
 }
 

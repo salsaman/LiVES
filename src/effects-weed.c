@@ -1620,7 +1620,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   int outwidth, outheight;
   int numplanes = 0, width, height, xwidth, xheight;
   int nchr;
-  int maxinwidth = 4, maxinheight = 4, mininwidth = -1, mininheight = -1;
+  int maxinwidth = 4, maxinheight = 4;
+  int area, minarea = 0, maxarea = 0, rmaxw, rmaxh, rminw, rminh;
   int iclamping, isampling, isubspace;
   int clip = -1;
   frames_t frame;
@@ -1892,11 +1893,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     all_out_alpha = FALSE;
   }
 
-  for (j = i = 0; i < num_in_tracks; i++) {
-    if (weed_palette_is_alpha(weed_channel_get_palette(in_channels[j]))) continue;
-    if (weed_get_boolean_value(in_channels[j], WEED_LEAF_DISABLED, NULL) == WEED_TRUE ||
-        weed_get_boolean_value(in_channels[j], WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) {
-      j++;
+  for (i = 0; i < num_in_tracks; i++) {
+    if (weed_palette_is_alpha(weed_channel_get_palette(in_channels[i]))) continue;
+    if (weed_get_boolean_value(in_channels[i], WEED_LEAF_DISABLED, NULL) == WEED_TRUE ||
+        weed_get_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) {
       continue;
     }
     layer = layers[in_tracks[i]];
@@ -1944,80 +1944,163 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       letterbox = TRUE;
 
     if (!svary) {
+      area = inwidth * inheight;
+      if (area > maxarea) {
+        maxarea = area;
+        rmaxw = inwidth;
+        rmaxh = inheight;
+      }
+      if (area < minarea || !minarea) {
+        minarea = area;
+        rminw = inwidth;
+        rminh = inheight;
+      }
       if (letterbox) {
-        /// manual adjustment for letterboxing. We want to avoid the situation where some layers are letterboxing in
-        /// one dimension and others are letterboxing in the other, however this is unavoidable with frames of different sizes.
-        /// the best we can do is to make sure that one layer sets the collective size and the others will get letterboxed to that size.
-        /// thus -
-        /// if this layer is the first, or it engulfs all of the previous layers, then we let it set the width and height
-        // otherwise, we will aspect ratio it to fit the max size. Since we know at least one of the dimensions was
-        // within the current bounds (otherwise it would engulf), we will end up with 2 edges touching and two letterboxed
-        if (inwidth >= maxinwidth && inheight >= maxinheight) {
+        // there are at most 3 aspect ratios to consider:
+        // - the player / encoded clip
+        // - the renderer (which all frames letterbox inside, and which is letterboxed into the output)
+        // - individual frame sizes (inwidth, inheight) which get letterboxed into the renderer
+
+        // for multitrack, the renderer and output size / aspect ratio are always the same
+        // for clip editor we use an algorithm to calculate the renderer aspect ratio, then set the size after.
+
+        // - each frame is shrunk / expanded to fit the renderer size; in letterbox mode it maintains its aspect ratio
+        // - the renderer is then shrunk / expanded to fit the output; in letterbox mode the renderer keeps its a.r
+
+        // this is further complicated with variable quality, so we use a system where the renderer aspect ratio is
+        // indpendent of the quality / player size. The quality setting only affects the renderer size
+        // - we must avoid a situation where the padding changes when
+        // quality is adjusted, as this can look very bad if the quality is switching often, thus at each quality setting the renderer must
+        // have the same aspect ratio - the only change should be its size
+
+        // if possible we avoid the situation where frames have padding in one direction inside the renderer,
+        // and then the renderer gets padding in the other dimension
+
+        // thus:
+        // 1) pick the aspect ratio of the renderer, independent of the quality setting
+        //  - with only one clip this is simple, we just use a.r of the clip
+        //  - with multiple clips (transition / compositor) we use a heuristic, this done is such a way
+        //    that the order of clips does not matter. i.e swapping fg / bg clips doesnt cause the a.r to change
+        // 2) adjust the size of the renderer depending on quality
+        //   - in high, med, all frames must fit inside this, in low only 1 frame (the smallest [by area]) need fit inside
+        //   - in high quality, the screen / output size must also fit inside
+        // 3) the effect is then applied
+        // 4) the output from the effect is normally the same as all the inputs, we just maintain this until
+        //     all effects are applied, then finally the end result is resized / letterboxed into the player
+        //
+        // ideally:
+        //  - we want at least one frame to completely fill the rendererer in one dimension
+        //  - if we make sure the render always has the same a.r as one of the frames, this is ensured
+        //
+        // there are various possibilities - we could use a.r of largest frame, smallest frame, widest frame, tallest frame
+        // - we pick a.r. of the smallest frame, since in low quality we also set the renderer size by this,
+        // thus at least one of the frames will not need any resizing / letterboxing
+
+#if 1
+        // min size
+        maxinwidth = rminw;
+        maxinheight = rminh;
+#else
+        // min area
+        double hscale, vscale;
+        double diw  = (double)inheight;
+        double dih = (double)inheight;
+        double miw = (double)maxinwidth;
+        double mih = (double)maxinheight;
+
+        int lb_width, lb_height;
+
+        hscale = diw / miw;
+        vscale = dih / mih;
+
+        if (maxinwidth == 4 || maxinheight == 4 || (hscale <= 1. && vscale <= 1.)) {
+          // fits inside completely, use the new frame a.r
           maxinwidth = inwidth;
           maxinheight = inheight;
-        }
-      } else {
-        if (inwidth > maxinwidth) maxinwidth = inwidth;
-        if (inheight > maxinheight) maxinheight = inheight;
-      }
-      if (prefs->pb_quality == PB_QUALITY_LOW) {
-        // for low quality we pick the smallest dimensions
-        if (mininwidth == -1) {
-          mininwidth = inwidth;
-          mininheight = inheight;
-        }
-        if (inwidth < mininwidth || inheight < mininheight) {
-          // use a smaller size for one dimension, but maintain aspect ratio
-          calc_midspect(mininwidth, mininheight, &inwidth, &inheight);
-          mininwidth = inwidth;
-          mininheight = inheight;
-        }
+        } else {
+          if (hscale > 1. && vscale > 1.) {
+            // current. sz. fits inside completely, keep it
+            // DO NOTHING
+          } else {
+            int a0, a1;
+            // exactly one dimension larger
+            lb_width = inwidth;
+            lb_height = inheight;
+            calc_maxspect(opwidth, opheight, &lb_width, &lb_height);
+            a0 = opwidth * opheight - lb_width * lb_height;
+            lb_width = maxinwidth;
+            lb_height = maxinheight;
+            calc_maxspect(opwidth, opheight, &lb_width, &lb_height);
+            a1 = opwidth * opheight - lb_width * lb_height;
+            if (a0 < a1) {
+              maxinwidth = inwidth;
+              maxinheight = inheight;
+            } else if (a0 == a1) {
+              if (inwidth > maxinwidth) {
+                maxinwidth = inwidth;
+                maxinheight = inheight;
+              }
+            }
+          }
+#endif
       }
     }
-    j++;
   }
+  // opwidth, opheight - these are actually renderer width and height
 
   if (!svary || prefs->pb_quality == PB_QUALITY_LOW || !is_converter) {
     switch (pb_quality) {
     case PB_QUALITY_HIGH:
-      if (maxinwidth > opwidth) opwidth = maxinwidth;
-      if (maxinheight > opheight) opheight = maxinheight;
-      break;
-    case PB_QUALITY_MED:
-      if (!mainw->multitrack) {
-        if (maxinwidth > opwidth || maxinheight > opheight) {
-          calc_maxspect(opwidth, opheight, &maxinwidth, &maxinheight);
-          opwidth = maxinwidth;
-          opheight = maxinheight;
-        } else {
-          calc_maxspect(maxinwidth, maxinheight, &opwidth, &opheight);
+      if (letterbox) {
+        // keep a.r. of maxinwidth, maxinheight, but make sure we contain rmax and op
+        calc_midspect(maxinwidth, maxinheight, &rmaxw, &rmaxh);
+        if (rmaxw < opwidth || rmaxh < opheight)
+          calc_midspect(rmaxw, rmaxh, &opwidth, &opheight);
+        else {
+          opwidth = rmaxw;
+          opheight = rmaxh;
         }
       } else {
-        if (maxinwidth > opwidth) maxinwidth = opwidth;
-        if (maxinheight > opheight) maxinheight = opheight;
-        opwidth = maxinwidth;
-        opheight = maxinheight;
+        opwidth = MAX(opwidth, rmaxw);
+        opheight = MAX(opheight, rmaxh);
+      }
+      break;
+    case PB_QUALITY_MED:
+      if (letterbox) {
+        if (!mainw->multitrack) {
+          if (maxinwidth > opwidth || maxinheight > opheight) {
+            calc_maxspect(opwidth, opheight, &maxinwidth, &maxinheight);
+            opwidth = maxinwidth;
+            opheight = maxinheight;
+          } else {
+            calc_maxspect(maxinwidth, maxinheight, &opwidth, &opheight);
+          }
+        } else {
+          calc_midspect(maxinwidth, maxinheight, &rmaxw, &rmaxh);
+          opwidth = rmaxw;
+          opheight = rmaxh;
+        }
+      } else {
+        opwidth = MIN(opwidth, rmaxw);
+        opheight = MIN(opheight, rmaxh);
       }
       break;
     default:
       // PB_QUALITY_LOW
-      if (!mainw->multitrack) {
-        if (mininwidth < opwidth || mininheight < opheight) {
-          calc_maxspect(mininwidth, mininheight, &opwidth, &opheight);
-        } else {
-          calc_maxspect(opwidth, opheight, &mininwidth, &mininheight);
-          opwidth = mininwidth;
-          opheight = mininheight;
-        }
+      if (letterbox) {
+        calc_midspect(maxinwidth, maxinheight, &rminw, &rminh);
+        opwidth = rminw;
+        opheight = rminh;
       } else {
-        if (mininwidth < opwidth) opwidth = mininwidth;
-        if (mininheight < opheight) opheight = mininheight;
+        opwidth = MIN(opwidth, rminw);
+        opheight = MIN(opheight, rminh);
       }
       break;
     }
   }
 
-  opwidth = (opwidth >> 1) << 1;
+  // swscale (I think) likes to have multiples of 8
+  opwidth = (opwidth >> 3) << 3;
   opheight = (opheight >> 1) << 1;
 
   if (pb_quality < PB_QUALITY_HIGH && mainw->multitrack && prefs->letterbox_mt) {
@@ -2345,13 +2428,11 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         // if we only have 1 layer this is irrelevant since the channel size == layer size, (or in high quality, channel size == player size,
         /// but the player size would have been adjusted to the letterboxed size in any case).
         /// However, when mixing channels, all will have
-        // the same size, which was set by largest / smallest engulfing channel. [unless the filter set WEED_FILTER_SIZES_MAY_VARY]
-        // Depending on the quality setting, this may be the largest or the smallest.
-        // thus one layer / channel will fill the image, whilst all others may get letterboxed
+        // the same size, which was set by the algorithm above. [unless the filter set WEED_FILTER_SIZES_MAY_VARY]
         // another alternative would be to resize all of the layers, and ignore letterboxing for the intermediate stages,
-        //// but for now we assume if the user wants letterboxing then it applies
-        // to all layers
+        //// but for now we assume if the user wants letterboxing then it applies to all layers
         int lbvals[4];
+
         calc_maxspect(width, height, &xwidth, &xheight);
 
         if (xwidth != width || height != xheight) {
@@ -2360,6 +2441,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
             goto done_video;
           }
           resized = TRUE;
+          letterboxed = TRUE;
           lbvals[0] = (width - xwidth) >> 1;
           lbvals[1] = (height - xheight) >> 1;
           lbvals[2] = xwidth;
@@ -2433,10 +2515,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (tgamma != WEED_GAMMA_UNKNOWN) {
       if (prefs->dev_show_timing)
         g_printerr("gamma1 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-      if (letterboxed)
+      // if we letterboxed then we can save a few cycles by not gamma converting the blank regions
+      // in med, low this seems not to work
+      if (letterboxed) {
         gamma_convert_sub_layer(tgamma, 1.0, layer, (width - xwidth) / 2, (height - xheight) / 2,
                                 xwidth, xheight, TRUE);
-      else
+      } else
         gamma_convert_layer(tgamma, layer);
       if (prefs->dev_show_timing)
         g_printerr("gamma1 post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -7822,11 +7906,11 @@ matchvals:
         xheight != weed_channel_get_height(channel)) {
       int nplanes;
       void **pd = weed_channel_get_pixel_data_planar(channel, &nplanes);
-      g_print("size is %d X %d\n", xwidth, xheight);
+      //g_print("size is %d X %d\n", xwidth, xheight);
       for (int j = 0; j < nplanes; j++) lives_free(pd[j]);
       lives_free(pd);
       weed_set_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
-      g_print("set channel size to %d X %d\n", xwidth, xheight);
+      //g_print("set channel size to %d X %d\n", xwidth, xheight);
       set_channel_size(filter, channel, xwidth, xheight);
     }
   }

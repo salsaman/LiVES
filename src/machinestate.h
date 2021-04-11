@@ -249,6 +249,10 @@ boolean show_desktop_panel(void);
 boolean hide_desktop_panel(void);
 boolean get_x11_visible(const char *wname);
 
+#ifdef GDK_WINDOWING_X11
+void rec_desk(int nframes);
+#endif
+
 int get_window_stack_level(LiVESXWindow *, int *nwins);
 
 #define WM_XFWM4 "Xfwm4"
@@ -277,6 +281,8 @@ int get_window_stack_level(LiVESXWindow *, int *nwins);
 #define XDG_SESSION_TYPE "XDG_SESSION_TYPE"
 #define XDG_DATA_HOME "XDG_DATA_HOME"
 #define XDG_RUNTIME_DIR "XDG_RUNTIME_DIR"
+
+#define WM_PROP_NEW_FOCUS "focus-new-windows"
 
 boolean wm_property_set(const char *key, const char *val);
 char *wm_property_get(const char *key, int *type_guess);

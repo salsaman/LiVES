@@ -137,6 +137,8 @@ typedef struct {
   int _casamps; ///< current out_asamps
   double _shrink_factor;  ///< resampling ratio
 
+  pthread_mutex_t atomic_mutex; ///<  ensures all buffer info updated together
+
   volatile boolean die;  ///< set to TRUE to shut down thread
 } lives_audio_buf_t;
 
@@ -220,7 +222,8 @@ void pulse_rec_audio_end(boolean close_fd);
 void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, boolean exact);
 void wake_audio_thread(void);
 
-boolean resync_audio(double frameno);
+boolean av_clips_equal(void);
+boolean resync_audio(int clipno, double frameno);
 void avsync_force(void);
 
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event,

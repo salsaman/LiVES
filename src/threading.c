@@ -766,7 +766,9 @@ static void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_a
   /// tell the thread to clean up after itself [but it won't delete thread_info]
   attr |= LIVES_THRDATTR_AUTODELETE;
   lives_thread_create(thread, attr, _plant_thread_func, (void *)thread_info);
-  weed_set_voidptr_value(thread_info, LIVES_LEAF_THREAD_WORK, thread->data);
+  if (attr & LIVES_THRDATTR_WAIT_SYNC) {
+    weed_set_voidptr_value(thread_info, LIVES_LEAF_THREAD_WORK, thread->data);
+  }
 }
 
 

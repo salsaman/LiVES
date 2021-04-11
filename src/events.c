@@ -4474,6 +4474,7 @@ filterinit2:
   return LIVES_RENDER_PROCESSING;
 }
 
+
 lives_render_error_t render_events_cb(boolean dummy) {
   /// values ignored if first param is FALSE
   return render_events(FALSE, FALSE, FALSE);

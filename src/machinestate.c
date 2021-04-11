@@ -2049,6 +2049,98 @@ LiVESResponseType send_to_trash(const char *item) {
 
 /// x11 stuff
 
+#ifdef GDK_WINDOWING_X11
+/* Window *find_wm_toplevel(Window xid) { */
+/*   Window root, parent, *children; */
+/*   unsigned int nchildren; */
+/*   if (XQueryTree (gdk_x11_get_default_xdisplay (), xid, &root, */
+/*   		  &parent, &children, &nchildren) == 0) { */
+/*     // None found */
+/*   } */
+/* } */
+
+
+static boolean rec_desk_done(livespointer data) {
+  lives_clip_t *sfile;
+  int clipno = LIVES_POINTER_TO_INT(data);
+  int current_file = mainw->current_file;
+
+  if (!IS_VALID_CLIP(clipno)) goto ohnoes2;
+
+  sfile = mainw->files[clipno];
+  if (sfile->frames <= 0) goto ohnoes;
+
+  do_error_dialogf("Grabbed %d frames", sfile->frames);
+
+  add_to_clipmenu_any(clipno);
+  mainw->files[clipno]->opening = FALSE;
+  switch_clip(1, clipno, FALSE);
+  return FALSE;
+
+ ohnoes:
+  mainw->current_file = clipno;
+  close_current_file(current_file);
+ ohnoes2:
+  do_error_dialog("Screen grab failed");
+  return FALSE;
+}
+
+
+void rec_desk(int nframes) {
+  // experimental
+  LiVESXWindow *root = gdk_get_default_root_window ();
+  LiVESPixbuf *pixbuf;
+  LiVESError *err = NULL;
+  lives_clip_t *sfile;
+  char *fname = lives_strdup("scrngrab");
+  int new_file = mainw->first_free_file;
+  int x = 0, y = 0;
+  int w = GUI_SCREEN_WIDTH;
+  int h = GUI_SCREEN_HEIGHT;
+
+  if (1) {
+    LiVESWidget *win = LIVES_MAIN_WINDOW_WIDGET;
+    GdkRectangle rect;
+    int wx, wy;
+    gdk_window_get_frame_extents(lives_widget_get_xwindow(LIVES_WIDGET(win)), &rect);
+    gdk_window_get_origin(lives_widget_get_xwindow(LIVES_WIDGET(win)), &wx, &wy);
+    x = wx;
+    y = wy;
+    w = rect.width;
+    h = rect.height;
+    g_print("GOT %d and %d ,,, %d X %d\n", x, y, w, h);
+  }
+
+  if (!get_new_handle(new_file, fname)) {
+    lives_free(fname);
+    return;
+  }
+
+  sfile = mainw->files[new_file];
+
+  for (int i = 1; i <= nframes; i++) {
+    char *imname = make_image_file_name(sfile, i, NULL);
+    pixbuf = gdk_pixbuf_get_from_window (root, x, y, w, h);
+    lives_pixbuf_save(pixbuf, imname, sfile->img_type, 100 - prefs->ocp,
+		      w, h, &err);
+    lives_nanosleep(MILLIONS(40));
+  }
+  sfile->hsize = w;
+  sfile->vsize = h;
+  sfile->start = 1;
+  sfile->end = sfile->frames = nframes;
+  sfile->fps = 25.;
+  sfile->changed = TRUE;
+  lives_snprintf(sfile->name, CLIP_NAME_MAXLEN, "%s", "screengrab");
+  if (!save_clip_values(new_file)) {
+    sfile->frames = -1;
+  }
+  if (sfile->frames > 0 && prefs->crash_recovery) add_to_recovery_file(sfile->handle);
+  lives_idle_add_simple(rec_desk_done, LIVES_INT_TO_POINTER(new_file));
+}
+
+#endif
+
 char *get_wid_for_name(const char *wname) {
 #ifndef GDK_WINDOWING_X11
   return NULL;
@@ -2130,6 +2222,7 @@ boolean unhide_x11_window(const char *wid) {
     cmd = lives_strdup_printf("%s windowmap \"%s\"", EXEC_XDOTOOL, wid);
   return mini_run(cmd);
 }
+
 
 boolean activate_x11_window(const char *wid) {
   char *cmd = NULL;
@@ -2214,6 +2307,8 @@ boolean wm_property_set(const char *key, const char *val) {
       lives_free(separ);
       lives_free(res);
       com = lives_strdup_printf("%s set %s %s %s", EXEC_GSETTINGS, schema, key, val);
+      g_print("COM is %s\n", com);
+      lives_system(com, TRUE);
       lives_free(com);
       lives_strfreev(array);
     }}

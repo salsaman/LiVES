@@ -1321,11 +1321,32 @@ boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean per
   if (!lives_strcmp(prefidx, PREF_JACK_OPTS)) {
     newval |= (future_prefs->jack_opts & (JACK_INFO_TEMP_OPTS | JACK_INFO_TEMP_NAMES));
     if (prefs->jack_opts != newval) {
+      int diff = newval ^ prefs->jack_opts;
       newval &= ~JACK_INFO_TEMP_OPTS;
       set_int_pref(PREF_JACK_OPTS, newval & ~JACK_INFO_TEMP_NAMES);
       future_prefs->jack_opts = prefs->jack_opts = newval;
-      if (prefsw) mainw->prefs_changed |= PREFS_JACK_CHANGED;
+      if (prefsw) {
+        if (diff & (JACK_OPTS_START_ASERVER | JACK_OPTS_NO_READ_AUTOCON
+                    | JACK_OPTS_ENABLE_TCLIENT | JACK_OPTS_PERM_ASERVER
+                    | JACK_OPTS_SETENV_ASERVER))
+          mainw->prefs_changed |= PREFS_JACK_CHANGED;
+        else {
+          if (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
+            if (diff & (JACK_OPTS_START_TSERVER | JACK_OPTS_PERM_TSERVER | JACK_OPTS_SETENV_TSERVER))
+              mainw->prefs_changed |= PREFS_JACK_CHANGED;
+	    // *INDENT-OFF*
+	  }}}
+      // *INDENT-ON*
+#ifdef ENABLE_JACK_TRANSPORT
+      if (!(prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+          || !(prefs->jack_opts & JACK_OPTS_STRICT_SLAVE))
+        jack_transport_make_strict_slave(mainw->jackd_trans, FALSE);
+      else
+        jack_transport_make_strict_slave(mainw->jackd_trans, TRUE);
+#endif
+      goto success3;
     }
+    goto fail3;
   }
 #endif
 
@@ -1391,7 +1412,6 @@ boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean per
   }
 
   goto success3;
-
 
 fail3:
   if (prefsw) prefsw->ignore_apply = FALSE;
@@ -1505,9 +1525,21 @@ boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aclips),
                                        (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE);
       }
-      if (bitfield == AUDIO_OPTS_NO_RESYNC) {
-        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aresync),
-                                       (prefs->audio_opts & AUDIO_OPTS_NO_RESYNC) ? FALSE : TRUE);
+      if (bitfield == AUDIO_OPTS_NO_RESYNC_FPS) {
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->resync_fps),
+                                       (prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_FPS) ? FALSE : TRUE);
+      }
+      if (bitfield == AUDIO_OPTS_NO_RESYNC_VPOS) {
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->resync_vpos),
+                                       (prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS) ? FALSE : TRUE);
+      }
+      if (bitfield == AUDIO_OPTS_RESYNC_ADIR) {
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->resync_adir),
+                                       (prefs->audio_opts & AUDIO_OPTS_RESYNC_ADIR) ? TRUE : FALSE);
+      }
+      if (bitfield == AUDIO_OPTS_RESYNC_ACLIP) {
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->resync_aclip),
+                                       (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP) ? TRUE : FALSE);
       }
     }
     goto success6;
@@ -1826,7 +1858,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean jack_tb_client = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client));
 #endif
 
-  boolean jack_pwp = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_pwp));
+  boolean jack_stricts = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_stricts));
   boolean jack_read_autocon = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_read_autocon));
 
   boolean jack_tstart = !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tcerror));
@@ -1844,22 +1876,26 @@ boolean apply_prefs(boolean skip_warn) {
   boolean jack_tcdef = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tcdef));
 
   uint32_t jack_opts =
-    JACK_OPTS_TRANSPORT_CLIENT * jack_client + JACK_OPTS_TRANSPORT_MASTER * jack_master +
+    JACK_OPTS_TRANSPORT_SLAVE * jack_client + JACK_OPTS_TRANSPORT_MASTER * jack_master +
     JACK_OPTS_START_TSERVER * jack_tstart + JACK_OPTS_START_ASERVER
     * jack_astart + JACK_OPTS_PERM_ASERVER * jack_aperm + JACK_OPTS_PERM_TSERVER * jack_tperm
     + JACK_OPTS_ENABLE_TCLIENT * jack_trans
-    + JACK_OPTS_NOPLAY_WHEN_PAUSED * !jack_pwp + JACK_OPTS_TIMEBASE_START * jack_tb_start +
-    JACK_OPTS_TIMEBASE_LSTART * jack_mtb_start + JACK_OPTS_TIMEBASE_CLIENT * jack_tb_client
+    + JACK_OPTS_STRICT_SLAVE * jack_stricts + JACK_OPTS_TIMEBASE_START * jack_tb_start +
+    JACK_OPTS_TIMEBASE_LSTART * jack_mtb_start + JACK_OPTS_TIMEBASE_SLAVE * jack_tb_client
     + JACK_OPTS_NO_READ_AUTOCON * !jack_read_autocon;
 #endif
 
 #ifdef RT_AUDIO
   boolean audio_follow_fps = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_afollow));
   boolean audio_follow_clips = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aclips));
-  boolean audio_resync = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aresync));
+  boolean resync_fps = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->resync_fps));
+  boolean resync_vpos = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->resync_vpos));
+  boolean resync_adir = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->resync_adir));
+  boolean resync_aclip = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->resync_aclip));
   uint32_t audio_opts = (AUDIO_OPTS_FOLLOW_FPS * audio_follow_fps
                          + AUDIO_OPTS_FOLLOW_CLIPS * audio_follow_clips
-                         + AUDIO_OPTS_NO_RESYNC * !(audio_resync));
+                         + AUDIO_OPTS_NO_RESYNC_FPS * !(resync_fps) + AUDIO_OPTS_NO_RESYNC_VPOS * !(resync_vpos)
+                         + AUDIO_OPTS_RESYNC_ADIR * resync_adir + AUDIO_OPTS_RESYNC_ACLIP * resync_aclip);
 #endif
 
 #ifdef ENABLE_OSC
@@ -1919,9 +1955,9 @@ boolean apply_prefs(boolean skip_warn) {
                         -1, NULL, NULL, NULL);
 
 #ifndef ENABLE_JACK_TRANSPORT
-  jack_opts &= ~(JACK_OPTS_TRANSPORT_CLIENT | JACK_OPTS_TRANSPORT_MASTER
+  jack_opts &= ~(JACK_OPTS_TRANSPORT_SLAVE | JACK_OPTS_TRANSPORT_MASTER
                  | JACK_OPTS_START_TSERVER | JACK_OPTS_TIMEBASE_START
-                 | JACK_OPTS_TIMEBASE_CLIENT | JACK_OPTS_TIMEBASE_MASTER
+                 | JACK_OPTS_TIMEBASE_SLAVE | JACK_OPTS_TIMEBASE_MASTER
                  | JACK_OPTS_TIMEBASE_LSTART | JACK_OPTS_ENABLE_TCLIENT);
 #else
   // ignore transport startup unless the client is enabled
@@ -2945,36 +2981,36 @@ static void on_mtbackevery_toggled(LiVESToggleButton * tbutton, livespointer use
 static void after_jack_client_toggled(LiVESToggleButton * tbutton, livespointer user_data) {
   if (!lives_toggle_button_get_active(tbutton)) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start), FALSE);
-    lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_start, FALSE);
   } else {
-    lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_start, TRUE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start),
                                    (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_START) ? TRUE : FALSE);
   }
 }
 
-
 static void after_jack_tb_start_toggled(LiVESToggleButton * tbutton, livespointer user_data) {
   if (!lives_toggle_button_get_active(tbutton)) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client), FALSE);
-    lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_client, FALSE);
-    future_prefs->jack_opts |= JACK_OPTS_TIMEBASE_START;
   } else {
-    lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_client, TRUE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client),
-                                   (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) ? TRUE : FALSE);
-    future_prefs->jack_opts &= ~JACK_OPTS_TIMEBASE_START;
+                                   (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE) ? TRUE : FALSE);
   }
 }
 
 static void after_jack_master_toggled(LiVESToggleButton * tbutton, livespointer user_data) {
   if (!lives_toggle_button_get_active(tbutton)) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_start), FALSE);
-    lives_widget_set_sensitive(prefsw->checkbutton_jack_mtb_start, FALSE);
   } else {
-    lives_widget_set_sensitive(prefsw->checkbutton_jack_mtb_start, TRUE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_start),
                                    (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART) ? TRUE : FALSE);
+  }
+}
+
+static void after_jack_upd_toggled(LiVESToggleButton * tbutton, livespointer user_data) {
+  if (!lives_toggle_button_get_active(tbutton)) {
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_update), FALSE);
+  } else {
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_update),
+                                   (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_MASTER) ? TRUE : FALSE);
   }
 }
 #endif
@@ -3019,14 +3055,20 @@ static void on_audp_entry_changed(LiVESWidget * audp_combo, livespointer ptr) {
   if (!strcmp(audp, AUDIO_PLAYER_JACK) || !strncmp(audp, AUDIO_PLAYER_PULSE_AUDIO, strlen(AUDIO_PLAYER_PULSE_AUDIO))) {
     lives_widget_set_sensitive(prefsw->checkbutton_aclips, TRUE);
     lives_widget_set_sensitive(prefsw->checkbutton_afollow, TRUE);
-    lives_widget_set_sensitive(prefsw->checkbutton_aresync, TRUE);
+    lives_widget_set_sensitive(prefsw->resync_fps, TRUE);
+    lives_widget_set_sensitive(prefsw->resync_vpos, TRUE);
+    lives_widget_set_sensitive(prefsw->resync_adir, TRUE);
+    lives_widget_set_sensitive(prefsw->resync_aclip, TRUE);
     lives_widget_set_sensitive(prefsw->raudio, TRUE);
     lives_widget_set_sensitive(prefsw->pa_gens, TRUE);
     lives_widget_set_sensitive(prefsw->rextaudio, TRUE);
   } else {
     lives_widget_set_sensitive(prefsw->checkbutton_aclips, FALSE);
     lives_widget_set_sensitive(prefsw->checkbutton_afollow, FALSE);
-    lives_widget_set_sensitive(prefsw->checkbutton_aresync, FALSE);
+    lives_widget_set_sensitive(prefsw->resync_fps, FALSE);
+    lives_widget_set_sensitive(prefsw->resync_vpos, FALSE);
+    lives_widget_set_sensitive(prefsw->resync_adir, FALSE);
+    lives_widget_set_sensitive(prefsw->resync_aclip, FALSE);
     lives_widget_set_sensitive(prefsw->raudio, FALSE);
     lives_widget_set_sensitive(prefsw->pa_gens, FALSE);
     lives_widget_set_sensitive(prefsw->rextaudio, FALSE);
@@ -3484,7 +3526,7 @@ static void do_full_reset(LiVESWidget * widget, livespointer data) {
   char *tmp, *tmp2;
   char *config_dir = lives_build_path(capable->home_dir, LIVES_DEF_CONFIG_DIR, NULL);
   widget_opts.use_markup = TRUE;
-  boolean ret = do_yesno_dialogf_with_countdown(2,  _("<big><b>LiVES will remove all settings and customizations</b></big>\n"
+  boolean ret = do_yesno_dialogf_with_countdown(2, TRUE, _("<big><b>LiVES will remove all settings and customizations</b></big>\n"
                 "\ncontained in %s\nand %s\n\n"
                 "Upon restart, you will be guided through the Setup process once more\n\n\n"
                 "Click 2 times on the 'Yes' button to confirm that this is waht you want\n"
@@ -4408,10 +4450,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
       (tmp = lives_strdup_printf(_("_Enable adaptive quality (%s)"),
                                  mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED])),
       prefs->pbq_adaptive, LIVES_BOX(hbox),
-      (tmp2 = (H_("If enabled, quality will be automatically adjusted during playback\n"
-                  "in order to maintain a smooth frame rate"))));
+      H_("If enabled, quality will be continuously adjusted during playback\n"
+         "in order to maintain a smooth frame rate"));
   lives_free(tmp);
-  lives_free(tmp2);
 
   prefsw->pbq_list = NULL;
   // TRANSLATORS: video quality, max len 50
@@ -4423,13 +4464,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-  //widget_opts.expand = LIVES_EXPAND_EXTRA;
   prefsw->pbq_combo = lives_standard_combo_new((tmp = (_("Preview _quality"))), prefsw->pbq_list, LIVES_BOX(hbox),
-                      (tmp2 = (_("The preview quality for video playback - affects resizing"))));
-  //widget_opts.expand = LIVES_EXPAND_DEFAULT;
+                      H_("The preview quality for video playback, ignored if adaptive quality is selected"));
 
   lives_free(tmp);
-  lives_free(tmp2);
 
   switch (future_prefs->pb_quality) {
   case PB_QUALITY_HIGH:
@@ -4439,15 +4477,22 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_combo_set_active_index(LIVES_COMBO(prefsw->pbq_combo), 1);
   }
 
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->pbq_adaptive), prefsw->pbq_combo, TRUE);
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  prefsw->checkbutton_show_stats = lives_standard_check_button_new(_("_Show FPS statistics"),
-                                   prefs->show_player_stats,
-                                   LIVES_BOX(hbox), NULL);
+  prefsw->checkbutton_show_stats =
+    lives_standard_check_button_new(_("_Show FPS statistics"),
+                                    prefs->show_player_stats,
+                                    LIVES_BOX(hbox), H_("Print a message detailing the mean FPS rate after playback ends\n"
+                                        "Can be useful for benchmarking"));
 
   add_hsep_to_box(LIVES_BOX(vbox));
 
   layout = lives_layout_new(LIVES_BOX(vbox));
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+  lives_layout_add_row(LIVES_LAYOUT(layout));
 
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Use letterboxing by default:"), TRUE);
 
@@ -4467,11 +4512,11 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->no_lb_gens = lives_standard_check_button_new(_("Avoid letterboxing generators"),
-                       !prefs->no_lb_gens, LIVES_BOX(hbox),
-                       (tmp = H_("If this is set, generator plugins will try to resize their output\n"
-                                 "to fit blended clips, rather than letterboxing inside them.\n"
-                                 "If unset, generators will maintain their default aspect ratio,"
-                                 "but may not entirely fill blended frames.")));
+                       prefs->no_lb_gens, LIVES_BOX(hbox),
+                       (tmp = H_("If this is set, generator plugins will try to dynamically adjust their aspect ratio\n"
+                                 "to exactly fill the player or blended clip.\n"
+                                 "If unset, generators will always maintain their default aspect ratio,"
+                                 "but may leave a gap at the edge of the containing frame.")));
 
   lives_free(tmp);
 
@@ -4492,7 +4537,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   add_hsep_to_box(LIVES_BOX(vbox));
 
   layout = lives_layout_new(LIVES_BOX(vbox));
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   if (ARE_UNCHECKED(vid_playback_plugins)) {
     capable->plugins_list[PLUGIN_TYPE_VIDEO_PLAYER] = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-" DLL_NAME);
@@ -4560,6 +4606,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   vbox = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(frame), vbox);
+  lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width);
 
   audp = lives_list_append(audp, lives_strdup_printf("%s", mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
 
@@ -4583,7 +4630,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   }
 
   layout = lives_layout_new(LIVES_BOX(vbox));
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->audp_combo = lives_standard_combo_new(_("_Player"), audp, LIVES_BOX(hbox), NULL);
 
@@ -4637,8 +4684,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                   prefs->pa_restart, LIVES_BOX(hbox),
                                   (tmp2 = (_("Recommended, but may interfere with other running "
                                           "audio applications"))));
-  lives_free(tmp);
-  lives_free(tmp2);
+  lives_free(tmp); lives_free(tmp2);
+
   ACTIVE(checkbutton_parestart, TOGGLED);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -4647,7 +4694,14 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                 LIVES_BOX(hbox), NULL);
   ACTIVE(audio_command_entry, CHANGED);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart), prefsw->audio_command_entry, FALSE);
+
+  if (prefs->audio_player != AUD_PLAYER_PULSE) lives_widget_set_sensitive(prefsw->checkbutton_parestart, FALSE);
 #endif
+
+  add_hsep_to_box(LIVES_BOX(vbox));
+
+  layout = lives_layout_new(LIVES_BOX(vbox));
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
@@ -4657,31 +4711,63 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-  prefsw->checkbutton_aclips = lives_standard_check_button_new(_("Audio follows _clip switches"),
+  prefsw->checkbutton_aclips = lives_standard_check_button_new(_("Audio follows video _clip switches"),
                                (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE,
                                LIVES_BOX(hbox), NULL);
 
+  //hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Resync audio when:"), TRUE);
+
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-  prefsw->checkbutton_aresync = lives_standard_check_button_new(_("Resync audio when fps is reset"),
-                                (prefs->audio_opts & AUDIO_OPTS_NO_RESYNC) ? FALSE : TRUE,
-                                LIVES_BOX(hbox),
-                                H_("Determines whether the audio "
-                                   "rate and position are\n"
-                                   "resynchronised with video"
-                                   "whenever the 'Reset FPS' key "
-                                   "is activated.\n"
-                                   "Only effective if video and "
-                                   "audio are playing the same clip."));
+  prefsw->resync_fps = lives_standard_check_button_new(_("fps is reset"),
+                       (prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_FPS) ? FALSE : TRUE,
+                       LIVES_BOX(hbox),
+                       H_("Determines whether the audio rate and position are\n"
+                          "resynchronised with video "
+                          "whenever the 'Reset FPS' key is activated.\n"));
+
+  prefsw->resync_adir = lives_standard_check_button_new(_("audio direction changes"),
+                        (prefs->audio_opts & AUDIO_OPTS_RESYNC_ADIR) ? TRUE : FALSE,
+                        LIVES_BOX(hbox),
+                        H_("Determines whether the audio rate and position are\n"
+                           "resynchronised with video "
+                           "whenever the audio playback direction changes\n"
+                           "as a result of video direction changing"));
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  prefsw->resync_vpos = lives_standard_check_button_new(_("video position 'jumps'"),
+                        (prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS) ? FALSE : TRUE,
+                        LIVES_BOX(hbox),
+                        H_("Determines whether the audio rate and position are\n"
+                           "resynchronised with video "
+                           "whenever the video position is changed "
+                           "via means other than normal playback\n"
+                           "E.g when clicking on the timeline, or when a 'bookmark' is activated"));
+
+  prefsw->resync_aclip = lives_standard_check_button_new(_("audio clip changes"),
+                         (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP) ? TRUE : FALSE,
+                         LIVES_BOX(hbox),
+                         H_("Determines whether the audio rate and position are\n"
+                            "resynchronised with video "
+                            "whenever the current audio clip changes"));
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("(Audio will only be resynchronised if both audio and video "
+                         "are playing the identical clip)"), FALSE);
+
+  add_fill_to_box(LIVES_BOX(vbox));
 
   add_hsep_to_box(LIVES_BOX(vbox));
 
+  add_fill_to_box(LIVES_BOX(vbox));
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
   label = lives_standard_label_new(_("Audio Source at start up (clip editor only):"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
   add_fill_to_box(LIVES_BOX(hbox));
-  add_fill_to_box(LIVES_BOX(vbox));
 
   prefsw->rintaudio = lives_standard_radio_button_new(_("_Internal"), &asrc_group, LIVES_BOX(hbox), NULL);
 
@@ -4695,7 +4781,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->checkbutton_aclips, TRUE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->checkbutton_afollow, TRUE);
-  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->checkbutton_aresync, TRUE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->resync_fps, TRUE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->resync_vpos, TRUE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->resync_adir, TRUE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->resync_aclip, TRUE);
 
   if (mainw->playing_file > 0 && mainw->record) {
     lives_widget_set_sensitive(prefsw->rextaudio, FALSE);
@@ -4704,6 +4793,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   if (!is_realtime_aplayer(prefs->audio_player)) {
     lives_widget_set_sensitive(prefsw->rextaudio, FALSE);
   }
+
+  add_fill_to_box(LIVES_BOX(vbox));
 
   pixbuf_playback = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_PLAYBACK, LIVES_ICON_SIZE_CUSTOM, -1);
 
@@ -6167,21 +6258,24 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   rb_group = NULL;
 
   prefsw->jack_srv_dup =
-    lives_standard_radio_button_new(_("_Use server settings from audio client"),
+    lives_standard_radio_button_new(_("_Duplicate server settings from audio client"),
                                     &rb_group, LIVES_BOX(hbox), NULL);
 
   widget =
-    lives_standard_radio_button_new(_("_Use separate setings for transport client (EXPERTS ONLY !)"),
-                                    &rb_group, LIVES_BOX(hbox), NULL);
+    lives_standard_radio_button_new(_("_Use separate setings for transport and audio clients (EXPERTS ONLY !)"),
+                                    &rb_group, LIVES_BOX(hbox), H_("By enabling this option, it is possible to configure "
+                                        "separate jackd servers for audio and transport clients.\n"
+                                        "However, care should be taken to ensure that the two server "
+                                        "configurations do not conflict with each other."));
 
   layout = lives_layout_new(LIVES_BOX(vbox));
   if (!prefs->jack_srv_dup) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(widget), TRUE);
 
   lives_layout_add_label(LIVES_LAYOUT(layout), _("WARNING: creating conflicting settings for audio "
-                         "and transport servers "
-                         "may cause problems when starting jackd.\n"
-                         "Use of separate server names for each client is "
-                         "strongly advised.\n"), FALSE);
+                         "and transport servers may cause problems when starting jackd.\n"
+                         "For example, attempting to launch multiple servers connecting to the same soundcard "
+                         "may fail with an error condition.\n"
+                         "Use of the 'dummy' driver or similar is recommended to avoid this situation."), FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
@@ -6189,7 +6283,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_standard_check_button_new(_("Connect using _default server name"), TRUE, LIVES_BOX(hbox),
                                     H_("The server name will be taken from the environment "
                                        "variable\n$JACK_DEFAULT_SERVER.\nIf that variable is not "
-                                       "set, then the name 'default' will be used instead"));
+                                       "set, then the name 'default' will be used instead."));
 
   toggle_sets_active_cond(LIVES_TOGGLE_BUTTON(prefsw->jack_acdef), prefsw->jack_tcdef,
                           (condfuncptr_t)lives_toggle_button_get_active, prefsw->jack_srv_dup,
@@ -6253,7 +6347,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   widget_opts.use_markup = TRUE;
   label = lives_standard_label_new("<b>------></b>");
   widget_opts.use_markup = FALSE;
-
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   if (!prefs->jack_srv_dup)
@@ -6280,66 +6373,113 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   toggle_sets_visible(LIVES_TOGGLE_BUTTON(prefsw->jack_srv_dup), layout, TRUE);
 
   layout = lives_layout_new(LIVES_BOX(vbox));
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Transport Options"), FALSE);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Master options - (in Clip Edit mode, values are taken from Audio playback. "
+                         "Setting the audio source to 'External' may be helpful.)"), FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->checkbutton_jack_master =
-    lives_standard_check_button_new(_("Jack transport _master (start and stop)  ---->"),
+    lives_standard_check_button_new(_("Transport _Master (playback state)"),
                                     (future_prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER)
-                                    ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
+                                    ? TRUE : FALSE, LIVES_BOX(hbox),
+                                    H_("LiVES will trigger transport to start whenever it starts "
+                                       "normal playback\nthen subsequently update the transport "
+                                       "state if stopped or paused."));
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_master),
-                                  LIVES_WIDGET_TOGGLED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(after_jack_master_toggled), NULL);
+                                  LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(after_jack_master_toggled), NULL);
+
+  widget_opts.use_markup = TRUE;
+  label = lives_standard_label_new("<b>------></b>");
+  widget_opts.use_markup = FALSE;
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_jack_mtb_start =
-    lives_standard_check_button_new(_("LiVES can set start position"),
+    lives_standard_check_button_new(_("Timecode Master (position changes)"),
                                     (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART) ?
                                     (lives_toggle_button_get_active
                                      (LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master)))
-                                    : FALSE, LIVES_BOX(hbox), NULL);
+                                    : FALSE, LIVES_BOX(hbox), H_("LiVES will update the transport time when starting playback, "
+                                        "when audio is resynced, and when playback is stopped"));
 
-  lives_widget_set_sensitive(prefsw->checkbutton_jack_mtb_start,
-                             lives_toggle_button_get_active
-                             (LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master)));
+  widget_opts.use_markup = TRUE;
+  label = lives_standard_label_new("<b>------></b>");
+  widget_opts.use_markup = FALSE;
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master),
+                        prefsw->checkbutton_jack_mtb_start, FALSE);
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_mtb_start),
+                                  LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(after_jack_upd_toggled), NULL);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  prefsw->checkbutton_jack_mtb_update =
+    lives_standard_check_button_new(_("Full Timebase Master (clock source)"),
+                                    (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_MASTER) ?
+                                    (lives_toggle_button_get_active
+                                     (LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_start)))
+                                    : FALSE, LIVES_BOX(hbox), H_("During playback, LiVES will continuously update the "
+                                        "transport position, acting as Master Clock Source.\n"
+                                        "(Ignored if another client is already configured as timebase Master,\n"
+                                        "or if playback was not initiated by LiVES)"));
+
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_start),
+                        prefsw->checkbutton_jack_mtb_update, FALSE);
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Slave options - (in Clip Edit mode, values are applied to Video playback)"),
+                         FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_jack_client =
-    lives_standard_check_button_new(_("Jack transport _client (start and stop)  ---->"),
-                                    (future_prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT)
+    lives_standard_check_button_new(_("Transport Slave (playback state)"),
+                                    (future_prefs->jack_opts & JACK_OPTS_TRANSPORT_SLAVE)
                                     ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_client),
                                   LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(after_jack_client_toggled), NULL);
 
+  widget_opts.use_markup = TRUE;
+  label = lives_standard_label_new("<b>------></b>");
+  widget_opts.use_markup = FALSE;
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_jack_tb_start =
-    lives_standard_check_button_new(_("Jack transport can set start position  ---->"),
+    lives_standard_check_button_new(_("Jack sets start position"),
                                     (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_START) ?
                                     (lives_toggle_button_get_active
                                      (LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)))
-                                    : FALSE, LIVES_BOX(hbox), NULL);
+                                    : FALSE, LIVES_BOX(hbox), H_("When playback is triggered from jack transport, "
+                                        "the start position will be set\n"
+                                        "based on the transport timecode"));
 
-  lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_start, lives_toggle_button_get_active
-                             (LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)));
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client),
+                        prefsw->checkbutton_jack_tb_start, FALSE);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_tb_start),
                                   LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(after_jack_tb_start_toggled), NULL);
 
+  widget_opts.use_markup = TRUE;
+  label = lives_standard_label_new("<b>------></b>");
+  widget_opts.use_markup = FALSE;
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_jack_tb_client =
-    lives_standard_check_button_new(_("Jack transport timebase slave"),
-                                    (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) ?
+    lives_standard_check_button_new(_("Full Timebase Slave (clock source)"),
+                                    (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE) ?
                                     (lives_toggle_button_get_active
                                      (LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start)))
                                     : FALSE, LIVES_BOX(hbox),
-                                    (tmp = H_("If playback is triggered by jack transport,\n"
-                                        "then LiVES will attempt to sync with transport"
-                                        "\nuntil playback finishes.")));
+                                    (tmp = H_("During playback, LiVES will continuously monitor the "
+                                        "transport position,\nusing it as Master Clock Source"
+                                        "for video playback.\nThe audio rate will be dynamically adjusted in "
+                                        "order to remain in sync with video\n"
+                                        "(This setting is only valid if playback is started via jack transport)")));
   lives_free(tmp);
 
   lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_client,
@@ -6348,14 +6488,18 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  prefsw->checkbutton_jack_pwp =
-    lives_standard_check_button_new(_("Play audio even when transport is _paused"),
-                                    (future_prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED)
-                                    ? FALSE : TRUE, LIVES_BOX(hbox), NULL);
+  prefsw->checkbutton_jack_stricts =
+    lives_standard_check_button_new(_("Function ONLY as Slave"),
+                                    (future_prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)
+                                    ? TRUE : FALSE, LIVES_BOX(hbox), H_("Setting this option forces LiVES to ONLY "
+                                        "perform the selected actions\nas a response "
+                                        "to changes in the transport server\n"
+                                        "When set, LiVES cannot act as transport Master"));
 
-  lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp, prefs->audio_player == AUD_PLAYER_JACK);
+  lives_widget_set_sensitive(prefsw->checkbutton_jack_stricts, prefs->audio_player == AUD_PLAYER_JACK);
 
-  tmp = lives_big_and_bold(_("\n(See also Playback -> Audio follows video rate/direction)"));
+  tmp = lives_big_and_bold(
+          _("(See also Playback -> Audio follows video rate/direction and Playback -> Audio follows video clip switches)"));
   widget_opts.use_markup = TRUE;
   label = lives_standard_label_new(tmp);
   widget_opts.use_markup = FALSE;
@@ -6364,17 +6508,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
 #endif
 
-  /* add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_jack)); */
-
-  /* tmp = lives_big_and_bold(_("Jack MIDI")); */
-  /* widget_opts.use_markup = TRUE; */
-  /* label = lives_standard_label_new_with_tooltips(tmp, LIVES_BOX(prefsw->vbox_right_jack), NULL); */
-  /* widget_opts.use_markup = FALSE; */
-  /* lives_free(tmp); */
-
-  /* label = lives_standard_label_new(_("Coming soon...")); */
-  /* lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), label, */
-  /*                      FALSE, FALSE, widget_opts.packing_height); */
 #endif
 
   pixbuf_jack =
@@ -6683,6 +6816,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   ACTIVE(checkbutton_instant_open, TOGGLED);
   ACTIVE(checkbutton_auto_deint, TOGGLED);
+  ACTIVE(checkbutton_auto_trim, TOGGLED);
+  ACTIVE(checkbutton_nobord, TOGGLED);
   ACTIVE(checkbutton_concat_images, TOGGLED);
   ACTIVE(checkbutton_lb, TOGGLED);
   ACTIVE(checkbutton_lbmt, TOGGLED);
@@ -6701,7 +6836,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   ACTIVE(checkbutton_afollow, TOGGLED);
   ACTIVE(checkbutton_aclips, TOGGLED);
-  ACTIVE(checkbutton_aresync, TOGGLED);
+  ACTIVE(resync_fps, TOGGLED);
+  ACTIVE(resync_vpos, TOGGLED);
+  ACTIVE(resync_adir, TOGGLED);
+  ACTIVE(resync_aclip, TOGGLED);
 
   ACTIVE(rdesk_audio, TOGGLED);
 
@@ -6800,8 +6938,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(checkbutton_jack_client, TOGGLED);
   ACTIVE(checkbutton_jack_tb_start, TOGGLED);
   ACTIVE(checkbutton_jack_mtb_start, TOGGLED);
+  ACTIVE(checkbutton_jack_mtb_update, TOGGLED);
   ACTIVE(checkbutton_jack_tb_client, TOGGLED);
-  ACTIVE(checkbutton_jack_pwp, TOGGLED);
+  ACTIVE(checkbutton_jack_stricts, TOGGLED);
 #endif
 
 #ifdef ENABLE_JACK

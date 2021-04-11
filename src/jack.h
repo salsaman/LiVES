@@ -23,15 +23,19 @@ typedef enum {
   JACK_CLIENT_TYPE_TRANSPORT,
   JACK_CLIENT_TYPE_AUDIO_WRITER,
   JACK_CLIENT_TYPE_AUDIO_READER,
+  // remainder currently unused
   JACK_CLIENT_TYPE_MIDI,
-  JACK_CLIENT_TYPE_SLAVE,
-  JACK_CLIENT_TYPE_OTHER
+  JACK_CLIENT_TYPE_TEMP,
+  JACK_CLIENT_TYPE_OTHER,
 } lives_jack_client_type;
 
 // should really be lives_jack_client_t - TODO
 typedef struct _lives_jack_driver_t jack_driver_t;
 
 // GUI functions
+
+// TODO: jack_internal_config() ???
+
 void jack_srv_startup_config(LiVESWidget *, livespointer type_data);
 
 boolean jack_drivers_config(LiVESWidget *, livespointer ptype);
@@ -40,15 +44,21 @@ void jack_server_config(LiVESWidget *, lives_rfx_t *);
 
 void show_jack_status(LiVESButton *, livespointer is_transp);
 
+boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt);
+
 // connect client or start server
 boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd);
 boolean lives_jack_poll(void); /** poll function to check transport state */
 void lives_jack_end(void);
 
-int lives_start_ready_callback(jack_transport_state_t state, jack_position_t *pos, void *arg);
+// should be called with mainw->jackd_trans
+void jack_transport_set_master(jack_driver_t *, boolean set);
+void jack_transport_update(jack_driver_t *, double pbtime);
+void jack_pb_start(jack_driver_t *, double pbtime);  /** start playback transport master */
+void jack_pb_stop(jack_driver_t *); /** pause playback transport master */
 
-void jack_pb_start(double pbtime);  /** start playback transport master */
-void jack_pb_stop(void);  /** pause playback transport master */
+void jack_transport_make_strict_slave(jack_driver_t *jackd, boolean set);
+boolean is_transport_locked(void);
 
 ////////////////////////////////////////////////////////////////////////////
 // Audio
@@ -56,35 +66,42 @@ void jack_pb_stop(void);  /** pause playback transport master */
 #include "audio.h"
 
 // mapping of jack_opts pref
-#define JACK_OPTS_TRANSPORT_CLIENT	(1 << 0)   ///< jack can start/stop
-#define JACK_OPTS_TRANSPORT_MASTER	(1 << 1)  ///< transport master (start and stop)
-#define JACK_OPTS_START_TSERVER		(1 << 2)     ///< start transport server if unable to connect
-#define JACK_OPTS_NOPLAY_WHEN_PAUSED	(1 << 3) ///< do not play audio when transport is paused
 #define JACK_OPTS_START_ASERVER		(1 << 4)     ///< start audio server if unable to connect
 
+// transport options
+#define JACK_OPTS_ENABLE_TCLIENT      	(1 << 10)     ///< enable transport client (global setting)
+#define JACK_OPTS_START_TSERVER		(1 << 2)     ///< start transport server if unable to connect
+
+#define JACK_OPTS_TRANSPORT_SLAVE	(1 << 0)   ///< jack can start/stop
+#define JACK_OPTS_TRANSPORT_MASTER	(1 << 1)  ///< LiVES can start / stop (start and stop)
+
 #define JACK_OPTS_TIMEBASE_START	(1 << 5)    ///< jack sets play start position
-#define JACK_OPTS_TIMEBASE_CLIENT	(1 << 6)    ///< full timebase client (position updates)
-#define JACK_OPTS_TIMEBASE_MASTER	(1 << 7)   ///< timebase master (not implemented yet)
-#define JACK_OPTS_NO_READ_AUTOCON	(1 << 8)   ///< do not auto con. rd clients when playing ext aud
 #define JACK_OPTS_TIMEBASE_LSTART	(1 << 9)    ///< LiVES sets play start position
 
-#define JACK_OPTS_ENABLE_TCLIENT      	(1 << 10)     ///< enable transport client (global setting)
+// only one or other should be set
+#define JACK_OPTS_TIMEBASE_SLAVE	(1 << 6)    ///< full timebase slave (position updates)
+#define JACK_OPTS_TIMEBASE_MASTER	(1 << 7)    ///< full timebase master (position updates)
 
-// sever is only killed if LiVES started it
+#define JACK_OPTS_STRICT_SLAVE		(1 << 3) ///< everything must be done via transport
+
+// general options
+#define JACK_OPTS_NO_READ_AUTOCON	(1 << 8)    ///< do not auto connect input ports
+
 // conflicts if both clients want to start same server and vals differ
-#define JACK_OPTS_PERM_ASERVER      	(1 << 11)     ///< leave audio srvr running even if we started
-#define JACK_OPTS_PERM_TSERVER      	(1 << 12)     ///< leave transport running even if we started it
+#define JACK_OPTS_PERM_ASERVER      	(1 << 16)     ///< leave audio srvr running even if we started
+#define JACK_OPTS_PERM_TSERVER      	(1 << 17)     ///< leave transport running even if we started it
 
 // only one or other should be set...
-#define JACK_OPTS_SETENV_ASERVER      	(1 << 13)     ///< setenv $JACK_DEFAULT_SERVER to aserver_sname
-#define JACK_OPTS_SETENV_TSERVER      	(1 << 14)     ///< setenv $JACK_DEFAULT_SERVER to tserver_sname
-
-#define JACK_INFO_TEST_SETUP      	(1 << 29)     ///< -jackserver used
-#define JACK_INFO_TEMP_NAMES      	(1 << 30)     ///< -jackserver used
-#define JACK_INFO_TEMP_OPTS      	(1 << 31)     ///< -jackopts used
+#define JACK_OPTS_SETENV_ASERVER      	(1 << 18)     ///< setenv $JACK_DEFAULT_SERVER from aserver_sname
+#define JACK_OPTS_SETENV_TSERVER      	(1 << 19)     ///< setenv $JACK_DEFAULT_SERVER from tserver_sname
 
 #define JACK_OPTS_OPTS_MASK ((1 << 24) - 1)
 
+// bits 24 - 31 reserved for info flags
+
+#define JACK_INFO_TEST_SETUP      	(1 << 29)     ///< setup is in test mode
+#define JACK_INFO_TEMP_NAMES      	(1 << 30)     ///< -jackserver startup argument used
+#define JACK_INFO_TEMP_OPTS      	(1 << 31)     ///< -jackopts startup argument used
 
 #define JACK_MAX_OUTPUT_PORTS 10
 #define JACK_MAX_INPUT_PORTS 10
@@ -95,8 +112,6 @@ void jack_pb_stop(void);  /** pause playback transport master */
 #define JACK_DEFAULT_SERVER_NAME "default"
 
 #define JACKD_RC_NAME "jackdrc"
-
-typedef jack_nframes_t nframes_t;
 
 // custom transport states (not very useful, may remove)
 #define JackTClosed 1024 // not activated
@@ -149,9 +164,6 @@ typedef struct _lives_jack_driver_t {
   /* variables used for trying to restart the connection to jack */
   boolean             jackd_died;                    /**< true if jackd has died and we should try to restart it */
 
-  // TODO - use jack_opts ??
-  boolean play_when_stopped; ///< if we should play audio even when jack transport is stopped
-
   volatile jack_nframes_t nframes_start;
   volatile uint64_t frames_written;
 
@@ -160,7 +172,7 @@ typedef struct _lives_jack_driver_t {
 
   boolean is_paused;
 
-  boolean is_output; ///< is output FROM host to jack
+  int client_type;
 
   boolean is_silent;
 
@@ -220,7 +232,7 @@ size_t jack_get_buffsize(jack_driver_t *);
 
 void jack_get_rec_avals(jack_driver_t *);
 
-ticks_t jack_transport_get_current_ticks(void);
+ticks_t jack_transport_get_current_ticks(jack_driver_t *);
 
 double lives_jack_get_pos(jack_driver_t *);
 

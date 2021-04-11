@@ -43,8 +43,7 @@ _resaudw *resaudw;
 						      1. / (fps)) * TICKS_PER_SECOND_DBL + .5))
 
 /// convert (double)seconds to multiples of (double)fps
-#define q_dbl(in, fps) ((in) - remainder((in) / TICKS_PER_SECOND_DBL, 1. / (fps)) \
-			* TICKS_PER_SECOND_DBL)
+#define q_dbl(in, fps) ((in) - remainder((in), 1. / (fps)))
 
 /// convert (double)seek_time to an integer number of audio samples
 #define quant_asamps(seek, arate) (((seek) <= 0. || (arate) <= 0) ? (size_t)0 \

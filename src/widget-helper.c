@@ -16,7 +16,7 @@
 
 // static defns
 
-#define EV_LIM 256
+#define EV_LIM 16
 
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
@@ -1181,7 +1181,7 @@ reloop:
         if (sigdata->is_timer) {
           // this is complicated, We need to return to caller so it can exit with correct value
           // but we need to return to run the new task
-          lives_idle_add_simple(governor_loop, new_sigdata);
+          lives_idle_priority(governor_loop, new_sigdata);
           //g_print("gov6\n");
           return FALSE;
         }
@@ -1258,13 +1258,16 @@ reloop:
     while (count++ < EV_LIM && lives_widget_context_iteration(NULL, FALSE)
            && sigdata_check_alarm(sigdata) && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
 
+    //g_print("XX %d %d %d\n", count, sigdata_check_alarm(sigdata), !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
+
+
     if (!sigdata_check_alarm(sigdata)) {
       gov_will_run = gov_running = FALSE;
       //g_print("gov11\n");
       return FALSE;
     }
     // add ourselves as an idlefunc and then return FALSE
-    lives_idle_add_simple(governor_loop, sigdata->alarm_handle ? sigdata : NULL);
+    lives_idle_priority(governor_loop, sigdata->alarm_handle ? sigdata : NULL);
 
     gov_running = FALSE;
 
@@ -1276,6 +1279,15 @@ reloop:
 
   /// something else might have removed the clutch, so check again if the handler is still running
   if (!lives_proc_thread_check_finished(sigdata->proc)) {
+    int count = 0;
+    while (count++ < EV_LIM && lives_widget_context_iteration(NULL, FALSE)
+           && sigdata_check_alarm(sigdata) && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
+
+    if (!sigdata_check_alarm(sigdata)) {
+      gov_will_run = gov_running = FALSE;
+      //g_print("gov11\n");
+      return FALSE;
+    }
     lpt_recurse = TRUE;
     goto reloop;
   }
@@ -1650,11 +1662,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widg
   // if we set it sensitive, this is passed down recursively, any widgets with a stored state
   // sensitive are sensitized, and we continue recursing, the rest are left insensitive
   if (GTK_IS_MENU_ITEM(widget)) {
-    if (!lives_widget_get_sensitive(lives_widget_get_parent(widget))) {
-      // update virtual state only
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), SUBMENU_INS_KEY,
-                                   LIVES_INT_TO_POINTER(!state));
-      return TRUE;
+    LiVESWidget *parent = lives_widget_get_parent(widget);
+    if (parent) {
+      if (!lives_widget_get_sensitive(parent)) {
+        // update virtual state only
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), SUBMENU_INS_KEY,
+                                     LIVES_INT_TO_POINTER(!state));
+        return TRUE;
+      }
     }
   }
 #endif
@@ -1963,6 +1978,7 @@ static LiVESResponseType _lives_dialog_run(LiVESDialog *dialog) {
   LiVESResponseType resp;
   _lives_widget_show_all(LIVES_WIDGET(dialog));
   resp = gtk_dialog_run(dialog);
+  //if (*capable->wm_caps.wm_focus) wm_property_set(WM_PROP_NEW_FOCUS, capable->wm_caps.wm_focus);
   return resp;
 #endif
   return LIVES_RESPONSE_INVALID;
@@ -1985,7 +2001,7 @@ void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
   lpttorun = lpt;
   lpt_retval = (volatile void *)retval;
   if (!gov_running) {
-    lives_idle_add_simple(governor_loop, NULL);
+    lives_idle_priority(governor_loop, NULL);
   } else {
     waitgov = TRUE;
     mainw->clutch = FALSE;
@@ -7497,6 +7513,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_timer_remove(uint32_t timer) {
   return TRUE;
 #endif
   return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE uint32_t lives_idle_priority(LiVESWidgetSourceFunc function, livespointer data) {
+#ifdef GUI_GTK
+  return g_idle_add_full(G_PRIORITY_HIGH, function, data, NULL);
+#endif
+  return 0;
 }
 
 

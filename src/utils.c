@@ -360,6 +360,8 @@ void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight) {
 
   // ie. one of the dimensions will stay unchanged, the other will grow
 
+  // the difference with maxspect is that the size can only increase
+
   double aspect, dheight;
 
   if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
@@ -862,11 +864,12 @@ LIVES_GLOBAL_INLINE lives_img_type_t lives_image_type_to_img_type(const char *li
 LIVES_GLOBAL_INLINE char *make_image_file_name(lives_clip_t *sfile, frames_t frame,
     const char *img_ext) {
   char *fname, *ret;
-  if (!*img_ext) {
+  const char *ximg_ext = img_ext;
+  if (!ximg_ext || !*ximg_ext) {
     sfile->img_type = resolve_img_type(sfile);
-    img_ext = get_image_ext_for_type(sfile->img_type);
+    ximg_ext = get_image_ext_for_type(sfile->img_type);
   }
-  fname = lives_strdup_printf("%08d.%s", frame, img_ext);
+  fname = lives_strdup_printf("%08d.%s", frame, ximg_ext);
   ret = lives_build_filename(prefs->workdir, sfile->handle, fname, NULL);
   lives_free(fname);
   return ret;
@@ -1666,7 +1669,6 @@ boolean switch_aud_to_jack(boolean set_in_prefs) {
       mainw->jackd->whentostop = &mainw->whentostop;
       mainw->jackd->cancelled = &mainw->cancelled;
       mainw->jackd->in_use = FALSE;
-      mainw->jackd->play_when_stopped = !(prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED);
       jack_write_client_activate(mainw->jackd);
     }
 

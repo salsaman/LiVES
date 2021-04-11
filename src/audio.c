@@ -465,8 +465,7 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
   // convert 8 bit audio to 16 bit audio
 
   // endianness will be machine endian
-  static double rem = 0.f;
-  double src_offset_d = rem;
+  double src_offset_d = 0.;
   unsigned char *ptr;
   unsigned char *src_end;
   off_t src_offset_i = 0;
@@ -479,7 +478,7 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
   if (!nSrcChannels) return;
 
   if (scale < 0.f) {
-    src_offset_d = ((double)nsamples * (-scale) - 1.f - rem);
+    src_offset_d = ((double)nsamples * (-scale) + 1.);
     src_offset_i = (off_t)src_offset_d * nSrcChannels;
   }
 
@@ -510,13 +509,8 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
     }
 
     /* advance the position */
-    src_offset_i = (off_t)((src_offset_d += scale) + .4999) * nSrcChannels;
-  }
-  rem = 0.f;
-  if (scale > 0.f) {
-    if (src_offset_d > src_offset_i) rem = src_offset_d - (double)src_offset_i;
-  } else {
-    if (src_offset_d < src_offset_i) rem = (double)src_offset_i - src_offset_d;
+    if (scale < 0.) src_offset_i = (off_t)((src_offset_d += scale) - .4999) * nSrcChannels;
+    else src_offset_i = (off_t)((src_offset_d += scale) + .4999) * nSrcChannels;
   }
 }
 
@@ -528,8 +522,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
                          uint64_t nsamples, size_t tbytes, double scale, int nDstChannels,
                          int nSrcChannels, int swap_endian, int swap_sign) {
   // TODO: going from >1 channels to 1, we should average
-  static double rem = 0.f;
-  double src_offset_d = rem;
+  double src_offset_d = 0.;
   int16_t *ptr;
   int16_t *src_end;
   int nSrcCount, nDstCount;
@@ -539,16 +532,16 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
   if (!nSrcChannels) return;
 
   if (scale < 0.f) {
-    src_offset_d = ((double)nsamples * (-scale) - 1.f - rem);
+    src_offset_d = ((double)nsamples * (-scale) + 1.);
     src_offset_i = (off_t)src_offset_d * nSrcChannels;
   }
 
   // take care of rounding errors
   src_end = src + tbytes / 2 - nSrcChannels;
 
-  if ((off_t)((fabs(scale) * (double)nsamples) + rem) * nSrcChannels * 2 > tbytes)
-    scale = scale > 0. ? ((double)(tbytes  / nSrcChannels / 2) - rem) / (double)nsamples
-            :  -(((double)(tbytes  / nSrcChannels / 2) - rem) / (double)nsamples);
+  if ((off_t)((fabs(scale) * (double)nsamples)) * nSrcChannels * 2 > tbytes)
+    scale = scale > 0. ? ((double)(tbytes  / nSrcChannels / 2)) / (double)nsamples
+            :  -(((double)(tbytes  / nSrcChannels / 2)) / (double)nsamples);
 
   while (nsamples--) {
     if ((nSrcCount = nSrcChannels) == (nDstCount = nDstChannels) && !swap_endian && !swap_sign) {
@@ -603,13 +596,8 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
       }
     }
     /* advance the position */
-    src_offset_i = (off_t)((src_offset_d += scale) + .4999) * nSrcChannels;
-  }
-  rem = 0.f;
-  if (scale > 0.f) {
-    if (src_offset_d > src_offset_i) rem = src_offset_d - (double)src_offset_i;
-  } else {
-    if (src_offset_d < src_offset_i) rem = (double)src_offset_i - src_offset_d;
+    if (scale < 0.) src_offset_i = (off_t)((src_offset_d += scale) - .4999) * nSrcChannels;
+    else src_offset_i = (off_t)((src_offset_d += scale) + .4999) * nSrcChannels;
   }
 }
 
@@ -620,8 +608,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
 void sample_move_d16_d8(uint8_t *dst, short *src,
                         uint64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) {
   // TODO: going from >1 channels to 1, we should average
-  double rem = 0.f;
-  double src_offset_d = rem;
+  double src_offset_d = 0.;
   short *ptr;
   short *src_end;
   off_t src_offset_i = 0;
@@ -631,7 +618,7 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
   if (!nSrcChannels) return;
 
   if (scale < 0.f) {
-    src_offset_d = ((double)nsamples * (-scale) - 1.f - rem);
+    src_offset_d = ((double)nsamples * (-scale) + 1.);
     src_offset_i = (off_t)src_offset_d * nSrcChannels;
   }
 
@@ -666,13 +653,8 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
     }
 
     /* advance the position */
-    src_offset_i = (off_t)((src_offset_d += scale) + .4999) * nSrcChannels;
-  }
-  rem = 0.f;
-  if (scale > 0.f) {
-    if (src_offset_d > src_offset_i) rem = src_offset_d - (double)src_offset_i;
-  } else {
-    if (src_offset_d < src_offset_i) rem = (double)src_offset_i - src_offset_d;
+    if (scale < 0.) src_offset_i = (off_t)((src_offset_d += scale) - .4999) * nSrcChannels;
+    else src_offset_i = (off_t)((src_offset_d += scale) + .4999) * nSrcChannels;
   }
 }
 
@@ -747,31 +729,23 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
 
 void sample_move_float_float(float *dst, float *src, uint64_t nsamples, double scale, int dst_skip) {
   // copy one channel of float to a buffer, applying the scale (scale 2.0 to double the rate, etc)
-  static double rem = 0.f;
-  double offs_d = rem;
+  double offs_d = 0.;
   off_t offs = 0;
-  int i;
-
-  if (scale < 0.f) {
-    offs_d = ((double)nsamples * (-scale) - 1.f - rem);
-    offs = (off_t)offs_d;
-  }
 
   if (scale == 1.f && dst_skip == 1) {
     lives_memcpy((void *)dst, (void *)src, nsamples * sizeof(float));
     return;
   }
 
-  for (i = 0; i < nsamples; i++) {
-    *dst = src[offs];
-    dst += dst_skip;
-    offs = (off_t)((offs_d += scale) + .4999);
+  if (scale < 0.f) {
+    offs_d = ((double)nsamples * (-scale) + 1.);
+    offs = (off_t)offs_d;
   }
-  rem = 0.f;
-  if (scale > 0.f) {
-    if (offs_d > offs) rem = offs_d - (double)offs;
-  } else {
-    if (offs_d < offs) rem = (double)offs - offs_d;
+
+  for (int i = 0; i < nsamples; i++) {
+    dst[dst_skip * i] = src[offs];
+    if (scale < 0.f) offs = (off_t)((offs_d += scale) - .4999);
+    else offs = (off_t)((offs_d += scale) + .4999);
   }
 }
 
@@ -867,7 +841,8 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
       offs++;
     }
     lcoffs = coffs;
-    coffs = (off_t)((coffs_d += scale) + .4999);
+    if (scale < 0.) coffs = (off_t)((coffs_d += scale) - .4999);
+    else coffs = (off_t)((coffs_d += scale) + .4999);
   }
   coffs_d -= (double)coffs;
   if (prefs->show_dev_opts) {
@@ -953,7 +928,8 @@ int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_ara
         xchan++;
       }
       // resample on the fly
-      src_offset_i = (off_t)((src_offset_d += scale) + .4999);
+      if (scale < 0.) src_offset_i = (off_t)((src_offset_d += scale) - .4999);
+      else src_offset_i = (off_t)((src_offset_d += scale) + .4999);
       samps++;
       samples_out++;
     }
@@ -1058,7 +1034,8 @@ int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arat
         pthread_mutex_unlock(&mainw->abuf_mutex);
         xchan++;
       }
-      src_offset_i = (ssize_t)((src_offset_d += scale) + .4999);
+      if (scale < 0.) src_offset_i = (ssize_t)((src_offset_d += scale) - .4999);
+      else src_offset_i = (ssize_t)((src_offset_d += scale) + .4999);
       samps++;
     }
 
@@ -2788,10 +2765,27 @@ LIVES_GLOBAL_INLINE void avsync_force(void) {
 }
 
 
+LIVES_GLOBAL_INLINE boolean av_clips_equal(void) {
+  if (prefs->audio_src == AUDIO_SRC_INT) {
+#ifdef ENABLE_JACK
+    if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK
+        && mainw->jackd->playing_file == mainw->playing_file)
+      return TRUE;
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE
+        && mainw->pulsed->playing_file == mainw->playing_file)
+      return TRUE;
+#endif
+  }
+  return FALSE;
+}
+
+
 /**
    @brief resync audio playback to the current video frame
 
-   if we are using a realtime audio player, resync to frameno
+   if we are using a realtime audio player, resync to frameno and pb_fps
    and return TRUE
 
    otherwise return FALSE
@@ -2800,65 +2794,73 @@ LIVES_GLOBAL_INLINE void avsync_force(void) {
    to external transport changes, (e.g. jack transport, osc retrigger / goto)
    or if we are looping a video selection, or it may be triggered from the keyboard
 
-   this is only active if "audio follows video rate/fps changes" is set
-   and various other conditions are met.
+   this is triggered if "audio follows video rate/fps changes" is set
+   or various other conditions are met.
 */
-boolean resync_audio(double frameno) {
-  if (prefs->audio_opts & AUDIO_OPTS_NO_RESYNC) return FALSE;
-  // if recording external audio, we are intrinsically in sync
-  if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT) return TRUE;
+boolean resync_audio(int clipno, double frameno) {
+  lives_clip_t *sfile;
+
+  if (!LIVES_IS_PLAYING || !CLIP_HAS_AUDIO(clipno)) return FALSE;
+  if (!av_clips_equal()) return FALSE;
+
+  sfile = mainw->files[clipno];
+  if (!frameno && sfile->fps == 0.) return FALSE;
 
   // if we are playing an audio generator or an event_list, then resync is meaningless
   if ((mainw->event_list && !mainw->multitrack && !mainw->record && !mainw->record_paused)
       || mainw->agen_key != 0 || mainw->agen_needs_reinit) return FALSE;
 
-  // also can't resync if the playing file has no audio, or prefs dont allow it
-  if (cfile->achans == 0
-      || (0
-#ifdef HAVE_PULSE_AUDIO
-          || (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed
-              && mainw->current_file != mainw->pulsed->playing_file)
-#endif
-          ||
-#ifdef ENABLE_JACK
-          (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd
-           && mainw->current_file != mainw->jackd->playing_file) ||
-#endif
-          0))
-    return FALSE;
+  if (sfile->pb_fps >= 0.) sfile->adirection = LIVES_DIRECTION_FORWARD;
+  else sfile->adirection = LIVES_DIRECTION_REVERSE;
 
 #ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
-    if (!jack_audio_seek_frame(mainw->jackd, frameno)) {
-      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, frameno);
-      else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
+    if (frameno) {
+      if (!jack_audio_seek_frame(mainw->jackd, frameno)) {
+        if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, frameno);
+        else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+      }
+      mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
     }
-    mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
 
-    if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && prefs->audio_src == AUDIO_SRC_INT) {
-      jack_get_rec_avals(mainw->jackd);
+    if (sfile->fps != 0.) mainw->jackd->sample_in_rate = sfile->arate * sfile->pb_fps / sfile->fps;
+
+    if (clipno == mainw->playing_file) jack_get_rec_avals(mainw->jackd);
+
+    if (frameno && sfile->fps != 0.) {
+      if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+          && (prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART)) {
+        jack_transport_update(mainw->jackd_trans, (frameno - 1.) / sfile->fps);
+      }
     }
     return TRUE;
   }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
-    /* if (mainw->files[mainw->pulsed->playing_file]->pb_fps != 0.) */
-    /*   frameno += (double)(mainw->startticks - mainw->currticks) / TICKS_PER_SECOND_DBL */
-    /* 	/ mainw->files[mainw->pulsed->playing_file]->pb_fps; */
-    if (!pulse_audio_seek_frame(mainw->pulsed, frameno)) {
-      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, frameno);
-      else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+  if (prefs->audio_player == AUD_PLAYER_PULSE) {
+    if (frameno) {
+      if (!pulse_audio_seek_frame(mainw->pulsed, frameno)) {
+        if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, frameno);
+        else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+      }
     }
     mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
 
-    if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && prefs->audio_src == AUDIO_SRC_INT) {
-      pulse_get_rec_avals(mainw->pulsed);
+    if (sfile->fps != 0.) {
+      mainw->pulsed->in_arate = sfile->arate * sfile->pb_fps / sfile->fps;
+      if (mainw->pulsed->in_arate > 0.) {
+        lives_buffered_rdonly_set_reversed(mainw->pulsed->fd, FALSE);
+      } else {
+        lives_buffered_rdonly_set_reversed(mainw->pulsed->fd, TRUE);
+      }
     }
+
+    if (clipno == mainw->playing_file) pulse_get_rec_avals(mainw->pulsed);
     return TRUE;
   }
 #endif
+
   return FALSE;
 }
 
@@ -2869,7 +2871,6 @@ static pthread_t athread;
 
 static pthread_cond_t cond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 
 /**
    @brief audio caching worker thread function
@@ -3107,25 +3108,42 @@ static void *cache_my_audio(void *arg) {
     cbuffer->_cachans = cbuffer->out_achans;
     cbuffer->_casamps = cbuffer->out_asamps;
 
+    // lock the mutex - we need to make sure eveything is updated together
+    pthread_mutex_lock(&cbuffer->atomic_mutex);
+
     // open new file if necessary
 
     if (cbuffer->fileno != cbuffer->_cfileno) {
-      lives_clip_t *afile = mainw->files[cbuffer->fileno];
+      if (cbuffer->_fd != -1) {
+        lives_close_buffered(cbuffer->_fd);
+        cbuffer->_fd = -1;
+      }
+    }
 
-      if (cbuffer->_fd != -1) lives_close_buffered(cbuffer->_fd);
+    if (!IS_VALID_CLIP(cbuffer->fileno)) {
+      cbuffer->in_achans = 0;
+      cbuffer->_cfileno = cbuffer->fileno = -1; ///< let client handle this
+      cbuffer->is_ready = TRUE;
+      pthread_mutex_unlock(&cbuffer->atomic_mutex);
+      continue;
+    }
 
+    if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->_fd == -1) {
+      lives_clip_t *afile;
+      afile = mainw->files[cbuffer->fileno];
       filename = get_audio_file_name(cbuffer->fileno, afile->opening);
 
       cbuffer->_fd = lives_open_buffered_rdonly(filename);
       if (cbuffer->_fd == -1) {
         lives_printerr("audio cache thread: error opening %s\n", filename);
         cbuffer->in_achans = 0;
-        cbuffer->fileno = -1; ///< let client handle this
+        cbuffer->_cfileno = cbuffer->fileno = -1; ///< let client handle this
         cbuffer->is_ready = TRUE;
+        pthread_mutex_unlock(&cbuffer->atomic_mutex);
         continue;
       }
-
       lives_free(filename);
+      cbuffer->_cfileno = -1;
     }
 
     if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek ||
@@ -3138,6 +3156,7 @@ static void *cache_my_audio(void *arg) {
       if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek) {
         lives_lseek_buffered_rdonly_absolute(cbuffer->_fd, cbuffer->seek);
       }
+      cbuffer->_cseek = cbuffer->seek;
     }
 
     cbuffer->_cfileno = cbuffer->fileno;
@@ -3152,11 +3171,13 @@ static void *cache_my_audio(void *arg) {
         cbuffer->_cbytesize = cbuffer->bytesize = 0;
         cbuffer->in_achans = 0;
         cbuffer->is_ready = TRUE;
+        pthread_mutex_unlock(&cbuffer->atomic_mutex);
         continue;
       }
     }
 
     // read from file
+    //g_print("NEED %ld\n", cbuffer->bytesize);
     cbuffer->_cbytesize = lives_read_buffered(cbuffer->_fd, cbuffer->_filebuffer, cbuffer->bytesize, TRUE);
 
     if (cbuffer->_cbytesize <= 0) {
@@ -3165,6 +3186,7 @@ static void *cache_my_audio(void *arg) {
       cbuffer->bytesize = cbuffer->_cbytesize = 0;
       cbuffer->in_achans = 0;
       cbuffer->is_ready = TRUE;
+      pthread_mutex_unlock(&cbuffer->atomic_mutex);
       continue;
     }
 
@@ -3206,6 +3228,7 @@ static void *cache_my_audio(void *arg) {
     // if our out_asamps is 16, we are done
 
     cbuffer->is_ready = TRUE;
+    pthread_mutex_unlock(&cbuffer->atomic_mutex);
   }
   return cbuffer;
 }
@@ -3248,6 +3271,8 @@ lives_audio_buf_t *audio_cache_init(void) {
     cache_buffer->_cseek = -1;
     cache_buffer->_fd = -1;
     cache_buffer->_shrink_factor = 0.;
+
+    pthread_mutex_init(&cache_buffer->atomic_mutex, NULL);
   }
 
   // init the audio caching thread for rt playback
@@ -3293,6 +3318,8 @@ void audio_cache_end(void) {
 
   if (cache_buffer->_fd != -1) lives_close_buffered(cache_buffer->_fd);
 
+  pthread_mutex_destroy(&cache_buffer->atomic_mutex);
+
   // make this threadsafe (kind of)
   xcache_buffer = cache_buffer;
   cache_buffer = NULL;
@@ -3305,9 +3332,7 @@ void audio_cache_end(void) {
 #endif
 }
 
-LIVES_GLOBAL_INLINE lives_audio_buf_t *audio_cache_get_buffer(void) {
-  return cache_buffer;
-}
+LIVES_GLOBAL_INLINE lives_audio_buf_t *audio_cache_get_buffer(void) {return cache_buffer;}
 
 ///////////////////////////////////////
 

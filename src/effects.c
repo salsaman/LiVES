@@ -1257,7 +1257,6 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
   //rte_swap_fg_bg();
 
   mainw->new_clip = blend_file;
-  //do_quick_switch(blend_file); // will set mainw->blend_file
 
   if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
                            || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))

@@ -73,7 +73,7 @@ LIVES_GLOBAL_INLINE double get_time_from_x(lives_mt *mt, int x) {
                 (mt->tl_max - mt->tl_min) + mt->tl_min;
   if (time < 0.) time = 0.;
   else if (time > mt->end_secs + 1. / mt->fps) time = mt->end_secs + 1. / mt->fps;
-  return q_dbl(time, mt->fps) / TICKS_PER_SECOND_DBL;
+  return q_dbl(time, mt->fps);
 }
 
 void mt_update_timecodes(lives_mt *mt, double dtime) {
@@ -2671,7 +2671,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
 
 
 static void _mt_tl_move(lives_mt * mt, double pos) {
-  pos = q_dbl(pos, mt->fps) / TICKS_PER_SECOND_DBL;
+  pos = q_dbl(pos, mt->fps);
   if (pos < 0.) pos = 0.;
 
   // after this, we need to reference ONLY mt->ptr_time, since it may become outside the range of mt->timeline

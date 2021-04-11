@@ -1124,6 +1124,7 @@ typedef struct {
   int dclick_dist;
   char *sysbindir;
 
+  // cmdline defaults
   char *extracmds_file[2];
   int extracmds_idx;
 
@@ -1133,6 +1134,9 @@ typedef struct {
   lives_checkstatus_t has_vid_playback_plugins;
 
   LiVESList *plugins_list[PLUGIN_TYPE_FIRST_CUSTOM];
+
+  // devices
+  LiVESList *videodevs;
 } capability;
 
 capability *capable;
@@ -1153,7 +1157,7 @@ boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number
 boolean do_yesno_dialog(const char *text);
 boolean do_yesno_dialogf(const char *fmt, ...);
 boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number);
-boolean do_yesno_dialogf_with_countdown(int nclicks, const char *fmt, ...);
+boolean do_yesno_dialogf_with_countdown(int nclicks, boolean isyes, const char *fmt, ...);
 
 void maybe_abort(boolean do_check);
 void do_abort_dialog(const char *text);

@@ -205,7 +205,10 @@ LiVESWidget *create_combo_dialog(int type, LiVESList *list);
 
 xprocess *create_processing(const char *text);
 xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had_focus);
+
+// actually in gui.c
 void add_to_clipmenu(void);
+void add_to_clipmenu_any(int clipno);
 void remove_from_clipmenu(void);
 
 boolean get_play_screen_size(int *opwidth, int *opheight); /// actually in gui.c

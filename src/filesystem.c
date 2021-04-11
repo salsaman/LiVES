@@ -902,8 +902,8 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
     while (count) {
       res = file_buffer_fill(fbuff, count);
       if (res < 0)  {
-	retval = res;
-	goto rd_done;
+        retval = res;
+        goto rd_done;
       }
 
       // buffer is sufficient (or eof hit)

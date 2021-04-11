@@ -1,6 +1,6 @@
 // yuv4mpeg.c
 // LiVES
-// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -14,7 +14,6 @@ static boolean gotbroken;
 typedef struct y4data {
   const char *filename;
   lives_yuv4m_t *yuv4mpeg;
-
   int fd;
   int i;
 } y4data;
@@ -245,7 +244,7 @@ void lives_yuv_stream_stop_read(lives_yuv4m_t *yuv4mpeg) {
   if (yuv4mpeg->name) lives_free(yuv4mpeg->name);
 
   if (yuv4mpeg->type == YUV4_TYPE_FW) fw_cards = lives_list_remove(fw_cards, LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
-  if (yuv4mpeg->type == YUV4_TYPE_TV) mainw->videodevs = lives_list_remove(mainw->videodevs,
+  if (yuv4mpeg->type == YUV4_TYPE_TV) capable->videodevs = lives_list_remove(capable->videodevs,
         LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
 }
 
@@ -582,7 +581,7 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   cardno = (int)mainw->fx1_val;
   chanstr = lives_strdup_printf("%d", (int)mainw->fx2_val);
 
-  if (lives_list_find(mainw->videodevs, LIVES_INT_TO_POINTER(cardno))) {
+  if (lives_list_find(capable->videodevs, LIVES_INT_TO_POINTER(cardno))) {
     lives_widget_destroy(card_dialog);
     do_card_in_use_error();
     lives_free(chanstr);
@@ -615,7 +614,7 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
-  mainw->videodevs = lives_list_append(mainw->videodevs, LIVES_INT_TO_POINTER(cardno));
+  capable->videodevs = lives_list_append(capable->videodevs, LIVES_INT_TO_POINTER(cardno));
 
   mainw->current_file = new_file;
 

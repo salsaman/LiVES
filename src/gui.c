@@ -4613,41 +4613,44 @@ char *get_menu_name(lives_clip_t *sfile, boolean add_setname) {
 }
 
 
-void add_to_clipmenu(void) {
+void add_to_clipmenu_any(int clipno) {
   // TODO - indicate "opening"
+  lives_clip_t *sfile;
   char *fname = NULL;
 
 #ifdef TEST_NOTIFY
   char *tmp, *detail;
 #endif
 
+  if (!IS_VALID_CLIP(clipno)) return;
+
+  sfile = mainw->files[clipno];
+
 #ifndef GTK_RADIO_MENU_BUG
-  if (!CURRENT_CLIP_IS_VALID) return;
   widget_opts.mnemonic_label = FALSE;
-  cfile->menuentry = lives_standard_radio_menu_item_new_with_label(mainw->clips_group, tmp = get_menu_name(cfile));
+  sfile->menuentry = lives_standard_radio_menu_item_new_with_label(mainw->clips_group, tmp = get_menu_name(sfile));
   lives_free(tmp);
-  mainw->clips_group = lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(cfile->menuentry));
+  mainw->clips_group = lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(sfile->menuentry));
 #else
   widget_opts.mnemonic_label = FALSE;
-  cfile->menuentry = lives_standard_check_menu_item_new_with_label(fname = get_menu_name(cfile, TRUE), FALSE);
-  lives_check_menu_item_set_draw_as_radio(LIVES_CHECK_MENU_ITEM(cfile->menuentry), TRUE);
+  sfile->menuentry = lives_standard_check_menu_item_new_with_label(fname = get_menu_name(sfile, TRUE), FALSE);
+  lives_check_menu_item_set_draw_as_radio(LIVES_CHECK_MENU_ITEM(sfile->menuentry), TRUE);
 #endif
 
-  if (!CURRENT_CLIP_IS_VALID) return;
   widget_opts.mnemonic_label = TRUE;
-  lives_widget_show(cfile->menuentry);
-  lives_container_add(LIVES_CONTAINER(mainw->clipsmenu), cfile->menuentry);
+  lives_widget_show(sfile->menuentry);
+  lives_container_add(LIVES_CONTAINER(mainw->clipsmenu), sfile->menuentry);
 
-  lives_widget_set_sensitive(cfile->menuentry, TRUE);
-  cfile->menuentry_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(cfile->menuentry), LIVES_WIDGET_TOGGLED_SIGNAL,
+  lives_widget_set_sensitive(sfile->menuentry, TRUE);
+  sfile->menuentry_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(sfile->menuentry), LIVES_WIDGET_TOGGLED_SIGNAL,
                           LIVES_GUI_CALLBACK(switch_clip_activate), NULL);
 
   if (CURRENT_CLIP_IS_NORMAL) mainw->clips_available++;
   pthread_mutex_lock(&mainw->clip_list_mutex);
-  mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
+  mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(clipno));
   pthread_mutex_unlock(&mainw->clip_list_mutex);
-  cfile->old_frames = cfile->frames;
-  cfile->ratio_fps = check_for_ratio_fps(cfile->fps);
+  sfile->old_frames = sfile->frames;
+  sfile->ratio_fps = check_for_ratio_fps(sfile->fps);
 
 #ifdef TEST_NOTIFY
   detail = lives_strdup_printf(_("'LiVES opened the file' '%s'"), fname);
@@ -4658,6 +4661,11 @@ void add_to_clipmenu(void) {
 #endif
 
   lives_freep((void **)&fname);
+}
+
+
+LIVES_GLOBAL_INLINE void add_to_clipmenu(void) {
+  add_to_clipmenu_any(mainw->current_file);
 }
 
 

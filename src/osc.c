@@ -851,7 +851,7 @@ static boolean osc_fx_on(int effect_key) {
     if (mainw->preview || (!mainw->multitrack && mainw->event_list) || mainw->is_processing ||
         mainw->multitrack) return lives_osc_notify_failure();
     mainw->error = FALSE;
-    lives_timer_add_simple(0, osc_init_generator, LIVES_INT_TO_POINTER(effect_key));
+    lives_idle_add_simple(osc_init_generator, LIVES_INT_TO_POINTER(effect_key));
     return TRUE;
   } else {
     rte_key_toggle(effect_key);
@@ -1597,6 +1597,7 @@ boolean lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs
 boolean lives_osc_cb_fgclip_retrigger(void *context, int arglen, const void *vargs, OSCTimeTag when,
                                       NetworkReturnAddressPtr ra) {
   // switch fg clip and reset framenumber
+  lives_clip_t *sfile;
 
   if (mainw->playing_file < 1 || (mainw->preview || (mainw->event_list && !mainw->record)) ||
       mainw->is_processing) return lives_osc_notify_failure();
@@ -1605,12 +1606,13 @@ boolean lives_osc_cb_fgclip_retrigger(void *context, int arglen, const void *var
 
   lives_osc_cb_fgclip_select(context, arglen, vargs, when, ra);
 
-  if (cfile->pb_fps > 0. || (cfile->play_paused && cfile->freeze_fps > 0.)) cfile->frameno = cfile->last_frameno = 1;
-  else cfile->frameno = cfile->last_frameno = cfile->frames;
+  sfile = mainw->files[mainw->playing_file];
+  if (sfile->pb_fps > 0. || (sfile->play_paused && sfile->freeze_fps > 0.)) sfile->frameno = sfile->last_frameno = 1;
+  else sfile->frameno = sfile->last_frameno = sfile->frames;
 
 #ifdef RT_AUDIO
-  if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-    resync_audio(cfile->frameno);
+  if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
+    resync_audio(mainw->playing_file, (double)sfile->frameno);
   }
 #endif
   return lives_osc_notify_success(NULL);
@@ -1880,7 +1882,9 @@ boolean lives_osc_cb_clip_count(void *context, int arglen, const void *vargs, OS
 
 
 boolean lives_osc_cb_clip_goto(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  int frame;
+  lives_clip_t *sfile;
+  frames_t frame;
+
   if (mainw->current_file < 1 || (mainw->preview || (mainw->event_list && (!mainw->record || !LIVES_IS_PLAYING))) ||
       mainw->playing_file < 1 ||
       mainw->is_processing) return lives_osc_notify_failure();
@@ -1889,13 +1893,13 @@ boolean lives_osc_cb_clip_goto(void *context, int arglen, const void *vargs, OSC
   if (!lives_osc_check_arguments(arglen, vargs, "i", TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs, &frame);
 
-  if (frame < 1 || frame > cfile->frames || !CURRENT_CLIP_IS_NORMAL) return lives_osc_notify_failure();
-
-  cfile->last_frameno = cfile->frameno = frame;
+  sfile = mainw->files[mainw->playing_file];
+  if (frame < 1 || frame > sfile->frames || !CURRENT_CLIP_IS_NORMAL) return lives_osc_notify_failure();
+  sfile->last_frameno = sfile->frameno = frame;
 
 #ifdef RT_AUDIO
-  if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-    resync_audio(frame);
+  if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
+    resync_audio(mainw->current_file, (double)frame);
   }
 #endif
   return lives_osc_notify_success(NULL);
@@ -2358,7 +2362,7 @@ boolean lives_osc_cb_get_playtime(void *context, int arglen, const void *vargs, 
 
 
 boolean lives_osc_cb_bgclip_goto(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  int frame;
+  frames_t frame;
   if (mainw->current_file < 1 || (mainw->preview || (mainw->event_list && !mainw->record)) || mainw->playing_file < 1 ||
       mainw->is_processing) return lives_osc_notify_failure();
   if (mainw->multitrack) return lives_osc_notify_failure();
@@ -2401,7 +2405,7 @@ boolean lives_osc_cb_clip_set_start(void *context, int arglen, const void *vargs
 
   int current_file = mainw->current_file;
   int clip = current_file;
-  int frame;
+  frames_t frame;
 
   boolean selwidth_locked = mainw->selwidth_locked;
 
@@ -2471,7 +2475,7 @@ boolean lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, 
 
   int current_file = mainw->current_file;
   int clip = current_file;
-  int frame;
+  frames_t frame;
 
   boolean selwidth_locked = mainw->selwidth_locked;
 
@@ -2640,7 +2644,8 @@ boolean lives_osc_cb_clip_save_frame(void *context, int arglen, const void *varg
                                      NetworkReturnAddressPtr ra) {
   int current_file = mainw->current_file;
   int clip = current_file;
-  int frame, width = -1, height = -1;
+  frames_t frame;
+  int width = -1, height = -1;
   char fname[OSC_STRING_SIZE];
   boolean retval;
 

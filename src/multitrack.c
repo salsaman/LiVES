@@ -1128,10 +1128,10 @@ weed_timecode_t mt_set_play_position(lives_mt * mt) {
 #ifdef ENABLE_JACK_TRANSPORT
   // if we have jack transport enabled, we get our playback start time from there
 
-  if (mainw->jack_can_stop && (prefs->jack_opts & JACK_OPTS_TIMEBASE_START) && (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT)) {
+  if (mainw->jack_can_stop && (prefs->jack_opts & JACK_OPTS_TIMEBASE_START) && (prefs->jack_opts & JACK_OPTS_TRANSPORT_SLAVE)) {
     mt->pb_loop_event = get_first_frame_event(mt->event_list);
     has_pb_loop_event = TRUE;
-    tc = q_gint64(jack_transport_get_current_ticks(), mainw->files[mt->render_file]->fps);
+    tc = q_gint64(jack_transport_get_current_ticks(mainw->jackd_trans), mainw->files[mt->render_file]->fps);
     if (!mainw->loop_cont) {
       if (tc > end_tc) {
         mainw->cancelled = CANCEL_VID_END;
@@ -2051,7 +2051,7 @@ void mt_spin_start_value_changed(LiVESSpinButton * spinbutton, livespointer user
   if (!LIVES_IS_INTERACTIVE) return;
 
   lives_signal_handler_block(mt->spinbutton_start, mt->spin_start_func);
-  mt->region_start = q_dbl(lives_spin_button_get_value(spinbutton), mt->fps) / TICKS_PER_SECOND_DBL;
+  mt->region_start = q_dbl(lives_spin_button_get_value(spinbutton), mt->fps);
   lives_spin_button_set_value(spinbutton, mt->region_start);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_end), mt->region_start, mt->end_secs);
   lives_widget_queue_draw(mt->timeline_reg);
@@ -2105,7 +2105,7 @@ void mt_spin_end_value_changed(LiVESSpinButton * spinbutton, livespointer user_d
   if (!LIVES_IS_INTERACTIVE) return;
 
   lives_signal_handler_block(mt->spinbutton_end, mt->spin_end_func);
-  mt->region_end = q_dbl(lives_spin_button_get_value(spinbutton), mt->fps) / TICKS_PER_SECOND_DBL;
+  mt->region_end = q_dbl(lives_spin_button_get_value(spinbutton), mt->fps);
   lives_spin_button_set_value(spinbutton, mt->region_end);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_start), 0., mt->region_end);
   lives_widget_queue_draw(mt->timeline_reg);
@@ -3652,7 +3652,7 @@ static boolean timecode_string_validate(LiVESEntry * entry, lives_mt * mt) {
 
   pos = mt->ptr_time;
 
-  pos = q_dbl(pos, mt->fps) / TICKS_PER_SECOND_DBL;
+  pos = q_dbl(pos, mt->fps);
   if (pos < 0.) pos = 0.;
 
   mt_update_timecodes(mt, pos);
@@ -3697,7 +3697,7 @@ static void after_timecode_changed(LiVESWidget * entry, LiVESXEventFocus * dir, 
 
   if (!timecode_string_validate(LIVES_ENTRY(entry), mt)) {
     pos = mt->ptr_time;
-    pos = q_dbl(pos, mt->fps) / TICKS_PER_SECOND_DBL;
+    pos = q_dbl(pos, mt->fps);
     if (pos < 0.) pos = 0.;
     mt_update_timecodes(mt, pos);
   }
@@ -6006,8 +6006,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->clip_scroll = lives_scrolled_window_new();
   lives_widget_object_ref(mt->clip_scroll);
   lives_widget_set_events(mt->clip_scroll, LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->clip_scroll), LIVES_WIDGET_SCROLL_EVENT, LIVES_GUI_CALLBACK(on_mouse_scroll),
-                            mt);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->clip_scroll), LIVES_WIDGET_SCROLL_EVENT,
+                            LIVES_GUI_CALLBACK(on_mouse_scroll), mt);
 
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mt->clip_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_NEVER);
   lives_widget_set_hexpand(mt->clip_scroll, TRUE);
@@ -9478,7 +9478,7 @@ void in_out_start_changed(LiVESWidget * widget, livespointer user_data) {
   event = block->start_event;
   orig_start_tc = block->offset_start;
   track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "layer_number"));
-  new_start_tc = q_dbl(new_start, mt->fps);
+  new_start_tc = q_dbl(new_start / TICKS_PER_SECOND_DBL, mt->fps) * TICKS_PER_SECOND_DBL;
 
   if (new_start_tc == orig_start_tc || !block->ordered) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), new_start_tc / TICKS_PER_SECOND_DBL);
@@ -9558,7 +9558,7 @@ void in_out_start_changed(LiVESWidget * widget, livespointer user_data) {
 
       if (ablock) {
         insert_audio_event_at(ablock->start_event, track, aclip, aseek, avel);
-        ablock->offset_start = q_dbl(aseek * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
+        ablock->offset_start = q_dbl(aseek, mt->fps);
       }
 
       // move filter_inits right, and deinits left
@@ -9606,7 +9606,7 @@ void in_out_start_changed(LiVESWidget * widget, livespointer user_data) {
                               get_prev_frame_event(ablock->start_event));
 
         insert_audio_event_at(ablock->start_event, track, aclip, aseek, avel);
-        ablock->offset_start = q_dbl(aseek * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
+        ablock->offset_start = q_dbl(aseek, mt->fps);
       }
       if (block != ablock) {
         // do an insert from offset_start down
@@ -12230,7 +12230,7 @@ static void insgap_inner(lives_mt * mt, int tnum, boolean is_sel, int passnm) {
     // frames and blocks
     if (tnum >= 0) eventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, tnum);
     else eventbox = (LiVESWidget *)mt->audio_draws->data;
-    tc = q_dbl(mt->region_start, mt->fps);
+    tc = q_dbl(mt->region_start, mt->fps) * TICKS_PER_SECOND_DBL;
     sblock = get_block_from_time(eventbox, mt->region_start, mt);
 
     if (sblock) {
@@ -13129,7 +13129,7 @@ weed_plant_t *add_blank_frames_up_to(weed_plant_t *event_list, weed_plant_t *sta
   // returns updated event_list
   weed_timecode_t tc;
   weed_plant_t *shortcut = NULL;
-  weed_timecode_t tl = q_dbl(1. / fps, fps);
+  weed_timecode_t tl = TICKS_PER_SECOND_DBL / fps;
   int blank_clip = -1;
   int64_t blank_frame = 0;
 
@@ -13488,10 +13488,10 @@ void on_jumpnext_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 static void mt_jumpto_mark(lives_mt * mt, lives_direction_t dir) {
   LiVESList *tl_marks = mt->tl_marks;
   double time = -1., marktime = -1.;
-  double ptr_time = q_dbl(mt->ptr_time, mt->fps) / TICKS_PER_SECOND_DBL;
+  double ptr_time = q_dbl(mt->ptr_time, mt->fps);
 
   while (tl_marks) {
-    time = q_dbl(lives_strtod((char *)tl_marks->data), mt->fps) / TICKS_PER_SECOND_DBL;
+    time = q_dbl(lives_strtod((char *)tl_marks->data), mt->fps);
     if (time > ptr_time) break;
     if (marktime == time) continue;
     marktime = time;
@@ -14556,9 +14556,6 @@ void multitrack_playall(lives_mt * mt) {
     lives_widget_show_all(mt->context_frame);
     lives_widget_set_sensitive(mt->context_frame, TRUE);
   }
-
-  if (mt->context_scroll)
-    lives_widget_object_unref(mt->context_scroll);
 
   if (!pb_audio_needs_prerender) lives_widget_set_sensitive(mt->prerender_aud, FALSE);
   if (mt->fx_base_box) lives_widget_set_sensitive(mt->fx_base_box, TRUE);

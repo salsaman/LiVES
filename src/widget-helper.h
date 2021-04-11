@@ -1010,6 +1010,7 @@ boolean lives_xwindow_set_cursor(LiVESXWindow *, LiVESXCursor *);
 uint32_t lives_timer_add(uint32_t interval, LiVESWidgetSourceFunc function, livespointer data);
 boolean lives_timer_remove(uint32_t timer);
 uint32_t lives_idle_add(LiVESWidgetSourceFunc function, livespointer data);
+uint32_t lives_idle_priority(LiVESWidgetSourceFunc function, livespointer data);
 
 boolean lives_source_remove(uint32_t handle);
 

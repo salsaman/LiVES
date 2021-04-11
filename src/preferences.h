@@ -291,7 +291,10 @@ typedef struct {
   volatile uint32_t audio_opts;
 #define AUDIO_OPTS_FOLLOW_CLIPS		(1 << 0)
 #define AUDIO_OPTS_FOLLOW_FPS		(1 << 1)
-#define AUDIO_OPTS_NO_RESYNC       	(1 << 2)
+#define AUDIO_OPTS_NO_RESYNC_FPS       	(1 << 2) // on by default
+#define AUDIO_OPTS_NO_RESYNC_VPOS      	(1 << 3) // on by default
+#define AUDIO_OPTS_RESYNC_ADIR       	(1 << 4)
+#define AUDIO_OPTS_RESYNC_ACLIP       	(1 << 5)
 
   boolean event_window_show_frame_events;
   boolean crash_recovery; ///< TRUE==maintain mainw->recovery file
@@ -777,13 +780,17 @@ typedef struct {
   LiVESWidget *checkbutton_jack_client;
   LiVESWidget *checkbutton_jack_tb_start;
   LiVESWidget *checkbutton_jack_mtb_start;
+  LiVESWidget *checkbutton_jack_mtb_update;
   LiVESWidget *checkbutton_jack_tb_client;
-  LiVESWidget *checkbutton_jack_pwp;
+  LiVESWidget *checkbutton_jack_stricts;
   //
   LiVESWidget *checkbutton_parestart;
   LiVESWidget *checkbutton_afollow;
   LiVESWidget *checkbutton_aclips;
-  LiVESWidget *checkbutton_aresync;
+  LiVESWidget *resync_fps;
+  LiVESWidget *resync_vpos;
+  LiVESWidget *resync_adir;
+  LiVESWidget *resync_aclip;
   LiVESWidget *spinbutton_ext_aud_thresh;
   LiVESWidget *spinbutton_mt_def_width;
   LiVESWidget *spinbutton_mt_def_height;
@@ -862,6 +869,7 @@ typedef struct {
   boolean ign_libdir;
   boolean ign_jackopts;
   boolean ign_jackserver;
+  boolean ign_jackcfg;
   boolean ign_aplayer;
   boolean ign_asource;
   boolean ign_stmode;

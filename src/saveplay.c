@@ -95,10 +95,9 @@ static boolean _start_playback(livespointer data) {
 
 LIVES_GLOBAL_INLINE boolean start_playback(int type) {return  _start_playback(LIVES_INT_TO_POINTER(type));}
 
+
 LIVES_GLOBAL_INLINE void start_playback_async(int type) {
-  lives_idle_add_simple(_start_playback, LIVES_INT_TO_POINTER(type));
-  //lives_proc_thread_create(0, (lives_funcptr_t)_start_playback, 0, "i", type);
-  //_start_playback(LIVES_INT_TO_POINTER(type));
+  lives_idle_priority(_start_playback, LIVES_INT_TO_POINTER(type));
 }
 
 
@@ -610,9 +609,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     asampsize = cfile->asampsize;
     cfile->old_frames = cfile->frames;
     cfile->frames = 0;
-
-    // we need this FALSE here, otherwise we will switch straight back here...
-    cfile->opening = FALSE;
 
     // force a resize
     current_file = mainw->current_file;
@@ -2321,15 +2317,6 @@ void play_file(void) {
   if (!is_realtime_aplayer(audio_player)) mainw->aud_file_to_kill = mainw->current_file;
   else mainw->aud_file_to_kill = -1;
 
-#ifdef ENABLE_JACK_TRANSPORT
-  if (!mainw->preview && !mainw->foreign) {
-    if (!mainw->multitrack)
-      jack_pb_start(cfile->achans > 0 ? cfile->real_pointer_time : cfile->pointer_time);
-    else
-      jack_pb_start(mainw->multitrack->pb_start_time);
-  }
-#endif
-
   mainw->ext_playback = FALSE;
 
   mainw->rec_aclip = -1;
@@ -2391,15 +2378,13 @@ void play_file(void) {
   if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
     lives_widget_set_frozen(mainw->spinbutton_start, TRUE);
     lives_widget_set_frozen(mainw->spinbutton_end, TRUE);
-    //lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
-    //lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
   }
 
 #ifdef ENABLE_JACK_TRANSPORT
   if (mainw->jack_can_stop && !mainw->event_list && !mainw->preview
-      && (prefs->jack_opts & (JACK_OPTS_TIMEBASE_START | JACK_OPTS_TIMEBASE_CLIENT))) {
+      && (prefs->jack_opts & (JACK_OPTS_TIMEBASE_START | JACK_OPTS_TIMEBASE_SLAVE))) {
     // calculate the start position from jack transport
-    double sttime = (double)jack_transport_get_current_ticks() / TICKS_PER_SECOND_DBL;
+    double sttime = (double)jack_transport_get_current_ticks(mainw->jackd_trans) / TICKS_PER_SECOND_DBL;
     cfile->pointer_time = cfile->real_pointer_time = sttime;
     if (cfile->real_pointer_time > CLIP_TOTAL_TIME(mainw->current_file))
       cfile->real_pointer_time = CLIP_TOTAL_TIME(mainw->current_file);
@@ -2511,7 +2496,9 @@ void play_file(void) {
   if (!mainw->preview || !cfile->opening) {
     enable_record();
     desensitize();
-    lives_widget_set_sensitive(mainw->spinbutton_pb_fps, TRUE);
+    if (!(mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+          && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)))
+      lives_widget_set_sensitive(mainw->spinbutton_pb_fps, TRUE);
   }
 
   if (mainw->record) {
@@ -2523,7 +2510,9 @@ void play_file(void) {
     lives_widget_hide(mainw->message_box);
   }
 
-  lives_widget_set_sensitive(mainw->stop, TRUE);
+  if (!(mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+        && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)))
+    lives_widget_set_sensitive(mainw->stop, TRUE);
 
   if (!mainw->multitrack) lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
   else if (!cfile->opening) {
@@ -2984,7 +2973,18 @@ void play_file(void) {
     }
 
     // send jack transport stop
-    if (!mainw->preview && !mainw->foreign) jack_pb_stop();
+    if (!mainw->preview && !mainw->foreign) {
+      if (mainw->lives_can_stop) {
+        jack_pb_stop(mainw->jackd_trans);
+        if (!mainw->multitrack
+            || (mainw->cancelled != CANCEL_USER_PAUSED
+                && !((mainw->cancelled == CANCEL_NONE ||
+                      mainw->cancelled == CANCEL_NO_MORE_PREVIEW)
+                     && mainw->multitrack->is_paused))) {
+          jack_transport_update(mainw->jackd_trans, cfile->real_pointer_time);
+        }
+      }
+    }
 
     // tell jack client to close audio file
     if (mainw->jackd && mainw->jackd->playing_file > 0) {
@@ -5470,11 +5470,12 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   if (!auto_recover) {
     if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
       lives_proc_thread_join(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+      mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
     }
     lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_context_update();
-    if (!do_yesno_dialog
-        (_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
+    if (!do_yesno_dialogf_with_countdown
+        (2, FALSE, _("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
       retb = FALSE;
       goto recovery_done;
     }
@@ -5836,8 +5837,8 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       rec_cleanup = TRUE;
       switch_to_file(mainw->current_file, start_file);
       showclipimgs();
-      redraw_timeline(mainw->current_file);
     }
+    redraw_timeline(mainw->current_file);
   } else {
     mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen
   }
@@ -5983,6 +5984,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
     lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+    mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
     return FALSE;
   }
 

@@ -17,6 +17,12 @@
 #include "paramwindow.h"
 #include "startup.h"
 
+#define MAX_CON_TRIES 10
+
+static int start_ready_callback(jack_transport_state_t state, jack_position_t *pos, void *jackd);
+static void timebase_callback(jack_transport_state_t state, jack_nframes_t nframes, jack_position_t *pos, int new_pos,
+                              void *jackd);
+
 #define afile mainw->files[jackd->playing_file]
 
 static lives_audio_buf_t *cache_buffer = NULL;
@@ -37,11 +43,11 @@ static boolean as_scripted = FALSE;
 static char *ts_running = NULL;
 static char *as_running = NULL;
 
+static boolean is_inited = FALSE;
+
 static lives_pid_t aserver_pid = 0, tserver_pid = 0;
 
 static char last_errmsg[JACK_PARAM_STRING_MAX];
-
-static jack_driver_t jack_transport;
 
 static jackctl_server_t *jackserver = NULL;
 
@@ -68,12 +74,44 @@ static void jack_error_func(const char *desc) {
 }
 
 
-#ifdef ENABLE_JACK_TRANSPORT
-static boolean jack_playall(livespointer data) {
-  on_playall_activate(NULL, NULL);
-  return FALSE;
+static int jack_get_srate(jack_nframes_t nframes, void *arg) {
+  //lives_printerr("the sample rate is now %ld/sec\n", (int64_t)nframes);
+  // TODO: reset timebase
+  jack_driver_t *jackd = (jack_driver_t *)arg;
+
+  if (jackd->client_type != JACK_CLIENT_TYPE_AUDIO_WRITER)
+    jackd->sample_in_rate = jack_get_sample_rate(jackd->client);
+
+  if (jackd->client_type != JACK_CLIENT_TYPE_AUDIO_READER)
+    jackd->sample_out_rate = jack_get_sample_rate(jackd->client);
+
+  return 0;
 }
-#endif
+
+
+void jack_shutdown(void *arg) {
+  jack_driver_t *jackd = (jack_driver_t *)arg;
+
+  jackd->client = NULL; /* reset client */
+  jackd->jackd_died = TRUE;
+  jackd->msgq = NULL;
+
+  lives_printerr("jack shutdown, setting client to 0 and jackd_died to true\n");
+  lives_printerr("trying to reconnect right now\n");
+
+  /////////////////////
+
+  if (jackd->client_type == JACK_CLIENT_TYPE_AUDIO_WRITER) {
+    jack_audio_init();
+    mainw->jackd = jack_get_driver(0, TRUE);
+    if (mainw->jackd->playing_file != -1 && afile)
+      jack_audio_seek_bytes(mainw->jackd, mainw->jackd->seek_pos, afile); // at least re-seek to the right place
+  }
+  if (jackd->client_type == JACK_CLIENT_TYPE_AUDIO_READER) {
+    jack_audio_read_init();
+    mainw->jackd_read = jack_get_driver(0, TRUE);
+  }
+}
 
 
 // round int a up to next multiple of int b, unless a is already a multiple of b
@@ -347,7 +385,7 @@ static void config_driver(LiVESWidget *b, jackctl_driver_t *driver) {
 // if so, logs it, clears it, and returns FALSE otherwise just returns TRUE
 // if errtxt starts with '#' then the message is printed as-is skipping the initial '#',
 // otherwise we add timestamp and formatting
-static boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
+boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
   if (!jackd || (!errtxt && !*last_errmsg)) return TRUE;
   else {
     size_t offs = lives_strlen(jackd->status_msg);
@@ -889,16 +927,24 @@ boolean jack_get_cfg_file(boolean is_trans, char **pserver_cfgx) {
   boolean cfg_exists = FALSE;
   if (is_trans) server_cfgx = lives_strdup(future_prefs->jack_tserver_cfg);
   else server_cfgx = lives_strdup(future_prefs->jack_aserver_cfg);
-  if (!*server_cfgx) {
-    lives_free(server_cfgx);
+  if (!server_cfgx || !*server_cfgx) {
+    if (server_cfgx) lives_free(server_cfgx);
     server_cfgx = lives_build_filename(capable->home_dir, "." JACKD_RC_NAME, NULL);
     if (!lives_file_test(server_cfgx, LIVES_FILE_TEST_EXISTS)) {
-      char *server_cfgx2 = lives_build_filename("etc", JACKD_RC_NAME, NULL);
-      if (lives_file_test(server_cfgx2, LIVES_FILE_TEST_EXISTS)) {
+      char *server_cfgx2 = lives_find_program_in_path("autojack");
+      if (server_cfgx2) {
         lives_free(server_cfgx);
         server_cfgx = server_cfgx2;
         cfg_exists = TRUE;
-      } else lives_free(server_cfgx2);
+      }
+      else {
+	server_cfgx2 = lives_build_filename("etc", JACKD_RC_NAME, NULL);
+	if (lives_file_test(server_cfgx2, LIVES_FILE_TEST_EXISTS)) {
+	  lives_free(server_cfgx);
+	  server_cfgx = server_cfgx2;
+	  cfg_exists = TRUE;
+	} else lives_free(server_cfgx2);
+      }
     } else cfg_exists = TRUE;
   } else {
     if (lives_file_test(server_cfgx, LIVES_FILE_TEST_EXISTS))
@@ -1102,6 +1148,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
   const JSList *drivers;
   const JSList *params;
   LiVESList *slave_list;
+  lives_pid_t sc_pid = 0;
 
   char *server_name;
   char *client_name = NULL;
@@ -1129,7 +1176,11 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
 
   int con_attempts = 0;
 
-  jack_set_error_function(jack_error_func);
+  if (!is_inited) {
+    jack_set_error_function(jack_error_func);
+    jackctl_setup_signals(0);
+    is_inited = TRUE;
+  }
 
   if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
     is_test = TRUE;
@@ -1149,12 +1200,17 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
 
   defservname = prefs->jack_def_server_name;
 
-  if (client_type == JACK_CLIENT_TYPE_TRANSPORT) is_trans = TRUE;
-  else if (client_type == JACK_CLIENT_TYPE_AUDIO_READER) is_reader = TRUE;
+  if (client_type == JACK_CLIENT_TYPE_TRANSPORT) {
+    is_trans = TRUE;
+    jackd = mainw->jackd_trans;
+  } else if (client_type == JACK_CLIENT_TYPE_AUDIO_READER) is_reader = TRUE;
+
+  if (!jackd) jackd = (jack_driver_t *)lives_calloc(sizeof(jack_driver_t), 1);
+
+  jackd->client_type = client_type;
 
   if (is_trans) {
-    if (!mainw->jackd_trans) mainw->jackd_trans = &jack_transport;
-    jackd = mainw->jackd_trans;
+    if (!mainw->jackd_trans) mainw->jackd_trans = jackd;
     if (jackd->client) {
       if (ts_running) goto ret_success;
     }
@@ -1227,7 +1283,26 @@ retry_connect:
     // try to connect, then if we fail, start the server
     // if server name is NULL, then use 'default' or $JACK_DEFAULT_SERVER
     jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
+
+    if (!mainw->signals_deferred) {
+      // try to handle crashes in jack_client_open()
+      set_signal_handlers((SignalHandlerPointer)defer_sigint);
+      needs_sigs = TRUE;
+    }
+    mainw->crash_possible = 1;
+
+    logmsg = lives_strdup_printf(_("%s client will try to connect to server named '%s'"),
+                                 type_name, server_name);
+    jack_log_errmsg(jackd, logmsg);
+    lives_free(logmsg);
+
     jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
+
+    if (needs_sigs) {
+      set_signal_handlers((SignalHandlerPointer)catch_sigint);
+      mainw->crash_possible = 0;
+    }
+
     if (jackd->client) {
       ts_running = server_name;
       logmsg = lives_strdup_printf(_("%s client '%s' <b>successfully connected</b> to running jack v%d server named '%s'"),
@@ -1246,7 +1321,23 @@ retry_connect:
     // try to connect, then if we fail, start the server
     // if server name is NULL, then use 'default' or $JACK_DEFAULT_SERVER
     jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
+    if (!mainw->signals_deferred) {
+      // try to handle crashes in jack_client_open()
+      set_signal_handlers((SignalHandlerPointer)defer_sigint);
+      needs_sigs = TRUE;
+    }
+    mainw->crash_possible = 2;
+
+    logmsg = lives_strdup_printf(_("%s client will try to connect to server named '%s'"),
+                                 type_name, server_name);
+    jack_log_errmsg(jackd, logmsg);
+    lives_free(logmsg);
+
     jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
+    if (needs_sigs) {
+      set_signal_handlers((SignalHandlerPointer)catch_sigint);
+      mainw->crash_possible = 0;
+    }
     if (jackd->client) {
       as_running = server_name;
       logmsg = lives_strdup_printf(_("%s client '%s' <b>successfully connected</b> to running jack v%d server named '%s'"),
@@ -1334,7 +1425,7 @@ retry_connect:
     }
   }
 
-  if (con_attempts++) {
+  if (con_attempts++ > MAX_CON_TRIES) {
     logmsg = lives_strdup_printf("#failed to connect to the server named '%s', perhaps there was an error in the script "
                                  "or the given server name does not match the one in the script\n", server_name);
     jack_log_errmsg(jackd, logmsg);
@@ -1359,7 +1450,6 @@ retry_connect:
   }
   if (com) {
     int pidchk;
-    lives_pid_t sc_pid;
 
     if (is_trans) {
       ts_scripted = FALSE;
@@ -1371,27 +1461,38 @@ retry_connect:
       else server_name = lives_strdup(defservname);
     }
 
-    logmsg = lives_strdup_printf("LiVES: Script file %s will be deployed", com);
-    jack_log_errmsg(jackd, logmsg);
-    lives_free(logmsg);
+    if (!sc_pid) {
+      logmsg = lives_strdup_printf("LiVES: Script file %s will be deployed", com);
+      jack_log_errmsg(jackd, logmsg);
+      lives_free(logmsg);
 
-    sc_pid = lives_fork(com);
+      sc_pid = lives_fork(com);
 
-    if (is_trans) tserver_pid = sc_pid;
-    else aserver_pid = sc_pid;
+      if (is_trans) tserver_pid = sc_pid;
+      else aserver_pid = sc_pid;
+    }
 
     pidchk = lives_kill(sc_pid, 0);
     if (!pidchk) {
       if (is_trans) ts_scripted = TRUE;
       else as_scripted = TRUE;
       logmsg = lives_strdup_printf("LiVES: script running, retrying connection attempt to server named '%s'", server_name);
-    } else
-      logmsg = lives_strdup_printf("LiVES: script not running, retrying connection attempt to server named '%s' anyway", server_name);
+    } else {
+      logmsg = lives_strdup_printf("LiVES: script not running, will abandon attempt to connect to '%s'", server_name);
+    }
 
     jack_log_errmsg(jackd, logmsg);
     lives_free(logmsg);
 
-    goto retry_connect;
+    if (!pidchk) {
+      if (con_attempts > 1) {
+        if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+        sleep(5);
+        if (lpt) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+      }
+
+      goto retry_connect;
+    }
   } else {
     if (is_trans) ts_scripted = FALSE;
     else as_scripted = FALSE;
@@ -1401,6 +1502,7 @@ retry_connect:
 
   if (!jackserver) {
     // create the server object
+    //jackserver = jackctl_server_create2(NULL, NULL, NULL);
     jackserver = jackctl_server_create(NULL, NULL);
     if (!jackserver) {
       logmsg = lives_strdup_printf("jackctl error: Could not create jackctl server object");
@@ -1554,14 +1656,19 @@ retry_connect:
     // try to handle crashes in jack_client_open()
     set_signal_handlers((SignalHandlerPointer)defer_sigint);
     needs_sigs = TRUE;
-    if (is_trans) {
-      mainw->crash_possible = 3;
-    } else {
-      mainw->crash_possible = 4;
-    }
+  }
+  if (is_trans) {
+    mainw->crash_possible = 3;
+  } else {
+    mainw->crash_possible = 4;
   }
 
   if (!jackctl_server_open(jackserver, driver)) {
+    if (needs_sigs) {
+      set_signal_handlers((SignalHandlerPointer)catch_sigint);
+      mainw->crash_possible = 0;
+    }
+
     logmsg = lives_strdup_printf("Could not launch jack2 server named '%s' with %s driver",
                                  server_name, driver_name);
     jack_log_errmsg(jackd, logmsg);
@@ -1569,6 +1676,12 @@ retry_connect:
     lives_free(logmsg);
     jack_log_errmsg(jackd, NULL);
     goto ret_failed;
+  }
+
+  if (is_trans) {
+    mainw->crash_possible = 5;
+  } else {
+    mainw->crash_possible = 6;
   }
 
   if (!jackctl_server_start(jackserver)) {
@@ -1590,11 +1703,11 @@ retry_connect:
     // try to handle crashes in jack_client_open()
     set_signal_handlers((SignalHandlerPointer)defer_sigint);
     needs_sigs = TRUE;
-    if (is_trans) {
-      mainw->crash_possible = 1;
-    } else {
-      mainw->crash_possible = 2;
-    }
+  }
+  if (is_trans) {
+    mainw->crash_possible = 5;
+  } else {
+    mainw->crash_possible = 6;
   }
 
   if (!jackctl_server_start(jackserver, driver)) {
@@ -1693,8 +1806,10 @@ connect_done:
 
   if (future_prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
     jack_activate(jackd->client);
-    jack_set_sync_timeout(jackd->client, 5000000); // seems to not work
-    jack_set_sync_callback(jackd->client, lives_start_ready_callback, NULL);
+    jackd->sample_in_rate = jackd->sample_out_rate = jack_get_sample_rate(jackd->client);
+    jack_set_sync_callback(jackd->client, start_ready_callback, jackd);
+    jack_set_sample_rate_callback(jackd->client, jack_get_srate, jackd);
+    jack_on_shutdown(jackd->client, jack_shutdown, jackd);
     mainw->jack_trans_poll = TRUE;
   } else {
     jack_client_close(jackd->client);
@@ -1722,16 +1837,13 @@ ret_failed:
 // transport handling
 
 
-ticks_t jack_transport_get_current_ticks(void) {
+ticks_t jack_transport_get_current_ticks(jack_driver_t *jackd) {
 #ifdef ENABLE_JACK_TRANSPORT
   double val;
-  jack_nframes_t srate;
   jack_position_t pos;
 
-  jack_transport_query(jack_transport.client, &pos);
-
-  srate = jack_get_sample_rate(jack_transport.client);
-  val = (double)pos.frame / (double)srate;
+  jack_transport_query(jackd->client, &pos);
+  val = (double)pos.frame / (double)jackd->sample_out_rate;
 
   if (val > 0.) return val * TICKS_PER_SECOND_DBL;
 #endif
@@ -1740,80 +1852,146 @@ ticks_t jack_transport_get_current_ticks(void) {
 
 
 #ifdef ENABLE_JACK_TRANSPORT
-static void jack_transport_check_state(void) {
+static void jack_transport_check_state(jack_driver_t *jackd) {
   jack_position_t pos;
   jack_transport_state_t jacktstate;
 
   // go away until the app has started up properly
   if (mainw->go_away) return;
 
-  if (!(prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT)) return;
+  if (!jackd || !jackd->client) return;
 
-  if (!jack_transport.client) return;
+  if (!(prefs->jack_opts & JACK_OPTS_TRANSPORT_SLAVE)
+      || !(prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)) return;
 
-  jacktstate = jack_transport_query(jack_transport.client, &pos);
+  jacktstate = jack_transport_query(jackd->client, &pos);
 
-  if (mainw->jack_can_start && (jacktstate == JackTransportRolling || jacktstate == JackTransportStarting) &&
-      !LIVES_IS_PLAYING && mainw->current_file > 0 && !mainw->is_processing) {
-    mainw->jack_can_start = FALSE;
-    mainw->jack_can_stop = TRUE;
-    lives_timer_add_simple(0, jack_playall, NULL);
+  if (jacktstate == JackTransportStopped) {
+    if (mainw->jack_can_stop) {
+      if (LIVES_IS_PLAYING) on_stop_activate(NULL, NULL);
+      mainw->jack_can_stop = FALSE;
+    }
+    if (!LIVES_IS_PLAYING) mainw->jack_can_start = TRUE;
     return;
   }
 
-  if (jacktstate == JackTransportStopped) {
-    if (LIVES_IS_PLAYING && mainw->jack_can_stop) {
-      on_stop_activate(NULL, NULL);
-    }
-    mainw->jack_can_start = TRUE;
+  if (!mainw->jack_can_start && !mainw->jack_can_stop) return;
+
+  if (lives_get_status() == LIVES_STATUS_IDLE
+      && mainw->jack_can_start && (jacktstate == JackTransportRolling || jacktstate == JackTransportStarting)
+      && CURRENT_CLIP_IS_VALID) {
+    // stops us from immediately restarting after pressing Stop in LiVES
+    mainw->jack_can_start = FALSE;
+    mainw->jack_can_stop = TRUE;
+    start_playback_async(0);
+    return;
   }
 }
+
+
+static void jack_transport_make_master(jack_driver_t *jackd, boolean set) {
+  if (!jackd || !jackd->client) return;
+  if (set) {
+    if (!jack_set_timebase_callback(jackd->client, 1, timebase_callback, jackd))
+      mainw->jack_master = TRUE;
+    else
+      mainw->jack_master = FALSE;
+    return;
+  }
+  jack_release_timebase(jackd->client);
+  mainw->jack_master = FALSE;
+}
+
 #endif
 
 
+void jack_transport_make_strict_slave(jack_driver_t *jackd, boolean set) {
+#ifdef ENABLE_JACK_TRANSPORT
+  if (!mainw || !mainw->is_ready || !jackd || !jackd->client) return;
+  lives_widget_set_sensitive(mainw->playall, !set);
+  lives_widget_set_sensitive(mainw->playsel, !set);
+  lives_widget_set_sensitive(mainw->stop, !set);
+  lives_widget_set_sensitive(mainw->rewind, !set);
+  lives_widget_set_sensitive(mainw->spinbutton_pb_fps, !set);
+  if (mainw->p_rewindbutton) lives_widget_set_sensitive(mainw->p_rewindbutton, !set);
+  if (mainw->p_playbutton) lives_widget_set_sensitive(mainw->p_playbutton, !set);
+  if (mainw->p_playselbutton) lives_widget_set_sensitive(mainw->p_playselbutton, !set);
+  lives_widget_set_sensitive(mainw->m_playbutton, !set);
+  lives_widget_set_sensitive(mainw->m_playselbutton, !set);
+  lives_widget_set_sensitive(mainw->m_stopbutton, !set);
+  lives_widget_set_sensitive(mainw->m_rewindbutton, !set);
+#endif
+}
+
+
+boolean is_transport_locked(void) {
+#ifdef ENABLE_JACK_TRANSPORT
+  if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+      && (prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE)
+      && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE))
+    return TRUE;
+#endif
+  return FALSE;
+}
+
+
 boolean lives_jack_poll(void) {
-  // data is always NULL
   // must return TRUE
 #ifdef ENABLE_JACK_TRANSPORT
-  jack_transport_check_state();
+  if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+      && (prefs->jack_opts & JACK_OPTS_TRANSPORT_SLAVE))
+    jack_transport_check_state(mainw->jackd_trans);
 #endif
   return TRUE;
 }
 
 
 void lives_jack_end(void) {
-#ifdef ENABLE_JACK_TRANSPORT
-  jack_client_t *client = jack_transport.client;
-#endif
-  jack_transport.client = NULL; // stop polling transport
-#ifdef ENABLE_JACK_TRANSPORT
-  if (client) {
-    jack_deactivate(client);
-    jack_client_close(client);
+  if (mainw->jackd_trans) {
+    jack_client_t *client = mainw->jackd_trans->client;
+    mainw->jackd_trans->client = NULL; // stop polling transport
+    if (client) {
+      jack_deactivate(client);
+      jack_client_close(client);
+    }
   }
-#endif
   if (jackserver) jackctl_server_destroy(jackserver);
   jackserver = NULL;
 }
 
 
-void jack_pb_start(double pbtime) {
-  // call this ASAP, then in load_frame_image; we will wait for sync from other clients (and ourself !)
-#ifdef ENABLE_JACK_TRANSPORT
-  if (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER) {
-    if (pbtime >= 0. && !mainw->jack_can_stop && (prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART))
-      jack_transport_locate(jack_transport.client, pbtime * jack_get_sample_rate(jack_transport.client));
-    jack_transport_start(jack_transport.client);
+void jack_transport_update(jack_driver_t *jackd, double pbtime) {
+  if (jackd && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+      && (prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART)) {
+    jack_transport_locate(jackd->client, pbtime * jackd->sample_out_rate);
   }
-#endif
 }
 
 
-void jack_pb_stop(void) {
+void jack_pb_start(jack_driver_t *jackd, double pbtime) {
+  if (mainw->jack_can_stop) return;
+  if (jackd && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)) {
+    mainw->lives_can_stop = TRUE;
+    if (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER) {
+      if (pbtime >= 0. && (prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART))
+        jack_transport_update(jackd, pbtime);
+    }
+    if (prefs->jack_opts & JACK_OPTS_TIMEBASE_MASTER)
+      jack_transport_make_master(jackd, TRUE);
+    jack_transport_start(jackd->client);
+  }
+}
+
+
+void jack_pb_stop(jack_driver_t *jackd) {
   // call this after pb stops
-#ifdef ENABLE_JACK_TRANSPORT
-  if (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER) jack_transport_stop(jack_transport.client);
-#endif
+  if (mainw->lives_can_stop) {
+    if (jackd && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+        && (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER))
+      jack_transport_stop(jackd->client);
+    if (mainw->jack_master) jack_transport_make_master(jackd, FALSE);
+    mainw->lives_can_stop = FALSE;
+  }
 }
 
 ////////////////////////////////////////////
@@ -1855,6 +2033,8 @@ static void push_cache_buffer(lives_audio_buf_t *cache_buffer, jack_driver_t *ja
   int qnt;
   if (!cache_buffer) return;
 
+  pthread_mutex_lock(&cache_buffer->atomic_mutex);
+
   qnt = afile->achans * (afile->asampsize >> 3);
   jackd->seek_pos = align_ceilng(jackd->seek_pos, qnt);
 
@@ -1884,6 +2064,7 @@ static void push_cache_buffer(lives_audio_buf_t *cache_buffer, jack_driver_t *ja
   cache_buffer->out_interleaf = FALSE;
 
   cache_buffer->operation = LIVES_READ_OPERATION;
+  pthread_mutex_unlock(&cache_buffer->atomic_mutex);
 
   wake_audio_thread();
 }
@@ -1895,7 +2076,7 @@ LIVES_INLINE lives_audio_buf_t *pop_cache_buffer(void) {
 }
 
 
-static void output_silence(size_t offset, nframes_t nframes, jack_driver_t *jackd, float **out_buffer) {
+static void output_silence(size_t offset, jack_nframes_t nframes, jack_driver_t *jackd, float **out_buffer) {
   // write nframes silence to all output streams
   for (int i = 0; i < jackd->num_output_channels; i++) {
     if (!jackd->is_silent) {
@@ -1918,13 +2099,13 @@ static void output_silence(size_t offset, nframes_t nframes, jack_driver_t *jack
     audio_stream(zero_buff, rbytes, jackd->astream_fd);
   }
   if (!jackd->is_paused) jackd->frames_written += nframes;
-  jackd->real_seek_pos = jackd->seek_pos;
-  if (IS_VALID_CLIP(jackd->playing_file) && jackd->seek_pos < afile->afilesize)
-    afile->aseek_pos = jackd->seek_pos;
+  /* jackd->real_seek_pos = jackd->seek_pos; */
+  /* if (IS_VALID_CLIP(jackd->playing_file) && jackd->seek_pos < afile->afilesize) */
+  /*   afile->aseek_pos = jackd->seek_pos; */
 }
 
 static volatile boolean in_ap = FALSE;
-static int audio_process(nframes_t nframes, void *arg) {
+static int audio_process(jack_nframes_t nframes, void *arg) {
   in_ap = TRUE;
   // JACK calls this periodically to get the next audio buffer
   float *out_buffer[JACK_MAX_OUTPUT_PORTS];
@@ -2022,15 +2203,16 @@ static int audio_process(nframes_t nframes, void *arg) {
     if (cache_buffer && cache_buffer->in_achans > 0 && !cache_buffer->is_ready) wait_cache_buffer = TRUE;
   }
 
-  if (!jackd->play_when_stopped) {
-    jackd->state = jack_transport_query(jackd->client, &pos);
+  jackd->state = jack_transport_query(jackd->client, &pos);
 
 #ifdef DEBUG_AJACK
-    lives_printerr("STATE is %d %d\n", jackd->state, jackd->play_when_stopped);
+  lives_printerr("STATE is %d\n", jackd->state);
 #endif
-  }
+
   /* handle playing state */
-  if (jackd->play_when_stopped || jackd->state == JackTransportRolling) {
+  if (!(prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)
+      || !(prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+      || jackd->state == JackTransportRolling) {
     uint64_t jackFramesAvailable = nframes; /* frames we have left to write to jack */
     uint64_t inputFramesAvailable;          /* frames we have available this loop */
     uint64_t numFramesToWrite;              /* num frames we are writing this loop */
@@ -2423,11 +2605,11 @@ static int audio_process(nframes_t nframes, void *arg) {
                   xbuf = (unsigned char *)cache_buffer->buffer16[0];
                 else {
                   // plugin is generating and we are streaming: convert fbuffer to s16
-                  float **fp = (float **)lives_malloc(jackd->num_output_channels * sizeof(float *));
+                  float **fp = (float **)lives_calloc(jackd->num_output_channels, sizeof(float *));
                   for (i = 0; i < jackd->num_output_channels; i++) {
                     fp[i] = fbuffer + i;
                   }
-                  xbuf = (unsigned char *)lives_malloc(nbytes * jackd->num_output_channels);
+                  xbuf = (unsigned char *)lives_calloc(nbytes * jackd->num_output_channels, 1);
                   sample_move_float_int((void *)xbuf, fp, numFramesToWrite, 1.0,
                                         jackd->num_output_channels, 16, 0, TRUE, TRUE, 1.0);
                 }
@@ -2441,7 +2623,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                     inbuf = (unsigned char *)cache_buffer->buffer16[0];
                   else oinbuf = inbuf = xbuf;
 
-                  xbuf = (unsigned char *)lives_malloc(nbytes);
+                  xbuf = (unsigned char *)lives_calloc(nbytes, 1);
                   if (!xbuf) {
                     // external streaming
                     rbytes = numFramesToWrite * jackd->num_output_channels * 2;
@@ -2496,7 +2678,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                 // need to remap channels to stereo (assumed for now)
                 size_t bysize = 4, tsize = 0;
                 unsigned char *inbuf = (unsigned char *)out_buffer;
-                xbuf = (unsigned char *)lives_malloc(nbytes);
+                xbuf = (unsigned char *)lives_calloc(nbytes, 1);
                 if (!xbuf) {
                   output_silence(0, numFramesToWrite, jackd, out_buffer);
                   in_ap = FALSE;
@@ -2588,7 +2770,14 @@ static int audio_process(nframes_t nframes, void *arg) {
 }
 
 
-int lives_start_ready_callback(jack_transport_state_t state, jack_position_t *pos, void *arg) {
+static void timebase_callback(jack_transport_state_t state, jack_nframes_t nframes, jack_position_t *pos, int new_pos,
+                              void *arg) {
+  jack_driver_t *jackd = (jack_driver_t *)arg;
+  pos->frame = (double)lives_jack_get_pos(mainw->jackd) * (double)jackd->sample_out_rate;
+}
+
+
+static int start_ready_callback(jack_transport_state_t state, jack_position_t *pos, void *arg) {
   // mainw->video_seek_ready is generally FALSE
   // if we are not playing, the transport poll should start playing which will set set
   // mainw->video_seek_ready to true, as soon as the video is at the right place
@@ -2599,34 +2788,33 @@ int lives_start_ready_callback(jack_transport_state_t state, jack_position_t *po
 
   /// TODO ****::   NEEDS retesting !!!!!
 
+  jack_driver_t *jackd = (jack_driver_t *)arg;
+
   // go away until the app has started up properly
-  if (mainw->go_away) {
-    if (state == JackTransportStopped) mainw->jack_can_start = TRUE;
-    else mainw->jack_can_start = mainw->jack_can_stop = FALSE;
-    return TRUE;
-  }
+  if (mainw->go_away) return TRUE;
 
-  if (!(prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT)) return TRUE;
-  if (!jack_transport.client) return TRUE;
+  if (!(prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE) || !(prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)) return TRUE;
 
-  if (!LIVES_IS_PLAYING && state == JackTransportStopped) {
-    if (prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) {
-      double trtime = (double)jack_transport_get_current_ticks() / TICKS_PER_SECOND_DBL;
-      if (!mainw->multitrack) {
+  if (!jackd->client) return TRUE;
+
+  if (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE) {
+    if (!LIVES_IS_PLAYING && state == JackTransportStopped) {
+      if (prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE) {
+        double trtime = (double)jack_transport_get_current_ticks(jackd) / TICKS_PER_SECOND_DBL;
+        if (!mainw->multitrack) {
 #ifndef ENABLE_GIW_3
-        lives_ruler_set_value(LIVES_RULER(mainw->hruler), x);
-        lives_widget_queue_draw_if_visible(mainw->hruler);
+          lives_ruler_set_value(LIVES_RULER(mainw->hruler), x);
+          lives_widget_queue_draw_if_visible(mainw->hruler);
 #else
-        lives_adjustment_set_value(giw_timeline_get_adjustment(GIW_TIMELINE(mainw->hruler)), trtime);
+          lives_adjustment_set_value(giw_timeline_get_adjustment(GIW_TIMELINE(mainw->hruler)), trtime);
 #endif
-      } else mt_tl_move(mainw->multitrack, trtime);
+        } else mt_tl_move(mainw->multitrack, trtime);
+      }
+      return TRUE;
     }
-    return TRUE;
   }
 
-  if (state != JackTransportStarting) return TRUE;
-
-  if (LIVES_IS_PLAYING && (prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT)) {
+  if (LIVES_IS_PLAYING && (prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE)) {
     // trigger audio resync
     mainw->scratch = SCRATCH_JUMP;
   }
@@ -2680,7 +2868,7 @@ static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofil
   frames_out = (int64_t)((double)nframes / out_scale + 1.);
   bytes_out = frames_out * ofile->achans * (ofile->asampsize >> 3);
 
-  holding_buff = lives_malloc(bytes_out);
+  holding_buff = lives_calloc(bytes_out, 1);
   if (!holding_buff) return 0;
 
   frames_out = sample_move_float_int(holding_buff, in_buffer, nframes, out_scale, ofile->achans,
@@ -2716,7 +2904,7 @@ static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofil
 }
 
 
-static int audio_read(nframes_t nframes, void *arg) {
+static int audio_read(jack_nframes_t nframes, void *arg) {
   // read nframes from jack buffer, and then write to mainw->aud_rec_fd
 
   // this is the jack callback for when we are recording audio
@@ -2815,37 +3003,6 @@ static int audio_read(nframes_t nframes, void *arg) {
 }
 
 
-int jack_get_srate(nframes_t nframes, void *arg) {
-  //lives_printerr("the sample rate is now %ld/sec\n", (int64_t)nframes);
-  // TODO: reset timebase
-  return 0;
-}
-
-
-void jack_shutdown(void *arg) {
-  jack_driver_t *jackd = (jack_driver_t *)arg;
-
-  jackd->client = NULL; /* reset client */
-  jackd->jackd_died = TRUE;
-  jackd->msgq = NULL;
-
-  lives_printerr("jack shutdown, setting client to 0 and jackd_died to true\n");
-  lives_printerr("trying to reconnect right now\n");
-
-  /////////////////////
-
-  jack_audio_init();
-
-  // TODO: init reader as well
-
-  mainw->jackd = jack_get_driver(0, TRUE);
-  mainw->jackd->msgq = NULL;
-
-  if (mainw->jackd->playing_file != -1 && afile)
-    jack_audio_seek_bytes(mainw->jackd, mainw->jackd->seek_pos, afile); // at least re-seek to the right place
-}
-
-
 static void jack_reset_driver(jack_driver_t *jackd) {
   // this a custom transport state
   jackd->state = (jack_transport_state_t)JackTReset;
@@ -2897,7 +3054,8 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
       char *logmsg = lives_strdup_printf("engine sample rate: %d\n", jackd->sample_out_rate);
       jack_log_errmsg(jackd, logmsg);
       lives_free(logmsg);
-      finish_test(jackd, TRUE, FALSE, FALSE);
+      // test reader first
+      //finish_test(jackd, TRUE, FALSE, FALSE);
       return TRUE;
     }
   }
@@ -3233,11 +3391,9 @@ int jack_audio_init(void) {
     jackd->abs_maxvol_heard = 0.;
     jackd->jackd_died = FALSE;
     jackd->num_output_channels = 2;
-    jackd->play_when_stopped = FALSE;
     jackd->mute = FALSE;
     jackd->is_silent = FALSE;
     jackd->out_chans_available = 0;
-    jackd->is_output = TRUE;
     jackd->read_abuf = -1;
     jackd->playing_file = -1;
     jackd->frames_written = 0;
@@ -3267,10 +3423,8 @@ int jack_audio_read_init(void) {
     jackd->abs_maxvol_heard = 0.;
     jackd->jackd_died = FALSE;
     jackd->num_input_channels = 2;
-    jackd->play_when_stopped = FALSE;
     jackd->mute = FALSE;
     jackd->in_chans_available = 0;
-    jackd->is_output = FALSE;
     jackd->playing_file = -1;
     jackd->frames_written = 0;
     *jackd->status_msg = 0;
@@ -3286,8 +3440,11 @@ volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
 
 
 void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
-  jackd->nframes_start = jack_frame_time(jackd->client) + (jack_nframes_t)((float)(offset / USEC_TO_TICKS) *
-                         (jack_get_sample_rate(jackd->client) / 1000000.));
+  jackd->nframes_start = jack_frame_time(jackd->client) + (jack_nframes_t)(((double)offset / USEC_TO_TICKS) *
+                         ((double)(jackd->client_type
+                                   == JACK_CLIENT_TYPE_AUDIO_READER
+                                   ? jackd->sample_in_rate
+                                   : jackd->sample_out_rate) / 1000000.));
   jackd->frames_written = 0;
   mainw->currticks = offset;
   mainw->deltaticks = mainw->startticks = 0;
@@ -3299,7 +3456,7 @@ ticks_t lives_jack_get_time(jack_driver_t *jackd) {
   volatile aserver_message_t *msg = jackd->msgq;
   static jack_nframes_t last_frames = 0;
   jack_nframes_t frames, retframes;
-  int srate;
+  double srate;
 
   if (!jackd->client) return -1;
 
@@ -3314,11 +3471,10 @@ ticks_t lives_jack_get_time(jack_driver_t *jackd) {
     if (timeout == 0) return -1;
   }
 
-
   if (!jackd->client) return -1;
   frames = jack_frame_time(jackd->client);
   if (!jackd->client) return -1;
-  srate = jack_get_sample_rate(jackd->client);
+  srate = (double)(jackd->client_type == JACK_CLIENT_TYPE_AUDIO_READER ? jackd->sample_in_rate : jackd->sample_out_rate);
   if (!jackd->client) return -1;
 
   retframes = frames;
@@ -3326,7 +3482,7 @@ ticks_t lives_jack_get_time(jack_driver_t *jackd) {
     retframes += jackd->frames_written;
   } else jackd->frames_written = 0;
   last_frames = frames;
-  return (ticks_t)((frames - jackd->nframes_start) * (1000000. / srate)) * USEC_TO_TICKS;
+  return (double)(frames - jackd->nframes_start) * (1000000. / srate) * USEC_TO_TICKS;
 }
 
 
@@ -3336,7 +3492,6 @@ double lives_jack_get_pos(jack_driver_t *jackd) {
     return fwd_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
   // from memory
   return (double)jackd->frames_written / (double)jackd->sample_out_rate;
-
 }
 
 
@@ -3424,24 +3579,24 @@ boolean jack_try_reconnect(void) {
   jack_audio_init();
   jack_audio_read_init();
 
-  // TODO: create the reader also
   mainw->jackd = jack_get_driver(0, TRUE);
   if (!jack_create_client_writer(mainw->jackd)) goto err123;
+
+  mainw->jackd_read = jack_get_driver(0, FALSE);
+  jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
 
   d_print(_("\nConnection to jack audio was reset.\n"));
   return TRUE;
 
 err123:
   mainw->aplayer_broken = TRUE;
-  mainw->jackd = NULL;
+  mainw->jackd = mainw->jackd_read = NULL;
   do_jack_lost_conn_error();
   return FALSE;
 }
 
 
-void jack_pb_end(void) {
-  cache_buffer = NULL;
-}
+void jack_pb_end(void) {cache_buffer = NULL;}
 
 
 void jack_aud_pb_ready(int fileno) {

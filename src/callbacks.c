@@ -589,7 +589,6 @@ void lives_exit(int signum) {
     lives_freep((void **)&mainw->multitrack);
     lives_freep((void **)&mainw->mgeom);
     lives_list_free_all(&prefs->disabled_decoders);
-    if (mainw->fonts_array) lives_strfreev(mainw->fonts_array);
 #ifdef ENABLE_NLS
     //lives_freep((void **)&trString);
 #endif
@@ -5100,6 +5099,7 @@ void unlock_loop_lock(void) {
 boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer area_enum) {
   int area = LIVES_POINTER_TO_INT(area_enum);
+  if (is_transport_locked()) return TRUE;
 
   if (!(mod & LIVES_ALT_MASK) && (mod & LIVES_CONTROL_MASK) && mainw->loop_locked) {
     boolean do_ret = FALSE;
@@ -5210,8 +5210,11 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
                            livespointer area_enum) {
   // reset playback fps (cfile->pb_fps) to normal fps (cfile->fps)
   // also resync the audio
+  lives_clip_t *sfile;
   int area;
+
   if (!LIVES_IS_PLAYING || mainw->multitrack) return TRUE;
+  if (is_transport_locked()) return TRUE;
 
   area = LIVES_POINTER_TO_INT(area_enum);
   if (area == SCREEN_AREA_BACKGROUND) {
@@ -5220,40 +5223,26 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     return TRUE;
   }
 
+  sfile = mainw->files[mainw->playing_file];
   mainw->scratch = SCRATCH_JUMP_NORESYNC;
 
   if (mainw->loop_locked) {
     dirchange_callback(group, obj, keyval, LIVES_CONTROL_MASK, SCREEN_AREA_FOREGROUND);
   }
-  if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC)) {
-    boolean res_aud = FALSE;
-#ifdef ENABLE_JACK
-    if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK
-        && mainw->jackd) {
-      if (mainw->jackd->playing_file == mainw->playing_file) res_aud = TRUE;
-    }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE
-        && mainw->pulsed) {
-      if (mainw->pulsed->playing_file == mainw->playing_file) res_aud = TRUE;
-    }
-#endif
-    if (res_aud) {
-      resync_audio(((double)cfile->frameno));
-    }
+
+  if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_FPS)) {
+    resync_audio(mainw->playing_file, (double)sfile->frameno);
   }
 
   // change play direction
-  if (cfile->play_paused) {
-    if (cfile->freeze_fps < 0.) cfile->freeze_fps = -cfile->fps;
-    else cfile->freeze_fps = cfile->fps;
+  if (sfile->play_paused) {
+    if (sfile->freeze_fps < 0.) sfile->freeze_fps = -sfile->fps;
+    else sfile->freeze_fps = sfile->fps;
     return TRUE;
   }
 
   lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
-  if (cfile->pb_fps > 0.) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->fps);
-  else lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), -cfile->fps);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), sfile->fps);
   lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
 
   // make sure this is called, sometimes we switch clips too soon...
@@ -5693,8 +5682,6 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
     // remove the old set (should be empty now)
     cleanup_set_dir(old_set);
   }
-
-
 
   if (!mainw->was_set && !lives_strcmp(old_set, mainw->set_name)) {
     // set name was set by export or save layout, now we need to update our layout map
@@ -6240,8 +6227,8 @@ static void recover_lost_clips(LiVESList * reclist) {
       if (IS_VALID_CLIP(start_file)
           && (mainw->files[start_file]->frames > 0 || mainw->files[start_file]->afilesize > 0)) break;
     }
-    switch_to_file(-1, start_file);
-  }
+    switch_clip(1, start_file, FALSE);
+  } else switch_clip(1, mainw->current_file, TRUE);
   do_info_dialogf(P_("%d clip was recovered", "%d clips were recovered\n",
                      mainw->clips_available), mainw->clips_available);
 }
@@ -10719,84 +10706,59 @@ void vj_mode_toggled(LiVESCheckMenuItem * menuitem, livespointer user_data) {
 
 
 /**
-   This is a super important function : almost everything related to velocity direction
-   changes during playback should ensurre this function is called.
-   For example it user_data is non-NULL, will also set the audio player rate / direction.
+   Almost everything related to velocity / direction changes during playback should ensure this function is called.
+   If user_data is non-NULL, will also set the audio player rate / direction.
    Even if the clip is frozen, we still update the freeze fps so that when it is unfrozen it starts with the correct velocity.
 */
 void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data) {
   /// user_data non-NULL to force audio rate update
+  lives_clip_t *sfile;
   double new_fps;
 
-  if (!LIVES_IS_PLAYING) return;
-  if (!CURRENT_CLIP_IS_VALID) return;
+  if (!LIVES_IS_PLAYING || !CURRENT_CLIP_IS_VALID) return;
+
+  if (!LIVES_IS_PLAYING) sfile = cfile;
+  else sfile = mainw->files[mainw->playing_file];
 
   new_fps = lives_fix(lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton)), 3);
+  if (new_fps != 0.) mainw->period = TICKS_PER_SECOND_DBL / new_fps;
 
-  if (!user_data && ((!cfile->play_paused && cfile->pb_fps == new_fps) || (cfile->play_paused && new_fps == 0.))) {
-    mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
+  if (!user_data && ((!sfile->play_paused && sfile->pb_fps == new_fps) || (sfile->play_paused && new_fps == 0.))) {
     return;
   }
 
+  sfile->pb_fps = new_fps;
+
   mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
 
-  if (new_fps != cfile->pb_fps && fabs(new_fps) > .001 && !cfile->play_paused) {
+  if (new_fps != sfile->pb_fps && fabs(new_fps) > .001 && !sfile->play_paused) {
     /// we must scale the frame delta, since e.g if we were a halfway through the frame and the fps increased,
     /// we could end up jumping several frames
     ticks_t delta_ticks;
     delta_ticks = (mainw->currticks - mainw->startticks);
-    delta_ticks = (ticks_t)((double)delta_ticks + fabs(cfile->pb_fps / new_fps));
+    delta_ticks = (ticks_t)((double)delta_ticks + fabs(sfile->pb_fps / new_fps));
     /// the time we would shown the last frame at using the new fps
     mainw->startticks = mainw->currticks - delta_ticks;
   }
 
-  cfile->pb_fps = new_fps;
-  mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
-
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-    if (new_fps >= 0.) cfile->adirection = LIVES_DIRECTION_FORWARD;
-    else cfile->adirection = LIVES_DIRECTION_REVERSE;
-    // update our audio player
-#ifdef ENABLE_JACK
-    if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
-      if (mainw->jackd->playing_file == mainw->current_file) {
-        mainw->jackd->sample_in_rate = cfile->arate * cfile->pb_fps / cfile->fps;
-        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
-            && mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-          jack_get_rec_avals(mainw->jackd);
-	  // *INDENT-OFF*
-        }}}
-    // *INDENT-ON*
-#endif
-
-#ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
-      if (mainw->pulsed->playing_file == mainw->current_file) {
-        mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps;
-        if (mainw->pulsed->fd >= 0) {
-          if (mainw->pulsed->in_arate > 0.) {
-            lives_buffered_rdonly_set_reversed(mainw->pulsed->fd, FALSE);
-          } else {
-            lives_buffered_rdonly_set_reversed(mainw->pulsed->fd, TRUE);
-          }
-        }
-        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
-            && mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-          pulse_get_rec_avals(mainw->pulsed);
-	  // *INDENT-OFF*
-        }}}
-    // *INDENT-ON*
-#endif
+    frames_t frameno = 0;
+    if ((prefs->audio_opts & AUDIO_OPTS_RESYNC_ADIR) && av_clips_equal()) {
+      if ((sfile->pb_fps > 0. && sfile->adirection == LIVES_DIRECTION_REVERSE)
+          || (sfile->pb_fps < 0. && sfile->adirection == LIVES_DIRECTION_FORWARD))
+        frameno = sfile->frameno;
+    }
+    resync_audio(mainw->playing_file, (double)frameno);
   }
 
-  if (cfile->play_paused && new_fps != 0.) {
-    cfile->freeze_fps = new_fps;
+  if (sfile->play_paused && new_fps != 0.) {
+    sfile->freeze_fps = new_fps;
     // unfreeze the clip at the new (non-zero) fps rate
     freeze_callback(NULL, NULL, 0, (LiVESXModifierType)0, NULL);
     return;
   }
 
-  if (cfile->pb_fps == 0. && !cfile->play_paused) {
+  if (sfile->pb_fps == 0. && !sfile->play_paused) {
     // freeze the clip
     freeze_callback(NULL, NULL, 0, (LiVESXModifierType)0, NULL);
     return;
@@ -10994,6 +10956,7 @@ boolean on_mouse_sel_start(LiVESWidget * widget, LiVESXEventButton * event, live
 void on_hrule_value_changed(LiVESWidget * widget, livespointer user_data) {
   if (!LIVES_IS_INTERACTIVE) return;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
+  if (is_transport_locked()) return;
 
   if (LIVES_IS_PLAYING) {
     lives_clip_t *pfile = mainw->files[mainw->playing_file];
@@ -11036,6 +10999,7 @@ boolean on_hrule_update(LiVESWidget * widget, LiVESXEventMotion * event, livespo
   if (LIVES_IS_PLAYING) return TRUE;
   if (!LIVES_IS_INTERACTIVE) return TRUE;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return TRUE;
+  if (is_transport_locked()) return;
 
   device = (LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device;
   lives_widget_get_modmask(device, widget, &modmask);
@@ -11193,6 +11157,7 @@ void on_slower_pressed(LiVESButton * button, livespointer user_data) {
   if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event) return;
+  if (is_transport_locked()) return;
 
   if (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_FPS)) return;
 
@@ -11219,6 +11184,7 @@ void on_slower_pressed(LiVESButton * button, livespointer user_data) {
     if (sfile == cfile) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), (sfile->pb_fps - change));
     else sfile->pb_fps -= change;
   }
+  changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
 }
 
 
@@ -11245,6 +11211,7 @@ void on_faster_pressed(LiVESButton * button, livespointer user_data) {
   if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event) return;
+  if (is_transport_locked()) return;
 
   if (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_FPS)) return;
 
@@ -11278,6 +11245,7 @@ void on_faster_pressed(LiVESButton * button, livespointer user_data) {
     if (sfile == cfile) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), (sfile->pb_fps + change));
     else sfile->pb_fps = sfile->pb_fps + change;
   }
+  changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
 }
 
 
@@ -11286,6 +11254,7 @@ void on_back_pressed(LiVESButton * button, livespointer user_data) {
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_NORMAL) return;
   if (mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
   if (LIVES_IS_PLAYING && !clip_can_reverse(mainw->current_file)) return;
+  if (is_transport_locked()) return;
 
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event) return;
@@ -11313,6 +11282,7 @@ void on_forward_pressed(LiVESButton * button, livespointer user_data) {
   int type = 0;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_NORMAL) return;
   if (mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
+  if (is_transport_locked()) return;
 
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event) return;
@@ -11342,6 +11312,7 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
   static boolean norecurse = FALSE;
 
   if (norecurse) return TRUE;
+  if (is_transport_locked()) return FALSE;
 
   if (mainw->multitrack && (LIVES_IS_PLAYING || mainw->multitrack->is_paused)) {
     on_playall_activate(NULL, NULL);
@@ -11391,8 +11362,7 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
 #ifdef ENABLE_JACK
     if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK
         && mainw->jackd->playing_file == mainw->playing_file
-        && (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED ||
-            prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
+        && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
       mainw->jackd->is_paused = cfile->play_paused;
       if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&
           !mainw->agen_needs_reinit) {
@@ -11403,10 +11373,11 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
           jack_get_rec_avals(mainw->jackd);
         }
       }
-#ifdef ENABLE_JACK_TRANSPORT
-      if (cfile->play_paused) jack_pb_stop();
-      else jack_pb_start(-1.);
-#endif
+      if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+          && (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER)) {
+        if (cfile->play_paused) jack_pb_stop(mainw->jackd_trans);
+        else jack_pb_start(mainw->jackd_trans, -1.);
+      }
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO
@@ -11436,6 +11407,10 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
 boolean nervous_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                          livespointer clip_number) {
   if (mainw->multitrack) return FALSE;
+  if (is_transport_locked()) {
+    mainw->nervous = FALSE;
+    return FALSE;
+  }
   mainw->nervous = !mainw->nervous;
   return TRUE;
 }
@@ -11462,13 +11437,7 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
     prefs->audio_opts = future_prefs->audio_opts;
     return TRUE;
   }
-  if (switch_audio_clip(mainw->current_file, TRUE)) {
-    if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-      mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
-      resync_audio(cfile->frameno);
-      changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(TRUE));
-    }
-  }
+  switch_audio_clip(mainw->current_file, TRUE);
   prefs->audio_opts &= ~(AUDIO_OPTS_FOLLOW_FPS | AUDIO_OPTS_FOLLOW_CLIPS);
   return TRUE;
 }
@@ -11550,16 +11519,16 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
                            livespointer clip_number) {
   // ctrl-fn key will store a clip for higher switching
   int clip = LIVES_POINTER_TO_INT(clip_number) - 1;
-  int i;
 
   if (!LIVES_IS_INTERACTIVE) return TRUE;
+  if (is_transport_locked()) return TRUE;
 
   if (!CURRENT_CLIP_IS_VALID || mainw->preview || (LIVES_IS_PLAYING && mainw->event_list && !mainw->record)
       || (mainw->is_processing && cfile->is_loaded) || !mainw->cliplist) return TRUE;
 
   if (clip >= FN_KEYS - 1) {
     // last fn key will clear all
-    for (i = 0; i < FN_KEYS - 1; i++) {
+    for (int i = 0; i < FN_KEYS - 1; i++) {
       mainw->clipstore[i][0] = -1;
     }
     return TRUE;

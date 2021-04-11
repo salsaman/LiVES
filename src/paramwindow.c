@@ -1360,6 +1360,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
             if ((fmtlen = lives_strlen((const char *)format)) < FMT_STRING_SIZE - 1) format[fmtlen] = (unsigned char)param->type;
           } else {
             used[pnum] = TRUE;
+            g_print("PARAM %d used\n", pnum);
             if (!has_box) {
               // add a new row if needed
               if (layoutx) lives_layout_add_row(LIVES_LAYOUT(layoutx));
@@ -1500,9 +1501,10 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       param = &rfx->params[i];
       if (!chk_params && !(rfx->flags & RFX_FLAGS_NO_RESET)) {
         param->flags &= ~PARAM_FLAGS_VALUE_SET;
-        if (used[i]) continue;
       }
-
+      if (used[i]) {
+        continue;
+      }
       layout_mode = FALSE;
       format = NULL;
 

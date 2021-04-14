@@ -53,6 +53,7 @@ typedef struct {
   lives_proc_thread_t var_tinfo;
   lives_thread_data_t *var_mydata;
   int var_id;
+  lives_intention var_intention;
   boolean var_com_failed;
   int var_write_failed, var_read_failed;
   boolean var_chdir_failed;
@@ -223,6 +224,7 @@ lives_thread_data_t *lives_thread_data_create(uint64_t idx);
 
 boolean lives_proc_thread_set_state(lives_proc_thread_t lpt, uint64_t state);
 uint64_t lives_proc_thread_get_state(lives_proc_thread_t lpt);
+uint64_t lives_proc_thread_check_states(lives_proc_thread_t lpt, uint64_t state_bits);
 uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t state_bits);
 boolean lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state_bits);
 
@@ -268,15 +270,19 @@ boolean lives_proc_thread_get_signalled(lives_proc_thread_t tinfo);
 boolean lives_proc_thread_set_signalled(lives_proc_thread_t tinfo, int signum, void *data);
 int lives_proc_thread_get_signal_data(lives_proc_thread_t tinfo, int64_t *tidx_return, void **data_return);
 
-/// only threads with no return value can possibly be cancellable. For threads with a value, use
-/// lives_proc_thread_dontcare()
 void lives_proc_thread_set_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
-boolean lives_proc_thread_cancel(lives_proc_thread_t, boolean can_block);
-boolean lives_proc_thread_cancel_immediate(lives_proc_thread_t tinfo);
+
+// set dontcare if the return result is no longer relevant / needed, otherwise the thread should be joined as normal
+// if thread is already set dontcare, value here is ignored. For non-cancellable threads use lives_proc_thread_dontcare instead.
+boolean lives_proc_thread_cancel(lives_proc_thread_t, boolean dontcare);
 boolean lives_proc_thread_get_cancelled(lives_proc_thread_t);
 
-/// tell a threead with return value that we no longer need the value so it can free itself
+// low level cancel, which will cause the thread to abort
+boolean lives_proc_thread_cancel_immediate(lives_proc_thread_t tinfo);
+
+/// tell a thread with return value that we no longer need the value so it can free itself
+/// after setting this, no further operations may be done on the proc_thread
 boolean lives_proc_thread_dontcare(lives_proc_thread_t);
 
 void lives_proc_thread_sync_ready(lives_proc_thread_t);

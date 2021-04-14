@@ -1997,9 +1997,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         // thus at least one of the frames will not need any resizing / letterboxing
 
 #if 1
-        // min size
-        maxinwidth = rminw;
-        maxinheight = rminh;
+        if (!mainw->multitrack) {
+          // min size
+          maxinwidth = rminw;
+          maxinheight = rminh;
+        } else {
+          maxinwidth = cfile->hsize;
+          maxinheight = cfile->vsize;
+        }
 #else
         // min area
         double hscale, vscale;

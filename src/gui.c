@@ -1163,8 +1163,11 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(mainw->tools_menu));
 
-  mainw->capture = lives_standard_menu_item_new_with_label(_("Capture _External Window... "));
+  mainw->capture = lives_standard_menu_item_new_with_label(_("Capture _External Window..."));
   lives_container_add(LIVES_CONTAINER(mainw->tools_menu), mainw->capture);
+
+  mainw->desk_rec = lives_standard_check_menu_item_new_with_label(_("Desktop Recorder..."), FALSE);
+  lives_container_add(LIVES_CONTAINER(mainw->tools_menu), mainw->desk_rec);
 
   lives_menu_add_separator(LIVES_MENU(mainw->tools_menu));
 
@@ -2832,6 +2835,8 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_erase_subs_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->capture), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_capture_activate), NULL);
+  mainw->desk_rec_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->desk_rec), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                         LIVES_GUI_CALLBACK(rec_desktop), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->rev_clipboard), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_rev_clipboard_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->export_selaudio), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -4801,7 +4806,7 @@ void splash_msg(const char *msg, double pct) {
 #ifdef PROGBAR_IS_ENTRY
   else {
     char *tmp = lives_strdup(msg);
-    lives_chomp(tmp);
+    lives_chomp(tmp, TRUE);
     lives_entry_set_text(LIVES_ENTRY(mainw->splash_label), tmp);
     lives_free(tmp);
   }

@@ -246,6 +246,8 @@ void add_suffix_check(LiVESBox *, const char *ext);
 const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width, LiVESSpinButton *sp_height,
     LiVESBox *container);
 
+rec_args *do_rec_desk_dlg(void);
+
 #define DEF_AUD_FADE_SECS 10. ///< default time to offer fade audio in/out for
 
 #define MIN_MSGBOX_WIDTH ((int)(620. * widget_opts.scale))

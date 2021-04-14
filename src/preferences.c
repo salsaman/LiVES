@@ -18,6 +18,7 @@
 #include "startup.h"
 #include "rfx-builder.h"
 #include "effects-weed.h"
+#include "multitrack-gui.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -5820,10 +5821,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->checkbutton_extra_colours =
-    lives_standard_check_button_new(_("Invent interface colours"),
+    lives_standard_check_button_new(_("Supplement interface colours"),
                                     prefs->extra_colours, LIVES_BOX(hbox),
                                     (tmp = H_("Make the interface more interesting "
-                                        "by adding harmonious colours")));
+                                        "by adding extra harmonious colours")));
   lives_free(tmp);
 
   frame = lives_standard_frame_new(_("Main Theme Details"), 0., FALSE);

@@ -101,8 +101,11 @@ weed_plant_t *string_req_init(const char *name, const char *def) {
 
 
 LIVES_GLOBAL_INLINE
-const lives_object_template_t *lives_object_template_for_type(uint64_t type, uint64_t subtype) {
-  if (type == IMkType("obj.MATH")) return maths_object_with_subtype(subtype);
+const lives_object_template_t *lives_object_template_for_type(uint64_t type) {
+  // TODO - get object template for type
+  // find a transform which creates child with subtype subtype
+
+  //if (type == IMkType("obj.MATH")) return maths_object_with_subtype(subtype);
   return NULL;
 }
 

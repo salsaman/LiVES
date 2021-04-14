@@ -60,15 +60,17 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_free(lives_proc_thread_t lpt) {
 
 lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, lives_funcptr_t func,
     int return_type, const char *args_fmt, va_list xargs) {
-  int p = 0;
-  const char *c;
   lives_proc_thread_t thread_info = lives_plant_new(LIVES_WEED_SUBTYPE_PROC_THREAD);
+  pthread_mutex_t *state_mutex;
+  const char *c;
+  int p = 0;
+
   if (!thread_info) return NULL;
   weed_set_funcptr_value(thread_info, LIVES_LEAF_THREADFUNC, func);
+  state_mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
+  pthread_mutex_init(state_mutex, NULL);
+  weed_set_voidptr_value(thread_info, LIVES_LEAF_STATE_MUTEX, state_mutex);
   if (return_type) {
-    pthread_mutex_t *state_mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
-    pthread_mutex_init(state_mutex, NULL);
-    weed_set_voidptr_value(thread_info, LIVES_LEAF_STATE_MUTEX, state_mutex);
     lives_proc_thread_set_state(thread_info, THRD_OPT_NOTIFY);
     if (return_type > 0)  weed_leaf_set(thread_info, LIVES_LEAF_RETURN_VALUE, return_type, 0, NULL);
   }
@@ -480,6 +482,11 @@ LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_get_state(lives_proc_thread_t lpt
 }
 
 
+LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_check_states(lives_proc_thread_t lpt, uint64_t state_bits) {
+  return lpt ? (weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL) & state_bits) : 0;
+}
+
+
 uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t state_bits) {
   if (lpt) {
     uint64_t tstate;
@@ -550,11 +557,11 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancellable(lives_proc_thread_
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t tinfo, boolean block) {
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t tinfo, boolean dontcare) {
   if (!tinfo || !lives_proc_thread_get_cancellable(tinfo)) return FALSE;
   lives_proc_thread_include_states(tinfo, THRD_STATE_CANCELLED);
-  if (block) lives_proc_thread_join(tinfo);
-  else lives_proc_thread_dontcare(tinfo);
+  // must set this after cancelling
+  if (dontcare) lives_proc_thread_dontcare(tinfo);
   return TRUE;
 }
 
@@ -583,6 +590,7 @@ boolean lives_proc_thread_dontcare(lives_proc_thread_t tinfo) {
     // task FINISHED before we could set this, so we need to unblock and free it
     // (otherwise it would do this itself when transitioning to FINISHED)
     lives_proc_thread_join(tinfo);
+    return FALSE;
   }
   return TRUE;
 }
@@ -597,8 +605,8 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_set_signalled(lives_proc_thread_t 
   if (!lpt) return FALSE;
   else {
     lives_thread_data_t *mydata = (lives_thread_data_t *)data;
-    if (mydata) mydata->signum = signum;
     pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+    if (mydata) mydata->signum = signum;
     pthread_mutex_lock(state_mutex);
     weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, lives_proc_thread_get_state(lpt) | THRD_STATE_SIGNALLED);
     weed_set_voidptr_value(lpt, LIVES_LEAF_SIGNAL_DATA, data);
@@ -674,8 +682,8 @@ static funcsig_t make_funcsig(lives_proc_thread_t func_info) {
 static void pthread_cleanup_func(void *args) {
   lives_proc_thread_t info = (lives_proc_thread_t)args;
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
-  boolean dontcare = lives_proc_thread_get_state(info) & THRD_OPT_DONTCARE;
-  if (dontcare || (!ret_type && !(lives_proc_thread_get_state(info) & THRD_OPT_NOTIFY))) {
+  boolean dontcare = lives_proc_thread_check_states(info, THRD_OPT_DONTCARE) ? TRUE : FALSE;
+  if (dontcare || (!ret_type && !(lives_proc_thread_check_states(info, THRD_OPT_NOTIFY)))) {
     lives_proc_thread_free(info);
   } else lives_proc_thread_include_states(info, THRD_STATE_FINISHED);
 }

@@ -54,7 +54,7 @@
 /// TODO: this file should be split into at least: memory functions, thread functions, file utils
 
 #include "memory.h"
-#include "threading.h"
+//#include "threading.h"
 
 /// disk/storage status values
 typedef enum {
@@ -153,10 +153,10 @@ char *lives_datetime(uint64_t secs, boolean use_local);
 char *lives_datetime_rel(const char *datetime);
 char *get_current_timestamp(void);
 
-#define LIVES_QUICK_NAP 1000 // 1 uSec
-#define LIVES_SHORT_SLEEP 1000000 // 1 mSec
-#define LIVES_FORTY_WINKS 40000000 // 40 mSec
-#define LIVES_WAIT_A_SEC 1000000000 // 1 second
+#define LIVES_QUICK_NAP 1000. // 1 uSec
+#define LIVES_SHORT_SLEEP 1000000. // 1 mSec
+#define LIVES_FORTY_WINKS 40000000. // 40 mSec
+#define LIVES_WAIT_A_SEC 1000000000. // 1 second
 
 #define lives_nanosleep(nanosec) {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
@@ -221,10 +221,10 @@ typedef struct {
 void lives_log(const char *what);
 #endif
 
-uint32_t lives_string_hash(const char *string) GNU_PURE GNU_HOT;
-uint32_t fast_hash(const char *key) GNU_PURE GNU_HOT;
-char *lives_chomp(char *string);
-char *lives_strtrim(const char *buff);
+uint32_t lives_string_hash(const char *) GNU_PURE GNU_HOT;
+uint32_t fast_hash(const char *) GNU_PURE GNU_HOT;
+char *lives_chomp(char *, boolean multi);
+char *lives_strtrim(const char *);
 
 int check_for_bad_ffmpeg(void);
 
@@ -250,7 +250,19 @@ boolean hide_desktop_panel(void);
 boolean get_x11_visible(const char *wname);
 
 #ifdef GDK_WINDOWING_X11
-void rec_desk(int nframes);
+// this doesn't really belong here, but for now, OK
+typedef struct {
+  int clipno;
+  int screen_area;
+  double fps;
+  double scale;
+  uint32_t delay_time, rec_time;
+  int achans, asamps, arate, signed_endian;
+  boolean duplex;
+  lives_proc_thread_t lpt;
+} rec_args;
+
+void rec_desk(void *args);
 #endif
 
 int get_window_stack_level(LiVESXWindow *, int *nwins);

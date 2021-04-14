@@ -31,6 +31,9 @@
 // ie. an intentcap "play" would have init_screen, exit_screen...so "play" is a capability as well as an action
 // so the capability part can list sub-intentions...or perhaps a capability can be linked to one or more a intentions..
 
+// must an intention always be linked to an object ? For example each thread can have an intention, should a thread become a lives_object
+// advantages / disadvantages...
+
 #ifndef HAS_LIVES_INTENTS_H
 #define HAS_LIVES_INTENTS_H
 
@@ -72,6 +75,9 @@ struct _object_t {
   void *priv; // internal data belonging to the object
 };
 
+// TODO - need to think more about relationship between intents / caps. Should caps be generic, eg "audio", "video"
+// or specific to and object type / subtype ? or a combination of generic caps + extendable custom caps ?
+
 enum {
   // some common intentions
   // internal or (possibly) non-functional types
@@ -95,15 +101,19 @@ enum {
   // specialised intentions
 
   // video players
-  LIVES_INTENTION_PLAY = 0x00000400, // value fixed for all time, order of followin must not change (see videoplugin.h)
+  LIVES_INTENTION_PLAY = 0x00000200, // value fixed for all time, order of following must not change (see videoplugin.h)
   LIVES_INTENTION_STREAM,  // encode / data in -> remote stream
   LIVES_INTENTION_TRANSCODE,  // encode / data in -> external file format
+
+  LIVES_INTENTION_RECORD,  // record
 
   LIVES_INTENTION_ENCODE = 0x00000899, // encode / file in -> external file format
 
   // clip-like objects (TBD. - part of clip object or should there be a clip_manager static object ?)
+  // maybe local / remote become CAPS
   LIVES_INTENTION_IMPORT_LOCAL = 0x00000C00, // import from local filesystem, -> internal clips  i.e "open"
   LIVES_INTENTION_IMPORT_REMOTE, // import from online source  -> internal clip "download"
+
   LIVES_INTENTION_EXPORT_LOCAL, // export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
   LIVES_INTENTION_EXPORT_REMOTE, // export raw format to online location, e.g. export audio, save frame
 
@@ -113,12 +123,12 @@ enum {
   LIVES_INTENTION_RESTORE, // restore from object -> internal clip
 
   // decoders
-  LIVES_INTENTION_DECODE = 0x00001000,
+  LIVES_INTENTION_DECODE = 0x00001000, // combine with caps to determine e.g. decode_audio, decode_video
 
   // use caps to further refine e.g REALTIMNE / NON_REALTIME
   LIVES_INTENTION_EFFECT = 0x00001400,
 
-  // do we need so many ?
+  // do we need so many ? maybe these can become CAPS
   LIVES_INTENTION_ANALYSE,
   LIVES_INTENTION_CONVERT,
   LIVES_INTENTION_MIX,
@@ -140,9 +150,6 @@ enum {
 #define LIVES_INTENTION_DOWNLOAD LIVES_INTENTION_IMPORT_REMOTE
 
 #define LIVES_INTENTION_DELETE LIVES_INTENTION_DESTROY
-
-// avoiding using an enum allows the list to be extended in other headers
-typedef int32_t lives_intention;
 
 /// type specific caps
 // vpp
@@ -241,9 +248,9 @@ typedef struct {
 // depending on type / subtype there may be additional information (e.g. error code, cancel reason)
 // this also to reduce the number of states for an object, although some statuses (e.g. running) may also be states
 // if an external caller can request (so cancelled would also be a state)
-#define LIVES_OBJECT_ERROR_COND -3
-#define LIVES_OBJECT_ERROR_PREREQ -2
-#define LIVES_OBJECT_ERROR_INTENT -1
+#define LIVES_OBJECT_ERROR_STATUS -3 /// object status does not allow
+#define LIVES_OBJECT_ERROR_RULES -2 /// not all rules / conditions met
+#define LIVES_OBJECT_ERROR_INVALID -1 /// transformation is not valid for object with this type / subtype / state
 #define LIVES_OBJECT_STATUS_NORMAL 0 ///< normal / success
 #define LIVES_OBJECT_STATUS_WAIT 1 ///< object is doing internal processing not in final state yet
 #define LIVES_OBJECT_STATUS_PREP 2 ///< object is in a preparatory status and has new param requirements
@@ -251,7 +258,7 @@ typedef struct {
 #define LIVES_OBJECT_STATUS_RUNNING 4 ///< object is "running" and the state cannot be changed
 #define LIVES_OBJECT_STATUS_FINISHED 5 ///< object finished running and has data
 #define LIVES_OBJECT_STATUS_CANCELLED 6 ///< object was cancelled during running
-#define LIVES_OBJECT_STATUS_FAILED 7 ///< object encountered an error during running
+#define LIVES_OBJECT_STATUS_ERROR 7 ///< object encountered an error during running
 #define LIVES_OBJECT_STATUS_NEEDS_DATA 8 ///< object is running but has param / data requirements
 #define LIVES_OBJECT_STATUS_DESTROYED 32768
 
@@ -267,7 +274,9 @@ typedef boolean lives_cond_t;
 
 // rules which must be satisfied before the transformation can succeed
 typedef struct {
-  lives_object_instance_t *oinst;
+  lives_object_instance_t *oinst; // owner instance / template
+  int states;
+  int *statuses; // ??
   lives_intentparams_t *reqs;
   char ui_schema; // schema for ui, eg. "RFX 1.x.x |"
   int n_uistrings; // num ui strings; in case a value is notr defined, it can be enterd by user
@@ -278,9 +287,13 @@ typedef struct {
 } lives_rules_t;
 
 // flagbits for transformations
+// combine : child for template, copy for instance
 #define TR_FLAGS_CREATES_CHILD (1 << 0) // creates child instance from template
 #define TR_FLAGS_CREATES_COPY  (1 << 1) // creates a copy of an instance with a different uid
+
+// remove: use list
 #define TR_FLAGS_CHANGES_SUBTYPE  (1 << 2) // object subtype may change during the transformation
+
 #define TR_FLAGS_FINAL (1 << 3) // state is final after tx, and can be destroyed
 #define TR_FLAGS_INSTANT (1 << 4) // must immediately be followed by another transformation (should the object be able to specify it
 /// 					e,g a cleanup to be run after processing, or just define it ?)
@@ -314,7 +327,10 @@ typedef struct {
 // after examining the transform object, caller should endure that all of the reqmt. rules are satisfied
 // and may then activate the transform for the object in question
 typedef struct {
-  int start_state;
+  uint64_t type;
+  uint64_t start_subtype;
+  lives_intentcap_t icaps;
+  //
   lives_rules_t *prereqs; // pointer to the prerequisites for carrying out the transform (can be NULL)
   int n_mappings; // mappings
   tx_map *mappings;
@@ -322,37 +338,48 @@ typedef struct {
   // output parameters created / updated in the transformation; this is actually array of pointers
   // and may even point to params in other objects
   lives_obj_param_t **oparams;
-  int new_state; // the state after, assuming success (can be same as start_state)
+  //
+  int new_state; // the state after, assuming success
+  int new_status; // status after, assuming success (e.g normal, running)
+  uint64_t *new_subtype; // subtype after, assuming success
   uint64_t flags;
 } lives_object_transform_t;
+
+//
+//const lives_object_template_t *lives_object_template_for_type(uint64_t type, uint64_t subtype);
+const lives_object_template_t *lives_object_template_for_type(uint64_t type);
 
 #if 0
 // base functions
 
-// for instances created from a template, select a transform with the flag bit CREATES_CHILD
-// for instances which dont have a template, create an instance with just the type set,
-// and call the function with a state of zero and pick a transform with LIVES_INTENTION_CREATE
-LiVESTransformList *list_transformations(lives_object_t *obj, int state);
+// return a LiVESList of lives_object_transform_t
+LiVESTransformList **list_transformations(lives_object_t *obj);
 #endif
 
-// ensure that all variable not marked optional are set, and all condition flags are TRUE
+// check if all variables not marked optional are set, and all condition flags are TRUE, type, subtype, state, status OK
 boolean requirements_met(lives_object_transform_t *);
 
-
 // the return value belongs to the object, and should only be freed with lives_object_status_free
-lives_object_status_t *transform(lives_object_t *obj, lives_object_transform_t *tx,
-                                 lives_object_t **other);
+lives_object_status_t *transform(lives_object_t *, lives_object_transform_t *, lives_object_t **other);
 
 //////
 // derived functions
 
-const lives_object_template_t *lives_object_template_for_type(uint64_t type, uint64_t subtype);
+// standard match funcs (match intent and caps) would be e.g at_least, nearest, exact, excludes
+// - TODO how to handle case where we need to transform state or subtype
+// -- should return a list, or several lists with alts.
+
+// note : may require change of subtype, state, status
+// first we should clear the status, then convert the subtype (maybe convert state first), then convert state
+// then finally convert status again
+
+//lives_object_transform_t *find_transform_for_intentcaps(lives_object_t *obj, lives_intentcaps icaps, lives_funct_t match_fn);
 
 lives_object_transform_t *find_transform_for_intent(lives_object_t *obj, lives_intention intent);
 
 boolean rules_lack_param(lives_rules_t *req, const char *pname);
-
 //boolean rules_lack_condition(lives_rules_t *req, int condition number);
+// type mismatch, subtype mismatch, state mismatch, status mismatch
 
 // convert an iparam to a regular weed_param
 weed_param_t *weed_param_from_iparams(lives_intentparams_t *iparams, const char *name);

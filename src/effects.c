@@ -310,7 +310,8 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   if (!do_progress_dialog(TRUE, TRUE, effectstring) || mainw->error) {
     if (cfile->pumper) {
-      lives_proc_thread_cancel(cfile->pumper, TRUE);
+      lives_proc_thread_cancel(cfile->pumper, FALSE);
+      lives_proc_thread_join(cfile->pumper);
       cfile->pumper = NULL;
     }
     mainw->last_dprint_file = ldfile;

@@ -434,8 +434,12 @@ typedef struct {
 
 #define DEF_ALIGN (sizeof(void *) * 8)
 
+// avoiding using an enum allows the list to be extended in other headers
+typedef int32_t lives_intention;
+
 #include "lists.h"
 #include "alarms.h"
+#include "threading.h"
 #include "machinestate.h"
 #include "lsd-tab.h"
 
@@ -443,19 +447,6 @@ boolean weed_threadsafe;
 int weed_abi_version;
 
 #define ALLOW_PNG24
-
-/// this struct is used only when physically resampling frames on the disk
-/// we create an array of these and write them to the disk
-typedef struct {
-  int value;
-  int64_t reltime;
-} resample_event;
-
-typedef struct {
-  int afile;
-  double seek;
-  double vel;
-} lives_audio_track_state_t;
 
 #ifdef IS_LIBLIVES
 #include "liblives.hpp"
@@ -684,6 +675,8 @@ typedef union _binval {
   const char chars[8];
   size_t size;
 } binval;
+
+#include "events.h"
 
 /// corresponds to one clip in the GUI
 typedef struct _lives_clip_t {
@@ -946,7 +939,6 @@ typedef struct {
 
 #include "paramspecial.h"
 #include "multitrack.h"
-#include "events.h"
 #include "mainwindow.h"
 #include "keyboard.h"
 #include "preferences.h"

@@ -1482,6 +1482,7 @@ char LIVES_STOCK_LABEL_SELECT[32];
 char LIVES_STOCK_LABEL_BACK[32];
 char LIVES_STOCK_LABEL_NEXT[32];
 char LIVES_STOCK_LABEL_RETRY[32];
+char LIVES_STOCK_LABEL_RESET[32];
 
 typedef struct {
   /// commonly adjusted values //////

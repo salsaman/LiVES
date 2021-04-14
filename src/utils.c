@@ -2805,7 +2805,7 @@ LiVESList *cache_file_contents(const char *filename) {
         if (*buff != '|') continue;
         cptr++;
       }
-      lives_chomp(cptr);
+      lives_chomp(cptr, FALSE);
       tmp = lives_strdup_printf("%s%s", data ? data : "", cptr);
       if (data) lives_free(data);
       data = tmp;

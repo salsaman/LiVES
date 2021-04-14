@@ -258,10 +258,12 @@ void on_forward_pressed(LiVESButton *, livespointer);
 
 boolean dirchange_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer area_enum);
 
-boolean dirchange_lock_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+boolean dirchange_lock_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod,
                                 livespointer area_enum);
 
 void unlock_loop_lock(void);
+
+void rec_desktop(LiVESMenuItem *, livespointer);
 
 void on_capture_activate(LiVESMenuItem *, livespointer);
 
@@ -323,7 +325,7 @@ void on_fade_audio_activate(LiVESMenuItem *, livespointer);
 
 void on_resample_video_activate(LiVESMenuItem *, livespointer);
 
-void on_resample_vid_ok(LiVESButton *, LiVESEntry *entry);
+void on_resample_vid_ok(LiVESButton *, livespointer pclipno);
 
 boolean on_trim_audio_activate(LiVESMenuItem *, livespointer);
 

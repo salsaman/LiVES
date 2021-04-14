@@ -35,9 +35,10 @@ boolean create_frame_index(int fileno, boolean init, frames_t start_offset, fram
 }
 
 
-static boolean extend_frame_index(int fileno, frames_t start, frames_t end) {
+static frames_t extend_frame_index(int fileno, frames_t start, frames_t end, lives_img_type_t img_type) {
   lives_clip_t *sfile = mainw->files[fileno];
   size_t idxsize = (ALIGN_CEIL(end * sizeof(frames_t), DEF_ALIGN)) / DEF_ALIGN;
+  frames_t i;
   if (!IS_VALID_CLIP(fileno) || start > end) return FALSE;
   if (sfile->frame_index_back) lives_free(sfile->frame_index_back);
   sfile->frame_index_back = sfile->frame_index;
@@ -47,8 +48,18 @@ static boolean extend_frame_index(int fileno, frames_t start, frames_t end) {
     sfile->frame_index_back = NULL;
     return FALSE;
   }
-  for (int i = start; i < end; i++) sfile->frame_index[i] = -1;
-  return TRUE;
+  for (i = start; i < end; i++) {
+    char *fname = make_image_file_name(sfile, i + 1, get_image_ext_for_type(img_type));
+    if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+      sfile->frame_index[i] = -1;
+    } else {
+      lives_free(fname);
+      delete_frames_from_virtual(fileno, i, end - 1);
+      break;
+    }
+    lives_free(fname);
+  }
+  return --i;
 }
 
 
@@ -329,7 +340,21 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 
   if (prefs->vj_mode) return TRUE;
 
+  sfile->afilesize = reget_afilesize_inner(fileno);
+  get_total_time(sfile);
+  if (sfile->video_time < sfile->laudio_time) {
+    binf = clip_forensic(fileno, NULL);
+    if (binf->frames) {
+      if (binf->frames * sfile->fps == sfile->laudio_time
+          || binf->frames * binf->fps == sfile->laudio_time
+          || (cdata && binf->frames * cdata->fps == sfile->laudio_time)) {
+        has_missing_frames = TRUE;
+      }
+    }
+  }
+
   // check the image type
+
   for (i = sfile->frames - 1; i >= 0; i--) {
     if (!sfile->frame_index || sfile->frame_index[i] == -1) {
       // this is a non-virtual frame
@@ -405,18 +430,25 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
     frames_t xframes = sfile->frames;
 
     if (sfile->frame_index_back) {
-      if (sfile->old_frames > sfile->frames) xframes = sfile->old_frames;
+      // old_frames should have been set in load_frame_index()
+      if (sfile->old_frames >= sfile->frames) xframes = sfile->old_frames;
+
+      // start by assuming backup is more correct
       backup_more_correct = TRUE;
     }
 
     // check and attempt to correct frame_index
     for (i = 0; i < xframes; i++) {
       frames_t fr;
+
+      // check frame_index first, unless we have passed its end
       if (i < sfile->frames) fr = sfile->frame_index[i];
       else fr = sfile->frame_index_back[i];
+
       if (fr < -1 || (!cdata && (frames64_t)fr > sfile->frames - 1)
           || (cdata && (frames64_t)fr > cdata->nframes - 1)) {
         if (i >= sfile->frames) {
+          // past the end so it must have been from backup
           backup_more_correct = FALSE;
           break;
         }
@@ -424,7 +456,9 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
           frames_t fr2 = sfile->frame_index_back[i];
           if (fr2 < -1 || (!cdata && (frames64_t)fr2 > sfile->frames - 1)
               || (cdata && (frames64_t)fr2 > cdata->nframes - 1)) {
+            // backup was incorrect, remove the assumption
             backup_more_correct = FALSE;
+            xframes = sfile->frames;
           }
         }
 
@@ -439,8 +473,12 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
             g_printerr("relinked to image frame %d\n", i + 1);
           }
         } else {
-          if (backup_more_correct && i < sfile->old_frames && sfile->frame_index_back[i] == -1)
+          // image file missing
+          if (backup_more_correct && i < sfile->old_frames && sfile->frame_index_back[i] == -1) {
             backup_more_correct = FALSE;
+            xframes = sfile->frames;
+          }
+          // relink it to next virtual frame if we can
           if (lgoodframe != -1) {
             sfile->frame_index[i] = lgoodframe + i - goodidx;
             if (prefs->show_dev_opts) {
@@ -611,19 +649,26 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 
 mismatch:
   // something mismatched - commence further investigation
+  if (!binf) binf = clip_forensic(fileno, NULL);
 
-  if ((binf = clip_forensic(mainw->current_file, NULL))) {
+  if (binf) {
+    if (cdata && binf->fps == cdata->fps)  {
+      sfile->pb_fps = sfile->fps = cdata->fps;
+    }
     if (has_missing_frames) {
       if (cdata) {
-        if (binf->frames == cdata->nframes  && binf->frames < sfile->frames) sfile->frames = binf->frames;
-        else if (binf->frames == sfile->frames && binf->frames < sfile->frames) {
-          if (sfile->frames > cdata->nframes) if (!extend_frame_index(fileno, cdata->nframes, sfile->frames)) return FALSE;
-          ((lives_clip_data_t *)cdata)->nframes = sfile->frames;
+        if (binf->frames == cdata->nframes && binf->frames < sfile->frames) sfile->frames = binf->frames;
+        else if ((binf->frames == sfile->frames && binf->frames != cdata->nframes)
+                 || (sfile->video_time < sfile->laudio_time
+                     && binf->frames * sfile->fps == sfile->laudio_time)) {
+          sfile->frames = binf->frames;
+          if (sfile->frames > cdata->nframes) {
+            sfile->frames = extend_frame_index(fileno, cdata->nframes, sfile->frames, empirical_img_type);
+            save_frame_index(fileno);
+          }
+          maxframe = sfile->frames;
         }
       } else if (binf->frames <= sfile->frames) sfile->frames = binf->frames;
-    }
-    if (cdata && binf->fps == cdata->fps)  {
-      ((lives_clip_data_t *)cdata)->fps =  sfile->pb_fps = sfile->fps;
     }
   }
 
@@ -634,7 +679,7 @@ mismatch:
   sfile->afilesize = reget_afilesize_inner(fileno);
 
   if (has_missing_frames && sfile->frame_index) {
-    if (sfile->frames > maxframe) extend_frame_index(fileno, maxframe, sfile->frames);
+    if (sfile->frames > maxframe) extend_frame_index(fileno, maxframe, sfile->frames, empirical_img_type);
     save_frame_index(fileno);
   }
   return FALSE;
@@ -1079,7 +1124,7 @@ void insert_images_in_virtual(int sfileno, frames_t where, frames_t frames, fram
 
 
 void delete_frames_from_virtual(int sfileno, frames_t start, frames_t end) {
-  // delete (frames) images from sfile at position start to end
+  // delete (frames) images from sfile at position start to end (inclusive)
   // this is the virtual (book-keeping) part
 
   // need to update the frame_index

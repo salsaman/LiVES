@@ -503,10 +503,9 @@ void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, int hei
   /* XQueryBestCursor (GDK_DISPLAY_XDISPLAY (display), */
   /* 		    GDK_WINDOW_XID (window), */
   /* 		    width, height, &cwidth, &cheight); */
+  //
+  // actually, the code for this function is rubbish, it just makes a guess:
   gdk_display_get_maximal_cursor_size(disp, &cwidth, &cheight);
-#endif
-#ifdef GUI_QT
-  cwidth = MAX_CURSOR_WIDTH;
 #endif
 
   if (width > cwidth) width = cwidth;
@@ -638,7 +637,7 @@ void mt_draw_block(lives_mt * mt, lives_painter_t *cairo,
   int width = BLOCK_THUMB_WIDTH;
   int hidden = (int)LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY));
 
-  register int i;
+  int i;
 
   if (mt->no_expose) return;
 
@@ -742,12 +741,10 @@ void mt_draw_block(lives_mt * mt, lives_painter_t *cairo,
                                                         framenum, last_framenum == -1 ? 0
                                                         : framenum - last_framenum);
                   } else {
-                    thumbnail = mt_make_thumb(mt, filenum, width, height,
-                                              framenum, LIVES_INTERP_FAST, FALSE);
+                    thumbnail = mt_make_thumb(mt, filenum, width, height, framenum, LIVES_INTERP_FAST, FALSE);
                   }
                 } else {
-                  thumbnail = mt_make_thumb(mt, filenum, width, height,
-                                            framenum, LIVES_INTERP_FAST, FALSE);
+                  thumbnail = mt_make_thumb(mt, filenum, width, height, framenum, LIVES_INTERP_FAST, FALSE);
                 }
                 in_cache = add_to_thumb_cache(filenum, framenum, range, height, thumbnail);
               } else {
@@ -885,7 +882,7 @@ void mt_draw_aparams(lives_mt * mt, LiVESWidget * eventbox, lives_painter_t *cr,
   double y;
 
   int vali, mini, maxi, *valis;
-  int i, pnum, ptype;
+  int pnum, ptype;
   int offset_start, offset_end, startpos;
   int track;
 
@@ -931,7 +928,7 @@ void mt_draw_aparams(lives_mt * mt, LiVESWidget * eventbox, lives_painter_t *cr,
   pchainx = weed_get_voidptr_array(init_event, WEED_LEAF_IN_PARAMETERS, NULL);
 
   //lives_painter_set_operator (cr, LIVES_PAINTER_OPERATOR_DEST_OVER);
-  for (i = startpos; i < startx + width; i++) {
+  for (int i = startpos; i < startx + width; i++) {
     dtime = get_time_from_x(mt, i);
     tc = dtime * TICKS_PER_SECOND_DBL;
     if (tc >= end_tc) break;
@@ -1359,11 +1356,11 @@ void on_seltrack_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 
 void track_select(lives_mt * mt) {
-  LiVESWidget *labelbox, *label, *hbox, *dummy, *ahbox, *arrow, *eventbox, *oeventbox, *checkbutton = NULL;
+  LiVESWidget *labelbox, *label, *hbox, *dummy, *ahbox, *arrow;
+  LiVESWidget *eventbox, *oeventbox, *checkbutton = NULL;
   LiVESList *list;
   weed_timecode_t tc;
-  int hidden = 0;
-  register int i;
+  int i, hidden = 0;
 
   if (!prefs->show_gui) return;
 
@@ -1496,11 +1493,13 @@ void track_select(lives_mt * mt) {
         }
 
 #ifdef ENABLE_GIW
-        if ((prefs->lamp_buttons && !giw_led_get_mode(GIW_LED(checkbutton))) || (!prefs->lamp_buttons &&
+        if ((prefs->lamp_buttons
+             && !giw_led_get_mode(GIW_LED(checkbutton)))
+            || (!prefs->lamp_buttons &&
 #else
         if (
 #endif
-            !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(checkbutton)))
+                !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(checkbutton)))
 #ifdef ENABLE_GIW
            )
 #endif
@@ -1914,8 +1913,7 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
 
         lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 2, 6, 1, 2, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
         lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, TIMELINE_TABLE_COLUMNS, 1, 2,
-                           (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
-                           (LiVESAttachOptions)(0), 0, 0);
+                           (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL), (LiVESAttachOptions)(0), 0, 0);
 
         lives_widget_set_valign(xeventbox, LIVES_ALIGN_CENTER);
 
@@ -1936,8 +1934,7 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
 
           lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 2, 6, 2, 3, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
           lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, TIMELINE_TABLE_COLUMNS, 2, 3,
-                             (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
-                             (LiVESAttachOptions)(0), 0, 0);
+                             (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL), (LiVESAttachOptions)(0), 0, 0);
 
           lives_widget_set_valign(xeventbox, LIVES_ALIGN_CENTER);
 
@@ -2081,12 +2078,10 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
                                             (LIVES_WIDGET_OBJECT(eventbox), "layer_number"))));
 
           lives_signal_connect(LIVES_GUI_OBJECT(labelbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                               LIVES_GUI_CALLBACK(atrack_ebox_pressed),
-                               (livespointer)mt);
+                               LIVES_GUI_CALLBACK(atrack_ebox_pressed), (livespointer)mt);
 
           lives_signal_connect(LIVES_GUI_OBJECT(ahbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                               LIVES_GUI_CALLBACK(track_arrow_pressed),
-                               (livespointer)mt);
+                               LIVES_GUI_CALLBACK(track_arrow_pressed), (livespointer)mt);
 
           lives_table_attach(LIVES_TABLE(mt->timeline_table), aeventbox, 7, TIMELINE_TABLE_COLUMNS, rows, rows + 1,
                              (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL), (LiVESAttachOptions)(0), 0, 0);
@@ -2332,6 +2327,7 @@ void mt_clip_select(lives_mt * mt, boolean scroll) {
   lives_list_free(list);
 }
 
+
 static void set_time_scrollbar(lives_mt * mt) {
   double page = mt->tl_max - mt->tl_min;
   if (mt->end_secs == 0.) mt->end_secs = DEF_TIME;
@@ -2374,9 +2370,10 @@ void set_timeline_end_secs(lives_mt * mt, double secs) {
 }
 
 
-void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
+weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
   // show preview of current frame in preview_eventbox and/or play_
-  // or, if return_layer is TRUE, we just set mainw->frame_layer (used when we want to save the frame, e.g right click context)
+  // or, if return_layer is TRUE, we just set mainw->frame_layer
+  // (used when we want to save the frame, e.g right click context)
 
   /// NOTE: this will show the current frame WITHOUT any currently unapplied effects
   // to show WITH unapplied effects, call activate_mt_preview() instead
@@ -2397,7 +2394,13 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
   static boolean lastblank = TRUE;
 
   //if (mt->play_width == 0 || mt->play_height == 0) return;
-  if (mt->no_frame_update) return;
+  if (mt->no_frame_update) return NULL;
+
+  if (mainw->frame_layer) {
+    weed_layer_ref(mainw->frame_layer);
+    weed_layer_ref(mainw->frame_layer);
+    mainw->frame_layer = NULL;
+  }
 
   set_mt_play_sizes_cfg(mt);
 
@@ -2459,7 +2462,13 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
     if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
       mt->idlefunc = mt_idle_add(mt);
     }
-    return;
+    weed_layer_free(mainw->frame_layer);
+    if (frame_layer) {
+      mainw->frame_layer = frame_layer;
+      weed_layer_unref(mainw->frame_layer);
+      weed_layer_unref(mainw->frame_layer);
+    } else mainw->frame_layer = NULL;
+    return NULL;
   }
 
   // start "playback" at mt->ptr_time; we just "render" one frame
@@ -2564,10 +2573,17 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
   }
 
   if (return_layer) {
+    weed_layer_t *layer;
     if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
       mt->idlefunc = mt_idle_add(mt);
     }
-    return;
+    layer = mainw->frame_layer;
+    if (frame_layer) {
+      mainw->frame_layer = frame_layer;
+      weed_layer_unref(mainw->frame_layer);
+      weed_layer_unref(mainw->frame_layer);
+    } else mainw->frame_layer = NULL;
+    return layer;
   }
 
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -2585,6 +2601,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
   }
 
   if (mainw->frame_layer) {
+    // we called process_events(), so that should have created mainw->frame_layer
     LiVESPixbuf *pixbuf = NULL;
     int pwidth, pheight, lb_width, lb_height;
     int cpal = WEED_PALETTE_RGB24, layer_palette;
@@ -2606,8 +2623,15 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
         pwidth = lb_width;
         pheight = lb_height;
         if (!letterbox_layer(mainw->frame_layer, pwidth, pheight, lb_width, lb_height,
-                             LIVES_INTERP_BEST, cpal, 0))
-          return;
+                             LIVES_INTERP_BEST, cpal, 0)) {
+          if (frame_layer) {
+            if (mainw->frame_layer) weed_layer_free(mainw->frame_layer);
+            mainw->frame_layer = frame_layer;
+            weed_layer_unref(mainw->frame_layer);
+            weed_layer_unref(mainw->frame_layer);
+          }
+          return NULL;
+        }
         was_letterboxed = TRUE;
       }
     }
@@ -2659,7 +2683,12 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
   mt->frame_pixbuf = NULL;
 
   /// restore original mainw->frame_layer
-  mainw->frame_layer = frame_layer;
+  if (frame_layer) {
+    if (mainw->frame_layer) weed_layer_free(mainw->frame_layer);
+    mainw->frame_layer = frame_layer;
+    weed_layer_unref(mainw->frame_layer);
+    weed_layer_unref(mainw->frame_layer);
+  }
 
   lives_ruler_set_value(LIVES_RULER(mt->timeline), ptr_time);
   lives_widget_queue_draw(mt->timeline);
@@ -2667,6 +2696,17 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
   if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
     mt->idlefunc = mt_idle_add(mt);
   }
+
+  return NULL;
+}
+
+
+boolean mt_idle_show_current_frame(livespointer data) {
+  lives_mt *mt = (lives_mt *)data;
+  if (!mainw->multitrack) return FALSE;
+  mt_tl_move(mt, mt->opts.ptr_time);
+  lives_widget_queue_draw(mainw->play_image);
+  return FALSE;
 }
 
 

@@ -218,12 +218,12 @@ fname|_Output file|string||\\n\
 highq|_High quality (larger file size)|bool|0|0|\\n\
 </params>\\n\
 <param_window>\\n\
-special|filewrite|5|\\n\
 layout|hseparator|\\n\
 layout|p5|\\n\
 layout|p6|\\n\
 layout|p0|\\n\
 layout|hseparator|\\n\
+special|filewrite|5|\\n\
 </param_window>\\n\
 <onchange>\\n\
 init|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} elsif ($p0 == 2) {$p5 .= \".webm\";} else {$p5 .= \".ogm\";}\\n\
@@ -497,7 +497,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   uri[0] = 0;
 
-  fprintf(stderr, "init_screen %d x %d %d\n", width, height, argc);
+  //fprintf(stderr, "init_screen %d x %d %d\n", width, height, argc);
 
   ostv.frame = osta.frame = NULL;
   vStream = aStream = NULL;

@@ -86,8 +86,8 @@ void on_change_speed_ok_clicked(LiVESButton *, livespointer);
 
 boolean auto_resample_resize(int width, int height, double fps, int fps_num,
                              int fps_denom, int arate, int asigned, boolean swap_endian);
-int reorder_frames(int rwidth, int rheight);
-int deorder_frames(frames_t old_framecount, boolean leave_bak); ///< leave_bak is a special mode for the clipboard
+frames_t reorder_frames(int clipno, int rwidth, int rheight);
+frames_t deorder_frames(frames_t old_framecount, boolean leave_bak); ///< leave_bak is a special mode for the clipboard
 
 boolean resample_clipboard(double new_fps); ///< call this to resample clipboard video
 

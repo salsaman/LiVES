@@ -2866,7 +2866,7 @@ if (1) {
 		$old_end = $ARGV[7];
 	    }
 
-	    $letterbox=0;
+	    $letterbox = 0;
 
 	    if (defined $ARGV[8] && $ARGV[8] != 0) {
 		#letterbox size
@@ -3476,7 +3476,7 @@ if (1) {
 		$audio_in = "$curworkdir/audio";
 	    }
 
-	    &smog_rename($audio_in, $audio_in . ".bak");
+	    &smog_rename($audio_in, "$audio_in.bak");
 
 	    $where = $audio_start;
 	    $end = $audio_end - $audio_start;
@@ -5013,7 +5013,7 @@ sub mv_mgk {
 		    unlink "$curworkdir/$name$img_ext";
 		}
 		else {
-		    $smres = &smog_rename("$curworkdir/$name$img_ext", "$curworkdir/$name.bak");
+		    $smres = &smog_rename("$curworkdir/$name$img_ext", "$curworkdir/$name.baky");
 		    if (!$smres) {
 			&try_to_recover($start, $i - 1);
 			if ($DEBUG_SMOGRIFY) {

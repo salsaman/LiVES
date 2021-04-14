@@ -145,7 +145,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   case CLIP_DETAILS_ARATE:
   case CLIP_DETAILS_ACHANS:
   case CLIP_DETAILS_ASAMPS:
-  case CLIP_DETAILS_FRAMES:
+  case CLIP_DETAILS_FRAMES: // TODO - frames_t
   case CLIP_DETAILS_GAMMA_TYPE:
   case CLIP_DETAILS_HEADER_VERSION:
     *(int *)retval = atoi(val); break;
@@ -276,7 +276,7 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
     break;
   case CLIP_DETAILS_ASAMPS:
     myval = lives_strdup_printf("%d", *(int *)val); break;
-  case CLIP_DETAILS_FRAMES:
+  case CLIP_DETAILS_FRAMES: // TODO - frames_t
     myval = lives_strdup_printf("%d", *(int *)val); break;
   case CLIP_DETAILS_GAMMA_TYPE:
     myval = lives_strdup_printf("%d", *(int *)val); break;

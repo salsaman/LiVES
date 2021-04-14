@@ -14,6 +14,19 @@
 
 /// parts of this may eventually become libweed-events
 
+/// this struct is used only when physically resampling frames on the disk
+/// we create an array of these and write them to the disk
+typedef struct {
+  int value;
+  int64_t reltime;
+} resample_event;
+
+typedef struct {
+  int afile;
+  double seek;
+  double vel;
+} lives_audio_track_state_t;
+
 // event_list
 #define WEED_LEAF_WEED_EVENT_API_VERSION "weed_event_api_version"
 #define WEED_LEAF_AUDIO_SIGNED "audio_signed"
@@ -118,7 +131,7 @@ typedef enum {
 } lives_render_error_t;
 
 weed_event_t *append_frame_event(weed_event_t *event_list, ticks_t tc, int numframes,
-                                 int *clips, int64_t *frames) WARN_UNUSED;
+                                 int *clips, frames64_t *frames) WARN_UNUSED;
 weed_event_t *append_filter_init_event(weed_event_t *event_list, ticks_t tc,
                                        int filter_idx, int num_in_tracks, int key, weed_plant_t *inst) WARN_UNUSED;
 weed_event_t *append_filter_deinit_event(weed_event_t *event_list, ticks_t tc,
@@ -130,7 +143,7 @@ weed_event_t *append_marker_event(weed_event_t *event_list, ticks_t tc, int mark
 
 /** will either insert or replace */
 weed_event_t *insert_frame_event_at(weed_event_t *event_list, ticks_t tc, int numframes,
-                                    int *clips, int64_t *frames, weed_event_t **shortcut) WARN_UNUSED;
+                                    int *clips, frames64_t *frames, weed_event_t **shortcut) WARN_UNUSED;
 void insert_audio_event_at(weed_event_t *event, int track, int clipnum, double time, double vel);
 void remove_audio_for_track(weed_event_t *event, int track);
 weed_event_t *insert_blank_frame_event_at(weed_event_t *event_list, ticks_t tc,
@@ -158,7 +171,7 @@ int weed_event_get_type(weed_event_t *event);
 weed_error_t weed_event_set_timecode(weed_event_t *, weed_timecode_t tc);
 weed_timecode_t weed_event_get_timecode(weed_event_t *);
 
-int weed_frame_event_get_tracks(weed_event_t *event,  int **clips, int64_t **frames); // returns ntracks
+int weed_frame_event_get_tracks(weed_event_t *event,  int **clips, frames64_t **frames); // returns ntracks
 int weed_frame_event_get_audio_tracks(weed_event_t *event,  int **aclips, double **aseeks); // returns natracks
 
 /// replace events in event_list with events in new_event_list

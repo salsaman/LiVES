@@ -895,7 +895,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   if (user_data) intention = LIVES_POINTER_TO_INT(user_data);
 
-  if (strlen(future_prefs->vpp_name)) {
+  if (*future_prefs->vpp_name) {
     if (!(tmpvpp = open_vid_playback_plugin(future_prefs->vpp_name, FALSE))) return NULL;
   } else {
     if (!mainw->vpp) return NULL;

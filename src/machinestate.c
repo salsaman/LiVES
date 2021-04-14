@@ -899,7 +899,7 @@ char *get_mountpoint_for(const char *dir) {
     for (int l = 0; l < lcount; l++) {
       int pccount = get_token_count(array0[l], ' ');
       char **array1 = lives_strsplit(array0[l], " ", pccount);
-      lives_chomp(array1[pccount - 1]);
+      lives_chomp(array1[pccount - 1], FALSE);
       for (j = 0; array1[pccount - 1][j] && j < slen; j++) if (array1[pccount - 1][j] != dir[j]) break;
       if (j > lmatch && !array1[pccount - 1][j]) {
         lmatch = j;
@@ -1148,7 +1148,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
         fclose(orderfile);
         break;
       }
-      lives_chomp(buff);
+      lives_chomp(buff, FALSE);
 
       fdets = (lives_file_dets_t *)struct_from_template(LIVES_STRUCT_FILE_DETS_T);
 
@@ -1510,12 +1510,15 @@ LIVES_GLOBAL_INLINE char *lives_strstop(char *st, const char term) {
 }
 
 
-LIVES_GLOBAL_INLINE char *lives_chomp(char *buff) {
+LIVES_GLOBAL_INLINE char *lives_chomp(char *buff, boolean multi) {
   /// chop off final newline
   /// see also lives_strchomp() which removes all whitespace
   if (buff) {
     size_t xs = lives_strlen(buff);
-    if (xs && buff[xs - 1] == '\n') buff[--xs] = '\0'; // remove trailing newline
+    do {
+      if (xs && buff[xs - 1] == '\n') buff[--xs] = '\0'; // remove trailing newline
+      else break;
+    } while (multi);
   }
   return buff;
 }
@@ -1955,7 +1958,7 @@ LIVES_LOCAL_INLINE char *mini_popen(char *cmd) {
     //char *com = lives_strdup_printf("%s $(%s)", capable->echo_cmd, EXEC_MKTEMP);
     lives_popen(cmd, TRUE, buff, PATH_MAX);
     lives_free(cmd);
-    lives_chomp(buff);
+    lives_chomp(buff, FALSE);
     return lives_strdup(buff);
   }
 }
@@ -2061,82 +2064,172 @@ LiVESResponseType send_to_trash(const char *item) {
 
 
 static boolean rec_desk_done(livespointer data) {
-  lives_clip_t *sfile;
-  int clipno = LIVES_POINTER_TO_INT(data);
-  int current_file = mainw->current_file;
+  if (lives_get_status() != LIVES_STATUS_IDLE) return TRUE;
+  else {
+    lives_clip_t *sfile;
+    rec_args *recargs = (rec_args *)data;
+    int current_file = mainw->current_file;
 
-  if (!IS_VALID_CLIP(clipno)) goto ohnoes2;
+    // need to do this, as lpt has a notify value; otherwise it would not be cancellable
+    lives_proc_thread_join(recargs->lpt);
 
-  sfile = mainw->files[clipno];
-  if (sfile->frames <= 0) goto ohnoes;
+    if (!IS_VALID_CLIP(recargs->clipno)) goto ohnoes2;
+    sfile = mainw->files[recargs->clipno];
+    sfile->is_loaded = TRUE;
 
-  do_error_dialogf("Grabbed %d frames", sfile->frames);
+    migrate_from_staging(recargs->clipno);
 
-  add_to_clipmenu_any(clipno);
-  mainw->files[clipno]->opening = FALSE;
-  switch_clip(1, clipno, FALSE);
-  return FALSE;
+    if (sfile->frames <= 0) goto ohnoes;
 
- ohnoes:
-  mainw->current_file = clipno;
-  close_current_file(current_file);
- ohnoes2:
-  do_error_dialog("Screen grab failed");
+    do_info_dialogf(_("Grabbed %d frames"), sfile->frames);
+
+    add_to_clipmenu_any(recargs->clipno);
+    switch_clip(1, recargs->clipno, FALSE);
+
+    cfile->undo1_dbl = recargs->fps;
+    cfile->fps = 0.;
+    THREADVAR(intention) = LIVES_INTENTION_RECORD;
+
+    on_resample_vid_ok(NULL, NULL);
+
+    break_me("done");
+    cfile->end = cfile->frames;
+    if (cfile->event_list) {
+      event_list_free(cfile->event_list);
+      cfile->event_list = NULL;
+    }
+    cfile->pb_fps = cfile->fps;
+    switch_clip(1, mainw->current_file, TRUE);
+
+
+    lives_widget_set_sensitive(mainw->desk_rec, TRUE);
+    lives_free(recargs);
+
+    return FALSE;
+
+  ohnoes:
+    mainw->current_file = recargs->clipno;
+    close_current_file(current_file);
+    lives_free(recargs);
+  ohnoes2:
+    do_error_dialog(_("Screen grab failed"));
+    lives_widget_set_sensitive(mainw->desk_rec, TRUE);
+  }
   return FALSE;
 }
 
 
-void rec_desk(int nframes) {
+void rec_desk(void *args) {
   // experimental
-  LiVESXWindow *root = gdk_get_default_root_window ();
-  LiVESPixbuf *pixbuf;
-  LiVESError *err = NULL;
+  // TODO - start disk space monitor
+  savethread_priv_t *saveargs = NULL;
+  lives_thread_t *saver_thread = NULL;
+  lives_proc_thread_t lpt = THREADVAR(tinfo);
+  rec_args *recargs = (rec_args *)args;
+  LiVESWidget *win;
+  LiVESXWindow *root;
   lives_clip_t *sfile;
-  char *fname = lives_strdup("scrngrab");
-  int new_file = mainw->first_free_file;
-  int x = 0, y = 0;
-  int w = GUI_SCREEN_WIDTH;
-  int h = GUI_SCREEN_HEIGHT;
+  weed_timecode_t tc;
+  weed_layer_t *layer;
+  LiVESPixbuf *pixbuf;
+  int clips[1];
+  int64_t frames[1];
+  char *imname;
+  lives_alarm_t alarm_handle;
 
-  if (1) {
-    LiVESWidget *win = LIVES_MAIN_WINDOW_WIDGET;
-    GdkRectangle rect;
-    int wx, wy;
-    gdk_window_get_frame_extents(lives_widget_get_xwindow(LIVES_WIDGET(win)), &rect);
-    gdk_window_get_origin(lives_widget_get_xwindow(LIVES_WIDGET(win)), &wx, &wy);
-    x = wx;
-    y = wy;
-    w = rect.width;
-    h = rect.height;
-    g_print("GOT %d and %d ,,, %d X %d\n", x, y, w, h);
+  int x = 0, y = 0, frameno = 0;
+  int w = GUI_SCREEN_WIDTH, h = GUI_SCREEN_HEIGHT;
+
+  if (lpt) lives_proc_thread_set_cancellable(lpt);
+
+  root = gdk_get_default_root_window ();
+
+  if (recargs->screen_area == SCREEN_AREA_FOREGROUND) {
+    win = LIVES_MAIN_WINDOW_WIDGET;
+    get_border_size(win, &x, &y);
+    w = lives_widget_get_allocation_width(win);
+    h = lives_widget_get_allocation_height(win);
   }
 
-  if (!get_new_handle(new_file, fname)) {
-    lives_free(fname);
-    return;
-  }
+  sfile = mainw->files[recargs->clipno];
+  clips[0] = recargs->clipno;
+  migrate_from_staging(recargs->clipno);
 
-  sfile = mainw->files[new_file];
+  saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
+  saveargs->compression = 100 - prefs->ocp;
 
-  for (int i = 1; i <= nframes; i++) {
-    char *imname = make_image_file_name(sfile, i, NULL);
+  lives_widget_set_sensitive(mainw->desk_rec, TRUE);
+  alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->delay_time);
+  lives_nanosleep_until_nonzero(!lives_alarm_check(alarm_handle) || (lpt && lives_proc_thread_get_cancelled(lpt)));
+  lives_alarm_clear(alarm_handle);
+
+  if (lpt && lives_proc_thread_get_cancelled(lpt)) goto done;
+
+  alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->rec_time);
+  while ((!recargs->rec_time || lives_alarm_check(alarm_handle))
+	 && (!lpt || !lives_proc_thread_get_cancelled(lpt))) {
+    if (saver_thread) {
+      lives_thread_join(*saver_thread, NULL);
+      if (saveargs->error) break;
+    }
+    else saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
+
+    tc = lives_get_current_ticks();
+    layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
     pixbuf = gdk_pixbuf_get_from_window (root, x, y, w, h);
-    lives_pixbuf_save(pixbuf, imname, sfile->img_type, 100 - prefs->ocp,
-		      w, h, &err);
-    lives_nanosleep(MILLIONS(40));
+    if (!pixbuf) break;
+
+    if (!pixbuf_to_layer(layer, pixbuf)) lives_widget_object_unref(pixbuf);
+    if (recargs->scale < 1.) {
+      if (!resize_layer(layer, (double)w * recargs->scale, (double)h * recargs->scale,
+			LIVES_INTERP_FAST, WEED_PALETTE_END, 0)) {
+	weed_layer_free(layer);
+	break;
+      }
+    }
+
+    frames[0] = frameno;
+    sfile->event_list = append_frame_event(sfile->event_list, tc, 1, clips, frames);
+
+    imname = make_image_file_name(sfile, ++frameno, NULL);
+
+    if (saveargs->layer) weed_layer_free(saveargs->layer);
+    saveargs->layer = layer;
+    if (saveargs->fname) lives_free(saveargs->fname);
+    saveargs->fname = imname;
+
+    lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
+
+    // TODO - check for timeout / cancel here too
+    lives_nanosleep(LIVES_WAIT_A_SEC / recargs->fps);
   }
+  lives_alarm_clear(alarm_handle);
+
+  if (saver_thread) {
+    lives_thread_join(*saver_thread, NULL);
+    lives_free(saver_thread);
+  }
+
+  if (saveargs) {
+    if (saveargs->layer) weed_layer_free(saveargs->layer);
+    if (saveargs->fname) lives_free(saveargs->fname);
+    lives_free(saveargs);
+  }
+
+ done: // timed out or cancelled
+  lives_signal_handler_block(mainw->desk_rec, mainw->desk_rec_func);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->desk_rec), FALSE);
+  lives_signal_handler_unblock(mainw->desk_rec, mainw->desk_rec_func);
+  sfile->fps = recargs->fps;
   sfile->hsize = w;
   sfile->vsize = h;
   sfile->start = 1;
-  sfile->end = sfile->frames = nframes;
-  sfile->fps = 25.;
-  sfile->changed = TRUE;
-  lives_snprintf(sfile->name, CLIP_NAME_MAXLEN, "%s", "screengrab");
-  if (!save_clip_values(new_file)) {
-    sfile->frames = -1;
-  }
+  sfile->end = sfile->frames = frameno;
+  if (!save_clip_values(recargs->clipno)) sfile->frames = -1;
   if (sfile->frames > 0 && prefs->crash_recovery) add_to_recovery_file(sfile->handle);
-  lives_idle_add_simple(rec_desk_done, LIVES_INT_TO_POINTER(new_file));
+  recargs->lpt = lpt;
+  lives_widget_set_sensitive(mainw->desk_rec, FALSE);
+  lives_idle_add_simple(rec_desk_done, recargs);
 }
 
 #endif
@@ -2184,7 +2277,7 @@ char *get_wid_for_name(const char *wname) {
 	  THREADVAR(com_failed) = FALSE;
 	  break;
 	}
-	lives_chomp(buff2);
+	lives_chomp(buff2, FALSE);
 	if (!lives_strcmp(wname, buff2)) {
 	  wid = lives_strdup_printf("0x%lX", atol(lines[l]));
 	  break;

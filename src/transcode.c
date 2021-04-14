@@ -183,6 +183,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
   } else {
     vpp = mainw->vpp;
     mainw->transrend_ready = TRUE;
+    lives_proc_thread_set_cancellable(mainw->transrend_proc);
     lives_nanosleep_until_nonzero(!mainw->transrend_ready
                                   || lives_proc_thread_get_cancelled(mainw->transrend_proc));
     if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) goto tr_err2;
@@ -480,6 +481,10 @@ tr_err2:
       }
     }
     mainw->no_switch_dprint = FALSE;
+  }
+
+  if (!error && mainw->cancelled == CANCEL_NONE) {
+    global_recent_manager_add(pname);
   }
 
   lives_freep((void **)&pname);

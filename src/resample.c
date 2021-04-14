@@ -54,7 +54,7 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
   boolean video_resized = FALSE;
   boolean bad_header = FALSE;
 
-  int frames = cfile->frames;
+  frames_t frames = cfile->frames;
 
   reorder_leave_back = FALSE;
 
@@ -118,6 +118,7 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
 
         cfile->undo1_dbl = fps;
         cfile->undo_start = 1;
+
         cfile->undo_end = frames;
 
         // now resample
@@ -281,7 +282,7 @@ void pre_analyse(weed_plant_t *elist) {
   lives_audio_track_state_t *ststate = NULL, *enstate;
   ticks_t offs = 0;
   int pclip = 0, ppclip = 0;
-  int pframe = 0, ppframe = 0;
+  frames64_t pframe = 0, ppframe = 0;
   int ev_api = 100;
   int ntracks;
 
@@ -295,17 +296,17 @@ void pre_analyse(weed_plant_t *elist) {
         int clip = get_frame_event_clip(event, 0);
         frames_t frame = get_frame_event_frame(event, 0);
         if (pframev && ppframev && pclip == clip && ppclip == clip) {
-          if (abs(frame - pframe) <= SMTH_FRAME_LIM && (tc - pptc) < SMTH_TC_LIM) {
+          if (abs((frames64_t)frame - pframe) <= SMTH_FRAME_LIM && (tc - pptc) < SMTH_TC_LIM) {
             double del1 = (double)(ptc - pptc);
             double del2 = (double)(tc - ptc);
             if (del1 * del2 >= 3.5) {
-              pframe = (frames_t)(((double)ppframe * del2 + (double)frame * del1) / (del1 + del2) + .5);
+              pframe = (frames64_t)(((double)ppframe * del2 + (double)frame * del1) / (del1 + del2) + .5);
               weed_set_int64_value(pframev, WEED_LEAF_FRAMES, pframe);
             }
           }
         }
         pptc = ptc; ptc = tc;
-        ppframe = pframe; pframe = frame;
+        ppframe = pframe; pframe = (frames64_t)frame;
         ppclip = pclip; pclip = clip;
         ppframev = pframev; pframev = event;
       }
@@ -473,7 +474,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
   boolean interpolate = TRUE;
   int *clips = NULL, *naclips = NULL, *nclips = NULL;
-  int64_t  *frames = NULL,  *nframes = NULL;
+  frames64_t *frames = NULL, *nframes = NULL;
   int *xaclips = NULL;
 
   int tracks, ntracks = 0, natracks = 0, xatracks = 0;
@@ -833,7 +834,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
               for (i = 0; i < tracks; i++) {
                 if (i >= ntracks) break;
                 if (clips[i] == nclips[i]) {
-                  frames[i] = (int64_t)((double)frames[i] + (double)(nframes[i] - frames[i]) * ratio);
+                  frames[i] = (frames64_t)((double)frames[i] + (double)(nframes[i] - frames[i]) * ratio);
                 }
               }
             }
@@ -1103,58 +1104,51 @@ q_done:
 
 //////////////////////////////////////////////////////////////////
 
-static void on_reorder_activate(int rwidth, int rheight) {
-  char *msg;
-
+static void on_reorder_activate(int clipno, int rwidth, int rheight) {
+  lives_clip_t *sfile;
   uint32_t chk_mask = WARN_MASK_LAYOUT_ALTER_FRAMES | WARN_MASK_LAYOUT_ALTER_AUDIO;
-  if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
-    return;
-  }
+  if (!check_for_layout_errors(NULL, clipno, 1, 0, &chk_mask)) return;
 
-  cfile->old_frames = cfile->frames;
+  sfile = mainw->files[clipno];
+  sfile->old_frames = sfile->frames;
 
   //  we  do the reorder in reorder_frames()
   // this will clear event_list and set it in event_list_back
-  if ((cfile->frames = reorder_frames(rwidth, rheight)) < 0) {
+  if ((sfile->frames = reorder_frames(clipno, rwidth, rheight)) < 0) {
     // reordering error
-    if (!(cfile->undo_action == UNDO_RESAMPLE)) {
-      cfile->frames = -cfile->frames;
+    if (!(sfile->undo_action == UNDO_RESAMPLE)) {
+      sfile->frames = -sfile->frames;
     }
     unbuffer_lmap_errors(FALSE);
     return;
   }
 
-  if (mainw->cancelled != CANCEL_NONE) {
-    return;
+  if (mainw->cancelled != CANCEL_NONE) return;
+
+  if (sfile->start > sfile->frames) {
+    sfile->start = sfile->frames;
   }
 
-  if (cfile->start > cfile->frames) {
-    cfile->start = cfile->frames;
+  if (sfile->end > sfile->frames) {
+    sfile->end = sfile->frames;
   }
 
-  if (cfile->end > cfile->frames) {
-    cfile->end = cfile->frames;
-  }
+  sfile->event_list = NULL;
+  sfile->next_event = NULL;
 
-  cfile->event_list = NULL;
-  cfile->next_event = NULL;
+  save_clip_value(clipno, CLIP_DETAILS_FRAMES, &sfile->frames);
 
-  save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames);
-
-  switch_to_file(mainw->current_file, mainw->current_file);
-  if (mainw->current_file > 0) {
+  if (clipno == mainw->current_file) switch_clip(1, mainw->current_file, TRUE);
+  if (clipno > 0) {
     d_print_done();
-    msg = lives_strdup_printf(_("Length of video is now %d frames.\n"), cfile->frames);
+    d_print(_("Length of video is now %d frames.\n"), sfile->frames);
   } else {
-    msg = lives_strdup_printf(_("Clipboard was resampled to %d frames.\n"), cfile->frames);
+    d_print(_("Clipboard was resampled to %d frames.\n"), sfile->frames);
   }
-
-  d_print(msg);
-  lives_free(msg);
 
   if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 
-  if (mainw->sl_undo_mem && cfile->stored_layout_frame != 0) {
+  if (mainw->sl_undo_mem && sfile->stored_layout_frame) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }
@@ -1392,41 +1386,54 @@ void on_resample_video_activate(LiVESMenuItem * menuitem, livespointer user_data
 }
 
 
-void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
-  weed_plant_t *real_back_list = NULL;
-  weed_plant_t *new_event_list = NULL;
-  double oundo1_dbl = cfile->undo1_dbl;
-  LiVESResponseType response;
+void on_resample_vid_ok(LiVESButton * button, livespointer pclipno) {
+  lives_clip_t *sfile;
+  weed_event_list_t *real_back_list = NULL;
+  weed_event_list_t *new_event_list = NULL;
+  double oundo1_dbl, old_fps;
   ticks_t in_time = 0;
-  double old_fps = cfile->fps;
   char *msg;
   char *what;
+  LiVESResponseType response;
   boolean ratio_fps;
   boolean bad_header = FALSE;
-  int old_frames;
-  int ostart = cfile->start;
-  int oend = cfile->end;
+  frames_t old_frames, ostart, oend;
+  int clipno;
+
+  if (pclipno) clipno = LIVES_POINTER_TO_INT(pclipno);
+  else clipno = mainw->current_file;
 
   mainw->error = FALSE;
 
   if (button) {
     lives_general_button_clicked(button, NULL);
     if (mainw->fx1_val == 0.) mainw->fx1_val = 1.;
-  } else {
-    mainw->fx1_val = cfile->undo1_dbl;
   }
 
-  if (mainw->current_file < 0 || cfile->frames == 0) return;
+  if (!CLIP_HAS_VIDEO(clipno)) return;
 
-  if (mainw->fx1_val == cfile->fps && !cfile->event_list) return;
+  sfile = mainw->files[clipno];
 
-  real_back_list = cfile->event_list;
+  oundo1_dbl = sfile->undo1_dbl;
+
+  old_fps = sfile->fps;
+
+  ostart = sfile->start;
+  oend = sfile->end;
+
+  // mainw->fx1_val == target framerate
+  // if button is NULL, this is set from sfile->undo1_dbl
+
+  if (!button) mainw->fx1_val = sfile->undo1_dbl;
+  if (mainw->fx1_val == sfile->fps && !sfile->event_list) return;
+
+  real_back_list = sfile->event_list;
   what = (_("creating the event list for resampling"));
 
-  if (!cfile->event_list) {
+  if (!sfile->event_list) {
     /* new_event_list = lives_event_list_new(NULL, 0); */
-    /* weed_set_double_value(new_event_list, WEED_LEAF_FPS, cfile->fps); */
-    for (int64_t i64 = 1; i64 <= (int64_t)cfile->frames; i64++) {
+    /* weed_set_double_value(new_event_list, WEED_LEAF_FPS, sfile->fps); */
+    for (frames64_t i64 = 1; i64 <= (frames64_t)sfile->frames; i64++) {
       do {
         response = LIVES_RESPONSE_OK;
         new_event_list = append_frame_event(new_event_list, in_time, 1, &(mainw->current_file), &i64);
@@ -1438,25 +1445,26 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
         lives_free(what);
         return;
       }
-      in_time += (ticks_t)(1. / cfile->fps * TICKS_PER_SECOND_DBL + .5);
+      in_time += (ticks_t)(1. / sfile->fps * TICKS_PER_SECOND_DBL + .5);
     }
-    cfile->event_list = new_event_list;
+    sfile->event_list = new_event_list;
   }
-  cfile->undo1_dbl = cfile->fps;
 
-  if (cfile->event_list_back) event_list_free(cfile->event_list_back);
-  cfile->event_list_back = cfile->event_list;
+  sfile->undo1_dbl = sfile->fps;
+
+  if (sfile->event_list_back) event_list_free(sfile->event_list_back);
+  sfile->event_list_back = sfile->event_list;
 
   //QUANTISE
-  new_event_list = quantise_events(cfile->event_list_back, mainw->fx1_val, real_back_list != NULL);
-  cfile->event_list = new_event_list;
+  new_event_list = quantise_events(sfile->event_list_back, mainw->fx1_val, real_back_list != NULL);
+  sfile->event_list = new_event_list;
 
-  if (!real_back_list) event_list_free(cfile->event_list_back);
-  cfile->event_list_back = NULL;
+  if (!real_back_list) event_list_free(sfile->event_list_back);
+  sfile->event_list_back = NULL;
 
-  if (!cfile->event_list) {
-    cfile->event_list = real_back_list;
-    cfile->undo1_dbl = oundo1_dbl;
+  if (!sfile->event_list) {
+    sfile->event_list = real_back_list;
+    sfile->undo1_dbl = oundo1_dbl;
     mainw->error = TRUE;
     return;
   }
@@ -1478,57 +1486,66 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
   }
   lives_free(msg);
 
-  old_frames = cfile->frames;
+  old_frames = sfile->frames;
 
-  // must set these before calling reorder
-  cfile->start = (int)((cfile->start - 1.) / old_fps * mainw->fx1_val + 1.);
-  if ((cfile->end = (int)((cfile->end * mainw->fx1_val) / old_fps + .49999)) < cfile->start) cfile->end = cfile->start;
+  if (old_fps) {
+    // must set these before calling reorder
+    sfile->start = (int)((sfile->start - 1.) / old_fps * mainw->fx1_val + 1.);
+    if ((sfile->end = (int)((sfile->end * mainw->fx1_val) / old_fps + .49999)) < sfile->start) sfile->end = sfile->start;
+  }
 
-  cfile->undo_action = UNDO_RESAMPLE;
+  sfile->undo_action = UNDO_RESAMPLE;
+  mainw->cancelled = CANCEL_NONE;
+
   // REORDER
   // this calls reorder_frames, which sets event_list_back==event_list, and clears event_list
-  on_reorder_activate(reorder_width, reorder_height);
+  on_reorder_activate(clipno, reorder_width, reorder_height);
+  if (mainw->cancelled == CANCEL_NO_PROPOGATE) mainw->cancelled = CANCEL_NONE;
 
-  if (cfile->frames <= 0 || mainw->cancelled != CANCEL_NONE) {
+  if (sfile->frames <= 0 || mainw->cancelled != CANCEL_NONE) {
     // reordering error...
-    cfile->event_list = real_back_list;
-    if (cfile->event_list_back) event_list_free(cfile->event_list_back);
-    cfile->event_list_back = NULL;
-    cfile->frames = old_frames;
-    cfile->start = ostart;
-    cfile->end = oend;
-    load_end_image(cfile->end);
-    load_start_image(cfile->start);
-    cfile->undo1_dbl = oundo1_dbl;
-    sensitize();
+    sfile->event_list = real_back_list;
+    if (sfile->event_list_back) event_list_free(sfile->event_list_back);
+    sfile->event_list_back = NULL;
+    sfile->frames = old_frames;
+    sfile->start = ostart;
+    sfile->end = oend;
+
+    if (clipno == mainw->current_file) {
+      showclipimgs();
+      sensitize();
+    }
+
+    sfile->undo1_dbl = oundo1_dbl;
     mainw->error = TRUE;
     widget_opts.non_modal = TRUE;
-    if (cfile->frames < 0) do_error_dialog(_("Reordering error !\n"));
+    if (sfile->frames < 0) do_error_dialog(_("Reordering error !\n"));
     widget_opts.non_modal = FALSE;
     return;
   }
 
-  if (cfile->event_list_back) event_list_free(cfile->event_list_back);
-  cfile->event_list_back = real_back_list;
+  if (sfile->event_list_back) event_list_free(sfile->event_list_back);
+  sfile->event_list_back = real_back_list;
 
-  cfile->ratio_fps = ratio_fps;
-  cfile->pb_fps = cfile->fps = mainw->fx1_val;
-  cfile->old_frames = old_frames;
+  sfile->ratio_fps = ratio_fps;
+  sfile->pb_fps = sfile->fps = mainw->fx1_val;
+  sfile->old_frames = old_frames;
 
-  set_undoable(_("Resample"), TRUE);
-  if (cfile->clip_type == CLIP_TYPE_FILE && cfile->ext_src) {
-    lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+  if (clipno == mainw->current_file && old_fps) set_undoable(_("Resample"), TRUE);
+
+  if (sfile->clip_type == CLIP_TYPE_FILE && sfile->ext_src) {
+    lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
     double dfps = (double)cdata->fps;
-    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
-    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps)) bad_header = TRUE;
+    if (!save_clip_value(clipno, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
+    if (!save_clip_value(clipno, CLIP_DETAILS_PB_FPS, &sfile->fps)) bad_header = TRUE;
   } else {
-    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps)) bad_header = TRUE;
-    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->pb_fps)) bad_header = TRUE;
+    if (!save_clip_value(clipno, CLIP_DETAILS_FPS, &sfile->fps)) bad_header = TRUE;
+    if (!save_clip_value(clipno, CLIP_DETAILS_PB_FPS, &sfile->pb_fps)) bad_header = TRUE;
   }
 
-  if (bad_header) do_header_write_error(mainw->current_file);
+  if (bad_header) do_header_write_error(clipno);
 
-  switch_to_file(mainw->current_file, mainw->current_file);
+  if (clipno == mainw->current_file) switch_clip(1, mainw->current_file, TRUE);
 }
 
 
@@ -1570,8 +1587,6 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
   LiVESWidget *hbox;
   LiVESWidget *hbox2;
 
-  LiVESAccelGroup *accel_group = NULL;
-
   LiVESSList *s1_group = NULL;
   LiVESSList *e1_group = NULL;
   LiVESSList *s2_group = NULL;
@@ -1585,6 +1600,7 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
   double secs = 0.;
 
   char *tmp;
+  char *title = NULL;
 
   int hours = 0, mins = 0;
   int aendian;
@@ -1623,8 +1639,6 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
   rate = lives_list_append(rate, (livespointer)"128000");
 
   if (type < 3 || type > 4) {
-    char *title = NULL;
-
     if (type == 1) {
       title = (_("Resample Audio"));
     } else if (type == 2) {
@@ -1634,21 +1648,20 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     } else if (type == 12 || type == 9 || type == 8) {
       title = (_("External Clip Settings"));
     }
+  }
 
+  if (!top_vbox) {
     resaudw->dialog = lives_standard_dialog_new(title, FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
     lives_signal_handlers_disconnect_by_func(resaudw->dialog, LIVES_GUI_CALLBACK(return_true), NULL);
     lives_free(title);
 
-    accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-    lives_window_add_accel_group(LIVES_WINDOW(resaudw->dialog), accel_group);
-
     dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(resaudw->dialog));
-
     vboxx = lives_vbox_new(FALSE, 0);
-
     lives_box_pack_start(LIVES_BOX(dialog_vbox), vboxx, TRUE, TRUE, 0);
-  } else vboxx = top_vbox;
-
+  } else {
+    resaudw->dialog = NULL;
+    vboxx = top_vbox;
+  }
   if (type == 12) {
     widget_opts.use_markup = TRUE;
     label = lives_standard_formatted_label_new(_("<big><b>LiVES could not automatically determine the audio format for this clip.\n"
@@ -1959,10 +1972,10 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
   }
 
   if (type > 4 && type <= 10) {
-    lives_box_set_spacing(LIVES_BOX(dialog_vbox), widget_opts.packing_height * 3);
+    lives_box_set_spacing(LIVES_BOX(vboxx), widget_opts.packing_height * 3);
 
     hbox = lives_hbox_new(FALSE, 0);
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+    lives_box_pack_start(LIVES_BOX(vboxx), hbox, TRUE, TRUE, widget_opts.packing_height);
 
     if (type != 6 && type != 7) {
       radiobutton = lives_standard_radio_button_new(_("Record for maximum:  "),
@@ -1978,7 +1991,7 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
                                    0., 59., 1., 10., 0, LIVES_BOX(hbox), NULL);
 
       hbox = lives_hbox_new(FALSE, 0);
-      lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+      lives_box_pack_start(LIVES_BOX(vboxx), hbox, TRUE, TRUE, widget_opts.packing_height);
 
       resaudw->unlim_radiobutton = lives_standard_radio_button_new(_("Unlimited"),
                                    &rbgroup, LIVES_BOX(hbox), NULL);
@@ -1992,50 +2005,50 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
 
     if (type < 8 || type == 11) {
       hseparator = lives_hseparator_new();
-      lives_box_pack_start(LIVES_BOX(dialog_vbox), hseparator, TRUE, TRUE, 0);
+      lives_box_pack_start(LIVES_BOX(vboxx), hseparator, TRUE, TRUE, 0);
 
-      label = lives_standard_label_new(_("Click OK to begin recording, or Cancel to quit."));
-
-      lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
+      if (resaudw->dialog) {
+        label = lives_standard_label_new(_("Click OK to begin recording, or Cancel to quit."));
+        lives_box_pack_start(LIVES_BOX(vboxx), label, TRUE, TRUE, 0);
+      }
     }
   }
 
   if (type < 3 || type > 4) {
-    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(resaudw->dialog),
-                   LIVES_STOCK_CANCEL, NULL,
-                   LIVES_RESPONSE_CANCEL);
+    if (resaudw->dialog) {
+      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(resaudw->dialog),
+                     LIVES_STOCK_CANCEL, NULL,
+                     LIVES_RESPONSE_CANCEL);
 
-    if (accel_group) lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL,
-          accel_group,
-          LIVES_KEY_Escape, (LiVESXModifierType)0,
-          (LiVESAccelFlags)0);
+      lives_window_add_escape(LIVES_WINDOW(resaudw->dialog), cancelbutton);
 
-    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(resaudw->dialog), LIVES_STOCK_OK, NULL,
-               LIVES_RESPONSE_OK);
+      okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(resaudw->dialog), LIVES_STOCK_OK, NULL,
+                 LIVES_RESPONSE_OK);
 
-    lives_button_grab_default_special(okbutton);
+      lives_button_grab_default_special(okbutton);
 
-    if (type < 8 || type == 11) {
-      lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                LIVES_GUI_CALLBACK(lives_general_button_clicked), resaudw);
-      if (type == 1) {
-        lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(on_resaudio_ok_clicked), NULL);
-      } else if (type == 2 || type == 11) {
-        lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(audio_details_clicked), NULL);
-      } else if (type == 5) {
-        lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(on_recaudclip_ok_clicked),
-                                  LIVES_INT_TO_POINTER(0));
-      } else if (type == 6 || type == 7) {
-        lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(on_recaudclip_ok_clicked),
-                                  LIVES_INT_TO_POINTER(1));
+      if (type < 8 || type == 11) {
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(lives_general_button_clicked), resaudw);
+        if (type == 1) {
+          lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_resaudio_ok_clicked), NULL);
+        } else if (type == 2 || type == 11) {
+          lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(audio_details_clicked), NULL);
+        } else if (type == 5) {
+          lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_recaudclip_ok_clicked),
+                                    LIVES_INT_TO_POINTER(0));
+        } else if (type == 6 || type == 7) {
+          lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_recaudclip_ok_clicked),
+                                    LIVES_INT_TO_POINTER(1));
+        }
       }
-    }
 
-    lives_widget_show_all(resaudw->dialog);
+      lives_widget_show_all(resaudw->dialog);
+    }
   } else {
     if (resaudw->aud_checkbutton) {
       lives_signal_sync_connect_after(LIVES_GUI_OBJECT(resaudw->aud_checkbutton),
@@ -2076,7 +2089,7 @@ void on_change_speed_ok_clicked(LiVESButton * button, livespointer user_data) {
   }
 
   if (mainw->fx2_bool) {
-    mainw->fx1_val = (double)((int)((double)cfile->frames / mainw->fx2_val * 1000. + .5)) / 1000.;
+    mainw->fx1_val = (double)((frames64_t)((double)cfile->frames / mainw->fx2_val * 1000. + .5)) / 1000.;
     if (mainw->fx1_val < 1.) mainw->fx1_val = 1.;
     if (mainw->fx1_val > FPS_MAX) mainw->fx1_val = FPS_MAX;
   }
@@ -2145,24 +2158,35 @@ void on_change_speed_ok_clicked(LiVESButton * button, livespointer user_data) {
 }
 
 
-int reorder_frames(int rwidth, int rheight) {
-  int new_frames = cfile->old_frames;
-  int cur_frames = cfile->frames;
+frames_t reorder_frames(int clipno, int rwidth, int rheight) {
+  lives_intention intention = THREADVAR(intention);
+  lives_clip_t *sfile;
+  frames_t new_frames, cur_frames;
   char **array;
   char *com;
 
-  if (rwidth * rheight == 0) com = lives_strdup_printf("%s reorder \"%s\" \"%s\" %d 0 0 %d %d", prefs->backend, cfile->handle,
-                                     get_image_ext_for_type(cfile->img_type), !mainw->endian,
-                                     reorder_leave_back, cfile->frames);
+  sfile = mainw->files[clipno];
+
+  new_frames = sfile->old_frames;
+  cur_frames = sfile->frames;
+
+  if (intention == LIVES_INTENTION_RECORD) {
+    reorder_leave_back = TRUE;
+    reorder_width = reorder_height = 0;
+  }
+
+  if (rwidth * rheight == 0) com = lives_strdup_printf("%s reorder \"%s\" \"%s\" %d 0 0 %d %d", prefs->backend, sfile->handle,
+                                     get_image_ext_for_type(sfile->img_type), !mainw->endian,
+                                     reorder_leave_back, sfile->frames);
   else {
-    if (!prefs->enc_letterbox) {
-      com = lives_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d 0 %d", prefs->backend, cfile->handle,
-                                get_image_ext_for_type(cfile->img_type), !mainw->endian, rwidth, rheight, cfile->frames);
+    if (intention != LIVES_INTENTION_ENCODE || !prefs->enc_letterbox) {
+      com = lives_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d 0 %d", prefs->backend, sfile->handle,
+                                get_image_ext_for_type(sfile->img_type), !mainw->endian, rwidth, rheight, sfile->frames);
     } else {
-      int iwidth = cfile->hsize, iheight = cfile->vsize;
+      int iwidth = sfile->hsize, iheight = sfile->vsize;
       calc_maxspect(rwidth, rheight, &iwidth, &iheight);
 
-      if (iwidth == cfile->hsize && iheight == cfile->vsize) {
+      if (iwidth == sfile->hsize && iheight == sfile->vsize) {
         iwidth = -iwidth;
         iheight = -iheight;
       }
@@ -2178,51 +2202,53 @@ int reorder_frames(int rwidth, int rheight) {
           return -cur_frames;
         }
       }
-      com = lives_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d %d %d %d %d", prefs->backend, cfile->handle,
-                                get_image_ext_for_type(cfile->img_type), !mainw->endian, rwidth, rheight,
-                                reorder_leave_back, cfile->frames, iwidth, iheight);
+      com = lives_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d %d %d %d %d", prefs->backend, sfile->handle,
+                                get_image_ext_for_type(sfile->img_type), !mainw->endian, rwidth, rheight,
+                                reorder_leave_back, sfile->frames, iwidth, iheight);
     }
   }
 
-  cfile->frames = 0;
+  if (intention == LIVES_INTENTION_RECORD) reorder_leave_back = FALSE;
 
-  cfile->progress_start = 1;
-  cfile->progress_end = save_event_frames(); // we convert cfile->event_list to a block and save it
+  sfile->frames = 0;
 
-  if (cfile->progress_end == -1) return -cur_frames; // save_event_frames failed
+  sfile->progress_start = 1;
+  sfile->progress_end = save_event_frames(); // we convert sfile->event_list to a block and save it
 
-  if (cur_frames > cfile->progress_end) cfile->progress_end = cur_frames;
+  if (sfile->progress_end == -1) return -cur_frames; // save_event_frames failed
 
-  cfile->next_event = NULL;
-  if (cfile->event_list) {
-    if (cfile->event_list_back) event_list_free(cfile->event_list_back);
-    cfile->event_list_back = cfile->event_list;
-    cfile->event_list = NULL;
+  if (cur_frames > sfile->progress_end) sfile->progress_end = cur_frames;
+
+  sfile->next_event = NULL;
+  if (sfile->event_list) {
+    if (sfile->event_list_back) event_list_free(sfile->event_list_back);
+    sfile->event_list_back = sfile->event_list;
+    sfile->event_list = NULL;
   }
 
-  lives_rm(cfile->info_file);
+  lives_rm(sfile->info_file);
   mainw->error = FALSE;
   lives_system(com, FALSE);
   if (THREADVAR(com_failed)) return -cur_frames;
 
-  if (cfile->undo_action == UNDO_RESAMPLE) {
-    if (mainw->current_file > 0) {
-      cfile->nopreview = cfile->nokeep = TRUE;
+  if (sfile->undo_action == UNDO_RESAMPLE) {
+    if (clipno > 0) {
+      sfile->nopreview = sfile->nokeep = TRUE;
       if (!do_progress_dialog(TRUE, TRUE, _("Resampling video"))) {
-        cfile->nopreview = cfile->nokeep = FALSE;
+        sfile->nopreview = sfile->nokeep = FALSE;
         return cur_frames;
       }
-      cfile->nopreview = cfile->nokeep = FALSE;
+      sfile->nopreview = sfile->nokeep = FALSE;
     } else {
       do_progress_dialog(TRUE, FALSE, _("Resampling clipboard video"));
     }
   } else {
-    cfile->nopreview = cfile->nokeep = TRUE;
+    sfile->nopreview = sfile->nokeep = TRUE;
     if (!do_progress_dialog(TRUE, TRUE, _("Reordering frames"))) {
-      cfile->nopreview = cfile->nokeep = FALSE;
+      sfile->nopreview = sfile->nokeep = FALSE;
       return cur_frames;
     }
-    cfile->nopreview = cfile->nokeep = FALSE;
+    sfile->nopreview = sfile->nokeep = FALSE;
   }
   lives_free(com);
 
@@ -2235,11 +2261,11 @@ int reorder_frames(int rwidth, int rheight) {
   } else {
     array = lives_strsplit(mainw->msg, "|", 2);
 
-    new_frames = atoi(array[1]);
+    new_frames = atoi(array[1]); // TODO - frames_t
     lives_strfreev(array);
 
-    if (cfile->frames > new_frames) {
-      new_frames = cfile->frames;
+    if (sfile->frames > new_frames) {
+      new_frames = sfile->frames;
     }
   }
 
@@ -2247,10 +2273,10 @@ int reorder_frames(int rwidth, int rheight) {
 }
 
 
-int deorder_frames(int old_frames, boolean leave_bak) {
+frames_t deorder_frames(frames_t old_frames, boolean leave_bak) {
   char *com;
   ticks_t time_start;
-  int perf_start, perf_end;
+  frames_t perf_start, perf_end;
 
   if (cfile->event_list) return cfile->frames;
 
@@ -2265,6 +2291,7 @@ int deorder_frames(int old_frames, boolean leave_bak) {
     perf_start = (int)(cfile->fps * (double)time_start / TICKS_PER_SECOND_DBL) + 1;
     perf_end = perf_start + count_events(cfile->event_list, FALSE, 0, 0) - 1;
   }
+  // TODO - frames_t
   com = lives_strdup_printf("%s deorder \"%s\" %d %d %d \"%s\" %d", prefs->backend, cfile->handle,
                             perf_start, cfile->frames, perf_end,
                             get_image_ext_for_type(cfile->img_type), leave_bak);
@@ -2279,7 +2306,7 @@ int deorder_frames(int old_frames, boolean leave_bak) {
   // check for EOF
 
   if (cfile->frame_index_back) {
-    int current_frames = cfile->frames;
+    frames_t current_frames = cfile->frames;
     cfile->frames = old_frames;
     restore_frame_index_back(mainw->current_file);
     cfile->frames = current_frames;
@@ -2298,7 +2325,7 @@ boolean resample_clipboard(double new_fps) {
   mainw->no_switch_dprint = TRUE;
 
   if (clipboard->undo1_dbl == new_fps && !prefs->conserve_space) {
-    int new_frames;
+    frames_t new_frames;
     double old_fps = clipboard->fps;
 
     if (new_fps == clipboard->fps) {
@@ -2334,12 +2361,14 @@ boolean resample_clipboard(double new_fps) {
     cfile->fps = cfile->undo1_dbl;
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->fps);
     cfile->undo1_dbl = old_fps;
+    // TODO - frames_t
     d_print(_("Clipboard was resampled to %d frames.\n"), cfile->frames);
     mainw->current_file = current_file;
   } else {
     if (clipboard->undo1_dbl < clipboard->fps) {
-      int old_frames = count_resampled_frames(clipboard->frames, clipboard->fps, clipboard->undo1_dbl);
+      frames_t old_frames = count_resampled_frames(clipboard->frames, clipboard->fps, clipboard->undo1_dbl);
       mainw->current_file = 0;
+      // TODO - frames_t
       com = lives_strdup_printf("%s undo \"%s\" %d %d \"%s\"", prefs->backend, cfile->handle, old_frames + 1, cfile->frames,
                                 get_image_ext_for_type(cfile->img_type));
       lives_rm(cfile->info_file);

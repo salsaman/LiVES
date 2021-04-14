@@ -59,6 +59,7 @@
 #include "cvirtual.h"
 #include "ce_thumbs.h"
 #include "rfx-builder.h"
+#include "multitrack-gui.h"
 
 #ifndef DISABLE_DIAGNOSTICS
 #include "diagnostics.h"
@@ -3274,7 +3275,7 @@ retry_configfile:
     xs = lives_strlen(buffer);
     if (xs < 5) return capable;
 
-    lives_chomp(buffer);
+    lives_chomp(buffer, FALSE);
     numtok = get_token_count(buffer, ' ');
     if (numtok < 2) return capable;
 
@@ -4152,9 +4153,6 @@ static boolean lives_startup(livespointer data) {
 static boolean lives_startup2(livespointer data) {
   char *ustr;
   boolean layout_recovered = FALSE;
-
-  // test
-  //lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)rec_desk, 0, "i", 100);
 
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
   else {

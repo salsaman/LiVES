@@ -1159,6 +1159,7 @@ typedef struct {
   ulong fsp_func; ///< fileselector preview expose (for image thumbnails)
   ulong vj_mode_func;
   ulong lb_func;
+  ulong desk_rec_func;
 
   lives_painter_surface_t *fsp_surface;
 
@@ -1276,6 +1277,7 @@ typedef struct {
   LiVESWidget *midi_save;
   LiVESWidget *change_speed;
   LiVESWidget *capture;
+  LiVESWidget *desk_rec;
   LiVESWidget *load_audio;
   LiVESWidget *load_cdtrack;
   LiVESWidget *eject_cd;

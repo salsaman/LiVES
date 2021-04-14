@@ -213,7 +213,7 @@ static int chain_lock_upgrade(weed_leaf_t *leaf, int have_rdlock, int is_del) {
 
     // check mode adds only a minute overhead, and we make the assumption the deleting leaves will occur relatively rarely
 
-    chain_lock_writelock(leaf);
+    chain_lock_writelock(leaf); /// a crash here is indicative of a double weed_plant_free()
 
     // if it is a SET, then we release the mutex; the next writer
     // will block on writelock; subsequent writeers will block on the mutex

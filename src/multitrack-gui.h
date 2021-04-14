@@ -6,6 +6,10 @@
 
 // multitrack window
 
+weed_layer_t *mt_show_current_frame(lives_mt *, boolean return_layer);  ///< preview the current frame
+
+boolean mt_idle_show_current_frame(livespointer mt);
+
 LiVESPixbuf *mt_make_thumb(lives_mt *, int file, int width, int height, frames_t frame, LiVESInterpType interp,
                            boolean noblanks);
 

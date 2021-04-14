@@ -764,7 +764,6 @@ void set_poly_tab(lives_mt *, uint32_t tab);
 
 // gui related
 void set_mt_play_sizes_cfg(lives_mt *);
-boolean mt_idle_show_current_frame(livespointer mt);
 boolean show_in_out_images(livespointer mt);
 
 void add_aparam_menuitems(lives_mt *);
@@ -877,7 +876,6 @@ void draw_region(lives_mt *);
 boolean mt_mark_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod,
                          livespointer user_data);
 
-void mt_show_current_frame(lives_mt *, boolean return_layer);  ///< preview the current frame
 void mt_clear_timeline(lives_mt *);
 
 void mt_zoom_in(LiVESMenuItem *, livespointer mt);

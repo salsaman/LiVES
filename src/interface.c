@@ -1505,8 +1505,6 @@ void do_logger_dialog(const char *title, const char *text, const char *buff, boo
 }
 
 
-
-
 static int ret_int(void *data) {
   if (data) return *(int *)data;
   return 0;
@@ -1573,8 +1571,7 @@ _insertw *create_insert_dialog(void) {
                 &radiobutton1_group, LIVES_BOX(hbox),
                 (tmp2 = (_("Insert clipboard before selected frames"))));
 
-  lives_free(tmp);
-  lives_free(tmp2);
+  lives_free(tmp); lives_free(tmp2);
 
   lives_table_attach(LIVES_TABLE(table), hbox, 0, 1, 0, 1,
                      (LiVESAttachOptions)(LIVES_FILL),
@@ -1829,6 +1826,7 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
     // do this to counter effect of setting margin
     widget_opts.packing_height = 0;
     cb = lives_standard_check_button_new(_("All"), type != 2, LIVES_BOX(hbox), NULL);
+    lives_widget_set_halign(hbox, LIVES_ALIGN_FILL);
     widget_opts.packing_height = woph;
     lives_widget_set_margin_left(cb, widget_opts.border_width >> 1);
     lives_widget_set_margin_right(cb, widget_opts.border_width);
@@ -1838,7 +1836,6 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
                                 LIVES_PACK_START);
 
     lives_widget_set_sensitive(cb, FALSE);
-    //set_child_alt_colour(hbox, FALSE);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "cb", (livespointer)cb);
 
     if (!type) {
@@ -1854,9 +1851,7 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
     lives_layout_add_label(LIVES_LAYOUT(layout), _("Modified Date"), TRUE);
     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-    //widget_opts.justify = LIVES_JUSTIFY_CENTER;
     lives_layout_add_label(LIVES_LAYOUT(layout), _("Details"), TRUE);
-    //widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     widget_opts.apply_theme = woat;
     lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
@@ -2070,7 +2065,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
     lives_window_add_escape(LIVES_WINDOW(dialog), cancelb);
 
     resetb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-             LIVES_STOCK_UNDO, _("_Reset"), LIVES_RESPONSE_NONE);
+             LIVES_STOCK_UNDO, LIVES_STOCK_LABEL_RESET, LIVES_RESPONSE_NONE);
     lives_widget_set_sensitive(resetb, FALSE);
 
     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
@@ -2080,11 +2075,10 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
     lives_widget_set_sensitive(accb, FALSE);
 
     trash_rb(LIVES_BUTTON_BOX(bbox));
-    lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_CENTER);
+    lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_CENTER);
   } else {
     accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-           LIVES_STOCK_CLOSE, _("_Close Window"),
-           LIVES_RESPONSE_OK);
+           LIVES_STOCK_CLOSE, LIVES_STOCK_LABEL_CLOSE_WINDOW, LIVES_RESPONSE_OK);
     lives_window_add_escape(LIVES_WINDOW(dialog), accb);
 
     lives_button_grab_default_special(accb);
@@ -2813,9 +2807,9 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
   }
 
 thrdjoin:
-  lives_proc_thread_cancel(layinfo, FALSE);
-  lives_proc_thread_cancel(clipsinfo, FALSE);
-  lives_proc_thread_cancel(sizinfo, FALSE);
+  lives_proc_thread_cancel(layinfo, TRUE);
+  lives_proc_thread_cancel(clipsinfo, TRUE);
+  lives_proc_thread_cancel(sizinfo, TRUE);
   if (*laylist) free_fdets_list(laylist);
   if (*clipslist) free_fdets_list(clipslist);
 }
@@ -4183,7 +4177,7 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
   // single clicking on a directory with should show its path in the filentry box, the select button should be sensitive
   // also the directory should appear as "selected"
 
-  // double clisking on a subdir, opens the subdir, but still nothing in the entry. and select button is insensitive
+  // double clicking on a subdir, opens the subdir, but still nothing in the entry. and select button is insensitive
   // - creating a directory makes the filechooser enter the directory but the select button is off, you have to go up one dir to the parent
   // so what is the point of entering the empty dir ?
 
@@ -4202,9 +4196,15 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
 #endif
   char *tmp;
 
-  char *fold = NULL, *dirname = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
-                                -1, NULL, NULL, NULL);
+  // folder for non-idrs
+  char *fold = NULL;
+
+  // filename fo non-dirs
+  char *dirname = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
+                                         -1, NULL, NULL, NULL);
   char *extra_dir = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(chooser), DEF_FILE_KEY);
+
+  int act = GET_INT_DATA(chooser, FC_ACTION_KEY);
 
   lives_free(tmp);
 
@@ -4216,9 +4216,11 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
 
   if (!dirname && !fold) return;
 
-  if (lives_file_test(dirname, LIVES_FILE_TEST_IS_REGULAR)) {
-    if (diss) lives_widget_set_sensitive(diss->selbut, FALSE);
-    return;
+  if (diss && diss->selbut) {
+    if (lives_file_test(dirname, LIVES_FILE_TEST_IS_REGULAR)) {
+      lives_widget_set_sensitive(diss->selbut, FALSE);
+      return;
+    }
   }
 
   tmp = lives_build_path(dirname, extra_dir, NULL);
@@ -4258,9 +4260,12 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
     lives_snprintf(buff, PATH_MAX, "%s", path);
     if (path != dirname && path != fold) lives_free(path);
 
-    if (!lives_file_test(buff, LIVES_FILE_TEST_IS_DIR)) {
-      ensure_isdir(buff);
+    if (act != LIVES_FILE_CHOOSER_ACTION_SAVE && act != LIVES_FILE_CHOOSER_ACTION_OPEN) {
+      if (!lives_file_test(buff, LIVES_FILE_TEST_IS_DIR)) {
+        ensure_isdir(buff);
+      }
     }
+
     if (diss->new_entry) lives_entry_set_text(LIVES_ENTRY(diss->new_entry), buff);
 
     for (LiVESWidget *widget = lives_widget_get_parent(diss->new_entry); widget;
@@ -4270,7 +4275,7 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
         break;
       }
     }
-    lives_widget_set_sensitive(diss->selbut, TRUE);
+    if (diss->selbut) lives_widget_set_sensitive(diss->selbut, TRUE);
   }
 #endif
 #endif
@@ -4893,9 +4898,22 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
                                   LIVES_GUI_CALLBACK(flip_cdisk_bit),
                                   LIVES_INT_TO_POINTER(LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
 
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
+
+  checkbutton = lives_standard_check_button_new(_("Remove temporary staging directories"),
+                !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_STAGING_DIRS), LIVES_BOX(hbox),
+                H_("Staging directories may be used during the very early process of opening a file.\n"
+                   "Any remnants are unlikely to be useful, and will in any case eventually be removed "
+                   "by the operating system."));
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(flip_cdisk_bit),
+                                  LIVES_INT_TO_POINTER(LIVES_CDISK_LEAVE_STAGING_DIRS));
+
   // resetbutton
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH, _("_Reset to Defaults"),
-                                     LIVES_RESPONSE_RETRY);
+                                     LIVES_RESPONSE_RESET);
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
              LIVES_RESPONSE_OK);
@@ -7296,6 +7314,142 @@ void run_diskspace_dialog(void) {
     mainw->cs_manage = FALSE;
     manclips_cb(NULL, dialog);
   } else mainw->cs_manage = FALSE;
+}
+
+
+rec_args *do_rec_desk_dlg(void) {
+  _resaudw *resaudw;
+  rec_args *recargs = NULL;
+  LiVESWidget *dialog = lives_standard_dialog_new(_("Record Desktop (LiVES Main Window)"), TRUE, -1, -1);
+  LiVESWidget *dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  LiVESWidget *layout = lives_layout_new(LIVES_BOX(dialog_vbox)), *hbox, *vbox;
+  LiVESWidget *spinh, *spinm, *spins, *spinf, *checkbutton;
+  LiVESWidget *spindh, *spindm, *spinds, *checkbuttond;
+  LiVESWidget *cb_aud, *cb_vover, *rb_win;
+  LiVESSList *rb_group = NULL;
+  LiVESResponseType response;
+
+  lives_layout_add_label(LIVES_LAYOUT(layout),
+                         _("This tool may be used to record either the entire desktop or just the area covered "
+                           "by the LiVES main window.\nIf Voiceover Mode is enabled, then "
+                           "both external and internal audio sources may be recorded and mixed.\n"
+                           "Note that recording is linked to the screen area, rather then the window itself - "
+                           "thus anything placed over the window will also be recorded."), FALSE);
+
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Screen area to record:"), TRUE);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  rb_win = lives_standard_radio_button_new(_("LiVES main _window"), &rb_group, LIVES_BOX(hbox), NULL);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  lives_standard_radio_button_new(_("Entire _desktop"), &rb_group, LIVES_BOX(hbox), NULL);
+
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rb_win), TRUE);
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Max recording time (unless cancelled from the menu)"), FALSE);
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  checkbutton = lives_standard_check_button_new(_("Unlimited (until cancelled from the menu)"), FALSE, LIVES_BOX(hbox), NULL);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  spinh = lives_standard_spin_button_new(_("_Hours"), 0., 0., 24., 1., 1., 0., LIVES_BOX(hbox), NULL);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  spinm = lives_standard_spin_button_new(_("_Minutes"), 0., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  spins = lives_standard_spin_button_new(_("_Seconds"), 8., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
+
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbutton), spinh, TRUE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbutton), spinm, TRUE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbutton), spins, TRUE);
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Delay before starting"), FALSE);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  checkbuttond = lives_standard_check_button_new(_("Immediate"), TRUE, LIVES_BOX(hbox), NULL);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  spindh = lives_standard_spin_button_new(_("_Hours"), 0., 0., 24., 1., 1., 0., LIVES_BOX(hbox), NULL);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  spindm = lives_standard_spin_button_new(_("_Minutes"), 0., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  spinds = lives_standard_spin_button_new(_("_Seconds"), 10., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
+
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbuttond), spindh, TRUE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbuttond), spindm, TRUE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbuttond), spinds, TRUE);
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  spinf = lives_standard_spin_button_new(_("_FPS"), DEF_FPS, 1., FPS_MAX, 1., 1., 2., LIVES_BOX(hbox), NULL);
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  cb_aud = lives_standard_check_button_new(_("Record internal audio"), FALSE, LIVES_BOX(hbox), NULL);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  cb_vover = lives_standard_check_button_new(_("Voiceover mode"), FALSE, LIVES_BOX(hbox),
+             H_("Record external audio regardless of the "
+                "audio source set in the player.\n"
+                "If the player source is set to 'Internal', "
+                "then both audio streams may be mixed together.\n"
+                "If unset, only internal audio will be recorded."));
+  mainw->fx1_val = DEFAULT_AUDIO_RATE;
+  mainw->fx2_val = DEFAULT_AUDIO_CHANS;
+  mainw->fx3_val = DEFAULT_AUDIO_SAMPS;
+  mainw->fx4_val = mainw->endian;
+
+  vbox = lives_vbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, FALSE, FALSE, widget_opts.packing_height);
+
+  resaudw = create_resaudw(6, NULL, vbox);
+
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(cb_aud), vbox, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(cb_aud), cb_vover, FALSE);
+
+  response = lives_dialog_run(LIVES_DIALOG(dialog));
+
+  if (response == LIVES_RESPONSE_OK) {
+    recargs = lives_calloc(sizeof(rec_args), 1);
+    recargs->scale = 1.;
+    if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rb_win)))
+      recargs->screen_area = SCREEN_AREA_FOREGROUND;
+    else
+      recargs->screen_area = SCREEN_AREA_BACKGROUND;
+
+    recargs->fps = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinf));
+    if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(checkbuttond))) {
+      recargs->delay_time = (lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spindh)) * 60
+                             + lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spindm))) * 60
+                            + lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinds));
+    }
+    if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(checkbutton))) {
+      recargs->rec_time = (lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinh)) * 60
+                           + lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinm))) * 60
+                          + lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spins));
+    }
+    if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb_aud))) {
+      recargs->arate = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
+      recargs->achans = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
+      recargs->asamps = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
+      if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
+        recargs->signed_endian = AFORM_UNSIGNED;
+      } else recargs->signed_endian = AFORM_SIGNED;
+      if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))) {
+        recargs->signed_endian |= AFORM_BIG_ENDIAN;
+      } else recargs->signed_endian |= AFORM_LITTLE_ENDIAN;
+    }
+    lives_free(resaudw);
+    recargs->duplex = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb_vover));
+    lives_widget_destroy(dialog);
+  }
+  return recargs;
 }
 
 

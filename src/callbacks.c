@@ -6600,9 +6600,9 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       goto cleanup;
     }
 
-    lives_proc_thread_cancel(recinfo, FALSE);
-    lives_proc_thread_cancel(reminfo, FALSE);
-    lives_proc_thread_cancel(leaveinfo, FALSE);
+    lives_proc_thread_cancel(recinfo, TRUE);
+    lives_proc_thread_cancel(reminfo, TRUE);
+    lives_proc_thread_cancel(leaveinfo, TRUE);
 
     if (retval == LIVES_RESPONSE_CANCEL) {
       com = lives_strdup_printf("%s restore_trash %s", temp_backend, trashdir);
@@ -6781,6 +6781,18 @@ cleanup:
   if (bytes < 0) bytes = 0;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
+  if (!(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_STAGING_DIRS)) {
+    const char *shmdir = get_shmdir();
+    if (shmdir && lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)) {
+      d_print(_("removing directory %s..."), shmdir);
+      bytes += get_dir_size(shmdir);
+      lives_rmdir(shmdir, TRUE);
+      if (lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)) {
+        bytes += get_dir_size(shmdir);
+      }
+    }
+  }
+
   if (gotsize && retval != LIVES_RESPONSE_CANCEL && !THREADVAR(com_failed) && fspace > -1) {
     LiVESWidget *dialog, *tview;
 
@@ -6884,8 +6896,8 @@ void on_cleardisk_advanced_clicked(LiVESWidget * widget, livespointer user_data)
     lives_widget_show_all(dialog);
     response = lives_dialog_run(LIVES_DIALOG(dialog));
     lives_widget_destroy(dialog);
-    if (response == LIVES_RESPONSE_RETRY) prefs->clear_disk_opts = 0;
-  } while (response == LIVES_RESPONSE_RETRY);
+    if (response == LIVES_RESPONSE_RESET) prefs->clear_disk_opts = 0;
+  } while (response == LIVES_RESPONSE_RESET);
 
   set_int_pref(PREF_CLEAR_DISK_OPTS, prefs->clear_disk_opts);
 }
@@ -11084,7 +11096,7 @@ boolean frame_context(LiVESWidget * widget, LiVESXEventButton * event, livespoin
 
   if (!LIVES_IS_INTERACTIVE) return FALSE;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return FALSE;
-
+  if (lives_get_status() != LIVES_STATUS_IDLE) return FALSE;
   if (mainw->multitrack && !mainw->multitrack->event_list) return FALSE;
 
   // only accept right mouse clicks
@@ -11576,6 +11588,40 @@ void on_toolbar_hide(LiVESButton * button, livespointer user_data) {
 }
 
 
+void rec_desktop(LiVESMenuItem * menuitem, livespointer user_data) {
+  // test
+  static lives_proc_thread_t lpt = NULL;
+  rec_args *recargs;
+  lives_clip_t *sfile;
+  lives_widget_set_sensitive(mainw->desk_rec, FALSE);
+
+  if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->desk_rec))) {
+    if (lpt) {
+      // if running, just send a cancel, the bg thread will add an idlefunc before exiting
+      lives_widget_set_sensitive(mainw->desk_rec, FALSE);
+      lives_proc_thread_cancel(lpt, FALSE);
+      lpt = NULL;
+    }
+    return;
+  } else lpt = NULL;
+  if (!(recargs = do_rec_desk_dlg())) return;
+  else {
+    int new_file = mainw->first_free_file;
+    char *fname = lives_strdup_printf("screengrab-%d", mainw->untitled_number++);
+    if (!get_new_handle(new_file, fname)) {
+      lives_free(fname);
+      return;
+    }
+    lives_free(fname);
+    sfile = mainw->files[new_file];
+    sfile->changed = TRUE;
+    recargs->clipno = new_file;
+  }
+  lives_widget_context_update();
+  lpt = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)rec_desk, -1, "v", recargs);
+}
+
+
 void on_capture_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char **array;
   double rec_end_time = -1.;
@@ -11776,6 +11822,8 @@ void on_capture_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   d_print(_("\nExternal window captured. Width=%d, height=%d, bpp=%d. *Do not resize*\n\n"
             "Stop or 'q' to finish.\n(Default of %.3f frames per second will be used.)\n"),
           mainw->foreign_width, mainw->foreign_height, mainw->foreign_bpp, mainw->rec_fps);
+
+  // TODO **** - remove need to start another copy
 
   // start another copy of LiVES and wait for it to return values
   com = lives_strdup_printf("%s -capture %d %u %d %d %s %d %d %.4f %d %d %d %d \"%s\"",
@@ -12415,9 +12463,7 @@ void on_fade_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   aud_fade(mainw->current_file, startt, endt, startv, endv);
   audio_free_fnames();
 
-  while (lives_alarm_check(alarm_handle) > 0) {
-    lives_usleep(prefs->sleep_time);
-  }
+  lives_nanosleep_until_zero(lives_alarm_check(alarm_handle));
 
   lives_alarm_clear(alarm_handle);
 

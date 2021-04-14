@@ -37,7 +37,7 @@ void player_sensitize(void);
 void init_track_decoders(void);
 void free_track_decoders(void);
 
-void load_frame_image(frames_t frame);
+boolean load_frame_image(frames_t frame);
 
 void reset_playback_clock(void);
 ticks_t lives_get_current_playback_ticks(ticks_t origsecs, ticks_t origusecs, lives_time_source_t *time_source);

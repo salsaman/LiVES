@@ -5945,6 +5945,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_widget_set_vexpand(mt->preview_eventbox, TRUE);
 
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->preview_eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                            LIVES_GUI_CALLBACK(frame_context), LIVES_INT_TO_POINTER(0));
+
   // must do this here to set mainw->files[mt->render_file]->hsize, mainw->files[mt->render_file]->vsize;
   //and we must have created aparam_submenu and insa_eventbox and insa_checkbutton
   msg = set_values_from_defs(mt, !prefs->mt_enter_prompt || (mainw->recoverable_layout &&
@@ -8198,16 +8201,14 @@ void do_effect_context(lives_mt * mt, LiVESXEventButton * event) {
   lives_container_add(LIVES_CONTAINER(menu), edit_effect);
 
   lives_signal_connect(LIVES_GUI_OBJECT(edit_effect), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_mt_fx_edit_activate),
-                       (livespointer)mt);
+                       LIVES_GUI_CALLBACK(on_mt_fx_edit_activate), (livespointer)mt);
 
   delete_effect = lives_standard_menu_item_new_with_label(_("_Delete this Effect"));
   if (mt->selected_init_event != mt->avol_init_event) {
     lives_container_add(LIVES_CONTAINER(menu), delete_effect);
 
     lives_signal_connect(LIVES_GUI_OBJECT(delete_effect), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_mt_delfx_activate),
-                         (livespointer)mt);
+                         LIVES_GUI_CALLBACK(on_mt_delfx_activate), (livespointer)mt);
   }
 
   if (palette->style & STYLE_1) {
@@ -8608,14 +8609,6 @@ static void set_audio_mixer_vols(lives_mt * mt, weed_plant_t *elist) {
 
   lives_free(atracks);
   lives_free(avols);
-}
-
-boolean mt_idle_show_current_frame(livespointer data) {
-  lives_mt *mt = (lives_mt *)data;
-  if (!mainw->multitrack) return FALSE;
-  mt_tl_move(mt, mt->opts.ptr_time);
-  lives_widget_queue_draw(mainw->play_image);
-  return FALSE;
 }
 
 
@@ -10719,7 +10712,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
       lives_widget_hide(mt->next_node_button);
     }
     set_poly_tab(mt, POLY_PARAMS);
-    if (mt->framedraw) mt_framedraw(mt, mainw->frame_layer);
+    if (mt->framedraw && mainw->frame_layer) mt_framedraw(mt, mainw->frame_layer);
     break;
   case POLY_FX_STACK:
     mt->init_event = NULL;

@@ -33,7 +33,7 @@ LIVES_GLOBAL_INLINE int weed_event_get_type(weed_event_t *event) {
   return get_event_type(event);
 }
 
-LIVES_GLOBAL_INLINE int weed_frame_event_get_tracks(weed_event_t *event,  int **clips, int64_t **frames) {
+LIVES_GLOBAL_INLINE int weed_frame_event_get_tracks(weed_event_t *event,  int **clips, frames64_t **frames) {
   int ntracks = 0, xntracks = 0;
   if (!event || !WEED_EVENT_IS_FRAME(event)) return -1;
   if (clips) *clips = weed_get_int_array_counted(event, WEED_LEAF_CLIPS, &ntracks);
@@ -222,7 +222,7 @@ int get_frame_event_clip(weed_plant_t *event, int layer) {
 frames_t get_frame_event_frame(weed_plant_t *event, int layer) {
   int numframes;
   frames_t framenum;
-  int64_t *frames;
+  frames64_t *frames;
   if (!WEED_EVENT_IS_FRAME(event)) return -2;
   frames = weed_get_int64_array_counted(event, WEED_LEAF_FRAMES, &numframes);
   if (numframes <= layer) {
@@ -486,10 +486,10 @@ void remove_frame_from_event(weed_plant_t *event_list, weed_plant_t *event, int 
   weed_timecode_t tc;
 
   int *clips;
-  int64_t *frames;
+  frames64_t *frames;
 
-  int numframes;
-  register int i;
+  frames_t numframes;
+  int i;
 
   if (!WEED_EVENT_IS_FRAME(event)) return;
 
@@ -517,7 +517,7 @@ void remove_frame_from_event(weed_plant_t *event_list, weed_plant_t *event, int 
 
 boolean is_blank_frame(weed_plant_t *event, boolean count_audio) {
   int clip, numframes;
-  int64_t frame;
+  frames64_t frame;
 
   if (!WEED_EVENT_IS_FRAME(event)) return FALSE;
   if (count_audio && WEED_EVENT_IS_AUDIO_FRAME(event)) {
@@ -757,7 +757,7 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_timecode_t out_
 
 boolean frame_event_has_frame_for_track(weed_plant_t *event, int track) {
   int *clips, numclips;
-  int64_t *frames;
+  frames64_t *frames;
 
   clips = weed_get_int_array_counted(event, WEED_LEAF_CLIPS, &numclips);
   if (numclips <= track) return FALSE;
@@ -1139,7 +1139,7 @@ void insert_param_change_event_at(weed_plant_t *event_list, weed_plant_t *at_eve
 
 
 weed_plant_t *insert_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, int numframes, int *clips,
-                                    int64_t *frames, weed_plant_t **shortcut) {
+                                    frames64_t *frames, weed_plant_t **shortcut) {
   // we will insert a FRAME event at timecode tc, after any other events (except for deinit events) at timecode tc
   // if there is an existing FRAME event at tc, we replace it with the new frame
 
@@ -1487,7 +1487,7 @@ LIVES_GLOBAL_INLINE
 weed_event_list_t *insert_blank_frame_event_at(weed_event_list_t *event_list, weed_timecode_t tc,
     weed_event_t **shortcut) {
   int clip = -1;
-  int64_t frame = 0;
+  frames64_t frame = 0;
   return insert_frame_event_at(event_list, tc, 1, &clip, &frame, shortcut);
 }
 
@@ -2516,7 +2516,7 @@ void event_list_add_track(weed_plant_t *event_list, int layer) {
   weed_plant_t *event;
 
   int *clips, *newclips, i;
-  int64_t *frames, *newframes;
+  frames64_t *frames, *newframes;
   int *in_tracks, *out_tracks;
 
   int num_in_tracks, num_out_tracks;
@@ -2597,7 +2597,7 @@ void event_list_add_track(weed_plant_t *event_list, int layer) {
 
 
 static weed_event_t *create_frame_event(weed_event_t *event, weed_timecode_t tc,
-                                        int numframes, int *clips, int64_t *frames) {
+                                        int numframes, int *clips, frames64_t *frames) {
   weed_error_t error = weed_event_set_timecode(event, tc);
   if (error != WEED_SUCCESS) return NULL;
   error = weed_set_int_value(event, WEED_LEAF_EVENT_TYPE, WEED_EVENT_TYPE_FRAME);
@@ -2637,7 +2637,7 @@ static weed_event_t *add_new_event(weed_event_list_t **pevent_list) {
 
 
 weed_event_list_t *append_frame_event(weed_event_list_t *event_list,
-                                      weed_timecode_t tc, int numframes, int *clips, int64_t *frames) {
+                                      weed_timecode_t tc, int numframes, int *clips, frames64_t *frames) {
   // append a frame event to an event_list
   // returns NULL on memory or other error
   weed_event_t *event;
@@ -3180,7 +3180,8 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
     if (mainw->multitrack) {
 
       if (!LIVES_IS_PLAYING || ((mainw->fixed_fpsd <= 0. && (!mainw->vpp || mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback))
-                                || (mainw->fixed_fpsd > 0. && (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->fixed_fpsd) ||
+                                || (mainw->fixed_fpsd > 0. && (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1.
+                                    / mainw->fixed_fpsd) ||
                                 (mainw->vpp && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
                                  (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd))) {
         mainw->pchains = pchains;
@@ -3603,7 +3604,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
   static int xaclips[MAX_AUDIO_TRACKS];
   static int out_frame;
   static int frame;
-  static int64_t old_scrap_frame;
+  static frames64_t old_scrap_frame;
   static int natracks, nbtracks;
   int blend_file = mainw->blend_file;
 
@@ -4869,7 +4870,7 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
     mainw->transrend_proc = lives_proc_thread_create(LIVES_THRDATTR_NONE,
                             (lives_funcptr_t)transcode_clip,
                             WEED_SEED_BOOLEAN, "iibV", 1, 0, TRUE, pname);
-    lives_proc_thread_set_cancellable(mainw->transrend_proc);
+
     lives_nanosleep_until_nonzero(mainw->transrend_ready);
 
     if (rendaud) {
@@ -4877,7 +4878,9 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
       d_print(_("Pre-rendering audio..."));
       if (!start_render_effect_events(mainw->event_list, FALSE, TRUE)) {
         mainw->transrend_ready = FALSE;
-        lives_proc_thread_cancel(mainw->transrend_proc, TRUE);
+        lives_proc_thread_cancel(mainw->transrend_proc, FALSE);
+        lives_proc_thread_join(mainw->transrend_proc);
+        mainw->transrend_proc = NULL;
         close_current_file(current_file);
         retval = FALSE;
         goto rtc_done;
@@ -4955,7 +4958,8 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
 
       if (transcode) {
         mainw->transrend_ready = TRUE;
-        lives_proc_thread_cancel(mainw->transrend_proc, TRUE);
+        lives_proc_thread_cancel(mainw->transrend_proc, FALSE);
+        lives_proc_thread_join(mainw->transrend_proc);
         mainw->transrend_proc = NULL;
         close_current_file(old_file);
         goto rtc_done;
@@ -5044,7 +5048,8 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
     retval = FALSE; // cancelled or error, so show the dialog again
     if (transcode) {
       mainw->transrend_ready = TRUE;
-      lives_proc_thread_cancel(mainw->transrend_proc, TRUE);
+      lives_proc_thread_cancel(mainw->transrend_proc, FALSE);
+      lives_proc_thread_join(mainw->transrend_proc);
       mainw->transrend_proc = NULL;
     }
     if (transcode || (new_clip && !mainw->multitrack)) {
@@ -5456,7 +5461,7 @@ double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int nb
   double *matrix[ntracks + nbtracks];
 
   int *clips = NULL;
-  int64_t *frames = NULL;
+  frames64_t *frames = NULL;
 
   int nxtracks;
   int got = -1;

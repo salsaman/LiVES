@@ -13521,7 +13521,7 @@ boolean pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
 
   if (!LIVES_IS_PIXBUF(pixbuf)) {
     weed_layer_set_size(layer, 0, 0);
-    weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, 0);
+    weed_layer_set_rowstride(layer, 0);
     weed_layer_pixel_data_free(layer);
     return FALSE;
   }
@@ -13533,22 +13533,22 @@ boolean pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
 
   weed_layer_set_width(layer, width);
   weed_layer_set_height(layer, height);
-  weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
+  weed_layer_set_rowstride(layer, rowstride);
 
-  if (!weed_plant_has_leaf(layer, WEED_LEAF_CURRENT_PALETTE)) {
+  if (weed_layer_get_palette(layer) == WEED_PALETTE_NONE) {
 #ifdef GUI_GTK
-    if (nchannels == 4) weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGBA32);
-    else weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGB24);
+    if (nchannels == 4) weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
+    else weed_layer_set_palette(layer, WEED_PALETTE_RGB24);
 #endif
   }
 
   if (rowstride == get_last_pixbuf_rowstride_value(width, nchannels)) {
     in_pixel_data = (void *)lives_pixbuf_get_pixels(pixbuf);
     weed_layer_pixel_data_free(layer);
-    weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, in_pixel_data);
+    weed_layer_set_pixel_data_packed(layer, in_pixel_data);
     weed_set_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, pixbuf);
-    palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, NULL);
-    if (weed_palette_is_rgb(palette)) weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+    palette = weed_layer_get_palette(layer);
+    if (weed_palette_is_rgb(palette)) weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
     return TRUE;
   }
 
@@ -13565,10 +13565,10 @@ boolean pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
   }
 
   weed_layer_pixel_data_free(layer);
-  weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
+  weed_layer_set_pixel_data_packed(layer, pixel_data);
 
-  palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, NULL);
-  if (weed_palette_is_rgb(palette)) weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+  palette = weed_layer_get_palette(layer);
+  if (weed_palette_is_rgb(palette)) weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
   return FALSE;
 }
@@ -14012,13 +14012,13 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
   if (weed_get_boolean_value(layer, WEED_LEAF_HOST_ORIG_PDATA, NULL) == WEED_TRUE)
     return;
 
-  if (weed_layer_count_refs(layer) > 0) {
-    if (weed_layer_get_pixel_data_planar(layer, NULL)) {
-      break_me("nullifying refcounted pixel_data, possible memory leak !");
-      weed_layer_nullify_pixel_data(layer);
-    }
-    return;
-  }
+  /* if (weed_layer_count_refs(layer) > 0) { */
+  /*   if (weed_layer_get_pixel_data_planar(layer, NULL)) { */
+  /*     //break_me("nullifying refcounted pixel_data, possible memory leak !"); */
+  /*     weed_layer_nullify_pixel_data(layer); */
+  /*   } */
+  /*   return; */
+  /* } */
 
   if ((pixel_data = weed_layer_get_pixel_data_planar(layer, &pd_elements)) != NULL) {
     if (pd_elements > 0) {
@@ -14068,7 +14068,7 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 */
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
-  if (weed_layer_unref(layer)) return layer;
+  if (layer) while (weed_layer_unref(layer) >= 0);
   return NULL;
 }
 

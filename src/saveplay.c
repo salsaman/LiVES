@@ -15,6 +15,7 @@
 #include "htmsocket.h"
 #include "cvirtual.h"
 #include "interface.h"
+#include "multitrack-gui.h"
 
 static boolean _start_playback(livespointer data) {
   int new_file, old_file;
@@ -4205,6 +4206,7 @@ boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int wi
     } while (resp == LIVES_RESPONSE_RETRY);
   } else {
     // multitrack mode
+    weed_layer_t *layer;
     LiVESError *gerr = NULL;
     LiVESPixbuf *pixbuf = NULL;
     LiVESResponseType retval;
@@ -4217,18 +4219,17 @@ boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int wi
 
     prefs->pb_quality = PB_QUALITY_BEST;
 
-    mt_show_current_frame(mainw->multitrack, TRUE);
-    resize_layer(mainw->frame_layer, sfile->hsize, sfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_RGB24, 0);
-    convert_layer_palette(mainw->frame_layer, WEED_PALETTE_RGB24, 0);
+    layer = mt_show_current_frame(mainw->multitrack, TRUE);
 
-    if (!internal) {
-      pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE, FALSE);
-    }
+    resize_layer(layer, sfile->hsize, sfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_RGB24, 0);
+    convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
+
+    if (!internal) pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
 
     do {
       retval = LIVES_RESPONSE_NONE;
       if (internal) {
-        save_to_png(mainw->frame_layer, tmp, 100 - prefs->ocp);
+        save_to_png(layer, tmp, 100 - prefs->ocp);
         if (THREADVAR(write_failed)) {
           THREADVAR(write_failed) = 0;
           retval = do_write_failed_error_s_with_retry(full_file_name, NULL);
@@ -4242,13 +4243,13 @@ boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int wi
         }
       }
     } while (retval == LIVES_RESPONSE_RETRY);
+    free(tmp);
 
     prefs->pb_quality = pbq;
 
-    weed_plant_free(mainw->frame_layer);
-    mainw->frame_layer = NULL;
+    if (internal) weed_layer_free(layer);
+    else weed_plant_free(layer);
 
-    free(tmp);
     if (pixbuf) lives_widget_object_unref(pixbuf);
   }
   return TRUE;
@@ -5538,7 +5539,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       mainw->recovery_list = mainw->recovery_list->next;
     }
 
-    lives_chomp(buff);
+    lives_chomp(buff, FALSE);
 
     if (buff[strlen(buff) - 1] == '*') {
       boolean crash_recovery = prefs->crash_recovery;
@@ -5706,107 +5707,118 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
           cfile->needs_update = TRUE;
         }
       }
+    }
 
-      threaded_dialog_spin(0.);
+    threaded_dialog_spin(0.);
 
-      /** not really from a set, but let's pretend to get the details
+    /** not really from a set, but let's pretend to get the details
         read the playback fps, play frame, and name */
 
-      /// NEED TO maintain mainw->hdrs_cache when entering the function,
-      /// else it will be considered a legacy file load
-      open_set_file(++clipnum);
+    /// NEED TO maintain mainw->hdrs_cache when entering the function,
+    /// else it will be considered a legacy file load
+    open_set_file(++clipnum);
 
-      threaded_dialog_spin(0.);
+    threaded_dialog_spin(0.);
 
-      if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
+    if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
-      if (mainw->current_file < 1) continue;
+    if (mainw->current_file < 1) continue;
 
-      get_total_time(cfile);
+    get_total_time(cfile);
 
-      if (CLIP_TOTAL_TIME(mainw->current_file) == 0.) {
-        close_current_file(last_good_file);
-        continue;
-      }
-
-      last_good_file = mainw->current_file;
-
-      if (update_clips_version(mainw->current_file)) cfile->needs_silent_update = TRUE;
-
-      if (!prefs->vj_mode || (cfile->needs_update || cfile->needs_silent_update)) {
-        if (!prefs->vj_mode && cfile->needs_update) do_clip_divergence_error(mainw->current_file);
-        save_clip_values(mainw->current_file);
-        cfile->needs_silent_update = cfile->needs_update = FALSE;
-      }
-
-      // add to clip menu
-      threaded_dialog_spin(0.);
-      add_to_clipmenu();
-      cfile->start = cfile->frames > 0 ? 1 : 0;
-      cfile->end = cfile->frames;
-      cfile->is_loaded = TRUE;
-      cfile->changed = TRUE;
-      lives_rm(cfile->info_file);
-      if (!mainw->multitrack) set_main_title(cfile->name, 0);
-
-      if (cfile->frameno > cfile->frames) cfile->frameno = cfile->last_frameno = 1;
-
-      if (!mainw->multitrack) {
-        lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
-        lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
-        lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
-        lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
-        showclipimgs();
-      } else {
-        int current_file = mainw->current_file;
-        lives_mt *multi = mainw->multitrack;
-        mainw->multitrack = NULL;
-        mainw->current_file = -1;
-        reget_afilesize(current_file);
-        mainw->current_file = current_file;
-        mainw->multitrack = multi;
-        get_total_time(cfile);
-        mainw->current_file = mainw->multitrack->render_file;
-        mt_init_clips(mainw->multitrack, current_file, TRUE);
-        set_poly_tab(mainw->multitrack, POLY_CLIPS);
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-        mt_clip_select(mainw->multitrack, TRUE);
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-        mainw->current_file = current_file;
-      }
-
-      threaded_dialog_spin(0.);
-
-      if (cfile->frameno > cfile->frames && cfile->frameno > 1) cfile->frameno = cfile->frames;
-      cfile->last_frameno = cfile->frameno;
-      cfile->pointer_time = cfile->real_pointer_time = calc_time_from_frame(mainw->current_file, cfile->frameno);
-      if (cfile->real_pointer_time > CLIP_TOTAL_TIME(mainw->current_file))
-        cfile->real_pointer_time = CLIP_TOTAL_TIME(mainw->current_file);
-      if (cfile->pointer_time > cfile->video_time) cfile->pointer_time = 0.;
-
-      if (cfile->achans) {
-        cfile->aseek_pos = (off64_t)((double)(cfile->real_pointer_time * cfile->arate) * cfile->achans *
-                                     (cfile->asampsize / 8));
-        if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
-      }
-
-      if (mainw->current_file != -1)
-        if (*mainw->set_name) recover_layout_map(mainw->current_file);
-
-      if (!mainw->multitrack) resize(1);
-
-      lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
+    if (CLIP_TOTAL_TIME(mainw->current_file) == 0.) {
+      close_current_file(last_good_file);
+      continue;
     }
-  }
 
-  if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
+    if (cfile->video_time < cfile->laudio_time) {
+      if (!cfile->checked) {
+        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+        if (!check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
+          cfile->needs_update = TRUE;
+        }
+      }
+    }
+
+    last_good_file = mainw->current_file;
+
+    if (update_clips_version(mainw->current_file)) cfile->needs_silent_update = TRUE;
+
+    if (!prefs->vj_mode || (cfile->needs_update || cfile->needs_silent_update)) {
+      if (!prefs->vj_mode && cfile->needs_update) do_clip_divergence_error(mainw->current_file);
+      save_clip_values(mainw->current_file);
+      cfile->needs_silent_update = cfile->needs_update = FALSE;
+    }
+
+    // add to clip menu
+    threaded_dialog_spin(0.);
+    add_to_clipmenu();
+    cfile->start = cfile->frames > 0 ? 1 : 0;
+    cfile->end = cfile->frames;
+    cfile->is_loaded = TRUE;
+    cfile->changed = TRUE;
+    lives_rm(cfile->info_file);
+    if (!mainw->multitrack) set_main_title(cfile->name, 0);
+
+    if (cfile->frameno > cfile->frames) cfile->frameno = cfile->last_frameno = 1;
+
+    if (!mainw->multitrack) {
+      lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
+      lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+      lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
+      lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
+      showclipimgs();
+    } else {
+      int current_file = mainw->current_file;
+      lives_mt *multi = mainw->multitrack;
+      mainw->multitrack = NULL;
+      mainw->current_file = -1;
+      reget_afilesize(current_file);
+      mainw->current_file = current_file;
+      mainw->multitrack = multi;
+      get_total_time(cfile);
+      mainw->current_file = mainw->multitrack->render_file;
+      mt_init_clips(mainw->multitrack, current_file, TRUE);
+      set_poly_tab(mainw->multitrack, POLY_CLIPS);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+      mt_clip_select(mainw->multitrack, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+      mainw->current_file = current_file;
+    }
+
+    threaded_dialog_spin(0.);
+
+    if (cfile->frameno > cfile->frames && cfile->frameno > 1) cfile->frameno = cfile->frames;
+    cfile->last_frameno = cfile->frameno;
+    cfile->pointer_time = cfile->real_pointer_time = calc_time_from_frame(mainw->current_file, cfile->frameno);
+    if (cfile->real_pointer_time > CLIP_TOTAL_TIME(mainw->current_file))
+      cfile->real_pointer_time = CLIP_TOTAL_TIME(mainw->current_file);
+    if (cfile->pointer_time > cfile->video_time) cfile->pointer_time = 0.;
+
+    if (cfile->achans) {
+      cfile->aseek_pos = (off64_t)((double)(cfile->real_pointer_time * cfile->arate) * cfile->achans *
+                                   (cfile->asampsize / 8));
+      if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
+    }
+
+    if (mainw->current_file != -1)
+      if (*mainw->set_name) recover_layout_map(mainw->current_file);
+
+    if (!mainw->multitrack) resize(1);
+
+    lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
+  }
+  //}
+
+  //if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
   ngoodclips = lives_list_length(mainw->cliplist);
   if (!ngoodclips) {
     d_print(_("No clips were recovered.\n"));
   }
+
   d_print(P_("%d clip was recovered ", "%d clips were recovered ", ngoodclips), ngoodclips);
   if (recovery_file)
     d_print(_("from the previous session.\n"));

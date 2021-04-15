@@ -2035,7 +2035,6 @@ void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, 
 	  // *INDENT-OFF*
         }}}}
   // *INDENT-ON*
-
 }
 
 
@@ -2368,7 +2367,7 @@ boolean event_list_to_block(weed_plant_t *event_list, int num_events) {
 
   while (event) {
     if (WEED_EVENT_IS_FRAME(event)) {
-      (cfile->resample_events + i++)->value = (int)weed_get_int64_value(event, WEED_LEAF_FRAMES, NULL);
+      cfile->resample_events[i++].value = (int)weed_get_int64_value(event, WEED_LEAF_FRAMES, NULL);
     }
     event = get_next_event(event);
   }
@@ -2887,7 +2886,9 @@ weed_event_list_t *append_filter_deinit_event(weed_event_list_t *event_list,
   weed_set_int64_value(event, WEED_LEAF_TIMECODE, tc);
   weed_set_int_value(event, WEED_LEAF_EVENT_TYPE, WEED_EVENT_TYPE_FILTER_DEINIT);
   weed_set_voidptr_value(event, WEED_LEAF_INIT_EVENT, init_event);
+
   weed_leaf_delete((weed_plant_t *)init_event, WEED_LEAF_DEINIT_EVENT); // delete since we assign a placeholder with int64 type
+
   weed_set_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, (void *)event);
   if (pchain) {
     int num_params = 0;

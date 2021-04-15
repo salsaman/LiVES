@@ -5122,12 +5122,7 @@ boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     /// set this so we invalid preload cache
     if (mainw->scratch == SCRATCH_NONE) mainw->scratch = SCRATCH_REV;
 
-    lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), -cfile->pb_fps);
-    lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
-
-    // make sure this is called, sometimes we switch clips too soon...
-    changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
   } else if (area == SCREEN_AREA_BACKGROUND) {
     if (!IS_NORMAL_CLIP(mainw->blend_file)
         || (!clip_can_reverse(mainw->blend_file) && mainw->files[mainw->blend_file]->pb_fps >= 0.)) return TRUE;
@@ -5241,12 +5236,8 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     return TRUE;
   }
 
-  lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), sfile->fps);
-  lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
-
-  // make sure this is called, sometimes we switch clips too soon...
-  changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
+  lives_spin_button_update(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps));
 
   return TRUE;
 }
@@ -10313,7 +10304,7 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
       if (scr_width != GUI_SCREEN_PHYS_WIDTH || scr_height != GUI_SCREEN_PHYS_HEIGHT) {
         if (!mainw->ignore_screen_size) {
           if (prefs->show_dev_opts) {
-            g_printerr("VALLS %d %d   %d %d   %d %d\n", event->width, event->height, scr_width, scr_height,
+            g_printerr("screen resize: %d %d   %d %d   %d %d\n", event->width, event->height, scr_width, scr_height,
                        GUI_SCREEN_PHYS_WIDTH, GUI_SCREEN_PHYS_HEIGHT);
           }
           resize_widgets_for_monitor(FALSE);
@@ -10729,7 +10720,7 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
 
   if (!LIVES_IS_PLAYING || !CURRENT_CLIP_IS_VALID) return;
 
-  if (!LIVES_IS_PLAYING) sfile = cfile;
+  if (user_data || !LIVES_IS_PLAYING) sfile = cfile;
   else sfile = mainw->files[mainw->playing_file];
 
   new_fps = lives_fix(lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton)), 3);
@@ -10753,7 +10744,7 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
     mainw->startticks = mainw->currticks - delta_ticks;
   }
 
-  if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
+  if (user_data || prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
     frames_t frameno = 0;
     if ((prefs->audio_opts & AUDIO_OPTS_RESYNC_ADIR) && av_clips_equal()) {
       if ((sfile->pb_fps > 0. && sfile->adirection == LIVES_DIRECTION_REVERSE)
@@ -11196,7 +11187,7 @@ void on_slower_pressed(LiVESButton * button, livespointer user_data) {
     if (sfile == cfile) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), (sfile->pb_fps - change));
     else sfile->pb_fps -= change;
   }
-  changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
+  lives_spin_button_update(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps));
 }
 
 
@@ -11257,7 +11248,7 @@ void on_faster_pressed(LiVESButton * button, livespointer user_data) {
     if (sfile == cfile) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), (sfile->pb_fps + change));
     else sfile->pb_fps = sfile->pb_fps + change;
   }
-  changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
+  lives_spin_button_update(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps));
 }
 
 
@@ -11444,13 +11435,11 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
       || mainw->is_rendering || mainw->preview || mainw->agen_key != 0 || mainw->agen_needs_reinit
       || prefs->audio_src == AUDIO_SRC_EXT) return TRUE;
 
-  if (!state) {
-    // lock OFF
-    prefs->audio_opts = future_prefs->audio_opts;
-    return TRUE;
-  }
+
+  // lock OFF
+  if (!state) prefs->audio_opts = future_prefs->audio_opts;
   switch_audio_clip(mainw->current_file, TRUE);
-  prefs->audio_opts &= ~(AUDIO_OPTS_FOLLOW_FPS | AUDIO_OPTS_FOLLOW_CLIPS);
+  if (state) prefs->audio_opts &= ~(AUDIO_OPTS_FOLLOW_FPS | AUDIO_OPTS_FOLLOW_CLIPS);
   return TRUE;
 }
 

@@ -66,6 +66,9 @@ typedef enum {
   CLIP_DETAILS_RESERVED0
 } lives_clip_details_t;
 
+#define LIVES_LITERAL_EVENT "event"
+#define LIVES_LITERAL_FRAMES "frames"
+
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
 
 boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
@@ -83,7 +86,8 @@ boolean read_file_details(const char *file_name, boolean only_check_for_audio, b
 
 boolean update_clips_version(int which);
 
-int save_event_frames(void);
+int save_event_frames(int clipno);
+void clear_event_frames(int clipno);
 
 boolean ignore_clip(int which);
 

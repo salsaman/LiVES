@@ -731,62 +731,75 @@ LIVES_GLOBAL_INLINE lives_clip_t *clip_forensic(int clipno, char *binfmtname) {
 }
 
 
-int save_event_frames(void) {
+LIVES_GLOBAL_INLINE void clear_event_frames(int clipno) {
+  char *clipdir = get_clip_dir(clipno);
+  char *hdrfile = lives_build_filename(clipdir, LIVES_LITERAL_EVENT "." LIVES_LITERAL_FRAMES, NULL);
+  lives_rm(hdrfile);
+  lives_free(hdrfile);
+  lives_free(clipdir);
+}
+
+
+int save_event_frames(int clipno) {
   // when doing a resample, we save a list of frames for the back end to do
   // a reorder
 
   // here we also update the frame_index for clips of type CLIP_TYPE_FILE
+  lives_clip_t *sfile;
 
-  char *clipdir = get_clip_dir(mainw->current_file);
-  char *hdrfile = lives_build_filename(clipdir, "event.frames", NULL);
+  char *clipdir = get_clip_dir(clipno);
+  char *hdrfile = lives_build_filename(clipdir, LIVES_LITERAL_EVENT "." LIVES_LITERAL_FRAMES, NULL);
 
-  int header_fd, i = 0;
+  frames_t i = 0;
+  int header_fd;
   int retval;
   int perf_start, perf_end;
   int nevents;
 
   lives_free(clipdir);
 
-  if (!cfile->event_list) {
+  sfile = mainw->files[clipno];
+
+  if (!sfile->event_list) {
     lives_rm(hdrfile);
     return -1;
   }
 
-  perf_start = (int)(cfile->fps * event_list_get_start_secs(cfile->event_list)) + 1;
-  perf_end = perf_start + (nevents = count_events(cfile->event_list, FALSE, 0, 0)) - 1;
+  perf_start = (int)(sfile->fps * event_list_get_start_secs(sfile->event_list)) + 1;
+  perf_end = perf_start + (nevents = count_events(sfile->event_list, FALSE, 0, 0)) - 1;
 
-  if (!event_list_to_block(cfile->event_list, nevents)) return -1;
+  if (!event_list_to_block(sfile->event_list, nevents)) return -1;
 
-  if (cfile->frame_index) {
+  if (sfile->frame_index) {
     LiVESResponseType response;
-    int xframes = cfile->frames;
+    frames_t xframes = sfile->frames;
     char *what = (_("creating the frame index for resampling "));
 
-    if (cfile->frame_index_back) lives_free(cfile->frame_index_back);
-    cfile->frame_index_back = cfile->frame_index;
-    cfile->frame_index = NULL;
+    if (sfile->frame_index_back) lives_free(sfile->frame_index_back);
+    sfile->frame_index_back = sfile->frame_index;
+    sfile->frame_index = NULL;
 
     do {
       response = LIVES_RESPONSE_OK;
-      create_frame_index(mainw->current_file, FALSE, 0, nevents);
-      if (!cfile->frame_index) {
+      create_frame_index(clipno, FALSE, 0, nevents);
+      if (!sfile->frame_index) {
         response = do_memory_error_dialog(what, nevents * 4);
       }
     } while (response == LIVES_RESPONSE_RETRY);
     lives_free(what);
     if (response == LIVES_RESPONSE_CANCEL) {
-      cfile->frame_index = cfile->frame_index_back;
-      cfile->frame_index_back = NULL;
+      sfile->frame_index = sfile->frame_index_back;
+      sfile->frame_index_back = NULL;
       return -1;
     }
 
     for (i = 0; i < nevents; i++) {
-      cfile->frame_index[i] = cfile->frame_index_back[(cfile->resample_events + i)->value - 1];
+      sfile->frame_index[i] = sfile->frame_index_back[(sfile->resample_events + i)->value - 1];
     }
 
-    cfile->frames = nevents;
-    if (!check_if_non_virtual(mainw->current_file, 1, cfile->frames)) save_frame_index(mainw->current_file);
-    cfile->frames = xframes;
+    sfile->frames = nevents;
+    if (!check_if_non_virtual(clipno, 1, sfile->frames)) save_frame_index(clipno);
+    sfile->frames = xframes;
   }
 
   do {
@@ -801,12 +814,13 @@ int save_event_frames(void) {
       THREADVAR(write_failed) = FALSE;
       lives_write(header_fd, &perf_start, 4, FALSE);
 
-      if (cfile->resample_events) {
+      if (sfile->resample_events) {
         for (i = 0; i <= perf_end - perf_start; i++) {
           if (THREADVAR(write_failed)) break;
-          lives_write(header_fd, &((cfile->resample_events + i)->value), 4, TRUE);
+          /// TODO: frames64_t
+          lives_write(header_fd, &((sfile->resample_events + i)->value), 4, TRUE);
         }
-        lives_freep((void **)&cfile->resample_events);
+        lives_freep((void **)&sfile->resample_events);
       }
 
       if (THREADVAR(write_failed)) {

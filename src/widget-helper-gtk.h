@@ -544,12 +544,16 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
   typedef GtkLabel                          LiVESLabel;
   typedef GtkImage                          LiVESImage;
   typedef GtkFileChooser                    LiVESFileChooser;
-#if GTK_CHECK_VERSION(3,2,0)
+#if GTK_CHECK_VERSION(3, 2, 0)
   typedef GtkFontChooser                    LiVESFontChooser;
   typedef GtkFontButton                     LiVESFontButton;
 #endif
   typedef GtkAlignment                      LiVESAlignment;
   typedef GtkAllocation                     LiVESAllocation;
+#if GTK_CHECK_VERSION(3, 10, 0)
+#define LIVES_HAS_HEADER_BAR_WIDGET 1
+  typedef GtkHeaderBar   		    LiVESHeaderBar;
+#endif
   typedef GtkMenu                           LiVESMenu;
   typedef GtkMenuShell                      LiVESMenuShell;
   typedef GtkMenuItem                       LiVESMenuItem;
@@ -946,6 +950,10 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #define LIVES_SPIN_BUTTON(widget) GTK_SPIN_BUTTON(widget)
 #define LIVES_COLOR_BUTTON(widget) GTK_COLOR_BUTTON(widget)
 #define LIVES_TOOL_BUTTON(widget) GTK_TOOL_BUTTON(widget)
+
+#if LIVES_HAS_HEADER_BAR_WIDGET
+#define LIVES_HEADER_BAR(widget) GTK_HEADER_BAR(widget)
+#endif
 
 #define LIVES_MENU(widget) GTK_MENU(widget)
 #define LIVES_MENU_SHELL(widget) GTK_MENU_SHELL(widget)

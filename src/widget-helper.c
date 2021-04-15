@@ -1393,7 +1393,7 @@ static boolean async_timer_handler(livespointer data) {
         //if (ev) g_print("ev was %d\n", ev->type);
         //else g_print("NULL event\n");
         lives_widget_context_iteration(NULL, FALSE);
-        //lives_nanosleep(NSLEEP_TIME);
+        lives_nanosleep(NSLEEP_TIME);
       }
       timer_running = FALSE;
     }
@@ -4709,8 +4709,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_button_new_with_label(const
 
 
 static LiVESWidget *make_ttips_image_for(LiVESWidget *widget, const char *text) {
-  LiVESWidget *ttips_image = lives_image_new_from_stock("livestock-help-info",
-                             widget_opts.icon_size);
+  LiVESWidget *ttips_image = lives_image_new_from_stock_at_size("livestock-help-info",
+                             LIVES_ICON_SIZE_CUSTOM, widget_opts.css_min_height + 2);
   if (ttips_image) {
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (widget_opts.apply_theme) {
@@ -4730,7 +4730,8 @@ static LiVESWidget *make_ttips_image_for(LiVESWidget *widget, const char *text) 
     lives_widget_set_sensitive_with(widget, ttips_image);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), HAS_TTIPS_IMAGE_KEY, ttips_image);
   }
-  lives_widget_set_valign(ttips_image, LIVES_ALIGN_START);
+  ///lives_widget_set_valign(ttips_image, LIVES_ALIGN_START);
+  lives_widget_set_valign(ttips_image, LIVES_ALIGN_CENTER);
   return ttips_image;
 }
 
@@ -7744,6 +7745,10 @@ LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustme
   else
     volume_scale = gtk_vscale_new(adj);
 
+  if (widget_opts.apply_theme) {
+    set_css_value_direct(volume_scale, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "0");
+  }
+
   gtk_scale_set_draw_value(GTK_SCALE(volume_scale), FALSE);
 #endif
 #endif
@@ -8080,8 +8085,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_separator(LiVESLayout 
 ////////////////////////////////////////////////////////////////////
 
 static LiVESWidget *add_warn_image(LiVESWidget * widget, LiVESWidget * hbox) {
-  LiVESWidget *warn_image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_WARNING,
-                            widget_opts.icon_size);
+  LiVESWidget *warn_image = lives_image_new_from_stock_at_size(LIVES_STOCK_DIALOG_WARNING,
+                            LIVES_ICON_SIZE_CUSTOM, widget_opts.css_min_height + 4);
   if (hbox) {
     if (!widget_opts.pack_end)
       lives_box_pack_start(LIVES_BOX(hbox), warn_image, FALSE, FALSE, 4);
@@ -8094,7 +8099,7 @@ static LiVESWidget *add_warn_image(LiVESWidget * widget, LiVESWidget * hbox) {
   lives_widget_set_sensitive_with(widget, warn_image);
 #if GTK_CHECK_VERSION(3, 16, 0)
   if (widget_opts.apply_theme) {
-    set_css_value_direct(warn_image, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+    set_css_value_direct(warn_image, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.8");
   }
 #endif
   return warn_image;
@@ -8641,6 +8646,37 @@ LiVESWidget *lives_standard_button_new_from_stock_full(const char *stock_id, con
   LiVESWidget *sbutt = lives_standard_button_new_from_stock(stock_id, label, width, height);
   return _lives_standard_button_set_full(sbutt, box, fake_default, ttips);
 }
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_header_bar_set_title(LiVESHeaderBar * hdrbar, const char *title) {
+#ifdef GUI_GTK
+#if LIVES_HAS_HEADER_BAR_WIDGET
+  gtk_header_bar_set_title(hdrbar, title);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_header_bar_new(LiVESWindow * toplevel) {
+  LiVESWidget *hdrbar = NULL;
+#ifdef GUI_GTK
+#if LIVES_HAS_HEADER_BAR_WIDGET
+  hdrbar = gtk_header_bar_new();
+  gtk_window_set_titlebar(toplevel, hdrbar);
+  gtk_header_bar_set_has_subtitle(LIVES_HEADER_BAR(hdrbar), FALSE);
+  gtk_header_bar_set_show_close_button(LIVES_HEADER_BAR(hdrbar), TRUE);
+  if (widget_opts.apply_theme) {
+    set_css_value_direct(hdrbar, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "0");
+    set_css_min_size(hdrbar, widget_opts.css_min_width, widget_opts.css_min_height >> 1);
+    lives_widget_apply_theme2(hdrbar, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  }
+#endif
+#endif
+  return hdrbar;
+}
+
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_hpaned_new(void) {
   LiVESWidget *hpaned;
@@ -9938,6 +9974,8 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
     set_child_alt_colour(combo, TRUE);
 
 #if GTK_CHECK_VERSION(3, 0, 0)
+    set_css_value_direct(combo, LIVES_WIDGET_STATE_NORMAL, "*", "border-width", "0");
+
     set_css_min_size(combo, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
     lives_container_forall(LIVES_CONTAINER(combo), setminsz, NULL);
 
@@ -10303,16 +10341,21 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   lives_window_set_monitor(LIVES_WINDOW(dialog), widget_opts.monitor);
 
+  if (width == -1 && height == -1) {
+    lives_widget_set_minimum_size(dialog, DEF_DIALOG_WIDTH >> 1, DEF_DIALOG_HEIGHT >> 1);
+    lives_window_set_default_size(LIVES_WINDOW(dialog), DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
+  } else {
 #if !GTK_CHECK_VERSION(3, 0, 0)
-  if (height > 8 && width > 8) {
+    if (height > 8 && width > 8) {
 #endif
-    lives_widget_set_minimum_size(dialog, width, height);
+      lives_widget_set_minimum_size(dialog, width, height);
 #if !GTK_CHECK_VERSION(3, 0, 0)
-  }
+    }
 #endif
 
-  lives_window_set_default_size(LIVES_WINDOW(dialog), width, height);
-  lives_widget_set_size_request(dialog, width, height);
+    lives_window_set_default_size(LIVES_WINDOW(dialog), width, height);
+    lives_widget_set_size_request(dialog, width, height);
+  }
 
   if (title) lives_window_set_title(LIVES_WINDOW(dialog), title);
 
@@ -10442,6 +10485,7 @@ static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char
   LiVESWidget *buttond;
   LiVESWidget *img_tips;
   LiVESWidget *warn_img;
+  LiVESWidget *layout;
 
   if (!box) return NULL;
 
@@ -10453,14 +10497,33 @@ static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(direntry), BUTTON_KEY, buttond);
 
   if (widget_opts.last_label) lives_label_set_mnemonic_widget(LIVES_LABEL(widget_opts.last_label), buttond);
-  lives_box_pack_start(LIVES_BOX(lives_widget_get_parent(direntry)), buttond, FALSE, FALSE, widget_opts.packing_width);
 
-  if ((warn_img = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(direntry), WARN_IMAGE_KEY))) {
-    lives_box_reorder_child(LIVES_BOX(lives_widget_get_parent(direntry)), buttond,
-                            get_box_child_index(LIVES_BOX(lives_widget_get_parent(direntry)), warn_img));
-  } else if ((img_tips = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(direntry), HAS_TTIPS_IMAGE_KEY))) {
-    lives_box_reorder_child(LIVES_BOX(lives_widget_get_parent(direntry)), buttond,
-                            get_box_child_index(LIVES_BOX(lives_widget_get_parent(direntry)), img_tips));
+  layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box), WH_LAYOUT_KEY);
+  if (layout) {
+    LiVESWidget *hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+    lives_box_pack_start(LIVES_BOX(hbox), buttond, FALSE, FALSE, widget_opts.packing_width);
+    if ((warn_img = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(direntry), WARN_IMAGE_KEY))) {
+      lives_widget_object_ref(warn_img);
+      lives_widget_unparent(warn_img);
+      lives_box_pack_start(LIVES_BOX(hbox), warn_img, FALSE, FALSE, widget_opts.packing_width);
+      lives_widget_object_unref(warn_img);
+    }
+    if ((img_tips = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(direntry), HAS_TTIPS_IMAGE_KEY))) {
+      lives_widget_object_ref(img_tips);
+      lives_widget_unparent(img_tips);
+      lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width);
+      lives_widget_object_unref(img_tips);
+    }
+  } else {
+    lives_box_pack_start(LIVES_BOX(lives_widget_get_parent(direntry)), buttond, FALSE, FALSE, widget_opts.packing_width);
+
+    if ((warn_img = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(direntry), WARN_IMAGE_KEY))) {
+      lives_box_reorder_child(LIVES_BOX(lives_widget_get_parent(direntry)), buttond,
+                              get_box_child_index(LIVES_BOX(lives_widget_get_parent(direntry)), warn_img));
+    } else if ((img_tips = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(direntry), HAS_TTIPS_IMAGE_KEY))) {
+      lives_box_reorder_child(LIVES_BOX(lives_widget_get_parent(direntry)), buttond,
+                              get_box_child_index(LIVES_BOX(lives_widget_get_parent(direntry)), img_tips));
+    }
   }
 
   lives_signal_sync_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
@@ -10494,6 +10557,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_toolbar_new(void) {
   lives_toolbar_set_icon_size(LIVES_TOOLBAR(toolbar), widget_opts.icon_size);
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
+    set_css_value_direct(toolbar, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "0");
     set_css_min_size(toolbar, widget_opts.css_min_width, widget_opts.css_min_height);
 #endif
   }
@@ -10805,7 +10869,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_file_button_new(boolean 
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_OPEN, LIVES_ICON_SIZE_LARGE_TOOLBAR);
 
   /// height X height is correct
-  int height = ((widget_opts.css_min_height * 3 + 3) >> 2);
+  int height = ((widget_opts.css_min_height * 2 + 2) >> 2);
   fbutton = lives_standard_button_new(height, height * 4);
   SET_INT_DATA(fbutton, ISDIR_KEY, is_dir);
   if (def_dir) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), DEFDIR_KEY, (livespointer)def_dir);
@@ -12494,7 +12558,7 @@ boolean lives_widget_context_update(void) {
         //if (ev) g_print("ev was %d\n", ev->type);
         //else g_print("NULL event\n");
         lives_widget_context_iteration(NULL, FALSE);
-        //lives_nanosleep(NSLEEP_TIME);
+        lives_nanosleep(NSLEEP_TIME);
       }
     }
   }

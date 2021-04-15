@@ -401,7 +401,7 @@ boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
     if (tstwin) {
       lives_proc_thread_t lpt = THREADVAR(tinfo);
       char *logmsg;
-      uint64_t ostate;
+      uint64_t ostate = 0;
       if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
       if (*errmsg == '#') logmsg = lives_strdup(errmsg + 1);
       else logmsg = lives_strdup_printf("%s:%s %s\n", tstamp, isjack, errmsg);
@@ -436,7 +436,7 @@ static void add_test_textwin(jack_driver_t *jackd) {
   char *logmsg;
   lives_proc_thread_t lpt = THREADVAR(tinfo);
   char *title = lives_strdup(_("Jack configuration test"));
-  uint64_t ostate;
+  uint64_t ostate = 0;
   if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
   textbuf = lives_text_buffer_new();
   tstwin = create_text_window(title, NULL, textbuf, FALSE);
@@ -1332,7 +1332,6 @@ retry_connect:
                                  type_name, server_name);
     jack_log_errmsg(jackd, logmsg);
     lives_free(logmsg);
-
     jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
@@ -1487,7 +1486,7 @@ retry_connect:
     if (!pidchk) {
       if (con_attempts > 1) {
         if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
-        sleep(5);
+        sleep(1);
         if (lpt) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
       }
 
@@ -1578,7 +1577,7 @@ retry_connect:
     else tsname = defservname;
     if (!lives_strcmp(asname, tsname)) all_equal = TRUE;
     if (is_trans && !all_equal && !prefs->jack_srv_dup) {
-      uint64_t ostate;
+      uint64_t ostate = 0;
       if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
       new_driver = (jackctl_driver_t *)main_thread_execute((lives_funcptr_t)get_def_drivers,
                    WEED_SEED_VOIDPTR, &new_driver, "vvb", drivers, &slist, 4);
@@ -1597,7 +1596,7 @@ retry_connect:
         lives_list_free(future_prefs->jack_tslaves);
       future_prefs->jack_tslaves = slist;
     } else {
-      uint64_t ostate;
+      uint64_t ostate = 0;
       if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
       new_driver = (jackctl_driver_t *)main_thread_execute((lives_funcptr_t)get_def_drivers,
                    WEED_SEED_VOIDPTR, &new_driver, "vvb", drivers, &slist, is_trans ? 4 : 5);
@@ -2219,7 +2218,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
     int64_t in_frames = 0;
     uint64_t in_bytes = 0, xin_bytes = 0;
     float shrink_factor = 1.f;
-    double vol;
+    double vol = 1.;
     lives_clip_t *xfile = afile;
     int qnt = 1;
     if (IS_VALID_CLIP(jackd->playing_file)) qnt = afile->achans * (afile->asampsize >> 3);
@@ -2458,7 +2457,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       }
 
       // playback from memory or file
-      vol = lives_vol_from_linear(future_prefs->volume * cfile->vol);
+      if (CLIP_HAS_AUDIO(jackd->playing_file)) vol = lives_vol_from_linear(future_prefs->volume * afile->vol);
+      else vol = lives_vol_from_linear(future_prefs->volume);
 
       if (numFramesToWrite > 0) {
         if (!from_memory) {
@@ -2546,7 +2546,6 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                 for (i = 0; i < jackd->num_output_channels; i++) {
                   jackd->abs_maxvol_heard = sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite,
                                             jackd->num_input_channels, afile->signed_endian & AFORM_UNSIGNED, FALSE, vol);
-
                   if (mainw->audio_frame_buffer && prefs->audio_src != AUDIO_SRC_EXT) {
                     // we will push the pre-effected audio to any audio reactive generators
                     append_to_audio_bufferf(out_buffer[i], numFramesToWrite, i);

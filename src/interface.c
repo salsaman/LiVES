@@ -4212,7 +4212,7 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
                                 -1, NULL, NULL, NULL);
   lives_free(tmp);
 
-  g_print("name %s and fold %s\n", dirname, fold);
+  //g_print("name %s and fold %s\n", dirname, fold);
 
   if (!dirname && !fold) return;
 
@@ -6701,7 +6701,7 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
   dsq->exp_layout = NULL;
   if (!lives_expander_get_expanded(LIVES_EXPANDER(dsq->expander))) {
     widget_opts.use_markup = TRUE;
-    lives_expander_set_label(LIVES_EXPANDER(dsq->expander), _("<b>Full _Details</b>"));
+    lives_expander_set_label(LIVES_EXPANDER(dsq->expander), _("<b>Click for Full _Details</b>"));
     widget_opts.use_markup = FALSE;
     return;
   }
@@ -7359,7 +7359,7 @@ rec_args *do_rec_desk_dlg(void) {
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   spinm = lives_standard_spin_button_new(_("_Minutes"), 0., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  spins = lives_standard_spin_button_new(_("_Seconds"), 8., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
+  spins = lives_standard_spin_button_new(_("_Seconds"), 10., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbutton), spinh, TRUE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbutton), spinm, TRUE);
@@ -7377,7 +7377,7 @@ rec_args *do_rec_desk_dlg(void) {
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   spindm = lives_standard_spin_button_new(_("_Minutes"), 0., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  spinds = lives_standard_spin_button_new(_("_Seconds"), 10., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
+  spinds = lives_standard_spin_button_new(_("_Seconds"), 5., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbuttond), spindh, TRUE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbuttond), spindm, TRUE);

@@ -529,10 +529,11 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   if (!allow_gap) offset_tc = get_event_timecode(get_first_frame_event(in_list));
   else out_tc = get_event_timecode(get_first_frame_event(in_list));
   end_tc = get_event_timecode(last_frame_event) - offset_tc;
-  end_tc = q_gint64(end_tc + tl, qfps);
+  //if (end_tc == out_tc) q_gint64(end_tc + tl, qfps);
+  end_tc = q_gint64(end_tc, qfps);
 
   // tl >>2 - make sure we don't round down
-  for (; out_tc < end_tc || event; out_tc = q_gint64(out_tc + tl, qfps)) {
+  for (; out_tc <= end_tc || event; out_tc = q_gint64(out_tc + tl, qfps)) {
     weed_timecode_t stop_tc = out_tc + offset_tc;
     if (out_tc > end_tc) out_tc = end_tc;
     while (1) {
@@ -1090,8 +1091,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   }
 
   /// for completeness we should add closers for all active audio tracks,
-  /// however this will be done in event_list_rectify() when necessary (or ideally, the player would add the closers and
-  /// record the offsets)
+  /// however this will be done in event_list_rectify() when necessary (ideally, the player adds the closers and
+  /// records the offsets)
 
 q_done:
   lives_list_free(init_events);
@@ -1390,9 +1391,8 @@ void on_resample_vid_ok(LiVESButton * button, livespointer pclipno) {
   lives_clip_t *sfile;
   weed_event_list_t *real_back_list = NULL;
   weed_event_list_t *new_event_list = NULL;
-  double oundo1_dbl, old_fps;
+  double oundo1_dbl, old_fps, target_fps = mainw->fx1_val;
   ticks_t in_time = 0;
-  char *msg;
   char *what;
   LiVESResponseType response;
   boolean ratio_fps;
@@ -1403,16 +1403,16 @@ void on_resample_vid_ok(LiVESButton * button, livespointer pclipno) {
   if (pclipno) clipno = LIVES_POINTER_TO_INT(pclipno);
   else clipno = mainw->current_file;
 
+  if (!CLIP_HAS_VIDEO(clipno)) return;
+
   mainw->error = FALSE;
+
+  sfile = mainw->files[clipno];
 
   if (button) {
     lives_general_button_clicked(button, NULL);
-    if (mainw->fx1_val == 0.) mainw->fx1_val = 1.;
-  }
-
-  if (!CLIP_HAS_VIDEO(clipno)) return;
-
-  sfile = mainw->files[clipno];
+    if (target_fps == 0.) target_fps = 1.;
+  } else target_fps = sfile->undo1_dbl;
 
   oundo1_dbl = sfile->undo1_dbl;
 
@@ -1421,11 +1421,7 @@ void on_resample_vid_ok(LiVESButton * button, livespointer pclipno) {
   ostart = sfile->start;
   oend = sfile->end;
 
-  // mainw->fx1_val == target framerate
-  // if button is NULL, this is set from sfile->undo1_dbl
-
-  if (!button) mainw->fx1_val = sfile->undo1_dbl;
-  if (mainw->fx1_val == sfile->fps && !sfile->event_list) return;
+  if (target_fps == sfile->fps && !sfile->event_list) return;
 
   real_back_list = sfile->event_list;
   what = (_("creating the event list for resampling"));
@@ -1436,7 +1432,7 @@ void on_resample_vid_ok(LiVESButton * button, livespointer pclipno) {
     for (frames64_t i64 = 1; i64 <= (frames64_t)sfile->frames; i64++) {
       do {
         response = LIVES_RESPONSE_OK;
-        new_event_list = append_frame_event(new_event_list, in_time, 1, &(mainw->current_file), &i64);
+        new_event_list = append_frame_event(new_event_list, in_time, 1, &clipno, &i64);
         if (!new_event_list) {
           response = do_memory_error_dialog(what, 0);
         }
@@ -1456,7 +1452,7 @@ void on_resample_vid_ok(LiVESButton * button, livespointer pclipno) {
   sfile->event_list_back = sfile->event_list;
 
   //QUANTISE
-  new_event_list = quantise_events(sfile->event_list_back, mainw->fx1_val, real_back_list != NULL);
+  new_event_list = quantise_events(sfile->event_list_back, target_fps, real_back_list != NULL);
   sfile->event_list = new_event_list;
 
   if (!real_back_list) event_list_free(sfile->event_list_back);
@@ -1471,34 +1467,28 @@ void on_resample_vid_ok(LiVESButton * button, livespointer pclipno) {
 
   if (mainw->multitrack) return;
 
-  ratio_fps = check_for_ratio_fps(mainw->fx1_val);
+  ratio_fps = check_for_ratio_fps(target_fps);
 
   // we have now quantised to fixed fps; we have come here from reorder
 
-  if (ratio_fps) {
-    // got a ratio
-    msg = lives_strdup_printf(_("Resampling video at %.8f frames per second..."), mainw->fx1_val);
-  } else {
-    msg = lives_strdup_printf(_("Resampling video at %.3f frames per second..."), mainw->fx1_val);
+  if (clipno > 0 && clipno == mainw->current_file) {
+    d_print(_("Resampling video at %.*f frames per second..."), ratio_fps ? 8 : 3, target_fps);
   }
-  if (mainw->current_file > 0) {
-    d_print(msg);
-  }
-  lives_free(msg);
 
   old_frames = sfile->frames;
 
   if (old_fps) {
     // must set these before calling reorder
-    sfile->start = (int)((sfile->start - 1.) / old_fps * mainw->fx1_val + 1.);
-    if ((sfile->end = (int)((sfile->end * mainw->fx1_val) / old_fps + .49999)) < sfile->start) sfile->end = sfile->start;
+    sfile->start = (int)((sfile->start - 1.) / old_fps * target_fps + 1.);
+    if ((sfile->end = (int)((sfile->end * target_fps) / old_fps + .49999)) < sfile->start)
+      sfile->end = sfile->start;
   }
 
   sfile->undo_action = UNDO_RESAMPLE;
   mainw->cancelled = CANCEL_NONE;
 
   // REORDER
-  // this calls reorder_frames, which sets event_list_back==event_list, and clears event_list
+  // this calls reorder_frames, which sets event_list_back = event_list, and clears event_list
   on_reorder_activate(clipno, reorder_width, reorder_height);
   if (mainw->cancelled == CANCEL_NO_PROPOGATE) mainw->cancelled = CANCEL_NONE;
 
@@ -1511,7 +1501,7 @@ void on_resample_vid_ok(LiVESButton * button, livespointer pclipno) {
     sfile->start = ostart;
     sfile->end = oend;
 
-    if (clipno == mainw->current_file) {
+    if (clipno == mainw->current_file && clipno > 0) {
       showclipimgs();
       sensitize();
     }
@@ -1528,10 +1518,10 @@ void on_resample_vid_ok(LiVESButton * button, livespointer pclipno) {
   sfile->event_list_back = real_back_list;
 
   sfile->ratio_fps = ratio_fps;
-  sfile->pb_fps = sfile->fps = mainw->fx1_val;
+  sfile->pb_fps = sfile->fps = target_fps;
   sfile->old_frames = old_frames;
 
-  if (clipno == mainw->current_file && old_fps) set_undoable(_("Resample"), TRUE);
+  if (clipno == mainw->current_file && old_fps && clipno > 0) set_undoable(_("Resample"), TRUE);
 
   if (sfile->clip_type == CLIP_TYPE_FILE && sfile->ext_src) {
     lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
@@ -1545,7 +1535,7 @@ void on_resample_vid_ok(LiVESButton * button, livespointer pclipno) {
 
   if (bad_header) do_header_write_error(clipno);
 
-  if (clipno == mainw->current_file) switch_clip(1, mainw->current_file, TRUE);
+  if (clipno == mainw->current_file && clipno > 0) switch_clip(1, mainw->current_file, TRUE);
 }
 
 
@@ -2213,7 +2203,9 @@ frames_t reorder_frames(int clipno, int rwidth, int rheight) {
   sfile->frames = 0;
 
   sfile->progress_start = 1;
-  sfile->progress_end = save_event_frames(); // we convert sfile->event_list to a block and save it
+
+  // create event.frames file from sfile->event_list
+  sfile->progress_end = save_event_frames(clipno); // we convert sfile->event_list to a block and save it
 
   if (sfile->progress_end == -1) return -cur_frames; // save_event_frames failed
 
@@ -2229,13 +2221,19 @@ frames_t reorder_frames(int clipno, int rwidth, int rheight) {
   lives_rm(sfile->info_file);
   mainw->error = FALSE;
   lives_system(com, FALSE);
-  if (THREADVAR(com_failed)) return -cur_frames;
+  lives_free(com);
+
+  if (THREADVAR(com_failed)) {
+    clear_event_frames(clipno);
+    return -cur_frames;
+  }
 
   if (sfile->undo_action == UNDO_RESAMPLE) {
     if (clipno > 0) {
       sfile->nopreview = sfile->nokeep = TRUE;
       if (!do_progress_dialog(TRUE, TRUE, _("Resampling video"))) {
         sfile->nopreview = sfile->nokeep = FALSE;
+        clear_event_frames(clipno);
         return cur_frames;
       }
       sfile->nopreview = sfile->nokeep = FALSE;
@@ -2246,11 +2244,13 @@ frames_t reorder_frames(int clipno, int rwidth, int rheight) {
     sfile->nopreview = sfile->nokeep = TRUE;
     if (!do_progress_dialog(TRUE, TRUE, _("Reordering frames"))) {
       sfile->nopreview = sfile->nokeep = FALSE;
+      clear_event_frames(clipno);
       return cur_frames;
     }
     sfile->nopreview = sfile->nokeep = FALSE;
   }
-  lives_free(com);
+
+  clear_event_frames(clipno);
 
   if (mainw->error) {
     widget_opts.non_modal = TRUE;

@@ -2882,6 +2882,7 @@ if (1) {
 
 	    $newframe = -1;
 	    $event_file = "$curworkdir/event.frames";
+
 	    $resize_ext = ".tmp";
 	    &smog_chdir($curworkdir);
 
@@ -2920,7 +2921,7 @@ if (1) {
 			    $to = &mkname($count);
 
 			    if ($newwidth > 0 && $newheight > 0) {
-				&resize_frame($from,$newwidth,$newheight);
+				&resize_frame($from, $newwidth, $newheight);
 				if ($panic) {
 				    if ($letterbox) {
 					&try_to_recover($start,$i-1);
@@ -2930,7 +2931,7 @@ if (1) {
 				    exit 1;
 				}
 
-				$smerr=rename "$curworkdir/$from$resize_ext","$curworkdir/$to.mgk";
+				$smerr = rename "$curworkdir/$from$resize_ext", "$curworkdir/$to.mgk";
 				if (!$smerr) {
 				    if ($letterbox) {
 					&try_to_recover($start,$i);
@@ -5013,7 +5014,7 @@ sub mv_mgk {
 		    unlink "$curworkdir/$name$img_ext";
 		}
 		else {
-		    $smres = &smog_rename("$curworkdir/$name$img_ext", "$curworkdir/$name.baky");
+		    $smres = &smog_rename("$curworkdir/$name$img_ext", "$curworkdir/$name.bak");
 		    if (!$smres) {
 			&try_to_recover($start, $i - 1);
 			if ($DEBUG_SMOGRIFY) {
@@ -8107,16 +8108,16 @@ sub getint {
     # get an int from a file in $endian format
     my $string = shift;
     my (@val) = unpack("CCCC", $string); #unpack $string to 4 chars in @val array
-
-    # TODO - this needs checking !
+    my $rval;
 
     if (!defined($endian) || $endian == 1) {
 	#little endian
-	return ((($val[3] * 256 + $val[2]) * 256 + $val[1]) * 256) + $val[0];
+	$rval = ((($val[3] * 256 + $val[2]) * 256 + $val[1]) * 256) + $val[0];
     }
     else {
-	return ((($val[0] * 256 + $val[1]) * 256 + $val[2]) * 256) + $val[3];
+	$rval = ((($val[0] * 256 + $val[1]) * 256 + $val[2]) * 256) + $val[3];
     }
+    $rval;
 }
 
 
@@ -8205,7 +8206,7 @@ sub clean_old {
     }
 
     my $use_trash = 0;
-    my @files = glob ("*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip");
+    my @files = glob ("*.mgk [0-9]*[0-9].bak *.pre *.tmp pause audio.* audiodump* audioclip");
     if ($movetotrash) {
 	my $deftrashdir = "$workdir/.$DEFTRASH";
 	if (! -d $deftrashdir) {

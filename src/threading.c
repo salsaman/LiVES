@@ -184,7 +184,7 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
     if (tstate & THRD_STATE_BUSY) {
       // thread MUST unavoidably block; stop the timer (e.g showing a UI)
       // user or other condition may set cancelled
-      if ((cancel = mainw->cancelled)) break;
+      if ((cancel = mainw->cancelled) != CANCEL_NONE) break;
       lives_alarm_reset(alarm_handle, timeout);
     }
   }

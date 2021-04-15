@@ -572,6 +572,9 @@ LiVESWidget *lives_standard_toolbar_new(void);
 LiVESWidget *lives_standard_hscale_new(LiVESAdjustment *);
 LiVESWidget *lives_vscale_new(LiVESAdjustment *);
 
+LiVESWidget *lives_standard_header_bar_new(LiVESWindow *toplevel);
+boolean lives_header_bar_set_title(LiVESHeaderBar *, const char *title);
+
 LiVESWidget *lives_hpaned_new(void);
 LiVESWidget *lives_vpaned_new(void);
 

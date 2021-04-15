@@ -340,6 +340,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_YES, NULL,
                            LIVES_RESPONSE_YES);
+
+    lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_EDGE);
     break;
 
   case LIVES_DIALOG_QUESTION:
@@ -431,6 +433,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   default:
     return NULL;
   }
+
+  gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
 
   if (del_key)
     lives_signal_sync_connect(LIVES_GUI_OBJECT(dialog), LIVES_WIDGET_DESTROY_SIGNAL,
@@ -3198,9 +3202,8 @@ boolean do_jack_no_connect_warn(boolean is_trans) {
     statbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), NULL, _("View Status _Log"),
                  LIVES_RESPONSE_BROWSE);
 
-    if (!is_bad)
-      srvbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_PREFERENCES,
-                  _("Jack _Server Setup"), LIVES_RESPONSE_RESET);
+    srvbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_PREFERENCES,
+                _("Jack _Server Setup"), LIVES_RESPONSE_RESET);
 
     cancbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_QUIT, _("_Exit LiVES"),
                  LIVES_RESPONSE_CANCEL);

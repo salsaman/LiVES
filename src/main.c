@@ -2772,8 +2772,8 @@ static void set_extra_colours(void) {
     tmp = lives_strdup_printf("0 -3px %s inset", colref);
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_CHECKED, "notebook header tabs *", "box-shadow", tmp);
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "menuitem", "box-shadow", tmp);
-    set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "menu menuitem", "box-shadow", "none");
     lives_free(tmp);
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "menu menuitem", "box-shadow", "none");
 
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_ACTIVE, "scrollbar slider", "background-color", colref);
     tmp = lives_strdup_printf("0 0 0 4px %s inset", colref);
@@ -3165,6 +3165,8 @@ boolean set_palette_colours(boolean force_reload) {
   }
 #endif
   /// set global values
+
+  //set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "*", "border-width", "0");
 
   set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "toolbutton *", "background-image", "none");
 
@@ -5435,7 +5437,11 @@ void set_main_title(const char *file, int untitled) {
     title = (_("<No File>"));
   }
 
+#if LIVES_HAS_HEADER_BAR_WIDGET
+  lives_header_bar_set_title(LIVES_HEADER_BAR(mainw->hdrbar), title);
+#else
   lives_window_set_title(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), title);
+#endif
   lives_free(title);
 
   if (!LIVES_IS_PLAYING && mainw->play_window) play_window_set_title();
@@ -8735,8 +8741,9 @@ boolean switch_audio_clip(int new_file, boolean activate) {
 #ifdef ENABLE_JACK
     if (mainw->jackd) {
       if (mainw->jackd->playing_file == new_file ||
-          (IS_VALID_CLIP(mainw->playing_file) && mainw->files[mainw->playing_file]->achans > 0
-           && mainw->jackd->playing_file != mainw->playing_file)) return FALSE;
+          /* (IS_VALID_CLIP(mainw->playing_file) && mainw->files[mainw->playing_file]->achans > 0 */
+          /*  && mainw->jackd->playing_file != mainw->playing_file)) return FALSE; */
+          !(prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) return FALSE;
 
       if (mainw->scratch == SCRATCH_JUMP) {
         mainw->files[new_file]->aseek_pos =
@@ -9050,7 +9057,11 @@ void do_quick_switch(int new_file) {
   mainw->laudio_drawable = cfile->laudio_drawable;
   mainw->raudio_drawable = cfile->raudio_drawable;
 
+  lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), mainw->files[new_file]->pb_fps);
+  lives_spin_button_update(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps));
+  lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
+
   changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(1));
 
   // switch audio clip

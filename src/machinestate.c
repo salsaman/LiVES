@@ -2064,14 +2064,18 @@ LiVESResponseType send_to_trash(const char *item) {
 
 
 static boolean rec_desk_done(livespointer data) {
+  rec_args *recargs = (rec_args *)data;
+  // need to do this, as lpt has a notify value; otherwise it would not be cancellable
+  if (recargs->lpt) {
+    lives_proc_thread_join(recargs->lpt);
+    recargs->lpt = NULL;
+  }
+
   if (lives_get_status() != LIVES_STATUS_IDLE) return TRUE;
   else {
     lives_clip_t *sfile;
-    rec_args *recargs = (rec_args *)data;
+    char *com;
     int current_file = mainw->current_file;
-
-    // need to do this, as lpt has a notify value; otherwise it would not be cancellable
-    lives_proc_thread_join(recargs->lpt);
 
     if (!IS_VALID_CLIP(recargs->clipno)) goto ohnoes2;
     sfile = mainw->files[recargs->clipno];
@@ -2091,8 +2095,10 @@ static boolean rec_desk_done(livespointer data) {
     THREADVAR(intention) = LIVES_INTENTION_RECORD;
 
     on_resample_vid_ok(NULL, NULL);
-
     break_me("done");
+    com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend, cfile->handle);
+    lives_system(com, FALSE);
+    lives_free(com);
     cfile->end = cfile->frames;
     if (cfile->event_list) {
       event_list_free(cfile->event_list);
@@ -2100,7 +2106,6 @@ static boolean rec_desk_done(livespointer data) {
     }
     cfile->pb_fps = cfile->fps;
     switch_clip(1, mainw->current_file, TRUE);
-
 
     lives_widget_set_sensitive(mainw->desk_rec, TRUE);
     lives_free(recargs);
@@ -2124,6 +2129,7 @@ void rec_desk(void *args) {
   // TODO - start disk space monitor
   savethread_priv_t *saveargs = NULL;
   lives_thread_t *saver_thread = NULL;
+  lives_painter_surface_t *csurf = NULL;
   lives_proc_thread_t lpt = THREADVAR(tinfo);
   rec_args *recargs = (rec_args *)args;
   LiVESWidget *win;
@@ -2132,8 +2138,10 @@ void rec_desk(void *args) {
   weed_timecode_t tc;
   weed_layer_t *layer;
   LiVESPixbuf *pixbuf;
+  LiVESXCursor *cursor;
   int clips[1];
   int64_t frames[1];
+  double cx, cy;
   char *imname;
   lives_alarm_t alarm_handle;
 
@@ -2155,24 +2163,29 @@ void rec_desk(void *args) {
   clips[0] = recargs->clipno;
   migrate_from_staging(recargs->clipno);
 
-  saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
-  saveargs->compression = 100 - prefs->ocp;
-
   lives_widget_set_sensitive(mainw->desk_rec, TRUE);
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->delay_time);
   lives_nanosleep_until_nonzero(!lives_alarm_check(alarm_handle) || (lpt && lives_proc_thread_get_cancelled(lpt)));
   lives_alarm_clear(alarm_handle);
 
   if (lpt && lives_proc_thread_get_cancelled(lpt)) goto done;
+  //lives_widget_set_sensitive(mainw->desk_rec, FALSE);
+
+  saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
+  saveargs->compression = 100 - prefs->ocp;
 
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->rec_time);
-  while ((!recargs->rec_time || lives_alarm_check(alarm_handle))
-	 && (!lpt || !lives_proc_thread_get_cancelled(lpt))) {
+
+  while (1) {
     if (saver_thread) {
       lives_thread_join(*saver_thread, NULL);
       if (saveargs->error) break;
     }
     else saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
+
+    if ((recargs->rec_time && !lives_alarm_check(alarm_handle))
+	|| (lpt && lives_proc_thread_get_cancelled(lpt)))
+      break;
 
     tc = lives_get_current_ticks();
     layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
@@ -2180,6 +2193,14 @@ void rec_desk(void *args) {
     if (!pixbuf) break;
 
     if (!pixbuf_to_layer(layer, pixbuf)) lives_widget_object_unref(pixbuf);
+
+    cursor = gdk_window_get_cursor(root);
+    if (cursor) csurf = gdk_cursor_get_surface(cursor, &cx, &cy);
+    else csurf = NULL;
+
+    if (!csurf) g_print("no cursor\n");
+    else g_print("Curs at %f, %f\n", cx, cy);
+
     if (recargs->scale < 1.) {
       if (!resize_layer(layer, (double)w * recargs->scale, (double)h * recargs->scale,
 			LIVES_INTERP_FAST, WEED_PALETTE_END, 0)) {
@@ -2188,10 +2209,10 @@ void rec_desk(void *args) {
       }
     }
 
+    imname = make_image_file_name(sfile, ++frameno, NULL);
+
     frames[0] = frameno;
     sfile->event_list = append_frame_event(sfile->event_list, tc, 1, clips, frames);
-
-    imname = make_image_file_name(sfile, ++frameno, NULL);
 
     if (saveargs->layer) weed_layer_free(saveargs->layer);
     saveargs->layer = layer;
@@ -2205,10 +2226,7 @@ void rec_desk(void *args) {
   }
   lives_alarm_clear(alarm_handle);
 
-  if (saver_thread) {
-    lives_thread_join(*saver_thread, NULL);
-    lives_free(saver_thread);
-  }
+  if (saver_thread) lives_free(saver_thread);
 
   if (saveargs) {
     if (saveargs->layer) weed_layer_free(saveargs->layer);
@@ -2667,7 +2685,7 @@ boolean notify_user(const char *detail) {
   if (check_for_executable(&capable->has_notify_send, EXEC_NOTIFY_SEND)) {
     char *msg = lives_strdup_printf("\n\n%s-%s says '%s completed\n\n'",
 				    lives_get_application_name(), LiVES_VERSION, detail);
-    char *cmd = lives_strdup_printf("%s %s", EXEC_NOTIFY_SEND, msg);
+    char *cmd = lives_strdup_printf("%s \"%s\"", EXEC_NOTIFY_SEND, msg);
     boolean ret = mini_run(cmd);
     lives_free(msg);
     if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;

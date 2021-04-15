@@ -553,6 +553,8 @@ enum {
 #define LIVES_FEATURE_URL "https://sourceforge.net/p/lives/feature-requests/"
 #define LIVES_TRANSLATE_URL "https://translations.launchpad.net/lives/trunk"
 
+#define LIVES_LITERAL "lives"
+
 // file names
 #define DLL_NAME "so"
 
@@ -579,8 +581,8 @@ enum {
 #define LIVES_THEME_NONE "none"
 #define LIVES_THEME_CAMERA "camera"
 
-#define LIVES_CLIP_HEADER HEADER_LITERAL ".lives"
-#define LIVES_ACLIP_HEADER AHEADER_LITERAL ".lives"
+#define LIVES_CLIP_HEADER HEADER_LITERAL "." LIVES_LITERAL
+#define LIVES_ACLIP_HEADER AHEADER_LITERAL "." LIVES_LITERAL
 
 #define LIVES_CLIP_HEADER_OLD HEADER_LITERAL
 #define LIVES_CLIP_HEADER_OLD2 LIVES_CLIP_HEADER_OLD "2"
@@ -618,7 +620,7 @@ enum {
 
 // directory / subdir names
 #define LIVES_SHARE_DIR "share"
-#define LIVES_DIR_LITERAL "lives"
+#define LIVES_DIR_LITERAL LIVES_LITERAL
 #define LIVES_DEVICE_DIR "dev"
 #define LIVES_RUN_DIR "run"
 #define LIVES_SHM_DIR "shm"
@@ -631,7 +633,7 @@ enum {
 
 #define DEF_PREFIX_DIR LIVES_USR_DIR
 
-#define LIVES_DEVNULL LIVES_DEVICE_DIR LIVES_DIR_SEP "null"
+#define LIVES_DEVNULL LIVES_DIR_SEP LIVES_DEVICE_DIR LIVES_DIR_SEP "null"
 
 // system-wide defaults in prefs->lib_dir
 #define PLUGIN_EXEC_DIR LIVES_DIR_LITERAL LIVES_DIR_SEP PLUGINS_LITERAL
@@ -1178,6 +1180,7 @@ typedef struct {
 
   /// WIDGETS
   LiVESWidget *LiVES; ///< toplevel window
+  LiVESWidget *hdrbar;
   LiVESWidget *frame1;
   LiVESWidget *frame2;
   LiVESWidget *freventbox0;

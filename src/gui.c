@@ -433,6 +433,9 @@ void create_LiVES(void) {
   if (!LIVES_MAIN_WINDOW_WIDGET) {
     new_lives = TRUE;
     LIVES_MAIN_WINDOW_WIDGET = lives_window_new(LIVES_WINDOW_TOPLEVEL);
+#if LIVES_HAS_HEADER_BAR_WIDGET
+    mainw->hdrbar = lives_standard_header_bar_new(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+#endif
     lives_container_set_border_width(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), 0);
     lives_window_set_monitor(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), widget_opts.monitor);
     lives_widget_add_events(LIVES_MAIN_WINDOW_WIDGET, LIVES_KEY_PRESS_MASK | LIVES_KEY_RELEASE_MASK);
@@ -483,7 +486,9 @@ void create_LiVES(void) {
   lives_widget_object_ref(mainw->layout_textbuffer);
   mainw->affected_layouts_map = NULL;
 
+#if !LIVES_HAS_HEADER_BAR_WIDGET
   lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+#endif
 
   if (new_lives) {
 #ifdef GUI_GTK
@@ -567,7 +572,8 @@ void create_LiVES(void) {
   }
 
   mainw->menubar = lives_menu_bar_new();
-  lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
+  //lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
+  gtk_header_bar_pack_start(LIVES_HEADER_BAR(mainw->hdrbar), mainw->menubar);
 
   menuitem = lives_standard_menu_item_new_with_label(_("_File"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
@@ -3558,8 +3564,6 @@ void fullscreen_internal(void) {
     lives_frame_set_label(LIVES_FRAME(mainw->playframe), NULL);
 
     if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
-
-    //lives_widget_context_update();
 
     if (prefs->open_maximised) {
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));

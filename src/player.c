@@ -2234,6 +2234,9 @@ const char *get_cache_stats(void) {
   return buff;
 }
 
+#ifdef RT_AUDIO
+#define ADJUST_AUDIO_RATE
+#endif
 
 int process_one(boolean visible) {
   // INTERNAL PLAYER
@@ -2257,7 +2260,7 @@ int process_one(boolean visible) {
   int delta = 0;
 #endif
   int aplay_file = 0;
-#ifdef RT_AUDIO
+#ifdef ADJUST_AUDIO_RATE
   double audio_stretch = 1.0;
   ticks_t audio_ticks = 0;
 #endif
@@ -2318,7 +2321,6 @@ int process_one(boolean visible) {
 
   mainw->audio_stretch = 1.0;
 
-  //#define ADJUST_AUDIO_RATE
 #ifdef ADJUST_AUDIO_RATE
   // adjust audio rate slightly if we are behind or ahead
   // shouldn't need this since normally we sync video to soundcard

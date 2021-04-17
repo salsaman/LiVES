@@ -9188,9 +9188,6 @@ static void lives_widget_show_all_cb(LiVESWidget * other, livespointer user_data
         lives_widget_set_no_show_all(other, FALSE);
       }
     }
-    /* if (!lives_widget_is_visible(widget)) { */
-    /*   lives_widget_show_all(widget); */
-    /* } */
     if (!lives_widget_is_visible(other)) {
       lives_widget_show_all(other);
     }
@@ -9373,6 +9370,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
   if (tooltip) img_tips = lives_widget_set_tooltip_text(checkbutton, tooltip);
 
   if (box) {
+    LiVESWidget *layout;
     int packing_width = 0;
 
     if (labeltext) {
@@ -9391,6 +9389,15 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 
     if (expand) add_fill_to_box(LIVES_BOX(hbox));
 
+    layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box),
+             WH_LAYOUT_KEY);
+
+    if (LIVES_SHOULD_EXPAND_WIDTH) {
+      if (layout) {
+        int nadded = GET_INT_DATA(layout, WADDED_KEY);
+        if (nadded > 0) lives_widget_set_margin_left(checkbutton, widget_opts.packing_width);
+      }
+    }
     lives_box_pack_start(LIVES_BOX(hbox), checkbutton, expand, expand,
                          !eventbox ? packing_width : 0);
 
@@ -9495,15 +9502,6 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox * bo
       set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_NORMAL, "button",
                            "background-color", colref);
       lives_free(colref);
-
-      /* if (prefs->extra_colours && mainw->pretty_colours) { */
-      /*   colref = gdk_rgba_to_string(&palette->nice3); */
-      /*   set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_CHECKED, "button", */
-      /*                        "color", colref); */
-      /*   set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_CHECKED, "button", */
-      /*                        "background-color", colref); */
-      /*   lives_free(colref); */
-      /* } */
 
       set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_NORMAL, "",
                            "transition-duration", "0.2s");
@@ -9767,7 +9765,8 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
     int packing_width = 0;
 
     if (layout) {
-      if (GET_INT_DATA(layout, WADDED_KEY) <= 1) layout = NULL;
+      int nadded = GET_INT_DATA(layout, WADDED_KEY);
+      if (nadded <= 1) layout = NULL;
     }
 
     if (labeltext) {
@@ -10365,7 +10364,6 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   if (LIVES_SHOULD_EXPAND_HEIGHT) lives_widget_set_vexpand(dialog, TRUE);
 
   if (widget_opts.apply_theme) {
-    set_standard_widget(dialog, TRUE);
     lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
     funkify_dialog(dialog);
 #if GTK_CHECK_VERSION(2, 18, 0)
@@ -11782,7 +11780,20 @@ static void _toggle_if_condmet(LiVESWidget * tbut, livespointer widget, boolean 
   else if (!strcmp(type, "visi")) {
     if (cond) lives_widget_show(LIVES_WIDGET(widget));
     else lives_widget_hide(LIVES_WIDGET(widget));
+  } else if (!strcmp(type, "show_warn")) {
+    if (cond) show_warn_image(LIVES_WIDGET(widget), NULL);
+    else hide_warn_image(LIVES_WIDGET(widget));
   }
+}
+
+static void toggle_show_warn_img(LiVESWidget * tbut, livespointer widget) {
+  if (LIVES_IS_TOGGLE_BUTTON(tbut))
+    _toggle_if_condmet(tbut, widget, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tbut)), "show_warn");
+}
+
+static void toggle_hide_warn_img(LiVESWidget * tbut, livespointer widget) {
+  if (LIVES_IS_TOGGLE_BUTTON(tbut))
+    _toggle_if_condmet(tbut, widget, !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tbut)), "show_warn");
 }
 
 static void toggle_set_sensitive(LiVESWidget * tbut, livespointer widget) {
@@ -11857,6 +11868,53 @@ static void toggle_set_inactive(LiVESWidget * tbut, livespointer widget) {
 
 // togglebutton functions
 
+boolean toggle_shows_warn_cond(LiVESWidget * tb, LiVESWidget * widget,
+                               condfuncptr_t condshow_f, void *condshow_data,
+                               condfuncptr_t condhide_f, void *condhide_data,
+                               boolean invert) {
+  if (condshow_f || condhide_f) {
+    weed_plant_t *cond_plant =
+      lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY);
+    if (!cond_plant) {
+      cond_plant = lives_plant_new(LIVES_WEED_SUBTYPE_BAG_OF_HOLDING);
+      lives_widget_object_set_data_plantptr(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY,
+                                            cond_plant);
+    }
+    if (condshow_f) {
+      /// set sensitive only if *condsens > 0
+      char *keyvalf = lives_strdup_printf("%p_shwarn_cond_f", widget);
+      char *keyvald = lives_strdup_printf("%p_shwarn_cond_data", widget);
+      weed_set_funcptr_value(cond_plant, keyvalf, (weed_funcptr_t)condshow_f);
+      weed_set_voidptr_value(cond_plant, keyvald, condshow_data);
+      lives_free(keyvalf);
+      lives_free(keyvald);
+    }
+    if (condhide_f) {
+      /// set sensitive only if *condsens > 0
+      char *keyvalf = lives_strdup_printf("%p_inshwarn_cond_f", widget);
+      char *keyvald = lives_strdup_printf("%p_inshwarn_cond_data", widget);
+      weed_set_funcptr_value(cond_plant, keyvalf, (weed_funcptr_t)condhide_f);
+      weed_set_voidptr_value(cond_plant, keyvald, condhide_data);
+      lives_free(keyvalf);
+      lives_free(keyvald);
+    }
+  }
+
+  if (!invert) {
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(toggle_show_warn_img),
+                                    (livespointer)widget);
+    toggle_show_warn_img(LIVES_WIDGET(tb), (livespointer)widget);
+  } else {
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(toggle_hide_warn_img),
+                                    (livespointer)widget);
+    toggle_hide_warn_img(tb, (livespointer)widget);
+  }
+  return TRUE;
+}
+
+
 boolean toggle_sets_sensitive_cond(LiVESWidget * tb, LiVESWidget * widget,
                                    condfuncptr_t condsens_f, void *condsens_data,
                                    condfuncptr_t condinsens_f, void *condinsens_data,
@@ -11893,7 +11951,7 @@ boolean toggle_sets_sensitive_cond(LiVESWidget * tb, LiVESWidget * widget,
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
                                     LIVES_GUI_CALLBACK(toggle_set_sensitive),
                                     (livespointer)widget);
-    toggle_set_sensitive(LIVES_WIDGET(tb), (livespointer)widget);
+    toggle_set_sensitive(tb, (livespointer)widget);
   } else {
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
                                     LIVES_GUI_CALLBACK(toggle_set_insensitive),
@@ -11902,6 +11960,7 @@ boolean toggle_sets_sensitive_cond(LiVESWidget * tb, LiVESWidget * widget,
   }
   return TRUE;
 }
+
 
 boolean toggle_sets_visible_cond(LiVESWidget * tb, LiVESWidget * widget,
                                  condfuncptr_t condvisi_f, void *condvisi_data,
@@ -11939,7 +11998,7 @@ boolean toggle_sets_visible_cond(LiVESWidget * tb, LiVESWidget * widget,
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
                                     LIVES_GUI_CALLBACK(toggle_set_visible),
                                     (livespointer)widget);
-    toggle_set_visible(LIVES_WIDGET(tb), (livespointer)widget);
+    toggle_set_visible(tb, (livespointer)widget);
   } else {
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
                                     LIVES_GUI_CALLBACK(toggle_set_invisible),
@@ -11985,7 +12044,7 @@ boolean toggle_sets_active_cond(LiVESWidget * tb, LiVESWidget * widget,
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
                                     LIVES_GUI_CALLBACK(toggle_set_active),
                                     (livespointer)widget);
-    toggle_set_active(LIVES_WIDGET(tb), (livespointer)widget);
+    toggle_set_active(tb, (livespointer)widget);
   } else {
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
                                     LIVES_GUI_CALLBACK(toggle_set_inactive),
@@ -11995,6 +12054,10 @@ boolean toggle_sets_active_cond(LiVESWidget * tb, LiVESWidget * widget,
   return TRUE;
 }
 
+WIDGET_HELPER_GLOBAL_INLINE boolean toggle_shows_warn_img(LiVESToggleButton * tb, LiVESWidget * widget,
+    boolean invert) {
+  return toggle_shows_warn_cond(LIVES_WIDGET(tb), widget, NULL, NULL, NULL, NULL, invert);
+}
 WIDGET_HELPER_GLOBAL_INLINE boolean toggle_sets_sensitive(LiVESToggleButton * tb, LiVESWidget * widget,
     boolean invert) {
   return toggle_sets_sensitive_cond(LIVES_WIDGET(tb), widget, NULL, NULL, NULL, NULL, invert);
@@ -12803,18 +12866,15 @@ boolean draw_cool_toggle(LiVESWidget * widget, lives_painter_t *cr, livespointer
 
   // draw rounded rctangle
   lives_painter_rectangle(cr, 0, rwidth / 4,
-                          rwidth,
-                          rheight - rwidth / 2);
+                          rwidth, rheight - rwidth / 2);
   lives_painter_fill(cr);
 
   lives_painter_rectangle(cr, rwidth / 4, 0,
-                          rwidth / 2,
-                          rwidth / 4);
+                          rwidth / 2, rwidth / 4);
   lives_painter_fill(cr);
 
   lives_painter_rectangle(cr, rwidth / 4, rheight - rwidth / 4,
-                          rwidth / 2,
-                          rwidth / 4);
+                          rwidth / 2, rwidth / 4);
   lives_painter_fill(cr);
   //#endif
 
@@ -12899,11 +12959,13 @@ boolean draw_cool_toggle(LiVESWidget * widget, lives_painter_t *cr, livespointer
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_get_inner_size(LiVESWindow * win, int *x, int *y) {
   // get size request for child to fill window "win" (assuming win is maximised and moved maximum top / left)
+  // function may not work in all circumstances
 #ifdef GUI_GTK
   GdkRectangle rect;
   gint wx, wy;
   gdk_window_get_frame_extents(lives_widget_get_xwindow(LIVES_WIDGET(win)), &rect);
-  gdk_window_get_origin(lives_widget_get_xwindow(LIVES_WIDGET(win)), &wx, &wy);
+  //gdk_window_get_origin(lives_widget_get_xwindow(LIVES_WIDGET(win)), &wx, &wy);
+  get_border_size(LIVES_WIDGET(win), &wx, &wy);
   if (x) *x = mainw->mgeom[widget_opts.monitor].width - (wx - rect.x) * 2;
   if (y) *y = mainw->mgeom[widget_opts.monitor].height;
   return TRUE;
@@ -12913,9 +12975,29 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_get_inner_size(LiVESWindow * wi
 
 
 boolean get_border_size(LiVESWidget * win, int *bx, int *by) {
+  static int px = 10000000, py = 10000000;
 #ifdef GUI_GTK
   if (win == LIVES_MAIN_WINDOW_WIDGET) {
     int eww, ewh;
+    if (mainw->hdrbar && lives_widget_is_realized(mainw->hdrbar)) {
+      GdkWindow *xwin = lives_widget_get_xwindow(win);
+      int xx, yy, xpx, xpy;
+      //gtk_window_move(win, 0, 0);
+      // this works somewhat, if the desktop is displaying a panel for example
+      gdk_window_get_root_origin(xwin, &xx, &yy);
+      if (xx > 0 || yy > 0) {
+        xpx = -xx;
+        xpy = -yy;
+      } else {
+        xpx = lives_widget_get_allocation_x(mainw->hdrbar) - xx;
+        xpy = lives_widget_get_allocation_y(mainw->hdrbar) - yy;
+      }
+      if (xpx < px) px = xpx;
+      if (xpy < py) py = xpy;
+      if (bx) *bx = px;
+      if (by) *by = py;
+      return TRUE;
+    }
     if (get_screen_usable_size(&eww, &ewh)) {
       if (bx) *bx = mainw->mgeom[widget_opts.monitor].phys_width - eww;
       if (by) *by = mainw->mgeom[widget_opts.monitor].phys_height - ewh;
@@ -12928,11 +13010,9 @@ boolean get_border_size(LiVESWidget * win, int *bx, int *by) {
   } else {
     GdkRectangle rect;
     GdkWindow *xwin = lives_widget_get_xwindow(win);
-    int gww, gwh;
     if (!xwin) return FALSE;
 
     gdk_window_get_frame_extents(lives_widget_get_xwindow(win), &rect);
-    gdk_window_get_origin(xwin, &gww, &gwh);
 
     if (bx) {
       *bx = rect.width - lives_widget_get_allocation_width(win);

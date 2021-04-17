@@ -434,8 +434,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     return NULL;
   }
 
-  gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
-
   if (del_key)
     lives_signal_sync_connect(LIVES_GUI_OBJECT(dialog), LIVES_WIDGET_DESTROY_SIGNAL,
                               LIVES_GUI_CALLBACK(del_event_cb), LIVES_INT_TO_POINTER(del_key));
@@ -522,6 +520,10 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
   if (!transient) {
     pop_to_front(dialog, NULL);
+  } else {
+    gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
+    lives_widget_show_all(dialog);
+    gdk_window_show_unraised(lives_widget_get_xwindow(dialog));
   }
 
   if (cb_key) extra_cb(dialog, cb_key);

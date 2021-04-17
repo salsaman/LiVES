@@ -7,6 +7,11 @@
 #ifndef HAS_LIVES_AUDIO_H
 #define HAS_LIVES_AUDIO_H
 
+#define AUD_SRC_EXTERNAL (prefs->audio_src == AUDIO_SRC_EXT)
+#define AUD_SRC_INTERNAL (prefs->audio_src == AUDIO_SRC_INT)
+#define AUD_SRC_REALTIME (get_play_clipno() != -1)
+#define AV_CLIPS_EQUAL (get_aplay_clipno() == mainw->playing_file)
+
 #define SAMPLE_MAX_16BIT_P  32767.4999999f
 #define SAMPLE_MAX_16BIT_N  32768.0f
 #define SAMPLE_MAX_16BITI  32768
@@ -222,9 +227,12 @@ void pulse_rec_audio_end(boolean close_fd);
 void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, boolean exact);
 void wake_audio_thread(void);
 
-boolean av_clips_equal(void);
+int get_aplay_clipno(void);
+
 boolean resync_audio(int clipno, double frameno);
 void avsync_force(void);
+
+void freeze_unfreeze_audio(boolean is_frozen);
 
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event,
     weed_timecode_t fill_tc, int what_to_get, boolean exact);

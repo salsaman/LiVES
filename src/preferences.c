@@ -1042,10 +1042,10 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->recent_check), newval);
   }
 
-  if (!lives_strcmp(prefidx, PREF_MSG_PBDIS)) {
-    if (prefs->msgs_pbdis == newval) goto fail2;
-    prefs->msgs_pbdis = newval;
-    if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_pbdis), newval);
+  if (!lives_strcmp(prefidx, PREF_MSG_NOPBDIS)) {
+    if (prefs->msgs_nopbdis == newval) goto fail2;
+    prefs->msgs_nopbdis = newval;
+    if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_nopbdis), newval);
     goto success2;
   }
 
@@ -1542,6 +1542,18 @@ boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->resync_aclip),
                                        (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP) ? TRUE : FALSE);
       }
+      if (bitfield == AUDIO_OPTS_LOCKED_FREEZE) {
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->afreeze_lock),
+                                       (prefs->audio_opts & AUDIO_OPTS_LOCKED_FREEZE) ? TRUE : FALSE);
+      }
+      if (bitfield == AUDIO_OPTS_LOCKED_PING_PONG) {
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->afreeze_ping),
+                                       (prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG) ? TRUE : FALSE);
+      }
+      if (bitfield == AUDIO_OPTS_LOCKED_RESYNC) {
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->afreeze_sync),
+                                       (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC) ? TRUE : FALSE);
+      }
     }
     goto success6;
   }
@@ -1723,7 +1735,7 @@ boolean apply_prefs(boolean skip_warn) {
   int max_msgs = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->nmessages_spin));
   const char *msgtextsize = lives_combo_get_active_text(LIVES_COMBO(prefsw->msg_textsize_combo));
   boolean msgs_unlimited = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_unlimited));
-  boolean msgs_pbdis = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_pbdis));
+  boolean msgs_nopbdis = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_nopbdis));
   boolean msgs_mbdis = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_mbdis));
 
   uint64_t ds_warn_level = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_ds)) * 1000000;
@@ -1893,10 +1905,15 @@ boolean apply_prefs(boolean skip_warn) {
   boolean resync_vpos = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->resync_vpos));
   boolean resync_adir = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->resync_adir));
   boolean resync_aclip = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->resync_aclip));
+  boolean freeze_lock = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->afreeze_lock));
+  boolean freeze_ping = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->afreeze_ping));
+  boolean freeze_resync = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->afreeze_sync));
   uint32_t audio_opts = (AUDIO_OPTS_FOLLOW_FPS * audio_follow_fps
                          + AUDIO_OPTS_FOLLOW_CLIPS * audio_follow_clips
                          + AUDIO_OPTS_NO_RESYNC_FPS * !(resync_fps) + AUDIO_OPTS_NO_RESYNC_VPOS * !(resync_vpos)
-                         + AUDIO_OPTS_RESYNC_ADIR * resync_adir + AUDIO_OPTS_RESYNC_ACLIP * resync_aclip);
+                         + AUDIO_OPTS_RESYNC_ADIR * resync_adir + AUDIO_OPTS_RESYNC_ACLIP * resync_aclip
+                         + AUDIO_OPTS_LOCKED_FREEZE * freeze_lock + AUDIO_OPTS_LOCKED_PING_PONG * freeze_ping
+                         + AUDIO_OPTS_LOCKED_RESYNC * freeze_resync);
 #endif
 
 #ifdef ENABLE_OSC
@@ -2107,7 +2124,7 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   pref_factory_bool(PREF_SHOW_MSGS, msgs_mbdis, TRUE);
-  pref_factory_bool(PREF_MSG_PBDIS, msgs_pbdis, TRUE);
+  pref_factory_bool(PREF_MSG_NOPBDIS, msgs_nopbdis, TRUE);
   pref_factory_bool(PREF_MSG_START, show_msgstart, TRUE);
   pref_factory_bool(PREF_SHOW_QUOTA, show_quota, TRUE);
   pref_factory_bool(PREF_AUTOCLEAN_TRASH, autoclean, TRUE);
@@ -4140,10 +4157,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-  prefsw->msgs_pbdis = lives_standard_check_button_new(_("_Pause message output during playback"),
-                       prefs->msgs_pbdis, LIVES_BOX(hbox), H_("Setting this can improve performance "
-                           "of the player engine during playback"));
-  ACTIVE(msgs_pbdis, TOGGLED);
+  prefsw->msgs_nopbdis = lives_standard_check_button_new(_("_Pause message output during playback"),
+                         prefs->msgs_nopbdis, LIVES_BOX(hbox), H_("Setting this can improve performance "
+                             "of the player engine during playback"));
+  ACTIVE(msgs_nopbdis, TOGGLED);
 
   textsizes_list = get_textsizes_list();
 
@@ -4161,7 +4178,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   ACTIVE(msg_textsize_combo, CHANGED);
 
-  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_mbdis), prefsw->msgs_pbdis, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_mbdis), prefsw->msgs_nopbdis, FALSE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_mbdis), prefsw->msgs_unlimited, FALSE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_mbdis), prefsw->nmessages_spin, FALSE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_mbdis), prefsw->msg_textsize_combo, FALSE);
@@ -4716,12 +4733,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE,
                                LIVES_BOX(hbox), NULL);
 
-  //hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-
   lives_layout_add_row(LIVES_LAYOUT(layout));
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Resync audio when:"), TRUE);
 
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  hbox = widget_opts.last_container;
 
   prefsw->resync_fps = lives_standard_check_button_new(_("fps is reset"),
                        (prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_FPS) ? FALSE : TRUE,
@@ -4756,14 +4771,47 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                             "resynchronised with video "
                             "whenever the current audio clip changes"));
 
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("(Audio will only be resynchronised if both audio and video "
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("(Audio will only be resynchronised if unlocked and both audio and video "
                          "are playing the identical clip)"), FALSE);
 
-  add_fill_to_box(LIVES_BOX(vbox));
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  prefsw->afreeze_lock = lives_standard_check_button_new(_("Freeze button affects even clip-locked audio"),
+                         (prefs->audio_opts & AUDIO_OPTS_LOCKED_FREEZE) ? TRUE : FALSE,
+                         LIVES_BOX(hbox),
+                         H_("Determines whether activating the freeze button affects audio "
+                            "when the audio is locked "
+                            "to a specific clip.\n\nNOTE: deactivating freeze will always "
+                            "start the locked audio "
+                            "regardless of this setting,\n"
+                            "so for trick play you can lock audio to a video clip whilst it is frozen,\n"
+                            "and then unfreeze both together (either by toggling the freeze button,\n"
+                            "or by switching the video clip)"));
+
+  show_warn_image(prefsw->afreeze_lock,
+                  _("Only active when 'Audio follows video _rate/direction"));
+
+  toggle_shows_warn_img(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_afollow), prefsw->afreeze_lock, TRUE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_afollow), prefsw->afreeze_lock, FALSE);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  prefsw->afreeze_ping = lives_standard_check_button_new(_("Ping pong mode affects even clip-locked audio"),
+                         (prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG) ? TRUE : FALSE,
+                         LIVES_BOX(hbox),
+                         H_("Determines whether ping-pong mode affects audio "
+                            "when the audio is locked to a specific clip.\n"
+                            "If unset then audio direction will remain fixed when looping"));
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->afreeze_sync = lives_standard_check_button_new(_("Resync to current video position when locking / unlocking audio"),
+                         (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC) ? TRUE : FALSE,
+                         LIVES_BOX(hbox), NULL);
 
   add_hsep_to_box(LIVES_BOX(vbox));
-
   add_fill_to_box(LIVES_BOX(vbox));
+
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
   label = lives_standard_label_new(_("Audio Source at start up (clip editor only):"));
@@ -6841,6 +6889,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(resync_vpos, TOGGLED);
   ACTIVE(resync_adir, TOGGLED);
   ACTIVE(resync_aclip, TOGGLED);
+
+  ACTIVE(afreeze_lock, TOGGLED);
+  ACTIVE(afreeze_ping, TOGGLED);
+  ACTIVE(afreeze_sync, TOGGLED);
 
   ACTIVE(rdesk_audio, TOGGLED);
 

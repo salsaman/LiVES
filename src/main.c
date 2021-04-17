@@ -1639,7 +1639,7 @@ static boolean lives_init(_ign_opts *ign_opts) {
   prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, TRUE);
   prefs->btgamma = FALSE;
 
-  prefs->msgs_pbdis = get_boolean_prefd(PREF_MSG_PBDIS, TRUE);
+  prefs->msgs_nopbdis = get_boolean_prefd(PREF_MSG_NOPBDIS, TRUE);
 
   prefs->cb_is_switch = FALSE;
 
@@ -3720,10 +3720,12 @@ boolean lazy_startup_checks(void *data) {
   if (prefs->vj_mode) {
     resize(1.);
     if (prefs->open_maximised) {
-      int bx, by;
-      get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-      if (by > MENU_HIDE_LIM)
-        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+      if (!mainw->hdrbar) {
+        int bx, by;
+        get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+        if (by > MENU_HIDE_LIM)
+          lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+      }
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     }
     return FALSE;
@@ -3816,7 +3818,6 @@ boolean lazy_startup_checks(void *data) {
 boolean resize_message_area(livespointer data) {
   // workaround because the window manager will resize the window asynchronously
   static boolean isfirst = TRUE;
-  int bx, by;
 
   if (data) isfirst = TRUE;
 
@@ -3828,15 +3829,17 @@ boolean resize_message_area(livespointer data) {
 
   if (mainw->idlemax-- == DEF_IDLE_MAX) mainw->msg_area_configed = FALSE;
 
-  get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-
-  if (mainw->idlemax == DEF_IDLE_MAX / 2 && prefs->open_maximised && (by > 0 || bx > 0)) {
-    if (by > MENU_HIDE_LIM)
-      lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
-    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    mainw->assumed_height = mainw->assumed_width = -1;
-    return TRUE;
-  }
+  /* if (mainw->idlemax == DEF_IDLE_MAX / 2 && prefs->open_maximised) { */
+  /*   if (!mainw->hdrbar) { */
+  /*     int bx, by; */
+  /*     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by); */
+  /*     if (by > MENU_HIDE_LIM) */
+  /* 	lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE); */
+  /*   } */
+  /*   lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)); */
+  /*   mainw->assumed_height = mainw->assumed_width = -1; */
+  /*   return TRUE; */
+  /* } */
 
   if (mainw->msg_area_configed) mainw->idlemax = 0;
 
@@ -3851,7 +3854,7 @@ boolean resize_message_area(livespointer data) {
   msg_area_config(mainw->msg_area);
   //#endif
   if (isfirst) {
-    lives_widget_set_vexpand(mainw->msg_area, TRUE);
+    //lives_widget_set_vexpand(mainw->msg_area, TRUE);
     if (prefs->open_maximised && prefs->show_gui) {
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     }
@@ -3978,10 +3981,12 @@ static boolean lives_startup(livespointer data) {
   create_LiVES();
 
   if (prefs->open_maximised && prefs->show_gui) {
-    int bx, by;
-    get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-    if (by > MENU_HIDE_LIM)
-      lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    if (!mainw->hdrbar) {
+      int bx, by;
+      get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+      if (by > MENU_HIDE_LIM)
+        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    }
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
@@ -6055,7 +6060,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   update_rect.height = rheight;
 
   if (!LIVES_IS_XWINDOW(xwin)) return;
-  lives_xwindow_invalidate_rect(lives_widget_get_xwindow(widget), &update_rect, FALSE);
+  lives_xwindow_invalidate_rect(xwin, &update_rect, FALSE);
 }
 
 
@@ -6107,8 +6112,10 @@ void load_start_image(frames_t frame) {
     int scr_height = GUI_SCREEN_HEIGHT;
     int vspace = get_vspace();
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-    if (by > MENU_HIDE_LIM)
-      lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    if (!mainw->hdrbar) {
+      if (by > MENU_HIDE_LIM)
+        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    }
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
     vsize = scr_height - (CE_TIMELINE_VSPACE * 1.01 / sqrt(widget_opts.scale) + vspace + by
                           + (prefs->show_msg_area ? mainw->mbar_res : 0)
@@ -6379,8 +6386,10 @@ void load_end_image(frames_t frame) {
     int scr_height = GUI_SCREEN_HEIGHT;
     int vspace = get_vspace();
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-    if (by > MENU_HIDE_LIM)
-      lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    if (!mainw->hdrbar) {
+      if (by > MENU_HIDE_LIM)
+        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    }
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
     vsize = scr_height - (CE_TIMELINE_VSPACE * 1.01 / sqrt(widget_opts.scale) + vspace + by
                           + (prefs->show_msg_area ? mainw->mbar_res : 0)
@@ -8731,84 +8740,106 @@ void switch_to_file(int old_file, int new_file) {
 
 boolean switch_audio_clip(int new_file, boolean activate) {
   ticks_t timeout;
+  lives_clip_t *sfile;
   lives_alarm_t alarm_handle;
+  int aplay_file;
 
   if (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP) {
     mainw->scratch = SCRATCH_JUMP;
   }
 
+  if (!IS_VALID_CLIP(new_file)) return FALSE;
+
+  if (AUD_SRC_EXTERNAL) return FALSE;
+
+  aplay_file = get_aplay_clipno();
+  sfile = mainw->files[new_file];
+
+  if ((aplay_file == new_file && (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+                                  || !CLIP_HAS_AUDIO(new_file)))
+      || (aplay_file != new_file && !(prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS))) {
+    return FALSE;
+  }
+
+  if (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) {
+    if (!sfile->play_paused) freeze_unfreeze_audio(FALSE);
+    return FALSE;
+  }
+
+  if (new_file == aplay_file) {
+    if (sfile->pb_fps > 0. || (sfile->play_paused && sfile->freeze_fps > 0.))
+      sfile->adirection = LIVES_DIRECTION_FORWARD;
+    else sfile->adirection = LIVES_DIRECTION_REVERSE;
+  }
+
   if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
     if (mainw->jackd) {
-      if (mainw->jackd->playing_file == new_file ||
-          /* (IS_VALID_CLIP(mainw->playing_file) && mainw->files[mainw->playing_file]->achans > 0 */
-          /*  && mainw->jackd->playing_file != mainw->playing_file)) return FALSE; */
-          !(prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) return FALSE;
-
       if (mainw->scratch == SCRATCH_JUMP) {
-        mainw->files[new_file]->aseek_pos =
-          (off_t)((double)mainw->files[new_file]->frameno / mainw->files[new_file]->fps * mainw->files[new_file]->arate)
-          * mainw->files[new_file]->achans * mainw->files[new_file]->asampsize / 8;
+        sfile->aseek_pos =
+          (off_t)((double)sfile->frameno / sfile->fps * sfile->arate)
+          * sfile->achans * sfile->asampsize / 8;
       }
 
       if (!activate) mainw->jackd->in_use = FALSE;
 
-      alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-      while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
-        // wait for seek
-        lives_nanosleep(1000);
-      }
-      lives_alarm_clear(alarm_handle);
-      if (timeout == 0) {
-        mainw->cancelled = handle_audio_timeout();
-        return FALSE;
-      }
-
-      if (mainw->jackd->playing_file > 0) {
-        if (!CLIP_HAS_AUDIO(new_file)) {
-          jack_get_rec_avals(mainw->jackd);
-          mainw->rec_avel = 0.;
-        }
-        jack_message.command = ASERVER_CMD_FILE_CLOSE;
-        jack_message.data = NULL;
-        jack_message.next = NULL;
-        mainw->jackd->msgq = &jack_message;
-
+      if (new_file != aplay_file) {
         alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd)) {
           // wait for seek
           lives_nanosleep(1000);
         }
         lives_alarm_clear(alarm_handle);
-        if (timeout == 0)  {
+        if (timeout == 0) {
           mainw->cancelled = handle_audio_timeout();
           return FALSE;
         }
+
+        if (mainw->jackd->playing_file > 0) {
+          if (!CLIP_HAS_AUDIO(new_file)) {
+            jack_get_rec_avals(mainw->jackd);
+            mainw->rec_avel = 0.;
+          }
+          jack_message.command = ASERVER_CMD_FILE_CLOSE;
+          jack_message.data = NULL;
+          jack_message.next = NULL;
+          mainw->jackd->msgq = &jack_message;
+
+          alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+          while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd)) {
+            // wait for seek
+            lives_nanosleep(1000);
+          }
+          lives_alarm_clear(alarm_handle);
+          if (timeout == 0)  {
+            mainw->cancelled = handle_audio_timeout();
+            return FALSE;
+          }
+        }
       }
     }
+
     if (!IS_VALID_CLIP(new_file)) {
       mainw->jackd->in_use = FALSE;
       return FALSE;
     }
 
     if (CLIP_HAS_AUDIO(new_file)) {
-      int asigned = !(mainw->files[new_file]->signed_endian & AFORM_UNSIGNED);
-      int aendian = !(mainw->files[new_file]->signed_endian & AFORM_BIG_ENDIAN);
-      mainw->jackd->num_input_channels = mainw->files[new_file]->achans;
-      mainw->jackd->bytes_per_channel = mainw->files[new_file]->asampsize / 8;
+      int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
+      int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
+      mainw->jackd->num_input_channels = sfile->achans;
+      mainw->jackd->bytes_per_channel = sfile->asampsize / 8;
       if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-        if (!mainw->files[new_file]->play_paused)
-          mainw->jackd->sample_in_rate = mainw->files[new_file]->arate * mainw->files[new_file]->pb_fps /
-                                         mainw->files[new_file]->fps;
-        else mainw->jackd->sample_in_rate = mainw->files[new_file]->arate * mainw->files[new_file]->freeze_fps /
-                                              mainw->files[new_file]->fps;
-      } else mainw->jackd->sample_in_rate = mainw->files[new_file]->arate;
-      if (mainw->files[new_file]->adirection == LIVES_DIRECTION_REVERSE)
+        if (!sfile->play_paused)
+          mainw->jackd->sample_in_rate = sfile->arate * sfile->pb_fps / sfile->fps;
+        else mainw->jackd->sample_in_rate = sfile->arate * sfile->freeze_fps / sfile->fps;
+      } else mainw->jackd->sample_in_rate = sfile->arate;
+      if (sfile->adirection == LIVES_DIRECTION_REVERSE)
         mainw->jackd->sample_in_rate = -abs(mainw->jackd->sample_in_rate);
       else
         mainw->jackd->sample_in_rate = abs(mainw->jackd->sample_in_rate);
       mainw->jackd->usigned = !asigned;
-      mainw->jackd->seek_end = mainw->files[new_file]->afilesize;
+      mainw->jackd->seek_end = sfile->afilesize;
 
       if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) ||
           (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
@@ -8817,6 +8848,8 @@ boolean switch_audio_clip(int new_file, boolean activate) {
 
       if (mainw->ping_pong) mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
       else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
+
+      if (new_file == aplay_file) return TRUE;
 
       avsync_force();
 
@@ -8828,20 +8861,20 @@ boolean switch_audio_clip(int new_file, boolean activate) {
 
       jack_message2.command = ASERVER_CMD_FILE_SEEK;
       jack_message.next = &jack_message2;
-      jack_message2.data = lives_strdup_printf("%"PRId64, mainw->files[new_file]->aseek_pos);
+      jack_message2.data = lives_strdup_printf("%"PRId64, sfile->aseek_pos);
       if (LIVES_IS_PLAYING && !mainw->preview) jack_message2.tc = lives_get_current_ticks();
       jack_message2.next = NULL;
 
       mainw->jackd->msgq = &jack_message;
       mainw->jackd->in_use = TRUE;
 
-      mainw->jackd->is_paused = mainw->files[new_file]->play_paused;
+      mainw->jackd->is_paused = sfile->play_paused;
       mainw->jackd->is_silent = FALSE;
       mainw->rec_aclip = new_file;
-      mainw->rec_avel = (double)mainw->jackd->sample_in_rate / (double)mainw->files[new_file]->arps;
-      mainw->rec_aseek = fabs((double)(mainw->files[new_file]->aseek_pos
-                                       / (mainw->files[new_file]->achans * mainw->files[new_file]->asampsize / 8))
-                              / (double)mainw->files[new_file]->arps);
+      mainw->rec_avel = (double)mainw->jackd->sample_in_rate / (double)sfile->arps;
+      mainw->rec_aseek = fabs((double)(sfile->aseek_pos
+                                       / (sfile->achans * sfile->asampsize / 8))
+                              / (double)sfile->arps);
     } else {
       mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
     }
@@ -8859,36 +8892,16 @@ boolean switch_audio_clip(int new_file, boolean activate) {
            && mainw->pulsed->playing_file != mainw->playing_file)) return FALSE;
 
       if (mainw->scratch == SCRATCH_JUMP) {
-        mainw->files[new_file]->aseek_pos =
-          (off_t)((double)mainw->files[new_file]->frameno / mainw->files[new_file]->fps * mainw->files[new_file]->arate)
-          * mainw->files[new_file]->achans * mainw->files[new_file]->asampsize / 8;
+        sfile->aseek_pos =
+          (off_t)((double)sfile->frameno / sfile->fps * sfile->arate)
+          * sfile->achans * sfile->asampsize / 8;
       }
 
       if (!activate) mainw->pulsed->in_use = FALSE;
 
-      alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-      while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed)) {
-        // wait for seek
-        lives_nanosleep(1000);
-      }
-      lives_alarm_clear(alarm_handle);
-      if (timeout == 0)  {
-        mainw->cancelled = handle_audio_timeout();
-        return FALSE;
-      }
-
-      if (mainw->pulsed->fd > 0) {
-        if (!CLIP_HAS_AUDIO(new_file)) {
-          pulse_get_rec_avals(mainw->pulsed);
-          mainw->rec_avel = 0.;
-        }
-        pulse_message.command = ASERVER_CMD_FILE_CLOSE;
-        pulse_message.data = NULL;
-        pulse_message.next = NULL;
-        mainw->pulsed->msgq = &pulse_message;
-
+      if (new_file != aplay_file) {
         alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
+        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed)) {
           // wait for seek
           lives_nanosleep(1000);
         }
@@ -8896,6 +8909,28 @@ boolean switch_audio_clip(int new_file, boolean activate) {
         if (timeout == 0)  {
           mainw->cancelled = handle_audio_timeout();
           return FALSE;
+        }
+
+        if (mainw->pulsed->fd > 0) {
+          if (!CLIP_HAS_AUDIO(new_file)) {
+            pulse_get_rec_avals(mainw->pulsed);
+            mainw->rec_avel = 0.;
+          }
+          pulse_message.command = ASERVER_CMD_FILE_CLOSE;
+          pulse_message.data = NULL;
+          pulse_message.next = NULL;
+          mainw->pulsed->msgq = &pulse_message;
+
+          alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+          while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed)) {
+            // wait for seek
+            lives_nanosleep(1000);
+          }
+          lives_alarm_clear(alarm_handle);
+          if (timeout == 0)  {
+            mainw->cancelled = handle_audio_timeout();
+            return FALSE;
+          }
         }
       }
 
@@ -8907,25 +8942,21 @@ boolean switch_audio_clip(int new_file, boolean activate) {
       mainw->pulsed->in_use = TRUE;
 
       if (CLIP_HAS_AUDIO(new_file)) {
-        int asigned = !(mainw->files[new_file]->signed_endian & AFORM_UNSIGNED);
-        int aendian = !(mainw->files[new_file]->signed_endian & AFORM_BIG_ENDIAN);
-        mainw->pulsed->in_achans = mainw->files[new_file]->achans;
-        mainw->pulsed->in_asamps = mainw->files[new_file]->asampsize;
+        int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
+        int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
+        mainw->pulsed->in_achans = sfile->achans;
+        mainw->pulsed->in_asamps = sfile->asampsize;
         if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-          if (!mainw->files[new_file]->play_paused)
-            mainw->pulsed->in_arate = mainw->files[new_file]->arate
-                                      * mainw->files[new_file]->pb_fps /
-                                      mainw->files[new_file]->fps;
-          else mainw->pulsed->in_arate = mainw->files[new_file]->arate
-                                           * mainw->files[new_file]->freeze_fps /
-                                           mainw->files[new_file]->fps;
-        } else mainw->pulsed->in_arate = mainw->files[new_file]->arate;
-        if (mainw->files[new_file]->adirection == LIVES_DIRECTION_REVERSE)
+          if (!sfile->play_paused)
+            mainw->pulsed->in_arate = sfile->arate * sfile->pb_fps / sfile->fps;
+          else mainw->pulsed->in_arate = sfile->arate * sfile->freeze_fps / sfile->fps;
+        } else mainw->pulsed->in_arate = sfile->arate;
+        if (sfile->adirection == LIVES_DIRECTION_REVERSE)
           mainw->pulsed->in_arate = -abs(mainw->pulsed->in_arate);
         else
           mainw->pulsed->in_arate = abs(mainw->pulsed->in_arate);
         mainw->pulsed->usigned = !asigned;
-        mainw->pulsed->seek_end = mainw->files[new_file]->afilesize;
+        mainw->pulsed->seek_end = sfile->afilesize;
 
         if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) ||
             (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
@@ -8934,6 +8965,8 @@ boolean switch_audio_clip(int new_file, boolean activate) {
 
         if (mainw->ping_pong) mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
         else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
+
+        if (new_file == aplay_file) return TRUE;
 
         avsync_force();
 
@@ -8945,17 +8978,17 @@ boolean switch_audio_clip(int new_file, boolean activate) {
         pulse_message2.command = ASERVER_CMD_FILE_SEEK;
         if (LIVES_IS_PLAYING && !mainw->preview) pulse_message2.tc = lives_get_current_ticks();
         pulse_message.next = &pulse_message2;
-        pulse_message2.data = lives_strdup_printf("%"PRId64, mainw->files[new_file]->aseek_pos);
+        pulse_message2.data = lives_strdup_printf("%"PRId64, sfile->aseek_pos);
         pulse_message2.next = NULL;
         mainw->pulsed->msgq = &pulse_message;
         mainw->pulsed->in_use = TRUE;
 
-        mainw->pulsed->is_paused = mainw->files[new_file]->play_paused;
+        mainw->pulsed->is_paused = sfile->play_paused;
         mainw->rec_aclip = new_file;
-        mainw->rec_avel = (double)mainw->pulsed->in_arate / (double)mainw->files[new_file]->arps;
-        mainw->rec_aseek = fabs((double)(mainw->files[new_file]->aseek_pos
-                                         / (mainw->files[new_file]->achans * mainw->files[new_file]->asampsize / 8))
-                                / (double)mainw->files[new_file]->arps);
+        mainw->rec_avel = (double)mainw->pulsed->in_arate / (double)sfile->arps;
+        mainw->rec_aseek = fabs((double)(sfile->aseek_pos
+                                         / (sfile->achans * sfile->asampsize / 8))
+                                / (double)sfile->arps);
       } else {
         mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
       }
@@ -8972,14 +9005,11 @@ boolean switch_audio_clip(int new_file, boolean activate) {
     if (mainw->nullaudio->playing_file == new_file) return FALSE;
     nullaudio_clip_set(new_file);
     if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-      if (!mainw->files[new_file]->play_paused)
-        nullaudio_arate_set(mainw->files[new_file]->arate * mainw->files[new_file]->pb_fps /
-                            mainw->files[new_file]->fps);
-      else nullaudio_arate_set(mainw->files[new_file]->arate
-                                 * mainw->files[new_file]->freeze_fps /
-                                 mainw->files[new_file]->fps);
-    } else nullaudio_arate_set(mainw->files[new_file]->arate);
-    nullaudio_seek_set(mainw->files[new_file]->aseek_pos);
+      if (!sfile->play_paused)
+        nullaudio_arate_set(sfile->arate * sfile->pb_fps / sfile->fps);
+      else nullaudio_arate_set(sfile->arate * sfile->freeze_fps / sfile->fps);
+    } else nullaudio_arate_set(sfile->arate);
+    nullaudio_seek_set(sfile->aseek_pos);
     if (CLIP_HAS_AUDIO(new_file)) {
       nullaudio_get_rec_avals();
     } else {
@@ -9171,8 +9201,10 @@ void resize(double scale) {
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
   bx *= 2;
 
-  if (prefs->open_maximised && by > MENU_HIDE_LIM)
-    lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+  if (!mainw->hdrbar) {
+    if (prefs->open_maximised && by > MENU_HIDE_LIM)
+      lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+  }
 
   w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
   h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
@@ -9186,8 +9218,6 @@ void resize(double scale) {
     lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
   }
-
-  //if (mainw->play_window) return;
 
   hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
   vsize = scr_height - (CE_TIMELINE_VSPACE * 1.01 / sqrt(widget_opts.scale) + vspace + by

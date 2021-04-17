@@ -2220,7 +2220,6 @@ static void post_playback(void) {
                            > GUI_SCREEN_WIDTH))) {
     if (prefs->open_maximised)
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
   }
 
   if (!mainw->preview && (mainw->current_file == -1 || (CURRENT_CLIP_IS_VALID && !cfile->opening))) {
@@ -2507,9 +2506,13 @@ void play_file(void) {
     mainw->record_starting = TRUE;
   }
 
-  if (prefs->show_msg_area && mainw->double_size && !mainw->multitrack) {
+  if (prefs->msgs_nopbdis || (prefs->show_msg_area && mainw->double_size && !mainw->multitrack)) {
     lives_widget_hide(mainw->message_box);
   }
+
+  /* if (prefs->show_msg_area) { */
+  /*   lives_widget_set_size_request(mainw->message_box, -1, MIN_MSGBAR_HEIGHT); */
+  /* } */
 
   if (!(mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
         && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)))
@@ -2580,7 +2583,7 @@ void play_file(void) {
 
     if (!mainw->sep_win && !mainw->foreign) {
       if (mainw->double_size) resize(2.);
-      else resize(1);
+      //else resize(1); // add_to_playframe does this
     }
 
     if (mainw->fs && !mainw->sep_win && cfile->frames > 0) {
@@ -3141,7 +3144,7 @@ void play_file(void) {
     lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_mon), FALSE);
 
   // reset in case audio lock was actioned
-  prefs->audio_opts = future_prefs->audio_opts;
+  prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
 
   // TODO ***: use MIDI output port for this
   if (!mainw->foreign && prefs->midisynch) lives_system(EXEC_MIDISTOP, TRUE);
@@ -3202,7 +3205,7 @@ void play_file(void) {
     if (mainw->sep_win) add_to_playframe();
 
     if (CURRENT_CLIP_HAS_VIDEO) {
-      resize(1.);
+      //resize(1.);
       lives_widget_show_all(mainw->playframe);
       lives_frame_set_label(LIVES_FRAME(mainw->playframe), NULL);
     }
@@ -3212,7 +3215,7 @@ void play_file(void) {
     }
 
     if (prefs->show_msg_area && !mainw->multitrack) {
-      lives_widget_show(mainw->message_box);
+      lives_widget_show_all(mainw->message_box);
       reset_message_area(); ///< necessary
     }
 

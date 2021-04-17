@@ -7090,10 +7090,12 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
   mainw->last_dprint_file = -1;
 
   if (prefs->show_gui && prefs->open_maximised) {
-    int bx, by;
-    get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-    if (by > MENU_HIDE_LIM)
-      lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    if (!mainw->hdrbar) {
+      int bx, by;
+      get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+      if (by > MENU_HIDE_LIM)
+        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    }
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
@@ -8886,10 +8888,12 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   mainw->is_ready = TRUE;
 
   if (prefs->show_gui && prefs->open_maximised) {
-    int bx, by;
-    get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-    if (by > MENU_HIDE_LIM)
-      lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    if (!mainw->hdrbar) {
+      int bx, by;
+      get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+      if (by > MENU_HIDE_LIM)
+        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    }
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
@@ -8925,10 +8929,12 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
   if (prefs->show_gui && prefs->open_maximised) {
-    int bx, by;
-    get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-    if (by > MENU_HIDE_LIM)
-      lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    if (!mainw->hdrbar) {
+      int bx, by;
+      get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+      if (by > MENU_HIDE_LIM)
+        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+    }
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 

@@ -274,7 +274,7 @@ static boolean avsync_check(void) {
 
   if (mainw->foreign || !LIVES_IS_PLAYING || prefs->audio_src == AUDIO_SRC_EXT || prefs->force_system_clock
       || (mainw->event_list && !(mainw->record || mainw->record_paused)) || prefs->audio_player == AUD_PLAYER_NONE
-      || !is_realtime_aplayer(prefs->audio_player)) {
+      || !is_realtime_aplayer(prefs->audio_player) || cfile->play_paused) {
     mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
     return TRUE;
   }
@@ -2032,12 +2032,15 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
             !(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
           // check if audio stopped playback. The audio player will also be checking this, BUT: we have to check here too
           // before doing any resync, otherwise the video can loop and if the audio is then resynced it may never reach the end
-          if (!check_for_audio_stop(fileno, first_frame + 1, last_frame - 1)) {
-            mainw->cancelled = CANCEL_AUD_END;
-            mainw->scratch = SCRATCH_NONE;
-            return 0;
+          if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
+            if (!check_for_audio_stop(fileno, first_frame + 1, last_frame - 1)) {
+              mainw->cancelled = CANCEL_AUD_END;
+              mainw->scratch = SCRATCH_NONE;
+              return 0;
+            }
           }
-          resync_audio(mainw->playing_file, (double)nframe);
+          if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
+            resync_audio(mainw->playing_file, (double)nframe);
         }
         mainw->scratch = SCRATCH_JUMP_NORESYNC;
       }

@@ -1298,6 +1298,7 @@ boolean toggle_sets_visible(LiVESToggleButton *, LiVESWidget *, boolean invert);
 boolean toggle_toolbutton_sets_visible(LiVESToggleToolButton *, LiVESWidget *, boolean invert);
 boolean menu_sets_visible(LiVESCheckMenuItem *, LiVESWidget *,  boolean invert);
 boolean toggle_toggles_var(LiVESToggleButton *, boolean *var, boolean invert);
+boolean toggle_shows_warn_img(LiVESToggleButton *tb, LiVESWidget *widget, boolean invert);
 
 boolean toggle_sets_sensitive_cond(LiVESWidget *tb, LiVESWidget *widget,
                                    condfuncptr_t condsens_f, void *condsens_data,

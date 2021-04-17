@@ -8307,7 +8307,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
             resize(1.);
           } else {
             if (mainw->faded) {
-              lives_widget_set_opacity(mainw->playframe, 0.);
+              //lives_widget_set_opacity(mainw->playframe, 0.);
               //lives_widget_hide(mainw->playframe);
               lives_widget_hide(mainw->frame1);
               lives_widget_hide(mainw->frame2);
@@ -8322,7 +8322,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
                   if (palette->style & STYLE_1) {
                     lives_widget_show(mainw->sep_image);
                   }
-                  if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
+                  if (prefs->show_msg_area && !prefs->msgs_nopbdis) lives_widget_show_all(mainw->message_box);
 		  // *INDENT-OFF*
 		}}}}}
 	// *INDENT-ON*
@@ -10244,7 +10244,10 @@ boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livesp
 /// generic func. to create surfaces
 boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
   lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
+  static boolean no_recurse = FALSE;
   if (mainw->no_configs) return TRUE;
+
+  if (no_recurse) return TRUE;
 
   if (!psurf) return FALSE;
   if (*psurf) lives_painter_surface_destroy(*psurf);
@@ -10268,9 +10271,11 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
     load_end_image(CURRENT_CLIP_IS_VALID ? cfile->end : 0);
   else if (widget == mainw->preview_image)
     load_preview_image(FALSE);
-  else if (widget == mainw->msg_area && !mainw->multitrack)
+  else if (widget == mainw->msg_area && !mainw->multitrack) {
+    no_recurse = TRUE;
     msg_area_config(widget);
-  else if (widget == mainw->dsu_widget)
+    no_recurse = FALSE;
+  } else if (widget == mainw->dsu_widget)
     draw_dsu_widget(widget);
   else if (mainw->multitrack) {
     if (widget == mainw->multitrack->timeline_reg)
@@ -10283,7 +10288,9 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
       //set_mt_play_sizes_cfg(mainw->multitrack);
       //mt_show_current_frame(mainw->multitrack, FALSE);
     } else if (widget == mainw->multitrack->msg_area) {
+      no_recurse = TRUE;
       msg_area_config(widget);
+      no_recurse = FALSE;
     }
   }
   return FALSE;
@@ -10582,7 +10589,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
       lives_sync(3);
     }
     current_file = mainw->current_file;
-    resize(1);
+    //resize(1);
 
     // play the clip
     on_playsel_activate(NULL, LIVES_INT_TO_POINTER(TRUE));
@@ -10744,9 +10751,9 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
     mainw->startticks = mainw->currticks - delta_ticks;
   }
 
-  if (user_data || prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
+  if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) && (user_data || prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
     frames_t frameno = 0;
-    if ((prefs->audio_opts & AUDIO_OPTS_RESYNC_ADIR) && av_clips_equal()) {
+    if ((prefs->audio_opts & AUDIO_OPTS_RESYNC_ADIR) && AV_CLIPS_EQUAL) {
       if ((sfile->pb_fps > 0. && sfile->adirection == LIVES_DIRECTION_REVERSE)
           || (sfile->pb_fps < 0. && sfile->adirection == LIVES_DIRECTION_FORWARD))
         frameno = sfile->frameno;
@@ -11361,46 +11368,9 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
     norecurse = FALSE;
   }
 
-  if (prefs->audio_src == AUDIO_SRC_INT) {
-#ifdef ENABLE_JACK
-    if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK
-        && mainw->jackd->playing_file == mainw->playing_file
-        && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-      mainw->jackd->is_paused = cfile->play_paused;
-      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&
-          !mainw->agen_needs_reinit) {
-        if (cfile->play_paused) {
-          weed_plant_t *event = get_last_frame_event(mainw->event_list);
-          insert_audio_event_at(event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
-        } else {
-          jack_get_rec_avals(mainw->jackd);
-        }
-      }
-      if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
-          && (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER)) {
-        if (cfile->play_paused) jack_pb_stop(mainw->jackd_trans);
-        else jack_pb_start(mainw->jackd_trans, -1.);
-      }
-    }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE
-        && mainw->pulsed->playing_file == mainw->playing_file && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-      if (!cfile->play_paused) mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps;
-      mainw->pulsed->is_paused = cfile->play_paused;
-      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&
-          !mainw->agen_needs_reinit) {
-        if (cfile->play_paused) {
-          if (!mainw->mute) {
-            weed_plant_t *event = get_last_frame_event(mainw->event_list);
-            insert_audio_event_at(event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
-          }
-        } else {
-          pulse_get_rec_avals(mainw->pulsed);
-        }
-      }
-    }
-#endif
+  if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+      || !cfile->play_paused || (prefs->audio_opts & AUDIO_OPTS_LOCKED_FREEZE)) {
+    freeze_unfreeze_audio(cfile->play_paused);
   }
   if (LIVES_IS_PLAYING) mainw->force_show = TRUE;
   return TRUE;
@@ -11431,15 +11401,20 @@ boolean nervous_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint3
 boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                           livespointer statep) {
   boolean state = LIVES_POINTER_TO_INT(statep);
+
   if (!LIVES_IS_PLAYING || !is_realtime_aplayer(prefs->audio_player) || mainw->multitrack
       || mainw->is_rendering || mainw->preview || mainw->agen_key != 0 || mainw->agen_needs_reinit
       || prefs->audio_src == AUDIO_SRC_EXT) return TRUE;
 
 
   // lock OFF
-  if (!state) prefs->audio_opts = future_prefs->audio_opts;
+  if (!state) prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
   switch_audio_clip(mainw->current_file, TRUE);
-  if (state) prefs->audio_opts &= ~(AUDIO_OPTS_FOLLOW_FPS | AUDIO_OPTS_FOLLOW_CLIPS);
+
+  if (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC) resync_audio(mainw->playing_file, mainw->files[mainw->playing_file]->frameno);
+
+  // lock ON
+  if (state) prefs->audio_opts |= AUDIO_OPTS_IS_LOCKED;
   return TRUE;
 }
 

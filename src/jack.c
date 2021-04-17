@@ -2327,7 +2327,9 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
           if (mainw->ping_pong && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
               && ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) || mainw->current_file == jackd->playing_file)
               && (!mainw->event_list || mainw->record || mainw->record_paused)
-              && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
+              && mainw->agen_key == 0 && !mainw->agen_needs_reinit
+              && (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+                  || ((prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG))))
             jackd->loop = AUDIO_LOOP_PINGPONG;
           else jackd->loop = AUDIO_LOOP_FORWARD;
         } else {
@@ -2457,7 +2459,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       }
 
       // playback from memory or file
-      if (CLIP_HAS_AUDIO(jackd->playing_file)) vol = lives_vol_from_linear(future_prefs->volume * afile->vol);
+      if (CLIP_HAS_AUDIO(jackd->playing_file) && !mainw->multitrack)
+        vol = lives_vol_from_linear(future_prefs->volume * afile->vol);
       else vol = lives_vol_from_linear(future_prefs->volume);
 
       if (numFramesToWrite > 0) {
@@ -3616,7 +3619,9 @@ void jack_aud_pb_ready(int fileno) {
     mainw->jackd->is_paused = FALSE;
     mainw->jackd->mute = mainw->mute;
     if ((mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) && !mainw->preview) {
-      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && !mainw->multitrack)
+      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && !mainw->multitrack
+          && (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+              || ((prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG))))
         mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
       else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
     } else mainw->jackd->loop = AUDIO_LOOP_NONE;

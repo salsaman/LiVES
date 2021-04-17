@@ -291,10 +291,15 @@ typedef struct {
   volatile uint32_t audio_opts;
 #define AUDIO_OPTS_FOLLOW_CLIPS		(1 << 0)
 #define AUDIO_OPTS_FOLLOW_FPS		(1 << 1)
-#define AUDIO_OPTS_NO_RESYNC_FPS       	(1 << 2) // on by default
-#define AUDIO_OPTS_NO_RESYNC_VPOS      	(1 << 3) // on by default
-#define AUDIO_OPTS_RESYNC_ADIR       	(1 << 4)
-#define AUDIO_OPTS_RESYNC_ACLIP       	(1 << 5)
+#define AUDIO_OPTS_NO_RESYNC_FPS	(1 << 2) // on by default
+#define AUDIO_OPTS_NO_RESYNC_VPOS	(1 << 3) // on by default
+#define AUDIO_OPTS_RESYNC_ADIR		(1 << 4)
+#define AUDIO_OPTS_RESYNC_ACLIP		(1 << 5)
+
+#define AUDIO_OPTS_IS_LOCKED		(1 << 16)
+#define AUDIO_OPTS_LOCKED_FREEZE	(1 << 17)
+#define AUDIO_OPTS_LOCKED_PING_PONG	(1 << 18)
+#define AUDIO_OPTS_LOCKED_RESYNC	(1 << 19)
 
   boolean event_window_show_frame_events;
   boolean crash_recovery; ///< TRUE==maintain mainw->recovery file
@@ -513,7 +518,7 @@ typedef struct {
   boolean dev_show_timing;
   boolean dev_show_caching;
 
-  boolean msgs_pbdis;
+  boolean msgs_nopbdis;
 
   boolean noframedrop;
 
@@ -749,7 +754,7 @@ typedef struct {
   LiVESWidget *spinbutton_ocp;
   LiVESWidget *nmessages_spin;
   LiVESWidget *msgs_unlimited;
-  LiVESWidget *msgs_pbdis;
+  LiVESWidget *msgs_nopbdis;
   LiVESWidget *msgs_mbdis;
   LiVESWidget *msg_textsize_combo;
   LiVESWidget *acodec_combo;
@@ -792,6 +797,9 @@ typedef struct {
   LiVESWidget *resync_vpos;
   LiVESWidget *resync_adir;
   LiVESWidget *resync_aclip;
+  LiVESWidget *afreeze_lock;
+  LiVESWidget *afreeze_ping;
+  LiVESWidget *afreeze_sync;
   LiVESWidget *spinbutton_ext_aud_thresh;
   LiVESWidget *spinbutton_mt_def_width;
   LiVESWidget *spinbutton_mt_def_height;
@@ -1115,7 +1123,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_MAX_MSGS "max_text_messages"
 #define PREF_MSG_TEXTSIZE "msg_textsize"
-#define PREF_MSG_PBDIS "msg_disable_during_playback"
+#define PREF_MSG_NOPBDIS "msg_disable_during_playback"
 
 #define PREF_NOFRAMEDROP "no_framedrop"
 

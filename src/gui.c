@@ -486,9 +486,8 @@ void create_LiVES(void) {
   lives_widget_object_ref(mainw->layout_textbuffer);
   mainw->affected_layouts_map = NULL;
 
-#if !LIVES_HAS_HEADER_BAR_WIDGET
-  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
-#endif
+  if (!mainw->hdrbar)
+    lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
 
   if (new_lives) {
 #ifdef GUI_GTK
@@ -572,8 +571,8 @@ void create_LiVES(void) {
   }
 
   mainw->menubar = lives_menu_bar_new();
-  //lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
-  gtk_header_bar_pack_start(LIVES_HEADER_BAR(mainw->hdrbar), mainw->menubar);
+  if (mainw->hdrbar) gtk_header_bar_pack_start(LIVES_HEADER_BAR(mainw->hdrbar), mainw->menubar);
+  else lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
 
   menuitem = lives_standard_menu_item_new_with_label(_("_File"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
@@ -2336,7 +2335,7 @@ void create_LiVES(void) {
 
   mainw->message_box = lives_hbox_new(FALSE, 0);
   lives_widget_set_app_paintable(mainw->message_box, TRUE);
-  //lives_widget_set_vexpand(mainw->message_box, TRUE);
+  lives_widget_set_vexpand(mainw->message_box, TRUE);
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, FALSE, TRUE, 0);
 
   mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(reshow_msg_area), &mainw->msg_surface);
@@ -3460,12 +3459,14 @@ void unfade_background(void) {
       lives_widget_show_all(mainw->sep_image);
     }
     lives_widget_show_all(mainw->hseparator);
-    if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
+    if (prefs->show_msg_area && !prefs->msgs_nopbdis) lives_widget_show_all(mainw->message_box);
   }
 
   lives_widget_show_all(mainw->eventbox2);
   lives_widget_show_all(mainw->eventbox3);
   lives_widget_show_all(mainw->eventbox4);
+
+  if (mainw->hdrbar) lives_widget_show_all(mainw->hdrbar);
 
   if (!CURRENT_CLIP_IS_VALID || !cfile->opening) {
     lives_widget_show(mainw->hruler);
@@ -3561,20 +3562,23 @@ void fullscreen_internal(void) {
     lives_widget_hide(mainw->eventbox3);
     lives_widget_hide(mainw->eventbox4);
 
+    if (mainw->hdrbar) lives_widget_hide(mainw->hdrbar);
+
     lives_frame_set_label(LIVES_FRAME(mainw->playframe), NULL);
 
     if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
 
     if (prefs->open_maximised) {
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-      lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+      /* lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET); */
+      /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET); */
     }
 
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &width, &height);
+    //g_print("inner sz = %d X %d\n", width, height);
 
-    height -= SCRN_BRDR; // necessary, or screen expands too much (!?)
+    height -= SCRN_BRDR * 32; // necessary, or screen expands too much (!?)
 
     // expand the inner box to fit this
     lives_widget_set_size_request(mainw->top_vbox, width, height);

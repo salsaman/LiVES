@@ -611,7 +611,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             if (mainw->ping_pong && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
                 && ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) || mainw->current_file == pulsed->playing_file)
                 && (!mainw->event_list || mainw->record || mainw->record_paused)
-                && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
+                && mainw->agen_key == 0 && !mainw->agen_needs_reinit
+                && (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+                    || ((prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG))))
               pulsed->loop = AUDIO_LOOP_PINGPONG;
             else pulsed->loop = AUDIO_LOOP_FORWARD;
           } else {
@@ -2014,7 +2016,9 @@ void pulse_aud_pb_ready(int fileno) {
     mainw->pulsed->is_paused = FALSE;
     mainw->pulsed->mute = mainw->mute;
     if ((mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) && !mainw->preview) {
-      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && !mainw->event_list)
+      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && !mainw->event_list
+          && (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+              || ((prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG))))
         mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
       else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
     } else mainw->pulsed->loop = AUDIO_LOOP_NONE;

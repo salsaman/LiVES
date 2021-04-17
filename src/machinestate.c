@@ -2133,7 +2133,6 @@ void rec_desk(void *args) {
   lives_proc_thread_t lpt = THREADVAR(tinfo);
   rec_args *recargs = (rec_args *)args;
   LiVESWidget *win;
-  LiVESXWindow *root;
   lives_clip_t *sfile;
   weed_timecode_t tc;
   weed_layer_t *layer;
@@ -2150,7 +2149,7 @@ void rec_desk(void *args) {
 
   if (lpt) lives_proc_thread_set_cancellable(lpt);
 
-  root = gdk_get_default_root_window ();
+
 
   if (recargs->screen_area == SCREEN_AREA_FOREGROUND) {
     win = LIVES_MAIN_WINDOW_WIDGET;
@@ -2189,12 +2188,12 @@ void rec_desk(void *args) {
 
     tc = lives_get_current_ticks();
     layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-    pixbuf = gdk_pixbuf_get_from_window (root, x, y, w, h);
+    pixbuf = gdk_pixbuf_get_from_window (capable->wm_caps.root_window, x, y, w, h);
     if (!pixbuf) break;
 
     if (!pixbuf_to_layer(layer, pixbuf)) lives_widget_object_unref(pixbuf);
 
-    cursor = gdk_window_get_cursor(root);
+    cursor = gdk_window_get_cursor(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET));
     if (cursor) csurf = gdk_cursor_get_surface(cursor, &cx, &cy);
     else csurf = NULL;
 

@@ -2743,6 +2743,57 @@ void free_pulse_audio_buffers(void) {
 }
 
 
+void freeze_unfreeze_audio(boolean is_frozen) {
+  if (prefs->audio_src == AUDIO_SRC_INT) {
+#ifdef ENABLE_JACK
+    if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK
+        && (mainw->jackd->playing_file == mainw->playing_file
+            || ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+                && (!is_frozen || (prefs->audio_opts & AUDIO_OPTS_LOCKED_FREEZE))))
+        && ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+            || ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) && !is_frozen))) {
+      mainw->jackd->is_paused = is_frozen;
+      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&
+          !mainw->agen_needs_reinit) {
+        if (is_frozen) {
+          weed_plant_t *event = get_last_frame_event(mainw->event_list);
+          insert_audio_event_at(event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
+        } else {
+          jack_get_rec_avals(mainw->jackd);
+        }
+      }
+      if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+          && (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER)) {
+        if (is_frozen) jack_pb_stop(mainw->jackd_trans);
+        else jack_pb_start(mainw->jackd_trans, -1.);
+      }
+    }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE
+        && (mainw->pulsed->playing_file == mainw->playing_file
+            || ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+                && (!is_frozen || (prefs->audio_opts & AUDIO_OPTS_LOCKED_FREEZE))))
+        && ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+            || ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) && !is_frozen))) {
+      mainw->pulsed->is_paused = is_frozen;
+      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&
+          !mainw->agen_needs_reinit) {
+        if (is_frozen) {
+          if (!mainw->mute) {
+            weed_plant_t *event = get_last_frame_event(mainw->event_list);
+            insert_audio_event_at(event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
+          }
+        } else {
+          pulse_get_rec_avals(mainw->pulsed);
+        }
+      }
+    }
+#endif
+  }
+}
+
+
 LIVES_GLOBAL_INLINE void avsync_force(void) {
 #ifdef RESEEK_ENABLE
   /// force realignment of video and audio at current file->frameno / player->seek_pos
@@ -2765,20 +2816,18 @@ LIVES_GLOBAL_INLINE void avsync_force(void) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean av_clips_equal(void) {
-  if (prefs->audio_src == AUDIO_SRC_INT) {
+LIVES_GLOBAL_INLINE int get_aplay_clipno(void) {
+  if (AUD_SRC_INTERNAL) {
 #ifdef ENABLE_JACK
-    if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK
-        && mainw->jackd->playing_file == mainw->playing_file)
-      return TRUE;
+    if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK)
+      return mainw->jackd->playing_file;
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE
-        && mainw->pulsed->playing_file == mainw->playing_file)
-      return TRUE;
+    if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE)
+      return mainw->pulsed->playing_file;
 #endif
   }
-  return FALSE;
+  return -1;
 }
 
 
@@ -2801,7 +2850,8 @@ boolean resync_audio(int clipno, double frameno) {
   lives_clip_t *sfile;
 
   if (!LIVES_IS_PLAYING || !CLIP_HAS_AUDIO(clipno)) return FALSE;
-  if (!av_clips_equal()) return FALSE;
+  if (!AV_CLIPS_EQUAL) return FALSE;
+  if (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) return FALSE;
 
   sfile = mainw->files[clipno];
   if (!frameno && sfile->fps == 0.) return FALSE;

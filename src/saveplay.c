@@ -2213,13 +2213,15 @@ static void post_playback(void) {
     }
   }
 
-  if (prefs->show_gui && ((mainw->multitrack  && mainw->double_size) ||
-                          (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET)
-                           > GUI_SCREEN_HEIGHT ||
-                           lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET)
-                           > GUI_SCREEN_WIDTH))) {
-    if (prefs->open_maximised)
+  if (prefs->open_maximised) {
+    int bx, by;
+    get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+    if (prefs->show_gui && (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET)
+                            > GUI_SCREEN_HEIGHT - abs(by) ||
+                            lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET)
+                            > GUI_SCREEN_WIDTH - abs(bx))) {
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    }
   }
 
   if (!mainw->preview && (mainw->current_file == -1 || (CURRENT_CLIP_IS_VALID && !cfile->opening))) {
@@ -2506,13 +2508,9 @@ void play_file(void) {
     mainw->record_starting = TRUE;
   }
 
-  if (prefs->msgs_nopbdis || (prefs->show_msg_area && mainw->double_size && !mainw->multitrack)) {
+  if (!mainw->multitrack && (prefs->msgs_nopbdis || (prefs->show_msg_area && mainw->double_size))) {
     lives_widget_hide(mainw->message_box);
   }
-
-  /* if (prefs->show_msg_area) { */
-  /*   lives_widget_set_size_request(mainw->message_box, -1, MIN_MSGBAR_HEIGHT); */
-  /* } */
 
   if (!(mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
         && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)))
@@ -3729,8 +3727,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
 
   pthread_mutex_init(&cfile->transform_mutex, NULL);
 
-  if (!strcmp(prefs->image_ext, LIVES_FILE_EXT_JPG)) cfile->img_type = IMG_TYPE_JPEG;
-  else cfile->img_type = IMG_TYPE_PNG;
+  cfile->img_type = lives_image_ext_to_img_type(prefs->image_ext);
 
   cfile->bpp = (cfile->img_type == IMG_TYPE_JPEG) ? 24 : 32;
   cfile->deinterlace = FALSE;
@@ -5395,7 +5392,7 @@ manual_locate:
 
   sfile->clip_type = CLIP_TYPE_FILE;
   get_mime_type(sfile->type, 40, cdata);
-  sfile->img_type = IMG_TYPE_BEST; // read_headers() will have set this to "jpeg" (default)
+  sfile->img_type = IMG_TYPE_UNKNOWN; // read_headers() will have set this to "jpeg" (default)
   // we will set correct value in check_clip_integrity() if there are any real images
 
   if (sfile->ext_src) {

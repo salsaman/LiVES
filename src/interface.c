@@ -7626,6 +7626,9 @@ boolean msg_area_config(LiVESWidget * widget) {
 
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
 
+  scr_height -= abs(by);
+  scr_width -= abs(bx);
+
   ww = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
   w = mainw->assumed_width;
   if (w == -1) w = ww;
@@ -7673,6 +7676,7 @@ boolean msg_area_config(LiVESWidget * widget) {
         mustret = TRUE;
       }
     }
+
     last_overflowy = overflowy;
 
     width = lives_widget_get_allocation_width(widget);
@@ -7746,14 +7750,15 @@ boolean msg_area_config(LiVESWidget * widget) {
       /* if (posx > gui_posx) posx = gui_posx; */
       /* if (posy > gui_posy) posy = gui_posy; */
 
-      get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+      //get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
 
 #ifdef DEBUG_OVERFLOW
       g_print("MOVE to %d X %d : %d %d\n", posx, posy, bx, by);
 #endif
+      gdk_window_move_resize(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET), posx - bx, posy - by, w, h);
 
-      lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx - bx, posy - by);
-      lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+      /* lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx - bx, posy - by); */
+      /* lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h); */
 
       gui_posx = posx;
       gui_posy = posy;
@@ -7779,7 +7784,7 @@ boolean msg_area_config(LiVESWidget * widget) {
       }
 
 #ifdef DEBUG_OVERFLOW
-      g_print("SIZE REQ: %d X %d\n", width, height);
+      g_print("SIZE REQ: %d X %d and %d X %d\n", width, height, w, h);
 #endif
 
       // NECESSARY !

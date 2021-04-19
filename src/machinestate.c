@@ -1891,11 +1891,11 @@ void update_effort(int nthings, boolean badthings) {
 }
 
 
-char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase, int ridx, int rlen) {
+static char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase, int ridx, int rlen, boolean partial) {
   char **lines, **words, **mwords;
-  char *match = NULL;
+  char *match = NULL, *wline;
   char buff[65536];
-  size_t nlines, mwlen;
+  size_t nlines, mwlen, mlen = 0;
   int m, minpieces;
 
   //break_me("GIC");
@@ -1917,25 +1917,44 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
     goto grpcln;
   }
 
+  if (partial) mlen = lives_strlen(mwords[mwlen - 1]);
+
   minpieces = MAX(mstart + mwlen, ridx + rlen);
 
   lines = lives_strsplit(buff, "\n", nlines);
   for (int l = 0; l < nlines; l++) {
-    if (*lines[l] && get_token_count(lines[l], ' ') >= minpieces) {
-      words = lives_strsplit(lines[l], " ", npieces);
-      for (m = 0; m < mwlen; m++) {
-	if (lives_strcmp(words[m + mstart], mwords[m])) break;
+    if (*lines[l]) {
+      // reduce multiple spaces to one
+      char *tmp = lives_strdup(lines[l]);
+      size_t llen = lives_strlen(tmp), tlen;
+      while (1) {
+	wline = subst(tmp, "  ", " ");
+	if ((tlen = lives_strlen(wline)) == llen) break;
+	lives_free(tmp);
+	tmp = wline;
+	llen = tlen;
       }
-      if (m == mwlen) {
-	match = lives_strdup(words[ridx]);
-	for (int w = 1; w < rlen; w++) {
-	  char *tmp = lives_strdup_printf(" %s", words[ridx + w]);
-	  match = lives_concat(match, tmp);
+
+      if (*wline && get_token_count(wline, ' ') >= minpieces) {
+	words = lives_strsplit(wline, " ", npieces);
+	for (m = 0; m < mwlen; m++) {
+	  if (partial && m == mwlen - 1) {
+	    if (lives_strncmp(words[m + mstart], mwords[m], mlen)) break;
+	  }
+	  else if (lives_strcmp(words[m + mstart], mwords[m])) break;
 	}
+	if (m == mwlen) {
+	  match = lives_strdup(words[ridx]);
+	  for (int w = 1; w < rlen; w++) {
+	    char *tmp = lives_strdup_printf(" %s", words[ridx + w]);
+	    match = lives_concat(match, tmp);
+	  }
+	}
+	lives_strfreev(words);
       }
-      lives_strfreev(words);
+      lives_free(wline);
+      if (match) break;
     }
-    if (match) break;
   }
   lives_strfreev(lines);
  grpcln:
@@ -2149,11 +2168,11 @@ void rec_desk(void *args) {
 
   if (lpt) lives_proc_thread_set_cancellable(lpt);
 
-
-
   if (recargs->screen_area == SCREEN_AREA_FOREGROUND) {
     win = LIVES_MAIN_WINDOW_WIDGET;
     get_border_size(win, &x, &y);
+    x = abs(x);
+    y = abs(y);
     w = lives_widget_get_allocation_width(win);
     h = lives_widget_get_allocation_height(win);
   }
@@ -2196,6 +2215,8 @@ void rec_desk(void *args) {
     cursor = gdk_window_get_cursor(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET));
     if (cursor) csurf = gdk_cursor_get_surface(cursor, &cx, &cy);
     else csurf = NULL;
+    /* GdkCursor *curs = gdk_window_get_device_cursor(NULL, device); */
+    /* gdk_cursor_get_image(curs); */
 
     if (!csurf) g_print("no cursor\n");
     else g_print("Curs at %f, %f\n", cx, cy);
@@ -2260,16 +2281,28 @@ char *get_wid_for_name(const char *wname) {
 
   if (check_for_executable(&capable->has_wmctrl, EXEC_WMCTRL)) {
     cmd = lives_strdup_printf("%s -l", EXEC_WMCTRL);
-    wid = grep_in_cmd(cmd, 3, 4, wname, 0, 1);
+    wid = grep_in_cmd(cmd, 3, 4, wname, 0, 1, TRUE);
     lives_free(cmd);
-    if (wid) return wid;
+    if (wid) {
+      g_print("GOT wm wid %s\n", wid);
+      return wid;
+    }
   }
+
+
+
   if (check_for_executable(&capable->has_xwininfo, EXEC_XWININFO)) {
     cmd = lives_strdup_printf("%s -name \"%s\" 2>/dev/null", EXEC_XWININFO, wname);
-    wid = grep_in_cmd(cmd, 1, -1, "Window id:", 3, 1);
+    wid = grep_in_cmd(cmd, 1, -1, "Window id:", 3, 1, FALSE);
     lives_free(cmd);
-    if (wid) return wid;
+    if (wid) {
+      g_print("GOT xw wid %s\n", wid);
+      return wid;
+    }
   }
+
+
+
   if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL)) {
     char buff[65536];
     size_t nlines;
@@ -2302,6 +2335,10 @@ char *get_wid_for_name(const char *wname) {
       }
       lives_strfreev(lines);
     }
+  }
+  if (wid) {
+    g_print("GOT xxxxxxwm wid %s\n", wid);
+    return wid;
   }
   return wid;
 #endif
@@ -2353,6 +2390,8 @@ boolean activate_x11_window(const char *wid) {
   return mini_run(cmd);
 }
 
+
+// TODO: xprop -name "title"
 
 char *wm_property_get(const char *key, int *type_guess) {
   char *com, *val = NULL, *res = NULL;
@@ -2543,7 +2582,7 @@ boolean get_x11_visible(const char *wname) {
   if (check_for_executable(&capable->has_xwininfo, EXEC_XWININFO)) {
     char *state;
     cmd = lives_strdup_printf("%s -name \"%s\"", EXEC_XWININFO, wname);
-    state = grep_in_cmd(cmd, 2, -1, "Map State:", 4, 1);
+    state = grep_in_cmd(cmd, 2, -1, "Map State:", 4, 1, FALSE);
     lives_free(cmd);
     if (state && !strcmp(state, "IsViewable")) {
       lives_free(state);
@@ -2698,7 +2737,7 @@ boolean check_snap(const char *prog) {
   // not working yet...
   if (!check_for_executable(&capable->has_snap, EXEC_SNAP)) return FALSE;
   char *com = lives_strdup_printf("%s find %s", EXEC_SNAP, prog);
-  char *res = grep_in_cmd(com, 0, 1, prog, 0, 1);
+  char *res = grep_in_cmd(com, 0, 1, prog, 0, 1, FALSE);
   if (!res) return FALSE;
   lives_free(res);
   return TRUE;

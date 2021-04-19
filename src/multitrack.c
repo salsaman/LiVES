@@ -4336,8 +4336,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->top_vbox = lives_vbox_new(FALSE, 0);
   lives_widget_set_vexpand(mt->top_vbox, TRUE);
 
+  //if (!mainw->hdrbar) {
   mt->menu_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mt->top_vbox), mt->menu_hbox, FALSE, FALSE, 0);
+  //}
 
   mt->top_vpaned = lives_standard_vpaned_new();
   lives_box_pack_start(LIVES_BOX(mt->top_vbox), mt->top_vpaned, TRUE, TRUE, 0);
@@ -4347,7 +4349,12 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_vexpand(mt->xtravbox, TRUE);
 
   mt->menubar = lives_menu_bar_new();
-  lives_box_pack_start(LIVES_BOX(mt->menu_hbox), mt->menubar, FALSE, FALSE, 0);
+
+  if (mainw->hdrbar) {
+    lives_widget_object_ref(mainw->menubar);
+    lives_widget_unparent(mainw->menubar);
+    gtk_header_bar_pack_start(LIVES_HEADER_BAR(mainw->hdrbar), mt->menubar);
+  } else lives_box_pack_start(LIVES_BOX(mt->menu_hbox), mt->menubar, FALSE, FALSE, 0);
 
   // File
   menuitem = lives_standard_menu_item_new_with_label(_("_File"));
@@ -6931,6 +6938,12 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
   // put buttons back in mainw->menubar
   mt_swap_play_pause(mt, FALSE);
 
+  if (mainw->hdrbar) {
+    lives_widget_unparent(mt->menubar);
+    gtk_header_bar_pack_start(LIVES_HEADER_BAR(mainw->hdrbar), mainw->menubar);
+    lives_widget_object_unref(mainw->menubar);
+  }
+
   lives_signal_handler_block(mainw->loop_continue, mainw->loop_cont_func);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_continue), mainw->loop_cont);
   lives_signal_handler_unblock(mainw->loop_continue, mainw->loop_cont_func);
@@ -7093,7 +7106,7 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
     if (!mainw->hdrbar) {
       int bx, by;
       get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-      if (by > MENU_HIDE_LIM)
+      if (abs(by) > MENU_HIDE_LIM)
         lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
     }
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -8891,7 +8904,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     if (!mainw->hdrbar) {
       int bx, by;
       get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-      if (by > MENU_HIDE_LIM)
+      if (abs(by) > MENU_HIDE_LIM)
         lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
     }
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -8932,7 +8945,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     if (!mainw->hdrbar) {
       int bx, by;
       get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-      if (by > MENU_HIDE_LIM)
+      if (abs(by) > MENU_HIDE_LIM)
         lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
     }
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));

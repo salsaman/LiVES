@@ -238,7 +238,7 @@ lives_proc_thread_t ordfile_to_file_details(LiVESList **listp, const char *ofnam
     const char *orig_loc, uint64_t extra);
 
 ///// cmdline
-char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase, int ridx, int rlen);
+//char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase, int ridx, int rlen);
 
 /// x11
 char *get_wid_for_name(const char *wname);

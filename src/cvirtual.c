@@ -523,7 +523,10 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
         }
       } else last_img_frame = last_real_frame;
       if (last_img_frame > -1) {
-        sfile->img_type = empirical_img_type;
+        if (sfile->img_type != empirical_img_type) {
+          sfile->img_type = empirical_img_type;
+          save_clip_value(fileno, CLIP_DETAILS_IMG_TYPE, &sfile->img_type);
+        }
         get_frames_sizes(fileno, last_img_frame, &hsize, &vsize);
       }
     }

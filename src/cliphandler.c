@@ -14,6 +14,8 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
     key = lives_strdup("header_version"); break;
   case CLIP_DETAILS_BPP:
     key = lives_strdup("bpp"); break;
+  case CLIP_DETAILS_IMG_TYPE:
+    key = lives_strdup("img_type"); break;
   case CLIP_DETAILS_FPS:
     key = lives_strdup("fps"); break;
   case CLIP_DETAILS_PB_FPS:
@@ -149,6 +151,8 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   case CLIP_DETAILS_GAMMA_TYPE:
   case CLIP_DETAILS_HEADER_VERSION:
     *(int *)retval = atoi(val); break;
+  case CLIP_DETAILS_IMG_TYPE:
+    *(lives_img_type_t *)retval = lives_image_type_to_img_type(val); break;
   case CLIP_DETAILS_ASIGNED:
     *(int *)retval = 0;
     if (sfile->header_version == 0) *(int *)retval = atoi(val);
@@ -245,6 +249,10 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
   switch (what) {
   case CLIP_DETAILS_BPP:
     myval = lives_strdup_printf("%d", *(int *)val);
+    break;
+  // header v. 104
+  case CLIP_DETAILS_IMG_TYPE:
+    myval = lives_strdup(image_ext_to_lives_image_type(get_image_ext_for_type(*(lives_img_type_t *)val)));
     break;
   case CLIP_DETAILS_FPS:
     if (!sfile->ratio_fps) myval = lives_strdup_printf("%.3f", *(double *)val);
@@ -402,6 +410,7 @@ boolean save_clip_values(int which) {
         if (!save_clip_value(which, CLIP_DETAILS_HEIGHT, &sfile->vsize)) break;
         if (!save_clip_value(which, CLIP_DETAILS_INTERLACE, &sfile->interlace)) break;
         if (!save_clip_value(which, CLIP_DETAILS_BPP, &sfile->bpp)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_IMG_TYPE, &sfile->img_type)) break;
         if (!save_clip_value(which, CLIP_DETAILS_ARATE, &sfile->arps)) break;
         if (!save_clip_value(which, CLIP_DETAILS_PB_ARATE, &sfile->arate)) break;
         if (!save_clip_value(which, CLIP_DETAILS_ACHANS, &sfile->achans)) break;
@@ -1142,6 +1151,10 @@ frombak:
         retval = get_clip_value(fileno, detail, &sfile->bpp, 0);
       }
       if (retval) {
+        detail = CLIP_DETAILS_IMG_TYPE;
+        get_clip_value(fileno, detail, &sfile->img_type, 0);
+      }
+      if (retval) {
         detail = CLIP_DETAILS_FPS;
         retval = get_clip_value(fileno, detail, &sfile->fps, 0);
       }
@@ -1337,9 +1350,9 @@ old_check:
         goto rhd_failed;
       } else {
         THREADVAR(read_failed) = FALSE;
-        lives_read_le(header_fd, &sfile->fps, 4, FALSE);
+        lives_read_le(header_fd, &sfile->fps, 8, FALSE);
         if (!THREADVAR(read_failed))
-          lives_read_le(header_fd, &sfile->bpp, 8, FALSE);
+          lives_read_le(header_fd, &sfile->bpp, 4, FALSE);
         if (!THREADVAR(read_failed))
           lives_read_le(header_fd, &sfile->hsize, 4, FALSE);
         if (!THREADVAR(read_failed))

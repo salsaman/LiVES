@@ -4,10 +4,15 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
+// NB: float jack_get_xrun_delayed_usecs (jack_client_t *); jack_set_xrun_callback;
+
+
+
 #include "main.h"
 #include <jack/jslist.h>
 #include <jack/control.h>
 #include <jack/metadata.h>
+#include <jack/statistics.h>
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ENABLE_JACK
@@ -1142,7 +1147,7 @@ static void finish_test(jack_driver_t *jackd, boolean success, boolean is_trans,
 // --              on less sever errors, allow choice of reverting settings or altering current ones
 boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd) {
   lives_proc_thread_t lpt = THREADVAR(tinfo);
-  jack_options_t options = JackNullOption |  JackServerName | JackUseExactName;
+  jack_options_t options = JackNullOption |  JackServerName;
   jack_status_t status;
   jackctl_driver_t *driver = NULL;
   const JSList *drivers;
@@ -1215,7 +1220,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
       if (ts_running) goto ret_success;
     }
     if (!jackd->client_name) {
-      client_name = jackd->client_name = lives_strdup_printf("LiVES-transport-%d", capable->mainpid);
+      client_name = jackd->client_name = lives_strdup_printf("LiVES:transport");
     } else client_name = jackd->client_name;
 
     if (*future_prefs->jack_tserver_cname) server_name = lives_strdup(future_prefs->jack_tserver_cname);
@@ -1243,9 +1248,9 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
   } else {
     if (!jackd->client_name) {
       if (is_reader)
-        client_name = jackd->client_name = lives_strdup_printf("LiVES-audio-in-%d", capable->mainpid);
+        client_name = jackd->client_name = lives_strdup("LiVES_in");
       else
-        client_name = jackd->client_name = lives_strdup_printf("LiVES-audio-out-%d", capable->mainpid);
+        client_name = jackd->client_name = lives_strdup("LiVES_out");
     } else client_name = jackd->client_name;
     if (as_running) was_started = TRUE;
     if (*future_prefs->jack_aserver_cname) server_name = lives_strdup(future_prefs->jack_aserver_cname);
@@ -1824,8 +1829,10 @@ ret_failed:
 
   if (is_trans) finish_test(jackd, test_ret, TRUE, FALSE);
 
-  if (tstwin->button) {
-    lives_widget_grab_focus(tstwin->button);
+  if (tstwin) {
+    if (tstwin->button) {
+      lives_widget_grab_focus(tstwin->button);
+    }
   }
   textwindow = tstwin;
   return test_ret;
@@ -2207,6 +2214,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
 #ifdef DEBUG_AJACK
   lives_printerr("STATE is %d\n", jackd->state);
 #endif
+
+  //g_print("MAX DEL is %f\n", jack_get_max_delayed_usecs(jackd->client));
 
   /* handle playing state */
   if (!(prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)
@@ -3067,7 +3076,11 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
 
   for (int i = 0; i < jackd->num_output_channels; i++) {
     char portname[32];
-    lives_snprintf(portname, 32, "out_%d", i);
+    if (!i) {
+      lives_snprintf(portname, 32, "audio_L");
+    } else if (i == 1) {
+      lives_snprintf(portname, 32, "audio_R");
+    } else lives_snprintf(portname, 32, "out_%d", i);
 
 #ifdef DEBUG_JACK_PORTS
     lives_printerr("output port %d is named '%s'\n", i, portname);
@@ -3130,7 +3143,11 @@ boolean jack_create_client_reader(jack_driver_t *jackd) {
   // create ports for the client (left and right channels)
   for (int i = 0; i < jackd->num_input_channels; i++) {
     char portname[32];
-    lives_snprintf(portname, 32, "in_%d", i);
+    if (!i) {
+      lives_snprintf(portname, 32, "audio_L");
+    } else if (i == 1) {
+      lives_snprintf(portname, 32, "audio_R");
+    } else lives_snprintf(portname, 32, "in_%d", i);
 
 #ifdef DEBUG_JACK_PORTS
     lives_printerr("input port %d is named '%s'\n", i, portname);
@@ -3292,6 +3309,7 @@ boolean jack_read_client_activate(jack_driver_t *jackd, boolean autocon) {
   }
 
   for (i = 0; ports[i]; i++) {
+    //#define DEBUG_JACK_PORTS
 #ifdef DEBUG_JACK_PORTS
     lives_printerr("ports[%d] = '%s'\n", i, ports[i]);
 #endif
@@ -3677,6 +3695,62 @@ void jack_aud_pb_ready(int fileno) {
     if ((mainw->agen_key != 0 || mainw->agen_needs_reinit)
         && !mainw->multitrack && !mainw->preview) mainw->jackd->in_use = TRUE; // audio generator is active
   }
+}
+
+
+boolean jack_interop_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+                              livespointer pjackd) {
+  static boolean inter = FALSE;
+  const char *iopclient = "jamin";
+  if (pjackd) {
+    size_t ioplen = lives_strlen(iopclient);
+    jack_driver_t *jackd = (jack_driver_t *)pjackd;
+    int x, i;
+
+    int nports = jackd->num_output_channels;
+
+    if ((lives_get_status() != LIVES_STATUS_PLAYING && mainw->status != LIVES_STATUS_IDLE)
+        || prefs->audio_player != AUD_PLAYER_JACK || AUD_SRC_EXTERNAL) return TRUE;
+
+    if (!inter) {
+      // disconnect from sys ports and reconnect
+      const char **ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
+      char *wid;
+      if (!ports) return FALSE;
+      for (x = 0; x < nports; x++) {
+        jack_port_disconnect(jackd->client, jackd->output_port[x]);
+      }
+
+      x = 0;
+
+      for (i = 0; ports[i]; i++) {
+        if (!lives_strncmp(ports[i], iopclient, ioplen)) {
+          if (jack_connect(jackd->client, jack_port_name(jackd->output_port[x++]), ports[i])) {
+            // connection failed
+            break;
+          }
+          if (x == nports) break;
+        }
+      }
+      pref_factory_bool(PREF_SEPWIN, TRUE, FALSE);
+      lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
+      gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE);
+      gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), FALSE);
+      pop_to_front(mainw->play_window, NULL);
+#ifdef GDK_WINDOWING_X11
+      wid = get_wid_for_name("jamin");
+      if (wid) activate_x11_window(wid);
+      lives_free(wid);
+#endif
+    } else {
+      if (mainw->play_window) {
+        lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET);
+        lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
+      }
+    }
+    inter = !inter;
+  }
+  return FALSE;
 }
 
 #undef afile

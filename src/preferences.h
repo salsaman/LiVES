@@ -1003,21 +1003,11 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
     -done
 */
 
-// NOTE: the following definitions must match with equivalent keys in smogrify
-
-#define PREF_REC_EXT_AUDIO "rec_ext_audio"
-#define PREF_AUDIO_OPTS "audio_opts"
-#define PREF_SEPWIN_TYPE "sepwin_type"
-#define PREF_MT_EXIT_RENDER "mt_exit_render"
-
-// factories non-cpp
-#define PREF_SHOW_ASRC "show_audio_src"
-#define PREF_HFBWNP "hide_framebar_when_not_playing"
-
-// normal prefs
+// temp values (not saved)
+#define PREF_REC_EXT_AUDIO "rec_ext_audio" // bool
+#define PREF_SEPWIN "sepwin" // bool
 
 /////////////////// string values
-
 #define PREF_WORKING_DIR "workdir"
 #define PREF_WORKING_DIR_OLD "tempdir"
 #define PREF_PREFIX_DIR "prefix_dir" // readonly
@@ -1076,8 +1066,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_JACK_TSSERVER "jack_trans_startup_server"
 #define PREF_JACK_TCONFIG "jack_trans_config_file"
 #endif
-////////////////////// utf8 values
 
+////////////////////// utf8 values
 #define PREF_OMC_MIDI_FNAME "omc_midi_fname"
 #define PREF_OMC_JS_FNAME "omc_js_fname"
 
@@ -1100,6 +1090,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_DISK_QUOTA "disk_quota"
 
 /////////////////// integer32 values
+#define PREF_SEPWIN_TYPE "sepwin_type"
+
 #define PREF_STARTUP_PHASE "startup_phase"
 
 #define PREF_STARTUP_INTERFACE "startup_interface"
@@ -1140,6 +1132,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_RECORD_OPTS "record_opts"
 
+#define PREF_AUDIO_OPTS "audio_opts"
+
 #define PREF_OMC_DEV_OPTS "omc_dev_opts"
 #define PREF_OSC_PORT "osc_port"
 
@@ -1168,6 +1162,9 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_BADFILE_INTENT "badfile_intent"
 
 ////////// boolean values
+#define PREF_MT_EXIT_RENDER "mt_exit_render"
+#define PREF_HFBWNP "hide_framebar_when_not_playing"
+#define PREF_SHOW_ASRC "show_audio_src"
 #define PREF_SHOW_RECENT_FILES "show_recent_files"
 #define PREF_FORCE_SINGLE_MONITOR "force_single_monitor"
 #define PREF_STOP_SCREENSAVER "stop_screensaver"

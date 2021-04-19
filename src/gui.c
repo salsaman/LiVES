@@ -486,8 +486,8 @@ void create_LiVES(void) {
   lives_widget_object_ref(mainw->layout_textbuffer);
   mainw->affected_layouts_map = NULL;
 
-  if (!mainw->hdrbar)
-    lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+  /* if (!mainw->hdrbar) */
+  /*   lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE); */
 
   if (new_lives) {
 #ifdef GUI_GTK
@@ -4039,6 +4039,7 @@ static void _make_play_window(void) {
                             LIVES_GUI_CALLBACK(key_press_or_release), NULL);
 
   lives_widget_set_sensitive(mainw->play_window, TRUE);
+  lives_grab_add(mainw->play_window);
 }
 
 void make_play_window(void) {
@@ -4108,8 +4109,8 @@ static void _resize_play_window(void) {
 
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
 
-  scr_width_safety += 2 * bx;
-  scr_height_safety += 2 * by;
+  scr_width_safety += 2 * abs(bx);
+  scr_height_safety += 2 * abs(by);
 
   if (!LIVES_IS_PLAYING && !mainw->multitrack)
     lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), TRUE);
@@ -4237,9 +4238,13 @@ static void _resize_play_window(void) {
 #endif
         lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
         lives_window_center(LIVES_WINDOW(mainw->play_window));
-        lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
         lives_window_set_position(LIVES_WINDOW(mainw->play_window), LIVES_WIN_POS_NONE);
-        lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
+
+        gdk_window_move_resize(lives_widget_get_xwindow(mainw->play_window), 0, 0, mainw->pwidth, mainw->pheight);
+
+        /* lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0); */
+        /* lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight); */
+
         lives_widget_queue_resize(mainw->play_window);
         lives_widget_process_updates(mainw->play_window);
         //lives_widget_context_update();
@@ -4348,6 +4353,7 @@ static void _resize_play_window(void) {
           mainw->ext_audio = ext_audio; // cannot set this until after init_screen()
 
           if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && (pmonitor == 0 || capable->nmonitors == 1)) {
+            // ensure that keypresses are still sent to the main widget
             lives_grab_add(LIVES_MAIN_WINDOW_WIDGET);
           }
         } else if (mainw->vpp->init_screen) {

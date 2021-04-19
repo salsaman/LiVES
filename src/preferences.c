@@ -942,6 +942,12 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
 
   if (prefsw) prefsw->ignore_apply = TRUE;
 
+  if (!lives_strcmp(prefidx, PREF_SEPWIN)) {
+    if (mainw->sep_win == newval) goto fail2;
+    on_sepwin_pressed(NULL, NULL);
+    goto success2;
+  }
+
   if (!lives_strcmp(prefidx, PREF_RRCRASH)) {
     if (prefs->rr_crash == newval) goto fail2;
     prefs->rr_crash = newval;
@@ -5363,7 +5369,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                              (tmp2 = _("The default directory for saving encoded clips to")));
   lives_free(tmp2);
 
-
   lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), prefsw->workdir_entry, 1, 2, 3, 4,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
@@ -5862,9 +5867,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_standard_check_button_new(_("Show icons in buttons"), widget_opts.show_button_images,
                                     LIVES_BOX(hbox), NULL);
 
-  //widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-  //widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
@@ -6422,6 +6425,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   toggle_sets_visible(LIVES_TOGGLE_BUTTON(prefsw->jack_srv_dup), layout, TRUE);
 
   layout = lives_layout_new(LIVES_BOX(vbox));
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Master options - (in Clip Edit mode, values are taken from Audio playback. "
                          "Setting the audio source to 'External' may be helpful.)"), FALSE);
 
@@ -6477,6 +6481,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_start),
                         prefsw->checkbutton_jack_mtb_update, FALSE);
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Slave options - (in Clip Edit mode, values are applied to Video playback)"),
                          FALSE);
 
@@ -6548,7 +6553,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_widget_set_sensitive(prefsw->checkbutton_jack_stricts, prefs->audio_player == AUD_PLAYER_JACK);
 
   tmp = lives_big_and_bold(
-          _("(See also Playback -> Audio follows video rate/direction and Playback -> Audio follows video clip switches)"));
+          _("(See also Playback -> Audio follows video rate/direction and Audio follows video clip switches)"));
   widget_opts.use_markup = TRUE;
   label = lives_standard_label_new(tmp);
   widget_opts.use_markup = FALSE;

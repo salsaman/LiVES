@@ -4060,6 +4060,9 @@ void on_insert_activate(LiVESButton * button, livespointer user_data) {
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize)) bad_header = TRUE;
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_BPP, &cfile->bpp)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_IMG_TYPE,
+                         (void *)image_ext_to_lives_image_type(get_image_ext_for_type(cfile->img_type))))
+      bad_header = TRUE;
     if (cfile->clip_type == CLIP_TYPE_FILE && cfile->ext_src) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
       double dfps = (double)cdata->fps;
@@ -8233,8 +8236,11 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
             lives_widget_show_all(mainw->sep_image);
           }
           if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
-	  // *INDENT-OFF*
-        }}}}
+        }
+        if (prefs->open_maximised)
+          lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+	// *INDENT-OFF*
+      }}}
   // *INDENT-ON*
   if (LIVES_IS_PLAYING && !mainw->fs) mainw->force_show = TRUE;
 }
@@ -11402,10 +11408,8 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
                           livespointer statep) {
   boolean state = LIVES_POINTER_TO_INT(statep);
 
-  if (!LIVES_IS_PLAYING || !is_realtime_aplayer(prefs->audio_player) || mainw->multitrack
-      || mainw->is_rendering || mainw->preview || mainw->agen_key != 0 || mainw->agen_needs_reinit
-      || prefs->audio_src == AUDIO_SRC_EXT) return TRUE;
-
+  if (lives_get_status() != LIVES_STATUS_PLAYING || !is_realtime_aplayer(prefs->audio_player) || mainw->multitrack
+      || mainw->agen_key != 0 || mainw->agen_needs_reinit || AUD_SRC_EXTERNAL) return TRUE;
 
   // lock OFF
   if (!state) prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;

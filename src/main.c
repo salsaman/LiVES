@@ -1607,8 +1607,6 @@ static boolean lives_init(_ign_opts *ign_opts) {
 
   prefs->unstable_fx = get_boolean_prefd(PREF_UNSTABLE_FX, TRUE);
 
-  prefs->enc_letterbox = FALSE;
-
   prefs->clear_disk_opts = get_int_prefd(PREF_CLEAR_DISK_OPTS, 0);
 
   prefs->force_system_clock = TRUE;
@@ -2394,6 +2392,9 @@ rest3:
           jack_audio_read_init();
           jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
         }
+
+        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_j, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                  lives_cclosure_new(LIVES_GUI_CALLBACK(jack_interop_callback), (livespointer)mainw->jackd, NULL));
       }
 #endif
     }
@@ -3723,7 +3724,7 @@ boolean lazy_startup_checks(void *data) {
       if (!mainw->hdrbar) {
         int bx, by;
         get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-        if (by > MENU_HIDE_LIM)
+        if (abs(by) > MENU_HIDE_LIM)
           lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
       }
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -3984,7 +3985,7 @@ static boolean lives_startup(livespointer data) {
     if (!mainw->hdrbar) {
       int bx, by;
       get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-      if (by > MENU_HIDE_LIM)
+      if (abs(by) > MENU_HIDE_LIM)
         lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
     }
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -4252,8 +4253,9 @@ static boolean lives_startup2(livespointer data) {
   if (!mainw->multitrack) sensitize();
 
   if (prefs->vj_mode) {
-    char *wid = lives_strdup_printf("0x%08lx",
-                                    (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET)));
+    char *wid =
+      lives_strdup_printf("0x%08lx",
+                          (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET)));
     if (wid) activate_x11_window(wid);
   }
   if (mainw->recording_recovered) {
@@ -6112,6 +6114,8 @@ void load_start_image(frames_t frame) {
     int scr_height = GUI_SCREEN_HEIGHT;
     int vspace = get_vspace();
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+    bx = abs(bx);
+    by = abs(by);
     if (!mainw->hdrbar) {
       if (by > MENU_HIDE_LIM)
         lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
@@ -6386,6 +6390,8 @@ void load_end_image(frames_t frame) {
     int scr_height = GUI_SCREEN_HEIGHT;
     int vspace = get_vspace();
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+    bx = abs(bx);
+    by = abs(by);
     if (!mainw->hdrbar) {
       if (by > MENU_HIDE_LIM)
         lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
@@ -9199,7 +9205,8 @@ void resize(double scale) {
   vspace = get_vspace();
 
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-  bx *= 2;
+  bx = 2 * abs(bx);
+  by = abs(by);
 
   if (!mainw->hdrbar) {
     if (prefs->open_maximised && by > MENU_HIDE_LIM)

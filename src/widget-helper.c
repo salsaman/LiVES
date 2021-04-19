@@ -16,7 +16,7 @@
 
 // static defns
 
-#define EV_LIM 16
+#define EV_LIM 64
 
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
@@ -3076,6 +3076,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_unfullscreen(LiVESWindow *windo
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_maximize(LiVESWindow *window) {
 #ifdef GUI_GTK
   gtk_window_maximize(window);
+  //lives_widget_process_updates(LIVES_WIDGET(window));
   return TRUE;
 #endif
   return FALSE;
@@ -4714,8 +4715,8 @@ static LiVESWidget *make_ttips_image_for(LiVESWidget *widget, const char *text) 
   if (ttips_image) {
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (widget_opts.apply_theme) {
-      set_css_value_direct(ttips_image, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "0.75");
-      set_css_value_direct(ttips_image, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+      //set_css_value_direct(ttips_image, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "0.85");
+      set_css_value_direct(ttips_image, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.75");
     }
 #endif
     lives_widget_set_no_show_all(ttips_image, TRUE);
@@ -9556,6 +9557,7 @@ LiVESToolItem *lives_standard_menu_tool_button_new(LiVESWidget * icon, const cha
       list = list->next;
     }
     lives_list_free(children);
+    set_css_value_direct(LIVES_WIDGET(toolitem), LIVES_WIDGET_STATE_NORMAL, "box *", "min-height", "0px");
   }
 #endif
   return toolitem;
@@ -11673,11 +11675,10 @@ boolean lives_window_center(LiVESWindow * window) {
     height = lives_widget_get_allocation_height(LIVES_WIDGET(window));
 
     get_border_size(LIVES_WIDGET(window), &bx, &by);
-    width += bx;
-    height += by;
+    width += abs(bx);
+    height += abs(by);
 
     xcen = mainw->mgeom[widget_opts.monitor].x + ((mainw->mgeom[widget_opts.monitor].width - width) >> 1);
-
     ycen = mainw->mgeom[widget_opts.monitor].y + ((mainw->mgeom[widget_opts.monitor].height - height) >> 1);
 
     lives_window_move(LIVES_WINDOW(window), xcen, ycen);
@@ -12966,7 +12967,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_get_inner_size(LiVESWindow * wi
   gdk_window_get_frame_extents(lives_widget_get_xwindow(LIVES_WIDGET(win)), &rect);
   //gdk_window_get_origin(lives_widget_get_xwindow(LIVES_WIDGET(win)), &wx, &wy);
   get_border_size(LIVES_WIDGET(win), &wx, &wy);
-  if (x) *x = mainw->mgeom[widget_opts.monitor].width - (wx - rect.x) * 2;
+  if (x) *x = mainw->mgeom[widget_opts.monitor].width - (abs(wx) - rect.x) * 2;
   if (y) *y = mainw->mgeom[widget_opts.monitor].height;
   return TRUE;
 #endif
@@ -13065,6 +13066,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_hseparator_new(void) {
       lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     }
     lives_widget_set_fg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    set_css_value_direct(LIVES_WIDGET(hseparator), LIVES_WIDGET_STATE_NORMAL, "", "min-height", "4px");
   }
   if (LIVES_SHOULD_EXPAND_HEIGHT)
     lives_widget_set_margin_top(hseparator, widget_opts.packing_height);

@@ -504,6 +504,14 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
   }
 
+  if (transient) {
+    //// NONE of this works....there seems to be no way at all to prevent dialogs
+    // from stealing focus
+    //
+    gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
+    gdk_window_show_unraised(lives_widget_get_xwindow(dialog));
+  }
+
   if (okbutton && mainw && mainw->iochan) {
     lives_button_grab_default_special(okbutton);
     lives_widget_grab_focus(okbutton);
@@ -520,10 +528,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
   if (!transient) {
     pop_to_front(dialog, NULL);
-  } else {
-    gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
-    lives_widget_show_all(dialog);
-    gdk_window_show_unraised(lives_widget_get_xwindow(dialog));
   }
 
   if (cb_key) extra_cb(dialog, cb_key);

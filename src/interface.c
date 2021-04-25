@@ -222,7 +222,6 @@ double lives_ce_update_timeline(int frame, double x) {
   if (!CURRENT_CLIP_IS_VALID) {
     if (!prefs->hide_framebar) {
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), "");
-      lives_widget_queue_draw_if_visible(mainw->framecounter);
     }
     clear_tbar_bgs(0, 0, 0, 0, 0);
     show_playbar_labels(-1);
@@ -259,7 +258,6 @@ double lives_ce_update_timeline(int frame, double x) {
     else framecount = lives_strdup_printf("%9d", frame);
     lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
     lives_freep((void **)&framecount);
-    //lives_widget_queue_draw_if_visible(mainw->framecounter);
   }
 
   if (!LIVES_IS_PLAYING && mainw->play_window && cfile->is_loaded && !mainw->multitrack) {
@@ -4434,7 +4432,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
         lives_free(oldname);
       } else gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), "");
       if (diss->old_entry) {
-        gtk_widget_hide(diss->old_entry);
+        lives_widget_hide(diss->old_entry);
 
         hbox = lives_hbox_new(FALSE, 0);
         widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
@@ -7760,10 +7758,7 @@ boolean msg_area_config(LiVESWidget * widget) {
 #ifdef DEBUG_OVERFLOW
       g_print("MOVE to %d X %d : %d %d\n", posx, posy, bx, by);
 #endif
-      gdk_window_move_resize(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET), posx - bx, posy - by, w, h);
-
-      /* lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx - bx, posy - by); */
-      /* lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h); */
+      lives_window_move_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx - bx, posy - by, w, h);
 
       gui_posx = posx;
       gui_posy = posy;

@@ -13151,7 +13151,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     /* } */
 
     // this will properly free() in_pixel_data
-    weed_layer_free(old_layer);
+    weed_layer_unref(old_layer);
     lives_free(out_pixel_data);
     lives_free(orowstrides);
     lives_free(irowstrides);

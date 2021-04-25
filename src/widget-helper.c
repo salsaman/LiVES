@@ -16,7 +16,7 @@
 
 // static defns
 
-#define EV_LIM 64
+#define EV_LIM 256
 
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
@@ -33,7 +33,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
                              const char *detail, const char *value);
 #endif
 
-#define NSLEEP_TIME 5000
+#define NSLEEP_TIME 2500
 
 #define IS_GUI_THREAD (pthread_self() == capable->gui_thread)
 
@@ -1061,9 +1061,9 @@ LIVES_LOCAL_INLINE boolean sigdata_check_alarm(lives_sigdata_t *sigdata) {
 //     this generally is not an issue since fg tasks should only consist of simple graphical updates
 //
 //   some gui functions when called in a bg thread are automatically rerouted to the fg:-
-//   g_main_context_iteration, gtk_dialog_run, gtk_widget_show_all, gtk_widget_destroy, (and gtk_entry_set_text - this may have been a bug)
+//   g_main_context_iteration, gtk_dialog_run, gtk_widget_show_all, gtk_widget_destroy,
 //   seem to be the main offenders, as well as anything to do with gkt_file_chooser. Any other "problematic" functions can
-//   be handled in this fashion.
+//   be handled in this fashion (e.g gtk_widget_show_now(), although that has not displayed any problems thus far.
 //
 //   other gtk functions appear to be fine - which is just as well as it would be a laborious task to ensure that every single widget function
 //   is fed to the fg thread - however some threads are particularly sensitive to graphical updates, for example long running threads that
@@ -1145,6 +1145,7 @@ reloop:
         // some handling that needed to be added to prevent multiple idlefuncs
         if (!lpt_recurse) {
           //g_print("gov3\n");
+          gov_will_run = gov_running = FALSE;
           return FALSE;
         } else {
           lpt_recurse = FALSE;
@@ -1160,6 +1161,7 @@ reloop:
 
     // some other handling for timers from trial and error
     if (timer_running) {
+      gov_will_run = gov_running = FALSE;
       mainw->clutch = FALSE;
       //g_print("gov5\n");
       return FALSE;
@@ -1734,12 +1736,21 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all_from_bg(LiVESWidget *w
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget *widget) {
+WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_show_now(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_show_now(widget);
   return TRUE;
 #endif
   return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget *widget) {
+  // run in main thread as it seems to give a smoother result
+  boolean ret;
+  main_thread_execute((lives_funcptr_t)_lives_widget_show_now, WEED_SEED_BOOLEAN, &ret, "v", widget);
+  return ret;
+  //return lives_widget_show_all(widget);
 }
 
 
@@ -2000,7 +2011,7 @@ void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
   }
   lpttorun = lpt;
   lpt_retval = (volatile void *)retval;
-  if (!gov_running) {
+  if (!gov_running && !gov_will_run) {
     lives_idle_priority(governor_loop, NULL);
   } else {
     waitgov = TRUE;
@@ -2993,6 +3004,15 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_move(LiVESWindow *window, int x
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_move_resize(LiVESWindow *window, int x, int y, int w, int h) {
+#ifdef GUI_GTK
+  gdk_window_move_resize(lives_widget_get_xwindow(LIVES_WIDGET(window)), x, y, w, h);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_position(LiVESWidget *widget, int *x, int *y) {
 #ifdef GUI_GTK
   GdkWindow *window = lives_widget_get_xwindow(widget);
@@ -3715,7 +3735,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_expander_new(const char *label) {
   if (!widget_opts.mnemonic_label) expander = gtk_expander_new(label);
   else expander = gtk_expander_new_with_mnemonic(label);
 #if GTK_CHECK_VERSION(3, 2, 0)
-  gtk_expander_set_resize_toplevel(GTK_EXPANDER(expander), TRUE);
+  if (LIVES_SHOULD_EXPAND)
+    gtk_expander_set_resize_toplevel(GTK_EXPANDER(expander), TRUE);
 #endif
 #endif
   return expander;
@@ -6348,19 +6369,6 @@ boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean _lives_entry_set_text(LiVESEntry *entry, const char *text) {
-  return lives_entry_set_text(entry, text);
-}
-
-
-/* boolean xlives_entry_set_text(LiVESEntry *entry, const char *text) { */
-/*   boolean ret; */
-/*   main_thread_execute((lives_funcptr_t)_lives_entry_set_text, WEED_SEED_BOOLEAN, &ret, "vs", */
-/*                       entry, text); */
-/*   return ret; */
-/* } */
-
-
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_width_chars(LiVESEntry *entry, int nchars) {
   // display length
 #ifdef GUI_GTK
@@ -8685,6 +8693,18 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_header_bar_new(LiVESWind
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE
+boolean lives_header_bar_pack_start(LiVESHeaderBar * hdrbar, LiVESWidget * w) {
+#ifdef GUI_GTK
+#if LIVES_HAS_HEADER_BAR_WIDGET
+  gtk_header_bar_pack_start(GTK_HEADER_BAR(hdrbar), w);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_hpaned_new(void) {
   LiVESWidget *hpaned;
 #ifdef GUI_GTK
@@ -10047,7 +10067,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
   if (tooltip) img_tips = lives_widget_set_tooltip_text(entry, tooltip);
 
-  if (txt) _lives_entry_set_text(LIVES_ENTRY(entry), txt);
+  if (txt) lives_entry_set_text(LIVES_ENTRY(entry), txt);
 
   if (dispwidth != -1) lives_entry_set_width_chars(LIVES_ENTRY(entry), dispwidth);
   else {
@@ -13035,7 +13055,7 @@ boolean get_border_size(LiVESWidget * win, int *bx, int *by) {
 
 //   Set active string to the combo box
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_active_string(LiVESCombo * combo, const char *active_str) {
-  return _lives_entry_set_text(LIVES_ENTRY(lives_bin_get_child(LIVES_BIN(combo))), active_str);
+  return lives_entry_set_text(LIVES_ENTRY(lives_bin_get_child(LIVES_BIN(combo))), active_str);
 }
 
 

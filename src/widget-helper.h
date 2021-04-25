@@ -522,6 +522,7 @@ boolean lives_window_move(LiVESWindow *, int x, int y);
 boolean lives_window_get_position(LiVESWindow *, int *x, int *y);
 boolean lives_window_set_position(LiVESWindow *, LiVESWindowPosition pos);
 boolean lives_window_resize(LiVESWindow *, int width, int height);
+boolean lives_window_move_resize(LiVESWindow *, int x, int y, int w, int h);
 boolean lives_window_present(LiVESWindow *);
 boolean lives_window_fullscreen(LiVESWindow *);
 boolean lives_window_unfullscreen(LiVESWindow *);
@@ -574,6 +575,7 @@ LiVESWidget *lives_vscale_new(LiVESAdjustment *);
 
 LiVESWidget *lives_standard_header_bar_new(LiVESWindow *toplevel);
 boolean lives_header_bar_set_title(LiVESHeaderBar *, const char *title);
+boolean lives_header_bar_pack_start(LiVESHeaderBar *, LiVESWidget *);
 
 LiVESWidget *lives_hpaned_new(void);
 LiVESWidget *lives_vpaned_new(void);

@@ -6420,7 +6420,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_start(LIVES_BOX(hbox), mt->timeline_table_header, TRUE, TRUE, 0);
   lives_box_pack_end(LIVES_BOX(hbox), scrollbar, FALSE, FALSE, widget_opts.packing_width);
 #if GTK_CHECK_VERSION(3, 8, 0)
-  gtk_widget_set_opacity(scrollbar, 0.);
+  lives_widget_set_opacity(scrollbar, 0.);
 #endif
 
   mt->tl_hbox = lives_hbox_new(FALSE, 0);
@@ -6941,7 +6941,7 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
   if (mainw->hdrbar) {
     lives_widget_object_ref(mt->menubar);
     lives_widget_unparent(mt->menubar);
-    gtk_header_bar_pack_start(LIVES_HEADER_BAR(mainw->hdrbar), mainw->menubar);
+    lives_header_bar_pack_start(LIVES_HEADER_BAR(mainw->hdrbar), mainw->menubar);
   }
 
   lives_signal_handler_block(mainw->loop_continue, mainw->loop_cont_func);

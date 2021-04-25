@@ -2209,7 +2209,6 @@ static void post_playback(void) {
       lives_ce_update_timeline(0, cfile->real_pointer_time);
       mainw->ptrtime = cfile->real_pointer_time;
       lives_widget_queue_draw(mainw->eventbox2);
-      lives_widget_queue_draw_if_visible(mainw->framecounter);
     }
   }
 
@@ -2988,7 +2987,7 @@ void play_file(void) {
       mainw->jackd_read->in_use = FALSE;
     }
 
-    if (mainw->jackd && mainw->jackd_read && AUD_SRC_EXTERNAL)
+    if (mainw->jackd)
       jack_conx_exclude(mainw->jackd_read, mainw->jackd, FALSE);
 
     // send jack transport stop

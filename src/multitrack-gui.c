@@ -3406,7 +3406,7 @@ LiVESWidget *amixer_add_channel_slider(lives_mt * mt, int i) {
   lives_box_pack_start(LIVES_BOX(vbox), amixer->ch_sliders[i], TRUE, TRUE, widget_opts.packing_height * 5);
 
   spinbutton = lives_standard_spin_button_new(NULL, 0.5, 0., 4., 0.01, 0.01, 3, LIVES_BOX(vbox), NULL);
-  gtk_spin_button_set_adjustment(LIVES_SPIN_BUTTON(spinbutton), LIVES_ADJUSTMENT(adj));
+  lives_spin_button_set_adjustment(LIVES_SPIN_BUTTON(spinbutton), LIVES_ADJUSTMENT(adj));
 
   amixer->nchans++;
 

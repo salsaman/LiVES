@@ -3893,7 +3893,7 @@ boolean resize_message_area(livespointer data) {
     isfirst = FALSE;
   }
   resize(1.);
-  lives_widget_queue_draw(mainw->LiVES);
+  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
   return FALSE;
 }
 

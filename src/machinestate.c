@@ -2124,16 +2124,12 @@ static boolean rec_desk_done(livespointer data) {
     THREADVAR(intention) = LIVES_INTENTION_RECORD;
 
     on_resample_vid_ok(NULL, NULL);
-    break_me("done");
+
     com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend, cfile->handle);
     lives_system(com, FALSE);
     lives_free(com);
     cfile->end = cfile->frames;
-    if (cfile->event_list) {
-      event_list_free(cfile->event_list);
-      cfile->event_list = NULL;
-    }
-    cfile->pb_fps = cfile->fps;
+
     switch_clip(1, mainw->current_file, TRUE);
 
     lives_widget_set_sensitive(mainw->desk_rec, TRUE);
@@ -2171,7 +2167,7 @@ void rec_desk(void *args) {
   int64_t frames[1];
   double cx, cy;
   char *imname;
-  lives_alarm_t alarm_handle;
+  lives_alarm_t alarm_handle, fps_alarm = LIVES_NO_ALARM;
 
   int x = 0, y = 0, frameno = 0;
   int w = GUI_SCREEN_WIDTH, h = GUI_SCREEN_HEIGHT;
@@ -2205,22 +2201,42 @@ void rec_desk(void *args) {
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->rec_time);
 
   while (1) {
-    if (saver_thread) {
-      lives_thread_join(*saver_thread, NULL);
-      if (saveargs->error) break;
-    }
-    else saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
-
     if ((recargs->rec_time && !lives_alarm_check(alarm_handle))
 	|| (lpt && lives_proc_thread_get_cancelled(lpt)))
       break;
 
+    fps_alarm = lives_alarm_set(TICKS_PER_SECOND_DBL / recargs->fps);
+
+    if (saver_thread) {
+      lives_thread_join(*saver_thread, NULL);
+      if (saveargs->error) break;
+      if ((recargs->rec_time && !lives_alarm_check(alarm_handle))
+	  || (lpt && lives_proc_thread_get_cancelled(lpt)))
+	break;
+    }
+    else saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
+
     tc = lives_get_current_ticks();
     layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+
+#ifdef FEEDBACK
+    lives_widget_set_opacity(LIVES_MAIN_WINDOW_WIDGET, 0.);
+    if (mainw->play_window) lives_widget_set_opacity(mainw->play_window, 0.);
+    lives_widget_context_update();
+#endif
+
     pixbuf = gdk_pixbuf_get_from_window (capable->wm_caps.root_window, x, y, w, h);
     if (!pixbuf) break;
-
     if (!pixbuf_to_layer(layer, pixbuf)) lives_widget_object_unref(pixbuf);
+
+#ifdef FEEDBACK
+    if (LIVES_IS_PLAYING) {
+      weed_layer_ref(layer);
+      mainw->ext_layer = layer;
+    }
+    if (mainw->play_window) lives_widget_set_opacity(mainw->play_window, 1.);
+    lives_widget_context_update();
+#endif
 
     cursor = gdk_window_get_cursor(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET));
     if (cursor) csurf = gdk_cursor_get_surface(cursor, &cx, &cy);
@@ -2244,7 +2260,7 @@ void rec_desk(void *args) {
     frames[0] = frameno;
     sfile->event_list = append_frame_event(sfile->event_list, tc, 1, clips, frames);
 
-    if (saveargs->layer) weed_layer_free(saveargs->layer);
+    if (saveargs->layer) weed_layer_unref(saveargs->layer);
     saveargs->layer = layer;
     if (saveargs->fname) lives_free(saveargs->fname);
     saveargs->fname = imname;
@@ -2252,14 +2268,24 @@ void rec_desk(void *args) {
     lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
 
     // TODO - check for timeout / cancel here too
-    lives_nanosleep(LIVES_WAIT_A_SEC / recargs->fps);
+    lives_nanosleep_until_zero(lives_alarm_check(fps_alarm) && (!recargs->rec_time || lives_alarm_check(alarm_handle))
+			       && (!lpt || !lives_proc_thread_get_cancelled(lpt)));
   }
+  if (fps_alarm != LIVES_NO_ALARM) lives_alarm_clear(fps_alarm);
   lives_alarm_clear(alarm_handle);
+
+#ifdef FEEDBACK
+  lives_widget_set_opacity(LIVES_MAIN_WINDOW_WIDGET, 1.);
+  if (mainw->play_window) lives_widget_set_opacity(mainw->play_window, 1.);
+  lives_widget_context_update();
+
+  mainw->ext_layer = NULL;
+#endif
 
   if (saver_thread) lives_free(saver_thread);
 
   if (saveargs) {
-    if (saveargs->layer) weed_layer_free(saveargs->layer);
+    if (saveargs->layer) weed_layer_unref(saveargs->layer);
     if (saveargs->fname) lives_free(saveargs->fname);
     lives_free(saveargs);
   }

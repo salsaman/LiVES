@@ -6425,7 +6425,7 @@ render_details *create_render_details(int type) {
   lives_button_box_make_first(LIVES_BUTTON_BOX(daa), widget_opts.last_container);
 
   rdet->always_hbox = widget_opts.last_container;
-  if (type == 1 || type == 2) gtk_widget_set_no_show_all(rdet->always_hbox, TRUE);
+  if (type == 1 || type == 2) lives_widget_set_no_show_all(rdet->always_hbox, TRUE);
 
   lives_free(tmp); lives_free(tmp2);
 
@@ -6460,7 +6460,7 @@ render_details *create_render_details(int type) {
     }
   }
 
-  if (type == 1) gtk_widget_set_no_show_all(frame, TRUE);
+  if (type == 1) lives_widget_set_no_show_all(frame, TRUE);
 
   if (type == 2) {
     if (mainw->event_list && weed_plant_has_leaf(mainw->event_list, WEED_LEAF_FPS)) {

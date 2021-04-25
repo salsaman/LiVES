@@ -553,7 +553,7 @@ void create_LiVES(void) {
   }
 
   mainw->menubar = lives_menu_bar_new();
-  if (mainw->hdrbar) gtk_header_bar_pack_start(LIVES_HEADER_BAR(mainw->hdrbar), mainw->menubar);
+  if (mainw->hdrbar) lives_header_bar_pack_start(LIVES_HEADER_BAR(mainw->hdrbar), mainw->menubar);
   else lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
 
   menuitem = lives_standard_menu_item_new_with_label(_("_File"));
@@ -3083,7 +3083,7 @@ void create_LiVES(void) {
 
 void show_lives(void) {
   lives_widget_show_all(mainw->top_vbox);
-  gtk_window_set_position(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), GTK_WIN_POS_CENTER_ALWAYS);
+  lives_window_set_position(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIN_POS_CENTER_ALWAYS);
 
   if (!prefs->show_gui && prefs->startup_interface == STARTUP_CE) {
     lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET); //this calls the config_event()

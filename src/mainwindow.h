@@ -1038,6 +1038,8 @@ typedef struct {
   LiVESWidget *play_window;
   weed_plant_t *frame_layer;
 
+  weed_plant_t *ext_layer; // can feed a layer to play
+
   lives_painter_surface_t *play_surface;
   lives_painter_surface_t *pwin_surface;
 

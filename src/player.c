@@ -819,46 +819,51 @@ boolean load_frame_image(frames_t frame) {
               }
             }
           } else {
-            boolean got_preload = FALSE;
-            if (mainw->frame_layer_preload && mainw->pred_clip == mainw->playing_file
-                && mainw->pred_frame != 0 && is_layer_ready(mainw->frame_layer_preload)) {
-              frames_t delta = (labs(mainw->pred_frame) - mainw->actual_frame) * sig(cfile->pb_fps);
-              /* g_print("THANKS for %p,! %d %ld should be %d, right  --  %d",
-                // mainw->frame_layer_preload, mainw->pred_clip, */
-              /*         mainw->pred_frame, mainw->actual_frame, delta); */
-              if (delta <= 0 || (mainw->pred_frame < 0 && delta > 0)) {
-                check_layer_ready(mainw->frame_layer_preload);
-                if (weed_layer_get_pixel_data(mainw->frame_layer_preload)) {
-                  //g_print("YAH !\n");
-                  got_preload = TRUE;
-                  if (mainw->pred_frame < 0) {
-                    if (mainw->frame_layer) weed_layer_free(mainw->frame_layer);
-                    mainw->frame_layer = weed_layer_copy(NULL, mainw->frame_layer_preload);
-                    weed_layer_ref(mainw->frame_layer);
-                  } else {
-                    weed_layer_copy(mainw->frame_layer, mainw->frame_layer_preload);
-                    weed_layer_nullify_pixel_data(mainw->frame_layer_preload);
+            weed_layer_ref(mainw->ext_layer);
+            if (mainw->ext_layer) {
+              mainw->frame_layer = weed_layer_copy(NULL, mainw->ext_layer);
+              weed_layer_unref(mainw->ext_layer);
+            } else {
+              boolean got_preload = FALSE;
+              if (mainw->frame_layer_preload && mainw->pred_clip == mainw->playing_file
+                  && mainw->pred_frame != 0 && is_layer_ready(mainw->frame_layer_preload)) {
+                frames_t delta = (labs(mainw->pred_frame) - mainw->actual_frame) * sig(cfile->pb_fps);
+                /* g_print("THANKS for %p,! %d %ld should be %d, right  --  %d",
+                            // mainw->frame_layer_preload, mainw->pred_clip, */
+                /*         mainw->pred_frame, mainw->actual_frame, delta); */
+                if (delta <= 0 || (mainw->pred_frame < 0 && delta > 0)) {
+                  check_layer_ready(mainw->frame_layer_preload);
+                  if (weed_layer_get_pixel_data(mainw->frame_layer_preload)) {
+                    //g_print("YAH !\n");
+                    got_preload = TRUE;
+                    if (mainw->pred_frame < 0) {
+                      if (mainw->frame_layer) weed_layer_free(mainw->frame_layer);
+                      mainw->frame_layer = weed_layer_copy(NULL, mainw->frame_layer_preload);
+                      weed_layer_ref(mainw->frame_layer);
+                    } else {
+                      weed_layer_copy(mainw->frame_layer, mainw->frame_layer_preload);
+                      weed_layer_nullify_pixel_data(mainw->frame_layer_preload);
+                    }
                   }
                 }
+                if (prefs->show_dev_opts) {
+                  if (delta < 0) g_printerr("cached frame    TOO LATE, got %ld, wanted %d !!!\n",
+                                              labs(mainw->pred_frame), mainw->actual_frame);
+                }
+                if (delta > 0) g_print("    waiting...\n");
               }
-              if (prefs->show_dev_opts) {
-                if (delta < 0) g_printerr("cached frame    TOO LATE, got %ld, wanted %d !!!\n",
-                                            labs(mainw->pred_frame), mainw->actual_frame);
+              if (!got_preload) {
+                pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
+                //pull_frame(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks);
               }
-              if (delta > 0) g_print("    waiting...\n");
-            }
-            if (!got_preload) {
-              pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
-              //pull_frame(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks);
-            }
-            if ((mainw->rte != 0 || (mainw->is_rendering && !mainw->event_list))
-                && (mainw->current_file != mainw->scrap_file || mainw->multitrack)) {
-              /// will set mainw->blend_layer
-              get_blend_layer((weed_timecode_t)mainw->currticks);
+              if ((mainw->rte != 0 || (mainw->is_rendering && !mainw->event_list))
+                  && (mainw->current_file != mainw->scrap_file || mainw->multitrack)) {
+                /// will set mainw->blend_layer
+                get_blend_layer((weed_timecode_t)mainw->currticks);
+              }
             }
           }
         }
-
         if (prefs->dev_show_timing)
           g_printerr("pull_frame done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         if ((!cfile->next_event && mainw->is_rendering && !mainw->switch_during_pb &&
@@ -976,15 +981,16 @@ boolean load_frame_image(frames_t frame) {
         && is_layer_ready(mainw->frame_layer)) {
       // if we are pulling the frame from an image and playing back normally, check the size is what it should be
       // this used to cause problems with some effects, but that may no longer be the case with the layers model
-      int wl = weed_layer_get_width(mainw->frame_layer) *
-               weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer));
+      int wl = weed_layer_get_width_pixels(mainw->frame_layer);
       int hl = weed_layer_get_height(mainw->frame_layer);
-      if ((wl != cfile->hsize && wl != mainw->pwidth)
-          || (hl != cfile->vsize && hl != mainw->pheight)) {
-        break_me("bad frame size");
-        mainw->size_warn = mainw->current_file;
-        size_ok = FALSE;
-      }
+      /* if ((wl != cfile->hsize && wl != mainw->pwidth) */
+      /*     || (hl != cfile->vsize && hl != mainw->pheight)) { */
+      /*   break_me("bad frame size"); */
+      /*   mainw->size_warn = mainw->current_file; */
+      /*   size_ok = FALSE; */
+      /* } */
+      cfile->hsize = wl;
+      cfile->vsize = hl;
     }
 
     if (size_ok) {
@@ -1581,7 +1587,7 @@ boolean load_frame_image(frames_t frame) {
       lives_widget_queue_draw(mainw->play_image);
     }
 
-    if (pixbuf) lives_widget_object_unref(pixbuf);
+    //if (pixbuf) lives_widget_object_unref(pixbuf);
     success = TRUE;
     if (prefs->dev_show_timing)
       g_print("paint @ %f\n\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -1599,7 +1605,6 @@ boolean load_frame_image(frames_t frame) {
 
     if (mainw->rec_vid_frames == -1) {
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), (tmp = lives_strdup_printf("%9d", frame)));
-      lives_widget_queue_draw(mainw->framecounter);
     } else {
       if (frame > mainw->rec_vid_frames) {
         mainw->cancelled = CANCEL_KEEP;
@@ -2282,8 +2287,7 @@ int process_one(boolean visible) {
 
 #ifdef ENABLE_JACK
   if (init_timers) {
-    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd
-        && mainw->jackd_read && AUD_SRC_EXTERNAL)
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd)
       jack_conx_exclude(mainw->jackd_read, mainw->jackd, TRUE);
 #ifdef ENABLE_JACK_TRANSPORT
     if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)

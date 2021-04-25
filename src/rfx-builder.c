@@ -3495,7 +3495,7 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
         rfxbuilder->params[i].def = lives_malloc(sizint);
         set_int_param(rfxbuilder->params[i].def, atoi(array[3]));
         if (len > 4) {
-          rfxbuilder->params[i].list = array_to_string_list(array, 3, len);
+          rfxbuilder->params[i].list = array_to_string_list((const char **)array, 3, len);
         } else {
           rfxbuilder->params[i].list = NULL;
           set_int_param(rfxbuilder->params[i].def, 0);
@@ -4609,8 +4609,8 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   }
 
   if (rfx_slot_count) {
-    for (rfx = mainw->rendered_fx[(plugin_idx = 1)]; plugin_idx <= rfx_slot_count;
-	 rfx = mainw->rendered_fx[++plugin_idx]) {
+    for (plugin_idx = 1; plugin_idx <= rfx_slot_count; plugin_idx++) {
+      rfx = mainw->rendered_fx[plugin_idx];
       if (status == RFX_STATUS_TEST && rfx->status == RFX_STATUS_BUILTIN) continue;
 
       if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);

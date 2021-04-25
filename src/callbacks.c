@@ -131,8 +131,8 @@ void lives_exit(int signum) {
     while (!pthread_mutex_unlock(&mainw->abuf_mutex));
 
     // non-recursive
-    pthread_mutex_trylock(&mainw->abuf_frame_mutex);
-    pthread_mutex_unlock(&mainw->abuf_frame_mutex);
+    pthread_mutex_trylock(&mainw->abuf_aux_frame_mutex);
+    pthread_mutex_unlock(&mainw->abuf_aux_frame_mutex);
     pthread_mutex_trylock(&mainw->fxd_active_mutex);
     pthread_mutex_unlock(&mainw->fxd_active_mutex);
     pthread_mutex_trylock(&mainw->event_list_mutex);
@@ -4754,7 +4754,7 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 #ifdef ENABLE_JACK
           if (prefs->audio_player == AUD_PLAYER_JACK) {
             char *lives_header = lives_build_filename(prefs->workdir, mainw->files[mainw->ascrap_file]->handle,
-                                 LIVES_CLIP_HEADER, NULL);
+                                 LIVES_ACLIP_HEADER, NULL);
             mainw->clip_header = fopen(lives_header, "w"); // speed up clip header writes
             lives_free(lives_header);
 
@@ -4775,7 +4775,7 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 #ifdef HAVE_PULSE_AUDIO
           if (prefs->audio_player == AUD_PLAYER_PULSE) {
             char *lives_header = lives_build_filename(prefs->workdir, mainw->files[mainw->ascrap_file]->handle,
-                                 LIVES_CLIP_HEADER, NULL);
+                                 LIVES_ACLIP_HEADER, NULL);
             mainw->clip_header = fopen(lives_header, "w"); // speed up clip header writes
             lives_free(lives_header);
 
@@ -8366,6 +8366,9 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         }
       } else {
         // switch from separate window during playback
+#ifdef ENABLE_JACK
+        jack_interop_cleanup();
+#endif
         if (mainw->ext_playback) {
 #ifndef IS_MINGW
           vid_playback_plugin_exit();

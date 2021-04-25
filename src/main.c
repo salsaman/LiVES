@@ -925,7 +925,7 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->instance_ref_mutex, &mattr);
 
   // non-recursive
-  pthread_mutex_init(&mainw->abuf_frame_mutex, NULL);
+  pthread_mutex_init(&mainw->abuf_aux_frame_mutex, NULL);
   pthread_mutex_init(&mainw->fxd_active_mutex, NULL);
   pthread_mutex_init(&mainw->event_list_mutex, NULL);
   pthread_mutex_init(&mainw->clip_list_mutex, NULL);
@@ -1132,6 +1132,13 @@ static boolean pre_init(void) {
 
   get_string_pref(PREF_JACK_ACSERVER, prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX);
   get_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX);
+
+  get_string_prefd(PREF_JACK_INPORT_CLIENT, buff, jack_port_name_size(), JACK_SYSTEM_CLIENT);
+  prefs->jack_inport_client = lives_strdup(buff);
+  get_string_prefd(PREF_JACK_OUTPORT_CLIENT, buff, jack_port_name_size(), JACK_SYSTEM_CLIENT);
+  prefs->jack_outport_client = lives_strdup(buff);
+  get_string_prefd(PREF_JACK_AUXPORT_CLIENT, buff, jack_port_name_size(), JACK_SYSTEM_CLIENT);
+  prefs->jack_auxport_client = lives_strdup(buff);
 
   if (!ign_opts.ign_jackcfg) {
     get_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg, PATH_MAX);
@@ -1412,6 +1419,7 @@ static boolean lives_init(_ign_opts *ign_opts) {
   lives_proc_thread_t info;
   ticks_t timeout;
   int orig_err = 0;
+  boolean jack_read_start = FALSE;
 #endif
   int i;
 
@@ -2080,6 +2088,9 @@ static boolean lives_init(_ign_opts *ign_opts) {
 
     future_prefs->audio_opts = prefs->audio_opts = get_int_prefd(PREF_AUDIO_OPTS, 3);
 
+    prefs->audio_opts |= AUDIO_OPTS_EXT_FX;
+    prefs->audio_opts &= ~(AUDIO_OPTS_AUX_RECORD | AUDIO_OPTS_AUX_PLAY);
+
     array = lives_strsplit(DEF_AUTOTRANS, "|", 3);
     mainw->def_trans_idx = weed_filter_highest_version(array[0], array[1], array[2], NULL);
     if (mainw->def_trans_idx == - 1) {
@@ -2146,11 +2157,11 @@ post_audio_choice:
       }
     }
 
+jack_tcl_try:
     if (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
       // start jack transport polling
       splash_msg(_("Connecting to jack transport server..."),
                  SPLASH_LEVEL_LOAD_APLAYER);
-jack_tcl_try:
       success = TRUE;
       timeout = LIVES_SHORTEST_TIMEOUT;
       if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
@@ -2199,8 +2210,6 @@ rest2:
             goto jack_tcl_try;
           }
           if (prefs->startup_phase) goto audio_choice;
-          future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
-          set_int_pref(PREF_JACK_OPTS, 0);
         } else {
 rest1:
           orig_err = 0;
@@ -2210,6 +2219,9 @@ rest1:
           }
           if (prefs->startup_phase) goto audio_choice;
         }
+        // disable transport for now
+        future_prefs->jack_opts &= ~JACK_OPTS_ENABLE_TCLIENT;
+        set_int_pref(PREF_JACK_OPTS, future_prefs->jack_opts);
         lives_exit(0);
       }
       if (ign_opts->ign_jackopts) set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
@@ -2259,6 +2271,7 @@ jack_acl_try:
         } else success = lives_proc_thread_join_boolean(info);
 
         if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
+          // dont clear TEST till here
           if (prefs->startup_phase) {
             if (success) {
               jack_audio_read_init();
@@ -2270,10 +2283,10 @@ jack_acl_try:
               lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
               lives_widget_destroy(textwindow->dialog);
               lives_free(textwindow);
+              textwindow = NULL;
               lives_widget_context_update();
             }
-            future_prefs->jack_opts &= ~JACK_INFO_TEST_SETUP;
-            if (success) goto jack_acl_try;
+            if (success) prompt_for_jack_ports(TRUE);
           } else {
             if (textwindow) {
               lives_widget_set_sensitive(textwindow->button, TRUE);
@@ -2281,18 +2294,19 @@ jack_acl_try:
               lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
               lives_widget_destroy(textwindow->dialog);
               lives_free(textwindow);
+              textwindow = NULL;
               if (orig_err) success = FALSE;
             }
           }
-        }
-
-        if (mainw->jackd) {
-          if (!mainw->jackd->sample_out_rate) success = FALSE;
-          else {
-            mainw->jackd->whentostop = &mainw->whentostop;
-            mainw->jackd->cancelled = &mainw->cancelled;
-            mainw->jackd->in_use = FALSE;
-            success = jack_write_client_activate(mainw->jackd);
+        } else {
+          if (mainw->jackd) {
+            if (!mainw->jackd->sample_out_rate) success = FALSE;
+            else {
+              mainw->jackd->whentostop = &mainw->whentostop;
+              mainw->jackd->cancelled = &mainw->cancelled;
+              mainw->jackd->in_use = FALSE;
+              success = jack_write_client_activate(mainw->jackd);
+            }
           }
         }
 
@@ -2355,6 +2369,7 @@ rest3:
           lives_snprintf(future_prefs->jack_tserver_sname, PATH_MAX, "%s", prefs->jack_tserver_sname);
           future_prefs->jack_tdriver = lives_strdup_free(future_prefs->jack_tdriver, prefs->jack_tdriver);
           future_prefs->jack_opts = prefs->jack_opts;
+          jack_read_start = TRUE;
           if (!orig_err) goto jack_acl_try;
           if (orig_err == 1) goto rest1;
           if (orig_err == 2) goto rest2;
@@ -2393,8 +2408,19 @@ rest3:
           jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
         }
 
+        if (jack_read_start) {
+          jack_create_client_reader(mainw->jackd_read);
+          jack_read_client_activate(mainw->jackd_read, FALSE);
+        }
+
         lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_j, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                   lives_cclosure_new(LIVES_GUI_CALLBACK(jack_interop_callback), (livespointer)mainw->jackd, NULL));
+
+        if (prefs->startup_phase) {
+          set_string_pref(PREF_JACK_INPORT_CLIENT, prefs->jack_inport_client);
+          set_string_pref(PREF_JACK_OUTPORT_CLIENT, prefs->jack_outport_client);
+          set_string_pref(PREF_JACK_AUXPORT_CLIENT, prefs->jack_auxport_client);
+        }
       }
 #endif
     }

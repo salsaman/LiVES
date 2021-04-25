@@ -158,15 +158,11 @@ LiVESList *get_plugin_result(const char *command, const char *delim, boolean all
   LiVESList *list = NULL;
   char buffer[65536];
 
-  //threaded_dialog_spin(0.);
-
   lives_popen(command, !mainw->is_ready && !list_plugins, buffer, 65535);
 
   if (THREADVAR(com_failed)) return NULL;
 
-  //threaded_dialog_spin(0.);
   list = buff_to_list(buffer, delim, allow_blanks, strip);
-  //threaded_dialog_spin(0.);
   return list;
 }
 
@@ -2183,25 +2179,18 @@ LiVESList *filter_encoders_by_img_ext(LiVESList * encoders, const char *img_ext)
 //////////////////////////////////////////////////////
 // decoder plugins
 
-boolean decoder_plugin_move_to_first(const char *name, uint64_t uid) {
-  LiVESList *decoder_plugin, *last_decoder_plugin = NULL;
-  lives_decoder_sys_t *dpsys;
-
-  for (decoder_plugin = capable->plugins_list[PLUGIN_TYPE_DECODER]; decoder_plugin;
-       decoder_plugin = decoder_plugin->next) {
-    dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
-    if ((uid && uid == dpsys->id->uid)
-        || (!uid && !lives_strcmp(name, dpsys->name))) {
-      if (last_decoder_plugin) {
-        last_decoder_plugin->next = decoder_plugin->next;
-        decoder_plugin->next = capable->plugins_list[PLUGIN_TYPE_DECODER];
-        capable->plugins_list[PLUGIN_TYPE_DECODER] = decoder_plugin;
-      }
-      return TRUE;
+LiVESList *move_decplug_to_first(uint64_t dec_uid, const char *decplugname) {
+  LiVESList *decoder_plugin = capable->plugins_list[PLUGIN_TYPE_DECODER];
+  for (; decoder_plugin; decoder_plugin = decoder_plugin->next) {
+    lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
+    if ((dec_uid && dpsys->id->uid == dec_uid) ||
+        (!dec_uid && !lives_strcmp(dpsys->name, decplugname))) {
+      capable->plugins_list[PLUGIN_TYPE_DECODER] =
+        lives_list_move_to_first(capable->plugins_list[PLUGIN_TYPE_DECODER], decoder_plugin);
+      return capable->plugins_list[PLUGIN_TYPE_DECODER];
     }
-    last_decoder_plugin = decoder_plugin;
   }
-  return FALSE;
+  return NULL;
 }
 
 
@@ -2472,24 +2461,18 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled,
   if (fake_cdata) {
     // if we are reloading a clip try first with the same decoder as last time,
     // which cannot be disabled
-    uint64_t dec_uid;
+    uint64_t dec_uid = 0;
+    *decplugname = 0;
     if (use_uids)
-      get_clip_value(fileno, CLIP_DETAILS_DECODER_UID, &dec_uid, 8);
+      get_clip_value(fileno, CLIP_DETAILS_DECODER_UID, &sfile->decoder_uid, 8);
     else
       get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decplugname, PATH_MAX);
 
     if ((use_uids && dec_uid) || (!use_uids && *decplugname)) {
-      LiVESList *decoder_plugin = capable->plugins_list[PLUGIN_TYPE_DECODER];
-      for (; decoder_plugin; decoder_plugin = decoder_plugin->next) {
-        lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
-        if ((use_uids && dpsys->id->uid == dec_uid) ||
-            (!use_uids && !lives_strcmp(dpsys->name, decplugname))) {
-          capable->plugins_list[PLUGIN_TYPE_DECODER] =
-            lives_list_move_to_first(capable->plugins_list[PLUGIN_TYPE_DECODER], decoder_plugin);
-          xdisabled = lives_list_remove(xdisabled, decoder_plugin);
-          use_fake_cdata = TRUE;
-          break;
-        }
+      LiVESList *decoder_plugin = move_decplug_to_first(sfile->decoder_uid, decplugname);
+      if (decoder_plugin) {
+        xdisabled = lives_list_remove(xdisabled, decoder_plugin);
+        use_fake_cdata = TRUE;
       }
     }
   }
@@ -3000,7 +2983,7 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
       cparam->def = lives_malloc(sizint);
       *(int *)cparam->def = atoi(param_array[3]);
       if (len > 4) {
-        cparam->list = array_to_string_list(param_array, 3, len);
+        cparam->list = array_to_string_list((const char **)param_array, 3, len);
       } else {
         set_int_param(cparam->def, 0);
       }
@@ -3041,27 +3024,6 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
   }
   lives_list_free_all(&parameter_list);
   //threaded_dialog_spin(0.);
-}
-
-
-LiVESList *array_to_string_list(char **array, int offset, int len) {
-  // build a LiVESList from an array.
-  int i;
-
-  char *string, *tmp;
-  LiVESList *slist = NULL;
-
-  for (i = offset + 1; i < len; i++) {
-    string = subst((tmp = L2U8(array[i])), "\\n", "\n");
-    lives_free(tmp);
-
-    // omit a last empty string
-    if (i < len - 1 || *string) {
-      slist = lives_list_append(slist, string);
-    } else lives_free(string);
-  }
-
-  return slist;
 }
 
 

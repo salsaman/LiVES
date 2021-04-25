@@ -2002,6 +2002,10 @@ finish:
             && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->rte_off_cb))) {
           weed_deinit_all(FALSE);
         }
+        if (mainw->proc_ptr->audint_cb
+            && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->audint_cb))) {
+          pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
+        }
         if (mainw->proc_ptr->notify_cb
             && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
           notify_user(mainw->proc_ptr->text);
@@ -3166,8 +3170,11 @@ boolean do_jack_no_connect_warn(boolean is_trans) {
     } else more = lives_strdup("");
 
     if (!prefsw && !prefs->startup_phase)
-      warn = lives_strdup_printf(_("<big><b>Please start the jack server before restarting LiVES%s</b></big>"),
-                                 is_trans ? "" : _(", or use the button below to redefine the server setup"));
+      warn = lives_strdup_printf(_("<big><b>Please try starting the jack server before restarting LiVES%s</b></big>"),
+                                 is_trans ? _("\nJack transport features will be disabled for now, "
+                                              "'Preferences / Jack Integration'\n"
+                                              "may be selected in order to re-enable them")
+                                 : _(", or use the button below to redefine the server setup"));
     else {
       warn = _("Please ensure the server is running before trying again");
       if (prefs->startup_phase) {
@@ -3233,6 +3240,11 @@ boolean do_jack_no_connect_warn(boolean is_trans) {
         lives_widget_destroy(dlg);
         if (resp == LIVES_RESPONSE_CANCEL) return FALSE;
         if (resp == LIVES_RESPONSE_RESET) {
+          if (is_trans) {
+            // disable transport for now
+            future_prefs->jack_opts &= ~JACK_OPTS_ENABLE_TCLIENT;
+            set_int_pref(PREF_JACK_OPTS, future_prefs->jack_opts);
+          }
           return do_jack_config(2, is_trans);
 	  // *INDENT-OFF*
 	}}}}

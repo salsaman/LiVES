@@ -253,7 +253,7 @@ double lives_ce_update_timeline(int frame, double x) {
   lives_widget_queue_draw_if_visible(mainw->hruler);
 #endif
 
-  if (prefs->show_gui && !prefs->hide_framebar && cfile->frames > 0) {
+  if (!LIVES_IS_PLAYING && prefs->show_gui && !prefs->hide_framebar && cfile->frames > 0) {
     char *framecount;
     if (cfile->frames > 0) framecount = lives_strdup_printf("%9d / %d", frame, cfile->frames);
     else framecount = lives_strdup_printf("%9d", frame);
@@ -918,6 +918,11 @@ xprocess *create_processing(const char *text) {
                                   "after processing\nso that the "
                                   "result can be viewed without them")));
     lives_free(tmp);
+  }
+
+  if (mainw->is_rendering && AUD_SRC_EXTERNAL) {
+    procw->audint_cb = lives_standard_check_button_new(_("Switch to intenal audio when finished"),
+                       FALSE, LIVES_BOX(vbox3), NULL);
   }
 
   procw->notify_cb = lives_standard_check_button_new(_("Notify when finished"),

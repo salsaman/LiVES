@@ -29,12 +29,28 @@ typedef enum {
   JACK_CLIENT_TYPE_OTHER,
 } lives_jack_client_type;
 
+typedef enum {
+  JACK_PORT_TYPE_INVALID,
+  JACK_PORT_TYPE_DEF_IN,
+  JACK_PORT_TYPE_DEF_OUT,
+  JACK_PORT_TYPE_AUX_IN,
+  JACK_PORT_TYPE_OTHER,
+} lives_jack_port_type;
+
 // should really be lives_jack_client_t - TODO
 typedef struct _lives_jack_driver_t jack_driver_t;
 
-// GUI functions
+const char *jack_get_best_client(lives_jack_port_type type, LiVESList *clients);
 
-// TODO: jack_internal_config() ???
+const char **jack_get_inports(void);
+const char **jack_get_outports(void);
+
+LiVESList *jack_get_inport_clients(void);
+LiVESList *jack_get_outport_clients(void);
+
+void jack_conx_exclude(jack_driver_t *jackd_in, jack_driver_t *jackd_out, boolean disc);
+
+// GUI functions
 
 void jack_srv_startup_config(LiVESWidget *, livespointer type_data);
 
@@ -48,6 +64,7 @@ boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt);
 
 boolean jack_interop_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod,
                               livespointer statep);
+void jack_interop_cleanup(void);
 
 // connect client or start server
 boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd);
@@ -86,9 +103,12 @@ boolean is_transport_locked(void);
 #define JACK_OPTS_TIMEBASE_MASTER	(1 << 7)    ///< full timebase master (position updates)
 
 #define JACK_OPTS_STRICT_SLAVE		(1 << 3) ///< everything must be done via transport
+#define JACK_OPTS_STRICT_MASTER		(1 << 11) ///< forcibly become master
 
 // general options
 #define JACK_OPTS_NO_READ_AUTOCON	(1 << 8)    ///< do not auto connect input ports
+/// if unset, LiVES will, during playback with external audio, remove any direct connections
+/// between its input ports and output ports. They will be restored after playback.
 
 // conflicts if both clients want to start same server and vals differ
 #define JACK_OPTS_PERM_ASERVER      	(1 << 16)     ///< leave audio srvr running even if we started
@@ -106,13 +126,14 @@ boolean is_transport_locked(void);
 #define JACK_INFO_TEMP_NAMES      	(1 << 30)     ///< -jackserver startup argument used
 #define JACK_INFO_TEMP_OPTS      	(1 << 31)     ///< -jackopts startup argument used
 
-#define JACK_MAX_OUTPUT_PORTS 10
-#define JACK_MAX_INPUT_PORTS 10
+#define JACK_MAX_PORTS 10
 
 #define ERR_PORT_NOT_FOUND 10
 
 #define JACK_DEFAULT_SERVER "JACK_DEFAULT_SERVER"
 #define JACK_DEFAULT_SERVER_NAME "default"
+
+#define JACK_SYSTEM_CLIENT "system"
 
 #define JACKD_RC_NAME "jackdrc"
 
@@ -124,36 +145,34 @@ boolean is_transport_locked(void);
 #define STMSGLEN 65536
 
 typedef struct _lives_jack_driver_t {
-  int      dev_idx;                      /**< id of this device ??? */
-  int     sample_out_rate;                   /**< samples(frames) per second */
-  volatile int     sample_in_rate;                   /**< samples(frames) per second */
-  uint64_t    num_input_channels;            /**< number of input channels(1 is mono, 2 stereo etc..) */
-  uint64_t    num_output_channels;           /**< number of output channels(1 is mono, 2 stereo etc..) */
-  uint64_t    bytes_per_channel;
+  int dev_idx;                      /**< id of this device ??? */
+  int sample_out_rate;                   /**< samples(frames) per second */
+  volatile int sample_in_rate;                   /**< samples(frames) per second */
+  uint64_t num_input_channels;            /**< number of input channels(1 is mono, 2 stereo etc..) */
+  uint64_t num_output_channels;           /**< number of output channels(1 is mono, 2 stereo etc..) */
+  uint64_t bytes_per_channel;
 
-  uint64_t    num_calls;                     /**< count of process_audio() calls */
+  uint64_t num_calls;                     /**< count of process_audio() calls */
 
-  jack_port_t     *output_port[JACK_MAX_OUTPUT_PORTS]; /**< output ports */
-  jack_port_t     *input_port[JACK_MAX_INPUT_PORTS]; /**< input ports */
-  jack_client_t   *client;                        /**< pointer to actual jack client */
+  jack_port_t *output_port[JACK_MAX_PORTS]; /**< output ports */
+  jack_port_t *input_port[JACK_MAX_PORTS]; /**< input ports */
+  jack_client_t *client;                        /**< pointer to actual jack client */
   char *client_name; // our name for the client
 
   boolean started_server; /// TRUE if the server this client is connected to was started by it
 
-  char             **jack_port_name;              /**< user given strings for the port names, can be NULL - unused*/
-  unsigned int     jack_port_name_count;          /**< the number of port names given - unused*/
-  uint64_t    jack_port_flags;               /**< flags to be passed to jack when opening the output ports - unused*/
+  uint64_t jack_port_flags;               /**< flags to be passed to jack when opening the output ports - unused*/
 
   lives_audio_loop_t loop;  ///< playback loop mode
 
   jack_transport_state_t state;
 
-  float     volume[JACK_MAX_OUTPUT_PORTS];      ///< amount volume, 1.0 is full volume
+  float volume[JACK_MAX_PORTS];      ///< amount volume, 1.0 is full volume
 
-  boolean          in_use;                        /**< true if this device is currently in use */
+  boolean in_use;                        /**< true if this device is currently in use */
   boolean mute;
 
-  volatile aserver_message_t   *msgq;          /**< linked list of messages we are sending to the callback process */
+  volatile aserver_message_t *msgq;          /**< linked list of messages we are sending to the callback process */
 
   off_t seek_pos;
   volatile off_t real_seek_pos;
@@ -165,13 +184,13 @@ typedef struct _lives_jack_driver_t {
   volatile lives_cancel_t *cancelled; ///< pointer to mainw->cancelled
 
   /* variables used for trying to restart the connection to jack */
-  boolean             jackd_died;                    /**< true if jackd has died and we should try to restart it */
+  boolean jackd_died;                    /**< true if jackd has died and we should try to restart it */
 
   volatile jack_nframes_t nframes_start;
   volatile uint64_t frames_written;
 
-  int out_chans_available;
-  int in_chans_available;
+  int out_ports_available;
+  int in_ports_available;
 
   boolean is_paused;
 
@@ -195,8 +214,8 @@ typedef struct _lives_jack_driver_t {
   char status_msg[STMSGLEN];
 } jack_driver_t;
 
-#define JACK_MAX_OUTDEVICES 10
-#define JACK_MAX_INDEVICES 10
+#define JACK_MAX_OUTDEVICES 1
+#define JACK_MAX_INDEVICES 1
 
 ////////////////////////////////////////////////////////////////////////////
 void jack_dump_metadata(void);

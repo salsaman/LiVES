@@ -149,11 +149,10 @@ int num_compound_fx(weed_plant_t *plant) {
 boolean has_non_alpha_palette(weed_plant_t *ctmpl, weed_plant_t *filter) {
   int *plist;
   int npals = 0;
-  register int i;
 
   plist = weed_chantmpl_get_palette_list(filter, ctmpl, &npals);
   if (!plist) return TRUE; ///< probably audio
-  for (i = 0; i < npals; i++) {
+  for (int i = 0; i < npals; i++) {
     if (plist[i] == WEED_PALETTE_END) break;
     if (!weed_palette_is_alpha(plist[i])) {
       lives_free(plist);
@@ -168,10 +167,8 @@ boolean has_non_alpha_palette(weed_plant_t *ctmpl, weed_plant_t *filter) {
 boolean has_alpha_palette(weed_plant_t *ctmpl, weed_plant_t *filter) {
   int *plist;
   int npals = 0;
-  register int i;
-
   plist = weed_chantmpl_get_palette_list(filter, ctmpl, &npals);
-  for (i = 0; i < npals; i++) {
+  for (int i = 0; i < npals; i++) {
     if (weed_palette_is_alpha(plist[i])) {
       if (palette == WEED_PALETTE_NONE) continue;
       lives_free(plist);
@@ -328,7 +325,7 @@ int num_alpha_channels(weed_plant_t *filter, boolean out) {
   // get number of alpha channels (in or out) for filter; including optional
   weed_plant_t **ctmpls;
   int count = 0, nchans;
-  register int i;
+  int i;
 
   if (out) {
     ctmpls = weed_filter_get_out_chantmpls(filter, &nchans);
@@ -417,9 +414,7 @@ void backup_weed_instances(void) {
   // this is called during multitrack rendering.
   // We are rendering, but we want to display the current frame in the preview window
   // thus we backup our rendering instances, apply the current frame instances, and then restore the rendering instances
-  register int i;
-
-  for (i = FX_KEYS_MAX_VIRTUAL; i < FX_KEYS_MAX; i++) {
+  for (int i = FX_KEYS_MAX_VIRTUAL; i < FX_KEYS_MAX; i++) {
     key_to_instance_copy[i][0] = key_to_instance[i][0];
     key_to_instance[i][0] = NULL;
   }
@@ -427,8 +422,7 @@ void backup_weed_instances(void) {
 
 
 void restore_weed_instances(void) {
-  register int i;
-  for (i = FX_KEYS_MAX_VIRTUAL; i < FX_KEYS_MAX; i++) {
+  for (int i = FX_KEYS_MAX_VIRTUAL; i < FX_KEYS_MAX; i++) {
     key_to_instance[i][0] = key_to_instance_copy[i][0];
   }
 }
@@ -556,7 +550,7 @@ weed_plant_t *get_mandatory_channel(weed_plant_t *filter, int which, boolean is_
   // "which" starts at 0
   weed_plant_t **ctmpls;
   weed_plant_t *retval;
-  register int i = 0;
+  int i;
 
   if (!WEED_PLANT_IS_FILTER_CLASS(filter)) return NULL;
 
@@ -564,9 +558,8 @@ weed_plant_t *get_mandatory_channel(weed_plant_t *filter, int which, boolean is_
   else ctmpls = weed_filter_get_out_chantmpls(filter, NULL);
 
   if (!ctmpls) return NULL;
-  while (which > -1) {
+  for (i = 0; which > -1; i++) {
     if (!weed_chantmpl_is_optional(ctmpls[i])) which--;
-    i++;
   }
   retval = ctmpls[i - 1];
   lives_free(ctmpls);
@@ -607,7 +600,7 @@ weed_plant_t *get_audio_channel_in(weed_plant_t *inst, int achnum) {
   in_chans = weed_instance_get_in_channels(inst, &nchans);
   if (!in_chans) return NULL;
 
-  for (register int i = 0; i < nchans; i++) {
+  for (int i = 0; i < nchans; i++) {
     ctmpl = weed_channel_get_template(in_chans[i]);
     if (weed_chantmpl_is_audio(ctmpl)) {
       if (achnum-- == 0) {
@@ -631,7 +624,7 @@ boolean has_video_chans_in(weed_plant_t *filter, boolean count_opt) {
   in_ctmpls = weed_filter_get_in_chantmpls(filter, &nchans);
   if (!in_ctmpls) return FALSE;
 
-  for (register int i = 0; i < nchans; i++) {
+  for (int i = 0; i < nchans; i++) {
     if (!count_opt && weed_chantmpl_is_optional(in_ctmpls[i])) continue;
     if (weed_chantmpl_is_audio(in_ctmpls[i])) continue;
     lives_free(in_ctmpls);
@@ -1143,7 +1136,7 @@ static void set_channel_size(weed_plant_t *filter, weed_plant_t *channel, int wi
 
 
 int weed_flagset_array_count(weed_plant_t **array, boolean set_readonly) {
-  register int i;
+  int i;
   for (i = 0; array[i]; i++) {
     if (set_readonly) weed_add_plant_flags(array[i], WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, "plugin_");
   }
@@ -1287,9 +1280,8 @@ void weed_reinit_all(void) {
   // reinit all effects on playback start
   lives_filter_error_t retval;
   weed_plant_t *instance, *last_inst, *next_inst;
-  register int i;
 
-  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+  for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
       if (rte_key_is_enabled(1 + i)) {
         mainw->osc_block = TRUE;
@@ -1909,7 +1901,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 #define FX_WAIT_LIM 10000 // microseconds * 10
         if (prefs->dev_show_timing)
           g_printerr("fx clr2 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-        for (register int tt = 0; tt < FX_WAIT_LIM && !is_layer_ready(layer); tt++) {
+        for (int tt = 0; tt < FX_WAIT_LIM && !is_layer_ready(layer); tt++) {
           lives_nanosleep(10000);
         }
         if (prefs->dev_show_timing)
@@ -1996,7 +1988,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         // - we pick a.r. of the smallest frame, since in low quality we also set the renderer size by this,
         // thus at least one of the frames will not need any resizing / letterboxing
 
-#if 1
         if (!mainw->multitrack) {
           // min size
           maxinwidth = rminw;
@@ -2005,49 +1996,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           maxinwidth = cfile->hsize;
           maxinheight = cfile->vsize;
         }
-#else
-        // min area
-        double hscale, vscale;
-        double diw  = (double)inheight;
-        double dih = (double)inheight;
-        double miw = (double)maxinwidth;
-        double mih = (double)maxinheight;
-
-        int lb_width, lb_height;
-
-        hscale = diw / miw;
-        vscale = dih / mih;
-
-        if (maxinwidth == 4 || maxinheight == 4 || (hscale <= 1. && vscale <= 1.)) {
-          // fits inside completely, use the new frame a.r
-          maxinwidth = inwidth;
-          maxinheight = inheight;
-        } else {
-          if (hscale > 1. && vscale > 1.) {
-            // current. sz. fits inside completely, keep it
-            // DO NOTHING
-          } else {
-            int a0, a1;
-            // exactly one dimension larger
-            lb_width = inwidth;
-            lb_height = inheight;
-            calc_maxspect(opwidth, opheight, &lb_width, &lb_height);
-            a0 = opwidth * opheight - lb_width * lb_height;
-            lb_width = maxinwidth;
-            lb_height = maxinheight;
-            calc_maxspect(opwidth, opheight, &lb_width, &lb_height);
-            a1 = opwidth * opheight - lb_width * lb_height;
-            if (a0 < a1) {
-              maxinwidth = inwidth;
-              maxinheight = inheight;
-            } else if (a0 == a1) {
-              if (inwidth > maxinwidth) {
-                maxinwidth = inwidth;
-                maxinheight = inheight;
-              }
-            }
-          }
-#endif
       }
     }
   }
@@ -2980,7 +2928,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
   int nchans = 0;
   int nsamps = 0;
 
-  register int i, j;
+  int i, j;
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
 
@@ -3983,11 +3931,10 @@ boolean has_audio_filters(lives_af_t af_type) {
   // called from audio thread during playback
   weed_plant_t *filter;
   int idx;
-  register int i;
 
-  if (af_type == AF_TYPE_A && mainw->audio_frame_buffer) return TRUE;
+  if (af_type == AF_TYPE_A && mainw->afbuffer) return TRUE;
 
-  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+  for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
       if (rte_key_is_enabled(1 + i)) {
         idx = key_to_fx[i][key_modes[i]];
@@ -4009,9 +3956,8 @@ boolean has_video_filters(boolean analysers_only) {
   // do we have any active video filters (excluding generators) ?
   weed_plant_t *filter;
   int idx;
-  register int i;
 
-  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+  for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
       if (rte_key_is_enabled(1 + i)) {
         idx = key_to_fx[i][key_modes[i]];
@@ -4115,8 +4061,6 @@ int enabled_in_channels(weed_plant_t *plant, boolean count_repeats) {
   int enabled = 0;
   int num_channels;
 
-  register int i;
-
   if (is_template) {
     filter = plant;
     if (!weed_plant_has_leaf(plant, WEED_LEAF_IN_CHANNEL_TEMPLATES)) return 0;
@@ -4127,7 +4071,7 @@ int enabled_in_channels(weed_plant_t *plant, boolean count_repeats) {
     channels = weed_get_plantptr_array_counted(plant, WEED_LEAF_IN_CHANNELS, &num_channels);
   }
 
-  for (i = 0; i < num_channels; i++) {
+  for (int i = 0; i < num_channels; i++) {
     if (!is_template) {
       weed_plant_t *ctmpl = weed_get_plantptr_value(channels[i], WEED_LEAF_TEMPLATE, NULL);
       if (weed_chantmpl_is_audio(ctmpl) == WEED_TRUE) {
@@ -5107,12 +5051,11 @@ static void make_fx_defs_menu(int num_weed_compounds) {
   char *string, *filter_type, *filter_name;
   char *pkg = NULL, *pkgstring;
   boolean hidden;
-  register int i;
 
   weed_fx_sorted_list = NULL;
 
   // menu entries for vj/set defs
-  for (i = 0; i < num_weed_filters; i++) {
+  for (int i = 0; i < num_weed_filters; i++) {
     filter = weed_filters[i];
 
     if (weed_filter_hints_unstable(filter) && !prefs->show_dev_opts && !prefs->unstable_fx) continue;
@@ -5425,7 +5368,7 @@ static weed_plant_t *create_compound_filter(char *plugin_name, int nfilts, int *
   int count, xcount, error, nvals;
   int txparam = -1, tparam, txvolm = -1, tvolm;
 
-  register int i, j, x;
+  int i, j, x;
 
   weed_set_int_array(filter, WEED_LEAF_HOST_FILTER_LIST, nfilts, filts);
 
@@ -6063,7 +6006,7 @@ void weed_unload_all(void) {
 
   int error;
 
-  register int i, j;
+  int i, j;
 
   if (!fx_inited) return;
 
@@ -6384,7 +6327,7 @@ static weed_plant_t **weed_channels_create(weed_plant_t *filter, boolean in) {
         pal = WEED_PALETTE_END;
         if (pvary) pal = weed_get_int_value(chantmpls[i], WEED_LEAF_PALETTE_LIST, NULL);
         if (pal == WEED_PALETTE_NONE) pal = weed_get_int_value(filter, WEED_LEAF_PALETTE_LIST, NULL);
-        weed_set_int_value(channels[ccount], WEED_LEAF_CURRENT_PALETTE, pal);
+        weed_channel_set_palette(channels[ccount], pal);
         if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {
           rah = weed_get_int_value(filter, WEED_LEAF_ALIGNMENT_HINT, NULL);
         }
@@ -6448,7 +6391,7 @@ static void set_default_channel_sizes(weed_plant_t *filter, weed_plant_t **in_ch
   boolean has_aud_in_chans = FALSE;
   int width, height;
 
-  register int i;
+  int i;
 
   // ignore filters with no in/out channels (e.g. data processors)
   if ((!in_channels || !in_channels[0]) && (!out_channels || !out_channels[0])) return;
@@ -6528,7 +6471,7 @@ void add_param_connections(weed_plant_t *inst) {
   int *xvals;
   int nptmpls, error;
 
-  register int i;
+  int i;
 
   in_ptmpls = weed_get_plantptr_array_counted(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &nptmpls);
   if (!in_ptmpls) return;
@@ -7452,9 +7395,7 @@ deinit3:
    @see weed_deinit_all()
 */
 void deinit_render_effects(void) {
-  register int i;
-
-  for (i = FX_KEYS_MAX_VIRTUAL; i < FX_KEYS_MAX; i++) {
+  for (int i = FX_KEYS_MAX_VIRTUAL; i < FX_KEYS_MAX; i++) {
     if (key_to_instance[i][0]) {
       // no mutex needed since we are rendering
       weed_deinit_effect(i);
@@ -7476,9 +7417,7 @@ void deinit_render_effects(void) {
 */
 void deinit_easing_effects(void) {
   weed_plant_t *instance;
-  register int i;
-
-  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+  for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if ((instance = key_to_instance[i][key_modes[i]]) != NULL) {
       weed_plant_t *gui = weed_instance_get_gui(instance, FALSE);
       if (weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT)) {
@@ -7551,53 +7490,121 @@ void weed_deinit_all(boolean shutdown) {
    following cycle. This ensures that no client will miss audio samples, at the cost of some minor latency.
    Purely audio filters are run directly during the audio cycle or by the audio caching thread.
 */
-static int register_audio_channels(int nchannels) {
+int register_audio_client(boolean is_vid) {
   if (!is_realtime_aplayer(prefs->audio_player)) {
-    mainw->afbuffer_clients = 0;
     return -1;
   }
-  if (nchannels <= 0) return mainw->afbuffer_clients;
-  pthread_mutex_lock(&mainw->abuf_frame_mutex);
-  if (mainw->afbuffer_clients == 0) {
+
+  if (!mainw->afbuffer) {
     init_audio_frame_buffers(prefs->audio_player);
-    mainw->afbuffer_clients_read = 0;
+    mainw->afbuffer->aclients = mainw->afbuffer->vclients = 0;
+    mainw->afbuffer->aclients_read = mainw->afbuffer->vclients_read = 0;
   }
-  mainw->afbuffer_clients += nchannels;
-  pthread_mutex_unlock(&mainw->abuf_frame_mutex);
-  return mainw->afbuffer_clients;
+
+  if (is_vid) mainw->afbuffer->vclients++;
+  else mainw->afbuffer->aclients++;
+
+  if (is_vid) return mainw->afbuffer->vclients;
+  return mainw->afbuffer->aclients;
 }
 
+int unregister_audio_client(boolean is_vid) {
+  if (!mainw->afbuffer) return -1;
 
-static int unregister_audio_channels(int nchannels) {
-  if (!mainw->audio_frame_buffer) {
-    mainw->afbuffer_clients = 0;
-    return -1;
-  }
-
-  mainw->afbuffer_clients -= nchannels;
-  if (mainw->afbuffer_clients <= 0) {
-    int i;
+  if (is_vid) mainw->afbuffer->vclients--;
+  else mainw->afbuffer->aclients--;
+  if (mainw->afbuffer->aclients <= 0 && mainw->afbuffer->vclients <= 0) {
     // lock out the audio thread
-    pthread_mutex_lock(&mainw->abuf_frame_mutex);
-    for (i = 0; i < 2; i++) {
-      if (mainw->afb[i]) {
-        free_audio_frame_buffer(mainw->afb[i]);
-        lives_free(mainw->afb[i]);
-        mainw->afb[i] = NULL;
-      }
-    }
-    mainw->audio_frame_buffer = NULL;
-    pthread_mutex_unlock(&mainw->abuf_frame_mutex);
+    free_audio_frame_buffer(mainw->afbuffer);
+    mainw->afbuffer = NULL;
+    return 0;
   }
-  return mainw->afbuffer_clients;
+
+  if (is_vid) return mainw->afbuffer->vclients;
+  return mainw->afbuffer->aclients;
 }
 
 
-static boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan) {
+boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan, boolean is_vid) {
   // this is for filter instances with mixed audio / video inputs/outputs
   // uneffected audio is buffered by the audio thread; here we copy / convert it to a video effect's audio channel
   // purely audio filters run in the audio thread
 
+  // now used also to pass loopback audio from reader to writer
+
+  lives_audio_buf_t *audbuf;
+
+  if (!achan) return TRUE;
+
+  weed_set_int_value(achan, WEED_LEAF_AUDIO_DATA_LENGTH, 0);
+  weed_set_voidptr_value(achan, WEED_LEAF_AUDIO_DATA, NULL);
+
+  audbuf = mainw->afbuffer;
+  if (!achan || !audbuf || audbuf->write_pos < 0) return FALSE;
+  if (is_vid) {
+    if (!audbuf->vclients) return FALSE;
+    push_audio_to_channel(filter, achan, audbuf, TRUE);
+    if (++audbuf->vclients_read >= audbuf->vclients) audbuf->vclients_read = 0;
+    if (!audbuf->vclients_read) {
+      audbuf->vclient_readpos = audbuf->vclient_readlevel;
+      audbuf->vclient_readlevel = audbuf->write_pos;
+    }
+  } else {
+    if (!audbuf->aclients) return FALSE;
+    push_audio_to_channel(filter, achan, audbuf, FALSE);
+    if (++audbuf->aclients_read >= audbuf->aclients) audbuf->aclients_read = 0;
+    if (!audbuf->aclients_read) {
+      audbuf->aclient_readpos = audbuf->aclient_readlevel;
+      audbuf->aclient_readlevel = audbuf->write_pos;
+    }
+  }
+  return TRUE;
+}
+
+
+int register_aux_audio_channels(int nchannels) {
+  if (!is_realtime_aplayer(prefs->audio_player)) {
+    mainw->afbuffer_aux_clients = 0;
+    return -1;
+  }
+  if (nchannels <= 0) return mainw->afbuffer_aux_clients;
+  pthread_mutex_lock(&mainw->abuf_aux_frame_mutex);
+  if (mainw->afbuffer_aux_clients == 0) {
+    init_aux_audio_frame_buffers(prefs->audio_player);
+    mainw->afbuffer_aux_clients_read = 0;
+  }
+  mainw->afbuffer_aux_clients += nchannels;
+  pthread_mutex_unlock(&mainw->abuf_aux_frame_mutex);
+  return mainw->afbuffer_aux_clients;
+}
+
+
+int unregister_aux_audio_channels(int nchannels) {
+  if (!mainw->audio_frame_buffer_aux) {
+    mainw->afbuffer_aux_clients = 0;
+    return -1;
+  }
+
+  mainw->afbuffer_aux_clients -= nchannels;
+  if (mainw->afbuffer_aux_clients <= 0) {
+    // lock out the audio thread
+    pthread_mutex_lock(&mainw->abuf_aux_frame_mutex);
+    for (int i = 0; i < 2; i++) {
+      if (mainw->afb_aux[i]) {
+        free_audio_frame_buffer(mainw->afb_aux[i]);
+        lives_free(mainw->afb_aux[i]);
+        mainw->afb_aux[i] = NULL;
+      }
+    }
+    mainw->audio_frame_buffer_aux = NULL;
+    pthread_mutex_unlock(&mainw->abuf_aux_frame_mutex);
+  }
+  return mainw->afbuffer_aux_clients;
+}
+
+
+boolean fill_audio_channel_aux(weed_plant_t *achan) {
+  // this is for duplex mode, we read from aux inputs
   static lives_audio_buf_t *audbuf;
 
   if (achan) {
@@ -7605,33 +7612,34 @@ static boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan) {
     weed_set_voidptr_value(achan, WEED_LEAF_AUDIO_DATA, NULL);
   }
 
-  if (!mainw->audio_frame_buffer || mainw->audio_frame_buffer->samples_filled <= 0 || mainw->afbuffer_clients == 0) {
+  if (!mainw->audio_frame_buffer_aux || mainw->audio_frame_buffer_aux->samples_filled <= 0
+      || mainw->afbuffer_aux_clients == 0) {
     // no audio has been buffered
     return FALSE;
   }
 
   // lock the buffers
 
-  if (mainw->afbuffer_clients_read == 0) {
+  if (mainw->afbuffer_aux_clients_read == 0) {
     /// when the first client reads, we grab the audio frame buffer and swap the other for writing
     // cast away the (volatile)
-    pthread_mutex_lock(&mainw->abuf_frame_mutex);
-    audbuf = (lives_audio_buf_t *)mainw->audio_frame_buffer;
-    if (audbuf == mainw->afb[0]) mainw->audio_frame_buffer = mainw->afb[1];
-    else mainw->audio_frame_buffer = mainw->afb[0];
-    pthread_mutex_unlock(&mainw->abuf_frame_mutex);
+    pthread_mutex_lock(&mainw->abuf_aux_frame_mutex);
+    audbuf = (lives_audio_buf_t *)mainw->audio_frame_buffer_aux;
+    if (audbuf == mainw->afb_aux[0]) mainw->audio_frame_buffer_aux = mainw->afb_aux[1];
+    else mainw->audio_frame_buffer_aux = mainw->afb_aux[0];
+    pthread_mutex_unlock(&mainw->abuf_aux_frame_mutex);
   }
 
   // push read buffer to channel
   if (achan && audbuf) {
     // convert audio to format requested, and copy it to the audio channel data
-    push_audio_to_channel(filter, achan, audbuf);
+    push_audio_to_channel(NULL, achan, audbuf, FALSE);
   }
 
-  if (++mainw->afbuffer_clients_read >= mainw->afbuffer_clients) {
+  if (++mainw->afbuffer_aux_clients_read >= mainw->afbuffer_aux_clients) {
     // all clients have read the data, now we can free it
     free_audio_frame_buffer(audbuf);
-    mainw->afbuffer_clients_read = 0;
+    mainw->afbuffer_aux_clients_read = 0;
   }
 
   return TRUE;
@@ -7639,8 +7647,8 @@ static boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan) {
 
 
 int check_filter_chain_palettes(boolean is_bg, int *palette_list, int npals) {
-  register int i;
   int palette = WEED_PALETTE_END;
+  int i;
 
   if (mainw->rte) {
     for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
@@ -7828,6 +7836,7 @@ matchvals:
                      & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE))) {
     // if it's in the bg, and letterboxing, set size to maxspect fg clip
     // or if it's fg or bg and we are playing high quality
+
     if (mainw->num_tr_applied > 0 && !num_in_alpha) {
       if ((mainw->multitrack && !mainw->multitrack->is_rendering && prefs->letterbox_mt)
           || (!mainw->multitrack && prefs->letterbox && (!mainw->is_rendering || mainw->preview_rendering))) {
@@ -7972,7 +7981,7 @@ matchvals:
 
   // if we have an optional audio channel, we can push audio to it
   if ((achan = get_enabled_audio_channel(inst, 0, TRUE)) != NULL) {
-    fill_audio_channel(filter, achan);
+    fill_audio_channel(filter, achan, TRUE);
   }
 
   if (prefs->pb_quality == PB_QUALITY_LOW && mainw->inst_fps > 0. && mainw->inst_fps
@@ -8179,10 +8188,9 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   cfile->opening = FALSE;
   mainw->proc_ptr = NULL;
 
-  // if the generator has an optional audio in channel, enable it: TODO - make this configurable
   if ((achan = get_audio_channel_in(inst, 0)) != NULL) {
     if (weed_plant_has_leaf(achan, WEED_LEAF_DISABLED)) weed_leaf_delete(achan, WEED_LEAF_DISABLED);
-    register_audio_channels(1);
+    register_audio_client(TRUE);
   }
 
   // if not playing, start playing
@@ -8239,29 +8247,14 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     return 0;
   } else {
     // already playing
-
     if (old_file != -1 && mainw->files[old_file]) {
       if (IS_NORMAL_CLIP(old_file)) mainw->pre_src_file = old_file;
       mainw->current_file = old_file;
     }
 
     if (!is_bg || old_file == -1 || old_file == new_file) {
-      //if (mainw->current_file == -1) mainw->current_file = new_file;
-
       if (new_file != old_file) {
         mainw->new_clip = new_file;
-
-        /* filter_mutex_unlock(key); // else we get stuck pulling a frame */
-        /* do_quick_switch(new_file); */
-        /* filter_mutex_lock(key); */
-        /* mainw->force_show = TRUE; */
-
-        // switch audio clip
-        /* if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) */
-        /*     && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || prefs->audio_src == AUDIO_SRC_EXT))) { */
-        /*   switch_audio_clip(new_file, TRUE); */
-        /* } */
-
         if (mainw->files[mainw->new_blend_file]) mainw->blend_file = mainw->new_blend_file;
         if (!is_bg && IS_VALID_CLIP(blend_file)) mainw->blend_file = blend_file;
         mainw->new_blend_file = -1;
@@ -8270,18 +8263,13 @@ int weed_generator_start(weed_plant_t *inst, int key) {
         resize(1);
         lives_widget_set_opacity(mainw->playframe, 1.);
       }
-      //if (old_file==-1) mainw->whentostop=STOP_ON_VID_END;
     } else {
-      if (mainw->current_file == -1) {
-        /* mainw->current_file = new_file; */
-        /* if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) */
-        /*     && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || prefs->audio_src == AUDIO_SRC_EXT))) { */
-        /*   switch_audio_clip(new_file, TRUE); */
-        /* } */
-      } else mainw->blend_file = new_file;
-      if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
-                               || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))
-        ce_thumbs_highlight_current_clip();
+      if (IS_VALID_CLIP(new_file)) {
+        mainw->blend_file = new_file;
+        if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
+                                 || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))
+          ce_thumbs_highlight_current_clip();
+      }
     }
     if (mainw->cancelled == CANCEL_GENERATOR_END) mainw->cancelled = CANCEL_NONE;
   }
@@ -8363,7 +8351,7 @@ void weed_generator_end(weed_plant_t *inst) {
   }
 
   if (inst && get_audio_channel_in(inst, 0)) {
-    unregister_audio_channels(1);
+    unregister_audio_client(TRUE);
   }
 
   if (is_bg) {
@@ -9519,8 +9507,7 @@ int rte_key_getmode(int key) {
 int rte_key_getmaxmode(int key) {
   // gets the highest mode with filter mapped for a key
   // not to be confused with rte_get_modespk() which returns the maximum possible
-
-  register int i;
+  int i;
 
   if (key < 1 || key > FX_KEYS_MAX) return -1;
 
@@ -10925,7 +10912,7 @@ int weed_get_idx_for_hashname(const char *hashname, boolean fullname) {
   int32_t numhash;
   char *xhashname = fix_hashnames(hashname);
   int type = 0;
-  register int i;
+  int i;
 
   if (!fullname) type = 2;
 
@@ -11045,7 +11032,7 @@ int *weed_get_indices_from_template(const char *pkg, const char *fxname, const c
 
   int count = 1, count2 = 0;
 
-  register int i;
+  int i;
 
   // count number of return values
   for (i = 0; i < num_weed_filters; i++) {
@@ -11361,8 +11348,8 @@ static int realign_typeleaf(int fd, weed_plant_t *plant) {
   uint8_t buff[12];
   const char XMATCH[8] = {4, 0, 0, 0, 't', 'y', 'p', 'e'};
   int type, nl;
-  register uint64_t count = REALIGN_MAX;
-  register int len;
+  uint64_t count = REALIGN_MAX;
+  int len;
 
   if (lives_read_buffered(fd, buff, 12, TRUE) < 12) return 0;
   for (len = 8; len > 0; len--) {
@@ -12430,7 +12417,7 @@ void apply_key_defaults(weed_plant_t *inst, int key, int mode) {
   weed_plant_t **defs, **params;
   weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
   int nparams = num_in_params(filter, FALSE, FALSE);
-  register int i, j = 0;
+  int i, j = 0;
 
   if (nparams == 0) return;
 

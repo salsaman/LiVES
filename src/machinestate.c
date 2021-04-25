@@ -1,3 +1,4 @@
+
 // machinestate.c
 // LiVES
 // (c) G. Finch 2019 - 2020 <salsaman+lives@gmail.com>
@@ -1950,6 +1951,15 @@ static char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *m
 	    match = lives_concat(match, tmp);
 	  }
 	}
+	else {
+	  if (partial) {
+	    // check end as well
+	    if (!lives_strncmp(mphrase, wline + llen - mlen, mlen)) {
+	      match = lives_strdup(words[ridx]);
+	      break;
+	    }
+	  }
+	}
 	lives_strfreev(words);
       }
       lives_free(wline);
@@ -2284,24 +2294,22 @@ char *get_wid_for_name(const char *wname) {
     wid = grep_in_cmd(cmd, 3, 4, wname, 0, 1, TRUE);
     lives_free(cmd);
     if (wid) {
-      g_print("GOT wm wid %s\n", wid);
+      //g_print("GOT wm wid %s\n", wid);
       return wid;
     }
   }
 
-
+  // need to use -root -tree
 
   if (check_for_executable(&capable->has_xwininfo, EXEC_XWININFO)) {
     cmd = lives_strdup_printf("%s -name \"%s\" 2>/dev/null", EXEC_XWININFO, wname);
     wid = grep_in_cmd(cmd, 1, -1, "Window id:", 3, 1, FALSE);
     lives_free(cmd);
     if (wid) {
-      g_print("GOT xw wid %s\n", wid);
+      //g_print("GOT xw wid %s\n", wid);
       return wid;
     }
   }
-
-
 
   if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL)) {
     char buff[65536];

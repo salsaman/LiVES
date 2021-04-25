@@ -1199,16 +1199,22 @@ knob_calculate_angle_with_value(GiwKnob *knob, gdouble value) {
 void
 knob_set_angle(GiwKnob *knob,
                gdouble angle) {
+  int count = 0;
 
   g_return_if_fail(knob != NULL);
   g_return_if_fail(GIW_IS_KNOB(knob));
 
   // Putting the angle between 0 and 2PI(360�)
-  while (angle > 2.0 * M_PI)
+  while (count++ < 1000 && angle > 2.0 * M_PI)
     angle = angle - (2.0 * M_PI);
 
-  while (angle < 0)
+  if (count >= 1000) return;
+  count = 0;
+
+  while (count++ < 1000 && angle < 0)
     angle = angle + (2.0 * M_PI);
+
+  if (count >= 1000) return;
 
   if (knob->angle != angle) {
     if (!knob->wrap) {

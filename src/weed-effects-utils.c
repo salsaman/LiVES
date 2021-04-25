@@ -571,7 +571,7 @@ WEED_GLOBAL_INLINE float **weed_channel_get_audio_data(weed_plant_t *channel, in
 WEED_GLOBAL_INLINE weed_layer_t *weed_channel_set_audio_data(weed_plant_t *channel, float **data,
     int arate, int naudchans, int nsamps) {
   if (!WEED_PLANT_IS_CHANNEL(channel)) return NULL;
-  weed_set_voidptr_array(channel, WEED_LEAF_AUDIO_DATA, naudchans, (void **)data);
+  if (data) weed_set_voidptr_array(channel, WEED_LEAF_AUDIO_DATA, naudchans, (void **)data);
   weed_set_int_value(channel, WEED_LEAF_AUDIO_RATE, arate);
   weed_set_int_value(channel, WEED_LEAF_AUDIO_DATA_LENGTH, nsamps);
   weed_set_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, naudchans);

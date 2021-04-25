@@ -7,6 +7,9 @@
 #ifndef HAS_LIVES_AUDIO_H
 #define HAS_LIVES_AUDIO_H
 
+typedef uint64_t size64_t;
+typedef int64_t ssize64_t;
+
 #define AUD_SRC_EXTERNAL (prefs->audio_src == AUDIO_SRC_EXT)
 #define AUD_SRC_INTERNAL (prefs->audio_src == AUDIO_SRC_INT)
 #define AUD_SRC_REALTIME (get_play_clipno() != -1)
@@ -30,6 +33,9 @@
 # define DEFAULT_AUDIO_SAMPS 16
 # define DEFAULT_AUDIO_SIGNED8 (AFORM_UNSIGNED)
 # define DEFAULT_AUDIO_SIGNED16 (!AFORM_UNSIGNED)
+
+// for afbuffer
+#define ABUF_ARENA_SIZE 768000
 
 /// max number of player channels
 #define MAX_ACHANS 2
@@ -105,6 +111,13 @@ typedef struct {
   int swap_endian;
   double shrink_factor;  ///< resampling ratio
 
+  // this is for the afbuffer (bufferf is an arena)
+  int vclients, aclients;
+  int vclients_read, aclients_read;
+  size_t vclient_readpos, aclient_readpos;
+  size_t vclient_readlevel, aclient_readlevel;
+  volatile ssize_t write_pos;
+
   size_t samp_space; ///< buffer space in samples (* by sizeof(type) to get bytesize) [if interleaf, also * by chans]
 
   boolean sequential; ///< hint that we will read sequentially starting from seek
@@ -160,7 +173,7 @@ float audiofile_get_maxvol(int fnum, double start, double end, float thresh);
 
 boolean normalise_audio(int fnum, double start, double end, float thresh);
 
-void sample_silence_dS(float *dst, uint64_t nsamples);
+void sample_silence_dS(float *dst, size64_t nsamples);
 
 void sample_silence_stream(int nchans, int64_t nframes);
 
@@ -168,20 +181,20 @@ boolean pad_with_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_
                          boolean big_endian);
 
 void sample_move_float_d16(int16_t *dst, float *src,
-                           uint64_t nsamples, size_t tbytes, double scale, int nDstChannels,
+                           size64_t nsamples, size_t tbytes, double scale, int nDstChannels,
                            int nSrcChannels, int swap_endian, int swap_sign);
 
 void sample_move_d8_d16(short *dst, uint8_t *src,
-                        uint64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
+                        size64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
 
 void sample_move_d16_d16(short *dst, short *src,
-                         uint64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_endian,
+                         size64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_endian,
                          int swap_sign) GNU_HOT;
 
 void sample_move_d16_d8(uint8_t *dst, short *src,
-                        uint64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
+                        size64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
 
-float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian,
+float sample_move_d16_float(float *dst, short *src, size_t nsamples, size_t src_skip, int is_unsigned, boolean rev_endian,
                             float vol) GNU_HOT;
 
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, double scale, int chans, int asamps,
@@ -192,10 +205,10 @@ int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_ara
 
 int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arate) GNU_HOT;
 
-void sample_move_float_float(float *dst, float *src, uint64_t nsamples, double scale, int dst_skip) GNU_HOT;
+size64_t sample_move_float_float(float *dst, float *src, size64_t in_samples, double scale, int dst_skip, float vol) GNU_HOT;
 
-boolean float_deinterleave(float *fbuffer, int nsamps, int nchans) GNU_HOT;
-boolean float_interleave(float *fbuffer, int nsamps, int nchans) GNU_HOT;
+float float_deinterleave(float *dst, float *src, size64_t in_samples, double scale, int in_chans, float vol) GNU_HOT;
+size64_t float_interleave(float *out, float **in, size64_t nsamps, double scale, int nchans, float vol) GNU_HOT;
 
 int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime, ticks_t tc_start,
                              ticks_t tc_end, double *chvol, double opvol_start, double opvol_end, lives_audio_buf_t *obuf);
@@ -261,11 +274,12 @@ void apply_rte_audio_end(boolean del);
 boolean apply_rte_audio(int64_t nframes);
 
 void init_audio_frame_buffers(short aplayer);
+void init_aux_audio_frame_buffers(short aplayer);
 void free_audio_frame_buffer(lives_audio_buf_t *abuf);
-void append_to_audio_bufferf(float *src, uint64_t nsamples, int channum);
-void append_to_audio_buffer16(void *src, uint64_t nsamples, int channum);
-boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_audio_buf_t *abuf);
-
+void append_to_audio_bufferf(float *src, size64_t nsamples, int channum);
+void append_to_aux_audio_bufferf(float *src, size64_t nsamples, int channum);
+void append_to_audio_buffer16(void *src, size64_t nsamples, int channum);
+boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_audio_buf_t *abuf, boolean is_vid);
 boolean start_audio_stream(void);
 void stop_audio_stream(void);
 void clear_audio_stream(void);

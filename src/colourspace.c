@@ -1817,7 +1817,8 @@ LIVES_GLOBAL_INLINE void init_conversions(int intent) {
     // this ensures we render at the highest settings
     mainw->effort = -EFFORT_RANGE_MAX;
   } else {
-    if (prefs) prefs->pb_quality = future_prefs->pb_quality;
+    if (mainw && mainw->multitrack) prefs->pb_quality = PB_QUALITY_LOW;
+    else if (prefs) prefs->pb_quality = future_prefs->pb_quality;
   }
 }
 
@@ -9880,7 +9881,7 @@ LIVES_GLOBAL_INLINE int weed_layer_is_audio(weed_layer_t *layer) {
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_data(weed_layer_t *layer, float **data,
     int arate, int naudchans, weed_size_t nsamps) {
   if (!layer || !WEED_IS_LAYER(layer)) return NULL;
-  weed_set_voidptr_array(layer, WEED_LEAF_AUDIO_DATA, naudchans, (void **)data);
+  if (data) weed_set_voidptr_array(layer, WEED_LEAF_AUDIO_DATA, naudchans, (void **)data);
   weed_set_int_value(layer, WEED_LEAF_AUDIO_RATE, arate);
   weed_set_int_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, nsamps);
   weed_set_int_value(layer, WEED_LEAF_AUDIO_CHANNELS, naudchans);

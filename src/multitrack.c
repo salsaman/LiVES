@@ -6939,9 +6939,9 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
   mt_swap_play_pause(mt, FALSE);
 
   if (mainw->hdrbar) {
+    lives_widget_object_ref(mt->menubar);
     lives_widget_unparent(mt->menubar);
     gtk_header_bar_pack_start(LIVES_HEADER_BAR(mainw->hdrbar), mainw->menubar);
-    lives_widget_object_unref(mainw->menubar);
   }
 
   lives_signal_handler_block(mainw->loop_continue, mainw->loop_cont_func);
@@ -7070,6 +7070,8 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
   for (i = 0; i < N_RECENT_FILES; i++) {
     lives_widget_reparent(mainw->recent[i], mainw->recent_submenu);
   }
+
+  lives_widget_object_unref(mt->menubar);
 
   if (prefs->show_gui) {
     if (lives_widget_get_parent(mt->top_vbox)) {

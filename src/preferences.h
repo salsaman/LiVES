@@ -279,6 +279,11 @@ typedef struct {
   const JSList *jack_adrivers, *jack_tdrivers;
 
   boolean jack_srv_dup;
+
+  char *jack_compat_client;
+  char *jack_inport_client;
+  char *jack_outport_client;
+  char *jack_auxport_client;
 #endif
 
   char *fxdefsfile;
@@ -300,6 +305,10 @@ typedef struct {
 #define AUDIO_OPTS_LOCKED_FREEZE	(1 << 17)
 #define AUDIO_OPTS_LOCKED_PING_PONG	(1 << 18)
 #define AUDIO_OPTS_LOCKED_RESYNC	(1 << 19)
+
+#define AUDIO_OPTS_EXT_FX		(1 << 25) // apply effects to external audio -> audio out
+#define AUDIO_OPTS_AUX_RECORD		(1 << 26) // mix aux in when saving
+#define AUDIO_OPTS_AUX_PLAY		(1 << 27) // mix aux in during pb
 
   boolean event_window_show_frame_events;
   boolean crash_recovery; ///< TRUE==maintain mainw->recovery file
@@ -1065,6 +1074,10 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_JACK_TCSERVER "jack_trans_connect_server"
 #define PREF_JACK_TSSERVER "jack_trans_startup_server"
 #define PREF_JACK_TCONFIG "jack_trans_config_file"
+
+#define PREF_JACK_INPORT_CLIENT "jack_inport_client"
+#define PREF_JACK_OUTPORT_CLIENT "jack_outport_client"
+#define PREF_JACK_AUXPORT_CLIENT "jack_auxport_client"
 #endif
 
 ////////////////////// utf8 values

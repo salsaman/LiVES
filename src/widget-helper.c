@@ -1061,7 +1061,7 @@ LIVES_LOCAL_INLINE boolean sigdata_check_alarm(lives_sigdata_t *sigdata) {
 //     this generally is not an issue since fg tasks should only consist of simple graphical updates
 //
 //   some gui functions when called in a bg thread are automatically rerouted to the fg:-
-//   g_main_context_iteration, gtk_dialog_run, gtk_widget_show_all, gtk_widget_destroy, and gtk_entry_set_text
+//   g_main_context_iteration, gtk_dialog_run, gtk_widget_show_all, gtk_widget_destroy, (and gtk_entry_set_text - this may have been a bug)
 //   seem to be the main offenders, as well as anything to do with gkt_file_chooser. Any other "problematic" functions can
 //   be handled in this fashion.
 //
@@ -6336,7 +6336,7 @@ WIDGET_HELPER_GLOBAL_INLINE const char *lives_entry_get_text(LiVESEntry *entry) 
 }
 
 
-static boolean _lives_entry_set_text(LiVESEntry *entry, const char *text) {
+boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
 #ifdef GUI_GTK
   if (widget_opts.justify == LIVES_JUSTIFY_START) lives_entry_set_alignment(entry, 0.);
   else if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_entry_set_alignment(entry, 0.5);
@@ -6347,12 +6347,18 @@ static boolean _lives_entry_set_text(LiVESEntry *entry, const char *text) {
   return FALSE;
 }
 
-boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
-  boolean ret;
-  main_thread_execute((lives_funcptr_t)_lives_entry_set_text, WEED_SEED_BOOLEAN, &ret, "vs",
-                      entry, text);
-  return ret;
+
+WIDGET_HELPER_GLOBAL_INLINE boolean _lives_entry_set_text(LiVESEntry *entry, const char *text) {
+  return lives_entry_set_text(entry, text);
 }
+
+
+/* boolean xlives_entry_set_text(LiVESEntry *entry, const char *text) { */
+/*   boolean ret; */
+/*   main_thread_execute((lives_funcptr_t)_lives_entry_set_text, WEED_SEED_BOOLEAN, &ret, "vs", */
+/*                       entry, text); */
+/*   return ret; */
+/* } */
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_width_chars(LiVESEntry *entry, int nchars) {

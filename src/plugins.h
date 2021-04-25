@@ -696,8 +696,6 @@ void **store_rfx_params(lives_rfx_t *);
 void set_rfx_params_from_store(lives_rfx_t *rfx, void **store);
 void rfx_params_store_free(lives_rfx_t *, void **store);
 
-LiVESList *array_to_string_list(char **array, int offset, int len);
-
 lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits);
 lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *instance, boolean show_reinits);
 

@@ -5,6 +5,36 @@
 
 #include "main.h"
 
+
+LIVES_GLOBAL_INLINE boolean lives_list_contains_string(LiVESList *list, const char *strng) {
+  for (; list; list = list->next) if (!lives_strcmp(strng, (const char *)list->data)) return TRUE;
+  return FALSE;
+}
+
+
+LiVESList *array_to_string_list(const char **array, int offset, int len) {
+  // build a LiVESList from an array, starting from element offset + 1, len is len of list
+  // if len is 0, then stop when we hit NULL element
+  // final empty string is omitted (unless len == 0)
+  // charset is converted from local to utf8, also newlines are unescaped
+  LiVESList *slist = NULL;
+  char *string, *tmp;
+
+  for (int i = offset + 1; !len || i < len; i++) {
+    if (!array[i]) break;
+    string = subst((tmp = L2U8(array[i])), "\\n", "\n");
+    lives_free(tmp);
+
+    // omit a last empty string
+    if (!len || i < len - 1 || *string) {
+      slist = lives_list_append(slist, string);
+    } else lives_free(string);
+  }
+
+  return slist;
+}
+
+
 typedef struct {
   int64_t idx;
   void *data;

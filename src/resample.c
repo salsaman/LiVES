@@ -1536,14 +1536,14 @@ void on_resample_vid_ok(LiVESButton * button, livespointer pclipno) {
 _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vbox) {
   // type 1 == resample
   // type 2 == insert silence
-  // type 3 == enter multitrack
+  // type 3 == enter multitrack / render to clip
   // type 4 == prefs/multitrack
   // type 5 == new clip record/record to selection with no existing audio
   // type 6 == record to clip with no existing audio
   // type 7 == record to clip with existing audio (show time only)
   // type 8 == grab external window, with audio
   // type 9 == grab external, no audio
-  // type 10 == change inside multitrack / render to clip (embedded) [resets to 3]
+  // type 10 == change inside multitrack
   // type 11 == rte audio gen as rfx
   // type 12 == load damaged audio
 
@@ -1608,6 +1608,8 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
 
   sampsize = lives_list_append(sampsize, (livespointer)"8");
   sampsize = lives_list_append(sampsize, (livespointer)"16");
+  /* if (type == 3) */
+  /*   sampsize = lives_list_append(sampsize, (livespointer)"32"); */
 
   rate = lives_list_append(rate, (livespointer)"5512");
   rate = lives_list_append(rate, (livespointer)"8000");

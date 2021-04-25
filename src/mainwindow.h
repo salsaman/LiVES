@@ -774,6 +774,7 @@ typedef struct {
   LiVESWidget *cancel_button;
   LiVESWidget *scrolledwindow;
   LiVESWidget *rte_off_cb;
+  LiVESWidget *audint_cb;
   LiVESWidget *notify_cb;
   frames_t progress_start, progress_end;
   frames_t frames_done;
@@ -787,6 +788,10 @@ typedef struct {
 enum {
   ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
   EXIT_HOOK,
+  PB_END_EARLY_HOOK,
+  PB_END_LATE_HOOK,
+  PB_START_EARLY_HOOK,
+  PB_START_LATE_HOOK,
   N_HOOK_FUNCS,
 };
 
@@ -1591,6 +1596,7 @@ typedef struct {
   /// mutices
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
   pthread_mutex_t abuf_frame_mutex;  ///< used to synch audio buffer for generators
+  pthread_mutex_t abuf_aux_frame_mutex;  ///< used to synch audio buffer for loopback
   pthread_mutex_t fx_mutex[FX_KEYS_MAX];  ///< used to prevent fx processing when it is scheduled for deinit
   pthread_mutex_t fxd_active_mutex; ///< prevent simultaneous writing to active_dummy by audio and video threads
   pthread_mutex_t event_list_mutex; ///< prevent simultaneous writing to event_list by audio and video threads
@@ -1774,10 +1780,12 @@ typedef struct {
   boolean gen_started_play;
   boolean fx_is_auto;
 
-  volatile lives_audio_buf_t *audio_frame_buffer; ///< used for buffering / feeding audio to video generators
-  lives_audio_buf_t *afb[2]; ///< used for buffering / feeding audio to video generators
-  int afbuffer_clients; /// # of registered clients for the audio frame buffer
-  int afbuffer_clients_read; /// current read count. When this reaches abuffer_clients, we swap the read / write buffers
+  lives_audio_buf_t *afbuffer; ///< used for buffering / feeding audio to video generators
+
+  volatile lives_audio_buf_t *audio_frame_buffer_aux; ///< used for buffering / feeding to loopback
+  lives_audio_buf_t *afb_aux[2]; ///< used for buffering / feeding audio to loopback
+  int afbuffer_aux_clients; /// # of registered clients for the aux audio frame buffer
+  int afbuffer_aux_clients_read; /// current read count. When this reaches abuffer_clients_aux, we swap the read / write buffers
 
   pthread_t *libthread;  /// GUI thread for liblives
 

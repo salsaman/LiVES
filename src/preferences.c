@@ -1874,6 +1874,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean jack_client = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client));
   boolean jack_tb_start = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start));
   boolean jack_mtb_start = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_start));
+  boolean jack_mtb_update = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_update));
   boolean jack_tb_client = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client));
 #endif
 
@@ -1901,6 +1902,7 @@ boolean apply_prefs(boolean skip_warn) {
     + JACK_OPTS_ENABLE_TCLIENT * jack_trans
     + JACK_OPTS_STRICT_SLAVE * jack_stricts + JACK_OPTS_TIMEBASE_START * jack_tb_start +
     JACK_OPTS_TIMEBASE_LSTART * jack_mtb_start + JACK_OPTS_TIMEBASE_SLAVE * jack_tb_client
+    + JACK_OPTS_TIMEBASE_MASTER * jack_mtb_update
     + JACK_OPTS_NO_READ_AUTOCON * !jack_read_autocon;
 #endif
 

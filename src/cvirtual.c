@@ -340,19 +340,21 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 
   if (prefs->vj_mode) return TRUE;
 
-  sfile->afilesize = reget_afilesize_inner(fileno);
-  get_total_time(sfile);
-  if (sfile->video_time < sfile->laudio_time) {
-    binf = clip_forensic(fileno, NULL);
-    if (binf->frames) {
-      if (binf->frames * sfile->fps == sfile->laudio_time
-          || binf->frames * binf->fps == sfile->laudio_time
-          || (cdata && binf->frames * cdata->fps == sfile->laudio_time)) {
-        has_missing_frames = TRUE;
+  if (sfile->frames) {
+    sfile->afilesize = reget_afilesize_inner(fileno);
+    get_total_time(sfile);
+    if (sfile->video_time < sfile->laudio_time) {
+      binf = clip_forensic(fileno, NULL);
+      if (binf && binf->frames) {
+        if (binf->frames * sfile->fps == sfile->laudio_time
+            || binf->frames * binf->fps == sfile->laudio_time
+            || (cdata && binf->frames * cdata->fps == sfile->laudio_time)) {
+          has_missing_frames = TRUE;
+        }
       }
+      if (!binf) has_missing_frames = TRUE;
     }
   }
-
   // check the image type
 
   for (i = sfile->frames - 1; i >= 0; i--) {

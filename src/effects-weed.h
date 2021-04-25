@@ -1,6 +1,6 @@
 // effects-weed.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2021 <salsaman@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -236,6 +236,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 void weed_apply_audio_effects(weed_plant_t *filter_map, weed_layer_t **, int nbtracks, int nchans, int64_t nsamps, double arate,
                               ticks_t tc, double *vis);
 void weed_apply_audio_effects_rt(weed_layer_t *alayer, ticks_t tc, boolean analysers_only, boolean is_audio_thread);
+
+boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan, boolean is_vid);
+int register_audio_client(boolean is_vid);
+int unregister_audio_client(boolean is_vid);
+
+int register_aux_audio_channels(int nchannels);
+int unregister_aux_audio_channels(int nchannels);
+boolean fill_audio_channel_aux(weed_plant_t *achan);
 
 lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_layer_t **layers, int nbtracks, int nchans,
     int64_t nsamps,

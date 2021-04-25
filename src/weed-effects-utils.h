@@ -146,7 +146,7 @@ int weed_channel_get_width_pixels(weed_plant_t *channel);
 // audio channels
 int weed_channel_get_audio_rate(weed_plant_t *channel);
 int weed_channel_get_naudchans(weed_plant_t *channel);
-int weed_channel_get_audio_length(weed_plant_t *channel);
+int weed_channel_get_audio_length(weed_plant_t *channel); // in sampls
 float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans);
 
 weed_plant_t *weed_channel_set_audio_data(weed_plant_t *channel, float **data, int arate, int naudchans, int nsamps);

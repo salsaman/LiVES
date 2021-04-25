@@ -94,7 +94,7 @@ void get_player_size(int *opwidth, int *opheight) {
     goto align;
   }
 
-  if (mainw->play_window) {
+  if (lives_get_status() != LIVES_STATUS_RENDERING && mainw->play_window) {
     // playback in separate window
     // use values set in resize_play_window
     *opwidth = mainw->pwidth;
@@ -119,10 +119,14 @@ void get_player_size(int *opwidth, int *opheight) {
 
   ////////////////////////////////////////////////////////////////////////////////////
   // clip edit mode
-  if (mainw->is_rendering && !mainw->preview) {
+  if (mainw->status == LIVES_STATUS_RENDERING) {
     *opwidth = cfile->hsize;
     *opheight = cfile->vsize;
-    goto align;
+    *opwidth = (*opwidth >> 1) << 1;
+    *opheight = (*opheight >> 1) << 1;
+    mainw->pwidth = *opwidth;
+    mainw->pheight = *opheight;
+    return;
   }
 
   if (!mainw->fs) {
@@ -137,7 +141,7 @@ void get_player_size(int *opwidth, int *opheight) {
 
 align:
   *opwidth = (*opwidth >> 2) << 2;
-  *opheight = (*opheight >> 2) << 2;
+  *opheight = (*opheight >> 1) << 1;
   mainw->pwidth = *opwidth;
   mainw->pheight = *opheight;
 }
@@ -2276,7 +2280,12 @@ int process_one(boolean visible) {
   old_playing_file = mainw->playing_file;
   old_vpp = mainw->vpp;
 
+#ifdef ENABLE_JACK
   if (init_timers) {
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd
+        && mainw->jackd_read && AUD_SRC_EXTERNAL)
+      jack_conx_exclude(mainw->jackd_read, mainw->jackd, TRUE);
+#ifdef ENABLE_JACK_TRANSPORT
     if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
         && (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER)) {
       if (!mainw->preview && !mainw->foreign) {
@@ -2286,7 +2295,18 @@ int process_one(boolean visible) {
           jack_pb_start(mainw->jackd_trans, mainw->multitrack->pb_start_time);
       }
     }
+#endif
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
+      if (prefs->audio_opts & AUDIO_OPTS_AUX_PLAY)
+        register_aux_audio_channels(1);
+      if (AUD_SRC_EXTERNAL) {
+        if (prefs->audio_opts & AUDIO_OPTS_EXT_FX)
+          register_audio_client(FALSE);
+        mainw->jackd->in_use = TRUE;
+      }
+    }
   }
+#endif
 
   // time is obtained as follows:
   // -  if there is an external transport or clock active, we take our time from that

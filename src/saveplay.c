@@ -2325,6 +2325,8 @@ void play_file(void) {
 
   init_conversions(LIVES_INTENTION_PLAY);
 
+  if (mainw->hook_funcs[PB_START_EARLY_HOOK])(*mainw->hook_funcs[PB_START_EARLY_HOOK])(mainw->hook_data[PB_START_EARLY_HOOK]);
+
   if (mainw->pre_src_file == -2) mainw->pre_src_file = mainw->current_file;
   mainw->pre_src_audio_file = mainw->current_file;
 
@@ -2764,6 +2766,9 @@ void play_file(void) {
 #endif
 
     mainw->abufs_to_fill = 0;
+
+    if (mainw->hook_funcs[PB_START_LATE_HOOK])(*mainw->hook_funcs[PB_START_LATE_HOOK])(mainw->hook_data[PB_START_LATE_HOOK]);
+
     //lives_widget_context_update();
     //play until stopped or a stream finishes
     do {
@@ -2901,6 +2906,7 @@ void play_file(void) {
           pthread_mutex_unlock(&mainw->abuf_mutex);
         }
 #endif
+
         // realtime effects off (for multitrack and event_list preview)
         deinit_render_effects();
 
@@ -2913,9 +2919,10 @@ void play_file(void) {
         if (mainw->scratch == SCRATCH_NONE) {
           mainw->multitrack->pb_start_event = mainw->multitrack->pb_loop_event;
         }
+
+        mainw->effort = 0;
+        if (mainw->multitrack) pb_start_event = mainw->multitrack->pb_start_event;
       }
-      mainw->effort = 0;
-      if (mainw->multitrack) pb_start_event = mainw->multitrack->pb_start_event;
     } while (mainw->multitrack && (mainw->loop_cont || mainw->scratch != SCRATCH_NONE) &&
              (mainw->cancelled == CANCEL_NONE || mainw->cancelled == CANCEL_EVENT_LIST_END));
   }
@@ -2967,12 +2974,22 @@ void play_file(void) {
 
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && (mainw->jackd || mainw->jackd_read)) {
+    if (prefs->audio_opts & AUDIO_OPTS_AUX_PLAY)
+      unregister_aux_audio_channels(1);
+    if (AUD_SRC_EXTERNAL) {
+      if (prefs->audio_opts & AUDIO_OPTS_EXT_FX)
+        unregister_audio_client(FALSE);
+    }
+
     if (mainw->jackd_read || mainw->aud_rec_fd != -1)
       jack_rec_audio_end(TRUE);
 
     if (mainw->jackd_read) {
       mainw->jackd_read->in_use = FALSE;
     }
+
+    if (mainw->jackd && mainw->jackd_read && AUD_SRC_EXTERNAL)
+      jack_conx_exclude(mainw->jackd_read, mainw->jackd, FALSE);
 
     // send jack transport stop
     if (!mainw->preview && !mainw->foreign) {
@@ -3195,6 +3212,8 @@ void play_file(void) {
   mainw->blend_palette = WEED_PALETTE_END;
   mainw->audio_stretch = 1.;
 
+  if (mainw->hook_funcs[PB_END_EARLY_HOOK])(*mainw->hook_funcs[PB_END_EARLY_HOOK])(mainw->hook_data[PB_END_EARLY_HOOK]);
+
   if (!mainw->multitrack) {
     if (mainw->faded || mainw->fs) {
       unfade_background();
@@ -3295,9 +3314,11 @@ void play_file(void) {
             lives_widget_grab_focus(mainw->preview_spinbutton);
             lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
             lives_widget_process_updates(mainw->play_window);
-            lives_window_center(LIVES_WINDOW(mainw->play_window));
-            clear_widget_bg(mainw->play_image, mainw->play_surface);
-            load_preview_image(FALSE);
+            if (mainw->play_window) {
+              lives_window_center(LIVES_WINDOW(mainw->play_window));
+              clear_widget_bg(mainw->play_image, mainw->play_surface);
+              load_preview_image(FALSE);
+            }
 	  // *INDENT-OFF*
 	  }}}}}
   // *INDENT-ON*
@@ -3452,6 +3473,8 @@ void play_file(void) {
 
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;
+
+  if (mainw->hook_funcs[PB_END_LATE_HOOK])(*mainw->hook_funcs[PB_END_LATE_HOOK])(mainw->hook_data[PB_END_LATE_HOOK]);
 }
 
 
@@ -4766,7 +4789,6 @@ boolean open_ascrap_file(void) {
   cfile->achans = 2;
   cfile->arate = cfile->arps = DEFAULT_AUDIO_RATE;
 
-  // float audio :: TODO
   cfile->asampsize = 16;
   cfile->signed_endian = 0; // ???
 
@@ -4789,6 +4811,7 @@ boolean open_ascrap_file(void) {
     if (prefs->audio_src == AUDIO_SRC_EXT) {
       if (mainw->jackd_read) {
         cfile->arate = cfile->arps = mainw->jackd_read->sample_in_rate;
+        cfile->asampsize = 32;
       }
     } else {
       if (mainw->jackd) {
@@ -5237,7 +5260,6 @@ boolean reload_clip(int fileno, int maxframe) {
   // cd to clip directory - so decoder plugins can write temp files
   LiVESList *odeclist;
   lives_clip_t *sfile = mainw->files[fileno];
-  char decoder_name[PATH_MAX];
   const lives_clip_data_t *cdata = NULL;
   lives_clip_data_t *fake_cdata = (lives_clip_data_t *)lives_calloc(sizeof(lives_clip_data_t), 1);
 
@@ -5246,7 +5268,6 @@ boolean reload_clip(int fileno, int maxframe) {
   char *orig_filename = lives_strdup(sfile->file_name);
   char *cwd = lives_get_current_dir();
   char *clipdir = get_clip_dir(fileno);
-  uint64_t dec_uid = 0;
 
   LiVESResponseType response;
   boolean was_renamed = FALSE, retb = FALSE;
@@ -5273,16 +5294,9 @@ boolean reload_clip(int fileno, int maxframe) {
   }
 
   ///< retain original order to restore for freshly opened clips
+  // get_decoder_cdata() may alter this
   odeclist = lives_list_copy(capable->plugins_list[PLUGIN_TYPE_DECODER]);
-  if (!sfile->decoder_uid) {
-    retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_UID, &dec_uid, 8);
-    if (!retb) {
-      retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decoder_name, PATH_MAX);
-    }
-  }
-  if (retb && *decoder_name) {
-    decoder_plugin_move_to_first(decoder_name, dec_uid);
-  }
+
   lives_chdir(clipdir, FALSE);
   lives_free(clipdir);
 
@@ -5657,15 +5671,18 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       retval = read_headers(mainw->current_file, clipdir, NULL);
       lives_free(clipdir);
 
-      if (is_ascrap) {
-        if (!retval) {
-          mainw->first_free_file = mainw->current_file;
-          mainw->ascrap_file = -1;
-        }
+      if (!retval) {
+        /// clip failed to reload
+        lives_free(mainw->files[mainw->current_file]);
+        mainw->files[mainw->current_file] = NULL;
+        mainw->first_free_file = mainw->current_file;
+        if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
+        if (is_ascrap) mainw->ascrap_file = -1;
         continue;
       }
 
       if (mainw->current_file < 1) continue;
+      if (is_ascrap) continue;
 
       /// see function reload_set() for detailed comments
       if ((maxframe = load_frame_index(mainw->current_file)) > 0) {

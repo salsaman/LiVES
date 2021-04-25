@@ -20,6 +20,7 @@ void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra);
 
 #ifdef ENABLE_JACK
 boolean do_jack_config(boolean is_setup, boolean is_trans);
+boolean prompt_for_jack_ports(boolean is_setup);
 #endif
 
 boolean do_audio_choice_dialog(short startup_phase);

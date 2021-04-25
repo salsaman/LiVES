@@ -69,6 +69,7 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
 }
 
 boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_t maxlen) {
+  // returns TRUE on success
   lives_clip_t *sfile = mainw->files[which];
   char *clipdir, *lives_header = NULL;
   char *val, *key, *tmp;

@@ -285,7 +285,7 @@ void d_print(const char *fmt, ...) {
   if (!mainw->go_away && prefs->show_gui && prefs->show_msg_area
       && ((!mainw->multitrack && mainw->msg_area
            && mainw->msg_adj)
-          || (!mainw->multitrack && mainw->multitrack->msg_area
+          || (mainw->multitrack && mainw->multitrack->msg_area
               && mainw->multitrack->msg_adj))) {
     if (mainw->multitrack) {
       msg_area_scroll_to_end(mainw->multitrack->msg_area, mainw->multitrack->msg_adj);

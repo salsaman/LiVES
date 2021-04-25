@@ -8,6 +8,10 @@
 #ifndef _LISTS_H_
 #define _LISTS_H_
 
+LiVESList *array_to_string_list(const char **array, int offset, int len);
+
+boolean lives_list_contains_string(LiVESList *list, const char *strng);
+
 LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) WARN_UNUSED;
 LiVESList *lives_list_delete_string(LiVESList *, const char *string) WARN_UNUSED;
 LiVESList *lives_list_copy_strings(LiVESList *list);

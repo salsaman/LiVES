@@ -603,6 +603,91 @@ void chk_jack_cfgx(LiVESWidget * w, LiVESEntry * e) {
 }
 
 
+boolean prompt_for_jack_ports(boolean is_setup) {
+  LiVESWidget *dialog, *dialog_vbox, *layout, *incombo, *outcombo, *auxcombo;
+  LiVESWidget *hbox, *cbr;
+  LiVESList *inp_list, *outp_list;
+  char *title = _("Port configuration for jack audio");
+  dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
+  lives_free(title);
+
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+
+  widget_opts.use_markup = TRUE;
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Please use the options below to define the "
+                         "basic initial settings for jackd.\n"
+                         "<b>After the setup process, you can review and update the full settings "
+                         "from within Preferences / Jack Integration\n</b>"
+                         "Most of the time the default values should be fine.\n"), TRUE);
+  widget_opts.use_markup = FALSE;
+
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+
+  inp_list = jack_get_inport_clients();
+  outp_list = jack_get_outport_clients();
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  incombo = lives_standard_combo_new(_("Input ports"), outp_list, LIVES_BOX(hbox),
+                                     H_("This is the source that LiVES will use when 'playing' external audio."));
+  lives_combo_set_active_string(LIVES_COMBO(incombo), jack_get_best_client(JACK_PORT_TYPE_DEF_IN, outp_list));
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  outcombo = lives_standard_combo_new(_("Output ports"), inp_list, LIVES_BOX(hbox),
+                                      H_("Defines the (default) ports which LiVES will connect to when playing audio"));
+  lives_combo_set_active_string(LIVES_COMBO(outcombo), jack_get_best_client(JACK_PORT_TYPE_DEF_OUT, inp_list));
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  auxcombo = lives_standard_combo_new(_("Aux ports"), outp_list, LIVES_BOX(hbox),
+                                      H_("Defines the ports which LiVES will connect to as an auxiliary audio source\n"
+                                         "The default is to connect to microphone for voiceovers"));
+  lives_combo_set_active_string(LIVES_COMBO(auxcombo), jack_get_best_client(JACK_PORT_TYPE_AUX_IN, outp_list));
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  cbr = lives_standard_check_button_new(_("Exclusive routing during external playback"),
+                                        future_prefs->jack_opts & JACK_OPTS_NO_READ_AUTOCON
+                                        ? FALSE : TRUE, LIVES_BOX(hbox),
+                                        H_("If set, during external playback LiVES will temporarily disconnect\nany direct "
+                                            "connection between input ports and output ports which would otherwise bypass LiVES"));
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
+                                     LIVES_STOCK_LABEL_NEXT, LIVES_RESPONSE_OK);
+
+  if (is_setup) pop_to_front(dialog, NULL);
+
+  lives_dialog_run(LIVES_DIALOG(dialog));
+
+  if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cbr)))
+    future_prefs->jack_opts |= JACK_OPTS_NO_READ_AUTOCON;
+
+  prefs->jack_inport_client = lives_strdup(lives_combo_get_active_text(LIVES_COMBO(incombo)));
+  prefs->jack_outport_client = lives_strdup(lives_combo_get_active_text(LIVES_COMBO(outcombo)));
+  prefs->jack_auxport_client = lives_strdup(lives_combo_get_active_text(LIVES_COMBO(auxcombo)));
+
+  lives_widget_destroy(dialog);
+
+  lives_list_free_all(&inp_list);
+  lives_list_free_all(&outp_list);
+
+  return TRUE;
+}
+
+
 boolean do_jack_config(int type, boolean is_trans) {
   LiVESSList *rb_group = NULL;
   LiVESWidget *dialog, *dialog_vbox, *layout, *hbox, *cb2 = NULL, *cb3;
@@ -640,15 +725,17 @@ set_config:
 
   if (type == 1) {
     widget_opts.use_markup = TRUE;
-    lives_layout_add_label(LIVES_LAYOUT(layout), _("</b></big>Please use the options below to define the "
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("Please use the options below to define the "
                            "basic initial settings for jackd.\n"
-                           "<big><b>After the setup process, you can review and update the full settings "
-                           "from within Preferences / Jack Integration\nMost of the time the default values should be fine.\n"), FALSE);
+                           "<b>After the setup process, you can review and update the full settings "
+                           "from within Preferences / Jack Integration\n</b>Most of the time the default values should be fine.\n"), TRUE);
     widget_opts.use_markup = FALSE;
 
     lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
     lives_layout_add_row(LIVES_LAYOUT(layout));
   }
+
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
 
   if (type) {
     widget_opts.use_markup = TRUE;
@@ -685,6 +772,7 @@ set_config:
     }
 
     lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
     lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
     lives_layout_add_label(LIVES_LAYOUT(layout), _("Action to take if the connection fails..."), FALSE);
@@ -825,7 +913,6 @@ set_config:
       }
     }
   }
-
 
   if (!type) {
     // warn if setting this for audio client and is already set for trans client, and trans
@@ -972,10 +1059,6 @@ set_config:
 
 retry:
   if (is_setup) pop_to_front(dialog, NULL);
-
-  lives_widget_show_all(dialog);
-  lives_widget_show_now(dialog);
-  lives_widget_context_update();
 
   response = lives_dialog_run(LIVES_DIALOG(dialog));
 

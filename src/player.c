@@ -983,14 +983,14 @@ boolean load_frame_image(frames_t frame) {
       // this used to cause problems with some effects, but that may no longer be the case with the layers model
       int wl = weed_layer_get_width_pixels(mainw->frame_layer);
       int hl = weed_layer_get_height(mainw->frame_layer);
-      /* if ((wl != cfile->hsize && wl != mainw->pwidth) */
-      /*     || (hl != cfile->vsize && hl != mainw->pheight)) { */
-      /*   break_me("bad frame size"); */
-      /*   mainw->size_warn = mainw->current_file; */
-      /*   size_ok = FALSE; */
-      /* } */
-      cfile->hsize = wl;
-      cfile->vsize = hl;
+      if ((wl != cfile->hsize && wl != mainw->pwidth)
+          || (hl != cfile->vsize && hl != mainw->pheight)) {
+        break_me("bad frame size");
+        mainw->size_warn = mainw->current_file;
+        size_ok = FALSE;
+      }
+      //cfile->hsize = wl;
+      //cfile->vsize = hl;
     }
 
     if (size_ok) {
@@ -1587,7 +1587,7 @@ boolean load_frame_image(frames_t frame) {
       lives_widget_queue_draw(mainw->play_image);
     }
 
-    //if (pixbuf) lives_widget_object_unref(pixbuf);
+    if (pixbuf) lives_widget_object_unref(pixbuf);
     success = TRUE;
     if (prefs->dev_show_timing)
       g_print("paint @ %f\n\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);

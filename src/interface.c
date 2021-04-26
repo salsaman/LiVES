@@ -2274,13 +2274,12 @@ harlem_shuffle:
 }
 
 
-LiVESWidget *create_opensel_dialog(int frames, double fps) {
-  LiVESWidget *opensel_dialog;
+opensel_win *create_opensel_window(int frames, double fps) {
+  opensel_win *openselwin;
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox;
   LiVESWidget *table;
   LiVESWidget *label;
-  LiVESWidget *spinbutton;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
@@ -2290,13 +2289,12 @@ LiVESWidget *create_opensel_dialog(int frames, double fps) {
 
   if (fps > 0.) tottime = (double)frames / fps;
 
-  opensel_dialog = lives_standard_dialog_new(_("Open Selection"), FALSE, -1, -1);
-
-  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(opensel_dialog));
+  openselwin = (opensel_win *)lives_calloc(1, sizeof(opensel_win));
+  openselwin->dialog = lives_standard_dialog_new(_("Open Selection"), FALSE, RFX_WINSIZE_H, RFX_WINSIZE_V);
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(openselwin->dialog));
 
   vbox = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, TRUE, 0);
-  lives_widget_set_size_request(LIVES_WIDGET(opensel_dialog), RFX_WINSIZE_H, RFX_WINSIZE_V);
 
   table = lives_table_new(2, 3, FALSE);
   lives_table_set_column_homogeneous(LIVES_TABLE(table), FALSE);
@@ -2339,55 +2337,39 @@ LiVESWidget *create_opensel_dialog(int frames, double fps) {
                      (LiVESAttachOptions)(0), 0, 0);
   lives_widget_set_halign(label, LIVES_ALIGN_START);
 
-  spinbutton = lives_standard_spin_button_new(NULL, mainw->fx1_val, 0., tottime, 1., 1., 2, NULL, NULL);
-  lives_widget_set_halign(spinbutton, LIVES_ALIGN_START);
+  openselwin->sp_start = lives_standard_spin_button_new(NULL, mainw->fx1_val, 0., tottime, 1., 1., 2, NULL, NULL);
+  lives_widget_set_halign(openselwin->sp_start, LIVES_ALIGN_START);
 
-  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(on_spin_value_changed),
-                                  LIVES_INT_TO_POINTER(1));
-
-  lives_table_attach(LIVES_TABLE(table), spinbutton, 1, 2, 0, 1,
+  lives_table_attach(LIVES_TABLE(table), openselwin->sp_start, 1, 2, 0, 1,
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), widget_opts.packing_height * 2 + 2, 0);
 
-  spinbutton = lives_standard_spin_button_new(NULL, (double)mainw->fx2_val, 1., (double)frames, 1., 1., 0, NULL, NULL);
-  lives_widget_set_halign(spinbutton, LIVES_ALIGN_START);
+  openselwin->sp_frames = lives_standard_spin_button_new(NULL, (double)mainw->fx2_val, 1., (double)frames, 1., 1., 0, NULL, NULL);
+  lives_widget_set_halign(openselwin->sp_frames, LIVES_ALIGN_START);
 
-  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(on_spin_value_changed),
-                                  LIVES_INT_TO_POINTER(2));
-
-  lives_table_attach(LIVES_TABLE(table), spinbutton, 1, 2, 1, 2,
+  lives_table_attach(LIVES_TABLE(table), openselwin->sp_frames, 1, 2, 1, 2,
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), widget_opts.packing_height * 2 + 2, 0);
 
-  widget_add_preview(opensel_dialog, LIVES_BOX(vbox), LIVES_BOX(vbox), LIVES_BOX(vbox), LIVES_PREVIEW_TYPE_RANGE);
+  widget_add_preview(openselwin->dialog, LIVES_BOX(vbox), LIVES_BOX(vbox), LIVES_BOX(vbox), LIVES_PREVIEW_TYPE_RANGE);
 
-  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(opensel_dialog), LIVES_STOCK_CANCEL, NULL,
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(openselwin->dialog), LIVES_STOCK_CANCEL, NULL,
                  LIVES_RESPONSE_CANCEL);
 
-  lives_window_add_escape(LIVES_WINDOW(opensel_dialog), cancelbutton);
+  lives_window_add_escape(LIVES_WINDOW(openselwin->dialog), cancelbutton);
 
-  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(opensel_dialog), LIVES_STOCK_OK, NULL,
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(openselwin->dialog), LIVES_STOCK_OK, NULL,
              LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(okbutton);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_cancel_opensel_clicked), NULL);
-
-  lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_opensel_range_ok_clicked), NULL);
-
-  lives_window_set_resizable(LIVES_WINDOW(opensel_dialog), TRUE);
+  lives_window_set_resizable(LIVES_WINDOW(openselwin->dialog), TRUE);
 
   if (prefs->open_maximised || prefs->fileselmax) {
-    lives_window_maximize(LIVES_WINDOW(opensel_dialog));
+    lives_window_maximize(LIVES_WINDOW(openselwin->dialog));
   }
 
-  lives_widget_show_all(opensel_dialog);
-
-  return opensel_dialog;
+  return openselwin;
 }
 
 

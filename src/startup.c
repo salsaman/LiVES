@@ -229,9 +229,9 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
 
 #ifdef GUI_GTK
     /// stock_icons
-    stock_icons_dir = lives_build_path(config_datadir, STOCK_ICONS_DIR, NULL);
+    stock_icons_dir = lives_build_path(config_datadir, STOCK_ICON_DIR, NULL);
     if (!lives_file_test(stock_icons_dir, LIVES_FILE_TEST_IS_DIR)) {
-      char *sys_stock_icons_dir = lives_build_path(prefs->prefix_dir, LIVES_DATA_DIR, STOCK_ICONS_DIR, NULL);
+      char *sys_stock_icons_dir = lives_build_path(prefs->prefix_dir, LIVES_DATA_DIR, STOCK_ICON_DIR, NULL);
       if (mainw && mainw->splash_window) {
         lives_widget_hide(mainw->splash_window);
         lives_widget_context_update();

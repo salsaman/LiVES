@@ -190,6 +190,7 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
   }
 
 thrd_done:
+  lives_free(sigdata);
   lives_alarm_clear(alarm_handle);
   if (xtimeout == 0) {
     if (!lives_proc_thread_check_finished(lpt)) {
@@ -291,6 +292,13 @@ void call_funcsig(lives_proc_thread_t info) {
     default: CALL_VOID_1(int); break;
     } break;
   }
+  case FUNCSIG_INT64: {
+    int64_t p0;
+    switch (ret_type) {
+    case WEED_SEED_BOOLEAN: CALL_1(boolean, int64); break;
+    default: CALL_VOID_1(int64); break;
+    } break;
+  }
   case FUNCSIG_DOUBLE: {
     double p0;
     switch (ret_type) {
@@ -327,6 +335,13 @@ void call_funcsig(lives_proc_thread_t info) {
     int p0; int64_t p1;
     switch (ret_type) {
     default: CALL_VOID_2(int, int64); break;
+    } break;
+  }
+  case FUNCSIG_BOOL_INT64: {
+    int p0; int64_t p1;
+    switch (ret_type) {
+    case WEED_SEED_BOOLEAN: CALL_2(boolean, boolean, int64); break;
+    default: CALL_VOID_2(boolean, int64); break;
     } break;
   }
   case FUNCSIG_INT_VOIDP: {

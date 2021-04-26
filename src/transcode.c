@@ -205,7 +205,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       // buffers will be used to convert to float audio
 
       audio = TRUE;
-      ospf = spf = (double)(cfile->arate) / cfile->fps;
+      ospf = spf = (double)cfile->arate / cfile->fps;
 
       afname = lives_build_filename(prefs->workdir, cfile->handle, CLIP_AUDIO_FILENAME, NULL);
       fd = lives_open_buffered_rdonly(afname);

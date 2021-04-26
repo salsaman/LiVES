@@ -8188,9 +8188,11 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   cfile->opening = FALSE;
   mainw->proc_ptr = NULL;
 
-  if ((achan = get_audio_channel_in(inst, 0)) != NULL) {
-    if (weed_plant_has_leaf(achan, WEED_LEAF_DISABLED)) weed_leaf_delete(achan, WEED_LEAF_DISABLED);
-    register_audio_client(TRUE);
+  if (prefs->push_audio_to_gens) {
+    if ((achan = get_audio_channel_in(inst, 0)) != NULL) {
+      if (weed_plant_has_leaf(achan, WEED_LEAF_DISABLED)) weed_leaf_delete(achan, WEED_LEAF_DISABLED);
+      register_audio_client(TRUE);
+    }
   }
 
   // if not playing, start playing
@@ -8319,6 +8321,12 @@ void weed_generator_end(weed_plant_t *inst) {
     LIVES_WARN("inst was NULL !");
   }
 
+  if (prefs->push_audio_to_gens) {
+    if (inst && get_audio_channel_in(inst, 0)) {
+      unregister_audio_client(TRUE);
+    }
+  }
+
   if (mainw->blend_file != -1 && mainw->blend_file != current_file && mainw->files[mainw->blend_file] &&
       mainw->files[mainw->blend_file]->ext_src == inst) is_bg = TRUE;
   else mainw->new_blend_file = mainw->blend_file;
@@ -8348,10 +8356,6 @@ void weed_generator_end(weed_plant_t *inst) {
     } else {
       ce_thumbs_set_keych(bg_generator_key, FALSE);
     }
-  }
-
-  if (inst && get_audio_channel_in(inst, 0)) {
-    unregister_audio_client(TRUE);
   }
 
   if (is_bg) {

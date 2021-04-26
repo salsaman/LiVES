@@ -112,7 +112,7 @@ boolean find_prefix_dir(const char *predirn, boolean check_only) {
     do {
       subdir_list = NULL;
       subdir_list = lives_list_prepend(subdir_list, dir_to_pieces(THEME_DIR));
-      subdir_list = lives_list_prepend(subdir_list, dir_to_pieces(ICON_DIR));
+      subdir_list = lives_list_prepend(subdir_list, dir_to_pieces(ICONS_DIR));
       subdir_list = check_for_subdirs(prdirn, subdir_list);
       if (!subdir_list) {
         if (show_succ) {

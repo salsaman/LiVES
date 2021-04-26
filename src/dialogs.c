@@ -509,7 +509,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     // from stealing focus
     //
     gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
-    gdk_window_show_unraised(lives_widget_get_xwindow(dialog));
   }
 
   if (okbutton && mainw && mainw->iochan) {

@@ -53,7 +53,6 @@ void load_theme_images(void) {
   // TODO - set palette in here ?
   LiVESError *error = NULL;
   LiVESPixbuf *pixbuf;
-
   int width, height;
 
   pixbuf = lives_pixbuf_new_from_file(mainw->sepimg_path, &error);
@@ -467,9 +466,6 @@ void create_LiVES(void) {
   mainw->layout_textbuffer = lives_text_buffer_new();
   lives_widget_object_ref(mainw->layout_textbuffer);
   mainw->affected_layouts_map = NULL;
-
-  /* if (!mainw->hdrbar) */
-  /*   lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE); */
 
   if (new_lives) {
 #ifdef GUI_GTK
@@ -2664,8 +2660,8 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(changed_fps_during_pb), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->open), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_open_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_sel), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_open_sel_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->open_sel), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_open_sel_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_dvd), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_open_vcd_activate),
                        LIVES_INT_TO_POINTER(LIVES_DEVICE_DVD));
@@ -3119,6 +3115,7 @@ void show_lives(void) {
   if (prefs->show_recent) {
     lives_widget_show(mainw->recent_menu);
   } else {
+    lives_widget_set_no_show_all(mainw->recent_menu, TRUE);
     lives_widget_hide(mainw->recent_menu);
   }
 
@@ -4810,8 +4807,6 @@ void splash_init(void) {
     lives_widget_destroy(mainw->splash_window);
     mainw->splash_window = NULL;
   }
-
-  lives_window_set_auto_startup_notification(TRUE);
 }
 
 
@@ -4834,7 +4829,8 @@ void splash_msg(const char *msg, double pct) {
   lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(mainw->splash_progress), pct);
 
   lives_widget_queue_draw(mainw->splash_window);
-  if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0) lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
+  if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0)
+    lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
 
   lives_widget_context_update();
 }

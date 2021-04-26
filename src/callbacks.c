@@ -1,6 +1,6 @@
 // callbacks.c
 // LiVES
-// (c) G. Finch 2003 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2003 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -619,20 +619,50 @@ void lives_exit(int signum) {
 #endif
 
 
-static void open_sel_range_activate(int frames, double fps) {
+static void open_sel_range_activate(char *fname, frames_t frames, double fps) {
   // open selection range dialog
-  LiVESWidget *opensel_dialog;
+  opensel_win *openselwin;
+  LiVESResponseType response;
+  double start;
+
+  // values for preview
   mainw->fc_buttonresponse = LIVES_RESPONSE_NONE; // reset button state
   mainw->fx1_val = 0.;
   mainw->fx2_val = frames > 1000. ? 1000. : (double)frames;
-  opensel_dialog = create_opensel_dialog(frames, fps);
-  lives_widget_show_all(opensel_dialog);
+
+  openselwin = create_opensel_window(frames, fps);
+  response = lives_dialog_run(LIVES_DIALOG(openselwin->dialog));
+
+  end_fs_preview();
+
+  if (response == LIVES_RESPONSE_CANCEL) {
+    lives_widget_destroy(openselwin->dialog);
+    lives_free(openselwin); lives_free(fname);
+    on_open_sel_activate(NULL, NULL);
+    return;
+  }
+
+  start = lives_spin_button_get_value(LIVES_SPIN_BUTTON(openselwin->sp_start));
+  frames = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(openselwin->sp_frames));
+  lives_widget_destroy(openselwin->dialog);
+  lives_free(openselwin);
+
+  mainw->img_concat_clip = -1;
+  open_file_sel(fname, start, frames);
+  lives_free(fname);
+
+  if (mainw->multitrack) {
+    polymorph(mainw->multitrack, POLY_NONE);
+    polymorph(mainw->multitrack, POLY_CLIPS);
+    mt_sensitise(mainw->multitrack);
+    maybe_add_mt_idlefunc();
+  }
 }
 
 
 static boolean read_file_details_generic(const char *fname) {
   /// make a tmpdir in case we need to open images for example
-  char *tmpdir = NULL, *dirname, *com;
+  char *tmpdir = NULL, *dirname, *com, *tmp;
   const char *prefix = "_fsp";
   dirname = get_worktmp(prefix);
   if (dirname) tmpdir = lives_build_path(prefs->workdir, dirname, NULL);
@@ -651,8 +681,9 @@ static boolean read_file_details_generic(const char *fname) {
   }
 
   // check details
-  com = lives_strdup_printf("%s get_details %s \"%s\" \"%s\" %d", prefs->backend_sync,
-                            dirname, fname, prefs->image_ext, 0);
+  com = lives_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d", prefs->backend_sync, dirname,
+                            (tmp = lives_filename_from_utf8(fname, -1, NULL, NULL, NULL)),
+                            get_image_ext_for_type(IMG_TYPE_BEST), 0);
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com); lives_free(dirname);
 
@@ -669,104 +700,82 @@ static boolean read_file_details_generic(const char *fname) {
 
 
 void on_open_sel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  // OPEN A FILE
+  // OPEN A FILE (partial)
   LiVESWidget *chooser;
   char **array;
-  char *fname, *tmp;
+  char *fname = NULL;
   double fps;
-  int resp, npieces, frames;
-  mainw->mt_needs_idlefunc = FALSE;
+  frames_t frames;
+  LiVESResponseType resp;
+  int npieces;
 
-  if (mainw->multitrack) {
-    if (mainw->multitrack->idlefunc > 0) {
-      lives_source_remove(mainw->multitrack->idlefunc);
-      mainw->multitrack->idlefunc = 0;
-      mainw->mt_needs_idlefunc = TRUE;
+  if (menuitem) {
+    mainw->mt_needs_idlefunc = FALSE;
+
+    if (mainw->multitrack) {
+      if (mainw->multitrack->idlefunc > 0) {
+        lives_source_remove(mainw->multitrack->idlefunc);
+        mainw->multitrack->idlefunc = 0;
+        mainw->mt_needs_idlefunc = TRUE;
+      }
+      mt_desensitise(mainw->multitrack);
+      lives_widget_set_sensitive(mainw->multitrack->playall, TRUE);
+      lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
     }
-    mt_desensitise(mainw->multitrack);
-    lives_widget_set_sensitive(mainw->multitrack->playall, TRUE);
-    lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
   }
 
-  while (1) {
+  //////////////////////
+
+  do {
     chooser = choose_file_with_preview((*mainw->vid_load_dir) ? mainw->vid_load_dir : NULL, NULL, NULL,
                                        LIVES_FILE_SELECTION_VIDEO_AUDIO);
-    resp = lives_dialog_run(LIVES_DIALOG(chooser));
 
+    resp = lives_dialog_run(LIVES_DIALOG(chooser));
     end_fs_preview();
+    mainw->cancelled = CANCEL_NONE;
 
     if (resp != LIVES_RESPONSE_ACCEPT) {
-      on_filechooser_cancel_clicked(chooser);
-      if (mainw->multitrack) {
-        mt_sensitise(mainw->multitrack);
-        maybe_add_mt_idlefunc();
-      }
-      return;
+      lives_widget_destroy(LIVES_WIDGET(chooser));
+      goto failed;
     }
 
     fname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
-
-    if (!fname) {
-      if (mainw->multitrack) {
-        mt_sensitise(mainw->multitrack);
-        maybe_add_mt_idlefunc();
-      }
-      return;
-    }
-
-    lives_snprintf(file_name, PATH_MAX, "%s",
-                   (tmp = lives_filename_to_utf8(fname, -1, NULL, NULL, NULL)));
-    lives_free(tmp);
-
     lives_widget_destroy(LIVES_WIDGET(chooser));
 
-    lives_snprintf(mainw->vid_load_dir, PATH_MAX, "%s", file_name);
-    get_dirname(mainw->vid_load_dir);
+    if (!fname) goto failed;
 
-    lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
+    lives_snprintf(mainw->vid_load_dir, PATH_MAX, "%s", fname);
+    get_dirname(mainw->vid_load_dir);
 
     if (prefs->save_directories) {
       set_utf8_pref(PREF_VID_LOAD_DIR, mainw->vid_load_dir);
     }
 
+    /// probe the file to see what it might be...
     if (!read_file_details_generic(fname)) {
-      lives_free(fname);
-      if (mainw->multitrack) {
-        mt_sensitise(mainw->multitrack);
-        maybe_add_mt_idlefunc();
-      }
-      return;
+      goto failed;
     }
-    lives_free(fname);
 
     npieces = get_token_count(mainw->msg, '|');
-    if (npieces < 8) {
-      end_fs_preview();
-      if (mainw->multitrack) {
-        mt_sensitise(mainw->multitrack);
-        maybe_add_mt_idlefunc();
-      }
-      return;
-    }
+    if (npieces < 8) goto failed;
 
     array = lives_strsplit(mainw->msg, "|", npieces);
     frames = atoi(array[2]);
     fps = lives_strtod(array[7]);
     lives_strfreev(array);
 
-    if (frames == 0) {
-      do_error_dialog("LiVES could not extract any video frames from this file.\nSorry.\n");
-      end_fs_preview();
-      if (mainw->multitrack) {
-        mt_sensitise(mainw->multitrack);
-        maybe_add_mt_idlefunc();
-      }
-      continue;
-    }
-    break;
-  }
+    if (!frames) do_error_dialog(_("LiVES could not extract any video frames from this file.\nSorry.\n"));
+  } while (!frames);
 
-  open_sel_range_activate(frames, fps);
+  open_sel_range_activate(fname, frames, fps);
+  return;
+
+failed:
+  if (fname) lives_free(fname);
+  if (mainw->multitrack) {
+    mt_sensitise(mainw->multitrack);
+    maybe_add_mt_idlefunc();
+  }
 }
 
 
@@ -7748,15 +7757,7 @@ void on_opensel_range_ok_clicked(LiVESButton * button, livespointer user_data) {
   lives_general_button_clicked(button, NULL);
   mainw->mt_needs_idlefunc = needs_idlefunc;
 
-  mainw->img_concat_clip = -1;
-  open_file_sel(file_name, mainw->fx1_val, (int)mainw->fx2_val);
 
-  if (mainw->multitrack) {
-    polymorph(mainw->multitrack, POLY_NONE);
-    polymorph(mainw->multitrack, POLY_CLIPS);
-    mt_sensitise(mainw->multitrack);
-    maybe_add_mt_idlefunc();
-  }
 }
 
 
@@ -7873,23 +7874,6 @@ void on_filechooser_cancel_clicked(LiVESWidget * widget) {
   } else if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && !cfile->opening) {
     get_play_times();
   }
-}
-
-
-void on_cancel_opensel_clicked(LiVESButton * button, livespointer user_data) {
-  boolean needs_idlefunc;
-
-  end_fs_preview();
-  needs_idlefunc = mainw->mt_needs_idlefunc;
-  mainw->mt_needs_idlefunc = FALSE;
-  lives_general_button_clicked(button, NULL);
-  mainw->mt_needs_idlefunc = needs_idlefunc;
-
-  if (mainw->multitrack) {
-    mt_sensitise(mainw->multitrack);
-    maybe_add_mt_idlefunc();
-  }
-  lives_menu_item_activate(LIVES_MENU_ITEM(mainw->open_sel)); // return to the fileselector
 }
 
 
@@ -9527,20 +9511,21 @@ void on_load_cdtrack_ok_clicked(LiVESButton * button, livespointer user_data) {
 
 
 void on_load_vcd_ok_clicked(LiVESButton * button, livespointer user_data) {
+  char *fname;
   boolean needs_idlefunc = mainw->mt_needs_idlefunc;
+
   mainw->mt_needs_idlefunc = FALSE;
   lives_general_button_clicked(button, NULL);
   mainw->mt_needs_idlefunc = needs_idlefunc;
 
   if (LIVES_POINTER_TO_INT(user_data) == LIVES_DEVICE_DVD) {
-    lives_snprintf(file_name, PATH_MAX, "dvd://%d", (int)mainw->fx1_val);
+    fname = lives_strdup_printf("dvd://%d", (int)mainw->fx1_val);
     lives_freep((void **)&mainw->file_open_params);
     if (USE_MPV) mainw->file_open_params = lives_strdup_printf("--chapter=%d --aid=%d", (int)mainw->fx2_val, (int)mainw->fx3_val);
     else mainw->file_open_params = lives_strdup_printf("-chapter %d -aid %d", (int)mainw->fx2_val, (int)mainw->fx3_val);
-  } else {
-    lives_snprintf(file_name, PATH_MAX, "vcd://%d", (int)mainw->fx1_val);
-  }
-  open_sel_range_activate(0, 0.);
+  } else fname = lives_strdup_printf("vcd://%d", (int)mainw->fx1_val);
+
+  open_sel_range_activate(fname, 0, 0.);
 }
 
 

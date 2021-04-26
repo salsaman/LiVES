@@ -942,6 +942,9 @@ typedef struct {
   char jack_aserver_sname[JACK_PARAM_STRING_MAX];
   char jack_tserver_sname[JACK_PARAM_STRING_MAX];
   char *jack_tdriver, *jack_adriver;
+  char *jack_inport_client;
+  char *jack_outport_client;
+  char *jack_auxport_client;
   LiVESList *jack_tslaves, *jack_aslaves;
 #endif
 

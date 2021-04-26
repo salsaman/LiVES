@@ -4475,6 +4475,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add(LIVES_CONTAINER(mt->files_menu), mt->recent_menu);
   recent_submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mt->recent_menu), recent_submenu);
+  if (!prefs->show_recent) lives_widget_set_no_show_all(mt->recent_menu, TRUE);
 
   for (i = 0; i < N_RECENT_FILES; i++) {
     lives_widget_reparent(mainw->recent[i], recent_submenu);

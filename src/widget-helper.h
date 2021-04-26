@@ -1361,6 +1361,8 @@ boolean lives_widget_get_mod_mask(LiVESWidget *, LiVESXModifierType *modmask);
 boolean lives_widget_nullify_with(LiVESWidget *, void **);
 boolean lives_widget_destroy_with(LiVESWidget *, LiVESWidget *dieplease);
 
+LiVESPixbuf *get_desktop_icon(const char *dir);
+
 typedef weed_plantptr_t lives_proc_thread_t;
 void *lives_fg_run(lives_proc_thread_t lpt, void *retval);
 

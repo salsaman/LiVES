@@ -159,12 +159,17 @@ typedef uint64_t lives_thread_attr_t;
 #define CALL_1(ret, t1) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS1(t1)))
 #define CALL_0(ret) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)())
 
+// 0p
 #define FUNCSIG_VOID				       			0X00000000
+// 1p
 #define FUNCSIG_INT 			       				0X00000001
 #define FUNCSIG_DOUBLE 				       			0X00000002
 #define FUNCSIG_STRING 				       			0X00000004
+#define FUNCSIG_INT64 			       				0X00000005
 #define FUNCSIG_VOIDP 				       			0X0000000D
 #define FUNCSIG_PLANTP 				       			0X0000000E
+// 2p
+#define FUNCSIG_BOOL_INT64 			       			0X00000035
 #define FUNCSIG_INT_INT64 			       			0X00000015
 #define FUNCSIG_INT_VOIDP 			       			0X0000001D
 #define FUNCSIG_STRING_INT 			      			0X00000041

@@ -1080,8 +1080,11 @@ typedef struct {
 
   char *gui_theme_name;
   char *icon_theme_name;
+  char *app_icon_path;
   char *extra_icon_path;
   LiVESList *all_icons;
+
+  LiVESList *app_icons; // desktop icons for app
 
   char *def_fontstring;
   char *font_name;

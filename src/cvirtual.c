@@ -30,7 +30,7 @@ boolean create_frame_index(int fileno, boolean init, frames_t start_offset, fram
   if (!IS_VALID_CLIP(fileno) || sfile->frame_index) return FALSE;
   sfile->frame_index = (frames_t *)lives_calloc(idxsize, DEF_ALIGN);
   if (!sfile->frame_index) return FALSE;
-  if (init) for (int i = 0; i < sfile->frames; i++) sfile->frame_index[i] = i + start_offset;
+  if (init) for (int i = 0; i < nframes; i++) sfile->frame_index[i] = i + start_offset;
   return TRUE;
 }
 

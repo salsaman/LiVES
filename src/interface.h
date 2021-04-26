@@ -52,7 +52,13 @@ void clear_tbar_bgs(int posx, int posy, int width, int height, int which);
 
 boolean redraw_tl_idle(void *data);
 
-LiVESWidget *create_opensel_dialog(int frames, double fps);
+typedef struct {
+  LiVESWidget *dialog;
+  LiVESWidget *sp_start;
+  LiVESWidget *sp_frames;
+} opensel_win;
+
+opensel_win *create_opensel_window(int frames, double fps);
 
 LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, boolean opt_resize);
 

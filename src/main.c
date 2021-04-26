@@ -678,8 +678,7 @@ static boolean pre_init(void) {
   char jbuff[JACK_PARAM_STRING_MAX];
 #endif
 #ifdef GUI_GTK
-  LiVESError *gerr = NULL;
-  char *icon;
+  LiVESPixbuf *iconpix;
 #endif
 
   pthread_mutexattr_t mattr;
@@ -1037,24 +1036,21 @@ static boolean pre_init(void) {
   if (needs_update) set_string_pref(PREF_PREFIX_DIR, prefs->prefix_dir);
 
 #ifdef GUI_GTK
-  icon = lives_build_filename(prefs->prefix_dir, DESKTOP_ICON_DIR, LIVES_DIR_LITERAL "." LIVES_FILE_EXT_PNG, NULL);
-  if (!lives_file_test(icon, LIVES_FILE_TEST_EXISTS)) {
-    lives_free(icon);
-    icon = NULL;
-    if (!dirs_equal(prefs->prefix_dir, LIVES_USR_DIR)) {
-      icon = lives_build_filename(LIVES_USR_DIR, DESKTOP_ICON_DIR, LIVES_DIR_LITERAL "." LIVES_FILE_EXT_PNG, NULL);
-      if (!lives_file_test(icon, LIVES_FILE_TEST_EXISTS)) {
-        lives_free(icon);
-        icon = NULL;
-      }
-    }
-  }
-  if (icon) {
-    gtk_window_set_default_icon_from_file(icon, &gerr);
-    lives_free(icon);
-  }
-
-  if (gerr) lives_error_free(gerr);
+  iconpix = get_desktop_icon(ICON_DIR(16));
+  if (iconpix) capable->app_icons = lives_list_append(capable->app_icons, iconpix);
+  iconpix = get_desktop_icon(ICON_DIR(22));
+  if (iconpix) capable->app_icons = lives_list_append(capable->app_icons, iconpix);
+  iconpix = get_desktop_icon(ICON_DIR(32));
+  if (iconpix) capable->app_icons = lives_list_append(capable->app_icons, iconpix);
+  iconpix = get_desktop_icon(ICON_DIR(48));
+  if (iconpix) capable->app_icons = lives_list_append(capable->app_icons, iconpix);
+  iconpix = get_desktop_icon(ICON_DIR(64));
+  if (iconpix) capable->app_icons = lives_list_append(capable->app_icons, iconpix);
+  iconpix = get_desktop_icon(ICON_DIR(128));
+  if (iconpix) capable->app_icons = lives_list_append(capable->app_icons, iconpix);
+  iconpix = get_desktop_icon(ICON_DIR(256));
+  if (iconpix) capable->app_icons = lives_list_append(capable->app_icons, iconpix);
+  gtk_window_set_default_icon_list(capable->app_icons);
 #endif
   mainw->first_free_file = 1;
 
@@ -1135,10 +1131,13 @@ static boolean pre_init(void) {
 
   get_string_prefd(PREF_JACK_INPORT_CLIENT, buff, jack_port_name_size(), JACK_SYSTEM_CLIENT);
   prefs->jack_inport_client = lives_strdup(buff);
+  future_prefs->jack_inport_client = lives_strdup(buff);
   get_string_prefd(PREF_JACK_OUTPORT_CLIENT, buff, jack_port_name_size(), JACK_SYSTEM_CLIENT);
   prefs->jack_outport_client = lives_strdup(buff);
+  future_prefs->jack_outport_client = lives_strdup(buff);
   get_string_prefd(PREF_JACK_AUXPORT_CLIENT, buff, jack_port_name_size(), JACK_SYSTEM_CLIENT);
   prefs->jack_auxport_client = lives_strdup(buff);
+  future_prefs->jack_auxport_client = lives_strdup(buff);
 
   if (!ign_opts.ign_jackcfg) {
     get_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg, PATH_MAX);
@@ -2768,21 +2767,23 @@ static void set_toolkit_theme(int prefer) {
     capable->gui_theme_name = lives_concat(capable->gui_theme_name, lname);
   }
 
-  capable->extra_icon_path = lives_build_path(prefs->config_datadir, STOCK_ICONS_DIR, NULL);
+  capable->extra_icon_path = lives_build_path(prefs->config_datadir, STOCK_ICON_DIR, NULL);
+  capable->app_icon_path = lives_build_path(prefs->prefix_dir, APP_ICON_DIR, NULL);
 
   widget_opts.icon_theme = gtk_icon_theme_new();
 
   gtk_icon_theme_set_custom_theme((LiVESIconTheme *)widget_opts.icon_theme, capable->icon_theme_name);
   gtk_icon_theme_prepend_search_path((LiVESIconTheme *)widget_opts.icon_theme, capable->extra_icon_path);
+  gtk_icon_theme_prepend_search_path((LiVESIconTheme *)widget_opts.icon_theme, capable->app_icon_path);
 
-  ic_dir = lives_build_path(prefs->prefix_dir, ICON_DIR, NULL);
+  ic_dir = lives_build_path(prefs->prefix_dir, DESKTOP_ICON_DIR, NULL);
   gtk_icon_theme_prepend_search_path((LiVESIconTheme *)widget_opts.icon_theme, ic_dir);
   lives_free(ic_dir);
 
   capable->all_icons = gtk_icon_theme_list_icons((LiVESIconTheme *)widget_opts.icon_theme, NULL);
   if (0) {
     LiVESList *list = capable->all_icons;
-    for (; list; list = list->next) if (!strncmp((char *)list->data, "gtk-", 4)) g_print("icon: %s\n", (char *)list->data);
+    for (; list; list = list->next) if (1 || !strncmp((char *)list->data, "gtk-", 4)) g_print("icon: %s\n", (char *)list->data);
   }
 
   widget_helper_set_stock_icon_alts((LiVESIconTheme *)widget_opts.icon_theme);
@@ -4324,6 +4325,8 @@ static boolean lives_startup2(livespointer data) {
 #ifdef ENABLE_JACK_TRANSPORT
   mainw->jack_can_start = TRUE;
 #endif
+
+  lives_window_set_auto_startup_notification(TRUE);
 
   return FALSE;
 } // end lives_startup2()

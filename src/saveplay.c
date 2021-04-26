@@ -182,14 +182,19 @@ void pad_init_silence(void) {
 
 #define AUDIO_FRAMES_TO_READ 100
 
-ulong open_file_sel(const char *file_name, double start, int frames) {
-  LiVESResponseType response;
+ulong open_file_sel(const char *file_name, double start, frames_t frames) {
+  const lives_clip_data_t *cdata;
+  weed_plant_t *mt_pb_start_event = NULL;
+
   char msg[256], loc[PATH_MAX];
   char *tmp = NULL;
   char *isubfname = NULL;
-  char *fname = lives_strdup(file_name), *msgstr;
+  char *msgstr;
   char *com, *what;
   char *temp_backend;
+
+  boolean mt_has_audio_file = TRUE;
+  LiVESResponseType response;
 
   int withsound = 1;
   int old_file = mainw->current_file;
@@ -200,44 +205,31 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   int extra_frames = 0;
   int probed_achans = 0;
 
-  boolean mt_has_audio_file = TRUE;
-
-  const lives_clip_data_t *cdata;
-
-  weed_plant_t *mt_pb_start_event = NULL;
-
-  if (!lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
-    do_no_loadfile_error(fname);
-    lives_free(fname);
+  if (!lives_file_test(file_name, LIVES_FILE_TEST_EXISTS)) {
+    do_no_loadfile_error(file_name);
     return 0;
   }
 
-  if (old_file == -1 || !CURRENT_CLIP_IS_VALID || !cfile->opening) {
+  if (!CURRENT_CLIP_IS_VALID || !cfile->opening) {
     new_file = mainw->first_free_file;
 
-    if (!get_new_handle(new_file, fname)) {
-      lives_free(fname);
+    if (!get_new_handle(new_file, file_name)) {
       return 0;
     }
-    lives_free(fname);
 
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
     lives_widget_context_update();
 
-    if (frames == 0) {
-      com = lives_strdup_printf(_("Opening %s"), file_name);
-    } else {
-      com = lives_strdup_printf(_("Opening %s start time %.2f sec. frames %d"),
-                                file_name, start, frames);
-    }
-    d_print(""); // exhaust "switch" message
+    d_print(_("Opening %s"), file_name);
+    if (start > 0.) d_print(_(" from time %.2f"), start);
+    if (frames > 0) d_print(_(" max. frames %d"), frames);
 
-    d_print(com);
-    lives_free(com);
     if (!mainw->save_with_sound) {
       d_print(_(" without sound"));
       withsound = 0;
     }
+
+    d_print(""); // exhaust "switch" message
 
     mainw->current_file = new_file;
 
@@ -295,11 +287,32 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       lives_chdir(cwd, FALSE);
       lives_free(cwd);
 
-      if (cfile->ext_src) {
+      if (cdata) {
         //lives_decoder_t *dplug = (lives_decoder_t *)cfile->ext_src;
+        frames_t st_frame = cdata->fps * start;
+        if (cfile->frames > cdata->nframes && cfile->frames != 123456789) {
+          extra_frames = cfile->frames - cdata->nframes;
+        }
+        cfile->frames = cdata->nframes;
+
+        if (st_frame >= cfile->frames) {
+          return 0;
+        }
+
+        if (!frames) frames = cfile->frames - st_frame;
+        else {
+          if (st_frame + frames >= cfile->frames) frames = cfile->frames - st_frame;
+        }
+
+        cfile->frames = frames;
+
+        cfile->start = 1;
+        cfile->end = cfile->frames;
+
         cfile->opening = TRUE;
-        cfile->clip_type = CLIP_TYPE_FILE;
+
         cfile->img_type = IMG_TYPE_BEST; // override the pref
+        cfile->clip_type = CLIP_TYPE_FILE;
 
         if (cdata->frame_width > 0) {
           cfile->hsize = cdata->frame_width;
@@ -309,10 +322,20 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           cfile->vsize = cdata->height;
         }
 
-        if (cfile->frames > cdata->nframes && cfile->frames != 123456789) {
-          extra_frames = cfile->frames - cdata->nframes;
+        what = (_("creating the frame index for the clip"));
+
+        do {
+          response = LIVES_RESPONSE_OK;
+          create_frame_index(mainw->current_file, TRUE, st_frame, frames);
+          if (!cfile->frame_index) {
+            response = do_memory_error_dialog(what, frames * 4);
+          }
+        } while (response == LIVES_RESPONSE_RETRY);
+        lives_free(what);
+        if (response == LIVES_RESPONSE_CANCEL) {
+          return 0;
         }
-        cfile->frames = cdata->nframes;
+
         if (!*cfile->author)
           lives_snprintf(cfile->author, 1024, "%s", cdata->author);
         if (!*cfile->title)
@@ -320,85 +343,15 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         if (!*cfile->comment)
           lives_snprintf(cfile->comment, 1024, "%s", cdata->comment);
 
-        if (frames > 0 && cfile->frames > frames) {
-          cfile->frames = frames;
-          extra_frames = 0;
-        }
-
-        cfile->start = 1;
-        cfile->end = cfile->frames;
-
-        what = (_("creating the frame index for the clip"));
-
-        do {
-          response = LIVES_RESPONSE_OK;
-          create_frame_index(mainw->current_file, TRUE, cfile->fps * (start == 0 ? 0 : start - 1),
-                             frames == 0 ? cfile->frames : frames);
-          if (!cfile->frame_index) {
-            response = do_memory_error_dialog(what, (frames == 0 ? cfile->frames : frames) * 4);
-          }
-        } while (response == LIVES_RESPONSE_RETRY);
-        lives_free(what);
-        if (response == LIVES_RESPONSE_CANCEL) {
-          return 0;
-        }
         probed_achans = cdata->achans;
         cfile->arate = cfile->arps = cdata->arate;
-        //cfile->achans = cdata->achans;
         cfile->asampsize = cdata->asamps;
 
         cfile->signed_endian =
           get_signed_endian(cdata->asigned, capable->byte_order == LIVES_LITTLE_ENDIAN);
 
-        /* if (cfile->achans > 0 && (dplug->decoder->rip_audio) && withsound == 1) { */
-        /*   // call rip_audio() in the decoder plugin */
-        /*   // the plugin gets a chance to do any internal cleanup in rip_audio_cleanup() */
-
-        /*   int64_t stframe = cfile->fps * start + .5; */
-        /*   int64_t maxframe = (stframe + (frames == 0)) ? cfile->frames : frames; */
-        /*   int64_t nframes = AUDIO_FRAMES_TO_READ; */
-        /*   char *afile = get_audio_file_name(mainw->current_file, TRUE); */
-
-        /*   msgstr = lives_strdup_printf(_("Opening audio for %s"), file_name); */
-
-        /*   if (!LIVES_IS_PLAYING) resize(1); */
-
-        /*   mainw->cancelled = CANCEL_NONE; */
-
-        /*   if (!LIVES_IS_PLAYING) { */
-        /*     mainw->cancel_type = CANCEL_SOFT; */
-        /*     do_threaded_dialog(msgstr, TRUE); */
-        /*     mainw->cancel_type = CANCEL_KILL; */
-        /*   } */
-
-        /*   do { */
-        /*     if (stframe + nframes > maxframe) nframes = maxframe - stframe; */
-        /*     if (nframes <= 0) break; */
-        /*     (dplug->decoder->rip_audio)(cdata, afile, stframe, nframes, NULL); */
-        /*     threaded_dialog_spin(0.); */
-        /*     stframe += nframes; */
-        /*   } while (mainw->cancelled == CANCEL_NONE); */
-
-        /*   if (dplug->decoder->rip_audio_cleanup) { */
-        /*     (dplug->decoder->rip_audio_cleanup)(cdata); */
-        /*   } */
-
-        /*   if (mainw->cancelled != CANCEL_NONE) { */
-        /*     if (!rip_audio_cancelled(old_file, mt_pb_start_event, mt_has_audio_file)) { */
-        /*       lives_free(afile); */
-        /*       return 0; */
-        /*     } */
-        /*   } */
-        /*   end_threaded_dialog(); */
-        /*   lives_free(msgstr); */
-        /*   lives_free(afile); */
-        /* } else { */
-        /*   cfile->arate = 0.; */
-        /*   cfile->achans = cfile->asampsize = 0; */
-        /* } */
-
-
         cfile->fps = cfile->pb_fps = cdata->fps;
+
         d_print("\n");
 
         if ((cfile->achans > 0 || probed_achans > 0) && withsound == 1) {

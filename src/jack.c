@@ -3476,736 +3476,735 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
       }
       //jackd->out_ports_available++;
     }
+  }
 #endif
 
-    /* tell the JACK server to call `srate()' whenever
-       the sample rate of the system changes. */
-    jack_set_sample_rate_callback(jackd->client, jack_get_srate, jackd);
+  /* tell the JACK server to call `srate()' whenever
+     the sample rate of the system changes. */
+  jack_set_sample_rate_callback(jackd->client, jack_get_srate, jackd);
 
-    /* tell the JACK server to call `jack_shutdown()' if
-       it ever shuts down, either entirely, or if it
-       just decides to stop calling us. */
-    jack_on_shutdown(jackd->client, jack_shutdown, jackd);
+  /* tell the JACK server to call `jack_shutdown()' if
+     it ever shuts down, either entirely, or if it
+     just decides to stop calling us. */
+  jack_on_shutdown(jackd->client, jack_shutdown, jackd);
 
-    return TRUE;
-  }
+  return TRUE;
+}
 
 
-  boolean jack_create_client_reader(jack_driver_t *jackd) {
-    // open a device to read audio from jack
-    lives_proc_thread_t lpt;
-    char portname[32];
-    int nch = jackd->num_input_channels;
-    boolean is_test = FALSE;
-    boolean res;
+boolean jack_create_client_reader(jack_driver_t *jackd) {
+  // open a device to read audio from jack
+  lives_proc_thread_t lpt;
+  char portname[32];
+  int nch = jackd->num_input_channels;
+  boolean is_test = FALSE;
+  boolean res;
 
-    if (mainw->aplayer_broken) return FALSE;
+  if (mainw->aplayer_broken) return FALSE;
 
-    if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) is_test = TRUE;
+  if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) is_test = TRUE;
 
-    if (!prefs->startup_phase || is_test) {
-      jackd->is_active = FALSE;
+  if (!prefs->startup_phase || is_test) {
+    jackd->is_active = FALSE;
 
-      // create a client and attach it to the server
-      res = lives_jack_init(JACK_CLIENT_TYPE_AUDIO_READER, jackd);
+    // create a client and attach it to the server
+    res = lives_jack_init(JACK_CLIENT_TYPE_AUDIO_READER, jackd);
 
-      if (prefs->startup_phase) {
-        jackd->jack_port_flags |= JackPortIsOutput;
-        if (out_ports) lives_free(out_ports);
-        out_ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
-      }
-
-      if (is_test) {
-        finish_test(jackd, res, FALSE, TRUE);
-        return res;
-      }
-      if (!res) return FALSE;
+    if (prefs->startup_phase) {
+      jackd->jack_port_flags |= JackPortIsOutput;
+      if (out_ports) lives_free(out_ports);
+      out_ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
     }
 
-    lpt = THREADVAR(tinfo);
-    if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+    if (is_test) {
+      finish_test(jackd, res, FALSE, TRUE);
+      return res;
+    }
+    if (!res) return FALSE;
+  }
 
-    jackd->sample_in_rate = jackd->sample_out_rate = jack_get_sample_rate(jackd->client);
-    //lives_printerr (lives_strdup_printf("engine sample rate: %ld\n",jackd->sample_rate));
+  lpt = THREADVAR(tinfo);
+  if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
 
-    // create ports for the client (left and right channels)
+  jackd->sample_in_rate = jackd->sample_out_rate = jack_get_sample_rate(jackd->client);
+  //lives_printerr (lives_strdup_printf("engine sample rate: %ld\n",jackd->sample_rate));
+
+  // create ports for the client (left and right channels)
+  for (int i = 0; i < nch; i++) {
+    if (!i) {
+      lives_snprintf(portname, 32, "audio_L");
+    } else if (i == 1) {
+      lives_snprintf(portname, 32, "audio_R");
+    } else lives_snprintf(portname, 32, "in_%d", i);
+#define DEBUG_JACK_PORTS
+#ifdef DEBUG_JACK_PORTS
+    lives_printerr("input port %d is named '%s'\n", i, portname);
+#endif
+    jackd->input_port[i] =
+      jack_port_register(jackd->client, portname, JACK_DEFAULT_AUDIO_TYPE,
+                         JackPortIsInput | JackPortIsTerminal, 0);
+    if (!jackd->input_port[i]) {
+      lives_printerr("no more JACK input ports available\n");
+      //return FALSE;
+    }
+  }
+
+  if ((prefs->audio_opts & AUDIO_OPTS_AUX_PLAY)
+      || (prefs->audio_opts & AUDIO_OPTS_AUX_RECORD)) {
     for (int i = 0; i < nch; i++) {
       if (!i) {
-        lives_snprintf(portname, 32, "audio_L");
+        lives_snprintf(portname, 32, "aux_L");
       } else if (i == 1) {
-        lives_snprintf(portname, 32, "audio_R");
-      } else lives_snprintf(portname, 32, "in_%d", i);
-#define DEBUG_JACK_PORTS
+        lives_snprintf(portname, 32, "aux_R");
+      } else lives_snprintf(portname, 32, "aux_in_%d", i);
+
 #ifdef DEBUG_JACK_PORTS
       lives_printerr("input port %d is named '%s'\n", i, portname);
 #endif
-      jackd->input_port[i] =
+      jackd->input_port[nch + i] =
         jack_port_register(jackd->client, portname, JACK_DEFAULT_AUDIO_TYPE,
                            JackPortIsInput | JackPortIsTerminal, 0);
-      if (!jackd->input_port[i]) {
+      if (!jackd->input_port[nch + i]) {
         lives_printerr("no more JACK input ports available\n");
         //return FALSE;
       }
     }
-
-    if ((prefs->audio_opts & AUDIO_OPTS_AUX_PLAY)
-        || (prefs->audio_opts & AUDIO_OPTS_AUX_RECORD)) {
-      for (int i = 0; i < nch; i++) {
-        if (!i) {
-          lives_snprintf(portname, 32, "aux_L");
-        } else if (i == 1) {
-          lives_snprintf(portname, 32, "aux_R");
-        } else lives_snprintf(portname, 32, "aux_in_%d", i);
-
-#ifdef DEBUG_JACK_PORTS
-        lives_printerr("input port %d is named '%s'\n", i, portname);
-#endif
-        jackd->input_port[nch + i] =
-          jack_port_register(jackd->client, portname, JACK_DEFAULT_AUDIO_TYPE,
-                             JackPortIsInput | JackPortIsTerminal, 0);
-        if (!jackd->input_port[nch + i]) {
-          lives_printerr("no more JACK input ports available\n");
-          //return FALSE;
-        }
-      }
-    }
-
-    /* tell the JACK server to call `srate()' whenever
-       the sample rate of the system changes. */
-    jack_set_sample_rate_callback(jackd->client, jack_get_srate, jackd);
-
-    /* tell the JACK server to call `jack_shutdown()' if
-       it ever shuts down, either entirely, or if it
-       just decides to stop calling us. */
-    jack_on_shutdown(jackd->client, jack_shutdown, jackd);
-
-    jrb = 0;
-
-    return 0;
   }
 
+  /* tell the JACK server to call `srate()' whenever
+     the sample rate of the system changes. */
+  jack_set_sample_rate_callback(jackd->client, jack_get_srate, jackd);
 
-  boolean jack_write_client_activate(jack_driver_t *jackd) {
-    // connect client and activate it
-    char **pieces;
-    char *logmsg;
-    int nch = jackd->num_output_channels;
-    int i, j = 0;
+  /* tell the JACK server to call `jack_shutdown()' if
+     it ever shuts down, either entirely, or if it
+     just decides to stop calling us. */
+  jack_on_shutdown(jackd->client, jack_shutdown, jackd);
 
-    if (jackd->is_active) return TRUE; // already running
+  jrb = 0;
 
-    jack_set_process_callback(jackd->client, audio_process, jackd);
+  return 0;
+}
 
-    /* tell the JACK server that we are ready to roll */
-    if (jack_activate(jackd->client)) {
-      // let's hope IT is too...
-      logmsg = lives_strdup_printf("LiVES : Could not activate jack writer client");
-      jack_log_errmsg(jackd, logmsg);
-      LIVES_ERROR(logmsg);
-      lives_free(logmsg);
-      return FALSE;
-    }
 
-    // we are looking for input ports to connect to
-    jackd->jack_port_flags |= JackPortIsInput;
-    if (in_ports) lives_free(in_ports);
-    in_ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
+boolean jack_write_client_activate(jack_driver_t *jackd) {
+  // connect client and activate it
+  char **pieces;
+  char *logmsg;
+  int nch = jackd->num_output_channels;
+  int i, j = 0;
 
-    if (!in_ports) {
-      logmsg = lives_strdup_printf("LiVES : No jack input ports available");
-      jack_log_errmsg(jackd, logmsg);
-      LIVES_ERROR(logmsg);
-      lives_free(logmsg);
-      return FALSE;
-    }
+  if (jackd->is_active) return TRUE; // already running
 
-    for (i = 0; in_ports[i]; i++);
-    jackd->in_ports_available = i;
+  jack_set_process_callback(jackd->client, audio_process, jackd);
 
-    /* connect the ports. Note: you can't do this before
-       the client is activated (this may change in the future). */
-    for (i = 0; i < jackd->in_ports_available; i++) {
+  /* tell the JACK server that we are ready to roll */
+  if (jack_activate(jackd->client)) {
+    // let's hope IT is too...
+    logmsg = lives_strdup_printf("LiVES : Could not activate jack writer client");
+    jack_log_errmsg(jackd, logmsg);
+    LIVES_ERROR(logmsg);
+    lives_free(logmsg);
+    return FALSE;
+  }
+
+  // we are looking for input ports to connect to
+  jackd->jack_port_flags |= JackPortIsInput;
+  if (in_ports) lives_free(in_ports);
+  in_ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
+
+  if (!in_ports) {
+    logmsg = lives_strdup_printf("LiVES : No jack input ports available");
+    jack_log_errmsg(jackd, logmsg);
+    LIVES_ERROR(logmsg);
+    lives_free(logmsg);
+    return FALSE;
+  }
+
+  for (i = 0; in_ports[i]; i++);
+  jackd->in_ports_available = i;
+
+  /* connect the ports. Note: you can't do this before
+     the client is activated (this may change in the future). */
+  for (i = 0; i < jackd->in_ports_available; i++) {
 #ifdef DEBUG_JACK_PORTS
-      lives_printerr("found port %s\n", in_ports[i]);
+    lives_printerr("found port %s\n", in_ports[i]);
 #endif
-      pieces = lives_strsplit(in_ports[i], ":", 2);
-      if (lives_strcmp(pieces[0], prefs->jack_outport_client)) {
-        lives_strfreev(pieces);
-        continue;
-      }
-      logmsg = lives_strdup_printf("LiVES : found port %s belonging to %s. Will connect %s to it\n", pieces[1], pieces[2],
-                                   jack_port_name(jackd->output_port[j]));
-
-
-      jack_log_errmsg(jackd, logmsg);
-      lives_free(logmsg);
-#ifdef DEBUG_JACK_PORTS
-      lives_printerr("client is %s, connecting to out port %s\n", pieces[0], jack_port_name(jackd->output_port[j]));
-#endif
-      if (jack_connect(jackd->client, jack_port_name(jackd->output_port[j]), in_ports[i])) {
-#ifdef DEBUG_JACK_PORTS
-        lives_printerr("connection failed\n");
-#endif
-        logmsg = lives_strdup_printf("LiVES : Could not connect to port");
-        jack_log_errmsg(jackd, logmsg);
-        LIVES_ERROR(logmsg);
-        lives_free(logmsg);
-        jack_log_errmsg(jackd, NULL);
-        break;
-      }
+    pieces = lives_strsplit(in_ports[i], ":", 2);
+    if (lives_strcmp(pieces[0], prefs->jack_outport_client)) {
       lives_strfreev(pieces);
-      j++;
+      continue;
     }
+    logmsg = lives_strdup_printf("LiVES : found port %s belonging to %s. Will connect %s to it\n", pieces[1], pieces[2],
+                                 jack_port_name(jackd->output_port[j]));
 
-    if (j < nch) {
-      logmsg = lives_strdup_printf("LiVES : failed to auto connect all output ports");
+
+    jack_log_errmsg(jackd, logmsg);
+    lives_free(logmsg);
+#ifdef DEBUG_JACK_PORTS
+    lives_printerr("client is %s, connecting to out port %s\n", pieces[0], jack_port_name(jackd->output_port[j]));
+#endif
+    if (jack_connect(jackd->client, jack_port_name(jackd->output_port[j]), in_ports[i])) {
+#ifdef DEBUG_JACK_PORTS
+      lives_printerr("connection failed\n");
+#endif
+      logmsg = lives_strdup_printf("LiVES : Could not connect to port");
       jack_log_errmsg(jackd, logmsg);
+      LIVES_ERROR(logmsg);
       lives_free(logmsg);
+      jack_log_errmsg(jackd, NULL);
+      break;
     }
-
-    jackd->num_output_channels = j;
-
-    // start using soundcard as timer source
-    prefs->force_system_clock = FALSE;
-
-    jackd->is_active = TRUE;
-    jackd->jackd_died = FALSE;
-    jackd->in_use = FALSE;
-    jackd->is_paused = FALSE;
-
-    d_print(_("Started jack audio subsystem.\n"));
-
-    return TRUE;
+    lives_strfreev(pieces);
+    j++;
   }
 
+  if (j < nch) {
+    logmsg = lives_strdup_printf("LiVES : failed to auto connect all output ports");
+    jack_log_errmsg(jackd, logmsg);
+    lives_free(logmsg);
+  }
 
-  boolean jack_read_client_activate(jack_driver_t *jackd, boolean autocon) {
-    // connect driver for reading
-    char **pieces;
-    char *logmsg;
-    int nch = jackd->num_input_channels;
-    int i, j = 0;
+  jackd->num_output_channels = j;
 
-    if (!jackd->is_active) {
-      // set process callback and start
-      jack_set_process_callback(jackd->client, audio_read, jackd);
-      if (jack_activate(jackd->client)) {
-        logmsg = lives_strdup_printf("LiVES : Could not activate jack reader client");
-        jack_log_errmsg(jackd, logmsg);
-        LIVES_ERROR(logmsg);
-        lives_free(logmsg);
-        return FALSE;
-      }
-    }
+  // start using soundcard as timer source
+  prefs->force_system_clock = FALSE;
 
-    if (!autocon && (prefs->jack_opts & JACK_OPTS_NO_READ_AUTOCON)) goto jackreadactive;
+  jackd->is_active = TRUE;
+  jackd->jackd_died = FALSE;
+  jackd->in_use = FALSE;
+  jackd->is_paused = FALSE;
 
-    // we are looking for output ports to connect to
-    jackd->jack_port_flags |= JackPortIsOutput;
+  d_print(_("Started jack audio subsystem.\n"));
 
-    if (out_ports) lives_free(out_ports);
-    out_ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
+  return TRUE;
+}
 
-    if (!out_ports) {
-      logmsg = lives_strdup_printf("LiVES : No jack output ports available");
+
+boolean jack_read_client_activate(jack_driver_t *jackd, boolean autocon) {
+  // connect driver for reading
+  char **pieces;
+  char *logmsg;
+  int nch = jackd->num_input_channels;
+  int i, j = 0;
+
+  if (!jackd->is_active) {
+    // set process callback and start
+    jack_set_process_callback(jackd->client, audio_read, jackd);
+    if (jack_activate(jackd->client)) {
+      logmsg = lives_strdup_printf("LiVES : Could not activate jack reader client");
       jack_log_errmsg(jackd, logmsg);
       LIVES_ERROR(logmsg);
       lives_free(logmsg);
       return FALSE;
     }
+  }
 
-    for (i = 0; out_ports[i]; i++);
+  if (!autocon && (prefs->jack_opts & JACK_OPTS_NO_READ_AUTOCON)) goto jackreadactive;
 
-    jackd->out_ports_available = i;
+  // we are looking for output ports to connect to
+  jackd->jack_port_flags |= JackPortIsOutput;
 
-    /* connect the ports. Note: you can't do this before
-       the client is activated (this may change in the future). */
-    for (i = 0; i < jackd->out_ports_available; i++) {
+  if (out_ports) lives_free(out_ports);
+  out_ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
+
+  if (!out_ports) {
+    logmsg = lives_strdup_printf("LiVES : No jack output ports available");
+    jack_log_errmsg(jackd, logmsg);
+    LIVES_ERROR(logmsg);
+    lives_free(logmsg);
+    return FALSE;
+  }
+
+  for (i = 0; out_ports[i]; i++);
+
+  jackd->out_ports_available = i;
+
+  /* connect the ports. Note: you can't do this before
+     the client is activated (this may change in the future). */
+  for (i = 0; i < jackd->out_ports_available; i++) {
 #define DEBUG_JACK_PORTS
 #ifdef DEBUG_JACK_PORTS
-      lives_printerr("found port %s\n", out_ports[i]);
+    lives_printerr("found port %s\n", out_ports[i]);
 #endif
-      pieces = lives_strsplit(out_ports[i], ":", 2);
-      if (lives_strcmp(pieces[0], prefs->jack_inport_client)) {
-        lives_strfreev(pieces);
-        continue;
-      }
-      logmsg = lives_strdup_printf("LiVES : found port %s belonging to %s. Will connect %s to it\n", pieces[1], pieces[2],
-                                   jack_port_name(jackd->input_port[j]));
-      jack_log_errmsg(jackd, logmsg);
-      lives_free(logmsg);
-#ifdef DEBUG_JACK_PORTS
-      lives_printerr("client is %s, connecting to in port %s\n", pieces[0], jack_port_name(jackd->input_port[j]));
-#endif
-      if (jack_connect(jackd->client, out_ports[i], jack_port_name(jackd->input_port[j]))) {
-#ifdef DEBUG_JACK_PORTS
-        lives_printerr("connection failed\n");
-#endif
-        logmsg = lives_strdup_printf("LiVES : Could not connect to port");
-        jack_log_errmsg(jackd, logmsg);
-        LIVES_ERROR(logmsg);
-        lives_free(logmsg);
-        jack_log_errmsg(jackd, NULL);
-        break;
-      }
+    pieces = lives_strsplit(out_ports[i], ":", 2);
+    if (lives_strcmp(pieces[0], prefs->jack_inport_client)) {
       lives_strfreev(pieces);
-      j++;
+      continue;
     }
-
-    if (j < nch) {
-      logmsg = lives_strdup_printf("LiVES : failed to auto connect all input ports");
+    logmsg = lives_strdup_printf("LiVES : found port %s belonging to %s. Will connect %s to it\n", pieces[1], pieces[2],
+                                 jack_port_name(jackd->input_port[j]));
+    jack_log_errmsg(jackd, logmsg);
+    lives_free(logmsg);
+#ifdef DEBUG_JACK_PORTS
+    lives_printerr("client is %s, connecting to in port %s\n", pieces[0], jack_port_name(jackd->input_port[j]));
+#endif
+    if (jack_connect(jackd->client, out_ports[i], jack_port_name(jackd->input_port[j]))) {
+#ifdef DEBUG_JACK_PORTS
+      lives_printerr("connection failed\n");
+#endif
+      logmsg = lives_strdup_printf("LiVES : Could not connect to port");
       jack_log_errmsg(jackd, logmsg);
+      LIVES_ERROR(logmsg);
       lives_free(logmsg);
+      jack_log_errmsg(jackd, NULL);
+      break;
     }
+    lives_strfreev(pieces);
+    j++;
+  }
 
-    if (!(future_prefs->jack_opts & JACK_INFO_TEST_SETUP))
-      jackd->num_input_channels = j;
+  if (j < nch) {
+    logmsg = lives_strdup_printf("LiVES : failed to auto connect all input ports");
+    jack_log_errmsg(jackd, logmsg);
+    lives_free(logmsg);
+  }
 
-    // do we need to be connected for this ?
-    // start using soundcard as timer source
-    //prefs->force_system_clock = FALSE;
+  if (!(future_prefs->jack_opts & JACK_INFO_TEST_SETUP))
+    jackd->num_input_channels = j;
+
+  // do we need to be connected for this ?
+  // start using soundcard as timer source
+  //prefs->force_system_clock = FALSE;
 
 jackreadactive:
 
-    jackd->is_active = TRUE;
-    jackd->jackd_died = FALSE;
-    jackd->in_use = FALSE;
-    jackd->is_paused = FALSE;
-    jackd->nframes_start = 0;
-    d_print(_("Started jack audio reader.\n"));
+  jackd->is_active = TRUE;
+  jackd->jackd_died = FALSE;
+  jackd->in_use = FALSE;
+  jackd->is_paused = FALSE;
+  jackd->nframes_start = 0;
+  d_print(_("Started jack audio reader.\n"));
 
-    // start using soundcard as timer source
-    prefs->force_system_clock = FALSE;
+  // start using soundcard as timer source
+  prefs->force_system_clock = FALSE;
 
-    return TRUE;
-  }
+  return TRUE;
+}
 
 
-  jack_driver_t *jack_get_driver(int dev_idx, boolean is_output) {
-    jack_driver_t *jackd;
+jack_driver_t *jack_get_driver(int dev_idx, boolean is_output) {
+  jack_driver_t *jackd;
 
-    if (is_output) jackd = &outdev[dev_idx];
-    else jackd = &indev[dev_idx];
+  if (is_output) jackd = &outdev[dev_idx];
+  else jackd = &indev[dev_idx];
 #ifdef TRACE_getReleaseDevice
-    lives_printerr("dev_idx is %d\n", dev_idx);
+  lives_printerr("dev_idx is %d\n", dev_idx);
 #endif
 
-    return jackd;
-  }
+  return jackd;
+}
 
 
-  int jack_audio_init(void) {
-    // initialise variables
-    int i, j;
-    jack_driver_t *jackd;
+int jack_audio_init(void) {
+  // initialise variables
+  int i, j;
+  jack_driver_t *jackd;
 
-    for (i = 0; i < JACK_MAX_OUTDEVICES; i++) {
-      jackd = &outdev[i];
-      //jack_reset_dev(i, TRUE);
-      jackd->dev_idx = i;
-      jackd->client = NULL;
-      jackd->in_use = FALSE;
-      for (j = 0; j < JACK_MAX_PORTS; j++) jackd->volume[j] = 1.0f;
-      jackd->state = (jack_transport_state_t)JackTClosed;
-      jackd->sample_out_rate = jackd->sample_in_rate = 0;
-      jackd->seek_pos = jackd->seek_end = jackd->real_seek_pos = 0;
-      jackd->msgq = NULL;
-      jackd->num_calls = 0;
-      jackd->astream_fd = -1;
-      jackd->abs_maxvol_heard = 0.;
-      jackd->jackd_died = FALSE;
-      jackd->num_output_channels = MAX_ACHANS;
-      jackd->mute = FALSE;
-      jackd->is_silent = FALSE;
-      jackd->out_ports_available = 0;
-      jackd->read_abuf = -1;
-      jackd->playing_file = -1;
-      jackd->frames_written = 0;
-      *jackd->status_msg = 0;
-    }
-    return 0;
-  }
-
-
-  int jack_audio_read_init(void) {
-    int i, j;
-    jack_driver_t *jackd;
-
-    for (i = 0; i < JACK_MAX_INDEVICES; i++) {
-      jackd = &indev[i];
-      //jack_reset_dev(i, FALSE);
-      jackd->dev_idx = i;
-      jackd->client = NULL;
-      jackd->in_use = FALSE;
-      for (j = 0; j < JACK_MAX_PORTS; j++) jackd->volume[j] = 1.0f;
-      jackd->state = (jack_transport_state_t)JackTClosed;
-      jackd->sample_out_rate = jackd->sample_in_rate = 0;
-      jackd->seek_pos = jackd->seek_end = jackd->real_seek_pos = 0;
-      jackd->msgq = NULL;
-      jackd->num_calls = 0;
-      jackd->astream_fd = -1;
-      jackd->abs_maxvol_heard = 0.;
-      jackd->jackd_died = FALSE;
-      jackd->num_input_channels = MAX_ACHANS;
-      jackd->mute = FALSE;
-      jackd->in_ports_available = 0;
-      jackd->playing_file = -1;
-      jackd->frames_written = 0;
-      *jackd->status_msg = 0;
-    }
-    return 0;
-  }
-
-
-  volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
-    if (jackd->jackd_died || mainw->aplayer_broken) return NULL;
-    return jackd->msgq;
-  }
-
-
-  void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
-    jackd->nframes_start = jack_frame_time(jackd->client) + (jack_nframes_t)(((double)offset / USEC_TO_TICKS) *
-                           ((double)(jackd->client_type
-                                     == JACK_CLIENT_TYPE_AUDIO_READER
-                                     ? jackd->sample_in_rate
-                                     : jackd->sample_out_rate) / 1000000.));
+  for (i = 0; i < JACK_MAX_OUTDEVICES; i++) {
+    jackd = &outdev[i];
+    //jack_reset_dev(i, TRUE);
+    jackd->dev_idx = i;
+    jackd->client = NULL;
+    jackd->in_use = FALSE;
+    for (j = 0; j < JACK_MAX_PORTS; j++) jackd->volume[j] = 1.0f;
+    jackd->state = (jack_transport_state_t)JackTClosed;
+    jackd->sample_out_rate = jackd->sample_in_rate = 0;
+    jackd->seek_pos = jackd->seek_end = jackd->real_seek_pos = 0;
+    jackd->msgq = NULL;
+    jackd->num_calls = 0;
+    jackd->astream_fd = -1;
+    jackd->abs_maxvol_heard = 0.;
+    jackd->jackd_died = FALSE;
+    jackd->num_output_channels = MAX_ACHANS;
+    jackd->mute = FALSE;
+    jackd->is_silent = FALSE;
+    jackd->out_ports_available = 0;
+    jackd->read_abuf = -1;
+    jackd->playing_file = -1;
     jackd->frames_written = 0;
-    mainw->currticks = offset;
-    mainw->deltaticks = mainw->startticks = 0;
+    *jackd->status_msg = 0;
   }
+  return 0;
+}
 
 
-  ticks_t lives_jack_get_time(jack_driver_t *jackd) {
-    // get the time in ticks since playback started
-    volatile aserver_message_t *msg = jackd->msgq;
-    static jack_nframes_t last_frames = 0;
-    jack_nframes_t frames, retframes;
-    double srate;
+int jack_audio_read_init(void) {
+  int i, j;
+  jack_driver_t *jackd;
 
-    if (!jackd->client) return -1;
-
-    if (msg && msg->command == ASERVER_CMD_FILE_SEEK) {
-      ticks_t timeout;
-      lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-      while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(jackd)) {
-        sched_yield(); // wait for seek
-        lives_usleep(prefs->sleep_time);
-      }
-      lives_alarm_clear(alarm_handle);
-      if (timeout == 0) return -1;
-    }
-
-    if (!jackd->client) return -1;
-    frames = jack_frame_time(jackd->client);
-    if (!jackd->client) return -1;
-    srate = (double)(jackd->client_type == JACK_CLIENT_TYPE_AUDIO_READER ? jackd->sample_in_rate : jackd->sample_out_rate);
-    if (!jackd->client) return -1;
-
-    retframes = frames;
-    if (last_frames > 0 && frames <= last_frames) {
-      retframes += jackd->frames_written;
-    } else jackd->frames_written = 0;
-    last_frames = frames;
-    return (double)(frames - jackd->nframes_start) * (1000000. / srate) * USEC_TO_TICKS;
+  for (i = 0; i < JACK_MAX_INDEVICES; i++) {
+    jackd = &indev[i];
+    //jack_reset_dev(i, FALSE);
+    jackd->dev_idx = i;
+    jackd->client = NULL;
+    jackd->in_use = FALSE;
+    for (j = 0; j < JACK_MAX_PORTS; j++) jackd->volume[j] = 1.0f;
+    jackd->state = (jack_transport_state_t)JackTClosed;
+    jackd->sample_out_rate = jackd->sample_in_rate = 0;
+    jackd->seek_pos = jackd->seek_end = jackd->real_seek_pos = 0;
+    jackd->msgq = NULL;
+    jackd->num_calls = 0;
+    jackd->astream_fd = -1;
+    jackd->abs_maxvol_heard = 0.;
+    jackd->jackd_died = FALSE;
+    jackd->num_input_channels = MAX_ACHANS;
+    jackd->mute = FALSE;
+    jackd->in_ports_available = 0;
+    jackd->playing_file = -1;
+    jackd->frames_written = 0;
+    *jackd->status_msg = 0;
   }
+  return 0;
+}
 
 
-  double lives_jack_get_pos(jack_driver_t *jackd) {
-    // get current time position (seconds) in audio file
-    if (jackd->playing_file > -1)
-      return fwd_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
-    // from memory
-    return (double)jackd->frames_written / (double)jackd->sample_out_rate;
-  }
+volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
+  if (jackd->jackd_died || mainw->aplayer_broken) return NULL;
+  return jackd->msgq;
+}
 
 
-  boolean jack_audio_seek_frame(jack_driver_t *jackd, double frame) {
-    // seek to frame "frame" in current audio file
-    // position will be adjusted to (floor) nearest sample
+void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
+  jackd->nframes_start = jack_frame_time(jackd->client) + (jack_nframes_t)(((double)offset / USEC_TO_TICKS) *
+                         ((double)(jackd->client_type
+                                   == JACK_CLIENT_TYPE_AUDIO_READER
+                                   ? jackd->sample_in_rate
+                                   : jackd->sample_out_rate) / 1000000.));
+  jackd->frames_written = 0;
+  mainw->currticks = offset;
+  mainw->deltaticks = mainw->startticks = 0;
+}
 
-    volatile aserver_message_t *jmsg;
-    int64_t seekstart;
+
+ticks_t lives_jack_get_time(jack_driver_t *jackd) {
+  // get the time in ticks since playback started
+  volatile aserver_message_t *msg = jackd->msgq;
+  static jack_nframes_t last_frames = 0;
+  jack_nframes_t frames, retframes;
+  double srate;
+
+  if (!jackd->client) return -1;
+
+  if (msg && msg->command == ASERVER_CMD_FILE_SEEK) {
     ticks_t timeout;
-    double thresh = 0., delta = 0.;
     lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+    while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(jackd)) {
+      sched_yield(); // wait for seek
+      lives_usleep(prefs->sleep_time);
+    }
+    lives_alarm_clear(alarm_handle);
+    if (timeout == 0) return -1;
+  }
 
-    if (alarm_handle == ALL_USED) return FALSE;
+  if (!jackd->client) return -1;
+  frames = jack_frame_time(jackd->client);
+  if (!jackd->client) return -1;
+  srate = (double)(jackd->client_type == JACK_CLIENT_TYPE_AUDIO_READER ? jackd->sample_in_rate : jackd->sample_out_rate);
+  if (!jackd->client) return -1;
 
-    if (frame < 1) frame = 1;
+  retframes = frames;
+  if (last_frames > 0 && frames <= last_frames) {
+    retframes += jackd->frames_written;
+  } else jackd->frames_written = 0;
+  last_frames = frames;
+  return (double)(frames - jackd->nframes_start) * (1000000. / srate) * USEC_TO_TICKS;
+}
 
+
+double lives_jack_get_pos(jack_driver_t *jackd) {
+  // get current time position (seconds) in audio file
+  if (jackd->playing_file > -1)
+    return fwd_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
+  // from memory
+  return (double)jackd->frames_written / (double)jackd->sample_out_rate;
+}
+
+
+boolean jack_audio_seek_frame(jack_driver_t *jackd, double frame) {
+  // seek to frame "frame" in current audio file
+  // position will be adjusted to (floor) nearest sample
+
+  volatile aserver_message_t *jmsg;
+  int64_t seekstart;
+  ticks_t timeout;
+  double thresh = 0., delta = 0.;
+  lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+
+  if (alarm_handle == ALL_USED) return FALSE;
+
+  if (frame < 1) frame = 1;
+
+  do {
+    jmsg = jack_get_msgq(jackd);
+  } while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jmsg && jmsg->command != ASERVER_CMD_FILE_SEEK);
+  lives_alarm_clear(alarm_handle);
+  if (timeout == 0 || jackd->playing_file == -1) {
+    return FALSE;
+  }
+  if (frame > afile->frames && afile->frames != 0) frame = afile->frames;
+  seekstart = (int64_t)((double)(frame - 1.) / afile->fps * afile->arps) * afile->achans * (afile->asampsize / 8);
+  if (cache_buffer) {
+    delta = (double)(seekstart - lives_buffered_offset(cache_buffer->_fd)) / (double)(afile->arps * afile->achans *
+            (afile->asampsize / 8));
+    thresh = 1. / (double)afile->fps;
+  }
+  if (delta >= thresh || delta <= -thresh)
+    jack_audio_seek_bytes(jackd, seekstart, afile);
+  return TRUE;
+}
+
+
+int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes, lives_clip_t *sfile) {
+  // seek to position "bytes" in current audio file
+  // position will be adjusted to (floor) nearest sample
+
+  // if the position is > size of file, we will seek to the end of the file
+
+  volatile aserver_message_t *jmsg;
+  int64_t seekstart;
+
+  ticks_t timeout;
+  lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+
+  fwd_seek_pos = bytes;
+
+  seek_err = FALSE;
+
+  if (alarm_handle == -1) {
+    LIVES_WARN("Invalid alarm handle");
+    return 0;
+  }
+  if (jackd->in_use) {
     do {
       jmsg = jack_get_msgq(jackd);
     } while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jmsg && jmsg->command != ASERVER_CMD_FILE_SEEK);
     lives_alarm_clear(alarm_handle);
     if (timeout == 0 || jackd->playing_file == -1) {
-      return FALSE;
-    }
-    if (frame > afile->frames && afile->frames != 0) frame = afile->frames;
-    seekstart = (int64_t)((double)(frame - 1.) / afile->fps * afile->arps) * afile->achans * (afile->asampsize / 8);
-    if (cache_buffer) {
-      delta = (double)(seekstart - lives_buffered_offset(cache_buffer->_fd)) / (double)(afile->arps * afile->achans *
-              (afile->asampsize / 8));
-      thresh = 1. / (double)afile->fps;
-    }
-    if (delta >= thresh || delta <= -thresh)
-      jack_audio_seek_bytes(jackd, seekstart, afile);
-    return TRUE;
-  }
-
-
-  int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes, lives_clip_t *sfile) {
-    // seek to position "bytes" in current audio file
-    // position will be adjusted to (floor) nearest sample
-
-    // if the position is > size of file, we will seek to the end of the file
-
-    volatile aserver_message_t *jmsg;
-    int64_t seekstart;
-
-    ticks_t timeout;
-    lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-
-    fwd_seek_pos = bytes;
-
-    seek_err = FALSE;
-
-    if (alarm_handle == -1) {
-      LIVES_WARN("Invalid alarm handle");
+      if (timeout == 0) LIVES_WARN("Jack connect timed out");
+      seek_err = TRUE;
       return 0;
     }
-    if (jackd->in_use) {
-      do {
-        jmsg = jack_get_msgq(jackd);
-      } while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jmsg && jmsg->command != ASERVER_CMD_FILE_SEEK);
-      lives_alarm_clear(alarm_handle);
-      if (timeout == 0 || jackd->playing_file == -1) {
-        if (timeout == 0) LIVES_WARN("Jack connect timed out");
-        seek_err = TRUE;
-        return 0;
-      }
-    }
-
-    seekstart = ((int64_t)(bytes / sfile->achans / (sfile->asampsize / 8))) * sfile->achans * (sfile->asampsize / 8);
-
-    if (seekstart < 0) seekstart = 0;
-    if (seekstart > sfile->afilesize) seekstart = sfile->afilesize;
-    jack_message2.command = ASERVER_CMD_FILE_SEEK;
-    jack_message2.tc = 0;//lives_get_current_ticks();
-    jack_message2.next = NULL;
-    jack_message2.data = lives_strdup_printf("%"PRId64, seekstart);
-    if (!jackd->msgq) jackd->msgq = &jack_message2;
-    else jackd->msgq->next = &jack_message2;
-    return seekstart;
   }
 
+  seekstart = ((int64_t)(bytes / sfile->achans / (sfile->asampsize / 8))) * sfile->achans * (sfile->asampsize / 8);
 
-  boolean jack_try_reconnect(void) {
-    jack_audio_init();
-    jack_audio_read_init();
+  if (seekstart < 0) seekstart = 0;
+  if (seekstart > sfile->afilesize) seekstart = sfile->afilesize;
+  jack_message2.command = ASERVER_CMD_FILE_SEEK;
+  jack_message2.tc = 0;//lives_get_current_ticks();
+  jack_message2.next = NULL;
+  jack_message2.data = lives_strdup_printf("%"PRId64, seekstart);
+  if (!jackd->msgq) jackd->msgq = &jack_message2;
+  else jackd->msgq->next = &jack_message2;
+  return seekstart;
+}
 
-    mainw->jackd = jack_get_driver(0, TRUE);
-    if (!jack_create_client_writer(mainw->jackd)) goto err123;
 
-    mainw->jackd_read = jack_get_driver(0, FALSE);
-    jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
+boolean jack_try_reconnect(void) {
+  jack_audio_init();
+  jack_audio_read_init();
 
-    d_print(_("\nConnection to jack audio was reset.\n"));
-    return TRUE;
+  mainw->jackd = jack_get_driver(0, TRUE);
+  if (!jack_create_client_writer(mainw->jackd)) goto err123;
+
+  mainw->jackd_read = jack_get_driver(0, FALSE);
+  jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
+
+  d_print(_("\nConnection to jack audio was reset.\n"));
+  return TRUE;
 
 err123:
-    mainw->aplayer_broken = TRUE;
-    mainw->jackd = mainw->jackd_read = NULL;
-    do_jack_lost_conn_error();
-    return FALSE;
-  }
+  mainw->aplayer_broken = TRUE;
+  mainw->jackd = mainw->jackd_read = NULL;
+  do_jack_lost_conn_error();
+  return FALSE;
+}
 
 
-  void jack_pb_end(void) {
-    cache_buffer = NULL;
-    if (prefs->audio_opts & AUDIO_OPTS_AUX_PLAY)
-      unregister_aux_audio_channels(1);
-    if (AUD_SRC_EXTERNAL) {
-      if (prefs->audio_opts & AUDIO_OPTS_EXT_FX)
-        unregister_audio_client(FALSE);
-    }
-  }
+void jack_pb_end(void) {
+  cache_buffer = NULL;
+  if (prefs->audio_opts & AUDIO_OPTS_AUX_PLAY)
+    unregister_aux_audio_channels(1);
+  if (AUD_SRC_EXTERNAL && (prefs->audio_opts & AUDIO_OPTS_EXT_FX))
+    unregister_audio_client(FALSE);
+}
 
 
-  void jack_aud_pb_ready(int fileno) {
-    // TODO - can we merge with switch_audio_clip()
+void jack_aud_pb_ready(int fileno) {
+  // TODO - can we merge with switch_audio_clip()
 
-    // prepare to play file fileno
-    // - set loop mode
-    // - check if we need to reconnect
-    // - set vals
+  // prepare to play file fileno
+  // - set loop mode
+  // - check if we need to reconnect
+  // - set vals
 
-    // called at pb start and rec stop (after rec_ext_audio)
-    char *tmpfilename = NULL;
-    lives_clip_t *sfile = mainw->files[fileno];
-    int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
-    int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
+  // called at pb start and rec stop (after rec_ext_audio)
+  char *tmpfilename = NULL;
+  lives_clip_t *sfile = mainw->files[fileno];
+  int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
+  int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
 
-    if (mainw->jackd && mainw->aud_rec_fd == -1) {
-      mainw->jackd->is_paused = FALSE;
-      mainw->jackd->mute = mainw->mute;
-      if ((mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) && !mainw->preview) {
-        if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && !mainw->multitrack
-            && (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
-                || ((prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG))))
-          mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
-        else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
-      } else mainw->jackd->loop = AUDIO_LOOP_NONE;
-      if (sfile->achans > 0 && (!mainw->preview || (mainw->preview && mainw->is_processing)) &&
-          (sfile->laudio_time > 0. || sfile->opening ||
-           (mainw->multitrack && mainw->multitrack->is_rendering &&
-            lives_file_test((tmpfilename = lives_get_audio_file_name(fileno)), LIVES_FILE_TEST_EXISTS)))) {
-        ticks_t timeout;
-        lives_alarm_t alarm_handle;
+  if (mainw->jackd && mainw->aud_rec_fd == -1) {
+    mainw->jackd->is_paused = FALSE;
+    mainw->jackd->mute = mainw->mute;
+    if ((mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) && !mainw->preview) {
+      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && !mainw->multitrack
+          && (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+              || ((prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG))))
+        mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
+      else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
+    } else mainw->jackd->loop = AUDIO_LOOP_NONE;
+    if (sfile->achans > 0 && (!mainw->preview || (mainw->preview && mainw->is_processing)) &&
+        (sfile->laudio_time > 0. || sfile->opening ||
+         (mainw->multitrack && mainw->multitrack->is_rendering &&
+          lives_file_test((tmpfilename = lives_get_audio_file_name(fileno)), LIVES_FILE_TEST_EXISTS)))) {
+      ticks_t timeout;
+      lives_alarm_t alarm_handle;
 
-        lives_freep((void **)&tmpfilename);
-        mainw->jackd->num_input_channels = sfile->achans;
-        mainw->jackd->bytes_per_channel = sfile->asampsize / 8;
-        mainw->jackd->sample_in_rate = sfile->arate;
-        mainw->jackd->usigned = !asigned;
-        mainw->jackd->seek_end = sfile->afilesize;
+      lives_freep((void **)&tmpfilename);
+      mainw->jackd->num_input_channels = sfile->achans;
+      mainw->jackd->bytes_per_channel = sfile->asampsize / 8;
+      mainw->jackd->sample_in_rate = sfile->arate;
+      mainw->jackd->usigned = !asigned;
+      mainw->jackd->seek_end = sfile->afilesize;
 
-        if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) || (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
-          mainw->jackd->reverse_endian = TRUE;
-        else mainw->jackd->reverse_endian = FALSE;
+      if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) || (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
+        mainw->jackd->reverse_endian = TRUE;
+      else mainw->jackd->reverse_endian = FALSE;
 
-        alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd)) {
-          sched_yield(); // wait for seek
-          lives_usleep(prefs->sleep_time);
-        }
-        lives_alarm_clear(alarm_handle);
-        if (timeout == 0) {
-          jack_try_reconnect();
-        }
-
-        if ((!mainw->multitrack || mainw->multitrack->is_rendering) &&
-            (!mainw->event_list || mainw->record || (mainw->preview && mainw->is_processing))) {
-          // tell jack server to open audio file and start playing it
-          jack_message.command = ASERVER_CMD_FILE_OPEN;
-          jack_message.data = lives_strdup_printf("%d", fileno);
-
-          jack_message.next = NULL;
-          mainw->jackd->msgq = &jack_message;
-
-          jack_audio_seek_bytes(mainw->jackd, sfile->aseek_pos, sfile);
-
-          if (seek_err) {
-            if (jack_try_reconnect()) jack_audio_seek_bytes(mainw->jackd, sfile->aseek_pos, sfile);
-          }
-
-          mainw->rec_aclip = fileno;
-          mainw->rec_avel = sfile->arate / sfile->arps;
-          mainw->rec_aseek = (double)sfile->aseek_pos
-                             / (double)(sfile->arps * sfile->achans * (sfile->asampsize / 8));
-        }
+      alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+      while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd)) {
+        sched_yield(); // wait for seek
+        lives_usleep(prefs->sleep_time);
       }
-      if ((mainw->agen_key != 0 || mainw->agen_needs_reinit)
-          && !mainw->multitrack && !mainw->preview) mainw->jackd->in_use = TRUE; // audio generator is active
+      lives_alarm_clear(alarm_handle);
+      if (timeout == 0) {
+        jack_try_reconnect();
+      }
+
+      if ((!mainw->multitrack || mainw->multitrack->is_rendering) &&
+          (!mainw->event_list || mainw->record || (mainw->preview && mainw->is_processing))) {
+        // tell jack server to open audio file and start playing it
+        jack_message.command = ASERVER_CMD_FILE_OPEN;
+        jack_message.data = lives_strdup_printf("%d", fileno);
+
+        jack_message.next = NULL;
+        mainw->jackd->msgq = &jack_message;
+
+        jack_audio_seek_bytes(mainw->jackd, sfile->aseek_pos, sfile);
+
+        if (seek_err) {
+          if (jack_try_reconnect()) jack_audio_seek_bytes(mainw->jackd, sfile->aseek_pos, sfile);
+        }
+
+        mainw->rec_aclip = fileno;
+        mainw->rec_avel = sfile->arate / sfile->arps;
+        mainw->rec_aseek = (double)sfile->aseek_pos
+                           / (double)(sfile->arps * sfile->achans * (sfile->asampsize / 8));
+      }
     }
-    if (prefs->audio_opts & AUDIO_OPTS_EXT_FX)
-      register_audio_client(FALSE);
-    if (prefs->audio_opts & AUDIO_OPTS_AUX_PLAY)
-      register_aux_audio_channels(1);
+    if ((mainw->agen_key != 0 || mainw->agen_needs_reinit)
+        && !mainw->multitrack && !mainw->preview) mainw->jackd->in_use = TRUE; // audio generator is active
   }
+  if (AUD_SRC_EXTERNAL && (prefs->audio_opts & AUDIO_OPTS_EXT_FX))
+    register_audio_client(FALSE);
+  if (prefs->audio_opts & AUDIO_OPTS_AUX_PLAY)
+    register_aux_audio_channels(1);
+}
 
 
 #define IOPCLIENT "jamin"
-  //#define IOPCLIENT "zita-rev1"
-  //#define IOPCLIENT "Qtractor"
-  static boolean inter = FALSE;
-  static boolean need_clnup = FALSE;
+//#define IOPCLIENT "zita-rev1"
+//#define IOPCLIENT "Qtractor"
+static boolean inter = FALSE;
+static boolean need_clnup = FALSE;
 
-  void jack_interop_cleanup(void) {
-    if (need_clnup) {
-      if (mainw->play_window) {
-        lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-        gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), TRUE);
-        gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), TRUE);
-      }
-      detach_accels(TRUE);
-      lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
-      mainw->hook_funcs[PB_END_EARLY_HOOK] = NULL;
-      need_clnup = FALSE;
+void jack_interop_cleanup(void) {
+  if (need_clnup) {
+    if (mainw->play_window) {
+      lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), TRUE);
+      gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), TRUE);
     }
+    detach_accels(TRUE);
+    lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
+    mainw->hook_funcs[PB_END_EARLY_HOOK] = NULL;
+    need_clnup = FALSE;
   }
+}
 
 
-  boolean jack_interop_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
-                                livespointer pjackd) {
-    const char *iopclient = IOPCLIENT;
-    if (pjackd) {
-      size_t ioplen = lives_strlen(iopclient);
-      jack_driver_t *jackd = (jack_driver_t *)pjackd;
-      int x, i;
+boolean jack_interop_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+                              livespointer pjackd) {
+  const char *iopclient = IOPCLIENT;
+  if (pjackd) {
+    size_t ioplen = lives_strlen(iopclient);
+    jack_driver_t *jackd = (jack_driver_t *)pjackd;
+    int x, i;
 
-      int nports = jackd->num_output_channels;
+    int nports = jackd->num_output_channels;
 
-      if ((lives_get_status() != LIVES_STATUS_PLAYING && mainw->status != LIVES_STATUS_IDLE)
-          || prefs->audio_player != AUD_PLAYER_JACK || AUD_SRC_EXTERNAL) return TRUE;
+    if ((lives_get_status() != LIVES_STATUS_PLAYING && mainw->status != LIVES_STATUS_IDLE)
+        || prefs->audio_player != AUD_PLAYER_JACK || AUD_SRC_EXTERNAL) return TRUE;
 
-      if (!inter) {
-        // disconnect from sys ports and reconnect
+    if (!inter) {
+      // disconnect from sys ports and reconnect
 #ifdef GDK_WINDOWING_X11
-        char *wid;
+      char *wid;
 #endif
-        const char **ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
-        if (!ports) return FALSE;
-        for (x = 0; x < nports; x++) {
-          jack_port_disconnect(jackd->client, jackd->output_port[x]);
-        }
-
-        x = 0;
-
-        for (i = 0; ports[i]; i++) {
-          if (!lives_strncmp(ports[i], iopclient, ioplen)) {
-            if (jack_connect(jackd->client, jack_port_name(jackd->output_port[x++]), ports[i])) {
-              // connection failed
-              break;
-            }
-            if (x == nports) break;
-          }
-        }
-#ifdef GDK_WINDOWING_X11
-        wid = get_wid_for_name(IOPCLIENT);
-        if (wid) activate_x11_window(wid);
-        lives_free(wid);
-#endif
-        pref_factory_bool(PREF_SEPWIN, TRUE, FALSE);
-        gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE);
-        gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), FALSE);
-        lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), NULL);
-        detach_accels(FALSE);
-        lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
-#ifdef GDK_WINDOWING_X11
-        if (capable->has_xdotool != MISSING || capable->has_wmctrl != MISSING) {
-          wid = lives_strdup_printf("0x%08lx",
-                                    (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(mainw->play_window)));
-          if (wid) {
-            activate_x11_window(wid);
-            lives_free(wid);
-          }
-        }
-#endif
-        mainw->hook_funcs[PB_END_EARLY_HOOK] = jack_interop_cleanup;
-        mainw->hook_data[PB_END_EARLY_HOOK] = NULL;
-        need_clnup = TRUE;
-      } else {
-        const char **ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
-        for (x = 0; x < nports; x++) {
-          jack_port_disconnect(jackd->client, jackd->output_port[x]);
-          jack_connect(jackd->client, jack_port_name(jackd->output_port[x]), ports[x]);
-        }
-        jack_interop_cleanup();
+      const char **ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
+      if (!ports) return FALSE;
+      for (x = 0; x < nports; x++) {
+        jack_port_disconnect(jackd->client, jackd->output_port[x]);
       }
-      inter = !inter;
+
+      x = 0;
+
+      for (i = 0; ports[i]; i++) {
+        if (!lives_strncmp(ports[i], iopclient, ioplen)) {
+          if (jack_connect(jackd->client, jack_port_name(jackd->output_port[x++]), ports[i])) {
+            // connection failed
+            break;
+          }
+          if (x == nports) break;
+        }
+      }
+#ifdef GDK_WINDOWING_X11
+      wid = get_wid_for_name(IOPCLIENT);
+      if (wid) activate_x11_window(wid);
+      lives_free(wid);
+#endif
+      pref_factory_bool(PREF_SEPWIN, TRUE, FALSE);
+      gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE);
+      gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), FALSE);
+      lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), NULL);
+      detach_accels(FALSE);
+      lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
+#ifdef GDK_WINDOWING_X11
+      if (capable->has_xdotool != MISSING || capable->has_wmctrl != MISSING) {
+        wid = lives_strdup_printf("0x%08lx",
+                                  (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(mainw->play_window)));
+        if (wid) {
+          activate_x11_window(wid);
+          lives_free(wid);
+        }
+      }
+#endif
+      mainw->hook_funcs[PB_END_EARLY_HOOK] = jack_interop_cleanup;
+      mainw->hook_data[PB_END_EARLY_HOOK] = NULL;
+      need_clnup = TRUE;
+    } else {
+      const char **ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
+      for (x = 0; x < nports; x++) {
+        jack_port_disconnect(jackd->client, jackd->output_port[x]);
+        jack_connect(jackd->client, jack_port_name(jackd->output_port[x]), ports[x]);
+      }
+      jack_interop_cleanup();
     }
-    return FALSE;
+    inter = !inter;
   }
+  return FALSE;
+}
 
 #undef afile
 

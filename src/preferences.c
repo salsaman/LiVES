@@ -1039,11 +1039,19 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     if (prefs->show_recent == newval) goto fail2;
     prefs->show_recent = newval;
     if (newval) {
+      lives_widget_set_no_show_all(mainw->recent_menu, FALSE);
       lives_widget_show(mainw->recent_menu);
-      if (mainw->multitrack) lives_widget_show(mainw->multitrack->recent_menu);
+      if (mainw->multitrack) {
+        lives_widget_set_no_show_all(mainw->multitrack->recent_menu, FALSE);
+        lives_widget_show(mainw->multitrack->recent_menu);
+      }
     } else {
+      lives_widget_set_no_show_all(mainw->recent_menu, FALSE);
       lives_widget_hide(mainw->recent_menu);
-      if (mainw->multitrack) lives_widget_hide(mainw->multitrack->recent_menu);
+      if (mainw->multitrack) {
+        lives_widget_set_no_show_all(mainw->multitrack->recent_menu, TRUE);
+        lives_widget_hide(mainw->multitrack->recent_menu);
+      }
     }
     if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->recent_check), newval);
   }

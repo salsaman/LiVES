@@ -2076,7 +2076,6 @@ static char *make_random_string(const char *prefix) {
   char *str;
   size_t psize = strlen(prefix);
   size_t rsize = RND_STRLEN << 1;
-  register int i;
 
   if (psize > RND_STRLEN) return NULL;
 
@@ -2085,7 +2084,7 @@ static char *make_random_string(const char *prefix) {
 
   rsize--;
 
-  for (i = psize; i < rsize; i++) str[i] = ((lives_random() & 15) + 65);
+  for (int i = psize; i < rsize; i++) str[i] = ((lives_random() & 15) + 65);
   str[rsize] = 0;
   return str;
 }
@@ -8631,6 +8630,8 @@ static LiVESWidget *_lives_standard_button_set_full(LiVESWidget * sbutt, LiVESBo
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
+  } else {
+    if (img_tips) break_me("floating img tips for button !");
   }
 
 #ifdef USE_SPECIAL_BUTTONS
@@ -9322,6 +9323,8 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
+  } else {
+    if (img_tips) break_me("floating img tips for switch !");
   }
 
   if (widget_opts.apply_theme) {
@@ -9439,6 +9442,8 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
+  } else {
+    if (img_tips) break_me("floating img tips for chkbutton !");
   }
 
   if (widget_opts.apply_theme) {
@@ -9645,6 +9650,8 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
+  } else {
+    if (img_tips) break_me("floating img tips for radiobutton !");
   }
 
   if (widget_opts.apply_theme) {
@@ -9843,6 +9850,8 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
+  } else {
+    if (img_tips) break_me("floating img tips for spinbutton !");
   }
 
   if (widget_opts.apply_theme) {
@@ -9989,6 +9998,8 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
+  } else {
+    if (img_tips) break_me("floating img tips for combo !");
   }
 
   if (list) {
@@ -10140,6 +10151,8 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }
+  } else {
+    if (img_tips) break_me("floating img tips for entry !");
   }
 
   if (widget_opts.apply_theme) {
@@ -13340,6 +13353,31 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_accel_path_disconnect(LiVESAccelGroup 
   return FALSE;
 }
 
+
+LiVESPixbuf *get_desktop_icon(const char *dir) {
+  LiVESPixbuf *pixbuf = NULL;
+  char *iconpfx = lives_build_path(prefs->prefix_dir, dir, NULL);
+  char *icon = lives_build_filename(iconpfx, LIVES_LITERAL "." LIVES_FILE_EXT_PNG, NULL);
+  if (!lives_file_test(icon, LIVES_FILE_TEST_EXISTS)) {
+    lives_free(iconpfx); lives_free(icon);
+    icon = iconpfx = NULL;
+    if (!dirs_equal(prefs->prefix_dir, LIVES_USR_DIR)) {
+      iconpfx = lives_build_path(LIVES_USR_DIR, dir, NULL);
+      icon = lives_build_filename(iconpfx, LIVES_LITERAL "." LIVES_FILE_EXT_PNG, NULL);
+      if (!lives_file_test(icon, LIVES_FILE_TEST_EXISTS)) {
+        lives_free(iconpfx); lives_free(icon);
+        icon = iconpfx = NULL;
+      }
+    }
+  }
+  if (icon) {
+    LiVESError *error = NULL;
+    pixbuf = lives_pixbuf_new_from_file(icon, &error);
+    lives_free(iconpfx); lives_free(icon);
+    if (error) lives_error_free(error);
+  }
+  return pixbuf;
+}
 
 WIDGET_HELPER_GLOBAL_INLINE lives_colRGBA64_t lives_rgba_col_new(int red, int green, int blue, int alpha) {
   lives_colRGBA64_t lcol = {red, green, blue, alpha};

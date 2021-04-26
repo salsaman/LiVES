@@ -143,8 +143,6 @@ void on_location_select(LiVESButton *, livespointer);
 
 lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, const char *tmpdir);
 
-void on_opensel_range_ok_clicked(LiVESButton *, livespointer);
-
 void on_open_sel_ok_button_clicked(LiVESButton *, livespointer);
 
 void on_save_textview_clicked(LiVESButton *, livespointer);
@@ -334,8 +332,6 @@ void on_resample_audio_activate(LiVESMenuItem *, livespointer);
 void on_export_audio_activate(LiVESMenuItem *, livespointer);
 
 void on_resaudio_ok_clicked(LiVESButton *, LiVESEntry *entry);
-
-void on_cancel_opensel_clicked(LiVESButton *, livespointer);
 
 void end_fs_preview(void);
 

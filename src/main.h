@@ -791,7 +791,6 @@ typedef struct _lives_clip_t {
   // binfmt fields may be added here:
   ///
 
-
   ////
   //// end add section ^^^^^^^
 

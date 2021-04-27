@@ -781,7 +781,8 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
         }
 
         if (strcmp(prefs->video_open_command, loc) && strncmp(prefs->video_open_command + 1, loc, strlen(loc))) {
-          lives_strappend(msg, 256, _("\n\nPlease check the setting of Video Open Command in\nTools|Preferences|Decoding\n"));
+          lives_strappend(msg, 256, _("\n\nPlease check the setting of Video Open Command in\n"
+                                      "Tools|Preferences|Decoding\n"));
         }
       }
       widget_opts.non_modal = TRUE;
@@ -890,11 +891,10 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
               redraw_timeline(mainw->current_file);
             } else lives_widget_destroy(resaudw->dialog);
             lives_freep((void **)&resaudw);
-          }
-        } while (resp == LIVES_RESPONSE_CANCEL);
-      }
-    }
-  }
+	    // *INDENT-OFF*
+          }} while (resp == LIVES_RESPONSE_CANCEL);
+      }}}
+  // *INDENT-ON*
 
 img_load:
   current_file = mainw->current_file;
@@ -1275,17 +1275,14 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
   add_suffix_check(LIVES_BOX(hbox), prefs->encoder.of_def_ext);
   lives_widget_show_all(hbox);
 
-  if (palette->style & STYLE_1) {
-    lives_widget_set_fg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+  lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
 
   if (!filename) {
     char *ttl = (_("Save Clip"));
     do {
       lives_freep((void **)&n_file_name);
       n_file_name = choose_file_bg(mainw->vid_save_dir, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, ttl, hbox);
-      if (mainw->fc_buttonresponse == LIVES_RESPONSE_CANCEL) return;
+      if (!n_file_name) return;
     } while (!*n_file_name);
     lives_snprintf(mainw->vid_save_dir, PATH_MAX, "%s", n_file_name);
     get_dirname(mainw->vid_save_dir);
@@ -1443,12 +1440,10 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
     nfile->img_type = sfile->img_type;
 
     com = lives_strdup_printf("%s link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d \"%s\"",
-                              prefs->backend, nfile->handle,
-                              start, end, aud_start, aud_end, nfile->arate,
-                              nfile->achans, nfile->asampsize,
+                              prefs->backend, nfile->handle, start, end, aud_start,
+                              aud_end, nfile->arate, nfile->achans, nfile->asampsize,
                               !(nfile->signed_endian & AFORM_UNSIGNED),
-                              !(nfile->signed_endian & AFORM_BIG_ENDIAN),
-                              sfile->handle);
+                              !(nfile->signed_endian & AFORM_BIG_ENDIAN), sfile->handle);
 
     lives_rm(nfile->info_file);
     lives_system(com, FALSE);
@@ -1463,9 +1458,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
       lives_freep((void **)&sfile);
       if (mainw->first_free_file == ALL_USED || mainw->first_free_file > new_file)
         mainw->first_free_file = new_file;
-      if (!mainw->multitrack) {
-        switch_to_file(clip, current_file);
-      }
+      if (!mainw->multitrack) switch_to_file(clip, current_file);
       d_print_cancelled();
       lives_freep((void **)&mainw->subt_save_file);
       return;
@@ -1550,9 +1543,8 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
     }
 
     com = lives_strdup_printf("%s link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d",
-                              prefs->backend, sfile->handle,
-                              start, end, aud_start, aud_end, sfile->arate,
-                              sfile->achans, sfile->asampsize,
+                              prefs->backend, sfile->handle, start, end, aud_start,
+                              aud_end, sfile->arate, sfile->achans, sfile->asampsize,
                               !(sfile->signed_endian & AFORM_UNSIGNED),
                               !(sfile->signed_endian & AFORM_BIG_ENDIAN));
 
@@ -1725,25 +1717,20 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
   if (prefs->encoder.capabilities & ENCODER_NON_NATIVE) {
     com = lives_strdup_printf("%s save \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %d %d %d "
                               "%.4f %.4f %s %s", prefs->backend,
-                              sfile->handle,
-                              enc_exec_name, fps_string,
+                              sfile->handle, enc_exec_name, fps_string,
                               (tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)),
                               startframe, sfile->frames, arate, sfile->achans, sfile->asampsize,
                               asigned | aendian, aud_start, aud_end, (extra_params == NULL) ? ""
                               : extra_params, redir);
   } else {
     com = lives_strdup_printf("%s save \"%s\" \"native:%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f "
-                              "%.4f %s %s", prefs->backend,
-                              sfile->handle,
-                              enc_exec_name, fps_string,
+                              "%.4f %s %s", prefs->backend, sfile->handle, enc_exec_name, fps_string,
                               (tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)),
                               startframe, sfile->frames, arate, sfile->achans, sfile->asampsize,
                               asigned | aendian, aud_start, aud_end, (extra_params == NULL) ? ""
                               : extra_params, redir);
   }
-  lives_free(tmp);
-  lives_free(fps_string);
-
+  lives_free(tmp); lives_free(fps_string);
   lives_freep((void **)&extra_params);
 
   mainw->effects_paused = FALSE;
@@ -2123,12 +2110,10 @@ char *prep_audio_player(char *com2, char *com3, frames_t audio_end, int arate, i
 static double fps_med = 0.;
 
 static void post_playback(void) {
-  if (prefs->show_player_stats) {
-    if (mainw->fps_measure > 0) {
-      d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"), fps_med, mainw->fps_measure,
-              (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs)
-              / TICKS_PER_SECOND_DBL);
-    }
+  if (prefs->show_player_stats && mainw->fps_measure > 0) {
+    d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"), fps_med, mainw->fps_measure,
+            (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs)
+            / TICKS_PER_SECOND_DBL);
   }
 
   if (mainw->new_vpp) {
@@ -2277,7 +2262,7 @@ void play_file(void) {
 
   init_conversions(LIVES_INTENTION_PLAY);
 
-  if (mainw->hook_funcs[PB_START_EARLY_HOOK])(*mainw->hook_funcs[PB_START_EARLY_HOOK])(mainw->hook_data[PB_START_EARLY_HOOK]);
+  lives_hooks_trigger(PB_START_EARLY_HOOK);
 
   if (mainw->pre_src_file == -2) mainw->pre_src_file = mainw->current_file;
   mainw->pre_src_audio_file = mainw->current_file;
@@ -2598,10 +2583,9 @@ void play_file(void) {
     if (!mainw->multitrack && !mainw->faded
         && (!prefs->hide_framebar &&
             (!mainw->fs || (widget_opts.monitor + 1 != prefs->play_monitor && prefs->play_monitor != 0
-                            && capable->nmonitors > 1 &&
-                            mainw->sep_win) ||
-             (mainw->vpp && mainw->sep_win && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) &&
-            ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening))) {
+                            && capable->nmonitors > 1 && mainw->sep_win)
+             || (mainw->vpp && mainw->sep_win && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)))
+            && ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening))) {
       lives_widget_show(mainw->framebar);
     }
   }
@@ -2719,7 +2703,7 @@ void play_file(void) {
 
     mainw->abufs_to_fill = 0;
 
-    if (mainw->hook_funcs[PB_START_LATE_HOOK])(*mainw->hook_funcs[PB_START_LATE_HOOK])(mainw->hook_data[PB_START_LATE_HOOK]);
+    lives_hooks_trigger(PB_START_LATE_HOOK);
 
     //lives_widget_context_update();
     //play until stopped or a stream finishes
@@ -2949,8 +2933,8 @@ void play_file(void) {
         jack_pb_stop(mainw->jackd_trans);
         if (!mainw->multitrack
             || (mainw->cancelled != CANCEL_USER_PAUSED
-                && !((mainw->cancelled == CANCEL_NONE ||
-                      mainw->cancelled == CANCEL_NO_MORE_PREVIEW)
+                && !((mainw->cancelled == CANCEL_NONE
+                      || mainw->cancelled == CANCEL_NO_MORE_PREVIEW)
                      && mainw->multitrack->is_paused))) {
           jack_transport_update(mainw->jackd_trans, cfile->real_pointer_time);
         }
@@ -3083,15 +3067,13 @@ void play_file(void) {
       char *xnew = lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/"
                                 "idle_activation_enabled true 2>/dev/null ;");
       tmp = lives_strconcat(com, xnew, NULL);
-      lives_free(com);
-      lives_free(xnew);
+      lives_free(com); lives_free(xnew);
       com = tmp;
     }
     if (capable->has_xdg_screensaver && awinid != -1) {
       char *xnew = lives_strdup_printf(" xdg-screensaver resume %"PRIu64" 2>/dev/null ;", awinid);
       tmp = lives_strconcat(com, xnew, NULL);
-      lives_free(com);
-      lives_free(xnew);
+      lives_free(com); lives_free(xnew);
       com = tmp;
     }
 #else
@@ -3164,7 +3146,7 @@ void play_file(void) {
   mainw->blend_palette = WEED_PALETTE_END;
   mainw->audio_stretch = 1.;
 
-  if (mainw->hook_funcs[PB_END_EARLY_HOOK])(*mainw->hook_funcs[PB_END_EARLY_HOOK])(mainw->hook_data[PB_END_EARLY_HOOK]);
+  lives_hooks_trigger(PB_END_EARLY_HOOK);
 
   if (!mainw->multitrack) {
     if (mainw->faded || mainw->fs) {
@@ -3205,14 +3187,14 @@ void play_file(void) {
   if (mainw->play_window) {
     if (mainw->fs) {
       mainw->ignore_screen_size = TRUE;
-      if (!mainw->multitrack || !mainw->fs ||
-          (mainw->cancelled != CANCEL_USER_PAUSED &&
-           !((mainw->cancelled == CANCEL_NONE ||
-              mainw->cancelled == CANCEL_NO_MORE_PREVIEW)))) {
+      if (!mainw->multitrack || !mainw->fs
+          || (mainw->cancelled != CANCEL_USER_PAUSED
+              && !((mainw->cancelled == CANCEL_NONE
+                    || mainw->cancelled == CANCEL_NO_MORE_PREVIEW)))) {
       }
       if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
-          && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
-          capable->wm_caps.pan_res & RESTYPE_ACTION) {
+          && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE)
+          && capable->wm_caps.pan_res & RESTYPE_ACTION) {
         show_desktop_panel();
       }
       lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
@@ -3221,8 +3203,8 @@ void play_file(void) {
       kill_play_window();
     } else {
       /// or resize it back to single size
-      if (CURRENT_CLIP_IS_VALID && cfile->is_loaded && cfile->frames > 0 && !mainw->is_rendering &&
-          (cfile->clip_type != CLIP_TYPE_GENERATOR)) {
+      if (CURRENT_CLIP_IS_VALID && cfile->is_loaded && cfile->frames > 0 && !mainw->is_rendering
+          && (cfile->clip_type != CLIP_TYPE_GENERATOR)) {
         if (mainw->preview_controls) {
           /// create the preview in the sepwin
           if (prefs->show_gui) {
@@ -3426,7 +3408,7 @@ void play_file(void) {
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;
 
-  if (mainw->hook_funcs[PB_END_LATE_HOOK])(*mainw->hook_funcs[PB_END_LATE_HOOK])(mainw->hook_data[PB_END_LATE_HOOK]);
+  lives_hooks_trigger(PB_END_LATE_HOOK);
 }
 
 
@@ -3861,16 +3843,6 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
     reget_afilesize(mainw->current_file);
     d_print_enough(cfile->frames);
-
-    /* if (prefs->auto_trim_audio) { */
-    /*   if (cfile->laudio_time > cfile->video_time) { */
-    /*     d_print(_("Auto trimming %.2f seconds of audio at end..."), */
-    /*             cfile->laudio_time - cfile->video_time); */
-    /*     if (on_trim_audio_activate(NULL, LIVES_INT_TO_POINTER(0))) d_print_done(); */
-    /*     else d_print("\n"); */
-    /*     cfile->changed = FALSE; */
-    /*   } */
-    /* } */
   } else {
     if (check_handle) {
       int npieces = get_token_count(mainw->msg, '|');
@@ -5186,7 +5158,7 @@ static LiVESResponseType manual_locate(const char *orig_filename, lives_clip_t *
 
     response = lives_dialog_run(LIVES_DIALOG(chooser));
 
-    end_fs_preview();
+    end_fs_preview(NULL);
 
     if (response == LIVES_RESPONSE_ACCEPT) {
       newname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
@@ -6008,7 +5980,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   THREADVAR(com_failed) = FALSE;
 
   /// CRITICAL: make sure this gets called even on system failure and abort
-  if (prefs->crash_recovery) mainw->hook_funcs[ABORT_HOOK] = (lives_funcptr_t)rewrite_recovery_file;
+  if (prefs->crash_recovery) lives_hook_append(ABORT_HOOK, (lives_funcptr_t)rewrite_recovery_file, NULL);
 
   // check for layout recovery file
   recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, recpid,
@@ -6117,7 +6089,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   lives_free(recording_numbering_file);
 
   if (prefs->crash_recovery) rewrite_recovery_file();
-  mainw->hook_funcs[ABORT_HOOK] = NULL;
+  lives_hook_remove(ABORT_HOOK, (lives_funcptr_t)rewrite_recovery_file, NULL);
 
   if (!mainw->recoverable_layout && !mainw->recording_recovered) {
     if (mainw->invalid_clips

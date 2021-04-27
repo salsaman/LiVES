@@ -273,7 +273,8 @@ void on_warn_mask_toggled(LiVESToggleButton *, livespointer);
 
 boolean frame_context(LiVESWidget *, LiVESXEventButton *, livespointer which);
 
-void on_fs_preview_clicked(LiVESWidget *, livespointer);
+void on_fs_preview_clicked1(LiVESWidget *, LiVESDialog *);
+void on_fs_preview_clicked2(LiVESWidget *, opensel_win *);
 
 void on_restore_activate(LiVESMenuItem *, livespointer);
 
@@ -333,7 +334,7 @@ void on_export_audio_activate(LiVESMenuItem *, livespointer);
 
 void on_resaudio_ok_clicked(LiVESButton *, LiVESEntry *entry);
 
-void end_fs_preview(void);
+void end_fs_preview(LiVESFileChooser *);
 
 void on_sticky_activate(LiVESMenuItem *, livespointer);
 

@@ -4483,6 +4483,24 @@ lives_render_error_t render_events_cb(boolean dummy) {
 }
 
 
+static void do_xdg_opt(LiVESToggleButton * cb) {
+  if (lives_toggle_button_get_active(cb)) {
+    char *tmp, *com = lives_strdup_printf("%s \"%s\"", EXEC_XDG_OPEN,
+                                          (tmp = U82L(cfile->save_file_name)));
+    lives_system(com, TRUE);
+    lives_free(com); lives_free(tmp);
+  }
+}
+
+static void add_xdg_opt(livespointer data) {
+  if (check_for_executable(&capable->has_xdg_open, EXEC_XDG_OPEN) == PRESENT) {
+    LiVESWidget *cb = lives_standard_check_button_new(_("Preview in default video player afterwards"),
+                      FALSE, LIVES_BOX(widget_opts.last_container), NULL);
+    lives_hook_append(PROGRESS_END_HOOK, (lives_funcptr_t)do_xdg_opt, cb);
+  }
+}
+
+
 boolean start_render_effect_events(weed_plant_t *event_list, boolean render_vid, boolean render_aud) {
   // this is called to begin rendering effect events from an event_list into cfile
   // it will do a reorder/resample/resize/effect apply all in one pass
@@ -4524,6 +4542,10 @@ boolean start_render_effect_events(weed_plant_t *event_list, boolean render_vid,
 
   if (!mainw->transrend_proc) mainw->disk_mon = MONITOR_QUOTA;
   if (cfile->old_frames > 0) cfile->nopreview = TRUE; /// FIXME...
+
+  if (mainw->transrend_proc) {
+    lives_hook_append(PROGRESS_START_HOOK, (lives_funcptr_t)add_xdg_opt, NULL);
+  }
 
   // play back the file as fast as possible, each time calling render_events()
   if ((!do_progress_dialog(TRUE, TRUE, render_vid ? (!mainw->transrend_proc ? _("Rendering")

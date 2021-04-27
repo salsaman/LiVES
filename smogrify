@@ -6038,7 +6038,7 @@ sub get_ffprobe_info {
     my $com;
     my $is_video = 0;
     my $is_audio = 0;
-    $VERBOSE = 2;
+
     if ($VERBOSE > 1) {
 	print STDERR "Running: $com\n";
     }

@@ -1983,12 +1983,47 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_opacity(LiVESWidget *widget
   return FALSE;
 }
 
+static boolean lives_widget_destroyed(LiVESWidget *widget, void **ptr) {
+  if (ptr) *ptr = NULL;
+  return FALSE;
+}
+
+static void _dialog_resp_get(LiVESDialog *dlg, int resp, livespointer data) {
+  SET_INT_DATA(dlg, RESPONSE_KEY, resp);
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_get_response(LiVESDialog *dlg) {
+  return GET_INT_DATA(dlg, RESPONSE_KEY);
+}
+
+
+static LiVESResponseType _dialog_run(LiVESDialog *dialog) {
+  LiVESResponseType resp;
+  ulong func = lives_signal_sync_connect(dialog, LIVES_WIDGET_RESPONSE_SIGNAL,
+                                         LIVES_GUI_CALLBACK(_dialog_resp_get), NULL);
+  ulong dfunc = lives_signal_sync_connect(LIVES_GUI_OBJECT(dialog), LIVES_WIDGET_DESTROY_SIGNAL,
+                                          LIVES_GUI_CALLBACK(lives_widget_destroyed), &dialog);
+  lives_widget_object_ref(dialog);
+  do {
+    lives_widget_context_iteration(NULL, FALSE);
+    lives_nanosleep(NSLEEP_TIME);
+    if (dialog) resp = GET_INT_DATA(dialog, RESPONSE_KEY);
+    else return LIVES_RESPONSE_INVALID;
+  } while (resp == LIVES_RESPONSE_INVALID);
+  if (dialog) lives_signal_handler_disconnect(dialog, dfunc);
+  if (dialog) lives_signal_handler_disconnect(dialog, func);
+  lives_widget_object_unref(dialog);
+  return resp;
+}
+
 
 static LiVESResponseType _lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
   LiVESResponseType resp;
   _lives_widget_show_all(LIVES_WIDGET(dialog));
-  resp = gtk_dialog_run(dialog);
+  //resp = gtk_dialog_run(dialog);
+  resp = _dialog_run(dialog);
   //if (*capable->wm_caps.wm_focus) wm_property_set(WM_PROP_NEW_FOCUS, capable->wm_caps.wm_focus);
   return resp;
 #endif
@@ -7390,12 +7425,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_modmask(LiVESXDevice *devic
 }
 
 
-static boolean lives_widget_destroyed(LiVESWidget *widget, void **ptr) {
-  if (ptr) *ptr = NULL;
-  return FALSE;
-}
-
-
 static boolean lives_widget_timetodie(LiVESWidget *widget, LiVESWidget *getoverhere) {
   if (LIVES_IS_WIDGET(getoverhere)) lives_widget_destroy(getoverhere);
   return FALSE;
@@ -7404,16 +7433,14 @@ static boolean lives_widget_timetodie(LiVESWidget *widget, LiVESWidget *getoverh
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_nullify_with(LiVESWidget *widget, void **ptr) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_DESTROY_SIGNAL,
-                            LIVES_GUI_CALLBACK(lives_widget_destroyed),
-                            ptr);
+                            LIVES_GUI_CALLBACK(lives_widget_destroyed), ptr);
   return TRUE;
 }
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy_with(LiVESWidget *widget, LiVESWidget *dieplease) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_DESTROY_SIGNAL,
-                            LIVES_GUI_CALLBACK(lives_widget_timetodie),
-                            dieplease);
+                            LIVES_GUI_CALLBACK(lives_widget_timetodie), dieplease);
   return TRUE;
 }
 

@@ -1088,3 +1088,41 @@ uint64_t lives_thread_join(lives_thread_t work, void **retval) {
   lives_free(task);
   return nthrd;
 }
+
+
+//// hook functions (not really threads, but here for now)
+
+
+LIVES_GLOBAL_INLINE void lives_hook_append(int type, lives_funcptr_t func, livespointer data) {
+  lives_closure_t *closure = (lives_closure_t *)lives_malloc(sizeof(lives_closure_t));
+  closure->func = func;
+  closure->data = data;
+  mainw->hook_closures[type] = lives_list_append(mainw->hook_closures[type], closure);
+}
+
+LIVES_GLOBAL_INLINE void lives_hook_prepend(int type, lives_funcptr_t func, livespointer data) {
+  lives_closure_t *closure = (lives_closure_t *)lives_malloc(sizeof(lives_closure_t));
+  closure->func = func;
+  closure->data = data;
+  mainw->hook_closures[type] = lives_list_prepend(mainw->hook_closures[type], closure);
+}
+
+LIVES_GLOBAL_INLINE void lives_hooks_trigger(int type) {
+  LiVESList *list = mainw->hook_closures[type];
+  for (; list; list = list->next) {
+    lives_closure_t *closure = (lives_closure_t *)list->data;
+    (*closure->func)(closure->data);
+  }
+  lives_list_free_all(&mainw->hook_closures[type]);
+}
+
+LIVES_GLOBAL_INLINE void lives_hook_remove(int type, lives_funcptr_t func, livespointer data) {
+  LiVESList *list = mainw->hook_closures[type];
+  for (; list; list = list->next) {
+    lives_closure_t *closure = (lives_closure_t *)list->data;
+    if (closure->func == func && closure->data == data) {
+      mainw->hook_closures[type] = lives_list_remove_node(mainw->hook_closures[type], list, TRUE);
+      return;
+    }
+  }
+}

@@ -1512,6 +1512,7 @@ LIVES_GLOBAL_INLINE char *get_clip_dir(int clipno) {
       }
       return lives_build_path(prefs->workdir, sfile->handle, NULL);
     }
+    return lives_build_path(prefs->workdir, sfile->handle, NULL);
   }
   return NULL;
 }

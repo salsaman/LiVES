@@ -43,7 +43,7 @@
 #include "osc.h"
 #endif
 
-static char file_name[PATH_MAX];
+//static char file_name[PATH_MAX];
 
 static LiVESResponseType prompt_for_set_save(void);
 
@@ -596,7 +596,7 @@ void lives_exit(int signum) {
     unload_decoder_plugins();
   }
 
-  if (mainw->hook_funcs[EXIT_HOOK])(*mainw->hook_funcs[EXIT_HOOK])(mainw->hook_data[EXIT_HOOK]);
+  lives_hooks_trigger(EXIT_HOOK);
 
   if (prefs->workdir_tx_intent == LIVES_INTENTION_DELETE) {
     // delete the old workdir
@@ -626,14 +626,15 @@ static void open_sel_range_activate(char *fname, frames_t frames, double fps) {
   double start;
 
   // values for preview
-  mainw->fc_buttonresponse = LIVES_RESPONSE_NONE; // reset button state
   mainw->fx1_val = 0.;
   mainw->fx2_val = frames > 1000. ? 1000. : (double)frames;
 
   openselwin = create_opensel_window(frames, fps);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(openselwin->preview_button), "filename", fname);
+
   response = lives_dialog_run(LIVES_DIALOG(openselwin->dialog));
 
-  end_fs_preview();
+  end_fs_preview(NULL);
 
   if (response == LIVES_RESPONSE_CANCEL) {
     lives_widget_destroy(openselwin->dialog);
@@ -675,7 +676,7 @@ static boolean read_file_details_generic(const char *fname) {
     if (!lives_make_writeable_dir(tmpdir)) {
       workdir_warning();
       lives_free(tmpdir); lives_free(dirname);
-      end_fs_preview();
+      end_fs_preview(NULL);
       return FALSE;
     }
   }
@@ -692,7 +693,7 @@ static boolean read_file_details_generic(const char *fname) {
 
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
-    end_fs_preview();
+    end_fs_preview(NULL);
     return FALSE;
   }
   return TRUE;
@@ -731,7 +732,7 @@ void on_open_sel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
                                        LIVES_FILE_SELECTION_VIDEO_AUDIO);
 
     resp = lives_dialog_run(LIVES_DIALOG(chooser));
-    end_fs_preview();
+    end_fs_preview(NULL);
     mainw->cancelled = CANCEL_NONE;
 
     if (resp != LIVES_RESPONSE_ACCEPT) {
@@ -952,6 +953,7 @@ void on_recent_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 
 void on_location_select(LiVESButton * button, livespointer user_data) {
+  char file_name[PATH_MAX];
   lives_snprintf(file_name, PATH_MAX, "%s", lives_entry_get_text(LIVES_ENTRY(locw->entry)));
   lives_widget_destroy(locw->dialog);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
@@ -7269,70 +7271,41 @@ void donate_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-static char *fsp_ltext;
-static char *fsp_info_file;
-static char *file_open_params;
-
-static boolean fs_preview_idle(void *data) {
-  LiVESWidget *widget = (LiVESWidget *)data;
-  FILE *ifile;
-
-  if (!(ifile = fopen(fsp_info_file, "r")) && mainw->in_fs_preview && mainw->fc_buttonresponse
-      == LIVES_RESPONSE_NONE) {
-    return TRUE;
-  }
-
-  widget_opts.expand = LIVES_EXPAND_NONE;
-
-  if (LIVES_IS_BUTTON(widget))
-    lives_button_set_label(LIVES_BUTTON(widget), fsp_ltext);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
-  lives_free(fsp_ltext);
-
-  if (ifile) {
-    fclose(ifile);
-  }
-
-  end_fs_preview();
-  lives_free(fsp_info_file);
-
-  lives_freep((void **)&file_open_params);
-  if (LIVES_IS_WIDGET(widget))
-    lives_widget_set_sensitive(widget, TRUE);
-  return FALSE;
-}
-
-
-void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
+static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, LiVESWidget * sp_start,
+                                  LiVESWidget * sp_frames) {
   // file selector preview
+  LiVESFileChooser *fchoo = NULL;
   double start_time = 0.;
-
   uint64_t xwin = 0;
 
   char **array;
+  char *fsp_ltext;
+  char *fsp_info_file;
+  char *file_open_params = NULL;
+  char *thm_dir = NULL;
+  char *tmp, *com;
+  char *type, *file_name;
 
+  boolean with_audio = mainw->save_with_sound;
   int preview_frames = 0;
-  int preview_type = LIVES_POINTER_TO_INT(user_data);
+  int preview_type = GET_INT_DATA(widget, "preview_type");
   int height = 0, width = 0;
   int fwidth = -1, fheight = -1;
   int owidth, oheight, npieces, border = 0;
-  boolean with_audio = mainw->save_with_sound;
 
-  char *thm_dir = NULL;
-  char *temp_backend = NULL;
-  char *tmp, *tmp2;
-  char *com;
-  char *type;
+  if (preview_type != LIVES_PREVIEW_TYPE_RANGE) fchoo = LIVES_FILE_CHOOSER(dlg);
 
-  file_open_params = NULL;
+  if (fchoo) file_name = gtk_file_chooser_get_preview_filename(fchoo);
+  else file_name = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "filename");
 
   if (mainw->in_fs_preview) {
-    end_fs_preview();
+    end_fs_preview(fchoo);
     return;
   }
   fsp_ltext = NULL;
 
   if (!check_for_executable(&capable->has_mktemp, EXEC_MKTEMP)) {
+    end_fs_preview(fchoo);
     do_program_not_found_error(EXEC_MKTEMP);
     lives_widget_set_sensitive(widget, TRUE);
     return;
@@ -7340,27 +7313,23 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
 
   if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
     // open selection
-    start_time = mainw->fx1_val;
-    preview_frames = (int)mainw->fx2_val;
-  } else {
-    // open file
-    lives_snprintf(file_name, PATH_MAX, "%s",
-                   (tmp = lives_filename_to_utf8((tmp2
-                          = lives_file_chooser_get_filename
-                            (LIVES_FILE_CHOOSER(lives_widget_get_toplevel(widget)))),
-                          -1, NULL, NULL, NULL)));
-    lives_free(tmp);
-    lives_free(tmp2);
+    end_fs_preview(NULL);
+    start_time = lives_spin_button_get_value(LIVES_SPIN_BUTTON(sp_start));
+    preview_frames = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(sp_frames));
   }
 
   // get file details
-  if (!read_file_details_generic(file_name)) return;
+  if (!read_file_details_generic(file_name)) {
+    end_fs_preview(fchoo);
+    return;
+  }
 
   npieces = get_token_count(mainw->msg, '|');
   if (npieces < 4) {
-    end_fs_preview();
+    end_fs_preview(fchoo);
     return;
   }
+
   array = lives_strsplit(mainw->msg, "|", npieces);
   type = lives_strdup(array[3]);
 
@@ -7384,8 +7353,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
 
         // make thumb from any image file
 
-        temp_backend = use_staging_dir_for(mainw->current_file);
-        com = lives_strdup_printf("%s make_thumb %s %d %d \"%s\" \"%s\"", temp_backend, thm_dir, fwidth,
+        com = lives_strdup_printf("%s make_thumb %s %d %d \"%s\" \"%s\"", prefs->backend_sync, thm_dir, fwidth,
                                   fheight, prefs->image_ext,
                                   (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
         lives_free(tmp);
@@ -7397,7 +7365,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
         npieces = get_token_count(mainw->msg, '|');
         if (npieces < 3) {
           THREADVAR(com_failed) = FALSE;
-          end_fs_preview();
+          end_fs_preview(fchoo);
           return;
         }
         if (!THREADVAR(com_failed)) {
@@ -7418,9 +7386,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
         char *thumbfile = lives_strdup_printf("%08d.%s", 1, prefs->image_ext);
         char *thumb = lives_build_filename(prefs->workdir, thm_dir, thumbfile, NULL);
         LiVESPixbuf *pixbuf = lives_pixbuf_new_from_file((tmp = lives_filename_from_utf8(thumb, -1, NULL, NULL, NULL)), &error);
-        lives_free(thumbfile);
-        lives_free(thumb);
-        lives_free(tmp);
+        lives_free(thumbfile); lives_free(thumb); lives_free(tmp);
         if (!error) {
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playimg), "pixbuf", pixbuf);
           owidth = width;
@@ -7437,7 +7403,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
           }
 
           if (width < 4 || height < 4) {
-            end_fs_preview();
+            end_fs_preview(fchoo);
             lives_widget_set_sensitive(widget, TRUE);
             return;
           }
@@ -7449,6 +7415,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
           lives_widget_show(mainw->fs_playimg);
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
           xwin = lives_widget_get_xwindow(mainw->fs_playimg);
+
           if (LIVES_IS_XWINDOW(xwin)) {
             if (mainw->fsp_surface) lives_painter_surface_destroy(mainw->fsp_surface);
             mainw->fsp_surface =
@@ -7481,14 +7448,13 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   check_for_executable(&capable->has_mpv, EXEC_MPV);
 
   if (!HAS_EXTERNAL_PLAYER) {
-    char *msg;
     if (!check_for_executable(&capable->has_identify, EXEC_IDENTIFY)) {
-      msg = (_("\n\nYou need to install mplayer, mplayer2 or mpv to be able to preview this file.\n"));
+      do_error_dialogf(_("\n\nYou need to install %s, %s or %s to be able to preview this file.\n"),
+                       EXEC_MPLAYER, EXEC_MPLAYER2, EXEC_MPV);
     } else {
-      msg = (_("\n\nYou need to install mplayer, mplayer2, mpv or imageMagick to be able to preview this file.\n"));
+      do_error_dialogf(_("\n\nYou need to install %s, %s, %s or imageMagick to be able to preview this file.\n"),
+                       EXEC_MPLAYER, EXEC_MPLAYER2, EXEC_MPV);
     }
-    do_error_dialog(msg);
-    lives_free(msg);
     lives_widget_set_sensitive(widget, TRUE);
     return;
   }
@@ -7503,7 +7469,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
 
   fsp_info_file = lives_build_filename(mainw->fsp_tmpdir, LIVES_STATUS_FILE_NAME, NULL);
 
-  mainw->in_fs_preview = TRUE;
+  //mainw->in_fs_preview = TRUE;
 
   if (preview_type != LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
     if (!strcmp(type, "Audio")) {
@@ -7531,7 +7497,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
       }
 
       if (width < 4 || height < 4) {
-        end_fs_preview();
+        end_fs_preview(fchoo);
         lives_widget_set_sensitive(widget, TRUE);
         return;
       }
@@ -7540,31 +7506,33 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
       lives_alignment_set(mainw->fs_playalign, 0.5, 0.5, (float)width / (float)fwidth,
                           (float)height / (float)fheight);
       border = MIN(fwidth - width, fheight - height);
-      lives_container_set_border_width(LIVES_CONTAINER(mainw->fs_playarea), border >> 1);
+      if (border > 0) {
+        lives_container_set_border_width(LIVES_CONTAINER(mainw->fs_playarea), border >> 1);
+      }
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     }
   }  else preview_frames = -1;
 
   if (!USE_MPV) {
     if (with_audio && prefs->audio_player == AUD_PLAYER_JACK) {
-      file_open_params = lives_strdup_printf("%s %s -ao jack", mainw->file_open_params != NULL ?
+      file_open_params = lives_strdup_printf("%s %s -ao jack", mainw->file_open_params ?
                                              mainw->file_open_params : "", get_deinterlace_string());
     } else if (with_audio && prefs->audio_player == AUD_PLAYER_PULSE) {
-      file_open_params = lives_strdup_printf("%s %s -ao pulse", mainw->file_open_params != NULL ?
+      file_open_params = lives_strdup_printf("%s %s -ao pulse", mainw->file_open_params ?
                                              mainw->file_open_params : "", get_deinterlace_string());
     } else {
-      file_open_params = lives_strdup_printf("%s %s -ao null", mainw->file_open_params != NULL ?
+      file_open_params = lives_strdup_printf("%s %s -ao null", mainw->file_open_params ?
                                              mainw->file_open_params : "", get_deinterlace_string());
     }
   } else {
     if (with_audio && prefs->audio_player == AUD_PLAYER_JACK) {
-      file_open_params = lives_strdup_printf("%s %s --ao=jack", mainw->file_open_params != NULL ?
+      file_open_params = lives_strdup_printf("%s %s --ao=jack", mainw->file_open_params ?
                                              mainw->file_open_params : "", get_deinterlace_string());
     } else if (with_audio && prefs->audio_player == AUD_PLAYER_PULSE) {
-      file_open_params = lives_strdup_printf("%s %s --ao=pulse", mainw->file_open_params != NULL ?
+      file_open_params = lives_strdup_printf("%s %s --ao=pulse", mainw->file_open_params ?
                                              mainw->file_open_params : "", get_deinterlace_string());
     } else {
-      file_open_params = lives_strdup_printf("%s %s --ao=null", mainw->file_open_params != NULL ?
+      file_open_params = lives_strdup_printf("%s %s --ao=null", mainw->file_open_params ?
                                              mainw->file_open_params : "", get_deinterlace_string());
     }
   }
@@ -7572,7 +7540,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || preview_type == LIVES_PREVIEW_TYPE_RANGE) {
     xwin = lives_widget_get_xwinid(mainw->fs_playarea, "Unsupported display type for preview.");
     if (xwin == -1) {
-      end_fs_preview();
+      end_fs_preview(fchoo);
       lives_free(fsp_info_file);
       lives_widget_set_sensitive(widget, TRUE);
       return;
@@ -7580,12 +7548,12 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   }
 
   if (file_open_params) {
-    com = lives_strdup_printf("%s fs_preview %s %"PRIu64" %d %d %.2f %d %d \"%s\" \"%s\"", temp_backend, mainw->fsp_tmpdir,
+    com = lives_strdup_printf("%s fs_preview %s %"PRIu64" %d %d %.2f %d %d \"%s\" \"%s\"", prefs->backend_sync, mainw->fsp_tmpdir,
                               xwin, width, height, start_time, preview_frames, (int)(prefs->volume * 100.),
                               (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), file_open_params);
 
   } else {
-    com = lives_strdup_printf("%s fs_preview %s %"PRIu64" %d %d %.2f %d %d \"%s\"", temp_backend, mainw->fsp_tmpdir,
+    com = lives_strdup_printf("%s fs_preview %s %"PRIu64" %d %d %.2f %d %d \"%s\"", prefs->backend_sync, mainw->fsp_tmpdir,
                               xwin, width, height, start_time, preview_frames, (int)(prefs->volume * 100.),
                               (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
   }
@@ -7593,18 +7561,19 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   lives_free(tmp);
   mainw->in_fs_preview = TRUE;
   lives_rm(fsp_info_file);
+
   lives_system(com, FALSE);
   lives_free(com);
 
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
-    end_fs_preview();
+    end_fs_preview(fchoo);
     lives_free(fsp_info_file);
     lives_widget_set_sensitive(widget, TRUE);
     return;
   }
 
-  tmp = (_("\nStop Preview\n"));
+  tmp = (_("Stop Preview"));
   fsp_ltext = lives_strdup(lives_button_get_label(LIVES_BUTTON(widget)));
   widget_opts.expand = LIVES_EXPAND_NONE;
   lives_button_set_label(LIVES_BUTTON(widget), tmp);
@@ -7613,10 +7582,49 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   }
   lives_free(tmp);
 
+#ifdef GUI_GTK
+  if (fchoo) {
+    gtk_file_chooser_set_preview_widget_active(fchoo, TRUE);
+    return;
+  }
+#endif
+
   // loop here until preview has finished, or the user presses OK or Cancel
-  lives_idle_add_simple(fs_preview_idle, (livespointer)widget);
+  //lives_idle_add_simple(fs_preview_idle, (livespointer)widget);
+
+  while (1) {
+    FILE *ifile;
+    if (!(ifile = fopen(fsp_info_file, "r")) && mainw->in_fs_preview && lives_dialog_get_response(dlg)
+        == LIVES_RESPONSE_INVALID) {
+      lives_nanosleep(LIVES_QUICK_NAP);
+      lives_widget_context_iteration(NULL, FALSE);
+      continue;
+    }
+
+    widget_opts.expand = LIVES_EXPAND_NONE;
+
+    if (LIVES_IS_BUTTON(widget)) lives_button_set_label(LIVES_BUTTON(widget), fsp_ltext);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    lives_free(fsp_ltext);
+
+    if (ifile) fclose(ifile);
+
+    end_fs_preview(NULL);
+    lives_free(fsp_info_file);
+
+    lives_freep((void **)&file_open_params);
+    if (LIVES_IS_WIDGET(widget)) lives_widget_set_sensitive(widget, TRUE);
+    break;
+  }
 }
 
+void on_fs_preview_clicked1(LiVESWidget * widget, LiVESDialog * fchoo) {
+  on_fs_preview_clicked(widget, fchoo, NULL, NULL);
+}
+
+void on_fs_preview_clicked2(LiVESWidget * widget, opensel_win * oswin) {
+  on_fs_preview_clicked(widget, LIVES_DIALOG(oswin->dialog), oswin->sp_start, oswin->sp_frames);
+}
 
 void on_open_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // OPEN A FILE (single or multiple)
@@ -7640,7 +7648,7 @@ void on_open_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   resp = lives_dialog_run(LIVES_DIALOG(chooser));
 
-  end_fs_preview();
+  end_fs_preview(NULL);
 
   if (resp == LIVES_RESPONSE_ACCEPT) on_ok_file_open_clicked(LIVES_FILE_CHOOSER(chooser), NULL);
   else on_filechooser_cancel_clicked(chooser);
@@ -7649,7 +7657,7 @@ void on_open_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 void on_ok_file_open_clicked(LiVESFileChooser * chooser, LiVESSList * fnames) {
   // this is also called from drag target
-
+  char file_name[PATH_MAX];
   LiVESSList *ofnames;
 
   if (chooser) {
@@ -7746,22 +7754,7 @@ void drag_from_outside(LiVESWidget * widget, GdkDragContext * dcon, int x, int y
 #endif
 
 
-void on_opensel_range_ok_clicked(LiVESButton * button, livespointer user_data) {
-  // open file selection
-  boolean needs_idlefunc;
-
-  end_fs_preview();
-
-  needs_idlefunc = mainw->mt_needs_idlefunc;
-  mainw->mt_needs_idlefunc = FALSE;
-  lives_general_button_clicked(button, NULL);
-  mainw->mt_needs_idlefunc = needs_idlefunc;
-
-
-}
-
-
-void end_fs_preview(void) {
+void end_fs_preview(LiVESFileChooser * fchoo) {
   // clean up if we were playing a preview - should be called from all callbacks
   // where there is a possibility of fs preview still playing
   static boolean singleton = FALSE;
@@ -7804,6 +7797,7 @@ void end_fs_preview(void) {
     mainw->in_fs_preview = FALSE;
   }
   if (mainw->fs_playframe) lives_widget_queue_draw(mainw->fs_playframe);
+  if (fchoo) gtk_file_chooser_set_preview_widget_active(fchoo, FALSE);
   singleton = FALSE;
 }
 
@@ -8931,7 +8925,7 @@ void on_load_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   resp = lives_dialog_run(LIVES_DIALOG(chooser));
 
-  end_fs_preview();
+  end_fs_preview(NULL);
 
   if (resp != LIVES_RESPONSE_ACCEPT) on_filechooser_cancel_clicked(chooser);
   else on_open_new_audio_clicked(LIVES_FILE_CHOOSER(chooser), NULL);
@@ -8941,6 +8935,7 @@ void on_load_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_data) {
   // open audio file
   // also called from osc.c
+  char file_name[PATH_MAX];
 
   char *a_type;
   char *com, *tmp;
@@ -8990,7 +8985,7 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
 
   lives_snprintf(mainw->audio_dir, PATH_MAX, "%s", file_name);
   get_dirname(mainw->audio_dir);
-  end_fs_preview();
+  end_fs_preview(NULL);
   lives_widget_destroy(LIVES_WIDGET(chooser));
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
@@ -12065,6 +12060,7 @@ void on_normalise_audio_activate(LiVESMenuItem * menuitem, livespointer user_dat
 
 void on_append_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   LiVESWidget *chooser;
+  char file_name[PATH_MAX];
 
   char *filt[] = LIVES_AUDIO_LOAD_FILTER;
 
@@ -12092,7 +12088,7 @@ void on_append_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   resp = lives_dialog_run(LIVES_DIALOG(chooser));
 
-  end_fs_preview();
+  end_fs_preview(NULL);
 
   if (resp != LIVES_RESPONSE_ACCEPT) {
     on_filechooser_cancel_clicked(chooser);

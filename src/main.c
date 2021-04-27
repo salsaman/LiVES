@@ -1,6 +1,6 @@
 // main.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2003 - 2021 <salsaman+lives@gmail.com>
 
 /*  This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 3 or higher as published by
@@ -173,6 +173,7 @@ void *gtk_thread_wrapper(void *data) {
 
 
 #ifdef USE_GLIB
+
 static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, const char *message,  livespointer data) {
   if (prefs && prefs->vj_mode) return;
   if (level & LIVES_LOG_FATAL_MASK) {
@@ -182,7 +183,6 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
   } else {
     char *msg;
     LiVESLogLevelFlags xlevel = level & LIVES_LOG_LEVEL_MASK;
-
 #ifdef LIVES_NO_DEBUG
     if (prefs && !prefs->show_dev_opts) return;
 #endif
@@ -199,7 +199,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #ifndef SHOW_MSG_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_MESSAGE) return;
 #endif
-#define NO_WARN_ERRORS
+    //#define NO_WARN_ERRORS
 #ifdef NO_WARN_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_WARNING) {
       return;
@@ -227,7 +227,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 
     //#define TRAP_ERRMSG ""
 #ifdef TRAP_ERRMSG
-    if (!strncmp(message, TRAP_ERRMSG, strlen(TRAP_ERRMSG))) {
+    if (*message && !strncmp(message, TRAP_ERRMSG, strlen(TRAP_ERRMSG))) {
       fprintf(stderr, "Trapped message %s\n", message);
       raise(LIVES_SIGTRAP);
     }
@@ -270,6 +270,23 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #endif
   }
 }
+
+
+#ifdef USE_GLIB
+
+#define N_LOG_FIELDS 2
+//static const GLogField log_fields[N_LOG_FIELDS] = {G_LOG_DOMAIN, GLIB_PRIORITY};
+static const GLogField log_domain[1] = {G_LOG_DOMAIN};
+
+static GLogWriterOutput lives_log_writer(GLogLevelFlags log_level, const GLogField *fields, gsize n_fields,
+    gpointer user_data) {
+  char *dom = g_log_writer_format_fields(log_level, log_domain, 1, FALSE);
+  //char *msg = g_log_writer_format_fields(log_level, log_fields, N_LOG_FIELDS, TRUE);
+  lives_log_handler(dom, log_level, "", user_data);
+  lives_free(dom);// lives_free(log_fields);
+  return G_LOG_WRITER_HANDLED;
+}
+
 #endif // USE_GLIB
 
 
@@ -4399,6 +4416,18 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs = NULL;
   capable = NULL;
 
+#ifdef GDK_WINDOWING_X11
+  XInitThreads();
+#endif
+
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(4, 0, 0)
+  gtk_init();
+#else
+  gtk_init(&argc, &argv);
+#endif
+#endif
+
   set_signal_handlers((SignalHandlerPointer)catch_sigint);
 
   lives_memset(&ign_opts, 0, sizeof(ign_opts));
@@ -4445,23 +4474,15 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 #endif
 
-#ifdef GDK_WINDOWING_X11
-  XInitThreads();
-#endif
-
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(4, 0, 0)
-  gtk_init();
-#else
-  gtk_init(&argc, &argv);
-#endif
-#endif
-
+#ifdef USE_GLIB
   g_log_set_default_handler(lives_log_handler, NULL);
+  g_log_set_writer_func(lives_log_writer, NULL, NULL);
+#endif
 
   //gtk_window_set_interactive_debugging(TRUE);
 #ifndef LIVES_NO_DEBUG
   g_printerr("FULL DEBUGGING IS ON !!\n");
+#endif
 #endif
 
 #ifndef IS_LIBLIVES

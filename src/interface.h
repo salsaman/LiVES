@@ -56,14 +56,15 @@ typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *sp_start;
   LiVESWidget *sp_frames;
+  LiVESWidget *preview_button;
 } opensel_win;
 
 opensel_win *create_opensel_window(int frames, double fps);
 
 LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, boolean opt_resize);
 
-void widget_add_preview(LiVESWidget *, LiVESBox *for_preview, LiVESBox *for_button,
-                        LiVESBox *for_deinterlace, int preview_type);  ///< for fileselector preview
+LiVESWidget *widget_add_preview(LiVESWidget *, LiVESBox *for_preview, LiVESBox *for_button,
+                                LiVESBox *for_deinterlace, int preview_type);  ///< for fileselector preview
 
 /// window change speed from Tools menu
 void create_new_pb_speed(short type);

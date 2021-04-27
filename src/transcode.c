@@ -487,6 +487,8 @@ tr_err2:
     global_recent_manager_add(pname);
   }
 
+  lives_snprintf(cfile->save_file_name, PATH_MAX, "%s", pname);
+
   lives_freep((void **)&pname);
   lives_freep((void **)&msg);
 

@@ -455,6 +455,8 @@ boolean lives_dialog_response(LiVESDialog *, LiVESResponseType response);
 LiVESResponseType lives_dialog_get_response_for_widget(LiVESDialog *, LiVESWidget *);
 LiVESWidget *lives_dialog_get_widget_for_response(LiVESDialog *, LiVESResponseType response);
 
+LiVESResponseType lives_dialog_get_response(LiVESDialog *);
+
 boolean lives_widget_set_bg_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
 boolean lives_widget_set_fg_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
 boolean lives_widget_set_text_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);

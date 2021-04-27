@@ -2209,10 +2209,12 @@ void rec_desk(void *args) {
 
     if (saver_thread) {
       lives_thread_join(*saver_thread, NULL);
-      if (saveargs->error) break;
-      if ((recargs->rec_time && !lives_alarm_check(alarm_handle))
-	  || (lpt && lives_proc_thread_get_cancelled(lpt)))
+      if (saveargs->error
+	  || ((recargs->rec_time && !lives_alarm_check(alarm_handle))
+	      || (lpt && lives_proc_thread_get_cancelled(lpt)))) {
+	lives_alarm_clear(fps_alarm);
 	break;
+      }
     }
     else saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
 
@@ -2226,7 +2228,10 @@ void rec_desk(void *args) {
 #endif
 
     pixbuf = gdk_pixbuf_get_from_window (capable->wm_caps.root_window, x, y, w, h);
-    if (!pixbuf) break;
+    if (!pixbuf) {
+      lives_alarm_clear(fps_alarm);
+      break;
+    }
     if (!pixbuf_to_layer(layer, pixbuf)) lives_widget_object_unref(pixbuf);
 
 #ifdef FEEDBACK
@@ -2250,6 +2255,7 @@ void rec_desk(void *args) {
     if (recargs->scale < 1.) {
       if (!resize_layer(layer, (double)w * recargs->scale, (double)h * recargs->scale,
 			LIVES_INTERP_FAST, WEED_PALETTE_END, 0)) {
+	lives_alarm_clear(fps_alarm);
 	weed_layer_free(layer);
 	break;
       }
@@ -2270,8 +2276,8 @@ void rec_desk(void *args) {
     // TODO - check for timeout / cancel here too
     lives_nanosleep_until_zero(lives_alarm_check(fps_alarm) && (!recargs->rec_time || lives_alarm_check(alarm_handle))
 			       && (!lpt || !lives_proc_thread_get_cancelled(lpt)));
+    lives_alarm_clear(fps_alarm);
   }
-  if (fps_alarm != LIVES_NO_ALARM) lives_alarm_clear(fps_alarm);
   lives_alarm_clear(alarm_handle);
 
 #ifdef FEEDBACK

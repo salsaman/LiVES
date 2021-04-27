@@ -313,6 +313,30 @@ void call_funcsig(lives_proc_thread_t info);
 void *fg_run_func(lives_proc_thread_t lpt, void *retval);
 /////
 
+/// hook funcs
+
+enum {
+  ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
+  EXIT_HOOK,
+  PB_END_EARLY_HOOK,
+  PB_END_LATE_HOOK,
+  PB_START_EARLY_HOOK,
+  PB_START_LATE_HOOK,
+  PROGRESS_START_HOOK,
+  PROGRESS_END_HOOK,
+  N_HOOK_FUNCS,
+};
+
+typedef struct {
+  lives_funcptr_t func;
+  void *data;
+} lives_closure_t;
+
+void lives_hook_append(int type, lives_funcptr_t func, livespointer data);
+void lives_hook_prepend(int type, lives_funcptr_t func, livespointer data);
+void lives_hook_remove(int type, lives_funcptr_t func, livespointer data);
+void lives_hooks_trigger(int type);
+
 // intents - for future use
 // type = thread, subtype livesproc
 #define PROC_THREAD_INTENTION_CREATE LIVES_INTENTION_CREATE // timeout is an optional ivar, default 0, how to handle

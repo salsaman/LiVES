@@ -58,22 +58,6 @@ static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
 }
 
 
-static void pv_sel_changed(LiVESFileChooser *chooser, livespointer user_data) {
-  LiVESSList *slist;
-  LiVESWidget *pbutton = (LiVESWidget *)user_data;
-  if (!LIVES_IS_FILE_CHOOSER(chooser)) return;
-  slist = lives_file_chooser_get_filenames(chooser);
-  end_fs_preview();
-
-  if (!slist || !slist->data || lives_slist_length(slist) > 1 ||
-      !(lives_file_test((char *)lives_slist_nth_data(slist, 0), LIVES_FILE_TEST_IS_REGULAR))) {
-    lives_widget_set_sensitive(pbutton, FALSE);
-  } else lives_widget_set_sensitive(pbutton, TRUE);
-
-  lives_slist_free_all(&slist);
-}
-
-
 void show_playbar_labels(int clipno) {
   lives_clip_t *sfile = mainw->files[clipno];
   char *tmp, *tmpch;
@@ -645,8 +629,25 @@ static boolean on_fsp_click(LiVESWidget *widget, LiVESXEventButton *event, lives
 }
 
 
-void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deint,
-                        int preview_type) {
+static void set_pb_active(LiVESWidget *fchoo, LiVESWidget *pbutton) {
+  LiVESSList *slist;
+  if (!LIVES_IS_FILE_CHOOSER(fchoo)) return;
+  slist = lives_file_chooser_get_filenames(LIVES_FILE_CHOOSER(fchoo));
+  end_fs_preview(LIVES_FILE_CHOOSER(fchoo));
+  if (!slist || !slist->data || lives_slist_length(slist) > 1 ||
+      !(lives_file_test((char *)lives_slist_nth_data(slist, 0), LIVES_FILE_TEST_IS_REGULAR))) {
+    lives_widget_set_sensitive(pbutton, FALSE);
+  } else lives_widget_set_sensitive(pbutton, TRUE);
+
+  lives_slist_free_all(&slist);
+  if (mainw->fs_playframe) {
+    lives_widget_show_all(lives_widget_get_parent(mainw->fs_playframe));
+  }
+}
+
+
+LiVESWidget *widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deint,
+                                int preview_type) {
   LiVESWidget *preview_button = NULL;
 
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || preview_type == LIVES_PREVIEW_TYPE_RANGE ||
@@ -655,7 +656,8 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
     mainw->fs_playalign = lives_alignment_new(0.5, 0.5, 1., 1.);
 
     mainw->fs_playimg = lives_drawing_area_new();
-    lives_widget_set_no_show_all(mainw->fs_playimg, TRUE);
+
+    //lives_widget_set_no_show_all(mainw->fs_playimg, TRUE);
     lives_widget_set_app_paintable(mainw->fs_playimg, TRUE);
 
     mainw->fs_playarea = lives_event_box_new();
@@ -677,8 +679,6 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 
     lives_container_set_border_width(LIVES_CONTAINER(mainw->fs_playframe), 0);
 
-    lives_box_pack_start(for_preview, mainw->fs_playframe, FALSE, TRUE, 0);
-
     if (preview_type != LIVES_PREVIEW_TYPE_RANGE) {
       lives_widget_set_size_request(mainw->fs_playframe,
                                     ((int)(DEF_FRAME_HSIZE_UNSCALED * (widget_opts.scale < 1.
@@ -694,16 +694,18 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
   } else mainw->fs_playframe = mainw->fs_playalign = mainw->fs_playarea = mainw->fs_playimg = NULL; // AUDIO_ONLY
 
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO) {
+    widget_opts.justify = LIVES_JUSTIFY_CENTER;
     preview_button =
       lives_standard_button_new_with_label(_("Click here to _Preview the Selected Video, "
                                            "Image or Audio File"),
                                            DEF_BUTTON_WIDTH * 4, DEF_BUTTON_HEIGHT);
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   } else if (preview_type == LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
     preview_button = lives_standard_button_new_with_label(_("Click here to _Preview the Selected "
                      "Audio File"), DEF_BUTTON_WIDTH * 4, DEF_BUTTON_HEIGHT);
   } else if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
     widget_opts.expand = LIVES_EXPAND_NONE;
-    preview_button = lives_standard_button_new_with_label(_("\nClick here to _Preview the Selection\n"),
+    preview_button = lives_standard_button_new_with_label(_("Click here to _Preview the Selection"),
                      DEF_BUTTON_WIDTH * 4, DEF_BUTTON_HEIGHT);
     lives_widget_set_hexpand(mainw->fs_playframe, TRUE);
     lives_widget_set_vexpand(mainw->fs_playframe, TRUE);
@@ -714,26 +716,39 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
                      DEF_BUTTON_WIDTH * 4, DEF_BUTTON_HEIGHT);
   }
 
+  if (LIVES_IS_FILE_CHOOSER(widget) && preview_type != LIVES_PREVIEW_TYPE_RANGE) {
+    gtk_file_chooser_set_preview_widget(GTK_FILE_CHOOSER(widget), mainw->fs_playframe);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(widget), "update-preview",
+                              LIVES_GUI_CALLBACK(set_pb_active), preview_button);
+  } else {
+    lives_box_pack_start(for_preview, mainw->fs_playframe, FALSE, TRUE, 0);
+    lives_widget_show_all(LIVES_WIDGET(for_preview));
+  }
+
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || preview_type == LIVES_PREVIEW_TYPE_RANGE ||
       preview_type == LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
-    lives_box_pack_start(for_button, preview_button, FALSE, FALSE, widget_opts.packing_width);
+    if (for_button) lives_box_pack_start(for_button, preview_button, FALSE, FALSE, widget_opts.packing_width);
+
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->fs_playframe), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                          LIVES_GUI_CALLBACK(on_fsp_click), preview_button);
   }
 
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || preview_type == LIVES_PREVIEW_TYPE_RANGE) {
-    add_deinterlace_checkbox(for_deint);
+    if (LIVES_IS_FILE_CHOOSER(widget)) {
+      gtk_file_chooser_add_choice(LIVES_FILE_CHOOSER(widget), "deint", _("Apply deinterlace"), NULL, NULL);
+    } else add_deinterlace_checkbox(for_deint);
   }
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_fs_preview_clicked), LIVES_INT_TO_POINTER(preview_type));
+  SET_INT_DATA(preview_button, "preview_type", preview_type);
+  if (preview_type != LIVES_PREVIEW_TYPE_RANGE)
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(on_fs_preview_clicked1), widget);
 
   if (LIVES_IS_FILE_CHOOSER(widget) && preview_type != LIVES_PREVIEW_TYPE_RANGE) {
     lives_widget_set_sensitive(preview_button, FALSE);
-
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL,
-                              LIVES_GUI_CALLBACK(pv_sel_changed), (livespointer)preview_button);
-  }
+  } else lives_widget_set_sensitive(preview_button, TRUE);
+  if (mainw->fs_playframe) lives_widget_show_all(mainw->fs_playframe);
+  return preview_button;
 }
 
 
@@ -805,8 +820,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   if (has_cancel) {
     if (CURRENT_CLIP_IS_VALID && mainw->cancel_type == CANCEL_SOFT) {
       LiVESWidget *enoughbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing),
-                                  NULL, _("_Enough"),
-                                  LIVES_RESPONSE_CANCEL);
+                                  NULL, _("_Enough"), LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_default(enoughbutton, TRUE);
 
       lives_signal_sync_connect(LIVES_GUI_OBJECT(enoughbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -816,8 +830,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
       lives_button_uncenter(enoughbutton, DLG_BUTTON_WIDTH);
     } else {
       procw->cancel_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing),
-                             LIVES_STOCK_CANCEL, NULL,
-                             LIVES_RESPONSE_CANCEL);
+                             LIVES_STOCK_CANCEL, NULL, LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_default(procw->cancel_button, TRUE);
 
       lives_window_add_escape(LIVES_WINDOW(procw->processing), procw->cancel_button);
@@ -931,6 +944,9 @@ xprocess *create_processing(const char *text) {
 
   lives_widget_set_opacity(lives_widget_get_parent(procw->notify_cb), 0.);
   lives_widget_set_sensitive(procw->notify_cb, FALSE);
+
+  widget_opts.last_container = vbox3;
+  lives_hooks_trigger(PROGRESS_START_HOOK);
 
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 8);
@@ -1675,7 +1691,7 @@ LiVESWidget *trash_rb(LiVESButtonBox *parent) {
   /// parent should be a bbox
   LiVESWidget *rb = NULL;
 
-  if (check_for_executable(&capable->has_gio, EXEC_GIO)) {
+  if (check_for_executable(&capable->has_gio, EXEC_GIO) == PRESENT) {
     LiVESSList *rb_group = NULL;
     LiVESWidget *vbox, *hbox;
     char *tmp, *tmp2;
@@ -2351,7 +2367,10 @@ opensel_win *create_opensel_window(int frames, double fps) {
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), widget_opts.packing_height * 2 + 2, 0);
 
-  widget_add_preview(openselwin->dialog, LIVES_BOX(vbox), LIVES_BOX(vbox), LIVES_BOX(vbox), LIVES_PREVIEW_TYPE_RANGE);
+  openselwin->preview_button =
+    widget_add_preview(openselwin->dialog, LIVES_BOX(vbox), LIVES_BOX(vbox), LIVES_BOX(vbox), LIVES_PREVIEW_TYPE_RANGE);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(openselwin->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_fs_preview_clicked2), openselwin);
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(openselwin->dialog), LIVES_STOCK_CANCEL, NULL,
                  LIVES_RESPONSE_CANCEL);
@@ -4102,7 +4121,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
     LiVESWidget *chooser = choose_file_with_preview(def_dir, fname, filt, filesel_type);
     int resp = lives_dialog_run(LIVES_DIALOG(chooser));
 
-    end_fs_preview();
+    end_fs_preview(NULL);
 
     if (resp == LIVES_RESPONSE_ACCEPT) {
       dirname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
@@ -4487,9 +4506,6 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   lives_window_set_modal(LIVES_WINDOW(chooser), TRUE);
   lives_memset(last_good_folder, 0, 1);
 
-  //set this so we know when button is pressed, even if waiting for preview to finish
-  mainw->fc_buttonresponse = LIVES_RESPONSE_NONE;
-
   if (dir) {
     gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser), dir);
     gtk_file_chooser_add_shortcut_folder(LIVES_FILE_CHOOSER(chooser), dir, NULL);
@@ -4522,7 +4538,6 @@ rundlg:
 
   lives_free(mytitle);
   lives_widget_destroy(chooser);
-  mainw->fc_buttonresponse = response;
 
 #if GTK_CHECK_VERSION(3, 10, 0)
   if (diss) {
@@ -4558,8 +4573,7 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
 
   // unfortunately we cannot simply run this and return a filename, in case there is a selection
 
-  LiVESWidget *chooser;
-
+  LiVESWidget *chooser, *pbut;
   int preview_type;
 
   if (filesel_type == LIVES_DIR_SELECTION_CREATE_FOLDER) {
@@ -4590,10 +4604,11 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
     preview_type = LIVES_PREVIEW_TYPE_AUDIO_ONLY;
   }
 
-  widget_add_preview(chooser, LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
-                     LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
-                     LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(chooser))),
-                     preview_type);
+  pbut = widget_add_preview(chooser, LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
+                            NULL, LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(chooser))),
+                            preview_type);
+
+  gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser), pbut);
 
   if (prefs->fileselmax) {
     int scr_width = GUI_SCREEN_WIDTH;
@@ -6022,9 +6037,8 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
   lives_strfreev(lines);
   lives_free(notes);
 
-  lives_widget_show_all(dialog);
-
   response = lives_dialog_run(LIVES_DIALOG(dialog));
+
   if (response < 0) {
     // user cancelled
     lives_list_free_all(&allids);
@@ -6214,7 +6228,7 @@ retry1:
     fsetname = lives_strdup(_("current set"));
   } else
     fsetname = lives_strdup_printf(_("set %s"), setname);
-  if (check_for_executable(&capable->has_gio, EXEC_GIO)) mainw->add_trash_rb = TRUE;
+  if (check_for_executable(&capable->has_gio, EXEC_GIO) == PRESENT) mainw->add_trash_rb = TRUE;
   if (do_warning_dialogf(_("The %s will be permanently deleted from the disk.\n"
                            "Are you sure ?"), fsetname)) {
     mainw->add_trash_rb = FALSE;

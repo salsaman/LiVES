@@ -4128,7 +4128,6 @@ void jack_interop_cleanup(void) {
     }
     detach_accels(TRUE);
     lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
-    mainw->hook_funcs[PB_END_EARLY_HOOK] = NULL;
     need_clnup = FALSE;
   }
 }
@@ -4190,8 +4189,7 @@ boolean jack_interop_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, 
         }
       }
 #endif
-      mainw->hook_funcs[PB_END_EARLY_HOOK] = jack_interop_cleanup;
-      mainw->hook_data[PB_END_EARLY_HOOK] = NULL;
+      lives_hook_append(PB_END_EARLY_HOOK, jack_interop_cleanup, NULL);
       need_clnup = TRUE;
     } else {
       const char **ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);

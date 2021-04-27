@@ -803,16 +803,6 @@ typedef struct {
 } xprocess;
 
 
-enum {
-  ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
-  EXIT_HOOK,
-  PB_END_EARLY_HOOK,
-  PB_END_LATE_HOOK,
-  PB_START_EARLY_HOOK,
-  PB_START_LATE_HOOK,
-  N_HOOK_FUNCS,
-};
-
 typedef struct {
   char msg[MAINW_MSG_SIZE];
 
@@ -1190,8 +1180,8 @@ typedef struct {
   lives_painter_surface_t *fsp_surface;
 
   /// hook functions
-  lives_funcptr_t hook_funcs[N_HOOK_FUNCS];
-  void *hook_data[N_HOOK_FUNCS];
+  // lists of lives_closure_t
+  LiVESList *hook_closures[N_HOOK_FUNCS];
 
   // selection pointers
   ulong mouse_fn1;
@@ -1818,8 +1808,6 @@ typedef struct {
 #define LIVES_IS_SENSITIZED ((mainw->sense_state & LIVES_SENSE_STATE_SENSITIZED) ? TRUE : FALSE)
 
   uint32_t sense_state;
-
-  int fc_buttonresponse;
 
   char frameblank_path[PATH_MAX];
   char sepimg_path[PATH_MAX];

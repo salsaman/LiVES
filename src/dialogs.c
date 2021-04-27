@@ -714,7 +714,7 @@ void maybe_abort(boolean do_check) {
         lives_kill_subprocesses(cfile->handle, TRUE);
       }
     }
-    if (mainw->hook_funcs[ABORT_HOOK])(*mainw->hook_funcs[ABORT_HOOK])(mainw->hook_data[ABORT_HOOK]);
+    lives_hooks_trigger(ABORT_HOOK);
     LIVES_FATAL("Aborted");
     lives_notify(LIVES_OSC_NOTIFY_QUIT, "Aborted");
     exit(1);
@@ -2013,6 +2013,7 @@ finish:
             && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
           notify_user(mainw->proc_ptr->text);
         }
+        lives_hooks_trigger(PROGRESS_END_HOOK);
         lives_freep((void **)&mainw->proc_ptr->text);
         lives_widget_destroy(mainw->proc_ptr->processing);
       }

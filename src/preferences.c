@@ -3573,8 +3573,7 @@ static void do_full_reset(LiVESWidget * widget, livespointer data) {
     lives_free(config_dir);
     return;
   }
-  mainw->hook_funcs[EXIT_HOOK] = _full_reset;
-  mainw->hook_data[EXIT_HOOK] = (void *)&config_dir;
+  lives_hook_append(EXIT_HOOK, _full_reset, (void *)&config_dir);
   lives_exit(0);
 }
 

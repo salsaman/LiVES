@@ -4419,7 +4419,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   if (diss) {
     diss->selbut = lives_dialog_get_widget_for_response(LIVES_DIALOG(chooser), LIVES_RESPONSE_NO);
 
-    if (act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER || LIVES_FILE_CHOOSER_ACTION_SELECT_CREATE_FOLDER) {
+    if (act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER || act == LIVES_FILE_CHOOSER_ACTION_SELECT_CREATE_FOLDER) {
       // only these actions are allowed to call set_current_name
       oldname = gtk_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
       gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), DETECTOR_STRING);

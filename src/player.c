@@ -1495,7 +1495,7 @@ boolean load_frame_image(frames_t frame) {
     else {
       cpal = WEED_PALETTE_RGBA32;
     }
-    if (mainw->fs && !mainw->ext_playback && (!mainw->multitrack || mainw->sep_win)) {
+    if (mainw->fs && (!mainw->multitrack || mainw->sep_win)) {
       // set again, in case vpp was turned off because of preview conditions
       get_player_size(&mainw->pwidth, &mainw->pheight);
     }

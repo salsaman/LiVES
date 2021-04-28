@@ -4359,7 +4359,8 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE) {
       mytitle = lives_strdup_printf(_("%sChoose a Device"), widget_opts.title_prefix);
       act = LIVES_FILE_CHOOSER_ACTION_OPEN;
-    } else if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER) {
+    } else if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER
+               || act == LIVES_FILE_CHOOSER_ACTION_SELECT_CREATE_FOLDER) {
       mytitle = lives_strdup_printf(_("%sChoose a Directory"), widget_opts.title_prefix);
     } else {
       mytitle = lives_strdup_printf(_("%sChoose a File"), widget_opts.title_prefix);
@@ -4385,7 +4386,8 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
                                           LIVES_STOCK_LABEL_SAVE, LIVES_RESPONSE_ACCEPT, NULL);
   }
 
-  if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER) {
+  if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER
+      || act == LIVES_FILE_CHOOSER_ACTION_SELECT_CREATE_FOLDER) {
     if (!custfilt) {
       custfilt = gtk_file_filter_new();
       if (fname) gtk_file_filter_set_name(custfilt, fname);
@@ -4417,7 +4419,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   if (diss) {
     diss->selbut = lives_dialog_get_widget_for_response(LIVES_DIALOG(chooser), LIVES_RESPONSE_NO);
 
-    if (act == LIVES_FILE_CHOOSER_ACTION_SAVE || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER) {
+    if (act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER || LIVES_FILE_CHOOSER_ACTION_SELECT_CREATE_FOLDER) {
       // only these actions are allowed to call set_current_name
       oldname = gtk_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
       gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), DETECTOR_STRING);
@@ -4520,8 +4522,14 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 rundlg:
   if ((response = lives_dialog_run(LIVES_DIALOG(chooser))) != LIVES_RESPONSE_CANCEL) {
     char *tmp;
-    if (diss && diss->new_entry) filename = lives_strdup(lives_entry_get_text(LIVES_ENTRY(diss->new_entry)));
-    else {
+    volatile LiVESWidget *xchooser = chooser;
+    break_me("OK");
+    if (diss && diss->new_entry) {
+      if (act == LIVES_FILE_CHOOSER_ACTION_SAVE) {
+        filename = lives_build_filename(gtk_file_chooser_get_current_folder(LIVES_FILE_CHOOSER(chooser)),
+                                        lives_entry_get_text(LIVES_ENTRY(diss->new_entry)), NULL);
+      } else filename = lives_strdup(lives_entry_get_text(LIVES_ENTRY(diss->new_entry)));
+    } else {
       filename = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
                                         -1, NULL, NULL, NULL);
       lives_free(tmp);

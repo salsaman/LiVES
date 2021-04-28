@@ -1116,6 +1116,10 @@ LIVES_GLOBAL_INLINE void lives_hooks_trigger(int type) {
   lives_list_free_all(&mainw->hook_closures[type]);
 }
 
+LIVES_GLOBAL_INLINE void lives_hooks_clear(int type) {
+  lives_list_free_all(&mainw->hook_closures[type]);
+}
+
 LIVES_GLOBAL_INLINE void lives_hook_remove(int type, lives_funcptr_t func, livespointer data) {
   LiVESList *list = mainw->hook_closures[type];
   for (; list; list = list->next) {

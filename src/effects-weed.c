@@ -1936,6 +1936,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       letterbox = TRUE;
 
     if (!svary) {
+      if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && prefs->no_lb_gens) {
+        maxinwidth = rmaxw = rminw = inwidth;
+        maxinheight = rmaxh = rminh = inheight;
+        break;
+      }
+
       area = inwidth * inheight;
       if (area > maxarea) {
         maxarea = area;
@@ -7834,58 +7840,14 @@ matchvals:
 
   if (can_change || (!(channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE) && !(channel_flags
                      & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE))) {
-    // if it's in the bg, and letterboxing, set size to maxspect fg clip
-    // or if it's fg or bg and we are playing high quality
+    int lb_width, lb_height;
+    // no_lb_gens -> use a.r of player
+    // set size dep. q -> low, contain other. med, contain player, shrink to screen, high - contain screen
 
-    if (mainw->num_tr_applied > 0 && !num_in_alpha) {
-      if ((mainw->multitrack && !mainw->multitrack->is_rendering && prefs->letterbox_mt)
-          || (!mainw->multitrack && prefs->letterbox && (!mainw->is_rendering || mainw->preview_rendering))) {
-        int lb_width, lb_height, opwidth, opheight;
-        boolean can_resize = FALSE, is_bg = FALSE;
-        if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
-            && mainw->files[mainw->blend_file]->ext_src == inst) {
-          is_bg = TRUE;
-        }
-        if (is_bg || prefs->no_lb_gens) {
-          if (is_bg) {
-            lb_width = mainw->files[mainw->playing_file]->hsize;
-            lb_height = mainw->files[mainw->playing_file]->vsize;
-          } else {
-            lb_width = mainw->files[mainw->blend_file]->hsize;
-            lb_height = mainw->files[mainw->blend_file]->vsize;
-          }
+    // lb_gens - use a.r of gen
 
-          if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) != 0) can_resize = TRUE;
-          get_player_size(&opwidth, &opheight);
-
-          // op size = fg frame in player
-          get_letterbox_sizes(&opwidth, &opheight, &lb_width, &lb_height, can_resize);
-
-          if (!is_bg || prefs->no_lb_gens) {
-            xwidth = lb_width;
-            xheight = lb_height;
-          } else {
-            opwidth = lb_width;
-            opheight = lb_height;
-            can_resize = FALSE;
-
-            if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_WIDTH)) {
-              lb_width = weed_get_int_value(chantmpl, WEED_LEAF_HOST_WIDTH, NULL);
-            } else lb_width = DEF_GEN_WIDTH;
-            if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_HEIGHT)) {
-              lb_height = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
-            } else lb_height = DEF_GEN_HEIGHT;
-          }
-        }
-        if (is_bg && !prefs->no_lb_gens) {
-          if ((mainw->multitrack && !mainw->multitrack->is_rendering && prefs->letterbox_mt)
-              || (!mainw->multitrack && prefs->letterbox && (!mainw->is_rendering || mainw->preview_rendering))) {
-            get_letterbox_sizes(&opwidth, &opheight, &lb_width, &lb_height, can_resize);
-            xwidth = lb_width;
-            xheight = lb_height;
-          }
-        }
-      }
+    if (prefs->no_lb_gens) {
+      get_player_size(&xwidth, &xheight);
     } else {
       if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_WIDTH)) {
         xwidth = weed_get_int_value(chantmpl, WEED_LEAF_HOST_WIDTH, NULL);
@@ -7893,6 +7855,57 @@ matchvals:
       if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_HEIGHT)) {
         xheight = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
       } else xheight = DEF_GEN_HEIGHT;
+    }
+
+    switch (prefs->pb_quality) {
+    case PB_QUALITY_LOW:
+      if (mainw->num_tr_applied > 0 && !num_in_alpha) {
+        if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
+            && mainw->files[mainw->blend_file]->ext_src == inst) {
+          is_bg = TRUE;
+        }
+        if (is_bg) {
+          lb_width = mainw->files[mainw->playing_file]->hsize;
+          lb_height = mainw->files[mainw->playing_file]->vsize;
+        } else {
+          lb_width = mainw->files[mainw->blend_file]->hsize;
+          lb_height = mainw->files[mainw->blend_file]->vsize;
+        }
+        calc_midspect(xwidth, xheight, &lb_width, &lb_height);
+      }
+      break;
+    case PB_QUALITY_MED:
+      if (prefs->no_lb_gens) {
+        int lb_width2, lb_height2;
+        if (mainw->num_tr_applied > 0 && !num_in_alpha) {
+          if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
+              && mainw->files[mainw->blend_file]->ext_src == inst) {
+            is_bg = TRUE;
+          }
+          if (is_bg) {
+            lb_width2 = mainw->files[mainw->playing_file]->hsize;
+            lb_height2 = mainw->files[mainw->playing_file]->vsize;
+          } else {
+            lb_width2 = mainw->files[mainw->blend_file]->hsize;
+            lb_height2 = mainw->files[mainw->blend_file]->vsize;
+          }
+          calc_midspect(lb_width, xheight, &lb_width2, &lb_height2);
+        }
+        if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_WIDTH)) {
+          lb_width = weed_get_int_value(chantmpl, WEED_LEAF_HOST_WIDTH, NULL);
+        } else lb_width = DEF_GEN_WIDTH;
+        if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_HEIGHT)) {
+          lb_height = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
+        } else lb_height = DEF_GEN_HEIGHT;
+        calc_midspect(xwidth, xheight, &lb_width, &lb_height);
+      }
+      break;
+    default:
+      if (!prefs->no_lb_gens) {
+        get_player_size(&lb_width, &lb_height);
+        calc_midspect(xwidth, xheight, &lb_width, &lb_height);
+      }
+      break;
     }
   }
 

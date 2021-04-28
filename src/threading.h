@@ -335,6 +335,7 @@ typedef struct {
 void lives_hook_append(int type, lives_funcptr_t func, livespointer data);
 void lives_hook_prepend(int type, lives_funcptr_t func, livespointer data);
 void lives_hook_remove(int type, lives_funcptr_t func, livespointer data);
+void lives_hooks_clear(int type);
 void lives_hooks_trigger(int type);
 
 // intents - for future use

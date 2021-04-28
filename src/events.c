@@ -3586,7 +3586,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
   int *in_count = NULL;
 
   weed_plant_t **source_params, **in_params;
-  weed_layer_t **layers, *layer = NULL, *out_layer = NULL;
+  weed_layer_t **layers, *layer = NULL;
 
   weed_error_t weed_error;
   LiVESResponseType retval;
@@ -3771,7 +3771,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       next_out_tc = q_gint64(next_out_tc, cfile->fps);
       if (mainw->flush_audio_tc == 0) {
         tc = get_event_timecode(event);
-
         if (r_video && !(!mainw->clip_switched && cfile->hsize * cfile->vsize == 0)) {
           lives_freep((void **)&mainw->clip_index);
           lives_freep((void **)&mainw->frame_index);
@@ -3790,23 +3789,22 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           }
           if (scrap_track != -1) {
             int64_t offs;
-            // do not apply fx, just pull frame
-            /* if (mainw->frame_index[scrap_track] == old_scrap_frame && mainw->scrap_pixbuf) { */
-            /*   pixbuf = mainw->scrap_pixbuf; */
             if (mainw->frame_index[scrap_track] == old_scrap_frame) {
               if (intimg) {
-                if (mainw->scrap_layer) out_layer = mainw->scrap_layer;
+                if (mainw->scrap_layer) {
+                  layer = mainw->scrap_layer;
+                }
               } else {
-                if (mainw->scrap_pixbuf) pixbuf = mainw->scrap_pixbuf;
+                if (mainw->scrap_pixbuf) {
+                  pixbuf = mainw->scrap_pixbuf;
+                }
               }
             } else {
-              //if (mainw->scrap_pixbuf) {
               if (intimg) {
                 if (mainw->scrap_layer) {
 #ifndef SAVE_THREAD
                   weed_layer_free(mainw->scrap_layer);
 #endif
-                  //mainw->scrap_pixbuf = NULL;
                   mainw->scrap_layer = NULL;
                 }
               } else {
@@ -3814,12 +3812,12 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 #ifndef SAVE_THREAD
                   lives_widget_object_unref(mainw->scrap_pixbuf);
 #endif
-                  //mainw->scrap_pixbuf = NULL;
                   mainw->scrap_pixbuf = NULL;
                 }
               }
+
               old_scrap_frame = mainw->frame_index[scrap_track];
-              layer = lives_layer_new_for_frame(mainw->clip_index[scrap_track], mainw->frame_index[scrap_track]);
+              layer = lives_layer_new_for_frame(mainw->clip_index[scrap_track], old_scrap_frame);
               offs = weed_get_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, &weed_error);
               if (!mainw->files[mainw->scrap_file]->ext_src) load_from_scrap_file(NULL, -1);
               lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src),
@@ -3887,6 +3885,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 // set alt src in layer
                 weed_set_voidptr_value(layers[i], WEED_LEAF_HOST_DECODER, (void *)mainw->track_decoders[i]);
                 pull_frame_threaded(layers[i], img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
+                //pull_frame(layers[i], img_ext, (weed_timecode_t)mainw->currticks);
               } else {
                 weed_layer_pixel_data_free(layers[i]);
               }
@@ -3902,6 +3901,11 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             if (weed_plant_has_leaf(event, LIVES_LEAF_FAKE_TC))
               ztc = weed_get_int64_value(event, LIVES_LEAF_FAKE_TC, NULL);
             else ztc = tc;
+
+            for (i = 0; layers[i]; i++) {
+              check_layer_ready(layers[i]);
+            }
+
             layer = weed_apply_effects(layers, mainw->filter_map, ztc,
                                        cfile->hsize, cfile->vsize, pchains);
 
@@ -3913,6 +3917,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             }
             lives_free(layers);
           }
+
 #ifdef VFADE_RENDER
           if (layer) {
             double fadeamt;
@@ -3935,10 +3940,39 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           if (layer) {
             int lpal, width, height;
             boolean was_lbox = FALSE;
+            boolean reused = FALSE;
             if (mainw->transrend_proc) {
               if (lives_proc_thread_check_finished(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
+
               lives_nanosleep_until_nonzero(!mainw->transrend_ready);
+
               if (lives_proc_thread_check_finished(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
+
+              if (scrap_track != -1) {
+                if (mainw->scrap_layer) {
+                  layer = mainw->scrap_layer;
+                  mainw->scrap_layer = NULL;
+                  reused = TRUE;
+                } else {
+                  check_layer_ready(layer);
+                  resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_NONE, 0);
+                }
+                // if our pixbuf came from scrap file, and next frame is also from scrap file with same frame number,
+                next_frame_event = get_next_frame_event(event);
+                if (weed_get_int_value(next_frame_event, WEED_LEAF_CLIPS, NULL) == mainw->clip_index[0]
+                    && weed_get_int64_value(next_frame_event, WEED_LEAF_FRAMES, NULL)
+                    == mainw->frame_index[0]) {
+                  // save the layer
+                  if (!mainw->scrap_layer || layer == mainw->scrap_layer)
+                    mainw->scrap_layer = weed_layer_copy(NULL, layer);
+                  reused = TRUE;
+                }
+              }
+              if (!reused && mainw->scrap_layer) {
+                weed_layer_free(mainw->scrap_layer);
+                mainw->scrap_layer = NULL;
+              }
+
               mainw->transrend_layer = layer;
               mainw->transrend_ready = TRUE;
               // sig_progress...
@@ -3975,21 +4009,20 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             // we have a choice here, we can either render with the same gamma tf as cfile, or force it to sRGB
             if (!was_lbox)
               gamma_convert_layer(cfile->gamma_type, layer);
-            else
+            else {
               gamma_convert_sub_layer(cfile->gamma_type, 1.0, layer, (cfile->hsize - width) / 2,
                                       (cfile->vsize - height) / 2,
                                       width, height, TRUE);
-
+            }
             if (weed_plant_has_leaf(event, WEED_LEAF_OVERLAY_TEXT)) {
               char *texto = weed_get_string_value(event, WEED_LEAF_OVERLAY_TEXT, NULL);
               render_text_overlay(layer, texto);
               lives_free(texto);
             }
-            if (intimg)
-              out_layer = layer;
-            else {
+            if (!intimg) {
               pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
               weed_layer_free(layer);
+              layer = NULL;
             }
           }
           mainw->blend_file = blend_file;
@@ -4016,7 +4049,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
         if (mainw->flush_audio_tc != 0) dtc = mainw->flush_audio_tc;
         else {
-          if (r_video && !next_frame_event && is_blank) tc -= 1. / cfile->fps * TICKS_PER_SECOND_DBL;;
+          if (r_video && !next_frame_event && is_blank) tc -= 1. / cfile->fps * TICKS_PER_SECOND_DBL;
           dtc = q_gint64(tc + rec_delta_tc, cfile->fps);
         }
 
@@ -4079,11 +4112,19 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
       if (!r_video) break;
 
+      /////////////////
       if (intimg) {
-        if (!out_layer) break;
+        if (!layer) {
+          break_me("miss lay");
+          break;
+        }
       } else {
-        if (!pixbuf) break;
+        if (!pixbuf) {
+          break_me("miss pix");
+          break;
+        }
       }
+      ////////////////////////
 
       if (!next_frame_event && is_blank) {
         next_out_tc = out_tc;
@@ -4117,6 +4158,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       } while (retval == LIVES_RESPONSE_RETRY);
 
 #else
+
       if (!saver_thread) {
         if (!mainw->transrend_proc) {
           saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
@@ -4148,8 +4190,10 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           }
         }
         if (intimg) {
-          if (saveargs->layer && saveargs->layer != out_layer) {
-            if (saveargs->layer == mainw->scrap_layer) mainw->scrap_layer = NULL;
+          if (saveargs->layer && saveargs->layer != layer) {
+            if (saveargs->layer == mainw->scrap_layer) {
+              mainw->scrap_layer = NULL;
+            }
             weed_layer_free(saveargs->layer);
             saveargs->layer = NULL;
           }
@@ -4163,7 +4207,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         lives_free(saveargs->fname);
         saveargs->fname = NULL;
       }
-
       if (!mainw->transrend_proc) {
         if (cfile->old_frames > 0) {
           saveargs->fname = make_image_file_name(cfile, out_frame, LIVES_FILE_EXT_MGK);
@@ -4172,7 +4215,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         }
 
         if (intimg) {
-          saveargs->layer = out_layer;
+          saveargs->layer = layer;
           lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
         } else {
           saveargs->pixbuf = pixbuf;
@@ -4194,10 +4237,11 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       // if our pixbuf came from scrap file, and next frame is also from scrap file with same frame number,
       // save the pixbuf and re-use it
       if (scrap_track != -1) {
-        if (intimg)
+        if (intimg) {
           mainw->scrap_layer = layer;
-        else
+        } else {
           mainw->scrap_pixbuf = pixbuf;
+        }
       }
       break;
 
@@ -4461,6 +4505,7 @@ filterinit2:
     }
 
     if (r_audio) {
+      next_out_tc += TICKS_PER_SECOND_DBL / cfile->fps;
       render_audio_segment(1, NULL, mainw->multitrack != NULL
                            ? mainw->multitrack->render_file : mainw->current_file,
                            NULL, NULL, atc, next_out_tc, chvols, 0., 0., NULL);
@@ -4489,6 +4534,7 @@ static void do_xdg_opt(LiVESToggleButton * cb) {
                                           (tmp = U82L(cfile->save_file_name)));
     lives_system(com, TRUE);
     lives_free(com); lives_free(tmp);
+    lives_widget_object_unref(cb);
   }
 }
 
@@ -4496,6 +4542,7 @@ static void add_xdg_opt(livespointer data) {
   if (check_for_executable(&capable->has_xdg_open, EXEC_XDG_OPEN) == PRESENT) {
     LiVESWidget *cb = lives_standard_check_button_new(_("Preview in default video player afterwards"),
                       FALSE, LIVES_BOX(widget_opts.last_container), NULL);
+    lives_widget_object_ref(cb);
     lives_hook_append(PROGRESS_END_HOOK, (lives_funcptr_t)do_xdg_opt, cb);
   }
 }
@@ -4543,7 +4590,7 @@ boolean start_render_effect_events(weed_plant_t *event_list, boolean render_vid,
   if (!mainw->transrend_proc) mainw->disk_mon = MONITOR_QUOTA;
   if (cfile->old_frames > 0) cfile->nopreview = TRUE; /// FIXME...
 
-  if (mainw->transrend_proc) {
+  if (mainw->transrend_proc && render_vid) {
     lives_hook_append(PROGRESS_START_HOOK, (lives_funcptr_t)add_xdg_opt, NULL);
   }
 
@@ -4790,6 +4837,8 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
       return FALSE; // show dialog again
     }
 
+    migrate_from_staging(mainw->current_file);
+
     lives_freep((void **)&clipname);
 
     cfile->opening = TRUE; // prevent audio from getting clobbered, it will be reset during rendering
@@ -4910,6 +4959,7 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
       }
       if (norm_after) on_normalise_audio_activate(NULL, NULL);
       if (afade_in_secs > 0.) {
+        if (afade_in_secs > cfile->laudio_time) afade_in_secs = cfile->laudio_time;
         cfile->undo1_int = 0; // fade in
         cfile->undo2_dbl = 0.;
         cfile->undo1_dbl = afade_in_secs;
@@ -4917,6 +4967,7 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
       }
       if (afade_out_secs > 0.) {
         cfile->undo1_int = 1; // fade out
+        if (afade_out_secs > cfile->laudio_time) afade_out_secs = cfile->laudio_time;
         cfile->undo2_dbl = cfile->laudio_time - afade_out_secs;
         cfile->undo1_dbl = cfile->laudio_time;
         on_fade_audio_activate(NULL, NULL);
@@ -4988,7 +5039,23 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
         goto rtc_done;
       }
 
-      if (rendaud && norm_after) on_normalise_audio_activate(NULL, NULL);
+      if (rendaud) {
+        if (norm_after) on_normalise_audio_activate(NULL, NULL);
+        if (afade_in_secs > 0.) {
+          if (afade_in_secs > cfile->laudio_time) afade_in_secs = cfile->laudio_time;
+          cfile->undo1_int = 0; // fade in
+          cfile->undo2_dbl = 0.;
+          cfile->undo1_dbl = afade_in_secs;
+          on_fade_audio_activate(NULL, NULL);
+        }
+        if (afade_out_secs > 0.) {
+          if (afade_out_secs > cfile->laudio_time) afade_out_secs = cfile->laudio_time;
+          cfile->undo1_int = 1; // fade out
+          cfile->undo2_dbl = cfile->laudio_time - afade_out_secs;
+          cfile->undo1_dbl = cfile->laudio_time;
+          on_fade_audio_activate(NULL, NULL);
+        }
+      }
 
       cfile->start = 1;
       cfile->end = cfile->frames;

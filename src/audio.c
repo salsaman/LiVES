@@ -1612,6 +1612,11 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     cur_size = lives_buffered_orig_size(out_fd);
 
     if (opvol_start == opvol_end && opvol_start == 0.) ins_pt = tc_end / TICKS_PER_SECOND_DBL;
+    if (opvol_start != opvol_end) {
+      ins_pt = tc_start / TICKS_PER_SECOND_DBL;
+      if (ins_pt < 0.) ins_pt = 0.;
+    }
+    g_print("OUT2 SEEK to %f\n", ins_pt);
     ins_pt *= out_achans * out_arate * out_asamps;
     ins_size = ((int64_t)(ins_pt / out_achans / out_asamps + .5)) * out_achans * out_asamps;
 
@@ -1623,8 +1628,10 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     if (ins_size > cur_size) {
       // fill to ins_pt with zeros
       pad_with_silence(out_fd, NULL, cur_size, ins_size, out_asamps, out_unsigned, out_bendian);
-    } else lives_lseek_buffered_writer(out_fd, ins_size);
-
+    } else {
+      g_print("OUT SEEK to %ld\n", ins_size);
+      lives_lseek_buffered_writer(out_fd, ins_size);
+    }
     if (opvol_start == opvol_end && opvol_start == 0.) {
       lives_close_buffered(out_fd);
       return tsamples;
@@ -1985,7 +1992,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       }
 
       if (!mainw->multitrack && opvol_end != opvol_start) {
-        time += (double)frames_out / (double)out_arate;
+        time += (double)frames_out / (double)out_arate / out_achans;
         opvol = opvol_start + (opvol_end - opvol_start) * (time / (double)((tc_end - tc_start) / TICKS_PER_SECOND_DBL));
         opvol = lives_vol_from_linear(opvol);
       }

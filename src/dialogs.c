@@ -1820,6 +1820,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         goto finish;
       }
 
+      if (mainw->render_error == LIVES_RENDER_COMPLETE) goto finish;
+
       // display progress fraction or pulse bar
       if (*mainw->msg && (frames_done = atoi(mainw->msg)) > 0 && mainw->proc_ptr) {
         if (mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
@@ -2030,6 +2032,7 @@ finish:
       // should manually call sensitize() after operation
       sensitize();
     }
+    lives_hooks_clear(PROGRESS_END_HOOK);
   } else {
     mainw->is_processing = TRUE;
   }

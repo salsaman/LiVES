@@ -199,7 +199,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #ifndef SHOW_MSG_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_MESSAGE) return;
 #endif
-    //#define NO_WARN_ERRORS
+#define NO_WARN_ERRORS
 #ifdef NO_WARN_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_WARNING) {
       return;

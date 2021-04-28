@@ -72,6 +72,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 #define COND_PLANT_KEY "_wh_cond_plant"
 
 #define RESPONSE_KEY "_wh_response"
+#define DESTROYED_KEY "_wh_destroyed"
 #define ACTION_AREA_KEY "_wh_act_area"
 
 #define SBUTT_SURFACE_KEY "_sbutt_surf"
@@ -1988,7 +1989,7 @@ static boolean lives_widget_destroyed(LiVESWidget *widget, void **ptr) {
   return FALSE;
 }
 
-static void _dialog_resp_get(LiVESDialog *dlg, int resp, livespointer data) {
+static void _dialog_resp_set(LiVESDialog *dlg, int resp, livespointer data) {
   SET_INT_DATA(dlg, RESPONSE_KEY, resp);
 }
 
@@ -1997,22 +1998,29 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_get_response(LiVESDia
   return GET_INT_DATA(dlg, RESPONSE_KEY);
 }
 
+static boolean lives_dialog_destroyed(LiVESWidget *dialog, void *data) {
+  SET_INT_DATA(dialog, DESTROYED_KEY, TRUE);
+  return FALSE;
+}
 
 static LiVESResponseType _dialog_run(LiVESDialog *dialog) {
   LiVESResponseType resp;
   ulong func = lives_signal_sync_connect(dialog, LIVES_WIDGET_RESPONSE_SIGNAL,
-                                         LIVES_GUI_CALLBACK(_dialog_resp_get), NULL);
+                                         LIVES_GUI_CALLBACK(_dialog_resp_set), NULL);
   ulong dfunc = lives_signal_sync_connect(LIVES_GUI_OBJECT(dialog), LIVES_WIDGET_DESTROY_SIGNAL,
-                                          LIVES_GUI_CALLBACK(lives_widget_destroyed), &dialog);
+                                          LIVES_GUI_CALLBACK(lives_dialog_destroyed), NULL);
+  boolean dest;
   lives_widget_object_ref(dialog);
   do {
     lives_widget_context_iteration(NULL, FALSE);
     lives_nanosleep(NSLEEP_TIME);
-    if (dialog) resp = GET_INT_DATA(dialog, RESPONSE_KEY);
-    else return LIVES_RESPONSE_INVALID;
-  } while (resp == LIVES_RESPONSE_INVALID);
-  if (dialog) lives_signal_handler_disconnect(dialog, dfunc);
-  if (dialog) lives_signal_handler_disconnect(dialog, func);
+    resp = GET_INT_DATA(dialog, RESPONSE_KEY);
+  } while (!(dest = GET_INT_DATA(dialog, DESTROYED_KEY)) && resp == LIVES_RESPONSE_INVALID);
+  if (!dest) {
+    if (dialog) lives_signal_handler_disconnect(dialog, dfunc);
+    if (dialog) lives_signal_handler_disconnect(dialog, func);
+  }
+  SET_INT_DATA(dialog, RESPONSE_KEY, LIVES_RESPONSE_INVALID);
   lives_widget_object_unref(dialog);
   return resp;
 }
@@ -12290,10 +12298,15 @@ WIDGET_HELPER_GLOBAL_INLINE double lives_spin_button_get_snapval(LiVESSpinButton
 #if GTK_CHECK_VERSION(3, 10, 0)
 static void dissect_filechooser(LiVESWidget * widget, livespointer user_data) {
   static boolean set_allx = FALSE;
+  static boolean set_all2 = FALSE;
   static boolean get_entry  = FALSE;
   boolean set_all = set_allx;
   boolean get_e = get_entry;
   struct fc_dissection *diss = (struct fc_dissection *)user_data;
+
+  if (LIVES_IS_FILE_CHOOSER(widget)) {
+    get_entry = set_all2 = set_allx = FALSE;
+  }
 
   if (LIVES_IS_PLACES_SIDEBAR(widget)) {
     diss->sidebar = widget;
@@ -12309,15 +12322,20 @@ static void dissect_filechooser(LiVESWidget * widget, livespointer user_data) {
     diss->bbox = widget;
   } else if (GTK_IS_LIST_BOX(widget)) {
     diss->treeview = widget;
+    set_all2 = TRUE;
   } else if (GTK_IS_REVEALER(widget) && !lives_strcmp(gtk_widget_get_name(widget), "browser_header_revealer")) {
     diss->revealer = widget;
   }
 
   if (!set_all && LIVES_IS_BUTTON(widget)) return; // avoids a problem with filechooser
-  if (set_all || LIVES_IS_LABEL(widget)) {
-    lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_NORMAL);
-    if (!LIVES_IS_LABEL(widget))
-      lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_INSENSITIVE);
+  if (set_all2) {
+    lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_NORMAL, FALSE);
+  } else {
+    if (set_all || LIVES_IS_LABEL(widget)) {
+      lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_NORMAL);
+      if (!LIVES_IS_LABEL(widget))
+        lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_INSENSITIVE);
+    }
   }
   if (LIVES_IS_CONTAINER(widget)) {
     lives_container_forall(LIVES_CONTAINER(widget), dissect_filechooser, user_data);

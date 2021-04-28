@@ -11928,7 +11928,7 @@ void on_encoder_ofmt_changed(LiVESCombo * combo, livespointer user_data) {
 
 void on_export_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
-  char *filt[] = {"*."LIVES_FILE_EXT_WAV, NULL};
+  char *filt[] = {"*." LIVES_FILE_EXT_WAV, NULL};
   char *filename, *file_name;
   char *com, *tmp;
 
@@ -11951,9 +11951,8 @@ void on_export_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   // warn if arps!=arate
   if (cfile->arate != cfile->arps) {
-    if (do_warning_dialog(
-          _("\n\nThe audio playback speed has been altered for this clip.\nClick 'OK' to export at the new speed, "
-            "or 'Cancel' to export at the original rate.\n"))) {
+    if (do_yesno_dialog(
+          _("\n\nThe audio playback speed has been altered for this clip.\nWould you like to export at the adjusted rate ?"))) {
       nrate = cfile->arate;
     }
   }
@@ -11978,6 +11977,7 @@ void on_export_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
   lives_rm(cfile->info_file);
   lives_system(com, FALSE);
   lives_free(com);
+
 
   if (THREADVAR(com_failed)) {
     lives_free(file_name);

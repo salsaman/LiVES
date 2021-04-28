@@ -1142,6 +1142,9 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   if (!top_vbox) {
     // just check how many non-hidden params without displaying
     chk_params = TRUE;
+    for (i = 0; i < rfx->num_params; i++) {
+      used[i] = FALSE;
+    }
   } else {
     LiVESWidget *extraw;
     dummy_label = lives_label_new(NULL);

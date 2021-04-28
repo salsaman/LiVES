@@ -8,7 +8,7 @@
 #ifndef _MEMORY_H_
 #define _MEMORY_H_
 
-#define EXTRA_BYTES DEF_ALIGN
+#define EXTRA_BYTES (DEF_ALIGN * 4)
 
 typedef void *(*malloc_f)(size_t);
 typedef void (*free_f)(void *);

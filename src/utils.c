@@ -1896,7 +1896,7 @@ boolean prepare_to_play_foreign(void) {
 #if !GTK_CHECK_VERSION(3, 0, 0)
 #ifdef GDK_WINDOWING_X11
   GdkVisual *vissi = NULL;
-  register int i;
+  int i;
 #endif
 #endif
 #endif
@@ -2700,7 +2700,14 @@ char *format_tstr(double xtime, int minlim) {
   xtime -= hrs * 3600;
   min = (int64_t)xtime / 60;
   xtime -= min * 60;
-
+  if (xtime >= 60.) {
+    min++;
+    xtime -= 60.;
+  }
+  if (min >= 60) {
+    hrs++;
+    min -= 60;
+  }
   if (hrs > 0) {
     // TRANSLATORS: h(ours) min(utes)
     if (minlim) tstr = lives_strdup_printf(_("%d h %d min"), hrs, min);

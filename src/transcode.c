@@ -281,11 +281,14 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
   width = pwidth = vpp->fwidth;
   height = pheight = vpp->fheight;
-  if (prefs->letterbox) {
-    width = cfile->hsize;
-    height = cfile->vsize;
-    get_letterbox_sizes(&pwidth, &pheight, &width, &height, (mainw->vpp->capabilities & VPP_CAN_RESIZE));
-  }
+
+  /* if (prefs->enc_letterbox) { */
+  /*   width = cfile->hsize; */
+  /*   height = cfile->vsize; */
+  /*   get_letterbox_sizes(&pwidth, &pheight, &width, &height, (mainw->vpp->capabilities & VPP_CAN_RESIZE)); */
+  /* } */
+
+  lives_snprintf(cfile->save_file_name, PATH_MAX, "%s", pname);
 
   if (!internal) {
     // for internal, the renderer will check diskspace levels
@@ -313,10 +316,10 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       weed_set_int_value(frame_layer, WEED_LEAF_FRAME, i);
 
       // - pull next frame (thread)
-      pull_frame_threaded(frame_layer, img_ext, (weed_timecode_t)currticks, width, height);
+      pull_frame_threaded(frame_layer, img_ext, (weed_timecode_t)currticks, cfile->hsize, cfile->vsize);
 
       if (mainw->fx1_bool) {
-        frame_layer = on_rte_apply(frame_layer, cfile->hsize, cfile->vsize, (weed_timecode_t)currticks);
+        frame_layer = on_rte_apply(frame_layer, vpp->fwidth, vpp->fheight, (weed_timecode_t)currticks);
       }
     } else {
       lives_nanosleep_until_nonzero(mainw->transrend_ready
@@ -486,8 +489,6 @@ tr_err2:
   if (!error && mainw->cancelled == CANCEL_NONE) {
     global_recent_manager_add(pname);
   }
-
-  lives_snprintf(cfile->save_file_name, PATH_MAX, "%s", pname);
 
   lives_freep((void **)&pname);
   lives_freep((void **)&msg);

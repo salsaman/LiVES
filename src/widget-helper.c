@@ -681,24 +681,11 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface
     int width, int height, int stride) {
   lives_painter_surface_t *surf = NULL;
 #ifdef LIVES_PAINTER_IS_CAIRO
+
   surf = cairo_image_surface_create_for_data(data, format, width, height, stride);
 #endif
 #ifdef PAINTER_QPAINTER
   surf = new lives_painter_surface_t(data, format, width, height, stride);
-#endif
-  return surf;
-}
-
-
-WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format,
-    int width,
-    int height) {
-  lives_painter_surface_t *surf = NULL;
-#ifdef LIVES_PAINTER_IS_CAIRO
-  surf = cairo_image_surface_create(format, width, height);
-#endif
-#ifdef PAINTER_QPAINTER
-  surf = new lives_painter_surface_t(width, height, format);
 #endif
   return surf;
 }

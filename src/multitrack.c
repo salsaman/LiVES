@@ -6525,10 +6525,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     lives_box_pack_start(LIVES_BOX(mt->message_box), mt->msg_scrollbar, FALSE, TRUE, 0);
     mt->msg_adj = mainw->msg_adj = lives_range_get_adjustment(LIVES_RANGE(mt->msg_scrollbar));
 
-    lives_signal_connect_after(LIVES_GUI_OBJECT(mt->msg_adj),
-                               LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(msg_area_scroll),
-                               (livespointer)mt->msg_area);
+    mainw->mt_msg_adj_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mt->msg_adj),
+                             LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(msg_area_scroll),
+                             (livespointer)mt->msg_area);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mt->msg_area), LIVES_WIDGET_SCROLL_EVENT,
                          LIVES_GUI_CALLBACK(on_msg_area_scroll),

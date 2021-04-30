@@ -157,6 +157,7 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
   lpt = lives_proc_thread_create_vargs(attr, func, xreturn_type, args_fmt, xargs);
   va_end(xargs);
   sigdata->proc = lpt;
+
   sigdata->is_timer = TRUE;
 
   mainw->cancelled = CANCEL_NONE;
@@ -516,13 +517,12 @@ uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t stat
     pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
     pthread_mutex_lock(state_mutex);
     tstate = lives_proc_thread_get_state(lpt);
-    if (!(tstate & THRD_STATE_FINISHED)) {
-      weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate | state_bits);
-    }
+    tstate |= state_bits;
+    weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate);
     pthread_mutex_unlock(state_mutex);
-    return tstate & state_bits;
+    return tstate;
   }
-  return 0;
+  return THRD_STATE_INVALID;
 }
 
 boolean lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state_bits) {
@@ -609,7 +609,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel_immediate(lives_proc_thread
 
 boolean lives_proc_thread_dontcare(lives_proc_thread_t tinfo) {
   if (!tinfo) return FALSE;
-  if (!lives_proc_thread_include_states(tinfo, THRD_OPT_DONTCARE)) {
+  if (lives_proc_thread_include_states(tinfo, THRD_OPT_DONTCARE) & THRD_STATE_FINISHED) {
     // task FINISHED before we could set this, so we need to unblock and free it
     // (otherwise it would do this itself when transitioning to FINISHED)
     lives_proc_thread_join(tinfo);

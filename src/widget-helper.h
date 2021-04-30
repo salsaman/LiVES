@@ -188,7 +188,6 @@ lives_painter_surface_t *lives_xwindow_create_similar_surface(LiVESXWindow *wind
     lives_painter_content_t cont,
     int width, int height);
 lives_painter_surface_t *lives_widget_create_painter_surface(LiVESWidget *);
-lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height);
 lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t,
     int width, int height, int stride);
 

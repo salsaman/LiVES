@@ -2330,8 +2330,8 @@ void create_LiVES(void) {
 
   mainw->msg_adj = lives_range_get_adjustment(LIVES_RANGE(mainw->msg_scrollbar));
 
-  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->msg_adj), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(msg_area_scroll), (livespointer)mainw->msg_area);
+  mainw->msg_adj_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->msg_adj), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                        LIVES_GUI_CALLBACK(msg_area_scroll), (livespointer)mainw->msg_area);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_SCROLL_EVENT,
                             LIVES_GUI_CALLBACK(on_msg_area_scroll), (livespointer)mainw->msg_adj);

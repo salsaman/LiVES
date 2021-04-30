@@ -1,6 +1,6 @@
 // colourspace.c
 // LiVES
-// (c) G. Finch 2004 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2021 <salsaman+lives@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -7527,7 +7527,7 @@ static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstr
 
   if ((irowstride == width * 3) && (orowstride == irowstride)) {
     // quick version
-#ifdef ENABLE_OIL
+#ifdef ENABLE_OILx
     if (!gamma_lut) {
       oil_rgb2bgr(dest, src, width * height);
       return;
@@ -7671,7 +7671,7 @@ static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int 
                                        uint8_t *dest, int thread_id) {
   // swap 3 bytes, add post alpha
   uint8_t *end = src + height * irowstride;
-  register int i;
+  int i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
     lives_thread_t threads[prefs->nfx_threads];
@@ -7722,16 +7722,15 @@ static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int 
       *(dest++) = 255; // alpha
     }
   } else {
-    int width3 = width * 3;
-    orowstride -= width * 4;
-    for (; src < end; src += irowstride) {
-      for (i = 0; i < width3; i += 3) {
-        *(dest++) = src[i + 2]; // red
-        *(dest++) = src[i + 1]; // green
-        *(dest++) = src[i]; // blue
-        *(dest++) = 255; // alpha
+    int j, k;
+    for (j = 0; j < height; j++) {
+      k = 0;
+      for (i = 0; i < width * 3; i += 3) {
+        dest[orowstride * j + k++] = src[irowstride * j + i + 2]; // red
+        dest[orowstride * j + k++] = src[irowstride * j + i + 1]; // green
+        dest[orowstride * j + k++] = src[irowstride * j + i]; // blue
+        dest[orowstride * j + k++] = 255; // alpha
       }
-      dest += orowstride;
     }
   }
 }
@@ -8024,7 +8023,7 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
       j = 0;
       for (i = 0; i < width3; i += 3) {
         if (!gamma_lut) {
-          lives_memcpy(&dest[orowstride * k + i], &src[irowstride * k + i], 3);
+          lives_memcpy(&dest[orowstride * k + j], &src[irowstride * k + i], 3);
           j += 3;
         } else {
           dest[orowstride * k + j++] = gamma_lut[src[irowstride + k + i]];
@@ -13680,6 +13679,7 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
   lives_painter_surface_t *surf;
   lives_painter_t *cairo;
   lives_painter_format_t cform;
+  int lform;
   uint8_t *src, *dst, *pixel_data;
 
   int irowstride, orowstride;
@@ -13700,8 +13700,8 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
       cform = LIVES_PAINTER_FORMAT_A1;
       widthx = width >> 3;
     } else {
-      cform = LIVES_PAINTER_COLOR_PALETTE(capable->byte_order);
-      convert_layer_palette(layer, cform, 0);
+      lform = LIVES_PAINTER_COLOR_PALETTE(capable->byte_order);
+      convert_layer_palette(layer, lform, 0);
       cform = LIVES_PAINTER_FORMAT_ARGB32;
       widthx = width << 2;
     }
@@ -13757,7 +13757,7 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_layer_t *layer) {
   // updates a weed_layer from a cr
   void *src;
   lives_painter_surface_t *surface = lives_painter_get_target(cr), *xsurface = NULL;
-  lives_painter_format_t  cform;
+  lives_painter_format_t cform;
 
   int width, height, rowstride;
 
@@ -13791,11 +13791,7 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_layer_t *layer) {
 
   switch (cform) {
   case LIVES_PAINTER_FORMAT_ARGB32:
-    if (capable->byte_order == LIVES_BIG_ENDIAN) {
-      weed_layer_set_palette(layer, WEED_PALETTE_ARGB32);
-    } else {
-      weed_layer_set_palette(layer, WEED_PALETTE_BGRA32);
-    }
+    weed_layer_set_palette(layer, LIVES_PAINTER_COLOR_PALETTE(capable->byte_order));
     weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
     if (prefs->alpha_post) {

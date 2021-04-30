@@ -1176,6 +1176,8 @@ typedef struct {
   ulong vj_mode_func;
   ulong lb_func;
   ulong desk_rec_func;
+  ulong msg_adj_func;
+  ulong mt_msg_adj_func;
 
   lives_painter_surface_t *fsp_surface;
 

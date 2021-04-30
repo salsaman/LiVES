@@ -646,71 +646,127 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
   cairo_font_options_t *ftopts = cairo_font_options_create();
 #endif
 
-  weed_layer_t *test_layer, *layer_slice;
-  uint8_t *src, *pd;
-  int row = weed_layer_get_rowstride(layer);
-  double ztop = 0.;
-  int pal = weed_layer_get_palette(layer), opal = pal;
   int width = weed_layer_get_width(layer);
+  int widthx = (width >> 3) << 3;
   int height = weed_layer_get_height(layer);
-  int lheight = height;
-  int gamma = WEED_GAMMA_UNKNOWN, offsx = 0;
+  if (widthx != width) {
+    resize_layer(layer, widthx, height, LIVES_INTERP_BEST, WEED_PALETTE_END,
+                 WEED_YUV_CLAMPING_UNCLAMPED);
+    width = weed_layer_get_width(layer);
+  }
+  if (1) {
+    weed_layer_t *test_layer, *layer_slice;
+    uint8_t *src, *pd;
+    int row = weed_layer_get_rowstride(layer);
+    double ztop = 0.;
+    int pal = weed_layer_get_palette(layer), opal = pal;
+    int lheight = height;
+    int gamma = WEED_GAMMA_UNKNOWN, offsx = 0;
 
-  if (weed_palette_is_rgb(pal)) {
-    int ppal = LIVES_PAINTER_COLOR_PALETTE(capable->byte_order), oppal = ppal;
-    int ipsize = pixel_size(pal);
-    int opsize = pixel_size(ppal);
-    // test first to get the layout coords
-    gamma = weed_layer_get_gamma(layer);
+    if (weed_palette_is_rgb(pal)) {
+      int ppal = LIVES_PAINTER_COLOR_PALETTE(capable->byte_order), oppal = ppal;
+      int ipsize = pixel_size(pal);
+      int opsize = pixel_size(ppal);
+      // test first to get the layout coords
+      gamma = weed_layer_get_gamma(layer);
 
-    lheight = height;
-    weed_layer_set_height(layer, 4);
+      lheight = height;
+      weed_layer_set_height(layer, 4);
 
-    test_layer = weed_layer_copy(NULL, layer);
+      test_layer = weed_layer_copy(NULL, layer);
 
-    if (ipsize == opsize) {
-      weed_layer_set_palette(test_layer, ppal);
-    } else {
-      if (consider_swapping(&pal, &ppal)) {
-        if (ppal == oppal) {
-          weed_layer_set_palette(test_layer, pal);
-        } else ppal = oppal;
-        pal = opal;
+      if (ipsize == opsize) {
+        weed_layer_set_palette(test_layer, ppal);
+      } else {
+        if (consider_swapping(&pal, &ppal)) {
+          if (ppal == oppal) {
+            weed_layer_set_palette(test_layer, pal);
+          } else ppal = oppal;
+          pal = opal;
+        }
       }
-    }
 
-    weed_layer_set_height(layer, height);
-    cr = layer_to_lives_painter(test_layer);
-    layout = render_text_to_cr(NULL, cr, text, fontname, size, LIVES_TEXT_MODE_PRECALCULATE,
-                               fg_col, bg_col, center, rising, &top, &offsx, width, &lheight);
-    if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
-
-    weed_layer_free(test_layer);
-
-    /// if possible just render the slice which contains the text
-    if (top * height + lheight < height) {
-      uint8_t *xsrc;
-      boolean rbswapped = FALSE;
-
-      // adjust pixel_data and height, then copy-by-ref to layer_slice
-      src = weed_layer_get_pixel_data(layer);
-      xsrc = src + (int)(top * height) * row;
-      weed_layer_set_pixel_data_packed(layer, xsrc);
-      weed_layer_set_height(layer, lheight);
-
-      layer_slice = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-      weed_layer_copy(layer_slice, layer);
-      weed_leaf_set_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
-
-      // restore original values
       weed_layer_set_height(layer, height);
-      weed_layer_set_pixel_data_packed(layer, src);
+      cr = layer_to_lives_painter(test_layer);
+      layout = render_text_to_cr(NULL, cr, text, fontname, size, LIVES_TEXT_MODE_PRECALCULATE,
+                                 fg_col, bg_col, center, rising, &top, &offsx, width, &lheight);
+      if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
 
-      if (consider_swapping(&pal, &ppal)) {
-        if (ppal == oppal) {
+      weed_layer_free(test_layer);
+
+      /// if possible just render the slice which contains the text
+      if (top * height + lheight < height) {
+        uint8_t *xsrc;
+        boolean rbswapped = FALSE;
+
+        // adjust pixel_data and height, then copy-by-ref to layer_slice
+        src = weed_layer_get_pixel_data(layer);
+        xsrc = src + (int)(top * height) * row;
+        weed_layer_set_pixel_data_packed(layer, xsrc);
+        weed_layer_set_height(layer, lheight);
+
+        layer_slice = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+        weed_layer_copy(layer_slice, layer);
+        weed_leaf_set_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
+
+        // restore original values
+        weed_layer_set_height(layer, height);
+        weed_layer_set_pixel_data_packed(layer, src);
+
+        if (consider_swapping(&pal, &ppal)) {
+          if (ppal == oppal) {
+            lives_colRGBA64_t col;
+            rbswapped = TRUE;
+            weed_layer_set_palette(layer_slice, pal);
+            col.red = fg_col->red;
+            fg_col->red = fg_col->blue;
+            fg_col->blue = col.red;
+            col.red = bg_col->red;
+            bg_col->red = bg_col->blue;
+            bg_col->blue = col.red;
+          }
+        }
+
+        cr = layer_to_lives_painter(layer_slice);
+
+#ifdef LIVES_PAINTER_IS_CAIRO
+        if (prefs->pb_quality == PB_QUALITY_LOW) antialias = CAIRO_ANTIALIAS_NONE;
+        else if (prefs->pb_quality == PB_QUALITY_MED) antialias = CAIRO_ANTIALIAS_FAST;
+        else antialias = CAIRO_ANTIALIAS_GOOD; // BEST is broken (?)t
+        cairo_get_font_options(cr, ftopts);
+        cairo_font_options_set_antialias(ftopts, antialias);
+        cairo_set_font_options(cr, ftopts);
+#endif
+
+        layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center,
+                                   FALSE, &ztop, &offsx, width, &height);
+        if (layout && LINGO_IS_LAYOUT(layout)) {
+          lingo_painter_show_layout(cr, layout);
+          lives_widget_object_unref(layout);
+        }
+        // frees pd
+        lives_painter_to_layer(cr, layer_slice);
+        /// make sure our slice isn't freed, since it is actually part of the image
+        /// which we will overwrite
+
+        convert_layer_palette(layer_slice, pal, 0);
+        weed_leaf_clear_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
+
+        pd = weed_layer_get_pixel_data(layer_slice);
+        if (pd != xsrc) {
+          int itop = (int)(top * height);
+          int orow = weed_layer_get_rowstride(layer_slice);
+          if (row != orow) {
+            g_print("VALUU %d and %d\n", row, orow);
+            for (int i = itop; i < itop + lheight; i++) {
+              lives_memcpy(&src[i * row], &pd[(i - itop) * orow], row);
+            }
+          } else lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
+        } else weed_layer_nullify_pixel_data(layer_slice);
+        weed_layer_free(layer_slice);
+
+        if (rbswapped) {
           lives_colRGBA64_t col;
-          rbswapped = TRUE;
-          weed_layer_set_palette(layer_slice, pal);
           col.red = fg_col->red;
           fg_col->red = fg_col->blue;
           fg_col->blue = col.red;
@@ -719,62 +775,22 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
           bg_col->blue = col.red;
         }
       }
+    }
 
-      cr = layer_to_lives_painter(layer_slice);
-
-#ifdef LIVES_PAINTER_IS_CAIRO
-      if (prefs->pb_quality == PB_QUALITY_LOW) antialias = CAIRO_ANTIALIAS_NONE;
-      else if (prefs->pb_quality == PB_QUALITY_MED) antialias = CAIRO_ANTIALIAS_FAST;
-      else antialias = CAIRO_ANTIALIAS_GOOD; // BEST is broken (?)t
-      cairo_get_font_options(cr, ftopts);
-      cairo_font_options_set_antialias(ftopts, antialias);
-      cairo_set_font_options(cr, ftopts);
-#endif
-
-      layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center,
-                                 FALSE, &ztop, &offsx, width, &height);
+    if (!cr) {
+      cr = layer_to_lives_painter(layer);
+      if (!cr) return layer; ///< error occurred
+      layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, rising, &top, &offsx, width, &height);
       if (layout && LINGO_IS_LAYOUT(layout)) {
         lingo_painter_show_layout(cr, layout);
-        lives_widget_object_unref(layout);
+        if (layout) lives_widget_object_unref(layout);
       }
-      // frees pd
-      lives_painter_to_layer(cr, layer_slice);
-      /// make sure our slice isn't freed, since it is actually part of the image
-      /// which we will overwrite
-
-      convert_layer_palette(layer_slice, pal, 0);
-      weed_leaf_clear_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
-
-      pd = weed_layer_get_pixel_data(layer_slice);
-      if (pd != xsrc) lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
-      else weed_layer_nullify_pixel_data(layer_slice);
-      weed_layer_free(layer_slice);
-
-      if (rbswapped) {
-        lives_colRGBA64_t col;
-        col.red = fg_col->red;
-        fg_col->red = fg_col->blue;
-        fg_col->blue = col.red;
-        col.red = bg_col->red;
-        bg_col->red = bg_col->blue;
-        bg_col->blue = col.red;
-      }
+      lives_painter_to_layer(cr, layer);
     }
+    if (gamma != WEED_GAMMA_UNKNOWN)
+      weed_layer_set_gamma(layer, gamma);
+    return layer;
   }
-
-  if (!cr) {
-    cr = layer_to_lives_painter(layer);
-    if (!cr) return layer; ///< error occurred
-    layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, rising, &top, &offsx, width, &height);
-    if (layout && LINGO_IS_LAYOUT(layout)) {
-      lingo_painter_show_layout(cr, layout);
-      if (layout) lives_widget_object_unref(layout);
-    }
-    lives_painter_to_layer(cr, layer);
-  }
-  if (gamma != WEED_GAMMA_UNKNOWN)
-    weed_layer_set_gamma(layer, gamma);
-  return layer;
 }
 
 static const char *cr_str = "\x0D";

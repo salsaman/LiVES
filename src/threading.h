@@ -39,6 +39,7 @@ typedef struct {
   livespointer instance;
   lives_funcptr_t callback;
   livespointer user_data;
+  boolean has_returnval;
   volatile boolean swapped;
   unsigned long funcid;
   char *detsig;
@@ -223,6 +224,8 @@ lives_thread_data_t *lives_thread_data_create(uint64_t idx);
 #define THRD_STATE_CANCELLED 	(1ul << 1)
 #define THRD_STATE_SIGNALLED 	(1ul << 2)
 #define THRD_STATE_BUSY 	(1ul << 3)
+
+#define THRD_STATE_INVALID 	(1ul << 31)
 
 #define THRD_OPT_NOTIFY 	(1ul << 32)
 #define THRD_OPT_CANCELLABLE 	(1ul << 34)

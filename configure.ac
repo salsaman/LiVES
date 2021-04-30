@@ -337,6 +337,9 @@ echo For this reason it is recommended to compile LiVES with jack2 in order to p
 echo **********************************************************************************************************
 echo
 
+fi
+fi
+
 PKG_CHECK_MODULES(X11,x11,HAVE_X11=true,HAVE_X11=false)
 
 if test "$HAVE_X11" = "false" ; then

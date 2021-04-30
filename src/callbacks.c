@@ -7282,7 +7282,7 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, doubl
   char *type, *file_name;
 
   boolean with_audio = mainw->save_with_sound;
-  int preview_type = GET_INT_DATA(widget, "preview_type");
+  int preview_type = GET_INT_DATA(widget, PRV_TYPE_KEY);
   int height = 0, width = 0;
   int fwidth = -1, fheight = -1;
   int owidth, oheight, npieces;
@@ -7378,7 +7378,7 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, doubl
         LiVESPixbuf *pixbuf = lives_pixbuf_new_from_file((tmp = lives_filename_from_utf8(thumb, -1, NULL, NULL, NULL)), &error);
         lives_free(thumbfile); lives_free(thumb); lives_free(tmp);
         if (!error) {
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playimg), "pixbuf", pixbuf);
+          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playimg), PIXBUF_KEY, pixbuf);
           owidth = width;
           oheight = height;
 
@@ -7765,9 +7765,9 @@ void end_fs_preview(LiVESFileChooser * fchoo, LiVESWidget * button) {
 
   if (mainw->fs_playarea) {
     LiVESPixbuf *pixbuf = NULL;
-    pixbuf = (LiVESPixbuf *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea), "pixbuf");
+    pixbuf = (LiVESPixbuf *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea), PIXBUF_KEY);
     if (pixbuf) lives_widget_object_unref(pixbuf);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea), "pixbuf", NULL);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea), PIXBUF_KEY, NULL);
     if (mainw->fsp_func != 0) {
       lives_signal_handler_disconnect(mainw->fs_playimg, mainw->fsp_func);
       mainw->fsp_func = 0;

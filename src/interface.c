@@ -682,7 +682,7 @@ LiVESWidget *widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVE
       lives_widget_set_fg_color(mainw->fs_playalign, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
       lives_widget_apply_theme(mainw->fs_playarea, LIVES_WIDGET_STATE_NORMAL);
     }
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea), "pixbuf", NULL);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea), PIXBUF_KEY, NULL);
 
     lives_container_set_border_width(LIVES_CONTAINER(mainw->fs_playframe), 0);
 
@@ -748,7 +748,7 @@ LiVESWidget *widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVE
     } else add_deinterlace_checkbox(for_deint);
   }
 
-  SET_INT_DATA(preview_button, "preview_type", preview_type);
+  SET_INT_DATA(preview_button, PRV_TYPE_KEY, preview_type);
   if (preview_type != LIVES_PREVIEW_TYPE_RANGE)
     lives_signal_sync_connect(LIVES_GUI_OBJECT(preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(on_fs_preview_clicked1), widget);

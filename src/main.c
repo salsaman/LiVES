@@ -5555,7 +5555,7 @@ void sensitize_rfx(void) {
       for (int i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
            mainw->num_rendered_effects_test; i++) {
         if (i == mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate) continue;
-        if (mainw->rendered_fx[i]->props & RFX_PROPS_MAY_RESIZE) continue;
+        //if (mainw->rendered_fx[i]->props & RFX_PROPS_MAY_RESIZE) continue;
         if (mainw->rendered_fx[i]->num_in_channels == 2) continue;
         menuitem = mainw->rendered_fx[i]->menuitem;
         if (menuitem && LIVES_IS_WIDGET(menuitem)) {

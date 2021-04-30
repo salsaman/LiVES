@@ -348,4 +348,6 @@ text_window *textwindow;
 #define DEF_FILE_KEY "_fc_def_file"
 #define FC_ACTION_KEY "_fc_action"
 
+#define PIXBUF_KEY "_pixbuf"
+#define PRV_TYPE_KEY "_preview_type"
 #endif

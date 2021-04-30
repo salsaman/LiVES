@@ -334,7 +334,7 @@ void on_export_audio_activate(LiVESMenuItem *, livespointer);
 
 void on_resaudio_ok_clicked(LiVESButton *, LiVESEntry *entry);
 
-void end_fs_preview(LiVESFileChooser *);
+void end_fs_preview(LiVESFileChooser *fchoo, LiVESWidget *button);
 
 void on_sticky_activate(LiVESMenuItem *, livespointer);
 

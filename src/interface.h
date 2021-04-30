@@ -53,9 +53,12 @@ void clear_tbar_bgs(int posx, int posy, int width, int height, int which);
 boolean redraw_tl_idle(void *data);
 
 typedef struct {
+  frames_t frames;
+  double fps;
   LiVESWidget *dialog;
   LiVESWidget *sp_start;
   LiVESWidget *sp_frames;
+  LiVESWidget *maxflabel;
   LiVESWidget *preview_button;
 } opensel_win;
 

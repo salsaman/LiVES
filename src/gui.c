@@ -4771,6 +4771,10 @@ void splash_init(void) {
     mainw->splash_label = mainw->splash_progress;
 #else
 
+#if GTK_CHECK_VERSION(3, 16, 0)
+    set_progbar_colours(mainw->splash_progress, FALSE);
+#endif
+
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
     mainw->splash_label = lives_standard_label_new("");
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
@@ -4824,6 +4828,10 @@ void splash_msg(const char *msg, double pct) {
   widget_opts.mnemonic_label = FALSE;
   lives_label_set_text(LIVES_LABEL(mainw->splash_label), msg);
   widget_opts.mnemonic_label = TRUE;
+#endif
+
+#if GTK_CHECK_VERSION(3, 16, 0)
+  set_progbar_colours(mainw->splash_progress, FALSE);
 #endif
 
   lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(mainw->splash_progress), pct);

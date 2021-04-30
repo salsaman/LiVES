@@ -21,6 +21,14 @@ LIVES_GLOBAL_INLINE double lives_fix(double val, int decimals) {
 }
 
 
+// bell curve with its peak at x = m, spread/standard deviation of s1 to the left of the mean,
+// spread of s2 to the right of the mean, and scaling parameter a.
+LIVES_GLOBAL_INLINE double gaussian(double x, double a, double m, double s1, double s2) {
+  double t = (x - m) / (x < m ? s1 : s2);
+  return a * exp(-(t * t) / 2.);
+}
+
+
 LIVES_GLOBAL_INLINE uint32_t get_approx_ln(uint32_t x) {
   x |= (x >> 1); x |= (x >> 2); x |= (x >> 4); x |= (x >> 8); x |= (x >> 16);
   return (++x) >> 1;

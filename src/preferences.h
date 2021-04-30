@@ -540,6 +540,7 @@ typedef struct {
 
   boolean interactive;
   boolean extra_colours;
+  double cptime;
   boolean pref_trash; ///< user prefers trash to delete
   boolean autoclean; ///< remove temp files on shutdown / startup
 
@@ -1250,6 +1251,9 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_BLEND_AMOUNT "trickplay_blend_change"
 #define PREF_FPSCHANGE_AMOUNT "trickplay_fpschange"
+
+#define PREF_CPICK_VAR "colour_pick_variance"
+#define PREF_CPICK_TIME "colour_pick_time"
 
 ///////// float values
 #define PREF_AHOLD_THRESHOLD "ahold_threshold"

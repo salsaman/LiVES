@@ -18,6 +18,9 @@
 
 #define EV_LIM 256
 
+static boolean _lives_standard_button_set_label(LiVESButton *,
+    const char *txt);
+
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
 static void async_sig_handler(livespointer instance, livespointer data);
@@ -4490,11 +4493,8 @@ LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const ch
   }
 
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 6, 0)
-  //gtk_button_set_always_show_image(GTK_BUTTON(button), widget_opts.show_button_images);
-#endif
   if (label)
-    lives_standard_button_set_label(LIVES_BUTTON(button), label);
+    _lives_standard_button_set_label(LIVES_BUTTON(button), label);
 #endif
 
   lives_widget_set_can_focus_and_default(button);
@@ -4814,57 +4814,70 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_widget_set_tooltip_text(LiVESWidg
 
   if (ttext && *ttext == '#' && !lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
       TTIPS_IMAGE_KEY)) {
+    // create new image tips, or re-enter with img tips
     if (!(img_tips = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), HAS_TTIPS_IMAGE_KEY))) {
       img_tips = make_ttips_image_for(widget, ++ttext);
       if (img_tips) widget = img_tips;
     } else lives_widget_set_tooltip_text(img_tips, ++ttext);
   }
-  if (!img_tips) {
-    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_OVERRIDE_KEY))
-      ttips_override = TRUE;
-    if (!prefs->show_tooltips && !ttips_override) {
-      if (ttext) {
-        lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY,
-                                          (livespointer)(lives_strdup(ttext)));
-      } else {
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, NULL);
-      }
-      if (!lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-                                        TTIPS_IMAGE_KEY)) {
+
+  if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), HAS_TTIPS_IMAGE_KEY)) {
+    // has existing img tips
+    if (!img_tips) {
+      // not new
+      if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_OVERRIDE_KEY))
+        ttips_override = TRUE;
+      if (!prefs->show_tooltips && !ttips_override) {
+        // ttips hidden by pref
+        if (ttext) {
+          lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY,
+                                            (livespointer)(lives_strdup(ttext)));
+        } else {
+          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, NULL);
+        }
+
         if (!lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-                                          HAS_TTIPS_IMAGE_KEY)) {
+                                          TTIPS_IMAGE_KEY)) {
           img_tips = make_ttips_image_for(widget, NULL);
           if (otext) lives_free(otext);
+          lives_widget_hide(img_tips);
           return img_tips;
         }
+        if (otext) lives_free(otext);
+        return NULL;
       }
-      if (otext) lives_free(otext);
-      return NULL;
-    }
-    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-                                     TTIPS_IMAGE_KEY)) {
-      if (ttext) {
-        if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-                                         SHOWALL_OVERRIDE_KEY)) {
-          LiVESWidget *cntrl;
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget),
-                                       SHOWALL_OVERRIDE_KEY, NULL);
-          if ((cntrl = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-                       SHOWHIDE_CONTROLLER_KEY))) {
-            if (lives_widget_is_visible(cntrl)) lives_widget_show_all(widget);
+
+      if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+                                       TTIPS_IMAGE_KEY)) {
+        // not hidden - set data or hide
+        if (ttext) {
+          if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+                                           SHOWALL_OVERRIDE_KEY)) {
+            LiVESWidget *cntrl;
+            lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget),
+                                         SHOWALL_OVERRIDE_KEY, NULL);
+            if ((cntrl = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+                         SHOWHIDE_CONTROLLER_KEY))) {
+              if (lives_widget_is_visible(cntrl)) lives_widget_show_all(widget);
+            }
           }
+        } else {
+          // set empty text, hide image and make sure we never show it
+          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget),
+                                       SHOWALL_OVERRIDE_KEY, widget);
+          lives_widget_hide(widget);
         }
       } else {
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget),
-                                     SHOWALL_OVERRIDE_KEY, widget);
-        lives_widget_hide(widget);
-      }
-    } else {
-      if (!lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), HAS_TTIPS_IMAGE_KEY)) {
-        img_tips = make_ttips_image_for(widget, NULL);
+        if (!lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_IMAGE_KEY)) {
+          // should have image so create it
+          img_tips = make_ttips_image_for(widget, NULL);
+        }
       }
     }
+    // set tips for img
+    widget = img_tips;
   }
+
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 12, 0)
   gtk_widget_set_tooltip_text(widget, ttext);
@@ -5289,6 +5302,28 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_value(LiVESSpinButton 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_range(LiVESSpinButton *button, double min, double max) {
 #ifdef GUI_GTK
+  gtk_spin_button_set_range(button, min, max);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_max(LiVESSpinButton *button, double max) {
+#ifdef GUI_GTK
+  double min;
+  gtk_spin_button_get_range(button, &min, NULL);
+  gtk_spin_button_set_range(button, min, max);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_min(LiVESSpinButton *button, double min) {
+#ifdef GUI_GTK
+  double max;
+  gtk_spin_button_get_range(button, NULL, &max);
   gtk_spin_button_set_range(button, min, max);
   return TRUE;
 #endif
@@ -7814,7 +7849,7 @@ boolean lives_button_ungrab_default_special(LiVESWidget *button) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(LIVES_WIDGET_OBJECT(toplevel)),
                                  DEFBUTTON_KEY, NULL);
 #ifdef USE_SPECIAL_BUTTONS
-  sbutt_render(button, 0, NULL);
+  render_standard_button(LIVES_BUTTON(button));
 #endif
   return TRUE;
 }
@@ -7831,8 +7866,8 @@ boolean lives_button_grab_default_special(LiVESWidget *button) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(LIVES_WIDGET_OBJECT(toplevel)),
                                  DEFBUTTON_KEY, button);
 #ifdef USE_SPECIAL_BUTTONS
-    sbutt_render(button, 0, NULL);
-    if (deflt) sbutt_render(deflt, 0, NULL);
+    render_standard_button(LIVES_BUTTON(button));
+    if (deflt) render_standard_button(LIVES_BUTTON(deflt));
 #endif
   }
   return TRUE;
@@ -8294,14 +8329,14 @@ static void lives_widget_object_set_data_psurface(LiVESWidgetObject * obj, const
                                     (LiVESDestroyNotify)lives_painter_psurface_destroy_cb);
 }
 
-void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user_data) {
+
+void render_standard_button(LiVESButton * sbutt) {
   if (!is_standard_widget(LIVES_WIDGET(sbutt))) return;
   else {
     LiVESWidget *widget = lives_bin_get_child(LIVES_BIN(sbutt));
     lives_painter_surface_t **pbsurf =
       (lives_painter_surface_t **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
           SBUTT_SURFACE_KEY);
-    state = lives_widget_get_state(sbutt); /// get updated state
     if (!pbsurf || !*pbsurf) return;
     else {
       lives_painter_t *cr;
@@ -8309,6 +8344,7 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
       LingoLayout *layout =
         (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(sbutt),
             SBUTT_LAYOUT_KEY);
+      LiVESWidgetState state = lives_widget_get_state(LIVES_WIDGET(sbutt));
       lives_colRGBA64_t fg, bg, pab, pab2;
       LiVESWidget *toplevel = lives_widget_get_toplevel(widget);
       LiVESWidget *deflt = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(toplevel), DEFBUTTON_KEY);
@@ -8320,7 +8356,7 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
       boolean use_markup = GET_INT_DATA(sbutt, SBUTT_MARKUP_KEY);
       boolean prelit = (state & LIVES_WIDGET_STATE_PRELIGHT) == 0 ? FALSE : TRUE;
       boolean insens = (state & LIVES_WIDGET_STATE_INSENSITIVE) == 0 ? FALSE : TRUE;
-      boolean focused = lives_widget_is_focus(sbutt);
+      boolean focused = lives_widget_is_focus(LIVES_WIDGET(sbutt));
       uint32_t acc;
       int themetype;
       int width, height, minwidth, minheight;
@@ -8429,9 +8465,10 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
                 lives_window_add_accel_group(LIVES_WINDOW(topl), accel_group);
               } else {
                 uint32_t oaccl = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(topl), BACCL_ACCL_KEY));
-                if (oaccl) lives_widget_remove_accelerator(sbutt, accel_group, oaccl, (LiVESXModifierType)LIVES_ALT_MASK);
+                if (oaccl) lives_widget_remove_accelerator(LIVES_WIDGET(sbutt),
+                      accel_group, oaccl, (LiVESXModifierType)LIVES_ALT_MASK);
               }
-              lives_widget_add_accelerator(sbutt, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+              lives_widget_add_accelerator(LIVES_WIDGET(sbutt), LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                            acc, (LiVESXModifierType)LIVES_ALT_MASK, (LiVESAccelFlags)0);
               lives_widget_object_set_data(LIVES_WIDGET_OBJECT(topl), BACCL_ACCL_KEY, LIVES_INT_TO_POINTER(acc));
             }
@@ -8456,11 +8493,11 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
                                   SBUTT_LH_KEY));
       }
 
-      if (focused || fake_default || (sbutt == deflt && !defover)) {
-        if (!fake_default && deflt && sbutt != deflt) {
+      if (focused || fake_default || ((LiVESWidget *)sbutt == deflt && !defover)) {
+        if (!fake_default && deflt && (LiVESWidget *)sbutt != deflt) {
           // clear def bg
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(toplevel), DEFOVERRIDE_KEY, sbutt);
-          sbutt_render(deflt, 0, NULL);
+          render_standard_button(LIVES_BUTTON(deflt));
         }
         if (themetype) {
           lives_painter_set_source_rgb_from_lives_rgba(cr, &pab2);
@@ -8468,9 +8505,9 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
           lives_painter_fill(cr);
         }
       } else {
-        if (sbutt == defover) {
+        if ((LiVESWidget *)sbutt == defover) {
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(toplevel), DEFOVERRIDE_KEY, NULL);
-          if (deflt) sbutt_render(deflt, 0, NULL);
+          if (deflt) render_standard_button(LIVES_BUTTON(deflt));
         }
         if (themetype) {
           lives_painter_set_source_rgb_from_lives_rgba(cr, &bg);
@@ -8520,17 +8557,22 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
       minwidth = lw + (pbw ? pbw + widget_opts.packing_width
                        : 0) + widget_opts.border_width * 4;
       minheight = lh + widget_opts.border_width * 2;
-      width = lives_widget_get_allocation_width(sbutt);
-      height = lives_widget_get_allocation_height(sbutt);
+      width = lives_widget_get_allocation_width(LIVES_WIDGET(sbutt));
+      height = lives_widget_get_allocation_height(LIVES_WIDGET(sbutt));
 
       if (width < minwidth || height < minheight) {
         if (width < minwidth) width = minwidth;
         if (height < minheight) height = minheight;
-        lives_widget_set_size_request(sbutt, width, height);
+        lives_widget_set_size_request(LIVES_WIDGET(sbutt), width, height);
       }
-      lives_widget_queue_draw(sbutt);
+      lives_widget_queue_draw(LIVES_WIDGET(sbutt));
     }
   }
+}
+
+
+static void sbutt_render(LiVESButton * sbutt, LiVESWidgetState state, livespointer user_data) {
+  render_standard_button(sbutt);
 }
 
 
@@ -8550,7 +8592,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_standard_button_set_image(LiVESButton 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(sbutt),
                                  SBUTT_FORCEIMG_KEY, NULL);
   }
-  sbutt_render(LIVES_WIDGET(sbutt), 0, NULL);
+  render_standard_button(sbutt);
   return TRUE;
 }
 
@@ -8603,21 +8645,29 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
   return button;
 }
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_standard_button_set_label(LiVESButton * sbutt,
+WIDGET_HELPER_LOCAL_INLINE boolean _lives_standard_button_set_label(LiVESButton * sbutt,
     const char *txt) {
-  if (!is_standard_widget(LIVES_WIDGET(sbutt))) return lives_button_set_label(sbutt, txt);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(sbutt), SBUTT_LAYOUT_KEY, NULL);
   SET_INT_DATA(sbutt, SBUTT_MARKUP_KEY, widget_opts.use_markup);
   lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(sbutt), SBUTT_TXT_KEY,
                                     txt ? lives_strdup(txt) : NULL);
-  lives_widget_queue_draw(LIVES_WIDGET(sbutt));
   return TRUE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_standard_button_set_label(LiVESButton * sbutt,
+    const char *txt) {
+  boolean ret;
+  if (!is_standard_widget(LIVES_WIDGET(sbutt))) return lives_button_set_label(sbutt, txt);
+  ret = _lives_standard_button_set_label(sbutt, txt);
+  render_standard_button(sbutt);
+  return ret;
 }
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_button_new_with_label(const char *txt,
     int width, int height) {
   LiVESWidget *sbutt = lives_standard_button_new(width, height);
-  lives_standard_button_set_label(LIVES_BUTTON(sbutt), txt);
+  _lives_standard_button_set_label(LIVES_BUTTON(sbutt), txt);
   return sbutt;
 }
 
@@ -10234,42 +10284,17 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
   return entry;
 }
 
-LiVESWidget *lives_standard_progress_bar_new(void) {
-  LiVESWidget *pbar;
-#ifdef PROGBAR_IS_ENTRY
-  pbar = lives_entry_new();
-  set_standard_widget(pbar, TRUE);
-  lives_widget_set_valign(pbar, LIVES_ALIGN_CENTER);
-  lives_widget_set_text_size(pbar, LIVES_WIDGET_STATE_NORMAL, widget_opts.text_size);
-  lives_entry_set_editable(LIVES_ENTRY(pbar), FALSE);
-  lives_widget_set_can_focus(LIVES_WIDGET(pbar), FALSE);
-  if (widget_opts.justify == LIVES_JUSTIFY_START) {
-    lives_entry_set_alignment(LIVES_ENTRY(pbar), 0.);
-  }
-  if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
-    lives_entry_set_alignment(LIVES_ENTRY(pbar), 0.5);
-  }
-  if (widget_opts.justify == LIVES_JUSTIFY_END) {
-    lives_entry_set_alignment(LIVES_ENTRY(pbar), 1.);
-  }
-#else
-  pbar = lives_progress_bar_new();
-#endif
 
-  if (widget_opts.apply_theme) {
-    set_standard_widget(pbar, TRUE);
-    lives_widget_apply_theme(pbar, LIVES_WIDGET_STATE_NORMAL);
-#if GTK_CHECK_VERSION(3, 0, 0)
+void set_progbar_colours(LiVESWidget * pbar, boolean new) {
 #if GTK_CHECK_VERSION(3, 16, 0)
+  static boolean done = FALSE;
+  if (new || !done) {
     char *tmp, *colref;
-#endif
 #ifdef PROGBAR_IS_ENTRY
     char *colref2;
 #endif
-    set_standard_widget(pbar, TRUE);
-    set_css_min_size(pbar, -1, widget_opts.css_min_height);
-#if GTK_CHECK_VERSION(3, 16, 0)
     if (prefs->extra_colours && mainw->pretty_colours) {
+      done = TRUE;
       colref = gdk_rgba_to_string(&palette->nice1);
       tmp = lives_strdup_printf("image(%s)", colref);
       set_css_value_direct(pbar, LIVES_WIDGET_STATE_NORMAL, "progress",
@@ -10292,13 +10317,43 @@ LiVESWidget *lives_standard_progress_bar_new(void) {
 #endif
       lives_free(colref);
     }
+  }
+#endif
+}
+
+LiVESWidget *lives_standard_progress_bar_new(void) {
+  LiVESWidget *pbar;
 #ifdef PROGBAR_IS_ENTRY
-    set_css_min_size_selected(pbar, "progress", -1, -1);
+  pbar = lives_entry_new();
+  set_standard_widget(pbar, TRUE);
+  lives_widget_set_valign(pbar, LIVES_ALIGN_CENTER);
+  lives_widget_set_text_size(pbar, LIVES_WIDGET_STATE_NORMAL, widget_opts.text_size);
+  lives_entry_set_editable(LIVES_ENTRY(pbar), FALSE);
+  lives_widget_set_can_focus(LIVES_WIDGET(pbar), FALSE);
+  if (widget_opts.justify == LIVES_JUSTIFY_START) {
+    lives_entry_set_alignment(LIVES_ENTRY(pbar), 0.);
+  }
+  if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
+    lives_entry_set_alignment(LIVES_ENTRY(pbar), 0.5);
+  }
+  if (widget_opts.justify == LIVES_JUSTIFY_END) {
+    lives_entry_set_alignment(LIVES_ENTRY(pbar), 1.);
+  }
+#else
+  pbar = lives_progress_bar_new();
 #endif
-#endif
+  if (widget_opts.apply_theme) {
+    set_standard_widget(pbar, TRUE);
+    lives_widget_apply_theme(pbar, LIVES_WIDGET_STATE_NORMAL);
+    set_standard_widget(pbar, TRUE);
+    set_css_min_size(pbar, -1, widget_opts.css_min_height);
+#if GTK_CHECK_VERSION(3, 16, 0)
+    set_progbar_colours(pbar, TRUE);
 #endif
   }
-
+#ifdef PROGBAR_IS_ENTRY
+  set_css_min_size_selected(pbar, "progress", -1, -1);
+#endif
   return pbar;
 }
 
@@ -10330,7 +10385,7 @@ LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog * dialog, const char
   }
 
   lives_widget_apply_theme(button, LIVES_WIDGET_STATE_NORMAL);
-  if (is_standard_widget(button)) sbutt_render(button, 0L, NULL);
+  if (is_standard_widget(button)) render_standard_button(LIVES_BUTTON(button));
   return button;
 }
 
@@ -10945,6 +11000,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_file_button_new(boolean 
   /// height X height is correct
   int height = ((widget_opts.css_min_height * 2 + 2) >> 2);
   fbutton = lives_standard_button_new(height, height * 4);
+  lives_widget_set_valign(fbutton, LIVES_ALIGN_CENTER);
   SET_INT_DATA(fbutton, ISDIR_KEY, is_dir);
   if (def_dir) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), DEFDIR_KEY, (livespointer)def_dir);
   lives_standard_button_set_image(LIVES_BUTTON(fbutton), image);
@@ -11391,6 +11447,19 @@ void widget_helper_set_stock_icon_alts(LiVESIconTheme * icon_theme) {
     lives_icon_get_stock_alt(icon_theme, LIVES_STOCK_KEEP_ALT_1, LIVES_STOCK_KEEP_ALT_2, (char *)NULL);
 #endif
 }
+
+
+void widget_helper_suggest_icons(const char *part) {
+  LiVESList *list = capable->all_icons;
+  const char *iname;
+  if (!list || !part) return;
+  for (; list; list = list->next) {
+    if (strstr((iname = (const char *)list->data), part)) {
+      g_print("suggest for %s icon: %s\n", part, iname);
+    }
+  }
+}
+
 
 
 boolean widget_helper_init(void) {
@@ -12330,6 +12399,7 @@ static void dissect_filechooser(LiVESWidget * widget, livespointer user_data) {
   if (!set_all && LIVES_IS_BUTTON(widget)) return; // avoids a problem with filechooser
   if (set_all2) {
     lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_NORMAL, FALSE);
+    lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_SELECTED);
   } else {
     if (set_all || LIVES_IS_LABEL(widget)) {
       lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_NORMAL);

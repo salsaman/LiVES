@@ -1016,11 +1016,40 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
 }
 
 
-void rgb2xyz(uint8_t r, uint8_t g, uint8_t b, double *x, double *y, double *z) {
+struct XYZ xyzFromWavelength(double freq) {
+  // appears to be freq * 10^11 Hz
+  // (wavelength in amstrongs 10^-10 should give 10 X the value ??)
+  // but does not match with rgb2xyz
+  //x max:
+  // freq 5998 is 1.055946, 0.637099, 0.000044
+  // y max:
+  // freq 5542 is 0.503775, 0.998182, 0.006079
+  // z max:
+  // freq 4481 is 0.350801, 0.029932, 1.784213
+
+  struct XYZ color;
+  color.x = gaussian(freq,  1.056, 5998, 379, 310) +
+            gaussian(freq,  0.362, 4420, 160, 267) +
+            gaussian(freq, -0.065, 5011, 204, 262);
+  color.y = gaussian(freq,  0.821, 5688, 469, 405) +
+            gaussian(freq,  0.286, 5309, 163, 311);
+  color.z = gaussian(freq,  1.217, 4370, 118, 360) +
+            gaussian(freq,  0.681, 4590, 260, 138);
+  return color;
+}
+
+
+static void rgb2xyz(uint8_t r, uint8_t g, uint8_t b, double *x, double *y, double *z) {
+  // RED: 41.240000, 21.260000, 1.930000
+  // GREEN: 35.760000, 71.520000, 11.920000
+  // BLUE: 18.050000, 7.220000, 95.050000
   double rr = (double)r / 2.55, gg = (double)g / 2.55, bb = (double)b / 2.55;
-  *x = rr * 0.4124 + gg * 0.3576 + bb * 0.1805;
-  *y = rr * 0.2126 + gg * 0.7152 + bb * 0.0722;
-  *z = rr * 0.0193 + gg * 0.1192 + bb * 0.9505;
+  /* *x = rr * 0.4124 + gg * 0.3576 + bb * 0.1805; */
+  /* *y = rr * 0.2126 + gg * 0.7152 + bb * 0.0722; */
+  /* *z = rr * 0.0193 + gg * 0.1192 + bb * 0.9505; */
+  *x = (rr * 0.490 + gg * 0.310 + bb * 0.200) / 0.17697;
+  *y = (rr * 0.17697 + gg * 0.81240 + bb * 0.01063) / 0.17697;
+  *x = (gg * 0.010 + bb * 0.990) / 0.17697;
 }
 
 // xyz and lab, thanks to
@@ -1031,7 +1060,7 @@ void rgb2xyz(uint8_t r, uint8_t g, uint8_t b, double *x, double *y, double *z) {
 #define LAB3 0.13793103448 // 16. / 116.
 LIVES_LOCAL_INLINE double lab_conv(double a) {return a > LAB0 ? pow(a, LAB1) : a * LAB2 + LAB3;}
 
-void xyz2lab(double x, double y, double z, double *l, double *a, double *b) {
+static void xyz2lab(double x, double y, double z, double *l, double *a, double *b) {
   x = lab_conv(x); y = lab_conv(y); z = lab_conv(z);
   if (l) {*l = 116. * y - 16.;} if (a) {*a = 500. * (x - y);} if (b) {*b = 200. * (y - z);}
 }
@@ -1145,7 +1174,7 @@ void hsv2rgb(double h, double s, double v, uint8_t *r, uint8_t *g, uint8_t *b) {
 }
 
 
-boolean pick_nice_colour(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_t *g1, uint8_t *b1,
+boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_t *g1, uint8_t *b1,
                          double max, double lmin, double lmax) {
   // given 2 colours a and b, calculate the cie94 distance (d) between them, then find a third colour
   // first calc the avg, calc d(a, b) with threshold > 1.
@@ -1153,29 +1182,34 @@ boolean pick_nice_colour(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_
   // da / db must be > ,9 and db / da also
   // finally luma should be between lmin and lmax
   // restrictions are gradually loosened
-
+  //#define __VOLA volatile // for testing
+#define __VOLA
 #define DIST_THRESH 10.
 #define RAT_START .9
 #define RAT_TIO  .9999999
 #define RAT_MIN .2
+  lives_alarm_t alarm_handle;
+  __VOLA double gmm = 1. + lmax * 2., gmn = 1. + lmin;
+  __VOLA uint8_t xr, xb, xg, ar, ag, ab;
+  __VOLA uint8_t rmin = MIN(r0, *r1) / 1.5, gmin = MIN(g0, *g1) / gmm, bmin = MIN(b0, *b1) / 1.5;
+  __VOLA uint8_t rmax = MAX(r0, *r1), gmax = MAX(g0, *g1), bmax = MAX(b0, *b1);
+  __VOLA double da, db, z, rat = RAT_START, d = cdist94(r0, g0, b0, *r1, *g1, *b1);
 
-  volatile double gmm = 1. + lmax * 2., gmn = 1. + lmin;
-  volatile uint8_t xr, xb, xg, ar, ag, ab;
-  volatile uint8_t rmin = MIN(r0, *r1) / 1.5, gmin = MIN(g0, *g1) / gmm, bmin = MIN(b0, *b1) / 1.5;
-  volatile uint8_t rmax = MAX(r0, *r1), gmax = MAX(g0, *g1), bmax = MAX(b0, *b1);
-  volatile double da, db, z, rat = RAT_START, d = cdist94(r0, g0, b0, *r1, *g1, *b1);
+
+  alarm_handle = lives_alarm_set(timeout);
+
   if (d < DIST_THRESH) d = DIST_THRESH;
   max *= d;
 
-  ar = (volatile double)(r0 + *r1) / 2.;
-  ag = (volatile double)(g0 + *g1) / 2.;
-  ab = (volatile double)(b0 + *b1) / 2.;
+  ar = (__VOLA double)(r0 + *r1) / 2.;
+  ag = (__VOLA double)(g0 + *g1) / 2.;
+  ab = (__VOLA double)(b0 + *b1) / 2.;
 
   rmax = (rmax < 128 ? rmax << 1 : 255) - rmin;
   gmax = (gmax < 255 / gmn ? gmax *gmn : 255) - gmin;
   bmax = (bmax < 128 ? bmax << 1 : 255) - bmin;
 
-  while ((z = rat * RAT_TIO) > RAT_MIN) {
+  while (lives_alarm_check(alarm_handle) && (z = rat * RAT_TIO) > RAT_MIN) {
     rat = z;
     /// pick a random col
     xr = fastrand_int(bmax) + bmin;
@@ -1183,6 +1217,7 @@ boolean pick_nice_colour(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_
     xb = fastrand_int(bmax) + bmin;
 
     da = cdist94(ar, ag, ab, xr, xg, xb);
+    //g_print("DA is %f; %f %f %f\n", da, max, rat, max * rat);
     if (max * rat > da) continue;
     da = cdist94(r0, g0, b0, xr, xg, xb);
     db = cdist94(*r1, *g1, *b1, xr, xg, xb);
@@ -1194,6 +1229,7 @@ boolean pick_nice_colour(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_
       return TRUE;
     }
   }
+  lives_alarm_clear(alarm_handle);
   g_print("FAILED TO GET COL\n");
   return FALSE;
 }
@@ -1678,7 +1714,11 @@ void init_colour_engine(void) {
 #endif
   //#define TEST_CONV
 #ifdef TEST_CONV
-  if (1) {
+  for (int64_t f = 3000; f < 8000; f += 1) {
+    struct XYZ xyz = xyzFromWavelength((double)f);
+    g_print("freq %ld is %f, %f, %f\n", f, xyz.x * 100., xyz.y * 100., xyz.z * 100.);
+  }
+  if (0) {
     int cr, cg, cb;
     uint8_t r = 100, g, b, y, u, v, xr, xg, xb;;
     set_conversion_arrays(WEED_YUV_CLAMPING_UNCLAMPED, WEED_YUV_SUBSPACE_YCBCR);

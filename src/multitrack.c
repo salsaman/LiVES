@@ -19156,7 +19156,7 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
         while (map) {
           if (map->data) {
             if ((old_set_name && !lives_strncmp((char *)map->data, changefrom, chlen)) ||
-                (!old_set_name && (strstr((char *)map->data, new_set_name) == NULL))) {
+                (!old_set_name && !strstr((char *)map->data, new_set_name))) {
 
               char **array = lives_strsplit((char *)map->data, "|", -1);
               size_t origlen = strlen(array[0]);
@@ -19182,7 +19182,7 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
   map = mainw->affected_layouts_map;
   while (map) {
     if ((old_set_name && !lives_strncmp((char *)map->data, changefrom, chlen)) ||
-        (!old_set_name && (strstr((char *)map->data, new_set_name) == NULL))) {
+        (!old_set_name && !strstr((char *)map->data, new_set_name))) {
       if (strcmp(mainw->string_constants[LIVES_STRING_CONSTANT_CL], (char *)map->data + chlen)) {
         tmp = lives_build_filename(prefs->workdir, new_set_name, LAYOUTS_DIRNAME, (char *)map->data + chlen, NULL);
         if (lives_file_test(tmp, LIVES_FILE_TEST_EXISTS)) {

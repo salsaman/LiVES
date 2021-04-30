@@ -302,6 +302,7 @@ void call_funcsig(lives_proc_thread_t info) {
   case FUNCSIG_DOUBLE: {
     double p0;
     switch (ret_type) {
+    case WEED_SEED_DOUBLE: CALL_1(double, double); break;
     default: CALL_VOID_1(double); break;
     } break;
   }
@@ -366,6 +367,13 @@ void call_funcsig(lives_proc_thread_t info) {
     }
     lives_free(p0);
     break;
+  }
+  case FUNCSIG_DOUBLE_DOUBLE: {
+    double p0, p1;
+    switch (ret_type) {
+    case WEED_SEED_DOUBLE: CALL_2(double, double, double); break;
+    default: CALL_VOID_2(double, double); break;
+    } break;
   }
   case FUNCSIG_VOIDP_DOUBLE: {
     void *p0; double p1;

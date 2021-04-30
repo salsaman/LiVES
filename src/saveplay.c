@@ -5062,7 +5062,7 @@ void recover_layout_map(int numclips) {
         lmap_entry = (layout_map *)lmap_node->data;
         check_handle = lives_strdup(sfile->handle);
 
-        if (strstr(lmap_entry->handle, "/") == NULL) {
+        if (!strstr(lmap_entry->handle, "/")) {
           lives_free(check_handle);
           check_handle = lives_path_get_basename(sfile->handle);
         }
@@ -5158,7 +5158,7 @@ static LiVESResponseType manual_locate(const char *orig_filename, lives_clip_t *
 
     response = lives_dialog_run(LIVES_DIALOG(chooser));
 
-    end_fs_preview(NULL);
+    end_fs_preview(NULL, NULL);
 
     if (response == LIVES_RESPONSE_ACCEPT) {
       newname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));

@@ -241,6 +241,7 @@ boolean lives_has_icon(LiVESIconTheme *, const char *stock_id, LiVESIconSize siz
 
 const char *lives_get_stock_icon_alt(int alt_stock_id);
 void widget_helper_set_stock_icon_alts(LiVESIconTheme *);
+void widget_helper_suggest_icons(const char *part);
 
 boolean widget_helper_init(void);
 boolean widget_opts_rescale(double scale);
@@ -771,6 +772,9 @@ LiVESAdjustment *lives_spin_button_set_adjustment(LiVESSpinButton *, LiVESAdjust
 boolean lives_spin_button_set_value(LiVESSpinButton *, double value);
 boolean lives_spin_button_set_range(LiVESSpinButton *, double min, double max);
 
+boolean lives_spin_button_set_max(LiVESSpinButton *, double max);
+boolean lives_spin_button_set_min(LiVESSpinButton *, double min);
+
 boolean lives_spin_button_set_wrap(LiVESSpinButton *, boolean wrap);
 
 boolean lives_spin_button_set_step_increment(LiVESSpinButton *button, double step_increment);
@@ -1077,7 +1081,7 @@ boolean is_standard_widget(LiVESWidget *);
 boolean lives_widget_set_frozen(LiVESWidget *, boolean state);
 
 #ifdef USE_SPECIAL_BUTTONS
-void sbutt_render(LiVESWidget *, LiVESWidgetState state, livespointer user_data);
+void render_standard_button(LiVESButton *sbutton);
 
 LiVESWidget *lives_standard_button_new(int width, int height);
 LiVESWidget *lives_standard_button_new_with_label(const char *labeltext, int width, int height);
@@ -1156,6 +1160,7 @@ LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt
     int dispwidth, int maxchars, LiVESBox *, const char *tooltip);
 
 LiVESWidget *lives_standard_progress_bar_new(void);
+void set_progbar_colours(LiVESWidget *pbar, boolean new);
 
 LiVESWidget *lives_standard_font_chooser_new(const char *fontname);
 boolean lives_standard_font_chooser_set_size(LiVESFontChooser *, int fsize);

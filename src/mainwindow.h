@@ -880,7 +880,7 @@ typedef struct {
   volatile boolean record;
 
   char *fsp_tmpdir;
-  volatile boolean in_fs_preview;
+  volatile boolean fs_preview_active, fs_preview_running, fs_preview_cleanup;
   volatile lives_cancel_t cancelled;
   lives_cancel_type_t cancel_type;
 
@@ -1893,7 +1893,7 @@ typedef struct {
 
   lives_permmgr_t *permmgr;
 
-  boolean pretty_colours;
+  volatile boolean pretty_colours;
 
   boolean suppress_layout_warnings;
 

@@ -52,11 +52,13 @@ uint32_t get_approx_ln(uint32_t val) GNU_CONST;
 uint64_t get_approx_ln64(uint64_t x)GNU_CONST;
 uint64_t get_near2pow(uint64_t val) GNU_CONST;
 
+double gaussian(double x, double a, double m, double s1, double s2);
+
 int hextodec(const char *string);
 
 //// statistics ///
 #define OBJECT_TYPE_MATH		IMkType("obj.MATH")
-#define MATH_OBJECT_SUBTYPE_STATS			IMkType("MATHstat")
+#define MATH_OBJECT_SUBTYPE_STATS	IMkType("MATHstat")
 
 enum {
   SUBTYPE_STATS,

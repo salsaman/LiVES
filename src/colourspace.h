@@ -145,9 +145,11 @@ typedef struct {
 
 #endif
 
+struct XYZ {double x, y, z;};
+
 void rgb2hsv(uint8_t r, uint8_t g, uint8_t b, double *h, double *s, double *v);
 void hsv2rgb(double h, double s, double v, uint8_t *r, uint8_t *g, uint8_t *b);
-boolean pick_nice_colour(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_t *g1, uint8_t *b1,
+boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_t *g1, uint8_t *b1,
                          double max, double lmin, double lmax);
 
 double cdist94(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1);

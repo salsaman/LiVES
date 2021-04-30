@@ -2800,7 +2800,8 @@ static void set_toolkit_theme(int prefer) {
   capable->all_icons = gtk_icon_theme_list_icons((LiVESIconTheme *)widget_opts.icon_theme, NULL);
   if (0) {
     LiVESList *list = capable->all_icons;
-    for (; list; list = list->next) if (1 || !strncmp((char *)list->data, "gtk-", 4)) g_print("icon: %s\n", (char *)list->data);
+    for (; list; list = list->next) if (1 || !strncmp((const char *)list->data, "gtk-", 4))
+        g_print("icon: %s\n", (const char *)list->data);
   }
 
   widget_helper_set_stock_icon_alts((LiVESIconTheme *)widget_opts.icon_theme);
@@ -2829,20 +2830,32 @@ static void set_extra_colours(void) {
 }
 
 
-static void pick_custom_colours(void) {
+static double pick_custom_colours(double var, double timer) {
+  ticks_t xtimerinfo, timerinfo, timeout;
   double lmin, lmax;
   uint8_t ncr, ncg, ncb;
+  boolean retried = FALSE;
+
+  if (var > 2.) var = 2.;
+
   if (!(palette->style & STYLE_LIGHT)) {
     lmin = .05; lmax = .4;
   } else {
     lmin = .6; lmax = .8;
   }
+retry:
   ncr = palette->menu_and_bars.red * 255.;
   ncg = palette->menu_and_bars.green * 255.;
   ncb = palette->menu_and_bars.blue * 255.;
   prefs->pb_quality = PB_QUALITY_HIGH;
-  if (pick_nice_colour(palette->normal_back.red * 255., palette->normal_back.green * 255.,
-                       palette->normal_back.blue * 255., &ncr, &ncg, &ncb, 1.5, .25, .75)) {
+  timeout = timer * TICKS_PER_SECOND;
+  xtimerinfo = lives_get_current_ticks();
+  if (pick_nice_colour(timeout, palette->normal_back.red * 255., palette->normal_back.green * 255.,
+                       palette->normal_back.blue * 255., &ncr, &ncg, &ncb, .15 * var, .25, .75)) {
+    mainw->pretty_colours = TRUE;
+    if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 10 * 9) var *= 1.02;
+    if (var > 2.) var = 2.;
+    xtimerinfo = timerinfo;
     // nice1 - used for outlines
     palette->nice1.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
     palette->nice1.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
@@ -2853,8 +2866,12 @@ static void pick_custom_colours(void) {
     ncg = palette->menu_and_bars.green * 255.;
     ncb = palette->menu_and_bars.blue * 255.;
 
-    if (pick_nice_colour(palette->nice1.red * 255., palette->nice1.green * 255.,
-                         palette->nice1.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax)) {
+    if (pick_nice_colour(timeout, palette->nice1.red * 255., palette->nice1.green * 255.,
+                         palette->nice1.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax)) {
+      if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 100000) var *= 1.02;
+      xtimerinfo = timerinfo;
+      if (var > 2.) var = 2.;
+      mainw->pretty_colours = TRUE;
       // nice2 - alt for menu_and_bars
       // insensitive colour ?
       palette->nice2.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
@@ -2868,16 +2885,25 @@ static void pick_custom_colours(void) {
       } else {
         lmin = .2; lmax = .4;
       }
-      pick_nice_colour(palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
-                       palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax);
+      pick_nice_colour(timeout, palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
+                       palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax);
+      if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 15) var *= 1.01;
       // nice3 - alt for menu_and_bars_fore
+      if (var > 2.) var = 2.;
       palette->nice3.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
       palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
       palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
       palette->nice3.alpha = 1.;
       main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
     }
+  } else {
+    if (!retried) {
+      retried = TRUE;
+      var = var * 0.9;
+      goto retry;
+    }
   }
+  return var;
 }
 #endif
 
@@ -3205,8 +3231,11 @@ boolean set_palette_colours(boolean force_reload) {
   // TODO - run a bg thread until we create GUI
   if (!prefs->vj_mode && prefs->startup_phase == 0) {
     /// create thread to pick custom colours
+    double cpvar = get_double_prefd(PREF_CPICK_VAR, 1.0);
+    prefs->cptime = get_double_prefd(PREF_CPICK_TIME, -2.0);
     mainw->helper_procthreads[PT_CUSTOM_COLOURS]
-      = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)pick_custom_colours, -1, "");
+      = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)pick_custom_colours,
+                                 WEED_SEED_DOUBLE, "dd", cpvar, abs(prefs->cptime));
   }
 #endif
   /// set global values
@@ -4206,11 +4235,23 @@ static boolean lives_startup2(livespointer data) {
   char *ustr;
   boolean layout_recovered = FALSE;
 
-  if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
-  else {
+  if (lives_proc_thread_check_finished(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) {
+    double cpvar = lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+    lives_proc_thread_free(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+    if (prefs->cptime < 0.) {
+      prefs->cptime *= 1.1;
+      set_double_pref(PREF_CPICK_TIME, prefs->cptime);
+    }
+    set_double_pref(PREF_CPICK_VAR, cpvar);
+  } else {
+    prefs->cptime = abs(prefs->cptime) * .9;
+    set_double_pref(PREF_CPICK_TIME, prefs->cptime);
     lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-    mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
   }
+  mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
+
+  if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
+
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
     d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));
     if (!reload_set(prefs->ar_clipset_name) || mainw->current_file == -1) {
@@ -4532,7 +4573,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
   init_random();
-
 #ifdef WEED_STARTUP_TESTS
   run_weed_startup_tests();
 #if 0
@@ -5369,6 +5409,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // get capabilities and if OK set some initial prefs
   theme_error = pre_init();
 
+  /* widget_helper_suggest_icons("preview"); */
+  /* abort(); */
+
   lives_memset(start_file, 0, 1);
 
   mainw->libthread = gtk_thread;
@@ -6041,11 +6084,10 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
 
     if (widget == mainw->start_image || widget == mainw->end_image
         || (mainw->multitrack && widget == mainw->play_image)
-        || (widget == mainw->play_window && !mainw->fs)) {
+        || (widget == mainw->play_window && !mainw->fs)
+       ) {
       int xrwidth, xrheight;
       LiVESWidget *p = lives_widget_get_parent(widget);
-
-      p = lives_widget_get_parent(p);
 
       xrwidth = lives_widget_get_allocation_width(p);
       xrheight = lives_widget_get_allocation_height(p);

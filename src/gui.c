@@ -4771,8 +4771,11 @@ void splash_init(void) {
     mainw->splash_label = mainw->splash_progress;
 #else
 
+#ifndef VALGRIND_ON
 #if GTK_CHECK_VERSION(3, 16, 0)
-    set_progbar_colours(mainw->splash_progress, FALSE);
+    if (!prefs->vj_mode)
+      set_progbar_colours(mainw->splash_progress, FALSE);
+#endif
 #endif
 
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
@@ -4830,8 +4833,11 @@ void splash_msg(const char *msg, double pct) {
   widget_opts.mnemonic_label = TRUE;
 #endif
 
+#ifndef VALGRIND_ON
 #if GTK_CHECK_VERSION(3, 16, 0)
-  set_progbar_colours(mainw->splash_progress, FALSE);
+  if (!prefs->vj_mode)
+    set_progbar_colours(mainw->splash_progress, FALSE);
+#endif
 #endif
 
   lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(mainw->splash_progress), pct);

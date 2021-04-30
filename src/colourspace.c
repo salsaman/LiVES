@@ -13708,6 +13708,9 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
 
     height = weed_layer_get_height(layer);
     irowstride = weed_layer_get_rowstride(layer);
+    /* if (weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA) & LIVES_FLAG_MAINTAIN_VALUE) */
+    /*   orowstride = irowstride; */
+    /* else */
     orowstride = lives_painter_format_stride_for_width(cform, width);
     src = (uint8_t *)weed_layer_get_pixel_data(layer);
 

@@ -10347,8 +10347,10 @@ LiVESWidget *lives_standard_progress_bar_new(void) {
     lives_widget_apply_theme(pbar, LIVES_WIDGET_STATE_NORMAL);
     set_standard_widget(pbar, TRUE);
     set_css_min_size(pbar, -1, widget_opts.css_min_height);
+#ifndef VALGRIND_ON
 #if GTK_CHECK_VERSION(3, 16, 0)
     set_progbar_colours(pbar, TRUE);
+#endif
 #endif
   }
 #ifdef PROGBAR_IS_ENTRY

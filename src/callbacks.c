@@ -7267,11 +7267,10 @@ void donate_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, LiVESWidget * sp_start,
-                                  LiVESWidget * sp_frames) {
+static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, double start_time,
+                                  frames_t preview_frames) {
   // file selector preview
   LiVESFileChooser *fchoo = NULL;
-  double start_time = 0.;
   uint64_t xwin = 0;
 
   char **array;
@@ -7283,7 +7282,6 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, LiVES
   char *type, *file_name;
 
   boolean with_audio = mainw->save_with_sound;
-  int preview_frames = 0;
   int preview_type = GET_INT_DATA(widget, "preview_type");
   int height = 0, width = 0;
   int fwidth = -1, fheight = -1;
@@ -7295,6 +7293,7 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, LiVES
   else file_name = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "filename");
 
   if (mainw->fs_preview_active) {
+    // if active, go there, if running, set running to FALSE and return
     end_fs_preview(fchoo, widget);
     return;
   }
@@ -7307,10 +7306,6 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, LiVES
   }
 
   if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
-    // open selection
-    end_fs_preview(NULL, NULL);
-    start_time = lives_spin_button_get_value(LIVES_SPIN_BUTTON(sp_start));
-    preview_frames = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(sp_frames));
   }
 
   // get file details
@@ -7463,7 +7458,7 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, LiVES
     return;
   }
 
-  fsp_info_file = lives_build_filename(mainw->fsp_tmpdir, LIVES_STATUS_FILE_NAME, NULL);
+  fsp_info_file = lives_build_filename(prefs->workdir, mainw->fsp_tmpdir, LIVES_STATUS_FILE_NAME, NULL);
 
   if (preview_type != LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
     if (!strcmp(type, "Audio")) {
@@ -7606,16 +7601,21 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, LiVES
 
     lives_freep((void **)&file_open_params);
     if (LIVES_IS_WIDGET(widget)) lives_widget_set_sensitive(widget, TRUE);
+    mainw->fs_preview_active = FALSE;
     break;
   }
 }
 
 void on_fs_preview_clicked1(LiVESWidget * widget, LiVESDialog * fchoo) {
-  on_fs_preview_clicked(widget, fchoo, NULL, NULL);
+  on_fs_preview_clicked(widget, fchoo, 0, 0.);
 }
 
 void on_fs_preview_clicked2(LiVESWidget * widget, opensel_win * oswin) {
-  on_fs_preview_clicked(widget, LIVES_DIALOG(oswin->dialog), oswin->sp_start, oswin->sp_frames);
+  double start_time = lives_spin_button_get_value(LIVES_SPIN_BUTTON(oswin->sp_start));
+  frames_t frames = 0;
+  if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(oswin->cb_allframes)))
+    frames = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(oswin->sp_frames));
+  on_fs_preview_clicked(widget, LIVES_DIALOG(oswin->dialog), start_time, frames);
 }
 
 void on_open_activate(LiVESMenuItem * menuitem, livespointer user_data) {
@@ -7798,7 +7798,6 @@ void end_fs_preview(LiVESFileChooser * fchoo, LiVESWidget * button) {
 
   if (button) lives_widget_set_sensitive(button, TRUE);
   if (mainw->fs_playframe) lives_widget_queue_draw(mainw->fs_playframe);
-  //if (fchoo) gtk_file_chooser_set_preview_widget_active(fchoo, FALSE);
 }
 
 

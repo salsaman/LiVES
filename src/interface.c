@@ -2319,7 +2319,6 @@ opensel_win *create_opensel_window(int frames, double fps) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox, *bbox;
   LiVESWidget *layout;
-  LiVESWidget *checkbutton;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
@@ -2328,6 +2327,7 @@ opensel_win *create_opensel_window(int frames, double fps) {
   char *text, *tmp;
 
   frames_t def_frames = fps * 10.;
+  def_frames = (frames_t)((def_frames + 99) / 100) * 100;
 
   if (def_frames > frames) def_frames = frames;
   if (fps > 0.) tottime = (double)frames / fps;
@@ -2375,8 +2375,8 @@ opensel_win *create_opensel_window(int frames, double fps) {
   if (frames) set_maxflabel(openselwin);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  checkbutton = lives_standard_check_button_new(_("Open to end"), FALSE, LIVES_BOX(hbox), NULL);
-  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbutton), openselwin->sp_frames, TRUE);
+  openselwin->cb_allframes = lives_standard_check_button_new(_("Open to end"), FALSE, LIVES_BOX(hbox), NULL);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(openselwin->cb_allframes), openselwin->sp_frames, TRUE);
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 

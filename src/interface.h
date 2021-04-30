@@ -58,6 +58,7 @@ typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *sp_start;
   LiVESWidget *sp_frames;
+  LiVESWidget *cb_allframes;
   LiVESWidget *maxflabel;
   LiVESWidget *preview_button;
 } opensel_win;

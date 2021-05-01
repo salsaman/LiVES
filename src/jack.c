@@ -131,7 +131,15 @@ void jack_conx_exclude(jack_driver_t *jackd_in, jack_driver_t *jackd_out, boolea
           if (!outports[j]) break;
           outs = jack_port_get_connections(outports[j]);
           if (outs) {
-            if (!jack_disconnect(jackd_in->client, ins[0], outs[0])) {
+            lives_proc_thread_t info;
+            ticks_t timeout = LIVES_SHORTEST_TIMEOUT;
+            if (!(info = LPT_WITH_TIMEOUT(timeout, 0, (lives_funcptr_t)jack_disconnect,
+                                          WEED_SEED_BOOLEAN, "vss",
+                                          jackd_in->client, ins[0], outs[0]))) {
+              break;
+            }
+            if (!lives_proc_thread_join_boolean(info)) {
+              //if (!jack_disconnect(jackd_in->client, ins[0], outs[0])) {
               xins[i] = ins[0];
               xouts[i] = outs[0];
             }
@@ -2868,8 +2876,10 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                   /* if (afile->asampsize == 32) */
                   /*   sample_move_float_float(out_buffer[i], cache_buffer->bufferf[i], numFramesToWrite, 1., 1, 1.); */
                   /* else  */
+                  // we use output_channels here since the audio has been resampled to this
                   jackd->abs_maxvol_heard = sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite,
-                                            jackd->num_input_channels, afile->signed_endian & AFORM_UNSIGNED, FALSE, vol);
+                                            jackd->num_output_channels, afile->signed_endian
+                                            & AFORM_UNSIGNED, FALSE, vol);
                   if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) {
                     // we will push the pre-effected audio to any audio reactive generators
                     append_to_audio_bufferf(out_buffer[i], numFramesToWrite, i == nch - 1 ? -i - 1 : i + 1);

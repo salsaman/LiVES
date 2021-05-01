@@ -163,7 +163,9 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
   mainw->cancelled = CANCEL_NONE;
   lives_widget_context_update();
   alarm_handle = sigdata->alarm_handle = lives_alarm_set(timeout);
-  tres = governor_loop(sigdata);
+
+  if (is_fg_thread()) tres = governor_loop(sigdata);
+  else resubmit_proc_thread(lpt, 0);
 
   tstate = lives_proc_thread_get_state(lpt);
 
@@ -179,8 +181,9 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
     lives_nanosleep(LIVES_SHORT_SLEEP);
     tstate = lives_proc_thread_get_state(lpt);
 
-    // allow governor_loop to run its idle func
-    lives_widget_context_update();
+    if (is_fg_thread())
+      // allow governor_loop to run its idle func
+      lives_widget_context_update();
 
     if (tstate & THRD_STATE_BUSY) {
       // thread MUST unavoidably block; stop the timer (e.g showing a UI)
@@ -433,6 +436,13 @@ void call_funcsig(lives_proc_thread_t info) {
     switch (ret_type) {
     case WEED_SEED_VOIDPTR: CALL_3(voidptr, voidptr, double, int); break;
     default: CALL_VOID_3(voidptr, double, int); break;
+    } break;
+  }
+  case FUNCSIG_VOIDP_STRING_STRING: {
+    void *p0; char *p1, *p2;
+    switch (ret_type) {
+    case WEED_SEED_BOOLEAN: CALL_3(boolean, voidptr, string, string); break;
+    default: CALL_VOID_3(voidptr, string, string); break;
     } break;
   }
   case FUNCSIG_BOOL_BOOL_STRING: {
@@ -902,6 +912,8 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   pthread_mutex_unlock(&twork_mutex);
 
   mywork = (thrd_work_t *)list->data;
+  if (!mywork) return FALSE;
+
   mywork->self =  pthread_self();
   mywork->busy = tdata->idx;
   myflags = mywork->flags;

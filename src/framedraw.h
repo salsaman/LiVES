@@ -45,6 +45,8 @@ void framedraw_add_label(LiVESVBox *box);
 void load_framedraw_image(LiVESPixbuf *);
 void load_rfx_preview(lives_rfx_t *rfx); ///< rfx preview
 
+void start_preview(LiVESButton *button, lives_rfx_t *rfx);
+
 // reset preview when any param changes
 void invalidate_preview(lives_special_framedraw_rect_t *);
 

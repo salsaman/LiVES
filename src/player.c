@@ -271,6 +271,7 @@ static boolean do_cleanup(weed_layer_t *layer, int success) {
 static boolean avsync_check(void) {
   int count = USEC_WAIT_FOR_SYNC / 10, rc = 0;
   struct timespec ts;
+  return TRUE;
 
 #ifdef VALGRIND_ON
   count *= 10;

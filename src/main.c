@@ -2187,7 +2187,7 @@ jack_tcl_try:
         if (mainw->cancelled) {
           lives_exit(0);
         }
-        lives_idle_priority(governor_loop, NULL);
+        //lives_idle_priority(governor_loop, NULL);
         return FALSE;
       } else success = lives_proc_thread_join_boolean(info);
 
@@ -2282,7 +2282,7 @@ jack_acl_try:
         if (!(info = LPT_WITH_TIMEOUT(timeout, 0,
                                       (lives_funcptr_t)jack_create_client_writer,
                                       WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
-          lives_idle_priority(governor_loop, NULL);
+          //lives_idle_priority(governor_loop, NULL);
           return FALSE;
         } else success = lives_proc_thread_join_boolean(info);
 
@@ -2321,7 +2321,13 @@ jack_acl_try:
               mainw->jackd->whentostop = &mainw->whentostop;
               mainw->jackd->cancelled = &mainw->cancelled;
               mainw->jackd->in_use = FALSE;
-              success = jack_write_client_activate(mainw->jackd);
+              if (!(info = LPT_WITH_TIMEOUT(timeout, 0,
+                                            (lives_funcptr_t)jack_write_client_activate,
+                                            WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
+                //lives_idle_priority(governor_loop, NULL);
+                success = FALSE;
+              } else success = lives_proc_thread_join_boolean(info);
+              //success = jack_write_client_activate(mainw->jackd);
             }
           }
         }

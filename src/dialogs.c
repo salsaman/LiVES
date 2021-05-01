@@ -1871,7 +1871,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         if (mainw->proc_ptr->stop_button)
           lives_widget_show_all(mainw->proc_ptr->stop_button);
       } else {
-
         // AHA !!
         lives_widget_show_all(mainw->proc_ptr->pause_button);
         if (mainw->proc_ptr->stop_button)
@@ -1968,7 +1967,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         pump_io_chan(mainw->iochan);
       }
 
-      if (!mainw->internal_messaging) lives_nanosleep(1000);
+      if (!mainw->internal_messaging) lives_nanosleep(1000000);
     } else break;
   }
 
@@ -3159,9 +3158,9 @@ boolean do_jack_no_connect_warn(boolean is_trans) {
       tmp = lives_markup_escape_text(prefs->jack_def_server_name, -1);
   }
 
-  if ((!is_trans && (prefs->jack_opts & JACK_OPTS_START_ASERVER))
+  if (mainw->fatal || (!is_trans && (prefs->jack_opts & JACK_OPTS_START_ASERVER))
       || (is_trans && (prefs->jack_opts & JACK_OPTS_START_TSERVER))) {
-    warn = _("<b>Something really bad happened...</b>\n\nPlease check the jackd status and try restarting it manually.\n");
+    warn = _("<b>Something really bad happened...</b>\n\n<big><b>Please check the jackd status and try restarting it manually.</b></big>\n");
     more = lives_strdup("");
     is_bad = TRUE;
   } else {
@@ -3215,11 +3214,13 @@ boolean do_jack_no_connect_warn(boolean is_trans) {
 
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
 
-    statbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), NULL, _("View Status _Log"),
-                 LIVES_RESPONSE_BROWSE);
+    if (!mainw->fatal)
+      statbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), NULL, _("View Status _Log"),
+                   LIVES_RESPONSE_BROWSE);
 
-    srvbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_PREFERENCES,
-                _("Jack _Server Setup"), LIVES_RESPONSE_RESET);
+    if (!is_bad)
+      srvbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_PREFERENCES,
+                  _("Jack _Server Setup"), LIVES_RESPONSE_RESET);
 
     cancbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_QUIT, _("_Exit LiVES"),
                  LIVES_RESPONSE_CANCEL);

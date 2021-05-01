@@ -59,7 +59,7 @@ void invalidate_preview(lives_special_framedraw_rect_t *frame_draw) {
 }
 
 
-static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
+void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
   int i;
   char *com;
 

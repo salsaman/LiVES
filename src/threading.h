@@ -182,6 +182,7 @@ typedef uint64_t lives_thread_attr_t;
 #define FUNCSIG_PLANTP_BOOL 				       		0X000000E3
 // 3p
 #define FUNCSIG_VOIDP_DOUBLE_INT 		        		0X00000D21
+#define FUNCSIG_VOIDP_STRING_STRING 		        		0X00000D44
 #define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
 #define FUNCSIG_VOIDP_VOIDP_BOOL 		        		0X00000DD3
 #define FUNCSIG_STRING_VOIDP_VOIDP 		        		0X000004DD

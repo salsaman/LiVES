@@ -12,7 +12,7 @@ typedef int64_t ssize64_t;
 
 #define AUD_SRC_EXTERNAL (prefs->audio_src == AUDIO_SRC_EXT)
 #define AUD_SRC_INTERNAL (prefs->audio_src == AUDIO_SRC_INT)
-#define AUD_SRC_REALTIME (get_play_clipno() != -1)
+#define AUD_SRC_REALTIME (get_aplay_clipno() != -1)
 #define AV_CLIPS_EQUAL (get_aplay_clipno() == mainw->playing_file)
 
 #define SAMPLE_MAX_16BIT_P  32767.4999999f
@@ -236,6 +236,8 @@ void pulse_rec_audio_to_clip(int fileno, int oldfileno,
                              lives_rec_audio_type_t rec_type);  ///< record from external source to clip
 void pulse_rec_audio_end(boolean close_fd);
 #endif
+
+void start_audio_rec(void);
 
 void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, boolean exact);
 void wake_audio_thread(void);

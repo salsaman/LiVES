@@ -1,6 +1,6 @@
 // multitrack.c
 // LiVES
-// (c) G. Finch 2005 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2005 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -5074,6 +5074,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_add_accelerator(mt->cback_audio, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                                LIVES_KEY_b, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
 
+  mt->delback_audio = lives_standard_image_menu_item_new_with_label(_("Delete Backing Audio"));
+  lives_container_add(LIVES_CONTAINER(mt->tracks_menu), mt->delback_audio);
+
   lives_menu_add_separator(LIVES_MENU(mt->tracks_menu));
 
   mt->add_vid_behind = lives_standard_image_menu_item_new_with_label(_("Add Video Track at _Rear"));
@@ -5560,6 +5563,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                             LIVES_GUI_CALLBACK(on_rename_track_activate), (livespointer)mt);
   lives_signal_connect(LIVES_GUI_OBJECT(mt->cback_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_cback_audio_activate), (livespointer)mt);
+  lives_signal_connect(LIVES_GUI_OBJECT(mt->delback_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_delback_audio_activate), (livespointer)mt);
   lives_signal_connect(LIVES_GUI_OBJECT(mt->add_vid_behind), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(add_video_track_behind), (livespointer)mt);
   lives_signal_connect(LIVES_GUI_OBJECT(mt->add_vid_front), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -6627,7 +6632,7 @@ void delete_audio_track(lives_mt * mt, LiVESWidget * eventbox, boolean full) {
   if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY)) == 0) {
     labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "labelbox");
     ahbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "ahbox");
-    if (labelbox) lives_widget_destroy(labelbox);
+    //if (labelbox) lives_widget_destroy(labelbox);
     if (ahbox) lives_widget_destroy(ahbox);
   }
 
@@ -13152,6 +13157,7 @@ weed_plant_t *add_blank_frames_up_to(weed_plant_t *event_list, weed_plant_t *sta
   else tc = 0;
 
   for (; tc <= end_tc; tc = q_gint64(tc + tl, fps)) {
+    g_print("ins blank at %ld\n", tc);
     event_list = insert_frame_event_at(event_list, tc, 1, &blank_clip, &blank_frame, &shortcut);
   }
   weed_set_double_value(event_list, WEED_LEAF_FPS, fps);
@@ -13568,6 +13574,13 @@ void on_cback_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   mt->current_track = -1;
   track_select(mt);
+}
+
+
+void on_delback_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  //lives_mt *mt = (lives_mt *)user_data;
+  //mt->current_track = -1;
+  //lives_widget_object_set_data(track, "blocks", NULL);
 }
 
 
@@ -15245,7 +15258,8 @@ void insert_audio(int filenum, weed_timecode_t offset_start, weed_timecode_t off
 
   if (!block || get_event_timecode(block->start_event) > end_tc) {
     // if no blocks after end point, insert audio off at end point
-    frame_event = get_frame_event_at(mt->event_list, end_tc, frame_event, TRUE);
+    ticks_t xend_tc = q_gint64(end_tc - TICKS_PER_SECOND_DBL, mt->fps);
+    frame_event = get_frame_event_at(mt->event_list, xend_tc, frame_event, TRUE);
     insert_audio_event_at(frame_event, -1, filenum, 0., 0.);
     add_block_end_point((LiVESWidget *)mt->audio_draws->data, frame_event);
   } else add_block_end_point((LiVESWidget *)mt->audio_draws->data, block->start_event);

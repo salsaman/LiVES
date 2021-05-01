@@ -1100,24 +1100,31 @@ boolean governor_loop(livespointer data) {
   volatile boolean clutch;
   static boolean lpt_recurse = FALSE;
   static boolean lpt_recurse2 = FALSE;
+  static int copies = 0;
   boolean is_timer = FALSE;
   lives_sigdata_t *sigdata = NULL;
   lives_sigdata_t *new_sigdata = (lives_sigdata_t *)data;
   gov_will_run = TRUE;
+  copies++;
+
   // reloop - for timers we cannot exit until we have the return code from the function
   // instead we loop back to here
 reloop:
-  if (g_main_depth() > 1 && !lpttorun) {
+  if (copies > 1 && !lpttorun) {
     // prevent recursion UNLESS a specific function is called
     mainw->clutch = TRUE;
     //g_print("gov1\n");
+    copies--;
     return FALSE;
   }
-  if (mainw->is_exiting) return FALSE;
-
+  if (mainw->is_exiting) {
+    copies--;
+    return FALSE;
+  }
   if (lpt_recurse2) {
     // prevent super-recursion
     //g_print("gov2\n");
+    copies--;
     return TRUE;
   }
 
@@ -1136,11 +1143,12 @@ reloop:
         // some handling that needed to be added to prevent multiple idlefuncs
         if (!lpt_recurse) {
           //g_print("gov3\n");
-          gov_will_run = gov_running = FALSE;
+          if (!--copies) gov_will_run = gov_running = FALSE;
           return FALSE;
         } else {
           lpt_recurse = FALSE;
           //g_print("gov4\n");
+          copies--;
           return TRUE;
         }
       }
@@ -1152,7 +1160,7 @@ reloop:
 
     // some other handling for timers from trial and error
     if (timer_running) {
-      gov_will_run = gov_running = FALSE;
+      if (!--copies) gov_will_run = gov_running = FALSE;
       mainw->clutch = FALSE;
       //g_print("gov5\n");
       return FALSE;
@@ -1176,6 +1184,8 @@ reloop:
           // but we need to return to run the new task
           lives_idle_priority(governor_loop, new_sigdata);
           //g_print("gov6\n");
+          if (!--copies) gov_running = FALSE;
+          gov_will_run = TRUE;
           return FALSE;
         }
       }
@@ -1217,7 +1227,7 @@ reloop:
   //else sigdata = new_sigdata;
   if (new_sigdata && !sigdata_check_alarm(new_sigdata)) {
     // timed out
-    gov_will_run = gov_running = FALSE;
+    if (!--copies) gov_will_run = gov_running = FALSE;
     //g_print("gov10\n");
     return FALSE;
   }
@@ -1226,7 +1236,7 @@ reloop:
 
   if (!task_list && !lpttorun && !sigdata) {
     // seems there is nothing left to do, so exit
-    gov_will_run = gov_running = FALSE;
+    if (!--copies) gov_will_run = gov_running = FALSE;
     //g_print("gov7\n");
     return FALSE;
   }
@@ -1253,17 +1263,13 @@ reloop:
 
     //g_print("XX %d %d %d\n", count, sigdata_check_alarm(sigdata), !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
 
-
     if (!sigdata_check_alarm(sigdata)) {
-      gov_will_run = gov_running = FALSE;
-      //g_print("gov11\n");
+      if (!--copies) gov_will_run = gov_running = FALSE;
       return FALSE;
     }
     // add ourselves as an idlefunc and then return FALSE
     lives_idle_priority(governor_loop, sigdata->alarm_handle ? sigdata : NULL);
-
-    gov_running = FALSE;
-
+    if (!--copies) gov_running = FALSE;
     // need to check for lpttorun here, after running all the context_iterations
     if (lpttorun) lpt_recurse = TRUE;
     //g_print("gov8\n");
@@ -1277,7 +1283,7 @@ reloop:
            && sigdata_check_alarm(sigdata) && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
 
     if (!sigdata_check_alarm(sigdata)) {
-      gov_will_run = gov_running = FALSE;
+      if (!--copies) gov_will_run = gov_running = FALSE;
       //g_print("gov11\n");
       return FALSE;
     }
@@ -1288,7 +1294,8 @@ reloop:
   // if we arrive here it means that some signal handler initiated the loops, and it's
   // actual callback has finished, now we can return to the proxy signal handler
 
-  gov_will_run = gov_running = FALSE;
+  if (!g_main_depth())
+    gov_will_run = gov_running = FALSE;
   if (sigdata->alarm_handle == LIVES_NO_ALARM) {
     // if a timer, set sigdata->swapped, this signals that the bg thread completed
     if (sigdata->is_timer) {
@@ -1299,7 +1306,7 @@ reloop:
       sigdata_free(sigdata, NULL);
     }
   }
-  //g_print("gov9\n");
+  if (!--copies) gov_will_run = gov_running = FALSE;
   return FALSE;
 }
 

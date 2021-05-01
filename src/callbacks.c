@@ -4741,91 +4741,19 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     if (!mainw->record || mainw->record_paused) {
       // recording is starting
       mainw->record_starting = TRUE;
-
       toggle_record();
-
       if ((prefs->rec_opts & REC_AUDIO) && (mainw->agen_key != 0 || mainw->agen_needs_reinit
                                             || prefs->audio_src == AUDIO_SRC_EXT) &&
-          (prefs->audio_player == AUD_PLAYER_JACK || prefs->audio_player == AUD_PLAYER_PULSE)) {
-        if (mainw->ascrap_file == -1) {
-          open_ascrap_file();
-        }
-        if (mainw->ascrap_file != -1) {
-          mainw->rec_samples = -1; // record unlimited
-          mainw->rec_aclip = mainw->ascrap_file;
-          mainw->rec_avel = 1.;
-          mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
-                             (double)(mainw->files[mainw->ascrap_file]->arps * mainw->files[mainw->ascrap_file]->achans *
-                                      mainw->files[mainw->ascrap_file]->asampsize >> 3);
-
-#ifdef ENABLE_JACK
-          if (prefs->audio_player == AUD_PLAYER_JACK) {
-            char *lives_header = lives_build_filename(prefs->workdir, mainw->files[mainw->ascrap_file]->handle,
-                                 LIVES_ACLIP_HEADER, NULL);
-            mainw->clip_header = fopen(lives_header, "w"); // speed up clip header writes
-            lives_free(lives_header);
-
-            if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-              jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-              mainw->jackd_read->is_paused = FALSE;
-              mainw->jackd_read->in_use = TRUE;
-            } else {
-              if (mainw->jackd) {
-                jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-              }
-            }
-            if (mainw->clip_header) fclose(mainw->clip_header);
-            mainw->clip_header = NULL;
-          }
-
-#endif
-#ifdef HAVE_PULSE_AUDIO
-          if (prefs->audio_player == AUD_PLAYER_PULSE) {
-            char *lives_header = lives_build_filename(prefs->workdir, mainw->files[mainw->ascrap_file]->handle,
-                                 LIVES_ACLIP_HEADER, NULL);
-            mainw->clip_header = fopen(lives_header, "w"); // speed up clip header writes
-            lives_free(lives_header);
-
-            if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-              pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-              mainw->pulsed_read->is_paused = FALSE;
-              mainw->pulsed_read->in_use = TRUE;
-            } else {
-              if (mainw->pulsed) {
-                pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-              }
-            }
-            if (mainw->clip_header) fclose(mainw->clip_header);
-            mainw->clip_header = NULL;
-          }
-#endif
-        }
-        return;
-      }
-
-      if (prefs->rec_opts & REC_AUDIO) {
-        // recording INTERNAL audio
-#ifdef ENABLE_JACK
-        if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
-          jack_get_rec_avals(mainw->jackd);
-        }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-        if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
-          pulse_get_rec_avals(mainw->pulsed);
-        }
-#endif
-      }
-      return;
+          AUD_SRC_REALTIME)
+        start_audio_rec();
+    } else {
+      // end record during playback
+      event_list_add_end_events(mainw->event_list, FALSE);
+      mainw->record_paused = TRUE; // pause recording of further events
+      enable_record();
     }
-
-    // end record during playback
-    event_list_add_end_events(mainw->event_list, FALSE);
-    mainw->record_paused = TRUE; // pause recording of further events
-    enable_record();
     return;
   }
-
   // out of playback
 
   // record performance

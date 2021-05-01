@@ -310,7 +310,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
   // check if this parameter is part of a special window
   // as we are drawing the paramwindow
 
-  if (rfx && rfx->status != RFX_STATUS_WEED
+  if (rfx && rfx->status != RFX_STATUS_WEED && !(rfx->props & RFX_PROPS_MAY_RESIZE)
       && (rfx->num_in_channels > 0 || !(rfx->props & RFX_PROPS_BATCHG)))
     will_add_preview = TRUE;
 

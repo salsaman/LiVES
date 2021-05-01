@@ -647,6 +647,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
                          uint64_t nsamples, size_t tbytes, double scale, int nDstChannels,
                          int nSrcChannels, int swap_endian, int swap_sign) {
   // TODO: going from >1 channels to 1, we should average
+  // TODO: option to create non-interleaved output
   double src_offset_d = 0.;
   int16_t *ptr;
   int16_t *src_end;
@@ -2567,6 +2568,78 @@ void pulse_rec_audio_end(boolean close_fd) {
 
 #endif
 
+
+void start_audio_rec(void) {
+  // if the user activates recording during playback, prepare to start recording audio
+  if (mainw->ascrap_file == -1) {
+    open_ascrap_file();
+  }
+  if (mainw->ascrap_file != -1) {
+    mainw->rec_samples = -1; // record unlimited
+    mainw->rec_aclip = mainw->ascrap_file;
+    mainw->rec_avel = 1.;
+    mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
+                       (double)(mainw->files[mainw->ascrap_file]->arps * mainw->files[mainw->ascrap_file]->achans *
+                                mainw->files[mainw->ascrap_file]->asampsize >> 3);
+
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK) {
+      char *lives_header = lives_build_filename(prefs->workdir, mainw->files[mainw->ascrap_file]->handle,
+                           LIVES_ACLIP_HEADER, NULL);
+      mainw->clip_header = fopen(lives_header, "w"); // speed up clip header writes
+      lives_free(lives_header);
+
+      if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
+        jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+        mainw->jackd_read->is_paused = FALSE;
+        mainw->jackd_read->in_use = TRUE;
+      } else {
+        if (mainw->jackd) {
+          jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+        }
+      }
+      if (mainw->clip_header) fclose(mainw->clip_header);
+      mainw->clip_header = NULL;
+    }
+
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE) {
+      char *lives_header = lives_build_filename(prefs->workdir, mainw->files[mainw->ascrap_file]->handle,
+                           LIVES_ACLIP_HEADER, NULL);
+      mainw->clip_header = fopen(lives_header, "w"); // speed up clip header writes
+      lives_free(lives_header);
+
+      if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
+        pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+        mainw->pulsed_read->is_paused = FALSE;
+        mainw->pulsed_read->in_use = TRUE;
+      } else {
+        if (mainw->pulsed) {
+          pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+        }
+      }
+      if (mainw->clip_header) fclose(mainw->clip_header);
+      mainw->clip_header = NULL;
+    }
+#endif
+  }
+
+  if (prefs->rec_opts & REC_AUDIO) {
+    // recording INTERNAL audio
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
+      jack_get_rec_avals(mainw->jackd);
+    }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
+      pulse_get_rec_avals(mainw->pulsed);
+    }
+#endif
+  }
+}
+
 /////////////////////////////////////////////////////////////////
 
 // playback via memory buffers (e.g. in multitrack)
@@ -2873,12 +2946,6 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
       // got next audio frame
       render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
-
-      /* for (i = 0; i < nfiles; i++) { */
-      /*   // increase seek values */
-      /*   aseeks[i] += avels[i] * (tc - last_tc) / TICKS_PER_SECOND_DBL; */
-      /* } */
-
       last_tc = tc;
       // process audio updates at this frame
       atstate = aframe_to_atstate(event);

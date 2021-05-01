@@ -220,9 +220,15 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (cfile->clip_type == CLIP_TYPE_FILE && rfx->status != RFX_STATUS_WEED) {
     // start decoding frames for the rendered effect plugins to start processing
     if (!cfile->pumper) {
-      cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)virtual_to_images,
-                      -1, "iiibV", mainw->current_file,
-                      cfile->undo_start, cfile->undo_end, FALSE, NULL);
+      if (rfx->props & RFX_PROPS_MAY_RESIZE) {
+        cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)virtual_to_images,
+                        -1, "iiibV", mainw->current_file,
+                        1, cfile->frames, FALSE, NULL);
+      } else {
+        cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)virtual_to_images,
+                        -1, "iiibV", mainw->current_file,
+                        cfile->undo_start, cfile->undo_end, FALSE, NULL);
+      }
     }
   }
 

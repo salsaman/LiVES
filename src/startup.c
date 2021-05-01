@@ -689,7 +689,7 @@ boolean prompt_for_jack_ports(boolean is_setup) {
 
 
 boolean do_jack_config(int type, boolean is_trans) {
-  LiVESSList *rb_group = NULL;
+  LiVESSList *rb_group;
   LiVESWidget *dialog, *dialog_vbox, *layout, *hbox, *cb2 = NULL, *cb3;
   LiVESWidget *acdef = NULL, *acname = NULL, *astart = NULL;
   LiVESWidget *asdef, *asname;
@@ -712,6 +712,8 @@ boolean do_jack_config(int type, boolean is_trans) {
   cfg_exists = jack_get_cfg_file(is_trans, &server_cfgx);
 
 set_config:
+  rb_group = NULL;
+
   if (type == 1) title = _("Initial configuration for jack audio");
   title = lives_strdup_printf(_("Server and driver configuration for %s"),
                               is_trans ? _("jack transport") : _("jack audio"));

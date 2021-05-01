@@ -2103,6 +2103,9 @@ static boolean rec_desk_done(livespointer data) {
   if (lives_get_status() != LIVES_STATUS_IDLE) return TRUE;
   else {
     lives_clip_t *sfile;
+    ticks_t tc;
+    int from_files[1];
+    double aseeks[1], avels[1], chvols[1];
     char *com;
     int current_file = mainw->current_file;
 
@@ -2118,6 +2121,19 @@ static boolean rec_desk_done(livespointer data) {
 
     add_to_clipmenu_any(recargs->clipno);
     switch_clip(1, recargs->clipno, FALSE);
+
+    // render the audio track
+    from_files[0] = mainw->ascrap_file;
+    avels[0] = 1.;
+    aseeks[0] =01.;
+    tc = 10 * TICKS_PER_SECOND_DBL;
+    chvols[0] = 1.;
+    cfile->achans = 2;
+    cfile->asampsize = 16;
+    cfile->arate = 48000;
+
+    render_audio_segment(1, from_files, mainw->current_file, avels, aseeks, 0, tc, chvols, 1., 1., NULL);
+    reget_afilesize(mainw->current_file);
 
     cfile->undo1_dbl = recargs->fps;
     cfile->fps = 0.;
@@ -2199,6 +2215,8 @@ void rec_desk(void *args) {
   saveargs->compression = 100 - prefs->ocp;
 
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->rec_time);
+
+  start_audio_rec();
 
   while (1) {
     if ((recargs->rec_time && !lives_alarm_check(alarm_handle))

@@ -224,6 +224,7 @@ lives_exe_SOURCES = \
 	htmsocket.c htmsocket.h \
 	merge.c merge.h \
 	cliphandler.c cliphandler.h \
+	sethandler.c sethandler.h \
 	dialogs.c saveplay.c \
 	player.c player.h \
 	audio.c audio.h \

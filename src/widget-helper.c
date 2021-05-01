@@ -12624,8 +12624,9 @@ boolean set_submenu_colours(LiVESMenu * menu, LiVESWidgetColor * colf, LiVESWidg
   LiVESList *children = lives_container_get_children(LIVES_CONTAINER(menu)), *list = children;
   lives_widget_set_bg_color(LIVES_WIDGET(menu), LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_fg_color(LIVES_WIDGET(menu), LIVES_WIDGET_STATE_NORMAL, colf);
-  while (list) {
+  for (; list; list = list->next) {
     LiVESWidget *child = (LiVESWidget *)list->data;
+    if (LIVES_IS_SEPARATOR_MENU_ITEM(child)) continue;
     if (LIVES_IS_MENU_ITEM(child)) {
       if ((menu = (LiVESMenu *)lives_menu_item_get_submenu(LIVES_MENU_ITEM(child))))
         set_submenu_colours(menu, colf, colb);
@@ -12634,7 +12635,6 @@ boolean set_submenu_colours(LiVESMenu * menu, LiVESWidgetColor * colf, LiVESWidg
         lives_widget_set_fg_color(LIVES_WIDGET(child), LIVES_WIDGET_STATE_NORMAL, colf);
       }
     }
-    list = list->next;
   }
   if (children) lives_list_free(children);
   return TRUE;
@@ -12782,11 +12782,20 @@ boolean lives_widget_context_update(void) {
 }
 
 
-LiVESWidget *lives_menu_add_separator(LiVESMenu * menu) {
-  LiVESWidget *separatormenuitem = lives_menu_item_new();
+LiVESWidget *lives_separator_menu_item_new(void) {
+  LiVESWidget *separatormenuitem = NULL;
+#ifdef GUI_GTK
+  separatormenuitem = gtk_separator_menu_item_new();
+#endif
+  return separatormenuitem;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_menu_add_separator(LiVESMenu * menu) {
+  LiVESWidget *separatormenuitem = lives_separator_menu_item_new();
   if (separatormenuitem) {
     lives_container_add(LIVES_CONTAINER(menu), separatormenuitem);
-    lives_widget_set_sensitive(separatormenuitem, FALSE);
+    lives_widget_set_sensitive(separatormenuitem, TRUE);
   }
   return separatormenuitem;
 }

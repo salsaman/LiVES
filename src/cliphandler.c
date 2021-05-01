@@ -1,5 +1,5 @@
 // cliphandler.c
-// (c) G. Finch 2019 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2019 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1453,25 +1453,28 @@ rhd_failed:
 
     if (!lives_file_test(hdrback, LIVES_FILE_TEST_EXISTS)) {
       lives_free(hdrback);
-      hdrback = NULL;
-      binfmt = lives_build_filename(clipdir, "." TOTALSAVE_NAME, NULL);
-      gzbinfmt = lives_build_filename(clipdir, "." TOTALSAVE_NAME "." LIVES_FILE_EXT_GZIP, NULL);
-      if (lives_file_test(gzbinfmt, LIVES_FILE_TEST_EXISTS)) {
-        lives_free(binfmt);
-        binfmt = gzbinfmt;
-      } else {
-        lives_free(gzbinfmt);
-        if (!lives_file_test(binfmt, LIVES_FILE_TEST_EXISTS)) {
-          char *binfmt2 = lives_build_filename(clipdir, TOTALSAVE_NAME, NULL);
-          if (lives_file_test(binfmt2, LIVES_FILE_TEST_EXISTS)) {
-            lives_mv(binfmt2, binfmt);
-            lives_free(binfmt);
-            binfmt = binfmt2;
-          } else {
-            lives_free(binfmt2); lives_free(binfmt);
-            binfmt = NULL;
-	    // *INDENT-OFF*
-	  }}}}
+      hdrback = lives_strdup_printf("%s.%s", lives_header, LIVES_FILE_EXT_NEW);
+      if (!lives_file_test(hdrback, LIVES_FILE_TEST_EXISTS)) {
+	lives_free(hdrback);
+	hdrback = NULL;
+	binfmt = lives_build_filename(clipdir, "." TOTALSAVE_NAME, NULL);
+	gzbinfmt = lives_build_filename(clipdir, "." TOTALSAVE_NAME "." LIVES_FILE_EXT_GZIP, NULL);
+	if (lives_file_test(gzbinfmt, LIVES_FILE_TEST_EXISTS)) {
+	  lives_free(binfmt);
+	  binfmt = gzbinfmt;
+	} else {
+	  lives_free(gzbinfmt);
+	  if (!lives_file_test(binfmt, LIVES_FILE_TEST_EXISTS)) {
+	    char *binfmt2 = lives_build_filename(clipdir, TOTALSAVE_NAME, NULL);
+	    if (lives_file_test(binfmt2, LIVES_FILE_TEST_EXISTS)) {
+	      lives_mv(binfmt2, binfmt);
+	      lives_free(binfmt);
+	      binfmt = binfmt2;
+	    } else {
+	      lives_free(binfmt2); lives_free(binfmt);
+	      binfmt = NULL;
+	      // *INDENT-OFF*
+	    }}}}}
     // *INDENT-ON*
 
     lives_free(clipdir);

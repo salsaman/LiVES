@@ -2197,27 +2197,6 @@ boolean do_auto_dialog(const char *text, int type) {
 
 ///// TODO: end processing.c /////
 
-boolean do_save_clipset_warn(void) {
-  char *extra;
-  char *msg;
-
-  if (!mainw->no_exit && !mainw->only_close) extra = lives_strdup(", and LiVES will exit");
-  else extra = lives_strdup("");
-
-  msg = lives_strdup_printf(
-          _("Saving the set will cause copies of all loaded clips to remain on the disk%s.\n\n"
-            "Please press 'Cancel' if that is not what you want.\n"), extra);
-  lives_free(extra);
-
-  if (!do_warning_dialog_with_check(msg, WARN_MASK_SAVE_SET)) {
-    lives_free(msg);
-    return FALSE;
-  }
-  lives_free(msg);
-  return TRUE;
-}
-
-
 LIVES_GLOBAL_INLINE void too_many_files(void) {
   do_error_dialogf(_("\nSorry, LiVES can only open %d files at once.\nPlease close a file and then try again."), MAX_FILES);
 }

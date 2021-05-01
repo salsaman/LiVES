@@ -691,51 +691,6 @@ void clear_lmap_errors(void) {
   }
 }
 
-/**
-   @brief check for set lock file
-   do this via the back-end (smogrify)
-   this allows for the locking scheme to be more flexible
-
-   smogrify indicates a lock very simply by by writing > 0 bytes to stdout
-   we read this via popen
-
-   type == 0 for load, type == 1 for save
-
-*/
-boolean check_for_lock_file(const char *set_name, int type) {
-  char *com;
-
-  if (type == 1 && !lives_strcmp(set_name, mainw->set_name)) return TRUE;
-
-  com = lives_strdup_printf("%s check_for_lock \"%s\" \"%s\" %d", prefs->backend_sync, set_name, capable->myname,
-                            capable->mainpid);
-
-  clear_mainw_msg();
-
-  threaded_dialog_spin(0.);
-  lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
-  threaded_dialog_spin(0.);
-  lives_free(com);
-
-  if (THREADVAR(com_failed)) return FALSE;
-
-  if (*(mainw->msg)) {
-    if (type == 0) {
-      if (mainw->recovering_files) return do_set_locked_warning(set_name);
-      threaded_dialog_spin(0.);
-      widget_opts.non_modal = TRUE;
-      do_error_dialogf(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"), set_name);
-      widget_opts.non_modal = FALSE;
-      threaded_dialog_spin(0.);
-    } else if (type == 1) {
-      if (!mainw->osc_auto) do_error_dialogf(_("\nThe set %s is currently in use by another copy of LiVES.\n"
-                                               "Please choose another set name.\n"), set_name);
-    }
-    return FALSE;
-  }
-  return TRUE;
-}
-
 
 boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, const char *nreject) {
   char *xtype = lives_strdup(type), *msg;
@@ -779,56 +734,6 @@ boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, co
   }
 
   lives_free(xtype);
-  return TRUE;
-}
-
-
-boolean is_legal_set_name(const char *set_name, boolean allow_dupes, boolean leeway) {
-  // check (clip) set names for validity
-  // - may not be of zero length
-  // - may not contain spaces or characters / \ * "
-  // - must NEVER be name of a set in use by another copy of LiVES (i.e. with a lock file)
-
-  // - as of 1.6.0:
-  // -  may not start with a .
-  // -  may not contain ..
-
-  // - as of 3.2.0
-  //   - must start with a letter [a - z] or [A - Z]
-
-  // should be in FILESYSTEM encoding
-
-  // may not be longer than MAX_SET_NAME_LEN chars
-
-  // iff allow_dupes is FALSE then we disallow the name of any existing set (has a subdirectory in the working directory)
-
-  if (!do_std_checks(set_name, _("Set"), MAX_SET_NAME_LEN, NULL)) return FALSE;
-
-  // check if this is a set in use by another copy of LiVES
-  if (mainw && mainw->is_ready && !check_for_lock_file(set_name, 1)) return FALSE;
-
-  if ((set_name[0] < 'a' || set_name[0] > 'z') && (set_name[0] < 'A' || set_name[0] > 'Z')) {
-    if (leeway) {
-      if (mainw->is_ready)
-        do_warning_dialog(_("As of LiVES 3.2.0 all set names must begin with alphabetical character\n"
-                            "(A - Z or a - z)\nYou will need to give a new name for the set when saving it.\n"));
-    } else {
-      do_error_dialog(_("All set names must begin with an alphabetical character\n(A - Z or a - z)\n"));
-      return FALSE;
-    }
-  }
-
-  if (!allow_dupes) {
-    // check for duplicate set names
-    char *set_dir = lives_build_filename(prefs->workdir, set_name, NULL);
-    if (lives_file_test(set_dir, LIVES_FILE_TEST_IS_DIR)) {
-      lives_free(set_dir);
-      return do_yesno_dialogf(_("\nThe set %s already exists.\n"
-                                "Do you want to add the current clips to the existing set ?.\n"), set_name);
-    }
-    lives_free(set_dir);
-  }
-
   return TRUE;
 }
 
@@ -2851,63 +2756,6 @@ char *get_val_from_cached_list(const char *key, size_t maxlen, LiVESList * cache
       return lives_strndup(speedy->data, maxlen);
   }
   return NULL;
-}
-
-
-
-LiVESList *get_set_list(const char *dir, boolean utf8) {
-  // get list of sets in top level dir
-  // values will be in filename encoding
-
-  LiVESList *setlist = NULL;
-  DIR *tldir, *subdir;
-  struct dirent *tdirent, *subdirent;
-  char *subdirname;
-
-  if (!dir) return NULL;
-
-  tldir = opendir(dir);
-
-  if (!tldir) return NULL;
-
-  lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-
-  while (1) {
-    tdirent = readdir(tldir);
-
-    if (!tdirent) {
-      closedir(tldir);
-      lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-      return setlist;
-    }
-
-    if (tdirent->d_name[0] == '.'
-        && (!tdirent->d_name[1] || tdirent->d_name[1] == '.')) continue;
-
-    subdirname = lives_build_filename(dir, tdirent->d_name, NULL);
-    subdir = opendir(subdirname);
-
-    if (!subdir) {
-      lives_free(subdirname);
-      continue;
-    }
-
-    while (1) {
-      subdirent = readdir(subdir);
-      if (!subdirent) break;
-
-      if (!strcmp(subdirent->d_name, "order")) {
-        if (!utf8)
-          setlist = lives_list_append(setlist, lives_strdup(tdirent->d_name));
-        else
-          setlist = lives_list_append(setlist, F2U8(tdirent->d_name));
-        break;
-      }
-    }
-    lives_free(subdirname);
-    closedir(subdir);
-  }
 }
 
 

@@ -589,16 +589,6 @@ enum {
 
 #define SUBS_FILENAME "subs"
 
-#define CLIP_ORDER_FILENAME "order"
-
-#define SET_LOCK_FILENAME "lock."
-
-#define CLIP_ARCHIVE_NAME "__CLIP_ARCHIVE-"
-
-#define LAYOUT_FILENAME "layout"
-#define LAYOUT_MAP_FILENAME LAYOUT_FILENAME "."  LIVES_FILE_EXT_MAP
-#define LAYOUT_NUMBERING_FILENAME LAYOUT_FILENAME "_numbering"
-
 #define TEMPFILE_MARKER "can_remove"
 
 #define COMMENT_FILENAME ".comment"
@@ -614,6 +604,8 @@ enum {
 #define TRASH_REMOVE 	"remove"
 #define TRASH_RECOVER 	"recover"
 #define TRASH_LEAVE 	"leave"
+
+#define RECOVERY_LITERAL "recovery"
 
 #define UNREC_CLIPS_DIR "unrecoverable_clips"
 #define UNREC_LAYOUTS_DIR "unrecoverable_layouts"
@@ -682,39 +674,6 @@ enum {
 #define LIVES_DEVICEMAP_DIR "devicemaps"
 #define LIVES_DEF_WORK_SUBDIR "livesprojects"
 #define LIVES_RESOURCES_DIR "resources"
-
-#define LAYOUTS_DIRNAME "layouts"
-#define CLIPS_DIRNAME "clips"
-#define IMPORTS_DIRNAME "imports"
-
-#define SET_DIR(set_name) (lives_build_path(prefs->workdir, (set_name), NULL))
-#define FUTURE_SET_DIR(set_name) (lives_build_path(future_prefs->workdir, (set_name), NULL))
-#define CURRENT_SET_DIR SET_DIR(mainw->set_name)
-
-#define SET_LOCK_FILE(set_name, lockfile) lives_build_filename(SET_DIR((set_name)), (lockfile), NULL)
-#define SET_LOCK_FILES_PREFIX(set_name) SET_LOCK_FILE((set_name), SET_LOCK_FILENAME);
-
-// directory where we store 1 clip / all clips if handle is NULL
-#define _MAKE_CLIPS_DIRNAME_(set, handle) lives_build_filename(SET_DIR((set)), CLIPS_DIRNAME, handle, NULL)
-
-// directory where we store 1 clip / all clips if handle is NULL
-#define _MAKE_FUTURE_CLIPS_DIRNAME_(set, handle) lives_build_filename(FUTURE_SET_DIR((set)), CLIPS_DIRNAME, handle, NULL)
-
-// directory for all clips in set
-#define CLIPS_DIR(set) (_MAKE_CLIPS_DIRNAME_((set), NULL))
-
-#define FUTURE_CLIPS_DIR(set) (_MAKE_FUTURE_CLIPS_DIRNAME_((set), NULL))
-
-// directory of a clip in the current set
-#define CURRENT_SET_CLIP_DIR(handle) (_MAKE_CLIPS_DIRNAME_(mainw->set_name, (handle)))
-
-#define LAYOUTS_DIR(set) (lives_build_path(SET_DIR((set)), LAYOUTS_DIRNAME, NULL))
-#define FUTURE_LAYOUTS_DIR(set) (lives_build_path(FUTURE_SET_DIR((set)), LAYOUTS_DIRNAME, NULL))
-
-#define CURRENT_SET_LAYOUTS_DIR (LAYOUTS_DIR(mainw->set_name))
-
-#define LAYOUT_MAP_FILE(set) (lives_build_filename(LAYOUTS_DIR((set)), LAYOUT_MAP_FILENAME, NULL))
-#define FUTURE_LAYOUT_MAP_FILE(set) (lives_build_filename(FUTURE_LAYOUTS_DIR((set)), LAYOUT_MAP_FILENAME, NULL))
 
 // filters
 #define LIVES_SUBS_FILTER  {"*.srt", "*.sub", NULL}
@@ -835,7 +794,6 @@ typedef struct {
   LiVESList *cliplist;
 
   /// sets
-#define MAX_SET_NAME_LEN 128
   char set_name[256];   // actually 128 is the (soft) limit now, filesystem encoding
   boolean was_set;
   boolean leave_files;  ///< TRUE to leave clip files on disk even when closing (default FALSE)
@@ -1439,6 +1397,11 @@ typedef struct {
   lives_painter_surface_t *msg_surface;
 
   LiVESWidget *clipsmenu;
+  LiVESWidget *clipgroups;
+  LiVESWidget *cg_submenu;
+  LiVESWidget *cg_newgroup;
+  LiVESWidget *show_allgroups;
+  LiVESWidget *show_defgroup;
   LiVESWidget *eventbox;
   LiVESWidget *eventbox2;
   LiVESWidget *eventbox3;

@@ -217,8 +217,6 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
 
       lives_free(colref); lives_free(colref2);
 
-      lives_widget_set_size_request(mainw->volume_scale, -1, 12);
-
       set_css_value_direct(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "*", "min-height", tmp);
       set_css_value_direct(mainw->ext_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "*", "min-height", tmp);
 
@@ -245,18 +243,21 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
       set_css_value_direct(lives_widget_get_parent(lives_widget_get_parent(mainw->l3_tb)),
                            LIVES_WIDGET_STATE_NORMAL, "", "opacity", "1.0");
 
-      lives_widget_set_valign(mainw->int_audio_checkbutton, LIVES_ALIGN_START);
-      lives_widget_set_valign(mainw->ext_audio_checkbutton, LIVES_ALIGN_START);
-
-      lives_widget_set_valign(mainw->l1_tb, LIVES_ALIGN_START);
-      lives_widget_set_valign(mainw->l2_tb, LIVES_ALIGN_START);
-      lives_widget_set_valign(mainw->l3_tb, LIVES_ALIGN_START);
-      lives_widget_set_valign(mainw->volume_scale, LIVES_ALIGN_START);
-
-      gtk_button_set_image_position(LIVES_BUTTON(mainw->volume_scale), LIVES_POS_TOP);
       set_css_value_direct(mainw->vol_toolitem,  LIVES_WIDGET_STATE_NORMAL, "", "box-shadow", "none");
     }
 #endif
+    lives_widget_set_valign(mainw->int_audio_checkbutton, LIVES_ALIGN_START);
+    lives_widget_set_valign(mainw->ext_audio_checkbutton, LIVES_ALIGN_START);
+
+    lives_widget_set_valign(mainw->l1_tb, LIVES_ALIGN_START);
+    lives_widget_set_valign(mainw->l2_tb, LIVES_ALIGN_START);
+    lives_widget_set_valign(mainw->l3_tb, LIVES_ALIGN_START);
+    lives_widget_set_valign(mainw->volume_scale, LIVES_ALIGN_START);
+
+    gtk_button_set_image_position(LIVES_BUTTON(mainw->volume_scale), LIVES_POS_TOP);
+
+    lives_widget_set_size_request(mainw->volume_scale, -1, 12);
+
     lives_widget_set_fg_color(mainw->l2_tb, LIVES_WIDGET_STATE_NORMAL, colf2);
     lives_widget_set_fg_color(mainw->l3_tb, LIVES_WIDGET_STATE_NORMAL, colf2);
     lives_widget_set_fg_color(mainw->l2_tb, LIVES_WIDGET_STATE_INSENSITIVE, colf2);
@@ -1334,6 +1335,29 @@ void create_LiVES(void) {
   mainw->rename = lives_standard_image_menu_item_new_with_label(_("_Rename Current Clip in Menu..."));
   lives_container_add(LIVES_CONTAINER(mainw->clipsmenu), mainw->rename);
   lives_widget_set_sensitive(mainw->rename, FALSE);
+
+  lives_menu_add_separator(LIVES_MENU(mainw->clipsmenu));
+
+  mainw->clipgroups = lives_standard_menu_item_new_with_label(_("Clip _Groups"));
+  lives_container_add(LIVES_CONTAINER(mainw->clipsmenu), mainw->clipgroups);
+
+  mainw->cg_submenu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->clipgroups), mainw->cg_submenu);
+  
+  mainw->cg_newgroup = lives_standard_menu_item_new_with_label(_("Create New Group..."));
+  lives_container_add(LIVES_CONTAINER(mainw->cg_submenu), mainw->cg_newgroup);
+
+  mainw->show_allgroups = lives_standard_check_menu_item_new_with_label(_("Show all groups"), TRUE);
+  lives_container_add(LIVES_CONTAINER(mainw->cg_submenu), mainw->show_allgroups);
+
+  lives_menu_add_separator(LIVES_MENU(mainw->cg_submenu));
+
+  mainw->show_defgroup = lives_standard_check_menu_item_new_with_label(_("Default group"), TRUE);
+  lives_container_add(LIVES_CONTAINER(mainw->cg_submenu), mainw->show_defgroup);
+
+  menu_sets_sensitive(LIVES_CHECK_MENU_ITEM(mainw->show_allgroups), mainw->show_defgroup, TRUE); 
+
+  // populate with clip groups
 
   lives_menu_add_separator(LIVES_MENU(mainw->clipsmenu));
 
@@ -2883,6 +2907,9 @@ void create_LiVES(void) {
                             LIVES_GUI_CALLBACK(run_diskspace_dialog_cb), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->rename), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_rename_activate), NULL);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->cg_newgroup), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(new_clipgroup), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(new_test_rfx), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_new_rfx_activate),

@@ -1428,6 +1428,7 @@ static boolean lives_init(_ign_opts *ign_opts) {
   char *libvis_path;
 #endif
   char *msg;
+  char *recfname;
 
   boolean needs_free;
 #ifdef ENABLE_JACK
@@ -2137,8 +2138,10 @@ static boolean lives_init(_ign_opts *ign_opts) {
 
     if (prefs->startup_phase == 0) mainw->first_shown = TRUE;
 
-    mainw->recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, lives_getuid(),
-                           lives_getgid(), capable->mainpid);
+    recfname = lives_strdup_printf("%s.%d.%d.%d", RECOVERY_LITERAL, lives_getuid(), lives_getgid(),
+				   capable->mainpid);
+    mainw->recovery_file = lives_build_filename(prefs->workdir, recfname, NULL);
+    lives_free(recfname);
 
 audio_choice:
     orig_err = 0;
@@ -2715,9 +2718,10 @@ static void do_start_messages(void) {
   lives_free(old_vhash);
 
   if (initial_startup_phase == 0) {
-    fname = lives_strdup_printf("%s.recovery.tried.succeeded", prefs->configfile);
+    char *fname = lives_strdup_printf("%s.%s.tried.succeeded", prefs->configfile, RECOVERY_LITERAL);
     if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
-      phase = lives_strdup_printf(_("%s WAS POSSIBLY RECOVERED FROM %s.recovery\n"), prefs->configfile, prefs->configfile);
+      phase = lives_strdup_printf(_("%s WAS POSSIBLY RECOVERED FROM %s.\n"),
+				  prefs->configfile, prefs->configfile, RECOVERY_LITERAL);
       d_print("%s", phase);
       lives_free(phase);
     }
@@ -2827,7 +2831,9 @@ static void set_extra_colours(void) {
     lives_free(tmp);
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "menu menuitem", "box-shadow", "none");
 
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "menu separator", "background-color", colref);
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_ACTIVE, "scrollbar slider", "background-color", colref);
+
     tmp = lives_strdup_printf("0 0 0 4px %s inset", colref);
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "combobox window menu menuitem", "box-shadow", tmp);
     lives_free(tmp);
@@ -3274,7 +3280,7 @@ boolean set_palette_colours(boolean force_reload) {
   set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "scrollbar", "color", colref);
   lives_free(colref);
 
-  //set_css_value_direct(NULL, LIVES_WIDGET_STATE_INSENSITIVE, "spinbutton button", "opacity", "0.5");
+  set_css_value_direct(NULL, LIVES_WIDGET_STATE_INSENSITIVE, "spinbutton button", "opacity", "0.5");
 
   return TRUE;
 }
@@ -3656,7 +3662,7 @@ void print_opthelp(LiVESTextBuffer * textbuf, const char *extracmds_file1, const
                              "overrides -startup-ce)\n"));
   outp_help(textbuf, "%s", _("-nolayout\t\t\t: do not reload any multitrack layout on startup (overrides -layout)\n"));
   outp_help(textbuf, "%s",
-            _("-norecover\t\t\t: force non-loading of crash recovery files (overrides -recover / -autorecover)\n"));
+            _("-norecover | -noautorecover\t: inhibits loading of crash recovery files (overrides -recover / -autorecover)\n"));
   outp_help(textbuf, "%s",
             _("-recover | -autorecover\t\t: force reloading of any crash recovery files (may override -noset and -nolayout)\n"));
   outp_help(textbuf, "%s", _("-nogui\t\t\t\t: do not show the gui (still shows the play window when active)\n"));
@@ -4256,7 +4262,7 @@ static boolean lives_startup2(livespointer data) {
   }
   mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
 
-  if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
+  if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
     d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));
@@ -4824,6 +4830,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         {"recover", 0, 0, 0},
         {"autorecover", 0, 0, 0},
         {"norecover", 0, 0, 0},
+        {"noautorecover", 0, 0, 0},
         {"nogui", 0, 0, 0},
         {"nosplash", 0, 0, 0},
         {"noplaywin", 0, 0, 0},
@@ -4982,7 +4989,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           continue;
         }
 
-        if (!strcmp(charopt, "norecover")) {
+        if (!strcmp(charopt, "norecover") || !strcmp(charopt, "noautorecover")) {
           // auto no-recovery
           no_recover = TRUE;
           continue;

@@ -666,7 +666,9 @@ boolean mt_load_recovery_layout(lives_mt *mt) {
     // failed to load
     // keep the faulty layout for forensic purposes
     char *uldir = lives_build_path(prefs->workdir, UNREC_LAYOUTS_DIR, NULL);
-    lives_mkdir_with_parents(uldir, capable->umask);
+    if (!lives_file_test(uldir, LIVES_FILE_TEST_IS_DIR)) {
+      lives_mkdir_with_parents(uldir, capable->umask);
+    }
     if (lives_file_test(uldir, LIVES_FILE_TEST_IS_DIR)) {
       char *norem = lives_build_filename(uldir, LIVES_FILENAME_NOREMOVE, NULL);
       lives_touch(norem);
@@ -3839,6 +3841,7 @@ void set_mt_colours(lives_mt * mt) {
 
     set_css_value_direct(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, "",
                          "background-image",  "none");
+    set_css_value_direct(mainw->vol_toolitem,  LIVES_WIDGET_STATE_NORMAL, "", "box-shadow", "none");
   }
 
   lives_widget_apply_theme(mt->in_out_box, LIVES_WIDGET_STATE_NORMAL);

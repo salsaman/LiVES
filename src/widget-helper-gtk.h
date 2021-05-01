@@ -1114,6 +1114,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #endif
 #define LIVES_IS_TEXT_VIEW(widget) GTK_IS_TEXT_VIEW(widget)
 #define LIVES_IS_MENU_ITEM(widget) GTK_IS_MENU_ITEM(widget)
+#define LIVES_IS_SEPARATOR_MENU_ITEM(widget) GTK_IS_SEPARATOR_MENU_ITEM(widget)
 #define LIVES_IS_MENU_BAR(widget) GTK_IS_MENU_BAR(widget)
 #define LIVES_IS_CHECK_MENU_ITEM(widget) GTK_IS_CHECK_MENU_ITEM(widget)
 #define LIVES_IS_FILE_CHOOSER(widget) GTK_IS_FILE_CHOOSER(widget)

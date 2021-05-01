@@ -948,6 +948,7 @@ extern mainwindow *mainw;
 
 #include "player.h"
 #include "cliphandler.h"
+#include "sethandler.h"
 #include "messaging.h"
 
 /// type sizes
@@ -1219,7 +1220,6 @@ char *workdir_ch_warning(void);
 void do_shutdown_msg(void);
 
 boolean do_close_changed_warn(void);
-boolean do_save_clipset_warn(void);
 boolean do_clipboard_fps_warning(void);
 void perf_mem_warning(void);
 void do_dvgrab_error(void);
@@ -1360,7 +1360,7 @@ boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int wi
 void wait_for_stop(const char *stop_command);
 void add_to_recovery_file(const char *handle);
 boolean rewrite_recovery_file(void);
-boolean check_for_recovery_files(boolean auto_recover);
+boolean check_for_recovery_files(boolean auto_recover, boolean no_recover);
 boolean recover_files(char *recovery_file, boolean auto_recover);
 void recover_layout_map(int numclips);
 const char *get_deinterlace_string(void);
@@ -1371,9 +1371,6 @@ void backup_file(int clip, int start, int end, const char *filename);
 
 // saveplay.c restore
 ulong restore_file(const char *filename);
-
-// saveplay.c sets
-void open_set_file(int clipnum);
 
 // saveplay.c scrap file
 boolean open_scrap_file(void);
@@ -1621,13 +1618,11 @@ void unbuffer_lmap_errors(boolean add);
 void clear_lmap_errors(void);
 boolean prompt_remove_layout_files(void);
 boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, const char *nreject);
-boolean is_legal_set_name(const char *set_name, boolean allow_dupes, boolean leeway);
 char *repl_workdir(const char *entry, boolean fwd);
 boolean check_frame_count(int idx, boolean last_chkd);
 frames_t get_frame_count(int idx, int xsize);
 boolean get_frames_sizes(int fileno, frames_t frame_to_test, int *hsize, int *vsize);
 frames_t count_resampled_frames(frames_t in_frames, double orig_fps, double resampled_fps);
-boolean check_for_lock_file(const char *set_name, int type);
 
 boolean create_event_space(int length_in_eventsb);
 void add_to_recent(const char *filename, double start, int frames, const char *file_open_params);
@@ -1645,8 +1640,6 @@ void find_when_to_stop(void);
 
 void minimise_aspect_delta(double allowed_aspect, int hblock, int vblock, int hsize, int vsize, int *width, int *height);
 LiVESInterpType get_interp_value(short quality, boolean low_for_mt);
-
-LiVESList *get_set_list(const char *dir, boolean utf8);
 
 char *subst(const char *string, const char *from, const char *to);
 char *subst_quote(const char *xstring, const char *quotes, const char *from, const char *to);

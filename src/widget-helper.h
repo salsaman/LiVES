@@ -936,6 +936,8 @@ boolean lives_menu_shell_append(LiVESMenuShell *, LiVESWidget *child);
 LiVESWidget *lives_menu_item_new(void);
 LiVESWidget *lives_menu_item_new_with_label(const char *label);
 
+LiVESWidget *lives_separator_menu_item_new(void);
+
 boolean lives_menu_item_set_accel_path(LiVESMenuItem *, const char *path);
 
 LiVESWidget *lives_check_menu_item_new_with_label(const char *label);

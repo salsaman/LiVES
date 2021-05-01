@@ -14,9 +14,6 @@ void lives_exit(int signum);
 void play_all(boolean from_menu);
 void play_sel(void);
 
-void lock_set_file(const char *set_name);
-void unlock_set_file(const char *set_name);
-
 void on_effects_paused(LiVESButton *, livespointer);
 
 void on_cancel_keep_button_clicked(LiVESButton *, livespointer);
@@ -68,8 +65,6 @@ void on_export_theme_activate(LiVESMenuItem *, livespointer);
 void on_import_theme_activate(LiVESMenuItem *, livespointer);
 
 void on_quit_activate(LiVESMenuItem *, livespointer);
-
-void del_current_set(boolean exit_after);
 
 void on_undo_activate(LiVESWidget *, livespointer);
 
@@ -392,14 +387,6 @@ boolean aud_lock_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
 char *get_palette_name_for_clip(int clipno);
 
 boolean show_sync_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer clip_number);
-
-boolean on_save_set_activate(LiVESWidget *, livespointer);
-
-void on_save_set_ok(void);
-
-char *on_load_set_activate(LiVESMenuItem *, livespointer);
-
-boolean reload_set(const char *set_name);
 
 void on_open_vcd_activate(LiVESMenuItem *, livespointer int_type);
 

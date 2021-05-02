@@ -1343,19 +1343,18 @@ void create_LiVES(void) {
 
   mainw->cg_submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->clipgroups), mainw->cg_submenu);
-  
-  mainw->cg_newgroup = lives_standard_menu_item_new_with_label(_("Create New Group..."));
-  lives_container_add(LIVES_CONTAINER(mainw->cg_submenu), mainw->cg_newgroup);
 
-  mainw->show_allgroups = lives_standard_check_menu_item_new_with_label(_("Show all groups"), TRUE);
-  lives_container_add(LIVES_CONTAINER(mainw->cg_submenu), mainw->show_allgroups);
+  mainw->cg_managegroups = lives_standard_menu_item_new_with_label(_("Create and Manage Clip Groups..."));
+  lives_container_add(LIVES_CONTAINER(mainw->cg_submenu), mainw->cg_managegroups);
+  lives_widget_set_sensitive(mainw->cg_managegroups, FALSE);
 
   lives_menu_add_separator(LIVES_MENU(mainw->cg_submenu));
 
   mainw->show_defgroup = lives_standard_check_menu_item_new_with_label(_("Default group"), TRUE);
   lives_container_add(LIVES_CONTAINER(mainw->cg_submenu), mainw->show_defgroup);
 
-  menu_sets_sensitive(LIVES_CHECK_MENU_ITEM(mainw->show_allgroups), mainw->show_defgroup, TRUE); 
+  lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(mainw->show_defgroup), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                    LIVES_GUI_CALLBACK(filter_clips), NULL);
 
   // populate with clip groups
 
@@ -2908,8 +2907,8 @@ void create_LiVES(void) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->rename), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_rename_activate), NULL);
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->cg_newgroup), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(new_clipgroup), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->cg_managegroups), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(manage_clipgroups), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(new_test_rfx), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_new_rfx_activate),
@@ -4752,6 +4751,53 @@ void remove_from_clipmenu(void) {
   }
 #endif
 }
+
+
+void filter_clips(lives_clipgrp_t *clipgrp, livespointer menuitem) {
+  lives_clip_t *sfile;
+  int hidden[MAX_FILES];
+  boolean is_on = FALSE;
+  int i, clipno;
+
+  lives_memset(hidden, 0, MAX_FILES * sizeof(boolean));
+  // if def active, set all TRUE - done
+  // else
+  // set all unknown, if a group is on, set to show
+  // if a group is off, set to not show, unless set on by another group
+  // when done, any set to not show are hidden
+  // if any groups are active we hide unknowns, else we show them
+
+  if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->show_defgroup))) {
+    for (i = 0; i < MAX_FILES; i++) hidden[i] = -1;
+    for (LiVESList *list = mainw->clip_grps; list; list = list->next) {
+      lives_clipgrp_t *clipgrp = (lives_clipgrp_t *)list->data;
+      boolean setting = lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(clipgrp->menuitem));
+      if (setting) is_on = TRUE;
+      for (LiVESList *l2 = clipgrp->list; l2; l2 = l2->next) {
+        uint64_t uid = atol((const char *)l2->data);
+        clipno = find_clip_by_uid(uid);
+        if (IS_VALID_CLIP(clipno)) {
+          if (setting) hidden[clipno] = 0;
+          else if (hidden[clipno] == -1) hidden[clipno] = 1;
+        }
+      }
+    }
+  }
+  for (LiVESList *list = mainw->cliplist; list; list = list->next) {
+    clipno = LIVES_POINTER_TO_INT(list->data);
+    sfile = mainw->files[clipno];
+    if (hidden[clipno]) {
+      sfile->hidden = TRUE;
+      lives_widget_hide(sfile->menuentry);
+      lives_widget_set_no_show_all(sfile->menuentry, TRUE);
+    } else {
+      sfile->hidden = FALSE;
+      lives_widget_set_no_show_all(sfile->menuentry, FALSE);
+      lives_widget_show(sfile->menuentry);
+    }
+  }
+}
+
 
 //////////////////////////////////////////////////////////////////////
 

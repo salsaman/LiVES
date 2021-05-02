@@ -545,8 +545,14 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 
   int x_pos = 0, y_pos = 0;
   double lwidth = (double)dwidth, lheight = (double)(*dheight);
+  boolean set_width = TRUE;
 
   if (!cr) return NULL;
+
+  if (size < 0.) {
+    size = -size;
+    set_width = FALSE;
+  }
 
 #ifdef GUI_GTK
   if (widget) {
@@ -577,6 +583,14 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
     lheight = (double)(*dheight);
     getxypos(layout, &x_pos, &y_pos, dwidth, *dheight, center, &lwidth, &lheight);
   }
+  if (!set_width) {
+    lingo_layout_set_width(layout, -1);
+    /// may cause text to wrap, so call this again
+    x_pos = y_pos = 0;
+    lwidth = (double)dwidth;
+    lheight = (double)(*dheight);
+    getxypos(layout, &x_pos, &y_pos, dwidth, *dheight, center, &lwidth, &lheight);
+  }
 
   if (!rising) y_pos = (double) * dheight * *top;
   if (!center) {
@@ -595,21 +609,22 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
     return layout;
   }
 
+  /* if (x_pos < 0.) x_pos = 0.; */
+  /* if (y_pos < 0.) y_pos = 0.; */
+
   layout_to_lives_painter(layout, cr, mode, fg, bg, lwidth, lheight, x_pos, y_pos, x_pos, y_pos);
 
   return layout;
 }
 
 
-#define RENDER_TEXT_SCALE 48.
-
-LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_layer_t *layer, const char *text) {
+LIVES_GLOBAL_INLINE weed_layer_t *render_text_overlay(weed_layer_t *layer, const char *text, double scaling) {
   if (!text) return layer;
   else {
     lives_colRGBA64_t col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
     lives_colRGBA64_t col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
     const char *font_name = capable->font_fam;
-    int font_size = weed_layer_get_width(layer) / RENDER_TEXT_SCALE;
+    int font_size = weed_layer_get_width(layer) / scaling;
     boolean fake_gamma = FALSE;
 
     if (prefs->apply_gamma) {
@@ -621,9 +636,9 @@ LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_layer_t *layer, const
       }
     }
 
-    layer =  render_text_to_layer(layer, text, font_name, font_size,
-                                  LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,
-                                  &col_white, &col_black_a, TRUE, FALSE, 0.1);
+    layer = render_text_to_layer(layer, text, font_name, font_size,
+                                 LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,
+                                 &col_white, &col_black_a, TRUE, FALSE, 0.1);
     if (fake_gamma)
       weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
   }
@@ -631,12 +646,11 @@ LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_layer_t *layer, const
 }
 
 
-weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const char *fontname,
+weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const char *fontname,
                                    double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col,
                                    lives_colRGBA64_t *bg_col,
                                    boolean center, boolean rising, double top) {
   // render text to layer and return a new layer, which may have a new "rowstrides", "width" and/or "current_palette"
-  // original layer pixel_data is freed in the process and should not be re-used
 
   lives_painter_t *cr = NULL;
   LingoLayout *layout;
@@ -654,6 +668,7 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
                  WEED_YUV_CLAMPING_UNCLAMPED);
     width = weed_layer_get_width(layer);
   }
+
   if (1) {
     weed_layer_t *test_layer, *layer_slice;
     uint8_t *src, *pd;
@@ -667,7 +682,8 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       int ppal = LIVES_PAINTER_COLOR_PALETTE(capable->byte_order), oppal = ppal;
       int ipsize = pixel_size(pal);
       int opsize = pixel_size(ppal);
-      // test first to get the layout coords
+
+      // test first to get the layout coords; we just copy a tiny slice of the pixel data
       gamma = weed_layer_get_gamma(layer);
 
       lheight = height;
@@ -695,6 +711,10 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       weed_layer_free(test_layer);
 
       /// if possible just render the slice which contains the text
+      // temporarily set the layer pixel_data and height to the slice, then copy it,
+      // then restore the original values, using the slice copy
+      // we have to be careful to ensure that the original slice pixel_data never gets freed
+      // although it can be replaced, and then we copy it back and free the new data
       if (top * height + lheight < height) {
         uint8_t *xsrc;
         boolean rbswapped = FALSE;
@@ -707,13 +727,20 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
         layer_slice = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
         weed_layer_copy(layer_slice, layer);
-        weed_leaf_set_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
 
-        // restore original values
+        // ensure we don't mess with the original pixel_data
+        weed_leaf_set_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
+        weed_leaf_delete(layer_slice, WEED_LEAF_HOST_PIXBUF_SRC);
+        weed_leaf_delete(layer_slice, WEED_LEAF_HOST_SURFACE_SRC);
+
+        // restore original values for the original layer
         weed_layer_set_height(layer, height);
         weed_layer_set_pixel_data_packed(layer, src);
 
         if (consider_swapping(&pal, &ppal)) {
+          // we may be able to speed things up, for example if we need to convert from
+          // BGR -> RGBA, we can pretend the layer palette is RGB, and then swap the red / blue of the fg and bg
+          // then after converting back from RGBA -> RGB, we just reset it back to BGR again
           if (ppal == oppal) {
             lives_colRGBA64_t col;
             rbswapped = TRUE;
@@ -730,9 +757,10 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
         cr = layer_to_lives_painter(layer_slice);
 
 #ifdef LIVES_PAINTER_IS_CAIRO
+        // set antialiasing for text, depending on the current quality setting
         if (prefs->pb_quality == PB_QUALITY_LOW) antialias = CAIRO_ANTIALIAS_NONE;
         else if (prefs->pb_quality == PB_QUALITY_MED) antialias = CAIRO_ANTIALIAS_FAST;
-        else antialias = CAIRO_ANTIALIAS_GOOD; // BEST is broken (?)t
+        else antialias = CAIRO_ANTIALIAS_GOOD; // BEST is broken (?)
         cairo_get_font_options(cr, ftopts);
         cairo_font_options_set_antialias(ftopts, antialias);
         cairo_set_font_options(cr, ftopts);
@@ -744,28 +772,26 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
           lingo_painter_show_layout(cr, layout);
           lives_widget_object_unref(layout);
         }
-        // frees pd
-        lives_painter_to_layer(cr, layer_slice);
-        /// make sure our slice isn't freed, since it is actually part of the image
-        /// which we will overwrite
 
+        lives_painter_to_layer(cr, layer_slice);
         convert_layer_palette(layer_slice, pal, 0);
-        weed_leaf_clear_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
 
         pd = weed_layer_get_pixel_data(layer_slice);
         if (pd != xsrc) {
           int itop = (int)(top * height);
           int orow = weed_layer_get_rowstride(layer_slice);
           if (row != orow) {
-            g_print("VALUU %d and %d\n", row, orow);
             for (int i = itop; i < itop + lheight; i++) {
               lives_memcpy(&src[i * row], &pd[(i - itop) * orow], row);
             }
           } else lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
         } else weed_layer_nullify_pixel_data(layer_slice);
+
+        weed_leaf_clear_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
         weed_layer_free(layer_slice);
 
         if (rbswapped) {
+          // reverse out fake palette if needed
           lives_colRGBA64_t col;
           col.red = fg_col->red;
           fg_col->red = fg_col->blue;
@@ -787,8 +813,7 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       }
       lives_painter_to_layer(cr, layer);
     }
-    if (gamma != WEED_GAMMA_UNKNOWN)
-      weed_layer_set_gamma(layer, gamma);
+    if (gamma != WEED_GAMMA_UNKNOWN) weed_layer_set_gamma(layer, gamma);
     return layer;
   }
 }

@@ -6,6 +6,20 @@
 #include "main.h"
 #include "cvirtual.h"
 
+
+LIVES_GLOBAL_INLINE int find_clip_by_uid(uint64_t uid) {
+  int clipno = -1;
+  for (LiVESList *list = mainw->cliplist; list; list = list->next) {
+    clipno = LIVES_POINTER_TO_INT(list->data);
+    if (IS_VALID_CLIP(clipno)) {
+      lives_clip_t *sfile = mainw->files[clipno];
+      if (sfile->unique_id == uid) break;
+    } else clipno = -1;
+  }
+  return clipno;
+}
+
+
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
   char *key = NULL;
 
@@ -1455,24 +1469,24 @@ rhd_failed:
       lives_free(hdrback);
       hdrback = lives_strdup_printf("%s.%s", lives_header, LIVES_FILE_EXT_NEW);
       if (!lives_file_test(hdrback, LIVES_FILE_TEST_EXISTS)) {
-	lives_free(hdrback);
-	hdrback = NULL;
-	binfmt = lives_build_filename(clipdir, "." TOTALSAVE_NAME, NULL);
-	gzbinfmt = lives_build_filename(clipdir, "." TOTALSAVE_NAME "." LIVES_FILE_EXT_GZIP, NULL);
-	if (lives_file_test(gzbinfmt, LIVES_FILE_TEST_EXISTS)) {
-	  lives_free(binfmt);
-	  binfmt = gzbinfmt;
-	} else {
-	  lives_free(gzbinfmt);
-	  if (!lives_file_test(binfmt, LIVES_FILE_TEST_EXISTS)) {
-	    char *binfmt2 = lives_build_filename(clipdir, TOTALSAVE_NAME, NULL);
-	    if (lives_file_test(binfmt2, LIVES_FILE_TEST_EXISTS)) {
-	      lives_mv(binfmt2, binfmt);
-	      lives_free(binfmt);
-	      binfmt = binfmt2;
-	    } else {
-	      lives_free(binfmt2); lives_free(binfmt);
-	      binfmt = NULL;
+        lives_free(hdrback);
+        hdrback = NULL;
+        binfmt = lives_build_filename(clipdir, "." TOTALSAVE_NAME, NULL);
+        gzbinfmt = lives_build_filename(clipdir, "." TOTALSAVE_NAME "." LIVES_FILE_EXT_GZIP, NULL);
+        if (lives_file_test(gzbinfmt, LIVES_FILE_TEST_EXISTS)) {
+          lives_free(binfmt);
+          binfmt = gzbinfmt;
+        } else {
+          lives_free(gzbinfmt);
+          if (!lives_file_test(binfmt, LIVES_FILE_TEST_EXISTS)) {
+            char *binfmt2 = lives_build_filename(clipdir, TOTALSAVE_NAME, NULL);
+            if (lives_file_test(binfmt2, LIVES_FILE_TEST_EXISTS)) {
+              lives_mv(binfmt2, binfmt);
+              lives_free(binfmt);
+              binfmt = binfmt2;
+            } else {
+              lives_free(binfmt2); lives_free(binfmt);
+              binfmt = NULL;
 	      // *INDENT-OFF*
 	    }}}}}
     // *INDENT-ON*

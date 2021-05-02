@@ -609,9 +609,13 @@ LiVESTreeModel *lives_combo_get_model(LiVESCombo *);
 boolean lives_combo_set_model(LiVESCombo *, LiVESTreeModel *);
 boolean lives_combo_set_focus_on_click(LiVESCombo *, boolean state);
 void lives_combo_popup(LiVESCombo *);
+boolean lives_combo_remove_text(LiVESCombo *, const char *text);
 boolean lives_combo_remove_all_text(LiVESCombo *);
 
+int lives_combo_get_n_entries(LiVESCombo *);
+
 boolean lives_combo_append_text(LiVESCombo *, const char *text);
+boolean lives_combo_prepend_text(LiVESCombo *, const char *text);
 boolean lives_combo_set_entry_text_column(LiVESCombo *, int column);
 
 const char *lives_combo_get_active_text(LiVESCombo *) WARN_UNUSED;

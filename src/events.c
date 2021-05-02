@@ -4016,7 +4016,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             }
             if (weed_plant_has_leaf(event, WEED_LEAF_OVERLAY_TEXT)) {
               char *texto = weed_get_string_value(event, WEED_LEAF_OVERLAY_TEXT, NULL);
-              render_text_overlay(layer, texto);
+              render_text_overlay(layer, texto, DEF_OVERLAY_SCALING);
               lives_free(texto);
             }
             if (!intimg) {
@@ -5750,8 +5750,6 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
   LiVESCellRenderer *renderer;
   LiVESTreeViewColumn *column;
 
-  LiVESAccelGroup *accel_group;
-
   char **propnames;
 
   char *strval = NULL, *desc = NULL;
@@ -5785,9 +5783,6 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
   event_dialog = lives_standard_dialog_new(_("Event List"), FALSE, winsize_h, winsize_v);
 
-  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-  lives_window_add_accel_group(LIVES_WINDOW(event_dialog), accel_group);
-
   top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(event_dialog));
 
   table = lives_table_new(rows, 6, FALSE);
@@ -5820,7 +5815,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
                                        LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
 
       lives_tree_store_append(treestore, &iter1, NULL);   /* Acquire an iterator */
-      lives_tree_store_set(treestore, &iter1, TITLE_COLUMN, "Properties", -1);
+      lives_tree_store_set(treestore, &iter1, TITLE_COLUMN, _("Properties"), -1);
 
       // get list of keys (property) names for this event
       propnames = weed_plant_list_leaves(event, NULL);
@@ -6095,7 +6090,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       column = lives_tree_view_column_new_with_attributes(NULL,
                renderer, LIVES_TREE_VIEW_COLUMN_TEXT, TITLE_COLUMN, NULL);
 
-      gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
+      lives_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
       lives_tree_view_append_column(LIVES_TREE_VIEW(tree), column);
 
       renderer = lives_cell_renderer_text_new();
@@ -6105,7 +6100,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       gtk_cell_renderer_set_padding(renderer, widget_opts.packing_width, 0);
       column = lives_tree_view_column_new_with_attributes(_("Keys"),
                renderer, LIVES_TREE_VIEW_COLUMN_TEXT, KEY_COLUMN, NULL);
-      gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
+      lives_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
       gtk_tree_view_column_set_expand(column, TRUE);
       lives_tree_view_append_column(LIVES_TREE_VIEW(tree), column);
 
@@ -6113,7 +6108,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       gtk_cell_renderer_set_padding(renderer, widget_opts.packing_width, 0);
       column = lives_tree_view_column_new_with_attributes(_("Values"),
                renderer, LIVES_TREE_VIEW_COLUMN_TEXT, VALUE_COLUMN, NULL);
-      gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
+      lives_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
       gtk_tree_view_column_set_expand(column, TRUE);
       lives_tree_view_append_column(LIVES_TREE_VIEW(tree), column);
 
@@ -6121,7 +6116,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       gtk_cell_renderer_set_padding(renderer, widget_opts.packing_width, 0);
       column = lives_tree_view_column_new_with_attributes(_("Description"),
                renderer, LIVES_TREE_VIEW_COLUMN_TEXT, DESC_COLUMN, NULL);
-      gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
+      lives_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
       gtk_tree_view_column_set_expand(column, TRUE);
       lives_tree_view_append_column(LIVES_TREE_VIEW(tree), column);
 
@@ -6173,8 +6168,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
   lives_button_grab_default_special(ok_button);
 
-  lives_widget_add_accelerator(ok_button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+  lives_window_add_escape(LIVES_WINDOW(event_dialog), ok_button);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);

@@ -45,64 +45,10 @@
 
 //static char file_name[PATH_MAX];
 
-static LiVESResponseType prompt_for_set_save(void);
-
 boolean on_LiVES_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, livespointer user_data) {
   if (!LIVES_IS_INTERACTIVE) return TRUE;
   on_quit_activate(NULL, NULL);
   return TRUE;
-}
-
-
-static void cleanup_set_dir(const char *set_name) {
-  // this function is called:
-  // - when a set is saved and merged with an existing one
-  // - when a set is deleted
-  // - when the last clip in a set is closed
-
-  char *lfiles, *ofile, *sdir;
-  char *cwd = lives_get_current_dir();
-
-  sdir = LAYOUTS_DIR(set_name);
-  if (lives_file_test(sdir, LIVES_FILE_TEST_IS_DIR))
-    lives_rmdir(sdir, FALSE);
-  lives_free(sdir);
-
-  sdir = CLIPS_DIR(set_name);
-  if (lives_file_test(sdir, LIVES_FILE_TEST_IS_DIR))
-    lives_rmdir(sdir, FALSE);
-  lives_free(sdir);
-
-  // remove any stale lockfiles
-  lfiles = SET_LOCK_FILES_PREFIX(set_name);
-
-  if (!lives_chdir(SET_DIR(set_name), TRUE)) {
-    lives_rmglob(lfiles);
-    lives_chdir(cwd, TRUE);
-  }
-  lives_free(lfiles);
-
-  ofile = lives_build_filename(SET_DIR(set_name), CLIP_ORDER_FILENAME, NULL);
-  lives_rm(ofile);
-  lives_free(ofile);
-
-  ofile = lives_build_filename(prefs->workdir, set_name,
-                               CLIP_ORDER_FILENAME "." LIVES_FILE_EXT_NEW, NULL);
-  lives_rm(ofile);
-  lives_free(ofile);
-
-  lives_sync(1);
-
-  sdir = lives_build_path(prefs->workdir, set_name, NULL);
-  lives_rmdir(sdir, FALSE); // set to FALSE in case the user placed extra files there
-  lives_free(sdir);
-
-  if (prefs->ar_clipset && !strcmp(prefs->ar_clipset_name, set_name)) {
-    prefs->ar_clipset = FALSE;
-    lives_memset(prefs->ar_clipset_name, 0, 1);
-    set_string_pref(PREF_AR_CLIPSET, "");
-  }
-  mainw->set_list = lives_list_delete_string(mainw->set_list, set_name);
 }
 
 
@@ -1477,17 +1423,6 @@ void on_save_selection_activate(LiVESMenuItem * menuitem, livespointer user_data
 }
 
 
-static void check_remove_layout_files(void) {
-  if (prompt_remove_layout_files()) {
-    // delete layout directory
-    char *laydir = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
-    lives_rmdir(laydir, TRUE);
-    lives_free(laydir);
-    d_print(_("Layouts were removed for set %s.\n"), mainw->set_name);
-  }
-}
-
-
 void on_close_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *warn, *extra;
   boolean lmap_errors = FALSE, acurrent = FALSE, only_current = FALSE;
@@ -2101,41 +2036,6 @@ void on_restore_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   get_dirname(mainw->proj_load_dir);
   lives_free(file_name);
   check_storage_space(-1, FALSE);
-}
-
-
-void mt_memory_free(void) {
-  int i;
-
-  threaded_dialog_spin(0.);
-
-  mainw->multitrack->no_expose = TRUE;
-
-  if (CURRENT_CLIP_HAS_AUDIO) {
-    delete_audio_tracks(mainw->multitrack, mainw->multitrack->audio_draws, FALSE);
-    if (mainw->multitrack->audio_vols) lives_list_free(mainw->multitrack->audio_vols);
-  }
-
-  if (mainw->multitrack->video_draws) {
-    for (i = 0; i < mainw->multitrack->num_video_tracks; i++) {
-      delete_video_track(mainw->multitrack, i, FALSE);
-    }
-    lives_list_free(mainw->multitrack->video_draws);
-  }
-
-  lives_widget_object_unref(mainw->multitrack->clip_scroll);
-  lives_widget_object_unref(mainw->multitrack->in_out_box);
-
-  lives_list_free(mainw->multitrack->tl_marks);
-
-  if (mainw->multitrack->event_list) event_list_free(mainw->multitrack->event_list);
-  mainw->multitrack->event_list = NULL;
-
-  if (mainw->multitrack->undo_mem) event_list_free_undos(mainw->multitrack);
-
-  recover_layout_cancelled(FALSE);
-
-  threaded_dialog_spin(0.);
 }
 
 
@@ -5070,7 +4970,8 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if (!list_index || ((list_index = list_index->prev) == NULL)) list_index = lives_list_last(mainw->cliplist);
     i = LIVES_POINTER_TO_INT(list_index->data);
-  } while ((!mainw->files[i] || mainw->files[i]->opening || mainw->files[i]->restoring || i == mainw->scrap_file ||
+  } while ((!mainw->files[i] || mainw->files[i]->hidden || mainw->files[i]->opening
+            || mainw->files[i]->restoring || i == mainw->scrap_file ||
             i == mainw->ascrap_file || (!mainw->files[i]->frames && LIVES_IS_PLAYING)) &&
            i != ((type == 2 || (mainw->playing_file > 0 && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && type != 1)) ?
                  mainw->blend_file : mainw->current_file));
@@ -5116,7 +5017,8 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if (!list_index || ((list_index = list_index->next) == NULL)) list_index = mainw->cliplist;
     i = LIVES_POINTER_TO_INT(list_index->data);
-  } while ((!mainw->files[i] || mainw->files[i]->opening || mainw->files[i]->restoring || i == mainw->scrap_file ||
+  } while ((!mainw->files[i] || || mainw->files[i]->hidden || mainw->files[i]->opening
+            || mainw->files[i]->restoring || i == mainw->scrap_file ||
             i == mainw->ascrap_file || (!mainw->files[i]->frames && LIVES_IS_PLAYING)) &&
            i != ((type == 2 || (mainw->playing_file > 0 && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && type != 1)) ?
                  mainw->blend_file : mainw->current_file));

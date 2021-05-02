@@ -790,6 +790,8 @@ static boolean pre_init(void) {
 
   // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
   mainw->string_constants[LIVES_STRING_CONSTANT_ANY] = (_("Any"));
+  // TRANSLATORS: text saying "Default", (as in "*Default* value")
+  mainw->string_constants[LIVES_STRING_CONSTANT_DEFAULT] = (_("Default"));
   // TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
   mainw->string_constants[LIVES_STRING_CONSTANT_NONE] = (_("None"));
   // TRANSLATORS: text saying "recommended", for plugin names, etc.
@@ -2139,7 +2141,7 @@ static boolean lives_init(_ign_opts *ign_opts) {
     if (prefs->startup_phase == 0) mainw->first_shown = TRUE;
 
     recfname = lives_strdup_printf("%s.%d.%d.%d", RECOVERY_LITERAL, lives_getuid(), lives_getgid(),
-				   capable->mainpid);
+                                   capable->mainpid);
     mainw->recovery_file = lives_build_filename(prefs->workdir, recfname, NULL);
     lives_free(recfname);
 
@@ -2721,7 +2723,7 @@ static void do_start_messages(void) {
     char *fname = lives_strdup_printf("%s.%s.tried.succeeded", prefs->configfile, RECOVERY_LITERAL);
     if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
       phase = lives_strdup_printf(_("%s WAS POSSIBLY RECOVERED FROM %s.\n"),
-				  prefs->configfile, prefs->configfile, RECOVERY_LITERAL);
+                                  prefs->configfile, prefs->configfile, RECOVERY_LITERAL);
       d_print("%s", phase);
       lives_free(phase);
     }
@@ -5738,6 +5740,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->loop_video, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_TOTAL_TIME > 0.));
   lives_widget_set_sensitive(mainw->loop_continue, TRUE);
   lives_widget_set_sensitive(mainw->load_audio, TRUE);
+  lives_widget_set_sensitive(mainw->cg_managegroups, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->load_subs, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->erase_subs, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->subt != NULL);
   if ((check_for_executable(&capable->has_cdda2wav, EXEC_CDDA2WAV)
@@ -5926,6 +5929,7 @@ void desensitize(void) {
     }
   }
 
+  lives_widget_set_sensitive(mainw->cg_managegroups, FALSE);
   lives_widget_set_sensitive(mainw->export_submenu, FALSE);
   lives_widget_set_sensitive(mainw->recaudio_submenu, FALSE);
   lives_widget_set_sensitive(mainw->append_audio, FALSE);
@@ -6741,9 +6745,49 @@ check_encache:
 }
 #endif
 
+#ifdef USE_GAPPL
+static int gappquick(GApplication * application, GVariantDict * options,
+                     livespointer user_data) {
+  if (g_variant_dict_contains(options, "zzz")) {
+    print_notice();
+    return 0;
+  }
+  return -1;
+}
+
+
+static int gappcmd(GApplication * application, GApplicationCommandLine * cmdline,
+                   livespointer user_data) {
+  char **st_argv;
+  int st_argc;
+  st_argv = g_application_command_line_get_arguments(cmdline, &st_argc);
+  return real_main(st_argc, st_argv, NULL, 0l);
+}
+#endif
+
 #ifndef IS_LIBLIVES
 int main(int argc, char *argv[]) {
   // call any hooks here
+#ifdef USE_GAPPL
+  GCancellable *canc = g_cancellable_new();
+  GApplication *gapp = g_application_new("com.lives-video.LiVES",
+                                         G_APPLICATION_HANDLES_COMMAND_LINE
+                                         | G_APPLICATION_SEND_ENVIRONMENT);
+
+  g_application_add_main_option(gapp, "version", 0, G_OPTION_ARG_NONE, G_OPTION_ARG_NONE,
+                                "Show version and exit", NULL);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(gapp), "handle-local-options",
+                            LIVES_GUI_CALLBACK(gappquick), NULL);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(gapp), "command-line",
+                            LIVES_GUI_CALLBACK(gappcmd), NULL);
+
+  if (g_application_register(gapp, canc, NULL)) {
+    return g_application_run(gapp, argc, argv);
+  }
+  return 0;
+#endif
   return real_main(argc, argv, NULL, 0l);
 }
 #endif

@@ -478,7 +478,6 @@ static void workdir_entry_check(LiVESEntry * entry, livespointer data) {
     return;
   }
   if (!dirs_equal(last_parentdir, parentdir)) {
-    g_print("CHECK %s\n", parentdir);
     if (!lives_file_test(parentdir, LIVES_FILE_TEST_IS_DIR)) {
       show_warn_image(LIVES_WIDGET(entry), _("WARNING: The parent directory does not exist !"));
     } else {

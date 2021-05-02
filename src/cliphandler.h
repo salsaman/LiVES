@@ -69,6 +69,8 @@ typedef enum {
 #define LIVES_LITERAL_EVENT "event"
 #define LIVES_LITERAL_FRAMES "frames"
 
+int find_clip_by_uid(uint64_t uid);
+
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
 
 boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);

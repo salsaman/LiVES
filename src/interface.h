@@ -223,6 +223,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
 void add_to_clipmenu(void);
 void add_to_clipmenu_any(int clipno);
 void remove_from_clipmenu(void);
+void filter_clips(lives_clipgrp_t *clipgrp, livespointer);
 
 boolean get_play_screen_size(int *opwidth, int *opheight); /// actually in gui.c
 void make_play_window(void);

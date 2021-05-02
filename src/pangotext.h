@@ -53,14 +53,16 @@ typedef enum {
   LIVES_TEXT_MODE_PRECALCULATE
 } lives_text_mode_t;
 
+#define DEF_OVERLAY_SCALING 48.
+
 void reset_font_size(void);
 
 char **get_font_list(void);
 void guess_font_size(LiVESWidget *window, LiVESLabel *xlabel, LiVESLabel *ylabel, double guess);
 
-weed_plant_t *render_text_overlay(weed_layer_t *layer, const char *text);
+weed_layer_t *render_text_overlay(weed_layer_t *layer, const char *text, double scaling);
 
-weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const char *fontname,
+weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const char *fontname,
                                    double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col,
                                    lives_colRGBA64_t *bg_col, boolean center, boolean rising, double top);
 

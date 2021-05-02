@@ -380,6 +380,7 @@ typedef struct {
 enum {
   LIVES_STRING_CONSTANT_ANY = 0,
   LIVES_STRING_CONSTANT_NONE,
+  LIVES_STRING_CONSTANT_DEFAULT,
   LIVES_STRING_CONSTANT_RECOMMENDED,
   LIVES_STRING_CONSTANT_DISABLED,
   LIVES_STRING_CONSTANT_CL,  ///< "the current layout"
@@ -790,8 +791,9 @@ typedef struct {
   //
   int clips_available;
 
-  /// hash table of clips in menu order
-  LiVESList *cliplist;
+  /// list of (int to ptr) clips in menu order
+  LiVESList *cliplist; /// IMPORTANT !!
+  LiVESList *clip_grps; // list of lives_clipgrp_t *
 
   /// sets
   char set_name[256];   // actually 128 is the (soft) limit now, filesystem encoding
@@ -1399,8 +1401,7 @@ typedef struct {
   LiVESWidget *clipsmenu;
   LiVESWidget *clipgroups;
   LiVESWidget *cg_submenu;
-  LiVESWidget *cg_newgroup;
-  LiVESWidget *show_allgroups;
+  LiVESWidget *cg_managegroups;
   LiVESWidget *show_defgroup;
   LiVESWidget *eventbox;
   LiVESWidget *eventbox2;

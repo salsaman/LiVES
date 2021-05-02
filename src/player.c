@@ -190,7 +190,7 @@ static boolean check_for_overlay_text(weed_layer_t *layer) {
       lives_freep((void **)&mainw->urgency_msg);
       return FALSE;
     }
-    render_text_overlay(layer, mainw->urgency_msg);
+    render_text_overlay(layer, mainw->urgency_msg, DEF_OVERLAY_SCALING);
     return TRUE;
   }
 
@@ -199,7 +199,7 @@ static boolean check_for_overlay_text(weed_layer_t *layer) {
       lives_freep((void **)&mainw->overlay_msg);
       show_sync_callback(NULL, NULL, 0, 0, LIVES_INT_TO_POINTER(1));
       if (mainw->overlay_msg) {
-        render_text_overlay(layer, mainw->overlay_msg);
+        render_text_overlay(layer, mainw->overlay_msg, DEF_OVERLAY_SCALING);
         if (prefs->render_overlay && mainw->record && !mainw->record_paused) {
           weed_plant_t *event = get_last_frame_event(mainw->event_list);
           if (event) weed_set_string_value(event, WEED_LEAF_OVERLAY_TEXT, mainw->overlay_msg);
@@ -214,7 +214,7 @@ static boolean check_for_overlay_text(weed_layer_t *layer) {
           return FALSE;
         }
       }
-      render_text_overlay(layer, mainw->overlay_msg);
+      render_text_overlay(layer, mainw->overlay_msg, DEF_OVERLAY_SCALING);
       if (mainw->preview_rendering) lives_freep((void **)&mainw->overlay_msg);
       return TRUE;
     }
@@ -1065,7 +1065,7 @@ boolean load_frame_image(frames_t frame) {
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
         if (!check_for_overlay_text(frame_layer)) {
           if (mainw->multitrack && mainw->multitrack->opts.overlay_timecode) {
-            frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring);
+            frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring, DEF_OVERLAY_SCALING);
           }
         }
       }
@@ -1337,7 +1337,7 @@ boolean load_frame_image(frames_t frame) {
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
         if (!check_for_overlay_text(frame_layer)) {
           if (mainw->multitrack && mainw->multitrack->opts.overlay_timecode) {
-            frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring);
+            frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring, DEF_OVERLAY_SCALING);
           }
         }
       }
@@ -1543,7 +1543,7 @@ boolean load_frame_image(frames_t frame) {
     if (LIVES_IS_PLAYING) {
       if (!check_for_overlay_text(mainw->frame_layer)) {
         if (mainw->multitrack && mainw->multitrack->opts.overlay_timecode) {
-          mainw->frame_layer = render_text_overlay(mainw->frame_layer, mainw->multitrack->timestring);
+          mainw->frame_layer = render_text_overlay(mainw->frame_layer, mainw->multitrack->timestring, DEF_OVERLAY_SCALING);
         }
       }
     }

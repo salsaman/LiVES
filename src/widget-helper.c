@@ -16,7 +16,7 @@
 
 // static defns
 
-#define EV_LIM 256
+#define EV_LIM 64
 
 static boolean _lives_standard_button_set_label(LiVESButton *,
     const char *txt);
@@ -36,7 +36,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
                              const char *detail, const char *value);
 #endif
 
-#define NSLEEP_TIME 2500
+#define NSLEEP_TIME 5000
 
 #define IS_GUI_THREAD (pthread_self() == capable->gui_thread)
 
@@ -3961,9 +3961,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_append_text(LiVESCombo *combo, c
   if (!GTK_IS_LIST_STORE(tmodel)) return FALSE;
   else {
     LiVESTreeIter iter;
-    LiVESListStore *lstore = GTK_LIST_STORE(tmodel);
+    LiVESListStore *lstore = LIVES_LIST_STORE(tmodel);
     gtk_list_store_append(lstore, &iter);   /* Acquire an iterator */
-    lives_tree_store_set(GTK_TREE_STORE(lstore), &iter, 0, text, -1);
+    lives_list_store_set(LIVES_LIST_STORE(lstore), &iter, 0, text, -1);
   }
 
   /* #if GTK_CHECK_VERSION(2, 24, 0) */
@@ -3992,6 +3992,39 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_prepend_text(LiVESCombo *combo, 
   return FALSE;
 }
 
+
+LIVES_GLOBAL_INLINE int lives_combo_get_n_entries(LiVESCombo *combo) {
+  int nnodes = -1;
+#ifdef GUI_GTK
+  LiVESTreeModel *tmodel = lives_combo_get_model(combo);
+  nnodes = gtk_tree_model_iter_n_children(tmodel, NULL);
+#endif
+  return nnodes;
+}
+
+
+boolean lives_combo_remove_text(LiVESCombo *combo, const char *text) {
+#ifdef GUI_GTK
+  LiVESTreeModel *tmodel = lives_combo_get_model(combo);
+  if (GTK_IS_LIST_STORE(tmodel)) {
+    LiVESTreeIter iter;
+    if (lives_tree_model_get_iter_first(tmodel, &iter)) {
+      LiVESTreeStore *xtmodel = lives_tree_store_new(1, LIVES_COL_TYPE_STRING);
+      LiVESTreeIter xiter;
+      char *ret;
+      do {
+        gtk_tree_model_get(LIVES_TREE_MODEL(tmodel), &iter, 0, &ret, -1);
+        if (strcmp(ret, text)) {
+          lives_tree_store_append(xtmodel, &xiter, NULL);
+          lives_tree_store_set(xtmodel, &xiter, 0, ret, -1);
+        }
+      }	while (gtk_tree_model_iter_next(tmodel, &iter));
+      lives_combo_set_model(combo, LIVES_TREE_MODEL(xtmodel));
+    }
+  }
+#endif
+  return FALSE;
+}
 
 boolean lives_combo_remove_all_text(LiVESCombo *combo) {
 #ifdef GUI_GTK
@@ -8093,6 +8126,11 @@ LiVESWidget *lives_layout_add_label(LiVESLayout * layout, const char *text, bool
     lives_widget_unparent(conter);
     lives_layout_pack(LIVES_HBOX(hbox), conter);
     widget_opts.last_container = hbox;
+#if GTK_CHECK_VERSION(3, 16, 0)
+    if (LIVES_SHOULD_EXPAND_HEIGHT)
+      set_css_min_size(label, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
+    lives_widget_set_size_request(label, -1, (((widget_opts.css_min_height * 3 + 3) >> 2) << 1) + widget_opts.packing_height);
+#endif
   } else {
     hbox = lives_hbox_new(FALSE, 0);
     label = lives_standard_label_new_with_tooltips(NULL, LIVES_BOX(hbox), NULL);

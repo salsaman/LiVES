@@ -2458,11 +2458,6 @@ boolean do_clipboard_fps_warning(void) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean do_reload_set_query(void) {
-  return do_yesno_dialog(_("Current clips will be added to the clip set.\nIs that what you want ?\n"));
-}
-
-
 LIVES_GLOBAL_INLINE boolean findex_bk_dialog(const char *fname_back) {
   return do_yesno_dialogf(_("I can attempt to restore the frame index from a backup.\n(%s)\nShall I try ?\n"), fname_back);
 }
@@ -2761,25 +2756,6 @@ void do_audio_import_error(void) {
   do_error_dialog(msg);
   lives_free(msg);
   d_print(_("failed (unknown type)\n"));
-}
-
-
-LIVES_GLOBAL_INLINE boolean prompt_remove_layout_files(void) {
-  return (do_yesno_dialog(
-            _("\nDo you wish to remove the layout files associated with this set ?\n"
-              "(They will not be usable without the set).\n")));
-}
-
-
-boolean do_set_duplicate_warning(const char *new_set) {
-  char *msg = lives_strdup_printf(
-                _("\nA set entitled %s already exists.\n"
-                  "Click %s to add the current clips and layouts to the existing set.\n"
-                  "Click %s to pick a new name.\n"), new_set,
-                STOCK_LABEL_TEXT(OK), STOCK_LABEL_TEXT(CANCEL));
-  boolean retcode = do_warning_dialog_with_check(msg, WARN_MASK_DUPLICATE_SET);
-  lives_free(msg);
-  return retcode;
 }
 
 
@@ -4070,25 +4046,6 @@ LIVES_GLOBAL_INLINE boolean do_noworkdirchange_dialog(void) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean do_set_locked_warning(const char *setname) {
-  return do_yesno_dialogf(
-           _("\nWarning - the set %s\nis in use by another copy of LiVES.\n"
-             "You are strongly advised to close the other copy before clicking %s to continue\n.\n"
-             "Click %s to cancel loading the set.\n"),
-           setname, STOCK_LABEL_TEXT(YES), STOCK_LABEL_TEXT(NO));
-}
-
-
-LIVES_GLOBAL_INLINE void do_no_sets_dialog(const char *dir) {
-  extra_cb_key = 1;
-  do_info_dialogf(_("No Sets could be found in the directory\n%s\n\n"
-                    "If you have Sets in another directory, you can either:\n"
-                    " - change the working directory in Preferences, or\n"
-                    " - restart lives with the -workdir switch to set it temporarily"),
-                  dir);
-}
-
-
 boolean do_foundclips_query(void) {
   char *text = (_("Possible lost clips were detected within the LiVES working directory.\n"
                   "What would you like me to do with them ?\n"));
@@ -4190,24 +4147,6 @@ LIVES_GLOBAL_INLINE LiVESResponseType do_imgfmts_error(lives_img_type_t imgtype)
 LIVES_GLOBAL_INLINE void do_bad_theme_error(const char *themefile) {
   do_error_dialogf(_("\nThe theme file %s has missing elements.\n"
                      "The theme could not be loaded correctly.\n"), themefile);
-}
-
-
-LIVES_GLOBAL_INLINE void do_set_noclips_error(const char *setname) {
-  char *msg = lives_strdup_printf(
-                _("No clips were recovered for set (%s).\n"
-                  "Please check the spelling of the set name and try again.\n"),
-                setname);
-  d_print(msg);
-  lives_free(msg);
-}
-
-
-
-boolean do_set_noclips_query(const char *set_name) {
-  return do_yesno_dialogf(_("LiVES was unable to find any clips in the set %s\n"
-                            "Would you like to delete this set ?\nIt is no longer usable"),
-                          set_name);
 }
 
 
@@ -4448,5 +4387,14 @@ LIVES_GLOBAL_INLINE boolean do_layout_recover_dialog(void) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     return ret;
   }
+}
+
+
+LIVES_GLOBAL_INLINE void do_no_sets_dialog(const char *dir) {
+  extra_cb_key = 1;
+  do_info_dialogf(_("No Sets could be found in the directory\n%s\n\n"
+                    "If you have Sets in another directory, you can either:\n"
+                    " - change the working directory in Preferences, or\n"
+                    " - restart lives with the -workdir switch to set it temporarily"), dir);
 }
 

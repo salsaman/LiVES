@@ -188,6 +188,39 @@ void set_mixer_track_vol(lives_mt *mt, int trackno, double vol) {
 }
 
 
+void mt_memory_free(void) {
+  threaded_dialog_spin(0.);
+
+  mainw->multitrack->no_expose = TRUE;
+
+  if (CURRENT_CLIP_HAS_AUDIO) {
+    delete_audio_tracks(mainw->multitrack, mainw->multitrack->audio_draws, FALSE);
+    if (mainw->multitrack->audio_vols) lives_list_free(mainw->multitrack->audio_vols);
+  }
+
+  if (mainw->multitrack->video_draws) {
+    for (int i = 0; i < mainw->multitrack->num_video_tracks; i++) {
+      delete_video_track(mainw->multitrack, i, FALSE);
+    }
+    lives_list_free(mainw->multitrack->video_draws);
+  }
+
+  lives_widget_object_unref(mainw->multitrack->clip_scroll);
+  lives_widget_object_unref(mainw->multitrack->in_out_box);
+
+  lives_list_free(mainw->multitrack->tl_marks);
+
+  if (mainw->multitrack->event_list) event_list_free(mainw->multitrack->event_list);
+  mainw->multitrack->event_list = NULL;
+
+  if (mainw->multitrack->undo_mem) event_list_free_undos(mainw->multitrack);
+
+  recover_layout_cancelled(FALSE);
+
+  threaded_dialog_spin(0.);
+}
+
+
 boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, unsigned char **mem) {
   weed_plant_t *event;
 

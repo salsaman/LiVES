@@ -911,6 +911,8 @@ typedef struct _lives_clip_t {
   frames_t tcache_dubious_from; /// set by clip alterations, frames from here onwards should be freed
   LiVESList *tcache; /// thumbnail cache, list of lives_tcache_entry_t
   boolean checked; /// clip integrity checked on load - to avoid duplicating it
+
+  boolean hidden; // hidden in menu by clip groups
 } lives_clip_t;
 
 typedef struct {
@@ -1232,8 +1234,6 @@ boolean rdet_suggest_values(int width, int height, double fps, int fps_num, int 
 boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_num, int fps_denom,
                                    int arate, int asigned, boolean swap_endian, boolean anr, boolean save_all);
 void do_messages_window(boolean is_startup);
-void do_firstever_dialog(void);
-void do_upgrade_error_dialog(void);
 void do_no_mplayer_sox_error(void);
 void do_need_mplayer_dialog(void);
 void do_need_mplayer_mpv_dialog(void);
@@ -1245,12 +1245,10 @@ void do_layout_ascrap_file_error(void);
 void do_program_not_found_error(const char *progname);
 void do_lb_composite_error(void);
 void do_lb_convert_error(void);
-void do_set_load_lmap_error(void);
-boolean do_set_duplicate_warning(const char *new_set);
 boolean do_set_rename_old_layouts_warning(const char *new_set);
 boolean do_layout_alter_frames_warning(void);
 boolean do_layout_alter_audio_warning(void);
-boolean do_reload_set_query(void);
+void do_no_sets_dialog(const char *dir);
 boolean findex_bk_dialog(const char *fname_back);
 boolean paste_enough_dlg(int lframe);
 boolean do_yuv4m_open_warning(void);
@@ -1296,12 +1294,9 @@ boolean do_erase_subs_warning(void);
 boolean do_sub_type_warning(const char *ext, const char *type_ext);
 boolean do_move_workdir_dialog(void);
 boolean do_noworkdirchange_dialog(void);
-boolean do_set_locked_warning(const char *setname);
 void do_no_in_vdevs_error(void);
 void do_locked_in_vdevs_error(void);
 void do_do_not_close_d(void);
-boolean do_set_noclips_query(const char *set_name);
-void do_set_noclips_error(const char *setname);
 boolean do_foundclips_query(void);
 void do_no_autolives_error(void);
 void do_autolives_needs_clips_error(void);
@@ -1312,7 +1307,6 @@ void do_bad_theme_error(const char *themefile);
 void do_bad_theme_import_error(const char *theme_file);
 boolean do_theme_exists_warn(const char *themename);
 boolean do_layout_recover_dialog(void);
-void do_no_sets_dialog(const char *dir);
 void add_resnn_label(LiVESDialog *dialog);
 
 void cancel_process(boolean visible);
@@ -1616,7 +1610,6 @@ void buffer_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
 void unbuffer_lmap_errors(boolean add);
 
 void clear_lmap_errors(void);
-boolean prompt_remove_layout_files(void);
 boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, const char *nreject);
 char *repl_workdir(const char *entry, boolean fwd);
 boolean check_frame_count(int idx, boolean last_chkd);

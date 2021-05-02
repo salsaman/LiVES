@@ -928,6 +928,7 @@ void on_fx_insb_clicked(LiVESWidget *button, livespointer mt);
 void on_fx_insa_clicked(LiVESWidget *button, livespointer mt);
 
 // utils
+void mt_memory_free(void);
 boolean event_list_rectify(lives_mt *, weed_plant_t *event_listy);
 void *find_init_event_in_ttable(ttable *trans_table, uint64_t in, boolean normal);
 void reset_renumbering(void);

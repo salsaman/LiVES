@@ -4,6 +4,9 @@
 // see file ../COPYING for licensing details
 
 #include "main.h"
+#include "interface.h"
+#include "callbacks.h"
+#include "cvirtual.h"
 
 boolean is_legal_set_name(const char *set_name, boolean allow_dupes, boolean leeway) {
   // check (clip) set names for validity
@@ -53,7 +56,6 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes, boolean lee
 
   return TRUE;
 }
-
 
 
 LiVESList *get_set_list(const char *dir, boolean utf8) {
@@ -261,7 +263,7 @@ void open_set_file(int clipnum) {
 // will it be copied to the original (the backup is also retained, so it can be used for recovery purposes)
 // it ought to be easy to recreate htis by parsing the subdirectories of /clips in the set but lack of time,,,
 // - also reordering via interface would be nice...
-static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boolean * got_new_handle) {
+static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boolean *got_new_handle) {
   char *ordfile = lives_build_filename(prefs->workdir, mainw->set_name, CLIP_ORDER_FILENAME, NULL);
   char *ordfile_new = lives_build_filename(prefs->workdir, mainw->set_name, CLIP_ORDER_FILENAME "." LIVES_FILE_EXT_NEW, NULL);
   char *cwd = lives_get_current_dir();
@@ -384,7 +386,7 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
 }
 
 
-boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
+boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
   // here is where we save clipsets
   // SAVE CLIPSET FUNCTION
   // also handles migration and merging of sets
@@ -619,7 +621,7 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
 }
 
 
-char *on_load_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+char *on_load_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // get set name (use a modified rename window)
   char *set_name = NULL;
   LiVESResponseType resp;
@@ -1250,6 +1252,119 @@ LiVESResponseType prompt_for_set_save(void) {
 }
 
 
+void cleanup_set_dir(const char *set_name) {
+  // this function is called:
+  // - when a set is saved and merged with an existing one
+  // - when a set is deleted
+  // - when the last clip in a set is closed
+
+  char *lfiles, *ofile, *sdir;
+  char *cwd = lives_get_current_dir();
+
+  sdir = LAYOUTS_DIR(set_name);
+  if (lives_file_test(sdir, LIVES_FILE_TEST_IS_DIR))
+    lives_rmdir(sdir, FALSE);
+  lives_free(sdir);
+
+  sdir = CLIPS_DIR(set_name);
+  if (lives_file_test(sdir, LIVES_FILE_TEST_IS_DIR))
+    lives_rmdir(sdir, FALSE);
+  lives_free(sdir);
+
+  // remove any stale lockfiles
+  lfiles = SET_LOCK_FILES_PREFIX(set_name);
+
+  if (!lives_chdir(SET_DIR(set_name), TRUE)) {
+    lives_rmglob(lfiles);
+    lives_chdir(cwd, TRUE);
+  }
+  lives_free(lfiles);
+
+  ofile = lives_build_filename(SET_DIR(set_name), CLIP_ORDER_FILENAME, NULL);
+  lives_rm(ofile);
+  lives_free(ofile);
+
+  ofile = lives_build_filename(prefs->workdir, set_name,
+                               CLIP_ORDER_FILENAME "." LIVES_FILE_EXT_NEW, NULL);
+  lives_rm(ofile);
+  lives_free(ofile);
+
+  lives_sync(1);
+
+  sdir = lives_build_path(prefs->workdir, set_name, NULL);
+  lives_rmdir(sdir, FALSE); // set to FALSE in case the user placed extra files there
+  lives_free(sdir);
+
+  if (prefs->ar_clipset && !strcmp(prefs->ar_clipset_name, set_name)) {
+    prefs->ar_clipset = FALSE;
+    lives_memset(prefs->ar_clipset_name, 0, 1);
+    set_string_pref(PREF_AR_CLIPSET, "");
+  }
+  mainw->set_list = lives_list_delete_string(mainw->set_list, set_name);
+}
+
+
+LIVES_GLOBAL_INLINE void do_set_noclips_error(const char *setname) {
+  char *msg = lives_strdup_printf(
+                _("No clips were recovered for set (%s).\n"
+                  "Please check the spelling of the set name and try again.\n"),
+                setname);
+  d_print(msg);
+  lives_free(msg);
+}
+
+
+
+LIVES_GLOBAL_INLINE boolean do_set_noclips_query(const char *set_name) {
+  return do_yesno_dialogf(_("LiVES was unable to find any clips in the set %s\n"
+                            "Would you like to delete this set ?\nIt is no longer usable"),
+                          set_name);
+}
+
+
+LIVES_GLOBAL_INLINE boolean do_set_locked_warning(const char *setname) {
+  return do_yesno_dialogf(
+           _("\nWarning - the set %s\nis in use by another copy of LiVES.\n"
+             "You are strongly advised to close the other copy before clicking %s to continue\n.\n"
+             "Click %s to cancel loading the set.\n"),
+           setname, STOCK_LABEL_TEXT(YES), STOCK_LABEL_TEXT(NO));
+}
+
+
+LIVES_GLOBAL_INLINE boolean prompt_remove_layout_files(void) {
+  return (do_yesno_dialog(
+            _("\nDo you wish to remove the layout files associated with this set ?\n"
+              "(They will not be usable without the set).\n")));
+}
+
+
+LIVES_GLOBAL_INLINE boolean do_reload_set_query(void) {
+  return do_yesno_dialog(_("Current clips will be added to the clip set.\nIs that what you want ?\n"));
+}
+
+boolean do_set_duplicate_warning(const char *new_set) {
+  char *msg = lives_strdup_printf(
+                _("\nA set entitled %s already exists.\n"
+                  "Click %s to add the current clips and layouts to the existing set.\n"
+                  "Click %s to pick a new name.\n"), new_set,
+                STOCK_LABEL_TEXT(OK), STOCK_LABEL_TEXT(CANCEL));
+  boolean retcode = do_warning_dialog_with_check(msg, WARN_MASK_DUPLICATE_SET);
+  lives_free(msg);
+  return retcode;
+}
+
+
+void check_remove_layout_files(void) {
+  if (prompt_remove_layout_files()) {
+    // delete layout directory
+    char *laydir = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
+    lives_rmdir(laydir, TRUE);
+    lives_free(laydir);
+    d_print(_("Layouts were removed for set %s.\n"), mainw->set_name);
+  }
+}
+
+
 boolean do_save_clipset_warn(void) {
   char *extra;
   char *msg;
@@ -1272,8 +1387,462 @@ boolean do_save_clipset_warn(void) {
 
 
 //////////// clip groups ///
+#define BW DEF_BUTTON_HEIGHT
+#define BH BW
 
-void new_clipgroup(LiVESWidget *w, livespointer data) {
+#define DEFNAME (mainw->string_constants[LIVES_STRING_CONSTANT_DEFAULT])
+
+static lives_clipgrp_t *current_grp = NULL;
+static LiVESTreeStore *xxtstore = NULL;
+static LiVESTreeIter xxiter;
+
+static boolean is_legal_clpgrp(const char *grpname) {
+  char c = *grpname;
+  for (int i = 0; c; c = grpname[++i]) {
+    if ((c < 'A' || c > 'Z') && (c < 'a' || c > 'z') && (c < '1' || c > '0')
+        && c != '_') return FALSE;
+  }
+  return TRUE;
+}
 
 
+static lives_clipgrp_t *clpgrp_new(const char *name) {
+  lives_clipgrp_t *clpgrp = (lives_clipgrp_t *)lives_calloc(1, sizeof(lives_clipgrp_t));
+  clpgrp->name = lives_strdup(name);
+  return clpgrp;
+}
+
+
+static boolean is_dupe_name(const char *name, LiVESList *list) {
+  if (!lives_strcmp(name, DEFNAME)) return TRUE;
+  for (; list; list = list->next) {
+    lives_clipgrp_t *clpgrp = (lives_clipgrp_t *)list->data;
+    if (!lives_strcmp(clpgrp->name, name)) return TRUE;
+  }
+  return FALSE;
+}
+
+
+static void chk_cgroup_name(LiVESWidget *e, LiVESWidget *okbutton) {
+  const char *clipgrp_name = lives_entry_get_text(LIVES_ENTRY(e));
+  boolean legal, duped, sens = FALSE;
+  if (!*clipgrp_name || ((legal = is_legal_clpgrp(clipgrp_name))
+                         && !(duped = is_dupe_name(clipgrp_name, mainw->clip_grps)))) {
+    hide_warn_image(e);
+    sens = TRUE;
+  } else {
+    if (!legal)
+      show_warn_image(e, _("Clip group names must be composed only of '_' and alphanumeric characters."));
+    else
+      show_warn_image(e, _("Clip group name must be unique for the set"));
+  }
+  lives_widget_set_sensitive(okbutton, sens);
+}
+
+
+static void add_clipgrp(LiVESWidget *w, LiVESCombo *combo) {
+  LiVESWidget *dialog_vbox, *hbox, *entry, *layout;
+  LiVESWidget *okbutton, *cancelbutton;
+  LiVESResponseType resp;
+  LiVESWidget *dialog = lives_standard_dialog_new(_("Create a New Clip Group"),
+                        FALSE, RFX_WINSIZE_H, RFX_WINSIZE_V);
+
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Enter the name of the new group, and you can then add clips to it. "
+                         "From the Clips menu, you can select which clip groups are visible.\n"
+                         "The remaining clips in the set will be temporarily hidden"), FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  entry = lives_standard_entry_new(_("Enter the name of the new group to create"), NULL, -1, 16, LIVES_BOX(hbox), NULL);
+
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                 LIVES_RESPONSE_CANCEL);
+
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+             LIVES_RESPONSE_OK);
+
+  lives_button_grab_default_special(okbutton);
+
+  lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
+
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(entry), "okbutton", (livespointer)okbutton);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(chk_cgroup_name), okbutton);
+
+  chk_cgroup_name(entry, okbutton);
+
+  resp = lives_dialog_run(LIVES_DIALOG(dialog));
+  if (resp == LIVES_RESPONSE_OK) {
+    const char *grpnamex = lives_entry_get_text(LIVES_ENTRY(entry));
+    if (*grpnamex) {
+      char *grpname = lives_strndup(grpnamex, 16);
+      lives_clipgrp_t *clpgrp = clpgrp_new(grpname);
+      int nentries;
+      lives_combo_append_text(combo, grpname);
+      nentries = lives_combo_get_n_entries(combo);
+      mainw->clip_grps = lives_list_append(mainw->clip_grps, clpgrp);
+      lives_combo_set_active_index(combo, nentries - 1);
+      lives_free(grpname);
+    }
+  }
+  lives_widget_destroy(dialog);
+}
+
+
+static void del_clipgrp(LiVESWidget *w, LiVESCombo *combo) {
+  const char *grpname = lives_combo_get_active_text(combo);
+  if (!do_yesno_dialogf(_("\nAre you sure you wish to delete the clip group %s ?\n"), grpname))
+    return;
+  for (LiVESList *list = mainw->clip_grps; list; list = list->next) {
+    lives_clipgrp_t *clpgrp = (lives_clipgrp_t *)list->data;
+    if (!lives_strcmp(clpgrp->name, grpname)) {
+      lives_list_free_all(&clpgrp->list);
+      lives_free(clpgrp->name);
+      if (clpgrp->menuitem) lives_widget_destroy(clpgrp->menuitem);
+      lives_free(clpgrp);
+      mainw->clip_grps = lives_list_remove_node(mainw->clip_grps, list, TRUE);
+      lives_combo_remove_text(combo, grpname);
+      lives_combo_set_active_index(combo, 0);
+      return;
+    }
+  }
+}
+
+
+static void grp_combo_populate(LiVESCombo *combo, LiVESTreeView *tview) {
+  LiVESList *list;
+  lives_clip_t *sfile;
+  LiVESWidget *del_button = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "del_button");
+  LiVESWidget *label = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "label");
+  LiVESWidget *tree = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "tree");
+  char *clipname;
+  const char *grpname = lives_combo_get_active_text(combo);
+  boolean sens = TRUE;
+  int clipno;
+
+  xxtstore = lives_tree_store_new(1, LIVES_COL_TYPE_STRING);
+  lives_tree_store_append(xxtstore, &xxiter, NULL);
+
+  if (!lives_strcmp(grpname, DEFNAME)) {
+    // "default" group
+    list = mainw->cliplist;
+    for (; list; list = list->next) {
+      clipno = LIVES_POINTER_TO_INT(list->data);
+      if (!IS_VALID_CLIP(clipno)) continue;
+      sfile = mainw->files[clipno];
+      clipname = get_menu_name(sfile, FALSE);
+      lives_tree_store_set(xxtstore, &xxiter, 0, clipname, -1);
+      lives_tree_store_append(xxtstore, &xxiter, NULL);
+    }
+    sens = FALSE;
+    current_grp = NULL;
+  } else {
+    for (list = mainw->clip_grps; list; list = list->next) {
+      lives_clipgrp_t *clipgrp = (lives_clipgrp_t *)list->data;
+      if (!lives_strcmp(clipgrp->name, grpname)) {
+        list = clipgrp->list;
+        current_grp = clipgrp;
+        break;
+      }
+    }
+    for (; list; list = list->next) {
+      uint64_t uid = atol((const char *)list->data);
+      clipno = find_clip_by_uid(uid);
+      if (IS_VALID_CLIP(clipno)) {
+        sfile = mainw->files[clipno];
+        clipname = get_menu_name(sfile, FALSE);
+        lives_tree_store_set(xxtstore, &xxiter, 0, clipname, -1);
+        lives_tree_store_append(xxtstore, &xxiter, NULL);
+      }
+    }
+  }
+  lives_tree_view_set_model(tview, LIVES_TREE_MODEL(xxtstore));
+  lives_widget_set_sensitive(del_button, sens);
+  lives_widget_set_sensitive(tree, sens);
+  lives_widget_set_sensitive(label, sens);
+}
+
+
+static int drag_clipno = -1;
+
+static boolean drag_start(LiVESWidget *widget, LiVESXEventButton *event, LiVESCellRenderer *rend) {
+  LiVESWidget *topl = lives_widget_get_toplevel(widget);
+  LiVESXDisplay *disp = lives_widget_get_display(topl);
+  LiVESPixbuf *pixbuf;
+  LiVESXCursor *cursor;
+  lives_colRGBA64_t *col;
+  LiVESTreePath *tpath;
+  lives_clip_t *sfile;
+  //lives_colRGBA64_t col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
+  lives_colRGBA64_t col_black = lives_rgba_col_new(0, 0, 0, 65535);
+  weed_layer_t *layer;
+  uint32_t cwidth, cheight;
+  uint8_t *cpixels;
+  char *clipname;
+  int trow;
+
+  gtk_tree_view_get_path_at_pos(LIVES_TREE_VIEW(widget), event->x, event->y, &tpath, NULL, NULL, NULL);
+  if (tpath) {
+    void *listnode;
+    drag_clipno = atoi(gtk_tree_path_to_string(tpath));
+    listnode = lives_list_nth_data(mainw->cliplist, drag_clipno);
+    if (!listnode) {
+      drag_clipno = 1;
+      return TRUE;
+    }
+    drag_clipno = LIVES_POINTER_TO_INT(listnode);
+  }
+  if (!IS_VALID_CLIP(drag_clipno)) {
+    drag_clipno = -1;
+    return TRUE;
+  }
+
+#ifdef GUI_GTK
+  // see multitrack.c
+  gdk_display_get_maximal_cursor_size(disp, &cwidth, &cheight);
+#endif
+  cheight = widget_opts.css_min_height << 1;
+  pixbuf = lives_pixbuf_new(TRUE, cwidth, cheight);
+
+  trow = lives_pixbuf_get_rowstride(pixbuf);
+  cpixels = lives_pixbuf_get_pixels(pixbuf);
+
+  col = &palette->fxcol;
+
+  if (prefs->extra_colours && mainw->pretty_colours) {
+    widget_color_to_lives_rgba(col, &palette->nice3);
+  }
+
+  for (int j = 0; j < cheight; j++) {
+    for (int k = 0; k < cwidth; k++) {
+      cpixels[0] = col->red >> 8;
+      cpixels[1] = col->green >> 8;
+      cpixels[2] = col->blue >> 8;
+      cpixels[3] = 255;
+      cpixels += 4;
+    }
+    cpixels += (trow - cwidth * 4);
+  }
+
+  layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+  if (!pixbuf_to_layer(layer, pixbuf)) {
+    lives_widget_object_unref(pixbuf);
+  }
+
+  sfile = mainw->files[drag_clipno];
+  clipname = get_menu_name(sfile, FALSE);
+  layer = render_text_to_layer(layer, clipname, capable->font_fam, -12.,
+                               LIVES_TEXT_MODE_FOREGROUND_ONLY,
+                               &col_black, &col_black, TRUE, FALSE, 0.1);
+
+  pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
+  weed_layer_free(layer);
+
+  cursor = lives_cursor_new_from_pixbuf(disp, pixbuf, 0, cheight >> 1);
+  lives_xwindow_set_cursor(lives_widget_get_xwindow(topl), cursor);
+
+  return TRUE;
+}
+
+// need clipno, tree2
+static boolean drag_end(LiVESWidget *widget, LiVESXEventButton *event, LiVESWidget *tree2) {
+  LiVESWidget *topl = lives_widget_get_toplevel(widget);
+  lives_xwindow_set_cursor(lives_widget_get_xwindow(topl), NULL);
+
+  if (IS_VALID_CLIP(drag_clipno)) {
+    LiVESXWindow *window;
+    LiVESXDisplay *disp = lives_widget_get_display(topl);
+    const char *clipname;
+    int win_x, win_y;
+    window = lives_display_get_window_at_pointer
+             ((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
+              disp, &win_x, &win_y);
+    if (window == gtk_tree_view_get_bin_window(LIVES_TREE_VIEW(tree2))) {
+      // need clipno of clip selected,
+      lives_clip_t *sfile = mainw->files[drag_clipno];
+      char *uidstr = lives_strdup_printf("%lu", sfile->unique_id);
+
+      // TODO - no dupes !
+      if (!current_grp->list) {
+        current_grp->menuitem = lives_standard_check_menu_item_new_with_label(current_grp->name, TRUE);
+        lives_container_add(LIVES_CONTAINER(mainw->cg_submenu), current_grp->menuitem);
+        lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(current_grp->menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                          LIVES_GUI_CALLBACK(filter_clips), current_grp);
+        lives_widget_show(current_grp->menuitem);
+      }
+      current_grp->list = lives_list_append(current_grp->list, uidstr);
+      clipname = get_menu_name(sfile, FALSE);
+
+      lives_tree_store_set(xxtstore, &xxiter, 0, clipname, -1);
+      lives_tree_store_append(xxtstore, &xxiter, NULL);
+    }
+  }
+  drag_clipno = -1;
+  return TRUE;
+}
+
+
+void manage_clipgroups(LiVESWidget *w, livespointer data) {
+  lives_clip_t *sfile;
+  LiVESCellRenderer *renderer;
+  LiVESTreeStore *treestore;
+  LiVESTreeIter iter;
+  LiVESList *grpslist = NULL;
+  LiVESTreeViewColumn *column;
+
+  LiVESWidget *img_tips, *label;
+  LiVESWidget *tree, *tree2, *combo;
+  LiVESWidget *add_button, *del_button;
+  LiVESWidget *layout, *okbutton;
+  LiVESWidget *scrolledwindow;
+  LiVESWidget *dialog_vbox, *hbox, *hbox1, *vbox;
+  LiVESWidget *dialog = lives_standard_dialog_new(_("Create and Manage Clip Groups"),
+                        FALSE, RFX_WINSIZE_H << 1, RFX_WINSIZE_V);
+  char *clipname, *msg, *xdefname;
+
+  xdefname = lives_strdup_printf("~%s", DEFNAME);
+
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+
+  msg = lives_strdup_printf(_("Clip groups can be used to filter the number of clips which are accessible "
+                              "via the Clips menu at any one time. "
+                              "This can be used to create smaller subsets within the larger set of available clips.\n"
+                              "The *%s* group contains every clip in the set.\n"), DEFNAME);
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), msg, FALSE);
+  lives_free(msg);
+  add_hsep_to_box(LIVES_BOX(dialog_vbox));
+
+  hbox1 = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox1, FALSE, TRUE, widget_opts.packing_height);
+
+  vbox = lives_vbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(hbox1), vbox, FALSE, TRUE, 0);
+
+  layout = lives_layout_new(LIVES_BOX(vbox));
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  label = lives_layout_add_label(LIVES_LAYOUT(layout), _("Drag clips from here to the group"), TRUE);
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  renderer = lives_cell_renderer_text_new();
+  column = lives_tree_view_column_new_with_attributes(NULL,
+           renderer, LIVES_TREE_VIEW_COLUMN_TEXT, 0, NULL);
+
+  lives_tree_view_column_set_sizing(column, LIVES_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_expand(column, TRUE);
+
+  treestore = lives_tree_store_new(1, LIVES_COL_TYPE_STRING);
+  lives_tree_store_append(treestore, &iter, NULL);
+  lives_tree_store_set(treestore, &iter, 0, _("Clips in Set"), -1);
+
+  tree = lives_tree_view_new_with_model(LIVES_TREE_MODEL(treestore));
+  lives_tree_view_append_column(LIVES_TREE_VIEW(tree), column);
+  lives_tree_view_set_headers_visible(LIVES_TREE_VIEW(tree), FALSE);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(tree), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                            LIVES_GUI_CALLBACK(drag_start), renderer);
+
+  for (LiVESList *list = mainw->cliplist; list; list = list->next) {
+    int clipno = LIVES_POINTER_TO_INT(list->data);
+    if (!IS_VALID_CLIP(clipno)) continue;
+    sfile = mainw->files[clipno];
+    clipname = get_menu_name(sfile, FALSE);
+    lives_tree_store_set(treestore, &iter, 0, clipname, -1);
+    lives_tree_store_append(treestore, &iter, NULL);
+  }
+
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
+  scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, tree);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  lives_box_pack_start(LIVES_BOX(hbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
+
+  vbox = lives_vbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(hbox1), vbox, FALSE, TRUE, 0);
+
+  layout = lives_layout_new(LIVES_BOX(vbox));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  grpslist = lives_list_prepend(grpslist, (char *)DEFNAME);
+  for (LiVESList *list = mainw->clip_grps; list; list = list->next) {
+    char *grpname = ((lives_clipgrp_t *)list->data)->name;
+    if (!lives_strcmp(grpname, DEFNAME)) grpname = xdefname;
+    grpslist = lives_list_append(grpslist, grpname);
+  }
+
+  combo = lives_standard_combo_new(_("Group name:"), grpslist, LIVES_BOX(hbox), NULL);
+  lives_list_free(grpslist);
+
+  ////
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  add_button = lives_standard_button_new_from_stock(LIVES_STOCK_ADD, NULL, BW, BH);
+  lives_layout_pack(LIVES_BOX(hbox), add_button);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(add_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(add_clipgrp), combo);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  del_button = lives_standard_button_new_from_stock(LIVES_STOCK_REMOVE, NULL, BW, BH);
+  lives_layout_pack(LIVES_BOX(hbox), del_button);
+  lives_widget_set_sensitive(del_button, FALSE);
+
+  msg = lives_strdup_printf(H_("Use the '+' button to add a new group, or the '-' button to delete a group.\n"
+                               "(The %s group can never be deleted)"), DEFNAME);
+  img_tips = lives_widget_set_tooltip_text(del_button, H_(msg));
+  lives_free(msg);
+
+  lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
+
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "del_button", (livespointer)del_button);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "tree", (livespointer)tree);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "label", (livespointer)label);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(del_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(del_clipgrp), combo);
+
+  layout = lives_layout_new(LIVES_BOX(vbox));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  renderer = lives_cell_renderer_text_new();
+  column = lives_tree_view_column_new_with_attributes(NULL,
+           renderer, LIVES_TREE_VIEW_COLUMN_TEXT, 0, NULL);
+
+  lives_tree_view_column_set_sizing(column, LIVES_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_expand(column, TRUE);
+
+  treestore = lives_tree_store_new(1, LIVES_COL_TYPE_STRING);
+  lives_tree_store_append(treestore, &iter, NULL);
+  lives_tree_store_set(treestore, &iter, 0, _("Clips in Group %"), -1);
+
+  tree2 = lives_tree_view_new_with_model(LIVES_TREE_MODEL(treestore));
+  lives_tree_view_append_column(LIVES_TREE_VIEW(tree2), column);
+  lives_tree_view_set_headers_visible(LIVES_TREE_VIEW(tree2), FALSE);
+
+  grp_combo_populate(LIVES_COMBO(combo), LIVES_TREE_VIEW(tree2));
+
+  lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(grp_combo_populate), tree2);
+
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
+  scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, tree2);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  lives_box_pack_start(LIVES_BOX(hbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(tree), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
+                            LIVES_GUI_CALLBACK(drag_end), tree2);
+
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+             LIVES_RESPONSE_OK);
+
+  lives_button_grab_default_special(okbutton);
+
+  lives_dialog_run(LIVES_DIALOG(dialog));
+  lives_widget_destroy(dialog);
+  lives_free(xdefname);
 }

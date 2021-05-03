@@ -90,7 +90,6 @@ uint64_t gen_unique_id(void) {
   // and the chance of it happening twice by chance is so unlikely we should discount it
   if (rnum < BILLIONS(1) && last_rnum < BILLIONS(1)) abort();
   last_rnum = rnum;
-  if (rnum == 0x7FFFFFFF00000000) abort();
   return rnum;
 }
 

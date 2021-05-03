@@ -228,13 +228,6 @@ struct _obj_status {
   int refcount;
 };
 
-// pretty straightforward - object enumerates type / subtype specific capabilites for a given intention
-typedef struct {
-  lives_intention intent;
-  int n_caps;
-  int *capabilities; ///< type specific capabilities
-} lives_intentcap_t;
-
 // values which are used to perform the transformation, part of the requirement rules
 typedef struct {
   lives_intention intent;

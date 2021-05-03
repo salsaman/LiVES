@@ -14,7 +14,6 @@
 #include "paramwindow.h"
 #include "ce_thumbs.h"
 
-
 LIVES_GLOBAL_INLINE int lives_set_status(int status) {
   mainw->status |= status;
   return status;

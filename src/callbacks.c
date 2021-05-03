@@ -5162,6 +5162,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
   boolean gotsize = FALSE;
 
+  uint32_t extra_opts = 0;
   int current_file = mainw->current_file;
   int marker_fd;
   int i, ntok, nitems = 0;
@@ -5287,9 +5288,12 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
   tinfo = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)do_auto_dialog, -1,
                                    "si", _("Analysing Disk"), 0);
+
+  if (mainw->multitrack) extra_opts = LIVES_CDISK_LEAVE_LNUMBERING;
+
   tbuff = lives_text_buffer_new();
   com = lives_strdup_printf("%s disk_check %s %u %s", temp_backend, cfile->handle,
-                            prefs->clear_disk_opts, trashdir);
+                            prefs->clear_disk_opts | extra_opts, trashdir);
   lives_free(uidgid);
   lives_popen(com, TRUE, (char *)tbuff, 0);
   lives_free(com);
@@ -5588,6 +5592,9 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   }
 
 cleanup:
+
+  // rwrtie this as it mayh get trashed
+  if (mainw->multitrack) write_backup_layout_numbering(mainw->multitrack);
 
   if (trashdir) lives_free(trashdir);
 

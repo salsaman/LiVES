@@ -622,6 +622,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *render_text_overlay(weed_layer_t *layer, const
   if (!text) return layer;
   else {
     lives_colRGBA64_t col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
+    lives_colRGBA64_t col_black = lives_rgba_col_new(0, 0, 0, 65535);
     lives_colRGBA64_t col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
     const char *font_name = capable->font_fam;
     int font_size = weed_layer_get_width(layer) / scaling;
@@ -636,9 +637,16 @@ LIVES_GLOBAL_INLINE weed_layer_t *render_text_overlay(weed_layer_t *layer, const
       }
     }
 
-    layer = render_text_to_layer(layer, text, font_name, font_size,
-                                 LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,
-                                 &col_white, &col_black_a, TRUE, FALSE, 0.1);
+    if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE
+        || THREAD_INTENTION == LIVES_INTENTION_RENDER) {
+      layer = render_text_to_layer(layer, text, font_name, font_size,
+                                   LIVES_TEXT_MODE_FOREGROUND_ONLY,
+                                   &col_black, &col_black_a, FALSE, FALSE, 0.);
+    } else {
+      layer = render_text_to_layer(layer, text, font_name, font_size,
+                                   LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,
+                                   &col_white, &col_black_a, TRUE, FALSE, 0.1);
+    }
     if (fake_gamma)
       weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
   }

@@ -5740,6 +5740,8 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->loop_video, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_TOTAL_TIME > 0.));
   lives_widget_set_sensitive(mainw->loop_continue, TRUE);
   lives_widget_set_sensitive(mainw->load_audio, TRUE);
+  if (mainw->rendered_fx)
+    lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->cg_managegroups, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->load_subs, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->erase_subs, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->subt != NULL);
@@ -5900,7 +5902,7 @@ void desensitize(void) {
         for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
              mainw->num_rendered_effects_test; i++) {
           if (i == mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate) continue;
-          if (mainw->rendered_fx[i]->props & RFX_PROPS_MAY_RESIZE) continue;
+          //if (mainw->rendered_fx[i]->props & RFX_PROPS_MAY_RESIZE) continue;
           if (mainw->rendered_fx[i]->num_in_channels == 2) continue;
           if (mainw->rendered_fx[i]->menuitem && mainw->rendered_fx[i]->min_frames >= 0)
             lives_widget_set_sensitive(mainw->rendered_fx[i]->menuitem, FALSE);
@@ -5929,6 +5931,8 @@ void desensitize(void) {
     }
   }
 
+  if (mainw->rendered_fx)
+    lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, FALSE);
   lives_widget_set_sensitive(mainw->cg_managegroups, FALSE);
   lives_widget_set_sensitive(mainw->export_submenu, FALSE);
   lives_widget_set_sensitive(mainw->recaudio_submenu, FALSE);

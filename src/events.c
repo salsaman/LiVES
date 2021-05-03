@@ -14,6 +14,7 @@
 #include "resample.h"
 #include "audio.h"
 #include "cvirtual.h"
+#include "rfx-builder.h"
 #ifdef LIBAV_TRANSCODE
 #include "transcode.h"
 #endif
@@ -3972,7 +3973,10 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 weed_layer_free(mainw->scrap_layer);
                 mainw->scrap_layer = NULL;
               }
-
+              if (weed_plant_has_leaf(event, LIVES_LEAF_FAKE_TC)) {
+                ztc = weed_get_int64_value(event, LIVES_LEAF_FAKE_TC, NULL);
+                weed_set_int64_value(layer, LIVES_LEAF_FAKE_TC, ztc);
+              }
               mainw->transrend_layer = layer;
               mainw->transrend_ready = TRUE;
               // sig_progress...

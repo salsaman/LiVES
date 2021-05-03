@@ -437,6 +437,11 @@ typedef struct {
 // avoiding using an enum allows the list to be extended in other headers
 typedef int32_t lives_intention;
 
+typedef struct {
+  lives_intention intent;
+  weed_plant_t *capabilities; ///< type specific capabilities
+} lives_intentcap_t;
+
 #include "lists.h"
 #include "alarms.h"
 #include "threading.h"

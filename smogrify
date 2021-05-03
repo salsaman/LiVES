@@ -9755,6 +9755,8 @@ sub clean_workdir {
     #      - if set bit 6 (64) remove stale recovery files
     #      - if set bit 7 (128) remove empty dirs
 
+    # if set bit 30 (...) leave multitrack crash recovery
+
     my $file;
     my @left;
 
@@ -10136,6 +10138,11 @@ sub clean_workdir {
 
     closedir DIR;
 
+    my $extra = "";
+    unless ($opts & 0x40000000) {
+	$extra = "layout_numbering*";
+    }
+
     unless ($opts & 0x10) {
 	# clean up a few extra remnants
 	if ($new_work) {
@@ -10149,17 +10156,17 @@ sub clean_workdir {
 		&sig_error("Bad default trashdir");
 	    }
 	}
-	print STDERR "\nsmogrify: removing .info.* rfx.* layout_numbering.*" .
+	print STDERR "\nsmogrify: removing .info.*$extra rfx.* $xtra" .
 	    "and keep_layout* from $workdir";
 	print STDERR "\nsmogrify: (can be overridden with option 0x10)\n";
-	print "\nremoving rfx.* .info.*  keep_layout* layout_numbering.* from $workdir";
+	print "\nremoving rfx.* .info.*  keep_layout*$extra from $workdir";
 	print "\n(can be overridden by disabling 'Remove Misc Files')\n";
 	if ($new_work) {
 	    if (! -d $deftrashdir) {
 		make_path $deftrashdir, {mode => 01777};
 	    }
 	}
-	for $filerem(glob "rfx.* keep_layout* .info.* layout_numbering.*") {
+	for $filerem(glob "rfx.* keep_layout* .info.* $extra") {
 	    if ($new_work) {
 		&smog_rename($filerem, $deftrashdir);
 	    }
@@ -10171,6 +10178,7 @@ sub clean_workdir {
 		    splice(@left, $index, 1);
 		    $nitems--;
 		}
+
 		&smog_system("$SYSBIN" . "touch $remdir/$filerem");
 		$nitems++;
 	    }

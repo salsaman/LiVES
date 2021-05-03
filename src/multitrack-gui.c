@@ -2943,6 +2943,7 @@ void mt_desensitise(lives_mt * mt) {
   lives_widget_set_sensitive(mt->remove_first_gaps, FALSE);
   lives_widget_set_sensitive(mt->undo, FALSE);
   lives_widget_set_sensitive(mt->redo, FALSE);
+  lives_widget_set_sensitive(mt->render, FALSE);
   lives_widget_set_sensitive(mt->show_quota, FALSE);
   lives_widget_set_sensitive(mt->jumpback, FALSE);
   lives_widget_set_sensitive(mt->jumpnext, FALSE);
@@ -3043,6 +3044,8 @@ void mt_sensitise(lives_mt * mt) {
   lives_widget_set_sensitive(mt->gens_submenu, TRUE);
   lives_widget_set_sensitive(mt->troubleshoot, TRUE);
   lives_widget_set_sensitive(mt->expl_missing, TRUE);
+
+  lives_widget_set_sensitive(mt->render, TRUE);
 
   lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
 

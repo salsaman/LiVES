@@ -54,7 +54,7 @@ typedef struct {
   lives_proc_thread_t var_tinfo;
   lives_thread_data_t *var_mydata;
   int var_id;
-  lives_intention var_intention;
+  lives_intentcap_t var_intentcap;
   boolean var_com_failed;
   int var_write_failed, var_read_failed;
   boolean var_chdir_failed;
@@ -342,6 +342,8 @@ void lives_hook_prepend(int type, lives_funcptr_t func, livespointer data);
 void lives_hook_remove(int type, lives_funcptr_t func, livespointer data);
 void lives_hooks_clear(int type);
 void lives_hooks_trigger(int type);
+
+#define THREAD_INTENTION THREADVAR(intentcap).intent
 
 // intents - for future use
 // type = thread, subtype livesproc

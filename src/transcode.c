@@ -16,6 +16,7 @@
 #include "transcode.h"
 #include "paramwindow.h"
 #include "effects-weed.h"
+#include "rfx-builder.h"
 
 
 boolean send_layer(weed_layer_t *layer, _vid_playback_plugin *vpp, int64_t timecode) {
@@ -426,9 +427,27 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       error = lives_proc_thread_join_boolean(coder);
     }
     if (!error) {
+      ticks_t ztc;
       weed_plant_t *copy_frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
       weed_layer_copy(copy_frame_layer, frame_layer);
       weed_layer_nullify_pixel_data(frame_layer);
+
+      if (mainw->overlay_msg) lives_free(mainw->overlay_msg);
+      if (weed_plant_has_leaf(frame_layer, LIVES_LEAF_FAKE_TC))
+        ztc = weed_get_int64_value(frame_layer, LIVES_LEAF_FAKE_TC, NULL);
+      else ztc = currticks;
+
+      mainw->overlay_msg = lives_strdup_printf("LiVES version %s powered by Weed ABI version %d, Weed Filter API version %d,\n"
+                           "RFX version %s, Clip Header Version %d\n"
+                           "Timecode %.6f : original frame %ld\n"
+                           "Frame jitter %0.6f sec.\n",
+                           LiVES_VERSION, WEED_ABI_VERSION, WEED_FILTER_API_VERSION,
+                           RFX_VERSION, LIVES_CLIP_HEADER_VERSION,
+                           currticks / TICKS_PER_SECOND_DBL, mainw->frame_index[0],
+                           (currticks - ztc) / TICKS_PER_SECOND_DBL);
+      THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
+      copy_frame_layer = render_text_overlay(copy_frame_layer, mainw->overlay_msg, DEF_OVERLAY_SCALING * 2);
+
       coder = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)send_layer,
                                        WEED_SEED_BOOLEAN, "PVI", copy_frame_layer, vpp, currticks);
     }

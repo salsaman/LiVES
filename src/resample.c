@@ -2143,7 +2143,7 @@ void on_change_speed_ok_clicked(LiVESButton * button, livespointer user_data) {
 
 
 frames_t reorder_frames(int clipno, int rwidth, int rheight) {
-  lives_intention intention = THREADVAR(intention);
+  lives_intention intention = THREAD_INTENTION;
   lives_clip_t *sfile;
   frames_t new_frames, cur_frames;
   char **array;

@@ -2137,7 +2137,8 @@ static boolean rec_desk_done(livespointer data) {
 
     cfile->undo1_dbl = recargs->fps;
     cfile->fps = 0.;
-    THREADVAR(intention) = LIVES_INTENTION_RECORD;
+
+    THREAD_INTENTION = LIVES_INTENTION_RECORD;
 
     on_resample_vid_ok(NULL, NULL);
 

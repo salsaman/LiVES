@@ -458,6 +458,7 @@ typedef struct {
 #define LIVES_CDISK_REMOVE_LOCK_FILES		(1 << 16) ///< not yet implemented - TODO
 #define LIVES_CDISK_REBUILD_ORDER_FILES		(1 << 17) ///< not yet implemented - TODO
 
+#define LIVES_CDISK_LEAVE_LNUMBERING		(1 << 30) ///< internal flag - - preservere layout crash recovery
 #define LIVES_CDISK_SEND_TO_TRASH		(1 << 31)
 
   uint32_t clear_disk_opts;

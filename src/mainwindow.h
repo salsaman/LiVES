@@ -836,8 +836,13 @@ typedef struct {
   boolean opening_loc;  ///< opening location (streaming)
   boolean dvgrab_preview;
   boolean switch_during_pb;
+
+  // recording flags
   boolean clip_switched; ///< for recording - did we switch clips ?
   volatile boolean record;
+  volatile boolean record_paused; ///< pause during recording
+  boolean record_starting; ///< start recording at next frame
+  volatile boolean record_all_audio;
 
   char *fsp_tmpdir;
   volatile boolean fs_preview_active, fs_preview_running, fs_preview_cleanup;
@@ -1631,10 +1636,6 @@ typedef struct {
   ticks_t cevent_tc; ///< timecode of currently processing event
 
   boolean opening_multi; ///< flag to indicate multiple file selection
-
-  volatile boolean record_paused; ///< pause during recording
-
-  boolean record_starting; ///< start recording at next frame
 
   int img_concat_clip;  ///< when opening multiple, image files can get concatenated here (prefs->concat_images)
 

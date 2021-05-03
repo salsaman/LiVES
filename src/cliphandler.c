@@ -193,7 +193,8 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     if (*(double *)retval == 0.) *(double *)retval = sfile->fps;
     break;
   case CLIP_DETAILS_UNIQUE_ID:
-    *(uint64_t *)retval = (uint64_t)atoll(val);
+    *(uint64_t *)retval = (uint64_t)atol(val);
+    break;
   case CLIP_DETAILS_AENDIAN:
     *(int *)retval = atoi(val) * 2; break;
   case CLIP_DETAILS_TITLE:

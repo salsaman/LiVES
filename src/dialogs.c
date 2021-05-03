@@ -650,18 +650,25 @@ LiVESResponseType lives_dialog_run_with_countdown(LiVESDialog *dialog, LiVESResp
 
 
 boolean do_yesno_dialogf_with_countdown(int nclicks, boolean isyes, const char *fmt, ...) {
-  // show Yes/No, returns TRUE if Yes is clicked nclicks times
+  // show Yes/No, returns TRUE if Yes is clicked nclicks times (if isyes if FALSE then 'No' must be clicked)
   LiVESWidget *warning;
   LiVESResponseType response;
   va_list xargs;
-  char *textx;
+  char *textx, *text, *msg;
 
   va_start(xargs, fmt);
   textx = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
 
-  warning = create_message_dialog(LIVES_DIALOG_YESNO, textx, 0);
+  msg = lives_strdup_printf(_("Click the '%s' button %d times to confirm your choice"),
+                            isyes ? STOCK_LABEL_TEXT(YES) : STOCK_LABEL_TEXT(NO), nclicks);
+  text = lives_strdup_printf("%s\n%s", textx, msg);
+  lives_free(msg);
+
   lives_free(textx);
+
+  warning = create_message_dialog(LIVES_DIALOG_YESNO, text, 0);
+  lives_free(text);
 
   response = lives_dialog_run_with_countdown(LIVES_DIALOG(warning), isyes ? LIVES_RESPONSE_YES
              : LIVES_RESPONSE_NO, nclicks);

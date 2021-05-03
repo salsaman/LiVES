@@ -5017,7 +5017,7 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if (!list_index || ((list_index = list_index->next) == NULL)) list_index = mainw->cliplist;
     i = LIVES_POINTER_TO_INT(list_index->data);
-  } while ((!mainw->files[i] || || mainw->files[i]->hidden || mainw->files[i]->opening
+  } while ((!mainw->files[i] || mainw->files[i]->hidden || mainw->files[i]->opening
             || mainw->files[i]->restoring || i == mainw->scrap_file ||
             i == mainw->ascrap_file || (!mainw->files[i]->frames && LIVES_IS_PLAYING)) &&
            i != ((type == 2 || (mainw->playing_file > 0 && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && type != 1)) ?

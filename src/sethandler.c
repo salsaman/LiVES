@@ -1232,8 +1232,8 @@ LiVESResponseType prompt_for_set_save(void) {
           expl = (_("<b>(Note: original source material will NOT be affected !)</b>"));
           widget_opts.use_markup = TRUE;
         }
-        if (!do_warning_dialogf(_("\n\n%s will be permanently deleted from the disk.\n"
-                                  "Are you sure ?\n\n%s"), what, expl)) {
+        if (!do_yesno_dialogf_with_countdown(3, TRUE, _("\n\n%s will be permanently deleted from the disk.\n"
+                                             "Are you sure ?\n\n%s"), what, expl)) {
           resp = LIVES_RESPONSE_ABORT;
         }
         widget_opts.use_markup = FALSE;
@@ -1589,12 +1589,14 @@ static boolean drag_start(LiVESWidget *widget, LiVESXEventButton *event, LiVESCe
   if (tpath) {
     void *listnode;
     drag_clipno = atoi(gtk_tree_path_to_string(tpath));
+    g_print("DC is %d\n", drag_clipno);
     listnode = lives_list_nth_data(mainw->cliplist, drag_clipno);
     if (!listnode) {
       drag_clipno = 1;
       return TRUE;
     }
     drag_clipno = LIVES_POINTER_TO_INT(listnode);
+    g_print("DC2 is %d\n", drag_clipno);
   }
   if (!IS_VALID_CLIP(drag_clipno)) {
     drag_clipno = -1;
@@ -1665,7 +1667,7 @@ static boolean drag_end(LiVESWidget *widget, LiVESXEventButton *event, LiVESWidg
       // need clipno of clip selected,
       lives_clip_t *sfile = mainw->files[drag_clipno];
       char *uidstr = lives_strdup_printf("%lu", sfile->unique_id);
-
+      g_print("uid for %d is %s i.e %d\n", drag_clipno, uidstr, find_clip_by_uid(sfile->unique_id));
       // TODO - no dupes !
       if (!current_grp->list) {
         current_grp->menuitem = lives_standard_check_menu_item_new_with_label(current_grp->name, TRUE);

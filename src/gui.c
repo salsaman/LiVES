@@ -4758,8 +4758,9 @@ void filter_clips(lives_clipgrp_t *clipgrp, livespointer menuitem) {
   int hidden[MAX_FILES];
   boolean is_on = FALSE;
   int i, clipno;
+  for (i = 0; i < MAX_FILES; i++) hidden[i] = -1;
 
-  lives_memset(hidden, 0, MAX_FILES * sizeof(boolean));
+  //lives_memset(hidden, 0, MAX_FILES * sizeof(boolean));
   // if def active, set all TRUE - done
   // else
   // set all unknown, if a group is on, set to show
@@ -4768,7 +4769,6 @@ void filter_clips(lives_clipgrp_t *clipgrp, livespointer menuitem) {
   // if any groups are active we hide unknowns, else we show them
 
   if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->show_defgroup))) {
-    for (i = 0; i < MAX_FILES; i++) hidden[i] = -1;
     for (LiVESList *list = mainw->clip_grps; list; list = list->next) {
       lives_clipgrp_t *clipgrp = (lives_clipgrp_t *)list->data;
       boolean setting = lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(clipgrp->menuitem));
@@ -4786,7 +4786,7 @@ void filter_clips(lives_clipgrp_t *clipgrp, livespointer menuitem) {
   for (LiVESList *list = mainw->cliplist; list; list = list->next) {
     clipno = LIVES_POINTER_TO_INT(list->data);
     sfile = mainw->files[clipno];
-    if (hidden[clipno]) {
+    if ((is_on && hidden[clipno]) || (!is_on && hidden[clipno] != -1)) {
       sfile->hidden = TRUE;
       lives_widget_hide(sfile->menuentry);
       lives_widget_set_no_show_all(sfile->menuentry, TRUE);

@@ -4590,9 +4590,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   advbutton = lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES, _("_Advanced"),
               DEF_BUTTON_WIDTH, -1, LIVES_BOX(hbox), TRUE, NULL);
 
+  THREAD_INTENTION = LIVES_INTENTION_PLAY;
   lives_signal_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_vpp_advanced_clicked),
-                       LIVES_INT_TO_POINTER(LIVES_INTENTION_PLAY));
+                       LIVES_GUI_CALLBACK(on_vpp_advanced_clicked), NULL);
 
   if (mainw->vpp) {
     lives_combo_set_active_string(LIVES_COMBO(pp_combo), mainw->vpp->name);

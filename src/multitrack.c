@@ -13772,7 +13772,8 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   migrate_from_staging(mt->render_file);
 
-  if (render_to_clip(FALSE, FALSE)) {
+  THREAD_INTENTION = LIVES_INTENTION_RENDER;
+  if (render_to_clip(FALSE)) {
     // rendering was successful
 
 #if 0
@@ -13786,6 +13787,7 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     }
 #endif
 
+    THREAD_INTENTION = LIVES_INTENTION_NOTHING;
     mainw->files[mt->render_file]->start = mainw->files[mt->render_file]->frames > 0 ? 1 : 0;
     mainw->files[mt->render_file]->end = mainw->files[mt->render_file]->frames;
     if (mainw->files[mt->render_file]->frames == 0) {

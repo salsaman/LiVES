@@ -401,7 +401,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
   int retval;
   int fd;
 
-  register int i;
+  int i;
 
   if (!lives_file_test(vpp_file, LIVES_FILE_TEST_EXISTS)) {
     return;
@@ -524,44 +524,14 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
           vpp = NULL;
           d_print_file_error_failed();
           return;
-        }
-      }
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
+	  // *INDENT-OFF*
+        }}}} while (retval == LIVES_RESPONSE_RETRY);
 
   d_print_done();
 }
 
 
-void on_vppa_cancel_clicked(LiVESButton *button, livespointer user_data) {
-  _vppaw *vppw = (_vppaw *)user_data;
-  _vid_playback_plugin *vpp = vppw->plugin;
-
-  lives_widget_destroy(vppw->dialog);
-  lives_widget_context_update();
-  if (vpp && vpp != mainw->vpp) {
-    // close the temp current vpp
-    close_vid_playback_plugin(vpp);
-  }
-
-  if (vppw->rfx) {
-    if (!vppw->keep_rfx) {
-      rfx_free(vppw->rfx);
-      lives_free(vppw->rfx);
-    }
-  }
-
-  lives_free(vppw);
-
-  if (prefsw) {
-    lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
-    lives_xwindow_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
-  }
-}
-
-
-void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
-  _vppaw *vppw = (_vppaw *)user_data;
+LiVESResponseType on_vppa_ok_clicked(boolean direct, _vppaw *vppw) {
   uint64_t xwinid = 0;
 
   const char *fixed_fps = NULL;
@@ -575,6 +545,8 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
 
   _vid_playback_plugin *vpp = vppw->plugin;
 
+  LiVESResponseType resp = LIVES_RESPONSE_RETRY;
+
   if (vppw->rfx && mainw->textwidget_focus) {
     // make sure text widgets are updated if they activate the default
     LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
@@ -583,11 +555,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   if (!special_cleanup(TRUE)) {
-    // check for file overwrites with special type "filewrite"
-    // if user declines, will return with LIVES_RESPONSE_RETRY
-    if (LIVES_IS_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))))
-      lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_RETRY);
-    return;
+    return resp;
   }
 
   mainw->textwidget_focus = NULL;
@@ -679,8 +647,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
                 if (mainw->play_window) {
                   xwinid = lives_widget_get_xwinid(mainw->play_window, "Unsupported display type for playback plugin");
                   if (xwinid == -1) {
-                    lives_dialog_response(LIVES_DIALOG(vppw->dialog), LIVES_RESPONSE_CANCEL);
-                    return;
+                    return LIVES_RESPONSE_CANCEL;
                   }
                 }
               }
@@ -820,35 +787,37 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
       vpp->extra_argc = 0;
     }
   }
-  if (button && !mainw->error) on_vppa_cancel_clicked(button, user_data);
-  else lives_dialog_response(LIVES_DIALOG(vppw->dialog), LIVES_RESPONSE_OK);
-  if (button) mainw->error = FALSE;
+  if (direct) {
+    if (!mainw->error) return LIVES_RESPONSE_CANCEL;
+    mainw->error = FALSE;
+  }
+  return LIVES_RESPONSE_OK;
 }
 
 
-void on_vppa_save_clicked(LiVESButton *button, livespointer user_data) {
-  _vppaw *vppw = (_vppaw *)user_data;
+static LiVESResponseType on_vppa_save_clicked(_vppaw *vppw) {
   _vid_playback_plugin *vpp = vppw->plugin;
   char *save_file;
+  LiVESResponseType resp = LIVES_RESPONSE_RETRY;
 
   // apply
   mainw->error = FALSE;
-  on_vppa_ok_clicked(NULL, user_data);
+  resp = on_vppa_ok_clicked(FALSE, vppw);
   if (mainw->error) {
     mainw->error = FALSE;
-    return;
+    return resp;
   }
 
   // get filename
   save_file = choose_file(NULL, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
-  if (!save_file) return;
+  if (!save_file) return resp;
 
   // save
   d_print(_("Saving playback plugin defaults to %s..."), save_file);
   save_vpp_defaults(vpp, save_file);
   d_print_done();
   lives_free(save_file);
-
+  return resp;
 }
 
 
@@ -860,8 +829,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
   LiVESWidget *savebutton;
-
-  LiVESAccelGroup *accel_group;
+  LiVESWidget *overlay_combo = NULL;
 
   _vppaw *vppa;
 
@@ -871,8 +839,9 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   double wscale = 1., hscale = 1.;
 
-  int intention = LIVES_INTENTION_PLAY;
   int hsize, vsize;
+
+  LiVESResponseType resp;
 
   LiVESList *fps_list_strings = NULL;
   LiVESList *pal_list_strings = NULL;
@@ -888,8 +857,6 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   char *ctext = NULL;
 
   // TODO - set default values from tmpvpp
-
-  if (user_data) intention = LIVES_POINTER_TO_INT(user_data);
 
   if (*future_prefs->vpp_name) {
     if (!(tmpvpp = open_vid_playback_plugin(future_prefs->vpp_name, FALSE))) return NULL;
@@ -907,11 +874,11 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   /* vppa->pal_entry = vppa->fps_entry = NULL; */
   /* vppa->keep_rfx = FALSE; */
 
-  vppa->intention = intention;
+  vppa->intention = THREAD_INTENTION;
 
   pversion = (tmpvpp->version)();
 
-  if (intention == LIVES_INTENTION_PLAY)
+  if (THREAD_INTENTION == LIVES_INTENTION_PLAY)
     title = lives_strdup_printf("%s", pversion);
   else {
     // LIVES_INTENTION_TRANSCODE
@@ -923,20 +890,17 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   vppa->dialog = lives_standard_dialog_new(title, FALSE, DEF_DIALOG_WIDTH * wscale, DEF_DIALOG_HEIGHT * hscale);
   lives_free(title);
 
-  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-  lives_window_add_accel_group(LIVES_WINDOW(vppa->dialog), accel_group);
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(vppa->dialog));
 
   // the filling...
-  if (intention == LIVES_INTENTION_PLAY && tmpvpp->get_description) {
+  if (THREAD_INTENTION == LIVES_INTENTION_PLAY && tmpvpp->get_description) {
     desc = (tmpvpp->get_description)();
     if (desc) {
       label = lives_standard_label_new(desc);
       lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
     }
   }
-  if (intention == LIVES_INTENTION_TRANSCODE) {
+  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
     tmp = lives_big_and_bold("%s", _("Quick transcode provides a rapid, high quality preview of the selected frames and audio."));
     widget_opts.use_markup = TRUE;
     label = lives_standard_label_new(tmp);
@@ -958,7 +922,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       }
     }
 
-    if (intention == LIVES_INTENTION_PLAY) {
+    if (THREAD_INTENTION == LIVES_INTENTION_PLAY) {
       // fps
       combo = lives_standard_combo_new((tmp = (_("_FPS"))), fps_list_strings,
                                        LIVES_BOX(dialog_vbox), (tmp2 = (_("Fixed framerate for plugin.\n"))));
@@ -991,7 +955,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     add_fill_to_box(LIVES_BOX(hbox));
 
     hsize = tmpvpp->fwidth > 0 ? tmpvpp->fwidth :
-            intention == LIVES_INTENTION_TRANSCODE ? cfile->hsize : DEF_VPP_HSIZE;
+            THREAD_INTENTION == LIVES_INTENTION_TRANSCODE ? cfile->hsize : DEF_VPP_HSIZE;
 
     vppa->spinbuttonw = lives_standard_spin_button_new(_("_Width"),
                         hsize,
@@ -1000,13 +964,13 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     add_fill_to_box(LIVES_BOX(hbox));
 
     vsize = tmpvpp->fheight > 0 ? tmpvpp->fheight :
-            intention == LIVES_INTENTION_TRANSCODE ? cfile->vsize : DEF_VPP_VSIZE;
+            THREAD_INTENTION == LIVES_INTENTION_TRANSCODE ? cfile->vsize : DEF_VPP_VSIZE;
 
     vppa->spinbuttonh = lives_standard_spin_button_new(_("_Height"),
                         vsize,
                         4., MAX_FRAME_HEIGHT, 4., 16., 0, LIVES_BOX(hbox), NULL);
 
-    if (intention == LIVES_INTENTION_TRANSCODE) {
+    if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
       if (mainw->event_list) {
         lives_widget_set_no_show_all(hbox, TRUE);
       } else {
@@ -1021,7 +985,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     add_fill_to_box(LIVES_BOX(hbox));
   }
 
-  if (intention == LIVES_INTENTION_PLAY) {
+  if (THREAD_INTENTION == LIVES_INTENTION_PLAY) {
     if (tmpvpp->get_palette_list && (pal_list = (*tmpvpp->get_palette_list)())) {
       int i;
 
@@ -1059,7 +1023,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       lives_list_free_all(&pal_list_strings);
     }
   }
-  if (intention == LIVES_INTENTION_TRANSCODE) {
+  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
     vppa->apply_fx = lives_standard_check_button_new(_("Apply current realtime effects"),
                      FALSE, LIVES_BOX(dialog_vbox), NULL);
     if (mainw->event_list) lives_widget_set_no_show_all(widget_opts.last_container, TRUE);
@@ -1070,8 +1034,10 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
     /* LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V / 2, vbox); */
     lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, TRUE, 0);
-    plugin_run_param_window((*tmpvpp->get_init_rfx)(intention), LIVES_VBOX(vbox), &(vppa->rfx));
-    if (intention != LIVES_INTENTION_TRANSCODE) {
+
+    plugin_run_param_window((*tmpvpp->get_init_rfx)(THREAD_INTENTION), LIVES_VBOX(vbox), &(vppa->rfx));
+
+    if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) {
       char *fnamex = lives_build_filename(prefs->workdir, vppa->rfx->name, NULL);
       if (lives_file_test(fnamex, LIVES_FILE_TEST_EXISTS))
         lives_rm(fnamex);
@@ -1086,20 +1052,26 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     }
   }
 
+  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
+    LiVESList *overlay_list = NULL;
+    LiVESWidget *hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
+    overlay_list = lives_list_append(overlay_list, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
+    overlay_list = lives_list_append(overlay_list,_("Statistics"));
+    overlay_combo = lives_standard_combo_new(_("Overlay / Watermark"), overlay_list, LIVES_BOX(hbox), NULL);
+    lives_list_free_all(&overlay_list);
+    lives_dialog_make_widget_first(LIVES_DIALOG(vppa->dialog), hbox);
+  }
+
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(vppa->dialog), LIVES_STOCK_CANCEL, NULL,
                  LIVES_RESPONSE_CANCEL);
 
-  lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+  lives_window_add_escape(LIVES_WINDOW(vppa->dialog), cancelbutton);
 
-  if (intention == LIVES_INTENTION_PLAY) {
+  if (THREAD_INTENTION == LIVES_INTENTION_PLAY) {
     savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(vppa->dialog), LIVES_STOCK_SAVE_AS, NULL,
                  LIVES_RESPONSE_BROWSE);
 
     lives_widget_set_tooltip_text(savebutton, _("Save settings to an alternate file.\n"));
-    lives_signal_connect(LIVES_GUI_OBJECT(savebutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_vppa_save_clicked),
-                         vppa);
   }
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(vppa->dialog), LIVES_STOCK_OK, NULL,
@@ -1107,16 +1079,42 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_button_grab_default_special(okbutton);
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_vppa_cancel_clicked), vppa);
+  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) return vppa;
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_vppa_ok_clicked), vppa);
+  do {
+    resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
+    if (resp == LIVES_RESPONSE_BROWSE) resp = on_vppa_save_clicked(vppa);
+    if (resp == LIVES_RESPONSE_OK) resp = on_vppa_ok_clicked(TRUE, vppa);
+  } while (resp == LIVES_RESPONSE_RETRY);
 
-  lives_widget_show_all(vppa->dialog);
-  lives_window_present(LIVES_WINDOW(vppa->dialog));
-  lives_xwindow_raise(lives_widget_get_xwindow(vppa->dialog));
+  if (overlay_combo) {
+    prefs->twater_type = lives_combo_get_active_index(LIVES_COMBO(overlay_combo));
+  }
 
+  lives_widget_destroy(vppa->dialog);
+
+  if (resp == LIVES_RESPONSE_CANCEL) {
+    _vid_playback_plugin *vppw = vppa->plugin;
+    if (vppw && vppw != mainw->vpp) {
+      // close the temp current vpp
+      close_vid_playback_plugin(vppw);
+    }
+
+    if (vppa->rfx) {
+      if (!vppa->keep_rfx) {
+	rfx_free(vppa->rfx);
+	lives_free(vppa->rfx);
+      }
+    }
+
+    lives_free(vppa);
+    vppa = NULL;
+
+    if (prefsw) {
+      lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
+      lives_xwindow_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
+    }
+  }
   return vppa;
 }
 
@@ -1360,11 +1358,12 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 
   palette_list = (*vpp->get_palette_list)();
 
-  if (future_prefs->vpp_argv) {
+  if (future_prefs->vpp_argv && future_prefs->vpp_palette != WEED_PALETTE_NONE) {
     vpp->palette = future_prefs->vpp_palette;
     vpp->YUV_clamping = future_prefs->vpp_YUV_clamping;
   } else {
-    if (!in_use && mainw->vpp && !(lives_strcmp(name, mainw->vpp->name))) {
+    if (!in_use && mainw->vpp && mainw->vpp->palette != WEED_PALETTE_END
+        && !(lives_strcmp(name, mainw->vpp->name))) {
       vpp->palette = mainw->vpp->palette;
       vpp->YUV_clamping = mainw->vpp->YUV_clamping;
     } else {
@@ -3445,10 +3444,10 @@ weed_plant_t **rfx_params_to_weed(lives_rfx_t *rfx) {
           break;
         case LIVES_PARAM_UNKNOWN:
           break;
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
+
   return wparams;
 }
 #endif

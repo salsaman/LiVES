@@ -366,6 +366,10 @@ typedef struct {
   boolean show_overlay_msgs;
   boolean render_overlay;
 
+  int twater_type; // transcode watermark types
+#define TWATER_TYPE_NONE		0
+#define TWATER_TYPE_STATS		1
+
   /// deprecated
   int midi_check_rate;
   int midi_rpt;

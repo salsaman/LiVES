@@ -3998,7 +3998,7 @@ static boolean lives_startup(livespointer data) {
 
   if (*buff && strcmp(buff, "(null)") && strcmp(buff, "none")) {
     mainw->vpp = open_vid_playback_plugin(buff, TRUE);
-  } else if (prefs->startup_phase == 3) {
+  } else if (prefs->startup_phase <= 3) {
     mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, TRUE);
     if (mainw->vpp) {
       lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);

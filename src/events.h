@@ -304,7 +304,7 @@ LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertra
 ////////////////////////////////////////////////////////////////
 /// rendering
 
-boolean render_to_clip(boolean new_clip, boolean transcode);
+boolean render_to_clip(boolean new_clip);
 boolean start_render_effect_events(weed_plant_t *event_list, boolean render_vid, boolean render_aud);
 
 lives_render_error_t render_events(boolean reset, boolean rend_video, boolean rend_audio);

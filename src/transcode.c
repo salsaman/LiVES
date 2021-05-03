@@ -75,14 +75,18 @@ boolean transcode_prep(void) {
 boolean transcode_get_params(char **fnameptr) {
   // create the param window for the plugin, configure it, and retrieve the filename
   LiVESList *retvals = NULL;
-  _vppaw *vppa = on_vpp_advanced_clicked(NULL, LIVES_INT_TO_POINTER(LIVES_INTENTION_TRANSCODE));
-  lives_rfx_t *rfx = vppa->rfx;
+  _vppaw *vppa;
+  lives_rfx_t *rfx;
   LiVESResponseType resp;
 
+  THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
+  vppa = on_vpp_advanced_clicked(NULL, NULL);
   if (!*fnameptr) *fnameptr = lives_build_filename(mainw->vid_save_dir, DEF_TRANSCODE_FILENAME, NULL);
-
+  rfx = vppa->rfx;
   if (!rfx) {
     lives_widget_destroy(vppa->dialog);
+    THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+    lives_free(vppa);
     return FALSE;
   }
 
@@ -105,13 +109,25 @@ boolean transcode_get_params(char **fnameptr) {
     resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
   } while (resp == LIVES_RESPONSE_RETRY);
 
+  if (resp == LIVES_RESPONSE_OK) on_vppa_ok_clicked(TRUE, vppa);
+
+  lives_widget_destroy(vppa->dialog);
+  lives_free(vppa);
+
   /// need to clean this up here, since we asked for the rfx to be kept
   rfx_clean_exe(rfx);
 
   if (resp == LIVES_RESPONSE_CANCEL) {
+    _vid_playback_plugin *vpp = vppa->plugin;
     mainw->cancelled = CANCEL_USER;
+    /* if (vpp && vpp != mainw->vpp) { */
+    /*   // close the temp current vpp */
+    /*   close_vid_playback_plugin(vpp); */
+    /* } */
+    //lives_widget_destroy(vppa->dialog);
     rfx_free(rfx);
     lives_free(rfx);
+    THREAD_INTENTION = LIVES_INTENTION_NOTHING;
     return FALSE;
   }
 
@@ -141,6 +157,33 @@ void transcode_cleanup(_vid_playback_plugin *vpp) {
 
   mainw->vpp = ovpp;
 }
+
+
+static weed_layer_t *apply_watermark(weed_layer_t *layer, ticks_t currticks) {
+  ticks_t ztc;
+  switch (prefs->twater_type) {
+  case TWATER_TYPE_STATS:
+    if (mainw->overlay_msg) lives_free(mainw->overlay_msg);
+    if (weed_plant_has_leaf(layer, LIVES_LEAF_FAKE_TC))
+      ztc = weed_get_int64_value(layer, LIVES_LEAF_FAKE_TC, NULL);
+    else ztc = currticks;
+
+    mainw->overlay_msg = lives_strdup_printf("LiVES version %s powered by Weed ABI version %d, Weed Filter API version %d,\n"
+                         "RFX version %s, Clip Header Version %d\n"
+                         "Timecode %.6f : original frame %ld\n"
+                         "Frame jitter %0.6f sec.\n",
+                         LiVES_VERSION, WEED_ABI_VERSION, WEED_FILTER_API_VERSION,
+                         RFX_VERSION, LIVES_CLIP_HEADER_VERSION,
+                         currticks / TICKS_PER_SECOND_DBL, mainw->frame_index[0],
+                         (currticks - ztc) / TICKS_PER_SECOND_DBL);
+    layer = render_text_overlay(layer, mainw->overlay_msg, DEF_OVERLAY_SCALING * 2);
+    break;
+  default:
+    break;
+  }
+  return layer;
+}
+
 
 #define COUNT_CHKVAL 100
 
@@ -175,10 +218,15 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
   int i = 0, j;
 
+  THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
+
   if (def_pname) pname = lives_strdup(def_pname);
 
   if (!internal) {
-    if (!transcode_prep()) return FALSE;
+    if (!transcode_prep()) {
+      THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+      return FALSE;
+    }
     vpp = mainw->vpp;
     if (!transcode_get_params(&pname)) goto tr_err2;
   } else {
@@ -427,26 +475,11 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       error = lives_proc_thread_join_boolean(coder);
     }
     if (!error) {
-      ticks_t ztc;
       weed_plant_t *copy_frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
       weed_layer_copy(copy_frame_layer, frame_layer);
       weed_layer_nullify_pixel_data(frame_layer);
 
-      if (mainw->overlay_msg) lives_free(mainw->overlay_msg);
-      if (weed_plant_has_leaf(frame_layer, LIVES_LEAF_FAKE_TC))
-        ztc = weed_get_int64_value(frame_layer, LIVES_LEAF_FAKE_TC, NULL);
-      else ztc = currticks;
-
-      mainw->overlay_msg = lives_strdup_printf("LiVES version %s powered by Weed ABI version %d, Weed Filter API version %d,\n"
-                           "RFX version %s, Clip Header Version %d\n"
-                           "Timecode %.6f : original frame %ld\n"
-                           "Frame jitter %0.6f sec.\n",
-                           LiVES_VERSION, WEED_ABI_VERSION, WEED_FILTER_API_VERSION,
-                           RFX_VERSION, LIVES_CLIP_HEADER_VERSION,
-                           currticks / TICKS_PER_SECOND_DBL, mainw->frame_index[0],
-                           (currticks - ztc) / TICKS_PER_SECOND_DBL);
-      THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
-      copy_frame_layer = render_text_overlay(copy_frame_layer, mainw->overlay_msg, DEF_OVERLAY_SCALING * 2);
+      copy_frame_layer = apply_watermark(copy_frame_layer, currticks);
 
       coder = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)send_layer,
                                        WEED_SEED_BOOLEAN, "PVI", copy_frame_layer, vpp, currticks);
@@ -491,7 +524,7 @@ tr_err:
 
 tr_err2:
   transcode_cleanup(vpp);
-
+  THREAD_INTENTION = LIVES_INTENTION_NOTHING;
   if (!internal) {
     if (needs_dprint) {
       if (mainw->cancelled != CANCEL_NONE) {

@@ -13419,6 +13419,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_set_button_width(LiVESButto
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_make_first(LiVESButtonBox * bbox, LiVESWidget * widget) {
 #ifdef GUI_GTK
+  if (!lives_widget_get_parent(widget)) {
+    lives_box_pack_start(LIVES_BOX(bbox), widget, FALSE, FALSE, 0);
+  }
   // any other layout seems to prevent this from working
   lives_button_box_set_layout(bbox, LIVES_BUTTONBOX_END);
   gtk_button_box_set_child_secondary(bbox, widget, TRUE);

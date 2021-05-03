@@ -619,12 +619,11 @@ boolean lives_combo_prepend_text(LiVESCombo *, const char *text);
 boolean lives_combo_set_entry_text_column(LiVESCombo *, int column);
 
 const char *lives_combo_get_active_text(LiVESCombo *) WARN_UNUSED;
-boolean lives_combo_set_active_text(LiVESCombo *, const char *text);
+boolean lives_combo_set_active_string(LiVESCombo *, const char *active_str);
 boolean lives_combo_set_active_index(LiVESCombo *, int index);
 int lives_combo_get_active_index(LiVESCombo *);
 boolean lives_combo_get_active_iter(LiVESCombo *, LiVESTreeIter *);
 boolean lives_combo_set_active_iter(LiVESCombo *, LiVESTreeIter *);
-boolean lives_combo_set_active_string(LiVESCombo *, const char *active_str);
 
 LiVESWidget *lives_combo_get_entry(LiVESCombo *);
 

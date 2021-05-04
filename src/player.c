@@ -760,7 +760,7 @@ boolean load_frame_image(frames_t frame) {
               // set alt src in layer
               weed_set_voidptr_value(layers[i], WEED_LEAF_HOST_DECODER,
                                      (void *)mainw->track_decoders[i]);
-              pull_frame_threaded(layers[i], img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
+              //pull_frame_threaded(layers[i], img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
             } else {
               weed_layer_pixel_data_free(layers[i]);
             }

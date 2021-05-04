@@ -714,6 +714,7 @@ typedef struct {
   LiVESWidget *apply_fx;
   LiVESWidget *fps_entry;
   LiVESWidget *pal_entry;
+  LiVESWidget *overlay_combo;
   lives_rfx_t *rfx;
   boolean keep_rfx;
   lives_intention intention;

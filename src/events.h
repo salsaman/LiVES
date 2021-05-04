@@ -9,6 +9,9 @@
 #ifndef HAS_LIVES_EVENTS_H
 #define HAS_LIVES_EVENTS_H
 
+#define DEF_AFADE_SECS 10.
+#define DEF_VFADE_SECS 10.
+
 /// for backwards compat.
 #define WEED_LEAF_HINT "hint"
 

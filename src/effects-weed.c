@@ -1788,7 +1788,27 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       break;
     }
     layer = layers[in_tracks[i]];
+    if (!weed_plant_has_leaf(layer, LIVES_LEAF_THREAD_PROCESSING)) {
+      const char *img_ext;
+      int nclip = lives_layer_get_clip(layer);
+      img_ext = get_image_ext_for_type(mainw->files[nclip]->img_type);
+      pull_frame_threaded(layers[i], img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
+    }
+    k++;
+  }
 
+  for (i = k = 0; i < num_ctmpl; i++) {
+    if (k >= num_inc + num_in_alpha) break;
+    channel = in_channels[k];
+    while (k < num_inc + num_in_alpha && weed_palette_is_alpha(weed_channel_get_palette(in_channels[k]))) k++;
+    while (k < num_inc + num_in_alpha && (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_TRUE
+                                          || weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE))
+      k++;
+    if (k >= num_inc + num_in_alpha) break;
+
+    channel = in_channels[k];
+
+    layer = layers[in_tracks[i]];
     if (!weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL)) {
       /// wait for thread to pull layer pixel_data
       if (prefs->dev_show_timing)

@@ -1042,6 +1042,7 @@ typedef struct {
   char rm_cmd[PATH_MAX];
   char mv_cmd[PATH_MAX];
   char cp_cmd[PATH_MAX];
+  char df_cmd[PATH_MAX];
   char ln_cmd[PATH_MAX];
   char chmod_cmd[PATH_MAX];
   char cat_cmd[PATH_MAX];

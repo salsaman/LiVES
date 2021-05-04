@@ -109,7 +109,10 @@ boolean transcode_get_params(char **fnameptr) {
     resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
   } while (resp == LIVES_RESPONSE_RETRY);
 
-  if (resp == LIVES_RESPONSE_OK) on_vppa_ok_clicked(TRUE, vppa);
+  if (resp == LIVES_RESPONSE_OK) {
+    prefs->twater_type = lives_combo_get_active_index(LIVES_COMBO(vppa->overlay_combo));
+    on_vppa_ok_clicked(TRUE, vppa);
+  }
 
   lives_widget_destroy(vppa->dialog);
   lives_free(vppa);
@@ -118,13 +121,7 @@ boolean transcode_get_params(char **fnameptr) {
   rfx_clean_exe(rfx);
 
   if (resp == LIVES_RESPONSE_CANCEL) {
-    _vid_playback_plugin *vpp = vppa->plugin;
     mainw->cancelled = CANCEL_USER;
-    /* if (vpp && vpp != mainw->vpp) { */
-    /*   // close the temp current vpp */
-    /*   close_vid_playback_plugin(vpp); */
-    /* } */
-    //lives_widget_destroy(vppa->dialog);
     rfx_free(rfx);
     lives_free(rfx);
     THREAD_INTENTION = LIVES_INTENTION_NOTHING;
@@ -185,7 +182,7 @@ static weed_layer_t *apply_watermark(weed_layer_t *layer, ticks_t currticks) {
 }
 
 
-#define COUNT_CHKVAL 100
+#define COUNT_CHKVAL 100 ///< how many frames between storage space checks
 
 boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
   _vid_playback_plugin *vpp;

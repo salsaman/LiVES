@@ -399,12 +399,12 @@ enum {
 #define EXEC_MPLAYER2 "mplayer2"
 #define EXEC_MPV "mpv"
 
-#define EXEC_TOUCH "touch"
-#define EXEC_RM "rm"
-#define EXEC_RMDIR "rmdir"
 #define EXEC_SED "sed"
 #define EXEC_GREP "grep"
 #define EXEC_WC "wc"
+
+#define EXEC_FILE "file"
+#define EXEC_MKTEMP "mktemp"
 
 // recommended
 #define EXEC_SOX "sox"
@@ -414,8 +414,7 @@ enum {
 #define EXEC_IDENTIFY "identify"
 #define EXEC_FFPROBE "ffprobe"
 #define EXEC_FFMPEG "ffmpeg"
-#define EXEC_FILE "file"
-#define EXEC_MKTEMP "mktemp"
+#define EXEC_EJECT "eject"
 #define EXEC_YOUTUBE_DL "youtube-dl"
 #define EXEC_YOUTUBE_DLC "youtube-dlc"
 #define EXEC_PIP "pip"
@@ -427,6 +426,7 @@ enum {
 #endif
 #define EXEC_GZIP "gzip"
 #define EXEC_DU "du"
+#define EXEC_DF "df"
 #define EXEC_WGET "wget"
 #define EXEC_CURL "curl"
 
@@ -459,7 +459,7 @@ enum {
 #define EXEC_SNAP "snap"
 
 /// other executables
-#define EXEC_SUDO "sudo"
+#define EXEC_SUDO "sudo" /// for info mesages only; for security this is not called directly
 
 // file types
 #define LIVES_FILE_TYPE_UNKNOWN					(0ull)
@@ -615,6 +615,7 @@ enum {
 #define LIVES_SHARE_DIR "share"
 #define LIVES_DIR_LITERAL LIVES_LITERAL
 #define LIVES_DEVICE_DIR "dev"
+#define LIVES_TMP_DIR "tmp"
 #define LIVES_RUN_DIR "run"
 #define LIVES_SHM_DIR "shm"
 #define LIVES_ETC_DIR "etc"

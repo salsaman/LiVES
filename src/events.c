@@ -3882,10 +3882,10 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               mainw->old_active_track_list[i] = mainw->active_track_list[i];
 
               if (nclip > 0) {
-                const char *img_ext = get_image_ext_for_type(mainw->files[nclip]->img_type);
+                //const char *img_ext = get_image_ext_for_type(mainw->files[nclip]->img_type);
                 // set alt src in layer
                 weed_set_voidptr_value(layers[i], WEED_LEAF_HOST_DECODER, (void *)mainw->track_decoders[i]);
-                pull_frame_threaded(layers[i], img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
+                //pull_frame_threaded(layers[i], img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
                 //pull_frame(layers[i], img_ext, (weed_timecode_t)mainw->currticks);
               } else {
                 weed_layer_pixel_data_free(layers[i]);
@@ -3903,9 +3903,9 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               ztc = weed_get_int64_value(event, LIVES_LEAF_FAKE_TC, NULL);
             else ztc = tc;
 
-            for (i = 0; layers[i]; i++) {
-              check_layer_ready(layers[i]);
-            }
+            /* for (i = 0; layers[i]; i++) { */
+            /*   check_layer_ready(layers[i]); */
+            /* } */
 
             layer = weed_apply_effects(layers, mainw->filter_map, ztc,
                                        cfile->hsize, cfile->vsize, pchains);
@@ -3973,10 +3973,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 weed_layer_free(mainw->scrap_layer);
                 mainw->scrap_layer = NULL;
               }
-              if (weed_plant_has_leaf(event, LIVES_LEAF_FAKE_TC)) {
-                ztc = weed_get_int64_value(event, LIVES_LEAF_FAKE_TC, NULL);
-                weed_set_int64_value(layer, LIVES_LEAF_FAKE_TC, ztc);
-              }
+              weed_leaf_dup(layer, event, LIVES_LEAF_FAKE_TC);
               mainw->transrend_layer = layer;
               mainw->transrend_ready = TRUE;
               // sig_progress...
@@ -6275,9 +6272,19 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
 }
 
 
-static void add_fade_elements(render_details * rdet, LiVESWidget * hbox, boolean is_video) {
+static void add_fade_elements(render_details * rdet, LiVESWidget * hbox, boolean is_video, double maxtime) {
   LiVESWidget *cb;
   LiVESWidget *vbox = NULL;
+  double def_fade_time;
+  if (!is_video) def_fade_time = DEF_AFADE_SECS;
+  else def_fade_time = DEF_VFADE_SECS;
+  if (maxtime > 0.) {
+    if (def_fade_time > maxtime / 4.) {
+      def_fade_time = maxtime / 4.;
+      if (def_fade_time > 1.) def_fade_time = (double)((int)def_fade_time);
+    }
+  }
+
   if (is_video) {
     vbox = lives_vbox_new(FALSE, widget_opts.packing_height >> 1);
     lives_box_pack_start(LIVES_BOX(hbox), vbox, FALSE, TRUE, 0);
@@ -6291,12 +6298,12 @@ static void add_fade_elements(render_details * rdet, LiVESWidget * hbox, boolean
   widget_opts.swap_label = TRUE;
   if (!is_video) {
     rdet->afade_in = lives_standard_spin_button_new(_("seconds"),
-                     10., 0., 1000., 1., 1., 2,
+                     def_fade_time, 0., 1000., 1., 1., 2,
                      LIVES_BOX(hbox), NULL);
     toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(cb), rdet->afade_in, FALSE);
   } else {
     rdet->vfade_in = lives_standard_spin_button_new(_("seconds"),
-                     10., 0., 1000., 1., 1., 2,
+                     def_fade_time, 0., 1000., 1., 1., 2,
                      LIVES_BOX(hbox), NULL);
     toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(cb), rdet->vfade_in, FALSE);
   }
@@ -6309,12 +6316,12 @@ static void add_fade_elements(render_details * rdet, LiVESWidget * hbox, boolean
   widget_opts.swap_label = TRUE;
   if (!is_video) {
     rdet->afade_out = lives_standard_spin_button_new(_("seconds"),
-                      10., 0., 1000., 1., 1., 2,
+                      def_fade_time, 0., 1000., 1., 1., 2,
                       LIVES_BOX(hbox), NULL);
     toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(cb), rdet->afade_out, FALSE);
   } else {
     rdet->vfade_out = lives_standard_spin_button_new(_("seconds"),
-                      10., 0., 1000., 1., 1., 2,
+                      def_fade_time, 0., 1000., 1., 1., 2,
                       LIVES_BOX(hbox), NULL);
     toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(cb), rdet->vfade_out, FALSE);
   }
@@ -6608,6 +6615,7 @@ render_details *create_render_details(int type) {
   }
 
   if (type == 2) {
+    double max_time = 0.;
     add_fill_to_box(LIVES_BOX(resaudw->vbox));
 
     hbox = lives_hbox_new(FALSE, 0);
@@ -6618,7 +6626,10 @@ render_details *create_render_details(int type) {
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(resaudw->vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-    add_fade_elements(rdet, hbox, FALSE);
+    if (mainw->event_list) max_time = (double)(get_event_timecode(get_last_frame_event(mainw->event_list))
+                                        - get_event_timecode(get_first_frame_event(mainw->event_list)))
+                                        / TICKS_PER_SECOND_DBL + 1. / lives_spin_button_get_value(LIVES_SPIN_BUTTON(rdet->spinbutton_fps));
+    add_fade_elements(rdet, hbox, FALSE, max_time);
   }
 
   if (type == 3) {

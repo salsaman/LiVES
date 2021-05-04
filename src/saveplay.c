@@ -2047,7 +2047,11 @@ char *prep_audio_player(char *com2, char *com3, frames_t audio_end, int arate, i
     if (mainw->pulsed) pulse_aud_pb_ready(mainw->current_file);
     return NULL;
 #endif
-  } else if (audio_player != AUD_PLAYER_NONE && cfile->achans > 0) {
+  }
+
+  // deprecated
+
+  else if (audio_player != AUD_PLAYER_NONE && cfile->achans > 0) {
     // sox or mplayer audio - run as background process
     char *clipdir;
     if (com3) {

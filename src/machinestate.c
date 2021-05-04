@@ -183,7 +183,6 @@ void make_nxttab(void) {
 }
 
 
-
 void autotune_u64(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials, double cost) {
   if (tuner) {
     double tc = cost;
@@ -469,20 +468,28 @@ char *use_staging_dir_for(int clipno) {
 
 const char *get_shmdir(void) {
   if (!*capable->shmdir_path) {
-    char *xshmdir, *shmdir = lives_build_path(LIVES_DEVICE_DIR, LIVES_SHM_DIR, NULL);
-    if (!lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)) {
-      lives_free(shmdir);
-      shmdir = lives_build_path(LIVES_RUN_DIR, LIVES_SHM_DIR, NULL);
-      if (!lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)) {
+    char *xshmdir = NULL, *shmdir = lives_build_path(LIVES_RUN_DIR, NULL);
+    if (lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)) {
+      xshmdir = lives_build_path(LIVES_RUN_DIR, LIVES_SHM_DIR, NULL);
+      if (!lives_file_test(xshmdir, LIVES_FILE_TEST_IS_DIR) || !is_writeable_dir(xshmdir)) {
+        lives_free(xshmdir);
+        if (!is_writeable_dir(shmdir)) {
+          lives_free(shmdir);
+          shmdir = lives_build_path(LIVES_DEVICE_DIR, LIVES_SHM_DIR, NULL);
+          if (!lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR)  || !is_writeable_dir(shmdir)) {
+            lives_free(shmdir);
+            shmdir = lives_build_path(LIVES_TMP_DIR, NULL);
+            if (!lives_file_test(shmdir, LIVES_FILE_TEST_IS_DIR) || !is_writeable_dir(shmdir)) {
+              lives_free(shmdir);
+              capable->writeable_shmdir = MISSING;
+              return NULL;
+	      // *INDENT-OFF*
+	    }}}}
+      // *INDENT-ON*
+      else {
         lives_free(shmdir);
-        capable->writeable_shmdir = MISSING;
-        return NULL;
+        shmdir = xshmdir;
       }
-    }
-    if (!is_writeable_dir(shmdir)) {
-      lives_free(shmdir);
-      capable->writeable_shmdir = MISSING;
-      return NULL;
     }
     capable->writeable_shmdir = PRESENT;
     xshmdir = lives_build_path(shmdir, LIVES_DEF_WORK_SUBDIR, NULL);
@@ -814,7 +821,7 @@ off_t sget_file_size(const char *name) {
 
 
 // check with list like subdir1, subdir2|subsubdir2,.. for subdirs in dirname. Returns list wuth matched subdirs removed.
-LiVESList *check_for_subdirs(const char *dirname, LiVESList *subdirs) {
+LiVESList *check_for_subdirs(const char *dirname, LiVESList * subdirs) {
   DIR *tldir, *xsubdir;
   struct dirent *tdirent, *xtdirent;
   LiVESList *xlist, *nlist;
@@ -885,12 +892,21 @@ boolean is_empty_dir(const char *dirname) {
 }
 
 
-char *get_mountpoint_for(const char *dir) {
-  char *mp = NULL, *tmp, *com, *res;
+LIVES_GLOBAL_INLINE char *get_symlink_for(const char *link) {
+  char buff[PATH_MAX];
+  ssize_t nbytes = readlink(link, buff, PATH_MAX);
+  if (nbytes < 0) return lives_strdup(link);
+  return lives_strndup(buff, nbytes);
+}
+
+
+char *get_mountpoint_for(const char *dirx) {
+  char *mp = NULL, *tmp, *com, *res, *dir;
   size_t lmatch = 0, slen;
   int j;
 
-  if (!dir) return NULL;
+  if (!dirx) return NULL;
+  dir = get_symlink_for(dirx);
   slen = lives_strlen(dir);
 
   com = lives_strdup("df -P");
@@ -914,7 +930,32 @@ char *get_mountpoint_for(const char *dir) {
     lives_strfreev(array0);
     lives_free(res);
   }
+  lives_free(dir);
   return mp;
+}
+
+
+char *get_fstype_for(const char *volx) {
+  char *fstype = NULL;
+  if (volx) {
+    char *vol = get_symlink_for(volx);
+    char *res, *com = lives_strdup("df --output=fstype,target");
+    if ((res = mini_popen(com))) {
+      int lcount = get_token_count(res, '\n');
+      char **array0 = lives_strsplit(res, "\n", lcount);
+      for (int l = 0; l < lcount; l++) {
+        int pccount = get_token_count(array0[l], ' ');
+        char **array1 = lives_strsplit(array0[l], " ", pccount);
+        if (!lives_strcmp(array1[pccount - 1], vol)) fstype = lives_strdup(array1[0]);
+        lives_strfreev(array1);
+        if (fstype) break;
+      }
+      lives_strfreev(array0);
+      lives_free(res);
+    }
+    lives_free(vol);
+  }
+  return fstype;
 }
 
 

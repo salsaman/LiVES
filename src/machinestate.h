@@ -145,7 +145,10 @@ int64_t disk_monitor_check_result(const char *dir);
 int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout);
 void disk_monitor_forget(void);
 
+char *get_symlink_for(const char *link);
+
 char *get_mountpoint_for(const char *dir);
+char *get_fstype_for(const char *vol);
 
 ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
 ticks_t lives_get_current_ticks(void);

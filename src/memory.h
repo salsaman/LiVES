@@ -57,6 +57,11 @@ void lives_slice_unalloc(size_t sz, void *p);
 void *lives_slice_alloc_and_copy(size_t sz, void *p);
 #endif
 
+void bigblock_init(void);
+void *alloc_bigblock(size_t s);
+void *calloc_bigblock(size_t nmemb, size_t align);
+void *free_bigblock(void *bstart);
+
 #ifndef lives_malloc
 #define lives_malloc malloc
 #endif

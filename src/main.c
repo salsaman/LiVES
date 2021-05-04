@@ -2850,8 +2850,6 @@ static double pick_custom_colours(double var, double timer) {
   uint8_t ncr, ncg, ncb;
   boolean retried = FALSE;
 
-  if (var > 2.) var = 2.;
-
   if (!(palette->style & STYLE_LIGHT)) {
     lmin = .05; lmax = .4;
   } else {
@@ -2867,9 +2865,11 @@ retry:
   if (pick_nice_colour(timeout, palette->normal_back.red * 255., palette->normal_back.green * 255.,
                        palette->normal_back.blue * 255., &ncr, &ncg, &ncb, .15 * var, .25, .75)) {
     mainw->pretty_colours = TRUE;
-    if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 10 * 9) var *= 1.02;
+    if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 10 * 9) var *= .98;
     if (var > 2.) var = 2.;
+    timeout -= (timerinfo - xtimerinfo);
     xtimerinfo = timerinfo;
+
     // nice1 - used for outlines
     palette->nice1.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
     palette->nice1.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
@@ -2882,7 +2882,8 @@ retry:
 
     if (pick_nice_colour(timeout, palette->nice1.red * 255., palette->nice1.green * 255.,
                          palette->nice1.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax)) {
-      if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 100000) var *= 1.02;
+      if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 100000) var *= .98;
+      timeout -= (timerinfo - xtimerinfo);
       xtimerinfo = timerinfo;
       if (var > 2.) var = 2.;
       mainw->pretty_colours = TRUE;
@@ -2901,7 +2902,7 @@ retry:
       }
       pick_nice_colour(timeout, palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
                        palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax);
-      if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 15) var *= 1.01;
+      if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 15) var *= .98;
       // nice3 - alt for menu_and_bars_fore
       if (var > 2.) var = 2.;
       palette->nice3.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
@@ -3245,8 +3246,9 @@ boolean set_palette_colours(boolean force_reload) {
   // TODO - run a bg thread until we create GUI
   if (!prefs->vj_mode && prefs->startup_phase == 0) {
     /// create thread to pick custom colours
-    double cpvar = get_double_prefd(PREF_CPICK_VAR, 1.0);
+    double cpvar = get_double_prefd(PREF_CPICK_VAR, 8.0);
     prefs->cptime = get_double_prefd(PREF_CPICK_TIME, -2.0);
+    if (abs(prefs->cptime) < .5) prefs->cptime = -1.;
     mainw->helper_procthreads[PT_CUSTOM_COLOURS]
       = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)pick_custom_colours,
                                  WEED_SEED_DOUBLE, "dd", cpvar, abs(prefs->cptime));
@@ -3318,15 +3320,18 @@ capability *get_capabilities(void) {
 
   capable->mainpid = lives_getpid();
 
+  // cmds part 1
   get_location("cp", capable->cp_cmd, PATH_MAX);
   capable->sysbindir = get_dir(capable->cp_cmd);
 
+  get_location("touch", capable->touch_cmd, PATH_MAX);
+  get_location("rm", capable->rm_cmd, PATH_MAX);
+  get_location("rmdir", capable->rmdir_cmd, PATH_MAX);
   get_location("mv", capable->mv_cmd, PATH_MAX);
   get_location("ln", capable->ln_cmd, PATH_MAX);
   get_location("chmod", capable->chmod_cmd, PATH_MAX);
   get_location("cat", capable->cat_cmd, PATH_MAX);
   get_location("echo", capable->echo_cmd, PATH_MAX);
-  get_location("eject", capable->eject_cmd, PATH_MAX);
 
   capable->wm_name = NULL;
   capable->wm_type = NULL;
@@ -3571,8 +3576,14 @@ retry_configfile:
 
   ///////////////////////////////////////////////////////
 
-  check_for_executable(&capable->has_md5sum, EXEC_MD5SUM);
+  get_location(EXEC_DF, capable->df_cmd, PATH_MAX);
+  get_location(EXEC_WC, capable->wc_cmd, PATH_MAX);
+  get_location(EXEC_SED, capable->sed_cmd, PATH_MAX);
+  get_location(EXEC_GREP, capable->grep_cmd, PATH_MAX);
+  get_location(EXEC_EJECT, capable->eject_cmd, PATH_MAX);
+
   check_for_executable(&capable->has_du, EXEC_DU);
+  check_for_executable(&capable->has_md5sum, EXEC_MD5SUM);
   check_for_executable(&capable->has_ffprobe, EXEC_FFPROBE);
   check_for_executable(&capable->has_sox_play, EXEC_PLAY);
 
@@ -4252,14 +4263,15 @@ static boolean lives_startup2(livespointer data) {
   if (lives_proc_thread_check_finished(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) {
     double cpvar = lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
     lives_proc_thread_free(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-    if (prefs->cptime < 0.) {
-      prefs->cptime *= 1.1;
+    if (prefs->cptime <= 0.) {
+      prefs->cptime *= 1.1 + .2;
       set_double_pref(PREF_CPICK_TIME, prefs->cptime);
+      set_double_pref(PREF_CPICK_VAR, cpvar);
     }
-    set_double_pref(PREF_CPICK_VAR, cpvar);
   } else {
     prefs->cptime = abs(prefs->cptime) * .9;
     set_double_pref(PREF_CPICK_TIME, prefs->cptime);
+    set_double_pref(PREF_CPICK_VAR, 4.);
     lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
   }
   mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
@@ -4736,13 +4748,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   lives_free(tmp);
 #endif
 
+  // CMDS part 2
   ensure_isdir(capable->home_dir);
-  get_location(EXEC_TOUCH, capable->touch_cmd, PATH_MAX); // needed for make_writeable_dir()
-  get_location(EXEC_RM, capable->rm_cmd, PATH_MAX); // ditto
-  get_location(EXEC_RMDIR, capable->rmdir_cmd, PATH_MAX); // ditto
-  get_location(EXEC_SED, capable->sed_cmd, PATH_MAX); // nice to know
-  get_location(EXEC_GREP, capable->grep_cmd, PATH_MAX); // ditto
-  get_location(EXEC_WC, capable->wc_cmd, PATH_MAX); // ditto
 
   // get opts first
   //

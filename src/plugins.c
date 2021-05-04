@@ -829,7 +829,6 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
   LiVESWidget *savebutton;
-  LiVESWidget *overlay_combo = NULL;
 
   _vppaw *vppa;
 
@@ -1057,7 +1056,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     LiVESWidget *hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
     overlay_list = lives_list_append(overlay_list, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
     overlay_list = lives_list_append(overlay_list,_("Statistics"));
-    overlay_combo = lives_standard_combo_new(_("Overlay / Watermark"), overlay_list, LIVES_BOX(hbox), NULL);
+    vppa->overlay_combo = lives_standard_combo_new(_("Overlay / Watermark"), overlay_list, LIVES_BOX(hbox), NULL);
     lives_list_free_all(&overlay_list);
     lives_dialog_make_widget_first(LIVES_DIALOG(vppa->dialog), hbox);
   }
@@ -1086,10 +1085,6 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     if (resp == LIVES_RESPONSE_BROWSE) resp = on_vppa_save_clicked(vppa);
     if (resp == LIVES_RESPONSE_OK) resp = on_vppa_ok_clicked(TRUE, vppa);
   } while (resp == LIVES_RESPONSE_RETRY);
-
-  if (overlay_combo) {
-    prefs->twater_type = lives_combo_get_active_index(LIVES_COMBO(overlay_combo));
-  }
 
   lives_widget_destroy(vppa->dialog);
 

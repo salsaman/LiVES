@@ -268,6 +268,7 @@ boolean init_memfuncs(void) {
 #ifdef USE_RPMALLOC
   rpmalloc_initialize();
 #endif
+  bigblock_init();
   return TRUE;
 }
 
@@ -279,3 +280,51 @@ boolean init_thread_memfuncs(void) {
   return TRUE;
 }
 
+
+#define NBIGBLOCKS 16
+#define BBLOCKSIZE (33554432ul)
+
+static void *bigblocks[NBIGBLOCKS];
+static int used[NBIGBLOCKS];
+
+void bigblock_init(void) {
+  for (int i = 0; i < NBIGBLOCKS; i++) {
+    bigblocks[i] = malloc(BBLOCKSIZE);
+    used[i] = 0;
+  }
+}
+
+void *alloc_bigblock(size_t sizeb) {
+  if (sizeb >= BBLOCKSIZE) return NULL;
+  for (int i = 0; i < NBIGBLOCKS; i++) {
+    if (!used[i]) {
+      used[i] = 1;
+      return bigblocks[i];
+    }
+  }
+  return NULL;
+}
+
+void *calloc_bigblock(size_t nmemb, size_t align) {
+  if (nmemb * align + align >= BBLOCKSIZE) return NULL;
+  for (int i = 0; i < NBIGBLOCKS; i++) {
+    if (!used[i]) {
+      void *start = (void *)(((size_t)((char *)bigblocks[i] + align - 1) / align) * align);
+      lives_memset(start, 0, nmemb * align);
+      used[i] = 1;
+      return start;
+    }
+  }
+  return NULL;
+}
+
+void *free_bigblock(void *bstart) {
+  for (int i = 0; i < NBIGBLOCKS; i++) {
+    if ((char *)bstart - (char *)bigblocks[i] < BBLOCKSIZE) {
+      used[i] = 0;
+      return NULL;
+    }
+  }
+  lives_free(bstart);
+  return NULL;
+}

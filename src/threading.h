@@ -208,7 +208,8 @@ void lives_threadpool_init(void);
 void lives_threadpool_finish(void);
 
 // lives_threads
-int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr, lives_thread_func_t func, void *arg);
+int lives_thread_create(lives_thread_t *, lives_thread_attr_t attr, lives_thread_func_t func, void *arg);
+uint64_t lives_thread_done(lives_thread_t thread);
 uint64_t lives_thread_join(lives_thread_t work, void **retval);
 
 // thread functions
@@ -251,6 +252,12 @@ boolean lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state
 #define LIVES_THRDATTR_WAIT_SYNC	(1 << 2)
 #define LIVES_THRDATTR_FG_THREAD	(1 << 3)
 #define LIVES_THRDATTR_NO_GUI		(1 << 4)
+
+// extra info requests
+#define LIVES_LEAF_START_TICKS "_start_ticks"
+#define LIVES_THRDATTR_NOTE_STTIME	(1 << 16)
+
+ticks_t lives_proc_thread_get_start_ticks(lives_proc_thread_t);
 
 lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_t,
     int return_type, const char *args_fmt, ...);

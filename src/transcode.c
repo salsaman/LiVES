@@ -255,6 +255,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
       afname = lives_build_filename(prefs->workdir, cfile->handle, CLIP_AUDIO_FILENAME, NULL);
       fd = lives_open_buffered_rdonly(afname);
+      lives_buffered_rdonly_slurp(fd, 0);
 
       if (fd < 0) {
         do_read_failed_error_s(afname, lives_strerror(errno));

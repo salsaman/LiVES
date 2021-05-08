@@ -2296,7 +2296,9 @@ LiVESWidget *create_rte_window(void) {
 
       lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-      nlabels[idx] = lives_standard_label_new(_("Effect name:"));
+      widget_opts.use_markup = TRUE;
+      nlabels[idx] = lives_standard_label_new(_("<b>Effect name:</b>"));
+      widget_opts.use_markup = FALSE;
 
       lives_box_pack_start(LIVES_BOX(hbox), nlabels[idx], FALSE, FALSE, widget_opts.packing_width);
 

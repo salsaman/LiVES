@@ -669,13 +669,13 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 #endif
 
   int width = weed_layer_get_width(layer);
-  int widthx = (width >> 3) << 3;
   int height = weed_layer_get_height(layer);
-  if (widthx != width) {
-    resize_layer(layer, widthx, height, LIVES_INTERP_BEST, WEED_PALETTE_END,
-                 WEED_YUV_CLAMPING_UNCLAMPED);
-    width = weed_layer_get_width(layer);
-  }
+  /* int widthx = (width >> 3) << 3; */
+  /* if (widthx != width) { */
+  /*   resize_layer(layer, widthx, height, LIVES_INTERP_BEST, WEED_PALETTE_END, */
+  /*                WEED_YUV_CLAMPING_UNCLAMPED); */
+  /*   width = weed_layer_get_width(layer); */
+  /* } */
 
   if (1) {
     weed_layer_t *test_layer, *layer_slice;

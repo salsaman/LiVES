@@ -90,6 +90,7 @@ lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, liv
     }
     lives_free(pkey);
   }
+  if (attr & LIVES_THRDATTR_NOTE_STTIME) weed_set_int64_value(thread_info, LIVES_LEAF_START_TICKS, lives_get_current_ticks());
   weed_set_int64_value(thread_info, LIVES_LEAF_FUNCSIG, make_funcsig(thread_info));
   if (!(attr & LIVES_THRDATTR_FG_THREAD)) {
     resubmit_proc_thread(thread_info, attr);
@@ -616,6 +617,9 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel_immediate(lives_proc_thread
   return FALSE;
 }
 
+LIVES_GLOBAL_INLINE ticks_t lives_proc_thread_get_start_ticks(lives_proc_thread_t tinfo) {
+  return tinfo ? weed_get_int64_value(tinfo, LIVES_LEAF_START_TICKS, NULL) : 0;
+}
 
 boolean lives_proc_thread_dontcare(lives_proc_thread_t tinfo) {
   if (!tinfo) return FALSE;
@@ -1109,6 +1113,11 @@ uint64_t lives_thread_join(lives_thread_t work, void **retval) {
   return nthrd;
 }
 
+
+LIVES_GLOBAL_INLINE uint64_t lives_thread_done(lives_thread_t work) {
+  thrd_work_t *task = (thrd_work_t *)work.data;
+  return task->done;
+}
 
 //// hook functions (not really threads, but here for now)
 

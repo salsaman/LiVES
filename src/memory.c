@@ -6,6 +6,8 @@
 
 /// susbtitute memory functions. These must be real functions and not #defines since we need fn pointers
 
+#include <sys/mman.h>
+
 #include "main.h"
 
 #ifdef THRD_SPECIFIC
@@ -287,16 +289,19 @@ boolean init_thread_memfuncs(void) {
 static void *bigblocks[NBIGBLOCKS];
 static int used[NBIGBLOCKS];
 
+static int NBBLOCKS = 0;
+
 void bigblock_init(void) {
   for (int i = 0; i < NBIGBLOCKS; i++) {
     bigblocks[i] = malloc(BBLOCKSIZE);
-    used[i] = 0;
+    if (mlock(bigblocks[i], BBLOCKSIZE)) return;
+    used[NBBLOCKS++] = 0;
   }
 }
 
 void *alloc_bigblock(size_t sizeb) {
   if (sizeb >= BBLOCKSIZE) return NULL;
-  for (int i = 0; i < NBIGBLOCKS; i++) {
+  for (int i = 0; i < NBBLOCKS; i++) {
     if (!used[i]) {
       used[i] = 1;
       return bigblocks[i];
@@ -307,7 +312,7 @@ void *alloc_bigblock(size_t sizeb) {
 
 void *calloc_bigblock(size_t nmemb, size_t align) {
   if (nmemb * align + align >= BBLOCKSIZE) return NULL;
-  for (int i = 0; i < NBIGBLOCKS; i++) {
+  for (int i = 0; i < NBBLOCKS; i++) {
     if (!used[i]) {
       void *start = (void *)(((size_t)((char *)bigblocks[i] + align - 1) / align) * align);
       lives_memset(start, 0, nmemb * align);
@@ -319,7 +324,7 @@ void *calloc_bigblock(size_t nmemb, size_t align) {
 }
 
 void *free_bigblock(void *bstart) {
-  for (int i = 0; i < NBIGBLOCKS; i++) {
+  for (int i = 0; i < NBBLOCKS; i++) {
     if ((char *)bstart - (char *)bigblocks[i] < BBLOCKSIZE) {
       used[i] = 0;
       return NULL;

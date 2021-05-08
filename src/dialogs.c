@@ -3718,7 +3718,8 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
 void do_read_failed_error_s(const char *s, const char *addinfo) {
   char *msg, *emsg;
   char *addbit;
-  char *sutf = lives_filename_to_utf8(s, -1, NULL, NULL, NULL);
+  const char *xs = s ? s : "uknown";
+  char *sutf = lives_filename_to_utf8(xs, -1, NULL, NULL, NULL);
 
   if (addinfo) addbit = lives_strdup_printf(_("Additional info: %s\n"), addinfo);
   else addbit = lives_strdup("");
@@ -3726,7 +3727,7 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
   msg = lives_strdup_printf(_("\nLiVES was unable to read from the file\n%s\n"
                               "Please check for possible error causes.\n%s"),
                             sutf, addbit);
-  emsg = lives_strdup_printf("Unable to read from the file\n%s\n%s", s, addbit);
+  emsg = lives_strdup_printf("Unable to read from the file\n%s\n%s", xs, addbit);
   d_print("\n"); d_print(emsg);
 
   LIVES_ERROR(emsg);

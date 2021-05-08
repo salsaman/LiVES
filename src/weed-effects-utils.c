@@ -185,7 +185,7 @@ WEED_GLOBAL_INLINE int weed_filter_hints_unstable(weed_plant_t *filter) {
 }
 
 WEED_GLOBAL_INLINE int weed_filter_hints_stateless(weed_plant_t *filter) {
-  if (weed_filter_get_flags(filter) & WEED_FILTER_HINT_STATELESS) return WEED_TRUE;
+  if (!(weed_filter_get_flags(filter) & WEED_FILTER_HINT_STATEFUL)) return WEED_TRUE;
   return WEED_FALSE;
 }
 

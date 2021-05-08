@@ -394,6 +394,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         cfile->aw_sizes[0] = offset_end;
         filename = lives_get_audio_file_name(mainw->current_file);
         afd = lives_open_buffered_rdonly(filename);
+        lives_buffered_rdonly_slurp(afd, 0);
         lives_free(filename);
 
         for (i = start; i < offset_end; i++) {
@@ -492,6 +493,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         filename = lives_get_audio_file_name(mainw->current_file);
         afd = lives_open_buffered_rdonly(filename);
         lives_free(filename);
+        lives_buffered_rdonly_slurp(afd, 0);
         for (i = start; i < offset_end; i++) {
           if (afd == -1) {
             THREADVAR(read_failed) = -2;
@@ -3389,12 +3391,12 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     lives_standard_radio_button_new(NULL, &radiobutton_group, LIVES_BOX(hbox), NULL);
 
     tvcardw->spinbuttonw = lives_standard_spin_button_new(_("Width"),
-                           640., 4., 4096., 4., 16., 0, LIVES_BOX(hbox), NULL);
+                           640., 4., 4096., -4., 16., 0, LIVES_BOX(hbox), NULL);
 
     lives_widget_set_sensitive(tvcardw->spinbuttonw, FALSE);
 
     tvcardw->spinbuttonh = lives_standard_spin_button_new(_("Height"),
-                           480., 4., 4096., 4., 16., 0, LIVES_BOX(hbox), NULL);
+                           480., 4., 4096., -4., 16., 0, LIVES_BOX(hbox), NULL);
 
     lives_widget_set_sensitive(tvcardw->spinbuttonh, FALSE);
 

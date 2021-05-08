@@ -541,7 +541,7 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     width_step = weed_get_int_value(tmpl, WEED_LEAF_HSTEP, NULL);
     if (!width_step) width_step = 4;
 
-    spinbuttonw = lives_standard_spin_button_new(_("_Width"), def_width, width_step, max_width, width_step,
+    spinbuttonw = lives_standard_spin_button_new(_("_Width"), def_width, width_step, max_width, -width_step,
                   width_step, 0, LIVES_BOX(hbox), NULL);
     lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(spinbuttonw), width_step);
     lives_spin_button_update(LIVES_SPIN_BUTTON(spinbuttonw));
@@ -563,7 +563,7 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     height_step = weed_get_int_value(tmpl, WEED_LEAF_VSTEP, NULL);
     if (!height_step) height_step = 4;
 
-    spinbuttonh = lives_standard_spin_button_new(_("_Height"), def_height, height_step, max_height, height_step,
+    spinbuttonh = lives_standard_spin_button_new(_("_Height"), def_height, height_step, max_height, -height_step,
                   height_step, 0, LIVES_BOX(hbox), NULL);
     lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(spinbuttonh), height_step);
     lives_spin_button_update(LIVES_SPIN_BUTTON(spinbuttonh));
@@ -888,6 +888,8 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
 
   // update widgets from onchange_init here
   if (top_dialog_vbox) {
+    add_fill_to_box(LIVES_BOX(top_dialog_vbox));
+
     fxw_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     lives_window_add_accel_group(LIVES_WINDOW(fx_dialog[didx]->dialog), fxw_accel_group);
 
@@ -1761,10 +1763,11 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
     widget_opts.mnemonic_label = use_mnemonic;
     if (param->dp) {
       if (param->max > param->min) {
-        spinbutton = lives_standard_spin_button_new(name, (pval = get_double_param(param->value)),
-                     param->min, param->max, param->step_size,
-                     param->step_size, param->dp,
-                     (LiVESBox *)hbox, param->desc);
+        spinbutton =
+          lives_standard_spin_button_new(name, (pval = get_double_param(param->value)),
+                                         param->min, param->max, param->step_size,
+                                         param->snap_to_step ? -param->step_size : param->step_size, param->dp,
+                                         (LiVESBox *)hbox, param->desc);
       } else {
         size_t len = calc_spin_button_width(-DBL_MAX, DBL_MAX, param->dp);
         char *ntxt = lives_strdup_printf("%.*f", param->dp, (pval = get_double_param(param->value)));
@@ -1783,10 +1786,11 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
       }
     } else {
       if (param->max > param->min) {
-        spinbutton = lives_standard_spin_button_new(name, (pval = (double)get_int_param(param->value)),
-                     param->min, param->max, param->step_size,
-                     param->step_size, param->dp,
-                     (LiVESBox *)hbox, param->desc);
+        spinbutton =
+          lives_standard_spin_button_new(name, (pval = (double)get_int_param(param->value)),
+                                         param->min, param->max, param->snap_to_step ? -param->step_size : param->step_size,
+                                         param->step_size, param->dp,
+                                         (LiVESBox *)hbox, param->desc);
       } else {
         size_t len = calc_spin_button_width(-INT_MAX, INT_MAX, 0);
         char *ntxt = lives_strdup_printf("%d", (int)(pval = (double)get_int_param(param->value)));

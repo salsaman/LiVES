@@ -513,6 +513,7 @@ struct _param_t {
 #define HIDDEN_TEMPORARY (0xFF00)
 
   double step_size;
+  boolean snap_to_step;
 
   boolean transition;
 

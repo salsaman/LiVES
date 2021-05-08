@@ -1019,7 +1019,6 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
 struct XYZ xyzFromWavelength(double freq) {
   // appears to be freq * 10^11 Hz
   // (wavelength in amstrongs 10^-10 should give 10 X the value ??)
-  // but does not match with rgb2xyz
   //x max:
   // freq 5998 is 1.055946, 0.637099, 0.000044
   // y max:
@@ -1040,17 +1039,19 @@ struct XYZ xyzFromWavelength(double freq) {
 
 
 static void rgb2xyz(uint8_t r, uint8_t g, uint8_t b, double *x, double *y, double *z) {
-  // RED: 41.240000, 21.260000, 1.930000
-  // GREEN: 35.760000, 71.520000, 11.920000
-  // BLUE: 18.050000, 7.220000, 95.050000
-  double rr = (double)r / 2.55, gg = (double)g / 2.55, bb = (double)b / 2.55;
-  /* *x = rr * 0.4124 + gg * 0.3576 + bb * 0.1805; */
-  /* *y = rr * 0.2126 + gg * 0.7152 + bb * 0.0722; */
-  /* *z = rr * 0.0193 + gg * 0.1192 + bb * 0.9505; */
-  *x = (rr * 0.490 + gg * 0.310 + bb * 0.200) / 0.17697;
-  *y = (rr * 0.17697 + gg * 0.81240 + bb * 0.01063) / 0.17697;
-  *x = (gg * 0.010 + bb * 0.990) / 0.17697;
+  double rr = (double)r / 255., gg = (double)g / 255., bb = (double)b / 255.;
+  /* *x = (rr * 0.490 + gg * 0.310 + bb * 0.200) / 0.17697; */
+  /* *y = (rr * 0.17697 + gg * 0.81240 + bb * 0.01063) / 0.17697; */
+  /* *x = (gg * 0.010 + bb * 0.990) / 0.17697; */
+  *x = (rr * 0.490 + gg * 0.17697 + bb) / 0.17697;
+  *y = (rr * 0.310 + gg * 0.81240 + bb * 0.01) / 0.17697;
+  *z = (rr * 0.2 + gg * 0.01063 * bb * 0.990) / 0.17697;
 }
+
+/* static void xyz2rgb(double *x, double *y, double *z, uint8_t *r, uint8_t *g, uint8_t *b) { */
+/*   rr = x * .48147 +  */
+/* } */
+
 
 // xyz and lab, thanks to
 // https://www.emanueleferonato.com/2009/09/08/color-difference-algorithm-part-2
@@ -1115,8 +1116,8 @@ double cdist94(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8
   double L1 = 0., A1 = 0., B1 = 0.;
   rgb2xyz(r0, g0, b0, &x0, &y0, &z0);
   rgb2xyz(r1, g1, b1, &x1, &y1, &z1);
-  xyz2lab(x0, y0, z0, &L0, &A0, &B0);
-  xyz2lab(x1, y1, z1, &L1, &A1, &B1);
+  xyz2lab(x0 * 255., y0 * 255., z0 * 255., &L0, &A0, &B0);
+  xyz2lab(x1 * 255., y1 * 255., z1 * 255., &L1, &A1, &B1);
   dist =  cdist94lab(L0, A0, B0, L1, A1, B1);
   return dist;
 }
@@ -1187,14 +1188,13 @@ boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, ui
 #define DIST_THRESH 10.
 #define RAT_START .9
 #define RAT_TIO  .9999999
-#define RAT_MIN .1
+#define RAT_MIN .25
   lives_alarm_t alarm_handle;
   __VOLA double gmm = 1. + lmax * 2., gmn = 1. + lmin;
   __VOLA uint8_t xr, xb, xg, ar, ag, ab;
   __VOLA uint8_t rmin = MIN(r0, *r1) / 1.5, gmin = MIN(g0, *g1) / gmm, bmin = MIN(b0, *b1) / 1.5;
   __VOLA uint8_t rmax = MAX(r0, *r1), gmax = MAX(g0, *g1), bmax = MAX(b0, *b1);
   __VOLA double da, db, z, rat = RAT_START, d = cdist94(r0, g0, b0, *r1, *g1, *b1);
-
 
   alarm_handle = lives_alarm_set(timeout);
 
@@ -10427,7 +10427,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
 
-  //    #define DEBUG_PCONV
+  //#define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -10477,10 +10477,10 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                                          isampling, osampling, isubspace, osubspace, inpl);
         LIVES_DEBUG(tmp2);
         lives_free(tmp2);
-        lives_free(istrides);
-        return TRUE;
       }
     }
+    lives_free(istrides);
+    return TRUE;
   }
 
   flags = weed_layer_get_flags(layer);

@@ -1253,7 +1253,7 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
                             livespointer user_data) {
   int blend_file = mainw->blend_file;
 
-  if (mainw->playing_file < 1 || mainw->num_tr_applied == 0 || !IS_VALID_CLIP(mainw->blend_file)
+  if (mainw->playing_file < 1 || !mainw->num_tr_applied || !IS_VALID_CLIP(mainw->blend_file)
       || mainw->blend_file == mainw->current_file || mainw->preview || (mainw->is_processing && cfile->is_loaded)) {
     return TRUE;
   }

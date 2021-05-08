@@ -26,6 +26,8 @@
 
 #define MIN_SPINBUTTON_SIZE 6 ///< min digits for spinbuttons
 
+#define BUTTON_RAD 5. ///< button border radius
+
 #define LONGEST_ENTRY_WIDTH ((int)(150. * widget_opts.scale))
 #define LONG_ENTRY_WIDTH ((int)(100. * widget_opts.scale))
 #define MEDIUM_ENTRY_WIDTH ((int)(60. * widget_opts.scale))

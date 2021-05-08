@@ -335,9 +335,7 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
 
   if (palette->style & STYLE_2) {
     lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, colb);
-    lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, colb);
     lives_widget_set_base_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, colb);
-    lives_widget_set_base_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, colb);
     lives_widget_set_text_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, colf);
     lives_widget_set_text_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, colf);
   }
@@ -2159,10 +2157,6 @@ void create_LiVES(void) {
   widget_opts.packing_width = dpw;
   widget_opts.apply_theme = woat;
 
-  if (woat) {
-    set_css_value_direct(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
-    set_css_value_direct(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, "button", "opacity", "0.5");
-  }
   lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_start), 10);
   lives_widget_set_halign(mainw->spinbutton_start, LIVES_ALIGN_CENTER);
   add_spring_to_box(LIVES_BOX(mainw->hbox3), 0);
@@ -2220,10 +2214,6 @@ void create_LiVES(void) {
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.packing_width = dpw;
   widget_opts.apply_theme = woat;
-  if (woat) {
-    set_css_value_direct(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
-    set_css_value_direct(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, "button", "opacity", "0.5");
-  }
 
   add_spring_to_box(LIVES_BOX(mainw->hbox3), 0.);
   lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_end), 10);
@@ -4063,7 +4053,9 @@ static void _make_play_window(void) {
                             LIVES_GUI_CALLBACK(key_press_or_release), NULL);
 
   lives_widget_set_sensitive(mainw->play_window, TRUE);
-  lives_grab_add(mainw->play_window);
+
+  /// cannot do this, or it blocks ctrl-v window !!!
+  //lives_grab_add(mainw->play_window);
 }
 
 void make_play_window(void) {

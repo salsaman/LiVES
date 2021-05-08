@@ -1957,7 +1957,7 @@ but plugin and host may add private leaves with keys prefixed "plugin_" and "hos
 			    - changing the 'default' or 'new_default' of a parameter
 			    - extending the range of 'min', 'max'
 			    - setting / unsetting WEED_CHANNEL_CAN_DO_INPLACE,
-			    WEED_FILTER_HINT_STATELESS,
+			    WEED_FILTER_HINT_STATEFUL,
 			    WEED_FILTER_HINT_MAY_THREAD, WEED_FILTER_PREF_PREMULTIPLIED_ALPHA,
 			    WEED_FILTER_PREF_LINEAR_GAMMA
 
@@ -2703,6 +2703,16 @@ As of API 201:
  any pseudo-random number generator, either in the init_func(), or if the filter has no init_func(),
  during process_func(). The host should thus set this value before calling init_func(), and delete it
  after calling process_func() for the first time.
+
+
+* "state_updated" : WEED_SEED_BOOLEAN :
+   if the filter sets both filter flag bit WEED_FILTER_HINT_STATEFUL, as well as WEED_FILTER_HINT_MAY_THREAD, then the following should happen:
+   - when calling the process_func() with threads, the host should set this leaf to WEED_FALSE, then call it with the first thread,
+   then wait for the plugin to set the leaf to WEED_TRUE, before running the remaining threads.
+   The host must also ensure the "state_updated" is reset (set to WEED_FALSE) before the next process cycle.
+   This is to allow the plugin to ensure that only one thread is responsible for updating the internal state of the filter instance.
+   If the thread returns with WEED_SUCCESS without setting this leaf to WEED_TRUE, then host may delete this leaf and
+   subsequently ignore this behaviour.
 
 
 * "flags" : WEED_SEED_INT : a bitmap of flags informing the plugin it may perform certain updates (see below for definitions)
@@ -3638,10 +3648,13 @@ WEED_VERBOSITY_DEBUG 	(3) : WEED_VERBOSITY_INFO + debugging messages
     non-realtime filter: the filter is too slow to use in realtime processing.
     The exact definition of what is realtime and what is not is left to the plugin author to decide.
 
- * WEED_FILTER_HINT_STATELESS    [[BR]]
-   This is optional, if the filter is stateless (i.e. not dependant on
-   past calls to process_func() ) then this this flag
-   bit can be set. Used mainly for compatibility with other plugin architectures.
+ * WEED_FILTER_HINT_STATEFUL    [[BR]]
+ 	N.B. this chnged in API 201.
+   If the filter maintains some internal state such that restarting it at any point may not produce the same
+   results each time, then this flag bit may be set to indicate this.
+   More importantly, if the filter is threading (see WEED_FILTER_MAY_THREAD), then this allows the host to provide a means
+   to ensure that only one thread (the first one) is responsible for updateing the filter state. (See the description
+   for WEED_FILTER_MAY_THREAD for more details).
 
  * WEED_FILTER_PREF_LINEAR_GAMMA
    This is a hint to the host that the plugin prefers to use R, G, B values in linear gamma space.
@@ -3662,9 +3675,24 @@ WEED_VERBOSITY_DEBUG 	(3) : WEED_VERBOSITY_INFO + debugging messages
    bit should be run as a whole after any filters without this flag have completed their processing for the cycle.
 
 *  WEED_FILTER_HINT_MAY_THREAD
-   If a video plugin (TODO - implement for audio ) operates in such a manner that its output may be subdivided vertically,
-   then it may set this hint. Ignored for filters which have no out_channels.
-   See note below about threading.
+   If a video plugin (TODO - implement for audio ) operates in such a manner that its output may be subdivided vertically (or horizontally)
+   then it may set this hint. If the filter wants to divide the slices vertically, then it is left to the filter writer to translate
+   horizontal slicing into vetical slcing (see appandix below - TODO).
+
+   IMPORTANT:
+   if the filter also sets the filter flag bit WEED_FILTER_HINT_STATEFUL, then the following should happen:
+   - when calling the process_func() with threads, the host should call it with the first thread, and the instance leaf "state_updated"
+   set to WEED_FALSE, then wait for the plugin to set that leaf to WEED_TRUE before running the remaining threads.
+   The host must also ensure the "state_updated" is reset before the next process cycle.
+   The plugin should update its internal state and set the leaf as soon as possible in the process_func() so as not to
+   needlessy delay the host.
+
+   In case the host fails to set the leaf to WEED_FALSE, on the first call to ptocess_func(), and the filter requires this behaviour,
+   it may return WEED_ERROR_FILTER_INVALID.
+   If the first filter thread returns WEED_SUCESS without setting the leaf, then the host may assume that the plugin does not support
+   or require this behaviour and may delete the "state_updated" leaf and ignore it in subsequent calls.
+
+   See also note below about threading.
 
 
  * WEED_FILTER_HINT_MAYBE_UNSTABLE

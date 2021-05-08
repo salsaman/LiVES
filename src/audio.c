@@ -1617,7 +1617,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       ins_pt = tc_start / TICKS_PER_SECOND_DBL;
       if (ins_pt < 0.) ins_pt = 0.;
     }
-    g_print("OUT2 SEEK to %f\n", ins_pt);
     ins_pt *= out_achans * out_arate * out_asamps;
     ins_size = ((int64_t)(ins_pt / out_achans / out_asamps + .5)) * out_achans * out_asamps;
 
@@ -1630,7 +1629,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       // fill to ins_pt with zeros
       pad_with_silence(out_fd, NULL, cur_size, ins_size, out_asamps, out_unsigned, out_bendian);
     } else {
-      g_print("OUT SEEK to %ld\n", ins_size);
       lives_lseek_buffered_writer(out_fd, ins_size);
     }
     if (opvol_start == opvol_end && opvol_start == 0.) {
@@ -1688,6 +1686,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       infilename = lives_get_audio_file_name(from_files[track]);
 
+      seekstart[track] = quant_abytes(fromtime[track], in_arps[track], in_achans[track], in_asamps[track]);
+
       // try to speed up access by keeping some files open
       if (track < NSTOREDFDS && storedfnames[track] && !strcmp(infilename, storedfnames[track])) {
         in_fd[track] = storedfds[track];
@@ -1703,10 +1703,10 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
             storedfds[track] = in_fd[track];
             storedfnames[track] = lives_strdup(infilename);
           }
+          lives_buffered_rdonly_slurp(in_fd[track], 0);
         }
       }
       seek = lives_buffered_offset(in_fd[track]);
-      seekstart[track] = quant_abytes(fromtime[track], in_arps[track], in_achans[track], in_asamps[track]);
       if (labs(seekstart[track] - seek) > AUD_DIFF_MIN) {
         lives_lseek_buffered_rdonly_absolute(in_fd[track], seekstart[track]);
       }
@@ -1815,7 +1815,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         continue;
       }
 
-      in_buff = (uint8_t *)lives_calloc_safety(tbytes, 1);
+      in_buff = (uint8_t *)lives_calloc_safety(tbytes * 2, 1);
 
       if (in_fd[track] > -1) {
         if (zavel < 0.) {
@@ -3192,7 +3192,6 @@ boolean resync_audio(int clipno, double frameno) {
 
   if (sfile->pb_fps >= 0.) sfile->adirection = LIVES_DIRECTION_FORWARD;
   else sfile->adirection = LIVES_DIRECTION_REVERSE;
-
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK) {
     if (frameno) {
@@ -3526,6 +3525,7 @@ static void *cache_my_audio(void *arg) {
       }
       lives_free(filename);
       cbuffer->_cfileno = -1;
+      lives_buffered_rdonly_slurp(cbuffer->_fd, 0);
     }
 
     if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek ||

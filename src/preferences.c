@@ -7239,8 +7239,8 @@ void on_prefs_apply_clicked(LiVESButton * button, livespointer user_data) {
       do_info_dialog(_("Disabling the theme will not take effect until the next time you start LiVES."));
     } else {
       do_info_dialog(_("Theme changes will only take full effect after restarting LiVES."));
-      set_double_pref(PREF_CPICK_VAR, 8.);
-      set_double_pref(PREF_CPICK_TIME, (prefs->cptime = -2.));
+      set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
+      set_double_pref(PREF_CPICK_TIME, (prefs->cptime = -DEF_CPICK_TIME));
     }
   } else
     lives_widget_set_sensitive(mainw->export_theme, TRUE);

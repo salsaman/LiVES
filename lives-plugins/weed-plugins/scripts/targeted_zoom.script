@@ -35,7 +35,7 @@ in_channel0
 </in_chans>
 
 <out_chans>
-out_channel0|inplace
+out_channel0
 </out_chans>
 
 <params>
@@ -49,29 +49,41 @@ special|framedraw|scaledpoint|1|2|0|
 special|display_val|log|0|
 </param_window>
 
+<static>
+static double scmax = exp(3.);
+</static>
+
 <process>
 float offsx = (float)xoffs, offsy = (float)yoffs, fscale = (float)scale, fscalex;
-int dx, dy, offset, widthx;
+int dx, dy, widthx;
 
+if (fscale > scmax) fscale = scmax;
 if (fscale < 1.) fscale = 1.;
+
 if (offsx < 0.) offsx = 0.;
-if (offsx + 1. / fscale > 1.) offsx = 1. - 1. / fscale;
+if (offsx > 1.) offsx = 1.;
 if (offsy < 0.) offsy = 0.;
-if (offsy + 1. / fscale > 1.) offsy = 1. - 1. / fscale;
+if (offsy > 1.) offsy = 1.;
 
 offsx *= width;
 offsy *= iheight;
 
 widthx = width * psize;
 fscalex = fscale * psize;
-offset = weed_channel_get_offset(out_chan);
 height += offset;
 
+src -= offset * irow;
+
 for (int y = offset; y < height; y++) {
-  dy = (int)(offsy + (float)y / fscale + .5);
+  dy = (int)(offsy + (float)(y - iheight / 2) / fscale + .5);
+  if (dy >= iheight) break;
+  if (dy < 0) continue;
   for (int x = 0; x < widthx; x += psize) {
-    dx = (int)(offsx + (float)x / fscalex + .5);
-    weed_memcpy(&dst[(y - offset) * orow + x], &src[irow * dy + dx * psize], psize);
+    dx = (int)(offsx + (float)(x - widthx / 2) / fscalex + .5);
+    if (dx >= width) break;
+    if (dx < 0) continue;
+    weed_memcpy(&dst[(y - offset) * orow + x],
+		    &src[irow * dy + dx * psize], psize);
   }
 }
 </process>

@@ -958,7 +958,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     vppa->spinbuttonw = lives_standard_spin_button_new(_("_Width"),
                         hsize,
-                        4., MAX_FRAME_WIDTH, 4., 16., 0, LIVES_BOX(hbox), NULL);
+                        4., MAX_FRAME_WIDTH, -4., 16., 0, LIVES_BOX(hbox), NULL);
 
     add_fill_to_box(LIVES_BOX(hbox));
 
@@ -967,7 +967,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     vppa->spinbuttonh = lives_standard_spin_button_new(_("_Height"),
                         vsize,
-                        4., MAX_FRAME_HEIGHT, 4., 16., 0, LIVES_BOX(hbox), NULL);
+                        4., MAX_FRAME_HEIGHT, -4., 16., 0, LIVES_BOX(hbox), NULL);
 
     if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
       if (mainw->event_list) {
@@ -3595,8 +3595,12 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
           lives_free(list);
           rpar[i].type = LIVES_PARAM_STRING_LIST;
           rpar[i].max = listlen;
-        } else if (weed_plant_has_leaf(gui, WEED_LEAF_STEP_SIZE))
-          rpar[i].step_size = (double)weed_get_int_value(gui, WEED_LEAF_STEP_SIZE, NULL);
+        } else {
+          if (weed_plant_has_leaf(gui, WEED_LEAF_STEP_SIZE)) {
+            rpar[i].step_size = (double)weed_get_int_value(gui, WEED_LEAF_STEP_SIZE, NULL);
+            rpar[i].snap_to_step = TRUE;
+          }
+        }
         if (rpar[i].step_size == 0.) rpar[i].step_size = 1.;
       }
       break;
@@ -3621,8 +3625,10 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       rpar[i].step_size = 0.;
       rpar[i].dp = 2;
       if (gui) {
-        if (weed_plant_has_leaf(gui, WEED_LEAF_STEP_SIZE))
+        if (weed_plant_has_leaf(gui, WEED_LEAF_STEP_SIZE)) {
           rpar[i].step_size = weed_get_double_value(gui, WEED_LEAF_STEP_SIZE, NULL);
+          rpar[i].snap_to_step = TRUE;
+        }
         if (weed_plant_has_leaf(gui, WEED_LEAF_DECIMALS))
           rpar[i].dp = weed_get_int_value(gui, WEED_LEAF_DECIMALS, NULL);
       }

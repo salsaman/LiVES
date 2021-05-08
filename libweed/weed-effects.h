@@ -90,7 +90,7 @@ typedef struct {
 /* Filter flags */
 #define WEED_FILTER_NON_REALTIME                	(1 << 0)
 #define WEED_FILTER_IS_CONVERTER                	(1 << 1)
-#define WEED_FILTER_HINT_STATELESS			(1 << 2)
+#define WEED_FILTER_HINT_STATEFUL			(1 << 2)
 #define WEED_FILTER_PREF_LINEAR_GAMMA			(1 << 3)
 #define WEED_FILTER_PREF_PREMULTIPLIED_ALPHA		(1 << 4)
 #define WEED_FILTER_HINT_PROCESS_LAST			(1 << 5)
@@ -299,6 +299,7 @@ typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed
 
 // API 201
 #define WEED_LEAF_RANDOM_SEED "random_seed"
+#define WEED_LEAF_STATE_UPDATED "state_updated"
 
 // instance GUI leaves
 #define WEED_LEAF_EASE_IN_FRAMES "ease_in_frames" // set by filter in init_func()

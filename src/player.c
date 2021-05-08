@@ -1888,23 +1888,30 @@ static boolean check_for_audio_stop(int fileno, frames_t first_frame, frames_t l
 }
 
 
-void calc_aframeno(int fileno) {
+LIVES_GLOBAL_INLINE void calc_aframeno(int fileno) {
+  if (CLIP_HAS_AUDIO(fileno)) {
+    lives_clip_t *sfile = mainw->files[fileno];
 #ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && ((mainw->jackd && mainw->jackd->playing_file == fileno) ||
-      (mainw->jackd_read && mainw->jackd_read->playing_file == fileno))) {
-    // get seek_pos from jack
-    if (mainw->jackd_read) mainw->aframeno = lives_jack_get_pos(mainw->jackd_read) * cfile->fps + 1.;
-    else mainw->aframeno = lives_jack_get_pos(mainw->jackd) * cfile->fps + 1.;
-  }
+    if (prefs->audio_player == AUD_PLAYER_JACK && ((mainw->jackd && mainw->jackd->playing_file == fileno) ||
+        (mainw->jackd_read && mainw->jackd_read->playing_file == fileno))) {
+      // get seek_pos from jack
+      if (mainw->jackd_read && mainw->jackd_read->playing_file == fileno)
+        mainw->aframeno = lives_jack_get_pos(mainw->jackd_read) * sfile->fps + 1.;
+      else
+        mainw->aframeno = lives_jack_get_pos(mainw->jackd) * sfile->fps + 1.;
+    }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE && ((mainw->pulsed && mainw->pulsed->playing_file == fileno) ||
-      (mainw->pulsed_read && mainw->pulsed_read->playing_file == fileno))) {
-    // get seek_pos from pulse
-    if (mainw->pulsed_read) mainw->aframeno = lives_pulse_get_pos(mainw->pulsed_read) * cfile->fps + 1.;
-    else mainw->aframeno = lives_pulse_get_pos(mainw->pulsed) * cfile->fps + 1.;
-  }
+    if (prefs->audio_player == AUD_PLAYER_PULSE && ((mainw->pulsed && mainw->pulsed->playing_file == fileno) ||
+        (mainw->pulsed_read && mainw->pulsed_read->playing_file == fileno))) {
+      // get seek_pos from pulse
+      if (mainw->pulsed_read && mainw->pulsed_read->playing_file == fileno)
+        mainw->aframeno = lives_pulse_get_pos(mainw->pulsed_read) * sfile->fps + 1.;
+      else
+        mainw->aframeno = lives_pulse_get_pos(mainw->pulsed) * sfile->fps + 1.;
+    }
 #endif
+  }
 }
 
 
@@ -2440,22 +2447,20 @@ switch_point:
     mainw->deltaticks = 0;
 
     if (IS_VALID_CLIP(mainw->playing_file)) {
-      if (sfile->arate)
+      if (sfile->arate) {
         /* g_print("HIB %d %d %d %d %ld %f %f %ld %ld %d %f\n", sfile->frameno, last_req_frame, mainw->playing_file, */
         /* 	aplay_file, sfile->aseek_pos, */
-        /* 	sfile->fps * lives_pulse_get_pos(mainw->pulsed) + 1., (double)sfile->aseek_pos */
+        /* 	sfile->fps * lives_jack_get_pos(mainw->jackd) + 1., (double)sfile->aseek_pos */
         /* 	/ (double)sfile->arps / 4. * sfile->fps + 1., */
         /* 	mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
-
         sfile->frameno = sfile->last_frameno = last_req_frame + sig(sfile->pb_fps);
-
+      }
       if (mainw->frame_layer_preload) {
         check_layer_ready(mainw->frame_layer_preload);
         weed_layer_free(mainw->frame_layer_preload);
         mainw->frame_layer_preload = NULL;
         cleanup_preload = FALSE;
       }
-
       //g_print("ASEEK is %ld\n", sfile->aseek_pos);
     }
 
@@ -2474,14 +2479,14 @@ switch_point:
 
     real_requested_frame = 0;
 
-    /* if (sfile->arate) */
-    /*   g_print("HIB2 %d %d %d %d %d %ld %f %f %ld %ld %d %f\n", mainw->actual_frame, sfile->frameno, last_req_frame, */
-    /* 	      mainw->playing_file, aplay_file, sfile->aseek_pos, */
-    /* 	      sfile->fps * lives_pulse_get_pos(mainw->pulsed) + 1., */
-    /* 	      (double)sfile->aseek_pos / (double)sfile->arate / 4. * sfile->fps + 1., */
-    /* 	      mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
+    if (sfile->arate)
+      /* g_print("HIB2 %d %d %d %d %d %ld %f %f %ld %ld %d %f\n", mainw->actual_frame, sfile->frameno, last_req_frame, */
+      /* 	      mainw->playing_file, aplay_file, sfile->aseek_pos, */
+      /* 	      sfile->fps * lives_jack_get_pos(mainw->jackd) + 1., */
+      /* 	      (double)sfile->aseek_pos / (double)sfile->arate / 4. * sfile->fps + 1., */
+      /* 	      mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
 
-    cache_hits = cache_misses = 0;
+      cache_hits = cache_misses = 0;
     mainw->force_show = TRUE;
     mainw->actual_frame = mainw->files[mainw->new_clip]->frameno;
     mainw->new_clip = -1;
@@ -2952,7 +2957,8 @@ switch_point:
             int qnt = mainw->files[aplay_file]->achans * (mainw->files[aplay_file]->asampsize >> 3);
             mainw->files[aplay_file]->aseek_pos =
               (double)((off_t)((double) mainw->jackd->seek_pos / (double)mainw->files[aplay_file]->arps
-                               / (mainw->files[aplay_file]->achans * mainw->files[aplay_file]->asampsize / 8)
+                               / (mainw->files[aplay_file]->achans * mainw->files[aplay_file]->asampsize / 8
+                                  + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL)
                                * mainw->files[aplay_file]->fps + .5)) / mainw->files[aplay_file]->fps
               * mainw->files[aplay_file]->arps * qnt;
           }

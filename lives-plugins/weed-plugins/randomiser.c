@@ -141,10 +141,14 @@ WEED_SETUP_START(200, 200) {
     snprintf(name, 256, "min%03d", i);
     snprintf(label, 256, "Min value for output %03d", count);
     in_params[i] = weed_float_init(name, label, 0., -1000000., 1000000.);
+    gui = weed_paramtmpl_get_gui(in_params[i]);
+    weed_set_int_value(gui, WEED_LEAF_DECIMALS, 8);
 
     snprintf(name, 256, "max%03d", i);
     snprintf(label, 256, "Max value for output %03d", count);
     in_params[i + 1] = weed_float_init(name, label, 1., -1000000., 1000000.);
+    gui = weed_paramtmpl_get_gui(in_params[i + 1]);
+    weed_set_int_value(gui, WEED_LEAF_DECIMALS, 8);
 
     snprintf(name, 256, "trigt%03d", i);
     snprintf(label, 256, "Trigger FALSE->TRUE");

@@ -453,14 +453,16 @@ LIVES_GLOBAL_INLINE int lives_open_buffered_rdonly(const char *pathname) {
   return lives_open_real_buffered(pathname, O_RDONLY, 0, TRUE);
 }
 
-
+//#define TEST_MMAP // actually slower...
 #ifdef TEST_MMAP
 #include <sys/mman.h>
 #endif
 
 boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-  off_t fsize = get_file_size(fd) - skip, bufsize = smbytes, res;
+  off_t fsize = get_file_size(fd) - skip, bufsize = smedbytes, res;
+  fbuff->ptr = fbuff->buffer = lives_calloc(1, fsize);
+  fbuff->skip = skip;
   if (fsize > 0) {
 #ifdef TEST_MMAP
     off_t offs = skip;
@@ -473,25 +475,28 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
     lseek(fd, skip, SEEK_SET);
 #endif
     fbuff->orig_size = fsize + skip;
-    fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
+    //fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
     //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
     while (fsize > 0) {
-      if (!fbuff->slurping) break; // file was closed
+      if (fbuff->invalid) {
+        //g_print("slurp file %d closed\n", fd);
+        break; // file was closed
+      }
       if (bufsize > fsize) bufsize = fsize;
 #ifdef TEST_MMAP
-      lives_memcpy(fbuff->buffer + fbuff->offset, p + offs, bufsize);
+      lives_memcpy(fbuff->buffer + fbuff->bytes, p + offs, bufsize);
       res = bufsize;
       offs += bufsize;
 #else
-      res = lives_read(fbuff->fd, fbuff->buffer + fbuff->offset, bufsize, TRUE);
-      //g_printerr("slurp for %d, %s with size %ld, read %lu bytes, remain\n", fd, fbuff->pathname, bufsize, fsize);
+      res = lives_read(fbuff->fd, fbuff->buffer + fbuff->bytes, bufsize, TRUE);
+      //g_printerr("slurp for %d, %s with size %ld, read %lu bytes, %lu remain\n", fd, fbuff->pathname, fbuff->orig_size, bufsize, fsize);
       if (res < 0) {
-        fbuff->eof = TRUE;
+        fbuff->invalid = TRUE;
         return FALSE;
       }
 #endif
       if (res > fsize) res = fsize;
-      fbuff->offset += res;
+      fbuff->bytes += res;
       fsize -= res;
       if (fsize >= bigbytes && bufsize >= medbytes) bufsize = bigbytes;
       else if (fsize >= medbytes && bufsize >= smedbytes) bufsize = medbytes;
@@ -503,18 +508,19 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
     munmap(p, fsize);
 #endif
   }
-  if (fbuff) fbuff->eof = TRUE;
+  if (fbuff) fbuff->slurping = FALSE;
   return TRUE;
 }
 
 
 void lives_buffered_rdonly_slurp(int fd, off_t skip) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-  if (!fbuff || fbuff->slurping) return;
+  if (!fbuff || fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return;
   fbuff->slurping = TRUE;
   fbuff->bytes = fbuff->offset = 0;
+  fbuff->bufsztype = BUFF_SIZE_READ_SLURP;
   lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "iI", fd, skip);
-  lives_nanosleep_until_nonzero(fbuff->orig_size | fbuff->eof);
+  lives_nanosleep_until_nonzero(fbuff->orig_size | !fbuff->slurping);
 }
 
 
@@ -591,8 +597,8 @@ ssize_t lives_close_buffered(int fd) {
   }
 
   if (fbuff->slurping) {
-    fbuff->slurping = FALSE;
-    lives_nanosleep_until_nonzero(fbuff->eof);
+    fbuff->invalid = TRUE;
+    lives_nanosleep_until_zero(fbuff->slurping);
   }
 
   lives_free(fbuff->pathname);
@@ -687,8 +693,17 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
 
 static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, off_t offset) {
   off_t newoffs;
-  if (offset == 0) return fbuff->offset - fbuff->bytes;
+  if (offset == 0) {
+    if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return fbuff->offset;
+    return fbuff->offset - fbuff->bytes;
+  }
   fbuff->nseqreads = 0;
+
+  if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
+    fbuff->offset += offset;
+    fbuff->ptr += offset;
+    return fbuff->offset;
+  }
 
   if (offset > 0) {
     // seek forwards
@@ -755,11 +770,18 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset) {
     return lseek(fd, offset, SEEK_SET);
   }
 
-  if (!fbuff->ptr || !fbuff->buffer) {
-    fbuff->offset = offset;
-    return fbuff->offset;
+  if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
+    offset -= fbuff->skip;
+    if (offset < 0) offset = 0;
+    if (offset > fbuff->orig_size) offset = fbuff->orig_size;
+    offset -= fbuff->offset;
+  } else {
+    if (!fbuff->ptr || !fbuff->buffer) {
+      fbuff->offset = offset;
+      return fbuff->offset;
+    }
+    offset -= fbuff->offset - fbuff->bytes;
   }
-  offset -= fbuff->offset - fbuff->bytes;
   return _lives_lseek_buffered_rdonly_relative(fbuff, offset);
 }
 
@@ -789,7 +811,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
   bufsztype = fbuff->bufsztype;
 
 #ifdef AUTOTUNE
-  if (!fbuff->slurping && fbuff->bufsztype != BUFF_SIZE_READ_CUSTOM) {
+  if (fbuff->bufsztype != BUFF_SIZE_READ_CUSTOM && fbuff->bufsztype != BUFF_SIZE_READ_SLURP) {
     cost = 1. / (1. + (double)fbuff->nseqreads);
     if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
       if (!tuneds && (!tuners || (tunedsm && !tunedm))) tuners = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 3);
@@ -807,6 +829,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
   }
 #endif
   if (!buf) {
+    if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return count;
     /// function can be called with buf == NULL to preload a buffer with at least (count) bytes
     lives_freep((void **)&fbuff->buffer);
     if (allow_less) {
@@ -825,15 +848,16 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
   fbuff->totops++;
 
   // read bytes from fbuff
-  if (fbuff->bytes > 0 || fbuff->slurping) {
-    size_t nbytes;
-    if (fbuff->slurping) {
-      if (fbuff->orig_size - fbuff->bytes < count) {
-        count = fbuff->orig_size - fbuff->bytes;
-        if (!count) goto rd_exit;
-      }
-      while ((nbytes = fbuff->offset - fbuff->bytes) < count  && !fbuff->eof) {
+  if (fbuff->bytes > 0 || fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
+    ssize_t nbytes;
+    if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
+      while ((nbytes = fbuff->bytes - fbuff->offset) < count && fbuff->slurping) {
         lives_nanosleep(1000);
+      }
+      if (fbuff->bytes - fbuff->offset <= count) {
+        fbuff->eof = TRUE;
+        count = fbuff->bytes - fbuff->offset;
+        if (!count) goto rd_exit;
       }
     } else nbytes = fbuff->bytes;
     if (nbytes > count) nbytes = count;
@@ -844,10 +868,13 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       if (mainw->is_exiting) {
         return retval;
       }
-      fbuff->offset -= (fbuff->ptr - fbuff->buffer + fbuff->bytes);
-      if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) fbuff->bytes = (fbuff->ptr - fbuff->buffer + fbuff->bytes);
-      fbuff->buffer = NULL;
-      file_buffer_fill(fbuff, fbuff->bytes);
+
+      if (fbuff->bufsztype != BUFF_SIZE_READ_SLURP) {
+        fbuff->offset -= (fbuff->ptr - fbuff->buffer + fbuff->bytes);
+        if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) fbuff->bytes = (fbuff->ptr - fbuff->buffer + fbuff->bytes);
+        fbuff->buffer = NULL;
+        file_buffer_fill(fbuff, fbuff->bytes);
+      }
       fbuff->invalid = FALSE;
     }
 
@@ -855,15 +882,21 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
 
     retval += nbytes;
     count -= nbytes;
-    fbuff->ptr += nbytes;
     ptr += nbytes;
     fbuff->totbytes += nbytes;
 
-    if (fbuff->slurping) fbuff->bytes += nbytes;
-    else fbuff->bytes -= nbytes;
+    if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
+      if (!fbuff->reversed) {
+        fbuff->offset += nbytes;
+        fbuff->ptr += nbytes;
+      }
+    } else {
+      fbuff->bytes -= nbytes;
+      fbuff->ptr += nbytes;
+    }
 
     fbuff->nseqreads++;
-    if (fbuff->slurping) goto rd_exit;
+    if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) goto rd_exit;
     if (count == 0) goto rd_done;
     if (fbuff->eof && !fbuff->reversed) goto rd_done;
     fbuff->nseqreads--;
@@ -1215,6 +1248,10 @@ off_t lives_buffered_offset(int fd) {
     return lseek(fd, 0, SEEK_CUR);
   }
 
+  if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
+    return fbuff->offset + fbuff->skip;
+  }
+
   if (fbuff->read) return fbuff->offset - fbuff->bytes;
   return fbuff->offset + fbuff->bytes;
 }
@@ -1226,6 +1263,10 @@ size_t lives_buffered_orig_size(int fd) {
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
     LIVES_DEBUG("lives_buffered_offset: no file buffer found");
     return lseek(fd, 0, SEEK_CUR);
+  }
+
+  if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
+    return fbuff->orig_size;// + fbuff->skip;
   }
 
   if (!fbuff->read) return fbuff->orig_size;

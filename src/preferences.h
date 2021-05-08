@@ -15,6 +15,13 @@
 #if HAVE_LADSPA
 #define LADSPA_LITERAL "ladspa"
 #endif
+
+// for the extended auto-colours
+// variance is actually 1. / VAR
+#define DEF_CPICK_VAR 0.4
+#define MAX_CPICK_VAR 1.0
+#define DEF_CPICK_TIME 2.0
+
 // for mainw->prefs_changed
 #define PREFS_THEME_CHANGED		(1 << 0)
 #define PREFS_JACK_CHANGED		(1 << 1)

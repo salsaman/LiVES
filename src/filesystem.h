@@ -42,6 +42,7 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 #define BUFF_SIZE_READ_MED 2
 #define BUFF_SIZE_READ_LARGE 3
 #define BUFF_SIZE_READ_CUSTOM -1
+#define BUFF_SIZE_READ_SLURP -2
 
 #define BUFF_SIZE_WRITE_SMALL 0
 #define BUFF_SIZE_WRITE_SMALLMED 1
@@ -50,16 +51,17 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 #define BUFF_SIZE_WRITE_LARGE 4
 
 typedef struct {
-  ssize_t bytes;  /// buffer size for write, bytes left to read in case of read
+  volatile ssize_t bytes;  /// buffer size for write, bytes left to read in case of read
   uint8_t *ptr;   /// read point in buffer
   uint8_t *buffer;   /// ptr to data  (ptr - buffer + bytes) gives the read size
   off_t offset; // file offs (of END of block)
+  off_t skip;
   int fd;
   int bufsztype;
-  boolean eof;
+  volatile boolean eof;
   boolean read;
   boolean reversed;
-  boolean slurping;
+  volatile boolean slurping;
   int nseqreads;
   int totops;
   int64_t totbytes;

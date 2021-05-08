@@ -65,6 +65,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 #define WADDED_KEY "_wh_widgets_added"
 #define NWIDTH_KEY "_wh_normal_width"
 #define FBUTT_KEY "_wh_first_button"
+#define SNAPVAL_KEY "_wh_snap_to_ticks"
 #define ISLOCKED_KEY "_wh_is_locked"
 #define CBUTTON_KEY "_wh_cbutton"
 #define SPRED_KEY "_wh_sp_red"
@@ -471,6 +472,27 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget 
   return FALSE;
 }
 
+
+LIVES_LOCAL_INLINE void lives_painter_lozenge(lives_painter_t *cr, double offs_x, double offs_y, double width, double height,
+    double rad) {
+  width += offs_x * 2;
+  height += offs_y * 2;
+
+  lives_painter_move_to(cr, rad + offs_x, offs_y);
+  lives_painter_line_to(cr, width - 1. - offs_x - rad, offs_y);
+  lives_painter_arc(cr, width - 1. - offs_x - rad, rad + offs_y, rad, 1.5 * M_PI, 0.);
+  lives_painter_move_to(cr, width - 1. - offs_x, offs_y + rad);
+  lives_painter_line_to(cr, width - 1 - offs_x, height - 6. - offs_y);
+
+  lives_painter_arc(cr, width - 1. - offs_x - rad, height - 1. - offs_y - rad, rad, 0., M_PI / 2.);
+  lives_painter_line_to(cr, offs_x + rad, height - 1. - offs_y);
+
+  lives_painter_arc(cr, offs_x + rad, height - 1. - offs_y - rad, rad, M_PI / 2., M_PI);
+  lives_painter_line_to(cr, offs_x, offs_y + rad);
+
+  lives_painter_arc(cr, offs_x + rad, offs_y + rad, rad, M_PI, 1.5 * M_PI);
+  lives_painter_line_to(cr, rad + offs_x, offs_y);
+}
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_destroy(lives_painter_surface_t *surf) {
@@ -2246,10 +2268,10 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
           if (selector != xselector) lives_free(selector);
           selector = lives_strdup("text");
         }
-        if (GTK_IS_SPIN_BUTTON(widget)) {
-          if (selector != xselector) lives_free(selector);
-          selector = lives_strdup("*");
-        }
+        /* if (GTK_IS_SPIN_BUTTON(widget)) { */
+        /*   if (selector != xselector) lives_free(selector); */
+        /*   selector = lives_strdup("*"); */
+        /* } */
       }
     }
 
@@ -5318,7 +5340,10 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESAdjustment *lives_spin_button_set_adjustment(Li
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_value(LiVESSpinButton *button, double value) {
-  if (is_standard_widget(LIVES_WIDGET(button))) value = lives_spin_button_get_snapval(button, value);
+  if (is_standard_widget(LIVES_WIDGET(button))) {
+    if (GET_INT_DATA(button, SNAPVAL_KEY))
+      value = lives_spin_button_get_snapval(button, value);
+  }
 #ifdef GUI_GTK
   gtk_spin_button_set_value(button, value);
   return TRUE;
@@ -7857,7 +7882,7 @@ LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustme
     volume_scale = gtk_vscale_new(adj);
 
   if (widget_opts.apply_theme) {
-    set_css_value_direct(volume_scale, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "0");
+    set_css_value_direct(volume_scale, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "0px");
   }
 
   gtk_scale_set_draw_value(GTK_SCALE(volume_scale), FALSE);
@@ -8429,14 +8454,15 @@ void render_standard_button(LiVESButton * sbutt) {
         lives_painter_set_line_width(cr, BT_PRE_WIDTH);
         if (prelit) lives_painter_set_source_rgb_from_lives_rgba(cr, &pab);
         else lives_painter_set_source_rgb_from_lives_rgba(cr, &bg);
-        lives_painter_rectangle(cr, 0, 0, width, height);
+        lives_painter_lozenge(cr, 0, 0, width, height, BUTTON_RAD);
         lives_painter_stroke(cr);
         offs_x += BT_PRE_WIDTH;
         offs_y += BT_PRE_WIDTH;
 
         lives_painter_set_line_width(cr, BT_UNPRE_WIDTH);
         lives_painter_set_source_rgb_from_lives_rgba(cr, &pab);
-        lives_painter_rectangle(cr, offs_x, offs_y, width - offs_x * 2., height - offs_y * 2.);
+
+        lives_painter_lozenge(cr, offs_x, offs_y, width - offs_x * 2., height - offs_y * 2., BUTTON_RAD);
         lives_painter_stroke(cr);
       } else {
         offs_x += BT_PRE_WIDTH;
@@ -8453,7 +8479,7 @@ void render_standard_button(LiVESButton * sbutt) {
       if (offs_x < 0.) offs_x = 0.;
       if (offs_y < 0.) offs_y = 0.;
 
-      lives_painter_rectangle(cr, offs_x, offs_y, width - offs_x * 2., height - offs_y * 2.);
+      lives_painter_lozenge(cr, offs_x, offs_y, width - offs_x * 2., height - offs_y * 2., BUTTON_RAD);
       lives_painter_clip(cr);
 
       if (widget_opts.show_button_images
@@ -8533,7 +8559,7 @@ void render_standard_button(LiVESButton * sbutt) {
         }
         if (themetype) {
           lives_painter_set_source_rgb_from_lives_rgba(cr, &pab2);
-          lives_painter_rectangle(cr, offs_x, offs_y, width - offs_x * 2., height - offs_y * 2.);
+          lives_painter_lozenge(cr, offs_x, offs_y, width, height, BUTTON_RAD);
           lives_painter_fill(cr);
         }
       } else {
@@ -8543,7 +8569,7 @@ void render_standard_button(LiVESButton * sbutt) {
         }
         if (themetype) {
           lives_painter_set_source_rgb_from_lives_rgba(cr, &bg);
-          lives_painter_rectangle(cr, offs_x, offs_y, width - offs_x * 2., height - offs_y * 2.);
+          lives_painter_lozenge(cr, offs_x, offs_y, width, height, BUTTON_RAD);
           lives_painter_fill(cr);
         }
       }
@@ -8655,6 +8681,10 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
 
 #if GTK_CHECK_VERSION(3, 16, 0)
     set_css_min_size(da, width, height);
+    set_css_value_direct(da, LIVES_WIDGET_STATE_NORMAL, "", "border-radius", "5px");
+    set_css_value_direct(button, LIVES_WIDGET_STATE_NORMAL, "", "border-radius", "5px");
+    set_css_value_direct(da, LIVES_WIDGET_STATE_PRELIGHT, "", "border-radius", "5px");
+    set_css_value_direct(button, LIVES_WIDGET_STATE_PRELIGHT, "", "border-radius", "5px");
     set_css_value_direct(button, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
 
     lives_widget_set_padding(button, 0);
@@ -9190,6 +9220,7 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
   if (invis) lives_frame_set_shadow_type(LIVES_FRAME(frame), LIVES_SHADOW_NONE);
 
   if (widget_opts.apply_theme) {
+    // WARNING - special css case - default selector only applies to label !
     set_standard_widget(frame, TRUE);
     lives_widget_apply_theme(frame, LIVES_WIDGET_STATE_NORMAL);
     lives_widget_set_text_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -9882,10 +9913,17 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 #if GTK_CHECK_VERSION(3, 14, 0)
   char *colref;
 #endif
-
+  boolean has_snapval = FALSE;
   boolean expand;
 
   int maxlen;
+
+
+  if (step < 0.) {
+    step = -step;
+    has_snapval = TRUE;
+  }
+
   widget_opts.last_label = NULL;
 
   if (step == 0.) step = 1. / (double)lives_10pow(dp);
@@ -9893,7 +9931,12 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   adj = lives_adjustment_new(val, min, max, step, page, 0.);
   spinbutton = lives_spin_button_new(adj, 1, dp);
 
-  val = lives_spin_button_get_snapval(LIVES_SPIN_BUTTON(spinbutton), val);
+  if (has_snapval) {
+    SET_INT_DATA(spinbutton, SNAPVAL_KEY, TRUE);
+    lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(spinbutton), TRUE);
+    val = lives_spin_button_get_snapval(LIVES_SPIN_BUTTON(spinbutton), val);
+  }
+
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(spinbutton), val);
   lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton));
   set_standard_widget(spinbutton, TRUE);
@@ -9979,6 +10022,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
     lives_widget_apply_theme2(LIVES_WIDGET(spinbutton), LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_widget_apply_theme_dimmed2(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
 #else
+
     lives_widget_apply_theme2(LIVES_WIDGET(spinbutton), LIVES_WIDGET_STATE_NORMAL, FALSE);
 
     colref = gdk_rgba_to_string(&palette->normal_fore);
@@ -9986,7 +10030,6 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
     lives_free(colref);
 
     set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
-    set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, "button", "opacity", "0.5");
 
     if (prefs->extra_colours && mainw->pretty_colours) {
       char *tmp;
@@ -9994,20 +10037,19 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
       set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
       set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "2px");
       set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_FOCUSED, "", "border-width", "2px");
+      set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "entry selection", "background-color", colref);
       tmp = lives_strdup_printf("0 0 0 1px %s inset", colref);
       set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp);
       lives_free(tmp);
       lives_free(colref);
-      colref = gdk_rgba_to_string(&palette->nice2);
+      colref = gdk_rgba_to_string(&palette->nice3);
       set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "caret-color", colref);
-      set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "entry selection", "background-color", colref);
       lives_free(colref);
       colref = gdk_rgba_to_string(&palette->normal_fore);
       set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "entry selection", "color", colref);
       lives_free(colref);
     }
 #endif
-    set_child_dimmed_colour2(spinbutton, BUTTON_DIM_VAL);// insens, themecols 1, child only
   }
 
   widget_opts.last_container = container;
@@ -10129,7 +10171,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
     set_child_alt_colour(combo, TRUE);
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-    set_css_value_direct(combo, LIVES_WIDGET_STATE_NORMAL, "*", "border-width", "0");
+    //set_css_value_direct(combo, LIVES_WIDGET_STATE_NORMAL, "*", "border-width", "0");
 
     set_css_min_size(combo, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
     lives_container_forall(LIVES_CONTAINER(combo), setminsz, NULL);
@@ -11008,6 +11050,7 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer * tb
   }
 
   if (widget_opts.apply_theme) {
+    // WARNING - special css case - default selector only applies to text !
     set_standard_widget(textview, TRUE);
     lives_widget_apply_theme3(textview, LIVES_WIDGET_STATE_NORMAL);
     if (prefs->extra_colours && mainw->pretty_colours) {
@@ -13038,7 +13081,7 @@ boolean draw_cool_toggle(LiVESWidget * widget, lives_painter_t *cr, livespointer
   // connect expose event to this
   double rwidth = (double)lives_widget_get_allocation_width(LIVES_WIDGET(widget));
   double rheight = (double)lives_widget_get_allocation_height(LIVES_WIDGET(widget));
-  double rad, scalex = 1., scaley = .8;
+  double scalex = 1., scaley = .8;
   boolean active =
     ((LIVES_IS_TOGGLE_BUTTON(widget) && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) ||
      (LIVES_IS_TOGGLE_TOOL_BUTTON(widget)
@@ -13062,44 +13105,8 @@ boolean draw_cool_toggle(LiVESWidget * widget, lives_painter_t *cr, livespointer
                                   palette->dark_red.blue, 1.);
   }
 
-  // draw rounded rctangle
-  lives_painter_rectangle(cr, 0, rwidth / 4,
-                          rwidth, rheight - rwidth / 2);
-  lives_painter_fill(cr);
-
-  lives_painter_rectangle(cr, rwidth / 4, 0,
-                          rwidth / 2, rwidth / 4);
-  lives_painter_fill(cr);
-
-  lives_painter_rectangle(cr, rwidth / 4, rheight - rwidth / 4,
-                          rwidth / 2, rwidth / 4);
-  lives_painter_fill(cr);
-  //#endif
-
-  rad = rwidth / 4.;
-
-  lives_painter_move_to(cr, rwidth / 4., rwidth / 4.);
-  lives_painter_line_to(cr, 0., rwidth / 4.);
-  lives_painter_arc(cr, rwidth / 4., rwidth / 4., rad, M_PI, 1.5 * M_PI);
-  lives_painter_line_to(cr, rwidth / 4., rwidth / 4.);
-  lives_painter_fill(cr);
-
-  lives_painter_move_to(cr, rwidth / 4.*3., rwidth / 4.);
-  lives_painter_line_to(cr, rwidth / 4.*3., 0.);
-  lives_painter_arc(cr, rwidth / 4.*3., rwidth / 4., rad, -M_PI / 2., 0.);
-  lives_painter_line_to(cr, rwidth / 4.*3., rwidth / 4.);
-  lives_painter_fill(cr);
-
-  lives_painter_move_to(cr, rwidth / 4., rheight - rwidth / 4.);
-  lives_painter_line_to(cr, rwidth / 4., rheight);
-  lives_painter_arc(cr, rwidth / 4., rheight - rwidth / 4., rad, M_PI / 2., M_PI);
-  lives_painter_line_to(cr, rwidth / 4., rheight - rwidth / 4.);
-  lives_painter_fill(cr);
-
-  lives_painter_move_to(cr, rwidth / 4.*3., rheight - rwidth / 4.);
-  lives_painter_line_to(cr, rwidth, rheight - rwidth / 4.);
-  lives_painter_arc(cr, rwidth / 4.*3., rheight - rwidth / 4., rad, 0., M_PI / 2.);
-  lives_painter_line_to(cr, rwidth / 4.*3., rheight - rwidth / 4.);
+  // draw rounded rectangle
+  lives_painter_lozenge(cr, 0, 0, rwidth, rheight, rwidth / 4.);
   lives_painter_fill(cr);
 
   // draw the surround
@@ -13109,34 +13116,7 @@ boolean draw_cool_toggle(LiVESWidget * widget, lives_painter_t *cr, livespointer
   lives_painter_set_source_rgba(cr, 0., 0., 0., .8);
   lives_painter_set_line_width(cr, 1.);
 
-  lives_painter_arc(cr, rwidth / 4., rwidth / 4., rad, M_PI, 1.5 * M_PI);
-  lives_painter_stroke(cr);
-  lives_painter_arc(cr, rwidth / 4.*3., rwidth / 4., rad, -M_PI / 2., 0.);
-  lives_painter_stroke(cr);
-  lives_painter_arc(cr, rwidth / 4., rheight - rwidth / 4., rad, M_PI / 2., M_PI);
-  lives_painter_stroke(cr);
-  lives_painter_arc(cr, rwidth / 4.*3., rheight - rwidth / 4., rad, 0., M_PI / 2.);
-
-  lives_painter_stroke(cr);
-
-  lives_painter_move_to(cr, rwidth / 4., 0);
-  lives_painter_line_to(cr, rwidth / 4.*3., 0);
-
-  lives_painter_stroke(cr);
-
-  lives_painter_move_to(cr, rwidth / 4., rheight);
-  lives_painter_line_to(cr, rwidth / 4.*3., rheight);
-
-  lives_painter_stroke(cr);
-
-  lives_painter_move_to(cr, 0., rwidth / 4.);
-  lives_painter_line_to(cr, 0., rheight - rwidth / 4.);
-
-  lives_painter_stroke(cr);
-
-  lives_painter_move_to(cr, rwidth, rwidth / 4.);
-  lives_painter_line_to(cr, rwidth, rheight - rwidth / 4.);
-
+  lives_painter_lozenge(cr, 0, 0, rwidth, rheight, rwidth / 4.);
   lives_painter_stroke(cr);
 
   if (active) {

@@ -95,6 +95,7 @@ void lives_exit(int signum) {
     pthread_mutex_unlock(&mainw->fbuffer_mutex);
     pthread_mutex_trylock(&mainw->alarmlist_mutex);
     pthread_mutex_unlock(&mainw->alarmlist_mutex);
+    pthread_mutex_unlock(&mainw->trcount_mutex);
     // filter mutexes are unlocked in weed_unload_all
 
     if (pthread_mutex_trylock(&mainw->exit_mutex)) pthread_exit(NULL);
@@ -7141,6 +7142,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 		}}}}}
 	// *INDENT-ON*
         else {
+          // multitrack
           if (mainw->play_window && !(mainw->ext_playback && mainw->vpp->fheight > -1
                                       && mainw->vpp->fwidth > -1)) {
             resize_play_window();
@@ -7158,8 +7160,9 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
             mainw->vpp->fwidth = cfile->hsize;
             mainw->vpp->fheight = cfile->vsize;
           }
-          mainw->pwidth = mainw->vpp->fwidth;
-          mainw->pheight = mainw->vpp->fheight;
+          get_player_size(&mainw->pwidth, &mainw->pheight);
+          /* mainw->pwidth = mainw->vpp->fwidth; */
+          /* mainw->pheight = mainw->vpp->fheight; */
 
           if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) {
             unfade_background();
@@ -9572,6 +9575,11 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
       if ((sfile->pb_fps > 0. && sfile->adirection == LIVES_DIRECTION_REVERSE)
           || (sfile->pb_fps < 0. && sfile->adirection == LIVES_DIRECTION_FORWARD))
         frameno = sfile->frameno;
+    } else {
+      if (AV_CLIPS_EQUAL && sfile->pb_fps < 0. && sfile->adirection == LIVES_DIRECTION_FORWARD) {
+        calc_aframeno(mainw->playing_file);
+        frameno = mainw->aframeno - 3.;
+      }
     }
     resync_audio(mainw->playing_file, (double)frameno);
   }

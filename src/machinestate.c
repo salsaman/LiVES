@@ -2971,11 +2971,14 @@ boolean get_machine_dets(void) {
 }
 
 
-#define DISK_STATS_FILE "/proc/diskstats"
-
 double get_disk_load(const char *mp) {
+  // not really working yet...
   if (!mp) return -1.;
   else {
+#ifndef IS_LINUX_GNU
+  return 0.;
+#else
+#define DISK_STATS_FILE "/proc/diskstats"
     static ticks_t lticks = 0;
     static uint64_t lval = 0;
     double ret = -1.;
@@ -3016,6 +3019,7 @@ double get_disk_load(const char *mp) {
   return ret;
   }
   return -1.;
+#endif
 }
 
 

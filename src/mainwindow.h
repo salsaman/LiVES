@@ -1589,6 +1589,7 @@ typedef struct {
   pthread_mutex_t exit_mutex; ///< prevent multiple threads trying to run cleanup
   pthread_mutex_t fbuffer_mutex; /// append / remove with file_buffer list
   pthread_mutex_t alarmlist_mutex; /// single access for updating alarm list
+  pthread_mutex_t trcount_mutex; /// transition count mutex
 
   ///< set for param window updates from OSC or data connections, notifies main thread to do visual updates
   volatile lives_rfx_t *vrfx_update;

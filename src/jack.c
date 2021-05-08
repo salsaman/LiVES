@@ -23,6 +23,7 @@
 #define MAX_CON_TRIES 10
 
 static int start_ready_callback(jack_transport_state_t state, jack_position_t *pos, void *jackd);
+static int xrun_callback(void *jackd);
 static void timebase_callback(jack_transport_state_t state, jack_nframes_t nframes, jack_position_t *pos, int new_pos,
                               void *jackd);
 
@@ -2665,7 +2666,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
 
         if (cache_buffer) eof = cache_buffer->eof;
 
-        if ((shrink_factor = (float)in_frames / (float)jackFramesAvailable) >= 0.f) {
+        if ((shrink_factor = (float)in_frames / (float)jackFramesAvailable / mainw->audio_stretch) >= 0.f) {
           jackd->seek_pos += in_bytes;
           if (jackd->playing_file != mainw->ascrap_file) {
             if (eof || (jackd->seek_pos >= jackd->seek_end && !afile->opening)) {
@@ -3090,6 +3091,20 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
 #endif
   in_ap = FALSE;
 
+  return 0;
+}
+
+
+static int xrun_callback(void *arg) {
+  jack_driver_t *jackd = (jack_driver_t *)arg;
+  float delay = jack_get_xrun_delayed_usecs(jackd->client);
+  volatile float *load = get_core_loadvar(0);
+  if (prefs->show_dev_opts) {
+    g_print("\n\nXRUN: %f %f\n", delay, *load);
+  }
+  if (IS_VALID_CLIP(jackd->playing_file))
+    jackd->seek_pos += (off_t)((double)jackd->sample_in_rate * ((double)delay / (double)MILLIONS(1))
+                               * TICKS_PER_SECOND_DBL) * afile->adirection * jackd->num_input_channels * 4.;
   return 0;
 }
 
@@ -3606,6 +3621,7 @@ boolean jack_write_client_activate(jack_driver_t *jackd) {
   if (jackd->is_active) return TRUE; // already running
 
   jack_set_process_callback(jackd->client, audio_process, jackd);
+  jack_set_xrun_callback(jackd->client, xrun_callback, jackd);
 
   /* tell the JACK server that we are ready to roll */
   if (jack_activate(jackd->client)) {

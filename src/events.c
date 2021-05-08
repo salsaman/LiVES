@@ -5321,6 +5321,9 @@ boolean deal_with_render_choice(boolean add_deinit) {
 
   render_choice = RENDER_CHOICE_NONE;
 
+  if (mainw->jackd)
+    jack_conx_exclude(mainw->jackd_read, mainw->jackd, FALSE);
+
   if (!CURRENT_CLIP_IS_VALID) {
     /// user may have recorded a  generator with no other clips loaded
     if (mainw->scrap_file != -1)
@@ -6238,13 +6241,13 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   *spwidth = lives_standard_spin_button_new
-             (_("_Width"), defwidth, width_step, MAX_FRAME_WIDTH, width_step, width_step, 0, LIVES_BOX(hbox), NULL);
+             (_("_Width"), defwidth, width_step, MAX_FRAME_WIDTH, -width_step, width_step, 0, LIVES_BOX(hbox), NULL);
   lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(*spwidth), width_step);
   lives_spin_button_update(LIVES_SPIN_BUTTON(*spwidth));
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   *spheight = lives_standard_spin_button_new
-              (_("_Height"), defheight, height_step, MAX_FRAME_WIDTH, height_step, height_step, 0, LIVES_BOX(hbox), NULL);
+              (_("_Height"), defheight, height_step, MAX_FRAME_WIDTH, -height_step, height_step, 0, LIVES_BOX(hbox), NULL);
   lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(*spheight), height_step);
   lives_spin_button_update(LIVES_SPIN_BUTTON(*spheight));
 

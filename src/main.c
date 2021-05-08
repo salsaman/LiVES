@@ -954,6 +954,7 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->fbuffer_mutex, NULL);
   pthread_mutex_init(&mainw->avseek_mutex, NULL);
   pthread_mutex_init(&mainw->alarmlist_mutex, NULL);
+  pthread_mutex_init(&mainw->trcount_mutex, NULL);
 
   // conds
   pthread_cond_init(&mainw->avseek_cond, NULL);
@@ -2860,13 +2861,15 @@ retry:
   ncg = palette->menu_and_bars.green * 255.;
   ncb = palette->menu_and_bars.blue * 255.;
   prefs->pb_quality = PB_QUALITY_HIGH;
-  timeout = timer * TICKS_PER_SECOND;
+
+  timeout = (ticks_t)(timer * TICKS_PER_SECOND_DBL);
   xtimerinfo = lives_get_current_ticks();
   if (pick_nice_colour(timeout, palette->normal_back.red * 255., palette->normal_back.green * 255.,
                        palette->normal_back.blue * 255., &ncr, &ncg, &ncb, .15 * var, .25, .75)) {
     mainw->pretty_colours = TRUE;
-    if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 10 * 9) var *= .98;
-    if (var > 2.) var = 2.;
+    if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 5) var *= 1.02;
+    //g_print("c1 %ld %ld %f %f\n", timerinfo - xtimerinfo, timeout, (double)(timerinfo - xtimerinfo) / (double)timeout, var);
+    if (var > MAX_CPICK_VAR) var = MAX_CPICK_VAR;
     timeout -= (timerinfo - xtimerinfo);
     xtimerinfo = timerinfo;
 
@@ -2882,10 +2885,11 @@ retry:
 
     if (pick_nice_colour(timeout, palette->nice1.red * 255., palette->nice1.green * 255.,
                          palette->nice1.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax)) {
-      if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 100000) var *= .98;
+      if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 2) var *= 1.02;
+      //g_print("c2 %ld %ld %f %f\n", timerinfo - xtimerinfo, timeout, (double)(timerinfo - xtimerinfo) / (double)timeout, var);
       timeout -= (timerinfo - xtimerinfo);
       xtimerinfo = timerinfo;
-      if (var > 2.) var = 2.;
+      if (var > MAX_CPICK_VAR) var = MAX_CPICK_VAR;
       mainw->pretty_colours = TRUE;
       // nice2 - alt for menu_and_bars
       // insensitive colour ?
@@ -2902,9 +2906,10 @@ retry:
       }
       pick_nice_colour(timeout, palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
                        palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax);
-      if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 15) var *= .98;
+      if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 4 * 3) var *= 1.02;
       // nice3 - alt for menu_and_bars_fore
-      if (var > 2.) var = 2.;
+      if (var > MAX_CPICK_VAR) var = MAX_CPICK_VAR;
+      //g_print("c3 %ld %ld %f %f\n", timerinfo - xtimerinfo, timeout, (double)(timerinfo - xtimerinfo) / (double)timeout, var);
       palette->nice3.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
       palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
       palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
@@ -2914,7 +2919,7 @@ retry:
   } else {
     if (!retried) {
       retried = TRUE;
-      var = var * 0.9;
+      var *= .98;
       goto retry;
     }
   }
@@ -3246,12 +3251,12 @@ boolean set_palette_colours(boolean force_reload) {
   // TODO - run a bg thread until we create GUI
   if (!prefs->vj_mode && prefs->startup_phase == 0) {
     /// create thread to pick custom colours
-    double cpvar = get_double_prefd(PREF_CPICK_VAR, 8.0);
-    prefs->cptime = get_double_prefd(PREF_CPICK_TIME, -2.0);
-    if (abs(prefs->cptime) < .5) prefs->cptime = -1.;
+    double cpvar = get_double_prefd(PREF_CPICK_VAR, DEF_CPICK_VAR);
+    prefs->cptime = get_double_prefd(PREF_CPICK_TIME, -DEF_CPICK_TIME);
+    if (fabs(prefs->cptime) < .5) prefs->cptime = -1.;
     mainw->helper_procthreads[PT_CUSTOM_COLOURS]
-      = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)pick_custom_colours,
-                                 WEED_SEED_DOUBLE, "dd", cpvar, abs(prefs->cptime));
+      = lives_proc_thread_create(LIVES_THRDATTR_NOTE_STTIME, (lives_funcptr_t)pick_custom_colours,
+                                 WEED_SEED_DOUBLE, "dd", cpvar, fabs(prefs->cptime));
   }
 #endif
   /// set global values
@@ -3283,8 +3288,6 @@ boolean set_palette_colours(boolean force_reload) {
   colref = gdk_rgba_to_string(&palette->menu_and_bars_fore);
   set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "scrollbar", "color", colref);
   lives_free(colref);
-
-  set_css_value_direct(NULL, LIVES_WIDGET_STATE_INSENSITIVE, "spinbutton button", "opacity", "0.5");
 
   return TRUE;
 }
@@ -4263,19 +4266,21 @@ static boolean lives_startup2(livespointer data) {
   if (lives_proc_thread_check_finished(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) {
     double cpvar = lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
     lives_proc_thread_free(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-    if (prefs->cptime <= 0.) {
+    if (prefs->cptime <= 0. && cpvar < MAX_CPICK_VAR) {
       prefs->cptime *= 1.1 + .2;
       set_double_pref(PREF_CPICK_TIME, prefs->cptime);
-      set_double_pref(PREF_CPICK_VAR, cpvar);
     }
+    set_double_pref(PREF_CPICK_VAR, cpvar);
   } else {
-    prefs->cptime = abs(prefs->cptime) * .9;
+    prefs->cptime =
+      (double)(lives_get_current_ticks()
+               - lives_proc_thread_get_start_ticks(mainw->helper_procthreads[PT_CUSTOM_COLOURS]))
+      / TICKS_PER_SECOND_DBL * .9;
     set_double_pref(PREF_CPICK_TIME, prefs->cptime);
-    set_double_pref(PREF_CPICK_VAR, 4.);
+    set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
     lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
   }
   mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
-
   if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
@@ -5747,7 +5752,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->loop_video, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_TOTAL_TIME > 0.));
   lives_widget_set_sensitive(mainw->loop_continue, TRUE);
   lives_widget_set_sensitive(mainw->load_audio, TRUE);
-  if (mainw->rendered_fx)
+  if (mainw->rendered_fx && mainw->rendered_fx[0] && mainw->rendered_fx[0]->menuitem)
     lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->cg_managegroups, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->load_subs, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
@@ -5938,7 +5943,7 @@ void desensitize(void) {
     }
   }
 
-  if (mainw->rendered_fx)
+  if (mainw->rendered_fx && mainw->rendered_fx[0] && mainw->rendered_fx[0]->menuitem)
     lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, FALSE);
   lives_widget_set_sensitive(mainw->cg_managegroups, FALSE);
   lives_widget_set_sensitive(mainw->export_submenu, FALSE);
@@ -7144,9 +7149,12 @@ static void png_init(png_structp png_ptr) {
 #ifdef PNG_BIO
 static void png_read_func(png_structp png_ptr, png_bytep data, png_size_t length) {
   int fd = LIVES_POINTER_TO_INT(png_get_io_ptr(png_ptr));
+  ssize_t bread;
   //lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-  if (lives_read_buffered(fd, data, length, TRUE) < length) {
-    png_error(png_ptr, "read_fn error");
+  if ((bread = lives_read_buffered(fd, data, length, TRUE)) < length) {
+    char *errmsg = lives_strdup_printf("png read_fn error, read only %ld bytes of %ld\n", bread, length);
+    png_error(png_ptr, errmsg);
+    lives_free(errmsg);
   }
 }
 #endif
@@ -8993,6 +9001,9 @@ boolean switch_audio_clip(int new_file, boolean activate) {
     if (CLIP_HAS_AUDIO(new_file)) {
       int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
       int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
+      sfile->aseek_pos += (off_t)((sfile->adirection / fabs(sfile->pb_fps) * .5
+                                   + (double)(mainw->currticks - mainw->startticks) / 2. / TICKS_PER_SECOND_DBL)
+                                  * sfile->arps) * sfile->achans * (sfile->asampsize >> 3);
       mainw->jackd->num_input_channels = sfile->achans;
       mainw->jackd->bytes_per_channel = sfile->asampsize / 8;
       if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
@@ -9110,6 +9121,9 @@ boolean switch_audio_clip(int new_file, boolean activate) {
       if (CLIP_HAS_AUDIO(new_file)) {
         int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
         int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
+        sfile->aseek_pos += (off_t)((sfile->adirection / fabs(sfile->pb_fps) * .5
+                                     + (double)(mainw->currticks - mainw->startticks) / 2. / TICKS_PER_SECOND_DBL)
+                                    * sfile->arps) * sfile->achans * (sfile->asampsize >> 3);
         mainw->pulsed->in_achans = sfile->achans;
         mainw->pulsed->in_asamps = sfile->asampsize;
         if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {

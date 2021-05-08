@@ -1144,7 +1144,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     seek_target = av_rescale_q(xtarget_pts, AV_TIME_BASE_Q, s->time_base);
     if (seek_target < -priv->ic->start_time) seek_target = 0;
 
-    av_seek_frame(priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD);
+    av_seek_frame(priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_FRAME);
 #ifdef DEBUG
     fprintf(stderr, "new seek: %ld %ld %ld\n", priv->last_frame, seek_target, priv->ic->start_time);
 #endif

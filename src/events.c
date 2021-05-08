@@ -3956,7 +3956,12 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                   reused = TRUE;
                 } else {
                   check_layer_ready(layer);
-                  resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_NONE, 0);
+                  if (prefs->enc_letterbox) {
+                    letterbox_layer(layer, cfile->hsize, cfile->vsize,
+                                    weed_layer_get_width_pixels(layer), weed_layer_get_height(layer),
+                                    LIVES_INTERP_BEST, WEED_PALETTE_NONE, 0);
+
+                  } else resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_NONE, 0);
                 }
                 // if our pixbuf came from scrap file, and next frame is also from scrap file with same frame number,
                 next_frame_event = get_next_frame_event(event);
@@ -5320,9 +5325,6 @@ boolean deal_with_render_choice(boolean add_deinit) {
   frames_t oplay_start = 1;
 
   render_choice = RENDER_CHOICE_NONE;
-
-  if (mainw->jackd)
-    jack_conx_exclude(mainw->jackd_read, mainw->jackd, FALSE);
 
   if (!CURRENT_CLIP_IS_VALID) {
     /// user may have recorded a  generator with no other clips loaded

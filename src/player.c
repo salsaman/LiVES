@@ -1138,7 +1138,7 @@ boolean load_frame_image(frames_t frame) {
 
       if (return_layer) weed_leaf_dup(return_layer, frame_layer, WEED_LEAF_GAMMA_TYPE);
       pd_array = weed_layer_get_pixel_data_planar(frame_layer, NULL);
-      lb_width = lwidth = weed_layer_get_width_pixels(frame_layer);
+      lb_width = lwidth = weed_layer_get_width(frame_layer);
       lb_height = lheight = weed_layer_get_height(frame_layer);
       pwidth = mainw->pwidth;
       pheight = mainw->pheight;

@@ -1823,7 +1823,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
           lives_lseek_buffered_rdonly(in_fd[track], - tbytes);
         } else {
           lives_buffered_rdonly_set_reversed(in_fd[track], FALSE);
-          //lives_buffered_rdonly_slurp(in_fd[track], seekstart[track]);
         }
       }
 

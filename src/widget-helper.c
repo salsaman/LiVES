@@ -1005,24 +1005,25 @@ static void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
 
 static boolean timer_running = FALSE;
 
+static pthread_mutex_t task_list_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 static LiVESList *task_list = NULL;
 
 static lives_sigdata_t *tasks_running(void) {
-  LiVESList *list;
-  lives_sigdata_t *sigdata;
-  list = task_list;
-  if (!list) return NULL;
-  sigdata = (lives_sigdata_t *)list->data;
-  if (lives_proc_thread_check_finished(sigdata->proc)) {
-    task_list = task_list->next;
-    if (task_list) task_list->prev = NULL;
-    list->next = NULL;
-    list->data = NULL;
-    lives_list_free(list);
-    if (!task_list) return sigdata;
-    if (sigdata->proc) lives_proc_thread_dontcare(sigdata->proc);
-    sigdata_free(sigdata, NULL);
+  pthread_mutex_lock(&task_list_mutex);
+  if (task_list) {
+    lives_sigdata_t *sigdata = (lives_sigdata_t *)task_list->data;
+    if (lives_proc_thread_check_finished(sigdata->proc)) {
+      task_list = lives_list_remove_node(task_list, task_list, FALSE);
+      if (!task_list) {
+        pthread_mutex_unlock(&task_list_mutex);
+        return sigdata;
+      }
+      if (sigdata->proc) lives_proc_thread_dontcare(sigdata->proc);
+      sigdata_free(sigdata, NULL);
+    }
   }
+  pthread_mutex_unlock(&task_list_mutex);
   return NULL;
 }
 
@@ -1218,14 +1219,15 @@ reloop:
       // if caller set alarm_handle the we dont push it to the stack, because that task has to be
       // kept under the spotlight so we can know whether to terminate it
       if (new_sigdata) {
-        if (new_sigdata->alarm_handle == LIVES_NO_ALARM
-            || !task_list) {
+        pthread_mutex_lock(&task_list_mutex);
+        if (new_sigdata->alarm_handle == LIVES_NO_ALARM || !task_list) {
           // push a new task to the stack
           // signal bg that it can start now...
           lives_proc_thread_sync_ready(new_sigdata->proc);
           task_list = lives_list_prepend(task_list, new_sigdata);
           if (new_sigdata->alarm_handle == LIVES_NO_ALARM) new_sigdata = NULL;
         }
+        pthread_mutex_unlock(&task_list_mutex);
         if (!new_sigdata || new_sigdata->alarm_handle == LIVES_NO_ALARM) goto reloop;
       }
 
@@ -1324,7 +1326,11 @@ reloop:
       if (sigdata) sigdata->swapped = TRUE;
       /// timer handler will free sigdata
     } else {
+      // make sure this is removed from tasklist
+      pthread_mutex_lock(&task_list_mutex);
+      task_list = lives_list_remove_data(task_list, sigdata, FALSE);
       lives_proc_thread_dontcare(sigdata->proc);
+      pthread_mutex_unlock(&task_list_mutex);
       sigdata_free(sigdata, NULL);
     }
   }
@@ -1395,7 +1401,12 @@ static boolean async_timer_handler(livespointer data) {
     while (1) {
       int count = 0;
       if (!governor_loop(sigdata->added ? NULL : (livespointer)sigdata)) {
-        if (sigdata->proc) lives_proc_thread_dontcare(sigdata->proc);
+        if (sigdata->proc) {
+          pthread_mutex_lock(&task_list_mutex);
+          task_list = lives_list_remove_data(task_list, sigdata, FALSE);
+          lives_proc_thread_dontcare(sigdata->proc);
+          pthread_mutex_unlock(&task_list_mutex);
+        }
         sigdata_free(sigdata, NULL);
         break;
       }

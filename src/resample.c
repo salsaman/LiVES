@@ -299,34 +299,16 @@ void pre_analyse(weed_plant_t *elist) {
   int ntracks;
   boolean done = FALSE;
 
-  if (!prefs->rr_pre_smooth) return;
-
 #if 0
   if (weed_plant_has_leaf(elist, WEED_LEAF_WEED_EVENT_API_VERSION))
     ev_api = weed_get_int_value(elist, WEED_LEAF_WEED_EVENT_API_VERSION, NULL);
 
   // pass1 : try to remove audio glitches. What we are looking for are small jumps in the audio position
-  // compared to where we should be theoretically
+  // compared to where we should be theoretically, with two audio frames close together
+  // we will remove whichever lies furthes from to 1 -> 4, then adjust
 
-  // we can consider each audio frame as the start of a vector, with the x axis being time, and y axis being th audio position
-  // then, reaching the next audio frame we start another vector. If the end of one vector doesnt touch the start of the next then
-  // we have an audio glitch, in fact any changes in direction without an acompanying velocity change are bad
-  // what we want to do is replace set sequence of vectors with a smooth curve, with the following limitations:
-  // we can only change the angle af frame timecodes
-  // the angular changes have a max. allowed value (e.g +- 0.05) (i.e tension)
-  // we want to minimise the sum of deltas (dif. between actual time and calc. time)
-  // - algorithm:
+  //
 
-  // adj vel 1, adj vel 2, etc.
-  // consider moving pt 2 nearer to cal pt. - if it reduces vel diff, do it, if not add new pt.
-  // halve angl diff, add new pt at appt. place
-
-  // start at pt 1, look at angle and pos of pt 2
-  // make a small adj. to pt 1 vel and pt 2 pos.
-  // proceed to next pt.
-
-  // after 1st pass, go through again. Eventually we may get a point which we cannot reach, because of limits.
-  // then we add an intervening pt, or remove it and re-add
   if (ev_api >= 122) {
     for (; event; event = get_next_event(event)) {
       if (!WEED_EVENT_IS_AUDIO_FRAME(event)) continue;
@@ -342,39 +324,40 @@ void pre_analyse(weed_plant_t *elist) {
       sm->pos = ststate[0].seek;
       sm->vel = ststate[0].vel;
       sm->tc = etc;
-      smooth = lives_list_prepend(sm);
+      smooth = lives_list_prepend(smooth, sm);
     }
-  }
 
-  while (smooth && !done) {
-    double dtime, tpos, ratio;
-    LiSTList *list = smooth, *prev = NULL;
-    for (; list; list = list->next) {
-      // list is actually in reverse order, so we are going back in time
-      prequant_t *pq = (prequant_t *)list->data, *pql;
-      prev = list;
-      if (!pq->is_cont || !prev) continue;
-      pql = (prequant_t *)prev->data;
+    if (smooth && smooth->next && smooth->next->next) {
+      smooth = lives_list_reverse(smooth);
 
-      dtime = (double)(pql->tc - pq->tc) / TICKS_PER_SECOND_DBL;
-      tpos = pq.seek + pq.vel * dtime;
-      // ratio is real diff / est diff, e.g 1 / 2 we should go half as fast
-      ratio = fabs(pql.seek - pq.seek) / fabs(tpos - pq.seek);
-      if (ratio < 1.) {
-        // we should go slower, or else seek should be higher
-        // look at next change - if it should go slower, we make ours slower
-        // if it should go faster, we move the seek forwards a little
+      while (smooth && !done) {
+        double dtime, tpos, ratio;
+        LiSTList *list = smooth->next;
+        for (; list && list->next; list = list->next) {
+          prequant_t *pq = (prequant_t *)list->data, *pql;
+          if (!pq->is_cont || !list->prev) continue;
+          pqn = (prequant_t *)list->next->data;
+          dtime = (double)(pql->tc - pq->tc) / TICKS_PER_SECOND_DBL;
+          if (dtime < GLITHCH_TIME_LIM) {
+            tpos = pq.seek + pq.vel * dtime;
+            // ratio is real diff / est diff, e.g 1 / 2 we should go half as fast
+            ratio = fabs(pqn.seek - pq.seek) / fabs(tpos - pq.seek);
+            if (fabs(1. - ratio) > GLITCH_RAT_LIM)) {
+              if (!list->next->next) {
+                // remove this one
 
+                break;
+              }
 
-
-
+            }
+          }
+        }
       }
-
-
     }
-
     event = get_first_event(elist);
 #endif
+
+    if (!prefs->rr_pre_smooth) return;
 
     for (; event; event = get_next_event(event)) {
       if (!WEED_EVENT_IS_AUDIO_FRAME(event)) continue;
@@ -475,55 +458,120 @@ void pre_analyse(weed_plant_t *elist) {
       else
         weed_event_set_timecode(xevent, ntc);
     }
+
+
+#if 0
+    // pass1 : try to remove audio glitches. What we are looking for are small jumps in the audio position
+    // compared to where we should be theoretically
+
+    //
+
+    if (ev_api >= 122) {
+      for (; event; event = get_next_event(event)) {
+        if (!WEED_EVENT_IS_AUDIO_FRAME(event)) continue;
+        enstate = audio_frame_to_atstate(event, &ntracks);
+        if (ntracks > 1) break;
+        etc = weed_event_get_timecode(event);
+        sm = lives_calloc(1, sizeof(prequant_t));
+
+        if (ststate && enstate[0].afile == ststate[0].afile
+            && ststate[0].vel != 0. && enstate[0].vel != 0.)
+          sm->is_cont = TRUE;
+
+        sm->pos = ststate[0].seek;
+        sm->vel = ststate[0].vel;
+        sm->tc = etc;
+        smooth = lives_list_prepend(smooth, sm);
+      }
+
+      // pass 1, we adjust all velocities so we touch each actual point
+      // pass 2, we adjust posns. to reduve the vel. diff. at the point
+      // pass 3, we limit the deltas from original
+      // pass 4, we introduce intermediate points, halfway between a and b in time and pos
+
+
+
+
+
+      if (smooth) {
+        smooth = lives_list_reverse(smooth);
+
+        while (smooth && !done) {
+          double dtime, tpos, ratio;
+          LiSTList *list = smooth;
+          for (; list && list->next; list = list->next) {
+            prequant_t *pq = (prequant_t *)list->data, *pql;
+            if (!pq->is_cont || !list->prev) continue;
+            pqn = (prequant_t *)list->next->data;
+            dtime = (double)(pql->tc - pq->tc) / TICKS_PER_SECOND_DBL;
+            tpos = pq.seek + pq.vel * dtime;
+            // ratio is real diff / est diff, e.g 1 / 2 we should go half as fast
+            ratio = fabs(pqn.seek - pq.seek) / fabs(tpos - pq.seek);
+            if (ratio > 1.) {
+              // we should go slower, or else seek should be higher
+              // look at next change - if it should go slower, we make ours slower
+              // if it should go faster, we move the seek forwards a little
+              if (!list->next->next) {
+                // if last, don't change pos
+
+
+              }
+            }
+          }
+        }
+      }
+      event = get_first_event(elist);
+    }
+#endif
   }
 
 
   /**
-     @brief quantise from event_list_t *in_list to *out_list at the new rate of qfps
+       @brief quantise from event_list_t *in_list to *out_list at the new rate of qfps
 
-     This is called from 3 functions:
-     - before rendering a recorded event_list
-     - when entering multitrack, if the fps is mismatched
-     - when resampling a clip (only frame events)
+       This is called from 3 functions:
+       - before rendering a recorded event_list
+       - when entering multitrack, if the fps is mismatched
+       - when resampling a clip (only frame events)
 
-     @return new event list, or old event list if no changes are needed (i.e fps  is already correct), or NULL on error
+       @return new event list, or old event list if no changes are needed (i.e fps  is already correct), or NULL on error
 
-     if old_list has no frames then we just return an empty list
-     otherwise returned list will always have at least one event (a frame at timecode 0).
+       if old_list has no frames then we just return an empty list
+       otherwise returned list will always have at least one event (a frame at timecode 0).
 
-     if there is a timecode gap at the start of the old_list (i.e frame 1 has a non-zero timecode)
-     then this well be eliminated in the out iist; i.e. frame 1 in out_list always has a timecode of 0.
+       if there is a timecode gap at the start of the old_list (i.e frame 1 has a non-zero timecode)
+       then this well be eliminated in the out iist; i.e. frame 1 in out_list always has a timecode of 0.
 
-     if the old event_list has a fixed fps, then we try to keep the duration as near as possible, so:
+       if the old event_list has a fixed fps, then we try to keep the duration as near as possible, so:
 
-     nframes_new = MAX(nframes_old / old_fps * new_fps , 1)
-     the value is rounded DOWN in the case that qfps < old_fps
-     and rounded to the nearest integer in the case that qfps > old_fps
+       nframes_new = MAX(nframes_old / old_fps * new_fps , 1)
+       the value is rounded DOWN in the case that qfps < old_fps
+       and rounded to the nearest integer in the case that qfps > old_fps
 
-     e.g 210 frames @ 20.0 fps 	-> 157 frames @ 15.0 fps
-     						-> 410 frames @ 39.0 fps
-     @see count_resmpled_frames()
+       e.g 210 frames @ 20.0 fps 	-> 157 frames @ 15.0 fps
+            -> 410 frames @ 39.0 fps
+       @see count_resmpled_frames()
 
-     i.e when the duration of the final frame is added, the total will always be >= duration of the old list
+       i.e when the duration of the final frame is added, the total will always be >= duration of the old list
 
 
-     if old_list has no fixed fps, then new_frames = (timecode of last frame  - timecode of first frame) * qfps
-     rounded UP.
+       if old_list has no fixed fps, then new_frames = (timecode of last frame  - timecode of first frame) * qfps
+       rounded UP.
 
-     /// algorithm:
-     /// - get tc of 1st frame event in in_list
-     /// tc of out_list starts at zero. If allow_gap is FALSE we add an offset_tc
-     /// so out_list 0 coincides with tc of 1st frame in in_list.
-     /// loop:
-     /// - advance in_list until either we hit a frame event, or tc of NEXT event > out_tc
-     ///  -- if tc of next frame is <= out_tc, we continue
-     ///  -- update the state to current event
-     ///
-     /// - apply in_list state at out_tc, interpolating between last (current) in frame and next in frame
-     /// - advance out_tc by 1. / out_fps
-     ///  - goto loop
+       /// algorithm:
+       /// - get tc of 1st frame event in in_list
+       /// tc of out_list starts at zero. If allow_gap is FALSE we add an offset_tc
+       /// so out_list 0 coincides with tc of 1st frame in in_list.
+       /// loop:
+       /// - advance in_list until either we hit a frame event, or tc of NEXT event > out_tc
+       ///  -- if tc of next frame is <= out_tc, we continue
+       ///  -- update the state to current event
+       ///
+       /// - apply in_list state at out_tc, interpolating between last (current) in frame and next in frame
+       /// - advance out_tc by 1. / out_fps
+       ///  - goto loop
 
-     /// inserting from scrap_file, we cannot interpolate frame numbers. So we just insert nearest frame
+       /// inserting from scrap_file, we cannot interpolate frame numbers. So we just insert nearest frame
   */
   weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
     weed_timecode_t out_tc = 0, offset_tc = 0, in_tc, laud_tc = 0, nx_tc;

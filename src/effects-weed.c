@@ -2052,12 +2052,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     case PB_QUALITY_MED:
       if (letterbox) {
         if (!mainw->multitrack) {
-          if (maxinwidth > opwidth || maxinheight > opheight) {
-            calc_maxspect(opwidth, opheight, &maxinwidth, &maxinheight);
-            opwidth = maxinwidth;
-            opheight = maxinheight;
-          } else {
-            calc_maxspect(maxinwidth, maxinheight, &opwidth, &opheight);
+          /* if (maxinwidth > opwidth || maxinheight > opheight) { */
+          /*   calc_maxspect(opwidth, opheight, &maxinwidth, &maxinheight); */
+          /*   opwidth = maxinwidth; */
+          /*   opheight = maxinheight; */
+          /* } else { */
+          calc_midspect(maxinwidth, maxinheight, &rmaxw, &rmaxh);
+          if (rmaxw > opwidth || rmaxh > opheight) {
+            calc_maxspect(opwidth, opheight, &rmaxw, &rmaxh);
           }
         } else {
           calc_midspect(maxinwidth, maxinheight, &rmaxw, &rmaxh);

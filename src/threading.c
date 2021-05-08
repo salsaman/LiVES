@@ -166,7 +166,10 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
   alarm_handle = sigdata->alarm_handle = lives_alarm_set(timeout);
 
   if (is_fg_thread()) tres = governor_loop(sigdata);
-  else resubmit_proc_thread(lpt, 0);
+  else {
+    resubmit_proc_thread(lpt, 0);
+    lives_proc_thread_sync_ready(lpt);
+  }
 
   tstate = lives_proc_thread_get_state(lpt);
 

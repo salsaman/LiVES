@@ -306,6 +306,13 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_remove_node(LiVESList *list, LiVESList
 }
 
 
+LIVES_GLOBAL_INLINE LiVESList *lives_list_remove_data(LiVESList *list, livespointer data, boolean free_data) {
+  LiVESList *xlist = list;
+  for (; xlist; xlist = xlist->next) if (xlist->data == data) break;
+  if (xlist) return lives_list_remove_node(list, xlist, free_data);
+}
+
+
 LIVES_GLOBAL_INLINE int lives_list_strcmp_index(LiVESList *list,
     livesconstpointer data, boolean case_sensitive) {
   // find data in list, using strcmp

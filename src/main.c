@@ -5571,7 +5571,7 @@ void set_main_title(const char *file, int untitled) {
 #endif
   lives_free(title);
 
-  if (!LIVES_IS_PLAYING && mainw->play_window) play_window_set_title();
+  if (mainw->play_window) play_window_set_title();
 }
 
 

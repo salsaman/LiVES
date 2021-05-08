@@ -215,28 +215,18 @@ const char *get_init_rfx(int intention) {
   }
   free(vdevs);
 
-  snprintf((char *)rfx, 32768, "%s%s%s%s%s",
-           "<define>\\n\
-|1.7\\n\
-</define>\\n\
-<language_code>\\n\
-0xF0\\n\
-</language_code>\\n\
-<params> \\n\
-vdevname|Video _device|string_list|0|",
+  snprintf((char *)rfx, 32768, "%s%s%s",
+           "<define>\\n"
+           "|1.7\\n"
+           "</define>\\n"
+           "<language_code>\\n"
+           "0xF0\\n"
+           "</language_code>\\n"
+           "<params> \\n"
+           "vdevname|Video _device|string_list|0|",
            devstr,
-           "\\n\
-afname|Send _audio to|string|", audfile, "/audio.wav|1024|\\n\
-</params> \\n\
-<param_window> \\n\
-</param_window> \\n\
-<onchange> \\n\
-</onchange> \\n\
-"
-          );
-
+           "\\n</params>\\n");
   return rfx;
-
 }
 
 
@@ -281,11 +271,6 @@ const int *get_yuv_palette_clamping(int palette) {
 boolean set_yuv_palette_clamping(int clamping_type) {
   myclamp = clamping_type;
   return TRUE;
-}
-
-
-static void make_path(const char *fname, int pid, const char *ext) {
-  snprintf(xfile, PATH_MAX, "%s/%s-%d.%s", audfile, fname, pid, ext);
 }
 
 
@@ -367,20 +352,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   ret_code = xioctl(vdevfd, VIDIOC_S_FMT, &vid_format);
 
-  make_path("livesaudio", mypid, "stream");
-
-  /* if (audfile) { */
-  /*   afd = open(xfile, O_RDONLY | O_NONBLOCK); */
-  /*   if (afd != -1) { */
-  /*     audio = 1; */
-  /*     close(afd); */
-  /*   } */
-
-  /*   if (audio) { */
-  /*     snprintf(cmd, PATH_MAX * 2, "/bin/cat %s > \"%s\" &", xfile, audfile); */
-  /*     _IGN_RET(system(cmd)); */
-  /*   } */
-  /* } */
   return TRUE;
 }
 

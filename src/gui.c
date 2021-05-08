@@ -624,8 +624,8 @@ void create_LiVES(void) {
 
 #ifdef HAVE_UNICAP
   lives_container_add(LIVES_CONTAINER(submenu), mainw->unicap);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->unicap), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_open_vdev_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->unicap), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_open_vdev_activate), NULL);
 #endif
 
 #ifdef HAVE_YUV4MPEG
@@ -3848,12 +3848,13 @@ void play_window_set_title(void) {
   char *title = NULL;
   double sepwin_scale = 0.;
 
+  if (mainw->multitrack) return;
+  if (!mainw->play_window) return;
+
   if (CURRENT_CLIP_IS_VALID) {
     sepwin_scale = sqrt(mainw->pwidth * mainw->pwidth + mainw->pheight * mainw->pheight) /
                    sqrt(cfile->hsize * cfile->hsize + cfile->vsize * cfile->vsize);
   }
-  if (mainw->multitrack) return;
-  if (!mainw->play_window) return;
 
   if (!LIVES_IS_PLAYING && sepwin_scale > 0.)
     xtrabit = lives_strdup_printf(_(" (%.0f %% scale)"), sepwin_scale * 100.);
@@ -3861,9 +3862,14 @@ void play_window_set_title(void) {
     xtrabit = lives_strdup("");
 
   if (LIVES_IS_PLAYING) {
-    if (mainw->vpp && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && mainw->fs)
-      lives_window_set_title(LIVES_WINDOW(mainw->play_window), _("Streaming"));
-    else {
+    if (mainw->vpp && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && mainw->fs) {
+      if (mainw->vpp->fwidth > 0 && mainw->vpp->fheight > 0) {
+        lives_free(xtrabit);
+        xtrabit = lives_strdup_printf(_(" (%d X %d)"), mainw->vpp->fwidth, mainw->vpp->fheight);
+      }
+      title = lives_strdup_printf(_("Streaming to %s%s"), mainw->vpp->name, xtrabit);
+      lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
+    } else {
       title = lives_strdup_printf(_("Play Window%s"), xtrabit);
       lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
     }

@@ -308,7 +308,7 @@ LIVES_GLOBAL_INLINE frames_t calc_frame_from_time4(int filenum, double time) {
 }
 
 
-void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
+LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
   // calculate maxspect (maximum size which maintains aspect ratio)
   // of cwidth, cheight - given restrictions rwidth * rheight
 
@@ -331,52 +331,38 @@ void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
 }
 
 
-void calc_minspect(int rwidth, int rheight, int *cwidth, int *cheight) {
-  // calculate minspect (maximum size which conforms to aspect ratio of
-  // of rwidth, rheight) - given restrictions cwidth * cheight
+LIVES_GLOBAL_INLINE void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight) {
+  // calculate minspect (minimum size which conforms to aspect ratio of
+  // of cwidth, cheight) - which contains rwidth, rheight
 
-  // i.e. one dimension will remain the same. the other will shrink
-
-  double aspect, dheight;
+  double aspect;
 
   if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
 
-  aspect = (double)(rwidth) / (double)(rheight);
-  dheight = (double)(*cwidth) / aspect;
-
-  if (dheight <= ((double)(*cheight) * (1. + ASPECT_ALLOWANCE)))
-    *cheight = (int)dheight;
-  else
-    *cwidth = (int)((double)(*cheight * aspect));
+  aspect = (double)(*cwidth) / (double)(*cheight);
+  if (rheight * aspect > rwidth) {
+    *cheight = rheight;
+    *cwidth = aspect * rheight;
+  } else {
+    *cwidth = rwidth;
+    *cheight = rwidth / aspect;
+  }
 
   *cwidth = ((*cwidth + 1) >> 1) << 1;
   *cheight = ((*cheight + 1) >> 1) << 1;
 }
 
 
-void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight) {
-  // calculate midspect (minimum size which conforms to aspect ratio of
+LIVES_GLOBAL_INLINE void calc_minspect(int rwidth, int rheight, int *cwidth, int *cheight) {
+  // calculate minspect (minimum size which conforms to aspect ratio of
   // of rwidth, rheight) - which contains cwidth, cheight
-
-  // ie. one of the dimensions will stay unchanged, the other will grow
-
-  // the difference with maxspect is that the size can only increase
-
-  double aspect, dheight;
-
-  if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
-
-  aspect = (double)(rwidth) / (double)(rheight);
-  dheight = (double)(*cwidth) / aspect;
-
-  if (dheight >= ((double)(*cheight) * (1. - ASPECT_ALLOWANCE)))
-    *cheight = (int)dheight;
-  else
-    *cwidth = (int)((double)(*cheight * aspect));
-
+  calc_midspect(*cwidth, *cheight, &rwidth, &rheight);
+  *cwidth = rwidth;
+  *cheight = rheight;
   *cwidth = ((*cwidth + 1) >> 1) << 1;
   *cheight = ((*cheight + 1) >> 1) << 1;
 }
+
 
 /////////////////////////////////////////////////////////////////////////////
 

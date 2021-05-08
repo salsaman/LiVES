@@ -1122,7 +1122,7 @@ AC_SUBST(WEED_UTILS_CFLAGS)
 AC_SUBST(WEED_UTILS_LIBS)
 
 if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED_COMPAT, libweed-compat >= 0.13.0, NEED_LOCAL_WEED_COMPAT=false, NEED_LOCAL_WEED_COMPAT=true)
+PKG_CHECK_MODULES(WEED_COMPAT, libweed-compat >= 0.14.0, NEED_LOCAL_WEED_COMPAT=false, NEED_LOCAL_WEED_COMPAT=true)
 else
 echo "Check for system libweed-compat is disabled"
 fi

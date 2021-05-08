@@ -22,6 +22,8 @@
 
 #define MAX_CON_TRIES 10
 
+static int xrun_cnt = 0;
+
 static int start_ready_callback(jack_transport_state_t state, jack_position_t *pos, void *jackd);
 static int xrun_callback(void *jackd);
 static void timebase_callback(jack_transport_state_t state, jack_nframes_t nframes, jack_position_t *pos, int new_pos,
@@ -161,9 +163,12 @@ void jack_conx_exclude(jack_driver_t *jackd_in, jack_driver_t *jackd_out, boolea
 }
 
 
+#define _SHOW_ERRORS
 static void jack_error_func(const char *desc) {
 #ifdef _SHOW_ERRORS
-  lives_printerr("Jack audio error %s\n", desc);
+  if (prefs->show_dev_opts) {
+    lives_printerr("Jack audio error %s\n", desc);
+  }
 #endif
   lives_snprintf(last_errmsg, JACK_PARAM_STRING_MAX, "%s", desc);
 }
@@ -2294,6 +2299,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
   jack_position_t pos;
   aserver_message_t *msg;
   int64_t xseek;
+  int oxrun_cnt = xrun_cnt;
   int new_file;
   int nch;
   static boolean reset_buffers = FALSE;
@@ -2307,9 +2313,14 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
 
   in_ap = TRUE;
 
+  if (xrun_cnt) {
+    lives_printerr("after xrun: nframes %ld\n", (int64_t)nframes);
+    xrun_cnt = 0;
+  }
+
   //#define DEBUG_AJACK
 #ifdef DEBUG_AJACK
-  lives_printerr("nframes %ld, sizeof(float) == %d\n", (int64_t)nframes, sizeof(float));
+  lives_printerr("nframes %ld\n", (int64_t)nframes);
 #endif
 
   if (!mainw->is_ready || !jackd || (!LIVES_IS_PLAYING && jackd->is_silent && !jackd->msgq)) {
@@ -2450,6 +2461,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       float auxmix[2] = {0.5, 0.5};
       mixdown_aux(jackd, out_buffer, auxmix, nframes);
     }
+    in_ap = FALSE;
     return 0;
   }
 
@@ -2631,6 +2643,9 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       } else {
         boolean eof = FALSE;
         int playfile = mainw->playing_file;
+
+        if (oxrun_cnt) jackd->seek_pos += nframes * afile->achans * (afile->asampsize >> 3);
+
         jackd->seek_end = 0;
         if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && IS_VALID_CLIP(jackd->playing_file)) {
           if (mainw->playing_sel) {
@@ -3101,6 +3116,7 @@ static int xrun_callback(void *arg) {
   volatile float *load = get_core_loadvar(0);
   if (prefs->show_dev_opts) {
     g_print("\n\nXRUN: %f %f\n", delay, *load);
+    xrun_cnt++;;
   }
   if (IS_VALID_CLIP(jackd->playing_file))
     jackd->seek_pos += (off_t)((double)jackd->sample_in_rate * ((double)delay / (double)MILLIONS(1))

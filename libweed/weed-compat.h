@@ -40,7 +40,7 @@ extern "C"
 
 #include <string.h>
 
-#define WEED_COMPAT_VERSION 0.13.0
+#define WEED_COMPAT_VERSION 0.14.0
 
 #ifdef NEED_FOURCC_COMPAT
 
@@ -57,7 +57,8 @@ extern "C"
 #endif // WEED_PALETTES_H
 
 #ifndef MK_FOURCC
-#define MK_FOURCC(a, b, c, d) ((a << 24) | (b << 16) | (c << 8) | d)
+#define MK_FOURCC(a, b, c, d) (((uint32_t)a) | (((uint32_t)b) << 8)	\
+			       | (((uint32_t)c) << 16) | (((uint32_t)d) << 24))
 #endif
 
 #ifndef VLC_FOURCC
@@ -139,7 +140,6 @@ static inline int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced
   case MK_FOURCC('I', 'Y', 'U', '2'):
     return WEED_PALETTE_YUV888;
   case MK_FOURCC('H', 'D', 'Y', 'C'):
-  case 0x43594448: // HDYC
     if (sspace) *sspace = WEED_YUV_SUBSPACE_BT709;
     return WEED_PALETTE_UYVY;
   case MK_FOURCC('U', 'Y', 'N', 'V'):

@@ -6885,7 +6885,9 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
       }
       if (mainw->sep_win) {
         resize_play_window();
-        lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
+
+        if (!mainw->vpp || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))
+          lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
       }
       if (cfile->frames == 1 || cfile->play_paused) {
         lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
@@ -6996,6 +6998,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
     //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     lives_window_center(LIVES_WINDOW(mainw->play_window));
   }
+  if (mainw->play_window) play_window_set_title();
 }
 
 
@@ -7140,7 +7143,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
                   if (prefs->show_msg_area && !prefs->msgs_nopbdis) lives_widget_show_all(mainw->message_box);
 		  // *INDENT-OFF*
 		}}}}}
-	// *INDENT-ON*
+	  // *INDENT-ON*
         else {
           // multitrack
           if (mainw->play_window && !(mainw->ext_playback && mainw->vpp->fheight > -1
@@ -7224,6 +7227,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 	  hide_cursor(lives_widget_get_xwindow(mainw->playarea));
 	}}}}
   // *INDENT-ON*
+  if (mainw->play_window) play_window_set_title();
   if (LIVES_IS_PLAYING) mainw->force_show = TRUE;
 }
 

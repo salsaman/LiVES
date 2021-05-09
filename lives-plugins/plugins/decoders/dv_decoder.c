@@ -63,6 +63,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   char *ext;
 
+  priv->fd = -1;
+
   if (isclone && !priv->inited) {
     isclone = FALSE;
     if (cdata->fps > 0. && cdata->nframes > 0)
@@ -171,8 +173,10 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
   lives_dv_priv_t *priv = cdata->priv;
-  close(priv->fd);
-  dv_decoder_free(priv->dv_dec);
+  if (priv) {
+    if (priv->fd != -1) close(priv->fd);
+    if (priv->dc_dec) dv_decoder_free(priv->dv_dec);
+  }
 }
 
 
@@ -207,7 +211,7 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
     cdata->palettes[3] = WEED_PALETTE_END;
   } else cdata = data;
 
-  cdata->priv = priv = malloc(sizeof(lives_dv_priv_t));
+  cdata->priv = priv = calloc(1, sizeof(lives_dv_priv_t));
 
   for (i = 0; i < 4; i++) {
     priv->audio_buffers[i] = NULL;

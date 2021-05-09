@@ -1432,14 +1432,16 @@ typedef struct {
   LiVESWidget *fs1;
   LiVESWidget *top_vbox;
 
+  LiVESWidget *l0_tb;
   LiVESWidget *l1_tb;
   LiVESWidget *l2_tb;
   LiVESWidget *l3_tb;
 
+  LiVESWidget *lock_audio_checkbutton;
   LiVESWidget *int_audio_checkbutton, *ext_audio_checkbutton;
   LiVESWidget *ext_audio_mon;
 
-  ulong int_audio_func, ext_audio_func;
+  ulong int_audio_func, ext_audio_func, lock_audio_func;
 
   LiVESWidget *volume_scale;
   LiVESWidget *vol_toolitem;

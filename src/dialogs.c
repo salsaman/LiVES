@@ -1674,7 +1674,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   // set initial audio seek position for current file
   // check rate rather than chans, as we can have chans but no rate during open
-  if (cfile->achans) {
+  if (cfile->achans && cfile->arps) {
     mainw->aframeno = calc_frame_from_time4(mainw->current_file,
                                             cfile->aseek_pos / cfile->arps / cfile->achans / (cfile->asampsize >> 3));
   }
@@ -3320,37 +3320,62 @@ LIVES_GLOBAL_INLINE void do_lb_convert_error(void) {
 }
 
 
-LiVESResponseType do_please_install(const char *info, const char *exec, uint64_t gflags) {
+LiVESResponseType do_please_install(const char *info, const char *exec, const char *exec2, uint64_t gflags) {
   LiVESResponseType ret;
   char *extra = lives_strdup(""), *msg;
   if (gflags & INSTALL_CANLOCAL) {
     lives_free(extra);
-    extra = lives_strdup(_("\n\nAlternately, LiVES may be able to install\na local user copy "
-                           "of the program.\n"));
-  } else {
-    if (capable->distro_name && *capable->distro_name) {
-      char *icmd = get_install_cmd(capable->distro_name, exec);
-      if (icmd) {
-        lives_free(extra);
-        extra = lives_strdup_printf(_("\n\nTry '%s' from a terminal window,\n"
-                                      "or use your software package manager to install that package\n"), icmd);
-        lives_free(icmd);
+    extra = _("\n\nAlternately, LiVES may be able to install\na local user copy "
+              "of the program.\n");
+  }
+
+  if (capable->distro_name && *capable->distro_name) {
+    char *icmd = get_install_cmd(capable->distro_name, exec), *extra2;
+    if (icmd) {
+      //lives_free(extra);
+      char *icmdx = lives_strdup_printf("'<b>%s</b>'", icmd), *icmd2x = NULL;
+      lives_free(icmd);
+      if (exec2) {
+        char *icmd2 = get_install_cmd(capable->distro_name, exec2);
+        if (icmd2) {
+          icmd2x = lives_strdup_printf("\nor '<b>%s</b>'", icmd2);
+          lives_free(icmd2);
+        }
       }
+
+      /* if (gflags & IS_ALTERNATIVE) alter = _("Alternatively, you can try"); */
+      /* else alter = _("Try"); */
+      extra2 = lives_strdup_printf(_("\n\nTry %s%s from a terminal window,\n"
+                                     "or use your software package manager to install %s\n%s"), icmdx,
+                                   icmd2x ? icmd2x : "", icmd2x ? _("one of those packages") : _("the package"), extra);
+      lives_free(extra);
+      extra = extra2;
+      lives_free(icmdx);
+      if (icmd2x) lives_free(icmd2x);
     }
   }
 
-  msg = lives_strdup_printf(_("%s '%s' is necessary for this feature to work.\n"
-                              "If possible, kindly install %s before continuing.%s"), info, exec, exec, extra);
+  if (exec2) {
+    msg = lives_strdup_printf(_("Either '%s' or '%s' must be installed for this feature to work.\n"
+                                "If possible, kindly install one or other of these before continuing\n%s"),
+                              exec, exec2, extra);
+  } else
+    msg = lives_strdup_printf(_("%s '%s' is necessary for this feature to work.\n"
+                                "If possible, kindly install %s before continuing.%s"), info, exec, exec, extra);
+  lives_free(extra);
 
   if (gflags & INSTALL_CANLOCAL) {
-    LiVESWidget *dlg = create_question_dialog(NULL, msg);
+    LiVESWidget *dlg;
+    widget_opts.use_markup = TRUE;
+    dlg = create_question_dialog(NULL, msg);
+    widget_opts.use_markup = FALSE;
     lives_free(msg);
 
     lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_CANCEL,
-                                       _("Cancel / Install Later"), LIVES_RESPONSE_CANCEL);
+                                       _("Cancel / Install Manually"), LIVES_RESPONSE_CANCEL);
 
     lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_ADD,
-                                       _("Continue"), LIVES_RESPONSE_YES);
+                                       _("Continue and Install Local Copy"), LIVES_RESPONSE_YES);
 
     lives_dialog_set_button_layout(LIVES_DIALOG(dlg), LIVES_BUTTONBOX_SPREAD);
 
@@ -3366,13 +3391,15 @@ LiVESResponseType do_please_install(const char *info, const char *exec, uint64_t
     lives_free(msg2); lives_free(msg);
     return ret;
   }
+  widget_opts.use_markup = TRUE;
   do_info_dialog(msg);
+  widget_opts.use_markup = FALSE;
   lives_free(msg);
   return LIVES_RESPONSE_NONE;
 }
 
 
-LIVES_GLOBAL_INLINE boolean do_please_install_either(const char *exec, const char *exec2) {
+LIVES_GLOBAL_INLINE boolean do_please_install_eitherz(const char *exec, const char *exec2) {
   do_info_dialogf(_("Either '%s' or '%s' must be installed for this feature to work.\n"
                     "If possible, kindly install one or other of these before continuing\n"),
                   exec, exec2);

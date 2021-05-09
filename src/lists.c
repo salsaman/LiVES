@@ -310,6 +310,7 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_remove_data(LiVESList *list, livespoin
   LiVESList *xlist = list;
   for (; xlist; xlist = xlist->next) if (xlist->data == data) break;
   if (xlist) return lives_list_remove_node(list, xlist, free_data);
+  return NULL;
 }
 
 

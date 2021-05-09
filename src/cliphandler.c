@@ -664,7 +664,7 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic, char *binfmtn
       LiVESResponseType resp = LIVES_RESPONSE_NONE;
       do {
         if (!check_for_executable(&capable->has_gzip, EXEC_GZIP)) {
-          resp = do_please_install(_("Unable to restore this clip"), EXEC_GZIP, INSTALL_IMPORTANT);
+          resp = do_please_install(_("Unable to restore this clip"), EXEC_GZIP, NULL, INSTALL_IMPORTANT);
           if (resp == LIVES_RESPONSE_CANCEL) {
             lives_free(gzname);
             return NULL;

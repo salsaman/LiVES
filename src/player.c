@@ -2316,6 +2316,8 @@ int process_one(boolean visible) {
         mainw->jackd->in_use = TRUE;
       }
     }
+    if (mainw->lock_audio_checkbutton)
+      aud_lock_act(LIVES_TOGGLE_TOOL_BUTTON(mainw->lock_audio_checkbutton), NULL);
   }
 #endif
 

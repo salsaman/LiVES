@@ -891,7 +891,7 @@ void on_recent_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     polymorph(mainw->multitrack, POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     maybe_add_mt_idlefunc();
-  }
+  } else sensitize();
 }
 
 
@@ -1018,6 +1018,8 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
   while (1) {
 retry:
     lives_rm(cfile->info_file);
+
+
     if (req->do_update) {
       if (!check_for_executable(&capable->has_pip, EXEC_PIP)
           && !check_for_executable(&capable->has_pip, EXEC_PIP3)
@@ -1028,7 +1030,7 @@ retry:
                                                "you, however\n")),
                                         EXEC_YOUTUBE_DL);
         lives_free(tmp);
-        do_please_install(msg, EXEC_PIP, 0);
+        do_please_install(msg, EXEC_PIP, NULL, 0);
         lives_free(msg);
         capable->has_pip = UNCHECKED;
         d_print_failed();
@@ -7181,7 +7183,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       } else {
         // switch from separate window during playback
 #ifdef ENABLE_JACK
-        jack_interop_cleanup();
+        if (mainw->jackd) jack_interop_cleanup(mainw->jackd);
 #endif
         if (mainw->ext_playback) {
 #ifndef IS_MINGW
@@ -10225,12 +10227,21 @@ boolean nervous_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint3
 
    if LiVES is not playing, or the audio player is non-realtime then there is no effect
 */
-boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
-                          livespointer statep) {
-  boolean state = LIVES_POINTER_TO_INT(statep);
 
+boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
+  boolean state;
   if (lives_get_status() != LIVES_STATUS_PLAYING || !is_realtime_aplayer(prefs->audio_player) || mainw->multitrack
       || mainw->agen_key != 0 || mainw->agen_needs_reinit || AUD_SRC_EXTERNAL) return TRUE;
+
+  if (w) state = lives_toggle_tool_button_get_active(w);
+  else {
+    state = LIVES_POINTER_TO_INT(statep);
+    if (mainw->lock_audio_checkbutton) {
+      lives_signal_handler_block(mainw->lock_audio_checkbutton, mainw->lock_audio_func);
+      lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->lock_audio_checkbutton), state);
+      lives_signal_handler_unblock(mainw->lock_audio_checkbutton, mainw->lock_audio_func);
+    }
+  }
 
   // lock OFF
   if (!state) prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
@@ -10241,6 +10252,12 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   // lock ON
   if (state) prefs->audio_opts |= AUDIO_OPTS_IS_LOCKED;
   return TRUE;
+}
+
+
+boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+                          livespointer statep) {
+  return aud_lock_act(NULL, statep);
 }
 
 

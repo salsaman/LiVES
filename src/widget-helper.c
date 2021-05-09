@@ -13090,22 +13090,27 @@ void lives_cool_toggled(LiVESWidget * tbutton, livespointer user_data) {
 
 boolean draw_cool_toggle(LiVESWidget * widget, lives_painter_t *cr, livespointer data) {
   // connect expose event to this
-  double rwidth = (double)lives_widget_get_allocation_width(LIVES_WIDGET(widget));
-  double rheight = (double)lives_widget_get_allocation_height(LIVES_WIDGET(widget));
+  double rwidth, rheight;
   double scalex = 1., scaley = .8;
   boolean active =
     ((LIVES_IS_TOGGLE_BUTTON(widget) && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) ||
      (LIVES_IS_TOGGLE_TOOL_BUTTON(widget)
       && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(widget))));
 
-  if (!mainw->multitrack) rheight /= 2.;
+  rwidth = (double)GET_INT_DATA(widget, WIDTH_KEY);
+  rheight = (double)GET_INT_DATA(widget, HEIGHT_KEY);
+
+  if (rwidth <= 0.) rwidth = (double)lives_widget_get_allocation_width(LIVES_WIDGET(widget));
+  else scalex = 1.;
+  if (rheight <= 0.) {
+    rheight = (double)lives_widget_get_allocation_height(LIVES_WIDGET(widget));
+    if (!mainw->multitrack) rheight /= 2.;
+  } else scaley = 1.;
 
   lives_painter_translate(cr, rwidth * (1. - scalex) / 2., rheight * (1. - scaley) / 2.);
 
   rwidth *= scalex;
   rheight *= scaley;
-
-  if (widget == mainw->ext_audio_mon) rwidth = rheight = 4.;
 
   // draw the inside
   if (active) {

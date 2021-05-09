@@ -1597,6 +1597,8 @@ const widget_opts_t _def_widget_opts = {
 #define FILESEL_TYPE_KEY "filesel_type"
 #define PARAM_NUMBER_KEY "param_number"
 #define WH_LAYOUT_KEY "_wh_layout"
+#define WIDTH_KEY "_wh_width"
+#define HEIGHT_KEY "_wh_height"
 
 // will be moved to separate header after testing
 //#define WEED_WIDGETS

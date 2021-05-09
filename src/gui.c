@@ -198,8 +198,10 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
     set_submenu_colours(LIVES_MENU(mainw->toys_menu), colf2, colb2);
     set_submenu_colours(LIVES_MENU(mainw->help_menu), colf2, colb2);
 
+    lives_widget_apply_theme2(mainw->l0_tb, LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_widget_apply_theme2(mainw->l2_tb, LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_widget_apply_theme2(mainw->l3_tb, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme2(mainw->l0_tb, LIVES_WIDGET_STATE_INSENSITIVE, TRUE);
     lives_widget_apply_theme2(mainw->l2_tb, LIVES_WIDGET_STATE_INSENSITIVE, TRUE);
     lives_widget_apply_theme2(mainw->l3_tb, LIVES_WIDGET_STATE_INSENSITIVE, TRUE);
 
@@ -217,12 +219,17 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
 
       lives_free(colref); lives_free(colref2);
 
-      set_css_value_direct(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "*", "min-height", tmp);
-      set_css_value_direct(mainw->ext_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "*", "min-height", tmp);
-
       set_css_value_direct(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "button", "min-height", tmp);
       set_css_value_direct(mainw->ext_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "button", "min-height", tmp);
+      set_css_value_direct(mainw->lock_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "button", "min-height", tmp);
       lives_free(tmp);
+
+      tmp = lives_strdup_printf("%dpx", mh >> 1);
+      set_css_value_direct(mainw->lock_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "button", "min-width", tmp);
+      set_css_value_direct(mainw->lock_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "*", "min-width", tmp);
+      lives_free(tmp);
+      set_css_value_direct(mainw->lock_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "1,0");
+      set_css_value_direct(mainw->lock_audio_checkbutton, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.4");
 
       set_css_value_direct(mainw->l2_tb, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "0.4");
       set_css_value_direct(mainw->l2_tb, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
@@ -246,9 +253,11 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
       set_css_value_direct(mainw->vol_toolitem,  LIVES_WIDGET_STATE_NORMAL, "", "box-shadow", "none");
     }
 #endif
+    lives_widget_set_valign(mainw->lock_audio_checkbutton, LIVES_ALIGN_START);
     lives_widget_set_valign(mainw->int_audio_checkbutton, LIVES_ALIGN_START);
     lives_widget_set_valign(mainw->ext_audio_checkbutton, LIVES_ALIGN_START);
 
+    lives_widget_set_valign(mainw->l0_tb, LIVES_ALIGN_START);
     lives_widget_set_valign(mainw->l1_tb, LIVES_ALIGN_START);
     lives_widget_set_valign(mainw->l2_tb, LIVES_ALIGN_START);
     lives_widget_set_valign(mainw->l3_tb, LIVES_ALIGN_START);
@@ -258,8 +267,10 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
 
     lives_widget_set_size_request(mainw->volume_scale, -1, 12);
 
+    lives_widget_set_fg_color(mainw->l0_tb, LIVES_WIDGET_STATE_NORMAL, colf2);
     lives_widget_set_fg_color(mainw->l2_tb, LIVES_WIDGET_STATE_NORMAL, colf2);
     lives_widget_set_fg_color(mainw->l3_tb, LIVES_WIDGET_STATE_NORMAL, colf2);
+    lives_widget_set_fg_color(mainw->l0_tb, LIVES_WIDGET_STATE_INSENSITIVE, colf2);
     lives_widget_set_fg_color(mainw->l2_tb, LIVES_WIDGET_STATE_INSENSITIVE, colf2);
     lives_widget_set_fg_color(mainw->l3_tb, LIVES_WIDGET_STATE_INSENSITIVE, colf2);
 
@@ -404,7 +415,7 @@ void create_LiVES(void) {
 
   int i;
   int dpw;
-  int woat;
+  int woat = widget_opts.apply_theme;
   boolean new_lives = FALSE;
 
   mainw->configured = FALSE;
@@ -1717,6 +1728,47 @@ void create_LiVES(void) {
   for (i = 0; i < 3; i++) {
     lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
   }
+
+  mainw->lock_audio_checkbutton = lives_toggle_tool_button_new();
+
+  widget_opts.expand = LIVES_EXPAND_NONE;
+  widget_opts.apply_theme = 0;
+  mainw->l0_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("Audio Locked  "), mainw->lock_audio_checkbutton);
+  lives_widget_set_valign(mainw->l0_tb, LIVES_ALIGN_START);
+
+  widget_opts.apply_theme = woat;
+  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+  // insert audio src buttons
+  if (prefs->lamp_buttons) {
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->lock_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
+                              LIVES_GUI_CALLBACK(draw_cool_toggle), NULL);
+
+    lives_widget_set_bg_color(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+    lives_widget_set_bg_color(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
+
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->lock_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(lives_cool_toggled), NULL);
+    lives_cool_toggled(mainw->lock_audio_checkbutton, NULL);
+  }
+#endif
+
+  SET_INT_DATA(mainw->lock_audio_checkbutton, WIDTH_KEY, 16);
+
+  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->lock_audio_checkbutton), -1);
+
+  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->lock_audio_checkbutton),
+                                      prefs->audio_opts & AUDIO_OPTS_IS_LOCKED);
+
+  mainw->lock_audio_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->lock_audio_checkbutton),
+                           LIVES_WIDGET_TOGGLED_SIGNAL,
+                           LIVES_GUI_CALLBACK(aud_lock_act), NULL);
+  widget_opts.expand = LIVES_EXPAND_NONE;
+  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
   mainw->l1_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("Audio Source:    "), NULL);
   lives_widget_set_valign(mainw->l1_tb, LIVES_ALIGN_START);
 
@@ -1741,17 +1793,12 @@ void create_LiVES(void) {
   }
 #endif
 
-  if (!mainw->int_audio_checkbutton) mainw->int_audio_checkbutton = lives_toggle_tool_button_new();
-
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->int_audio_checkbutton), -1);
-
-  woat = widget_opts.apply_theme;
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.apply_theme = 0;
-  lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("  Internal"), mainw->int_audio_checkbutton);
 
-  mainw->l2_tb = widget_opts.last_label;
+  mainw->l2_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("  Internal"), mainw->int_audio_checkbutton);
   lives_widget_set_valign(mainw->l2_tb, LIVES_ALIGN_START);
 
   widget_opts.apply_theme = woat;
@@ -1790,11 +1837,10 @@ void create_LiVES(void) {
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.apply_theme = 0;
-  lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("  External"), mainw->ext_audio_checkbutton);
+  mainw->l3_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("  External"), mainw->ext_audio_checkbutton);
   widget_opts.apply_theme = woat;
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-  mainw->l3_tb = widget_opts.last_label;
   lives_widget_set_valign(mainw->l3_tb, LIVES_ALIGN_START);
 
   lives_widget_set_sensitive(mainw->l3_tb, prefs->audio_src != AUDIO_SRC_EXT);
@@ -1803,11 +1849,14 @@ void create_LiVES(void) {
                                       prefs->audio_src == AUDIO_SRC_EXT);
 
   toggle_toolbutton_sets_sensitive(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), mainw->l3_tb, TRUE);
+  toggle_toolbutton_sets_sensitive(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), mainw->l0_tb, TRUE);
+  toggle_toolbutton_sets_sensitive(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), mainw->lock_audio_checkbutton, TRUE);
 
   mainw->ext_audio_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton),
                           LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(on_audio_toggled), mainw->l3_tb);
 
   if (!is_realtime_aplayer(prefs->audio_player) || prefs->audio_player == AUD_PLAYER_NONE) {
+    lives_widget_set_sensitive(mainw->lock_audio_checkbutton, FALSE);
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
   }
@@ -1816,8 +1865,8 @@ void create_LiVES(void) {
   // insert audio src buttons
   if (prefs->lamp_buttons) {
     mainw->ext_audio_mon = lives_toggle_tool_button_new();
-    lives_widget_set_size_request(mainw->ext_audio_mon, 8, 8);
-
+    SET_INT_DATA(mainw->ext_audio_mon, WIDTH_KEY, 4);
+    SET_INT_DATA(mainw->ext_audio_mon, HEIGHT_KEY, 4);
     lives_widget_set_sensitive(mainw->ext_audio_mon, FALSE);
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->ext_audio_mon), -1);
     lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->ext_audio_mon), LIVES_WIDGET_EXPOSE_EVENT,

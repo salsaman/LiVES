@@ -342,6 +342,8 @@ weed_leaf_delete_f _weed_leaf_delete;
 #define INSTALL_CANLOCAL (1ul << 0)
 #define INSTALL_IMPORTANT (1ul << 1)
 
+#define IS_ALTERNATIVE (1ul << 16)
+
 typedef enum {
   MISSING = -1, ///< not yet implemented (TODO)
   UNCHECKED = 0,
@@ -1550,7 +1552,8 @@ void cached_list_free(LiVESList **list);
 
 void get_location(const char *exe, char *val, int maxlen);
 boolean check_for_executable(lives_checkstatus_t *cap, const char *exec);
-LiVESResponseType  do_please_install(const char *more, const char *exec, uint64_t guidance_flags);
+//LiVESResponseType  do_please_install(const char *more, const char *exec, uint64_t guidance_flags);
+LiVESResponseType do_please_install(const char *info, const char *exec, const char *exec2, uint64_t guidance_flags);
 boolean do_please_install_either(const char *exec, const char *exec2);
 
 /// lives_image_type can be a string, lives_img_type_t is an enumeration

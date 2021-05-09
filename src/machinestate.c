@@ -2863,6 +2863,8 @@ char *get_install_cmd(const char *distro, const char *exe) {
     }
   }
   if (!strcmp(exe, EXEC_GZIP)) pkgname = EXEC_GZIP;
+  if (!strcmp(exe, EXEC_YOUTUBE_DL)) pkgname = EXEC_YOUTUBE_DL;
+  if (!strcmp(exe, EXEC_YOUTUBE_DLC)) pkgname = EXEC_YOUTUBE_DLC;
 
   if (!pkgname) return NULL;
 

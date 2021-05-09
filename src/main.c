@@ -292,7 +292,7 @@ static GLogWriterOutput lives_log_writer(GLogLevelFlags log_level, const GLogFie
 
 #ifdef ENABLE_JACK
 LIVES_LOCAL_INLINE boolean jack_warn(boolean is_trans, boolean is_con) {
-  boolean ret = TRUE;
+  boolean ret = TRUE, fork_tried = FALSE;
 
   mainw->fatal = TRUE;
 
@@ -301,11 +301,25 @@ LIVES_LOCAL_INLINE boolean jack_warn(boolean is_trans, boolean is_con) {
     ret = do_jack_no_startup_warn(is_trans);
     //if (!prefs->startup_phase) do_jack_restart_warn(-1, NULL);
   } else {
+    char *com = NULL;
     ret = do_jack_no_connect_warn(is_trans);
     //if (!prefs->startup_phase) do_jack_restart_warn(16, NULL);
+
+    // as a last ditch attempt, try to launch the server
+    if (is_trans) {
+      if (prefs->jack_opts & JACK_OPTS_START_TSERVER) {
+        if (*future_prefs->jack_tserver_cfg) com = future_prefs->jack_tserver_cfg;
+      }
+    } else {
+      if (prefs->jack_opts & JACK_OPTS_START_ASERVER) {
+        if (*future_prefs->jack_aserver_cfg) com = future_prefs->jack_aserver_cfg;
+      }
+    }
+    if (com) IGN_RET(lives_fork(com));
+    fork_tried = TRUE;
   }
-  // if we have backup config, restore from it
-  set_int_pref(PREF_JACK_OPTS, 0);
+  // TODO - if we have backup config, restore from it
+  if (!fork_tried) set_int_pref(PREF_JACK_OPTS, 0);
   return ret;
 }
 #endif

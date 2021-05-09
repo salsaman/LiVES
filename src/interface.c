@@ -5509,10 +5509,20 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
         !check_for_executable(&capable->has_youtube_dlc, EXEC_YOUTUBE_DLC)
        ) {
       firsttime = trylocal = TRUE;
-      /* if (!do_please_install_either(EXEC_YOUTUBE_DL, EXEC_YOUTUBE_DLC)) { */
-      /*   capable->has_youtube_dl = capable->has_youtube_dlc = UNCHECKED; */
-      /*   return NULL; */
-      /* } */
+      if (do_please_install(NULL, EXEC_YOUTUBE_DL, EXEC_YOUTUBE_DLC, INSTALL_CANLOCAL) == LIVES_RESPONSE_CANCEL) {
+        capable->has_youtube_dl = capable->has_youtube_dlc = UNCHECKED;
+        return NULL;
+      }
+      if (!check_for_executable(&capable->has_pip, EXEC_PIP)
+          && !check_for_executable(&capable->has_pip, EXEC_PIP3)
+         ) {
+        /// check we can update locally
+        char *msg = _("LiVES can try to install a local copy, however");
+        do_please_install(msg, EXEC_PIP, NULL, 0);
+        lives_free(msg);
+        capable->has_pip = UNCHECKED;
+        return NULL;
+      }
     } else {
       if (capable->has_youtube_dl != LOCAL) {
         /// local version not found, so try first with system version

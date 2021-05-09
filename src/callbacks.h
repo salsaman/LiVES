@@ -381,8 +381,10 @@ boolean storeclip_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiV
 
 boolean nervous_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer);
 
-boolean aud_lock_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+boolean aud_lock_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod,
                           livespointer statep);
+
+boolean aud_lock_act(LiVESToggleToolButton *, livespointer statep);
 
 char *get_palette_name_for_clip(int clipno);
 

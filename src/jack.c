@@ -134,15 +134,7 @@ void jack_conx_exclude(jack_driver_t *jackd_in, jack_driver_t *jackd_out, boolea
           if (!outports[j]) break;
           outs = jack_port_get_connections(outports[j]);
           if (outs) {
-            lives_proc_thread_t info;
-            ticks_t timeout = LIVES_SHORTEST_TIMEOUT;
-            if (!(info = LPT_WITH_TIMEOUT(timeout, 0, (lives_funcptr_t)jack_disconnect,
-                                          WEED_SEED_BOOLEAN, "vss",
-                                          jackd_in->client, ins[0], outs[0]))) {
-              break;
-            }
-            if (!lives_proc_thread_join_boolean(info)) {
-              //if (!jack_disconnect(jackd_in->client, ins[0], outs[0])) {
+            if (!jack_disconnect(jackd_in->client, ins[0], outs[0])) {
               xins[i] = ins[0];
               xouts[i] = outs[0];
             }
@@ -1567,7 +1559,7 @@ retry_connect:
       lives_free(logmsg);
 
       sc_pid = lives_fork(com);
-
+      if (!sc_pid) goto ret_failed;
       if (is_trans) tserver_pid = sc_pid;
       else aserver_pid = sc_pid;
     }
@@ -1587,7 +1579,7 @@ retry_connect:
     if (!pidchk) {
       if (con_attempts > 1) {
         if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
-        sleep(1);
+        lives_nanosleep(LIVES_WAIT_A_SEC);
         if (lpt) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
       }
 
@@ -2429,10 +2421,9 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
 
           if (remsiz < acsize && ac_buff && ac_buff[i]) {
             lives_memcpy((void *)lb_buff[i] + (lbufsiz - xlbufsiz) * 4, (void *)ac_buff[i] + remsiz * 4, (acsize - remsiz) * 4);
-          }
-        }
-      }
-    }
+	    // *INDENT-OFF*
+          }}}}
+    // *INDENT-ON*
 
     weed_plant_free(achan);
     if (ac_buff) lives_free(ac_buff);
@@ -3676,7 +3667,7 @@ boolean jack_write_client_activate(jack_driver_t *jackd) {
       lives_strfreev(pieces);
       continue;
     }
-    logmsg = lives_strdup_printf("LiVES : found port %s belonging to %s. Will connect %s to it\n", pieces[1], pieces[2],
+    logmsg = lives_strdup_printf("LiVES : found port %s belonging to %s. Will connect %s to it\n", pieces[1], pieces[0],
                                  jack_port_name(jackd->output_port[j]));
 
 
@@ -3773,7 +3764,7 @@ boolean jack_read_client_activate(jack_driver_t *jackd, boolean autocon) {
       lives_strfreev(pieces);
       continue;
     }
-    logmsg = lives_strdup_printf("LiVES : found port %s belonging to %s. Will connect %s to it\n", pieces[1], pieces[2],
+    logmsg = lives_strdup_printf("LiVES : found port %s belonging to %s. Will connect %s to it\n", pieces[1], pieces[0],
                                  jack_port_name(jackd->input_port[j]));
     jack_log_errmsg(jackd, logmsg);
     lives_free(logmsg);
@@ -4154,6 +4145,8 @@ void jack_aud_pb_ready(int fileno) {
     register_aux_audio_channels(1);
 }
 
+static const char *xouts[JACK_MAX_PORTS];
+static lives_pid_t iop_pid = 0;
 
 #define IOPCLIENT "jamin"
 //#define IOPCLIENT "zita-rev1"
@@ -4161,7 +4154,22 @@ void jack_aud_pb_ready(int fileno) {
 static boolean inter = FALSE;
 static boolean need_clnup = FALSE;
 
-void jack_interop_cleanup(void) {
+void jack_interop_cleanup(jack_driver_t *jackd) {
+  // reconnect
+  int nch = jackd->num_output_channels;
+  for (int i = 0; i < nch; i++) {
+    if (xouts[i]) {
+      jack_port_disconnect(jackd->client, jackd->output_port[i]);
+      jack_connect(jackd->client, jack_port_name(jackd->output_port[i]), xouts[i]);
+      xouts[i] = NULL;
+    }
+  }
+
+  if (iop_pid) {
+    lives_kill(iop_pid, LIVES_SIGKILL);
+    iop_pid = 0;
+  }
+
   if (need_clnup) {
     if (mainw->play_window) {
       lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -4178,11 +4186,13 @@ void jack_interop_cleanup(void) {
 boolean jack_interop_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                               livespointer pjackd) {
   const char *iopclient = IOPCLIENT;
+  const char **outs;
+
   if (pjackd) {
     size_t ioplen = lives_strlen(iopclient);
     jack_driver_t *jackd = (jack_driver_t *)pjackd;
-    int x, i;
-
+    boolean launched = FALSE;
+    int x, i, retries = 0;
     int nports = jackd->num_output_channels;
 
     if ((lives_get_status() != LIVES_STATUS_PLAYING && mainw->status != LIVES_STATUS_IDLE)
@@ -4194,15 +4204,26 @@ boolean jack_interop_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, 
       char *wid;
 #endif
       const char **ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
+      boolean found = FALSE;
       if (!ports) return FALSE;
+
+      for (i = 0; i < JACK_MAX_PORTS; i++) xouts[i] = NULL;
+
       for (x = 0; x < nports; x++) {
-        jack_port_disconnect(jackd->client, jackd->output_port[x]);
+        outs = jack_port_get_connections(jackd->output_port[x]);
+        if (outs) {
+          jack_port_disconnect(jackd->client, jackd->output_port[x]);
+          xouts[x] = outs[0];
+          lives_free(outs);
+        }
       }
 
+retry:
       x = 0;
-
       for (i = 0; ports[i]; i++) {
         if (!lives_strncmp(ports[i], iopclient, ioplen)) {
+          found = TRUE;
+          // TODO - timeout
           if (jack_connect(jackd->client, jack_port_name(jackd->output_port[x++]), ports[i])) {
             // connection failed
             break;
@@ -4210,6 +4231,30 @@ boolean jack_interop_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, 
           if (x == nports) break;
         }
       }
+
+      if (!found) {
+        if (!launched) {
+          char *com = lives_strdup_printf("%s", IOPCLIENT);
+          iop_pid = lives_fork(com);
+          lives_free(com);
+          if (!iop_pid) {
+            jack_interop_cleanup(jackd);
+            return FALSE;
+          }
+          retries = MAX_CON_TRIES;
+          launched = TRUE;
+        }
+        if (retries-- > 0) {
+          int pidchk = lives_kill(iop_pid, 0);
+          if (!pidchk) {
+            lives_nanosleep(LIVES_WAIT_A_SEC);
+            goto retry;
+          }
+        }
+        jack_interop_cleanup(jackd);
+        return FALSE;
+      }
+
 #ifdef GDK_WINDOWING_X11
       wid = get_wid_for_name(IOPCLIENT);
       if (wid) activate_x11_window(wid);
@@ -4231,15 +4276,10 @@ boolean jack_interop_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, 
         }
       }
 #endif
-      lives_hook_append(PB_END_EARLY_HOOK, jack_interop_cleanup, NULL);
+      lives_hook_append(PB_END_EARLY_HOOK, jack_interop_cleanup, jackd);
       need_clnup = TRUE;
     } else {
-      const char **ports = jack_get_ports(jackd->client, NULL, NULL, jackd->jack_port_flags);
-      for (x = 0; x < nports; x++) {
-        jack_port_disconnect(jackd->client, jackd->output_port[x]);
-        jack_connect(jackd->client, jack_port_name(jackd->output_port[x]), ports[x]);
-      }
-      jack_interop_cleanup();
+      jack_interop_cleanup(jackd);
     }
     inter = !inter;
   }

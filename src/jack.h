@@ -60,11 +60,12 @@ void jack_server_config(LiVESWidget *, lives_rfx_t *);
 
 void show_jack_status(LiVESButton *, livespointer is_transp);
 
-boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt);
+boolean jack_log_errmsg(jack_driver_t *, const char *errtxt);
 
 boolean jack_interop_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod,
                               livespointer statep);
-void jack_interop_cleanup(void);
+
+void jack_interop_cleanup(jack_driver_t *);
 
 // connect client or start server
 boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd);

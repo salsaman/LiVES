@@ -36,6 +36,8 @@ boolean weed_palette_is_sane(int pal);
 
 #define USE_THREADS 1 ///< set to 0 to disable threading for pixbuf operations, 1 to enable. Other values are invalid.
 
+//#define USE_BIGBLOCKS 1
+
 #ifdef USE_SWSCALE
 
 #ifdef FF_API_PIX_FMT
@@ -9351,6 +9353,9 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     for (sbits = 7; (1 << sbits) > rowstride_alignment; sbits--);
   }
 
+  if (weed_plant_has_leaf(layer, "bblockalloc")) {
+    weed_leaf_delete(layer, "bblockalloc");
+  }
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
     weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
   }
@@ -9376,9 +9381,12 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
     framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
+#ifdef USE_BIGBLOCKS
     if ((pixel_data = calloc_bigblock(framesize >> SHIFTVAL, ALIGN_SIZE)))
       weed_set_boolean_value(layer, "bblockalloc", WEED_TRUE);
-    else pixel_data = lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+    else
+#endif
+      pixel_data = lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
     if (!pixel_data) return FALSE;
     weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
@@ -9401,7 +9409,12 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
     framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
-    pixel_data = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+#ifdef USE_BIGBLOCKS
+    if ((pixel_data = calloc_bigblock(framesize >> SHIFTVAL, ALIGN_SIZE)))
+      weed_set_boolean_value(layer, "bblockalloc", WEED_TRUE);
+    else
+#endif
+      pixel_data = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
     if (!pixel_data) return FALSE;
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
     weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
@@ -9521,9 +9534,11 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       }
     } else {
       weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
+#ifdef USE_BIGBLOCKS
       if ((memblock = calloc_bigblock((framesize + framesize2 * 2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE))) {
         weed_set_boolean_value(layer, "bblockalloc", WEED_TRUE);
       } else
+#endif
         memblock = (uint8_t *)lives_calloc((framesize + framesize2 * 2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
       if (!memblock) return FALSE;
       pd_array[0] = (uint8_t *)memblock;
@@ -9997,6 +10012,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *la
   weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
   weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
   weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
+  weed_leaf_delete(layer, "bblockalloc");
   return layer;
 }
 
@@ -12344,7 +12360,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
 
   uint8_t *pixel_data, *pixels;
 
-  boolean cheat = FALSE, done;
+  boolean cheat = FALSE, done, nocheat = FALSE;
 
   int palette, xpalette;
   int width;
@@ -12371,6 +12387,8 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
     layer = create_blank_layer(layer, NULL, 0, 0, WEED_PALETTE_END);
   }
 
+  if (weed_plant_has_leaf(layer, "bblockalloc")) nocheat = TRUE;
+
   do {
     width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(palette);
     height = weed_layer_get_height(layer);
@@ -12394,7 +12412,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
     case WEED_PALETTE_RGB24:
     case WEED_PALETTE_BGR24:
     case WEED_PALETTE_YUV888:
-      if (irowstride == get_pixbuf_rowstride_value(width * 3)) {
+      if (!nocheat && irowstride == get_pixbuf_rowstride_value(width * 3)) {
         // rowstrides are OK, we can just steal the pixel_data
         pixbuf = lives_pixbuf_cheat(FALSE, width, height, pixel_data);
         weed_layer_nullify_pixel_data(layer);
@@ -12412,7 +12430,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
 #else
 #endif
     case WEED_PALETTE_YUVA8888:
-      if (irowstride == get_pixbuf_rowstride_value(width * 4)) {
+      if (!nocheat && irowstride == get_pixbuf_rowstride_value(width * 4)) {
         // rowstrides are OK, we can just steal the pixel_data
         pixbuf = lives_pixbuf_cheat(TRUE, width, height, pixel_data);
         weed_layer_nullify_pixel_data(layer);
@@ -12671,7 +12689,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   int iwidth = weed_layer_get_width_pixels(layer);
   int iheight = weed_layer_get_height(layer);
   int iclamping = weed_layer_get_yuv_clamping(layer);
-  int new_gamma_type = weed_layer_get_gamma(layer);
+  int new_gamma_type = WEED_GAMMA_UNKNOWN;
 
 #ifdef USE_SWSCALE
   boolean resolved = FALSE;
@@ -12713,6 +12731,8 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     height = (height >> 1) << 1;
   }
   if (iwidth == width && iheight == height) return TRUE; // no resize needed
+
+  if (weed_plant_has_leaf(layer, WEED_LEAF_GAMMA_TYPE)) new_gamma_type  = weed_layer_get_gamma(layer);
 
   // if in palette is a YUV palette which we cannot scale, convert to YUV888 (unclamped) or YUVA8888 (unclamped)
   // we can always scale these by pretending they are RGB24 and RGBA32 respectively
@@ -12901,14 +12921,16 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       }
     }
 
-    if (weed_palette_is_rgb(palette) && !weed_palette_is_rgb(opal_hint) &&
-        weed_layer_get_gamma(layer) == WEED_GAMMA_LINEAR) {
-      // gamma correction
-      if (prefs->apply_gamma) {
-        gamma_convert_layer(WEED_GAMMA_SRGB, layer);
+    if (new_gamma_type != WEED_GAMMA_UNKNOWN) {
+      if (weed_palette_is_rgb(palette) && !weed_palette_is_rgb(opal_hint) &&
+          weed_layer_get_gamma(layer) == WEED_GAMMA_LINEAR) {
+        // gamma correction
+        if (prefs->apply_gamma) {
+          gamma_convert_layer(WEED_GAMMA_SRGB, layer);
+        }
       }
+      new_gamma_type = weed_layer_get_gamma(layer);
     }
-    new_gamma_type = weed_layer_get_gamma(layer);
 
     // set new values
 
@@ -12928,15 +12950,17 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       return FALSE;
     }
 
-    weed_layer_set_gamma(layer, new_gamma_type);
     out_pixel_data = weed_layer_get_pixel_data_planar(layer, &oplanes);
     orowstrides = weed_layer_get_rowstrides(layer, NULL);
 
-    if (weed_palette_is_rgb(palette)) {
-      if (new_gamma_type == WEED_GAMMA_BT709) subspace = WEED_YUV_SUBSPACE_BT709;
-    } else if (weed_palette_is_yuv(palette)) {
-      if (new_gamma_type == WEED_GAMMA_BT709 || weed_layer_get_yuv_subspace(old_layer) == WEED_YUV_SUBSPACE_BT709)
-        subspace = WEED_YUV_SUBSPACE_BT709;
+    if (new_gamma_type != WEED_GAMMA_UNKNOWN) {
+      weed_layer_set_gamma(layer, new_gamma_type);
+      if (weed_palette_is_rgb(palette)) {
+        if (new_gamma_type == WEED_GAMMA_BT709) subspace = WEED_YUV_SUBSPACE_BT709;
+      } else if (weed_palette_is_yuv(palette)) {
+        if (new_gamma_type == WEED_GAMMA_BT709 || weed_layer_get_yuv_subspace(old_layer) == WEED_YUV_SUBSPACE_BT709)
+          subspace = WEED_YUV_SUBSPACE_BT709;
+      }
     }
 
     for (i = 0; i < 4; i++) {
@@ -13113,7 +13137,6 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   case WEED_PALETTE_BGRA32:
 
     // create a new pixbuf
-    //gamma_convert_layer(cfile->gamma_type, layer);
     pixbuf = layer_to_pixbuf(layer, FALSE, FALSE);
 
     threaded_dialog_spin(0.);
@@ -13942,9 +13965,9 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
     return;
 
   if (weed_get_boolean_value(layer, "bblockalloc", NULL) == WEED_TRUE) {
+    weed_leaf_delete(layer, "bblockalloc");
     free_bigblock(weed_layer_get_pixel_data(layer));
     weed_layer_nullify_pixel_data(layer);
-    weed_set_boolean_value(layer, "bblockalloc", WEED_FALSE);
     return;
   }
 

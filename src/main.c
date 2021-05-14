@@ -1643,7 +1643,11 @@ static boolean lives_init(_ign_opts *ign_opts) {
 
   prefs->rec_stop_gb = get_double_prefd(PREF_REC_STOP_GB, DEF_REC_STOP_GB);
 
-  if (prefs->max_modes_per_key == 0) prefs->max_modes_per_key = atoi(DEF_FX_KEYMODES);
+  if (!ign_opts->ign_rte_keymodes) {
+    prefs->rte_modes_per_key = get_int_prefd(PREF_RTE_MODES_PERKEY, DEF_FX_KEYMODES);
+    if (prefs->rte_modes_per_key < 1) prefs->rte_modes_per_key = 1;
+    if (prefs->rte_modes_per_key > FX_MODES_MAX) prefs->rte_modes_per_key = FX_MODES_MAX;
+  }
 
   prefs->stream_audio_out = get_boolean_pref(PREF_STREAM_AUDIO_OUT);
 
@@ -2209,7 +2213,9 @@ jack_tcl_try:
         }
         //lives_idle_priority(governor_loop, NULL);
         return FALSE;
-      } else success = lives_proc_thread_join_boolean(info);
+      }
+      success = lives_proc_thread_join_boolean(info);
+      lives_proc_thread_free(info);
 
       if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
         if (prefs->startup_phase) {
@@ -2304,7 +2310,9 @@ jack_acl_try:
                                       WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
           //lives_idle_priority(governor_loop, NULL);
           return FALSE;
-        } else success = lives_proc_thread_join_boolean(info);
+        }
+        success = lives_proc_thread_join_boolean(info);
+        lives_proc_thread_free(info);
 
         if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
           // dont clear TEST till here
@@ -2346,8 +2354,10 @@ jack_acl_try:
                                             WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
                 //lives_idle_priority(governor_loop, NULL);
                 success = FALSE;
-              } else success = lives_proc_thread_join_boolean(info);
-              //success = jack_write_client_activate(mainw->jackd);
+              } else {
+                success = lives_proc_thread_join_boolean(info);
+                lives_proc_thread_free(info);
+              }
             }
           }
         }
@@ -2863,7 +2873,10 @@ static double pick_custom_colours(double var, double timer) {
   ticks_t xtimerinfo, timerinfo, timeout;
   double lmin, lmax;
   uint8_t ncr, ncg, ncb;
-  boolean retried = FALSE;
+  boolean retried = FALSE, fixed = FALSE;
+
+  if (timer > 0.) fixed = TRUE;
+  else timer = -timer;
 
   if (!(palette->style & STYLE_LIGHT)) {
     lmin = .05; lmax = .4;
@@ -2918,16 +2931,17 @@ retry:
       } else {
         lmin = .2; lmax = .4;
       }
-      pick_nice_colour(timeout, palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
-                       palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax);
-      if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 4 * 3) var *= 1.02;
-      // nice3 - alt for menu_and_bars_fore
-      if (var > MAX_CPICK_VAR) var = MAX_CPICK_VAR;
-      //g_print("c3 %ld %ld %f %f\n", timerinfo - xtimerinfo, timeout, (double)(timerinfo - xtimerinfo) / (double)timeout, var);
-      palette->nice3.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
-      palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
-      palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
-      palette->nice3.alpha = 1.;
+      if (pick_nice_colour(timeout, palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
+                           palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax)) {
+        if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 4 * 3) var *= 1.02;
+        // nice3 - alt for menu_and_bars_fore
+        if (var > MAX_CPICK_VAR) var = MAX_CPICK_VAR;
+        //g_print("c3 %ld %ld %f %f\n", timerinfo - xtimerinfo, timeout, (double)(timerinfo - xtimerinfo) / (double)timeout, var);
+        palette->nice3.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
+        palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
+        palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
+        palette->nice3.alpha = 1.;
+      } else if (!fixed) var = -var;
       main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
     }
   } else {
@@ -3270,7 +3284,7 @@ boolean set_palette_colours(boolean force_reload) {
     if (fabs(prefs->cptime) < .5) prefs->cptime = -1.;
     mainw->helper_procthreads[PT_CUSTOM_COLOURS]
       = lives_proc_thread_create(LIVES_THRDATTR_NOTE_STTIME, (lives_funcptr_t)pick_custom_colours,
-                                 WEED_SEED_DOUBLE, "dd", cpvar, fabs(prefs->cptime));
+                                 WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime);
   }
 #endif
   /// set global values
@@ -3705,8 +3719,9 @@ void print_opthelp(LiVESTextBuffer * textbuf, const char *extracmds_file1, const
   outp_help(textbuf, "%s", _("-startup-mt\t\t\t: start in multitrack mode\n"));
   outp_help(textbuf, "%s", _("-vjmode\t\t\t\t: start in VJ mode (implicitly sets -startup-ce -autorecover "
                              "-nolayout -asource external)\n"));
-  outp_help(textbuf, "%s",
-            _("-fxmodesmax <n>\t\t\t: allow <n> modes per effect key (overrides any value set in preferences; minimum is 1)\n"));
+  outp_help(textbuf,
+            _("-fxmodesmax <n>\t\t\t: allow <n> modes per effect key (overrides any value set in preferences); range 1 - %x)\n"),
+            FX_MODES_MAX);
 #ifdef ENABLE_OSC
   outp_help(textbuf,  _("-oscstart <port>\t\t: start OSC listener on UDP port <port> (default is %d)\n"), DEF_OSC_LISTEN_PORT);
   outp_help(textbuf, "%s",
@@ -3908,9 +3923,10 @@ boolean lazy_startup_checks(void *data) {
     if (!RFX_LOADED) return TRUE;
     if (mainw->helper_procthreads[PT_LAZY_RFX]) {
       if (!lives_proc_thread_join_boolean(mainw->helper_procthreads[PT_LAZY_RFX])) {
+        lives_proc_thread_free(mainw->helper_procthreads[PT_LAZY_RFX]);
+        mainw->helper_procthreads[PT_LAZY_RFX] = NULL;
         if (capable->has_plugins_libdir == UNCHECKED) {
           if (check_for_plugins(prefs->lib_dir, FALSE)) {
-            lives_proc_thread_free(mainw->helper_procthreads[PT_LAZY_RFX]);
             mainw->helper_procthreads[PT_LAZY_RFX] =
               lives_proc_thread_create(LIVES_THRDATTR_NONE,
                                        (lives_funcptr_t)add_rfx_effects, WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY);
@@ -3918,6 +3934,8 @@ boolean lazy_startup_checks(void *data) {
           }
         }
       } else {
+        lives_proc_thread_free(mainw->helper_procthreads[PT_LAZY_RFX]);
+        mainw->helper_procthreads[PT_LAZY_RFX] = NULL;
         lives_widget_destroy(mainw->ldg_menuitem);
         mainw->ldg_menuitem = NULL;
         add_rfx_effects2(RFX_STATUS_ANY);
@@ -4284,7 +4302,7 @@ static boolean lives_startup2(livespointer data) {
       prefs->cptime *= 1.1 + .2;
       set_double_pref(PREF_CPICK_TIME, prefs->cptime);
     }
-    set_double_pref(PREF_CPICK_VAR, cpvar);
+    set_double_pref(PREF_CPICK_VAR, fabs(cpvar));
   } else {
     prefs->cptime =
       (double)(lives_get_current_ticks()
@@ -4739,8 +4757,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->debug = FALSE;
 
   mainw->sense_state = LIVES_SENSE_STATE_INSENSITIZED;
-
-  prefs->max_modes_per_key = atoi(DEF_FX_KEYMODES);
 
   devmap[0] = '\0';
   capable->mountpoint = NULL;
@@ -5293,8 +5309,10 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             continue;
           }
           // set number of fx modes
-          prefs->max_modes_per_key = atoi(optarg);
-          if (prefs->max_modes_per_key < 1) prefs->max_modes_per_key = 1;
+          prefs->rte_modes_per_key = atoi(optarg);
+          if (prefs->rte_modes_per_key < 1) prefs->rte_modes_per_key = 1;
+          if (prefs->rte_modes_per_key > FX_MODES_MAX) prefs->rte_modes_per_key = FX_MODES_MAX;
+          ign_opts.ign_rte_keymodes = TRUE;
           continue;
         }
 
@@ -6134,7 +6152,10 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
         || (widget == mainw->play_window && !mainw->fs)
        ) {
       int xrwidth, xrheight;
-      LiVESWidget *p = lives_widget_get_parent(widget);
+      LiVESWidget *p = widget;
+
+      if (mainw->multitrack || (!mainw->multitrack && widget != mainw->preview_image))
+        p = lives_widget_get_parent(widget);
 
       xrwidth = lives_widget_get_allocation_width(p);
       xrheight = lives_widget_get_allocation_height(p);
@@ -6145,7 +6166,8 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
         rheight = xrheight;
       }
 
-      if (!mainw->multitrack && (prefs->ce_maxspect || prefs->letterbox)) {
+      if ((mainw->multitrack && widget == mainw->preview_image && prefs->letterbox_mt)
+          || (!mainw->multitrack && (prefs->ce_maxspect || prefs->letterbox))) {
         calc_maxspect(rwidth, rheight, &width, &height);
 
         width = (width >> 1) << 1;
@@ -6185,6 +6207,9 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     }
 
     /// x, y values are offset of top / left of image in drawing area
+    /* if (!mainw->multitrack && (widget == mainw->preview_image && LIVES_IS_PLAYING)) */
+    /*   lives_painter_set_source_pixbuf(cr, pixbuf, 0, 0); */
+    /* else */
     lives_painter_set_source_pixbuf(cr, pixbuf, cx, cy);
     lives_painter_rectangle(cr, cx, cy, rwidth - cx * 2, rheight + 2 - cy * 2);
   } else {
@@ -7851,6 +7876,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 
   weed_layer_pixel_data_free(layer);
   weed_layer_ref(layer);
+  weed_layer_set_size(layer, width, height);
 
   clip = lives_layer_get_clip(layer);
   frame = lives_layer_get_frame(layer);
@@ -8154,6 +8180,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       weed_layer_copy(layer, vlayer); // layer is non-NULL, so copy by reference
       weed_layer_nullify_pixel_data(vlayer);
       filter_mutex_unlock(key);
+      weed_set_boolean_value(layer, "HOST_RESIZABLE", WEED_TRUE);
     } else {
       mainw->osc_block = FALSE;
       create_blank_layer(layer, image_ext, width, height, target_palette);

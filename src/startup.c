@@ -1456,7 +1456,7 @@ reloop:
 
   lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_SPREAD);
   lives_button_grab_default_special(okbutton);
-  lives_widget_grab_focus(okbutton);
+  //lives_widget_grab_focus(okbutton);
 
   pop_to_front(dialog, NULL);
 

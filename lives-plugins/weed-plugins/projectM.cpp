@@ -27,10 +27,12 @@ static int package_version = 2; // version of this package
 
 #include "weed-plugin-utils.c" // optional
 
+static int next_pot(int val) {for (int i = 2;; i *= 2) if (i >= val) return i;}
+
 static int verbosity = WEED_VERBOSITY_ERROR;
 #define WORKER_TIMEOUT_SEC 30 /// how long to wait for worker thread startup
 #define MAX_AUDLEN 2048 /// this is defined by projectM itself, increasing the value above 2048 will only result in jumps in the audio
-#define DEF_SENS 1.5 /// beat sensitivity 0. -> 5.  (lower is more sensitive); too high -> less dynamic, too low - nothing w. silence
+#define DEF_SENS 4.5 /// beat sensitivity 0. -> 5.  (lower is more sensitive); too high -> less dynamic, too low - nothing w. silence
 /////////////////////////////////////////////////////////////
 
 #define USE_DBLBUF 1
@@ -59,8 +61,10 @@ static int verbosity = WEED_VERBOSITY_ERROR;
 #include <X11/extensions/Xrender.h>
 #include <X11/Xatom.h>
 
-#define PREF_FPS 25.
-#define MESHSIZE 128
+#define PREF_FPS 30.
+#define MESHSIZE 32.
+
+static Display *dpy;
 
 static int copies = 0;
 
@@ -76,8 +80,9 @@ static int count = 0;
 static int pcount = 0;
 static int blanks = 0;
 
-static int texwidth;
-static int texheight;
+static int texwidth, texheight;
+
+static int maxwidth, maxheight;
 
 static bool rerand = true;
 
@@ -144,9 +149,9 @@ typedef struct {
   volatile bool silent;
 } _sdata;
 
-static _sdata *statsd;
+static bool resize_buffer(_sdata *sd);
 
-static int maxwidth, maxheight;
+static _sdata *statsd;
 
 static int inited = 0;
 
@@ -195,25 +200,32 @@ static int change_size(_sdata *sdata) {
   int ret = 0;
   int newsize = texwidth;
   if (texheight > newsize) newsize = texheight;
-  //std::cerr << "CHANGED SIZE to " << texwidth << " X " << texheight << std::endl;
+  if (texwidth >= texheight)
+    newsize = next_pot(texwidth);
+  else
+    newsize = next_pot(texheight);
+  std::cerr << "CHANGED SIZE to " << texwidth << " X " << texheight << std::endl;
 
   // must be done in this exact order, else projectM (SOIL) crashes...
-
-  sdata->globalPM->projectM_resetGL(texwidth, texheight);
 
 #ifdef HAVE_SDL2
   SDL_SetWindowSize(sdata->win, texwidth, texheight);
 #else
   ret = resize_display(texwidth, texheight);
 #endif
+  if (sdata->worker_ready) sdata->textureHandle = sdata->globalPM->initRenderToTexture();
+
   sdata->texsize = newsize;
 
-  sdata->globalPM->changeTextureSize(newsize);
-  sdata->globalPM->projectM_resetTextures();
+  if (sdata->worker_ready) {
+    // does not work, only the initial textSize in settings seems to have any bearing
+    sdata->globalPM->changeTextureSize(newsize);
+    sdata->globalPM->projectM_resetTextures();
+  }
 
-  // need some way to get the new handle without actually calling reset
-  // - the following crashes
-  // sdata->textureHandle = sdata->globalPM->initRenderToTexture();
+  resize_buffer(sdata);
+  if (sdata->worker_ready) sdata->globalPM->projectM_resetGL(texwidth, texheight);
+
   return ret;
 }
 
@@ -253,13 +265,7 @@ static int init_display(_sdata *sd) {
   maxheight = info->current_h;
 #endif
 
-  if (verbosity >= WEED_VERBOSITY_DEBUG)
-    printf("Screen Resolution: %d x %d\n", maxwidth, maxheight);
-
-  if (defwidth > maxwidth) defwidth = maxwidth;
-  if (defheight > maxheight) defheight = maxheight;
-
-  //SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+  SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
@@ -272,18 +278,17 @@ static int init_display(_sdata *sd) {
 
 #ifdef HAVE_SDL2
   sd->win = SDL_CreateWindow("projectM", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, defwidth, defheight,
-                             SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
+                             SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_BORDERLESS);
   sd->glCtx = SDL_GL_CreateContext(sd->win);
 #else
   if (resize_display(defwidth, defheight)) return 3;
 #endif
-  //if (change_size(sd)) return 4;
 
   return 0;
 }
 
 
-bool resize_buffer(_sdata *sd) {
+static bool resize_buffer(_sdata *sd) {
   size_t align = 1;
   if ((sd->rowstride & 0X01) == 0) {
     if ((sd->rowstride & 0X03) == 0) {
@@ -352,7 +357,6 @@ static int render_frame(_sdata *sd) {
   }
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-  //glEnable(GL_DEPTH_TEST);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
 
@@ -393,7 +397,9 @@ static int render_frame(_sdata *sd) {
     if (sd->ncycs > 1.) sd->cycadj = -(int)(sd->ncycs);
   }
 
+  XLockDisplay(dpy);
   sd->globalPM->renderFrame();
+  XUnlockDisplay(dpy);
   pcount++;
 
   if (sd->needs_more && checked_audio) {
@@ -407,6 +413,9 @@ static int render_frame(_sdata *sd) {
     glEnable(GL_TEXTURE_2D);
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
     glBindTexture(GL_TEXTURE_2D, sd->textureHandle);
 
@@ -507,13 +516,16 @@ static void *worker(void *data) {
 
   settings.windowWidth = texwidth;
   settings.windowHeight = texheight;
-  settings.meshX = texwidth / 64;
+
+  //std::cerr << "RESET size to " << texwidth << " X " << texheight << std::endl;
+
+  settings.meshX = texwidth / MESHSIZE;
   settings.meshY = ((int)(settings.meshX * hwratio + 1) >> 1) << 1;
   settings.fps = sd->fps;
   settings.smoothPresetDuration = 30.;
   settings.presetDuration = 60; /// ignored
   settings.beatSensitivity = DEF_SENS;
-  settings.aspectCorrection = 1;
+  settings.aspectCorrection = 0;
   settings.softCutRatingsEnabled = 1;
   settings.shuffleEnabled = 0;
   settings.presetURL = "/usr/share/projectM/presets";
@@ -528,10 +540,12 @@ static void *worker(void *data) {
   settings.easterEgg = 1;
 
   //std::cerr << "SIZE is " << texwidth << " X " << texheight << std::endl;
+
+  // setting to pot seems to speed things up
   if (texwidth >= texheight)
-    settings.textureSize = sd->texsize = texwidth;
+    settings.textureSize = sd->texsize = next_pot(texwidth);
   else
-    settings.textureSize = sd->texsize = texheight;
+    settings.textureSize = sd->texsize = next_pot(texheight);
 
   if (sd->failed) {
     // can happen if the host is overloaded and the caller timed out
@@ -544,9 +558,9 @@ static void *worker(void *data) {
 
   // can fail here
   sd->globalPM = new projectM(settings, 0);
+  sd->textureHandle = sd->globalPM->initRenderToTexture();
   sd->globalPM->setPresetLock(true);
 
-  sd->textureHandle = sd->globalPM->initRenderToTexture();
   sd->nprs = sd->globalPM->getPlaylistSize() + 1;
   sd->checkforblanks = true;
   sd->cycadj = 0;
@@ -569,6 +583,8 @@ static void *worker(void *data) {
     pthread_mutex_unlock(&cond_mutex);
     return NULL;
   }
+
+  //sd->globalPM->projectM_resetGL(texwidth, texheight);
 
   pthread_mutex_lock(&sd->mutex);
   sd->worker_ready = true;
@@ -652,6 +668,7 @@ static void *worker(void *data) {
       }
     }
   }
+  sd->needs_more = false;
   sd->worker_active = false;
   pthread_mutex_unlock(&sd->mutex);
 
@@ -717,18 +734,16 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     int palette = weed_channel_get_palette(out_channel);
     int psize = pixel_size(palette);
 
-    copies++;
-
     if (inited) {
       sd = statsd;
       weed_set_voidptr_value(inst, "plugin_internal", sd);
       if (texwidth != width || texheight != height) {
         projectM_deinit(inst);
         finalise();
-        copies++;
-        //return WEED_ERROR_FILTER_INVALID;
       }
     }
+
+    copies++;
 
     if (!inited) {
       int rc = 0;
@@ -736,7 +751,6 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       if (!sd) return WEED_ERROR_MEMORY_ALLOCATION;
 
       sd->error = WEED_SUCCESS;
-      sd->fbuffer = NULL;
       weed_set_voidptr_value(inst, "plugin_internal", sd);
 
       sd->pidx = sd->opidx = -1;
@@ -752,13 +766,23 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       sd->prnames = NULL;
       sd->worker_ready = false;
       sd->worker_active = false;
+      sd->timer = 0.;
+      sd->timestamp = 0.;
 
       sd->die = sd->failed = false;
       sd->rendering = false;
+
       texwidth = width;
       texheight = height;
       sd->rowstride = rowstride;
       sd->bad_programs = NULL;
+
+      if (!sd->fbuffer || texheight != height || sd->rowstride != rowstride) {
+        if (!resize_buffer(sd) && sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
+          projectM_deinit(inst);
+          return WEED_ERROR_MEMORY_ALLOCATION;
+        }
+      }
 
       // kick off a thread to init screean and render
       pthread_create(&sd->thread, NULL, worker, sd);
@@ -798,42 +822,33 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       inited = 1;
     }
 
-    sd->rendering = false;
-
-    if (!sd->fbuffer || texheight != height || sd->rowstride != rowstride) {
-      if (!resize_buffer(sd) && sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
-        projectM_deinit(inst);
-        return WEED_ERROR_MEMORY_ALLOCATION;
-      }
-    }
+    //sd->rendering = false;
 
     sd->audio = (float *)weed_calloc(MAX_AUDLEN * 2,  sizeof(float));
     if (!sd->audio) {
       projectM_deinit(inst);
       return WEED_ERROR_MEMORY_ALLOCATION;
     }
+
     sd->abufsize = 4096;
 
     sd->got_first = false;
-    //texwidth = width;
-    //texheight = height;
     sd->psize = psize;
     sd->palette = palette;
-    sd->rowstride = 0;
+
     sd->update_size = false;
     sd->update_psize = false;
     sd->needs_more = false;
-    sd->needs_update = sd->set_update = false;
+    sd->needs_update = false;
+    sd->set_update = false;
     sd->audio_frames = sd->audio_offs = 0;
     pcount = count = 0;
-    sd->rendering = true;
     sd->tfps = 0.;
     sd->ncycs = 0.;
     sd->bad_prog = false;
-    sd->timer = 0.;
-    sd->timestamp = 0.;
     sd->busy = false;
     sd->silent = false;
+    sd->rendering = true;
 
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
@@ -844,6 +859,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
 
 static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  static double ltt;
   _sdata *sd = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
   weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
   weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
@@ -859,7 +875,6 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   int psize = pixel_size(palette);
   int rowstride = weed_channel_get_stride(out_channel);
   bool did_update = false;
-  static double ltt;
   double timer;
 
   weed_free(inparams);
@@ -892,15 +907,14 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   if (sd->busy) goto copytodest;
 
+  //std::cerr << "pm size " << width << " X " << height << std::endl;
+
   while (!sd->worker_active) {
     sd->rendering = true;
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
   }
-
-  if (width > maxwidth) width = maxwidth;
-  if (height > maxheight) height = maxheight;
 
   //std::cerr << texwidth << " X " << texheight << " and " << width << " X " << height << std::endl;
 
@@ -1034,6 +1048,17 @@ copytodest:
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
+  if (texwidth > maxwidth || texheight > maxheight) {
+    weed_plant_t *gui = weed_channel_get_gui(out_channel);
+    int xgap = 0, ygap = 0;
+    if (texwidth > maxwidth) xgap = (texwidth - maxwidth) >> 1;
+    if (texheight > maxheight) ygap = (texheight - maxheight) >> 1;
+    weed_set_int_value(gui, WEED_LEAF_BORDER_TOP, ygap);
+    weed_set_int_value(gui, WEED_LEAF_BORDER_BOTTOM, ygap);
+    weed_set_int_value(gui, WEED_LEAF_BORDER_LEFT, xgap);
+    weed_set_int_value(gui, WEED_LEAF_BORDER_RIGHT, xgap);
+  }
+
   return WEED_SUCCESS;
 }
 
@@ -1066,6 +1091,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
   statsd = NULL;
   XInitThreads();
+  dpy = XOpenDisplay(NULL);
 }
 WEED_SETUP_END;
 
@@ -1099,6 +1125,7 @@ static void finalise(void) {
 
 WEED_DESETUP_START {
   finalise();
+  XCloseDisplay(dpy);
 }
 WEED_DESETUP_END;
 

@@ -10,7 +10,7 @@
 #define RTE_INFO_WIDTH ((int)(550. * widget_opts.scale))
 #define RTE_INFO_HEIGHT ((int)(400. * widget_opts.scale))
 
-#define DEF_FX_KEYMODES "8" // keep as string
+#define DEF_FX_KEYMODES 8
 
 #define DEF_KEYMAP_FILE2 "fxdefs.perkey"
 #define DEF_KEYMAP_FILE3 "datacons.map"

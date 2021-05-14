@@ -1516,9 +1516,10 @@ void create_LiVES(void) {
   mainw->vj_realize = lives_standard_menu_item_new_with_label(_("_Pre-decode all frames (unlocks reverse playback)"));
   lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_realize);
   lives_widget_set_tooltip_text(mainw->vj_realize,
-                                (_("Decode all frames to images. This will unlock reverse playback and can "
-                                   "improve random seek times,\n"
-                                   "but may require additional diskspace.")));
+                                (tmp = (_("Decode all frames to images. This will unlock reverse playback and can "
+                                          "improve random seek times,\n"
+                                          "but may require additional diskspace."))));
+  lives_free(tmp);
   lives_widget_set_sensitive(mainw->vj_realize, FALSE);
 
   mainw->vj_reset = lives_standard_menu_item_new_with_label(_("_Reset All Playback Speeds and Positions"));
@@ -1563,7 +1564,7 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
 
-  mainw->autolives = lives_standard_check_menu_item_new_with_label(_("_Automatic Mode (autolives)..."), FALSE);
+  mainw->autolives = lives_standard_check_menu_item_new_with_label(_("Start Playback in _Automatic Mode (autolives)..."), FALSE);
 #ifdef ENABLE_OSC
   lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->autolives);
 #endif
@@ -2422,43 +2423,47 @@ void create_LiVES(void) {
   // actually, for up and down, the user data doesn't matter since it is ignored when we create synthetic
   // key presses, and only the keymod counts. However it's added here as a guide.
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
-                            LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                            LIVES_CONTROL_MASK | LIVES_SPECIAL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK
+                                | LIVES_SPECIAL_MASK),
                             (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
-                            (LIVES_ALT_MASK), (LiVESAccelFlags)0,
+                            (LIVES_ALT_MASK | LIVES_SPECIAL_MASK), (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(less_callback), NULL, NULL));
 
   //////////////////////////
 
+  // key + alt == background
+
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up,
-                            LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                            (LIVES_CONTROL_MASK | LIVES_SPECIAL_MASK), (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(faster_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK
+                                | LIVES_SPECIAL_MASK),
                             (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(faster_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up,
-                            (LiVESXModifierType)(LIVES_ALT_MASK),
+                            (LiVESXModifierType)(LIVES_SHIFT_MASK | LIVES_SPECIAL_MASK),
                             (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(more_callback), NULL, NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Left,
-                            LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                            (LIVES_CONTROL_MASK | LIVES_SPECIAL_MASK), (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(skip_back_callback), NULL, NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Right,
-                            LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                            (LIVES_CONTROL_MASK | LIVES_SPECIAL_MASK), (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(skip_forward_callback), NULL, NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
@@ -2466,8 +2471,9 @@ void create_LiVES(void) {
                             (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
+  // space + shift == lock
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
                             (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_lock_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
@@ -2477,7 +2483,7 @@ void create_LiVES(void) {
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
                             (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
@@ -2487,14 +2493,16 @@ void create_LiVES(void) {
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Return,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK), (LiVESAccelFlags)0,
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK), (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(fps_reset_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Less, (LiVESXModifierType)LIVES_SHIFT_MASK,
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Less, (LiVESXModifierType)(LIVES_SHIFT_MASK
+                            | LIVES_SPECIAL_MASK),
                             (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(voldown_callback), NULL, NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Greater, (LiVESXModifierType)LIVES_SHIFT_MASK,
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Greater, (LiVESXModifierType)(LIVES_SHIFT_MASK
+                            | LIVES_SPECIAL_MASK),
                             (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(volup_callback), NULL, NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_k, (LiVESXModifierType)0, (LiVESAccelFlags)0,
@@ -2513,6 +2521,9 @@ void create_LiVES(void) {
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_x, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(swap_fg_bg_callback), NULL, NULL));
+
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_e, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(retrigger_callback), NULL, NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_n, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(nervous_callback), NULL, NULL));
@@ -4598,47 +4609,8 @@ void kill_play_window(void) {
     widths should be in pixels (not macropixels)
 */
 void get_letterbox_sizes(int *pwidth, int *pheight, int *lb_width, int *lb_height, boolean player_can_upscale) {
-  float frame_aspect, player_aspect;
-  if (!player_can_upscale) {
-    calc_maxspect(*pwidth, *pheight, lb_width, lb_height);
-    return;
-  }
-  frame_aspect = (float) * lb_width / (float) * lb_height;
-  player_aspect = (float) * pwidth / (float) * pheight;
-  if (fabs(1. - frame_aspect / player_aspect) < ASPECT_DIFF_LMT) {
-    if (*lb_width > *pwidth) *lb_width = *pwidth;
-    if (*lb_height > *pheight) *lb_height = *pheight;
-    if (*pwidth > *lb_width) *pwidth = *lb_width;
-    if (*pheight > *lb_height) *pheight = *lb_height;
-    return;
-  }
-
-  // *pwidth, *pheight are the outer dimensions, *lb_width, *lb_height are inner, widths are in pixels
-  if (frame_aspect > player_aspect) {
-    // width is relatively larger, so the height will need padding
-    if (*lb_width > *pwidth) {
-      /// inner frame needs scaling down
-      *lb_width = *pwidth;
-      *lb_height = (float) * lb_width / frame_aspect + .5;
-      *lb_height = (*lb_height >> 1) << 1;
-      return;
-    } else {
-      /// inner frame size OK, we will shrink wrap the outer frame
-      *pwidth = *lb_width;
-      *pheight = (float) * pwidth / player_aspect + .5;
-      *pheight = (*pheight >> 1) << 1;
-    }
-    return;
-  }
-  if (*lb_height > *pheight) {
-    *lb_height = *pheight;
-    *lb_width = (float) * lb_height * frame_aspect + .5;;
-    *lb_width = (*lb_width >> 2) << 2;
-  } else {
-    *pheight = *lb_height;
-    *pwidth = (float) * pheight * player_aspect + .5;
-    *pwidth = (*pwidth >> 2) << 2;
-  }
+  if (!player_can_upscale) calc_maxspect(*pwidth, *pheight, lb_width, lb_height);
+  else calc_minspect(pwidth, pheight, *lb_width, *lb_height);
 }
 
 

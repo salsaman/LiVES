@@ -30,7 +30,9 @@
 #define PREFS_XCOLOURS_CHANGED		(1 << 4)
 #define PREFS_IMAGES_CHANGED		(1 << 5)
 #define PREFS_MONITOR_CHANGED		(1 << 6)
-#define PREFS_NEEDS_REVERT		(1 << 7)
+#define PREFS_RTE_KEYMODES_CHANGED	(1 << 7)
+
+#define PREFS_NEEDS_REVERT		(1 << 28)
 
 typedef struct {
   char bgcolour[256];
@@ -244,7 +246,8 @@ typedef struct {
 
   double fps_tolerance;
 
-  short rte_keys_virtual;
+  int rte_keys_virtual;
+  int rte_modes_per_key; ///< maximum effect modes per key
 
   boolean show_msg_area;
 
@@ -416,8 +419,6 @@ typedef struct {
 
 #define DEF_REC_STOP_GB 10.
   double rec_stop_gb;
-
-  int max_modes_per_key; ///< maximum effect modes per key
 
   // autotransitioning in mt
   int atrans_fx;
@@ -782,6 +783,7 @@ typedef struct {
   LiVESWidget *acodec_combo;
   LiVESWidget *spinbutton_osc_udp;
   LiVESWidget *spinbutton_rte_keys;
+  LiVESWidget *spinbutton_rte_modes;
   LiVESWidget *spinbutton_nfx_threads;
   LiVESWidget *enable_OSC;
   LiVESWidget *enable_OSC_start;
@@ -897,6 +899,7 @@ typedef struct {
   boolean ign_clipset;
   boolean ign_layout;
   boolean ign_osc;
+  boolean ign_rte_keymodes;
   boolean ign_libdir;
   boolean ign_jackopts;
   boolean ign_jackserver;
@@ -1149,6 +1152,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_NOFRAMEDROP "no_framedrop"
 
 #define PREF_RTE_KEYS_VIRTUAL "rte_keys_virtual"
+#define PREF_RTE_MODES_PERKEY "rte_keymodes"
 
 #define PREF_JACK_OPTS "jack_opts"
 

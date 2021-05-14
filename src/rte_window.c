@@ -11,6 +11,7 @@
 #include "ce_thumbs.h"
 
 static int old_rte_keys_virtual = 0;
+static int old_modes_per_key = 0;
 
 static LiVESWidget **key_checks;
 static LiVESWidget **key_grabs;
@@ -709,7 +710,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
 
   int maxmodes = rte_getmodespk();
 
-  register int i, j, k, count;
+  int i, j, k, count;
 
   do {
     retval = 0;
@@ -1175,6 +1176,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
   char *keymap_file3 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE3, NULL); // data connections
 
   int *def_modes = NULL;
+  int *max_modes = NULL;
   uint8_t **badkeymap = NULL;
 
   boolean notfound = FALSE;
@@ -1187,11 +1189,12 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
   int hlen;
   int retval;
 
-  int key, mode;
+  int key, mode, maxkey = -1, maxmode = modes;
   int update = 0;
 
   int i;
 
+reload:
   if (lives_file_test(keymap_file2, LIVES_FILE_TEST_EXISTS)) {
     // per key defaults / newer style keymap
     lives_free(keymap_file);
@@ -1244,7 +1247,10 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   def_modes = (int *)lives_malloc(prefs->rte_keys_virtual * sizint);
-  for (i = 0; i < prefs->rte_keys_virtual; i++) def_modes[i] = -1;
+  max_modes = (int *)lives_malloc(prefs->rte_keys_virtual * sizint);
+  for (i = 0; i < prefs->rte_keys_virtual; i++) {
+    max_modes[i] = def_modes[i] = -1;
+  }
 
   badkeymap = (uint8_t **)lives_malloc(prefs->rte_keys_virtual * sizeof(uint8_t *));
   for (i = 0; i < prefs->rte_keys_virtual; i++) {
@@ -1374,6 +1380,12 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
     }
 
     if (key < 1 || key > prefs->rte_keys_virtual) {
+      if (key <= FX_KEYS_MAX_VIRTUAL && key > maxkey) {
+        def_modes = (int *)lives_realloc(def_modes, key * sizint);
+        max_modes = (int *)lives_realloc(max_modes, key * sizint);
+        for (i = maxkey; i < key; i++) max_modes[i] = def_modes[i] = -1;
+        maxkey = key;
+      }
       d_print((tmp = lives_strdup_printf(_("Invalid key %d in %s\n"), key, keymap_file)));
       LIVES_ERROR(tmp);
       lives_free(tmp);
@@ -1383,6 +1395,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
         // read param defaults
         if (!read_perkey_defaults(kfd, -1, -1, version)) break; // file read error
       }
+      max_modes[key - 1]++;
       continue;
     }
 
@@ -1439,7 +1452,12 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       def_modes[key - 1]--;
       continue;
     }
+
+    max_modes[key - 1]++;
+    if (max_modes[key - 1] > maxmode) maxmode = max_modes[key - 1];
+
     if (mode == -3) {
+      if (max_modes[key - 1] > maxmode) maxmode = max_modes[key - 1];;
       d_print((tmp = lives_strdup_printf(_("Too many effects bound to key %d.\n"), key)));
       LIVES_ERROR(tmp);
       lives_free(tmp);
@@ -1514,8 +1532,19 @@ cleanup1:
   lives_freep((void **)&keymap_file); // frees keymap_file2 if applicable
   lives_freep((void **)&keymap_file3);
   lives_freep((void **)&def_modes);
+  lives_freep((void **)&max_modes);
   if (mainw->ce_thumbs) ce_thumbs_reset_combos();
   if (rte_window) check_clear_all_button();
+
+  if (maxmode > modes || maxkey > -1) {
+    if (do_fxload_query(maxkey, maxmode)) {
+      // clear old
+      on_clear_all_clicked(NULL, user_data);
+      pref_factory_int(PREF_RTE_KEYS_VIRTUAL, &prefs->rte_keys_virtual, maxkey, TRUE);
+      pref_factory_int(PREF_RTE_MODES_PERKEY, &prefs->rte_modes_per_key, maxmode, TRUE);
+      goto reload;
+    }
+  }
 
   return FALSE;
 }
@@ -1851,6 +1880,7 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
 
 boolean on_rtew_delete_event(LiVESWidget * widget, LiVESXEventDelete * event, livespointer user_data) {
   old_rte_keys_virtual = prefs->rte_keys_virtual;
+  old_modes_per_key = prefs->rte_modes_per_key;
   lives_widget_set_sensitive(mainw->mt_menu, TRUE);
   lives_widget_set_sensitive(mainw->rte_defs_menu, TRUE);
   if (!user_data) {
@@ -2091,7 +2121,7 @@ static LiVESTreeModel *rte_window_fx_model(void) {
 }
 
 
-LiVESWidget *create_rte_window(void) {
+static LiVESWidget *create_rte_window(boolean reshow) {
   LiVESWidget *irte_window = rte_window;
   LiVESWidget *table;
   LiVESWidget *hbox;
@@ -2113,16 +2143,12 @@ LiVESWidget *create_rte_window(void) {
 
   LiVESTreeModel *model;
 
-  char *tmp, *tmp2, *labelt;
+  char *tmp, *tmp2, *labelt = NULL;
+  boolean has_no_key = FALSE;
 
-  int modes = rte_getmodespk();
-
-  int idx;
-
-  int winsize_h;
-  int winsize_v;
-
-  register int i, j;
+  int idx, modes = rte_getmodespk();
+  int winsize_h, winsize_v;
+  int i, j;
 
   ///////////////////////////////////////////////////////////////////////////
 
@@ -2134,7 +2160,8 @@ LiVESWidget *create_rte_window(void) {
   winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
   if (irte_window) {
-    if (prefs->rte_keys_virtual != old_rte_keys_virtual) {
+    if (prefs->rte_keys_virtual != old_rte_keys_virtual ||
+        prefs->rte_modes_per_key != old_modes_per_key) {
       // number of fx keys changed, rebuild the window
       mainw->no_context_update = FALSE;
       return refresh_rte_window();
@@ -2204,15 +2231,19 @@ LiVESWidget *create_rte_window(void) {
       case 10:
         labelt = (_("equals")); break;
       default:
-        labelt = lives_strdup("????");
+        labelt = lives_strdup_printf("%d", i + 1);
+        has_no_key = TRUE;
         break;
       }
     }
 
     widget_opts.use_markup = TRUE;
-    label = lives_standard_label_new((tmp = lives_strdup_printf(_("<big><b>Ctrl-%s</b></big>"), labelt)));
+    if (has_no_key)
+      label = lives_standard_label_new((tmp = lives_big_and_bold(_("Key Slot %d"), i + 1)));
+    else
+      label = lives_standard_label_new((tmp = lives_big_and_bold(_("Ctrl-%s"), labelt)));
     widget_opts.use_markup = FALSE;
-    lives_free(labelt);
+    lives_freep((void **)&labelt);
     lives_free(tmp);
 
     lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, FALSE, widget_opts.packing_width);
@@ -2420,35 +2451,42 @@ LiVESWidget *create_rte_window(void) {
 rte_window_ready:
   // TODO: ignore button clicks until window is fully shown
 
-  rte_window_is_hidden = FALSE;
+  if (reshow) {
+    rte_window_is_hidden = FALSE;
 
-  //lives_window_set_modal(LIVES_WINDOW(irte_window), TRUE);
-  lives_widget_show_all(irte_window);
+    //lives_window_set_modal(LIVES_WINDOW(irte_window), TRUE);
+    lives_widget_show_all(irte_window);
 
-  if (prefs->open_maximised) {
-    lives_window_maximize(LIVES_WINDOW(irte_window));
+    if (prefs->open_maximised) {
+      lives_window_maximize(LIVES_WINDOW(irte_window));
+    }
+
+    lives_widget_show_now(irte_window);
+
+    lives_widget_set_sensitive(mainw->mt_menu, FALSE);
+    lives_widget_set_sensitive(mainw->rte_defs_menu, FALSE);
+
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL, irte_window);
+    mainw->no_context_update = FALSE;
   }
-
-  lives_widget_show_now(irte_window);
-
-  lives_widget_set_sensitive(mainw->mt_menu, FALSE);
-  lives_widget_set_sensitive(mainw->rte_defs_menu, FALSE);
-
-  lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-  lives_set_cursor_style(LIVES_CURSOR_NORMAL, irte_window);
-  mainw->no_context_update = FALSE;
   return irte_window;
 }
 
 
 LiVESWidget *refresh_rte_window(void) {
   if (rte_window) {
-    lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    lives_set_cursor_style(LIVES_CURSOR_BUSY, rte_window);
-    lives_widget_context_update();
-    on_rtew_delete_event(NULL, NULL, NULL);
+    boolean reshow = FALSE;
+    if (!rte_window_is_hidden) {
+      reshow = TRUE;
+      lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+      lives_set_cursor_style(LIVES_CURSOR_BUSY, rte_window);
+      lives_widget_context_update();
+    }
+    on_rtew_delete_event(NULL, NULL, LIVES_INT_TO_POINTER(1));
     lives_widget_destroy(rte_window);
-    rte_window = create_rte_window();
+    rte_window = NULL;
+    rte_window = create_rte_window(reshow);
     rte_window_set_interactive(prefs->interactive);
   }
   return rte_window;
@@ -2459,7 +2497,7 @@ void on_assign_rte_keys_activate(LiVESMenuItem * menuitem, livespointer user_dat
   if (rte_window && !rte_window_is_hidden) {
     on_rtew_delete_event(NULL, NULL, NULL);
   } else {
-    rte_window = create_rte_window();
+    rte_window = create_rte_window(TRUE);
     rte_window_set_interactive(prefs->interactive);
     lives_widget_show(rte_window);
     if (mainw->play_window && !mainw->fs && (prefs->play_monitor == widget_opts.monitor + 1 || capable->nmonitors == 1)) {

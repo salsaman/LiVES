@@ -1,0 +1,152 @@
+<define>
+|1.8.3
+</define>
+
+<name>
+vertigo|vertigo
+</name>
+
+<version>
+1|1
+</version>
+
+<author>
+effecTV
+salsaman
+</author>
+
+<language_code>
+0xC0
+</language_code>
+
+<requires>
+putils
+<math.h>
+</requires>
+
+<typedefs>
+unsigned int|RGB32
+</typedefs>
+
+<palette_lists>
+WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_END
+</palette_lists>
+
+<in_chans>
+in_channel0|reinit_on_size_change
+</in_chans>
+
+<out_chans>
+out_channel0|
+</out_chans>
+
+<sdata>
+int|dx
+int|dy
+int|sx
+int|sy;
+RGB32 *|buffer|weed_free
+RGB32 *|current_buffer|
+RGB32 *|alt_buffer|
+double phase
+</sdata>
+
+<static>
+typedef unsigned int RGB32;
+
+static void setParams(int video_width, int video_height, sdata_t *sdata, double phase_increment, double zoomrate) {
+  double vx, vy;
+  double t;
+  double x, y;
+  double dizz;
+
+  dizz = sin(sdata->phase) * 10 + sin(sdata->phase * 1.9 + 5) * 5;
+
+  x = video_width / 2.;
+  y = video_height / 2.;
+  t = (x * x + y * y) * zoomrate;
+  if (video_width > video_height) {
+    if (dizz >= 0) {
+      if (dizz > x) dizz = x;
+      vx = (x * (x - dizz) + y * y) / t;
+    } else {
+      if (dizz < -x) dizz = -x;
+      vx = (x * (x + dizz) + y * y) / t;
+    }
+    vy = (dizz * y) / t;
+  } else {
+    if (dizz >= 0) {
+      if (dizz > y) dizz = y;
+      vx = (x * x + y * (y - dizz)) / t;
+    } else {
+      if (dizz < -y) dizz = -y;
+      vx = (x * x + y * (y + dizz)) / t;
+    }
+    vy = (dizz * x) / t;
+  }
+  sdata->dx = vx * 65536.;
+  sdata->dy = vy * 65536.;
+
+  sdata->sx = (-vx * x + vy * y + x + cos(sdata->phase * 5.) * 2.) * 65536.;
+  sdata->sy = (-vx * y - vy * x + y + sin(sdata->phase * 6.) * 2.) * 65536.;
+
+  sdata->phase += phase_increment;
+  if (sdata->phase > 5700000.) sdata->phase = 0.;
+ }
+</static>
+
+<params>
+pinc|_Phase increment|num2|.2|.1|1.|
+zoom|_Zoom|num2|1.01|1.01|1.10|
+</params>
+
+<init>
+int video_area = width * height;
+size_t psize = pixel_size(pal) * 2;
+
+sdata->buffer = (RGB32 *)weed_calloc(video_area, psize);
+if (!sdata->buffer) {
+  weed_free(sdata);
+  return WEED_ERROR_MEMORY_ALLOCATION;
+}
+sdata->current_buffer = sdata->buffer;
+sdata->alt_buffer = sdata->buffer + video_area;
+</init>
+
+<process>
+RGB32 v, *p;
+  size_t offs = 0;
+
+int video_area = width * height;
+int y, ox, oy, x, i;
+int widthx = width * pixel_size(pal);
+
+setParams(width, height, sdata, pinc, zoom);
+
+p = sdata->alt_buffer;
+
+for (y = height; y > 0; y--) {
+  ox = sdata->sx;
+  oy = sdata->sy;
+  for (x = width; x > 0; x--) {
+    if ((i = (oy >> 16) * width + (ox >> 16)) < 0) i = 0;
+    if (i >= video_area) i = video_area;
+    v = ((sdata->current_buffer[i] & 0xfcfcff) * 3) + ((*src) & 0xfcfcff);
+    *p++ = (v >> 2) | (*src++ & 0xff000000);
+    ox += sdata->dx;
+    oy += sdata->dy;
+  }
+
+  src += irow;
+  sdata->sx -= sdata->dy;
+  sdata->sy += sdata->dx;
+}
+
+for (y = 0; y < height; y++) {
+  weed_memcpy(&dst[orow * y], sdata->alt_buffer + offs, widthx);
+}
+
+p = sdata->current_buffer;
+sdata->current_buffer = sdata->alt_buffer;
+sdata->alt_buffer = p;
+</process>

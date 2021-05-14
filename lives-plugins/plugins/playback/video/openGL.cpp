@@ -136,6 +136,7 @@ static boolean WaitForNotify(Display *dpy, XEvent *event, XPointer arg) {
 static uint32_t imgRow;
 static uint32_t imgWidth;
 static uint32_t imgHeight;
+
 static double x_range;
 static double y_range;
 
@@ -950,7 +951,7 @@ static void set_priorities(void) {
   GLclampf *prios = (GLclampf *)malloc(nbuf * sizeof(GLclampf));
   int idx = ctexture;
 
-  register int i;
+  int i;
 
   for (i = 0; i < nbuf; i++) {
     prios[i] = 0.;
@@ -1998,11 +1999,13 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   int rowz, mwidth;
   void **return_data = NULL;
   void *pixel_data = weed_channel_get_pixel_data(frame);
-  register int i;
+  int i;
 
   if (ret) return_data = weed_get_voidptr_array(ret, WEED_LEAF_PIXEL_DATA, NULL);
 
   pthread_mutex_lock(&rthread_mutex); // wait for lockout of render thread
+
+  x_range = y_range = 1.;
 
   x_range = weed_get_double_value(frame, "x_range", NULL);
   y_range = weed_get_double_value(frame, "y_range", NULL);

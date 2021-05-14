@@ -46,6 +46,7 @@ static weed_error_t targeted_zoom_process(weed_plant_t *inst, weed_timecode_t tc
   int pal = weed_channel_get_palette(in_chan);
   int irow = weed_channel_get_stride(in_chan);
   int iheight = weed_channel_get_height(in_chan);
+  int is_threading = weed_is_threading(inst);
   int offset = 0;
   int width = weed_channel_get_width(out_chan);
   int height = weed_channel_get_height(out_chan);
@@ -57,7 +58,7 @@ static weed_error_t targeted_zoom_process(weed_plant_t *inst, weed_timecode_t tc
   double yoffs = weed_param_get_value_double(in_params[P_yoffs]);
   weed_free(in_params);
 
-  if (weed_is_threading(inst)) {
+  if (is_threading) {
     offset = weed_channel_get_offset(out_chan);
     src += offset * irow;
     dst += offset * orow;

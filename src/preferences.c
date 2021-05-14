@@ -1386,13 +1386,26 @@ boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean per
     goto success3;
   }
 
+  if (!lives_strcmp(prefidx, PREF_RTE_KEYS_VIRTUAL)) {
+    // if we are showing the rte window, we must destroy and recreate it
+    prefs->rte_keys_virtual = newval;
+    mainw->prefs_changed |= PREFS_RTE_KEYMODES_CHANGED;
+    goto success3;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_RTE_MODES_PERKEY)) {
+    // if we are showing the rte window, we must destroy and recreate it
+    prefs->rte_modes_per_key = newval;
+    mainw->prefs_changed |= PREFS_RTE_KEYMODES_CHANGED;
+    goto success3;
+  }
+
   if (!lives_strcmp(prefidx, PREF_MAX_MSGS)) {
     if (newval < mainw->n_messages && newval >= 0) {
       free_n_msgs(mainw->n_messages - newval);
       if (prefs->show_msg_area)
         msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
     }
-    //prefs->max_messages = newval;
     goto success3;
   }
 
@@ -1939,6 +1952,7 @@ boolean apply_prefs(boolean skip_warn) {
 #endif
 
   int rte_keys_virtual = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_rte_keys));
+  int rte_modes_per_key = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_rte_modes));
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
@@ -2546,13 +2560,10 @@ boolean apply_prefs(boolean skip_warn) {
   pref_factory_float(PREF_AHOLD_THRESHOLD, ext_aud_thresh, TRUE);
 
   // virtual rte keys
-  if (prefs->rte_keys_virtual != rte_keys_virtual) {
-    // if we are showing the rte window, we must destroy and recreate it
-    refresh_rte_window();
+  pref_factory_int(PREF_RTE_KEYS_VIRTUAL, &prefs->rte_keys_virtual, rte_keys_virtual, TRUE);
 
-    prefs->rte_keys_virtual = rte_keys_virtual;
-    set_int_pref(PREF_RTE_KEYS_VIRTUAL, prefs->rte_keys_virtual);
-  }
+  // virtual rte keys
+  pref_factory_int(PREF_RTE_MODES_PERKEY, &prefs->rte_modes_per_key, rte_modes_per_key, TRUE);
 
   if (prefs->rec_stop_gb != rec_gb) {
     // disk free level at which we must stop recording
@@ -5192,8 +5203,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   prefsw->scrollw_right_effects = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_effects);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
+  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_effects));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->checkbutton_load_rfx = lives_standard_check_button_new(_("Load rendered effects on startup"), prefs->load_rfx_builtin,
                                  LIVES_BOX(hbox), NULL);
@@ -5201,40 +5212,44 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   if (prefs->vj_mode)
     show_warn_image(prefsw->checkbutton_load_rfx, _("Disabled in VJ mode"));
 
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_antialias = lives_standard_check_button_new(_("Use _antialiasing when resizing"), prefs->antialias,
                                   LIVES_BOX(hbox), H_("This setting applies to images imported into or\n"
                                       "exported from LiVES, and for certain rendered effects\n"
                                       "and Tools, such as Trim Frames"));
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_effects));
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE,
-                       widget_opts.packing_height);
-
-  prefsw->checkbutton_apply_gamma =
-    lives_standard_check_button_new(_("Automatic gamma correction (requires restart)"),
-                                    prefs->apply_gamma, LIVES_BOX(hbox),
-                                    (tmp = (_("Also affects the monitor gamma !! (for now...)"))));
-  lives_free(tmp);
-
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
+  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_effects));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->spinbutton_rte_keys = lives_standard_spin_button_new
                                 ((tmp = (_("Number of _real time effect keys"))), prefs->rte_keys_virtual, FX_KEYS_PHYSICAL,
                                  FX_KEYS_MAX_VIRTUAL, 1., 1., 0, LIVES_BOX(hbox),
-                                 (tmp2 = lives_strdup(
-                                     _("The number of \"virtual\" real time effect keys. "
-                                       "They can be controlled through the real time effects window, or via network (OSC)."))));
+                                 (tmp2 = H_("The number of \"virtual\" real time effect keys.\n"
+                                         "They can be controlled through the real time effects window,\n"
+                                         "or via network (OSC), or other means.")));
   lives_free(tmp); lives_free(tmp2);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  prefsw->spinbutton_rte_modes = lives_standard_spin_button_new
+                                 ((tmp = (_("Modes per key"))), prefs->rte_modes_per_key, 1.,
+                                  FX_MODES_MAX, 1., 1., 0, LIVES_BOX(hbox),
+                                  (tmp2 = H_("Each effect key can have multiple modes which can each be assigned to a\n"
+                                          "realtime effect, for example, by means of the effect mapping window\n"
+                                          "These modes can then be cycled through (see VJ / Show VJ keys for an example).")));
+  lives_free(tmp); lives_free(tmp2);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->checkbutton_threads = lives_standard_check_button_new(_("Use _threads where possible when applying effects"),
                                 future_prefs->nfx_threads > 1, LIVES_BOX(hbox), NULL);
 
-  add_fill_to_box(LIVES_BOX(hbox));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->spinbutton_nfx_threads = lives_standard_spin_button_new(_("Number of _threads"), future_prefs->nfx_threads, 2., 65536.,
                                    1., 1., 0, LIVES_BOX(hbox), NULL);
@@ -5246,11 +5261,18 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   if (future_prefs->nfx_threads == 1) lives_widget_set_sensitive(prefsw->spinbutton_nfx_threads, FALSE);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->pa_gens = lives_standard_check_button_new(_("Push audio to video generators that support it"),
                     prefs->push_audio_to_gens, LIVES_BOX(hbox), NULL);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  prefsw->checkbutton_apply_gamma =
+    lives_standard_check_button_new(_("Automatic gamma correction (requires restart)"),
+                                    prefs->apply_gamma, LIVES_BOX(hbox),
+                                    (tmp = (_("Also affects the monitor gamma !! (for now...)"))));
+  lives_free(tmp);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_effects));
 
@@ -6934,6 +6956,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(checkbutton_apply_gamma, TOGGLED);
 
   ACTIVE(spinbutton_rte_keys, VALUE_CHANGED);
+  ACTIVE(spinbutton_rte_modes, VALUE_CHANGED);
   ACTIVE(spinbutton_nfx_threads, VALUE_CHANGED);
 
   ACTIVE(checkbutton_threads, TOGGLED);
@@ -7231,6 +7254,10 @@ void on_prefs_apply_clicked(LiVESButton * button, livespointer user_data) {
   if (needs_restart) {
     //do_info_dialog(_("For the directory change to take effect LiVES will restart when preferences dialog closes."));
     do_info_dialog(_("LiVES will restart when preferences dialog closes."));
+  }
+
+  if (mainw->prefs_changed & PREFS_RTE_KEYMODES_CHANGED) {
+    refresh_rte_window();
   }
 
   if (mainw->prefs_changed & PREFS_THEME_CHANGED) {

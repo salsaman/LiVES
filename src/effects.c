@@ -304,7 +304,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   }
   lives_free(tmp);
 
-  if (rfx->props & RFX_PROPS_MAY_RESIZE || rfx->num_in_channels == 0) {
+  if (rfx->props & RFX_PROPS_MAY_RESIZE || !rfx->num_in_channels) {
     if (rfx->status == RFX_STATUS_WEED) {
       // set out_channel dimensions for resizers / generators
       weed_plant_t *first_out = get_enabled_channel((weed_plant_t *)rfx->source, 0, FALSE);
@@ -1290,9 +1290,7 @@ LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key) {
 }
 
 
-LIVES_GLOBAL_INLINE int rte_getmodespk(void) {
-  return prefs->max_modes_per_key;
-}
+LIVES_GLOBAL_INLINE int rte_getmodespk(void) {return prefs->rte_modes_per_key;}
 
 
 LIVES_GLOBAL_INLINE boolean rte_key_toggle(int key) {

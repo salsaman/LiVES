@@ -953,7 +953,7 @@ void pre_analyse(weed_plant_t *elist) {
             } else {
               if (old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth && interpolate) {
                 /// interpolate frames if possible
-                double ratio = (double)(out_tc - frame_tc) / (double)(nx_tc - frame_tc);
+                double ratio = (double)(out_tc + offset_tc - frame_tc) / (double)(nx_tc - frame_tc);
                 for (i = 0; i < tracks; i++) {
                   if (i >= ntracks) break;
                   if (clips[i] == nclips[i]) {

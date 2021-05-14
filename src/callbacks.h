@@ -379,6 +379,9 @@ boolean freeze_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESX
 
 boolean storeclip_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer);
 
+boolean retrigger_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType,
+                           livespointer);
+
 boolean nervous_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer);
 
 boolean aud_lock_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod,

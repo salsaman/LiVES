@@ -142,11 +142,13 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
   }
   //g_print("doing: %s\n",com);
 
-  if (mainw && mainw->is_ready && !mainw->is_exiting &&
-      ((!mainw->multitrack && mainw->cursor_style == LIVES_CURSOR_NORMAL) ||
-       (mainw->multitrack && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
-    cnorm = TRUE;
-    lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+  if (is_fg_thread()) {
+    if (mainw && mainw->is_ready && !mainw->is_exiting &&
+        ((!mainw->multitrack && mainw->cursor_style == LIVES_CURSOR_NORMAL) ||
+         (mainw->multitrack && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
+      cnorm = TRUE;
+      lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+    }
   }
 
   do {
@@ -326,41 +328,54 @@ LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int
     *cheight = rheight;
     *cwidth = (double)(*cheight) * aspect;
   }
-  *cwidth = ((*cwidth + 1) >> 1) << 1;
+  *cwidth = ((*cwidth + 7) >> 3) << 3;
   *cheight = ((*cheight + 1) >> 1) << 1;
 }
 
 
 LIVES_GLOBAL_INLINE void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight) {
-  // calculate minspect (minimum size which conforms to aspect ratio of
+  // calculate midspect (minimum size which conforms to aspect ratio of
   // of cwidth, cheight) - which contains rwidth, rheight
+
+  // i.e both dimensions may grow, image size will never shrink
 
   double aspect;
 
   if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
+  if (*cwidth >= rwidth && *cheight >= rheight) return;
 
   aspect = (double)(*cwidth) / (double)(*cheight);
-  if (rheight * aspect > rwidth) {
-    *cheight = rheight;
-    *cwidth = aspect * rheight;
-  } else {
+
+  calc_maxspect(rwidth, rheight, cwidth, cheight);
+
+  if (rwidth > *cwidth) {
     *cwidth = rwidth;
-    *cheight = rwidth / aspect;
+    *cheight = *cwidth / aspect;
+  }
+  if (rheight > *cheight) {
+    *cheight = rheight;
+    *cwidth = *cheight * aspect;
   }
 
-  *cwidth = ((*cwidth + 1) >> 1) << 1;
+  *cwidth = ((*cwidth + 7) >> 3) << 3;
   *cheight = ((*cheight + 1) >> 1) << 1;
 }
 
 
-LIVES_GLOBAL_INLINE void calc_minspect(int rwidth, int rheight, int *cwidth, int *cheight) {
+LIVES_GLOBAL_INLINE void calc_minspect(int *rwidth, int *rheight, int cwidth, int cheight) {
   // calculate minspect (minimum size which conforms to aspect ratio of
   // of rwidth, rheight) - which contains cwidth, cheight
-  calc_midspect(*cwidth, *cheight, &rwidth, &rheight);
-  *cwidth = rwidth;
-  *cheight = rheight;
-  *cwidth = ((*cwidth + 1) >> 1) << 1;
-  *cheight = ((*cheight + 1) >> 1) << 1;
+
+  // rwidth, rheight keeps aspect ratio, but we fit it inside cwidth, cheight...
+  calc_maxspect(cwidth, cheight, rwidth, rheight);
+
+  // ...then expand it so it contains cwidth, cheight...
+  calc_midspect(cwidth, cheight, rwidth, rheight);
+
+  // ...then finally make sure this fits in original
+
+  *rwidth = ((*rwidth + 7) >> 3) << 3;
+  *rheight = ((*rheight + 1) >> 1) << 1;
 }
 
 

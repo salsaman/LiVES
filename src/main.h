@@ -1229,6 +1229,8 @@ boolean check_del_workdir(const char *dirname);
 char *workdir_ch_warning(void);
 void do_shutdown_msg(void);
 
+boolean do_fxload_query(int maxkey, int maxmode);
+
 boolean do_close_changed_warn(void);
 boolean do_clipboard_fps_warning(void);
 void perf_mem_warning(void);
@@ -1607,7 +1609,7 @@ boolean calc_ratio_fps(double fps, int *numer, int *denom);
 
 void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight);
 void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight);
-void calc_minspect(int rwidth, int rheight, int *cwidth, int *cheight);
+void calc_minspect(int *rwidth, int *rheight, int cwidth, int cheight);
 
 char *remove_trailing_zeroes(double val);
 

@@ -2870,6 +2870,12 @@ possible, and process video accordingly:
 
 					     If not set, then the alpha is post-multiplied.
 
+
+ * "gui" : WEED_SEED_PLANTPTR : pointer to a plant
+           type GUI [see below - GUI plants].
+
+
+
 For RGB type channels:
 
  * "gamma_type" : WEED_SEED_INT :
@@ -3276,6 +3282,22 @@ parameter GUI plants, and may show or hide parameters in the interface according
 				     init_func() for the first time. The plugin may then provide the list of choices in the language
 				     selected by the host.
 
+
+==== channel GUI ====
+The plugin may create and populate an optional GUI plant for any channel duing process_func().
+The following leaves can be set in it:
+
+ * "border_top"		:: WEED_SEED_INT
+ * "border_bottom"	:: WEED_SEED_INT
+ * "border_left"	:: WEED_SEED_INT
+ * "border_right"	:: WEED_SEED_INT
+
+the plugin may set any of the 4 values above in case there is a "blank" border around the actual image (for example,
+the plugin cannot resize in image to fit in the channel pixel_data.) and the host may crop the border region if it so wishes.
+
+All values are in pixels, and must be positive and borders may not not overlap.
+
+Valid only for output channels with video.
 
 
 

@@ -9929,7 +9929,6 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
   int maxlen;
 
-
   if (step < 0.) {
     step = -step;
     has_snapval = TRUE;

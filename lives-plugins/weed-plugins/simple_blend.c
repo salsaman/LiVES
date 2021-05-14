@@ -118,9 +118,18 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
       switch (type) {
       case 0:
         // chroma blend
-        dst[orowstride * i + j] = sdata->blend[src2[irowstride2 * i + j]][src1[irowstride1 * i + j]];
-        dst[orowstride * i + j + 1] = sdata->blend[src2[irowstride2 * i + j + 1]][src1[irowstride1 * i + j + 1]];
-        dst[orowstride * i + j + 2] = sdata->blend[src2[irowstride2 * i + j + 2]][src1[irowstride1 * i + j + 2]];
+        if (psize == 4) {
+          float alpha = (float)src2[irowstride2 * i + j + 3] / 255.;
+          dst[orowstride * i + j] = sdata->blend[(uint8_t)((float)src2[irowstride2 * i + j] * alpha)][src1[irowstride1 * i + j]];
+          dst[orowstride * i + j + 1] = sdata->blend[(uint8_t)((float)src2[irowstride2 * i + j + 1] * alpha)][src1[irowstride1 * i + j +
+                                        1]];
+          dst[orowstride * i + j + 2] = sdata->blend[(uint8_t)((float)src2[irowstride2 * i + j + 2] * alpha)][src1[irowstride1 * i + j +
+                                        2]];
+        } else {
+          dst[orowstride * i + j] = sdata->blend[src2[irowstride2 * i + j]][src1[irowstride1 * i + j]];
+          dst[orowstride * i + j + 1] = sdata->blend[src2[irowstride2 * i + j + 1]][src1[irowstride1 * i + j + 1]];
+          dst[orowstride * i + j + 2] = sdata->blend[src2[irowstride2 * i + j + 2]][src1[irowstride1 * i + j + 2]];
+        }
         break;
       case 4:
         // avg luma overlay

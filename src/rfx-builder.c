@@ -4609,13 +4609,15 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   }
 
   if (rfx_slot_count) {
+    char *tmp;
     for (plugin_idx = 1; plugin_idx <= rfx_slot_count; plugin_idx++) {
       rfx = mainw->rendered_fx[plugin_idx];
       if (status == RFX_STATUS_TEST && rfx->status == RFX_STATUS_BUILTIN) continue;
 
       if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
-      lives_snprintf(txt, 61, "_%s", _(rfx->menu_text));
+      lives_snprintf(txt, 61, "_%s", (tmp = _(rfx->menu_text)));
+      lives_free(tmp);
       if (rfx->num_params) lives_strappend(txt, 64, "...");
 
       menuitem = lives_standard_menu_item_new_with_label(txt);

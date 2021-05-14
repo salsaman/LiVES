@@ -482,6 +482,7 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
     //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
     while (fsize > 0) {
       if (fbuff->invalid) {
+        fbuff->invalid = FALSE;
         //g_print("slurp file %d closed\n", fd);
         break; // file was closed
       }

@@ -3997,6 +3997,35 @@ boolean do_abort_check(void) {
 }
 
 
+boolean do_fxload_query(int maxkey, int maxmode) {
+  char *morekeys, *moremodes;
+  boolean ret;
+
+  if (maxkey > prefs->rte_keys_virtual) {
+    char *extra;
+    if (maxmode > prefs->rte_modes_per_key)
+      extra = lives_strdup(_(",\nand "));
+    else
+      extra = lives_strdup("");
+    morekeys = lives_strdup_printf(_("%d effect key slots (current setting is %d)%s"),
+                                   maxkey, prefs->rte_keys_virtual, extra);
+    lives_free(extra);
+  } else morekeys = lives_strdup("");
+
+  if (maxmode > prefs->rte_modes_per_key) {
+    moremodes = lives_strdup_printf(_("%d modes per key (current setting is %d)"),
+                                    maxmode, prefs->rte_modes_per_key);
+  } else moremodes = lives_strdup("");
+
+  ret = do_yesno_dialogf(_("The effect keymap could not be completely loaded as it requires %s%s\n"
+                           "Should I update %s in Preferences and try again ?\n"),
+                         morekeys, moremodes, (*morekeys && *moremodes) ? _("these values") :
+                         _("this value"));
+  lives_free(morekeys); lives_free(moremodes);
+  return ret;
+}
+
+
 void do_encoder_img_fmt_error(render_details * rdet) {
   do_error_dialogf(_("\nThe %s cannot encode clips with image type %s.\n"
                      "Please select another encoder from the list.\n"),

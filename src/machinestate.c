@@ -1976,6 +1976,7 @@ static char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *m
 	tmp = wline;
 	llen = tlen;
       }
+      lives_free(tmp);
 
       if (*wline && get_token_count(wline, ' ') >= minpieces) {
 	words = lives_strsplit(wline, " ", npieces);

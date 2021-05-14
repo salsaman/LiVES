@@ -83,6 +83,8 @@ my $fver = @pieces[1];
 my $description = (&rc_read("description", $file))[0];
 my @requires=&rc_read("requires", $file);
 
+my @typedefs = &rc_read("typedefs", $file);
+
 my @sdata = &rc_read("sdata", $file);
 
 my @filter_flags = &rc_read("filter_flags", $file);
@@ -278,11 +280,11 @@ if ($pal_lists[0] =~ /^ALL/) {
 }
 
 foreach (@requires) {
-    if ($_ eq "putils") {
+    if ($_ eq "putils" || $_ eq "palette_utils") {
 	$need_putils = 1;
 	next;
     }
-    if ($_ eq "pconv") {
+    if ($_ eq "pconv" || $_ eq "palette_conversions") {
 	$need_pconv = 1;
 	next;
     }
@@ -379,7 +381,7 @@ print OUT "#include \"../../libweed/weed-utils.h\" // optional\n";
 print OUT "#include \"../../libweed/weed-plugin-utils.h\" // optional\n";
 print OUT "#endif\n\n";
 
-print OUT "#include \"weed-plugin-utils.c\"\n";
+print OUT "#include \"weed-plugin-utils.c\"\n\n";
 
 print OUT "//////////////////////////////////////////////////////////////////\n\n";
 
@@ -395,6 +397,16 @@ foreach (@requires) {
     }
 }
 
+print OUT "\nstatic int verbosity = WEED_VERBOSITY_ERROR;\n\n";
+
+if (@typedefs) {
+    &add_typedefs;
+}
+
+if ($use_sdata) {
+    &add_sdata;
+}
+
 if ($num_params) {
     print OUT "enum {\n";
     
@@ -406,24 +418,6 @@ if ($num_params) {
 
     print OUT "};\n";
 }
-
-## add sdata struct
-if ($use_sdata) {
-    print OUT "typedef struct {\n";
-    foreach (@sdata) {
-	@pieces = split(/$delim/);
-	my $spacer = " ";
-	if (@pieces[0] =~ /\*$/) {
-	    $spacer = "";
-	}
-	print OUT "  @pieces[0]$spacer@pieces[1];\n";
-    }
-    print OUT "} sdata_t;\n";
-}   
-
-print OUT "\nstatic int verbosity = WEED_VERBOSITY_ERROR;\n\n";
-
-print OUT "/////////////////////////////////////////////////////////////////////////////\n";
 
 if (@static) {
     # add static funcs
@@ -572,8 +566,20 @@ if ($pal_lists[0] =~ /^ALL/) {
     print OUT "$pal_lists[0];\n";
 }
 else {
-    print OUT "{$pal_lists[0]};\n";
-}    
+    print OUT "{";
+    foreach (@pal_lists) {
+	@pieces = split(/$delim/);
+	foreach (@pieces) {
+	    if ($_ =~ /^WEED_PALETTE_/) {
+		print OUT $_ . ", ";
+	    }
+	    else {
+		print OUT "WEED_PALETTE_" . $_ . ", ";
+	    }
+	}
+    }
+    print OUT "WEED_PALETTE_END};\n";
+}
 
 #setup in_chantmpls
 if ($num_inc) {
@@ -828,6 +834,10 @@ if ($addnl) {
 }
 
 print OUT "  filter_class = weed_filter_class_init(\"$filter_name\", \"$author\", $fver, filter_flags, palette_list,\n    $init_func, $proc_func, $deinit_func, $incs, $outcs, $inps, $outps);\n\n";
+
+if (@authors > 1) {
+    print OUT "  weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, $authors[1]);\n";
+}
 
 ## set filter gui
 if (@param_window) {
@@ -1141,6 +1151,27 @@ sub add_end {
     }
 }
 
+sub add_typedefs {
+    foreach (@typedefs) {
+	@pieces = split(/$delim/, $_);
+	my $p0 = @pieces[0];
+	my $p1 = @pieces[1];
+	print OUT "typedef $p0 $p1;\n";
+    }
+}
+
+sub add_sdata {
+    print OUT "\ntypedef struct {\n";
+    foreach (@sdata) {
+	@pieces = split(/$delim/);
+	my $spacer = " ";
+	if (@pieces[0] =~ /\*$/) {
+	    $spacer = "";
+	}
+	print OUT "  @pieces[0]$spacer@pieces[1];\n";
+    }
+    print OUT "} sdata_t;\n\n";
+}
 
 sub get_paramvals {
     ## TODO - handle multi valued params

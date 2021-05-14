@@ -1,0 +1,163 @@
+<define>
+|1.8.3
+</define>
+
+<name>
+pan_and_zoom|pan and zoom
+</name>
+
+<version>
+1|1
+</version>
+
+<author>
+salsaman
+</author>
+
+<requires>
+<math.h>
+random
+</requires>
+
+<language_code>
+0xC0
+</language_code>
+
+<sdata>
+int|phase|
+int|count|
+volatile int|wait|
+volatile int|ready|
+volatile int|tot|
+double|dscale|
+double|dx|
+double|dy|
+double|scale|
+double|cx|
+double|cy|
+int otrig;
+</sdata>
+
+<filter_flags>
+may_thread
+stateful
+</filter_flags>
+
+<palette_lists>
+ALL_PACKED_PALETTES
+</palette_lists>
+
+<in_chans>
+in_channel0
+</in_chans>
+
+<out_chans>
+out_channel0
+</out_chans>
+
+<params>
+trigger|_Trigger|bool|0|
+</params>
+
+<param_window>
+</param_window>
+
+<static>
+static double scmax = exp(3.);
+</static>
+
+<process>
+int offsx, offsy, widthx, dx, dy, tt;
+double fscalex;
+
+if (is_threading == WEED_TRUE) {
+  if (!weed_plant_has_leaf(inst, WEED_LEAF_STATE_UPDATED)) {
+    return WEED_ERROR_FILTER_INVALID;
+  }
+  if (weed_get_boolean_value(inst, WEED_LEAF_STATE_UPDATED, NULL) == WEED_FALSE) {
+    if (trigger && sdata->otrig) sdata->count = 0;
+    sdata->otrig = trigger;
+    if (sdata->count <= 0) {
+      float tscale, tx, ty;
+      double dcount = 0.;
+      if (sdata->phase > 0) {
+        sdata->count = 8 + fastrand_int_re(32, inst, WEED_LEAF_PLUGIN_RANDOM_SEED);
+        dcount = (double)sdata->count;
+      }
+      switch (sdata->phase++) {
+      case 4:
+        sdata->phase = 0;
+      case 0:
+        sdata->cx = sdata->cy = 0.5;
+        sdata->scale = 1;
+        sdata->count = 0;
+        break;
+      case 1:
+        // pick target scale
+        tscale = fastrnd_dbl(3.);
+        sdata->dscale = (1. + tscale) / dcount;
+        //tx = (fastrnd_dbl(1.) - .5);// / sdata->scale;
+        //ty = (fastrnd_dbl(1.) - .5);// / sdata->scale;
+        //sdata->dx = tx / dcount;
+        //sdata->dy = ty / dcount;
+        break;
+      case 2:
+        //sdata->count = 0;
+        // pick target x, y
+        tx = (fastrnd_dbl(1.) - .5);// / sdata->scale;
+        ty = (fastrnd_dbl(1.) - .5);// / sdata->scale;
+        sdata->dx = tx / dcount;
+        sdata->dy = ty / dcount;
+        sdata->dscale = 0;
+        break;
+      case 3:
+        // return to base
+        sdata->dx = (.5 - sdata->cx) / dcount;
+        sdata->dy = (.5 - sdata->cy) / dcount;
+        sdata->dscale = (1. - sdata->scale) / dcount;
+        break;
+      default:
+        break;
+      }
+    }
+
+    sdata->scale += sdata->dscale;
+    sdata->cx += sdata->dx / sdata->scale;
+    sdata->cy += sdata->dy / sdata->scale;
+
+    if (sdata->scale > scmax) sdata->scale = scmax;
+    if (sdata->scale < 1.) sdata->scale = 1.;
+
+    if (sdata->cx < .5 / sdata->scale) sdata->cx = .5 / sdata->scale;
+    if (sdata->cx > 1. - .5 / sdata->scale) sdata->cx = 1. - .5 / sdata->scale;
+    if (sdata->cy < .5 / sdata->scale) sdata->cy = .5 / sdata->scale;
+    if (sdata->cy > 1. - .5 / sdata->scale) sdata->cy = 1. - .5 / sdata->scale;
+
+    sdata->count--;
+
+    weed_set_boolean_value(inst, WEED_LEAF_STATE_UPDATED, WEED_TRUE);
+  }
+}
+
+offsx = sdata->cx * width;
+offsy = sdata->cy * iheight;
+src -= offset * irow;
+
+widthx = width * psize;
+fscalex = sdata->scale * psize;
+height += offset;
+
+for (int y = offset; y < height; y++) {
+  dy = (int)(offsy + (float)(y - iheight / 2) / sdata->scale + .5);
+  if (dy >= iheight) break;
+  if (dy < 0) continue;
+  for (int x = 0; x < widthx; x += psize) {
+    dx = (int)(offsx + (float)(x - widthx / 2) / fscalex + .5);
+    if (dx >= width) break;
+    if (dx < 0) continue;
+    weed_memcpy(&dst[(y - offset) * orow + x],
+      &src[irow * dy + dx * psize], psize);
+  }
+}
+</process>
+

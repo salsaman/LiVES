@@ -225,7 +225,10 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       return FALSE;
     }
     vpp = mainw->vpp;
-    if (!transcode_get_params(&pname)) goto tr_err2;
+    if (!transcode_get_params(&pname)) {
+      THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+      goto tr_err2;
+    }
   } else {
     vpp = mainw->vpp;
     mainw->transrend_ready = TRUE;
@@ -263,7 +266,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
         goto tr_err;
       }
 
-      lives_lseek_buffered_rdonly(fd, (int)((double)(cfile->start - 1.) * spf) * cfile->achans * (cfile->asampsize >> 3));
+      if (!internal)
+        lives_lseek_buffered_rdonly(fd, (int)((double)(cfile->start - 1.) * spf) * cfile->achans * (cfile->asampsize >> 3));
 
       asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
       aendian = cfile->signed_endian & AFORM_BIG_ENDIAN;
@@ -445,11 +449,15 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     //if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
     // ensure all threads are complete. optionally deinterlace, optionally overlay subtitles.
     check_layer_ready(frame_layer);
-    width = weed_layer_get_width(frame_layer) * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(frame_layer));
+
+    width = weed_layer_get_width_pixels(frame_layer);
     height = weed_layer_get_height(frame_layer);
 
     if (prefs->enc_letterbox && (pwidth != width || pheight != height)) {
-      get_letterbox_sizes(&pwidth, &pheight, &width, &height, (mainw->vpp->capabilities & VPP_CAN_RESIZE));
+      if (!internal)
+        get_letterbox_sizes(&pwidth, &pheight, &width, &height, (mainw->vpp->capabilities & VPP_CAN_RESIZE));
+      else
+        calc_maxspect(pwidth, pheight, &width, &height);
       if (!letterbox_layer(frame_layer, pwidth, pheight, width, height, interp, vpp->palette, vpp->YUV_clamping)) goto tr_err;
     }
 

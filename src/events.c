@@ -1007,7 +1007,7 @@ void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, boo
 void update_filter_maps(weed_plant_t *event, weed_plant_t *end_event, weed_plant_t *init_event) {
   // append init_event to all FILTER_MAPS between event and end_event
 
-  while (event != end_event) {
+  while (event && event != end_event) {
     if (WEED_EVENT_IS_FILTER_MAP(event)) {
       add_init_event_to_filter_map(event, init_event, NULL);
     }
@@ -1691,6 +1691,7 @@ void rescale_param_changes(weed_event_list_t *event_list, weed_event_t *init_eve
       pchain_tc = get_event_timecode((weed_plant_t *)pchain);
       new_tc = (weed_timecode_t)((double)(pchain_tc - old_init_tc) / (double)(old_deinit_tc - old_init_tc) *
                                  (double)(new_deinit_tc - new_init_tc)) + new_init_tc;
+      if (new_tc < 0) break;
       if (fps > 0.) new_tc = q_gint64(new_tc, fps);
       if (new_tc == pchain_tc) {
         if (!weed_plant_has_leaf((weed_plant_t *)pchain, WEED_LEAF_NEXT_CHANGE)) pchain = NULL;
@@ -2205,7 +2206,6 @@ LiVESWidget *events_rec_dialog(void) {
   LiVESWidget *okbutton;
   LiVESWidget *cancelbutton;
   LiVESSList *radiobutton_group = NULL;
-  LiVESAccelGroup *accel_group;
 
   render_choice = RENDER_CHOICE_PREVIEW;
 
@@ -2296,11 +2296,7 @@ LiVESWidget *events_rec_dialog(void) {
                             LIVES_GUI_CALLBACK(set_render_choice_button),
                             LIVES_INT_TO_POINTER(RENDER_CHOICE_DISCARD));
 
-  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-  lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
-  lives_window_add_accel_group(LIVES_WINDOW(e_rec_dialog), accel_group);
+  lives_window_add_escape(LIVES_WINDOW(e_rec_dialog), cancelbutton);
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(e_rec_dialog), LIVES_STOCK_OK, NULL,
              LIVES_RESPONSE_OK);
@@ -4757,6 +4753,7 @@ boolean render_to_clip(boolean new_clip) {
 #endif
   boolean retval = TRUE, rendaud = TRUE, response;
   boolean norm_after = FALSE;
+  boolean enc_lb = prefs->enc_letterbox;
   int xachans = 0, xarate = 0, xasamps = 0, xse = 0;
   int current_file = mainw->current_file;
 
@@ -4764,7 +4761,6 @@ boolean render_to_clip(boolean new_clip) {
     if (prefs->render_prompt) {
       //set file details
       rdet = create_render_details(THREAD_INTENTION == LIVES_INTENTION_TRANSCODE ? 5 : 2);
-
       if (!has_audio_frame(mainw->event_list)) {
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), FALSE);
         lives_widget_set_sensitive(resaudw->aud_checkbutton, FALSE);
@@ -4810,7 +4806,10 @@ boolean render_to_clip(boolean new_clip) {
         tmp = get_untitled_name(mainw->untitled_number);
         if (!strcmp(clipname, tmp)) mainw->untitled_number++;
         lives_free(tmp);
-      } else clipname = lives_strdup("transcode");
+      } else {
+        clipname = lives_strdup("transcode");
+        if (rdet->enc_lb) prefs->enc_letterbox = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rdet->enc_lb));
+      }
 
       lives_widget_destroy(rdet->dialog);
 
@@ -4835,7 +4834,6 @@ boolean render_to_clip(boolean new_clip) {
 
     if (!get_new_handle(mainw->current_file, clipname)) {
       mainw->current_file = current_file;
-
       if (prefs->mt_enter_prompt) {
         if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE)
           lives_free(rdet->encoder_name);
@@ -4855,6 +4853,7 @@ boolean render_to_clip(boolean new_clip) {
     if (weed_plant_has_leaf(mainw->event_list, WEED_LEAF_FPS))
       old_fps = weed_get_double_value(mainw->event_list, WEED_LEAF_FPS, NULL);
 
+    // RDET invalid after this
     if (prefs->render_prompt) {
       cfile->hsize = rdet->width;
       cfile->vsize = rdet->height;
@@ -4866,8 +4865,9 @@ boolean render_to_clip(boolean new_clip) {
       cfile->asampsize = xasamps;
       cfile->signed_endian = xse;
 
-      if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE)
+      if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) {
         lives_free(rdet->encoder_name);
+      }
       lives_freep((void **)&rdet);
       lives_freep((void **)&resaudw);
     } else {
@@ -4904,7 +4904,10 @@ boolean render_to_clip(boolean new_clip) {
       lives_rm(cfile->info_file);
       lives_system(com, FALSE);
       lives_free(com);
-      if (THREADVAR(com_failed)) return FALSE;
+      if (THREADVAR(com_failed)) {
+        prefs->enc_letterbox = enc_lb;
+        return FALSE;
+      }
     } else {
       do_threaded_dialog(_("Clearing up clip..."), FALSE);
       com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend_sync, cfile->handle);
@@ -4935,12 +4938,14 @@ boolean render_to_clip(boolean new_clip) {
   if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
     if (!transcode_prep()) {
       close_current_file(current_file);
+      prefs->enc_letterbox = enc_lb;
       return FALSE;
     }
 
     if (!transcode_get_params(&pname)) {
       transcode_cleanup(mainw->vpp);
       close_current_file(current_file);
+      prefs->enc_letterbox = enc_lb;
       return FALSE;
     }
 
@@ -5129,6 +5134,7 @@ boolean render_to_clip(boolean new_clip) {
               cfile->frame_index_back = NULL;
             }
           }
+          prefs->enc_letterbox = enc_lb;
           return FALSE; /// will reshow the dialog
         }
 
@@ -6242,6 +6248,20 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
   layout = lives_layout_new(LIVES_BOX(vbox));
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  if (spframes) {
+    *spframes = lives_standard_spin_button_new
+                (_("_Number of frames"), defframes, 1., 100000, 1., 5., 0, LIVES_BOX(hbox), NULL);
+    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  }
+
+  *spfps = lives_standard_spin_button_new
+           (_("_Frames per second"), deffps, 1., FPS_MAX, .1, 1., 3, LIVES_BOX(hbox), NULL);
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
   *spwidth = lives_standard_spin_button_new
              (_("_Width"), defwidth, width_step, MAX_FRAME_WIDTH, -width_step, width_step, 0, LIVES_BOX(hbox), NULL);
   lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(*spwidth), width_step);
@@ -6260,24 +6280,13 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
     add_aspect_ratio_button(LIVES_SPIN_BUTTON(*spwidth), LIVES_SPIN_BUTTON(*spheight), LIVES_BOX(hbox));
   }
 
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-
-  if (spframes) {
-    *spframes = lives_standard_spin_button_new
-                (_("_Number of frames"), defframes, 1., 100000, 1., 5., 0, LIVES_BOX(hbox), NULL);
-    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  }
-
-  *spfps = lives_standard_spin_button_new
-           (_("_Frames per second"), deffps, 1., FPS_MAX, 1., 10., 3, LIVES_BOX(hbox), NULL);
-
   if (extra) lives_box_pack_start(LIVES_BOX(vbox), extra, FALSE, FALSE, widget_opts.packing_height);
 
   return frame;
 }
 
 
-static void add_fade_elements(render_details * rdet, LiVESWidget * hbox, boolean is_video, double maxtime) {
+static void add_fade_elements(render_details * rdet, LiVESWidget * hbox, boolean is_video, double maxtime, boolean def_on) {
   LiVESWidget *cb;
   LiVESWidget *vbox = NULL;
   double def_fade_time;
@@ -6316,7 +6325,7 @@ static void add_fade_elements(render_details * rdet, LiVESWidget * hbox, boolean
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  cb = lives_standard_check_button_new(_("Fade out over"), TRUE, LIVES_BOX(hbox), NULL);
+  cb = lives_standard_check_button_new(_("Fade out over"), def_on, LIVES_BOX(hbox), NULL);
 
   widget_opts.swap_label = TRUE;
   if (!is_video) {
@@ -6412,6 +6421,23 @@ static void rdet_use_current(LiVESButton * button, livespointer user_data) {
   } else {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), FALSE);
   }
+}
+
+
+static void check_lb_conflict(LiVESToggleButton * b, livespointer p) {
+  char *msg = NULL;
+  if (lives_toggle_button_get_active(b)) {
+    if (!prefs->letterbox) msg = _("Letterboxing was not selected during recording.");
+  } else {
+    if (prefs->letterbox) msg = _("Letterboxing was enabled during recording.");
+  }
+  if (msg) {
+    char *msg2 = lives_strdup_printf(_("%s.\nUsing identical settings for recording "
+                                       "and encoding is recommended.\n"
+                                       "(The default value for this can be changed in Preferences / Encoding.)"), msg);
+    show_warn_image(LIVES_WIDGET(b), msg2);
+    lives_free(msg); lives_free(msg2);
+  } else hide_warn_image(LIVES_WIDGET(b));
 }
 
 
@@ -6557,6 +6583,14 @@ render_details *create_render_details(int type) {
     widget_opts.use_markup = FALSE;
     lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, TRUE, 0);
   }
+  if (no_opts) {
+    hbox = lives_hbox_new(FALSE, 0);
+    rdet->enc_lb = lives_standard_check_button_new(_("Use letterboxing to fill frame"),
+                   prefs->enc_letterbox, LIVES_BOX(hbox), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(rdet->enc_lb), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(check_lb_conflict), NULL);
+    check_lb_conflict(rdet->enc_lb, NULL);
+  }
 
   frame = add_video_options(&rdet->spinbutton_width, rdet->width, &rdet->spinbutton_height, rdet->height, &rdet->spinbutton_fps,
                             rdet->fps, NULL, 0., TRUE, hbox);
@@ -6634,7 +6668,7 @@ render_details *create_render_details(int type) {
     if (mainw->event_list) max_time = (double)(get_event_timecode(get_last_frame_event(mainw->event_list))
                                         - get_event_timecode(get_first_frame_event(mainw->event_list)))
                                         / TICKS_PER_SECOND_DBL + 1. / lives_spin_button_get_value(LIVES_SPIN_BUTTON(rdet->spinbutton_fps));
-    add_fade_elements(rdet, hbox, FALSE, max_time);
+    add_fade_elements(rdet, hbox, FALSE, max_time, no_opts);
   }
 
   if (type == 3) {

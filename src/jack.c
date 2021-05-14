@@ -2305,10 +2305,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
 
   in_ap = TRUE;
 
-  if (xrun_cnt) {
-    lives_printerr("after xrun: nframes %ld\n", (int64_t)nframes);
-    xrun_cnt = 0;
-  }
+  if (xrun_cnt) xrun_cnt = 0;
 
   //#define DEBUG_AJACK
 #ifdef DEBUG_AJACK
@@ -2344,12 +2341,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       lbufsiz = 0;
     }
 
-    reset_buffers = FALSE;
-
-    for (i = 0; i < nch; i++)
-      out_buffer[i] = (float *)jack_port_get_buffer(jackd->output_port[i], nframes);
-
-    if (!jackd->in_use) {
+    if (!jackd->in_use && !mainw->jackd->msgq) {
       if (!jackd->is_silent) {
         output_silence(0, nframes, jackd, out_buffer);
         jackd->is_silent = TRUE;
@@ -2357,6 +2349,11 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       in_ap = FALSE;
       return 0;
     }
+
+    reset_buffers = FALSE;
+
+    for (i = 0; i < nch; i++)
+      out_buffer[i] = (float *)jack_port_get_buffer(jackd->output_port[i], nframes);
 
     jackd->is_silent = FALSE;
 
@@ -2492,6 +2489,15 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
     msg->command = ASERVER_CMD_PROCESSED;
     jackd->msgq = msg->next;
     if (jackd->msgq && jackd->msgq->next == jackd->msgq) jackd->msgq->next = NULL;
+
+    if (!jackd->in_use) {
+      if (!jackd->is_silent) {
+        output_silence(0, nframes, jackd, out_buffer);
+        jackd->is_silent = TRUE;
+      }
+      in_ap = FALSE;
+      return 0;
+    }
   }
   /* retrieve the buffers for the output ports */
   for (i = 0; i < nch; i++)
@@ -2871,7 +2877,8 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
               // audio from a file
               if (wait_cache_buffer) {
                 while (!cache_buffer->is_ready && !cache_buffer->die) {
-                  lives_usleep(prefs->sleep_time);
+                  lives_nanosleep(LIVES_FORTY_WINKS);
+                  if (mainw->is_exiting) cache_buffer->die = TRUE;
                 }
                 wait_cache_buffer = FALSE;
               }
@@ -3109,9 +3116,10 @@ static int xrun_callback(void *arg) {
     g_print("\n\nXRUN: %f %f\n", delay, *load);
     xrun_cnt++;;
   }
-  if (IS_VALID_CLIP(jackd->playing_file))
-    jackd->seek_pos += (off_t)((double)jackd->sample_in_rate * ((double)delay / (double)MILLIONS(1))
-                               * TICKS_PER_SECOND_DBL) * afile->adirection * jackd->num_input_channels * 4.;
+  if (delay >= 0.)
+    if (IS_VALID_CLIP(jackd->playing_file))
+      jackd->seek_pos += (off_t)((double)jackd->sample_in_rate * ((double)delay / (double)MILLIONS(1))
+                                 * TICKS_PER_SECOND_DBL) * afile->adirection * jackd->num_input_channels * 4.;
   return 0;
 }
 
@@ -3403,6 +3411,7 @@ static void jack_reset_driver(jack_driver_t *jackd) {
 void jack_close_client(jack_driver_t *jackd) {
   //lives_printerr("closing the jack client thread\n");
   if (jackd->client) {
+    if (cache_buffer) cache_buffer->die = TRUE;
     jack_deactivate(jackd->client);
     jack_set_process_callback(jackd->client, NULL, jackd);
     lives_nanosleep_until_nonzero(!in_ap);
@@ -3464,9 +3473,9 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
 
   for (int i = 0; i < nch; i++) {
     if (!i) {
-      lives_snprintf(portname, 32, "audio_L");
+      lives_snprintf(portname, 32, "front-left");
     } else if (i == 1) {
-      lives_snprintf(portname, 32, "audio_R");
+      lives_snprintf(portname, 32, "front-right");
     } else lives_snprintf(portname, 32, "out_%d", i);
 
 #ifdef DEBUG_JACK_PORTS
@@ -3564,9 +3573,9 @@ boolean jack_create_client_reader(jack_driver_t *jackd) {
   // create ports for the client (left and right channels)
   for (int i = 0; i < nch; i++) {
     if (!i) {
-      lives_snprintf(portname, 32, "audio_L");
+      lives_snprintf(portname, 32, "front-left");
     } else if (i == 1) {
-      lives_snprintf(portname, 32, "audio_R");
+      lives_snprintf(portname, 32, "front-right");
     } else lives_snprintf(portname, 32, "in_%d", i);
 #define DEBUG_JACK_PORTS
 #ifdef DEBUG_JACK_PORTS

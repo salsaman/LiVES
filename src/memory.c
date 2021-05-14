@@ -283,17 +283,19 @@ boolean init_thread_memfuncs(void) {
 }
 
 
-#define NBIGBLOCKS 16
+#define NBIGBLOCKS 8
 #define BBLOCKSIZE (33554432ul)
 
 static void *bigblocks[NBIGBLOCKS];
-static int used[NBIGBLOCKS];
+static volatile int used[NBIGBLOCKS];
 
 static int NBBLOCKS = 0;
 
+static pthread_mutex_t bigblock_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void bigblock_init(void) {
   for (int i = 0; i < NBIGBLOCKS; i++) {
-    bigblocks[i] = malloc(BBLOCKSIZE);
+    bigblocks[i] = lives_calloc(1, BBLOCKSIZE);
     if (mlock(bigblocks[i], BBLOCKSIZE)) return;
     used[NBBLOCKS++] = 0;
   }
@@ -301,35 +303,43 @@ void bigblock_init(void) {
 
 void *alloc_bigblock(size_t sizeb) {
   if (sizeb >= BBLOCKSIZE) return NULL;
+  pthread_mutex_lock(&bigblock_mutex);
   for (int i = 0; i < NBBLOCKS; i++) {
     if (!used[i]) {
       used[i] = 1;
+      pthread_mutex_unlock(&bigblock_mutex);
       return bigblocks[i];
     }
   }
+  pthread_mutex_unlock(&bigblock_mutex);
   return NULL;
 }
 
 void *calloc_bigblock(size_t nmemb, size_t align) {
+  void *start;
   if (nmemb * align + align >= BBLOCKSIZE) return NULL;
+  pthread_mutex_lock(&bigblock_mutex);
   for (int i = 0; i < NBBLOCKS; i++) {
     if (!used[i]) {
-      void *start = (void *)(((size_t)((char *)bigblocks[i] + align - 1) / align) * align);
-      lives_memset(start, 0, nmemb * align);
       used[i] = 1;
+      pthread_mutex_unlock(&bigblock_mutex);
+      start = (void *)((size_t)((size_t)((char *)bigblocks[i] + align - 1) / align) * align);
+      lives_memset(start, 0, nmemb * align);
       return start;
     }
   }
+  pthread_mutex_unlock(&bigblock_mutex);
+  g_print("OUT OF BIGBLOCKS !!\n");
   return NULL;
 }
 
 void *free_bigblock(void *bstart) {
   for (int i = 0; i < NBBLOCKS; i++) {
-    if ((char *)bstart - (char *)bigblocks[i] < BBLOCKSIZE) {
+    if ((char *)bstart >= (char *)bigblocks[i]
+        && (char *)bstart - (char *)bigblocks[i] < BBLOCKSIZE) {
       used[i] = 0;
-      return NULL;
+      break;
     }
   }
-  lives_free(bstart);
   return NULL;
 }

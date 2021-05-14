@@ -264,6 +264,7 @@ typedef struct {
   LiVESWidget *vfade_in;
   LiVESWidget *vfade_out;
   LiVESWidget *vfade_col;
+  LiVESWidget *enc_lb;
   ulong encoder_name_fn;
   ulong encoder_ofmt_fn;
   boolean enc_changed;

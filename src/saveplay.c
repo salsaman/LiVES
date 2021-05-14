@@ -2962,12 +2962,7 @@ void play_file(void) {
       jack_message.next = NULL;
       mainw->jackd->msgq = &jack_message;
       if (timeout == 0) handle_audio_timeout();
-      else {
-        while (mainw->jackd->playing_file > -1) {
-          sched_yield();
-          lives_usleep(prefs->sleep_time);
-        }
-      }
+      else lives_nanosleep_until_zero(mainw->jackd->playing_file > -1);
     }
   } else {
 #endif
@@ -4847,7 +4842,6 @@ static int64_t _save_to_scrap_file(weed_layer_t *layer) {
 #endif
   } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
 
-
   // serialise entire frame to scrap file
   pdata_size = weed_plant_serialise(fd, layer, NULL);
   weed_layer_free(layer);
@@ -5322,6 +5316,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   }
 
   if (!auto_recover) {
+    char *tmp;
     if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
       lives_proc_thread_join(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
@@ -5329,10 +5324,12 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
     lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_context_update();
     if (!do_yesno_dialogf_with_countdown
-        (2, FALSE, _("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
+        (2, FALSE, (tmp = _("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n")))) {
+      lives_free(tmp);
       retb = FALSE;
       goto recovery_done;
     }
+    lives_free(tmp);
   } else {
     if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
       lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);

@@ -346,6 +346,12 @@ typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed
 #define WEED_LEAF_OFFSET "offset" ///< threading
 #define WEED_LEAF_DISABLED "disabled"
 
+// CHANNEL GUI
+#define WEED_LEAF_BORDER_TOP "border_top"
+#define WEED_LEAF_BORDER_BOTTOM "border_bottom"
+#define WEED_LEAF_BORDER_LEFT "border_left"
+#define WEED_LEAF_BORDER_RIGHT "border_right"
+
 /// optional for VIDEO
 /// WEED_LEAF_YUV_CLAMPING
 /// WEED_LEAF_YUV_SAMPLING

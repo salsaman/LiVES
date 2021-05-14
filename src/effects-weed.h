@@ -162,6 +162,7 @@ boolean has_audio_filters(lives_af_t af_type);
 
 boolean has_usable_palette(weed_plant_t *chantmpl);
 int best_palette_match(int *palete_list, int num_palettes, int palette);
+int check_filter_chain_palettes(boolean is_bg, int *palette_list, int npals);
 
 // instances
 weed_error_t weed_call_init_func(weed_plant_t *instance);

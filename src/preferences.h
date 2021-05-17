@@ -301,7 +301,7 @@ typedef struct {
   char *vppdefaultsfile;
 
   LiVESList *acodec_list;
-  int acodec_list_to_format[AUDIO_CODEC_NONE];
+  int acodec_list_to_format[AUDIO_CODEC_MAX];
 
   volatile uint32_t audio_opts;
 #define AUDIO_OPTS_FOLLOW_CLIPS		(1 << 0)

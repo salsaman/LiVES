@@ -3610,8 +3610,11 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
   boolean completed = FALSE;
   boolean intimg = FALSE;
 
+  double dt = 0.;
   static double chvols[MAX_AUDIO_TRACKS];
-  static double xaseek[MAX_AUDIO_TRACKS], xavel[MAX_AUDIO_TRACKS], atime;
+  static boolean xaon[MAX_AUDIO_TRACKS];
+  static double xaseek[MAX_AUDIO_TRACKS], xavel[MAX_AUDIO_TRACKS];
+  static double atime;
 
 #ifdef VFADE_RENDER
   static weed_timecode_t vfade_in_end;
@@ -3702,6 +3705,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       for (i = 0; i < MAX_AUDIO_TRACKS; i++) {
         xaclips[i] = -1;
         xaseek[i] = xavel[i] = 0.;
+        xaon[i >> 1] = TRUE;
         if (list) {
           natracks++;
           chvols[i] = (double)LIVES_POINTER_TO_INT(list->data) / 1000000.;
@@ -3799,16 +3803,12 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             } else {
               if (intimg) {
                 if (mainw->scrap_layer) {
-#ifndef SAVE_THREAD
                   weed_layer_free(mainw->scrap_layer);
-#endif
                   mainw->scrap_layer = NULL;
                 }
               } else {
                 if (mainw->scrap_pixbuf) {
-#ifndef SAVE_THREAD
                   lives_widget_object_unref(mainw->scrap_pixbuf);
-#endif
                   mainw->scrap_pixbuf = NULL;
                 }
               }
@@ -4065,6 +4065,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                                NULL, NULL, atc, dtc, chvols, 0., 0., NULL);
         }
 
+        dt = (dtc - atc) / TICKS_PER_SECOND_DBL;
         atc = dtc;
 
         if (THREADVAR(write_failed)) {
@@ -4100,20 +4101,24 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             //g_print("del was %f\n", xaseek[mytrack] - aseeks[i]);
             if (prefs->rr_super && prefs->rr_ramicro) {
               /// smooth out audio by ignoring tiny seek differences
+              xaseek[mytrack] += xavel[mytrack] * dt;
               if (xavel[mytrack] * aseeks[i + 1] < 0.) mult *= AUD_DIFF_REVADJ;
-              if (xaclips[mytrack] != aclips[i + 1] || fabs(xaseek[mytrack] - aseeks[i]) > AUD_DIFF_MIN * mult)
+              if (xaclips[mytrack] != aclips[i + 1] || xaon[i >> 1]
+                  || fabs(xaseek[mytrack] - aseeks[i]) > AUD_DIFF_MIN * mult) {
                 xaseek[mytrack] = aseeks[i];
-            }
+              }
+            } else xaseek[mytrack] = aseeks[i];
+            if (xaclips[mytrack] != aclips[i + 1]) xaon[mytrack] = TRUE;
+            else xaon[mytrack] = TRUE;
             xaclips[mytrack] = aclips[i + 1];
             xavel[mytrack] = aseeks[i + 1];
           }
+          lives_freep((void **)&aseeks);
+          lives_freep((void **)&aclips);
         }
-        lives_freep((void **)&aseeks);
-        lives_freep((void **)&aclips);
       }
 
       if (!r_video) break;
-
       /////////////////
       if (intimg) {
         if (!layer) {
@@ -4193,9 +4198,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         }
         if (intimg) {
           if (saveargs->layer && saveargs->layer != layer) {
-            if (saveargs->layer == mainw->scrap_layer) {
-              mainw->scrap_layer = NULL;
-            }
             weed_layer_free(saveargs->layer);
             saveargs->layer = NULL;
           }
@@ -6501,14 +6503,14 @@ render_details *create_render_details(int type) {
     rdet->asamps = prefs->mt_def_asamps;
     rdet->aendian = prefs->mt_def_signed_endian;
   } else {
-    rdet->width = cfile->hsize;
-    rdet->height = cfile->vsize;
-    rdet->fps = cfile->fps;
-    rdet->ratio_fps = cfile->ratio_fps;
+    rdet->width = DEF_FRAME_HSIZE_UNSCALED;
+    rdet->height = DEF_FRAME_VSIZE_UNSCALED;
+    rdet->fps = prefs->default_fps;
+    rdet->ratio_fps = FALSE;
 
-    rdet->arate = cfile->arate;
-    rdet->achans = cfile->achans;
-    rdet->asamps = cfile->asampsize;
+    rdet->arate = cfile->arps ? cfile->arps : DEFAULT_AUDIO_RATE;
+    rdet->achans = DEFAULT_AUDIO_CHANS;
+    rdet->asamps = DEFAULT_AUDIO_SAMPS;
     rdet->aendian = cfile->signed_endian;
   }
 

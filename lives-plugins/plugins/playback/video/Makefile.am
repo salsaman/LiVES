@@ -65,12 +65,6 @@ oggstream_la_LDFLAGS = $(shared_ldflags) @MJPEGTOOLS_LIBS@
 icecast_output_la_CFLAGS = @MJPEGTOOLS_CFLAGS@ $(shared_cflags) $(weed_cflags)
 icecast_output_la_LDFLAGS = $(shared_ldflags) @MJPEGTOOLS_LIBS@
 
-if HAVE_LIBv4l1
-vloopback_libs = vloopback.la
-vloopback_la_CFLAGS = $(shared_cflags) $(weed_cflags) -Dv4l1_INCFILE=@v4l1_INCFILE@
-vloopback_la_LDFLAGS = $(shared_ldflags)
-endif
-
 if HAVE_LIBv4l2
 vloopback2_libs = vloopback2.la
 vloopback2_la_CFLAGS = $(shared_cflags) $(weed_cflags)

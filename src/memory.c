@@ -338,8 +338,9 @@ void *free_bigblock(void *bstart) {
     if ((char *)bstart >= (char *)bigblocks[i]
         && (char *)bstart - (char *)bigblocks[i] < BBLOCKSIZE) {
       used[i] = 0;
-      break;
+      return NULL;
     }
   }
+  abort();
   return NULL;
 }

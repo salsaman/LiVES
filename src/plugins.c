@@ -1341,7 +1341,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 
   vpp->get_yuv_palette_clamping = (int *(*)(int))dlsym(handle, "get_yuv_palette_clamping");
   vpp->set_yuv_palette_clamping = (int (*)(int))dlsym(handle, "set_yuv_palette_clamping");
-  vpp->get_audio_fmts = (int *(*)())dlsym(handle, "get_audio_fmts");
+  vpp->get_audio_fmts = (uint64_t *(*)())dlsym(handle, "get_audio_fmts");
   vpp->init_screen = (boolean(*)(int, int, boolean, uint64_t, int, char **))dlsym(handle, "init_screen");
   vpp->init_audio = (boolean(*)(int, int, int, char **))dlsym(handle, "init_audio");
   vpp->render_audio_frame_float = (boolean(*)(float **, int))dlsym(handle, "render_audio_frame_float");
@@ -1558,22 +1558,22 @@ void vid_playback_plugin_exit(void) {
 }
 
 
-int64_t get_best_audio(_vid_playback_plugin * vpp) {
+uint64_t get_best_audio(_vid_playback_plugin * vpp) {
   // find best audio from video plugin list, matching with audiostream plugins
 
   // i.e. cross-check video list with astreamer list
 
-  // only for plugins which want to stream audiom but dont provide a render_audio_frame()
+  // only for plugins which want to stream audio, but dont provide a render_audio_frame()
 
-  int *fmts, *sfmts;
-  int ret = AUDIO_CODEC_NONE;
+  int64_t *fmts, *sfmts;
+  uint64_t ret = AUDIO_CODEC_NONE;
   int i, j = 0, nfmts;
   char *astreamer, *com;
   char buf[1024];
   char **array;
 
   if (vpp && vpp->get_audio_fmts) {
-    fmts = (*vpp->get_audio_fmts)(); // const, so do not free()
+    fmts = (int64_t *)(*vpp->get_audio_fmts)(); // const, so do not free()
 
     // make audiostream plugin name
     astreamer = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_AUDIO_STREAM, AUDIO_STREAMER_NAME, NULL);
@@ -1586,20 +1586,20 @@ int64_t get_best_audio(_vid_playback_plugin * vpp) {
 
     nfmts = get_token_count(buf, '|');
     array = lives_strsplit(buf, "|", nfmts);
-    sfmts = (int *)lives_calloc(nfmts, sizint);
+    sfmts = (int64_t *)lives_calloc(nfmts, 8);
 
     for (i = 0; i < nfmts; i++) {
-      if (array[i] && *array[i]) sfmts[j++] = atoi(array[i]);
+      if (array[i] && *array[i]) sfmts[j++] = lives_strtol(array[i]);
     }
 
     nfmts = j;
     lives_strfreev(array);
 
-    for (i = 0; fmts[i] != -1; i++) {
+    for (i = 0; fmts[i] != AUDIO_CODEC_UNKNOWN; i++) {
       // traverse video list and see if audiostreamer supports each one
-      if (int_array_contains_value(sfmts, nfmts, fmts[i])) {
+      if (int64_array_contains_value(sfmts, nfmts, fmts[i])) {
 
-        com = lives_strdup_printf("\"%s\" check %d", astreamer, fmts[i]);
+        com = lives_strdup_printf("\"%s\" check %lu", astreamer, fmts[i]);
         lives_popen(com, FALSE, buf, 1024);
         lives_free(com);
 
@@ -1626,11 +1626,11 @@ int64_t get_best_audio(_vid_playback_plugin * vpp) {
       }
     }
 
-    if (fmts[i] == -1) {
+    if (fmts[i] == AUDIO_CODEC_UNKNOWN) {
       //none suitable, stick with first
       for (i = 0; fmts[i] != -1; i++) {
         // traverse video list and see if audiostreamer supports each one
-        if (int_array_contains_value(sfmts, nfmts, fmts[i])) {
+        if (int64_array_contains_value(sfmts, nfmts, fmts[i])) {
           ret = fmts[i];
           break;
         }
@@ -1727,7 +1727,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
           } else {
             lives_snprintf(prefs->encoder.of_restrict, 128, "none");
           }
-          prefs->encoder.of_allowed_acodecs = atoi(array[2]);
+          prefs->encoder.of_allowed_acodecs = lives_strtol(array[2]);
           lives_list_free_all(&ofmt_all);
           lives_strfreev(array);
           break;
@@ -1742,7 +1742,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
   }
 
   if (!rdet && mainw->save_with_sound && prefs->encoder.audio_codec != AUDIO_CODEC_NONE) {
-    if (!(prefs->encoder.of_allowed_acodecs & (1 << prefs->encoder.audio_codec))) {
+    if (!(prefs->encoder.of_allowed_acodecs & ((uint64_t)1 << prefs->encoder.audio_codec))) {
       do_encoder_acodec_error();
       return FALSE;
     }
@@ -3105,6 +3105,7 @@ void rfx_free_all(void) {
 
 void param_copy(lives_param_t *dest, lives_param_t *src, boolean full) {
   // rfxbuilder.c uses this to copy params to a temporary copy and back again
+
 
   dest->name = lives_strdup(src->name);
   dest->label = lives_strdup(src->label);

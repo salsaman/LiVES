@@ -348,7 +348,6 @@ void pre_analyse(weed_plant_t *elist) {
 
                 break;
               }
-
             }
           }
         }
@@ -386,7 +385,6 @@ void pre_analyse(weed_plant_t *elist) {
         double tpos = ststate[0].seek + ststate[0].vel * dtime;
         // ratio is real diff / est diff, e.g 1 / 2 we should go twice as fast
         double ratio = fabs(enstate[0].seek - ststate[0].seek) / fabs(tpos - ststate[0].seek);
-
         if (dtime >= READJ_MIN_TIME) {
           if (ratio >= READJ_MIN_RATIO && ratio < READJ_MAX_RATIO) {
             // now have calculated the ratio, we can backtrack to start audio event, and adjust tcs
@@ -489,10 +487,6 @@ void pre_analyse(weed_plant_t *elist) {
       // pass 3, we limit the deltas from original
       // pass 4, we introduce intermediate points, halfway between a and b in time and pos
 
-
-
-
-
       if (smooth) {
         smooth = lives_list_reverse(smooth);
 
@@ -574,17 +568,18 @@ void pre_analyse(weed_plant_t *elist) {
        /// inserting from scrap_file, we cannot interpolate frame numbers. So we just insert nearest frame
   */
   weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
-    weed_timecode_t out_tc = 0, offset_tc = 0, in_tc, laud_tc = 0, nx_tc;
-    weed_timecode_t end_tc;
+    weed_timecode_t out_tc = 0, offset_tc = 0, in_tc, laud_tc = 0, nx_tc = 0, xnx_tc = 0;
+    weed_timecode_t nxt_out_tc, end_tc;
+    weed_timecode_t recst_tc = 0;
+    weed_timecode_t frame_tc = 0, oframe_tc;
 
     weed_plant_t *out_list, *xout_list;
     weed_event_t *naudio_event = NULL;
-    weed_event_t *frame_event = NULL, *nframe_event = NULL;
+    weed_event_t *frame_event = NULL, *nframe_event = NULL, *xnframe_event = NULL;
     weed_event_t *last_frame_event;
     weed_event_t *event, *newframe = NULL;
     weed_event_t *init_event, *filter_map = NULL, *deinit_event;
     weed_event_t *prev_aframe, *xprev_aframe;
-    weed_timecode_t recst_tc = 0;
 
     LiVESResponseType response;
     LiVESList *init_events = NULL, *deinit_events = NULL, *list;
@@ -713,8 +708,17 @@ void pre_analyse(weed_plant_t *elist) {
           break;
           case WEED_EVENT_TYPE_FRAME:
             interpolate = TRUE;
-            nframe_event = get_next_frame_event(event);
+            xnframe_event = nframe_event = get_next_frame_event(event);
             if (!nframe_event) is_final = 1;
+
+            nxt_out_tc = q_gint64(out_tc + offset_tc + tl, qfps);
+            xnx_tc = nx_tc = get_event_timecode(nframe_event);
+
+            while (xnx_tc < nxt_out_tc) {
+              xnframe_event = get_next_frame_event(xnframe_event);
+              if (!xnframe_event) break;
+              xnx_tc = get_event_timecode(xnframe_event);
+            }
 
             /// now we have a choice: we can either insert this frame at out_tc with the current fx state,
             /// or with the state at out_tc
@@ -724,7 +728,7 @@ void pre_analyse(weed_plant_t *elist) {
             if (!prefs->rr_fstate) {
               if (!is_final) {
                 /// force insertion by setting stop_tc to -1, thus all events will have a timecode
-                if (weed_event_get_timecode(nframe_event) > stop_tc) stop_tc = -1; // force insertion now
+                if (weed_event_get_timecode(get_next_frame_event(event)) > stop_tc) stop_tc = -1; // force insertion now
               }
             }
             // interpolate unadded audio
@@ -776,8 +780,8 @@ void pre_analyse(weed_plant_t *elist) {
             }
             /// laud_tc is last frame in_tc, frame_event is last frame
             laud_tc = in_tc;
+            frame_tc = in_tc;
             frame_event = event;
-            if (event == nframe_event) nframe_event = NULL;
             break;
           case WEED_EVENT_TYPE_FILTER_INIT:
             // add to filter_inits list
@@ -878,7 +882,6 @@ void pre_analyse(weed_plant_t *elist) {
           }
           if (event) event = get_next_event(event);
         } else {
-          weed_timecode_t frame_tc;
           if (is_final == 2 && !event) break;
           /// insert the state
           if (init_events) {
@@ -931,14 +934,11 @@ void pre_analyse(weed_plant_t *elist) {
           /// INSERT A FRAME AT OUT_TC
 
           tracks = weed_frame_event_get_tracks(frame_event, &clips, &frames);
-          frame_tc = get_event_timecode(frame_event);
+          //oframe_tc = get_event_timecode(frame_event);
 
           // frame_event is always <= out_tc, nframe_event is always > out_tc
-          if (!nframe_event) nframe_event = get_next_frame_event(frame_event);
-          ntracks = weed_frame_event_get_tracks(nframe_event, &nclips, &nframes);
-          nx_tc = get_event_timecode(nframe_event);
-
           if (nframe_event) {
+            ntracks = weed_frame_event_get_tracks(nframe_event, &nclips, &nframes);
             if (mainw->scrap_file != -1 && (nclips[0] == mainw->scrap_file
                                             || clips[0] == mainw->scrap_file)) {
               if (nx_tc - (out_tc + offset_tc) < out_tc + offset_tc - frame_tc) {
@@ -951,22 +951,25 @@ void pre_analyse(weed_plant_t *elist) {
                 tracks = ntracks;
               }
             } else {
-              if (old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth && interpolate) {
+              if (event != frame_event && old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth && interpolate) {
                 /// interpolate frames if possible
-                double ratio = (double)(out_tc + offset_tc - frame_tc) / (double)(nx_tc - frame_tc);
+                double ratio = (double)(out_tc + offset_tc - frame_tc) / (double)(xnx_tc - frame_tc);
+                lives_free(nclips);
+                lives_free(nframes);
+                ntracks = weed_frame_event_get_tracks(xnframe_event, &nclips, &nframes);
                 for (i = 0; i < tracks; i++) {
                   if (i >= ntracks) break;
                   if (clips[i] == nclips[i]) {
                     frames[i] = (frames64_t)((double)frames[i] + (double)(nframes[i] - frames[i]) * ratio);
-                  }
-                }
-              }
-              lives_free(nclips);
-              lives_free(nframes);
-            }
-          }
+		  // *INDENT-OFF*
+                  }}}
+	      lives_free(nclips);
+	      lives_free(nframes);
+	    }}
+	  // *INDENT-ON*
 
           /// now we insert the frame
+          //if (event == frame_event) frame_tc = out_tc;
           out_list = append_frame_event(out_list, out_tc, tracks, clips, frames);
           newframe = get_last_event(out_list);
           /* g_print("frame (%p) with %d tracks %d %ld  going in at %ld\n", newframe, */

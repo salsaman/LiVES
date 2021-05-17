@@ -90,6 +90,7 @@ weed_plant_t *lives_plant_new_with_index(int subtype, int64_t index);
 
 void lives_get_randbytes(void *ptr, size_t size);
 
+uint64_t lives_strtol(const char *nptr);
 size_t lives_strlen(const char *) GNU_HOT GNU_PURE;
 boolean lives_strcmp(const char *, const char *) GNU_HOT GNU_PURE;
 boolean lives_strncmp(const char *, const char *, size_t) GNU_HOT GNU_PURE;

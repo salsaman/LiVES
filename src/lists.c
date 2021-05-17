@@ -266,6 +266,12 @@ LIVES_GLOBAL_INLINE boolean int_array_contains_value(int *array, int num_elems, 
 }
 
 
+LIVES_GLOBAL_INLINE boolean int64_array_contains_value(int64_t *array, int num_elems, int64_t value) {
+  for (int i = 0; i < num_elems; i++) if (array[i] == value) return TRUE;
+  return FALSE;
+}
+
+
 LIVES_GLOBAL_INLINE LiVESList *lives_list_sort_alpha(LiVESList *list, boolean fwd) {
   /// stable sort, so input list should NOT be freed
   /// handles utf-8 strings

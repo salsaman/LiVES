@@ -170,7 +170,7 @@ typedef uint64_t lives_thread_attr_t;
 #define FUNCSIG_VOIDP 				       			0X0000000D
 #define FUNCSIG_PLANTP 				       			0X0000000E
 // 2p
-#define FUNCSIG_BOOL_INT64 			       			0X00000035
+#define FUNCSIG_BOOL_INT 			       			0X00000031
 #define FUNCSIG_INT_INT64 			       			0X00000015
 #define FUNCSIG_INT_VOIDP 			       			0X0000001D
 #define FUNCSIG_STRING_INT 			      			0X00000041

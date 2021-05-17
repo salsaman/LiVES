@@ -730,7 +730,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
         // adjust pixel_data and height, then copy-by-ref to layer_slice
         src = weed_layer_get_pixel_data(layer);
         xsrc = src + (int)(top * height) * row;
-        weed_layer_set_pixel_data_packed(layer, xsrc);
+        weed_layer_set_pixel_data(layer, xsrc);
         weed_layer_set_height(layer, lheight);
 
         layer_slice = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
@@ -743,7 +743,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
         // restore original values for the original layer
         weed_layer_set_height(layer, height);
-        weed_layer_set_pixel_data_packed(layer, src);
+        weed_layer_set_pixel_data(layer, src);
 
         if (consider_swapping(&pal, &ppal)) {
           // we may be able to speed things up, for example if we need to convert from

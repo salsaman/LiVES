@@ -4296,7 +4296,6 @@ static void _resize_play_window(void) {
         } else lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x,
                                    mainw->mgeom[pmonitor - 1].y);
       }
-      sched_yield();
       // leave this alone * !
       if (!(mainw->vpp && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
         mainw->ignore_screen_size = TRUE;
@@ -4319,17 +4318,15 @@ static void _resize_play_window(void) {
         lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
 #endif
         lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
+
+        // must center first, then set pos to NONE
         lives_window_center(LIVES_WINDOW(mainw->play_window));
         lives_window_set_position(LIVES_WINDOW(mainw->play_window), LIVES_WIN_POS_NONE);
 
-        gdk_window_move_resize(lives_widget_get_xwindow(mainw->play_window), 0, 0, mainw->pwidth, mainw->pheight);
-
-        /* lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0); */
-        /* lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight); */
+        lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
+        lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
 
         lives_widget_queue_resize(mainw->play_window);
-        lives_widget_process_updates(mainw->play_window);
-        //lives_widget_context_update();
       }
 
       // init the playback plugin, unless the player cannot resize and there is a possibility of
@@ -4355,8 +4352,8 @@ static void _resize_play_window(void) {
         if (mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
           // fixed o/p size for stream
           if (mainw->vpp->fwidth * mainw->vpp->fheight == 0) {
-            mainw->vpp->fwidth = cfile->hsize;//DEF_VPP_HSIZE;
-            mainw->vpp->fheight = cfile->vsize;//DEF_VPP_VSIZE;
+            mainw->vpp->fwidth = cfile->hsize;
+            mainw->vpp->fheight = cfile->vsize;
           }
           if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
             mainw->pwidth = mainw->vpp->fwidth;

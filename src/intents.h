@@ -169,21 +169,21 @@ enum {
 #define ENCODER_NON_NATIVE (1<<3)
 
 //"acodecs"
-#define AUDIO_CODEC_MP3 0
-#define AUDIO_CODEC_PCM 1
-#define AUDIO_CODEC_MP2 2
-#define AUDIO_CODEC_VORBIS 3
-#define AUDIO_CODEC_AC3 4
-#define AUDIO_CODEC_AAC 5
-#define AUDIO_CODEC_AMR_NB 6
-#define AUDIO_CODEC_RAW 7       // reserved
-#define AUDIO_CODEC_WMA2 8
-#define AUDIO_CODEC_OPUS 9
+#define AUDIO_CODEC_NONE 0  /// was 32
 
-#define AUDIO_CODEC_MAX 31
-//
-#define AUDIO_CODEC_NONE 32
-#define AUDIO_CODEC_UNKNOWN 33
+#define AUDIO_CODEC_MP3 1
+#define AUDIO_CODEC_PCM 2
+#define AUDIO_CODEC_MP2 3
+#define AUDIO_CODEC_VORBIS 4
+#define AUDIO_CODEC_AC3 5
+#define AUDIO_CODEC_AAC 6
+#define AUDIO_CODEC_AMR_NB 7
+#define AUDIO_CODEC_RAW 8
+#define AUDIO_CODEC_WMA2 9
+#define AUDIO_CODEC_OPUS 10
+
+#define AUDIO_CODEC_MAX 63
+#define AUDIO_CODEC_UNKNOWN -1
 
 // decoders
 // "sync_hint"

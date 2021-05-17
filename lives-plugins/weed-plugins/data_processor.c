@@ -27,6 +27,15 @@ static int package_version = 1; // version of this package
 #include "weed-plugin-utils.c"
 
 /////////////////////////////////////////////////////////////
+// algorithm:
+// - preprocess the expression; put * and / in parentheses
+// - parse and simplify the equation, e.g a+-b becomes just a-b
+// create a tree from the equation, of the form LHS - operator - RHS
+//   we start from the lowest level and when reaching an operator, the current tree becomes the LHS
+//      and then we start to build the RHS
+//   parentheses cause a new sub branch
+// then starting from the leaves we evaluate the tree. At the lowest level we substitute symbols with actual numerical
+// values, this is then passed up the tree to give the final result.
 
 #include <string.h>
 #include <stdlib.h>
@@ -104,6 +113,7 @@ static void free_all(node *xnode) {
 
 
 static double getval(char *what, _sdata *sdata) {
+  // convert symbols to numerical (double) values
   int which;
 
   if (!strncmp(what, "i[", 2)) {
@@ -128,6 +138,7 @@ static double getval(char *what, _sdata *sdata) {
 
 
 static char *simplify2(node *left, node *right, node *op, _sdata *sdata) {
+  // apply an operator to both sides of a node
   double res = 0.;
 
   char buf[32768];
@@ -158,23 +169,25 @@ static char *simplify2(node *left, node *right, node *op, _sdata *sdata) {
 
 
 static char *simplify(node *xnode, _sdata *sdata) {
+  // parse the tree recursively - we descend the LHS until we reach the bottom
+  // calculate the value, then desecend the RHS
+  // we visit each node twice, once on the way down, then again on the way up
   char *res = NULL;
 
-  if (xnode == NULL) return NULL;
+  if (!xnode) return NULL;
 
-  if (xnode->left == NULL) {
+  if (!xnode->left) {
     xnode->visited = 2;
-
     return xnode->value;
   }
 
-  if (xnode->left->left == NULL && xnode->right->left == NULL) {
+  if (!xnode->left->left && !xnode->right->left) {
 #ifdef DEBUG
     fprintf(stderr, "simplifying %s %s %s = ", xnode->left->value, xnode->value, xnode->right->value);
 #endif
     res = simplify2(xnode->left, xnode->right, xnode, sdata);
-    if (xnode->left != NULL) xnode->left->visited = 2;
-    if (xnode->right != NULL) xnode->right->visited = 2;
+    if (xnode->left) xnode->left->visited = 2;
+    if (xnode->right) xnode->right->visited = 2;
 
 #ifdef DEBUG
     fprintf(stderr, "%s\n", res);
@@ -183,13 +196,13 @@ static char *simplify(node *xnode, _sdata *sdata) {
     simplify(xnode->left, sdata);
     simplify(xnode->right, sdata);
 
-    if (xnode->left->left == NULL && xnode->right->left == NULL) {
+    if (!xnode->left->left && !xnode->right->left) {
 #ifdef DEBUG
       fprintf(stderr, "simplifying %s %s %s = ", xnode->left->value, xnode->value, xnode->right->value);
 #endif
       res = simplify2(xnode->left, xnode->right, xnode, sdata);
-      if (xnode->left != NULL) xnode->left->visited = 2;
-      if (xnode->right != NULL) xnode->right->visited = 2;
+      if (xnode->left) xnode->left->visited = 2;
+      if (xnode->right) xnode->right->visited = 2;
 
 #ifdef DEBUG
       fprintf(stderr, "%s\n", res);
@@ -210,31 +223,28 @@ static char *simplify(node *xnode, _sdata *sdata) {
 //#define DEBUG_SYNTAX
 
 static int exp_to_tree(const char *exp) {
+  // here we parse an expression (RHS of the equation) and convert it to a tree
+  // - if we get parentheses then we call this recursively for the expression in brackets
+  // we also do some cleanup of the expression, e.g 1++2 becomes 1+0+2, 1+-2 becomes 1+0-2, etc.
+  // spaces are removed
+  node *oldroot;
+  char buf[1024];
+  char *varname = NULL;
+  char *parbit, *tmp;
+
   size_t len = strlen(exp);
 
   int nstart = -1;
-  int plevel = 0;
-  int pstart;
+  int plevel = 0, pstart;
   int gotdot = 0;
   int retval;
   int op = 0;
-
-  char buf[1024];
-
-  char *varname = NULL;
-  char *parbit;
-
-  char *tmp;
-
-  node *oldroot;
-
-  register int i;
+  int i;
 
   for (i = 0; i < len; i++) {
     switch (exp[i]) {
-
     case '[':
-      if (varname == NULL) {
+      if (!varname) {
 #ifdef DEBUG_SYNTAX
         printf("pt 1\n");
 #endif
@@ -276,9 +286,9 @@ static int exp_to_tree(const char *exp) {
       rootnode->varname = varname;
       varname = NULL;
 
-      if (oldroot != NULL) {
+      if (oldroot) {
         oldroot->right = rootnode;
-        if (rootnode != NULL) rootnode->parent = oldroot;
+        if (rootnode) rootnode->parent = oldroot;
         rootnode = oldroot;
       }
 
@@ -330,30 +340,22 @@ static int exp_to_tree(const char *exp) {
 
       if (retval != 0) return retval;
 
-      if (oldroot != NULL) {
+      if (oldroot) {
         oldroot->right = rootnode;
-        if (rootnode != NULL) rootnode->parent = oldroot;
+        if (rootnode) rootnode->parent = oldroot;
         rootnode = oldroot;
       }
       break;
 
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9':
+    case '0': case '1': case '2': case '3': case '4':
+    case '5': case '6': case '7': case '8': case '9':
       if (plevel == 1) {
 #ifdef DEBUG_SYNTAX
         printf("pt 6\n");
 #endif
         return 1;
       }
-      if (varname != NULL) {
+      if (varname) {
 #ifdef DEBUG_SYNTAX
         printf("pt 7\n");
 #endif
@@ -368,7 +370,7 @@ static int exp_to_tree(const char *exp) {
 #endif
         return 1;
       }
-      if (gotdot || varname != NULL) {
+      if (gotdot || varname) {
 #ifdef DEBUG_SYNTAX
         printf("pt 9\n");
 #endif
@@ -379,7 +381,7 @@ static int exp_to_tree(const char *exp) {
       break;
     case '-':
     case '+':
-      if (varname != NULL) {
+      if (varname) {
 #ifdef DEBUG_SYNTAX
         printf("pt 10\n");
 #endif
@@ -411,7 +413,7 @@ static int exp_to_tree(const char *exp) {
 
     case '*':
     case '/':
-      if (varname != NULL) {
+      if (varname) {
 #ifdef DEBUG_SYNTAX
         printf("pt 11\n");
 #endif
@@ -428,7 +430,7 @@ static int exp_to_tree(const char *exp) {
 
         snprintf(buf, i - nstart + 1, "%s", exp + nstart);
 
-        if (rootnode == NULL) {
+        if (!rootnode) {
           rootnode = new_node(buf);
           snprintf(buf, 2, "%s", &exp[i]);
           add_parent(rootnode, buf);
@@ -454,7 +456,7 @@ static int exp_to_tree(const char *exp) {
 #endif
         return 1;
       }
-      if (varname != NULL || nstart != -1) {
+      if (varname || nstart != -1) {
 #ifdef DEBUG_SYNTAX
         printf("pt 14\n");
 #endif
@@ -469,7 +471,7 @@ static int exp_to_tree(const char *exp) {
 #endif
         return 1;
       }
-      if (varname != NULL || nstart != -1) {
+      if (varname || nstart != -1) {
 #ifdef DEBUG_SYNTAX
         printf("pt 16\n");
 #endif
@@ -494,7 +496,7 @@ static int exp_to_tree(const char *exp) {
 
   snprintf(buf, i - nstart + 1, "%s", exp + nstart);
 
-  if (rootnode == NULL) {
+  if (!rootnode) {
     rootnode = new_node(buf);
   } else {
     add_right(rootnode, buf);
@@ -508,9 +510,9 @@ static int exp_to_tree(const char *exp) {
 static void print_tree(node *xnode, int visits) {
   //visit tree in infix order
 
-  if (xnode == NULL) return;
+  if (!xnode) return;
 
-  if (xnode->left == NULL) {
+  if (!xnode->left) {
     fprintf(stderr, "%s", xnode->value);
     xnode->visited = visits;
     return;
@@ -534,11 +536,8 @@ static int preproc(const char *exp) {
   // put parens around *, /
   char tmp[65536];
   char lastop = 0;
-
-  int nstart = -1, plevel = 0;
   size_t len = strlen(exp);
-
-  register int i;
+  int i, nstart = -1, plevel = 0;
 
   for (i = 0; i < len; i++) {
     switch (exp[i]) {
@@ -552,22 +551,11 @@ static int preproc(const char *exp) {
     case ']':
       i++;
       goto preprocdone;
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9':
-    case 'i':
-    case 's':
+    case '0': case '1': case '2': case '3': case '4': case '5':
+    case '6': case '7': case '8': case '9': case 'i': case 's':
       if (nstart == -1) nstart = i;
       break;
-    case '+':
-    case '-':
+    case '+': case '-':
       if (nstart == -1) {
         nstart = i;
         break;
@@ -709,13 +697,13 @@ static weed_error_t dataproc_process(weed_plant_t *inst, weed_timecode_t timesta
   sdata->params = in_params;
 
   for (i = EQS; i < EQN; i++) {
-    if (ip != NULL) weed_free(ip);
+    if (ip) weed_free(ip);
     ip = weed_get_string_value(in_params[i], WEED_LEAF_VALUE, NULL);
 
     if (!strlen(ip)) continue;
 
     ptr = index(ip, '=');
-    if (ptr == NULL) {
+    if (!ptr) {
       fprintf(stderr, "data_processor ERROR: eqn %d has no '='\n", i - EQS);
       continue;
     }
@@ -817,7 +805,7 @@ static weed_error_t dataproc_process(weed_plant_t *inst, weed_timecode_t timesta
     }
   }
 
-  if (ip != NULL) weed_free(ip);
+  if (ip) weed_free(ip);
 
   weed_free(in_params);
   weed_free(out_params);
@@ -829,8 +817,8 @@ static weed_error_t dataproc_process(weed_plant_t *inst, weed_timecode_t timesta
 static weed_error_t dataproc_deinit(weed_plant_t *inst) {
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
-  if (sdata != NULL) {
-    if (sdata->store != NULL) weed_free(sdata->store);
+  if (sdata) {
+    if (sdata->store) weed_free(sdata->store);
     weed_free(sdata);
   }
   weed_set_voidptr_value(inst, "plugin_internal", NULL);
@@ -891,6 +879,6 @@ WEED_SETUP_START(200, 200) {
 
   weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;

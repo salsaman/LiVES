@@ -178,18 +178,6 @@ uint64_t get_capabilities(int palette) {
   return 0;
 }
 
-
-const int *get_audio_fmts() {
-  // this is not yet documented, but is an optional function to get a list of audio formats.
-  // If the user chooses to stream audio then it will be sent to a fifo file in the tempdir called livesaudio.stream,
-  // in one of the supported formats
-  aforms[0] = 1; // pcm
-  aforms[1] = -1; // end
-
-  return aforms;
-}
-
-
 const char rfx[32768];
 
 const char *get_init_rfx(int intention) {

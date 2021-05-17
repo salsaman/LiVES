@@ -844,37 +844,21 @@ AC_SUBST(UNICAP_LIBS)
 
 AM_CONDITIONAL(HAVE_UNICAP,$HAVE_UNICAP)
 
-HAVE_LIBv4l1=false
+HAVE_LIBDV=false
+dnl check for v4l2
 
-AC_ARG_ENABLE(v4l, [  --disable-v4l     Disable v4l1 / v4l2 support.] , disable_v4l=yes)
-if test "$disable_v4l" != "xyes" ; then
+AC_ARG_ENABLE(v4l2, [  --disable-v4l2     Disable Video for Linux 2 support.] , disable_v4l2=yes)
+if test "$disable_v4l2" != "xyes" ; then
 
 AC_CHECK_HEADERS(linux/videodev2.h, HAVE_LIBv4l2=true, HAVE_LIBv4l2=false)
-AM_CONDITIONAL(HAVE_LIBv4l2,$HAVE_LIBv4l2)
-
-if test HAVE_LIBv4l2 = "false"; then
-
-dnl Check of -lv4l1
-AC_CHECK_HEADERS(linux/videodev.h, HAVE_LIBv4l1=true, HAVE_LIBv4l1=false)
-if test "$HAVE_LIBv4l1" = "true"; then
-v4l1_INCFILE=1
-else
-AC_CHECK_HEADERS(libv4l1-videodev.h, HAVE_LIBv4l1=true, HAVE_LIBv4l1=false)
-if test "$HAVE_LIBv4l1" = "true"; then
-v4l1_INCFILE=2
-fi
-fi
-AC_SUBST(v4l1_INCFILE)
+AM_CONDITIONAL(HAVE_LIBv4l2, $HAVE_LIBv4l2)
 
 fi
-fi
-AM_CONDITIONAL(HAVE_LIBv4l1,$HAVE_LIBv4l1)
-
 
 HAVE_LIBDV=false
 dnl check for libdv
 
-AC_ARG_ENABLE(v4l, [  --disable-libdv     Disable libdv support.] , disable_libdv=yes)
+AC_ARG_ENABLE(dv, [  --disable-libdv     Disable libdv support.] , disable_libdv=yes)
 if test "$disable_libdv" != "xyes" ; then
 
 PKG_CHECK_MODULES(LIBDV,libdv,HAVE_LIBDV=true,HAVE_LIBDV=false)

@@ -2443,8 +2443,8 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (prefs->encoder.audio_codec != future_prefs->encoder.audio_codec) {
     prefs->encoder.audio_codec = future_prefs->encoder.audio_codec;
-    if (prefs->encoder.audio_codec < AUDIO_CODEC_UNKNOWN) {
-      set_int_pref(PREF_ENCODER_ACODEC, prefs->encoder.audio_codec);
+    if (prefs->encoder.audio_codec > AUDIO_CODEC_UNKNOWN) {
+      set_int64_pref(PREF_ENCODER_ACODEC, prefs->encoder.audio_codec);
     }
   }
 
@@ -2886,15 +2886,15 @@ void rdet_acodec_changed(LiVESCombo * acodec_combo, livespointer user_data) {
   const char *audio_codec = lives_combo_get_active_text(acodec_combo);
   if (!strcmp(audio_codec, mainw->string_constants[LIVES_STRING_CONSTANT_ANY])) return;
 
-  for (idx = 0; idx < listlen && strcmp((char *)lives_list_nth_data(prefs->acodec_list, idx), audio_codec); idx++);
+  for (idx = 0; idx < listlen && lives_strcmp((char *)lives_list_nth_data(prefs->acodec_list, idx), audio_codec); idx++);
 
   if (idx == listlen) future_prefs->encoder.audio_codec = 0;
   else future_prefs->encoder.audio_codec = prefs->acodec_list_to_format[idx];
 
   if (prefs->encoder.audio_codec != future_prefs->encoder.audio_codec) {
     prefs->encoder.audio_codec = future_prefs->encoder.audio_codec;
-    if (prefs->encoder.audio_codec < AUDIO_CODEC_UNKNOWN) {
-      set_int_pref(PREF_ENCODER_ACODEC, prefs->encoder.audio_codec);
+    if (prefs->encoder.audio_codec > AUDIO_CODEC_UNKNOWN) {
+      set_int64_pref(PREF_ENCODER_ACODEC, prefs->encoder.audio_codec);
     }
   }
 }
@@ -2927,8 +2927,8 @@ void set_acodec_list_from_allowed(_prefsw * prefsw, render_details * rdet) {
     return;
   }
   for (idx = 0; strlen(anames[idx]); idx++) {
-    if (future_prefs->encoder.of_allowed_acodecs & (1 << idx)) {
-      if (idx == AUDIO_CODEC_PCM) prefs->acodec_list = lives_list_append(prefs->acodec_list,
+    if (future_prefs->encoder.of_allowed_acodecs & ((uint64_t)1 << idx)) {
+      if (idx == AUDIO_CODEC_PCM - 1) prefs->acodec_list = lives_list_append(prefs->acodec_list,
             (_("PCM (highest quality; largest files)")));
       else prefs->acodec_list = lives_list_append(prefs->acodec_list, lives_strdup(anames[idx]));
       prefs->acodec_list_to_format[count++] = idx;
@@ -3162,7 +3162,7 @@ static void stream_audio_toggled(LiVESToggleButton * togglebutton, livespointer 
   if (lives_toggle_button_get_active(togglebutton)) {
     // init vpp, get audio codec, check requisites
     _vid_playback_plugin *tmpvpp;
-    uint32_t orig_acodec = AUDIO_CODEC_NONE;
+    uint64_t orig_acodec = AUDIO_CODEC_NONE;
 
     if (*future_prefs->vpp_name) {
       if ((tmpvpp = open_vid_playback_plugin(future_prefs->vpp_name, FALSE)) == NULL) return;
@@ -3181,7 +3181,7 @@ static void stream_audio_toggled(LiVESToggleButton * togglebutton, livespointer 
 
       char *astreamer = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_AUDIO_STREAM, AUDIO_STREAMER_NAME, NULL);
 
-      com = lives_strdup_printf("\"%s\" check %d", astreamer, tmpvpp->audio_codec);
+      com = lives_strdup_printf("\"%s\" check %lu", astreamer, tmpvpp->audio_codec);
       lives_free(astreamer);
 
       rlen = lives_popen(com, TRUE, buf, 1024);
@@ -5153,7 +5153,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
         if (get_token_count((char *)lives_list_nth_data(ofmt_all, i), '|') > 2) {
           array = lives_strsplit((char *)lives_list_nth_data(ofmt_all, i), "|", -1);
           if (!strcmp(array[0], prefs->encoder.of_name)) {
-            prefs->encoder.of_allowed_acodecs = atoi(array[2]);
+            prefs->encoder.of_allowed_acodecs = lives_strtol(array[2]);
             lives_snprintf(prefs->encoder.of_restrict, 1024, "%s", array[3]);
           }
           ofmt = lives_list_append(ofmt, lives_strdup(array[1]));

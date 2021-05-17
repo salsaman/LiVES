@@ -180,8 +180,6 @@ void pad_init_silence(void) {
 }
 
 
-#define AUDIO_FRAMES_TO_READ 100
-
 ulong open_file_sel(const char *file_name, double start, frames_t frames) {
   const lives_clip_data_t *cdata;
   weed_plant_t *mt_pb_start_event = NULL;
@@ -1369,7 +1367,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
   if (prefs->encoder.capabilities & HAS_RFX) {
     char buff[65536];
 
-    com = lives_strdup_printf("\"%s\" get_rfx %s %d %d %d", enc_exec_name, prefs->encoder.of_name,
+    com = lives_strdup_printf("\"%s\" get_rfx %s %lu %d %d", enc_exec_name, prefs->encoder.of_name,
                               prefs->encoder.audio_codec, sfile->hsize, sfile->vsize);
     if (debug_mode) {
       fprintf(stderr, "Running command: %s\n", com);

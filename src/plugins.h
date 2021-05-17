@@ -156,9 +156,9 @@ typedef struct {
   int (*set_yuv_palette_subspace)(int subspace_type);
 
   // audio streaming (deprecated, use init_audio(), render_audio_frame())
-  int *(*get_audio_fmts)(void);
+  uint64_t *(*get_audio_fmts)(void);
 
-  uint32_t audio_codec; //(deprecated, use init_audio(), render_audio_frame())
+  uint64_t audio_codec; //(deprecated, use init_audio(), render_audio_frame())
   // must match with the "acodec" LiVESList in interface.c
   // and bitmaps in the encder plugins
 
@@ -192,7 +192,7 @@ typedef struct {
 _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use);
 void vid_playback_plugin_exit(void);
 void close_vid_playback_plugin(_vid_playback_plugin *);
-int64_t get_best_audio(_vid_playback_plugin *);
+uint64_t get_best_audio(_vid_playback_plugin *);
 void save_vpp_defaults(_vid_playback_plugin *, char *file);
 void load_vpp_defaults(_vid_playback_plugin *, char *file);
 
@@ -224,7 +224,7 @@ LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const char *img_ext);
 
 typedef struct {
   char name[64];
-  uint32_t audio_codec;
+  uint64_t audio_codec;
   // match with bitmaps in the encoder plugins
   // and also anames array in plugins.c (see below)
 
@@ -233,7 +233,7 @@ typedef struct {
   // current output format
   char of_name[64];
   char of_desc[128];
-  int of_allowed_acodecs;
+  uint64_t of_allowed_acodecs;
   char of_restrict[1024];
   char of_def_ext[16];
   char ptext[512];

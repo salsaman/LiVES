@@ -1961,136 +1961,147 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (!mainw->multitrack) {
       if (!svary || prefs->pb_quality == PB_QUALITY_LOW || !is_converter) {
-        if (inwidth > rmaxw) rmaxw = inwidth;
-        if (inheight > rmaxh) rmaxh = inheight;
+        int natinwidth, natinheight, *natsize;
+        lives_nanosleep_until_nonzero(weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
+        natsize = weed_get_int_array(layer, WEED_LEAF_NATURAL_SIZE, NULL);
+        if (natsize) {
+          natinwidth = natsize[0];
+          natinheight = natsize[1];
+          lives_free(natsize);
+        } else {
+          natinwidth = inwidth;
+          natinheight = inheight;
+        }
 
-        area = inwidth * inheight;
+        if (natinwidth > rmaxw) rmaxw = natinwidth;
+        if (natinheight > rmaxh) rmaxh = natinheight;
+
+        area = natinwidth * natinheight;
         if (area < minarea || !minarea) {
           minarea = area;
-          rminw = inwidth;
-          rminh = inheight;
+          rminw = natinwidth;
+          rminh = natinheight;
 	  // *INDENT-OFF*
 	}}}
     // *INDENT-ON*
+  }
 
-    if (letterbox) {
-      // there are at most 3 aspect ratios to consider:
-      // - the player / encoded clip
-      // - the renderer (which all frames letterbox inside, and which is letterboxed into the output)
-      // - individual frame sizes (inwidth, inheight) which get letterboxed into the renderer
+  if (letterbox) {
+    // there are at most 3 aspect ratios to consider:
+    // - the player / encoded clip
+    // - the renderer (which all frames letterbox inside, and which is letterboxed into the output)
+    // - individual frame sizes (inwidth, inheight) which get letterboxed into the renderer
 
-      // for multitrack, the renderer and output size / aspect ratio are always the same
-      // for clip editor we use an algorithm to calculate the renderer aspect ratio, then set the size after.
+    // for multitrack, the renderer and output size / aspect ratio are always the same
+    // for clip editor we use an algorithm to calculate the renderer aspect ratio, then set the size after.
 
-      // - each frame is shrunk / expanded to fit the renderer size; in letterbox mode it maintains its aspect ratio
-      // - the renderer is then shrunk / expanded to fit the output; in letterbox mode the renderer keeps its a.r
+    // - each frame is shrunk / expanded to fit the renderer size; in letterbox mode it maintains its aspect ratio
+    // - the renderer is then shrunk / expanded to fit the output; in letterbox mode the renderer keeps its a.r
 
-      // this is further complicated with variable quality, so we use a system where the renderer aspect ratio is
-      // indpendent of the quality / player size. The quality setting only affects the renderer size
-      // - we must avoid a situation where the padding changes when
-      // quality is adjusted, as this can look very bad if the quality is switching often, thus at each quality setting the renderer must
-      // have the same aspect ratio - the only change should be its size
+    // this is further complicated with variable quality, so we use a system where the renderer aspect ratio is
+    // indpendent of the quality / player size. The quality setting only affects the renderer size
+    // - we must avoid a situation where the padding changes when
+    // quality is adjusted, as this can look very bad if the quality is switching often, thus at each quality setting the renderer must
+    // have the same aspect ratio - the only change should be its size
 
-      // if possible we avoid the situation where frames have padding in one direction inside the renderer,
-      // and then the renderer gets padding in the other dimension
+    // if possible we avoid the situation where frames have padding in one direction inside the renderer,
+    // and then the renderer gets padding in the other dimension
 
-      // thus:
-      // 1) pick the aspect ratio of the renderer, independent of the quality setting
-      //  - with only one clip this is simple, we just use a.r of the clip
-      //  - with multiple clips (transition / compositor) we use a heuristic, this done is such a way
-      //    that the order of clips does not matter. i.e swapping fg / bg clips doesnt cause the a.r to change
-      // 2) adjust the size of the renderer depending on quality
-      //   - in high, med, all frames must fit inside this, in low only 1 frame (the smallest [by area]) need fit inside
-      //   - in high quality, the screen / output size must also fit inside
-      // 3) the effect is then applied
-      // 4) the output from the effect is normally the same as all the inputs, we just maintain this until
-      //     all effects are applied, then finally the end result is resized / letterboxed into the player
-      //
-      // ideally:
-      //  - we want at least one frame to completely fill the rendererer in one dimension
-      //  - if we make sure the render always has the same a.r as one of the frames, this is ensured
-      //
-      // there are various possibilities - we could use a.r of largest frame, smallest frame, widest frame, tallest frame
-      // - we pick a.r. of the smallest frame, since in low quality we also set the renderer size by this,
-      // thus at least one of the frames will not need any resizing / letterboxing
-    }
+    // thus:
+    // 1) pick the aspect ratio of the renderer, independent of the quality setting
+    //  - with only one clip this is simple, we just use a.r of the clip
+    //  - with multiple clips (transition / compositor) we use a heuristic, this done is such a way
+    //    that the order of clips does not matter. i.e swapping fg / bg clips doesnt cause the a.r to change
+    // 2) adjust the size of the renderer depending on quality
+    //   - in high, med, all frames must fit inside this, in low only 1 frame (the smallest [by area]) need fit inside
+    //   - in high quality, the screen / output size must also fit inside
+    // 3) the effect is then applied
+    // 4) the output from the effect is normally the same as all the inputs, we just maintain this until
+    //     all effects are applied, then finally the end result is resized / letterboxed into the player
+    //
+    // ideally:
+    //  - we want at least one frame to completely fill the rendererer in one dimension
+    //  - if we make sure the render always has the same a.r as one of the frames, this is ensured
+    //
+    // there are various possibilities - we could use a.r of largest frame, smallest frame, widest frame, tallest frame
+    // - we pick a.r. of the smallest frame, since in low quality we also set the renderer size by this,
+    // thus at least one of the frames will not need any resizing / letterboxing
+  }
 
-    if (!mainw->multitrack) {
-      if (!svary || prefs->pb_quality == PB_QUALITY_LOW || !is_converter) {
-        if (opwidth && opheight && letterbox) {
-          // since we will letterbox the final result into the player, we calculate the area
-          // we will draw into as the 'player size'
-          int ww = rminw;
-          int hh = rminh;
-          calc_maxspect(opwidth, opheight, &ww, &hh);
-          opwidth = ww;
-          opheight = hh;
-        }
-
-        switch (pb_quality) {
-        case PB_QUALITY_LOW:
-          if (letterbox) {
-            // use whichever frame had the smallest area, no resizing
-            opwidth = rminw;
-            opheight = rminh;
-          } else {
-            if (opwidth > 0 && opheight > 0) {
-              opwidth = MIN(opwidth, rminw);
-              opheight = MIN(opheight, rminh);
-            } else {
-              opwidth = rminw;
-              opheight = rminh;
-            }
-          }
-          break;
-        case PB_QUALITY_MED:
-          if (letterbox) {
-            // make sure we include all frames, but keep with output bounds
-            calc_midspect(rmaxw, rmaxh, &rminw, &rminh);
-            if (opwidth && opheight) {
-              if (rminw > opwidth || rminh > opheight) {
-                calc_maxspect(opwidth, opheight, &rminw, &rminh);
-              }
-            }
-            opwidth = rminw;
-            opheight = rminh;
-          } else {
-            if (opwidth && opheight) {
-              opwidth = MIN(opwidth, rmaxw);
-              opheight = MIN(opheight, rmaxh);
-            } else {
-              opwidth = rmaxw;
-              opheight = rmaxh;
-            }
-          }
-          break;
-        case PB_QUALITY_HIGH:
-          // highq - as MED but we must envelope the player / encoder + all frames
-          if (letterbox) {
-            calc_midspect(rmaxw, rmaxh, &rminw, &rminh);
-            if (opwidth && opheight) calc_midspect(opwidth, opheight, &rminw, &rminh);
-            opwidth = rminw;
-            opheight = rminh;
-          } else {
-            if (opwidth && opheight) calc_midspect(rmaxw, rmaxh, &opwidth, &opheight);
-            else {
-              opwidth = rmaxw;
-              opheight = rmaxh;
-            }
-          }
-          break;
-        }
-
-        //g_print("FX size %d X %d\n", opwidth, opheight);
-
-        // swscale (I think) likes to have multiples of 8
-        opwidth = ((opwidth + 7) >> 3) << 3;
-        opheight = (opheight >> 1) << 1;
+  if (!mainw->multitrack) {
+    if (!svary || prefs->pb_quality == PB_QUALITY_LOW || !is_converter) {
+      if (opwidth && opheight && letterbox) {
+        // since we will letterbox the final result into the player, we calculate the area
+        // we will draw into as the 'player size'
+        int ww = rminw;
+        int hh = rminh;
+        calc_maxspect(opwidth, opheight, &ww, &hh);
+        opwidth = ww;
+        opheight = hh;
       }
+
+      switch (pb_quality) {
+      case PB_QUALITY_LOW:
+        if (letterbox) {
+          // use whichever frame had the smallest area, no resizing
+          opwidth = rminw;
+          opheight = rminh;
+        } else {
+          if (opwidth > 0 && opheight > 0) {
+            opwidth = MIN(opwidth, rminw);
+            opheight = MIN(opheight, rminh);
+          } else {
+            opwidth = rminw;
+            opheight = rminh;
+          }
+        }
+        break;
+      case PB_QUALITY_MED:
+        if (letterbox) {
+          // make sure we include all frames, but keep with output bounds
+          calc_midspect(rmaxw, rmaxh, &rminw, &rminh);
+          if (opwidth && opheight) {
+            if (rminw > opwidth || rminh > opheight) {
+              calc_maxspect(opwidth, opheight, &rminw, &rminh);
+            }
+          }
+          opwidth = rminw;
+          opheight = rminh;
+        } else {
+          if (opwidth && opheight) {
+            opwidth = MIN(opwidth, rmaxw);
+            opheight = MIN(opheight, rmaxh);
+          } else {
+            opwidth = rmaxw;
+            opheight = rmaxh;
+          }
+        }
+        break;
+      case PB_QUALITY_HIGH:
+        // highq - as MED but we must envelope the player / encoder + all frames
+        if (letterbox) {
+          calc_midspect(rmaxw, rmaxh, &rminw, &rminh);
+          if (opwidth && opheight) calc_midspect(opwidth, opheight, &rminw, &rminh);
+          opwidth = rminw;
+          opheight = rminh;
+        } else {
+          if (opwidth && opheight) calc_midspect(rmaxw, rmaxh, &opwidth, &opheight);
+          else {
+            opwidth = rmaxw;
+            opheight = rmaxh;
+          }
+        }
+        break;
+      }
+
+      //g_print("FX size %d X %d\n", opwidth, opheight);
+
+      opwidth = (opwidth >> 1) << 1;
+      opheight = (opheight >> 1) << 1;
     }
-    if (pb_quality < PB_QUALITY_HIGH && mainw->multitrack && prefs->letterbox_mt) {
-      calc_midspect(cfile->hsize, cfile->vsize, &opwidth, &opheight);
-    }
+  }
+  if (pb_quality < PB_QUALITY_HIGH && mainw->multitrack && prefs->letterbox_mt) {
+    calc_midspect(cfile->hsize, cfile->vsize, &opwidth, &opheight);
   }
 
   /// pass 1, we try to set channel sizes to opwidth X opheight
@@ -2628,6 +2639,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         lives_freep((void **)&palettes);
       }
 
+      if (num_inc == 1)
+        weed_leaf_copy_or_delete(channel, WEED_LEAF_NATURAL_SIZE, def_channel);
       weed_leaf_copy_or_delete(channel, WEED_LEAF_YUV_CLAMPING, def_channel);
       weed_leaf_copy_or_delete(channel, WEED_LEAF_YUV_SAMPLING, def_channel);
       weed_leaf_copy_or_delete(channel, WEED_LEAF_YUV_SUBSPACE, def_channel);
@@ -7785,6 +7798,7 @@ weed_layer_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   lives_clip_t *sfile = NULL;
   int *palette_list;
   int *rowstrides;
+  int natsize[2];
   lives_filter_error_t retval;
   weed_error_t ret;
   int npals;
@@ -7959,7 +7973,6 @@ matchvals:
     } else xheight = DEF_GEN_HEIGHT;
   }
 
-
   rowstrides = weed_channel_get_rowstrides(channel, &npl);
 
   if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {
@@ -7972,7 +7985,6 @@ matchvals:
   for (i = 0; (xchannel = get_enabled_channel(inst, i, FALSE)); i++) {
     if (xwidth != weed_channel_get_width(xchannel) ||
         xheight != weed_channel_get_height(xchannel)) {
-      weed_layer_nullify_pixel_data(xchannel);
 
       // this helps for openGL player etc.
       if (mainw->ext_playback) {
@@ -7987,9 +7999,16 @@ matchvals:
   xwidth = weed_channel_get_width(channel);
   xheight = weed_channel_get_height(channel);
 
+  natsize[0] = xwidth;
+  natsize[1] = xheight;
+  weed_set_int_array(channel, WEED_LEAF_NATURAL_SIZE, 2, natsize);
+
   //g_print("SZ4a is %d X %d\n", xwidth, xheight);
 
   if (!create_empty_pixel_data(channel, FALSE, TRUE)) return NULL;
+
+  xwidth = weed_channel_get_width(channel);
+  xheight = weed_channel_get_height(channel);
 
   if (xwidth != width || xheight != height) {
     if (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE) {
@@ -8022,6 +8041,7 @@ matchvals:
       weed_instance_unref(inst);
       return NULL;
     }
+    weed_layer_pixel_data_free(channel);
     goto matchvals;
   }
 
@@ -8112,9 +8132,11 @@ procfunc1:
       orow = weed_layer_get_rowstride(newl);
       ipd = weed_channel_get_pixel_data(channel) + irow * btop + bleft * psize;
       opd = weed_layer_get_pixel_data(newl);
+
       for (int i = 0; i < bh; i++) {
         lives_memcpy(&opd[orow * i], &ipd[irow * i], bw);
       }
+
       weed_layer_pixel_data_free(channel);
       resize_layer(newl, xwidth, xheight, LIVES_INTERP_BEST, WEED_PALETTE_END,
                    WEED_YUV_CLAMPING_UNCLAMPED);
@@ -11697,7 +11719,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
           lives_free(rs);
 
-          weed_layer_pixel_data_free(layer);
+          weed_layer_nullify_pixel_data(layer);
           values[0] = lives_calloc(ALIGN_CEIL(vlen64_tot + EXTRA_BYTES, 16) / 16, 16);
 
           if (!values[0]) {
@@ -11895,7 +11917,13 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
           if (check_ptrs) {
             switch (weed_plant_get_type(plant)) {
             case WEED_PLANT_LAYER:
-              if (lives_strcmp(key, WEED_LEAF_PIXEL_DATA)) {
+              if (lives_strcmp(key, WEED_LEAF_PIXEL_DATA)
+                  || !lives_strcmp(key, "bblockalloc")
+                  || !lives_strcmp(key, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS)
+                  || !lives_strcmp(key, WEED_LEAF_HOST_PIXBUF_SRC)
+                  || !lives_strcmp(key, WEED_LEAF_HOST_SURFACE_SRC)
+                  || !lives_strcmp(key, WEED_LEAF_HOST_ORIG_PDATA)
+                 ) {
                 add_leaf = FALSE;
               }
               break;
@@ -11925,6 +11953,12 @@ done:
     lives_freep((void **)&values);
   }
   lives_freep((void **)&mykey);
+
+
+
+
+
+
   return type;
 }
 

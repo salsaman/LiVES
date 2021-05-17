@@ -832,6 +832,10 @@ static boolean pre_init(void) {
 
   prefs->show_dev_opts = get_boolean_prefd(PREF_SHOW_DEVOPTS, FALSE);
 
+  if (prefs->show_dev_opts) {
+    g_printerr("Today's lucky number is 0X%08lX\n", gen_unique_id());
+  }
+
   prefs->back_compat = get_boolean_prefd(PREF_BACK_COMPAT, TRUE);
 
   future_prefs->vj_mode = get_boolean_prefd(PREF_VJMODE, FALSE);
@@ -1898,7 +1902,7 @@ static boolean lives_init(_ign_opts *ign_opts) {
       get_string_pref(PREF_OUTPUT_TYPE, prefs->encoder.of_name, 64);
     }
 
-    future_prefs->encoder.audio_codec = prefs->encoder.audio_codec = get_int_prefd(PREF_ENCODER_ACODEC, -1);
+    future_prefs->encoder.audio_codec = prefs->encoder.audio_codec = get_int64_prefd(PREF_ENCODER_ACODEC, -1);
     prefs->encoder.capabilities = 0;
     prefs->encoder.of_allowed_acodecs = AUDIO_CODEC_UNKNOWN;
 
@@ -4636,6 +4640,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
   init_random();
+
 #ifdef WEED_STARTUP_TESTS
   run_weed_startup_tests();
 #if 0
@@ -8180,7 +8185,6 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       weed_layer_copy(layer, vlayer); // layer is non-NULL, so copy by reference
       weed_layer_nullify_pixel_data(vlayer);
       filter_mutex_unlock(key);
-      weed_set_boolean_value(layer, "HOST_RESIZABLE", WEED_TRUE);
     } else {
       mainw->osc_block = FALSE;
       create_blank_layer(layer, image_ext, width, height, target_palette);

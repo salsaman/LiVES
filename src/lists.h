@@ -22,6 +22,7 @@ LiVESList *buff_to_list(const char *buffer, const char *delim, boolean allow_bla
 int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean case_sensitive);
 
 boolean int_array_contains_value(int *array, int num_elems, int value);
+boolean int64_array_contains_value(int64_t *array, int num_elems, int64_t value);
 
 LiVESList *lives_list_sort_alpha(LiVESList *, boolean fwd);
 

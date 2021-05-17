@@ -75,6 +75,8 @@ my $extra_authors = @pieces[1];
 
 my $lang_code = (&rc_read("language_code", $file))[0];
 
+my $uid = (&rc_read("unique_id", $file))[0];
+
 my $versions = (&rc_read("version", $file))[0];
 @pieces = split(/$delim/, $versions);
 my $pver = @pieces[0];
@@ -262,6 +264,10 @@ print OUT "/////////////////////////////////////////////////////////////////////
 print OUT "static int package_version = $pver; // version of this package\n\n";
 print OUT "/////////////////////////////////////////////////////////////////////////////\n";
 
+if ($uid) {
+    print OUT "\n#define _UNIQUE_ID_ \"$uid\"\n\n";
+}
+
 #add requirements
 my $need_putils = 0;
 my $need_pconv = 0;
@@ -395,6 +401,10 @@ foreach (@requires) {
 	    $inc_stdio = 1;
 	}
     }
+}
+
+if ($uid && !$inc_stdio) {
+    print OUT "#include <stdio.h>\n";
 }
 
 print OUT "\nstatic int verbosity = WEED_VERBOSITY_ERROR;\n\n";
@@ -558,6 +568,10 @@ if (@disp) {
 print OUT "\nWEED_SETUP_START(200, 200) {\n";
 print OUT "  weed_plant_t *host_info = weed_get_host_info(plugin_info);\n";
 print OUT "  weed_plant_t *filter_class;\n";
+
+if ($uid) {
+    print OUT "  uint64_t unique_id;\n";
+}
 
 ## setup palette_list
 print OUT "  int palette_list[] = ";
@@ -854,6 +868,13 @@ if ($description) {
 ## set layout
 
 print OUT "  weed_plugin_info_add_filter_class(plugin_info, filter_class);\n";
+
+if ($uid) {
+    print OUT "\n  if (!sscanf(_UNIQUE_ID_, \"0X%lX\", &unique_id) || !sscanf(_UNIQUE_ID_, \"0x%lx\", &unique_id)) {\n";
+    print OUT "    weed_set_int64_value(plugin_info, WEED_LEAF_UNIQUE_ID, unique_id);\n";
+    print OUT "  }\n\n";
+}
+
 print OUT "  weed_plugin_set_package_version(plugin_info, package_version);\n";
 print OUT "}\n";
 print OUT "WEED_SETUP_END;\n\n";

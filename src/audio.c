@@ -1860,10 +1860,10 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       /// convert to float
       zzavel = zavel;
 
+      clip_vol = lives_vol_from_linear(mainw->files[from_files[track]]->vol);
+
       if (in_asamps[track] == 4) {
         // for float -> float
-        if (!mainw->preview_rendering) clip_vol = lives_vol_from_linear(mainw->files[from_files[track]]->vol);
-        else clip_vol = 1.;
         if (zavel < 0.) {
           if (reverse_buffer(in_buff, tbytes, in_achans[track] * 4))
             zavel = -zavel;
@@ -1894,8 +1894,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         lives_free(in_buff);
         /// if we are previewing a rendering, we would get double the volume adjustment, once from the rendering and again from
         /// the audio player, so in that case we skip the adjustment here
-        if (!mainw->preview_rendering) clip_vol = lives_vol_from_linear(mainw->files[from_files[track]]->vol);
-        else clip_vol = 1.;
+        //if (!mainw->preview_rendering)
+
         for (c = 0; c < out_achans; c++) {
           /// now we convert to holding_buff to float in float_buffer and adjust the track volume
           sample_move_d16_float(float_buffer[track * out_achans + c], holding_buff + c, nframes,
@@ -3076,11 +3076,11 @@ void freeze_unfreeze_audio(boolean is_frozen) {
   if (prefs->audio_src == AUDIO_SRC_INT) {
 #ifdef ENABLE_JACK
     if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK
-        && (mainw->jackd->playing_file == mainw->playing_file
+        && mainw->jackd->is_paused != is_frozen
+        && ((mainw->jackd->playing_file == mainw->playing_file
+             && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS))
             || ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
-                && (!is_frozen || (prefs->audio_opts & AUDIO_OPTS_LOCKED_FREEZE))))
-        && ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
-            || ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) && !is_frozen))) {
+                && (!is_frozen || (prefs->audio_opts & AUDIO_OPTS_LOCKED_FREEZE))))) {
       mainw->jackd->is_paused = is_frozen;
       if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&
           !mainw->agen_needs_reinit) {
@@ -3100,11 +3100,11 @@ void freeze_unfreeze_audio(boolean is_frozen) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE
-        && (mainw->pulsed->playing_file == mainw->playing_file
+        && mainw->pulsed->is_paused != is_frozen
+        && ((mainw->pulsed->playing_file == mainw->playing_file
+             && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS))
             || ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
-                && (!is_frozen || (prefs->audio_opts & AUDIO_OPTS_LOCKED_FREEZE))))
-        && ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
-            || ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) && !is_frozen))) {
+                && (!is_frozen || (prefs->audio_opts & AUDIO_OPTS_LOCKED_FREEZE))))) {
       mainw->pulsed->is_paused = is_frozen;
       if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&
           !mainw->agen_needs_reinit) {
@@ -4297,7 +4297,7 @@ boolean start_audio_stream(void) {
 #endif
 
   astreamer = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_AUDIO_STREAM, playername, NULL);
-  com = lives_strdup_printf("%s play %d \"%s\" \"%s\" %d", astreamer, mainw->vpp->audio_codec, astream_name, astream_name_out,
+  com = lives_strdup_printf("%s play %lu \"%s\" \"%s\" %d", astreamer, mainw->vpp->audio_codec, astream_name, astream_name_out,
                             arate);
   lives_free(astreamer);
 
@@ -4366,7 +4366,7 @@ void stop_audio_stream(void) {
     lives_free(astream_name);
 
     // astreamer should remove cooked stream
-    com = lives_strdup_printf("\"%s\" cleanup %d \"%s\"", astreamer, mainw->vpp->audio_codec, astream_name_out);
+    com = lives_strdup_printf("\"%s\" cleanup %lu \"%s\"", astreamer, mainw->vpp->audio_codec, astream_name_out);
     lives_system(com, FALSE);
     lives_free(astreamer);
     lives_free(com);

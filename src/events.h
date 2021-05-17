@@ -109,7 +109,7 @@ typedef struct {
 
 #define LIVES_TRACK_ANY -1000000
 
-#define AUD_DIFF_MIN 0.05  ///< ignore audio seek differences < than this (seconds)
+#define AUD_DIFF_MIN 0.2  ///< ignore audio seek differences < than this (seconds)
 #define AUD_DIFF_REVADJ 8. ///< allow longer seek differences when audio plauback direction reverses (multiplying factor)
 
 #ifndef HAS_EVENT_TYPEDEFS

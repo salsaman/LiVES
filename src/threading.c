@@ -346,11 +346,11 @@ void call_funcsig(lives_proc_thread_t info) {
     default: CALL_VOID_2(int, int64); break;
     } break;
   }
-  case FUNCSIG_BOOL_INT64: {
+  case FUNCSIG_BOOL_INT: {
     int p0; int64_t p1;
     switch (ret_type) {
-    case WEED_SEED_BOOLEAN: CALL_2(boolean, boolean, int64); break;
-    default: CALL_VOID_2(boolean, int64); break;
+    case WEED_SEED_BOOLEAN: CALL_2(boolean, boolean, int); break;
+    default: CALL_VOID_2(boolean, int); break;
     } break;
   }
   case FUNCSIG_INT_VOIDP: {

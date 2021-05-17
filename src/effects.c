@@ -1040,7 +1040,7 @@ deint1:
 // keypresses
 // TODO - we should mutex lock mainw->rte
 
-static boolean _rte_on_off(boolean from_menu, int64_t key) {
+static boolean _rte_on_off(boolean from_menu, int key) {
   // this is the callback which happens when a rte is keyed
   // key is 1 based, but if < 0 then this indicates auto mode (set via data connection)
   // in automode we don't add the effect parameters in ce_thumbs mode
@@ -1174,13 +1174,13 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
                             livespointer user_data) {
   boolean ret;
   int key = LIVES_POINTER_TO_INT(user_data);
-  main_thread_execute((lives_funcptr_t)_rte_on_off, WEED_SEED_BOOLEAN, &ret, "bI", (group != NULL), (int64_t)key);
+  main_thread_execute((lives_funcptr_t)_rte_on_off, WEED_SEED_BOOLEAN, &ret, "bi", (group != NULL), key);
   return ret;
 }
 
 boolean rte_on_off_callback_hook(LiVESToggleButton * button, livespointer user_data) {
   int key = LIVES_POINTER_TO_INT(user_data);
-  return _rte_on_off(FALSE, (int64_t)key);
+  return _rte_on_off(FALSE, key);
 }
 
 
@@ -1296,7 +1296,6 @@ LIVES_GLOBAL_INLINE int rte_getmodespk(void) {return prefs->rte_modes_per_key;}
 LIVES_GLOBAL_INLINE boolean rte_key_toggle(int key) {
   // key is 1 based, or < 0 for auto mode
   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(key));
-
   return rte_key_is_enabled(key);
 }
 

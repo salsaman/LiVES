@@ -3677,7 +3677,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
     old_scrap_frame = -1;
     rec_delta_tc = 0;
     /* end_tc */
-    /*   = get_event_timecode(get_last_frame_event(mainw->event_list)) */
+    /*   = get_event_timecode(get_last_frame_event(cfile->event_list)) */
     /*   + TICKS_PER_SECOND_DBL / cfile->fps; */
 
 #ifdef VFADE_RENDER
@@ -3728,24 +3728,31 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
   if (mainw->effects_paused) return LIVES_RENDER_EFFECTS_PAUSED;
 
 #ifdef USE_LIBPNG
-  // use internal image saver if we can
-  if (cfile->img_type == IMG_TYPE_PNG) intimg = TRUE;
+  if (r_video)
+    // use internal image saver if we can
+    if (cfile->img_type == IMG_TYPE_PNG) intimg = TRUE;
 #endif
+
+  if (event && !r_video && r_audio && !mainw->flush_audio_tc) {
+    while (event && !(WEED_EVENT_IS_MARKER(event) || WEED_EVENT_IS_AUDIO_FRAME(event))) {
+      event = get_next_frame_event(event);
+    }
+  }
 
   if (mainw->flush_audio_tc != 0 || event) {
     if (event) etype = get_event_type(event);
     else etype = WEED_EVENT_TYPE_FRAME;
     if (mainw->flush_audio_tc == 0) {
-      /* if (!(!mainw->multitrack && mainw->is_rendering && cfile->old_frames > 0 && out_frame <= cfile->frames)) { */
-      /*   is_blank = FALSE; */
-      /* 	g_print("pt ZZ2\n"); */
-      /* } */
+      if (!(!mainw->multitrack && mainw->is_rendering && cfile->old_frames > 0 && out_frame <= cfile->frames)) {
+        is_blank = FALSE;
+        //g_print("pt ZZ2\n");
+      }
       eventnext = get_next_event(event);
     } else {
       if (etype != WEED_EVENT_TYPE_MARKER)
         etype = WEED_EVENT_TYPE_FRAME;
     }
-    if (!r_video && etype != WEED_EVENT_TYPE_FRAME) etype = WEED_EVENT_TYPE_UNDEFINED;
+    if (!r_video && etype != WEED_EVENT_TYPE_FRAME && etype != WEED_EVENT_TYPE_MARKER) etype = WEED_EVENT_TYPE_UNDEFINED;
 
     switch (etype) {
     case WEED_EVENT_TYPE_MARKER: {
@@ -4030,10 +4037,11 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           mainw->blend_file = blend_file;
         }
         next_frame_event = get_next_frame_event(event);
+        tc = get_event_timecode(event);
       } else tc = mainw->flush_audio_tc;
 
       if (r_audio && (!next_frame_event || WEED_EVENT_IS_AUDIO_FRAME(event)
-                      || (mainw->flush_audio_tc != 0 && tc > mainw->flush_audio_tc)) && tc > atc) {
+                      || (mainw->flush_audio_tc != 0 && tc > mainw->flush_audio_tc)) && tc >= atc) {
         int auditracks;
         for (auditracks = 0; auditracks < MAX_AUDIO_TRACKS; auditracks++) {
           // see if we have any audio to render
@@ -4083,38 +4091,38 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
         set_proc_label(mainw->proc_ptr, blabel, FALSE);
         lives_freep((void **)&blabel);
-      }
 
-      if (mainw->flush_audio_tc != 0) {
-        if (read_write_error) return read_write_error;
-        return LIVES_RENDER_COMPLETE;
-      } else {
-        int *aclips = NULL;
-        double *aseeks = NULL;
-        int num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
+        if (mainw->flush_audio_tc != 0) {
+          if (read_write_error) return read_write_error;
+          return LIVES_RENDER_COMPLETE;
+        } else {
+          int *aclips = NULL;
+          double *aseeks = NULL;
+          int num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
 
-        for (i = 0; i < num_aclips; i += 2) {
-          if (aclips[i + 1] > 0) { // clipnum
-            double mult = 1.0;
-            mytrack = aclips[i] + nbtracks;
-            if (mytrack < 0) mytrack = 0;
-            //g_print("del was %f\n", xaseek[mytrack] - aseeks[i]);
-            if (prefs->rr_super && prefs->rr_ramicro) {
-              /// smooth out audio by ignoring tiny seek differences
-              xaseek[mytrack] += xavel[mytrack] * dt;
-              if (xavel[mytrack] * aseeks[i + 1] < 0.) mult *= AUD_DIFF_REVADJ;
-              if (xaclips[mytrack] != aclips[i + 1] || xaon[i >> 1]
-                  || fabs(xaseek[mytrack] - aseeks[i]) > AUD_DIFF_MIN * mult) {
-                xaseek[mytrack] = aseeks[i];
-              }
-            } else xaseek[mytrack] = aseeks[i];
-            if (xaclips[mytrack] != aclips[i + 1]) xaon[mytrack] = TRUE;
-            else xaon[mytrack] = TRUE;
-            xaclips[mytrack] = aclips[i + 1];
-            xavel[mytrack] = aseeks[i + 1];
+          for (i = 0; i < num_aclips; i += 2) {
+            if (aclips[i + 1] > 0) { // clipnum
+              double mult = 1.0;
+              mytrack = aclips[i] + nbtracks;
+              if (mytrack < 0) mytrack = 0;
+              //g_print("del was %f\n", xaseek[mytrack] - aseeks[i]);
+              if (prefs->rr_super && prefs->rr_ramicro) {
+                /// smooth out audio by ignoring tiny seek differences
+                xaseek[mytrack] += xavel[mytrack] * dt;
+                if (xavel[mytrack] * aseeks[i + 1] < 0.) mult *= AUD_DIFF_REVADJ;
+                if (xaclips[mytrack] != aclips[i + 1] || xaon[i >> 1]
+                    || fabs(xaseek[mytrack] - aseeks[i]) > AUD_DIFF_MIN * mult) {
+                  xaseek[mytrack] = aseeks[i];
+                }
+              } else xaseek[mytrack] = aseeks[i];
+              if (xaclips[mytrack] != aclips[i + 1]) xaon[mytrack] = TRUE;
+              else xaon[mytrack] = TRUE;
+              xaclips[mytrack] = aclips[i + 1];
+              xavel[mytrack] = aseeks[i + 1];
+            }
+            lives_freep((void **)&aseeks);
+            lives_freep((void **)&aclips);
           }
-          lives_freep((void **)&aseeks);
-          lives_freep((void **)&aclips);
         }
       }
 
@@ -4509,10 +4517,13 @@ filterinit2:
     }
 
     if (r_audio) {
-      next_out_tc += TICKS_PER_SECOND_DBL / cfile->fps;
-      render_audio_segment(1, NULL, mainw->multitrack != NULL
-                           ? mainw->multitrack->render_file : mainw->current_file,
-                           NULL, NULL, atc, next_out_tc, chvols, 0., 0., NULL);
+      next_out_tc = q_gint64(get_event_timecode(get_last_frame_event(mainw->event_list)) + rec_delta_tc
+                             + TICKS_PER_SECOND_DBL / cfile->fps, cfile->fps);
+      render_audio_segment(natracks, xaclips, mainw->multitrack != NULL ? mainw->multitrack->render_file :
+                           mainw->current_file, xavel, xaseek, atc, next_out_tc, chvols, 1., 1., NULL);
+      /* render_audio_segment(1, NULL, mainw->multitrack != NULL */
+      /*                      ? mainw->multitrack->render_file : mainw->current_file, */
+      /*                      NULL, NULL, atc, next_out_tc, chvols, 0., 0., NULL); */
       cfile->afilesize = reget_afilesize_inner(mainw->current_file);
     }
     mainw->filter_map = NULL;
@@ -6382,7 +6393,8 @@ static void rdet_use_current(LiVESButton * button, livespointer user_data) {
   if (CURRENT_CLIP_HAS_VIDEO) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_width), (double)cfile->hsize);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_height), (double)cfile->vsize);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_fps), cfile->fps);
+    if (lives_widget_get_sensitive(rdet->spinbutton_fps))
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_fps), cfile->fps);
     lives_spin_button_update(LIVES_SPIN_BUTTON(rdet->spinbutton_width));
 
     aspect = paramspecial_get_aspect();

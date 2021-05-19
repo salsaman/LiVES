@@ -265,7 +265,7 @@ static weed_plant_t *copy_with_check(weed_plant_t *event, weed_plant_t *out_list
 }
 
 
-#define READJ_MIN_TIME 0.1
+#define READJ_MIN_TIME 4.0
 #define READJ_MIN_RATIO 0.9
 #define READJ_MAX_RATIO 1.1
 
@@ -483,7 +483,7 @@ void pre_analyse(weed_plant_t *elist) {
       }
 
       // pass 1, we adjust all velocities so we touch each actual point
-      // pass 2, we adjust posns. to reduve the vel. diff. at the point
+      // pass 2, we adjust posns. to reduce the vel. diff. at the point
       // pass 3, we limit the deltas from original
       // pass 4, we introduce intermediate points, halfway between a and b in time and pos
 
@@ -571,7 +571,7 @@ void pre_analyse(weed_plant_t *elist) {
     weed_timecode_t out_tc = 0, offset_tc = 0, in_tc, laud_tc = 0, nx_tc = 0, xnx_tc = 0;
     weed_timecode_t nxt_out_tc, end_tc;
     weed_timecode_t recst_tc = 0;
-    weed_timecode_t frame_tc = 0, oframe_tc;
+    weed_timecode_t frame_tc = 0;
 
     weed_plant_t *out_list, *xout_list;
     weed_event_t *naudio_event = NULL;

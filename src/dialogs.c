@@ -1899,7 +1899,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     //    g_print("MSG is %s\n", mainw->msg);
 
-    if (lives_strncmp(mainw->msg, "completed", 8) && strncmp(mainw->msg, "error", 5) &&
+    if (*mainw->msg && lives_strncmp(mainw->msg, "completed", 8) && strncmp(mainw->msg, "error", 5) &&
         strncmp(mainw->msg, "killed", 6) && (visible ||
             ((lives_strncmp(mainw->msg, "video_ended", 11) || mainw->whentostop != STOP_ON_VID_END)
              && (lives_strncmp(mainw->msg, "audio_ended", 11) || mainw->preview ||
@@ -1937,45 +1937,46 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
                   int frames_done = atoi(mainw->msg);
                   if (frames_done > 0 && mainw->proc_ptr) mainw->proc_ptr->frames_done = frames_done;
 		  // *INDENT-OFF*
-		}}}}}}
-      // *INDENT-ON*
+		}}}}}}}
+    // *INDENT-ON*
 
-      // do a processing pass
-      if (process_one(visible)) {
-        lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+    // do a processing pass
+    if (process_one(visible)) {
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 #ifdef USE_GDK_FRAME_CLOCK
-        if (using_gdk_frame_clock) {
-          gdk_frame_clock_end_updating(gclock);
-        }
+      if (using_gdk_frame_clock) {
+        gdk_frame_clock_end_updating(gclock);
+      }
 #endif
-        if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
-        if (visible) mainw->noswitch = FALSE;
-        return FALSE;
+      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
+      if (visible) mainw->noswitch = FALSE;
+      return FALSE;
+    }
+
+    if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) {
+      int64_t dsused = disk_monitor_check_result(prefs->workdir);
+      if (dsused >= 0) {
+        capable->ds_used = dsused;
       }
+      disk_monitor_start(prefs->workdir);
+      mainw->dsu_valid = FALSE;
+    }
 
-      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) {
-        int64_t dsused = disk_monitor_check_result(prefs->workdir);
-        if (dsused >= 0) {
-          capable->ds_used = dsused;
-        }
-        disk_monitor_start(prefs->workdir);
-        mainw->dsu_valid = FALSE;
-      }
+    if (LIVES_UNLIKELY(mainw->agen_needs_reinit)) {
+      // we are generating audio from a plugin and it needs reinit
+      // - we do it in this thread so as not to hold up the player thread
+      reinit_audio_gen();
+    }
 
+    if (mainw->iochan && progress_count == 0) {
+      // pump data from stdout to textbuffer
+      pump_io_chan(mainw->iochan);
+    }
 
-      if (LIVES_UNLIKELY(mainw->agen_needs_reinit)) {
-        // we are generating audio from a plugin and it needs reinit
-        // - we do it in this thread so as not to hold up the player thread
-        reinit_audio_gen();
-      }
-
-      if (mainw->iochan && progress_count == 0) {
-        // pump data from stdout to textbuffer
-        pump_io_chan(mainw->iochan);
-      }
-
-      if (!mainw->internal_messaging) lives_nanosleep(1000000);
-    } else break;
+    if (!mainw->internal_messaging) {
+      lives_nanosleep(1000000);
+    }
+    //else break;
   }
 
 #ifdef USE_GDK_FRAME_CLOCK

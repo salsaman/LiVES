@@ -2465,6 +2465,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
         jackd->playing_file = new_file;
       }
       jackd->seek_pos = jackd->real_seek_pos = 0;
+      push_cache_buffer(cache_buffer, jackd, 0, 0, 1.);
       break;
     case ASERVER_CMD_FILE_CLOSE:
       jackd->playing_file = -1;
@@ -2490,14 +2491,12 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
     jackd->msgq = msg->next;
     if (jackd->msgq && jackd->msgq->next == jackd->msgq) jackd->msgq->next = NULL;
 
-    if (!jackd->in_use) {
-      if (!jackd->is_silent) {
-        output_silence(0, nframes, jackd, out_buffer);
-        jackd->is_silent = TRUE;
-      }
-      in_ap = FALSE;
-      return 0;
+    if (!jackd->is_silent) {
+      output_silence(0, nframes, jackd, out_buffer);
+      jackd->is_silent = TRUE;
     }
+    in_ap = FALSE;
+    return 0;
   }
   /* retrieve the buffers for the output ports */
   for (i = 0; i < nch; i++)
@@ -2806,7 +2805,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       if (numFramesToWrite > 0) {
         if (!from_memory) {
           //	if (((int)(jackd->num_calls/100.))*100==jackd->num_calls) if (mainw->soft_debug) g_print("audio pip\n");
-          if ((mainw->agen_key != 0 || mainw->agen_needs_reinit || cache_buffer->bufferf) && !mainw->preview &&
+          if ((mainw->agen_key != 0 || mainw->agen_needs_reinit || cache_buffer->bufferf) && !mainw->preview_rendering &&
               !jackd->mute) { // TODO - try buffer16 instead of bufferf
             float *fbuffer = NULL;
 

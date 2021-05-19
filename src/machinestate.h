@@ -162,9 +162,9 @@ char *get_current_timestamp(void);
 #define LIVES_FORTY_WINKS 40000000. // 40 mSec
 #define LIVES_WAIT_A_SEC 1000000000. // 1 second
 
-#define lives_nanosleep(nanosec) {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
+#define lives_nanosleep(nanosec) do {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
-								     errno != ETIMEDOUT);}
+								     errno != ETIMEDOUT);} while (0);
 
 #define lives_nanosleep_until_nonzero(condition) {while (!(condition)) lives_nanosleep(LIVES_QUICK_NAP);}
 #define lives_nanosleep_until_zero(condition) {while ((condition)) lives_nanosleep(LIVES_QUICK_NAP);}

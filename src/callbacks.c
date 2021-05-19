@@ -9369,7 +9369,9 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
       } else {
         if (mainw->is_processing && mainw->is_rendering && prefs->render_audio) {
           // render audio up to current tc
-          mainw->flush_audio_tc = q_gint64((double)cfile->undo_end / cfile->fps * TICKS_PER_SECOND_DBL, cfile->fps);
+          if (mainw->proc_ptr)
+            mainw->flush_audio_tc = q_gint64((double)mainw->proc_ptr->frames_done
+                                             / cfile->fps * TICKS_PER_SECOND_DBL, cfile->fps);
           render_events_cb(FALSE);
           mainw->flush_audio_tc = 0;
           cfile->afilesize = reget_afilesize_inner(mainw->current_file);

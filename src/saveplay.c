@@ -2275,8 +2275,7 @@ void play_file(void) {
                             (freeze_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL)));
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_BackSpace,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
-                            (LiVESAccelFlags)0,
+                            (LiVESXModifierType)(LIVES_SHIFT_MASK), (LiVESAccelFlags)0,
                             (bg_freeze_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL)));
 

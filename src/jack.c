@@ -2478,7 +2478,6 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       xseek = ALIGN_CEIL64(xseek, afile->achans * (afile->asampsize >> 3));
       if (xseek < 0) xseek = 0;
       jackd->seek_pos = jackd->real_seek_pos = afile->aseek_pos = xseek;
-      push_cache_buffer(cache_buffer, jackd, 0, 0, 1.);
       jackd->in_use = TRUE;
       break;
     default:
@@ -2624,6 +2623,13 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       mainw->audio_seek_ready = TRUE;
       pthread_cond_signal(&mainw->avseek_cond);
       pthread_mutex_unlock(&mainw->avseek_mutex);
+
+      if (!jackd->is_silent) {
+        output_silence(0, nframes, jackd, out_buffer);
+        jackd->is_silent = TRUE;
+      }
+      in_ap = FALSE;
+      return 0;
     }
 
     if (LIVES_LIKELY(jackFramesAvailable > 0)) {
@@ -2640,7 +2646,15 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
         boolean eof = FALSE;
         int playfile = mainw->playing_file;
 
-        if (oxrun_cnt) jackd->seek_pos += nframes * afile->achans * (afile->asampsize >> 3);
+        if (oxrun_cnt) {
+          jackd->seek_pos += nframes * oxrun_cnt * afile->achans * (afile->asampsize >> 3);
+          if (!jackd->is_silent) {
+            output_silence(0, nframes, jackd, out_buffer);
+            jackd->is_silent = TRUE;
+          }
+          in_ap = FALSE;
+          return 0;
+        }
 
         jackd->seek_end = 0;
         if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && IS_VALID_CLIP(jackd->playing_file)) {

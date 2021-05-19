@@ -451,15 +451,15 @@ static inline weed_data_t **weed_data_new(uint32_t seed_type, weed_size_t num_el
       if (!(data[i] = weed_malloc_sizeof(weed_data_t)))
 	return weed_data_free(data, --i, num_elems, seed_type);
       if (seed_type == WEED_SEED_STRING) {
-	data[i]->value.voidptr = (weed_voidptr_t)(((data[i]->size = weed_strlen(valuec[i])) > nullv) ?
-						  (weed_voidptr_t)weed_malloc_and_copy(data[i]->size - nullv,
-										       valuec[i]) : NULL);
+	data[i]->value.voidptr = valuec ? (weed_voidptr_t)(((data[i]->size = weed_strlen(valuec[i])) > nullv) ?
+							   (weed_voidptr_t)weed_malloc_and_copy(data[i]->size - nullv,
+												valuec[i]) : NULL) : NULL;
       } else {
         data[i]->size = weed_seed_get_size(seed_type, 0);
         if (seed_type == WEED_SEED_FUNCPTR)
-	  data[i]->value.funcptr = valuef[i];
+	  data[i]->value.funcptr = valuef ? valuef[i] : NULL;
         else {
-          if (is_ptr) data[i]->value.voidptr = valuep[i];
+          if (is_ptr) data[i]->value.voidptr = valuep ? valuep[i] : NULL;
           else data[i]->value.voidptr =
 		 (weed_voidptr_t)(weed_malloc_and_copy(data[i]->size,
 						       (char *)values + i * data[i]->size));}}

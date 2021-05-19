@@ -85,6 +85,7 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
   int irowstride1 = weed_channel_get_stride(in_channels[0]);
   int irowstride2 = weed_channel_get_stride(in_channels[1]);
   int orowstride = weed_channel_get_stride(out_channel);
+  int is_threading = weed_is_threading(inst);
   int inplace = (src1 == dst);
 
   if (pal == WEED_PALETTE_ARGB32) start = 1;
@@ -104,12 +105,24 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
 
   if (type == 0) {
     sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
-    if (sdata->obf != blend_factor) {
-      /// ensure that only one thread updates the blend table
-      if (offset == 0) {
+    if (is_threading == WEED_TRUE) {
+      if (!weed_plant_has_leaf(inst, WEED_LEAF_STATE_UPDATED)) {
+        return WEED_ERROR_FILTER_INVALID;
+      }
+      if (weed_get_boolean_value(inst, WEED_LEAF_STATE_UPDATED, NULL) == WEED_FALSE) {
+        // threadsafe updates - because we set WEED_FILTER_HINT_STATEFUL | WEED_FILTER_HINT_MAY_THREAD
+        if (sdata && sdata->obf != blend_factor) {
+          make_blend_table(sdata, blend_factor, blendneg);
+          sdata->obf = blend_factor;
+        }
+        //
+        weed_set_boolean_value(inst, WEED_LEAF_STATE_UPDATED, WEED_TRUE);
+      }
+    } else {
+      if (sdata && sdata->obf != blend_factor) {
         make_blend_table(sdata, blend_factor, blendneg);
         sdata->obf = blend_factor;
-      } else while (sdata->obf != blend_factor) usleep(10);
+      }
     }
   }
 
@@ -209,7 +222,8 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *filter_class
     = weed_filter_class_init("chroma blend", "salsaman", 1,
-                             WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
+                             WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_STATEFUL
+                             | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                              chroma_init, chroma_process, chroma_deinit,
                              in_chantmpls, out_chantmpls, in_params1, NULL);
 

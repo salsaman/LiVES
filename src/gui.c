@@ -2422,24 +2422,19 @@ void create_LiVES(void) {
 
   // actually, for up and down, the user data doesn't matter since it is ignored when we create synthetic
   // key presses, and only the keymod counts. However it's added here as a guide.
+  //////////////////////////
+
+  // key + SHIFT == background
+
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
                             LIVES_CONTROL_MASK | LIVES_SPECIAL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK
-                                | LIVES_SPECIAL_MASK),
+                            (LiVESXModifierType)(LIVES_SHIFT_MASK | LIVES_SPECIAL_MASK),
                             (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
-
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
-                            (LIVES_ALT_MASK | LIVES_SPECIAL_MASK), (LiVESAccelFlags)0,
-                            lives_cclosure_new(LIVES_GUI_CALLBACK(less_callback), NULL, NULL));
-
-  //////////////////////////
-
-  // key + alt == background
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up,
                             (LIVES_CONTROL_MASK | LIVES_SPECIAL_MASK), (LiVESAccelFlags)0,
@@ -2447,16 +2442,11 @@ void create_LiVES(void) {
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK
-                                | LIVES_SPECIAL_MASK),
-                            (LiVESAccelFlags)0,
+                            (LiVESXModifierType)(LIVES_SHIFT_MASK | LIVES_SPECIAL_MASK), (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(faster_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up,
-                            (LiVESXModifierType)(LIVES_SHIFT_MASK | LIVES_SPECIAL_MASK),
-                            (LiVESAccelFlags)0,
-                            lives_cclosure_new(LIVES_GUI_CALLBACK(more_callback), NULL, NULL));
+  ///
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Left,
                             (LIVES_CONTROL_MASK | LIVES_SPECIAL_MASK), (LiVESAccelFlags)0,
@@ -2466,24 +2456,15 @@ void create_LiVES(void) {
                             (LIVES_CONTROL_MASK | LIVES_SPECIAL_MASK), (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(skip_forward_callback), NULL, NULL));
 
+  ///
+
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
                             (LiVESXModifierType)(LIVES_CONTROL_MASK),
                             (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
-  // space + shift == lock
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
-                            (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_lock_callback),
-                                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
-
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), GDK_KEY_braceleft,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK),
-                            (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_lock_callback),
-                                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
-
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
+                            (LiVESXModifierType)(LIVES_SHIFT_MASK),
                             (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
@@ -2492,10 +2473,36 @@ void create_LiVES(void) {
                             lives_cclosure_new(LIVES_GUI_CALLBACK(fps_reset_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
+  // two keys mapped since not all combos work
+
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Return,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK), (LiVESAccelFlags)0,
+                            (LiVESXModifierType)(LIVES_SHIFT_MASK), (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(fps_reset_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
+  // key + ALT - special actions
+
+  // up / down - more / less keygrabbed effect
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
+                            (LIVES_ALT_MASK | LIVES_SPECIAL_MASK), (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(less_callback), NULL, NULL));
+
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up,
+                            (LiVESXModifierType)(LIVES_ALT_MASK | LIVES_SPECIAL_MASK),
+                            (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(more_callback), NULL, NULL));
+
+  // space + alt == lock
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
+                            (LiVESXModifierType)(LIVES_ALT_MASK | LIVES_CONTROL_MASK),
+                            (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_lock_callback),
+                                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
+
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), GDK_KEY_braceleft,
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK),
+                            (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_lock_callback),
+                                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
+
+  ///////
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Less, (LiVESXModifierType)(LIVES_SHIFT_MASK
                             | LIVES_SPECIAL_MASK),

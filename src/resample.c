@@ -954,8 +954,8 @@ void pre_analyse(weed_plant_t *elist) {
               if (event != frame_event && old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth && interpolate) {
                 /// interpolate frames if possible
                 double ratio = (double)(out_tc + offset_tc - frame_tc) / (double)(xnx_tc - frame_tc);
-                lives_free(nclips);
-                lives_free(nframes);
+                lives_freep((void **)&nclips);
+                lives_freep((void **)&nframes);
                 ntracks = weed_frame_event_get_tracks(xnframe_event, &nclips, &nframes);
                 for (i = 0; i < tracks; i++) {
                   if (i >= ntracks) break;
@@ -963,8 +963,8 @@ void pre_analyse(weed_plant_t *elist) {
                     frames[i] = (frames64_t)((double)frames[i] + (double)(nframes[i] - frames[i]) * ratio);
 		  // *INDENT-OFF*
                   }}}
-	      lives_free(nclips);
-	      lives_free(nframes);
+	      lives_freep((void **)&nclips);
+	      lives_freep((void **)&nframes);
 	    }}
 	  // *INDENT-ON*
 

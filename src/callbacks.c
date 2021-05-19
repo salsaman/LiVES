@@ -18,7 +18,6 @@
 #include "effects.h"
 #include "resample.h"
 #include "rte_window.h"
-#include "events.h"
 #include "audio.h"
 #include "cvirtual.h"
 #include "paramwindow.h"
@@ -4889,7 +4888,7 @@ void on_volch_pressed(LiVESButton * button, livespointer user_data) {
   if (cfile->vol > 2.) cfile->vol = 2.;
   if (cfile->vol < 0.) cfile->vol = 0.;
   if (prefs->show_overlay_msgs && !(mainw->urgency_msg && prefs->show_urgency_msgs))
-    d_print_overlay(.5, _("Clip volume: %.2f"), cfile->vol);
+    d_print_overlay(.5, _("Clip playback volume: %.2f"), cfile->vol);
 }
 
 

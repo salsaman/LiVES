@@ -106,10 +106,15 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
         return WEED_ERROR_FILTER_INVALID;
       }
       if (weed_get_boolean_value(inst, WEED_LEAF_STATE_UPDATED, NULL) == WEED_FALSE) {
+        // threadsafe updates - because we set WEED_FILTER_HINT_STATEFUL | WEED_FILTER_HINT_MAY_THREAD
         if (fastrnd_dbl(1.) >= bfd) sdata->cpy0 = 0;
         else sdata->cpy0 = 1;
+        //
         weed_set_boolean_value(inst, WEED_LEAF_STATE_UPDATED, WEED_TRUE);
       }
+    } else {
+      if (fastrnd_dbl(1.) >= bfd) sdata->cpy0 = 0;
+      else sdata->cpy0 = 1;
     }
     if (inplace && !sdata->cpy0) return WEED_SUCCESS;
   }

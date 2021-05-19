@@ -462,7 +462,15 @@ LIVES_GLOBAL_INLINE int lives_open_buffered_rdonly(const char *pathname) {
 
 boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-  off_t fsize = get_file_size(fd) - skip, bufsize = smbytes, res;
+  off_t fsize = get_file_size(fd) - skip, bufsize = smedbytes, res;
+#if defined HAVE_POSIX_FADVISE
+  posix_fadvise(fbuff->fd, skip, 0, POSIX_FADV_SEQUENTIAL);
+  posix_fadvise(fbuff->fd, skip, 0, POSIX_FADV_NOREUSE);
+  posix_fadvise(fbuff->fd, skip, 0, POSIX_FADV_WILLNEED);
+#endif
+#ifdef __linux__
+  readahead(fbuff->fd, skip, fsize);
+#endif
   fbuff->ptr = fbuff->buffer = lives_calloc(1, fsize);
   mlock(fbuff->buffer, fsize);
   fbuff->skip = skip;

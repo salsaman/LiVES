@@ -176,16 +176,17 @@ FN_TYPE int weed_plant_has_leaf(weed_plant_t *plant, const char *key) {
   return __weed_check_leaf__(plant, key) == WEED_SUCCESS ? WEED_TRUE : WEED_FALSE;}
 
 #define _WEED_SET_(stype) return weed_leaf_set(plant, key, WEED_SEED_##stype, 1, (weed_voidptr_t)&value);
+#define _WEED_SET_P(stype) return weed_leaf_set(plant, key, WEED_SEED_##stype, 1, value ? (weed_voidptr_t)&value : NULL);
 
   /*							--- SINGLE VALUE SETTERS ---						*/
 FN_TYPE weed_error_t weed_set_int_value(weed_plant_t *plant, const char *key, int32_t value) {_WEED_SET_(INT)}
 FN_TYPE weed_error_t weed_set_double_value(weed_plant_t *plant, const char *key, double value) {_WEED_SET_(DOUBLE)}
 FN_TYPE weed_error_t weed_set_boolean_value(weed_plant_t *plant, const char *key, int32_t value) {_WEED_SET_(BOOLEAN)}
 FN_TYPE weed_error_t weed_set_int64_value(weed_plant_t *plant, const char *key, int64_t value) {_WEED_SET_(INT64)}
-FN_TYPE weed_error_t weed_set_string_value(weed_plant_t *plant, const char *key, const char *value) {_WEED_SET_(STRING)}
-FN_TYPE weed_error_t weed_set_funcptr_value(weed_plant_t *plant, const char *key, weed_funcptr_t value) {_WEED_SET_(FUNCPTR)}
-FN_TYPE weed_error_t weed_set_voidptr_value(weed_plant_t *plant, const char *key, weed_voidptr_t value) {_WEED_SET_(VOIDPTR)}
-FN_TYPE weed_error_t weed_set_plantptr_value(weed_plant_t *plant, const char *key, weed_plant_t *value) {_WEED_SET_(PLANTPTR)}
+FN_TYPE weed_error_t weed_set_string_value(weed_plant_t *plant, const char *key, const char *value) {_WEED_SET_P(STRING)}
+FN_TYPE weed_error_t weed_set_funcptr_value(weed_plant_t *plant, const char *key, weed_funcptr_t value) {_WEED_SET_P(FUNCPTR)}
+FN_TYPE weed_error_t weed_set_voidptr_value(weed_plant_t *plant, const char *key, weed_voidptr_t value) {_WEED_SET_P(VOIDPTR)}
+FN_TYPE weed_error_t weed_set_plantptr_value(weed_plant_t *plant, const char *key, weed_plant_t *value) {_WEED_SET_P(PLANTPTR)}
 
 #undef _WEED_SET_
 FN_TYPE weed_error_t __weed_leaf_check__(weed_plant_t *plant, const char *key, uint32_t seed_type) {

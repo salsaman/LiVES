@@ -6,6 +6,15 @@
 
 #include "main.h"
 
+LIVES_GLOBAL_INLINE lives_capacity_t *lives_capacities_new(void) {
+  return lives_plant_new(LIVES_WEED_SUBTYPE_CAPACITIES);
+}
+
+LIVES_GLOBAL_INLINE void lives_capacities_free(lives_capacity_t *cap) {
+  if (cap) weed_plant_free(cap);
+}
+
+
 weed_param_t *weed_param_from_iparams(lives_intentparams_t *iparams, const char *name) {
   // find param by NAME, if it lacks a VALUE, set it from default
   // and also set the plant type to WEED_PLANT_PARAMETER - this is to allow

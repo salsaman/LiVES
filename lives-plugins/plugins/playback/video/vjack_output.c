@@ -9,7 +9,10 @@
 
 /////////////////////////////////////////////////////////////////
 
-static char plugin_version[64] = "LiVES videojack output client 1.1";
+static int vmaj = 1;
+static int vmin = 1;
+const char *plugin_name = "LiVES videojack output";
+
 static char fps_list[256];
 static int palette_list[2];
 static int mypalette;
@@ -97,9 +100,11 @@ const char *module_check_init(void) {
   return NULL;
 }
 
-const char *version(void) {
-  return plugin_version;
+
+const lives_plugin_id_t *get_plugin_id(void) {
+  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
+
 
 const char *get_description(void) {
   return "The vjack_output plugin allows sending frames to videojack.\nThis is an experimental plugin\n";

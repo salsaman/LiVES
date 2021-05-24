@@ -10,7 +10,7 @@
 #define EXEC_RFX_BUILDER "build-lives-rfx-plugin"
 
 /// must match whatever is in RFX_BUILDER
-#define RFX_VERSION "1.8.3"
+#define RFX_VERSION "1.8.5"
 
 /// this definition must match with smogrify
 #define EXEC_RFX_BUILDER_MULTI "build-lives-rfx-plugin-multi"

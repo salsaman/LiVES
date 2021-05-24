@@ -694,9 +694,8 @@ LiVESWidget *widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVE
                                            ? widget_opts.scale : 1.)) >> 2) << 1,
                                     ((int)(DEF_FRAME_VSIZE_UNSCALED * (widget_opts.scale < 1.
                                            ? widget_opts.scale : 1.)) >> 2) << 1);
-    } else {
-      lives_widget_set_vexpand(mainw->fs_playframe, TRUE);
-    }
+    } else lives_widget_set_vexpand(mainw->fs_playframe, TRUE);
+
     lives_container_add(LIVES_CONTAINER(mainw->fs_playframe), mainw->fs_playalign);
     lives_container_add(LIVES_CONTAINER(mainw->fs_playalign), mainw->fs_playarea);
     lives_container_add(LIVES_CONTAINER(mainw->fs_playarea), mainw->fs_playimg);
@@ -1104,16 +1103,22 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   LiVESWidget *hbox;
   LiVESWidget *layout;
 
-  lives_clipinfo_t *filew = (lives_clipinfo_t *)(lives_malloc(sizeof(lives_clipinfo_t)));
+  lives_clipinfo_t *filew;
 
   char *title;
   char *tmp;
 
   int offset = 0;
 
-  if (!is_mt)
+  filew = (lives_clipinfo_t *)(lives_malloc(sizeof(lives_clipinfo_t)));
+
+  if (!is_mt) {
+    if (!CURRENT_CLIP_IS_VALID) return NULL;
     title = get_menu_name(cfile, TRUE);
-  else {
+    if (prefs->show_dev_opts) {
+      title = lives_concat(title, lives_strdup_printf(" (%s)", cfile->handle));
+    }
+  } else {
     offset = 2;
     title = (_("Multitrack Details"));
   }
@@ -7644,7 +7649,7 @@ boolean msg_area_config(LiVESWidget * widget) {
   if (mainw->multitrack && lives_widget_get_allocation_height(mainw->multitrack->top_vbox) < 32)
     return FALSE;
 
-  lives_widget_set_vexpand(widget, TRUE);
+  //lives_widget_set_vexpand(widget, TRUE);
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
 
@@ -7657,10 +7662,6 @@ boolean msg_area_config(LiVESWidget * widget) {
   reqwidth = -1;
   if (reqheight != -1) height = reqheight;
   reqheight = -1;
-
-  // the expose event for the message area is a good opportunity to recheck the window size
-
-  //if (width < LAYOUT_SIZE_MIN || height < LAYOUT_SIZE_MIN) return FALSE;
 
   llast = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
                                "layout_last"));
@@ -7778,8 +7779,8 @@ boolean msg_area_config(LiVESWidget * widget) {
       if (width < 0 || height < 0) return FALSE;
     }
 
-    w = ww - overflowx;
-    h = hh - overflowy;
+    w = ww - overflowx + abs(bx);
+    h = hh - overflowy + abs(by);
 
     if (!prefs->open_maximised) {
       mainw->assumed_width = w;
@@ -7796,8 +7797,8 @@ boolean msg_area_config(LiVESWidget * widget) {
       g_print("2MOVE to %d X %d\n", posx, posy);
 #endif
     } else {
-      mainw->assumed_width = rect.width;// - overflowx;// - bx;
-      mainw->assumed_height = rect.height;// - overflowy;// - by;
+      mainw->assumed_width = w;//rect.width;// - overflowx;// - bx;
+      mainw->assumed_height = h;//rect.height;// - overflowy;// - by;
     }
 
     if (!prefs->open_maximised) {
@@ -7845,13 +7846,15 @@ boolean msg_area_config(LiVESWidget * widget) {
 #endif
 
       // NECESSARY !
-      lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+      lives_window_move_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), abs(bx), abs(by), w, h);
 
       if (width + overflowx > scr_width) {
         lives_widget_set_size_request(widget, width, height);
+        //lives_widget_set_size_request(lives_widget_get_parent(widget), width, height);
         reqwidth = width;
       } else {
         lives_widget_set_size_request(widget, -1, height);
+        //lives_widget_set_size_request(lives_widget_get_parent(widget), -1, height);
         reqwidth = width + overflowx;
       }
       reqheight = height;

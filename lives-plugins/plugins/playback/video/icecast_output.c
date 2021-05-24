@@ -1,5 +1,5 @@
 // LiVES - ogg/theora/vorbis to icecast stream engine
-// (c) G. Finch 2004 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -12,6 +12,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
+
+static int audio;
 
 static int mypalette = WEED_PALETTE_END;
 static int palette_list[2];
@@ -19,7 +22,11 @@ static int palette_list[2];
 static int clampings[3];
 static int myclamp;
 
-static char plugin_version[64] = "LiVES ogg/theora/vorbis stream engine version 1.0";
+static int vmaj = 1;
+static int vmin = 1;
+const char *plugin_name = "LiVES icecast output";
+
+#define _IGN_RET(a) ((void)((a) + 1))
 
 static boolean(*render_fn)(int hsize, int vsize, void **pixel_data);
 boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data);
@@ -27,7 +34,7 @@ boolean render_frame_unknown(int hsize, int vsize, void **pixel_data);
 
 static int ov_vsize, ov_hsize;
 
-static char *workdir;
+static char *workdir = NULL;
 
 static char xfile[PATH_MAX];
 
@@ -42,17 +49,13 @@ static int aforms[2];
 typedef struct {
   y4m_stream_info_t streaminfo;
   y4m_frame_info_t frameinfo;
-  y4m_ratio_t sar;
-  y4m_ratio_t dar;
+  y4m_ratio_t sar, dar;
   int fd;
-  int hsize;
-  int vsize;
+  int hsize, vsize;
   y4m_ratio_t fps;
-  int bufn;
-  int bufc;
+  int bufn, bufc;
   uint8_t ** *framebuf;
 } yuv4m_t;
-
 
 static yuv4m_t *yuv4mpeg;
 
@@ -65,15 +68,12 @@ yuv4m_t *yuv4mpeg_alloc(void) {
 }
 
 
-
 static void make_path(const char *fname, int pid, const char *ext) {
   snprintf(xfile, PATH_MAX, "%s/%s-%d.%s", workdir, fname, pid, ext);
 }
 
-static uint8_t **blankframe;
 
-
-
+static uint8_t **blankframe = NULL;
 
 static uint8_t **make_blankframe(size_t size, boolean clear) {
   uint8_t **planes;
@@ -103,7 +103,7 @@ static uint8_t **make_blankframe(size_t size, boolean clear) {
     return NULL;
   }
 
-  // yes i know....129....well some encoders may ignore "black frames" @ start
+  // 129 since some encoders may choose to ignore "black frames" @ start
   if (clear) memset(planes[1], 129, size);
 
   planes[2] = (uint8_t *)malloc(size);
@@ -119,15 +119,11 @@ static uint8_t **make_blankframe(size_t size, boolean clear) {
 }
 
 
-
-
 //////////////////////////////////////////////
-
 
 const char *module_check_init(void) {
   FILE *fp;
   char buffer[PATH_MAX];
-  const char *dummy;
 
   // check all binaries are present
 
@@ -140,26 +136,31 @@ const char *module_check_init(void) {
   yuv4mpeg->fd = -1;
 
   // get tempdir
-  fp = popen("smogrify get_workdir", "r");
-  dummy = fgets(buffer, PATH_MAX, fp);
+  fp = popen("mktemp -d lives-icecast-out-XXXXXXXXXX", "r");
+  IGN_RET(fgets(buffer, PATH_MAX, fp));
   pclose(fp);
   workdir = strdup(buffer);
 
   blankframe = NULL;
 
-  dummy = dummy; // keep compiler happy
-
   return NULL;
 }
 
 
-const char *version(void) {
-  return plugin_version;
+const lives_plugin_id_t *get_plugin_id(void) {
+  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
+
 const char *get_description(void) {
-  return "The icecast_output plugin provides realtime encoding\n to an icecast2 server in ogg/theora/vorbis format.\nIt requires ffmpeg2theora, oggTranscode, oggfwd and oggJoin.\nTry first with small frame sizes and low fps.\nNB: oggTranscode can be downloaded as part of oggvideotools 0.8a\nhttp://sourceforge.net/projects/oggvideotools/files/\n";
+  return "The icecast_output plugin provides realtime encoding\n"
+         "to an icecast2 server in ogg/theora/vorbis format.\n"
+         "It requires ffmpeg2theora, oggTranscode, oggfwd and oggJoin.\n"
+         "Try first with small frame sizes and low fps.\n"
+         "NB: oggTranscode can be downloaded as part of oggvideotools 0.8a\n"
+         "http://sourceforge.net/projects/oggvideotools/files/\n";
 }
+
 
 const int *get_palette_list(void) {
   palette_list[0] = WEED_PALETTE_YUV420P;
@@ -168,21 +169,20 @@ const int *get_palette_list(void) {
 }
 
 
-uint64_t get_capabilities(int palette) {
-  return 0;
-}
+uint64_t get_capabilities(int palette) {return 0;}
 
 
 const int *get_audio_fmts() {
-  // this is not yet documented in the manual, but is an optional function to get a list of audio formats. If the user chooses to stream audio then it will be sent to a fifo file in the tempdir called livesaudio.stream, in one of the supported formats
+  // this is not yet documented in the manual, but is an optional function to get a list of audio formats.
+  // If the user chooses to stream audio then it will be sent to a fifo file in the tempdir called livesaudio.stream
+  // in one of the supported formats
   aforms[0] = 3; // vorbis - see src/plugins.h
   aforms[1] = -1; // end
-
   return aforms;
 }
 
 
-const char *get_init_rfx(int intention) {
+const char *get_init_rfx(lives_intentcap_t *icaps) {
   return \
          "<define>\\n\
 |1.7\\n\
@@ -205,6 +205,7 @@ special|password|3|\\n\
 ";
 }
 
+
 const int *get_yuv_palette_clamping(int palette) {
   if (palette == WEED_PALETTE_YUV420P) {
     clampings[0] = WEED_YUV_CLAMPING_UNCLAMPED;
@@ -215,24 +216,25 @@ const int *get_yuv_palette_clamping(int palette) {
 }
 
 
-
 boolean set_yuv_palette_clamping(int clamping_type) {
   myclamp = clamping_type;
   return TRUE;
 }
 
 
-
 boolean set_palette(int palette) {
   if (!yuv4mpeg) return FALSE;
+
   if (palette == WEED_PALETTE_YUV420P) {
     mypalette = palette;
     render_fn = &render_frame_yuv420;
     return TRUE;
   }
+
   // invalid palette
   return FALSE;
 }
+
 
 const char *get_fps_list(int palette) {
   return "12|16|8|4|2|1|20|24|24000:1001|25|30000:1001|30|60";
@@ -253,17 +255,12 @@ boolean set_fps(double in_fps) {
   return TRUE;
 }
 
-static int audio;
-#include <errno.h>
 
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
-  int dummyvar;
   char cmd[PATH_MAX * 2];
   const char *ics = NULL, *icpw = NULL, *icmp = NULL;
-  int afd;
-  int icp = 8000;
-  int i;
 
+  int afd, icp = 8000;
   int mypid = getpid();
 
   double syncd = 0;
@@ -296,7 +293,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     yuv4mpeg->bufc = 1;
     yuv4mpeg->framebuf = (uint8_t ** *)malloc(yuv4mpeg->bufn * sizeof(uint8_t **));
     if (!yuv4mpeg->framebuf) return FALSE;
-    for (i = 0; i < yuv4mpeg->bufn; i++) yuv4mpeg->framebuf[i] = NULL;
+    for (int i = 0; i < yuv4mpeg->bufn; i++) yuv4mpeg->framebuf[i] = NULL;
   } else yuv4mpeg->bufc = 0;
 
   make_path("stream", mypid, "fifo");
@@ -308,9 +305,9 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   make_path("video3", mypid, "ogv");
   mkfifo(xfile, S_IRUSR | S_IWUSR); // feed to oggfwd
 
-  snprintf(cmd, PATH_MAX * 2, "ffmpeg2theora -f yuv4m -o %s/video-%d.ogv %s/stream-%d.fifo 2>/dev/null&", workdir, mypid, workdir,
-           mypid);
-  dummyvar = system(cmd);
+  snprintf(cmd, PATH_MAX * 2, "ffmpeg2theora -f yuv4m -o %s/video-%d.ogv %s/stream-%d.fifo 2>/dev/null &",
+           workdir, mypid, workdir, mypid);
+  IGN_RET(system(cmd));
 
   make_path("livesaudio", mypid, "stream");
 
@@ -322,34 +319,32 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   if (audio) {
     snprintf(cmd, PATH_MAX * 2, "oggTranscode %s/video-%d.ogv %s/video2-%d.ogv &", workdir, mypid, workdir, mypid);
-    dummyvar = system(cmd);
-    snprintf(cmd, PATH_MAX * 2, "oggJoin %s/video3-%d.ogv %s/video2-%d.ogv %s/livesaudio-%d.stream &", workdir, mypid, workdir,
-             mypid, workdir,
-             mypid);
-    dummyvar = system(cmd);
+    IGN_RET(system(cmd));
+    snprintf(cmd, PATH_MAX * 2, "oggJoin %s/video3-%d.ogv %s/video2-%d.ogv %s/livesaudio-%d.stream &",
+             workdir, mypid, workdir, mypid, workdir, mypid);
+    IGN_RET(system(cmd));
   } else {
     snprintf(cmd, PATH_MAX * 2, "oggTranscode %s/video-%d.ogv %s/video3-%d.ogv &", workdir, mypid, workdir, mypid);
-    dummyvar = system(cmd);
+    IGN_RET(system(cmd));
   }
 
-  snprintf(cmd, PATH_MAX * 2, "oggfwd -d \"LiVES stream\" \"%s\" %d \"%s\" \"%s\" < %s/video3-%d.ogv &", ics, icp, icpw, icmp,
-           workdir,
-           mypid);
-  dummyvar = system(cmd);
+  snprintf(cmd, PATH_MAX * 2, "oggfwd -d \"LiVES stream\" \"%s\" %d \"%s\" \"%s\" < %s/video3-%d.ogv &",
+           ics, icp, icpw, icmp, workdir, mypid);
+  IGN_RET(system(cmd)_;
 
-  // open first fifo for writing
-  make_path("stream", mypid, "fifo");
-  yuv4mpeg->fd = open(xfile, O_WRONLY);
+          // open first fifo for writing
+          make_path("stream", mypid, "fifo");
+          yuv4mpeg->fd = open(xfile, O_WRONLY);
 
-  ov_vsize = ov_hsize = 0;
+          ov_vsize = ov_hsize = 0;
 
-  y4m_si_set_framerate(&(yuv4mpeg->streaminfo), yuv4mpeg->fps);
-  y4m_si_set_interlace(&(yuv4mpeg->streaminfo), Y4M_ILACE_NONE);
+          y4m_si_set_framerate(&(yuv4mpeg->streaminfo), yuv4mpeg->fps);
+          y4m_si_set_interlace(&(yuv4mpeg->streaminfo), Y4M_ILACE_NONE);
 
-  if (blankframe != NULL) free(blankframe);
-  blankframe = NULL;
-
-  dummyvar = dummyvar; // keep compiler happy
+  if (blankframe) {
+  free(blankframe);
+    blankframe = NULL;
+  }
 
   //y4m_log_stream_info(LOG_INFO, "lives-yuv4mpeg", &(yuv4mpeg->streaminfo));
   return TRUE;
@@ -361,10 +356,10 @@ boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void *
   return render_fn(hsize, vsize, pixel_data);
 }
 
+
 boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data) {
-  int i, z;
+  int i, z, j;
   size_t fsize;
-  register int j;
 
   if ((ov_hsize != hsize || ov_vsize != vsize)) {
     //start new stream
@@ -384,7 +379,7 @@ boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data) {
       yuv4mpeg->bufc = 1; // reset delay (for now)
 
       for (i = 0; i < yuv4mpeg->bufn; i++) {
-        if (yuv4mpeg->framebuf[i] != NULL) {
+        if (yuv4mpeg->framebuf[i]) {
           for (j = 0; j < 3; j++) {
             free(yuv4mpeg->framebuf[i][j]);
           }
@@ -393,12 +388,12 @@ boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data) {
         }
       }
 
-      if (blankframe != NULL) free(blankframe);
-      blankframe = NULL;
+      if (blankframe) {
+        free(blankframe);
+        blankframe = NULL;
+      }
     }
-
   }
-
 
   if (yuv4mpeg->bufn == 0) {
     // no sync delay
@@ -409,13 +404,13 @@ boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data) {
     z = yuv4mpeg->bufc - 1;
     fsize = hsize * vsize;
 
-    if (yuv4mpeg->framebuf[z] == NULL) {
+    if (!yuv4mpeg->framebuf[z]) {
       // blank to output
       yuv4mpeg->framebuf[z] = make_blankframe(fsize, FALSE);
-      if (yuv4mpeg->framebuf[z] == NULL) return FALSE;
+      if (!yuv4mpeg->framebuf[z]) return FALSE;
 
-      if (blankframe == NULL) blankframe = make_blankframe(fsize, FALSE);
-      if (blankframe == NULL) return FALSE; // oom
+      if (!blankframe) blankframe = make_blankframe(fsize, FALSE);
+      if (!blankframe) return FALSE; // oom
 
       i = y4m_write_frame(yuv4mpeg->fd, &(yuv4mpeg->streaminfo),
                           &(yuv4mpeg->frameinfo), blankframe);
@@ -432,14 +427,13 @@ boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data) {
 
     yuv4mpeg->bufc++;
     if (yuv4mpeg->bufc > yuv4mpeg->bufn) yuv4mpeg->bufc = 1;
-
   }
 
   if (i != Y4M_OK) return FALSE;
 
-
   return TRUE;
 }
+
 
 boolean render_frame_unknown(int hsize, int vsize, void **pixel_data) {
   if (mypalette == WEED_PALETTE_END) {
@@ -448,11 +442,9 @@ boolean render_frame_unknown(int hsize, int vsize, void **pixel_data) {
   return FALSE;
 }
 
-void exit_screen(int16_t mouse_x, int16_t mouse_y) {
-  int dummyvar;
-  int mypid = getpid();
 
-  int i, j;
+void exit_screen(int16_t mouse_x, int16_t mouse_y) {
+  int mypid = getpid();
 
   y4m_fini_stream_info(&(yuv4mpeg->streaminfo));
   y4m_fini_frame_info(&(yuv4mpeg->frameinfo));
@@ -462,7 +454,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
     yuv4mpeg->fd = -1;
   }
 
-  dummyvar = system("pkill -g 0 -P 1");
+  IGN_RET(system("pkill -g 0 -P 1"));
 
   make_path("video", mypid, "ogv");
   unlink(xfile);
@@ -473,18 +465,20 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   make_path("stream", mypid, "fifo");
   unlink(xfile);
 
-  if (blankframe != NULL) free(blankframe);
-  blankframe = NULL;
+  if (blankframe) {
+    free(blankframe);
+    blankframe = NULL;
+  }
 
-  if (yuv4mpeg->bufc != 0) {
+  if (yuv4mpeg->bufc) {
     if (yuv4mpeg->bufc < 0) {
       yuv4mpeg->bufn = -yuv4mpeg->bufc - 1;
     }
 
-    if (yuv4mpeg->framebuf != NULL) {
-      for (i = 0; i < yuv4mpeg->bufn; i++) {
-        if (yuv4mpeg->framebuf[i] != NULL) {
-          for (j = 0; j < 3; j++) {
+    if (yuv4mpeg->framebuf) {
+      for (int i = 0; i < yuv4mpeg->bufn; i++) {
+        if (yuv4mpeg->framebuf[i]) {
+          for (int j = 0; j < 3; j++) {
             free(yuv4mpeg->framebuf[i][j]);
           }
           free(yuv4mpeg->framebuf[i]);
@@ -493,19 +487,16 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
       free(yuv4mpeg->framebuf);
     }
   }
-
-  dummyvar = dummyvar; // keep compiler happy
-
-
 }
-
 
 
 void module_unload(void) {
-  if (yuv4mpeg != NULL) {
+  if (yuv4mpeg) {
     free(yuv4mpeg);
+    yuv4mpeg = NULL;
   }
-  yuv4mpeg = NULL;
+  if (workdir) {
+    free(workdir);
+    workdir = NULL;
+  }
 }
-
-

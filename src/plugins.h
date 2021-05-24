@@ -29,15 +29,18 @@ typedef weed_plant_t weed_param_t;
 #define PLUGIN_TYPE_ENCODER		257//		"encoder"
 #define PLUGIN_TYPE_FILTER		258//		"filter"
 #define PLUGIN_TYPE_SOURCE		259//		"source"
-#define PLUGIN_TYPE_VIDEO_PLAYER 	260//		"player"
+#define PLUGIN_TYPE_PLAYER      	260//		"player"
 
 #define PLUGIN_TYPE_BASE_OFFSET		256 // subtract from types to get 0 base
 
+// subtypes (in future derived from intentcaps)
+#define PLUGIN_SUBTYPE_VIDEO_PLAYER     32768
+
 #define PLUGIN_TYPE_FIRST_CUSTOM	65536
 
-#define PLUGIN_SUBTYPE_DYNAMIC 		128//	dynamic library
-#define PLUGIN_SUBTYPE_EXE 		129//	binary executable
-#define PLUGIN_SUBTYPE_SCRIPT 		130//	interpreted script
+#define PLUGIN_PKGTYPE_DYNAMIC 		128//	dynamic library
+#define PLUGIN_PKGTYPE_EXE 		129//	binary executable
+#define PLUGIN_PKGTYPE_SCRIPT 		130//	interpreted script
 
 #define PLUGIN_CHANNEL_NONE	0ul
 #define PLUGIN_CHANNEL_VIDEO	(1<<0)ul
@@ -52,15 +55,14 @@ typedef weed_plant_t weed_param_t;
 typedef struct {
   uint64_t uid; // fixed enumeration
   uint64_t type;  ///< e.g. "decoder"
-  uint64_t subtype;  ///< e.g. dynamic
+  uint64_t pkgtype;  ///< e.g. dynamic
   char script_lang[32];  ///< for scripted types only, the script interpreter, e.g. "perl", "python3"
   int api_version_major; ///< version of interface API
   int api_version_minor;
   char name[32];  ///< e.g. "mkv_decoder"
   int pl_version_major; ///< version of plugin
   int pl_version_minor;
-  int n_intentcaps;
-  lives_intentcap_t *intentcaps;  /// array of intentcaps[n_intentcaps]
+  lives_intentcap_t *intentcaps;  /// array of intentcaps (NULL terminated)
   void *unused; // padding
 } lives_plugin_id_t;
 
@@ -114,12 +116,16 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
 
 typedef struct {
   // playback
-  char name[64];
+  char *soname; ///< plugin name (soname without .so)
   void *handle;
 
   // mandatory
+  const lives_plugin_id_t *(*get_plugin_id)(void);
+  const lives_plugin_id_t *id;
+
+  // mandatory
   const char *(*module_check_init)(void);
-  const char *(*version)(void);
+  //const char *(*version)(void);
   const char *(*get_description)(void);
 
   int *(*get_palette_list)(void);
@@ -140,7 +146,7 @@ typedef struct {
   const char *(*get_fps_list)(int palette);
   boolean(*set_fps)(double fps);
 
-  const char *(*get_init_rfx)(int intention);
+  const char *(*get_init_rfx)(lives_intentcap_t *icaps);
 
 #ifdef __WEED_EFFECTS_H__
   ///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
@@ -256,9 +262,6 @@ typedef struct {
   double xvals[64];  /// extra values which may be stored depending on codec
 } adv_timing_t;
 
-// defined in plugins.c for the whole app
-extern const char *const anames[AUDIO_CODEC_MAX];
-
 // decoder plugins
 
 // seek_flags is a bitmap
@@ -350,7 +353,7 @@ typedef struct _lives_clip_data {
 
 typedef struct {
   // playback
-  const char *name; ///< plugin name
+  const char *soname; ///< plugin name (soname without .so)
   void *handle; ///< may be shared between several instances
 
   // mandatory
@@ -731,5 +734,79 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx);
 boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, boolean save_all);
 
 /// for realtime effects, see effects-weed.h
+
+/// CAPACITIES - flavours
+
+#define LIVES_CAPACITY_AUDIO_RATE "audio_rate"			// int value
+#define LIVES_CAPACITY_AUDIO_CHANS "audio_channels"		// int value
+
+/// CAPACITIES - varieties
+
+// vpp
+//"general"
+#define VPP_CAN_RESIZE    (1<<0)
+#define VPP_CAN_RETURN    (1<<1)
+#define VPP_LOCAL_DISPLAY (1<<2)
+#define VPP_LINEAR_GAMMA  (1<<3)
+#define VPP_CAN_RESIZE_WINDOW          		(1<<4)   /// can resize the image to fit the play window
+#define VPP_CAN_LETTERBOX                  	(1<<5)
+#define VPP_CAN_CHANGE_PALETTE			(1<<6)
+
+// encoder
+//"general"
+#define HAS_RFX (1<<0)
+#define CAN_ENCODE_PNG (1<<2)
+#define ENCODER_NON_NATIVE (1<<3)
+
+//"acodecs"
+#define AUDIO_CODEC_NONE 0  /// was 32
+
+#define AUDIO_CODEC_MP3 1
+#define AUDIO_CODEC_PCM 2
+#define AUDIO_CODEC_MP2 3
+#define AUDIO_CODEC_VORBIS 4
+#define AUDIO_CODEC_AC3 5
+#define AUDIO_CODEC_AAC 6
+#define AUDIO_CODEC_AMR_NB 7
+#define AUDIO_CODEC_RAW 8
+#define AUDIO_CODEC_WMA2 9
+#define AUDIO_CODEC_OPUS 10
+
+#define AUDIO_CODEC_MAX 63
+#define AUDIO_CODEC_UNKNOWN -1
+
+// decoders
+// "sync_hint"
+#define SYNC_HINT_AUDIO_TRIM_START (1<<0)
+#define SYNC_HINT_AUDIO_PAD_START (1<<1)
+#define SYNC_HINT_AUDIO_TRIM_END (1<<2)
+#define SYNC_HINT_AUDIO_PAD_END (1<<3)
+
+#define SYNC_HINT_VIDEO_PAD_START (1<<4)
+#define SYNC_HINT_VIDEO_PAD_END (1<<5)
+
+//"seek_flag"
+/// good
+#define LIVES_SEEK_FAST (1<<0)
+#define LIVES_SEEK_FAST_REV (1<<1)
+
+/// not so good
+#define LIVES_SEEK_NEEDS_CALCULATION (1<<2)
+#define LIVES_SEEK_QUALITY_LOSS (1<<3)
+
+// rendered effects
+// "general"
+#define RFX_PROPS_SLOW        0x0001  ///< hint to GUI
+#define RFX_PROPS_MAY_RESIZE  0x0002 ///< is a tool (can only be applied to entire clip)
+#define RFX_PROPS_BATCHG      0x0004 ///< is a batch generator
+#define RFX_PROPS_NO_PREVIEWS 0x0008 ///< no previews possible (e.g. effect has long prep. time)
+
+#define RFX_PROPS_RESERVED1   0x1000
+#define RFX_PROPS_RESERVED2   0x2000
+#define RFX_PROPS_RESERVED3   0x4000
+#define RFX_PROPS_AUTO_BUILT  0x8000
+
+// defined in plugins.c for the whole app
+extern const char *const anames[AUDIO_CODEC_MAX];
 
 #endif

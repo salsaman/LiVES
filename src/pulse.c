@@ -904,7 +904,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
               // convert float audio back to s16 in pulsed->sound_buffer
               sample_move_float_int(pulsed->sound_buffer, fltbuf, nsamples, 1.0, pulsed->out_achans, PA_SAMPSIZE, 0,
-                                    (capable->byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
+                                    (capable->hw.byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
 
               for (i = 0; i < pulsed->out_achans; i++) {
                 lives_free(fltbuf[i]);
@@ -981,7 +981,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             pulsed->sound_buffer = (uint8_t *)pulsed->aPlayPtr->data;
 
             sample_move_float_int(pulsed->sound_buffer, fltbuf, numFramesToWrite, 1.0,
-                                  pulsed->out_achans, PA_SAMPSIZE, 0, (capable->byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
+                                  pulsed->out_achans, PA_SAMPSIZE, 0, (capable->hw.byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
 
             if (fltbuf) {
               for (register int i = 0; i < pulsed->out_achans; i++) lives_freep((void **)&fltbuf[i]);
@@ -1612,7 +1612,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   pdriver->in_asamps = pdriver->out_asamps = PA_SAMPSIZE;
   pdriver->out_signed = AFORM_SIGNED;
 
-  if (capable->byte_order == LIVES_BIG_ENDIAN) {
+  if (capable->hw.byte_order == LIVES_BIG_ENDIAN) {
     pdriver->out_endian = AFORM_BIG_ENDIAN;
     pa_spec.format = PA_SAMPLE_S16BE;
   } else {
@@ -2035,7 +2035,7 @@ void pulse_aud_pb_ready(int fileno) {
       mainw->pulsed->seek_end = sfile->afilesize;
       mainw->pulsed->seek_pos = 0;
 
-      if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) || (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
+      if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
         mainw->pulsed->reverse_endian = TRUE;
       else mainw->pulsed->reverse_endian = FALSE;
 

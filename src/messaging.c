@@ -72,10 +72,9 @@ char *dump_messages(int start, int end) {
 
 static weed_plant_t *make_msg(const char *text) {
   // make single msg. text should have no newlines in it, except possibly as the last character.
-  weed_plant_t *msg = weed_plant_new(WEED_PLANT_LIVES);
+  weed_plant_t *msg = lives_plant_new(LIVES_WEED_SUBTYPE_MESSAGE);
   if (!msg) return NULL;
 
-  weed_set_int_value(msg, WEED_LEAF_LIVES_SUBTYPE, LIVES_WEED_SUBTYPE_MESSAGE);
   weed_set_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, text);
 
   weed_set_plantptr_value(msg, WEED_LEAF_NEXT, NULL);

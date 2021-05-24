@@ -317,10 +317,9 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
       if (sdata->bufidx > ONSET_WINDOW) {
         float val1, val2, varx;
         for (j = sdata->bufidx - ONSET_WINDOW; j <= sdata->bufidx; j++) {
-          if (
-            (val1 = sdata->buf[i][j]) != -1. &&
-            (val2 = sdata->buf[i][j - 1]) != -1.
-          ) {
+          val1 = sdata->buf[i][j];
+          val2 = sdata->buf[i][j - 1];
+          if (val1 != -1. && val2 != -1) {
             varx = (val1 - val2);
             if (varx < 0.) varx = 0.;
             if (varx > 1000.) varx = 0.; // ignore invalid value

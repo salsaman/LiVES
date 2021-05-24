@@ -1226,6 +1226,7 @@ typedef struct {
   LiVESWidget *paste_as_new;
   LiVESWidget *merge;
   LiVESWidget *xdelete;
+  LiVESWidget *trim_video;
   LiVESWidget *select_submenu;
   LiVESWidget *select_all;
   LiVESWidget *select_new;

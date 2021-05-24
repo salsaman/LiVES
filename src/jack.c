@@ -4123,7 +4123,7 @@ void jack_aud_pb_ready(int fileno) {
       mainw->jackd->usigned = !asigned;
       mainw->jackd->seek_end = sfile->afilesize;
 
-      if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) || (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
+      if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
         mainw->jackd->reverse_endian = TRUE;
       else mainw->jackd->reverse_endian = FALSE;
 

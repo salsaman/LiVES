@@ -4595,7 +4595,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_UNDO, LIVES_ICON_SIZE_MENU);
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mt->undo), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   if (mt->undo_offset == lives_list_length(mt->undos)) mt_set_undoable(mt, MT_UNDO_NONE, NULL, FALSE);
@@ -4616,7 +4618,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_REDO, LIVES_ICON_SIZE_MENU);
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mt->redo), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   if (mt->undo_offset <= 1) mt_set_redoable(mt, MT_UNDO_NONE, NULL, FALSE);
@@ -4735,7 +4739,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_REFRESH, LIVES_ICON_SIZE_MENU);
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mt->playall), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   mt->playsel = lives_standard_image_menu_item_new_with_label(_("Pla_y Selected Time Only"));
@@ -4752,7 +4758,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_MEDIA_STOP, LIVES_ICON_SIZE_MENU);
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mt->stop), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   mt->rewind = lives_standard_image_menu_item_new_with_label(_("Re_wind"));
@@ -4760,7 +4768,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_MEDIA_REWIND, LIVES_ICON_SIZE_MENU);
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mt->rewind), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   lives_widget_set_sensitive(mt->rewind, FALSE);
@@ -5330,7 +5340,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_PREFERENCES, LIVES_ICON_SIZE_MENU);
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(menuitem), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,

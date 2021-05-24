@@ -439,8 +439,8 @@ boolean normalise_audio(int fnum, double start, double end, float thresh) {
       }
       lives_free(filename);
 
-      if (((afile->signed_endian & AFORM_BIG_ENDIAN) && capable->byte_order == LIVES_LITTLE_ENDIAN)
-          || ((afile->signed_endian & AFORM_LITTLE_ENDIAN) && capable->byte_order == LIVES_BIG_ENDIAN))
+      if (((afile->signed_endian & AFORM_BIG_ENDIAN) && capable->hw.byte_order == LIVES_LITTLE_ENDIAN)
+          || ((afile->signed_endian & AFORM_LITTLE_ENDIAN) && capable->hw.byte_order == LIVES_BIG_ENDIAN))
         swap_endian = TRUE;
 
       lives_lseek_buffered_writer(afd2, quant_abytes(start, afile->arps, afile->achans, afile->asampsize));
@@ -1423,8 +1423,8 @@ boolean pad_with_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_
   g_print("sbytes is %ld\n", sbytes);
 #endif
   if (sbytes > 0) {
-    if ((big_endian && capable->byte_order == LIVES_LITTLE_ENDIAN)
-        || (!big_endian && capable->byte_order == LIVES_LITTLE_ENDIAN)) revendian = TRUE;
+    if ((big_endian && capable->hw.byte_order == LIVES_LITTLE_ENDIAN)
+        || (!big_endian && capable->hw.byte_order == LIVES_LITTLE_ENDIAN)) revendian = TRUE;
     if (out_fd >= 0) lives_lseek_buffered_writer(out_fd, oins_size);
     else {
       if (!buff) return FALSE;
@@ -1620,8 +1620,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     ins_pt *= out_achans * out_arate * out_asamps;
     ins_size = ((int64_t)(ins_pt / out_achans / out_asamps + .5)) * out_achans * out_asamps;
 
-    if ((!out_bendian && (capable->byte_order == LIVES_BIG_ENDIAN)) ||
-        (out_bendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
+    if ((!out_bendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) ||
+        (out_bendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
       out_reverse_endian = TRUE;
     else out_reverse_endian = FALSE;
 
@@ -1673,8 +1673,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
     if (LIVES_UNLIKELY(in_achans[track] == 0)) is_silent[track] = TRUE;
     else {
-      if ((!in_bendian && (capable->byte_order == LIVES_BIG_ENDIAN)) ||
-          (in_bendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
+      if ((!in_bendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) ||
+          (in_bendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
         in_reverse_endian[track] = TRUE;
       else in_reverse_endian[track] = FALSE;
 
@@ -1740,8 +1740,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         pad_with_silence(-1, (void *)obuf->buffer16[0], obuf->samples_filled * out_asamps * out_achans,
                          (obuf->samples_filled + tsamples) * out_asamps * out_achans, out_asamps, obuf->s16_signed
                          ? AFORM_SIGNED : AFORM_UNSIGNED,
-                         ((capable->byte_order == LIVES_LITTLE_ENDIAN && obuf->swap_endian == SWAP_L_TO_X)
-                          || (capable->byte_order == LIVES_LITTLE_ENDIAN && obuf->swap_endian != SWAP_L_TO_X)));
+                         ((capable->hw.byte_order == LIVES_LITTLE_ENDIAN && obuf->swap_endian == SWAP_L_TO_X)
+                          || (capable->hw.byte_order == LIVES_LITTLE_ENDIAN && obuf->swap_endian != SWAP_L_TO_X)));
       }
       obuf->samples_filled += tsamples;
     }
@@ -2363,8 +2363,8 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
   } else {
     int out_bendian = outfile->signed_endian & AFORM_BIG_ENDIAN;
 
-    if ((!out_bendian && (capable->byte_order == LIVES_BIG_ENDIAN)) ||
-        (out_bendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
+    if ((!out_bendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) ||
+        (out_bendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
       mainw->jackd_read->reverse_endian = TRUE;
     else mainw->jackd_read->reverse_endian = FALSE;
 
@@ -2510,8 +2510,8 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
   } else {
     int out_bendian = outfile->signed_endian & AFORM_BIG_ENDIAN;
 
-    if ((!out_bendian && (capable->byte_order == LIVES_BIG_ENDIAN)) ||
-        (out_bendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
+    if ((!out_bendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) ||
+        (out_bendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
       mainw->pulsed_read->reverse_endian = TRUE;
     else mainw->pulsed_read->reverse_endian = FALSE;
 
@@ -3156,6 +3156,19 @@ LIVES_GLOBAL_INLINE int get_aplay_clipno(void) {
       return mainw->pulsed->playing_file;
 #endif
   }
+  return -1;
+}
+
+
+LIVES_GLOBAL_INLINE int get_aplay_rate(void) {
+#ifdef ENABLE_JACK
+  if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK)
+    return mainw->jackd->sample_out_rate;
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE)
+    return mainw->pulsed->out_arate;
+#endif
   return -1;
 }
 
@@ -3934,8 +3947,8 @@ boolean apply_rte_audio(int64_t nframes) {
 
   // read nframes of audio from clip or generator
 
-  if ((abigendian && capable->byte_order == LIVES_LITTLE_ENDIAN) || (!abigendian &&
-      capable->byte_order == LIVES_BIG_ENDIAN)) rev_endian = TRUE;
+  if ((abigendian && capable->hw.byte_order == LIVES_LITTLE_ENDIAN) || (!abigendian &&
+      capable->hw.byte_order == LIVES_BIG_ENDIAN)) rev_endian = TRUE;
 
   tbytes = nframes * cfile->achans * cfile->asampsize / 8;
 

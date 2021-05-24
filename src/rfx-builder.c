@@ -2491,6 +2491,7 @@ LiVESWidget *make_param_window_dialog(int pnum, rfx_build_window_t *rfxbuilder) 
   splist = lives_list_append(splist, (livespointer)"framedraw");
   splist = lives_list_append(splist, (livespointer)"fileread");
   splist = lives_list_append(splist, (livespointer)"filewrite");
+  splist = lives_list_append(splist, (livespointer)"fontchooser");
   splist = lives_list_append(splist, (livespointer)"password");
   if (rfxbuilder->type == RFX_BUILD_TYPE_EFFECT2) {
     splist = lives_list_append(splist, (livespointer)"mergealign");
@@ -4230,9 +4231,6 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
   lives_rfx_t *rfx = NULL;
   lives_rfx_t **rendered_fx;
 
-#if LIVES_HAS_IMAGE_MENU_ITEM
-  LiVESWidget *rfx_image;
-#endif
   int i, plugin_idx;
 
   int llen;
@@ -4527,7 +4525,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
 
   if (status == RFX_STATUS_ANY) {
     // recreate effects menu
-    LiVESWidget *menuitem = lives_standard_menu_item_new_with_label(mainw->rendered_fx[0]->menu_text);
+    LiVESWidget *menuitem = lives_standard_image_menu_item_new_with_label(mainw->rendered_fx[0]->menu_text);
 
     lives_widget_set_tooltip_text(menuitem, _("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."));
 
@@ -4620,7 +4618,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
       lives_free(tmp);
       if (rfx->num_params) lives_strappend(txt, 64, "...");
 
-      menuitem = lives_standard_menu_item_new_with_label(txt);
+      menuitem = lives_standard_image_menu_item_new_with_label(txt);
       rfx->menuitem = menuitem;
 
       if ((rfx->props & RFX_PROPS_MAY_RESIZE && rfx->num_in_channels == 1) || rfx->min_frames < 0) {
@@ -4690,13 +4688,15 @@ void add_rfx_effects2(lives_rfx_status_t status) {
 				       LINKED_RFX_KEY, (livespointer)rfx);
         } else {
 #if LIVES_HAS_IMAGE_MENU_ITEM
-          rfx_image = NULL;
+          LiVESWidget *rfx_image = NULL;
           if (rfx->props & RFX_PROPS_SLOW) {
             rfx_image = lives_image_new_from_stock(LIVES_STOCK_NO, LIVES_ICON_SIZE_MENU);
           } else {
             rfx_image = lives_image_new_from_stock(LIVES_STOCK_YES, LIVES_ICON_SIZE_MENU);
           }
+	  LIVES_IGNORE_DEPRECATIONS
           lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(menuitem), rfx_image);
+	  LIVES_IGNORE_DEPRECATIONS_END
 #endif
           if (rfx->num_in_channels == 1) {
 	    if (rfx->status == RFX_STATUS_CUSTOM) {

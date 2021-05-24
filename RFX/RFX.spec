@@ -12,8 +12,8 @@ for a variety of plugins. The protocol described is not directed specifically to
 ---------------------------------
 
 Author: salsaman+lives@gmail.com
-Last edit date: 06 June 2020
-API Version: 1.8.4 GNU FDL
+Last edit date: 22 May 2021
+API Version: 1.8.5 GNU FDL
 
 Changes
 1.0 First version salsaman@xs4all.nl
@@ -57,6 +57,8 @@ d1.6 Added string_list parameter type
 
 - clarified the meaning of "min frames"
 - added properties bit 0x0008 (no previews), API version not changed
+
+1.8.5 Add special|ignored
 
 
 TODO: 	- split into RFX layout and RFX plugin components (?)
@@ -675,6 +677,10 @@ Special type "password" - 1 string parameter : the host may hide/obscure the inp
 Special type "fontchooser" - 1 string parameter, one numerical (optional).
   The first parameter may be set to a font name, the second (if defined) to a font (point) size.
 
+Special type "ignored" - any number of parameters
+  This is a hint that the values of the referenced parameters are not relevant in that instance.
+  The corresponding parameters may optionally be hidden or set readonly. The host must still return a
+  value for them to the plugin; the value returned should be equal to the default value of the parameter.
 
 ================================== end interface section ================================
 

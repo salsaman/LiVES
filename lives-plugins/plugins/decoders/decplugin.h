@@ -27,13 +27,6 @@ extern "C"
 #endif
 #endif
 
-// palettes, etc. :: don't include weed-compat.h, since plugins need to #define stuff first
-#ifdef NEED_LOCAL_WEED
-#include "../../../libweed/weed-palettes.h"
-#else
-#include <weed/weed-palettes.h>
-#endif
-
 #if defined (IS_DARWIN) || defined (__FreeBSD__)
 #ifndef lseek64
 #define lseek64 lseek
@@ -70,18 +63,6 @@ typedef struct {
 
   double xvals[64];  /// extra values which may be stored depending on codec
 } adv_timing_t;
-
-// these now become intentcaps
-
-#define LIVES_INTENTION_DECODE 0x00001000
-
-/// good
-#define LIVES_SEEK_FAST (1<<0)
-#define LIVES_SEEK_FAST_REV (1<<1)
-
-/// not so good
-#define LIVES_SEEK_NEEDS_CALCULATION (1<<2)
-#define LIVES_SEEK_QUALITY_LOSS (1<<3)
 
 // memfuncs
 typedef void *(*malloc_f)(size_t);
@@ -139,28 +120,67 @@ static inline void myrand(void *ptr, size_t size) {
 #include "../../../src/lsd.h"
 
 #define DEC_PLUGIN_TYPE_DECODER		256 // "decoder"
-#define DEC_PLUGIN_SUBTYPE_DYNAMIC     	128 // dynamic library
+#define DEC_PLUGIN_PKGTYPE_DYNAMIC     	128 // dynamic library
 
-typedef int lives_intention;
+#define LIVES_INTENTION_DECODE 0x00001000
+
+/// good
+#define LIVES_SEEK_FAST (1<<0)
+#define LIVES_SEEK_FAST_REV (1<<1)
+
+/// not so good
+#define LIVES_SEEK_NEEDS_CALCULATION (1<<2)
+#define LIVES_SEEK_QUALITY_LOSS (1<<3)
+
+#ifndef NEED_LOCAL_WEED
+#include <weed/weed-plugin.h>
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
+#else
+#include "../../../libweed/weed-plugin.h"
+#include "../../../libweed/weed.h"
+#include "../../../libweed/weed-palettes.h"
+#include "../../../libweed/weed-effects.h"
+#include "../../../libweed/weed-utils.h"
+#endif
+
+#include "../../weed-plugins/weed-plugin-utils.c"
+
+//typedef weed_plant_t weed_layer_t;
+
+// intentcaps
+typedef weed_plant_t lives_capacity_t;
+
+typedef int32_t lives_intention;
 
 typedef struct {
   lives_intention intent;
-  int n_caps;
-  int *capabilities; ///< type specific capabilities
+  lives_capacity_t *capacities; ///< type specific capabilities
 } lives_intentcap_t;
+
+#define lives_capacity_exists(caps, key) (caps ? (weed_plant_has_leaf(caps, key) == WEED_TRUE ? TRUE : FALSE) \
+					  : FALSE)
+
+#define lives_capacity_is_readonly(caps, key) (caps ? ((weed_leaf_get_flags(caps, key) & WEED_FLAG_IMMUTABLE) \
+						      ? TRUE : FALSE) : FALSE)
+
+#define lives_capacity_get_int(caps, key) (caps ? weed_get_int_value(caps, key, 0) : 0)
+#define lives_capacity_get_string(caps, key) (caps ? weed_get_string_value(caps, key, 0) : 0)
 
 typedef struct {
   uint64_t uid; // fixed enumeration
   uint64_t type;  ///< e.g. "decoder"
-  uint64_t subtype;  ///< e.g. dynamic
-  char script_lang[32];  ///< N/A only for scripted plugins
+  uint64_t pkgtype;  ///< e.g. dynamic
+  char script_lang[32];  ///< for scripted types only, the script interpreter, e.g. "perl", "python3"
   int api_version_major; ///< version of interface API
   int api_version_minor;
   char name[32];  ///< e.g. "mkv_decoder"
   int pl_version_major; ///< version of plugin
   int pl_version_minor;
-  int n_intentcaps;
-  int *intentcaps;  /// array of intentcaps[n_intentcaps]
+  lives_intentcap_t *intentcaps;  /// array of intentcaps (NULL terminated)
+  void *unused; // padding
 } lives_plugin_id_t;
 
 typedef struct _lives_clip_data {
@@ -266,7 +286,7 @@ static inline lives_plugin_id_t *_make_plugin_id(const char *name, int vmaj, int
     inited = 1;
     plugin_id.uid = PLUGIN_UID;
     plugin_id.type = DEC_PLUGIN_TYPE_DECODER;
-    plugin_id.subtype = DEC_PLUGIN_SUBTYPE_DYNAMIC;
+    plugin_id.pkgtype = DEC_PLUGIN_PKGTYPE_DYNAMIC;
     *plugin_id.script_lang = 0;
     plugin_id.api_version_major = DEC_PLUGIN_VERSION_MAJOR;
     plugin_id.api_version_major = DEC_PLUGIN_VERSION_MINOR;
@@ -274,15 +294,12 @@ static inline lives_plugin_id_t *_make_plugin_id(const char *name, int vmaj, int
     plugin_id.pl_version_major = vmaj;
     plugin_id.pl_version_minor = vmin;
 #ifndef PLUGIN_INTENTCAPS
-#define PLUGIN_N_INTENTCAPS 0
 #define PLUGIN_INTENTCAPS NULL
 #endif
-    plugin_id.n_intentcaps = PLUGIN_N_INTENTCAPS;
     plugin_id.intentcaps = PLUGIN_INTENTCAPS;
   }
   return &plugin_id;
 }
-
 
 /// pass in NULL clip_data for the first call, subsequent calls (if the URI, current_clip or current_palette changes)
 /// should reuse the previous value. If URI or current_clip are invalid, clip_data will be freed and NULL returned.
@@ -320,8 +337,6 @@ double estimate_delay(const lives_clip_data_t *cdata, int64_t tframe);
 #define get_le16int(p) (*(p + 1) << 8 | *(p))
 #define get_le32int(p) ((get_le16int(p + 2) << 16) | get_le16int(p))
 #define get_le64int(p) (int64_t)(((uint64_t)(get_le32int(p + 4)) << 32) | (uint64_t)(get_le32int(p)))
-
-#define ABS(a) ((a) >= 0. ? (a) : -(a))
 
 double get_fps(const char *uri);
 

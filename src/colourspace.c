@@ -206,7 +206,7 @@ static boolean unal_inited = FALSE;
 
 #ifdef GUI_GTK
 // from gdkpixbuf
-#define get_last_pixbuf_rowstride_value(width, nchans) (width * (((nchans << 3) + 7) >> 3))
+#define get_last_pixbuf_rowstride_value(width, nchans) ((((width * nchans) << 3) + 7) >> 3)
 #else
 #define get_last_pixbuf_rowstride_value(width, nchans) (width * nchans)
 #endif
@@ -220,6 +220,13 @@ static void lives_free_buffer(uint8_t *pixels, livespointer data) {
 #define CLAMP0255f(a)  (a > 255. ? 255.: a < 0. ? 0. : a)
 #define CLAMP0255fi(a)  ((int)(a > 255. ? 255.: a < 0. ? 0. : a))
 
+static inline uint8_t clamp0255f(float f) {
+  if (f > 255.) f = 255.;
+  if (f < 0.) f = 0;
+  return f;
+}
+
+
 /* precomputed tables */
 
 // generic
@@ -232,6 +239,16 @@ static int *Cb_B;
 static int *Cr_R;
 static int *Cr_G;
 static int *Cr_B;
+
+static float *Yf_R;
+static float *Yf_G;
+static float *Yf_B;
+static float *Cbf_R;
+static float *Cbf_G;
+static float *Cbf_B;
+static float *Crf_R;
+static float *Crf_G;
+static float *Crf_B;
 
 // clamped Y'CbCr
 static int Y_Rc[256];
@@ -266,6 +283,18 @@ static int HCr_Rc[256];
 static int HCr_Gc[256];
 static int HCr_Bc[256];
 
+// float - experimental
+static float HYf_Rc[256];
+static float HYf_Gc[256];
+static float HYf_Bc[256];
+static float HCbf_Rc[256];
+static float HCbf_Gc[256];
+static float HCbf_Bc[256];
+static float HCrf_Rc[256];
+static float HCrf_Gc[256];
+static float HCrf_Bc[256];
+
+
 // unclamped BT.709
 static int HY_Ru[256];
 static int HY_Gu[256];
@@ -277,6 +306,16 @@ static int HCr_Ru[256];
 static int HCr_Gu[256];
 static int HCr_Bu[256];
 
+static float HYf_Ru[256];
+static float HYf_Gu[256];
+static float HYf_Bu[256];
+static float HCbf_Ru[256];
+static float HCbf_Gu[256];
+static float HCbf_Bu[256];
+static float HCrf_Ru[256];
+static float HCrf_Gu[256];
+static float HCrf_Bu[256];
+
 static boolean conv_RY_inited = FALSE;
 
 // generic
@@ -285,6 +324,12 @@ static int *R_Cr;
 static int *G_Cb;
 static int *G_Cr;
 static int *B_Cb;
+
+static float *RGBf_Y;
+static float *Rf_Cr;
+static float *Gf_Cb;
+static float *Gf_Cr;
+static float *Bf_Cb;
 
 // clamped Y'CbCr
 static int RGB_Yc[256];
@@ -307,12 +352,24 @@ static int HG_Crc[256];
 static int HG_Cbc[256];
 static int HB_Cbc[256];
 
+static float HRGBf_Yc[256];
+static float HRf_Crc[256];
+static float HGf_Crc[256];
+static float HGf_Cbc[256];
+static float HBf_Cbc[256];
+
 // unclamped BT.709
 static int HRGB_Yu[256];
 static int HR_Cru[256];
 static int HG_Cru[256];
 static int HG_Cbu[256];
 static int HB_Cbu[256];
+
+static float HRGBf_Yu[256];
+static float HRf_Cru[256];
+static float HGf_Cru[256];
+static float HGf_Cbu[256];
+static float HBf_Cbu[256];
 
 static boolean conv_YR_inited = FALSE;
 
@@ -383,7 +440,8 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
   int i;
 
   if (fileg == 1.0) {
-    if (gamma_to == WEED_GAMMA_UNKNOWN || gamma_from == WEED_GAMMA_UNKNOWN) return NULL;
+    if (gamma_to == gamma_from || gamma_to == WEED_GAMMA_UNKNOWN
+        || gamma_from == WEED_GAMMA_UNKNOWN) return NULL;
     if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_SRGB && gamma_l2s) return gamma_l2s;
     if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_BT709 && gamma_l2b) return gamma_l2b;
     if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_LINEAR && gamma_s2l) return gamma_s2l;
@@ -402,10 +460,10 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
   gamma_lut[0] = 0;
 
   for (i = 1; i < 256; ++i) {
-    if (gamma_from == gamma_to && fileg == 1.0) {
-      gamma_lut[i] = i;
-      continue;
-    }
+    /* if (gamma_from == gamma_to && fileg == 1.0) { */
+    /*   gamma_lut[i] = i; */
+    /*   continue; */
+    /* } */
 
     x = a = (float)i / 255.;
 
@@ -487,17 +545,17 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
     }
     gamma_lut[i] = CLAMP0255((int32_t)(255. * x + .5));
   }
-  if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_SRGB && gamma_l2s)
+  if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_SRGB && !gamma_l2s)
     gamma_l2s = gamma_lut;
-  if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_BT709 && gamma_l2b)
+  if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_BT709 && !gamma_l2b)
     gamma_l2b = gamma_lut;
-  if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_LINEAR && gamma_s2l)
+  if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_LINEAR && !gamma_s2l)
     gamma_s2l = gamma_lut;
-  if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_BT709 && gamma_s2b)
+  if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_BT709 && !gamma_s2b)
     gamma_s2b = gamma_lut;
-  if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_LINEAR && gamma_b2l)
+  if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_LINEAR && !gamma_b2l)
     gamma_b2l = gamma_lut;
-  if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_SRGB && gamma_b2s)
+  if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_SRGB && !gamma_b2s)
     gamma_b2s = gamma_lut;
   return gamma_lut;
 }
@@ -643,17 +701,29 @@ static void init_RGB_to_YUV_tables(void) {
     HY_Gc[i] = myround((1. - KR_BT709 - KB_BT709) * (double)i * CLAMP_FACTOR_Y * SCALE_FACTOR);   // Kb
     HY_Bc[i] = myround((KB_BT709 * (double)i * CLAMP_FACTOR_Y + YUV_CLAMP_MIN) * SCALE_FACTOR);
 
+    HYf_Rc[i] = KR_BT709 * (double)i * CLAMP_FACTOR_Y;
+    HYf_Gc[i] = (1. - KR_BT709 - KB_BT709) * (double)i * CLAMP_FACTOR_Y;
+    HYf_Bc[i] = KB_BT709 * (double)i * CLAMP_FACTOR_Y + YUV_CLAMP_MIN;
+
     fac = .5 / (1. - KB_BT709);
 
     HCb_Rc[i] = myround(-fac * KR_BT709 * (double)i * CLAMP_FACTOR_UV  * SCALE_FACTOR); // -.16736
     HCb_Gc[i] = myround(-fac * (1. - KB_BT709 - KR_BT709)  * (double)i * CLAMP_FACTOR_UV * SCALE_FACTOR); // -.331264
     HCb_Bc[i] = myround((0.5 * (double)i * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
 
+    HCbf_Rc[i] = -fac * KR_BT709 * (double)i * CLAMP_FACTOR_UV;
+    HCbf_Gc[i] = -fac * (1. - KB_BT709 - KR_BT709)  * (double)i * CLAMP_FACTOR_UV;
+    HCbf_Bc[i] = 0.5 * (double)i * CLAMP_FACTOR_UV + UV_BIAS;
+
     fac = .5 / (1. - KR_BT709);
 
     HCr_Rc[i] = myround((0.5 * (double)i * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
     HCr_Gc[i] = myround(-fac * (1. - KB_BT709 - KR_BT709) * (double)i * CLAMP_FACTOR_UV * SCALE_FACTOR);
     HCr_Bc[i] = myround(-fac * KB_BT709 * (double)i * CLAMP_FACTOR_UV * SCALE_FACTOR);
+
+    HCrf_Rc[i] = 0.5 * (double)i * CLAMP_FACTOR_UV + UV_BIAS;
+    HCrf_Gc[i] = -fac * (1. - KB_BT709 - KR_BT709) * (double)i * CLAMP_FACTOR_UV;
+    HCrf_Bc[i] = -fac * KB_BT709 * (double)i * CLAMP_FACTOR_UV;
   }
 
   for (i = 0; i < 256; i++) {
@@ -661,17 +731,29 @@ static void init_RGB_to_YUV_tables(void) {
     HY_Gu[i] = myround((1. - KR_BT709 - KB_BT709) * (double)i * SCALE_FACTOR);   // Kb
     HY_Bu[i] = myround(KB_BT709 * (double)i * SCALE_FACTOR);
 
+    HYf_Ru[i] = KR_BT709 * (double)i;
+    HYf_Gu[i] = (1. - KR_BT709 - KB_BT709) * (double)i;   // Kb
+    HYf_Bu[i] = KB_BT709 * (double)i;
+
     fac = .5 / (1. - KB_BT709);
 
     HCb_Ru[i] = myround(-fac * KR_BT709 * (double)i * SCALE_FACTOR); // -.16736
     HCb_Gu[i] = myround(-fac * (1. - KB_BT709 - KR_BT709)  * (double)i * SCALE_FACTOR); // -.331264
     HCb_Bu[i] = myround((0.5 * (double)i + UV_BIAS) * SCALE_FACTOR);
 
+    HCbf_Ru[i] = -fac * KR_BT709 * (double)i;
+    HCbf_Gu[i] = -fac * (1. - KB_BT709 - KR_BT709)  * (double)i;
+    HCbf_Bu[i] = 0.5 * (double)i + UV_BIAS;
+
     fac = .5 / (1. - KR_BT709);
 
     HCr_Ru[i] = myround((0.5 * (double)i + UV_BIAS) * SCALE_FACTOR);
     HCr_Gu[i] = myround(-fac * (1. - KB_BT709 - KR_BT709) * (double)i * SCALE_FACTOR);
     HCr_Bu[i] = myround(-fac * KB_BT709 * (double)i * SCALE_FACTOR);
+
+    HCrf_Ru[i] = 0.5 * (double)i + UV_BIAS;
+    HCrf_Gu[i] = -fac * (1. - KB_BT709 - KR_BT709) * (double)i;
+    HCrf_Bu[i] = -fac * KB_BT709 * (double)i;
   }
 
   conv_RY_inited = TRUE;
@@ -735,16 +817,20 @@ static void init_YUV_to_RGB_tables(void) {
 
   /* clip Y values under 16 */
   for (i = 0; i <= YUV_CLAMP_MINI; i++) HRGB_Yc[i] = 0;
+  for (i = 0; i <= YUV_CLAMP_MINI; i++) HRGBf_Yc[i] = 0.;
 
   for (; i < Y_CLAMP_MAXI; i++) {
     HRGB_Yc[i] = myround(((double)i - YUV_CLAMP_MIN) / (Y_CLAMP_MAX - YUV_CLAMP_MIN) * 255. * SCALE_FACTOR);
+    HRGBf_Yc[i] = ((double)i - YUV_CLAMP_MIN) / (Y_CLAMP_MAX - YUV_CLAMP_MIN) * 255.;
   }
 
   /* clip Y values above 235 */
   for (; i < 256; i++) HRGB_Yc[i] = 255 * SCALE_FACTOR;
+  for (; i < 256; i++) HRGBf_Yc[i] = 255.;
 
   /* clip Cb/Cr values below 16 */
   for (i = 0; i <= YUV_CLAMP_MINI; i++) HR_Crc[i] = HG_Crc[i] = HG_Cbc[i] = HB_Cbc[i] = 0;
+  for (i = 0; i <= YUV_CLAMP_MINI; i++) HRf_Crc[i] = HGf_Crc[i] = HGf_Cbc[i] = HBf_Cbc[i] = 0.;
 
   for (; i < UV_CLAMP_MAXI; i++) {
     HR_Crc[i] = myround(2. * (1. - KR_BT709) * ((((double)i - YUV_CLAMP_MIN) /
@@ -755,6 +841,15 @@ static void init_YUV_to_RGB_tables(void) {
                         (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR);
     HB_Cbc[i] = myround(2. * (1. - KB_BT709) * ((((double)i - YUV_CLAMP_MIN) /
                         (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
+
+    HRf_Crc[i] = 2. * (1. - KR_BT709) * ((((double)i - YUV_CLAMP_MIN) /
+                                          (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS);
+    HGf_Crc[i] = -.5 / (1. - KR_BT709) * ((((double)i - YUV_CLAMP_MIN) /
+                                           (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS);
+    HGf_Cbc[i] = -.5 / (1. + KB_BT709 + KB_BT709) * ((((double)i - YUV_CLAMP_MIN) /
+                 (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS);
+    HBf_Cbc[i] = 2. * (1. - KB_BT709) * ((((double)i - YUV_CLAMP_MIN) /
+                                          (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS);
   }
   /* clip Cb/Cr values above 240 */
   for (; i < 256; i++) {
@@ -762,16 +857,27 @@ static void init_YUV_to_RGB_tables(void) {
     HG_Crc[i] = myround(-.5 / (1. - KR_BT709) * (255. - UV_BIAS) * SCALE_FACTOR);
     HG_Cbc[i] = myround(-.5 / (1. + KB_BT709 + KB_BT709) * (255. - UV_BIAS) * SCALE_FACTOR);
     HB_Cbc[i] = myround(2. * (1. - KB_BT709) * (255. - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
+
+    HRf_Crc[i] = 2. * (1. - KR_BT709) * (254. - UV_BIAS);
+    HGf_Crc[i] = -.5 / (1. - KR_BT709) * (254. - UV_BIAS);
+    HGf_Cbc[i] = -.5 / (1. + KB_BT709 + KB_BT709) * (254. - UV_BIAS);
+    HBf_Cbc[i] = 2. * (1. - KB_BT709) * (254. - UV_BIAS);
   }
 
   // unclamped Y'CbCr
   for (i = 0; i <= 255; i++) HRGB_Yu[i] = i * SCALE_FACTOR;
+  for (i = 0; i <= 255; i++) HRGBf_Yu[i] = i;
 
   for (i = 0; i <= 255; i++) {
     HR_Cru[i] = myround(2. * (1. - KR_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
     HG_Cru[i] = myround(-.5 / (1. - KR_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR);
     HG_Cbu[i] = myround(-.5 / (1. + KB_BT709 + KB_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR);
     HB_Cbu[i] = myround(2. * (1. - KB_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
+
+    HRf_Cru[i] = 2. * (1. - KR_BT709) * ((double)i - UV_BIAS);
+    HGf_Cru[i] = -.5 / (1. - KR_BT709) * ((double)i - UV_BIAS);
+    HGf_Cbu[i] = -.5 / (1. + KB_BT709 + KB_BT709) * ((double)i - UV_BIAS);
+    HBf_Cbu[i] = 2. * (1. - KB_BT709) * ((double)i - UV_BIAS);
   }
   conv_YR_inited = TRUE;
 }
@@ -906,39 +1012,83 @@ static void set_conversion_arrays(int clamping, int subspace) {
       Y_G = HY_Gc;
       Y_B = HY_Bc;
 
+      Yf_R = HYf_Rc;
+      Yf_G = HYf_Gc;
+      Yf_B = HYf_Bc;
+
       Cr_R = HCr_Rc;
       Cr_G = HCr_Gc;
       Cr_B = HCr_Bc;
+
+      Crf_R = HCrf_Rc;
+      Crf_G = HCrf_Gc;
+      Crf_B = HCrf_Bc;
 
       Cb_R = HCb_Rc;
       Cb_G = HCb_Gc;
       Cb_B = HCb_Bc;
 
+      Cbf_R = HCbf_Rc;
+      Cbf_G = HCbf_Gc;
+      Cbf_B = HCbf_Bc;
+
       RGB_Y = HRGB_Yc;
+      RGBf_Y = HRGBf_Yc;
 
       R_Cr = HR_Crc;
       G_Cr = HG_Crc;
       G_Cb = HG_Cbc;
       B_Cb = HB_Cbc;
+
+      Rf_Cr = HRf_Crc;
+      Gf_Cr = HGf_Crc;
+      Gf_Cb = HGf_Cbc;
+      Bf_Cb = HBf_Cbc;
     } else {
       Y_R = HY_Ru;
       Y_G = HY_Gu;
       Y_B = HY_Bu;
 
+      Yf_R = HYf_Ru;
+      Yf_G = HYf_Gu;
+      Yf_B = HYf_Bu;
+
+      Y_R = HY_Ru;
+      Y_G = HY_Gu;
+      Y_B = HY_Bu;
+
+      Yf_R = HYf_Ru;
+      Yf_G = HYf_Gu;
+      Yf_B = HYf_Bu;
+
       Cr_R = HCr_Ru;
       Cr_G = HCr_Gu;
       Cr_B = HCr_Bu;
+
+      Crf_R = HCrf_Ru;
+      Crf_G = HCrf_Gu;
+      Crf_B = HCrf_Bu;
 
       Cb_R = HCb_Ru;
       Cb_G = HCb_Gu;
       Cb_B = HCb_Bu;
 
+      Cbf_R = HCbf_Ru;
+      Cbf_G = HCbf_Gu;
+      Cbf_B = HCbf_Bu;
+
       RGB_Y = HRGB_Yu;
+      RGBf_Y = HRGBf_Yu;
 
       R_Cr = HR_Cru;
       G_Cr = HG_Cru;
       G_Cb = HG_Cbu;
       B_Cb = HB_Cbu;
+
+      Rf_Cr = HRf_Cru;
+      Gf_Cr = HGf_Cru;
+      Gf_Cb = HGf_Cbu;
+      Bf_Cb = HBf_Cbu;
     }
     break;
   }
@@ -1141,7 +1291,7 @@ void rgb2hsv(uint8_t r, uint8_t g, uint8_t b, double *h, double *s, double *v) {
   if (v) *v = dcmax / 2.55;
 
 #if CALC_HSL
-  register short a;
+  short a;
   if ((a = spc_rnd(Y_Ru[r] + Y_Gu[g] + Y_Bu[b])) > 255) a = 255;
   if (v) *v = (double)(a < 0 ? 0 : a) / 255.;
 #endif
@@ -2091,11 +2241,23 @@ LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
   else yuv->u2 = a < min_UV ? min_UV : a;
 }
 
-LIVES_INLINE void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
+LIVES_INLINE void yuv2rgb_int(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
   *r = CLAMP0255f(spc_rnd(RGB_Y[y] + R_Cr[v]));
   *g = CLAMP0255f(spc_rnd(RGB_Y[y] + G_Cb[u] + G_Cr[v]));
   *b = CLAMP0255f(spc_rnd(RGB_Y[y] + B_Cb[u]));
 }
+
+LIVES_INLINE void yuv2rgb_float(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
+  *r = clamp0255f(RGBf_Y[y] + Rf_Cr[v]);
+  *g = clamp0255f(RGBf_Y[y] + Gf_Cb[u] + Gf_Cr[v]);
+  *b = clamp0255f(RGBf_Y[y] + Bf_Cb[u]);
+}
+
+LIVES_INLINE void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
+  if (prefs->pb_quality == PB_QUALITY_HIGH) return yuv2rgb_float(y, u, v, r, g, b);
+  return yuv2rgb_int(y, u, v, r, g, b);
+}
+
 
 #define yuv2bgr(y, u, v, b, g, r) yuv2rgb(y, u, v, r, g, b)
 
@@ -2104,6 +2266,19 @@ LIVES_INLINE void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r
   *g = lut[(int)CLAMP0255f(spc_rnd(RGB_Y[y] + G_Cb[u] + G_Cr[v]))];
   *b = lut[(int)CLAMP0255f(spc_rnd(RGB_Y[y] + B_Cb[u]))];
 }
+
+// nope...
+/* LIVES_INLINE void yuv2rgb_with_gamma_float(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *lut) { */
+/*   //yuv2rgb_with_gamma_int(y, u, v, r, g, b, lut); */
+/*   *r = lut[(uint8_t)clamp0255f(RGBf_Y[y] + Rf_Cr[v])]; */
+/*   *g = lut[(uint8_t)clamp0255f(RGBf_Y[y] + Gf_Cb[u] + Gf_Cr[v])]; */
+/*   *b = lut[(uint8_t)clamp0255f(RGBf_Y[y] + Bf_Cb[u])]; */
+/* } */
+
+/* LIVES_INLINE void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *lut) { */
+/*   if (prefs->pb_quality == PB_QUALITY_HIGH) return yuv2rgb_with_gamma_float(y, u, v, r, g, b, lut); */
+/*   return yuv2rgb_with_gamma_int(y, u, v, r, g, b, lut); */
+/* } */
 
 #define yuv2bgr_with_gamma(y, u, v, b, g, r, lut) yuv2rgb_with_gamma(y, u, v, r, g, b, lut)
 
@@ -2180,7 +2355,7 @@ LIVES_INLINE void yuyv_2_yuv422(yuyv_macropixel *yuyv, uint8_t *y0, uint8_t *u0,
 LIVES_GLOBAL_INLINE boolean weed_palette_is_painter_palette(int pal) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   if (pal == WEED_PALETTE_A8 || pal == WEED_PALETTE_A1) return TRUE;
-  if (capable->byte_order == LIVES_BIG_ENDIAN) {
+  if (capable->hw.byte_order == LIVES_BIG_ENDIAN) {
     if (pal == WEED_PALETTE_ARGB32) return TRUE;
   } else {
     if (pal == WEED_PALETTE_BGRA32) return TRUE;
@@ -2869,7 +3044,9 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, b
   if (thread_id == -1) {
 #endif
     set_conversion_arrays(clamping, subspace);
-    if (tgamma) gamma_lut = create_gamma_lut(1.0, gamma, tgamma);
+    if (tgamma) {
+      gamma_lut = create_gamma_lut(1.0, gamma, tgamma);
+    }
 #if USE_THREADS
   }
 #endif
@@ -10424,7 +10601,7 @@ LIVES_LOCAL_INLINE boolean can_inline_gamma(int inpl, int opal) {
   // TODO: rgb <-> bgra, bgr <-> rgba,
   if (inpl == WEED_PALETTE_YUV420P || inpl == WEED_PALETTE_YUV420P || inpl == WEED_PALETTE_YUV420P) {
     if (opal == WEED_PALETTE_RGB24 || opal == WEED_PALETTE_BGR24 || opal == WEED_PALETTE_RGBA32
-        || opal == WEED_PALETTE_ARGB32) return TRUE;
+        || opal == WEED_PALETTE_BGRA32 || opal == WEED_PALETTE_ARGB32) return TRUE;
   }
   if (opal == WEED_PALETTE_UYVY || opal == WEED_PALETTE_YUYV) {
     if (inpl == WEED_PALETTE_RGB24 || inpl == WEED_PALETTE_RGBA32
@@ -10503,7 +10680,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
 
-  //  #define DEBUG_PCONV
+  //    #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -13018,7 +13195,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     orowstrides = weed_layer_get_rowstrides(layer, NULL);
 
     if (new_gamma_type != WEED_GAMMA_UNKNOWN) {
-      weed_layer_set_gamma(layer, new_gamma_type);
+      //weed_layer_set_gamma(layer, new_gamma_type);
       if (weed_palette_is_rgb(palette)) {
         if (new_gamma_type == WEED_GAMMA_BT709) subspace = WEED_YUV_SUBSPACE_BT709;
       } else if (weed_palette_is_yuv(palette)) {
@@ -13678,7 +13855,7 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
       cform = LIVES_PAINTER_FORMAT_A1;
       widthx = width >> 3;
     } else {
-      lform = LIVES_PAINTER_COLOR_PALETTE(capable->byte_order);
+      lform = LIVES_PAINTER_COLOR_PALETTE(capable->hw.byte_order);
       convert_layer_palette(layer, lform, 0);
       cform = LIVES_PAINTER_FORMAT_ARGB32;
       widthx = width << 2;
@@ -13766,7 +13943,7 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_layer_t *layer) {
 
   switch (cform) {
   case LIVES_PAINTER_FORMAT_ARGB32:
-    weed_layer_set_palette(layer, LIVES_PAINTER_COLOR_PALETTE(capable->byte_order));
+    weed_layer_set_palette(layer, LIVES_PAINTER_COLOR_PALETTE(capable->hw.byte_order));
     weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
     if (prefs->alpha_post) {

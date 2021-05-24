@@ -16,9 +16,6 @@ extern "C"
 
 //#define DEBUG
 
-
-
-
 #ifdef DEBUG
 #include <stdio.h>
 #define debug_print(...) fprintf(stderr, __VA_ARGS__)
@@ -52,6 +49,18 @@ extern "C"
 #define LSD_NAMELEN 16
 #define LSD_MAX_ALLOC 65535
 #define LIVES_STRUCT_ID 0x4C7C56332D2D3035  /// 1st 8 bytes - L|V3--05 (be) or 50--3V|L (le)
+
+#define LSD_FIELD_LSD "lsd"
+
+#define LSD_FIELD_IDENTIFIER			"identifier"
+#define LSD_FIELD_UNIQUE_ID			"unique_id"
+#define LSD_FIELD_REFCOUNT			"refcount"
+#define LSD_FIELD_GENERATION			"generation"
+#define LSD_FIELD_TOP				"top"
+#define LSD_FIELD_SPECIAL_FIELDS		"special_fields"
+#define LSD_FIELD_SELF_FIELDS			"self_fields"
+#define LSD_FIELD_USER_DATA			"user_data"
+#define LSD_FIELD_END_ID			"end_id"
 
 #include <stdint.h>
 #include <inttypes.h>
@@ -104,44 +113,80 @@ static char *_lsd_proxy_strdup(char *str) {
   return ret;
 }
 
-/// AUTONATION FLAGS
+/// AUTOMATION FLAGS
 
-/// copy flags
-///< alloc and copy on copy. If bytesize is set that will be the allocated size,
-/// if 0 then we do a strdup. Fixed size is ignored for arrays.
+///  - copying flags
+/// alloc and copy on copy. If bytesize is set, that will be the allocated size,
+/// if bytesize is 0, then we do a strdup.
+/// For nullt arrays, this is applied to each non-zero element
 #define LIVES_FIELD_FLAG_ALLOC_AND_COPY (1ull << 0)
 
-///< if bytesize is 0, field will be set to NULL in lives_struct_copy,
-/// if ALLOC_AND_COPY is also set, will be set to empty string
-/// if bytesize > 0 and not IS_NULLT_ARRAY
-/// then field will will be filled with bytesize zeros
-/// dest->field = NULL or memset(dets->field, 0, bytesize)
-/// for ARRAYS, the process will be applied to each element in turn
-/// however, since a NULL element marks the end of a NULLT_ARRAY,
-/// the combination ALLOC_AND_COPY | ZERO_ON_COPY | IS_NULLT_ARRAY may interfere with
-/// subsequent copying
+/// for non arrays:
+/// if bytesize is 0, and ALLOC_AND_COPY is also set
+/// will be set to empty string i.e memset(dest->field, 0, bytesize)
+/// else set to NULL
+///
+/// if bytesize > 0 then field will will be filled with bytesize zeros
+/// i.e. memset(dest->field, 0, bytesize)
+//
+/// for NULLT_ARRAYS, the process will be applied to each element in turn
+/// for bsize == 0:
+/// - if COPY_AND_ALLOC is NOT set, we do a copy by value
+/// -- setting ZERO_ON_COPY is *dangerous* as all elements will instead be set to NULL
+///     hence the array length will be lost !
+///
+/// - if COPY_AND_ALLOC is set:
+/// -- we do a strdup, unless ZERO_ON_COPY is also set in which case we create all empty strings
+///      (up to the NULL element)
+///
+/// for bsize > 0:
+/// - if COPY_AND_ALLOC is NOT set, we do a copy by value
+///    setting ZERO_ON_COPY will result in each value being set to bsize zeroes
+///
+/// - if COPY_AND_ALLOC is set, we do a copy by reference
+///    setting ZERO_ON_COPY will result in each value being set to NULL
+///     hence the array length will be lost !
+///
 #define LIVES_FIELD_FLAG_ZERO_ON_COPY (1ull << 1)
 
-// delete flags
-///< field wiill be freed in lives_struct_delete
+// - delete flags
+/// field wiill be freed in lives_struct_delete
 /// free(struct->field)
+///
 #define LIVES_FIELD_FLAG_FREE_ON_DELETE (1ull << 16)
 
 /// for (i = 0; struct->field[i], i++) free(struct->field[i];
-#define LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE (1ull << 17) ///< combined with IS_NULLT_ARRAY, frees all elements, combine with FREE_ON_DELETE to free element after
+/// - combined with IS_NULLT_ARRAY, frees all (non NULL) elements;
+///   if that flagbit is not set, this one is ignored
+/// combined with FREE_ON_DELETE frees elements + array itself
+/// - advisable only to set this is ALLOC_AND_COPY is also set
+#define LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE (1ull << 17)
 
 /// flags giving extra info about the field (affects copy and delete)
 
-///< field is a substruct with its own lives_struct_def_t; functions should be called recursively
+/// field is a substruct with its own lives_struct_def_t; functions should be called recursively
 /// it must be possible to locate the lives_struct_def_t field from the first byte
 /// sequence matching LIVES_STRUCT_ID in its identifier field
 /// lives_struct_copy(struct->field
 /// if this is set, all other flag bits are ignored for the field
+/// - NOT YET IMPLEMENTED !
 #define LIVES_FIELD_FLAG_IS_SUBSTRUCT (1ull << 32)
 
-///< field is an array of elements of size bytelen, last element has all bytes set to zero
-/// if bytesize is zero, it is an array of NUL terminated char
+/// field is an array of elements each of size bytesize, last element has all bytes set to zero
+/// if bytesize is zero, it is an array of 0 terminated char * (strings), with last element NULL
+///
+/// if bytesize > 0:
+/// - if ALLOC_AND_COPY is NOT set then a simple copy by value is done, stopping at any element with
+///    bsize zeroes
+///
+/// - if ALLOC_AND_COPY is set,
+/// bsize defines the element size, and the array is terminated by an element with bsize zeroes
+
+///    and we do a simple copy by ref of each element. In this case, setting ZERO_ON_COPY would simply set all
+///    values to zero, thus it should be handled with caution as the information about the array length would be lost
+///
 /// may be combined with ALLOC_AND_COPY, FREE_ON_DELETE, FREE_ALL_ON_DELETE
+/// combining with ZERO_ON_COPY is NOT recommended for reasons given above
 #define LIVES_FIELD_FLAG_IS_NULLT_ARRAY (1ull << 33)
 
 // combinations:
@@ -173,12 +218,18 @@ static char *_lsd_proxy_strdup(char *str) {
 // FREE_ON_DELETE | FREE_ALL_ON_DELETE recommended
 
 #define LIVES_FIELD_CHARPTR (LIVES_FIELD_FLAG_ALLOC_AND_COPY | LIVES_FIELD_FLAG_FREE_ON_DELETE)
+#define LIVES_FIELD_STRING LIVES_FIELD_CHARPTR
+
 #define LIVES_FIELD_BLOB LIVES_FIELD_CHARPTR // with bytesize > 0
 
+// copy by value, free array on delete
 #define LIVES_FIELD_ARRAY (LIVES_FIELD_FLAG_IS_NULLT_ARRAY | LIVES_FIELD_FLAG_FREE_ON_DELETE)
 
+// copy by value, free array on delete
 #define LIVES_FIELD_PTR_ARRAY (LIVES_FIELD_ARRAY | LIVES_FIELD_FLAG_ALLOC_AND_COPY \
 			       | LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE)
+
+#define LIVES_FIELD_STR_ARRAY LIVES_FIELD_PTR_ARRAY // with bsize == 0
 
 // with a bytesize of zero this will cause a string to be set to "" on copy
 // without the ALLOC_AND_COPY, the string would be set to NULL
@@ -417,24 +468,24 @@ static void _lsd_init_copy(void *dst, void *strct, const char *strct_type, const
                            void *ptr_to_field) {
   if (!dst) {
     /// called from init
-    if (!strcmp(field_name, "identifier")) {
+    if (!strcmp(field_name, LSD_FIELD_IDENTIFIER)) {
       *(uint64_t *)ptr_to_field = LIVES_STRUCT_ID;
       return;
     }
-    if (!strcmp(field_name, "end_id")) {
+    if (!strcmp(field_name, LSD_FIELD_END_ID)) {
       *(uint64_t *)ptr_to_field =
         (LIVES_STRUCT_ID ^ 0xFFFFFFFFFFFFFFFF);
       return;
     }
   }
-  if (!strcmp(field_name, "top")) {
+  if (!strcmp(field_name, LSD_FIELD_TOP)) {
     if (dst) *(void **)ptr_to_field = dst;
     else *(void **)ptr_to_field = strct;
-  } else if (!strcmp(field_name, "unique_id")) {
+  } else if (!strcmp(field_name, LSD_FIELD_UNIQUE_ID)) {
     LSD_RANDFUNC(ptr_to_field, 8);
-  } else if (!strcmp(field_name, "refcount")) {
+  } else if (!strcmp(field_name, LSD_FIELD_REFCOUNT)) {
     *((int *)ptr_to_field) = 1;
-  } else if (!strcmp(field_name, "generation")) {
+  } else if (!strcmp(field_name, LSD_FIELD_GENERATION)) {
     (*(int *)ptr_to_field)++;
   }
 }
@@ -516,8 +567,7 @@ static void *_lsd_get_field(char *top, int is_self_field,
     if (spfields[0]->bytesize) {
       if (!i) return top;
       top = *((char **)top);
-      debug_print("\nlsd is a pointer, real top is %p\n",
-                  top);
+      debug_print("\nlsd is a pointer, real top is %p\n", top);
     }
   }
   debug_print("adding field offset of %" PRIu64 ", final ptr is %p\n",
@@ -565,14 +615,17 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
   size_t bsize = spcf->bytesize;
   int j;
   if (!(spcf->flags & LIVES_FIELD_FLAG_IS_NULLT_ARRAY)) {
+    // non-array
     if (spcf->flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) {
       if (bsize) {
+        // non-string
         if (bsize > LSD_MAX_ALLOC) {
           debug_print("error: memory request too large (%" PRIu64 " > %" PRIu64 ")\n", bsize, LSD_MAX_ALLOC);
           return;
         } else {
           debug_print("allocating %" PRIu64 " bytes...", bsize);
           if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
+            // alloc and zero
             if (!(*_lsd_calloc_aligned)((void **)dst_field, 1, bsize)) {
               debug_print("and set to zero.\n");
             } else {
@@ -580,6 +633,7 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
             }
             return;
           } else {
+            // alloc and copy
             if (src_field != lsd && !(*((void **)src_field))) {
               debug_print("value is NULL, not copying\n");
             } else {
@@ -594,11 +648,10 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
 	      }}}
 	  // *INDENT-ON*
       } else {
-        // strings
+        // string (bsize == 0)
         char **cptr = (char **)dst_field;
         if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
           // set the string to an empty string
-          // without ALLOC_AND_COPY we set it to NULL instead
           *cptr = (*_lsd_strdup)("");
           debug_print("string was set to \"\"\n");
         } else {
@@ -644,8 +697,8 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
       debug_print("WARNING: FREE_ALL_ON_DELETE is set\n");
     }
     return;
-  }
-  if (spcf->flags & LIVES_FIELD_FLAG_IS_NULLT_ARRAY) {
+  } else {
+    // nullt array
     int count = 0;
     debug_print("handling array...");
     // copy / create n elements or strings
@@ -661,7 +714,13 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
         for (j = 0; j < count; j++) {
           // flags tells us what to with each element
           if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
-            dptr[j] = (*_lsd_strdup)("");
+            if (spcf->flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) {
+              dptr[j] = (*_lsd_strdup)("");
+            } else {
+              ///set to NULL - but deliver a warning
+              debug_print("WARNING - non-last sttring set to NULL");
+              dptr[j] = NULL;
+            }
           } else {
             if (spcf->flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) {
               dptr[j] = (*_lsd_strdup)(cptr[j]);
@@ -700,6 +759,7 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
       }
       return;
     } else {
+      /// array of elemnts of bsize
       if (spcf->flags & (LIVES_FIELD_FLAG_ALLOC_AND_COPY
                          | LIVES_FIELD_FLAG_ZERO_ON_COPY)) {
         /// alloc and copy elements of size bsize
@@ -713,12 +773,14 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
           }
           for (j = 0; j < count; j++) {
             // flags tells us what to with each element
-            if ((*_lsd_calloc_aligned)((void **)&dptr[j], 1, bsize)) {
-              memerr_print(bsize, spcf->name, lsd->structtype);
-              return;
-            } else {
-              if (!(spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY)) {
-                (*_lsd_memcpy)(dptr[j], vptr[j], bsize);
+            if (spcf->flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) {
+              if ((*_lsd_calloc_aligned)((void **)&dptr[j], 1, bsize)) {
+                memerr_print(bsize, spcf->name, lsd->structtype);
+                return;
+              } else {
+                if (!(spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY)) {
+                  (*_lsd_memcpy)(dptr[j], vptr[j], bsize);
+                }
               }
             }
           }
@@ -993,10 +1055,10 @@ static int _lsd_struct_init(const lives_struct_def_t *lsd, void *thestruct,
     lives_special_field_t **spfields = lsd->self_fields;
     if (is_ptr)
       spfields[0] = _lsd_make_special_field(LIVES_FIELD_FLAG_ALLOC_AND_COPY, thestruct,
-                                            lsd_in_structp, "lsd",
+                                            lsd_in_structp, LSD_FIELD_LSD,
                                             sizeof(lives_struct_def_t), NULL, NULL, NULL);
     else
-      spfields[0] = _lsd_make_special_field(0, thestruct, lsd_in_struct, "lsd", 0, NULL, NULL, NULL);
+      spfields[0] = _lsd_make_special_field(0, thestruct, lsd_in_struct, LSD_FIELD_LSD, 0, NULL, NULL, NULL);
   }
   return 0;
 }
@@ -1180,7 +1242,7 @@ static const lives_struct_def_t *lsd_create(const char *struct_type, size_t stru
   if (nspecial > 0) {
     if ((*_lsd_calloc_aligned)((void **)&lsd->special_fields, nspecial + 1,
                                sizeof(lives_special_field_t *))) {
-      memerr_print((nspecial + 1) * sizeof(lives_special_field_t *), "lsd.special_fields",
+      memerr_print((nspecial + 1) * sizeof(lives_special_field_t *), LSD_FIELD_LSD "." LSD_FIELD_SPECIAL_FIELDS,
                    SELF_STRUCT_TYPE);
       return NULL;
     }
@@ -1188,7 +1250,7 @@ static const lives_struct_def_t *lsd_create(const char *struct_type, size_t stru
   }
 
   if ((*_lsd_calloc_aligned)((void **) & (lsd->self_fields), 11, sizeof(lives_special_field_t *))) {
-    memerr_print(8 * sizeof(lives_special_field_t *), "lsd.self_fields", SELF_STRUCT_TYPE);
+    memerr_print(8 * sizeof(lives_special_field_t *), LSD_FIELD_LSD "." LSD_FIELD_SELF_FIELDS, SELF_STRUCT_TYPE);
     return NULL;
   }
   xspecf = lsd->self_fields;
@@ -1196,34 +1258,34 @@ static const lives_struct_def_t *lsd_create(const char *struct_type, size_t stru
   // xspecf[0] ("lsd") stays as NULL for now, this tells us that the struct has not been inited yet.
 
   // set on init
-  xspecf[1] = _lsd_make_special_field(0, lsd, &lsd->identifier, "identifier", 0, _lsd_init_cb,
+  xspecf[1] = _lsd_make_special_field(0, lsd, &lsd->identifier, LSD_FIELD_IDENTIFIER, 0, _lsd_init_cb,
                                       NULL, NULL);
   // set a new random value on init / copy
-  xspecf[2] = _lsd_make_special_field(0, lsd, &lsd->unique_id, "unique_id", 0,
+  xspecf[2] = _lsd_make_special_field(0, lsd, &lsd->unique_id, LSD_FIELD_UNIQUE_ID, 0,
                                       _lsd_init_cb, _lsd_copy_cb, NULL);
   // et to 1 on init / copy
-  xspecf[3] = _lsd_make_special_field(0, lsd, &lsd->refcount, "refcount", 0,
+  xspecf[3] = _lsd_make_special_field(0, lsd, &lsd->refcount, LSD_FIELD_REFCOUNT, 0,
                                       _lsd_init_cb, _lsd_copy_cb, NULL);
   // set to 1 on init, increment on copy
-  xspecf[4] = _lsd_make_special_field(0, lsd, &lsd->generation, "generation", 0,
+  xspecf[4] = _lsd_make_special_field(0, lsd, &lsd->generation, LSD_FIELD_GENERATION, 0,
                                       _lsd_init_cb, _lsd_copy_cb, NULL);
   // point to struct on init / copy
-  xspecf[5] = _lsd_make_special_field(0, lsd, &lsd->top, "top", 0, _lsd_init_cb, _lsd_copy_cb, NULL);
+  xspecf[5] = _lsd_make_special_field(0, lsd, &lsd->top, LSD_FIELD_TOP, 0, _lsd_init_cb, _lsd_copy_cb, NULL);
 
   // values will be alloced and copied to a copy struct,
   xspecf[6] = _lsd_make_special_field(LIVES_FIELD_PTR_ARRAY, lsd,
-                                      &lsd->special_fields, "special_fields",
+                                      &lsd->special_fields, LSD_FIELD_SPECIAL_FIELDS,
                                       sizeof(lives_special_field_t), NULL, NULL, NULL);
   // NULL terminated array - array allocated / freed elements copied
   xspecf[7] = _lsd_make_special_field(LIVES_FIELD_PTR_ARRAY, lsd,
-                                      &lsd->self_fields, "self_fields",
+                                      &lsd->self_fields, LSD_FIELD_SELF_FIELDS,
                                       sizeof(lives_special_field_t),
                                       NULL, NULL, NULL);
   // value will be set to zero after copying
   xspecf[8] = _lsd_make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, lsd,
-                                      &lsd->user_data, "user_data", 8, NULL, NULL, NULL);
+                                      &lsd->user_data, LSD_FIELD_USER_DATA, 8, NULL, NULL, NULL);
   // set to val
-  xspecf[9] = _lsd_make_special_field(0, lsd, &lsd->end_id, "end_id", 0, _lsd_init_cb,
+  xspecf[9] = _lsd_make_special_field(0, lsd, &lsd->end_id, LSD_FIELD_END_ID, 0, _lsd_init_cb,
                                       NULL, NULL);
 
   xspecf[10] = NULL;

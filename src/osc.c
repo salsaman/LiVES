@@ -50,7 +50,7 @@ static boolean osc_init_generator(livespointer data) {
 /* convert a big endian 32 bit string to an int for internal use */
 
 static int toInt(const char *b) {
-  if (capable->byte_order == LIVES_LITTLE_ENDIAN) {
+  if (capable->hw.byte_order == LIVES_LITTLE_ENDIAN) {
     return (((int) b[3]) & 0xff) + ((((int) b[2]) & 0xff) << 8) + ((((int) b[1]) & 0xff) << 16) +
            ((((int) b[0]) & 0xff) << 24);
   }

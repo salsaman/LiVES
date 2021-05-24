@@ -17,7 +17,7 @@
 //    (Prototype pattern)
 // - allows functions to be chained in sequence with outputs from one feeding into the next (function sequencing)
 // - provides for verifying that a set of conditions is satisfied before the function(s) are called (argument validation)
-// - objects can list capabilities which depend on the intent and object state (introspection, inheritance, polymorphism)
+// - objects can list capacities which depend on the intent and object state (introspection, inheritance, polymorphism)
 // - a status can be returned after any step in the transform - new requirements and conditions can be added (function sequencing)
 // - the transform returns a status which can be updated dynamically (e,g waiting, needs_data) (dynamic returns)
 // - allows for the possibility of object - object communication and data sharing (AI like behaviours, swarming, nnets)
@@ -28,8 +28,8 @@
 //
 
 // ideas: a type / subtype can list a set of intentcaps, but can they also provide an interface
-// ie. an intentcap "play" would have init_screen, exit_screen...so "play" is a capability as well as an action
-// so the capability part can list sub-intentions...or perhaps a capability can be linked to one or more a intentions..
+// ie. an intentcap "play" would have init_screen, exit_screen...so "play" is a capacity as well as an action
+// so the capacity part can list sub-intentions...or perhaps a capacity can be linked to one or more a intentions..
 
 // must an intention always be linked to an object ? For example each thread can have an intention, should a thread become a lives_object
 // advantages / disadvantages...
@@ -150,71 +150,6 @@ enum {
 #define LIVES_INTENTION_DOWNLOAD LIVES_INTENTION_IMPORT_REMOTE
 
 #define LIVES_INTENTION_DELETE LIVES_INTENTION_DESTROY
-
-/// type specific caps
-// vpp
-//"general"
-#define VPP_CAN_RESIZE    (1<<0)
-#define VPP_CAN_RETURN    (1<<1)
-#define VPP_LOCAL_DISPLAY (1<<2)
-#define VPP_LINEAR_GAMMA  (1<<3)
-#define VPP_CAN_RESIZE_WINDOW          		(1<<4)   /// can resize the image to fit the play window
-#define VPP_CAN_LETTERBOX                  	(1<<5)
-#define VPP_CAN_CHANGE_PALETTE			(1<<6)
-
-// encoder
-//"general"
-#define HAS_RFX (1<<0)
-#define CAN_ENCODE_PNG (1<<2)
-#define ENCODER_NON_NATIVE (1<<3)
-
-//"acodecs"
-#define AUDIO_CODEC_NONE 0  /// was 32
-
-#define AUDIO_CODEC_MP3 1
-#define AUDIO_CODEC_PCM 2
-#define AUDIO_CODEC_MP2 3
-#define AUDIO_CODEC_VORBIS 4
-#define AUDIO_CODEC_AC3 5
-#define AUDIO_CODEC_AAC 6
-#define AUDIO_CODEC_AMR_NB 7
-#define AUDIO_CODEC_RAW 8
-#define AUDIO_CODEC_WMA2 9
-#define AUDIO_CODEC_OPUS 10
-
-#define AUDIO_CODEC_MAX 63
-#define AUDIO_CODEC_UNKNOWN -1
-
-// decoders
-// "sync_hint"
-#define SYNC_HINT_AUDIO_TRIM_START (1<<0)
-#define SYNC_HINT_AUDIO_PAD_START (1<<1)
-#define SYNC_HINT_AUDIO_TRIM_END (1<<2)
-#define SYNC_HINT_AUDIO_PAD_END (1<<3)
-
-#define SYNC_HINT_VIDEO_PAD_START (1<<4)
-#define SYNC_HINT_VIDEO_PAD_END (1<<5)
-
-//"seek_flag"
-/// good
-#define LIVES_SEEK_FAST (1<<0)
-#define LIVES_SEEK_FAST_REV (1<<1)
-
-/// not so good
-#define LIVES_SEEK_NEEDS_CALCULATION (1<<2)
-#define LIVES_SEEK_QUALITY_LOSS (1<<3)
-
-// rendered effects
-// "general"
-#define RFX_PROPS_SLOW        0x0001  ///< hint to GUI
-#define RFX_PROPS_MAY_RESIZE  0x0002 ///< is a tool (can only be applied to entire clip)
-#define RFX_PROPS_BATCHG      0x0004 ///< is a batch generator
-#define RFX_PROPS_NO_PREVIEWS 0x0008 ///< no previews possible (e.g. effect has long prep. time)
-
-#define RFX_PROPS_RESERVED1   0x1000
-#define RFX_PROPS_RESERVED2   0x2000
-#define RFX_PROPS_RESERVED3   0x4000
-#define RFX_PROPS_AUTO_BUILT  0x8000
 
 // generic STATES which can be altered by *transforms*
 #define OBJECT_STATE_NULL	0
@@ -341,6 +276,33 @@ typedef struct {
 //
 //const lives_object_template_t *lives_object_template_for_type(uint64_t type, uint64_t subtype);
 const lives_object_template_t *lives_object_template_for_type(uint64_t type);
+
+#define LIVES_WEED_SUBTYPE_CAPACITIES 512
+
+lives_capacity_t *lives_capacities_new(void);
+void lives_capacities_free(lives_capacity_t *);
+
+#define LIVES_ERROR_NOSUCH_CAP WEED_ERROR_NOSUCH_PLANT
+
+#define lives_capacity_exists(caps, key) (caps ? (weed_plant_has_leaf(caps, key) == WEED_TRUE ? TRUE : FALSE) \
+					  FALSE)
+
+#define lives_capacity_delete(caps, key) (caps ? weed_leaf_delete(caps, key) \
+					  : WEED_ERROR_NOSUCH_CAP)
+
+#define lives_capacity_set_int(caps, key, val) weed_set_int_value(caps, key, val)
+#define lives_capacity_set_string(caps, key, val) weed_set_string_value(caps, key, val)
+
+// TODO - add some error handling
+#define lives_capacity_get_int(caps, key) (cap ? weed_get_int_value(caps, key, 0) : 0)
+#define lives_capacity_get_string(caps, key) (cap ? weed_get_string_value(caps, key, 0) : 0)
+
+#define lives_capacity_set_readonly(caps, key, state) \
+  (caps ? weed_leaf_set_flags(caps, key, weed_leaf_get_flags(caps, key) | (state ? WEED_FLAG_IMMUTABLE : 0)) \
+   : LIVES_ERROR_NOSUCH_CAP)
+
+#define lives_capacity_is_readonly(caps, key) (cap ? ((weed_leaf_get_flags(caps, key) & WEED_FLAG_IMMUTABLE) \
+						      ? TRUE : FALSE) : FALSE)
 
 #if 0
 // base functions

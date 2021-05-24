@@ -141,7 +141,7 @@ endif
 endif
 
 videopluginslib_LTLIBRARIES = $(YUV4MPEG_libs) $(oggstream_libs) $(icecast_output_libs) \
-	$(vjack_output_libs) $(lives2lives_stream_libs) $(vloopback_libs) $(vloopback2_libs) \
+	$(vjack_output_libs) $(lives2lives_stream_libs) $(vloopback2_libs) \
 	$(openGL_libs) $(libav_stream_libs)
 
 EXTRA_DIST = videoplugin.h glad.h glad_glx.h

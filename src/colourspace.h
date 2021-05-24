@@ -61,8 +61,8 @@
 #define UV_CLAMP_MAX 240.
 #define UV_CLAMP_MAXI 240
 
-#define CLAMP_FACTOR_Y ((Y_CLAMP_MAX-YUV_CLAMP_MIN)/255.) // unclamped -> clamped
-#define CLAMP_FACTOR_UV ((UV_CLAMP_MAX-YUV_CLAMP_MIN)/255.) // unclamped -> clamped
+#define CLAMP_FACTOR_Y ((Y_CLAMP_MAX - YUV_CLAMP_MIN) / 255.) // unclamped -> clamped
+#define CLAMP_FACTOR_UV ((UV_CLAMP_MAX - YUV_CLAMP_MIN) / 255.) // unclamped -> clamped
 
 #define UV_BIAS 128.
 

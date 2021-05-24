@@ -55,8 +55,14 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
   char **array = lives_strsplit(sp_string, "|", num_widgets + 2);
 
   // TODO - assert only one of each of these
-
-  if (!strcmp(array[0], "aspect")) {
+  if (!strcmp(array[0], "ignored")) {
+    for (int i = 1; i <= num_widgets; i++) {
+      int np = atoi(array[i]);
+      if (np <= rfx->num_params) {
+        rfx->params[np].hidden |= HIDDEN_GUI_PERM;
+      }
+    }
+  } else if (!strcmp(array[0], "aspect")) {
     aspect.width_param = &rfx->params[atoi(array[1])];
     aspect.height_param = &rfx->params[atoi(array[2])];
   } else if (!strcmp(array[0], "fontchooser")) {
@@ -371,18 +377,12 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     }
 
     if (param == aspect.width_param) {
-      if (CURRENT_CLIP_HAS_VIDEO)
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), cfile->hsize);
-
       aspect.width_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(after_aspect_width_changed), NULL);
       aspect.nwidgets++;
     }
 
     if (param == aspect.height_param) {
-      if (CURRENT_CLIP_HAS_VIDEO)
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), cfile->vsize);
-
       aspect.height_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(after_aspect_height_changed), NULL);
       aspect.nwidgets++;

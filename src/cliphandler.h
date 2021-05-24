@@ -91,7 +91,10 @@ boolean update_clips_version(int which);
 int save_event_frames(int clipno);
 void clear_event_frames(int clipno);
 
+// query function //
 boolean ignore_clip(int which);
+
+void make_cleanable(int clipno, boolean isit);
 
 void remove_old_headers(int which);
 boolean write_headers(int which);

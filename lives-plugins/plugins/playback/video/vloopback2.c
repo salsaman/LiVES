@@ -1,7 +1,9 @@
-// LiVES - vloopback2 playback engine
-// (c) G. Finch 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// LiVES - vloopback2 playback engine for LiVES
+// (c) G. Finch 2011 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
+
+#define PLUGIN_UID 0X9F9490472BEF94Dull
 
 #include "videoplugin.h"
 
@@ -18,7 +20,10 @@
 
 /////////////////////////////////////////////////////////////////
 
-static char plugin_version[64] = "LiVES vloopback2 output client 1.0.1";
+static int vmaj = 1;
+static int vmin = 1;
+const char *plugin_name = "LiVES vloopback2 output";
+
 static int palette_list[4];
 static int clampings[3];
 static int mypalette;
@@ -163,8 +168,8 @@ const char *module_check_init(void) {
 }
 
 
-const char *version(void) {
-  return plugin_version;
+const lives_plugin_id_t *get_plugin_id(void) {
+  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
 
@@ -174,19 +179,15 @@ const char *get_description(void) {
 }
 
 
-uint64_t get_capabilities(int palette) {
-  return 0;
-}
+uint64_t get_capabilities(int palette) {return 0;}
 
-const char rfx[32768];
 
-const char *get_init_rfx(int intention) {
+static char ifbuf[32768];
+
+const char *get_init_rfx(lives_intentcap_t *icaps) {
   char **vdevs = get_vloopback2_devices();
   char devstr[30000];
-
   size_t slen = 0;
-
-  int i = 0;
 
   if (!vdevs[0]) {
     free(vdevs);
@@ -196,14 +197,13 @@ const char *get_init_rfx(int intention) {
 
   memset(devstr, 0, 1);
 
-  while (vdevs[i]) {
+  for (int i = 0; vdevs[i]; free(vdevs[i++])) {
     snprintf(devstr + slen, 30000 - slen, "%s|", vdevs[i]);
     slen += strlen(vdevs[i]) + 1;
-    free(vdevs[i++]);
   }
   free(vdevs);
 
-  snprintf((char *)rfx, 32768, "%s%s%s",
+  snprintf(ifbuf, 32768,
            "<define>\\n"
            "|1.7\\n"
            "</define>\\n"
@@ -211,10 +211,10 @@ const char *get_init_rfx(int intention) {
            "0xF0\\n"
            "</language_code>\\n"
            "<params> \\n"
-           "vdevname|Video _device|string_list|0|",
-           devstr,
-           "\\n</params>\\n");
-  return rfx;
+           "vdevname|Video _device|string_list|0|\\n"
+           "%s\\n"
+           "</params>\\n", devstr);
+  return ifbuf;
 }
 
 
@@ -265,7 +265,7 @@ boolean set_yuv_palette_clamping(int clamping_type) {
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   // width in pixels
 
-  int i = 0, idx = 0, ret_code;
+  int idx = 0, ret_code;
   int mypid = getpid();
   char **vdevs;
 
@@ -282,7 +282,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     vdevname = strdup(vdevs[idx]);
   } else vdevname = NULL;
 
-  while (vdevs[i]) free(vdevs[i++]);
+  for (int i = 0; vdevs[i]; free(vdevs[i++]));
   free(vdevs);
 
   if (!vdevname) return FALSE;

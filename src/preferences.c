@@ -492,7 +492,7 @@ void set_vpp(boolean set_in_prefs) {
       if ((vpp = open_vid_playback_plugin(future_prefs->vpp_name, TRUE))) {
         mainw->vpp = vpp;
         if (set_in_prefs) {
-          set_string_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
+          set_string_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->soname);
           if (!mainw->ext_playback)
             do_error_dialog(_("\n\nVideo playback plugins are only activated in\n"
                               "full screen, separate window (fs) mode\n"));
@@ -1661,7 +1661,7 @@ boolean pref_factory_list(const char *prefidx, LiVESList * list) {
     for (; list; list = list->next) {
       dpsys = (lives_decoder_sys_t *)list->data;
       if (prefs->back_compat) {
-        tmp = lives_strdup(dpsys->name);
+        tmp = lives_strdup(dpsys->soname);
         if (!string2) string2 = tmp;
         else string2 = lives_concat_sep(string2, "\n", tmp);
       }
@@ -2971,7 +2971,7 @@ void after_vpp_changed(LiVESWidget * vpp_combo, livespointer advbutton) {
 
     // will call set_astream_settings
     if ((tmpvpp = open_vid_playback_plugin(newvpp, FALSE)) == NULL) {
-      lives_combo_set_active_string(LIVES_COMBO(vpp_combo), mainw->vpp->name);
+      lives_combo_set_active_string(LIVES_COMBO(vpp_combo), mainw->vpp->soname);
       return;
     }
     close_vid_playback_plugin(tmpvpp);
@@ -4250,10 +4250,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(mt_enter_defs), prefsw->checkbutton_render_prompt, FALSE);
 
-  frame = add_video_options(&prefsw->spinbutton_mt_def_width, mainw->multitrack == NULL ? prefs->mt_def_width : cfile->hsize,
+  frame = add_video_options(&prefsw->spinbutton_mt_def_width, !mainw->multitrack ? prefs->mt_def_width : cfile->hsize,
                             &prefsw->spinbutton_mt_def_height,
-                            mainw->multitrack == NULL ? prefs->mt_def_height : cfile->vsize, &prefsw->spinbutton_mt_def_fps,
-                            mainw->multitrack == NULL ? prefs->mt_def_fps : cfile->fps, NULL, 0, FALSE, NULL);
+                            !mainw->multitrack ? prefs->mt_def_height : cfile->vsize, &prefsw->spinbutton_mt_def_fps,
+                            !mainw->multitrack ? prefs->mt_def_fps : cfile->fps, NULL, 0, NULL, NULL);
 
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), frame, FALSE, FALSE, widget_opts.packing_height);
 
@@ -4585,12 +4585,12 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   if (ARE_UNCHECKED(vid_playback_plugins)) {
-    capable->plugins_list[PLUGIN_TYPE_VIDEO_PLAYER] = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-" DLL_NAME);
-    if (capable->plugins_list[PLUGIN_TYPE_VIDEO_PLAYER]) capable->has_vid_playback_plugins = PRESENT;
+    capable->plugins_list[PLUGIN_SUBTYPE_VIDEO_PLAYER] = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-" DLL_NAME);
+    if (capable->plugins_list[PLUGIN_SUBTYPE_VIDEO_PLAYER]) capable->has_vid_playback_plugins = PRESENT;
     else capable->has_vid_playback_plugins = MISSING;
   }
 
-  vid_playback_plugins = lives_list_copy_strings(capable->plugins_list[PLUGIN_TYPE_VIDEO_PLAYER]);
+  vid_playback_plugins = lives_list_copy_strings(capable->plugins_list[PLUGIN_SUBTYPE_VIDEO_PLAYER]);
 
   vid_playback_plugins = lives_list_prepend(vid_playback_plugins,
                          lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
@@ -4606,7 +4606,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                        LIVES_GUI_CALLBACK(on_vpp_advanced_clicked), NULL);
 
   if (mainw->vpp) {
-    lives_combo_set_active_string(LIVES_COMBO(pp_combo), mainw->vpp->name);
+    lives_combo_set_active_string(LIVES_COMBO(pp_combo), mainw->vpp->soname);
   } else {
     lives_combo_set_active_index(LIVES_COMBO(pp_combo), 0);
     lives_widget_set_sensitive(advbutton, FALSE);

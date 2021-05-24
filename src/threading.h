@@ -351,6 +351,7 @@ void lives_hooks_clear(int type);
 void lives_hooks_trigger(int type);
 
 #define THREAD_INTENTION THREADVAR(intentcap).intent
+#define THREAD_CAPACITIES THREADVAR(intentcap).capacities
 
 // intents - for future use
 // type = thread, subtype livesproc

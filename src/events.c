@@ -4787,9 +4787,9 @@ boolean render_to_clip(boolean new_clip) {
         }
       } while (rdet->suggestion_followed || response == LIVES_RESPONSE_RETRY || response == LIVES_RESPONSE_RESET);
 
-      xarate = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
-      xachans = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
-      xasamps = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
+      xarate = rdet->arate;
+      xachans = rdet->achans;
+      xasamps = rdet->asamps;
 
       // do we render audio ?
       rendaud = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton));
@@ -4950,16 +4950,30 @@ boolean render_to_clip(boolean new_clip) {
 #ifdef LIBAV_TRANSCODE
   if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
     if (!transcode_prep()) {
+      THREAD_INTENTION = LIVES_INTENTION_NOTHING;
       close_current_file(current_file);
       prefs->enc_letterbox = enc_lb;
       return FALSE;
-    }
+    } else {
+      lives_capacity_t *caps = lives_capacities_new();
+      lives_capacity_set_int(caps, LIVES_CAPACITY_AUDIO_RATE, cfile->arate);
+      lives_capacity_set_int(caps, LIVES_CAPACITY_AUDIO_CHANS, cfile->achans);
+      lives_capacity_set_readonly(caps, LIVES_CAPACITY_AUDIO_RATE, TRUE);
+      lives_capacity_set_readonly(caps, LIVES_CAPACITY_AUDIO_CHANS, TRUE);
 
-    if (!transcode_get_params(&pname)) {
-      transcode_cleanup(mainw->vpp);
-      close_current_file(current_file);
-      prefs->enc_letterbox = enc_lb;
-      return FALSE;
+      THREAD_CAPACITIES = caps;
+
+      if (!transcode_get_params(&pname)) {
+        lives_capacities_free(caps);
+        THREAD_CAPACITIES = NULL;
+        transcode_cleanup(mainw->vpp);
+        close_current_file(current_file);
+        prefs->enc_letterbox = enc_lb;
+        return FALSE;
+      }
+
+      lives_capacities_free(caps);
+      THREAD_CAPACITIES = NULL;
     }
 
     cfile->nopreview = TRUE;
@@ -5837,7 +5851,10 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
     }
 
     etype = get_event_type(event);
-
+    if (WEED_EVENT_IS_FRAME(event)) {
+      event = get_next_event(event);
+      continue;
+    }
     if ((prefs->event_window_show_frame_events || (prefs->show_dev_opts && !mainw->multitrack)
          || !WEED_EVENT_IS_FRAME(event)) || WEED_EVENT_IS_AUDIO_FRAME(event)) {
       if (!prefs->event_window_show_frame_events && WEED_EVENT_IS_FRAME(event)) {
@@ -6247,7 +6264,7 @@ void rdetw_spinf_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
 
 LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget **spheight, int defheight,
                                LiVESWidget **spfps, double deffps, LiVESWidget **spframes, int defframes,
-                               boolean add_aspect, LiVESWidget * extra) {
+                               LiVESWidget **as_lock, LiVESWidget * extra) {
   // add video options to multitrack enter, etc
   LiVESWidget *vbox, *hbox, *layout;
   LiVESWidget *frame = lives_standard_frame_new(_("Video"), 0., FALSE);
@@ -6287,10 +6304,13 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
   lives_spin_button_update(LIVES_SPIN_BUTTON(*spheight));
 
   // add aspect button ?
-  if (add_aspect && CURRENT_CLIP_IS_VALID) {
-    // add "aspectratio" widget
-    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-    add_aspect_ratio_button(LIVES_SPIN_BUTTON(*spwidth), LIVES_SPIN_BUTTON(*spheight), LIVES_BOX(hbox));
+  if (as_lock) {
+    if (CURRENT_CLIP_IS_VALID) {
+      const lives_special_aspect_t *aspect;
+      hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+      aspect = add_aspect_ratio_button(LIVES_SPIN_BUTTON(*spwidth), LIVES_SPIN_BUTTON(*spheight), LIVES_BOX(hbox));
+      *as_lock = aspect->lockbutton;
+    } else *as_lock = NULL;
   }
 
   if (extra) lives_box_pack_start(LIVES_BOX(vbox), extra, FALSE, FALSE, widget_opts.packing_height);
@@ -6384,7 +6404,6 @@ LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertra
 
 static void rdet_use_current(LiVESButton * button, livespointer user_data) {
   render_details *rdet = (render_details *)user_data;
-  const lives_special_aspect_t *aspect = NULL;
   char *arate, *achans, *asamps;
   int aendian;
 
@@ -6397,10 +6416,10 @@ static void rdet_use_current(LiVESButton * button, livespointer user_data) {
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_fps), cfile->fps);
     lives_spin_button_update(LIVES_SPIN_BUTTON(rdet->spinbutton_width));
 
-    aspect = paramspecial_get_aspect();
-
-    if (aspect && aspect->lockbutton) lives_widget_show_all(aspect->lockbutton);
-
+    if (rdet->as_lock) {
+      lives_lock_button_set_locked(LIVES_BUTTON(rdet->as_lock), TRUE);
+      lives_widget_show_all(rdet->as_lock);
+    }
     rdet->ratio_fps = cfile->ratio_fps;
   }
 
@@ -6504,7 +6523,8 @@ render_details *create_render_details(int type) {
 
   rdet->is_encoding = FALSE;
 
-  if ((type != 1 && type != 4) || !IS_VALID_CLIP(mainw->current_file) || mainw->current_file == mainw->scrap_file) {
+  if (type == 3 || (mainw->multitrack && type != 4)
+      || !CURRENT_CLIP_IS_VALID || mainw->current_file == mainw->scrap_file) {
     rdet->width = prefs->mt_def_width;
     rdet->height = prefs->mt_def_height;
     rdet->fps = prefs->mt_def_fps;
@@ -6515,12 +6535,15 @@ render_details *create_render_details(int type) {
     rdet->asamps = prefs->mt_def_asamps;
     rdet->aendian = prefs->mt_def_signed_endian;
   } else {
+    int player_arate = get_aplay_rate();
     rdet->width = DEF_FRAME_HSIZE_UNSCALED;
     rdet->height = DEF_FRAME_VSIZE_UNSCALED;
     rdet->fps = prefs->default_fps;
     rdet->ratio_fps = FALSE;
 
-    rdet->arate = cfile->arps ? cfile->arps : DEFAULT_AUDIO_RATE;
+    if (type == 4 || player_arate == -1)
+      rdet->arate = cfile->arps ? cfile->arps : DEFAULT_AUDIO_RATE;
+    else rdet->arate = player_arate;
     rdet->achans = DEFAULT_AUDIO_CHANS;
     rdet->asamps = DEFAULT_AUDIO_SAMPS;
     rdet->aendian = cfile->signed_endian;
@@ -6531,7 +6554,10 @@ render_details *create_render_details(int type) {
   if (type == 3 || type == 4) {
     title = (_("Multitrack Details"));
   } else if (type == 1) title = (_("Encoding Details"));
-  else title = (_("New Clip Details"));
+  else {
+    if (!no_opts) title = (_("New Clip Details"));
+    else title = (_("Quick Transcode"));
+  }
 
   maxwidth = width = scrw - SCR_WIDTH_SAFETY;
   maxheight = height = scrh - SCR_HEIGHT_SAFETY;
@@ -6607,16 +6633,9 @@ render_details *create_render_details(int type) {
   }
 
   frame = add_video_options(&rdet->spinbutton_width, rdet->width, &rdet->spinbutton_height, rdet->height, &rdet->spinbutton_fps,
-                            rdet->fps, NULL, 0., TRUE, hbox);
+                            rdet->fps, NULL, 0., &rdet->as_lock, hbox);
+  lives_lock_button_set_locked(LIVES_BUTTON(rdet->as_lock), FALSE);
   lives_box_pack_start(LIVES_BOX(top_vbox), frame, FALSE, TRUE, 0);
-
-  if (type == 4) {
-    const lives_special_aspect_t *aspect = paramspecial_get_aspect();
-    if (aspect && aspect->lockbutton) {
-      if (lives_lock_button_get_locked(LIVES_BUTTON(aspect->lockbutton)))
-        lives_lock_button_toggle(LIVES_BUTTON(aspect->lockbutton));
-    }
-  }
 
   if (type == 1) lives_widget_set_no_show_all(frame, TRUE);
 
@@ -6659,6 +6678,8 @@ render_details *create_render_details(int type) {
 
   rdet->pertrack_checkbutton = lives_check_button_new();
   rdet->backaudio_checkbutton = lives_check_button_new();
+
+  if (no_opts) rdet->asamps = -32;
 
   ////// add audio part
   resaudw = NULL;

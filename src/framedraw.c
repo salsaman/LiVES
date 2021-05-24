@@ -250,7 +250,7 @@ static void redraw_framedraw_image(weed_layer_t *layer) {
 
   // resize to correct size
   resize_layer(layer, width, height, LIVES_INTERP_BEST,
-               LIVES_PAINTER_COLOR_PALETTE(capable->byte_order), 0);
+               LIVES_PAINTER_COLOR_PALETTE(capable->hw.byte_order), 0);
 
   cr2 = lives_painter_create_from_surface(mainw->fd_surface);
 
@@ -494,7 +494,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
 
   // resize to correct size
   resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST,
-               LIVES_PAINTER_COLOR_PALETTE(capable->byte_order), 0);
+               LIVES_PAINTER_COLOR_PALETTE(capable->hw.byte_order), 0);
 
   cr = layer_to_lives_painter(mainw->fd_layer);
 

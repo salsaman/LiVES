@@ -568,15 +568,15 @@ void pre_analyse(weed_plant_t *elist) {
        /// inserting from scrap_file, we cannot interpolate frame numbers. So we just insert nearest frame
   */
   weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
-    weed_timecode_t out_tc = 0, offset_tc = 0, in_tc, laud_tc = 0, nx_tc = 0, xnx_tc = 0;
-    weed_timecode_t nxt_out_tc, end_tc;
+    weed_timecode_t out_tc = 0, offset_tc = 0, in_tc = 0, laud_tc = 0, nx_tc = 0;
+    weed_timecode_t end_tc, cin_tc = 0;
     weed_timecode_t recst_tc = 0;
-    weed_timecode_t frame_tc = 0;
+    weed_timecode_t frame_tc = 0, pframe_tc = 0;
 
     weed_plant_t *out_list, *xout_list;
     weed_event_t *naudio_event = NULL;
-    weed_event_t *frame_event = NULL, *nframe_event = NULL, *xnframe_event = NULL;
-    weed_event_t *last_frame_event;
+    weed_event_t *frame_event = NULL, *nframe_event = NULL, *pframe_event = NULL;
+    weed_event_t *last_frame_event, *cframe_event = NULL;
     weed_event_t *event, *newframe = NULL;
     weed_event_t *init_event, *filter_map = NULL, *deinit_event;
     weed_event_t *prev_aframe, *xprev_aframe;
@@ -590,11 +590,11 @@ void pre_analyse(weed_plant_t *elist) {
     char *what;
 
     boolean interpolate = TRUE;
-    int *clips = NULL, *naclips = NULL, *nclips = NULL;
-    frames64_t *frames = NULL, *nframes = NULL;
+    int *clips = NULL, *naclips = NULL, *nclips = NULL, *pclips = NULL;;
+    frames64_t *frames = NULL, *nframes = NULL, *pframes = NULL;
     int *xaclips = NULL;
 
-    int tracks, ntracks = 0, natracks = 0, xatracks = 0;
+    int tracks, ntracks = 0, natracks = 0, xatracks = 0, ptracks = 0;
     int etype;
     int is_final = 0;
     int ev_api = 100;
@@ -708,17 +708,11 @@ void pre_analyse(weed_plant_t *elist) {
           break;
           case WEED_EVENT_TYPE_FRAME:
             interpolate = TRUE;
-            xnframe_event = nframe_event = get_next_frame_event(event);
+            cframe_event = event;
+            cin_tc = in_tc;
+            nframe_event = get_next_frame_event(event);
             if (!nframe_event) is_final = 1;
-
-            nxt_out_tc = q_gint64(out_tc + offset_tc + tl, qfps);
-            xnx_tc = nx_tc = get_event_timecode(nframe_event);
-
-            while (xnx_tc < nxt_out_tc) {
-              xnframe_event = get_next_frame_event(xnframe_event);
-              if (!xnframe_event) break;
-              xnx_tc = get_event_timecode(xnframe_event);
-            }
+            else nx_tc = get_event_timecode(nframe_event);
 
             /// now we have a choice: we can either insert this frame at out_tc with the current fx state,
             /// or with the state at out_tc
@@ -728,11 +722,11 @@ void pre_analyse(weed_plant_t *elist) {
             if (!prefs->rr_fstate) {
               if (!is_final) {
                 /// force insertion by setting stop_tc to -1, thus all events will have a timecode
-                if (weed_event_get_timecode(get_next_frame_event(event)) > stop_tc) stop_tc = -1; // force insertion now
+                if (nx_tc > stop_tc) stop_tc = -1; // force insertion now
               }
             }
             // interpolate unadded audio
-            if (natracks > 0) {
+            if (natracks > 0 && event) {
               // advance the seek value, so when we do add the audio vals, the seek is to the right time
               // we use const. accel calculated when picked up
               double dt = (double)(in_tc - laud_tc) / TICKS_PER_SECOND_DBL;
@@ -780,8 +774,6 @@ void pre_analyse(weed_plant_t *elist) {
             }
             /// laud_tc is last frame in_tc, frame_event is last frame
             laud_tc = in_tc;
-            frame_tc = in_tc;
-            frame_event = event;
             break;
           case WEED_EVENT_TYPE_FILTER_INIT:
             // add to filter_inits list
@@ -884,6 +876,20 @@ void pre_analyse(weed_plant_t *elist) {
         } else {
           if (is_final == 2 && !event) break;
           /// insert the state
+
+          lives_freep((void **)&nclips);
+          lives_freep((void **)&nframes);
+
+          lives_freep((void **)&pclips);
+          lives_freep((void **)&pframes);
+
+          ntracks = ptracks = 0;
+
+          pframe_tc = frame_tc;
+          pframe_event = frame_event;
+          frame_tc = cin_tc;
+          frame_event = cframe_event;
+
           if (init_events) {
             void **pchanges;
             weed_event_t *xinit_event;
@@ -951,27 +957,33 @@ void pre_analyse(weed_plant_t *elist) {
                 tracks = ntracks;
               }
             } else {
-              if (event != frame_event && old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth && interpolate) {
+              if (event != frame_event && old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth && interpolate
+                  && pframe_event && nframe_event) {
                 /// interpolate frames if possible
-                double ratio = (double)(out_tc + offset_tc - frame_tc) / (double)(xnx_tc - frame_tc);
-                lives_freep((void **)&nclips);
-                lives_freep((void **)&nframes);
-                ntracks = weed_frame_event_get_tracks(xnframe_event, &nclips, &nframes);
-                for (i = 0; i < tracks; i++) {
-                  if (i >= ntracks) break;
-                  if (clips[i] == nclips[i]) {
-                    frames[i] = (frames64_t)((double)frames[i] + (double)(nframes[i] - frames[i]) * ratio);
-		  // *INDENT-OFF*
-                  }}}
-	      lives_freep((void **)&nclips);
-	      lives_freep((void **)&nframes);
-	    }}
+                double ratio = (double)(out_tc + offset_tc - pframe_tc) / (double)(nx_tc - pframe_tc);
+                //ratio = 0.5;
+                if (!ntracks) ntracks = weed_frame_event_get_tracks(nframe_event, &nclips, &nframes);
+                if (!ptracks) ptracks = weed_frame_event_get_tracks(pframe_event, &pclips, &pframes);
+                if (nclips && pclips) {
+                  for (i = 0; i < tracks; i++) {
+                    if (i >= ntracks) break;
+                    if (clips[i] == nclips[i] && clips[i] == pclips[i] && pframes[i] != nframes[i] &&
+                        (frames[i] == pframes[i] || frames[i] == nframes[i])) {
+                      g_print("inter1 %ld -> %ld, %ld\n", pframes[i], nframes[i], frames[i]);
+                      frames[i] = (frames64_t)((double)pframes[i] + (double)(nframes[i] - pframes[i]) * ratio);
+                      g_print("				inter2 %ld %f\n", frames[i], ratio);
+		      // *INDENT-OFF*
+		    }}
+		  weed_set_int64_array(cframe_event, WEED_LEAF_FRAMES, tracks, frames);
+		}}}}
 	  // *INDENT-ON*
 
           /// now we insert the frame
           //if (event == frame_event) frame_tc = out_tc;
-          out_list = append_frame_event(out_list, out_tc, tracks, clips, frames);
+          if (clips)
+            out_list = append_frame_event(out_list, out_tc, tracks, clips, frames);
           newframe = get_last_event(out_list);
+
           /* g_print("frame (%p) with %d tracks %d %ld  going in at %ld\n", newframe, */
           /* 	tracks, clips[0], frames[0], out_tc); */
           /* g_print("frame tc is %ld\n", weed_event_get_timecode(newframe)); */
@@ -1184,6 +1196,12 @@ void pre_analyse(weed_plant_t *elist) {
       } /// end of the in_list
     } /// end of out_list
 
+    lives_freep((void **)&nclips);
+    lives_freep((void **)&nframes);
+
+    lives_freep((void **)&pclips);
+    lives_freep((void **)&pframes);
+
     //g_print("RES: %p and %ld, %ld\n", event, out_tc + tl, end_tc);
     if (filter_map) {
       // insert final filter_map
@@ -1261,6 +1279,7 @@ q_done:
 
     sfile->event_list = NULL;
     sfile->next_event = NULL;
+
 
     save_clip_value(clipno, CLIP_DETAILS_FRAMES, &sfile->frames);
 
@@ -1722,6 +1741,7 @@ q_done:
 
     boolean chans_fixed = FALSE;
     boolean is_8bit;
+    boolean allow_f32 = FALSE;
 
     _resaudw *resaudw = (_resaudw *)(lives_malloc(sizeof(_resaudw)));
 
@@ -1739,11 +1759,17 @@ q_done:
     channels = lives_list_append(channels, (livespointer)"1");
     channels = lives_list_append(channels, (livespointer)"2");
 
-    sampsize = lives_list_append(sampsize, (livespointer)"8");
-    sampsize = lives_list_append(sampsize, (livespointer)"16");
-    /* if (type == 3) */
-    /*   sampsize = lives_list_append(sampsize, (livespointer)"32"); */
-
+    if (!rdet || rdet->asamps >= 0) {
+      sampsize = lives_list_append(sampsize, (livespointer)"8");
+      sampsize = lives_list_append(sampsize, (livespointer)"16");
+    }
+    if (rdet) {
+      if (rdet->asamps < 0) rdet->asamps = -rdet->asamps;
+      if (rdet->asamps == 32) {
+        allow_f32 = TRUE;
+        sampsize = lives_list_append(sampsize, (livespointer)"float 32");
+      }
+    }
     rate = lives_list_append(rate, (livespointer)"5512");
     rate = lives_list_append(rate, (livespointer)"8000");
     rate = lives_list_append(rate, (livespointer)"11025");
@@ -1811,7 +1837,8 @@ q_done:
       lives_widget_set_can_focus(combo_entry3, FALSE);
 
       tmp = lives_strdup_printf("%d", (int)mainw->fx3_val);
-      combo_entry1 = lives_standard_entry_new(_("Sample Size "), tmp, 6, 2, LIVES_BOX(hbox2), NULL);
+      combo_entry1 = lives_standard_entry_new(_("Sample Size "), tmp, allow_f32 ? 10 : 6,
+                                              allow_f32 ? 8 : 2, LIVES_BOX(hbox2), NULL);
       lives_free(tmp);
 
       lives_editable_set_editable(LIVES_EDITABLE(combo_entry1), FALSE);
@@ -1974,11 +2001,12 @@ q_done:
       if (type == 7) lives_widget_set_sensitive(combo6, FALSE);
 
       resaudw->entry_asamps = lives_combo_get_entry(LIVES_COMBO(combo6));
-      lives_entry_set_max_length(LIVES_ENTRY(resaudw->entry_asamps), 2);
+      lives_entry_set_max_length(LIVES_ENTRY(resaudw->entry_asamps), allow_f32 ? 8 : 2);
       lives_editable_set_editable(LIVES_EDITABLE(resaudw->entry_asamps), FALSE);
-      lives_entry_set_width_chars(LIVES_ENTRY(resaudw->entry_asamps), 8);
+      lives_entry_set_width_chars(LIVES_ENTRY(resaudw->entry_asamps), allow_f32 ? 10 : 8);
 
-      if (type < 3 || (type > 4 && type < 8) || type > 10)
+      if (allow_f32) tmp = lives_strdup("float 32");
+      else if (type < 3 || (type > 4 && type < 8) || type > 10)
         tmp = lives_strdup_printf("%d", (int)mainw->fx3_val);
       else if (type == 8) tmp = lives_strdup_printf("%d", DEFAULT_AUDIO_SAMPS);
       else if (type == 3) tmp = lives_strdup_printf("%d", rdet->asamps);
@@ -2015,9 +2043,16 @@ q_done:
 
       if (type == 7 || !is_8bit) lives_widget_set_sensitive(resaudw->rb_unsigned, FALSE);
 
+      if (allow_f32) {
+        lives_widget_set_no_show_all(resaudw->rb_signed, TRUE);
+        lives_widget_set_no_show_all(resaudw->rb_unsigned, TRUE);
+        lives_widget_hide(resaudw->rb_signed);
+        lives_widget_hide(resaudw->rb_unsigned);
+      }
+
       if (type < 3 || (type > 4 && type < 8) || type > 10) aendian = mainw->fx4_val;
       else if (type == 8) aendian = DEFAULT_AUDIO_SIGNED16
-                                      | ((capable->byte_order == LIVES_BIG_ENDIAN) ? AFORM_BIG_ENDIAN : 0);
+                                      | ((capable->hw.byte_order == LIVES_BIG_ENDIAN) ? AFORM_BIG_ENDIAN : 0);
       else if (type == 3) aendian = rdet->aendian;
       else aendian = (!mainw->multitrack || !cfile->achans)
                        ? prefs->mt_def_signed_endian : cfile->signed_endian;

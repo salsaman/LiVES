@@ -56,13 +56,13 @@ LIVES_GLOBAL_INLINE boolean lives_unsetenv(const char *name) {
 
 int lives_system(const char *com, boolean allow_error) {
   LiVESResponseType response;
-  int retval;
   static boolean shortcut = FALSE;
   boolean cnorm = FALSE;
+  int retval;
 
   //g_print("doing: %s\n",com);
 
-  // lets us remove cfile->info_file with lives_rm
+  // otherwise we get infinite recursion removing cfile->info_file with lives_rm
   if (shortcut) return system(com);
 
   if (mainw && mainw->is_ready && !mainw->is_exiting &&
@@ -1544,6 +1544,9 @@ void zero_spinbuttons(void) {
 
 
 void set_start_end_spins(int clipno) {
+  // consider:
+  //    showclipimgs();
+  //    redraw_timeline(clipno);
   if (CLIP_HAS_VIDEO(clipno)) {
     lives_clip_t *sfile = mainw->files[clipno];
     lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);

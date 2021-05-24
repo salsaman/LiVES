@@ -167,7 +167,7 @@ ssize_t lives_write(int fd, const void *buf, ssize_t count, boolean allow_fail) 
 
 ssize_t lives_write_le(int fd, const void *buf, ssize_t count, boolean allow_fail) {
   if (count <= 0) return 0;
-  if (capable->byte_order == LIVES_BIG_ENDIAN && (prefs->bigendbug != 1)) {
+  if (capable->hw.byte_order == LIVES_BIG_ENDIAN && (prefs->bigendbug != 1)) {
     reverse_bytes((char *)buf, count, count);
   }
   return lives_write(fd, buf, count, allow_fail);
@@ -306,7 +306,7 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less) {
   if (count <= 0) return 0;
   retval = lives_read(fd, buf, count, allow_less);
   if (retval < count) return retval;
-  if (capable->byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
+  if (capable->hw.byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
     reverse_bytes((char *)buf, count, count);
   }
   return retval;
@@ -468,9 +468,6 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
   posix_fadvise(fbuff->fd, skip, 0, POSIX_FADV_NOREUSE);
   posix_fadvise(fbuff->fd, skip, 0, POSIX_FADV_WILLNEED);
 #endif
-#ifdef __linux__
-  readahead(fbuff->fd, skip, fsize);
-#endif
   fbuff->ptr = fbuff->buffer = lives_calloc(1, fsize);
   mlock(fbuff->buffer, fsize);
   fbuff->skip = skip;
@@ -515,6 +512,9 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
       else if (fsize >= smedbytes) bufsize = smedbytes;
       //g_printerr("slurp %d oof %ld %ld remain %lu  \n", fd, fbuff->offset, fsize, ofsize);
       //if (mainw->disk_pressure > 0.) mainw->disk_pressure = check_disk_pressure(0.);
+#ifdef __linux__
+      readahead(fbuff->fd, fbuff->bytes, bufsize * 4);
+#endif
     }
 #ifdef TEST_MMAP
     munmap(p, fsize);
@@ -801,7 +801,7 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset) {
 ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less) {
   lives_file_buffer_t *fbuff;
   ssize_t retval = 0, res = 0;
-  size_t ocount = count;
+  ssize_t ocount = count;
   uint8_t *ptr = (uint8_t *)buf;
   int bufsztype;
 #ifdef AUTOTUNE
@@ -863,6 +863,11 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
   if (fbuff->bytes > 0 || fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
     ssize_t nbytes;
     if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
+      if (fbuff->reversed) {
+        if (ocount > fbuff->offset) ocount = fbuff->offset;
+        fbuff->offset -= ocount;
+        fbuff->ptr -= ocount;
+      }
       while ((nbytes = fbuff->bytes - fbuff->offset) < count && fbuff->slurping) {
         lives_nanosleep(1000);
       }
@@ -1051,7 +1056,7 @@ ssize_t lives_read_le_buffered(int fd, void *buf, ssize_t count, boolean allow_l
   if (count <= 0) return 0;
   retval = lives_read_buffered(fd, buf, count, allow_less);
   if (retval < count) return retval;
-  if (capable->byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
+  if (capable->hw.byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
     reverse_bytes((char *)buf, count, count);
   }
   return retval;
@@ -1219,7 +1224,7 @@ ssize_t lives_buffered_write_printf(int fd, boolean allow_fail, const char *fmt,
 
 ssize_t lives_write_le_buffered(int fd, const void *buf, ssize_t count, boolean allow_fail) {
   if (count <= 0) return 0;
-  if (capable->byte_order == LIVES_BIG_ENDIAN && (prefs->bigendbug != 1)) {
+  if (capable->hw.byte_order == LIVES_BIG_ENDIAN && (prefs->bigendbug != 1)) {
     reverse_bytes((char *)buf, count, count);
   }
   return lives_write_buffered(fd, (char *)buf, count, allow_fail);

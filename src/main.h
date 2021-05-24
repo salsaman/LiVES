@@ -71,8 +71,10 @@
 #  define GNU_NORETURN __attribute__((noreturn))
 #  define GNU_FLATTEN  __attribute__((flatten)) // inline all function calls
 #  define GNU_HOT  __attribute__((hot))
-#  define GNU_SENTINEL  __attribute__((__sentinel__(0)))
+#  define GNU_SENTINEL  __attribute__((sentinel))
 #  define GNU_RETURNS_TWICE  __attribute__((returns_twice))
+#  define LIVES_IGNORE_DEPRECATIONS G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+#  define LIVES_IGNORE_DEPRECATIONS_END G_GNUC_END_IGNORE_DEPRECATIONS
 #else
 #  define WARN_UNUSED
 #  define GNU_PURE
@@ -88,7 +90,10 @@
 #  define GNU_HOT
 #  define GNU_SENTINEL
 #  define GNU_RETURNS_TWICE
+#  define LIVES_IGNORE_DEPRECATIONS
+#  define LIVES_IGNORE_DEPRECATIONS_END
 #endif
+
 
 #include <sys/types.h>
 #include <inttypes.h>
@@ -434,14 +439,28 @@ typedef struct {
   char sshot[64];
 } wm_caps_t;
 
+typedef struct {
+  int byte_order;
+  int ncpus;
+  short cpu_bits;
+  char *cpu_name;
+  int cacheline_size;
+  //
+  int mem_status;
+  int64_t memtotal;
+  int64_t memfree;
+  int64_t memavail;
+} hw_caps_t;
+
 #define DEF_ALIGN (sizeof(void *) * 8)
 
 // avoiding using an enum allows the list to be extended in other headers
 typedef int32_t lives_intention;
+typedef weed_plant_t lives_capacity_t;
 
 typedef struct {
   lives_intention intent;
-  weed_plant_t *capabilities; ///< type specific capabilities
+  lives_capacity_t *capacities; ///< type specific capabilities
 } lives_intentcap_t;
 
 #include "lists.h"
@@ -469,6 +488,7 @@ typedef enum {
   UNDO_MERGE,
   UNDO_RESAMPLE,
   UNDO_TRIM_AUDIO,
+  UNDO_TRIM_VIDEO,
   UNDO_CHANGE_SPEED,
   UNDO_AUDIO_RESAMPLE,
   UNDO_APPEND_AUDIO,
@@ -623,11 +643,11 @@ typedef enum {
 #define CLIP_HAS_AUDIO(clip) (IS_VALID_CLIP(clip) ? (mainw->files[clip]->achans > 0 && mainw->files[clip]->asampsize > 0) : FALSE)
 #define CURRENT_CLIP_HAS_AUDIO CLIP_HAS_AUDIO(mainw->current_file)
 
-#define CLIP_VIDEO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? mainw->files[clip]->video_time : 0.))
+#define CLIP_VIDEO_TIME(clip) ((double)(CLIP_HAS_VIDEO(clip) ? mainw->files[clip]->video_time : 0.))
 
-#define CLIP_LEFT_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? mainw->files[clip]->laudio_time : 0.))
+#define CLIP_LEFT_AUDIO_TIME(clip) ((double)(CLIP_HAS_AUDIO(clip) ? mainw->files[clip]->laudio_time : 0.))
 
-#define CLIP_RIGHT_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? (mainw->files[clip]->achans > 1 ? \
+#define CLIP_RIGHT_AUDIO_TIME(clip) ((double)(CLIP_HAS_AUDIO(clip) ? (mainw->files[clip]->achans > 1 ? \
 								     mainw->files[clip]->raudio_time : 0.) : 0.))
 
 #define CLIP_AUDIO_TIME(clip) ((double)(CLIP_LEFT_AUDIO_TIME(clip) >= CLIP_RIGHT_AUDIO_TIME(clip) \
@@ -920,6 +940,8 @@ typedef struct _lives_clip_t {
   boolean checked; /// clip integrity checked on load - to avoid duplicating it
 
   boolean hidden; // hidden in menu by clip groups
+
+  boolean tsavedone;
 } lives_clip_t;
 
 typedef struct {
@@ -1064,15 +1086,8 @@ typedef struct {
   lives_checkstatus_t has_python3;
   uint64_t python_version;
 
-  int ncpus;
-  int byte_order;
-
   char *myname_full;
   char *myname;
-
-  char *cpu_name;
-  short cpu_bits;
-  int cacheline_size;
 
   int64_t boot_time;
   int xstdout;
@@ -1087,6 +1102,8 @@ typedef struct {
   char *username;
 
   mode_t umask;
+
+  hw_caps_t hw;
 
   char *gui_theme_name;
   char *icon_theme_name;

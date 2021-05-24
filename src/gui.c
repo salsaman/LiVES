@@ -774,8 +774,9 @@ void create_LiVES(void) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_UNDO, LIVES_ICON_SIZE_MENU);
-
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->undo), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   mainw->redo = lives_standard_image_menu_item_new_with_label(_("_Redo"));
@@ -787,8 +788,9 @@ void create_LiVES(void) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_REDO, LIVES_ICON_SIZE_MENU);
-
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->redo), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   lives_menu_add_separator(LIVES_MENU(mainw->edit_menu));
@@ -824,8 +826,9 @@ void create_LiVES(void) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_ADD, LIVES_ICON_SIZE_MENU);
-
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->insert), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   mainw->paste_as_new = lives_standard_image_menu_item_new_with_label(_("Paste as _New"));
@@ -844,9 +847,20 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->xdelete);
   lives_widget_set_sensitive(mainw->xdelete, FALSE);
 
+  mainw->trim_video = lives_standard_image_menu_item_new_with_label(_("Trim to Selection"));
+  lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->trim_video);
+  lives_widget_set_sensitive(mainw->trim_video, FALSE);
+
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_DELETE, LIVES_ICON_SIZE_MENU);
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->xdelete), image);
+  LIVES_IGNORE_DEPRECATIONS_END
+
+  image = lives_image_find_in_stock(LIVES_ICON_SIZE_MENU, "trim", "clean", NULL);
+  LIVES_IGNORE_DEPRECATIONS
+  lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->trim_video), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   lives_widget_add_accelerator(mainw->xdelete, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -932,7 +946,9 @@ void create_LiVES(void) {
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_REFRESH, LIVES_ICON_SIZE_MENU);
 
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->playall), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   mainw->playsel = lives_standard_image_menu_item_new_with_label(_("Pla_y Selection"));
@@ -952,13 +968,17 @@ void create_LiVES(void) {
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_MENU);
 
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->playsel), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_MENU);
 
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->playclip), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   mainw->stop = lives_standard_image_menu_item_new_with_label(_("_Stop"));
@@ -969,7 +989,9 @@ void create_LiVES(void) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_MEDIA_STOP, LIVES_ICON_SIZE_MENU);
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->stop), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   mainw->rewind = lives_standard_image_menu_item_new_with_label(_("Re_wind"));
@@ -978,8 +1000,9 @@ void create_LiVES(void) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_MEDIA_REWIND, LIVES_ICON_SIZE_MENU);
-
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->rewind), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   lives_widget_add_accelerator(mainw->rewind, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -1171,7 +1194,9 @@ void create_LiVES(void) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_PREFERENCES, LIVES_ICON_SIZE_MENU);
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->preferences), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   menuitem = lives_standard_menu_item_new_with_label(_("_Audio"));
@@ -1316,7 +1341,9 @@ void create_LiVES(void) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_INFO, LIVES_ICON_SIZE_MENU);
+  LIVES_IGNORE_DEPRECATIONS
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->show_file_info), image);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
   mainw->show_messages = lives_standard_image_menu_item_new_with_label(_("Show _Messages"));
@@ -1620,7 +1647,7 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
-  mainw->show_devopts = lives_standard_check_menu_item_new_with_label(_("Enable Developer Options"), prefs->show_dev_opts);
+  mainw->show_devopts = lives_standard_check_menu_item_new_with_label(_("Developer Mode"), prefs->show_dev_opts);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->show_devopts),  prefs->show_dev_opts);
 
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->show_devopts);
@@ -2383,7 +2410,6 @@ void create_LiVES(void) {
 
   lives_widget_add_events(mainw->msg_area, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
 
-  //lives_widget_set_vexpand(mainw->msg_area, TRUE);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->message_box), 0);
   lives_widget_apply_theme3(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL);
   lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->msg_area, TRUE, TRUE, 0);
@@ -2819,6 +2845,8 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_paste_as_new_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->xdelete), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_delete_activate), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->trim_video), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_trim_vid_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_all), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_select_all_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_start_only), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -3934,7 +3962,7 @@ void play_window_set_title(void) {
         lives_free(xtrabit);
         xtrabit = lives_strdup_printf(_(" (%d X %d)"), mainw->vpp->fwidth, mainw->vpp->fheight);
       }
-      title = lives_strdup_printf(_("Streaming to %s%s"), mainw->vpp->name, xtrabit);
+      title = lives_strdup_printf(_("Streaming to %s%s"), mainw->vpp->soname, xtrabit);
       lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
     } else {
       title = lives_strdup_printf(_("Play Window%s"), xtrabit);

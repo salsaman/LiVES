@@ -2507,9 +2507,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_bg_state_color(LiVESWidget 
     LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
-  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  LIVES_IGNORE_DEPRECATIONS
   gtk_style_context_get_background_color(gtk_widget_get_style_context(widget), lives_widget_get_state(widget), color);
-  G_GNUC_END_IGNORE_DEPRECATIONS
+  LIVES_IGNORE_DEPRECATIONS_END
 #else
   lives_widget_color_copy(color, &gtk_widget_get_style(widget)->bg[LIVES_WIDGET_STATE_NORMAL]);
 #endif
@@ -2772,12 +2772,12 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_dialog_get_action_area(LiVESDialo
 #ifdef GUI_GTK
   if (is_standard_widget(LIVES_WIDGET(dialog))) return lives_standard_dialog_get_action_area(dialog);
 #if GTK_CHECK_VERSION(2, 14, 0)
-#ifdef G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+#ifdef LIVES_IGNORE_DEPRECATIONS
+  LIVES_IGNORE_DEPRECATIONS
 #endif
   return gtk_dialog_get_action_area(LIVES_DIALOG(dialog));
-#ifdef G_GNUC_END_IGNORE_DEPRECATIONS
-  G_GNUC_END_IGNORE_DEPRECATIONS
+#ifdef LIVES_IGNORE_DEPRECATIONS_END
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 #else
   return LIVES_DIALOG(dialog)->vbox;
@@ -6758,12 +6758,14 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_menu_item_get_submenu(LiVESMenuIt
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_with_label(const char *label) {
   LiVESWidget *menuitem = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 10, 0)
+#if !LIVES_HAS_IMAGE_MENU_ITEM
   if (!widget_opts.mnemonic_label) menuitem = gtk_menu_item_new_with_label(label);
   else menuitem = gtk_menu_item_new_with_mnemonic(label);
 #else
+  LIVES_IGNORE_DEPRECATIONS
   if (!widget_opts.mnemonic_label) menuitem = gtk_image_menu_item_new_with_label(label);
   else menuitem = gtk_image_menu_item_new_with_mnemonic(label);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 #endif
   return menuitem;
@@ -6811,7 +6813,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(co
     LiVESAccelGroup *accel_group) {
   LiVESWidget *menuitem = NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 10, 0)
+#if !LIVES_HAS_IMAGE_MENU_ITEM
   char *xstock_id = lives_strdup(stock_id); // need to back this up as we will use translation functions
   menuitem = gtk_menu_item_new_with_mnemonic(xstock_id);
 
@@ -6824,7 +6826,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(co
   }
   lives_free(xstock_id);
 #else
+  LIVES_IGNORE_DEPRECATIONS
   menuitem = gtk_image_menu_item_new_from_stock(stock_id, accel_group);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 #endif
   return menuitem;
@@ -6884,11 +6888,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_check_menu_item_get_active(LiVESCheckM
 }
 
 
-#if !GTK_CHECK_VERSION(3, 10, 0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_image_menu_item_set_image(LiVESImageMenuItem *item, LiVESWidget *image) {
 #ifdef GUI_GTK
+  LIVES_IGNORE_DEPRECATIONS
   gtk_image_menu_item_set_image(item, image);
+  LIVES_IGNORE_DEPRECATIONS_END
   return TRUE;
 #endif
   return FALSE;
@@ -6972,8 +6978,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_image_menu_item_set_always_show_image(
   // return TRUE if implemented
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 16, 0)
-#if !GTK_CHECK_VERSION(3, 10, 0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
+  LIVES_IGNORE_DEPRECATIONS
   gtk_image_menu_item_set_always_show_image(item, show);
+  LIVES_IGNORE_DEPRECATIONS_END
 #endif
   return TRUE;
 #endif
@@ -11098,16 +11106,14 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_file_button_new(boolean 
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_lock_button_get_locked(LiVESButton * button) {
-  return (boolean)LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button),
-                                       ISLOCKED_KEY));
+  return GET_INT_DATA(button, ISLOCKED_KEY);
 }
 
 
 static void _on_lock_button_clicked(LiVESButton * button, livespointer user_data) {
   LiVESWidget *image;
-  int locked = !(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button),
-                                      ISLOCKED_KEY)));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), ISLOCKED_KEY, LIVES_INT_TO_POINTER(locked));
+  int locked = !GET_INT_DATA(button, ISLOCKED_KEY);
+  SET_INT_DATA(button, ISLOCKED_KEY, locked);
   if (locked) {
     image = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOCKED, LIVES_ICON_SIZE_BUTTON);
     lives_widget_set_opacity(LIVES_WIDGET(button), 1.0);
@@ -11128,6 +11134,13 @@ boolean label_act_lockbutton(LiVESWidget * widget, LiVESXEventButton * event, Li
 
 boolean lives_lock_button_toggle(LiVESButton * button) {
   _on_lock_button_clicked(button, NULL);
+  return lives_lock_button_get_locked(button);
+}
+
+
+boolean lives_lock_button_set_locked(LiVESButton * button, boolean state) {
+  if (GET_INT_DATA(button, ISLOCKED_KEY) != state)
+    _on_lock_button_clicked(button, NULL);
   return lives_lock_button_get_locked(button);
 }
 
@@ -11536,17 +11549,36 @@ void widget_helper_set_stock_icon_alts(LiVESIconTheme * icon_theme) {
 }
 
 
-void widget_helper_suggest_icons(const char *part) {
+const char *widget_helper_suggest_icons(const char *part, int idx) {
   LiVESList *list = capable->all_icons;
-  const char *iname;
-  if (!list || !part) return;
+  const char *iname = NULL;
+  //boolean found = FALSE;
+  if (!list || !part) return NULL;
   for (; list; list = list->next) {
     if (strstr((iname = (const char *)list->data), part)) {
-      g_print("suggest for %s icon: %s\n", part, iname);
+      if (!idx--) break;
+      //g_print("suggest for %s icon: %s\n", part, iname);
+      //found = TRUE;
     }
   }
+  //if (!found) g_print("No suitable icons match %s\n", part);
+  return iname;
 }
 
+
+LiVESWidget *lives_image_find_in_stock(LiVESIconSize size, ...) {
+  va_list ap;
+  const char *iname;
+  char *match;
+  va_start(ap, size);
+  while ((match = va_arg(ap, char *))) {
+    iname = widget_helper_suggest_icons(match, 0);
+    if (iname) break;
+  }
+  va_end(ap);
+  if (iname) return lives_image_new_from_stock(iname, size);
+  return NULL;
+}
 
 
 boolean widget_helper_init(void) {

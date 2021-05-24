@@ -584,6 +584,9 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     else
       add_aspect_ratio_button(LIVES_SPIN_BUTTON(spinbuttonw), LIVES_SPIN_BUTTON(spinbuttonh),
                               LIVES_BOX(vbox));
+
+    if (CURRENT_CLIP_HAS_VIDEO)
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(spinbuttonw), cfile->hsize);
   }
 
   if (added) {
@@ -680,9 +683,9 @@ static void xspinfps_changed(LiVESSpinButton *spinbutton, livespointer user_data
 
 static void add_genparams(LiVESWidget *vbox, lives_rfx_t *rfx) {
   // add nframes, fps, width, heights
-  LiVESWidget *sp_width, *sp_height, *sp_frames, *sp_fps;
+  LiVESWidget *sp_width, *sp_height, *sp_frames, *sp_fps, *as_lock;
   LiVESWidget *frame = add_video_options(&sp_width, cfile->hsize, &sp_height, cfile->vsize, &sp_fps, cfile->fps,
-                                         &sp_frames, cfile->end, TRUE, NULL);
+                                         &sp_frames, cfile->frames, &as_lock, NULL);
   lives_box_pack_start(LIVES_BOX(vbox), frame, FALSE, TRUE, 0);
 
   lives_spin_button_update(LIVES_SPIN_BUTTON(sp_width));

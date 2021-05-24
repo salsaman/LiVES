@@ -242,7 +242,7 @@ boolean lives_has_icon(LiVESIconTheme *, const char *stock_id, LiVESIconSize siz
 
 const char *lives_get_stock_icon_alt(int alt_stock_id);
 void widget_helper_set_stock_icon_alts(LiVESIconTheme *);
-void widget_helper_suggest_icons(const char *part);
+const char *widget_helper_suggest_icons(const char *part, int idx);
 
 boolean widget_helper_init(void);
 boolean widget_opts_rescale(double scale);
@@ -481,6 +481,7 @@ boolean lives_widget_color_mix(LiVESWidgetColor *c1, const LiVESWidgetColor *c2,
 LiVESWidget *lives_image_new(void);
 LiVESWidget *lives_image_new_from_file(const char *filename);
 LiVESWidget *lives_image_new_from_stock(const char *stock_id, LiVESIconSize size);
+LiVESWidget *lives_image_find_in_stock(LiVESIconSize size, ...) GNU_SENTINEL;
 
 boolean lives_image_set_from_pixbuf(LiVESImage *, LiVESPixbuf *);
 LiVESPixbuf *lives_image_get_pixbuf(LiVESImage *);
@@ -955,7 +956,7 @@ LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock_id, LiVESAcc
 LiVESToolItem *lives_menu_tool_button_new(LiVESWidget *icon, const char *label);
 boolean lives_menu_tool_button_set_menu(LiVESMenuToolButton *, LiVESWidget *menu);
 
-#if !GTK_CHECK_VERSION(3, 10, 0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
 
 boolean lives_image_menu_item_set_image(LiVESImageMenuItem *, LiVESWidget *image);
 
@@ -1176,6 +1177,7 @@ LiVESToolItem *lives_menu_tool_button_new(LiVESWidget *icon, const char *label);
 LiVESWidget *lives_standard_lock_button_new(boolean is_locked, const char *label, const char *tooltip);
 
 boolean lives_lock_button_get_locked(LiVESButton *);
+boolean lives_lock_button_set_locked(LiVESButton *button, boolean state);
 boolean lives_lock_button_toggle(LiVESButton *);
 
 boolean lives_dialog_set_button_layout(LiVESDialog *, LiVESButtonBoxStyle bstyle);

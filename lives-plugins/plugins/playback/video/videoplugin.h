@@ -11,15 +11,8 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#ifndef NEED_LOCAL_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#else
-#include "../../../../libweed/weed.h"
-#include "../../../../libweed/weed-palettes.h"
-#endif
-
-typedef weed_plant_t weed_layer_t;
+#define VIDP_PLUGIN_VERSION_MAJOR 2
+#define VIDP_PLUGIN_VERSION_MINOR 0
 
 #include <inttypes.h>
 
@@ -59,10 +52,6 @@ typedef int boolean;
 #define TRUE 1
 #define FALSE 0
 
-#ifndef ABS
-#define ABS(a) (a > 0 ? a : -a)
-#endif
-
 #ifndef PATH_MAX
 #ifdef MAX_PATH
 #define PATH_MAX MAX_PATH
@@ -74,18 +63,101 @@ typedef int boolean;
 // Warning - CPU_BITS macro evaluates only at runtime (uses sizeof)
 #define CPU_BITS ((sizeof(void *)) << 3)
 
+#ifndef NEED_LOCAL_WEED
+#include <weed/weed-plugin.h>
+#include <weed/weed.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
+#else
+#include "../../../../libweed/weed-plugin.h"
+#include "../../../../libweed/weed.h"
+#include "../../../../libweed/weed-effects.h"
+#include "../../../../libweed/weed-utils.h"
+#endif
+
+#include "../../../weed-plugins/weed-plugin-utils.c"
+
+typedef weed_plant_t weed_layer_t;
+
+// intentcaps
+typedef weed_plant_t lives_capacity_t;
+
+typedef int32_t lives_intention;
+
+#define LIVES_CAPACITY_AUDIO_RATE "audio_rate"			// int value
+#define LIVES_CAPACITY_AUDIO_CHANS "audio_channels"		// int value
+
+typedef struct {
+  lives_intention intent;
+  lives_capacity_t *capacities; ///< type specific capabilities
+} lives_intentcap_t;
+
+#define lives_capacity_exists(caps, key) (caps ? (weed_plant_has_leaf(caps, key) == WEED_TRUE ? TRUE : FALSE) \
+					  : FALSE)
+
+#define lives_capacity_is_readonly(caps, key) (caps ? ((weed_leaf_get_flags(caps, key) & WEED_FLAG_IMMUTABLE) \
+						      ? TRUE : FALSE) : FALSE)
+
+#define lives_capacity_get_int(caps, key) (caps ? weed_get_int_value(caps, key, 0) : 0)
+#define lives_capacity_get_string(caps, key) (caps ? weed_get_string_value(caps, key, 0) : 0)
+
+/////
+#define PLUGIN_TYPE_PLAYER		260 // "player"
+#define PLUGIN_PKGTYPE_DYNAMIC     	128 // dynamic library
+
+#define LIVES_INTENTION_PLAY		0x00000200
+#define LIVES_INTENTION_STREAM		0x00000201
+#define LIVES_INTENTION_TRANSCODE	0x00000202
+
+typedef struct {
+  uint64_t uid; // fixed enumeration
+  uint64_t type;  ///< e.g. "decoder"
+  uint64_t pkgtype;  ///< e.g. dynamic
+  char script_lang[32];  ///< for scripted types only, the script interpreter, e.g. "perl", "python3"
+  int api_version_major; ///< version of interface API
+  int api_version_minor;
+  char name[32];  ///< e.g. "mkv_decoder"
+  int pl_version_major; ///< version of plugin
+  int pl_version_minor;
+  lives_intentcap_t *intentcaps;  /// array of intentcaps (NULL terminated)
+  void *unused; // padding
+} lives_plugin_id_t;
+
+const lives_plugin_id_t *get_plugin_id(void);
+
+static lives_plugin_id_t plugin_id;
+
+static inline lives_plugin_id_t *_make_plugin_id(const char *name, int vmaj, int vmin) {
+  static int inited = 0;
+  if (!inited) {
+    inited = 1;
+    plugin_id.uid = PLUGIN_UID;
+    plugin_id.type = PLUGIN_TYPE_PLAYER;
+    plugin_id.pkgtype = PLUGIN_PKGTYPE_DYNAMIC;
+    *plugin_id.script_lang = 0;
+    plugin_id.api_version_major = VIDP_PLUGIN_VERSION_MAJOR;
+    plugin_id.api_version_major = VIDP_PLUGIN_VERSION_MINOR;
+    snprintf(plugin_id.name, 32, "%s", name);
+    plugin_id.pl_version_major = vmaj;
+    plugin_id.pl_version_minor = vmin;
+#ifndef PLUGIN_INTENTCAPS
+#define PLUGIN_INTENTCAPS NULL
+#endif
+    plugin_id.intentcaps = PLUGIN_INTENTCAPS;
+  }
+  return &plugin_id;
+}
+
 // all playback modules need to implement these functions, unless they are marked (optional)
 
 /// host calls at startup
 const char *module_check_init(void);
-const char *version(void);
 const char *get_description(void);   ///< optional
-const char *get_init_rfx(int intention);   ///< optional
 
-#ifdef __WEED_EFFECTS_H__
+const char *get_init_rfx(lives_intentcap_t *icaps);   ///< optional
+
 ///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
 const weed_plant_t **get_play_params(weed_bootstrap_f boot);
-#endif
 
 /// plugin send list of palettes, in order of preference
 const int *get_palette_list(void);
@@ -95,10 +167,6 @@ boolean set_palette(int palette);
 
 /// host will call this
 uint64_t get_capabilities(int palette);
-
-#define LIVES_INTENTION_PLAY               	512
-#define LIVES_INTENTION_STREAM          	513
-#define LIVES_INTENTION_TRANSCODE    		514
 
 #define VPP_CAN_RESIZE	       		(1<<0)   ///< can resize the image to fit the play window / letterbox
 #define VPP_CAN_RETURN	       		(1<<1)   ///< can return pixel_data after playing

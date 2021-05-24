@@ -12,7 +12,9 @@ static int palette_list[2];
 
 static int clampings[3];
 
-static char plugin_version[64] = "LiVES yuv4mpeg playback engine version 1.1";
+static int vmaj = 1;
+static int vmin = 1;
+const char *plugin_name = "LiVES yuv4mpeg playback";
 
 static boolean(*render_fn)(int hsize, int vsize, void **pixel_data);
 boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data);
@@ -63,9 +65,10 @@ const char *module_check_init(void) {
 }
 
 
-const char *version(void) {
-  return plugin_version;
+const lives_plugin_id_t *get_plugin_id(void) {
+  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
+
 
 const char *get_description(void) {
   return "The yuvmpeg_stream plugin allows streaming in yuv4mpeg format.\nOutput is on stdout, so it can be piped into another application.\n";

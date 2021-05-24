@@ -550,7 +550,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #endif
   typedef GtkAlignment                      LiVESAlignment;
   typedef GtkAllocation                     LiVESAllocation;
-#if GTK_CHECK_VERSION(3, 10, 0)
+#ifdef GTK_HEADER_BAR
 #define LIVES_HAS_HEADER_BAR_WIDGET 1
   typedef GtkHeaderBar   		    LiVESHeaderBar;
 #endif
@@ -567,7 +567,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 
   typedef GtkExpander                       LiVESExpander;
 
-#if GTK_CHECK_VERSION(2, 20, 0)
+#ifdef GTK_SPINNER
 #define LIVES_HAS_SPINNER_WIDGET 1
   typedef GtkSpinner        	          LiVESSpinner;
 #else
@@ -621,7 +621,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
   typedef GtkRange                          LiVESScaleButton;
 #endif
 
-#if GTK_CHECK_VERSION(3, 2, 0)
+#ifdef GTK_GRID
   typedef GtkGrid                           LiVESGrid;
 #undef LIVES_HAS_GRID_WIDGET
 #define LIVES_HAS_GRID_WIDGET 1
@@ -635,7 +635,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
   typedef GtkTable                          LiVESTable;
 #endif
 
-#if GTK_CHECK_VERSION(3, 0, 0)
+#ifdef GTK_SWITCH
 #undef LIVES_HAS_SWITCH_WIDGET
 #define LIVES_HAS_SWITCH_WIDGET 1
   typedef GtkSwitch                         LiVESSwitch;
@@ -1021,13 +1021,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 #endif
 
-#if GTK_CHECK_VERSION(3, 2, 0)
-#define LIVES_GRID(widget) GTK_GRID(widget)
-#else
-#define LIVES_GRID(widget) GTK_WIDGET(widget)
-#endif
-
-#if GTK_CHECK_VERSION(3, 10, 0)
+#ifndef GTK_IMAGE_MENU_ITEM
 #define LIVES_IMAGE_MENU_ITEM(widget) GTK_MENU_ITEM(widget)
 #else
 #define LIVES_IMAGE_MENU_ITEM(widget) GTK_IMAGE_MENU_ITEM(widget)
@@ -1035,11 +1029,13 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #define LIVES_HAS_IMAGE_MENU_ITEM 1
 #endif
 
-#if LIVES_TABLE_IS_GRID
+#ifdef GTK_GRID
+#define LIVES_GRID(widget) GTK_GRID(widget)
 #define LIVES_TABLE(widget) GTK_GRID(widget)
 #define LIVES_IS_TABLE(widget) GTK_IS_GRID(widget)
 #define LIVES_IS_GRID(widget) GTK_IS_GRID(widget)
 #else
+#define LIVES_GRID(widget) GTK_WIDGET(widget)
 #define LIVES_TABLE(widget) GTK_TABLE(widget)
 #define LIVES_IS_TABLE(widget) GTK_IS_TABLE(widget)
 #define LIVES_IS_GRID(widget) FALSE

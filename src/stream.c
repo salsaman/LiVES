@@ -389,7 +389,7 @@ static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, in
   lstream->dsize = atoi(array[3]);
 
   if (!(lstream->flags & LIVES_VSTREAM_FLAGS_IS_CONTINUATION)) {
-    if (capable->cpu_bits == 32) {
+    if (capable->hw.cpu_bits == 32) {
       lstream->timecode = strtoll(array[4], NULL, 10);
     } else {
       lstream->timecode = strtol(array[4], NULL, 10);
@@ -989,10 +989,10 @@ void on_send_lives2lives_activate(LiVESMenuItem *menuitem, livespointer user_dat
 
   if (mainw->vpp) {
     lives_free(orig_name);
-    orig_name = lives_strdup(mainw->vpp->name);
+    orig_name = lives_strdup(mainw->vpp->soname);
   }
 
-  if (!mainw->vpp || strcmp(mainw->vpp->name, "lives2lives_stream")) {
+  if (!mainw->vpp || strcmp(mainw->vpp->soname, "lives2lives_stream")) {
     lives_snprintf(future_prefs->vpp_name, 64, "lives2lives_stream");
   }
   vppa = on_vpp_advanced_clicked(NULL, LIVES_INT_TO_POINTER(LIVES_INTENTION_STREAM));

@@ -687,7 +687,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     int gamma = WEED_GAMMA_UNKNOWN, offsx = 0;
 
     if (weed_palette_is_rgb(pal)) {
-      int ppal = LIVES_PAINTER_COLOR_PALETTE(capable->byte_order), oppal = ppal;
+      int ppal = LIVES_PAINTER_COLOR_PALETTE(capable->hw.byte_order), oppal = ppal;
       int ipsize = pixel_size(pal);
       int opsize = pixel_size(ppal);
 

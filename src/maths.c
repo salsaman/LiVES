@@ -48,7 +48,7 @@ LIVES_GLOBAL_INLINE uint64_t get_near2pow(uint64_t val) {
 
 /* convert to/from a big endian 32 bit float for internal use */
 LIVES_GLOBAL_INLINE float LEFloat_to_BEFloat(float f) {
-  if (capable->byte_order == LIVES_LITTLE_ENDIAN) swab4(&f, &f, 1);
+  if (capable->hw.byte_order == LIVES_LITTLE_ENDIAN) swab4(&f, &f, 1);
   return f;
 }
 

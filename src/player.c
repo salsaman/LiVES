@@ -2293,6 +2293,8 @@ int process_one(boolean visible) {
 
   if (visible) goto proc_dialog;
 
+  //check_mem_status();
+
   sfile = mainw->files[mainw->playing_file];
 
   old_playing_file = mainw->playing_file;
@@ -2825,7 +2827,37 @@ switch_point:
                   }
 
                   if (est_time <= 0.) break;
-                  new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps + .9999);
+
+                  if (sfile->pb_fps > 0.) {
+                    new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps + .9999);
+                    if (new_pred_frame > sfile->frames) new_pred_frame = pred_frame;
+                  } else {
+                    // this does not work for reverse playback - we compensate for delay by jumping further
+                    // but for reverse play, the further back we go, the faster it may be
+                    // so test if we can reach the new target quicker
+                    new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps - .9999);
+                    if (new_pred_frame < 1) new_pred_frame = pred_frame;
+                    else {
+                      while (1) {
+                        double est_time2;
+                        if (is_virtual_frame(mainw->playing_file, pred_frame)) {
+                          est_time2 = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->playing_file, new_pred_frame));
+                        } else {
+                          est_time2 = sfile->img_decode_time;
+                        }
+                        if (est_time2 >= est_time) {
+                          new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps - .9999);
+                          break;
+                        }
+                        new_pred_frame = sfile->frameno + (frames_t)(est_time2 * sfile->pb_fps - .9999);
+                        if (new_pred_frame < 1) {
+                          new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps - .9999);
+                          break;
+                        }
+                        est_time = est_time2;
+                      }
+                    }
+                  }
                   if (sfile->pb_fps > 0.) {
                     if (new_pred_frame < requested_frame) break;
                   } else {
@@ -3046,7 +3078,7 @@ switch_point:
         if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) last_seek_pos = mainw->pulsed->seek_pos;
 #endif
         //g_print("DISK PR is %f\n", mainw->disk_pressure);
-        volatile float *cpuload = get_core_loadvar(0);
+        cpuload = get_core_loadvar(0);
         if (*cpuload < CORE_LOAD_THRESH || mainw->pred_clip != -1) {
           load_frame_image(sfile->frameno);
         }

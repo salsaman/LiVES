@@ -1899,84 +1899,85 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     //    g_print("MSG is %s\n", mainw->msg);
 
-    if (*mainw->msg && lives_strncmp(mainw->msg, "completed", 8) && strncmp(mainw->msg, "error", 5) &&
-        strncmp(mainw->msg, "killed", 6) && (visible ||
-            ((lives_strncmp(mainw->msg, "video_ended", 11) || mainw->whentostop != STOP_ON_VID_END)
-             && (lives_strncmp(mainw->msg, "audio_ended", 11) || mainw->preview ||
-                 mainw->whentostop != STOP_ON_AUD_END)))) {
+    if (!*mainw->msg || (lives_strncmp(mainw->msg, "completed", 8) && strncmp(mainw->msg, "error", 5) &&
+                         strncmp(mainw->msg, "killed", 6) && (visible ||
+                             ((lives_strncmp(mainw->msg, "video_ended", 11) || mainw->whentostop != STOP_ON_VID_END)
+                              && (lives_strncmp(mainw->msg, "audio_ended", 11) || mainw->preview ||
+                                  mainw->whentostop != STOP_ON_AUD_END))))) {
       // processing not yet completed...
-      if (visible) {
-        // last frame processed ->> will go from cfile->start to cfile->end
-        int numtok = get_token_count(mainw->msg, '|');
-        // get progress count from backend
-        if (numtok > 1) {
-          char **array = lives_strsplit(mainw->msg, "|", numtok);
-          int frames_done = atoi(array[0]);
-          if (frames_done > 0 && mainw->proc_ptr) mainw->proc_ptr->frames_done = frames_done;
-          if (numtok == 2 && *(array[1])) cfile->progress_end = atoi(array[1]);
-          else if (numtok == 5 && *(array[4])) {
-            // rendered generators
-            cfile->start = cfile->undo_start = 1;
-            cfile->frames = cfile->end = cfile->undo_end = atoi(array[0]);
-            cfile->hsize = atoi(array[1]);
-            cfile->vsize = atoi(array[2]);
-            cfile->fps = cfile->pb_fps = lives_strtod(array[3]);
-            if (cfile->fps == 0.) cfile->fps = cfile->pb_fps = prefs->default_fps;
-            cfile->progress_end = atoi(array[4]);
-          }
-          lives_strfreev(array);
-        } else {
-          if (mainw->proc_ptr) {
-            if (*mainw->msg) {
-              if (*mainw->msg == '!')
-                progbar_display(mainw->msg + 1, TRUE);
-              else {
-                if (mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
-                  mainw->proc_ptr->frac_done = atof(mainw->msg) / 100.;
+      if (*mainw->msg) {
+        if (visible) {
+          // last frame processed ->> will go from cfile->start to cfile->end
+          int numtok = get_token_count(mainw->msg, '|');
+          // get progress count from backend
+          if (numtok > 1) {
+            char **array = lives_strsplit(mainw->msg, "|", numtok);
+            int frames_done = atoi(array[0]);
+            if (frames_done > 0 && mainw->proc_ptr) mainw->proc_ptr->frames_done = frames_done;
+            if (numtok == 2 && *(array[1])) cfile->progress_end = atoi(array[1]);
+            else if (numtok == 5 && *(array[4])) {
+              // rendered generators
+              cfile->start = cfile->undo_start = 1;
+              cfile->frames = cfile->end = cfile->undo_end = atoi(array[0]);
+              cfile->hsize = atoi(array[1]);
+              cfile->vsize = atoi(array[2]);
+              cfile->fps = cfile->pb_fps = lives_strtod(array[3]);
+              if (cfile->fps == 0.) cfile->fps = cfile->pb_fps = prefs->default_fps;
+              cfile->progress_end = atoi(array[4]);
+            }
+            lives_strfreev(array);
+          } else {
+            if (mainw->proc_ptr) {
+              if (*mainw->msg) {
+                if (*mainw->msg == '!')
+                  progbar_display(mainw->msg + 1, TRUE);
                 else {
-                  int frames_done = atoi(mainw->msg);
-                  if (frames_done > 0 && mainw->proc_ptr) mainw->proc_ptr->frames_done = frames_done;
-		  // *INDENT-OFF*
-		}}}}}}}
-    // *INDENT-ON*
+                  if (mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
+                    mainw->proc_ptr->frac_done = atof(mainw->msg) / 100.;
+                  else {
+                    int frames_done = atoi(mainw->msg);
+                    if (frames_done > 0 && mainw->proc_ptr) mainw->proc_ptr->frames_done = frames_done;
+		    // *INDENT-OFF*
+		  }}}}}}}
+      // *INDENT-ON*
 
-    // do a processing pass
-    if (process_one(visible)) {
-      lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+      // do a processing pass
+      if (process_one(visible)) {
+        lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 #ifdef USE_GDK_FRAME_CLOCK
-      if (using_gdk_frame_clock) {
-        gdk_frame_clock_end_updating(gclock);
-      }
+        if (using_gdk_frame_clock) {
+          gdk_frame_clock_end_updating(gclock);
+        }
 #endif
-      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
-      if (visible) mainw->noswitch = FALSE;
-      return FALSE;
-    }
-
-    if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) {
-      int64_t dsused = disk_monitor_check_result(prefs->workdir);
-      if (dsused >= 0) {
-        capable->ds_used = dsused;
+        if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
+        if (visible) mainw->noswitch = FALSE;
+        return FALSE;
       }
-      disk_monitor_start(prefs->workdir);
-      mainw->dsu_valid = FALSE;
-    }
 
-    if (LIVES_UNLIKELY(mainw->agen_needs_reinit)) {
-      // we are generating audio from a plugin and it needs reinit
-      // - we do it in this thread so as not to hold up the player thread
-      reinit_audio_gen();
-    }
+      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) {
+        int64_t dsused = disk_monitor_check_result(prefs->workdir);
+        if (dsused >= 0) {
+          capable->ds_used = dsused;
+        }
+        disk_monitor_start(prefs->workdir);
+        mainw->dsu_valid = FALSE;
+      }
 
-    if (mainw->iochan && progress_count == 0) {
-      // pump data from stdout to textbuffer
-      pump_io_chan(mainw->iochan);
-    }
+      if (LIVES_UNLIKELY(mainw->agen_needs_reinit)) {
+        // we are generating audio from a plugin and it needs reinit
+        // - we do it in this thread so as not to hold up the player thread
+        reinit_audio_gen();
+      }
 
-    if (!mainw->internal_messaging) {
-      lives_nanosleep(1000000);
-    }
-    //else break;
+      if (mainw->iochan && progress_count == 0) {
+        // pump data from stdout to textbuffer
+        pump_io_chan(mainw->iochan);
+      }
+
+      if (!mainw->internal_messaging) {
+        lives_nanosleep(1000000);
+      }
+    } else break;
   }
 
 #ifdef USE_GDK_FRAME_CLOCK

@@ -1,7 +1,9 @@
 // LiVES - libav stream engine
-// (c) G. Finch 2017 <salsaman+lives@gmail.com>
+// (c) G. Finch 2017 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
+
+#define PLUGIN_UID 0X11E4474233EB27EEull
 
 #include <stdio.h>
 #include <pthread.h>
@@ -19,12 +21,16 @@
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 
-#include "videoplugin.h"
+static int vmaj = 1;
+static int vmin = 2;
+const char *plugin_name = "LiVES libav stream";
 
 #define HAVE_AVUTIL
 #define HAVE_AVCODEC
 
-#ifdef HAVE_SYSTEM_WEED
+#include "videoplugin.h"
+
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed-compat.h>
 #else
 #include "../../../../libweed/weed-compat.h"
@@ -41,8 +47,6 @@ static int avpalette;
 
 static int clampings[3];
 static int myclamp = WEED_YUV_CLAMPING_UNCLAMPED;
-
-static char plugin_version[64] = "LiVES libav stream engine version 1.1";
 
 static boolean(*render_fn)(int hsize, int vsize, void **pixel_data);
 
@@ -127,8 +131,8 @@ const char *module_check_init(void) {
 }
 
 
-const char *version(void) {
-  return plugin_version;
+const lives_plugin_id_t *get_plugin_id(void) {
+  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
 
@@ -154,23 +158,28 @@ uint64_t get_capabilities(int palette) {
 /*
   parameter template, these are returned as argc, argv in init_screen() and init_audio()
 */
-const char *get_init_rfx(int intention) {
-  // intention allows switching between different tailored interfaces
-  intent = intention;
 
-  switch (intent) {
+#define IFBUFSIZE 16384
+
+const char *get_init_rfx(lives_intentcap_t *icaps) {
+  // intent / capabilities allows switching between different tailored interfaces
+  static char ifbuf[IFBUFSIZE];
+  int defchans = 1, defrate, defrateval = 1;
+  char *extra;
+
+  switch (icaps->intent) {
   case LIVES_INTENTION_PLAY: // for now...
   case LIVES_INTENTION_STREAM: // LiVES VPP (streaming output)
-    return
-      "<define>\\n\
-|1.7\\n\
-</define>\\n\
+    snprintf(ifbuf, IFBUFSIZE, "%s",
+             "<define>\\n\
+|1.8.5\\n		  \
+</define>\\n	  \
 <params>\\n\
 form|_Format|string_list|0|mp4/h264/aac|ogm/theora/vorbis||\\n\
 \
 mbitv|Max bitrate (_video)|num0|500000|100000|1000000000|\\n\
 \
-achans|Audio _layout|string_list|1|mono|stereo||\\n\
+achans|Audio _layout|string_list|2|none|mono|stereo||\\n\
 arate|Audio _rate (Hz)|string_list|1|22050|44100|48000||\\n\
 mbita|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
 \
@@ -195,12 +204,21 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill|\\n\
 </param_window>\\n\
 <onchange>\\n\
 </onchange>\\n\
-";
-
-  case LIVES_INTENTION_TRANSCODE: // LiVES transcoding (test)
-    return
-      "<define>\\n\
-|1.8.1\\n\
+");
+    break;
+  case LIVES_INTENTION_TRANSCODE: // LiVES transcoding
+    if (weed_plant_has_leaf(icaps->capacities, LIVES_CAPACITY_AUDIO_CHANS)) {
+      defchans = lives_capacity_get_int(icaps->capacities, LIVES_CAPACITY_AUDIO_CHANS);
+      defrate = lives_capacity_get_int(icaps->capacities, LIVES_CAPACITY_AUDIO_RATE);
+      if (lives_capacity_is_readonly(icaps->capacities, LIVES_CAPACITY_AUDIO_CHANS))
+        extra = strdup("special|ignored|2|3|");
+      else extra = strdup("");
+      if (defrate == 22050) defrateval = 0;
+      else if (defrate == 44100) defrateval = 1;
+      else if (defrate == 48000) defrateval = 2;
+    } else extra = strdup("");
+    snprintf(ifbuf, IFBUFSIZE, "<define>\\n\
+|1.8.5\\n				    \
 </define>\\n\
 <language_code>\\n\
 0xF0\\n\
@@ -210,8 +228,8 @@ form|_Format|string_list|0|mp4/h264/aac|ogm/theora/vorbis|webm/vp9/opus||\\n\
 \
 mbitv|Max bitrate (_video)|num0|500000|100000|1000000000|\\n\
 \
-achans|Audio _layout|string_list|1|mono|stereo||\\n\
-arate|Audio _rate (Hz)|string_list|1|22050|44100|48000||\\n\
+achans|Audio _layout|string_list|%d|none|mono|stereo||\\n\
+arate|Audio _rate (Hz)|string_list|%d|22050|44100|48000||\\n\
 mbita|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
 \
 fname|_Output file|string||\\n\
@@ -224,15 +242,19 @@ layout|p6|\\n\
 layout|p0|\\n\
 layout|hseparator|\\n\
 special|filewrite|5|\\n\
+%s\\n\
 </param_window>\\n\
 <onchange>\\n\
 init|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} elsif ($p0 == 2) {$p5 .= \".webm\";} else {$p5 .= \".ogm\";}\\n\
 0|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} elsif ($p0 == 2) {$p5 .= \".webm\";} else {$p5 .= \".ogm\";}\\n\
 </onchange>\\n\
-";
+", defchans, defrateval, extra);
+    free(extra);
+    break;
   default:
     return "";
   }
+  return ifbuf;
 }
 
 
@@ -491,8 +513,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   AVDictionary *fmt_opts = NULL;
   char uri[PATH_MAX];
 
-  int vcodec_id;
-  int acodec_id;
+  int vcodec_id, acodec_id;
   int ret;
 
   uri[0] = 0;
@@ -694,27 +715,32 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     maxabitrate = 320000;
 
     if (argc > 0) {
-      out_nchans = atoi(argv[2]) + 1;
-      switch (atoi(argv[3])) {
-      case 0:
-        out_sample_rate = 22050;
-        break;
-      case 1:
-        out_sample_rate = 44100;
-        break;
-      case 2:
-        out_sample_rate = 48000;
-        break;
-      default:
-        break;
+      out_nchans = atoi(argv[2]);
+      if (out_nchans) {
+        switch (atoi(argv[3])) {
+        case 0:
+          out_sample_rate = 22050;
+          break;
+        case 1:
+          out_sample_rate = 44100;
+          break;
+        case 2:
+          out_sample_rate = 48000;
+          break;
+        default:
+          break;
+        }
+        maxabitrate = atoi(argv[4]);
+
+        fprintf(stderr, "added audio stream\n");
+        if (!open_audio()) {
+          avformat_free_context(fmtctx);
+          fmtctx = NULL;
+          return FALSE;
+        }
+      } else {
+        fprintf(stderr, "no audio stream selected\n");
       }
-      maxabitrate = atoi(argv[4]);
-    }
-    fprintf(stderr, "added audio stream\n");
-    if (!open_audio()) {
-      avformat_free_context(fmtctx);
-      fmtctx = NULL;
-      return FALSE;
     }
   }
 
@@ -831,12 +857,10 @@ static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int
     if (!ostv.sws_ctx) {
       ostv.sws_ctx = sws_getContext(hsize, vsize,
                                     weed_palette_to_avi_pix_fmt(mypalette, &myclamp),
-                                    c->width, c->height,
-                                    avpalette,
+                                    c->width, c->height, avpalette,
                                     SCALE_FLAGS, NULL, NULL, NULL);
       if (!ostv.sws_ctx) {
-        fprintf(stderr,
-                "libav_stream: Could not initialize the conversion context\n");
+        fprintf(stderr, "libav_stream: Could not initialize the conversion context\n");
         return NULL;
       }
       ohsize = hsize;
@@ -854,9 +878,7 @@ static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int
     if (mypalette == WEED_PALETTE_YUV420P) {
       ipd[1] = pixel_data[1];
       ipd[2] = pixel_data[2];
-    } else {
-      ipd[1] = ipd[2] = NULL;
-    }
+    } else ipd[1] = ipd[2] = NULL;
     ipd[3] = NULL;
 
     opd[0] = ostv.frame->data[0];
@@ -874,8 +896,7 @@ static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int
     ostrides[3] = 0;
     opd[3] = NULL;
 
-    sws_scale(ostv.sws_ctx,
-              (const uint8_t *const *)ipd, istrides,
+    sws_scale(ostv.sws_ctx, (const uint8_t *const *)ipd, istrides,
               0, vsize, (uint8_t *const *)opd, ostrides);
   } else {
     copy_yuv_image(ostv.frame, hsize, vsize, pixel_data);
@@ -887,113 +908,109 @@ static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int
 
 
 boolean render_audio_frame_float(float **audio, int nsamps)  {
-  AVCodecContext *c = osta.enc;
-  AVPacket pkt = { 0 }; // data and size must be 0;
+  if (out_nchans) return TRUE;
+  else {
+    AVCodecContext *c = osta.enc;
+    AVPacket pkt = { 0 }; // data and size must be 0;
 
-  float *abuff[in_nchans];
+    float *abuff[in_nchans];
 
-  int ret;
-  int got_packet = 0;
-  int nb_samples;
-  int i;
+    int ret, i;
+    int got_packet = 0;
+    int nb_samples;
 
-  av_init_packet(&pkt);
+    av_init_packet(&pkt);
 
-  if (!audio || nsamps == 0) {
-    // flush buffers
-    ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
-    if (ret < 0) {
-      fprintf(stderr, "Error 1 encoding audio frame: %s %d %d %d %ld\n", av_err2str(ret), nsamps, c->sample_rate, c->sample_fmt,
-              c->channel_layout);
-      return FALSE;
-    }
-
-    if (got_packet) {
-      ret = write_frame(&c->time_base, aStream, &pkt);
+    if (!audio || nsamps == 0) {
+      // flush buffers
+      ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
       if (ret < 0) {
-        fprintf(stderr, "Error while writing audio frame: %s\n",
-                av_err2str(ret));
+        fprintf(stderr, "Error 1 encoding audio frame: %s %d %d %d %ld\n", av_err2str(ret),
+                nsamps, c->sample_rate, c->sample_fmt, c->channel_layout);
         return FALSE;
       }
-    }
-    return TRUE;
-  }
 
-  for (i = 0; i < in_nchans; i++) {
-    abuff[i] = audio[i];
-  }
-
-  while (nsamps > 0) {
-    if (out_nb_samples != 0) {
-      if (nsamps + spb_len < in_nb_samples) {
-        // have l.t. one full buffer to send, store this for next time
-        for (i = 0; i < in_nchans; i++) {
-          memcpy(&(spill_buffers[i][spb_len]), abuff[i], nsamps * sizeof(float));
+      if (got_packet) {
+        ret = write_frame(&c->time_base, aStream, &pkt);
+        if (ret < 0) {
+          fprintf(stderr, "Error while writing audio frame: %s\n", av_err2str(ret));
+          return FALSE;
         }
-        spb_len += nsamps;
+      }
+      return TRUE;
+    }
+
+    for (i = 0; i < in_nchans; i++) abuff[i] = audio[i];
+
+    while (nsamps > 0) {
+      if (out_nb_samples != 0) {
+        if (nsamps + spb_len < in_nb_samples) {
+          // have l.t. one full buffer to send, store this for next time
+          for (i = 0; i < in_nchans; i++) {
+            memcpy(&(spill_buffers[i][spb_len]), abuff[i], nsamps * sizeof(float));
+          }
+          spb_len += nsamps;
+          return TRUE;
+        }
+        if (spb_len > 0) {
+          // have data in buffers from last call. fill these up and clear them first
+          for (i = 0; i < in_nchans; i++) {
+            memcpy(&(spill_buffers[i][spb_len]), audio[i], (in_nb_samples - spb_len) * sizeof(float));
+          }
+        }
+        nb_samples = out_nb_samples;
+      } else {
+        // codec accepts variable nb_samples, so encode all
+        in_nb_samples = nsamps;
+        nb_samples = av_rescale_rnd(in_nb_samples,
+                                    c->sample_rate, in_sample_rate, AV_ROUND_DOWN);
+        osta.frame = alloc_audio_frame(c->sample_fmt, c->channel_layout, c->sample_rate, nb_samples);
+      }
+
+      ret = av_frame_make_writable(osta.frame);
+      if (ret < 0) return FALSE;
+
+      ret = swr_convert(osta.swr_ctx, osta.frame->data, nb_samples,
+                        spb_len == 0 ? (const uint8_t **)abuff
+                        : (const uint8_t **)spill_buffers, in_nb_samples);
+      if (ret < 0) {
+        fprintf(stderr, "Error while converting audio\n");
+        return FALSE;
+      }
+
+      osta.frame->pts = av_rescale_q(osta.samples_count,
+      (AVRational) {1, c->sample_rate}, c->time_base);
+
+      osta.samples_count += nb_samples;
+
+      ret = avcodec_encode_audio2(c, &pkt, osta.frame, &got_packet);
+      if (ret < 0) {
+        fprintf(stderr, "Error 2 encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), nsamps,
+                nb_samples, c->sample_rate, c->sample_fmt, c->channel_layout);
+        return FALSE;
+      }
+
+      if (got_packet) {
+        ret = write_frame(&c->time_base, aStream, &pkt);
+        if (ret < 0) {
+          fprintf(stderr, "Error 2 while writing audio frame: %s\n", av_err2str(ret));
+          return FALSE;
+        }
+      }
+
+      for (i = 0; i < in_nchans; i++) {
+        abuff[i] += in_nb_samples - spb_len;
+      }
+
+      nsamps -= in_nb_samples - spb_len;
+      spb_len = 0;
+
+      if (out_nb_samples == 0) {
+        if (osta.frame) av_frame_unref(osta.frame);
+        osta.frame = NULL;
+        in_nb_samples = 0;
         return TRUE;
       }
-      if (spb_len > 0) {
-        // have data in buffers from last call. fill these up and clear them first
-        for (i = 0; i < in_nchans; i++) {
-          memcpy(&(spill_buffers[i][spb_len]), audio[i], (in_nb_samples - spb_len) * sizeof(float));
-        }
-      }
-      nb_samples = out_nb_samples;
-    } else {
-      // codec accepts variable nb_samples, so encode all
-      in_nb_samples = nsamps;
-      nb_samples = av_rescale_rnd(in_nb_samples,
-                                  c->sample_rate, in_sample_rate, AV_ROUND_DOWN);
-      osta.frame = alloc_audio_frame(c->sample_fmt, c->channel_layout, c->sample_rate, nb_samples);
-    }
-
-    ret = av_frame_make_writable(osta.frame);
-    if (ret < 0) return FALSE;
-
-    ret = swr_convert(osta.swr_ctx,
-                      osta.frame->data, nb_samples,
-                      spb_len == 0 ? (const uint8_t **)abuff : (const uint8_t **)spill_buffers, in_nb_samples);
-    if (ret < 0) {
-      fprintf(stderr, "Error while converting audio\n");
-      return FALSE;
-    }
-
-    osta.frame->pts = av_rescale_q(osta.samples_count, (AVRational) {
-      1, c->sample_rate
-    }, c->time_base);
-
-    osta.samples_count += nb_samples;
-
-    ret = avcodec_encode_audio2(c, &pkt, osta.frame, &got_packet);
-    if (ret < 0) {
-      fprintf(stderr, "Error 2 encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), nsamps,
-              nb_samples, c->sample_rate, c->sample_fmt,
-              c->channel_layout);
-      return FALSE;
-    }
-
-    if (got_packet) {
-      ret = write_frame(&c->time_base, aStream, &pkt);
-      if (ret < 0) {
-        fprintf(stderr, "Error 2 while writing audio frame: %s\n",
-                av_err2str(ret));
-        return FALSE;
-      }
-    }
-
-    for (i = 0; i < in_nchans; i++) {
-      abuff[i] += in_nb_samples - spb_len;
-    }
-
-    nsamps -= in_nb_samples - spb_len;
-    spb_len = 0;
-
-    if (out_nb_samples == 0) {
-      if (osta.frame) av_frame_unref(osta.frame);
-      osta.frame = NULL;
-      in_nb_samples = 0;
-      return TRUE;
     }
   }
   return TRUE;
@@ -1020,11 +1037,10 @@ boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data) {
       fprintf(stderr, "Error encoding video frame: %s\n", av_err2str(ret));
       return FALSE;
     }
-    if (got_packet) {
-      ret = write_frame(&c->time_base, vStream, &pkt);
-    } else {
-      ret = 0;
-    }
+
+    if (got_packet) ret = write_frame(&c->time_base, vStream, &pkt);
+    else ret = 0;
+
     if (ret < 0) {
       fprintf(stderr, "Error writing video frame: %s\n", av_err2str(ret));
       return FALSE;
@@ -1054,8 +1070,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 
   if (fmtctx) {
     if (!stream_encode && !(fmtctx->oformat->flags & AVFMT_NOFILE)) {
-
-      if (in_sample_rate != 0) {
+      if (out_nchans && in_sample_rate) {
         // flush final audio
         c = osta.enc;
 
@@ -1064,16 +1079,15 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 
           ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
           if (ret < 0) {
-            fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), 0, 0, c->sample_rate, c->sample_fmt,
-                    c->channel_layout);
+            fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret),
+                    0, 0, c->sample_rate, c->sample_fmt, c->channel_layout);
             break;
           }
 
           if (got_packet) {
             ret = write_frame(&c->time_base, aStream, &pkt);
             if (ret < 0) {
-              fprintf(stderr, "Error while writing audio frame: %s\n",
-                      av_err2str(ret));
+              fprintf(stderr, "Error while writing audio frame: %s\n", av_err2str(ret));
               break;
             }
           }
@@ -1092,14 +1106,9 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
           fprintf(stderr, "Error encoding video frame: %s\n", av_err2str(ret));
           break;
         }
-        if (got_packet) {
-          ret = write_frame(&c->time_base, vStream, &pkt);
-        } else {
-          ret = 0;
-        }
-        if (ret < 0) {
-          break;
-        }
+        if (got_packet) ret = write_frame(&c->time_base, vStream, &pkt);
+        else ret = 0;
+        if (ret < 0) break;
       } while (got_packet);
     }
 
@@ -1139,9 +1148,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   osta.swr_ctx = NULL;
 
   if (spill_buffers) {
-    for (i = 0; i < in_nchans; i++) {
-      free(spill_buffers[i]);
-    }
+    for (i = 0; i < in_nchans; i++) free(spill_buffers[i]);
     free(spill_buffers);
     spill_buffers = NULL;
   }
@@ -1156,3 +1163,5 @@ void module_unload(void) {
   inited = 0;
 }
 
+WEED_SETUP_START(200, 200)
+WEED_SETUP_END;

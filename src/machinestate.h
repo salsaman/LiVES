@@ -85,6 +85,8 @@ typedef enum {
 
 #define LIVES_WEED_SUBTYPE_BAG_OF_HOLDING 256 // generic - cant think of a better name right now
 
+// 512 == CAPACITIES
+
 weed_plant_t *lives_plant_new(int subtype);
 weed_plant_t *lives_plant_new_with_index(int subtype, int64_t index);
 
@@ -135,6 +137,8 @@ void *lives_oil_memcpy(void *dest, const void *src, size_t n);
 void *proxy_realloc(void *ptr, size_t new_size);
 
 char *get_md5sum(const char *filename);
+
+boolean check_mem_status(void);
 
 char *lives_format_storage_space_string(uint64_t space);
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval, int64_t resvd);

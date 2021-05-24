@@ -1386,7 +1386,7 @@ LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
     uint64_t *pi = (uint64_t *)s, nulmask;
     if ((void *)pi == (void *)s) {
       while (!(nulmask = hasNulByte(*pi))) pi++;
-      return (char *)pi - s + (capable->byte_order == LIVES_LITTLE_ENDIAN ? getnulpos(nulmask)
+      return (char *)pi - s + (capable->hw.byte_order == LIVES_LITTLE_ENDIAN ? getnulpos(nulmask)
                                : getnulpos_be(nulmask));
     }
   }
@@ -1410,7 +1410,7 @@ LIVES_GLOBAL_INLINE char *lives_strdup_quick(const char *s) {
     if ((void *)pi == (void *)s) {
       while (!(nulmask = hasNulByte(*pi))) pi++;
       stlen = (char *)pi - s + 1
-              + (capable->byte_order == LIVES_LITTLE_ENDIAN)
+              + (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)
               ? getnulpos(nulmask) : getnulpos_be(nulmask);
       return lives_memcpy(lives_malloc(stlen), s, stlen);
     }
@@ -2949,7 +2949,7 @@ boolean get_machine_dets(void) {
 				  "%s -e \"s/.*: //\" -e \"s:\\s\\+:/:g\"",
 				  capable->grep_cmd, capable->sed_cmd);
 #endif
-  capable->cpu_name = mini_popen(com);
+  capable->hw.cpu_name = mini_popen(com);
 
   com = lives_strdup("uname -o");
   capable->os_name = mini_popen(com);
@@ -2960,7 +2960,7 @@ boolean get_machine_dets(void) {
   com = lives_strdup("uname -m");
   capable->os_hardware = mini_popen(com);
 
-  capable->cacheline_size = capable->cpu_bits * 8;
+  capable->hw.cacheline_size = capable->hw.cpu_bits * 8;
 
 #if IS_X86_64
   if (!strcmp(capable->os_hardware, "x86_64")) capable->cacheline_size = get_cacheline_size();
@@ -2980,77 +2980,166 @@ boolean get_machine_dets(void) {
 }
 
 
-double get_disk_load(const char *mp) {
-  // not really working yet...
-  if (!mp) return -1.;
-  else {
-#ifndef IS_LINUX_GNU
-  return 0.;
-#else
-#define DISK_STATS_FILE "/proc/diskstats"
-    static ticks_t lticks = 0;
-    static uint64_t lval = 0;
-    double ret = -1.;
-    const char *xmp;
-    char *com, *res;
-    if (!lives_strncmp(mp, "/dev/", 5))
-      xmp = (char *)mp + 5;
-    else
-      xmp = mp;
-    com = lives_strdup_printf("%s -n $(%s %s %s)", capable->echo_cmd,
-			      capable->grep_cmd, xmp, DISK_STATS_FILE);
-    if ((res = mini_popen(com))) {
-      int p;
-      int xbits = get_token_count(res, ' ');
-      char **array = lives_strsplit(res, " ", xbits);
-      lives_free(res);
-      for (p = 0; p < xbits; p++) if (!strcmp(array[p], xmp)) break;
-      p += 10;
-      if (xbits > p) {
-	uint64_t val = atoll(array[p]);
-	ticks_t clock_ticks;
-	if (LIVES_IS_PLAYING) clock_ticks = mainw->clock_ticks;
-	else clock_ticks = lives_get_current_ticks();
-	if (lticks > 0 && clock_ticks > lticks && val > lval) {
-	  ret = (double)(val - lval) / ((double)(clock_ticks - lticks) / TICKS_PER_SECOND_DBL);
-	  g_print("AND %f %f %f\n", ret, (double)(val - lval),
-		  ((double)(clock_ticks - lticks) / TICKS_PER_SECOND_DBL));
-	  lticks = clock_ticks;
-	  lval = val;
-	}
-	if (lval == 0 && val > 0) {
-	  lticks = clock_ticks;
-	  lval = val;
+boolean parse_valfile(const char *fname, const char delim, const char **keys, char **vals) {
+  // parse fname - read it line by line, in each line we split at delim
+  // if part[0] == a key, then we assign part[1] (with whitespace trimmed) in corresponding val
+  // key is a NULL terminated list
+  char buffer[8192];
+  size_t ntok;
+  const char dstr[2] = {delim, 0};
+  FILE *file = fopen(fname, "r");
+  if (!file) return -1;
+  while (1) {
+    if (!fgets(buffer, 8192, file)) {
+      boolean bret = !!feof(file);
+      fclose(file);
+      return bret;
+    }
+    ntok = get_token_count(buffer, delim);
+    if (ntok > 1) {
+      char **array = lives_strsplit(buffer, dstr, ntok);
+      for (int i = 0; keys[i]; i++) {
+	if (!lives_strcmp(keys[i], array[0])) {
+	  vals[i] = lives_strdup(lives_strstrip(array[1]));
 	}
       }
       lives_strfreev(array);
     }
-  return ret;
   }
-  return -1.;
+  // should never reach here
+  fclose(file);
+  return TRUE;
+}
+
+
+#define PROC_MEMINFO "/proc/meminfo"
+#define MEM_CRIT 100000
+
+boolean check_mem_status(void) {
+  char *rets[4];
+  boolean bret;
+  int64_t memavail;
+  const char *valx[] = {"MemTotal", "MemFree", "MemAvailable", "Mlocked", NULL};
+  for (int i = 0; valx[i]; i++) rets[i] = NULL;
+  bret = parse_valfile(PROC_MEMINFO, ':', valx, rets);
+  memavail = lives_strtol(rets[2]);
+  if (memavail < MEM_CRIT) {
+    // almost oom...backup all we can just in case...
+    capable->hw.mem_status = LIVES_STORAGE_STATUS_CRITICAL;
+    if (LIVES_IS_PLAYING && mainw->record) {
+      if (prefs->crash_recovery && prefs->rr_crash) {
+	lives_proc_thread_create(LIVES_THRDATTR_NO_GUI | LIVES_THRDATTR_PRIORITY,
+				 (lives_funcptr_t)backup_recording, 0, "vv", NULL, NULL);
+      }
+    }
+    for (LiVESList *list = mainw->cliplist; list; list = list->next) {
+      int clpno = LIVES_POINTER_TO_INT(list->data);
+      if (IS_NORMAL_CLIP(clpno)) {
+	if (!mainw->files[clpno]->tsavedone) {
+	  char *fname = lives_build_filename(prefs->workdir, mainw->files[clpno]->handle,
+					     "." TOTALSAVE_NAME, NULL);
+	  int fd = lives_create_buffered(fname, DEF_FILE_PERMS);
+	  if (fd >= 0) {
+	    lives_write_buffered(fd, (const char *)mainw->files[clpno], sizeof(lives_clip_t), TRUE);
+	    lives_close_buffered(fd);
+	  }
+	  lives_free(fname);
+	  mainw->files[clpno]->tsavedone = TRUE;
+	}
+      }
+    }
+  }
+  else {
+    if (capable->hw.mem_status) {
+      if (memavail > MEM_CRIT) capable->hw.mem_status = LIVES_STORAGE_STATUS_WARNING;
+      if (memavail > MEM_CRIT * 2) capable->hw.mem_status = LIVES_STORAGE_STATUS_NORMAL;
+    }
+  }
+  for (int i = 0; valx[i]; i++) if (rets[i]) lives_free(rets[i]);
+  return bret;
+}
+
+
+double get_disk_load(const char *mp) {
+  // not really working yet...
+  if (0 && !mp) return -1.;
+  else {
+#ifndef IS_LINUX_GNU
+  return 0.;
+#else
+#define VM_STATS_FILE "/proc/vmstat"
+#define _VM_SEEKSTR_ "pgpg"
+#define INPART_ "pgpgin"
+#define OUTPART_ "pgpgout"
+    static int64_t linval = -1, loutval = -1;
+    static ticks_t lticks = 0;
+    int64_t inval = -1, outval = -1;
+    ticks_t clock_ticks;
+    double inret = -1., outret = -1.;
+    char *res;
+    char *com = lives_strdup_printf("%s -n $(%s %s %s)", capable->echo_cmd,
+				    capable->grep_cmd, _VM_SEEKSTR_, VM_STATS_FILE);
+    if ((res = mini_popen(com))) {
+      g_print("RES was %s\n", res);
+      int xlines = get_token_count(res, '\n');
+      char **xarray = lives_strsplit(res, "\n", xlines);
+      for (int i = 0; i < xlines; i++) {
+	if (!xarray[i] || !*xarray[i]) continue;
+	else {
+	  size_t xbits = get_token_count(xarray[i], ' ');
+	  if (xbits > 1) {
+	    char **array = lives_strsplit(xarray[i], " ", xbits);
+	    for (int j = 0; j < xbits - 1; j++) {
+	      g_print("checking %s\n", array[j]);
+	      if (!lives_strcmp(array[j], INPART_))
+		inval = lives_strtol(array[j + 1]);
+	      else if (!lives_strcmp(array[j], OUTPART_))
+		outval = lives_strtol(array[j + 1]);
+	      if (inval > -1 && outval > -1) break;
+	    }
+	    lives_strfreev(array);
+	  }
+	}
+      }
+      lives_free(res);
+      lives_strfreev(xarray);
+      if (LIVES_IS_PLAYING) clock_ticks = mainw->clock_ticks;
+      else clock_ticks = lives_get_current_ticks();
+      if (lticks > 0 && clock_ticks > lticks) {
+	if (inval > linval) {
+	  inret = (double)(inval - linval) / ((double)(clock_ticks - lticks) / TICKS_PER_SECOND_DBL);
+	  linval = inval;
+	}
+	if (outval > loutval) {
+	  outret = (double)(outval - loutval) / ((double)(clock_ticks - lticks) / TICKS_PER_SECOND_DBL);
+	  loutval = outval;
+	}
+
+	g_print("DISK PRESS: %f %f %f\n", inret, outret,
+		((double)(clock_ticks - lticks) / TICKS_PER_SECOND_DBL));
+      }
+      lticks = clock_ticks;
+    }
+  }
+  return 0.;
 #endif
 }
 
 
 LIVES_GLOBAL_INLINE double check_disk_pressure(double current) {
-  /* double dload = get_disk_load(capable->mountpoint); */
-  /* if (dload == 0.) { */
-  /*   dload = (current + 1.) * ((double)get_cpu_load(0) / (double)80000000.); */
-  /*   if (dload < 1.) dload = 0.; */
-  /* } */
-  /* if (dload > current) current = dload; */
-  get_proc_loads(FALSE);
-  return current;
+  return 0.;
 }
 
 
 int set_thread_cpuid(pthread_t pth) {
+  // doesn't seem particularly useful - the kernel does a pretty good job
+  // - code retained anyway, in case it becomes useful one day
 #ifdef CPU_ZERO
   cpu_set_t cpuset;
   int mincore = 0;
   float minload = 1000.;
   int ret = 0;
-  for (int i = 1; i <= capable->ncpus; i++) {
+  for (int i = 1; i <= capable->hw.ncpus; i++) {
     float load = *(get_core_loadvar(i));
     if (load > 0. && load < minload) {
       minload = load;
@@ -3171,32 +3260,38 @@ static void *proc_load_stats = NULL;
 static size_t nfill = 0; // will go away
 
 volatile float **const get_proc_loads(boolean reset) {
+  // get processor load values, and keep a rolling average
   boolean doinit = FALSE;
 
   if (!vals || reset) {
-    running_average(NULL, capable->ncpus + 1, &proc_load_stats);
+    running_average(NULL, capable->hw.ncpus + 1, &proc_load_stats);
     running_average(NULL, N_CPU_MEAS, &proc_load_stats);
   }
   if (!vals) {
     doinit = TRUE;
-    vals = (volatile float **)lives_calloc(sizeof(float *), capable->ncpus + 1);
+    vals = (volatile float **)lives_calloc(sizeof(float *), capable->hw.ncpus + 1);
   }
-  for (int i = 0; i <= capable->ncpus; i++) {
+  for (int i = 0; i <= capable->hw.ncpus; i++) {
     float load = (float)get_cpu_load(i) / (float)10000.;
     nfill = running_average(&load, i, &proc_load_stats);
     if (doinit) vals[i] = (volatile float *)lives_malloc(4);
     *vals[i] = load;
   }
+  //get_disk_load(0);
   return vals;
 }
 
 
 volatile float *get_core_loadvar(int corenum) {
+  // return a pointer to the (static) array member containing the requested value
+  // returning a pointer rather than the value allows for more in depth analysis
   return vals[corenum];
 }
 
 
 double analyse_cpu_stats(void) {
+  // in future in might be nice to analyse the CPU / disk / memory load and respond accordingly
+  // also looking for repeating / cyclic patterns we could take measures to minimise contention
 #if 0
   static lives_object_instance_t *statsinst = NULL;
   volatile float *cpuvals = vals[0];

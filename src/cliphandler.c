@@ -28,6 +28,7 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
     key = lives_strdup("header_version"); break;
   case CLIP_DETAILS_BPP:
     key = lives_strdup("bpp"); break;
+  // header v. 104
   case CLIP_DETAILS_IMG_TYPE:
     key = lives_strdup("img_type"); break;
   case CLIP_DETAILS_FPS:
@@ -78,7 +79,7 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
     key = lives_strdup("gamma_type"); break;
   default: break;
   }
-  if (maxlenp && *maxlenp == 0) *maxlenp = 256;
+  if (maxlenp && !*maxlenp) *maxlenp = 256;
   return key;
 }
 
@@ -166,20 +167,21 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   case CLIP_DETAILS_GAMMA_TYPE:
   case CLIP_DETAILS_HEADER_VERSION:
     *(int *)retval = atoi(val); break;
+  // header v. 104
   case CLIP_DETAILS_IMG_TYPE:
     *(lives_img_type_t *)retval = lives_image_type_to_img_type(val); break;
   case CLIP_DETAILS_ASIGNED:
     *(int *)retval = 0;
-    if (sfile->header_version == 0) *(int *)retval = atoi(val);
-    if (*(int *)retval == 0 && (!strcasecmp(val, "false"))) *(int *)retval = 1; // unsigned
+    if (!sfile->header_version) *(int *)retval = atoi(val);
+    if (!*(int *)retval && (!strcasecmp(val, "false"))) *(int *)retval = 1; // unsigned
     break;
   case CLIP_DETAILS_PB_FRAMENO:
     *(int *)retval = atoi(val);
-    if (retval == 0) *(int *)retval = 1;
+    if (!retval) *(int *)retval = 1;
     break;
   case CLIP_DETAILS_PB_ARATE:
     *(int *)retval = atoi(val);
-    if (retval == 0) *(int *)retval = sfile->arps;
+    if (!retval) *(int *)retval = sfile->arps;
     break;
   case CLIP_DETAILS_INTERLACE:
     *(int *)retval = atoi(val);
@@ -233,7 +235,7 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
   THREADVAR(write_failed) = 0;
   THREADVAR(com_failed) = FALSE;
 
-  if (which == 0 || which == mainw->scrap_file) return FALSE;
+  if (!which || which == mainw->scrap_file) return FALSE;
 
   if (!IS_VALID_CLIP(which)) return FALSE;
 
@@ -381,7 +383,7 @@ boolean save_clip_values(int which) {
   int asigned, endian;
   int retval;
 
-  if (which == 0 || which == mainw->scrap_file || which == mainw->ascrap_file) return TRUE;
+  if (!which || which == mainw->scrap_file || which == mainw->ascrap_file) return TRUE;
 
   set_signal_handlers((SignalHandlerPointer)defer_sigint); // ignore ctrl-c
 
@@ -445,7 +447,7 @@ boolean save_clip_values(int which) {
         if (!save_clip_value(which, CLIP_DETAILS_KEYWORDS, sfile->keywords)) break;
         if (sfile->clip_type == CLIP_TYPE_FILE && sfile->ext_src) {
           lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
-          if (!save_clip_value(which, CLIP_DETAILS_DECODER_NAME, (void *)dplug->decoder->name)) break;
+          if (!save_clip_value(which, CLIP_DETAILS_DECODER_NAME, (void *)dplug->decoder->soname)) break;
           if (!save_clip_value(which, CLIP_DETAILS_DECODER_UID, (void *)&sfile->decoder_uid)) break;
         }
         all_ok = TRUE;
@@ -512,7 +514,8 @@ size_t reget_afilesize(int fileno) {
     }
   }
 
-  if (mainw->is_ready && fileno > 0 && fileno == mainw->current_file) {
+  if (!mainw->no_context_update && mainw->is_ready && fileno > 0
+      && fileno == mainw->current_file) {
     // force a redraw
     update_play_times();
   }
@@ -977,6 +980,18 @@ boolean write_headers(int clipno) {
 }
 
 
+LIVES_GLOBAL_INLINE void make_cleanable(int clipno, boolean isit) {
+  if (IS_VALID_CLIP(clipno)) {
+    char *clipdir = get_clip_dir(clipno);
+    char *clnup = lives_build_filename(clipdir, LIVES_FILENAME_NOCLEAN, NULL);
+    if (!isit) lives_touch(clnup);
+    else lives_rm(clnup);
+    lives_free(clnup);
+    lives_free(clipdir);
+  }
+}
+
+
 LIVES_GLOBAL_INLINE boolean ignore_clip(int clipno) {
   boolean do_ignore = TRUE;
   if (IS_VALID_CLIP(clipno)) {
@@ -1000,7 +1015,7 @@ static boolean do_delete_or_mark(int clipno) {
     LiVESWidget *vbox, *check;
     LiVESWidget *dialog;
     dialog = create_question_dialog(_("Cleanup options"), _("LiVES was unable to load a clip which seems to be "
-                                    "damaged byond repair\n"
+                                    "damaged beyond repair\n"
                                     "This clip can be deleted or marked as unopenable "
                                     "and ignored\n"
                                     "What would you like to do ?\n"));
@@ -1202,7 +1217,7 @@ frombak:
         if (sfile->header_version > 100) {
           detail = CLIP_DETAILS_GAMMA_TYPE;
           get_clip_value(fileno, detail, &sfile->gamma_type, 0);
-          if (sfile->gamma_type == 0) sfile->gamma_type = WEED_GAMMA_SRGB;
+          if (sfile->gamma_type == WEED_GAMMA_UNKNOWN) sfile->gamma_type = WEED_GAMMA_SRGB;
           if (sfile->gamma_type != WEED_GAMMA_SRGB) {
             if (!do_gamma_import_warn(sfile->has_binfmt ?
                                       sfile->binfmt_version.num : 0, sfile->gamma_type)) goto rhd_failed;
@@ -1225,7 +1240,7 @@ get_avals:
         if (!retvala) sfile->achans = 0;
       }
 
-      if (sfile->achans == 0) retvala = FALSE;
+      if (!sfile->achans) retvala = FALSE;
       else retvala = TRUE;
 
       if (retval && retvala) {
@@ -1234,7 +1249,7 @@ get_avals:
       }
 
       if (!retvala) sfile->arps = sfile->achans = sfile->arate = sfile->asampsize = 0;
-      if (sfile->arps == 0) retvala = FALSE;
+      if (!sfile->arps) retvala = FALSE;
 
       if (retvala && retval) {
         detail = CLIP_DETAILS_PB_ARATE;

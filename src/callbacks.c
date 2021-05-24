@@ -2133,17 +2133,16 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 // TODO - split into undo.c
 void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
-  char *com, *tmp;
+  char *com = NULL, *tmp;
 
   boolean bad_header = FALSE;
   boolean retvalb;
 
-  int ostart = cfile->start;
-  int oend = cfile->end;
+  int oundo_start = cfile->undo_start, oundo_end = cfile->undo_end;
+  int ostart = cfile->start, oend = cfile->end;
   int current_file = mainw->current_file;
   int switch_file = current_file;
-  int asigned, aendian;
-  int i;
+  int asigned, aendian, i;
 
   if (mainw->multitrack) return;
 
@@ -2170,7 +2169,8 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     cfile->undo1_dbl = start;
   }
 
-  if (cfile->undo_action == UNDO_CUT || cfile->undo_action == UNDO_DELETE || cfile->undo_action == UNDO_DELETE_AUDIO) {
+  if (cfile->undo_action == UNDO_CUT || cfile->undo_action == UNDO_DELETE || cfile->undo_action == UNDO_DELETE_AUDIO
+      || cfile->undo_action == UNDO_TRIM_VIDEO) {
     int reset_achans = 0;
     lives_rm(cfile->info_file);
     if (cfile->achans != cfile->undo_achans) {
@@ -2187,7 +2187,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     cfile->asampsize = cfile->undo_asampsize;
     cfile->arps = cfile->undo_arps;
 
-    if (cfile->frames == 0) {
+    if (!cfile->frames) {
       cfile->hsize = cfile->ohsize;
       cfile->vsize = cfile->ovsize;
     }
@@ -2207,50 +2207,117 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
                                        cfile->asampsize, !(cfile->signed_endian & AFORM_UNSIGNED),
                                        !(cfile->signed_endian & AFORM_BIG_ENDIAN));
     } else {
-      // undo cut or delete (times to insert is -1)
-      // start,end, where are in frames
-      cfile->undo1_boolean &= mainw->ccpd_with_sound;
-      com = lives_strdup_printf("%s insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d 0 0 %.3f %d %d %d %d %d -1",
-                                prefs->backend, cfile->handle,
-                                get_image_ext_for_type(cfile->img_type), cfile->undo_start - 1, cfile->undo_start,
-                                cfile->undo_end, cfile->handle, cfile->undo1_boolean, cfile->frames, cfile->fps,
-                                cfile->arps, cfile->achans, cfile->asampsize, !(cfile->signed_endian & AFORM_UNSIGNED),
-                                !(cfile->signed_endian & AFORM_BIG_ENDIAN));
+      if (cfile->undo_action != UNDO_TRIM_VIDEO || cfile->undo_start > 1) {
+        // undo cut or delete (times to insert is -1)
+        // start,end, where are in frames
+        cfile->undo1_boolean &= mainw->ccpd_with_sound;
 
+        if (cfile->undo_action == UNDO_TRIM_VIDEO) {
+          if (cfile->undo1_boolean) {
+            com = lives_strdup_printf("%s rename_audio \"%s\" .old_start .bak", prefs->backend, cfile->handle);
+            lives_system(com, TRUE);
+            lives_free(com);
+          }
+          cfile->undo_end = cfile->undo_start - 1;
+          cfile->undo_start = 1;
+          if (oundo_end < cfile->old_frames) make_cleanable(mainw->current_file, FALSE);
+        }
+
+        com = lives_strdup_printf("%s insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d 0 0 %.3f %d %d %d %d %d -1",
+                                  prefs->backend, cfile->handle,
+                                  get_image_ext_for_type(cfile->img_type), cfile->undo_start - 1, cfile->undo_start,
+                                  cfile->undo_end, cfile->handle, cfile->undo1_boolean, cfile->frames, cfile->fps,
+                                  cfile->arps, cfile->achans, cfile->asampsize, !(cfile->signed_endian & AFORM_UNSIGNED),
+                                  !(cfile->signed_endian & AFORM_BIG_ENDIAN));
+
+        if (cfile->undo_action == UNDO_TRIM_VIDEO) {
+          cfile->frames += cfile->undo_end;
+          cfile->start += cfile->undo_end;
+          cfile->end += cfile->undo_end;
+          cfile->undo_start = cfile->undo_end;
+          cfile->undo_end = cfile->frames;
+        }
+      }
     }
 
-    lives_system(com, FALSE);
-    lives_free(com);
+    if (com) {
+      lives_system(com, FALSE);
+      lives_free(com);
 
-    if (THREADVAR(com_failed)) return;
+      if (THREADVAR(com_failed)) return;
 
-    // show a progress dialog, not cancellable
-    do_progress_dialog(TRUE, FALSE, _("Undoing"));
+      // show a progress dialog, not cancellable
+      do_progress_dialog(TRUE, FALSE, _("Undoing"));
 
-    if (mainw->error) {
-      d_print_failed();
-      //cfile->may_be_damaged=TRUE;
-      return;
+      if (mainw->error) {
+        d_print_failed();
+        //cfile->may_be_damaged=TRUE;
+        return;
+      }
+    }
+
+    if (cfile->undo_action == UNDO_TRIM_VIDEO) {
+      if (cfile->old_frames > cfile->frames) {
+        // then restore end
+        cfile->undo_start = cfile->frames + 1;
+        cfile->undo_end = cfile->old_frames;
+
+        cfile->undo1_boolean &= mainw->ccpd_with_sound;
+
+        if (cfile->undo1_boolean) {
+          com = lives_strdup_printf("%s rename_audio \"%s\" .old_end .bak", prefs->backend, cfile->handle);
+          lives_system(com, TRUE);
+          lives_free(com);
+        }
+
+        if (oundo_start > 1) make_cleanable(mainw->current_file, TRUE);
+
+        com = lives_strdup_printf("%s insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d 0 0 %.3f %d %d %d %d %d -1",
+                                  prefs->backend, cfile->handle,
+                                  get_image_ext_for_type(cfile->img_type), cfile->undo_start - 1, cfile->undo_start,
+                                  cfile->undo_end, cfile->handle, cfile->undo1_boolean, cfile->frames, cfile->fps,
+                                  cfile->arps, cfile->achans, cfile->asampsize, !(cfile->signed_endian & AFORM_UNSIGNED),
+                                  !(cfile->signed_endian & AFORM_BIG_ENDIAN));
+
+        lives_system(com, FALSE);
+        lives_free(com);
+
+        if (THREADVAR(com_failed)) return;
+
+        // show a progress dialog, not cancellable
+        do_progress_dialog(TRUE, FALSE, _("Undoing"));
+
+        if (mainw->error) {
+          d_print_failed();
+          //cfile->may_be_damaged=TRUE;
+          return;
+        }
+      }
+      cfile->frames = cfile->old_frames;
+      cfile->undo_start = oundo_start;
+      cfile->undo_end = oundo_end;
     }
 
     if (cfile->undo_action != UNDO_DELETE_AUDIO) {
-      cfile->insert_start = cfile->undo_start;
-      cfile->insert_end = cfile->undo_end;
+      if (cfile->undo_action != UNDO_TRIM_VIDEO) {
+        cfile->insert_start = cfile->undo_start;
+        cfile->insert_end = cfile->undo_end;
 
-      if (cfile->start >= cfile->undo_start) {
-        cfile->start += cfile->undo_end - cfile->undo_start + 1;
-      }
-      if (cfile->end >= cfile->undo_start) {
-        cfile->end += cfile->undo_end - cfile->undo_start + 1;
-      }
-
-      cfile->frames += cfile->undo_end - cfile->undo_start + 1;
-      if (cfile->frames > 0) {
-        if (cfile->start == 0) {
-          cfile->start = 1;
+        if (cfile->start >= cfile->undo_start) {
+          cfile->start += cfile->undo_end - cfile->undo_start + 1;
         }
-        if (cfile->end == 0) {
-          cfile->end = cfile->frames;
+        if (cfile->end >= cfile->undo_start) {
+          cfile->end += cfile->undo_end - cfile->undo_start + 1;
+        }
+
+        cfile->frames += cfile->undo_end - cfile->undo_start + 1;
+        if (cfile->frames > 0) {
+          if (cfile->start == 0) {
+            cfile->start = 1;
+          }
+          if (cfile->end == 0) {
+            cfile->end = cfile->frames;
+          }
         }
       }
       if (cfile->frame_index_back) {
@@ -2258,6 +2325,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
       }
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
       showclipimgs();
+      get_play_times();
     }
     if (reset_achans > 0) {
       if (cfile->audio_waveform) {
@@ -2276,8 +2344,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned)) bad_header = TRUE;
     }
 
-    showclipimgs();
-
+    get_play_times();
     if (bad_header) do_header_write_error(mainw->current_file);
   }
 
@@ -2374,8 +2441,10 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     cfile->frames = cfile->old_frames;
     cfile->hsize = cfile->ohsize;
     cfile->vsize = cfile->ovsize;
+
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize)) bad_header = TRUE;
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
+
     cfile->fps = cfile->undo1_dbl;
     if (cfile->clip_type == CLIP_TYPE_FILE && cfile->ext_src) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
@@ -2396,6 +2465,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     cfile->frames = cfile->old_frames;
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
     showclipimgs();
+    get_play_times();
     if (bad_header) do_header_write_error(mainw->current_file);
   }
 
@@ -2432,7 +2502,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
           cfile->end = cfile->insert_start - 1;
         }
       }
-      // TODO - use lives_clip_start macro
+
       if (cfile->start < 1) cfile->start = cfile->frames > 0 ? 1 : 0;
       if (cfile->end < 1) cfile->end = cfile->frames > 0 ? 1 : 0;
 
@@ -2441,6 +2511,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     mainw->ccpd_with_sound = ccpd_with_sound;
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
     showclipimgs();
+    get_play_times();
     if (bad_header) do_header_write_error(mainw->current_file);
   }
 
@@ -2618,6 +2689,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     lives_free(com);
     mainw->no_switch_dprint = FALSE;
     showclipimgs();
+    get_play_times();
   }
 
   if (cfile->end > cfile->frames) {
@@ -2661,11 +2733,9 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
 
 void on_redo_activate(LiVESWidget * menuitem, livespointer user_data) {
   char *com;
-
-  int ostart = cfile->start;
-  int oend = cfile->end;
+  int ostart = cfile->start, oend = cfile->end;
+  int oundo_start = cfile->undo_start;
   int current_file = mainw->current_file;
-  int i;
 
   mainw->osc_block = TRUE;
 
@@ -2706,18 +2776,25 @@ void on_redo_activate(LiVESWidget * menuitem, livespointer user_data) {
     d_print_done();
     return;
   }
-  if (cfile->undo_action == UNDO_CUT || cfile->undo_action == UNDO_DELETE) {
+  if (cfile->undo_action == UNDO_CUT || cfile->undo_action == UNDO_DELETE
+      || cfile->undo_action == UNDO_TRIM_VIDEO) {
     cfile->start = cfile->undo_start;
     cfile->end = cfile->undo_end;
     mainw->osc_block = FALSE;
   }
   if (cfile->undo_action == UNDO_CUT) {
     on_cut_activate(NULL, NULL);
-    mainw->osc_block = FALSE;
   }
   if (cfile->undo_action == UNDO_DELETE) {
     on_delete_activate(NULL, NULL);
-    mainw->osc_block = FALSE;
+  }
+  if (cfile->undo_action == UNDO_TRIM_VIDEO) {
+    on_trim_vid_activate(NULL, NULL);
+    cfile->start = ostart - oundo_start + 1;
+    cfile->end = oend - oundo_start + 1;
+    showclipimgs();
+    get_play_times();
+    return;
   }
   if (cfile->undo_action == UNDO_DELETE_AUDIO) {
     on_del_audio_activate(NULL, NULL);
@@ -2726,6 +2803,7 @@ void on_redo_activate(LiVESWidget * menuitem, livespointer user_data) {
     return;
   }
   if (cfile->undo_action == UNDO_CUT || cfile->undo_action == UNDO_DELETE) {
+    // reset clip start and end points
     cfile->start = ostart;
     cfile->end = oend;
     if (mainw->current_file == current_file) {
@@ -2741,15 +2819,14 @@ void on_redo_activate(LiVESWidget * menuitem, livespointer user_data) {
           cfile->end = cfile->undo_start - 1;
         }
       }
-      switch_to_file(mainw->current_file, mainw->current_file);
+      switch_clip(1, mainw->current_file, TRUE);
     }
-    mainw->osc_block = FALSE;
     return;
   }
 
   if (cfile->undo_action == UNDO_REC_AUDIO) {
     if (cfile->audio_waveform) {
-      for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
+      for (int i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
       lives_freep((void **)&cfile->audio_waveform);
       lives_freep((void **)&cfile->aw_sizes);
     }
@@ -2785,7 +2862,7 @@ void on_redo_activate(LiVESWidget * menuitem, livespointer user_data) {
     }
 
     d_print_done();
-    switch_to_file(mainw->current_file, mainw->current_file);
+    switch_clip(1, mainw->current_file, TRUE);
     mainw->osc_block = FALSE;
     return;
   }
@@ -2997,7 +3074,6 @@ void on_cut_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
 
   showclipimgs();
-
   get_play_times();
 
   if (bad_header) do_header_write_error(mainw->current_file);
@@ -4081,12 +4157,59 @@ boolean check_for_layout_errors(const char *operation, int fileno, int start, in
 }
 
 
-void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  char *com;
-
+static boolean post_del_cleanup(boolean early_return) {
   boolean bad_header = FALSE;
 
-  uint32_t chk_mask = 0;
+  if (!early_return) {
+    if (mainw->ccpd_with_sound) {
+      reget_afilesize(mainw->current_file);
+    }
+  }
+
+  if (cfile->frames == 0) {
+    if (cfile->afilesize == 0l) {
+      close_current_file(0);
+      return FALSE;
+    }
+    get_play_times();
+    lives_snprintf(cfile->type, 40, "Audio");
+    cfile->hsize = cfile->vsize = 0;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
+
+    if (bad_header) do_header_write_error(mainw->current_file);
+    cfile->orig_file_name = FALSE;
+    desensitize();
+    sensitize();
+  }
+
+  // ***** if we came here from undo_insert *****
+  if (early_return) return FALSE;
+
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
+
+  showclipimgs();
+  get_play_times();
+
+  if (bad_header) do_header_write_error(mainw->current_file);
+
+  // mark new file size as 'Unknown'
+  cfile->f_size = 0l;
+  cfile->changed = TRUE;
+
+  if (mainw->sl_undo_mem && (cfile->stored_layout_frame != 0 || (mainw->ccpd_with_sound &&
+                             cfile->stored_layout_audio != 0.))) {
+    // need to invalidate undo/redo stack, in case file was used in some layout undo
+    stored_event_list_free_undos();
+  }
+  return TRUE;
+}
+
+static uint32_t chk_mask = 0;
+
+// can be called programmatically by setting cfile->start, cfile->end and call with NULL menuitem
+void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  char *com;
 
   int frames_cut = cfile->end - cfile->start + 1;
   int start = cfile->start;
@@ -4105,7 +4228,9 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     }
   }
 
-  if (menuitem) {
+  chk_mask = 0;
+
+  if (menuitem || user_data) {
     char *tmp = (_("Deletion"));
     chk_mask = WARN_MASK_LAYOUT_DELETE_FRAMES | WARN_MASK_LAYOUT_SHIFT_FRAMES | WARN_MASK_LAYOUT_ALTER_FRAMES;
     if (mainw->ccpd_with_sound) chk_mask |= WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_SHIFT_AUDIO |
@@ -4126,7 +4251,7 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   cfile->undo_end = cfile->end;
   cfile->undo1_boolean = mainw->ccpd_with_sound;
 
-  if (menuitem || mainw->osc_auto) {
+  if (menuitem || mainw->osc_auto || user_data) {
     d_print(""); // force switchtext
     d_print(_("Deleting frames %d to %d%s..."), cfile->start, cfile->end,
             mainw->ccpd_with_sound && cfile->achans > 0 ? " (with sound)" : "");
@@ -4136,7 +4261,6 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
                             prefs->backend, cfile->handle, cfile->start, cfile->end,
                             mainw->ccpd_with_sound, cfile->frames, get_image_ext_for_type(cfile->img_type),
                             cfile->fps, cfile->arate, cfile->achans, cfile->asampsize);
-  lives_rm(cfile->info_file);
   lives_system(com, FALSE);
   lives_free(com);
 
@@ -4177,25 +4301,13 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     return;
   }
 
-  if (mainw->ccpd_with_sound) {
-    reget_afilesize(mainw->current_file);
-  } else get_play_times();
+  if (user_data) return;
 
-  if (cfile->frames == 0) {
-    if (cfile->afilesize == 0l) {
-      close_current_file(0);
-      return;
-    }
-    lives_snprintf(cfile->type, 40, "Audio");
-    cfile->hsize = cfile->vsize = 0;
-    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize)) bad_header = TRUE;
-    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
+  if (!post_del_cleanup(!menuitem && !mainw->osc_auto)) return;
 
-    if (bad_header) do_header_write_error(mainw->current_file);
-    cfile->orig_file_name = FALSE;
-    desensitize();
-    sensitize();
-  }
+  set_undoable(_("Delete"), TRUE);
+  cfile->undo_action = UNDO_DELETE;
+  d_print_done();
 
   if (!mainw->selwidth_locked || cfile->start > cfile->frames) {
     if (--start == 0 && cfile->frames > 0) {
@@ -4215,33 +4327,102 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   set_start_end_spins(mainw->current_file);
-
-  // menuitem is NULL if we came here from undo_insert
-  if (!menuitem && !mainw->osc_auto) return;
-
-  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
-
   showclipimgs();
-
   get_play_times();
 
-  if (bad_header) do_header_write_error(mainw->current_file);
+  if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
+}
 
-  // mark new file size as 'Unknown'
-  cfile->f_size = 0l;
-  cfile->changed = TRUE;
 
-  set_undoable(_("Delete"), TRUE);
-  cfile->undo_action = UNDO_DELETE;
-  d_print_done();
+void on_trim_vid_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  // delete the part after end
+  // then delete the part before start
+  // doing it in this order make it easier to undo the operation
+  frames_t *frame_index_back = NULL;
+  char *com;
+  boolean trimmed_end = FALSE;
+  frames_t ostart, oend;
 
-  if (mainw->sl_undo_mem && (cfile->stored_layout_frame != 0 || (mainw->ccpd_with_sound &&
-                             cfile->stored_layout_audio != 0.))) {
-    // need to invalidate undo/redo stack, in case file was used in some layout undo
-    stored_event_list_free_undos();
+  if (!CURRENT_CLIP_HAS_VIDEO || (cfile->start == 1 && cfile->end == cfile->frames)) return;
+  if (lives_get_status() != LIVES_STATUS_IDLE) return;
+
+  desensitize();
+
+  ostart = cfile->start;
+  oend = cfile->end;
+  cfile->old_frames = cfile->frames;
+
+  if (cfile->end < cfile->frames) {
+    // delete after end
+    cfile->start = cfile->end + 1;
+    cfile->end = cfile->frames;
+    on_delete_activate(NULL, LIVES_MAIN_WINDOW_WIDGET);
+    if (cfile->frames == cfile->old_frames) {
+      cfile->start = ostart;
+      cfile->end = oend;
+      goto done;
+    }
+    com = lives_strdup_printf("%s rename_audio \"%s\" .bak .old_end", prefs->backend, cfile->handle);
+    lives_system(com, TRUE);
+    lives_free(com);
+    trimmed_end = TRUE;
   }
 
+  if (ostart > 1) {
+    // delete to start
+    frames_t old_frames = cfile->frames;
+    cfile->start = 1;
+    cfile->end  = ostart - 1;
+
+    if (trimmed_end) {
+      // must make sure we only ADD to previous backup
+      frame_index_back = cfile->frame_index_back;
+      cfile->frame_index_back = NULL;
+      make_cleanable(mainw->current_file, FALSE);
+    }
+
+    on_delete_activate(NULL, LIVES_MAIN_WINDOW_WIDGET);
+
+    if (trimmed_end) make_cleanable(mainw->current_file, TRUE);
+
+    if (cfile->frames == old_frames) {
+      if (trimmed_end) {
+        com = lives_strdup_printf("%s rename_audio \"%s\" .old_end .bak", prefs->backend, cfile->handle);
+        lives_system(com, TRUE);
+        lives_free(com);
+        on_undo_activate(NULL, NULL);
+        set_undoable(NULL, FALSE);
+      }
+      cfile->start = ostart;
+      cfile->end = oend;
+      goto done;
+    }
+    cfile->start = 1;
+    cfile->end = cfile->frames;
+    com = lives_strdup_printf("%s rename_audio \"%s\" .bak .old_start", prefs->backend, cfile->handle);
+    lives_system(com, TRUE);
+    lives_free(com);
+  }
+
+  if (frame_index_back) {
+    if (cfile->frame_index_back) lives_free(cfile->frame_index_back);
+    cfile->frame_index_back = frame_index_back;
+  }
+
+  post_del_cleanup(FALSE);
+
+  set_undoable(_("Trim Video"), TRUE);
+  cfile->undo_action = UNDO_TRIM_VIDEO;
+  cfile->undo_start = ostart;
+  cfile->undo_end = oend;
+
   if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
+
+done:
+  set_start_end_spins(mainw->current_file);
+  showclipimgs();
+  get_play_times();
+  sensitize();
 }
 
 
@@ -5802,6 +5983,7 @@ void on_show_file_info_activate(LiVESMenuItem * menuitem, livespointer user_data
   if (!CURRENT_CLIP_IS_VALID) return;
 
   filew = create_clip_info_window(cfile->achans, FALSE);
+  if (!filew) return;
 
   if (cfile->frames > 0) {
     // type
@@ -7521,7 +7703,7 @@ void on_spin_value_changed(LiVESSpinButton * spinbutton, livespointer user_data)
 
 
 void on_spin_start_value_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
-  // generic
+  // generic - not to be confused with *_spinbutton_start_*
   // TODO - use array
   switch (LIVES_POINTER_TO_INT(user_data)) {
     GEN_SPB_LINK_I(1, start); GEN_SPB_LINK_I(2, start);
@@ -7532,7 +7714,7 @@ void on_spin_start_value_changed(LiVESSpinButton * spinbutton, livespointer user
 
 
 void on_spin_step_value_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
-  // generic
+  // generic - not to be confused with *_spinbutton_end_*
   // TODO - use array
   switch (LIVES_POINTER_TO_INT(user_data)) {
     GEN_SPB_LINK_I(1, step); GEN_SPB_LINK_I(2, step);
@@ -8058,7 +8240,7 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
   if (bad_header) do_header_write_error(mainw->current_file);
 
   if (!mainw->multitrack) {
-    switch_to_file(mainw->current_file, mainw->current_file);
+    switch_clip(1, mainw->current_file, TRUE);
   }
 
   if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
@@ -8705,6 +8887,8 @@ void update_sel_menu(void) {
     lives_widget_set_sensitive(mainw->select_from_start, FALSE);
     lives_widget_set_sensitive(mainw->select_to_end, FALSE);
     lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
+
+    lives_widget_set_sensitive(mainw->trim_video, FALSE);
     return;
   }
 
@@ -8722,6 +8906,7 @@ void update_sel_menu(void) {
     lives_widget_set_sensitive(mainw->select_invert, FALSE);
     lives_widget_set_sensitive(mainw->select_all, FALSE);
     lives_widget_set_sensitive(mainw->sa_button, FALSE);
+    lives_widget_set_sensitive(mainw->trim_video, FALSE);
   } else {
     if (cfile->start == 1 || cfile->end == cfile->frames)
       lives_widget_set_sensitive(mainw->select_invert, TRUE);
@@ -8730,6 +8915,7 @@ void update_sel_menu(void) {
 
     lives_widget_set_sensitive(mainw->select_all, TRUE);
     lives_widget_set_sensitive(mainw->sa_button, TRUE);
+    lives_widget_set_sensitive(mainw->trim_video, TRUE);
   }
 
   if (cfile->start == 1) lives_widget_set_sensitive(mainw->select_from_start, FALSE);
@@ -9012,10 +9198,11 @@ boolean expose_laud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
     lives_painter_set_source_surface(cr, mainw->laudio_drawable, 0., 0.);
     lives_painter_paint(cr);
   }
-  return TRUE;
+  return FALSE;
 }
 
 boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
+  if (!mainw->reconfig) return TRUE;
   if (IS_VALID_CLIP(mainw->drawsrc)) {
     lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
     lives_painter_surface_t *laudio_drawable;
@@ -9042,6 +9229,7 @@ boolean expose_raud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
 }
 
 boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
+  if (!mainw->reconfig) return TRUE;
   if (IS_VALID_CLIP(mainw->drawsrc)) {
     lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
     lives_painter_surface_t *raudio_drawable;
@@ -11143,7 +11331,6 @@ boolean on_trim_audio_activate(LiVESMenuItem * menuitem, livespointer user_data)
                             cfile->achans, cfile->asampsize, !(cfile->signed_endian & AFORM_UNSIGNED),
                             !(cfile->signed_endian & AFORM_BIG_ENDIAN));
   lives_free(temp_backend);
-  lives_rm(cfile->info_file);
   lives_system(com, FALSE);
   lives_free(com);
 
@@ -11309,12 +11496,10 @@ void on_fade_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   double start, end;
   char *com, *tmp, *msg = NULL;
+  char *temp_backend;
 
   uint32_t chk_mask = 0;
-
   boolean bad_header = FALSE;
-
-  int i;
 
   if (!CURRENT_CLIP_IS_VALID) return FALSE;
 
@@ -11370,10 +11555,11 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
     lives_free(msg);
   }
 
-  com = lives_strdup_printf("%s delete_audio \"%s\" %.8f %.8f %d %d %d", prefs->backend,
+  temp_backend = use_staging_dir_for(mainw->current_file);
+  com = lives_strdup_printf("%s delete_audio \"%s\" %.8f %.8f %d %d %d", temp_backend,
                             cfile->handle, start, end, cfile->arps,
                             cfile->achans, cfile->asampsize);
-  lives_rm(cfile->info_file);
+  lives_free(temp_backend);
   lives_system(com, FALSE);
   lives_free(com);
 
@@ -11400,7 +11586,7 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   if (cfile->laudio_time == 0. || cfile->raudio_time == 0.) {
     if (cfile->audio_waveform) {
-      for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
+      for (int i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
       lives_freep((void **)&cfile->audio_waveform);
       lives_freep((void **)&cfile->aw_sizes);
     }

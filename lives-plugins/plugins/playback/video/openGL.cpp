@@ -1,8 +1,10 @@
 // LiVES - openGL playback engine
-// (c) G. Finch 2012 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2012 - 2021 <salsaman+lives@gmail.com>
 // (c) OpenGL effects by Antti Silvast, 2012 <antti.silvast@iki.fi>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
+
+#define PLUGIN_UID 0XA6750BDAC53DF23Full
 
 #include <stdlib.h>
 #include <string.h>
@@ -13,26 +15,13 @@
 
 #include <iostream>
 
-#ifndef NEED_LOCAL_WEED
-#include <weed/weed-plugin.h>
-#include <weed/weed.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
-#else
-#include "../../../../libweed/weed-plugin.h"
-#include "../../../../libweed/weed.h"
-#include "../../../../libweed/weed-effects.h"
-#include "../../../../libweed/weed-utils.h"
-#endif
-
-#define USE_LIBWEED
 #include "videoplugin.h"
-
-#include "../../../weed-plugins/weed-plugin-utils.c"
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-static char plugin_version[64] = "LiVES openGL playback engine version 1.2";
+static int vmaj = 1;
+static int vmin = 2;
+const char *plugin_name = "LiVES openGL playback";
 
 static const uint16_t RGBA2RGB[8] =  {1, 0, 2, 1, 3, 2, 0, 3};
 
@@ -61,7 +50,6 @@ static boolean npot;
 #include "glad_glx.h"
 
 //#include <GL/glu.h>
-
 
 typedef struct {
   unsigned long flags;
@@ -261,8 +249,8 @@ const char *module_check_init(void) {
 }
 
 
-const char *version(void) {
-  return plugin_version;
+const lives_plugin_id_t *get_plugin_id(void) {
+  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
 
@@ -608,6 +596,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   xparms.width = width;
   xparms.height = height;
+
   xparms.fullscreen = fullscreen;
   xparms.window_id = window_id;
   xparms.argc = argc;
@@ -774,8 +763,8 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
 
     context = glXCreateContext(dpy, &xvis[0], 0, GL_TRUE);
 
-    width = attr.width;
-    height = attr.height;
+    //width = attr.width;
+    //height = attr.height;
 
     glXGetConfig(dpy, xvis, GLX_DOUBLEBUFFER, &dblbuf);
     XFree(xvis);
@@ -981,12 +970,14 @@ static int Upload(void) {
   int window_width, window_height;
 
   float scalex, scaley, offs_x, offs_y;
-  double x_stretch = (double)(imgWidth * typesize) / (double)texRow;
+  double x_stretch;
   double aspect;
 
   // scaling for particles
-  float partx, party = 2. / (float)imgHeight;
+  float partx, party;
   pthread_mutex_lock(&rthread_mutex);
+  x_stretch = (double)(imgWidth * typesize) / (double)texRow;
+
   if (has_new_texture) {
     ctexture++;
     if (ctexture == nbuf) ctexture = 0;
@@ -995,13 +986,14 @@ static int Upload(void) {
     render_to_gpumem_inner(0, texRow, texHeight, type, texturebuf);
     //set_priorities();
   }
-  pthread_mutex_unlock(&rthread_mutex);
 
   aspect = (double)imgWidth / (double)imgHeight;
   scalex = (float)(imgWidth * typesize) / (float)texRow;
   scaley = (float)imgHeight / (float)texHeight;
   partx = 2. / (float)imgWidth;
   party = 2. / (float)imgHeight;
+
+  pthread_mutex_unlock(&rthread_mutex);
 
   //if (zmode != -1) mode = zmode;
 
@@ -1953,6 +1945,7 @@ static void *render_thread_func(void *data) {
 
   retbuf = NULL;
 
+  // width X height -> window size iff we create own window
   init_screen_inner(xparms->width, xparms->height, xparms->fullscreen, xparms->window_id, xparms->argc, xparms->argv);
 
   rthread_ready = TRUE;

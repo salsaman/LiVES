@@ -243,6 +243,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 void wake_audio_thread(void);
 
 int get_aplay_clipno(void);
+int get_aplay_rate(void);
 
 boolean resync_audio(int clipno, double frameno);
 void avsync_force(void);

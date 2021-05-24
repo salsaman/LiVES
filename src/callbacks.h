@@ -84,6 +84,8 @@ void on_merge_activate(LiVESMenuItem *, livespointer);
 
 void on_delete_activate(LiVESMenuItem *, livespointer);
 
+void on_trim_vid_activate(LiVESMenuItem *, livespointer);
+
 void update_sel_menu(void);
 
 void on_select_all_activate(LiVESWidget *, livespointer);

@@ -252,6 +252,7 @@ typedef struct {
   LiVESWidget *acodec_entry;
   LiVESWidget *spinbutton_width;
   LiVESWidget *spinbutton_height;
+  LiVESWidget *as_lock;
   LiVESWidget *spinbutton_fps;
   LiVESWidget *pertrack_checkbutton;
   LiVESWidget *backaudio_checkbutton;
@@ -301,7 +302,7 @@ render_details *create_render_details(int type);
 
 LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget **spheight, int defheight,
                                LiVESWidget **spfps, double deffps, LiVESWidget **spframes, int defframes,
-                               boolean add_aspect, LiVESWidget *extra);
+                               LiVESWidget **as_lock, LiVESWidget *extra);
 
 LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertrack);
 

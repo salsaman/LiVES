@@ -865,7 +865,7 @@ static boolean pre_init(void) {
   /// this must be done before we can check the disk status
   future_prefs->nfx_threads = prefs->nfx_threads = get_int_pref(PREF_NFX_THREADS);
   if (future_prefs->nfx_threads <= 0) {
-    prefs->nfx_threads = capable->ncpus;
+    prefs->nfx_threads = capable->hw.ncpus;
     // set this for the backend, but use a -ve value so we know it wasnt set by the user
     if (prefs->nfx_threads != -future_prefs->nfx_threads)
       set_int_pref(PREF_NFX_THREADS, -prefs->nfx_threads);
@@ -1468,7 +1468,7 @@ static boolean lives_init(_ign_opts *ign_opts) {
   mainw->opwx = mainw->opwy = -1;
   mainw->toy_type = LIVES_TOY_NONE;
   mainw->framedraw = mainw->framedraw_spinbutton = NULL;
-  if (capable->byte_order == LIVES_LITTLE_ENDIAN) {
+  if (capable->hw.byte_order == LIVES_LITTLE_ENDIAN) {
     mainw->endian = 0;
   } else {
     mainw->endian = AFORM_BIG_ENDIAN;
@@ -1787,7 +1787,7 @@ static boolean lives_init(_ign_opts *ign_opts) {
     prefs->mt_def_arate = get_int_prefd(PREF_MT_DEF_ARATE, DEFAULT_AUDIO_RATE);
     prefs->mt_def_achans = get_int_prefd(PREF_MT_DEF_ACHANS, DEFAULT_AUDIO_CHANS);
     prefs->mt_def_asamps = get_int_prefd(PREF_MT_DEF_ASAMPS, DEFAULT_AUDIO_SAMPS);
-    prefs->mt_def_signed_endian = get_int_prefd(PREF_MT_DEF_SIGNED_ENDIAN, (capable->byte_order == LIVES_BIG_ENDIAN)
+    prefs->mt_def_signed_endian = get_int_prefd(PREF_MT_DEF_SIGNED_ENDIAN, (capable->hw.byte_order == LIVES_BIG_ENDIAN)
                                   ? 2 : 0 + ((prefs->mt_def_asamps == 8) ? 1 : 0));
 
     prefs->mt_exit_render = get_boolean_prefd(PREF_MT_EXIT_RENDER, TRUE);
@@ -2601,12 +2601,12 @@ static void do_start_messages(void) {
           capable->os_release ? capable->os_release : "?",
           capable->os_hardware ? capable->os_hardware : "????");
 
-  d_print(_("CPU type is %s "), capable->cpu_name);
-  d_print(P_("(%d core, ", "(%d cores, ", capable->ncpus), capable->ncpus);
+  d_print(_("CPU type is %s "), capable->hw.cpu_name);
+  d_print(P_("(%d core, ", "(%d cores, ", capable->hw.ncpus), capable->hw.ncpus);
 
-  if (capable->byte_order == LIVES_LITTLE_ENDIAN) endian = (_("little endian"));
+  if (capable->hw.byte_order == LIVES_LITTLE_ENDIAN) endian = (_("little endian"));
   else endian = (_("big endian"));
-  d_print(_("%d bits, %s)\n"), capable->cpu_bits, endian);
+  d_print(_("%d bits, %s)\n"), capable->hw.cpu_bits, endian);
   lives_free(endian);
 
   d_print(_("Machine name is '%s'\n"), capable->mach_name);
@@ -3281,7 +3281,7 @@ boolean set_palette_colours(boolean force_reload) {
   // still experimenting...some values may need tweaking
   // suggested uses for each colour in the process of being defined
   // TODO - run a bg thread until we create GUI
-  if (!prefs->vj_mode && prefs->startup_phase == 0) {
+  if (!prefs->vj_mode && !prefs->startup_phase) {
     /// create thread to pick custom colours
     double cpvar = get_double_prefd(PREF_CPICK_VAR, DEF_CPICK_VAR);
     prefs->cptime = get_double_prefd(PREF_CPICK_TIME, -DEF_CPICK_TIME);
@@ -3349,7 +3349,7 @@ capability *get_capabilities(void) {
   if (!check_for_executable(&capable->has_perl, EXEC_PERL)) return capable;
 
   // this is _compile time_ bits, not runtime bits
-  capable->cpu_bits = (sizeof(void *)) * 8;
+  capable->hw.cpu_bits = (sizeof(void *)) * 8;
 
   capable->ds_used = capable->ds_free = capable->ds_tot = -1;
 
@@ -3651,8 +3651,8 @@ retry_configfile:
     check_for_executable(&capable->has_midistartstop, EXEC_MIDISTOP);
   }
 
-  capable->ncpus = get_num_cpus();
-  if (capable->ncpus == 0) capable->ncpus = 1;
+  capable->hw.ncpus = get_num_cpus();
+  if (capable->hw.ncpus == 0) capable->hw.ncpus = 1;
 
   return capable;
 }
@@ -4051,8 +4051,8 @@ static boolean lives_startup(livespointer data) {
   } else if (prefs->startup_phase <= 3) {
     mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, TRUE);
     if (mainw->vpp) {
-      lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);
-      set_string_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
+      lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->soname);
+      set_string_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->soname);
     }
   }
 
@@ -4555,13 +4555,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
   capable = (capability *)lives_calloc(1, sizeof(capability));
-  capable->cacheline_size = sizeof(void *) * 8;
+  capable->hw.cacheline_size = sizeof(void *) * 8;
 
   // _runtime_ byte order, needed for lives_strlen and other things
   if (IS_BIG_ENDIAN)
-    capable->byte_order = LIVES_BIG_ENDIAN;
+    capable->hw.byte_order = LIVES_BIG_ENDIAN;
   else
-    capable->byte_order = LIVES_LITTLE_ENDIAN;
+    capable->hw.byte_order = LIVES_LITTLE_ENDIAN;
 
   capable->main_thread = pthread_self();
 
@@ -5473,7 +5473,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // get capabilities and if OK set some initial prefs
   theme_error = pre_init();
 
-  /* widget_helper_suggest_icons("preview"); */
+  /* widget_helper_suggest_icons("filter"); */
   /* abort(); */
 
   lives_memset(start_file, 0, 1);
@@ -5713,6 +5713,8 @@ void sensitize(void) {
     lives_widget_set_sensitive(mainw->merge, (clipboard != NULL && !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO));
   }
   lives_widget_set_sensitive(mainw->xdelete, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->trim_video, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO
+                             && (cfile->start > 1 || cfile->end < cfile->frames));
   lives_widget_set_sensitive(mainw->playall, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->m_playbutton, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->m_playselbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
@@ -5941,6 +5943,7 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->insert, FALSE);
   lives_widget_set_sensitive(mainw->merge, FALSE);
   lives_widget_set_sensitive(mainw->xdelete, FALSE);
+  lives_widget_set_sensitive(mainw->trim_video, FALSE);
   if (!prefs->pause_during_pb) {
     lives_widget_set_sensitive(mainw->playall, FALSE);
   }
@@ -9063,8 +9066,8 @@ boolean switch_audio_clip(int new_file, boolean activate) {
       mainw->jackd->usigned = !asigned;
       mainw->jackd->seek_end = sfile->afilesize;
 
-      if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) ||
-          (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
+      if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) ||
+          (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
         mainw->jackd->reverse_endian = TRUE;
       else mainw->jackd->reverse_endian = FALSE;
 
@@ -9183,8 +9186,8 @@ boolean switch_audio_clip(int new_file, boolean activate) {
         mainw->pulsed->usigned = !asigned;
         mainw->pulsed->seek_end = sfile->afilesize;
 
-        if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) ||
-            (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
+        if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) ||
+            (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
           mainw->pulsed->reverse_endian = TRUE;
         else mainw->pulsed->reverse_endian = FALSE;
 

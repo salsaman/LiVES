@@ -248,7 +248,9 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
       mainw->multitrack->has_audio_file = TRUE;
     }
 
-    cfile->img_type = lives_image_ext_to_img_type(prefs->image_ext);
+    if (cfile->header_version < 104)
+      cfile->img_type = lives_image_ext_to_img_type(prefs->image_ext);
+
     if ((!strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) || !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG))) {
       read_file_details(file_name, FALSE, TRUE);
       add_file_info(cfile->handle, FALSE);
@@ -309,7 +311,8 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
 
         cfile->opening = TRUE;
 
-        cfile->img_type = IMG_TYPE_BEST; // override the pref
+        if (cfile->header_version < 104)
+          cfile->img_type = IMG_TYPE_BEST; // override the pref
         cfile->clip_type = CLIP_TYPE_FILE;
 
         if (cdata->frame_width > 0) {
@@ -346,7 +349,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
         cfile->asampsize = cdata->asamps;
 
         cfile->signed_endian =
-          get_signed_endian(cdata->asigned, capable->byte_order == LIVES_LITTLE_ENDIAN);
+          get_signed_endian(cdata->asigned, capable->hw.byte_order == LIVES_LITTLE_ENDIAN);
 
         cfile->fps = cfile->pb_fps = cdata->fps;
 
@@ -472,7 +475,9 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                 cfile->end = cfile->frames;
                 d_print(_("Auto trimming %.4f seconds of audio at end..."),
                         cfile->laudio_time - cfile->video_time);
-                if (on_trim_audio_activate(NULL, LIVES_INT_TO_POINTER(0))) d_print_done();
+                cfile->undo1_dbl = cfile->video_time;
+                cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
+                if (on_del_audio_activate(NULL, NULL)) d_print_done();
                 else d_print("\n");
                 cfile->changed = FALSE;
               }
@@ -821,7 +826,9 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
         if (!prefs->keep_all_audio || start != 0. || extra_frames <= 0) {
           d_print(_("Auto trimming %.2f seconds of audio at end..."),
                   cfile->laudio_time - cfile->video_time);
-          if (on_trim_audio_activate(NULL, LIVES_INT_TO_POINTER(0))) d_print_done();
+          cfile->undo1_dbl = cfile->video_time;
+          cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
+          if (on_del_audio_activate(NULL, NULL)) d_print_done();
           else d_print("\n");
           cfile->changed = FALSE;
         } else {
@@ -877,7 +884,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
           mainw->fx3_val = cfile->asampsize ? cfile->asampsize : DEFAULT_AUDIO_SAMPS;
           if (!cfile->achans && !cfile->signed_endian) {
             mainw->fx4_val = (mainw->fx3_val == 8) ? DEFAULT_AUDIO_SIGNED8 :
-                             DEFAULT_AUDIO_SIGNED16 | ((capable->byte_order == LIVES_BIG_ENDIAN)
+                             DEFAULT_AUDIO_SIGNED16 | ((capable->hw.byte_order == LIVES_BIG_ENDIAN)
                                  ? AFORM_BIG_ENDIAN : 0);
 
             mainw->fx2_val = cfile->achans ? cfile->achans : DEFAULT_AUDIO_CHANS;
@@ -5236,7 +5243,10 @@ manual_locate:
 
   sfile->clip_type = CLIP_TYPE_FILE;
   get_mime_type(sfile->type, 40, cdata);
-  sfile->img_type = IMG_TYPE_UNKNOWN; // read_headers() will have set this to "jpeg" (default)
+
+  // read_headers() may have set this to "jpeg" (default)
+  if (sfile->header_version < 104) sfile->img_type = IMG_TYPE_UNKNOWN;
+
   // we will set correct value in check_clip_integrity() if there are any real images
 
   if (sfile->ext_src) {
@@ -5257,7 +5267,7 @@ manual_locate:
         save_clip_value(fileno, CLIP_DETAILS_DECODER_UID, (void *)&sfile->decoder_uid);
         if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
         else {
-          save_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, (void *)dpsys->name);
+          save_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, (void *)dpsys->soname);
           if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
         }
       }

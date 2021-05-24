@@ -36,10 +36,9 @@ boolean send_layer(weed_layer_t *layer, _vid_playback_plugin *vpp, int64_t timec
 
   if (pd_array) {
     // send pixel data to the video frame renderer
-    error = !(*vpp->render_frame)(weed_layer_get_width(layer),
-                                  weed_layer_get_height(layer),
-                                  timecode, pd_array, NULL, NULL);
-
+    error = !(*vpp->render_frame)
+            (weed_layer_get_width(layer), weed_layer_get_height(layer),
+             timecode, pd_array, NULL, NULL);
     lives_free(pd_array);
   }
   weed_layer_free(layer);
@@ -79,13 +78,11 @@ boolean transcode_get_params(char **fnameptr) {
   lives_rfx_t *rfx;
   LiVESResponseType resp;
 
-  THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
   vppa = on_vpp_advanced_clicked(NULL, NULL);
   if (!*fnameptr) *fnameptr = lives_build_filename(mainw->vid_save_dir, DEF_TRANSCODE_FILENAME, NULL);
   rfx = vppa->rfx;
   if (!rfx) {
     lives_widget_destroy(vppa->dialog);
-    THREAD_INTENTION = LIVES_INTENTION_NOTHING;
     lives_free(vppa);
     return FALSE;
   }
@@ -94,6 +91,7 @@ boolean transcode_get_params(char **fnameptr) {
   vppa->keep_rfx = TRUE;
 
   // set the default value in the param window
+  // TODO - consider setting in intentcaps ?
   set_rfx_value_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, *fnameptr, TRUE);
   lives_freep((void **)fnameptr);
 
@@ -124,7 +122,6 @@ boolean transcode_get_params(char **fnameptr) {
     mainw->cancelled = CANCEL_USER;
     rfx_free(rfx);
     lives_free(rfx);
-    THREAD_INTENTION = LIVES_INTENTION_NOTHING;
     return FALSE;
   }
 
@@ -215,6 +212,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
   int i = 0, j;
 
+  if (cfile->asampsize == 32) cfile->asampsize = 16;
+
   THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
 
   if (def_pname) pname = lives_strdup(def_pname);
@@ -223,11 +222,23 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     if (!transcode_prep()) {
       THREAD_INTENTION = LIVES_INTENTION_NOTHING;
       return FALSE;
-    }
-    vpp = mainw->vpp;
-    if (!transcode_get_params(&pname)) {
-      THREAD_INTENTION = LIVES_INTENTION_NOTHING;
-      goto tr_err2;
+    } else {
+      lives_capacity_t *caps = lives_capacities_new();
+      if (mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
+        lives_capacity_set_int(caps, LIVES_CAPACITY_AUDIO_RATE, cfile->arate);
+        lives_capacity_set_int(caps, LIVES_CAPACITY_AUDIO_CHANS, cfile->achans);
+      } else lives_capacity_set_int(caps, LIVES_CAPACITY_AUDIO_CHANS, cfile->achans);
+
+      vpp = mainw->vpp;
+      THREAD_CAPACITIES = caps;
+      if (!transcode_get_params(&pname)) {
+        THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+        lives_capacities_free(caps);
+        THREAD_CAPACITIES = NULL;
+        goto tr_err2;
+      }
+      lives_capacities_free(caps);
+      THREAD_CAPACITIES = NULL;
     }
   } else {
     vpp = mainw->vpp;
@@ -272,8 +283,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
       aendian = cfile->signed_endian & AFORM_BIG_ENDIAN;
 
-      if (cfile->asampsize > 8) {
-        if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) || (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
+      if (cfile->asampsize > 8 && cfile->asampsize < 32) {
+        if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
           swap_endian = TRUE;
         else swap_endian = FALSE;
       }
@@ -413,7 +424,10 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
         for (j = 0; j < cfile->achans; j++) {
           // convert to float
-          if (cfile->asampsize == 16) {
+          if (cfile->asampsize == 32) {
+            float_deinterleave(fltbuf[j], (float *)abuff, (uint64_t)nsamps, 1.,
+                               cfile->achans, lives_vol_from_linear(cfile->vol));
+          } else if (cfile->asampsize == 16) {
             sample_move_d16_float(fltbuf[j], (short *)abuff, (uint64_t)nsamps,
                                   cfile->achans, asigned ? AFORM_SIGNED : AFORM_UNSIGNED, swap_endian,
                                   lives_vol_from_linear(cfile->vol));

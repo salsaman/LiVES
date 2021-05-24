@@ -208,7 +208,7 @@ if (1) {
 
 	    # configfile / workdir not set
 	    my $filenot = "CONFIGFILE";
-	    if (!$workdir) {
+	    if (!$workdir && $command ne "get_workdir") {
 		$filenot = "WORKDIR";
 	    }
 	    print STDERR "smogrify for $GUI_NAME v$version: Error\n$filenot not defined for command \"$command\", ";
@@ -558,8 +558,7 @@ if (1) {
 		    &smog_system("pgrep -P $target_pid > \"$workdir/.pids.$target_pid\" 2>/dev/null");
 		    if (-s "$workdir/.pids.$target_pid" && defined(open IN, "<", "$workdir/.pids.$target_pid")) {
 			while (<IN>) {
-			    my $pid = $_;
-			    chomp($pid);
+			    my $pid = chomp $_;
 			    &kill_child_pids($pid, $sig);
 			}
 			close IN;
@@ -631,24 +630,17 @@ if (1) {
 	}
 
 
-	if ($command eq "get_tempdir") {
-	    ## deprecated - DO NOT USE, use get_workdir instead
-	    my $id;
-	    if (defined($ARGV[1])) {
-		$id = $ARGV[1];
-
-		open OUT, ">", "/tmp/.smogrify.$id" or exit 1;
-		print OUT "$workdir";
-		close OUT;
-	    } else {
-		print $workdir;
-	    }
-	    exit 0;
-	}
-
-
 	if ($command eq "get_workdir") {
-	    # safer version - writes to stdout
+	    if ($workdir eq "") {
+		$has_configfile = 0 + -e $configfile;
+		if ($has_configfile) {
+		    # can exit 3 here
+		    $workdir = &config_get("workdir");
+		    if ($workdir eq "") {
+			$workdir = &config_get("tempdir");
+		    }
+		}
+	    }
 	    print $workdir;
 	    exit 0;
 	}
@@ -787,6 +779,20 @@ if (1) {
 		exit 1;
 	    }
 	    &sig_complete;
+	    exit 0;
+	}
+
+
+	if ($command eq "rename_audio") {
+	    $handle = $ARGV[1];
+	    $from_ext = $ARGV[2];
+	    $to_ext = $ARGV[3];
+	    $curworkdir = "$workdir/$handle";
+	    &smog_chdir($curworkdir);
+	    &backup_audio(0, $from_ext, $to_ext);
+	    if ($panic) {
+		exit 1;
+	    }
 	    exit 0;
 	}
 
@@ -1733,8 +1739,10 @@ if (1) {
 	    }
 	    if ($mplay_command eq "") {
 		my $mp_command = &config_get("video_open_command");
-		if ($mp_command =~ /mpv/) {
-		    $is_mpv = 1;
+		if ($mp_command) {
+		    if ($mp_command =~ /mpv/) {
+			$is_mpv = 1;
+		    }
 		}
 		else {
 		    # sets $is_mpv
@@ -2512,7 +2520,7 @@ if (1) {
 	    our $author = $tmp[1];
 	    our $comment = $tmp[2];
 
-	    chomp($comment);
+	    chomp $comment;
 
 	    $command = "encode";
 
@@ -3460,6 +3468,9 @@ if (1) {
 
 	    #trim audio to selection
 
+	    ## if we trim from frame 1 or to final frame, we can use cut_audio instead
+	    ## which should require less backup space
+
 	    # $audio_from is the new clip ("audioclip")
 	    $clipaudio = $audio_from = &clip_audio($audio_start, $audio_end);
 	    if ($panic) {
@@ -3578,7 +3589,7 @@ if (1) {
 	    }
 	    @wid = split( / /, $win_id);
 	    $win_id = hex($wid[3]);
-	    chomp($win_id);
+	    chomp $win_id;
 
 	    &smog_system("grep \"Width:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
 	    if (defined(open IN, "<", "$curworkdir/tmpinfo2")) {
@@ -3587,7 +3598,7 @@ if (1) {
 	    }
 	    @widths = split( /Width: /, $width);
 	    $width = $widths[1];
-	    chomp($width);
+	    chomp $width;
 
 	    &smog_system("grep \"Height:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
 	    if (defined(open IN, "<", "$curworkdir/tmpinfo2")) {
@@ -3596,7 +3607,7 @@ if (1) {
 	    }
 	    @heights = split( /Height: /, $height);
 	    $height = $heights[1];
-	    chomp($height);
+	    chomp $height;
 
 	    &smog_system("grep \"Depth:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
 	    if (defined(open IN, "<", "$curworkdir/tmpinfo2")) {
@@ -3605,7 +3616,7 @@ if (1) {
 	    }
 	    @bpps = split( /Depth: /, $bpp);
 	    $bpp = $bpps[1];
-	    chomp($bpp);
+	    chomp $bpp;
 
 	    &smog_system("grep \"Visual:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
 	    if (defined(open IN, "<", "$curworkdir/tmpinfo2")) {
@@ -3614,7 +3625,7 @@ if (1) {
 	    }
 	    @visuals = split( /Visual: /, $visual);
 	    $visual = $visuals[1];
-	    chomp($visual);
+	    chomp $visual;
 
 	    unlink "$curworkdir/tmpinfo";
 	    unlink "$curworkdir/tmpinfo2";
@@ -4811,8 +4822,7 @@ sub kill_child_pids {
 
     if (-s "$workdir/.pids.$target_pid" && defined(open IN, "<", "$workdir/.pids.$target_pid")) {
 	while (<IN>) {
-	    $pid = $_;
-	    chomp($pid);
+	    $pid = chomp $_;
 	    &kill_child_pids($pid, $sig);
 	}
 	close IN;
@@ -5138,12 +5148,17 @@ sub undo_audio {
 
 
 sub backup_audio {
-    my $mstcopy = shift;
-    my $audio = "$curworkdir/audio";
+    my ($mstcopy, $from_ext, $to_ext) = @_;
+
+    if (!$to_ext) {
+	$to_ext = ".bak";
+    }
+
+    my $audio = "$curworkdir/audio" . $from_ext;
 
     return if (! -f $audio);
 
-    my $audio_bak = "$curworkdir/audio.bak";
+    my $audio_bak = "$curworkdir/audio" . $to_ext;
 
     unless ($mstcopy) {
 	if (-f $audio_bak) {
@@ -5160,7 +5175,7 @@ sub backup_audio {
 	return;
     }
 
-    my $fsize = -s  $audio;
+    my $fsize = -s $audio;
     unless ($mstcopy) {
 	&smog_rename($audio, $audio_bak);
     }
@@ -5876,7 +5891,7 @@ sub get_mpv_info {
 	    }
 
 	    $samps = (split(/ /, $audio))[3];
-	    chomp($samps);
+	    chomp $samps;
 	    if ($VERBOSE > 1) {
 		print STDERR "mpv got asamps $asamps\n";
 	    }
@@ -6397,7 +6412,7 @@ sub get_mplayer_info {
 	    }
 
 	    $samps = (split(/\, /, $audio))[2];
-	    chomp($samps);
+	    chomp $samps;
 	    if ($VERBOSE > 1) {
 		print STDERR "mplayer got asamps $asamps\n";
 	    }
@@ -7314,7 +7329,7 @@ sub cut_audio {
     #what we are going to do:
     # a)
     ## copy from $start to $end to temp
-    ## copy (inline) in original, removing (overwriting) the deleted section
+    ## copy (inplace) in original, removing (overwriting) the deleted section
     ## truncate original
     #
     ## on success, rename temp to bak
@@ -8192,7 +8207,7 @@ sub clean_old {
     if ($movetotrash && &is_dangerous($DEFTRASH)) {
 	exit 1;
     }
-    return if (! -d "$workdir/$handle" || ! -f "$workdir/$handle/header.lives");
+    return if (! -d "$workdir/$handle" || ! -f "$workdir/$handle/header.lives" || -f "$workdir/$handle/.noclean");
     my $dir = cwd();
     &smog_chdir("$workdir/$handle");
     if ($log) {
@@ -8454,7 +8469,7 @@ sub location {
     # return the location of an executable
     my $command = shift;
     my $location = &smog_system_direct("which \"$command\" 2>$nulfile");
-    chomp($location);
+    chomp $location;
     $location;
 }
 
@@ -8740,7 +8755,7 @@ sub config_set {
 	&startup_error(4, "config_set_new", "remove_new0", "$newconfigfile:\@:");
     }
     if (!defined(open OUT, ">", $newconfigfile)) {
-	&startup_error(4, "config_set_new", "open_new0", "$newconfigfile:\@:");
+	&startup_error(4, "config_set_new", "ope_new0", "$newconfigfile:\@:");
     }
 
     # autoflush output

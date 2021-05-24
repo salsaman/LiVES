@@ -26,7 +26,7 @@ if ($USE_WARNINGS) {
 }
 
 my $builder_version = "3.2.1-pre";
-my $rfx_version = "1.8.3";
+my $rfx_version = "1.8.5";
 my ($section, $file);
 
 if ($ARGV[0] eq "-get") {

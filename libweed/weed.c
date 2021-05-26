@@ -218,7 +218,7 @@ static int chain_lock_upgrade(weed_leaf_t *leaf, int have_rdlock, int is_del) {
     // if it is a SET, then we release the mutex; the next writer
     // will block on writelock; subsequent writeers will block on the mutex
     if (is_del) leaf->flags |= WEED_FLAG_OP_DELETE;
-    else if (!have_rdlock) structure_mutex_unlock(leaf);
+    else if (!have_rdlock && !is_del) structure_mutex_unlock(leaf);
   }
   return 0;
 }

@@ -40,15 +40,19 @@ static char *lctext;
 
 #define BW (40. * widget_opts.scale)
 #define BH (40. * widget_opts.scale)
-
+//#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
 static void dump_connections(void) {
   lives_pconnect_t *pconx = mainw->pconx;
+  g_print("\n\nPCONX DUMP\n");
   while (pconx) {
     int p = 0;
+    g_print("Next (%d, %d):\n", pconx->okey, pconx->omode);
     for (int i = 0; i < pconx->nparams; i++) {
       int pnum = pconx->params[i];
-      for (int j = 0; j < pconx->nconns[i + 1]; j++) {
+      g_print("%d : pnum = %d\n", i, pnum);
+      for (int j = 0; j < pconx->nconns[i]; j++) {
+        g_print("conx to %d, %d, %d\n", pconx->ikey[p], pconx->imode[p], pconx->ipnum[p]);
         p++;
 	// *INDENT-OFF*
       }}
@@ -3484,7 +3488,8 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
   if (idx_ret) *idx_ret = idx;
 
   if (!setup) {
-    if (pconx_get_out_param(TRUE, ikey, imode, ipnum, okey, omode, oopnum, NULL)) {
+    g_print("CHECK for %d %d %d\n", ikey - 1, imode, ipnum);
+    if (pconx_get_out_param(TRUE, ikey - 1, imode, ipnum, okey, omode, oopnum, NULL)) {
       // dest param already has a connection
       return -1;
     }
@@ -3695,7 +3700,7 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
   if (idx_ret) *idx_ret = idx;
 
   if (!setup) {
-    if (cconx_get_out_alpha(TRUE, ikey, imode, i, okey, omode, ocnum)) {
+    if (cconx_get_out_alpha(TRUE, ikey - 1, imode, i, okey, omode, ocnum)) {
       // dest chan already has a connection
       return -1;
     }
@@ -4678,6 +4683,7 @@ show_ex_params:
   posn = 0;
 
   for (i = 0; i < pconx->nparams; i++) {
+
     pidx = pconx->params[i];
 
     // find the row
@@ -4853,6 +4859,10 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   if (LIVES_IS_BOX(abox) && (conxw.num_alpha > 0 || conxw.num_params > 0)) add_fill_to_box(LIVES_BOX(abox));
 
   cbox = lives_dialog_get_content_area(LIVES_DIALOG(conxw.conx_dialog));
+
+#ifdef DEBUG_PCONX
+  dump_connections();
+#endif
 
   scrolledwindow = conx_scroll_new(&conxw);
   show_existing(&conxw);

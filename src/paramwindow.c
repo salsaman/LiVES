@@ -83,9 +83,6 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
 static void on_paramwindow_button_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
   // close from rte window
   on_paramwindow_button_clicked(button, rfx);
-  if (rfx->source_type == LIVES_RFX_SOURCE_WEED && rfx->source) {
-    weed_instance_unref((weed_plant_t *)rfx->source); // remove the ref we held
-  }
   lives_freep((void **)&fx_dialog[1]);
 }
 

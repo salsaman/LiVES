@@ -1,4 +1,4 @@
-// nn_programmer.c
+// log_sig.c
 // weed plugin
 // (c) G. Finch (salsaman) 2012
 //
@@ -35,15 +35,13 @@ static int package_version = 1; // version of this package
 #define N_PARAMS 128
 
 static weed_error_t logsig_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+  weed_plant_t **out_params = weed_get_out_params(inst, NULL);
   double fval;
 
-  register int i;
-
-  for (i = 0; i < 256; i++) {
-    if (weed_plant_has_leaf(in_params[i], WEED_LEAF_VALUE)) {
-      fval = weed_get_double_value(in_params[i], WEED_LEAF_VALUE, NULL);
+  for (int i = 0; i < N_PARAMS; i++) {
+    if (weed_param_has_value(in_params[i])) {
+      fval = weed_param_get_value_double(in_params[i]);
       weed_set_double_value(out_params[i], WEED_LEAF_VALUE, 1. / (1. + exp(-fval)));
     }
   }
@@ -61,16 +59,16 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_params[N_PARAMS + 1];
   weed_plant_t *out_params[N_PARAMS + 1];
 
-  register int i;
+  int i;
 
   char name[256];
   char label[256];
 
   for (i = 0; i < N_PARAMS; i++) {
-    snprintf(name, N_PARAMS, "input%03d", i);
-    snprintf(label, N_PARAMS, "Input %03d", i);
+    snprintf(name, 256, "input%03d", i);
+    snprintf(label, 256, "Input %03d", i);
     in_params[i] = weed_float_init(name, label, 0., -1000000000000., 1000000000000.);
-    snprintf(name, N_PARAMS, "Output %03d", i);
+    snprintf(name, 256, "Output %03d", i);
     out_params[i] = weed_out_param_float_init(name, 0., -1., 1.);
   }
 
@@ -86,8 +84,7 @@ WEED_SETUP_START(200, 200) {
                         "for instance.\n");
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
 

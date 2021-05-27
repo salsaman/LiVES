@@ -199,10 +199,11 @@ FN_DECL int weed_channel_is_disabled(weed_plant_t *channel);
 FN_DECL weed_plant_t  *weed_param_get_template(weed_plant_t *param);
 FN_DECL weed_plant_t *weed_param_get_gui(weed_plant_t *param) ALLOW_UNUSED;
 
-
 FN_DECL int weed_gui_get_flags(weed_plant_t *gui);
 
 // param values
+FN_DECL int weed_param_has_value(weed_plant_t *param);
+
 FN_DECL int weed_param_get_value_int(weed_plant_t *param);
 FN_DECL int weed_param_get_value_boolean(weed_plant_t *param);
 FN_DECL double weed_param_get_value_double(weed_plant_t *param);

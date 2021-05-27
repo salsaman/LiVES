@@ -47,7 +47,7 @@ typedef struct {
 //////////////////////////////////////////////////////////////////////////////////
 
 static weed_error_t nnprog_init(weed_plant_t *inst) {
-  register int i, j;
+  int i, j;
 
   _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
   if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
@@ -98,7 +98,7 @@ static weed_error_t nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp
 
   int k, idx = 0;
 
-  register int i, j, z;
+  int i, j, z;
 
   weed_free(in_params);
 
@@ -230,7 +230,7 @@ WEED_SETUP_START(200, 200) {
            "A Gaussian randomiser is used to vary the random factors.\n");
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
 

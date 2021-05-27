@@ -208,6 +208,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	alpha_to_grey.la \
 	negate.la \
 	nn_programmer.la \
+	data_counter.la \
 	noise.la \
 	onedTV.la \
 	palette_test.la\

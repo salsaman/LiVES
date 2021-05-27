@@ -589,8 +589,10 @@ static inline void **weed_channel_get_pixel_data_planar(weed_plant_t *channel, i
 }
 #endif
 
+static inline int weed_param_has_value(weed_plant_t *param) {
+  return _leaf_has_value(param, WEED_LEAF_VALUE) ? WEED_TRUE : WEED_FALSE;}
 static inline int weed_param_get_value_int(weed_plant_t *param) {return gg_i(param, WEED_LEAF_VALUE);}
-static inline int weed_param_get_value_boolean(weed_plant_t *param) {return weed_param_get_value_int(param);}
+static inline int weed_param_get_value_boolean(weed_plant_t *param) {return gg_i(param, WEED_LEAF_VALUE);}
 static inline double weed_param_get_value_double(weed_plant_t *param) {return gg_dbl(param, WEED_LEAF_VALUE);}
 static inline int64_t weed_param_get_value_int64(weed_plant_t *param) {return gg_i64(param, WEED_LEAF_VALUE);}
 static inline char *weed_param_get_value_string(weed_plant_t *param) {

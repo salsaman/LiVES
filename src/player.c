@@ -841,7 +841,10 @@ boolean load_frame_image(frames_t frame) {
                     if (mainw->pred_frame < 0) {
                       // -ve value...make a deep copy, e.g we got the frame too early
                       // and we may need to reshow it several times
-                      if (mainw->frame_layer) weed_layer_free(mainw->frame_layer);
+                      if (mainw->frame_layer) {
+                        check_layer_ready(mainw->frame_layer);
+                        weed_layer_free(mainw->frame_layer);
+                      }
                       mainw->frame_layer = weed_layer_copy(NULL, mainw->frame_layer_preload);
                       weed_layer_ref(mainw->frame_layer);
                     } else {
@@ -1198,6 +1201,7 @@ boolean load_frame_image(frames_t frame) {
         g_printerr("rend fr done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       lives_free(pd_array);
       if (frame_layer != mainw->frame_layer) {
+        check_layer_ready(frame_layer);
         weed_layer_free(frame_layer);
       }
 
@@ -1467,6 +1471,7 @@ boolean load_frame_image(frames_t frame) {
       }
 
       if (frame_layer != mainw->frame_layer) {
+        check_layer_ready(frame_layer);
         weed_layer_free(frame_layer);
       }
 
@@ -3230,6 +3235,7 @@ switch_point:
                                       (weed_timecode_t)mainw->currticks,
                                       sfile->hsize, sfile->vsize, WEED_PALETTE_END)) {
                 if (mainw->frame_layer_preload) {
+                  check_layer_ready(mainw->frame_layer_preload);
                   weed_layer_free(mainw->frame_layer_preload);
                   mainw->frame_layer_preload = NULL;
                   mainw->pred_clip = -1;

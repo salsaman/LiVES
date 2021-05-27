@@ -3484,6 +3484,7 @@ filterinit1:
           int pnum = weed_get_int_value(next_event, WEED_LEAF_INDEX, NULL);
           weed_plant_t *param = weed_inst_in_param(inst, pnum, FALSE, FALSE);
           weed_leaf_dup(param, next_event, WEED_LEAF_VALUE);
+          weed_instance_unref(inst);
         }
       }
     }
@@ -4400,6 +4401,7 @@ filterinit2:
         inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &weed_error);
         goto filterinit2;
       }
+
       weed_instance_unref(orig_inst);
       THREADVAR(random_seed) = 0;
 
@@ -4446,6 +4448,7 @@ filterinit2:
             int pnum = weed_get_int_value(event, WEED_LEAF_INDEX, NULL);
             weed_plant_t *param = weed_inst_in_param(inst, pnum, FALSE, FALSE);
             weed_leaf_dup(param, event, WEED_LEAF_VALUE);
+            weed_instance_unref(inst);
           }
         }
       }
@@ -5695,7 +5698,6 @@ double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int nb
               matrix[in_tracks[0] + nbtracks][j] *= 1. - trans;
               matrix[out_tracks[0] + nbtracks][j] = matrix[in_tracks[0] + nbtracks][j] + matrix[in_tracks[1] + nbtracks][j];
             }
-
             weed_instance_unref(inst);
             weed_instance_unref(inst);
           }
@@ -5851,10 +5853,10 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
     }
 
     etype = get_event_type(event);
-    if (WEED_EVENT_IS_FRAME(event)) {
-      event = get_next_event(event);
-      continue;
-    }
+    /* if (WEED_EVENT_IS_FRAME(event)) { */
+    /*   event = get_next_event(event); */
+    /*   continue; */
+    /* } */
     if ((prefs->event_window_show_frame_events || (prefs->show_dev_opts && !mainw->multitrack)
          || !WEED_EVENT_IS_FRAME(event)) || WEED_EVENT_IS_AUDIO_FRAME(event)) {
       if (!prefs->event_window_show_frame_events && WEED_EVENT_IS_FRAME(event)) {
@@ -6546,7 +6548,8 @@ render_details *create_render_details(int type) {
     else rdet->arate = player_arate;
     rdet->achans = DEFAULT_AUDIO_CHANS;
     rdet->asamps = DEFAULT_AUDIO_SAMPS;
-    rdet->aendian = cfile->signed_endian;
+    rdet->aendian = CURRENT_CLIP_HAS_AUDIO ? cfile->signed_endian
+                    : capable->hw.byte_order == LIVES_BIG_ENDIAN;
   }
 
   rdet->enc_changed = FALSE;
@@ -6730,15 +6733,16 @@ render_details *create_render_details(int type) {
       else {
         LiVESList *encs = encoders = filter_encoders_by_img_ext(encoders, get_image_ext_for_type(cfile->img_type));
         needs_new_encoder = TRUE;
-        while (encs) {
-          if (!strcmp((char *)encs->data, prefs->encoder.name)) {
-            needs_new_encoder = FALSE;
-            break;
-          }
-          encs = encs->next;
-        }
-      }
-    }
+        if (*prefs->encoder.name) {
+          while (encs) {
+            if (!strcmp((char *)encs->data, prefs->encoder.name)) {
+              needs_new_encoder = FALSE;
+              break;
+            }
+            encs = encs->next;
+	    // *INDENT-OFF*
+	  }}}}
+    // *INDENT-ON*
 
     if (type != 1) {
       add_hsep_to_box(LIVES_BOX(top_vbox));
@@ -6917,7 +6921,7 @@ render_details *create_render_details(int type) {
     if (needs_new_encoder) {
       lives_widget_set_sensitive(rdet->okbutton, FALSE);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET); // force showing of transient window
-      do_encoder_img_fmt_error(rdet);
+      if (*prefs->encoder.name) do_encoder_img_fmt_error(rdet);
     }
 
     lives_signal_sync_connect_after(LIVES_COMBO(rdet->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL,

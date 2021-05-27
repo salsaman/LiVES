@@ -898,6 +898,7 @@ void mt_draw_aparams(lives_mt * mt, LiVESWidget * eventbox, lives_painter_t *cr,
   lives_free(fhash);
 
   inst = weed_instance_from_filter(filter);
+
   in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
   deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, NULL);
@@ -912,6 +913,7 @@ void mt_draw_aparams(lives_mt * mt, LiVESWidget * eventbox, lives_painter_t *cr,
 
   if (offset_end < 0 || offset_start > lives_widget_get_allocation_width(eventbox)) {
     lives_free(in_params);
+    weed_instance_unref(inst);
     weed_instance_unref(inst);
     return;
   }

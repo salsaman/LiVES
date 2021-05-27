@@ -1026,6 +1026,13 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto success2;
   }
 
+  if (!lives_strcmp(prefidx, PREF_SHOW_MENU_ICONS)) {
+    if (prefs->show_menu_images == newval) goto fail2;
+    prefs->show_menu_images = newval;
+    mainw->prefs_changed |= PREFS_THEME_MINOR_CHANGE;
+    goto success2;
+  }
+
   if (!lives_strcmp(prefidx, PREF_EXTRA_COLOURS)) {
     if (prefs->extra_colours == newval) goto fail2;
     prefs->extra_colours = newval;
@@ -1825,6 +1832,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean mouse_scroll = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mouse_scroll));
   boolean ce_maxspect = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_ce_maxspect));
   boolean show_button_icons = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_button_icons));
+  boolean show_menu_icons = FALSE;
   boolean extra_colours = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_extra_colours));
   boolean show_asrc = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_show_asrc));
   boolean show_ttips = prefsw->checkbutton_show_ttips == NULL ? FALSE : lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(
@@ -2001,6 +2009,9 @@ boolean apply_prefs(boolean skip_warn) {
   char *tmp;
   char *cdplay_device = lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)),
                         -1, NULL, NULL, NULL);
+
+  if (prefsw->checkbutton_menu_icons)
+    show_menu_icons = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_menu_icons));
 
 #ifndef ENABLE_JACK_TRANSPORT
   jack_opts &= ~(JACK_OPTS_TRANSPORT_SLAVE | JACK_OPTS_TRANSPORT_MASTER
@@ -2214,6 +2225,9 @@ boolean apply_prefs(boolean skip_warn) {
   pref_factory_bool(PREF_PUSH_AUDIO_TO_GENS, pa_gens, TRUE);
 
   pref_factory_bool(PREF_SHOW_BUTTON_ICONS, show_button_icons, TRUE);
+
+  if (prefsw->checkbutton_menu_icons)
+    pref_factory_bool(PREF_SHOW_MENU_ICONS, show_menu_icons, TRUE);
 
   pref_factory_bool(PREF_EXTRA_COLOURS, extra_colours, TRUE);
 
@@ -5898,6 +5912,16 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_standard_check_button_new(_("Show icons in buttons"), widget_opts.show_button_images,
                                     LIVES_BOX(hbox), NULL);
 
+#if LIVES_HAS_IMAGE_MENU_ITEM
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  prefsw->checkbutton_menu_icons =
+    lives_standard_check_button_new(_("Show icons in menus"), prefs->show_menu_images,
+                                    LIVES_BOX(hbox), NULL);
+#else
+  prefsw->checkbutton_menu_icons = NULL;
+#endif
+
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -6839,6 +6863,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(checkbutton_ce_maxspect, TOGGLED);
   ACTIVE(ce_thumbs, TOGGLED);
   ACTIVE(checkbutton_button_icons, TOGGLED);
+  if (prefsw->checkbutton_menu_icons)
+    ACTIVE(checkbutton_menu_icons, TOGGLED);
   ACTIVE(checkbutton_extra_colours, TOGGLED);
   ACTIVE(checkbutton_hfbwnp, TOGGLED);
   ACTIVE(checkbutton_show_asrc, TOGGLED);
@@ -7260,14 +7286,16 @@ void on_prefs_apply_clicked(LiVESButton * button, livespointer user_data) {
     refresh_rte_window();
   }
 
-  if (mainw->prefs_changed & PREFS_THEME_CHANGED) {
-    if (!lives_strcmp(future_prefs->theme, LIVES_THEME_NONE)) {
+  if ((mainw->prefs_changed & PREFS_THEME_CHANGED) || (mainw->prefs_changed & PREFS_THEME_MINOR_CHANGE)) {
+    if ((mainw->prefs_changed & PREFS_THEME_CHANGED) && !lives_strcmp(future_prefs->theme, LIVES_THEME_NONE)) {
       lives_widget_set_sensitive(mainw->export_theme, FALSE);
       do_info_dialog(_("Disabling the theme will not take effect until the next time you start LiVES."));
     } else {
-      do_info_dialog(_("Theme changes will only take full effect after restarting LiVES."));
-      set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
-      set_double_pref(PREF_CPICK_TIME, (prefs->cptime = -DEF_CPICK_TIME));
+      do_info_dialog(_("Some theme changes will only take full effect after restarting LiVES."));
+      if (mainw->prefs_changed & PREFS_THEME_CHANGED) {
+        set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
+        set_double_pref(PREF_CPICK_TIME, (prefs->cptime = -DEF_CPICK_TIME));
+      }
     }
   } else
     lives_widget_set_sensitive(mainw->export_theme, TRUE);

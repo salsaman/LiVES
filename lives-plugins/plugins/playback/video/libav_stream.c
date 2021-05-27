@@ -48,10 +48,23 @@ static int avpalette;
 static int clampings[3];
 static int myclamp = WEED_YUV_CLAMPING_UNCLAMPED;
 
-static boolean(*render_fn)(int hsize, int vsize, void **pixel_data);
+static boolean(*play_fn)(weed_layer_t *frame, int64_t tc, weed_layer_t *ret);
 
-static boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data);
-static boolean render_frame_unknown(int hsize, int vsize, void **pixel_data);
+
+static boolean play_frame_unknown(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
+  //boolean render_frame_unknown(int hsize, int vsize, void **pixel_data) {
+  if (mypalette == WEED_PALETTE_END) {
+    fprintf(stderr, "libav_stream plugin error: No palette was set !\n");
+  }
+  return FALSE;
+}
+
+//static boolean(*render_fn)(int hsize, int vsize, void **pixel_data);
+
+static boolean play_frame_yuv420(weed_layer_t *frame, int64_t tc, weed_layer_t *ret);
+
+//static boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data);
+//static boolean render_frame_unknown(int hsize, int vsize, void **pixel_data);
 
 static int ovsize, ohsize;
 static int in_nchans, out_nchans;
@@ -109,7 +122,7 @@ const char *get_fps_list(int palette) {
 ////////////////////////////////////////////////
 
 const char *module_check_init(void) {
-  render_fn = &render_frame_unknown;
+  play_fn = &play_frame_unknown;
   ovsize = ohsize = 0;
 
   fmtctx = NULL;
@@ -276,7 +289,7 @@ boolean set_yuv_palette_clamping(int clamping_type) {
 
 boolean set_palette(int palette) {
   mypalette = palette;
-  render_fn = &render_frame_yuv420;
+  play_fn = &play_frame_yuv420;
   avpalette = weed_palette_to_avi_pix_fmt(WEED_PALETTE_YUV420P, &myclamp);
   return TRUE;
 }
@@ -786,9 +799,9 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 }
 
 
-boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void **rd, void **pp) {
+boolean play_frame(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   // call the function which was set in set_palette
-  return render_fn(hsize, vsize, pixel_data);
+  return play_fn(frame, tc, ret);
 }
 
 /*
@@ -840,7 +853,7 @@ static void copy_yuv_image(AVFrame *pict, int width, int height, const uint8_t *
 }
 
 
-static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int vsize) {
+static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int vsize, int *rows) {
   AVCodecContext *c = ostv.enc;
   const uint8_t *ipd[4];
   const uint8_t *opd[4];
@@ -865,11 +878,11 @@ static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int
       }
       ohsize = hsize;
       ovsize = vsize;
+      istrides[0] = rows[0];
       if (mypalette == WEED_PALETTE_YUV420P) {
-        istrides[0] = hsize;
-        istrides[1] = istrides[2] = hsize >> 1;
+        istrides[1] = rows[1];
+        istrides[2] = rows[2];
       } else {
-        istrides[0] = hsize * 3;
         istrides[1] = istrides[2] = 0;
       }
       istrides[3] = 0;
@@ -908,7 +921,7 @@ static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int
 
 
 boolean render_audio_frame_float(float **audio, int nsamps)  {
-  if (out_nchans) return TRUE;
+  if (!out_nchans) return TRUE;
   else {
     AVCodecContext *c = osta.enc;
     AVPacket pkt = { 0 }; // data and size must be 0;
@@ -984,6 +997,7 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
       osta.samples_count += nb_samples;
 
       ret = avcodec_encode_audio2(c, &pkt, osta.frame, &got_packet);
+
       if (ret < 0) {
         fprintf(stderr, "Error 2 encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), nsamps,
                 nb_samples, c->sample_rate, c->sample_fmt, c->channel_layout);
@@ -1016,46 +1030,78 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
   return TRUE;
 }
 
+//#define NEWVER
 
-boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data) {
+static boolean play_frame_yuv420(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   AVCodecContext *c;
   AVPacket pkt = { 0 };
-
+  uint8_t **pixel_data = (uint8_t **)weed_channel_get_pixel_data_planar(frame, NULL);
+  int hsize = weed_channel_get_width(frame);
+  int vsize = weed_channel_get_height(frame);
+  int *rows = weed_channel_get_rowstrides(frame, NULL);
   int got_packet = 0;
-  int ret;
+  int iret;
 
   c = ostv.enc;
 
   // copy and scale pixel_data
-  if ((ostv.frame = get_video_frame((const uint8_t *const *)pixel_data, hsize, vsize)) != NULL) {
+  if ((ostv.frame = get_video_frame((const uint8_t *const *)pixel_data, hsize, vsize, rows)) != NULL) {
+    weed_free(rows);
+    weed_free(pixel_data);
     av_init_packet(&pkt);
-
+#ifndef NEWVER
     /* encode the image */
-    ret = avcodec_encode_video2(c, &pkt, ostv.frame, &got_packet);
+    iret = avcodec_encode_video2(c, &pkt, ostv.frame, &got_packet);
 
-    if (ret < 0) {
-      fprintf(stderr, "Error encoding video frame: %s\n", av_err2str(ret));
+    if (iret < 0) {
+      fprintf(stderr, "Error encoding video frame: %s\n", av_err2str(iret));
+      return FALSE;
+    }
+    if (got_packet) {
+#if 0
+    }
+#endif
+#else
+    iret = avcodec_send_frame(c, ostv.frame);
+
+    if (iret < 0) {
+      fprintf(stderr, "Error sending a frame for encoding: %s\n",
+              av_err2str(iret));
+      return FALSE;
+    }
+    while (iret >= 0) {
+      iret = avcodec_receive_packet(c, &pkt);
+      if (iret == AVERROR(EAGAIN) || iret == AVERROR_EOF) {
+        return (iret == AVERROR(EAGAIN)) ? TRUE : FALSE;
+      } else if (iret < 0) {
+        fprintf(stderr, "Error encoding video frame: %s\n", av_err2str(iret));
+        return FALSE;
+      }
+    }
+#endif
+
+    if (iret < 0) {
+      fprintf(stderr, "Error writing video frame: %s\n", av_err2str(iret));
       return FALSE;
     }
 
-    if (got_packet) ret = write_frame(&c->time_base, vStream, &pkt);
-    else ret = 0;
+    iret = write_frame(&c->time_base, ostv.st, &pkt);
 
-    if (ret < 0) {
-      fprintf(stderr, "Error writing video frame: %s\n", av_err2str(ret));
-      return FALSE;
+    if (iret < 0) {
+      fprintf(stderr, "Error while writing video frame: %s\n", av_err2str(iret));
+      return FALSE;;
     }
+#ifndef NEWVER
   }
-
-  return TRUE;
+} else {
+  iret = 0;
+  weed_free(rows);
+  weed_free(pixel_data);
+#endif
+  av_init_packet(&pkt);
 }
-
-
-boolean render_frame_unknown(int hsize, int vsize, void **pixel_data) {
-  if (mypalette == WEED_PALETTE_END) {
-    fprintf(stderr, "libav_stream plugin error: No palette was set !\n");
-  }
-  return FALSE;
+av_packet_unref(&pkt);
+return ostv.frame ? TRUE : FALSE;
 }
 
 
@@ -1164,4 +1210,4 @@ void module_unload(void) {
 }
 
 WEED_SETUP_START(200, 200)
-WEED_SETUP_END;
+WEED_SETUP_END

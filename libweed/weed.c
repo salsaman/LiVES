@@ -769,22 +769,22 @@ static char **_weed_plant_list_leaves(weed_plant_t *plant, weed_size_t *nleaves)
   char **leaflist;
   int i = 1, j = 0;
   if (nleaves) *nleaves = 0;
-  chain_lock_upgrade(plant, 0, 0);
+  structure_mutex_lock(plant);
 
   for (; leaf; i++) leaf = leaf->next;
   if (!(leaflist = (char **)malloc(i * sizeof(char *)))) {
-    chain_lock_unlock(plant);
+    structure_mutex_unlock(plant);
     return NULL;
   }
   for (leaf = plant; leaf; leaf = leaf->next) {
     leaflist[j++] = strdup(leaf->key);
     if (!leaflist[j - 1]) {
-      chain_lock_unlock(plant);
+      structure_mutex_unlock(plant);
       for (--j; j > 0; free(leaflist[--j]));
       free(leaflist);
       return NULL;
     }}
-  chain_lock_unlock(plant);
+  structure_mutex_unlock(plant);
   leaflist[j] = NULL;
   if (nleaves) *nleaves = j;
   return leaflist;

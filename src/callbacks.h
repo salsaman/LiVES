@@ -88,6 +88,8 @@ void on_trim_vid_activate(LiVESMenuItem *, livespointer);
 
 void update_sel_menu(void);
 
+void sel_vismatch_activate(LiVESWidget *, livespointer);
+
 void on_select_all_activate(LiVESWidget *, livespointer);
 
 void on_select_new_activate(LiVESMenuItem *, livespointer);

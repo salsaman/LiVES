@@ -51,7 +51,7 @@ int get_param_widget_by_type(lives_param_t *, int wtype);
 void on_paramwindow_button_clicked(LiVESButton *, lives_rfx_t *);
 
 void on_render_fx_pre_activate(LiVESMenuItem *, livespointer unused);
-void on_render_fx_activate(LiVESMenuItem *, livespointer unused);
+void on_render_fx_activate(LiVESMenuItem *, livespointer do_onch);
 
 _fx_dialog *on_fx_pre_activate(lives_rfx_t *, boolean is_realtime, LiVESWidget *pbox);
 

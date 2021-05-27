@@ -12,6 +12,14 @@ LIVES_GLOBAL_INLINE boolean lives_list_contains_string(LiVESList *list, const ch
 }
 
 
+LIVES_GLOBAL_INLINE boolean cmp_rows(uint64_t *r0, uint64_t *r1, int nr) {
+  for (int i = 0; i < nr; i++) {
+    if (r0[i] != r1[i]) return TRUE;
+  }
+  return FALSE;
+}
+
+
 LiVESList *array_to_string_list(const char **array, int offset, int len) {
   // build a LiVESList from an array, starting from element offset + 1, len is len of list
   // if len is 0, then stop when we hit NULL element

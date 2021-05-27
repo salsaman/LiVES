@@ -20,18 +20,18 @@ static int package_version = 2; // version of this package
 #endif
 
 #include "weed-plugin-utils.c"
+
 //////////////////////////////////////////////////////////////////
 
 #include <math.h>
+
+static int verbosity = WEED_VERBOSITY_ERROR;
+
 enum {
   P_scale,
   P_xoffs,
   P_yoffs,
 };
-
-static int verbosity = WEED_VERBOSITY_ERROR;
-
-/////////////////////////////////////////////////////////////////////////////
 
 static double scmax = exp(3.);
 

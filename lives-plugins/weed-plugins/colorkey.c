@@ -19,17 +19,17 @@ static int package_version = 1; // version of this package
 #endif
 
 #include "weed-plugin-utils.c"
+
 //////////////////////////////////////////////////////////////////
+
+
+static int verbosity = WEED_VERBOSITY_ERROR;
 
 enum {
   P_delta,
   P_opac,
   P_col,
 };
-
-static int verbosity = WEED_VERBOSITY_ERROR;
-
-/////////////////////////////////////////////////////////////////////////////
 
 static weed_error_t colorkey_process(weed_plant_t *inst, weed_timecode_t tc) {
   weed_plant_t **in_chans = weed_get_in_channels(inst, NULL);
@@ -97,7 +97,7 @@ static weed_error_t colorkey_process(weed_plant_t *inst, weed_timecode_t tc) {
 WEED_SETUP_START(200, 200) {
   weed_plant_t *host_info = weed_get_host_info(plugin_info);
   weed_plant_t *filter_class;
-  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_END};
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_END, WEED_PALETTE_END};
   weed_plant_t *in_chantmpls[] = {
     weed_channel_template_init("in_channel0", 0),
     weed_channel_template_init("in_channel1", 0),

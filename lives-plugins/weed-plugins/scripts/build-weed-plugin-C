@@ -457,7 +457,6 @@ if ($has_init) {
     if ($use_sdata) {
 	print OUT "    sdata = (sdata_t *)weed_calloc(1, sizeof(sdata_t));\n";
 	print OUT "    if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;\n";
-	print OUT "    weed_set_voidptr_value(inst, \"plugin_internal\", sdata);\n";
     }
 
     if ($need_random) {
@@ -472,6 +471,7 @@ if ($has_init) {
 	print OUT "    }\n";
     }
 
+    print OUT "    weed_set_voidptr_value(inst, \"plugin_internal\", sdata);\n";
     print OUT "  }\n";
 
     if ($use_sdata) {

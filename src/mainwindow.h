@@ -1228,6 +1228,8 @@ typedef struct {
   LiVESWidget *xdelete;
   LiVESWidget *trim_video;
   LiVESWidget *select_submenu;
+  LiVESWidget *select_vis;
+  LiVESWidget *select_vismatch;
   LiVESWidget *select_all;
   LiVESWidget *select_new;
   LiVESWidget *select_to_end;
@@ -1695,6 +1697,7 @@ typedef struct {
 
   boolean has_custom_effects, has_custom_tools,  has_custom_gens, has_custom_utilities;
   boolean has_test_effects;
+  volatile boolean rfx_loaded;
 
   boolean debug; ///< debug crashes and asserts
   void *debug_ptr;

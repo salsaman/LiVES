@@ -2299,10 +2299,9 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     }
 
     if (cfile->undo_action != UNDO_DELETE_AUDIO) {
+      cfile->insert_start = cfile->undo_start;
+      cfile->insert_end = cfile->undo_end;
       if (cfile->undo_action != UNDO_TRIM_VIDEO) {
-        cfile->insert_start = cfile->undo_start;
-        cfile->insert_end = cfile->undo_end;
-
         if (cfile->start >= cfile->undo_start) {
           cfile->start += cfile->undo_end - cfile->undo_start + 1;
         }
@@ -4427,7 +4426,7 @@ done:
 
 
 void on_select_all_activate(LiVESWidget * widget, livespointer user_data) {
-  if (!CURRENT_CLIP_IS_VALID) return;
+  if (!CURRENT_CLIP_HAS_VIDEO) return;
 
   if (mainw->selwidth_locked) {
     widget_opts.non_modal = TRUE;
@@ -4449,18 +4448,66 @@ void on_select_all_activate(LiVESWidget * widget, livespointer user_data) {
 
 
 void on_select_start_only_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  if (mainw->current_file == -1) return;
+  if (!CURRENT_CLIP_HAS_VIDEO) return;
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->start);
 }
 
 
 void on_select_end_only_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  if (mainw->current_file == -1) return;
+  if (!CURRENT_CLIP_HAS_VIDEO) return;
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->end);
 }
 
 
+void sel_vismatch_activate(LiVESWidget * w, livespointer user_data) {
+  uint64_t *myrows;
+  boolean mv_start = FALSE;
+  boolean from_cursor = FALSE;
+  int dirn = LIVES_DIRECTION_FORWARD;
+  int maxcheck = 100;
+  int fridx;
+  frames_t i, posn;
+
+  if (!CURRENT_CLIP_HAS_VIDEO) return;
+
+  // TODO:
+  // show dialog: move start, move end
+  // from current posn / from cursor
+  // maxcheck
+
+  if (!mv_start) {
+    myrows = hash_cmp_rows(NULL, mainw->current_file, cfile->start);
+    if (!myrows) return;
+    fridx = get_indexed_frame(mainw->current_file, cfile->start);
+    if (from_cursor) posn = 0; // TODO
+    else posn = cfile->end;
+    if (dirn == LIVES_DIRECTION_FORWARD) {
+      if (cfile->end == cfile->start) posn++;
+      maxcheck += posn;
+      if (maxcheck > cfile->frames) maxcheck = cfile->frames;
+      for (i = posn; i <= maxcheck; i++) {
+        g_print("checking %d\n", i);
+        if (get_indexed_frame(mainw->current_file, i) == fridx) break;
+        if (hash_cmp_rows(myrows, mainw->current_file, i)) break;
+      }
+      lives_free(myrows);
+      if (i > maxcheck) {
+        // notfound
+        g_print("nomatch\n");
+        return;
+      }
+    }
+    cfile->end = --i;
+    set_start_end_spins(mainw->current_file);
+    showclipimgs();
+    return;
+  }
+  // move start
+}
+
+
 void on_select_invert_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  if (!CURRENT_CLIP_HAS_VIDEO) return;
   if (cfile->start == 1) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->end + 1);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
@@ -4476,6 +4523,7 @@ void on_select_invert_activate(LiVESMenuItem * menuitem, livespointer user_data)
 
 
 void on_select_last_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  if (!CURRENT_CLIP_HAS_VIDEO) return;
   if (cfile->undo_start > cfile->frames) cfile->undo_start = cfile->frames;
   if (cfile->undo_end > cfile->frames) cfile->undo_end = cfile->frames;
 
@@ -4492,6 +4540,7 @@ void on_select_last_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 
 void on_select_new_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  if (!CURRENT_CLIP_HAS_VIDEO) return;
   if (cfile->insert_start > cfile->frames) cfile->insert_start = cfile->frames;
   if (cfile->insert_end > cfile->frames) cfile->insert_end = cfile->frames;
 
@@ -4508,6 +4557,7 @@ void on_select_new_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 
 void on_select_to_end_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  if (!CURRENT_CLIP_HAS_VIDEO) return;
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
   cfile->end = cfile->frames;
   get_play_times();
@@ -4516,7 +4566,9 @@ void on_select_to_end_activate(LiVESMenuItem * menuitem, livespointer user_data)
 
 
 void on_select_to_aend_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  int end = calc_frame_from_time4(mainw->current_file, cfile->laudio_time);
+  int end;
+  if (!CURRENT_CLIP_HAS_VIDEO) return;
+  end = calc_frame_from_time4(mainw->current_file, cfile->laudio_time);
   if (end > cfile->frames) end = cfile->frames;
   if (end < cfile->start) end = cfile->start;
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), end);
@@ -4527,6 +4579,7 @@ void on_select_to_aend_activate(LiVESMenuItem * menuitem, livespointer user_data
 
 
 void on_select_from_start_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  if (!CURRENT_CLIP_HAS_VIDEO) return;
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1);
   cfile->start = cfile->frames > 0 ? 1 : 0;
   get_play_times();

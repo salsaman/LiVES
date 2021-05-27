@@ -369,6 +369,7 @@ void create_LiVES(void) {
   LiVESWidget *vbox2;
   LiVESWidget *menuitem;
   LiVESWidget *select_submenu_menu;
+  LiVESWidget *select_vis_submenu;
   LiVESWidget *submenu_menu;
   LiVESWidget *export_submenu_menu;
   LiVESWidget *trimaudio_submenu_menu;
@@ -838,7 +839,7 @@ void create_LiVES(void) {
   lives_widget_add_accelerator(mainw->paste_as_new, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_n, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
 
-  mainw->merge = lives_standard_menu_item_new_with_label(_("_Merge Clipboard with Selection..."));
+  mainw->merge = lives_standard_image_menu_item_new_with_label(_("_Merge Clipboard with Selection..."));
 
   lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->merge);
   lives_widget_set_sensitive(mainw->merge, FALSE);
@@ -850,18 +851,6 @@ void create_LiVES(void) {
   mainw->trim_video = lives_standard_image_menu_item_new_with_label(_("Trim to Selection"));
   lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->trim_video);
   lives_widget_set_sensitive(mainw->trim_video, FALSE);
-
-#if LIVES_HAS_IMAGE_MENU_ITEM
-  image = lives_image_new_from_stock(LIVES_STOCK_DELETE, LIVES_ICON_SIZE_MENU);
-  LIVES_IGNORE_DEPRECATIONS
-  lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->xdelete), image);
-  LIVES_IGNORE_DEPRECATIONS_END
-
-  image = lives_image_find_in_stock(LIVES_ICON_SIZE_MENU, "trim", "clean", NULL);
-  LIVES_IGNORE_DEPRECATIONS
-  lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->trim_video), image);
-  LIVES_IGNORE_DEPRECATIONS_END
-#endif
 
   lives_widget_add_accelerator(mainw->xdelete, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_d, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
@@ -878,7 +867,7 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(mainw->edit_menu));
 
-  mainw->select_submenu = lives_standard_menu_item_new_with_label(_("_Select..."));
+  mainw->select_submenu = lives_standard_image_menu_item_new_with_label(_("_Select..."));
   lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->select_submenu);
 
   select_submenu_menu = lives_menu_new();
@@ -905,6 +894,25 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(select_submenu_menu));
 
+  mainw->select_vis = lives_standard_image_menu_item_new_with_label(_("Select _Visually"));
+
+#define TEST_VISMATCH
+#ifdef TEST_VISMATCH
+
+  lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_vis);
+
+#endif
+
+  select_vis_submenu = lives_menu_new();
+
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->select_vis), select_vis_submenu);
+  lives_widget_set_sensitive(mainw->select_vis, FALSE);
+
+  mainw->select_vismatch = lives_standard_image_menu_item_new_with_label(_("Match Start / End Frames Visually..."));
+  lives_container_add(LIVES_CONTAINER(select_vis_submenu), mainw->select_vismatch);
+
+  lives_menu_add_separator(LIVES_MENU(select_submenu_menu));
+
   mainw->select_from_start = lives_standard_image_menu_item_new_with_label(_("Select from _First Frame"));
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_from_start);
 
@@ -914,7 +922,7 @@ void create_LiVES(void) {
   mainw->select_to_aend = lives_standard_image_menu_item_new_with_label(_("Select to _Audio End"));
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_to_aend);
 
-  mainw->select_new = lives_standard_image_menu_item_new_with_label(_("Select Last Insertion/_Merge"));
+  mainw->select_new = lives_standard_image_menu_item_new_with_label(_("Select Last Insertion/_Merge/Trim"));
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_new);
 
   mainw->select_last = lives_standard_image_menu_item_new_with_label(_("Select Last _Effect"));
@@ -929,6 +937,43 @@ void create_LiVES(void) {
   mainw->lock_selwidth = lives_standard_check_menu_item_new_with_label(_("_Lock Selection Width"), FALSE);
   lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->lock_selwidth);
   lives_widget_set_sensitive(mainw->lock_selwidth, FALSE);
+
+#if LIVES_HAS_IMAGE_MENU_ITEM
+  image = lives_image_new_from_stock(LIVES_STOCK_DELETE, LIVES_ICON_SIZE_MENU);
+  LIVES_IGNORE_DEPRECATIONS;
+  lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->xdelete), image);
+  LIVES_IGNORE_DEPRECATIONS_END;
+
+  image = lives_image_find_in_stock(LIVES_ICON_SIZE_MENU, "trim", "clean", NULL);
+  LIVES_IGNORE_DEPRECATIONS;
+  if (image) lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->trim_video), image);
+  LIVES_IGNORE_DEPRECATIONS_END;
+
+  image = lives_image_find_in_stock(LIVES_ICON_SIZE_MENU, "paste", NULL);
+  LIVES_IGNORE_DEPRECATIONS;
+  if (image) lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->paste_as_new), image);
+  LIVES_IGNORE_DEPRECATIONS_END;
+
+  image = lives_image_find_in_stock(LIVES_ICON_SIZE_MENU, "merge", NULL);
+  LIVES_IGNORE_DEPRECATIONS;
+  if (image) lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->merge), image);
+  LIVES_IGNORE_DEPRECATIONS_END;
+
+  image = lives_image_find_in_stock(LIVES_ICON_SIZE_MENU, "copy", NULL);
+  LIVES_IGNORE_DEPRECATIONS;
+  if (image) lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->copy), image);
+  LIVES_IGNORE_DEPRECATIONS_END;
+
+  image = lives_image_find_in_stock(LIVES_ICON_SIZE_MENU, "cut", NULL);
+  LIVES_IGNORE_DEPRECATIONS;
+  if (image) lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->cut), image);
+  LIVES_IGNORE_DEPRECATIONS_END;
+
+  image = lives_image_find_in_stock(LIVES_ICON_SIZE_MENU, "select", NULL);
+  LIVES_IGNORE_DEPRECATIONS;
+  if (image) lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->select_submenu), image);
+  LIVES_IGNORE_DEPRECATIONS_END;
+#endif
 
   menuitem = lives_standard_menu_item_new_with_label(_("_Play"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
@@ -1105,7 +1150,7 @@ void create_LiVES(void) {
   lives_widget_set_no_show_all(mainw->custom_tools_submenu, TRUE);
 
   if (!prefs->vj_mode) {
-    if (!RFX_LOADED) {
+    if (!mainw->rfx_loaded) {
       mainw->ldg_menuitem = lives_standard_menu_item_new_with_label(_("Loading..."));
       lives_container_add(LIVES_CONTAINER(mainw->effects_menu), mainw->ldg_menuitem);
     }
@@ -2853,6 +2898,8 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_select_start_only_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_end_only), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_select_end_only_activate), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_vismatch), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(sel_vismatch_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_invert), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_select_invert_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_new), LIVES_WIDGET_ACTIVATE_SIGNAL,

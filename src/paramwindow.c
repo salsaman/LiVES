@@ -134,7 +134,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   if (mainw->did_rfx_preview) {
     if (def_ok) {
       for (i = 0; i < rfx->num_params; i++) {
-        if (rfx->params[i].flags | PARAM_FLAGS_VALUE_SET) {
+        if (rfx->params[i].flags & PARAM_FLAGS_VALUE_SET) {
           mainw->keep_pre = FALSE;
           break;
         }
@@ -236,7 +236,7 @@ static lives_widget_group_t *get_group(lives_rfx_t *rfx, lives_param_t *param) {
 }
 
 
-void on_render_fx_activate(LiVESMenuItem *menuitem, livespointer unused) {
+void on_render_fx_activate(LiVESMenuItem *menuitem, livespointer do_onch) {
   uint32_t chk_mask = 0;
   lives_rfx_t *rfx
     = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem), LINKED_RFX_KEY);
@@ -248,7 +248,7 @@ void on_render_fx_activate(LiVESMenuItem *menuitem, livespointer unused) {
   }
 
   // do onchange|init
-  if (menuitem) {
+  if (menuitem && do_onch) {
     LiVESList *retvals = do_onchange_init(rfx);
     lives_list_free_all(&retvals);
   }

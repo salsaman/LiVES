@@ -2320,6 +2320,11 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
 
   nch = jackd->num_output_channels;
 
+  jackd->is_silent = FALSE;
+
+  for (i = 0; i < nch; i++)
+    out_buffer[i] = (float *)jack_port_get_buffer(jackd->output_port[i], nframes);
+
   if (AUD_SRC_EXTERNAL && (prefs->audio_opts & AUDIO_OPTS_EXT_FX)) {
     // "loopback" buffers - generally we read exactly as much as we write, but anything left over gets cached
     static float **lb_buff = NULL;
@@ -2351,11 +2356,6 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
     }
 
     reset_buffers = FALSE;
-
-    for (i = 0; i < nch; i++)
-      out_buffer[i] = (float *)jack_port_get_buffer(jackd->output_port[i], nframes);
-
-    jackd->is_silent = FALSE;
 
     if (CLIP_HAS_AUDIO(jackd->playing_file) && !mainw->multitrack)
       vol = lives_vol_from_linear(future_prefs->volume * afile->vol);

@@ -6757,15 +6757,16 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_menu_item_get_submenu(LiVESMenuIt
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_with_label(const char *label) {
   LiVESWidget *menuitem = NULL;
+  if (!prefs->show_menu_images) return lives_menu_item_new_with_label(label);
 #ifdef GUI_GTK
-#if !LIVES_HAS_IMAGE_MENU_ITEM
-  if (!widget_opts.mnemonic_label) menuitem = gtk_menu_item_new_with_label(label);
-  else menuitem = gtk_menu_item_new_with_mnemonic(label);
-#else
+#if LIVES_HAS_IMAGE_MENU_ITEM
   LIVES_IGNORE_DEPRECATIONS
   if (!widget_opts.mnemonic_label) menuitem = gtk_image_menu_item_new_with_label(label);
   else menuitem = gtk_image_menu_item_new_with_mnemonic(label);
   LIVES_IGNORE_DEPRECATIONS_END
+#else
+  if (!widget_opts.mnemonic_label) menuitem = gtk_menu_item_new_with_label(label);
+  else menuitem = gtk_menu_item_new_with_mnemonic(label);
 #endif
 #endif
   return menuitem;
@@ -6813,22 +6814,26 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(co
     LiVESAccelGroup *accel_group) {
   LiVESWidget *menuitem = NULL;
 #ifdef GUI_GTK
-#if !LIVES_HAS_IMAGE_MENU_ITEM
-  char *xstock_id = lives_strdup(stock_id); // need to back this up as we will use translation functions
-  menuitem = gtk_menu_item_new_with_mnemonic(xstock_id);
+#if LIVES_HAS_IMAGE_MENU_ITEM
+  if (prefs->show_menu_images) {
+    LIVES_IGNORE_DEPRECATIONS
+    menuitem = gtk_image_menu_item_new_from_stock(stock_id, accel_group);
+    LIVES_IGNORE_DEPRECATIONS_END
+  } else {
+#endif
+    char *xstock_id = lives_strdup(stock_id); // need to back this up as we will use translation functions
+    menuitem = gtk_menu_item_new_with_mnemonic(xstock_id);
 
-  if (!strcmp(xstock_id, LIVES_STOCK_LABEL_SAVE)) {
-    lives_menu_item_set_accel_path(LIVES_MENU_ITEM(menuitem), LIVES_ACCEL_PATH_SAVE);
-  }
+    if (!strcmp(xstock_id, LIVES_STOCK_LABEL_SAVE)) {
+      lives_menu_item_set_accel_path(LIVES_MENU_ITEM(menuitem), LIVES_ACCEL_PATH_SAVE);
+    }
 
-  if (!strcmp(xstock_id, LIVES_STOCK_LABEL_QUIT)) {
-    lives_menu_item_set_accel_path(LIVES_MENU_ITEM(menuitem), LIVES_ACCEL_PATH_QUIT);
+    if (!strcmp(xstock_id, LIVES_STOCK_LABEL_QUIT)) {
+      lives_menu_item_set_accel_path(LIVES_MENU_ITEM(menuitem), LIVES_ACCEL_PATH_QUIT);
+    }
+    lives_free(xstock_id);
+#if LIVES_HAS_IMAGE_MENU_ITEM
   }
-  lives_free(xstock_id);
-#else
-  LIVES_IGNORE_DEPRECATIONS
-  menuitem = gtk_image_menu_item_new_from_stock(stock_id, accel_group);
-  LIVES_IGNORE_DEPRECATIONS_END
 #endif
 #endif
   return menuitem;
@@ -6892,6 +6897,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_check_menu_item_get_active(LiVESCheckM
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_image_menu_item_set_image(LiVESImageMenuItem *item, LiVESWidget *image) {
 #ifdef GUI_GTK
+  if (!prefs->show_menu_images) return FALSE;
   LIVES_IGNORE_DEPRECATIONS
   gtk_image_menu_item_set_image(item, image);
   LIVES_IGNORE_DEPRECATIONS_END
@@ -6977,6 +6983,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_menu_shell_prepend(LiVESMenuShell *men
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_image_menu_item_set_always_show_image(LiVESImageMenuItem *item, boolean show) {
   // return TRUE if implemented
 #ifdef GUI_GTK
+  if (!prefs->show_menu_images) return FALSE;
 #if GTK_CHECK_VERSION(2, 16, 0)
 #if LIVES_HAS_IMAGE_MENU_ITEM
   LIVES_IGNORE_DEPRECATIONS
@@ -8982,7 +8989,9 @@ LiVESWidget *lives_standard_menu_item_new_with_label(const char *label) {
 
 
 LiVESWidget *lives_standard_image_menu_item_new_with_label(const char *label) {
-  LiVESWidget *menuitem = lives_image_menu_item_new_with_label(label);
+  LiVESWidget *menuitem;
+  if (!prefs->show_menu_images) return lives_standard_menu_item_new_with_label(label);
+  menuitem = lives_image_menu_item_new_with_label(label);
   if (menuitem) {
     if (widget_opts.apply_theme) {
       set_standard_widget(menuitem, TRUE);

@@ -4657,7 +4657,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
         if (menuitem != mainw->resize_menuitem) {
           if (!rfx->params) {
             lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                                 LIVES_GUI_CALLBACK(on_render_fx_activate), NULL);
+                                 LIVES_GUI_CALLBACK(on_render_fx_activate), (livespointer)rfx);
           } else {
             lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
                                  LIVES_GUI_CALLBACK(on_render_fx_pre_activate), NULL);
@@ -4729,6 +4729,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     }
     threaded_dialog_spin(0.);
   }
+  mainw->rfx_loaded = TRUE;
 }
 
 

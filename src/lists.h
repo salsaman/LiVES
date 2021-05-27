@@ -24,6 +24,8 @@ int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean cas
 boolean int_array_contains_value(int *array, int num_elems, int value);
 boolean int64_array_contains_value(int64_t *array, int num_elems, int64_t value);
 
+boolean cmp_rows(uint64_t *r0, uint64_t *r1, int nr);
+
 LiVESList *lives_list_sort_alpha(LiVESList *, boolean fwd);
 
 void lives_list_free_strings(LiVESList *);

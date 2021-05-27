@@ -1869,7 +1869,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
             zavel = -zavel;
         }
         for (c = 0; c < out_achans; c++) {
-          float_deinterleave(float_buffer[track * out_achans + c], (float *)(in_buff + (c % in_achans[track]) * 4),
+          float_deinterleave(float_buffer[track * out_achans + c], ((float *)in_buff + (c % in_achans[track])),
                              nframes * zavel, zavel, in_achans[track], clip_vol * (use_live_chvols ? 1. : chvol[track]));
         }
       } else {
@@ -1890,8 +1890,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
           sample_move_d16_d16(holding_buff, (short *)in_buff, nframes, tbytes, zavel, out_achans,
                               in_achans[track], in_reverse_endian[track] ? SWAP_X_TO_L : 0, 0);
         }
-        zavel = zzavel;
-        lives_free(in_buff);
         /// if we are previewing a rendering, we would get double the volume adjustment, once from the rendering and again from
         /// the audio player, so in that case we skip the adjustment here
         //if (!mainw->preview_rendering)
@@ -1902,6 +1900,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
                                 out_achans, in_unsigned[track], FALSE, clip_vol * (use_live_chvols ? 1. : chvol[track]));
         }
       }
+      zavel = zzavel;
+      lives_free(in_buff);
     }
 
     // next we send small chunks at a time to the audio vol/pan effect + any other audio effects
@@ -2794,6 +2794,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
               int pnum = weed_get_int_value(event, WEED_LEAF_INDEX, NULL);
               weed_plant_t *param = weed_inst_in_param(inst, pnum, FALSE, FALSE);
               weed_leaf_dup(param, event, WEED_LEAF_VALUE);
+              weed_instance_unref(inst);
             }
           }
         }

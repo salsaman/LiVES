@@ -31,6 +31,7 @@
 #define PREFS_IMAGES_CHANGED		(1 << 5)
 #define PREFS_MONITOR_CHANGED		(1 << 6)
 #define PREFS_RTE_KEYMODES_CHANGED	(1 << 7)
+#define PREFS_THEME_MINOR_CHANGE       	(1 << 8)
 
 #define PREFS_NEEDS_REVERT		(1 << 28)
 
@@ -496,6 +497,7 @@ typedef struct {
   boolean ce_thumb_mode;
 
   boolean show_button_images;
+  boolean show_menu_images;
 
   boolean push_audio_to_gens;
 
@@ -874,6 +876,7 @@ typedef struct {
   LiVESWidget *jack_int_label;
   LiVESWidget *checkbutton_ce_maxspect;
   LiVESWidget *checkbutton_button_icons;
+  LiVESWidget *checkbutton_menu_icons;
   LiVESWidget *checkbutton_extra_colours;
   LiVESWidget *workdir_label;
   LiVESWidget *checkbutton_stream_audio;
@@ -1213,6 +1216,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_KEEP_ALL_AUDIO "never_trim_audio"
 #define PREF_MOUSE_SCROLL_CLIPS "mouse_scroll_clips"
 #define PREF_SHOW_BUTTON_ICONS "show_button_icons"
+#define PREF_SHOW_MENU_ICONS "show_menu_icons"
 #define PREF_STREAM_AUDIO_OUT "stream_audio_out"
 #define PREF_CE_THUMB_MODE "ce_thumb_mode"
 #define PREF_LOAD_RFX_BUILTIN "load_rfx_builtin"

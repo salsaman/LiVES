@@ -434,20 +434,20 @@ static uint8_t *gamma_s2b = NULL;
 static uint8_t *gamma_b2s = NULL;
 
 static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_to) {
-  uint8_t *gamma_lut;
+  uint8_t *gamma_lut = NULL;
   float inv_gamma = 0.;
   float a, x = 0.;
-  int i;
 
   if (fileg == 1.0) {
     if (gamma_to == gamma_from || gamma_to == WEED_GAMMA_UNKNOWN
         || gamma_from == WEED_GAMMA_UNKNOWN) return NULL;
-    if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_SRGB && gamma_l2s) return gamma_l2s;
-    if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_BT709 && gamma_l2b) return gamma_l2b;
-    if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_LINEAR && gamma_s2l) return gamma_s2l;
-    if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_BT709 && gamma_s2b) return gamma_s2b;
-    if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_LINEAR && gamma_b2l) return gamma_b2l;
-    if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_SRGB && gamma_b2s) return gamma_b2s;
+    if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_SRGB && gamma_l2s) gamma_lut = gamma_l2s;
+    else if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_BT709 && gamma_l2b) gamma_lut = gamma_l2b;
+    else if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_LINEAR && gamma_s2l) gamma_lut = gamma_s2l;
+    else if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_BT709 && gamma_s2b) gamma_lut = gamma_s2b;
+    else if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_LINEAR && gamma_b2l) gamma_lut = gamma_b2l;
+    else if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_SRGB && gamma_b2s) gamma_lut = gamma_b2s;
+    if (gamma_lut) return gamma_lut;
   }
 
   gamma_lut = lives_calloc(4, 64);
@@ -459,7 +459,7 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
 
   gamma_lut[0] = 0;
 
-  for (i = 1; i < 256; ++i) {
+  for (int i = 1; i < 256; ++i) {
     /* if (gamma_from == gamma_to && fileg == 1.0) { */
     /*   gamma_lut[i] = i; */
     /*   continue; */
@@ -545,18 +545,20 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
     }
     gamma_lut[i] = CLAMP0255((int32_t)(255. * x + .5));
   }
-  if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_SRGB && !gamma_l2s)
-    gamma_l2s = gamma_lut;
-  if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_BT709 && !gamma_l2b)
-    gamma_l2b = gamma_lut;
-  if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_LINEAR && !gamma_s2l)
-    gamma_s2l = gamma_lut;
-  if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_BT709 && !gamma_s2b)
-    gamma_s2b = gamma_lut;
-  if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_LINEAR && !gamma_b2l)
-    gamma_b2l = gamma_lut;
-  if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_SRGB && !gamma_b2s)
-    gamma_b2s = gamma_lut;
+  if (fileg == 1.) {
+    if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_SRGB && !gamma_l2s)
+      gamma_l2s = gamma_lut;
+    if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_BT709 && !gamma_l2b)
+      gamma_l2b = gamma_lut;
+    if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_LINEAR && !gamma_s2l)
+      gamma_s2l = gamma_lut;
+    if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_BT709 && !gamma_s2b)
+      gamma_s2b = gamma_lut;
+    if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_LINEAR && !gamma_b2l)
+      gamma_b2l = gamma_lut;
+    if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_SRGB && !gamma_b2s)
+      gamma_b2s = gamma_lut;
+  }
   return gamma_lut;
 }
 
@@ -8264,9 +8266,9 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
         if (!gamma_lut) {
           lives_memcpy(&dest[orowstride * k + j], &src[irowstride * k + i], 3);
         } else {
-          dest[orowstride * k + j] = gamma_lut[src[irowstride + k + i]];
-          dest[orowstride * k + j + 1] = gamma_lut[src[irowstride + k + i + 1]];
-          dest[orowstride * k + j + 2] = gamma_lut[src[irowstride + k + i + 2]];
+          dest[orowstride * k + j] = gamma_lut[src[irowstride * k + i]];
+          dest[orowstride * k + j + 1] = gamma_lut[src[irowstride * k + i + 1]];
+          dest[orowstride * k + j + 2] = gamma_lut[src[irowstride * k + i + 2]];
         }
         j += 3;
         dest[orowstride * k + j++] = 255; // alpha
@@ -9506,6 +9508,7 @@ boolean weed_layer_clear_pixel_data(weed_layer_t *layer) {
   blank_frame(pd, weed_layer_get_width(layer), weed_layer_get_height(layer), rs,
               pal, nplanes, clamping);
   lives_free(rs);
+  lives_free(pd);
   return TRUE;
 }
 
@@ -9559,8 +9562,6 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
   int sbits = 7, al, r;
   int rowstride_alignment = 16;
 
-  if (width <= 0 || height <= 0) return FALSE;
-
   if (!weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE)) {
     int nsize[2];
     // set "natural_size" in case a filter needs it
@@ -9568,6 +9569,8 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     nsize[1] = height;
     weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
   }
+
+  if (width <= 0 || height <= 0) return FALSE;
 
   if (weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES) & LIVES_FLAG_MAINTAIN_VALUE) {
     /// force use of fixed rowstrides, eg. decoder plugin
@@ -10250,6 +10253,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *la
   weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
   weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
   weed_leaf_delete(layer, "bblockalloc");
+  weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
   return layer;
 }
 
@@ -10680,7 +10684,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
 
-  //    #define DEBUG_PCONV
+  //      #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -12479,6 +12483,7 @@ static void *gamma_convert_layer_thread(void *data) {
   int psize = ccparams->psize, px = 3;
   int widthx = ccparams->hsize * psize;
   int start = ccparams->xoffset;
+
   uint8_t *gamma_lut = ccparams->lut;
   if (!gamma_lut) return NULL;
 
@@ -12535,6 +12540,8 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *laye
           gamma_lut = create_gamma_lut(fileg, lgamma_type, gamma_type);
         else
           gamma_lut = create_gamma_lut(1.0, lgamma_type, gamma_type);
+
+        if (!gamma_lut) return TRUE;
 
         //for (int i = nfx_threads - 1; i >= 0; i--) {
         for (int i = nfx_threads - 1; i >= 0; i--) {
@@ -12952,7 +12959,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     lives_free(msg);
     return FALSE;
   }
-  //#define DEBUG_RESIZE
+  //  #define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette,
@@ -14081,6 +14088,47 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
 }
 
 
+//uint64_t *hash_img_rows(int clipno, frames_t frame, int *pheight) {
+// with crows NULL, creates row hash and returns it
+// with crows non NULL, compares row by row, on diff. returns NULL, else returns crows
+uint64_t *hash_cmp_rows(uint64_t *crows, int clipno, frames_t frame) {
+  if (CLIP_HAS_VIDEO(clipno)) {
+    uint64_t *hashes = NULL;
+    weed_timecode_t tc;
+    lives_clip_t *sfile = mainw->files[clipno];
+    weed_layer_t *layer;
+    if (frame > sfile->frames) return NULL;
+    layer = lives_layer_new_for_frame(clipno, frame);
+    tc = ((frame - 1.)) / sfile->fps * TICKS_PER_SECOND;
+    if (pull_frame_at_size(layer, get_image_ext_for_type(sfile->img_type),
+                           tc, sfile->hsize, sfile->vsize, WEED_PALETTE_RGB24)) {
+      uint8_t *pd = weed_layer_get_pixel_data(layer);
+      int32_t width = weed_layer_get_width(layer) * 3;
+      uint32_t height = weed_layer_get_height(layer);
+      int row = weed_layer_get_rowstride(layer);
+
+      if (height > MAX_FRAME_HEIGHT) height = MAX_FRAME_HEIGHT;
+      if (!crows) hashes = lives_calloc(height, 8);
+
+      if (crows || hashes) {
+        for (int i = 0; i < height; i++) {
+          if (!crows) hashes[i] = lives_bin_hash(&pd[row * i], width);
+          else {
+            if (crows[i] != lives_bin_hash(&pd[row * i], width)) {
+              weed_layer_free(layer);
+              return NULL;
+	      // *INDENT-OFF*
+	    }}}}}
+    // *INDENT-ON*
+    if (layer) weed_layer_free(layer);
+    if (!crows) return hashes;
+    return crows;
+  }
+  return NULL;
+}
+
+
+
 /**
    @brief create a layer, setting the most important properties */
 weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int palette) {
@@ -14204,6 +14252,8 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 
   if (weed_get_boolean_value(layer, WEED_LEAF_HOST_ORIG_PDATA, NULL) == WEED_TRUE)
     return;
+
+  weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
 
   if (weed_get_boolean_value(layer, "bblockalloc", NULL) == WEED_TRUE) {
     weed_leaf_delete(layer, "bblockalloc");

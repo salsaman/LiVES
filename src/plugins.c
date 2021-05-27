@@ -3865,7 +3865,6 @@ lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits) {
     // init and deinit the effect to allow the plugin to hide parameters, etc.
     // rfx will inherit the refcount
     weed_reinit_effect(inst, TRUE);
-    weed_instance_unref(inst);
     rfx->is_template = TRUE;
   }
 

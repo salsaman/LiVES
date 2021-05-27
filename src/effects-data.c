@@ -1403,7 +1403,7 @@ int pconx_chain_data_omc(weed_plant_t *inst, int okey, int omode) {
 boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
   weed_plant_t **inparams = NULL;
   weed_plant_t *oparam, *inparam = NULL;
-  weed_plant_t *inst = NULL;
+  weed_plant_t *inst = NULL, *oinst;
 
   boolean changed, reinit_inst = FALSE;
 
@@ -1432,7 +1432,9 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
     if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS))
       inparams = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_PARAMETERS, &nparams);
   } else {
-    if (rte_keymode_get_filter_idx(key + 1, mode) == -1) return FALSE;
+    if (rte_keymode_get_filter_idx(key + 1, mode) == -1) {
+      return FALSE;
+    }
   }
 
   for (i = start; i < nparams; i++) {
@@ -1452,10 +1454,11 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
         pthread_mutex_unlock(&mainw->fxd_active_mutex);
       } else inparam = inparams[i];
 
+      oinst = NULL;
       /// we need to keep these locked for as little time as possible so as not to hang up the video / audio thread
       filter_mutex_lock(okey);
       if (oparam != active_dummy) {
-        weed_plant_t *oinst = rte_keymode_get_instance(okey + 1, omode);
+        oinst = rte_keymode_get_instance(okey + 1, omode);
         if (!oinst) {
           filter_mutex_unlock(okey);
           if (inst) {
@@ -1464,7 +1467,6 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
           }
           return FALSE;
         }
-        weed_instance_unref(oinst);
       }
 
       changed = pconx_convert_value_data(inst, i, key, key == FX_DATA_KEY_PLAYBACK_PLUGIN
@@ -1477,24 +1479,29 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
           // let the video thread handle it
           weed_plant_t *filter = rte_keymode_get_filter(key + 1, rte_key_getmode(key + 1));
           if (!is_pure_audio(filter, FALSE)) {
+            if (oinst) {
+              weed_instance_unref(oinst);
+              filter_mutex_unlock(okey);
+            }
             if (inst) {
               weed_instance_unref(inst);
-              inst = NULL;
               filter_mutex_unlock(key);
             }
-            filter_mutex_unlock(okey);
             return FALSE;
           }
         }
-        if (inst) {
-          weed_instance_unref(inst);
-          inst = NULL;
-          filter_mutex_unlock(key);
-        }
         switch_fx_state(key + 1);
-        filter_mutex_unlock(okey);
+        if (oinst) {
+          weed_instance_unref(oinst);
+          filter_mutex_unlock(okey);
+        }
+        break;
+        //filter_mutex_unlock(key);
       } else {
-        filter_mutex_unlock(okey);
+        if (oinst) {
+          weed_instance_unref(oinst);
+          filter_mutex_unlock(okey);
+        }
         if (changed && inst && key > -1) {
           // only store value if it changed; for int, double or colour, store old value too
 
@@ -1525,7 +1532,6 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
 
   if (inst) {
     weed_instance_unref(inst);
-    inst = NULL;
     filter_mutex_unlock(key);
   }
 
@@ -2033,7 +2039,7 @@ static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, 
       }
     }
     cconx = cconx->next;
-    weed_instance_unref(inst);
+    weed_instance_unref(orig_inst);
   }
 
   return NULL;
@@ -2046,6 +2052,8 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   // return TRUE if we need to reinit the instance (because channel palette changed)
 
   // we set boolean "host_orig_pdata" if we steal the schan pdata (so do not free....)
+
+  // N.B. this is only for alpha channels
 
   int iwidth, iheight, ipal, irow;
   int owidth, oheight, opal, orow, oflags;
@@ -2170,7 +2178,7 @@ boolean cconx_chain_data(int key, int mode) {
       filter_mutex_unlock(key);
     }
   }
-  //if (inst) weed_instance_unref(inst);
+  if (inst) weed_instance_unref(inst);
   return needs_reinit;
 }
 

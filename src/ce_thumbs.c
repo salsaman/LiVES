@@ -476,8 +476,8 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   }
 
   inst = rte_keymode_get_instance(key + 1, mode);
-
   rfx = weed_to_rfx(inst, FALSE); // rfx will inherit the refcount
+
   rfx->min_frames = -1;
 
   // here we just check if we have any params to display

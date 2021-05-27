@@ -229,6 +229,7 @@ typedef struct {
 void lives_log(const char *what);
 #endif
 
+uint64_t lives_bin_hash(uint8_t *bin, size_t binlen) GNU_PURE GNU_HOT;
 uint32_t lives_string_hash(const char *) GNU_PURE GNU_HOT;
 uint32_t fast_hash(const char *) GNU_PURE GNU_HOT;
 char *lives_chomp(char *, boolean multi);

@@ -1848,7 +1848,7 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
     filter_mutex_unlock(key);
     weed_reinit_effect(inst, TRUE);
     filter_mutex_lock(key);
-  } else weed_instance_ref(inst);
+  }
 
   filter_mutex_unlock(key);
 
@@ -1874,7 +1874,6 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
   fx_dialog[1]->key = key;
   fx_dialog[1]->mode = mode;
   fx_dialog[1]->rfx = rfx;
-  //weed_instance_unref(inst);
 }
 
 
@@ -2637,6 +2636,7 @@ void rte_set_defs_ok(LiVESButton * button, lives_rfx_t *rfx) {
   /// check if we might need a restart
   inst = weed_instance_from_filter(filter);
   retval = weed_reinit_effect(inst, TRUE);
+  weed_instance_unref(inst);
   weed_instance_unref(inst);
   if (retval == FILTER_ERROR_INVALID_FILTER) {
     // TODO: get plugin for filter, go through all filters for that plugin

@@ -25,22 +25,31 @@ boolean send_layer(weed_layer_t *layer, _vid_playback_plugin *vpp, int64_t timec
 
   // returns: TRUE on rendering error
 
-  void **pd_array;
+  boolean player_v2 = FALSE;
   boolean error = FALSE;
 
-  // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
-  compact_rowstrides(layer);
+  if (vpp->play_frame) player_v2 = TRUE;
 
-  // get a void ** to the planar pixel_data
-  pd_array = weed_layer_get_pixel_data_planar(layer, NULL);
-
-  if (pd_array) {
-    // send pixel data to the video frame renderer
-    error = !(*vpp->render_frame)
-            (weed_layer_get_width(layer), weed_layer_get_height(layer),
-             timecode, pd_array, NULL, NULL);
-    lives_free(pd_array);
+  if (layer) {
+    if (player_v2) {
+      if (!(*vpp->play_frame)(layer,  mainw->currticks - mainw->stream_ticks, NULL)) {
+        /// sblahhh...
+        error = TRUE;
+      }
+    } else {
+      void **pd_array;
+      // send pixel data to the video frame renderer
+      THREADVAR(rowstride_alignment_hint) = -1;
+      // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
+      compact_rowstrides(layer);
+      // get a void ** to the planar pixel_data
+      pd_array = weed_layer_get_pixel_data_planar(layer, NULL);
+      error = !(*vpp->render_frame)
+              (weed_layer_get_width(layer), weed_layer_get_height(layer),
+               timecode, pd_array, NULL, NULL);
+    }
   }
+
   weed_layer_free(layer);
   return error;
 }

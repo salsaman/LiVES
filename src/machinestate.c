@@ -1509,6 +1509,14 @@ LIVES_GLOBAL_INLINE uint32_t lives_string_hash(const char *st) {
 }
 
 
+#define HASHROOT 5381
+LIVES_GLOBAL_INLINE uint64_t lives_bin_hash(uint8_t *bin, size_t binlen) {
+  uint64_t hash = HASHROOT;
+  for (int i = 0; i < binlen; hash += (hash << 5) + (uint64_t)bin[i++]);
+  return hash;
+}
+
+
 // fast hash from: http://www.azillionmonkeys.com/qed/hash.html
 // (c) Paul Hsieh
 #define get16bits(d) (*((const uint16_t *) (d)))

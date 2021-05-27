@@ -41,8 +41,8 @@ tsize|Use _Trimmed Size|bool|0|1|
 </params>
 
 <param_window>
-layout|p0|p1|
-layout|p2|p3|
+layout|p0|p2|
+layout|p1|p3|
 layout|p4|
 special|framedraw|rectdemask|0|1|2|3|
 layout|hseparator|

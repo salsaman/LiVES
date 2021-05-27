@@ -3236,9 +3236,11 @@ void play_file(void) {
         // and add it to the play window
         if (!lives_widget_get_parent(mainw->preview_box)
             && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
-          lives_widget_queue_draw(mainw->play_window);
-          lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
-          play_window_set_title();
+          if (mainw->play_window) {
+            lives_widget_queue_draw(mainw->play_window);
+            lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
+            play_window_set_title();
+          }
         }
 
         if (mainw->play_window) {
@@ -3247,11 +3249,12 @@ void play_file(void) {
             lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
             unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
+            // need to recheck mainw->play_window after this
             lives_widget_show_all(mainw->preview_box);
             lives_widget_grab_focus(mainw->preview_spinbutton);
             lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
-            lives_widget_process_updates(mainw->play_window);
             if (mainw->play_window) {
+              lives_widget_process_updates(mainw->play_window);
               lives_window_center(LIVES_WINDOW(mainw->play_window));
               clear_widget_bg(mainw->play_image, mainw->play_surface);
               load_preview_image(FALSE);
@@ -3412,6 +3415,8 @@ void play_file(void) {
   mainw->noswitch = FALSE;
 
   lives_hooks_trigger(PB_END_LATE_HOOK);
+  /* if (prefs->show_dev_opts) */
+  /*   g_print("nrefs = %d\n", check_ninstrefs()); */
 }
 
 

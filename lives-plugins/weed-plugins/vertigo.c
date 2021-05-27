@@ -108,7 +108,6 @@ static weed_error_t vertigo_init(weed_plant_t *inst) {
   if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {
     sdata = (sdata_t *)weed_calloc(1, sizeof(sdata_t));
     if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
-    weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
     if (1) {
       int video_area = width * height;
@@ -122,6 +121,7 @@ static weed_error_t vertigo_init(weed_plant_t *inst) {
       sdata->current_buffer = sdata->buffer;
       sdata->alt_buffer = sdata->buffer + video_area;
     }
+    weed_set_voidptr_value(inst, "plugin_internal", sdata);
   } else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   return WEED_SUCCESS;

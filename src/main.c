@@ -930,6 +930,8 @@ static boolean pre_init(void) {
     }
   }
 
+  mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+
   prefs->show_msg_area = future_prefs->show_msg_area = get_boolean_prefd(PREF_SHOW_MSGS, TRUE);
 
   // get some prefs we need to set menu options
@@ -1002,6 +1004,10 @@ static boolean pre_init(void) {
   prefs->extra_colours = get_boolean_prefd(PREF_EXTRA_COLOURS, TRUE);
   prefs->show_button_images = widget_opts.show_button_images =
                                 get_boolean_prefd(PREF_SHOW_BUTTON_ICONS, TRUE);
+
+#if LIVES_HAS_IMAGE_MENU_ITEM
+  prefs->show_menu_images = get_boolean_prefd(PREF_SHOW_MENU_ICONS, FALSE);
+#endif
 
   prefs->mt_show_ctx = get_boolean_prefd(PREF_MT_SHOW_CTX, TRUE);
 
@@ -1536,9 +1542,6 @@ static boolean lives_init(_ign_opts *ign_opts) {
   mainw->new_clip = -1;
   mainw->scrap_file = -1;
   mainw->ascrap_file = -1;
-
-  if (!mainw->foreign) mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
-  else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
 
   mainw->did_rfx_preview = FALSE;
 
@@ -5661,7 +5664,6 @@ void sensitize_rfx(void) {
   }
 }
 
-static boolean has_rfx = FALSE;
 
 void sensitize(void) {
   // sensitize main window controls
@@ -5755,10 +5757,7 @@ void sensitize(void) {
   }
 
   if (!prefs->vj_mode) {
-    if (!has_rfx && RFX_LOADED) {
-      has_rfx = TRUE;
-    }
-    if (has_rfx) sensitize_rfx();
+    if (mainw->rfx_loaded) sensitize_rfx();
   }
   lives_widget_set_sensitive(mainw->record_perf, TRUE);
   if (!prefs->vj_mode) {
@@ -5949,7 +5948,7 @@ void desensitize(void) {
   }
   lives_widget_set_sensitive(mainw->rewind, FALSE);
   if (!prefs->vj_mode) {
-    if (has_rfx) {
+    if (mainw->rfx_loaded) {
       if (!mainw->foreign) {
         for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
              mainw->num_rendered_effects_test; i++) {

@@ -360,6 +360,8 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot)
     if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->fx_mutex[key]); g_print("done\n");}
 #endif
 
+int check_ninstrefs(void);
+
 //#define DEBUG_REFCOUNT
 #ifdef DEBUG_REFCOUNT
 #define weed_instance_ref(a) {g_print ("ref %p at line %d in file %s\n",a,__LINE__,__FILE__); _weed_instance_ref(a);}

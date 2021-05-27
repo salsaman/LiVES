@@ -954,7 +954,10 @@ void pre_analyse(weed_plant_t *elist) {
                 lives_free(frames);
                 frames = nframes;
                 clips = nclips;
+
                 tracks = ntracks;
+                nframes = NULL;
+                nclips = NULL;
               }
             } else {
               if (event != frame_event && old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth && interpolate
@@ -967,8 +970,8 @@ void pre_analyse(weed_plant_t *elist) {
                 if (nclips && pclips) {
                   for (i = 0; i < tracks; i++) {
                     if (i >= ntracks) break;
-                    if (clips[i] == nclips[i] && clips[i] == pclips[i] && pframes[i] != nframes[i] &&
-                        (frames[i] == pframes[i] || frames[i] == nframes[i])) {
+                    if (clips[i] == nclips[i] && clips[i] == pclips[i] && pframes[i] != nframes[i]) {// &&
+                      //(frames[i] == pframes[i] || frames[i] == nframes[i])) {
                       g_print("inter1 %ld -> %ld, %ld\n", pframes[i], nframes[i], frames[i]);
                       frames[i] = (frames64_t)((double)pframes[i] + (double)(nframes[i] - pframes[i]) * ratio);
                       g_print("				inter2 %ld %f\n", frames[i], ratio);

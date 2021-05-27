@@ -977,9 +977,12 @@ weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_
     if (!retlayer) retlayer = layers[0];
   }
 
-  // all our pixel_data will have been free'd already
+  // all our pixel_data should have been free'd already
   for (i = 0; layers[i]; i++) {
-    if (layers[i] != retlayer) weed_layer_free(layers[i]);
+    if (layers[i] != retlayer) {
+      check_layer_ready(layers[i]);
+      weed_layer_free(layers[i]);
+    }
   }
   lives_free(layers);
   return retlayer;
@@ -988,10 +991,8 @@ weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_
 
 void deinterlace_frame(weed_layer_t *layer, weed_timecode_t tc) {
   weed_plant_t **layers;
-
   weed_plant_t *deint_filter, *deint_instance, *next_inst, *init_event, *orig_instance;
-
-  int deint_idx, error;
+  int deint_idx;
 
   if (mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate == -1) return;
 
@@ -1016,22 +1017,17 @@ deint1:
 
   weed_apply_instance(deint_instance, init_event, layers, 0, 0, tc);
 
-  if (weed_plant_has_leaf(deint_instance, WEED_LEAF_HOST_NEXT_INSTANCE)) next_inst = weed_get_plantptr_value(deint_instance,
-        WEED_LEAF_HOST_NEXT_INSTANCE, &error);
-  else next_inst = NULL;
+  next_inst = get_next_compound_inst(deint_instance);
 
   weed_call_deinit_func(deint_instance);
-  weed_instance_unref(deint_instance);
 
   if (next_inst) {
     deint_instance = next_inst;
     goto deint1;
   }
 
-  weed_instance_unref(orig_instance);
-
   weed_plant_free(init_event);
-
+  weed_instance_unref(orig_instance);
   lives_free(layers);
 }
 

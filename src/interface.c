@@ -5410,6 +5410,14 @@ LiVESWidget *add_list_expander(LiVESBox * box, const char *title, int width, int
 }
 
 
+LIVES_GLOBAL_INLINE boolean do_utube_stream_warn(void) {
+  return do_yesno_dialog(_("The selected clip appears to be a stream.\nThe output will be continuously saved "
+                           "until either the Enough or Cancel button is clicked.\n\n"
+                           "It is also likely that the file obtained will not be in a useable format\n"
+                           "Do you wish to continue with the download anyway ?"));
+}
+
+
 #ifdef ALLOW_NONFREE_CODECS
 static void on_freedom_toggled(LiVESToggleButton * togglebutton, livespointer user_data) {
   LiVESWidget *label = (LiVESWidget *)user_data;
@@ -5835,9 +5843,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
       mainw->error = TRUE;
       return NULL;
     }
-    req->allownf = !only_free;
   }
 
+  req->allownf = !only_free;
   req->debug = debug;
 
   mainw->error = FALSE;
@@ -5897,6 +5905,19 @@ static boolean on_ebox_click(LiVESWidget * widget, LiVESXEventButton * event, li
 
 boolean youtube_select_format(lives_remote_clip_request_t *req) {
   // need to set req->vidchoice
+  LiVESWidget *dialog, *dialog_vbox, *scrollw, *table;
+  LiVESWidget *label, *eventbox, *cancelbutton;
+  LiVESWidget *abox;
+
+  LiVESList *allids = NULL;
+
+  char **lines, **pieces;
+
+  char *title, *txt;
+  char *notes;
+
+  size_t slen;
+
   int numlines, npieces;
   int width, height;
   int i, j, dbw, pdone;
@@ -5905,26 +5926,19 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
   int row = 1;
   int response;
 
-  size_t slen;
-
-  char **lines, **pieces;
-  char *title, *txt;
-
-  char *notes;
-
-  LiVESWidget *dialog, *dialog_vbox, *scrollw, *table;
-  LiVESWidget *label, *eventbox, *cancelbutton;
-  LiVESWidget *abox;
-
-  LiVESList *allids = NULL;
-
   if (lives_strlen(mainw->msg) < 10) return FALSE;
   numlines = get_token_count(mainw->msg, '|');
-  if (numlines < 2) return FALSE;
+  if (numlines < 4) return FALSE;
   lines = lives_strsplit(mainw->msg, "|", numlines);
   if (strcmp(lines[0], "completed")) {
     lives_strfreev(lines);
     return FALSE;
+  }
+
+  req->duration = lives_strtod(lines[1]);
+
+  if (req->duration == 0.) {
+    if (!do_utube_stream_warn()) return FALSE;
   }
 
   // create the dialog with a scrolledwindow
@@ -5954,7 +5968,7 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
-  table = lives_table_new(numlines + 1, 5, FALSE);
+  table = lives_table_new(numlines, 5, FALSE);
   lives_table_set_row_spacings(LIVES_TABLE(table), widget_opts.packing_height * 2);
 
   dbw = widget_opts.border_width;
@@ -5997,12 +6011,15 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
   lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
   lives_widget_set_valign(label, LIVES_ALIGN_END);
 
-  for (i = 1; i < numlines; i++) {
+  for (i = 2; i < numlines; i++) {
+    if (!lines[i]) continue;
+
     npieces = get_token_count(lines[i], ' ');
     pieces = lives_strsplit(lines[i], " ", npieces);
     pdone = 0;
 
     for (j = 0; j < npieces; j++) {
+      if (!pieces[j]) break;
       if (pdone < 3 && !*pieces[j]) continue;
 
       if (pdone == 0) {
@@ -6094,6 +6111,13 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
 
   lives_strfreev(lines);
   lives_free(notes);
+
+  if (req->duration == 0.) {
+    // stream doesnt care
+    lives_snprintf(req->vidchoice, 512, "%s", (char *)lives_list_nth_data(allids, 0));
+    lives_list_free_all(&allids);
+    return TRUE;
+  }
 
   response = lives_dialog_run(LIVES_DIALOG(dialog));
 
@@ -7935,11 +7959,8 @@ boolean msg_area_config(LiVESWidget * widget) {
 boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
   lives_painter_t *cr2;
   LingoLayout *layout;
-  LiVESWidgetState state = lives_widget_get_state(widget);
 
   if (!prefs->show_msg_area) return TRUE;
-
-  if (state & LIVES_WIDGET_STATE_BACKDROP) return TRUE;
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
 

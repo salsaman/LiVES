@@ -10,6 +10,14 @@
 typedef uint64_t size64_t;
 typedef int64_t ssize64_t;
 
+#define AFORM_SIGNED 0
+#define AFORM_LITTLE_ENDIAN 0
+
+#define AFORM_UNSIGNED 1
+#define AFORM_BIG_ENDIAN (1<<1)
+
+#define AFORM_UNKNOWN 65536
+
 #define AUD_SRC_EXTERNAL (prefs->audio_src == AUDIO_SRC_EXT)
 #define AUD_SRC_INTERNAL (prefs->audio_src == AUDIO_SRC_INT)
 #define AUD_SRC_REALTIME (get_aplay_clipno() != -1)
@@ -170,6 +178,7 @@ typedef enum lives_audio_loop {
 
 float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int chans) GNU_HOT;
 float audiofile_get_maxvol(int fnum, double start, double end, float thresh);
+double audiofile_get_silent(int fnum, double start, double end, int dir, float thresh);
 
 boolean normalise_audio(int fnum, double start, double end, float thresh);
 

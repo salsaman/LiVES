@@ -1384,6 +1384,25 @@ void *lives_fg_run(lives_proc_thread_t lpt, void *retval);
 //volatile lives_proc_thread_t get_lpttorun(boolean runit);
 boolean has_lpttorun(void);
 
+// directions
+/// use REVERSE / FORWARD when a sign is used, BACKWARD / FORWARD when a parity is used
+typedef enum {
+  LIVES_DIRECTION_REVERSE = -1,
+  LIVES_DIRECTION_BACKWARD,
+  LIVES_DIRECTION_FORWARD,
+  LIVES_DIRECTION_LEFT,
+  LIVES_DIRECTION_RIGHT,
+  LIVES_DIRECTION_UP,
+  LIVES_DIRECTION_DOWN,
+  LIVES_DIRECTION_IN,
+  LIVES_DIRECTION_OUT,
+  LIVES_DIRECTION_UNKNOWN,
+  LIVES_DIRECTION_STOPPED,
+  LIVES_DIRECTION_CYCLIC,
+  LIVES_DIRECTION_RANDOM,
+  LIVES_DIRECTION_OTHER,
+} lives_direction_t;
+
 #define LIVES_JUSTIFY_DEFAULT (def_widget_opts.justify)
 
 typedef enum {

@@ -1875,8 +1875,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       // show buttons
       if (cfile->opening_loc) {
         lives_widget_hide(mainw->proc_ptr->pause_button);
-        if (mainw->proc_ptr->stop_button)
+        if (mainw->proc_ptr->stop_button) {
+          lives_widget_set_no_show_all(mainw->proc_ptr->stop_button, FALSE);
           lives_widget_show_all(mainw->proc_ptr->stop_button);
+        }
       } else {
         // AHA !!
         lives_widget_show_all(mainw->proc_ptr->pause_button);

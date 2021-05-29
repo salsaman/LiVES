@@ -177,7 +177,7 @@ LIVES_GLOBAL_INLINE void free_track_decoders(void) {
   for (int i = 0; i < MAX_TRACKS; i++) {
     if (mainw->track_decoders[i] &&
         (mainw->active_track_list[i] <= 0 || mainw->track_decoders[i] != mainw->files[mainw->active_track_list[i]]->ext_src))
-      close_decoder_plugin(mainw->track_decoders[i]);
+      clip_decoder_free(mainw->track_decoders[i]);
   }
 }
 
@@ -734,7 +734,7 @@ boolean load_frame_image(frames_t frame) {
                 if (mainw->files[oclip]->clip_type == CLIP_TYPE_FILE) {
                   if (mainw->track_decoders[i] != (lives_decoder_t *)mainw->files[oclip]->ext_src) {
                     // remove the clone for oclip
-                    close_decoder_plugin(mainw->track_decoders[i]);
+                    clip_decoder_free(mainw->track_decoders[i]);
                   }
                   mainw->track_decoders[i] = NULL;
                 }
@@ -2307,16 +2307,17 @@ int process_one(boolean visible) {
 
 #ifdef ENABLE_JACK
   if (init_timers) {
-    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd)
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
       if (mainw->jackd_read && AUD_SRC_EXTERNAL) jack_conx_exclude(mainw->jackd_read, mainw->jackd, TRUE);
 #ifdef ENABLE_JACK_TRANSPORT
-    if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
-        && (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER)) {
-      if (!mainw->preview && !mainw->foreign) {
-        if (!mainw->multitrack)
-          jack_pb_start(mainw->jackd_trans, sfile->achans > 0 ? sfile->real_pointer_time : sfile->pointer_time);
-        else
-          jack_pb_start(mainw->jackd_trans, mainw->multitrack->pb_start_time);
+      if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+          && (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER)) {
+        if (!mainw->preview && !mainw->foreign) {
+          if (!mainw->multitrack)
+            jack_pb_start(mainw->jackd_trans, sfile->achans > 0 ? sfile->real_pointer_time : sfile->pointer_time);
+          else
+            jack_pb_start(mainw->jackd_trans, mainw->multitrack->pb_start_time);
+        }
       }
     }
 #endif

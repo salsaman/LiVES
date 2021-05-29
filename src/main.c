@@ -2131,6 +2131,8 @@ static boolean lives_init(_ign_opts *ign_opts) {
     load_default_keymap();
     threaded_dialog_spin(0.);
 
+    load_decoders();
+
     future_prefs->audio_opts = prefs->audio_opts = get_int_prefd(PREF_AUDIO_OPTS, 3);
 
     prefs->audio_opts |= AUDIO_OPTS_EXT_FX;
@@ -4386,18 +4388,7 @@ static boolean lives_startup2(livespointer data) {
   mainw->no_switch_dprint = FALSE;
   d_print("");
 
-  if (!mainw->multitrack) {
-    if (mainw->current_file == -1) {
-      resize(1.);
-      if (prefs->show_msg_area) {
-        // the message area must fit exactly to the screen size, so we update it in an idle function
-        // due to the fact that the window manager may resize the window asynchronously
-        if (mainw->idlemax == 0)
-          lives_idle_add_simple(resize_message_area, NULL);
-        mainw->idlemax = DEF_IDLE_MAX;
-      }
-    }
-  } else {
+  if (mainw->multitrack) {
     lives_idle_add_simple(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
     if (mainw->multitrack->idlefunc == 0) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);

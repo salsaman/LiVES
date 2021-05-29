@@ -923,7 +923,7 @@ void on_location_select(LiVESButton * button, livespointer user_data) {
 lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, const char *tmpdir) {
   char *com, *full_dfile = NULL, *tmp, *ddir, *dest = NULL;
   char *overrdkey = NULL;
-  char *mpf = NULL, *mpt = NULL;
+  char *mpf = NULL, *mpt = NULL, *msg, *msg2;
   lives_remote_clip_request_t *reqout = NULL;
   boolean hasnone = FALSE, hasalts = FALSE;
   boolean keep_old_dir = FALSE;
@@ -1013,21 +1013,20 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
   }
 
   migrate_from_staging(mainw->current_file);
+  req->duration = -1.;
 
   while (1) {
-retry:
     lives_rm(cfile->info_file);
-
 
     if (req->do_update) {
       if (!check_for_executable(&capable->has_pip, EXEC_PIP)
           && !check_for_executable(&capable->has_pip, EXEC_PIP3)
          ) {
         /// check we can update locally
-        char *msg = lives_strdup_printf((tmp = _("%s was not found on your system.\n"
-                                               "LiVES can attempt to install a local copy for "
-                                               "you, however\n")),
-                                        EXEC_YOUTUBE_DL);
+        msg = lives_strdup_printf((tmp = _("%s was not found on your system.\n"
+                                           "LiVES can attempt to install a local copy for "
+                                           "you, however\n")),
+                                  EXEC_YOUTUBE_DL);
         lives_free(tmp);
         do_please_install(msg, EXEC_PIP, NULL, 0);
         lives_free(msg);
@@ -1048,6 +1047,7 @@ retry:
     // also we could send req->sub_lang...
 
     if (!mainw->save_with_sound) audchoice = -1;
+    if (req->duration == 0.) req->matchsize = -1;
 
     com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d \"%s\" %d "
                               "%d %d %d %s", prefs->backend, cfile->handle, req->URI, ddir,
@@ -1085,6 +1085,7 @@ retry:
 
     // we expect to get back a list of available formats
     // or the selected format
+    // (the duration is now prepended before this to avoid problems with streams)
     if (*(req->vidchoice)) break;
 
     if (!do_auto_dialog(_("Getting format list"), 2)) {
@@ -1102,7 +1103,7 @@ retry:
               mainw->permmgr->key && *mainw->permmgr->key) {
             req->do_update = TRUE;
             mainw->error = FALSE;
-            goto retry;
+            continue;
           } else {
             req->do_update = FALSE;
             lives_free(mainw->permmgr);
@@ -1131,6 +1132,8 @@ retry:
       hasalts = TRUE;
     }
 #endif
+    else if (get_token_count(mainw->msg, '|') < 4)
+      hasnone = TRUE;
 
     if (hasnone || hasalts) {
       d_print_failed();
@@ -1162,12 +1165,25 @@ retry:
       req->matchsize = LIVES_MATCH_SPECIFIED;
     } else {
       // returned completed|vidchoice|audchoice
-      char **array = lives_strsplit(mainw->msg, "|", 3);
-      lives_snprintf(req->vidchoice, 512, "%s", array[1]);
-      lives_snprintf(req->audchoice, 512, "%s", array[2]);
+      char **array = lives_strsplit(mainw->msg, "|", 4);
+      req->duration = lives_strtod(array[1]);
+      lives_snprintf(req->vidchoice, 512, "%s", array[2]);
+      lives_snprintf(req->audchoice, 512, "%s", array[3]);
       lives_strfreev(array);
+      if (req->duration == 0.) {
+        if (do_utube_stream_warn())
+          goto cleanup_ut;
+      }
     }
   }
+
+  if (req->duration == 0.) {
+    mainw->cancel_type = CANCEL_INTERRUPT;
+    // force the "Enough" button to show
+    cfile->opening_loc = TRUE;
+    cfile->keep_without_preview = TRUE;
+    msg = lives_strdup(_(". Click 'Enough' to stop the stream download"));
+  } else msg = lives_strdup("");
 
   // backend should now be downloading the clip
 
@@ -1190,8 +1206,24 @@ retry:
 
   full_dfile = lives_strdup_printf("%s.%s", req->fname, req->ext);
 
-  bres = do_progress_dialog(TRUE, TRUE, _("Downloading clip"));
+  msg2 = lives_strdup_printf(_("Downloading clip%s..."), msg);
+  lives_free(msg);
+  bres = do_progress_dialog(TRUE, TRUE, msg2);
+  lives_free(msg2);
   cfile->no_proc_sys_errors = FALSE;
+  mainw->cancel_type = CANCEL_KILL;
+  if (mainw->cancelled == CANCEL_KEEP) {
+    break_me("aahh");
+    mainw->cancelled = CANCEL_NONE;
+    mainw->error = FALSE;
+    bres = TRUE;
+  }
+  if (mainw->cancelled) {
+    if (mainw->cancelled == CANCEL_ERROR)
+      badfile = TRUE;
+    //d_print_cancelled();
+    goto cleanup_ut;
+  }
   if (!bres || mainw->error) badfile = TRUE;
   else {
     dest = lives_build_filename(req->save_dir, full_dfile, NULL);
@@ -1278,6 +1310,8 @@ cleanup_ut:
   close_temp_handle(current_file);
   lives_freep((void **)&mpt);
 
+  if (badfile) goto cancelled;
+
   if (manage_ds) {
     lives_storage_status_t dstat;
     boolean recheck = FALSE;
@@ -1347,6 +1381,8 @@ cleanup_ut:
     }
   }
 
+cancelled:
+
   mainw->img_concat_clip = -1;
   mainw->no_switch_dprint = FALSE;
 
@@ -1358,6 +1394,8 @@ cleanup_ut:
         polymorph(mainw->multitrack, POLY_CLIPS);
         mt_sensitise(mainw->multitrack);
       }
+    } else {
+      do_error_dialog(_("LiVES was unable to download the clip\n"));
     }
     lives_free(dest);
   }
@@ -1386,6 +1424,7 @@ void on_stop_clicked(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (CURRENT_CLIP_IS_VALID) {
     lives_kill_subprocesses(cfile->handle, FALSE);
+    if (mainw->cancel_type == CANCEL_INTERRUPT) mainw->cancelled = CANCEL_KEEP;
     if (mainw->proc_ptr) {
       if (mainw->proc_ptr->stop_button)
         lives_widget_set_sensitive(mainw->proc_ptr->stop_button, FALSE);
@@ -4486,14 +4525,12 @@ void sel_vismatch_activate(LiVESWidget * w, livespointer user_data) {
       maxcheck += posn;
       if (maxcheck > cfile->frames) maxcheck = cfile->frames;
       for (i = posn; i <= maxcheck; i++) {
-        g_print("checking %d\n", i);
         if (get_indexed_frame(mainw->current_file, i) == fridx) break;
         if (hash_cmp_rows(myrows, mainw->current_file, i)) break;
       }
       lives_free(myrows);
       if (i > maxcheck) {
         // notfound
-        g_print("nomatch\n");
         return;
       }
     }
@@ -4503,6 +4540,18 @@ void sel_vismatch_activate(LiVESWidget * w, livespointer user_data) {
     return;
   }
   // move start
+}
+
+
+void sel_skipbl_activate(LiVESWidget * w, livespointer user_data) {
+  double front = audiofile_get_silent(mainw->current_file, 0., cfile->laudio_time, LIVES_DIRECTION_FORWARD, .5);
+  double back = audiofile_get_silent(mainw->current_file, 0., cfile->laudio_time, LIVES_DIRECTION_BACKWARD, .5);
+  cfile->start = calc_frame_from_time3(mainw->current_file, front);
+  cfile->end = calc_frame_from_time3(mainw->current_file, back) + 1;
+  if (cfile->end > cfile->frames) cfile->end = cfile->frames;
+  set_start_end_spins(mainw->current_file);
+  showclipimgs();
+  get_play_times();
 }
 
 
@@ -8943,6 +8992,18 @@ void update_sel_menu(void) {
 
     lives_widget_set_sensitive(mainw->trim_video, FALSE);
     return;
+  }
+
+  if (!CURRENT_CLIP_HAS_VIDEO) {
+    lives_widget_set_sensitive(mainw->select_vismatch, FALSE);
+  } else {
+    lives_widget_set_sensitive(mainw->select_vismatch, TRUE);
+  }
+
+  if (!CURRENT_CLIP_HAS_VIDEO || !CURRENT_CLIP_HAS_AUDIO) {
+    lives_widget_set_sensitive(mainw->select_skipbl, FALSE);
+  } else {
+    lives_widget_set_sensitive(mainw->select_skipbl, TRUE);
   }
 
   lives_widget_set_sensitive(mainw->select_new, cfile->insert_start > 0);

@@ -1653,7 +1653,10 @@ success7:
 }
 
 
-boolean pref_factory_list(const char *prefidx, LiVESList * list) {
+LiVESList *pref_factory_list(const char *prefidx, LiVESList * list) {
+  // olist is what we return, varlist is what we set in settings
+  LiVESList *olist = list, *varlist = list;
+
   if (prefsw) prefsw->ignore_apply = TRUE;
   if (!list) {
     delete_pref(prefidx);
@@ -1661,43 +1664,50 @@ boolean pref_factory_list(const char *prefidx, LiVESList * list) {
   }
 
   if (!lives_strcmp(prefidx, PREF_DISABLED_DECODERS)) {
-    // ste through prefs->disabled_decoders
+    // step through prefs->disabled_decoders
     // first write the names (for backwards compat) and then the UIDs
-    lives_decoder_sys_t *dpsys;
-    char *string1 = NULL, *string2 = NULL, *tmp, *string;
+    //char *string1 = NULL, *string2 = NULL;
+    //char *tmp, *string;
+    char *tmp;
+    varlist = NULL;
     for (; list; list = list->next) {
-      dpsys = (lives_decoder_sys_t *)list->data;
-      if (prefs->back_compat) {
+      const lives_decoder_sys_t *dpsys = (const lives_decoder_sys_t *)list->data;
+      if (!dpsys || !dpsys->id) continue;
+      if (0 && prefs->back_compat) {
         tmp = lives_strdup(dpsys->soname);
-        if (!string2) string2 = tmp;
-        else string2 = lives_concat_sep(string2, "\n", tmp);
+        /* if (!string2) string2 = tmp; */
+        /* else string2 = lives_concat_sep(string2, "\n", tmp); */
       }
       tmp = lives_strdup_printf("0X%016lX", dpsys->id->uid);
-      if (!string1) string = tmp;
-      else string1 = lives_concat_sep(string1, "\n", tmp);
+      /* if (!string1) string = tmp; */
+      /* else string1 = lives_concat_sep(string1, "\n", tmp); */
+      varlist = lives_list_append(varlist, tmp);
     }
-    if (string2) {
-      if (string1) string2 = lives_concat_sep(string2, "\n", string1);
-      string = string2;
-    } else {
-      if (string1) string = string1;
-      else string = lives_strdup("");
-    }
-
-    set_string_pref(prefidx, string);
-
-    lives_free(string);
-    goto success;
+    //lives_list_free_all(&list);
+    /* } */
+    /* if (string2) { */
+    /*   if (string1) string2 = lives_concat_sep(string2, "\n", string1); */
+    /*   string = string2; */
+    /* } else { */
+    /*   if (string1) string = string1; */
+    /*   else string = lives_strdup(""); */
+    /* } */
+    /* list2 = lives_list_append(list2, string); */
+    //set_list_pref(prefidx, string);
+    goto success2;
   }
 
-  set_list_pref(prefidx, list);
-
+success2:
+  if (varlist != list) {
+    set_list_pref(prefidx, varlist);
+    lives_list_free_all(&varlist);
+  }
 success:
   if (prefsw) {
     lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
   }
-  return TRUE;
+  return olist;
 }
 
 
@@ -2308,10 +2318,10 @@ boolean apply_prefs(boolean skip_warn) {
 
   // disabled_decoders
   if (lists_differ(prefs->disabled_decoders, future_prefs->disabled_decoders, FALSE)) {
-    lives_list_free(prefs->disabled_decoders);
+    lives_list_free_all(&prefs->disabled_decoders);
     prefs->disabled_decoders = future_prefs->disabled_decoders;
-    future_prefs->disabled_decoders = NULL;
-    pref_factory_list(PREF_DISABLED_DECODERS, prefs->disabled_decoders);
+    prefs->disabled_decoders = pref_factory_list(PREF_DISABLED_DECODERS, prefs->disabled_decoders);
+    future_prefs->disabled_decoders = lives_list_copy(prefs->disabled_decoders);
   }
 
   // stop xscreensaver
@@ -7187,9 +7197,10 @@ void on_prefs_close_clicked(LiVESButton * button, livespointer user_data) {
     lives_free(prefsw->audp_name);
     lives_free(prefsw->orig_audp_name);
     lives_freep((void **)&resaudw);
-    lives_list_free(future_prefs->disabled_decoders);
-    future_prefs->disabled_decoders = NULL;
-
+    if (future_prefs->disabled_decoders) {
+      lives_list_free(future_prefs->disabled_decoders);
+      future_prefs->disabled_decoders = NULL;
+    }
     lives_general_button_clicked(button, user_data);
 
     prefsw = NULL;
@@ -7392,9 +7403,10 @@ void on_prefs_revert_clicked(LiVESButton * button, livespointer user_data) {
   lives_free(prefsw->audp_name);
   lives_free(prefsw->orig_audp_name);
 
-  lives_list_free(future_prefs->disabled_decoders);
-  future_prefs->disabled_decoders = NULL;
-
+  if (future_prefs->disabled_decoders) {
+    lives_list_free(future_prefs->disabled_decoders);
+    future_prefs->disabled_decoders = NULL;
+  }
   saved_dialog = prefsw->prefs_dialog;
   saved_revertbutton = prefsw->revertbutton;
   saved_applybutton = prefsw->applybutton;

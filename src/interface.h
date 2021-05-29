@@ -271,35 +271,7 @@ rec_args *do_rec_desk_dlg(void);
 #define TB_HEIGHT_VID ((int)(80. * widget_opts.scale))
 #define TB_HEIGHT_AUD ((int)(50. * widget_opts.scale))
 
-typedef enum {
-  LIVES_MATCH_UNDEFINED = 0,
-  LIVES_MATCH_NEAREST,
-  LIVES_MATCH_AT_LEAST,
-  LIVES_MATCH_AT_MOST,
-  LIVES_MATCH_HIGHEST,
-  LIVES_MATCH_LOWEST,
-  LIVES_MATCH_CHOICE,
-  LIVES_MATCH_SPECIFIED
-} lives_size_match_t;
-
-typedef struct {
-  char URI[8192];
-  char save_dir[PATH_MAX];
-  char fname[PATH_MAX];
-  char format[256];
-  char ext[16];
-  int desired_width;
-  int desired_height;
-  float desired_fps;  // unused for now
-  lives_size_match_t matchsize;
-  boolean do_update;
-  boolean allownf;
-  boolean debug;
-  char vidchoice[512];
-  char audchoice[512];
-  // TODO: add audio bitrate ?, audio_lang, get_sub, sub_format, sub_language, etc.
-} lives_remote_clip_request_t;
-
+boolean do_utube_stream_warn(void);
 lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *);
 boolean youtube_select_format(lives_remote_clip_request_t *);
 

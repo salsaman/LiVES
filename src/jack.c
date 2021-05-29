@@ -2619,6 +2619,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       mainw->fps_mini_ticks = mainw->currticks;
       mainw->fps_mini_measure = 0;
 
+      // BAD - non realtime
       pthread_mutex_lock(&mainw->avseek_mutex);
       mainw->audio_seek_ready = TRUE;
       pthread_cond_signal(&mainw->avseek_cond);
@@ -2888,6 +2889,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
               }
             } else {
               // audio from a file
+              // BAD - non realtime
               if (wait_cache_buffer) {
                 while (!cache_buffer->is_ready && !cache_buffer->die) {
                   lives_nanosleep(LIVES_FORTY_WINKS);
@@ -2896,6 +2898,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                 wait_cache_buffer = FALSE;
               }
 
+              // BAD - non realtime
               pthread_mutex_lock(&mainw->cache_buffer_mutex);
               if (!cache_buffer->die) {
                 // push audio from cache_buffer to jack
@@ -2935,6 +2938,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                   weed_layer_free(layer);
                 }
 
+                // BAD - non realtime
                 pthread_mutex_lock(&mainw->vpp_stream_mutex);
                 if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
                   (*mainw->vpp->render_audio_frame_float)(out_buffer, numFramesToWrite);
@@ -3365,6 +3369,7 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
     }
   }
 
+  // BAD - non realtime
   pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
 
   if (mainw->ascrap_file != -1 && mainw->files[mainw->ascrap_file] &&
@@ -3424,7 +3429,8 @@ static void jack_reset_driver(jack_driver_t *jackd) {
 void jack_close_client(jack_driver_t *jackd) {
   //lives_printerr("closing the jack client thread\n");
   if (jackd->client) {
-    if (cache_buffer) cache_buffer->die = TRUE;
+    if (jackd->client_type == JACK_CLIENT_TYPE_AUDIO_WRITER)
+      if (cache_buffer) cache_buffer->die = TRUE;
     jack_deactivate(jackd->client);
     jack_set_process_callback(jackd->client, NULL, jackd);
     lives_nanosleep_until_nonzero(!in_ap);
@@ -3954,7 +3960,8 @@ ticks_t lives_jack_get_time(jack_driver_t *jackd) {
   if (!jackd->client) return -1;
   frames = jack_frame_time(jackd->client);
   if (!jackd->client) return -1;
-  srate = (double)(jackd->client_type == JACK_CLIENT_TYPE_AUDIO_READER ? jackd->sample_in_rate : jackd->sample_out_rate);
+  srate = (double)(jackd->client_type == JACK_CLIENT_TYPE_AUDIO_READER
+                   ? jackd->sample_in_rate : jackd->sample_out_rate);
   if (!jackd->client) return -1;
 
   retframes = frames;

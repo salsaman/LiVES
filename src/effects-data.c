@@ -1442,7 +1442,6 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
   }
 
   for (i = start; i < nparams; i++) {
-    //g_print("NOW at %d %d\n ", key, mode);
     if ((oparam = pconx_get_out_param(FALSE, key, mode, i, &okey, &omode, NULL, &autoscale))) {
       //#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
@@ -3488,7 +3487,6 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
   if (idx_ret) *idx_ret = idx;
 
   if (!setup) {
-    g_print("CHECK for %d %d %d\n", ikey - 1, imode, ipnum);
     if (pconx_get_out_param(TRUE, ikey - 1, imode, ipnum, okey, omode, oopnum, NULL)) {
       // dest param already has a connection
       return -1;

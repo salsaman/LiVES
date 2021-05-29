@@ -2608,7 +2608,7 @@ static index_entry *mpegts_read_seek(const lives_clip_data_t *cdata, uint32_t ti
 
   lseek(priv->fd, priv->input_position, SEEK_SET);
 
-  if (priv->avpkt.data != NULL) {
+  if (priv->avpkt.data) {
     free(priv->avpkt.data);
     priv->avpkt.data = NULL;
     priv->avpkt.size = 0;
@@ -2797,8 +2797,12 @@ int64_t get_last_video_dts(lives_clip_data_t *cdata) {
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
       len = avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
+      len = FFMIN(len, priv->avpkt.size);
+      priv->avpkt.data += len;
+      priv->avpkt.size -= len;
 #else
       len = avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
+      priv->avpkt.size = 0;
 #endif
 
       if (got_picture) {
@@ -2811,12 +2815,7 @@ int64_t get_last_video_dts(lives_clip_data_t *cdata) {
         idxpos = priv->input_position;
       }
 
-      if (len < 0 || len == priv->avpkt.size || got_picture) {
-        if (priv->avpkt.data != NULL) {
-          free(priv->avpkt.data);
-          priv->avpkt.data = NULL;
-          priv->avpkt.size = 0;
-        }
+      if (!priv->avpkt.size || got_picture) {
         if (priv->input_position == priv->filesize) goto vts_next;
         mpegts_read_packet((lives_clip_data_t *)cdata, &priv->avpkt);
         if (priv->got_eof) goto vts_next;
@@ -2838,18 +2837,17 @@ vts_next:
   while (1) {
 #if LIBAVCODEC_VERSION_MAJOR >= 52
     len = avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
+    len = FFMIN(len, priv->avpkt.size);
+    priv->avpkt.data += len;
+    priv->avpkt.size -= len;
 #else
     len = avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
+    priv->avpkt.size = 0;
 #endif
 
     if (got_picture) last_dts = priv->avpkt.dts;
 
-    if (len == priv->avpkt.size) {
-      if (priv->avpkt.data != NULL) {
-        free(priv->avpkt.data);
-        priv->avpkt.data = NULL;
-        priv->avpkt.size = 0;
-      }
+    if (!priv->avpkt.size) {
       if (priv->input_position == priv->filesize) goto vts_done;
       mpegts_read_packet((lives_clip_data_t *)cdata, &priv->avpkt);
       if (priv->got_eof) goto vts_done;
@@ -3041,8 +3039,9 @@ skip_det:
   // re-scan with avcodec; priv->data_start holds video data start position
 
   av_init_packet(&priv->avpkt);
-  if (priv->avpkt.data != NULL) free(priv->avpkt.data);
+  if (priv->avpkt.data) free(priv->avpkt.data);
   priv->avpkt.data = NULL;
+  priv->avpkt.size = 0;
 
   priv->input_position = priv->data_start;
   lseek(priv->fd, priv->input_position, SEEK_SET);
@@ -3053,19 +3052,18 @@ skip_det:
   mpegts_read_packet(cdata, &priv->avpkt);
 
   while (!got_picture && !priv->got_eof) {
-
+    if (priv->avpkt.data) {
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-    len = avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt);
+      len = avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt);
+      len = FFMIN(len, priv->avpkt.size);
+      priv->avpkt.data += len;
+      priv->avpkt.size -= len;
 #else
-    len = avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
+      len = avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
+      priv->avpkt.size = 0;
 #endif
-
-    if (len < 0 || len == priv->avpkt.size) {
-      if (priv->avpkt.data != NULL) {
-        free(priv->avpkt.data);
-        priv->avpkt.data = NULL;
-        priv->avpkt.size = 0;
-      }
+    }
+    if (!priv->avpkt.size) {
       mpegts_read_packet(cdata, &priv->avpkt);
     }
   }
@@ -3097,16 +3095,15 @@ skip_det:
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
     len = avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt);
+    len = FFMIN(len, priv->avpkt.size);
+    priv->avpkt.data += len;
+    priv->avpkt.size -= len;
 #else
     len = avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
+    priv->avpkt.size = 0;
 #endif
 
-    if (len == priv->avpkt.size) {
-      if (priv->avpkt.data != NULL) {
-        free(priv->avpkt.data);
-        priv->avpkt.data = NULL;
-        priv->avpkt.size = 0;
-      }
+    if (!priv->avpkt.size) {
       mpegts_read_packet(cdata, &priv->avpkt);
     }
   }
@@ -3562,17 +3559,15 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
         len = avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
+        len = FFMIN(len, priv->avpkt.size);
+        priv->avpkt.data += len;
+        priv->avpkt.size -= len;
 #else
         len = avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
+        priv->avpkt.size = 0;
 #endif
 
-        if (len == priv->avpkt.size) {
-          if (priv->avpkt.data != NULL) {
-            free(priv->avpkt.data);
-            priv->avpkt.data = NULL;
-            priv->avpkt.size = 0;
-          }
-
+        if (!priv->avpkt.size) {
           if (priv->input_position == priv->filesize) return FALSE;
           mpegts_read_packet((lives_clip_data_t *)cdata, &priv->avpkt);
           if (priv->got_eof) return FALSE;

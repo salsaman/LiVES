@@ -203,7 +203,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
   int extra_frames = 0;
   int probed_achans = 0;
 
-  if (!lives_file_test(file_name, LIVES_FILE_TEST_EXISTS)) {
+  if (!mainw->opening_loc && !lives_file_test(file_name, LIVES_FILE_TEST_EXISTS)) {
     do_no_loadfile_error(file_name);
     return 0;
   }
@@ -407,7 +407,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
             }
 
             // cancelled
-            if (mainw->cancelled != CANCEL_ERROR) {
+            if (mainw->cancelled != CANCEL_ERROR && mainw->cancel_type != CANCEL_INTERRUPT) {
               lives_kill_subprocesses(cfile->handle, TRUE);
             }
 
@@ -3351,7 +3351,8 @@ void play_file(void) {
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && mainw->jackd) {
     ticks_t timeout;
-    lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+    lives_alarm_t alarm_handle;
+    alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
     while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd)) {
       sched_yield(); ///< wait for seek
       lives_usleep(prefs->sleep_time);

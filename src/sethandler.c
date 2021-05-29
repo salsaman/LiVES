@@ -8,6 +8,10 @@
 #include "callbacks.h"
 #include "cvirtual.h"
 
+// TODO - save clipgroups and bookmarks for the set
+// and clip audio volumes
+// allow reordering of clips in set
+
 boolean is_legal_set_name(const char *set_name, boolean allow_dupes, boolean leeway) {
   // check (clip) set names for validity
   // - may not be of zero length
@@ -1667,7 +1671,6 @@ static boolean drag_end(LiVESWidget *widget, LiVESXEventButton *event, LiVESWidg
       // need clipno of clip selected,
       lives_clip_t *sfile = mainw->files[drag_clipno];
       char *uidstr = lives_strdup_printf("%lu", sfile->unique_id);
-      g_print("uid for %d is %s i.e %d\n", drag_clipno, uidstr, find_clip_by_uid(sfile->unique_id));
       // TODO - no dupes !
       if (!current_grp->list) {
         current_grp->menuitem = lives_standard_check_menu_item_new_with_label(current_grp->name, TRUE);
@@ -1714,7 +1717,7 @@ void manage_clipgroups(LiVESWidget *w, livespointer data) {
   msg = lives_strdup_printf(_("Clip groups can be used to filter the number of clips which are accessible "
                               "via the Clips menu at any one time. "
                               "This can be used to create smaller subsets within the larger set of available clips.\n"
-                              "The *%s* group contains every clip in the set.\n"), DEFNAME);
+                              "The *%s* group contains every clip in the set. Click the + button to add a new group.\n"), DEFNAME);
 
   lives_layout_add_label(LIVES_LAYOUT(layout), msg, FALSE);
   lives_free(msg);

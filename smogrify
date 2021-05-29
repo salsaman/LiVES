@@ -551,35 +551,16 @@ if (1) {
 		}
 		elsif ($command eq "stopsubsub" || $command eq "stop_audio") {
 		    # kill all subprocesses of target_pid, and target_pid
-		    &kill_child_pids($target_pid, $sig);
+		    &kill_child_pids($target_pid, $sig, 1);
+		    if ($sig eq "KILL" && $command ne "stop_audio") {
+			&sig_killed;
+		    }
 		}
 		elsif ($command eq "stopsubsubs") {
 		    # kill all subprocesses of target_pid, but not target_pid
-		    &smog_system("pgrep -P $target_pid > \"$workdir/.pids.$target_pid\" 2>/dev/null");
-		    if (-s "$workdir/.pids.$target_pid" && defined(open IN, "<", "$workdir/.pids.$target_pid")) {
-			while (<IN>) {
-			    my $pid = chomp $_;
-			    &kill_child_pids($pid, $sig);
-			}
-			close IN;
-		    }
-		    unlink "$workdir/.pids.$target_pid";
+		    &kill_child_pids($target_pid, $sig, 0);
 		}
 
-		else {
-		    print "Attempting to stop process " . $target_pid . " with $command\n";
-		    if ($sig eq "KILL") {
-			kill $sig, $target_pid;
-		    } else {
-			## kill child processes of $target_pid
-			&smog_system("pkill -$sig -P $target_pid");
-			# must not ! >/dev/null 2>&1");
-		    }
-		}
-
-		if ($sig eq "KILL" && $command ne "stop_audio") {
-		    &sig_killed;
-		}
 		exit 0;
 	    }
 	    exit 1;
@@ -961,7 +942,6 @@ if (1) {
 	    ## TODO: make bg
 	    if (&location($rfx_builder_multi) eq "") {
 		&sig_error("Unable to locate the program $rfx_builder_multi");
-		exit 1;
 	    }
 
 	    $type = $ARGV[1];
@@ -2171,10 +2151,10 @@ if (1) {
 		    if (!defined($DEBUG_OPEN) && $withsound >= 0) {
 			print STDERR "\nFailed to open file - I tried:\n\n:";
 			if (!$is_remote) {
-			    print STDERR "$syscomv;\nSsyscoma;";
+			    print STDERR "$syscomv;\n$syscoma;";
 			}
 			else {
-			    print STDERR "Ssyscomb;\n";
+			    print STDERR "$syscomb;\n";
 			}
 			if (!$is_mpv) {
 			    print STDERR "\nMaybe you are missing a library in mplayer (or it is not a valid media file) ?\n";
@@ -2185,7 +2165,7 @@ if (1) {
 		    }
 		    &sig_error("This does not appear to be a valid video or image file",
 			       "$GUI_NAME was unable to open it.",
-			       "",
+			       "\n",
 			       "Check the terminal window for more details.");
 		}
 	    }
@@ -3906,10 +3886,7 @@ if (1) {
 			    $line = "Unknown error";
 			}
 		    }
-		    my $cmd1 = "\n";
-		    #if (!$islocal) {
-		#	$cmd1 = "cp $prog $local_prog\n";
-		 #   }
+		    $com = "\n";
 		    if (!$pip) {
 			$pip = &location("pip");
 			if ($pip eq "") {
@@ -3963,7 +3940,6 @@ if (1) {
 			print STDERR "unknown ERROR. Exiting\n";
 		    }
 		    &sig_error("Unknown error");
-		    exit 1;
 		}
 	    }
 
@@ -4004,7 +3980,8 @@ if (1) {
 		    print STDERR "DOING: '$prog' $vb --no-playlist -F '$url'\n";
 		}
 
-		my $OK = open(my $fh, "-|", "'$prog' $vb --no-playlist -F '$url'");
+		$com = "'$prog' --ignore-config $vb --no-playlist -F '$url'";
+		my $OK = open(my $fh, "-|", $com);
 		if ($OK) {
 		    while (defined($line = <$fh>)) {
 			if ($debug) {
@@ -4160,9 +4137,9 @@ if (1) {
 		    $res = 0;
 		}
 
-		if (!$OK || $res || (!$count && $vidchoice eq "")) {
+		if (!$OK || $res || (!$count && $vidchoice eq "" && !$hasalts)) {
 		    if ($debug) {
-			print STDERR "unable to run: command,\nerror was $line\n";
+			print STDERR "unable to run: $com,\nerror was $line\n";
 			print STDERR "exiting\n\n";
 		    }
 		    if (!$line) {
@@ -4174,7 +4151,6 @@ if (1) {
 			}
 		    }
 		    if (!$islocal) {
-		    #my $cmd1 = "cp $prog $localprog\n";
 		    my $cmd1 = "\n";
 		    if (!$pip) {
 			$pip = &location("pip");
@@ -4193,18 +4169,11 @@ if (1) {
 		    else {
 			&sig_system_error($com, $line);
 		    }
+		    unlink $pidfile;
 		    exit 1;
 		}
 
-		if ($matchsize == 6 && $count > 0) {
-		    if ($debug) {
-			print STDERR "returning $count lines\n";
-		    }
-		    &sig_complete(@lines);
-		    exit 0;
-		}
-
-		if ($bestvideo eq "" || ($count == 0 && $matchsize != 7)) {
+		if ($bestvideo eq "" && !$count && $matchsize != 7) {
 		    if ($hasalts) {
 			&sig_complete("altfmts");
 			exit 0;
@@ -4213,20 +4182,50 @@ if (1) {
 			print STDERR "Could not open $url\n\n";
 			&sig_error("The requested URL", $url, "could not be opened with the desired format.",
 				   "\nPlease try again.");
-			exit 1;
 		    }
+		}
 
-		    if ($audchoice eq "" && $xbestaudio ne "") {
-			$bestaudio = $xbestaudio;
-		    }
+		## get the length (sec.), 0 could indicate a stream, which could potentially fill
+		## the entire disk...
 
-		    if ($vidchoice eq "") {
+		my $duration;
+		$com = "'$prog' --ignore-config --no-playlist --get-duration '$url'";
+		my $OK = open(my $fh, "-|", $com);
+		if ($OK) {
+		    while (defined($line = <$fh>)) {
+			$duration = 0 + $line;
 			if ($debug) {
-			    print STDERR "SMOG returning selection\n";
+			    print STDERR "GOT duration: $duration\n";
 			}
-			&sig_complete($bestvideo, $bestaudio);
-			exit 0;
+			last;
 		    }
+		    close $fh;
+		}
+		else {
+		    if ($debug) {
+			print STDERR "unable to run: $com,\nerror was $line\n";
+			print STDERR "exiting\n\n";
+		    }
+		}
+
+		if ($matchsize == 6 && $count > 0) {
+		    if ($debug) {
+			print STDERR "returning $lines lines\n";
+		    }
+		    &sig_complete($duration, @lines);
+		    exit 0;
+		}
+
+		if ($audchoice eq "" && $xbestaudio ne "") {
+		    $bestaudio = $xbestaudio;
+		}
+
+		if ($vidchoice eq "") {
+		    if ($debug) {
+			print STDERR "SMOG returning selection\n";
+		    }
+		    &sig_complete($duration, $bestvideo, $bestaudio);
+		    exit 0;
 		}
 	    }
 
@@ -4236,10 +4235,12 @@ if (1) {
 		unlink $xdfile;
 	    }
 
+	    &sig_progress(1);
+
 	    if (-f $xdfile) {
 		print STDERR "Could not remove existing file $xdfile\n";
+		$exit_err = 3;
 		&sig_error("Could not remove existing file $xdfile");
-		exit 3;
 	    }
 
 
@@ -4260,11 +4261,6 @@ if (1) {
 		}
 	    }
 
-	    my $kf = "";
-	    if ($keep_frags) {
-		$kf = "--keep-fragments";
-	    }
-	    
 	    my $extra = "";
 	    ## TODO: proxy URl, ipv4 / ipv6 switch
 
@@ -4279,20 +4275,36 @@ if (1) {
 		}
 	    }
 
-	    $com = "'$prog' $vb --newline --audio-quality 0 --no-mark-watched $kf --no-playlist $kf -o \"$xdfile\" $extra " .
-		"--no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
+	    my $outp = "";
+	    my $fmt = "";
+	    my $kf = "";
+	    my $xxdfile = "\"$xdfile\"";
+
+	    if ($matchsize < 0) {
+		$outp = ">$xxdfile";
+		$xxdfile = "-";
+	    }
+	    else {
+		$fmt = "-f '$bestvideo$xbestaudio'";
+	    }
+
+	    if ($keep_frags) {
+		$kf = "--keep-fragments";
+	    }
+
+	    $com = "'$prog' --ignore-config $vb --newline --audio-quality 0 --no-mark-watched --no-playlist $kf -o $xxdfile $extra " .
+		"--no-part --no-cache-dir $fmt \"$url\" $outp";
 	    
 	    if ($debug) {
 		print STDERR "RUNNING $com\n";
 	    }
 
-	    &sig_progress(1);
 
 	    if (-f $xdfile) {
 		unlink $xdfile;
 	    }
 
-	    if (open (my $fh, "-|", "$com")) {
+	    if (open (my $fh, "-|", $com)) {
 		while (defined(my $line = <$fh>)) {
 		    if ($debug) {
 			print STDERR "output: $line\n";
@@ -4309,7 +4321,6 @@ if (1) {
 
 	    if ($res || ! -f $xdfile || -z $xdfile) {
 		## if $kf is set, we can leave the fragments for a retry (needs testing)
-
 		if (-f $xdfile) {
 		    unlink $xdfile;
 		}
@@ -4327,9 +4338,11 @@ if (1) {
 	    if ($debug) {
 		print STDERR "download complete\n";
 	    }
+
 	    &sig_complete;
 	    exit 0;
 	}
+
 
 	if ($command eq "cdopen") {
 	    my $cdda2wav_command = &location("cdda2wav");
@@ -4725,7 +4738,6 @@ if (1) {
 			unlink $res_file;
 		    }
 		    &sig_error(@err);
-		    exit 1;
 		}
 		unless(defined($fx_prev)) {
 		    &mv_mgk;
@@ -4809,26 +4821,26 @@ sub check_for_pause {
 
 
 sub kill_child_pids {
-    my ($target_pid, $sig) = @_;
-    my $pid;
-    &smog_system("pgrep -P $target_pid > \"$workdir/.pids.$target_pid\" 2>/dev/null");
+    my ($target_pid, $sig, $killme) = @_;
+    my $com = "pgrep -P $target_pid";
+    if (open (my $fh, "-|", $com)) {
+	while (defined(my $pidx = <$fh>)) {
+	    my $npidx = 0 + $pidx;
+	    last if $npidx == 0;
+	    &kill_child_pids($npidx, $sig, 1);
+	}
+	close $fh;
+    }
+
+    if (!$killme) {
+	return;
+    }
 
     if ($sig eq "KILL") {
-	&smog_system("kill -$sig $target_pid >/dev/null 2>&1");
+	&smog_system("kill -$sig $target_pid");
     } else {
 	&smog_system("pkill -$sig -P $target_pid");
-	# must not ! >/dev/null 2>&1
     }
-
-    if (-s "$workdir/.pids.$target_pid" && defined(open IN, "<", "$workdir/.pids.$target_pid")) {
-	while (<IN>) {
-	    $pid = chomp $_;
-	    &kill_child_pids($pid, $sig);
-	}
-	close IN;
-    }
-
-    unlink "$workdir/.pids.$target_pid";
 }
 
 
@@ -5807,7 +5819,7 @@ sub get_mpv_info {
 	print STDERR "EXECUTING: $com\n";
     }
 
-    open (my $fh, "-|", "$com");
+    open (my $fh, "-|", $com);
     while (defined(my $line = <$fh>)) {
 	if ($line =~ /^XDATA:duration=(.*)/ || $line =~ /^XDATA:length=(.*)/) {
 	    next if ($length);
@@ -8313,6 +8325,10 @@ sub sig_error {
     return if (! -d $curworkdir);
     return if ($handle eq '.');
 
+    if (!defined($exit_err)) {
+	$exit_err = 1;
+    }
+
     my $status = "error";
     my $count = 0;
     foreach (@_) {
@@ -8331,7 +8347,7 @@ sub sig_error {
     if (defined($pidfile)) {
 	unlink $pidfile;
     }
-    exit 1;
+    exit $exit_err;
 }
 
 

@@ -431,17 +431,17 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
 
 
 char *get_md5sum(const char *filename) {
-  /// for future use
   char **array;
   char *md5;
+  char buff[MAINW_MSG_SIZE];
   char *com = lives_strdup_printf("%s \"%s\"", EXEC_MD5SUM, filename);
-  lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
+  lives_popen(com, TRUE, buff, MAINW_MSG_SIZE);
   lives_free(com);
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
     return NULL;
   }
-  array = lives_strsplit(mainw->msg, " ", 2);
+  array = lives_strsplit(buff, " ", 2);
   md5 = lives_strdup(array[0]);
   lives_strfreev(array);
   return md5;

@@ -1540,6 +1540,8 @@ void zero_spinbuttons(void) {
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), 0., 0.);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), 0.);
   lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
+  lives_widget_set_can_focus(mainw->spinbutton_start, FALSE);
+  lives_widget_set_can_focus(mainw->spinbutton_end, FALSE);
 }
 
 
@@ -1561,6 +1563,9 @@ void set_start_end_spins(int clipno) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), (double)sfile->start);
     lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
   } else zero_spinbuttons();
+  lives_widget_set_can_focus(mainw->spinbutton_start, TRUE);
+  lives_widget_set_can_focus(mainw->spinbutton_end, TRUE);
+  update_sel_menu();
 }
 
 
@@ -2206,17 +2211,33 @@ int lives_cp(const char *from, const char *to) {
 }
 
 
+int lives_cp_noclobber(const char *from, const char *to) {
+  // may not fail - BUT seems to return -1 sometimes
+  char *com = lives_strdup_printf("%s -n \"%s\" \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
+  int retval = lives_system(com, FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
 int lives_cp_recursive(const char *from, const char *to, boolean incl_dir) {
-  // may not fail
+  // we do allow fail since the source may be empty dir
   int retval;
   char *com;
+  boolean mayfail = FALSE;
   if (incl_dir) com = lives_strdup_printf("%s -r \"%s\" \"%s\" >\"%s\" 2>&1",
                                             capable->cp_cmd, from, to, prefs->cmd_log);
-  else com = lives_strdup_printf("%s -rf \"%s\"/* \"%s\" >\"%s\" 2>&1",
-                                   capable->cp_cmd, from, to, prefs->cmd_log);
+  else {
+    // we do allow fail since the source dir may be empty dir
+    com = lives_strdup_printf("%s -rf \"%s\"/* \"%s\" >\"%s\" 2>&1",
+                              capable->cp_cmd, from, to, prefs->cmd_log);
+    mayfail = TRUE;
+  }
   if (!lives_file_test(to, LIVES_FILE_TEST_EXISTS))
     lives_mkdir_with_parents(to, capable->umask);
-  retval = lives_system(com, FALSE);
+
+  retval = lives_system(com, mayfail);
+
   lives_free(com);
   return retval;
 }

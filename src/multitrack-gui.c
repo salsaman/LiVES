@@ -2945,7 +2945,6 @@ void mt_desensitise(lives_mt * mt) {
   lives_widget_set_sensitive(mt->remove_first_gaps, FALSE);
   lives_widget_set_sensitive(mt->undo, FALSE);
   lives_widget_set_sensitive(mt->redo, FALSE);
-  lives_widget_set_sensitive(mt->render, FALSE);
   lives_widget_set_sensitive(mt->show_quota, FALSE);
   lives_widget_set_sensitive(mt->jumpback, FALSE);
   lives_widget_set_sensitive(mt->jumpnext, FALSE);
@@ -3047,8 +3046,6 @@ void mt_sensitise(lives_mt * mt) {
   lives_widget_set_sensitive(mt->troubleshoot, TRUE);
   lives_widget_set_sensitive(mt->expl_missing, TRUE);
 
-  lives_widget_set_sensitive(mt->render, TRUE);
-
   lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
 
   lives_widget_set_sensitive(mt->load_set, !mainw->was_set);
@@ -3082,8 +3079,8 @@ void mt_sensitise(lives_mt * mt) {
     lives_widget_set_sensitive(mt->adjust_start_end, TRUE);
   }
 
-  if (mt->video_draws &&
-      mt->current_track > -1) eventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, mt->current_track);
+  if (mt->video_draws && mt->current_track > -1)
+    eventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, mt->current_track);
   else if (mt->audio_draws) eventbox = (LiVESWidget *)mt->audio_draws->data;
 
   if (eventbox) {
@@ -3101,9 +3098,8 @@ void mt_sensitise(lives_mt * mt) {
   if (mt->block_selected) {
     lives_widget_set_sensitive(mt->delblock, TRUE);
     if (mt->poly_state == POLY_IN_OUT && mt->block_selected->ordered) {
-      weed_timecode_t offset_end = mt->block_selected->offset_start + (weed_timecode_t)(TICKS_PER_SECOND_DBL / mt->fps) +
-                                   (get_event_timecode(mt->block_selected->end_event)
-                                    - get_event_timecode(mt->block_selected->start_event));
+      weed_timecode_t offset_end = mt->block_selected->offset_start + (weed_timecode_t)(TICKS_PER_SECOND_DBL / mt->fps)
+                                   + (get_event_timecode(mt->block_selected->end_event) - get_event_timecode(mt->block_selected->start_event));
       mt_set_in_out_spin_ranges(mt, mt->block_selected->offset_start, offset_end);
     }
   } else if (mt->poly_state == POLY_IN_OUT) {
@@ -3175,8 +3171,7 @@ void mt_swap_play_pause(lives_mt * mt, boolean put_pause) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->m_playbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(on_playall_activate), NULL);
     lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_BackSpace,
-                              (LiVESXModifierType)LIVES_CONTROL_MASK,
-                              (LiVESAccelFlags)0, freeze_closure);
+                              (LiVESXModifierType)LIVES_CONTROL_MASK, (LiVESAccelFlags)0, freeze_closure);
   } else {
     tmp_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mt->btoolbar2)));
     lives_menu_item_set_text(mt->playall, _("_Play from Timeline Position"), TRUE);
@@ -3257,8 +3252,6 @@ static void on_amixer_reset_clicked(LiVESButton * button, lives_mt * mt) {
 #endif
       lives_signal_handler_block(lives_range_get_adjustment(LIVES_RANGE(amixer->ch_sliders[i])), amixer->ch_slider_fns[i]);
       lives_range_set_value(LIVES_RANGE(amixer->ch_sliders[i]), val);
-      //lives_scale_add_mark(LIVES_SCALE(amixer->ch_sliders[i]), val, LIVES_POS_LEFT, NULL);
-      //lives_scale_add_mark(LIVES_SCALE(amixer->ch_sliders[i]), val, LIVES_POS_RIGHT, NULL);
       lives_signal_handler_unblock(lives_range_get_adjustment(LIVES_RANGE(amixer->ch_sliders[i])), amixer->ch_slider_fns[i]);
 #if ENABLE_GIW
     }

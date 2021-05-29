@@ -972,7 +972,7 @@ void pre_analyse(weed_plant_t *elist) {
                     if (i >= ntracks) break;
                     if (clips[i] == nclips[i] && clips[i] == pclips[i] && pframes[i] != nframes[i]) {// &&
                       //(frames[i] == pframes[i] || frames[i] == nframes[i])) {
-                      g_print("inter1 %ld -> %ld, %ld\n", pframes[i], nframes[i], frames[i]);
+                      //g_print("inter1 %ld -> %ld, %ld\n", pframes[i], nframes[i], frames[i]);
                       frames[i] = (frames64_t)((double)pframes[i] + (double)(nframes[i] - pframes[i]) * ratio);
                       g_print("				inter2 %ld %f\n", frames[i], ratio);
 		      // *INDENT-OFF*
@@ -982,7 +982,6 @@ void pre_analyse(weed_plant_t *elist) {
 	  // *INDENT-ON*
 
           /// now we insert the frame
-          //if (event == frame_event) frame_tc = out_tc;
           if (clips)
             out_list = append_frame_event(out_list, out_tc, tracks, clips, frames);
           newframe = get_last_event(out_list);

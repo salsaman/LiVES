@@ -230,6 +230,9 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill|\\n\
       else if (defrate == 44100) defrateval = 1;
       else if (defrate == 48000) defrateval = 2;
     } else extra = strdup("");
+    /* if (weed_plant_has_leaf(icaps->capacities, LIVES_CAPACITY_FPS)) { */
+    /*   fps = lives_capacity_get_double(icaps->capacities, LIVES_CAPACITY_FPS); */
+    /* } */
     snprintf(ifbuf, IFBUFSIZE, "<define>\\n\
 |1.8.5\\n				    \
 </define>\\n\

@@ -18,8 +18,7 @@
 
 #define EV_LIM 64
 
-static boolean _lives_standard_button_set_label(LiVESButton *,
-    const char *txt);
+static boolean _lives_standard_button_set_label(LiVESButton *, const char *txt);
 
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
@@ -445,6 +444,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_destroy(lives_painter_t *cr) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget *widget, lives_painter_t *cr, double x,
     double y, double width, double height) {
+  if (!palette) return FALSE;
 #ifdef LIVES_PAINTER_IS_CAIRO
   if (widget == mainw->play_image && mainw->multitrack) {
     if (prefs->dev_show_dabg)
@@ -4442,8 +4442,13 @@ LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const ch
 
 #if GTK_CHECK_VERSION(3, 10, 0)
   do {
-    if (!stock_id) {
+    if (!palette || !stock_id) {
       button = lives_standard_button_new(width, height);
+      if (stock_id && *stock_id) {
+        if (!strcmp(stock_id, LIVES_STOCK_CANCEL)) label = LIVES_STOCK_LABEL_CANCEL;
+        if (!strcmp(stock_id, LIVES_STOCK_OK)) label = LIVES_STOCK_LABEL_OK;
+      }
+      if (label && *label) lives_button_set_label(LIVES_BUTTON(button), label);
       break;
     }
     if (!strcmp(stock_id, LIVES_STOCK_LABEL_CANCEL)) stock_id = LIVES_STOCK_CANCEL;
@@ -8441,7 +8446,7 @@ void render_standard_button(LiVESButton * sbutt) {
       boolean insens = (state & LIVES_WIDGET_STATE_INSENSITIVE) == 0 ? FALSE : TRUE;
       boolean focused = lives_widget_is_focus(LIVES_WIDGET(sbutt));
       uint32_t acc;
-      int themetype;
+      int themetype = 0;
       int width, height, minwidth, minheight;
       int lw = 0, lh = 0, x_pos, y_pos, w_, h_;
       int pbw = 0, pbh = 0;
@@ -8451,7 +8456,7 @@ void render_standard_button(LiVESButton * sbutt) {
       pab2.red = pab2.green = pab2.blue = 0;
       pab2.alpha = 1.;
 
-      themetype = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(sbutt), THEME_KEY));
+      if (palette) themetype = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(sbutt), THEME_KEY));
       if (themetype) {
         if (themetype == 1) {
           widget_color_to_lives_rgba(&bg, &palette->normal_back);
@@ -8687,6 +8692,7 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
   LiVESWidget *button, *da;
 
   button = lives_button_new();
+  if (!palette) return button;
 
   da = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), pbsurf);
   lives_widget_object_set_data_psurface(LIVES_WIDGET_OBJECT(da),
@@ -8739,6 +8745,7 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_standard_button_set_label(LiVESButton 
   SET_INT_DATA(sbutt, SBUTT_MARKUP_KEY, widget_opts.use_markup);
   lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(sbutt), SBUTT_TXT_KEY,
                                     txt ? lives_strdup(txt) : NULL);
+  render_standard_button(sbutt);
   return TRUE;
 }
 
@@ -8748,7 +8755,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_standard_button_set_label(LiVESButton 
   boolean ret;
   if (!is_standard_widget(LIVES_WIDGET(sbutt))) return lives_button_set_label(sbutt, txt);
   ret = _lives_standard_button_set_label(sbutt, txt);
-  render_standard_button(sbutt);
   return ret;
 }
 
@@ -9213,6 +9219,7 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, lives_pa
   if (widget_opts.apply_theme) {
     set_standard_widget(darea, TRUE);
     lives_widget_apply_theme(darea, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(darea, LIVES_WIDGET_STATE_BACKDROP);
   }
 #endif
   return darea;

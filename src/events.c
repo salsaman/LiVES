@@ -3746,7 +3746,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
     if (mainw->flush_audio_tc == 0) {
       if (!(!mainw->multitrack && mainw->is_rendering && cfile->old_frames > 0 && out_frame <= cfile->frames)) {
         is_blank = FALSE;
-        //g_print("pt ZZ2\n");
       }
       eventnext = get_next_event(event);
     } else {
@@ -3865,7 +3864,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                   if (mainw->files[oclip]->clip_type == CLIP_TYPE_FILE) {
                     if (mainw->track_decoders[i] != (lives_decoder_t *)mainw->files[oclip]->ext_src) {
                       // remove the clone for oclip
-                      close_decoder_plugin(mainw->track_decoders[i]);
+                      clip_decoder_free(mainw->track_decoders[i]);
                     } else chill_decoder_plugin(oclip); /// free buffers to relesae memory
                     mainw->track_decoders[i] = NULL;
                   }
@@ -4607,6 +4606,8 @@ boolean start_render_effect_events(weed_plant_t *event_list, boolean render_vid,
 
   if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE)
     mainw->disk_mon = MONITOR_QUOTA;
+  else cfile->nopreview = TRUE;
+
   if (cfile->old_frames > 0) cfile->nopreview = TRUE; /// FIXME...
 
   if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE && render_vid) {
@@ -6637,7 +6638,8 @@ render_details *create_render_details(int type) {
 
   frame = add_video_options(&rdet->spinbutton_width, rdet->width, &rdet->spinbutton_height, rdet->height, &rdet->spinbutton_fps,
                             rdet->fps, NULL, 0., &rdet->as_lock, hbox);
-  lives_lock_button_set_locked(LIVES_BUTTON(rdet->as_lock), FALSE);
+  if (rdet->as_lock)
+    lives_lock_button_set_locked(LIVES_BUTTON(rdet->as_lock), FALSE);
   lives_box_pack_start(LIVES_BOX(top_vbox), frame, FALSE, TRUE, 0);
 
   if (type == 1) lives_widget_set_no_show_all(frame, TRUE);

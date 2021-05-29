@@ -2206,7 +2206,7 @@ LiVESList *filter_encoders_by_img_ext(LiVESList * encoders, const char *img_ext)
 LiVESList *move_decplug_to_first(uint64_t dec_uid, const char *decplugname) {
   LiVESList *decoder_plugin = capable->plugins_list[PLUGIN_TYPE_DECODER];
   for (; decoder_plugin; decoder_plugin = decoder_plugin->next) {
-    lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
+    const lives_decoder_sys_t *dpsys = (const lives_decoder_sys_t *)decoder_plugin->data;
     if ((dec_uid && dpsys->id->uid == dec_uid) ||
         (!dec_uid && !lives_strcmp(dpsys->soname, decplugname))) {
       capable->plugins_list[PLUGIN_TYPE_DECODER] =
@@ -2219,7 +2219,7 @@ LiVESList *move_decplug_to_first(uint64_t dec_uid, const char *decplugname) {
 
 
 static LiVESList *locate_decoders(LiVESList * dlist) {
-  // for disbaled decoders, the list can now be a mix of plugin names and uids (as string)
+  // for disabled decoders, the list can now be a mix of plugin names and uids (as string)
   // uids will begin with "0X", plugin names should not
   // here we will create a list of decoder plugins by matching names / uids
   LiVESList *list = NULL, *dplist;
@@ -2253,7 +2253,7 @@ static LiVESList *locate_decoders(LiVESList * dlist) {
 
 
 LiVESList *load_decoders(void) {
-  lives_decoder_sys_t *dplug;
+  lives_decoder_sys_t *dpsys;
   char *decplugdir = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_DECODERS, NULL);
   LiVESList *dlist = NULL, *list;
   LiVESList *decoder_plugins = get_plugin_list(PLUGIN_DECODERS, TRUE, decplugdir, "-" DLL_NAME);
@@ -2278,12 +2278,12 @@ LiVESList *load_decoders(void) {
       }
     }
     if (!skip) {
-      dplug = open_decoder_plugin((char *)decoder_plugins->data);
-      if (dplug) dlist = lives_list_append(dlist, (livespointer)dplug);
+      dpsys = open_decoder_plugin((char *)decoder_plugins->data);
+      if (dpsys) dlist = lives_list_append(dlist, (livespointer)dpsys);
     }
     lives_free((livespointer)decoder_plugins->data);
   }
-
+  lives_list_free(decoder_plugins);
   if (!dlist) {
     char *msg = lives_strdup_printf(_("\n\nNo decoders found in %s !\n"), decplugdir);
     LIVES_WARN(msg);
@@ -2343,24 +2343,39 @@ typedef struct {
 lives_decoder_t *clone_decoder(int fileno) {
   lives_decoder_t *dplug;
   const lives_decoder_sys_t *dpsys;
-  lives_clip_data_t *cdata;
+  lives_clip_data_t *cdata = NULL;
 
   if (!mainw->files[fileno] || !mainw->files[fileno]->ext_src) return NULL;
-
-  cdata = ((lives_decoder_sys_t *)((lives_decoder_t *)mainw->files[fileno]->ext_src)->decoder)->get_clip_data
-          (NULL, ((lives_decoder_t *)mainw->files[fileno]->ext_src)->cdata);
+  dplug = (lives_decoder_t *)mainw->files[fileno]->ext_src;
+  if (dplug) {
+    dpsys = dplug->decoder;
+    if (dpsys)cdata = (*dpsys->get_clip_data)(NULL, dplug->cdata);
+  }
 
   if (!cdata) return NULL;
 
   dplug = (lives_decoder_t *)lives_calloc(1, sizeof(lives_decoder_t));
-  dpsys = ((lives_decoder_t *)mainw->files[fileno]->ext_src)->decoder;
-
   dplug->decoder = dpsys;
   dplug->cdata = cdata;
-  dplug->refs = 1;
   set_cdata_memfuncs((lives_clip_data_t *)cdata);
   cdata->rec_rowstrides = NULL;
   return dplug;
+}
+
+
+void clip_decoder_free(lives_decoder_t *decoder) {
+  if (decoder) {
+    lives_clip_data_t *cdata = decoder->cdata;
+    if (cdata) {
+      const lives_decoder_sys_t *dpsys = decoder->decoder;
+      if (cdata->rec_rowstrides) {
+        lives_free(cdata->rec_rowstrides);
+        cdata->rec_rowstrides = NULL;
+      }
+      if (dpsys)(*dpsys->clip_data_free)(cdata);
+    }
+    lives_free(decoder);
+  }
 }
 
 
@@ -2377,31 +2392,32 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
   // when reloading clips we try the decoder which last opened them first, otherwise they could get picked up by another
   // decoder and the frames could come out different
 
-  lives_decoder_t *dplug = (lives_decoder_t *)lives_calloc(1, sizeof(lives_decoder_t));
+  lives_decoder_t *dplug = NULL;
+  lives_clip_data_t *cdata = NULL;
   LiVESList *decoder_plugin = capable->plugins_list[PLUGIN_TYPE_DECODER];
   LiVESList *xdis;
   char *file_name = xfile_name;
 
-  dplug->refs = 1;
-
-  if (fake_cdata) {
-    set_cdata_memfuncs((lives_clip_data_t *)fake_cdata);
-    ((lives_clip_data_t *)fake_cdata)->seek_flag = LIVES_SEEK_FAST;
-  }
-
   for (; decoder_plugin; decoder_plugin = decoder_plugin->next) {
-    lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
+    const lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
 
     // check if (user) disabled this decoder
-    for (xdis = disabled; xdis; xdis = xdis->next) if (xdis->data == decoder_plugin) break;
+    for (xdis = disabled; xdis; xdis = xdis->next) if (xdis->data == decoder_plugin) {
+        break;
+      }
     if (xdis) continue;
 
-    //#define DEBUG_DECPLUG
 #ifdef DEBUG_DECPLUG
     g_print("trying decoder %s\n", dpsys->id->name);
 #endif
 
-    dplug->cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
+    if (fake_cdata) {
+      lives_clip_data_t *fcdata = (lives_clip_data_t *)fake_cdata;
+      set_cdata_memfuncs(fcdata);
+      fcdata->seek_flag = LIVES_SEEK_FAST;
+    }
+
+    cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
 
     // use fake_cdata only on first (reloaded)
     if (fake_cdata) {
@@ -2409,33 +2425,31 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
       fake_cdata = NULL;
     }
 
-    if (dplug->cdata) {
+    if (cdata) {
       // check for sanity
       //g_print("Checking return data from %s\n", dpsys->soname);
       if (lsd_check_match((lives_struct_def_t *)get_lsd(LIVES_STRUCT_CLIP_DATA_T),
-                          &dplug->cdata->lsd)) {
+                          &cdata->lsd)) {
         g_printerr("Error in cdata received from decoder plugin:\n%s\nAborting.", dpsys->soname);
         abort();
       }
-      if (!sanity_check_cdata(dplug->cdata)) {
+      if (!sanity_check_cdata(cdata)) {
+        lives_struct_free(&cdata->lsd);
+        cdata = NULL;
         continue;
       }
-      set_cdata_memfuncs(dplug->cdata);
-
+      dplug = (lives_decoder_t *)lives_malloc(sizeof(lives_decoder_t *));
       dplug->decoder = dpsys;
-
+      dplug->cdata = cdata;
+      dplug->cdata->rec_rowstrides = NULL;
+      dplug->decoder = dpsys;
+      set_cdata_memfuncs(cdata);
       break;
     }
+    if (dplug) break;
   }
 
   if (file_name && file_name != xfile_name) lives_free(file_name);
-
-  if (!decoder_plugin) {
-    lives_freep((void **)&dplug);
-  } else {
-    dplug->cdata->rec_rowstrides = NULL;
-  }
-
   return dplug;
 }
 
@@ -2519,9 +2533,8 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled,
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
-  if (dplug) {
+  if (dplug && dplug->decoder && dplug->decoder->id) {
     char *plstr = make_plverstring(dplug->decoder->id, _(" version "));
-    d_print(_(" using %s"), plstr);
     lives_free(plstr);
     sfile->decoder_uid = dplug->decoder->id->uid;
     sfile->ext_src = dplug;
@@ -2530,28 +2543,6 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled,
   }
 
   return NULL;
-}
-
-
-// close one instance of dplug
-void close_decoder_plugin(lives_decoder_t *dplug) {
-  lives_clip_data_t *cdata;
-
-  if (!dplug) return;
-
-  dplug->refs--;
-  if (dplug->refs) return;
-
-  cdata = dplug->cdata;
-
-  if (cdata) {
-    if (cdata->rec_rowstrides) {
-      lives_free(cdata->rec_rowstrides);
-      cdata->rec_rowstrides = NULL;
-    }
-    (*dplug->decoder->clip_data_free)(cdata);
-  }
-  lives_free(dplug);
 }
 
 
@@ -2564,7 +2555,7 @@ void close_clip_decoder(int clipno) {
       char *ppath = lives_build_filename(prefs->workdir, sfile->handle, NULL);
       lives_chdir(ppath, FALSE);
       lives_free(ppath);
-      close_decoder_plugin((lives_decoder_t *)sfile->ext_src);
+      clip_decoder_free((lives_decoder_t *)sfile->ext_src);
       sfile->ext_src = NULL;
       sfile->ext_src_type = LIVES_EXT_SRC_NONE;
       lives_chdir(cwd, FALSE);
@@ -2574,21 +2565,19 @@ void close_clip_decoder(int clipno) {
 }
 
 
-static void unload_decoder_plugin(lives_decoder_sys_t *dplug) {
-  if (dplug->module_unload)(*dplug->module_unload)();
-
-  lives_freep((void **)&dplug->soname);
-
-  dlclose(dplug->handle);
-  lives_free(dplug);
+static void unload_decoder_plugin(lives_decoder_sys_t *dpsys) {
+  if (dpsys->module_unload)(*dpsys->module_unload)();
+  lives_freep((void **)&dpsys->soname);
+  dlclose(dpsys->handle);
+  lives_free(dpsys);
 }
 
 
 void unload_decoder_plugins(void) {
   LiVESList *dplugs = capable->plugins_list[PLUGIN_TYPE_DECODER];
-
   while (dplugs) {
-    unload_decoder_plugin((lives_decoder_sys_t *)dplugs->data);
+    lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplugs->data;
+    unload_decoder_plugin(dpsys);
     dplugs = dplugs->next;
   }
 
@@ -2612,15 +2601,13 @@ boolean chill_decoder_plugin(int fileno) {
 
 
 lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
-  lives_decoder_sys_t *dplug;
+  lives_decoder_sys_t *dpsys;
   char *plugname, *tmp;
   boolean OK = TRUE;
   const char *err;
   int dlflags = RTLD_NOW | RTLD_LOCAL;
 
-  dplug = (lives_decoder_sys_t *)lives_calloc(1, sizeof(lives_decoder_sys_t));
-
-  dplug->soname = NULL;
+  dpsys = (lives_decoder_sys_t *)lives_calloc(1, sizeof(lives_decoder_sys_t));
 
   tmp = lives_strdup_printf("%s.%s", plname, DLL_NAME);
   plugname = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_DECODERS, tmp, NULL);
@@ -2630,62 +2617,62 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   dlflags |= RTLD_DEEPBIND;
 #endif
 
-  dplug->handle = dlopen(plugname, dlflags);
+  dpsys->handle = dlopen(plugname, dlflags);
   lives_free(plugname);
 
-  if (!dplug->handle) {
+  if (!dpsys->handle) {
     d_print(_("\n\nFailed to open decoder plugin %s\nError was %s\n"), plname, dlerror());
-    lives_free(dplug);
+    lives_free(dpsys);
     return NULL;
   }
 
-  if ((dplug->get_plugin_id = (const lives_plugin_id_t *(*)())dlsym(dplug->handle, "get_plugin_id")) == NULL) {
+  if ((dpsys->get_plugin_id = (const lives_plugin_id_t *(*)())dlsym(dpsys->handle, "get_plugin_id")) == NULL) {
     OK = FALSE;
   }
-  if ((dplug->get_clip_data = (lives_clip_data_t *(*)(char *, const lives_clip_data_t *))
-                              dlsym(dplug->handle, "get_clip_data")) == NULL) {
+  if ((dpsys->get_clip_data = (lives_clip_data_t *(*)(char *, const lives_clip_data_t *))
+                              dlsym(dpsys->handle, "get_clip_data")) == NULL) {
     OK = FALSE;
   }
-  if ((dplug->get_frame = (boolean(*)(const lives_clip_data_t *, int64_t, int *, int, void **))
-                          dlsym(dplug->handle, "get_frame")) == NULL) {
+  if ((dpsys->get_frame = (boolean(*)(const lives_clip_data_t *, int64_t, int *, int, void **))
+                          dlsym(dpsys->handle, "get_frame")) == NULL) {
     OK = FALSE;
   }
-  if ((dplug->clip_data_free = (void (*)(lives_clip_data_t *))dlsym(dplug->handle, "clip_data_free")) == NULL) {
+  if ((dpsys->clip_data_free = (void (*)(lives_clip_data_t *))dlsym(dpsys->handle, "clip_data_free")) == NULL) {
     OK = FALSE;
   }
 
   if (!OK) {
     d_print(_("\n\nDecoder plugin %s\nis missing a mandatory function.\nUnable to use it.\n"), plname);
-    unload_decoder_plugin(dplug);
-    lives_free(dplug);
+    unload_decoder_plugin(dpsys);
+    lives_free(dpsys);
     return NULL;
   }
 
   // optional
-  dplug->module_check_init = (const char *(*)())dlsym(dplug->handle, "module_check_init");
-  dplug->chill_out = (boolean(*)(const lives_clip_data_t *))dlsym(dplug->handle, "chill_out");
-  dplug->set_palette = (boolean(*)(lives_clip_data_t *))dlsym(dplug->handle, "set_palette");
-  dplug->module_unload = (void (*)())dlsym(dplug->handle, "module_unload");
-  dplug->rip_audio = (int64_t (*)(const lives_clip_data_t *, const char *, int64_t, int64_t, unsigned char **))
-                     dlsym(dplug->handle, "rip_audio");
-  dplug->rip_audio_cleanup = (void (*)(const lives_clip_data_t *))dlsym(dplug->handle, "rip_audio_cleanup");
+  dpsys->module_check_init = (const char *(*)())dlsym(dpsys->handle, "module_check_init");
+  dpsys->chill_out = (boolean(*)(const lives_clip_data_t *))dlsym(dpsys->handle, "chill_out");
+  dpsys->set_palette = (boolean(*)(lives_clip_data_t *))dlsym(dpsys->handle, "set_palette");
+  dpsys->module_unload = (void (*)())dlsym(dpsys->handle, "module_unload");
+  dpsys->rip_audio = (int64_t (*)(const lives_clip_data_t *, const char *, int64_t, int64_t, unsigned char **))
+                     dlsym(dpsys->handle, "rip_audio");
+  dpsys->rip_audio_cleanup = (void (*)(const lives_clip_data_t *))dlsym(dpsys->handle, "rip_audio_cleanup");
 
-  dplug->estimate_delay = (double (*)(const lives_clip_data_t *, int64_t))dlsym(dplug->handle, "estimate_delay");
+  dpsys->estimate_delay = (double (*)(const lives_clip_data_t *, int64_t))dlsym(dpsys->handle, "estimate_delay");
 
-  if (dplug->module_check_init) {
-    err = (*dplug->module_check_init)();
+  if (dpsys->module_check_init) {
+    err = (*dpsys->module_check_init)();
 
     if (err) {
       lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", err);
-      unload_decoder_plugin(dplug);
-      lives_free(dplug);
+      unload_decoder_plugin(dpsys);
+      lives_free(dpsys);
       return NULL;
     }
   }
 
-  dplug->id = (*dplug->get_plugin_id)();
-  dplug->soname = lives_strdup(plname);
-  return dplug;
+  dpsys->id = (*dpsys->get_plugin_id)();
+  dpsys->soname = lives_strdup(plname);
+  return dpsys;
 }
 
 
@@ -2732,15 +2719,17 @@ static void dpa_cancel_clicked(LiVESButton * button, livespointer user_data) {
     lives_xwindow_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
   }
   lives_list_free(future_prefs->disabled_decoders);
+  future_prefs->disabled_decoders = NULL;
 }
 
 
-static void on_dpa_cb_toggled(LiVESToggleButton * button, livespointer decoder) {
+static void on_dpa_cb_toggled(LiVESToggleButton * button, livespointer decoders) {
+  LiVESList *declist = (LiVESList *)decoders;
   if (!lives_toggle_button_get_active(button))
     // unchecked is disabled
-    future_prefs->disabled_decoders = lives_list_append(future_prefs->disabled_decoders, decoder);
+    future_prefs->disabled_decoders = lives_list_append(future_prefs->disabled_decoders, declist->data);
   else
-    future_prefs->disabled_decoders = lives_list_remove(future_prefs->disabled_decoders, decoder);
+    future_prefs->disabled_decoders = lives_list_remove(future_prefs->disabled_decoders, declist->data);
 }
 
 
@@ -2782,9 +2771,11 @@ void on_decplug_advanced_clicked(LiVESButton * button, livespointer user_data) {
   lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   for (; decoder_plugin; decoder_plugin = decoder_plugin->next) {
-    lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
+    const lives_decoder_sys_t *dpsys = (const lives_decoder_sys_t *)decoder_plugin->data;
+
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
     ltext = lives_strdup_printf("<big><b>%s</b></big> decoder plugin version %d.%d",
                                 (tmp = lives_markup_escape_text(dpsys->id->name, -1)),
                                 dpsys->id->pl_version_major, dpsys->id->pl_version_minor);
@@ -2820,7 +2811,7 @@ void on_decplug_advanced_clicked(LiVESButton * button, livespointer user_data) {
   lives_window_present(LIVES_WINDOW(dialog));
   lives_xwindow_raise(lives_widget_get_xwindow(dialog));
 
-  future_prefs->disabled_decoders = lives_list_copy(prefs->disabled_decoders);
+  //future_prefs->disabled_decoders = lives_list_copy(prefs->disabled_decoders);
 
   lives_free(decplugdir);
 }

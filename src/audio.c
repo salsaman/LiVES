@@ -372,12 +372,51 @@ void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
 }
 
 
+double audiofile_get_silent(int fnum, double start, double end, int dir, float thresh) {
+  if (!IS_NORMAL_CLIP(fnum) || !mainw->files[fnum]->achans || start >= mainw->files[fnum]->laudio_time) return -1.;
+  else {
+    double atime;
+    lives_clip_t *afile = mainw->files[fnum];
+    char *filename = lives_get_audio_file_name(fnum);
+    int afd = lives_open_buffered_rdonly(filename);
+    float xf;
+    int c, count = 0;
+    lives_free(filename);
+    if (end == 0. || end > afile->laudio_time) end = afile->laudio_time;
+    if (dir == LIVES_DIRECTION_FORWARD) atime = start;
+    else atime = end;
+    while ((dir == LIVES_DIRECTION_FORWARD && atime <= end)
+           || (dir == LIVES_DIRECTION_BACKWARD && atime >= start)) {
+      for (c = 0; c < afile->achans; c++) {
+        if (afd == -1) {
+          THREADVAR(read_failed) = -2;
+          return -1.;
+        }
+        xf = fabsf(get_float_audio_val_at_time(fnum, afd, atime, c, afile->achans));
+        if (xf > thresh) {
+          lives_close_buffered(afd);
+          return atime;
+        }
+      }
+      if (dir == LIVES_DIRECTION_FORWARD)
+        atime += 1. / afile->arps;
+      else
+        atime -= 1. / afile->arps;
+      if (count == afile->arps) count = 0;
+      if (!count++) threaded_dialog_spin((atime - start) / 2. / (end - start));
+    }
+    lives_close_buffered(afd);
+    return atime;
+  }
+}
+
+
 float audiofile_get_maxvol(int fnum, double start, double end, float thresh) {
   if (!IS_NORMAL_CLIP(fnum) || !mainw->files[fnum]->achans || start >= mainw->files[fnum]->laudio_time) return -1.;
   else {
     double atime = start;
     lives_clip_t *afile = mainw->files[fnum];
-    char *filename = lives_get_audio_file_name(mainw->current_file);
+    char *filename = lives_get_audio_file_name(fnum);
     int afd = lives_open_buffered_rdonly(filename);
     float xx = 0., xf;
     int c, count = 0;
@@ -415,7 +454,7 @@ boolean normalise_audio(int fnum, double start, double end, float thresh) {
       lives_clip_t *afile = mainw->files[fnum];
       double atime = start;
       float fact = thresh / xx, val;
-      char *filename = lives_get_audio_file_name(mainw->current_file);
+      char *filename = lives_get_audio_file_name(fnum);
       boolean xsigned = !(afile->signed_endian & AFORM_UNSIGNED);
       boolean swap_endian = FALSE;
       int afd, afd2;
@@ -3259,6 +3298,8 @@ boolean resync_audio(int clipno, double frameno) {
 
 //////////////////////////////////////////////////////////////////////////
 static lives_audio_buf_t *cache_buffer = NULL;
+static lives_audio_buf_t *cache_buffera = NULL;
+static lives_audio_buf_t *cache_bufferb = NULL;
 static pthread_t athread;
 
 static pthread_cond_t cond  = PTHREAD_COND_INITIALIZER;
@@ -3279,17 +3320,20 @@ static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
    adjusted.
 */
 static void *cache_my_audio(void *arg) {
-  lives_audio_buf_t *cbuffer = (lives_audio_buf_t *)arg;
+  volatile lives_audio_buf_t **pcbuffer = (volatile lives_audio_buf_t **)arg;
+  lives_audio_buf_t *cbuffer;
   char *filename;
   int i;
 
-  while (!cbuffer->die) {
+  while (!((*pcbuffer)->die)) {
     // wait for request from client (setting cbuffer->is_ready or cbuffer->die)
-    while (cbuffer->is_ready && !cbuffer->die && mainw->abufs_to_fill <= 0) {
+    while ((*pcbuffer)->is_ready && !(*pcbuffer)->die && mainw->abufs_to_fill <= 0) {
       pthread_mutex_lock(&cond_mutex);
       pthread_cond_wait(&cond, &cond_mutex);
       pthread_mutex_unlock(&cond_mutex);
     }
+
+    cbuffer = *((lives_audio_buf_t **)pcbuffer);
 
     if (cbuffer->die) {
       if (!mainw->event_list || mainw->record
@@ -3636,12 +3680,16 @@ static void *cache_my_audio(void *arg) {
     cbuffer->is_ready = TRUE;
     pthread_mutex_unlock(&cbuffer->atomic_mutex);
   }
-  return cbuffer;
+  return NULL;
 }
 
 
 void wake_audio_thread(void) {
+  if (cache_buffer == cache_buffera) cache_buffer = cache_bufferb;
+  else cache_buffer = cache_buffera;
+
   if (cache_buffer) cache_buffer->is_ready = FALSE;
+
   pthread_mutex_lock(&cond_mutex);
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&cond_mutex);
@@ -3649,87 +3697,97 @@ void wake_audio_thread(void) {
 
 
 lives_audio_buf_t *audio_cache_init(void) {
-  cache_buffer = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
-  cache_buffer->is_ready = FALSE;
-  cache_buffer->die = FALSE;
+  for (int i = 0; i < 2; i++) {
+    cache_buffer = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
+    if (i == 0) cache_bufferb = cache_buffer;
+    else cache_buffera = cache_buffer;
+    cache_buffer->is_ready = FALSE;
+    cache_buffer->die = FALSE;
 
-  if (!mainw->multitrack) {
-    cache_buffer->in_achans = 0;
+    if (!mainw->multitrack) {
+      cache_buffer->in_achans = 0;
 
-    // NULLify all pointers of cache_buffer
+      // NULLify all pointers of cache_buffer
 
-    cache_buffer->buffer8 = NULL;
-    cache_buffer->buffer16 = NULL;
-    cache_buffer->buffer24 = NULL;
-    cache_buffer->buffer32 = NULL;
-    cache_buffer->bufferf = NULL;
-    cache_buffer->_filebuffer = NULL;
-    cache_buffer->_cbytesize = 0;
-    cache_buffer->_csamp_space = 0;
-    cache_buffer->_cachans = 0;
-    cache_buffer->_casamps = 0;
-    cache_buffer->_cout_interleaf = FALSE;
-    cache_buffer->_cin_interleaf = FALSE;
-    cache_buffer->eof = FALSE;
-    cache_buffer->sequential = FALSE;
+      cache_buffer->buffer8 = NULL;
+      cache_buffer->buffer16 = NULL;
+      cache_buffer->buffer24 = NULL;
+      cache_buffer->buffer32 = NULL;
+      cache_buffer->bufferf = NULL;
+      cache_buffer->_filebuffer = NULL;
+      cache_buffer->_cbytesize = 0;
+      cache_buffer->_csamp_space = 0;
+      cache_buffer->_cachans = 0;
+      cache_buffer->_casamps = 0;
+      cache_buffer->_cout_interleaf = FALSE;
+      cache_buffer->_cin_interleaf = FALSE;
+      cache_buffer->eof = FALSE;
+      cache_buffer->sequential = FALSE;
 
-    cache_buffer->_cfileno = -1;
-    cache_buffer->_cseek = -1;
-    cache_buffer->_fd = -1;
-    cache_buffer->_shrink_factor = 0.;
+      cache_buffer->_cfileno = -1;
+      cache_buffer->_cseek = -1;
+      cache_buffer->_fd = -1;
+      cache_buffer->_shrink_factor = 0.;
 
-    pthread_mutex_init(&cache_buffer->atomic_mutex, NULL);
+      pthread_mutex_init(&cache_buffer->atomic_mutex, NULL);
+    }
   }
 
   // init the audio caching thread for rt playback
-  pthread_create(&athread, NULL, cache_my_audio, cache_buffer);
+  pthread_create(&athread, NULL, cache_my_audio, &cache_buffer);
 
   return cache_buffer;
 }
 
 
 void audio_cache_end(void) {
-  lives_audio_buf_t *xcache_buffer;
-  int i;
-
   pthread_mutex_lock(&mainw->cache_buffer_mutex);
   if (!cache_buffer) {
     pthread_mutex_unlock(&mainw->cache_buffer_mutex);
     return;
   }
-  cache_buffer->die = TRUE; ///< tell cache thread to exit when possible
+  cache_buffera->die = cache_bufferb->die = TRUE; ///< tell cache thread to exit when possible
   wake_audio_thread();
   pthread_join(athread, NULL);
   pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
   if (!mainw->event_list) {
     // free all buffers
+    for (int c = 0; c < 2; c++) {
+      if (!c) cache_buffer = cache_buffera;
+      else cache_buffer = cache_bufferb;
+      for (int i = 0; i < (cache_buffer->_cin_interleaf ? 1 : cache_buffer->_cachans); i++) {
+        if (cache_buffer->buffer8 && cache_buffer->buffer8[i]) lives_free(cache_buffer->buffer8[i]);
+        if (cache_buffer->buffer16 && cache_buffer->buffer16[i]) lives_free(cache_buffer->buffer16[i]);
+        if (cache_buffer->buffer24 && cache_buffer->buffer24[i]) lives_free(cache_buffer->buffer24[i]);
+        if (cache_buffer->buffer32 && cache_buffer->buffer32[i]) lives_free(cache_buffer->buffer32[i]);
+        if (cache_buffer->bufferf && cache_buffer->bufferf[i]) lives_free(cache_buffer->bufferf[i]);
+      }
 
-    for (i = 0; i < (cache_buffer->_cin_interleaf ? 1 : cache_buffer->_cachans); i++) {
-      if (cache_buffer->buffer8 && cache_buffer->buffer8[i]) lives_free(cache_buffer->buffer8[i]);
-      if (cache_buffer->buffer16 && cache_buffer->buffer16[i]) lives_free(cache_buffer->buffer16[i]);
-      if (cache_buffer->buffer24 && cache_buffer->buffer24[i]) lives_free(cache_buffer->buffer24[i]);
-      if (cache_buffer->buffer32 && cache_buffer->buffer32[i]) lives_free(cache_buffer->buffer32[i]);
-      if (cache_buffer->bufferf && cache_buffer->bufferf[i]) lives_free(cache_buffer->bufferf[i]);
+      if (cache_buffer->buffer8) lives_free(cache_buffer->buffer8);
+      if (cache_buffer->buffer16) lives_free(cache_buffer->buffer16);
+      if (cache_buffer->buffer24) lives_free(cache_buffer->buffer24);
+      if (cache_buffer->buffer32) lives_free(cache_buffer->buffer32);
+      if (cache_buffer->bufferf) lives_free(cache_buffer->bufferf);
+
+      if (cache_buffer->_filebuffer) lives_free(cache_buffer->_filebuffer);
     }
-
-    if (cache_buffer->buffer8) lives_free(cache_buffer->buffer8);
-    if (cache_buffer->buffer16) lives_free(cache_buffer->buffer16);
-    if (cache_buffer->buffer24) lives_free(cache_buffer->buffer24);
-    if (cache_buffer->buffer32) lives_free(cache_buffer->buffer32);
-    if (cache_buffer->bufferf) lives_free(cache_buffer->bufferf);
-
-    if (cache_buffer->_filebuffer) lives_free(cache_buffer->_filebuffer);
   }
 
-  if (cache_buffer->_fd != -1) lives_close_buffered(cache_buffer->_fd);
+  if (cache_buffera->_fd != -1) lives_close_buffered(cache_buffera->_fd);
+  if (cache_bufferb->_fd != -1 && cache_bufferb->_fd != cache_buffera->_fd) lives_close_buffered(cache_bufferb->_fd);
 
-  pthread_mutex_destroy(&cache_buffer->atomic_mutex);
+  pthread_mutex_destroy(&cache_buffera->atomic_mutex);
+  pthread_mutex_destroy(&cache_bufferb->atomic_mutex);
 
   // make this threadsafe (kind of)
-  xcache_buffer = cache_buffer;
-  cache_buffer = NULL;
-  lives_free(xcache_buffer);
+  cache_buffer = cache_buffera;
+  cache_buffera = NULL;
+  lives_free(cache_buffer);
+
+  cache_buffer = cache_bufferb;
+  cache_bufferb = NULL;
+  lives_free(cache_buffer);
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK) {
@@ -3738,7 +3796,13 @@ void audio_cache_end(void) {
 #endif
 }
 
-LIVES_GLOBAL_INLINE lives_audio_buf_t *audio_cache_get_buffer(void) {return cache_buffer;}
+LIVES_GLOBAL_INLINE lives_audio_buf_t *audio_cache_get_buffer(void) {
+  if (cache_buffer == cache_buffera)
+    return cache_bufferb;
+  else
+    return cache_buffera;
+}
+
 
 ///////////////////////////////////////
 

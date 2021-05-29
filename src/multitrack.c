@@ -5361,8 +5361,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_sensitive(mt->render, FALSE);
 
   lives_widget_add_accelerator(mt->render, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
-                               LIVES_KEY_r, LIVES_CONTROL_MASK,
-                               LIVES_ACCEL_VISIBLE);
+                               LIVES_KEY_r, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
 
   // TODO - render selected time
 
@@ -10424,12 +10423,17 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
 
   static int xxwidth = 0, xxheight = 0;
 
-  register int i, j;
+  int i, j;
 
   if (mt->in_sensitise) return;
 
   if (poly == mt->poly_state && poly != POLY_PARAMS && poly != POLY_FX_STACK) {
     return;
+  }
+
+  if (IS_VALID_CLIP(mt->render_file)) {
+    width = mainw->files[mt->render_file]->hsize;
+    height = mainw->files[mt->render_file]->vsize;
   }
 
   switch (mt->poly_state) {

@@ -492,8 +492,7 @@ void create_LiVES(void) {
   mainw->top_vbox = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), mainw->top_vbox);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->top_vbox), 0);
-
-  //lives_widget_set_valign(mainw->top_vbox, LIVES_ALIGN_FILL);
+  lives_widget_set_app_paintable(mainw->top_vbox, TRUE);
 
   // top_vbox contains the following:
   // - menu_hbox -> menubar -> menuitems
@@ -848,12 +847,12 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->xdelete);
   lives_widget_set_sensitive(mainw->xdelete, FALSE);
 
+  lives_widget_add_accelerator(mainw->xdelete, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
+                               LIVES_KEY_d, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
+
   mainw->trim_video = lives_standard_image_menu_item_new_with_label(_("Trim to Selection"));
   lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->trim_video);
   lives_widget_set_sensitive(mainw->trim_video, FALSE);
-
-  lives_widget_add_accelerator(mainw->xdelete, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                               LIVES_KEY_d, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
 
   lives_menu_add_separator(LIVES_MENU(mainw->edit_menu));
 
@@ -894,9 +893,11 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(select_submenu_menu));
 
+  // TODO - add more visual methods - e.g skip over blank frames
+
   mainw->select_vis = lives_standard_image_menu_item_new_with_label(_("Select _Visually"));
 
-#define TEST_VISMATCH
+  //#define TEST_VISMATCH
 #ifdef TEST_VISMATCH
 
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_vis);
@@ -910,6 +911,9 @@ void create_LiVES(void) {
 
   mainw->select_vismatch = lives_standard_image_menu_item_new_with_label(_("Match Start / End Frames Visually..."));
   lives_container_add(LIVES_CONTAINER(select_vis_submenu), mainw->select_vismatch);
+
+  mainw->select_skipbl = lives_standard_image_menu_item_new_with_label(_("Skip start / end blank frames"));
+  lives_container_add(LIVES_CONTAINER(select_vis_submenu), mainw->select_skipbl);
 
   lives_menu_add_separator(LIVES_MENU(select_submenu_menu));
 
@@ -2771,8 +2775,7 @@ void create_LiVES(void) {
                                             lives_cclosure_new(LIVES_GUI_CALLBACK(rte_on_off_callback),
                                                 LIVES_INT_TO_POINTER(8), NULL));
                   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_8,
-                                            LIVES_CONTROL_MASK | LIVES_ALT_MASK,
-                                            (LiVESAccelFlags)0,
+                                            LIVES_CONTROL_MASK | LIVES_ALT_MASK, (LiVESAccelFlags)0,
                                             lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback),
                                                 LIVES_INT_TO_POINTER(7), NULL));
                   if (FX_KEYS_PHYSICAL > 8) {
@@ -2782,8 +2785,7 @@ void create_LiVES(void) {
                                                   LIVES_INT_TO_POINTER(9), NULL));
                     lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_9,
                                               LIVES_CONTROL_MASK | LIVES_ALT_MASK,
-                                              (LiVESAccelFlags)0,
-                                              lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback),
+                                              (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback),
                                                   LIVES_INT_TO_POINTER(8), NULL));
 		    // *INDENT-OFF*
                   }}}}}}}}}
@@ -2867,11 +2869,9 @@ void create_LiVES(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->clear_ds), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_cleardisk_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->quit), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_quit_activate),
-                            LIVES_INT_TO_POINTER(0));
+                            LIVES_GUI_CALLBACK(on_quit_activate), LIVES_INT_TO_POINTER(0));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->vj_save_set), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_quit_activate),
-                       LIVES_INT_TO_POINTER(1));
+                       LIVES_GUI_CALLBACK(on_quit_activate), LIVES_INT_TO_POINTER(1));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->undo), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_undo_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->redo), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2900,6 +2900,8 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_select_end_only_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_vismatch), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(sel_vismatch_activate), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_skipbl), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(sel_skipbl_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_invert), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_select_invert_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_new), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2914,10 +2916,9 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_select_last_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->lock_selwidth), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_lock_selwidth_activate), NULL);
-  mainw->record_perf_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->record_perf),
-                            LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_record_perf_activate),
-                            NULL);
+  mainw->record_perf_func
+    = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->record_perf), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                LIVES_GUI_CALLBACK(on_record_perf_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->playall), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_playall_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->rewind), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2932,8 +2933,7 @@ void create_LiVES(void) {
   mainw->fullscreen_cb_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->full_screen), LIVES_WIDGET_ACTIVATE_SIGNAL,
                               LIVES_GUI_CALLBACK(on_full_screen_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->sw_sound), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_boolean_toggled),
-                            &mainw->save_with_sound); // TODO - make pref
+                            LIVES_GUI_CALLBACK(on_boolean_toggled), &mainw->save_with_sound); // TODO - make pref
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->showsubs), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_showsubs_toggled), NULL);
   mainw->lb_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->letter), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2941,8 +2941,7 @@ void create_LiVES(void) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->aload_subs), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_boolean_toggled), &prefs->autoload_subs);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->ccpd_sound), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_boolean_toggled),
-                            &mainw->ccpd_with_sound); // TODO - make pref
+                            LIVES_GUI_CALLBACK(on_boolean_toggled), &mainw->ccpd_with_sound); // TODO - make pref
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->dsize), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_double_size_activate), NULL);
   mainw->sepwin_cb_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->sepwin), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -3225,6 +3224,9 @@ void create_LiVES(void) {
     if (new_lives) lives_widget_grab_focus(mainw->message_box); // TODO !prefs->show_msg_area
   }
 
+  lives_widget_set_can_focus(mainw->spinbutton_start, FALSE);
+  lives_widget_set_can_focus(mainw->spinbutton_end, FALSE);
+
   if (RFX_LOADED) {
     if (mainw->ldg_menuitem) {
       lives_widget_destroy(mainw->ldg_menuitem);
@@ -3428,8 +3430,7 @@ void set_interactive(boolean interactive) {
     }
     lives_widget_set_sensitive(mainw->spinbutton_start, TRUE);
     lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
-    lives_widget_set_sensitive(mainw->sa_button,
-                               CURRENT_CLIP_HAS_VIDEO
+    lives_widget_set_sensitive(mainw->sa_button, CURRENT_CLIP_HAS_VIDEO
                                && (cfile->start > 1 || cfile->end < cfile->frames));
 
     if (CURRENT_CLIP_IS_VALID && mainw->proc_ptr) {

@@ -101,28 +101,39 @@ enum {
   // specialised intentions
 
   // video players
+  // an intent which creates weed_layers / audio (depending on CAPACITIES) from a set of clip_like objects
   LIVES_INTENTION_PLAY = 0x00000200, // value fixed for all time, order of following must not change (see videoplugin.h)
-  LIVES_INTENTION_STREAM,  // encode / data in -> remote stream
-  LIVES_INTENTION_TRANSCODE,  // encode / data in -> external file format
 
+  // like play, but with the REMOTE capacity
+  LIVES_INTENTION_STREAM,  // encode / data in -> remote stream
+
+  // alias for encode but with a weed_layer requirement
+  // rather than a clip object
+  LIVES_INTENTION_TRANSCODE,
+
+  // an attatchment (?) to a player which can create an event_list object
   LIVES_INTENTION_RECORD,  // record
 
-  LIVES_INTENTION_ENCODE = 0x00000899, // encode / file in -> external file format
+  // an intent which creates a new clip object with STATUS NOT_LOADED
+  LIVES_INTENTION_ENCODE = 0x00000899,
 
-  // clip-like objects (TBD. - part of clip object or should there be a clip_manager static object ?)
-  // maybe local / remote become CAPS
+  // an intent which converts a clip object's STATE from NOT_LOADED to READY
   LIVES_INTENTION_IMPORT_LOCAL = 0x00000C00, // import from local filesystem, -> internal clips  i.e "open"
+
+  // TODO - this should just be IMPORT but with the REMOTE capacity selected
   LIVES_INTENTION_IMPORT_REMOTE, // import from online source  -> internal clip "download"
 
   LIVES_INTENTION_EXPORT_LOCAL, // export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
   LIVES_INTENTION_EXPORT_REMOTE, // export raw format to online location, e.g. export audio, save frame
 
-  LIVES_INTENTION_RENDER, // data -> internal clip
+  // intent which creates a new clip_object from an event_list
+  LIVES_INTENTION_RENDER,
 
   LIVES_INTENTION_BACKUP, // internal clip -> restorable object
   LIVES_INTENTION_RESTORE, // restore from object -> internal clip
 
   // decoders
+  // TODO - maybe this is IMPORT with LOCAL capacity
   LIVES_INTENTION_DECODE = 0x00001000, // combine with caps to determine e.g. decode_audio, decode_video
 
   // use caps to further refine e.g REALTIMNE / NON_REALTIME
@@ -138,6 +149,10 @@ enum {
   LiVES_INTENTION_FIRST_CUSTOM = 0x80000000,
   LIVES_INTENTION_MAX = 0xFFFFFFFF
 };
+
+// the above suggests the following objects: clip, clip_like [event_list, generator, source ?]
+// clip_like can be non-objects, but a certain class of requirement ?
+// capacities LOCAL and REMOTE
 
 // aliases
 #define LIVES_INTENTION_IGNORE LIVES_INTENTION_NOTHING
@@ -232,13 +247,9 @@ typedef struct {
 // maps in / out params to actual function parameters
 typedef struct {
   // negative mapping values may have special meanings, e.g self, fundamental
-  int n_in_mappings;
-  int *in_mappings; // array that maps function parameters to req. params (0 == first param, etc)
+  int *in_mapping; // array that maps function parameters to req. params (0 == first param, etc)
   lives_func_info_t func_info; /// function(s) to perform the transformation
-  int n_out_mappings;
   int *out_mapping; // index of the out_parameters which will be updated by this function
-  lives_funcptr_t callback_hook; // optional callback which may be called after each step for multi step transforms
-  /// type is void (*callback_hook)(lives_object_instance_t *self, void *user_data);
 } tx_map;
 
 // a transform(ation) is a function or sequence of functions which correspond to satistying some intention for the object
@@ -255,20 +266,14 @@ typedef struct {
 // after examining the transform object, caller should endure that all of the reqmt. rules are satisfied
 // and may then activate the transform for the object in question
 typedef struct {
-  uint64_t type;
-  uint64_t start_subtype;
   lives_intentcap_t icaps;
-  //
   lives_rules_t *prereqs; // pointer to the prerequisites for carrying out the transform (can be NULL)
-  int n_mappings; // mappings
   tx_map *mappings;
-  int n_out_params;
   // output parameters created / updated in the transformation; this is actually array of pointers
   // and may even point to params in other objects
   lives_obj_param_t **oparams;
-  //
+  lives_intentcap_t *hooks; // a list of "hook" intentions that attachment objects may attach to
   int new_state; // the state after, assuming success
-  int new_status; // status after, assuming success (e.g normal, running)
   uint64_t *new_subtype; // subtype after, assuming success
   uint64_t flags;
 } lives_object_transform_t;

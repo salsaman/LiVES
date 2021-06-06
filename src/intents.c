@@ -15,11 +15,52 @@ LIVES_GLOBAL_INLINE void lives_capacities_free(lives_capacity_t *cap) {
 }
 
 
+LIVES_LOCAL_INLINE lives_intentcap_t *lives_icaps_new(lives_intention intent) {
+  lives_intentcap_t *icaps = (lives_intentcap_t *)lives_malloc(sizeof(lives_intentcap_t));
+  icaps->intent = intent;
+  icaps->capacities = lives_capacities_new();
+  return icaps;
+}
+
+
+void lives_intentcaps_free(lives_intentcap_t *icaps) {
+  if (icaps) {
+    if (icaps->capacities) lives_capacities_free(icaps->capacities);
+    lives_free(icaps);
+  }
+}
+
+
+lives_intentcap_t *lives_intentcaps_new(int icapstype) {
+  lives_intentcap_t *icaps = NULL;
+  switch (icapstype) {
+  case LIVES_ICAPS_LOAD:
+  case LIVES_ICAPS_DOWNLOAD:
+    icaps = lives_icaps_new(LIVES_INTENTION_IMPORT);
+    break;
+  default: break;
+  }
+
+  icaps->capacities = lives_capacities_new();
+
+  switch (icapstype) {
+  case LIVES_ICAPS_LOAD:
+    lives_capacity_set(icaps->capacities, LIVES_CAPACITY_LOCAL);
+    break;
+  case LIVES_ICAPS_DOWNLOAD:
+    lives_capacity_set(icaps->capacities, LIVES_CAPACITY_REMOTE);
+    break;
+  default: break;
+  }
+  return icaps;
+}
+
+
 weed_param_t *weed_param_from_iparams(lives_intentparams_t *iparams, const char *name) {
   // find param by NAME, if it lacks a VALUE, set it from default
   // and also set the plant type to WEED_PLANT_PARAMETER - this is to allow
   // other functions to use the weed_parameter_get_*_value() functions etc.
-  for (int i = 0; i < iparams->n_params; i++) {
+  for (int i = 0; iparams->params[i]; i++) {
     char *pname = weed_get_string_value(iparams->params[i], WEED_LEAF_NAME, NULL);
     if (!lives_strcmp(name, pname)) {
       free(pname);
@@ -36,11 +77,11 @@ weed_param_t *weed_param_from_iparams(lives_intentparams_t *iparams, const char 
 }
 
 
-static weed_param_t *iparam_from_name(weed_param_t **params, int nparams, const char *name) {
+static weed_param_t *iparam_from_name(weed_param_t **params, const char *name) {
   // weed need to find the param by (voidptr) name
   // and also set the plant type to WEED_PLANT_PARAMETER - this is to allow
   // other functions to use the weed_parameter_get_*_value() functions etc.
-  for (int i = 0; i < nparams; i++) {
+  for (int i = 0; params[i]; i++) {
     char *pname = weed_get_string_value(params[i], WEED_LEAF_NAME, NULL);
     if (!lives_strcmp(name, pname)) {
       free(pname);
@@ -51,12 +92,12 @@ static weed_param_t *iparam_from_name(weed_param_t **params, int nparams, const 
 }
 
 
-static weed_param_t *iparam_match_name(weed_param_t **params, int nparams, weed_param_t *param) {
+static weed_param_t *iparam_match_name(weed_param_t **params, weed_param_t *param) {
   // weed need to find the param by (voidptr) name
   // and also set the plant type to WEED_PLANT_PARAMETER - this is to allow
   // other functions to use the weed_parameter_get_*_value() functions etc.
   char *name = weed_get_string_value(param, WEED_LEAF_NAME, NULL);
-  for (int i = 0; i < nparams; i++) {
+  for (int i = 0; params[i]; i++) {
     char *pname = weed_get_string_value(params[i], WEED_LEAF_NAME, NULL);
     if (!lives_strcmp(name, pname)) {
       free(name); free(pname);
@@ -120,7 +161,7 @@ const lives_object_template_t *lives_object_template_for_type(uint64_t type) {
 
 
 boolean rules_lack_param(lives_rules_t *prereq, const char *pname) {
-  weed_param_t *iparam = iparam_from_name(prereq->reqs->params, prereq->reqs->n_params, pname);
+  weed_param_t *iparam = iparam_from_name(prereq->reqs->params, pname);
   if (iparam) {
     if (!weed_plant_has_leaf(iparam, WEED_LEAF_VALUE)
         && !weed_plant_has_leaf(iparam, WEED_LEAF_DEFAULT)) {
@@ -129,40 +170,34 @@ boolean rules_lack_param(lives_rules_t *prereq, const char *pname) {
       return FALSE;
     }
   }
-  iparam = iparam_from_name(prereq->oinst->params, prereq->oinst->n_params, pname);
+  iparam = iparam_from_name(prereq->oinst->params, pname);
   if (iparam) return TRUE;
   return TRUE;
 }
 
 
-static void lives_object_status_unref(lives_object_status_t *st) {
+static void lives_transform_status_unref(lives_transform_status_t *st) {
   if (--st->refcount < 0) lives_free(st);
 }
 
 
-void lives_object_status_free(lives_object_status_t *st) {
-  lives_object_status_unref(st);
+void lives_transform_status_free(lives_transform_status_t *st) {
+  lives_transform_status_unref(st);
 }
 
 
 boolean requirements_met(lives_object_transform_t *tx) {
   lives_obj_param_t *req;
-  for (int i = 0; i < tx->prereqs->reqs->n_params; i++) {
-    req = tx->prereqs->reqs->params[i];
-    if (req) {
-      if (!weed_plant_has_leaf(req, WEED_LEAF_VALUE) &&
-          !weed_plant_has_leaf(req, WEED_LEAF_DEFAULT)) {
-        int flags = weed_get_int_value(req, WEED_LEAF_FLAGS, NULL);
-        if (!(flags & PARAM_FLAGS_OPTIONAL)) return FALSE;
-      }
-      continue;
+  for (int i = 0; ((req = tx->prereqs->reqs->params[i])); i++) {
+    if (!weed_plant_has_leaf(req, WEED_LEAF_VALUE) &&
+        !weed_plant_has_leaf(req, WEED_LEAF_DEFAULT)) {
+      int flags = weed_get_int_value(req, WEED_LEAF_FLAGS, NULL);
+      if (!(flags & PARAM_FLAGS_OPTIONAL)) return FALSE;
     }
-    req = iparam_match_name(tx->prereqs->oinst->params, tx->prereqs->oinst->n_params, req);
-    if (!req) return FALSE;
+    continue;
   }
-  for (int i = 0; i < tx->prereqs->n_conditions; i++) {
-    if (!*tx->prereqs->conditions[i]) return FALSE;
-  }
+  req = iparam_match_name(tx->prereqs->oinst->params, req);
+  if (!req) return FALSE;
   return TRUE;
 }
 
@@ -170,12 +205,11 @@ boolean requirements_met(lives_object_transform_t *tx) {
 static void lives_rules_unref(lives_rules_t *rules) {
   if (--rules->refcount < 0) {
     if (rules->reqs) {
-      for (int i = 0; i < rules->reqs->n_params; i++) {
+      for (int i = 0; rules->reqs->params[i]; i++) {
         weed_plant_free(rules->reqs->params[i]);
       }
       lives_free(rules->reqs);
     }
-    if (rules->conditions) lives_free(rules->conditions);
     lives_free(rules);
   }
 }
@@ -198,8 +232,8 @@ lives_object_transform_t *find_transform_for_intent(lives_object_t *obj, lives_i
 }
 
 
-lives_object_status_t *transform(lives_object_t *obj, lives_object_transform_t *tx,
-                                 lives_object_t **other) {
+lives_transform_status_t *transform(lives_object_t *obj, lives_object_transform_t *tx,
+                                    lives_object_t **other) {
   /* for (int i = 0; i < tx->prereqs->n_conditions; i++) { */
   /*   if (!*tx->prereqs->conditions[i]) return FALSE; */
   /* } */
@@ -225,7 +259,7 @@ lives_object_status_t *transform(lives_object_t *obj, lives_object_transform_t *
 
 
 void lives_intentparams_free(lives_intentparams_t *iparams) {
-  for (int i = 0; i < iparams->n_params; i++) {
+  for (int i = 0; iparams->params[i]; i++) {
     weed_plant_free(iparams->params[i]);
   }
   lives_free(iparams->params);

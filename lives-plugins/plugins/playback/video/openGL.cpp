@@ -4,7 +4,7 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#define PLUGIN_UID 0XA6750BDAC53DF23Full
+#define PLUGIN_UID 0XA6750BDAC53DF23F
 
 #include <stdlib.h>
 #include <string.h>
@@ -15,13 +15,15 @@
 
 #include <iostream>
 
+#include "lives-plugin.h"
+
+#define PLUGIN_NAME "LiVES openGL playback"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 2
+
 #include "videoplugin.h"
 
 ////////////////////////////////////////////////////////////////////////////////////
-
-static int vmaj = 1;
-static int vmin = 2;
-const char *plugin_name = "LiVES openGL playback";
 
 static const uint16_t RGBA2RGB[8] =  {1, 0, 2, 1, 3, 2, 0, 3};
 
@@ -32,7 +34,7 @@ static boolean play_frame_unknown(weed_layer_t *frame, int64_t tc, weed_layer_t 
 static int palette_list[6];
 static int mypalette;
 
-static boolean inited;
+static boolean inited = false;
 
 static boolean npot;
 
@@ -249,11 +251,6 @@ const char *module_check_init(void) {
 }
 
 
-const lives_plugin_id_t *get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
-}
-
-
 const char *get_description(void) {
   return "The openGL plugin allows faster playback.\n";
 }
@@ -264,7 +261,7 @@ uint64_t get_capabilities(int palette) {
 }
 
 
-const char *get_init_rfx(int intention) {
+const char *get_init_rfx(plugin_intentcap_t *icaps) {
   return "<define>\\n\
 |1.7\\n		     \
 </define>\\n	     \
@@ -862,7 +859,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     gladLoadGL();
   }
 
-  error = glGetError();
+  error = glad_glGetError();
   if (error != GL_NO_ERROR) {
     char const *msg;
     if (error == GL_INVALID_ENUM)	msg = "GL_INVALID_ENUM";

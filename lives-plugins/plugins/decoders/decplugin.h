@@ -11,8 +11,21 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#define DEC_PLUGIN_VERSION_MAJOR 3
-#define DEC_PLUGIN_VERSION_MINOR 0
+// decoder plugin API version
+#define PLUGIN_API_VERSION_MAJOR 3
+#define PLUGIN_API_VERSION_MINOR 0
+
+#ifndef PLUGIN_TYPE
+#define PLUGIN_TYPE PLUGIN_TYPE_DECODER
+#endif
+
+#ifndef PLUGIN_DEVSTATE
+#define PLUGIN_DEVSTATE PLUGIN_DEVSTATE_NORMAL
+#endif
+
+#ifndef PLUGIN_PKGTYPE
+#define PLUGIN_PKGTYPE PLUGIN_PKGTYPE_DYNAMIC
+#endif
 
 #include <inttypes.h>
 #include <sys/types.h>
@@ -36,11 +49,25 @@ extern "C"
 #endif
 #endif
 
+#ifndef NEED_LOCAL_WEED
+#include <weed/weed-plugin.h>
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
+#else
+#include "../../../libweed/weed-plugin.h"
+#include "../../../libweed/weed.h"
+#include "../../../libweed/weed-palettes.h"
+#include "../../../libweed/weed-effects.h"
+#include "../../../libweed/weed-utils.h"
+#endif
+
+#include "../../weed-plugins/weed-plugin-utils.c"
+
+#include "lives-plugin.h"
+
 typedef int boolean;
-#undef TRUE
-#undef FALSE
-#define TRUE 1
-#define FALSE 0
 
 typedef enum {
   LIVES_INTERLACE_NONE = 0,
@@ -119,11 +146,6 @@ static inline void myrand(void *ptr, size_t size) {
 
 #include "../../../src/lsd.h"
 
-#define DEC_PLUGIN_TYPE_DECODER		256 // "decoder"
-#define DEC_PLUGIN_PKGTYPE_DYNAMIC     	128 // dynamic library
-
-#define LIVES_INTENTION_DECODE 0x00001000
-
 /// good
 #define LIVES_SEEK_FAST (1<<0)
 #define LIVES_SEEK_FAST_REV (1<<1)
@@ -132,56 +154,7 @@ static inline void myrand(void *ptr, size_t size) {
 #define LIVES_SEEK_NEEDS_CALCULATION (1<<2)
 #define LIVES_SEEK_QUALITY_LOSS (1<<3)
 
-#ifndef NEED_LOCAL_WEED
-#include <weed/weed-plugin.h>
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
-#else
-#include "../../../libweed/weed-plugin.h"
-#include "../../../libweed/weed.h"
-#include "../../../libweed/weed-palettes.h"
-#include "../../../libweed/weed-effects.h"
-#include "../../../libweed/weed-utils.h"
-#endif
-
-#include "../../weed-plugins/weed-plugin-utils.c"
-
 //typedef weed_plant_t weed_layer_t;
-
-// intentcaps
-typedef weed_plant_t lives_capacity_t;
-
-typedef int32_t lives_intention;
-
-typedef struct {
-  lives_intention intent;
-  lives_capacity_t *capacities; ///< type specific capabilities
-} lives_intentcap_t;
-
-#define lives_capacity_exists(caps, key) (caps ? (weed_plant_has_leaf(caps, key) == WEED_TRUE ? TRUE : FALSE) \
-					  : FALSE)
-
-#define lives_capacity_is_readonly(caps, key) (caps ? ((weed_leaf_get_flags(caps, key) & WEED_FLAG_IMMUTABLE) \
-						      ? TRUE : FALSE) : FALSE)
-
-#define lives_capacity_get_int(caps, key) (caps ? weed_get_int_value(caps, key, 0) : 0)
-#define lives_capacity_get_string(caps, key) (caps ? weed_get_string_value(caps, key, 0) : 0)
-
-typedef struct {
-  uint64_t uid; // fixed enumeration
-  uint64_t type;  ///< e.g. "decoder"
-  uint64_t pkgtype;  ///< e.g. dynamic
-  char script_lang[32];  ///< for scripted types only, the script interpreter, e.g. "perl", "python3"
-  int api_version_major; ///< version of interface API
-  int api_version_minor;
-  char name[32];  ///< e.g. "mkv_decoder"
-  int pl_version_major; ///< version of plugin
-  int pl_version_minor;
-  lives_intentcap_t *intentcaps;  /// array of intentcaps (NULL terminated)
-  void *unused; // padding
-} lives_plugin_id_t;
 
 typedef struct _lives_clip_data {
   // fixed parLUt
@@ -275,32 +248,6 @@ typedef struct _lives_clip_data {
   adv_timing_t adv_timing;
 } lives_clip_data_t;
 
-// std functions
-const lives_plugin_id_t *get_plugin_id(void);
-
-static lives_plugin_id_t plugin_id;
-
-static inline lives_plugin_id_t *_make_plugin_id(const char *name, int vmaj, int vmin) {
-  static int inited = 0;
-  if (!inited) {
-    inited = 1;
-    plugin_id.uid = PLUGIN_UID;
-    plugin_id.type = DEC_PLUGIN_TYPE_DECODER;
-    plugin_id.pkgtype = DEC_PLUGIN_PKGTYPE_DYNAMIC;
-    *plugin_id.script_lang = 0;
-    plugin_id.api_version_major = DEC_PLUGIN_VERSION_MAJOR;
-    plugin_id.api_version_major = DEC_PLUGIN_VERSION_MINOR;
-    snprintf(plugin_id.name, 32, "%s", name);
-    plugin_id.pl_version_major = vmaj;
-    plugin_id.pl_version_minor = vmin;
-#ifndef PLUGIN_INTENTCAPS
-#define PLUGIN_INTENTCAPS NULL
-#endif
-    plugin_id.intentcaps = PLUGIN_INTENTCAPS;
-  }
-  return &plugin_id;
-}
-
 /// pass in NULL clip_data for the first call, subsequent calls (if the URI, current_clip or current_palette changes)
 /// should reuse the previous value. If URI or current_clip are invalid, clip_data will be freed and NULL returned.
 ///
@@ -339,13 +286,6 @@ double estimate_delay(const lives_clip_data_t *cdata, int64_t tframe);
 #define get_le64int(p) (int64_t)(((uint64_t)(get_le32int(p + 4)) << 32) | (uint64_t)(get_le32int(p)))
 
 double get_fps(const char *uri);
-
-enum LiVESMediaType {
-  LIVES_MEDIA_TYPE_UNKNOWN = 0,
-  LIVES_MEDIA_TYPE_VIDEO,
-  LIVES_MEDIA_TYPE_AUDIO,
-  LIVES_MEDIA_TYPE_DATA
-};
 
 #ifdef NEED_CLONEFUNC
 #define CREATOR_ID "LiVES decoder plugin"

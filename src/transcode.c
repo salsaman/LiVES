@@ -218,6 +218,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
   int width, height, pwidth, pheight;
   int tgamma = WEED_GAMMA_SRGB;
   int count = 0;
+  int pbq = prefs->pb_quality;
 
   int i = 0, j;
 
@@ -330,6 +331,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
   /// plugin ready
 
   //av_log_set_level(AV_LOG_FATAL);
+  prefs->pb_quality = PB_QUALITY_HIGH;
   THREADVAR(rowstride_alignment_hint) = 16;
 
   if (!internal) {
@@ -505,8 +507,9 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     }
     if (!error) {
       weed_plant_t *copy_frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-      weed_layer_copy(copy_frame_layer, frame_layer);
-      weed_layer_nullify_pixel_data(frame_layer);
+      /* weed_layer_copy(copy_frame_layer, frame_layer); */
+      /* weed_layer_nullify_pixel_data(frame_layer); */
+      copy_frame_layer = weed_layer_copy(NULL, frame_layer);
 
       copy_frame_layer = apply_watermark(copy_frame_layer, currticks);
 
@@ -521,8 +524,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       // so there is a normal progress dialog which is updated in the player)
       threaded_dialog_spin(1. - (double)(cfile->end - i) / (double)(cfile->end - cfile->start + 1.));
     } else {
-      weed_layer_free(frame_layer);
-      frame_layer = NULL;
+      /* weed_layer_free(frame_layer); */
+      /* frame_layer = NULL; */
       mainw->transrend_ready = FALSE;
     }
 
@@ -533,6 +536,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
 tr_err:
   mainw->cancel_type = CANCEL_KILL;
+  prefs->pb_quality = pbq;
 
   mainw->fx1_bool = fx1_bool;
 

@@ -311,8 +311,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
 
         cfile->opening = TRUE;
 
-        if (cfile->header_version < 104)
-          cfile->img_type = IMG_TYPE_BEST; // override the pref
+        cfile->img_type = IMG_TYPE_BEST; // override the pref
         cfile->clip_type = CLIP_TYPE_FILE;
 
         if (cdata->frame_width > 0) {
@@ -610,6 +609,9 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                                 (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
                                 withsound, prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST),
                                 start, frames, cfile->achans, mainw->file_open_params);
+
+      g_print("cmd is %s\n", com);
+
       lives_free(tmp);
       lives_system(com, FALSE);
       lives_free(com);
@@ -1052,7 +1054,11 @@ boolean get_handle_from_info_file(int index) {
   char *com, *shm_path = NULL;
 
   // optionally we can stage the clip open in an alt directory
-  lives_intentparams_t *iparams = get_txparams_for_clip(index, LIVES_INTENTION_IMPORT_LOCAL);
+  lives_intentparams_t *iparams;
+  lives_intentcap_t *icaps = lives_intentcaps_new(LIVES_ICAPS_LOAD);
+  iparams = get_txparams_for_clip(index, icaps);
+  lives_intentcaps_free(icaps);
+
   if (iparams) {
     weed_param_t *adir_param =
       weed_param_from_iparams(iparams, CLIP_PARAM_STAGING_DIR);
@@ -2915,6 +2921,13 @@ void play_file(void) {
     cfile->pointer_time = pointer_time;
     cfile->real_pointer_time = real_pointer_time;
   }
+
+  // tell the audio cache thread to terminate, else we can get in a deadlock where the player is waiting for
+  // more data, and we are waiting for the player to finish
+  if (audio_player == AUD_PLAYER_JACK
+      || (mainw->event_list && !mainw->record && (!mainw->is_rendering
+          || !mainw->preview || mainw->preview_rendering)))
+    audio_cache_finish();
 
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && (mainw->jackd || mainw->jackd_read)) {
@@ -5113,7 +5126,7 @@ boolean reload_clip(int fileno, int maxframe) {
   char *clipdir = get_clip_dir(fileno);
 
   LiVESResponseType response;
-  boolean was_renamed = FALSE, retb = FALSE;
+  boolean was_renamed = FALSE, retb = FALSE, ignore;
   int current_file;
 
   while (!lives_file_test(sfile->file_name, LIVES_FILE_TEST_EXISTS)) {
@@ -5131,9 +5144,11 @@ boolean reload_clip(int fileno, int maxframe) {
   fake_cdata = (lives_clip_data_t *)struct_from_template(LIVES_STRUCT_CLIP_DATA_T);
 
   if (ARE_UNCHECKED(decoder_plugins)) {
+    prefs->disabled_decoders = locate_decoders(get_list_pref(PREF_DISABLED_DECODERS));
     capable->plugins_list[PLUGIN_TYPE_DECODER] = load_decoders();
-    if (capable->plugins_list[PLUGIN_TYPE_DECODER]) capable->has_decoder_plugins = PRESENT;
-    else capable->has_decoder_plugins = MISSING;
+    if (capable->plugins_list[PLUGIN_TYPE_DECODER]) {
+      capable->has_decoder_plugins = PRESENT;
+    } else capable->has_decoder_plugins = MISSING;
   }
 
   ///< retain original order to restore for freshly opened clips
@@ -5173,6 +5188,7 @@ manual_locate:
       } else {
         // unopenable
         do_no_decoder_error(sfile->file_name);
+        ignore = TRUE;
       }
 
       lives_chdir(cwd, FALSE);
@@ -5189,9 +5205,14 @@ manual_locate:
         sfile->checked = TRUE;
       }
       if (!retb) {
-        current_file = mainw->current_file;
-        mainw->current_file = fileno;
-        close_current_file(current_file);
+        if (ignore) {
+          ignore_clip(fileno);
+          lives_freep((void **)&mainw->files[fileno]);
+        } else {
+          current_file = mainw->current_file;
+          mainw->current_file = fileno;
+          close_current_file(current_file);
+        }
       }
       unref_struct(&fake_cdata->lsd);
 

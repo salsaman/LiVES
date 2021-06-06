@@ -2131,7 +2131,14 @@ static boolean lives_init(_ign_opts *ign_opts) {
     load_default_keymap();
     threaded_dialog_spin(0.);
 
-    load_decoders();
+    //load_decoders();
+    if (ARE_UNCHECKED(decoder_plugins)) {
+      prefs->disabled_decoders = locate_decoders(get_list_pref(PREF_DISABLED_DECODERS));
+      capable->plugins_list[PLUGIN_TYPE_DECODER] = load_decoders();
+      if (capable->plugins_list[PLUGIN_TYPE_DECODER]) {
+        capable->has_decoder_plugins = PRESENT;
+      } else capable->has_decoder_plugins = MISSING;
+    }
 
     future_prefs->audio_opts = prefs->audio_opts = get_int_prefd(PREF_AUDIO_OPTS, 3);
 
@@ -6786,12 +6793,12 @@ check_encache:
               lives_free(fname);
             }
             weed_set_string_value(layer, WEED_LEAF_MD5SUM, xmd5sum);
-	  // *INDENT-OFF*
-	}}
-      lives_layer_set_frame(layer, xpf);
-      lives_layer_set_clip(layer, mainw->current_file);
-    }}
-  // *INDENT-ON*
+	    // *INDENT-OFF*
+	  }}
+	lives_layer_set_frame(layer, xpf);
+	lives_layer_set_clip(layer, mainw->current_file);
+      }}
+    // *INDENT-ON*
     if (xmd5sum) lives_free(xmd5sum);
   }
 #if 0
@@ -7117,7 +7124,11 @@ check_prcache:
 
 #ifdef GUI_GTK
 static void pbsize_set(GdkPixbufLoader * pbload, int xxwidth, int xxheight, livespointer ptr) {
-  if (xxwidth * xxheight > 0) gdk_pixbuf_loader_set_size(pbload, xxwidth, xxheight);
+  weed_layer_t *layer = (weed_layer_t *)ptr;
+  int nsize[2];
+  nsize[0] = xxwidth;
+  nsize[1] = xxheight;
+  weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
 }
 #endif
 
@@ -7313,8 +7324,16 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
     weed_set_int_value(layer, WEED_LEAF_WIDTH, xwidth);
     weed_set_int_value(layer, WEED_LEAF_HEIGHT, xheight);
 
-    privflags = weed_get_int_value(layer, WEED_LEAF_HOST_FLAGS, NULL);
-    weed_set_int_value(layer, WEED_LEAF_HOST_FLAGS, privflags | LIVES_LAYER_HAS_SIZE_NOW);
+    if (!weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE)) {
+      int nsize[2];
+      // set "natural_size" in case a filter needs it
+      nsize[0] = xwidth;
+      nsize[1] = xheight;
+      weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
+    }
+
+    privflags = weed_get_int_value(layer, LIVES_LEAF_HOST_FLAGS, NULL);
+
     if (privflags == LIVES_LAYER_GET_SIZE_ONLY
         || (privflags == LIVES_LAYER_LOAD_IF_NEEDS_RESIZE
             && (int)xwidth == twidth && (int)xheight == theight)) {
@@ -7494,7 +7513,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 #endif
     int clamping, sampling, subspace;
     weed_layer_get_palette_yuv(layer, &clamping, &sampling, &subspace);
-    weed_set_int_value(layer, WEED_LEAF_PIXEL_BITS, 16);
+    weed_set_int_value(layer, LIVES_LEAF_PIXEL_BITS, 16);
     if (weed_palette_has_alpha(tpalette)) tpalette = WEED_PALETTE_YUVA4444P;
     else {
       if (tpalette != WEED_PALETTE_YUV420P) tpalette = WEED_PALETTE_YUV444P;
@@ -7727,7 +7746,7 @@ boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char 
   else pbload = gdk_pixbuf_loader_new();
 
   lives_signal_connect(LIVES_WIDGET_OBJECT(pbload), LIVES_WIDGET_SIZE_PREPARED_SIGNAL,
-                       LIVES_GUI_CALLBACK(pbsize_set), NULL);
+                       LIVES_GUI_CALLBACK(pbsize_set), layer);
 
   while (1) {
 #ifndef PNG_BIO
@@ -7920,8 +7939,8 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         weed_layer_unref(layer);
         return FALSE;
       }
-      weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
-      weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
+      weed_leaf_delete(layer, LIVES_LEAF_PIXBUF_SRC);
+      weed_leaf_delete(layer, LIVES_LEAF_SURFACE_SRC);
       // clip width and height may vary dynamically
       if (LIVES_IS_PLAYING) {
         sfile->hsize = weed_layer_get_width(layer);
@@ -7929,6 +7948,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       }
       // realign
       copy_pixel_data(layer, NULL, THREADVAR(rowstride_alignment));
+
       mainw->osc_block = FALSE;
       weed_layer_unref(layer);
       return TRUE;

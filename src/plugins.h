@@ -52,6 +52,15 @@ typedef weed_plant_t weed_param_t;
 #define PLUGIN_CHANNEL_TTY    		(1<<34)ul
 #define PLUGIN_CHANNEL_FILE    		(1<<35)ul
 
+#define LIVES_DEVSTATE_NORMAL 0 // normal development status, presumed bug free
+#define LIVES_DEVSTATE_RECOMMENDED 1 // recommended, suitable for default use
+#define LIVES_DEVSTATE_CUSTOM 2 // plugin is not normally shipped with base package
+#define LIVES_DEVSTATE_TESTING 3 // waring - plugin is being tested and may not function correctly
+
+#define LIVES_DEVSTATE_UNSTABLE -1 // warning - may be unstable in specific circumstances
+#define LIVES_DEVSTATE_BROKEN -2 // WARNING - plugin is know to function incorrectly
+#define LIVES_DEVSTATE_AVOID -3 // WARNING - plugin should be completely ignored
+
 typedef struct {
   uint64_t uid; // fixed enumeration
   uint64_t type;  ///< e.g. "decoder"
@@ -62,6 +71,7 @@ typedef struct {
   char name[32];  ///< e.g. "mkv_decoder"
   int pl_version_major; ///< version of plugin
   int pl_version_minor;
+  int devstate; // e.g. LIVES_DEVSTATE_UNSTABLE
   lives_intentcap_t *intentcaps;  /// array of intentcaps (NULL terminated)
   void *unused; // padding
 } lives_plugin_id_t;
@@ -395,6 +405,7 @@ typedef struct {
   lives_clip_data_t *cdata;
 } lives_decoder_t;
 
+LiVESList *locate_decoders(LiVESList *);
 LiVESList *load_decoders(void);
 boolean chill_decoder_plugin(int fileno);
 boolean decoder_plugin_move_to_first(const char *name, uint64_t uid);

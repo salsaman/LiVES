@@ -1557,12 +1557,12 @@ void migrate_from_staging(int clipno) {
     if (*sfile->staging_dir) {
       char *old_clipdir, *new_clipdir, *stfile;
       old_clipdir = get_clip_dir(clipno);
-      if (sfile->achans) wait_for_bg_audio_sync(clipno);
+      if (sfile->achans && sfile->ext_src) wait_for_bg_audio_sync(clipno);
       pthread_mutex_lock(&sfile->transform_mutex);
       *sfile->staging_dir = 0;
       new_clipdir = get_clip_dir(clipno);
       lives_cp_recursive(old_clipdir, new_clipdir, FALSE);
-      if (sfile->achans) wait_for_bg_audio_sync(clipno);
+      if (sfile->achans && sfile->ext_src) wait_for_bg_audio_sync(clipno);
       lives_rmdir(old_clipdir, TRUE);
       lives_free(old_clipdir);
       stfile = lives_build_filename(new_clipdir, LIVES_STATUS_FILE_NAME, NULL);
@@ -1599,19 +1599,22 @@ typedef struct {
 
 
 lives_intentparams_t *_get_params_for_clip_tx(lives_object_t *obj, int state,
-    lives_intention intent) {
+    lives_intentcap_t *icaps) {
+  lives_intention intent = icaps->intent;
   lives_intentparams_t *iparams = NULL;
   clip_priv_data_t *priv = (clip_priv_data_t *)obj->priv;
-  if (intent == LIVES_INTENTION_IMPORT_LOCAL) {
+
+  if (intent != LIVES_INTENTION_IMPORT) return NULL;
+
+  if (lives_capacity_get(icaps->capacities, LIVES_CAPACITY_LOCAL)) {
     if (prefs->startup_phase != 0) return NULL;
     if (capable->writeable_shmdir == MISSING) return NULL;
     if (state == CLIP_STATE_READY) {
       if (!*priv->sfile->staging_dir) return NULL;
     } else get_shmdir();
+
     iparams = (lives_intentparams_t *)lives_calloc(sizeof(lives_intentparams_t), 1);
-    iparams->intent = intent;
-    iparams->n_params = 1;
-    iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 1);
+    iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 2);
 
     // TODO - need to mark
     if (state == CLIP_STATE_READY) {
@@ -1619,20 +1622,21 @@ lives_intentparams_t *_get_params_for_clip_tx(lives_object_t *obj, int state,
     } else {
       iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, capable->shmdir_path);
     }
-  } else if (intent == LIVES_INTENTION_DOWNLOAD) {
+    iparams->params[1] = NULL;
+  } else if (lives_capacity_get(icaps->capacities, LIVES_CAPACITY_REMOTE)) {
     char *uidstr, *tmpdir;
     iparams = (lives_intentparams_t *)lives_calloc(sizeof(lives_intentparams_t), 1);
-    iparams->intent = intent;
-    iparams->n_params = 1;
-    iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 1);
+    //iparams->intent = intent;
+    iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 2);
 
-    // eventually 'ytdl' should come from a param CLIP_STAGING_PARAM and be part of the reqs
-    // go from state none -> state ready / prepared, and in turn, being in state ready will be
-    // a precondition to perform the IMPORT_REMOTE transformation
+    // eventually 'ytdl' should come from an optional req CLIP_STAGING_PARAM
+    // to perform the IMPORT transformation, which would resolve to open_file_sel for LiVES
+    // and get_clip_data for the clip
     uidstr = lives_strdup_printf("ytdl-%lu", gen_unique_id());
     tmpdir = get_systmp(uidstr, TRUE);
     iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, tmpdir);
     lives_free(tmpdir);
+    iparams->params[1] = NULL;
   }
   return iparams;
 }
@@ -1640,29 +1644,27 @@ lives_intentparams_t *_get_params_for_clip_tx(lives_object_t *obj, int state,
 
 // TODO - merge with transform for intent, or whatever it ends up being...
 LIVES_LOCAL_INLINE
-lives_intentparams_t *get_txparams_for_intent(lives_object_t *obj, lives_intention intent) {
+lives_intentparams_t *get_txparams_for_intent(lives_object_t *obj, lives_intentcap_t *icaps) {
   if (obj->type == OBJECT_TYPE_CLIP) {
-    return _get_params_for_clip_tx(obj, obj->status->state, intent);
+    return _get_params_for_clip_tx(obj, obj->state, icaps);
   }
   return NULL;
 }
 
 
 // placeholder function, until we have proper objects for clips
-lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intention intent) {
+lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intentcap_t *icaps) {
   lives_object_t obj;
-  lives_object_status_t ostat;
-  clip_priv_data_t priv;
+  clip_priv_data_t *priv;
   obj.type = OBJECT_TYPE_CLIP;
-  obj.status = &ostat;
-  obj.priv = &priv;
-  priv.idx = clipno;
+  priv = obj.priv = (clip_priv_data_t *)lives_calloc(1, sizeof(clip_priv_data_t));
+  priv->idx = clipno;
   if (!IS_VALID_CLIP(clipno)) {
-    priv.sfile = NULL;
-    ostat.state = CLIP_STATE_NOT_LOADED;
+    priv->sfile = NULL;
+    obj.state = CLIP_STATE_NOT_LOADED;
   } else {
-    priv.sfile = mainw->files[clipno];
-    ostat.state = CLIP_STATE_READY;
+    priv->sfile = mainw->files[clipno];
+    obj.state = CLIP_STATE_READY;
   }
-  return get_txparams_for_intent(&obj, intent);
+  return get_txparams_for_intent(&obj, icaps);
 }

@@ -3950,6 +3950,9 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
               lives_nanosleep_until_nonzero(!mainw->transrend_ready);
 
+              if (mainw->transrend_layer && mainw->transrend_layer != mainw->scrap_layer)
+                weed_layer_free(mainw->transrend_layer);
+
               if (lives_proc_thread_check_finished(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
 
               if (scrap_track != -1) {
@@ -3960,10 +3963,11 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 } else {
                   check_layer_ready(layer);
                   if (prefs->enc_letterbox) {
-                    letterbox_layer(layer, cfile->hsize, cfile->vsize,
-                                    weed_layer_get_width_pixels(layer), weed_layer_get_height(layer),
+                    int lb_width = weed_layer_get_width_pixels(layer);
+                    int lb_height = weed_layer_get_height(layer);
+                    calc_maxspect(cfile->hsize, cfile->vsize, &lb_width, &lb_height);
+                    letterbox_layer(layer, cfile->hsize, cfile->vsize, lb_width, lb_height,
                                     LIVES_INTERP_BEST, WEED_PALETTE_NONE, 0);
-
                   } else resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_NONE, 0);
                 }
                 // if our pixbuf came from scrap file, and next frame is also from scrap file with same frame number,
@@ -3972,8 +3976,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                     && weed_get_int64_value(next_frame_event, WEED_LEAF_FRAMES, NULL)
                     == mainw->frame_index[0]) {
                   // save the layer
-                  if (!mainw->scrap_layer || layer == mainw->scrap_layer)
-                    mainw->scrap_layer = weed_layer_copy(NULL, layer);
+                  if (!mainw->scrap_layer) // || layer == mainw->scrap_layer)
+                    mainw->scrap_layer = layer;//weed_layer_copy(NULL, layer);
                   reused = TRUE;
                 }
               }
@@ -4106,7 +4110,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               mytrack = aclips[i] + nbtracks;
               if (mytrack < 0) mytrack = 0;
               //g_print("del was %f\n", xaseek[mytrack] - aseeks[i]);
-              if (prefs->rr_super && prefs->rr_ramicro) {
+              if (prefs->rr_super && prefs->rr_ramicro
+                  && weed_get_boolean_value(event, LIVES_LEAF_ALLOW_JUMP, NULL) != WEED_TRUE) {
                 /// smooth out audio by ignoring tiny seek differences
                 xaseek[mytrack] += xavel[mytrack] * dt;
                 if (xavel[mytrack] * aseeks[i + 1] < 0.) mult *= AUD_DIFF_REVADJ;
@@ -4498,6 +4503,8 @@ filterinit2:
     }
 #endif
 
+    if (mainw->transrend_layer) weed_layer_free(mainw->transrend_layer);
+
     if (cfile->old_frames == 0) cfile->undo_start = cfile->undo_end = 0;
     if (r_video) {
       com = lives_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\"", prefs->backend, cfile->handle, cfile->undo_start,
@@ -4773,6 +4780,9 @@ boolean render_to_clip(boolean new_clip) {
   boolean enc_lb = prefs->enc_letterbox;
   int xachans = 0, xarate = 0, xasamps = 0, xse = 0;
   int current_file = mainw->current_file;
+  int pbq = prefs->pb_quality;
+
+  prefs->pb_quality = PB_QUALITY_HIGH;
 
   if (new_clip) {
     if (prefs->render_prompt) {
@@ -4836,6 +4846,8 @@ boolean render_to_clip(boolean new_clip) {
         lives_free(clipname);
         lives_freep((void **)&rdet);
         lives_freep((void **)&resaudw);
+        prefs->pb_quality = pbq;
+        prefs->enc_letterbox = enc_lb;
         return FALSE;
       }
     } else {
@@ -4858,6 +4870,8 @@ boolean render_to_clip(boolean new_clip) {
         lives_freep((void **)&resaudw);
       }
       lives_free(clipname);
+      prefs->enc_letterbox = enc_lb;
+      prefs->pb_quality = pbq;
       return FALSE; // show dialog again
     }
 
@@ -4923,6 +4937,7 @@ boolean render_to_clip(boolean new_clip) {
       lives_free(com);
       if (THREADVAR(com_failed)) {
         prefs->enc_letterbox = enc_lb;
+        prefs->pb_quality = pbq;
         return FALSE;
       }
     } else {
@@ -4957,6 +4972,7 @@ boolean render_to_clip(boolean new_clip) {
       THREAD_INTENTION = LIVES_INTENTION_NOTHING;
       close_current_file(current_file);
       prefs->enc_letterbox = enc_lb;
+      prefs->pb_quality = pbq;
       return FALSE;
     } else {
       lives_capacity_t *caps = lives_capacities_new();
@@ -4973,6 +4989,7 @@ boolean render_to_clip(boolean new_clip) {
         transcode_cleanup(mainw->vpp);
         close_current_file(current_file);
         prefs->enc_letterbox = enc_lb;
+        prefs->pb_quality = pbq;
         return FALSE;
       }
 
@@ -5038,6 +5055,8 @@ boolean render_to_clip(boolean new_clip) {
 #endif
 
   if (mainw->multitrack && !rendaud && !mainw->multitrack->opts.render_vidp) {
+    prefs->enc_letterbox = enc_lb;
+    prefs->pb_quality = pbq;
     return FALSE;
   }
 
@@ -5166,6 +5185,7 @@ boolean render_to_clip(boolean new_clip) {
             }
           }
           prefs->enc_letterbox = enc_lb;
+          prefs->pb_quality = pbq;
           return FALSE; /// will reshow the dialog
         }
 
@@ -5203,6 +5223,8 @@ rtc_done:
   deinit_render_effects();
   audio_free_fnames();
   mainw->vfade_in_secs = mainw->vfade_out_secs = 0.;
+  prefs->pb_quality = pbq;
+  prefs->enc_letterbox = enc_lb;
   return retval;
 }
 

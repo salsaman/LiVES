@@ -2553,7 +2553,7 @@ static void convert_yuv888_to_rgb_frame(uint8_t *src, int hsize, int vsize, int 
       lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
       xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-      for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+      for (i = prefs->nfx_threads - 1; i--;) {
         dheight = xdheight;
 
         if ((src + dheight * i * irowstride) < end) {
@@ -2638,7 +2638,7 @@ static void convert_yuva8888_to_rgba_frame(uint8_t *src, int hsize, int vsize, i
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -2721,7 +2721,7 @@ static void convert_yuv888_to_bgr_frame(uint8_t *src, int hsize, int vsize, int 
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -2805,7 +2805,7 @@ static void convert_yuva8888_to_bgra_frame(uint8_t *src, int hsize, int vsize, i
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -2888,7 +2888,7 @@ static void convert_yuv888_to_argb_frame(uint8_t *src, int hsize, int vsize, int
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -2970,7 +2970,7 @@ static void convert_yuva8888_to_argb_frame(uint8_t *src, int hsize, int vsize, i
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -3029,9 +3029,10 @@ static void *convert_yuva8888_to_argb_frame_thread(void *data) {
 }
 
 
-static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, boolean is_bottom, int *istrides, int orowstride,
+static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width, int height, boolean is_bottom, int *istrides,
+    int orowstride,
     uint8_t *dest, boolean add_alpha, boolean is_422, int sampling, int clamping, int subspace,
-    int gamma, int tgamma, uint8_t *gamma_lut, int thread_id) {
+    int gamma, int tgamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   int i, j;
   uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
   int opsize = 3;
@@ -3062,7 +3063,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, b
       lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
       xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-      for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+      for (i = prefs->nfx_threads - 1; i--;) {
         dheight = xdheight;
 
         if ((src[0] + dheight * i * istrides[0]) < end) {
@@ -3206,10 +3207,10 @@ static void *convert_yuv420p_to_rgb_frame_thread(void *data) {
 }
 
 
-static void convert_yuv420p_to_bgr_frame(uint8_t **src, int width, int height, boolean is_bottom, int *istrides,
+static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width, int height, boolean is_bottom, int *istrides,
     int orowstride,
     uint8_t *dest, boolean add_alpha, boolean is_422, int sampling, int clamping, int subspace,
-    int gamma, int tgamma, uint8_t *gamma_lut, int thread_id) {
+    int gamma, int tgamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   int i, j;
   uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
   int opsize = 3;
@@ -3239,7 +3240,7 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **src, int width, int height, b
       lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
       xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-      for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+      for (i = prefs->nfx_threads - 1; i--;) {
         dheight = xdheight;
 
         if ((src[0] + dheight * i * istrides[0]) < end) {
@@ -3385,10 +3386,10 @@ static void *convert_yuv420p_to_bgr_frame_thread(void *data) {
 }
 
 
-static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, boolean is_bottom, int *istrides,
+static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int width, int height, boolean is_bottom, int *istrides,
     int orowstride,
     uint8_t *dest, boolean is_422, int sampling, int clamping, int subspace,
-    int gamma, int tgamma, uint8_t *gamma_lut, int thread_id) {
+    int gamma, int tgamma, uint8_t *LIVES_RESTRICT gamma_lut, int thread_id) {
   int i, j;
   uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
   int opsize = 4;
@@ -3418,7 +3419,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
       lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
       xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-      for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+      for (i = prefs->nfx_threads - 1; i--;) {
         dheight = xdheight;
 
         if ((src[0] + dheight * i * istrides[0]) < end) {
@@ -3642,7 +3643,7 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((rgbdata + dheight * i * rowstride) < end) {
@@ -3741,7 +3742,7 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((rgbdata + dheight * i * rowstride) < end) {
@@ -3839,7 +3840,7 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((rgbdata + dheight * i * rowstride) < end) {
@@ -3933,7 +3934,7 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((rgbdata + dheight * i * rowstride) < end) {
@@ -4025,7 +4026,7 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((rgbdata + dheight * i * rowstride) < end) {
@@ -4109,7 +4110,7 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((rgbdata + dheight * i * rowstride) < end) {
@@ -4190,7 +4191,7 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((rgbdata + dheight * i * rowstride) < end) {
@@ -4281,7 +4282,7 @@ static void convert_rgb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((rgbdata + dheight * i * rowstride) < end) {
@@ -4373,7 +4374,7 @@ static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((rgbdata + dheight * i * rowstride) < end) {
@@ -4464,7 +4465,7 @@ static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((rgbdata + dheight * i * rowstride) < end) {
@@ -4555,7 +4556,7 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((rgbdata + dheight * i * rowstride) < end) {
@@ -4642,7 +4643,7 @@ static void convert_argb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, i
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)vsize / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((rgbdata + dheight * i * rowstride) < end) {
@@ -5092,7 +5093,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((dheight * i) < height) {
@@ -5178,7 +5179,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((dheight * i) < height) {
@@ -5260,7 +5261,7 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((dheight * i) < height) {
@@ -5335,7 +5336,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((dheight * i) < height) {
@@ -5417,7 +5418,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((dheight * i) < height) {
@@ -5499,7 +5500,7 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((dheight * i) < height) {
@@ -5677,7 +5678,7 @@ static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((y + dheight * i * irowstride) < end) {
@@ -5778,7 +5779,7 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
 
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((y + dheight * i * irowstride) < end) {
@@ -5875,7 +5876,7 @@ static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int heigh
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((y + dheight * i * irowstride) < end) {
@@ -7709,7 +7710,7 @@ static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstr
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -7827,7 +7828,7 @@ static void convert_swap4_frame(uint8_t *src, int width, int height, int irowstr
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -7921,7 +7922,7 @@ static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int 
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -7998,7 +7999,7 @@ static void convert_swap3addpre_frame(uint8_t *src, int width, int height, int i
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -8075,7 +8076,7 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * rowstride) < end) {
@@ -8139,7 +8140,7 @@ static void convert_swap3prealpha_frame(uint8_t *src, int width, int height, int
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * rowstride) < end) {
@@ -8204,7 +8205,7 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -8299,7 +8300,7 @@ static void convert_addpre_frame(uint8_t *src, int width, int height, int irowst
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -8375,7 +8376,7 @@ static void convert_swap3delpost_frame(uint8_t *src, int width, int height, int 
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -8450,7 +8451,7 @@ static void convert_delpost_frame(uint8_t *src, int width, int height, int irows
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -8543,7 +8544,7 @@ static void convert_delpre_frame(uint8_t *src, int width, int height, int irowst
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -8619,7 +8620,7 @@ static void convert_swap3delpre_frame(uint8_t *src, int width, int height, int i
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -8696,7 +8697,7 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * irowstride) < end) {
@@ -8799,7 +8800,7 @@ static void convert_swab_frame(uint8_t *src, int width, int height, int irow, in
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
-    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+    for (i = prefs->nfx_threads - 1; i--;) {
       dheight = xdheight;
 
       if ((src + dheight * i * width4) < end) {
@@ -9532,7 +9533,7 @@ boolean weed_layer_clear_pixel_data(weed_layer_t *layer) {
 
    may_contig should normally be set to TRUE, except for special uses during palette conversion
    if set, then for planar palettes, only plane 0 will be allocated, so only this value should be freed
-   in this case, the leaf WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS will be set to WEED_TRUE
+   in this case, the leaf LIVES_LEAF_PIXEL_DATA_CONTIGUOUS will be set to WEED_TRUE
 
    the allocated frames will be aligned to the pixel size for whatever palette and may be padded with extra bytes
    to guard against accidental overwrites
@@ -9593,14 +9594,14 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     for (sbits = 7; (1 << sbits) > rowstride_alignment; sbits--);
   }
 
-  if (weed_plant_has_leaf(layer, "bblockalloc")) {
-    weed_leaf_delete(layer, "bblockalloc");
+  if (weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC)) {
+    weed_leaf_delete(layer, LIVES_LEAF_BBLOCKALLOC);
   }
-  if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
-    weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
+  if (weed_plant_has_leaf(layer, LIVES_LEAF_PIXBUF_SRC)) {
+    weed_leaf_delete(layer, LIVES_LEAF_PIXBUF_SRC);
   }
-  if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC)) {
-    weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
+  if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
+    weed_leaf_delete(layer, LIVES_LEAF_SURFACE_SRC);
   }
   pflags = weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA);
   weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA, pflags & ~LIVES_FLAG_MAINTAIN_VALUE);
@@ -9623,7 +9624,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
 #ifdef USE_BIGBLOCKS
     if ((pixel_data = calloc_bigblock(framesize >> SHIFTVAL, ALIGN_SIZE)))
-      weed_set_boolean_value(layer, "bblockalloc", WEED_TRUE);
+      weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
     else
 #endif
       pixel_data = lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
@@ -9651,7 +9652,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
 #ifdef USE_BIGBLOCKS
     if ((pixel_data = calloc_bigblock(framesize >> SHIFTVAL, ALIGN_SIZE)))
-      weed_set_boolean_value(layer, "bblockalloc", WEED_TRUE);
+      weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
     else
 #endif
       pixel_data = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
@@ -9753,7 +9754,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     pd_array = (uint8_t **)lives_malloc(3 * sizeof(uint8_t *));
 
     if (!may_contig) {
-      weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
+      weed_leaf_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
       pd_array[0] = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
       if (!pd_array[0]) {
         lives_free(pd_array);
@@ -9773,10 +9774,10 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
         return FALSE;
       }
     } else {
-      weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
+      weed_set_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
 #ifdef USE_BIGBLOCKS
       if ((memblock = calloc_bigblock((framesize + framesize2 * 2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE))) {
-        weed_set_boolean_value(layer, "bblockalloc", WEED_TRUE);
+        weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
       } else
 #endif
         memblock = (uint8_t *)lives_calloc((framesize + framesize2 * 2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
@@ -9826,7 +9827,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     pd_array = (uint8_t **)lives_malloc(3 * sizeof(uint8_t *));
 
     if (!may_contig) {
-      weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
+      weed_leaf_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
       pd_array[0] = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
       if (!pd_array[0]) {
         lives_free(pd_array);
@@ -9846,7 +9847,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
         return FALSE;
       }
     } else {
-      weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
+      weed_set_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
       memblock = (uint8_t *)lives_calloc((framesize + framesize2 * 2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
       if (!memblock) return FALSE;
       pd_array[0] = (uint8_t *)memblock;
@@ -9883,7 +9884,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE);
 
     if (!may_contig) {
-      weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
+      weed_leaf_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
       pd_array[0] = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
       if (!pd_array[0]) {
         lives_free(pd_array);
@@ -9903,7 +9904,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
         return FALSE;
       }
     } else {
-      weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
+      weed_set_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
       memblock = (uint8_t *)lives_calloc((framesize * 3 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
       if (!memblock) return FALSE;
       pd_array[0] = memblock;
@@ -9941,7 +9942,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE);
 
     if (!may_contig) {
-      weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
+      weed_leaf_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
       pd_array[0] = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
       if (!pd_array[0]) {
         lives_free(pd_array);
@@ -9969,7 +9970,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
         return FALSE;
       }
     } else {
-      weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
+      weed_set_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
       memblock = (uint8_t *)lives_calloc((framesize * 4 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
       if (!memblock) return FALSE;
       pd_array[0] = memblock;
@@ -10187,14 +10188,14 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_data(weed_layer_t *layer,
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_flags(weed_layer_t *layer, int flags) {
   if (!layer || !WEED_IS_LAYER(layer)) return NULL;
-  weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
+  weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, flags);
   return layer;
 }
 
 
 LIVES_GLOBAL_INLINE int weed_layer_get_flags(weed_layer_t *layer) {
   if (!layer || !WEED_IS_LAYER(layer)) return 0;
-  return weed_get_int_value(layer, WEED_LEAF_FLAGS, NULL);
+  return weed_get_int_value(layer, LIVES_LEAF_HOST_FLAGS, NULL);
 }
 
 
@@ -10249,10 +10250,10 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *layer,
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {
   if (!layer || !WEED_IS_LAYER(layer)) return NULL;
   weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 0, NULL);
-  weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
-  weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
-  weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
-  weed_leaf_delete(layer, "bblockalloc");
+  weed_leaf_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
+  weed_leaf_delete(layer, LIVES_LEAF_PIXBUF_SRC);
+  weed_leaf_delete(layer, LIVES_LEAF_SURFACE_SRC);
+  weed_leaf_delete(layer, LIVES_LEAF_BBLOCKALLOC);
   weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
   return layer;
 }
@@ -10352,7 +10353,8 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   boolean newdata = FALSE;
 
   if (alignment != 0 && !old_layer) {
-    while (i > 0) if (orowstrides[--i] % alignment != 0) i = -1;
+    rowstrides = weed_layer_get_rowstrides(layer, &i);
+    while (i > 0) if (rowstrides[--i] % alignment != 0) i = -1;
     if (i == 0) return TRUE;
   }
 
@@ -10578,8 +10580,8 @@ void alpha_unpremult(weed_layer_t *layer, boolean un) {
   if (!un) flags |= WEED_LAYER_ALPHA_PREMULT;
   else if (flags & WEED_LAYER_ALPHA_PREMULT) flags ^= WEED_LAYER_ALPHA_PREMULT;
 
-  if (flags == 0) weed_leaf_delete(layer, WEED_LEAF_FLAGS);
-  else weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
+  if (flags == 0) weed_leaf_delete(layer, LIVES_LEAF_HOST_FLAGS);
+  else weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, flags);
 }
 
 
@@ -10751,17 +10753,17 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   } else {
     if (!weed_palette_has_alpha(inpl) && weed_palette_has_alpha(outpl)) {
       flags |= WEED_LAYER_ALPHA_PREMULT;
-      weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
+      weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, flags);
     }
   }
 
   if (weed_palette_has_alpha(inpl) && !(weed_palette_has_alpha(outpl)) && (flags & WEED_LAYER_ALPHA_PREMULT)) {
     flags ^= WEED_LAYER_ALPHA_PREMULT;
-    if (flags == 0) weed_leaf_delete(layer, WEED_LEAF_FLAGS);
-    else weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
+    if (flags == 0) weed_leaf_delete(layer, LIVES_LEAF_HOST_FLAGS);
+    else weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, flags);
   }
 
-  if (weed_get_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, &error) == WEED_TRUE)
+  if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, &error) == WEED_TRUE)
     contig = TRUE;
 
   width = weed_layer_get_width(layer);
@@ -11131,11 +11133,11 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       break;
     case WEED_PALETTE_YUV420P:
     case WEED_PALETTE_YVU420P:
-      if (weed_get_int_value(layer, WEED_LEAF_PIXEL_BITS, NULL) == 16) width >>= 1;
+      if (weed_get_int_value(layer, LIVES_LEAF_PIXEL_BITS, NULL) == 16) width >>= 1;
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
       ostrides = weed_layer_get_rowstrides(layer, NULL);
-      if (weed_get_int_value(layer, WEED_LEAF_PIXEL_BITS, NULL) == 16) width = -width;
+      if (weed_get_int_value(layer, LIVES_LEAF_PIXEL_BITS, NULL) == 16) width = -width;
       convert_rgb_to_yuv420_frame(gusrc, width, height, irowstride, ostrides, gudest_array, FALSE,
                                   FALSE, WEED_YUV_SAMPLING_DEFAULT, oclamping);
       weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, WEED_YUV_SAMPLING_DEFAULT);
@@ -12543,8 +12545,8 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *laye
 
         if (!gamma_lut) return TRUE;
 
-        //for (int i = nfx_threads - 1; i >= 0; i--) {
-        for (int i = nfx_threads - 1; i >= 0; i--) {
+        //for (int i = nfx_threads - 1; i--;) {
+        for (int i = nfx_threads - 1; i--;) {
           dheight = xdheight;
 
           if ((pixels + dheight * i * orowstride) < end) {
@@ -12620,11 +12622,11 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
 
   palette = weed_layer_get_palette(layer);
 
-  if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC) && (!realpalette || weed_palette_is_pixbuf_palette(palette))) {
+  if (weed_plant_has_leaf(layer, LIVES_LEAF_PIXBUF_SRC) && (!realpalette || weed_palette_is_pixbuf_palette(palette))) {
     // our layer pixel_data originally came from a pixbuf, so just nullify the layer and return the original pixbuf
-    pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, NULL);
+    pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, LIVES_LEAF_PIXBUF_SRC, NULL);
     weed_layer_nullify_pixel_data(layer);
-    weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
+    weed_leaf_delete(layer, LIVES_LEAF_PIXBUF_SRC);
     return pixbuf;
   }
 
@@ -12634,7 +12636,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
     layer = create_blank_layer(layer, NULL, 0, 0, WEED_PALETTE_END);
   }
 
-  if (weed_plant_has_leaf(layer, "bblockalloc")) nocheat = TRUE;
+  if (weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC)) nocheat = TRUE;
 
   do {
     width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(palette);
@@ -12869,7 +12871,7 @@ boolean compact_rowstrides(weed_layer_t *layer) {
     }
   }
 
-  if (nplanes > 1) weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
+  if (nplanes > 1) weed_set_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
   weed_layer_free(old_layer);
   lives_free(pixel_data);
   lives_free(new_pixel_data);
@@ -13748,7 +13750,7 @@ boolean pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
     in_pixel_data = (void *)lives_pixbuf_get_pixels(pixbuf);
     weed_layer_pixel_data_free(layer);
     weed_layer_set_pixel_data(layer, in_pixel_data);
-    weed_set_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, pixbuf);
+    weed_set_voidptr_value(layer, LIVES_LEAF_PIXBUF_SRC, pixbuf);
     palette = weed_layer_get_palette(layer);
     if (weed_palette_is_rgb(palette)) weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
     return TRUE;
@@ -13850,8 +13852,8 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
 
   int i;
 
-  if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC)) {
-    surf = (lives_painter_surface_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_SURFACE_SRC, NULL);
+  if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
+    surf = (lives_painter_surface_t *)weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
   } else {
     width = weed_layer_get_width(layer);
     pal = weed_layer_get_palette(layer);
@@ -13873,7 +13875,7 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
     orowstride = lives_painter_format_stride_for_width(cform, width);
     src = (uint8_t *)weed_layer_get_pixel_data(layer);
 
-    if (irowstride == orowstride && !weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC) &&
+    if (irowstride == orowstride && !weed_plant_has_leaf(layer, LIVES_LEAF_PIXBUF_SRC) &&
         !weed_plant_has_leaf(layer, WEED_LEAF_HOST_ORIG_PDATA)) {
       pixel_data = src;
     } else {
@@ -13888,12 +13890,12 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
     }
 
     if (weed_palette_has_alpha(pal)) {
-      int flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, NULL);
+      int flags = weed_get_int_value(layer, LIVES_LEAF_HOST_FLAGS, NULL);
       if (!(flags & WEED_LAYER_ALPHA_PREMULT)) {
         // if we have post-multiplied alpha, pre multiply
         alpha_unpremult(layer, FALSE);
         flags |= WEED_LAYER_ALPHA_PREMULT;
-        weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
+        weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, flags);
       }
     }
     surf = lives_painter_image_surface_create_for_data(pixel_data, cform, width, height, orowstride);
@@ -13905,7 +13907,7 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
   g_print("VALaa1 = %d %p\n", cairo_surface_get_reference_count(surf), surf);
 #endif
   weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, lives_painter_image_surface_get_data(surf));
-  weed_set_voidptr_value(layer, WEED_LEAF_HOST_SURFACE_SRC, surf);
+  weed_set_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, surf);
   return cairo;
 }
 
@@ -13923,15 +13925,15 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_layer_t *layer) {
   /// flush to ensure all writing to the image surface was done
   lives_painter_surface_flush(surface);
 
-  if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC)) {
-    xsurface = (lives_painter_surface_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_SURFACE_SRC, NULL);
+  if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
+    xsurface = (lives_painter_surface_t *)weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
   }
   if (xsurface != surface) weed_layer_pixel_data_free(layer);
 
   src = lives_painter_image_surface_get_data(surface);
 
   weed_layer_set_pixel_data(layer, src);
-  weed_set_voidptr_value(layer, WEED_LEAF_HOST_SURFACE_SRC, surface);
+  weed_set_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, surface);
 
 #ifdef DEBUG_CAIRO_SURFACE
   g_print("VALaa2 = %d %p\n", cairo_surface_get_reference_count(surface), surface);
@@ -14029,7 +14031,7 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
       } else bad++;
     }
     layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-    weed_set_int_value(layer, WEED_LEAF_HOST_FLAGS, LIVES_LAYER_LOAD_IF_NEEDS_RESIZE);
+    weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, LIVES_LAYER_LOAD_IF_NEEDS_RESIZE);
     if (!weed_layer_create_from_file_progressive(layer, fname, width, height, WEED_PALETTE_END,
         get_image_ext_for_type(ximgtype))) {
       lives_free(fname);
@@ -14199,11 +14201,11 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
     weed_leaf_copy_or_delete(layer, WEED_LEAF_WIDTH, slayer);
     weed_leaf_copy_or_delete(layer, WEED_LEAF_CURRENT_PALETTE, slayer);
     if (pd_array) {
-      weed_leaf_copy_or_delete(layer, "bblockalloc", slayer);
-      weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC, slayer);
+      weed_leaf_copy_or_delete(layer, LIVES_LEAF_BBLOCKALLOC, slayer);
+      weed_leaf_copy_or_delete(layer, LIVES_LEAF_PIXBUF_SRC, slayer);
       weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_ORIG_PDATA, slayer);
-      weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_SURFACE_SRC, slayer);
-      weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, slayer);
+      weed_leaf_copy_or_delete(layer, LIVES_LEAF_SURFACE_SRC, slayer);
+      weed_leaf_copy_or_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, slayer);
     }
     if (pd_array) {
       if (weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA,
@@ -14212,7 +14214,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
   }
 
   weed_leaf_copy_or_delete(layer, WEED_LEAF_GAMMA_TYPE, slayer);
-  weed_leaf_copy_or_delete(layer, WEED_LEAF_FLAGS, slayer);
+  weed_leaf_copy_or_delete(layer, LIVES_LEAF_HOST_FLAGS, slayer);
   weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_CLAMPING, slayer);
   weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_SUBSPACE, slayer);
   weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_SAMPLING, slayer);
@@ -14234,9 +14236,9 @@ LIVES_GLOBAL_INLINE int weed_layer_count_refs(weed_layer_t *layer) {
 
    we do not free if WEED_LEAF_HOST_ORIG_PDATA is set (data is an alpha in which "belongs" to another out param)
 
-   take care of WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS
-   take care of WEED_LEAF_HOST_PIXBUF_SRC
-   take care of WEED_LEAF_HOST_SURFACE_SRC
+   take care of LIVES_LEAF_PIXEL_DATA_CONTIGUOUS
+   take care of LIVES_LEAF_PIXBUF_SRC
+   take care of LIVES_LEAF_SURFACE_SRC
 
    sets WEED_LEAF_PIXEL_DATA to NULL for the layer
 
@@ -14255,20 +14257,20 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 
   weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
 
-  if (weed_get_boolean_value(layer, "bblockalloc", NULL) == WEED_TRUE) {
-    weed_leaf_delete(layer, "bblockalloc");
+  if (weed_get_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, NULL) == WEED_TRUE) {
+    weed_leaf_delete(layer, LIVES_LEAF_BBLOCKALLOC);
     free_bigblock(weed_layer_get_pixel_data(layer));
     weed_layer_nullify_pixel_data(layer);
   } else {
     if ((pixel_data = weed_layer_get_pixel_data_planar(layer, &pd_elements)) != NULL) {
       if (pd_elements > 0) {
-        if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
-          LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, NULL);
+        if (weed_plant_has_leaf(layer, LIVES_LEAF_PIXBUF_SRC)) {
+          LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, LIVES_LEAF_PIXBUF_SRC, NULL);
           if (pixbuf) lives_widget_object_unref(pixbuf);
         } else {
-          if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC)) {
+          if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
             lives_painter_surface_t *surface = (lives_painter_surface_t *)weed_get_voidptr_value(layer,
-                                               WEED_LEAF_HOST_SURFACE_SRC, NULL);
+                                               LIVES_LEAF_SURFACE_SRC, NULL);
             if (surface) {
               // this is where most surfaces die, as we convert from BGRA -> RGB
               uint8_t *pdata = lives_painter_image_surface_get_data(surface);
@@ -14281,7 +14283,7 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
               lives_free(pdata);
             }
           } else {
-            if (weed_get_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE) {
+            if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE) {
               pd_elements = 1;
             }
             for (int i = 0; i < pd_elements; i++) {
@@ -14294,9 +14296,9 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
       }
     }
   }
-  weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
-  weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
-  weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
+  weed_leaf_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
+  weed_leaf_delete(layer, LIVES_LEAF_PIXBUF_SRC);
+  weed_leaf_delete(layer, LIVES_LEAF_SURFACE_SRC);
 }
 
 

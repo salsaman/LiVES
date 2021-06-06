@@ -216,6 +216,18 @@ size_t lives_fread_string(char *buff, size_t stlen, const char *fname) {
 }
 
 
+char *lives_fread_line(const char *fname) {
+  char buff[DEF_BUFFSIZE];
+  FILE *infofile = fopen(fname, "r");
+  if (infofile) {
+    char *rets = lives_fgets(buff, DEF_BUFFSIZE, infofile);
+    fclose(infofile);
+    if (rets) return lives_strdup(rets);
+  }
+  return NULL;
+}
+
+
 lives_file_buffer_t *find_in_file_buffers(int fd) {
   lives_file_buffer_t *fbuff = NULL;
   LiVESList *fblist;

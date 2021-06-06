@@ -2799,7 +2799,10 @@ void create_LiVES(void) {
     lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Equal, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                               lives_cclosure_new(LIVES_GUI_CALLBACK(rte_on_off_callback), LIVES_INT_TO_POINTER(11), NULL));
   }
-
+  if (prefs->rte_keys_virtual > 11) {
+    lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), GDK_KEY_exclam, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                              lives_cclosure_new(LIVES_GUI_CALLBACK(rte_on_off_callback), LIVES_INT_TO_POINTER(12), NULL));
+  }
   if (new_lives) {
     lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_DELETE_EVENT,
                          LIVES_GUI_CALLBACK(on_LiVES_delete_event), NULL);
@@ -2823,7 +2826,6 @@ void create_LiVES(void) {
                        LIVES_INT_TO_POINTER(LIVES_DEVICE_VCD));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_loc), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_open_loc_activate), NULL);
-  //#ifdef HAVE_WEBM
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->open_utube), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_open_utube_activate), NULL);
 

@@ -785,6 +785,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   procw = (xprocess *)(lives_calloc(sizeof(xprocess), 1));
 
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
+  lives_widget_set_minimum_size(procw->processing, DEF_DIALOG_WIDTH * .75, DEF_DIALOG_HEIGHT >> 1);
 
   lives_window_set_decorated(LIVES_WINDOW(procw->processing), FALSE);
 
@@ -885,6 +886,7 @@ xprocess *create_processing(const char *text) {
   procw->frac_done = -1.;
 
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
+  lives_widget_set_minimum_size(procw->processing, DEF_DIALOG_WIDTH * .75, DEF_DIALOG_HEIGHT >> 1);
 
   lives_window_set_decorated(LIVES_WINDOW(procw->processing), FALSE);
 
@@ -4017,7 +4019,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
   lives_rfx_t *rfx;
   char **filt = NULL;
   char *dirname = NULL, *fname, *tmp, *def_dir = NULL;
-  boolean is_dir = TRUE, free_def_dir = FALSE, show_hidden = FALSE, free_filt = FALSE;
+  boolean is_dir = FALSE, free_def_dir = FALSE, show_hidden = FALSE, free_filt = FALSE;
   int filesel_type = LIVES_FILE_SELECTION_UNDEFINED;
 
   if (button) {
@@ -4049,6 +4051,8 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
   /// take the filename from the text entry widget
   if (LIVES_IS_TEXT_VIEW(tentry)) fname = lives_text_view_get_text(LIVES_TEXT_VIEW(tentry));
   else fname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(tentry)));
+
+  g_print("GOT FNAME %s\n", fname);
 
   /// TODO: only do this for directory mode, blank text is valid filename
   if (is_dir) {
@@ -4253,17 +4257,18 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
 
   if (!dirname && !fold) return;
 
-  if (diss && diss->selbut) {
-    if (lives_file_test(dirname, LIVES_FILE_TEST_IS_REGULAR)) {
-      lives_widget_set_sensitive(diss->selbut, FALSE);
-      return;
+  if (act != LIVES_FILE_CHOOSER_ACTION_OPEN) {
+    if (diss && diss->selbut) {
+      if (lives_file_test(dirname, LIVES_FILE_TEST_IS_REGULAR)) {
+        lives_widget_set_sensitive(diss->selbut, FALSE);
+        return;
+      }
     }
-  }
-
-  tmp = lives_build_path(dirname, extra_dir, NULL);
-  if (lives_file_test(tmp, LIVES_FILE_TEST_IS_DIR)) {
-    no = TRUE;
-    gtk_file_chooser_select_filename(chooser, tmp);
+    tmp = lives_build_path(dirname, extra_dir, NULL);
+    if (lives_file_test(tmp, LIVES_FILE_TEST_IS_DIR)) {
+      no = TRUE;
+      gtk_file_chooser_select_filename(chooser, tmp);
+    }
   }
 
 #ifdef GUI_GTK
@@ -4335,7 +4340,7 @@ static void fc_folder_changed(LiVESFileChooser * chooser, livespointer user_data
 
 #if GTK_CHECK_VERSION(3, 10, 0)
     struct fc_dissection *diss = (struct fc_dissection *)user_data;
-    if (diss && diss->treeview) set_child_colour(diss->treeview, TRUE);
+    //if (diss && diss->treeview) set_child_colour(diss->treeview, TRUE);
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
@@ -4487,6 +4492,8 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 #endif
   gtk_file_chooser_set_show_hidden(LIVES_FILE_CHOOSER(chooser), show_hidden);
 
+  SET_INT_DATA(chooser, FC_ACTION_KEY, act);
+
   if (filt) {
     int i;
     GtkFileFilter *filter = gtk_file_filter_new();
@@ -4508,7 +4515,8 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
           || act == LIVES_FILE_CHOOSER_ACTION_OPEN) {
         if (dir) {
           char *ffname = lives_build_filename(dir, fname, NULL);
-          gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname); // utf-8
+          if (act != LIVES_FILE_CHOOSER_ACTION_OPEN)
+            gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname); // utf-8
           gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser), ffname); // must be dir and file
           lives_free(ffname);
         } else {
@@ -4522,10 +4530,11 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
         }
         lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL,
                                         LIVES_GUI_CALLBACK(fc_sel_changed), diss);
-        lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL,
-                                        LIVES_GUI_CALLBACK(fc_folder_changed), diss);
+        if (act != LIVES_FILE_CHOOSER_ACTION_OPEN) {
+          lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL,
+                                          LIVES_GUI_CALLBACK(fc_folder_changed), diss);
 	// *INDENT-OFF*
-      }}}
+	}}}}
   // *INDENT-ON*
   else {
     /* if (act == LIVES_FILE_CHOOSER_ACTION_SAVE || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER */
@@ -4555,7 +4564,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     gtk_file_chooser_add_shortcut_folder(LIVES_FILE_CHOOSER(chooser), dir, NULL);
   }
 
-  if (extra_widget == LIVES_MAIN_WINDOW_WIDGET && LIVES_MAIN_WINDOW_WIDGET) {
+  if (extra_widget && extra_widget == LIVES_MAIN_WINDOW_WIDGET) {
     return (char *)chooser; // kludge to allow custom adding of extra widgets
   }
 
@@ -4958,6 +4967,21 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(flip_cdisk_bit),
                                   LIVES_INT_TO_POINTER(LIVES_CDISK_LEAVE_STAGING_DIRS));
+
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
+
+  checkbutton = lives_standard_check_button_new(_("Check files marked as 'Ignore'"),
+                !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_STAGING_DIRS), LIVES_BOX(hbox),
+                H_("In rare circumstances it is not possible to reload a clip during normal startup\n"
+                   "Such clips may be marked as 'Ignored' to prevent them from constantly trying to be reloaded.\n"
+                   "Enabling this option allows the cleanup / recovery process to consider these files\n"
+                   "again and make another attempt to recover them."));
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(flip_cdisk_bit),
+                                  LIVES_INT_TO_POINTER(LIVES_CDISK_CONSIDER_IGNORED));
 
   // resetbutton
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH, _("_Reset to Defaults"),

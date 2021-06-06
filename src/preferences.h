@@ -467,6 +467,7 @@ typedef struct {
 #define LIVES_CDISK_REMOVE_STALE_RECOVERY	(1 << 6)
 #define LIVES_CDISK_LEAVE_EMPTY_DIRS		(1 << 7)
 #define LIVES_CDISK_LEAVE_STAGING_DIRS		(1 << 8)
+#define LIVES_CDISK_CONSIDER_IGNORED		(1 << 9) // check files marked .ignore
 
 #define LIVES_CDISK_REMOVE_LOCK_FILES		(1 << 16) ///< not yet implemented - TODO
 #define LIVES_CDISK_REBUILD_ORDER_FILES		(1 << 17) ///< not yet implemented - TODO

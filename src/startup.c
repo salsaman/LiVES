@@ -12,6 +12,7 @@
 #include "startup.h"
 
 static boolean allpassed;
+static boolean nowait;
 
 LiVESWidget *assist;
 
@@ -585,20 +586,19 @@ static void chk_setenv_conf(LiVESToggleButton * b, livespointer data) {
   // *INDENT-ON*
 }
 
+
 void chk_jack_cfgx(LiVESWidget * w, LiVESEntry * e) {
   const char *server_cfgx = lives_entry_get_text(LIVES_ENTRY(e));
-  if (lives_file_test(server_cfgx, LIVES_FILE_TEST_IS_EXECUTABLE)) {
+  if (lives_file_test(server_cfgx, LIVES_FILE_TEST_EXISTS)) {
     char *srv_name = jack_parse_script(server_cfgx);
     hide_warn_image(w);
     if (srv_name) lives_entry_set_text(e, srv_name);
     lives_free(srv_name);
     return;
-  }
-  if (!lives_file_test(server_cfgx, LIVES_FILE_TEST_EXISTS)) {
+  } else {
     show_warn_image(w, _("The specified file does not exist"));
     return;
   }
-  show_warn_image(w, _("The specified file should be executable"));
 }
 
 
@@ -830,10 +830,6 @@ set_config:
 
   if (!cfg_exists) {
     show_warn_image(cfg_entry, _("The specified file does not exist"));
-  } else {
-    if (!lives_file_test(server_cfgx, LIVES_FILE_TEST_IS_EXECUTABLE)) {
-      show_warn_image(cfg_entry, _("The specified file should be executable"));
-    }
   }
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(cfg_entry), LIVES_WIDGET_CHANGED_SIGNAL,
@@ -1077,7 +1073,8 @@ retry:
         future_prefs->jack_opts |= JACK_OPTS_START_ASERVER;
         if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(scrpt_rb))) {
           const char *server_cfg = lives_entry_get_text(LIVES_ENTRY(cfg_entry));
-          if (!lives_file_test(server_cfg, LIVES_FILE_TEST_IS_EXECUTABLE)) {
+
+          if (!lives_file_test(server_cfg, LIVES_FILE_TEST_EXISTS)) {
             if (!do_jack_nonex_warn(server_cfg)) {
               goto retry;
             }
@@ -1546,15 +1543,17 @@ static void prep_test(LiVESWidget * table, int row) {
     lives_spinner_start(LIVES_SPINNER(test_spinners[row]));
   }
 #endif
-  for (int i = 0; i < 200; i++) {
-    lives_widget_context_update();
-    if (mainw->cancelled) break;
-    lives_usleep(2000);
+  if (!nowait) {
+    for (int i = 0; i < 200; i++) {
+      lives_widget_context_update();
+      if (mainw->cancelled) break;
+      lives_usleep(2000);
+    }
   }
 }
 
-static void add_test(LiVESWidget * table, int row, const char *ttext, boolean noskip) {
-  LiVESWidget *label = test_labels[row];
+static void add_test(LiVESWidget * table, int row, const char *ttext) {
+  LiVESWidget *label = test_labels[row], *image = NULL;
   boolean add_spinner = FALSE;
 
   if (!label) {
@@ -1567,8 +1566,7 @@ static void add_test(LiVESWidget * table, int row, const char *ttext, boolean no
     lives_label_set_text(LIVES_LABEL(label), ttext);
   }
 
-  if (!noskip) {
-    LiVESWidget *image = NULL;
+  if (!nowait) {
     label = test_reslabels[row];
     if (add_spinner) {
       if (!label) label = lives_standard_label_new(_("Waiting..."));
@@ -1577,36 +1575,22 @@ static void add_test(LiVESWidget * table, int row, const char *ttext, boolean no
         image = test_spinners[row] = lives_standard_spinner_new(FALSE);
       }
 #endif
-    } else {
-      char *txt;
-      if (test_spinners[row]) {
-        lives_widget_unparent(test_spinners[row]);
-        test_spinners[row] = NULL;
-      }
-
-      image = lives_image_new_from_stock(LIVES_STOCK_REMOVE, LIVES_ICON_SIZE_LARGE_TOOLBAR);
-
-      // TRANSLATORS - as in "skipped test"
-      txt = _("Skipped");
-      if (!label) label = lives_standard_label_new(txt);
-      else lives_label_set_text(LIVES_LABEL(label), txt);
-      lives_free(txt);
     }
-
-    if (!test_reslabels[row]) {
-      lives_table_attach(LIVES_TABLE(table), label, 1, 2, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
-      //lives_widget_show(label);
-      test_reslabels[row] = label;
-    }
-
-    if (image) {
-      lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
-    }
-    lives_widget_show_all(table);
   }
+
+  if (!test_reslabels[row]) {
+    lives_table_attach(LIVES_TABLE(table), label, 1, 2, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
+    //lives_widget_show(label);
+    test_reslabels[row] = label;
+  }
+
+  if (image) {
+    lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
+  }
+  lives_widget_show_all(table);
+
 }
 
-static boolean nowait;
 
 static boolean pass_test(LiVESWidget * table, int row) {
   // TRANSLATORS - as in "passed test"
@@ -1732,8 +1716,8 @@ static void back_from_tests(LiVESWidget * dialog, livespointer button) {
 }
 
 static void skip_tests(LiVESWidget * dialog, livespointer button) {
-  SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_SKIP);
-  mainw->cancelled = CANCEL_USER;
+  nowait = TRUE;
+  lives_widget_set_sensitive(LIVES_WIDGET(button), FALSE);
 }
 
 
@@ -1797,6 +1781,7 @@ boolean do_startup_tests(boolean tshoot) {
   boolean success, success2, success3, success4;
   boolean imgext_switched;
   boolean add_skip = FALSE;
+  boolean onowait;
 
   LiVESResponseType response;
   int res;
@@ -1878,34 +1863,37 @@ rerun:
   table = lives_table_new(10, 4, FALSE);
   lives_container_add(LIVES_CONTAINER(dialog_vbox), table);
 
-  add_test(table, testcase, _("Checking for plugin presence"), FALSE);
+  add_test(table, testcase, _("Checking for plugin presence"));
 
   widget_opts.mnemonic_label = FALSE;
-  add_test(table, ++testcase, _("Checking for components under 'prefix_dir'"), FALSE);
+  add_test(table, ++testcase, _("Checking for components under 'prefix_dir'"));
   widget_opts.mnemonic_label = TRUE;
 
-  add_test(table, ++testcase, _("Checking for \"sox\" presence"), FALSE);
+  add_test(table, ++testcase, _("Checking for \"sox\" presence"));
 
   // test if sox can convert raw 44100 -> wav 22050
-  add_test(table, ++testcase, _("Checking if sox can convert audio"), FALSE);
+  add_test(table, ++testcase, _("Checking if sox can convert audio"));
 
-  add_test(table, ++testcase, _("Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"), FALSE);
+  add_test(table, ++testcase, _("Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"));
 
-  add_test(table, ++testcase, _("Checking if ???? can convert audio"), FALSE);
+  add_test(table, ++testcase, _("Checking if ???? can convert audio"));
 
 #ifdef ALLOW_PNG24
   msg = lives_strdup_printf(_("Checking if %s can decode to png"), "????");
 #else
   msg = lives_strdup_printf(_("Checking if %s can decode to png/alpha"), "????");
 #endif
-  add_test(table, ++testcase, msg, FALSE);
+  add_test(table, ++testcase, msg);
   lives_free(msg);
 
-  add_test(table, ++testcase, NULL, TRUE);
+  onowait = nowait;
+  nowait = FALSE;
+  add_test(table, ++testcase, NULL);
+  nowait = onowait;
 
-  add_test(table, ++testcase, _("Checking if ???? can decode to jpeg"), FALSE);
+  add_test(table, ++testcase, _("Checking if ???? can decode to jpeg"));
 
-  add_test(table, ++testcase, _("Checking for \"convert\" presence"), FALSE);
+  add_test(table, ++testcase, _("Checking for \"convert\" presence"));
 
   if (!tshoot) {
     msg = lives_strdup_printf(
@@ -2126,9 +2114,12 @@ rerun:
   lives_snprintf(prefs->video_open_command, PATH_MAX + 2, "\"%s\"", mppath);
   set_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command);
 
+  onowait = nowait;
+  nowait = success2;
   msg = lives_strdup_printf(_("Checking if %s can convert audio"), mp_cmd);
-  add_test(table, ++testcase, msg, success2);
+  add_test(table, ++testcase, msg);
   lives_free(msg);
+  nowait = onowait;
   prep_test(table, testcase);
   if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
@@ -2171,8 +2162,11 @@ rerun:
   msg = lives_strdup_printf(_("Checking if %s can decode to png/alpha"), mp_cmd);
 #endif
 
-  add_test(table, ++testcase, msg, success2);
+  onowait = nowait;
+  nowait = success2;
+  add_test(table, ++testcase, msg);
   lives_free(msg);
+  nowait = onowait;
   prep_test(table, testcase);
   if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
@@ -2184,8 +2178,11 @@ rerun:
     lives_free(tmp);
 
     msg = lives_strdup_printf(_("Checking less rigorously"), mp_cmd);
-    add_test(table, ++testcase, msg, TRUE);
+    onowait = nowait;
+    nowait = TRUE;
+    add_test(table, ++testcase, msg);
     lives_free(msg);
+    nowait = onowait;
 
     res = 1;
 
@@ -2274,8 +2271,11 @@ rerun:
   if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
   msg = lives_strdup_printf(_("Checking if %s can decode to jpeg"), mp_cmd);
-  add_test(table, testcase, msg, success2);
+  onowait = nowait;
+  nowait = success2;
+  add_test(table, testcase, msg);
   lives_free(msg);
+  nowait = onowait;
   res = 1;
 
   if (!strcmp(mp_cmd, "mpv")) {
@@ -2361,6 +2361,7 @@ jpgdone:
     }
     lives_widget_show(label);
     lives_standard_button_set_label(LIVES_BUTTON(defbutton), LIVES_STOCK_LABEL_OK);
+    lives_widget_set_sensitive(defbutton, TRUE);
   } else {
     if (xlabel) lives_widget_set_opacity(xlabel, 1.);
 
@@ -2435,13 +2436,6 @@ cancld:
   if (mainw->multitrack) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
-  }
-
-  if (intent == LIVES_INTENTION_SKIP) {
-    if (mainw->splash_window) {
-      lives_widget_show(mainw->splash_window);
-    }
-    return TRUE;
   }
 
   return FALSE;

@@ -39,11 +39,16 @@ extern "C"
 #define baderr_print(...)
 #endif
 
+#ifdef ALLOW_UNUSED
+#undef ALLOW_UNUSED
+#endif
+
 #if defined __GNUC__
 #define ALLOW_UNUSED __attribute__((unused))
 #else
 #define ALLOW_UNUSED
 #endif
+
 
 #define LSD_TEXTLEN 64
 #define LSD_NAMELEN 16

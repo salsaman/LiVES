@@ -32,7 +32,14 @@
 // finalise (clip_data_free)
 ///----------------------------------------------------------
 
-#define PLUGIN_UID 0x646563702E6F6767ull
+#define PLUGIN_UID 0x646563702E6F6767
+
+// include once to get constants. decplugin.h will include it a second time.
+#include "lives-plugin.h"
+
+#define PLUGIN_NAME "LiVES ogg"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 2
 
 #define NEED_CLONEFUNC
 
@@ -70,10 +77,6 @@
 #endif
 
 static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boolean cont);
-
-static int vmaj = 1;
-static int vmin = 2;
-static const char *plugin_name = "LiVES ogg";
 
 static index_container_t **indices;
 static int nidxc;
@@ -2134,10 +2137,6 @@ static int64_t ogg_seek(lives_clip_data_t *cdata, int64_t tframe, int64_t ppos_l
 
 //////////////////////////////////////////
 // std functions
-
-const lives_plugin_id_t *get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
-}
 
 
 const char *module_check_init(void) {

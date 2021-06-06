@@ -1588,6 +1588,7 @@ typedef struct {
   boolean recoverable_layout;
   boolean invalid_clips;
   boolean recovering_files;
+  boolean hard_recovery;
   boolean recording_recovered;
 
   boolean unordered_blocks; ///< are we recording unordered blocks ?

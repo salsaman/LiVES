@@ -3,6 +3,15 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+
+#define PLUGIN_UID 0XB2D49B695EC62B4D
+
+#include "lives-plugin.h"
+
+#define PLUGIN_NAME "LiVES ogg/theora/vorbis stream"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 0
+
 #include "videoplugin.h"
 
 #include <stdio.h>
@@ -18,10 +27,6 @@ static int palette_list[2];
 
 static int clampings[3];
 static int myclamp;
-
-static int vmaj = 1;
-static int vmin = 0;
-const char *plugin_name = "LiVES ogg/theora/vorbis stream";
 
 static boolean(*render_fn)(int hsize, int vsize, void **pixel_data);
 boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data);
@@ -154,11 +159,6 @@ const char *module_check_init(void) {
 }
 
 
-const lives_plugin_id_t *get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
-}
-
-
 const char *get_description(void) {
   return "The oggstream plugin provides realtime encoding to ogg/theora/vorbis format.\nIt requires ffmpeg2theora, oggTranscode and oggJoin.\nThe output file can be sent to a pipe or a file.\nNB: oggTranscode can be downloaded as part of oggvideotools 0.8a\nhttp://sourceforge.net/projects/oggvideotools/files/\n";
 }
@@ -184,7 +184,7 @@ const int *get_audio_fmts() {
 }
 
 
-const char *get_init_rfx(lives_intentcap_t *icaps) {
+const char *get_init_rfx(plugin_intentcap_t *icaps) {
   char homedir[PATH_MAX];
 
   snprintf(homedir, PATH_MAX, "%s", getenv("HOME"));

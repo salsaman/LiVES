@@ -1003,7 +1003,7 @@ void add_resnn_label(LiVESDialog *dialog);
 
 void cancel_process(boolean visible);
 
-void update_progress(boolean visible);
+void update_progress(boolean visible, int clipno);
 void do_threaded_dialog(const char *translated_text, boolean has_cancel);
 void end_threaded_dialog(void);
 void threaded_dialog_spin(double fraction);
@@ -1093,7 +1093,7 @@ boolean resize_message_area(livespointer data);
 boolean lazy_startup_checks(void *data);
 
 #define is_layer_ready(layer) (weed_get_boolean_value((layer), LIVES_LEAF_THREAD_PROCESSING, NULL) == WEED_FALSE \
-			       && weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL) == NULL)
+			       && weed_get_voidptr_value(layer, LIVES_LEAF_RESIZE_THREAD, NULL) == NULL)
 
 boolean pull_frame(weed_layer_t *, const char *image_ext, ticks_t tc);
 void pull_frame_threaded(weed_layer_t *, const char *img_ext, ticks_t tc, int width, int height);

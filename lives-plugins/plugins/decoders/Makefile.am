@@ -155,4 +155,4 @@ endif
 
 decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(flv_libs) $(asf_libs) $(mkv_libs) $(mpegts_libs) $(zzavformat_libs)
 
-EXTRA_DIST = decplugin.h libav_helper.h
+EXTRA_DIST = decplugin.h libav_helper.h lives-plugin.h

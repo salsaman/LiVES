@@ -501,6 +501,7 @@ boolean load_frame_image(frames_t frame) {
               goto lfi_done;
             }
             jack_get_rec_avals(mainw->jackd);
+            g_print("GOT SEEK %f\n", mainw->rec_aseek);
           }
 #endif
 #ifdef HAVE_PULSE_AUDIO
@@ -2286,10 +2287,12 @@ int process_one(boolean visible) {
   boolean show_frame = FALSE;
   boolean did_switch = FALSE;
   int old_current_file, old_playing_file;
+  lives_cancel_t cancelled = CANCEL_NONE;
 #ifdef ENABLE_PRECACHE
   int delta = 0;
 #endif
-  int aplay_file = 0;
+  int proc_file = -1;
+  int aplay_file = -1;
 #ifdef ADJUST_AUDIO_RATE
   double audio_stretch = 1.0;
   ticks_t audio_ticks = 0;
@@ -2331,7 +2334,8 @@ int process_one(boolean visible) {
       }
     }
     if (mainw->lock_audio_checkbutton)
-      aud_lock_act(LIVES_TOGGLE_TOOL_BUTTON(mainw->lock_audio_checkbutton), NULL);
+      aud_lock_act(NULL, LIVES_INT_TO_POINTER(lives_toggle_tool_button_get_active
+                                              (LIVES_TOGGLE_TOOL_BUTTON(mainw->lock_audio_checkbutton))));
   }
 #endif
 
@@ -2486,7 +2490,7 @@ switch_point:
     if (!IS_VALID_CLIP(mainw->playing_file)) {
       if (IS_VALID_CLIP(mainw->new_clip)) goto switch_point;
       mainw->cancelled = CANCEL_INTERNAL_ERROR;
-      cancel_process(visible);
+      cancel_process(FALSE);
       return ONE_MILLION + mainw->cancelled;
     }
 
@@ -2564,7 +2568,7 @@ switch_point:
     lives_widget_context_update();
 
     if (mainw->cancelled == CANCEL_NONE) return 0;
-    cancel_process(visible);
+    cancel_process(FALSE);
     return mainw->cancelled;
   }
 
@@ -3266,68 +3270,78 @@ switch_point:
     // *INDENT-ON*
   if (!spare_cycles) get_proc_loads(FALSE);
 
+  cancelled = THREADVAR(cancelled) = mainw->cancelled;
+
 proc_dialog:
 
   if (visible) {
+    proc_file = THREADVAR(proc_file) = mainw->current_file;
+    sfile = mainw->files[proc_file];
     if (!mainw->proc_ptr) {
       // fixes a problem with opening preview with bg generator
-      if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_NO_PROPOGATE;
+      if (cancelled == CANCEL_NONE) {
+        cancelled = THREADVAR(cancelled) = mainw->cancelled = CANCEL_NO_PROPOGATE;
+      }
     } else {
       if (LIVES_IS_SPIN_BUTTON(mainw->framedraw_spinbutton))
         lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), 1,
                                     mainw->proc_ptr->frames_done);
       // set the progress bar %
-      update_progress(visible);
+      update_progress(visible, proc_file);
     }
-  }
+  } else proc_file = THREADVAR(proc_file) = mainw->playing_file;
 
-  if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
-    lives_rfx_t *xrfx;
+  cancelled = THREADVAR(cancelled) = mainw->cancelled;
+  if (LIVES_LIKELY(cancelled == CANCEL_NONE)) {
+    if (proc_file != mainw->current_file) return 0;
+    else {
+      lives_rfx_t *xrfx;
 
-    if ((xrfx = (lives_rfx_t *)mainw->vrfx_update) != NULL && fx_dialog[1]) {
-      // the audio thread wants to update the parameter window
-      mainw->vrfx_update = NULL;
-      update_visual_params(xrfx, FALSE);
+      if ((xrfx = (lives_rfx_t *)mainw->vrfx_update) != NULL && fx_dialog[1]) {
+        // the audio thread wants to update the parameter window
+        mainw->vrfx_update = NULL;
+        update_visual_params(xrfx, FALSE);
+      }
+
+      // the audio thread wants to update the parameter scroll(s)
+      if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
+
+      /// we are permitted to switch clips here under very restricitive circumstances, e.g when opening a clip
+      if (mainw->cs_permitted) {
+        mainw->cs_is_permitted = TRUE;
+        old_current_file = mainw->current_file;
+      }
+
+      if (mainw->currticks - last_anim_ticks > ANIM_LIM || mainw->currticks < last_anim_ticks) {
+        // a segfault here can indicate memory corruption in an FX plugin
+        last_anim_ticks = mainw->currticks;
+        lives_widget_context_update();
+      }
+
+      //#define LOAD_ANALYSE_TICKS MILLIONS(10)
+
+      /* if (mainw->currticks - last_ana_ticks > LOAD_ANALYSE_TICKS) { */
+      /*   cpu_pressure = analyse_cpu_stats(); */
+      /*   last_ana_ticks = mainw->currticks; */
+      /* } */
+
+      /// if we did switch clips then cancel the dialog without cancelling the background process
+      if (mainw->cs_is_permitted) {
+        mainw->cs_is_permitted = FALSE;
+        if (mainw->current_file != old_current_file) mainw->cancelled = CANCEL_NO_PROPOGATE;
+      }
+
+      if (!CURRENT_CLIP_IS_VALID) {
+        if (IS_VALID_CLIP(mainw->new_clip)) goto switch_point;
+        mainw->cancelled = CANCEL_INTERNAL_ERROR;
+      }
+
+      if (mainw->cancelled != CANCEL_NONE) {
+        cancel_process(FALSE);
+        return ONE_MILLION + mainw->cancelled;
+      }
+      return 0;
     }
-
-    // the audio thread wants to update the parameter scroll(s)
-    if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
-
-    /// we are permitted to switch clips here under very restricitive circumstances, e.g when opening a clip
-    if (mainw->cs_permitted) {
-      mainw->cs_is_permitted = TRUE;
-      old_current_file = mainw->current_file;
-    }
-
-    if (mainw->currticks - last_anim_ticks > ANIM_LIM || mainw->currticks < last_anim_ticks) {
-      // a segfault here can indicate memory corruption in an FX plugin
-      last_anim_ticks = mainw->currticks;
-      lives_widget_context_update();
-    }
-
-    //#define LOAD_ANALYSE_TICKS MILLIONS(10)
-
-    /* if (mainw->currticks - last_ana_ticks > LOAD_ANALYSE_TICKS) { */
-    /*   cpu_pressure = analyse_cpu_stats(); */
-    /*   last_ana_ticks = mainw->currticks; */
-    /* } */
-
-    /// if we did switch clips then cancel the dialog without cancelling the background process
-    if (mainw->cs_is_permitted) {
-      mainw->cs_is_permitted = FALSE;
-      if (mainw->current_file != old_current_file) mainw->cancelled = CANCEL_NO_PROPOGATE;
-    }
-
-    if (!CURRENT_CLIP_IS_VALID) {
-      if (IS_VALID_CLIP(mainw->new_clip)) goto switch_point;
-      mainw->cancelled = CANCEL_INTERNAL_ERROR;
-    }
-
-    if (mainw->cancelled != CANCEL_NONE) {
-      cancel_process(visible);
-      return ONE_MILLION + mainw->cancelled;
-    }
-    return 0;
   }
 
   if (LIVES_IS_PLAYING) {
@@ -3337,6 +3351,7 @@ proc_dialog:
   }
 
   cancel_process(visible);
+  //skipit:
 
   return 2000000 + mainw->cancelled;
 }

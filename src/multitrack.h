@@ -595,6 +595,8 @@ struct _mt {
 
   boolean auto_reloading;
 
+  boolean auto_zoom;
+
   weed_plant_t *fm_edit_event;
   weed_plant_t *moving_fx;
 

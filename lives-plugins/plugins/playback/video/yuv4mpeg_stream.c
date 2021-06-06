@@ -3,6 +3,14 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+#define PLUGIN_UID 0X286FF3E3AC94A072
+
+#include "lives-plugin.h"
+
+#define PLUGIN_NAME "LiVES yuv4mpeg playback"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 1
+
 #include "videoplugin.h"
 
 #include <stdio.h>
@@ -12,9 +20,6 @@ static int palette_list[2];
 
 static int clampings[3];
 
-static int vmaj = 1;
-static int vmin = 1;
-const char *plugin_name = "LiVES yuv4mpeg playback";
 
 static boolean(*render_fn)(int hsize, int vsize, void **pixel_data);
 boolean render_frame_yuv420(int hsize, int vsize, void **pixel_data);
@@ -62,11 +67,6 @@ const char *module_check_init(void) {
   yuv4mpeg = yuv4mpeg_alloc();
 
   return NULL;
-}
-
-
-const lives_plugin_id_t *get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
 

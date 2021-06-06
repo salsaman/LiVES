@@ -316,6 +316,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
   // check if this parameter is part of a special window
   // as we are drawing the paramwindow
 
+  if (!param) return;
+
   if (rfx && rfx->status != RFX_STATUS_WEED && !(rfx->props & RFX_PROPS_MAY_RESIZE)
       && (rfx->num_in_channels > 0 || !(rfx->props & RFX_PROPS_BATCHG)))
     will_add_preview = TRUE;
@@ -413,7 +415,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       lives_widget_set_show_hide_with(widget, buttond);
       lives_widget_set_sensitive_with(widget, buttond);
 
-      lives_widget_destroy_with(buttond, tbox);
+      //lives_widget_destroy_with(buttond, tbox);
 
       lives_signal_sync_connect(LIVES_GUI_OBJECT(buttond), LIVES_WIDGET_FONT_SET_SIGNAL,
                                 LIVES_GUI_CALLBACK(font_set_cb), (livespointer)rfx);

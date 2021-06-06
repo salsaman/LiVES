@@ -6,9 +6,31 @@
 
 /// susbtitute memory functions. These must be real functions and not #defines since we need fn pointers
 
-#include <sys/mman.h>
+#include <sys/mman.h> // for mlock()
 
 #include "main.h"
+
+#ifdef USE_INTRINSICS
+/// intrinsics
+#if defined(_MSC_VER)
+/* Microsoft C/C++-compatible compiler */
+#include <intrin.h>
+// SSE SIMD intrinsics
+#include <xmmintrin.h>
+#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
+/* GCC-compatible compiler, targeting x86/x86-64 */
+// AVX SIMD intrinsics included
+#include <x86intrin.h>
+// SSE SIMD intrinsics
+#include <xmmintrin.h>
+#elif defined(__GNUC__) && defined(__ARM_NEON__)
+/* GCC-compatible compiler, targeting ARM with NEON */
+#include <arm_neon.h>
+#elif defined(__GNUC__) && defined(__IWMMXT__)
+/* GCC-compatible compiler, targeting ARM with WMMX */
+#include <mmintrin.h>
+#endif
+#endif
 
 #ifdef THRD_SPECIFIC
 //global-dynamic, local-dynamic, initial-exec, local-exec
@@ -291,6 +313,10 @@ static volatile int used[NBIGBLOCKS];
 
 static int NBBLOCKS = 0;
 
+#ifdef BBL_TEST
+static int bbused = 0;
+#endif
+
 static pthread_mutex_t bigblock_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void bigblock_init(void) {
@@ -302,11 +328,17 @@ void bigblock_init(void) {
 }
 
 void *alloc_bigblock(size_t sizeb) {
-  if (sizeb >= BBLOCKSIZE) return NULL;
+  if (sizeb >= BBLOCKSIZE) {
+    if (prefs->show_dev_opts) g_print("msize req %lu > %lu, cannot use bblockalloc\n", sizeb, BBLOCKSIZE);
+    return NULL;
+  }
   pthread_mutex_lock(&bigblock_mutex);
   for (int i = 0; i < NBBLOCKS; i++) {
     if (!used[i]) {
       used[i] = 1;
+#ifdef BBL_TEST
+      bbused++;
+#endif
       pthread_mutex_unlock(&bigblock_mutex);
       return bigblocks[i];
     }
@@ -317,11 +349,17 @@ void *alloc_bigblock(size_t sizeb) {
 
 void *calloc_bigblock(size_t nmemb, size_t align) {
   void *start;
-  if (nmemb * align + align >= BBLOCKSIZE) return NULL;
+  if (nmemb * align + align >= BBLOCKSIZE) {
+    if (prefs->show_dev_opts) g_print("size req %lu > %lu, cannot use bblockalloc\n", nmemb * align + align, BBLOCKSIZE);
+    return NULL;
+  }
   pthread_mutex_lock(&bigblock_mutex);
   for (int i = 0; i < NBBLOCKS; i++) {
     if (!used[i]) {
       used[i] = 1;
+#ifdef BBL_TEST
+      bbused++;
+#endif
       pthread_mutex_unlock(&bigblock_mutex);
       start = (void *)((size_t)((size_t)((char *)bigblocks[i] + align - 1) / align) * align);
       lives_memset(start, 0, nmemb * align);
@@ -338,9 +376,48 @@ void *free_bigblock(void *bstart) {
     if ((char *)bstart >= (char *)bigblocks[i]
         && (char *)bstart - (char *)bigblocks[i] < BBLOCKSIZE) {
       used[i] = 0;
+#ifdef BBL_TEST
+      pthread_mutex_lock(&bigblock_mutex);
+      if (prefs->show_dev_opts) g_print("bblocks in use: %d\n", bbused);
+      bbused--;
+      pthread_mutex_unlock(&bigblock_mutex);
+#endif
       return NULL;
     }
   }
   abort();
   return NULL;
 }
+
+
+#ifdef USE_INTRINSICS
+double intrin_resample_vol(float *dst, size_t dst_skip, float *src, double offsd, double scale, float vol) {
+  // *dst = src[offs] * vol; dst += dst_skip; offs = rnd(offs + scale);
+  // returns: offs after last float
+  // load 4 vols
+  // load 4 src vals
+  // mult 4
+  // map dst back
+  float srcf[4], dstf[4];
+  __m128 srcv, dstv;
+  __m128 volsv = _mm_load1_ps(&vol);
+  off64_t offs;
+  int i;
+  for (i = 0; i < 3; i++) {
+    if (scale < 0.) {
+      offs = (off64_t)(offsd - .4999);
+    } else {
+      offs = (off64_t)(offsd + .4999);
+    }
+    srcf[i] = src[offs];
+    offsd += scale;
+  }
+  srcv = _mm_load_ps(srcf);
+  dstv = _mm_mul_ps(srcv, volsv);
+  _mm_store_ps(dstf, dstv);
+  for (i = 0; i < 3; i++) {
+    dst[dst_skip++] = dstf[i];
+  }
+  return offsd;
+}
+#endif

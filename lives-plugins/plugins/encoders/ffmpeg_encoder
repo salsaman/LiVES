@@ -88,6 +88,7 @@ if ($command eq "get_plugin_id") {
     printf "ffmpeg"; # name of encoder plugin
     print "2\n"; # encoder ver major
     print "16\n"; # encoder ver minor
+    print "1\n"; # devstate - recommended
     print "1"; # n_intentcaps
     print "encode|5";
 

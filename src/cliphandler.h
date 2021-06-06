@@ -447,12 +447,12 @@ void migrate_from_staging(int which);
 /// intents ////
 
 // aliases for object states
-#define CLIP_STATE_NOT_LOADED 	OBJECT_STATE_NULL
+#define CLIP_STATE_NOT_LOADED 	OBJECT_STATE_UNDEFINED
 #define CLIP_STATE_READY	OBJECT_STATE_NORMAL
 
 // txparams
 #define CLIP_PARAM_STAGING_DIR "staging_dir"
 
-lives_intentparams_t *get_txparams_for_clip(int which, lives_intention intent);
+lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intentcap_t *icaps);
 
 #endif

@@ -128,7 +128,7 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
 
   if (weed_palette_get_nplanes(ldev->current_palette) > 1 && !ldev->is_really_grey) {
     boolean contig = FALSE;
-    if (weed_get_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, &error) == WEED_TRUE) contig = TRUE;
+    if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, &error) == WEED_TRUE) contig = TRUE;
     pixel_data_planar_from_membuf(pixel_data, returned_buffer->data, sfile->hsize * sfile->vsize, ldev->current_palette, contig);
   } else {
     if (ldev->buffer_type == UNICAP_BUFFER_TYPE_SYSTEM) {

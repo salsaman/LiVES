@@ -572,7 +572,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
       lives_free(text);
       // we could list all affected layouts, which could potentially be a lot !
-      //mainw->affected_layouts_map=lives_list_append_unique(mainw->affected_layouts_map,array[0]);
+      //mainw->affected_layouts_map=lives_list_append_unique_str(mainw->affected_layouts_map,array[0]);
       lives_strfreev(array);
       lmap = lmap->next;
     }
@@ -583,7 +583,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
       text = lives_strdup_printf("%s\n", mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
       lives_free(text);
-      mainw->affected_layouts_map = lives_list_append_unique(mainw->affected_layouts_map,
+      mainw->affected_layouts_map = lives_list_append_unique_str(mainw->affected_layouts_map,
                                     mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
       mainw->affected_layout_marks = lives_list_append(mainw->affected_layout_marks,
@@ -597,7 +597,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
       text = lives_strdup_printf("%s\n", array[0]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
       lives_free(text);
-      mainw->affected_layouts_map = lives_list_append_unique(mainw->affected_layouts_map, array[0]);
+      mainw->affected_layouts_map = lives_list_append_unique_str(mainw->affected_layouts_map, array[0]);
       lives_strfreev(array);
       lmap = lmap->next;
     }
@@ -609,7 +609,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
       text = lives_strdup_printf("%s\n", mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
       lives_free(text);
-      mainw->affected_layouts_map = lives_list_append_unique(mainw->affected_layouts_map,
+      mainw->affected_layouts_map = lives_list_append_unique_str(mainw->affected_layouts_map,
                                     mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
       mainw->affected_layout_marks = lives_list_append(mainw->affected_layout_marks,
@@ -625,7 +625,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
         text = lives_strdup_printf("%s\n", array[0]);
         lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
         lives_free(text);
-        mainw->affected_layouts_map = lives_list_append_unique(mainw->affected_layouts_map, array[0]);
+        mainw->affected_layouts_map = lives_list_append_unique_str(mainw->affected_layouts_map, array[0]);
       }
       lives_strfreev(array);
       lmap = lmap->next;
@@ -638,7 +638,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
       text = lives_strdup_printf("%s\n", mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
       lives_free(text);
-      mainw->affected_layouts_map = lives_list_append_unique(mainw->affected_layouts_map,
+      mainw->affected_layouts_map = lives_list_append_unique_str(mainw->affected_layouts_map,
                                     mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
       mainw->affected_layout_marks = lives_list_append(mainw->affected_layout_marks,
@@ -653,7 +653,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
         text = lives_strdup_printf("%s\n", array[0]);
         lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
         lives_free(text);
-        mainw->affected_layouts_map = lives_list_append_unique(mainw->affected_layouts_map, array[0]);
+        mainw->affected_layouts_map = lives_list_append_unique_str(mainw->affected_layouts_map, array[0]);
       }
       lives_strfreev(array);
       lmap = lmap->next;
@@ -851,7 +851,7 @@ boolean get_frames_sizes(int fileno, frames_t frame, int *hsize, int *vsize) {
   lives_clip_t *sfile = mainw->files[fileno];
   weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   char *fname = make_image_file_name(sfile, frame, get_image_ext_for_type(sfile->img_type));
-  weed_set_int_value(layer, WEED_LEAF_HOST_FLAGS, LIVES_LAYER_GET_SIZE_ONLY);
+  weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, LIVES_LAYER_GET_SIZE_ONLY);
   if (!weed_layer_create_from_file_progressive(layer, fname, 0, 0, WEED_PALETTE_END,
       get_image_ext_for_type(sfile->img_type))) {
     lives_free(fname);

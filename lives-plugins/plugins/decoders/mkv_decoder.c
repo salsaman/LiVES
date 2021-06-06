@@ -28,7 +28,7 @@
    Specs available on the Matroska project page: http://www.matroska.org/.
 */
 
-#define PLUGIN_UID 0X646563702E6D6B76ull
+#define PLUGIN_UID 0XD2C0814086849A37
 
 #include <stdio.h>
 #include <string.h>
@@ -39,18 +39,14 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
-static int vmaj = 1;
-static int vmin = 4;
-const char *plugin_name = "LiVES mkv";
+#include "lives-plugin.h"
+
+#define PLUGIN_NAME "LiVES mkv"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 4
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
-#endif
-
-#ifndef HAVE_SYSTEM_WEED
-#include "../../../libweed/weed-palettes.h"
-#else
-#include <weed/weed-palettes.h>
 #endif
 
 #define HAVE_AVCODEC
@@ -1977,11 +1973,6 @@ const char *module_check_init(void) {
   nidxc = 0;
   pthread_mutex_init(&indices_mutex, NULL);
   return NULL;
-}
-
-
-const lives_plugin_id_t *get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
 

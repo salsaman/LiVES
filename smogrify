@@ -1685,7 +1685,7 @@ if (1) {
 	    # - the user chooses to disable instant opening
 	    # - all of the decoder plugins fail
 	    # - opening the audio track
-	    #$DEBUG_OPEN = 1;
+	    $DEBUG_OPEN = 1;
 
 	    unlink "$curworkdir/pause";
 
@@ -9834,14 +9834,19 @@ sub clean_workdir {
 	    print "is a directory...";
 	    my $norem = "$file/.noremove";
 	    my $ignore = "$file/.ignore";
+	    if ($opts & 0x200) {
+		if (-f $ignore) {
+		    unlink $ignore;
+		}
+	    }
 	    if (-f $norem || -f $ignore) {
 		if (-f $norem) {
 		    print STDERR "\nsmogrify: $file is marked for manual removal only\n";
 		    print "\n$file is marked for manual removal only\n";
 		}
 		else {
-		    print STDERR "\nsmogrify: $file is marked as ignored\n";
-		    print "\n$file is marked as ignored\n";
+		    print STDERR "\nsmogrify: $file is marked as ignored. Can be overridden with opt flagbit\n";
+		    print "\n$file is marked as ignored. You can override this by setting 'consider ignored files' in clear disk options.\n";
 		}
 		if ($new_work) {
 		    print STDERR "smogrify: moving contents of $workdir/$file\nto\n$new_work/$file\n";

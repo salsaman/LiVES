@@ -1,6 +1,6 @@
 // preferences.c
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 // functions dealing with getting/setting user preferences
@@ -376,7 +376,7 @@ int set_list_pref(const char *key, LiVESList *values) {
   while (xlist) {
     if (!string) string = lives_strdup((char *)xlist->data);
     else {
-      tmp = lives_strdup_printf("%s\n%s", string, (char *)xlist->data);
+      tmp = lives_strdup_printf("%s\n|%s", string, (char *)xlist->data);
       lives_free(string);
       string = tmp;
     }
@@ -1655,7 +1655,7 @@ success7:
 
 LiVESList *pref_factory_list(const char *prefidx, LiVESList * list) {
   // olist is what we return, varlist is what we set in settings
-  LiVESList *olist = list, *varlist = list;
+  LiVESList *olist = list, *varlist = NULL;
 
   if (prefsw) prefsw->ignore_apply = TRUE;
   if (!list) {
@@ -1665,40 +1665,18 @@ LiVESList *pref_factory_list(const char *prefidx, LiVESList * list) {
 
   if (!lives_strcmp(prefidx, PREF_DISABLED_DECODERS)) {
     // step through prefs->disabled_decoders
-    // first write the names (for backwards compat) and then the UIDs
-    //char *string1 = NULL, *string2 = NULL;
-    //char *tmp, *string;
     char *tmp;
-    varlist = NULL;
     for (; list; list = list->next) {
       const lives_decoder_sys_t *dpsys = (const lives_decoder_sys_t *)list->data;
       if (!dpsys || !dpsys->id) continue;
-      if (0 && prefs->back_compat) {
-        tmp = lives_strdup(dpsys->soname);
-        /* if (!string2) string2 = tmp; */
-        /* else string2 = lives_concat_sep(string2, "\n", tmp); */
-      }
       tmp = lives_strdup_printf("0X%016lX", dpsys->id->uid);
-      /* if (!string1) string = tmp; */
-      /* else string1 = lives_concat_sep(string1, "\n", tmp); */
       varlist = lives_list_append(varlist, tmp);
     }
-    //lives_list_free_all(&list);
-    /* } */
-    /* if (string2) { */
-    /*   if (string1) string2 = lives_concat_sep(string2, "\n", string1); */
-    /*   string = string2; */
-    /* } else { */
-    /*   if (string1) string = string1; */
-    /*   else string = lives_strdup(""); */
-    /* } */
-    /* list2 = lives_list_append(list2, string); */
-    //set_list_pref(prefidx, string);
     goto success2;
   }
 
 success2:
-  if (varlist != list) {
+  if (varlist) {
     set_list_pref(prefidx, varlist);
     lives_list_free_all(&varlist);
   }
@@ -2317,11 +2295,12 @@ boolean apply_prefs(boolean skip_warn) {
   ensure_isdir(workdir);
 
   // disabled_decoders
-  if (lists_differ(prefs->disabled_decoders, future_prefs->disabled_decoders, FALSE)) {
-    lives_list_free_all(&prefs->disabled_decoders);
+  if (future_prefs->disabled_decoders
+      && lists_differ(prefs->disabled_decoders, future_prefs->disabled_decoders, FALSE)) {
+    lives_list_free(prefs->disabled_decoders);
     prefs->disabled_decoders = future_prefs->disabled_decoders;
+    future_prefs->disabled_decoders = NULL;
     prefs->disabled_decoders = pref_factory_list(PREF_DISABLED_DECODERS, prefs->disabled_decoders);
-    future_prefs->disabled_decoders = lives_list_copy(prefs->disabled_decoders);
   }
 
   // stop xscreensaver
@@ -3616,7 +3595,7 @@ static void do_full_reset(LiVESWidget * widget, livespointer data) {
 static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
   int pos = lives_paned_get_position(p);
   while (!gtk_widget_get_mapped(w)) {
-    lives_paned_set_position(p, --pos);
+    if (pos > 10) lives_paned_set_position(p, --pos);
     lives_widget_context_update();
   }
   lives_paned_set_position(p, ++pos);
@@ -7173,7 +7152,6 @@ void on_preferences_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     return;
   }
 
-  future_prefs->disabled_decoders = lives_list_copy(prefs->disabled_decoders);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_widget_context_update();
 
@@ -7407,6 +7385,7 @@ void on_prefs_revert_clicked(LiVESButton * button, livespointer user_data) {
     lives_list_free(future_prefs->disabled_decoders);
     future_prefs->disabled_decoders = NULL;
   }
+
   saved_dialog = prefsw->prefs_dialog;
   saved_revertbutton = prefsw->revertbutton;
   saved_applybutton = prefsw->applybutton;

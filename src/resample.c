@@ -347,225 +347,245 @@ void pre_analyse(weed_plant_t *elist) {
                 // remove this one
 
                 break;
-              }
-            }
-          }
-        }
-      }
-    }
-    event = get_first_event(elist);
+		// *INDENT-OFF*
+              }}}}}
+    // *INDENT-ON*
+      event = get_first_event(elist);
 #endif
 
-    if (!prefs->rr_pre_smooth) return;
+      if (!prefs->rr_pre_smooth) return;
 
-    for (; event; event = get_next_event(event)) {
-      if (!WEED_EVENT_IS_AUDIO_FRAME(event)) continue;
-      enstate = audio_frame_to_atstate(event, &ntracks);
-      if (ntracks > 1) break;
-      etc = weed_event_get_timecode(event);
-
-      if (!last) {
-        last = event;
-        stc = etc;
-        ststate = enstate;
-        continue;
-      }
-
-      // we know the velocity from last aud. event, and current seekpos
-      // thus we can easily calculate the theoretical time we should arrive at
-      // seekpoint, and scale all timecodes accordingly
-
-      // after the final, we just add constat adj.
-
-      // alternately, we can adjust the audio velocity
-
-      /// for older lists we didn't set the seek point at audio off, so ignore those
-      if (ststate[0].vel != 0. && (enstate[0].vel != 0. || ev_api >= 122) && enstate[0].afile == ststate[0].afile) {
-        double dtime = (double)(etc - stc) / TICKS_PER_SECOND_DBL;
-        double tpos = ststate[0].seek + ststate[0].vel * dtime;
-        // ratio is real diff / est diff, e.g 1 / 2 we should go twice as fast
-        double ratio = fabs(enstate[0].seek - ststate[0].seek) / fabs(tpos - ststate[0].seek);
-        if (dtime >= READJ_MIN_TIME) {
-          if (ratio >= READJ_MIN_RATIO && ratio < READJ_MAX_RATIO) {
-            // now have calculated the ratio, we can backtrack to start audio event, and adjust tcs
-            // new_tc -> start_tc + diff / ratio
-            weed_timecode_t otc = 0;
-            for (xevent = last; xevent != event; xevent = get_next_event(xevent)) {
-              int etype = get_event_type(xevent);
-              otc = get_event_timecode(xevent);
-              dtime = (double)(otc - stc) / TICKS_PER_SECOND_DBL;
-              dtime *= ratio;
-              ntc = stc + offs + (ticks_t)(dtime * TICKS_PER_SECOND_DBL);
-              if (etype == WEED_EVENT_TYPE_FILTER_DEINIT) {
-                weed_timecode_t new_tc;
-                weed_plant_t *init_event
-                  = (weed_plant_t *)weed_get_voidptr_value(xevent, WEED_LEAF_INIT_EVENT, NULL);
-                if (weed_plant_has_leaf(init_event, "new_tc"))
-                  new_tc = weed_get_int64_value(init_event, "new_tc", NULL);
-                else
-                  new_tc = weed_event_get_timecode(init_event);
-                rescale_param_changes(elist, init_event, new_tc, xevent, ntc, 0.);
-                weed_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, "new_tc");
-                weed_leaf_delete(init_event, "new_tc");
-              }
-              if (etype == WEED_EVENT_TYPE_FILTER_INIT)
-                weed_set_int64_value(xevent, "new_tc", ntc);
-              else
-                weed_event_set_timecode(xevent, ntc);
-            }
-            offs += ntc - otc;
-          }
-        } else {
-          // if the diff between audio frames is small, better to adjust the velocity instead
-          if (ratio >= READJ_MIN_TRATIO && ratio < READJ_MAX_TRATIO) {
-            double aseeks[2];
-            aseeks[0] = ststate[0].seek;
-            aseeks[1] = ststate[0].vel * ratio;
-            weed_set_double_array(last, WEED_LEAF_AUDIO_SEEKS, 2, aseeks);
-          }
-        }
-      }
-      /// offs is what we will add to remaining events when we hit the end
-      lives_free(ststate);
-      ststate = enstate;
-      last = event;
-      stc = etc;
-    }
-
-    lives_freep((void **)&ststate);
-
-    // we hit the end, just add offs
-    for (xevent = last; xevent; xevent = get_next_event(xevent)) {
-      int etype = get_event_type(xevent);
-      tc = get_event_timecode(xevent);
-      ntc = tc + offs;
-      if (etype == WEED_EVENT_TYPE_FILTER_DEINIT) {
-        weed_timecode_t new_tc;
-        weed_plant_t *init_event
-          = (weed_plant_t *)weed_get_voidptr_value(xevent, WEED_LEAF_INIT_EVENT, NULL);
-        if (weed_plant_has_leaf(init_event, "new_tc"))
-          new_tc = weed_get_int64_value(init_event, "new_tc", NULL);
-        else
-          new_tc = weed_event_get_timecode(init_event);
-        rescale_param_changes(elist, init_event, new_tc, xevent, ntc, 0.);
-        weed_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, "new_tc");
-        weed_leaf_delete(init_event, "new_tc");
-      }
-      if (etype == WEED_EVENT_TYPE_FILTER_INIT)
-        weed_set_int64_value(xevent, "new_tc", ntc);
-      else
-        weed_event_set_timecode(xevent, ntc);
-    }
-
-
-#if 0
-    // pass1 : try to remove audio glitches. What we are looking for are small jumps in the audio position
-    // compared to where we should be theoretically
-
-    //
-
-    if (ev_api >= 122) {
       for (; event; event = get_next_event(event)) {
+        if (WEED_EVENT_IS_MARKER(event)) {
+          int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
+          if (marker_type == EVENT_MARKER_RECORD_START) {
+            // reset at recording break
+            lives_freep((void **)&ststate);
+            last = NULL;
+          }
+          continue;
+        }
+
         if (!WEED_EVENT_IS_AUDIO_FRAME(event)) continue;
         enstate = audio_frame_to_atstate(event, &ntracks);
         if (ntracks > 1) break;
         etc = weed_event_get_timecode(event);
-        sm = lives_calloc(1, sizeof(prequant_t));
 
-        if (ststate && enstate[0].afile == ststate[0].afile
-            && ststate[0].vel != 0. && enstate[0].vel != 0.)
-          sm->is_cont = TRUE;
+        if (!last) {
+          last = event;
+          stc = etc;
+          ststate = enstate;
+          continue;
+        }
 
-        sm->pos = ststate[0].seek;
-        sm->vel = ststate[0].vel;
-        sm->tc = etc;
-        smooth = lives_list_prepend(smooth, sm);
+        // we know the velocity from last aud. event, and current seekpos
+        // thus we can easily calculate the theoretical time we should arrive at
+        // seekpoint, and scale all timecodes accordingly
+
+        // after the final, we just add constat adj.
+
+        // alternately, we can adjust the audio velocity
+
+        /// for older lists we didn't set the seek point at audio off, so ignore those
+        if (ststate[0].vel != 0. && (enstate[0].vel != 0. || ev_api >= 122) && enstate[0].afile == ststate[0].afile) {
+          double dtime = (double)(etc - stc) / TICKS_PER_SECOND_DBL;
+          double tpos = ststate[0].seek + ststate[0].vel * dtime;
+          // ratio is real diff / est diff, e.g 1 / 2 we should go twice as fast
+          double ratio = fabs(enstate[0].seek - ststate[0].seek) / fabs(tpos - ststate[0].seek);
+          if (dtime >= READJ_MIN_TIME) {
+            if (ratio >= READJ_MIN_RATIO && ratio < READJ_MAX_RATIO) {
+              // now have calculated the ratio, we can backtrack to start audio event, and adjust tcs
+              // new_tc -> start_tc + diff / ratio
+              weed_timecode_t otc = 0;
+              for (xevent = last; xevent != event; xevent = get_next_event(xevent)) {
+                int etype = get_event_type(xevent);
+                otc = get_event_timecode(xevent);
+                dtime = (double)(otc - stc) / TICKS_PER_SECOND_DBL;
+                dtime *= ratio;
+                ntc = stc + offs + (ticks_t)(dtime * TICKS_PER_SECOND_DBL);
+                if (etype == WEED_EVENT_TYPE_FILTER_DEINIT) {
+                  weed_timecode_t new_tc;
+                  weed_plant_t *init_event
+                    = (weed_plant_t *)weed_get_voidptr_value(xevent, WEED_LEAF_INIT_EVENT, NULL);
+                  if (weed_plant_has_leaf(init_event, "new_tc"))
+                    new_tc = weed_get_int64_value(init_event, "new_tc", NULL);
+                  else
+                    new_tc = weed_event_get_timecode(init_event);
+                  rescale_param_changes(elist, init_event, new_tc, xevent, ntc, 0.);
+                  weed_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, "new_tc");
+                  weed_leaf_delete(init_event, "new_tc");
+                }
+                if (etype == WEED_EVENT_TYPE_FILTER_INIT)
+                  weed_set_int64_value(xevent, "new_tc", ntc);
+                else
+                  weed_event_set_timecode(xevent, ntc);
+              }
+              offs += ntc - otc;
+            }
+          } else {
+            // if the diff between audio frames is small, better to adjust the velocity instead
+            if (ratio >= READJ_MIN_TRATIO && ratio < READJ_MAX_TRATIO) {
+              double aseeks[2];
+              aseeks[0] = ststate[0].seek;
+              aseeks[1] = ststate[0].vel * ratio;
+              weed_set_double_array(last, WEED_LEAF_AUDIO_SEEKS, 2, aseeks);
+            }
+          }
+        }
+        /// offs is what we will add to remaining events when we hit the end
+        lives_free(ststate);
+        ststate = enstate;
+        last = event;
+        stc = etc;
       }
 
-      // pass 1, we adjust all velocities so we touch each actual point
-      // pass 2, we adjust posns. to reduce the vel. diff. at the point
-      // pass 3, we limit the deltas from original
-      // pass 4, we introduce intermediate points, halfway between a and b in time and pos
+      lives_freep((void **)&ststate);
 
-      if (smooth) {
-        smooth = lives_list_reverse(smooth);
+      // we hit the end, just add offs
+      for (xevent = last; xevent; xevent = get_next_event(xevent)) {
+        int etype = get_event_type(xevent);
+        tc = get_event_timecode(xevent);
+        ntc = tc + offs;
+        if (etype == WEED_EVENT_TYPE_FILTER_DEINIT) {
+          weed_timecode_t new_tc;
+          weed_plant_t *init_event
+            = (weed_plant_t *)weed_get_voidptr_value(xevent, WEED_LEAF_INIT_EVENT, NULL);
+          if (weed_plant_has_leaf(init_event, "new_tc"))
+            new_tc = weed_get_int64_value(init_event, "new_tc", NULL);
+          else
+            new_tc = weed_event_get_timecode(init_event);
+          rescale_param_changes(elist, init_event, new_tc, xevent, ntc, 0.);
+          weed_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, "new_tc");
+          weed_leaf_delete(init_event, "new_tc");
+        }
+        if (etype == WEED_EVENT_TYPE_FILTER_INIT)
+          weed_set_int64_value(xevent, "new_tc", ntc);
+        else
+          weed_event_set_timecode(xevent, ntc);
+      }
 
-        while (smooth && !done) {
-          double dtime, tpos, ratio;
-          LiSTList *list = smooth;
-          for (; list && list->next; list = list->next) {
-            prequant_t *pq = (prequant_t *)list->data, *pql;
-            if (!pq->is_cont || !list->prev) continue;
-            pqn = (prequant_t *)list->next->data;
-            dtime = (double)(pql->tc - pq->tc) / TICKS_PER_SECOND_DBL;
-            tpos = pq.seek + pq.vel * dtime;
-            // ratio is real diff / est diff, e.g 1 / 2 we should go half as fast
-            ratio = fabs(pqn.seek - pq.seek) / fabs(tpos - pq.seek);
-            if (ratio > 1.) {
-              // we should go slower, or else seek should be higher
-              // look at next change - if it should go slower, we make ours slower
-              // if it should go faster, we move the seek forwards a little
-              if (!list->next->next) {
-                // if last, don't change pos
+
+#if 0
+      // pass1 : try to remove audio glitches. What we are looking for are small jumps in the audio position
+      // compared to where we should be theoretically
+
+      //
+
+      if (ev_api >= 122) {
+        for (; event; event = get_next_event(event)) {
+          if (!WEED_EVENT_IS_AUDIO_FRAME(event)) continue;
+          enstate = audio_frame_to_atstate(event, &ntracks);
+          if (ntracks > 1) break;
+          etc = weed_event_get_timecode(event);
+          sm = lives_calloc(1, sizeof(prequant_t));
+
+          if (ststate && enstate[0].afile == ststate[0].afile
+              && ststate[0].vel != 0. && enstate[0].vel != 0.)
+            sm->is_cont = TRUE;
+
+          sm->pos = ststate[0].seek;
+          sm->vel = ststate[0].vel;
+          sm->tc = etc;
+          smooth = lives_list_prepend(smooth, sm);
+        }
+
+        // pass 1, we adjust all velocities so we touch each actual point
+        // pass 2, we adjust posns. to reduce the vel. diff. at the point
+        // pass 3, we limit the deltas from original
+        // pass 4, we introduce intermediate points, halfway between a and b in time and pos
+
+        if (smooth) {
+          smooth = lives_list_reverse(smooth);
+
+          while (smooth && !done) {
+            double dtime, tpos, ratio;
+            LiSTList *list = smooth;
+            for (; list && list->next; list = list->next) {
+              prequant_t *pq = (prequant_t *)list->data, *pql;
+              if (!pq->is_cont || !list->prev) continue;
+              pqn = (prequant_t *)list->next->data;
+              dtime = (double)(pql->tc - pq->tc) / TICKS_PER_SECOND_DBL;
+              tpos = pq.seek + pq.vel * dtime;
+              // ratio is real diff / est diff, e.g 1 / 2 we should go half as fast
+              ratio = fabs(pqn.seek - pq.seek) / fabs(tpos - pq.seek);
+              if (ratio > 1.) {
+                // we should go slower, or else seek should be higher
+                // look at next change - if it should go slower, we make ours slower
+                // if it should go faster, we move the seek forwards a little
+                if (!list->next->next) {
+                  // if last, don't change pos
 
 
+                }
               }
             }
           }
         }
+        event = get_first_event(elist);
       }
-      event = get_first_event(elist);
     }
 #endif
   }
 
 
+
+  static boolean has_recstart_between(weed_event_t *event, weed_event_t *nframe_event) {
+    for (event = get_next_event(event); event != nframe_event; event = get_next_event(event)) {
+      if (WEED_EVENT_IS_MARKER(event)) {
+        int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
+        if (marker_type == EVENT_MARKER_RECORD_START) return TRUE;
+      }
+    }
+    return FALSE;
+  }
+
+
   /**
-       @brief quantise from event_list_t *in_list to *out_list at the new rate of qfps
+     @brief quantise from event_list_t *in_list to *out_list at the new rate of qfps
 
-       This is called from 3 functions:
-       - before rendering a recorded event_list
-       - when entering multitrack, if the fps is mismatched
-       - when resampling a clip (only frame events)
+     This is called from 3 functions:
+     - before rendering a recorded event_list
+     - when entering multitrack, if the fps is mismatched
+     - when resampling a clip (only frame events)
 
-       @return new event list, or old event list if no changes are needed (i.e fps  is already correct), or NULL on error
+     @return new event list, or old event list if no changes are needed (i.e fps  is already correct), or NULL on error
 
-       if old_list has no frames then we just return an empty list
-       otherwise returned list will always have at least one event (a frame at timecode 0).
+     if old_list has no frames then we just return an empty list
+     otherwise returned list will always have at least one event (a frame at timecode 0).
 
-       if there is a timecode gap at the start of the old_list (i.e frame 1 has a non-zero timecode)
-       then this well be eliminated in the out iist; i.e. frame 1 in out_list always has a timecode of 0.
+     if there is a timecode gap at the start of the old_list (i.e frame 1 has a non-zero timecode)
+     then this well be eliminated in the out iist; i.e. frame 1 in out_list always has a timecode of 0.
 
-       if the old event_list has a fixed fps, then we try to keep the duration as near as possible, so:
+     if the old event_list has a fixed fps, then we try to keep the duration as near as possible, so:
 
-       nframes_new = MAX(nframes_old / old_fps * new_fps , 1)
-       the value is rounded DOWN in the case that qfps < old_fps
-       and rounded to the nearest integer in the case that qfps > old_fps
+     nframes_new = MAX(nframes_old / old_fps * new_fps , 1)
+     the value is rounded DOWN in the case that qfps < old_fps
+     and rounded to the nearest integer in the case that qfps > old_fps
 
-       e.g 210 frames @ 20.0 fps 	-> 157 frames @ 15.0 fps
-            -> 410 frames @ 39.0 fps
-       @see count_resmpled_frames()
+     e.g 210 frames @ 20.0 fps 	-> 157 frames @ 15.0 fps
+     -> 410 frames @ 39.0 fps
+     @see count_resmpled_frames()
 
-       i.e when the duration of the final frame is added, the total will always be >= duration of the old list
+     i.e when the duration of the final frame is added, the total will always be >= duration of the old list
 
 
-       if old_list has no fixed fps, then new_frames = (timecode of last frame  - timecode of first frame) * qfps
-       rounded UP.
+     if old_list has no fixed fps, then new_frames = (timecode of last frame  - timecode of first frame) * qfps
+     rounded UP.
 
-       /// algorithm:
-       /// - get tc of 1st frame event in in_list
-       /// tc of out_list starts at zero. If allow_gap is FALSE we add an offset_tc
-       /// so out_list 0 coincides with tc of 1st frame in in_list.
-       /// loop:
-       /// - advance in_list until either we hit a frame event, or tc of NEXT event > out_tc
-       ///  -- if tc of next frame is <= out_tc, we continue
-       ///  -- update the state to current event
-       ///
-       /// - apply in_list state at out_tc, interpolating between last (current) in frame and next in frame
-       /// - advance out_tc by 1. / out_fps
-       ///  - goto loop
+     /// algorithm:
+     /// - get tc of 1st frame event in in_list
+     /// tc of out_list starts at zero. If allow_gap is FALSE we add an offset_tc
+     /// so out_list 0 coincides with tc of 1st frame in in_list.
+     /// loop:
+     /// - advance in_list until either we hit a frame event, or tc of NEXT event > out_tc
+     ///  -- if tc of next frame is <= out_tc, we continue
+     ///  -- update the state to current event
+     ///
+     /// - apply in_list state at out_tc, interpolating between last (current) in frame and next in frame
+     /// - advance out_tc by 1. / out_fps
+     ///  - goto loop
 
-       /// inserting from scrap_file, we cannot interpolate frame numbers. So we just insert nearest frame
+     /// inserting from scrap_file, we cannot interpolate frame numbers. So we just insert nearest frame
   */
   weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
     weed_timecode_t out_tc = 0, offset_tc = 0, in_tc = 0, laud_tc = 0, nx_tc = 0;
@@ -574,7 +594,6 @@ void pre_analyse(weed_plant_t *elist) {
     weed_timecode_t frame_tc = 0, pframe_tc = 0;
 
     weed_plant_t *out_list, *xout_list;
-    weed_event_t *naudio_event = NULL;
     weed_event_t *frame_event = NULL, *nframe_event = NULL, *pframe_event = NULL;
     weed_event_t *last_frame_event, *cframe_event = NULL;
     weed_event_t *event, *newframe = NULL;
@@ -589,7 +608,9 @@ void pre_analyse(weed_plant_t *elist) {
     double old_fps;
     char *what;
 
-    boolean interpolate = TRUE;
+    boolean allow_jump = FALSE;
+    boolean nframe_event_tainted = FALSE;
+
     int *clips = NULL, *naclips = NULL, *nclips = NULL, *pclips = NULL;;
     frames64_t *frames = NULL, *nframes = NULL, *pframes = NULL;
     int *xaclips = NULL;
@@ -682,7 +703,8 @@ void pre_analyse(weed_plant_t *elist) {
                 || marker_type == EVENT_MARKER_RECORD_START) {
               // if event_list started as a recording then this will have been set for
               // previews, but we now need to discard it
-              interpolate = FALSE;
+              pframe_event = NULL;
+              allow_jump = TRUE;
               lives_freep((void **)&xaclips);
               lives_freep((void **)&xaseeks);
               lives_freep((void **)&naclips);
@@ -707,12 +729,20 @@ void pre_analyse(weed_plant_t *elist) {
           }
           break;
           case WEED_EVENT_TYPE_FRAME:
-            interpolate = TRUE;
             cframe_event = event;
             cin_tc = in_tc;
-            nframe_event = get_next_frame_event(event);
-            if (!nframe_event) is_final = 1;
-            else nx_tc = get_event_timecode(nframe_event);
+
+            if (!nframe_event || nframe_event == event) {
+              // nframe_event gets next frame
+              nframe_event = get_next_frame_event(event);
+              if (!nframe_event) is_final = 1;
+              else {
+                if (!has_recstart_between(event, nframe_event)) {
+                  nx_tc = get_event_timecode(nframe_event);
+                  nframe_event_tainted = FALSE;
+                } else nframe_event_tainted = TRUE;
+              }
+            }
 
             /// now we have a choice: we can either insert this frame at out_tc with the current fx state,
             /// or with the state at out_tc
@@ -744,6 +774,10 @@ void pre_analyse(weed_plant_t *elist) {
               int *aclips;
               double *aseeks;
               int atracks = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
+              if (allow_jump) {
+                allow_jump = FALSE;
+                weed_set_boolean_value(event, LIVES_LEAF_ALLOW_JUMP, WEED_TRUE);
+              }
               for (i = 0; i < atracks; i += 2) {
                 for (j = 0; j < natracks; j += 2) {
                   if (naclips[j] == aclips[i]) {
@@ -770,7 +804,6 @@ void pre_analyse(weed_plant_t *elist) {
               }
               lives_free(aclips);
               lives_free(aseeks);
-              if (naudio_event == event) naudio_event = NULL;
             }
             /// laud_tc is last frame in_tc, frame_event is last frame
             laud_tc = in_tc;
@@ -885,8 +918,11 @@ void pre_analyse(weed_plant_t *elist) {
 
           ntracks = ptracks = 0;
 
+          // pframe_event gets the previous frame
           pframe_tc = frame_tc;
           pframe_event = frame_event;
+
+          // cframe_event is this one
           frame_tc = cin_tc;
           frame_event = cframe_event;
 
@@ -960,8 +996,8 @@ void pre_analyse(weed_plant_t *elist) {
                 nclips = NULL;
               }
             } else {
-              if (event != frame_event && old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth && interpolate
-                  && pframe_event && nframe_event) {
+              if (event != frame_event && old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth
+                  && pframe_event && nframe_event && !nframe_event_tainted) {
                 /// interpolate frames if possible
                 double ratio = (double)(out_tc + offset_tc - pframe_tc) / (double)(nx_tc - pframe_tc);
                 //ratio = 0.5;
@@ -974,12 +1010,12 @@ void pre_analyse(weed_plant_t *elist) {
                       //(frames[i] == pframes[i] || frames[i] == nframes[i])) {
                       //g_print("inter1 %ld -> %ld, %ld\n", pframes[i], nframes[i], frames[i]);
                       frames[i] = (frames64_t)((double)pframes[i] + (double)(nframes[i] - pframes[i]) * ratio);
-                      g_print("				inter2 %ld %f\n", frames[i], ratio);
-		      // *INDENT-OFF*
-		    }}
-		  weed_set_int64_array(cframe_event, WEED_LEAF_FRAMES, tracks, frames);
-		}}}}
-	  // *INDENT-ON*
+                      //g_print("				inter2 %ld %f\n", frames[i], ratio);
+		    // *INDENT-OFF*
+		  }}
+		//weed_set_int64_array(frame_event, WEED_LEAF_FRAMES, tracks, frames);
+	      }}}}
+	// *INDENT-ON*
 
           /// now we insert the frame
           if (clips)

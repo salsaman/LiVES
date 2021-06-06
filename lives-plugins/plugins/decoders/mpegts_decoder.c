@@ -21,7 +21,7 @@
    Copyright (c) 2002-2003 Fabrice Bellard
 */
 
-#define PLUGIN_UID 0x646563702E6D7473ull
+#define PLUGIN_UID 0x646563702E6D7473
 
 #include <stdio.h>
 #include <string.h>
@@ -35,9 +35,12 @@
 #include <endian.h>
 #endif
 
-static int vmaj = 1;
-static int vmin = 4;
-const char *plugin_name = "LiVES mpegts";
+#include "lives-plugin.h"
+
+#define PLUGIN_NAME "LiVES mpegts"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 4
+#define PLUGIN_DEVSTATE PLUGIN_DEVSTATE_BROKEN
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -2556,11 +2559,6 @@ const char *module_check_init(void) {
   nidxc = 0;
   pthread_mutex_init(&indices_mutex, NULL);
   return NULL;
-}
-
-
-const lives_plugin_id_t *get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
 

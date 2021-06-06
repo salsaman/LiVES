@@ -321,7 +321,7 @@ void call_funcsig(lives_proc_thread_t info) {
     case WEED_SEED_INT64: CALL_1(int64, string); break;
     default: CALL_VOID_1(string); break;
     }
-    lives_free(p0);
+    if (p0) lives_free(p0);
     break;
   }
   case FUNCSIG_VOIDP: {
@@ -365,7 +365,7 @@ void call_funcsig(lives_proc_thread_t info) {
     switch (ret_type) {
     default: CALL_VOID_2(string, int); break;
     }
-    lives_free(p0);
+    if (p0) lives_free(p0);
     break;
   }
   case FUNCSIG_STRING_BOOL: {
@@ -373,7 +373,7 @@ void call_funcsig(lives_proc_thread_t info) {
     switch (ret_type) {
     default: CALL_VOID_2(string, boolean); break;
     }
-    lives_free(p0);
+    if (p0) lives_free(p0);
     break;
   }
   case FUNCSIG_DOUBLE_DOUBLE: {
@@ -403,7 +403,7 @@ void call_funcsig(lives_proc_thread_t info) {
     case WEED_SEED_BOOLEAN: CALL_2(boolean, voidptr, string); break;
     default: CALL_VOID_2(voidptr, string); break;
     }
-    lives_free(p1);
+    if (p1) lives_free(p1);
     break;
   }
   case FUNCSIG_PLANTP_BOOL: {
@@ -432,7 +432,7 @@ void call_funcsig(lives_proc_thread_t info) {
     case WEED_SEED_VOIDPTR: CALL_3(voidptr, string, voidptr, voidptr); break;
     default: CALL_VOID_3(string, voidptr, voidptr); break;
     }
-    lives_free(p0); lives_free(p1);
+    if (p0) lives_free(p0);
     break;
   }
   case FUNCSIG_VOIDP_DOUBLE_INT: {
@@ -447,6 +447,8 @@ void call_funcsig(lives_proc_thread_t info) {
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_3(boolean, voidptr, string, string); break;
     default: CALL_VOID_3(voidptr, string, string); break;
+      if (p1) lives_free(p1);
+      if (p2) lives_free(p2);
     } break;
   }
   case FUNCSIG_BOOL_BOOL_STRING: {
@@ -455,7 +457,7 @@ void call_funcsig(lives_proc_thread_t info) {
     case WEED_SEED_BOOLEAN: CALL_3(boolean, boolean, boolean, string); break;
     default: CALL_VOID_3(boolean, boolean, string); break;
     }
-    lives_free(p2);
+    if (p2) lives_free(p2);
     break;
   }
   case FUNCSIG_PLANTP_VOIDP_INT64: {
@@ -471,7 +473,8 @@ void call_funcsig(lives_proc_thread_t info) {
     case WEED_SEED_STRING: CALL_4(string, string, string, voidptr, int); break;
     default: CALL_VOID_4(string, string, voidptr, int); break;
     }
-    lives_free(p0); lives_free(p1);
+    if (p0) lives_free(p0);
+    if (p1) lives_free(p1);
     break;
   }
   case FUNCSIG_INT_INT_BOOL_VOIDP: {
@@ -486,7 +489,8 @@ void call_funcsig(lives_proc_thread_t info) {
     switch (ret_type) {
     default: CALL_VOID_5(voidptr, string, string, int64, int); break;
     }
-    lives_free(p1); lives_free(p2);
+    if (p1) lives_free(p1);
+    if (p2) lives_free(p2);
     break;
   }
   case FUNCSIG_INT_INT_INT_BOOL_VOIDP: {
@@ -501,7 +505,9 @@ void call_funcsig(lives_proc_thread_t info) {
     case WEED_SEED_STRING: CALL_6(string, string, string, voidptr, int, string, voidptr); break;
     default: CALL_VOID_6(string, string, voidptr, int, string, voidptr); break;
     }
-    lives_free(p0); lives_free(p1); lives_free(p4);
+    if (p0) lives_free(p0);
+    if (p1) lives_free(p1);
+    if (p4) lives_free(p4);
     break;
   }
   default:

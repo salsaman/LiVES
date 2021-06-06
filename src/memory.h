@@ -183,6 +183,12 @@ static inline int _lsd_calloc_aligned_(void **memptr, size_t nmemb, size_t size)
 #include "lsd.h"
 #undef OVERRIDE_MEMFUNCS
 
+
+#ifdef USE_INTRINSICS
+double intrin_resample_vol(float *dst, size_t dst_skip, float *src, double offsd, double scale, float vol);
+#endif
+
+
 #ifdef __GNUC__
 #define LIVES_GNU
 #define lives_malloc_auto(size) __builtin_alloc(size)

@@ -2321,9 +2321,7 @@ static boolean clip_ebox_pressed(LiVESWidget * eventbox, LiVESXEventButton * eve
   }
 
   // change cursor to block
-  if (!mt->video_draws && !mt->audio_draws) {
-    return FALSE;
-  } else {
+  if (mt->video_draws || mt->audio_draws) {
     if (sfile->frames > 0) {
       if (!mt->opts.ign_ins_sel) {
         width = (sfile->end - sfile->start + 1.) / sfile->fps;
@@ -2339,6 +2337,7 @@ static boolean clip_ebox_pressed(LiVESWidget * eventbox, LiVESXEventButton * eve
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, eventbox);
     mt_set_cursor_style(mt, LIVES_CURSOR_BLOCK, width, height, file, 0, height / 2);
     mt->hotspot_x = mt->hotspot_y = 0;
+    mt->auto_zoom = TRUE;
   }
 
   return FALSE;
@@ -2410,8 +2409,13 @@ static boolean on_drag_clip_end(LiVESWidget * widget, LiVESXEventButton * event,
                                 ((mainw->files[mt->file_selected]->start - 1.) / mainw->files[mt->file_selected]->fps) ||
                                 (mainw->files[mt->file_selected]->laudio_time > 0. && mt->opts.ign_ins_sel)))
         insert_audio_here_cb(NULL, (livespointer)mt);
+      else mt->auto_zoom = FALSE;
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
       if (mt->is_paused) mt->ptr_time = lives_ruler_set_value(LIVES_RULER(mt->timeline), osecs);
+      if (mt->auto_zoom) {
+        mt_zoom(mt, .5);
+        mt->auto_zoom = FALSE;
+      }
       return FALSE;
     }
   }
@@ -2446,9 +2450,13 @@ static boolean on_drag_clip_end(LiVESWidget * widget, LiVESXEventButton * event,
           }
         }
         lives_widget_queue_draw(mt->timeline);
-      }
-      if (!LIVES_IS_PLAYING && mainw->files[mt->file_selected]->frames > 0) {
-        insert_here_cb(NULL, mt);
+        if (mainw->files[mt->file_selected]->frames > 0) {
+          insert_here_cb(NULL, mt);
+          if (mt->auto_zoom) {
+            mt_zoom(mt, .5);
+            mt->auto_zoom = FALSE;
+          }
+        }
       }
       break;
     }
@@ -16703,7 +16711,7 @@ LiVESList *load_layout_map(void) {
           lmap_entry->list = lives_list_append(lmap_entry->list, lives_strdup(string));
           array = lives_strsplit(string, "|", -1);
           lives_free(string);
-          mainw->current_layouts_map = lives_list_append_unique(mainw->current_layouts_map, array[0]);
+          mainw->current_layouts_map = lives_list_append_unique_str(mainw->current_layouts_map, array[0]);
           lives_strfreev(array);
           lives_free(entry);
         }
@@ -19283,7 +19291,7 @@ LiVESList *layout_frame_is_affected(int clipno, int start, int end, LiVESList * 
     resampled_frame = count_resampled_frames(mainw->files[clipno]->stored_layout_frame, mainw->files[clipno]->stored_layout_fps,
                       mainw->files[clipno]->fps);
     if (start <= resampled_frame && (end == 0 || end >= resampled_frame))
-      xlays = lives_list_append_unique(xlays, mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+      xlays = lives_list_append_unique_str(xlays, mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
   }
 
   while (lmap) {
@@ -19293,7 +19301,7 @@ LiVESList *layout_frame_is_affected(int clipno, int start, int end, LiVESList * 
       resampled_frame = count_resampled_frames(atoi(array[2]), orig_fps, mainw->files[clipno]->fps);
       if (array[2] == 0) resampled_frame = 0;
       if (start <= resampled_frame && (end == 0 || end >= resampled_frame))
-        xlays = lives_list_append_unique(xlays, array[0]);
+        xlays = lives_list_append_unique_str(xlays, array[0]);
     }
     lives_strfreev(array);
     lmap = lmap->next;
@@ -19318,7 +19326,7 @@ LiVESList *layout_audio_is_affected(int clipno, double stime, double etime, LiVE
     // see if it affects the current layout
     if (mainw->files[clipno]->stored_layout_audio > 0. && stime <= mainw->files[clipno]->stored_layout_audio &&
         (etime == 0. || etime <= mainw->files[clipno]->stored_layout_audio))
-      xlays = lives_list_append_unique(xlays, mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+      xlays = lives_list_append_unique_str(xlays, mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
   }
 
   while (lmap) {
@@ -19326,7 +19334,7 @@ LiVESList *layout_audio_is_affected(int clipno, double stime, double etime, LiVE
     array = lives_strsplit((char *)lmap->data, "|", -1);
     max_time = lives_strtod(array[4]);
     if (max_time > 0. && stime <= max_time && (etime == 0. || etime <= mainw->files[clipno]->stored_layout_audio)) {
-      xlays = lives_list_append_unique(xlays, array[0]);
+      xlays = lives_list_append_unique_str(xlays, array[0]);
     }
     lives_strfreev(array);
     lmap = lmap->next;

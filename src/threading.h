@@ -64,6 +64,8 @@ typedef struct {
   int var_last_sws_block;
   boolean var_no_gui;
   uint64_t var_random_seed;
+  int var_proc_file;
+  int var_cancelled;
   int var_core_id;
   volatile float *var_core_load_ptr; // pointer to value that monitors core load
 } lives_threadvars_t;

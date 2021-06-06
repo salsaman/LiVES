@@ -3,6 +3,15 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+
+#define PLUGIN_UID 0XB1E4BB6B14E50715
+
+#include "lives-plugin.h"
+
+#define PLUGIN_NAME "LiVES icecast output"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 1
+
 #include "videoplugin.h"
 
 #include <stdio.h>
@@ -21,10 +30,6 @@ static int palette_list[2];
 
 static int clampings[3];
 static int myclamp;
-
-static int vmaj = 1;
-static int vmin = 1;
-const char *plugin_name = "LiVES icecast output";
 
 #define _IGN_RET(a) ((void)((a) + 1))
 
@@ -147,10 +152,6 @@ const char *module_check_init(void) {
 }
 
 
-const lives_plugin_id_t *get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
-}
-
 
 const char *get_description(void) {
   return "The icecast_output plugin provides realtime encoding\n"
@@ -182,7 +183,7 @@ const int *get_audio_fmts() {
 }
 
 
-const char *get_init_rfx(lives_intentcap_t *icaps) {
+const char *get_init_rfx(plugin_intentcap_t *icaps) {
   return \
          "<define>\\n\
 |1.7\\n\

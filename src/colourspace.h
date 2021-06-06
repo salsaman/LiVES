@@ -13,17 +13,20 @@
 #define USE_EXTEND
 #endif
 
+#define LIVES_RESTRICT __restrict__
+
 //#define WEED_ADVANCED_PALETTES
 
 #define WEED_LEAF_CLIP "clip"
 #define WEED_LEAF_FRAME "frame"
-#define WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS "host_contiguous"
-#define WEED_LEAF_HOST_PIXBUF_SRC "host_pixbuf_src"
-#define WEED_LEAF_HOST_SURFACE_SRC "host_surface_src"
-#define WEED_LEAF_PIXEL_BITS "pixel_bits"
-#define WEED_LEAF_HOST_FLAGS "host_flags"
-#define WEED_LEAF_RESIZE_THREAD "res_thread"
-#define WEED_LEAF_PROGSCAN "progscan"
+#define LIVES_LEAF_PIXEL_DATA_CONTIGUOUS "host_contiguous"
+#define LIVES_LEAF_PIXBUF_SRC "host_pixbuf_src"
+#define LIVES_LEAF_SURFACE_SRC "host_surface_src"
+#define LIVES_LEAF_PIXEL_BITS "pixel_bits"
+#define LIVES_LEAF_HOST_FLAGS "host_flags"
+#define LIVES_LEAF_RESIZE_THREAD "res_thread"
+#define LIVES_LEAF_PROGSCAN "progscan"
+#define LIVES_LEAF_BBLOCKALLOC "bblockalloc"
 
 #define DEF_SCREEN_GAMMA 1.4 // extra gammm boost
 
@@ -121,7 +124,7 @@ typedef struct {
   int out_sampling;
   boolean alpha_first;
   boolean is_422;
-  void *lut;
+  uint8_t *lut;
   int thread_id;
   uint64_t padding[6];
 } lives_cc_params;
@@ -263,9 +266,6 @@ void weed_layer_pixel_data_free(weed_layer_t *);
 /// private flags
 #define LIVES_LAYER_LOAD_IF_NEEDS_RESIZE 1
 #define LIVES_LAYER_GET_SIZE_ONLY 2
-
-// private flags bitfield
-#define LIVES_LAYER_HAS_SIZE_NOW (1 << 16)
 
 // layer transformation functions
 void alpha_unpremult(weed_layer_t *, boolean un);

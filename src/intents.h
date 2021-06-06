@@ -16,23 +16,23 @@
 // - objects can create and manage things other than object classes, for example and object class which manages the lifecyle of a C struct
 //    (Prototype pattern)
 // - allows functions to be chained in sequence with outputs from one feeding into the next (function sequencing)
-// - provides for verifying that a set of conditions is satisfied before the function(s) are called (argument validation)
+// - TBD - provides for verifying that a set of conditions is satisfied before the function(s) are called (argument validation)
 // - objects can list capacities which depend on the intent and object state (introspection, inheritance, polymorphism)
 // - a status can be returned after any step in the transform - new requirements and conditions can be added (function sequencing)
 // - the transform returns a status which can be updated dynamically (e,g waiting, needs_data) (dynamic returns)
 // - allows for the possibility of object - object communication and data sharing (AI like behaviours, swarming, nnets)
 // - enables goal based activities based on a sequence of state changes from the current state to the goal state (AI, goal oriented behaviours)
 // - allows for "factory" type templates which can create instances of various subtypes (inheritance)
-// - modular implementation allows for the various components to be used independantly (e.g "intention" can be used anywhere
+// - modular implementation allows for the various components to be used independently (e.g "intention" can be used anywhere
 //		like an enum) (modular design)
 //
-
-// ideas: a type / subtype can list a set of intentcaps, but can they also provide an interface
-// ie. an intentcap "play" would have init_screen, exit_screen...so "play" is a capacity as well as an action
-// so the capacity part can list sub-intentions...or perhaps a capacity can be linked to one or more a intentions..
-
-// must an intention always be linked to an object ? For example each thread can have an intention, should a thread become a lives_object
-// advantages / disadvantages...
+// - transforms also have hooks, these allow some parameters to be updated internally during processing
+//    some hooks can be mandatory as part of the requts. some objects will have "attachments" which can connect to hooks
+//     'needs_data' status corresponds to a transform waiting for a hook to return new data
+//
+// - some requirements can be objects with a specific type / subtype(s) / state(s)
+// - reqs, can be optional, for some, caller can change the default, and let user / or an object provide the value.
+//    Some values can be set readonly.
 
 #ifndef HAS_LIVES_INTENTS_H
 #define HAS_LIVES_INTENTS_H
@@ -55,11 +55,14 @@
 #define OBJECT_TYPE_WIDGET		IMkType("obj.WDGT")
 #define OBJECT_TYPE_THREAD		IMkType("obj.THRD")
 
+#define LIVES_SEED_HOOK WEED_SEED_FUNCPTR
+#define LIVES_SEED_OBJECT 2048
+
 typedef struct _object_t lives_object_t;
 typedef struct _object_t lives_object_template_t;
 typedef struct _object_t lives_object_instance_t;
-typedef struct _obj_status lives_object_status_t;
-
+typedef struct _obj_status_t lives_transform_status_t;
+typedef struct _obj_transform_t lives_object_transform_t;
 typedef weed_param_t lives_obj_param_t;
 
 // lives_object_t
@@ -68,20 +71,27 @@ struct _object_t {
   // for other objects should be randomly generated for the lifetime of the object
   uint64_t type; // object type - from IMkType
   uint64_t subtype; // object subtype, can change during a transformation
-  const lives_object_t *template; // pointer to template class, or NULL
-  lives_object_status_t *status; // pointer to status struct
-  int n_params;  // internal params for the object - may be mapped to transform reqs. / out params
-  lives_obj_param_t **params;
+  int state; // object state
+  lives_obj_param_t **params; // internal parameters
+  const lives_object_t *template; // pointer to template class which the instance was created from, or NULL
   void *priv; // internal data belonging to the object
 };
 
-// TODO - need to think more about relationship between intents / caps. Should caps be generic, eg "audio", "video"
-// or specific to and object type / subtype ? or a combination of generic caps + extendable custom caps ?
+#define OBJECT_TYPE_UNDEFINED 0
+#define OBJECT_SUBTYPE_UNDEFINED 0
+
+typedef struct {
+  uint64_t *types;
+  uint64_t *subtypes;
+  int *states;
+} lives_obj_stance;
 
 enum {
   // some common intentions
   // internal or (possibly) non-functional types
   LIVES_INTENTION_UNKNOWN,
+
+  // application types
   LIVES_INTENTION_NOTHING,
   LIVES_INTENTION_UNDO,
   LIVES_INTENTION_REDO,
@@ -89,7 +99,7 @@ enum {
   LIVES_INTENTION_CANCEL, // requests an object with status "running" to transform to status "cancelled"
 
   // function like
-  LIVES_INTENTION_CREATE_INSTANCE,
+  LIVES_INTENTION_CREATE_INSTANCE = 0x00000100,
   LIVES_INTENTION_DESTROY,
 
   LIVES_INTENTION_ADDREF,
@@ -118,11 +128,10 @@ enum {
   LIVES_INTENTION_ENCODE = 0x00000899,
 
   // an intent which converts a clip object's STATE from NOT_LOADED to READY
-  LIVES_INTENTION_IMPORT_LOCAL = 0x00000C00, // import from local filesystem, -> internal clips  i.e "open"
+  // caps define LOCAL or REMOTE source
+  LIVES_INTENTION_IMPORT = 0x00000C00,
 
-  // TODO - this should just be IMPORT but with the REMOTE capacity selected
-  LIVES_INTENTION_IMPORT_REMOTE, // import from online source  -> internal clip "download"
-
+  // TODO - just EXPORT and use LOCAL / REMOTE caps
   LIVES_INTENTION_EXPORT_LOCAL, // export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
   LIVES_INTENTION_EXPORT_REMOTE, // export raw format to online location, e.g. export audio, save frame
 
@@ -134,9 +143,10 @@ enum {
 
   // decoders
   // TODO - maybe this is IMPORT with LOCAL capacity
+  // or an attachment to import / local
   LIVES_INTENTION_DECODE = 0x00001000, // combine with caps to determine e.g. decode_audio, decode_video
 
-  // use caps to further refine e.g REALTIMNE / NON_REALTIME
+  // use caps to further refine e.g REALTIME / NON_REALTIME
   LIVES_INTENTION_EFFECT = 0x00001400,
 
   // do we need so many ? maybe these can become CAPS
@@ -150,9 +160,28 @@ enum {
   LIVES_INTENTION_MAX = 0xFFFFFFFF
 };
 
-// the above suggests the following objects: clip, clip_like [event_list, generator, source ?]
-// clip_like can be non-objects, but a certain class of requirement ?
-// capacities LOCAL and REMOTE
+// generic capacities, type specific ones may also exist
+// key name is defined here. Values are int32_t interprited as boolean: FALSE (0) or TRUE (1 or non-zero)
+// absent values are assumed FALSE
+#define LIVES_CAPACITY_LOCAL		"local"
+#define LIVES_CAPACITY_REMOTE		"remote"
+
+#define LIVES_CAPACITY_REALTIME		"realtime"
+
+#define LIVES_CAPACITY_VIDEO		"video"
+#define LIVES_CAPACITY_AUDIO		"audio"
+#define LIVES_CAPACITY_TEXT		"text"
+
+#define LIVES_CAPACITY_DATA		"data"
+
+/////// intentcaps //
+
+#define LIVES_ICAPS_LOAD LIVES_INTENTION_IMPORT
+#define LIVES_ICAPS_DOWNLOAD LIVES_INTENTION_IMPORT + 1
+
+
+#define LIVES_INTENCAP_IS_IMPORT_LOCAL(icap) (icap->intent = LIVE_INTENTION_IMPORT && lives_get_capacity(LIVES_CAPACITY_LOCAL))
+#define LIVES_INTENCAP_IS_IMPORT_REMOTE(icap) (icap->intent = LIVE_INTENTION_IMPORT && lives_get_capacity(LIVES_CAPACITY_REMOTE))
 
 // aliases
 #define LIVES_INTENTION_IGNORE LIVES_INTENTION_NOTHING
@@ -162,70 +191,95 @@ enum {
 #define LIVES_INTENTION_MOVE LIVES_INTENTION_EXPORT_LOCAL
 
 #define LIVES_INTENTION_UPLOAD LIVES_INTENTION_EXPORT_REMOTE
-#define LIVES_INTENTION_DOWNLOAD LIVES_INTENTION_IMPORT_REMOTE
+//#define LIVES_INTENTION_DOWNLOAD LIVES_INTENTION_IMPORT_REMOTE
 
 #define LIVES_INTENTION_DELETE LIVES_INTENTION_DESTROY
 
 // generic STATES which can be altered by *transforms*
-#define OBJECT_STATE_NULL	0
+#define OBJECT_STATE_UNDEFINED	0
 #define OBJECT_STATE_NORMAL	1
 #define OBJECT_STATE_PREVIEW	2
+#define OBJECT_STATE_READY	3
 
-// when object is destroyed it should add a ref to status to be returned, and set state to DESTROYED before freeing itself
-struct _obj_status {
-  int state;
+#define OBJECT_STATE_FINALISED	512
+
+struct _obj_status_t {
   int *status; /// pointer to an int (some states are dynamic)
   int refcount;
 };
 
-// values which are used to perform the transformation, part of the requirement rules
+// create, destroy, set subtype, set state, set value, get value
+
+// clock GET_VALUE :: REALTIME :: out tcode, source, etc.
+// in reset
+// opt att. SET_VALUE :: ticks, source
+
+// transport controller GET_VALUE | REALTIME, video
+// mand att. running, SET_VALUE timecode | <- obj will call the cb as needed
+
+// opt att. running / SET_VALUE cmd_msg | <- other
+//
+// inputs timecode, cmd msgs
+// outputs clip stack, frame stack
+
+/// hook
+// status which triggers the hook
+// transform that the hook must call
+// callback which is set :: status cb_func(obj, * hook);
+// user_data for callback
+
+// attt : tyoe / sub / state / status, intentcaps
+// - check if can match reqts for secondary tx
+
+// player : GET_VALUE / REALTIME | VIDEO
+// in ->stack of clip objects, array of clipidx, frame; ouput : layer
+// mand att. SET_VALUE timecode, layer
+
+// displayer ::
+/// LIVES_INTENTION_DISPLAY
+// mand att: layer
+//
+// GET_SET_VALUES: width heigth, sepwin
+
+/// transforms
+
+
 typedef struct {
-  lives_intention intent;
-  int n_params;
+  //lives_intention intent;
+  //int n_params; // to simplify
   lives_obj_param_t **params; ///< (can be converted to normal params via weed_param_from_iparams)
 } lives_intentparams_t;
 
 /// NOT YET FULLY IMPLEMENTED
 
-// object status (these differ from states in that they are dynamic and under control of the object itself)
-// depending on type / subtype there may be additional information (e.g. error code, cancel reason)
-// this also to reduce the number of states for an object, although some statuses (e.g. running) may also be states
-// if an external caller can request (so cancelled would also be a state)
-#define LIVES_OBJECT_ERROR_STATUS -3 /// object status does not allow
-#define LIVES_OBJECT_ERROR_RULES -2 /// not all rules / conditions met
-#define LIVES_OBJECT_ERROR_INVALID -1 /// transformation is not valid for object with this type / subtype / state
-#define LIVES_OBJECT_STATUS_NORMAL 0 ///< normal / success
-#define LIVES_OBJECT_STATUS_WAIT 1 ///< object is doing internal processing not in final state yet
-#define LIVES_OBJECT_STATUS_PREP 2 ///< object is in a preparatory status and has new param requirements
-#define LIVES_OBJECT_STATUS_READY 3 ///< object is ready but has new conditions
-#define LIVES_OBJECT_STATUS_RUNNING 4 ///< object is "running" and the state cannot be changed
-#define LIVES_OBJECT_STATUS_FINISHED 5 ///< object finished running and has data
-#define LIVES_OBJECT_STATUS_CANCELLED 6 ///< object was cancelled during running
-#define LIVES_OBJECT_STATUS_ERROR 7 ///< object encountered an error during running
-#define LIVES_OBJECT_STATUS_NEEDS_DATA 8 ///< object is running but has param / data requirements
-#define LIVES_OBJECT_STATUS_DESTROYED 32768
+// transform status
+#define LIVES_TRANSFORM_ERROR_REQ -1 // not all requirements met (e.g. params with no values and no way to
+//  find them, objects of wrong type / subtype / state)
+#define LIVES_TRANSFORM_STATUS_RUNNING 0 ///< transform is "running" and the state cannot be changed
+#define LIVES_TRANSFORM_STATUS_NEEDS_DATA 1 ///< reqmts. need updating
+#define LIVES_TRANSFORM_STATUS_SUCCESS 2 ///< normal / success
+#define LIVES_TRANSFORM_STATUS_CANCELLED 3 ///< transform was cancelled during running
+#define LIVES_TRANSFORM_STATUS_ERROR 4 ///< transform encountered an error during running
 
 weed_plant_t *int_req_init(const char *name, int def, int min, int max);
 weed_plant_t *boolean_req_init(const char *name, int def);
 weed_plant_t *double_req_init(const char *name, double def, double min, double max);
 weed_plant_t *string_req_init(const char *name, const char *def);
-
-// may become functions
-typedef boolean lives_cond_t;
-
-// possibly - req type param value, req type condition, req type ...
+weed_plant_t *obj_req_init(const char *name, lives_obj_stance stances);
+weed_plant_t *hook_req_init(const char *name, int status, lives_object_transform_t *trn, void *user_data);
 
 // rules which must be satisfied before the transformation can succeed
 typedef struct {
-  lives_object_instance_t *oinst; // owner instance / template
-  int states;
-  int *statuses; // ??
-  lives_intentparams_t *reqs;
+  // list of subtypes and states the owner object must be in to run the transform
+  int *subtype;
+  int *state;
+  lives_intentparams_t *reqs; // mix of params and object types, caller needs to set these
+  // --------
+  /// if caller cannot fill all values it can call a fn. and UI will run
   char ui_schema; // schema for ui, eg. "RFX 1.x.x |"
-  int n_uistrings; // num ui strings; in case a value is notr defined, it can be enterd by user
-  char **uistrings; ///< strings to provide hints about constructing an interface for user entry
-  int n_conditions;
-  lives_cond_t **conditions; /// ptrs to conditions which must be satisfied (set to TRUE)
+  char **uistrings; ///< strings to provide hints about constructing an interface for user entry, to get missing values
+  // internal book keeping
+  lives_object_instance_t *oinst; // owner instance / template
   int refcount;
 } lives_rules_t;
 
@@ -246,10 +300,12 @@ typedef struct {
 
 // maps in / out params to actual function parameters
 typedef struct {
-  // negative mapping values may have special meanings, e.g self, fundamental
-  int *in_mapping; // array that maps function parameters to req. params (0 == first param, etc)
+  int *obj_in_mapping; // maps reqts -> internal variables (can also be internal vars in other objects) (weed / weed) or obj / obj
+  int *fn_in_mapping; // maps internal variables -> fn params (weed or obj / idx)
   lives_func_info_t func_info; /// function(s) to perform the transformation
-  int *out_mapping; // index of the out_parameters which will be updated by this function
+  int *fn_out_mapping; // maps fn variables -> internal params (ptr to var -> weed or obj)
+  int *obj_out_mapping; // maps internal params -> out params (weed / weed) or obj / obj
+  // hook mappings ???
 } tx_map;
 
 // a transform(ation) is a function or sequence of functions which correspond to satistying some intention for the object
@@ -265,18 +321,18 @@ typedef struct {
 //
 // after examining the transform object, caller should endure that all of the reqmt. rules are satisfied
 // and may then activate the transform for the object in question
-typedef struct {
+struct _obj_transform_t {
   lives_intentcap_t icaps;
   lives_rules_t *prereqs; // pointer to the prerequisites for carrying out the transform (can be NULL)
-  tx_map *mappings;
-  // output parameters created / updated in the transformation; this is actually array of pointers
-  // and may even point to params in other objects
-  lives_obj_param_t **oparams;
-  lives_intentcap_t *hooks; // a list of "hook" intentions that attachment objects may attach to
-  int new_state; // the state after, assuming success
+  ///
+  lives_obj_param_t **oparams;  // a mix of params and objects
+  //
+  int new_state; // the state of some requt object after
   uint64_t *new_subtype; // subtype after, assuming success
+  ///
+  tx_map *mappings; // internal mapping for the object
   uint64_t flags;
-} lives_object_transform_t;
+};
 
 //
 //const lives_object_template_t *lives_object_template_for_type(uint64_t type, uint64_t subtype);
@@ -287,20 +343,23 @@ const lives_object_template_t *lives_object_template_for_type(uint64_t type);
 lives_capacity_t *lives_capacities_new(void);
 void lives_capacities_free(lives_capacity_t *);
 
-#define LIVES_ERROR_NOSUCH_CAP WEED_ERROR_NOSUCH_PLANT
+#define LIVES_ERROR_NOSUCH_CAP WEED_ERROR_NOSUCH_LEAF
+#define LIVES_ERROR_ICAP_NULL 65536
 
 #define lives_capacity_exists(caps, key) (caps ? (weed_plant_has_leaf(caps, key) == WEED_TRUE ? TRUE : FALSE) \
 					  FALSE)
 
 #define lives_capacity_delete(caps, key) (caps ? weed_leaf_delete(caps, key) \
-					  : WEED_ERROR_NOSUCH_CAP)
+					  : LIVES_ERROR_ICAP_NULL)
 
+#define lives_capacity_set(caps, key) (caps ? weed_set_boolean_value(caps, key, WEED_TRUE) : LIVES_ERROR_ICAP_NULL)
 #define lives_capacity_set_int(caps, key, val) weed_set_int_value(caps, key, val)
 #define lives_capacity_set_string(caps, key, val) weed_set_string_value(caps, key, val)
 
 // TODO - add some error handling
-#define lives_capacity_get_int(caps, key) (cap ? weed_get_int_value(caps, key, 0) : 0)
-#define lives_capacity_get_string(caps, key) (cap ? weed_get_string_value(caps, key, 0) : 0)
+#define lives_capacity_get(caps, key) (caps ? weed_get_boolean_value(caps, key, 0) == WEED_TRUE ? TRUE : FALSE : FALSE)
+#define lives_capacity_get_int(caps, key) (caps ? weed_get_int_value(caps, key, 0) : 0)
+#define lives_capacity_get_string(caps, key) (caps ? weed_get_string_value(caps, key, 0) : 0)
 
 #define lives_capacity_set_readonly(caps, key, state) \
   (caps ? weed_leaf_set_flags(caps, key, weed_leaf_get_flags(caps, key) | (state ? WEED_FLAG_IMMUTABLE : 0)) \
@@ -308,6 +367,9 @@ void lives_capacities_free(lives_capacity_t *);
 
 #define lives_capacity_is_readonly(caps, key) (cap ? ((weed_leaf_get_flags(caps, key) & WEED_FLAG_IMMUTABLE) \
 						      ? TRUE : FALSE) : FALSE)
+
+void lives_intentcaps_free(lives_intentcap_t *);
+lives_intentcap_t *lives_intentcaps_new(int icapstype);
 
 #if 0
 // base functions
@@ -319,8 +381,8 @@ LiVESTransformList **list_transformations(lives_object_t *obj);
 // check if all variables not marked optional are set, and all condition flags are TRUE, type, subtype, state, status OK
 boolean requirements_met(lives_object_transform_t *);
 
-// the return value belongs to the object, and should only be freed with lives_object_status_free
-lives_object_status_t *transform(lives_object_t *, lives_object_transform_t *, lives_object_t **other);
+// the return value belongs to the object, and should only be freed with lives_transform_status_free
+lives_transform_status_t *transform(lives_object_t *, lives_object_transform_t *, lives_object_t **other);
 
 //////
 // derived functions
@@ -345,7 +407,7 @@ boolean rules_lack_param(lives_rules_t *req, const char *pname);
 weed_param_t *weed_param_from_iparams(lives_intentparams_t *iparams, const char *name);
 
 #if 0
-const lives_object_status_t *get_current_status(lives_object_t *obj);
+const lives_transform_status_t *get_current_status(lives_object_t *obj);
 void lives_intentcaps_free(lives_intcaps_t **icap_pp);
 void lives_rules_ref(lives_rules_t *rules_pp);
 void lives_transform_list_free(LiVESTransformList **transform_list_pp);
@@ -353,7 +415,7 @@ void lives_tx_map_free(LiVESTransformList **transform_list_pp);
 #endif
 
 void lives_intentparams_free(lives_intentparams_t *p);
-void lives_object_status_free(lives_object_status_t *st);
+void lives_transform_status_free(lives_transform_status_t *st);
 void lives_object_transform_free(lives_object_transform_t *tx);
 
 #endif

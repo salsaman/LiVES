@@ -7,6 +7,13 @@
 
 #define PLUGIN_UID 0x646563706C2E6476
 
+#include "lives-plugin.h"
+
+#define PLUGIN_DEVSTATE PLUGIN_DEVSTATE_RECOMMENDED
+#define PLUGIN_NAME "LiVES avformat"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 1
+
 #define NEED_CLONEFUNC
 
 #include "decplugin.h"

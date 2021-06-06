@@ -5,17 +5,10 @@
 //
 // some code adapted from vlc (GPL v2 or higher)
 
-
-#define PLUGIN_UID 0x6465636C69626176ull
+#define PLUGIN_UID 0x6465636C69626176
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
-#endif
-
-#ifndef HAVE_SYSTEM_WEED
-#include "../../../libweed/weed-palettes.h"
-#else
-#include <weed/weed-palettes.h>
 #endif
 
 #define HAVE_AVCODEC
@@ -36,6 +29,13 @@
 /// but only when using send_packet / receive_frame
 /// using the deprecated method does not cause the leak
 #undef HAVE_AVCODEC_SEND_PACKET
+
+#include "lives-plugin.h"
+
+#define PLUGIN_DEVSTATE PLUGIN_DEVSTATE_RECOMMENDED
+#define PLUGIN_NAME "LiVES avformat"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 1
 
 #define NEED_CLONEFUNC
 #define NEED_TIMING
@@ -64,10 +64,6 @@
 #include "libav_helper.h"
 
 #include "avformat_decoder.h"
-
-static int vmaj = 1;
-static int vmin = 1;
-static const char *plugin_name = "LiVES avformat";
 
 static pthread_mutex_t avcodec_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -731,11 +727,6 @@ const char *module_check_init(void) {
   //avformat_network_init();
   lives_avcodec_unlock();
   return NULL;
-}
-
-
-const lives_plugin_id_t *get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
 

@@ -25,7 +25,7 @@
 
 */
 
-#define PLUGIN_UID 0X646563702E617366ull
+#define PLUGIN_UID 0X646563702E617366
 
 #include <stdio.h>
 #include <string.h>
@@ -39,9 +39,12 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
-static int vmaj = 1;
-static int vmin = 1;
-const char *plugin_name = "LiVES asf/wmv";
+// include once to get constants. decplugin.h will include it a second time.
+#include "lives-plugin.h"
+
+#define PLUGIN_NAME "LiVES asf/wmv"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 1
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -1216,7 +1219,7 @@ seek_skip:
 #endif
 
     } else if (!guidcmp(&g, &lives_asf_stream_header)) {
-      enum LiVESMediaType type;
+      const char *type;
       int sizeX;
       //uint64_t total_size;
       unsigned int tag1;
@@ -1260,14 +1263,14 @@ seek_skip:
 
       test_for_ext_stream_audio = 0;
       if (!guidcmp(&g, &lives_asf_audio_stream)) {
-        type = LIVES_MEDIA_TYPE_AUDIO;
+        type = PLUGIN_CAPACITY_AUDIO;
       } else if (!guidcmp(&g, &lives_asf_video_stream)) {
-        type = LIVES_MEDIA_TYPE_VIDEO;
+        type = PLUGIN_CAPACITY_VIDEO;
       } else if (!guidcmp(&g, &lives_asf_command_stream)) {
-        type = LIVES_MEDIA_TYPE_DATA;
+        type = PLUGIN_CAPACITY_DATA;
       } else if (!guidcmp(&g, &lives_asf_ext_stream_embed_stream_header)) {
         test_for_ext_stream_audio = 1;
-        type = LIVES_MEDIA_TYPE_UNKNOWN;
+        type = NULL;
       } else {
         return -1;
       }
@@ -1318,7 +1321,7 @@ seek_skip:
         priv->input_position += sizeof(lives_asf_guid);
 
         if (!guidcmp(&g, &lives_asf_ext_stream_audio_stream)) {
-          type = LIVES_MEDIA_TYPE_AUDIO;
+          type = PLUGIN_CAPACITY_AUDIO;
           //is_dvr_ms_audio=1;
           get_guid(priv->fd, &g);
           priv->input_position += sizeof(lives_asf_guid);
@@ -1334,10 +1337,10 @@ seek_skip:
         }
       }
 
-      if (type == LIVES_MEDIA_TYPE_AUDIO) {
+      if (strcmp(type, PLUGIN_CAPACITY_AUDIO)) {
         priv->st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
 
-      } else if (type == LIVES_MEDIA_TYPE_VIDEO) {
+      } else if (strcmp(type, PLUGIN_CAPACITY_VIDEO)) {
         priv->st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
         if (vidindex != -1 && vidindex != priv->st->id) {
           fprintf(stderr, "asf_decoder: unhandled multiple vidstreams %d and %d in %s\n", vidindex, priv->st->id, cdata->URI);
@@ -2374,11 +2377,6 @@ const char *module_check_init(void) {
 
   pthread_mutex_init(&indices_mutex, NULL);
   return NULL;
-}
-
-
-const lives_plugin_id_t *get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
 

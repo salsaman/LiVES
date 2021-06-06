@@ -847,13 +847,12 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
   short srcxs;
   short *srcp;
 
-  if (vol == 0.) vol = 0.0000001f;
-  svolp = SAMPLE_MAX_16BIT_P / vol;
-  svoln = SAMPLE_MAX_16BIT_N / vol;
+  svolp = vol / SAMPLE_MAX_16BIT_P;
+  svoln = vol / SAMPLE_MAX_16BIT_N;
 
 #ifdef ENABLE_OIL
-  xp = 1. / svolp;
-  xn = 1. / svoln;
+  xp = svolp;
+  xn = svoln;
   xa = 2. * vol / (SAMPLE_MAX_16BIT_P + SAMPLE_MAX_16BIT_N);
 #endif
 
@@ -868,7 +867,7 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
 #ifdef ENABLE_OIL
       oil_scaleconv_f32_s16(&val, srcp, 1, &y, val > 0 ? &xp : &xn);
 #else
-      if ((val = (float)((float)(*srcp) / (*srcp > 0 ? svolp : svoln))) > 1.0f) val = 1.0f;
+      if ((val = (float)((float)(*srcp) * (*srcp > 0 ? svolp : svoln))) > 1.0f) val = 1.0f;
       else if (val < -1.0f) val = -1.0f;
 #endif
     } else {
@@ -877,13 +876,13 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
       val -= vol;
 #else
       valss = (unsigned short) * srcp - SAMPLE_MAX_16BITI;
-      if ((val = (float)((float)(valss) / (valss > 0 ? svolp : svoln))) > 1.0f) val = 1.0f;
+      if ((val = (float)((float)(valss) * (valss > 0 ? svolp : svoln))) > 1.0f) val = 1.0f;
       else if (val < -1.0f) val = -1.0f;
 #endif
     }
 
-    if (*srcp > maxval) maxval = *srcp;
-    else if (-*srcp > maxval) maxval = -*srcp;
+    if (1. / *srcp > maxval) maxval = 1. / *srcp;
+    else if (-1. / *srcp > maxval) maxval = -1. / *srcp;
 
     *(dst++) = val;
     src += src_skip;
@@ -969,6 +968,11 @@ size64_t sample_move_float_float(float *dst, float *src, size64_t in_samples, do
   off64_t offs = 0;
   size64_t outsamps = 0;
 
+#ifdef USE_INTRINSICSx
+  boolean can_intrin;
+  off64_t xoffs;
+#endif
+
   if (scale == 1. && dst_skip == 1 && vol == 1.) {
     lives_memcpy((void *)dst, (void *)src, in_samples * sizeof(float));
     return in_samples;
@@ -982,6 +986,23 @@ size64_t sample_move_float_float(float *dst, float *src, size64_t in_samples, do
   while (1) {
     if ((scale > 0. && offs > (off64_t)in_samples)
         || (scale < 0. && offs < 0)) break;
+
+#ifdef USE_INTRINSICSx
+    can_intrin = FALSE;
+    if (scale < 0.) {
+      xoffs = (off64_t)((offs_d + scale * 4.) - .4999);
+      if (xoffs >= 0) can_intrin = TRUE;
+    } else {
+      xoffs = (off64_t)((offs_d + scale * 4.) + .4999);
+      if (xoffs < in_samples) can_intrin = TRUE;
+    }
+    if (can_intrin) {
+      offs_d = intrin_resample_vol(&dst[dst_skip * outsamps], dst_skip, src, offs_d, scale, vol);
+      outsamps += 4;
+      continue;
+    }
+#endif
+
     dst[dst_skip * outsamps] = src[offs] * vol;
     if (scale < 0.) {
       offs = (off64_t)((offs_d += scale) - .4999);
@@ -1006,6 +1027,11 @@ size64_t sample_move_float_float_arena(float *dst, float *src, size_t offset, si
   size64_t outsamps = 0;
   size64_t space = ABUF_ARENA_SIZE - offset;
 
+#ifdef USE_INTRINSICSx
+  boolean can_intrin;
+  off64_t xxoffs;
+#endif
+
   if (scale == 1. && dst_skip == 1 && vol == 1. && in_samples <= space) {
     lives_memcpy((void *)dst, (void *)src, in_samples * sizeof(float));
     return in_samples;
@@ -1019,9 +1045,32 @@ size64_t sample_move_float_float_arena(float *dst, float *src, size_t offset, si
   while (1) {
     if ((scale > 0. && offs > (off64_t)in_samples)
         || (scale < 0. && offs < 0)) break;
+
     xoffs = offset + offs;
-    if (xoffs >= ABUF_ARENA_SIZE) xoffs -= ABUF_ARENA_SIZE;
-    else if (xoffs < 0) xoffs += ABUF_ARENA_SIZE;
+
+    if (xoffs >= ABUF_ARENA_SIZE) {
+      xoffs -= ABUF_ARENA_SIZE;
+      offs_d -= (double)ABUF_ARENA_SIZE;
+    } else if (xoffs < 0) {
+      xoffs += ABUF_ARENA_SIZE;
+      offs_d += (double)ABUF_ARENA_SIZE;
+    }
+
+#ifdef USE_INTRINSICSx
+    can_intrin = FALSE;
+    if (scale < 0.) {
+      xxoffs = (off64_t)((offs_d + scale * 4.) - .4999);
+      if (xxoffs >= 0) can_intrin = TRUE;
+    } else {
+      xxoffs = (off64_t)((offs_d + scale * 4.) + .4999);
+      if (xxoffs < in_samples && xoffs < ABUF_ARENA_SIZE) can_intrin = TRUE;
+    }
+    if (can_intrin) {
+      offs_d = intrin_resample_vol(&dst[dst_skip * outsamps], dst_skip, src, offs_d, scale, vol);
+      outsamps += 4;
+      continue;
+    }
+#endif
 
     dst[dst_skip * outsamps] = src[xoffs] * vol;
     if (scale < 0.) {
@@ -3740,7 +3789,7 @@ lives_audio_buf_t *audio_cache_init(void) {
 }
 
 
-void audio_cache_end(void) {
+void audio_cache_finish(void) {
   pthread_mutex_lock(&mainw->cache_buffer_mutex);
   if (!cache_buffer) {
     pthread_mutex_unlock(&mainw->cache_buffer_mutex);
@@ -3748,6 +3797,12 @@ void audio_cache_end(void) {
   }
   cache_buffera->die = cache_bufferb->die = TRUE; ///< tell cache thread to exit when possible
   wake_audio_thread();
+  pthread_mutex_unlock(&mainw->cache_buffer_mutex);
+}
+
+
+void audio_cache_end(void) {
+  pthread_mutex_lock(&mainw->cache_buffer_mutex);
   pthread_join(athread, NULL);
   pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
@@ -4066,9 +4121,7 @@ boolean apply_rte_audio(int64_t nframes) {
       // convert s16 to non-interleaved float
       fltbuf[i] = (float *)lives_calloc(nframes, sizeof(float));
       if (!fltbuf[i]) {
-        for (--i; i >= 0; i--) {
-          lives_free(fltbuf[i]);
-        }
+        while (i--) lives_free(fltbuf[i]);
         lives_free(fltbuf);
         if (shortbuf != (short *)in_buff) lives_free(shortbuf);
         lives_free(in_buff);

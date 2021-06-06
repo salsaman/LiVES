@@ -42,8 +42,6 @@
 #include "osc.h"
 #endif
 
-//static char file_name[PATH_MAX];
-
 boolean on_LiVES_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, livespointer user_data) {
   if (!LIVES_IS_INTERACTIVE) return TRUE;
   on_quit_activate(NULL, NULL);
@@ -775,6 +773,7 @@ void on_open_loc_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   /// get a system tmpdir
   lives_intentparams_t *iparams;
+  lives_intentcap_t *icaps;
   lives_remote_clip_request_t *req = NULL, *req2;
   char *tmpdir = NULL;
 
@@ -783,7 +782,10 @@ void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     return;
   }
 
-  iparams = get_txparams_for_clip(-1, LIVES_INTENTION_DOWNLOAD);
+  icaps = lives_intentcaps_new(LIVES_ICAPS_DOWNLOAD);
+  iparams = get_txparams_for_clip(-1, icaps);
+  lives_intentcaps_free(icaps);
+
   if (iparams) {
     weed_param_t *adir_param =
       weed_param_from_iparams(iparams, CLIP_PARAM_STAGING_DIR);
@@ -919,19 +921,27 @@ void on_location_select(LiVESButton * button, livespointer user_data) {
 
 #define USE_YTDL
 
+static int manage_ds = 0;
+
+lives_remote_clip_request_t *utube_dl2(lives_remote_clip_request_t *req, const char *tmpdir, char *ddir, char *mpt,
+                                       boolean forcecheck,
+                                       lives_remote_clip_request_t *reqout);
+lives_remote_clip_request_t *utube_dl3(lives_remote_clip_request_t *req, const char *tmpdir,
+                                       char *full_dfile, char *ddir, char *mpt, boolean forcecheck,
+                                       lives_remote_clip_request_t *reqout, boolean bres);
+lives_remote_clip_request_t *utube_dl4(lives_remote_clip_request_t *req, const char *tmpdir, char *mpt,
+                                       boolean badfile, boolean forcecheck, char *dest, lives_remote_clip_request_t *reqout);
+
 //ret updated req if fmt sel. needs change
 lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, const char *tmpdir) {
-  char *com, *full_dfile = NULL, *tmp, *ddir, *dest = NULL;
+  char *com, *tmp, *ddir, *dest = NULL;
   char *overrdkey = NULL;
-  char *mpf = NULL, *mpt = NULL, *msg, *msg2;
+  char *mpf = NULL, *mpt = NULL, *msg;
   lives_remote_clip_request_t *reqout = NULL;
   boolean hasnone = FALSE, hasalts = FALSE;
   boolean keep_old_dir = FALSE;
   boolean forcecheck = FALSE;
-  boolean bres;
-  boolean badfile = FALSE;
   int keep_frags = 0;
-  int manage_ds = 0;
   int current_file = mainw->current_file;
   int audchoice = 0;
 
@@ -950,7 +960,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
       LiVESResponseType resp;
       char *cwd = lives_get_current_dir();
       if (lives_chdir(tmpdir, FALSE)) {
-        goto cleanup_ut;
+        return utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
       }
       lives_rmglob("*");
       lives_chdir(cwd, FALSE);
@@ -958,7 +968,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
         resp = LIVES_RESPONSE_NONE;
         if (!lives_make_writeable_dir(ddir)) {
           resp = do_dir_perm_error(ddir, TRUE);
-          if (resp == LIVES_RESPONSE_CANCEL) goto cleanup_ut;
+          if (resp == LIVES_RESPONSE_CANCEL) utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
         }
       } while (resp == LIVES_RESPONSE_RETRY);
     }
@@ -1009,7 +1019,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
   if (!get_temp_handle(-1)) {
     // we failed because we ran out of file handles; this should almost never happen
     d_print_failed();
-    goto cleanup_ut;
+    utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
   }
 
   migrate_from_staging(mainw->current_file);
@@ -1032,7 +1042,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
         lives_free(msg);
         capable->has_pip = UNCHECKED;
         d_print_failed();
-        goto cleanup_ut;
+        utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
       } else {
         if (mainw->permmgr && mainw->permmgr->key) {
           /// force fresh install of local youtube-dl
@@ -1076,7 +1086,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
       reqout = req;
       reqout->do_update = TRUE;
       mainw->cancelled = CANCEL_RETRY;
-      goto cleanup_ut;
+      utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
     }
 
 #ifndef USE_YTDL
@@ -1121,7 +1131,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
       mainw->error = FALSE;
       mainw->cancelled = CANCEL_RETRY;
       reqout = req;
-      goto cleanup_ut;
+      utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
     }
 
     if (!(*mainw->msg)) {
@@ -1153,13 +1163,13 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
         }
 #endif
       }
-      goto cleanup_ut;
+      utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
     }
 
     if (req->matchsize == LIVES_MATCH_CHOICE && !*req->vidchoice)  {
       // show a list of the video formats and let the user pick one
       if (!youtube_select_format(req)) {
-        goto cleanup_ut;
+        utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
       }
       // we try again, this time with req->vidchoice set
       req->matchsize = LIVES_MATCH_SPECIFIED;
@@ -1172,20 +1182,10 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
       lives_strfreev(array);
       if (req->duration == 0.) {
         if (do_utube_stream_warn())
-          goto cleanup_ut;
+          utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
       }
     }
   }
-
-  if (req->duration == 0.) {
-    mainw->cancel_type = CANCEL_INTERRUPT;
-    // force the "Enough" button to show
-    cfile->opening_loc = TRUE;
-    cfile->keep_without_preview = TRUE;
-    msg = lives_strdup(_(". Click 'Enough' to stop the stream download"));
-  } else msg = lives_strdup("");
-
-  // backend should now be downloading the clip
 
   // do more intensive diskspace checking
   forcecheck = TRUE;
@@ -1201,7 +1201,25 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
 
   //// TODO - allow downloading in bg while user does something else
   /// **ADD TASK CALLBACK
+  mainw->current_file = current_file;
+  return utube_dl2(req, tmpdir, ddir, mpt, forcecheck, reqout);
+}
 
+
+lives_remote_clip_request_t *utube_dl2(lives_remote_clip_request_t *req, const char *tmpdir, char *ddir, char *mpt,
+                                       boolean forcecheck,
+                                       lives_remote_clip_request_t *reqout) {
+  char *full_dfile, *msg2, *msg;
+  boolean bres;
+  if (req->duration == 0.) {
+    mainw->cancel_type = CANCEL_INTERRUPT;
+    // force the "Enough" button to show
+    cfile->opening_loc = TRUE;
+    cfile->keep_without_preview = TRUE;
+    msg = lives_strdup(_(". Click 'Enough' to stop the stream download"));
+  } else msg = lives_strdup("");
+
+  // backend should now be downloading the clip
   lives_snprintf(req->ext, 16, "%s", req->format);
 
   full_dfile = lives_strdup_printf("%s.%s", req->fname, req->ext);
@@ -1210,10 +1228,19 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
   lives_free(msg);
   bres = do_progress_dialog(TRUE, TRUE, msg2);
   lives_free(msg2);
+  return utube_dl3(req, tmpdir, full_dfile, ddir, mpt, forcecheck, reqout, bres);
+}
+
+
+lives_remote_clip_request_t *utube_dl3(lives_remote_clip_request_t *req, const char *tmpdir, char *full_dfile, char *ddir,
+                                       char *mpt,
+                                       boolean forcecheck, lives_remote_clip_request_t *reqout, boolean bres) {
+  boolean badfile = FALSE;
+  char *dest = NULL;
+
   cfile->no_proc_sys_errors = FALSE;
   mainw->cancel_type = CANCEL_KILL;
   if (mainw->cancelled == CANCEL_KEEP) {
-    break_me("aahh");
     mainw->cancelled = CANCEL_NONE;
     mainw->error = FALSE;
     bres = TRUE;
@@ -1222,7 +1249,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
     if (mainw->cancelled == CANCEL_ERROR)
       badfile = TRUE;
     //d_print_cancelled();
-    goto cleanup_ut;
+    utube_dl4(req, tmpdir, mpt, badfile, forcecheck, dest, reqout);
   }
   if (!bres || mainw->error) badfile = TRUE;
   else {
@@ -1275,8 +1302,9 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
           if (lives_mv(from, dest)) {
             lives_free(from);
             lives_free(dest);
+            dest = NULL;
             badfile = TRUE;
-            goto cleanup_ut;
+            utube_dl4(req, tmpdir, mpt, badfile, forcecheck, dest, reqout);
           }
         }
         do {
@@ -1305,8 +1333,16 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
       mainw->error = FALSE;
     }
   }
+  return utube_dl4(req, tmpdir, mpt, badfile, forcecheck, dest, reqout);
+}
 
-cleanup_ut:
+
+//cleanup_ut:
+lives_remote_clip_request_t *utube_dl4(lives_remote_clip_request_t *req, const char *tmpdir, char *mpt,
+                                       boolean badfile, boolean forcecheck, char *dest,
+                                       lives_remote_clip_request_t *reqout) {
+  int current_file = mainw->current_file;
+
   close_temp_handle(current_file);
   lives_freep((void **)&mpt);
 
@@ -1373,6 +1409,8 @@ cleanup_ut:
       // we should probably offer if warn or quota too
       if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL && dest) {
         lives_rm(dest);
+        lives_free(dest);
+        dest = NULL;
         badfile = TRUE;
       }
       if (!check_storage_space(-1, FALSE)) {
@@ -1486,7 +1524,7 @@ void on_close_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     acurrent = used_in_current_layout(mainw->multitrack, mainw->current_file);
     if (acurrent) {
       if (!mainw->xlays) only_current = TRUE;
-      mainw->xlays = lives_list_append_unique(mainw->xlays, mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+      mainw->xlays = lives_list_append_unique_str(mainw->xlays, mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
     }
 
     if (mainw->xlays) {
@@ -5326,8 +5364,10 @@ static void recover_lost_clips(LiVESList * reclist) {
   }
 
   // recover files
+  mainw->hard_recovery = TRUE;
   mainw->recovery_list = reclist;
   recover_files(NULL, TRUE);
+  mainw->hard_recovery = FALSE;
 
   if (prefs->crash_recovery) rewrite_recovery_file();
 
@@ -10547,10 +10587,13 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
   }
 
   // lock OFF
-  if (!state) prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
-  switch_audio_clip(mainw->current_file, TRUE);
+  if (!state) {
+    prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
+    if (w) switch_audio_clip(mainw->current_file, TRUE);
+  }
 
-  if (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC) resync_audio(mainw->playing_file, mainw->files[mainw->playing_file]->frameno);
+  if (w && (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC))
+    resync_audio(mainw->playing_file, mainw->files[mainw->playing_file]->frameno);
 
   // lock ON
   if (state) prefs->audio_opts |= AUDIO_OPTS_IS_LOCKED;

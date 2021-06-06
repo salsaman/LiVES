@@ -11649,7 +11649,7 @@ boolean widget_helper_init(void) {
     GdkPixbufFormat *form = (GdkPixbufFormat *)slist->data;
     char **ext = gdk_pixbuf_format_get_extensions(form);
     for (i = 0; ext[i]; i++) {
-      xlist = lives_list_append_unique(xlist, lives_strdup(ext[i]));
+      xlist = lives_list_append_unique_str(xlist, lives_strdup(ext[i]));
     }
     lives_strfreev(ext);
     slist = slist->next;
@@ -12560,7 +12560,7 @@ static void set_child_colour_internal(LiVESWidget * widget, livespointer set_all
       lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_INSENSITIVE);
   }
   if (LIVES_IS_CONTAINER(widget)) {
-    lives_container_forall(LIVES_CONTAINER(widget), set_child_colour_internal, set_allx);
+    lives_container_foreach(LIVES_CONTAINER(widget), set_child_colour_internal, set_allx);
   }
 }
 
@@ -12589,7 +12589,7 @@ static void set_child_dimmed_colour_internal(LiVESWidget * widget, livespointer 
   lives_widget_apply_theme_dimmed(widget, LIVES_WIDGET_STATE_NORMAL, dimval);
 
   if (LIVES_IS_CONTAINER(widget)) {
-    lives_container_forall(LIVES_CONTAINER(widget), set_child_dimmed_colour_internal, dim);
+    lives_container_foreach(LIVES_CONTAINER(widget), set_child_dimmed_colour_internal, dim);
   }
 }
 
@@ -12608,7 +12608,7 @@ static void set_child_dimmed_colour2_internal(LiVESWidget * widget, livespointer
   lives_widget_apply_theme_dimmed2(widget, LIVES_WIDGET_STATE_INSENSITIVE, dimval);
 
   if (LIVES_IS_CONTAINER(widget)) {
-    lives_container_forall(LIVES_CONTAINER(widget), set_child_dimmed_colour2_internal, dim);
+    lives_container_foreach(LIVES_CONTAINER(widget), set_child_dimmed_colour2_internal, dim);
   }
 }
 
@@ -12634,7 +12634,7 @@ static void set_child_alt_colour_internal(LiVESWidget * widget, livespointer set
   }
 
   if (LIVES_IS_CONTAINER(widget)) {
-    lives_container_forall(LIVES_CONTAINER(widget), set_child_alt_colour_internal, set_allx);
+    lives_container_foreach(LIVES_CONTAINER(widget), set_child_alt_colour_internal, set_allx);
   }
 }
 
@@ -12650,7 +12650,7 @@ WIDGET_HELPER_GLOBAL_INLINE void set_child_alt_colour(LiVESWidget * widget, bool
 static void set_child_alt_colour_internal_prelight(LiVESWidget * widget, livespointer data) {
   lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_PRELIGHT, TRUE);
   if (LIVES_IS_CONTAINER(widget)) {
-    lives_container_forall(LIVES_CONTAINER(widget), set_child_alt_colour_internal_prelight, NULL);
+    lives_container_foreach(LIVES_CONTAINER(widget), set_child_alt_colour_internal_prelight, NULL);
   }
 }
 
@@ -12676,7 +12676,7 @@ static void set_child_colour3_internal(LiVESWidget * widget, livespointer set_al
   }
 
   if (LIVES_IS_CONTAINER(widget)) {
-    lives_container_forall(LIVES_CONTAINER(widget), set_child_colour3_internal, set_allx);
+    lives_container_foreach(LIVES_CONTAINER(widget), set_child_colour3_internal, set_allx);
   }
 }
 

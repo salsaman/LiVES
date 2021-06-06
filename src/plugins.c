@@ -1318,7 +1318,8 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     }
   }
 
-  vpp->get_plugin_id = (const lives_plugin_id_t *(*)())dlsym(handle, "get_plugin_id");
+  if ((vpp->get_plugin_id = (const lives_plugin_id_t *(*)())dlsym(handle, "get_plugin_id")) == NULL)
+    vpp->get_plugin_id = (const lives_plugin_id_t *(*)())dlsym(handle, "get_plugin_id_default");
 
   if ((vpp->get_fps_list = (const char *(*)(int))dlsym(handle, "get_fps_list"))) {
     if ((vpp->set_fps = (boolean(*)(double))dlsym(handle, "set_fps")) == NULL) {
@@ -2218,7 +2219,7 @@ LiVESList *move_decplug_to_first(uint64_t dec_uid, const char *decplugname) {
 }
 
 
-static LiVESList *locate_decoders(LiVESList * dlist) {
+LiVESList *locate_decoders(LiVESList * dlist) {
   // for disabled decoders, the list can now be a mix of plugin names and uids (as string)
   // uids will begin with "0X", plugin names should not
   // here we will create a list of decoder plugins by matching names / uids
@@ -2228,8 +2229,8 @@ static LiVESList *locate_decoders(LiVESList * dlist) {
   uint64_t uid;
   for (; dlist; dlist = dlist->next) {
     decid = (const char *)dlist->data;
-    if (!lives_strncmp(decid, "0X", 2)) {
-      if (sscanf(decid, "%016lX", &uid) > 0) {
+    if (!lives_strncmp(decid, "0X", 2) || !lives_strncmp(decid, "0x", 2)) {
+      if (sscanf(decid + 2, "%016lX", &uid) > 0) {
         for (dplist = capable->plugins_list[PLUGIN_TYPE_DECODER]; dplist; dplist = dplist->next) {
           dpsys = (lives_decoder_sys_t *)dplist->data;
           if (dpsys->id->uid == uid) {
@@ -2255,7 +2256,7 @@ static LiVESList *locate_decoders(LiVESList * dlist) {
 LiVESList *load_decoders(void) {
   lives_decoder_sys_t *dpsys;
   char *decplugdir = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_DECODERS, NULL);
-  LiVESList *dlist = NULL, *list;
+  LiVESList *dlist = NULL;
   LiVESList *decoder_plugins = get_plugin_list(PLUGIN_DECODERS, TRUE, decplugdir, "-" DLL_NAME);
 
   char *blacklist[3] = {
@@ -2279,7 +2280,14 @@ LiVESList *load_decoders(void) {
     }
     if (!skip) {
       dpsys = open_decoder_plugin((char *)decoder_plugins->data);
-      if (dpsys) dlist = lives_list_append(dlist, (livespointer)dpsys);
+      if (dpsys) {
+        if (dpsys->id->devstate == LIVES_DEVSTATE_AVOID) continue;
+        dlist = lives_list_append(dlist, (livespointer)dpsys);
+        if (dpsys->id->devstate == LIVES_DEVSTATE_BROKEN) {
+          prefs->disabled_decoders = lives_list_append_unique(prefs->disabled_decoders, dpsys);
+          g_print("BROKEN is %p\n", dpsys);
+        }
+      }
     }
     lives_free((livespointer)decoder_plugins->data);
   }
@@ -2292,10 +2300,6 @@ LiVESList *load_decoders(void) {
   }
 
   lives_free(decplugdir);
-
-  list = get_list_pref(PREF_DISABLED_DECODERS);
-  prefs->disabled_decoders = locate_decoders(list);
-  lives_list_free_all(&list);
 
   return dlist;
 }
@@ -2534,8 +2538,8 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled,
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
   if (dplug && dplug->decoder && dplug->decoder->id) {
-    char *plstr = make_plverstring(dplug->decoder->id, _(" version "));
-    lives_free(plstr);
+    /* char *plstr = make_plverstring(dplug->decoder->id, _(" version ")); */
+    /* lives_free(plstr); */
     sfile->decoder_uid = dplug->decoder->id->uid;
     sfile->ext_src = dplug;
     sfile->ext_src_type = LIVES_EXT_SRC_DECODER;
@@ -2627,7 +2631,9 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   }
 
   if ((dpsys->get_plugin_id = (const lives_plugin_id_t *(*)())dlsym(dpsys->handle, "get_plugin_id")) == NULL) {
-    OK = FALSE;
+    if ((dpsys->get_plugin_id = (const lives_plugin_id_t *(*)())dlsym(dpsys->handle, "get_plugin_id_default")) == NULL) {
+      OK = FALSE;
+    }
   }
   if ((dpsys->get_clip_data = (lives_clip_data_t *(*)(char *, const lives_clip_data_t *))
                               dlsym(dpsys->handle, "get_clip_data")) == NULL) {
@@ -2644,7 +2650,6 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   if (!OK) {
     d_print(_("\n\nDecoder plugin %s\nis missing a mandatory function.\nUnable to use it.\n"), plname);
     unload_decoder_plugin(dpsys);
-    lives_free(dpsys);
     return NULL;
   }
 
@@ -2665,7 +2670,6 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
     if (err) {
       lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", err);
       unload_decoder_plugin(dpsys);
-      lives_free(dpsys);
       return NULL;
     }
   }
@@ -2701,13 +2705,26 @@ void get_mime_type(char *text, int maxlen, const lives_clip_data_t *cdata) {
 }
 
 
-static void dpa_ok_clicked(LiVESButton * button, livespointer user_data) {
+static void dpa_ok_clicked(LiVESButton * button, LiVESWidget * dlg) {
+  LiVESList *list = capable->plugins_list[PLUGIN_TYPE_DECODER];
+  LiVESWidget *cb = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(dlg), BUTTON_KEY);
+  if (future_prefs->disabled_decoders) {
+    lives_list_free(future_prefs->disabled_decoders);
+    future_prefs->disabled_decoders = NULL;
+  }
+  while (cb) {
+    if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb)))
+      future_prefs->disabled_decoders = lives_list_append(future_prefs->disabled_decoders, list->data);
+    list = list->next;
+    cb = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cb), BUTTON_KEY);
+  }
   lives_general_button_clicked(button, NULL);
   if (prefsw) {
     lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
     lives_xwindow_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
-    if (lists_differ(prefs->disabled_decoders, future_prefs->disabled_decoders, FALSE))
+    if (lists_differ(prefs->disabled_decoders, future_prefs->disabled_decoders, FALSE)) {
       apply_button_set_enabled(NULL, NULL);
+    }
   }
 }
 
@@ -2718,26 +2735,26 @@ static void dpa_cancel_clicked(LiVESButton * button, livespointer user_data) {
     lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
     lives_xwindow_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
   }
-  lives_list_free(future_prefs->disabled_decoders);
-  future_prefs->disabled_decoders = NULL;
 }
 
-
-static void on_dpa_cb_toggled(LiVESToggleButton * button, livespointer decoders) {
-  LiVESList *declist = (LiVESList *)decoders;
-  if (!lives_toggle_button_get_active(button))
-    // unchecked is disabled
-    future_prefs->disabled_decoders = lives_list_append(future_prefs->disabled_decoders, declist->data);
-  else
-    future_prefs->disabled_decoders = lives_list_remove(future_prefs->disabled_decoders, declist->data);
+char *lives_devstate_to_text(int devstate) {
+  switch (devstate) {
+  case LIVES_DEVSTATE_NORMAL: return _("normal");
+  case LIVES_DEVSTATE_RECOMMENDED:
+    return lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
+  case LIVES_DEVSTATE_TESTING: return _("testing");
+  case LIVES_DEVSTATE_UNSTABLE: return _("may be unstable");
+  case LIVES_DEVSTATE_BROKEN: return _("BROKEN !");
+  case LIVES_DEVSTATE_AVOID: return _("You should not be seeing this...");
+  default: return _("custom");
+  }
 }
-
 
 void on_decplug_advanced_clicked(LiVESButton * button, livespointer user_data) {
   LiVESList *decoder_plugin;
-
+  LiVESWidget *last_cb;
   LiVESWidget *hbox;
-  LiVESWidget *vbox;
+  LiVESWidget *layout;
   LiVESWidget *checkbutton;
   LiVESWidget *scrolledwindow;
   LiVESWidget *label;
@@ -2746,7 +2763,7 @@ void on_decplug_advanced_clicked(LiVESButton * button, livespointer user_data) {
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
-  char *ltext, *tmp;
+  char *ltext, *tmp, *tmp2;
   char *decplugdir = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_DECODERS, NULL);
 
   if (ARE_UNCHECKED(decoder_plugins)) {
@@ -2757,24 +2774,33 @@ void on_decplug_advanced_clicked(LiVESButton * button, livespointer user_data) {
 
   decoder_plugin = capable->plugins_list[PLUGIN_TYPE_DECODER];
 
+  future_prefs->disabled_decoders = lives_list_copy(prefs->disabled_decoders);
+
   dialog = lives_standard_dialog_new(_("Decoder Plugins"), FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
-  vbox = lives_vbox_new(FALSE, 0);
+  tmp = lives_big_and_bold(_("Enabled Video Decoders (uncheck to disable)"));
 
-  scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, vbox);
+  widget_opts.use_markup = TRUE;
+  label = lives_standard_label_new(tmp);
+  widget_opts.use_markup = FALSE;
+  lives_free(tmp);
+
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+
+  layout = lives_layout_new(NULL);
+
+  scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, layout);
 
   lives_container_add(LIVES_CONTAINER(dialog_vbox), scrolledwindow);
 
-  label = lives_standard_label_new(_("Enabled Video Decoders (uncheck to disable)"));
-  lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  last_cb = dialog;
 
   for (; decoder_plugin; decoder_plugin = decoder_plugin->next) {
     const lives_decoder_sys_t *dpsys = (const lives_decoder_sys_t *)decoder_plugin->data;
 
-    hbox = lives_hbox_new(FALSE, 0);
-    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
     ltext = lives_strdup_printf("<big><b>%s</b></big> decoder plugin version %d.%d",
                                 (tmp = lives_markup_escape_text(dpsys->id->name, -1)),
@@ -2784,15 +2810,24 @@ void on_decplug_advanced_clicked(LiVESButton * button, livespointer user_data) {
     widget_opts.mnemonic_label = FALSE;
     widget_opts.use_markup = TRUE;
     checkbutton =
-      lives_standard_check_button_new(ltext, lives_list_index(future_prefs->disabled_decoders,
-                                      (livespointer)decoder_plugin) == -1, LIVES_BOX(hbox), NULL);
-    widget_opts.use_markup = FALSE;
+      lives_standard_check_button_new(ltext, TRUE, LIVES_BOX(hbox), NULL);
+
+    if (lives_list_index(future_prefs->disabled_decoders,
+                         (livespointer)decoder_plugin->data) != -1) {
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), FALSE);
+    }
+    lives_free(ltext);
     widget_opts.mnemonic_label = TRUE;
 
-    lives_free(ltext);
+    tmp = lives_devstate_to_text(dpsys->id->devstate);
+    tmp2 = lives_strdup_printf("<b>%s</b>", tmp);
+    widget_opts.use_markup = TRUE;
+    label = lives_layout_add_label(LIVES_LAYOUT(layout), tmp2, TRUE);
+    widget_opts.use_markup = FALSE;
+    lives_free(tmp); lives_free(tmp2);
 
-    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                    LIVES_GUI_CALLBACK(on_dpa_cb_toggled), (livespointer)decoder_plugin);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(last_cb), BUTTON_KEY, checkbutton);
+    last_cb = checkbutton;
   }
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL, LIVES_RESPONSE_CANCEL);
@@ -2805,13 +2840,11 @@ void on_decplug_advanced_clicked(LiVESButton * button, livespointer user_data) {
                        LIVES_GUI_CALLBACK(dpa_cancel_clicked), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(dpa_ok_clicked), NULL);
+                       LIVES_GUI_CALLBACK(dpa_ok_clicked), dialog);
 
   lives_widget_show_all(dialog);
   lives_window_present(LIVES_WINDOW(dialog));
   lives_xwindow_raise(lives_widget_get_xwindow(dialog));
-
-  //future_prefs->disabled_decoders = lives_list_copy(prefs->disabled_decoders);
 
   lives_free(decplugdir);
 }

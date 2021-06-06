@@ -25,7 +25,7 @@
 
 */
 
-#define PLUGIN_UID 0X646563702E666C76ull
+#define PLUGIN_UID 0XD5AB8A57FED6E49F
 
 #include <stdio.h>
 #include <string.h>
@@ -36,10 +36,6 @@
 #include <math.h>
 #include <sys/stat.h>
 #include <pthread.h>
-
-static int vmaj = 1;
-static int vmin = 1;
-const char *plugin_name = "LiVES flv";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -65,7 +61,15 @@ const char *plugin_name = "LiVES flv";
 #include <weed/weed-compat.h>
 #endif
 
+// include once to get constants. decplugin.h will include it a second time.
+#include "lives-plugin.h"
+
+#define PLUGIN_NAME "LiVES flv"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 1
+
 #define NEED_CLONEFUNC
+
 #include "decplugin.h"
 
 #include <libavutil/intreadwrite.h>
@@ -1315,11 +1319,6 @@ const char *module_check_init(void) {
   nidxc = 0;
   pthread_mutex_init(&indices_mutex, NULL);
   return NULL;
-}
-
-
-const lives_plugin_id_t *get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
 

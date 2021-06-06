@@ -1366,24 +1366,25 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done, doub
 }
 
 
-void update_progress(boolean visible) {
+void update_progress(boolean visible, int clipno) {
   double fraction_done, timesofar;
   static double est_time = 0.;
+  lives_clip_t *sfile = mainw->files[clipno];
   char *prog_label;
 
-  if (cfile->opening && cfile->clip_type == CLIP_TYPE_DISK && !cfile->opening_only_audio &&
-      (cfile->hsize > 0 || cfile->vsize > 0 || cfile->frames > 0) && (!mainw->effects_paused || !shown_paused_frames)) {
+  if (sfile->opening && sfile->clip_type == CLIP_TYPE_DISK && !sfile->opening_only_audio &&
+      (sfile->hsize > 0 || sfile->vsize > 0 || sfile->frames > 0) && (!mainw->effects_paused || !shown_paused_frames)) {
     uint32_t apxl;
     ticks_t currticks = lives_get_current_ticks();
     if ((currticks - last_open_check_ticks) > OPEN_CHECK_TICKS *
-        ((apxl = get_approx_ln((uint32_t)cfile->opening_frames)) < 50 ? apxl : 50) ||
+        ((apxl = get_approx_ln((uint32_t)sfile->opening_frames)) < 50 ? apxl : 50) ||
         (mainw->effects_paused && !shown_paused_frames)) {
-      mainw->proc_ptr->frames_done = cfile->end = cfile->opening_frames = get_frame_count(mainw->current_file,
-                                     cfile->opening_frames > 1 ? cfile->opening_frames : 1);
+      mainw->proc_ptr->frames_done = sfile->end = sfile->opening_frames = get_frame_count(mainw->current_file,
+                                     sfile->opening_frames > 1 ? sfile->opening_frames : 1);
       last_open_check_ticks = currticks;
-      if (cfile->opening_frames > 1) {
-        if (cfile->frames > 0 && cfile->frames != 123456789) {
-          fraction_done = (double)(cfile->opening_frames - 1.) / (double)cfile->frames;
+      if (sfile->opening_frames > 1) {
+        if (sfile->frames > 0 && sfile->frames != 123456789) {
+          fraction_done = (double)(sfile->opening_frames - 1.) / (double)sfile->frames;
           if (fraction_done > 1.) fraction_done = 1.;
           if (!mainw->effects_paused) {
             timesofar = (currticks - proc_start_ticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
@@ -1394,12 +1395,12 @@ void update_progress(boolean visible) {
           if (est_time != -1.) {
             char *remtstr = remtime_string(est_time);
             prog_label = lives_strdup_printf(_("\n%d/%d frames opened. %s\n"),
-                                             cfile->opening_frames - 1, cfile->frames, remtstr);
+                                             sfile->opening_frames - 1, sfile->frames, remtstr);
             lives_free(remtstr);
-          } else prog_label = lives_strdup_printf(_("\n%d/%d frames opened.\n"), cfile->opening_frames - 1, cfile->frames);
+          } else prog_label = lives_strdup_printf(_("\n%d/%d frames opened.\n"), sfile->opening_frames - 1, sfile->frames);
         } else {
           lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
-          prog_label = lives_strdup_printf(_("\n%d frames opened.\n"), cfile->opening_frames - 1);
+          prog_label = lives_strdup_printf(_("\n%d frames opened.\n"), sfile->opening_frames - 1);
         }
 #ifdef PROGBAR_IS_ENTRY
         widget_opts.justify = LIVES_JUSTIFY_CENTER;
@@ -1409,7 +1410,7 @@ void update_progress(boolean visible) {
         lives_label_set_text(LIVES_LABEL(mainw->proc_ptr->label3), prog_label);
 #endif
         lives_free(prog_label);
-        cfile->start = cfile->end > 0 ? 1 : 0;
+        sfile->start = sfile->end > 0 ? 1 : 0;
         showclipimgs();
       }
     }
@@ -2867,7 +2868,10 @@ LIVES_GLOBAL_INLINE void do_no_decoder_error(const char *fname) {
   lives_widget_context_update();
   do_error_dialogf(
     _("\n\nLiVES could not find a required decoder plugin for the clip\n%s\n"
-      "The clip could not be loaded.\n"), fname);
+      "The clip could not be loaded.\n\n"
+      "The clip will be marked 'ignore' - you can try to recover it using\n"
+      "Files | Clean up Disk Space / Recover files, "
+      "with the option 'Consider Files Marked Ignore' enabled."), fname);
 }
 
 
@@ -2879,14 +2883,9 @@ LIVES_GLOBAL_INLINE void do_no_loadfile_error(const char *fname) {
 #ifdef ENABLE_JACK
 
 LIVES_GLOBAL_INLINE boolean do_jack_nonex_warn(const char *server_cfg) {
-  if (!lives_file_test(server_cfg, LIVES_FILE_TEST_EXISTS))
-    return do_yesno_dialogf(_("The script file selected for server startup does not exist.\n"
-                              "(%s)\nAre you sure you wish to continue with these settings ?\n"),
-                            server_cfg);
-  else
-    return do_yesno_dialogf(_("The script file selected for server startup is not executable.\n"
-                              "(%s)\nAre you sure you wish to continue with these settings ?\n"),
-                            server_cfg);
+  return do_yesno_dialogf(_("The script file selected for server startup does not exist.\n"
+                            "(%s)\nAre you sure you wish to continue with these settings ?\n"),
+                          server_cfg);
 }
 
 

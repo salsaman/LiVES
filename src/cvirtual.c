@@ -294,7 +294,7 @@ lives_img_type_t resolve_img_type(lives_clip_t *sfile) {
   lives_img_type_t ximgtype;
   int nimty = (int)N_IMG_TYPES;
   char *fname;
-  for (frames_t i = sfile->frames - 1; i >= 0; i--) {
+  for (frames_t i = sfile->frames - 1; i--;) {
     if (!sfile->frame_index || sfile->frame_index[i] == -1) {
       for (int j = 1; j < nimty; j++) {
         ximgtype = (lives_img_type_t)j;
@@ -357,7 +357,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   }
   // check the image type
 
-  for (i = sfile->frames - 1; i >= 0; i--) {
+  for (i = sfile->frames - 1; i--;) {
     if (!sfile->frame_index || sfile->frame_index[i] == -1) {
       // this is a non-virtual frame
       ximgtype = empirical_img_type;

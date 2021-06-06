@@ -5,6 +5,12 @@
 
 #define PLUGIN_UID 0X9F9490472BEF94Dull
 
+#include "lives-plugin.h"
+
+#define PLUGIN_NAME "LiVES vloopback2 output"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 1
+
 #include "videoplugin.h"
 
 #include <linux/videodev2.h>
@@ -19,10 +25,6 @@
 #define _IGN_RET(a) ((void)((a) + 1))
 
 /////////////////////////////////////////////////////////////////
-
-static int vmaj = 1;
-static int vmin = 1;
-const char *plugin_name = "LiVES vloopback2 output";
 
 static int palette_list[4];
 static int clampings[3];
@@ -168,11 +170,6 @@ const char *module_check_init(void) {
 }
 
 
-const lives_plugin_id_t *get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
-}
-
-
 const char *get_description(void) {
   return "The vloopback2 playback plugin makes LiVES appear as a video device in /dev.\n"
          "It requires the vloopback2 kernel module which can be downloaded from\nhttps://github.com/umlaeute/v4l2loopback\n";
@@ -184,7 +181,7 @@ uint64_t get_capabilities(int palette) {return 0;}
 
 static char ifbuf[32768];
 
-const char *get_init_rfx(lives_intentcap_t *icaps) {
+const char *get_init_rfx(plugin_intentcap_t *icaps) {
   char **vdevs = get_vloopback2_devices();
   char devstr[30000];
   size_t slen = 0;

@@ -1189,7 +1189,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
   int hlen;
   int retval;
 
-  int key, mode, maxkey = -1, maxmode = modes;
+  int key, mode, maxkey = prefs->rte_keys_virtual, maxmode = modes;
   int update = 0;
 
   int i;
@@ -1536,7 +1536,7 @@ cleanup1:
   if (mainw->ce_thumbs) ce_thumbs_reset_combos();
   if (rte_window) check_clear_all_button();
 
-  if (maxmode > modes || maxkey > -1) {
+  if (maxmode > modes || maxkey > prefs->rte_keys_virtual) {
     if (do_fxload_query(maxkey, maxmode)) {
       // clear old
       on_clear_all_clicked(NULL, user_data);

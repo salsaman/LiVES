@@ -20,6 +20,7 @@ int lives_fputs(const char *s, FILE *stream);
 char *lives_fgets(char *s, int size, FILE *stream);
 size_t lives_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
 size_t lives_fread_string(char *buff, size_t stlen, const char *fname);
+char *lives_fread_line(const char *fname);
 
 int lives_open3(const char *pathname, int flags, mode_t mode);
 int lives_open2(const char *pathname, int flags);
@@ -49,6 +50,8 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 #define BUFF_SIZE_WRITE_MED 2
 #define BUFF_SIZE_WRITE_BIGMED 3
 #define BUFF_SIZE_WRITE_LARGE 4
+
+#define DEF_BUFFSIZE 65536
 
 typedef struct {
   volatile ssize_t bytes;  /// buffer size for write, bytes left to read in case of read

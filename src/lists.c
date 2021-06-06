@@ -146,7 +146,7 @@ LIVES_GLOBAL_INLINE LiVESList *buff_to_list(const char *buffer, const char *deli
 }
 
 
-LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add) {
+LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique_str(LiVESList *xlist, const char *add) {
   LiVESList *list = xlist, *listlast = NULL;
   while (list) {
     listlast = list;
@@ -154,6 +154,19 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList *xlist, const 
     list = list->next;
   }
   list = lives_list_append(listlast, lives_strdup(add));
+  if (!xlist) return list;
+  return xlist;
+}
+
+
+LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList *xlist, livespointer add) {
+  LiVESList *list = xlist, *listlast = NULL;
+  while (list) {
+    listlast = list;
+    if (list->data == add) return xlist;
+    list = list->next;
+  }
+  list = lives_list_append(listlast, add);
   if (!xlist) return list;
   return xlist;
 }

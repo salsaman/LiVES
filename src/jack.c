@@ -99,7 +99,7 @@ LiVESList *jack_get_inport_clients(void) {
   LiVESList *list = NULL;
   for (int i = 0; in_ports[i]; i++) {
     char **pieces = lives_strsplit(in_ports[i], ":", 2);
-    list = lives_list_append_unique(list, pieces[0]);
+    list = lives_list_append_unique_str(list, pieces[0]);
     lives_strfreev(pieces);
   }
   return list;
@@ -109,7 +109,7 @@ LiVESList *jack_get_outport_clients(void) {
   LiVESList *list = NULL;
   for (int i = 0; out_ports[i]; i++) {
     char **pieces = lives_strsplit(out_ports[i], ":", 2);
-    list = lives_list_append_unique(list, pieces[0]);
+    list = lives_list_append_unique_str(list, pieces[0]);
     lives_strfreev(pieces);
   }
   return list;
@@ -969,46 +969,50 @@ static const char *get_type_name(lives_jack_client_type type) {
 }
 
 
-#define SCRIPT_BUFFSIZE 8192
-
 char *jack_parse_script(const char *fname) {
-  char buff[SCRIPT_BUFFSIZE];
-  int i;
-  lives_fread_string(buff, SCRIPT_BUFFSIZE,  fname);
-  for (i = 0; buff[i] && buff[i + 1]; i++) if (buff[i] ==  '-') {
-      if (buff[i + 1] == 'd' || buff[i + 1] == 'n'
-          || (buff[i + 1] == '-' && (buff[i + 2] == 'n'
-                                     || buff[i + 2] == 'd'))) break;
-      i++;
-    }
-  if (!buff[i]) return NULL;
-  for (; buff[i]; i++) {
-    if (buff[i] != '-') continue;
-    //i++;
-    if (buff[++i] == 'd') break;
-    if (!lives_strncmp(&buff[i], "-driver", 7)
-        && (buff[i + 7] == ' ' || buff[i + 7] == '=')) break;
-    if (buff[i] == 'n' || (!lives_strncmp(&buff[i], "-name", 5)
-                           && (buff[i + 5] == ' ' || buff[i + 5] == '='))) {
-      int start = -1, end = -1, done = 0;
-      char quote = 0;
-      if (buff[i] == '-') i += 5;
-      for (i++; buff[i] && !done; i++) {
-        switch (buff[i]) {
-        case ' ': if (start != -1 && !quote) done = 1; break;
-        case '\'': case '"':
-          if (!quote || quote == buff[i]) {
-            quote = buff[i] - quote;
-            break;
-          }
-        default:
-          if (start == -1) start = i;
-          end = i;
-          break;
-        }
+  char *line = lives_fread_line(fname), *retv;
+  if (line) {
+    int i;
+    for (i = 0; line[i] && line[i + 1]; i++) if (line[i] ==  '-') {
+	if (line[i + 1] == 'd' || line[i + 1] == 'n'
+	    || (line[i + 1] == '-' && (line[i + 2] == 'n'
+				       || line[i + 2] == 'd'))) break;
+	i++;
       }
-      return end <= start || start == -1 ? NULL :
-             lives_strndup(&buff[start], end - start + 1);
+    if (!line[i]) {
+      lives_free(line);
+      return NULL;
+    }
+    for (; line[i]; i++) {
+      if (line[i] != '-') continue;
+      //i++;
+      if (line[++i] == 'd') break;
+      if (!lives_strncmp(&line[i], "-driver", 7)
+	  && (line[i + 7] == ' ' || line[i + 7] == '=')) break;
+      if (line[i] == 'n' || (!lives_strncmp(&line[i], "-name", 5)
+			     && (line[i + 5] == ' ' || line[i + 5] == '='))) {
+	int start = -1, end = -1, done = 0;
+	char quote = 0;
+	if (line[i] == '-') i += 5;
+	for (i++; line[i] && !done; i++) {
+	  switch (line[i]) {
+	  case ' ': if (start != -1 && !quote) done = 1; break;
+	  case '\'': case '"':
+	    if (!quote || quote == line[i]) {
+	      quote = line[i] - quote;
+	      break;
+	    }
+	  default:
+	    if (start == -1) start = i;
+	    end = i;
+	    break;
+	  }
+	}
+	retv = (end <= start || start == -1 ? NULL :
+		lives_strndup(&line[start], end - start + 1));
+	lives_free(line);
+	return retv;
+      }
     }
   }
   return NULL;
@@ -1247,6 +1251,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
   char *client_name = NULL;
   char *com = NULL;
   char *logmsg, *logmsg2, *tmp, *tmp2;
+  const char *scrfile;
 
   const char *driver_name;
   const char *type_name = get_type_name(client_type);
@@ -1536,10 +1541,11 @@ retry_connect:
   // using a config file. We will run it via fork() and then try to connect
   // for this to work we need to parse the config file and try to extract the server name
   if (is_trans) {
-    if (*future_prefs->jack_tserver_cfg) com = future_prefs->jack_tserver_cfg;
+    scrfile = future_prefs->jack_tserver_cfg;
   } else {
-    if (*future_prefs->jack_aserver_cfg) com = future_prefs->jack_aserver_cfg;
+    scrfile = future_prefs->jack_tserver_cfg;
   }
+  com = lives_fread_line(scrfile);
   if (com) {
     int pidchk;
 
@@ -1554,11 +1560,12 @@ retry_connect:
     }
 
     if (!sc_pid) {
-      logmsg = lives_strdup_printf("LiVES: Script file %s will be deployed", com);
+      logmsg = lives_strdup_printf("LiVES: Script file %s will be deployed", scrfile);
       jack_log_errmsg(jackd, logmsg);
       lives_free(logmsg);
 
       sc_pid = lives_fork(com);
+      lives_free(com);
       if (!sc_pid) goto ret_failed;
       if (is_trans) tserver_pid = sc_pid;
       else aserver_pid = sc_pid;
@@ -2464,7 +2471,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       if (jackd->playing_file != new_file) {
         jackd->playing_file = new_file;
       }
-      jackd->seek_pos = jackd->real_seek_pos = 0;
+      fwd_seek_pos = jackd->seek_pos = jackd->real_seek_pos = 0;
       push_cache_buffer(cache_buffer, jackd, 0, 0, 1.);
       break;
     case ASERVER_CMD_FILE_CLOSE:
@@ -2477,7 +2484,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
       xseek = atol((char *)msg->data);
       xseek = ALIGN_CEIL64(xseek, afile->achans * (afile->asampsize >> 3));
       if (xseek < 0) xseek = 0;
-      jackd->seek_pos = jackd->real_seek_pos = afile->aseek_pos = xseek;
+      fwd_seek_pos = jackd->seek_pos = jackd->real_seek_pos = afile->aseek_pos = xseek;
       jackd->in_use = TRUE;
       break;
     default:

@@ -81,6 +81,10 @@ extern "C"
 #endif
 #endif
 
+#ifdef ALLOW_UNUSED
+#undef ALLOW_UNUSED
+#endif
+
 #define ALLOW_UNUSED
 #define FN_DECL static
 

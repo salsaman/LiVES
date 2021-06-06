@@ -5,6 +5,12 @@
 
 #define PLUGIN_UID 0X88865894934196CDull
 
+#include "lives-plugin.h"
+
+#define PLUGIN_NAME "LiVES to LiVES streaming"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 1
+
 #include "videoplugin.h"
 
 #include <inttypes.h>
@@ -20,10 +26,6 @@
 static int palette_list[3];
 
 static int clampings[3];
-
-static int vmaj = 1;
-static int vmin = 1;
-const char *plugin_name = "LiVES to LiVES streaming";
 
 static boolean(*render_fn)(int hsize, int vsize, int64_t tc, void **pixel_data);
 boolean render_frame_stream(int hsize, int vsize, int64_t tc, void **pixel_data);
@@ -167,10 +169,6 @@ const char *module_check_init(void) {
 }
 
 
-const lives_plugin_id_t *get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
-}
-
 
 const char *get_description(void) {
   return "The LiVES 2 LiVES stream plugin allows streaming to another copy of LiVES.\n";
@@ -220,7 +218,7 @@ boolean set_palette(int palette) {
 }
 
 
-const char *get_init_rfx(lives_intentcap_t *icaps) {
+const char *get_init_rfx(plugin_intentcap_t *icaps) {
   return \
          "<define>\\n\
 |1.7\\n\

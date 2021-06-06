@@ -366,7 +366,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         }
         lives_free(filename);
       }
-      pulsed->real_seek_pos = pulsed->seek_pos = 0;
+      fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = 0;
       pulsed->playing_file = new_file;
       //pa_stream_trigger(pulsed->pstream, NULL, NULL); // only needed for prebuffer
       break;
@@ -404,7 +404,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       if (seek < 0.) xseek = 0.;
       xseek = ALIGN_CEIL64(xseek, afile->achans * (afile->asampsize >> 3));
       lives_lseek_buffered_rdonly_absolute(pulsed->fd, xseek);
-      pulsed->real_seek_pos = pulsed->seek_pos = afile->aseek_pos = xseek;
+      fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = afile->aseek_pos = xseek;
       if (pulsed->playing_file == mainw->ascrap_file || afile->adirection == LIVES_DIRECTION_FORWARD) {
         lives_buffered_rdonly_set_reversed(pulsed->fd, FALSE);
       } else {

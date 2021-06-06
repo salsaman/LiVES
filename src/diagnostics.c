@@ -564,7 +564,7 @@ int run_weed_startup_tests(void) {
   }
   free(keys);
 
-  weed_set_string_value(plant, "Test2", "12345");
+  weed_set_string_value(plant, "Test2", NULL);
   str = weed_get_string_value(plant, "Test2", &werr);
 
   fprintf(stderr, "value 4 read was %s, err was %d\n", str, werr);
@@ -581,10 +581,59 @@ int run_weed_startup_tests(void) {
   show_quadstate(plant);
   fprintf(stderr, "\n");
 
-  weed_set_string_value(plant, "Test2", "");
+  weed_set_string_value(plant, "Test2", "xyzabc");
+  str = weed_get_string_value(plant, "Test2", &werr);
+
+  fprintf(stderr, "value 3a read was %s, err was %d\n", str, werr);
+
+  keys = weed_plant_list_leaves(plant, &nleaves);
+  n = 0;
+  while (keys[n] != NULL) {
+    fprintf(stderr, "key %d is %s\n", n, keys[n]);
+    free(keys[n]);
+    n++;
+  }
+  free(keys);
+
+
+  werr = weed_set_string_value(plant, "Test2", "");
+  fprintf(stderr, "value 5 set err was %d\n", werr);
+
   str = weed_get_string_value(plant, "Test2", &werr);
 
   fprintf(stderr, "value 5 read was %s, err was %d\n", str, werr);
+
+  keys = weed_plant_list_leaves(plant, &nleaves);
+  n = 0;
+  while (keys[n] != NULL) {
+    fprintf(stderr, "key %d is %s\n", n, keys[n]);
+    free(keys[n]);
+    n++;
+  }
+  free(keys);
+
+
+  weed_set_string_value(plant, "Test2", "xyzabc");
+  str = weed_get_string_value(plant, "Test2", &werr);
+
+  fprintf(stderr, "value 3b read was %s, err was %d\n", str, werr);
+
+  keys = weed_plant_list_leaves(plant, &nleaves);
+  n = 0;
+  while (keys[n] != NULL) {
+    fprintf(stderr, "key %d is %s\n", n, keys[n]);
+    free(keys[n]);
+    n++;
+  }
+  free(keys);
+
+
+  werr = weed_set_string_value(plant, "Test2", "");
+  fprintf(stderr, "value 5b set err was %d\n", werr);
+
+  str = weed_get_string_value(plant, "Test2", &werr);
+
+  fprintf(stderr, "value 5b read was %s, err was %d\n", str, werr);
 
   keys = weed_plant_list_leaves(plant, &nleaves);
   n = 0;

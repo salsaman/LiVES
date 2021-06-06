@@ -11,8 +11,20 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#define VIDP_PLUGIN_VERSION_MAJOR 2
-#define VIDP_PLUGIN_VERSION_MINOR 0
+#define PLUGIN_API_VERSION_MAJOR 2
+#define PLUGIN_API_VERSION_MINOR 0
+
+#ifndef PLUGIN_TYPE
+#define PLUGIN_TYPE PLUGIN_TYPE_PLAYER
+#endif
+
+#ifndef PLUGIN_DEVSTATE
+#define PLUGIN_DEVSTATE PLUGIN_DEVSTATE_NORMAL
+#endif
+
+#ifndef PLUGIN_PKGTYPE
+#define PLUGIN_PKGTYPE PLUGIN_PKGTYPE_DYNAMIC
+#endif
 
 #include <inttypes.h>
 
@@ -43,15 +55,6 @@ extern "C"
 
 typedef void (*func_ptr)(void *);
 
-#ifndef IS_MINGW
-typedef int boolean;
-#endif
-#undef TRUE
-#undef FALSE
-
-#define TRUE 1
-#define FALSE 0
-
 #ifndef PATH_MAX
 #ifdef MAX_PATH
 #define PATH_MAX MAX_PATH
@@ -79,74 +82,11 @@ typedef int boolean;
 
 typedef weed_plant_t weed_layer_t;
 
-// intentcaps
-typedef weed_plant_t lives_capacity_t;
+#include "lives-plugin.h"
 
-typedef int32_t lives_intention;
-
-#define LIVES_CAPACITY_AUDIO_RATE "audio_rate"			// int value
-#define LIVES_CAPACITY_AUDIO_CHANS "audio_channels"		// int value
-
-typedef struct {
-  lives_intention intent;
-  lives_capacity_t *capacities; ///< type specific capabilities
-} lives_intentcap_t;
-
-#define lives_capacity_exists(caps, key) (caps ? (weed_plant_has_leaf(caps, key) == WEED_TRUE ? TRUE : FALSE) \
-					  : FALSE)
-
-#define lives_capacity_is_readonly(caps, key) (caps ? ((weed_leaf_get_flags(caps, key) & WEED_FLAG_IMMUTABLE) \
-						      ? TRUE : FALSE) : FALSE)
-
-#define lives_capacity_get_int(caps, key) (caps ? weed_get_int_value(caps, key, 0) : 0)
-#define lives_capacity_get_string(caps, key) (caps ? weed_get_string_value(caps, key, 0) : 0)
-
-/////
-#define PLUGIN_TYPE_PLAYER		260 // "player"
-#define PLUGIN_PKGTYPE_DYNAMIC     	128 // dynamic library
-
-#define LIVES_INTENTION_PLAY		0x00000200
-#define LIVES_INTENTION_STREAM		0x00000201
-#define LIVES_INTENTION_TRANSCODE	0x00000202
-
-typedef struct {
-  uint64_t uid; // fixed enumeration
-  uint64_t type;  ///< e.g. "decoder"
-  uint64_t pkgtype;  ///< e.g. dynamic
-  char script_lang[32];  ///< for scripted types only, the script interpreter, e.g. "perl", "python3"
-  int api_version_major; ///< version of interface API
-  int api_version_minor;
-  char name[32];  ///< e.g. "mkv_decoder"
-  int pl_version_major; ///< version of plugin
-  int pl_version_minor;
-  lives_intentcap_t *intentcaps;  /// array of intentcaps (NULL terminated)
-  void *unused; // padding
-} lives_plugin_id_t;
-
-const lives_plugin_id_t *get_plugin_id(void);
-
-static lives_plugin_id_t plugin_id;
-
-static inline lives_plugin_id_t *_make_plugin_id(const char *name, int vmaj, int vmin) {
-  static int inited = 0;
-  if (!inited) {
-    inited = 1;
-    plugin_id.uid = PLUGIN_UID;
-    plugin_id.type = PLUGIN_TYPE_PLAYER;
-    plugin_id.pkgtype = PLUGIN_PKGTYPE_DYNAMIC;
-    *plugin_id.script_lang = 0;
-    plugin_id.api_version_major = VIDP_PLUGIN_VERSION_MAJOR;
-    plugin_id.api_version_major = VIDP_PLUGIN_VERSION_MINOR;
-    snprintf(plugin_id.name, 32, "%s", name);
-    plugin_id.pl_version_major = vmaj;
-    plugin_id.pl_version_minor = vmin;
-#ifndef PLUGIN_INTENTCAPS
-#define PLUGIN_INTENTCAPS NULL
+#ifndef IS_MINGW
+typedef int boolean;
 #endif
-    plugin_id.intentcaps = PLUGIN_INTENTCAPS;
-  }
-  return &plugin_id;
-}
 
 // all playback modules need to implement these functions, unless they are marked (optional)
 
@@ -154,7 +94,7 @@ static inline lives_plugin_id_t *_make_plugin_id(const char *name, int vmaj, int
 const char *module_check_init(void);
 const char *get_description(void);   ///< optional
 
-const char *get_init_rfx(lives_intentcap_t *icaps);   ///< optional
+const char *get_init_rfx(plugin_intentcap_t *icaps);   ///< optional
 
 ///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
 const weed_plant_t **get_play_params(weed_bootstrap_f boot);

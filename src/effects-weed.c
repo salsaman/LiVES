@@ -1988,7 +1988,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       if (!mainw->multitrack) {
         if (!svary || prefs->pb_quality == PB_QUALITY_LOW || !is_converter) {
           int natinwidth, natinheight, *natsize;
-          lives_nanosleep_until_nonzero(weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
+          lives_alarm_t alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
+          ticks_t xtimeout;
+          lives_nanosleep_until_nonzero(!(xtimeout = lives_alarm_check(alarm_handle))
+                                        || weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
+          lives_alarm_clear(alarm_handle);
+          if (!xtimeout) {
+            continue;
+          }
           natsize = weed_get_int_array(layer, WEED_LEAF_NATURAL_SIZE, NULL);
           if (natsize) {
             natinwidth = natsize[0];
@@ -2211,6 +2218,15 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (prefs->dev_show_timing)
       g_printerr("nsw pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     if (1 || channel_flags & WEED_CHANNEL_NEEDS_NATURAL_SIZE) {
+      lives_alarm_t alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
+      ticks_t xtimeout;
+      lives_nanosleep_until_nonzero(!(xtimeout = lives_alarm_check(alarm_handle))
+                                    || weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
+      lives_alarm_clear(alarm_handle);
+      if (!xtimeout) {
+        break_me("slow");
+        continue;
+      }
       lives_nanosleep_until_nonzero(weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
       weed_leaf_dup(channel, layer, WEED_LEAF_NATURAL_SIZE);
     }
@@ -4569,9 +4585,7 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t s
   weed_error_t err;
 
   if (!plant) return WEED_ERROR_NOSUCH_PLANT;
-  do {
-    err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
-  } while (err == WEED_ERROR_CONCURRENCY);
+  err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
   if (err == WEED_ERROR_IMMUTABLE) {
     int32_t flags = weed_leaf_get_flags(plant, key);
     flags ^= WEED_FLAG_IMMUTABLE;
@@ -11384,7 +11398,7 @@ static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, 
 
     totsize += 28;
 
-    if (weed_get_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE) {
+    if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE) {
       contig = TRUE;
     }
     padding = 0;
@@ -11836,7 +11850,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
             values[i] = values[i - 1] + vlen64[i];
           }
           if (nplanes > 1)
-            weed_set_boolean_value(plant, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
+            weed_set_boolean_value(plant, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
           lives_free(vlen64);
         } else {
           /// size 0, bad ID
@@ -11985,7 +11999,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         } else {
           if (check_ptrs) {
             if (!lives_strcmp(key, "bblockalloc")
-                || !lives_strcmp(key, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS)
+                || !lives_strcmp(key, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS)
                 || !lives_strcmp(key, WEED_LEAF_HOST_ORIG_PDATA)
                ) add_leaf = FALSE;
           }

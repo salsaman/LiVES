@@ -17,7 +17,10 @@ LiVESList *lives_list_delete_string(LiVESList *, const char *string) WARN_UNUSED
 LiVESList *lives_list_copy_strings(LiVESList *);
 boolean string_lists_differ(LiVESList *, LiVESList *);
 boolean lists_differ(LiVESList *, LiVESList *, boolean ordered);
-LiVESList *lives_list_append_unique(LiVESList *, const char *add);
+
+LiVESList *lives_list_append_unique_str(LiVESList *, const char *add);
+LiVESList *lives_list_append_unique(LiVESList *, livespointer add);
+
 LiVESList *buff_to_list(const char *buffer, const char *delim, boolean allow_blanks, boolean strip);
 int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean case_sensitive);
 
@@ -34,8 +37,6 @@ void lives_slist_free_all(LiVESSList **);
 
 LiVESList *lives_list_remove_node(LiVESList *, LiVESList *node, boolean free_data);
 LiVESList *lives_list_remove_data(LiVESList *, livespointer data, boolean free_data);
-
-LiVESList *lives_list_append_unique(LiVESList *, const char *add);
 
 LiVESList *idx_list_update(LiVESList *, int64_t idx, void *data);
 LiVESList *idx_list_update(LiVESList *, int64_t idx, void *data);

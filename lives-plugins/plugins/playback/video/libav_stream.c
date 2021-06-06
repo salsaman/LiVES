@@ -21,9 +21,11 @@
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 
-static int vmaj = 1;
-static int vmin = 2;
-const char *plugin_name = "LiVES libav stream";
+#include "lives-plugin.h"
+
+#define PLUGIN_NAME "LiVES libav stream"
+#define PLUGIN_VERSION_MAJOR 1
+#define PLUGIN_VERSION_MINOR 2
 
 #define HAVE_AVUTIL
 #define HAVE_AVCODEC
@@ -144,11 +146,6 @@ const char *module_check_init(void) {
 }
 
 
-const lives_plugin_id_t *get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
-}
-
-
 const char *get_description(void) {
   return "The libav_stream plugin provides realtime streaming over a local network (UDP)\n";
 }
@@ -174,15 +171,15 @@ uint64_t get_capabilities(int palette) {
 
 #define IFBUFSIZE 16384
 
-const char *get_init_rfx(lives_intentcap_t *icaps) {
+const char *get_init_rfx(plugin_intentcap_t *icaps) {
   // intent / capabilities allows switching between different tailored interfaces
   static char ifbuf[IFBUFSIZE];
   int defchans = 1, defrate, defrateval = 1;
   char *extra;
 
   switch (icaps->intent) {
-  case LIVES_INTENTION_PLAY: // for now...
-  case LIVES_INTENTION_STREAM: // LiVES VPP (streaming output)
+  case PLUGIN_INTENTION_PLAY: // for now...
+  case PLUGIN_INTENTION_STREAM: // LiVES VPP (streaming output)
     snprintf(ifbuf, IFBUFSIZE, "%s",
              "<define>\\n\
 |1.8.5\\n		  \
@@ -219,19 +216,19 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill|\\n\
 </onchange>\\n\
 ");
     break;
-  case LIVES_INTENTION_TRANSCODE: // LiVES transcoding
-    if (weed_plant_has_leaf(icaps->capacities, LIVES_CAPACITY_AUDIO_CHANS)) {
-      defchans = lives_capacity_get_int(icaps->capacities, LIVES_CAPACITY_AUDIO_CHANS);
-      defrate = lives_capacity_get_int(icaps->capacities, LIVES_CAPACITY_AUDIO_RATE);
-      if (lives_capacity_is_readonly(icaps->capacities, LIVES_CAPACITY_AUDIO_CHANS))
+  case PLUGIN_INTENTION_TRANSCODE: // LiVES transcoding
+    if (weed_plant_has_leaf(icaps->capacities, PLUGIN_REQUIREMENT_AUDIO_CHANS)) {
+      defchans = plugin_requirement_get_int(icaps->capacities, PLUGIN_REQUIREMENT_AUDIO_CHANS);
+      defrate = plugin_requirement_get_int(icaps->capacities, PLUGIN_REQUIREMENT_AUDIO_RATE);
+      if (plugin_requirement_is_readonly(icaps->capacities, PLUGIN_REQUIREMENT_AUDIO_CHANS))
         extra = strdup("special|ignored|2|3|");
       else extra = strdup("");
       if (defrate == 22050) defrateval = 0;
       else if (defrate == 44100) defrateval = 1;
       else if (defrate == 48000) defrateval = 2;
     } else extra = strdup("");
-    /* if (weed_plant_has_leaf(icaps->capacities, LIVES_CAPACITY_FPS)) { */
-    /*   fps = lives_capacity_get_double(icaps->capacities, LIVES_CAPACITY_FPS); */
+    /* if (weed_plant_has_leaf(icaps->capacities, PLUGIN_REQUIREMENT_FPS)) { */
+    /*   fps = plugin_requirement_get_double(icaps->capacities, PLUGIN_REQUIREMENT_FPS); */
     /* } */
     snprintf(ifbuf, IFBUFSIZE, "<define>\\n\
 |1.8.5\\n				    \
@@ -546,7 +543,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     fprintf(stderr, "libav stream plugin error: No palette was set !\n");
     return FALSE;
   }
-  if (intent == LIVES_INTENTION_STREAM)
+  if (intent == PLUGIN_INTENTION_STREAM)
     fmtstring = "flv";
   else
     fmtstring = "mp4";
@@ -585,7 +582,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     maxvbitrate = atoi(argv[1]);
 
     switch (intent) {
-    case LIVES_INTENTION_STREAM:
+    case PLUGIN_INTENTION_STREAM:
       stream_encode = TRUE;
       snprintf(uri, PATH_MAX, "udp://%s.%s.%s.%s:%s", argv[5], argv[6], argv[7], argv[8], argv[9]);
       break;

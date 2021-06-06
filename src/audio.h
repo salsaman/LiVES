@@ -279,6 +279,7 @@ void preview_aud_vol(void);
 
 lives_audio_buf_t *audio_cache_init(void);
 void audio_cache_end(void);
+void audio_cache_finish(void);
 lives_audio_buf_t *audio_cache_get_buffer(void);
 
 boolean apply_rte_audio_init(void);

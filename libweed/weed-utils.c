@@ -108,7 +108,7 @@ weed_error_t weed_set_int64_value(weed_plant_t *plant, const char *key, int64_t 
 
 
 weed_error_t weed_set_string_value(weed_plant_t *plant, const char *key, const char *value) {
-  return weed_leaf_set(plant, key, WEED_SEED_STRING, 1, value ? (weed_voidptr_t)&value : NULL);
+  return weed_leaf_set(plant, key, WEED_SEED_STRING, 1, (weed_voidptr_t)&value);
 }
 
 

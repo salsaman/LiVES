@@ -1318,7 +1318,6 @@ void set_undoable(const char *what, boolean sensitive);
 void set_redoable(const char *what, boolean sensitive);
 void zero_spinbuttons(void);
 void set_start_end_spins(int clipno);
-char *format_tstr(double xtime, int minlim);
 void set_sel_label(LiVESWidget *label);
 void clear_mainw_msg(void);
 size_t get_token_count(const char *string, int delim);
@@ -1435,6 +1434,9 @@ void break_me(const char *dtl);
 #endif
 
 #endif
+
+#define VSLICES 1
+
 //#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT

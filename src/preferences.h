@@ -380,6 +380,7 @@ typedef struct {
   int twater_type; // transcode watermark types
 #define TWATER_TYPE_NONE		0
 #define TWATER_TYPE_STATS		1
+#define TWATER_TYPE_DIAGNOSTICS		2
 
   /// deprecated
   int midi_check_rate;
@@ -435,6 +436,7 @@ typedef struct {
   boolean letterbox_mt; ///< playback with letterbox (multitrack)
   boolean enc_letterbox; ///< encode with letterbox
   boolean no_lb_gens; // do not letterbox generators
+  int genq_mode; // 0 == speed, 1 == quality (TODO)
 
   boolean force_system_clock; /// < force system clock (rather than soundcard) for timing ( better for high framerates )
 

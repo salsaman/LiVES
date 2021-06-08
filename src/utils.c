@@ -2624,44 +2624,6 @@ void set_redoable(const char *what, boolean sensitive) {
 }
 
 
-char *format_tstr(double xtime, int minlim) {
-  char *tstr;
-  int hrs = (int64_t)xtime / 3600, min;
-  xtime -= hrs * 3600;
-  min = (int64_t)xtime / 60;
-  xtime -= min * 60;
-  if (xtime >= 60.) {
-    min++;
-    xtime -= 60.;
-  }
-  if (min >= 60) {
-    hrs++;
-    min -= 60;
-  }
-  if (hrs > 0) {
-    // TRANSLATORS: h(ours) min(utes)
-    if (minlim) tstr = lives_strdup_printf(_("%d h %d min"), hrs, min);
-    // TRANSLATORS: h(ours) min(utes) sec(onds)
-    else tstr = lives_strdup_printf("%d h %d min %.2f sec", hrs, min, xtime);
-  } else {
-    if (min > 0) {
-      if (minlim) {
-        // TRANSLATORS: min(utes)
-        if (min >= minlim) tstr = lives_strdup_printf(_("%d min"), min);
-        // TRANSLATORS: min(utes) sec(onds)
-        else tstr = lives_strdup_printf("%d min %d sec", min, (int)(xtime + .5));
-      }
-      // TRANSLATORS: min(utes) sec(onds)
-      else tstr = lives_strdup_printf("%d min %.2f sec", min, xtime);
-    } else {
-      if (minlim) tstr = lives_strdup_printf("%d sec", (int)(xtime + .5));
-      else tstr = lives_strdup_printf("%.2f sec", xtime);
-    }
-  }
-  return tstr;
-}
-
-
 void set_sel_label(LiVESWidget * sel_label) {
   char *tstr, *frstr, *tmp;
   char *sy, *sz;

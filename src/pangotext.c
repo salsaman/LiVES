@@ -622,9 +622,10 @@ LIVES_GLOBAL_INLINE weed_layer_t *render_text_overlay(weed_layer_t *layer, const
   if (!text) return layer;
   else {
     lives_colRGBA64_t col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
-    lives_colRGBA64_t col_black = lives_rgba_col_new(0, 0, 0, 65535);
+    lives_colRGBA64_t fg_col = lives_rgba_col_new(0, 0, 0, 65535);
     lives_colRGBA64_t col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
     const char *font_name = capable->font_fam;
+    int *colz = weed_get_int_array(layer, "fg_col", NULL);
     int font_size = weed_layer_get_width(layer) / scaling;
     boolean fake_gamma = FALSE;
 
@@ -637,11 +638,19 @@ LIVES_GLOBAL_INLINE weed_layer_t *render_text_overlay(weed_layer_t *layer, const
       }
     }
 
-    if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE
+    if (colz) {
+      fg_col.red = (short)colz[0];
+      fg_col.green = (short)colz[1];
+      fg_col.blue = (short)colz[2];
+      lives_free(colz);
+    }
+
+    if ((THREAD_INTENTION == LIVES_INTENTION_TRANSCODE
+         && prefs->twater_type != TWATER_TYPE_DIAGNOSTICS)
         || THREAD_INTENTION == LIVES_INTENTION_RENDER) {
       layer = render_text_to_layer(layer, text, font_name, font_size,
                                    LIVES_TEXT_MODE_FOREGROUND_ONLY,
-                                   &col_black, &col_black_a, FALSE, FALSE, 0.);
+                                   &fg_col, &col_black_a, FALSE, FALSE, 0.);
     } else {
       layer = render_text_to_layer(layer, text, font_name, font_size,
                                    LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,

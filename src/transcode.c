@@ -162,24 +162,48 @@ void transcode_cleanup(_vid_playback_plugin *vpp) {
 }
 
 
+static ticks_t startt;
+static int tot_frames;
+static int out_asamps;
+
 static weed_layer_t *apply_watermark(weed_layer_t *layer, ticks_t currticks) {
-  ticks_t ztc;
+  char *framestr, *timestr, *audstr;
+  ticks_t curt;
+  double elapsed_secs, fps_avg = 0.;
+  int rgb[3];
   switch (prefs->twater_type) {
   case TWATER_TYPE_STATS:
     if (mainw->overlay_msg) lives_free(mainw->overlay_msg);
-    if (weed_plant_has_leaf(layer, LIVES_LEAF_FAKE_TC))
-      ztc = weed_get_int64_value(layer, LIVES_LEAF_FAKE_TC, NULL);
-    else ztc = currticks;
+
+    if (mainw->num_tracks > 1) {
+      framestr = lives_strdup_printf("%ld (fg), %ld (bg)", mainw->frame_index[0], mainw->frame_index[1]);
+    } else {
+      framestr = lives_strdup_printf("%ld", mainw->frame_index[0]);
+    }
+    curt = lives_get_current_ticks();
+    elapsed_secs = (curt - startt) / TICKS_PER_SECOND_DBL;
+    if (elapsed_secs) fps_avg = tot_frames / elapsed_secs;
+    timestr = format_tstr(elapsed_secs, 0);
+
+    if (cfile->achans && cfile->arps) {
+      audstr = lives_strdup_printf(", audio: %d channels, %d bits per sample, %d Hz", cfile->achans, out_asamps, cfile->arps);
+    } else audstr = lives_strdup("");
 
     mainw->overlay_msg = lives_strdup_printf("LiVES version %s powered by Weed ABI version %d, Weed Filter API version %d,\n"
                          "RFX version %s, Clip Header Version %d\n"
-                         "Timecode %.6f : original frame %ld\n"
-                         "Frame jitter %0.6f sec.\n",
+                         "Rendering clip size %d X %d @ %.3f fps%s\n"
+                         "Render time %s, %.3f fps avg.\n"
+                         "Timecode %.6f : original frame %s\n",
                          LiVES_VERSION, WEED_ABI_VERSION, WEED_FILTER_API_VERSION,
                          RFX_VERSION, LIVES_CLIP_HEADER_VERSION,
-                         currticks / TICKS_PER_SECOND_DBL, mainw->frame_index[0],
-                         (currticks - ztc) / TICKS_PER_SECOND_DBL);
-    layer = render_text_overlay(layer, mainw->overlay_msg, DEF_OVERLAY_SCALING * 2);
+                         cfile->hsize, cfile->vsize, cfile->fps, audstr, timestr, fps_avg,
+                         currticks / TICKS_PER_SECOND_DBL, framestr);
+    lives_free(framestr); lives_free(timestr); lives_free(audstr);
+
+    if (tot_frames & 1) lives_memset(rgb, 0, 12);
+    else rgb[0] = rgb[1] = rgb[2] = 65535;
+    weed_set_int_array(layer, "fg_col", 3, rgb);
+    layer = render_text_overlay(layer, mainw->overlay_msg, DEF_OVERLAY_SCALING);
     break;
   default:
     break;
@@ -221,6 +245,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
   int pbq = prefs->pb_quality;
 
   int i = 0, j;
+
+  out_asamps = cfile->asampsize;
 
   if (cfile->asampsize == 32) cfile->asampsize = 16;
 
@@ -375,6 +401,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     }
   }
 
+  startt = lives_get_current_ticks();
+  tot_frames = 0;
   // encoding loop
   for (i = start; !end || i <= end; i++) {
     if (manage_ds) {
@@ -528,7 +556,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       /* frame_layer = NULL; */
       mainw->transrend_ready = FALSE;
     }
-
+    tot_frames++;
     if (mainw->cancelled != CANCEL_NONE) break;
   }
 

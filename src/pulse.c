@@ -521,6 +521,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       //g_print("VALXXX %d %d %d\n", mainw->play_sequence, afile->last_play_sequence, mainw->switch_during_pb);
       rnd_frame += afile->adirection * (mainw->switch_during_pb && afile->last_play_sequence == mainw->play_sequence ? 1 : 0);
       mainw->switch_during_pb = FALSE;
+      afile->last_play_sequence = mainw->play_sequence;
       rnd_samp = (int64_t)((double)(rnd_frame + .00001) / afile->fps * (double)afile->arate + .5);
       pulsed->seek_pos = (ssize_t)(rnd_samp * qnt);
       //g_print("rndfr = %d rnt = %ld skpo = %ld\n", rnd_frame + 1, rnd_samp, pulsed->seek_pos);

@@ -181,7 +181,11 @@ typedef struct {
 // intentcaps
 
 // intentions
-#define PLUGIN_INTENTION_DECODE 0x00001000
+#define PLUGIN_INTENTION_DECODE 	0x00001000
+
+#define PLUGIN_INTENTION_PLAY		0x00000200
+#define PLUGIN_INTENTION_STREAM		0x00000201
+#define PLUGIN_INTENTION_TRANSCODE	0x00000202
 
 static plugin_id_t plugin_id;
 
@@ -239,19 +243,23 @@ const plugin_id_t *get_plugin_id_default(void) {
 
 #define PLUGIN_CAPACITY_DATA		"data"
 
+#define plugin_capcity_set(caps, key) (caps ? weed_set_boolean_value(caps, key, 0) : FALSE)
+#define plugin_capacity_set_int(caps, key) (caps ? weed_set_int_value(caps, key, 0) : 0)
+#define plugin_capacity_set_string(caps, key) (caps ? weed_set_string_value(caps, key, 0) : 0)
+
+//
+
 // requirements - for future use
-#define plugin_requirement_is_readonly(caps, key) (caps ? ((weed_leaf__get_flags(caps, key) & WEED_FLAG_IMMUTABLE) \
+
+#define PLUGIN_REQUIREMENT_AUDIO_CHANS	"audio_channels"
+#define PLUGIN_REQUIREMENT_AUDIO_RATE	"audio_rate"
+
+#define plugin_requirement_is_readonly(caps, key) (caps ? ((weed_leaf_get_flags(caps, key) & WEED_FLAG_IMMUTABLE) \
 						      ? TRUE : FALSE) : FALSE)
 
 #define plugin_requirement_get(caps, key) (caps ? weed_get_boolean_value(caps, key, 0) : FALSE)
 #define plugin_requirement_get_int(caps, key) (caps ? weed_get_int_value(caps, key, 0) : 0)
 #define plugin_requirement_get_string(caps, key) (caps ? get_string_value(caps, key, 0) : 0)
-
-// capacities for future use
-
-#define plugin_capcity_set(caps, key) (caps ? weed_set_boolean_value(caps, key, 0) : FALSE)
-#define plugin_capacity_set_int(caps, key) (caps ? weed_set_int_value(caps, key, 0) : 0)
-#define plugin_capacity_set_string(caps, key) (caps ? weed_set_string_value(caps, key, 0) : 0)
 
 // std functions
 
@@ -294,9 +302,10 @@ const plugin_id_t *get_plugin_id(void);
 // details of all this are still in the process of being elaborated / tested
 
 #endif // ...INC1
+#endif
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* _LIVES_PLUGIN_H_VERSION_ */
+//#endif /* _LIVES_PLUGIN_H_VERSION_ */

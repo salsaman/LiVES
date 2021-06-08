@@ -157,8 +157,9 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   }
 
   switch (what) {
-  case CLIP_DETAILS_BPP:
   case CLIP_DETAILS_WIDTH:
+    *(int *)retval = atoi(val) / VSLICES; break;
+  case CLIP_DETAILS_BPP:
   case CLIP_DETAILS_HEIGHT:
   case CLIP_DETAILS_ARATE:
   case CLIP_DETAILS_ACHANS:

@@ -175,6 +175,8 @@ typedef struct _lives_jack_driver_t {
 
   volatile aserver_message_t *msgq;          /**< linked list of messages we are sending to the callback process */
 
+  ticks_t last_proc_ticks;
+
   off_t seek_pos;
   volatile off_t real_seek_pos;
   off_t seek_end;
@@ -258,6 +260,8 @@ void jack_get_rec_avals(jack_driver_t *);
 ticks_t jack_transport_get_current_ticks(jack_driver_t *);
 
 double lives_jack_get_pos(jack_driver_t *);
+
+ticks_t update_aud_pos(jack_driver_t *jackd, uint64_t nframes);
 
 #endif
 

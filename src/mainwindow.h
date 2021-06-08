@@ -1569,6 +1569,8 @@ typedef struct {
   void *pulsed_read;
 #endif
 
+  boolean xrun_active;
+
   // layouts
   LiVESTextBuffer *layout_textbuffer; ///< stores layout errors
   LiVESList *affected_layouts_map; ///< map of layouts with errors

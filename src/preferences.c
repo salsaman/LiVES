@@ -3592,10 +3592,12 @@ static void do_full_reset(LiVESWidget * widget, livespointer data) {
 }
 
 
+#define PANED_MIN 20
+
 static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
   int pos = lives_paned_get_position(p);
   while (!gtk_widget_get_mapped(w)) {
-    if (pos > 10) lives_paned_set_position(p, --pos);
+    if (pos > PANED_MIN) lives_paned_set_position(p, --pos);
     lives_widget_context_update();
   }
   lives_paned_set_position(p, ++pos);
@@ -7118,6 +7120,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   main_thread_execute((lives_funcptr_t)on_prefs_page_changed, -1, NULL, "vv", prefsw->selection, prefsw);
   //on_prefs_page_changed(prefsw->selection, prefsw);
+
+  lives_widget_show_now(prefsw->prefs_dialog);
 
   callibrate_paned(LIVES_PANED(prefsw->dialog_hpaned),
                    lives_scrolled_window_get_hscrollbar(LIVES_SCROLLED_WINDOW(prefsw->list_scroll)));

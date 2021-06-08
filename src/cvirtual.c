@@ -167,6 +167,7 @@ frames_t load_frame_index(int fileno) {
       } else if (sfile->frame_index_back) {
         if (findex_bk_dialog(fname_back)) {
           sfile->frame_index = sfile->frame_index_back;
+          sfile->frame_index_back = NULL;
         }
       }
       if (retval == LIVES_RESPONSE_CANCEL) {
@@ -294,7 +295,7 @@ lives_img_type_t resolve_img_type(lives_clip_t *sfile) {
   lives_img_type_t ximgtype;
   int nimty = (int)N_IMG_TYPES;
   char *fname;
-  for (frames_t i = sfile->frames - 1; i--;) {
+  for (frames_t i = sfile->frames; i--;) {
     if (!sfile->frame_index || sfile->frame_index[i] == -1) {
       for (int j = 1; j < nimty; j++) {
         ximgtype = (lives_img_type_t)j;
@@ -357,7 +358,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   }
   // check the image type
 
-  for (i = sfile->frames - 1; i--;) {
+  for (i = sfile->frames; i--;) {
     if (!sfile->frame_index || sfile->frame_index[i] == -1) {
       // this is a non-virtual frame
       ximgtype = empirical_img_type;
@@ -444,12 +445,12 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
       frames_t fr;
 
       // check frame_index first, unless we have passed its end
-      if (i < sfile->frames) fr = sfile->frame_index[i];
+      if (i < sfile->frames || !sfile->frame_index_back) fr = sfile->frame_index[i];
       else fr = sfile->frame_index_back[i];
 
       if (fr < -1 || (!cdata && (frames64_t)fr > sfile->frames - 1)
           || (cdata && (frames64_t)fr > cdata->nframes - 1)) {
-        if (i >= sfile->frames) {
+        if (i >= sfile->frames && sfile->frame_index_back) {
           // past the end so it must have been from backup
           backup_more_correct = FALSE;
           break;
@@ -505,6 +506,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   if (has_missing_frames && backup_more_correct) {
     lives_freep((void **)&sfile->frame_index);
     sfile->frame_index = sfile->frame_index_back;
+    sfile->frame_index_back = NULL;
     if (sfile->old_frames > sfile->frames) {
       sfile->frames = sfile->old_frames;
       sfile->frames = scan_frames(sfile, sfile->frames, last_real_frame);
@@ -535,13 +537,15 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 
     if (cdata) {
       if (!prefs->auto_nobord) {
-        chsize = cdata->frame_width * weed_palette_get_pixels_per_macropixel(cdata->current_palette);
+        chsize = cdata->frame_width * weed_palette_get_pixels_per_macropixel(cdata->current_palette) / VSLICES;
         cvsize = cdata->frame_height;
       } else {
-        chsize = cdata->width * weed_palette_get_pixels_per_macropixel(cdata->current_palette);
+        chsize = cdata->width * weed_palette_get_pixels_per_macropixel(cdata->current_palette) / VSLICES;
         cvsize = cdata->height;
       }
     }
+
+    hsize /= VSLICES;
 
     if (chsize == hsize && hsize != sfile->hsize) sfile->hsize = hsize;
     if (cvsize == vsize && vsize != sfile->vsize) sfile->vsize = vsize;
@@ -568,6 +572,8 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 	if (fframe) get_frames_sizes(fileno, fframe, &hsize, &vsize);
       }}
     // *INDENT-ON*
+
+    hsize /= VSLICES;
 
     if (sfile->hsize != hsize || sfile->vsize != vsize) {
       LiVESResponseType resp = do_resize_dlg(sfile->hsize, sfile->vsize, hsize, vsize);

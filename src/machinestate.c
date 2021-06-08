@@ -26,14 +26,27 @@ static void cpuid(unsigned int ax, unsigned int *p) {
    : "0"(ax));
 }
 
+//#define xgetbv(index, eax, edx)					\
+//        __asm__ (".byte 0x0f, 0x01, 0xd0" : "=a"(eax), "=d"(edx) : "c" (index))
 static int get_cacheline_size(void) {
   unsigned int cacheline = -1;
-  unsigned int regs[4], regs2[4];
-  cpuid(0x00000000, regs);
+  unsigned int regs[4], regs2[4]; // regs2 :: eax, ebx, ecx, 0
+  //union { int i[3]; char c[12]; } vendor;
+  cpuid(0x00000000, regs); // regs == max_level, vendor0, vendor2, vendor1
   if (regs[0] >= 0x00000001) {
     cpuid(0x00000001, regs2);
-    cacheline = ((regs2[1] >> 8) & 0xFF) * 8;
-    //has_sse2 = (regs2[3] & 0x4000000) ? TRUE : FALSE;
+    cacheline = ((regs2[1] >> 8) & 0xFF) * 8; // ebx
+    //has_sse2 = (regs2[3] & 0x4000000) ? TRUE : FALSE; // bit 26
+    // 25 == sse, 1 == sse3, 0x200 == ssse3, 0x80000 == sse4, 0x100000 == sse42,
+    // cpuid(7, eax, ebx, ecx, edx)
+    //if ((ecx & 0x18000000) == 0x18000000) {
+    //             xgetbv(0, xcr0_lo, xcr0_hi);
+    //             if ((xcr0_lo & 0x6) == 0x6) {
+    ///avx
+    //// if (ecx & 0x00001000)
+    ///              fma3}
+    ///if avx && (ebx & 0x00000020) avx2
+
   }
   return cacheline;
 }
@@ -679,6 +692,46 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t o
 LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
   //  return current (wallclock) time in ticks (units of 10 nanoseconds)
   return lives_get_relative_ticks(0, 0);
+}
+
+
+char *format_tstr(double xtime, int minlim) {
+  // format xtime (secs) as h/min/secs
+  // if minlim > 0 then for mins >= minlim we don't show secs.
+  char *tstr;
+  int hrs = (int64_t)xtime / 3600, min;
+  xtime -= hrs * 3600;
+  min = (int64_t)xtime / 60;
+  xtime -= min * 60;
+  if (xtime >= 60.) {
+    min++;
+    xtime -= 60.;
+  }
+  if (min >= 60) {
+    hrs++;
+    min -= 60;
+  }
+  if (hrs > 0) {
+    // TRANSLATORS: h(ours) min(utes)
+    if (minlim) tstr = lives_strdup_printf(_("%d h %d min"), hrs, min);
+    // TRANSLATORS: h(ours) min(utes) sec(onds)
+    else tstr = lives_strdup_printf("%d h %d min %.2f sec", hrs, min, xtime);
+  } else {
+    if (min > 0) {
+      if (minlim) {
+        // TRANSLATORS: min(utes)
+        if (min >= minlim) tstr = lives_strdup_printf(_("%d min"), min);
+        // TRANSLATORS: min(utes) sec(onds)
+        else tstr = lives_strdup_printf("%d min %d sec", min, (int)(xtime + .5));
+      }
+      // TRANSLATORS: min(utes) sec(onds)
+      else tstr = lives_strdup_printf("%d min %.2f sec", min, xtime);
+    } else {
+      if (minlim) tstr = lives_strdup_printf("%d sec", (int)(xtime + .5));
+      else tstr = lives_strdup_printf("%.2f sec", xtime);
+    }
+  }
+  return tstr;
 }
 
 

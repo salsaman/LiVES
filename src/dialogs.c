@@ -3125,7 +3125,8 @@ boolean do_jack_no_connect_warn(boolean is_trans) {
 
   if (mainw->fatal || (!is_trans && (prefs->jack_opts & JACK_OPTS_START_ASERVER))
       || (is_trans && (prefs->jack_opts & JACK_OPTS_START_TSERVER))) {
-    warn = _("<b>Something really bad happened...</b>\n\n<big><b>Please check the jackd status and try restarting it manually.</b></big>\n");
+    warn = _("<b>Something really bad happened with jack...</b>\n\nPlease try restarting LiVES.\n"
+             "If that still does not work, please check the jackd status and try restarting it manually.");
     more = lives_strdup("");
     is_bad = TRUE;
   } else {

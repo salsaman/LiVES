@@ -7921,6 +7921,27 @@ weed_layer_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   if (clipno == mainw->playing_file) is_bg = FALSE;
   if (IS_VALID_CLIP(clipno)) sfile = mainw->files[clipno];
 
+  if (!is_bg && mainw->blend_file != -1 && mainw->blend_file != mainw->playing_file) {
+    if (prefs->genq_mode == 0) {
+      // prefer speed
+      if (IS_VALID_CLIP(mainw->blend_file)) {
+        double pb_fps = fabs(mainw->files[mainw->blend_file]->pb_fps);
+        if (pb_fps > sfile->pb_fps) sfile->pb_fps = pb_fps;
+      }
+    } else {
+      if (prefs->pb_quality != PB_QUALITY_HIGH && IS_VALID_CLIP(mainw->blend_file)
+          && sfile->pb_fps > mainw->files[mainw->blend_file]->pb_fps) {
+        sfile->pb_fps = mainw->files[mainw->blend_file]->pb_fps;
+      } else {
+        if (prefs->pb_quality == PB_QUALITY_LOW && sfile->pb_fps > sfile->fps / 2.) {
+          sfile->pb_fps *= .99;
+        } else if (prefs->pb_quality == PB_QUALITY_MED && sfile->pb_fps > sfile->fps) {
+          sfile->pb_fps *= .99;
+        }
+      }
+    }
+  } else sfile->pb_fps = sfile->fps;
+
   /*
     - just as with normal filters,
     - if the channel template flags have WEED_FILTER_REINIT_ON_PALETTE_CHANGE, then we want to minimise palette changes,

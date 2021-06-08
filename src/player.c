@@ -96,8 +96,12 @@ void get_player_size(int *opwidth, int *opheight) {
   if (lives_get_status() != LIVES_STATUS_RENDERING && mainw->play_window) {
     // playback in separate window
     // use values set in resize_play_window
-    *opwidth = mainw->pwidth;
-    *opheight = mainw->pheight;
+
+    *opwidth = rwidth = lives_widget_get_allocation_width(mainw->preview_image);// - H_RESIZE_ADJUST;
+    *opheight = rheight = lives_widget_get_allocation_height(mainw->preview_image);// - V_RESIZE_ADJUST;
+
+    /* *opwidth = mainw->pwidth; */
+    /* *opheight = mainw->pheight; */
     if (mainw->multitrack && prefs->letterbox_mt) {
       rwidth = *opwidth;
       rheight = *opheight;
@@ -270,7 +274,6 @@ static boolean do_cleanup(weed_layer_t *layer, int success) {
 static boolean avsync_check(void) {
   int count = USEC_WAIT_FOR_SYNC / 10, rc = 0;
   struct timespec ts;
-  return TRUE;
 
 #ifdef VALGRIND_ON
   count *= 10;
@@ -1152,6 +1155,12 @@ boolean load_frame_image(frames_t frame) {
       pwidth = mainw->pwidth;
       pheight = mainw->pheight;
 
+      // x_range and y_range define the ratio how much image to fill
+      // so:
+      // lb_width / pwidth, lb_height / pheight --> original unscaled image, centered in output
+      // 1, 1 ---> image will be stretched to fill all window
+      // get_letterbox_sizes ---> lb_width / pwidth , lb_height / pheight -> letterboxed
+
       if ((!mainw->multitrack && prefs->letterbox) || (mainw->multitrack && prefs->letterbox_mt)) {
         // plugin can resize but may not be able to letterbox...
         if (mainw->vpp->capabilities & VPP_CAN_LETTERBOX) {
@@ -1170,11 +1179,9 @@ boolean load_frame_image(frames_t frame) {
           if (!letterbox_layer(frame_layer, pwidth, pheight, lb_width, lb_height, interp,
                                mainw->vpp->palette, mainw->vpp->YUV_clamping)) goto lfi_done;
         }
-      }
-
-      if (player_v2) {
-        if ((!mainw->multitrack && prefs->letterbox) || (mainw->multitrack && prefs->letterbox_mt)) {
-        } else {
+      } else {
+        if (player_v2) {
+          // no letterboxing -> stretch it to fill window
           weed_set_double_value(frame_layer, "x_range", 1.0);
           weed_set_double_value(frame_layer, "y_range", 1.0);
         }
@@ -2286,6 +2293,7 @@ int process_one(boolean visible) {
   frames_t requested_frame = 0;
   boolean show_frame = FALSE;
   boolean did_switch = FALSE;
+  static boolean reset_on_tsource_change = FALSE;
   int old_current_file, old_playing_file;
   lives_cancel_t cancelled = CANCEL_NONE;
 #ifdef ENABLE_PRECACHE
@@ -2350,6 +2358,7 @@ int process_one(boolean visible) {
   //   from the card
   //g_print("process_one @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
+  last_time_source = time_source;
   time_source = LIVES_TIME_SOURCE_NONE;
 
   mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, &time_source);
@@ -2357,6 +2366,12 @@ int process_one(boolean visible) {
     if (time_source == LIVES_TIME_SOURCE_SOUNDCARD) handle_audio_timeout();
     mainw->cancelled = CANCEL_ERROR;
     return mainw->cancelled;
+  }
+
+  if (time_source != last_time_source && reset_on_tsource_change) {
+    reset_on_tsource_change = FALSE;
+    mainw->last_startticks = mainw->startticks = last_anim_ticks
+                             = mainw->fps_mini_ticks = mainw->currticks;
   }
 
   if (init_timers) {
@@ -2371,9 +2386,15 @@ int process_one(boolean visible) {
     mainw->offsetticks -= mainw->currticks;
     real_requested_frame = 0;
     get_proc_loads(FALSE);
+    reset_on_tsource_change = TRUE;
   }
 
   mainw->audio_stretch = 1.0;
+
+  if (AUD_SRC_REALTIME && (!mainw->video_seek_ready || !mainw->audio_seek_ready)) {
+    mainw->video_seek_ready = TRUE;
+    avsync_check();
+  }
 
 #ifdef ADJUST_AUDIO_RATE
   // adjust audio rate slightly if we are behind or ahead
@@ -2467,21 +2488,38 @@ switch_point:
     mainw->deltaticks = 0;
 
     if (IS_VALID_CLIP(mainw->playing_file)) {
-      if (sfile->arate) {
-        /* g_print("HIB %d %d %d %d %ld %f %f %ld %ld %d %f\n", sfile->frameno, last_req_frame, mainw->playing_file, */
-        /* 	aplay_file, sfile->aseek_pos, */
-        /* 	sfile->fps * lives_jack_get_pos(mainw->jackd) + 1., (double)sfile->aseek_pos */
-        /* 	/ (double)sfile->arps / 4. * sfile->fps + 1., */
-        /* 	mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
-        sfile->frameno = sfile->last_frameno = last_req_frame + sig(sfile->pb_fps);
-      }
+      /* if (sfile->arate) { */
+      /*   g_print("HIB %d %d %d %d %ld %f %f %ld %ld %d %f\n", sfile->frameno, last_req_frame, mainw->playing_file, */
+      /*   	aplay_file, sfile->aseek_pos, */
+      /*   	sfile->fps * lives_jack_get_pos(mainw->jackd) + 1., (double)sfile->aseek_pos */
+      /*   	/ (double)sfile->arps / 4. * sfile->fps + 1., */
+      /*   	mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
+      /*   sfile->frameno = sfile->last_frameno = last_req_frame + sig(sfile->pb_fps); */
+      /* } */
       if (mainw->frame_layer_preload) {
         check_layer_ready(mainw->frame_layer_preload);
         weed_layer_free(mainw->frame_layer_preload);
         mainw->frame_layer_preload = NULL;
+        mainw->pred_frame = 0;
+        mainw->pred_clip = 0;
         cleanup_preload = FALSE;
       }
       //g_print("ASEEK is %ld\n", sfile->aseek_pos);
+    }
+
+    if (mainw->xrun_active) {
+      update_aud_pos(mainw->jackd, 0);
+      mainw->xrun_active = FALSE;
+    }
+
+    if (AV_CLIPS_EQUAL) {
+      aplay_file = get_aplay_clipno();
+      if (IS_VALID_CLIP(aplay_file)) {
+        lives_clip_t *sfile = mainw->files[aplay_file];
+        int qnt = sfile->achans * (sfile->asampsize >> 3);
+        sfile->aseek_pos -= (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
+                            * sfile->arps * qnt;
+      }
     }
 
     do_quick_switch(mainw->new_clip);
@@ -2498,20 +2536,21 @@ switch_point:
     sfile->last_frameno = sfile->frameno;
 
     real_requested_frame = 0;
+    dropped = 0;
 
-    if (sfile->arate)
-      /* g_print("HIB2 %d %d %d %d %d %ld %f %f %ld %ld %d %f\n", mainw->actual_frame, sfile->frameno, last_req_frame, */
-      /* 	      mainw->playing_file, aplay_file, sfile->aseek_pos, */
-      /* 	      sfile->fps * lives_jack_get_pos(mainw->jackd) + 1., */
-      /* 	      (double)sfile->aseek_pos / (double)sfile->arate / 4. * sfile->fps + 1., */
-      /* 	      mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
+    /* if (sfile->arate) */
+    /*   g_print("HIB2 %d %d %d %d %d %ld %f %f %ld %ld %d %f\n", mainw->actual_frame, sfile->frameno, last_req_frame, */
+    /*   	      mainw->playing_file, aplay_file, sfile->aseek_pos, */
+    /*   	      sfile->fps * lives_jack_get_pos(mainw->jackd) + 1., */
+    /*   	      (double)sfile->aseek_pos / (double)sfile->arate / 4. * sfile->fps + 1., */
+    /*   	      mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
 
-      cache_hits = cache_misses = 0;
+    cache_hits = cache_misses = 0;
     mainw->force_show = TRUE;
     mainw->actual_frame = mainw->files[mainw->new_clip]->frameno;
     mainw->new_clip = -1;
     mainw->blend_palette = WEED_PALETTE_END;
-    getahead = -1;
+    getahead = test_getahead = -1;
     if (prefs->pbq_adaptive) reset_effort();
     // TODO: add a few to bungle_frames in case of decoder unchilling
 
@@ -2620,11 +2659,13 @@ switch_point:
     // this depending on the cached frame
     frames_t oframe = sfile->last_frameno;
 
-    if (mainw->scratch == SCRATCH_NONE && real_requested_frame > 0) sfile->last_frameno = real_requested_frame;
+    if (mainw->scratch == SCRATCH_NONE && scratch == SCRATCH_NONE
+        && real_requested_frame > 0) sfile->last_frameno = real_requested_frame;
     //g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_frameno, (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps);
     real_requested_frame = requested_frame
                            = calc_new_playback_position(mainw->playing_file, mainw->startticks, &new_ticks);
     //g_print("POST: %ld %ld %d\n", mainw->startticks, new_ticks, requested_frame);
+    //mainw->startticks = new_ticks;
     sfile->last_frameno = oframe;
     if (mainw->foreign) {
       if (requested_frame > sfile->frameno) {
@@ -2647,7 +2688,7 @@ switch_point:
       cleanup_preload = TRUE;
       mainw->pred_frame = -1;
       // fix for a/v sync
-      if (!did_switch) sfile->last_play_sequence = mainw->play_sequence;
+      //if (!did_switch) sfile->last_play_sequence = mainw->play_sequence;
     }
 #endif
 
@@ -2683,10 +2724,10 @@ switch_point:
           /// in future, we could also get a more accurate estimate by integrating statistics from the decoder.
           /// - useful values would be the frame decode time, keyframe positions, seek time to keyframe, keyframe decode time.
           int dir = sig(sfile->pb_fps);
-          delta = (test_getahead - requested_frame) * dir;
+          delta = (test_getahead - mainw->actual_frame) * dir;
           if (prefs->dev_show_caching) {
-            g_print("gah (%d) %d, act %d %d, bungle %d, shouldabeen %d %s", mainw->effort, test_getahead,
-                    sfile->frameno, requested_frame,
+            g_print("gah (%d) %d, act %d %d %d, bungle %d, shouldabeen %d %s", mainw->effort, test_getahead,
+                    mainw->actual_frame, sfile->frameno, requested_frame,
                     bungle_frames, bungle_frames - delta, getahead == -1 ? "(calibrating)" : "");
             if (delta < 0) g_print(" !!!!!\n");
             if (delta == 0) g_print(" EXACT\n");
@@ -2823,59 +2864,60 @@ switch_point:
                   if (dplug) dpsys = (lives_decoder_sys_t *)dplug->decoder;
                 }
 
-                //g_print("st EST %ld\n", pred_frame);
-                for (int zz = 0; zz < 6; zz++) {
-                  int64_t new_pred_frame;
-                  double est_time;
+                if (!mainw->xrun_active && !did_switch) {
+                  for (int zz = 0; zz < 6; zz++) {
+                    int64_t new_pred_frame;
+                    double est_time;
 
-                  if (is_virtual_frame(mainw->playing_file, pred_frame)) {
-                    if (!dpsys || !dpsys->estimate_delay) break;
-                    est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->playing_file, pred_frame));
-                  } else {
-                    // img timings
-                    est_time = sfile->img_decode_time;
-                  }
+                    if (is_virtual_frame(mainw->playing_file, pred_frame)) {
+                      if (!dpsys || !dpsys->estimate_delay) break;
+                      est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->playing_file, pred_frame));
+                    } else {
+                      // img timings
+                      est_time = sfile->img_decode_time;
+                    }
 
-                  if (est_time <= 0.) break;
+                    if (est_time <= 0.) break;
 
-                  if (sfile->pb_fps > 0.) {
-                    new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps + .9999);
-                    if (new_pred_frame > sfile->frames) new_pred_frame = pred_frame;
-                  } else {
-                    // this does not work for reverse playback - we compensate for delay by jumping further
-                    // but for reverse play, the further back we go, the faster it may be
-                    // so test if we can reach the new target quicker
-                    new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps - .9999);
-                    if (new_pred_frame < 1) new_pred_frame = pred_frame;
-                    else {
-                      while (1) {
-                        double est_time2;
-                        if (is_virtual_frame(mainw->playing_file, pred_frame)) {
-                          est_time2 = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->playing_file, new_pred_frame));
-                        } else {
-                          est_time2 = sfile->img_decode_time;
+                    if (sfile->pb_fps > 0.) {
+                      new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps + .9999);
+                      if (new_pred_frame > sfile->frames) new_pred_frame = pred_frame;
+                    } else {
+                      // this does not work for reverse playback - we compensate for delay by jumping further
+                      // but for reverse play, the further back we go, the faster it may be
+                      // so test if we can reach the new target quicker
+                      new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps - .9999);
+                      if (new_pred_frame < 1) new_pred_frame = pred_frame;
+                      else {
+                        while (1) {
+                          double est_time2;
+                          if (is_virtual_frame(mainw->playing_file, pred_frame)) {
+                            est_time2 = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->playing_file, new_pred_frame));
+                          } else {
+                            est_time2 = sfile->img_decode_time;
+                          }
+                          if (est_time2 >= est_time) {
+                            new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps - .9999);
+                            break;
+                          }
+                          new_pred_frame = sfile->frameno + (frames_t)(est_time2 * sfile->pb_fps - .9999);
+                          if (new_pred_frame < 1) {
+                            new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps - .9999);
+                            break;
+                          }
+                          est_time = est_time2;
                         }
-                        if (est_time2 >= est_time) {
-                          new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps - .9999);
-                          break;
-                        }
-                        new_pred_frame = sfile->frameno + (frames_t)(est_time2 * sfile->pb_fps - .9999);
-                        if (new_pred_frame < 1) {
-                          new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps - .9999);
-                          break;
-                        }
-                        est_time = est_time2;
                       }
                     }
+                    if (sfile->pb_fps > 0.) {
+                      if (new_pred_frame < requested_frame) break;
+                    } else {
+                      if (new_pred_frame > requested_frame) break;
+                    }
+                    //g_print("EST %ld -> %ld\n", pred_frame, new_pred_frame);
+                    if (new_pred_frame == pred_frame) break;
+                    pred_frame = new_pred_frame;
                   }
-                  if (sfile->pb_fps > 0.) {
-                    if (new_pred_frame < requested_frame) break;
-                  } else {
-                    if (new_pred_frame > requested_frame) break;
-                  }
-                  //g_print("EST %ld -> %ld\n", pred_frame, new_pred_frame);
-                  if (new_pred_frame == pred_frame) break;
-                  pred_frame = new_pred_frame;
                 }
                 getahead = pred_frame;
                 if (getahead < 1) getahead = 1;
@@ -2903,6 +2945,16 @@ switch_point:
           if (getahead < 0 && new_ticks != mainw->startticks
               && (!mainw->pulsed || (mainw->pulsed->seek_pos == last_seek_pos
                                      && CLIP_HAS_AUDIO(mainw->pulsed->playing_file)))) {
+            mainw->startticks = new_ticks;
+            sfile->frameno = mainw->actual_frame;
+          }
+        }
+#endif
+#ifdef ENABLE_JACK
+        if (prefs->audio_player == AUD_PLAYER_JACK) {
+          if (getahead < 0 && new_ticks != mainw->startticks
+              && (!mainw->jackd || (mainw->jackd->seek_pos == last_seek_pos
+                                    && CLIP_HAS_AUDIO(mainw->jackd->playing_file)))) {
             mainw->startticks = new_ticks;
             sfile->frameno = mainw->actual_frame;
           }
@@ -2951,7 +3003,7 @@ switch_point:
                   }
 		  // *INDENT-OFF*
 		}}}}}
-	  // *INDENT-ON*
+	// *INDENT-ON*
 
         if (sfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->playing_file, sfile->frameno))
           sfile->last_vframe_played = sfile->frameno;
@@ -2959,9 +3011,23 @@ switch_point:
       }
 
       if (prefs->pbq_adaptive && scratch == SCRATCH_NONE) {
-        if (requested_frame != last_req_frame) {
-          /// update the effort calculation with dropped frames and spare_cycles
-          if (dropped > 0) update_effort(abs(requested_frame - last_req_frame - 1), TRUE);
+        if (requested_frame != last_req_frame || sfile->frames == 1) {
+          if (sfile->frames == 1) {
+            if (!spare_cycles) {
+              //if (sfile->ext_src_type == LIVES_EXT_SRC_FILTER) {
+              //weed_plant_t *inst = (weed_plant_t *)sfile->ext_src;
+              double target_fps = fabs(sfile->pb_fps);//weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
+              if (target_fps) {
+                mainw->inst_fps = get_inst_fps(FALSE);
+                if (mainw->inst_fps < target_fps) {
+                  update_effort(1 + target_fps / mainw->inst_fps, TRUE);
+		  // *INDENT-OFF*
+		}}}}
+	  // *INDENT-ON*
+          else {
+            /// update the effort calculation with dropped frames and spare_cycles
+            if (dropped > 0) update_effort(abs(requested_frame - last_req_frame - 1), TRUE);
+          }
           update_effort(spare_cycles + 1, FALSE);
         }
       }
@@ -2987,7 +3053,7 @@ switch_point:
       //g_print("dropped = %d, %d scyc = %ld %d %d\n", dropped, mainw->effort, spare_cycles, requested_frame, sfile->frameno);
 #endif
       drop_off = FALSE;
-      if (mainw->force_show || ((sfile->frameno != mainw->actual_frame || (sfile->frames == 1 && sfile->frameno == 1)
+      if (mainw->force_show || ((sfile->frameno != mainw->actual_frame || (show_frame && sfile->frames == 1 && sfile->frameno == 1)
                                  || (mainw->playing_sel && sfile->start == sfile->end))
 #ifdef ENABLE_PRECACHE
                                 && getahead < 0)
@@ -2998,7 +3064,7 @@ switch_point:
         mainw->record_frame = requested_frame;
 
         /// note the audio seek position at the current frame. We will use this when switching clips
-        /// we don;t know if the last audio buffer has been played or not yet, so we compensate by subtracting half the buffer length
+        /// we don;t know if the last audio buffer has been played or not yet, so we compensate by adding half the buffer length
 #ifdef ENABLE_JACK
         // note the audio seek position
         if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
@@ -3045,7 +3111,6 @@ switch_point:
         // load and display the new frame
         if (prefs->dev_show_caching) {
           g_print("playing frame %d / %d at %ld (%ld : %ld) %.2f %ld %ld\n", sfile->frameno, requested_frame, mainw->currticks,
-
                   mainw->startticks, new_ticks,
 #ifdef HAVE_PULSE_AUDIO
                   prefs->audio_player == AUD_PLAYER_PULSE ?
@@ -3066,7 +3131,7 @@ switch_point:
 #endif
                   0,
 #ifdef HAVE_PULSE_AUDIO
-                  prefs->audio_player == AUD_PLAYER_JACK ?
+                  prefs->audio_player == AUD_PLAYER_PULSE ?
                   lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) :
 #endif
 #ifdef ENABLE_JACK
@@ -3092,7 +3157,7 @@ switch_point:
         if (*cpuload < CORE_LOAD_THRESH || mainw->pred_clip != -1) {
           load_frame_image(sfile->frameno);
         }
-        mainw->inst_fps = get_inst_fps();
+        mainw->inst_fps = get_inst_fps(FALSE);
         if (prefs->show_player_stats) {
           mainw->fps_measure++;
         }
@@ -3196,31 +3261,33 @@ switch_point:
               if (dplug) dpsys = (lives_decoder_sys_t *)dplug->decoder;
             }
 
-            for (int zz = 0; zz < 6; zz++) {
-              int64_t new_pred_frame;
-              double est_time;
+            if (!mainw->xrun_active && !did_switch) {
+              for (int zz = 0; zz < 6; zz++) {
+                int64_t new_pred_frame;
+                double est_time;
 
-              if (is_virtual_frame(mainw->playing_file, pred_frame)) {
-                if (!dpsys || !dpsys->estimate_delay) break;
-                est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->playing_file, pred_frame));
-              } else {
-                // png timings
-                est_time = sfile->img_decode_time;
+                if (is_virtual_frame(mainw->playing_file, pred_frame)) {
+                  if (!dpsys || !dpsys->estimate_delay) break;
+                  est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->playing_file, pred_frame));
+                } else {
+                  // png timings
+                  est_time = sfile->img_decode_time;
+                }
+
+                if (est_time <= 0.) break;
+                if (last_est_time > -1. && est_time > last_est_time) break;
+                new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps + .9999);
+
+                if (sfile->pb_fps > 0.) {
+                  if (new_pred_frame == sfile->frameno) new_pred_frame++;
+                } else {
+                  if (new_pred_frame == sfile->frameno) new_pred_frame--;
+                }
+                if (new_pred_frame == pred_frame) break;
+                pred_frame = new_pred_frame;
+                //if (est_time < last_est_time) break;
+                last_est_time = est_time;
               }
-
-              if (est_time <= 0.) break;
-              if (last_est_time > -1. && est_time > last_est_time) break;
-              new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps + .9999);
-
-              if (sfile->pb_fps > 0.) {
-                if (new_pred_frame == sfile->frameno) new_pred_frame++;
-              } else {
-                if (new_pred_frame == sfile->frameno) new_pred_frame--;
-              }
-              if (new_pred_frame == pred_frame) break;
-              pred_frame = new_pred_frame;
-              //if (est_time < last_est_time) break;
-              last_est_time = est_time;
             }
             mainw->pred_frame = pred_frame;
           }

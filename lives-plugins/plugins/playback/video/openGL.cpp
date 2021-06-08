@@ -967,7 +967,7 @@ static int Upload(void) {
   int window_width, window_height;
 
   float scalex, scaley, offs_x, offs_y;
-  double x_stretch;
+  double x_stretch, y_stretch = 1.;
   double aspect;
 
   // scaling for particles
@@ -1013,6 +1013,9 @@ static int Upload(void) {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glViewport(0, 0, window_width, window_height);
 
+  // smaller values will expand the image
+  //y_stretch = (double)imgHeight / (double)window_height;
+
   switch (mode) {
   case 0: {
     // flat:
@@ -1045,9 +1048,9 @@ static int Upload(void) {
     glBegin(GL_QUADS);
     glTexCoord2d(0, 0);
     glVertex2d(-x_range, y_range);
-    glTexCoord2d(0, 1);
+    glTexCoord2d(0, y_stretch);
     glVertex2d(-x_range, -y_range);
-    glTexCoord2d(x_stretch, 1);
+    glTexCoord2d(x_stretch, y_stretch);
     glVertex2d(x_range, -y_range);
     glTexCoord2d(x_stretch, 0);
     glVertex2d(x_range, y_range);

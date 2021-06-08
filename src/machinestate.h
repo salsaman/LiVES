@@ -162,6 +162,7 @@ ticks_t lives_get_current_ticks(void);
 char *lives_datetime(uint64_t secs, boolean use_local);
 char *lives_datetime_rel(const char *datetime);
 char *get_current_timestamp(void);
+char *format_tstr(double xtime, int minlim);
 
 #define LIVES_QUICK_NAP 1000. // 1 uSec
 #define LIVES_SHORT_SLEEP 1000000. // 1 mSec

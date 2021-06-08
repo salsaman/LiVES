@@ -11,7 +11,7 @@
 #include "mainwindow.h"
 
 char *get_stats_msg(boolean calc_only);
-double get_inst_fps(void);
+double get_inst_fps(boolean get_msg);
 
 #ifdef WEED_STARTUP_TESTS
 int run_weed_startup_tests(void);

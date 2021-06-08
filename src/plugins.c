@@ -1082,6 +1082,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     LiVESWidget *hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
     overlay_list = lives_list_append(overlay_list, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
     overlay_list = lives_list_append(overlay_list,_("Statistics"));
+    if (prefs->show_dev_opts) overlay_list = lives_list_append(overlay_list,_("Diagnostics"));
     vppa->overlay_combo = lives_standard_combo_new(_("Overlay / Watermark"), overlay_list, LIVES_BOX(hbox), NULL);
     lives_list_free_all(&overlay_list);
     lives_dialog_make_widget_first(LIVES_DIALOG(vppa->dialog), hbox);

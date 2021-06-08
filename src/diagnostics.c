@@ -13,8 +13,8 @@
 #define STATS_TC (TICKS_PER_SECOND_DBL)
 static double inst_fps = 0.;
 
-LIVES_GLOBAL_INLINE double get_inst_fps(void) {
-  if (!mainw->lockstats) get_stats_msg(TRUE);
+LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
+  if (get_msg) get_stats_msg(TRUE);
   return inst_fps;
 }
 

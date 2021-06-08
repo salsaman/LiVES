@@ -8718,7 +8718,7 @@ void close_current_file(int file_to_switch_to) {
         return;
       }
       if (mainw->clips_available > 0) {
-        for (i = mainw->current_file - 1; i > 0; i--) {
+        for (i = mainw->current_file; --i;) {
           if (mainw->files[i]) {
             if (!mainw->multitrack) {
               if (!LIVES_IS_PLAYING) {
@@ -8754,6 +8754,11 @@ void close_current_file(int file_to_switch_to) {
   mainw->current_file = mainw->blend_file = -1;
   set_main_title(NULL, 0);
 
+  if (mainw->play_window) {
+    lives_widget_hide(mainw->preview_controls);
+    load_preview_image(FALSE);
+    resize_play_window();
+  }
   lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
   lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
   lives_widget_set_sensitive(mainw->export_proj, FALSE);
@@ -8970,10 +8975,13 @@ void switch_to_file(int old_file, int new_file) {
 }
 
 
+#define FIDDLE_FACTOR 0.007 // const seconds to subtrace
+
 boolean switch_audio_clip(int new_file, boolean activate) {
   ticks_t timeout;
   lives_clip_t *sfile;
   lives_alarm_t alarm_handle;
+  double ratio = 0.;
   int aplay_file;
 
   if (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP) {
@@ -8983,9 +8991,12 @@ boolean switch_audio_clip(int new_file, boolean activate) {
   if (!IS_VALID_CLIP(new_file)) return FALSE;
 
   if (AUD_SRC_EXTERNAL) return FALSE;
-
   aplay_file = get_aplay_clipno();
   sfile = mainw->files[new_file];
+
+  if (IS_VALID_CLIP(aplay_file) && mainw->files[aplay_file]->pb_fps && sfile->pb_fps) {
+    ratio = sfile->pb_fps / mainw->files[aplay_file]->pb_fps;
+  }
 
   if ((aplay_file == new_file && (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
                                   || !CLIP_HAS_AUDIO(new_file)))
@@ -9046,10 +9057,9 @@ boolean switch_audio_clip(int new_file, boolean activate) {
           if (timeout == 0)  {
             mainw->cancelled = handle_audio_timeout();
             return FALSE;
-          }
-        }
-      }
-    }
+	    // *INDENT-OFF*
+          }}}}
+    // *INDENT-ON*
 
     if (!IS_VALID_CLIP(new_file)) {
       mainw->jackd->in_use = FALSE;
@@ -9059,9 +9069,10 @@ boolean switch_audio_clip(int new_file, boolean activate) {
     if (CLIP_HAS_AUDIO(new_file)) {
       int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
       int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
-      sfile->aseek_pos += (off_t)((sfile->adirection / fabs(sfile->pb_fps) * .5
-                                   + (double)(mainw->currticks - mainw->startticks) / 2. / TICKS_PER_SECOND_DBL)
-                                  * sfile->arps) * sfile->achans * (sfile->asampsize >> 3);
+      sfile->aseek_pos += (off_t)((sfile->adirection * (-FIDDLE_FACTOR * ratio + 0. / fabs(sfile->pb_fps)
+                                   - (double)(mainw->currticks - mainw->startticks)
+                                   * 0. * ratio / 4. / TICKS_PER_SECOND_DBL)
+                                   * sfile->arps) * sfile->achans * (sfile->asampsize >> 3));
       mainw->jackd->num_input_channels = sfile->achans;
       mainw->jackd->bytes_per_channel = sfile->asampsize / 8;
       if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
@@ -9179,9 +9190,10 @@ boolean switch_audio_clip(int new_file, boolean activate) {
       if (CLIP_HAS_AUDIO(new_file)) {
         int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
         int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
-        sfile->aseek_pos += (off_t)((sfile->adirection / fabs(sfile->pb_fps) * .5
-                                     + (double)(mainw->currticks - mainw->startticks) / 2. / TICKS_PER_SECOND_DBL)
-                                    * sfile->arps) * sfile->achans * (sfile->asampsize >> 3);
+        sfile->aseek_pos += (off_t)((sfile->adirection * (-FIDDLE_FACTOR + 1. / fabs(sfile->pb_fps)
+                                     - (double)(mainw->currticks - mainw->startticks)
+                                     * ratio / TICKS_PER_SECOND_DBL)
+                                     * sfile->arps) * sfile->achans * (sfile->asampsize >> 3));
         mainw->pulsed->in_achans = sfile->achans;
         mainw->pulsed->in_asamps = sfile->asampsize;
         if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {

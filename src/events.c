@@ -3986,6 +3986,13 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 mainw->scrap_layer = NULL;
               }
               weed_leaf_dup(layer, event, LIVES_LEAF_FAKE_TC);
+              if (prefs->twater_type == TWATER_TYPE_DIAGNOSTICS) {
+                if (weed_plant_has_leaf(event, WEED_LEAF_OVERLAY_TEXT)) {
+                  char *texto = weed_get_string_value(event, WEED_LEAF_OVERLAY_TEXT, NULL);
+                  render_text_overlay(layer, texto, DEF_OVERLAY_SCALING);
+                  lives_free(texto);
+                }
+              }
               mainw->transrend_layer = layer;
               mainw->transrend_ready = TRUE;
               // sig_progress...
@@ -5069,6 +5076,7 @@ boolean render_to_clip(boolean new_clip) {
   if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
     cfile->progress_start = 0;
     cfile->progress_end = cfile->frames;
+    //cfile->asampsize = xasamps;
   }
 
   if (start_render_effect_events(mainw->event_list, TRUE, rendaud)) { // re-render, applying effects

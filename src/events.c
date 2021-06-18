@@ -3675,7 +3675,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
     mainw->filter_map = NULL;
     mainw->afilter_map = NULL;
     mainw->audio_event = event;
-    old_scrap_frame = -1;
+    old_scrap_frame = -2;
     rec_delta_tc = 0;
     /* end_tc */
     /*   = get_event_timecode(get_last_frame_event(cfile->event_list)) */
@@ -3807,10 +3807,12 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                   pixbuf = mainw->scrap_pixbuf;
                 }
               }
-            } else {
+            }
+
+            if (!layer && !pixbuf) {
               if (intimg) {
                 if (mainw->scrap_layer) {
-                  weed_layer_free(mainw->scrap_layer);
+                  if (!saveargs || mainw->scrap_layer != saveargs->layer) weed_layer_free(mainw->scrap_layer);
                   mainw->scrap_layer = NULL;
                 }
               } else {
@@ -3819,16 +3821,18 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                   mainw->scrap_pixbuf = NULL;
                 }
               }
-
               old_scrap_frame = mainw->frame_index[scrap_track];
+
               layer = lives_layer_new_for_frame(mainw->clip_index[scrap_track], old_scrap_frame);
               offs = weed_get_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, &weed_error);
               if (!mainw->files[mainw->scrap_file]->ext_src) load_from_scrap_file(NULL, -1);
-              lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src),
-                                                   offs);
-              if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
-                weed_layer_free(layer);
-                layer = NULL;
+              else {
+                lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src),
+                                                     offs);
+                if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
+                  weed_layer_free(layer);
+                  layer = NULL;
+                }
               }
             }
           } else {
@@ -3941,7 +3945,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             }
           }
 #endif
-          if (layer) {
+          if (layer && weed_layer_get_width(layer) > 0) {
             int lpal, width, height;
             boolean was_lbox = FALSE;
             boolean reused = FALSE;
@@ -3950,15 +3954,10 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
               lives_nanosleep_until_nonzero(!mainw->transrend_ready);
 
-              if (mainw->transrend_layer && mainw->transrend_layer != mainw->scrap_layer)
-                weed_layer_free(mainw->transrend_layer);
-
               if (lives_proc_thread_check_finished(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
 
               if (scrap_track != -1) {
-                if (mainw->scrap_layer) {
-                  layer = mainw->scrap_layer;
-                  mainw->scrap_layer = NULL;
+                if (layer == mainw->scrap_layer) {
                   reused = TRUE;
                 } else {
                   check_layer_ready(layer);
@@ -3976,14 +3975,12 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                     && weed_get_int64_value(next_frame_event, WEED_LEAF_FRAMES, NULL)
                     == mainw->frame_index[0]) {
                   // save the layer
-                  if (!mainw->scrap_layer) // || layer == mainw->scrap_layer)
-                    mainw->scrap_layer = layer;//weed_layer_copy(NULL, layer);
-                  reused = TRUE;
+                  if (!mainw->scrap_layer) {
+                    // NOT WORKING....TODO ???
+                    //mainw->scrap_layer = weed_layer_copy(NULL, layer);
+                    reused = TRUE;
+                  }
                 }
-              }
-              if (!reused && mainw->scrap_layer) {
-                weed_layer_free(mainw->scrap_layer);
-                mainw->scrap_layer = NULL;
               }
               weed_leaf_dup(layer, event, LIVES_LEAF_FAKE_TC);
               if (prefs->twater_type == TWATER_TYPE_DIAGNOSTICS) {
@@ -4013,6 +4010,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 #else
             layer_palette = WEED_PALETTE_RGB24;
 #endif
+            // TODO - enc lb
             if ((mainw->multitrack && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
               calc_maxspect(cfile->hsize, cfile->vsize, &width, &height);
               if (layer_palette != lpal && (cfile->hsize > width || cfile->vsize > height)) {
@@ -4218,7 +4216,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         }
         if (intimg) {
           if (saveargs->layer && saveargs->layer != layer) {
-            weed_layer_free(saveargs->layer);
+            if (saveargs->layer != mainw->scrap_layer)
+              weed_layer_free(saveargs->layer);
             saveargs->layer = NULL;
           }
         } else {
@@ -4258,13 +4257,15 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       if (cfile->start == 0) cfile->start = 1;
       out_frame++;
 
-      // if our pixbuf came from scrap file, and next frame is also from scrap file with same frame number,
-      // save the pixbuf and re-use it
-      if (scrap_track != -1) {
-        if (intimg) {
-          mainw->scrap_layer = layer;
-        } else {
-          mainw->scrap_pixbuf = pixbuf;
+      if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) {
+        // if our pixbuf came from scrap file, and next frame is also from scrap file with same frame number,
+        // save the pixbuf and re-use it
+        if (scrap_track != -1) {
+          if (intimg) {
+            mainw->scrap_layer = layer;
+          } else {
+            mainw->scrap_pixbuf = pixbuf;
+          }
         }
       }
       break;
@@ -4510,7 +4511,7 @@ filterinit2:
     }
 #endif
 
-    if (mainw->transrend_layer) weed_layer_free(mainw->transrend_layer);
+    //if (mainw->transrend_layer) weed_layer_free(mainw->transrend_layer);
 
     if (cfile->old_frames == 0) cfile->undo_start = cfile->undo_end = 0;
     if (r_video) {

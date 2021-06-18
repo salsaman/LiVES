@@ -994,6 +994,7 @@ static void *thrdpool(void *arg) {
 
 void lives_threadpool_init(void) {
   npoolthreads = MINPOOLTHREADS;
+  if (mainw->debug) npoolthreads = 0;
   if (prefs->nfx_threads > npoolthreads) npoolthreads = prefs->nfx_threads;
   poolthrds = (pthread_t **)lives_calloc(npoolthreads, sizeof(pthread_t *));
   threads_die = FALSE;
@@ -1070,7 +1071,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
   pthread_cond_signal(&tcond);
   pthread_mutex_unlock(&tcond_mutex);
   pthread_mutex_lock(&pool_mutex);
-  if (ntasks >= npoolthreads) {
+  if (npoolthreads && ntasks >= npoolthreads) {
     pthread_mutex_lock(&tcond_mutex);
     pthread_cond_broadcast(&tcond);
     pthread_mutex_unlock(&tcond_mutex);

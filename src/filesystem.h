@@ -12,6 +12,20 @@ char *filename_from_fd(char *val, int fd);
 ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz);
 
 boolean is_writeable_dir(const char *dir);
+boolean check_dir_access(const char *dir, boolean leaveit);
+boolean lives_make_writeable_dir(const char *newdir);
+boolean check_file(const char *file_name, boolean check_exists);  ///< check if file exists
+
+boolean ensure_isdir(char *fname);
+boolean dirs_equal(const char *dira, const char *dirb);
+
+char *get_extension(const char *filename);
+char *ensure_extension(const char *fname, const char *ext) WARN_UNUSED;
+
+void get_dirname(char *filename);
+char *get_dir(const char *filename);
+void get_basename(char *filename);
+void get_filename(char *filename, boolean strip_dir);
 
 boolean lives_fsync(int fd);
 void lives_sync(int times);

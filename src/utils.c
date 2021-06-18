@@ -589,7 +589,6 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
       mainw->affected_layout_marks = lives_list_append(mainw->affected_layout_marks,
                                      (livespointer)lives_text_buffer_create_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),
                                          NULL, &end_iter, TRUE));
-
     }
     lmap = (LiVESList *)user_data;
     while (lmap) {
@@ -889,99 +888,6 @@ boolean lives_string_ends_with(const char *string, const char *fmt, ...) {
 }
 
 
-void get_dirname(char *filename) {
-  char *tmp;
-  // get directory name from a file
-  // filename should point to char[PATH_MAX]
-  // WARNING: will change contents of filename
-
-  lives_snprintf(filename, PATH_MAX, "%s%s", (tmp = lives_path_get_dirname(filename)), LIVES_DIR_SEP);
-  if (!strcmp(tmp, ".")) {
-    char *tmp1 = lives_get_current_dir(), *tmp2 = lives_build_filename(tmp1, filename + 2, NULL);
-    lives_free(tmp1);
-    lives_snprintf(filename, PATH_MAX, "%s", tmp2);
-    lives_free(tmp2);
-  }
-
-  lives_free(tmp);
-}
-
-
-char *get_dir(const char *filename) {
-  // get directory as string, should free after use
-  char tmp[PATH_MAX];
-  lives_snprintf(tmp, PATH_MAX, "%s", filename);
-  get_dirname(tmp);
-  return lives_strdup(tmp);
-}
-
-
-LIVES_GLOBAL_INLINE void get_basename(char *filename) {
-  // get basename from a file
-  // (filename without directory)
-  // filename should point to char[PATH_MAX]
-  // WARNING: will change contents of filename
-  char *tmp = lives_path_get_basename(filename);
-  lives_snprintf(filename, PATH_MAX, "%s", tmp);
-  lives_free(tmp);
-}
-
-
-LIVES_GLOBAL_INLINE void get_filename(char *filename, boolean strip_dir) {
-  // get filename (part without extension) of a file
-  //filename should point to char[PATH_MAX]
-  // WARNING: will change contents of filename
-  if (strip_dir) get_basename(filename);
-  lives_strstop(filename, '.');
-}
-
-/// return filename (no dir, no .ext)
-LIVES_GLOBAL_INLINE char *lives_get_filename(char *uri) {return lives_strstop(lives_path_get_basename(uri), '.');}
-
-
-char *get_extension(const char *filename) {
-  // return file extension without the "."
-  char *tmp = lives_path_get_basename(filename);
-  char *ptr = strrchr(tmp, '.');
-  if (!ptr) {
-    lives_free(tmp);
-    return lives_strdup("");
-  } else {
-    char *ret = lives_strdup(ptr + 1);
-    lives_free(tmp);
-    return ret;
-  }
-}
-
-
-char *ensure_extension(const char *fname, const char *ext) {
-  // make sure filename fname has file extension ext
-  // if ext does not begin with a "." we prepend one to the start of ext
-  // we then check if fname ends with ext. If not we append ext to fname.
-  // we return a copy of fname, possibly modified. The string returned should be freed after use.
-  // NOTE: the original ext is not changed.
-
-  size_t se = strlen(ext), sf;
-  char *eptr = (char *)ext;
-
-  if (!fname) return NULL;
-
-  if (se == 0) return lives_strdup(fname);
-
-  if (eptr[0] == '.') {
-    eptr++;
-    se--;
-  }
-
-  sf = lives_strlen(fname);
-  if (sf < se + 1 || strcmp(fname + sf - se, eptr) || fname[sf - se - 1] != '.') {
-    return lives_strconcat(fname, ".", eptr, NULL);
-  }
-
-  return lives_strdup(fname);
-}
-
-
 // input length includes terminating NUL
 
 LIVES_GLOBAL_INLINE char *lives_ellipsize(char *txt, size_t maxlen, LiVESEllipsizeMode mode) {
@@ -1065,67 +971,6 @@ LIVES_GLOBAL_INLINE char *lives_pad_ellipsize(char *txt, size_t fixlen, int pali
   if (slen == fixlen - 1) return txt;
   if (slen >= fixlen) return lives_ellipsize(txt, fixlen, emode);
   return lives_pad(txt, fixlen, palign);
-}
-
-
-boolean ensure_isdir(char *fname) {
-  // ensure dirname ends in a single dir separator
-  // fname should be char[PATH_MAX]
-
-  // returns TRUE if fname was altered
-
-  size_t dslen = strlen(LIVES_DIR_SEP);
-  ssize_t offs;
-  boolean ret = FALSE;
-  char *tmp = lives_strdup_printf("%s%s", LIVES_DIR_SEP, fname), *tmp2;
-  size_t tlen = lives_strlen(tmp), slen, tlen2;
-
-  while (1) {
-    // recursively remove double DIR_SEP
-    tmp2 = subst(tmp, LIVES_DIR_SEP LIVES_DIR_SEP, LIVES_DIR_SEP);
-    if ((tlen2 = lives_strlen(tmp2)) < tlen) {
-      ret = TRUE;
-      lives_free(tmp);
-      tmp = tmp2;
-      tlen = tlen2;
-    } else {
-      lives_free(tmp2);
-      break;
-    }
-  }
-
-  if (ret) lives_snprintf(fname, PATH_MAX, "%s", tmp);
-  lives_free(tmp);
-
-  slen = tlen - 1;
-  offs = slen;
-
-  // we should now only have one or zero DIR_SEP at the end, but just in case we remove all but the last one
-  while (offs >= 0 && !strncmp(fname + offs, LIVES_DIR_SEP, dslen)) offs -= dslen;
-  if (offs == slen - dslen) return ret; // format is OK as-is
-
-  // strip off all terminating DIR_SEP and then append one
-  if (++offs < 0) offs = 0;
-  if (offs < slen) fname[offs] = 0;
-  fname = strncat(fname, LIVES_DIR_SEP, PATH_MAX - offs - 1);
-  return TRUE;
-}
-
-
-boolean dirs_equal(const char *dira, const char *dirb) {
-  // filenames in locale encoding
-  char *tmp;
-  char dir1[PATH_MAX];
-  char dir2[PATH_MAX];
-  lives_snprintf(dir1, PATH_MAX, "%s", (tmp = F2U8(dira)));
-  lives_free(tmp);
-  lives_snprintf(dir2, PATH_MAX, "%s", (tmp = F2U8(dirb)));
-  lives_free(tmp);
-  ensure_isdir(dir1);
-  ensure_isdir(dir2);
-  // TODO: for some (Linux) fstypes we should use strcasecmp
-  // can get this using "df -T"
-  return (!lives_strcmp(dir1, dir2));
 }
 
 
@@ -2054,60 +1899,6 @@ void reset_clipmenu(void) {
 }
 
 
-boolean check_file(const char *file_name, boolean check_existing) {
-  int check;
-  boolean exists = FALSE;
-  char *msg;
-  // file_name should be in utf8
-  char *lfile_name = U82F(file_name);
-
-  mainw->error = FALSE;
-
-  while (1) {
-    // check if file exists
-    if (lives_file_test(lfile_name, LIVES_FILE_TEST_EXISTS)) {
-      if (check_existing) {
-        msg = lives_strdup_printf(_("\n%s\nalready exists.\n\nOverwrite ?\n"), file_name);
-        if (!do_warning_dialog(msg)) {
-          lives_free(msg);
-          lives_free(lfile_name);
-          return FALSE;
-        }
-        lives_free(msg);
-      }
-      check = open(lfile_name, O_WRONLY);
-      exists = TRUE;
-    }
-    // if not, check if we can write to it
-    else {
-      check = open(lfile_name, O_CREAT | O_EXCL | O_WRONLY, DEF_FILE_PERMS);
-    }
-
-    if (check < 0) {
-      LiVESResponseType resp = LIVES_RESPONSE_NONE;
-      mainw->error = TRUE;
-      if (mainw && mainw->is_ready) {
-        if (errno == EACCES)
-          resp = do_file_perm_error(lfile_name, TRUE);
-        else
-          resp = do_write_failed_error_s_with_retry(lfile_name, NULL);
-        if (resp == LIVES_RESPONSE_RETRY) {
-          continue;
-        }
-      }
-      lives_free(lfile_name);
-      return FALSE;
-    }
-
-    close(check);
-    break;
-  }
-  if (!exists) lives_rm(lfile_name);
-  lives_free(lfile_name);
-  return TRUE;
-}
-
-
 int lives_rmdir(const char *dir, boolean force) {
   // if force is TRUE, removes non-empty dirs, otherwise leaves them
   // may fail
@@ -2345,73 +2136,6 @@ void lives_suspend_resume_process(const char *dirname, boolean suspend) {
   com = lives_strdup_printf("%s resume \"%s\"", prefs->backend_sync, dirname);
   lives_system(com, FALSE);
   lives_free(com);
-}
-
-
-boolean check_dir_access(const char *dir, boolean leaveit) {
-  // if a directory exists, make sure it is readable and writable
-  // otherwise create it and then check
-  // we test here by actually creating a (mkstemp) file and writing to it
-  // dir is in locale encoding
-
-  // see also is_writeable_dir() which uses access() to check directory permissions
-
-  // WARNING: may leave some parents around
-  char test[5] = "1234";
-  char *testfile;
-  boolean exists = lives_file_test(dir, LIVES_FILE_TEST_EXISTS);
-  int fp;
-
-  if (!exists) lives_mkdir_with_parents(dir, capable->umask);
-
-  if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return FALSE;
-
-  if (!is_writeable_dir(dir)) return FALSE;
-
-  testfile = lives_build_filename(dir, "livestst-XXXXXX", NULL);
-  fp = g_mkstemp(testfile);
-  if (fp == -1) {
-    lives_free(testfile);
-    if (!exists) {
-      lives_rmdir(dir, FALSE);
-    }
-    return FALSE;
-  }
-  if (lives_write(fp, test, 4, TRUE) != 4) {
-    close(fp);
-    lives_rm(testfile);
-    if (!exists) {
-      lives_rmdir(dir, FALSE);
-    }
-    lives_free(testfile);
-    return FALSE;
-  }
-  close(fp);
-  fp = lives_open2(testfile, O_RDONLY);
-  if (fp < 0) {
-    lives_rm(testfile);
-    if (!exists) {
-      lives_rmdir(dir, FALSE);
-    }
-    lives_free(testfile);
-    return FALSE;
-  }
-  if (lives_read(fp, test, 4, TRUE) != 4) {
-    close(fp);
-    lives_rm(testfile);
-    if (!exists) {
-      lives_rmdir(dir, FALSE);
-    }
-    lives_free(testfile);
-    return FALSE;
-  }
-  close(fp);
-  lives_rm(testfile);
-  if (!exists && !leaveit) {
-    lives_rmdir(dir, FALSE);
-  }
-  lives_free(testfile);
-  return TRUE;
 }
 
 
@@ -3125,29 +2849,6 @@ char *insert_newlines(const char *text, int maxwidth) {
   *(retstr + req_size) = 0;
 
   return retstr;
-}
-
-
-boolean lives_make_writeable_dir(const char *newdir) {
-  /// create a directory (including parents)
-  /// and ensure we can actually write to it
-  int ret = lives_mkdir_with_parents(newdir, capable->umask);
-  int myerrno = errno;
-  if (!check_dir_access(newdir, TRUE)) {
-    // abort if we cannot create the new subdir
-    if (myerrno == EINVAL) {
-      LIVES_ERROR("Could not write to directory");
-    } else LIVES_ERROR("Could not create directory");
-    LIVES_ERROR(newdir);
-    THREADVAR(com_failed) = FALSE;
-    return FALSE;
-  } else {
-    if (ret != -1) {
-      LIVES_DEBUG("Created directory");
-      LIVES_DEBUG(newdir);
-    }
-  }
-  return TRUE;
 }
 
 

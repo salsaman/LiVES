@@ -10457,7 +10457,9 @@ LiVESWidget *lives_standard_progress_bar_new(void) {
     set_css_min_size(pbar, -1, widget_opts.css_min_height);
 #ifndef VALGRIND_ON
 #if GTK_CHECK_VERSION(3, 16, 0)
-    set_progbar_colours(pbar, TRUE);
+    if (!prefs->vj_mode && !mainw->debug) {
+      set_progbar_colours(pbar, TRUE);
+    }
 #endif
 #endif
   }

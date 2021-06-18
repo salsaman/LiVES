@@ -12,6 +12,16 @@
 // and clip audio volumes
 // allow reordering of clips in set
 
+// general metadata
+
+
+
+
+
+
+
+
+
 boolean is_legal_set_name(const char *set_name, boolean allow_dupes, boolean leeway) {
   // check (clip) set names for validity
   // - may not be of zero length

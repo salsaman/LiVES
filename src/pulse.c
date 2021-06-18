@@ -260,7 +260,7 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, size_t nbytes, size_t x
         && (!mainw->event_list || mainw->record || mainw->record_paused))  {
       // buffer audio for any generators
       // interleaved, so we paste all to channel 0
-      append_to_audio_buffer16(buff, nsamples * pulsed->out_achans, 0);
+      append_to_audio_buffer16(buff, nsamples * pulsed->out_achans, 2);
     }
 #if !HAVE_PA_STREAM_BEGIN_WRITE
     pa_stream_write(pulsed->pstream, buff, xbytes, pulse_buff_free, 0, PA_SEEK_RELATIVE);
@@ -1074,7 +1074,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       /// we may also stream to a fifo, as well as possibly caching the audio for any video filters to utilize
       if (pulsed->astream_fd != -1) audio_stream(buffer, xbytes, pulsed->astream_fd);
       if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) {
-        append_to_audio_buffer16(buffer, xbytes / 2, 0);
+        append_to_audio_buffer16(buffer, xbytes / 2, 2);
       }
 
       /// Finally... we actually write to pulse buffers

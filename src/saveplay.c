@@ -2634,7 +2634,7 @@ void play_file(void) {
     mainw->rec_samples = -1; // record unlimited
     if (mainw->record) {
       // create temp clip
-      open_ascrap_file();
+      open_ascrap_file(-1);
       if (mainw->ascrap_file != -1) {
         mainw->rec_aclip = mainw->ascrap_file;
         mainw->rec_avel = 1.;
@@ -4582,16 +4582,14 @@ boolean open_scrap_file(void) {
     return FALSE;
   }
 
-  dir = get_clip_dir(mainw->current_file);
-
   if (!create_cfile(-1, handle, FALSE)) {
-    lives_rmdir(dir, FALSE);
-    lives_free(dir); lives_free(handle);
+    lives_free(handle);
     return FALSE;
   }
   lives_free(handle);
 
   mainw->scrap_file = mainw->current_file;
+  dir = get_clip_dir(mainw->current_file);
 
   lives_snprintf(cfile->type, 40, "scrap");
 
@@ -4614,50 +4612,53 @@ boolean open_scrap_file(void) {
 }
 
 
-boolean open_ascrap_file(void) {
+boolean open_ascrap_file(int clipno) {
   // create a scrap file for recording audio
+  lives_clip_t *sfile;
+  char *dir, *handle, *ascrap_handle;
   int current_file = mainw->current_file;
-  char *dir;
-  char *handle, *ascrap_handle;
+  boolean new_clip = FALSE;
 
-  if (!check_for_executable(&capable->has_mktemp, EXEC_MKTEMP)) {
-    do_program_not_found_error(EXEC_MKTEMP);
-    return FALSE;
-  }
+  if (!IS_VALID_CLIP(clipno)) {
+    if (!check_for_executable(&capable->has_mktemp, EXEC_MKTEMP)) {
+      do_program_not_found_error(EXEC_MKTEMP);
+      return FALSE;
+    }
 
-  handle = get_worktmp("_ascrap");
-  if (!handle) {
-    workdir_warning();
-    return FALSE;
-  }
-  if (!create_cfile(-1, handle, FALSE)) {
-    dir = get_clip_dir(mainw->current_file);
-    lives_rmdir(dir, FALSE);
-    lives_free(dir); lives_free(handle);
-    return FALSE;
-  }
-  lives_free(handle);
+    handle = get_worktmp("_ascrap");
+    if (!handle) {
+      workdir_warning();
+      return FALSE;
+    }
+    if (!create_cfile(-1, handle, FALSE)) {
+      dir = get_clip_dir(mainw->current_file);
+      lives_rmdir(dir, FALSE);
+      lives_free(dir); lives_free(handle);
+      return FALSE;
+    }
+    lives_free(handle);
+    mainw->ascrap_file = mainw->current_file;
+    lives_snprintf(cfile->type, 40, "ascrap");
+    cfile->opening = FALSE;
+    new_clip = TRUE;
+  } else mainw->ascrap_file = clipno;
+  sfile = mainw->files[mainw->ascrap_file];
 
-  mainw->ascrap_file = mainw->current_file;
-  lives_snprintf(cfile->type, 40, "ascrap");
-
-  cfile->opening = FALSE;
-
-  cfile->achans = 2;
-  cfile->arate = cfile->arps = DEFAULT_AUDIO_RATE;
-
-  cfile->asampsize = 16;
-  cfile->signed_endian = 0; // ???
+  // audio player will reset these, values are just defaults
+  sfile->achans = 2;
+  sfile->arate = sfile->arps = DEFAULT_AUDIO_RATE;
+  sfile->asampsize = 16;
+  sfile->signed_endian = 0; // the audio player will set this
 
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
     if (prefs->audio_src == AUDIO_SRC_EXT) {
       if (mainw->pulsed_read) {
-        cfile->arate = cfile->arps = mainw->pulsed_read->in_arate;
+        sfile->arate = sfile->arps = mainw->pulsed_read->in_arate;
       }
     } else {
       if (mainw->pulsed) {
-        cfile->arate = cfile->arps = mainw->pulsed->out_arate;
+        sfile->arate = sfile->arps = mainw->pulsed->out_arate;
       }
     }
   }
@@ -4667,31 +4668,31 @@ boolean open_ascrap_file(void) {
   if (prefs->audio_player == AUD_PLAYER_JACK) {
     if (prefs->audio_src == AUDIO_SRC_EXT) {
       if (mainw->jackd_read) {
-        cfile->arate = cfile->arps = mainw->jackd_read->sample_in_rate;
-        cfile->asampsize = 32;
+        sfile->arate = sfile->arps = mainw->jackd_read->sample_in_rate;
+        sfile->asampsize = 32;
       }
     } else {
       if (mainw->jackd) {
-        cfile->arate = cfile->arps = mainw->jackd->sample_out_rate;
+        sfile->arate = sfile->arps = mainw->jackd->sample_out_rate;
       }
     }
   }
 #endif
+  if (new_clip) {
+    ascrap_handle = lives_strdup_printf("ascrap|%s", sfile->handle);
+    if (prefs->crash_recovery) add_to_recovery_file(ascrap_handle);
+    lives_free(ascrap_handle);
 
-  ascrap_handle = lives_strdup_printf("ascrap|%s", cfile->handle);
-  if (prefs->crash_recovery) add_to_recovery_file(ascrap_handle);
-  lives_free(ascrap_handle);
+    pthread_mutex_lock(&mainw->clip_list_mutex);
+    mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
+    pthread_mutex_unlock(&mainw->clip_list_mutex);
 
-  pthread_mutex_lock(&mainw->clip_list_mutex);
-  mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
-  pthread_mutex_unlock(&mainw->clip_list_mutex);
+    dir = get_clip_dir(mainw->current_file);
+    free_mb = (double)get_ds_free(dir) / (double)ONE_MILLION;
+    lives_free(dir);
 
-  dir = get_clip_dir(mainw->current_file);
-  free_mb = (double)get_ds_free(dir) / (double)ONE_MILLION;
-  lives_free(dir);
-
-  mainw->current_file = current_file;
-
+    mainw->current_file = current_file;
+  }
   ascrap_mb = 0.;
 
   return TRUE;

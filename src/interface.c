@@ -953,8 +953,7 @@ xprocess *create_processing(const char *text) {
 
   procw->notify_cb = lives_standard_check_button_new(_("Notify when finished"),
                      FALSE, LIVES_BOX(vbox3),
-                     (tmp = H_("Send a desktop notification\n"
-                               "when complete")));
+                     (tmp = H_("Send a desktop notification\nwhen complete")));
   lives_free(tmp);
 
   lives_widget_set_opacity(lives_widget_get_parent(procw->notify_cb), 0.);

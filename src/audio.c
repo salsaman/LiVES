@@ -129,7 +129,7 @@ void append_to_audio_bufferf(float *src, uint64_t nsamples, int channum) {
   if (!abuf->bufferf || channum > abuf->out_achans) {
     if (!abuf->bufferf) abuf->write_pos = abuf->vclient_readpos = abuf->vclient_readlevel
                                             = abuf->aclient_readpos = abuf->aclient_readlevel = 0;
-    abuf->bufferf = (float **)lives_realloc(abuf->bufferf, channum * sizeof(float *));
+    abuf->bufferf = (float **)lives_realloc(abuf->bufferf, (channum + 1) * sizeof(float *));
     for (int i = abuf->out_achans; i < channum; i++) {
       abuf->bufferf[i] = (float *)lives_calloc(ABUF_ARENA_SIZE, 4);
     }
@@ -184,10 +184,9 @@ void append_to_aux_audio_bufferf(float *src, uint64_t nsamples, int channum) {
 }
 
 
-void append_to_audio_buffer16(void *src, uint64_t nsamples, int channum) {
+void append_to_audio_buffer16(void *src, uint64_t nsamples, int nchans) {
   // append float audio to the audio frame buffer
   ssize_t write_offset;
-  boolean increment = FALSE;
   lives_audio_buf_t *abuf;
 
   if (!prefs->push_audio_to_gens) return;
@@ -199,30 +198,20 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int channum) {
     abuf->out_achans = 0;
   }
 
-  if (channum < 0) {
-    channum = -channum;
-    increment = TRUE;
+  if (!abuf->buffer16 || nchans > abuf->out_achans) {
+    if (!abuf->buffer16) abuf->buffer16 = (short **)lives_calloc(1, sizeof(short *));
+    abuf->buffer16[0] = (short *)lives_recalloc(abuf->buffer16[0], ABUF_ARENA_SIZE * nchans, ABUF_ARENA_SIZE * abuf->out_achans, 2);
+    abuf->out_achans = nchans;
   }
 
-  if (!abuf->buffer16 || channum > abuf->out_achans) {
-    abuf->buffer16 = (short **)lives_realloc(abuf->buffer16, channum * sizeof(short *));
-    for (int i = abuf->out_achans; i < channum; i++) {
-      abuf->buffer16[i] = (short *)lives_calloc(ABUF_ARENA_SIZE, 2);
-    }
-    abuf->out_achans = channum;
-  }
-
-  channum--;
-
-  if (!abuf->buffer16[channum]) {
-    abuf->buffer16[channum] = (short *)lives_calloc(ABUF_ARENA_SIZE, 2);
+  if (!abuf->buffer16[0]) {
+    abuf->buffer16[0] = (short *)lives_calloc(ABUF_ARENA_SIZE, 2 * nchans);
     abuf->write_pos = 0;
   }
-  write_offset = arena_write(abuf->buffer16[channum], src, abuf->write_pos, nsamples, 2);
-  if (increment) {
-    // only update when all channels written
-    abuf->write_pos = write_offset;
-  }
+
+  write_offset = arena_write(abuf->buffer16[0], src, abuf->write_pos, nsamples, 2);
+  abuf->write_pos = write_offset;
+
 #ifdef DEBUG_AFB
   g_print("append16 to afb\n");
 #endif
@@ -2368,7 +2357,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 
   boolean jackd_read_started = (mainw->jackd_read != NULL);
 
-  int retval;
+  LiVESResponseType retval;
 
   // should we set is_paused ? (yes)
   // should we reset time (no)
@@ -2426,6 +2415,20 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     off_t fsize = lives_buffered_offset(mainw->aud_rec_fd);
 
     if (rec_type == RECA_EXTERNAL) {
+      mainw->pulsed_read->reverse_endian = FALSE;
+
+      pulse_driver_activate(mainw->pulsed_read);
+
+      outfile->arate = outfile->arps = mainw->jackd_read->sample_in_rate;
+      outfile->achans = mainw->jackd_read->num_input_channels;
+      outfile->asampsize = 16;
+      outfile->signed_endian = get_signed_endian(TRUE, TRUE);
+
+      asigned = !(outfile->signed_endian & AFORM_UNSIGNED);
+      aendian = !(outfile->signed_endian & AFORM_BIG_ENDIAN);
+
+      mainw->jackd_read->frames_written = fsize / (outfile->achans * (outfile->asampsize >> 3));
+
       asigned = !(outfile->signed_endian & AFORM_UNSIGNED);
       aendian = !(outfile->signed_endian & AFORM_BIG_ENDIAN);
       mainw->jackd_read->frames_written = fsize / (outfile->achans * (outfile->asampsize >> 3));
@@ -2565,11 +2568,11 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
 
       pulse_driver_activate(mainw->pulsed_read);
 
-      outfile->arate = outfile->arps = mainw->pulsed_read->out_arate;
-      outfile->achans = mainw->pulsed_read->out_achans;
-      outfile->asampsize = mainw->pulsed_read->out_asamps;
-      outfile->signed_endian = get_signed_endian(mainw->pulsed_read->out_signed != AFORM_UNSIGNED,
-                               mainw->pulsed_read->out_endian != AFORM_BIG_ENDIAN);
+      outfile->arate = outfile->arps = mainw->pulsed_read->in_arate;
+      outfile->achans = mainw->pulsed_read->in_achans;
+      outfile->asampsize = mainw->pulsed_read->in_asamps;
+      outfile->signed_endian = get_signed_endian(mainw->pulsed_read->in_signed != AFORM_UNSIGNED,
+                               mainw->pulsed_read->in_endian != AFORM_BIG_ENDIAN);
 
       asigned = !(outfile->signed_endian & AFORM_UNSIGNED);
       aendian = !(outfile->signed_endian & AFORM_BIG_ENDIAN);
@@ -2659,7 +2662,7 @@ void pulse_rec_audio_end(boolean close_fd) {
 void start_audio_rec(void) {
   // if the user activates recording during playback, prepare to start recording audio
   if (mainw->ascrap_file == -1) {
-    open_ascrap_file();
+    open_ascrap_file(-1);
   }
   if (mainw->ascrap_file != -1) {
     mainw->rec_samples = -1; // record unlimited

@@ -444,6 +444,8 @@ typedef struct {
   int ncpus;
   short cpu_bits;
   char *cpu_name;
+  char *cpu_vendor;
+  uint64_t cpu_features;
   int cacheline_size;
   //
   int mem_status;
@@ -451,6 +453,8 @@ typedef struct {
   int64_t memfree;
   int64_t memavail;
 } hw_caps_t;
+
+#define CPU_HAS_SSE2			1
 
 #define DEF_ALIGN (sizeof(void *) * 8)
 
@@ -1060,7 +1064,7 @@ ulong restore_file(const char *filename);
 
 // saveplay.c scrap file
 boolean open_scrap_file(void);
-boolean open_ascrap_file(void);
+boolean open_ascrap_file(int clipno);
 int save_to_scrap_file(weed_layer_t *);
 boolean load_from_scrap_file(weed_layer_t *, frames_t frame);
 void close_ascrap_file(boolean remove);
@@ -1217,12 +1221,6 @@ int lives_utf8_strcmp(const char *s1, const char *s2);
 
 boolean lives_string_ends_with(const char *string, const char *fmt, ...);
 
-void get_dirname(char *filename);
-char *get_dir(const char *filename);
-void get_basename(char *filename);
-void get_filename(char *filename, boolean strip_dir);
-char *get_extension(const char *filename);
-
 uint64_t get_version_hash(const char *exe, const char *sep, int piece);
 uint64_t make_version_hash(const char *ver);
 char *unhash_version(uint64_t version);
@@ -1265,12 +1263,6 @@ boolean switch_aud_to_pulse(boolean set_pref);
 
 boolean prepare_to_play_foreign(void);
 boolean after_foreign_play(void);
-boolean check_file(const char *file_name, boolean check_exists);  ///< check if file exists
-boolean check_dir_access(const char *dir, boolean leaveit);
-boolean lives_make_writeable_dir(const char *newdir);
-boolean ensure_isdir(char *fname);
-boolean dirs_equal(const char *dira, const char *dirb);
-char *ensure_extension(const char *fname, const char *ext) WARN_UNUSED;
 char *lives_ellipsize(char *, size_t maxlen, LiVESEllipsizeMode mode);
 char *lives_pad(char *, size_t minlen, int align);
 char *lives_pad_ellipsize(char *, size_t fixlen, int padlen, LiVESEllipsizeMode mode);
@@ -1442,7 +1434,6 @@ void break_me(const char *dtl);
 #define QUICK_EXIT
 #else
 #define USE_REC_RS
-#define RESEEK_ENABLE
 #endif
 
 #endif // #ifndef HAS_LIVES_MAIN_H

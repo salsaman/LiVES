@@ -19,24 +19,30 @@ LIVES_LOCAL_INLINE char *mini_popen(char *cmd);
 
 #if IS_X86_64
 
-static void cpuid(unsigned int ax, unsigned int *p) {
-  __asm __volatile
-  ("movl %%ebx, %%esi\n\tcpuid\n\txchgl %%ebx, %%esi"
-   : "=a"(p[0]), "=S"(p[1]), "=c"(p[2]), "=d"(p[3])
-   : "0"(ax));
-}
+#define LIVES_REG_b  "rbx"
+#define LIVES_REG_S  "rsi"
 
-//#define xgetbv(index, eax, edx)					\
-//        __asm__ (".byte 0x0f, 0x01, 0xd0" : "=a"(eax), "=d"(edx) : "c" (index))
-static int get_cacheline_size(void) {
-  unsigned int cacheline = -1;
-  unsigned int regs[4], regs2[4]; // regs2 :: eax, ebx, ecx, 0
-  //union { int i[3]; char c[12]; } vendor;
-  cpuid(0x00000000, regs); // regs == max_level, vendor0, vendor2, vendor1
-  if (regs[0] >= 0x00000001) {
-    cpuid(0x00000001, regs2);
-    cacheline = ((regs2[1] >> 8) & 0xFF) * 8; // ebx
-    //has_sse2 = (regs2[3] & 0x4000000) ? TRUE : FALSE; // bit 26
+//////////////#define cpuid(index, eax, ebx, ecx, edx)
+
+#define cpuid(index, p)						    \
+__asm__ volatile (						    \
+            "mov    %%"LIVES_REG_b", %%"LIVES_REG_S" \n\t"                \
+            "cpuid                       \n\t"                      \
+            "xchg   %%"LIVES_REG_b", %%"LIVES_REG_S                       \
+            : "=a" (p[0]), "=S" (p[1]), "=c" (p[2]), "=d" (p[3]) \
+            : "0" (index), "2"(0))
+#endif
+
+static void get_cpuinfo(void) {
+#if IS_X86_64
+  unsigned int regs[4]; // regs2 :: eax, ebx, ecx, 0
+  union { int i[4]; char c[16]; } vendor;
+  cpuid(0x00000000, vendor.i); // regs == max_level, vendor0, vendor2, vendor1
+  capable->hw.cpu_vendor = lives_strdup_printf("%.4s%.4s%.4s", &vendor.c[4], &vendor.c[12], &vendor.c[8]);
+  if (vendor.i[0] >= 0x00000001) {
+    cpuid(0x00000001, regs);
+    capable->hw.cacheline_size = ((regs[1] >> 8) & 0xFF) << 3; // ebx
+    if (regs[3] & 0x4000000) capable->hw.cpu_features |= CPU_HAS_SSE2;
     // 25 == sse, 1 == sse3, 0x200 == ssse3, 0x80000 == sse4, 0x100000 == sse42,
     // cpuid(7, eax, ebx, ecx, edx)
     //if ((ecx & 0x18000000) == 0x18000000) {
@@ -48,10 +54,9 @@ static int get_cacheline_size(void) {
     ///if avx && (ebx & 0x00000020) avx2
 
   }
-  return cacheline;
+#endif
 }
 
-#endif
 
 static uint64_t fastrand_val = 0;
 
@@ -2326,7 +2331,9 @@ void rec_desk(void *args) {
 
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->rec_time);
 
-  //start_audio_rec();
+  // temp kludge ahead !
+  open_ascrap_file(recargs->clipno);
+  //
 
   while (1) {
     if ((recargs->rec_time && !lives_alarm_check(alarm_handle))
@@ -3023,9 +3030,8 @@ boolean get_machine_dets(void) {
 
   capable->hw.cacheline_size = capable->hw.cpu_bits * 8;
 
-#if IS_X86_64
-  if (!strcmp(capable->os_hardware, "x86_64")) capable->cacheline_size = get_cacheline_size();
-#endif
+  if (!mainw->debug && !strcmp(capable->os_hardware, "x86_64"))
+    get_cpuinfo();
 
   com = lives_strdup("uname -n");
   capable->mach_name = mini_popen(com);

@@ -67,6 +67,8 @@ void lives_exit(int signum) {
   if (!mainw->only_close) {
     mainw->is_exiting = TRUE;
 
+    if (mainw->debug_log) close_logfile(mainw->debug_log);
+
     // unlock all mutexes to prevent deadlocks
 
     // recursive

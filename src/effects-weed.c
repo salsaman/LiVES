@@ -11846,7 +11846,14 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
           lives_free(rs);
 
           weed_layer_nullify_pixel_data(layer);
-          values[0] = lives_calloc(ALIGN_CEIL(vlen64_tot + EXTRA_BYTES, 16) / 16, 16);
+#define USE_BIGBLOCKS
+#ifdef USE_BIGBLOCKS
+          if ((values[0] = calloc_bigblock(ALIGN_CEIL(vlen64_tot + EXTRA_BYTES, 16) / 16, 16)))
+            weed_set_boolean_value(plant, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
+          else
+#endif
+            // TODO - figure out why memory gets trashed without bblocks
+            values[0] = lives_calloc(ALIGN_CEIL(vlen64_tot + EXTRA_BYTES, 16) / 16, 16);
 
           if (!values[0]) {
             msg = lives_strdup_printf("Could not allocate %d bytes for deserialised frame", vlen);
@@ -11923,7 +11930,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     }
     if (plant) {
       weed_set_voidptr_array(plant, WEED_LEAF_PIXEL_DATA, nplanes, values);
-      while (nplanes != 0) values[--nplanes] = NULL; /// prevent "values" from being freed because we copy-by-value
+      while (nplanes--) values[nplanes] = NULL; /// prevent "values" from being freed because we copy-by-value
     }
     goto done;
   } else {
@@ -12019,7 +12026,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
           }
         } else {
           if (check_ptrs) {
-            if (!lives_strcmp(key, "bblockalloc")
+            if (!lives_strcmp(key, LIVES_LEAF_BBLOCKALLOC)
                 || !lives_strcmp(key, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS)
                 || !lives_strcmp(key, WEED_LEAF_HOST_ORIG_PDATA)
                ) add_leaf = FALSE;

@@ -865,6 +865,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   double wscale = 1., hscale = 1.;
 
   int hsize, vsize;
+  int intention;
 
   LiVESResponseType resp;
 
@@ -879,6 +880,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   char *tmp, *tmp2;
 
   char *ctext = NULL;
+  lives_capacity_t *ocaps;
 
   // TODO - set default values from tmpvpp
 
@@ -889,14 +891,20 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     tmpvpp = mainw->vpp;
   }
 
+  intention = THREAD_INTENTION;
+  ocaps = THREAD_CAPACITIES;
+
+  if (button) {
+    lives_capacity_t *caps = lives_capacities_new();
+    THREAD_INTENTION = LIVES_INTENTION_PLAY;
+    // TODO - set from plugin - can be local or remote
+    lives_capacity_set(caps, LIVES_CAPACITY_LOCAL);
+    THREAD_CAPACITIES = caps;
+  }
+
   vppa = (_vppaw *)(lives_calloc(1, sizeof(_vppaw)));
 
   vppa->plugin = tmpvpp;
-  /* vppa->rfx = NULL; */
-  /* vppa->spinbuttonh = vppa->spinbuttonw = NULL; */
-  /* vppa->apply_fx = NULL; */
-  /* vppa->pal_entry = vppa->fps_entry = NULL; */
-  /* vppa->keep_rfx = FALSE; */
 
   vppa->intention = THREAD_INTENTION;
 
@@ -1062,12 +1070,13 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     plugin_run_param_window((*tmpvpp->get_init_rfx)(&icaps), LIVES_VBOX(vbox), &(vppa->rfx));
 
-    if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) {
-      char *fnamex = lives_build_filename(prefs->workdir, vppa->rfx->name, NULL);
-      if (lives_file_test(fnamex, LIVES_FILE_TEST_EXISTS))
-        lives_rm(fnamex);
-      lives_free(fnamex);
-    }
+    /* if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) { */
+    /*   char *fnamex = lives_build_filename(prefs->workdir, vppa->rfx->name, NULL); */
+    /*   if (lives_file_test(fnamex, LIVES_FILE_TEST_EXISTS)) */
+    /*     lives_rm(fnamex); */
+    /*   lives_free(fnamex); */
+    /* } */
+
     if (tmpvpp->extra_argv && tmpvpp->extra_argc > 0) {
       // update with defaults
       LiVESList *plist = argv_to_marshalled_list(vppa->rfx, tmpvpp->extra_argc, tmpvpp->extra_argv);
@@ -1137,7 +1146,13 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       lives_xwindow_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
     }
   }
-  return vppa;
+
+  if (button) {
+    lives_capacities_free(THREAD_CAPACITIES);
+    THREAD_INTENTION = intention;
+    THREAD_CAPACITIES = ocaps;
+  }
+ return vppa;
 }
 
 
@@ -2286,7 +2301,6 @@ LiVESList *load_decoders(void) {
         dlist = lives_list_append(dlist, (livespointer)dpsys);
         if (dpsys->id->devstate == LIVES_DEVSTATE_BROKEN) {
           prefs->disabled_decoders = lives_list_append_unique(prefs->disabled_decoders, dpsys);
-          g_print("BROKEN is %p\n", dpsys);
         }
       }
     }

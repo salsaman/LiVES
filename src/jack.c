@@ -2181,12 +2181,14 @@ static void output_silence(size_t offset, jack_nframes_t nframes, jack_driver_t 
   // write nframes silence to all output streams
   int nch = jackd->num_output_channels;
   for (int i = 0; i < nch; i++) {
-    if (!jackd->is_silent) {
-      sample_silence_dS(out_buffer[i] + offset, nframes);
-    }
-    if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) {
-      // audio to be sent to video generator plugins
-      append_to_audio_bufferf(out_buffer[i] + offset, nframes, i == nch - 1 ? -i - 1 : i + 1);
+    if (out_buffer[i]) {
+      if (!jackd->is_silent) {
+        sample_silence_dS(out_buffer[i] + offset, nframes);
+      }
+      if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) {
+        // audio to be sent to video generator plugins
+        append_to_audio_bufferf(out_buffer[i] + offset, nframes, i == nch - 1 ? -i - 1 : i + 1);
+      }
     }
   }
   if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
@@ -2327,6 +2329,11 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
 
   //jackd->is_silent = FALSE;
 
+  /* retrieve the buffers for the output ports */
+  for (i = 0; i < nch; i++)
+    out_buffer[i] = (float *)jack_port_get_buffer(jackd->output_port[i], nframes);
+
+
   if (AUD_SRC_EXTERNAL && (prefs->audio_opts & AUDIO_OPTS_EXT_FX)) {
     // "loopback" buffers - generally we read exactly as much as we write, but anything left over gets cached
     static float **lb_buff = NULL;
@@ -2395,14 +2402,16 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
     if (remsiz > acsize) remsiz = acsize;
 
     for (i = 0; i < nch; i++) {
-      if (xlbufsiz) {
-        for (k = 0; k < xlbufsiz; k++)
-          out_buffer[i][k] = lb_buff[i][k] * vol;
-      }
-      if (remsiz) {
-        if (ac_buff[i]) {
-          for (k = 0; k < remsiz; k++)
-            out_buffer[i][xlbufsiz + k] = ac_buff[i][k] * vol;
+      if (out_buffer[i]) {
+        if (xlbufsiz) {
+          for (k = 0; k < xlbufsiz; k++)
+            out_buffer[i][k] = lb_buff[i][k] * vol;
+        }
+        if (remsiz) {
+          if (ac_buff[i]) {
+            for (k = 0; k < remsiz; k++)
+              out_buffer[i][xlbufsiz + k] = ac_buff[i][k] * vol;
+          }
         }
       }
       //
@@ -2454,10 +2463,6 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
     in_ap = FALSE;
     return 0;
   }
-
-  /* retrieve the buffers for the output ports */
-  for (i = 0; i < nch; i++)
-    out_buffer[i] = (float *)jack_port_get_buffer(jackd->output_port[i], nframes);
 
   if ((!jackd->in_use || !nframes) && !mainw->xrun_active && !mainw->jackd->msgq) {
     if (!jackd->is_silent) {

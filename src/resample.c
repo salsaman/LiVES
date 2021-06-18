@@ -997,7 +997,8 @@ void pre_analyse(weed_plant_t *elist) {
               }
             } else {
               if (event != frame_event && old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth
-                  && pframe_event && nframe_event && !nframe_event_tainted) {
+                  && pframe_event && nframe_event && !nframe_event_tainted
+                  && weed_get_int_value(event, LIVES_LEAF_SCRATCH, NULL) == SCRATCH_NONE) {
                 /// interpolate frames if possible
                 double ratio = (double)(out_tc + offset_tc - pframe_tc) / (double)(nx_tc - pframe_tc);
                 //ratio = 0.5;

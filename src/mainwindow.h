@@ -1717,6 +1717,7 @@ typedef struct {
   volatile boolean rfx_loaded;
 
   boolean debug; ///< debug crashes and asserts
+  FILE *debug_log;
   void *debug_ptr;
 
   char *subt_save_file; ///< name of file to save subtitles to

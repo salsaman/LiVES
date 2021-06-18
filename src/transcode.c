@@ -427,6 +427,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
                                     || lives_proc_thread_get_cancelled(mainw->transrend_proc));
       if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) goto tr_err;
       frame_layer = mainw->transrend_layer;
+      mainw->transrend_layer = NULL;
     }
 
 #ifdef MATCH_PALETTES
@@ -515,7 +516,10 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     }
 
     if (((width ^ pwidth) >> 2) || ((height ^ pheight) >> 1)) {
-      if (!resize_layer(frame_layer, pwidth, pheight, interp, vpp->palette, vpp->YUV_clamping)) goto tr_err;
+      if (!resize_layer(frame_layer, pwidth, pheight, interp, vpp->palette, vpp->YUV_clamping)) {
+        //break_me("tranres");
+        goto tr_err;
+      }
     }
 
     if (weed_palette_is_rgb(mainw->vpp->palette)) {
@@ -527,7 +531,6 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     }
 
     convert_layer_palette_full(frame_layer, vpp->palette, vpp->YUV_clamping, vpp->YUV_sampling, vpp->YUV_subspace, tgamma);
-
     gamma_convert_layer(tgamma, frame_layer);
 
     if (coder) {
@@ -546,14 +549,15 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     }
 
     if (error) goto tr_err;
+
     if (!internal) {
       // update progress dialog with fraction done
       // (for internal, the frames would be passed from the player, calling render_events
       // so there is a normal progress dialog which is updated in the player)
       threaded_dialog_spin(1. - (double)(cfile->end - i) / (double)(cfile->end - cfile->start + 1.));
     } else {
-      /* weed_layer_free(frame_layer); */
-      /* frame_layer = NULL; */
+      if (frame_layer != mainw->scrap_layer) weed_layer_free(frame_layer);
+      frame_layer = NULL;
       mainw->transrend_ready = FALSE;
     }
     tot_frames++;
@@ -619,6 +623,8 @@ tr_err2:
   }
 
   lives_freep((void **)&sbuff);
+
+  if (internal) mainw->transrend_ready = FALSE;
 
   return !error;
 }

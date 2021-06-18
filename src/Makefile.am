@@ -4,6 +4,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 gtk_def =
 
+cpu_CFLAGS =
+
 if ENABLE_OSC
 osc_CPPFLAGS = -I "$(top_srcdir)/libOSC"
 endif
@@ -11,6 +13,10 @@ endif
 if IS_DARWIN
 darwin_CPPFLAGS = -I /sw/include
 darwin_CFLAGS = -DIS_DARWIN=1
+endif
+
+if IS_X86_64
+cpu_CFLAGS += -DIS_X86_64
 endif
 
 if IS_IRIX
@@ -266,7 +272,7 @@ lives_exe_LDADD = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(j
 	 $(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@ $(libexplain_LDADD) $(ffthumb_LDADD)
 
 AM_CFLAGS = -fcommon -fPIE -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
-	$(oil_CFLAGS) $(wayland_CFLAGS) $(transcode_CFLAGS) \
+	$(oil_CFLAGS) $(wayland_CFLAGS) $(transcode_CFLAGS) $(cpu_CFLAGS) 	\
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(freeBSD_CFLAGS) \
 	$(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(libexplain_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \

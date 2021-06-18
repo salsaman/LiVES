@@ -1,6 +1,6 @@
 // memory.c
 // LiVES
-// (c) G. Finch 2019 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2019 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -260,9 +260,11 @@ LIVES_GLOBAL_INLINE size_t get_max_align(size_t req_size, size_t align_max) {
 LIVES_GLOBAL_INLINE void *lives_calloc_safety(size_t nmemb, size_t xsize) {
   void *p;
   size_t totsize = nmemb * xsize;
+  size_t align = DEF_ALIGN;
+  if (capable->hw.cacheline_size > 0) align = capable->hw.cacheline_size;
   if (!totsize) return NULL;
-  if (xsize < DEF_ALIGN) {
-    xsize = DEF_ALIGN;
+  if (xsize < align) {
+    xsize = align;
     nmemb = (totsize / xsize) + 1;
   }
   p = __builtin_assume_aligned(lives_calloc(nmemb + (EXTRA_BYTES / xsize), xsize), DEF_ALIGN);
@@ -272,12 +274,18 @@ LIVES_GLOBAL_INLINE void *lives_calloc_safety(size_t nmemb, size_t xsize) {
 LIVES_GLOBAL_INLINE void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize) {
   /// realloc from omemb * size to nmemb * size
   /// memory allocated via calloc, with DEF_ALIGN alignment and EXTRA_BYTES extra padding
-  void *np = __builtin_assume_aligned(lives_calloc_safety(nmemb, xsize), DEF_ALIGN);
-  void *op = __builtin_assume_aligned(p, DEF_ALIGN);
-  if (omemb > nmemb) omemb = nmemb;
-  lives_memcpy(np, op, omemb * xsize);
-  lives_free(p);
-  return np;
+  size_t align = DEF_ALIGN;
+  if (capable->hw.cacheline_size > 0) align = capable->hw.cacheline_size;
+  do {
+    void *np = __builtin_assume_aligned(lives_calloc_safety(nmemb, xsize), align);
+    if (p && omemb > 0) {
+      void *op = __builtin_assume_aligned(p, align);
+      if (omemb > nmemb) omemb = nmemb;
+      lives_memcpy(np, op, omemb * xsize);
+    }
+    if (p) lives_free(p);
+    return np;
+  } while (FALSE);
 }
 
 #ifdef USE_RPMALLOC
@@ -285,7 +293,11 @@ void quick_free(void *p) {rpfree(p);}
 #endif
 
 #ifdef USE_RPMALLOC
-void *quick_calloc(size_t n, size_t s) {return rpaligned_calloc(DEF_ALIGN, n, s);}
+void *quick_calloc(size_t n, size_t s) {
+  size_t align = DEF_ALIGN;
+  if (capable->hw.cacheline_size > 0) align = capable->hw.cacheline_size;
+  return rpaligned_calloc(align, n, s);
+}
 #endif
 
 boolean init_memfuncs(void) {

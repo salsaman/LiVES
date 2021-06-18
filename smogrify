@@ -321,6 +321,17 @@ if (1) {
 			$has_configfile = 1;
 			$old_version_hash = "0";
 		    }
+		    else {
+			my $etcdefs = "/etc/lives/default_config/settings";
+			if (-f $etcdefs) {
+			    $panic = 0;
+			    &smog_copy($etcdefs, $configfile);
+			    if ($panic) {
+				&startup_error(5, "report", "copy_from_etc", "$configfile:\@:");
+			    }
+			    $has_configfile = 1;
+			}
+		    }
 		}
 	    }
 

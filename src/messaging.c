@@ -70,16 +70,44 @@ char *dump_messages(int start, int end) {
 }
 
 
+static int log_msg(FILE *logfile, const char *text) {
+  if (text && logfile) {
+    lives_fputs(text, logfile);
+  }
+  return 0;
+}
+
+
+#define LOGFILENAME "debug.log"
+
+FILE *open_logfile(const char *logfilename) {
+  FILE *logfile;
+  char *xlog;
+  if (!logfilename) {
+    xlog = lives_build_filename(prefs->config_datadir, LOGFILENAME, NULL);
+  } else xlog = lives_strndup(logfilename, PATH_MAX);
+  g_print("ppening log %s\n", xlog);
+  logfile = fopen(xlog, "w");
+  lives_free(xlog);
+  return logfile;
+}
+
+
+LIVES_GLOBAL_INLINE void close_logfile(FILE *logfile) {fclose(logfile);}
+
+
 static weed_plant_t *make_msg(const char *text) {
   // make single msg. text should have no newlines in it, except possibly as the last character.
-  weed_plant_t *msg = lives_plant_new(LIVES_WEED_SUBTYPE_MESSAGE);
-  if (!msg) return NULL;
+  if (!text) return NULL;
+  else {
+    weed_plant_t *msg = lives_plant_new(LIVES_WEED_SUBTYPE_MESSAGE);
+    if (!msg) return NULL;
 
-  weed_set_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, text);
-
-  weed_set_plantptr_value(msg, WEED_LEAF_NEXT, NULL);
-  weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, NULL);
-  return msg;
+    weed_set_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, text);
+    weed_set_plantptr_value(msg, WEED_LEAF_NEXT, NULL);
+    weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, NULL);
+    return msg;
+  }
 }
 
 
@@ -185,6 +213,8 @@ int add_messages_to_list(const char *text) {
       return WEED_ERROR_MEMORY_ALLOCATION;
     }
 
+    if (mainw->debug) log_msg(mainw->debug_log, text);
+
     mainw->n_messages++;
 
     // head will get new previous (us)
@@ -263,6 +293,8 @@ void d_print(const char *fmt, ...) {
   va_start(xargs, fmt);
   text = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
+
+  //if (mainw->debug) log_msg(mainw->debug_log, text);
 
   if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && !mainw->multitrack &&
       (mainw->current_file == -1 || (cfile && cfile->clip_type != CLIP_TYPE_GENERATOR)) && !mainw->no_switch_dprint) {

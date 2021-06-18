@@ -166,12 +166,12 @@ typedef struct {
   uint32_t typesize;
 } _texture;
 
-static int ntextures;
+static int ntextures = 0;
 static int ctexture;
 
 static _texture *textures;
 
-static GLuint *texID;
+static GLuint *texID = 0;
 
 static int type;
 static int typesize;
@@ -2174,6 +2174,6 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 void module_unload(void) {
   if (ntextures > 0) glDeleteTextures(ntextures, texID);
   free(texID);
-  if (zsubtitles != NULL) weed_free(zsubtitles);
+  if (zsubtitles) weed_free(zsubtitles);
 }
 

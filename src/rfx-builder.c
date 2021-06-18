@@ -4538,7 +4538,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     mainw->rendered_fx[0]->menuitem = menuitem;
     mainw->rendered_fx[0]->num_in_channels = 1;
 
-    if (!LIVES_IS_PLAYING && mainw->current_file > 0 &&
+    if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_NORMAL &&
         ((has_video_filters(TRUE) && !has_video_filters(FALSE)) ||
          (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
          mainw->agen_key != 0)) {

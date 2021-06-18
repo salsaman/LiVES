@@ -723,6 +723,17 @@ static boolean pre_init(void) {
   /// create context data for main thread; must be called before get_capabilities()
   lives_thread_data_create(0);
 
+  // locate shell commands that may be used in processing
+  //
+  get_location("touch", capable->touch_cmd, PATH_MAX);
+  get_location("rm", capable->rm_cmd, PATH_MAX);
+  get_location("rmdir", capable->rmdir_cmd, PATH_MAX);
+  get_location("mv", capable->mv_cmd, PATH_MAX);
+  get_location("ln", capable->ln_cmd, PATH_MAX);
+  get_location("chmod", capable->chmod_cmd, PATH_MAX);
+  get_location("cat", capable->cat_cmd, PATH_MAX);
+  get_location("echo", capable->echo_cmd, PATH_MAX);
+
   // need to create directory for configfile before calling get_capabilities()
   // NOTE: this is the one and only time we reference cfgdir, other than this it should be considered sacrosanct
   cfgdir = get_dir(prefs->configfile);
@@ -874,6 +885,8 @@ static boolean pre_init(void) {
 
 #ifdef VALGRIND_ON
   prefs->nfx_threads = 2;
+#else
+  if (mainw->debug) prefs->nfx_threads = 2;
 #endif
 
   lives_threadpool_init();
@@ -2592,7 +2605,7 @@ static void show_detected_or_not(boolean cap, const char *pname) {
 
 static void do_start_messages(void) {
   int w, h;
-  char *tmp, *endian, *fname, *phase = NULL;
+  char *tmp, *endian, *fname, *phase = NULL, *vendorstr = NULL;
 
   if (prefs->vj_mode) {
     d_print(_("Starting in VJ MODE: Skipping most startup checks\n"));
@@ -2613,13 +2626,28 @@ static void do_start_messages(void) {
           capable->os_release ? capable->os_release : "?",
           capable->os_hardware ? capable->os_hardware : "????");
 
-  d_print(_("CPU type is %s "), capable->hw.cpu_name);
-  d_print(P_("(%d core, ", "(%d cores, ", capable->hw.ncpus), capable->hw.ncpus);
+  if (capable->hw.cpu_vendor) {
+    vendorstr = lives_strdup_printf(_(" (VendorID: %s)"), capable->hw.cpu_vendor);
+  }
+
+  d_print(_("CPU type is %s%s"), capable->hw.cpu_name, vendorstr ? vendorstr : "");
+  if (vendorstr) lives_free(vendorstr);
+  d_print(P_(", (%d core, ", ", (%d cores, ", capable->hw.ncpus), capable->hw.ncpus);
 
   if (capable->hw.byte_order == LIVES_LITTLE_ENDIAN) endian = (_("little endian"));
   else endian = (_("big endian"));
   d_print(_("%d bits, %s)\n"), capable->hw.cpu_bits, endian);
   lives_free(endian);
+
+  if (capable->hw.cpu_features) {
+    d_print(_("CPU features detected:"));
+    if (capable->hw.cpu_features & CPU_HAS_SSE2) d_print(" SSE2");
+    d_print("\n");
+  }
+
+  if (capable->hw.cacheline_size > 0) {
+    d_print(_("Cacheline size is %d bytes.\n"), capable->hw.cacheline_size);
+  }
 
   d_print(_("Machine name is '%s'\n"), capable->mach_name);
 
@@ -2771,7 +2799,6 @@ static void do_start_messages(void) {
     lives_free(fname);
   }
 
-
   d_print(_("\nChecking RECOMMENDED dependencies: "));
 
   SHOWDET_ALTS(mplayer, MPLAYER, mplayer2, MPLAYER2);
@@ -2863,7 +2890,7 @@ static void set_toolkit_theme(int prefer) {
 
 #ifndef VALGRIND_ON
 static void set_extra_colours(void) {
-  if (prefs->extra_colours && mainw->pretty_colours) {
+  if (!mainw->debug && prefs->extra_colours && mainw->pretty_colours) {
     char *colref, *tmp;
     colref = gdk_rgba_to_string(&palette->nice1);
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "combobox window menu menuitem", "border-color", colref);
@@ -3293,7 +3320,7 @@ boolean set_palette_colours(boolean force_reload) {
   // still experimenting...some values may need tweaking
   // suggested uses for each colour in the process of being defined
   // TODO - run a bg thread until we create GUI
-  if (!prefs->vj_mode && !prefs->startup_phase) {
+  if (!prefs->vj_mode && !prefs->startup_phase && !mainw->debug) {
     /// create thread to pick custom colours
     double cpvar = get_double_prefd(PREF_CPICK_VAR, DEF_CPICK_VAR);
     prefs->cptime = get_double_prefd(PREF_CPICK_TIME, -DEF_CPICK_TIME);
@@ -3370,15 +3397,6 @@ capability *get_capabilities(void) {
   // cmds part 1
   get_location("cp", capable->cp_cmd, PATH_MAX);
   capable->sysbindir = get_dir(capable->cp_cmd);
-
-  get_location("touch", capable->touch_cmd, PATH_MAX);
-  get_location("rm", capable->rm_cmd, PATH_MAX);
-  get_location("rmdir", capable->rmdir_cmd, PATH_MAX);
-  get_location("mv", capable->mv_cmd, PATH_MAX);
-  get_location("ln", capable->ln_cmd, PATH_MAX);
-  get_location("chmod", capable->chmod_cmd, PATH_MAX);
-  get_location("cat", capable->cat_cmd, PATH_MAX);
-  get_location("echo", capable->echo_cmd, PATH_MAX);
 
   capable->wm_name = NULL;
   capable->wm_type = NULL;
@@ -4060,7 +4078,7 @@ static boolean lives_startup(livespointer data) {
 
   if (*buff && strcmp(buff, "(null)") && strcmp(buff, "none")) {
     mainw->vpp = open_vid_playback_plugin(buff, TRUE);
-  } else if (prefs->startup_phase <= 3) {
+  } else if (prefs->startup_phase && prefs->startup_phase <= 3) {
     mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, TRUE);
     if (mainw->vpp) {
       lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->soname);
@@ -4394,6 +4412,8 @@ static boolean lives_startup2(livespointer data) {
 
   mainw->no_switch_dprint = FALSE;
   d_print("");
+
+  if (mainw->debug_log) close_logfile(mainw->debug_log);
 
   if (mainw->multitrack) {
     lives_idle_add_simple(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
@@ -5469,6 +5489,10 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     tmp = get_localsharedir(LIVES_DIR_LITERAL);
     lives_snprintf(prefs->config_datadir, PATH_MAX, "%s", tmp);
     lives_free(tmp);
+  }
+
+  if (mainw->debug) {
+    mainw->debug_log = open_logfile(NULL);
   }
 
   // get capabilities and if OK set some initial prefs
@@ -7306,7 +7330,10 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 #ifdef PNG_BIO
   png_set_read_fn(png_ptr, LIVES_INT_TO_POINTER(fd), png_read_func);
 #ifndef VALGRIND_ON
-  png_set_sig_bytes(png_ptr, 8);
+  if (mainw->debug)
+    png_set_sig_bytes(png_ptr, 0);
+  else
+    png_set_sig_bytes(png_ptr, 8);
 #else
   png_set_sig_bytes(png_ptr, 0);
 #endif
@@ -7703,7 +7730,8 @@ boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char 
   size_t bsize;
 
 #ifndef VALGRIND_ON
-  if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) is_png = TRUE;
+  if (!mainw->debug)
+    if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) is_png = TRUE;
 #endif
 
 #ifdef PNG_BIO
@@ -8975,7 +9003,7 @@ void switch_to_file(int old_file, int new_file) {
 }
 
 
-#define FIDDLE_FACTOR 0.007 // const seconds to subtrace
+#define FIDDLE_FACTOR 0.007 // const seconds to subtract
 
 boolean switch_audio_clip(int new_file, boolean activate) {
   ticks_t timeout;
@@ -9069,10 +9097,7 @@ boolean switch_audio_clip(int new_file, boolean activate) {
     if (CLIP_HAS_AUDIO(new_file)) {
       int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
       int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
-      sfile->aseek_pos += (off_t)((sfile->adirection * (-FIDDLE_FACTOR * ratio + 0. / fabs(sfile->pb_fps)
-                                   - (double)(mainw->currticks - mainw->startticks)
-                                   * 0. * ratio / 4. / TICKS_PER_SECOND_DBL)
-                                   * sfile->arps) * sfile->achans * (sfile->asampsize >> 3));
+      sfile->aseek_pos += (off_t)(sfile->adirection * (-FIDDLE_FACTOR * ratio));
       mainw->jackd->num_input_channels = sfile->achans;
       mainw->jackd->bytes_per_channel = sfile->asampsize / 8;
       if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {

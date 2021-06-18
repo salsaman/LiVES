@@ -72,8 +72,8 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
                  *out_channel = weed_get_out_channel(inst, 0);
   weed_plant_t *in_param;
 
-  uint8_t *src1 = weed_channel_get_pixel_data(in_channels[0]);
-  uint8_t *src2 = weed_channel_get_pixel_data(in_channels[1]);
+  uint8_t *__restrict__ src1 = weed_channel_get_pixel_data(in_channels[0]);
+  uint8_t *__restrict__ src2 = weed_channel_get_pixel_data(in_channels[1]);
   uint8_t *dst = weed_channel_get_pixel_data(out_channel);
 
   uint8_t blendneg, blend_factor;

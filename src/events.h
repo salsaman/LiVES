@@ -106,6 +106,7 @@ typedef struct {
 #define WEED_LEAF_OVERLAY_TEXT "overlay_text"
 
 #define LIVES_LEAF_FAKE_TC "fake_tc"
+#define LIVES_LEAF_SCRATCH "scratch_val"
 #define LIVES_LEAF_ALLOW_JUMP "allow_jump"
 
 #define LIVES_TRACK_ANY -1000000

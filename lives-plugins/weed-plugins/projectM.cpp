@@ -790,7 +790,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       clock_gettime(CLOCK_REALTIME, &ts);
       ts.tv_sec += WORKER_TIMEOUT_SEC;
 
-      //#define DEBUG
+#define DEBUG
 #ifdef DEBUG
       ts.tv_sec *= 100;
 #endif

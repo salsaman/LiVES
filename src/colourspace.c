@@ -2256,7 +2256,7 @@ LIVES_INLINE void yuv2rgb_float(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uin
 }
 
 LIVES_INLINE void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
-  if (prefs->pb_quality == PB_QUALITY_HIGH) return yuv2rgb_float(y, u, v, r, g, b);
+  //if (prefs->pb_quality == PB_QUALITY_HIGH) return yuv2rgb_float(y, u, v, r, g, b);
   return yuv2rgb_int(y, u, v, r, g, b);
 }
 
@@ -14309,7 +14309,13 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 */
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
-  if (layer) while (weed_layer_unref(layer) >= 0);
+  if (layer) {
+    int nrefs;
+    do {
+      nrefs = weed_layer_unref(layer);
+    } while (0);//nrefs >= 0);
+    //if (nrefs >= 0) break_me("free refed  layer");
+  }
   return NULL;
 }
 
@@ -14320,6 +14326,7 @@ int weed_layer_unref(weed_layer_t *layer) {
   refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
   weed_set_int_value(layer, WEED_LEAF_HOST_REFS, --refs);
   pthread_mutex_unlock(&layer_reflock);
+  if (refs < -1) break_me("double unref");
   if (refs >= 0) return refs;
   weed_layer_pixel_data_free(layer);
   weed_plant_free(layer);

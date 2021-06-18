@@ -14,6 +14,9 @@ weed_plant_t *get_nth_info_message(int n); // utils.c
 int add_messages_to_list(const char *text);
 int free_n_msgs(int frval);
 
+FILE *open_logfile(const char *logfilename);
+void close_logfile(FILE *logfile);
+
 // d_print shortcuts
 void d_print_cancelled(void);
 void d_print_failed(void);

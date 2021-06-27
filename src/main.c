@@ -2924,7 +2924,7 @@ static double pick_custom_colours(double var, double timer) {
   if (!(palette->style & STYLE_LIGHT)) {
     lmin = .05; lmax = .4;
   } else {
-    lmin = .6; lmax = .8;
+    lmin = .15; lmax = .35;
   }
 retry:
   ncr = palette->menu_and_bars.red * 255.;
@@ -4705,6 +4705,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // weed_plant_new = weed_plant_new_host;
 
   init_colour_engine();
+
+  //make_nice_grid();
 
   weed_threadsafe = FALSE;
   test_plant = weed_plant_new(0);
@@ -8009,14 +8011,14 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           return FALSE;
         }
         if (target_palette != dplug->cdata->current_palette) {
-          if (dplug->decoder->set_palette) {
+          if (dplug->dpsys->set_palette) {
             int opal = dplug->cdata->current_palette;
             int pal = best_palette_match(dplug->cdata->palettes, -1, target_palette);
             if (pal != opal) {
               dplug->cdata->current_palette = pal;
-              if (!(*dplug->decoder->set_palette)(dplug->cdata)) {
+              if (!(*dplug->dpsys->set_palette)(dplug->cdata)) {
                 dplug->cdata->current_palette = opal;
-                (*dplug->decoder->set_palette)(dplug->cdata);
+                (*dplug->dpsys->set_palette)(dplug->cdata);
               } else if (dplug->cdata->rec_rowstrides) {
                 lives_free(dplug->cdata->rec_rowstrides);
                 dplug->cdata->rec_rowstrides = NULL;
@@ -8088,9 +8090,9 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 
         /* g_print("GF %d\n", frame); */
         /* int64_t timex = lives_get_current_ticks(); */
-        /* double est_time = (*dplug->decoder->estimate_delay)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame)); */
-        if (!(*dplug->decoder->get_frame)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame),
-                                          rowstrides, sfile->vsize, pixel_data)) {
+        /* double est_time = (*dplug->dpsys->estimate_delay)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame)); */
+        if (!(*dplug->dpsys->get_frame)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame),
+                                        rowstrides, sfile->vsize, pixel_data)) {
 
 #ifdef USE_REC_RS
           if (dplug->cdata->rec_rowstrides) lives_memset(dplug->cdata->rec_rowstrides, 0, nplanes * sizint);
@@ -9301,42 +9303,48 @@ boolean switch_audio_clip(int new_file, boolean activate) {
 void do_quick_switch(int new_file) {
   // handle clip switching during playback
   // calling this function directly is now deprecated in favour of switch_clip()
+  lives_clip_t *sfile = NULL;
   boolean osc_block;
-  int old_file = mainw->current_file;// area = 0;
-
-  if (mainw->current_file < 1 || !mainw->files[new_file]) return;
-
-  if (mainw->multitrack
-      || (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_CLIPS)) ||
-      mainw->foreign || (mainw->preview && !mainw->is_rendering)) return;
+  int old_file = mainw->playing_file;
 
   if (!LIVES_IS_PLAYING) {
     switch_to_file(mainw->current_file, new_file);
     return;
   }
 
+  if (old_file == new_file || old_file < 1 || !IS_VALID_CLIP(new_file)) return;
+
+  if (mainw->multitrack
+      || (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_CLIPS)) ||
+      mainw->foreign || (mainw->preview && !mainw->is_rendering)) return;
+
+
   if (mainw->noswitch) {
     mainw->new_clip = new_file;
     return;
   }
 
+  if (IS_VALID_CLIP(old_file)) sfile = mainw->files[old_file];
+
+  mainw->whentostop = NEVER_STOP;
   mainw->blend_palette = WEED_PALETTE_END;
 
-  if (CURRENT_CLIP_IS_VALID && new_file != mainw->current_file && mainw->current_file != mainw->blend_file
-      && !mainw->is_rendering) {
-    if (cfile->clip_type == CLIP_TYPE_GENERATOR && cfile->ext_src) {
+  if (old_file != mainw->blend_file && !mainw->is_rendering) {
+    if (sfile && sfile->clip_type == CLIP_TYPE_GENERATOR && sfile->ext_src) {
       if (new_file != mainw->blend_file) {
         // switched from generator to another clip, end the generator
-        weed_plant_t *inst = (weed_plant_t *)cfile->ext_src;
+        weed_plant_t *inst = (weed_plant_t *)sfile->ext_src;
         mainw->gen_started_play = FALSE;
-        mainw->whentostop = NEVER_STOP;
         weed_generator_end(inst);
       } else {
+        // switch fg to bg
         rte_swap_fg_bg();
       }
     }
+
     if (new_file == mainw->blend_file && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR
         && mainw->files[mainw->blend_file]->ext_src) {
+      // switch bg to fg
       rte_swap_fg_bg();
     }
   }
@@ -9348,13 +9356,11 @@ void do_quick_switch(int new_file) {
     unlock_loop_lock();
   }
 
-  mainw->whentostop = NEVER_STOP;
-
   // TODO - can these be combined ?
   mainw->switch_during_pb = TRUE;
   mainw->clip_switched = TRUE;
 
-  if (CURRENT_CLIP_IS_NORMAL) cfile->last_play_sequence = mainw->play_sequence;
+  if (sfile) sfile->last_play_sequence = mainw->play_sequence;
 
   mainw->current_file = new_file;
 
@@ -9396,7 +9402,8 @@ void do_quick_switch(int new_file) {
   // selection bounds)
   mainw->playing_sel = FALSE;
 
-  if (!cfile->frameno && cfile->frames) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+  if (!cfile->frameno && cfile->frames)
+    cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
   cfile->last_frameno = cfile->frameno;
 
   mainw->playing_file = new_file;
@@ -9427,7 +9434,11 @@ void do_quick_switch(int new_file) {
   }
 
   if (new_file == mainw->blend_file) {
-    check_layer_ready(mainw->blend_layer);
+    if (mainw->blend_layer) {
+      check_layer_ready(mainw->blend_layer);
+      weed_layer_free(mainw->blend_layer);
+      mainw->blend_layer = NULL;
+    }
     mainw->blend_file = old_file;
   }
 

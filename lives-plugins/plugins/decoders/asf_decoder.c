@@ -25,7 +25,7 @@
 
 */
 
-#define PLUGIN_UID 0X646563702E617366
+#define PLUGIN_UID 0XFD133DFAF9626DB8
 
 #include <stdio.h>
 #include <string.h>

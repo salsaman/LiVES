@@ -764,10 +764,9 @@ if (1) {
 	if ($command eq "backup_audio") {
 	    $handle = $ARGV[1];
 	    $curworkdir = "$workdir/$handle";
-	    $statusfile = "$curworkdir/.status";
-	    &smog_chdir($curworkdir);
 	    &backup_audio(1);
 	    if ($panic) {
+		unlink $pidfile;
 		exit 1;
 	    }
 	    &sig_complete;
@@ -780,9 +779,9 @@ if (1) {
 	    $from_ext = $ARGV[2];
 	    $to_ext = $ARGV[3];
 	    $curworkdir = "$workdir/$handle";
-	    &smog_chdir($curworkdir);
 	    &backup_audio(0, $from_ext, $to_ext);
 	    if ($panic) {
+		unlink $pidfile;
 		exit 1;
 	    }
 	    exit 0;
@@ -3077,7 +3076,6 @@ if (1) {
 
 
 	if ($command eq "deorder") {
-	    $curworkdir = "$workdir/$handle";
 	    $start = $ARGV[2];
 	    $end = $ARGV[3];
 	    $frames = $ARGV[4];
@@ -3327,6 +3325,34 @@ if (1) {
 	    }
 
 	    move($audio_out, $nfile) or die $!;
+	    &sig_complete;
+	    exit 0;
+	}
+
+
+	if ($command eq "stretch_audio") {
+	    my $ratio = $ARGV[2];
+	    my $arate = $ARGV[3];
+	    my $achans = $ARGV[4];
+	    my $asamps = $ARGV[5];
+	    my $asigned = $ARGV[6];
+
+	    my $sox_version = &get_sox_version;
+	    my $asigned = &get_sox_signed($asigned);
+	    my $audio_in = "$curworkdir/audio.bak";
+	    my $audio_out = "$curworkdir/audio";
+
+	    &backup_audio(1);
+	    if ($panic) {
+		unlink $pidfile;
+		exit 1;
+	    }
+
+	    &stretch_audio($audio_in, $audio_out, $ratio, $arate, $achans, $asamps, $asigned);
+	    if ($panic) {
+		unlink $pidfile;
+		exit 1;
+	    }
 	    &sig_complete;
 	    exit 0;
 	}
@@ -4599,8 +4625,6 @@ if (1) {
 
 
 	if ($command =~ /^fxrender_(.*)/) {
-	    $curworkdir = "$workdir/$handle";
-
 	    unlink "$curworkdir/pause";
 	    $command = $1;
 	    $status = $ARGV[2];
@@ -6897,6 +6921,50 @@ sub convert_audio_to_raw {
     }
 
     &smog_system_sync();
+}
+
+
+sub stretch_audio {
+    my ($audio_in, $audio_out, $ratio, $arate, $achans, $asamps, $asigned) = @_;
+
+    if (&location("sox") ne "") {
+	if (!defined($sox_version)) {
+	    $sox_version = &get_sox_version;
+	}
+	if (!defined($axsigned)) {
+	    ## call get_sox_signed with guessed format (u for 8, s for 16)
+	    ## returns signed e.g -e signed
+	    $axsigned = &get_sox_format($asamps);
+	}
+	if (!$axsamps) {
+	    ## returns eg -b 16
+	    $axsamps = &get_sox_samps($asamps);
+	}
+
+	## only needed for resampling I think
+	if ($sox_version < 13000000) {
+	    $nodither = "";
+	}
+	else {
+	    $nodither = "-D";
+	}
+
+	my $smcom = "sox $nodither -t .raw -r $arate -c $achans $axsigned -$axsamps \"$audio_in\" " .
+	    "-t .raw -r $arate -c $achans $axsigned -$axsamps \"$audio_out\" tempo $ratio >$nulfile 2>&1";
+	if ($DEBUG_SMOGRIFY) {
+	    print STDERR "COM is $smcom\n";
+	}
+
+	my $smerr = &smog_system($smcom);
+
+	if ($smerr) {
+	    &sig_system_error($smcom, $smerr);
+	    $panic = 1;
+	    return;
+	}
+
+	&smog_system_sync();
+    }
 }
 
 

@@ -311,6 +311,10 @@ static int render_frame(_sdata *sd) {
   float xscale = (float)texwidth / sd->texsize * 2.;
   bool checked_audio = false;
 
+#ifdef HAVE_SDL2
+  SDL_GL_MakeCurrent(sd->win, sd->glCtx);
+#endif
+
   if (sd->needs_update || !sd->got_first) {
     if (sd->needs_update) {
       pthread_mutex_lock(&cond_mutex);
@@ -729,15 +733,15 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
     weed_plant_t **iparams = weed_get_in_params(inst, NULL);
     int height = weed_channel_get_height(out_channel);
-    int rowstride = weed_channel_get_stride(out_channel);
     int width = weed_channel_get_width(out_channel);
     int palette = weed_channel_get_palette(out_channel);
     int psize = pixel_size(palette);
+    int rowstride = width * psize;
 
     if (inited) {
       sd = statsd;
       weed_set_voidptr_value(inst, "plugin_internal", sd);
-      if (texwidth != width || texheight != height) {
+      if (texwidth != width || texheight != height || rowstride != sd->rowstride) {
         projectM_deinit(inst);
         finalise();
       }
@@ -755,9 +759,9 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
       sd->pidx = sd->opidx = -1;
 
-      sd->fps = PREF_FPS;
+      sd->tfps = PREF_FPS;
       if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, NULL);
-      if (weed_plant_has_leaf(inst, WEED_LEAF_TARGET_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
+      if (weed_plant_has_leaf(inst, WEED_LEAF_TARGET_FPS)) sd->tfps = weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
 
       pthread_mutex_init(&sd->mutex, NULL);
       pthread_mutex_init(&sd->pcm_mutex, NULL);
@@ -775,6 +779,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       texwidth = width;
       texheight = height;
       sd->rowstride = rowstride;
+      std::cerr << "width " << width << " X " << rowstride << std::endl;
       sd->bad_programs = NULL;
 
       if (!sd->fbuffer || texheight != height || sd->rowstride != rowstride) {
@@ -824,7 +829,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
     //sd->rendering = false;
 
-    sd->audio = (float *)weed_calloc(MAX_AUDLEN * 2,  sizeof(float));
+    sd->audio = (float *)weed_calloc(MAX_AUDLEN * 2, sizeof(float));
     if (!sd->audio) {
       projectM_deinit(inst);
       return WEED_ERROR_MEMORY_ALLOCATION;
@@ -841,9 +846,10 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     sd->needs_more = false;
     sd->needs_update = false;
     sd->set_update = false;
-    sd->audio_frames = sd->audio_offs = 0;
+    sd->audio_frames = MAX_AUDLEN;
+    sd->audio_offs = 0;
     pcount = count = 0;
-    sd->tfps = 0.;
+    //sd->tfps = 0.;
     sd->ncycs = 0.;
     sd->bad_prog = false;
     sd->busy = false;
@@ -873,7 +879,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   int palette = weed_channel_get_palette(out_channel);
   int psize = pixel_size(palette);
-  int rowstride = weed_channel_get_stride(out_channel);
+  int rowstride = weed_channel_get_stride(out_channel), xrowstride = width * psize;
   bool did_update = false;
   double timer;
 
@@ -918,7 +924,10 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   //std::cerr << texwidth << " X " << texheight << " and " << width << " X " << height << std::endl;
 
-  if (texwidth != width || texheight != height || sd->psize != psize || sd->rowstride != rowstride || sd->palette != palette) {
+  if (texwidth != width || texheight != height || sd->psize != psize || sd->rowstride != xrowstride || sd->palette != palette) {
+    std::cerr << texwidth << " X " << texheight << " and " << width << " X " << height
+              << " featuring " << xrowstride << " against " << sd->rowstride
+              << " and also " << sd->psize << " vs " << psize << " with " << sd->palette << " for " << palette << std::endl;
     /// we must update size / pal, this has to be done before reading the buffer
     pthread_mutex_lock(&cond_mutex);
     sd->needs_update = true;
@@ -934,11 +943,11 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
       texwidth = width;
       sd->update_size = true;
     }
-    if (sd->palette != palette || sd->rowstride != rowstride || sd->psize != psize) {
+    if (sd->palette != palette || sd->rowstride != xrowstride || sd->psize != psize) {
       sd->update_psize = true;
       sd->psize = psize;
       sd->palette = palette;
-      sd->rowstride = rowstride;
+      sd->rowstride = xrowstride;
     }
     /// let the worker thread know that the values have been updated
     sd->needs_more = true;
@@ -954,6 +963,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   // first we shift the vals. down by 1, so -1 is random and prgs 0 - 8
   // 0 - 9, we just use the value - 1
   // else val % (nprs - 1) .e.g 9 mod 9 is 0, 10 mod 9 is 1, etc
+
   sd->pidx = (weed_param_get_value_int(inparam) - 1) % (sd->nprs - 1);
 
   sd->ctime = ctime;
@@ -1039,7 +1049,10 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
 copytodest:
   pthread_mutex_lock(&buffer_mutex);
-  weed_memcpy(dst, sd->fbuffer, rowstride * height);
+  for (int yy = 0; yy < height; yy++) {
+    weed_memcpy(&dst[yy * rowstride], &sd->fbuffer[yy * xrowstride], xrowstride);
+  }
+
   sd->needs_more = true;
   pthread_mutex_unlock(&buffer_mutex);
 

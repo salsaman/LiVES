@@ -14,6 +14,36 @@
 static char *storedfnames[NSTOREDFDS];
 static int storedfds[NSTOREDFDS];
 static boolean storedfdsset = FALSE;
+static const int std_arates[] =
+{8000, 11025, 22050, 32000, 44100, 48000, 88200, 96000, 128000, 256000, 0};
+
+
+LiVESList *get_std_arates(void) {
+  LiVESList *list = NULL;
+  char *str;
+  for (int i = 0; std_arates[i]; i++) {
+    str = lives_strdup_printf("%d", std_arates[i]);
+    list = lives_list_append(list, str);
+  }
+  return list;
+}
+
+
+int find_standard_arate(int rate) {
+  int mindist, minval = 0, dist, arate;
+  if (rate) {
+    for (int i = 0; std_arates[i]; i++) {
+      arate = std_arates[i];
+      dist = abs(arate - rate);
+      if (!minval || dist <= mindist) {
+        mindist = dist;
+        minval = arate;
+      }
+      if (arate > rate) break;
+    }
+  }
+  return minval;
+}
 
 
 static void audio_reset_stored_fnames(void) {
@@ -336,7 +366,8 @@ void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
       abuf->buffer24 = NULL;
     }
     if (abuf->buffer16) {
-      for (i = 0; i < abuf->out_achans; i++) lives_free(abuf->buffer16[i]);
+      //for (i = 0; i < abuf->out_achans; i++) lives_free(abuf->buffer16[i]);
+      for (i = 0; i < 1; i++) lives_free(abuf->buffer16[i]);
       lives_free(abuf->buffer16);
       abuf->buffer16 = NULL;
     }

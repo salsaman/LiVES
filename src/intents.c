@@ -45,7 +45,7 @@ lives_intentcap_t *lives_intentcaps_new(int icapstype) {
 
   switch (icapstype) {
   case LIVES_ICAPS_LOAD:
-    lives_capacity_set(icaps->capacities, LIVES_CAPACITY_LOCAL);
+    lives_capacity_unset(icaps->capacities, LIVES_CAPACITY_REMOTE);
     break;
   case LIVES_ICAPS_DOWNLOAD:
     lives_capacity_set(icaps->capacities, LIVES_CAPACITY_REMOTE);

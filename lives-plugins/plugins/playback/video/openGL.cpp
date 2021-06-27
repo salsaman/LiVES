@@ -541,7 +541,7 @@ static uint8_t *render_to_mainmem(int type, int row, int window_width, int windo
   return xretbuf;
 }
 
-static int next_pot(int val) {for (int i = 2;; i *= 2) if (i >= val) return i;}
+static int next_pot(int val) {for (int i = 1024;; i *= 2) if (i >= val) return i;}
 
 static void render_to_gpumem_inner(int tnum, int width, int height, int type, volatile uint8_t *texturebuf) {
   int mipMapLevel = 0;
@@ -571,7 +571,7 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, vo
 
   glGenerateMipmap(m_TexTarget);
 
-  glDisable(m_TexTarget);
+  //glDisable(m_TexTarget);
 
   tnum = get_real_tnum(tnum, FALSE);
 
@@ -975,6 +975,8 @@ static int Upload(void) {
   pthread_mutex_lock(&rthread_mutex);
   x_stretch = (double)(imgWidth * typesize) / (double)texRow;
 
+  glXMakeCurrent(dpy, glxWin, context);
+
   if (has_new_texture) {
     ctexture++;
     if (ctexture == nbuf) ctexture = 0;
@@ -1048,11 +1050,11 @@ static int Upload(void) {
     glBegin(GL_QUADS);
     glTexCoord2d(0, 0);
     glVertex2d(-x_range, y_range);
-    glTexCoord2d(0, y_stretch);
+    glTexCoord2d(0, scaley);
     glVertex2d(-x_range, -y_range);
-    glTexCoord2d(x_stretch, y_stretch);
+    glTexCoord2d(scalex, scaley);
     glVertex2d(x_range, -y_range);
-    glTexCoord2d(x_stretch, 0);
+    glTexCoord2d(scalex, 0);
     glVertex2d(x_range, y_range);
     glEnd();
     glDisable(m_TexTarget);
@@ -1985,6 +1987,7 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   //int hsize, int vsize, int xoffs, int yoffs, int *rs, void **pixel_data, void **return_data) {
   // within the mutex lock we set imgWidth, imgHwight, texWidth, texHeight, texbuffer
   static int otypesize = typesize;
+  static int otexRow = 0, otexHeight = 0;
   /// until we get libweed-layer
   int hsize = weed_channel_get_width(frame);
   int vsize = weed_channel_get_height(frame);
@@ -2008,6 +2011,7 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   imgHeight = vsize;
 
   rowz = (int)(imgRow / typesize) * typesize;
+  if (rowz < 1024) rowz = 1024;
 
   if (!npot) {
     hsize = next_pot(hsize);
@@ -2017,14 +2021,20 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
 
   if (rowz < imgRow) rowz = (int)((((imgRow >> 1) + typesize - 1) << 1) / typesize) * typesize;
 
-  if (imgRow != texRow || imgHeight != texHeight || !texturebuf) {
-    if (texturebuf) weed_free((void *)texturebuf);
-    texturebuf = (uint8_t *)weed_malloc(rowz * vsize);
-  }
-
   texRow = rowz;
   texWidth = hsize;
   texHeight = vsize;
+
+  // if (texRow < 1024 * typesize) texRow = 1024 * typesize;
+  // if (texHeight <1024) texHeight = 1024;
+
+  if (otexRow != texRow || otexHeight != texHeight || !texturebuf) {
+    if (texturebuf) weed_free((void *)texturebuf);
+    texturebuf = (uint8_t *)weed_malloc(texRow * texHeight);
+  }
+
+  otexRow = texRow;
+  otexHeight = texHeight;
 
   if (texRow == imgRow && texHeight >= imgHeight) {
     weed_memcpy((void *)texturebuf, pixel_data, imgRow * imgHeight);

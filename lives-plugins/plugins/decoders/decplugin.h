@@ -246,6 +246,8 @@ typedef struct _lives_clip_data {
   int sync_hint;
 
   adv_timing_t adv_timing;
+
+  boolean debug;
 } lives_clip_data_t;
 
 /// pass in NULL clip_data for the first call, subsequent calls (if the URI, current_clip or current_palette changes)
@@ -292,7 +294,7 @@ double get_fps(const char *uri);
 static const lives_struct_def_t *cdata_lsd = NULL;
 
 static void make_acid(void) {
-  cdata_lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "adv_timing", 6);
+  cdata_lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "debug", 6);
   if (!cdata_lsd) return;
   else {
     lives_special_field_t **specf = cdata_lsd->special_fields;

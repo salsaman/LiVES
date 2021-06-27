@@ -21,7 +21,7 @@
    Copyright (c) 2002-2003 Fabrice Bellard
 */
 
-#define PLUGIN_UID 0x646563702E6D7473
+#define PLUGIN_UID 0X72BD9ED503FFDEE2
 
 #include <stdio.h>
 #include <string.h>

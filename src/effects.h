@@ -52,7 +52,7 @@ boolean do_effect(lives_rfx_t *, boolean is_preview); ///< defined as extern in 
 ///////////////// real time effects
 
 // render
-void on_realfx_activate(LiVESMenuItem *, livespointer rfx);
+void on_realfx_activate(LiVESMenuItem *, lives_rfx_t *rfx);
 boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx);
 
 lives_render_error_t realfx_progress(boolean reset);

@@ -23,7 +23,7 @@
 static int ireinit = 0;
 
 extern boolean do_effect(lives_rfx_t *, boolean is_preview);  //effects.c in LiVES
-extern void on_realfx_activate(LiVESMenuItem *, livespointer rfx);  // effects.c in LiVES
+extern void on_realfx_activate(LiVESMenuItem *, lives_rfx_t *rfx); // effects.c in LiVES
 
 static void after_param_text_buffer_changed(LiVESTextBuffer *textbuffer, lives_rfx_t *rfx);
 

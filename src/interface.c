@@ -3561,7 +3561,8 @@ void create_new_pb_speed(short type) {
   LiVESWidget *spinbutton_pb_time = NULL;
   LiVESWidget *cancelbutton;
   LiVESWidget *change_pb_ok;
-  LiVESWidget *change_audio_speed;
+  LiVESWidget *change_audio_speed = NULL;
+  LiVESWidget *tmpoonly = NULL;
 
   LiVESSList *rbgroup = NULL;
 
@@ -3651,16 +3652,23 @@ void create_new_pb_speed(short type) {
 
   add_fill_to_box(LIVES_BOX(vbox));
 
-  if (type < 3) {
+  if (type == 1 && cfile->achans) {
     ca_hbox = lives_hbox_new(FALSE, 0);
     change_audio_speed = lives_standard_check_button_new
-                         (_("Change the _audio speed as well"), FALSE, LIVES_BOX(ca_hbox), NULL);
+                         (_("Change the _audio speed as well"), mainw->fx1_bool, LIVES_BOX(ca_hbox), NULL);
 
     lives_box_pack_start(LIVES_BOX(vbox), ca_hbox, TRUE, TRUE, widget_opts.packing_height);
 
-    add_fill_to_box(LIVES_BOX(vbox));
+    if (capable->has_sox_sox) {
+      ca_hbox = lives_hbox_new(FALSE, 0);
 
-    if (type != 1 || cfile->achans == 0) lives_widget_set_no_show_all(ca_hbox, TRUE);
+      tmpoonly = lives_standard_check_button_new
+                 (_("Maintain audio pitch"), mainw->fx3_bool, LIVES_BOX(ca_hbox), NULL);
+
+      lives_box_pack_start(LIVES_BOX(vbox), ca_hbox, TRUE, TRUE, widget_opts.packing_height);
+    }
+
+    add_fill_to_box(LIVES_BOX(vbox));
   }
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(new_pb_speed), LIVES_STOCK_CANCEL, NULL,
@@ -3691,12 +3699,13 @@ void create_new_pb_speed(short type) {
 
   if (type < 3) {
     reorder_leave_back_set(FALSE);
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(change_audio_speed), LIVES_WIDGET_TOGGLED_SIGNAL,
-                              LIVES_GUI_CALLBACK(on_boolean_toggled), &mainw->fx1_bool);
   }
   lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
   if (type == 1) {
+    toggle_toggles_var(LIVES_TOGGLE_BUTTON(change_audio_speed), &mainw->fx1_bool, FALSE);
+    toggle_toggles_var(LIVES_TOGGLE_BUTTON(tmpoonly), &mainw->fx3_bool, FALSE);
+
     lives_signal_sync_connect(LIVES_GUI_OBJECT(change_pb_ok), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(on_change_speed_ok_clicked), NULL);
   } else if (type == 2) {

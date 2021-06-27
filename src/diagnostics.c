@@ -1300,3 +1300,36 @@ void show_struct_sizes(void) {
 }
 
 #endif
+
+
+/* void make_nice_grid(void) { */
+/*   float lmin = .05, lmax = .2; */
+/*   float varx = .12; */
+/*   uint8_t rd = 0, gr = 0, bl = 0, ncg = 0, ncb = 64, ncr = 0; */
+/*   uint8_t ocg = ncg, ocb = ncb, ocr = ncr; */
+/*   LiVESWidget *hbox, *cbut; */
+/*   LiVESWidget *window = lives_window_new(LIVES_WINDOW_TOPLEVEL); */
+/*   LiVESWidget *top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog)); */
+/*   LiVESWidget *layout = lives_layout_new(LIVES_BOX(top_vbox)); */
+/*   LiVESWidgetColor colr; */
+/*   lives_colRGBA64_t fg, bg; */
+
+/*   for (int sel = 0; sel < 35; sel++) { */
+/*     for (int r = 0; r < 6; r++) { */
+/*       for (int c = 0; c < 8; c++) { */
+/* 	pick_nice_colour(0, rd, gr, bl, &ncr, &ncg, &ncb, .1 * varx, lmin, lmax); */
+/* 	rd = ocr; gr = ocg; bl = ocb; */
+/* 	ocr = ncr; ocg = ncg; ocr = ncr; */
+/* 	g_print("next vals are %d %d %d\n", ncr, ncg, ncb); */
+
+/*         hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout)); */
+
+/* 	widget_color_to_lives_rgba(&rgba, &palette->menu_and_bars); */
+/* 	colr.red = colr.green = 0.; colr.blue = 1.; */
+/* 	colr.alpha = 1.; */
+/* 	cbut = lives_color_button_new_with_color(&colr); */
+
+/*       } */
+/*     } */
+
+/* } */

@@ -9802,10 +9802,12 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
   if (tooltip) img_tips = lives_widget_set_tooltip_text(radiobutton, tooltip);
 
   if (box) {
+    LiVESWidget *layout;
     int packing_width = 0;
 
     if (labeltext) {
       eventbox = make_label_eventbox(labeltext, radiobutton);
+      lives_widget_set_show_hide_with(radiobutton, eventbox);
     }
 
     hbox = make_inner_hbox(LIVES_BOX(box), !widget_opts.swap_label);
@@ -9814,19 +9816,27 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
     if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
 
     if (widget_opts.swap_label && eventbox)
-      lives_box_pack_start(LIVES_BOX(hbox), eventbox, TRUE, FALSE, packing_width);
+      lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
 
     if (expand) add_fill_to_box(LIVES_BOX(hbox));
 
-    lives_box_pack_start(LIVES_BOX(hbox), radiobutton, expand, FALSE,
+    layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box),
+             WH_LAYOUT_KEY);
+
+    if (LIVES_SHOULD_EXPAND_WIDTH) {
+      if (layout) {
+        int nadded = GET_INT_DATA(layout, WADDED_KEY);
+        if (nadded > 0) lives_widget_set_margin_left(radiobutton, widget_opts.packing_width);
+      }
+    }
+    lives_box_pack_start(LIVES_BOX(hbox), radiobutton, expand, expand,
                          !eventbox ? packing_width : 0);
 
     if (expand) add_fill_to_box(LIVES_BOX(hbox));
+    lives_widget_set_show_hide_parent(radiobutton);
 
     if (!widget_opts.swap_label && eventbox)
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
-
-    lives_widget_set_show_hide_parent(radiobutton);
 
     add_warn_image(radiobutton, hbox);
 

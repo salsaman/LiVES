@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2021-06-17 02:26-0300\n"
+"POT-Creation-Date: 2021-06-21 12:21-0300\n"
 "PO-Revision-Date: 2015-04-16 10:52+0000\n"
 "Last-Translator: Andi Chandler <Unknown>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -334,8 +334,8 @@ msgstr "Show Details"
 msgid "OS is %s %s, running on %s\n"
 msgstr ""
 
-#: src/main.c:2625 src/dialogs.c:1272 src/effects.c:120 src/plugins.c:2686
-#: src/plugins.c:2700
+#: src/main.c:2625 src/dialogs.c:1272 src/effects.c:120 src/plugins.c:2697
+#: src/plugins.c:2711
 msgid "unknown"
 msgstr "unknown"
 
@@ -1031,12 +1031,12 @@ msgid "Closed clip %s\n"
 msgstr "Closed file %s\n"
 
 #: src/main.c:8798 src/gui.c:767 src/utils.c:2307 src/utils.c:2338
-#: src/saveplay.c:3732 src/multitrack.c:2765 src/multitrack.c:4597
+#: src/saveplay.c:3742 src/multitrack.c:2765 src/multitrack.c:4597
 msgid "_Undo"
 msgstr "_Undo"
 
 #: src/main.c:8799 src/gui.c:782 src/utils.c:2308 src/utils.c:2339
-#: src/saveplay.c:3733 src/multitrack.c:2784 src/multitrack.c:4620
+#: src/saveplay.c:3743 src/multitrack.c:2784 src/multitrack.c:4620
 msgid "_Redo"
 msgstr "_Redo"
 
@@ -3684,7 +3684,7 @@ msgstr ""
 msgid "Frame size should be at most this size"
 msgstr ""
 
-#: src/interface.c:5744 src/paramwindow.c:541 src/plugins.c:982
+#: src/interface.c:5744 src/paramwindow.c:541 src/plugins.c:990
 msgid "_Width"
 msgstr "_Width"
 
@@ -4237,7 +4237,7 @@ msgstr ""
 msgid "Immediate"
 msgstr ""
 
-#: src/interface.c:7493 src/plugins.c:949
+#: src/interface.c:7493 src/plugins.c:957
 msgid "_FPS"
 msgstr "_FPS"
 
@@ -6650,11 +6650,11 @@ msgstr ""
 msgid "Hide Play Window"
 msgstr "Hide Play Window"
 
-#: src/gui.c:4670
+#: src/gui.c:4678
 msgid "Show Play Window"
 msgstr "Show Play Window"
 
-#: src/gui.c:4800
+#: src/gui.c:4808
 #, fuzzy, c-format
 msgid "'LiVES opened the file' '%s'"
 msgstr ""
@@ -6662,7 +6662,7 @@ msgstr ""
 "\n"
 "LiVES was unable to reorder the frames."
 
-#: src/gui.c:4824
+#: src/gui.c:4832
 #, fuzzy, c-format
 msgid "'LiVES closed the file' '%s'"
 msgstr "LiVES: - choose a file"
@@ -6876,7 +6876,7 @@ msgstr ""
 msgid " max. frames %d"
 msgstr "LiVES: Save Frame %d as..."
 
-#: src/saveplay.c:226 src/saveplay.c:4277
+#: src/saveplay.c:226 src/saveplay.c:4287
 msgid " without sound"
 msgstr " without sound"
 
@@ -6998,7 +6998,7 @@ msgid "Save Clip"
 msgstr "Pasting"
 
 #: src/saveplay.c:1426 src/saveplay.c:1544 src/saveplay.c:1622
-#: src/saveplay.c:4285
+#: src/saveplay.c:4295
 #, fuzzy
 msgid "Pulling frames from clip..."
 msgstr "Pulling frames from clip"
@@ -7061,7 +7061,7 @@ msgstr "recording aborted by clipboard playback.\n"
 msgid "Recording performance..."
 msgstr "Recording performance..."
 
-#: src/saveplay.c:3330
+#: src/saveplay.c:3340
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -7078,16 +7078,16 @@ msgstr ""
 "You should click on Tools--->Resize All\n"
 "and resize all frames to the current size.\n"
 
-#: src/saveplay.c:3648
+#: src/saveplay.c:3658
 msgid "Unknown"
 msgstr "Unknown"
 
-#: src/saveplay.c:3752
+#: src/saveplay.c:3762
 #, c-format
 msgid "Untitled%d"
 msgstr "Untitled%d"
 
-#: src/saveplay.c:3877
+#: src/saveplay.c:3887
 #, c-format
 msgid ""
 "\n"
@@ -7095,13 +7095,13 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/saveplay.c:3879
+#: src/saveplay.c:3889
 msgid ""
 "\n"
 "An error occurred opening the file\n"
 msgstr ""
 
-#: src/saveplay.c:3892
+#: src/saveplay.c:3902
 #, c-format
 msgid ""
 "\n"
@@ -7112,7 +7112,7 @@ msgstr ""
 "Error getting file info for clip %s.\n"
 "Bad things may happen with this clip.\n"
 
-#: src/saveplay.c:3987
+#: src/saveplay.c:3997
 #, c-format
 msgid ""
 "\n"
@@ -7123,16 +7123,16 @@ msgstr ""
 "Playback speed not found or invalid ! Using default fps of %.3f fps. \n"
 "Default can be set in Tools | Preferences | Misc.\n"
 
-#: src/saveplay.c:3998
+#: src/saveplay.c:4008
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 
-#: src/saveplay.c:4007
+#: src/saveplay.c:4017
 msgid "Image format detected"
 msgstr ""
 
-#: src/saveplay.c:4014
+#: src/saveplay.c:4024
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -7141,7 +7141,7 @@ msgstr ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 
-#: src/saveplay.c:4018 src/saveplay.c:4501
+#: src/saveplay.c:4028 src/saveplay.c:4511
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -7150,54 +7150,54 @@ msgstr ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 
-#: src/saveplay.c:4023 src/saveplay.c:4506
+#: src/saveplay.c:4033 src/saveplay.c:4516
 #, c-format
 msgid "%s none\n"
 msgstr "%s none\n"
 
-#: src/saveplay.c:4035
+#: src/saveplay.c:4045
 #, c-format
 msgid " - Author: %s\n"
 msgstr " - Author: %s\n"
 
-#: src/saveplay.c:4038
+#: src/saveplay.c:4048
 #, c-format
 msgid " - Title: %s\n"
 msgstr " - Title: %s\n"
 
-#: src/saveplay.c:4041
+#: src/saveplay.c:4051
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Comment: %s\n"
 
-#: src/saveplay.c:4145
+#: src/saveplay.c:4155
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Saving frame %d as %s..."
 
-#: src/saveplay.c:4273
+#: src/saveplay.c:4283
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Backing up %s to %s"
 
-#: src/saveplay.c:4317
+#: src/saveplay.c:4327
 msgid "Backing up"
 msgstr "Backing up"
 
-#: src/saveplay.c:4349
+#: src/saveplay.c:4359
 msgid "performance data was backed up..."
 msgstr "performance data was backed up..."
 
-#: src/saveplay.c:4410
+#: src/saveplay.c:4420
 #, c-format
 msgid "Restoring %s..."
 msgstr "Restoring %s..."
 
-#: src/saveplay.c:4436
+#: src/saveplay.c:4446
 msgid "Restoring"
 msgstr "Restoring"
 
-#: src/saveplay.c:4456
+#: src/saveplay.c:4466
 #, c-format
 msgid ""
 "\n"
@@ -7210,23 +7210,23 @@ msgstr ""
 "The file %s is corrupt.\n"
 "LiVES was unable to restore it.\n"
 
-#: src/saveplay.c:4743
+#: src/saveplay.c:4752
 msgid "FREE DISK SPACE"
 msgstr ""
 
-#: src/saveplay.c:4744
+#: src/saveplay.c:4753
 msgid "BELOW"
 msgstr ""
 
-#: src/saveplay.c:4746
+#: src/saveplay.c:4755
 msgid "DISK SPACE USED"
 msgstr ""
 
-#: src/saveplay.c:4747
+#: src/saveplay.c:4756
 msgid "ABOVE"
 msgstr ""
 
-#: src/saveplay.c:4749
+#: src/saveplay.c:4758
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -7237,32 +7237,32 @@ msgstr ""
 "RECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\n"
 "Record stop level can be set in Preferences.\n"
 
-#: src/saveplay.c:4753
+#: src/saveplay.c:4762
 msgid "RECORDING WAS PAUSED DUE TO DISKSPACE LIMITS\n"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4904
+#: src/saveplay.c:4913
 #, c-format
 msgid "rec %.2f MB"
 msgstr "rec %.2f MB"
 
-#: src/saveplay.c:4909
+#: src/saveplay.c:4918
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!rec %.2f MB"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4912
+#: src/saveplay.c:4921
 msgid "rec ?? MB"
 msgstr "rec ?? MB"
 
-#: src/saveplay.c:5076
+#: src/saveplay.c:5085
 #, fuzzy
 msgid "The original file"
 msgstr "This file"
 
-#: src/saveplay.c:5363
+#: src/saveplay.c:5376
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -7272,35 +7272,35 @@ msgstr ""
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 
-#: src/saveplay.c:5389
+#: src/saveplay.c:5402
 msgid "Recovering files"
 msgstr "Recovering files"
 
-#: src/saveplay.c:5390
+#: src/saveplay.c:5403
 #, fuzzy
 msgid ""
 "\n"
 "Recovering files..."
 msgstr "Recovering files..."
 
-#: src/saveplay.c:5438
+#: src/saveplay.c:5451
 msgid ""
 "Click Abort to exit LiVES immediately, Retry to try again, or Cancel to "
 "continue without reloading the set.\n"
 msgstr ""
 
-#: src/saveplay.c:5708
+#: src/saveplay.c:5721
 #, fuzzy
 msgid "No clips were recovered.\n"
 msgstr ""
 "\n"
 "No frames were generated.\n"
 
-#: src/saveplay.c:5713
+#: src/saveplay.c:5726
 msgid "from the previous session.\n"
 msgstr ""
 
-#: src/saveplay.c:5715
+#: src/saveplay.c:5728
 msgid "from previous sessions.\n"
 msgstr ""
 
@@ -9518,7 +9518,7 @@ msgstr ""
 "\n"
 "No frames were generated.\n"
 
-#: src/effects-weed.c:4931
+#: src/effects-weed.c:4945
 #, fuzzy, c-format
 msgid ""
 "Unable to load plugin %s\n"
@@ -9527,126 +9527,126 @@ msgstr ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 
-#: src/effects-weed.c:4937
+#: src/effects-weed.c:4951
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Error: plugin %s has no weed_setup() function.\n"
 
-#: src/effects-weed.c:4969
+#: src/effects-weed.c:4983
 #, fuzzy, c-format
 msgid ""
 "No usable filters found in plugin:\n"
 "%s\n"
 msgstr "No usable filters found in plugin %s\n"
 
-#: src/effects-weed.c:5054
+#: src/effects-weed.c:5068
 #, c-format
 msgid "Plugin %s returned an empty filter !"
 msgstr ""
 
-#: src/effects-weed.c:5084
+#: src/effects-weed.c:5098
 #, c-format
 msgid "%sskipping blacklisted filter %s\n"
 msgstr ""
 
-#: src/effects-weed.c:5113
+#: src/effects-weed.c:5127
 #, c-format
 msgid "Found duplicate plugin %s"
 msgstr "Found duplicate plugin %s"
 
-#: src/effects-weed.c:5146
+#: src/effects-weed.c:5160
 #, fuzzy, c-format
 msgid "Loaded filter %s in plugin %s"
 msgstr "No usable filters found in plugin %s\n"
 
-#: src/effects-weed.c:5169 src/effects-weed.c:6240
+#: src/effects-weed.c:5183 src/effects-weed.c:6254
 msgid "Some plugin directories"
 msgstr "Some plugin directories"
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:5227 src/rte_window.c:2087
+#: src/effects-weed.c:5241 src/rte_window.c:2087
 #, c-format
 msgid " - %s plugins -"
 msgstr " - %s plugins -"
 
-#: src/effects-weed.c:5411
+#: src/effects-weed.c:5425
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Successfully loaded %d Weed filters\n"
 
-#: src/effects-weed.c:5528
+#: src/effects-weed.c:5542
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr "Invalid compound effect %s - has conflicting target_fps\n"
 
-#: src/effects-weed.c:5548
+#: src/effects-weed.c:5562
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr "Invalid compound effect %s - has multiple transition parameters\n"
 
-#: src/effects-weed.c:5565
+#: src/effects-weed.c:5579
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr "Invalid compound effect %s - has multiple master volume parameters\n"
 
-#: src/effects-weed.c:5685
+#: src/effects-weed.c:5699
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr "Invalid compound effect %s - must have >1 sub filters\n"
 
-#: src/effects-weed.c:5707
+#: src/effects-weed.c:5721
 #, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr "Invalid effect %s found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:5725
+#: src/effects-weed.c:5739
 #, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr "Invalid default found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:5738
+#: src/effects-weed.c:5752
 #, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:5755
+#: src/effects-weed.c:5769
 #, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr "Invalid param %d for defaults found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:5785
+#: src/effects-weed.c:5799
 #, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5822
+#: src/effects-weed.c:5836
 #, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:5856
+#: src/effects-weed.c:5870
 #, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr "Invalid param link found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:5870
+#: src/effects-weed.c:5884
 #, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:5891
+#: src/effects-weed.c:5905
 #, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:5906
+#: src/effects-weed.c:5920
 #, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
@@ -9655,26 +9655,26 @@ msgstr ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 
-#: src/effects-weed.c:5919
+#: src/effects-weed.c:5933
 #, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:5936
+#: src/effects-weed.c:5950
 #, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:5968
+#: src/effects-weed.c:5982
 #, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr "Invalid channel link found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:5982
+#: src/effects-weed.c:5996
 #, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
@@ -9683,63 +9683,63 @@ msgstr ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 
-#: src/effects-weed.c:6003
+#: src/effects-weed.c:6017
 #, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:6016
+#: src/effects-weed.c:6030
 #, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:6037
+#: src/effects-weed.c:6051
 #, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 
-#: src/effects-weed.c:6075
+#: src/effects-weed.c:6089
 #, c-format
 msgid "Compound:%s"
 msgstr "Compound:%s"
 
-#: src/effects-weed.c:6136
+#: src/effects-weed.c:6150
 #, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:6844
+#: src/effects-weed.c:6858
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:7005
+#: src/effects-weed.c:7019
 #, fuzzy, c-format
 msgid "Failed to start instance %s, (%s)\n"
 msgstr "Failed to start instance %s, error code %d\n"
 
-#: src/effects-weed.c:7086
+#: src/effects-weed.c:7100
 #, fuzzy, c-format
 msgid "Unable to start generator %s (error code: %d)\n"
 msgstr "Unable to start generator %s\n"
 
-#: src/effects-weed.c:8744
+#: src/effects-weed.c:8774
 #, fuzzy, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr "Failed to start generator %s\n"
 
-#: src/effects-weed.c:8861
+#: src/effects-weed.c:8891
 #, fuzzy, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr "Failed to start generator %s\n"
 
-#: src/effects-weed.c:9806
+#: src/effects-weed.c:9836
 #, c-format
 msgid "%s [unstable]"
 msgstr "%s [unstable]"
@@ -9952,7 +9952,7 @@ msgstr "%s : size"
 msgid "New size (pixels)"
 msgstr "New size (pixels)"
 
-#: src/paramwindow.c:563 src/plugins.c:991
+#: src/paramwindow.c:563 src/plugins.c:999
 msgid "_Height"
 msgstr "_Height"
 
@@ -10091,51 +10091,51 @@ msgstr ""
 msgid "Saving playback plugin defaults to %s..."
 msgstr "Saving playback plugin defaults to %s..."
 
-#: src/plugins.c:907
+#: src/plugins.c:915
 msgid "Quick Transcoding"
 msgstr ""
 
-#: src/plugins.c:926
+#: src/plugins.c:934
 msgid ""
 "Quick transcode provides a rapid, high quality preview of the selected "
 "frames and audio."
 msgstr ""
 
-#: src/plugins.c:950
+#: src/plugins.c:958
 msgid "Fixed framerate for plugin.\n"
 msgstr "Fixed framerate for plugin.\n"
 
-#: src/plugins.c:1030
+#: src/plugins.c:1038
 msgid "_Colourspace"
 msgstr "_Colourspace"
 
-#: src/plugins.c:1031
+#: src/plugins.c:1039
 msgid "Colourspace input to the plugin.\n"
 msgstr "Colourspace input to the plugin.\n"
 
-#: src/plugins.c:1049
+#: src/plugins.c:1057
 #, fuzzy
 msgid "Apply current realtime effects"
 msgstr "_Apply Real Time Effects to Selection"
 
-#: src/plugins.c:1084
+#: src/plugins.c:1093
 #, fuzzy
 msgid "Statistics"
 msgstr "_Show FPS statistics"
 
-#: src/plugins.c:1085
+#: src/plugins.c:1094
 msgid "Diagnostics"
 msgstr ""
 
-#: src/plugins.c:1086
+#: src/plugins.c:1095
 msgid "Overlay / Watermark"
 msgstr ""
 
-#: src/plugins.c:1100
+#: src/plugins.c:1109
 msgid "Save settings to an alternate file.\n"
 msgstr "Save settings to an alternate file.\n"
 
-#: src/plugins.c:1277
+#: src/plugins.c:1292
 #, c-format
 msgid ""
 "\n"
@@ -10146,7 +10146,7 @@ msgid ""
 "it can be re-enabled in Preferences / Playback.\n"
 msgstr ""
 
-#: src/plugins.c:1333
+#: src/plugins.c:1348
 #, c-format
 msgid ""
 "\n"
@@ -10161,7 +10161,7 @@ msgstr ""
 "is missing a mandatory function.\n"
 "Unable to use it.\n"
 
-#: src/plugins.c:1345
+#: src/plugins.c:1360
 #, c-format
 msgid ""
 "Video playback plugin failed to initialise.\n"
@@ -10170,7 +10170,7 @@ msgstr ""
 "Video playback plugin failed to initialise.\n"
 "Error was: %s\n"
 
-#: src/plugins.c:1550
+#: src/plugins.c:1565
 #, c-format
 msgid ""
 "*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). "
@@ -10179,17 +10179,17 @@ msgstr ""
 "*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). "
 "***\n"
 
-#: src/plugins.c:1648
+#: src/plugins.c:1663
 #, c-format
 msgid "Audio stream unable to use preferred format '%s'\n"
 msgstr "Audio stream unable to use preferred format '%s'\n"
 
-#: src/plugins.c:1654
+#: src/plugins.c:1669
 #, c-format
 msgid "Using format '%s' instead.\n"
 msgstr "Using '%s' format instead.\n"
 
-#: src/plugins.c:1689
+#: src/plugins.c:1704
 #, fuzzy, c-format
 msgid ""
 "LiVES did not receive a response from the encoder plugin called '%s'.\n"
@@ -10202,7 +10202,7 @@ msgstr ""
 "%s%s%s\n"
 "or switch to another plugin using Tools|Preferences|Encoding\n"
 
-#: src/plugins.c:2296
+#: src/plugins.c:2311
 #, c-format
 msgid ""
 "\n"
@@ -10210,7 +10210,7 @@ msgid ""
 "No decoders found in %s !\n"
 msgstr ""
 
-#: src/plugins.c:2628
+#: src/plugins.c:2639
 #, c-format
 msgid ""
 "\n"
@@ -10223,7 +10223,7 @@ msgstr ""
 "Failed to open decoder plugin %s\n"
 "Error was %s\n"
 
-#: src/plugins.c:2651
+#: src/plugins.c:2662
 #, c-format
 msgid ""
 "\n"
@@ -10238,53 +10238,53 @@ msgstr ""
 "is missing a mandatory function.\n"
 "Unable to use it.\n"
 
-#: src/plugins.c:2691
+#: src/plugins.c:2702
 msgid "/unknown"
 msgstr "/unknown"
 
-#: src/plugins.c:2742
+#: src/plugins.c:2753
 #, fuzzy
 msgid "normal"
 msgstr "Resizing"
 
-#: src/plugins.c:2745
+#: src/plugins.c:2756
 #, fuzzy
 msgid "testing"
 msgstr "Pasting"
 
-#: src/plugins.c:2746
+#: src/plugins.c:2757
 #, fuzzy
 msgid "may be unstable"
 msgstr "%s [unstable]"
 
-#: src/plugins.c:2747
+#: src/plugins.c:2758
 msgid "BROKEN !"
 msgstr ""
 
-#: src/plugins.c:2748
+#: src/plugins.c:2759
 msgid "You should not be seeing this..."
 msgstr ""
 
-#: src/plugins.c:2749
+#: src/plugins.c:2760
 #, fuzzy
 msgid "custom"
 msgstr "Custom"
 
-#: src/plugins.c:2779
+#: src/plugins.c:2790
 #, fuzzy
 msgid "Decoder Plugins"
 msgstr "LiVES: - Decoder Plugins"
 
-#: src/plugins.c:2783
+#: src/plugins.c:2794
 msgid "Enabled Video Decoders (uncheck to disable)"
 msgstr "Enabled Video Decoders (uncheck to disable)"
 
-#: src/plugins.c:2859
+#: src/plugins.c:2870
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Failed to load %s, transitions may not resize.\n"
 
-#: src/plugins.c:4139
+#: src/plugins.c:4150
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s advanced settings"
@@ -16003,7 +16003,7 @@ msgstr "Script name: "
 msgid "Clips in Group %"
 msgstr ""
 
-#: src/messaging.c:303
+#: src/messaging.c:302
 #, c-format
 msgid ""
 "\n"
@@ -16014,7 +16014,7 @@ msgstr ""
 "==============================\n"
 "Switched to clip %s\n"
 
-#: src/messaging.c:310
+#: src/messaging.c:309
 msgid ""
 "\n"
 "==============================\n"
@@ -16024,19 +16024,19 @@ msgstr ""
 "==============================\n"
 "Switched to empty clip\n"
 
-#: src/messaging.c:349
+#: src/messaging.c:348
 msgid "cancelled.\n"
 msgstr "cancelled.\n"
 
-#: src/messaging.c:354
+#: src/messaging.c:353
 msgid "failed.\n"
 msgstr "failed.\n"
 
-#: src/messaging.c:359
+#: src/messaging.c:358
 msgid "done.\n"
 msgstr "done.\n"
 
-#: src/messaging.c:364
+#: src/messaging.c:363
 msgid "error in file. Failed.\n"
 msgstr "error in file. Failed.\n"
 

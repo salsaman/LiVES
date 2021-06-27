@@ -1768,7 +1768,7 @@ q_done:
 
     LiVESList *channels = NULL;
     LiVESList *sampsize = NULL;
-    LiVESList *rate = NULL;
+    LiVESList *rates = NULL;
 
     double secs = 0.;
 
@@ -1809,16 +1809,8 @@ q_done:
         sampsize = lives_list_append(sampsize, (livespointer)"float 32");
       }
     }
-    rate = lives_list_append(rate, (livespointer)"5512");
-    rate = lives_list_append(rate, (livespointer)"8000");
-    rate = lives_list_append(rate, (livespointer)"11025");
-    rate = lives_list_append(rate, (livespointer)"22050");
-    rate = lives_list_append(rate, (livespointer)"32000");
-    rate = lives_list_append(rate, (livespointer)"44100");
-    rate = lives_list_append(rate, (livespointer)"48000");
-    rate = lives_list_append(rate, (livespointer)"88200");
-    rate = lives_list_append(rate, (livespointer)"96000");
-    rate = lives_list_append(rate, (livespointer)"128000");
+
+    rates = get_std_arates();
 
     if (type < 3 || type > 4) {
       if (type == 1) {
@@ -1984,7 +1976,7 @@ q_done:
       lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
       lives_container_set_border_width(LIVES_CONTAINER(hbox), widget_opts.border_width);
 
-      combo4 = lives_standard_combo_new(_("Rate (Hz) "), rate, LIVES_BOX(hbox), NULL);
+      combo4 = lives_standard_combo_new(_("Rate (Hz) "), rates, LIVES_BOX(hbox), NULL);
 
       resaudw->entry_arate = lives_combo_get_entry(LIVES_COMBO(combo4));
 
@@ -2254,7 +2246,7 @@ q_done:
 
     lives_list_free(channels);
     lives_list_free(sampsize);
-    lives_list_free(rate);
+    lives_list_free(rates);
 
     return resaudw;
   }
@@ -2262,14 +2254,16 @@ q_done:
 
   void on_change_speed_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     // change speed from the menu
-    create_new_pb_speed(1);
-    mainw->fx1_bool = mainw->fx2_bool = FALSE;
+    mainw->fx1_bool = TRUE;
+    mainw->fx2_bool = FALSE;
+    mainw->fx3_bool = FALSE;
     mainw->fx1_val = cfile->fps;
+    create_new_pb_speed(1);
   }
 
 
   void on_change_speed_ok_clicked(LiVESButton * button, livespointer user_data) {
-    double arate = cfile->arate / cfile->fps;
+    double ratio;
     char *msg;
     boolean bad_header = FALSE;
     //int new_frames = count_resampled_frames(cfile->frames, mainw->fx1_val, cfile->fps);
@@ -2296,7 +2290,7 @@ q_done:
     }
     lives_free(tmp);
 
-    if (button == NULL) {
+    if (!button) {
       mainw->fx1_bool = !(cfile->undo1_int == cfile->arate);
       mainw->fx1_val = cfile->undo1_dbl;
     }
@@ -2304,9 +2298,11 @@ q_done:
     set_undoable(_("Speed Change"), TRUE);
     cfile->undo1_dbl = cfile->fps;
     cfile->undo1_int = cfile->arate;
+    cfile->undo3_boolean = mainw->fx3_bool;
     cfile->undo_action = UNDO_CHANGE_SPEED;
 
     if (mainw->fx1_val == 0.) mainw->fx1_val = 1.;
+    ratio = mainw->fx1_val / cfile->fps;
 
     // update the frame rate
     cfile->pb_fps = cfile->fps = mainw->fx1_val;
@@ -2314,9 +2310,31 @@ q_done:
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
 
     if (mainw->fx1_bool) {
-      cfile->arate = (int)(arate * cfile->fps + .5);
-      msg = lives_strdup_printf(_("Changed playback speed to %.3f frames per second and audio to %d Hz.\n"), cfile->fps,
-                                cfile->arate);
+      if (!mainw->fx3_bool) {
+        cfile->arate = (int)(cfile->arate * ratio + .5);
+        msg = lives_strdup_printf(_("Changed playback speed to %.3f frames per second and audio to %d Hz.\n"), cfile->fps,
+                                  cfile->arate);
+      } else {
+        int asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
+        char *com = lives_strdup_printf("%s stretch_audio \"%s\" %f %d %d %d %d", prefs->backend, cfile->handle, ratio,
+                                        cfile->arps, cfile->achans, cfile->asampsize, asigned);
+
+        lives_system(com, FALSE);
+        lives_free(com);
+
+        if (THREADVAR(com_failed)) {
+          THREADVAR(com_failed) = FALSE;
+        } else {
+          do_progress_dialog(TRUE, FALSE, _("Stretching audio"));
+
+          if (mainw->error) {
+            d_print_failed();
+            do_error_dialog(mainw->msg);
+          }
+        }
+      }
+      msg = lives_strdup_printf(_("Changed playback speed to %.3f frames per second and stretched audio by a factor of %.3f\n"),
+                                cfile->fps, 1. / ratio);
     } else {
       msg = lives_strdup_printf(_("Changed playback speed to %.3f frames per second.\n"), cfile->fps);
     }
@@ -2335,10 +2353,12 @@ q_done:
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->pb_fps)) bad_header = TRUE;
     }
 
-    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate)) bad_header = TRUE;
-    if (bad_header) do_header_write_error(mainw->current_file);
+    if (mainw->fx1_bool && !mainw->fx3_bool) {
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate)) bad_header = TRUE;
+      if (bad_header) do_header_write_error(mainw->current_file);
+    }
 
-    switch_to_file(mainw->current_file, mainw->current_file);
+    switch_clip(1, mainw->current_file, TRUE);
 
     if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 

@@ -944,7 +944,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
   boolean keep_old_dir = FALSE;
   boolean forcecheck = FALSE;
   int keep_frags = 0;
-  int current_file = mainw->current_file;
+  //int current_file = mainw->current_file;
   int audchoice = 0;
 
   mainw->no_switch_dprint = TRUE;
@@ -1203,7 +1203,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
 
   //// TODO - allow downloading in bg while user does something else
   /// **ADD TASK CALLBACK
-  mainw->current_file = current_file;
+  //mainw->current_file = current_file;
   return utube_dl2(req, tmpdir, ddir, mpt, forcecheck, reqout);
 }
 
@@ -6140,7 +6140,7 @@ void on_show_file_info_activate(LiVESMenuItem * menuitem, livespointer user_data
 
     if (cfile->clip_type == CLIP_TYPE_FILE) {
       lives_decoder_t *dplug = (lives_decoder_t *)cfile->ext_src;
-      lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->decoder;
+      lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
       char *decname = lives_strdup_printf("%s plugin v %d.%d", dpsys->id->name,
                                           dpsys->id->pl_version_major, dpsys->id->pl_version_minor);
 
@@ -11150,8 +11150,16 @@ void on_export_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   double start, end;
 
-  int nrate = cfile->arps;
+  int nrate = cfile->arps, orate = nrate;
   int asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
+  int type = 0;
+
+  // warn if arps!=arate
+  if (cfile->arate != cfile->arps) {
+    type = do_audexport_dlg(cfile->arps, cfile->arate);
+    if (type == -1) return; // cancelled
+    if (type & 1) orate = nrate = cfile->arate;
+  }
 
   if (cfile->end > 0 && !LIVES_POINTER_TO_INT(user_data)) {
     filename = choose_file((*mainw->audio_dir) ? mainw->audio_dir : NULL, NULL,
@@ -11165,12 +11173,9 @@ void on_export_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
   file_name = ensure_extension(filename, LIVES_FILE_EXT_WAV);
   lives_free(filename);
 
-  // warn if arps!=arate
-  if (cfile->arate != cfile->arps) {
-    if (do_yesno_dialog(
-          _("\n\nThe audio playback speed has been altered for this clip.\nWould you like to export at the adjusted rate ?"))) {
-      nrate = cfile->arate;
-    }
+  if (type & 2) {
+    // resample from nrate to standard
+    orate = find_standard_arate(orate);
   }
 
   if (cfile->start * cfile->end > 0 && !LIVES_POINTER_TO_INT(user_data)) {
@@ -11186,14 +11191,12 @@ void on_export_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
   d_print(mainw->msg);
 
   com = lives_strdup_printf("%s export_audio \"%s\" %.8f %.8f %d %d %d %d %d \"%s\"", prefs->backend, cfile->handle,
-                            start, end, cfile->arps, cfile->achans, cfile->asampsize, asigned, nrate,
+                            start, end, nrate, cfile->achans, cfile->asampsize, asigned, orate,
                             (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
   lives_free(tmp);
 
-  lives_rm(cfile->info_file);
   lives_system(com, FALSE);
   lives_free(com);
-
 
   if (THREADVAR(com_failed)) {
     lives_free(file_name);

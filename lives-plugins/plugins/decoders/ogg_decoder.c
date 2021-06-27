@@ -32,7 +32,7 @@
 // finalise (clip_data_free)
 ///----------------------------------------------------------
 
-#define PLUGIN_UID 0x646563702E6F6767
+#define PLUGIN_UID 0XFE57EB9034D412C2
 
 // include once to get constants. decplugin.h will include it a second time.
 #include "lives-plugin.h"

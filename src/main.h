@@ -956,6 +956,7 @@ void do_mt_no_audchan_error(void);
 void do_mt_no_jack_error(int warn_mask);
 boolean do_mt_rect_prompt(void);
 void do_audrate_error_dialog(void);
+int do_audexport_dlg(int arps, int arate);
 boolean do_event_list_warning(void);
 void do_nojack_rec_error(void);
 void do_vpp_palette_error(void);

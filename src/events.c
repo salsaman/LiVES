@@ -3776,6 +3776,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       out_tc = q_gint64(out_tc, cfile->fps);
       next_out_tc = (weed_timecode_t)(out_frame / cfile->fps
                                       * TICKS_PER_SECOND_DBL - rec_delta_tc); // calculate tc of next out frame */
+      layer = NULL;
       next_out_tc = q_gint64(next_out_tc, cfile->fps);
       if (mainw->flush_audio_tc == 0) {
         tc = get_event_timecode(event);
@@ -3810,16 +3811,13 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             }
 
             if (!layer && !pixbuf) {
-              if (intimg) {
-                if (mainw->scrap_layer) {
-                  if (!saveargs || mainw->scrap_layer != saveargs->layer) weed_layer_free(mainw->scrap_layer);
-                  mainw->scrap_layer = NULL;
-                }
-              } else {
-                if (mainw->scrap_pixbuf) {
-                  lives_widget_object_unref(mainw->scrap_pixbuf);
-                  mainw->scrap_pixbuf = NULL;
-                }
+              if (mainw->scrap_layer) {
+                if (!saveargs || mainw->scrap_layer != saveargs->layer) weed_layer_free(mainw->scrap_layer);
+                mainw->scrap_layer = NULL;
+              }
+              if (mainw->scrap_pixbuf) {
+                lives_widget_object_unref(mainw->scrap_pixbuf);
+                mainw->scrap_pixbuf = NULL;
               }
               old_scrap_frame = mainw->frame_index[scrap_track];
 
@@ -3853,7 +3851,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 is_blank = FALSE;
               }
               layers[i] = lives_layer_new_for_frame(mainw->clip_index[i], mainw->frame_index[i]);
-              weed_layer_nullify_pixel_data(layers[i]);
+              //weed_layer_nullify_pixel_data(layers[i]);
 
               if ((oclip = mainw->old_active_track_list[i]) != (nclip = mainw->active_track_list[i])) {
                 // now using threading, we want to start pulling all pixel_data for all active layers here
@@ -3948,7 +3946,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           if (layer && weed_layer_get_width(layer) > 0) {
             int lpal, width, height;
             boolean was_lbox = FALSE;
-            boolean reused = FALSE;
             if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
               if (lives_proc_thread_check_finished(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
 
@@ -3958,7 +3955,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
               if (scrap_track != -1) {
                 if (layer == mainw->scrap_layer) {
-                  reused = TRUE;
+                  // hmmm
                 } else {
                   check_layer_ready(layer);
                   if (prefs->enc_letterbox) {
@@ -3978,7 +3975,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                   if (!mainw->scrap_layer) {
                     // NOT WORKING....TODO ???
                     //mainw->scrap_layer = weed_layer_copy(NULL, layer);
-                    reused = TRUE;
                   }
                 }
               }
@@ -4214,18 +4210,15 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                               saveargs->width, saveargs->height, &saveargs->error);
           }
         }
-        if (intimg) {
-          if (saveargs->layer && saveargs->layer != layer) {
-            if (saveargs->layer != mainw->scrap_layer)
-              weed_layer_free(saveargs->layer);
-            saveargs->layer = NULL;
-          }
-        } else {
-          if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {
-            if (saveargs->pixbuf == mainw->scrap_pixbuf) mainw->scrap_pixbuf = NULL;
-            lives_widget_object_unref(saveargs->pixbuf);
-            saveargs->pixbuf = NULL;
-          }
+        if (saveargs->layer && saveargs->layer != layer) {
+          if (saveargs->layer != mainw->scrap_layer)
+            weed_layer_free(saveargs->layer);
+          saveargs->layer = NULL;
+        }
+        if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {
+          if (saveargs->pixbuf == mainw->scrap_pixbuf) mainw->scrap_pixbuf = NULL;
+          lives_widget_object_unref(saveargs->pixbuf);
+          saveargs->pixbuf = NULL;
         }
         lives_free(saveargs->fname);
         saveargs->fname = NULL;
@@ -4265,6 +4258,15 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             mainw->scrap_layer = layer;
           } else {
             mainw->scrap_pixbuf = pixbuf;
+          }
+        } else {
+          if (mainw->scrap_layer) {
+            weed_layer_free(mainw->scrap_layer);
+            mainw->scrap_layer = NULL;
+          }
+          if (mainw->scrap_pixbuf) {
+            lives_widget_object_unref(saveargs->pixbuf);
+            mainw->scrap_pixbuf = NULL;
           }
         }
       }
@@ -4492,16 +4494,13 @@ filterinit2:
           }
         }
       }
-      if (intimg) {
-        if (saveargs->layer) {
-          weed_layer_free(saveargs->layer);
-          if (saveargs->layer == mainw->scrap_layer) mainw->scrap_layer = NULL;
-        }
-      } else {
-        if (saveargs->pixbuf) {
-          lives_widget_object_unref(saveargs->pixbuf);
-          if (saveargs->pixbuf == mainw->scrap_pixbuf) mainw->scrap_pixbuf = NULL;
-        }
+      if (saveargs->layer) {
+        weed_layer_free(saveargs->layer);
+        if (saveargs->layer == mainw->scrap_layer) mainw->scrap_layer = NULL;
+      }
+      if (saveargs->pixbuf) {
+        lives_widget_object_unref(saveargs->pixbuf);
+        if (saveargs->pixbuf == mainw->scrap_pixbuf) mainw->scrap_pixbuf = NULL;
       }
       lives_freep((void **)&saveargs->fname);
       lives_free(saveargs);
@@ -6537,7 +6536,7 @@ render_details *create_render_details(int type) {
   char *title;
 
   boolean needs_new_encoder = FALSE;
-  boolean no_opts = FALSE;
+  boolean is_transcode = FALSE;
 
   int width, height, dwidth, dheight, spht, maxwidth, maxheight;
 
@@ -6548,7 +6547,7 @@ render_details *create_render_details(int type) {
   int i;
 
   if (type == 5) {
-    no_opts = TRUE;
+    is_transcode = TRUE;
     type = 2;
   }
   mainw->no_context_update = TRUE;
@@ -6590,7 +6589,7 @@ render_details *create_render_details(int type) {
     title = (_("Multitrack Details"));
   } else if (type == 1) title = (_("Encoding Details"));
   else {
-    if (!no_opts) title = (_("New Clip Details"));
+    if (!is_transcode) title = (_("New Clip Details"));
     else title = (_("Quick Transcode"));
   }
 
@@ -6658,7 +6657,7 @@ render_details *create_render_details(int type) {
     widget_opts.use_markup = FALSE;
     lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, TRUE, 0);
   }
-  if (no_opts) {
+  if (is_transcode) {
     hbox = lives_hbox_new(FALSE, 0);
     rdet->enc_lb = lives_standard_check_button_new(_("Use letterboxing to fill frame"),
                    prefs->enc_letterbox, LIVES_BOX(hbox), NULL);
@@ -6682,7 +6681,7 @@ render_details *create_render_details(int type) {
       lives_widget_set_sensitive(rdet->spinbutton_fps, FALSE);
     }
 
-    if (!no_opts) {
+    if (!is_transcode) {
       // add clip name entry
       rdet->clipname_entry = lives_standard_entry_new((tmp = (_("New clip name"))),
                              (tmp2 = get_untitled_name(mainw->untitled_number)),
@@ -6715,7 +6714,7 @@ render_details *create_render_details(int type) {
   rdet->pertrack_checkbutton = lives_check_button_new();
   rdet->backaudio_checkbutton = lives_check_button_new();
 
-  if (no_opts) rdet->asamps = -32;
+  if (is_transcode) rdet->asamps = -32;
 
   ////// add audio part
   resaudw = NULL;
@@ -6739,7 +6738,7 @@ render_details *create_render_details(int type) {
     if (mainw->event_list) max_time = (double)(get_event_timecode(get_last_frame_event(mainw->event_list))
                                         - get_event_timecode(get_first_frame_event(mainw->event_list)))
                                         / TICKS_PER_SECOND_DBL + 1. / lives_spin_button_get_value(LIVES_SPIN_BUTTON(rdet->spinbutton_fps));
-    add_fade_elements(rdet, hbox, FALSE, max_time, no_opts);
+    add_fade_elements(rdet, hbox, FALSE, max_time, is_transcode);
   }
 
   if (type == 3) {
@@ -6759,7 +6758,7 @@ render_details *create_render_details(int type) {
                                lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
   }
 
-  if (!no_opts) {
+  if (!is_transcode) {
     if (capable->has_encoder_plugins == PRESENT) {
       encoders = lives_list_copy_strings(capable->plugins_list[PLUGIN_TYPE_ENCODER]);
       if (type != 1) encoders = filter_encoders_by_img_ext(encoders, prefs->image_ext);
@@ -6924,7 +6923,7 @@ render_details *create_render_details(int type) {
                    LIVES_RESPONSE_CANCEL);
   } else if (LIVES_IS_BOX(daa)) add_fill_to_box(LIVES_BOX(daa));
 
-  if (!(prefs->startup_interface == STARTUP_MT && !mainw->is_ready)) {
+  if (!is_transcode && !(prefs->startup_interface == STARTUP_MT && !mainw->is_ready)) {
     if (type == 2 || type == 3) {
       if (CURRENT_CLIP_HAS_VIDEO && mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) {
         widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
@@ -6938,7 +6937,7 @@ render_details *create_render_details(int type) {
   }
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
-  if (type != 1) {
+  if (type != 1 && !is_transcode) {
     rdet->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), LIVES_STOCK_OK, NULL, LIVES_RESPONSE_OK);
   } else  {
     rdet->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
@@ -6950,7 +6949,7 @@ render_details *create_render_details(int type) {
 
   lives_window_add_escape(LIVES_WINDOW(rdet->dialog), cancelbutton);
 
-  if (!no_opts) {
+  if (!is_transcode) {
     if (needs_new_encoder) {
       lives_widget_set_sensitive(rdet->okbutton, FALSE);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET); // force showing of transient window

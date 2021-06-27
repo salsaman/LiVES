@@ -27,7 +27,7 @@ const lives_struct_def_t *get_lsd(lives_struct_type st_type) {
   else if (lsd_table[st_type]) return lsd_table[st_type];
   switch (st_type) {
   case LIVES_STRUCT_CLIP_DATA_T:
-    lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "adv_timing", 6);
+    lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "debug", 6);
     if (lsd) {
       lives_special_field_t **specf = lsd->special_fields;
       lives_clip_data_t *cdata = (lives_clip_data_t *)lives_calloc(1, sizeof(lives_clip_data_t));

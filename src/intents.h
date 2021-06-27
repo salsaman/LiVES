@@ -108,45 +108,51 @@ enum {
   LIVES_INTENTION_GET_VALUE,
   LIVES_INTENTION_SET_VALUE,
 
-  // specialised intentions
-
-  // video players
-  // an intent which creates weed_layers / audio (depending on CAPACITIES) from a set of clip_like objects
-  LIVES_INTENTION_PLAY = 0x00000200, // value fixed for all time, order of following must not change (see videoplugin.h)
-
-  // like play, but with the REMOTE capacity
-  LIVES_INTENTION_STREAM,  // encode / data in -> remote stream
-
-  // alias for encode but with a weed_layer requirement
-  // rather than a clip object
-  LIVES_INTENTION_TRANSCODE,
-
-  // an attatchment (?) to a player which can create an event_list object
-  LIVES_INTENTION_RECORD,  // record
-
-  // an intent which creates a new clip object with STATUS NOT_LOADED
-  LIVES_INTENTION_ENCODE = 0x00000899,
-
-  // an intent which converts a clip object's STATE from NOT_LOADED to READY
+  // an intent which converts an object's STATE from EXTERNAL
   // caps define LOCAL or REMOTE source
   LIVES_INTENTION_IMPORT = 0x00000C00,
 
-  // TODO - just EXPORT and use LOCAL / REMOTE caps
-  LIVES_INTENTION_EXPORT_LOCAL, // export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
-  LIVES_INTENTION_EXPORT_REMOTE, // export raw format to online location, e.g. export audio, save frame
+  // an intent which creates a copy object in STATE EXTERNAL
+  // with LOCAL - export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
+  // with REMOTE - export raw format to online location, e.g. export audio, save frame
+  LIVES_INTENTION_EXPORT,
+
+  // specialised intentions
+
+  // video players
+  // an intent which creates frame objects / audio (depending on CAPACITIES) from an array of clip_like objects
+  // or from an event_list object
+  LIVES_INTENTION_PLAY = 0x00000200, // value fixed for all time, order of following must not change (see videoplugin.h)
+
+  // like play, but with the REMOTE capacity (can also be an attachment to PLAY)
+  LIVES_INTENTION_STREAM,  // encode / data in -> remote stream
+
+  // alias for encode but with a weed_layer (frame ?) requirement
+  // rather than a clip object (could also be an attachment to PLAY with realtime == FALSE and display == FALSE caps)
+  LIVES_INTENTION_TRANSCODE,
+
+  // an attachment (?) to a player which can create an event_list object
+  LIVES_INTENTION_RECORD,  // record
 
   // intent which creates a new clip_object from an event_list
+  // (can also be an attachment to PLAY, with non-realtime, non-display and output clip in state READY)
   LIVES_INTENTION_RENDER,
+
+  // an intent which creates a new clip object with STATE EXTERNAL
+  // alias for EXPORT for clip objects ?
+  // actually this can just be PLAY but with non-realtime and non-display (like transcode)
+  LIVES_INTENTION_ENCODE = 0x00000899,
+
+  // these may be specialised for clip objects
 
   LIVES_INTENTION_BACKUP, // internal clip -> restorable object
   LIVES_INTENTION_RESTORE, // restore from object -> internal clip
 
   // decoders
-  // TODO - maybe this is IMPORT with LOCAL capacity
-  // or an attachment to import / local
+  // this is a specialized intent for clip objects, for READY objects, produces frame objects from the clip object)
   LIVES_INTENTION_DECODE = 0x00001000, // combine with caps to determine e.g. decode_audio, decode_video
 
-  // use caps to further refine e.g REALTIME / NON_REALTIME
+  // use caps to further refine e.g REALTIME / NON_REALTIME (can be attachment to PLAY ?)
   LIVES_INTENTION_EFFECT = 0x00001400,
 
   // do we need so many ? maybe these can become CAPS
@@ -163,10 +169,11 @@ enum {
 // generic capacities, type specific ones may also exist
 // key name is defined here. Values are int32_t interprited as boolean: FALSE (0) or TRUE (1 or non-zero)
 // absent values are assumed FALSE
-#define LIVES_CAPACITY_LOCAL		"local"
+//#define LIVES_CAPACITY_LOCAL		"local"
 #define LIVES_CAPACITY_REMOTE		"remote"
 
 #define LIVES_CAPACITY_REALTIME		"realtime"
+#define LIVES_CAPACITY_DISPLAY		"display" // providesd some type of (local) display output
 
 #define LIVES_CAPACITY_VIDEO		"video"
 #define LIVES_CAPACITY_AUDIO		"audio"
@@ -188,9 +195,11 @@ enum {
 #define LIVES_INTENTION_LEAVE LIVES_INTENTION_NOTHING
 #define LIVES_INTENTION_SKIP LIVES_INTENTION_NOTHING
 
-#define LIVES_INTENTION_MOVE LIVES_INTENTION_EXPORT_LOCAL
+// or maybe just set value with workdir param for LiVES object ?
+#define LIVES_INTENTION_MOVE LIVES_INTENTION_EXPORT
 
-#define LIVES_INTENTION_UPLOAD LIVES_INTENTION_EXPORT_REMOTE
+#define LIVES_INTENTION_UPLOAD LIVES_INTENTION_EXPORT // with "local" set to FALSE
+
 //#define LIVES_INTENTION_DOWNLOAD LIVES_INTENTION_IMPORT_REMOTE
 
 #define LIVES_INTENTION_DELETE LIVES_INTENTION_DESTROY
@@ -198,8 +207,9 @@ enum {
 // generic STATES which can be altered by *transforms*
 #define OBJECT_STATE_UNDEFINED	0
 #define OBJECT_STATE_NORMAL	1
-#define OBJECT_STATE_PREVIEW	2
-#define OBJECT_STATE_READY	3
+#define OBJECT_STATE_PREVIEW	2 // ???
+
+#define OBJECT_STATE_EXTERNAL	64
 
 #define OBJECT_STATE_FINALISED	512
 
@@ -346,26 +356,37 @@ void lives_capacities_free(lives_capacity_t *);
 #define LIVES_ERROR_NOSUCH_CAP WEED_ERROR_NOSUCH_LEAF
 #define LIVES_ERROR_ICAP_NULL 65536
 
-#define lives_capacity_exists(caps, key) (caps ? (weed_plant_has_leaf(caps, key) == WEED_TRUE ? TRUE : FALSE) \
+#define LIVES_CAPACITY_TRUE(caps, key) ((caps) ? weed_get_boolean_value((caps), (key)) == WEED_TRUE : FALSE)
+#define LIVES_CAPACITY_FALSE(caps, key) ((caps) ? weed_get_boolean_value((caps), (key), NULL) == WEED_FALSE \
+					 ? TRUE : FALSE : FALSE)
+
+#define LIVES_CAPACITY_NEGATED(caps, key) ((caps) ? lives_capacity_exists((caps), (key)) \
+					 ? weed_get_boolean_value((caps), (key)) == WEED_TRUE \
+					 ? TRUE : FALSE : FALSE : FALSE)
+
+#define LIVES_HAS_CAPACITY(caps, key) (lives_capacity_exists((caps), (key)))
+
+#define lives_capacity_exists(caps, key) ((caps) ? (weed_plant_has_leaf((caps), (key)) == WEED_TRUE ? TRUE : FALSE) \
 					  FALSE)
 
-#define lives_capacity_delete(caps, key) (caps ? weed_leaf_delete(caps, key) \
-					  : LIVES_ERROR_ICAP_NULL)
+#define lives_capacity_delete(caps, key) ((caps) ? weed_leaf_delete((caps), (key)) : LIVES_ERROR_ICAP_NULL)
 
-#define lives_capacity_set(caps, key) (caps ? weed_set_boolean_value(caps, key, WEED_TRUE) : LIVES_ERROR_ICAP_NULL)
-#define lives_capacity_set_int(caps, key, val) weed_set_int_value(caps, key, val)
-#define lives_capacity_set_string(caps, key, val) weed_set_string_value(caps, key, val)
+#define lives_capacity_set(caps, key) ((caps) ? weed_set_boolean_value((caps), (key), WEED_TRUE) : LIVES_ERROR_ICAP_NULL)
+#define lives_capacity_unset(caps, key) ((caps) ? weed_set_boolean_value((caps), (key), WEED_FALSE) : LIVES_ERROR_ICAP_NULL)
+
+#define lives_capacity_set_int(caps, key, val) weed_set_int_value((caps), (key), val)
+#define lives_capacity_set_string(caps, key, val) weed_set_string_value((caps), (key), val)
 
 // TODO - add some error handling
-#define lives_capacity_get(caps, key) (caps ? weed_get_boolean_value(caps, key, 0) == WEED_TRUE ? TRUE : FALSE : FALSE)
-#define lives_capacity_get_int(caps, key) (caps ? weed_get_int_value(caps, key, 0) : 0)
-#define lives_capacity_get_string(caps, key) (caps ? weed_get_string_value(caps, key, 0) : 0)
+#define lives_capacity_get(caps, key) ((caps) ? weed_get_boolean_value((caps), (key), 0) == WEED_TRUE ? TRUE : FALSE : FALSE)
+#define lives_capacity_get_int(caps, key) ((caps) ? weed_get_int_value((caps), (key), 0) : 0)
+#define lives_capacity_get_string(caps, key) ((caps) ? weed_get_string_value((caps), (key), 0) : 0)
 
 #define lives_capacity_set_readonly(caps, key, state) \
-  (caps ? weed_leaf_set_flags(caps, key, weed_leaf_get_flags(caps, key) | (state ? WEED_FLAG_IMMUTABLE : 0)) \
+  ((caps) ? weed_leaf_set_flags((caps), (key), weed_leaf_get_flags((caps), (key)) | (state ? WEED_FLAG_IMMUTABLE : 0)) \
    : LIVES_ERROR_NOSUCH_CAP)
 
-#define lives_capacity_is_readonly(caps, key) (cap ? ((weed_leaf_get_flags(caps, key) & WEED_FLAG_IMMUTABLE) \
+#define lives_capacity_is_readonly(caps, key) (cap ? ((weed_leaf_get_flags((caps), (key)) & WEED_FLAG_IMMUTABLE) \
 						      ? TRUE : FALSE) : FALSE)
 
 void lives_intentcaps_free(lives_intentcap_t *);

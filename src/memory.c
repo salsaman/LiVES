@@ -352,6 +352,7 @@ void *alloc_bigblock(size_t sizeb) {
       bbused++;
 #endif
       pthread_mutex_unlock(&bigblock_mutex);
+      //g_print("ALLOBIG %p\n", bigblocks[i]);
       return bigblocks[i];
     }
   }
@@ -373,12 +374,14 @@ void *calloc_bigblock(size_t nmemb, size_t align) {
       bbused++;
 #endif
       pthread_mutex_unlock(&bigblock_mutex);
+      //g_print("CALLOBIG %p %d\n", bigblocks[i], i);
       start = (void *)((size_t)((size_t)((char *)bigblocks[i] + align - 1) / align) * align);
       lives_memset(start, 0, nmemb * align);
       return start;
     }
   }
   pthread_mutex_unlock(&bigblock_mutex);
+  break_me("bblock");
   g_print("OUT OF BIGBLOCKS !!\n");
   return NULL;
 }
@@ -394,6 +397,7 @@ void *free_bigblock(void *bstart) {
       bbused--;
       pthread_mutex_unlock(&bigblock_mutex);
 #endif
+      //g_print("FREEBIG %p %d\n", bigblocks[i], i);
       return NULL;
     }
   }

@@ -4466,3 +4466,98 @@ LIVES_GLOBAL_INLINE void do_no_sets_dialog(const char *dir) {
                     " - restart lives with the -workdir switch to set it temporarily"), dir);
 }
 
+
+int do_audexport_dlg(int arps, int arate) {
+  LiVESWidget *dialog, *dialog_vbox, *hbox, *layout;
+  LiVESWidget *rb = NULL, *cancelbutton, *okbutton;
+  char *msg = NULL, *xmsg;
+  LiVESResponseType resp;
+  boolean use_adjrate = FALSE;
+  boolean resamp1 = FALSE, resamp2 = FALSE;
+  int xarate = arate, xarps = arps;
+  int res = 0;
+
+  if (arps != arate) {
+    msg = _("The audio playback speed has been altered for this clip.\n");
+  } else {
+    if (find_standard_arate(arate) != arate) {
+      msg = lives_strdup_printf(_("The current audio rate (%d) uses a non-standard value\n"), arate);
+      extra_cb_key = 3;
+    } else return 0;
+  }
+
+  xmsg = lives_strdup_printf(_("\n\n%s\nWhat would you like to do ?"), msg);
+  lives_free(msg);
+
+  dialog = create_question_dialog(NULL, xmsg);
+  lives_free(xmsg);
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+
+  xarps = find_standard_arate(arps);
+
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+
+  if (arps != arate) {
+    LiVESSList *rbgroup = NULL;
+    xarate = find_standard_arate(arate);
+    use_adjrate = TRUE;
+    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+    msg = lives_strdup_printf(_("Use original rate (%d Hz)"), arps);
+    lives_standard_radio_button_new(msg, &rbgroup, LIVES_BOX(hbox), NULL);
+    lives_free(msg);
+    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+    msg = lives_strdup_printf(_("Use adjusted rate (%d Hz)"), arate);
+    rb = lives_standard_radio_button_new(msg, &rbgroup, LIVES_BOX(hbox), NULL);
+    lives_free(msg);
+    toggle_toggles_var(LIVES_TOGGLE_BUTTON(rb), &use_adjrate, FALSE);
+    lives_layout_add_row(LIVES_LAYOUT(layout));
+  }
+
+  if (xarps != arps || xarate != arate) {
+    LiVESWidget *checkb1, *checkb2;
+    if (arps != arate) {
+      lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+      hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+    } else hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+    if (xarps != arps) {
+      resamp1 = TRUE;
+      msg = lives_strdup_printf(_("Resample to standard rate (%d Hz)"), xarps);
+      checkb1 = lives_standard_check_button_new(msg, FALSE, LIVES_BOX(hbox), NULL);
+      lives_free(msg);
+      toggle_toggles_var(LIVES_TOGGLE_BUTTON(checkb1), &resamp1, FALSE);
+      if (rb) toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), checkb1, TRUE);
+    }
+    if (arate != arps && xarate != arate) {
+      resamp2 = TRUE;
+      hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+      msg = lives_strdup_printf(_("Resample to standard rate (%d Hz)"), xarate);
+      checkb2 = lives_standard_check_button_new(msg, FALSE, LIVES_BOX(hbox), NULL);
+      lives_free(msg);
+      toggle_toggles_var(LIVES_TOGGLE_BUTTON(checkb2), &resamp2, FALSE);
+      if (rb) toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), checkb2, FALSE);
+    }
+  }
+
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                 LIVES_RESPONSE_CANCEL);
+
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+             LIVES_RESPONSE_OK);
+
+  lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
+
+  lives_button_grab_default_special(okbutton);
+  lives_widget_grab_focus(okbutton);
+
+  resp = lives_dialog_run(LIVES_DIALOG(dialog));
+  lives_widget_destroy(dialog);
+
+  if (resp == LIVES_RESPONSE_CANCEL) return -1;
+
+  if (use_adjrate) {
+    res++;
+    if (resamp2) res += 2;
+  } else if (resamp1) res += 2;
+  return res;
+}
+

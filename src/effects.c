@@ -842,8 +842,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
 }
 
 
-void on_realfx_activate(LiVESMenuItem *menuitem, livespointer xrfx) {
-  lives_rfx_t *rfx = (lives_rfx_t *)xrfx;
+void on_realfx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
   uint32_t chk_mask = 0;
   int type = 1;
 
@@ -901,18 +900,20 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
 
     if (blend_file->clip_type == CLIP_TYPE_FILE) {
       dplug = (lives_decoder_t *)blend_file->ext_src;
-      if (dplug) dpsys = (lives_decoder_sys_t *)dplug->decoder;
+      if (dplug) dpsys = (lives_decoder_sys_t *)dplug->dpsys;
     }
 
-    if (is_virtual_frame(mainw->blend_file, frameno)) {
-      if (dpsys && dpsys->estimate_delay)
-        est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->blend_file, frameno));
-    } else {
-      // img timings
-      est_time = blend_file->img_decode_time;
+    if (IS_NORMAL_CLIP(mainw->blend_file)) {
+      if (is_virtual_frame(mainw->blend_file, frameno)) {
+        if (dpsys && dpsys->estimate_delay)
+          est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->blend_file, frameno));
+      } else {
+        // img timings
+        est_time = blend_file->img_decode_time;
+      }
     }
 
-    if (est_time > 0.) {
+    if (est_time >= 0.) {
       ntc = tc + est_time * TICKS_PER_SECOND_DBL;
       frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
     }
@@ -934,10 +935,10 @@ void get_blend_layer(weed_timecode_t tc) {
            (!mainw->files[mainw->blend_file]->frames ||
             !mainw->files[mainw->blend_file]->is_loaded)))) {
     // invalid blend file
-    mainw->blend_file = mainw->current_file;
+    mainw->blend_file = mainw->playing_file;
   }
 
-  if (mainw->num_tr_applied && mainw->blend_file != mainw->current_file &&
+  if (mainw->num_tr_applied && mainw->blend_file != mainw->playing_file &&
       IS_VALID_CLIP(mainw->blend_file) && !resize_instance) {
     get_blend_layer_inner(tc);
   }
@@ -1249,8 +1250,8 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
                             livespointer user_data) {
   int blend_file = mainw->blend_file;
 
-  if (mainw->playing_file < 1 || !mainw->num_tr_applied || !IS_VALID_CLIP(mainw->blend_file)
-      || mainw->blend_file == mainw->current_file || mainw->preview || (mainw->is_processing && cfile->is_loaded)) {
+  if (mainw->playing_file < 1 || !mainw->num_tr_applied || !IS_VALID_CLIP(blend_file)
+      || blend_file == mainw->current_file || mainw->preview || (mainw->is_processing && cfile->is_loaded)) {
     return TRUE;
   }
 
@@ -1262,15 +1263,13 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
     else mainw->swapped_clip = mainw->pre_src_file;
   } else mainw->swapped_clip = -1;
 
-  //rte_swap_fg_bg();
-
   mainw->new_clip = blend_file;
 
   if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
                            || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))
     ce_thumbs_highlight_current_clip();
 
-  mainw->blend_palette = WEED_PALETTE_END;
+  //mainw->blend_palette = WEED_PALETTE_END;
 
   return TRUE;
 

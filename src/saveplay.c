@@ -2037,7 +2037,7 @@ char *prep_audio_player(char *com2, char *com3, frames_t audio_end, int arate, i
   short audio_player = prefs->audio_player;
   int loop = 0;
 
-  if (cfile->achans > 0) {
+  if (!mainw->preview && cfile->achans > 0) {
     cfile->aseek_pos = (off64_t)(cfile->real_pointer_time * (double)cfile->arate) * cfile->achans * (cfile->asampsize / 8);
     if (mainw->playing_sel) {
       off64_t apos = (off64_t)((double)(mainw->play_start - 1.) / cfile->fps * (double)cfile->arate) * cfile->achans *
@@ -3102,6 +3102,16 @@ void play_file(void) {
     if (com) {
       lives_system(com, TRUE);
       lives_free(com);
+    }
+  }
+
+  if (mainw->play_window) {
+    if (prefs->show_gui) {
+      detach_accels(TRUE);
+      gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), TRUE);
+      gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), TRUE);
+      lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), get_transient_full());
+      lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
     }
   }
 
@@ -5166,6 +5176,10 @@ boolean reload_clip(int fileno, int maxframe) {
     fake_cdata->fps = sfile->fps;
     fake_cdata->nframes = maxframe;
 
+#ifdef VALGRIND_ON
+    fake_cdata->debug = TRUE;
+#endif
+
     response = LIVES_RESPONSE_NONE;
 
     if ((cdata = get_decoder_cdata(fileno, prefs->disabled_decoders,
@@ -5261,7 +5275,7 @@ manual_locate:
     }
 
     threaded_dialog_spin(0.);
-    unref_struct(&fake_cdata->lsd);
+    if (cdata != fake_cdata) unref_struct(&fake_cdata->lsd);
     break;
   }
 
@@ -5290,7 +5304,7 @@ manual_locate:
     } else {
       lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
       if (dplug) {
-        lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->decoder;
+        lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
         sfile->decoder_uid = dpsys->id->uid;
         save_clip_value(fileno, CLIP_DETAILS_DECODER_UID, (void *)&sfile->decoder_uid);
         if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;

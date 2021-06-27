@@ -229,6 +229,8 @@ double get_luma16(uint16_t r, uint16_t g, uint16_t b);
 
 #define WEED_IS_LAYER(plant) (weed_plant_get_type(plant) == WEED_PLANT_LAYER)
 
+#define WEED_IS_XLAYER(plant) (weed_plant_get_type(plant) == WEED_PLANT_LAYER || weed_plant_get_type(plant) == WEED_PLANT_CHANNEL)
+
 // create / destroy / copy layers
 weed_layer_t *weed_layer_new(int layer_type);
 int weed_layer_get_type(weed_layer_t *);

@@ -1249,7 +1249,7 @@ boolean lives_osc_cb_fgclipsel_rteapply(void *context, int arglen, const void *v
 
   mainw->current_file = clipno;
 
-  on_realfx_activate(NULL, &mainw->rendered_fx[0]);
+  on_realfx_activate(NULL, mainw->rendered_fx[0]);
 
   mainw->current_file = current_file;
 

@@ -260,7 +260,7 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, size_t nbytes, size_t x
         && (!mainw->event_list || mainw->record || mainw->record_paused))  {
       // buffer audio for any generators
       // interleaved, so we paste all to channel 0
-      append_to_audio_buffer16(buff, nsamples * pulsed->out_achans, 2);
+      append_to_audio_buffer16(buff, nsamples, 2);
     }
 #if !HAVE_PA_STREAM_BEGIN_WRITE
     pa_stream_write(pulsed->pstream, buff, xbytes, pulse_buff_free, 0, PA_SEEK_RELATIVE);
@@ -1014,16 +1014,16 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       }
 
       // playback from memory or file
-      if (pulsed->playing_file > -1 && !mainw->multitrack) clip_vol = lives_vol_from_linear(afile->vol);
-      if (future_prefs->volume * clip_vol != pulsed->volume_linear) {
+      if (pulsed->playing_file > -1 && !mainw->multitrack) clip_vol = afile->vol;//lives_vol_from_linear(afile->vol);
+      if (lives_vol_from_linear(future_prefs->volume) * lives_vol_from_linear(clip_vol) != pulsed->volume_linear) {
         // TODO: pa_threaded_mainloop_once_unlocked() (pa 13.0 +) ??
         pa_operation *paop;
-        pavol = pa_sw_volume_from_linear(future_prefs->volume * clip_vol);
+        pulsed->volume_linear = lives_vol_from_linear(future_prefs->volume) * lives_vol_from_linear(clip_vol);
+        pavol = pa_sw_volume_from_linear(pulsed->volume_linear);
         pa_cvolume_set(&pulsed->volume, pulsed->out_achans, pavol);
         paop = pa_context_set_sink_input_volume(pulsed->con,
                                                 pa_stream_get_index(pulsed->pstream), &pulsed->volume, NULL, NULL);
         pa_operation_unref(paop);
-        pulsed->volume_linear = future_prefs->volume * clip_vol;
       }
     }
 
@@ -1074,7 +1074,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       /// we may also stream to a fifo, as well as possibly caching the audio for any video filters to utilize
       if (pulsed->astream_fd != -1) audio_stream(buffer, xbytes, pulsed->astream_fd);
       if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) {
-        append_to_audio_buffer16(buffer, xbytes / 2, 2);
+        append_to_audio_buffer16(buffer, xbytes / 4, 2);
       }
 
       /// Finally... we actually write to pulse buffers
@@ -1477,7 +1477,7 @@ int pulse_audio_init(void) {
   pulsed.con = pcon;
 
   //for (int j = 0; j < PULSE_MAX_OUTPUT_CHANS; j++) pulsed.volume.values[j] = pa_sw_volume_from_linear(future_prefs->volume);
-  pulsed.volume_linear = future_prefs->volume;
+  pulsed.volume_linear = -1.;
   pulsed.state = (pa_stream_state_t)PA_STREAM_UNCONNECTED;
   pulsed.in_arate = 44100;
   pulsed.fd = -1;
@@ -1695,7 +1695,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
       lives_usleep(prefs->sleep_time);
     }
 
-    pdriver->volume_linear = -1;
+    pdriver->volume_linear = -1.;
 
 #if PA_SW_CONNECTION
     // get the volume from the server
@@ -1880,7 +1880,7 @@ double lives_pulse_get_pos(pulse_driver_t *pulsed) {
   //return (double)pulsed->real_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
   if (pulsed->playing_file > -1) {
     return (double)(fwd_seek_pos)
-           / (double)(afile->arps * afile->achans * afile->asampsize / 8);
+           / (double)(afile->arate * afile->achans * afile->asampsize / 8);
   }
   // from memory
   return (double)pulsed->frames_written / (double)pulsed->out_arate;

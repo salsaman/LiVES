@@ -5,14 +5,13 @@
 
 // NOTE: interlace is bottom first
 
-#define PLUGIN_UID 0x646563706C2E6476
+#define PLUGIN_UID 0X5095CEA294A1880A
 
 #include "lives-plugin.h"
 
-#define PLUGIN_DEVSTATE PLUGIN_DEVSTATE_RECOMMENDED
-#define PLUGIN_NAME "LiVES avformat"
+#define PLUGIN_NAME "LiVES dvr"
 #define PLUGIN_VERSION_MAJOR 1
-#define PLUGIN_VERSION_MINOR 1
+#define PLUGIN_VERSION_MINOR 3
 
 #define NEED_CLONEFUNC
 

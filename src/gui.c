@@ -4520,6 +4520,14 @@ static void _resize_play_window(void) {
             // ensure that keypresses are still sent to the main widget
             lives_grab_add(LIVES_MAIN_WINDOW_WIDGET);
           }
+
+          /* if (1) { */
+          /*   gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE); */
+          /*   gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), FALSE); */
+          /*   lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), NULL); */
+          /*   detach_accels(FALSE); */
+          /*   lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET); */
+          /* } */
         } else if (mainw->vpp->init_screen) {
           LIVES_ERROR("Failed to start playback plugin");
         }

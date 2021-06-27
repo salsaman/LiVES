@@ -1329,6 +1329,10 @@ void hsv2rgb(double h, double s, double v, uint8_t *r, uint8_t *g, uint8_t *b) {
 }
 
 
+#define RDEL_MIN 8
+#define GDEL_MIN 8
+#define BDEL_MIN 8
+
 boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_t *g1, uint8_t *b1,
                          double max, double lmin, double lmax) {
   // given 2 colours a and b, calculate the cie94 distance (d) between them, then find a third colour
@@ -1337,20 +1341,20 @@ boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, ui
   // da / db must be > ,9 and db / da also
   // finally luma should be between lmin and lmax
   // restrictions are gradually loosened
-  //#define __VOLA volatile // for testing
-#define __VOLA
+#define __VOLA volatile // for testing
+  //#define __VOLA
 #define DIST_THRESH 10.
 #define RAT_START .9
 #define RAT_TIO  .9999999
 #define RAT_MIN .25
-  lives_alarm_t alarm_handle;
+  lives_alarm_t alarm_handle = LIVES_NO_ALARM;
   __VOLA double gmm = 1. + lmax * 2., gmn = 1. + lmin;
   __VOLA uint8_t xr, xb, xg, ar, ag, ab;
   __VOLA uint8_t rmin = MIN(r0, *r1) / 1.5, gmin = MIN(g0, *g1) / gmm, bmin = MIN(b0, *b1) / 1.5;
   __VOLA uint8_t rmax = MAX(r0, *r1), gmax = MAX(g0, *g1), bmax = MAX(b0, *b1);
-  __VOLA double da, db, z, rat = RAT_START, d = cdist94(r0, g0, b0, *r1, *g1, *b1);
+  __VOLA double l, da, db, z, rat = RAT_START, d = cdist94(r0, g0, b0, *r1, *g1, *b1);
 
-  alarm_handle = lives_alarm_set(timeout);
+  if (timeout) alarm_handle = lives_alarm_set(timeout);
 
   if (d < DIST_THRESH) d = DIST_THRESH;
   max *= d;
@@ -1359,29 +1363,80 @@ boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, ui
   ag = (__VOLA double)(g0 + *g1) / 2.;
   ab = (__VOLA double)(b0 + *b1) / 2.;
 
+  if (rmax - rmin < (RDEL_MIN << 1)) {
+    rmin = ar <= RDEL_MIN ? 0 : ar - RDEL_MIN;
+    rmax = rmax >= 255 - RDEL_MIN ? 255 : ar + RDEL_MIN;
+  }
+
+  if (gmax - gmin < (GDEL_MIN << 1)) {
+    gmin = ag <= GDEL_MIN ? 0 : ag - GDEL_MIN;
+    gmax = gmax >= 255 - GDEL_MIN ? 255 : ag + GDEL_MIN;
+  }
+
+  if (bmax - bmin < (BDEL_MIN << 1)) {
+    bmin = ab <= BDEL_MIN ? 0 : ab - BDEL_MIN;
+    bmax = bmax >= 255 - BDEL_MIN ? 255 : ab + BDEL_MIN;
+  }
+
+  g_print("max %d min %d\n", bmax, bmin);
+
+  // these values now become the range
   rmax = (rmax < 128 ? rmax << 1 : 255) - rmin;
+
+  // special handling for geen, involving min luma
   gmax = (gmax < 255 / gmn ? gmax *gmn : 255) - gmin;
+
   bmax = (bmax < 128 ? bmax << 1 : 255) - bmin;
 
-  while (lives_alarm_check(alarm_handle) && (z = rat * RAT_TIO) > RAT_MIN) {
+  g_print("max %d min %d\n", bmax, bmin);
+
+  while ((!timeout || lives_alarm_check(alarm_handle)) && (z = rat * RAT_TIO) > RAT_MIN) {
+    // rat is initialized to RAT_START (default .9)
+    // loop until timeout or rat * .9999 < RAT_MIN (def .25)
+
     rat = z;
     /// pick a random col
     xr = fastrand_int(bmax) + bmin;
     xg = fastrand_int(gmax) + gmin;
     xb = fastrand_int(bmax) + bmin;
 
-    da = cdist94(ar, ag, ab, xr, xg, xb);
-    //g_print("DA is %f; %f %f %f\n", da, max, rat, max * rat);
-    if (max * rat > da) continue;
+    // calc perceptual dist. to averages
+    da = cdist94(ar, ag, ab, xr, xg, xb) / 255.;
+
+    //g_print("DA is %f; %f %f %f\n", da, max, rat, max / rat);
+
+    // first we only consider points with dist < max from avg pt
+    // we gradually increase max
+    if (da > max / rat) continue;
+
+    // calc dist. to both colours
     da = cdist94(r0, g0, b0, xr, xg, xb);
     db = cdist94(*r1, *g1, *b1, xr, xg, xb);
-    if (da * rat * lmax > db || db * rat > da * lmax) continue;
-    else {
-      double l = get_luma8(xr, xg, xb);
-      if (l < lmin || l > lmax) continue;
-      *r1 = xr; *g1 = xg; *b1 = xb;
-      return TRUE;
+
+    g_print("DA2 is %f; %f %f %f %f\n", da, db, da * rat * lmax, db * rat * lmax, da);
+
+    // next we only consider pts equidistant from the input colours
+    // we assume however, that col2 is brighter tha col1
+    // to help limit to lmax, da must be shorter than db in proportion
+    // this gives a quick estimate of luma without having to calulate it each time
+    // this check is loosened over cycles
+
+    // if da X rat X lmax > db
+    // or db X rat > da X lmax
+    if (da * rat * lmax > db || db * rat * lmax > da) {
+      g_print("failed equi check\n");
+      if (da * rat * lmax > db) g_print("cond1\n");
+      if (db * rat > lmax * da) g_print("cond2\n");
+      continue;
     }
+    // if we pass all the checks then we do a proper check of luma
+    l = get_luma8(CLAMP0255f(xr * 1.4), xg * .75, CLAMP0255f(xb * 1.3));
+    if (l < lmin || l > lmax) {
+      g_print("failed luma check %f %f %f %d %d %d\n", l, lmax, lmin, xr, xg, xb);
+      continue;
+    }
+    *r1 = xr; *g1 = xg; *b1 = xb;
+    return TRUE;
   }
   lives_alarm_clear(alarm_handle);
   g_print("FAILED TO GET COL\n");
@@ -10177,7 +10232,7 @@ LIVES_GLOBAL_INLINE int weed_layer_is_audio(weed_layer_t *layer) {
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_data(weed_layer_t *layer, float **data,
     int arate, int naudchans, weed_size_t nsamps) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   if (data) weed_set_voidptr_array(layer, WEED_LEAF_AUDIO_DATA, naudchans, (void **)data);
   weed_set_int_value(layer, WEED_LEAF_AUDIO_RATE, arate);
   weed_set_int_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, nsamps);
@@ -10248,7 +10303,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *layer,
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 0, NULL);
   weed_leaf_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
   weed_leaf_delete(layer, LIVES_LEAF_PIXBUF_SRC);
@@ -10260,49 +10315,49 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *la
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_rowstrides(weed_layer_t *layer, int *rowstrides, int nplanes) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_int_array(layer, WEED_LEAF_ROWSTRIDES, nplanes, rowstrides);
   return layer;
 }
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_rowstride(weed_layer_t *layer, int rowstride) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
   return layer;
 }
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_palette(weed_layer_t *layer, int palette) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, palette);
   return layer;
 }
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_gamma(weed_layer_t *layer, int gamma_type) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, gamma_type);
   return layer;
 }
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_yuv_clamping(weed_layer_t *layer, int clamping) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, clamping);
   return layer;
 }
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_yuv_sampling(weed_layer_t *layer, int sampling) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, sampling);
   return layer;
 }
 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_yuv_subspace(weed_layer_t *layer, int subspace) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, subspace);
   return layer;
 }
@@ -10686,7 +10741,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
 
-  //        #define DEBUG_PCONV
+  //            #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -12390,10 +12445,9 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int h
 
 int weed_layer_get_gamma(weed_layer_t *layer) {
   int gamma_type = WEED_GAMMA_UNKNOWN;
-  int error;
   if (prefs->apply_gamma) {
     if (weed_plant_has_leaf(layer, WEED_LEAF_GAMMA_TYPE)) {
-      gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, &error);
+      gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL);
     }
     if (gamma_type == WEED_GAMMA_UNKNOWN) {
       break_me("weed_layer_get_gamma with unk. gamma");
@@ -12683,9 +12737,10 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
         pixbuf = lives_pixbuf_cheat(TRUE, width, height, pixel_data);
         weed_layer_nullify_pixel_data(layer);
         cheat = TRUE;
-      } else
+      } else {
         // otherwise we need to copy the data
         pixbuf = lives_pixbuf_new(TRUE, width, height);
+      }
       n_channels = 4;
       break;
     default:
@@ -12960,7 +13015,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     lives_free(msg);
     return FALSE;
   }
-  //    #define DEBUG_RESIZE
+  //        #define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette,
@@ -14167,10 +14222,10 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
   weed_layer_t *layer;
   void **pd_array = NULL;
 
-  if (!slayer || (!WEED_IS_LAYER(slayer) && !WEED_PLANT_IS_CHANNEL(slayer))) return NULL;
+  if (!slayer || !WEED_IS_XLAYER(slayer)) return NULL;
 
   if (dlayer) {
-    if (!WEED_IS_LAYER(dlayer) && !WEED_PLANT_IS_CHANNEL(dlayer)) return NULL;
+    if (!WEED_IS_XLAYER(dlayer)) return NULL;
     layer = dlayer;
   }
 
@@ -14205,11 +14260,9 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
       weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_ORIG_PDATA, slayer);
       weed_leaf_copy_or_delete(layer, LIVES_LEAF_SURFACE_SRC, slayer);
       weed_leaf_copy_or_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, slayer);
-    }
-    if (pd_array) {
       if (weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA,
                               weed_leaf_get_flags(slayer, WEED_LEAF_PIXEL_DATA)));
-    }
+    } else weed_layer_nullify_pixel_data(layer);
   }
 
   weed_leaf_copy_or_delete(layer, WEED_LEAF_GAMMA_TYPE, slayer);
@@ -14309,13 +14362,7 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 */
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
-  if (layer) {
-    int nrefs;
-    do {
-      nrefs = weed_layer_unref(layer);
-    } while (0);//nrefs >= 0);
-    //if (nrefs >= 0) break_me("free refed  layer");
-  }
+  if (layer) weed_layer_unref(layer);
   return NULL;
 }
 

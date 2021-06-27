@@ -213,7 +213,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     lives_free(tmp);
     break;
   case CLIP_DETAILS_DECODER_UID:
-    *(uint64_t *)retval = (uint64_t)atoll(val);
+    *(uint64_t *)retval = (uint64_t)lives_strtol(val);
     break;
   default:
     lives_free(val);
@@ -448,7 +448,7 @@ boolean save_clip_values(int which) {
         if (!save_clip_value(which, CLIP_DETAILS_KEYWORDS, sfile->keywords)) break;
         if (sfile->clip_type == CLIP_TYPE_FILE && sfile->ext_src) {
           lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
-          if (!save_clip_value(which, CLIP_DETAILS_DECODER_NAME, (void *)dplug->decoder->soname)) break;
+          if (!save_clip_value(which, CLIP_DETAILS_DECODER_NAME, (void *)dplug->dpsys->soname)) break;
           if (!save_clip_value(which, CLIP_DETAILS_DECODER_UID, (void *)&sfile->decoder_uid)) break;
         }
         all_ok = TRUE;
@@ -1607,7 +1607,7 @@ lives_intentparams_t *_get_params_for_clip_tx(lives_object_t *obj, int state,
 
   if (intent != LIVES_INTENTION_IMPORT) return NULL;
 
-  if (lives_capacity_get(icaps->capacities, LIVES_CAPACITY_LOCAL)) {
+  if (LIVES_CAPACITY_FALSE(icaps->capacities, LIVES_CAPACITY_REMOTE)) {
     if (prefs->startup_phase != 0) return NULL;
     if (capable->writeable_shmdir == MISSING) return NULL;
     if (state == CLIP_STATE_READY) {

@@ -87,8 +87,6 @@
 
 #define FAST_SEEK_LIMIT 50 // milliseconds (default 0.05 sec)
 #define FAST_SEEK_REV_LIMIT 200 // milliseconds (default 0.2 sec)
-#define NO_SEEK_LIMIT 2000 // milliseconds (default 2 seconds)
-#define LNO_SEEK_LIMIT 10000 // milliseconds (default 10 seconds)
 
 #define TIME_SCALE (priv->matroska.time_scale * 1000 / AV_TIME_BASE)
 

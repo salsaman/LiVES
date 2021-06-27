@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2021-06-17 02:26-0300\n"
+"POT-Creation-Date: 2021-06-21 12:21-0300\n"
 "PO-Revision-Date: 2020-10-31 09:08+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -336,8 +336,8 @@ msgstr ""
 msgid "OS is %s %s, running on %s\n"
 msgstr "ОС — %s %s, запущено на %s\n"
 
-#: src/main.c:2625 src/dialogs.c:1272 src/effects.c:120 src/plugins.c:2686
-#: src/plugins.c:2700
+#: src/main.c:2625 src/dialogs.c:1272 src/effects.c:120 src/plugins.c:2697
+#: src/plugins.c:2711
 msgid "unknown"
 msgstr "невідомий"
 
@@ -1065,12 +1065,12 @@ msgid "Closed clip %s\n"
 msgstr "Закрито кліп %s\n"
 
 #: src/main.c:8798 src/gui.c:767 src/utils.c:2307 src/utils.c:2338
-#: src/saveplay.c:3732 src/multitrack.c:2765 src/multitrack.c:4597
+#: src/saveplay.c:3742 src/multitrack.c:2765 src/multitrack.c:4597
 msgid "_Undo"
 msgstr "В_ернути"
 
 #: src/main.c:8799 src/gui.c:782 src/utils.c:2308 src/utils.c:2339
-#: src/saveplay.c:3733 src/multitrack.c:2784 src/multitrack.c:4620
+#: src/saveplay.c:3743 src/multitrack.c:2784 src/multitrack.c:4620
 msgid "_Redo"
 msgstr "Повт_орити"
 
@@ -3713,7 +3713,7 @@ msgstr "- Не _більше:"
 msgid "Frame size should be at most this size"
 msgstr "Розмір кадру має не перевищувати цей"
 
-#: src/interface.c:5744 src/paramwindow.c:541 src/plugins.c:982
+#: src/interface.c:5744 src/paramwindow.c:541 src/plugins.c:990
 msgid "_Width"
 msgstr "_Ширина"
 
@@ -4256,7 +4256,7 @@ msgstr ""
 msgid "Immediate"
 msgstr ""
 
-#: src/interface.c:7493 src/plugins.c:949
+#: src/interface.c:7493 src/plugins.c:957
 msgid "_FPS"
 msgstr "_Частота кадрів"
 
@@ -6703,16 +6703,16 @@ msgstr "Розмір графічного інтерфейсу змінено н
 msgid "Hide Play Window"
 msgstr "Приховати вікно відтворення"
 
-#: src/gui.c:4670
+#: src/gui.c:4678
 msgid "Show Play Window"
 msgstr "Показати вікно відтворення"
 
-#: src/gui.c:4800
+#: src/gui.c:4808
 #, c-format
 msgid "'LiVES opened the file' '%s'"
 msgstr "'LiVES відкрито файл' '%s'"
 
-#: src/gui.c:4824
+#: src/gui.c:4832
 #, c-format
 msgid "'LiVES closed the file' '%s'"
 msgstr "'LiVES закрито файл' '%s'"
@@ -6925,7 +6925,7 @@ msgstr ""
 msgid " max. frames %d"
 msgstr "Зберегти кадр %d"
 
-#: src/saveplay.c:226 src/saveplay.c:4277
+#: src/saveplay.c:226 src/saveplay.c:4287
 msgid " without sound"
 msgstr " без звуку"
 
@@ -7042,7 +7042,7 @@ msgid "Save Clip"
 msgstr "Зберегти кліп"
 
 #: src/saveplay.c:1426 src/saveplay.c:1544 src/saveplay.c:1622
-#: src/saveplay.c:4285
+#: src/saveplay.c:4295
 msgid "Pulling frames from clip..."
 msgstr "Отримуємо кадри з кліпу…"
 
@@ -7107,7 +7107,7 @@ msgstr "запис перервано відтворенням даних з б�
 msgid "Recording performance..."
 msgstr "Виконання запису…"
 
-#: src/saveplay.c:3330
+#: src/saveplay.c:3340
 #, c-format
 msgid ""
 "\n"
@@ -7126,16 +7126,16 @@ msgstr ""
 "Вам слід вибрати пункт меню Інструменти --> Змінити розмір всіх\n"
 "і змінити розмір усіх кадрів за розміром поточного кадру.\n"
 
-#: src/saveplay.c:3648
+#: src/saveplay.c:3658
 msgid "Unknown"
 msgstr "Невідомо"
 
-#: src/saveplay.c:3752
+#: src/saveplay.c:3762
 #, c-format
 msgid "Untitled%d"
 msgstr "Без_назви%d"
 
-#: src/saveplay.c:3877
+#: src/saveplay.c:3887
 #, c-format
 msgid ""
 "\n"
@@ -7146,7 +7146,7 @@ msgstr ""
 "Сталася помилка під час виконання\n"
 "%s\n"
 
-#: src/saveplay.c:3879
+#: src/saveplay.c:3889
 msgid ""
 "\n"
 "An error occurred opening the file\n"
@@ -7154,7 +7154,7 @@ msgstr ""
 "\n"
 "Під час спроби відкрити файл сталася помилка\n"
 
-#: src/saveplay.c:3892
+#: src/saveplay.c:3902
 #, c-format
 msgid ""
 "\n"
@@ -7165,7 +7165,7 @@ msgstr ""
 "Помилка під час спроби отримання даних щодо кліпу %s.\n"
 "Можливо, дані цього кліпу пошкоджено.\n"
 
-#: src/saveplay.c:3987
+#: src/saveplay.c:3997
 #, c-format
 msgid ""
 "\n"
@@ -7178,18 +7178,18 @@ msgstr ""
 "Типову частоту кадрів можна встановити за допомогою пункту меню «Інструменти "
 "| Параметри | Інше».\n"
 
-#: src/saveplay.c:3998
+#: src/saveplay.c:4008
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "Швидкість відтворення було скориговано до значення %.3f кадрів на секунду, "
 "щоб зберегти відповідність з звуковими даними.\n"
 
-#: src/saveplay.c:4007
+#: src/saveplay.c:4017
 msgid "Image format detected"
 msgstr "Виявлено формат зображення"
 
-#: src/saveplay.c:4014
+#: src/saveplay.c:4024
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -7199,7 +7199,7 @@ msgstr ""
 "%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:4018 src/saveplay.c:4501
+#: src/saveplay.c:4028 src/saveplay.c:4511
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -7208,54 +7208,54 @@ msgstr ""
 "Кадрів=%d тип=%s розмір=%dx%d глибина кольорів=%d частота кадрів=%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:4023 src/saveplay.c:4506
+#: src/saveplay.c:4033 src/saveplay.c:4516
 #, c-format
 msgid "%s none\n"
 msgstr "%s немає\n"
 
-#: src/saveplay.c:4035
+#: src/saveplay.c:4045
 #, c-format
 msgid " - Author: %s\n"
 msgstr " - Автор: %s\n"
 
-#: src/saveplay.c:4038
+#: src/saveplay.c:4048
 #, c-format
 msgid " - Title: %s\n"
 msgstr " - Назва: %s\n"
 
-#: src/saveplay.c:4041
+#: src/saveplay.c:4051
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Коментар: %s\n"
 
-#: src/saveplay.c:4145
+#: src/saveplay.c:4155
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Збереження кадру %d як %s..."
 
-#: src/saveplay.c:4273
+#: src/saveplay.c:4283
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Створення резервної копії %s на %s"
 
-#: src/saveplay.c:4317
+#: src/saveplay.c:4327
 msgid "Backing up"
 msgstr "Створення резервної копії"
 
-#: src/saveplay.c:4349
+#: src/saveplay.c:4359
 msgid "performance data was backed up..."
 msgstr "було створено резервну копію записаних даних…"
 
-#: src/saveplay.c:4410
+#: src/saveplay.c:4420
 #, c-format
 msgid "Restoring %s..."
 msgstr "Відновлення %s…"
 
-#: src/saveplay.c:4436
+#: src/saveplay.c:4446
 msgid "Restoring"
 msgstr "Відновлення"
 
-#: src/saveplay.c:4456
+#: src/saveplay.c:4466
 #, c-format
 msgid ""
 "\n"
@@ -7268,23 +7268,23 @@ msgstr ""
 "Дані у файлі %s пошкоджено.\n"
 "LiVES не вдалося відновити їх.\n"
 
-#: src/saveplay.c:4743
+#: src/saveplay.c:4752
 msgid "FREE DISK SPACE"
 msgstr "ВІЛЬНОГО МІСЦЯ НА ДИСКУ"
 
-#: src/saveplay.c:4744
+#: src/saveplay.c:4753
 msgid "BELOW"
 msgstr "МЕНШЕ"
 
-#: src/saveplay.c:4746
+#: src/saveplay.c:4755
 msgid "DISK SPACE USED"
 msgstr "ВИКОРИСТАНОГО МІСЦЯ НА ДИСКУ"
 
-#: src/saveplay.c:4747
+#: src/saveplay.c:4756
 msgid "ABOVE"
 msgstr "БІЛЬШЕ"
 
-#: src/saveplay.c:4749
+#: src/saveplay.c:4758
 #, c-format
 msgid ""
 "\n"
@@ -7296,31 +7296,31 @@ msgstr ""
 "Визначити обмеження щодо призупинення запису можна за допомогою сторінки "
 "«Налаштування -> Інше».\n"
 
-#: src/saveplay.c:4753
+#: src/saveplay.c:4762
 msgid "RECORDING WAS PAUSED DUE TO DISKSPACE LIMITS\n"
 msgstr "ЗАПИС ЗУПИНЕНО ЧЕРЕЗ НЕДОСТАЧУ МІСЦЯ НА ДИСКУ\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4904
+#: src/saveplay.c:4913
 #, c-format
 msgid "rec %.2f MB"
 msgstr "зап %.2f МБ"
 
-#: src/saveplay.c:4909
+#: src/saveplay.c:4918
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!зап %.2f МБ"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4912
+#: src/saveplay.c:4921
 msgid "rec ?? MB"
 msgstr "зап. ?? МБ"
 
-#: src/saveplay.c:5076
+#: src/saveplay.c:5085
 msgid "The original file"
 msgstr "Початковий файл"
 
-#: src/saveplay.c:5363
+#: src/saveplay.c:5376
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -7330,11 +7330,11 @@ msgstr ""
 "Було знайдено файли від попереднього запуску LiVES.\n"
 "Бажаєте, щоб програма спробувала їх відновити?\n"
 
-#: src/saveplay.c:5389
+#: src/saveplay.c:5402
 msgid "Recovering files"
 msgstr "Відновлення файлів"
 
-#: src/saveplay.c:5390
+#: src/saveplay.c:5403
 msgid ""
 "\n"
 "Recovering files..."
@@ -7342,7 +7342,7 @@ msgstr ""
 "\n"
 "Відновлюємо файли…"
 
-#: src/saveplay.c:5438
+#: src/saveplay.c:5451
 msgid ""
 "Click Abort to exit LiVES immediately, Retry to try again, or Cancel to "
 "continue without reloading the set.\n"
@@ -7351,15 +7351,15 @@ msgstr ""
 "«Повторити», щоб повторити спробу, або кнопку «Скасувати», щоб продовжити "
 "роботу без перезавантаження набору.\n"
 
-#: src/saveplay.c:5708
+#: src/saveplay.c:5721
 msgid "No clips were recovered.\n"
 msgstr "Не відновлено жодного кліпу.\n"
 
-#: src/saveplay.c:5713
+#: src/saveplay.c:5726
 msgid "from the previous session.\n"
 msgstr "з попереднього сеансу.\n"
 
-#: src/saveplay.c:5715
+#: src/saveplay.c:5728
 msgid "from previous sessions.\n"
 msgstr "з попередніх сеансів.\n"
 
@@ -9668,7 +9668,7 @@ msgstr ""
 "\n"
 "Не було створено жодного кадру.\n"
 
-#: src/effects-weed.c:4931
+#: src/effects-weed.c:4945
 #, c-format
 msgid ""
 "Unable to load plugin %s\n"
@@ -9677,12 +9677,12 @@ msgstr ""
 "Не вдалося завантажити додаток %s\n"
 "Повідомлення про помилку: %s\n"
 
-#: src/effects-weed.c:4937
+#: src/effects-weed.c:4951
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Помилка: у додатку %s не визначено функції weed_setup().\n"
 
-#: src/effects-weed.c:4969
+#: src/effects-weed.c:4983
 #, c-format
 msgid ""
 "No usable filters found in plugin:\n"
@@ -9691,89 +9691,89 @@ msgstr ""
 "У додатку не знайдено придатних до використання фільтрів:\n"
 "%s\n"
 
-#: src/effects-weed.c:5054
+#: src/effects-weed.c:5068
 #, c-format
 msgid "Plugin %s returned an empty filter !"
 msgstr "Додатком %s повернуто порожній фільтр!"
 
-#: src/effects-weed.c:5084
+#: src/effects-weed.c:5098
 #, c-format
 msgid "%sskipping blacklisted filter %s\n"
 msgstr "%sпропускаємо фільтр з «чорного» списку %s\n"
 
-#: src/effects-weed.c:5113
+#: src/effects-weed.c:5127
 #, c-format
 msgid "Found duplicate plugin %s"
 msgstr "Виявлено дублювання додатка %s"
 
-#: src/effects-weed.c:5146
+#: src/effects-weed.c:5160
 #, c-format
 msgid "Loaded filter %s in plugin %s"
 msgstr "Завантажено фільтр %s у додатку %s"
 
-#: src/effects-weed.c:5169 src/effects-weed.c:6240
+#: src/effects-weed.c:5183 src/effects-weed.c:6254
 msgid "Some plugin directories"
 msgstr "Каталоги додатків"
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:5227 src/rte_window.c:2087
+#: src/effects-weed.c:5241 src/rte_window.c:2087
 #, c-format
 msgid " - %s plugins -"
 msgstr " - додатки %s -"
 
-#: src/effects-weed.c:5411
+#: src/effects-weed.c:5425
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Успішно завантажено %d фільтрів Weed\n"
 
-#: src/effects-weed.c:5528
+#: src/effects-weed.c:5542
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr "Некоректний комплексний ефект %s — суперечливі значення target_fps\n"
 
-#: src/effects-weed.c:5548
+#: src/effects-weed.c:5562
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr "Некоректний комплексний ефект %s — декілька параметрів переходу\n"
 
-#: src/effects-weed.c:5565
+#: src/effects-weed.c:5579
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr ""
 "Некоректний комплексний ефект %s — вказано декілька параметрів гучності "
 "основного каналу\n"
 
-#: src/effects-weed.c:5685
+#: src/effects-weed.c:5699
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr "Некоректний комплексний ефект %s — має бути більше одного підфільтра\n"
 
-#: src/effects-weed.c:5707
+#: src/effects-weed.c:5721
 #, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr "Виявлено некоректний ефект %s у комплексному ефекті %s, рядок %d\n"
 
-#: src/effects-weed.c:5725
+#: src/effects-weed.c:5739
 #, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr ""
 "Виявлено некоректне типове значення у комплексному ефекті %s, рядок %d\n"
 
-#: src/effects-weed.c:5738
+#: src/effects-weed.c:5752
 #, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 "Виявлено некоректний фільтр %d для типових значень у комплексному ефекті %s, "
 "рядок %d\n"
 
-#: src/effects-weed.c:5755
+#: src/effects-weed.c:5769
 #, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 "Виявлено некоректний параметр %d для типових значень у комплексному ефекті "
 "%s, рядок %d\n"
 
-#: src/effects-weed.c:5785
+#: src/effects-weed.c:5799
 #, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
@@ -9781,7 +9781,7 @@ msgstr ""
 "Виявлено некоректну кількість типових значень у комплексному ефекті %s, "
 "рядок %d\n"
 
-#: src/effects-weed.c:5822
+#: src/effects-weed.c:5836
 #, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
@@ -9789,13 +9789,13 @@ msgstr ""
 "Виявлено небулеве значення для типового параметра у комплексному ефекті %s, "
 "рядок %d\n"
 
-#: src/effects-weed.c:5856
+#: src/effects-weed.c:5870
 #, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr ""
 "Виявлено некоректний параметр посилання у комплексному ефекті %s, рядок %d\n"
 
-#: src/effects-weed.c:5870
+#: src/effects-weed.c:5884
 #, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
@@ -9803,7 +9803,7 @@ msgstr ""
 "Виявлено некоректний фільтр виведення даних %d для параметрів посилань у "
 "комплексному ефекті %s, рядок %d\n"
 
-#: src/effects-weed.c:5891
+#: src/effects-weed.c:5905
 #, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
@@ -9811,7 +9811,7 @@ msgstr ""
 "Виявлено некоректний параметр виведення даних %d для параметрів посилань у "
 "комплексному ефекті %s, рядок %d\n"
 
-#: src/effects-weed.c:5906
+#: src/effects-weed.c:5920
 #, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
@@ -9820,7 +9820,7 @@ msgstr ""
 "Виявлено небулеве значення для автоматичного масштабування у комплексному "
 "ефекті %s, рядок %d\n"
 
-#: src/effects-weed.c:5919
+#: src/effects-weed.c:5933
 #, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
@@ -9828,7 +9828,7 @@ msgstr ""
 "Виявлено некоректний фільтр вхідних даних %d для параметрів посилань у "
 "комплексному ефекті %s, рядок %d\n"
 
-#: src/effects-weed.c:5936
+#: src/effects-weed.c:5950
 #, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
@@ -9836,13 +9836,13 @@ msgstr ""
 "Виявлено некоректний параметр вхідних даних %d для параметрів посилань у "
 "комплексному ефекті %s, рядок %d\n"
 
-#: src/effects-weed.c:5968
+#: src/effects-weed.c:5982
 #, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr ""
 "Виявлено некоректне посилання на канал у комплексному ефекті %s, рядок %d\n"
 
-#: src/effects-weed.c:5982
+#: src/effects-weed.c:5996
 #, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
@@ -9851,7 +9851,7 @@ msgstr ""
 "Виявлено некоректний фільтр виведення даних %d для каналів прив’язки у "
 "комплексному ефекті %s, рядок %d\n"
 
-#: src/effects-weed.c:6003
+#: src/effects-weed.c:6017
 #, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
@@ -9859,7 +9859,7 @@ msgstr ""
 "Виявлено некоректний канал виведення даних %d для параметрів посилань у "
 "комплексному ефекті %s, рядок %d\n"
 
-#: src/effects-weed.c:6016
+#: src/effects-weed.c:6030
 #, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
@@ -9867,7 +9867,7 @@ msgstr ""
 "Виявлено некоректний фільтр вхідних даних %d для каналів прив’язки у "
 "комплексному ефекті %s, рядок %d\n"
 
-#: src/effects-weed.c:6037
+#: src/effects-weed.c:6051
 #, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
@@ -9875,42 +9875,42 @@ msgstr ""
 "Виявлено некоректний канал вхідних даних %d для параметрів посилань у "
 "комплексному ефекті %s, рядок %d\n"
 
-#: src/effects-weed.c:6075
+#: src/effects-weed.c:6089
 #, c-format
 msgid "Compound:%s"
 msgstr "Комплексний: %s"
 
-#: src/effects-weed.c:6136
+#: src/effects-weed.c:6150
 #, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr "Успішно завантажено %d комплексних фільтрів\n"
 
-#: src/effects-weed.c:6844
+#: src/effects-weed.c:6858
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr "Не можна використовувати ефект %s з цим програвачем звукових даних.\n"
 
-#: src/effects-weed.c:7005
+#: src/effects-weed.c:7019
 #, c-format
 msgid "Failed to start instance %s, (%s)\n"
 msgstr "Не вдалося запустити екземпляр %s, (%s)\n"
 
-#: src/effects-weed.c:7086
+#: src/effects-weed.c:7100
 #, c-format
 msgid "Unable to start generator %s (error code: %d)\n"
 msgstr "Не вдалося запустити генератор %s (код помилки: %d)\n"
 
-#: src/effects-weed.c:8744
+#: src/effects-weed.c:8774
 #, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr "Не вдалося запустити породжувач %s (%s)\n"
 
-#: src/effects-weed.c:8861
+#: src/effects-weed.c:8891
 #, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr "Не вдалося запустити породжувач %s, (%s)\n"
 
-#: src/effects-weed.c:9806
+#: src/effects-weed.c:9836
 #, c-format
 msgid "%s [unstable]"
 msgstr "%s [нестабільний]"
@@ -10141,7 +10141,7 @@ msgstr "%s: розмір"
 msgid "New size (pixels)"
 msgstr "Новий розмір (у пікселях):"
 
-#: src/paramwindow.c:563 src/plugins.c:991
+#: src/paramwindow.c:563 src/plugins.c:999
 msgid "_Height"
 msgstr "_Висота"
 
@@ -10280,11 +10280,11 @@ msgstr ""
 msgid "Saving playback plugin defaults to %s..."
 msgstr "Збереження типових параметрів додатка відтворення до %s…"
 
-#: src/plugins.c:907
+#: src/plugins.c:915
 msgid "Quick Transcoding"
 msgstr "Швидке перекодування"
 
-#: src/plugins.c:926
+#: src/plugins.c:934
 msgid ""
 "Quick transcode provides a rapid, high quality preview of the selected "
 "frames and audio."
@@ -10292,40 +10292,40 @@ msgstr ""
 "За допомогою швидкого перекодування можна негайно отримати високоякісні дані "
 "попереднього перегляду позначених кадрів та звуку."
 
-#: src/plugins.c:950
+#: src/plugins.c:958
 msgid "Fixed framerate for plugin.\n"
 msgstr "Фіксована частота кадрів для додатка.\n"
 
-#: src/plugins.c:1030
+#: src/plugins.c:1038
 msgid "_Colourspace"
 msgstr "_Простір кольорів"
 
-#: src/plugins.c:1031
+#: src/plugins.c:1039
 msgid "Colourspace input to the plugin.\n"
 msgstr "Вхідний простір кольорів для додатка.\n"
 
-#: src/plugins.c:1049
+#: src/plugins.c:1057
 msgid "Apply current realtime effects"
 msgstr "Застосувати поточні інтерактивні ефекти"
 
-#: src/plugins.c:1084
+#: src/plugins.c:1093
 #, fuzzy
 msgid "Statistics"
 msgstr "П_оказувати дані щодо частоти кадрів"
 
-#: src/plugins.c:1085
+#: src/plugins.c:1094
 msgid "Diagnostics"
 msgstr ""
 
-#: src/plugins.c:1086
+#: src/plugins.c:1095
 msgid "Overlay / Watermark"
 msgstr ""
 
-#: src/plugins.c:1100
+#: src/plugins.c:1109
 msgid "Save settings to an alternate file.\n"
 msgstr "Зберегти параметри до іншого файла.\n"
 
-#: src/plugins.c:1277
+#: src/plugins.c:1292
 #, c-format
 msgid ""
 "\n"
@@ -10343,7 +10343,7 @@ msgstr ""
 "Ви можете повторно його увімкнути за допомогою сторінки «Налаштування -> "
 "Відтворення».\n"
 
-#: src/plugins.c:1333
+#: src/plugins.c:1348
 #, c-format
 msgid ""
 "\n"
@@ -10358,7 +10358,7 @@ msgstr ""
 "не передбачено обов’язкової функції.\n"
 "Його використання неможливе.\n"
 
-#: src/plugins.c:1345
+#: src/plugins.c:1360
 #, c-format
 msgid ""
 "Video playback plugin failed to initialise.\n"
@@ -10367,7 +10367,7 @@ msgstr ""
 "Не вдалося ініціалізувати додаток відтворення.\n"
 "Помилка: %s\n"
 
-#: src/plugins.c:1550
+#: src/plugins.c:1565
 #, c-format
 msgid ""
 "*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). "
@@ -10376,17 +10376,17 @@ msgstr ""
 "*** Використання додатка %s для повноекранного відтворення призведе до "
 "використання типу палітри %d ( %s ). ***\n"
 
-#: src/plugins.c:1648
+#: src/plugins.c:1663
 #, c-format
 msgid "Audio stream unable to use preferred format '%s'\n"
 msgstr "Поток звукових даних не може використовувати бажаний формат «%s»\n"
 
-#: src/plugins.c:1654
+#: src/plugins.c:1669
 #, c-format
 msgid "Using format '%s' instead.\n"
 msgstr "Використовуємо формат «%s».\n"
 
-#: src/plugins.c:1689
+#: src/plugins.c:1704
 #, fuzzy, c-format
 msgid ""
 "LiVES did not receive a response from the encoder plugin called '%s'.\n"
@@ -10400,7 +10400,7 @@ msgstr ""
 "або перемкніть програму на використання іншого додатка за допомогою вкладки "
 "«Інструменти|Параметри|Кодування»\n"
 
-#: src/plugins.c:2296
+#: src/plugins.c:2311
 #, c-format
 msgid ""
 "\n"
@@ -10411,7 +10411,7 @@ msgstr ""
 "\n"
 "У %s не знайдено декодувальників!\n"
 
-#: src/plugins.c:2628
+#: src/plugins.c:2639
 #, c-format
 msgid ""
 "\n"
@@ -10424,7 +10424,7 @@ msgstr ""
 "Не вдалося відкрити додаток декодування %s\n"
 "Помилка: %s\n"
 
-#: src/plugins.c:2651
+#: src/plugins.c:2662
 #, c-format
 msgid ""
 "\n"
@@ -10439,52 +10439,52 @@ msgstr ""
 "немає обов’язкової функції.\n"
 "Його використання неможливе.\n"
 
-#: src/plugins.c:2691
+#: src/plugins.c:2702
 msgid "/unknown"
 msgstr "/невідомо"
 
-#: src/plugins.c:2742
+#: src/plugins.c:2753
 #, fuzzy
 msgid "normal"
 msgstr "нормалізація"
 
-#: src/plugins.c:2745
+#: src/plugins.c:2756
 #, fuzzy
 msgid "testing"
 msgstr "Вставка"
 
-#: src/plugins.c:2746
+#: src/plugins.c:2757
 #, fuzzy
 msgid "may be unstable"
 msgstr "%s [нестабільний]"
 
-#: src/plugins.c:2747
+#: src/plugins.c:2758
 msgid "BROKEN !"
 msgstr ""
 
-#: src/plugins.c:2748
+#: src/plugins.c:2759
 msgid "You should not be seeing this..."
 msgstr ""
 
-#: src/plugins.c:2749
+#: src/plugins.c:2760
 #, fuzzy
 msgid "custom"
 msgstr "Нетиповий"
 
-#: src/plugins.c:2779
+#: src/plugins.c:2790
 msgid "Decoder Plugins"
 msgstr "Додатки декодування"
 
-#: src/plugins.c:2783
+#: src/plugins.c:2794
 msgid "Enabled Video Decoders (uncheck to disable)"
 msgstr "Увімкнені декодери відео (зніміть позначку, щоб вимкнути)"
 
-#: src/plugins.c:2859
+#: src/plugins.c:2870
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Не вдалося завантажити %s, при переходах зміна розмірів неможлива.\n"
 
-#: src/plugins.c:4139
+#: src/plugins.c:4150
 #, c-format
 msgid "%s advanced settings"
 msgstr "Додаткові параметри %s"
@@ -16131,7 +16131,7 @@ msgstr "Назва скрипту: "
 msgid "Clips in Group %"
 msgstr ""
 
-#: src/messaging.c:303
+#: src/messaging.c:302
 #, c-format
 msgid ""
 "\n"
@@ -16142,7 +16142,7 @@ msgstr ""
 "==============================\n"
 "Перемкнуто на кліп %s\n"
 
-#: src/messaging.c:310
+#: src/messaging.c:309
 msgid ""
 "\n"
 "==============================\n"
@@ -16152,19 +16152,19 @@ msgstr ""
 "==============================\n"
 "Перемкнуто на порожній кліп\n"
 
-#: src/messaging.c:349
+#: src/messaging.c:348
 msgid "cancelled.\n"
 msgstr "скасовано.\n"
 
-#: src/messaging.c:354
+#: src/messaging.c:353
 msgid "failed.\n"
 msgstr "невдало.\n"
 
-#: src/messaging.c:359
+#: src/messaging.c:358
 msgid "done.\n"
 msgstr "виконано.\n"
 
-#: src/messaging.c:364
+#: src/messaging.c:363
 msgid "error in file. Failed.\n"
 msgstr "помилка у файлі. Виконання перервано.\n"
 

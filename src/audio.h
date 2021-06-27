@@ -311,4 +311,7 @@ lives_audio_track_state_t *audio_frame_to_atstate(weed_plant_t *event, int *ntra
 #define lives_vol_from_linear(vol) ((float)squared(squared((vol))))
 #define lives_vol_to_linear(vol) (sqrtf(sqrtf((vol))))
 
+int find_standard_arate(int rate);
+LiVESList *get_std_arates(void);
+
 #endif

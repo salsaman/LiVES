@@ -358,6 +358,8 @@ typedef struct _lives_clip_data {
   int sync_hint;
 
   adv_timing_t adv_timing;
+
+  boolean debug;
 } lives_clip_data_t;
 
 
@@ -401,7 +403,7 @@ typedef struct {
 } lives_decoder_sys_t;
 
 typedef struct {
-  const lives_decoder_sys_t *decoder;
+  const lives_decoder_sys_t *dpsys;
   lives_clip_data_t *cdata;
 } lives_decoder_t;
 

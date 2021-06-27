@@ -120,6 +120,8 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
   boolean have_lower_bound = FALSE;
 
   if (allow_longer_seek) no_seek_limit = LNO_SEEK_LIMIT * 1000;
+  if (cdata->debug) no_seek_limit *=  1000;
+
   cdata->seek_flag = LIVES_SEEK_FAST | LIVES_SEEK_FAST_REV;
 
   // check we can get at least one frame
@@ -259,6 +261,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       is_partial_clone = TRUE;
     else priv->longer_seek = TRUE;
   }
+
+  if (cdata->debug) priv->longer_seek = TRUE;
 
   if (isclone) goto skip_probe;
 
@@ -815,7 +819,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   if (!URI && cdata) {
     // create a clone of cdata - we also need to be able to handle a "fake" clone
-    // with only URI, nframes and fps set (priv == NULL_
+    // with only URI, nframes and fps set (priv == NULL)
     cdata = avf_clone(cdata);
     if (!cdata) return NULL;
     priv = cdata->priv;
@@ -853,7 +857,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 rescan:
   priv = cdata->priv;
 
-  if (cdata->seek_flag == 0 || (cdata->seek_flag & LIVES_SEEK_FAST) != 0) {
+  if (!cdata->debug && (cdata->seek_flag == 0 || (cdata->seek_flag & LIVES_SEEK_FAST) != 0)) {
     real_frames = get_real_last_frame(cdata, priv->longer_seek) + 1;
 
     if (real_frames <= 0) {

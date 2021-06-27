@@ -898,7 +898,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     lives_capacity_t *caps = lives_capacities_new();
     THREAD_INTENTION = LIVES_INTENTION_PLAY;
     // TODO - set from plugin - can be local or remote
-    lives_capacity_set(caps, LIVES_CAPACITY_LOCAL);
+    lives_capacity_unset(caps, LIVES_CAPACITY_REMOTE);
     THREAD_CAPACITIES = caps;
   }
 
@@ -2367,14 +2367,14 @@ lives_decoder_t *clone_decoder(int fileno) {
   if (!mainw->files[fileno] || !mainw->files[fileno]->ext_src) return NULL;
   dplug = (lives_decoder_t *)mainw->files[fileno]->ext_src;
   if (dplug) {
-    dpsys = dplug->decoder;
+    dpsys = dplug->dpsys;
     if (dpsys)cdata = (*dpsys->get_clip_data)(NULL, dplug->cdata);
   }
 
   if (!cdata) return NULL;
 
   dplug = (lives_decoder_t *)lives_calloc(1, sizeof(lives_decoder_t));
-  dplug->decoder = dpsys;
+  dplug->dpsys = dpsys;
   dplug->cdata = cdata;
   set_cdata_memfuncs((lives_clip_data_t *)cdata);
   cdata->rec_rowstrides = NULL;
@@ -2386,7 +2386,7 @@ void clip_decoder_free(lives_decoder_t *decoder) {
   if (decoder) {
     lives_clip_data_t *cdata = decoder->cdata;
     if (cdata) {
-      const lives_decoder_sys_t *dpsys = decoder->decoder;
+      const lives_decoder_sys_t *dpsys = decoder->dpsys;
       if (cdata->rec_rowstrides) {
         lives_free(cdata->rec_rowstrides);
         cdata->rec_rowstrides = NULL;
@@ -2457,11 +2457,10 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
         cdata = NULL;
         continue;
       }
-      dplug = (lives_decoder_t *)lives_malloc(sizeof(lives_decoder_t *));
-      dplug->decoder = dpsys;
+      dplug = (lives_decoder_t *)lives_malloc(sizeof(lives_decoder_t));
+      dplug->dpsys = dpsys;
       dplug->cdata = cdata;
       dplug->cdata->rec_rowstrides = NULL;
-      dplug->decoder = dpsys;
       set_cdata_memfuncs(cdata);
       break;
     }
@@ -2518,14 +2517,13 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled,
   if (fake_cdata) {
     // if we are reloading a clip try first with the same decoder as last time,
     // which cannot be disabled
-    uint64_t dec_uid = 0;
     *decplugname = 0;
     if (use_uids)
-      get_clip_value(fileno, CLIP_DETAILS_DECODER_UID, &sfile->decoder_uid, 8);
+      get_clip_value(fileno, CLIP_DETAILS_DECODER_UID, &sfile->decoder_uid, 0);
     else
       get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decplugname, PATH_MAX);
 
-    if ((use_uids && dec_uid) || (!use_uids && *decplugname)) {
+    if ((use_uids && sfile->decoder_uid) || (!use_uids && *decplugname)) {
       LiVESList *decoder_plugin = move_decplug_to_first(sfile->decoder_uid, decplugname);
       if (decoder_plugin) {
         xdisabled = lives_list_remove(xdisabled, decoder_plugin);
@@ -2552,10 +2550,8 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled,
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
-  if (dplug && dplug->decoder && dplug->decoder->id) {
-    /* char *plstr = make_plverstring(dplug->decoder->id, _(" version ")); */
-    /* lives_free(plstr); */
-    sfile->decoder_uid = dplug->decoder->id->uid;
+  if (dplug && dplug->dpsys && dplug->dpsys->id) {
+    sfile->decoder_uid = dplug->dpsys->id->uid;
     sfile->ext_src = dplug;
     sfile->ext_src_type = LIVES_EXT_SRC_DECODER;
     return dplug->cdata;
@@ -2610,7 +2606,7 @@ boolean chill_decoder_plugin(int fileno) {
   lives_clip_t *sfile = mainw->files[fileno];
   if (IS_NORMAL_CLIP(fileno) && sfile->clip_type == CLIP_TYPE_FILE && sfile->ext_src) {
     lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
-    lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->decoder;
+    lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
     lives_clip_data_t *cdata = dplug->cdata;
     if (cdata)
       if (dpsys->chill_out) return (*dpsys->chill_out)(cdata);

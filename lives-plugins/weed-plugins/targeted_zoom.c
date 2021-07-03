@@ -52,7 +52,6 @@ static weed_error_t targeted_zoom_process(weed_plant_t *inst, weed_timecode_t tc
   int height = weed_channel_get_height(out_chan);
   int orow = weed_channel_get_stride(out_chan);
   int psize = pixel_size(pal);
-
   double scale = weed_param_get_value_double(in_params[P_scale]);
   double xoffs = weed_param_get_value_double(in_params[P_xoffs]);
   double yoffs = weed_param_get_value_double(in_params[P_yoffs]);

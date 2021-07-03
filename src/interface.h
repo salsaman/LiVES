@@ -70,6 +70,8 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 LiVESWidget *widget_add_preview(LiVESWidget *, LiVESBox *for_preview, LiVESBox *for_button,
                                 LiVESBox *for_deinterlace, int preview_type);  ///< for fileselector preview
 
+boolean do_st_end_times_dlg(int clipno, double *start, double *end);
+
 /// window change speed from Tools menu
 void create_new_pb_speed(short type);
 

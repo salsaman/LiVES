@@ -105,6 +105,7 @@ static weed_error_t vertigo_init(weed_plant_t *inst) {
   double pinc = weed_param_get_value_double(in_params[P_pinc]);
   double zoom = weed_param_get_value_double(in_params[P_zoom]);
   weed_free(in_params);
+
   if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {
     sdata = (sdata_t *)weed_calloc(1, sizeof(sdata_t));
     if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
@@ -155,44 +156,45 @@ static weed_error_t vertigo_process(weed_plant_t *inst, weed_timecode_t tc) {
   int psize = pixel_size(pal);
   sdata_t *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (!sdata) return WEED_ERROR_REINIT_NEEDED;
+  else {
+    double pinc = weed_param_get_value_double(in_params[P_pinc]);
+    double zoom = weed_param_get_value_double(in_params[P_zoom]);
+    weed_free(in_params);
 
-  double pinc = weed_param_get_value_double(in_params[P_pinc]);
-  double zoom = weed_param_get_value_double(in_params[P_zoom]);
-  weed_free(in_params);
+    if (1) {
+      RGB32 v, z, *p = sdata->alt_buffer, *psrc = (RGB32 *)src;
 
-  if (1) {
-    RGB32 v, z, *p = sdata->alt_buffer, *psrc = (RGB32 *)src;
+      int video_area = width * height;
+      int y, ox, oy, x, i;
+      int widthx = width * pixel_size(pal);
 
-    int video_area = width * height;
-    int y, ox, oy, x, i;
-    int widthx = width * pixel_size(pal);
+      setParams(width, height, sdata, pinc, zoom);
+      irow /= psize;
 
-    setParams(width, height, sdata, pinc, zoom);
-    irow /= psize;
-
-    for (y = 0; y < height; y++) {
-      ox = sdata->sx;
-      oy = sdata->sy;
-      for (x = 0; x < width; x++) {
-        if ((i = (oy >> 16) * width + (ox >> 16)) < 0) i = 0;
-        if (i >= video_area) i = video_area;
-        z = psrc[irow * y + x];
-        v = ((sdata->current_buffer[i] & 0xfcfcff) * 3) + (z & 0xfcfcff);
-        p[width * y + x] = (v >> 2) | (z & 0xff000000);
-        ox += sdata->dx;
-        oy += sdata->dy;
+      for (y = 0; y < height; y++) {
+        ox = sdata->sx;
+        oy = sdata->sy;
+        for (x = 0; x < width; x++) {
+          if ((i = (oy >> 16) * width + (ox >> 16)) < 0) i = 0;
+          if (i >= video_area) i = video_area;
+          z = psrc[irow * y + x];
+          v = ((sdata->current_buffer[i] & 0xfcfcff) * 3) + (z & 0xfcfcff);
+          p[width * y + x] = (v >> 2) | (z & 0xff000000);
+          ox += sdata->dx;
+          oy += sdata->dy;
+        }
+        sdata->sx -= sdata->dy;
+        sdata->sy += sdata->dx;
       }
-      sdata->sx -= sdata->dy;
-      sdata->sy += sdata->dx;
-    }
 
-    for (y = 0; y < height; y++) {
-      weed_memcpy(&dst[orow * y], &sdata->alt_buffer[width * y], widthx);
-    }
+      for (y = 0; y < height; y++) {
+        weed_memcpy(&dst[orow * y], &sdata->alt_buffer[width * y], widthx);
+      }
 
-    p = sdata->current_buffer;
-    sdata->current_buffer = sdata->alt_buffer;
-    sdata->alt_buffer = p;
+      p = sdata->current_buffer;
+      sdata->current_buffer = sdata->alt_buffer;
+      sdata->alt_buffer = p;
+    }
   }
 
   return WEED_SUCCESS;

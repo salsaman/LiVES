@@ -1297,6 +1297,7 @@ typedef struct {
   LiVESWidget *trim_to_pstart;
   LiVESWidget *delaudio_submenu;
   LiVESWidget *delsel_audio;
+  LiVESWidget *delspec_audio;
   LiVESWidget *delall_audio;
   LiVESWidget *ins_silence;
   LiVESWidget *voladj;

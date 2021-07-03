@@ -63,11 +63,14 @@ static weed_error_t dissolve_init(weed_plant_t *inst) {
   sdata->mask = weed_calloc(width * height, sizeof(float));
   if (!sdata->mask) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  sdata->fastrand_val = fastrand(0); // seed random
+  weed_set_int64_value(inst, WEED_LEAF_PLUGIN_RANDOM_SEED,
+                       weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL));
 
-  for (int i = 0; i < height; i += width) {
+  fprintf(stderr, "INITN !\n");
+
+  for (int i = 0; i < height; i++) {
     for (int j = 0; j < width; j++) {
-      sdata->mask[width * i + j] = (float)((double)(sdata->fastrand_val = fastrand(sdata->fastrand_val)) / (double)UINT64_MAX);
+      sdata->mask[width * i + j] = (float)(fastrand_dbl_re(1., inst, WEED_LEAF_PLUGIN_RANDOM_SEED));
     }
   }
 

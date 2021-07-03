@@ -4734,6 +4734,55 @@ LIVES_GLOBAL_INLINE LiVESWidget *make_autoreload_check(LiVESHBox * hbox, boolean
 }
 
 
+boolean do_st_end_times_dlg(int clipno, double * start, double * end) {
+  lives_clip_t *sfile;
+  LiVESWidget *dialog = lives_standard_dialog_new(_("Start and End Times"), TRUE, -1, -1);
+  LiVESWidget *dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  LiVESWidget *layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+  LiVESWidget *sttime, *entime, *cb_quant = NULL, *hbox;
+  LiVESResponseType resp;
+
+  if (!IS_VALID_CLIP(clipno)) return FALSE;
+  sfile = mainw->files[clipno];
+
+  lives_layout_set_row_spacings(LIVES_LAYOUT(layout), widget_opts.packing_height << 2);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  sttime = lives_standard_spin_button_new(_("Start time (seconds)"), 0., 0., sfile->laudio_time,
+                                          1., 1, 2, LIVES_BOX(hbox), NULL);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  entime = lives_standard_spin_button_new(_("End time (seconds)"), 0., 0., sfile->laudio_time,
+                                          1., 1, 2, LIVES_BOX(hbox), NULL);
+
+  spin_ranges_set_exclusive(LIVES_SPIN_BUTTON(sttime), LIVES_SPIN_BUTTON(entime), 0.);
+
+  if (sfile->frames) {
+    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+    cb_quant = lives_standard_check_button_new(_("Snap to nearest frame start"), FALSE, LIVES_BOX(hbox), NULL);
+  }
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+  resp = lives_dialog_run(LIVES_DIALOG(dialog));
+  if (resp == LIVES_RESPONSE_CANCEL) {
+    return FALSE;
+  }
+
+  *start = lives_spin_button_get_value(LIVES_SPIN_BUTTON(sttime));
+  *end = lives_spin_button_get_value(LIVES_SPIN_BUTTON(entime));
+
+  if (sfile->frames && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb_quant))) {
+    *start = q_dbl(*start, sfile->fps);
+    *end = q_dbl(*end, sfile->fps);
+  }
+
+  lives_widget_destroy(dialog);
+
+  return TRUE;
+}
+
+
 //cancel/discard/save dialog
 _entryw *create_cds_dialog(int type) {
   // values for type are:

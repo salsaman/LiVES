@@ -1178,6 +1178,16 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
   lives_filter_error_t filter_error = FILTER_SUCCESS;
   int key = -1;
 
+  // we need to reinit
+  // however, a size / rowstrides change may have been caused by an adjustment in adaptive quality
+  // - if the reinit causes a delay then we might immediately switch back to a lower quality
+  //   (since frames will be dropped) - however if we keep doing this, we will be constantly reiniting
+  //   thus we need to tell the player to ignore dropped frames for this cycle when updating effort
+
+  // player will reset this for the next cycle
+  if (LIVES_IS_PLAYING && mainw->scratch == SCRATCH_NONE)
+    mainw->scratch = SCRATCH_JUMP;
+
   // +1 ref
   weed_instance_ref(inst);
 
@@ -1213,7 +1223,6 @@ reinit:
   if (deinit_first) {
     // +- refs
     weed_instance_ref(inst);
-    g_print("call deinit\n");
     retval = weed_call_deinit_func(inst);
     if (retval != WEED_SUCCESS) {
       weed_instance_unref(inst);
@@ -1222,7 +1231,6 @@ reinit:
   }
 
   // +- refs
-  g_print("call init\n");
   retval = weed_call_init_func(inst);
   weed_instance_unref(inst);
 
@@ -1266,7 +1274,6 @@ reinit:
     if (!rfx || !(rfx->flags & (RFX_FLAGS_UPD_FROM_GUI | RFX_FLAGS_UPD_FROM_VAL))) {
       // +- refs
       weed_instance_ref(inst);
-      g_print("call deinit2\n");
       retval = weed_call_deinit_func(inst);
       if (retval != WEED_SUCCESS) weed_instance_unref(inst);
     }
@@ -1656,8 +1663,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   if (prefs->dev_show_timing)
     g_printerr("apply inst @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
-  if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE) needs_reinit = TRUE;
-
+  if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE) {
+    needs_reinit = TRUE;
+  }
   if (LIVES_IS_RENDERING) pb_quality = PB_QUALITY_HIGH;
 
   // TODO - check if inited, if not return with error (check also for filters with no init_func)
@@ -2036,7 +2044,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 	}}}}
     // *INDENT-ON*
 
-  if (1) {
+  if (opwidth != rmaxw || opwidth != rminw || opheight != rmaxh || opheight != rminh) {
     // there are at most 3 aspect ratios to consider:
     // - the player / encoded clip
     // - the renderer (which all frames letterbox inside, and which is letterboxed into the output)
@@ -2114,7 +2122,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
             // make sure we include all frames, but keep with output bounds
             calc_midspect(rmaxw, rmaxh, &rminw, &rminh);
             if (opwidth && opheight) {
-              if (rminw > opwidth || rminh > opheight) {
+              if (mainw->fs && (rminw > opwidth || rminh > opheight)) {
                 calc_maxspect(opwidth, opheight, &rminw, &rminh);
               }
             }
@@ -2122,7 +2130,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
             opheight = rminh;
           } else {
             if (opwidth && opheight) {
-              if (opwidth < rmaxw || opheight < rmaxh) {
+              if (mainw->fs && (opwidth < rmaxw || opheight < rmaxh)) {
                 calc_maxspect(opwidth, opheight, &rmaxw, &rmaxh);
               } else {
                 opwidth = rmaxw;
@@ -2154,7 +2162,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
         //g_print("FX size %d X %d %d %d\n", opwidth, opheight, pb_quality, letterbox);
         // has to be a multiple of 16 ! either for openGL or swscale
-        opwidth = ((opwidth + 8) >> 4) << 4;
+        opwidth = (opwidth >> 4) << 4;
         opheight = (opheight >> 1) << 1;
         //g_print("FX2 size %d X %d\n", opwidth, opheight);
       }
@@ -2218,45 +2226,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (owidth != width || oheight != height) {
       set_channel_size(filter, channel, width, height);
-      opwidth = weed_channel_get_width(channel);
-      opheight = weed_channel_get_height(channel);
-      if (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE) {
-        boolean oneeds_reinit = needs_reinit;
-        needs_reinit = TRUE;
-        if (1 || channel_flags & WEED_CHANNEL_NEEDS_NATURAL_SIZE) {
-          int *nsizes = weed_get_int_array(channel, WEED_LEAF_NATURAL_SIZE, NULL);
-          if (nsizes) {
-            int *lnsizes;
-            if (prefs->dev_show_timing)
-              g_printerr("nsw pre2 @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-            lives_nanosleep_until_nonzero(weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
-            if (prefs->dev_show_timing)
-              g_printerr("nsw post2 @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-            lnsizes = weed_get_int_array(layer, WEED_LEAF_NATURAL_SIZE, NULL);
-            if (nsizes[0] == lnsizes[0] && nsizes[1] == lnsizes[1]) needs_reinit = oneeds_reinit;
-            lives_free(lnsizes);
-            lives_free(nsizes);
-	    // *INDENT-OFF*
-	  }}}}
-    // *INDENT-ON*
-
-    if (prefs->dev_show_timing)
-      g_printerr("nsw pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-    if (1 || channel_flags & WEED_CHANNEL_NEEDS_NATURAL_SIZE) {
-      lives_alarm_t alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
-      ticks_t xtimeout;
-      lives_nanosleep_until_nonzero(!(xtimeout = lives_alarm_check(alarm_handle))
-                                    || weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
-      lives_alarm_clear(alarm_handle);
-      if (!xtimeout) {
-        break_me("slow");
-        continue;
+      width = weed_channel_get_width_pixels(channel);
+      height = weed_channel_get_height(channel);
+      if (width != owidth || height != oheight) {
+        if (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE) {
+          needs_reinit = TRUE;
+        }
       }
-      lives_nanosleep_until_nonzero(weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
-      weed_leaf_dup(channel, layer, WEED_LEAF_NATURAL_SIZE);
     }
-    if (prefs->dev_show_timing)
-      g_printerr("nsw post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     i++;
   }
 
@@ -2348,6 +2325,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         if (clip == 0 || IS_NORMAL_CLIP(clip)) {
           if (!weed_palette_is_rgb(opalette))
             opalette = (weed_palette_has_alpha(opalette) ? WEED_PALETTE_RGBA32 : WEED_PALETTE_RGB24);
+          g_print("rzzzzessssdaseisdasdnnn 123aaa\n");
           needs_reinit = TRUE;
 	  // *INDENT-OFF*
 	}}}
@@ -2365,7 +2343,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
 
       if (palette != inpalette) {
-        if (channel_flags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE) needs_reinit = TRUE;
+        if (channel_flags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE) {
+          g_print("ressssdaseisdasdnnn 123aaa\n");
+          needs_reinit = TRUE;
+        }
       }
       lives_freep((void **)&palettes);
       opalette = palette;
@@ -2450,6 +2431,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
                 opalette = best_palette_match(palettes, num_palettes, opalette);
               }
             }
+            g_print("reeisdasdnnn 123aaa\n");
             needs_reinit = TRUE;
 	    // *INDENT-OFF*
           }}}}
@@ -2538,9 +2520,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         if (weed_plant_has_leaf(channel, WEED_LEAF_INNER_SIZE))
           weed_leaf_delete(channel, WEED_LEAF_INNER_SIZE);
         if (sfile && sfile->clip_type == CLIP_TYPE_GENERATOR && prefs->no_lb_gens) {
-          get_player_size(&width, &height);
-          width = mainw->pwidth;
-          height = mainw->pheight;
+          /* get_player_size(&width, &height); */
+          /* width = mainw->pwidth; */
+          /* height = mainw->pheight; */
         } else if (letterbox && opwidth && opheight) calc_maxspect(opwidth, opheight, &width, &height);
         if (!resize_layer(layer, width, height, interp, opalette, oclamping)) {
           retval = FILTER_ERROR_UNABLE_TO_RESIZE;
@@ -2559,6 +2541,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       if (weed_plant_has_leaf(channel, WEED_LEAF_INNER_SIZE))
         weed_leaf_delete(channel, WEED_LEAF_INNER_SIZE);
     }
+
+    weed_leaf_dup(channel, layer, WEED_LEAF_NATURAL_SIZE);
 
     // check palette again in case it changed during resize
     cpalette = weed_layer_get_palette(layer);
@@ -2592,9 +2576,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     lives_free(channel_rows);
     lives_free(rowstrides);
 
-    if (rowstrides_changed && (channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))
+    if (rowstrides_changed && (channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE)) {
+      g_print("reeinnn 123aaa\n");
       needs_reinit = TRUE;
-
+    }
     if (tgamma != WEED_GAMMA_UNKNOWN) {
       if (prefs->dev_show_timing)
         g_printerr("gamma1 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -2712,8 +2697,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         lives_freep((void **)&palettes);
       }
 
-      /* if (num_inc == 1) */
-      /*   weed_leaf_copy_or_delete(channel, WEED_LEAF_NATURAL_SIZE, def_channel); */
+      if (num_inc == 1)
+        weed_leaf_copy_or_delete(channel, WEED_LEAF_NATURAL_SIZE, def_channel);
       weed_leaf_copy_or_delete(channel, WEED_LEAF_YUV_CLAMPING, def_channel);
       weed_leaf_copy_or_delete(channel, WEED_LEAF_YUV_SAMPLING, def_channel);
       weed_leaf_copy_or_delete(channel, WEED_LEAF_YUV_SUBSPACE, def_channel);
@@ -2769,14 +2754,19 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     width = weed_channel_get_width(channel);
     height = weed_channel_get_height(channel);
 
-    if ((rowstrides_changed && (channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))) needs_reinit = TRUE;
-
-    if ((outwidth != width || outheight != height) && (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE))
+    if ((rowstrides_changed && (channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))) {
+      g_print("reeinnn 123\n");
       needs_reinit = TRUE;
+    }
+    if ((outwidth != width || outheight != height) && (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)) {
+      needs_reinit = TRUE;
+    }
 
     if (palette != inpalette || (weed_palette_is_yuv(palette)
                                  && (oclamping != iclamping || osampling != isampling || osubspace != isubspace)))
-      if (channel_flags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE) needs_reinit = TRUE;
+      if (channel_flags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE) {
+        needs_reinit = TRUE;
+      }
   }
 
   /// all channels now set up
@@ -3013,6 +3003,7 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
     lives_free(out_channels);
     if (retval != FILTER_ERROR_DONT_THREAD) did_thread = TRUE;
   }
+
   if (!did_thread) {
     // normal single threaded version
     process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
@@ -8047,7 +8038,7 @@ matchvals:
   palette_list = weed_chantmpl_get_palette_list(filter, chantmpl, &npals);
   palette = WEED_PALETTE_END;
 
-  if (needs_reinit || weed_get_boolean_value(inst, WEED_LEAF_HOST_UNUSED, NULL) == WEED_TRUE)
+  if (needs_reinit)// weed_get_boolean_value(inst, WEED_LEAF_HOST_UNUSED, NULL) == WEED_TRUE)
     can_change = TRUE;
 
   needs_reinit = FALSE;
@@ -8077,7 +8068,7 @@ matchvals:
     }
   }
 
-  xwidth = width = weed_channel_get_width(channel);
+  xwidth = width = weed_channel_get_width_pixels(channel);
   xheight = height = weed_channel_get_height(channel);
 
   // no_lb_gens -> use a.r of player
@@ -8103,36 +8094,35 @@ matchvals:
     if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_HEIGHT)) {
       xheight = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
     } else xheight = DEF_GEN_HEIGHT;
-  }
 
-  oxwidth = xwidth;
-  oxheight = xheight;
+    oxwidth = xwidth;
+    oxheight = xheight;
 
-  if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file) {
-    if (is_bg) {
-      lb_width = mainw->files[mainw->playing_file]->hsize;
-      lb_height = mainw->files[mainw->playing_file]->vsize;
-    } else {
-      lb_width = mainw->files[mainw->blend_file]->hsize;
-      lb_height = mainw->files[mainw->blend_file]->vsize;
-    }
-    // expand to contain other
-    //calc_midspect(lb_width, lb_height, &xwidth, &xheight);
-    calc_maxspect(lb_width, lb_height, &xwidth, &xheight);
-    //g_print("SZ is %d X %d\n", xwidth, xheight);
-
-    switch (prefs->pb_quality) {
-    case PB_QUALITY_HIGH:
-      get_player_size(&lb_width, &lb_height);
+    if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file) {
+      if (is_bg) {
+        lb_width = mainw->files[mainw->playing_file]->hsize;
+        lb_height = mainw->files[mainw->playing_file]->vsize;
+      } else {
+        lb_width = mainw->files[mainw->blend_file]->hsize;
+        lb_height = mainw->files[mainw->blend_file]->vsize;
+      }
+      // expand to contain other
+      //calc_midspect(lb_width, lb_height, &xwidth, &xheight);
       calc_maxspect(lb_width, lb_height, &xwidth, &xheight);
-    case PB_QUALITY_MED:
-      calc_maxspect(oxwidth, oxheight, &xwidth, &xheight);
-      break;
-    default:
-      break;
+      //g_print("SZ is %d X %d\n", xwidth, xheight);
+
+      switch (prefs->pb_quality) {
+      case PB_QUALITY_HIGH:
+        get_player_size(&lb_width, &lb_height);
+        calc_maxspect(lb_width, lb_height, &xwidth, &xheight);
+      case PB_QUALITY_MED:
+        calc_maxspect(oxwidth, oxheight, &xwidth, &xheight);
+        break;
+      default:
+        break;
+      }
     }
   }
-
   //g_print("SZ2 is %d X %d\n", xwidth, xheight);
 
   if (xwidth * xheight == 0) {
@@ -8153,26 +8143,30 @@ matchvals:
     }
   }
 
-  xwidth = ((xwidth + 8) >> 4) << 4;
+  xwidth = (xwidth >> 4) << 4;
+
+  // see if we need to change the size
+  // if so and we need to reinit we can then update the palette
+  // or if we dont need to reinit on pal. changes then we can just update it
 
   for (i = 0; (xchannel = get_enabled_channel(inst, i, FALSE)); i++) {
     if (xwidth != weed_channel_get_width(xchannel) ||
         xheight != weed_channel_get_height(xchannel)) {
 
       // this helps for openGL player etc.
-      if (mainw->ext_playback) {
-        if (palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24)
-          xwidth = (xwidth >> 3) << 3;
-      }
+      /* if (mainw->ext_playback) { */
+      /*   if (palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24) */
+      /*     xwidth = (xwidth >> 3) << 3; */
+      /* } */
       //g_print("set xchannel size to %d X %d\n", xwidth, xheight);
       set_channel_size(filter, xchannel, xwidth, xheight);
     }
   }
 
-  xwidth = weed_channel_get_width(channel);
+  xwidth = weed_channel_get_width_pixels(channel);
   xheight = weed_channel_get_height(channel);
 
-  sfile->hsize = xwidth;
+  sfile->hsize = xwidth / weed_palette_get_pixels_per_macropixel(palette);
   sfile->vsize = xheight;
 
   if (xwidth != width || xheight != height) {
@@ -8181,29 +8175,34 @@ matchvals:
     }
   }
 
-  if (needs_reinit || weed_get_boolean_value(inst, WEED_LEAF_HOST_UNUSED, NULL) == WEED_TRUE)
+  if (needs_reinit)// || weed_get_boolean_value(inst, WEED_LEAF_HOST_UNUSED, NULL) == WEED_TRUE)
     can_change = TRUE;
 
-  if (can_change || !((channel_flags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE))) {
+  if (can_change || opalette == WEED_PALETTE_END || !((channel_flags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE))) {
     palette = check_filter_chain_palettes(is_bg, palette_list, npals);
+
     if (palette != WEED_PALETTE_END) {
+
       if (palette != opalette
-          && (can_change || (!((channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE)
-                               && pixel_size(palette) != pixel_size(opalette))))) {
+          && (opalette == WEED_PALETTE_END || can_change
+              || (!((channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE)
+                    && pixel_size(palette) != pixel_size(opalette))))) {
         weed_channel_set_palette(channel, palette);
         if (channel_flags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE) {
           needs_reinit = TRUE;
         }
-        if ((channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE)
-            && pixel_size(palette) != pixel_size(opalette)) {
-          needs_reinit = TRUE;
-        }
         opalette = palette;
+        weed_layer_pixel_data_free(channel);
+      } else palette = opalette;
+
+    } else {
+      if (opalette == WEED_PALETTE_END) {
+        palette = opalette = palette_list[0];
       }
     }
   }
 
-  xwidth = weed_channel_get_width(channel);
+  xwidth = weed_channel_get_width_pixels(channel);
   xheight = weed_channel_get_height(channel);
 
   if (xwidth != width || xheight != height) {
@@ -8226,6 +8225,7 @@ matchvals:
   }
 
   if (!weed_channel_get_pixel_data(channel)) {
+    weed_leaf_delete(channel, WEED_LEAF_NATURAL_SIZE);
     if (!create_empty_pixel_data(channel, FALSE, TRUE)) {
       // create pixel data with new vals, so we get rowstrides
       weed_instance_unref(inst);
@@ -8237,8 +8237,9 @@ matchvals:
 
   if (!needs_reinit && (channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE)) {
     int *rowstrides2 = weed_channel_get_rowstrides(channel, &npl2);
-    if (rowstrides_differ(npl, rowstrides, npl2, rowstrides2))
+    if (rowstrides_differ(npl, rowstrides, npl2, rowstrides2)) {
       needs_reinit = TRUE;
+    }
     lives_free(rowstrides2);
   }
 
@@ -8260,7 +8261,7 @@ matchvals:
   lives_free(rowstrides);
 
   if (sfile) {
-    sfile->hsize = xwidth / weed_palette_get_pixels_per_macropixel(opalette);
+    sfile->hsize = xwidth;
     sfile->vsize = xheight;
 
     if (clipno == mainw->playing_file) {
@@ -8341,8 +8342,9 @@ procfunc1:
         lives_memcpy(&opd[orow * i], &ipd[irow * i], bw);
       }
 
-      nats = weed_get_int_array(channel, WEED_LEAF_NATURAL_SIZE, 0);
+      nats = weed_get_int_array(channel, WEED_LEAF_NATURAL_SIZE, NULL);
       weed_layer_pixel_data_free(channel);
+
       resize_layer(newl, xwidth, xheight, LIVES_INTERP_BEST, WEED_PALETTE_END,
                    WEED_YUV_CLAMPING_UNCLAMPED);
       weed_layer_copy(channel, newl);

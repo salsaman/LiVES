@@ -41,6 +41,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 
 /// internal data keys
 #define STD_KEY "_wh_is_standard"
+#define EXCL_KEY "_wh_excl"
 #define BACCL_GROUP_KEY "_wh_baccl_group"
 #define BACCL_ACCL_KEY "_wh_baccl_accl"
 #define TTIPS_KEY "_wh_lives_tooltips"
@@ -9942,6 +9943,39 @@ boolean lives_adjustment_configure_the_good_bits(LiVESAdjustment * adj,
                                     lives_adjustment_get_step_increment(adj),
                                     lives_adjustment_get_page_increment(adj));
 }
+
+
+void spval_sets_start(LiVESSpinButton * sp1, LiVESSpinButton * sp2) {
+  LiVESAdjustment *adj = lives_spin_button_get_adjustment(sp2);
+  double val;
+  int excl = GET_INT_DATA(sp1, EXCL_KEY);
+  if (!excl) val = lives_spin_button_get_value(sp1);
+  else val = (double)(lives_spin_button_get_value_as_int(sp1) + excl);
+  lives_adjustment_set_lower(adj, val);
+}
+
+void spval_sets_end(LiVESSpinButton * sp1, LiVESSpinButton * sp2) {
+  LiVESAdjustment *adj = lives_spin_button_get_adjustment(sp2);
+  double val;
+  int excl = GET_INT_DATA(sp1, EXCL_KEY);
+  if (!excl) val = lives_spin_button_get_value(sp1);
+  else val = (double)(lives_spin_button_get_value_as_int(sp1) + excl);
+  lives_adjustment_set_upper(adj, val);
+}
+
+
+boolean spin_ranges_set_exclusive(LiVESSpinButton * sp1, LiVESSpinButton * sp2, int excl) {
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(sp1), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(spval_sets_start), sp2);
+  if (excl) SET_INT_DATA(sp1, EXCL_KEY, excl);
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(sp2), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(spval_sets_end), sp1);
+  if (excl) SET_INT_DATA(sp2, EXCL_KEY, excl);
+
+  return TRUE;
+}
+
 
 
 LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, double min,

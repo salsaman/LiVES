@@ -186,10 +186,6 @@ static weed_error_t edge_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
     for (y = 2; y < height - 2; y++) {
       for (x = 2; x < width - 2; x++) {
-        /* sdata->mapgx[y * width + x] = sdata->maph[(y - 1) * width + x] */
-        /* 	+ sdata->maph[y * width + x] + sdata->maph[(y + 1) * width + x]; */
-        /* sdata->mapgy[y * width + x] = sdata->mapv[y * width + x - 1] */
-        /* 	+ sdata->mapv[y * width + x] + sdata->mapv[y * width + x + 1]; */
         v0 = sdata->maph[(y - 1) * width + x]
              + sdata->maph[y * width + x] + sdata->maph[(y + 1) * width + x];
         v1 = sdata->mapv[y * width + x - 1]
@@ -201,6 +197,7 @@ static weed_error_t edge_process(weed_plant_t *inst, weed_timecode_t timestamp) 
         nbh++;
       }
     }
+
     // use Otsu to find thresh
     abh = (double)(bh) / (double)nbh;
     for (thresh = 0; thresh < TMAX; thresh++) {

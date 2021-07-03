@@ -101,37 +101,39 @@ static weed_error_t xeffect_process(weed_plant_t *inst, weed_timecode_t tc) {
   int psize = pixel_size(pal);
   sdata_t *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (!sdata) return WEED_ERROR_REINIT_NEEDED;
+  else {
 
-  if (1) {
-    int widthp = (width - 1) * psize, nbr;
-    unsigned int myluma, threshold = 10000;
-    if (!sdata->map) return WEED_ERROR_REINIT_NEEDED;
+    if (1) {
+      int widthp = (width - 1) * psize, nbr;
+      unsigned int myluma, threshold = 10000;
+      if (!sdata->map) return WEED_ERROR_REINIT_NEEDED;
 
-    for (int h = 0; h < height; h++) {
-      for (int i = 0; i < width; i ++) {
-        sdata->map[h * width + i] = calc_luma(&src[h * irow  + i * psize], pal, 0);
-      }
-    }
-    src += irow;
-    dst += orow;
-    for (int h = 1; h < height - 2; h++) {
-      for (int i = psize; i < widthp; i += psize) {
-        myluma = sdata->map[h * width + i / psize];
-        nbr = 0;
-        for (int j = h - 1; j <= h + 1; j++) {
-          for (int k = -1; k < 2; k++) {
-            if ((j != h || k != 0) &&
-                ABS(sdata->map[j * width + i / psize + k] - myluma) > threshold) nbr++;
-          }
+      for (int h = 0; h < height; h++) {
+        for (int i = 0; i < width; i ++) {
+          sdata->map[h * width + i] = calc_luma(&src[h * irow  + i * psize], pal, 0);
         }
-        if (nbr < 2 || nbr > 5) {
-          nine_fill(&dst[h * orow + i], orow, &src[h * irow + i]);
-        } else {
-          if (myluma < 12500) {
-            blank_pixel(&dst[h * orow + i], pal, 0, NULL);
+      }
+      src += irow;
+      dst += orow;
+      for (int h = 1; h < height - 2; h++) {
+        for (int i = psize; i < widthp; i += psize) {
+          myluma = sdata->map[h * width + i / psize];
+          nbr = 0;
+          for (int j = h - 1; j <= h + 1; j++) {
+            for (int k = -1; k < 2; k++) {
+              if ((j != h || k != 0) &&
+                  ABS(sdata->map[j * width + i / psize + k] - myluma) > threshold) nbr++;
+            }
+          }
+          if (nbr < 2 || nbr > 5) {
+            nine_fill(&dst[h * orow + i], orow, &src[h * irow + i]);
           } else {
-            if (myluma > 20000) {
-              make_white(&dst[h * orow + i]);
+            if (myluma < 12500) {
+              blank_pixel(&dst[h * orow + i], pal, 0, NULL);
+            } else {
+              if (myluma > 20000) {
+                make_white(&dst[h * orow + i]);
+              }
             }
           }
         }

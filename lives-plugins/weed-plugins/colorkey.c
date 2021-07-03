@@ -48,7 +48,6 @@ static weed_error_t colorkey_process(weed_plant_t *inst, weed_timecode_t tc) {
   int orow = weed_channel_get_stride(out_chan);
   int *iarray;
   int col_red, col_green, col_blue;
-
   double delta = weed_param_get_value_double(in_params[P_delta]);
   double opac = weed_param_get_value_double(in_params[P_opac]);
   iarray = weed_param_get_array_int(in_params[P_col], NULL);

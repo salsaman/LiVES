@@ -103,43 +103,45 @@ static weed_error_t alien_overlay_process(weed_plant_t *inst, weed_timecode_t tc
   int psize = pixel_size(pal);
   sdata_t *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (!sdata) return WEED_ERROR_REINIT_NEEDED;
+  else {
 
-  if (is_threading) {
-    offset = weed_channel_get_offset(out_chan);
-    src += offset * irow;
-    dst += offset * orow;
-  }
+    if (is_threading) {
+      offset = weed_channel_get_offset(out_chan);
+      src += offset * irow;
+      dst += offset * orow;
+    }
 
-  if (1) {
-    /// the secret to this effect is that we deliberately cast the values to (char)
-    /// rather than (unsigned char)
-    /// when averaging the current frame with the prior one
-    // - the overflow when converted back produces some interesting visuals
-    int offset = weed_channel_get_offset(out_chan);
-    int offs = rgb_offset(pal);
-    int xwidth = width * psize;
-    int row = offset;
-    unsigned char *old_pixel_data, val;
-    width *= 3;
-    old_pixel_data = sdata->old_pixel_data + width * offset;
+    if (1) {
+      /// the secret to this effect is that we deliberately cast the values to (char)
+      /// rather than (unsigned char)
+      /// when averaging the current frame with the prior one
+      // - the overflow when converted back produces some interesting visuals
+      int offset = weed_channel_get_offset(out_chan);
+      int offs = rgb_offset(pal);
+      int xwidth = width * psize;
+      int row = offset;
+      unsigned char *old_pixel_data, val;
+      width *= 3;
+      old_pixel_data = sdata->old_pixel_data + width * offset;
 
-    for (int i = 0; i < height; i++) {
-      for (int j = offs; j < xwidth; j += psize) {
-        for (int k = 0; k < 3; k++) {
-          if (sdata->inited[row]) {
-            if (!inplace) {
-              dst[orow * i + j + k] = ((char)(old_pixel_data[width * i + j + k])
-                                       + (char)(src[irow * i + j + k])) >> 1;
-              old_pixel_data[width * i + j + k] = src[irow * i + j + k];
-            } else {
-              val = ((char)(old_pixel_data[width * i + j + k]) + (char)(src[irow * i + j + k])) >> 1;
-              old_pixel_data[width * i + j + k] = src[irow * i + j + k];
-              dst[orow * i + j + k] = val;
-            }
-          } else old_pixel_data[width * i + j + k] = dst[orow * i + j + k] = src[irow * i + j + k];
+      for (int i = 0; i < height; i++) {
+        for (int j = offs; j < xwidth; j += psize) {
+          for (int k = 0; k < 3; k++) {
+            if (sdata->inited[row]) {
+              if (!inplace) {
+                dst[orow * i + j + k] = ((char)(old_pixel_data[width * i + j + k])
+                                         + (char)(src[irow * i + j + k])) >> 1;
+                old_pixel_data[width * i + j + k] = src[irow * i + j + k];
+              } else {
+                val = ((char)(old_pixel_data[width * i + j + k]) + (char)(src[irow * i + j + k])) >> 1;
+                old_pixel_data[width * i + j + k] = src[irow * i + j + k];
+                dst[orow * i + j + k] = val;
+              }
+            } else old_pixel_data[width * i + j + k] = dst[orow * i + j + k] = src[irow * i + j + k];
+          }
         }
+        sdata->inited[row + i] = 1;
       }
-      sdata->inited[row + i] = 1;
     }
   }
 

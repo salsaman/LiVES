@@ -27,12 +27,13 @@ static int package_version = 2; // version of this package
 
 #include "weed-plugin-utils.c" // optional
 
-static int next_pot(int val) {for (int i = 2;; i *= 2) if (i >= val) return i;}
+//static int next_pot(int val) {for (int i = 2;; i *= 2) if (i >= val) return i;}
+static int next_pot(int val) {return val;}
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 #define WORKER_TIMEOUT_SEC 30 /// how long to wait for worker thread startup
 #define MAX_AUDLEN 2048 /// this is defined by projectM itself, increasing the value above 2048 will only result in jumps in the audio
-#define DEF_SENS 4.5 /// beat sensitivity 0. -> 5.  (lower is more sensitive); too high -> less dynamic, too low - nothing w. silence
+#define DEF_SENS 1.5 /// beat sensitivity 0. -> 5.  (lower is more sensitive); too high -> less dynamic, too low - nothing w. silence
 /////////////////////////////////////////////////////////////
 
 #define USE_DBLBUF 1
@@ -147,6 +148,7 @@ typedef struct {
   weed_timecode_t timestamp;
   volatile bool busy;
   volatile bool silent;
+  bool screen_inited;
 } _sdata;
 
 static bool resize_buffer(_sdata *sd);
@@ -233,56 +235,65 @@ static int change_size(_sdata *sdata) {
 static int init_display(_sdata *sd) {
   int defwidth = texwidth;
   int defheight = texheight;
+  //std::cerr << "worker initscr" << std::endl;
 
-  /* First, initialize SDL's video subsystem. */
-  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    if (verbosity >= WEED_VERBOSITY_CRITICAL)
-      fprintf(stderr, "{ProjectM plugin: Video initialization failed: %s\n",
-              SDL_GetError());
-    return 1;
-  }
+  if (!sd->screen_inited) {
+    /* First, initialize SDL's video subsystem. */
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+      if (verbosity >= WEED_VERBOSITY_CRITICAL)
+        fprintf(stderr, "{ProjectM plugin: Video initialization failed: %s\n",
+                SDL_GetError());
+      return 1;
+    }
+    //std::cerr << "worker initscr 2" << std::endl;
 
-  /* Let's get some video information. */
+    /* Let's get some video information. */
 #ifdef HAVE_SDL2
-  SDL_Rect rect;
-  SDL_GetDisplayBounds(0, &rect);
-  maxwidth = rect.w;
-  maxheight = rect.h;
-  if (verbosity >= WEED_VERBOSITY_DEBUG)
-    fprintf(stderr, "ProjectM running with SDL 2\n");
+    SDL_Rect rect;
+    SDL_GetDisplayBounds(0, &rect);
+    maxwidth = rect.w;
+    maxheight = rect.h;
+    if (verbosity >= WEED_VERBOSITY_DEBUG)
+      fprintf(stderr, "ProjectM running with SDL 2\n");
 #else
-  const SDL_VideoInfo *info = SDL_GetVideoInfo();
-  if (verbosity >= WEED_VERBOSITY_DEBUG)
-    fprintf(stderr, "ProjectM running with SDL 1\n");
-  if (!info) {
-    /* This should probably never happen. */
-    if (verbosity >= WEED_VERBOSITY_CRITICAL)
-      fprintf(stderr, "ProjectM plugin: Video query failed: %s\n",
-              SDL_GetError());
-    return 2;
-  }
-  maxwidth = info->current_w;
-  maxheight = info->current_h;
+    const SDL_VideoInfo *info = SDL_GetVideoInfo();
+    if (verbosity >= WEED_VERBOSITY_DEBUG)
+      fprintf(stderr, "ProjectM running with SDL 1\n");
+    if (!info) {
+      /* This should probably never happen. */
+      if (verbosity >= WEED_VERBOSITY_CRITICAL)
+        fprintf(stderr, "ProjectM plugin: Video query failed: %s\n",
+                SDL_GetError());
+      return 2;
+    }
+    maxwidth = info->current_w;
+    maxheight = info->current_h;
 #endif
 
-  SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, USE_DBLBUF);
+    //std::cerr << "worker initscr 3" << std::endl;
 
-  SDL_GL_SetSwapInterval(0);
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, USE_DBLBUF);
+
+    SDL_GL_SetSwapInterval(0);
+  }
+  //std::cerr << "worker initscr 4" << std::endl;
 
 #ifdef HAVE_SDL2
-  sd->win = SDL_CreateWindow("projectM", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, defwidth, defheight,
+  sd->win = SDL_CreateWindow("projectM", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, maxwidth, maxheight,
                              SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_BORDERLESS);
+  //std::cerr << "worker initscr 5" << std::endl;
   sd->glCtx = SDL_GL_CreateContext(sd->win);
 #else
   if (resize_display(defwidth, defheight)) return 3;
 #endif
+  //std::cerr << "worker initscr 6" << std::endl;
 
   return 0;
 }
@@ -490,7 +501,7 @@ static void do_exit(void) {
   //pthread_mutex_lock(&cond_mutex);
   //pthread_cond_signal(&cond);
   //pthread_mutex_unlock(&cond_mutex);
-
+  //std::cerr << "EXIT !!" << std::endl;
   if (inited && statsd != NULL) {
     statsd->die = true;
   }
@@ -503,6 +514,7 @@ static void *worker(void *data) {
   _sdata *sd = (_sdata *)data;
   float hwratio = (float)texheight / (float)texwidth;
   //  int new_stdout, new_stderr;
+  //std::cerr << "worker start" << std::endl;
 
   if (init_display(sd)) {
     sd->failed = true;
@@ -518,6 +530,7 @@ static void *worker(void *data) {
 
   atexit(do_exit);
 
+  //std::cerr << "worker start 2" << std::endl;
   settings.windowWidth = texwidth;
   settings.windowHeight = texheight;
 
@@ -560,10 +573,16 @@ static void *worker(void *data) {
     return NULL;
   }
 
+  //std::cerr << "worker start 3" << std::endl;
+
   // can fail here
   sd->globalPM = new projectM(settings, 0);
+  //std::cerr << "worker start 3a" << std::endl;
   sd->textureHandle = sd->globalPM->initRenderToTexture();
+  //std::cerr << "worker start 3b" << std::endl;
   sd->globalPM->setPresetLock(true);
+
+  //std::cerr << "worker start 4" << std::endl;
 
   sd->nprs = sd->globalPM->getPlaylistSize() + 1;
   sd->checkforblanks = true;
@@ -578,6 +597,7 @@ static void *worker(void *data) {
     sd->prnames[0] = strdup("- Random -");
     for (int i = 1; i < sd->nprs; i++) sd->prnames[i] = strdup((sd->globalPM->getPresetName(i - 1)).c_str());
   }
+  //std::cerr << "worker start 5" << std::endl;
 
   if (sd->failed) {
     // can happen if the host is overloaded and the caller timed out
@@ -592,6 +612,7 @@ static void *worker(void *data) {
 
   pthread_mutex_lock(&sd->mutex);
   sd->worker_ready = true;
+  //std::cerr << "worker start 6" << std::endl;
 
   // tell main thread we are ready
   pthread_mutex_lock(&cond_mutex);
@@ -599,9 +620,12 @@ static void *worker(void *data) {
   pthread_mutex_unlock(&cond_mutex);
 
   rerand = true;
+  //std::cerr << "worker start 7" << std::endl;
 
   while (!sd->die) {
+    //std::cerr << "worker start 8" << std::endl;
     if (!sd->rendering) {
+      //std::cerr << "worker start 9" << std::endl;
       // deinit() will only exit once the mutex is unlocked, we need to make sure we are idling
       // else we can pick up the wm response for the playback plugin and cause it to hang
       sd->worker_active = false;
@@ -657,6 +681,7 @@ static void *worker(void *data) {
 
     if (sd->die) break;
     sd->opidx = sd->pidx;
+    //std::cerr << "worker start 9" << std::endl;
 
     if (sd->needs_update || sd->needs_more || !sd->got_first || sd->ncycs > 1.) {
       if (render_frame(sd)) {
@@ -671,15 +696,19 @@ static void *worker(void *data) {
         }
       }
     }
+    //std::cerr << "worker start 14" << std::endl;
+
   }
+  //std::cerr << "worker start 44" << std::endl;
   sd->needs_more = false;
   sd->worker_active = false;
   pthread_mutex_unlock(&sd->mutex);
 
   SDL_GL_DeleteContext(sd->glCtx);
+
   if (sd->globalPM) delete (sd->globalPM);
   sd->globalPM = NULL;
-  SDL_Quit();
+  //SDL_Quit();
 
   pthread_mutex_lock(&cond_mutex);
   pthread_cond_signal(&cond);
@@ -719,8 +748,8 @@ static weed_error_t projectM_deinit(weed_plant_t *inst) {
         inited = 0;
       }
     }
+    copies--;
   }
-  copies--;
   weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
 }
@@ -729,6 +758,11 @@ static weed_error_t projectM_deinit(weed_plant_t *inst) {
 static weed_error_t projectM_init(weed_plant_t *inst) {
   if (copies == 1) return WEED_ERROR_TOO_MANY_INSTANCES;
   else {
+#ifdef HAVE_SDL2
+    SDL_Window *win;
+    SDL_GLContext glCtx;
+    bool reinit = false;
+#endif
     _sdata *sd;
     weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
     weed_plant_t **iparams = weed_get_in_params(inst, NULL);
@@ -739,10 +773,19 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     int rowstride = width * psize;
 
     if (inited) {
+      //std::cerr << "already inited" << std::endl;
       sd = statsd;
       weed_set_voidptr_value(inst, "plugin_internal", sd);
+
+#ifdef HAVE_SDL2
+      // win = sd->win;
+      // glCtx = sd->glCtx;
+      reinit = true;
+#endif
+
       if (texwidth != width || texheight != height || rowstride != sd->rowstride) {
         projectM_deinit(inst);
+        // will free statsd
         finalise();
       }
     }
@@ -753,6 +796,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       int rc = 0;
       sd = (_sdata *)weed_calloc(1, sizeof(_sdata));
       if (!sd) return WEED_ERROR_MEMORY_ALLOCATION;
+      //std::cerr << "resetting" << std::endl;
 
       sd->error = WEED_SUCCESS;
       weed_set_voidptr_value(inst, "plugin_internal", sd);
@@ -766,6 +810,16 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       pthread_mutex_init(&sd->mutex, NULL);
       pthread_mutex_init(&sd->pcm_mutex, NULL);
 
+      sd->screen_inited = false;
+
+#ifdef HAVE_SDL2
+      if (reinit) {
+        //std::cerr << "maintain old values" << std::endl;
+        // sd->win = win;
+        // sd->glCtx = glCtx;
+        sd->screen_inited = true;
+      }
+#endif
       sd->nprs = 0;
       sd->prnames = NULL;
       sd->worker_ready = false;
@@ -779,7 +833,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       texwidth = width;
       texheight = height;
       sd->rowstride = rowstride;
-      std::cerr << "width " << width << " X " << rowstride << std::endl;
+      //std::cerr << "width " << width << " X " << rowstride << "ht " << height << std::endl;
       sd->bad_programs = NULL;
 
       if (!sd->fbuffer || texheight != height || sd->rowstride != rowstride) {
@@ -801,6 +855,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 #endif
 
       // wait for worker thread ready
+      //std::cerr << "Waiting for worker_ready" << std::endl;
       pthread_mutex_lock(&cond_mutex);
       while (!sd->worker_ready && rc != ETIMEDOUT) {
         rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
@@ -809,6 +864,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
       if (rc == ETIMEDOUT && !sd->worker_ready) {
         // if we timedout then die
+        //std::cerr << "timed out Waiting for worker_ready" << std::endl;
         sd->failed = true;
       }
 
@@ -924,7 +980,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   //std::cerr << texwidth << " X " << texheight << " and " << width << " X " << height << std::endl;
 
-  if (texwidth != width || texheight != height || sd->psize != psize || sd->rowstride != xrowstride || sd->palette != palette) {
+  if (texwidth != width || texheight != height || sd->psize != psize || sd->rowstride != xrowstride) {
     std::cerr << texwidth << " X " << texheight << " and " << width << " X " << height
               << " featuring " << xrowstride << " against " << sd->rowstride
               << " and also " << sd->psize << " vs " << psize << " with " << sd->palette << " for " << palette << std::endl;
@@ -946,7 +1002,6 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     if (sd->palette != palette || sd->rowstride != xrowstride || sd->psize != psize) {
       sd->update_psize = true;
       sd->psize = psize;
-      sd->palette = palette;
       sd->rowstride = xrowstride;
     }
     /// let the worker thread know that the values have been updated
@@ -958,6 +1013,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     did_update = true;
   }
 
+  sd->palette = palette;
   /// get the program number:
   // ex. if nprs == 10, we have 9 programs 1 - 9 and 0 is random
   // first we shift the vals. down by 1, so -1 is random and prgs 0 - 8
@@ -1090,7 +1146,9 @@ WEED_SETUP_START(200, 200) {
                                weed_integer_init("ctime", "_Random pattern hold time (seconds - 0 for never change)", 20, 0, 100000), NULL
                               };
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE
+                                   | WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL
+                                  };
   weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1,
                                0, palette_list, projectM_init,
                                projectM_process, projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
@@ -1137,7 +1195,9 @@ static void finalise(void) {
 
 
 WEED_DESETUP_START {
+  if (statsd) SDL_GL_DeleteContext(statsd->glCtx);
   finalise();
+  SDL_Quit();
   XCloseDisplay(dpy);
 }
 WEED_DESETUP_END;

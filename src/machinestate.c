@@ -1999,6 +1999,7 @@ void update_effort(int nthings, boolean badthings) {
 					  || is_layer_ready(mainw->frame_layer_preload))) {
     prefs->pb_quality = pb_quality;
     mainw->blend_palette = WEED_PALETTE_END;
+  if (mainw->scratch == SCRATCH_NONE)  mainw->scratch = SCRATCH_JUMP;
   }
 
   //g_print("STRG %d and %d %d\n", struggling, mainw->effort, prefs->pb_quality);
@@ -2208,11 +2209,6 @@ LiVESResponseType send_to_trash(const char *item) {
 
 static boolean rec_desk_done(livespointer data) {
   rec_args *recargs = (rec_args *)data;
-  // need to do this, as lpt has a notify value; otherwise it would not be cancellable
-  if (recargs->lpt) {
-    lives_proc_thread_join(recargs->lpt);
-    recargs->lpt = NULL;
-  }
 
   if (lives_get_status() != LIVES_STATUS_IDLE) return TRUE;
   else {
@@ -2220,7 +2216,8 @@ static boolean rec_desk_done(livespointer data) {
     /* ticks_t tc; */
     /* int from_files[1]; */
     /* double aseeks[1], avels[1], chvols[1]; */
-    char *com;
+    double tsec = recargs->tottime / TICKS_PER_SECOND_DBL;
+    char *com, *timestr = format_tstr(tsec, 0);
     int current_file = mainw->current_file;
 
     if (!IS_VALID_CLIP(recargs->clipno)) goto ohnoes2;
@@ -2230,10 +2227,12 @@ static boolean rec_desk_done(livespointer data) {
     migrate_from_staging(recargs->clipno);
 
     if (sfile->frames <= 0) goto ohnoes;
-
-    do_info_dialogf(_("Grabbed %d frames"), sfile->frames);
-
     add_to_clipmenu_any(recargs->clipno);
+
+    do_info_dialogf(_("Grabbed %d frames in %s (average %.3f fps)"),
+		    sfile->frames, timestr, tsec ? (double)sfile->frames / tsec : 0.);
+    lives_free(timestr);
+
     switch_clip(1, recargs->clipno, FALSE);
 
     // render the audio track
@@ -2251,10 +2250,15 @@ static boolean rec_desk_done(livespointer data) {
 
     cfile->undo1_dbl = recargs->fps;
     cfile->fps = 0.;
+    mainw->cancelled = CANCEL_NONE;
 
     THREAD_INTENTION = LIVES_INTENTION_RECORD;
 
     on_resample_vid_ok(NULL, NULL);
+    if (mainw->cancelled != CANCEL_NONE) {
+      close_current_file(current_file);
+      return FALSE;
+    }
 
     com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend, cfile->handle);
     lives_system(com, FALSE);
@@ -2299,7 +2303,7 @@ void rec_desk(void *args) {
   double cx, cy;
   char *imname;
   lives_alarm_t alarm_handle, fps_alarm = LIVES_NO_ALARM;
-
+  boolean cancelled = FALSE;
   int x = 0, y = 0, frameno = 0;
   int w = GUI_SCREEN_WIDTH, h = GUI_SCREEN_HEIGHT;
 
@@ -2332,12 +2336,14 @@ void rec_desk(void *args) {
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->rec_time);
 
   // temp kludge ahead !
-  open_ascrap_file(recargs->clipno);
+  //open_ascrap_file(recargs->clipno);
   //
+
+  recargs->tottime = lives_get_current_ticks();
 
   while (1) {
     if ((recargs->rec_time && !lives_alarm_check(alarm_handle))
-	|| (lpt && lives_proc_thread_get_cancelled(lpt)))
+	|| (lpt && (cancelled = lives_proc_thread_get_cancelled(lpt))))
       break;
 
     fps_alarm = lives_alarm_set(TICKS_PER_SECOND_DBL / recargs->fps);
@@ -2410,10 +2416,12 @@ void rec_desk(void *args) {
 
     // TODO - check for timeout / cancel here too
     lives_nanosleep_until_zero(lives_alarm_check(fps_alarm) && (!recargs->rec_time || lives_alarm_check(alarm_handle))
-			       && (!lpt || !lives_proc_thread_get_cancelled(lpt)));
+			       && (!lpt || !(cancelled = lives_proc_thread_get_cancelled(lpt))));
     lives_alarm_clear(fps_alarm);
   }
   lives_alarm_clear(alarm_handle);
+
+  recargs->tottime = lives_get_current_ticks() - recargs->tottime;
 
 #ifdef FEEDBACK
   lives_widget_set_opacity(LIVES_MAIN_WINDOW_WIDGET, 1.);

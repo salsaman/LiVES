@@ -5123,21 +5123,27 @@ boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     if (do_ret) return TRUE;
   }
 
+
   if (area == SCREEN_AREA_FOREGROUND) {
-    if (!CURRENT_CLIP_IS_NORMAL
-        || (!clip_can_reverse(mainw->current_file) && cfile->pb_fps > 0.)) return TRUE;
-    // change play direction
-    if (cfile->play_paused) {
-      if (!clip_can_reverse(mainw->current_file) && cfile->freeze_fps > 0.) return TRUE;
-      cfile->freeze_fps = -cfile->freeze_fps;
-      return TRUE;
+    if (!CURRENT_CLIP_IS_NORMAL && IS_NORMAL_CLIP(mainw->blend_file)) area = SCREEN_AREA_BACKGROUND;
+    else {
+      if (!CURRENT_CLIP_IS_NORMAL
+          || (!clip_can_reverse(mainw->current_file) && cfile->pb_fps > 0.)) return TRUE;
+      // change play direction
+      if (cfile->play_paused) {
+        if (!clip_can_reverse(mainw->current_file) && cfile->freeze_fps > 0.) return TRUE;
+        cfile->freeze_fps = -cfile->freeze_fps;
+        return TRUE;
+      }
+
+      /// set this so we invalid preload cache
+      if (mainw->scratch == SCRATCH_NONE) mainw->scratch = SCRATCH_REV;
+
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), -cfile->pb_fps);
     }
+  }
 
-    /// set this so we invalid preload cache
-    if (mainw->scratch == SCRATCH_NONE) mainw->scratch = SCRATCH_REV;
-
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), -cfile->pb_fps);
-  } else if (area == SCREEN_AREA_BACKGROUND) {
+  if (area == SCREEN_AREA_BACKGROUND) {
     if (!IS_NORMAL_CLIP(mainw->blend_file)
         || (!clip_can_reverse(mainw->blend_file) && mainw->files[mainw->blend_file]->pb_fps >= 0.)) return TRUE;
     mainw->files[mainw->blend_file]->pb_fps = -mainw->files[mainw->blend_file]->pb_fps;
@@ -5295,11 +5301,11 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if (!list_index || ((list_index = list_index->prev) == NULL)) list_index = lives_list_last(mainw->cliplist);
     i = LIVES_POINTER_TO_INT(list_index->data);
-  } while ((!mainw->files[i] || mainw->files[i]->hidden || mainw->files[i]->opening
-            || mainw->files[i]->restoring || i == mainw->scrap_file ||
-            i == mainw->ascrap_file || (!mainw->files[i]->frames && LIVES_IS_PLAYING)) &&
-           i != ((type == 2 || (mainw->playing_file > 0 && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && type != 1)) ?
-                 mainw->blend_file : mainw->current_file));
+  } while (!mainw->files[i] || mainw->files[i]->hidden || mainw->files[i]->opening
+           || mainw->files[i]->restoring || i == mainw->scrap_file ||
+           i == mainw->ascrap_file || (LIVES_IS_PLAYING
+                                       && (!mainw->files[i]->frames
+                                           || i == mainw->blend_file || i == mainw->playing_file)));
 
   switch_clip(type, i, FALSE);
 
@@ -5342,11 +5348,11 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if (!list_index || ((list_index = list_index->next) == NULL)) list_index = mainw->cliplist;
     i = LIVES_POINTER_TO_INT(list_index->data);
-  } while ((!mainw->files[i] || mainw->files[i]->hidden || mainw->files[i]->opening
-            || mainw->files[i]->restoring || i == mainw->scrap_file ||
-            i == mainw->ascrap_file || (!mainw->files[i]->frames && LIVES_IS_PLAYING)) &&
-           i != ((type == 2 || (mainw->playing_file > 0 && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && type != 1)) ?
-                 mainw->blend_file : mainw->current_file));
+  } while (!mainw->files[i] || mainw->files[i]->hidden || mainw->files[i]->opening
+           || mainw->files[i]->restoring || i == mainw->scrap_file ||
+           i == mainw->ascrap_file || (LIVES_IS_PLAYING
+                                       && (!mainw->files[i]->frames
+                                           || i == mainw->blend_file || i == mainw->playing_file)));
 
   switch_clip(type, i, FALSE);
 
@@ -10347,6 +10353,8 @@ void on_slower_pressed(LiVESButton * button, livespointer user_data) {
 
   if (user_data) {
     type = LIVES_POINTER_TO_INT(user_data);
+    if (type == SCREEN_AREA_FOREGROUND && !CURRENT_CLIP_IS_NORMAL && IS_NORMAL_CLIP(mainw->blend_file))
+      type = SCREEN_AREA_BACKGROUND;
     if (type == SCREEN_AREA_BACKGROUND) {
       if (!IS_NORMAL_CLIP(mainw->blend_file)) return;
       sfile = mainw->files[mainw->blend_file];
@@ -10401,6 +10409,8 @@ void on_faster_pressed(LiVESButton * button, livespointer user_data) {
 
   if (user_data) {
     type = LIVES_POINTER_TO_INT(user_data);
+    if (type == SCREEN_AREA_FOREGROUND && !CURRENT_CLIP_IS_NORMAL && IS_NORMAL_CLIP(mainw->blend_file))
+      type = SCREEN_AREA_BACKGROUND;
     if (type == SCREEN_AREA_BACKGROUND) {
       if (!IS_NORMAL_CLIP(mainw->blend_file)) return;
       sfile = mainw->files[mainw->blend_file];
@@ -10575,7 +10585,8 @@ boolean nervous_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint3
 
 boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
   boolean state;
-  if (lives_get_status() != LIVES_STATUS_PLAYING || !is_realtime_aplayer(prefs->audio_player) || mainw->multitrack
+  if ((lives_get_status() != LIVES_STATUS_PLAYING && mainw->status != LIVES_STATUS_IDLE)
+      || !is_realtime_aplayer(prefs->audio_player) || mainw->multitrack
       || mainw->agen_key != 0 || mainw->agen_needs_reinit || AUD_SRC_EXTERNAL) return TRUE;
 
   if (w) state = lives_toggle_tool_button_get_active(w);
@@ -10766,7 +10777,7 @@ void rec_desktop(LiVESMenuItem * menuitem, livespointer user_data) {
     if (lpt) {
       // if running, just send a cancel, the bg thread will add an idlefunc before exiting
       lives_widget_set_sensitive(mainw->desk_rec, FALSE);
-      lives_proc_thread_cancel(lpt, FALSE);
+      lives_proc_thread_cancel(lpt, TRUE);
       lpt = NULL;
     }
     return;
@@ -11656,12 +11667,14 @@ void on_fade_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 
 boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  // type: 0 == selection, 1 == all, 2 == specify by time
   double start, end;
   char *com, *tmp, *msg = NULL;
   char *temp_backend;
 
   uint32_t chk_mask = 0;
   boolean bad_header = FALSE;
+  int type = 2;
 
   if (!CURRENT_CLIP_IS_VALID) return FALSE;
 
@@ -11670,7 +11683,8 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
     start = cfile->undo1_dbl;
     end = cfile->undo2_dbl;
   } else {
-    if (LIVES_POINTER_TO_INT(user_data)) {
+    type = LIVES_POINTER_TO_INT(user_data);
+    if (type == 1) {
       tmp = (_("Deleting all audio"));
       chk_mask = WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_ALTER_AUDIO;
       if (!check_for_layout_errors(tmp, mainw->current_file, 1, 0, &chk_mask)) {
@@ -11687,8 +11701,13 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
       msg = (_("Deleting all audio..."));
       start = end = 0.;
     } else {
-      start = calc_time_from_frame(mainw->current_file, cfile->start);
-      end = calc_time_from_frame(mainw->current_file, cfile->end + 1);
+      if (type == 0) {
+        start = calc_time_from_frame(mainw->current_file, cfile->start);
+        end = calc_time_from_frame(mainw->current_file, cfile->end + 1);
+      } else {
+        if (!do_st_end_times_dlg(mainw->current_file, &start, &end)) return FALSE;
+        if (start == end) return FALSE;
+      }
       msg = lives_strdup_printf(_("Deleting audio from %.2f to %.2f seconds..."), start, end);
       start *= (double)cfile->arate / (double)cfile->arps;
       end *= (double)cfile->arate / (double)cfile->arps;

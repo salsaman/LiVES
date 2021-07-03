@@ -271,6 +271,7 @@ typedef struct {
   uint32_t delay_time, rec_time;
   int achans, asamps, arate, signed_endian;
   boolean duplex;
+  ticks_t tottime;
   lives_proc_thread_t lpt;
 } rec_args;
 

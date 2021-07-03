@@ -447,8 +447,8 @@ if ($has_init) {
     &add_start(0);
 
     if ($num_params) {
-	&get_paramvals(1);
-	&get_paramvals(0);
+	&get_paramvals(1, 0);
+	&get_paramvals(0, 0);
     }
 
     ## gui only reinit
@@ -531,31 +531,42 @@ print OUT "\nstatic weed_error_t $proc_func(weed_plant_t *inst, weed_timecode_t 
 &add_start(1);
 
 if ($num_params) {
-    &get_paramvals(1);
-    &get_paramvals(0);
+    &get_paramvals(1, 1);
+    &get_paramvals(0, 1);
+}
+
+my $xspcs = "";
+if ($use_sdata) {
+    $xspcs = "  ";
 }
 
 ## add threading
 if ($may_thread && $num_inc == 1 && $num_outc == 1) {
-    print OUT "\n  if (is_threading) {\n";
-    print OUT "    offset = weed_channel_get_offset(out_chan);\n";
-    print OUT "    src += offset * irow;\n";
-    print OUT "    dst += offset * orow;\n";
-    print OUT "  }\n";
+    print OUT "\n$xspcs  if (is_threading) {\n";
+    print OUT "$xspcs    offset = weed_channel_get_offset(out_chan);\n";
+    print OUT "$xspcs    src += offset * irow;\n";
+    print OUT "$xspcs    dst += offset * orow;\n";
+    print OUT "$xspcs  }\n";
 }
 
 print OUT "\n";
 
-print OUT "  if (1) {\n";
-&gen_array(4, @proc);
-print OUT "  }\n";
+print OUT "$xspcs  if (1) {\n";
+my $indent = 4;
+if ($use_sdata) {
+    $indent = 6;
+}
+&gen_array($indent, @proc);
+print OUT "$xspcs  }\n";
 
 if ($num_params) {
     &clean_params;
 }
 
 &add_end(1);
-
+if ($use_sdata) {
+    print OUT "  }\n";
+}
 print OUT "\n  return WEED_SUCCESS;\n";
 print OUT "}\n\n";
 
@@ -1130,6 +1141,7 @@ sub add_start {
 	if ($is_procfunc) {
 	    print OUT " = weed_get_voidptr_value(inst, \"plugin_internal\", NULL);\n";
 	    print OUT "  if (!sdata) return WEED_ERROR_REINIT_NEEDED;\n";
+	    print OUT "  else {\n";
 	}
 	else {
 	    print OUT ";\n";
@@ -1142,33 +1154,33 @@ sub add_end {
     if ($is_procfunc) {
 	if (@in_planar) {
 	    if (@in_planar == 1) {
-		print OUT "  weed_free(srcp);\n";
+		print OUT "    weed_free(srcp);\n";
 	    }
 	    else {
 		foreach (@in_planar) {
-		    print OUT "  weed_free(srcp$_);\n";
+		    print OUT "    weed_free(srcp$_);\n";
 		}
 	    }
 	}
 	if (@out_planar) {
 	    if (@out_planar == 1) {
-		print OUT "  weed_free(dstp);\n";
+		print OUT "    weed_free(dstp);\n";
 	    }
 	    else {
 		foreach (@in_planar) {
-		    print OUT "  weed_free(dstp$_);\n";
+		    print OUT "    weed_free(dstp$_);\n";
 		}
 	    }
 	}
     }
     if ($num_oparams) {
-	print OUT "  weed_free(out_params);\n";
+	print OUT "    weed_free(out_params);\n";
     }
     if ($num_inc > 1) {
-	print OUT "  weed_free(in_chans);\n";
+	print OUT "    weed_free(in_chans);\n";
     }
     if ($num_outc > 1) {
-	print OUT "  weed_free(out_chans);\n";
+	print OUT "    weed_free(out_chans);\n";
     }
 }
 
@@ -1196,9 +1208,13 @@ sub add_sdata {
 
 sub get_paramvals {
     ## TODO - handle multi valued params
-    my $checkonly = shift;
-    if (!$checkonly) {
+    my ($checkonly, $isproc) = @_;
+    if (!$checkonly && !$isproc) {
 	print OUT "\n";
+    }
+    my $spcs = "";
+    if ($isproc && $use_sdata) {
+	$spcs = "  ";
     }
     foreach (@params) {
 	@pieces = split(/$delim/);
@@ -1210,34 +1226,34 @@ sub get_paramvals {
 		if (!$has_darray) {
 		    $has_darray = 1;
 		    if ($checkonly) {
-			print OUT "  double *darray;\n";
+			print OUT "$spcs  double *darray;\n";
 		    }
 		}
 		if ($checkonly) {
-		    print OUT "  double $pname" . "_red, $pname" . "_green, $pname" . "_blue;\n"; 
+		    print OUT "$spcs  double $pname" . "_red, $pname" . "_green, $pname" . "_blue;\n";
 		}
 		else {
-		    print OUT "  darray = weed_param_get_array_double(in_params[P_$pname], NULL);\n";
-		    print OUT "  $pname" . "_red = darray[0];\n";
-		    print OUT "  $pname" . "_green = darray[1];\n";
-		    print OUT "  $pname" . "_blue = darray[2];\n";
+		    print OUT "$spcs  darray = weed_param_get_array_double(in_params[P_$pname], NULL);\n";
+		    print OUT "$spcs  $pname" . "_red = darray[0];\n";
+		    print OUT "$spcs  $pname" . "_green = darray[1];\n";
+		    print OUT "$spcs  $pname" . "_blue = darray[2];\n";
 		}
 	    }
 	    else {
 		if (!$has_iarray) {
 		    $has_iarray = 1;
 		    if ($checkonly) {
-			print OUT "  int *iarray;\n";
+			print OUT "$spcs  int *iarray;\n";
 		    }
 		}
 		if ($checkonly) {
-		    print OUT "  int $pname" . "_red, $pname" . "_green, $pname" . "_blue;\n"; 
+		    print OUT "$spcs  int $pname" . "_red, $pname" . "_green, $pname" . "_blue;\n";
 		}
 		else {
-		    print OUT "  iarray = weed_param_get_array_int(in_params[P_$pname], NULL);\n";
-		    print OUT "  $pname" . "_red = iarray[0];\n";
-		    print OUT "  $pname" . "_green = iarray[1];\n";
-		    print OUT "  $pname" . "_blue = iarray[2];\n";
+		    print OUT "$spcs  iarray = weed_param_get_array_int(in_params[P_$pname], NULL);\n";
+		    print OUT "$spcs  $pname" . "_red = iarray[0];\n";
+		    print OUT "$spcs  $pname" . "_green = iarray[1];\n";
+		    print OUT "$spcs  $pname" . "_blue = iarray[2];\n";
 		}
 	    }
 	}
@@ -1245,30 +1261,33 @@ sub get_paramvals {
 	if ($type =~ /^num/) {
 	    my $dp = 0 + substr($type, 3);
 	    if (!$dp) {
-		print OUT "  int $pname = weed_param_get_value_int(in_params[P_$pname]);\n";
+		print OUT "$spcs  int $pname = weed_param_get_value_int(in_params[P_$pname]);\n";
 	    }
 	    else {
-		print OUT "  double $pname = weed_param_get_value_double(in_params[P_$pname]);\n";
+		print OUT "$spcs  double $pname = weed_param_get_value_double(in_params[P_$pname]);\n";
 	    }
 	}
 	elsif ($type eq "string_list") {
-	    print OUT "  int $pname = weed_param_get_value_int(in_params[P_$pname]);\n";
+	    print OUT "$spcs  int $pname = weed_param_get_value_int(in_params[P_$pname]);\n";
 	}
 	elsif ($type eq "bool") {
-	    print OUT "  int $pname = weed_param_get_value_boolean(in_params[P_$pname]);\n";
+	    print OUT "$spcs  int $pname = weed_param_get_value_boolean(in_params[P_$pname]);\n";
 	}
 	elsif ($type eq "string") {
-	    print OUT "  int $pname = weed_param_get_value_string(in_params[P_$pname]);\n";
+	    print OUT "$spcs  int $pname = weed_param_get_value_string(in_params[P_$pname]);\n";
 	}
     }
     if (!$checkonly) {
 	if ($has_iarray) {
-	    print OUT "  weed_free(iarray);\n";
+	    print OUT "$spcs  weed_free(iarray);\n";
 	}
 	if ($has_darray) {
-	    print OUT "  weed_free(darray);\n";
+	    print OUT "$spcs  weed_free(darray);\n";
 	}
-	print OUT "  weed_free(in_params);\n";
+	print OUT "$spcs  weed_free(in_params);\n";
+	if (!$isproc) {
+	    print OUT "\n";
+	}
     }
 }
 

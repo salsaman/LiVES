@@ -1062,6 +1062,9 @@ LiVESWidget *align_horizontal_with(LiVESWidget *thingtoadd, LiVESWidget *thingto
 boolean lives_box_pack_first(LiVESBox *, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding);
 
 // this is not the same as a GtkLayout !!
+
+#define lives_layout_set_row_spacings(l, s) lives_table_set_row_spacings(l, s)
+
 LiVESWidget *lives_layout_new(LiVESBox *);
 LiVESWidget *lives_layout_hbox_new(LiVESLayout *);
 LiVESWidget *lives_layout_row_new(LiVESLayout *);
@@ -1150,6 +1153,12 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox *, const char *tooltip, boolean *togglevalue);
 LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList **rbgroup,
     LiVESBox *, const char *tooltip);
+
+
+boolean spin_ranges_set_exclusive(LiVESSpinButton *, LiVESSpinButton *, int excl);
+void spval_sets_start(LiVESSpinButton *, LiVESSpinButton *);
+void spval_sets_end(LiVESSpinButton *, LiVESSpinButton *);
+
 LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, double min,
     double max, double step, double page, int dp, LiVESBox *,
     const char *tooltip);

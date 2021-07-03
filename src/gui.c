@@ -1348,6 +1348,9 @@ void create_LiVES(void) {
   mainw->delsel_audio = lives_standard_menu_item_new_with_label(_("Delete _Selected Audio"));
   lives_container_add(LIVES_CONTAINER(delaudio_submenu_menu), mainw->delsel_audio);
 
+  mainw->delspec_audio = lives_standard_menu_item_new_with_label(_("Delete Audio by Time..."));
+  lives_container_add(LIVES_CONTAINER(delaudio_submenu_menu), mainw->delspec_audio);
+
   mainw->delall_audio = lives_standard_menu_item_new_with_label(_("Delete _All Audio"));
   lives_container_add(LIVES_CONTAINER(delaudio_submenu_menu), mainw->delall_audio);
 
@@ -2990,6 +2993,8 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_trim_audio_activate), LIVES_INT_TO_POINTER(0));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->trim_to_pstart), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_trim_audio_activate), LIVES_INT_TO_POINTER(1));
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->delspec_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_del_audio_activate), LIVES_INT_TO_POINTER(2));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->delsel_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_del_audio_activate), LIVES_INT_TO_POINTER(0));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->voladj), LIVES_WIDGET_ACTIVATE_SIGNAL,

@@ -30,8 +30,8 @@ static int verbosity = WEED_VERBOSITY_ERROR;
 static weed_error_t negate_process(weed_plant_t *inst, weed_timecode_t tc) {
   weed_plant_t *in_chan = weed_get_in_channel(inst, 0);
   weed_plant_t *out_chan = weed_get_out_channel(inst, 0);
-  unsigned char *restrict src = weed_channel_get_pixel_data(in_chan);
-  unsigned char *restrict dst = weed_channel_get_pixel_data(out_chan);
+  unsigned char *src = weed_channel_get_pixel_data(in_chan);
+  unsigned char *dst = weed_channel_get_pixel_data(out_chan);
   int inplace = (src == dst);
   int pal = weed_channel_get_palette(in_chan);
   int irow = weed_channel_get_stride(in_chan);

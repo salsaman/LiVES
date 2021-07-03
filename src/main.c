@@ -2902,7 +2902,9 @@ static void set_extra_colours(void) {
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "menu menuitem", "box-shadow", "none");
 
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "menu separator", "background-color", colref);
+
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_ACTIVE, "scrollbar slider", "background-color", colref);
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "scrollbar slider", "background-color", colref);
 
     tmp = lives_strdup_printf("0 0 0 4px %s inset", colref);
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "combobox window menu menuitem", "box-shadow", tmp);
@@ -2922,9 +2924,9 @@ static double pick_custom_colours(double var, double timer) {
   else timer = -timer;
 
   if (!(palette->style & STYLE_LIGHT)) {
-    lmin = .05; lmax = .4;
+    lmin = .05; lmax = .3;
   } else {
-    lmin = .15; lmax = .35;
+    lmin = .45; lmax = .6;
   }
 retry:
   ncr = palette->menu_and_bars.red * 255.;
@@ -2992,7 +2994,7 @@ retry:
       retried = TRUE;
       var *= .98;
       goto retry;
-    }
+    } else lives_widget_color_copy(&palette->nice2, &palette->menu_and_bars);
   }
   return var;
 }
@@ -4705,8 +4707,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // weed_plant_new = weed_plant_new_host;
 
   init_colour_engine();
-
-  //make_nice_grid();
 
   weed_threadsafe = FALSE;
   test_plant = weed_plant_new(0);

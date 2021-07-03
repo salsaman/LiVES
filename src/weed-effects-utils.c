@@ -432,7 +432,8 @@ WEED_GLOBAL_INLINE void weed_channel_set_width(weed_plant_t *channel, int width)
 
 WEED_GLOBAL_INLINE int weed_channel_get_width_pixels(weed_plant_t *channel) {
   /// width in pixels: only relevant when comparing widths of different palettes
-  return  weed_channel_get_width(channel) * weed_palette_get_pixels_per_macropixel(weed_channel_get_palette(channel));
+  int pal = weed_channel_get_palette(channel);
+  return weed_channel_get_width(channel) * weed_palette_get_pixels_per_macropixel(pal);
 }
 
 WEED_GLOBAL_INLINE int weed_channel_get_height(weed_plant_t *channel) {
@@ -831,6 +832,7 @@ const char *weed_gamma_get_name(int gamma) {
 #ifndef WEED_ADVANCED_PALETTES
 
 WEED_GLOBAL_INLINE int weed_palette_get_bits_per_macropixel(int pal) {
+  if (pal == WEED_PALETTE_END) return 1;
   if (pal == WEED_PALETTE_A8 || pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P ||
       pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P) return 8;
   if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) return 24;

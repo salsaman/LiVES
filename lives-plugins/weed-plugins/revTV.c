@@ -46,7 +46,6 @@ static weed_error_t revTV_process(weed_plant_t *inst, weed_timecode_t tc) {
   int height = weed_channel_get_height(out_chan);
   int orow = weed_channel_get_stride(out_chan);
   int psize = pixel_size(pal);
-
   int lspace = weed_param_get_value_int(in_params[P_lspace]);
   double vscale = weed_param_get_value_double(in_params[P_vscale]);
   weed_free(in_params);

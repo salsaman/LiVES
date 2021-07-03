@@ -1413,7 +1413,7 @@ boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, ui
     da = cdist94(r0, g0, b0, xr, xg, xb);
     db = cdist94(*r1, *g1, *b1, xr, xg, xb);
 
-    g_print("DA2 is %f; %f %f %f %f\n", da, db, da * rat * lmax, db * rat * lmax, da);
+    //g_print("DA2 is %f; %f %f %f %f\n", da, db, da * rat * lmax, db * rat * lmax, da);
 
     // next we only consider pts equidistant from the input colours
     // we assume however, that col2 is brighter tha col1
@@ -1424,15 +1424,15 @@ boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, ui
     // if da X rat X lmax > db
     // or db X rat > da X lmax
     if (da * rat * lmax > db || db * rat * lmax > da) {
-      g_print("failed equi check\n");
-      if (da * rat * lmax > db) g_print("cond1\n");
-      if (db * rat > lmax * da) g_print("cond2\n");
+      /* g_print("failed equi check\n"); */
+      /* if (da * rat * lmax > db) g_print("cond1\n"); */
+      /* if (db * rat > lmax * da) g_print("cond2\n"); */
       continue;
     }
     // if we pass all the checks then we do a proper check of luma
-    l = get_luma8(CLAMP0255f(xr * 1.4), xg * .75, CLAMP0255f(xb * 1.3));
+    l = get_luma8(CLAMP0255f(xr * 1.4), xg * .7, CLAMP0255f(xb * 1.3));
     if (l < lmin || l > lmax) {
-      g_print("failed luma check %f %f %f %d %d %d\n", l, lmax, lmin, xr, xg, xb);
+      //g_print("failed luma check %f %f %f %d %d %d\n", l, lmax, lmin, xr, xg, xb);
       continue;
     }
     *r1 = xr; *g1 = xg; *b1 = xb;
@@ -1618,7 +1618,7 @@ void init_advanced_palettes(void) {
 
 
 LIVES_GLOBAL_INLINE const weed_macropixel_t *get_advanced_palette(int weed_palette) {
-  for (register int i = 0; advp[i].ext_ref != WEED_PALETTE_END; i++)
+  for (int i = 0; advp[i].ext_ref != WEED_PALETTE_END; i++)
     if (advp[i].ext_ref == weed_palette) return &advp[i];
   return NULL;
 }
@@ -1653,11 +1653,14 @@ LIVES_GLOBAL_INLINE size_t pixel_size(int pal) {
 }
 
 LIVES_GLOBAL_INLINE int weed_palette_get_pixels_per_macropixel(int pal) {
-  int npix = 0;
-  const weed_macropixel_t *mpx = get_advanced_palette(pal);
-  if (!mpx) return 0;
-  npix = mpx->npixels;
-  return !npix ? 1 : npix;
+  if (pal == WEED_PALETTE_END) return 1;
+  else {
+    int npix = 0;
+    const weed_macropixel_t *mpx = get_advanced_palette(pal);
+    if (!mpx) return 0;
+    npix = mpx->npixels;
+    return !npix ? 1 : npix;
+  }
 }
 
 LIVES_GLOBAL_INLINE int weed_palette_get_bits_per_macropixel(int pal) {
@@ -12519,6 +12522,7 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
           }
         }
         lives_gamma_lut_free(gamma_lut);
+        gamma_lut = NULL;
         weed_set_int_array(param, WEED_LEAF_VALUE, nvals, ivals);
         lives_free(ivals);
         weed_set_int_value(param, WEED_LEAF_GAMMA_TYPE, gamma_type);
@@ -13004,7 +13008,9 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 #endif
   if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA)) {
     weed_layer_set_size(layer, width / weed_palette_get_pixels_per_macropixel(opal_hint), height);
-    weed_layer_set_palette(layer, opal_hint);
+    if (opal_hint != WEED_PALETTE_END) {
+      weed_layer_set_palette(layer, opal_hint);
+    }
     weed_layer_set_yuv_clamping(layer, oclamp_hint);
     return FALSE;
   }
@@ -13238,7 +13244,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
     // set new values
 
-    if (palette != opal_hint) {
+    if (palette != opal_hint && opal_hint != WEED_PALETTE_END) {
       weed_layer_set_palette(layer, opal_hint);
     }
 
@@ -13418,7 +13424,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 #endif
 
   // reget these after conversion, convert width from macropixels to pixels
-  iwidth = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(palette);
+  iwidth = weed_layer_get_width_pixels(layer);
   iheight = weed_layer_get_height(layer);
   if (iwidth == width && iheight == height) return TRUE; // no resize needed
 
@@ -14432,7 +14438,8 @@ LIVES_GLOBAL_INLINE int weed_layer_get_width(weed_layer_t *layer) {
 
 LIVES_GLOBAL_INLINE int weed_layer_get_width_pixels(weed_layer_t *layer) {
   if (!layer)  return -1;
-  return  weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer));
+  int pal = weed_layer_get_palette(layer);
+  return weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(pal);
 }
 
 

@@ -1528,6 +1528,8 @@ boolean load_frame_image(frames_t frame) {
     pwidth = opwidth;
     pheight = opheight;
 
+    pwidth = (int)(pwidth >> 4) << 4;
+
     if (prefs->dev_show_timing)
       g_printerr("res start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
@@ -2243,7 +2245,7 @@ static boolean recalc_bungle_frames = 0;
 static boolean cleanup_preload;
 static boolean init_timers = TRUE;
 static boolean drop_off = FALSE;
-static int dropped;
+static frames_t dropped;
 
 static lives_time_source_t last_time_source;
 
@@ -2818,6 +2820,7 @@ switch_point:
             dropped = ABS(requested_frame - mainw->actual_frame) - 1;
           if (dropped < 0) dropped = 0;
         }
+        //g_print("SCR %d and dropped = %d\n", scratch, dropped);
 #ifdef ENABLE_PRECACHE
         if (getahead > -1) {
           if (mainw->pred_frame == -getahead) {
@@ -3042,10 +3045,10 @@ switch_point:
               double target_fps = fabs(sfile->pb_fps);//weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
               if (target_fps) {
                 mainw->inst_fps = get_inst_fps(FALSE);
-                if (mainw->inst_fps < target_fps) {
+                if (scratch == SCRATCH_NONE && mainw->inst_fps < target_fps) {
                   update_effort(1 + target_fps / mainw->inst_fps, TRUE);
 		    // *INDENT-OFF*
-		  }}}}
+		}}}}
 	    // *INDENT-ON*
           else {
             /// update the effort calculation with dropped frames and spare_cycles

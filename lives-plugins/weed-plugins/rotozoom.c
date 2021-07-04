@@ -32,7 +32,7 @@ static int package_version = 1; // version of this package
 static int verbosity = WEED_VERBOSITY_ERROR;
 
 typedef struct {
-  int path, zpath; ;
+  int path, zpath ;
 } sdata_t;
 
 enum {
@@ -49,12 +49,7 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
                       int video_width, int irowstride, int orowstride, int video_height,
                       int dheight, int offset, int psize) {
   int x, y, xd, yd, a, b, sx = 0, sy = 0;
-
-  int origin;
-
-  register int i, j;
-
-  orowstride -= video_width * psize;
+  int origin, i, j;
 
   xd = (stepx * zoom) >> 12;
   yd = (stepy * zoom) >> 12;
@@ -72,23 +67,17 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
      More fun can be had by playing around with x, y, xd, and yd as
      you move about the image.
   */
-
   for (j = 0; j < dheight; j++) {
     x = sx;
     y = sy;
     for (i = 0; i < video_width; i++) {
       a = ((x >> 12 & 255) * video_width) >> 8;
       b = ((y >> 12 & 255) * video_height) >> 8;
-      //       a*=video_width/64;
-      //      b*=video_height/64;
       origin = b * irowstride + a * psize;
-
-      weed_memcpy(dst, &src[origin], psize);
-      dst += psize;
+      weed_memcpy(&dst[orowstride * j + i * psize], &src[origin], psize);
       x += xd;
       y += yd;
     }
-    dst += orowstride;
     sx -= yd;
     sy += xd;
   }
@@ -120,8 +109,7 @@ static weed_error_t rotozoom_init(weed_plant_t *inst) {
       sdata->path = sdata->zpath = 0;
     }
     weed_set_voidptr_value(inst, "plugin_internal", sdata);
-  }
-  else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  } else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   return WEED_SUCCESS;
 }
@@ -181,10 +169,10 @@ static weed_error_t rotozoom_process(weed_plant_t *inst, weed_timecode_t tc) {
           weed_set_boolean_value(inst, WEED_LEAF_STATE_UPDATED, WEED_TRUE);
         }
       }
-      
+
       zoom = roto2[sdata->zpath];
       draw_tile(roto[sdata->path], roto[(sdata->path + 128) & 0xFF],
-        zoom, src, dst, width, irow, orow, iheight, height, offset, psize);
+                zoom, src - offset * irow, dst, width, irow, orow, iheight, height, offset, psize);
     }
   }
 
@@ -198,21 +186,24 @@ WEED_SETUP_START(200, 200) {
   uint64_t unique_id;
   int palette_list[] = ALL_PACKED_PALETTES_PLUS;
   weed_plant_t *in_chantmpls[] = {
-      weed_channel_template_init("in_channel0", 0),
-      NULL};
+    weed_channel_template_init("in_channel0", 0),
+    NULL
+  };
   weed_plant_t *out_chantmpls[] = {
-      weed_channel_template_init("out_channel0", 0),
-      NULL};
+    weed_channel_template_init("out_channel0", 0),
+    NULL
+  };
   weed_plant_t *in_paramtmpls[] = {
-      weed_integer_init("zoom", "_Zoom value", 128, 0, 255),
-      weed_switch_init("autozoom", "_Auto zoom", WEED_TRUE),
-      NULL};
+    weed_integer_init("zoom", "_Zoom value", 128, 0, 255),
+    weed_switch_init("autozoom", "_Auto zoom", WEED_TRUE),
+    NULL
+  };
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_STATEFUL;
 
   verbosity = weed_get_host_verbosity(host_info);
 
   filter_class = weed_filter_class_init("rotozoom", "effecTV", 1, filter_flags, palette_list,
-    rotozoom_init, rotozoom_process, rotozoom_deinit, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
+                                        rotozoom_init, rotozoom_process, rotozoom_deinit, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
 
   weed_filter_set_description(filter_class, "Rotate and zoom images");
 
@@ -220,6 +211,16 @@ WEED_SETUP_START(200, 200) {
 
   if (!sscanf(_UNIQUE_ID_, "0X%lX", &unique_id) || !sscanf(_UNIQUE_ID_, "0x%lx", &unique_id)) {
     weed_set_int64_value(plugin_info, WEED_LEAF_UNIQUE_ID, unique_id);
+  }
+
+  if (1) {
+    // static data for all instances
+    for (int i = 0; i < 256; i++) {
+      float rad = (float)i * 1.41176 * 0.0174532;
+      float c = sin(rad);
+      roto[i] = (c + 0.8) * 4096.0;
+      roto2[i] = (2.0 * c) * 4096.0;
+    }
   }
 
   weed_plugin_set_package_version(plugin_info, package_version);

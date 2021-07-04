@@ -78,8 +78,7 @@ static weed_error_t ccorrect_init(weed_plant_t *inst) {
       sdata->ored = sdata->ogreen = sdata->oblue = 0.;
     }
     weed_set_voidptr_value(inst, "plugin_internal", sdata);
-  }
-  else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  } else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   return WEED_SUCCESS;
 }
@@ -127,25 +126,25 @@ static weed_error_t ccorrect_process(weed_plant_t *inst, weed_timecode_t tc) {
 
     if (1) {
       int offs = 0;
-      
+
       if (red != sdata->ored) {
         make_table(sdata->r, red);
         sdata->ored = red;
       }
-      
+
       if (green != sdata->ogreen) {
         make_table(sdata->g, green);
         sdata->ogreen = green;
       }
-      
+
       if (blue != sdata->oblue) {
         make_table(sdata->b, blue);
         sdata->oblue = blue;
       }
-      
+
       offs = rgb_offset(pal);
       width *= psize;
-      
+
       for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i += psize) {
           if (pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_BGRA32) {
@@ -175,16 +174,19 @@ WEED_SETUP_START(200, 200) {
   uint64_t unique_id;
   int palette_list[] = ALL_RGB_PALETTES;
   weed_plant_t *in_chantmpls[] = {
-      weed_channel_template_init("in_channel0", 0),
-      NULL};
+    weed_channel_template_init("in_channel0", 0),
+    NULL
+  };
   weed_plant_t *out_chantmpls[] = {
-      weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
-      NULL};
+    weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
+    NULL
+  };
   weed_plant_t *in_paramtmpls[] = {
-      weed_float_init("red", "_Red factor", 1., 0., 4.),
-      weed_float_init("green", "_Green factor", 1., 0., 4.),
-      weed_float_init("blue", "_Blue factor", 1., 0., 4.),
-      NULL};
+    weed_float_init("red", "_Red factor", 1., 0., 4.),
+    weed_float_init("green", "_Green factor", 1., 0., 4.),
+    weed_float_init("blue", "_Blue factor", 1., 0., 4.),
+    NULL
+  };
   weed_plant_t *pgui;
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
@@ -200,7 +202,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(pgui, WEED_LEAF_DECIMALS, 2);
 
   filter_class = weed_filter_class_init("colour correction", "salsaman", 1, filter_flags, palette_list,
-    ccorrect_init, ccorrect_process, ccorrect_deinit, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
+                                        ccorrect_init, ccorrect_process, ccorrect_deinit, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

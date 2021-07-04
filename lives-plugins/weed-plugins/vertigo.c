@@ -45,7 +45,7 @@ enum {
 };
 
 static void setParams(int video_width, int video_height, sdata_t *sdata,
-    double phase_increment, double zoom) {
+                      double phase_increment, double zoom) {
   double zoomrate = 1. + zoom / 100.;
   double vx, vy, vvx, vvy, ang;
   double dizz = sin(sdata->phase) * 10 + sin(sdata->phase * 1.9 + 5) * 5;
@@ -112,7 +112,7 @@ static weed_error_t vertigo_init(weed_plant_t *inst) {
     if (1) {
       int video_area = width * height;
       size_t psize = pixel_size(pal) * 2;
-      
+
       sdata->buffer = (RGB32 *)weed_calloc(video_area, psize);
       if (!sdata->buffer) {
         weed_free(sdata);
@@ -122,8 +122,7 @@ static weed_error_t vertigo_init(weed_plant_t *inst) {
       sdata->alt_buffer = sdata->buffer + video_area;
     }
     weed_set_voidptr_value(inst, "plugin_internal", sdata);
-  }
-  else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  } else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   return WEED_SUCCESS;
 }
@@ -163,14 +162,14 @@ static weed_error_t vertigo_process(weed_plant_t *inst, weed_timecode_t tc) {
 
     if (1) {
       RGB32 v, z, *p = sdata->alt_buffer, *psrc = (RGB32 *)src;
-      
+
       int video_area = width * height;
       int y, ox, oy, x, i;
       int widthx = width * pixel_size(pal);
-      
+
       setParams(width, height, sdata, pinc, zoom);
       irow /= psize;
-      
+
       for (y = 0; y < height; y++) {
         ox = sdata->sx;
         oy = sdata->sy;
@@ -186,11 +185,11 @@ static weed_error_t vertigo_process(weed_plant_t *inst, weed_timecode_t tc) {
         sdata->sx -= sdata->dy;
         sdata->sy += sdata->dx;
       }
-      
+
       for (y = 0; y < height; y++) {
         weed_memcpy(&dst[orow * y], &sdata->alt_buffer[width * y], widthx);
       }
-      
+
       p = sdata->current_buffer;
       sdata->current_buffer = sdata->alt_buffer;
       sdata->alt_buffer = p;
@@ -207,15 +206,18 @@ WEED_SETUP_START(200, 200) {
   uint64_t unique_id;
   int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_END};
   weed_plant_t *in_chantmpls[] = {
-      weed_channel_template_init("in_channel0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE),
-      NULL};
+    weed_channel_template_init("in_channel0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE),
+    NULL
+  };
   weed_plant_t *out_chantmpls[] = {
-      weed_channel_template_init("out_channel0", 0),
-      NULL};
+    weed_channel_template_init("out_channel0", 0),
+    NULL
+  };
   weed_plant_t *in_paramtmpls[] = {
-      weed_float_init("pinc", "_Phase increment", .2, 0., 1.),
-      weed_float_init("zoom", "_Zoom", 1., 0., 10.),
-      NULL};
+    weed_float_init("pinc", "_Phase increment", .2, 0., 1.),
+    weed_float_init("zoom", "_Zoom", 1., 0., 10.),
+    NULL
+  };
   weed_plant_t *pgui;
   int filter_flags = 0;
 
@@ -228,7 +230,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(pgui, WEED_LEAF_DECIMALS, 2);
 
   filter_class = weed_filter_class_init("vertigo", "effecTV", 1, filter_flags, palette_list,
-    vertigo_init, vertigo_process, vertigo_deinit, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
+                                        vertigo_init, vertigo_process, vertigo_deinit, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

@@ -7047,8 +7047,8 @@ boolean weed_init_effect(int hotkey) {
   }
 
   if (!gen_start) {
-    if (LIVES_IS_PLAYING || (!(flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)
-                             && !(flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))) {
+    if (!LIVES_IS_PLAYING || (!(flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)
+                              && !(flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))) {
       weed_plant_t *next_inst = NULL;
 start1:
       if ((error = weed_call_init_func(inst)) != WEED_SUCCESS) {

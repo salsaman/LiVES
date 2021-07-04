@@ -109,6 +109,8 @@ my @init = &rc_read("init", $file);
 my @proc= &rc_read("process", $file);
 my @deinit = &rc_read("deinit", $file);
 
+my @setup= &rc_read("setup", $file);
+
 my @disp = &rc_read("display_vals", $file);
 
 unless ($lang_code eq "192" || hex($lang_code) == 192) {
@@ -885,6 +887,12 @@ print OUT "  weed_plugin_info_add_filter_class(plugin_info, filter_class);\n";
 if ($uid) {
     print OUT "\n  if (!sscanf(_UNIQUE_ID_, \"0X%lX\", &unique_id) || !sscanf(_UNIQUE_ID_, \"0x%lx\", &unique_id)) {\n";
     print OUT "    weed_set_int64_value(plugin_info, WEED_LEAF_UNIQUE_ID, unique_id);\n";
+    print OUT "  }\n\n";
+}
+
+if (@setup) {
+    print OUT "  if (1) {\n";
+    &gen_array(5, 4, @setup);
     print OUT "  }\n\n";
 }
 

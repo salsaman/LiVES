@@ -68,8 +68,7 @@ static weed_error_t posterise_process(weed_plant_t *inst, weed_timecode_t tc) {
           dst[j * orow + i] = src[j * irow + i] & levmask;
         }
       }
-    }
-    else {
+    } else {
       for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i += 4) {
           dst[j * orow + i] = src[j * irow + i] & levmask;
@@ -91,20 +90,23 @@ WEED_SETUP_START(200, 200) {
   uint64_t unique_id;
   int palette_list[] = ALL_RGBX_PALETTES;
   weed_plant_t *in_chantmpls[] = {
-      weed_channel_template_init("in_channel0", 0),
-      NULL};
+    weed_channel_template_init("in_channel0", 0),
+    NULL
+  };
   weed_plant_t *out_chantmpls[] = {
-      weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
-      NULL};
+    weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
+    NULL
+  };
   weed_plant_t *in_paramtmpls[] = {
-      weed_integer_init("levels", "Colour _levels", 1, 1, 8),
-      NULL};
+    weed_integer_init("levels", "Colour _levels", 1, 1, 8),
+    NULL
+  };
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
   verbosity = weed_get_host_verbosity(host_info);
 
   filter_class = weed_filter_class_init("posterise", "salsaman", 1, filter_flags, palette_list,
-    NULL, posterise_process, NULL, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
+                                        NULL, posterise_process, NULL, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
 
   weed_filter_set_description(filter_class, "A simple filter which reduces the number of colour levels in the images.");
 

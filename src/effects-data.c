@@ -783,7 +783,7 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
 
   switch (stype) {
   case WEED_SEED_DOUBLE:
-    if (dtype == WEED_SEED_STRING) return TRUE;
+    if (dtype == WEED_SEED_STRING || dtype == WEED_SEED_INT) return TRUE;
     return FALSE;
   case WEED_SEED_INT:
     if (dtype == WEED_SEED_DOUBLE || dtype == WEED_SEED_STRING) return TRUE;
@@ -943,8 +943,60 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
       }
       lives_free(maxd); lives_free(mind); lives_free(valsD); lives_free(valsd);
+      return retval;
     }
-    return retval;
+    case WEED_SEED_INT: {
+      double *valsD = weed_get_double_array(sparam, WEED_LEAF_VALUE, NULL);
+      int *valsI = lives_malloc(ndvals * sizint);
+      int *valsi = weed_get_int_array(dparam, WEED_LEAF_VALUE, NULL);
+
+      int *maxi = weed_get_int_array(dptmpl, WEED_LEAF_MAX, NULL);
+      int *mini = weed_get_int_array(dptmpl, WEED_LEAF_MIN, NULL);
+
+      double *mins = NULL, *maxs = NULL;
+
+      if (autoscale) {
+        mins = weed_get_double_array(sptmpl, WEED_LEAF_MIN, NULL);
+        maxs = weed_get_double_array(sptmpl, WEED_LEAF_MAX, NULL);
+      }
+
+      if (ndvals > ondvals) valsi = (int *)lives_realloc(valsi, ndvals * sizint);
+
+      for (i = 0; i < ndvals; i++) {
+        if (autoscale) {
+          ratio = (valsD[i] - mins[sminct]) / (maxs[smaxct] - mins[sminct]);
+          valsI[i] = myround((double)mini[minct] + (double)(maxi[maxct] - mini[minct]) * ratio);
+          if (++smaxct == nsmax) smaxct = 0;
+          if (++sminct == nsmin) sminct = 0;
+
+          if (valsI[i] > maxi[maxct]) valsI[i] = maxi[maxct];
+          if (valsI[i] < mini[minct]) valsI[i] = mini[minct];
+        } else valsI[i] = myround(valsD[i]);
+
+        if (i >= ondvals || valsi[i] != valsI[i]) {
+          retval = TRUE;
+          valsi[i] = valsI[i];
+        }
+        if (++maxct == nmax) maxct = 0;
+        if (++minct == nmin) minct = 0;
+      }
+
+      if (mins) {
+        lives_free(mins);
+        lives_free(maxs);
+      }
+
+      if (retval) {
+        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+          // if we are recording, add this change to our event_list
+          rec_param_change(inst, pnum);
+        }
+
+        weed_set_int_array(dparam, WEED_LEAF_VALUE, ndvals, valsi);
+      }
+      lives_free(maxi); lives_free(mini); lives_free(valsD); lives_free(valsI); lives_free(valsi);
+      return retval;
+    }
 
     case WEED_SEED_STRING: {
       char *opstring, *tmp, *bit;

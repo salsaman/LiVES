@@ -55,7 +55,7 @@ autozoom|_Auto zoom|bool|WEED_TRUE|
 </params>
 
 <sdata>
-int path, zpath;
+int path, zpath
 </sdata>
 
 <static>
@@ -68,12 +68,7 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
                       int video_width, int irowstride, int orowstride, int video_height,
                       int dheight, int offset, int psize) {
   int x, y, xd, yd, a, b, sx = 0, sy = 0;
-
-  int origin;
-
-  register int i, j;
-
-  orowstride -= video_width * psize;
+  int origin, i, j;
 
   xd = (stepx * zoom) >> 12;
   yd = (stepy * zoom) >> 12;
@@ -91,23 +86,17 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
      More fun can be had by playing around with x, y, xd, and yd as
      you move about the image.
   */
-
   for (j = 0; j < dheight; j++) {
     x = sx;
     y = sy;
     for (i = 0; i < video_width; i++) {
       a = ((x >> 12 & 255) * video_width) >> 8;
       b = ((y >> 12 & 255) * video_height) >> 8;
-      //       a*=video_width/64;
-      //      b*=video_height/64;
       origin = b * irowstride + a * psize;
-
-      weed_memcpy(dst, &src[origin], psize);
-      dst += psize;
+      weed_memcpy(&dst[orowstride * j + i * psize], &src[origin], psize);
       x += xd;
       y += yd;
     }
-    dst += orowstride;
     sx -= yd;
     sy += xd;
   }
@@ -130,7 +119,7 @@ END_STATEFUL_UPDATE
 
 zoom = roto2[sdata->zpath];
 draw_tile(roto[sdata->path], roto[(sdata->path + 128) & 0xFF],
-  zoom, src, dst, width, irow, orow, iheight, height, offset, psize);
+  zoom, src - offset * irow, dst, width, irow, orow, iheight, height, offset, psize);
 </process>
 
 <setup>

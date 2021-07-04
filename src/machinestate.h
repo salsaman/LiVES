@@ -340,6 +340,4 @@ char *get_install_cmd(const char *distro, const char *exe);
 
 boolean check_snap(const char *prog);
 
-char *use_staging_dir_for(int clipno);
-
 #endif

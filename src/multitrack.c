@@ -1289,9 +1289,14 @@ static void mt_zoom(lives_mt * mt, double scale) {
 
   // scale < 0.0 = center on screen middle
   // scale > 0.0 = center on cursor
+  static boolean norecurse = FALSE;
 
-  double tl_span = (mt->tl_max - mt->tl_min) / 2.;
+  double tl_span;
   double tl_cur;
+
+  if (norecurse) return;
+
+  tl_span = (mt->tl_max - mt->tl_min) / 2.;
 
   if (scale > 0.) {
     tl_cur = mt->ptr_time;
@@ -1319,7 +1324,9 @@ static void mt_zoom(lives_mt * mt, double scale) {
   lives_ruler_set_upper(LIVES_RULER(mt->timeline), mt->tl_max);
   lives_ruler_set_lower(LIVES_RULER(mt->timeline), mt->tl_min);
 
+  norecurse = TRUE;
   mt_set_time_scrollbar(mt);
+  norecurse = FALSE;
 
   lives_widget_queue_draw(mt->timeline);
 
@@ -4542,6 +4549,14 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_menu_add_separator(LIVES_MENU(mt->files_menu));
 
+#ifdef LIBAV_TRANSCODE
+  mt->transcode = lives_standard_image_menu_item_new_with_label(_("_Quick transcode..."));
+  lives_container_add(LIVES_CONTAINER(mt->files_menu), mt->transcode);
+  lives_widget_set_sensitive(mt->transcode, FALSE);
+#endif
+
+  lives_menu_add_separator(LIVES_MENU(mt->files_menu));
+
   mt->save_event_list = lives_standard_image_menu_item_new_with_label(_("_Save Layout as..."));
   lives_container_add(LIVES_CONTAINER(mt->files_menu), mt->save_event_list);
   lives_widget_set_sensitive(mt->save_event_list, FALSE);
@@ -5473,19 +5488,16 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add(LIVES_CONTAINER(mt->view_menu), zoom_in);
 
   lives_widget_add_accelerator(zoom_in, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
-                               LIVES_KEY_Plus, (LiVESXModifierType)LIVES_CONTROL_MASK,
-                               LIVES_ACCEL_VISIBLE);
+                               LIVES_KEY_Plus, (LiVESXModifierType)LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
 
   lives_widget_add_accelerator(zoom_in, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
-                               LIVES_KEY_Equal, (LiVESXModifierType)LIVES_CONTROL_MASK,
-                               (LiVESAccelFlags)0);
+                               LIVES_KEY_Equal, (LiVESXModifierType)LIVES_CONTROL_MASK, (LiVESAccelFlags)0);
 
   zoom_out = lives_standard_menu_item_new_with_label(_("_Zoom Out"));
   lives_container_add(LIVES_CONTAINER(mt->view_menu), zoom_out);
 
   lives_widget_add_accelerator(zoom_out, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
-                               LIVES_KEY_Minus, (LiVESXModifierType)LIVES_CONTROL_MASK,
-                               LIVES_ACCEL_VISIBLE);
+                               LIVES_KEY_Minus, (LiVESXModifierType)LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
 
   lives_menu_add_separator(LIVES_MENU(mt->view_menu));
 
@@ -5638,6 +5650,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                             LIVES_GUI_CALLBACK(on_jumpnext_mark_activate), (livespointer)mt);
   lives_signal_connect(LIVES_GUI_OBJECT(mt->delblock), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_delblock_activate), (livespointer)mt);
+#ifdef LIBAV_TRANSCODE
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->transcode), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_mt_transcode_activate), (livespointer)mt);
+#endif
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->save_event_list), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_save_event_list_activate), (livespointer)mt);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->load_event_list), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -13044,12 +13060,13 @@ void multitrack_redo(LiVESMenuItem * menuitem, livespointer user_data) {
 
 
 void multitrack_view_details(LiVESMenuItem * menuitem, livespointer user_data) {
-  char buff[512];
   lives_clipinfo_t *filew;
   lives_mt *mt = (lives_mt *)user_data;
   lives_clip_t *rfile = mainw->files[mt->render_file];
-  uint32_t bsize = 0;
   double time = 0.;
+  char buff[512];
+  char *timestr;
+  uint32_t bsize = 0;
   int num_events = 0;
 
   filew = create_clip_info_window(mainw->files[mt->render_file]->achans, TRUE);
@@ -13079,7 +13096,9 @@ void multitrack_view_details(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_snprintf(buff, 512, "\n  %d", (frames_t)(mt->fps * time));
   lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_frames), buff, -1);
 
-  lives_snprintf(buff, 512, _("\n  %.3f sec"), time);
+  timestr = format_tstr(time, 0);
+  lives_snprintf(buff, 512, _("\n  %.3f sec\n(%s)"), time, timestr);
+  lives_free(timestr);
   lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_vtime), buff, -1);
 
   // byte size
@@ -13796,11 +13815,11 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   migrate_from_staging(mt->render_file);
 
-  THREAD_INTENTION = LIVES_INTENTION_RENDER;
+  if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) THREAD_INTENTION = LIVES_INTENTION_RENDER;
   if (render_to_clip(FALSE)) {
     // rendering was successful
+    THREAD_INTENTION = LIVES_INTENTION_NOTHING;
 
-#if 0
     if (mt->pr_audio) {
       mt->pr_audio = FALSE;
       lives_widget_set_sensitive(mt->render_vid, TRUE);
@@ -13809,9 +13828,7 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       mt->idlefunc = mt_idle_add(mt);
       return FALSE;
     }
-#endif
 
-    THREAD_INTENTION = LIVES_INTENTION_NOTHING;
     mainw->files[mt->render_file]->start = mainw->files[mt->render_file]->frames > 0 ? 1 : 0;
     mainw->files[mt->render_file]->end = mainw->files[mt->render_file]->frames;
     if (mainw->files[mt->render_file]->frames == 0) {
@@ -13905,11 +13922,9 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
     mainw->event_list = NULL;
     if (mt->pr_audio) {
-      char *temp_backend = use_staging_dir_for(mt->render_file);
-      com = lives_strdup_printf("%s undo_audio \"%s\"", temp_backend, cfile->handle);
+      com = lives_strdup_printf("%s undo_audio \"%s\"", prefs->backend, cfile->handle);
       lives_system(com, FALSE);
       lives_free(com);
-      lives_free(temp_backend);
       mt->has_audio_file = had_audio;
     } else {
       // remove subdir
@@ -15201,7 +15216,7 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
     lives_freep((void **)&frames);
 
     if (direction == LIVES_DIRECTION_FORWARD) {
-      last_tc += TICKS_PER_SECOND_DBL / mt->fps + 1;
+      last_tc += TICKS_PER_SECOND_DBL / mt->fps;
       last_tc = q_gint64(last_tc, mt->fps);
     } else {
       if (last_tc < TICKS_PER_SECOND_DBL / mt->fps) {
@@ -17009,6 +17024,16 @@ boolean set_new_set_name(lives_mt * mt) {
   else lives_widget_set_sensitive(mt->backup, TRUE);
   return TRUE;
 }
+
+
+#ifdef LIBAV_TRANSCODE
+void on_mt_transcode_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  lives_mt *mt = (lives_mt *)user_data;
+  if (!mt->event_list || !get_first_event(mt->event_list)) return;
+  THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
+  on_render_activate(NULL, mt);
+}
+#endif
 
 
 boolean on_save_event_list_activate(LiVESMenuItem * menuitem, livespointer user_data) {

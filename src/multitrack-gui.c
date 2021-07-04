@@ -2938,6 +2938,9 @@ void mt_desensitise(lives_mt * mt) {
   lives_widget_set_sensitive(mt->render, FALSE);
   lives_widget_set_sensitive(mt->prerender_aud, FALSE);
   lives_widget_set_sensitive(mt->delblock, FALSE);
+#ifdef LIBAV_TRANSCODE
+  lives_widget_set_sensitive(mt->transcode, FALSE);
+#endif
   lives_widget_set_sensitive(mt->save_event_list, FALSE);
   lives_widget_set_sensitive(mt->load_event_list, FALSE);
   lives_widget_set_sensitive(mt->clear_event_list, FALSE);
@@ -3010,6 +3013,9 @@ void mt_sensitise(lives_mt * mt) {
     lives_widget_set_sensitive(mt->view_events, TRUE);
     lives_widget_set_sensitive(mt->view_sel_events, mt->region_start != mt->region_end);
     lives_widget_set_sensitive(mt->render, TRUE);
+#ifdef LIBAV_TRANSCODE
+    lives_widget_set_sensitive(mt->transcode, TRUE);
+#endif
     if (mt->avol_init_event && mt->opts.pertrack_audio && mainw->files[mt->render_file]->achans > 0)
       lives_widget_set_sensitive(mt->prerender_aud, TRUE);
     lives_widget_set_sensitive(mt->save_event_list, !mainw->recording_recovered);
@@ -3021,6 +3027,9 @@ void mt_sensitise(lives_mt * mt) {
     lives_widget_set_sensitive(mt->view_sel_events, FALSE);
     lives_widget_set_sensitive(mt->render, FALSE);
     lives_widget_set_sensitive(mt->save_event_list, FALSE);
+#ifdef LIBAV_TRANSCODE
+    lives_widget_set_sensitive(mt->transcode, FALSE);
+#endif
   }
 
   if (mt->event_list) lives_widget_set_sensitive(mt->clear_event_list, TRUE);

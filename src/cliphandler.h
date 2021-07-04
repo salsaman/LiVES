@@ -444,6 +444,8 @@ void permit_close(int which);
 
 void migrate_from_staging(int which);
 
+char *use_staging_dir_for(int clipno);
+
 /// intents ////
 
 // aliases for object states

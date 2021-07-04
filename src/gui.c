@@ -893,6 +893,14 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(select_submenu_menu));
 
+  mainw->select_sttoptr = lives_standard_image_menu_item_new_with_label(_("Move Start to Pointer"));
+  lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_sttoptr);
+  lives_widget_set_sensitive(mainw->select_sttoptr, FALSE);
+
+  mainw->select_entoptr = lives_standard_image_menu_item_new_with_label(_("Move End to Pointer"));
+  lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_entoptr);
+  lives_widget_set_sensitive(mainw->select_entoptr, FALSE);
+
   // TODO - add more visual methods - e.g skip over blank frames
 
   mainw->select_vis = lives_standard_image_menu_item_new_with_label(_("Select _Visually"));
@@ -900,6 +908,7 @@ void create_LiVES(void) {
   //#define TEST_VISMATCH
 #ifdef TEST_VISMATCH
 
+  lives_menu_add_separator(LIVES_MENU(select_submenu_menu));
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_vis);
 
 #endif
@@ -2897,26 +2906,31 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_delete_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->trim_video), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_trim_vid_activate), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_sttoptr), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_STTOPTR));
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_entoptr), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_ENTOPTR));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_all), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_select_all_activate), NULL);
+                       LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_ALL));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_start_only), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_select_start_only_activate), NULL);
+                       LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_START_ONLY));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_end_only), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_select_end_only_activate), NULL);
+                       LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_END_ONLY));
+  // etc.
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_vismatch), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(sel_vismatch_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_skipbl), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(sel_skipbl_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_invert), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_select_invert_activate), NULL);
+                       LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_INVERT));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_new), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_select_new_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_to_end), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_select_to_end_activate), NULL);
+                       LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_TOEND));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_to_aend), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_select_to_aend_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_from_start), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_select_from_start_activate), NULL);
+                       LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_FROMSTART));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_last), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_select_last_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->lock_selwidth), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -3217,7 +3231,7 @@ void create_LiVES(void) {
 #endif
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->sa_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_select_all_activate), NULL);
+                            LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_ALL));
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->eventbox3), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                             LIVES_GUI_CALLBACK(frame_context), LIVES_INT_TO_POINTER(1));
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->eventbox4), LIVES_WIDGET_BUTTON_PRESS_EVENT,

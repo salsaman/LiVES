@@ -2406,6 +2406,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
       get_play_times();
     }
     if (reset_achans > 0) {
+      reget_afilesize(mainw->current_file);
       if (cfile->audio_waveform) {
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
@@ -4504,7 +4505,8 @@ done:
 }
 
 
-void on_select_all_activate(LiVESWidget * widget, livespointer user_data) {
+void on_select_activate(LiVESWidget * widget, livespointer user_data) {
+  int seltype = LIVES_POINTER_TO_INT(user_data);
   if (!CURRENT_CLIP_HAS_VIDEO) return;
 
   if (mainw->selwidth_locked) {
@@ -4514,29 +4516,48 @@ void on_select_all_activate(LiVESWidget * widget, livespointer user_data) {
     return;
   }
 
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1);
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
+  switch (seltype) {
+  case LIVES_SELECT_ALL:
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
+    break;
+  case LIVES_SELECT_START_ONLY:
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->start);
+    break;
+  case LIVES_SELECT_END_ONLY:
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->end);
+    break;
+  case LIVES_SELECT_INVERT:
+    if (cfile->start == 1) {
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->end + 1);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
+    } else {
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->start - 1);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1);
+    }
+    break;
+  case LIVES_SELECT_TOEND:
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
+    break;
+  case LIVES_SELECT_FROMSTART:
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
+    break;
+  case LIVES_SELECT_STTOPTR:
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),
+                                calc_frame_from_time(mainw->current_file, cfile->pointer_time));
+    break;
+  case LIVES_SELECT_ENTOPTR:
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),
+                                calc_frame_from_time(mainw->current_file, cfile->pointer_time));
+    break;
+  default:
+    return;
+  }
 
-  cfile->start = cfile->frames > 0 ? 1 : 0;
-  cfile->end = cfile->frames;
-
-  get_play_times();
-
+  set_start_end_spins(mainw->current_file);
   showclipimgs();
+  redraw_timeline(mainw->current_file);
 }
-
-
-void on_select_start_only_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  if (!CURRENT_CLIP_HAS_VIDEO) return;
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->start);
-}
-
-
-void on_select_end_only_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  if (!CURRENT_CLIP_HAS_VIDEO) return;
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->end);
-}
-
 
 void sel_vismatch_activate(LiVESWidget * w, livespointer user_data) {
   uint64_t *myrows;
@@ -4595,22 +4616,6 @@ void sel_skipbl_activate(LiVESWidget * w, livespointer user_data) {
 }
 
 
-void on_select_invert_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  if (!CURRENT_CLIP_HAS_VIDEO) return;
-  if (cfile->start == 1) {
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->end + 1);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
-  } else {
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->start - 1);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1);
-  }
-
-  get_play_times();
-
-  showclipimgs();
-}
-
-
 void on_select_last_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (!CURRENT_CLIP_HAS_VIDEO) return;
   if (cfile->undo_start > cfile->frames) cfile->undo_start = cfile->frames;
@@ -4645,15 +4650,6 @@ void on_select_new_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_select_to_end_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  if (!CURRENT_CLIP_HAS_VIDEO) return;
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
-  cfile->end = cfile->frames;
-  get_play_times();
-  load_end_image(cfile->end);
-}
-
-
 void on_select_to_aend_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   int end;
   if (!CURRENT_CLIP_HAS_VIDEO) return;
@@ -4664,15 +4660,6 @@ void on_select_to_aend_activate(LiVESMenuItem * menuitem, livespointer user_data
   cfile->end = end;
   get_play_times();
   load_end_image(cfile->end);
-}
-
-
-void on_select_from_start_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  if (!CURRENT_CLIP_HAS_VIDEO) return;
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1);
-  cfile->start = cfile->frames > 0 ? 1 : 0;
-  get_play_times();
-  load_start_image(cfile->start);
 }
 
 
@@ -9044,8 +9031,14 @@ void update_sel_menu(void) {
 
   if (!CURRENT_CLIP_HAS_VIDEO) {
     lives_widget_set_sensitive(mainw->select_vismatch, FALSE);
+    lives_widget_set_sensitive(mainw->select_sttoptr, FALSE);
+    lives_widget_set_sensitive(mainw->select_entoptr, FALSE);
   } else {
     lives_widget_set_sensitive(mainw->select_vismatch, TRUE);
+    lives_widget_set_sensitive(mainw->select_sttoptr,
+                               cfile->pointer_time <= calc_time_from_frame(mainw->current_file, cfile->end));
+    lives_widget_set_sensitive(mainw->select_entoptr,
+                               cfile->pointer_time >= calc_time_from_frame(mainw->current_file, cfile->start));
   }
 
   if (!CURRENT_CLIP_HAS_VIDEO || !CURRENT_CLIP_HAS_AUDIO) {
@@ -10175,6 +10168,12 @@ void on_hrule_value_changed(LiVESWidget * widget, livespointer user_data) {
     if (mainw->preview_box) {
       lives_widget_set_sensitive(mainw->p_rewindbutton, FALSE);
     }
+  }
+  if (CURRENT_CLIP_HAS_VIDEO) {
+    lives_widget_set_sensitive(mainw->select_sttoptr,
+                               cfile->pointer_time <= calc_time_from_frame(mainw->current_file, cfile->end));
+    lives_widget_set_sensitive(mainw->select_entoptr,
+                               cfile->pointer_time >= calc_time_from_frame(mainw->current_file, cfile->start));
   }
   mainw->ptrtime = cfile->pointer_time;
   lives_widget_queue_draw(mainw->eventbox2);
@@ -11708,6 +11707,7 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
         if (!do_st_end_times_dlg(mainw->current_file, &start, &end)) return FALSE;
         if (start == end) return FALSE;
       }
+
       msg = lives_strdup_printf(_("Deleting audio from %.2f to %.2f seconds..."), start, end);
       start *= (double)cfile->arate / (double)cfile->arps;
       end *= (double)cfile->arate / (double)cfile->arps;
@@ -11763,7 +11763,6 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   reget_afilesize(mainw->current_file);
   cfile->changed = TRUE;
-  sensitize();
 
   if (cfile->laudio_time == 0. || cfile->raudio_time == 0.) {
     if (cfile->audio_waveform) {
@@ -11778,9 +11777,9 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
     if (bad_header) do_header_write_error(mainw->current_file);
   }
 
-  if (menuitem) {
-    d_print_done();
-  }
+  get_play_times();
+
+  if (menuitem) d_print_done();
 
   if (mainw->sl_undo_mem && cfile->stored_layout_audio != 0.) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo

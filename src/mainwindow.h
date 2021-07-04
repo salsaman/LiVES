@@ -1240,7 +1240,20 @@ typedef struct {
   LiVESWidget *merge;
   LiVESWidget *xdelete;
   LiVESWidget *trim_video;
+
+#define LIVES_SELECT_NONE 0
+#define LIVES_SELECT_ALL 1
+#define LIVES_SELECT_START_ONLY 2
+#define LIVES_SELECT_END_ONLY 3
+#define LIVES_SELECT_INVERT 4
+#define LIVES_SELECT_FROMSTART 5
+#define LIVES_SELECT_TOEND 6
+#define LIVES_SELECT_STTOPTR 7
+#define LIVES_SELECT_ENTOPTR 8
+
   LiVESWidget *select_submenu;
+  LiVESWidget *select_sttoptr;
+  LiVESWidget *select_entoptr;
   LiVESWidget *select_vis;
   LiVESWidget *select_vismatch;
   LiVESWidget *select_skipbl;

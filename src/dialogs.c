@@ -1316,8 +1316,10 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess * pro
   if (fraction_done > 1.) fraction_done = 1.;
   if (fraction_done < 0.) fraction_done = 0.;
 
-  if (fraction_done > disp_fraction_done + .0001)
+  if (fraction_done > disp_fraction_done + .0001) {
     lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(proc->progressbar), fraction_done);
+    disp_fraction_done = fraction_done;
+  } else if (fraction_done < disp_fraction_done) disp_fraction_done = fraction_done;
 
   remtime = timesofar / fraction_done - timesofar;
   remtstr = remtime_string(remtime);
@@ -1330,7 +1332,7 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess * pro
   progbar_display(prog_label, FALSE);
   lives_free(prog_label);
 
-  disp_fraction_done = fraction_done;
+
 }
 
 

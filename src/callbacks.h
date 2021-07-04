@@ -90,19 +90,15 @@ void update_sel_menu(void);
 
 void sel_vismatch_activate(LiVESWidget *, livespointer);
 
-void sel_skipbl_activate(LiVESWidget *, livespointer);
+void on_select_activate(LiVESWidget *widget, livespointer type);
 
-void on_select_all_activate(LiVESWidget *, livespointer);
+void sel_skipbl_activate(LiVESWidget *, livespointer);
 
 void on_select_new_activate(LiVESMenuItem *, livespointer);
 
 void on_select_last_activate(LiVESMenuItem *, livespointer);
 
-void on_select_to_end_activate(LiVESMenuItem *, livespointer);
-
 void on_select_to_aend_activate(LiVESMenuItem *, livespointer);
-
-void on_select_from_start_activate(LiVESMenuItem *, livespointer);
 
 void on_lock_selwidth_activate(LiVESMenuItem *, livespointer);
 
@@ -268,8 +264,6 @@ void on_capture_activate(LiVESMenuItem *, livespointer);
 
 void on_capture2_activate(void);
 
-void on_select_invert_activate(LiVESMenuItem *, livespointer);
-
 void on_warn_mask_toggled(LiVESToggleButton *, livespointer);
 
 boolean frame_context(LiVESWidget *, LiVESXEventButton *, livespointer which);
@@ -292,10 +286,6 @@ boolean mute_audio_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t key
 boolean on_stop_activate_by_del(LiVESWidget *, LiVESXEvent *, livespointer);
 
 void on_pause_clicked(void);
-
-void on_select_start_only_activate(LiVESMenuItem *, livespointer);
-
-void on_select_end_only_activate(LiVESMenuItem *, livespointer);
 
 void on_encoder_ofmt_changed(LiVESCombo *, livespointer);
 

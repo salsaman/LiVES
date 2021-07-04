@@ -289,6 +289,9 @@ struct _mt {
   LiVESWidget *sel_label;
   LiVESWidget *l_sel_arrow;
   LiVESWidget *r_sel_arrow;
+#ifdef LIBAV_TRANSCODE
+  LiVESWidget *transcode; ///< menuitem
+#endif
   LiVESWidget *save_event_list; ///< menuitem
   LiVESWidget *load_event_list; ///< menuitem
   LiVESWidget *clear_event_list; ///< menuitem
@@ -959,6 +962,10 @@ weed_plant_t *load_event_list(lives_mt *, char *eload_file);
 boolean on_save_event_list_activate(LiVESMenuItem *, livespointer mt);
 boolean save_event_list_inner(lives_mt *, int fd, weed_plant_t *event_list, unsigned char **mem);
 boolean mt_load_recovery_layout(lives_mt *);
+
+#ifdef LIBAV_TRANSCODE
+void on_mt_transcode_activate(LiVESMenuItem *menuitem, livespointer mt);
+#endif
 
 // layouts and layout maps
 LiVESList *load_layout_map(void);

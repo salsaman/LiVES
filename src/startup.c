@@ -1886,10 +1886,10 @@ rerun:
   add_test(table, ++testcase, msg);
   lives_free(msg);
 
-  onowait = nowait;
-  nowait = FALSE;
-  add_test(table, ++testcase, NULL);
-  nowait = onowait;
+  /* onowait = nowait; */
+  /* nowait = FALSE; */
+  /* add_test(table, ++testcase, NULL); */
+  /* nowait = onowait; */
 
   add_test(table, ++testcase, _("Checking if ???? can decode to jpeg"));
 
@@ -2267,7 +2267,7 @@ rerun:
   }
 
   // check if mplayer can decode to jpeg
-  prep_test(table, ++testcase);
+  prep_test(table, testcase);
   if (mainw->cancelled != CANCEL_NONE) goto cancld;
 
   msg = lives_strdup_printf(_("Checking if %s can decode to jpeg"), mp_cmd);

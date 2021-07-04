@@ -5530,8 +5530,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_ruler_set_range(LiVESRuler *ruler, dou
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_message_dialog_new(LiVESWindow *parent, LiVESDialogFlags flags,
-    LiVESMessageType type,
-    LiVESButtonsType buttons, const char *msg_fmt, ...) {
+    LiVESMessageType type, LiVESButtonsType buttons, const char *msg_fmt, ...) {
   LiVESWidget *mdial = NULL;
 #ifdef GUI_GTK
   mdial = gtk_message_dialog_new(parent, flags | GTK_DIALOG_DESTROY_WITH_PARENT, type, buttons, msg_fmt, NULL);

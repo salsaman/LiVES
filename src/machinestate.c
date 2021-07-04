@@ -466,24 +466,6 @@ char *get_md5sum(const char *filename) {
 }
 
 
-LIVES_GLOBAL_INLINE
-char *use_staging_dir_for(int clipno) {
-  if (clipno > 0 && IS_VALID_CLIP(clipno)) {
-    lives_clip_t *sfile = mainw->files[clipno];
-    char *clipdir = get_clip_dir(clipno);
-    char *stfile = lives_build_filename(clipdir, LIVES_STATUS_FILE_NAME, NULL);
-    lives_free(clipdir);
-    lives_snprintf(sfile->info_file, PATH_MAX, "%s", stfile);
-    lives_free(stfile);
-    if (*sfile->staging_dir) {
-      return lives_strdup_printf("%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGFILE=\"%s\" --", EXEC_PERL,
-                                 capable->backend_path, sfile->staging_dir, prefs->configfile);
-    }
-  }
-  return lives_strdup(prefs->backend_sync);
-}
-
-
 const char *get_shmdir(void) {
   if (!*capable->shmdir_path) {
     char *xshmdir = NULL, *shmdir = lives_build_path(LIVES_RUN_DIR, NULL);

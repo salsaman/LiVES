@@ -3553,7 +3553,6 @@ if (1) {
 		unlink $pidfile;
 		exit 1;
 	    }
-
 	    &sig_complete;
 	    exit 0;
 	}

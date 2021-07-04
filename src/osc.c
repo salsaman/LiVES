@@ -2709,7 +2709,7 @@ boolean lives_osc_cb_clip_select_all(void *context, int arglen, const void *varg
   if (!CURRENT_CLIP_IS_NORMAL || !CURRENT_CLIP_HAS_VIDEO) return lives_osc_notify_failure();
 
   mainw->selwidth_locked = FALSE;
-  on_select_all_activate(NULL, NULL);
+  on_select_activate(NULL, LIVES_INT_TO_POINTER(LIVES_SELECT_ALL));
   mainw->selwidth_locked = selwidth_locked;
 
   return lives_osc_notify_success(NULL);

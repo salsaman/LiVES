@@ -20,6 +20,23 @@ LIVES_GLOBAL_INLINE int find_clip_by_uid(uint64_t uid) {
 }
 
 
+LIVES_GLOBAL_INLINE
+char *use_staging_dir_for(int clipno) {
+  if (clipno > 0 && IS_VALID_CLIP(clipno)) {
+    lives_clip_t *sfile = mainw->files[clipno];
+    char *clipdir = get_clip_dir(clipno);
+    char *stfile = lives_build_filename(clipdir, LIVES_STATUS_FILE_NAME, NULL);
+    lives_free(clipdir);
+    lives_snprintf(sfile->info_file, PATH_MAX, "%s", stfile);
+    lives_free(stfile);
+    if (*sfile->staging_dir) {
+      return lives_strdup_printf("%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGFILE=\"%s\" --", EXEC_PERL,
+                                 capable->backend_path, sfile->staging_dir, prefs->configfile);
+    }
+  }
+  return lives_strdup(prefs->backend_sync);
+}
+
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
   char *key = NULL;
 

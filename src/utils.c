@@ -75,6 +75,7 @@ int lives_system(const char *com, boolean allow_error) {
   if (CURRENT_CLIP_IS_VALID) {
     shortcut = TRUE;
     lives_rm(cfile->info_file);
+    shortcut = FALSE;
   }
   mainw->error = FALSE;
   mainw->cancelled = CANCEL_NONE;

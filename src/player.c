@@ -2589,10 +2589,10 @@ switch_point:
     old_current_file = mainw->current_file;
     old_playing_file = mainw->playing_file;
 
-    if (sfile->arate)
-      g_print("seek vals: vid %d %ld = %f %d %f\n", sfile->frameno, sfile->aseek_pos,
-              (double)sfile->aseek_pos / (double)sfile->arate / 4. * sfile->fps + 1.,
-              sfile->arate, sfile->fps);
+    /* if (sfile->arate) */
+    /* g_print("seek vals: vid %d %ld = %f %d %f\n", sfile->frameno, sfile->aseek_pos, */
+    /*         (double)sfile->aseek_pos / (double)sfile->arate / 4. * sfile->fps + 1., */
+    /*         sfile->arate, sfile->fps); */
   }
 
   mainw->noswitch = TRUE;

@@ -60,6 +60,7 @@ trigger|_Trigger|bool|0|
 </params>
 
 <param_window>
+special|ignored|1|
 </param_window>
 
 <static>

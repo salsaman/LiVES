@@ -26,7 +26,6 @@ static int package_version = 1; // version of this package
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 
-
 static weed_error_t negate_process(weed_plant_t *inst, weed_timecode_t tc) {
   weed_plant_t *in_chan = weed_get_in_channel(inst, 0);
   weed_plant_t *out_chan = weed_get_out_channel(inst, 0);
@@ -77,19 +76,17 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class;
   int palette_list[] = ALL_RGB_PALETTES;
   weed_plant_t *in_chantmpls[] = {
-    weed_channel_template_init("in_channel0", 0),
-    NULL
-  };
+      weed_channel_template_init("in_channel0", 0),
+      NULL};
   weed_plant_t *out_chantmpls[] = {
-    weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
-    NULL
-  };
+      weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
+      NULL};
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
   verbosity = weed_get_host_verbosity(host_info);
 
   filter_class = weed_filter_class_init("negate", "salsaman", 1, filter_flags, palette_list,
-                                        NULL, negate_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
+    NULL, negate_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_filter_set_description(filter_class, "Inverts the Red, Green and Blue values of each pixel.");
 

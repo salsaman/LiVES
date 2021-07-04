@@ -27,7 +27,6 @@ static int package_version = 1; // version of this package
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 
-
 static uint32_t sqrti(uint32_t n) {
   uint32_t root = 0, remainder = n, place = 0x40000000, tmp;
   while (place > remainder) place >>= 2;
@@ -44,7 +43,7 @@ static uint32_t sqrti(uint32_t n) {
 
 
 static void cp_chroma(unsigned char *dst, unsigned char *src, int irow,
-                      int orow, int width, int height) {
+      int orow, int width, int height) {
   if (irow == orow && irow == width) weed_memcpy(dst, src, width * height);
   else {
     for (int i = 0; i < height; i++) {
@@ -72,13 +71,13 @@ static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t tc) {
     int row0, row1, sum, scale = 384;
     unsigned char *src = srcp[0];
     unsigned char *dst = dstp[0];
-
+    
     int irow = irows[0];
     int orow = orows[0];
     int ymin, ymax, nplanes, j;
-
+    
     unsigned char *end = src + (height - 2) * irow;
-
+    
     if (clamping == WEED_YUV_CLAMPING_UNCLAMPED) {
       ymin = 0;
       ymax = 255;
@@ -86,62 +85,62 @@ static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t tc) {
       ymin = 16;
       ymax = 235;
     }
-
+    
     // skip top scanline
     weed_memcpy(dst, src, width);
-
+    
     // skip rightmost pixel
     width--;
-
+    
     // process each row
     for (int i = 1; i < height; i++) {
       // skip leftmost pixel
       dst[orow * i] = src[irow * i];
-
+    
       // process all pixels except leftmost and rightmost
       for (j = 1; j < width; j++) {
         // do edge detect and convolve
         row0 = src[irow * (i + 1) - 1 + j] - src[irow * (i - 1) - 1 + j]
-               + ((src[irow * (i + 1) + j] - src[irow * (i - 1) + j]) << 1)
-               + src[irow * (i + 1) + 1 + j] - src[irow * (i + 1) - 1 + j];
+              + ((src[irow * (i + 1) + j] - src[irow * (i - 1) + j]) << 1)
+              + src[irow * (i + 1) + 1 + j] - src[irow * (i + 1)- 1 + j];
         row1 = src[irow * (i - 1) + 1 + j] - src[irow * (i - 1) - 1 + j]
-               + ((src[irow * i + 1 + j] - src[irow * i - 1 + j]) << 1)
-               + src[irow * (i + 1) + 1 + j] - src[irow * (i + 1) - 1 + j];
-
+              + ((src[irow * i + 1 + j] - src[irow * i - 1 + j]) << 1)
+              + src[irow * (i + 1) + 1 + j] - src[irow * (i + 1)- 1 + j];
+    
         sum = ((3 * sqrti(row0 * row0 + row1 * row1) / 2) * scale) >> 8;
-
+    
         // clamp and invert
         sum = 255 - (sum < 0 ? 0 : sum > 255 ? 255 : sum);
-
+    
         // mix 25% effected with 75% original
         sum = (64 * sum + 192 * (*src)) >> 8;
         if (clamping == WEED_YUV_CLAMPING_CLAMPED) sum = (double)sum / 255. * 219. + 16.;
-
+    
         dst[orow * i + j] = (uint8_t)(sum < ymin ? ymin : sum > ymax ? ymax : sum);
       }
-
+    
       // skip rightmost pixel
-      dst[orow * i + j] = src[irow * i + j];
+      dst[orow * i + j] = src[irow * i +j];
     }
-
+    
     width++;
-
+    
     // copy bottom row
     weed_memcpy(dst, src, width);
-
+    
     if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P) height >>= 1;
     if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P
-        || pal == WEED_PALETTE_YUV422P) width >>= 1;
-
+          || pal == WEED_PALETTE_YUV422P) width >>= 1;
+    
     if (pal == WEED_PALETTE_YUVA4444P) nplanes = 4;
     else nplanes = 3;
-
+    
     for (int i = 1; i < nplanes; i++) {
       cp_chroma(dstp[i], srcp[i], irows[i], orows[i], width, height);
     }
   }
-  weed_free(srcp);
-  weed_free(dstp);
+    weed_free(srcp);
+    weed_free(dstp);
 
   return WEED_SUCCESS;
 }
@@ -152,19 +151,17 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class;
   int palette_list[] = ALL_PLANAR_PALETTES;
   weed_plant_t *in_chantmpls[] = {
-    weed_channel_template_init("in_channel0", 0),
-    NULL
-  };
+      weed_channel_template_init("in_channel0", 0),
+      NULL};
   weed_plant_t *out_chantmpls[] = {
-    weed_channel_template_init("out_channel", 0),
-    NULL
-  };
+      weed_channel_template_init("out_channel", 0),
+      NULL};
   int filter_flags = 0;
 
   verbosity = weed_get_host_verbosity(host_info);
 
   filter_class = weed_filter_class_init("comic book", "salsaman", 1, filter_flags, palette_list,
-                                        NULL, comic_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
+    NULL, comic_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_plugin_set_package_version(plugin_info, package_version);

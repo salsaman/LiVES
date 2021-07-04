@@ -15,6 +15,7 @@ salsaman
 </author>
 
 <requires>
+putils
 <inttypes.h>
 </requires>
 
@@ -49,9 +50,9 @@ static void cp_chroma(unsigned char *dst, unsigned char *src, int irow,
 }
 </static>
 
-<palette_lists>
+<palette_list>
 ALL_PLANAR_PALETTES
-</palette_lists>
+</palette_list>
 
 <in_chans>
 in_channel0|unclamped, planar

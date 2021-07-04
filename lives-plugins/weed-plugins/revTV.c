@@ -25,7 +25,6 @@ static int package_version = 1; // version of this package
 
 
 static int verbosity = WEED_VERBOSITY_ERROR;
-
 enum {
   P_lspace,
   P_vscale,
@@ -59,31 +58,32 @@ static weed_error_t revTV_process(weed_plant_t *inst, weed_timecode_t tc) {
   if (1) {
     short val;
     int red = 0, green = 1, blue = 2, yoffset, yval;
-
+    
     // split threads horizontally instead of vertically
     int offset = weed_channel_get_offset(out_chan);
     int xst = (offset * width / iheight) * psize;
     int xend = ((offset + height - 1) * width / iheight) * psize;
     if (xend > width * psize) xend = width * psize;
-
+    
     height = iheight;
-
+    
     src -= irow * offset;
     dst -= orow * offset;
-
+    
     vscale /= 200.;
     if (pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_BGRA32) {
       red = 2; blue = 0;
-    } else if (pal == WEED_PALETTE_ARGB32) {
+    }
+    else if (pal == WEED_PALETTE_ARGB32) {
       red = 1; green = 2; blue = 3;
     }
-
+    
     for (int y = 0; y < height; y += lspace) {
       for (int x = xst; x < xend; x += psize) {
         if (pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888)
           val = src[irow * y + x] * 7;
         else val = (short)((src[irow * y + x + red] << 1) + (src[irow * y + x + green] << 2)
-                             + src[irow * y + x + blue]);
+              + src[irow * y + x + blue]);
         yval = y - val * vscale;
         if (yval >= 0) {
           weed_memcpy(&dst[orow * yval + x], &src[irow * y + x], psize);
@@ -101,18 +101,15 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class;
   int palette_list[] = ALL_PACKED_PALETTES;
   weed_plant_t *in_chantmpls[] = {
-    weed_channel_template_init("in_channel0", 0),
-    NULL
-  };
+      weed_channel_template_init("in_channel0", 0),
+      NULL};
   weed_plant_t *out_chantmpls[] = {
-    weed_channel_template_init("out_channel0", 0),
-    NULL
-  };
+      weed_channel_template_init("out_channel0", 0),
+      NULL};
   weed_plant_t *in_paramtmpls[] = {
-    weed_integer_init("lspace", "_Line spacing", 6, 1, 16),
-    weed_float_init("vscale", "_Vertical scale factor", 2., 0., 4.),
-    NULL
-  };
+      weed_integer_init("lspace", "_Line spacing", 6, 1, 16),
+      weed_float_init("vscale", "_Vertical scale factor", 2., 0., 4.),
+      NULL};
   weed_plant_t *pgui;
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
@@ -122,7 +119,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(pgui, WEED_LEAF_DECIMALS, 2);
 
   filter_class = weed_filter_class_init("revTV", "effecTV", 1, filter_flags, palette_list,
-                                        NULL, revTV_process, NULL, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
+    NULL, revTV_process, NULL, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_plugin_set_package_version(plugin_info, package_version);

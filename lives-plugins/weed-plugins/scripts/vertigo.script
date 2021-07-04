@@ -32,9 +32,9 @@ putils
 unsigned int|RGB32
 </typedefs>
 
-<palette_lists>
+<palette_list>
 RGBA32|BGRA32
-</palette_lists>
+</palette_list>
 
 <in_chans>
 in_channel0|reinit_on_size_change
@@ -48,7 +48,7 @@ out_channel0|
 int|dx, dy, sx, sy
 RGB32 *|buffer|weed_free
 RGB32 *|current_buffer, *alt_buffer
-double phase
+double|phase
 </sdata>
 
 <static>

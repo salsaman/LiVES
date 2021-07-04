@@ -17,6 +17,7 @@ salsaman
 <requires>
 <math.h>
 random
+putils
 </requires>
 
 <language_code>
@@ -29,12 +30,9 @@ int|count|
 volatile int|wait|
 volatile int|ready|
 volatile int|tot|
-double|dscale|
-double|dx|
-double|dy|
-double|scale|
-double|cx|
-double|cy|
+double|dscale, scale|
+double|dx, dy|
+double|cx, cy|
 int otrig;
 </sdata>
 
@@ -43,9 +41,9 @@ may_thread
 stateful
 </filter_flags>
 
-<palette_lists>
+<palette_list>
 ALL_PACKED_PALETTES
-</palette_lists>
+</palette_list>
 
 <in_chans>
 in_channel0
@@ -64,81 +62,74 @@ special|ignored|1|
 </param_window>
 
 <static>
-static double scmax = exp(3.);
+static const double scmax = exp(3.);
 </static>
 
 <process>
 int offsx, offsy, widthx, dx, dy, tt;
 double fscalex;
 
-if (is_threading == WEED_TRUE) {
-  if (!weed_plant_has_leaf(inst, WEED_LEAF_STATE_UPDATED)) {
-    return WEED_ERROR_FILTER_INVALID;
+START_STATEFUL_UPDATE
+if (trigger && sdata->otrig) sdata->count = 0;
+sdata->otrig = trigger;
+if (sdata->count <= 0) {
+  float tscale, tx, ty;
+  double dcount = 0.;
+  if (sdata->phase > 0) {
+    sdata->count = 8 + fastrand_int_re(32, inst, WEED_LEAF_PLUGIN_RANDOM_SEED);
+    dcount = (double)sdata->count;
   }
-  if (weed_get_boolean_value(inst, WEED_LEAF_STATE_UPDATED, NULL) == WEED_FALSE) {
-    if (trigger && sdata->otrig) sdata->count = 0;
-    sdata->otrig = trigger;
-    if (sdata->count <= 0) {
-      float tscale, tx, ty;
-      double dcount = 0.;
-      if (sdata->phase > 0) {
-        sdata->count = 8 + fastrand_int_re(32, inst, WEED_LEAF_PLUGIN_RANDOM_SEED);
-        dcount = (double)sdata->count;
-      }
-      switch (sdata->phase++) {
-      case 4:
-        sdata->phase = 0;
-      case 0:
-        sdata->cx = sdata->cy = 0.5;
-        sdata->scale = 1;
-        sdata->count = 0;
-        break;
-      case 1:
-        // pick target scale
-        tscale = fastrnd_dbl(3.);
-        sdata->dscale = (1. + tscale) / dcount;
-        //tx = (fastrnd_dbl(1.) - .5);// / sdata->scale;
-        //ty = (fastrnd_dbl(1.) - .5);// / sdata->scale;
-        //sdata->dx = tx / dcount;
-        //sdata->dy = ty / dcount;
-        break;
-      case 2:
-        //sdata->count = 0;
-        // pick target x, y
-        tx = (fastrnd_dbl(1.) - .5);// / sdata->scale;
-        ty = (fastrnd_dbl(1.) - .5);// / sdata->scale;
-        sdata->dx = tx / dcount;
-        sdata->dy = ty / dcount;
-        sdata->dscale = 0;
-        break;
-      case 3:
-        // return to base
-        sdata->dx = (.5 - sdata->cx) / dcount;
-        sdata->dy = (.5 - sdata->cy) / dcount;
-        sdata->dscale = (1. - sdata->scale) / dcount;
-        break;
-      default:
-        break;
-      }
-    }
-
-    sdata->scale += sdata->dscale;
-    sdata->cx += sdata->dx / sdata->scale;
-    sdata->cy += sdata->dy / sdata->scale;
-
-    if (sdata->scale > scmax) sdata->scale = scmax;
-    if (sdata->scale < 1.) sdata->scale = 1.;
-
-    if (sdata->cx < .5 / sdata->scale) sdata->cx = .5 / sdata->scale;
-    if (sdata->cx > 1. - .5 / sdata->scale) sdata->cx = 1. - .5 / sdata->scale;
-    if (sdata->cy < .5 / sdata->scale) sdata->cy = .5 / sdata->scale;
-    if (sdata->cy > 1. - .5 / sdata->scale) sdata->cy = 1. - .5 / sdata->scale;
-
-    sdata->count--;
-
-    weed_set_boolean_value(inst, WEED_LEAF_STATE_UPDATED, WEED_TRUE);
+  switch (sdata->phase++) {
+  case 4:
+    sdata->phase = 0;
+  case 0:
+    sdata->cx = sdata->cy = 0.5;
+    sdata->scale = 1;
+    sdata->count = 0;
+    break;
+  case 1:
+    // pick target scale
+    tscale = fastrnd_dbl(3.);
+    sdata->dscale = (1. + tscale) / dcount;
+    //tx = (fastrnd_dbl(1.) - .5);// / sdata->scale;
+    //ty = (fastrnd_dbl(1.) - .5);// / sdata->scale;
+    //sdata->dx = tx / dcount;
+    //sdata->dy = ty / dcount;
+    break;
+  case 2:
+    //sdata->count = 0;
+    // pick target x, y
+    tx = (fastrnd_dbl(1.) - .5);// / sdata->scale;
+    ty = (fastrnd_dbl(1.) - .5);// / sdata->scale;
+    sdata->dx = tx / dcount;
+    sdata->dy = ty / dcount;
+    sdata->dscale = 0;
+    break;
+  case 3:
+    // return to base
+    sdata->dx = (.5 - sdata->cx) / dcount;
+    sdata->dy = (.5 - sdata->cy) / dcount;
+    sdata->dscale = (1. - sdata->scale) / dcount;
+    break;
+  default:
+    break;
   }
 }
+
+sdata->scale += sdata->dscale;
+sdata->cx += sdata->dx / sdata->scale;
+sdata->cy += sdata->dy / sdata->scale;
+
+if (sdata->scale > scmax) sdata->scale = scmax;
+if (sdata->scale < 1.) sdata->scale = 1.;
+
+if (sdata->cx < .5 / sdata->scale) sdata->cx = .5 / sdata->scale;
+if (sdata->cx > 1. - .5 / sdata->scale) sdata->cx = 1. - .5 / sdata->scale;
+if (sdata->cy < .5 / sdata->scale) sdata->cy = .5 / sdata->scale;
+if (sdata->cy > 1. - .5 / sdata->scale) sdata->cy = 1. - .5 / sdata->scale;
+
+sdata->count--;
+END_STATEFUL_UPDATE
 
 offsx = sdata->cx * width;
 offsy = sdata->cy * iheight;

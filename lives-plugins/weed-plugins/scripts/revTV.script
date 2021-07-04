@@ -12,19 +12,24 @@ revTV
 
 <author>
 effecTV
+salsaman
 </author>
 
 <language_code>
 0xC0
 </language_code>
 
+<requires>
+putils
+</requires>
+
 <filter_flags>
 may_thread
 </filter_flags>
 
-<palette_lists>
+<palette_list>
 ALL_PACKED_PALETTES
-</palette_lists>
+</palette_list>
 
 <in_chans>
 in_channel0

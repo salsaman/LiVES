@@ -94,7 +94,7 @@ my $flagstr;
 
 my @static = &rc_read("static", $file);
 
-my @pal_lists = &rc_read("palette_lists", $file);
+my @pal_list = &rc_read("palette_list", $file);
 
 my @in_chans = &rc_read("in_chans", $file);
 my @out_chans = &rc_read("out_chans", $file);
@@ -407,7 +407,7 @@ if ($uid && !$inc_stdio) {
     print OUT "#include <stdio.h>\n";
 }
 
-print OUT "\nstatic int verbosity = WEED_VERBOSITY_ERROR;\n\n";
+print OUT "\nstatic int verbosity = WEED_VERBOSITY_ERROR;\n";
 
 if (@typedefs) {
     &add_typedefs;
@@ -432,7 +432,7 @@ if ($num_params) {
 if (@static) {
     # add static funcs
     print OUT "\n";
-    &gen_array(0, @static);
+    &gen_array(0, 0, @static);
     print OUT "\n/////////////////////////////////////////////////////////////////////////////\n";
 }
 
@@ -467,7 +467,7 @@ if ($has_init) {
     if (@init) {
 	## add main init code
 	print OUT "\n    if (1) {\n";
-	&gen_array(6, @init);
+	&gen_array(1, 6, @init);
 	print OUT "    }\n";
     }
 
@@ -498,7 +498,7 @@ if ($has_deinit) {
 	    "\"plugin_internal\", NULL);\n";
     }
 
-    &gen_array(2, @deinit);
+    &gen_array(2, 2, @deinit);
     
     if ($use_sdata) {
 	my $has_destr = 0;
@@ -556,7 +556,7 @@ my $indent = 4;
 if ($use_sdata) {
     $indent = 6;
 }
-&gen_array($indent, @proc);
+&gen_array(3, $indent, @proc);
 print OUT "$xspcs  }\n";
 
 if ($num_params) {
@@ -587,12 +587,12 @@ if ($uid) {
 ## setup palette_list
 print OUT "  int palette_list[] = ";
 
-if ($pal_lists[0] =~ /^ALL/) {
-    print OUT "$pal_lists[0];\n";
+if ($pal_list[0] =~ /^ALL/) {
+    print OUT "$pal_list[0];\n";
 }
 else {
     print OUT "{";
-    foreach (@pal_lists) {
+    foreach (@pal_list) {
 	@pieces = split(/$delim/);
 	foreach (@pieces) {
 	    if ($_ =~ /^WEED_PALETTE_/) {
@@ -688,7 +688,7 @@ if ($num_outc) {
     print OUT"NULL};\n";
 }
 
-#setup in_pramtmpls
+#setup in_paramtmpls
 if ($num_params) {
     print OUT "  weed_plant_t *$inps" . "[] = {\n      ";
     foreach (@params) {
@@ -715,11 +715,12 @@ if ($num_params) {
 	    else {
 		print OUT "weed_switch_init(\"$pname\", \"$plabel\", ";
 	    }
-	    if (!@pieces[3]) {
-		print OUT "WEED_FALSE";
+
+	    if (@pieces[3] eq "1" || @pieces[3] eq "WEED_TRUE" || @pieces[3] eq "TRUE" || @pieces[3] eq "true") {
+		print OUT "WEED_TRUE";
 	    }
 	    else {
-		print OUT "WEED_TRUE";
+		print OUT "WEED_FALSE";
 	    }
 	    if (@pieces > 4) {
 		print OUT ", @pieces[4]";
@@ -751,7 +752,7 @@ if ($num_params) {
     print OUT"NULL};\n";
 }
 
-#setup out_pramtmpls
+#setup out_paramtmpls
 if ($num_oparams) {
     print OUT "  weed_plant_t *$outps" . "[] = {\n      ";
     foreach (@oparams) {
@@ -858,7 +859,8 @@ if ($addnl) {
     print OUT "\n";
 }
 
-print OUT "  filter_class = weed_filter_class_init(\"$filter_name\", \"$author\", $fver, filter_flags, palette_list,\n    $init_func, $proc_func, $deinit_func, $incs, $outcs, $inps, $outps);\n\n";
+print OUT "  filter_class = weed_filter_class_init(\"$filter_name\", \"$author\", $fver, filter_flags, " .
+    "palette_list,\n    $init_func, $proc_func, $deinit_func, $incs, $outcs, $inps, $outps);\n\n";
 
 if (@authors > 1) {
     print OUT "  weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, $authors[1]);\n";
@@ -907,6 +909,7 @@ sub rc_read {
     }
     $part = 0;
     while (<IN>) {
+	next if ($_ =~ /#/);
 	if ($_ =~ /(.*)(<\/$key>)/) {
 	    return @result;
 	}
@@ -937,10 +940,41 @@ sub make_ver_hash {
     $version_hash;
 }
 
+sub subst_macro {
+    my ($type, $nspaces, $line) = @_;
+    if ($type == 3) {
+	## proc
+	if ($line eq "START_STATEFUL_UPDATE") {
+	    print OUT " " x $nspaces . "if (is_threading) {\n";
+	    print OUT " " x $nspaces . "  if (!weed_plant_has_leaf(inst, WEED_LEAF_STATE_UPDATED)) {\n";
+	    print OUT " " x $nspaces . "    return WEED_ERROR_FILTER_INVALID;\n"; 
+	    print OUT " " x $nspaces . "  }\n";
+	    print OUT " " x $nspaces . "  /* host should set this to WEED_FALSE for the first thread, then wait for WEED_TRUE */\n";
+	    print OUT " " x $nspaces . "  if (weed_get_boolean_value(inst, WEED_LEAF_STATE_UPDATED, NULL) == WEED_FALSE) {\n";
+	    return 4;
+	}
+	if ($line eq "END_STATEFUL_UPDATE") {
+	    $nspaces -= 4;
+	    print OUT " " x $nspaces . "    weed_set_boolean_value(inst, WEED_LEAF_STATE_UPDATED, WEED_TRUE);\n";
+	    print OUT " " x $nspaces . "  }\n";
+	    print OUT " " x $nspaces . "}\n";
+	    return -4;
+	}
+    }
+    return "none";
+}
+
 sub gen_array {
-    my ($nspaces, @array) = @_;
+    my ($type, $nspaces, @array) = @_;
+    ## type: 0 = static, 1 = init, 2 = deinit, 3 = proc
     foreach (@array) {
-	print OUT " " x $nspaces . $_ . "\n";
+	my $xspaces = &subst_macro($type, $nspaces, $_);
+	if ($xspaces eq "none") {
+	    print OUT " " x $nspaces . $_ . "\n";
+	}
+	else {
+	    $nspaces += $xspaces;
+	}
     }
 }
 

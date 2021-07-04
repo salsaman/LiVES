@@ -27,7 +27,6 @@ static int package_version = 1; // version of this package
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 
-
 typedef struct {
   uint8_t *map;
 } sdata_t;
@@ -68,7 +67,8 @@ static weed_error_t xeffect_init(weed_plant_t *inst) {
       if (!sdata->map) return WEED_ERROR_MEMORY_ALLOCATION;
     }
     weed_set_voidptr_value(inst, "plugin_internal", sdata);
-  } else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  }
+  else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   return WEED_SUCCESS;
 }
@@ -107,7 +107,7 @@ static weed_error_t xeffect_process(weed_plant_t *inst, weed_timecode_t tc) {
       int widthp = (width - 1) * psize, nbr;
       unsigned int myluma, threshold = 10000;
       if (!sdata->map) return WEED_ERROR_REINIT_NEEDED;
-
+      
       for (int h = 0; h < height; h++) {
         for (int i = 0; i < width; i ++) {
           sdata->map[h * width + i] = calc_luma(&src[h * irow  + i * psize], pal, 0);
@@ -150,19 +150,17 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class;
   int palette_list[] = ALL_RGB_PALETTES;
   weed_plant_t *in_chantmpls[] = {
-    weed_channel_template_init("in_channel0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE),
-    NULL
-  };
+      weed_channel_template_init("in_channel0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE),
+      NULL};
   weed_plant_t *out_chantmpls[] = {
-    weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
-    NULL
-  };
+      weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
+      NULL};
   int filter_flags = 0;
 
   verbosity = weed_get_host_verbosity(host_info);
 
   filter_class = weed_filter_class_init("graphic novel", "salsaman", 1, filter_flags, palette_list,
-                                        xeffect_init, xeffect_process, xeffect_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
+    xeffect_init, xeffect_process, xeffect_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_plugin_set_package_version(plugin_info, package_version);

@@ -1,0 +1,176 @@
+## sections may be included in any order desired
+
+<define>
+# MANDATORY
+# 1 char delimiter, followed by RFX API version
+|1.8.3
+</define>
+
+<name>
+# MANDATORY
+# filename (no spaces), optional menu name
+new_effect|new effect
+</name>
+
+<version>
+# MANDATORY
+# package version, filter version
+1|1
+</version>
+
+<author>
+# MANDATORY
+# principle author
+effecTV
+#optional additional authors
+salsaman
+</author>
+
+<unique_id>
+# MANDATORY
+# a randomly generated 64 bit number, MUST not change. E.g:
+0X4847CA06EC91CD4A
+</unique_id>
+
+<description>
+# OPTIONAL
+# free text description
+A filter which does something cool.
+</description>
+
+<requires>
+# OPTIONAL
+# a combination of headers and features
+<math.h>
+putils
+</requires>
+
+<language_code>
+# MANDATORY
+# always 0xC0 to generate C code
+0xC0
+</language_code>
+
+<typedefs>
+# OPTIONAL
+# typedefs which may then be used in sdata struct
+unsigned int|RGB32
+</typedefs>
+
+<sdata>
+# OPTIONAL
+# details for the sd struct (static per instance data), optionally followed by a free function
+# the following are all valid:
+int|phase, count|
+volatile int|wait|
+void *|buff|weed_free
+void *|buff2, *buff3
+double dphase
+
+# defined in <typedefs>
+RGB32 *|framebuff
+</sdata>
+
+<filter_flags>
+# OPTIONAL
+# keywords denoting WEED filter flag bits
+may_thread
+stateful
+</filter_flags>
+
+<palette_list>
+# OPTIONAL (MANDATORY for filters with video channels)
+# a list of WEED_PALETTES (e.g WEED_PALETTE_RGB24, or just RGB24), or a standard set starting with "ALL_"
+# e.g ALL_RGB_PALETTES
+ALL_PACKED_PALETTES_PLUS
+</palette_list>
+
+<in_chans>
+# OPTIONAL
+# names of any in_channels, 1 per line, each followed by flag keywords (optional)
+in_channel0|reinit_on_size_change
+in_channel1|unclamped, planar
+</in_chans>
+
+<out_chans>
+# OPTIONAL
+# names of any out_channels, 1 per line, each followed by flag keywords (optional)
+out_channel0|inplace
+</out_chans>
+
+<params>
+# OPTIONAL
+# params: name, label, type, ... (following RFX standard)
+zoom|_Zoom value|num0|128|0|255|
+autozoom|_Auto zoom|bool|TRUE|
+opac|_Opacity|num2|1.|0.|1.|
+col|_Colour|colRGB24|0|0|255|
+</params>
+
+<param_window>
+# OPTIONAL
+# param window hints (following RFX standard)
+special|ignored|1|
+
+# here we link one or more params to display values (not part of RFX spec)
+special|display_val|log|0|
+</param_window>
+
+<static>
+# OPTIONAL
+# static variables and functions for the plugin as a whole
+static const double scmax = exp(3.);
+void foo(void) {
+  // code
+}
+</static>
+
+<init>
+# OPTIONAL
+# init function code
+int video_area = width * height;
+size_t psize = pixel_size(pal) * 2;
+sdata->buffer = (RGB32 *)weed_calloc(video_area, psize);
+if (!sdata->buffer) {
+  weed_free(sdata);
+  return WEED_ERROR_MEMORY_ALLOCATION;
+}
+</init>
+
+<deinit>
+# OPTIONAL
+# deinit code
+if (sdata->buff3) weed_free(sdata->buff3);
+</deinit>
+
+<process>
+# OPTIONAL
+# a mix of C code and MACROS
+int z = 0;
+START_STATEFUL_UPDATE ## for use with may_thread / stateful
+  sdata->phase++;
+END_STATEFUL_UPDATE
+</process>
+
+<setup>
+# OPTIONAL
+# any extra setup code for all filters in plugin
+make_tables();
+</setup>
+
+<display_vals>
+# OPTIONAL
+# conversion values to / from display and actual param values
+
+# the param name | type | check for invalidity (real -> display) | check for invalidity (disp -> real)
+log|double|val <= 0.||
+
+# code to convert real val -> display val
+val = log(val) + 1.;
+
+# a single "-"
+~
+
+# code to convert display val to real val
+val = exp(val - 1.);
+</display_vals>

@@ -7,6 +7,9 @@
 static int package_version = 1; // version of this package
 
 /////////////////////////////////////////////////////////////////////////////
+
+#define _UNIQUE_ID_ "0XC54D97FB4F78A3C8"
+
 #define NEED_PALETTE_UTILS
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
@@ -23,9 +26,9 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#include <stdio.h>
 
 static int verbosity = WEED_VERBOSITY_ERROR;
-
 enum {
   P_levels,
 };
@@ -65,7 +68,8 @@ static weed_error_t posterise_process(weed_plant_t *inst, weed_timecode_t tc) {
           dst[j * orow + i] = src[j * irow + i] & levmask;
         }
       }
-    } else {
+    }
+    else {
       for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i += 4) {
           dst[j * orow + i] = src[j * irow + i] & levmask;
@@ -84,29 +88,32 @@ static weed_error_t posterise_process(weed_plant_t *inst, weed_timecode_t tc) {
 WEED_SETUP_START(200, 200) {
   weed_plant_t *host_info = weed_get_host_info(plugin_info);
   weed_plant_t *filter_class;
+  uint64_t unique_id;
   int palette_list[] = ALL_RGBX_PALETTES;
   weed_plant_t *in_chantmpls[] = {
-    weed_channel_template_init("in_channel0", 0),
-    NULL
-  };
+      weed_channel_template_init("in_channel0", 0),
+      NULL};
   weed_plant_t *out_chantmpls[] = {
-    weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
-    NULL
-  };
+      weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
+      NULL};
   weed_plant_t *in_paramtmpls[] = {
-    weed_integer_init("levels", "Colour _levels", 1, 1, 8),
-    NULL
-  };
+      weed_integer_init("levels", "Colour _levels", 1, 1, 8),
+      NULL};
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
   verbosity = weed_get_host_verbosity(host_info);
 
   filter_class = weed_filter_class_init("posterise", "salsaman", 1, filter_flags, palette_list,
-                                        NULL, posterise_process, NULL, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
+    NULL, posterise_process, NULL, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
 
   weed_filter_set_description(filter_class, "A simple filter which reduces the number of colour levels in the images.");
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  if (!sscanf(_UNIQUE_ID_, "0X%lX", &unique_id) || !sscanf(_UNIQUE_ID_, "0x%lx", &unique_id)) {
+    weed_set_int64_value(plugin_info, WEED_LEAF_UNIQUE_ID, unique_id);
+  }
+
   weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;

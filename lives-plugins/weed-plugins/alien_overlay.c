@@ -30,7 +30,6 @@ static int package_version = 1; // version of this package
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 
-
 typedef struct {
   uint8_t *inited;
   unsigned char *old_pixel_data;
@@ -57,7 +56,7 @@ static weed_error_t alien_overlay_init(weed_plant_t *inst) {
         weed_free(sdata);
         return WEED_ERROR_MEMORY_ALLOCATION;
       }
-
+      
       sdata->inited = (uint8_t *)weed_calloc(height, 1);
       if (!sdata->inited) {
         weed_free(sdata);
@@ -66,7 +65,8 @@ static weed_error_t alien_overlay_init(weed_plant_t *inst) {
       }
     }
     weed_set_voidptr_value(inst, "plugin_internal", sdata);
-  } else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  }
+  else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   return WEED_SUCCESS;
 }
@@ -123,14 +123,14 @@ static weed_error_t alien_overlay_process(weed_plant_t *inst, weed_timecode_t tc
       unsigned char *old_pixel_data, val;
       width *= 3;
       old_pixel_data = sdata->old_pixel_data + width * offset;
-
+      
       for (int i = 0; i < height; i++) {
         for (int j = offs; j < xwidth; j += psize) {
           for (int k = 0; k < 3; k++) {
             if (sdata->inited[row]) {
               if (!inplace) {
                 dst[orow * i + j + k] = ((char)(old_pixel_data[width * i + j + k])
-                                         + (char)(src[irow * i + j + k])) >> 1;
+      	      + (char)(src[irow * i + j + k])) >> 1;
                 old_pixel_data[width * i + j + k] = src[irow * i + j + k];
               } else {
                 val = ((char)(old_pixel_data[width * i + j + k]) + (char)(src[irow * i + j + k])) >> 1;
@@ -155,19 +155,17 @@ WEED_SETUP_START(200, 200) {
   uint64_t unique_id;
   int palette_list[] = ALL_RGB_PALETTES;
   weed_plant_t *in_chantmpls[] = {
-    weed_channel_template_init("in_channel0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE),
-    NULL
-  };
+      weed_channel_template_init("in_channel0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE),
+      NULL};
   weed_plant_t *out_chantmpls[] = {
-    weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
-    NULL
-  };
+      weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
+      NULL};
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
   verbosity = weed_get_host_verbosity(host_info);
 
   filter_class = weed_filter_class_init("alien overlay", "salsaman", 1, filter_flags, palette_list,
-                                        alien_overlay_init, alien_overlay_process, alien_overlay_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
+    alien_overlay_init, alien_overlay_process, alien_overlay_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

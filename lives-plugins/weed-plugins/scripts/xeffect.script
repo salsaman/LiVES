@@ -48,9 +48,9 @@ sdata->map = weed_malloc(width * height);
 if (!sdata->map) return WEED_ERROR_MEMORY_ALLOCATION;
 </init>
 
-<palette_lists>
+<palette_list>
 ALL_RGB_PALETTES
-</palette_lists>
+</palette_list>
 
 <in_chans>
 in_channel0|reinit_on_size_change

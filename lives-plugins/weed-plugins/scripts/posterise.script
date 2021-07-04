@@ -14,11 +14,16 @@ posterise
 salsaman
 </author>
 
+<unique_id>
+0XC54D97FB4F78A3C8
+</unique_id>
+
 <description>
 A simple filter which reduces the number of colour levels in the images.
 </description>
 
 <requires>
+putils
 </requires>
 
 <language_code>
@@ -29,9 +34,9 @@ A simple filter which reduces the number of colour levels in the images.
 may_thread
 </filter_flags>
 
-<palette_lists>
+<palette_list>
 ALL_RGBX_PALETTES
-</palette_lists>
+</palette_list>
 
 
 <in_chans>

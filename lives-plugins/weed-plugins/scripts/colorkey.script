@@ -22,9 +22,9 @@ salsaman
 may_thread
 </filter_flags>
 
-<palette_lists>
-WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_END
-</palette_lists>
+<palette_list>
+WEED_PALETTE_RGB24, WEED_PALETTE_BGR24
+</palette_list>
 
 <in_chans>
 in_channel0

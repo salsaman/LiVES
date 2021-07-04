@@ -20,6 +20,7 @@ A simple filter which overlays random noise on each frame.
 
 <requires>
 random
+putils
 </requires>
 
 <language_code>
@@ -30,9 +31,9 @@ random
 may_thread
 </filter_flags>
 
-<palette_lists>
+<palette_list>
 ALL_RGBX_PALETTES
-</palette_lists>
+</palette_list>
 
 <in_chans>
 in_channel0

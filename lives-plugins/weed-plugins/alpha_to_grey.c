@@ -26,7 +26,6 @@ static int package_version = 1; // version of this package
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 
-
 static weed_error_t alpha_to_grey_process(weed_plant_t *inst, weed_timecode_t tc) {
   weed_plant_t *in_chan = weed_get_in_channel(inst, 0);
   weed_plant_t *out_chan = weed_get_out_channel(inst, 0);
@@ -52,14 +51,14 @@ static weed_error_t alpha_to_grey_process(weed_plant_t *inst, weed_timecode_t tc
   if (1) {
     int alpha = 3, offset = 0;
     uint8_t aval;
-
+    
     if (pal == WEED_PALETTE_ARGB32) {
       alpha = 0;
       offset = 1;
     }
-
+    
     width *= 4;
-
+    
     for (int j = 0; j < height; j++) {
       for (int i = 0; i < width; i += 4) {
         aval = src[irow * j + i + alpha];
@@ -78,22 +77,19 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class;
   int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
   weed_plant_t *in_chantmpls[] = {
-    weed_channel_template_init("in_channel0", 0),
-    NULL
-  };
+      weed_channel_template_init("in_channel0", 0),
+      NULL};
   weed_plant_t *out_chantmpls[] = {
-    weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
-    NULL
-  };
+      weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
+      NULL};
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
   verbosity = weed_get_host_verbosity(host_info);
 
   filter_class = weed_filter_class_init("alpha to grey", "salsaman", 1, filter_flags, palette_list,
-                                        NULL, alpha_to_grey_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
+    NULL, alpha_to_grey_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
 
-  weed_filter_set_description(filter_class,
-                              "Sets the Red, Green and Blue values of each output pixel equal to the alpha value of the input.");
+  weed_filter_set_description(filter_class, "Sets the Red, Green and Blue values of each output pixel equal to the alpha value of the input.");
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_plugin_set_package_version(plugin_info, package_version);

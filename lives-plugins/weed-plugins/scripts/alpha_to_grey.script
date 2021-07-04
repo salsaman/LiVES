@@ -30,9 +30,9 @@ putils
 may_thread
 </filter_flags>
 
-<palette_lists>
+<palette_list>
 RGBA32|BGRA32|ARGB32
-</palette_lists>
+</palette_list>
 
 <in_chans>
 in_channel0

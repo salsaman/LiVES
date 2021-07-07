@@ -505,7 +505,6 @@ boolean load_frame_image(frames_t frame) {
               goto lfi_done;
             }
             jack_get_rec_avals(mainw->jackd);
-            g_print("GOT SEEK %f\n", mainw->rec_aseek);
           }
 #endif
 #ifdef HAVE_PULSE_AUDIO
@@ -1198,6 +1197,7 @@ boolean load_frame_image(frames_t frame) {
         // TODO - do conversion before letterboxing
         gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
       }
+
       // RENDER VIA PLUGIN
       if (!player_v2) pd_array = weed_layer_get_pixel_data_planar(frame_layer, NULL);
       if ((player_v2 && !(*mainw->vpp->play_frame)(frame_layer, mainw->currticks - mainw->stream_ticks, return_layer))
@@ -1528,7 +1528,7 @@ boolean load_frame_image(frames_t frame) {
     pwidth = opwidth;
     pheight = opheight;
 
-    pwidth = (int)(pwidth >> 4) << 4;
+    pwidth = (int)(pwidth >> 1) << 1;
 
     if (prefs->dev_show_timing)
       g_printerr("res start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);

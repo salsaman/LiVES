@@ -329,8 +329,8 @@ LIVES_GLOBAL_INLINE void calc_maxspect(int rwidth, int rheight, int *cwidth, int
     *cheight = rheight;
     *cwidth = (double)(*cheight) * aspect;
   }
-  *cwidth = ((*cwidth + 7) >> 3) << 3;
-  *cheight = ((*cheight + 1) >> 1) << 1;
+  *cwidth = (*cwidth >> 2) << 2;
+  *cheight = (*cheight >> 1) << 1;
 }
 
 
@@ -358,7 +358,7 @@ LIVES_GLOBAL_INLINE void calc_midspect(int rwidth, int rheight, int *cwidth, int
     *cwidth = *cheight * aspect;
   }
 
-  *cwidth = ((*cwidth + 7) >> 3) << 3;
+  *cwidth = ((*cwidth + 3) >> 2) << 2;
   *cheight = ((*cheight + 1) >> 1) << 1;
 }
 
@@ -373,10 +373,8 @@ LIVES_GLOBAL_INLINE void calc_minspect(int *rwidth, int *rheight, int cwidth, in
   // ...then expand it so it contains cwidth, cheight...
   calc_midspect(cwidth, cheight, rwidth, rheight);
 
-  // ...then finally make sure this fits in original
-
-  *rwidth = ((*rwidth + 7) >> 3) << 3;
-  *rheight = ((*rheight + 1) >> 1) << 1;
+  *rwidth = (*rwidth >> 2) << 2;
+  *rheight = (*rheight  >> 1) << 1;
 }
 
 

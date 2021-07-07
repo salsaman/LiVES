@@ -4888,19 +4888,37 @@ static int64_t _save_to_scrap_file(weed_layer_t *layer) {
     lives_free(dir);
   }
 
-  /// check every 64 frames for quota overrun, because its a background task
-  check_for_disk_space((scrapfile->frames & 0x3F) ? TRUE : FALSE);
   return pdata_size;
 }
 
 static lives_proc_thread_t scrap_file_procthrd = NULL;
 
 int save_to_scrap_file(weed_layer_t *layer) {
+  g_print("PT A1\n");
   weed_layer_t *orig_layer;
   lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
   char *framecount;
+  static boolean checked_disk = FALSE;
+
   if (!IS_VALID_CLIP(mainw->scrap_file)) return -1;
   if (!layer) return scrapfile->frames;
+
+  if ((scrapfile->frames & 0x3F) == 0x3F && !checked_disk) {
+    /// check every 64 frames for quota overrun
+    checked_disk = TRUE;
+    check_for_disk_space(TRUE);
+    return scrapfile->frames;
+  }
+
+  checked_disk = FALSE;
+  check_for_disk_space(FALSE);
+
+  if (scrap_file_procthrd) {
+    if (mainw->rec_aclip == -1 && mainw->scratch == SCRATCH_NONE) {
+      if (!lives_proc_thread_check_finished(scrap_file_procthrd)) return scrapfile->frames;
+    }
+  }
+
   orig_layer = weed_layer_copy(NULL, layer);
   if (scrap_file_procthrd) {
     scrapfile->f_size += lives_proc_thread_join_int64(scrap_file_procthrd);

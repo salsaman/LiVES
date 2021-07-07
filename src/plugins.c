@@ -1226,34 +1226,37 @@ const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx) {
 }
 
 
-boolean vpp_try_match_palette(_vid_playback_plugin *vpp, weed_layer_t *layer) {
-  int *pal_list, i = 0;
+int get_best_vpp_palette_for(_vid_playback_plugin *vpp, int palette) {
+  int *pal_list;
   if (vpp->get_palette_list && (pal_list = (*vpp->get_palette_list)())) {
-    int palette = weed_layer_get_palette(layer);
-    for (i = 0; pal_list[i] != WEED_PALETTE_END; i++) {
-      if (pal_list[i] == palette) break;
-    }
-    if (pal_list[i] == WEED_PALETTE_END) {
-      if (!i) return FALSE;
-      palette = best_palette_match(pal_list, i, palette);
-    }
-    if (palette == WEED_PALETTE_END) return FALSE;
-    if (palette != vpp->palette) {
-      if (!(*vpp->set_palette)(palette)) {
-        return FALSE;
+    for (int i = 0; pal_list[i] != WEED_PALETTE_END; i++) {
+      if (pal_list[i] == palette) return palette;
+      if (pal_list[i] == WEED_PALETTE_END) {
+	if (!i) return WEED_PALETTE_NONE;
+	return best_palette_match(pal_list, i, palette);
       }
     }
-    vpp->palette = palette;
-    if (weed_palette_is_yuv(palette) && vpp->get_yuv_palette_clamping) {
-      int *yuv_clamping_types = (*vpp->get_yuv_palette_clamping)(vpp->palette);
-      int lclamping = weed_layer_get_yuv_clamping(layer);
-      for (i = 0; yuv_clamping_types[i] != -1; i++) {
-        if (yuv_clamping_types[i] == lclamping) {
-          if ((*vpp->set_yuv_palette_clamping)(lclamping))
-            vpp->YUV_clamping = lclamping;
-          break;
-	  // *INDENT-OFF*
-	}}}}
+  }
+  return WEED_PALETTE_NONE;
+}
+
+
+boolean vpp_try_match_palette(_vid_playback_plugin *vpp, weed_layer_t *layer) {
+  int palette = get_best_vpp_palette_for(vpp, weed_layer_get_palette(layer));
+  if (palette == WEED_PALETTE_NONE) return FALSE;
+  if (palette != vpp->palette)
+    if (!(*vpp->set_palette)(palette)) return FALSE;
+  vpp->palette = palette;
+  if (weed_palette_is_yuv(palette) && vpp->get_yuv_palette_clamping) {
+    int *yuv_clamping_types = (*vpp->get_yuv_palette_clamping)(vpp->palette);
+    int lclamping = weed_layer_get_yuv_clamping(layer);
+    for (int i = 0; yuv_clamping_types[i] != -1; i++) {
+      if (yuv_clamping_types[i] == lclamping) {
+	if ((*vpp->set_yuv_palette_clamping)(lclamping))
+	  vpp->YUV_clamping = lclamping;
+	break;
+	// *INDENT-OFF*
+      }}}
   // *INDENT-ON*
   return FALSE;
 }

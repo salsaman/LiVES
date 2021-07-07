@@ -323,8 +323,8 @@ const weed_plant_t **get_play_params(weed_bootstrap_f weed_boot) {
 const int *get_palette_list(void) {
   // return palettes in order of preference, ending with WEED_PALETTE_END
   palette_list[0] = WEED_PALETTE_RGBA32;
-  palette_list[1] = WEED_PALETTE_RGB24;
-  palette_list[2] = WEED_PALETTE_BGRA32;
+  palette_list[1] = WEED_PALETTE_BGRA32;
+  palette_list[2] = WEED_PALETTE_RGB24;
   palette_list[3] = WEED_PALETTE_BGR24;
   palette_list[4] = WEED_PALETTE_END;
   return palette_list;
@@ -333,10 +333,12 @@ const int *get_palette_list(void) {
 
 static int get_size_for_type(int type) {
   switch (type) {
+  case GL_RGBA8:
   case GL_RGBA:
   case GL_BGRA:
   case GL_SRGB8_ALPHA8:
     return 4;
+  case GL_RGB8:
   case GL_RGB:
   case GL_BGR:
   case GL_SRGB8:
@@ -354,8 +356,8 @@ boolean set_palette(int palette) {
     play_fn = &play_frame_rgba;
     mypalette = palette;
 
-    type = GL_RGBA;
-    if (mypalette == WEED_PALETTE_RGB24 || mypalette == WEED_PALETTE_BGR24) type = GL_RGB;
+    type = GL_RGBA8;
+    if (mypalette == WEED_PALETTE_RGB24 || mypalette == WEED_PALETTE_BGR24) type = GL_RGB8;
     typesize = get_size_for_type(type);
     pthread_mutex_unlock(&rthread_mutex);
 
@@ -543,16 +545,17 @@ static uint8_t *render_to_mainmem(int type, int row, int window_width, int windo
 
 static int next_pot(int val) {for (int i = 1024;; i *= 2) if (i >= val) return i;}
 
-static void render_to_gpumem_inner(int tnum, int width, int height, int type, volatile uint8_t *texturebuf) {
+static void render_to_gpumem_inner(int tnum, int texwidth, int width, int height, int type, volatile uint8_t *texturebuf) {
+  // texwidth in pixels
   int mipMapLevel = 0;
   int texID = get_texture_texID(tnum);
-  int intype = type;
-  int xwidth = width / typesize;
+  int intype = GL_RGB;
   int btype = GL_UNSIGNED_BYTE;
 
   glEnable(m_TexTarget);
 
-  glBindTexture(m_TexTarget, texID);
+  if (mypalette == WEED_PALETTE_RGBA32)
+    intype = GL_RGBA;
 
   if (mypalette == WEED_PALETTE_BGR24)
     intype = GL_BGR;
@@ -565,13 +568,19 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, vo
     intype = GL_BGRA;
     btype = GL_UNSIGNED_INT_8_8_8_8_REV;
   }
+  glBindTexture(m_TexTarget, texID);
 
-  glTexImage2D(m_TexTarget, mipMapLevel, GL_RGBA, xwidth, height, 0, intype, btype,
+  glTexParameteri(m_TexTarget, GL_TEXTURE_BASE_LEVEL, 0);
+  glTexParameteri(m_TexTarget, GL_TEXTURE_MAX_LEVEL, 0);
+
+  glTexImage2D(m_TexTarget, mipMapLevel, type, texwidth, height, 0, intype, btype,
                (const GLvoid *)texturebuf);
 
-  glGenerateMipmap(m_TexTarget);
+  glTexSubImage2D(m_TexTarget, mipMapLevel, texwidth - width, 0, texwidth, height, intype, btype,
+                  (const GLvoid *)((char *)texturebuf - (texwidth - width)));
 
-  //glDisable(m_TexTarget);
+  glBindTexture(m_TexTarget, 0);
+  glDisable(m_TexTarget);
 
   tnum = get_real_tnum(tnum, FALSE);
 
@@ -899,18 +908,11 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  //glFinish();
-  glFlush();
   if (dblbuf) glXSwapBuffers(dpy, glxWin);
+  else glFlush();
 
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glFlush();
-
-  // type = GL_RGBA;
-  // if (mypalette == WEED_PALETTE_RGB24 || mypalette == WEED_PALETTE_BGR24) type = GL_RGB;
-
-  //typesize = get_size_for_type(type);
 
   rquad = 0.;
 
@@ -982,7 +984,7 @@ static int Upload(void) {
     if (ctexture == nbuf) ctexture = 0;
     if (ntextures < nbuf) ntextures++;
     has_new_texture = FALSE;
-    render_to_gpumem_inner(0, texRow, texHeight, type, texturebuf);
+    render_to_gpumem_inner(0, texRow / typesize, imgWidth, texHeight, type, texturebuf);
     //set_priorities();
   }
 
@@ -2010,8 +2012,7 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   imgWidth = hsize;  // pix
   imgHeight = vsize;
 
-  rowz = (int)(imgRow / typesize) * typesize;
-  if (rowz < 1024) rowz = 1024;
+  rowz = imgRow;
 
   if (!npot) {
     hsize = next_pot(hsize);
@@ -2019,14 +2020,14 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
     if (hsize * typesize > rowz) rowz = hsize * typesize;
   }
 
-  if (rowz < imgRow) rowz = (int)((((imgRow >> 1) + typesize - 1) << 1) / typesize) * typesize;
+  //if (rowz < imgRow) rowz = (int)((((imgRow >> 1) + typesize - 1) << 1) / typesize) * typesize;
 
   texRow = rowz;
   texWidth = hsize;
   texHeight = vsize;
 
-  // if (texRow < 1024 * typesize) texRow = 1024 * typesize;
-  // if (texHeight <1024) texHeight = 1024;
+  if (texRow < 1024 * typesize) texRow = 1024 * typesize;
+  if (texHeight < 1024) texHeight = 1024;
 
   if (otexRow != texRow || otexHeight != texHeight || !texturebuf) {
     if (texturebuf) weed_free((void *)texturebuf);
@@ -2039,7 +2040,6 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   if (texRow == imgRow && texHeight >= imgHeight) {
     weed_memcpy((void *)texturebuf, pixel_data, imgRow * imgHeight);
   } else {
-    /// !!!!! imgRow is +2 too big after first init_screen / exit_screen !!!!!
     for (i = 0; i < imgHeight; i++) {
       weed_memcpy((uint8_t *)texturebuf + i * texRow, (uint8_t *)pixel_data + i * imgRow,
                   imgWidth * typesize);
@@ -2106,9 +2106,8 @@ void decode_pparams(weed_plant_t **pparams) {
   /// not yet implemented
   weed_plant_t *ptmpl;
   char *pname;
-  int error, type;
-
-  int i = 0;
+  weed_error_t error;
+  int pltype;
 
   zmode = 0;
   zfft0 = 0.;
@@ -2116,27 +2115,25 @@ void decode_pparams(weed_plant_t **pparams) {
   zsubtitles = NULL;
 
   if (!pparams) return;
-  while (pparams[i]) {
-    type = weed_plant_get_type(pparams[i]);
+  for (int i = 0; pparams[i]; i++) {
+    pltype = weed_plant_get_type(pparams[i]);
 
-    if (type == WEED_PLANT_PARAMETER) {
+    if (pltype == WEED_PLANT_PARAMETER) {
       ptmpl = weed_param_get_template(pparams[i]);
       pname = weed_get_string_value(ptmpl, "name", &error);
       if (pname) {
         if (!strcmp(pname, "mode")) {
-          zmode = weed_get_int_value(pparams[i], "value", &error);
+          zmode = weed_param_get_value_int(pparams[i]);
         } else if (!strcmp(pname, "fft0")) {
-          zfft0 = (float)weed_get_double_value(pparams[i], "value", &error);
+          zfft0 = (float)weed_param_get_value_double(pparams[i]);
         } else if (!strcmp(pname, "subtitles")) {
-          zsubtitles = weed_get_string_value(pparams[i], "value", &error);
+          zsubtitles = weed_param_get_value_string(pparams[i]);
         }
-
         weed_free(pname);
       }
     } else {
       // must be an alpha channel
     }
-    i++;
   }
 }
 

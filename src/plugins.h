@@ -43,14 +43,14 @@ typedef weed_plant_t weed_param_t;
 #define PLUGIN_PKGTYPE_SCRIPT 		130//	interpreted script
 
 #define PLUGIN_CHANNEL_NONE	0ul
-#define PLUGIN_CHANNEL_VIDEO	(1<<0)ul
-#define PLUGIN_CHANNEL_AUDIO	(1<<1)ul
-#define PLUGIN_CHANNEL_TEXT	(1<<2)ul
+#define PLUGIN_CHANNEL_VIDEO	(1ul << 0)
+#define PLUGIN_CHANNEL_AUDIO	(1ul << 1)
+#define PLUGIN_CHANNEL_TEXT	(1ul << 2)
 
-#define PLUGIN_CHANNEL_DATA    		(1<<32)ul
-#define PLUGIN_CHANNEL_STREAM    	(1<<33)ul
-#define PLUGIN_CHANNEL_TTY    		(1<<34)ul
-#define PLUGIN_CHANNEL_FILE    		(1<<35)ul
+#define PLUGIN_CHANNEL_DATA    		(1ul << 32)
+#define PLUGIN_CHANNEL_STREAM    	(1ul << 33)
+#define PLUGIN_CHANNEL_TTY    		(1ul << 34)
+#define PLUGIN_CHANNEL_FILE    		(1ul << 35)
 
 #define LIVES_DEVSTATE_NORMAL 0 // normal development status, presumed bug free
 #define LIVES_DEVSTATE_RECOMMENDED 1 // recommended, suitable for default use
@@ -98,8 +98,10 @@ boolean find_prefix_dir(const char *predirn, boolean check_only);
 #define PLUGIN_ENCODERS ENCODERS_LITERAL
 #define PLUGIN_DECODERS DECODERS_LITERAL
 
-#define PLUGIN_VID_PLAYBACK "playback" LIVES_DIR_SEP  "video"
-#define PLUGIN_AUDIO_STREAM "playback" LIVES_DIR_SEP "audiostream"
+#define PLAYBACK_LITERAL "playback"
+
+#define PLUGIN_VID_PLAYBACK PLAYBACK_LITERAL LIVES_DIR_SEP  "video"
+#define PLUGIN_AUDIO_STREAM PLAYBACK_LITERAL LIVES_DIR_SEP "audiostream"
 
 #define AUDIO_STREAMER_NAME "audiostreamer.pl"
 
@@ -212,9 +214,12 @@ uint64_t get_best_audio(_vid_playback_plugin *);
 void save_vpp_defaults(_vid_playback_plugin *, char *file);
 void load_vpp_defaults(_vid_playback_plugin *, char *file);
 
-boolean vpp_try_match_palette(_vid_playback_plugin *vpp, weed_layer_t *layer);
+boolean vpp_try_match_palette(_vid_playback_plugin *, weed_layer_t *);
+int get_best_vpp_palette_for(_vid_playback_plugin *, int palette);
 
 #define DEFAULT_VPP "openGL"
+// TODO:
+//#define DEFAULT_VPP_UID 0XA6750BDAC53DF23F
 
 #define DEF_VPP_HSIZE DEF_FRAME_HSIZE_UNSCALED
 #define DEF_VPP_VSIZE DEF_FRAME_VSIZE_UNSCALED
@@ -224,6 +229,7 @@ const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx);
 
 // encoder plugins
 
+// TODO - use plugin UIDs
 #define FFMPEG_ENCODER_NAME "ffmpeg_encoder"
 
 #define MULTI_ENCODER_NAME "multi_encoder"
@@ -660,10 +666,10 @@ lives_param_t *lives_param_string_init(lives_param_t *, const char *name, const 
 lives_param_t *lives_param_double_init(lives_param_t *, const char *name, double def,
                                        double min, double max);
 
-lives_param_t *lives_param_integer_init(lives_param_t *p, const char *name, int def,
+lives_param_t *lives_param_integer_init(lives_param_t *, const char *name, int def,
                                         int min, int max);
 
-lives_param_t *lives_param_boolean_init(lives_param_t *p, const char *name, int def);
+lives_param_t *lives_param_boolean_init(lives_param_t *, const char *name, int def);
 
 void param_copy(lives_param_t *dest, lives_param_t *src, boolean full);
 
@@ -674,7 +680,7 @@ lives_param_t *rfx_param_from_name(lives_param_t *, int nparams, const char *nam
 boolean set_rfx_value_by_name_string(lives_rfx_t *, const char *name,
                                      const char *value, boolean update_visual);
 
-boolean get_rfx_value_by_name_string(lives_rfx_t *rfx, const char *name, char **return_value);
+boolean get_rfx_value_by_name_string(lives_rfx_t *, const char *name, char **return_value);
 
 typedef struct {
   LiVESList *list; ///< list of filter_idx from which user can delegate
@@ -710,10 +716,10 @@ void set_float_array_param(void **value_ptr, float *values, int nvals);
 
 /// return an array of parameter values
 void **store_rfx_params(lives_rfx_t *);
-void set_rfx_params_from_store(lives_rfx_t *rfx, void **store);
+void set_rfx_params_from_store(lives_rfx_t *, void **store);
 void rfx_params_store_free(lives_rfx_t *, void **store);
 
-lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits);
+lives_rfx_t *weed_to_rfx(weed_plant_t *filter_or_inst, boolean show_reinits);
 lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *instance, boolean show_reinits);
 
 void rfx_clean_exe(lives_rfx_t *rfx);
@@ -739,11 +745,11 @@ typedef struct {
 
 _vppaw *on_vpp_advanced_clicked(LiVESButton *, livespointer);
 
-void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data);
+void on_decplug_advanced_clicked(LiVESButton *, livespointer user_data);
 
-LiVESResponseType on_vppa_ok_clicked(boolean direct, _vppaw *vppw);
+LiVESResponseType on_vppa_ok_clicked(boolean direct, _vppaw *);
 
-LiVESList *get_external_window_hints(lives_rfx_t *rfx);
+LiVESList *get_external_window_hints(lives_rfx_t *);
 boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, boolean save_all);
 
 /// for realtime effects, see effects-weed.h

@@ -1005,10 +1005,8 @@ void deinterlace_frame(weed_layer_t *layer, weed_timecode_t tc) {
   orig_instance = deint_instance = weed_instance_from_filter(deint_filter);
 
   layers = (weed_plant_t **)lives_malloc(2 * sizeof(weed_plant_t *));
-
-  layers[1] = NULL;
-
   layers[0] = layer;
+  layers[1] = NULL;
 
   init_event = weed_plant_new(WEED_PLANT_EVENT);
   weed_set_int_value(init_event, WEED_LEAF_IN_TRACKS, 0);
@@ -1017,12 +1015,12 @@ void deinterlace_frame(weed_layer_t *layer, weed_timecode_t tc) {
 deint1:
 
   weed_apply_instance(deint_instance, init_event, layers, 0, 0, tc);
-
-  next_inst = get_next_compound_inst(deint_instance);
-
   weed_call_deinit_func(deint_instance);
+  next_inst = get_next_compound_inst(deint_instance);
+  if (deint_instance != orig_instance) weed_instance_unref(deint_instance);
 
   if (next_inst) {
+    weed_instance_ref(next_inst);
     deint_instance = next_inst;
     goto deint1;
   }

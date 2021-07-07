@@ -129,7 +129,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   mainw->block_param_updates = TRUE;
 
   if (mainw->did_rfx_preview) {
-    if (def_ok) {
+    if (def_ok && rfx) {
       for (i = 0; i < rfx->num_params; i++) {
         if (rfx->params[i].flags & PARAM_FLAGS_VALUE_SET) {
           mainw->keep_pre = FALSE;
@@ -152,7 +152,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
         cfile->end = cfile->frames;
       }
 
-      do_rfx_cleanup(rfx);
+      if (rfx) do_rfx_cleanup(rfx);
       mainw->did_rfx_preview = FALSE;
     }
     mainw->show_procd = TRUE;
@@ -185,6 +185,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
       if (rfx != mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx) {
         rfx_free(rfx);
         lives_free(rfx);
+        rfx = NULL;
       }
     } else {
       if (usrgrp_to_livesgrp[0]) lives_slist_free(usrgrp_to_livesgrp[0]);
@@ -203,11 +204,11 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     }
   }
 
-  if (rfx->status == RFX_STATUS_INTERFACE || (def_ok && rfx && rfx->status == RFX_STATUS_SCRAP)) return;
+  if (rfx && (rfx->status == RFX_STATUS_INTERFACE || (def_ok && rfx->status == RFX_STATUS_SCRAP))) return;
 
   lives_general_button_clicked(button, NULL);
 
-  if (def_ok) {
+  if (rfx && def_ok) {
     if (rfx->status == RFX_STATUS_WEED) on_realfx_activate(NULL, rfx);
     else on_render_fx_activate(LIVES_MENU_ITEM(rfx->menuitem), NULL);
   }

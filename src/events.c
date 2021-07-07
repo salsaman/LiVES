@@ -3384,7 +3384,6 @@ filterinit1:
         }
 
         offset += num_params;
-
         weed_call_init_func(inst);
       }
 

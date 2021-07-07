@@ -2313,7 +2313,7 @@ None.
 
 '''Optional leaves for channels with video''': [[BR]]
 
-  If the filter flagbit WEED_FILTER_CHANNEL_SIZES _MAY_VARY, then the following leaves may be set
+  If the filter flagbit WEED_FILTER_CHANNEL_SIZES_MAY_VARY, then the following leaves may be set
   to define values for channels created from an individual template. Values set here override any defaults set in the filter_class.
   A value of zero may be used to indicate that the channel(s) created from this template are not restricted by
   the defaults set for the filter.
@@ -2323,6 +2323,8 @@ None.
   NOTE:
   "hstep", "vstep" and "alignment_hint" can ONLY be set in the filter_class, and may not be overridden for
   individual channels.
+
+
 
 
  * "width" : WEED_SEED_INT    :  overrides any default set in the filter class. A value of zero means no limitations.

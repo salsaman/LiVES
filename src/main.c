@@ -2924,7 +2924,7 @@ static double pick_custom_colours(double var, double timer) {
   else timer = -timer;
 
   if (!(palette->style & STYLE_LIGHT)) {
-    lmin = .05; lmax = .3;
+    lmin = .05; lmax = .25;
   } else {
     lmin = .45; lmax = .6;
   }

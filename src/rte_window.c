@@ -1830,6 +1830,7 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
   lives_rfx_t *rfx;
 
   filter_mutex_lock(key);
+  // may add a ref
   if ((inst = rte_keymode_get_instance(key + 1, mode)) == NULL) {
     // create a new detached instance for the dialog
     weed_plant_t *filter = rte_keymode_get_filter(key + 1, mode);
@@ -1837,13 +1838,10 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
       filter_mutex_unlock(key);
       return;
     }
+    // adds a ref
     inst = weed_instance_from_filter(filter);
     weed_set_boolean_value(inst, WEED_LEAF_HOST_NORECORD, WEED_TRUE);
 
-    // do some fiddly stuff to show the key defs.
-    /* filter_mutex_unlock(key); */
-    /* weed_reinit_effect(inst, TRUE); */
-    /* filter_mutex_lock(key); */
     apply_key_defaults(inst, key, mode);
     filter_mutex_unlock(key);
     weed_reinit_effect(inst, TRUE);

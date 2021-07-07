@@ -1333,6 +1333,10 @@ void hsv2rgb(double h, double s, double v, uint8_t *r, uint8_t *g, uint8_t *b) {
 #define GDEL_MIN 8
 #define BDEL_MIN 8
 
+#define RSCALE 1.4
+#define GSCALE 0.7
+#define BSCALE 1.3
+
 boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_t *g1, uint8_t *b1,
                          double max, double lmin, double lmax) {
   // given 2 colours a and b, calculate the cie94 distance (d) between them, then find a third colour
@@ -1341,105 +1345,113 @@ boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, ui
   // da / db must be > ,9 and db / da also
   // finally luma should be between lmin and lmax
   // restrictions are gradually loosened
-#define __VOLA volatile // for testing
-  //#define __VOLA
+  //#define __VOLA volatile // for testing
+#define __VOLA
 #define DIST_THRESH 10.
 #define RAT_START .9
 #define RAT_TIO  .9999999
 #define RAT_MIN .25
-  lives_alarm_t alarm_handle = LIVES_NO_ALARM;
-  __VOLA double gmm = 1. + lmax * 2., gmn = 1. + lmin;
-  __VOLA uint8_t xr, xb, xg, ar, ag, ab;
-  __VOLA uint8_t rmin = MIN(r0, *r1) / 1.5, gmin = MIN(g0, *g1) / gmm, bmin = MIN(b0, *b1) / 1.5;
-  __VOLA uint8_t rmax = MAX(r0, *r1), gmax = MAX(g0, *g1), bmax = MAX(b0, *b1);
-  __VOLA double l, da, db, z, rat = RAT_START, d = cdist94(r0, g0, b0, *r1, *g1, *b1);
-
-  if (timeout) alarm_handle = lives_alarm_set(timeout);
-
-  if (d < DIST_THRESH) d = DIST_THRESH;
-  max *= d;
-
-  ar = (__VOLA double)(r0 + *r1) / 2.;
-  ag = (__VOLA double)(g0 + *g1) / 2.;
-  ab = (__VOLA double)(b0 + *b1) / 2.;
-
-  if (rmax - rmin < (RDEL_MIN << 1)) {
-    rmin = ar <= RDEL_MIN ? 0 : ar - RDEL_MIN;
-    rmax = rmax >= 255 - RDEL_MIN ? 255 : ar + RDEL_MIN;
+  uint8_t xr0, xg0, xb0, xr1, xg1, xb1;
+  if (get_luma8(r0, g0, b0) > get_luma8(*r1, *g1, *b1)) {
+    xr0 = *r1; xg0 = *g1; xb0 = *b1;
+    xr1 = r0; xg1 = g0; xb1 = b0;
+  } else {
+    xr0 = r0; xg0 = g0; xb0 = b0;
+    xr1 = *r1; xg1 = *g1; xb1 = *b1;
   }
+  if (1) {
+    lives_alarm_t alarm_handle = LIVES_NO_ALARM;
+    __VOLA double gmm = 1. + lmax * 2., gmn = 1. + lmin;
+    __VOLA uint8_t xr, xb, xg, ar, ag, ab;
+    __VOLA uint8_t rmin = MIN(xr0, xr1) / 1.5, gmin = MIN(xg0, xg1) / gmm, bmin = MIN(xb0, xb1) / 1.5;
+    __VOLA uint8_t rmax = MAX(xr0, xr1), gmax = MAX(xg0, xg1), bmax = MAX(xb0, xb1);
+    __VOLA double l, da, db, z, rat = RAT_START, d = cdist94(xr0, xg0, xb0, xr1, xg1, xb1);
 
-  if (gmax - gmin < (GDEL_MIN << 1)) {
-    gmin = ag <= GDEL_MIN ? 0 : ag - GDEL_MIN;
-    gmax = gmax >= 255 - GDEL_MIN ? 255 : ag + GDEL_MIN;
-  }
+    if (timeout) alarm_handle = lives_alarm_set(timeout);
 
-  if (bmax - bmin < (BDEL_MIN << 1)) {
-    bmin = ab <= BDEL_MIN ? 0 : ab - BDEL_MIN;
-    bmax = bmax >= 255 - BDEL_MIN ? 255 : ab + BDEL_MIN;
-  }
+    if (d < DIST_THRESH) d = DIST_THRESH;
+    max *= d;
 
-  g_print("max %d min %d\n", bmax, bmin);
+    ar = (__VOLA double)(xr0 + xr1) / 2.;
+    ag = (__VOLA double)(xg0 + xg1) / 2.;
+    ab = (__VOLA double)(xb0 + xb1) / 2.;
 
-  // these values now become the range
-  rmax = (rmax < 128 ? rmax << 1 : 255) - rmin;
-
-  // special handling for geen, involving min luma
-  gmax = (gmax < 255 / gmn ? gmax *gmn : 255) - gmin;
-
-  bmax = (bmax < 128 ? bmax << 1 : 255) - bmin;
-
-  g_print("max %d min %d\n", bmax, bmin);
-
-  while ((!timeout || lives_alarm_check(alarm_handle)) && (z = rat * RAT_TIO) > RAT_MIN) {
-    // rat is initialized to RAT_START (default .9)
-    // loop until timeout or rat * .9999 < RAT_MIN (def .25)
-
-    rat = z;
-    /// pick a random col
-    xr = fastrand_int(bmax) + bmin;
-    xg = fastrand_int(gmax) + gmin;
-    xb = fastrand_int(bmax) + bmin;
-
-    // calc perceptual dist. to averages
-    da = cdist94(ar, ag, ab, xr, xg, xb) / 255.;
-
-    //g_print("DA is %f; %f %f %f\n", da, max, rat, max / rat);
-
-    // first we only consider points with dist < max from avg pt
-    // we gradually increase max
-    if (da > max / rat) continue;
-
-    // calc dist. to both colours
-    da = cdist94(r0, g0, b0, xr, xg, xb);
-    db = cdist94(*r1, *g1, *b1, xr, xg, xb);
-
-    //g_print("DA2 is %f; %f %f %f %f\n", da, db, da * rat * lmax, db * rat * lmax, da);
-
-    // next we only consider pts equidistant from the input colours
-    // we assume however, that col2 is brighter tha col1
-    // to help limit to lmax, da must be shorter than db in proportion
-    // this gives a quick estimate of luma without having to calulate it each time
-    // this check is loosened over cycles
-
-    // if da X rat X lmax > db
-    // or db X rat > da X lmax
-    if (da * rat * lmax > db || db * rat * lmax > da) {
-      /* g_print("failed equi check\n"); */
-      /* if (da * rat * lmax > db) g_print("cond1\n"); */
-      /* if (db * rat > lmax * da) g_print("cond2\n"); */
-      continue;
+    if (rmax - rmin < (RDEL_MIN << 1)) {
+      rmin = ar <= RDEL_MIN ? 0 : ar - RDEL_MIN;
+      rmax = rmax >= 255 - RDEL_MIN ? 255 : ar + RDEL_MIN;
     }
-    // if we pass all the checks then we do a proper check of luma
-    l = get_luma8(CLAMP0255f(xr * 1.4), xg * .7, CLAMP0255f(xb * 1.3));
-    if (l < lmin || l > lmax) {
-      //g_print("failed luma check %f %f %f %d %d %d\n", l, lmax, lmin, xr, xg, xb);
-      continue;
+
+    if (gmax - gmin < (GDEL_MIN << 1)) {
+      gmin = ag <= GDEL_MIN ? 0 : ag - GDEL_MIN;
+      gmax = gmax >= 255 - GDEL_MIN ? 255 : ag + GDEL_MIN;
     }
-    *r1 = xr; *g1 = xg; *b1 = xb;
-    return TRUE;
+
+    if (bmax - bmin < (BDEL_MIN << 1)) {
+      bmin = ab <= BDEL_MIN ? 0 : ab - BDEL_MIN;
+      bmax = bmax >= 255 - BDEL_MIN ? 255 : ab + BDEL_MIN;
+    }
+
+    // these values now become the range
+    rmax = (rmax < 128 ? rmax << 1 : 255) - rmin;
+
+    // special handling for geen, involving min luma
+    gmax = (gmax < 255 / gmn ? gmax *gmn : 255) - gmin;
+
+    bmax = (bmax < 128 ? bmax << 1 : 255) - bmin;
+
+    g_print("max %d min %d\n", bmax, bmin);
+
+    while ((!timeout || lives_alarm_check(alarm_handle)) && (z = rat * RAT_TIO) > RAT_MIN) {
+      // rat is initialized to RAT_START (default .9)
+      // loop until timeout or rat * .9999 < RAT_MIN (def .25)
+
+      rat = z;
+      /// pick a random col
+      xr = fastrand_int(bmax) + bmin;
+      xg = fastrand_int(gmax) + gmin;
+      xb = fastrand_int(bmax) + bmin;
+
+      // calc perceptual dist. to averages
+      da = cdist94(ar, ag, ab, xr, xg, xb) / 255.;
+
+      //g_print("DA is %f; %f %f %f\n", da, max, rat, max / rat);
+
+      // first we only consider points with dist < max from avg pt
+      // we gradually increase max
+      if (da > max / rat) continue;
+
+      // calc dist. to both colours
+      da = cdist94(xr0, xg0, xb0, xr, xg, xb);
+      db = cdist94(xr1, xg1, xb1, xr, xg, xb);
+
+      //g_print("DA2 is %f; %f %f %f %f\n", da, db, da * rat * lmax, db * rat * lmax, da);
+
+      // next we only consider pts equidistant from the input colours
+      // we assume however, that col2 is brighter tha col1
+      // to help limit to lmax, da must be shorter than db in proportion
+      // this gives a quick estimate of luma without having to calulate it each time
+      // this check is loosened over cycles
+
+      // if da X rat X lmax > db
+      // or db X rat > da X lmax
+      if (da * rat > db * lmax || db * rat > da) {
+        /* g_print("failed equi check\n"); */
+        /* if (da * rat * lmax > db) g_print("cond1\n"); */
+        /* if (db * rat > lmax * da) g_print("cond2\n"); */
+        continue;
+      }
+      // if we pass all the checks then we do a proper check of luma
+      l = get_luma8(CLAMP0255f(xr * RSCALE), CLAMP0255f(xg * GSCALE), CLAMP0255f(xb * BSCALE));
+      if (l < lmin || l > lmax) {
+        //g_print("failed luma check %f %f %f %d %d %d\n", l, lmax, lmin, xr, xg, xb);
+        continue;
+      }
+      *r1 = xr; *g1 = xg; *b1 = xb;
+      return TRUE;
+    }
+    lives_alarm_clear(alarm_handle);
+    g_print("FAILED TO GET COL\n");
   }
-  lives_alarm_clear(alarm_handle);
-  g_print("FAILED TO GET COL\n");
   return FALSE;
 }
 
@@ -10744,7 +10756,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
 
-  //            #define DEBUG_PCONV
+  //      #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),

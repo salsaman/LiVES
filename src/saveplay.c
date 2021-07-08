@@ -191,6 +191,8 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
   char *com, *what;
   char *temp_backend;
 
+  uint64_t clip_uid = 0;
+
   boolean mt_has_audio_file = TRUE;
   LiVESResponseType response;
 
@@ -976,6 +978,7 @@ img_load:
   }
 
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
+  clip_uid = cfile->unique_id;
 
 load_done:
 
@@ -1008,7 +1011,7 @@ load_done:
   check_storage_space(-1, FALSE);
 
   lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
-  return cfile->unique_id;
+  return clip_uid;
 }
 
 

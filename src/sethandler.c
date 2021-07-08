@@ -59,7 +59,7 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes, boolean lee
 
   if (!allow_dupes) {
     // check for duplicate set names
-    char *set_dir = lives_build_filename(prefs->workdir, set_name, NULL);
+    char *set_dir = SET_DIR(set_name);
     if (lives_file_test(set_dir, LIVES_FILE_TEST_IS_DIR)) {
       lives_free(set_dir);
       return do_yesno_dialogf(_("\nThe set %s already exists.\n"
@@ -278,11 +278,11 @@ void open_set_file(int clipnum) {
 // it ought to be easy to recreate htis by parsing the subdirectories of /clips in the set but lack of time,,,
 // - also reordering via interface would be nice...
 static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boolean *got_new_handle) {
-  char *ordfile = lives_build_filename(prefs->workdir, mainw->set_name, CLIP_ORDER_FILENAME, NULL);
-  char *ordfile_new = lives_build_filename(prefs->workdir, mainw->set_name, CLIP_ORDER_FILENAME "." LIVES_FILE_EXT_NEW, NULL);
+  char *ordfile = lives_build_filename(CURRENT_SET_DIR, CLIP_ORDER_FILENAME, NULL);
+  char *ordfile_new = lives_build_filename(CURRENT_SET_DIR, CLIP_ORDER_FILENAME "." LIVES_FILE_EXT_NEW, NULL);
   char *cwd = lives_get_current_dir();
   char *new_dir;
-  char *dfile, *ord_entry;
+  char *dfile, *ord_entry, *xhand;
   char buff[PATH_MAX] = {0};
   char new_handle[256] = {0};
   LiVESResponseType retval;
@@ -319,18 +319,24 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
 
         i = LIVES_POINTER_TO_INT(cliplist->data);
         if (IS_NORMAL_CLIP(i) && i != mainw->scrap_file && i != mainw->ascrap_file) {
+          lives_clip_t *sfile;
           if (ignore_clip(i)) continue;
-          lives_snprintf(buff, PATH_MAX, "%s", mainw->files[i]->handle);
+          sfile = mainw->files[i];
+          sfile->was_in_set = TRUE;
+          dump_clip_binfmt(i);
+          lives_snprintf(buff, PATH_MAX, "%s", sfile->handle);
           get_basename(buff);
           if (*buff) {
-            lives_snprintf(new_handle, 256, "%s/%s/%s", mainw->set_name, CLIPS_DIRNAME, buff);
+            xhand = CLIP_HANDLE(mainw->set_name, buff);
           } else {
-            lives_snprintf(new_handle, 256, "%s/%s/%s", mainw->set_name, CLIPS_DIRNAME, mainw->files[i]->handle);
+            xhand = CLIP_HANDLE(mainw->set_name, sfile->handle);
           }
+          lives_snprintf(new_handle, 256, "%s", xhand);
+          lives_free(xhand);
 
           // compare the clip's handle with what it would be if it were already in the set directory
           // if the values differ then this is a candidate for moving
-          if (lives_strcmp(new_handle, mainw->files[i]->handle)) {
+          if (lives_strcmp(new_handle, sfile->handle)) {
             if (!add) continue;
 
             new_dir = lives_build_path(prefs->workdir, new_handle, NULL);
@@ -338,14 +344,15 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
             if (lives_file_test(new_dir, LIVES_FILE_TEST_IS_DIR)) {
               // get a new unique handle
               get_temp_handle(i);
-              migrate_from_staging(mainw->current_file);
-              lives_snprintf(new_handle, 256, "%s/%s/%s",
-                             mainw->set_name, CLIPS_DIRNAME, mainw->files[i]->handle);
+              migrate_from_staging(i);
+              xhand = CLIP_HANDLE(mainw->set_name, sfile->handle);
+              lives_snprintf(new_handle, 256, "%s", xhand);
+              lives_free(xhand);
             }
             lives_free(new_dir);
 
             // move the files
-            oldval = lives_build_path(prefs->workdir, mainw->files[i]->handle, NULL);
+            oldval = lives_build_path(prefs->workdir, sfile->handle, NULL);
             newval = lives_build_path(prefs->workdir, new_handle, NULL);
 
             lives_mv(oldval, newval);
@@ -364,16 +371,16 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
 
             *got_new_handle = TRUE;
 
-            lives_snprintf(mainw->files[i]->handle, 256, "%s", new_handle);
+            lives_snprintf(sfile->handle, 256, "%s", new_handle);
 
-            dfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+            dfile = lives_build_filename(prefs->workdir, sfile->handle,
                                          LIVES_STATUS_FILE_NAME, NULL);
 
-            lives_snprintf(mainw->files[i]->info_file, PATH_MAX, "%s", dfile);
+            lives_snprintf(sfile->info_file, PATH_MAX, "%s", dfile);
             lives_free(dfile);
           }
 
-          ord_entry = lives_strdup_printf("%s\n", mainw->files[i]->handle);
+          ord_entry = lives_strdup_printf("%s\n", sfile->handle);
           lives_write(ord_fd, ord_entry, lives_strlen(ord_entry), FALSE);
           lives_free(ord_entry);
         }
@@ -600,9 +607,7 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
   if (!mainw->was_set && !lives_strcmp(old_set, mainw->set_name)) {
     // set name was set by export or save layout, now we need to update our layout map
     layout_map_dir = LAYOUTS_DIR(old_set);
-
-    layout_map_file = lives_build_filename(layout_map_dir, LAYOUT_MAP_FILENAME, NULL);
-
+    layout_map_file = LAYOUT_MAP_FILE(old_set);
     if (lives_file_test(layout_map_file, LIVES_FILE_TEST_EXISTS)) save_layout_map(NULL, NULL, NULL, layout_map_dir);
     mainw->was_set = TRUE;
     got_new_handle = FALSE;
@@ -685,7 +690,7 @@ char *on_load_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void lock_set_file(const char *set_name) {
   // function is called when a set is opened, to prevent multiple access to the same set
-  char *setdir = lives_build_path(prefs->workdir, set_name, NULL);
+  char *setdir = SET_DIR(set_name);
   if (lives_file_test(setdir, LIVES_FILE_TEST_IS_DIR)) {
     char *set_lock_file = lives_strdup_printf("%s%d", SET_LOCK_FILENAME, capable->mainpid);
     char *set_locker = SET_LOCK_FILE(set_name, set_lock_file);
@@ -811,7 +816,7 @@ boolean reload_set(const char *set_name) {
       }
 
       if (clipnum == 0) {
-        char *dirname = lives_build_path(prefs->workdir, set_name, NULL);
+        char *dirname = SET_DIR(set_name);
         // if dir exists, and there are no subdirs, ask user if they want to delete
         if (lives_file_test(dirname, LIVES_FILE_TEST_IS_DIR)) {
           //// todo test if no subdirs
@@ -1093,6 +1098,7 @@ boolean reload_set(const char *set_name) {
     cfile->changed = TRUE;
     lives_rm(cfile->info_file);
     set_main_title(cfile->name, 0);
+
     restore_clip_binfmt(mainw->current_file);
 
     if (!mainw->multitrack) {
@@ -1298,14 +1304,13 @@ void cleanup_set_dir(const char *set_name) {
   lives_rm(ofile);
   lives_free(ofile);
 
-  ofile = lives_build_filename(prefs->workdir, set_name,
-                               CLIP_ORDER_FILENAME "." LIVES_FILE_EXT_NEW, NULL);
+  ofile = lives_build_filename(SET_DIR(set_name), CLIP_ORDER_FILENAME "." LIVES_FILE_EXT_NEW, NULL);
   lives_rm(ofile);
   lives_free(ofile);
 
   lives_sync(1);
 
-  sdir = lives_build_path(prefs->workdir, set_name, NULL);
+  sdir = SET_DIR(set_name);
   lives_rmdir(sdir, FALSE); // set to FALSE in case the user placed extra files there
   lives_free(sdir);
 
@@ -1371,7 +1376,7 @@ boolean do_set_duplicate_warning(const char *new_set) {
 void check_remove_layout_files(void) {
   if (prompt_remove_layout_files()) {
     // delete layout directory
-    char *laydir = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
+    char *laydir = LAYOUTS_DIR(mainw->set_name);
     lives_rmdir(laydir, TRUE);
     lives_free(laydir);
     d_print(_("Layouts were removed for set %s.\n"), mainw->set_name);
@@ -1466,7 +1471,7 @@ static void add_clipgrp(LiVESWidget *w, LiVESCombo *combo) {
   layout = lives_layout_new(LIVES_BOX(dialog_vbox));
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Enter the name of the new group, and you can then add clips to it. "
                          "From the Clips menu, you can select which clip groups are visible.\n"
-                         "The remaining clips in the set will be temporarily hidden"), FALSE);
+                         "The remaining clips in the set will be temporarily hidden."), FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
@@ -1509,7 +1514,8 @@ static void add_clipgrp(LiVESWidget *w, LiVESCombo *combo) {
 
 static void del_clipgrp(LiVESWidget *w, LiVESCombo *combo) {
   const char *grpname = lives_combo_get_active_text(combo);
-  if (!do_yesno_dialogf(_("\nAre you sure you wish to delete the clip group %s ?\n"), grpname))
+  if (!do_yesno_dialogf(_("\nAre you sure you wish to delete the clip group '%s' ?\n"
+                          "(This will not remove the clips themselves)"), grpname))
     return;
   for (LiVESList *list = mainw->clip_grps; list; list = list->next) {
     lives_clipgrp_t *clpgrp = (lives_clipgrp_t *)list->data;
@@ -1564,7 +1570,7 @@ static void grp_combo_populate(LiVESCombo *combo, LiVESTreeView *tview) {
       }
     }
     for (; list; list = list->next) {
-      uint64_t uid = atol((const char *)list->data);
+      uint64_t uid = lives_strtoul((const char *)list->data);
       clipno = find_clip_by_uid(uid);
       if (IS_VALID_CLIP(clipno)) {
         sfile = mainw->files[clipno];
@@ -1603,14 +1609,12 @@ static boolean drag_start(LiVESWidget *widget, LiVESXEventButton *event, LiVESCe
   if (tpath) {
     void *listnode;
     drag_clipno = atoi(gtk_tree_path_to_string(tpath));
-    g_print("DC is %d\n", drag_clipno);
     listnode = lives_list_nth_data(mainw->cliplist, drag_clipno);
     if (!listnode) {
       drag_clipno = 1;
       return TRUE;
     }
     drag_clipno = LIVES_POINTER_TO_INT(listnode);
-    g_print("DC2 is %d\n", drag_clipno);
   }
   if (!IS_VALID_CLIP(drag_clipno)) {
     drag_clipno = -1;
@@ -1691,6 +1695,8 @@ static boolean drag_end(LiVESWidget *widget, LiVESXEventButton *event, LiVESWidg
       }
       current_grp->list = lives_list_append(current_grp->list, uidstr);
       clipname = get_menu_name(sfile, FALSE);
+
+      g_print("ADD clip %s\n", clipname);
 
       lives_tree_store_set(xxtstore, &xxiter, 0, clipname, -1);
       lives_tree_store_append(xxtstore, &xxiter, NULL);

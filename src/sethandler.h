@@ -59,6 +59,9 @@ typedef struct {
 #define LAYOUT_MAP_FILE(set) (lives_build_filename(LAYOUTS_DIR((set)), LAYOUT_MAP_FILENAME, NULL))
 #define FUTURE_LAYOUT_MAP_FILE(set) (lives_build_filename(FUTURE_LAYOUTS_DIR((set)), LAYOUT_MAP_FILENAME, NULL))
 
+#define CLIP_HANDLE(set, xhandle) ((set) ? lives_build_path_relative(set, CLIPS_DIRNAME, (xhandle), NULL) \
+				   : (xhandle))
+
 ///////////////////////// warnings, errors, etc
 
 boolean do_reload_set_query(void);

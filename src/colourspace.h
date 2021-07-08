@@ -218,6 +218,15 @@ void init_colour_engine(void);
 double get_luma8(uint8_t r, uint8_t g, uint8_t b);
 double get_luma16(uint16_t r, uint16_t g, uint16_t b);
 
+#define is_useable_palette(p) (((p) == WEED_PALETTE_RGB24 || (p) == WEED_PALETTE_RGBA32 \
+				|| (p) == WEED_PALETTE_BGR24 || (p) == WEED_PALETTE_BGRA32 || (p) == WEED_PALETTE_ARGB32 \
+				|| (p) == WEED_PALETTE_YUV888 || (p) == WEED_PALETTE_YUVA8888 || (p) == WEED_PALETTE_YUV422P \
+				|| (p) == WEED_PALETTE_YUV420P || (p) == WEED_PALETTE_YVU420P || (p) == WEED_PALETTE_YUV411 \
+				|| (p) == WEED_PALETTE_YUV444P || (p) == WEED_PALETTE_YUVA4444P || (p) == WEED_PALETTE_YUV411 \
+				|| (p) == WEED_PALETTE_UYVY || (p) == WEED_PALETTE_YUYV) \
+  ? TRUE : FALSE)
+
+
 /////////////////////////////////////// LAYERS ///////////////////////////////////////
 
 #define WEED_PLANT_LAYER 128

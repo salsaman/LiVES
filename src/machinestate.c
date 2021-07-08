@@ -1435,9 +1435,15 @@ LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
 }
 
 
-LIVES_GLOBAL_INLINE uint64_t lives_strtol(const char *nptr) {
+LIVES_GLOBAL_INLINE int64_t lives_strtol(const char *nptr) {
   if (sizeof(long int) == 8) return strtol(nptr, NULL, 10);
   else return strtoll(nptr, NULL, 10);
+}
+
+
+LIVES_GLOBAL_INLINE uint64_t lives_strtoul(const char *nptr) {
+  if (sizeof(long int) == 8) return strtoul(nptr, NULL, 10);
+  else return strtoull(nptr, NULL, 10);
 }
 
 

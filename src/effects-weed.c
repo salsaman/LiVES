@@ -4204,6 +4204,7 @@ int num_out_params(weed_plant_t *plant) {
   return num_params;
 }
 
+
 boolean has_usable_palette(weed_plant_t *chantmpl) {
   int *palettes = weed_get_int_array(chantmpl, WEED_LEAF_PALETTE_LIST, NULL);
   boolean retval = TRUE;
@@ -4212,7 +4213,7 @@ boolean has_usable_palette(weed_plant_t *chantmpl) {
       retval = FALSE;
       break;
     }
-    if (is_usable_palette(palettes[i])) break;
+    if (is_useable_palette(palettes[i])) break;
   }
   lives_free(palettes);
   return retval;
@@ -7942,8 +7943,7 @@ weed_layer_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   int filter_flags = 0, channel_flags;
   int num_in_alpha = 0;
   int width, height, xwidth, xheight, lb_width, lb_height;
-  int reinits = 0;
-  uint oxwidth, oxheight, i;
+  int reinits = 0, i;
 
   boolean needs_reinit = FALSE;
   boolean do_recheck = FALSE;
@@ -8094,9 +8094,6 @@ matchvals:
     if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_HEIGHT)) {
       xheight = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
     } else xheight = DEF_GEN_HEIGHT;
-
-    oxwidth = xwidth;
-    oxheight = xheight;
 
     if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file) {
       if (is_bg) {

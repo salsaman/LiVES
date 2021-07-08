@@ -187,8 +187,7 @@ static void extra_cb(LiVESWidget *dialog, int key) {
       lives_standard_button_new_from_stock_full(LIVES_STOCK_REFRESH,
           _("Scan other directory"), DEF_BUTTON_WIDTH,
           DEF_BUTTON_HEIGHT, LIVES_BOX(hbox), TRUE,
-          (tmp = lives_strdup(H_("Scan other directories for "
-                                 "LiVES Clip Sets. May be slow "
+          (tmp = lives_strdup(H_("Scan other directories for LiVES Clip Sets. May take time "
                                  "for some directories."))));
     lives_free(tmp);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), "disp_label", label);
@@ -199,10 +198,9 @@ static void extra_cb(LiVESWidget *dialog, int key) {
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
     widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
     lives_layout_add_label(LIVES_LAYOUT(layout), _("If you believe there should be clips in the "
-                           "current directory,\n"
-                           "you can try to recover them by launching\n"
-                           " 'Clean up Diskspace / Recover Missing Clips' "
-                           "from the File menu.\n"), FALSE);
+                           "current directory,\nyou can try to recover them by launching\n"
+                           "*Clean up Diskspace / Recover Missing Clips* from the File menu.\n"),
+                           FALSE);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
     lives_label_set_selectable(LIVES_LABEL(widget_opts.last_label), TRUE);

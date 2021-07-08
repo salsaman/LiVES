@@ -14,7 +14,8 @@ LIVES_GLOBAL_INLINE int find_clip_by_uid(uint64_t uid) {
     if (IS_VALID_CLIP(clipno)) {
       lives_clip_t *sfile = mainw->files[clipno];
       if (sfile->unique_id == uid) break;
-    } else clipno = -1;
+    }
+    clipno = -1;
   }
   return clipno;
 }
@@ -213,7 +214,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     if (*(double *)retval == 0.) *(double *)retval = sfile->fps;
     break;
   case CLIP_DETAILS_UNIQUE_ID:
-    *(uint64_t *)retval = (uint64_t)atol(val);
+    *(uint64_t *)retval = (uint64_t)lives_strtoul(val);
     break;
   case CLIP_DETAILS_AENDIAN:
     *(int *)retval = atoi(val) * 2; break;
@@ -1015,7 +1016,7 @@ LIVES_GLOBAL_INLINE boolean ignore_clip(int clipno) {
   if (IS_VALID_CLIP(clipno)) {
     char *clipdir = get_clip_dir(clipno);
     char *ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
-    if (lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) do_ignore = TRUE;
+    if (!lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) do_ignore = FALSE;
     lives_free(ignore);
     lives_free(clipdir);
   }

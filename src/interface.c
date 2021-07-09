@@ -6042,9 +6042,6 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                  LIVES_RESPONSE_CANCEL);
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
-
   lives_window_add_escape(LIVES_WINDOW(dialog), cancelbutton);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
@@ -6205,6 +6202,7 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
   if (response < 0) {
     // user cancelled
     lives_list_free_all(&allids);
+    lives_widget_destroy(dialog);
     return FALSE;
   }
 

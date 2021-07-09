@@ -11,6 +11,23 @@ static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+// how this works:
+// - we create a hidden (fullscreen) SDL window with a gl context
+//
+// - we start up projectM and ask it to render to a texture
+//   (the texture has to be square, so we use MAX(screen width, screen height). This is adjusted to the nxt power of two,
+//   as this makes projectM render more efficiently
+//
+// - we draw the texture in the SDL window, resizing it to the image size
+// - we read the pixels from the window into sd->fbuffer
+// - we copy sd->buffer to the output, adjusting the rowstride to match
+//   (sd->fbuffer has no rowstride padding, except in the case of RGB24, where we make it a multiple of 4 bytes)
+// - since we can only draw up to the window (screen) size, if the image size > screen size we set a scaling hint for the host
+//   (we also set MAXWIDTH and MAXHEIGHT for the channel, so the host can be aware of this limitation)
+// - the projectM texture size is fixed, so we just vary img size and scale accordingly
+
+// TODO - handle screen size changes (we need to completely reset the filter)
+
 #define FONT_DIR1 "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 #define FONT_DIR2 "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf"
 
@@ -84,9 +101,8 @@ static int count = 0;
 static int pcount = 0;
 static int blanks = 0;
 
-static int texwidth, texheight;
-
-static int maxwidth, maxheight;
+static int scrwidth, scrheight;
+static int imgwidth, imgheight;
 
 static bool rerand = true;
 
@@ -151,13 +167,14 @@ typedef struct {
   weed_timecode_t timestamp;
   volatile bool busy;
   volatile bool silent;
+  bool screen_inited;
 } _sdata;
 
 static bool resize_buffer(_sdata *sd);
 
 static _sdata *statsd = NULL;
 
-static int inited = 0;
+static bool inited = false;
 
 #ifndef HAVE_SDL2
 static void winhide() {
@@ -200,44 +217,50 @@ static int resize_display(int width, int height) {
 #endif
 
 
+#if 0
 static int change_size(_sdata *sdata) {
   int ret = 0;
-  int newsize = texwidth;
-  if (texheight > newsize) newsize = texheight;
-  if (texwidth >= texheight)
-    newsize = next_pot(texwidth);
+  int newsize = scrwidth;
+  if (scrheight > newsize) newsize = scrheight;
+  if (scrwidth >= scrheight)
+    newsize = scrwidth;//next_pot(scrwidth);
   else
-    newsize = next_pot(texheight);
-  std::cerr << "CHANGED SIZE to " << texwidth << " X " << texheight << std::endl;
+    newsize = scrheight;//next_pot(scrheight);
 
-  // must be done in this exact order, else projectM (SOIL) crashes...
+  // if (newsize > maxwidth) newsize = maxwidth;
+  // if (newsize > maxheight) newsize = maxheight;
+  
+  std::cerr << "CHANGED SIZE to " << scrwidth << " X " << scrheight << std::endl;
 
 #ifdef HAVE_SDL2
-  SDL_SetWindowSize(sdata->win, texwidth, texheight);
+  SDL_SetWindowSize(sdata->win, scrwidth, scrheight);
 #else
-  ret = resize_display(texwidth, texheight);
+  ret = resize_display(scrwidth, scrheight);
 #endif
-  if (sdata->worker_ready) sdata->textureHandle = sdata->globalPM->initRenderToTexture();
+  //if (sdata->worker_ready) 
 
   sdata->texsize = newsize;
 
   if (sdata->worker_ready) {
     // does not work, only the initial textSize in settings seems to have any bearing
-    sdata->globalPM->changeTextureSize(newsize);
-    sdata->globalPM->projectM_resetTextures();
+    //sdata->globalPM->projectM_resetTextures();
+
+    //sdata->globalPM->projectM_resetGL(scrwidth, scrheight);
+
+    // sdata->textureHandle = sdata->globalPM->initRenderToTexture();
+    // sdata->globalPM->changeTextureSize(newsize);
   }
 
-  resize_buffer(sdata);
-  if (sdata->worker_ready) sdata->globalPM->projectM_resetGL(texwidth, texheight);
+  //if (sdata->worker_ready) sdata->globalPM->projectM_resetGL(scrwidth, scrheight);
 
   return ret;
 }
+#endif
 
-
-static void setup_display(void) {
+static int setup_display(void) {
   XInitThreads();
   dpy = XOpenDisplay(NULL);
-
+  
   /* First, initialize SDL's video subsystem. */
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     if (verbosity >= WEED_VERBOSITY_CRITICAL)
@@ -251,8 +274,8 @@ static void setup_display(void) {
 #ifdef HAVE_SDL2
   SDL_Rect rect;
   SDL_GetDisplayBounds(0, &rect);
-  maxwidth = rect.w;
-  maxheight = rect.h;
+  scrwidth = rect.w;
+  scrheight = rect.h;
   if (verbosity >= WEED_VERBOSITY_DEBUG)
     fprintf(stderr, "ProjectM running with SDL 2\n");
 #else
@@ -266,8 +289,8 @@ static void setup_display(void) {
               SDL_GetError());
     return 2;
   }
-  maxwidth = info->current_w;
-  maxheight = info->current_h;
+  scrwidth = info->current_w;
+  scrheight = info->current_h;
 #endif
 
   //std::cerr << "worker initscr 3" << std::endl;
@@ -282,22 +305,24 @@ static void setup_display(void) {
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, USE_DBLBUF);
 
   SDL_GL_SetSwapInterval(0);
+  return 0;
 }
 
 
 static int init_display(_sdata *sd) {
   //std::cerr << "worker initscr" << std::endl;
 
+  if (!sd->screen_inited) {
 #ifdef HAVE_SDL2
-  sd->win = SDL_CreateWindow("projectM", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, maxwidth, maxheight,
-                             SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_BORDERLESS);
-  //std::cerr << "worker initscr 5" << std::endl;
-  sd->glCtx = SDL_GL_CreateContext(sd->win);
+    sd->win = SDL_CreateWindow("projectM", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, scrwidth, scrheight,
+			       SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_BORDERLESS);
+    //std::cerr << "worker initscr 5" << std::endl;
+    sd->glCtx = SDL_GL_CreateContext(sd->win);
 #else
-  if (resize_display(maxwidth, maxheight)) return 3;
+    if (resize_display(scrwidth, scrheight)) return 3;
 #endif
-  //std::cerr << "worker initscr 6" << std::endl;
-
+  }
+  sd->screen_inited = true;
   return 0;
 }
 
@@ -314,16 +339,22 @@ static bool resize_buffer(_sdata *sd) {
     } else align = 2;
   }
   if (sd->fbuffer) weed_free(sd->fbuffer);
-  sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride * texheight / align, align);
+  sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride * scrheight / align, align);
   if (!sd->fbuffer) return false;
   return true;
 }
 
 
 static int render_frame(_sdata *sd) {
-  float yscale = (float)texheight / sd->texsize * 2.;
-  float xscale = (float)texwidth / sd->texsize * 2.;
+  float yscale, xscale;
+  int maxwidth = imgwidth, maxheight = imgheight;
   bool checked_audio = false;
+
+  if (maxwidth > scrwidth) maxwidth = scrwidth;
+  if (maxheight > scrheight) maxheight = scrheight;
+
+  xscale = (float)maxwidth / sd->texsize * 2.;
+  yscale = (float)maxheight / sd->texsize * 2.;
 
 #ifdef HAVE_SDL2
   SDL_GL_MakeCurrent(sd->win, sd->glCtx);
@@ -341,7 +372,8 @@ static int render_frame(_sdata *sd) {
       sd->set_update = false;
       if (sd->update_size) {
         glFlush();
-        change_size(sd);
+	resize_buffer(sd);
+        //change_size(sd);
         sd->update_size = false;
       }
       if (sd->update_psize) {
@@ -358,6 +390,7 @@ static int render_frame(_sdata *sd) {
     }
     if (sd->update_psize || !sd->got_first) {
       sd->update_psize = false;
+      // define how we will map screen to sd->fbuffer
       glPixelStorei(GL_UNPACK_ROW_LENGTH, sd->rowstride / sd->psize);
       if (sd->psize == 4) {
         if (sd->palette == WEED_PALETTE_BGRA32) {
@@ -378,7 +411,7 @@ static int render_frame(_sdata *sd) {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
 
-  glViewport(0, 0, texwidth, texheight);
+  glViewport(0, 0, imgwidth, imgheight);
 
 #define NORM_AUDIO
 
@@ -459,7 +492,7 @@ static int render_frame(_sdata *sd) {
 #endif
 #endif
     pthread_mutex_lock(&buffer_mutex);
-    glReadPixels(0, 0, sd->rowstride / sd->psize, texheight, sd->psize == 4
+    glReadPixels(0, 0, sd->rowstride / sd->psize, imgheight, sd->psize == 4
                  ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, sd->fbuffer);
     sd->needs_more = false;
     pthread_mutex_unlock(&buffer_mutex);
@@ -475,7 +508,7 @@ static int render_frame(_sdata *sd) {
       /// and pick another (not sure why the blank frames happen, but generally if the first two come back blank, so do all the
       /// rest. Possibly we need an image texture to load, which we don't have; more investigation needed).
       int i = 0;
-      ssize_t frmsize = sd->rowstride * texheight;
+      ssize_t frmsize = sd->rowstride * imgheight;
       if (sd->psize == 4) {
         for (i = 0; i < frmsize; i += sd->psize)
           if ((sd->fbuffer[i] | sd->fbuffer[i + 1] | sd->fbuffer[i + 2]) && sd->fbuffer[i + 3]) break;
@@ -505,7 +538,7 @@ static void do_exit(void) {
   //pthread_cond_signal(&cond);
   //pthread_mutex_unlock(&cond_mutex);
   //std::cerr << "EXIT !!" << std::endl;
-  if (inited && statsd != NULL) {
+  if (inited && statsd) {
     statsd->die = true;
   }
 }
@@ -515,7 +548,7 @@ static void *worker(void *data) {
   std::string prname;
   projectM::Settings settings;
   _sdata *sd = (_sdata *)data;
-  float hwratio = (float)texheight / (float)texwidth;
+  float hwratio;
   //  int new_stdout, new_stderr;
   //std::cerr << "worker start" << std::endl;
 
@@ -532,14 +565,14 @@ static void *worker(void *data) {
   }
 
   atexit(do_exit);
-
+  hwratio = (float)scrheight / (float)scrwidth;
   //std::cerr << "worker start 2" << std::endl;
-  settings.windowWidth = texwidth;
-  settings.windowHeight = texheight;
+  settings.windowWidth = scrwidth;
+  settings.windowHeight = scrheight;
 
-  //std::cerr << "RESET size to " << texwidth << " X " << texheight << std::endl;
+  //std::cerr << "RESET size to " << scrwidth << " X " << scrheight << std::endl;
 
-  settings.meshX = texwidth / MESHSIZE;
+  settings.meshX = scrwidth / MESHSIZE;
   settings.meshY = ((int)(settings.meshX * hwratio + 1) >> 1) << 1;
   settings.fps = sd->fps;
   settings.smoothPresetDuration = 30.;
@@ -559,13 +592,13 @@ static void *worker(void *data) {
   }
   settings.easterEgg = 1;
 
-  //std::cerr << "SIZE is " << texwidth << " X " << texheight << std::endl;
+  //std::cerr << "SIZE is " << scrwidth << " X " << scrheight << std::endl;
 
   // setting to pot seems to speed things up
-  if (texwidth >= texheight)
-    settings.textureSize = sd->texsize = next_pot(texwidth);
+  if (scrwidth >= scrheight)
+    settings.textureSize = sd->texsize = next_pot(scrwidth);
   else
-    settings.textureSize = sd->texsize = next_pot(texheight);
+    settings.textureSize = sd->texsize = next_pot(scrheight);
 
   if (sd->failed) {
     // can happen if the host is overloaded and the caller timed out
@@ -611,7 +644,7 @@ static void *worker(void *data) {
     return NULL;
   }
 
-  //sd->globalPM->projectM_resetGL(texwidth, texheight);
+  //sd->globalPM->projectM_resetGL(scrwidth, scrheight);
 
   pthread_mutex_lock(&sd->mutex);
   sd->worker_ready = true;
@@ -744,11 +777,10 @@ static weed_error_t projectM_deinit(weed_plant_t *inst) {
       if (sd->bad_programs) weed_free(sd->bad_programs);
       weed_free(sd);
       weed_set_voidptr_value(inst, "plugin_internal", NULL);
-      inited = 0;
+      inited = false;
     } else {
       if (sd->failed) {
         weed_free(sd);
-        inited = 0;
       }
     }
     copies--;
@@ -759,166 +791,166 @@ static weed_error_t projectM_deinit(weed_plant_t *inst) {
 
 
 static weed_error_t projectM_init(weed_plant_t *inst) {
-  if (access(FONT_DIR1, R_OK) && access(FONT_DIR2, R_OK));
-  if (verbosity >= WEED_VERBOSITY_CRITICAL)
-    std::cerr << "{ProjectM plugin: could not access font directory, tried:" << std::endl
-              << FONT_DIR1 << std::endl << FONT_DIR2 << std::endl;
-  return WEED_ERROR_FILTER_INVALID;
-}
-if (copies >= 1) {
-  if (verbosity >= WEED_VERBOSITY_CRITICAL)
-    std::cerr << "{ProjectM plugin: cannot run multiple instances." << std::endl;
-  return WEED_ERROR_TOO_MANY_INSTANCES;
-} else {
-#ifdef HAVE_SDL2
-  SDL_Window *win;
-  SDL_GLContext glCtx;
-  bool reinit = false;
-#endif
-  _sdata *sd;
-  weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
-  weed_plant_t **iparams = weed_get_in_params(inst, NULL);
-  int height = weed_channel_get_height(out_channel);
-  int width = weed_channel_get_width(out_channel);
-  int palette = weed_channel_get_palette(out_channel);
-  int psize = pixel_size(palette);
-  int rowstride = width * psize;
-
-  if (inited) {
-    //std::cerr << "already inited" << std::endl;
-    sd = statsd;
-    weed_set_voidptr_value(inst, "plugin_internal", sd);
-
-#ifdef HAVE_SDL2
-    // win = sd->win;
-    // glCtx = sd->glCtx;
-    reinit = true;
-#endif
-
-    if (texwidth != width || texheight != height || rowstride != sd->rowstride) {
-      projectM_deinit(inst);
-      // will free statsd
-      finalise();
-    }
+  if (access(FONT_DIR1, R_OK) && access(FONT_DIR2, R_OK)) {
+    if (verbosity >= WEED_VERBOSITY_CRITICAL)
+      std::cerr << "{ProjectM plugin: could not access font directory, tried:" << std::endl
+		<< FONT_DIR1 << std::endl << FONT_DIR2 << std::endl;
+    return WEED_ERROR_FILTER_INVALID;
   }
+  if (copies >= 1) {
+    if (verbosity >= WEED_VERBOSITY_CRITICAL)
+      std::cerr << "{ProjectM plugin: cannot run multiple instances." << std::endl;
+    return WEED_ERROR_TOO_MANY_INSTANCES;
+  } else {
+#ifdef HAVE_SDL2
+    SDL_Window *win;
+    SDL_GLContext glCtx;
+    bool reinit = false;
+#endif
+    _sdata *sd;
+    weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
+    int height = weed_channel_get_height(out_channel);
+    int width = weed_channel_get_width(out_channel);
+    int palette = weed_channel_get_palette(out_channel);
+    int psize = pixel_size(palette);
+    int xrowstride = width * psize;
+    
+    copies++;
 
-  copies++;
-
-  if (!inited) {
-    int rc = 0;
-    sd = (_sdata *)weed_calloc(1, sizeof(_sdata));
-    if (!sd) return WEED_ERROR_MEMORY_ALLOCATION;
-    //std::cerr << "resetting" << std::endl;
-
-    sd->error = WEED_SUCCESS;
-    weed_set_voidptr_value(inst, "plugin_internal", sd);
-
-    sd->pidx = sd->opidx = -1;
-
-    sd->tfps = PREF_FPS;
-    if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, NULL);
-    if (weed_plant_has_leaf(inst, WEED_LEAF_TARGET_FPS)) sd->tfps = weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
-
-    pthread_mutex_init(&sd->mutex, NULL);
-    pthread_mutex_init(&sd->pcm_mutex, NULL);
-
-    sd->nprs = 0;
-    sd->prnames = NULL;
-    sd->worker_ready = false;
-    sd->worker_active = false;
-    sd->timer = 0.;
-    sd->timestamp = 0.;
-
-    sd->die = sd->failed = false;
-    sd->rendering = false;
-
-    texwidth = width;
-    texheight = height;
-    sd->rowstride = rowstride;
-    //std::cerr << "width " << width << " X " << rowstride << "ht " << height << std::endl;
-    sd->bad_programs = NULL;
-
-    if (!sd->fbuffer || texheight != height || sd->rowstride != rowstride) {
-      if (!resize_buffer(sd) && sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
-        projectM_deinit(inst);
-        return WEED_ERROR_MEMORY_ALLOCATION;
+    if (inited) {
+      //std::cerr << "already inited" << std::endl;
+      sd = statsd;
+      weed_set_voidptr_value(inst, "plugin_internal", sd);
+      copies--;
+      if (imgwidth != width || imgheight != height || xrowstride != sd->rowstride) {
+	if (imgheight != height || xrowstride != sd->rowstride) {
+	  sd->rowstride = xrowstride;
+	  imgheight = height;
+	  imgwidth = width;
+	  resize_buffer(sd);
+	}
       }
     }
+    else {
+      weed_plant_t **iparams = weed_get_in_params(inst, NULL);
+      int rc = 0;
+      sd = (_sdata *)weed_calloc(1, sizeof(_sdata));
+      if (!sd) return WEED_ERROR_MEMORY_ALLOCATION;
+      //std::cerr << "resetting" << std::endl;
 
-    // kick off a thread to init screean and render
-    pthread_create(&sd->thread, NULL, worker, sd);
+      sd->error = WEED_SUCCESS;
+      weed_set_voidptr_value(inst, "plugin_internal", sd);
 
-    clock_gettime(CLOCK_REALTIME, &ts);
-    ts.tv_sec += WORKER_TIMEOUT_SEC;
+      sd->pidx = sd->opidx = -1;
+
+      sd->tfps = PREF_FPS;
+      if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, NULL);
+      if (weed_plant_has_leaf(inst, WEED_LEAF_TARGET_FPS)) sd->tfps = weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
+
+      pthread_mutex_init(&sd->mutex, NULL);
+      pthread_mutex_init(&sd->pcm_mutex, NULL);
+
+      sd->nprs = 0;
+      sd->prnames = NULL;
+      sd->worker_ready = false;
+      sd->worker_active = false;
+      sd->timer = 0.;
+      sd->timestamp = 0.;
+
+      sd->die = sd->failed = false;
+      sd->rendering = false;
+
+      imgwidth = width;
+      imgheight = height;
+      sd->rowstride = xrowstride;
+
+      //std::cerr << "width " << width << " X " << rowstride << "ht " << height << std::endl;
+      sd->bad_programs = NULL;
+
+      // kick off a thread to init screean and render
+      pthread_create(&sd->thread, NULL, worker, sd);
+
+      clock_gettime(CLOCK_REALTIME, &ts);
+      ts.tv_sec += WORKER_TIMEOUT_SEC;
 
 #define DEBUG
 #ifdef DEBUG
-    ts.tv_sec *= 100;
+      ts.tv_sec *= 100;
 #endif
 
-    // wait for worker thread ready
-    //std::cerr << "Waiting for worker_ready" << std::endl;
-    pthread_mutex_lock(&cond_mutex);
-    while (!sd->worker_ready && rc != ETIMEDOUT) {
-      rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
-    }
-    pthread_mutex_unlock(&cond_mutex);
+      // wait for worker thread ready
+      //std::cerr << "Waiting for worker_ready" << std::endl;
+      pthread_mutex_lock(&cond_mutex);
+      while (!sd->worker_ready && rc != ETIMEDOUT) {
+	rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
+      }
+      pthread_mutex_unlock(&cond_mutex);
 
-    if (rc == ETIMEDOUT && !sd->worker_ready) {
-      // if we timedout then die
-      //std::cerr << "timed out Waiting for worker_ready" << std::endl;
-      sd->failed = true;
+      if (rc == ETIMEDOUT && !sd->worker_ready) {
+	// if we timedout then die
+	//std::cerr << "timed out Waiting for worker_ready" << std::endl;
+	sd->failed = true;
+      }
+
+      if (sd->failed) {
+	projectM_deinit(inst);
+	return WEED_ERROR_PLUGIN_INVALID;
+      }
+
+      if (!weed_plant_has_leaf(iparams[0], WEED_LEAF_GUI)) {
+	weed_plant_t *iparamgui = weed_param_get_gui(iparams[0]);
+	weed_set_string_array(iparamgui, WEED_LEAF_CHOICES, sd->nprs, (char **)sd->prnames);
+      }
+      weed_free(iparams);
+
+      // if (!sd->fbuffer || scrheight != height || sd->rowstride != rowstride) {
+      // 	if (!resize_buffer(sd) && sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
+      // 	  projectM_deinit(inst);
+      // 	  return WEED_ERROR_MEMORY_ALLOCATION;
+      // 	}
+      // }
+
+      resize_buffer(sd);
+      //change_size(sd);
+
+      statsd = sd;
+      inited = 1;
     }
 
-    if (sd->failed) {
+    //sd->rendering = false;
+
+    sd->audio = (float *)weed_calloc(MAX_AUDLEN * 2, sizeof(float));
+    if (!sd->audio) {
       projectM_deinit(inst);
-      return WEED_ERROR_PLUGIN_INVALID;
+      return WEED_ERROR_MEMORY_ALLOCATION;
     }
 
-    if (!weed_plant_has_leaf(iparams[0], WEED_LEAF_GUI)) {
-      weed_plant_t *iparamgui = weed_param_get_gui(iparams[0]);
-      weed_set_string_array(iparamgui, WEED_LEAF_CHOICES, sd->nprs, (char **)sd->prnames);
-    }
-    weed_free(iparams);
+    sd->abufsize = 4096;
 
-    statsd = sd;
-    inited = 1;
+    sd->got_first = false;
+    sd->psize = psize;
+    sd->palette = palette;
+
+    sd->update_size = false;
+    sd->update_psize = false;
+    sd->needs_more = false;
+    sd->needs_update = false;
+    sd->set_update = false;
+    sd->audio_frames = MAX_AUDLEN;
+    sd->audio_offs = 0;
+    pcount = count = 0;
+    //sd->tfps = 0.;
+    sd->ncycs = 0.;
+    sd->bad_prog = false;
+    sd->busy = false;
+    sd->silent = false;
+    sd->rendering = true;
+
+    pthread_mutex_lock(&cond_mutex);
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
   }
-
-  //sd->rendering = false;
-
-  sd->audio = (float *)weed_calloc(MAX_AUDLEN * 2, sizeof(float));
-  if (!sd->audio) {
-    projectM_deinit(inst);
-    return WEED_ERROR_MEMORY_ALLOCATION;
-  }
-
-  sd->abufsize = 4096;
-
-  sd->got_first = false;
-  sd->psize = psize;
-  sd->palette = palette;
-
-  sd->update_size = false;
-  sd->update_psize = false;
-  sd->needs_more = false;
-  sd->needs_update = false;
-  sd->set_update = false;
-  sd->audio_frames = MAX_AUDLEN;
-  sd->audio_offs = 0;
-  pcount = count = 0;
-  //sd->tfps = 0.;
-  sd->ncycs = 0.;
-  sd->bad_prog = false;
-  sd->busy = false;
-  sd->silent = false;
-  sd->rendering = true;
-
-  pthread_mutex_lock(&cond_mutex);
-  pthread_cond_signal(&cond);
-  pthread_mutex_unlock(&cond_mutex);
-}
-return WEED_SUCCESS;
+  return WEED_SUCCESS;
 }
 
 
@@ -980,10 +1012,12 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     pthread_mutex_unlock(&cond_mutex);
   }
 
-  //std::cerr << texwidth << " X " << texheight << " and " << width << " X " << height << std::endl;
+  //std::cerr << scrwidth << " X " << scrheight << " and " << width << " X " << height << std::endl;
+  sd->psize = psize;
+  imgwidth = width;
 
-  if (texwidth != width || texheight != height || sd->psize != psize || sd->rowstride != xrowstride) {
-    std::cerr << texwidth << " X " << texheight << " and " << width << " X " << height
+  if (imgheight != height || sd->rowstride != xrowstride || palette != sd->palette) {
+    std::cerr << imgwidth << " X " << imgheight << " and " << width << " X " << height
               << " featuring " << xrowstride << " against " << sd->rowstride
               << " and also " << sd->psize << " vs " << psize << " with " << sd->palette << " for " << palette << std::endl;
     /// we must update size / pal, this has to be done before reading the buffer
@@ -996,16 +1030,19 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     pthread_mutex_unlock(&cond_mutex);
     //sd->updating = true;
     /// now we can set new values
-    if (texwidth != width || texheight != height) {
-      texheight = height;
-      texwidth = width;
+    if (sd->rowstride != xrowstride) {
+      // force sd->fbuffer resize
+      imgheight = height;
+      sd->rowstride = xrowstride;      
       sd->update_size = true;
     }
-    if (sd->palette != palette || sd->rowstride != xrowstride || sd->psize != psize) {
+
+    if (palette != sd->palette) {
+      // force pixel mapping update
       sd->update_psize = true;
-      sd->psize = psize;
-      sd->rowstride = xrowstride;
+      sd->palette = palette;
     }
+    
     /// let the worker thread know that the values have been updated
     sd->needs_more = true;
     pthread_mutex_lock(&cond_mutex);
@@ -1015,7 +1052,6 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     did_update = true;
   }
 
-  sd->palette = palette;
   /// get the program number:
   // ex. if nprs == 10, we have 9 programs 1 - 9 and 0 is random
   // first we shift the vals. down by 1, so -1 is random and prgs 0 - 8
@@ -1119,11 +1155,11 @@ copytodest:
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  if (texwidth > maxwidth || texheight > maxheight) {
+  if (imgwidth > scrwidth || imgheight > scrheight) {
     weed_plant_t *gui = weed_channel_get_gui(out_channel);
     int xgap = 0, ygap = 0;
-    if (texwidth > maxwidth) xgap = (texwidth - maxwidth) >> 1;
-    if (texheight > maxheight) ygap = (texheight - maxheight) >> 1;
+    if (imgwidth > scrwidth) xgap = (imgwidth - scrwidth) >> 1;
+    if (imgheight > scrheight) ygap = (imgheight - scrheight) >> 1;
     weed_set_int_value(gui, WEED_LEAF_BORDER_TOP, ygap);
     weed_set_int_value(gui, WEED_LEAF_BORDER_BOTTOM, ygap);
     weed_set_int_value(gui, WEED_LEAF_BORDER_LEFT, xgap);
@@ -1144,9 +1180,8 @@ WEED_SETUP_START(200, 200) {
                                weed_integer_init("ctime", "_Random pattern hold time (seconds - 0 for never change)", 20, 0, 100000), NULL
                               };
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE
-                                   | WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL
-                                  };
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
+
   weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, 0, palette_list,
                                projectM_init, projectM_process, projectM_deinit,
                                in_chantmpls, out_chantmpls, in_params, NULL);
@@ -1161,8 +1196,8 @@ WEED_SETUP_START(200, 200) {
 
   setup_display();
 
-  weed_set_int_value(out_chantmpls[0], WEED_LEAF_MAXWIDTH, maxwidth);
-  weed_set_int_value(out_chantmpls[0], WEED_LEAF_MAXHEIGHT, maxheight);
+  weed_set_int_value(out_chantmpls[0], WEED_LEAF_MAXWIDTH, scrwidth);
+  weed_set_int_value(out_chantmpls[0], WEED_LEAF_MAXHEIGHT, scrheight);
 
   weed_plugin_set_package_version(plugin_info, package_version);
 }

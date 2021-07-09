@@ -1,4 +1,3 @@
-
 // machinestate.c
 // LiVES
 // (c) G. Finch 2019 - 2020 <salsaman+lives@gmail.com>
@@ -1987,7 +1986,7 @@ void update_effort(int nthings, boolean badthings) {
 					  || is_layer_ready(mainw->frame_layer_preload))) {
     prefs->pb_quality = pb_quality;
     mainw->blend_palette = WEED_PALETTE_END;
-  if (mainw->scratch == SCRATCH_NONE)  mainw->scratch = SCRATCH_JUMP;
+  if (mainw->scratch == SCRATCH_NONE)  mainw->scratch = SCRATCH_JUMP_NORESYNC;
   }
 
   //g_print("STRG %d and %d %d\n", struggling, mainw->effort, prefs->pb_quality);

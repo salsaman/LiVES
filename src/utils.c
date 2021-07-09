@@ -2289,64 +2289,6 @@ int verhash(char *xv) {
 }
 
 
-// TODO - move into undo.c
-void set_undoable(const char *what, boolean sensitive) {
-  if (mainw->current_file > -1) {
-    cfile->redoable = FALSE;
-    cfile->undoable = sensitive;
-    if (!what || *what) {
-      if (what) {
-        char *what_safe = lives_strdelimit(lives_strdup(what), "_", ' ');
-        lives_snprintf(cfile->undo_text, 32, _("_Undo %s"), what_safe);
-        lives_snprintf(cfile->redo_text, 32, _("_Redo %s"), what_safe);
-        lives_free(what_safe);
-      } else {
-        cfile->undoable = FALSE;
-        cfile->undo_action = UNDO_NONE;
-        lives_snprintf(cfile->undo_text, 32, "%s", _("_Undo"));
-        lives_snprintf(cfile->redo_text, 32, "%s", _("_Redo"));
-      }
-      lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
-      lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
-    }
-  }
-
-  lives_widget_hide(mainw->redo);
-  lives_widget_show(mainw->undo);
-  lives_widget_set_sensitive(mainw->undo, sensitive);
-
-#ifdef PRODUCE_LOG
-  lives_log(what);
-#endif
-}
-
-
-void set_redoable(const char *what, boolean sensitive) {
-  if (mainw->current_file > -1) {
-    cfile->undoable = FALSE;
-    cfile->redoable = sensitive;
-    if (!what || *what) {
-      if (what) {
-        char *what_safe = lives_strdelimit(lives_strdup(what), "_", ' ');
-        lives_snprintf(cfile->undo_text, 32, _("_Undo %s"), what_safe);
-        lives_snprintf(cfile->redo_text, 32, _("_Redo %s"), what_safe);
-        lives_free(what_safe);
-      } else {
-        cfile->redoable = FALSE;
-        cfile->undo_action = UNDO_NONE;
-        lives_snprintf(cfile->undo_text, 32, "%s", _("_Undo"));
-        lives_snprintf(cfile->redo_text, 32, "%s", _("_Redo"));
-      }
-      lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
-      lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
-    }
-  }
-  lives_widget_hide(mainw->undo);
-  lives_widget_show(mainw->redo);
-  lives_widget_set_sensitive(mainw->redo, sensitive);
-}
-
-
 void set_sel_label(LiVESWidget * sel_label) {
   char *tstr, *frstr, *tmp;
   char *sy, *sz;

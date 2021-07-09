@@ -1107,8 +1107,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
         mainw->cancelled = CANCEL_NONE;
         mainw->error = TRUE;
       }
-      if (mainw->cancelled) d_print_cancelled();
-      else if (mainw->error) {
+      if (!mainw->cancelled && mainw->error) {
         d_print_failed();
         if (mainw->permmgr)  {
           if (mainw->cancelled == CANCEL_NONE &&
@@ -1130,48 +1129,54 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
         }
         if (reqout) reqout->do_update = TRUE;
       }
-      mainw->error = FALSE;
       mainw->cancelled = CANCEL_RETRY;
+      mainw->error = FALSE;
+    }
+    if (mainw->cancelled) {
       reqout = req;
-      utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
+      lives_freep((void **)&dest);
+      mainw->cancelled = CANCEL_RETRY;
+      return utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
     }
+    else {
+      if (!*mainw->msg) hasnone = TRUE;
 
-    if (!(*mainw->msg)) {
-      hasnone = TRUE;
-    }
 #ifdef ALLOW_NONFREE_CODECS
-    else if (!lives_strncmp(mainw->msg, "completed|altfmts", 17)) {
-      hasalts = TRUE;
-    }
-#endif
-    else if (get_token_count(mainw->msg, '|') < 4)
-      hasnone = TRUE;
-
-    if (hasnone || hasalts) {
-      d_print_failed();
-      if (hasnone) {
-        do_error_dialog(
-          _("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \n"
-            "the latest youtube-dl installed.\n"));
-      } else {
-#ifdef ALLOW_NONFREE_CODECS
-        if (do_yesno_dialog(
-              _("\nLiVES was unable to download the clip in the desired format\nWould you like to try using an alternate "
-                "format selection ?"))) {
-          mainw->error = FALSE;
-          mainw->cancelled = CANCEL_RETRY;
-          req->allownf = TRUE;
-          reqout = req;
-        }
-#endif
+      else if (!lives_strncmp(mainw->msg, "completed|altfmts", 17)) {
+	hasalts = TRUE;
       }
-      utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
+#endif
+      else if (get_token_count(mainw->msg, '|') < 4) hasnone = TRUE;
+
+      if (hasnone || hasalts) {
+	d_print_failed();
+	if (hasnone) {
+	  do_error_dialog(
+			  _("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \n"
+			    "the latest youtube-dl installed.\n"));
+	} else {
+#ifdef ALLOW_NONFREE_CODECS
+	  if (do_yesno_dialog(
+			      _("\nLiVES was unable to download the clip in the desired format\nWould you like to try using an alternate "
+				"format selection ?"))) {
+	    mainw->error = FALSE;
+	    mainw->cancelled = CANCEL_RETRY;
+	    req->allownf = TRUE;
+	    reqout = req;
+	  }
+#endif
+	}
+	lives_freep((void **)&dest);
+	return utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
+      }
     }
 
     if (req->matchsize == LIVES_MATCH_CHOICE && !*req->vidchoice)  {
       // show a list of the video formats and let the user pick one
       if (!youtube_select_format(req)) {
-        utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
+	lives_freep((void **)&dest);
+	mainw->cancelled = CANCEL_RETRY;
+        return utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
       }
       // we try again, this time with req->vidchoice set
       req->matchsize = LIVES_MATCH_SPECIFIED;
@@ -1183,8 +1188,10 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
       lives_snprintf(req->audchoice, 512, "%s", array[3]);
       lives_strfreev(array);
       if (req->duration == 0.) {
-        if (do_utube_stream_warn())
-          utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
+        if (!do_utube_stream_warn()) {
+	  lives_freep((void **)&dest);
+          return utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
+	}
       }
     }
   }
@@ -1211,6 +1218,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
 lives_remote_clip_request_t *utube_dl2(lives_remote_clip_request_t *req, const char *tmpdir, char *ddir, char *mpt,
                                        boolean forcecheck,
                                        lives_remote_clip_request_t *reqout) {
+  // format has been selected, do the dload
   char *full_dfile, *msg2, *msg;
   boolean bres;
   if (req->duration == 0.) {
@@ -1237,6 +1245,7 @@ lives_remote_clip_request_t *utube_dl2(lives_remote_clip_request_t *req, const c
 lives_remote_clip_request_t *utube_dl3(lives_remote_clip_request_t *req, const char *tmpdir, char *full_dfile, char *ddir,
                                        char *mpt,
                                        boolean forcecheck, lives_remote_clip_request_t *reqout, boolean bres) {
+  // clip should be downloaded now (or user cancelled)
   boolean badfile = FALSE;
   char *dest = NULL;
 
@@ -1348,7 +1357,7 @@ lives_remote_clip_request_t *utube_dl4(lives_remote_clip_request_t *req, const c
   close_temp_handle(current_file);
   lives_freep((void **)&mpt);
 
-  if (badfile) goto cancelled;
+  if (badfile || mainw->cancelled) goto cancelled;
 
   if (manage_ds) {
     lives_storage_status_t dstat;
@@ -10601,10 +10610,13 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
   // lock OFF
   if (!state) {
     prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
-    if (w) switch_audio_clip(mainw->current_file, TRUE);
+    if (!w) {
+      g_print("SW AUD CL\n");
+      switch_audio_clip(mainw->playing_file, TRUE);
+    }
   }
 
-  if (w && (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC))
+  if (!w && (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC))
     resync_audio(mainw->playing_file, mainw->files[mainw->playing_file]->frameno);
 
   // lock ON
@@ -11673,6 +11685,7 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   uint32_t chk_mask = 0;
   boolean bad_header = FALSE;
+  boolean is_trim = FALSE;
   int type = 2;
 
   if (!CURRENT_CLIP_IS_VALID) return FALSE;
@@ -11681,6 +11694,10 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
     // undo/redo
     start = cfile->undo1_dbl;
     end = cfile->undo2_dbl;
+    if (cfile->opening_audio) {
+      is_trim = TRUE;
+      cfile->opening_audio = FALSE;
+    }
   } else {
     type = LIVES_POINTER_TO_INT(user_data);
     if (type == 1) {
@@ -11750,7 +11767,10 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
     return FALSE;
   }
 
-  do_progress_dialog(TRUE, FALSE, _("Deleting Audio"));
+  if (is_trim) msg = _("Trimming Audio");
+  else msg = _("Deleting Audio");
+  do_progress_dialog(TRUE, FALSE, msg);
+  lives_free(msg);
 
   if (mainw->error) {
     if (menuitem) d_print_failed();
@@ -11758,7 +11778,8 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
     return FALSE;
   }
 
-  set_undoable(_("Delete Audio"), TRUE);
+  if (is_trim) set_undoable(_("Trim Audio"), TRUE);
+  else set_undoable(_("Delete Audio"), TRUE);
   cfile->undo_action = UNDO_DELETE_AUDIO;
 
   reget_afilesize(mainw->current_file);

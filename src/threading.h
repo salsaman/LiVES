@@ -213,6 +213,7 @@ void lives_threadpool_finish(void);
 int lives_thread_create(lives_thread_t *, lives_thread_attr_t attr, lives_thread_func_t func, void *arg);
 uint64_t lives_thread_done(lives_thread_t thread);
 uint64_t lives_thread_join(lives_thread_t work, void **retval);
+void lives_thread_free(lives_thread_t *thread);
 
 // thread functions
 lives_thread_data_t *get_thread_data(void);

@@ -159,7 +159,7 @@ lives_fx_cat_t weed_filter_subcategorise(weed_plant_t *pl, lives_fx_cat_t catego
 boolean has_audio_filters(lives_af_t af_type);
 #endif
 
-boolean has_usable_palette(weed_plant_t *chantmpl);
+boolean has_usable_palette(weed_plant_t *filter, weed_plant_t *chantmpl);
 int best_palette_match(int *palete_list, int num_palettes, int palette);
 int check_filter_chain_palettes(boolean is_bg, int *palette_list, int npals);
 
@@ -354,7 +354,10 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot)
 //#define DEBUG_FILTER_MUTEXES
 #ifdef DEBUG_FILTER_MUTEXES
 #define filter_mutex_lock(key) {g_print ("lock %d at line %d in file %s\n",key,__LINE__,__FILE__); \
-    if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_lock(&mainw->fx_mutex[key]); g_print("done\n");}
+  if (key >= 0 && key < FX_KEYS_MAX) {if (pthread_mutex_trylock(&mainw->fx_mutex[key])) { \
+      g_print("BLOCKED\n"); pthread_mutex_lock(&mainw->fx_mutex[key]);} \
+    g_print("done\n");}}
+
 #define filter_mutex_unlock(key) {g_print ("unlock %d at line %d in file %s\n\n",key,__LINE__,__FILE__); \
     if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->fx_mutex[key]); g_print("done\n");}
 #endif

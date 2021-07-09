@@ -1399,7 +1399,7 @@ boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, ui
 
     bmax = (bmax < 128 ? bmax << 1 : 255) - bmin;
 
-    g_print("max %d min %d\n", bmax, bmin);
+    //g_print("max %d min %d\n", bmax, bmin);
 
     while ((!timeout || lives_alarm_check(alarm_handle)) && (z = rat * RAT_TIO) > RAT_MIN) {
       // rat is initialized to RAT_START (default .9)
@@ -1450,7 +1450,9 @@ boolean pick_nice_colour(ticks_t timeout, uint8_t r0, uint8_t g0, uint8_t b0, ui
       return TRUE;
     }
     lives_alarm_clear(alarm_handle);
-    g_print("FAILED TO GET COL\n");
+    if (prefs->show_dev_opts) {
+      g_print("Failed to get harmonious colour\n");
+    }
   }
   return FALSE;
 }
@@ -10425,6 +10427,7 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   if (alignment != 0 && !old_layer) {
     rowstrides = weed_layer_get_rowstrides(layer, &i);
     while (i > 0) if (rowstrides[--i] % alignment != 0) i = -1;
+    lives_free(rowstrides);
     if (i == 0) return TRUE;
   }
 
@@ -13386,7 +13389,8 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         }
         swparams[sl].irw = irw;
         swparams[sl].orw = orw;
-        if (sl < nthrds - 1) lives_thread_create(&threads[sl], LIVES_THRDATTR_NONE, swscale_threadfunc, &swparams[sl]);
+        if (sl < nthrds - 1) lives_thread_create(&threads[sl], LIVES_THRDATTR_NONE,
+						 swscale_threadfunc, &swparams[sl]);
         else swscale_threadfunc(&swparams[sl]);
       }
     }

@@ -466,6 +466,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                 cfile->undo1_dbl = 0.;
                 cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
                 d_print(_("Auto trimming %.4f seconds of audio at start..."), cfile->undo2_dbl);
+		cfile->opening_audio = TRUE;
                 if (on_del_audio_activate(NULL, NULL)) d_print_done();
                 else d_print("\n");
                 cfile->changed = FALSE;
@@ -478,6 +479,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                         cfile->laudio_time - cfile->video_time);
                 cfile->undo1_dbl = cfile->video_time;
                 cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
+		cfile->opening_audio = TRUE;
                 if (on_del_audio_activate(NULL, NULL)) d_print_done();
                 else d_print("\n");
                 cfile->changed = FALSE;
@@ -504,6 +506,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
 		// *INDENT-OFF*
               }}}}
 	// *INDENT-ON*
+	cfile->opening_audio = FALSE;
 
         get_mime_type(cfile->type, 40, cdata);
         save_frame_index(mainw->current_file);
@@ -556,9 +559,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
     cfile->undo_start = 1;
     cfile->undo_end = cfile->frames;
 
-    if (cfile->achans > 0) {
-      cfile->opening_audio = TRUE;
-    }
+    if (cfile->achans > 0) cfile->opening_audio = TRUE;
 
     // these will get reset as we have no audio file yet, so preserve them
     achans = cfile->achans;
@@ -612,7 +613,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                                 withsound, prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST),
                                 start, frames, cfile->achans, mainw->file_open_params);
 
-      g_print("cmd is %s\n", com);
+      //g_print("cmd is %s\n", com);
 
       lives_free(tmp);
       lives_system(com, FALSE);
@@ -832,6 +833,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                   cfile->laudio_time - cfile->video_time);
           cfile->undo1_dbl = cfile->video_time;
           cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
+	  cfile->opening_audio = TRUE;
           if (on_del_audio_activate(NULL, NULL)) d_print_done();
           else d_print("\n");
           cfile->changed = FALSE;
@@ -3471,6 +3473,7 @@ int close_temp_handle(int new_clip) {
 
   clipd = get_clip_dir(mainw->current_file);
   if (lives_file_test(clipd, LIVES_FILE_TEST_EXISTS)) {
+    lives_cancel_t cancelled = (lives_cancel_t)mainw->cancelled;
     permit_close(mainw->current_file);
 
     temp_backend = use_staging_dir_for(mainw->current_file);
@@ -3478,6 +3481,7 @@ int close_temp_handle(int new_clip) {
     lives_system(com, TRUE);
     lives_free(com);
     lives_free(temp_backend);
+    mainw->cancelled = cancelled;
   }
   lives_freep((void **)&mainw->files[clipno]);
 
@@ -4897,7 +4901,6 @@ static int64_t _save_to_scrap_file(weed_layer_t *layer) {
 static lives_proc_thread_t scrap_file_procthrd = NULL;
 
 int save_to_scrap_file(weed_layer_t *layer) {
-  g_print("PT A1\n");
   weed_layer_t *orig_layer;
   lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
   char *framecount;
@@ -4925,6 +4928,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
   orig_layer = weed_layer_copy(NULL, layer);
   if (scrap_file_procthrd) {
     scrapfile->f_size += lives_proc_thread_join_int64(scrap_file_procthrd);
+    lives_proc_thread_free(scrap_file_procthrd);
     if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1))
         && !prefs->hide_framebar &&
         !mainw->faded) {
@@ -4957,6 +4961,7 @@ void close_scrap_file(boolean remove) {
 
   if (scrap_file_procthrd) {
     mainw->files[mainw->scrap_file]->f_size += lives_proc_thread_join_int64(scrap_file_procthrd);
+    lives_proc_thread_free(scrap_file_procthrd);
     scrap_file_procthrd = NULL;
   }
 

@@ -998,7 +998,7 @@ static boolean pre_init(void) {
     prefs->load_rfx_builtin = get_boolean_prefd(PREF_LOAD_RFX_BUILTIN, TRUE);
 
   for (i = 0; i < FX_KEYS_MAX; i++) {
-    pthread_mutex_init(&mainw->fx_mutex[i], NULL);
+    pthread_mutex_init(&mainw->fx_mutex[i], &mattr);
   }
 
   mainw->vrfx_update = NULL;
@@ -8728,6 +8728,8 @@ void close_current_file(int file_to_switch_to) {
       // the generator is the blend file and we switch because it was deinited, and when we switch fg <-> bg
       // in the former case the generator is killed off, in the latter it survives
       mainw->blend_file = -1;
+      weed_layer_free(mainw->blend_layer);
+      mainw->blend_layer = NULL;
     }
 
     mainw->preview_frame = 0;
@@ -9014,10 +9016,6 @@ boolean switch_audio_clip(int new_file, boolean activate) {
   double ratio = 0.;
   int aplay_file;
 
-  if (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP) {
-    mainw->scratch = SCRATCH_JUMP;
-  }
-
   if (!IS_VALID_CLIP(new_file)) return FALSE;
 
   if (AUD_SRC_EXTERNAL) return FALSE;
@@ -9037,6 +9035,10 @@ boolean switch_audio_clip(int new_file, boolean activate) {
   if (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) {
     if (!sfile->play_paused) freeze_unfreeze_audio(FALSE);
     return FALSE;
+  }
+
+  if (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP) {
+    mainw->scratch = SCRATCH_JUMP;
   }
 
   if (new_file == aplay_file) {
@@ -9160,10 +9162,6 @@ boolean switch_audio_clip(int new_file, boolean activate) {
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed) {
-      if (mainw->pulsed->playing_file == new_file ||
-          (IS_VALID_CLIP(mainw->playing_file) && mainw->files[mainw->playing_file]->achans > 0
-           && mainw->pulsed->playing_file != mainw->playing_file)) return FALSE;
-
       if (mainw->scratch == SCRATCH_JUMP) {
         sfile->aseek_pos =
           (off_t)((double)sfile->frameno / sfile->fps * sfile->arate)
@@ -9377,7 +9375,8 @@ void do_quick_switch(int new_file) {
 
   // switch audio clip
   if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
-      && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit
+      && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) && !mainw->is_rendering
+      && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit
                                   || prefs->audio_src == AUDIO_SRC_EXT))) {
     switch_audio_clip(new_file, TRUE);
   }

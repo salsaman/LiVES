@@ -925,7 +925,7 @@ ssize_t lives_close_buffered(int fd) {
   mainw->file_buffers = lives_list_remove(mainw->file_buffers, (livesconstpointer)fbuff);
   pthread_mutex_unlock(&mainw->fbuffer_mutex);
 
-  if (fbuff->buffer && !fbuff->invalid) {
+  if (fbuff->buffer) {
     lives_free(fbuff->buffer);
   }
 

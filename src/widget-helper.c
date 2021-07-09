@@ -1922,7 +1922,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *wi
   }
 
   if (!was_modal) {
-    lives_window_set_modal(win, FALSE);
+    if (win) lives_window_set_modal(win, FALSE);
     if (modalold) lives_window_set_modal(modalold, TRUE);
   }
   return TRUE;

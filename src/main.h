@@ -1307,8 +1307,6 @@ frames_t count_resampled_frames(frames_t in_frames, double orig_fps, double resa
 boolean create_event_space(int length_in_eventsb);
 void add_to_recent(const char *filename, double start, int frames, const char *file_open_params);
 int verhash(char *version);
-void set_undoable(const char *what, boolean sensitive);
-void set_redoable(const char *what, boolean sensitive);
 void zero_spinbuttons(void);
 void set_start_end_spins(int clipno);
 void set_sel_label(LiVESWidget *label);

@@ -33,8 +33,7 @@ boolean send_layer(weed_layer_t *layer, _vid_playback_plugin *vpp, int64_t timec
   if (layer) {
     if (player_v2) {
       if (!(*vpp->play_frame)(layer,  mainw->currticks - mainw->stream_ticks, NULL)) {
-        /// sblahhh...
-        error = TRUE;
+         error = TRUE;
       }
     } else {
       void **pd_array;
@@ -575,6 +574,7 @@ tr_err:
   if (coder) {
     // do b4 exit_screen
     error = lives_proc_thread_join_boolean(coder);
+    lives_proc_thread_free(coder);
   }
 
   // flush streams, write headers, plugin cleanup

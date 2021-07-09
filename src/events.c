@@ -2735,8 +2735,7 @@ void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, w
 
 
 weed_event_list_t *append_filter_init_event(weed_event_list_t *event_list,
-    weed_timecode_t tc, int filter_idx,
-    int num_in_tracks, int key, weed_plant_t *inst) {
+    weed_timecode_t tc, int filter_idx, int num_in_tracks, int key, weed_plant_t *inst) {
   weed_plant_t **ctmpl;
   weed_event_t *event;
   weed_plant_t *filter, *chan;
@@ -2784,7 +2783,7 @@ weed_event_list_t *append_filter_init_event(weed_event_list_t *event_list,
       // we need to use some repeated channels
       for (i = 0; i < total_in_channels; i++) {
         if (weed_plant_has_leaf(ctmpl[i], WEED_LEAF_MAX_REPEATS)
-            && (count[i] > 0 || has_usable_palette(ctmpl[i]))) {
+            && (count[i] > 0 || has_usable_palette(filter, ctmpl[i]))) {
           repeats = weed_get_int_value(ctmpl[i], WEED_LEAF_MAX_REPEATS, NULL);
           if (repeats == 0) {
             count[i] += num_in_tracks - my_in_tracks;

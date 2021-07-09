@@ -940,7 +940,8 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   lives_widget_context_invoke(tdata->ctx, gsrc_wrapper, mywork);
 
   if (myflags & LIVES_THRDFLAG_AUTODELETE) {
-    lives_free(mywork); lives_free(list);
+    lives_free(mywork);
+    lives_thread_free((lives_thread_t *)list);
   } else mywork->done = tdata->idx;
 
   pthread_mutex_lock(&twork_count_mutex);
@@ -1028,6 +1029,13 @@ void lives_threadpool_finish(void) {
   lives_list_free_all((LiVESList **)&twork_first);
   twork_first = twork_last = NULL;
   ntasks = 0;
+}
+
+
+LIVES_GLOBAL_INLINE void lives_thread_free(lives_thread_t *thread) {
+  LiVESList *list = (LiVESList *)thread;
+  list->prev = list->next = NULL;
+  lives_list_free(list);
 }
 
 

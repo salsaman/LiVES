@@ -51,7 +51,7 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
   weed_plant_t *in_param;
   int intval;
 
-  register int j;
+  int j;
 
   int bf;
   unsigned char luma1, luma2;

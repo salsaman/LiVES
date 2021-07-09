@@ -1042,6 +1042,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
   // if non-automode, the user overrides effect toggling
 
   uint64_t new_rte;
+  boolean needs_unlock = FALSE;
 
   if (mainw->go_away) return TRUE;
   if (!LIVES_IS_INTERACTIVE && from_menu) return TRUE;
@@ -1070,6 +1071,8 @@ static boolean _rte_on_off(boolean from_menu, int key) {
       // switch is ON
       // WARNING - if we start playing because a generator was started, we block here
       filter_mutex_lock(key);
+      needs_unlock = TRUE;
+
       //if (!LIVES_IS_PLAYING) {
       if (!(weed_init_effect(key))) {
         // ran out of instance slots, no effect assigned, or some other error
@@ -1110,7 +1113,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
           if (!mainw->fx_is_auto) ce_thumbs_add_param_box(key, !mainw->fx_is_auto);
         }
       }
-      filter_mutex_unlock(key);
+      if (needs_unlock) filter_mutex_unlock(key);
     } else {
       // effect is OFF
       filter_mutex_lock(key);

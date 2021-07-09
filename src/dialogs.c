@@ -1265,13 +1265,14 @@ void cancel_process(boolean visible) {
 
 
 static char *remtime_string(double timerem) {
-  char *fmtstr, *tstr;
+  char *fmtstr, *tstr, *tmp;
   if (timerem < 0.) {
-    tstr = lives_strdup(_("unknown"));
+    tstr = _("unknown");
   } else {
     tstr = format_tstr(timerem, 5);
   }
-  fmtstr = lives_strdup_printf(_("Time remaining: %s"), tstr);
+  fmtstr = lives_strdup_printf((tmp = _("Time remaining: %s")), tstr);
+  lives_free(tmp);
   lives_free(tstr);
   return fmtstr;
 }
@@ -1309,7 +1310,7 @@ static void progbar_display(const char *txt, boolean lunch) {
 static void disp_fraction(double fraction_done, double timesofar, xprocess * proc) {
   // display fraction done and estimated time remaining
   double remtime;
-  char *prog_label, *remtstr;
+  char *prog_label, *remtstr, *tmp;
 
   if (fraction_done > 1.) fraction_done = 1.;
   if (fraction_done < 0.) fraction_done = 0.;
@@ -1325,7 +1326,8 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess * pro
     lives_widget_set_opacity(lives_widget_get_parent(mainw->proc_ptr->notify_cb), 1.);
     lives_widget_set_sensitive(mainw->proc_ptr->notify_cb, TRUE);
   }
-  prog_label = lives_strdup_printf(_("\n%d%% done. %s\n"), (int)(fraction_done * 100.), remtstr);
+  prog_label = lives_strdup_printf((tmp = _("\n%d%% done. %s\n")), (int)(fraction_done * 100.), remtstr);
+  lives_free(tmp);
   lives_free(remtstr);
   progbar_display(prog_label, FALSE);
   lives_free(prog_label);

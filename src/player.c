@@ -125,7 +125,7 @@ void get_player_size(int *opwidth, int *opheight) {
   if (mainw->status == LIVES_STATUS_RENDERING) {
     *opwidth = cfile->hsize;
     *opheight = cfile->vsize;
-    *opwidth = (*opwidth >> 1) << 1;
+    *opwidth = (*opwidth >> 2) << 2;
     *opheight = (*opheight >> 1) << 1;
     mainw->pwidth = *opwidth;
     mainw->pheight = *opheight;
@@ -143,7 +143,7 @@ void get_player_size(int *opwidth, int *opheight) {
   }
 
 align:
-  *opwidth = (*opwidth >> 2) << 2;
+  *opwidth = (*opwidth >> 3) << 3;
   *opheight = (*opheight >> 1) << 1;
   mainw->pwidth = *opwidth;
   mainw->pheight = *opheight;
@@ -1329,7 +1329,7 @@ boolean load_frame_image(frames_t frame) {
       if (((weed_layer_get_width_pixels(frame_layer) ^ pwidth) >> 2) ||
           ((weed_layer_get_height(frame_layer) ^ pheight) >> 1)) {
         if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
-        if (!needs_lb  || was_letterboxed) {
+        if (!needs_lb || was_letterboxed) {
           lb_width = pwidth;
           lb_height = pheight;
         }
@@ -1528,7 +1528,7 @@ boolean load_frame_image(frames_t frame) {
     pwidth = opwidth;
     pheight = opheight;
 
-    pwidth = (int)(pwidth >> 1) << 1;
+    pwidth = (int)(pwidth >> 3) << 3;
 
     if (prefs->dev_show_timing)
       g_printerr("res start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -2654,7 +2654,7 @@ switch_point:
     last_kbd_ticks = mainw->currticks;
   }
 
-  if (mainw->scratch == SCRATCH_JUMP && time_source == LIVES_TIME_SOURCE_EXTERNAL) {
+  if (mainw->scratch != SCRATCH_NONE && time_source == LIVES_TIME_SOURCE_EXTERNAL) {
     sfile->frameno = sfile->last_frameno = calc_frame_from_time(mainw->playing_file,
                                            mainw->currticks / TICKS_PER_SECOND_DBL);
     mainw->startticks = mainw->currticks;
@@ -2662,7 +2662,7 @@ switch_point:
 
   new_ticks = mainw->currticks;
 
-  if (mainw->scratch != SCRATCH_JUMP)
+  if (mainw->scratch == SCRATCH_NONE)
     if (new_ticks < mainw->startticks) new_ticks = mainw->startticks;
 
   show_frame = FALSE;

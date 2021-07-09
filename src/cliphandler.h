@@ -429,6 +429,9 @@ boolean update_clips_version(int which);
 int save_event_frames(int clipno);
 void clear_event_frames(int clipno);
 
+void set_undoable(const char *what, boolean sensitive);
+void set_redoable(const char *what, boolean sensitive);
+
 // query function //
 boolean ignore_clip(int which);
 

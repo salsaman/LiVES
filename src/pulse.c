@@ -1377,8 +1377,8 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
           weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
           weed_layer_set_audio_data(layer, fltbuf, pulsed->in_arate, nch, xnsamples);
           weed_apply_audio_effects_rt(layer, tc, TRUE, TRUE);
-          lives_free(fltbuf);
-          fltbuf = weed_layer_get_audio_data(layer, NULL);
+          /* lives_free(fltbuf); */
+          /* fltbuf = weed_layer_get_audio_data(layer, NULL); */
           weed_layer_free(layer);
         }
         // stream audio to video playback plugin if appropriate (probably needs retesting...)
@@ -1891,13 +1891,12 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, double frame) {
   // seek to frame "frame" in current audio file
   // position will be adjusted to (floor) nearest sample
   int64_t seekstart;
-  double fps;
+
+  if (!IS_VALID_CLIP(pulsed->playing_file)) return FALSE;
 
   if (frame > afile->frames && afile->frames > 0) frame = afile->frames;
-  if (LIVES_IS_PLAYING) fps = fabs(afile->pb_fps);
-  else fps = afile->fps;
 
-  seekstart = (int64_t)(((frame - 1.) / fps
+  seekstart = (int64_t)(((frame - 1.) / afile->fps
                          + (LIVES_IS_PLAYING ? (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
                             * (pulsed->in_arate >= 0. ? 1.0 : -1.0) : 0.)) * (double)afile->arate)
               * afile->achans * afile->asampsize / 8;

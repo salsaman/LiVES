@@ -1137,45 +1137,44 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
       lives_freep((void **)&dest);
       mainw->cancelled = CANCEL_RETRY;
       return utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
-    }
-    else {
+    } else {
       if (!*mainw->msg) hasnone = TRUE;
 
 #ifdef ALLOW_NONFREE_CODECS
       else if (!lives_strncmp(mainw->msg, "completed|altfmts", 17)) {
-	hasalts = TRUE;
+        hasalts = TRUE;
       }
 #endif
       else if (get_token_count(mainw->msg, '|') < 4) hasnone = TRUE;
 
       if (hasnone || hasalts) {
-	d_print_failed();
-	if (hasnone) {
-	  do_error_dialog(
-			  _("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \n"
-			    "the latest youtube-dl installed.\n"));
-	} else {
+        d_print_failed();
+        if (hasnone) {
+          do_error_dialog(
+            _("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \n"
+              "the latest youtube-dl installed.\n"));
+        } else {
 #ifdef ALLOW_NONFREE_CODECS
-	  if (do_yesno_dialog(
-			      _("\nLiVES was unable to download the clip in the desired format\nWould you like to try using an alternate "
-				"format selection ?"))) {
-	    mainw->error = FALSE;
-	    mainw->cancelled = CANCEL_RETRY;
-	    req->allownf = TRUE;
-	    reqout = req;
-	  }
+          if (do_yesno_dialog(
+                _("\nLiVES was unable to download the clip in the desired format\nWould you like to try using an alternate "
+                  "format selection ?"))) {
+            mainw->error = FALSE;
+            mainw->cancelled = CANCEL_RETRY;
+            req->allownf = TRUE;
+            reqout = req;
+          }
 #endif
-	}
-	lives_freep((void **)&dest);
-	return utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
+        }
+        lives_freep((void **)&dest);
+        return utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
       }
     }
 
     if (req->matchsize == LIVES_MATCH_CHOICE && !*req->vidchoice)  {
       // show a list of the video formats and let the user pick one
       if (!youtube_select_format(req)) {
-	lives_freep((void **)&dest);
-	mainw->cancelled = CANCEL_RETRY;
+        lives_freep((void **)&dest);
+        mainw->cancelled = CANCEL_RETRY;
         return utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
       }
       // we try again, this time with req->vidchoice set
@@ -1189,9 +1188,9 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
       lives_strfreev(array);
       if (req->duration == 0.) {
         if (!do_utube_stream_warn()) {
-	  lives_freep((void **)&dest);
+          lives_freep((void **)&dest);
           return utube_dl4(req, tmpdir, mpt, FALSE, forcecheck, dest, reqout);
-	}
+        }
       }
     }
   }
@@ -10611,7 +10610,6 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
   if (!state) {
     prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
     if (!w) {
-      g_print("SW AUD CL\n");
       switch_audio_clip(mainw->playing_file, TRUE);
     }
   }

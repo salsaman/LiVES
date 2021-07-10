@@ -1412,11 +1412,11 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
   }
 
   for (j = 0; j < to_use; j++) {
-    // each thread needs its own copy of the output channels, so it can have its own WEED_LEAF_OFFSET and WEED_LEAF_HEIGHT
-    // therefore it also needs its own copy of inst
+    // each thread gets its own copy of the filter instance, with the following changes
+    // - each copy has no refcount (since it is only used here)
+    // - each copy has its own set of output channel(s), with a reduced height and an offset
     // but note that WEED_LEAF_PIXEL_DATA always points to the same memory buffer(s)
-    // this is good also because it avoids concurrency problems with updating inst leaves
-    // one of the threads (in this case the last one) will get the original inst so it can update values
+    //
     pthread_mutex_lock(&mainw->instance_ref_mutex);
 
     xinst[j] = weed_plant_copy(inst);
@@ -1469,7 +1469,6 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
   // wait for threads to finish
   for (j = 0; j < nthreads; j++) {
     lives_thread_join(dthreads[j], NULL);
-    lives_thread_free(&dthreads[j]);
     retval = procvals[j].ret;
     if (retval == WEED_ERROR_PLUGIN_INVALID) plugin_invalid = TRUE;
     if (retval == WEED_ERROR_FILTER_INVALID) filter_invalid = TRUE;
@@ -1699,6 +1698,15 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
             retval = FILTER_ERROR_MEMORY_ERROR;
             goto done_video;
           }
+        }
+      }
+
+      if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE) {
+        retval = weed_reinit_effect(inst, FALSE);
+        if (retval == FILTER_ERROR_COULD_NOT_REINIT || retval == FILTER_ERROR_INVALID_PLUGIN
+            || retval == FILTER_ERROR_INVALID_FILTER) {
+          weed_instance_unref(inst);
+          return retval;
         }
       }
 
@@ -2318,21 +2326,21 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       /// check which of the plugin's allowed palettes is closest to our target palette
       palettes = weed_chantmpl_get_palette_list(filter, chantmpl, &num_palettes);
       if (palettes) {
-	palette = best_palette_match(palettes, num_palettes, opalette);
-	if (i > 0 && !pvary && palette != def_palette) {
-	  lives_freep((void **)&palettes);
-	  lives_freep((void **)&rowstrides);
-	  retval = FILTER_ERROR_TEMPLATE_MISMATCH; // plugin author messed up...
-	  goto done_video;
-	}
+        palette = best_palette_match(palettes, num_palettes, opalette);
+        if (i > 0 && !pvary && palette != def_palette) {
+          lives_freep((void **)&palettes);
+          lives_freep((void **)&rowstrides);
+          retval = FILTER_ERROR_TEMPLATE_MISMATCH; // plugin author messed up...
+          goto done_video;
+        }
 
-	if (palette != inpalette) {
-	  if (channel_flags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE) {
-	    needs_reinit = TRUE;
-	  }
-	}
-	lives_free(palettes);
-	opalette = palette;
+        if (palette != inpalette) {
+          if (channel_flags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE) {
+            needs_reinit = TRUE;
+          }
+        }
+        lives_free(palettes);
+        opalette = palette;
       }
     }
 
@@ -2970,9 +2978,9 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
       (filter_flags & WEED_FILTER_HINT_MAY_THREAD)) {
     weed_plant_t **out_channels = weed_instance_get_out_channels(instance, NULL);
     //if (key == -1 || !filter_mutex_trylock(key)) {
-      retval = process_func_threaded(instance, tc);
-      //if (key != -1) filter_mutex_unlock(key);
-      //} else retval = FILTER_ERROR_INVALID_PLUGIN;
+    retval = process_func_threaded(instance, tc);
+    //if (key != -1) filter_mutex_unlock(key);
+    //} else retval = FILTER_ERROR_INVALID_PLUGIN;
     /* totth += (lives_get_current_ticks() - timex); */
     /* thcount++; */
     lives_free(out_channels);
@@ -3238,7 +3246,16 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_la
 
         // otherwise we just run the process_func() and return
 
-        if (CURRENT_CLIP_IS_VALID)  weed_set_double_value(instance, WEED_LEAF_FPS, cfile->pb_fps);
+        if (weed_get_boolean_value(instance, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE) {
+          retval = weed_reinit_effect(instance, FALSE);
+          if (retval == FILTER_ERROR_COULD_NOT_REINIT || retval == FILTER_ERROR_INVALID_PLUGIN
+              || retval == FILTER_ERROR_INVALID_FILTER) {
+            weed_instance_unref(instance);
+            return retval;
+          }
+        }
+
+        if (CURRENT_CLIP_IS_VALID) weed_set_double_value(instance, WEED_LEAF_FPS, cfile->pb_fps);
         retval = run_process_func(instance, tc, key);
         return retval;
       }
@@ -3423,15 +3440,15 @@ audinst1:
   if (needs_reinit) {
     lives_filter_error_t filter_error = weed_reinit_effect(instance, FALSE);
     if (filter_error == FILTER_ERROR_COULD_NOT_REINIT || filter_error == FILTER_ERROR_INVALID_PLUGIN
-	|| filter_error == FILTER_ERROR_INVALID_FILTER) {
+        || filter_error == FILTER_ERROR_INVALID_FILTER) {
       retval = FILTER_ERROR_COULD_NOT_REINIT;
       goto audret1;
     }
-    if (weed_call_init_func(instance) != WEED_SUCCESS) {
-      key_to_instance[key][key_modes[key]] = NULL;
-      lives_freep((void **)&in_channels);
-      lives_freep((void **)&out_channels);
-    }
+    /* if (weed_call_init_func(instance) != WEED_SUCCESS) { */
+    /*   key_to_instance[key][key_modes[key]] = NULL; */
+    /*   lives_freep((void **)&in_channels); */
+    /*   lives_freep((void **)&out_channels); */
+    /* } */
     retval = FILTER_INFO_REINITED;
   }
 
@@ -3447,10 +3464,10 @@ audinst1:
         if (vis[in_tracks[i] + nbtracks] < 0.) fvols[i] = -fvols[i];
       }
       //if (!filter_mutex_trylock(key)) {
-        weed_set_double_array(in_params[vmaster], WEED_LEAF_VALUE, nvals, fvols);
-        //filter_mutex_unlock(key);
-        //set_copy_to(instance, vmaster, TRUE);
-	//}
+      weed_set_double_array(in_params[vmaster], WEED_LEAF_VALUE, nvals, fvols);
+      //filter_mutex_unlock(key);
+      //set_copy_to(instance, vmaster, TRUE);
+      //}
       lives_freep((void **)&fvols);
       lives_freep((void **)&in_params);
     }
@@ -3975,14 +3992,14 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
         mainw->osc_block = TRUE;
 
         if ((orig_inst = instance = weed_instance_obtain(i, key_modes[i])) == NULL) {
-	  filter_mutex_unlock(i);
+          filter_mutex_unlock(i);
           mainw->osc_block = FALSE;
           continue;
         }
 
-	filter_mutex_unlock(i);
-
         filter = weed_instance_get_filter(instance, FALSE);
+
+        filter_mutex_unlock(i);
 
         if (!has_audio_chans_in(filter, FALSE) || has_video_chans_in(filter, FALSE) || has_video_chans_out(filter, FALSE)) {
           mainw->osc_block = FALSE;
@@ -3994,21 +4011,21 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
         }
 
         if (mainw->pchains && mainw->pchains[i]) {
-	  interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
+          interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
         }
 
         if (mainw->pconx && is_audio_thread) {
           // chain any data pipelines
           needs_reinit = pconx_chain_data(i, key_modes[i], TRUE);
 
-	  filter_mutex_lock(i);
+          filter_mutex_lock(i);
           // if anything is connected to ACTIVATE, the fx may be deactivated
           if ((new_inst = weed_instance_obtain(i, key_modes[i])) == NULL) {
-	    filter_mutex_unlock(i);
+            filter_mutex_unlock(i);
             mainw->osc_block = FALSE;
             continue;
           }
-	  filter_mutex_unlock(i);
+          filter_mutex_unlock(i);
 
           // either we just added another ref, or we dont need this
           // this should work both ways
@@ -4027,9 +4044,11 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
             }}}
 	// *INDENT-ON*
 
+        orig_inst = instance;
+
 apply_audio_inst2:
-	
-	if (weed_plant_has_leaf(instance, WEED_LEAF_HOST_NEXT_INSTANCE)) {
+
+        if (weed_plant_has_leaf(instance, WEED_LEAF_HOST_NEXT_INSTANCE)) {
           // chain any internal data pipelines for compound fx
           needs_reinit = pconx_chain_data_internal(instance);
           if (needs_reinit) {
@@ -6970,9 +6989,6 @@ boolean weed_init_effect(int hotkey) {
     if (hotkey < FX_KEYS_MAX_VIRTUAL && key_defaults[hotkey][key_modes[hotkey]]) {
       // TODO - handle compound fx
       apply_key_defaults(new_instance, hotkey, key_modes[hotkey]);
-      //filter_mutex_unlock(hotkey);
-      weed_reinit_effect(new_instance, FALSE);
-      //filter_mutex_lock(hotkey);
     }
   }
 
@@ -7267,10 +7283,20 @@ deinit2:
 }
 
 
+static pthread_mutex_t inited_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 weed_error_t weed_call_init_func(weed_plant_t *inst) {
   weed_plant_t *filter;
   weed_error_t error = WEED_SUCCESS;
   uint64_t rseed;
+
+  pthread_mutex_lock(&inited_mutex);
+  if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_TRUE) {
+    pthread_mutex_unlock(&inited_mutex);
+    return WEED_ERROR_NOT_READY;
+  }
+  weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
+  pthread_mutex_unlock(&inited_mutex);
 
   rseed = THREADVAR(random_seed);
   if (!rseed) rseed = gen_unique_id();
@@ -7289,7 +7315,6 @@ weed_error_t weed_call_init_func(weed_plant_t *inst) {
       }
     }
   }
-  weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
   return error;
 }
 
@@ -7303,21 +7328,27 @@ weed_error_t weed_call_deinit_func(weed_plant_t *instance) {
 
   //weed_instance_ref(instance);
 
+  pthread_mutex_lock(&inited_mutex);
+  if (weed_get_boolean_value(instance, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE) {
+    pthread_mutex_unlock(&inited_mutex);
+    return WEED_ERROR_NOT_READY;
+  }
+  weed_set_boolean_value(instance, WEED_LEAF_HOST_INITED, WEED_FALSE);
+  pthread_mutex_unlock(&inited_mutex);
+
   filter = weed_instance_get_filter(instance, FALSE);
 
-  if (weed_get_boolean_value(instance, WEED_LEAF_HOST_INITED, NULL) == WEED_TRUE) {
-    if (weed_plant_has_leaf(filter, WEED_LEAF_DEINIT_FUNC)) {
-      weed_deinit_f deinit_func =
-        (weed_deinit_f)weed_get_funcptr_value(filter, WEED_LEAF_DEINIT_FUNC, NULL);
-      if (deinit_func) {
-        char *cwd = cd_to_plugin_dir(filter);
-        error = (*deinit_func)(instance);
-        lives_chdir(cwd, FALSE);
-        lives_free(cwd);
-      }
+  if (weed_plant_has_leaf(filter, WEED_LEAF_DEINIT_FUNC)) {
+    weed_deinit_f deinit_func =
+      (weed_deinit_f)weed_get_funcptr_value(filter, WEED_LEAF_DEINIT_FUNC, NULL);
+    if (deinit_func) {
+      char *cwd = cd_to_plugin_dir(filter);
+      error = (*deinit_func)(instance);
+      lives_chdir(cwd, FALSE);
+      lives_free(cwd);
     }
-    weed_set_boolean_value(instance, WEED_LEAF_HOST_INITED, WEED_FALSE);
   }
+
   return error;
 }
 
@@ -8147,6 +8178,7 @@ recheck:
   sfile->vsize = xheight;
 
   if (xwidth != width || xheight != height) {
+    weed_layer_pixel_data_free(channel);
     if (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE) {
       needs_reinit = TRUE;
     }
@@ -8183,6 +8215,7 @@ recheck:
   xheight = weed_channel_get_height(channel);
 
   if (xwidth != width || xheight != height) {
+    weed_layer_pixel_data_free(channel);
     if (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE) {
       if (!needs_reinit) {
         do_recheck = needs_reinit = TRUE;
@@ -8191,6 +8224,11 @@ recheck:
   }
 
   if (opalette != palette) {
+    if (pixel_size(opalette) != pixel_size(palette)
+        || weed_palette_get_nplanes(opalette) != weed_palette_get_nplanes(palette)
+        || weed_palette_get_pixels_per_macropixel(opalette)
+        != weed_palette_get_pixels_per_macropixel(palette))
+      weed_layer_pixel_data_free(channel);
     do_recheck = TRUE;
     opalette = palette;
   }
@@ -11843,10 +11881,10 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         pal = weed_layer_get_palette(plant);
         if (pal > 0) {
           rs = weed_layer_get_rowstrides(plant, &nplanes);
-	  if (nplanes != ne) {
-	    LIVES_WARN("Invalid planes in retrieved layer");
-	  }
-	  lives_free(rs);
+          if (nplanes != ne) {
+            LIVES_WARN("Invalid planes in retrieved layer");
+          }
+          lives_free(rs);
 	  // *INDENT-OFF*
 	}}}
     // *INDENT-ON*

@@ -43,6 +43,7 @@ typedef struct {
 
 
 static weed_error_t edge_init(weed_plant_t *inst) {
+  fprintf(stderr, "in  edg init\n");
   weed_plant_t *in_channel;
   int width, height;
   static_data *sdata = (static_data *)weed_malloc(sizeof(static_data));
@@ -86,6 +87,7 @@ static weed_error_t edge_init(weed_plant_t *inst) {
 
 static weed_error_t edge_deinit(weed_plant_t *inst) {
   static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  fprintf(stderr, "in deinit\n");
   if (sdata) {
     if (sdata->mapl) weed_free(sdata->mapl);
     if (sdata->maph) weed_free(sdata->maph);

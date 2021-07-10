@@ -1841,7 +1841,6 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
     // adds a ref
     inst = weed_instance_from_filter(filter);
     weed_set_boolean_value(inst, WEED_LEAF_HOST_NORECORD, WEED_TRUE);
-
     apply_key_defaults(inst, key, mode);
     filter_mutex_unlock(key);
     weed_reinit_effect(inst, TRUE);

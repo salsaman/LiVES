@@ -1525,8 +1525,8 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
           filter_mutex_unlock(okey);
           if (inst) {
             weed_instance_unref(inst);
-            //filter_mutex_unlock(key);
           }
+          if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams) lives_free(inparams);
           return FALSE;
         }
       }
@@ -1541,29 +1541,30 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
           // let the video thread handle it
           weed_plant_t *filter = rte_keymode_get_filter(key + 1, rte_key_getmode(key + 1));
           if (!is_pure_audio(filter, FALSE)) {
-	    if (okey_needs_unlock) filter_mutex_unlock(okey);
+            if (okey_needs_unlock) filter_mutex_unlock(okey);
             if (oinst) weed_instance_unref(oinst);
-	    if (inst) weed_instance_unref(inst);
+            if (inst) weed_instance_unref(inst);
+            if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams) lives_free(inparams);
             return FALSE;
           }
         }
-	if (okey_needs_unlock) {
+        if (okey_needs_unlock) {
           filter_mutex_unlock(okey);
-	  okey_needs_unlock = FALSE;
+          okey_needs_unlock = FALSE;
         }
         switch_fx_state(key + 1);
         if (oinst) {
           weed_instance_unref(oinst);
-	}
+        }
         break;
       } else {
-	if (okey_needs_unlock) {
+        if (okey_needs_unlock) {
           filter_mutex_unlock(okey);
-	  okey_needs_unlock = FALSE;
+          okey_needs_unlock = FALSE;
         }
         if (oinst) {
           weed_instance_unref(oinst);
-	}
+        }
         if (changed && inst && key > -1) {
           // only store value if it changed; for int, double or colour, store old value too
 

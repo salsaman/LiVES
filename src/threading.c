@@ -1033,9 +1033,7 @@ void lives_threadpool_finish(void) {
 
 
 LIVES_GLOBAL_INLINE void lives_thread_free(lives_thread_t *thread) {
-  LiVESList *list = (LiVESList *)thread;
-  list->prev = list->next = NULL;
-  lives_list_free(list);
+  if (thread) lives_free(thread);
 }
 
 

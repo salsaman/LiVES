@@ -13390,7 +13390,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         swparams[sl].irw = irw;
         swparams[sl].orw = orw;
         if (sl < nthrds - 1) lives_thread_create(&threads[sl], LIVES_THRDATTR_NONE,
-						 swscale_threadfunc, &swparams[sl]);
+              swscale_threadfunc, &swparams[sl]);
         else swscale_threadfunc(&swparams[sl]);
       }
     }

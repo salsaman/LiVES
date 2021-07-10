@@ -2743,6 +2743,7 @@ void create_LiVES(void) {
     if (FX_KEYS_PHYSICAL > 1) {
       lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_2, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                                 lives_cclosure_new(LIVES_GUI_CALLBACK(rte_on_off_callback), LIVES_INT_TO_POINTER(2), NULL));
+
       lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_2, LIVES_CONTROL_MASK | LIVES_ALT_MASK,
                                 (LiVESAccelFlags)0,
                                 lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback), LIVES_INT_TO_POINTER(1), NULL));

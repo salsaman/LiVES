@@ -466,7 +466,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                 cfile->undo1_dbl = 0.;
                 cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
                 d_print(_("Auto trimming %.4f seconds of audio at start..."), cfile->undo2_dbl);
-		cfile->opening_audio = TRUE;
+                cfile->opening_audio = TRUE;
                 if (on_del_audio_activate(NULL, NULL)) d_print_done();
                 else d_print("\n");
                 cfile->changed = FALSE;
@@ -479,7 +479,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                         cfile->laudio_time - cfile->video_time);
                 cfile->undo1_dbl = cfile->video_time;
                 cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
-		cfile->opening_audio = TRUE;
+                cfile->opening_audio = TRUE;
                 if (on_del_audio_activate(NULL, NULL)) d_print_done();
                 else d_print("\n");
                 cfile->changed = FALSE;
@@ -506,7 +506,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
 		// *INDENT-OFF*
               }}}}
 	// *INDENT-ON*
-	cfile->opening_audio = FALSE;
+        cfile->opening_audio = FALSE;
 
         get_mime_type(cfile->type, 40, cdata);
         save_frame_index(mainw->current_file);
@@ -833,7 +833,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                   cfile->laudio_time - cfile->video_time);
           cfile->undo1_dbl = cfile->video_time;
           cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
-	  cfile->opening_audio = TRUE;
+          cfile->opening_audio = TRUE;
           if (on_del_audio_activate(NULL, NULL)) d_print_done();
           else d_print("\n");
           cfile->changed = FALSE;

@@ -1042,7 +1042,6 @@ static boolean _rte_on_off(boolean from_menu, int key) {
   // if non-automode, the user overrides effect toggling
 
   uint64_t new_rte;
-  boolean needs_unlock = FALSE;
 
   if (mainw->go_away) return TRUE;
   if (!LIVES_IS_INTERACTIVE && from_menu) return TRUE;
@@ -1069,17 +1068,12 @@ static boolean _rte_on_off(boolean from_menu, int key) {
 
     if (!(mainw->rte & new_rte)) {
       // switch is ON
-      // WARNING - if we start playing because a generator was started, we block here
       filter_mutex_lock(key);
-      needs_unlock = TRUE;
 
       //if (!LIVES_IS_PLAYING) {
       if (!(weed_init_effect(key))) {
         // ran out of instance slots, no effect assigned, or some other error
-        // or gen started playback and then stopped
-        pthread_mutex_lock(&mainw->event_list_mutex);
-        if (mainw->rte & new_rte) mainw->rte ^= new_rte;
-        pthread_mutex_unlock(&mainw->event_list_mutex);
+        mainw->rte &= ~new_rte;
         if (rte_window) rtew_set_keych(key, FALSE);
         if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         mainw->osc_block = FALSE;
@@ -1087,41 +1081,38 @@ static boolean _rte_on_off(boolean from_menu, int key) {
         return TRUE;
       }
 
-      if (!mainw->gen_started_play) {
-        pthread_mutex_lock(&mainw->event_list_mutex);
-        if (!(mainw->rte & new_rte)) mainw->rte |= new_rte;
-        pthread_mutex_unlock(&mainw->event_list_mutex);
+      mainw->rte |= new_rte;
 
-        if (!LIVES_IS_PLAYING) {
-          // if anything is connected to ACTIVATE, the fx may be activated
-          // during playback this is checked when we play a frame
-          for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
-            if (rte_key_valid(i + 1, TRUE)) {
-              if (!rte_key_is_enabled(1 + i)) {
-                pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
-		// *INDENT-OFF*
-	      }}}}
-	// *INDENT-ON*
+      mainw->last_grabbable_effect = key;
+      if (rte_window) rtew_set_keych(key, TRUE);
+      if (mainw->ce_thumbs) {
+        ce_thumbs_set_keych(key, TRUE);
 
-        mainw->last_grabbable_effect = key;
-        if (rte_window) rtew_set_keych(key, TRUE);
-        if (mainw->ce_thumbs) {
-          ce_thumbs_set_keych(key, TRUE);
-
-          // if effect was auto (from ACTIVATE data connection), leave all param boxes
-          // otherwise, remove any which are not "pinned"
-          if (!mainw->fx_is_auto) ce_thumbs_add_param_box(key, !mainw->fx_is_auto);
-        }
+        // if effect was auto (from ACTIVATE data connection), leave all param boxes
+        // otherwise, remove any which are not "pinned"
+        if (!mainw->fx_is_auto) ce_thumbs_add_param_box(key, !mainw->fx_is_auto);
       }
-      if (needs_unlock) filter_mutex_unlock(key);
+      filter_mutex_unlock(key);
+      if (!LIVES_IS_PLAYING) {
+        // if anything is connected to ACTIVATE, the fx may be activated
+        // during playback this is checked when we play a frame
+        for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+          if (rte_key_valid(i + 1, TRUE)) {
+            if (!rte_key_is_enabled(1 + i)) {
+              pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
+	      // *INDENT-OFF*
+	    }}}}
+      // *INDENT-ON*
     } else {
       // effect is OFF
       filter_mutex_lock(key);
       if (weed_deinit_effect(key)) {
-        pthread_mutex_lock(&mainw->event_list_mutex);
-        if (mainw->rte & new_rte) mainw->rte ^= new_rte;
-        pthread_mutex_unlock(&mainw->event_list_mutex);
+        mainw->rte &= ~new_rte;
       }
+
+      if (rte_window) rtew_set_keych(key, FALSE);
+      if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
+
       filter_mutex_unlock(key);
       if (!LIVES_IS_PLAYING) {
         // if anything is connected to ACTIVATE, the fx may be de-activated
@@ -1133,9 +1124,6 @@ static boolean _rte_on_off(boolean from_menu, int key) {
 	      // *INDENT-OFF*
 	    }}}}
       // *INDENT-ON*
-
-      if (rte_window) rtew_set_keych(key, FALSE);
-      if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
     }
   }
 
@@ -1282,7 +1270,7 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
 
 LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key) {
   // key starts at 1
-  return !((mainw->rte & (GU641 << --key)) == 0ll);
+  return !!(mainw->rte & (GU641 << --key));
 }
 
 
@@ -1343,7 +1331,7 @@ void rte_keymodes_restore(int nkeys) {
     // set the mode
     rte_key_setmode(i + 1, backup_key_modes[i]);
     // activate the key
-    if ((mainw->rte & GU641 << (i)) != 0) rte_key_toggle(i + 1);
+    if (mainw->rte & (GU641 << i)) rte_key_toggle(i + 1);
   }
   if (mainw->rte_keys != -1) {
     filter_mutex_lock(mainw->rte_keys);

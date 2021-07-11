@@ -2682,13 +2682,10 @@ void after_param_value_changed(LiVESSpinButton * spinbutton, lives_rfx_t *rfx) {
     new_double = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
 
     if (rfx->status == RFX_STATUS_WEED) {
-      weed_plant_t *inst = (weed_plant_t *)rfx->source;
-      if (inst && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
-        LiVESAdjustment *adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(param->widgets[0]));
-        rfx->flags |= RFX_FLAGS_UPD_FROM_GUI;
-        if (set_value_from_dispval(adj, param)) new_double = get_double_param(param->value);
-        rfx->flags &= ~RFX_FLAGS_UPD_FROM_GUI;
-      }
+      LiVESAdjustment *adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(param->widgets[0]));
+      rfx->flags |= RFX_FLAGS_UPD_FROM_GUI;
+      if (set_value_from_dispval(adj, param)) new_double = get_double_param(param->value);
+      rfx->flags &= ~RFX_FLAGS_UPD_FROM_GUI;
     }
     if (old_double == new_double) return;
   } else {
@@ -2696,13 +2693,10 @@ void after_param_value_changed(LiVESSpinButton * spinbutton, lives_rfx_t *rfx) {
     new_int = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
 
     if (rfx->status == RFX_STATUS_WEED) {
-      weed_plant_t *inst = (weed_plant_t *)rfx->source;
-      if (inst && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
-        LiVESAdjustment *adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(param->widgets[0]));
-        rfx->flags |= RFX_FLAGS_UPD_FROM_GUI;
-        if (set_value_from_dispval(adj, param)) new_int = get_int_param(param->value);
-        rfx->flags &= ~RFX_FLAGS_UPD_FROM_GUI;
-      }
+      LiVESAdjustment *adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(param->widgets[0]));
+      rfx->flags |= RFX_FLAGS_UPD_FROM_GUI;
+      if (set_value_from_dispval(adj, param)) new_int = get_int_param(param->value);
+      rfx->flags &= ~RFX_FLAGS_UPD_FROM_GUI;
     }
 
     if (old_int == new_int) return;

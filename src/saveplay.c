@@ -5098,7 +5098,9 @@ void recover_layout_map(int numclips) {
             mask |= WARN_MASK_LAYOUT_DELETE_AUDIO;
             //g_print("AUD %f\n", cfile->laudio_time);
           }
-          if (mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(mask));
+          if (mask != 0) {
+            popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(mask));
+          }
         }
 
         lives_free(check_handle);

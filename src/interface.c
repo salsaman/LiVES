@@ -1310,7 +1310,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   lives_button_grab_default_special(okbutton);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(lives_general_button_clicked), filew);
+                            LIVES_GUI_CALLBACK(lives_general_button_clicked), &filew);
 
   lives_window_add_escape(LIVES_WINDOW(filew->dialog), okbutton);
 
@@ -1487,7 +1487,7 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
     lives_button_grab_default_special(textwindow->button);
 
     lives_signal_sync_connect(LIVES_GUI_OBJECT(textwindow->button), LIVES_WIDGET_CLICKED_SIGNAL,
-                              LIVES_GUI_CALLBACK(lives_general_button_clicked), textwindow);
+                              LIVES_GUI_CALLBACK(lives_general_button_clicked), &textwindow);
 
     lives_window_add_escape(LIVES_WINDOW(textwindow->dialog), textwindow->button);
   }
@@ -1694,7 +1694,7 @@ _insertw *create_insert_dialog(void) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_boolean_toggled), &mainw->insert_after);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(lives_general_button_clicked), insertw);
+                            LIVES_GUI_CALLBACK(lives_general_button_clicked), &insertw);
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_insert_activate), NULL);
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(insertw->spinbutton_times), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -2478,7 +2478,7 @@ _entryw *create_location_dialog(void) {
   lives_button_grab_default_special(okbutton);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(lives_general_button_clicked), locw);
+                            LIVES_GUI_CALLBACK(lives_general_button_clicked), &locw);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_location_select), NULL);
@@ -3099,7 +3099,7 @@ _entryw *create_rename_dialog(int type) {
 
   if (type != 3 && type != 6 && renamew->cancelbutton) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(renamew->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                              LIVES_GUI_CALLBACK(lives_general_button_clicked), renamew);
+                              LIVES_GUI_CALLBACK(lives_general_button_clicked), &renamew);
   }
 
   if (type == 3) {

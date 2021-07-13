@@ -999,6 +999,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #define LIVES_TREE_MODEL(object) GTK_TREE_MODEL(object)
 
 #define LIVES_LIST_STORE(object) GTK_LIST_STORE(object)
+#define LIVES_TREE_STORE(object) GTK_TREE_STORE(object)
 
 #define LIVES_ACCEL_GROUP(object) GTK_ACCEL_GROUP(object)
 
@@ -1040,6 +1041,9 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #define LIVES_IS_TABLE(widget) GTK_IS_TABLE(widget)
 #define LIVES_IS_GRID(widget) FALSE
 #endif
+
+#define LIVES_IS_LIST_STORE(object) GTK_IS_LIST_STORE(object)
+#define LIVES_IS_TREE_STORE(object) GTK_IS_TREE_STORE(object)
 
 #define LIVES_LAYOUT LIVES_TABLE
 

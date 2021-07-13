@@ -4312,7 +4312,6 @@ static boolean lives_startup(livespointer data) {
   }
 
   if (!mainw->lives_shown) show_lives();
-  mainw->is_ready = TRUE;
 
   if (!strcmp(buff, AUDIO_PLAYER_SOX)) {
     switch_aud_to_sox(FALSE);
@@ -4439,11 +4438,6 @@ static boolean lives_startup2(livespointer data) {
 
   mainw->overlay_alarm = lives_alarm_set(0);
 
-  if (!mainw->multitrack)
-    lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
-  else
-    lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
-
   if (!prefs->vj_mode && !prefs->startup_phase) {
     mainw->helper_procthreads[PT_LAZY_RFX] =
       lives_proc_thread_create(LIVES_THRDATTR_NONE,
@@ -4474,7 +4468,13 @@ static boolean lives_startup2(livespointer data) {
   mainw->jack_can_start = TRUE;
 #endif
 
+  mainw->is_ready = TRUE;
   lives_window_set_auto_startup_notification(TRUE);
+
+  if (!mainw->multitrack)
+    lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
+  else
+    lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
 
   return FALSE;
 } // end lives_startup2()

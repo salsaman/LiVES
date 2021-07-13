@@ -7102,7 +7102,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   }
 
   prefsw->close_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->closebutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_prefs_close_clicked), prefsw);
+                       LIVES_GUI_CALLBACK(on_prefs_close_clicked), NULL);
 
   lives_list_free_all(&audp);
 
@@ -7183,9 +7183,7 @@ void on_prefs_close_clicked(LiVESButton * button, livespointer user_data) {
       lives_list_free(future_prefs->disabled_decoders);
       future_prefs->disabled_decoders = NULL;
     }
-    lives_general_button_clicked(button, user_data);
-
-    prefsw = NULL;
+    lives_general_button_clicked(button, (livespointer *)&prefsw);
   }
   if (mainw->prefs_need_restart) {
     do_shutdown_msg();

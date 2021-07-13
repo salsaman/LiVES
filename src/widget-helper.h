@@ -706,6 +706,9 @@ LiVESListStore *lives_list_store_new(int ncols, ...);
 boolean lives_list_store_set(LiVESListStore *, LiVESTreeIter *, ...);
 boolean lives_list_store_insert(LiVESListStore *, LiVESTreeIter *, int position);
 
+boolean lives_list_store_append(LiVESListStore *lstore, LiVESTreeIter *liter);
+boolean lives_list_store_prepend(LiVESListStore *lstore, LiVESTreeIter *liter);
+
 LiVESCellRenderer *lives_cell_renderer_text_new(void);
 LiVESCellRenderer *lives_cell_renderer_spin_new(void);
 LiVESCellRenderer *lives_cell_renderer_toggle_new(void);
@@ -1289,7 +1292,7 @@ boolean lives_text_view_set_markup(LiVESTextView *, const char *markup);
 boolean lives_text_buffer_insert_at_end(LiVESTextBuffer *, const char *text);
 boolean lives_text_buffer_insert_markup_at_end(LiVESTextBuffer *, const char *markup);
 
-void lives_general_button_clicked(LiVESButton *, livespointer data_to_free);
+void lives_general_button_clicked(LiVESButton *, livespointer *data_to_free);
 
 boolean lives_spin_button_configure(LiVESSpinButton *, double value, double lower, double upper,
                                     double step_increment, double page_increment);

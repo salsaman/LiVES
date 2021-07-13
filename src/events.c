@@ -6107,7 +6107,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       // timecode
       tc_secs = tc / TICKS_PER_SECOND;
       tc -= tc_secs * TICKS_PER_SECOND;
-      text = lives_strdup_printf(_("Timecode=%"PRId64".%.08"PRId64), tc_secs, tc);
+      text = lives_strdup_printf(_("Timecode=%" PRId64 ".%.08" PRId64), tc_secs, tc);
       label = lives_standard_label_new(text);
       lives_free(text);
       lives_widget_set_valign(label, LIVES_ALIGN_START);

@@ -3992,19 +3992,18 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_focus_on_click(LiVESCombo *c
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_append_text(LiVESCombo *combo, const char *text) {
 #ifdef GUI_GTK
   LiVESTreeModel *tmodel = lives_combo_get_model(combo);
-  if (!GTK_IS_LIST_STORE(tmodel)) return FALSE;
+  if (!tmodel) {
+    LiVESListStore *lstore = lives_list_store_new(1, LIVES_COL_TYPE_STRING);
+    lives_combo_set_model(combo, (tmodel = LIVES_TREE_MODEL(lstore)));
+    lives_combo_set_entry_text_column(combo, 0);
+  }
+  if (!LIVES_IS_LIST_STORE(tmodel)) return FALSE;
   else {
     LiVESTreeIter iter;
     LiVESListStore *lstore = LIVES_LIST_STORE(tmodel);
-    gtk_list_store_append(lstore, &iter);   /* Acquire an iterator */
-    lives_list_store_set(LIVES_LIST_STORE(lstore), &iter, 0, text, -1);
+    lives_list_store_append(lstore, &iter);   /* Acquire an iterator */
+    lives_list_store_set(lstore, &iter, 0, text, -1);
   }
-
-  /* #if GTK_CHECK_VERSION(2, 24, 0) */
-  /*   gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), text); */
-  /* #else */
-  /*   gtk_combo_box_append_text(GTK_COMBO_BOX(combo), text); */
-  /* #endif */
   return TRUE;
 #endif
   return FALSE;
@@ -4014,12 +4013,17 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_append_text(LiVESCombo *combo, c
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_prepend_text(LiVESCombo *combo, const char *text) {
 #ifdef GUI_GTK
   LiVESTreeModel *tmodel = lives_combo_get_model(combo);
-  if (!GTK_IS_LIST_STORE(tmodel)) return FALSE;
+  if (!tmodel) {
+    LiVESListStore *lstore = lives_list_store_new(1, LIVES_COL_TYPE_STRING);
+    lives_combo_set_model(combo, (tmodel = LIVES_TREE_MODEL(lstore)));
+    lives_combo_set_entry_text_column(combo, 0);
+  }
+  if (!LIVES_IS_LIST_STORE(tmodel)) return FALSE;
   else {
     LiVESTreeIter iter;
-    LiVESListStore *lstore = GTK_LIST_STORE(tmodel);
-    gtk_list_store_prepend(lstore, &iter);   /* Acquire an iterator */
-    lives_tree_store_set(GTK_TREE_STORE(lstore), &iter, 0, text, -1);
+    LiVESListStore *lstore = LIVES_LIST_STORE(tmodel);
+    lives_list_store_prepend(lstore, &iter);   /* Acquire an iterator */
+    lives_list_store_set(lstore, &iter, 0, text, -1);
   }
   return TRUE;
 #endif
@@ -6119,6 +6123,23 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTreeStore *lives_tree_store_new(int ncols, ...)
 #endif
   va_end(argList);
   return tstore;
+}
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_list_store_append(LiVESListStore *lstore, LiVESTreeIter *liter) {
+#ifdef GUI_GTK
+  gtk_list_store_append(lstore, liter);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_list_store_prepend(LiVESListStore *lstore, LiVESTreeIter *liter) {
+#ifdef GUI_GTK
+  gtk_list_store_prepend(lstore, liter);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
 
@@ -11719,16 +11740,14 @@ boolean widget_helper_init(void) {
 boolean widget_opts_rescale(double scale) {
   widget_opts.scale = scale;
   if (def_widget_opts.css_min_width != -1) {
-    widget_opts.css_min_width = (int)((double)def_widget_opts.css_min_width * widget_opts.scale + .5);
-    widget_opts.css_min_width = ((widget_opts.css_min_width + 1) >> 1) << 1;
+    widget_opts.css_min_width = ALIGN_CEIL((int)((double)def_widget_opts.css_min_width * widget_opts.scale + .5), 2);
   }
   if (def_widget_opts.css_min_height != -1) {
-    widget_opts.css_min_height = (int)((double)def_widget_opts.css_min_height * widget_opts.scale + .5);
-    widget_opts.css_min_height = ((widget_opts.css_min_height + 1) >> 1) << 1;
+    widget_opts.css_min_height = ALIGN_CEIL((int)((double)def_widget_opts.css_min_height * widget_opts.scale + .5), 2);
   }
-  widget_opts.border_width = (int)((double)def_widget_opts.border_width * widget_opts.scale + .5);
-  widget_opts.packing_width = (int)((double)def_widget_opts.packing_width * widget_opts.scale + .5);
-  widget_opts.packing_height = (int)((double)def_widget_opts.packing_height * widget_opts.scale + .5);
+  widget_opts.border_width = ALIGN_CEIL((int)((double)def_widget_opts.border_width * widget_opts.scale + .5), 2);
+  widget_opts.packing_width = ALIGN_CEIL((int)((double)def_widget_opts.packing_width * widget_opts.scale + .5), 2);
+  widget_opts.packing_height = ALIGN_CEIL((int)((double)def_widget_opts.packing_height * widget_opts.scale + .5), 2);
   widget_opts.filler_len = (int)((double)def_widget_opts.filler_len * widget_opts.scale + .5);
   return TRUE;
 }
@@ -13329,13 +13348,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_can_focus_and_default(LiVES
 }
 
 
-void lives_general_button_clicked(LiVESButton * button, livespointer data_to_free) {
+void lives_general_button_clicked(LiVESButton * button, livespointer * data_to_free) {
   // destroy the button top-level and free data
   if (LIVES_IS_WIDGET(lives_widget_get_toplevel(LIVES_WIDGET(button)))) {
     lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-  }
-  lives_freep((void **)&data_to_free);
+  } else abort();
+  lives_freep(data_to_free);
 
   /// TODO: this is BAD. Need to check that mainw->mt_needs_idlefunc is set conistently
   maybe_add_mt_idlefunc(); ///< add idlefunc iff mainw->mt_needs_idlefunc is set

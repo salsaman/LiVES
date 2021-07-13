@@ -103,6 +103,9 @@ typedef struct {
   int tbl_currow;
   LiVESWidget *table;
   LiVESWidget *top_vbox;
+
+  LiVESResponseType bresp;
+  boolean ready;
 } omclearn_w;
 
 enum {

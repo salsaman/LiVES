@@ -8691,10 +8691,8 @@ void on_load_vcd_ok_clicked(LiVESButton * button, livespointer user_data) {
 
 void popup_lmap_errors(LiVESMenuItem * menuitem, livespointer user_data) {
   // popup layout map errors dialog
-  LiVESWidget *vbox;
-  LiVESWidget *button;
-  text_window *textwindow;
-
+  LiVESWidget *vbox, *button;
+  LiVESResponseType resp;
   uint32_t chk_mask = 0;
 
   unbuffer_lmap_errors(TRUE);
@@ -8716,33 +8714,40 @@ void popup_lmap_errors(LiVESMenuItem * menuitem, livespointer user_data) {
   button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
            LIVES_RESPONSE_OK);
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                            textwindow);
-
   lives_container_set_border_width(LIVES_CONTAINER(button), widget_opts.border_width);
 
   textwindow->clear_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLEAR,
                              _("Clear _Errors"),
-                             LIVES_RESPONSE_CANCEL);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(textwindow->clear_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_lerrors_clear_clicked),
-                            LIVES_INT_TO_POINTER(FALSE));
+                             LIVES_RESPONSE_RESET);
 
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->clear_button), widget_opts.border_width);
 
   textwindow->delete_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_DELETE,
-                              _("_Delete affected layouts"), LIVES_RESPONSE_CANCEL);
+                              _("_Delete affected layouts"), LIVES_RESPONSE_REJECT);
 
   lives_button_box_set_layout(LIVES_BUTTON_BOX(lives_widget_get_parent(textwindow->delete_button)), LIVES_BUTTONBOX_SPREAD);
 
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->delete_button), widget_opts.border_width);
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(textwindow->delete_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_lerrors_delete_clicked), NULL);
-
   lives_widget_show_all(textwindow->dialog);
+
+  lives_widget_set_can_default(button, TRUE);
+  lives_button_grab_default_special(button);
+
+  lives_window_add_escape(LIVES_WINDOW(textwindow->dialog), button);
+
+  resp = lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
+
+  if (resp == LIVES_RESPONSE_REJECT) {
+    on_lerrors_delete_clicked(LIVES_BUTTON(button), NULL);
+  } else if (resp == LIVES_RESPONSE_RESET) {
+    on_lerrors_clear_clicked(LIVES_BUTTON(button), LIVES_INT_TO_POINTER(TRUE));
+  }
+  if (textwindow) {
+    lives_widget_destroy(textwindow->dialog);
+    lives_free(textwindow);
+    textwindow = NULL;
+  }
 }
 
 
@@ -12336,7 +12341,7 @@ void on_lerrors_clear_clicked(LiVESButton * button, livespointer user_data) {
   if (close) {
     boolean needs_idlefunc = mainw->mt_needs_idlefunc;
     mainw->mt_needs_idlefunc = FALSE;
-    lives_general_button_clicked(button, textwindow);
+    lives_general_button_clicked(button, (livespointer *)&textwindow);
     mainw->mt_needs_idlefunc = needs_idlefunc;
   } else {
     lives_widget_queue_draw(lives_widget_get_toplevel(LIVES_WIDGET(button)));

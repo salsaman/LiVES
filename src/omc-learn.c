@@ -708,7 +708,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   if (macro.nparams == 0) return;
 
   lives_tree_store_append(mnode->gtkstore2, &iter1, NULL);   /* Acquire an iterator */
-  lives_tree_store_set(mnode->gtkstore2, &iter1, TITLE2_COLUMN, (_("Params.")), -1);
+  lives_tree_store_set(mnode->gtkstore2, &iter1, TITLE2_COLUMN, (_("Show / Hide details")), -1);
 
   for (i = 0; i < macro.nparams; i++) {
     lives_tree_store_append(mnode->gtkstore2, &iter2, &iter1);   /* Acquire a child iterator */
@@ -740,7 +740,6 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
     }
 
     vname = macro.pname[i];
-
     lives_tree_store_set(mnode->gtkstore2, &iter2, TITLE2_COLUMN, vname, VALUE2_COLUMN, strval, ADJUSTMENT, adj, -1);
   }
 
@@ -754,9 +753,14 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   }
 
   renderer = lives_cell_renderer_text_new();
-  column = lives_tree_view_column_new_with_attributes(NULL,
+  column = lives_tree_view_column_new_with_attributes(_("Parameter"),
            renderer, LIVES_TREE_VIEW_COLUMN_TEXT, TITLE2_COLUMN, NULL);
 
+#ifdef GUI_GTK
+  g_object_set(renderer, "width-chars", 20, "xalign", 0., NULL);
+#endif
+
+  lives_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev2), column);
 
   renderer = lives_cell_renderer_spin_new();
@@ -768,24 +772,27 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
 
 #endif
 
-    lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell1_edited_callback), mnode);
+    lives_signal_sync_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell1_edited_callback), mnode);
 
     //  renderer = lives_cell_renderer_text_new ();
     column = lives_tree_view_column_new_with_attributes(_("value"),
              renderer, LIVES_TREE_VIEW_COLUMN_TEXT, VALUE2_COLUMN,
              "adjustment", ADJUSTMENT, NULL);
 
+    lives_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
     lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev2), column);
   }
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-  lives_signal_connect(LIVES_GUI_OBJECT(mnode->treev2), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
-                       LIVES_GUI_CALLBACK(rowexpand), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mnode->treev2), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
+                            LIVES_GUI_CALLBACK(rowexpand), NULL);
 #endif
 
   lives_table_attach(LIVES_TABLE(omclw->table), mnode->treev2, 3, 4, row, row + 1,
                      (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
+
+  lives_widget_show_all(omclw->dialog);
 }
 
 
@@ -828,39 +835,42 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
 
 
 static void on_omc_combo_entry_changed(LiVESCombo *combo, livespointer ptr) {
-  lives_omc_match_node_t *mnode = (lives_omc_match_node_t *)ptr;
-  const char *macro_text;
-  int i, row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "row"));
   omclearn_w *omclw = (omclearn_w *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "omclw");
+  if (omclw->ready) {
+    lives_omc_match_node_t *mnode = (lives_omc_match_node_t *)ptr;
+    const char *macro_text;
+    int i, row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "row"));
 
-  macro_text = lives_combo_get_active_text(LIVES_COMBO(combo));
+    macro_text = lives_combo_get_active_text(LIVES_COMBO(combo));
 
-  if (mnode->treev2) {
-    // remove old mapping
-    lives_widget_destroy(mnode->treev2);
-    mnode->treev2 = NULL;
+    if (mnode->treev2) {
+      // remove old mapping
+      lives_widget_destroy(mnode->treev2);
+      mnode->treev2 = NULL;
 
-    mnode->macro = -1;
+      mnode->macro = -1;
 
-    lives_free(mnode->map);
-    lives_free(mnode->fvali);
-    lives_free(mnode->fvald);
+      lives_free(mnode->map);
+      lives_free(mnode->fvali);
+      lives_free(mnode->fvald);
 
-    mnode->map = mnode->fvali = NULL;
-    mnode->fvald = NULL;
+      mnode->map = mnode->fvali = NULL;
+      mnode->fvald = NULL;
+    }
+
+    if (!strcmp(macro_text, mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))
+      return;
+
+    for (i = 0; i < N_OMC_MACROS; i++) {
+      if (!strcmp(macro_text, omc_macros[i].macro_text)) break;
+    }
+
+    if (i < N_OMC_MACROS) {
+      mnode->macro = i;
+      omc_learn_link_params(mnode);
+      omc_macro_row_add_params(mnode, row, omclw);
+    }
   }
-
-  if (!strcmp(macro_text, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
-    return;
-  }
-
-  for (i = 0; i < N_OMC_MACROS; i++) {
-    if (!strcmp(macro_text, omc_macros[i].macro_text)) break;
-  }
-
-  mnode->macro = i;
-  omc_learn_link_params(mnode);
-  omc_macro_row_add_params(mnode, row, omclw);
 }
 
 
@@ -956,17 +966,21 @@ static void cell_edited_callback(LiVESCellRenderer *spinbutton, const char *path
 static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int row, omclearn_w *omclw) {
   LiVESWidget *combo = lives_standard_combo_new(NULL, NULL, NULL, NULL);
 
+  lives_combo_append_text(LIVES_COMBO(combo), mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
+
   for (int i = 0; i < N_OMC_MACROS; i++) {
     if (!omc_macros[i].msg) break;
     lives_combo_append_text(LIVES_COMBO(combo), omc_macros[i].macro_text);
   }
 
-  if (mnode->macro != -1) {
-    lives_combo_set_active_index(LIVES_COMBO(combo), mnode->macro);
-  }
+  lives_widget_show_all(combo);
 
-  lives_signal_connect_after(LIVES_WIDGET_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_omc_combo_entry_changed), mnode);
+  //if (mnode->macro != -1) {
+  lives_combo_set_active_index(LIVES_COMBO(combo), mnode->macro + 1);
+  //}
+
+  lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(on_omc_combo_entry_changed), mnode);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "row", LIVES_INT_TO_POINTER(row));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "omclw", (livespointer)omclw);
@@ -1010,7 +1024,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
                                          LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
 
   lives_tree_store_append(mnode->gtkstore, &iter1, NULL);   /* Acquire an iterator */
-  lives_tree_store_set(mnode->gtkstore, &iter1, TITLE_COLUMN, (_("Vars.")), -1);
+  lives_tree_store_set(mnode->gtkstore, &iter1, TITLE_COLUMN, (_("Show / Hide details")), -1);
 
   for (int i = 0; i < mnode->nvars; i++) {
     lives_tree_store_append(mnode->gtkstore, &iter2, &iter1);   /* Acquire a child iterator */
@@ -1108,29 +1122,33 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   }
 
   renderer = lives_cell_renderer_text_new();
-  column = lives_tree_view_column_new_with_attributes(NULL,
+  column = lives_tree_view_column_new_with_attributes(_("Variable Name"),
            renderer, LIVES_TREE_VIEW_COLUMN_TEXT, TITLE_COLUMN, NULL);
 
+  lives_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
   renderer = lives_cell_renderer_text_new();
   column = lives_tree_view_column_new_with_attributes(_("value"),
            renderer, LIVES_TREE_VIEW_COLUMN_TEXT, VALUE_COLUMN, NULL);
 
+  lives_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
   renderer = lives_cell_renderer_toggle_new();
   column = lives_tree_view_column_new_with_attributes(_("x"),
            renderer, "active", FILTER_COLUMN, NULL);
 
+  lives_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
-  lives_signal_connect(renderer, LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(cell_toggled_callback), mnode);
+  lives_signal_sync_connect(renderer, LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(cell_toggled_callback), mnode);
 
   renderer = lives_cell_renderer_text_new();
   column = lives_tree_view_column_new_with_attributes(_("range"),
            renderer, LIVES_TREE_VIEW_COLUMN_TEXT, RANGE_COLUMN, NULL);
 
+  lives_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
   renderer = lives_cell_renderer_spin_new();
@@ -1145,11 +1163,12 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
                  "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
 #endif
 
-    lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
+    lives_signal_sync_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
 
     column = lives_tree_view_column_new_with_attributes(_("+ offset1"),
              renderer, LIVES_TREE_VIEW_COLUMN_TEXT, OFFS1_COLUMN, NULL);
 
+    lives_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
     lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
   }
 
@@ -1165,10 +1184,11 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 #endif
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(SCALE_COLUMN));
-    lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
+    lives_signal_sync_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
 
     column = lives_tree_view_column_new_with_attributes(_("* scale"),
              renderer, LIVES_TREE_VIEW_COLUMN_TEXT, SCALE_COLUMN, NULL);
+    lives_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
     lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
   }
 
@@ -1179,19 +1199,21 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
 #ifdef GUI_GTK
     g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
-                 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
+                 "editable", TRUE, "xalign", 0., "adjustment", spinadj, NULL);
 #endif
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(OFFS2_COLUMN));
-    lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
+    lives_signal_sync_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
 
     column = lives_tree_view_column_new_with_attributes(_("+ offset2"),
              renderer, LIVES_TREE_VIEW_COLUMN_TEXT, OFFS2_COLUMN, NULL);
+    lives_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
     lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
   }
 
 #if LIVES_TABLE_IS_GRID
   lives_widget_set_size_request(mnode->treev1, -1, TREE_ROW_HEIGHT);
+  gtk_tree_view_set_fixed_height_mode(LIVES_TREE_VIEW(mnode->treev1), TRUE);
 #endif
 
   lives_table_attach(LIVES_TABLE(omclw->table), mnode->treev1, 1, 2, omclw->tbl_currow, omclw->tbl_currow + 1,
@@ -1199,8 +1221,8 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-  lives_signal_connect(LIVES_GUI_OBJECT(mnode->treev1), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
-                       LIVES_GUI_CALLBACK(rowexpand), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mnode->treev1), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
+                            LIVES_GUI_CALLBACK(rowexpand), NULL);
 #endif
 
   combo = create_omc_macro_combo(mnode, omclw->tbl_currow, omclw);
@@ -1221,9 +1243,11 @@ static void killit(LiVESWidget *widget, livespointer user_data) {
 static void show_existing(omclearn_w *omclw) {
   LiVESSList *slist = omc_node_list;
   lives_omc_match_node_t *mnode;
-  int type, supertype;
   char **array, *srch;
+  int type, supertype;
   int idx;
+
+  omclw->ready = FALSE;
 
   while (slist) {
     mnode = (lives_omc_match_node_t *)slist->data;
@@ -1266,51 +1290,16 @@ static void show_existing(omclearn_w *omclw) {
 
     slist = slist->next;
   }
-}
-
-
-static void clear_unmatched(LiVESButton *button, livespointer user_data) {
-  omclearn_w *omclw = (omclearn_w *)user_data;
-
-  // destroy everything in table
-
-  lives_container_foreach(LIVES_CONTAINER(omclw->table), killit, NULL);
-
-  omclw->tbl_currow = -1;
-
-  remove_all_nodes(FALSE, omclw);
-
-  show_existing(omclw);
-}
-
-
-static void del_all(LiVESButton *button, livespointer user_data) {
-  omclearn_w *omclw = (omclearn_w *)user_data;
-
-  // need to use the full version here to override the default transient window
-  if (!do_warning_dialog(_("\nClick OK to delete all entries\n"))) return;
-
-  // destroy everything in table
-  lives_container_foreach(LIVES_CONTAINER(omclw->table), killit, NULL);
-
-  remove_all_nodes(TRUE, omclw);
-
-  lives_widget_set_sensitive(mainw->midi_save, FALSE);
-}
-
-
-static void close_learner_dialog(LiVESButton *button, livespointer user_data) {
-  mainw->cancelled = CANCEL_USER;
-  if (has_devicemap(-1)) lives_widget_set_sensitive(mainw->midi_save, TRUE);
+  lives_widget_show_all(omclw->dialog);
+  omclw->ready = TRUE;
 }
 
 
 static omclearn_w *create_omclearn_dialog(void) {
+  omclearn_w *omclw = (omclearn_w *)lives_malloc(sizeof(omclearn_w));
   LiVESWidget *ok_button;
   LiVESWidget *scrolledwindow;
   int winsize_h, winsize_v;
-
-  omclearn_w *omclw = (omclearn_w *)lives_malloc(sizeof(omclearn_w));
 
   omclw->tbl_rows = 4;
   omclw->tbl_currow = -1;
@@ -1324,26 +1313,22 @@ static omclearn_w *create_omclearn_dialog(void) {
   omclw->top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(omclw->dialog));
 
   omclw->table = lives_table_new(omclw->tbl_rows, 4, FALSE);
+  lives_widget_set_valign(omclw->table, LIVES_ALIGN_START);
 
   lives_table_set_col_spacings(LIVES_TABLE(omclw->table), widget_opts.packing_width * 2);
+  lives_table_set_row_spacings(LIVES_TABLE(omclw->table), widget_opts.packing_height);
 
   scrolledwindow = lives_standard_scrolled_window_new(winsize_h, winsize_v - SCR_HEIGHT_SAFETY, omclw->table);
 
   lives_box_pack_start(LIVES_BOX(omclw->top_vbox), scrolledwindow, TRUE, TRUE, 0);
 
   omclw->clear_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(omclw->dialog), LIVES_STOCK_CLEAR, _("Clear _unmatched"),
-                        LIVES_RESPONSE_NONE);
-
-  lives_signal_connect(LIVES_GUI_OBJECT(omclw->clear_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(clear_unmatched), (livespointer)omclw);
+                        LIVES_RESPONSE_RESET);
 
   lives_widget_set_sensitive(omclw->clear_button, FALSE);
 
   omclw->del_all_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(omclw->dialog), LIVES_STOCK_DELETE, _("_Delete all"),
-                          LIVES_RESPONSE_NONE);
-
-  lives_signal_connect(LIVES_GUI_OBJECT(omclw->del_all_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(del_all), (livespointer)omclw);
+                          LIVES_RESPONSE_REJECT);
 
   lives_widget_set_sensitive(omclw->del_all_button, FALSE);
 
@@ -1351,9 +1336,6 @@ static omclearn_w *create_omclearn_dialog(void) {
               LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(ok_button);
-
-  lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(close_learner_dialog), NULL);
 
   if (prefs->gui_monitor != 0) {
     lives_window_center(LIVES_WINDOW(omclw->dialog));
@@ -1363,9 +1345,6 @@ static omclearn_w *create_omclearn_dialog(void) {
     lives_window_unmaximize(LIVES_WINDOW(omclw->dialog));
     lives_window_maximize(LIVES_WINDOW(omclw->dialog));
   }
-
-  if (prefs->show_gui)
-    lives_widget_show_all(omclw->dialog);
 
   return omclw;
 }
@@ -1840,6 +1819,7 @@ void omclearn_match_control(lives_omc_match_node_t *mnode, int str_type, int ind
   // add combo box on right
 
   omc_learner_add_row(str_type, index, mnode, string, omclw);
+  lives_widget_show_all(omclw->dialog);
 }
 
 
@@ -2042,6 +2022,11 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
 }
 
 
+static void omclw_resp_set(LiVESDialog *dlg, int resp, omclearn_w *omclw) {
+  omclw->bresp = (LiVESResponseType)resp;
+}
+
+
 void on_midi_learn_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   omclearn_w *omclw = create_omclearn_dialog();
   char *string = NULL;
@@ -2063,6 +2048,10 @@ void on_midi_learn_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->cancelled = CANCEL_NONE;
 
   show_existing(omclw);
+
+  omclw->bresp = LIVES_RESPONSE_NONE;
+  lives_signal_sync_connect(omclw->dialog, LIVES_WIDGET_RESPONSE_SIGNAL,
+                            LIVES_GUI_CALLBACK(omclw_resp_set), omclw);
 
   // read controls and notes
   while (mainw->cancelled == CANCEL_NONE) {
@@ -2093,19 +2082,36 @@ void on_midi_learn_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 #ifdef OMC_JS_IMPL
     }
 #endif
-
-    lives_usleep(prefs->sleep_time);
-
+    if (omclw->bresp != LIVES_RESPONSE_NONE) {
+      if (omclw->bresp == LIVES_RESPONSE_OK) {
+        break;
+      }
+      if (omclw->bresp == LIVES_RESPONSE_RESET) {
+        // clear unmatched
+        lives_container_foreach(LIVES_CONTAINER(omclw->table), killit, NULL);
+        omclw->tbl_currow = -1;
+        remove_all_nodes(FALSE, omclw);
+        show_existing(omclw);
+        omclw->bresp = LIVES_RESPONSE_NONE;
+      } else if (omclw->bresp == LIVES_RESPONSE_REJECT) {
+        // delete all
+        if (do_warning_dialog(_("\nClick OK to delete all entries\n"))) {
+          lives_container_foreach(LIVES_CONTAINER(omclw->table), killit, NULL);
+          remove_all_nodes(TRUE, omclw);
+          lives_widget_set_sensitive(mainw->midi_save, FALSE);
+        }
+        omclw->bresp = LIVES_RESPONSE_NONE;
+      }
+    }
+    lives_nanosleep(LIVES_QUICK_NAP);
     lives_widget_context_update();
   }
 
   remove_all_nodes(FALSE, omclw);
-
   lives_widget_destroy(omclw->dialog);
-
-  mainw->cancelled = CANCEL_NONE;
-
   lives_free(omclw);
+  mainw->cancelled = CANCEL_NONE;
+  if (has_devicemap(-1)) lives_widget_set_sensitive(mainw->midi_save, TRUE);
 }
 
 

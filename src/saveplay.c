@@ -3033,10 +3033,12 @@ void play_file(void) {
     } else {
 #endif
       if (!is_realtime_aplayer(audio_player) && stopcom) {
+        lives_cancel_t cancelled = mainw->cancelled;
         // kill sound (if still playing)
         lives_system(stopcom, TRUE);
         mainw->aud_file_to_kill = -1;
         lives_free(stopcom);
+        mainw->cancelled = cancelled;
       }
 #ifdef ENABLE_JACK
     }
@@ -3105,8 +3107,10 @@ void play_file(void) {
 #endif
 
     if (com) {
+      lives_cancel_t cancelled = mainw->cancelled;
       lives_system(com, TRUE);
       lives_free(com);
+      mainw->cancelled = cancelled;
     }
   }
 
@@ -3127,8 +3131,11 @@ void play_file(void) {
   prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
 
   // TODO ***: use MIDI output port for this
-  if (!mainw->foreign && prefs->midisynch) lives_system(EXEC_MIDISTOP, TRUE);
-
+  if (!mainw->foreign && prefs->midisynch) {
+    lives_cancel_t cancelled = mainw->cancelled;
+    lives_system(EXEC_MIDISTOP, TRUE);
+    mainw->cancelled = cancelled;
+  }
   // we could have started by playing a generator, which could've been closed
   if (!mainw->files[current_file]) current_file = mainw->current_file;
 
@@ -3478,7 +3485,7 @@ int close_temp_handle(int new_clip) {
 
   clipd = get_clip_dir(mainw->current_file);
   if (lives_file_test(clipd, LIVES_FILE_TEST_EXISTS)) {
-    lives_cancel_t cancelled = (lives_cancel_t)mainw->cancelled;
+    lives_cancel_t cancelled = mainw->cancelled;
     permit_close(mainw->current_file);
 
     temp_backend = use_staging_dir_for(mainw->current_file);

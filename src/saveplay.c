@@ -3291,10 +3291,15 @@ void play_file(void) {
 	  }}}}}
   // *INDENT-ON*
 
-  /// free the last frame image
+  /// free the last frame image(s)
   if (mainw->frame_layer) {
     weed_layer_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
+  }
+
+  if (mainw->blend_layer) {
+    weed_layer_free(mainw->blend_layer);
+    mainw->blend_layer = NULL;
   }
 
   if (mainw->lazy) mainw->lazy = lives_idle_add_simple(lazy_startup_checks, NULL);
@@ -5859,7 +5864,7 @@ boolean rewrite_recovery_file(void) {
         } else {
           if (sfile->was_in_set && *mainw->set_name) {
             if (!wrote_set_entry) {
-              recovery_entry = lives_build_filename(mainw->set_name, "*\n", NULL);
+              recovery_entry = lives_build_filename_relative(mainw->set_name, "*\n", NULL);
               wrote_set_entry = TRUE;
             } else continue;
           } else recovery_entry = lives_strdup_printf("%s\n", sfile->handle);

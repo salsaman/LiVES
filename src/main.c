@@ -8217,17 +8217,16 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
     // special handling for clips where host controls size
     // Note: vlayer is actually the out channel of the generator, so we should
     // never free it !
-    weed_plant_t *inst = (weed_plant_t *)sfile->ext_src;
+    weed_plant_t *inst;
+    weed_instance_ref((inst = (weed_plant_t *)sfile->ext_src));
     if (inst) {
       int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
-      while (filter_mutex_trylock(key)) {
-        sched_yield();
-        lives_usleep(prefs->sleep_time);
-      }
+      filter_mutex_lock(key);
       vlayer = weed_layer_create_from_generator(inst, tc, clip);
       weed_layer_copy(layer, vlayer); // layer is non-NULL, so copy by reference
       weed_layer_nullify_pixel_data(vlayer);
       filter_mutex_unlock(key);
+      weed_instance_unref(inst);
     } else {
       mainw->osc_block = FALSE;
       create_blank_layer(layer, image_ext, width, height, target_palette);

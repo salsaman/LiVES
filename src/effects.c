@@ -1105,7 +1105,6 @@ static boolean _rte_on_off(boolean from_menu, int key) {
       // *INDENT-ON*
     } else {
       // effect is OFF
-      filter_mutex_lock(key);
       if (weed_deinit_effect(key)) {
         mainw->rte &= ~new_rte;
       }
@@ -1113,7 +1112,6 @@ static boolean _rte_on_off(boolean from_menu, int key) {
       if (rte_window) rtew_set_keych(key, FALSE);
       if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
 
-      filter_mutex_unlock(key);
       if (!LIVES_IS_PLAYING) {
         // if anything is connected to ACTIVATE, the fx may be de-activated
         // during playback this is checked when we play a frame
@@ -1186,9 +1184,7 @@ boolean grabkeys_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
     mainw->osc_block = FALSE;
     return TRUE;
   }
-  filter_mutex_lock(mainw->rte_keys);
   mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
-  filter_mutex_unlock(mainw->rte_keys);
   mainw->osc_block = FALSE;
   return TRUE;
 }
@@ -1215,9 +1211,7 @@ boolean rtemode_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint3
   // "m" mode key
   if (mainw->rte_keys == -1) return TRUE;
   rte_key_setmode(0, dirn == PREV_MODE_CYCLE ? -2 : -1);
-  filter_mutex_lock(mainw->rte_keys);
   mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
-  filter_mutex_unlock(mainw->rte_keys);
   return TRUE;
 }
 
@@ -1334,8 +1328,6 @@ void rte_keymodes_restore(int nkeys) {
     if (mainw->rte & (GU641 << i)) rte_key_toggle(i + 1);
   }
   if (mainw->rte_keys != -1) {
-    filter_mutex_lock(mainw->rte_keys);
     mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
-    filter_mutex_unlock(mainw->rte_keys);
   }
 }

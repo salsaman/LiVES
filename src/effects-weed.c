@@ -101,14 +101,7 @@ LIVES_GLOBAL_INLINE int filter_mutex_trylock(int key) {
 
 #ifndef DEBUG_FILTER_MUTEXES
 LIVES_GLOBAL_INLINE int filter_mutex_lock(int key) {
-  //int ret = filter_mutex_trylock(key);
   int ret = pthread_mutex_lock(&mainw->fx_mutex[key]);
-  /// attempted double locking is actually normal behaviour when we have both video and audio effects running
-  /* if (ret != 0 && !mainw->is_exiting) { */
-  /*   /\* char *msg = lives_strdup_printf("attempted double lock of fx key %d, err was %d", key, ret); *\/ */
-  /*   /\* LIVES_ERROR(msg); *\/ */
-  /*   /\* lives_free(msg); *\/ */
-  /* } */
   return ret;
 }
 
@@ -1832,7 +1825,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     /// wait for thread to pull layer pixel_data
     if (prefs->dev_show_timing)
       g_printerr("fx clr pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+
     check_layer_ready(layer);
+
     if (prefs->dev_show_timing)
       g_printerr("fx clr post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     frame = weed_get_int_value(layer, WEED_LEAF_FRAME, NULL);
@@ -2149,7 +2144,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
         //g_print("FX size %d X %d %d %d\n", opwidth, opheight, pb_quality, letterbox);
 
-        opwidth = (opwidth >> 2) << 2;
+        opwidth = (opwidth >> 4) << 4;
         opheight = (opheight >> 1) << 1;
         //g_print("FX2 size %d X %d\n", opwidth, opheight);
       }
@@ -2514,7 +2509,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           goto done_video;
         }
 
-        if (!mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
+        if (!mainw->is_rendering && !mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
           mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
                                  &mainw->blend_subspace);
           mainw->blend_width = width;
@@ -2975,12 +2970,7 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
   if ((prefs->nfx_threads = future_prefs->nfx_threads) > 1 &&
       (filter_flags & WEED_FILTER_HINT_MAY_THREAD)) {
     weed_plant_t **out_channels = weed_instance_get_out_channels(instance, NULL);
-    //if (key == -1 || !filter_mutex_trylock(key)) {
     retval = process_func_threaded(instance, tc);
-    //if (key != -1) filter_mutex_unlock(key);
-    //} else retval = FILTER_ERROR_INVALID_PLUGIN;
-    /* totth += (lives_get_current_ticks() - timex); */
-    /* thcount++; */
     lives_free(out_channels);
     if (retval != FILTER_ERROR_DONT_THREAD) did_thread = TRUE;
   }
@@ -2988,11 +2978,8 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
   if (!did_thread) {
     // normal single threaded version
     process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
-    if (process_func) {// && (key == -1 || !filter_mutex_trylock(key))) {
+    if (process_func) {
       weed_error_t ret = (*process_func)(instance, tc);
-      //if (key != -1) filter_mutex_unlock(key);
-      /* totnth += (lives_get_current_ticks() - timex); */
-      /* nthcount++; */
       if (ret == WEED_ERROR_PLUGIN_INVALID) retval = FILTER_ERROR_INVALID_PLUGIN;
       if (ret == WEED_ERROR_FILTER_INVALID) retval = FILTER_ERROR_INVALID_FILTER;
       if (ret == WEED_ERROR_NOT_READY) retval = FILTER_ERROR_BUSY;
@@ -8907,6 +8894,8 @@ deinit5:
         return FALSE;
       }
 
+      filter_mutex_unlock(bg_gen_to_start);
+
       if (!IS_VALID_CLIP(mainw->blend_file)
           || (mainw->files[mainw->blend_file]->frames > 0
               && mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_GENERATOR)) {
@@ -8933,7 +8922,7 @@ deinit5:
         mainw->files[mainw->blend_file]->ext_src_type = LIVES_EXT_SRC_FILTER;
         mainw->current_file = current_file;
       }
-    } else filter_mutex_unlock(bg_gen_to_start);
+    }
   }
 
   // orig_inst = inst;

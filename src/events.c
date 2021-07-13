@@ -3065,7 +3065,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 
   int current_file;
 
-  int num_params, offset = 0;
+  int num_params, offset = 0, nparams;
   int num_in_count = 0;
   int num_in_channels = 0, num_out_channels = 0;
   int new_file;
@@ -3357,7 +3357,6 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       orig_inst = inst = rte_keymode_get_instance(key + 1, 0);
 
       if (weed_plant_has_leaf(next_event, WEED_LEAF_IN_PARAMETERS)) {
-        int nparams;
         void **xpchains = weed_get_voidptr_array_counted(next_event, WEED_LEAF_IN_PARAMETERS, &nparams);
         pchains[key] = (void **)lives_realloc(pchains[key], (nparams + 1) * sizeof(void *));
         for (i = 0; i < nparams; i++) pchains[key][i] = xpchains[i];
@@ -3372,16 +3371,16 @@ filterinit1:
       if (num_params > 0) {
         weed_call_deinit_func(inst);
         if (weed_plant_has_leaf(next_event, WEED_LEAF_IN_PARAMETERS)) {
-          in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
           source_params = (weed_plant_t **)pchains[key];
-
-          for (i = 0; i < num_params; i++) {
-            if (source_params && source_params[i + offset] && is_init_pchange(next_event, source_params[i + offset]))
-              weed_leaf_dup(in_params[i], source_params[i + offset], WEED_LEAF_VALUE);
+          if (source_params) {
+            in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+            for (i = 0; i < num_params && i < nparams; i++) {
+              if (source_params[i + offset] && is_init_pchange(next_event, source_params[i + offset]))
+                weed_leaf_dup(in_params[i], source_params[i + offset], WEED_LEAF_VALUE);
+            }
+            lives_free(in_params);
           }
-          lives_free(in_params);
         }
-
         offset += num_params;
         weed_call_init_func(inst);
       }
@@ -3630,10 +3629,13 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
   char *key_string, *com;
   char *filter_name;
 
-  int i;
+  int i, nparams;
 
   if (reset) {
     LiVESList *list = NULL;
+    // reset pchains
+    for (i = 0; i < FX_KEYS_MAX; i++) pchains[i] = NULL;
+
     r_audio = rend_audio;
     r_video = rend_video;
     progress = frame = 1;
@@ -3960,6 +3962,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                     int lb_width = weed_layer_get_width_pixels(layer);
                     int lb_height = weed_layer_get_height(layer);
                     calc_maxspect(cfile->hsize, cfile->vsize, &lb_width, &lb_height);
+                    lb_width = (lb_width >> 2) << 2;
                     letterbox_layer(layer, cfile->hsize, cfile->vsize, lb_width, lb_height,
                                     LIVES_INTERP_BEST, WEED_PALETTE_NONE, 0);
                   } else resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_NONE, 0);
@@ -4353,7 +4356,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       orig_inst = inst = rte_keymode_get_instance(key + 1, 0);
 
       if (weed_plant_has_leaf(event, WEED_LEAF_IN_PARAMETERS)) {
-        int nparams;
         void **xpchains = weed_get_voidptr_array_counted(event, WEED_LEAF_IN_PARAMETERS, &nparams);
         pchains[key] = (void **)lives_realloc(pchains[key], (nparams + 1) * sizeof(void *));
         for (i = 0; i < nparams; i++) pchains[key][i] = xpchains[i];
@@ -4369,16 +4371,16 @@ filterinit2:
         weed_call_deinit_func(inst);
         if (weed_plant_has_leaf(event, WEED_LEAF_IN_PARAMETERS)) {
           source_params = (weed_plant_t **)pchains[key];
-          in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &weed_error);
-
-          for (i = 0; i < num_params; i++) {
-            if (source_params && source_params[i + offset]
-                && is_init_pchange(event, source_params[i + offset]))
-              weed_leaf_copy(in_params[i], WEED_LEAF_VALUE, source_params[i + offset], WEED_LEAF_VALUE);
+          if (source_params) {
+            in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+            for (i = 0; i < num_params && i < nparams; i++) {
+              if (source_params && source_params[i + offset]
+                  && is_init_pchange(event, source_params[i + offset]))
+                weed_leaf_copy(in_params[i], WEED_LEAF_VALUE, source_params[i + offset], WEED_LEAF_VALUE);
+            }
+            lives_free(in_params);
           }
-          lives_free(in_params);
         }
-
         offset += num_params;
         weed_call_init_func(inst);
       }

@@ -10756,13 +10756,15 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 
 boolean retrigger_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer user_data) {
-  uint32_t aud_locked = prefs->audio_opts & AUDIO_OPTS_IS_LOCKED;
-  lives_clip_t *sfile = mainw->files[mainw->playing_file];
-  sfile->frameno = sfile->last_frameno = 1;
-  mainw->scratch = SCRATCH_JUMP;
-  prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
-  resync_audio(mainw->playing_file, (double)sfile->frameno);
-  prefs->audio_opts |= aud_locked;
+  if (IS_VALID_CLIP(mainw->playing_file)) {
+    uint32_t aud_locked = prefs->audio_opts & AUDIO_OPTS_IS_LOCKED;
+    lives_clip_t *sfile = mainw->files[mainw->playing_file];
+    sfile->frameno = sfile->last_frameno = 1;
+    mainw->scratch = SCRATCH_JUMP;
+    prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
+    resync_audio(mainw->playing_file, (double)sfile->frameno);
+    prefs->audio_opts |= aud_locked;
+  }
   return TRUE;
 }
 

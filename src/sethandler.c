@@ -14,14 +14,6 @@
 
 // general metadata
 
-
-
-
-
-
-
-
-
 boolean is_legal_set_name(const char *set_name, boolean allow_dupes, boolean leeway) {
   // check (clip) set names for validity
   // - may not be of zero length
@@ -640,6 +632,107 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
 }
 
 
+void recover_layout_map(int numclips) {
+  // load global layout map for a set and assign entries to clips [mainw->files[i]->layout_map]
+  LiVESList *mlist, *lmap_node, *lmap_node_next, *lmap_entry_list, *lmap_entry_list_next;
+
+  layout_map *lmap_entry;
+  uint32_t mask;
+
+  char **array;
+  char *check_handle;
+
+  if (numclips > MAX_FILES) numclips = MAX_FILES;
+
+  if ((mlist = load_layout_map())) {
+    int i;
+
+    // assign layout map to clips
+    for (i = 1; i <= numclips; i++) {
+      lives_clip_t *sfile = mainw->files[i];
+      if (!sfile) continue;
+      lmap_node = mlist;
+      while (lmap_node) {
+        lmap_node_next = lmap_node->next;
+        lmap_entry = (layout_map *)lmap_node->data;
+        check_handle = lives_strdup(sfile->handle);
+
+        if (!strstr(lmap_entry->handle, "/")) {
+          lives_free(check_handle);
+          check_handle = lives_path_get_basename(sfile->handle);
+        }
+
+        if ((!strcmp(check_handle, lmap_entry->handle) && (sfile->unique_id == lmap_entry->unique_id)) ||
+            (prefs->mt_load_fuzzy && (!strcmp(check_handle, lmap_entry->handle) || (sfile->unique_id == lmap_entry->unique_id)))
+           ) {
+          // check handle and unique id match
+          // got a match, assign list to layout_map and delete this node
+          lmap_entry_list = lmap_entry->list;
+          while (lmap_entry_list) {
+            lmap_entry_list_next = lmap_entry_list->next;
+            array = lives_strsplit((char *)lmap_entry_list->data, "|", -1);
+            if (!lives_file_test(array[0], LIVES_FILE_TEST_EXISTS)) {
+              //g_print("removing layout because no file %s\n", array[0]);
+              // layout file has been deleted, remove this entry
+              lmap_entry->list = lives_list_remove_node(lmap_entry->list, lmap_entry_list, TRUE);
+            }
+            lives_strfreev(array);
+            lmap_entry_list = lmap_entry_list_next;
+          }
+          sfile->layout_map = lmap_entry->list;
+
+          lives_free(lmap_entry->handle);
+          lives_free(lmap_entry->name);
+          lives_free(lmap_entry);
+
+          mlist = lives_list_remove_node(mlist, lmap_node, FALSE);
+
+          if (sfile->layout_map) {
+            /// check for missing frames and audio in layouts
+            // TODO: -- needs checking ----
+            mask = 0;
+            mainw->xlays = layout_frame_is_affected(i, sfile->frames + 1, 0, mainw->xlays);
+            if (mainw->xlays) {
+              add_lmap_error(LMAP_ERROR_DELETE_FRAMES, sfile->name, (livespointer)sfile->layout_map, i,
+                             sfile->frames, 0., FALSE);
+              lives_list_free_all(&mainw->xlays);
+              mask |= WARN_MASK_LAYOUT_DELETE_FRAMES;
+              //g_print("FRMS %d\n", cfile->frames);
+            }
+
+            mainw->xlays = layout_audio_is_affected(i, sfile->laudio_time, 0., mainw->xlays);
+            if (mainw->xlays) {
+              add_lmap_error(LMAP_ERROR_DELETE_AUDIO, sfile->name, (livespointer)sfile->layout_map, i,
+                             sfile->frames, sfile->laudio_time, FALSE);
+              lives_list_free_all(&mainw->xlays);
+              mask |= WARN_MASK_LAYOUT_DELETE_AUDIO;
+              //g_print("AUD %f\n", cfile->laudio_time);
+            }
+            if (mask != 0) {
+              popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(mask));
+            }
+          }
+          lives_free(check_handle);
+          break;
+        }
+        lives_free(check_handle);
+        lmap_node = lmap_node_next;
+      }
+    }
+
+    lmap_node = mlist;
+    while (lmap_node) {
+      lmap_entry = (layout_map *)lmap_node->data;
+      if (lmap_entry->name) lives_free(lmap_entry->name);
+      if (lmap_entry->handle) lives_free(lmap_entry->handle);
+      lives_list_free_all(&lmap_entry->list);
+      lmap_node = lmap_node->next;
+    }
+    if (mlist) lives_list_free(mlist);
+  }
+}
+
+
 char *on_load_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // get set name (use a modified rename window)
   char *set_name = NULL;
@@ -1123,6 +1216,121 @@ boolean reload_set(const char *set_name) {
 }
 
 
+void remove_layout_files(LiVESList *map) {
+  // removes a LiVESList of layouts from the set layout map
+
+  // removes from: - global layouts map
+  //               - disk
+  //               - clip layout maps
+
+  // called after, for example: a clip is removed or altered and the user opts to remove all associated layouts
+
+  LiVESList *lmap, *lmap_next, *cmap, *cmap_next, *map_next;
+  size_t maplen;
+  char **array;
+  char *fname, *fdir;
+  boolean is_current;
+
+  while (map) {
+    map_next = map->next;
+    if (map->data) {
+      if (!lives_utf8_strcasecmp((char *)map->data, mainw->string_constants[LIVES_STRING_CONSTANT_CL])) {
+        is_current = TRUE;
+        fname = lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+      } else {
+        is_current = FALSE;
+        maplen = lives_strlen((char *)map->data);
+
+        // remove from mainw->current_layouts_map
+        cmap = mainw->current_layouts_map;
+        while (cmap) {
+          cmap_next = cmap->next;
+          if (!lives_utf8_strcasecmp((char *)cmap->data, (char *)map->data)) {
+            lives_free((livespointer)cmap->data);
+            mainw->current_layouts_map = lives_list_delete_link(mainw->current_layouts_map, cmap);
+            break;
+          }
+          cmap = cmap_next;
+        }
+
+        array = lives_strsplit((char *)map->data, "|", -1);
+        fname = repl_workdir(array[0], FALSE);
+        lives_strfreev(array);
+      }
+
+      // fname should now hold the layout name on disk
+      d_print(_("Removing layout %s\n"), fname);
+
+      if (!is_current) {
+        lives_rm(fname);
+
+        // if no more layouts in parent dir, we can delete dir
+
+        // ensure that parent dir is below our own working dir
+        if (!lives_strncmp(fname, prefs->workdir, lives_strlen(prefs->workdir))) {
+          // is in workdir, safe to remove parents
+
+          char *protect_file = lives_build_filename(prefs->workdir, LIVES_FILENAME_NOREMOVE, NULL);
+
+          // touch a file in tpmdir, so we cannot remove workdir itself
+          lives_touch(protect_file);
+
+          if (!THREADVAR(com_failed)) {
+            // ok, the "touch" worked
+            // now we call rmdir -p : remove directory + any empty parents
+            if (lives_file_test(protect_file, LIVES_FILE_TEST_IS_REGULAR)) {
+              fdir = lives_path_get_dirname(fname);
+              lives_rmdir_with_parents(fdir);
+              lives_free(fdir);
+            }
+          }
+
+          // remove the file we touched to clean up
+          lives_rm(protect_file);
+          lives_free(protect_file);
+        }
+
+        // remove from mainw->files[]->layout_map
+        for (int i = 1; i <= MAX_FILES; i++) {
+          if (mainw->files[i]) {
+            if (mainw->files[i]->layout_map) {
+              lmap = mainw->files[i]->layout_map;
+              while (lmap) {
+                lmap_next = lmap->next;
+                if (!lives_strncmp((char *)lmap->data, (char *)map->data, maplen)) {
+                  lives_free((livespointer)lmap->data);
+                  mainw->files[i]->layout_map = lives_list_delete_link(mainw->files[i]->layout_map, lmap);
+                }
+                lmap = lmap_next;
+		// *INDENT-OFF*
+              }}}}
+	// *INDENT-ON*
+
+      } else {
+        // asked to remove the currently loaded layout
+
+        if (mainw->stored_event_list || mainw->sl_undo_mem) {
+          // we are in CE mode, so event_list is in storage
+          stored_event_list_free_all(TRUE);
+        }
+        // in mt mode we need to do more
+        else remove_current_from_affected_layouts(mainw->multitrack);
+
+        // and we dont want to try reloading this next time
+        prefs->ar_layout = FALSE;
+        set_string_pref(PREF_AR_LAYOUT, "");
+        lives_memset(prefs->ar_layout_name, 0, 1);
+      }
+      lives_free(fname);
+    }
+    map = map_next;
+  }
+
+  // save updated layout.map
+  save_layout_map(NULL, NULL, NULL, NULL);
+}
+
+
 void del_current_set(boolean exit_after) {
   char *msg;
   boolean moc = mainw->only_close, crec;
@@ -1432,7 +1640,7 @@ static lives_clipgrp_t *clpgrp_new(const char *name) {
 }
 
 
-static boolean is_dupe_name(const char *name, LiVESList *list) {
+static boolean is_dupe_name(const char *name, LiVESList * list) {
   if (!lives_strcmp(name, DEFNAME)) return TRUE;
   for (; list; list = list->next) {
     lives_clipgrp_t *clpgrp = (lives_clipgrp_t *)list->data;
@@ -1442,7 +1650,7 @@ static boolean is_dupe_name(const char *name, LiVESList *list) {
 }
 
 
-static void chk_cgroup_name(LiVESWidget *e, LiVESWidget *okbutton) {
+static void chk_cgroup_name(LiVESWidget * e, LiVESWidget * okbutton) {
   const char *clipgrp_name = lives_entry_get_text(LIVES_ENTRY(e));
   boolean legal, duped, sens = FALSE;
   if (!*clipgrp_name || ((legal = is_legal_clpgrp(clipgrp_name))
@@ -1459,7 +1667,7 @@ static void chk_cgroup_name(LiVESWidget *e, LiVESWidget *okbutton) {
 }
 
 
-static void add_clipgrp(LiVESWidget *w, LiVESCombo *combo) {
+static void add_clipgrp(LiVESWidget * w, LiVESCombo * combo) {
   LiVESWidget *dialog_vbox, *hbox, *entry, *layout;
   LiVESWidget *okbutton, *cancelbutton;
   LiVESResponseType resp;
@@ -1512,7 +1720,7 @@ static void add_clipgrp(LiVESWidget *w, LiVESCombo *combo) {
 }
 
 
-static void del_clipgrp(LiVESWidget *w, LiVESCombo *combo) {
+static void del_clipgrp(LiVESWidget * w, LiVESCombo * combo) {
   const char *grpname = lives_combo_get_active_text(combo);
   if (!do_yesno_dialogf(_("\nAre you sure you wish to delete the clip group '%s' ?\n"
                           "(This will not remove the clips themselves)"), grpname))
@@ -1533,7 +1741,7 @@ static void del_clipgrp(LiVESWidget *w, LiVESCombo *combo) {
 }
 
 
-static void grp_combo_populate(LiVESCombo *combo, LiVESTreeView *tview) {
+static void grp_combo_populate(LiVESCombo * combo, LiVESTreeView * tview) {
   LiVESList *list;
   lives_clip_t *sfile;
   LiVESWidget *del_button = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "del_button");
@@ -1589,7 +1797,7 @@ static void grp_combo_populate(LiVESCombo *combo, LiVESTreeView *tview) {
 
 static int drag_clipno = -1;
 
-static boolean drag_start(LiVESWidget *widget, LiVESXEventButton *event, LiVESCellRenderer *rend) {
+static boolean drag_start(LiVESWidget * widget, LiVESXEventButton * event, LiVESCellRenderer * rend) {
   LiVESWidget *topl = lives_widget_get_toplevel(widget);
   LiVESXDisplay *disp = lives_widget_get_display(topl);
   LiVESPixbuf *pixbuf;
@@ -1669,7 +1877,7 @@ static boolean drag_start(LiVESWidget *widget, LiVESXEventButton *event, LiVESCe
 }
 
 // need clipno, tree2
-static boolean drag_end(LiVESWidget *widget, LiVESXEventButton *event, LiVESWidget *tree2) {
+static boolean drag_end(LiVESWidget * widget, LiVESXEventButton * event, LiVESWidget * tree2) {
   LiVESWidget *topl = lives_widget_get_toplevel(widget);
   lives_xwindow_set_cursor(lives_widget_get_xwindow(topl), NULL);
 
@@ -1707,7 +1915,7 @@ static boolean drag_end(LiVESWidget *widget, LiVESXEventButton *event, LiVESWidg
 }
 
 
-void manage_clipgroups(LiVESWidget *w, livespointer data) {
+void manage_clipgroups(LiVESWidget * w, livespointer data) {
   lives_clip_t *sfile;
   LiVESCellRenderer *renderer;
   LiVESTreeStore *treestore;

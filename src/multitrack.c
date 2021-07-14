@@ -1102,7 +1102,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
           array = lives_strsplit((char *)lmap->data, "|", -1);
           threaded_dialog_spin(0.);
 
-          // piece 2 is the clip number
+          // piece 2 is the clip number within the specific layout
           rnc = atoi(array[1]);
           if (rnc < 0 || rnc > MAX_FILES) continue;
           renumbered_clips[rnc] = i;
@@ -6814,9 +6814,8 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
         int numatracks;
         int *aclip_index;
         double *aseek_index;
-        register int i;
         numatracks = weed_frame_event_get_audio_tracks(event, &aclip_index, &aseek_index);
-        for (i = 0; i < numatracks; i += 2) {
+        for (int i = 0; i < numatracks; i += 2) {
           if (aclip_index[i + 1] > 0) {
             atrack = aclip_index[i];
             tc = get_event_timecode(event);
@@ -6827,6 +6826,9 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
                 if (avel[atrack] != 0.) {
                   aval = aseek[atrack] + (tc - atc[atrack]) / TICKS_PER_SECOND_DBL * avel[atrack];
                   last_aclip = last_aclips[atrack];
+                  // audio can be fractionally longer than the clip audio due to quantisation effects
+                  // so limit it to the real clip length
+                  if (aval > mainw->files[last_aclip]->laudio_time) aval = mainw->files[last_aclip]->laudio_time;
                   if (aval > used_clips[last_aclip]) used_clips[last_aclip] = aval;
                 }
                 aseek[atrack] = aseek_index[i];

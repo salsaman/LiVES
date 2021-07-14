@@ -4244,24 +4244,17 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
 
   int act = GET_INT_DATA(chooser, FC_ACTION_KEY);
 
-  /* tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser)); */
-  /* g_print("SEL is %s\n", tmp); */
-  /* if (tmp) { */
-  /*   char *fname; */
-  /*   dirname = lives_filename_to_utf8(tmp, -1, NULL, NULL, NULL); */
-  /*   fname = lives_path_get_basename(dirname); */
-  /*   no = TRUE; */
-  /*   gtk_file_chooser_select_filename(chooser, fname); */
-  /*   lives_free(tmp); lives_free(dirname); lives_free(fname); */
-  /* } */
+  tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
 
-  /* return; */
+  if (tmp) {
+    get_dirname(tmp);
+    if (*tmp) dirname = lives_filename_to_utf8(tmp, -1, NULL, NULL, NULL);
+    lives_free(tmp);
+  }
 
   fold = lives_filename_to_utf8((tmp = gtk_file_chooser_get_current_folder(LIVES_FILE_CHOOSER(chooser))),
                                 -1, NULL, NULL, NULL);
   lives_free(tmp);
-
-  //g_print("name %s and fold %s\n", dirname, fold);
 
   if (!dirname && !fold) return;
 
@@ -4446,8 +4439,6 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
   SET_INT_DATA(chooser, FC_ACTION_KEY, act);
 
-  if (dir) gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser), dir);
-
   lives_widget_show_all(chooser);
 
   if (prefs->fileselmax) {
@@ -4498,6 +4489,9 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     }
   }
 #endif
+
+  if (dir) gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser), dir);
+
   gtk_file_chooser_set_show_hidden(LIVES_FILE_CHOOSER(chooser), show_hidden);
 
   SET_INT_DATA(chooser, FC_ACTION_KEY, act);
@@ -4536,13 +4530,15 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
             gtk_file_chooser_set_filename(LIVES_FILE_CHOOSER(chooser), fname);
           }
         }
+
         lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL,
                                         LIVES_GUI_CALLBACK(fc_sel_changed), diss);
+
         if (act != LIVES_FILE_CHOOSER_ACTION_OPEN) {
           lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL,
                                           LIVES_GUI_CALLBACK(fc_folder_changed), diss);
 	// *INDENT-OFF*
-	}}}}
+      }}}}
   // *INDENT-ON*
   else {
     /* if (act == LIVES_FILE_CHOOSER_ACTION_SAVE || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER */

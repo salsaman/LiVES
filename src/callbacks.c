@@ -8736,7 +8736,7 @@ void popup_lmap_errors(LiVESMenuItem * menuitem, livespointer user_data) {
 
   lives_window_add_escape(LIVES_WINDOW(textwindow->dialog), button);
 
-  resp = lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
+  resp = lives_dialog_run_with_countdown(LIVES_DIALOG(textwindow->dialog), LIVES_RESPONSE_REJECT, 3);
 
   if (resp == LIVES_RESPONSE_REJECT) {
     on_lerrors_delete_clicked(LIVES_BUTTON(button), NULL);

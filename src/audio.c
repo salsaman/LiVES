@@ -2940,7 +2940,8 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
               }
             }
             last_tc += delta;
-            for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
+            nnfiles = 0;
+            if (atstate) for (; atstate[nnfiles].afile != -1; nnfiles++);
             if (nnfiles > nfiles) {
               audstate = resize_audstate(audstate, nfiles, nnfiles + 1);
               audstate[nnfiles].afile = -1;

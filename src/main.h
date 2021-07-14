@@ -1053,7 +1053,6 @@ void add_to_recovery_file(const char *handle);
 boolean rewrite_recovery_file(void);
 boolean check_for_recovery_files(boolean auto_recover, boolean no_recover);
 boolean recover_files(char *recovery_file, boolean auto_recover);
-void recover_layout_map(int numclips);
 const char *get_deinterlace_string(void);
 void reload_subs(int fileno);
 
@@ -1289,7 +1288,6 @@ void calc_minspect(int *rwidth, int *rheight, int cwidth, int cheight);
 
 char *remove_trailing_zeroes(double val);
 
-void remove_layout_files(LiVESList *lmap);
 boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data,
                        int clipno, int frameno, double atime, boolean affects_current);
 void buffer_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data, int clipno,

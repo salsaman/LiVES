@@ -1193,6 +1193,13 @@ frombak:
 
       if (is_ascrap) goto get_avals;
 
+      if (sfile->header_version >= 104) {
+        uint64_t uid = sfile->unique_id;
+        detail = CLIP_DETAILS_UNIQUE_ID;
+        retval = get_clip_value(fileno, detail, &sfile->unique_id, 0);
+        if (!sfile->unique_id) sfile->unique_id = uid;
+      }
+
       detail = CLIP_DETAILS_FRAMES;
       retval = get_clip_value(fileno, detail, &sfile->frames, 0);
 

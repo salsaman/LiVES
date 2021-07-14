@@ -84,6 +84,13 @@ void open_set_file(int clipnum);
 //// utils (API) /////
 LiVESList *get_set_list(const char *dir, boolean utf8);
 
+// layout management
+// remove from global layouts map for set
+void remove_layout_files(LiVESList *lmap);
+
+// reload the global layout map
+void recover_layout_map(int numclips);
+
 /// load / save / delete /////
 boolean on_save_set_activate(LiVESWidget *, livespointer);
 char *on_load_set_activate(LiVESMenuItem *, livespointer);

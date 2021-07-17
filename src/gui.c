@@ -395,10 +395,7 @@ void create_LiVES(void) {
   LiVESWidget *label;
   LiVESWidget *hseparator;
   LiVESWidget *t_label;
-
-#if defined HAVE_YUV4MPEG || defined HAVE_UNICAP
   LiVESWidget *submenu;
-#endif
 
   LiVESWidget *new_test_rfx;
   LiVESWidget *copy_rfx;

@@ -4859,7 +4859,7 @@ boolean render_to_clip(boolean new_clip) {
       }
     } else {
       if (mainw->multitrack) rendaud = mainw->multitrack->opts.render_audp;
-      else rendaud = prefs->render_audio;
+      else rendaud = FALSE;
       // TODO: prompt just for clip name
     }
 

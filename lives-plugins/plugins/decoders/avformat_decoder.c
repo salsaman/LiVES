@@ -1193,8 +1193,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
           fprintf(stderr, "ret was %d for tframe %ld\n", ret, tframe);
 #endif
           if (ret < 0) {
-            xframe = (int64_t)((double)MyPts / (double)AV_TIME_BASE * cdata->fps - .5);
-            priv->last_frame = xframe;
+            //xframe = (int64_t)((double)MyPts / (double)AV_TIME_BASE * cdata->fps - .5);
+            //priv->last_frame = xframe;
+            priv->last_frame = -1;
             goto cleanup;
           }
         } while (priv->packet.stream_index != priv->vstream);
@@ -1248,7 +1249,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #if LIBAVCODEC_VERSION_MAJOR >= 52
       ret = avcodec_decode_video2(cc, priv->pFrame, &gotFrame, &priv->packet);
       if (ret < 0) {
-        fprintf(stderr, "avcode_decode_video2 returned %d for frame %ld !\n", ret, tframe);
+        fprintf(stderr, "avcodec_decode_video2 returned %d for frame %ld !\n", ret, tframe);
         goto cleanup;
       }
       ret = FFMIN(ret, priv->packet.size);

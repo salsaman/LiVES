@@ -226,7 +226,7 @@ static void text_size_cb(LiVESSpinButton * button, livespointer data) {
 }
 
 static void font_entry_cb(LiVESEntry * entry, livespointer data) {
-  LiVESFontButton *button = (LiVESFontButton *)fchooser.font_param->widgets[1];
+  LiVESFontButton *button = (LiVESFontButton *)fchooser.font_param->widgets[2];
   //lives_font_chooser_set_font(LIVES_FONT_CHOOSER(button), lives_entry_get_text(entry));
   if (fchooser.size_param) text_size_cb(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), data);
   font_set_cb(button, data);
@@ -424,7 +424,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
                             LIVES_WIDGET_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(font_entry_cb), (livespointer)rfx);
 
-      if (fchooser.nwidgets == 1) {
+      if (fchooser.size_param) {
         double fsize = get_double_param(fchooser.size_param);
         lives_entry_set_text(LIVES_ENTRY(param->widgets[0]), param->value);
         font_entry_cb(LIVES_ENTRY(param->widgets[0]), (livespointer)rfx);

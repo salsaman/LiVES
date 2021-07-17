@@ -376,20 +376,22 @@ void lives_exit(int signum) {
             }
           }
           mainw->close_keep_frames = FALSE;
-        }
 
-        if (*mainw->set_name && prefs->workdir_tx_intent != LIVES_INTENTION_DELETE) {
-          if (!mainw->leave_files && !mainw->leave_recovery) {
-            // delete the current set (this is for DELETE_SET)
-            cleanup_set_dir(mainw->set_name);
-            lives_memset(mainw->set_name, 0, 1);
-            mainw->was_set = FALSE;
-            lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
-          } else {
-            unlock_set_file(mainw->set_name);
+          if (prefs->workdir_tx_intent != LIVES_INTENTION_DELETE) {
+            if (!mainw->leave_files && !mainw->leave_recovery) {
+              // delete the current set (this is for DELETE_SET)
+              cleanup_set_dir(mainw->set_name);
+              lives_memset(mainw->set_name, 0, 1);
+              mainw->was_set = FALSE;
+              lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
+            } else {
+              unlock_set_file(mainw->set_name);
+            }
           }
         }
       }
+
+      mainw->clips_available = 0;
 
       if (!signum && *future_prefs->workdir
           && lives_strcmp(future_prefs->workdir, prefs->workdir)) {
@@ -2155,20 +2157,19 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       mainw->mt_needs_idlefunc = TRUE;
     }
     mt_desensitise(mainw->multitrack);
+    if (mainw->multitrack->event_list) {
+      if (mainw->only_close) {
+        if (!check_for_layout_del(mainw->multitrack, FALSE)) {
+          if (mainw->multitrack) {
+            mt_sensitise(mainw->multitrack);
+            maybe_add_mt_idlefunc();
+          }
+          return;
+	  // *INDENT-OFF*
+	}}}
+    // *INDENT-ON*
+    mainw->multitrack->clip_selected = -1;
   }
-
-  if (mainw->multitrack && mainw->multitrack->event_list) {
-    if (mainw->only_close) {
-      if (!check_for_layout_del(mainw->multitrack, FALSE)) {
-        if (mainw->multitrack) {
-          mt_sensitise(mainw->multitrack);
-          maybe_add_mt_idlefunc();
-        }
-        return;
-	// *INDENT-OFF*
-      }}}
-  // *INDENT-ON*
-
   if (mainw->stored_event_list && mainw->stored_event_list_changed) {
     if (!check_for_layout_del(NULL, FALSE)) {
       mainw->only_close = mainw->is_exiting = FALSE;
@@ -12341,7 +12342,8 @@ void on_lerrors_clear_clicked(LiVESButton * button, livespointer user_data) {
   if (close) {
     boolean needs_idlefunc = mainw->mt_needs_idlefunc;
     mainw->mt_needs_idlefunc = FALSE;
-    lives_general_button_clicked(button, (livespointer *)&textwindow);
+    lives_general_button_clicked(button, textwindow);
+    textwindow = NULL;
     mainw->mt_needs_idlefunc = needs_idlefunc;
   } else {
     lives_widget_queue_draw(lives_widget_get_toplevel(LIVES_WIDGET(button)));

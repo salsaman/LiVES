@@ -472,6 +472,7 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
         if (strcmp(mainw->files[offs]->handle, buf)) continue;
 
         // got a match - index the current clip order -> clip order in layout
+        //g_print("RENUM pt a %d = %d\n", clipn, offs);
         renumbered_clips[clipn] = offs;
         // lfps contains the fps at the time of the crash
         lfps[offs] = vard;
@@ -1043,11 +1044,13 @@ static void renumber_clips(void) {
 
         if (mainw->first_free_file == cclip) mainw->first_free_file++;
 
+        //g_print("RENUM pt a2 %d = %d\n", i, cclip);
         renumbered_clips[i] = cclip;
       }
       // process this clip again
       else cclip--;
     } else {
+      //g_print("RENUM pt a3 %d = %d\n", cclip, cclip);
       renumbered_clips[cclip] = cclip;
       if (i == cclip) i++;
     }
@@ -1087,6 +1090,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
   renumbered_clips[0] = 0;
 
   for (i = 1; i <= MAX_FILES && mainw->files[i]; i++) {
+    //g_print("RENUM pt a4 %d = %d\n", i, 0);
     renumbered_clips[i] = 0;
     if (mainw->files[i]) lfps[i] = mainw->files[i]->fps;
     else lfps[i] = cfile->fps;
@@ -1097,6 +1101,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
     for (i = 1; i <= MAX_FILES && mainw->files[i]; i++) {
       for (lmap = mainw->files[i]->layout_map; lmap; lmap = lmap->next) {
         // lmap->data starts with layout name
+        //g_print("for i, got %s vs %s\n", lmap->data, lfile);
         if (!lives_strncmp((char *)lmap->data, lfile, strlen(lfile))) {
           threaded_dialog_spin(0.);
           array = lives_strsplit((char *)lmap->data, "|", -1);
@@ -1105,6 +1110,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
           // piece 2 is the clip number within the specific layout
           rnc = atoi(array[1]);
           if (rnc < 0 || rnc > MAX_FILES) continue;
+          //g_print("RENUM pt a5 %d = %d\n", rnc, i);
           renumbered_clips[rnc] = i;
 
           // original fps
@@ -1119,6 +1125,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
     // current event_list
     for (i = 1; i <= MAX_FILES && mainw->files[i]; i++) {
       if (mainw->files[i]->stored_layout_idx != -1) {
+        //g_print("RENUM pt a6 %d = %d\n", i, i);
         renumbered_clips[mainw->files[i]->stored_layout_idx] = i;
       }
       lfps[i] = mainw->files[i]->stored_layout_fps;
@@ -3560,7 +3567,36 @@ void stored_event_list_free_all(boolean wiped) {
 }
 
 
+static void mt_nullify_events(lives_mt * mt) {
+  mt->fm_edit_event = NULL; // this might have been deleted; etc., c.f. fixup_events
+  mt->init_event = NULL;
+  mt->selected_init_event = NULL;
+  mt->specific_event = NULL;
+  mt->avol_init_event = NULL; // we will try to relocate this in mt_init_tracks()
+  mt->pb_start_event = NULL;
+  mt->pb_loop_event = NULL;
+}
+
+
 LIVES_INLINE void print_layout_wiped(void) {d_print(_("Layout was wiped.\n"));}
+
+static void wipe_layout_inner(lives_mt * mt) {
+  close_scrap_file(TRUE);
+  close_ascrap_file(TRUE);
+
+  recover_layout_cancelled(FALSE);
+  mainw->recording_recovered = FALSE;
+
+  event_list_free(mt->event_list);
+  event_list_free_undos(mt);
+  mt->event_list = NULL;
+
+  mt_nullify_events(mt);
+  mt->block_selected = NULL;
+
+  mt_clear_timeline(mt);
+  print_layout_wiped();
+}
 
 
 boolean check_for_layout_del(lives_mt * mt, boolean exiting) {
@@ -3611,14 +3647,7 @@ boolean check_for_layout_del(lives_mt * mt, boolean exiting) {
     stored_event_list_free_all(TRUE);
     print_layout_wiped();
   } else if (mt && mt->event_list && (exiting || resp == 1)) {
-    event_list_free(mt->event_list);
-    event_list_free_undos(mt);
-    mt->event_list = NULL;
-    mt_clear_timeline(mt);
-    close_scrap_file(TRUE);
-    close_ascrap_file(TRUE);
-    mainw->recording_recovered = FALSE;
-    print_layout_wiped();
+    wipe_layout_inner(mt);
   }
   prefs->letterbox_mt = future_prefs->letterbox_mt;
   return TRUE;
@@ -7347,6 +7376,7 @@ static boolean on_tleb_enter(LiVESWidget * widget, LiVESXEventCrossing * event, 
 void reset_renumbering(void) {
   for (int i = 1; i <= MAX_FILES; i++) {
     if (mainw->files[i]) {
+      //g_print("RENUM pt a7 %d = %d\n", i, i);
       renumbered_clips[i] = i;
     } else renumbered_clips[i] = 0;
   }
@@ -7842,6 +7872,7 @@ void delete_video_track(lives_mt * mt, int layer, boolean full) {
 
   if ((bgimg = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg")) != NULL) {
     lives_painter_surface_destroy(bgimg);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg", NULL);
   }
 
   checkbutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "checkbutton");
@@ -9751,7 +9782,9 @@ void in_out_start_changed(LiVESWidget * widget, livespointer user_data) {
     mt->opts.insert_mode = insert_mode;
   }
 
-  offset_end = (new_start_tc = block->offset_start) + (weed_timecode_t)((double)(track >= 0) * TICKS_PER_SECOND_DBL / mt->fps) +
+  offset_end = (new_start_tc =
+                  block->offset_start) + (weed_timecode_t)((double)(track >= 0)
+                      * TICKS_PER_SECOND_DBL / mt->fps) +
                avel * (get_event_timecode(block->end_event) - get_event_timecode(block->start_event));
 
   if (mt->poly_state == POLY_IN_OUT) {
@@ -12767,11 +12800,7 @@ void multitrack_undo(LiVESMenuItem * menuitem, livespointer user_data) {
     delete_audio_tracks(mt, mt->audio_draws, FALSE);
     mt->audio_draws = NULL;
 
-    mt->fm_edit_event = NULL; // this might have been deleted; etc., c.f. fixup_events
-    mt->init_event = NULL;
-    mt->selected_init_event = NULL;
-    mt->specific_event = NULL;
-    mt->avol_init_event = NULL; // we will try to relocate this in mt_init_tracks()
+    mt_nullify_events(mt);
 
     mt_init_tracks(mt, FALSE);
 
@@ -12960,11 +12989,7 @@ void multitrack_redo(LiVESMenuItem * menuitem, livespointer user_data) {
     delete_audio_tracks(mt, mt->audio_draws, FALSE);
     mt->audio_draws = NULL;
 
-    mt->fm_edit_event = NULL; // this might have been deleted; etc., c.f. fixup_events
-    mt->init_event = NULL;
-    mt->selected_init_event = NULL;
-    mt->specific_event = NULL;
-    mt->avol_init_event = NULL; // we will try to relocate this in mt_init_tracks()
+    mt_nullify_events(mt);
 
     mt_init_tracks(mt, FALSE);
 
@@ -13996,7 +14021,7 @@ void update_filter_events(lives_mt * mt, weed_plant_t *first_event, weed_timecod
 
   int nins;
 
-  register int i;
+  int i;
 
   event = get_last_frame_event(mt->event_list);
   if (event) last_frame_tc = get_event_timecode(event);
@@ -16237,7 +16262,7 @@ void on_resetp_clicked(LiVESWidget * button, livespointer user_data) {
     weed_reinit_effect(mt->current_rfx->source, TRUE);
     mt->current_rfx->needs_reinit = FALSE;
   }
-  mt->current_rfx->flags ^= RFX_FLAGS_NO_RESET;
+  mt->current_rfx->flags &= ~RFX_FLAGS_NO_RESET;
   mt->opts.fx_auto_preview = aprev;
   lives_widget_set_sensitive(mt->apply_fx_button, can_apply);
   lives_widget_set_sensitive(mt->resetp_button, check_can_resetp(mt));
@@ -16384,6 +16409,14 @@ void mt_fixup_events(lives_mt * mt, weed_plant_t *old_event, weed_plant_t *new_e
   if (mt->specific_event == old_event) {
     //g_print("spec event\n");
     mt->specific_event = new_event;
+  }
+  if (mt->pb_start_event == old_event) {
+    //g_print("spec event\n");
+    mt->pb_start_event = new_event;
+  }
+  if (mt->pb_loop_event == old_event) {
+    //g_print("spec event\n");
+    mt->pb_loop_event = new_event;
   }
 }
 
@@ -17281,7 +17314,7 @@ static char *rec_error_add(char *ebuf, char *msg, int num, weed_timecode_t tc) {
     else xnew = lives_strdup_printf("%s %d at timecode %"PRId64"\n", msg, num, tc);
   }
   tmp = lives_strconcat(ebuf, xnew, NULL);
-  //#define SILENT_EVENT_LIST_LOAD
+#define SILENT_EVENT_LIST_LOAD
 #ifndef SILENT_EVENT_LIST_LOAD
   lives_printerr("Rec error: %s", xnew);
 #endif
@@ -18993,29 +19026,15 @@ void wipe_layout(lives_mt * mt) {
     mt->idlefunc = 0;
   }
 
-  print_layout_wiped();
-
-  close_scrap_file(TRUE);
-  close_ascrap_file(TRUE);
-
-  recover_layout_cancelled(FALSE);
-  mainw->recording_recovered = FALSE;
-
   if (*mt->layout_name && !strcmp(mt->layout_name, prefs->ar_layout_name)) {
     set_string_pref(PREF_AR_LAYOUT, "");
     lives_memset(prefs->ar_layout_name, 0, 1);
     prefs->ar_layout = FALSE;
   }
 
-  event_list_free(mt->event_list);
-  mt->event_list = NULL;
-
-  event_list_free_undos(mt);
-
-  mt_clear_timeline(mt);
+  wipe_layout_inner(mt);
 
   mt_sensitise(mt);
-
   mt->idlefunc = mt_idle_add(mt);
 }
 

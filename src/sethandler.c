@@ -378,7 +378,7 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
         }
       }
 
-      if (THREADVAR(write_failed) == ord_fd) {
+      if (THREADVAR(write_failed)) {
         THREADVAR(write_failed) = 0;
         retval = do_write_failed_error_s_with_retry(ordfile, NULL);
       }
@@ -645,81 +645,90 @@ void recover_layout_map(int numclips) {
   if (numclips > MAX_FILES) numclips = MAX_FILES;
 
   if ((mlist = load_layout_map())) {
-    int i;
+    for (int pass = 0; pass < 2; pass++) {
+      // assign layout map to clips
+      for (int i = 1; mlist && i <= numclips; i++) {
+        lives_clip_t *sfile = mainw->files[i];
+        if (!sfile) continue;
+        lmap_node = mlist;
+        while (lmap_node) {
+          lmap_node_next = lmap_node->next;
+          lmap_entry = (layout_map *)lmap_node->data;
+          check_handle = lives_strdup(sfile->handle);
 
-    // assign layout map to clips
-    for (i = 1; i <= numclips; i++) {
-      lives_clip_t *sfile = mainw->files[i];
-      if (!sfile) continue;
-      lmap_node = mlist;
-      while (lmap_node) {
-        lmap_node_next = lmap_node->next;
-        lmap_entry = (layout_map *)lmap_node->data;
-        check_handle = lives_strdup(sfile->handle);
-
-        if (!strstr(lmap_entry->handle, "/")) {
-          lives_free(check_handle);
-          check_handle = lives_path_get_basename(sfile->handle);
-        }
-
-        if ((!strcmp(check_handle, lmap_entry->handle) && (sfile->unique_id == lmap_entry->unique_id)) ||
-            (prefs->mt_load_fuzzy && (!strcmp(check_handle, lmap_entry->handle) || (sfile->unique_id == lmap_entry->unique_id)))
-           ) {
-          // check handle and unique id match
-          // got a match, assign list to layout_map and delete this node
-          lmap_entry_list = lmap_entry->list;
-          while (lmap_entry_list) {
-            lmap_entry_list_next = lmap_entry_list->next;
-            array = lives_strsplit((char *)lmap_entry_list->data, "|", -1);
-            if (!lives_file_test(array[0], LIVES_FILE_TEST_EXISTS)) {
-              //g_print("removing layout because no file %s\n", array[0]);
-              // layout file has been deleted, remove this entry
-              lmap_entry->list = lives_list_remove_node(lmap_entry->list, lmap_entry_list, TRUE);
-            }
-            lives_strfreev(array);
-            lmap_entry_list = lmap_entry_list_next;
+          if (!strstr(lmap_entry->handle, "/")) {
+            lives_free(check_handle);
+            check_handle = lives_path_get_basename(sfile->handle);
           }
-          sfile->layout_map = lmap_entry->list;
 
-          lives_free(lmap_entry->handle);
-          lives_free(lmap_entry->name);
-          lives_free(lmap_entry);
+          //g_print("CF %s and %s, %lu and %lu\n", check_handle, lmap_entry->handle, sfile->unique_id, lmap_entry->unique_id);
 
-          mlist = lives_list_remove_node(mlist, lmap_node, FALSE);
+          if ((!lives_strcmp(check_handle, lmap_entry->handle) && (sfile->unique_id == lmap_entry->unique_id)) ||
+              ((prefs->mt_load_fuzzy || pass == 1)
+               && (!strcmp(check_handle, lmap_entry->handle) || (sfile->unique_id == lmap_entry->unique_id)))
+             ) {
+            // check handle and unique id match
+            // got a match, assign list to layout_map and delete this node
 
-          if (sfile->layout_map) {
-            /// check for missing frames and audio in layouts
-            // TODO: -- needs checking ----
-            mask = 0;
-            mainw->xlays = layout_frame_is_affected(i, sfile->frames + 1, 0, mainw->xlays);
-            if (mainw->xlays) {
-              add_lmap_error(LMAP_ERROR_DELETE_FRAMES, sfile->name, (livespointer)sfile->layout_map, i,
-                             sfile->frames, 0., FALSE);
-              lives_list_free_all(&mainw->xlays);
-              mask |= WARN_MASK_LAYOUT_DELETE_FRAMES;
-              //g_print("FRMS %d\n", cfile->frames);
+            g_print("\nGOT MATCH\n");
+
+            lmap_entry_list = lmap_entry->list;
+            while (lmap_entry_list) {
+              lmap_entry_list_next = lmap_entry_list->next;
+              array = lives_strsplit((char *)lmap_entry_list->data, "|", -1);
+              g_print("checking %s\n", array[0]);
+              if (!lives_file_test(array[0], LIVES_FILE_TEST_EXISTS)) {
+                //g_print("removing layout because no file %s\n", array[0]);
+                // layout file has been deleted, remove this entry
+                lmap_entry->list = lives_list_remove_node(lmap_entry->list, lmap_entry_list, TRUE);
+                g_print("NOTFOUND\n");
+              }
+              lives_strfreev(array);
+              lmap_entry_list = lmap_entry_list_next;
             }
+            sfile->layout_map = lmap_entry->list;
+            g_print("set lmap for clip %d to %p\n", i, lmap_entry->list);
 
-            mainw->xlays = layout_audio_is_affected(i, sfile->laudio_time, 0., mainw->xlays);
-            if (mainw->xlays) {
-              add_lmap_error(LMAP_ERROR_DELETE_AUDIO, sfile->name, (livespointer)sfile->layout_map, i,
-                             sfile->frames, sfile->laudio_time, FALSE);
-              lives_list_free_all(&mainw->xlays);
-              mask |= WARN_MASK_LAYOUT_DELETE_AUDIO;
-              //g_print("AUD %f\n", cfile->laudio_time);
+            lives_free(lmap_entry->handle);
+            lives_free(lmap_entry->name);
+            lives_free(lmap_entry);
+
+            mlist = lives_list_remove_node(mlist, lmap_node, FALSE);
+
+            if (sfile->layout_map) {
+              /// check for missing frames and audio in layouts
+              // TODO: -- needs checking ----
+              mask = 0;
+              mainw->xlays = layout_frame_is_affected(i, sfile->frames + 1, 0, mainw->xlays);
+              if (mainw->xlays) {
+                add_lmap_error(LMAP_ERROR_DELETE_FRAMES, sfile->name, (livespointer)sfile->layout_map, i,
+                               sfile->frames, 0., FALSE);
+                lives_list_free_all(&mainw->xlays);
+                mask |= WARN_MASK_LAYOUT_DELETE_FRAMES;
+                //g_print("FRMS %d\n", cfile->frames);
+              }
+
+              mainw->xlays = layout_audio_is_affected(i, sfile->laudio_time, 0., mainw->xlays);
+              if (mainw->xlays) {
+                add_lmap_error(LMAP_ERROR_DELETE_AUDIO, sfile->name, (livespointer)sfile->layout_map, i,
+                               sfile->frames, sfile->laudio_time, FALSE);
+                lives_list_free_all(&mainw->xlays);
+                mask |= WARN_MASK_LAYOUT_DELETE_AUDIO;
+                //g_print("AUD %f\n", cfile->laudio_time);
+              }
+              if (mask != 0) {
+                popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(mask));
+              }
             }
-            if (mask != 0) {
-              popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(mask));
-            }
+            lives_free(check_handle);
+            break;
           }
           lives_free(check_handle);
-          break;
+          lmap_node = lmap_node_next;
         }
-        lives_free(check_handle);
-        lmap_node = lmap_node_next;
       }
+      if (!mlist) break;
     }
-
     lmap_node = mlist;
     while (lmap_node) {
       lmap_entry = (layout_map *)lmap_node->data;

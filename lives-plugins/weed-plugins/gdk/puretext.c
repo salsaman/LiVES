@@ -2787,7 +2787,7 @@ static weed_error_t pt_disp(weed_plant_t *inst, weed_plant_t *param, int inverse
     double dval = weed_param_get_value_double(param);
     if (inverse == WEED_TRUE) {
       if (dval <= 0.) return WEED_ERROR_NOT_READY;
-      dval = log(dval) * 5.;
+      dval = log(dval * 5.);
     } else dval = exp(dval) / 5.;
     gui = weed_param_get_gui(param);
     return weed_set_double_value(gui, WEED_LEAF_DISPLAY_VALUE, dval);

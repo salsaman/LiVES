@@ -1575,7 +1575,7 @@ else if (mt->current_rfx && mt->init_event && mt->poly_state == POLY_PARAMS &&
         weed_reinit_effect(mt->current_rfx->source, TRUE);
         mt->current_rfx->needs_reinit = FALSE;
       }
-      mt->current_rfx->flags ^= RFX_FLAGS_NO_RESET;
+      mt->current_rfx->flags &= ~RFX_FLAGS_NO_RESET;
       mt->opts.fx_auto_preview = aprev;
       activate_mt_preview(mt);
     } else mt_show_current_frame(mt, FALSE);
@@ -2284,7 +2284,7 @@ void mt_clip_select(lives_mt * mt, boolean scroll) {
 
   if (mt->clip_selected < 0 || (was_neg && mt->clip_selected == 0)) mt->clip_selected = len - 1;
 
-  if (mt->clip_selected < 0) {
+  if (!IS_VALID_CLIP(mt->clip_selected)) {
     mt->file_selected = -1;
     lives_list_free(list);
     return;

@@ -659,7 +659,7 @@ lives_render_error_t realfx_progress(boolean reset) {
 
   if (has_video_filters(FALSE) || resize_instance) {
     frameticks = (i - cfile->start + 1.) / cfile->fps * TICKS_PER_SECOND;
-    THREADVAR(rowstride_alignment_hint) = 4;
+    //THREADVAR(rowstride_alignment_hint) = 4;
     layer = lives_layer_new_for_frame(mainw->current_file, i);
     if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), frameticks)) {
       // do_read_failed_error_s() cannot be used here as we dont know the filename

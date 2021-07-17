@@ -1897,6 +1897,14 @@ void reset_effort(void) {
 void update_effort(int nthings, boolean badthings) {
   int spcycles;
   short pb_quality = prefs->pb_quality;
+
+  if (LIVES_IS_RENDERING) {
+    mainw->effort = -EFFORT_RANGE_MAX;
+    prefs->pb_quality = PB_QUALITY_HIGH;
+    return;
+  }
+
+
   if (!inited) reset_effort();
   if (!nthings) return;
 

@@ -13348,16 +13348,21 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_can_focus_and_default(LiVES
 }
 
 
-void lives_general_button_clicked(LiVESButton * button, livespointer * data_to_free) {
+void lives_general_button_clicked(LiVESButton * button, livespointer data_to_free) {
   // destroy the button top-level and free data
   if (LIVES_IS_WIDGET(lives_widget_get_toplevel(LIVES_WIDGET(button)))) {
     lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   } else abort();
-  lives_freep(data_to_free);
+  if (data_to_free) lives_free(data_to_free);
 
   /// TODO: this is BAD. Need to check that mainw->mt_needs_idlefunc is set conistently
   maybe_add_mt_idlefunc(); ///< add idlefunc iff mainw->mt_needs_idlefunc is set
+}
+
+void lives_general_button_clickedp(LiVESButton * button, livespointer * data_to_free) {
+  lives_general_button_clicked(button, NULL);
+  lives_freep(data_to_free);
 }
 
 

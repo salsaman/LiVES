@@ -1292,7 +1292,8 @@ boolean lives_text_view_set_markup(LiVESTextView *, const char *markup);
 boolean lives_text_buffer_insert_at_end(LiVESTextBuffer *, const char *text);
 boolean lives_text_buffer_insert_markup_at_end(LiVESTextBuffer *, const char *markup);
 
-void lives_general_button_clicked(LiVESButton *, livespointer *data_to_free);
+void lives_general_button_clicked(LiVESButton *, livespointer data_to_free);
+void lives_general_button_clickedp(LiVESButton *, livespointer *ptr_data_to_free);
 
 boolean lives_spin_button_configure(LiVESSpinButton *, double value, double lower, double upper,
                                     double step_increment, double page_increment);

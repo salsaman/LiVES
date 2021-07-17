@@ -7183,7 +7183,8 @@ void on_prefs_close_clicked(LiVESButton * button, livespointer user_data) {
       lives_list_free(future_prefs->disabled_decoders);
       future_prefs->disabled_decoders = NULL;
     }
-    lives_general_button_clicked(button, (livespointer *)&prefsw);
+    lives_general_button_clicked(button, prefsw);
+    prefsw = NULL;
   }
   if (mainw->prefs_need_restart) {
     do_shutdown_msg();

@@ -2212,7 +2212,7 @@ q_done:
 
         if (type < 8 || type == 11) {
           lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                    LIVES_GUI_CALLBACK(lives_general_button_clicked), &resaudw);
+                                    LIVES_GUI_CALLBACK(lives_general_button_clicked), resaudw);
           if (type == 1) {
             lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                                       LIVES_GUI_CALLBACK(on_resaudio_ok_clicked), NULL);

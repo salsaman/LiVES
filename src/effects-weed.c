@@ -1171,7 +1171,7 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
   //   thus we need to tell the player to ignore dropped frames for this cycle when updating effort
 
   // player will reset this for the next cycle
-  if (LIVES_IS_PLAYING && mainw->scratch == SCRATCH_NONE)
+  if (LIVES_IS_PLAYING && !mainw->multitrack && mainw->scratch == SCRATCH_NONE)
     mainw->scratch = SCRATCH_JUMP_NORESYNC;
 
   // +1 ref
@@ -1637,7 +1637,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE)
     needs_reinit = TRUE;
 
-  if (LIVES_IS_RENDERING) pb_quality = PB_QUALITY_HIGH;
+  if (LIVES_IS_RENDERING) pb_quality = prefs->pb_quality = PB_QUALITY_HIGH;
 
   // TODO - check if inited, if not return with error (check also for filters with no init_func)
 
@@ -1977,7 +1977,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       inwidth = weed_layer_get_width_pixels(layer);
       inheight = weed_layer_get_height(layer);
 
-      if (!svary || prefs->pb_quality == PB_QUALITY_LOW || !is_converter) {
+      if (!svary || pb_quality == PB_QUALITY_LOW || !is_converter) {
         // track the layer size as we pass through the effects chain
         // initially we use NATURAL_SIZE - this allows, for example, generators to have a size which matches the
         // output for blending, but still acting as if they had their original size / aspect ratio
@@ -2068,7 +2068,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // thus at least one of the frames will not need any resizing / letterboxing
 
     if (!mainw->multitrack) {
-      if (!svary || prefs->pb_quality == PB_QUALITY_LOW || !is_converter) {
+      if (!svary || pb_quality == PB_QUALITY_LOW || !is_converter) {
         if (opwidth && opheight && letterbox) {
           // since we will letterbox the final result into the player, we calculate the area
           // we will draw into as the 'player size'
@@ -2458,8 +2458,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // which will be width * pixels_per_macropixel of the original channel palette, which is the divisor we used when
     // setting the channel width. resize_layer() will handle conversion of the macropixel sizes between layer palette
     // and opalette
-    if ((!svary && (inwidth != width || inheight != height))
-        || (svary && (inwidth > width || inheight > height || letterbox))) {
+    if (width && height && ((!svary && (inwidth != width || inheight != height))
+                            || (svary && (inwidth > width || inheight > height || letterbox)))) {
       lives_clip_t *sfile = NULL;
       short interp = get_interp_value(pb_quality, TRUE);
       if (letterbox && !orig_layer) {
@@ -3903,7 +3903,7 @@ apply_inst3:
 
 void weed_apply_audio_effects(weed_plant_t *filter_map, weed_layer_t **layers, int nbtracks, int nchans, int64_t nsamps,
                               double arate, weed_timecode_t tc, double * vis) {
-  int i, num_inst, error;
+  int num_inst;
   void **init_events;
   weed_plant_t *init_event, *filter;
   char *fhash;
@@ -3919,15 +3919,20 @@ void weed_apply_audio_effects(weed_plant_t *filter_map, weed_layer_t **layers, i
   }
   mainw->pchains = get_event_pchains();
   init_events = weed_get_voidptr_array_counted(filter_map, WEED_LEAF_INIT_EVENTS, &num_inst);
-  for (i = 0; i < num_inst; i++) {
+  for (int i = 0; i < num_inst; i++) {
     init_event = (weed_plant_t *)init_events[i];
-    fhash = weed_get_string_value(init_event, WEED_LEAF_FILTER, &error);
-    filter = get_weed_filter(weed_get_idx_for_hashname(fhash, TRUE));
-    lives_freep((void **)&fhash);
-    if (has_audio_chans_in(filter, FALSE) && !has_video_chans_in(filter, FALSE) && !has_video_chans_out(filter, FALSE) &&
-        has_audio_chans_out(filter, FALSE)) {
-      weed_apply_audio_instance(init_event, layers, nbtracks, nchans, nsamps, arate, tc, vis);
+    //weed_instance_ref(init_event);
+
+    fhash = weed_get_string_value(init_event, WEED_LEAF_FILTER, NULL);
+    if (fhash) {
+      filter = get_weed_filter(weed_get_idx_for_hashname(fhash, TRUE));
+      lives_freep((void **)&fhash);
+      if (has_audio_chans_in(filter, FALSE) && !has_video_chans_in(filter, FALSE) && !has_video_chans_out(filter, FALSE) &&
+          has_audio_chans_out(filter, FALSE)) {
+        weed_apply_audio_instance(init_event, layers, nbtracks, nchans, nsamps, arate, tc, vis);
+      }
     }
+    //weed_instance_unref(init_event);
     // TODO *** - also run any pure data processing filters which feed into audio filters
   }
   lives_freep((void **)&init_events);

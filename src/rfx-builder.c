@@ -4533,7 +4533,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
                                  LIVES_KEY_e, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
 
     lives_signal_sync_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_realfx_activate), &mainw->rendered_fx[0]);
+                         LIVES_GUI_CALLBACK(on_realfx_activate), mainw->rendered_fx[0]);
 
     mainw->rendered_fx[0]->menuitem = menuitem;
     mainw->rendered_fx[0]->num_in_channels = 1;

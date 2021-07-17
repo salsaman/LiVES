@@ -2769,7 +2769,6 @@ void play_file(void) {
           if (audio_player == AUD_PLAYER_PULSE) {
             int i;
             mainw->write_abuf = 0;
-
             /// fill our audio buffers now
             /// this will also get our effects state
 
@@ -2878,7 +2877,7 @@ void play_file(void) {
         mainw->effort = 0;
         if (mainw->multitrack) pb_start_event = mainw->multitrack->pb_start_event;
       }
-    } while (mainw->multitrack && (mainw->loop_cont || mainw->scratch != SCRATCH_NONE) &&
+    } while (mainw->multitrack && mainw->loop_cont &&
              (mainw->cancelled == CANCEL_NONE || mainw->cancelled == CANCEL_EVENT_LIST_END));
   }
 
@@ -5559,7 +5558,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
     if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
-    if (mainw->current_file < 1) continue;
+    if (!CURRENT_CLIP_IS_VALID) continue;
 
     get_total_time(cfile);
 

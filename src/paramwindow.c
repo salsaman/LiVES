@@ -1345,7 +1345,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
             && (pnum = pnum + poffset) < rfx->num_params && !used[pnum]) {
           // parameter, eg. p1 ////////////////////////////
           param = &rfx->params[pnum];
-          if (!chk_params && !(rfx->flags & RFX_FLAGS_NO_RESET)) {
+          if (!chk_params && (rfx->flags & RFX_FLAGS_NO_RESET) != RFX_FLAGS_NO_RESET) {
             rfx->params[pnum].flags &= ~PARAM_FLAGS_VALUE_SET;
           }
           if (rfx->source_type == LIVES_RFX_SOURCE_WEED) {
@@ -1500,7 +1500,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     // add any unused parameters
     for (i = 0; i < rfx->num_params; i++) {
       param = &rfx->params[i];
-      if (!chk_params && !(rfx->flags & RFX_FLAGS_NO_RESET)) {
+      if (!chk_params && (rfx->flags & RFX_FLAGS_NO_RESET) != RFX_FLAGS_NO_RESET) {
         param->flags &= ~PARAM_FLAGS_VALUE_SET;
       }
       if (used[i]) {
@@ -1680,7 +1680,7 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
   if (param->reinit) add_scalers = FALSE;
 
   // for plugins (encoders and video playback) sliders look silly
-  if (rfx->flags & RFX_FLAGS_NO_SLIDERS) add_scalers = FALSE;
+  if ((rfx->flags & RFX_FLAGS_NO_SLIDERS) == RFX_FLAGS_NO_SLIDERS) add_scalers = FALSE;
 
   if (LIVES_IS_HBOX(LIVES_WIDGET(box))) {
     hbox = LIVES_WIDGET(box);
@@ -1820,6 +1820,7 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton),
                                  PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
     param->widgets[0] = spinbutton;
+
     param->widgets[++wcount] = widget_opts.last_label;
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(param->widgets[0]), RFX_KEY, rfx);
 
@@ -2150,10 +2151,10 @@ boolean update_widget_vis(lives_rfx_t *rfx, int key, int mode) {
         if (param->type == LIVES_PARAM_COLRGB24 && j == 3 && !param->widgets[j]) continue;
         if (!param->widgets[j]) break;
         if (param->type == LIVES_PARAM_NUM) {
-          if (rfx->flags & RFX_FLAGS_UPD_FROM_GUI) {
+          if ((rfx->flags & RFX_FLAGS_UPD_FROM_GUI) == RFX_FLAGS_UPD_FROM_GUI) {
             set_value_from_dispval(lives_spin_button_get_adjustment
                                    (LIVES_SPIN_BUTTON(param->widgets[0])), param);
-          } else if (rfx->flags & RFX_FLAGS_UPD_FROM_VAL) {
+          } else if ((rfx->flags & RFX_FLAGS_UPD_FROM_VAL) == RFX_FLAGS_UPD_FROM_VAL) {
             lives_signal_handlers_block_by_func(param->widgets[0],
                                                 (livespointer)after_param_value_changed,
                                                 (livespointer)rfx);
@@ -2212,7 +2213,11 @@ static void after_any_changed_2(lives_rfx_t *rfx, lives_param_t *param, boolean 
   lives_filter_error_t retval = FILTER_SUCCESS;
 
   /// update widgets on screen (as a result of copying values or triggers)
-  if (needs_update) update_visual_params(rfx, FALSE);
+  if (needs_update) {
+    rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
+    update_visual_params(rfx, FALSE);
+    rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
+  }
   needs_update = FALSE;
 
   /// only the first param in the chain can reinit
@@ -2527,7 +2532,6 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
               imin = (int)param->min;
               imax = (int)param->max;
               weed_set_int_value(wparam, WEED_LEAF_VALUE, imin);
-              rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
                 if (delback) {
                   // something went wrong...restore original value
@@ -2539,7 +2543,6 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
               }
               imin = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
 
-              rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
               weed_set_int_value(wparam, WEED_LEAF_VALUE, imax);
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
                 if (delback) {
@@ -2589,7 +2592,6 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
               dmax = param->max;
 
               weed_set_double_value(wparam, WEED_LEAF_VALUE, dmin);
-              rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
                 if (delback) {
                   // something went wrong...restore original value
@@ -2602,7 +2604,6 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
               dmin = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
 
               weed_set_double_value(wparam, WEED_LEAF_VALUE, dmax);
-              rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
                 if (delback) {
                   // something went wrong...restore original value

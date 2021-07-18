@@ -1,0 +1,112 @@
+<define>
+|1.8.3
+</define>
+
+<name>
+ccorrect|colour correction
+</name>
+
+<version>
+1|1
+</version>
+
+<unique_id>
+0XED963E5BC8CD926B
+</unique_id>
+
+<author>
+salsaman
+</author>
+
+<requires>
+putils
+</requires>
+
+<language_code>
+0xC0
+</language_code>
+
+<filter_flags>
+may_thread
+</filter_flags>
+
+<palette_list>
+ALL_RGB_PALETTES
+</palette_list>
+
+<in_chans>
+in_channel0
+</in_chans>
+
+<out_chans>
+out_channel0|inplace
+</out_chans>
+
+<params>
+red|_Red factor|num2|1.|0.|4.|
+green|_Green factor|num2|1.|0.|4.|
+blue|_Blue factor|num2|1.|0.|4.|
+</params>
+
+<sdata>
+double ored, ogreen, oblue
+unsigned char r[256], g[256], b[256]
+</sdata>
+
+<static>
+static void make_table(unsigned char *tab, double val) {
+  for (int i = 0; i < 256; i++) {
+    int ival = (val * i + .5);
+    tab[i] = ival > 255 ? (unsigned char)255 : (unsigned char)ival;
+  }
+}
+</static>
+
+<init>
+for (int i = 0; i < 256; i++) {
+  sdata->r[i] = sdata->g[i] = sdata->b[i] = 0;
+}
+sdata->ored = sdata->ogreen = sdata->oblue = 0.;
+</init>
+
+<deinit>
+</deinit>
+
+<process>
+int offs = 0;
+
+if (red != sdata->ored) {
+  make_table(sdata->r, red);
+  sdata->ored = red;
+}
+
+if (green != sdata->ogreen) {
+  make_table(sdata->g, green);
+  sdata->ogreen = green;
+}
+
+if (blue != sdata->oblue) {
+  make_table(sdata->b, blue);
+  sdata->oblue = blue;
+}
+
+offs = rgb_offset(pal);
+width *= psize;
+
+for (int j = 0; j < height; j++) {
+  for (int i = 0; i < width; i += psize) {
+    if (pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_BGRA32) {
+      dst[j * orow + i] = sdata->b[src[j * irow + i]];
+      dst[j * orow + i + 1] = sdata->g[src[j * irow + i + 1]];
+      dst[j * orow + i + 2] = sdata->r[src[j * irow + i + 2]];
+      if (!inplace && pal == WEED_PALETTE_BGRA32) dst[j * orow + i + 3] = src[j * irow + i + 3];
+    } else {
+      if (!inplace && pal == WEED_PALETTE_ARGB32) dst[j * orow + i] = src[j * irow + i];
+      dst[j * orow + i + offs] = sdata->r[src[j * irow + i + offs]];
+      dst[j * orow + i + 1 + offs] = sdata->g[src[j * irow + i + 1 + offs]];
+      dst[j * orow + i + 2 + offs] = sdata->b[src[j * irow + i + 2 + offs]];
+      if (!inplace && pal == WEED_PALETTE_RGBA32) dst[j * orow + i + 3] = src[j * irow + i + 3];
+    }
+  }
+}
+</process>

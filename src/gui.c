@@ -2360,7 +2360,7 @@ void create_LiVES(void) {
   mainw->hseparator = lives_hseparator_new();
 
   if (palette->style & STYLE_1) {
-    lives_box_pack_start(LIVES_BOX(vbox4), mainw->sep_image, FALSE, FALSE, 4. * widget_opts.scale);
+    lives_box_pack_start(LIVES_BOX(vbox4), mainw->sep_image, FALSE, FALSE, 0);
   } else {
     lives_box_pack_start(LIVES_BOX(vbox4), mainw->hseparator, TRUE, TRUE, 0);
   }

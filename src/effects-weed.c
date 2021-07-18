@@ -1177,25 +1177,26 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
   // +1 ref
   weed_instance_ref(inst);
 
-  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY))
-    key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
-
-  if (key != -1) {
-    weed_plant_t *gui;
-    filter_mutex_lock(key);
-    gui = weed_instance_get_gui(inst, FALSE);
-    if (weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL) > 0) {
-      // plugin is easing, so we need to deinit it
-      uint64_t new_rte = GU641 << (key);
-      mainw->rte &= ~new_rte;
-      // WEED_LEAF_EASE_OUT exists, so it'll get deinited right away
-      weed_deinit_effect(key);
-      return FILTER_ERROR_COULD_NOT_REINIT;
+  if (!mainw->multitrack) {
+    if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY))
+      key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
+    if (key != -1) {
+      weed_plant_t *gui;
+      filter_mutex_lock(key);
+      gui = weed_instance_get_gui(inst, FALSE);
+      if (weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL) > 0) {
+        // plugin is easing, so we need to deinit it
+        uint64_t new_rte = GU641 << (key);
+        mainw->rte &= ~new_rte;
+        // WEED_LEAF_EASE_OUT exists, so it'll get deinited right away
+        weed_deinit_effect(key);
+        return FILTER_ERROR_COULD_NOT_REINIT;
+      }
+      filter_mutex_unlock(key);
     }
-    filter_mutex_unlock(key);
-  }
 
-  mainw->blend_palette = WEED_PALETTE_END;
+    mainw->blend_palette = WEED_PALETTE_END;
+  }
 
   if (fx_dialog[1]) rfx = fx_dialog[1]->rfx;
   else if (mainw->multitrack) rfx = mainw->multitrack->current_rfx;
@@ -1628,7 +1629,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   int num_in_alpha = 0, num_out_alpha = 0;
   int nmandout = 0;
   int lcount = 0;
-  int key = -1;
   int i, j, k;
 
   if (prefs->dev_show_timing)
@@ -1650,13 +1650,24 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   }
 
   filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
-  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
 
   if (is_pure_audio(filter, TRUE)) {
     /// we process audio effects elsewhere
     lives_freep((void **)&out_channels);
     return FILTER_ERROR_IS_AUDIO;
   }
+
+  /* if (!mainw->multitrack) { */
+  /*   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) */
+  /*     key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL); */
+  /* } */
+  /* else { */
+  /*   if (weed_plant_has_leaf(init_event, WEED_LEAF_HOST_TAG)) { */
+  /*     char *keystr = weed_get_string_value(init_event, WEED_LEAF_HOST_TAG, NULL); */
+  /*     key = atoi(keystr); */
+  /*     lives_freep((void **)&keystr); */
+  /*   } else return FILTER_ERROR_INVALID_INIT_EVENT; */
+  /* } */
 
   in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL);
 
@@ -1705,7 +1716,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
       /// run it only if it outputs into effects which have video chans
       /// if (!feeds_to_video_filters(key,rte_key_getmode(key+1))) return FILTER_ERROR_NO_IN_CHANNELS;
-      retval = run_process_func(inst, tc, key);
+      retval = run_process_func(inst, tc);
 
       lives_freep((void **)&in_channels);
       return retval;
@@ -2772,7 +2783,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   // TODO - better error handling
   //...finally we are ready to apply the filter
-  retval = run_process_func(inst, tc, key);
+  retval = run_process_func(inst, tc);
 
   /// do gamma correction of any integer RGB(A) parameters
   /// convert in and out parameters to SRGB
@@ -2958,7 +2969,7 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
 }
 
 
-lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc, int key) {
+lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc) {
   weed_plant_t *filter = weed_instance_get_filter(instance, FALSE);
   weed_process_f process_func;
   lives_filter_error_t retval = FILTER_SUCCESS;
@@ -3018,14 +3029,11 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
   int num_in_tracks, num_out_tracks;
 
   int num_inc;
-  int key = -1;
 
   int nchans = 0;
   int nsamps = 0;
 
   int i, j;
-
-  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
 
   if (!get_enabled_channel(inst, 0, TRUE)) {
     // we process generators elsewhere
@@ -3118,8 +3126,20 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
 
   if (CURRENT_CLIP_IS_VALID) weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
 
+  /* if (!mainw->multitrack) { */
+  /*   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) */
+  /*     key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL); */
+  /* } */
+  /* else { */
+  /*   if (weed_plant_has_leaf(init_event, WEED_LEAF_HOST_TAG)) { */
+  /*     char *keystr = weed_get_string_value(init_event, WEED_LEAF_HOST_TAG, NULL); */
+  /*     key = atoi(keystr); */
+  /*     lives_freep((void **)&keystr); */
+  /*   } else return FILTER_ERROR_INVALID_INIT_EVENT; */
+  /* } */
+
   //...finally we are ready to apply the filter
-  retval = run_process_func(inst, tc, key);
+  retval = run_process_func(inst, tc);
 
   if (retval == FILTER_ERROR_INVALID_PLUGIN || retval == FILTER_ERROR_INVALID_FILTER)
     goto done_audio;
@@ -3225,7 +3245,7 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_la
     if (!in_channels) {
       if (!out_channels && weed_plant_has_leaf(instance, WEED_LEAF_OUT_PARAMETERS)) {
         // plugin has no in channels and no out channels, but if it has out parameters then it must be a data processing module
-
+        ;
         // if the data feeds into audio effects then we run it now, otherwise we will run it during the video cycle
         if (!feeds_to_audio_filters(key, rte_key_getmode(key + 1))) return FILTER_ERROR_NO_IN_CHANNELS;
 
@@ -3241,7 +3261,7 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_la
         }
 
         if (CURRENT_CLIP_IS_VALID) weed_set_double_value(instance, WEED_LEAF_FPS, cfile->pb_fps);
-        retval = run_process_func(instance, tc, key);
+        retval = run_process_func(instance, tc);
         return retval;
       }
       lives_free(out_channels);
@@ -3315,7 +3335,7 @@ audinst1:
   if (flags & WEED_FILTER_AUDIO_RATES_MAY_VARY) rvary = TRUE;
   if (flags & WEED_FILTER_CHANNEL_LAYOUTS_MAY_VARY) lvary = TRUE;
 
-  if (vis && vis[0] < 0. && in_tracks[0] <= -nbtracks) {
+  if (vis && vis[0] < 0. && ((nbtracks > 0 && in_tracks[0] <= -nbtracks) || (!nbtracks && in_tracks[0] < 0))) {
     /// first layer comes from ascrap file; do not apply any effects except the final audio mixer
     if (numinchans == 1 && numoutchans == 1 && !(flags & WEED_FILTER_IS_CONVERTER)) {
       retval = FILTER_ERROR_IS_SCRAP_FILE;
@@ -3919,21 +3939,20 @@ void weed_apply_audio_effects(weed_plant_t *filter_map, weed_layer_t **layers, i
   }
   mainw->pchains = get_event_pchains();
   init_events = weed_get_voidptr_array_counted(filter_map, WEED_LEAF_INIT_EVENTS, &num_inst);
-  for (int i = 0; i < num_inst; i++) {
-    init_event = (weed_plant_t *)init_events[i];
-    //weed_instance_ref(init_event);
-
-    fhash = weed_get_string_value(init_event, WEED_LEAF_FILTER, NULL);
-    if (fhash) {
-      filter = get_weed_filter(weed_get_idx_for_hashname(fhash, TRUE));
-      lives_freep((void **)&fhash);
-      if (has_audio_chans_in(filter, FALSE) && !has_video_chans_in(filter, FALSE) && !has_video_chans_out(filter, FALSE) &&
-          has_audio_chans_out(filter, FALSE)) {
-        weed_apply_audio_instance(init_event, layers, nbtracks, nchans, nsamps, arate, tc, vis);
+  if (init_events && (num_inst > 1 || init_events[0])) {
+    for (int i = 0; i < num_inst; i++) {
+      init_event = (weed_plant_t *)init_events[i];
+      fhash = weed_get_string_value(init_event, WEED_LEAF_FILTER, NULL);
+      if (fhash) {
+        filter = get_weed_filter(weed_get_idx_for_hashname(fhash, TRUE));
+        lives_freep((void **)&fhash);
+        if (has_audio_chans_in(filter, FALSE) && !has_video_chans_in(filter, FALSE) && !has_video_chans_out(filter, FALSE) &&
+            has_audio_chans_out(filter, FALSE)) {
+          weed_apply_audio_instance(init_event, layers, nbtracks, nchans, nsamps, arate, tc, vis);
+        }
       }
+      // TODO *** - also run any pure data processing filters which feed into audio filters
     }
-    //weed_instance_unref(init_event);
-    // TODO *** - also run any pure data processing filters which feed into audio filters
   }
   lives_freep((void **)&init_events);
   mainw->pchains = NULL;
@@ -6957,8 +6976,10 @@ boolean weed_init_effect(int hotkey) {
     }
   }
 
-  // record the key so we know whose parameters to record later
-  weed_set_int_value(new_instance, WEED_LEAF_HOST_KEY, hotkey);
+  if (!mainw->multitrack) {
+    // record the key so we know whose parameters to record later
+    weed_set_int_value(new_instance, WEED_LEAF_HOST_KEY, hotkey);
+  }
 
   inst = new_instance;
 
@@ -8240,7 +8261,7 @@ recheck:
   gui = weed_channel_get_gui(channel, TRUE);
 
 procfunc1:
-  ret = run_process_func(inst, tc, -1);
+  ret = run_process_func(inst, tc);
 
   if (achan) {
     int nachans;
@@ -9636,7 +9657,10 @@ int get_next_free_key(void) {
       break;
     }
   }
-  if (i == FX_KEYS_MAX) next_free_key = -1;
+  if (i == FX_KEYS_MAX) {
+    next_free_key = FX_KEYS_MAX_VIRTUAL;
+    return -1;
+  }
   return free_key;
 }
 
@@ -9745,7 +9769,6 @@ int rte_keymode_get_filter_idx(int key, int mode) {
 int rte_key_getmode(int key) {
   // get current active mode for an rte key
   // key is 1 based
-
   if (key < 1 || key > FX_KEYS_MAX) return -1;
   return key_modes[--key];
 }
@@ -9753,14 +9776,25 @@ int rte_key_getmode(int key) {
 
 int rte_key_getmaxmode(int key) {
   // gets the highest mode with filter mapped for a key
-  int i;
-
   if (key < 1 || key > FX_KEYS_MAX) return -1;
-  key--;
-  for (i = 0; i < (key < FX_KEYS_MAX_VIRTUAL ? prefs->rte_modes_per_key : 1); i++) {
-    if (key_to_fx[key][i] == -1) return --i;
+  else {
+    int maxmode = rte_key_num_modes(key);
+    key--;
+    for (int i = 0; i < maxmode; i++) {
+      if (key_to_fx[key][i] == -1) return --i;
+    }
+    return --maxmode;
   }
-  return --i;
+}
+
+
+int rte_key_num_modes(int key) {
+  // gets the highest mode with or without filter mapped, for a key
+  // (key is 1 based here)
+  key--;
+  if (key < 0 || key >= FX_KEYS_MAX) return 0;
+  if (key < FX_KEYS_MAX_VIRTUAL) return prefs->rte_modes_per_key;
+  return 1;
 }
 
 
@@ -10069,7 +10103,7 @@ int weed_add_effectkey_by_idx(int key, int idx) {
 
   key--;
 
-  for (i = 0; i < prefs->rte_modes_per_key; i++) {
+  for (i = 0; i < rte_key_num_modes(key + 1); i++) {
     if (key_to_fx[key][i] != -1) {
       if (enabled_in_channels(weed_filters[key_to_fx[key][i]], FALSE) == 0
           && has_video_chans_out(weed_filters[key_to_fx[key][i]], TRUE))
@@ -12131,11 +12165,6 @@ done:
     lives_freep((void **)&values);
   }
   lives_freep((void **)&mykey);
-
-
-
-
-
 
   return type;
 }

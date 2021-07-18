@@ -2780,6 +2780,7 @@ void play_file(void) {
             mainw->pulsed->abufs[0]->out_asamps = mainw->pulsed->out_asamps;
 
             fill_abuffer_from(mainw->pulsed->abufs[0], mainw->event_list, pb_start_event, exact_preview);
+
             for (i = 1; i < prefs->num_rtaudiobufs; i++) {
               if (mainw->multitrack) mainw->pulsed->abufs[i]->arate = cfile->arate;
               else mainw->pulsed->abufs[i]->arate = mainw->pulsed->out_arate;

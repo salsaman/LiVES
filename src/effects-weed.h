@@ -166,15 +166,12 @@ int check_filter_chain_palettes(boolean is_bg, int *palette_list, int npals);
 // instances
 weed_error_t weed_call_init_func(weed_plant_t *instance);
 weed_error_t weed_call_deinit_func(weed_plant_t *instance);
-lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc, int key);
+lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc);
 
 char *cd_to_plugin_dir(weed_plant_t *filter);
 boolean weed_init_effect(int hotkey); ///< hotkey starts at 1
 boolean  weed_deinit_effect(int hotkey); ///< hotkey starts at 1
 weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);
-int _wood_instance_ref(weed_plant_t *inst);
-int _wood_instance_unref(weed_plant_t *inst);
-weed_plant_t *_wood_instance_obtain(int line, char *file, int key, int mode);
 void weed_in_parameters_free(weed_plant_t *inst);
 void weed_in_params_free(weed_plant_t **parameters, int num_parameters);
 void add_param_connections(weed_plant_t *inst);
@@ -294,6 +291,8 @@ int weed_add_effectkey_by_idx(int key, int idx);  ///< see description
 
 int rte_key_getmode(int key);  ///< returns current active mode for a key (or -1)
 int rte_key_getmaxmode(int key); ///< returns highest mode which is set
+
+int rte_key_num_modes(int key); ///< max, set or not
 
 weed_plant_t *get_new_inst_for_keymode(int key, int mode); ///< get new refcounted inst (during recording playback)
 

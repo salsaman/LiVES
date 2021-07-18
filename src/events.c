@@ -3083,6 +3083,8 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
     return NULL;
   }
 
+  if (mainw->multitrack && LIVES_IS_PLAYING) prefs->pb_quality = future_prefs->pb_quality;
+
   tc = get_event_timecode(next_event);
 
   if (mainw->playing_file != -1 && tc > curr_tc) {
@@ -3288,7 +3290,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       filter = get_weed_filter(idx);
 
       if (!process_audio && is_pure_audio(filter, FALSE)) {
-        if (weed_plant_has_leaf(next_event, WEED_LEAF_HOST_TAG)) weed_leaf_delete(next_event, WEED_LEAF_HOST_TAG);
+        //if (weed_plant_has_leaf(next_event, WEED_LEAF_HOST_TAG)) weed_leaf_delete(next_event, WEED_LEAF_HOST_TAG);
         break; // audio effects are processed in the audio renderer
       }
 
@@ -4286,7 +4288,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
       filter = get_weed_filter(idx);
       if (is_pure_audio(filter, FALSE)) {
-        if (weed_plant_has_leaf(event, WEED_LEAF_HOST_TAG)) weed_leaf_delete(event, WEED_LEAF_HOST_TAG);
+        //if (weed_plant_has_leaf(event, WEED_LEAF_HOST_TAG)) weed_leaf_delete(event, WEED_LEAF_HOST_TAG);
         break; // audio effects are processed in the audio renderer
       }
 
@@ -5732,7 +5734,6 @@ double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int nb
               matrix[out_tracks[0] + nbtracks][j] = matrix[in_tracks[0] + nbtracks][j] + matrix[in_tracks[1] + nbtracks][j];
             }
             weed_instance_unref(inst);
-            weed_instance_unref(inst);
           }
           lives_free(in_tracks);
           lives_free(out_tracks);
@@ -6749,6 +6750,7 @@ render_details *create_render_details(int type) {
     lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
     hbox = add_audio_options(&rdet->backaudio_checkbutton, &rdet->pertrack_checkbutton);
     lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rdet->backaudio_checkbutton), prefs->mt_backaudio > 0);
 
     lives_widget_set_sensitive(rdet->backaudio_checkbutton,

@@ -1810,7 +1810,8 @@ static boolean lives_init(_ign_opts *ign_opts) {
     prefs->render_prompt = get_boolean_prefd(PREF_RENDER_PROMPT, TRUE);
 
     prefs->mt_pertrack_audio = get_boolean_prefd(PREF_MT_PERTRACK_AUDIO, TRUE);
-    prefs->mt_backaudio = get_int_prefd(PREF_MT_BACKAUDIO, 1);
+    //prefs->mt_backaudio = get_int_prefd(PREF_MT_BACKAUDIO, 1);
+    prefs->mt_backaudio = get_int_prefd(PREF_MT_BACKAUDIO, 0);
 
     prefs->instant_open = get_boolean_prefd(PREF_INSTANT_OPEN, TRUE);
     prefs->auto_deint = get_boolean_prefd(PREF_AUTO_DEINTERLACE, TRUE);
@@ -2902,6 +2903,8 @@ static void set_extra_colours(void) {
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "menu menuitem", "box-shadow", "none");
 
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "menu separator", "background-color", colref);
+
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "paned separator", "background-color", colref);
 
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_ACTIVE, "scrollbar slider", "background-color", colref);
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "scrollbar slider", "background-color", colref);

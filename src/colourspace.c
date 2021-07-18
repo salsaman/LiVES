@@ -2083,8 +2083,8 @@ LIVES_GLOBAL_INLINE void init_conversions(int intent) {
     // this ensures we render at the highest settings
     mainw->effort = -EFFORT_RANGE_MAX;
   } else {
-    if (mainw && mainw->multitrack) prefs->pb_quality = PB_QUALITY_LOW;
-    else if (prefs) prefs->pb_quality = future_prefs->pb_quality;
+    //if (mainw && mainw->multitrack) prefs->pb_quality = PB_QUALITY_LOW;
+    if (prefs) prefs->pb_quality = future_prefs->pb_quality;
   }
 }
 

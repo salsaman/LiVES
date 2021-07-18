@@ -670,24 +670,19 @@ void recover_layout_map(int numclips) {
             // check handle and unique id match
             // got a match, assign list to layout_map and delete this node
 
-            g_print("\nGOT MATCH\n");
-
             lmap_entry_list = lmap_entry->list;
             while (lmap_entry_list) {
               lmap_entry_list_next = lmap_entry_list->next;
               array = lives_strsplit((char *)lmap_entry_list->data, "|", -1);
-              g_print("checking %s\n", array[0]);
               if (!lives_file_test(array[0], LIVES_FILE_TEST_EXISTS)) {
                 //g_print("removing layout because no file %s\n", array[0]);
                 // layout file has been deleted, remove this entry
                 lmap_entry->list = lives_list_remove_node(lmap_entry->list, lmap_entry_list, TRUE);
-                g_print("NOTFOUND\n");
               }
               lives_strfreev(array);
               lmap_entry_list = lmap_entry_list_next;
             }
             sfile->layout_map = lmap_entry->list;
-            g_print("set lmap for clip %d to %p\n", i, lmap_entry->list);
 
             lives_free(lmap_entry->handle);
             lives_free(lmap_entry->name);
@@ -985,7 +980,7 @@ boolean reload_set(const char *set_name) {
       mainw->was_set = TRUE;
 
     if (prefs->crash_recovery && !added_recovery) {
-      char *recovery_entry = lives_build_filename(set_name, "*", NULL);
+      char *recovery_entry = lives_build_filename_relative(set_name, "*", NULL);
       add_to_recovery_file(recovery_entry);
       lives_free(recovery_entry);
       added_recovery = TRUE;

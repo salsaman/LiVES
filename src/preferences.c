@@ -1859,7 +1859,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean mt_exit_render = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_mt_exit_render));
   boolean mt_enable_audio = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton));
   boolean mt_pertrack_audio = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->pertrack_checkbutton));
-  boolean mt_backaudio = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->backaudio_checkbutton));
+  int mt_backaudio = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->backaudio_checkbutton)) ? 1 : 0;
 
   boolean mt_autoback_always = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_always));
   boolean mt_autoback_never = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_never));
@@ -3739,8 +3739,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   boolean tjack_cfg_exists = FALSE;
 #endif
 
-  int woph;
-
+  int woph = widget_opts.packing_height;
+  int wopw = widget_opts.packing_width;
   int i;
 
   // Allocate memory for the preferences structure
@@ -3749,8 +3749,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   mainw->prefs_need_restart = FALSE;
 
   prefsw->accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-
-  woph = widget_opts.packing_height;
 
   if (!saved_dialog) {
     // Create new modal dialog window and set some attributes
@@ -4303,10 +4301,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_box_pack_end(LIVES_BOX(hbox), label, FALSE, TRUE, widget_opts.packing_width * 2);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  int wopw = widget_opts.packing_width;
-  widget_opts.packing_width >>= 1;
+
   prefsw->mt_autoback_every = lives_standard_radio_button_new(_("_Every"), &autoback_group, LIVES_BOX(hbox), NULL);
 
+  widget_opts.packing_width >>= 1;
   widget_opts.swap_label = TRUE;
   prefsw->spinbutton_mt_ab_time = lives_standard_spin_button_new(_("seconds"), 120., 10., 1800., 1., 10., 0, LIVES_BOX(hbox),
                                   NULL);

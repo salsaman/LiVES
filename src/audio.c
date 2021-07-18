@@ -3987,7 +3987,7 @@ getaud1:
     }
   }
 
-  retval = run_process_func(inst, tc, mainw->agen_key);
+  retval = run_process_func(inst, tc);
 
   if (retval != WEED_SUCCESS) {
     if (retval == WEED_ERROR_REINIT_NEEDED) mainw->agen_needs_reinit = TRUE;

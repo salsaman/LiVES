@@ -1535,7 +1535,7 @@ void track_select(lives_mt * mt) {
         lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
         lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 	  // *INDENT-OFF*
-        }}}}
+      }}}}
   // *INDENT-ON*
 
 if (mt->poly_state == POLY_FX_STACK) polymorph(mt, POLY_FX_STACK);
@@ -2705,7 +2705,7 @@ weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
 
 boolean mt_idle_show_current_frame(livespointer data) {
   lives_mt *mt = (lives_mt *)data;
-  if (!mainw->multitrack) return FALSE;
+  if (!mainw->multitrack || lives_get_status() != LIVES_STATUS_IDLE) return FALSE;
   mt_tl_move(mt, mt->opts.ptr_time);
   lives_widget_queue_draw(mainw->play_image);
   return FALSE;
@@ -2987,6 +2987,8 @@ void mt_desensitise(lives_mt * mt) {
   lives_widget_set_sensitive(mt->ins_gap_sel, FALSE);
   lives_widget_set_sensitive(mt->ins_gap_cur, FALSE);
 
+  lives_widget_set_sensitive(mt->addback_audio, FALSE);
+
   if (mt->poly_state == POLY_IN_OUT) {
     if (mt->block_selected) {
       val = lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->spinbutton_in));
@@ -3077,6 +3079,9 @@ void mt_sensitise(lives_mt * mt) {
       lives_widget_set_sensitive(mt->avel_scale, TRUE);
     }
   }
+
+  if (!mt->opts.back_audio_tracks && mainw->files[mt->render_file]->achans)
+    lives_widget_set_sensitive(mt->addback_audio, TRUE);
 
   lives_widget_set_sensitive(mt->load_event_list, *mainw->set_name != 0);
   lives_widget_set_sensitive(mt->clipedit, TRUE);
@@ -3251,8 +3256,7 @@ static void on_amixer_reset_clicked(LiVESButton * button, lives_mt * mt) {
 
   for (i = 0; i < amixer->nchans; i++) {
     float val = (float)LIVES_POINTER_TO_INT(lives_list_nth_data(mt->audio_vols_back, i)) / LIVES_AVOL_SCALE;
-    if (0)
-      val = lives_vol_to_linear(val);
+    // set linear slider values - we will convert to non linear when applying
 #if ENABLE_GIW
     if (prefs->lamp_buttons) {
       lives_signal_handler_block(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[i])), amixer->ch_slider_fns[i]);

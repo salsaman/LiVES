@@ -319,6 +319,7 @@ struct _mt {
   LiVESWidget *fx_iafter_button;
   LiVESWidget *rename_track;
   LiVESWidget *cback_audio;
+  LiVESWidget *addback_audio;
   LiVESWidget *delback_audio;
   LiVESWidget *aload_subs;
   LiVESWidget *load_vals;
@@ -352,6 +353,7 @@ struct _mt {
   LiVESWidget *adjust_start_end;
   LiVESWidget *context_frame;
   LiVESWidget *context_vb;
+  LiVESWidget *context_vbx;
   LiVESWidget *nb;
   LiVESWidget *nb_label;
 
@@ -804,6 +806,7 @@ weed_plant_t *add_blank_frames_up_to(weed_plant_t *event_list, weed_plant_t *sta
 // track functions
 char *get_track_name(lives_mt *, int track_num, boolean is_audio);
 void on_cback_audio_activate(LiVESMenuItem *, livespointer mt);
+void on_addback_audio_activate(LiVESMenuItem *, livespointer mt);
 void on_delback_audio_activate(LiVESMenuItem *, livespointer mt);
 LiVESWidget *add_audio_track(lives_mt *, int trackno, boolean behind);
 int add_video_track_behind(LiVESMenuItem *, livespointer mt);

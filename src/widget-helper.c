@@ -2080,7 +2080,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
 
 void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
   boolean waitgov = FALSE;
-  while (gov_will_run && !gov_running) {
+  while (lpttorun || (gov_will_run && !gov_running)) {
     lives_nanosleep(NSLEEP_TIME);
   }
   lpttorun = lpt;
@@ -8667,9 +8667,13 @@ void render_standard_button(LiVESButton * sbutt) {
         lives_painter_paint(cr);
       }
       lives_painter_destroy(cr);
-      minwidth = lw + (pbw ? pbw + widget_opts.packing_width
-                       : 0) + widget_opts.border_width * 4;
-      minheight = lh + widget_opts.border_width * 2;
+      if (LIVES_EXPAND_WIDTH(GET_INT_DATA(sbutt, EXPANSION_KEY))) {
+        minwidth = lw + (pbw ? pbw + widget_opts.packing_width
+                         : 0) + widget_opts.border_width * 4;
+      } else minwidth = lw;
+      if (LIVES_EXPAND_HEIGHT(GET_INT_DATA(sbutt, EXPANSION_KEY))) {
+        minheight = lh + widget_opts.border_width * 2;
+      } else minheight = lh;
       width = lives_widget_get_allocation_width(LIVES_WIDGET(sbutt));
       height = lives_widget_get_allocation_height(LIVES_WIDGET(sbutt));
 
@@ -8724,6 +8728,8 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
 
   lives_container_add(LIVES_CONTAINER(button), da);
   lives_widget_set_show_hide_with(button, da);
+
+  SET_INT_DATA(button, EXPANSION_KEY, widget_opts.expand);
 
   if (widget_opts.apply_theme) {
     set_standard_widget(button, TRUE);
@@ -8939,7 +8945,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_hpaned_new(void) {
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_vpaned_new(void) {
   LiVESWidget *vpaned;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 0, 0)
+#if !GTK_CHECK_VERSION(3, 0, 0)
   vpaned = lives_vpaned_new();
 #else
   vpaned = gtk_paned_new(LIVES_ORIENTATION_VERTICAL);
@@ -9110,6 +9116,9 @@ lives_standard_check_menu_item_new_for_var(const char *labeltext, boolean * var,
 LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor * bg_color, const LiVESWidgetColor * act_color) {
   LiVESWidget *notebook = lives_notebook_new();
 
+#ifdef GUI_GTK
+  gtk_notebook_set_show_border(LIVES_NOTEBOOK(notebook), FALSE);
+
 #if GTK_CHECK_VERSION(3, 16, 0)
   if (widget_opts.apply_theme) {
     char *colref = gdk_rgba_to_string(bg_color);
@@ -9123,6 +9132,7 @@ LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor * bg_color, cons
     set_css_value_direct(notebook, LIVES_WIDGET_STATE_ACTIVE, "*", "background-color", colref);
     lives_free(colref);
   }
+#endif
 #endif
   lives_widget_set_hexpand(notebook, TRUE);
   return notebook;
@@ -13409,7 +13419,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_vseparator_new(void) {
 LiVESWidget *add_hsep_to_box(LiVESBox * box) {
   LiVESWidget *hseparator = lives_standard_hseparator_new();
   int packing_height = widget_opts.packing_height;
-  if (LIVES_IS_HBOX(box)) packing_height = 0;
+  if (LIVES_IS_HBOX(box) || !LIVES_SHOULD_EXPAND_HEIGHT) packing_height = 0;
   lives_box_pack_start(box, hseparator, LIVES_IS_HBOX(box)
                        || LIVES_SHOULD_EXPAND_EXTRA_FOR(box), TRUE, packing_height);
   return hseparator;

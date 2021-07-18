@@ -234,7 +234,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 
 EXTRA_DIST=data icons scripts syna.h weed-plugin-utils.c
 
-install-data-localipt:
+install-data-local:
 	rm -rf "$(DESTDIR)$(fxpluginslibdir)"
 	$(MKDIR_P) "$(DESTDIR)$(fxpluginslibdir)"
 	cp -rf data "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/data"

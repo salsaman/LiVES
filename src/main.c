@@ -1319,7 +1319,7 @@ static boolean pre_init(void) {
     mainw->fx_candidates[i].rfx = NULL;
   }
 
-  prefs->volume = (float)get_double_prefd(PREF_MASTER_VOLUME, 1.0);
+  prefs->volume = (float)get_double_prefd(PREF_MASTER_VOLUME, 0.72);
   future_prefs->volume = prefs->volume;
   mainw->uflow_count = 0;
 

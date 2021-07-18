@@ -351,6 +351,7 @@ struct _mt {
   LiVESWidget *view_sel_events;
   LiVESWidget *adjust_start_end;
   LiVESWidget *context_frame;
+  LiVESWidget *context_vb;
   LiVESWidget *nb;
   LiVESWidget *nb_label;
 

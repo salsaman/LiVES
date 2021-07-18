@@ -4177,6 +4177,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   LiVESWidget *suggest_feature;
   LiVESWidget *help_translate;
   LiVESWidget *label;
+  LiVESWidget *cl_butt;
 
   LiVESWidgetObject *vadjustment;
   LiVESAdjustment *spinbutton_adj;
@@ -6456,7 +6457,26 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->poly_state = POLY_NONE;
   polymorph(mt, POLY_CLIPS);
 
+  widget_opts.expand = LIVES_EXPAND_NONE;
   mt->context_frame = lives_standard_frame_new(_("Info"), 0.5, FALSE);
+  mt->context_vb = lives_vbox_new(FALSE, 0);
+  lives_container_add(LIVES_CONTAINER(mt->context_frame), mt->context_vb);
+
+  widget_opts.apply_theme = 2;
+  cl_butt =
+    lives_standard_button_new_from_stock_full(LIVES_STOCK_CLOSE,
+        "", 2, 10, mt->context_vb, FALSE,
+        (tmp = _("CLick to close")));
+  lives_widget_set_halign(widget_opts.last_container, LIVES_ALIGN_END);
+  widget_opts.apply_theme = woat;
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  lives_free(tmp);
+
+  lives_widget_set_fg_color(widget_opts.last_container, LIVES_WIDGET_STATE_NORMAL,
+                            &palette->normal_fore);
+  lives_widget_set_bg_color(widget_opts.last_container, LIVES_WIDGET_STATE_NORMAL,
+                            &palette->normal_back);
+
 
   lives_paned_pack(2, LIVES_PANED(mt->hpaned), mt->context_frame, TRUE, FALSE);
 
@@ -9391,7 +9411,7 @@ static void _clear_context(lives_mt * mt) {
   mt->context_scroll = lives_scrolled_window_new();
   lives_widget_set_hexpand(mt->context_scroll, TRUE);
 
-  lives_container_add(LIVES_CONTAINER(mt->context_frame), mt->context_scroll);
+  lives_box_pack_start(mt->context_vb, mt->context_scroll, FALSE, TRUE, 0);
 
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mt->context_scroll), LIVES_POLICY_NEVER,
                                    LIVES_POLICY_AUTOMATIC);
@@ -13263,7 +13283,7 @@ weed_plant_t *add_blank_frames_up_to(weed_plant_t *event_list, weed_plant_t *sta
   else tc = 0;
 
   for (; tc <= end_tc; tc = q_gint64(tc + tl, fps)) {
-    g_print("ins blank at %ld\n", tc);
+    //g_print("ins blank at %ld\n", tc);
     event_list = insert_frame_event_at(event_list, tc, 1, &blank_clip, &blank_frame, &shortcut);
   }
   weed_set_double_value(event_list, WEED_LEAF_FPS, fps);
@@ -14619,7 +14639,7 @@ void multitrack_playall(lives_mt * mt) {
 
   if (mt->context_scroll) {
     lives_widget_object_ref(mt->context_scroll); // this allows us to get our old messages back
-    lives_container_remove(LIVES_CONTAINER(mt->context_frame), mt->context_scroll);
+    lives_container_remove(LIVES_CONTAINER(mt->context_vb), mt->context_scroll);
     mt->context_scroll = NULL;
   }
 
@@ -14677,12 +14697,13 @@ void multitrack_playall(lives_mt * mt) {
 
   mt_swap_play_pause(mt, FALSE);
 
-  if (mt->context_scroll)
-    lives_container_remove(LIVES_CONTAINER(mt->context_frame), mt->context_scroll);
-
+  if (mt->context_scroll) {
+    lives_container_remove(LIVES_CONTAINER(mt->context_vb), mt->context_scroll);
+  }
   mt->context_scroll = old_context_scroll;
-  if (mt->context_scroll)
-    lives_container_add(LIVES_CONTAINER(mt->context_frame), mt->context_scroll);
+  if (mt->context_scroll) {
+    lives_box_pack_start(mt->context_vb, mt->context_scroll, FALSE, TRUE, 0);
+  }
 
   if (prefs->mt_show_ctx) {
     lives_widget_show_all(mt->context_frame);
@@ -16101,11 +16122,19 @@ void on_node_spin_value_changed(LiVESSpinButton * spinbutton, livespointer user_
     mt->block_node_spin = TRUE;
     if (mt->current_track >= 0 && (mt->opts.fx_auto_preview || mainw->play_window))
       mt->no_frame_update = TRUE; // we will preview anyway later, so don't do it twice
+    mt->block_tl_move = TRUE;
     mt_tl_move(mt, timesecs);
+    mt->block_tl_move = FALSE;
     mt->no_frame_update = FALSE;
     mt->block_node_spin = FALSE;
   }
 
+  if (!mt->init_event) {
+    lives_signal_handlers_unblock_by_func(spinbutton,
+                                          (livespointer)on_node_spin_value_changed,
+                                          (livespointer)mt);
+    return;
+  }
   if (mt->prev_fx_time == 0. || tc == init_tc) {
     //add_mt_param_box(mt); // sensitise/desensitise reinit params
   } else mt->prev_fx_time = mt_get_effect_time(mt);
@@ -16237,14 +16266,18 @@ void on_resetp_clicked(LiVESWidget * button, livespointer user_data) {
       fill_param_vals_to(def_params[i], weed_param_get_template(def_params[i]), mt->track_index);
       if (!weed_leaf_elements_equate(in_params[i], WEED_LEAF_VALUE, def_params[i], WEED_LEAF_VALUE, mt->track_index)) {
         weed_leaf_dup_nth(in_params[i], def_params[i], WEED_LEAF_VALUE, mt->track_index);
-        can_apply = TRUE;
-        mt->current_rfx->params[i].flags |= PARAM_FLAGS_VALUE_SET;
+        if (!weed_param_value_irrelevant(in_params[i])) {
+          can_apply = TRUE;
+          mt->current_rfx->params[i].flags |= PARAM_FLAGS_VALUE_SET;
+        }
       }
     } else {
       if (!weed_leaf_elements_equate(in_params[i], WEED_LEAF_VALUE, def_params[i], WEED_LEAF_VALUE, -1)) {
         weed_leaf_dup(in_params[i], def_params[i], WEED_LEAF_VALUE);
-        mt->current_rfx->params[i].flags |= PARAM_FLAGS_VALUE_SET;
-        can_apply = TRUE;
+        if (!weed_param_value_irrelevant(in_params[i])) {
+          mt->current_rfx->params[i].flags |= PARAM_FLAGS_VALUE_SET;
+          can_apply = TRUE;
+        }
       }
     }
     weed_plant_free(def_params[i]);
@@ -16548,6 +16581,12 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
 
   for (i = 0; ((param = weed_inst_in_param(inst, i, FALSE, FALSE)) != NULL); i++) {
     if (!(mt->current_rfx->params[i].flags & PARAM_FLAGS_VALUE_SET)) continue;// set only user changed parameters
+
+    // the flags should not have VALUE_SET, but double check anyway
+    if (weed_param_value_irrelevant(param)) {
+      mt->current_rfx->params[i].flags &= ~PARAM_FLAGS_VALUE_SET;
+      continue;
+    }
     pchange = weed_plant_new(WEED_PLANT_EVENT);
     weed_set_int_value(pchange, WEED_LEAF_EVENT_TYPE, WEED_EVENT_TYPE_PARAM_CHANGE);
     weed_set_int64_value(pchange, WEED_LEAF_TIMECODE, tc);

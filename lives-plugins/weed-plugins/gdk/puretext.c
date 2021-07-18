@@ -2876,6 +2876,8 @@ WEED_SETUP_START(200, 201) {
   weed_paramtmpl_set_hidden(in_params[P_TRIGGER], WEED_TRUE);
 
   in_params[P_RANDMODE] = weed_switch_init("randmode", "Switch mode randomly", WEED_FALSE);
+  weed_paramtmpl_set_flags(in_params[P_RANDMODE], WEED_PARAMETER_VALUE_IRRELEVANT);
+
   gui = weed_paramtmpl_get_gui(in_params[P_RANDMODE]);
   weed_gui_set_flags(gui, weed_gui_get_flags(gui) | WEED_GUI_REINIT_ON_VALUE_CHANGE);
 

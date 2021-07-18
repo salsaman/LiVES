@@ -774,7 +774,7 @@ static jackctl_driver_t *get_def_drivers(const JSList *drivers, LiVESList **slvl
   layout = lives_layout_new(LIVES_BOX(vbox));
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Slave drivers:"), FALSE);
 #else
-  if (*slist) defdriver = (*slist)->data;
+  if (slist) defdriver = slist->data;
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Available drivers:"), FALSE);
 #endif
 

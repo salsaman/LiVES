@@ -2706,14 +2706,16 @@ void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, w
       fill_param_vals_to(in_param, in_ptmpls[i], ntracks - 1);
     }
 
-    weed_leaf_dup((weed_plant_t *)pchain[i], in_param, WEED_LEAF_VALUE);
+    if (weed_param_value_irrelevant(in_param))
+      weed_leaf_copy((weed_plant_t *)pchain[i], WEED_LEAF_VALUE,
+                     weed_param_get_template(in_param), WEED_LEAF_DEFAULT);
+    else weed_leaf_dup((weed_plant_t *)pchain[i], in_param, WEED_LEAF_VALUE);
 
     weed_set_int_value((weed_plant_t *)pchain[i], WEED_LEAF_INDEX, i);
     weed_set_voidptr_value((weed_plant_t *)pchain[i], WEED_LEAF_INIT_EVENT, init_event);
     weed_set_voidptr_value((weed_plant_t *)pchain[i], WEED_LEAF_NEXT_CHANGE, NULL);
     weed_set_voidptr_value((weed_plant_t *)pchain[i], WEED_LEAF_PREV_CHANGE, NULL);
     weed_set_boolean_value((weed_plant_t *)pchain[i], WEED_LEAF_IS_DEF_VALUE, WEED_TRUE);
-    //weed_add_plant_flags((weed_plant_t *)pchain[i], WEED_LEAF_READONLY_PLUGIN);
 
     insert_param_change_event_at(event_list, init_event, (weed_plant_t *)pchain[i]);
   }

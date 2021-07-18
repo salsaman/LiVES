@@ -3960,6 +3960,11 @@ The order of channels and values is the same.
   intended for debugging purposes - in this case the host should reinit the instance, but the parameter change should not be
   recorded.
 
+  A more complex example might be a parameter such as "switch mode randomly". In this case the host may still wish to store the value (on / off) as
+  a user (parameter) default; however during recording it may be beneficial to leave the parameter in its original (template) default
+  (e.g. WEED_FALSE) state and  instead simply record the value of the "mode" which it affects.
+  In this manner, when replaying the recording, the instance will follow the recorded mode changes rather than (possibly) switching randomly.
+
   in addition a filter may set this in the case that a newer version of the filter exists, and this parameter no longer has any
   functional value. Consider also setting "hidden" to WEED_TRUE in the parameter template GUI plant.
 

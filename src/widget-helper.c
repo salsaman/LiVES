@@ -8379,9 +8379,9 @@ static LiVESWidget *make_inner_hbox(LiVESBox * box, boolean start) {
     lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box)
                          ? widget_opts.packing_height : 0);
     //lives_widget_set_show_hide_parent(hbox);
+    widget_opts.last_container = hbox;
     box = LIVES_BOX(hbox);
     hbox = lives_hbox_new(FALSE, 0);
-    widget_opts.last_container = hbox;
     lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box)
                          ? widget_opts.packing_width : 0);
   }
@@ -8488,7 +8488,10 @@ void render_standard_button(LiVESButton * sbutt) {
         }
         if (prefs->extra_colours && mainw->pretty_colours) {
           widget_color_to_lives_rgba(&pab, &palette->nice1);
-          widget_color_to_lives_rgba(&pab2, &palette->nice2);
+          if (themetype == 2)
+            widget_color_to_lives_rgba(&pab2, &palette->nice1);
+          else
+            widget_color_to_lives_rgba(&pab2, &palette->nice2);
         } else {
           widget_color_to_lives_rgba(&pab, &palette->menu_and_bars);
           widget_color_to_lives_rgba(&pab2, &palette->menu_and_bars);
@@ -8547,7 +8550,7 @@ void render_standard_button(LiVESButton * sbutt) {
       if (!layout) {
         const char *text = (const char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(sbutt),
                            SBUTT_TXT_KEY);
-        if (text) {
+        if (text && *text) {
           LiVESWidget *topl;
           LingoContext *ctx = gtk_widget_get_pango_context(widget);
           char *markup, *full_markup;

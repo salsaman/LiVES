@@ -9355,13 +9355,15 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
   //actual_ticks = mainw->clock_ticks;//lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
   actual_ticks = mainw->startticks; ///< use the "thoretical" time
 
-  pthread_mutex_lock(&mainw->event_list_mutex);
   key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
 
   in_param = weed_inst_in_param(inst, pnum, FALSE, FALSE);
 
-  mainw->event_list = append_param_change_event(mainw->event_list, actual_ticks, pnum, in_param, init_events[key], pchains[key]);
-  pthread_mutex_unlock(&mainw->event_list_mutex);
+  if (!weed_param_value_irrelevant(in_param)) {
+    pthread_mutex_lock(&mainw->event_list_mutex);
+    mainw->event_list = append_param_change_event(mainw->event_list, actual_ticks, pnum, in_param, init_events[key], pchains[key]);
+    pthread_mutex_unlock(&mainw->event_list_mutex);
+  }
 
   weed_instance_unref(inst);
 }

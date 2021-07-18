@@ -3516,33 +3516,30 @@ weed_plant_t **rfx_params_to_weed(lives_rfx_t *rfx) {
 #endif
 
 lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_reinits) {
-  int i, j;
   lives_param_t *rpar = (lives_param_t *)lives_calloc(npar, sizeof(lives_param_t));
-  int param_type;
-  char **list;
-  char *string;
-  int vali;
-  double vald;
-  weed_plant_t *gui = NULL;
-  int listlen;
-  int cspace, *cols = NULL, red_min = 0, red_max = 255, green_min = 0, green_max = 255, blue_min = 0, blue_max = 255,
-               *maxi = NULL, *mini = NULL;
-  double *colsd;
-  double red_mind = 0., red_maxd = 1., green_mind = 0., green_maxd = 1., blue_mind = 0., blue_maxd = 1.,
-         *maxd = NULL, *mind = NULL;
-  int flags = 0;
-  int nwpars = 0, poffset = 0;
-  boolean col_int;
-
   weed_plant_t *wtmpl;
   weed_plant_t **wpars = NULL, *wpar = NULL;
-
+  weed_plant_t *gui = NULL;
   weed_plant_t *chann, *ctmpl;
   weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
+  char **list;
+  char *string;
+  double *colsd, *maxd = NULL, *mind = NULL;
+  int *cols = NULL, *maxi = NULL, *mini = NULL;
+
+  double vald;
+  double red_mind = 0., red_maxd = 1., green_mind = 0., green_maxd = 1., blue_mind = 0., blue_maxd = 1.;
+  uint64_t flags = 0;
+  boolean col_int;
+  int listlen;
+  int cspace, red_min = 0, red_max = 255, green_min = 0, green_max = 255, blue_min = 0, blue_max = 255;
+  int nwpars = 0, poffset = 0;
+  int param_type;
+  int vali;
 
   wpars = weed_instance_get_in_params(inst, &nwpars);
 
-  for (i = 0; i < npar; i++) {
+  for (int i = 0; i < npar; i++) {
     if (i - poffset >= nwpars) {
       // handling for compound fx
       poffset += nwpars;
@@ -3561,7 +3558,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
     wpar = wpars[i - poffset];
     wtmpl = weed_param_get_template(wpar);
 
-    flags = weed_paramtmpl_get_flags(wtmpl);
+    flags = (uint64_t)weed_paramtmpl_get_flags(wtmpl);
 
     rpar[i].flags = flags;
 
@@ -3657,7 +3654,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
         if (weed_plant_has_leaf(gui, WEED_LEAF_CHOICES)) {
           listlen = weed_leaf_num_elements(gui, WEED_LEAF_CHOICES);
           list = weed_get_string_array(gui, WEED_LEAF_CHOICES, NULL);
-          for (j = 0; j < listlen; j++) {
+          for (int j = 0; j < listlen; j++) {
             rpar[i].list = lives_list_append(rpar[i].list, list[j]);
           }
           lives_free(list);
@@ -3874,7 +3871,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       }
     }
 
-    for (j = 0; j < MAX_PARAM_WIDGETS; j++) {
+    for (int j = 0; j < MAX_PARAM_WIDGETS; j++) {
       rpar[i].widgets[j] = NULL;
     }
     rpar[i].onchange = FALSE;

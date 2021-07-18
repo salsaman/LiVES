@@ -1016,7 +1016,7 @@ static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param, int idx) 
   weed_plant_t *wparam;
   if (param->type == LIVES_PARAM_UNDISPLAYABLE || param->type == LIVES_PARAM_UNKNOWN)
     param->hidden |= HIDDEN_UNDISPLAYABLE;
-  if ((param->reinit & REINIT_FUNCTIONAL)
+  if (!mainw->multitrack && (param->reinit & REINIT_FUNCTIONAL)
       && weed_get_boolean_value(inst, WEED_LEAF_HOST_REINITING, NULL) == WEED_FALSE
       && weed_get_int_value(inst, WEED_LEAF_HOST_REFS, NULL) >= 2) {
     // effect is running and user is editing the params, we should hide reinit params
@@ -1078,7 +1078,7 @@ static boolean fmt_match(char *fmt_string) {
    if top_vbox is NULL: we just check for displayable params, returning FALSE there are none to be shown.
    otherwise, adds widgets to top_vbox, returning FALSE if nothing was added
 */
-boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
+static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   lives_param_t *param = NULL;
 
   LiVESWidget *param_vbox = NULL;
@@ -1592,6 +1592,13 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
   }
   return has_param;
+}
+
+
+boolean make_param_box(LiVESVBox * top_vbox, lives_rfx_t *rfx) {
+  boolean ret;
+  main_thread_execute((lives_funcptr_t)_make_param_box, WEED_SEED_BOOLEAN, &ret, "vv", top_vbox, rfx);
+  return ret;
 }
 
 
@@ -2222,7 +2229,10 @@ static void after_any_changed_2(lives_rfx_t *rfx, lives_param_t *param, boolean 
 
   /// only the first param in the chain can reinit
   if (--ireinit > 0) {
-    param->flags |= PARAM_FLAGS_VALUE_SET;
+    if (!(param->source_type == LIVES_RFX_SOURCE_WEED
+          && weed_paramtmpl_value_irrelevant((weed_plant_t *)param->source))) {
+      param->flags |= PARAM_FLAGS_VALUE_SET;
+    }
     param->change_blocked = FALSE;
     return;
   }
@@ -2272,7 +2282,8 @@ static void after_any_changed_2(lives_rfx_t *rfx, lives_param_t *param, boolean 
     mainw->block_param_updates = FALSE;
   }
 
-  if (!weed_param_value_irrelevant(wparam)) {
+  if (!(param->source_type == LIVES_RFX_SOURCE_WEED
+        && weed_paramtmpl_value_irrelevant((weed_plant_t *)param->source))) {
     param->flags |= PARAM_FLAGS_VALUE_SET;
   }
 

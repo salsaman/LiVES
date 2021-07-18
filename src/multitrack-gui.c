@@ -2738,10 +2738,10 @@ static void _mt_tl_move(lives_mt * mt, double pos) {
 
   lives_widget_queue_draw(mt->timeline);
   if (mt->init_event && mt->poly_state == POLY_PARAMS && !mt->block_node_spin) {
-    mt->block_tl_move = TRUE;
+    //mt->block_tl_move = TRUE;
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->node_spinbutton),
                                 pos - get_event_timecode(mt->init_event) / TICKS_PER_SECOND_DBL);
-    mt->block_tl_move = FALSE;
+    //mt->block_tl_move = FALSE;
   }
 
   mt_update_timecodes(mt, pos);
@@ -2757,6 +2757,7 @@ static void _mt_tl_move(lives_mt * mt, double pos) {
     weed_plant_t *deinit_event = weed_get_plantptr_value(mt->init_event, WEED_LEAF_DEINIT_EVENT, NULL);
     if (tc < get_event_timecode(mt->init_event) || tc > get_event_timecode(deinit_event)) {
       mt->init_event = NULL;
+      mt->current_rfx = NULL;
       if (mt->poly_state == POLY_PARAMS) polymorph(mt, POLY_FX_STACK);
     }
   }

@@ -513,9 +513,9 @@ struct _param_t {
   char *label;
   uint64_t flags;
   // parameter is "optional:
-#define PARAM_FLAGS_OPTIONAL 	0x00000001
+#define PARAM_FLAGS_OPTIONAL 	0x10000000
   // the 'value' has been set
-#define PARAM_FLAGS_VALUE_SET	0x00000002
+#define PARAM_FLAGS_VALUE_SET	0x20000000
 
   boolean use_mnemonic;
   uint32_t hidden;

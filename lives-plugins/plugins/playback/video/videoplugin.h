@@ -69,12 +69,14 @@ typedef void (*func_ptr)(void *);
 #ifndef NEED_LOCAL_WEED
 #include <weed/weed-plugin.h>
 #include <weed/weed.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
 #else
 #include "../../../../libweed/weed-plugin.h"
 #include "../../../../libweed/weed.h"
-#include "../../../../libweed/weed-effects.h"
+#endif
+
+#ifndef NEED_LOCAL_WEED_UTILS
+#include <weed/weed-utils.h>
+#else
 #include "../../../../libweed/weed-utils.h"
 #endif
 

@@ -1,23 +1,37 @@
 ## Process this with automake to create Makefile.in
 
-LIBS=
+LIBS =
 
 videopluginslibdir = "$(libdir)/$(PACKAGE)/plugins/playback/video"
 
+if NEED_LOCAL_WEED
+weed_cflags = -DNEED_LOCAL_WEED=1
+else
+weed_cflags =
+endif
+
+if NEED_LOCAL_WEED_UTILS
+weed_cflags += -DNEED_LOCAL_WEED_UTILS=1
+endif
+
+if NEED_LOCAL_WEED_PLUGIN
+weed_cflags += -DNEED_LOCAL_WEED_PLUGIN=1
+endif
+
+if NEED_LOCAL_WEED_COMPAT
+weed_cflags += -DNEED_LOCAL_WEED_COMPAT=1
+endif
+
 if IS_DARWIN
 shared_ldflags =  -dynamiclib -module -avoid-version --tag=disable-static
-shared_cflags = -fno-common -DIS_DARWIN=1
+shared_cflags = -fno-common -DIS_DARWIN=1 $(weed_cflags)
 else
 shared_ldflags =  -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
-shared_cflags =  -fPIC -DPIC @TURBO_CFLAGS@ -Wno-unused-variable
+shared_cflags =  -fPIC -DPIC @TURBO_CFLAGS@ -Wno-unused-variable $(weed_cflags)
 endif
 
 if IS_IRIX
-shared_cflags +=-DIS_IRIX=1
-endif
-
-if NEED_LOCAL_WEED
-weed_cflags = -DNEED_LOCAL_WEED
+shared_cflags += -DIS_IRIX=1
 endif
 
 if HAVE_MJPEGTOOLS
@@ -28,7 +42,7 @@ endif
 
 if ENABLE_VJACK
 vjack_output_libs = vjack_output.la
-vjack_output_la_CFLAGS = $(shared_cflags) $(weed_cflags)
+vjack_output_la_CFLAGS = $(shared_cflags)
 vjack_output_la_LDFLAGS = $(shared_ldflags) -ljack
 endif
 
@@ -37,7 +51,7 @@ if HAVE_X11
 if HAVE_OPENGL
 openGL_libs = openGL.la
 openGL_la_SOURCES = openGL.cpp glad.cpp glad_glx.cpp
-openGL_la_CPPFLAGS = $(shared_cflags) $(weed_cflags) @X11_CFLAGS@ @XRENDER_CFLAGS@ @GL_CFLAGS@ -pthread
+openGL_la_CPPFLAGS = $(shared_cflags) @X11_CFLAGS@ @XRENDER_CFLAGS@ @GL_CFLAGS@ -pthread
 openGL_la_LDFLAGS = $(shared_ldflags) @X11_LIBS@ @XRENDER_LIBS@ @GL_LIBS@ -pthread -L/usr/lib/x86_64-linux-gnu
 
 if NEED_LOCAL_WEED
@@ -53,21 +67,21 @@ endif
 endif
 
 lives2lives_stream_libs = lives2lives_stream.la 
-lives2lives_stream_la_CFLAGS = $(shared_cflags) $(weed_cflags)
+lives2lives_stream_la_CFLAGS = $(shared_cflags)
 lives2lives_stream_la_LDFLAGS = $(shared_ldflags)
 
-yuv4mpeg_stream_la_CFLAGS = @MJPEGTOOLS_CFLAGS@ $(shared_cflags) $(weed_cflags)
+yuv4mpeg_stream_la_CFLAGS = @MJPEGTOOLS_CFLAGS@ $(shared_cflags)
 yuv4mpeg_stream_la_LDFLAGS = $(shared_ldflags) @MJPEGTOOLS_LIBS@
 
-oggstream_la_CFLAGS = @MJPEGTOOLS_CFLAGS@ $(shared_cflags) $(weed_cflags)
+oggstream_la_CFLAGS = @MJPEGTOOLS_CFLAGS@ $(shared_cflags)
 oggstream_la_LDFLAGS = $(shared_ldflags) @MJPEGTOOLS_LIBS@
 
-icecast_output_la_CFLAGS = @MJPEGTOOLS_CFLAGS@ $(shared_cflags) $(weed_cflags)
+icecast_output_la_CFLAGS = @MJPEGTOOLS_CFLAGS@ $(shared_cflags)
 icecast_output_la_LDFLAGS = $(shared_ldflags) @MJPEGTOOLS_LIBS@
 
 if HAVE_LIBv4l2
 vloopback2_libs = vloopback2.la
-vloopback2_la_CFLAGS = $(shared_cflags) $(weed_cflags)
+vloopback2_la_CFLAGS = $(shared_cflags)
 vloopback2_la_LDFLAGS = $(shared_ldflags)
 endif
 
@@ -131,7 +145,7 @@ libav_stream_libs = libav_stream.la
 AVSTREAM_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@ @LIBSWSCALE_LIBS@ @LIBSWRESAMPLE_LIBS@
 AVSTREAM_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ @LIBSWSCALE_CFLAGS@ @LIBSWRESAMPLE_CFLAGS@ -Wno-deprecated-declarations
 
-libav_stream_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(AVSTREAM_CFLAGS)
+libav_stream_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(AVSTREAM_CFLAGS)
 libav_stream_la_LDFLAGS = $(shared_ldflags) $(AVSTREAM_LIBS) $(libav_ldflags)
 endif
 endif

@@ -2529,7 +2529,7 @@ boolean activate_x11_window(const char *wid) {
 
   if (capable->has_xdotool != MISSING) {
     if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL))
-      cmd = lives_strdup_printf("%s windowactivate \"%s\"", EXEC_XDOTOOL, wid);
+      cmd = lives_strdup_printf("%s windowactivate \"%s\" --sync", EXEC_XDOTOOL, wid);
   }
   else if (capable->has_wmctrl != MISSING) {
     if (check_for_executable(&capable->has_wmctrl, EXEC_WMCTRL))

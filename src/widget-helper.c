@@ -3141,7 +3141,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_resize(LiVESWindow *window, int
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_present(LiVESWindow *window) {
 #ifdef GUI_GTK
-  gtk_window_present(window);
+  uint32_t tstamp = gtk_get_current_event_time();
+  gtk_window_present_with_time(window, tstamp);
   return TRUE;
 #endif
   return FALSE;

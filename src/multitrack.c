@@ -4475,26 +4475,26 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   // TODO, show these options but show error if no mplayer / mplayer2
 
+  menuitem2 = lives_standard_menu_item_new_with_label(_("Play Remote _Stream..."));
+
 #ifdef HAVE_WEBM
-  mt->open_loc_menu = lives_standard_menu_item_new_with_label(_("Open _Location/Stream..."));
+  mt->open_loc_menu = lives_standard_menu_item_new_with_label(_("Open _Online Clip..."));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mt->open_loc_menu);
 
   open_loc_submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mt->open_loc_menu), open_loc_submenu);
 
-  menuitem = lives_standard_menu_item_new_with_label(_("Open _Youtube Clip..."));
+  menuitem = lives_standard_menu_item_new_with_label(_("Download from _Youtube or other site..."));
   lives_container_add(LIVES_CONTAINER(open_loc_submenu), menuitem);
 
   lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_open_utube_activate), NULL);
 
-  menuitem = lives_standard_menu_item_new_with_label(_("Open _Location/Stream..."));
-  lives_container_add(LIVES_CONTAINER(open_loc_submenu), menuitem);
+  lives_container_add(LIVES_CONTAINER(open_loc_submenu), menuitem2);
 
 #else
 
-  menuitem = lives_standard_menu_item_new_with_label(_("Open _Location/Stream..."));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), menuitem);
+  lives_container_add(LIVES_CONTAINER(menuitem_menu), menuitem2);
 
 #endif
 

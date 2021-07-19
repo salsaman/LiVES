@@ -17,8 +17,6 @@ static boolean nowait;
 LiVESWidget *assist;
 
 void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
-  char *wid = NULL;
-  boolean activated = FALSE;
   if (prefs->startup_phase && !LIVES_IS_FILE_CHOOSER_DIALOG(dialog)) {
     if (!mainw->is_ready) {
       gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE); // dont know if this actually does anything...
@@ -30,22 +28,7 @@ void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
   }
 
   lives_widget_show_all(dialog);
-  lives_widget_context_update();
-
-  //if (!prefs->startup_phase || LIVES_IS_FILE_CHOOSER_DIALOG(dialog)) {
-  if (capable->has_xdotool == MISSING && capable->has_wmctrl == MISSING) return;
-  wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
-  activated = activate_x11_window(wid);
-  lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
-
-  if (extra) {
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(extra), KEEPABOVE_KEY, dialog);
-    if (activated)
-      lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(extra),
-                                        ACTIVATE_KEY, lives_strdup(wid));
-  }
-  if (wid) lives_free(wid);
-  //}
+  lives_window_present(LIVES_WINDOW(dialog));
 }
 
 

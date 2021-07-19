@@ -166,16 +166,31 @@ static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event
 }
 #endif
 
-void pad_init_silence(void) {
-  cfile->undo1_dbl = 0.;
-  cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file) - cfile->laudio_time;
-  cfile->undo_arate = cfile->arate;
-  cfile->undo_signed_endian = cfile->signed_endian;
-  cfile->undo_achans = cfile->achans;
-  cfile->undo_asampsize = cfile->asampsize;
-  cfile->undo_arps = cfile->arps;
-  d_print(_("Auto padding with %.4f seconds of silence at start..."), cfile->undo2_dbl);
-  if (on_ins_silence_activate(NULL, NULL)) d_print_done();
+
+void pad_with_silence(int clipno, boolean at_start, boolean is_auto) {
+  lives_clip_t *sfile;
+
+  if (!IS_NORMAL_CLIP(clipno)) return;
+  sfile = mainw->files[clipno];
+
+  if (at_start) {
+    sfile->undo1_dbl = 0.;
+    sfile->undo2_dbl = CLIP_TOTAL_TIME(clipno) - sfile->laudio_time;
+  } else {
+    sfile->undo1_dbl = sfile->laudio_time;
+    sfile->undo2_dbl = CLIP_TOTAL_TIME(clipno);
+  }
+
+  sfile->undo_arate = sfile->arate;
+  sfile->undo_signed_endian = sfile->signed_endian;
+  sfile->undo_achans = sfile->achans;
+  sfile->undo_asampsize = sfile->asampsize;
+  sfile->undo_arps = sfile->arps;
+
+  d_print(_("Padding %s with %.4f seconds of silence..."), at_start ? _("start") : _("end"),
+          sfile->undo2_dbl - sfile->undo1_dbl);
+
+  if (on_ins_silence_activate(NULL, LIVES_INT_TO_POINTER(clipno))) d_print_done();
   else d_print("\n");
 }
 
@@ -488,20 +503,11 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
             if (!mainw->effects_paused && cfile->afilesize > 0 && cfile->achans > 0
                 && CLIP_TOTAL_TIME(mainw->current_file) > cfile->laudio_time + AV_TRACK_MIN_DIFF) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_PAD_START) {
-                pad_init_silence();
+                pad_with_silence(mainw->current_file, TRUE, TRUE);
                 cfile->changed = FALSE;
               }
               if (cdata->sync_hint & SYNC_HINT_AUDIO_PAD_END) {
-                cfile->undo1_dbl = cfile->laudio_time;
-                cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file) - cfile->laudio_time;
-                cfile->undo_arate = cfile->arate;
-                cfile->undo_signed_endian = cfile->signed_endian;
-                cfile->undo_achans = cfile->achans;
-                cfile->undo_asampsize = cfile->asampsize;
-                cfile->undo_arps = cfile->arps;
-                d_print(_("Auto padding with %.4f seconds of silence at end..."), cfile->undo2_dbl);
-                if (on_ins_silence_activate(NULL, NULL)) d_print_done();
-                else d_print("\n");
+                pad_with_silence(mainw->current_file, FALSE, TRUE);
                 cfile->changed = FALSE;
 		// *INDENT-OFF*
               }}}}
@@ -851,16 +857,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
         }
       }
       if (cfile->laudio_time < cfile->video_time && cfile->achans > 0) {
-        cfile->undo1_dbl = cfile->laudio_time;
-        cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file) - cfile->laudio_time;
-        cfile->undo_arate = cfile->arate;
-        cfile->undo_signed_endian = cfile->signed_endian;
-        cfile->undo_achans = cfile->achans;
-        cfile->undo_asampsize = cfile->asampsize;
-        cfile->undo_arps = cfile->arps;
-        d_print(_("Auto padding with %.2f seconds of silence at end..."), cfile->undo2_dbl);
-        if (on_ins_silence_activate(NULL, NULL)) d_print_done();
-        else d_print("\n");
+        pad_with_silence(mainw->current_file, FALSE, TRUE);
         cfile->changed = FALSE;
       }
     }
@@ -4503,8 +4500,6 @@ ulong restore_file(const char *file_name) {
   }
   cfile->checked = TRUE;
 
-  // add entry to window menu
-  // TODO - do this earlier and allow switching during restore
   add_to_clipmenu();
 
   if (prefs->show_recent) {
@@ -5057,7 +5052,7 @@ static LiVESResponseType manual_locate(const char *orig_filename, lives_clip_t *
 }
 
 
-boolean reload_clip(int fileno, int maxframe) {
+boolean reload_clip(int fileno, frames_t maxframe) {
   // reload clip -- for CLIP_TYPE_FILE
   // cd to clip directory - so decoder plugins can write temp files
   LiVESList *odeclist;
@@ -5271,7 +5266,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   int clipnum = 0;
   int maxframe;
-  int last_good_file = -1, ngoodclips;
+  int last_good_file = -1, ngoodclips = 0;
 
   boolean is_scrap, is_ascrap;
   boolean did_set_check = FALSE;
@@ -5401,8 +5396,10 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         mainw->suppress_dprint = FALSE;
         continue;
       }
+      last_good_file = mainw->current_file;
       mainw->was_set = TRUE;
       prefs->crash_recovery = crash_recovery; /// reset to original value
+      continue;
     } else {
       /// load single file
       if (!strncmp(buff, "scrap|", 6)) {
@@ -5589,7 +5586,9 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
     // add to clip menu
     threaded_dialog_spin(0.);
+
     add_to_clipmenu();
+
     cfile->start = cfile->frames > 0 ? 1 : 0;
     cfile->end = cfile->frames;
     cfile->is_loaded = TRUE;
@@ -5640,9 +5639,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
     }
 
-    if (mainw->current_file != -1)
-      if (*mainw->set_name) recover_layout_map(mainw->current_file);
-
     if (!mainw->multitrack) resize(1);
 
     lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
@@ -5654,9 +5650,9 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   ngoodclips = lives_list_length(mainw->cliplist);
   if (!ngoodclips) {
     d_print(_("No clips were recovered.\n"));
-  }
+  } else
+    d_print(P_("%d clip was recovered ", "%d clips were recovered ", ngoodclips), ngoodclips);
 
-  d_print(P_("%d clip was recovered ", "%d clips were recovered ", ngoodclips), ngoodclips);
   if (recovery_file)
     d_print(_("from the previous session.\n"));
   else
@@ -5700,7 +5696,6 @@ recovery_done:
   mainw->invalid_clips = FALSE;
   mainw->suppress_dprint = FALSE;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-  mainw->recovering_files = FALSE;
   mainw->is_ready = is_ready;
   if (mainw->multitrack) {
     mainw->multitrack->is_ready = mt_is_ready;
@@ -5714,6 +5709,10 @@ recovery_done:
   mainw->no_switch_dprint = FALSE;
   d_print("");
   mainw->invalid_clips = rec_cleanup;
+
+  if (ngoodclips && *mainw->set_name) recover_layout_map();
+  mainw->recovering_files = FALSE;
+
   return retb;
 }
 

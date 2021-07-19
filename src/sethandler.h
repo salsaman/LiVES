@@ -89,7 +89,7 @@ LiVESList *get_set_list(const char *dir, boolean utf8);
 void remove_layout_files(LiVESList *lmap);
 
 // reload the global layout map
-void recover_layout_map(int numclips);
+void recover_layout_map(void);
 
 /// load / save / delete /////
 boolean on_save_set_activate(LiVESWidget *, livespointer);

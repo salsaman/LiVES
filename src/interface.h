@@ -314,14 +314,12 @@ LiVESWidget *trash_rb(LiVESButtonBox *parent);
 
 void draw_dsu_widget(LiVESWidget *dsu_widget);
 
-_commentsw *commentsw;
-_entryw *renamew;
-_entryw *locw;
-_insertw *insertw;
 text_window *textwindow;
 
 #define DEF_FILE_KEY "_fc_def_file"
 #define FC_ACTION_KEY "_fc_action"
+
+#define STRUCT_KEY "_struct"
 
 #define PIXBUF_KEY "_pixbuf"
 #define PRV_TYPE_KEY "_preview_type"

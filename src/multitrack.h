@@ -981,7 +981,7 @@ void wipe_layout(lives_mt *);
 
 void migrate_layouts(const char *old_set_name, const char *new_set_name);
 
-LiVESList *layout_frame_is_affected(int clipno, int start, int end, LiVESList *xlays);
+LiVESList *layout_frame_is_affected(int clipno, frames_t start, frames_t end, LiVESList *xlays);
 LiVESList *layout_audio_is_affected(int clipno, double stime, double etime, LiVESList *xlays);
 
 boolean check_for_layout_del(lives_mt *, boolean exiting);

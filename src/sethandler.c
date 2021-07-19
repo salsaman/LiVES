@@ -440,18 +440,18 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
 
   if (!user_data) {
     // this was called from the GUI
+    _entryw *renamew = create_rename_dialog(2);
     do {
       // prompt for a set name, advise user to save set
-      renamew = create_rename_dialog(2);
       response = lives_dialog_run(LIVES_DIALOG(renamew->dialog));
       if (response == LIVES_RESPONSE_CANCEL) return FALSE;
       lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s",
                      (tmp = U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
       lives_free(tmp);
-      lives_widget_destroy(renamew->dialog);
-      lives_free(renamew);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     } while (!is_legal_set_name(new_set_name, TRUE, FALSE));
+    lives_widget_destroy(renamew->dialog);
+    lives_free(renamew);
   } else lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s", (char *)user_data);
 
   lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
@@ -612,7 +612,7 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
     // warn the user about layouts if the set name changed
     // but, don't bother the user with errors if we are exiting
     add_lmap_error(LMAP_INFO_SETNAME_CHANGED, old_set, mainw->set_name, 0, 0, 0., FALSE);
-    popup_lmap_errors(NULL, NULL);
+    popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(LMAP_INFO_SETNAME_CHANGED));
   }
 
   lives_notify(LIVES_OSC_NOTIFY_CLIPSET_SAVED, old_set);
@@ -632,24 +632,23 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
 }
 
 
-void recover_layout_map(int numclips) {
+void recover_layout_map(void) {
   // load global layout map for a set and assign entries to clips [mainw->files[i]->layout_map]
   LiVESList *mlist, *lmap_node, *lmap_node_next, *lmap_entry_list, *lmap_entry_list_next;
 
   layout_map *lmap_entry;
-  uint32_t mask;
+  uint32_t mask = 0;
 
   char **array;
   char *check_handle;
 
-  if (numclips > MAX_FILES) numclips = MAX_FILES;
-
   if ((mlist = load_layout_map())) {
     for (int pass = 0; pass < 2; pass++) {
       // assign layout map to clips
-      for (int i = 1; mlist && i <= numclips; i++) {
+      for (int i = 1; i < MAX_FILES && mlist; i++) {
+        if (!IS_NORMAL_CLIP(i) || (mainw->multitrack && i == mainw->multitrack->render_file)
+            || i == mainw->scrap_file || i == mainw->ascrap_file) continue;
         lives_clip_t *sfile = mainw->files[i];
-        if (!sfile) continue;
         lmap_node = mlist;
         while (lmap_node) {
           lmap_node_next = lmap_node->next;
@@ -693,7 +692,6 @@ void recover_layout_map(int numclips) {
             if (sfile->layout_map) {
               /// check for missing frames and audio in layouts
               // TODO: -- needs checking ----
-              mask = 0;
               mainw->xlays = layout_frame_is_affected(i, sfile->frames + 1, 0, mainw->xlays);
               if (mainw->xlays) {
                 add_lmap_error(LMAP_ERROR_DELETE_FRAMES, sfile->name, (livespointer)sfile->layout_map, i,
@@ -710,9 +708,6 @@ void recover_layout_map(int numclips) {
                 lives_list_free_all(&mainw->xlays);
                 mask |= WARN_MASK_LAYOUT_DELETE_AUDIO;
                 //g_print("AUD %f\n", cfile->laudio_time);
-              }
-              if (mask != 0) {
-                popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(mask));
               }
             }
             lives_free(check_handle);
@@ -734,11 +729,13 @@ void recover_layout_map(int numclips) {
     }
     if (mlist) lives_list_free(mlist);
   }
+  if (mask) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(mask));
 }
 
 
 char *on_load_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // get set name (use a modified rename window)
+  _entryw *renamew;
   char *set_name = NULL;
   LiVESResponseType resp;
   mainw->mt_needs_idlefunc = FALSE;
@@ -822,14 +819,12 @@ boolean reload_set(const char *set_name) {
   char *ignore;
 
   boolean added_recovery = FALSE;
-  boolean keep_threaded_dialog = FALSE;
   boolean hadbad = FALSE;
 
   int last_file = -1, new_file = -1;
-  int current_file = mainw->current_file;
-  int clipnum = 0;
-  int maxframe;
-  int ignored = 0;
+  int clipcount = 0, ignored = 0;
+  frames_t maxframe;
+
   mainw->mt_needs_idlefunc = FALSE;
 
   if (mainw->multitrack) {
@@ -856,10 +851,7 @@ boolean reload_set(const char *set_name) {
 
   lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "none");
 
-  // check if we already have a threaded dialog running (i.e. we are called from startup)
-  if (mainw->threaded_dialog) keep_threaded_dialog = TRUE;
-
-  if (prefs->show_gui && !keep_threaded_dialog) {
+  if (prefs->show_gui && !mainw->recovering_files) {
     char *tmp;
     msg = lives_strdup_printf(_("Loading clips from set %s"), (tmp = F2U8(set_name)));
     do_threaded_dialog(msg, FALSE);
@@ -897,27 +889,25 @@ boolean reload_set(const char *set_name) {
     }
 
     if (!(*mainw->msg) || (!strncmp(mainw->msg, "none", 4))) {
-      if (!mainw->recovering_files) mainw->suppress_dprint = FALSE;
-      if (!keep_threaded_dialog) end_threaded_dialog();
-
       if (orderfile) fclose(orderfile);
 
-      //mainw->current_file = current_file;
-
-      if (!mainw->multitrack) {
-        if (last_file > 0) {
-          threaded_dialog_spin(0.);
-          switch_to_file(current_file, last_file);
-          threaded_dialog_spin(0.);
-        }
+      if (!mainw->recovering_files) {
+        mainw->suppress_dprint = FALSE;
+        end_threaded_dialog();
       }
 
-      if (clipnum == 0) {
+      if (!mainw->multitrack) {
+        if (last_file > 0) switch_clip(1, last_file, TRUE);
+      }
+
+      if (!clipcount) {
+        // no clips recovered from set
         char *dirname = SET_DIR(set_name);
         // if dir exists, and there are no subdirs, ask user if they want to delete
         if (lives_file_test(dirname, LIVES_FILE_TEST_IS_DIR)) {
           //// todo test if no subdirs
           if (ignored) {
+            // if all files ignored, ignore the entries set
             char *ignore = lives_build_filename(CURRENT_SET_DIR, LIVES_FILENAME_IGNORE, NULL);
             lives_touch(ignore);
             lives_free(ignore);
@@ -928,7 +918,7 @@ boolean reload_set(const char *set_name) {
             }
           }
         } else {
-          // this is appropriate if the dir doens not exist, an !recovery
+          // this is appropriate if the dir does not exist, and !recovery
           do_set_noclips_error(set_name);
         }
       } else {
@@ -936,23 +926,18 @@ boolean reload_set(const char *set_name) {
         reset_clipmenu();
         lives_widget_set_sensitive(mainw->vj_load_set, FALSE);
 
-        // MUST set set_name before calling this
-        recover_layout_map(MAX_FILES);
-
-        // TODO - check for missing frames and audio in layouts
         if (hadbad) rewrite_orderfile(FALSE, FALSE, NULL);
 
         d_print(_("%d clips and %d layouts were recovered from set (%s).\n"),
-                clipnum, lives_list_length(mainw->current_layouts_map), (tmp = F2U8(set_name)));
+                clipcount, lives_list_length(mainw->current_layouts_map), (tmp = F2U8(set_name)));
         lives_free(tmp);
         lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", set_name);
         lives_notify(LIVES_OSC_NOTIFY_CLIPSET_OPENED, mainw->set_name);
       }
 
-      threaded_dialog_spin(0.);
       if (!mainw->multitrack) {
         if (mainw->is_ready) {
-          if (clipnum > 0 && CURRENT_CLIP_IS_VALID) {
+          if (clipcount && CURRENT_CLIP_IS_VALID) {
             showclipimgs();
           }
           // force a redraw
@@ -964,45 +949,45 @@ boolean reload_set(const char *set_name) {
         mainw->current_file = mainw->multitrack->render_file;
         polymorph(mainw->multitrack, POLY_NONE);
         polymorph(mainw->multitrack, POLY_CLIPS);
-        mt_sensitise(mainw->multitrack);
-        maybe_add_mt_idlefunc();
+        mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen
       }
-      if (!keep_threaded_dialog) end_threaded_dialog();
       lives_chdir(cwd, FALSE);
       lives_free(cwd);
-      if (mainw->multitrack)
-        mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen
-      sensitize();
+
+      if (clipcount && !mainw->recovering_files) {
+        // if we are truly recovering files, we allow error correction later on
+        // otherwise we might end up calling this twice
+        mainw->recovering_files = TRUE; // allow error correction
+        // MUST set set_name before calling this
+        recover_layout_map();
+        mainw->recovering_files = FALSE;
+      }
+
+      if (mainw->recovering_files) {
+        if (mainw->multitrack) {
+          mt_sensitise(mainw->multitrack);
+          maybe_add_mt_idlefunc();
+        } else sensitize();
+      }
       return TRUE;
     }
 
-    if (clipnum > 0)
-      mainw->was_set = TRUE;
-
-    if (prefs->crash_recovery && !added_recovery) {
-      char *recovery_entry = lives_build_filename_relative(set_name, "*", NULL);
-      add_to_recovery_file(recovery_entry);
-      lives_free(recovery_entry);
-      added_recovery = TRUE;
-    }
-
     clipdir = lives_build_filename(prefs->workdir, mainw->msg, NULL);
-    ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
-    if (lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) {
+    if (!lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
       lives_free(clipdir);
-      lives_free(ignore);
-      ignored++;
       continue;
     }
-    lives_free(ignore);
+
+    ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
+    if (lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) {
+      ignored++;
+      lives_free(clipdir);
+      lives_free(ignore);
+      continue;
+    }
 
     if (orderfile) {
       // newer style (0.9.6+)
-
-      if (!lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
-        lives_free(clipdir);
-        continue;
-      }
       threaded_dialog_spin(0.);
 
       //create a new cfile and fill in the details
@@ -1017,22 +1002,26 @@ boolean reload_set(const char *set_name) {
 
     if (!sfile) {
       lives_free(clipdir);
+      lives_free(ignore);
       mainw->suppress_dprint = FALSE;
 
-      if (!keep_threaded_dialog) end_threaded_dialog();
+      if (!mainw->recovering_files) end_threaded_dialog();
 
       if (mainw->multitrack) {
         mainw->current_file = mainw->multitrack->render_file;
         polymorph(mainw->multitrack, POLY_NONE);
         polymorph(mainw->multitrack, POLY_CLIPS);
-        mt_sensitise(mainw->multitrack);
-        maybe_add_mt_idlefunc();
       }
 
-      recover_layout_map(MAX_FILES);
       lives_chdir(cwd, FALSE);
       lives_free(cwd);
       fclose(orderfile);
+
+      if (mainw->multitrack) {
+        mt_sensitise(mainw->multitrack);
+        maybe_add_mt_idlefunc();
+      } else sensitize();
+
       return FALSE;
     }
 
@@ -1044,7 +1033,6 @@ boolean reload_set(const char *set_name) {
       /// set clip failed to load, when this happens
       // the user can choose to delete it or mark it as ignored
       /// else it will keep trying to reload each time.
-      ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
       if (lives_file_test(ignore, LIVES_FILE_TEST_EXISTS)) {
         ignored++;
       }
@@ -1058,6 +1046,7 @@ boolean reload_set(const char *set_name) {
       continue;
     }
     lives_free(clipdir);
+    lives_free(ignore);
 
     threaded_dialog_spin(0.);
 
@@ -1129,6 +1118,13 @@ boolean reload_set(const char *set_name) {
       }
     }
 
+    if (prefs->crash_recovery && !added_recovery) {
+      char *recovery_entry = lives_build_filename_relative(set_name, "*", NULL);
+      add_to_recovery_file(recovery_entry);
+      lives_free(recovery_entry);
+      added_recovery = TRUE;
+    }
+
     if (!prefs->vj_mode) {
       if (cfile->achans > 0 && cfile->afilesize == 0) {
         reget_afilesize_inner(mainw->current_file);
@@ -1137,14 +1133,16 @@ boolean reload_set(const char *set_name) {
 
     last_file = new_file;
 
-    if (++clipnum == 1) {
+    if (++clipcount == 1) {
+      // we recovered our first clip from the set...
       /** we need to set the set_name before calling add_to_clipmenu(), so that the clip gets the name of the set in
         its menuentry, and also prior to loading any layouts since they specirfy the clipset they need */
       lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", set_name);
+      mainw->was_set = TRUE;
     }
 
     /// read the playback fps, play frame, and name
-    open_set_file(clipnum); ///< must do before calling save_clip_values()
+    open_set_file(clipcount); ///< must do before calling save_clip_values()
     if (cfile->clip_type == CLIP_TYPE_FILE && cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
 
     /// if this is set then it means we are auto reloading the clipset from the previous session, so restore full details
@@ -1543,7 +1541,6 @@ LIVES_GLOBAL_INLINE void do_set_noclips_error(const char *setname) {
   d_print(msg);
   lives_free(msg);
 }
-
 
 
 LIVES_GLOBAL_INLINE boolean do_set_noclips_query(const char *set_name) {

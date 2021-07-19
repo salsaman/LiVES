@@ -63,6 +63,7 @@ typedef struct {
   int var_rowstride_alignment_hint;
   int var_last_sws_block;
   boolean var_no_gui;
+  boolean var_force_button_image;
   uint64_t var_random_seed;
   int var_proc_file;
   int var_cancelled;

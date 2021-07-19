@@ -1498,8 +1498,8 @@ static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer,
 
 //#define DEBUG_ARENDER
 
-boolean pad_with_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned,
-                         boolean big_endian) {
+boolean append_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned,
+                       boolean big_endian) {
   // asamps is sample size in BYTES
   // fill to ins_pt with zeros (or 0x80.. for unsigned)
   // oins_size is the current file length, ins_size is the point where we want append to (both in bytes)
@@ -1735,7 +1735,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
     if (ins_size > cur_size) {
       // fill to ins_pt with zeros
-      pad_with_silence(out_fd, NULL, cur_size, ins_size, out_asamps, out_unsigned, out_bendian);
+      append_silence(out_fd, NULL, cur_size, ins_size, out_asamps, out_unsigned, out_bendian);
     } else {
       lives_lseek_buffered_writer(out_fd, ins_size);
     }
@@ -1837,7 +1837,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       ins_pt = tc_end / TICKS_PER_SECOND_DBL;
       ins_pt *= out_achans * out_arate * out_asamps;
       ins_size = ((int64_t)(ins_pt / out_achans / out_asamps) + .5) * out_achans * out_asamps;
-      pad_with_silence(out_fd, NULL, oins_size, ins_size, out_asamps, out_unsigned, out_bendian);
+      append_silence(out_fd, NULL, oins_size, ins_size, out_asamps, out_unsigned, out_bendian);
       lives_close_buffered(out_fd);
     } else {
       if (prefs->audio_player == AUD_PLAYER_JACK) {
@@ -1845,11 +1845,11 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
           lives_memset((void *)obuf->bufferf[i] + obuf->samples_filled * sizeof(float), 0, tsamples * sizeof(float));
         }
       } else {
-        pad_with_silence(-1, (void *)obuf->buffer16[0], obuf->samples_filled * out_asamps * out_achans,
-                         (obuf->samples_filled + tsamples) * out_asamps * out_achans, out_asamps, obuf->s16_signed
-                         ? AFORM_SIGNED : AFORM_UNSIGNED,
-                         ((capable->hw.byte_order == LIVES_LITTLE_ENDIAN && obuf->swap_endian == SWAP_L_TO_X)
-                          || (capable->hw.byte_order == LIVES_LITTLE_ENDIAN && obuf->swap_endian != SWAP_L_TO_X)));
+        append_silence(-1, (void *)obuf->buffer16[0], obuf->samples_filled * out_asamps * out_achans,
+                       (obuf->samples_filled + tsamples) * out_asamps * out_achans, out_asamps, obuf->s16_signed
+                       ? AFORM_SIGNED : AFORM_UNSIGNED,
+                       ((capable->hw.byte_order == LIVES_LITTLE_ENDIAN && obuf->swap_endian == SWAP_L_TO_X)
+                        || (capable->hw.byte_order == LIVES_LITTLE_ENDIAN && obuf->swap_endian != SWAP_L_TO_X)));
       }
       obuf->samples_filled += tsamples;
     }
@@ -1957,9 +1957,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       }
 
       if (bytes_read < tbytes && bytes_read >= 0)  {
-        pad_with_silence(-1, in_buff, bytes_read, tbytes, in_asamps[track], mainw->files[from_files[track]]->signed_endian
-                         & AFORM_UNSIGNED, mainw->files[from_files[track]]->signed_endian & AFORM_BIG_ENDIAN);
-        //lives_memset(in_buff + bytes_read, 0, tbytes - bytes_read);
+        append_silence(-1, in_buff, bytes_read, tbytes, in_asamps[track], mainw->files[from_files[track]]->signed_endian
+                       & AFORM_UNSIGNED, mainw->files[from_files[track]]->signed_endian & AFORM_BIG_ENDIAN);
       }
 
       // should be approximately = xsamples, I believe
@@ -4061,8 +4060,8 @@ boolean apply_rte_audio_init(void) {
 
   if (audio_pos > cfile->afilesize) {
     off64_t audio_end_pos = (double)((cfile->start - 1) * cfile->arate * cfile->achans * cfile->asampsize / 8) / cfile->fps;
-    pad_with_silence(audio_fd, NULL, audio_pos, audio_end_pos, cfile->asampsize, cfile->signed_endian & AFORM_UNSIGNED,
-                     cfile->signed_endian & AFORM_BIG_ENDIAN);
+    append_silence(audio_fd, NULL, audio_pos, audio_end_pos, cfile->asampsize, cfile->signed_endian & AFORM_UNSIGNED,
+                   cfile->signed_endian & AFORM_BIG_ENDIAN);
   } else lives_lseek_buffered_writer(audio_fd, audio_pos);
 
   aud_tc = 0;

@@ -181,9 +181,6 @@ char *format_tstr(double xtime, int minlim);
 
 int check_dev_busy(char *devstr);
 
-off_t get_file_size(int fd);
-off_t sget_file_size(const char *name);
-
 off_t get_dir_size(const char *dirname);
 
 LiVESList *check_for_subdirs(const char *dirname, LiVESList *subdirs);

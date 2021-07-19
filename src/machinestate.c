@@ -830,35 +830,6 @@ boolean compress_files_in_dir(const char *dir, int method, void *data) {
 }
 
 
-off_t get_file_size(int fd) {
-  // get the size of file fd
-  struct stat filestat;
-  off_t fsize;
-  lives_file_buffer_t *fbuff;
-  fstat(fd, &filestat);
-  fsize = filestat.st_size;
-  //g_printerr("fssize for %d is %ld\n", fd, fsize);
-  if ((fbuff = find_in_file_buffers(fd)) != NULL) {
-    if (!fbuff->read) {
-      /// because of padding bytes... !!!!
-      off_t f2size;
-      if ((f2size = (off_t)(fbuff->offset + fbuff->bytes)) > fsize) return f2size;
-    }
-  }
-  return fsize;
-}
-
-
-off_t sget_file_size(const char *name) {
-  off_t res;
-  struct stat xstat;
-  if (!name) return 0;
-  res = stat(name, &xstat);
-  if (res < 0) return res;
-  return xstat.st_size;
-}
-
-
 // check with list like subdir1, subdir2|subsubdir2,.. for subdirs in dirname. Returns list wuth matched subdirs removed.
 LiVESList *check_for_subdirs(const char *dirname, LiVESList * subdirs) {
   DIR *tldir, *xsubdir;

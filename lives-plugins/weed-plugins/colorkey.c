@@ -86,7 +86,7 @@ static weed_error_t colorkey_process(weed_plant_t *inst, weed_timecode_t tc) {
       }
     }
   }
-  weed_free(in_chans);
+    weed_free(in_chans);
 
   return WEED_SUCCESS;
 }
@@ -97,20 +97,17 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class;
   int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_END};
   weed_plant_t *in_chantmpls[] = {
-    weed_channel_template_init("in_channel0", 0),
-    weed_channel_template_init("in_channel1", 0),
-    NULL
-  };
+      weed_channel_template_init("in_channel0", 0),
+      weed_channel_template_init("in_channel1", 0),
+      NULL};
   weed_plant_t *out_chantmpls[] = {
-    weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
-    NULL
-  };
+      weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
+      NULL};
   weed_plant_t *in_paramtmpls[] = {
-    weed_float_init("delta", "_Delta", .2, 0., 1.),
-    weed_float_init("opac", "_Opacity", 1., 0., 1.),
-    weed_colRGBi_init("col", "_Colour", 0, 0, 255),
-    NULL
-  };
+      weed_float_init("delta", "_Delta", .2, 0., 1.),
+      weed_float_init("opac", "_Opacity", 1., 0., 1.),
+      weed_colRGBi_init("col", "_Colour", 0, 0, 255),
+      NULL};
   weed_plant_t *pgui;
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
@@ -123,7 +120,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(pgui, WEED_LEAF_DECIMALS, 2);
 
   filter_class = weed_filter_class_init("colour key", "salsaman", 1, filter_flags, palette_list,
-                                        NULL, colorkey_process, NULL, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
+    NULL, colorkey_process, NULL, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_plugin_set_package_version(plugin_info, package_version);

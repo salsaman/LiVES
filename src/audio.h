@@ -186,8 +186,8 @@ void sample_silence_dS(float *dst, size64_t nsamples);
 
 void sample_silence_stream(int nchans, int64_t nframes);
 
-boolean pad_with_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned,
-                         boolean big_endian);
+boolean append_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned,
+                       boolean big_endian);
 
 void sample_move_float_d16(int16_t *dst, float *src,
                            size64_t nsamples, size_t tbytes, double scale, int nDstChannels,

@@ -1100,7 +1100,7 @@ LiVESWidget *lives_standard_button_new(int width, int height);
 LiVESWidget *lives_standard_button_new_with_label(const char *labeltext, int width, int height);
 boolean lives_standard_button_set_label(LiVESButton *, const char *label);
 const char *lives_standard_button_get_label(LiVESButton *);
-boolean lives_standard_button_set_image(LiVESButton *, LiVESWidget *image);
+boolean lives_standard_button_set_image(LiVESButton *, LiVESWidget *image, boolean force_show);
 
 LiVESWidget *lives_standard_button_new_full(const char *label, int width, int height, LiVESBox *,
     boolean fake_default, const char *ttips);

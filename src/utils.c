@@ -498,9 +498,9 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
   lives_text_buffer_get_end_iter(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter);
 
   if (affects_current && !user_data) {
-    mainw->affected_layout_marks = lives_list_append(mainw->affected_layout_marks,
-                                   (livespointer)lives_text_buffer_create_mark
-                                   (LIVES_TEXT_BUFFER(mainw->layout_textbuffer), NULL, &end_iter, TRUE));
+    mainw->affected_layout_marks =
+      lives_list_append(mainw->affected_layout_marks, (livespointer)lives_text_buffer_create_mark
+                        (LIVES_TEXT_BUFFER(mainw->layout_textbuffer), NULL, &end_iter, TRUE));
   }
 
   switch (lerror) {
@@ -557,9 +557,9 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
   }
 
   if (affects_current && user_data) {
-    mainw->affected_layout_marks = lives_list_append(mainw->affected_layout_marks,
-                                   (livespointer)lives_text_buffer_create_mark
-                                   (LIVES_TEXT_BUFFER(mainw->layout_textbuffer), NULL, &end_iter, TRUE));
+    mainw->affected_layout_marks =
+      lives_list_append(mainw->affected_layout_marks, (livespointer)lives_text_buffer_create_mark
+                        (LIVES_TEXT_BUFFER(mainw->layout_textbuffer), NULL, &end_iter, TRUE));
   }
 
   switch (lerror) {
@@ -1724,7 +1724,7 @@ boolean after_foreign_play(void) {
           end_threaded_dialog();
           if (cfile->afilesize > 0 && cfile->achans > 0
               && CLIP_TOTAL_TIME(mainw->current_file) > cfile->laudio_time + AV_TRACK_MIN_DIFF) {
-            pad_init_silence();
+            pad_with_silence(mainw->current_file, FALSE, TRUE);
           }
 	  // *INDENT-OFF*
 	}}}}

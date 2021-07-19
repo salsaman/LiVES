@@ -43,7 +43,7 @@ static uint32_t sqrti(uint32_t n) {
 
 
 static void cp_chroma(unsigned char *dst, unsigned char *src, int irow,
-                      int orow, int width, int height) {
+      int orow, int width, int height) {
   if (irow == orow && irow == width) weed_memcpy(dst, src, width * height);
   else {
     for (int i = 0; i < height; i++) {
@@ -101,11 +101,11 @@ static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t tc) {
       for (j = 1; j < width; j++) {
         // do edge detect and convolve
         row0 = src[irow * (i + 1) - 1 + j] - src[irow * (i - 1) - 1 + j]
-               + ((src[irow * (i + 1) + j] - src[irow * (i - 1) + j]) << 1)
-               + src[irow * (i + 1) + 1 + j] - src[irow * (i + 1) - 1 + j];
+              + ((src[irow * (i + 1) + j] - src[irow * (i - 1) + j]) << 1)
+              + src[irow * (i + 1) + 1 + j] - src[irow * (i + 1)- 1 + j];
         row1 = src[irow * (i - 1) + 1 + j] - src[irow * (i - 1) - 1 + j]
-               + ((src[irow * i + 1 + j] - src[irow * i - 1 + j]) << 1)
-               + src[irow * (i + 1) + 1 + j] - src[irow * (i + 1) - 1 + j];
+              + ((src[irow * i + 1 + j] - src[irow * i - 1 + j]) << 1)
+              + src[irow * (i + 1) + 1 + j] - src[irow * (i + 1)- 1 + j];
 
         sum = ((3 * sqrti(row0 * row0 + row1 * row1) / 2) * scale) >> 8;
 
@@ -120,7 +120,7 @@ static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t tc) {
       }
 
       // skip rightmost pixel
-      dst[orow * i + j] = src[irow * i + j];
+      dst[orow * i + j] = src[irow * i +j];
     }
 
     width++;
@@ -130,7 +130,7 @@ static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t tc) {
 
     if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P) height >>= 1;
     if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P
-        || pal == WEED_PALETTE_YUV422P) width >>= 1;
+          || pal == WEED_PALETTE_YUV422P) width >>= 1;
 
     if (pal == WEED_PALETTE_YUVA4444P) nplanes = 4;
     else nplanes = 3;
@@ -139,8 +139,8 @@ static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t tc) {
       cp_chroma(dstp[i], srcp[i], irows[i], orows[i], width, height);
     }
   }
-  weed_free(srcp);
-  weed_free(dstp);
+    weed_free(srcp);
+    weed_free(dstp);
 
   return WEED_SUCCESS;
 }
@@ -151,19 +151,17 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class;
   int palette_list[] = ALL_PLANAR_PALETTES;
   weed_plant_t *in_chantmpls[] = {
-    weed_channel_template_init("in_channel0", 0),
-    NULL
-  };
+      weed_channel_template_init("in_channel0", 0),
+      NULL};
   weed_plant_t *out_chantmpls[] = {
-    weed_channel_template_init("out_channel", 0),
-    NULL
-  };
+      weed_channel_template_init("out_channel", 0),
+      NULL};
   int filter_flags = 0;
 
   verbosity = weed_get_host_verbosity(host_info);
 
   filter_class = weed_filter_class_init("comic book", "salsaman", 1, filter_flags, palette_list,
-                                        NULL, comic_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
+    NULL, comic_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_plugin_set_package_version(plugin_info, package_version);

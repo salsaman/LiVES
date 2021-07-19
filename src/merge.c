@@ -531,7 +531,7 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
     mainw->fx1_start = clipboard->frames - excess_frames + 1;
     mainw->fx2_start = clipboard->frames;
 
-    on_insert_activate(NULL, LIVES_INT_TO_POINTER(1));
+    on_insert_activate(NULL, NULL);
   }
 
   if (excess_frames == 0 || !mainw->last_transition_ins_frames) {

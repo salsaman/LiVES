@@ -68,9 +68,10 @@ static weed_error_t pan_and_zoom_init(weed_plant_t *inst) {
     if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
 
     weed_set_int64_value(inst, WEED_LEAF_PLUGIN_RANDOM_SEED,
-                         weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL));
+        weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL));
     weed_set_voidptr_value(inst, "plugin_internal", sdata);
-  } else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  }
+  else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   return WEED_SUCCESS;
 }
@@ -203,7 +204,7 @@ static weed_error_t pan_and_zoom_process(weed_plant_t *inst, weed_timecode_t tc)
           if (dx >= width) break;
           if (dx < 0) continue;
           weed_memcpy(&dst[(y - offset) * orow + x],
-                      &src[irow * dy + dx * psize], psize);
+            &src[irow * dy + dx * psize], psize);
         }
       }
     }
@@ -218,28 +219,24 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class;
   int palette_list[] = ALL_PACKED_PALETTES;
   weed_plant_t *in_chantmpls[] = {
-    weed_channel_template_init("in_channel0", 0),
-    NULL
-  };
+      weed_channel_template_init("in_channel0", 0),
+      NULL};
   weed_plant_t *out_chantmpls[] = {
-    weed_channel_template_init("out_channel0", 0),
-    NULL
-  };
+      weed_channel_template_init("out_channel0", 0),
+      NULL};
   weed_plant_t *in_paramtmpls[] = {
-    weed_switch_init("trigger", "_Trigger", WEED_FALSE),
-    NULL
-  };
+      weed_switch_init("trigger", "_Trigger", WEED_FALSE),
+      NULL};
   weed_plant_t *gui;
   char *rfx_strings[] = {
-    "special|ignored|1|",
-    NULL
-  };
+      "special|ignored|1|",
+      NULL};
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_STATEFUL;
 
   verbosity = weed_get_host_verbosity(host_info);
 
   filter_class = weed_filter_class_init("pan and zoom", "salsaman", 1, filter_flags, palette_list,
-                                        pan_and_zoom_init, pan_and_zoom_process, pan_and_zoom_deinit, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
+    pan_and_zoom_init, pan_and_zoom_process, pan_and_zoom_deinit, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
 
   gui = weed_filter_get_gui(filter_class);
   weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");

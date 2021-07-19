@@ -256,7 +256,9 @@ foreach (@out_chans) {
 
 ########################################################
 
-open OUT, ">", "$plugin_file";
+open OUT, ">", $plugin_file;
+
+chmod 0666, $plugin_file;
 
 print OUT "/////////////////////////////////////////////////////////////////////////////\n";
 print OUT "// Weed $plugin_name plugin, version $pver\n";
@@ -976,6 +978,10 @@ sub gen_array {
     my ($type, $nspaces, @array) = @_;
     ## type: 0 = static, 1 = init, 2 = deinit, 3 = proc
     foreach (@array) {
+	if ($_ eq "") {
+	    print OUT "\n";
+	    next;
+	}
 	my $xspaces = &subst_macro($type, $nspaces, $_);
 	if ($xspaces eq "none") {
 	    print OUT " " x $nspaces . $_ . "\n";

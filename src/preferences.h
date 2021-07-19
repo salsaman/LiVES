@@ -165,8 +165,10 @@ typedef struct {
 #define WARN_MASK_RSVD_0					(1ull << 47)
 
   // for bits 48 - 63, the sense will be reversed, in case we need anything else ON
-  // by default
-#define WARN_MASK_RSVD_OFF_15					(1ull << 48)
+  // by default (this only affects the checkbutton state in the warning dialog)
+#define WARN_MASK_DEF_ON					(1ull << 48)
+#define WARN_MASK_LAYOUT_RELOAD					(1ull << 48)
+
 #define WARN_MASK_RSVD_OFF_14					(1ull << 49)
 #define WARN_MASK_RSVD_OFF_13					(1ull << 50)
 #define WARN_MASK_RSVD_OFF_12					(1ull << 51)
@@ -575,7 +577,7 @@ typedef struct {
   int rr_fstate;
   boolean rr_amicro;
   boolean rr_ramicro;
-
+  boolean skip_lmap_afixes;
   char def_author[1024]; ///< TODO - add to prefs window
 } _prefs;
 
@@ -729,6 +731,7 @@ typedef struct {
   LiVESWidget *checkbutton_warn_layout_aalt;
   LiVESWidget *checkbutton_warn_layout_ashift;
   LiVESWidget *checkbutton_warn_layout_popup;
+  LiVESWidget *checkbutton_warn_layout_reload;
   LiVESWidget *checkbutton_warn_discard_layout;
   LiVESWidget *checkbutton_warn_after_dvgrab;
   LiVESWidget *checkbutton_warn_no_pulse;

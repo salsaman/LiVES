@@ -4410,6 +4410,12 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new_with_label(const char 
 
 LIVES_GLOBAL_INLINE boolean lives_button_set_image_from_stock(LiVESButton *button,
     const char *stock_id) {
+  boolean can_show = FALSE, always_show = FALSE;
+#ifdef USE_SPECIAL_BUTTONS
+  can_show = TRUE;
+#endif
+  if (THREADVAR(force_button_image)) always_show = TRUE;
+
   /// tweaks for better icons
   if (!strcmp(stock_id, LIVES_STOCK_YES)) stock_id = LIVES_STOCK_APPLY;
   if (!strcmp(stock_id, LIVES_STOCK_NO)) stock_id = LIVES_STOCK_STOP;
@@ -4423,21 +4429,21 @@ LIVES_GLOBAL_INLINE boolean lives_button_set_image_from_stock(LiVESButton *butto
                      || !strcmp(stock_id, LIVES_STOCK_REMOVE)
                     )) {
       LiVESWidget *image = gtk_image_new_from_icon_name(stock_id, LIVES_ICON_SIZE_BUTTON);
-      if (LIVES_IS_IMAGE(image)) gtk_button_set_image(LIVES_BUTTON(button), image);
-      else return FALSE;
+      if (LIVES_IS_IMAGE(image)) {
+        gtk_button_set_image(LIVES_BUTTON(button), image);
+      } else return FALSE;
+    }
+  } else {
+    if (can_show || always_show) {
+      if (stock_id) {
+        LiVESPixbuf *pixbuf = lives_pixbuf_new_from_stock_at_size(stock_id, LIVES_ICON_SIZE_BUTTON, 0);
+        if (LIVES_IS_PIXBUF(pixbuf)) {
+          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), SBUTT_PIXBUF_KEY, (livespointer)pixbuf);
+        } else return FALSE;
+        if (always_show) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), SBUTT_FORCEIMG_KEY, pixbuf);
+      }
     }
   }
-
-#ifdef USE_SPECIAL_BUTTONS
-  else {
-    if (stock_id) {
-      LiVESPixbuf *pixbuf = lives_pixbuf_new_from_stock_at_size(stock_id, LIVES_ICON_SIZE_BUTTON, 0);
-      if (LIVES_IS_PIXBUF(pixbuf))
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), SBUTT_PIXBUF_KEY, (livespointer)pixbuf);
-      else return FALSE;
-    }
-  }
-#endif
   return TRUE;
 }
 
@@ -8694,20 +8700,20 @@ static void sbutt_render(LiVESButton * sbutt, LiVESWidgetState state, livespoint
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_standard_button_set_image(LiVESButton * sbutt,
-    LiVESWidget * img) {
+    LiVESWidget * img, boolean force_show) {
   if (!is_standard_widget(LIVES_WIDGET(sbutt))) return lives_button_set_image(sbutt, img);
 
   if (img) {
     LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(img));
     if (LIVES_IS_PIXBUF(pixbuf)) lives_widget_object_set_data_widget_object(LIVES_WIDGET_OBJECT(sbutt),
           SBUTT_PIXBUF_KEY, (livespointer)pixbuf);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(sbutt),
-                                 SBUTT_FORCEIMG_KEY, pixbuf);
+    if (force_show)
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(sbutt), SBUTT_FORCEIMG_KEY, pixbuf);
+    else
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(sbutt), SBUTT_FORCEIMG_KEY, NULL);
   } else {
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(sbutt),
-                                 SBUTT_PIXBUF_KEY, NULL);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(sbutt),
-                                 SBUTT_FORCEIMG_KEY, NULL);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(sbutt), SBUTT_PIXBUF_KEY, NULL);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(sbutt), SBUTT_FORCEIMG_KEY, NULL);
   }
   render_standard_button(sbutt);
   return TRUE;
@@ -11186,14 +11192,13 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer * tb
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir) {
   LiVESWidget *fbutton;
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_OPEN, LIVES_ICON_SIZE_LARGE_TOOLBAR);
-
   /// height X height is correct
   int height = ((widget_opts.css_min_height * 2 + 2) >> 2);
   fbutton = lives_standard_button_new(height, height * 4);
   lives_widget_set_valign(fbutton, LIVES_ALIGN_CENTER);
   SET_INT_DATA(fbutton, ISDIR_KEY, is_dir);
   if (def_dir) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), DEFDIR_KEY, (livespointer)def_dir);
-  lives_standard_button_set_image(LIVES_BUTTON(fbutton), image);
+  lives_standard_button_set_image(LIVES_BUTTON(fbutton), image, TRUE);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(LIVES_WIDGET_OBJECT(fbutton)),
                                SBUTT_FAKEDEF_KEY, fbutton);
   return fbutton;
@@ -11216,7 +11221,7 @@ static void _on_lock_button_clicked(LiVESButton * button, livespointer user_data
     image = lives_image_new_from_stock(LIVES_LIVES_STOCK_UNLOCKED, LIVES_ICON_SIZE_BUTTON);
     lives_widget_set_opacity(LIVES_WIDGET(button), .75);
   }
-  lives_standard_button_set_image(LIVES_BUTTON(button), image);
+  lives_standard_button_set_image(LIVES_BUTTON(button), image, TRUE);
 }
 
 

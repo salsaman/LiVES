@@ -27,6 +27,9 @@ char *get_dir(const char *filename);
 void get_basename(char *filename);
 void get_filename(char *filename, boolean strip_dir);
 
+off_t get_file_size(int fd);
+off_t sget_file_size(const char *name);
+
 boolean lives_fsync(int fd);
 void lives_sync(int times);
 

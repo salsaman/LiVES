@@ -84,7 +84,7 @@ for (int y = offset; y < height; y++) {
     if (dx >= width) break;
     if (dx < 0) continue;
     weed_memcpy(&dst[(y - offset) * orow + x],
-		    &src[irow * dy + dx * psize], psize);
+      &src[irow * dy + dx * psize], psize);
   }
 }
 </process>

@@ -15,6 +15,35 @@
 #endif
 
 
+off_t get_file_size(int fd) {
+  // get the size of file fd
+  struct stat filestat;
+  off_t fsize;
+  lives_file_buffer_t *fbuff;
+  fstat(fd, &filestat);
+  fsize = filestat.st_size;
+  //g_printerr("fssize for %d is %ld\n", fd, fsize);
+  if ((fbuff = find_in_file_buffers(fd)) != NULL) {
+    if (!fbuff->read) {
+      /// because of padding bytes... !!!!
+      off_t f2size;
+      if ((f2size = (off_t)(fbuff->offset + fbuff->bytes)) > fsize) return f2size;
+    }
+  }
+  return fsize;
+}
+
+
+off_t sget_file_size(const char *name) {
+  off_t res;
+  struct stat xstat;
+  if (!name) return 0;
+  res = stat(name, &xstat);
+  if (res < 0) return res;
+  return xstat.st_size;
+}
+
+
 /**
   @brief: return filename from an open fd, freeing val first
 
@@ -331,28 +360,28 @@ char *get_extension(const char *filename) {
 char *ensure_extension(const char *fname, const char *ext) {
   // make sure filename fname has file extension ext
   // if ext does not begin with a "." we prepend one to the start of ext
-  // we then check if fname ends with ext. If not we append ext to fname.
+  // we then check if fname ends with ".ext". If not we append ext to fname.
   // we return a copy of fname, possibly modified. The string returned should be freed after use.
   // NOTE: the original ext is not changed.
 
-  size_t se = strlen(ext), sf;
-  char *eptr = (char *)ext;
+  size_t se, sf;
+  char *eptr = (char *)ext, *ret;
 
   if (!fname) return NULL;
 
-  if (se == 0) return lives_strdup(fname);
+  if (!ext || (se = strlen(ext)) == 0) return lives_strdup(fname);
 
-  if (eptr[0] == '.') {
-    eptr++;
-    se--;
+  if (*eptr != '.') {
+    eptr = lives_strdup_printf(".%s", ext);
+    se++;
   }
 
   sf = lives_strlen(fname);
-  if (sf < se + 1 || strcmp(fname + sf - se, eptr) || fname[sf - se - 1] != '.') {
-    return lives_strconcat(fname, ".", eptr, NULL);
-  }
-
-  return lives_strdup(fname);
+  if (sf < se || strcmp(fname + sf - se, eptr)) {
+    ret = lives_strdup_printf("%s%s", fname, eptr);
+  } else ret = lives_strdup(fname);
+  if (eptr != (char *)ext) lives_free(eptr);
+  return ret;
 }
 
 

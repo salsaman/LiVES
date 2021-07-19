@@ -109,7 +109,8 @@ static weed_error_t rotozoom_init(weed_plant_t *inst) {
       sdata->path = sdata->zpath = 0;
     }
     weed_set_voidptr_value(inst, "plugin_internal", sdata);
-  } else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  }
+  else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   return WEED_SUCCESS;
 }
@@ -172,7 +173,7 @@ static weed_error_t rotozoom_process(weed_plant_t *inst, weed_timecode_t tc) {
 
       zoom = roto2[sdata->zpath];
       draw_tile(roto[sdata->path], roto[(sdata->path + 128) & 0xFF],
-                zoom, src - offset * irow, dst, width, irow, orow, iheight, height, offset, psize);
+        zoom, src - offset * irow, dst, width, irow, orow, iheight, height, offset, psize);
     }
   }
 
@@ -186,24 +187,21 @@ WEED_SETUP_START(200, 200) {
   uint64_t unique_id;
   int palette_list[] = ALL_PACKED_PALETTES_PLUS;
   weed_plant_t *in_chantmpls[] = {
-    weed_channel_template_init("in_channel0", 0),
-    NULL
-  };
+      weed_channel_template_init("in_channel0", 0),
+      NULL};
   weed_plant_t *out_chantmpls[] = {
-    weed_channel_template_init("out_channel0", 0),
-    NULL
-  };
+      weed_channel_template_init("out_channel0", 0),
+      NULL};
   weed_plant_t *in_paramtmpls[] = {
-    weed_integer_init("zoom", "_Zoom value", 128, 0, 255),
-    weed_switch_init("autozoom", "_Auto zoom", WEED_TRUE),
-    NULL
-  };
+      weed_integer_init("zoom", "_Zoom value", 128, 0, 255),
+      weed_switch_init("autozoom", "_Auto zoom", WEED_TRUE),
+      NULL};
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_STATEFUL;
 
   verbosity = weed_get_host_verbosity(host_info);
 
   filter_class = weed_filter_class_init("rotozoom", "effecTV", 1, filter_flags, palette_list,
-                                        rotozoom_init, rotozoom_process, rotozoom_deinit, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
+    rotozoom_init, rotozoom_process, rotozoom_deinit, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
 
   weed_filter_set_description(filter_class, "Rotate and zoom images");
 

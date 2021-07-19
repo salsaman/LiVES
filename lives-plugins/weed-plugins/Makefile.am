@@ -5,7 +5,8 @@ LIBS =
 AUTOMAKE_OPTIONS = subdir-objects
 
 #NOTE - install-exec-local MUST go in the first subdir ONLY !!
-SUBDIRS = scripts gdk cairo # supercollider experimental
+
+SUBDIRS = scripts . gdk cairo # supercollider experimental
 
 fxpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 
@@ -233,6 +234,11 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	xeffect.la
 
 EXTRA_DIST=data icons scripts syna.h weed-plugin-utils.c
+
+dist: distdir-am all
+
+distdir-am:
+	$(MAKE) -C scripts dist
 
 install-data-local:
 	rm -rf "$(DESTDIR)$(fxpluginslibdir)"

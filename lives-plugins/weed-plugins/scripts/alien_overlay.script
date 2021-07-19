@@ -81,7 +81,7 @@ for (int i = 0; i < height; i++) {
       if (sdata->inited[row]) {
         if (!inplace) {
           dst[orow * i + j + k] = ((char)(old_pixel_data[width * i + j + k])
-	      + (char)(src[irow * i + j + k])) >> 1;
+            + (char)(src[irow * i + j + k])) >> 1;
           old_pixel_data[width * i + j + k] = src[irow * i + j + k];
         } else {
           val = ((char)(old_pixel_data[width * i + j + k]) + (char)(src[irow * i + j + k])) >> 1;

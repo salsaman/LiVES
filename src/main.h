@@ -901,7 +901,10 @@ void do_exec_missing_error(const char *execname);
 boolean ask_permission_dialog(int what);
 boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs, const char *sudocom);
 boolean do_abort_check(void);
-void add_warn_check(LiVESBox *box, int warn_mask_number);
+
+// detail can be set to override default "do not show this warning again"
+// e.g "show this warning at startup"
+void add_warn_check(LiVESBox *box, uint64_t warn_mask_number, const char *detail);
 LiVESResponseType do_memory_error_dialog(char *op, size_t bytes);
 void too_many_files(void);
 void workdir_warning(void);
@@ -1032,7 +1035,6 @@ void wait_for_bg_audio_sync(int fileno);
 ulong deduce_file(const char *filename, double start_time, int end);
 ulong open_file(const char *filename);
 ulong open_file_sel(const char *file_name, double start_time, int frames);
-void pad_init_silence(void);
 void open_fw_device(void);
 char *get_untitled_name(int number);
 boolean get_new_handle(int index, const char *name);
@@ -1055,6 +1057,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover);
 boolean recover_files(char *recovery_file, boolean auto_recover);
 const char *get_deinterlace_string(void);
 void reload_subs(int fileno);
+void pad_with_silence(int clipno, boolean at_start, boolean is_auto);
 
 // saveplay.c backup
 void backup_file(int clip, int start, int end, const char *filename);

@@ -530,6 +530,7 @@ boolean do_workdir_query(void) {
            || (lives_strcmp(dirname, prefs->workdir) &&
                check_workdir_valid(&dirname, LIVES_DIALOG(wizard->dialog), TRUE)
                == LIVES_RESPONSE_RETRY));
+
   lives_widget_destroy(wizard->dialog);
 
   mp = get_mountpoint_for(dirname);

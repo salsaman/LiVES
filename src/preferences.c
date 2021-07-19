@@ -1795,6 +1795,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean warn_layout_ashift = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_ashift));
   boolean warn_layout_aalt = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_aalt));
   boolean warn_layout_popup = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_popup));
+  boolean warn_layout_reload = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_reload));
   boolean warn_mt_backup_space
     = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_backup_space));
   boolean warn_after_crash = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_after_crash));
@@ -2130,11 +2131,10 @@ boolean apply_prefs(boolean skip_warn) {
               WARN_MASK_AFTER_DVGRAB + !warn_mt_achans * WARN_MASK_MT_ACHANS + !warn_mt_no_jack *
               WARN_MASK_MT_NO_JACK + !warn_layout_adel * WARN_MASK_LAYOUT_DELETE_AUDIO + !warn_layout_ashift *
               WARN_MASK_LAYOUT_SHIFT_AUDIO + !warn_layout_aalt * WARN_MASK_LAYOUT_ALTER_AUDIO + !warn_layout_popup *
-              WARN_MASK_LAYOUT_POPUP + !warn_yuv4m_open * WARN_MASK_OPEN_YUV4M + !warn_mt_backup_space *
-              WARN_MASK_MT_BACKUP_SPACE + !warn_after_crash * WARN_MASK_CLEAN_AFTER_CRASH
-              + !warn_no_pulse * WARN_MASK_NO_PULSE_CONNECT
-              + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE + !warn_layout_gamma * WARN_MASK_LAYOUT_GAMMA + !warn_layout_lb *
-              WARN_MASK_LAYOUT_LB + !warn_vjmode_enter *
+              WARN_MASK_LAYOUT_POPUP + +!warn_layout_reload * WARN_MASK_LAYOUT_RELOAD + !warn_yuv4m_open * WARN_MASK_OPEN_YUV4M
+              + !warn_mt_backup_space * WARN_MASK_MT_BACKUP_SPACE + !warn_after_crash * WARN_MASK_CLEAN_AFTER_CRASH
+              + !warn_no_pulse * WARN_MASK_NO_PULSE_CONNECT + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE +
+              !warn_layout_gamma * WARN_MASK_LAYOUT_GAMMA + !warn_layout_lb * WARN_MASK_LAYOUT_LB + !warn_vjmode_enter *
               WARN_MASK_VJMODE_ENTER + !warn_dmgd_audio * WARN_MASK_DMGD_AUDIO;
 
 #ifdef ENABLE_JACK
@@ -5681,6 +5681,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                               !(prefs->warning_mask & WARN_MASK_LAYOUT_POPUP), LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->checkbutton_warn_layout_reload = lives_standard_check_button_new
+      (_("Popup layout errors after reloading a set."), !(prefs->warning_mask & WARN_MASK_LAYOUT_RELOAD), LIVES_BOX(hbox), NULL);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_warn_discard_layout = lives_standard_check_button_new
       (_("Warn if the layout has not been saved when leaving multitrack mode."),
        !(prefs->warning_mask & WARN_MASK_EXIT_MT), LIVES_BOX(hbox), NULL);
@@ -6992,6 +6996,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(checkbutton_warn_layout_ashift, TOGGLED);
   ACTIVE(checkbutton_warn_layout_aalt, TOGGLED);
   ACTIVE(checkbutton_warn_layout_popup, TOGGLED);
+  ACTIVE(checkbutton_warn_layout_reload, TOGGLED);
   ACTIVE(checkbutton_warn_discard_layout, TOGGLED);
   ACTIVE(checkbutton_warn_mt_achans, TOGGLED);
   ACTIVE(checkbutton_warn_mt_no_jack, TOGGLED);

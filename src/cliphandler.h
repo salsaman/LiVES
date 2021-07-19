@@ -236,6 +236,7 @@ typedef struct _lives_clip_t {
   weed_plant_t *next_event;
 
   LiVESList *layout_map;
+  double lmap_fix_apad;
   ////////////////////////////////////////////////////////////////////////////////////////
 
   void *ext_src; ///< points to opaque source for non-disk types

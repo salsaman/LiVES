@@ -626,6 +626,10 @@ static boolean recover_from_forensics(int fileno, lives_clip_t *loaded) {
         if (sfile->clip_type == CLIP_TYPE_FILE || (hsize == loaded->hsize && vsize == loaded->vsize)) {
           sfile->start = 1;
           sfile->end = sfile->frames;
+          _RELOAD(undo1_int); _RELOAD(undo1_dbl); _RELOAD(undo_action);
+          _RELOAD(undo_arate); _RELOAD(undo_signed_endian); _RELOAD(undo_achans);
+          _RELOAD(undo_asampsize); _RELOAD(undo_arps);
+          _RELOAD(undoable); _RELOAD(redoable);
           _RELOAD(hsize); _RELOAD(vsize); _RELOAD(ratio_fps);
           _RELOAD(interlace); _RELOAD(bpp); _RELOAD(deinterlace);
           _RELOAD(gamma_type); _RELOAD(is_untitled);
@@ -749,6 +753,7 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic, char *binfmtn
       _RELOAD_STRING(save_file_name, PATH_MAX);  _RELOAD(start); _RELOAD(end); _RELOAD(is_untitled); _RELOAD(was_in_set);
       _RELOAD(ratio_fps); _RELOAD_STRING(mime_type, 256);
       _RELOAD(changed); _RELOAD(deinterlace); _RELOAD(vol);
+
       if (sfile->start < 1) sfile->start = 1;
       if (sfile->end > sfile->frames) sfile->end = sfile->frames;
       if (sfile->start > sfile->end) sfile->start = sfile->end;

@@ -78,7 +78,7 @@ void on_cut_activate(LiVESMenuItem *, livespointer);
 
 void on_insert_pre_activate(LiVESMenuItem *, livespointer);
 
-void on_insert_activate(LiVESButton *, livespointer);
+void on_insert_activate(LiVESButton *, _insertw *insertw);
 
 void on_merge_activate(LiVESMenuItem *, livespointer);
 
@@ -136,7 +136,7 @@ void on_ok_button1_clicked(LiVESButton *, livespointer);
 
 void on_ok_file_open_clicked(LiVESFileChooser *, LiVESSList *fnames);
 
-void on_location_select(LiVESButton *, livespointer);
+void on_location_select(LiVESButton *button, _entryw *locw);
 
 lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, const char *tmpdir);
 
@@ -331,7 +331,7 @@ void on_sticky_activate(LiVESMenuItem *, livespointer);
 
 void on_resaudw_asamps_changed(LiVESWidget *, livespointer);
 
-void on_insertwsound_toggled(LiVESToggleButton *, livespointer);
+void on_insertwsound_toggled(LiVESToggleButton *togglebutton, _insertw *insertw);
 
 void on_showfct_activate(LiVESMenuItem *, livespointer);
 
@@ -409,16 +409,9 @@ boolean on_ins_silence_activate(LiVESMenuItem *, livespointer);
 
 void audio_details_clicked(LiVESButton *, livespointer clipno);
 
-void on_lerrors_close_clicked(LiVESButton *, livespointer);
-
-void on_lerrors_clear_clicked(LiVESButton *, livespointer);
-
-void on_lerrors_delete_clicked(LiVESButton *, livespointer);
-
 #ifdef GUI_GTK
 void drag_from_outside(LiVESWidget *, GdkDragContext *, int x, int y,
                        GtkSelectionData *, uint32_t info, uint32_t time, livespointer);
-
 #endif
 
 #endif

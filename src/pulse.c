@@ -676,7 +676,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                   } while (pulsed->aPlayPtr->size < in_bytes && !lives_read_buffered_eof(pulsed->fd));
                   if (pulsed->aPlayPtr->size < in_bytes) {
                     pad_bytes = in_bytes - pulsed->aPlayPtr->size;
-                    /// TODO: use pad_with_silence() for all padding
+                    /// TODO: use append_silence() for all padding
                     lives_memset((void *)pulsed->aPlayPtr->data + in_bytes - pad_bytes, 0, pad_bytes);
                     pulsed->aPlayPtr->size = in_bytes;
                   }
@@ -767,15 +767,15 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             /// if we are a few bytes short, pad with silence. If playing fwd we pad at the end, backwards we pad the beginning
             /// (since the buffer will be reversed)
             if (pulsed->in_arate > 0) {
-              pad_with_silence(-1, (void *)pulsed->aPlayPtr->data, pulsed->aPlayPtr->size, in_bytes,
-                               afile->asampsize >> 3, afile->signed_endian & AFORM_UNSIGNED,
-                               afile->signed_endian & AFORM_BIG_ENDIAN);
+              append_silence(-1, (void *)pulsed->aPlayPtr->data, pulsed->aPlayPtr->size, in_bytes,
+                             afile->asampsize >> 3, afile->signed_endian & AFORM_UNSIGNED,
+                             afile->signed_endian & AFORM_BIG_ENDIAN);
             } else {
               lives_memmove((void *)pulsed->aPlayPtr->data + (in_bytes - pulsed->aPlayPtr->size), (void *)pulsed->aPlayPtr->data,
                             pulsed->aPlayPtr->size);
-              pad_with_silence(-1, (void *)pulsed->aPlayPtr->data, 0, in_bytes - pulsed->aPlayPtr->size,
-                               afile->asampsize >> 3, afile->signed_endian & AFORM_UNSIGNED,
-                               afile->signed_endian & AFORM_BIG_ENDIAN);
+              append_silence(-1, (void *)pulsed->aPlayPtr->data, 0, in_bytes - pulsed->aPlayPtr->size,
+                             afile->asampsize >> 3, afile->signed_endian & AFORM_UNSIGNED,
+                             afile->signed_endian & AFORM_BIG_ENDIAN);
             }
           }
         }

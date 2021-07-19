@@ -70,10 +70,25 @@ static void add_xlays_widget(LiVESBox *box) {
 }
 
 
-void add_warn_check(LiVESBox *box, int warn_mask_number) {
-  LiVESWidget *checkbutton = lives_standard_check_button_new(
-                               _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
-                               FALSE, LIVES_BOX(box), NULL);
+void add_warn_check(LiVESBox *box, uint64_t warn_mask_number, const char *detail) {
+  LiVESWidget *checkbutton;
+  char *text, *xdetail = (char *)detail, *tmp;
+  boolean defstate = FALSE;
+
+  if (!box || !warn_mask_number) return;
+
+  if (warn_mask_number >= WARN_MASK_DEF_ON) defstate = TRUE;
+
+  if (!xdetail) {
+    xdetail = _("Do not show this _warning any more");
+    defstate = FALSE;
+  }
+
+  text = lives_strdup_printf((tmp = _("%s\n(can be turned back on from Preferences/Warnings)")), xdetail);
+
+  checkbutton = lives_standard_check_button_new(text, defstate, LIVES_BOX(box), NULL);
+  lives_free(text); lives_free(tmp);
+  if (xdetail != detail) lives_free(xdetail);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_warn_mask_toggled), LIVES_INT_TO_POINTER(warn_mask_number));
@@ -481,13 +496,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
       add_clear_ds_adv(LIVES_BOX(dialog_vbox));
     }
 
-    if (warn_mask_number > 0) {
-      add_warn_check(LIVES_BOX(dialog_vbox), warn_mask_number);
-    }
+    if (warn_mask_number > 0) add_warn_check(LIVES_BOX(dialog_vbox), warn_mask_number, NULL);
 
-    if (mainw->xlays) {
-      add_xlays_widget(LIVES_BOX(dialog_vbox));
-    }
+    if (mainw->xlays) add_xlays_widget(LIVES_BOX(dialog_vbox));
 
     if (mainw->iochan && !widget_opts.non_modal) {
       LiVESWidget *details_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL, _("Show _Details"),
@@ -2504,8 +2515,7 @@ boolean do_comments_dialog(int fileno, char *filename) {
 
   boolean response;
   boolean encoding = FALSE;
-
-  commentsw = create_comments_dialog(sfile, filename);
+  _commentsw *commentsw = create_comments_dialog(sfile, filename);
 
   if (sfile == NULL) sfile = cfile;
   else encoding = TRUE;
@@ -4284,8 +4294,7 @@ LIVES_GLOBAL_INLINE boolean do_close_changed_warn(void) {
 LIVES_GLOBAL_INLINE boolean check_del_workdir(const char *dirname) {
   return do_yesno_dialogf_with_countdown(3, TRUE,  _("All files will be irrevocably deleted from the working directory\n%s\n"
                                          "Are you certain you wish to continue ?\n"
-                                         "Click 3 times on the 'Yes' button to confirm you understand\n"),
-                                         prefs->workdir);
+                                         "Click 3 times on the 'Yes' button to confirm you understand\n"), prefs->workdir);
 }
 
 

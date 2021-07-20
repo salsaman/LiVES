@@ -4499,7 +4499,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
 #endif
 
-  lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(menuitem2), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_open_loc_activate), NULL);
 
 #ifdef ENABLE_DVD_GRAB

@@ -21,6 +21,7 @@
 #include "cvirtual.h"
 #include "pangotext.h"
 #include "rte_window.h"
+#include "diagnostics.h"
 
 #include "multitrack-gui.h"
 

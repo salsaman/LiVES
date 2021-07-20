@@ -27,6 +27,10 @@ void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
     lives_widget_hide(mainw->splash_window);
   }
 
+  if (extra) {
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(extra), KEEPABOVE_KEY, dialog);
+  }
+
   lives_widget_show_all(dialog);
   lives_window_present(LIVES_WINDOW(dialog));
 }
@@ -2630,75 +2634,4 @@ retry:
   return TRUE;
 }
 
-
 void on_troubleshoot_activate(LiVESMenuItem * menuitem, livespointer user_data) {do_startup_tests(TRUE);}
-
-
-static char *explain_missing(const char *exe) {
-  char *pt2, *pt1 = lives_strdup_printf(_("\t'%s' was not found on your system.\n"
-                                          "Installation is recommended as it provides the following features\n\t- "), exe);
-  if (!lives_strcmp(exe, EXEC_FILE)) pt2 = (_("Enables easier identification of file types,\n\n"));
-  else if (!lives_strcmp(exe, EXEC_DU)) pt2 = (_("Enables measuring of disk space used,\n\n"));
-  else if (!lives_strcmp(exe, EXEC_GZIP)) pt2 = (_("Enables reduction in file size for some files,\n\n"));
-  else if (!lives_strcmp(exe, EXEC_DU)) pt2 = (_("Enables measuring of disk space used,\n\n"));
-  else if (!lives_strcmp(exe, EXEC_FFPROBE)) pt2 = (_("Assists in the identification of video clips\n\n"));
-  else if (!lives_strcmp(exe, EXEC_IDENTIFY)) pt2 = (_("Assists in the identification of image files\n\n"));
-  else if (!lives_strcmp(exe, EXEC_CONVERT)) pt2 = (_("Required for many rendered effects in the clip editor.\n\n"));
-  else if (!lives_strcmp(exe, EXEC_COMPOSITE)) pt2 = (_("Enables clip merging in the clip editor.\n\n"));
-  else if (!lives_strcmp(exe, EXEC_PYTHON)) pt2 = (_("Allows use of some additional encoder plugins\n\n"));
-  else if (!lives_strcmp(exe, EXEC_MD5SUM)) pt2 = (_("Allows checking for file changes, "
-        "enabling additional files to be cached in memory.\n\n"));
-  else if (!lives_strcmp(exe, EXEC_YOUTUBE_DL)) pt2 = (_("Enables download and import of files from "
-        "Youtube and other sites.\n\n"));
-  else if (!lives_strcmp(exe, EXEC_XWININFO)) pt2 = (_("Enables identification of external windows "
-        "so that they can be recorded.\n\n"));
-  else {
-    lives_free(pt1);
-    pt1 = lives_strdup_printf(_("\t'%s' was not found on your system.\n"
-                                "Installation is optional, but may enable additional features\n\t- "), exe);
-    if (!lives_strcmp(exe, EXEC_XDOTOOL)) pt2 = (_("Enables adjustment of windows within the desktop,\n\n"));
-    else return lives_strdup_free(pt1, "");
-  }
-  return lives_concat(pt1, pt2);
-}
-
-
-#define ADD_TO_TEXT(what, exec)   if (!capable->has_##what) {	\
-    text = lives_concat(text, explain_missing(exec)) ;\
-}
-
-void explain_missing_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  char *title = (_("What is missing ?")), *text = lives_strdup("");
-
-  check_for_executable(&capable->has_file, EXEC_FILE);
-
-  ADD_TO_TEXT(sox_sox, EXEC_SOX);
-  ADD_TO_TEXT(file, EXEC_FILE);
-  ADD_TO_TEXT(du, EXEC_DU);
-  ADD_TO_TEXT(identify, EXEC_IDENTIFY);
-  ADD_TO_TEXT(md5sum, EXEC_MD5SUM);
-  ADD_TO_TEXT(ffprobe, EXEC_FFPROBE);
-  ADD_TO_TEXT(convert, EXEC_CONVERT);
-  ADD_TO_TEXT(composite, EXEC_COMPOSITE);
-  if (check_for_executable(&capable->has_python, EXEC_PYTHON) != PRESENT
-      && check_for_executable(&capable->has_python3, EXEC_PYTHON3) != PRESENT) {
-    ADD_TO_TEXT(python, EXEC_PYTHON);
-  }
-  ADD_TO_TEXT(gzip, EXEC_GZIP);
-  ADD_TO_TEXT(youtube_dl, EXEC_YOUTUBE_DL);
-  ADD_TO_TEXT(xwininfo, EXEC_XWININFO);
-  if (!(*text)) {
-    lives_free(title); lives_free(text);
-    do_info_dialog(_("All optional components located\n"));
-    return;
-  }
-  text = lives_concat(text, (_("\n\nIf you DO have any of these missing components, please ensure they are "
-                               "located in your $PATH before restarting LiVES")));
-  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-  create_text_window(title, text, NULL, TRUE);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;;
-  lives_free(title);
-  lives_free(text);
-}
-#undef ADD_TO_TEXT
-

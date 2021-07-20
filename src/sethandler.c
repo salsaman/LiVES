@@ -538,6 +538,7 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
 
   if (retval == LIVES_RESPONSE_CANCEL) {
     end_threaded_dialog();
+    sensitize();
     return FALSE;
   }
 
@@ -627,7 +628,7 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
   mainw->leave_files = FALSE;
   //end_threaded_dialog();
 
-  lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
+  sensitize();
   return TRUE;
 }
 
@@ -641,6 +642,8 @@ void recover_layout_map(void) {
 
   char **array;
   char *check_handle;
+
+  if (prefs->vj_mode) return;
 
   if ((mlist = load_layout_map())) {
     for (int pass = 0; pass < 2; pass++) {
@@ -963,12 +966,10 @@ boolean reload_set(const char *set_name) {
         mainw->recovering_files = FALSE;
       }
 
-      if (mainw->recovering_files) {
-        if (mainw->multitrack) {
-          mt_sensitise(mainw->multitrack);
-          maybe_add_mt_idlefunc();
-        } else sensitize();
-      }
+      if (mainw->multitrack) {
+        mt_sensitise(mainw->multitrack);
+        maybe_add_mt_idlefunc();
+      } else sensitize();
       return TRUE;
     }
 

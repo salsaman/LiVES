@@ -10,6 +10,7 @@
 #include "diagnostics.h"
 #include "callbacks.h"
 
+
 #define STATS_TC (TICKS_PER_SECOND_DBL)
 static double inst_fps = 0.;
 
@@ -144,6 +145,153 @@ char *get_stats_msg(boolean calc_only) {
 }
 
 
+static char *explain_missing(const char *exe) {
+  char *pt2, *pt3, *pt1 = lives_strdup_printf(_("\t'%s' was not found on your system.\n"
+                          "Installation is recommended as it provides the following features\n\t- "), exe);
+  if (!lives_strcmp(exe, EXEC_FILE)) pt2 = (_("Enables easier identification of file types,\n\n"));
+  else if (!lives_strcmp(exe, EXEC_DU)) pt2 = (_("Enables measuring of disk space used,\n\n"));
+  else if (!lives_strcmp(exe, EXEC_GZIP)) pt2 = (_("Enables reduction in file size for some files,\n\n"));
+  else if (!lives_strcmp(exe, EXEC_DU)) pt2 = (_("Enables measuring of disk space used,\n\n"));
+  else if (!lives_strcmp(exe, EXEC_FFPROBE)) pt2 = (_("Assists in the identification of video clips\n\n"));
+  else if (!lives_strcmp(exe, EXEC_IDENTIFY)) pt2 = (_("Assists in the identification of image files\n\n"));
+  else if (!lives_strcmp(exe, EXEC_CONVERT)) pt2 = (_("Required for many rendered effects in the clip editor.\n\n"));
+  else if (!lives_strcmp(exe, EXEC_COMPOSITE)) pt2 = (_("Enables clip merging in the clip editor.\n\n"));
+  else if (!lives_strcmp(exe, EXEC_PYTHON)) pt2 = (_("Allows use of some additional encoder plugins\n\n"));
+  else if (!lives_strcmp(exe, EXEC_MD5SUM)) pt2 = (_("Allows checking for file changes, "
+        "enabling additional files to be cached in memory.\n\n"));
+  else if (!lives_strcmp(exe, EXEC_YOUTUBE_DL)) pt2 = (_("Enables download and import of files from "
+        "Youtube and other sites.\n\n"));
+  else if (!lives_strcmp(exe, EXEC_XWININFO)) pt2 = (_("Enables identification of external windows "
+        "so that they can be recorded.\n\n"));
+  else {
+    lives_free(pt1);
+    pt1 = lives_strdup_printf(_("\t'%s' was not found on your system.\n"
+                                "Installation is optional, but may enable additional features\n\n"), exe);
+    if (!lives_strcmp(exe, EXEC_XDOTOOL)) pt2 = (_("Enables adjustment of windows within the desktop,\n\n"));
+    else pt2 = lives_strdup("");
+  }
+  pt3 = get_install_cmd(NULL, exe);
+  if (pt3) {
+    pt3 = lives_strdup_printf(_("Try: %s\n\n"), pt3);
+    pt2 = lives_concat(pt2, pt3);
+  }
+  return lives_concat(pt1, pt2);
+}
+
+enum {
+  MISS_RT_AUDIO = 1,
+  // etc....
+};
+
+
+static char *explain_missing_cpt(int idx) {
+  char *libs[10];
+  char *text, *text2;
+  char *desc, *with = NULL;
+  //chat *without = NULL;
+  //uint64_t status = 0;
+
+  for (int i = 10; i; libs[--i] = NULL);
+
+  switch (idx) {
+  case MISS_RT_AUDIO:
+    desc = _("real time audio");
+    //status = INSTALL_IMPORTANT;
+    libs[0] = "pulse";
+    libs[1] = "jack-jackd2";
+    with = _("greatly improve audio performance");
+    break;
+  default:
+    return lives_strdup("");
+  }
+  text = lives_strdup_printf(_("LiVES was compiled without support for %s."), desc);
+  if (with) {
+    text2 = lives_strdup_printf(_(" Recompiling with this will %s.\n"), with);
+    text = lives_concat(text, text2);
+  }
+  if (libs[0]) {
+    text2 = _("Before compiling, try ");
+    text = lives_concat(text, text2);
+    text2 = get_install_lib_cmd(NULL, libs[0]);
+    if (!text2) text2 = lives_strdup_printf(_("installing lib%s-dev"), libs[0]);
+    text = lives_concat(text, text2);
+    if (libs[1]) {
+      char *text3;
+      for (int i = 1; i < 10 && libs[i]; i++) {
+        text2 = get_install_lib_cmd(NULL, libs[i]);
+        if (!text2) text2 = lives_strdup_printf(_("lib%s-dev"), libs[i]);
+        text3 = lives_strdup_printf("%s OR %s", text, text2);
+        lives_free(text); lives_free(text2);
+        text = text3;
+      }
+    }
+  }
+  text = lives_concat(text, lives_strdup("\n\n"));
+  return text;
+}
+
+
+#define ADD_TO_TEXT(what, exec)   if (!capable->has_##what)	\
+    text = lives_concat(text, explain_missing(exec));
+
+#define ADD_TO_CTEXT(idx) ctext = lives_concat(ctext, explain_missing_cpt(idx));
+
+void explain_missing_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+  char *title = (_("What is missing ?")), *text = lives_strdup("");
+  char *ctext = lives_strdup("");
+
+  ADD_TO_CTEXT(0);
+
+#if !HAS_PULSE && !ENABLE_JACK
+  ADD_TO_CTEXT(MISS_RT_AUDIO);
+#endif
+
+  check_for_executable(&capable->has_file, EXEC_FILE);
+
+  ADD_TO_TEXT(sox_sox, EXEC_SOX);
+  ADD_TO_TEXT(file, EXEC_FILE);
+  ADD_TO_TEXT(du, EXEC_DU);
+  ADD_TO_TEXT(identify, EXEC_IDENTIFY);
+  ADD_TO_TEXT(md5sum, EXEC_MD5SUM);
+  ADD_TO_TEXT(ffprobe, EXEC_FFPROBE);
+  ADD_TO_TEXT(convert, EXEC_CONVERT);
+  ADD_TO_TEXT(composite, EXEC_COMPOSITE);
+  if (check_for_executable(&capable->has_python, EXEC_PYTHON) != PRESENT
+      && check_for_executable(&capable->has_python3, EXEC_PYTHON3) != PRESENT) {
+    ADD_TO_TEXT(python, EXEC_PYTHON);
+  }
+  ADD_TO_TEXT(gzip, EXEC_GZIP);
+  ADD_TO_TEXT(youtube_dl, EXEC_YOUTUBE_DL);
+  ADD_TO_TEXT(xwininfo, EXEC_XWININFO);
+  if (!*text && !*ctext) {
+    lives_free(title); lives_free(text); lives_free(ctext);
+    do_info_dialog(_("All optional components located\n"));
+    return;
+  }
+  if (*ctext) {
+    char *fintext = lives_strdup_printf(_("Compilation Options:\n%s\n%s"), ctext,
+                                        *text ? _("Executables:\n") : "");
+    lives_free(ctext);
+    ctext = fintext;
+  }
+
+  if (*text) {
+    if (*ctext) text = lives_concat(ctext, text);
+    text = lives_concat(text, (_("\nIf you DO have any of these missing executables, please ensure they are "
+                                 "located in your $PATH before restarting LiVES")));
+  } else text = ctext;
+
+  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+  create_text_window(title, text, NULL, TRUE);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;;
+  lives_free(title);
+  lives_free(text);
+}
+#undef ADD_TO_TEXT
+
+
+/// TRASH area /////
+
 #ifdef WEED_STARTUP_TESTS
 
 #define NITERS 1024
@@ -219,6 +367,17 @@ void check_random(void) {
   }
 }
 
+#endif
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#pragma GCC diagnostic ignored "-Wunused-function"
+
+#ifndef WEED_STARTUP_TESTS
+static int run_weed_startup_tests(void);
+//static int test_palette_conversions(void);
+#endif
 
 ticks_t timerinfo;
 
@@ -271,6 +430,8 @@ typedef struct {
   char **strgs;
 } lives_test_t;
 
+
+#ifdef WEED_STARTUP_TESTS
 
 void benchmark(void) {
   int nruns = 1000000;
@@ -342,9 +503,12 @@ void lives_struct_test(void) {
   show_timer_info();
 }
 
+#endif
+
 LIVES_LOCAL_INLINE void show_quadstate(weed_plant_t *p) {
   // do nothing
 }
+
 
 int run_weed_startup_tests(void) {
   weed_plant_t *plant;
@@ -595,7 +759,6 @@ int run_weed_startup_tests(void) {
   }
   free(keys);
 
-
   werr = weed_set_string_value(plant, "Test2", "");
   fprintf(stderr, "value 5 set err was %d\n", werr);
 
@@ -612,7 +775,6 @@ int run_weed_startup_tests(void) {
   }
   free(keys);
 
-
   weed_set_string_value(plant, "Test2", "xyzabc");
   str = weed_get_string_value(plant, "Test2", &werr);
 
@@ -626,7 +788,6 @@ int run_weed_startup_tests(void) {
     n++;
   }
   free(keys);
-
 
   werr = weed_set_string_value(plant, "Test2", "");
   fprintf(stderr, "value 5b set err was %d\n", werr);
@@ -771,9 +932,6 @@ int run_weed_startup_tests(void) {
   show_quadstate(plant);
   fprintf(stderr, "\n");
 
-
-
-
   werr = weed_set_int_value(plant, "type", 123);
   fprintf(stderr, "set type returned %d\n", werr);
 
@@ -781,18 +939,12 @@ int run_weed_startup_tests(void) {
   show_quadstate(plant);
   fprintf(stderr, "\n");
 
-
-
-
   a = weed_get_int_value(plant, "type", &werr);
   fprintf(stderr, "get type returned %d %d\n", a, werr);
-
 
   fprintf(stderr, "\n");
   show_quadstate(plant);
   fprintf(stderr, "\n");
-
-
 
   flags = weed_leaf_get_flags(plant, "type");
   fprintf(stderr, "type flags (2) are %d\n", flags);
@@ -800,8 +952,6 @@ int run_weed_startup_tests(void) {
   fprintf(stderr, "\n");
   show_quadstate(plant);
   fprintf(stderr, "\n");
-  /// hang....
-
 
   werr = weed_leaf_set_flags(plant, "type", WEED_FLAG_IMMUTABLE);
   fprintf(stderr, "type setflags %d\n", werr);
@@ -858,11 +1008,9 @@ int run_weed_startup_tests(void) {
   str = weed_get_string_value(plant, "string2", &werr);
   fprintf(stderr, "value 13 read was %s, err was %d\n", str, werr);
 
-
   fprintf(stderr, "\n");
   show_quadstate(plant);
   fprintf(stderr, "\n");
-
 
   keys = weed_plant_list_leaves(plant, &nleaves);
   n = 0;
@@ -902,7 +1050,6 @@ int run_weed_startup_tests(void) {
   str = weed_get_string_value(plant, "string2", &werr);
   fprintf(stderr, "del zzz leaf returned %s %d\n", str, werr);
 
-
   weed_leaf_set_flags(plant, "string2", 0);
   flags = weed_leaf_get_flags(plant, "string2");
   fprintf(stderr, "set flags returned %d\n", flags);
@@ -911,8 +1058,6 @@ int run_weed_startup_tests(void) {
 
   str = weed_get_string_value(plant, "string2", &werr);
   fprintf(stderr, "del xxx leaf val returned %s %d\n", str, werr);
-
-
 
   werr = weed_leaf_set_flags(plant, "Test2", WEED_FLAG_UNDELETABLE);
 
@@ -932,8 +1077,6 @@ int run_weed_startup_tests(void) {
     n++;
   }
   free(keys);
-
-
 
   werr = weed_set_voidptr_value(plant, "nullptr",  NULL);
   fprintf(stderr, "set null void * returned %d\n", werr);
@@ -1208,21 +1351,50 @@ int run_weed_startup_tests(void) {
   return 0;
 }
 
-#endif
 
 #define SCALE_FACT 65793. /// (2 ^ 24 - 1) / (2 ^ 8 - 1)
 
 int test_palette_conversions(void) {
-  double val;
-  int inval, outval;
-  for (val = 0.; val < 256.; val += .1) {
-    inval = val * SCALE_FACT;
-    outval = round_special(inval);
-    if (fabs((float)outval - val) > .51)
-      g_print("in val was %.6f, stored as %d, returned as %d\n", val, inval, outval);
+  double val, dif, tot = 0., totp = 0., totn = 0., tota = 0., totap = 0., totan = 0., fdif;
+  int inval, outval, divg = 0, divbad = 0;
+  int pbq = prefs->pb_quality;
+  //prefs->pb_quality = PB_QUALITY_LOW;
+  //prefs->pb_quality = PB_QUALITY_MED;
+  //prefs->pb_quality = PB_QUALITY_HIGH;
+  for (int pb = 1; pb < 4; pb++) {
+    prefs->pb_quality = pb;
+    for (val = 0.; val < 256.; val += .1) {
+      inval = val * SCALE_FACT;
+      outval = round_special(inval);
+      dif = (float)outval - val;
+      if (dif > 0.) totap += dif;
+      else totan += dif;
+      fdif = fabs(dif);
+      tota += fdif;
+      if (fdif > .5) {
+        //g_print("in val was %.6f, stored as %d, returned as %d\n", val, inval, outval);
+        divg++;
+        tot += fdif;
+        if (dif > 0.) totp += dif;
+        else totn += fdif;
+        if (fdif > 1.) {
+          //g_print("in val was %.6f, stored as %d, returned as %d\n", val, inval, outval);
+          divbad++;
+        }
+      }
+    }
+    g_print("quality %d found %d divergences; total = %f, avg = %f\n", prefs->pb_quality, divg, tot, tot / divg);
+    g_print("totp = %f, totn = %f, tota = %f, %f, %f, bad = %d\n", totp, totn, tota, totap, totan, divbad);
+    tot = totp = totn = tota = totan = totap = 0;
+    divg = divbad = 0;
   }
+  prefs->pb_quality = pbq;
   return 0;
 }
+
+#endif
+
+#ifdef WEED_STARTUP_TESTS
 
 #ifdef WEED_WIDGETS
 void show_widgets_info(void) {
@@ -1287,6 +1459,8 @@ void show_widgets_info(void) {
 }
 #endif
 
+#endif
+
 #define show_size(s) fprintf(stderr, "sizeof s is %lu\n", sizeof(s))
 
 void show_struct_sizes(void) {
@@ -1294,9 +1468,14 @@ void show_struct_sizes(void) {
   show_size(thrd_work_t);
   show_size(lives_func_info_t);
   show_size(struct _lives_thread_data_t);
-  show_size(thrd_work_t);
   show_size(lives_cc_params);
   show_size(lives_sw_params);
+  show_size(lives_sigdata_t);
 }
 
-#endif
+void run_diagnostic(LiVESWidget *mi, const char *testname) {
+  if (!lives_strcmp(testname, "libweed")) run_weed_startup_tests();
+  if (!lives_strcmp(testname, "structsizes")) show_struct_sizes();
+}
+
+#pragma GCC diagnostic pop

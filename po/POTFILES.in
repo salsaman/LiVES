@@ -46,3 +46,4 @@ src/threading.c
 src/intents.c
 src/maths.c
 src/player.c
+src/diagnostics.c

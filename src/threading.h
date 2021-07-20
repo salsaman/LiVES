@@ -39,12 +39,12 @@ typedef struct {
   livespointer instance;
   lives_funcptr_t callback;
   livespointer user_data;
-  boolean has_returnval;
-  volatile boolean swapped;
+  uint8_t has_returnval;
+  uint8_t is_timer;
+  uint8_t added;
+  volatile uint8_t swapped;
   unsigned long funcid;
   char *detsig;
-  boolean is_timer;
-  boolean added;
   lives_proc_thread_t proc;
   lives_alarm_t alarm_handle;
 } lives_sigdata_t;
@@ -53,29 +53,31 @@ typedef struct {
   uint64_t var_uid;
   lives_proc_thread_t var_tinfo;
   lives_thread_data_t *var_mydata;
-  int var_id;
-  lives_intentcap_t var_intentcap;
-  boolean var_com_failed;
-  int var_write_failed, var_read_failed;
-  boolean var_chdir_failed;
   char *var_read_failed_file, *var_write_failed_file, *var_bad_aud_file;
+  uint64_t var_random_seed;
+
+  lives_intentcap_t var_intentcap;
+  int var_id;
+  int var_write_failed, var_read_failed;
   int var_rowstride_alignment;   // used to align the rowstride bytesize in create_empty_pixel_data
   int var_rowstride_alignment_hint;
   int var_last_sws_block;
-  boolean var_no_gui;
-  boolean var_force_button_image;
-  uint64_t var_random_seed;
   int var_proc_file;
   int var_cancelled;
   int var_core_id;
+  boolean var_com_failed;
+  boolean var_no_gui;
+  boolean var_force_button_image;
+  boolean var_chdir_failed;
   volatile float *var_core_load_ptr; // pointer to value that monitors core load
 } lives_threadvars_t;
 
 struct _lives_thread_data_t {
   LiVESWidgetContext *ctx;
   int64_t idx;
-  int signum;
   lives_threadvars_t vars;
+  int signum;
+  char padding[96];
 };
 
 typedef struct {

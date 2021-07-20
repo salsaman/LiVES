@@ -602,7 +602,7 @@ static inline int32_t _spc_rnd(int32_t val, short quality) {
     uint32_t sig = val & 0x80000000;
     return (((val - (val >> 8)) >> 16) | sig);
   }
-  return ((float)val / SCALE_FACTOR + .5);
+  return ((float)val / SCALE_FACTOR);
 }
 
 
@@ -611,20 +611,6 @@ static inline int32_t _spc_rnd(int32_t val, short quality) {
 
 LIVES_GLOBAL_INLINE int32_t round_special(int32_t val) {
   return spc_rnd(val);
-}
-
-
-double get_luma8(uint8_t r, uint8_t g, uint8_t b) {
-  /// return luma value between 0. (black) and 1. (white)
-  short a = _spc_rnd(Y_Ru[r] + Y_Gu[g] + Y_Bu[b], PB_QUALITY_HIGH);
-  if (a > 255) a = 255;
-  return a < 0 ? 0. : (double)a / 255.;
-}
-
-
-double get_luma16(uint16_t r, uint16_t g, uint16_t b) {
-  /// return luma value between 0. (black) and 1. (white)
-  return get_luma8(r >> 8, g >> 8, b >> 8);
 }
 
 
@@ -1927,6 +1913,19 @@ static void init_gamma_tx(void) {
 static void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) GNU_HOT;
 static void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) GNU_HOT;
 
+double get_luma8(uint8_t r, uint8_t g, uint8_t b) {
+  /// return luma value between 0. (black) and 1. (white)
+  short a = _spc_rnd(Y_Ru[r] + Y_Gu[g] + Y_Bu[b], PB_QUALITY_HIGH);
+  if (a > 255) a = 255;
+  return a < 0 ? 0. : (double)a / 255.;
+}
+
+
+double get_luma16(uint16_t r, uint16_t g, uint16_t b) {
+  /// return luma value between 0. (black) and 1. (white)
+  return get_luma8(r >> 8, g >> 8, b >> 8);
+}
+
 void init_colour_engine(void) {
   init_RGB_to_YUV_tables();
   init_YUV_to_RGB_tables();
@@ -1937,34 +1936,6 @@ void init_colour_engine(void) {
   init_conversions(LIVES_INTENTION_PLAY);
 #ifdef WEED_ADVANCED_PALETTES
   init_advanced_palettes();
-#endif
-  //#define TEST_CONV
-#ifdef TEST_CONV
-  for (int64_t f = 3000; f < 8000; f += 1) {
-    struct XYZ xyz = xyzFromWavelength((double)f);
-    g_print("freq %ld is %f, %f, %f\n", f, xyz.x * 100., xyz.y * 100., xyz.z * 100.);
-  }
-  if (0) {
-    int cr, cg, cb;
-    uint8_t r = 100, g, b, y, u, v, xr, xg, xb;;
-    set_conversion_arrays(WEED_YUV_CLAMPING_UNCLAMPED, WEED_YUV_SUBSPACE_YCBCR);
-    //prefs->pb_quality = PB_QUALITY_MED;
-    for (cr = 100; cr < 256; cr++) {
-      g = 0;
-      for (cg = 0; cg < 256; cg++) {
-        b = 0;
-        for (cb = 0; cb < 256; cb++) {
-          g_print("in: %d %d %d\n", r, g, b);
-          rgb2yuv(r, g, b, &y, &u, &v);
-          yuv2rgb(y, u, v, &xr, &xg, &xb);
-          g_print("out: %d %d %d   %d %d %d\n", y, u, v, xr, xg, xb);
-          b++;
-        }
-        g++;
-      }
-      r++;
-    }
-  }
 #endif
 }
 
@@ -4249,7 +4220,7 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
   int ipsize = 3, opsize = 3;
   int iwidth;
   uint8_t *end = rgbdata + (rowstride * vsize);
-  register int i;
+  int i;
   uint8_t in_alpha = 255;
 
   if (LIVES_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
@@ -4511,8 +4482,6 @@ static void *convert_bgr_to_yuv_frame_thread(void *data) {
 
 static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orow,
                                       uint8_t **yuvp, boolean in_has_alpha, boolean out_has_alpha, int clamping, int thread_id) {
-  // TESTED !
-
   int ipsize = 3;
   int iwidth;
   uint8_t *end = rgbdata + (rowstride * vsize);
@@ -6554,10 +6523,8 @@ static void convert_yuv888_to_yuv420_frame(uint8_t *yuv8, int width, int height,
 
   // TODO - handle different sampling types
 
-  // TESTED !
-
-  register int j;
-  register short x_u, x_v;
+  int j;
+  short x_u, x_v;
 
   uint8_t *d_y, *d_u, *d_v, *end;
 
@@ -13803,7 +13770,7 @@ boolean pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
     weed_layer_set_size(layer, 0, 0);
     weed_layer_set_rowstride(layer, 0);
     weed_layer_pixel_data_free(layer);
-    return FALSE;
+    return TRUE;
   }
 
   rowstride = lives_pixbuf_get_rowstride(pixbuf);
@@ -14515,3 +14482,34 @@ LIVES_GLOBAL_INLINE int weed_layer_get_audio_length(weed_layer_t *layer) {
   return weed_get_int_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
 }
 
+
+void test_conv(int clamping, int subspace, uint8_t r, uint8_t g, uint8_t b) {
+  //#define TEST_CONV
+#ifdef TEST_CONV
+  for (int64_t f = 3000; f < 8000; f += 1) {
+    struct XYZ xyz = xyzFromWavelength((double)f);
+    g_print("freq %ld is %f, %f, %f\n", f, xyz.x * 100., xyz.y * 100., xyz.z * 100.);
+  }
+  if (1) {
+    //int cr, cg, cb;
+    //uint8_t r = 100, g, b, y, u, v, xr, xg, xb;;
+    set_conversion_arrays(WEED_YUV_CLAMPING_UNCLAMPED, WEED_YUV_SUBSPACE_YCBCR);
+    //prefs->pb_quality = PB_QUALITY_MED;
+    for (cr = 100; cr < 256; cr++) {
+      g = 0;
+      for (cg = 0; cg < 256; cg++) {
+        b = 0;
+        for (cb = 0; cb < 256; cb++) {
+          g_print("in: %d %d %d\n", r, g, b);
+          rgb2yuv(r, g, b, &y, &u, &v);
+          yuv2rgb(y, u, v, &xr, &xg, &xb);
+          g_print("out: %d %d %d   %d %d %d\n", y, u, v, xr, xg, xb);
+          b++;
+        }
+        g++;
+      }
+      r++;
+    }
+  }
+#endif
+}

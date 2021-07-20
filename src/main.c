@@ -4430,10 +4430,11 @@ static boolean lives_startup2(livespointer data) {
   if (!mainw->multitrack) sensitize();
 
   if (prefs->vj_mode) {
-    char *wid =
-      lives_strdup_printf("0x%08lx",
-                          (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET)));
-    if (wid) activate_x11_window(wid);
+    lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    /* char *wid = */
+    /*   lives_strdup_printf("0x%08lx", */
+    /*                       (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET))); */
+    /* if (wid) activate_x11_window(wid); */
   }
   if (mainw->recording_recovered) {
     lives_idle_add_simple(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
@@ -5816,7 +5817,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->mute_audio, TRUE);
   lives_widget_set_sensitive(mainw->loop_video, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_TOTAL_TIME > 0.));
   lives_widget_set_sensitive(mainw->loop_continue, TRUE);
-  lives_widget_set_sensitive(mainw->load_audio, TRUE);
+  lives_widget_set_sensitive(mainw->load_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   if (mainw->rendered_fx && mainw->rendered_fx[0] && mainw->rendered_fx[0]->menuitem)
     lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->cg_managegroups, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
@@ -7923,6 +7924,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
   int clip_type;
 
   boolean is_thread = FALSE;
+  static boolean norecurse = FALSE;
 
   weed_layer_pixel_data_free(layer);
   weed_layer_ref(layer);
@@ -7986,171 +7988,188 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       weed_layer_unref(layer);
       return TRUE;
     } else {
-      if (sfile->clip_type == CLIP_TYPE_FILE && sfile->frame_index && frame > 0 &&
+      if (clip_type == CLIP_TYPE_FILE && sfile->frame_index && frame > 0 &&
           frame <= sfile->frames && is_virtual_frame(clip, frame)) {
-        // pull frame from video clip
-        ///
-#ifdef USE_REC_RS
-        int nplanes;
-#endif
-        void **pixel_data;
-        boolean res = TRUE;
-        int *rowstrides;
-        lives_decoder_t *dplug = NULL;
-        /// HOST_DECODER is set in mulitrack, there is 1 decoder per track since multiple tracks can have the same clip
-        if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_DECODER)) {
-          dplug = (lives_decoder_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_DECODER, NULL);
-        } else {
-          /// experimental, multiple decoder plugins for each sfile,,,
-          if (weed_plant_has_leaf(layer, "alt_src")) {
-            int srcnum = weed_get_int_value(layer, "alt_src", NULL);
-            dplug = sfile->alt_srcs[srcnum];
-          }
-          if (!dplug) dplug = (lives_decoder_t *)sfile->ext_src;
-        }
-        if (!dplug || !dplug->cdata) {
-          create_blank_layer(layer, image_ext, width, height, target_palette);
-          weed_layer_unref(layer);
-          return FALSE;
-        }
-        if (target_palette != dplug->cdata->current_palette) {
-          if (dplug->dpsys->set_palette) {
-            int opal = dplug->cdata->current_palette;
-            int pal = best_palette_match(dplug->cdata->palettes, -1, target_palette);
-            if (pal != opal) {
-              dplug->cdata->current_palette = pal;
-              if (!(*dplug->dpsys->set_palette)(dplug->cdata)) {
-                dplug->cdata->current_palette = opal;
-                (*dplug->dpsys->set_palette)(dplug->cdata);
-              } else if (dplug->cdata->rec_rowstrides) {
-                lives_free(dplug->cdata->rec_rowstrides);
-                dplug->cdata->rec_rowstrides = NULL;
-		// *INDENT-OFF*
-	      }}}}
-	// *INDENT-ON*
-
-        // TODO *** - check for auto-border : we might use width,height instead of frame_width,frame_height,
-        // and handle this in the plugin
-
-        if (!prefs->auto_nobord) {
-          width = dplug->cdata->frame_width / weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
-          height = dplug->cdata->frame_height;
-        } else {
-          width = dplug->cdata->width / weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
-          height = dplug->cdata->height;
-        }
-
-        weed_layer_set_size(layer, width, height);
-
-        if (weed_palette_is_yuv(dplug->cdata->current_palette))
-          weed_layer_set_palette_yuv(layer, dplug->cdata->current_palette,
-                                     dplug->cdata->YUV_clamping,
-                                     dplug->cdata->YUV_sampling,
-                                     dplug->cdata->YUV_subspace);
-        else weed_layer_set_palette(layer, dplug->cdata->current_palette);
-
-#ifdef USE_REC_RS
-        nplanes = weed_palette_get_nplanes(dplug->cdata->current_palette);
-        if (!dplug->cdata->rec_rowstrides) {
-          dplug->cdata->rec_rowstrides = lives_calloc(nplanes, sizint);
-        } else {
-          if (dplug->cdata->rec_rowstrides[0]) {
-            weed_layer_set_rowstrides(layer, dplug->cdata->rec_rowstrides, nplanes);
-            weed_leaf_set_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
-            lives_memset(dplug->cdata->rec_rowstrides, 0, nplanes * sizint);
+        if (prefs->vj_mode && mainw->loop_locked && mainw->ping_pong && sfile->pb_fps >= 0. && !norecurse) {
+          lives_proc_thread_t tinfo = THREADVAR(tinfo);
+          LiVESPixbuf *pixbuf = NULL;
+          THREADVAR(tinfo) = NULL;
+          norecurse = TRUE;
+          virtual_to_images(clip, frame, frame, FALSE, &pixbuf);
+          norecurse = FALSE;
+          THREADVAR(tinfo) = tinfo;
+          if (pixbuf) {
+            if (!pixbuf_to_layer(layer, pixbuf)) {
+              lives_widget_object_unref(pixbuf);
+            }
+            break;
           }
         }
-#endif
-        if (create_empty_pixel_data(layer, TRUE, TRUE)) {
+        if (1) {
+          // pull frame from video clip
+          ///
 #ifdef USE_REC_RS
-          weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
+          int nplanes;
 #endif
-          pixel_data = weed_layer_get_pixel_data_planar(layer, NULL);
-        } else {
-#ifdef USE_REC_RS
-          weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
-#endif
-          create_blank_layer(layer, image_ext, width, height, target_palette);
-          weed_layer_unref(layer);
-          return FALSE;
-        }
-
-        if (!pixel_data || !pixel_data[0]) {
-          char *msg = lives_strdup_printf("NULL pixel data for layer size %d X %d, palette %s\n", width, height,
-                                          weed_palette_get_name_full(dplug->cdata->current_palette,
-                                              dplug->cdata->YUV_clamping, dplug->cdata->YUV_subspace));
-          LIVES_WARN(msg);
-          lives_free(msg);
-          create_blank_layer(layer, image_ext, width, height, target_palette);
-          weed_layer_unref(layer);
-          return FALSE;
-        }
-
-        rowstrides = weed_layer_get_rowstrides(layer, NULL);
-
-        //static int last = -1;
-        // try to pull frame from decoder plugin
-
-        /* g_print("GF %d\n", frame); */
-        /* int64_t timex = lives_get_current_ticks(); */
-        /* double est_time = (*dplug->dpsys->estimate_delay)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame)); */
-        if (!(*dplug->dpsys->get_frame)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame),
-                                        rowstrides, sfile->vsize, pixel_data)) {
-
-#ifdef USE_REC_RS
-          if (dplug->cdata->rec_rowstrides) lives_memset(dplug->cdata->rec_rowstrides, 0, nplanes * sizint);
-#endif
-          if (prefs->show_dev_opts) {
-            g_print("Error loading frame %d (index value %d)\n", frame,
-                    sfile->frame_index[frame - 1]);
-            break_me("load error");
+          void **pixel_data;
+          boolean res = TRUE;
+          int *rowstrides;
+          lives_decoder_t *dplug = NULL;
+          /// HOST_DECODER is set in mulitrack, there is 1 decoder per track since multiple tracks can have the same clip
+          if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_DECODER)) {
+            dplug = (lives_decoder_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_DECODER, NULL);
+          } else {
+            /// experimental, multiple decoder plugins for each sfile,,,
+            if (weed_plant_has_leaf(layer, "alt_src")) {
+              int srcnum = weed_get_int_value(layer, "alt_src", NULL);
+              dplug = sfile->alt_srcs[srcnum];
+            }
+            if (!dplug) dplug = (lives_decoder_t *)sfile->ext_src;
           }
-          // if get_frame fails, return a black frame
-          if (!is_thread) {
-            weed_layer_clear_pixel_data(layer);
+          if (!dplug || !dplug->cdata) {
+            create_blank_layer(layer, image_ext, width, height, target_palette);
             weed_layer_unref(layer);
             return FALSE;
           }
-          res = FALSE;
-        }
-        //g_print("ACT %f EST %f\n",  (double)(lives_get_current_ticks() - timex) / TICKS_PER_SECOND_DBL, est_time);
+          if (target_palette != dplug->cdata->current_palette) {
+            if (dplug->dpsys->set_palette) {
+              int opal = dplug->cdata->current_palette;
+              int pal = best_palette_match(dplug->cdata->palettes, -1, target_palette);
+              if (pal != opal) {
+                dplug->cdata->current_palette = pal;
+                if (!(*dplug->dpsys->set_palette)(dplug->cdata)) {
+                  dplug->cdata->current_palette = opal;
+                  (*dplug->dpsys->set_palette)(dplug->cdata);
+                } else if (dplug->cdata->rec_rowstrides) {
+                  lives_free(dplug->cdata->rec_rowstrides);
+                  dplug->cdata->rec_rowstrides = NULL;
+		  // *INDENT-OFF*
+		}}}}
+	  // *INDENT-ON*
 
-        lives_free(pixel_data);
-        lives_free(rowstrides);
-        if (res) {
-          if (prefs->apply_gamma && prefs->pb_quality != PB_QUALITY_LOW) {
-            if (dplug->cdata->frame_gamma != WEED_GAMMA_UNKNOWN) {
-              weed_layer_set_gamma(layer, dplug->cdata->frame_gamma);
-            } else if (dplug->cdata->YUV_subspace == WEED_YUV_SUBSPACE_BT709) {
-              weed_layer_set_gamma(layer, WEED_GAMMA_BT709);
-            }
+          // TODO *** - check for auto-border : we might use width,height instead of frame_width,frame_height,
+          // and handle this in the plugin
+
+          if (!prefs->auto_nobord) {
+            width = dplug->cdata->frame_width / weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
+            height = dplug->cdata->frame_height;
+          } else {
+            width = dplug->cdata->width / weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
+            height = dplug->cdata->height;
           }
 
-          // get_frame may now update YUV_clamping, YUV_sampling, YUV_subspace
-          if (weed_palette_is_yuv(dplug->cdata->current_palette)) {
+          weed_layer_set_size(layer, width, height);
+
+          if (weed_palette_is_yuv(dplug->cdata->current_palette))
             weed_layer_set_palette_yuv(layer, dplug->cdata->current_palette,
                                        dplug->cdata->YUV_clamping,
                                        dplug->cdata->YUV_sampling,
                                        dplug->cdata->YUV_subspace);
-            if (prefs->apply_gamma && prefs->pb_quality != PB_QUALITY_LOW) {
-              if (weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL) == WEED_GAMMA_BT709) {
-                weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_BT709);
-              }
-              if (weed_get_int_value(layer, WEED_LEAF_YUV_SUBSPACE, NULL) == WEED_YUV_SUBSPACE_BT709) {
-                weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_BT709);
-              }
+          else weed_layer_set_palette(layer, dplug->cdata->current_palette);
+
+#ifdef USE_REC_RS
+          nplanes = weed_palette_get_nplanes(dplug->cdata->current_palette);
+          if (!dplug->cdata->rec_rowstrides) {
+            dplug->cdata->rec_rowstrides = lives_calloc(nplanes, sizint);
+          } else {
+            if (dplug->cdata->rec_rowstrides[0]) {
+              weed_layer_set_rowstrides(layer, dplug->cdata->rec_rowstrides, nplanes);
+              weed_leaf_set_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
+              lives_memset(dplug->cdata->rec_rowstrides, 0, nplanes * sizint);
             }
           }
-          // deinterlace
-          if (sfile->deinterlace || (prefs->auto_deint && dplug->cdata->interlace != LIVES_INTERLACE_NONE)) {
-            if (!is_thread) {
-              deinterlace_frame(layer, tc);
-            } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
+#endif
+          if (create_empty_pixel_data(layer, TRUE, TRUE)) {
+#ifdef USE_REC_RS
+            weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
+#endif
+            pixel_data = weed_layer_get_pixel_data_planar(layer, NULL);
+          } else {
+#ifdef USE_REC_RS
+            weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
+#endif
+            create_blank_layer(layer, image_ext, width, height, target_palette);
+            weed_layer_unref(layer);
+            return FALSE;
           }
+
+          if (!pixel_data || !pixel_data[0]) {
+            char *msg = lives_strdup_printf("NULL pixel data for layer size %d X %d, palette %s\n", width, height,
+                                            weed_palette_get_name_full(dplug->cdata->current_palette,
+                                                dplug->cdata->YUV_clamping, dplug->cdata->YUV_subspace));
+            LIVES_WARN(msg);
+            lives_free(msg);
+            create_blank_layer(layer, image_ext, width, height, target_palette);
+            weed_layer_unref(layer);
+            return FALSE;
+          }
+
+          rowstrides = weed_layer_get_rowstrides(layer, NULL);
+
+          //static int last = -1;
+          // try to pull frame from decoder plugin
+
+          /* g_print("GF %d\n", frame); */
+          /* int64_t timex = lives_get_current_ticks(); */
+          /* double est_time = (*dplug->dpsys->estimate_delay)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame)); */
+          if (!(*dplug->dpsys->get_frame)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame),
+                                          rowstrides, sfile->vsize, pixel_data)) {
+
+#ifdef USE_REC_RS
+            if (dplug->cdata->rec_rowstrides) lives_memset(dplug->cdata->rec_rowstrides, 0, nplanes * sizint);
+#endif
+            if (prefs->show_dev_opts) {
+              g_print("Error loading frame %d (index value %d)\n", frame,
+                      sfile->frame_index[frame - 1]);
+              break_me("load error");
+            }
+            // if get_frame fails, return a black frame
+            if (!is_thread) {
+              weed_layer_clear_pixel_data(layer);
+              weed_layer_unref(layer);
+              return FALSE;
+            }
+            res = FALSE;
+          }
+          //g_print("ACT %f EST %f\n",  (double)(lives_get_current_ticks() - timex) / TICKS_PER_SECOND_DBL, est_time);
+
+          lives_free(pixel_data);
+          lives_free(rowstrides);
+          if (res) {
+            if (prefs->apply_gamma && prefs->pb_quality != PB_QUALITY_LOW) {
+              if (dplug->cdata->frame_gamma != WEED_GAMMA_UNKNOWN) {
+                weed_layer_set_gamma(layer, dplug->cdata->frame_gamma);
+              } else if (dplug->cdata->YUV_subspace == WEED_YUV_SUBSPACE_BT709) {
+                weed_layer_set_gamma(layer, WEED_GAMMA_BT709);
+              }
+            }
+
+            // get_frame may now update YUV_clamping, YUV_sampling, YUV_subspace
+            if (weed_palette_is_yuv(dplug->cdata->current_palette)) {
+              weed_layer_set_palette_yuv(layer, dplug->cdata->current_palette,
+                                         dplug->cdata->YUV_clamping,
+                                         dplug->cdata->YUV_sampling,
+                                         dplug->cdata->YUV_subspace);
+              if (prefs->apply_gamma && prefs->pb_quality != PB_QUALITY_LOW) {
+                if (weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL) == WEED_GAMMA_BT709) {
+                  weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_BT709);
+                }
+                if (weed_get_int_value(layer, WEED_LEAF_YUV_SUBSPACE, NULL) == WEED_YUV_SUBSPACE_BT709) {
+                  weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_BT709);
+                }
+              }
+            }
+            // deinterlace
+            if (sfile->deinterlace || (prefs->auto_deint && dplug->cdata->interlace != LIVES_INTERLACE_NONE)) {
+              if (!is_thread) {
+                deinterlace_frame(layer, tc);
+              } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
+            }
+          }
+          mainw->osc_block = FALSE;
+          weed_layer_unref(layer);
+          return res;
         }
-        mainw->osc_block = FALSE;
-        weed_layer_unref(layer);
-        return res;
       } else {
         // pull frame from decoded images
         int64_t timex = lives_get_current_ticks();

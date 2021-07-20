@@ -10,6 +10,10 @@
 #include "main.h"
 #include "mainwindow.h"
 
+void explain_missing_activate(LiVESMenuItem *, livespointer user_data);
+
+void run_diagnostic(LiVESWidget *, const char *testname);
+
 char *get_stats_msg(boolean calc_only);
 double get_inst_fps(boolean get_msg);
 

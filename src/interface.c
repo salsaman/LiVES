@@ -4002,16 +4002,14 @@ static void chooser_check_dir(LiVESFileChooser * chooser, livespointer user_data
   lives_free(cwd);
 }
 
+
 void restore_wm_stackpos(LiVESButton * button) {
   LiVESWindow *dialog;
-  char *wid;
-  if ((wid = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button),
-             ACTIVATE_KEY)) != NULL)
-    activate_x11_window(wid);
-
-  if ((dialog = (LiVESWindow *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button),
-                KEEPABOVE_KEY)) != NULL)
-    lives_window_set_keep_above(dialog, TRUE);
+  if ((dialog = (LiVESWindow *)lives_widget_object_get_data
+                (LIVES_WIDGET_OBJECT(button), KEEPABOVE_KEY)) != NULL) {
+    lives_widget_show_all(LIVES_WIDGET(dialog));
+    lives_window_present(LIVES_WINDOW(dialog));
+  }
 }
 
 

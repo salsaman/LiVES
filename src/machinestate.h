@@ -335,6 +335,7 @@ char *get_localsharedir(const char *subdir);
 boolean notify_user(const char *detail);
 
 char *get_install_cmd(const char *distro, const char *exe);
+char *get_install_lib_cmd(const char *distro, const char *libname);
 
 boolean check_snap(const char *prog);
 

@@ -16,6 +16,7 @@
 #include "rte_window.h"
 #include "stream.h"
 #include "startup.h"
+#include "diagnostics.h"
 #include "ce_thumbs.h"
 
 #ifdef ENABLE_OSC
@@ -1724,6 +1725,18 @@ void create_LiVES(void) {
 
   menu_sets_sensitive(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), submenu, FALSE);
   menu_sets_visible(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), menuitem, FALSE);
+
+  /* menuitem = lives_standard_menu_item_new_with_label(_("Run libweed test")); */
+  /* lives_container_add(LIVES_CONTAINER(submenu), menuitem); */
+
+  /* lives_signal_sync_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL, */
+  /* 			    LIVES_GUI_CALLBACK(run_diagnostic), "libweed"); */
+
+  /* menuitem = lives_standard_menu_item_new_with_label(_("Struct size info")); */
+  /* lives_container_add(LIVES_CONTAINER(submenu), menuitem); */
+
+  /* lives_signal_sync_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL, */
+  /* 			    LIVES_GUI_CALLBACK(run_diagnostic), "structsizes"); */
 
   mainw->dev_dabg = lives_standard_check_menu_item_new_for_var(_("Show drawing area backgrounds"),
                     &prefs->dev_show_dabg, FALSE);

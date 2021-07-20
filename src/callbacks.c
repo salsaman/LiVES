@@ -8099,7 +8099,10 @@ void on_load_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   end_fs_preview(NULL, NULL);
 
   if (resp != LIVES_RESPONSE_ACCEPT) on_filechooser_cancel_clicked(chooser);
-  else on_open_new_audio_clicked(LIVES_FILE_CHOOSER(chooser), NULL);
+  else {
+    lives_widget_destroy(chooser);
+    on_open_new_audio_clicked(LIVES_FILE_CHOOSER(chooser), NULL);
+  }
 }
 
 
@@ -8122,8 +8125,6 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
   boolean bad_header = FALSE;
   boolean preparse = FALSE;
   boolean gotit = FALSE;
-
-  register int i;
 
   if (!CURRENT_CLIP_IS_VALID) return;
 
@@ -8164,7 +8165,7 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
 
   if (strlen(a_type)) {
     char *filt[] = LIVES_AUDIO_LOAD_FILTER;
-    for (i = 0; filt[i]; i++) {
+    for (int i = 0; filt[i]; i++) {
       if (!lives_ascii_strcasecmp(a_type, filt[i] + 2)) gotit = TRUE; // skip past "*." in filt
     }
   }

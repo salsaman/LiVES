@@ -2897,7 +2897,10 @@ boolean check_snap(const char *prog) {
 #define SU_PKG_INSTALL "su pkg install %s"
 
 char *get_install_cmd(const char *distro, const char *exe) {
-  char *cmd = NULL, *pkgname = NULL;
+  char *cmd = NULL;
+  const char *pkgname = NULL;
+
+  if (!distro) distro = capable->distro_name;
 
   if (!lives_strcmp(exe, EXEC_PIP)) {
     if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
@@ -2915,7 +2918,7 @@ char *get_install_cmd(const char *distro, const char *exe) {
   if (!strcmp(exe, EXEC_YOUTUBE_DL)) pkgname = EXEC_YOUTUBE_DL;
   if (!strcmp(exe, EXEC_YOUTUBE_DLC)) pkgname = EXEC_YOUTUBE_DLC;
 
-  if (!pkgname) return NULL;
+  if (!pkgname) pkgname = exe;
 
   // TODO - add more, eg. pacman, dpkg
   if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
@@ -2924,6 +2927,14 @@ char *get_install_cmd(const char *distro, const char *exe) {
   if (!lives_strcmp(distro, DISTRO_FREEBSD)) {
     cmd = lives_strdup_printf(SU_PKG_INSTALL, pkgname);
   }
+  return cmd;
+}
+
+
+char *get_install_lib_cmd(const char *distro, const char *libname) {
+  char *libpkg = lives_strdup_printf("lib%s-dev", libname);
+  char *cmd = get_install_cmd(NULL, libpkg);
+  lives_free(libpkg);
   return cmd;
 }
 

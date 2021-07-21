@@ -7667,8 +7667,8 @@ void weed_deinit_all(boolean shutdown) {
           if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
           weed_deinit_effect(i);
           mainw->rte &= ~(GU641 << i);
+          weed_instance_unref(instance);
         }
-        weed_instance_unref(instance);
       }
     }
     if (!shutdown) filter_mutex_unlock(i);

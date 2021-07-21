@@ -843,10 +843,6 @@ static boolean pre_init(void) {
 
   prefs->show_dev_opts = get_boolean_prefd(PREF_SHOW_DEVOPTS, FALSE);
 
-  if (prefs->show_dev_opts) {
-    g_printerr("Today's lucky number is 0X%08lX\n", gen_unique_id());
-  }
-
   prefs->back_compat = get_boolean_prefd(PREF_BACK_COMPAT, TRUE);
 
   future_prefs->vj_mode = get_boolean_prefd(PREF_VJMODE, FALSE);
@@ -1161,6 +1157,10 @@ static boolean pre_init(void) {
   if (!mainw->foreign) {
     if (prefs->startup_phase == 0 && prefs->show_splash) splash_init();
     print_notice();
+  }
+
+  if (prefs->show_dev_opts) {
+    g_printerr("Today's lucky number is 0X%08lX\n", gen_unique_id());
   }
 
   get_string_pref(PREF_CDPLAY_DEVICE, prefs->cdplay_device, PATH_MAX);

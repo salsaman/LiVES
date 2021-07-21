@@ -82,7 +82,7 @@ my $versions = (&rc_read("version", $file))[0];
 my $pver = @pieces[0];
 my $fver = @pieces[1];
 
-my $description = (&rc_read("description", $file))[0];
+my @description = (&rc_read("description", $file));
 my @requires=&rc_read("requires", $file);
 
 my @typedefs = &rc_read("typedefs", $file);
@@ -588,26 +588,27 @@ if ($uid) {
     print OUT "  uint64_t unique_id;\n";
 }
 
-## setup palette_list
-print OUT "  int palette_list[] = ";
-
-if ($pal_list[0] =~ /^ALL/) {
-    print OUT "$pal_list[0];\n";
-}
-else {
-    print OUT "{";
-    foreach (@pal_list) {
-	@pieces = split(/$delim/);
-	foreach (@pieces) {
-	    if ($_ =~ /^WEED_PALETTE_/) {
-		print OUT $_ . ", ";
-	    }
-	    else {
-		print OUT "WEED_PALETTE_" . $_ . ", ";
+if (@pal_list) {
+    ## setup palette_list
+    print OUT "  int palette_list[] = ";
+    if ($pal_list[0] =~ /^ALL/) {
+	print OUT "$pal_list[0];\n";
+    }
+    else {
+	print OUT "{";
+	foreach (@pal_list) {
+	    @pieces = split(/$delim/);
+	    foreach (@pieces) {
+		if ($_ =~ /^WEED_PALETTE_/) {
+		    print OUT $_ . ", ";
+		}
+		else {
+		    print OUT "WEED_PALETTE_" . $_ . ", ";
+		}
 	    }
 	}
+	print OUT "WEED_PALETTE_END};\n";
     }
-    print OUT "WEED_PALETTE_END};\n";
 }
 
 #setup in_chantmpls
@@ -863,8 +864,13 @@ if ($addnl) {
     print OUT "\n";
 }
 
+my $pl = "NULL";
+if (@pal_list) {
+    $pl = "palette_list";
+}
+
 print OUT "  filter_class = weed_filter_class_init(\"$filter_name\", \"$author\", $fver, filter_flags, " .
-    "palette_list,\n    $init_func, $proc_func, $deinit_func, $incs, $outcs, $inps, $outps);\n\n";
+    "$pl,\n    $init_func, $proc_func, $deinit_func, $incs, $outcs, $inps, $outps);\n\n";
 
 if (@authors > 1) {
     print OUT "  weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, $authors[1]);\n";
@@ -878,8 +884,13 @@ if (@param_window) {
     print OUT "  weed_set_string_array(gui, \"layout_rfx_strings\", " . $nwlines . ", rfx_strings);\n\n";
 }
 
-if ($description) {
-    print OUT "  weed_filter_set_description(filter_class, \"$description\");\n\n";
+if (@description) {
+    print OUT "  weed_filter_set_description(filter_class, \"@description[0]\"";
+    shift @description;
+    foreach (@description) {
+	print OUT "\n\t\t\t\t\"$_\"";
+    }
+    print OUT ");\n\n";
 }
 
 ## set layout

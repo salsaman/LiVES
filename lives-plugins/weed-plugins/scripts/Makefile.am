@@ -12,12 +12,10 @@ all: generate
 generate: build-weed-plugin-C
 
 build-weed-plugin-C: $(SCRIPT_FILES)
+	@touch $@
 	for script in $?; do \
 		./$@ $$script ..;\
-		touch $$script; \
 	done
-	@touch $@
-	./build-weed-plugin-C
 
 all-scripts: $(SCRIPT_FILES)
 	for script in $^; do \

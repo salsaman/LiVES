@@ -14,6 +14,10 @@ negate
 salsaman
 </author>
 
+<unique_id>
+0XA6B186E9FD04FE51
+</unique_id>
+
 <description>
 Inverts the Red, Green and Blue values of each pixel.
 </description>

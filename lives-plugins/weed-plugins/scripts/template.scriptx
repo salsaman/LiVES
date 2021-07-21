@@ -116,6 +116,15 @@ special|ignored|1|
 special|display_val|log|0|
 </param_window>
 
+<out_params>
+# OPTIONAL
+# out params: name, type, default, [min, max]
+relative|num3|0|
+absolute|num3|0|
+since_reset|num3|0|
+was_reset|bool|WEED_FALSE|
+</out_params>
+
 <static>
 # OPTIONAL
 # static variables and functions for the plugin as a whole

@@ -7,6 +7,9 @@
 static int package_version = 1; // version of this package
 
 /////////////////////////////////////////////////////////////////////////////
+
+#define _UNIQUE_ID_ "0XA6B186E9FD04FE51"
+
 #define NEED_PALETTE_UTILS
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
@@ -23,6 +26,7 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#include <stdio.h>
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 
@@ -74,6 +78,7 @@ static weed_error_t negate_process(weed_plant_t *inst, weed_timecode_t tc) {
 WEED_SETUP_START(200, 200) {
   weed_plant_t *host_info = weed_get_host_info(plugin_info);
   weed_plant_t *filter_class;
+  uint64_t unique_id;
   int palette_list[] = ALL_RGB_PALETTES;
   weed_plant_t *in_chantmpls[] = {
       weed_channel_template_init("in_channel0", 0),
@@ -91,6 +96,11 @@ WEED_SETUP_START(200, 200) {
   weed_filter_set_description(filter_class, "Inverts the Red, Green and Blue values of each pixel.");
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  if (!sscanf(_UNIQUE_ID_, "0X%lX", &unique_id) || !sscanf(_UNIQUE_ID_, "0x%lx", &unique_id)) {
+    weed_set_int64_value(plugin_info, WEED_LEAF_UNIQUE_ID, unique_id);
+  }
+
   weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;

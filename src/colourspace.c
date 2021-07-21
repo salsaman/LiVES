@@ -602,7 +602,7 @@ static inline int32_t _spc_rnd(int32_t val, short quality) {
     uint32_t sig = val & 0x80000000;
     return (((val - (val >> 8)) >> 16) | sig);
   }
-  return ((float)val / SCALE_FACTOR);
+  return ((float)val / SCALE_FACTOR + .5);
 }
 
 

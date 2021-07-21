@@ -1053,20 +1053,9 @@ static void save_subs_to_file(lives_clip_t *sfile, char *fname) {
 boolean get_handle_from_info_file(int index) {
   // called from get_new_handle to get the 'real' file handle
   // because until we know the handle we can't use the normal info file yet
-  char *com, *shm_path = NULL;
+  char *com, *shm_path;
 
-  // optionally we can stage the clip open in an alt directory
-  lives_intentparams_t *iparams;
-  lives_intentcap_t *icaps = lives_intentcaps_new(LIVES_ICAPS_LOAD);
-  iparams = get_txparams_for_clip(index, icaps);
-  lives_intentcaps_free(icaps);
-
-  if (iparams) {
-    weed_param_t *adir_param =
-      weed_param_from_iparams(iparams, CLIP_PARAM_STAGING_DIR);
-    if (adir_param) shm_path = weed_param_get_value_string(adir_param);
-    lives_intentparams_free(iparams);
-  }
+  shm_path = get_staging_dir_for(index, LIVES_ICAPS_LOAD);
 
   if (shm_path)
     com = lives_strdup_printf("%s new \"%s\"", prefs->backend_sync, shm_path);
@@ -1077,7 +1066,7 @@ boolean get_handle_from_info_file(int index) {
   lives_free(com);
 
   if (!lives_strncmp(mainw->msg, "error|", 6)) {
-    lives_free(shm_path);
+    if (shm_path) lives_free(shm_path);
     handle_backend_errors(FALSE);
     return FALSE;
   }

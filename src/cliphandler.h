@@ -446,7 +446,9 @@ char *get_clip_dir(int which);
 
 void permit_close(int which);
 
-void migrate_from_staging(int which);
+char *get_staging_dir_for(int clipno, lives_intention intent);
+
+void migrate_from_staging(int clipno);
 
 char *use_staging_dir_for(int clipno);
 

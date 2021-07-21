@@ -778,8 +778,6 @@ void on_open_loc_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   /// get a system tmpdir
-  lives_intentparams_t *iparams;
-  lives_intentcap_t *icaps;
   lives_remote_clip_request_t *req = NULL, *req2;
   char *tmpdir = NULL;
 
@@ -788,16 +786,7 @@ void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     return;
   }
 
-  icaps = lives_intentcaps_new(LIVES_ICAPS_DOWNLOAD);
-  iparams = get_txparams_for_clip(-1, icaps);
-  lives_intentcaps_free(icaps);
-
-  if (iparams) {
-    weed_param_t *adir_param =
-      weed_param_from_iparams(iparams, CLIP_PARAM_STAGING_DIR);
-    if (adir_param) tmpdir = weed_param_get_value_string(adir_param);
-    lives_intentparams_free(iparams);
-  }
+  tmpdir = get_staging_dir_for(-1, LIVES_ICAPS_DOWNLOAD);
 
   if (!tmpdir) return;
 

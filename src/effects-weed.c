@@ -6436,11 +6436,11 @@ weed_plant_t *_weed_instance_obtain(int line, char *file, int key, int mode) {
 
   if (mode < 0 || mode > rte_key_getmaxmode(key + 1)) return NULL;
   filter_mutex_lock(key);
+  _weed_instance_ref(key_to_instance[key][mode]);
   instance = key_to_instance[key][mode];
 #ifdef DEBUG_REFCOUNT
   if (instance) g_print("wio %p at line %d in file %s\n", instance, line, file);
 #endif
-  if (instance) _weed_instance_ref(instance);
   filter_mutex_unlock(key);
   return instance;
 }

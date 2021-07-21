@@ -5,6 +5,8 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+// TODO: are we segfaulting on .prjm programs ??
+
 ///////////////////////////////////////////////////////////////////
 
 static int package_version = 2; // version of this package
@@ -53,7 +55,7 @@ static int next_pot(int val) {return val;}
 static int verbosity = WEED_VERBOSITY_ERROR;
 #define WORKER_TIMEOUT_SEC 30 /// how long to wait for worker thread startup
 #define MAX_AUDLEN 2048 /// this is defined by projectM itself, increasing the value above 2048 will only result in jumps in the audio
-#define DEF_SENS 1.5 /// beat sensitivity 0. -> 5.  (lower is more sensitive); too high -> less dynamic, too low - nothing w. silence
+#define DEF_SENS 0. /// beat sensitivity 0. -> 5.  (lower is more sensitive); too high -> less dynamic, too low - nothing w. silence
 /////////////////////////////////////////////////////////////
 
 #define USE_DBLBUF 1
@@ -349,6 +351,7 @@ static int render_frame(_sdata *sd) {
   float yscale, xscale;
   int maxwidth = imgwidth, maxheight = imgheight;
   bool checked_audio = false;
+  bool do_unlock = false;
 
   if (maxwidth > scrwidth) maxwidth = scrwidth;
   if (maxheight > scrheight) maxheight = scrheight;
@@ -418,7 +421,7 @@ static int render_frame(_sdata *sd) {
   if (sd->needs_more || sd->audio_frames > sd->audio_offs) {
     size_t audlen = MAX_AUDLEN;
 #ifdef NORM_AUDIO
-    float maxvol = 1., myvol;
+    float maxvol = 0., myvol;
     size_t i;
 #endif
     pthread_mutex_lock(&sd->pcm_mutex);
@@ -430,7 +433,7 @@ static int render_frame(_sdata *sd) {
         if ((myvol = fabsf(sd->audio[sd->audio_offs + i]) > maxvol)) maxvol = myvol;
         if (maxvol > .8) break;
       }
-      if (i == audlen && maxvol > 0.05) {
+      if (i == audlen && maxvol > 0.05 && maxvol < 1.) {
         for (i = 0; i < audlen; i++) {
           sd->audio[sd->audio_offs + i] /= maxvol;
         }
@@ -453,7 +456,7 @@ static int render_frame(_sdata *sd) {
   XUnlockDisplay(dpy);
   pcount++;
 
-  if (sd->needs_more && checked_audio) {
+  if ((sd->needs_more && checked_audio) || (sd->pidx == -1 && sd->checkforblanks)) {
     glMatrixMode(GL_PROJECTION);
     glOrtho(0, 1, 0, 1, -1, 1);
     glLoadIdentity();
@@ -491,20 +494,14 @@ static int render_frame(_sdata *sd) {
     SDL_GL_SwapBuffers();
 #endif
 #endif
+
     pthread_mutex_lock(&buffer_mutex);
     glReadPixels(0, 0, sd->rowstride / sd->psize, imgheight, sd->psize == 4
                  ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, sd->fbuffer);
-    sd->needs_more = false;
-    pthread_mutex_unlock(&buffer_mutex);
-    pthread_mutex_lock(&cond_mutex);
-    pthread_cond_signal(&cond);
-    pthread_mutex_unlock(&cond_mutex);
-    sd->got_first = true;
-    if (sd->fps > 0.) sd->ncycs += sd->tfps / sd->fps - 1.;
-    sd->ncycs += sd->cycadj;
-    if (sd->ncycs < 0.) sd->ncycs = 0.;
+
+#define BLANK_LIM 8
     if (sd->pidx == -1 && sd->checkforblanks) {
-      /// check for blank frames: if the first and second from a new program are both blank, mark the program as "bad"
+      /// check for blank frames: if the first BLANK_LIM frames from a new program are all blank, mark the program as "bad"
       /// and pick another (not sure why the blank frames happen, but generally if the first two come back blank, so do all the
       /// rest. Possibly we need an image texture to load, which we don't have; more investigation needed).
       int i = 0;
@@ -518,17 +515,31 @@ static int render_frame(_sdata *sd) {
       if (i >= frmsize) blanks++;
       else {
         blanks = 0;
-        //sd->check = false;
+        sd->checkforblanks = false;
         sd->bad_programs[sd->program] = 2;
       }
-      if (blanks > 1) sd->bad_prog = true;
+      if (blanks >= BLANK_LIM) sd->bad_prog = true;
     }
-  } else {
+    sd->needs_more = false;
+  }
+  else {
     if (sd->ncycs > 1.) {
       sd->ncycs--;
       if (sd->ncycs < 1. && sd->cycadj < 0) sd->cycadj++;
     }
   }
+
+  pthread_mutex_unlock(&buffer_mutex);
+  pthread_mutex_lock(&cond_mutex);
+  pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&cond_mutex);
+
+  sd->got_first = true;
+
+  if (sd->fps > 0.) sd->ncycs += sd->tfps / sd->fps - 1.;
+  sd->ncycs += sd->cycadj;
+  if (sd->ncycs < 0.) sd->ncycs = 0.;
+
   return 0;
 }
 
@@ -690,11 +701,11 @@ static void *worker(void *data) {
         for (int rr = 0; rr < 4; rr++) {
           sd->program = fastrnd_int(sd->nprs - 2);
 
-          // mkae it 4 times more likely to select a known good program than an untested one
+          // make it 4 times more likely to select a known good program than an untested one
           // values can be: 0 - unchecked, 1 - known bad, 2 - known good, 3 - bad if silent
           if (sd->bad_programs[sd->program] == 2) break;
-          if (sd->bad_programs[sd->program] == 1 || (sd->silent && sd->bad_programs[sd->program] == 3)) {
-            rr--;
+          if (sd->bad_programs[sd->program] < 2 || (sd->silent && sd->bad_programs[sd->program] == 3)) {
+            if (sd->bad_programs[sd->program]) rr--;
             continue;
           }
         }
@@ -733,8 +744,8 @@ static void *worker(void *data) {
       }
     }
     //std::cerr << "worker start 14" << std::endl;
-
   }
+
   //std::cerr << "worker start 44" << std::endl;
   sd->needs_more = false;
   sd->worker_active = false;
@@ -1016,9 +1027,9 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   imgwidth = width;
 
   if (imgheight != height || sd->rowstride != xrowstride || palette != sd->palette) {
-    std::cerr << imgwidth << " X " << imgheight << " and " << width << " X " << height
-              << " featuring " << xrowstride << " against " << sd->rowstride
-              << " and also " << sd->psize << " vs " << psize << " with " << sd->palette << " for " << palette << std::endl;
+    // std::cerr << imgwidth << " X " << imgheight << " and " << width << " X " << height
+    //           << " featuring " << xrowstride << " against " << sd->rowstride
+    //           << " and also " << sd->psize << " vs " << psize << " with " << sd->palette << " for " << palette << std::endl;
     /// we must update size / pal, this has to be done before reading the buffer
     pthread_mutex_lock(&cond_mutex);
     sd->needs_update = true;
@@ -1115,6 +1126,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
       sd->abufsize = adlen;
       weed_memcpy(sd->audio, adata[0], adlen * 4);
     } else adlen = 0;
+
     sd->audio_frames = adlen;
     sd->audio_offs = 0;
     pthread_mutex_unlock(&sd->pcm_mutex);

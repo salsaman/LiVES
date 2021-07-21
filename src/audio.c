@@ -243,7 +243,7 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int nchans) {
   abuf->write_pos = write_offset;
 
 #ifdef DEBUG_AFB
-  g_print("append16 to afb\n");
+  g_print("append16 to afb %p and %p %d\n", abuf, abuf->buffer16, ((short *)src)[0]);
 #endif
 }
 
@@ -729,6 +729,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
             :  -(((double)(tbytes  / nSrcChannels / 2)) / (double)nsamples);
 
   while (nsamples--) {
+    if (src_offset_i * 2 > tbytes || src_offset_i < 0) break;
     if ((nSrcCount = nSrcChannels) == (nDstCount = nDstChannels) && !swap_endian && !swap_sign) {
       // same number of channels
 
@@ -4254,13 +4255,13 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
 
   weed_plant_t *ctmpl;
 
-  double scale = 1.;
+  double scale = 1., clipvol = 1.;
 
   ssize_t samps, offs = 0;
   boolean rvary = FALSE, lvary = FALSE;
   int trate, tchans, xnchans, flags;
   size_t alen, olen;
-
+  int afile;
   int i;
 
   // copy the part from readpos -> readlevel
@@ -4315,11 +4316,12 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
   }
 
 #ifdef DEBUG_AFB
-  g_print("push from afb %d\n", abuf->samples_filled);
+  g_print("push from afb %ld %p and %p\n", abuf->samples_filled, abuf->bufferf, abuf->buffer16);
 #endif
 
   // plugin will get float, so we first convert to that
-  if (!abuf->bufferf) {
+  if (abuf->in_asamps < 32) {
+
     // try 8 bit -> 16
     if (abuf->buffer8 && !abuf->buffer16) {
       int swap = 0;
@@ -4337,14 +4339,18 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
     // try convert S16 -> float
     if (abuf->buffer16) {
       size_t sampstart = abuf->start_sample;
-      size_t samps = abuf->samples_filled;
+      //size_t samps = abuf->samples_filled;
       size_t write_pos;
-      abuf->samples_filled = 0;
+      //abuf->samples_filled = 0;
       if (!abuf->in_interleaf) samps /= abuf->in_achans;
       if (!abuf->bufferf) {
         abuf->bufferf = (float **)lives_calloc(abuf->out_achans, sizeof(float *));
         abuf->write_pos = 0;
       }
+
+      afile = get_aplay_clipno();
+      if (CLIP_HAS_AUDIO(afile)) clipvol = lives_vol_from_linear(mainw->files[afile]->vol);
+
       for (i = 0; i < abuf->out_achans; i++) {
         // get buffer16 write_pos
         // write to abuf->bufferf at write_pos, from
@@ -4352,12 +4358,12 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
         if (!abuf->in_interleaf) {
           sample_move_d16_float_arena(abuf->bufferf[i], abuf->buffer16[i], sampstart, samps, 1,
                                       (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED),
-                                      abuf->swap_endian, lives_vol_from_linear(cfile->vol));
+                                      abuf->swap_endian, clipvol);
         } else {
           sample_move_d16_float_arena(abuf->bufferf[i], &abuf->buffer16[0][i], sampstart,
                                       samps, abuf->in_achans,
                                       (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED),
-                                      abuf->swap_endian, lives_vol_from_linear(cfile->vol));
+                                      abuf->swap_endian, clipvol);
         }
         abuf->start_sample += samps;
         if (abuf->start_sample >= ABUF_ARENA_SIZE) abuf->start_sample -= ABUF_ARENA_SIZE;
@@ -4390,9 +4396,9 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
     if (src) {
       if (scale == 1.) {
         dst[i] = lives_calloc(olen, sizeof(float));
-        if (is_vid)
+        if (is_vid) {
           arena_read((void *)dst[i], (void *)src, abuf->vclient_readpos, alen, 4);
-        else
+        } else
           arena_read((void *)dst[i], (void *)src, abuf->aclient_readpos, alen, 4);
       } else {
         // needs resample

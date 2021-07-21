@@ -7192,6 +7192,8 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
     if (mt->audio_vols) lives_list_free(mt->audio_vols);
   }
 
+  mainw->multitrack = NULL;
+
   if (CURRENT_CLIP_IS_VALID && CLIP_TOTAL_TIME(mainw->current_file) == 0.) {
     mainw->files[mt->render_file]->laudio_drawable =
       mainw->files[mt->render_file]->raudio_drawable = NULL;
@@ -7211,7 +7213,6 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
 
   lives_list_free(mt->tl_marks);
 
-  mainw->multitrack = NULL;
   mainw->event_list = NULL;
 
   lives_window_remove_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mt->accel_group);

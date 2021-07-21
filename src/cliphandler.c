@@ -21,6 +21,24 @@ LIVES_GLOBAL_INLINE int find_clip_by_uid(uint64_t uid) {
 }
 
 
+char *get_staging_dir_for(int index, lives_intention intent) {
+  // optionally we can stage the clip open in an alt directory
+  char *shm_path = NULL;
+  lives_intentparams_t *iparams;
+  lives_intentcap_t *icaps = lives_intentcaps_new(intent);
+  iparams = get_txparams_for_clip(index, icaps);
+  lives_intentcaps_free(icaps);
+
+  if (iparams) {
+    weed_param_t *adir_param =
+      weed_param_from_iparams(iparams, CLIP_PARAM_STAGING_DIR);
+    if (adir_param) shm_path = weed_param_get_value_string(adir_param);
+    lives_intentparams_free(iparams);
+  }
+  return shm_path;
+}
+
+
 LIVES_GLOBAL_INLINE
 char *use_staging_dir_for(int clipno) {
   if (clipno > 0 && IS_VALID_CLIP(clipno)) {
@@ -1109,7 +1127,7 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
   char **array;
   char buff[1024];
   char version[32];
-  char *com, *tmp;
+  char *com, *tmp, *stdir;
   char *old_hdrfile, *lives_header = NULL;
 
   off_t header_size;
@@ -1506,6 +1524,22 @@ old_check:
 
 rhd_failed:
 
+  stdir = get_staging_dir_for(fileno, LIVES_ICAPS_LOAD);
+  if (stdir) {
+    char *clip_stdir = lives_build_path(stdir, sfile->handle, NULL);
+    if (lives_file_test(clip_stdir, LIVES_FILE_TEST_IS_DIR)) {
+      char *clipdir = get_clip_dir(fileno);
+      break_me("ready");
+      lives_cp_noclobber(clip_stdir, clipdir);
+      lives_rmdir(clip_stdir, TRUE);
+      lives_free(stdir);
+      lives_free(clip_stdir);
+      lives_free(clipdir);
+      goto frombak;
+    }
+  }
+  lives_free(stdir);
+
   // header file (lives_header) missing or damaged -- see if we can recover ///////////////
   if (fileno == mainw->current_file) {
     char *clipdir = get_clip_dir(fileno);
@@ -1592,7 +1626,7 @@ void migrate_from_staging(int clipno) {
       pthread_mutex_lock(&sfile->transform_mutex);
       *sfile->staging_dir = 0;
       new_clipdir = get_clip_dir(clipno);
-      lives_cp_recursive(old_clipdir, new_clipdir, FALSE);
+      lives_cp_noclobber(old_clipdir, new_clipdir);
       if (sfile->achans && sfile->ext_src) wait_for_bg_audio_sync(clipno);
       lives_rmdir(old_clipdir, TRUE);
       lives_free(old_clipdir);
@@ -1750,7 +1784,7 @@ lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intentcap_t *icaps
   obj.type = OBJECT_TYPE_CLIP;
   priv = obj.priv = (clip_priv_data_t *)lives_calloc(1, sizeof(clip_priv_data_t));
   priv->idx = clipno;
-  if (!IS_VALID_CLIP(clipno)) {
+  if (!IS_VALID_CLIP(clipno) || mainw->recovering_files) {
     priv->sfile = NULL;
     obj.state = CLIP_STATE_NOT_LOADED;
   } else {

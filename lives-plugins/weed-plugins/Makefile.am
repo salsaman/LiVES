@@ -136,13 +136,16 @@ endif
 endif
 
 if HAVE_FFTW3F
-audio_fft_libs = audio_fft.la beat_detector.la
+audio_fft_libs = audio_fft.la
+beat_detector_libs = beat_detector.la
 audio_fft_la_LDFLAGS = $(FFTW3F_LIBS) $(AM_LDFLAGS)
 audio_fft_la_CFLAGS = $(FFTW3F_CFLAGS) $(AM_CFLAGS)
 beat_detector_la_LDFLAGS = $(FFTW3F_LIBS) $(AM_LDFLAGS)
 beat_detector_la_CFLAGS = $(FFTW3F_CFLAGS) $(AM_CFLAGS)
-audio_fftlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
-audio_fftlib_LTLIBRARIES = $(audio_fft_libs)
+audio_fftdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+audio_fft_LTLIBRARIES = $(audio_fft_libs)
+beat_detectordir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+beat_detector_LTLIBRARIES = $(beat_detector_libs)
 endif
 
 if HAVE_LADSPA
@@ -240,8 +243,10 @@ dist: distdir-am all
 distdir-am:
 	$(MAKE) -C scripts dist
 
-install-data-local:
+install-exec-am:
 	rm -rf "$(DESTDIR)$(fxpluginslibdir)"
+
+install-data-local:
 	$(MKDIR_P) "$(DESTDIR)$(fxpluginslibdir)"
 	cp -rf data "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/data"
 	cp -rf icons "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/icons"

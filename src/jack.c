@@ -2962,6 +2962,19 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                 }
                 pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
+                inputFramesAvailable = in_bytes / (jackd->num_input_channels * (afile->asampsize >> 3));
+                numFramesToWrite = (uint64_t)((double)inputFramesAvailable / (double)fabsf(shrink_factor) + .001);
+
+                if (numFramesToWrite < jackFramesAvailable) {
+                  // because of rounding, occasionally we get a sample or two short. Here we duplicate the last samples
+                  // so as not to jump to leave a zero filled gap
+                  size_t lack = jackFramesAvailable - numFramesToWrite;
+                  for (i = 0; i < nch; i++) {
+                    lives_memcpy(out_buffer[i] + numFramesToWrite, out_buffer[i] + numFramesToWrite - lack, lack * 4);
+                  }
+                  numFramesToWrite = jackFramesAvailable;
+                }
+
                 if (has_audio_filters(AF_TYPE_ANY) && jackd->playing_file != mainw->ascrap_file) {
                   float **xfltbuf;
                   ticks_t tc = mainw->currticks;

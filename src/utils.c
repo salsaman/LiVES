@@ -1887,9 +1887,8 @@ int lives_cp(const char *from, const char *to) {
 
 
 int lives_cp_noclobber(const char *from, const char *to) {
-  // may not fail - BUT seems to return -1 sometimes
-  char *com = lives_strdup_printf("%s -n \"%s\" \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
-  int retval = lives_system(com, FALSE);
+  char *com = lives_strdup_printf("%s -n \"%s\"/* \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
+  int retval = lives_system(com, TRUE);
   lives_free(com);
   return retval;
 }

@@ -2889,9 +2889,10 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
   // either we temporarily disable the channel, or we can't apply the filter
   weed_plant_t *filter = weed_instance_get_filter(inst, FALSE);
   weed_plant_t *channel, **channels, *chantmpl, **ctmpls = NULL, *layer;
-  int maxcheck = num_tracks, i, j, num_ctmpls, num_channels;
+  float **adata = NULL;
   void **pixdata = NULL;
   boolean *mand;
+  int maxcheck = num_tracks, i, j, num_ctmpls, num_channels;
 
   if (is_in)
     channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_CHANNELS, &num_channels);
@@ -2910,7 +2911,7 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
     if (i < num_tracks) layer = layers[tracks[i] + nbtracks];
     else layer = NULL;
 
-    if (!layer || ((weed_layer_is_audio(layer) && !weed_layer_get_audio_data(layer, NULL)) ||
+    if (!layer || ((weed_layer_is_audio(layer) && !(adata = weed_layer_get_audio_data(layer, NULL))) ||
                    (weed_layer_is_video(layer) && (pixdata = weed_layer_get_pixel_data_planar(layer, NULL)) == NULL))) {
       // if the layer data is NULL and it maps to a repeating channel, then disable the channel temporarily
       chantmpl = weed_channel_get_template(channel);
@@ -2924,6 +2925,7 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
         lives_freep((void **)&ctmpls);
         return FILTER_ERROR_MISSING_LAYER;
       }
+      if (adata) lives_free(adata);
     }
   }
 
@@ -3642,8 +3644,6 @@ apply_inst2:
         //if (LIVES_IS_PLAYING)
         filter_error = weed_apply_instance(instance, init_event, layers, opwidth, opheight, tc);
 
-        //filter_error = weed_apply_instance(instance, init_event, layers, 0, 0, tc);
-
         if (filter_error == WEED_SUCCESS && (xinstance = get_next_compound_inst(instance)) != NULL) {
           if (instance != orig_inst) weed_instance_unref(instance);
           weed_instance_ref(xinstance);
@@ -3718,6 +3718,11 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
           // adds a ref
           if ((instance = weed_instance_obtain(i, key_modes[i])) == NULL) {
             mainw->osc_block = FALSE;
+            continue;
+          }
+
+          if (weed_get_boolean_value(instance, LIVES_LEAF_SOFT_DEINIT, NULL) ==  WEED_TRUE) {
+            weed_instance_unref(instance);
             continue;
           }
 
@@ -3998,8 +4003,12 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
           continue;
         }
 
-        filter = weed_instance_get_filter(instance, FALSE);
+        if (weed_get_boolean_value(instance, LIVES_LEAF_SOFT_DEINIT, NULL) ==  WEED_TRUE) {
+          weed_instance_unref(instance);
+          continue;
+        }
 
+        filter = weed_instance_get_filter(instance, FALSE);
         filter_mutex_unlock(i);
 
         if (!has_audio_chans_in(filter, FALSE) || has_video_chans_in(filter, FALSE) || has_video_chans_out(filter, FALSE)) {
@@ -4092,8 +4101,7 @@ apply_audio_inst2:
         }}
       else {
 	filter_mutex_unlock(i);
-      }
-    }}
+      }}}
   if (orig_inst) weed_instance_unref(orig_inst);
   // *INDENT-ON*
 }
@@ -8036,6 +8044,7 @@ matchvals:
     retval = check_cconx(inst, num_in_alpha, &needs_reinit);
     if (retval != FILTER_SUCCESS) {
       weed_instance_unref(inst);
+      if (palette_list) lives_free(palette_list);
       return NULL;
     }
   }
@@ -8192,6 +8201,11 @@ recheck:
   if (do_recheck) {
     do_recheck = FALSE;
     goto recheck;
+  }
+
+  if (palette_list) {
+    lives_free(palette_list);
+    palette_list = NULL;
   }
 
   if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
@@ -8509,7 +8523,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
 
       // if effect was auto (from ACTIVATE data connection), leave all param boxes
       // otherwise, remove any which are not "pinned"
-      if (!mainw->fx_is_auto) ce_thumbs_add_param_box(key, !mainw->fx_is_auto);
+      if (!THREADVAR(fx_is_auto)) ce_thumbs_add_param_box(key, TRUE);
     }
 
     if (mainw->play_window) {

@@ -8089,7 +8089,6 @@ void on_load_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (resp != LIVES_RESPONSE_ACCEPT) on_filechooser_cancel_clicked(chooser);
   else {
-    lives_widget_destroy(chooser);
     on_open_new_audio_clicked(LIVES_FILE_CHOOSER(chooser), NULL);
   }
 }

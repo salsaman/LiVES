@@ -65,6 +65,7 @@ typedef struct {
   int var_proc_file;
   int var_cancelled;
   int var_core_id;
+  boolean var_fx_is_auto;
   boolean var_com_failed;
   boolean var_no_gui;
   boolean var_force_button_image;
@@ -76,8 +77,9 @@ struct _lives_thread_data_t {
   LiVESWidgetContext *ctx;
   int64_t idx;
   lives_threadvars_t vars;
+
   int signum;
-  char padding[96];
+  char padding[92];
 };
 
 typedef struct {

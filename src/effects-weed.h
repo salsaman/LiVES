@@ -103,6 +103,8 @@ typedef enum {
 
 #define LIVES_LEAF_IGNORE_STATE_UPDATES "host_ign_state_upd"
 
+#define LIVES_LEAF_SOFT_DEINIT "host_soft_deinit"
+
 // compound plugins
 #define WEED_LEAF_HOST_INTERNAL_CONNECTION "host_internal_connection" // for chain plugins
 #define WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE "host_internal_connection_autoscale" // for chain plugins

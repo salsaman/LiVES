@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2021-07-20 19:49-0300\n"
+"POT-Creation-Date: 2021-07-21 02:47-0300\n"
 "PO-Revision-Date: 2015-04-05 16:35+0000\n"
 "Last-Translator: Timothy Gu <timothy_gu@hotmail.com>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -6553,16 +6553,16 @@ msgstr "未知"
 msgid "Cleaning up clip"
 msgstr "清理剪辑"
 
-#: src/utils.c:2182
+#: src/utils.c:2181
 msgid "-------------Selection------------"
 msgstr "-------------选择------------"
 
-#: src/utils.c:2192
+#: src/utils.c:2191
 #, fuzzy
 msgid "] ----------Selection---------- [ "
 msgstr "-------------选择------------"
 
-#: src/utils.c:2193
+#: src/utils.c:2192
 msgid " frames ] ----------"
 msgstr " 帧 ] ----------"
 
@@ -14213,15 +14213,15 @@ msgstr "无法连接 JACK 服务器\n"
 msgid "jackctl : failed adding slave %s to server named '%s'"
 msgstr ""
 
-#: src/jack.c:3786
+#: src/jack.c:3799
 msgid "Started jack audio subsystem.\n"
 msgstr "已启动 jack 音频子系统。\n"
 
-#: src/jack.c:3885
+#: src/jack.c:3898
 msgid "Started jack audio reader.\n"
 msgstr "已启动 jack 音频读取器。\n"
 
-#: src/jack.c:4123
+#: src/jack.c:4136
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
@@ -14247,12 +14247,12 @@ msgstr "无法连接 JACK 服务器\n"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
-#: src/pulse.c:1998
+#: src/pulse.c:1976
 #, fuzzy
 msgid "Resetting pulseaudio connection..."
 msgstr "正在开启 pulse 音频服务..."
 
-#: src/pulse.c:2026
+#: src/pulse.c:2004
 msgid ""
 "\n"
 "Connection to pulseaudio was reset.\n"

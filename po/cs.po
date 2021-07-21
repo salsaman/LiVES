@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVEScz\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2021-07-20 19:49-0300\n"
+"POT-Creation-Date: 2021-07-21 02:47-0300\n"
 "PO-Revision-Date: 2018-07-23 13:17+0000\n"
 "Last-Translator: Pavel Borecki <Unknown>\n"
 "Language-Team: <martin@svobodicz.com, ales@mur.at>\n"
@@ -6428,16 +6428,16 @@ msgstr "Neznámé"
 msgid "Cleaning up clip"
 msgstr "Vyčištění klipu"
 
-#: src/utils.c:2182
+#: src/utils.c:2181
 msgid "-------------Selection------------"
 msgstr "---------------Výběr--------------"
 
-#: src/utils.c:2192
+#: src/utils.c:2191
 #, fuzzy
 msgid "] ----------Selection---------- [ "
 msgstr " sek ] ----------výběr---------- [ "
 
-#: src/utils.c:2193
+#: src/utils.c:2192
 msgid " frames ] ----------"
 msgstr " snímků ] ----------"
 
@@ -14210,15 +14210,15 @@ msgstr "Nelze se připojit k JACK serveru\n"
 msgid "jackctl : failed adding slave %s to server named '%s'"
 msgstr ""
 
-#: src/jack.c:3786
+#: src/jack.c:3799
 msgid "Started jack audio subsystem.\n"
 msgstr "Spuštěn podsystém jack audio.\n"
 
-#: src/jack.c:3885
+#: src/jack.c:3898
 msgid "Started jack audio reader.\n"
 msgstr "Spuštěna čtečka audio jacku .\n"
 
-#: src/jack.c:4123
+#: src/jack.c:4136
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
@@ -14244,12 +14244,12 @@ msgstr "Nelze se připojit k JACK serveru\n"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
-#: src/pulse.c:1998
+#: src/pulse.c:1976
 #, fuzzy
 msgid "Resetting pulseaudio connection..."
 msgstr "Spouští se pulse audio server…"
 
-#: src/pulse.c:2026
+#: src/pulse.c:2004
 msgid ""
 "\n"
 "Connection to pulseaudio was reset.\n"

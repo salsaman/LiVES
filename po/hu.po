@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2021-07-20 19:49-0300\n"
+"POT-Creation-Date: 2021-07-21 02:47-0300\n"
 "PO-Revision-Date: 2012-08-08 08:49+0000\n"
 "Last-Translator: Krasznecz Zoltán <zoltan.krasznecz@gmail.com>\n"
 "Language-Team: Magyar <lisovszki@gmail.com>\n"
@@ -6654,16 +6654,16 @@ msgstr "Ismeretlen"
 msgid "Cleaning up clip"
 msgstr "klip kipucolása"
 
-#: src/utils.c:2182
+#: src/utils.c:2181
 msgid "-------------Selection------------"
 msgstr "-------------Kijelölés-------------"
 
-#: src/utils.c:2192
+#: src/utils.c:2191
 #, fuzzy
 msgid "] ----------Selection---------- [ "
 msgstr " mp ] ----------Kijelölés----------- [ "
 
-#: src/utils.c:2193
+#: src/utils.c:2192
 msgid " frames ] ----------"
 msgstr " képkockák ] ----------"
 
@@ -14857,15 +14857,15 @@ msgstr "Nem tudok csatlakozni a JACK szerverre\n"
 msgid "jackctl : failed adding slave %s to server named '%s'"
 msgstr ""
 
-#: src/jack.c:3786
+#: src/jack.c:3799
 msgid "Started jack audio subsystem.\n"
 msgstr "Jack hang alrendszer elindítva.\n"
 
-#: src/jack.c:3885
+#: src/jack.c:3898
 msgid "Started jack audio reader.\n"
 msgstr "Jack hang olvasó elindítva.\n"
 
-#: src/jack.c:4123
+#: src/jack.c:4136
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
@@ -14895,12 +14895,12 @@ msgstr "Nem tudok csatlakozni a JACK szerverre\n"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
-#: src/pulse.c:1998
+#: src/pulse.c:1976
 #, fuzzy
 msgid "Resetting pulseaudio connection..."
 msgstr "Pulse audio szerver indítása..."
 
-#: src/pulse.c:2026
+#: src/pulse.c:2004
 msgid ""
 "\n"
 "Connection to pulseaudio was reset.\n"

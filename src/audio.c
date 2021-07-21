@@ -4413,6 +4413,7 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
 
   // set channel values
   weed_channel_set_audio_data(achan, dst, trate, tchans, olen);
+  lives_free(dst);
   return TRUE;
 }
 

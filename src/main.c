@@ -7633,6 +7633,7 @@ static boolean save_to_png_inner(FILE * fp, weed_layer_t *layer, int comp) {
   palette = weed_layer_get_palette(layer);
 
   if (width <= 0 || height <= 0 || rowstride <= 0) {
+    if (info_ptr) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
     LIVES_WARN("Cannot make png with 0 width or height");
     return FALSE;
   }
@@ -7693,8 +7694,8 @@ static boolean save_to_png_inner(FILE * fp, weed_layer_t *layer, int comp) {
   // end write
   png_write_end(png_ptr, (png_infop)NULL);
 
-  if (info_ptr) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
   png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+  if (info_ptr) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
 
   return TRUE;
 }

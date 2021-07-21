@@ -1040,20 +1040,13 @@ static boolean _rte_on_off(boolean from_menu, int key) {
   // key is 1 based, but if < 0 then this indicates auto mode (set via data connection)
   // in automode we don't add the effect parameters in ce_thumbs mode
   // if non-automode, the user overrides effect toggling
-
+  weed_plant_t *inst;
   uint64_t new_rte;
 
   if (mainw->go_away) return TRUE;
   if (!LIVES_IS_INTERACTIVE && from_menu) return TRUE;
 
-  mainw->fx_is_auto = FALSE;
-
   mainw->osc_block = TRUE;
-
-  if (key < 0) {
-    mainw->fx_is_auto = TRUE;
-    key = -key;
-  }
 
   if (key == EFFECT_NONE) {
     // switch off real time effects
@@ -1069,16 +1062,21 @@ static boolean _rte_on_off(boolean from_menu, int key) {
     if (!(mainw->rte & new_rte)) {
       // switch is ON
       filter_mutex_lock(key);
-
-      //if (!LIVES_IS_PLAYING) {
-      if (!(weed_init_effect(key))) {
-        // ran out of instance slots, no effect assigned, or some other error
-        mainw->rte &= ~new_rte;
-        if (rte_window) rtew_set_keych(key, FALSE);
-        if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
-        mainw->osc_block = FALSE;
-        filter_mutex_unlock(key);
-        return TRUE;
+      if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
+        if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) ==  WEED_TRUE) {
+          weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
+        }
+        weed_instance_unref(inst);
+      } else {
+        //if (!LIVES_IS_PLAYING) {
+        if (!(weed_init_effect(key))) {
+          // ran out of instance slots, no effect assigned, or some other error
+          mainw->rte &= ~new_rte;
+          if (rte_window) rtew_set_keych(key, FALSE);
+          if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
+          mainw->osc_block = FALSE;
+          return TRUE;
+        }
       }
 
       mainw->rte |= new_rte;
@@ -1090,7 +1088,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
 
         // if effect was auto (from ACTIVATE data connection), leave all param boxes
         // otherwise, remove any which are not "pinned"
-        if (!mainw->fx_is_auto) ce_thumbs_add_param_box(key, !mainw->fx_is_auto);
+        if (!THREADVAR(fx_is_auto)) ce_thumbs_add_param_box(key, TRUE);
       }
       filter_mutex_unlock(key);
       if (!LIVES_IS_PLAYING) {
@@ -1105,8 +1103,23 @@ static boolean _rte_on_off(boolean from_menu, int key) {
       // *INDENT-ON*
     } else {
       // effect is OFF
-      if (weed_deinit_effect(key)) {
-        mainw->rte &= ~new_rte;
+      if (THREADVAR(fx_is_auto)) {
+        weed_plant_t *inst, *xinst;
+        if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
+          weed_set_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, WEED_TRUE);
+          filter_mutex_lock(key);
+          if ((xinst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) == inst) {
+            mainw->rte &= ~new_rte;
+            weed_instance_unref(xinst);
+          }
+          weed_instance_unref(inst);
+          filter_mutex_unlock(key);
+        } else THREADVAR(fx_is_auto) = FALSE;
+      }
+      if (!THREADVAR(fx_is_auto)) {
+        if (weed_deinit_effect(key)) {
+          mainw->rte &= ~new_rte;
+        }
       }
 
       if (rte_window) rtew_set_keych(key, FALSE);
@@ -1120,10 +1133,8 @@ static boolean _rte_on_off(boolean from_menu, int key) {
             if (rte_key_is_enabled(1 + i)) {
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
 	      // *INDENT-OFF*
-	    }}}}
+	    }}}}}}
       // *INDENT-ON*
-    }
-  }
 
   mainw->osc_block = FALSE;
 
@@ -1138,8 +1149,9 @@ static boolean _rte_on_off(boolean from_menu, int key) {
     }
   }
 
-  if (key > 0 && !mainw->fx_is_auto) {
+  if (key > 0 && !THREADVAR(fx_is_auto)) {
     // user override any ACTIVATE data connection
+
     override_if_active_input(key);
 
     // if this is an outlet for ACTIVATE, disable the override now
@@ -1150,7 +1162,6 @@ static boolean _rte_on_off(boolean from_menu, int key) {
     mainw->force_show = TRUE;
   }
 
-  mainw->fx_is_auto = FALSE;
   return TRUE;
 }
 

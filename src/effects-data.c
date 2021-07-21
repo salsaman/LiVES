@@ -104,9 +104,10 @@ static char *get_chan_name(weed_plant_t *chan, int cnum, boolean is_in) {
 static void switch_fx_state(int hotkey) {
   // switch effect state when a connection to ACTIVATE is present
   uint32_t last_grabbable_effect = mainw->last_grabbable_effect;
-  // use -hotkey to indicate auto
 
-  rte_on_off_callback_hook(NULL, LIVES_INT_TO_POINTER(-hotkey));
+  THREADVAR(fx_is_auto) = TRUE;
+  rte_on_off_callback_hook(NULL, LIVES_INT_TO_POINTER(hotkey));
+  THREADVAR(fx_is_auto) = FALSE;
   mainw->last_grabbable_effect = last_grabbable_effect;
 }
 

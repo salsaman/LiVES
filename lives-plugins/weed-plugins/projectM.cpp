@@ -317,7 +317,8 @@ static int init_display(_sdata *sd) {
   if (!sd->screen_inited) {
 #ifdef HAVE_SDL2
     sd->win = SDL_CreateWindow("projectM", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, scrwidth, scrheight,
-                               SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_BORDERLESS);
+                               SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_FULLSCREEN
+			       | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_BORDERLESS);
     //std::cerr << "worker initscr 5" << std::endl;
     sd->glCtx = SDL_GL_CreateContext(sd->win);
 #else
@@ -642,7 +643,14 @@ static void *worker(void *data) {
   if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) sd->rendering = false;
   else {
     sd->prnames[0] = strdup("- Random -");
-    for (int i = 1; i < sd->nprs; i++) sd->prnames[i] = strdup((sd->globalPM->getPresetName(i - 1)).c_str());
+    for (int i = 1; i < sd->nprs; i++) {
+      if (sd->globalPM->getPresetURL(i - 1).substr(sd->globalPM->getPresetURL(i - 1)
+						   .find_last_of(".") + 1) == "prjm") {
+	sd->bad_programs[i] = 1;
+	continue;
+      }
+      sd->prnames[i] = strdup((sd->globalPM->getPresetName(i - 1)).c_str());
+    }
   }
   //std::cerr << "worker start 5" << std::endl;
 
@@ -690,18 +698,21 @@ static void *worker(void *data) {
     }
 
     sd->worker_active = true;
-    if (sd->ctime && sd->timer > (double)sd->ctime) {
+    if (sd->ctime > 0. && sd->timer > (double)sd->ctime) {
       sd->timer = 0.;
       rerand = true;
     }
+
+#define CHECKED_BIAS 2 // higher values prefer known and tested programs
+
     if (sd->pidx == -1) {
       if (rerand) {
         sd->busy = true;
         sd->cycadj = 0;
-        for (int rr = 0; rr < 4; rr++) {
+        for (int rr = 0; rr < CHECKED_BIAS; rr++) {
           sd->program = fastrnd_int(sd->nprs - 2);
 
-          // make it 4 times more likely to select a known good program than an untested one
+          // make it N times more likely to select a known good program than an untested one
           // values can be: 0 - unchecked, 1 - known bad, 2 - known good, 3 - bad if silent
           if (sd->bad_programs[sd->program] == 2) break;
           if (sd->bad_programs[sd->program] < 2 || (sd->silent && sd->bad_programs[sd->program] == 3)) {
@@ -956,6 +967,8 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     sd->silent = false;
     sd->rendering = true;
 
+    if (sd->pidx == -1) rerand = true;
+
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
@@ -1183,17 +1196,18 @@ copytodest:
 
 WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_RGB24, WEED_PALETTE_BGRA32,
-                        WEED_PALETTE_BGR24, WEED_PALETTE_END
-                       };
+                        WEED_PALETTE_BGR24, WEED_PALETTE_END};
 
   const char *xlist[3] = {"- Random -", "Choose...", NULL};
   weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist),
-                               weed_integer_init("ctime", "_Random pattern hold time (seconds - 0 for never change)", 20, 0, 100000), NULL
-                              };
+                               weed_integer_init("ctime", "_Random pattern hold time (seconds - 0 for never change, -1 for auto changes)",
+						 -1, -1, 100000), NULL};
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
 
-  weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, 0, palette_list,
+  int flags = WEED_FILTER_PREF_LINEAR_GAMMA;
+
+  weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, flags, palette_list,
                                projectM_init, projectM_process, projectM_deinit,
                                in_chantmpls, out_chantmpls, in_params, NULL);
   weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);

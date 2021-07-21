@@ -1875,7 +1875,6 @@ void update_effort(int nthings, boolean badthings) {
     return;
   }
 
-
   if (!inited) reset_effort();
   if (!nthings) return;
 

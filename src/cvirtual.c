@@ -77,6 +77,7 @@ boolean save_frame_index(int fileno) {
   clipdir = get_clip_dir(fileno);
   fname = lives_build_filename(clipdir, FRAME_INDEX_FNAME "." LIVES_FILE_EXT_BACK, NULL);
   fname_new = lives_build_filename(clipdir, FRAME_INDEX_FNAME, NULL);
+  lives_free(clipdir);
 
   do {
     retval = 0;
@@ -141,12 +142,14 @@ frames_t load_frame_index(int fileno) {
   filesize = sget_file_size(fname);
 
   if (filesize <= 0) {
+    if (clipdir) lives_free(clipdir);
     lives_free(fname);
     return 0;
   }
 
   if (filesize >> 2 > (off_t)sfile->frames) sfile->frames = (frames_t)(filesize >> 2);
   fname_back = lives_build_filename(clipdir, FRAME_INDEX_FNAME "." LIVES_FILE_EXT_BACK, NULL);
+  if (clipdir) lives_free(clipdir);
 
   do {
     retval = 0;

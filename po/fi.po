@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2021-07-20 19:49-0300\n"
+"POT-Creation-Date: 2021-07-21 02:47-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -6544,16 +6544,16 @@ msgstr "Tuntematon"
 msgid "Cleaning up clip"
 msgstr ""
 
-#: src/utils.c:2182
+#: src/utils.c:2181
 msgid "-------------Selection------------"
 msgstr "-------------Valinta------------"
 
-#: src/utils.c:2192
+#: src/utils.c:2191
 #, fuzzy
 msgid "] ----------Selection---------- [ "
 msgstr " s ] ----------Valinta---------- [ "
 
-#: src/utils.c:2193
+#: src/utils.c:2192
 msgid " frames ] ----------"
 msgstr " kuvaa ] ----------"
 
@@ -14317,15 +14317,15 @@ msgstr "JACK-palvelimeen ei voitu muodostaa yhteyttä\n"
 msgid "jackctl : failed adding slave %s to server named '%s'"
 msgstr ""
 
-#: src/jack.c:3786
+#: src/jack.c:3799
 msgid "Started jack audio subsystem.\n"
 msgstr ""
 
-#: src/jack.c:3885
+#: src/jack.c:3898
 msgid "Started jack audio reader.\n"
 msgstr ""
 
-#: src/jack.c:4123
+#: src/jack.c:4136
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
@@ -14351,12 +14351,12 @@ msgstr "JACK-palvelimeen ei voitu muodostaa yhteyttä\n"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
-#: src/pulse.c:1998
+#: src/pulse.c:1976
 #, fuzzy
 msgid "Resetting pulseaudio connection..."
 msgstr "Käynnistetään pulse audio -palvelin..."
 
-#: src/pulse.c:2026
+#: src/pulse.c:2004
 msgid ""
 "\n"
 "Connection to pulseaudio was reset.\n"

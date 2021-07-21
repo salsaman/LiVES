@@ -1795,7 +1795,6 @@ typedef struct {
   int old_active_track_list[MAX_TRACKS];
 
   boolean gen_started_play;
-  boolean fx_is_auto;
 
   lives_audio_buf_t *afbuffer; ///< used for buffering / feeding audio to video generators
 

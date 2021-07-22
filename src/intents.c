@@ -232,8 +232,7 @@ lives_object_transform_t *find_transform_for_intent(lives_object_t *obj, lives_i
 }
 
 
-lives_transform_status_t *transform(lives_object_t *obj, lives_object_transform_t *tx,
-                                    lives_object_t **other) {
+lives_transform_status_t *transform(lives_object_transform_t *tx) {
   /* for (int i = 0; i < tx->prereqs->n_conditions; i++) { */
   /*   if (!*tx->prereqs->conditions[i]) return FALSE; */
   /* } */
@@ -247,13 +246,8 @@ lives_transform_status_t *transform(lives_object_t *obj, lives_object_transform_
 
   /*   switch ( */
 
-
-
-
   /* pth = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD, funcinf->function, */
   /* 				       WEED_SEED_DOUBLE, args_fmt, xargs); */
-
-
   return NULL;
 }
 
@@ -268,7 +262,7 @@ void lives_intentparams_free(lives_intentparams_t *iparams) {
 
 
 #if 0
-LiVESTransformList *list_transformations(lives_object_t *obj, int state) {
+lives_intentcaps_t **list_intentcaps(void) {
   LiVESList *txlist = NULL;
   if (obj->type == OBJECT_TYPE_CLIP) {
     if (state == CLIP_STATE_NOT_LOADED) {

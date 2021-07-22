@@ -834,7 +834,7 @@ static void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_a
 #else
 #define MINPOOLTHREADS 2
 #endif
-static int npoolthreads;
+static int npoolthreads, rnpoolthreads;
 static pthread_t **poolthrds;
 static pthread_cond_t tcond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t tcond_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -954,9 +954,13 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
 }
 
 
+#define POOL_TIMEOUT_SEC 120
+
 static void *thrdpool(void *arg) {
   boolean skip_wait = FALSE;
   lives_thread_data_t *tdata = (lives_thread_data_t *)arg;
+  static struct timespec ts;
+  int rc = 0;
 #ifdef USE_RPMALLOC
   if (!rpmalloc_is_thread_initialized()) {
     rpmalloc_thread_initialize();
@@ -971,15 +975,28 @@ static void *thrdpool(void *arg) {
 
   while (!threads_die) {
     if (!skip_wait) {
+      clock_gettime(CLOCK_REALTIME, &ts);
+      ts.tv_sec += POOL_TIMEOUT_SEC;
       pthread_mutex_lock(&tcond_mutex);
-      pthread_cond_wait(&tcond, &tcond_mutex);
+      rc = pthread_cond_timedwait(&tcond, &tcond_mutex, &ts);
       pthread_mutex_unlock(&tcond_mutex);
+      if (rc == ETIMEDOUT) {
+        if (!pthread_mutex_trylock(&pool_mutex)) {
+          npoolthreads--;
+          pthread_mutex_unlock(&pool_mutex);
+          lives_widget_context_unref(tdata->ctx);
+          tdata->exited = TRUE;
+          break;
+        }
+      }
     }
     if (LIVES_UNLIKELY(threads_die)) break;
     skip_wait = do_something_useful(tdata);
 #ifdef USE_RPMALLOC
-    if (rpmalloc_is_thread_initialized()) {
-      rpmalloc_thread_collect();
+    if (skip_wait) {
+      if (rpmalloc_is_thread_initialized()) {
+        rpmalloc_thread_collect();
+      }
     }
 #endif
   }
@@ -992,11 +1009,10 @@ static void *thrdpool(void *arg) {
 }
 
 
-
 void lives_threadpool_init(void) {
-  npoolthreads = MINPOOLTHREADS;
-  if (mainw->debug) npoolthreads = 0;
-  if (prefs->nfx_threads > npoolthreads) npoolthreads = prefs->nfx_threads;
+  rnpoolthreads = npoolthreads = MINPOOLTHREADS;
+  if (mainw->debug) rnpoolthreads = npoolthreads = 0;
+  if (prefs->nfx_threads > npoolthreads) rnpoolthreads = npoolthreads = prefs->nfx_threads;
   poolthrds = (pthread_t **)lives_calloc(npoolthreads, sizeof(pthread_t *));
   threads_die = FALSE;
   twork_first = twork_last = NULL;
@@ -1014,14 +1030,16 @@ void lives_threadpool_finish(void) {
   pthread_mutex_lock(&tcond_mutex);
   pthread_cond_broadcast(&tcond);
   pthread_mutex_unlock(&tcond_mutex);
-  for (int i = 0; i < npoolthreads; i++) {
+  for (int i = 0; i < rnpoolthreads; i++) {
     lives_thread_data_t *tdata = get_thread_data_by_id(i + 1);
-    pthread_cond_broadcast(&tcond);
-    pthread_mutex_unlock(&tcond_mutex);
-    pthread_join(*(poolthrds[i]), NULL);
-    lives_widget_context_unref(tdata->ctx);
-    lives_free(tdata);
-    lives_free(poolthrds[i]);
+    if (!tdata->exited) {
+      pthread_cond_broadcast(&tcond);
+      pthread_mutex_unlock(&tcond_mutex);
+      pthread_join(*(poolthrds[i]), NULL);
+      lives_widget_context_unref(tdata->ctx);
+      lives_free(tdata);
+      lives_free(poolthrds[i]);
+    }
   }
   lives_free(poolthrds);
   poolthrds = NULL;
@@ -1077,21 +1095,43 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
   pthread_cond_signal(&tcond);
   pthread_mutex_unlock(&tcond_mutex);
   pthread_mutex_lock(&pool_mutex);
-  if (npoolthreads && ntasks >= npoolthreads) {
-    pthread_mutex_lock(&tcond_mutex);
-    pthread_cond_broadcast(&tcond);
-    pthread_mutex_unlock(&tcond_mutex);
-    poolthrds =
-      (pthread_t **)lives_realloc(poolthrds, (npoolthreads + MINPOOLTHREADS) * sizeof(pthread_t *));
-    for (int i = npoolthreads; i < npoolthreads + MINPOOLTHREADS; i++) {
-      lives_thread_data_t *tdata = lives_thread_data_create(i + 1);
-      poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
-      pthread_create(poolthrds[i], NULL, thrdpool, tdata);
+  if (rnpoolthreads && ntasks >= npoolthreads) {
+    if (npoolthreads < rnpoolthreads) {
+      for (int i = 0; i < rnpoolthreads; i++) {
+        lives_thread_data_t *tdata = get_thread_data_by_id(i + 1);
+        if (tdata->exited) {
+          lives_free(tdata);
+          lives_free(poolthrds[i]);
+          tdata = lives_thread_data_create(i + 1);
+          poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
+          pthread_create(poolthrds[i], NULL, thrdpool, tdata);
+          pthread_mutex_lock(&tcond_mutex);
+          pthread_cond_signal(&tcond);
+          pthread_mutex_unlock(&tcond_mutex);
+        }
+      }
+    }
+    if (ntasks <= rnpoolthreads) {
       pthread_mutex_lock(&tcond_mutex);
-      pthread_cond_signal(&tcond);
+      pthread_cond_broadcast(&tcond);
+      pthread_mutex_unlock(&tcond_mutex);
+    } else {
+      poolthrds =
+        (pthread_t **)lives_realloc(poolthrds, (rnpoolthreads + MINPOOLTHREADS) * sizeof(pthread_t *));
+      for (int i = rnpoolthreads; i < rnpoolthreads + MINPOOLTHREADS; i++) {
+        lives_thread_data_t *tdata = lives_thread_data_create(i + 1);
+        poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
+        pthread_create(poolthrds[i], NULL, thrdpool, tdata);
+        pthread_mutex_lock(&tcond_mutex);
+        pthread_cond_signal(&tcond);
+        pthread_mutex_unlock(&tcond_mutex);
+      }
+      rnpoolthreads += MINPOOLTHREADS;
+      pthread_mutex_lock(&tcond_mutex);
+      pthread_cond_broadcast(&tcond);
       pthread_mutex_unlock(&tcond_mutex);
     }
-    npoolthreads += MINPOOLTHREADS;
+    npoolthreads = rnpoolthreads;
   }
   pthread_mutex_unlock(&pool_mutex);
   return 0;

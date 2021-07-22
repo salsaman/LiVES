@@ -121,16 +121,6 @@ boolean ext_triggers_poll(livespointer data) {
 }
 
 
-// unused, but left for future reference in case i becomes useful
-#if defined HAVE_X11
-LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespointer data) {
-  // filter events at X11 level and act on key press/release
-  uint32_t modifiers = 0;
-  return LIVES_FILTER_CONTINUE; // this is most likely handled in key_press_or_release() now
-}
-#endif
-
-
 boolean key_press_or_release(LiVESWidget *widget, LiVESXEventKey *event, livespointer user_data) {
   boolean ret = pl_key_function(event->type == LIVES_KEY_PRESS, event->keyval, event->state);
   //if (ckey !=0 && cached_key == 0) g_print("unaching key\n");

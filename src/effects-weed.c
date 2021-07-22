@@ -5340,7 +5340,7 @@ void weed_load_all(void) {
   // get list of plugins from directory and create our fx
   LiVESList *weed_plugin_list, *weed_plugin_sublist;
   char **dirs;
-  char *subdir_path, *subdir_name, *plugin_path, *plugin_name;
+  char *subdir_path, *subdir_name, *plugin_path, *plugin_name, *plugin_ext;
   int max_modes = FX_MODES_MAX;
   int numdirs, ncompounds;
   int i, j;
@@ -5406,7 +5406,8 @@ void weed_load_all(void) {
       LiVESList *listnext = list->next;
       threaded_dialog_spin(0.);
       plugin_name = (char *)list->data;
-      if (!lives_strncmp(plugin_name + lives_strlen(plugin_name) - strlen(DLL_NAME) - 1, "." DLL_NAME, strlen(DLL_NAME) + 1)) {
+      plugin_ext = get_extension(plugin_name);
+      if (!lives_strcmp(plugin_ext, DLL_EXT)) {
         plugin_path = lives_build_filename(dirs[i], plugin_name, NULL);
         load_weed_plugin(plugin_name, plugin_path, dirs[i]);
         lives_freep((void **)&plugin_name);
@@ -5418,6 +5419,7 @@ void weed_load_all(void) {
         list->prev = list->next = NULL;
         lives_list_free(list);
       }
+      lives_free(plugin_ext);
       list = listnext;
       threaded_dialog_spin(0.);
     }
@@ -5432,7 +5434,7 @@ void weed_load_all(void) {
         continue;
       }
 
-      for (LiVESList *list2 = weed_plugin_sublist = get_plugin_list(PLUGIN_EFFECTS_WEED, TRUE, subdir_path, DLL_NAME);
+      for (LiVESList *list2 = weed_plugin_sublist = get_plugin_list(PLUGIN_EFFECTS_WEED, TRUE, subdir_path, DLL_EXT);
            list2; list2 = list2 ->next) {
         plugin_name = (char *)list2->data;
         plugin_path = lives_build_filename(subdir_path, plugin_name, NULL);

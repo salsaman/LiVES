@@ -1635,7 +1635,7 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
   lives_free(tmp);
   lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
-  plname = lives_strdup_printf("%s.%s", plugin_name, DLL_NAME);
+  plname = ensure_extension(plugin_name, DLL_EXT);
   label = lives_standard_label_new((tmp = lives_strdup_printf(_("Plugin name: %s"), plname)));
   lives_free(tmp); lives_free(plname);
   lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);

@@ -432,9 +432,6 @@ GLAPI int GLAD_GLX_VERSION_1_4;
 typedef __GLXextFuncPtr(APIENTRYP PFNGLXGETPROCADDRESSPROC)(const GLubyte *procName);
 GLAPI PFNGLXGETPROCADDRESSPROC glad_glXGetProcAddress;
 #define glXGetProcAddress glad_glXGetProcAddress
-typedef void(APIENTRYP PFNGLXTEXSTORAGE2DPROC)(int target, int levels, int internalformat, int width, int height);
-GLAPI PFNGLXTEXSTORAGE2DPROC glad_glXTexStorage2D;
-#define glXTexStorage2D glad_glXTexStorage2D
 #endif
 
 #ifdef __cplusplus

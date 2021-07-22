@@ -51,6 +51,18 @@ if HAVE_LIBVISUAL
 libvisual_CFLAGS = -DHAVE_LIBVISUAL=1
 endif
 
+if HAVE_XRENDER
+xrender_CFLAGS = -DHAVE_XRENDER=1
+endif
+
+if HAVE_X11
+x11_CFLAGS = -DHAVE_X11=1
+endif
+
+if HAVE_OPENGL
+opengl_CFLAGS = -DHAVE_OPENGL=1
+endif
+
 gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -pthread
 
 AM_CPPFLAGS = \
@@ -277,7 +289,7 @@ AM_CFLAGS = -fcommon -fPIE -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgra
 	$(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(libexplain_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def) @TURBO_CFLAGS@ \
-	$(libvisual_CFLAGS) $(frei0r_CFLAGS) $(ladspa_CFLAGS) $(ffthumb_CFLAGS)
+	$(libvisual_CFLAGS) $(frei0r_CFLAGS) $(ladspa_CFLAGS) $(ffthumb_CFLAGS) $(xrender_CFLAGS) $(x11_CFLAGS) $(opengl_CFLAGS)
 
 if HAVE_AVFORMAT
 if HAVE_AVCODEC

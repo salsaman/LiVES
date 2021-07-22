@@ -23,6 +23,8 @@ typedef weed_plant_t weed_param_t;
 
 // generic objects / plugins
 
+#define DLL_EXT "so"
+
 // perhaps intentions could be used instead, ie. each plugin just provides a set of intentcaps
 // and an interface for each one ?
 #define PLUGIN_TYPE_DECODER		256//		"decoder"
@@ -32,6 +34,7 @@ typedef weed_plant_t weed_param_t;
 #define PLUGIN_TYPE_PLAYER      	260//		"player"
 
 #define PLUGIN_TYPE_BASE_OFFSET		256 // subtract from types to get 0 base
+#define PLUGIN_TYPE_MAX_BUILTIN		1023
 
 // subtypes (in future derived from intentcaps)
 #define PLUGIN_SUBTYPE_VIDEO_PLAYER     32768
@@ -61,20 +64,31 @@ typedef weed_plant_t weed_param_t;
 #define LIVES_DEVSTATE_BROKEN -2 // WARNING - plugin is know to function incorrectly
 #define LIVES_DEVSTATE_AVOID -3 // WARNING - plugin should be completely ignored
 
+// in future, all plugins will have only a single mandatory function, get_plugin_id
+// which should return a lives_plugin_id_t
+
 typedef struct {
   uint64_t uid; // fixed enumeration
-  uint64_t type;  ///< e.g. "decoder"
-  uint64_t pkgtype;  ///< e.g. dynamic
-  char script_lang[32];  ///< for scripted types only, the script interpreter, e.g. "perl", "python3"
-  int api_version_major; ///< version of interface API
-  int api_version_minor;
   char name[32];  ///< e.g. "mkv_decoder"
   int pl_version_major; ///< version of plugin
   int pl_version_minor;
   int devstate; // e.g. LIVES_DEVSTATE_UNSTABLE
+
+  // the following would normally be filled via a type specific header:
+  uint64_t type;  ///< e.g. "decoder"
+  int api_version_major; ///< version of interface API
+  int api_version_minor;
+  uint64_t pkgtype;  ///< e.g. dynamic
+  char script_lang[32];  ///< for scripted types only, the script interpreter, e.g. "perl", "python3"
+
+  // if intentcaps is set, then type, api_version_* become optional
   lives_intentcap_t *intentcaps;  /// array of intentcaps (NULL terminated)
-  void *unused; // padding
 } lives_plugin_id_t;
+
+typedef struct {
+  lives_plugin_id_t *pl_id;
+  void *pl_priv;
+} lives_plugin_t;
 
 LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex,
                            const char *plugdir, const char *filter_ext);
@@ -124,20 +138,22 @@ LiVESList *plugin_request_by_space(const char *plugin_type, const char *plugin_n
 LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_name, const char *request, const char *delim,
                                  boolean allow_blanks);
 
+// descriptive text for version string formatting
+#define DECPLUG_VER_DESC " engine v "
+
 #define VPP_DEFS_FILE "vpp_defaults"
 
 typedef struct {
+  // mandatory
+  const lives_plugin_id_t *(*get_plugin_id)(void);
+  const lives_plugin_id_t *id;
+
   // playback
   char *soname; ///< plugin name (soname without .so)
   void *handle;
 
   // mandatory
-  const lives_plugin_id_t *(*get_plugin_id)(void);
-  const lives_plugin_id_t *id;
-
-  // mandatory
   const char *(*module_check_init)(void);
-  //const char *(*version)(void);
   const char *(*get_description)(void);
 
   int *(*get_palette_list)(void);
@@ -217,9 +233,10 @@ void load_vpp_defaults(_vid_playback_plugin *, char *file);
 boolean vpp_try_match_palette(_vid_playback_plugin *, weed_layer_t *);
 int get_best_vpp_palette_for(_vid_playback_plugin *, int palette);
 
-#define DEFAULT_VPP "openGL"
-// TODO:
-//#define DEFAULT_VPP_UID 0XA6750BDAC53DF23F
+#if HAVE_OPENGL && HAVE_X11 && HAVE_XRENDER
+#define DEFAULT_VPP_NAME "openGL"
+#define DEFAULT_VPP_UID 0XA6750BDAC53DF23F
+#endif
 
 #define DEF_VPP_HSIZE DEF_FRAME_HSIZE_UNSCALED
 #define DEF_VPP_VSIZE DEF_FRAME_VSIZE_UNSCALED
@@ -370,14 +387,13 @@ typedef struct _lives_clip_data {
 
 
 typedef struct {
+  // mandatory
+  const lives_plugin_id_t *(*get_plugin_id)(void);
+  const lives_plugin_id_t *id;
+
   // playback
   const char *soname; ///< plugin name (soname without .so)
   void *handle; ///< may be shared between several instances
-
-  // mandatory
-  const lives_plugin_id_t *(*get_plugin_id)(void);
-
-  const lives_plugin_id_t *id;
 
   /// call first time with NULL cdata
   /// subsequent calls should re-use cdata

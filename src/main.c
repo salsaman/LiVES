@@ -4081,15 +4081,19 @@ static boolean lives_startup(livespointer data) {
 
   get_string_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
 
-  if (*buff && strcmp(buff, "(null)") && strcmp(buff, "none")) {
+  if (*buff && lives_strcmp(buff, "(null)") && lives_strcmp(buff, "none")
+      && lives_strcmp(buff, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
     mainw->vpp = open_vid_playback_plugin(buff, TRUE);
-  } else if (prefs->startup_phase && prefs->startup_phase <= 3) {
-    mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, TRUE);
+  }
+#ifdef DEFAULT_VPP_NAME
+  else if (prefs->startup_phase && prefs->startup_phase <= 3) {
+    mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP_NAME, TRUE);
     if (mainw->vpp) {
       lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->soname);
       set_string_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->soname);
     }
   }
+#endif
 
   if (!ign_opts.ign_aplayer) {
     get_string_pref(PREF_AUDIO_PLAYER, buff, 256);

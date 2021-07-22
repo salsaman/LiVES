@@ -162,17 +162,20 @@ typedef struct {
 
 typedef struct {
   uint64_t uid; // fixed enumeration
-  uint64_t type;  ///< e.g. "decoder"
-  uint64_t pkgtype;  ///< e.g. dynamic
-  char script_lang[32];  ///< for scripted types only, the script interpreter, e.g. "perl", "python3"
-  int api_version_major; ///< version of interface API
-  int api_version_minor;
   char name[32];  ///< e.g. "mkv_decoder"
   int pl_version_major; ///< version of plugin
   int pl_version_minor;
-  int devstate; // e.g. PLUGIN_DEVSTATE_UNSTABLE
+  int devstate; // e.g. LIVES_DEVSTATE_UNSTABLE
+
+  // the following would normally be filled via a type specific header:
+  uint64_t type;  ///< e.g. "decoder"
+  int api_version_major; ///< version of interface API
+  int api_version_minor;
+  uint64_t pkgtype;  ///< e.g. dynamic
+  char script_lang[32];  ///< for scripted types only, the script interpreter, e.g. "perl", "python3"
+
+  // if intentcaps is set, then type, api_version_* become optional
   plugin_intentcap_t *intentcaps;  /// array of intentcaps (NULL terminated)
-  void *unused; // padding
 } plugin_id_t;
 
 //////////////////////////////////////////////////////////////////
@@ -194,10 +197,19 @@ static inline plugin_id_t *_make_plugin_id(void) {
   if (!inited) {
     inited = 1;
     plugin_id.uid = PLUGIN_UID;
+    snprintf(plugin_id.name, 32, "%s", PLUGIN_NAME);
+    plugin_id.pl_version_major = PLUGIN_VERSION_MAJOR;
+    plugin_id.pl_version_minor = PLUGIN_VERSION_MINOR;
+#ifndef PLUGIN_DEVSTATE
+#define PLUGIN_DEVSTATE PLUGIN_DEVSTATE_CUSTOM
+#endif
+    plugin_id.devstate = PLUGIN_DEVSTATE;
 #ifndef PLUGIN_TYPE
 #define PLUGIN_TYPE_UNSPECIFIED
 #endif
     plugin_id.type = PLUGIN_TYPE;
+    plugin_id.api_version_major = PLUGIN_API_VERSION_MAJOR;
+    plugin_id.api_version_major = PLUGIN_API_VERSION_MINOR;
 #ifndef PLUGIN_PKGTYPE
 #define PLUGIN_PKGTYPE PLUGIN_PKGTYPE_DYNAMIC
 #endif
@@ -207,15 +219,6 @@ static inline plugin_id_t *_make_plugin_id(void) {
 #endif
     snprintf(plugin_id.script_lang, 32, "%s", PLUGIN_SCRIPT_LANG);
 #endif
-#ifndef PLUGIN_DEVSTATE
-#define PLUGIN_DEVSTATE PLUGIN_DEVSTATE_CUSTOM
-#endif
-    plugin_id.devstate = PLUGIN_DEVSTATE;
-    plugin_id.api_version_major = PLUGIN_API_VERSION_MAJOR;
-    plugin_id.api_version_major = PLUGIN_API_VERSION_MINOR;
-    snprintf(plugin_id.name, 32, "%s", PLUGIN_NAME);
-    plugin_id.pl_version_major = PLUGIN_VERSION_MAJOR;
-    plugin_id.pl_version_minor = PLUGIN_VERSION_MINOR;
 #ifndef PLUGIN_INTENTCAPS
 #define PLUGIN_INTENTCAPS NULL
 #endif
@@ -236,6 +239,9 @@ const plugin_id_t *get_plugin_id_default(void) {
 // absent values are assumed FALSE
 #define PLUGIN_CAPACITY_LOCAL		"local"
 #define PLUGIN_CAPACITY_REMOTE		"remote"
+
+#define LIVES_CAPACITY_REALTIME		"realtime"
+#define LIVES_CAPACITY_DISPLAY		"display"
 
 #define PLUGIN_CAPACITY_VIDEO		"video"
 #define PLUGIN_CAPACITY_AUDIO		"audio"

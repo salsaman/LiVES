@@ -40,6 +40,35 @@ static char *dir_to_pieces(const char *dirnm) {
 }
 
 
+void *lives_plugin_dlopen(const char *dlname, const char *dldir, int dlflags) {
+  void *handle;
+  char *tmp = ensure_extension(dlname, DLL_EXT);
+  char *plugname = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, dldir, tmp, NULL);
+  lives_free(tmp);
+
+  if (!lives_file_test(plugname, LIVES_FILE_TEST_EXISTS)) {
+    lives_free(plugname);
+    return NULL;
+  }
+
+  handle = dlopen(plugname, dlflags);
+  lives_free(plugname);
+  return handle;
+}
+
+
+LIVES_GLOBAL_INLINE void *lives_plugin_from_uid(uint64_t uid) {
+  lives_plugin_t *plugin;
+  for (int pltype = PLUGIN_TYPE_BASE_OFFSET; pltype <= PLUGIN_TYPE_MAX_BUILTIN; pltype++) {
+    for (LiVESList *pl_list = capable->plugins_list[pltype]; pl_list; pl_list = pl_list->next) {
+      plugin = (lives_plugin_t *)pl_list->data;
+      if (plugin && plugin->pl_id->uid == uid) return pl_list->data;
+    }
+  }
+  return NULL;
+}
+
+
 boolean check_for_plugins(const char *dirn, boolean check_only) {
   // check all are present in prefs->lib_dir
   // ret. FALSE if missing
@@ -303,9 +332,12 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
 }
 
 
-LIVES_LOCAL_INLINE char *make_plverstring(const lives_plugin_id_t *id, const char *extra) {
-  return lives_strdup_printf("%s%s%d.%d", id->name, extra,
-                             id->pl_version_major, id->pl_version_minor);
+LIVES_LOCAL_INLINE char *make_plverstring(_vid_playback_plugin *vpp, const char *extra) {
+  if (vpp->id) {
+    return lives_strdup_printf("%s%s%d.%d", vpp->id->name, extra,
+                               vpp->id->pl_version_major, vpp->id->pl_version_minor);
+  }
+  return lives_strdup("unknown plugin");
 }
 
 
@@ -370,8 +402,7 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
   if (lives_write_le(fd, &len, 4, FALSE) < 4) return;
   if (lives_write(fd, vpp->soname, len, FALSE) < len) return;
 
-  version = make_plverstring(vpp->id, " engine v ");
-
+  version = make_plverstring(vpp, DECPLUG_VER_DESC);
   len = lives_strlen(version);
 
   if (lives_write_le(fd, &len, 4, FALSE) < 4
@@ -478,7 +509,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
         }
 
         // version string
-        version = make_plverstring(vpp->id, " engine v ");
+        version = make_plverstring(vpp, DECPLUG_VER_DESC);
         lives_read_le(fd, &len, 4, FALSE);
         if (THREADVAR(read_failed)) break;
         lives_read(fd, buf, len, FALSE);
@@ -1276,7 +1307,6 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   void *handle;
   int *palette_list;
   char *msg, *tmp;
-  char *plugname;
   int dlflags = RTLD_LAZY;
   boolean OK = TRUE;
 
@@ -1285,16 +1315,12 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     return NULL;
   }
 
-  tmp = lives_strdup_printf("%s.%s", name, DLL_NAME);
-  plugname = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_VID_PLAYBACK, tmp, NULL);
-  lives_free(tmp);
-
-  handle = dlopen(plugname, dlflags);
+  handle = lives_plugin_dlopen(name, PLUGIN_VID_PLAYBACK, dlflags);
 
   if (!handle) {
     char *msg = lives_strdup_printf(_("\n\nFailed to open playback plugin %s\nError was %s\n"
                                       "Playback plugin will be disabled,\n"
-                                      "it can be re-enabled in Preferences / Playback.\n"), plugname, dlerror());
+                                      "it can be re-enabled in Preferences / Playback.\n"), name, dlerror());
     if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
       if (!prefsw) widget_opts.non_modal = TRUE;
       do_error_dialog(msg);
@@ -1302,8 +1328,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     }
     LIVES_ERROR(msg);
     lives_free(msg);
-    lives_free(plugname);
-    lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
+    lives_snprintf(future_prefs->vpp_name, 64, "none");
     set_vpp(TRUE);
     return NULL;
   }
@@ -1340,6 +1365,10 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   if ((vpp->get_plugin_id = (const lives_plugin_id_t *(*)())dlsym(handle, "get_plugin_id")) == NULL)
     vpp->get_plugin_id = (const lives_plugin_id_t *(*)())dlsym(handle, "get_plugin_id_default");
 
+  if (!vpp->get_plugin_id) {
+    OK = FALSE;
+  }
+
   if ((vpp->get_fps_list = (const char *(*)(int))dlsym(handle, "get_fps_list"))) {
     if ((vpp->set_fps = (boolean(*)(double))dlsym(handle, "set_fps")) == NULL) {
       OK = FALSE;
@@ -1347,30 +1376,28 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   }
 
   if (!OK) {
+    char *plversion = make_plverstring(vpp, DECPLUG_VER_DESC);
     char *msg = lives_strdup_printf
-                (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"), plugname);
-    set_string_pref(PREF_VID_PLAYBACK_PLUGIN, "none");
-    do_error_dialog(msg);
+                (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"), plversion);
+    lives_free(plversion);
+    if (!prefs->startup_phase) do_error_dialog(msg);
+    else LIVES_INFO(msg);
     lives_free(msg);
     dlclose(handle);
     lives_free(vpp);
     vpp = NULL;
-    lives_free(plugname);
+    set_string_pref(PREF_VID_PLAYBACK_PLUGIN, "none");
     return NULL;
   }
 
   if ((pl_error = (*vpp->module_check_init)())) {
     msg = lives_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"), pl_error);
-    if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
-      do_error_dialog(msg);
-    } else {
-      LIVES_ERROR(msg);
-    }
+    if (!prefs->startup_phase) do_error_dialog(msg);
+    else LIVES_ERROR(msg);
     lives_free(msg);
     dlclose(handle);
     lives_free(vpp);
     vpp = NULL;
-    lives_free(plugname);
     return NULL;
   }
 
@@ -1547,7 +1574,6 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   if (!(*vpp->set_palette)(vpp->palette)) {
     do_vpp_palette_error();
     close_vid_playback_plugin(vpp);
-    lives_free(plugname);
     return NULL;
   }
 
@@ -1569,8 +1595,6 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
           vpp->palette, (tmp = weed_palette_get_name_full(vpp->palette, vpp->YUV_clamping,
                                WEED_YUV_SUBSPACE_YCBCR)));
   lives_free(tmp);
-
-  lives_free(plugname);
 
   if (mainw->is_ready && in_use && mainw->vpp) {
     close_vid_playback_plugin(mainw->vpp);
@@ -2276,7 +2300,7 @@ LiVESList *load_decoders(void) {
   lives_decoder_sys_t *dpsys;
   char *decplugdir = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_DECODERS, NULL);
   LiVESList *dlist = NULL;
-  LiVESList *decoder_plugins = get_plugin_list(PLUGIN_DECODERS, TRUE, decplugdir, "-" DLL_NAME);
+  LiVESList *decoder_plugins = get_plugin_list(PLUGIN_DECODERS, TRUE, decplugdir, "-" DLL_EXT);
 
   char *blacklist[3] = {
     "zyavformat_decoder",
@@ -2620,23 +2644,17 @@ boolean chill_decoder_plugin(int fileno) {
 
 lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   lives_decoder_sys_t *dpsys;
-  char *plugname, *tmp;
   boolean OK = TRUE;
   const char *err;
   int dlflags = RTLD_NOW | RTLD_LOCAL;
 
   dpsys = (lives_decoder_sys_t *)lives_calloc(1, sizeof(lives_decoder_sys_t));
 
-  tmp = lives_strdup_printf("%s.%s", plname, DLL_NAME);
-  plugname = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_DECODERS, tmp, NULL);
-  lives_free(tmp);
-
 #ifdef RTLD_DEEPBIND
   dlflags |= RTLD_DEEPBIND;
 #endif
 
-  dpsys->handle = dlopen(plugname, dlflags);
-  lives_free(plugname);
+  dpsys->handle = lives_plugin_dlopen(plname, PLUGIN_DECODERS, dlflags);
 
   if (!dpsys->handle) {
     d_print(_("\n\nFailed to open decoder plugin %s\nError was %s\n"), plname, dlerror());

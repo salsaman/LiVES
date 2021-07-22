@@ -77,9 +77,9 @@ struct _lives_thread_data_t {
   LiVESWidgetContext *ctx;
   int64_t idx;
   lives_threadvars_t vars;
-
+  boolean exited;
   int signum;
-  char padding[92];
+  char padding[84];
 };
 
 typedef struct {

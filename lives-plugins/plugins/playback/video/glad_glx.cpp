@@ -188,7 +188,6 @@ PFNGLXGETCURRENTREADDRAWABLEPROC glad_glXGetCurrentReadDrawable;
 PFNGLXDESTROYPIXMAPPROC glad_glXDestroyPixmap;
 PFNGLXGETCURRENTCONTEXTPROC glad_glXGetCurrentContext;
 PFNGLXGETPROCADDRESSPROC glad_glXGetProcAddress;
-PFNGLXTEXSTORAGE2DPROC glad_glXTexStorage2D;
 PFNGLXWAITGLPROC glad_glXWaitGL;
 PFNGLXISDIRECTPROC glad_glXIsDirect;
 PFNGLXDESTROYWINDOWPROC glad_glXDestroyWindow;
@@ -270,7 +269,6 @@ static void load_GLX_VERSION_1_3(GLADloadproc load) {
 static void load_GLX_VERSION_1_4(GLADloadproc load) {
   if (!GLAD_GLX_VERSION_1_4) return;
   glad_glXGetProcAddress = (PFNGLXGETPROCADDRESSPROC)load("glXGetProcAddress");
-  glad_glXTexStorage2D = (PFNGLXTEXSTORAGE2DPROC)load("glTexStorage2DARB");
 }
 static int find_extensionsGLX(void) {
   if (!get_exts()) return 0;

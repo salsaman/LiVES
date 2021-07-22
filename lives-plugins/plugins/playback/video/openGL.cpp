@@ -769,8 +769,8 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
 
     context = glXCreateContext(dpy, &xvis[0], 0, GL_TRUE);
 
-    //width = attr.width;
-    //height = attr.height;
+    width = attr.width;
+    height = attr.height;
 
     glXGetConfig(dpy, xvis, GLX_DOUBLEBUFFER, &dblbuf);
     XFree(xvis);
@@ -868,7 +868,8 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     gladLoadGL();
   }
 
-  error = glad_glGetError();
+
+  error = glGetError();
   if (error != GL_NO_ERROR) {
     char const *msg;
     if (error == GL_INVALID_ENUM)	msg = "GL_INVALID_ENUM";
@@ -908,8 +909,9 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  glFlush();
   if (dblbuf) glXSwapBuffers(dpy, glxWin);
-  else glFlush();
+  //else glFlush();
 
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

@@ -4588,7 +4588,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   if (ARE_UNCHECKED(vid_playback_plugins)) {
-    capable->plugins_list[PLUGIN_SUBTYPE_VIDEO_PLAYER] = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-" DLL_NAME);
+    capable->plugins_list[PLUGIN_SUBTYPE_VIDEO_PLAYER] = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-" DLL_EXT);
     if (capable->plugins_list[PLUGIN_SUBTYPE_VIDEO_PLAYER]) capable->has_vid_playback_plugins = PRESENT;
     else capable->has_vid_playback_plugins = MISSING;
   }

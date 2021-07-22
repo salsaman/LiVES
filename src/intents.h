@@ -167,13 +167,13 @@ enum {
 };
 
 // generic capacities, type specific ones may also exist
-// key name is defined here. Values are int32_t interprited as boolean: FALSE (0) or TRUE (1 or non-zero)
+// key name is defined here. Values are int32_t interpreted as boolean: FALSE (0) or TRUE (1 or non-zero)
 // absent values are assumed FALSE
 //#define LIVES_CAPACITY_LOCAL		"local"
 #define LIVES_CAPACITY_REMOTE		"remote"
 
 #define LIVES_CAPACITY_REALTIME		"realtime"
-#define LIVES_CAPACITY_DISPLAY		"display" // providesd some type of (local) display output
+#define LIVES_CAPACITY_DISPLAY		"display" // provides some type of (local) display output
 
 #define LIVES_CAPACITY_VIDEO		"video"
 #define LIVES_CAPACITY_AUDIO		"audio"
@@ -331,14 +331,20 @@ typedef struct {
 //
 // after examining the transform object, caller should endure that all of the reqmt. rules are satisfied
 // and may then activate the transform for the object in question
+
+// some transforms may operate on self, some may operate on other objects (the subject of the tx)
+// TODO: how to determine this (perhaps a capacity ?); useful to act on multiple objects at once ?
+// can we map requirements / outputs to other objects - seems like it might be nice
+// separate default / value mappings for inputs ? multiple mappings for outputs ?
+
 struct _obj_transform_t {
   lives_intentcap_t icaps;
   lives_rules_t *prereqs; // pointer to the prerequisites for carrying out the transform (can be NULL)
   ///
   lives_obj_param_t **oparams;  // a mix of params and objects
   //
-  int new_state; // the state of some requt object after
-  uint64_t *new_subtype; // subtype after, assuming success
+  int new_state; // the state of the subhect after tx
+  uint64_t *new_subtype; // subtype of subhject after, assuming success
   ///
   tx_map *mappings; // internal mapping for the object
   uint64_t flags;
@@ -394,16 +400,20 @@ lives_intentcap_t *lives_intentcaps_new(int icapstype);
 
 #if 0
 // base functions
-
-// return a LiVESList of lives_object_transform_t
-LiVESTransformList **list_transformations(lives_object_t *obj);
+lives_intentcaps_t **list_intentcaps(void);
+get_transform_for(intentcap);
 #endif
 
-// check if all variables not marked optional are set, and all condition flags are TRUE, type, subtype, state, status OK
-boolean requirements_met(lives_object_transform_t *);
+// check all requmnts and mark - filled (value set) / can_fill (value unset, but has means to obtain) / missing / optional (unset)
+// value readonly (constant) or variable, default readonly or variable
+boolean check_requirements(lives_object_transform_t *);
+
+// as above, but any can_fill values will become filled, unless the value is readonly
+boolean fill_requirements(lives_object_transform_t *);
 
 // the return value belongs to the object, and should only be freed with lives_transform_status_free
-lives_transform_status_t *transform(lives_object_t *, lives_object_transform_t *, lives_object_t **other);
+// will call check_requirements() then fill_requirements() if any mandatory values are missing
+lives_transform_status_t *transform(lives_object_transform_t *);
 
 //////
 // derived functions

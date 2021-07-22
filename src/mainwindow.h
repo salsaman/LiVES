@@ -571,8 +571,6 @@ enum {
 #define LIVES_LITERAL "lives"
 
 // file names
-#define DLL_NAME "so"
-
 #define LIVES_STATUS_FILE_NAME ".status"
 #define LIVES_ENC_DEBUG_FILE_NAME ".debug_out"
 

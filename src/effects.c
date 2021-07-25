@@ -1040,13 +1040,12 @@ static boolean _rte_on_off(boolean from_menu, int key) {
   // in automode we don't add the effect parameters in ce_thumbs mode, and we use SOFT_DEINIT
   // if non-automode, the user overrides effect toggling
   weed_plant_t *inst;
-  uint64_t new_rte;
+  y  uint64_t new_rte;
 
   if (mainw->go_away) return TRUE;
   if (!LIVES_IS_INTERACTIVE && from_menu) return TRUE;
 
   mainw->osc_block = TRUE;
-  new_rte = GU641 << key;
 
   if (key == EFFECT_NONE) {
     // switch off real time effects
@@ -1057,6 +1056,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
     // and then we come out of there and do not wish to set the key on
     key--;
     mainw->gen_started_play = FALSE;
+    new_rte = GU641 << key;
 
     if (!rte_key_is_enabled(key, !THREADVAR(fx_is_auto))) {
       // switch is ON

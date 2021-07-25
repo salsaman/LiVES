@@ -1286,12 +1286,13 @@ void weed_reinit_all(void) {
 
   for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
+      filter_mutex_lock(i);
       if (rte_key_is_enabled(i, TRUE)) {
-        mainw->osc_block = TRUE;
         if ((instance = weed_instance_obtain(i, key_modes[i])) == NULL) {
-          mainw->osc_block = FALSE;
+          filter_mutex_unlock(i);
           continue;
         }
+        filter_mutex_unlock(i);
         last_inst = instance;
 
         // ignore video generators
@@ -1308,11 +1309,9 @@ void weed_reinit_all(void) {
           continue;
         }
         weed_instance_unref(instance);
-      }
+      } else filter_mutex_unlock(i);
     }
   }
-
-  mainw->osc_block = FALSE;
 }
 
 
@@ -7640,19 +7639,15 @@ void deinit_easing_effects(void) {
      background generators will be killed because their transition will be deinited
 */
 void weed_deinit_all(boolean shutdown) {
-  int i;
   weed_plant_t *instance;
 
-  mainw->osc_block = TRUE;
-  if (rte_window) {
-    rtew_set_keygr(-1);
-  }
+  if (rte_window) rtew_set_keygr(-1);
 
   mainw->rte_keys = -1;
   mainw->last_grabbable_effect = -1;
   if (!LIVES_IS_PLAYING) bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
 
-  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+  for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (!shutdown) {
       // maintain braces because of #DEBUG_FILTER_MUTEXES
       if (LIVES_IS_PLAYING && !shutdown && i >= FX_KEYS_PHYSICAL) {
@@ -7676,8 +7671,6 @@ void weed_deinit_all(boolean shutdown) {
     }
     if (!shutdown) filter_mutex_unlock(i);
   }
-
-  mainw->osc_block = FALSE;
 }
 
 

@@ -60,6 +60,8 @@
 
 #define DEF_AUTOTRANS "simple_blend|chroma blend|salsaman"
 
+#define LAYER_NUMBER_KEY "_layer_number"
+
 typedef struct _mt lives_mt;
 
 typedef struct _track_rect track_rect;
@@ -522,6 +524,7 @@ struct _mt {
 
   track_rect *block_selected; ///< pointer to current selected block, or NULL
   track_rect *putative_block; ///< putative block to move or copy, or NULL
+  track_rect *new_block; ///< newly added block for zooming
 
   double ptr_time; ///< stored timeline cursor position before playback
 
@@ -870,8 +873,7 @@ double mt_get_block_entime(lives_mt *, int ntrack, int iblock); /// get timeline
 
 track_rect *get_block_from_track_and_time(lives_mt *, int track, double time);
 
-int get_track_for_block(track_rect *block);
-int get_clip_for_block(track_rect *block);
+int get_track_for_block(lives_mt *, track_rect *);
 
 track_rect *mt_selblock(LiVESMenuItem *, livespointer user_data);
 

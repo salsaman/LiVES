@@ -29,8 +29,8 @@ typedef void (*unmalloc_and_copy_f)(size_t, void *);
 boolean lives_freep(void **ptr);
 
 void *lives_free_and_return(void *p);
-void *lives_calloc_safety(size_t nmemb, size_t xsize) GNU_ALIGNED(DEF_ALIGN);
-void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize) GNU_ALIGNED(DEF_ALIGN);
+void *lives_calloc_safety(size_t nmemb, size_t xsize);
+void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize);
 
 size_t get_max_align(size_t req_size, size_t align_max);
 
@@ -150,15 +150,15 @@ void *free_bigblock(void *bstart);
 #endif // USE_STD_MEMFUNCS
 
 void *_ext_malloc(size_t n) GNU_MALLOC;
-void *_ext_malloc_and_copy(size_t, const void *) GNU_MALLOC_SIZE(1);
+void *_ext_malloc_and_copy(size_t, const void *);// GNU_MALLOC_SIZE(1);
 void _ext_unmalloc_and_copy(size_t, void *);
 void _ext_free(void *);
 void *_ext_free_and_return(void *);
 void *_ext_memcpy(void *, const void *, size_t);
 void *_ext_memset(void *, int, size_t);
 void *_ext_memmove(void *, const void *, size_t);
-void *_ext_realloc(void *, size_t) GNU_MALLOC_SIZE(2);
-void *_ext_calloc(size_t, size_t) GNU_MALLOC_SIZE2(1, 2) GNU_ALIGN(2);
+void *_ext_realloc(void *, size_t);// GNU_MALLOC_SIZE(2);
+void *_ext_calloc(size_t, size_t);// GNU_MALLOC_SIZE2(1, 2);
 
 #define OVERRIDE_MEMFUNCS
 static void *(*_lsd_memcpy)(void *dest, const void *src, size_t n) = _ext_memcpy;

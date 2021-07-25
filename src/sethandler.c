@@ -635,6 +635,10 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
 
 void recover_layout_map(void) {
   // load global layout map for a set and assign entries to clips [mainw->files[i]->layout_map]
+  // each entry is a list of mappings for a particular clip, mapping e.g. clip index, as well as max frame, max aud time
+  // here we match each bundle with its original clip when the layout was saved
+  // we match using unique_id and handle, if we fail to find a match then we try to match EITHER uid or handle
+  // (this shouldn't be necassary, but sometimes is needed due to buggy code or test scenarios)
   LiVESList *mlist, *lmap_node, *lmap_node_next, *lmap_entry_list, *lmap_entry_list_next;
 
   layout_map *lmap_entry;
@@ -670,14 +674,14 @@ void recover_layout_map(void) {
                && (!strcmp(check_handle, lmap_entry->handle) || (sfile->unique_id == lmap_entry->unique_id)))
              ) {
             // check handle and unique id match
-            // got a match, assign list to layout_map and delete this node
+            // got a match, assign list to clip layout_map and delete this node, then continue to next clip
 
             lmap_entry_list = lmap_entry->list;
             while (lmap_entry_list) {
               lmap_entry_list_next = lmap_entry_list->next;
               array = lives_strsplit((char *)lmap_entry_list->data, "|", -1);
               if (!lives_file_test(array[0], LIVES_FILE_TEST_EXISTS)) {
-                //g_print("removing layout because no file %s\n", array[0]);
+                g_print("removing layout because no file %s\n", array[0]);
                 // layout file has been deleted, remove this entry
                 lmap_entry->list = lives_list_remove_node(lmap_entry->list, lmap_entry_list, TRUE);
               }

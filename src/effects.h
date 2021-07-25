@@ -68,7 +68,7 @@ boolean grabkeys_callback_hook(LiVESToggleButton *button, livespointer user_data
 
 boolean rte_on_off_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType,
                             livespointer user_data);  ///< for accel groups
-boolean rte_on_off_callback_hook(LiVESToggleButton *, livespointer user_data);  ///< for widgets
+boolean rte_on_off_callback_fg(LiVESToggleButton *, livespointer user_data);  ///< for widgets
 
 boolean rtemode_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType,
                          livespointer user_data);  ///< for accel groups
@@ -86,12 +86,16 @@ void deinterlace_frame(weed_layer_t *layer, ticks_t tc);
 void rte_keymodes_backup(int nkeys);
 void rte_keymodes_restore(int nkeys);
 
-boolean rte_key_on_off(int key, boolean on);
-boolean rte_key_toggle(int key);
+// equivalent to weed_deinit_all
 void rte_keys_reset(void);
 
-boolean rte_key_is_enabled(int key);
+// hotkey is 1 based
+boolean rte_key_on_off(int hotkey, boolean on);
+boolean rte_key_toggle(int hotkey);
 
-int rte_getmodespk(void);
+// key is 0 based (now)
+boolean rte_key_is_enabled(int key, boolean ign_soft_deinits);
+
+#define rte_getmodespk() prefs->rte_modes_per_key
 
 #endif

@@ -10,6 +10,9 @@
 #define MAX_WEED_STRLEN 65535 // soft limit for LiVES
 #define MAX_WEED_ELEMENTS 65535 // soft limit for LiVES
 
+// signature for serialisation / deserialisation
+#define WEED_LAYER_MARKER 0x44454557;
+
 /// filter apply errors
 typedef enum {
   FILTER_SUCCESS = 0,

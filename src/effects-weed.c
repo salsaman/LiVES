@@ -1286,7 +1286,7 @@ void weed_reinit_all(void) {
 
   for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
-      if (rte_key_is_enabled(1 + i)) {
+      if (rte_key_is_enabled(i, TRUE)) {
         mainw->osc_block = TRUE;
         if ((instance = weed_instance_obtain(i, key_modes[i])) == NULL) {
           mainw->osc_block = FALSE;
@@ -3709,11 +3709,11 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
       orig_inst = NULL;
 
       if (rte_key_valid(i + 1, TRUE)) {
-        if (!(rte_key_is_enabled(1 + i))) {
+        if (!(rte_key_is_enabled(i, TRUE))) {
           // if anything is connected to ACTIVATE, the fx may be activated
           pconx_chain_data(i, key_modes[i], FALSE);
         }
-        if (rte_key_is_enabled(i + 1)) {
+        if (rte_key_is_enabled(i, TRUE)) {
           mainw->osc_block = TRUE;
           // adds a ref
           if ((instance = weed_instance_obtain(i, key_modes[i])) == NULL) {
@@ -3751,7 +3751,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
                 filter_mutex_lock(i);
                 weed_deinit_effect(i);
                 orig_inst = NULL;
-                if (mainw->rte & new_rte) {
+                if (rte_key_is_enabled(i, FALSE)) {
                   mainw->rte &= ~new_rte;
                   if (rte_window) rtew_set_keych(i, FALSE);
                   if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
@@ -3820,7 +3820,7 @@ apply_inst3:
               if (xeaseval > myeaseval) {
                 uint64_t new_rte = GU641 << (i);
                 filter_mutex_lock(i);
-                if (mainw->rte & new_rte) {
+                if (rte_key_is_enabled(i, FALSE)) {
                   mainw->rte &= ~new_rte;
                   if (rte_window) rtew_set_keych(i, FALSE);
                   if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
@@ -3985,7 +3985,7 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
     orig_inst = NULL;
 
     if (rte_key_valid(i + 1, TRUE)) {
-      if (!(rte_key_is_enabled(1 + i))) {
+      if (!(rte_key_is_enabled(i, TRUE))) {
         // if anything is connected to ACTIVATE, the fx may be activated
         if (is_audio_thread) {
           pconx_chain_data(i, key_modes[i], TRUE);
@@ -3994,7 +3994,7 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
 
       filter_mutex_lock(i);
 
-      if (rte_key_is_enabled(1 + i)) {
+      if (rte_key_is_enabled(i, TRUE)) {
         mainw->osc_block = TRUE;
 
         if ((orig_inst = instance = weed_instance_obtain(i, key_modes[i])) == NULL) {
@@ -4117,7 +4117,7 @@ boolean has_audio_filters(lives_af_t af_type) {
 
   for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
-      if (rte_key_is_enabled(1 + i)) {
+      if (rte_key_is_enabled(i, TRUE)) {
         idx = key_to_fx[i][key_modes[i]];
         filter = weed_filters[idx];
         if (has_audio_chans_in(filter, FALSE) && !has_video_chans_in(filter, FALSE) && !has_video_chans_out(filter, FALSE)) {
@@ -4140,7 +4140,7 @@ boolean has_video_filters(boolean analysers_only) {
 
   for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
-      if (rte_key_is_enabled(1 + i)) {
+      if (rte_key_is_enabled(i, TRUE)) {
         idx = key_to_fx[i][key_modes[i]];
         filter = weed_filters[idx];
         if (has_video_chans_in(filter, FALSE)) {
@@ -6887,7 +6887,7 @@ boolean weed_init_effect(int hotkey) {
         int agen_key = mainw->agen_key - 1;
         filter_mutex_lock(agen_key);
         weed_deinit_effect(agen_key);
-        if ((rte_key_is_enabled(1 + agen_key))) {
+        if ((rte_key_is_enabled(agen_key, FALSE))) {
           // need to do this in case starting another audio gen caused us to come here
           mainw->rte &= ~(GU641 << agen_key);
           if (rte_window && !mainw->is_rendering && !mainw->multitrack) {
@@ -7368,13 +7368,14 @@ boolean weed_deinit_effect(int hotkey) {
   // adds a ref
   if (!(instance = weed_instance_obtain(hotkey, key_modes[hotkey]))) return TRUE;
 
+  if (weed_plant_has_leaf(instance, LIVES_LEAF_SOFT_DEINIT)) weed_leaf_delete(instance, LIVES_LEAF_SOFT_DEINIT);
+
   if (LIVES_IS_PLAYING && hotkey < FX_KEYS_MAX_VIRTUAL) {
     if (prefs->allow_easing) {
       // if it's a user key and the plugin supports easing out, we'll do that instead
       weed_plant_t *gui = weed_instance_get_gui(instance, FALSE);
       if (!weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT)) {
-        uint64_t new_rte = GU641 << (hotkey);
-        if (mainw->rte & new_rte) {
+        if (rte_key_is_enabled(hotkey, TRUE)) {
           if ((easing = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL))) {
             int myease = cfile->pb_fps * 2.;
             if (easing < myease) {
@@ -7661,7 +7662,7 @@ void weed_deinit_all(boolean shutdown) {
       }
       filter_mutex_lock(i);
     }
-    if ((rte_key_is_enabled(1 + i))) {
+    if ((rte_key_is_enabled(i, FALSE))) {
       if ((instance = weed_instance_obtain(i, key_modes[i])) != NULL) {
         weed_instance_unref(instance);
         if (shutdown || !LIVES_IS_PLAYING || mainw->current_file == -1 || cfile->ext_src != instance) {
@@ -7852,7 +7853,7 @@ int check_filter_chain_palettes(boolean is_bg, int *palette_list, int npals) {
       if (instance) weed_instance_unref(instance);
       instance = NULL;
       if (palette != WEED_PALETTE_END) break;
-      if (rte_key_is_enabled(1 + i)) {
+      if (rte_key_is_enabled(i, TRUE)) {
         if (i == fg_generator_key) continue;
         if ((instance = weed_instance_obtain(i, key_modes[i])) != NULL) {
           if (is_bg && enabled_in_channels(instance, FALSE) < 2) {
@@ -8576,12 +8577,10 @@ int weed_generator_start(weed_plant_t *inst, int key) {
 
 void wge_inner(weed_plant_t *inst) {
   weed_plant_t *next_inst = NULL;
-  // called from weed_generator_end() below and also called directly after playback ends
-  // unrefs inst
+  // called from weed_generator_end()
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
-    int error;
-    int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+    int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
     filter_mutex_lock(key);
     key_to_instance[key][key_modes[key]] = NULL;
     filter_mutex_unlock(key);
@@ -8652,7 +8651,7 @@ void weed_generator_end(weed_plant_t *inst) {
     if (mainw->blend_layer) check_layer_ready(mainw->blend_layer);
     filter_mutex_lock(bg_generator_key);
     key_to_instance[bg_generator_key][bg_generator_mode] = NULL;
-    if (rte_key_is_enabled(1 + bg_generator_key)) mainw->rte &= ~(GU641 << bg_generator_key);
+    if (rte_key_is_enabled(bg_generator_key, FALSE)) mainw->rte &= ~(GU641 << bg_generator_key);
     filter_mutex_unlock(bg_generator_key);
     bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
     pre_src_file = mainw->pre_src_file;
@@ -8660,14 +8659,14 @@ void weed_generator_end(weed_plant_t *inst) {
   } else {
     if (mainw->frame_layer) check_layer_ready(mainw->frame_layer);
     filter_mutex_lock(fg_generator_key);
-    if (rte_key_is_enabled(1 + fg_generator_key)) mainw->rte &= ~(GU641 << fg_generator_key);
+    if (rte_key_is_enabled(fg_generator_key, FALSE)) mainw->rte &= ~(GU641 << fg_generator_key);
     key_to_instance[fg_generator_key][fg_generator_mode] = NULL;
     filter_mutex_unlock(fg_generator_key);
     fg_gen_to_start = fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
     if (mainw->blend_file == mainw->current_file) mainw->blend_file = -1;
   }
 
-  if (inst) wge_inner(inst); // removes 1 ref
+  if (inst) wge_inner(inst); // unref inst + compound parts
 
   // if the param window is already open, show any reinits now
   if (fx_dialog[1]) {
@@ -8904,7 +8903,7 @@ undoit:
 
         if (key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]] == inst) {
           key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]] = NULL;
-          if (rte_key_is_enabled(1 + ABS(bg_gen_to_start))) mainw->rte &= ~(GU641 << ABS(bg_gen_to_start));
+          if (rte_key_is_enabled(ABS(bg_gen_to_start), FALSE)) mainw->rte &= ~(GU641 << ABS(bg_gen_to_start));
         }
         filter_mutex_unlock(bg_gen_to_start);
         if (inst) {
@@ -9726,7 +9725,7 @@ boolean weed_delete_effectkey(int key, int mode) {
               }
             }
           } else {
-            if (rte_key_is_enabled(1 + key)) mainw->rte &= ~(GU641 << key);
+            if (rte_key_is_enabled(key, FALSE)) mainw->rte &= ~(GU641 << key);
           }
         }
       }
@@ -11503,8 +11502,8 @@ static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, 
     /// then for each plane: rowstride 4 bytes, data size 8 bytes (the data size is plane height * rowstride + padding)
     /// finally the pixel data
     lives_write_le_buffered(fd, &ival, 4, TRUE);
-    ival = 0x44454557;
-    lives_write_le_buffered(fd, &ival, 4, TRUE);
+    ival = WEED_LAYER_MARKER
+           lives_write_le_buffered(fd, &ival, 4, TRUE);
     ival = 1; /// version
     lives_write_le_buffered(fd, &ival, 4, TRUE);
     lives_write_le_buffered(fd, &nplanes, 4, TRUE);

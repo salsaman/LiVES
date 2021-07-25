@@ -853,14 +853,14 @@ void on_realfx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
     int i;
     for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
       if (rte_key_valid(i + 1, TRUE)) {
-        if (rte_key_is_enabled(1 + i)) {
+        if (rte_key_is_enabled(i, TRUE)) {
           weed_plant_t *filter = rte_keymode_get_filter(i + 1, rte_key_getmode(i + 1));
           if (is_pure_audio(filter, TRUE)) {
             chk_mask |= WARN_MASK_LAYOUT_ALTER_AUDIO;
           } else chk_mask = WARN_MASK_LAYOUT_ALTER_FRAMES;
-        }
-      }
-    }
+	  // *INDENT-OFF*
+        }}}
+    // *INDENT-ON*
     if (chk_mask > 0) {
       if (!check_for_layout_errors(NULL, mainw->current_file, cfile->start, cfile->end, &chk_mask)) {
         return;
@@ -954,7 +954,6 @@ weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_
   // returns the effected layer
 
   weed_plant_t **layers, *retlayer;
-  int i;
 
   if (mainw->foreign) return NULL;
 
@@ -979,7 +978,7 @@ weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_
   }
 
   // all our pixel_data should have been free'd already
-  for (i = 0; layers[i]; i++) {
+  for (int i = 0; layers[i]; i++) {
     if (layers[i] != retlayer) {
       check_layer_ready(layers[i]);
       weed_layer_free(layers[i]);
@@ -1037,8 +1036,8 @@ deint1:
 
 static boolean _rte_on_off(boolean from_menu, int key) {
   // this is the callback which happens when a rte is keyed
-  // key is 1 based, but if < 0 then this indicates auto mode (set via data connection)
-  // in automode we don't add the effect parameters in ce_thumbs mode
+  // key is 1 based
+  // in automode we don't add the effect parameters in ce_thumbs mode, and we use SOFT_DEINIT
   // if non-automode, the user overrides effect toggling
   weed_plant_t *inst;
   uint64_t new_rte;
@@ -1047,6 +1046,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
   if (!LIVES_IS_INTERACTIVE && from_menu) return TRUE;
 
   mainw->osc_block = TRUE;
+  new_rte = GU641 << key;
 
   if (key == EFFECT_NONE) {
     // switch off real time effects
@@ -1056,10 +1056,9 @@ static boolean _rte_on_off(boolean from_menu, int key) {
     // the idea here is this gets set if a generator starts play, because in weed_init_effect() we will run playback
     // and then we come out of there and do not wish to set the key on
     key--;
-    new_rte = GU641 << (key);
     mainw->gen_started_play = FALSE;
 
-    if (!(mainw->rte & new_rte)) {
+    if (!rte_key_is_enabled(key, !THREADVAR(fx_is_auto))) {
       // switch is ON
       filter_mutex_lock(key);
       if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
@@ -1096,7 +1095,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
         // during playback this is checked when we play a frame
         for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
           if (rte_key_valid(i + 1, TRUE)) {
-            if (!rte_key_is_enabled(1 + i)) {
+            if (!rte_key_is_enabled(i, TRUE)) {
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
 	      // *INDENT-OFF*
 	    }}}}
@@ -1104,6 +1103,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
     } else {
       // effect is OFF
       if (THREADVAR(fx_is_auto)) {
+        // SOFT_DIENIT
         weed_plant_t *inst, *xinst;
         if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
           weed_set_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, WEED_TRUE);
@@ -1114,8 +1114,9 @@ static boolean _rte_on_off(boolean from_menu, int key) {
           }
           weed_instance_unref(inst);
           filter_mutex_unlock(key);
-        } else THREADVAR(fx_is_auto) = FALSE;
+        }
       }
+
       if (!THREADVAR(fx_is_auto)) {
         if (weed_deinit_effect(key)) {
           mainw->rte &= ~new_rte;
@@ -1130,7 +1131,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
         // during playback this is checked when we play a frame
         for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
           if (rte_key_valid(i + 1, TRUE)) {
-            if (rte_key_is_enabled(1 + i)) {
+            if (rte_key_is_enabled(i, TRUE)) {
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
 	      // *INDENT-OFF*
 	    }}}}}}
@@ -1173,7 +1174,7 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
   return ret;
 }
 
-boolean rte_on_off_callback_hook(LiVESToggleButton * button, livespointer user_data) {
+boolean rte_on_off_callback_fg(LiVESToggleButton * button, livespointer user_data) {
   int key = LIVES_POINTER_TO_INT(user_data);
   return _rte_on_off(FALSE, key);
 }
@@ -1273,35 +1274,43 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
 //////////////////////////////////////////////////////////////
 
 
-LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key) {
-  // key starts at 1
-  return !!(mainw->rte & (GU641 << --key));
+LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key, boolean ign_soft_deinits) {
+  // if ign_soft_deinits is FALSE, we return the real state, ignoring SOFT_DEINITS
+  // key starts at 0 (now)
+  boolean enabled = !!(mainw->rte & (GU641 << key));
+  if (ign_soft_deinits) return enabled;
+  else {
+    if (!(mainw->rte & (GU641 << key))) return FALSE;
+    else {
+      weed_plant_t *inst;
+      enabled = TRUE;
+      filter_mutex_lock(key);
+      if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
+        if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) enabled = FALSE;
+      }
+      filter_mutex_unlock(key);
+      return enabled;
+    }
+  }
 }
 
 
-LIVES_GLOBAL_INLINE int rte_getmodespk(void) {return prefs->rte_modes_per_key;}
-
-
 LIVES_GLOBAL_INLINE boolean rte_key_toggle(int key) {
-  // key is 1 based, or < 0 for auto mode
+  // key is 1 based
   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(key));
-  return rte_key_is_enabled(key);
+  return rte_key_is_enabled(--key, FALSE);
 }
 
 
 boolean rte_key_on_off(int key, boolean on) {
   // key is 1 based
   // returns the state of the key afterwards
-  uint64_t new_rte;
+  boolean state;
   if (key < 1 || key >= FX_KEYS_MAX_VIRTUAL) return FALSE;
-  key--;
-  new_rte = GU641 << (key);
-  if (mainw->rte & new_rte) {
-    if (on) return TRUE;
-  } else if (!on) return FALSE;
-  key++;
+  state = rte_key_is_enabled(key, FALSE);
+  if (state == on) return state;
   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(key));
-  return (mainw->rte & new_rte);
+  return rte_key_is_enabled(key, FALSE);
 }
 
 
@@ -1316,23 +1325,18 @@ static uint64_t backup_rte = 0;
 
 void rte_keymodes_backup(int nkeys) {
   // backup the current key/mode state
-  int i;
-
   backup_rte = mainw->rte;
-
-  for (i = 0; i < nkeys; i++) {
+  for (int i = 0; i < nkeys; i++) {
     backup_key_modes[i] = rte_key_getmode(i + 1);
   }
 }
 
 
 void rte_keymodes_restore(int nkeys) {
-  int i;
-
   rte_keys_reset();
   mainw->rte = backup_rte;
 
-  for (i = 0; i < nkeys; i++) {
+  for (int i = 0; i < nkeys; i++) {
     // set the mode
     rte_key_setmode(i + 1, backup_key_modes[i]);
     // activate the key

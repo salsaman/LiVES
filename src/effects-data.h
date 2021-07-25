@@ -195,4 +195,6 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
 boolean feeds_to_video_filters(int okey, int omode);
 boolean feeds_to_audio_filters(int okey, int omode);
 
+void really_deinit_effects(void);
+
 #endif

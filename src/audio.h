@@ -260,7 +260,7 @@ void avsync_force(void);
 void freeze_unfreeze_audio(boolean is_frozen);
 
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event,
-    weed_timecode_t fill_tc, int what_to_get, boolean exact);
+    weed_timecode_t fill_tc, int what_to_get, boolean exact, int *ntracks);
 
 boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps, boolean is_audio_thread);
 void reinit_audio_gen(void);

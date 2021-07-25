@@ -1590,7 +1590,7 @@ LIVES_LOCAL_INLINE void audio_process_events_to(weed_timecode_t tc) {
 #ifdef DEBUG_ARENDER
     g_print("smallblock %ld to %ld\n", weed_event_get_timecode(mainw->audio_event), tc);
 #endif
-    get_audio_and_effects_state_at(NULL, mainw->audio_event, tc, LIVES_PREVIEW_TYPE_AUDIO_ONLY, FALSE);
+    get_audio_and_effects_state_at(NULL, mainw->audio_event, tc, LIVES_PREVIEW_TYPE_AUDIO_ONLY, FALSE, NULL);
   }
 }
 
@@ -1765,7 +1765,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     g_print(" track %d %d %.4f %.4f\n", track, from_files[track], fromtime[track], avels[track]);
 #endif
 
-    if (avels[track] == 0.) {
+    if (from_files[track] == -1 || avels[track] == 0.) {
       is_silent[track] = TRUE;
       continue;
     }
@@ -1967,8 +1967,9 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       /// convert to float
       zzavel = zavel;
-
-      clip_vol = lives_vol_from_linear(mainw->files[from_files[track]]->vol);
+      if (!mainw->multitrack) {
+        clip_vol = lives_vol_from_linear(mainw->files[from_files[track]]->vol);
+      } else clip_vol = mainw->files[from_files[track]]->vol;
 
       if (in_asamps[track] == 4) {
         // for float -> float
@@ -2165,7 +2166,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       if (track >= NSTOREDFDS && in_fd[track] > -1) lives_close_buffered(in_fd[track]);
     }
   }
-  //#define DEBUG_ARENDER
+
   if (to_file > -1) {
 #ifdef DEBUG_ARENDER
     g_print("fs is %ld %s\n", get_file_size(out_fd), cfile->handle);
@@ -2771,11 +2772,8 @@ void start_audio_rec(void) {
 static lives_audio_track_state_t *resize_audstate(lives_audio_track_state_t *ostate, int nostate, int nstate) {
   // increase the element size of the audstate array (ostate)
   // from nostate elements to nstate elements
-  lives_audio_track_state_t *audstate = (lives_audio_track_state_t *)lives_calloc(nstate, sizeof(lives_audio_track_state_t));
-  int n = MIN(nostate, nstate);
-  if (n > 0)
-    lives_memcpy(audstate, ostate, n * sizeof(lives_audio_track_state_t));
-  lives_freep((void **)&ostate);
+  lives_audio_track_state_t *audstate =
+    (lives_audio_track_state_t *)lives_recalloc((void *)ostate, nstate, nostate, sizeof(lives_audio_track_state_t));
   return audstate;
 }
 
@@ -2787,18 +2785,16 @@ static lives_audio_track_state_t *aframe_to_atstate_inner(weed_plant_t *event, i
   double *aseeks = NULL;
   int naudstate = 0;
   lives_audio_track_state_t *atstate = NULL;
-
-  int i;
-
   int btoffs = mainw->multitrack ? mainw->multitrack->opts.back_audio_tracks : 1;
+
   num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
-  for (i = 0; i < num_aclips; i += 2) {
+  for (int i = 0; i < num_aclips; i += 2) {
     if (aclips[i + 1] > 0) { // else ignore
       atrack = aclips[i];
-      if (atrack + btoffs >= naudstate - 1) {
-        atstate = resize_audstate(atstate, naudstate, atrack + btoffs + 2);
+      if (atrack + btoffs + 1 > naudstate) {
+        atstate = resize_audstate(atstate, naudstate, atrack + btoffs + 1);
+        for (int j = naudstate; j <= atrack + btoffs; j++) atstate[j].afile = -1;
         naudstate = atrack + btoffs + 1;
-        atstate[naudstate].afile = -1;
       }
       atstate[atrack + btoffs].afile = aclips[i + 1];
       atstate[atrack + btoffs].seek = aseeks[i];
@@ -2809,14 +2805,9 @@ static lives_audio_track_state_t *aframe_to_atstate_inner(weed_plant_t *event, i
   lives_freep((void **)&aclips);
   lives_freep((void **)&aseeks);
 
-  if (ntracks) *ntracks = num_aclips;
+  if (ntracks) *ntracks = naudstate;
 
   return atstate;
-}
-
-
-LIVES_LOCAL_INLINE lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
-  return aframe_to_atstate_inner(event, NULL);
 }
 
 
@@ -2835,14 +2826,14 @@ LIVES_GLOBAL_INLINE lives_audio_track_state_t *audio_frame_to_atstate(weed_event
    similar to quantise_events(), except we don't produce output frames
 */
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event,
-    weed_timecode_t fill_tc, int what_to_get, boolean exact) {
+    weed_timecode_t fill_tc, int what_to_get, boolean exact, int *xntracks) {
   // if exact is set, we must rewind back to first active stateful effect,
   // and play forwards from there (not yet implemented - TODO)
   lives_audio_track_state_t *atstate = NULL, *audstate = NULL;
   weed_timecode_t last_tc = 0;
   weed_event_t *event, *nevent;
   weed_event_t *deinit_event;
-  int nfiles, nnfiles, etype;
+  int ntracks = 0, etype;
 
   // gets effects state immediately prior to start_event. (initing any effects which should be active, and applying param changes
   // if not in multrack)
@@ -2863,7 +2854,8 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
 
   while ((st_event && event != st_event) || (!st_event && get_event_timecode(event) < fill_tc)) {
     etype = weed_event_get_type(event);
-    if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || (etype != 1 && etype != 5)) {
+    if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || (etype != WEED_EVENT_TYPE_FRAME
+        && etype != WEED_EVENT_TYPE_PARAM_CHANGE)) {
       switch (etype) {
       case WEED_EVENT_TYPE_FILTER_MAP:
         if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
@@ -2926,35 +2918,36 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
 
         if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
           /// update audio state
-          atstate = aframe_to_atstate(event);
+          int nntracks;
+          atstate = audio_frame_to_atstate(event, &nntracks);
           if (!audstate) {
             audstate = atstate;
             last_tc = get_event_timecode(event);
+            ntracks = nntracks;
           } else {
             // have an existing audio state, update with current
-            weed_timecode_t delta = get_event_timecode(event) - last_tc;
-            for (nfiles = 0; audstate[nfiles].afile != -1; nfiles++) {
+            weed_timecode_t tc = get_event_timecode(event);
+            weed_timecode_t delta = tc - last_tc;
+            if (nntracks > ntracks) {
+              audstate = resize_audstate(audstate, ntracks, nntracks);
+            }
+            for (int i = 0; i < nntracks; i++) {
               if (delta > 0) {
                 // increase seek values up to current frame
-                audstate[nfiles].seek += audstate[nfiles].vel * delta / TICKS_PER_SECOND_DBL;
+                audstate[i].seek += audstate[i].vel * delta / TICKS_PER_SECOND_DBL;
               }
             }
-            last_tc += delta;
-            nnfiles = 0;
-            if (atstate) for (; atstate[nnfiles].afile != -1; nnfiles++);
-            if (nnfiles > nfiles) {
-              audstate = resize_audstate(audstate, nfiles, nnfiles + 1);
-              audstate[nnfiles].afile = -1;
-            }
+            last_tc = tc;
 
-            for (int i = 0; i < nnfiles; i++) {
-              if (atstate[i].afile > 0) {
+            for (int i = 0; i < nntracks; i++) {
+              if (atstate[i].afile != -1) {
                 audstate[i].afile = atstate[i].afile;
                 audstate[i].seek = atstate[i].seek;
                 audstate[i].vel = atstate[i].vel;
               }
             }
             lives_free(atstate);
+            if (nntracks > ntracks) ntracks = nntracks;
           }
         }
         break;
@@ -2971,15 +2964,18 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
     if (audstate) {
       weed_timecode_t delta = get_event_timecode(event) - last_tc;
       if (delta > 0) {
-        for (nfiles = 0; audstate[nfiles].afile != -1; nfiles++) {
-          // increase seek values up to current frame
-          audstate[nfiles].seek += audstate[nfiles].vel * delta / TICKS_PER_SECOND_DBL;
+        for (int i = 0; i < ntracks; i++) {
+          if (audstate[i].afile != -1) {
+            // increase seek values up to current frame
+            audstate[i].seek += audstate[i].vel * delta / TICKS_PER_SECOND_DBL;
+          }
 	  // *INDENT-OFF*
         }}}}
   // *INDENT-ON*
 
   if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_ONLY)
     mainw->audio_event = event;
+  if (xntracks) *xntracks = ntracks;
   return audstate;
 }
 
@@ -3000,7 +2996,8 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   static weed_timecode_t last_tc, tc;
   static weed_timecode_t fill_tc;
   static weed_plant_t *event;
-  static int nfiles;
+  static int ntracks;
+  int nntracks;
 
   static int *from_files = NULL;
   static double *aseeks = NULL, *avels = NULL;
@@ -3023,37 +3020,47 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     lives_freep((void **)&aseeks);
 
     if (mainw->multitrack && mainw->multitrack->avol_init_event)
-      nfiles = weed_leaf_num_elements(mainw->multitrack->avol_init_event, WEED_LEAF_IN_TRACKS);
+      ntracks = weed_leaf_num_elements(mainw->multitrack->avol_init_event, WEED_LEAF_IN_TRACKS);
+    else ntracks = 1;
 
-    else nfiles = 1;
+    from_files = (int *)lives_calloc(ntracks, sizint);
+    avels = (double *)lives_calloc(ntracks, sizdbl);
+    aseeks = (double *)lives_calloc(ntracks, sizdbl);
 
-    from_files = (int *)lives_calloc(nfiles, sizint);
-    avels = (double *)lives_calloc(nfiles, sizdbl);
-    aseeks = (double *)lives_calloc(nfiles, sizdbl);
-
-    for (i = 0; i < nfiles; i++) {
-      from_files[i] = 0;
+    for (i = 0; i < ntracks; i++) {
+      from_files[i] = -1;
       avels[i] = aseeks[i] = 0.;
     }
 
     // get audio and fx state at pt immediately before st_event
-    atstate = get_audio_and_effects_state_at(event_list, event, 0, LIVES_PREVIEW_TYPE_VIDEO_AUDIO, exact);
+    atstate = get_audio_and_effects_state_at(event_list, event, 0, LIVES_PREVIEW_TYPE_VIDEO_AUDIO, exact, &nntracks);
+
+    if (nntracks > ntracks) {
+      from_files = (int *)lives_recalloc(from_files, nntracks, ntracks, sizint);
+      avels = (double *)lives_recalloc(avels, nntracks, ntracks, sizdbl);
+      aseeks = (double *)lives_recalloc(aseeks, nntracks, ntracks, sizdbl);
+    }
 
     if (atstate) {
-      for (i = 0; atstate[i].afile != -1; i++) {
-        if (atstate[i].afile > 0) {
-          from_files[i] = atstate[i].afile;
-          avels[i] = atstate[i].vel;
-          aseeks[i] = atstate[i].seek;
+      for (i = 0; i < nntracks; i++) {
+        if (i >= ntracks) from_files[i] = -1;
+        else {
+          if (atstate[i].afile > 0) {
+            from_files[i] = atstate[i].afile;
+            avels[i] = atstate[i].vel;
+            aseeks[i] = atstate[i].seek;
+          }
         }
       }
       lives_free(atstate);
     }
   }
 
+  if (nntracks > ntracks) ntracks = nntracks;
+
   if (mainw->multitrack) {
     // get channel volumes from the mixer
-    for (i = 0; i < nfiles; i++) {
+    for (i = 0; i < ntracks; i++) {
       if (mainw->multitrack && mainw->multitrack->audio_vols) {
         chvols[i] = (double)LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->multitrack->audio_vols, i)) / ONE_MILLION_DBL;
       }
@@ -3068,37 +3075,32 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   while (event && (tc = get_event_timecode(event)) < fill_tc) {
     if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
       // got next audio frame
-      render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
+      render_audio_segment(ntracks, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
       last_tc = tc;
       // process audio updates at this frame
-      atstate = aframe_to_atstate(event);
+      atstate = audio_frame_to_atstate(event, &nntracks);
 
       if (atstate) {
-        int nnfiles;
-        for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
-        for (i = 0; i < nnfiles; i++) {
-          if (atstate[i].afile > 0) {
-            from_files[i] = atstate[i].afile;
-            avels[i] = atstate[i].vel;
-            aseeks[i] = atstate[i].seek;
+        for (i = 0; i < nntracks; i++) {
+          if (i >= ntracks) from_files[i] = -1;
+          else {
+            if (atstate[i].afile > 0) {
+              from_files[i] = atstate[i].afile;
+              avels[i] = atstate[i].vel;
+              aseeks[i] = atstate[i].seek;
+            }
           }
         }
         lives_free(atstate);
       }
+      if (nntracks > ntracks) ntracks = nntracks;
     }
     event = get_next_audio_frame_event(event);
   }
 
   if (last_tc < fill_tc) {
     // fill the rest of the buffer
-    /* if (nfiles == 0)  */
-    /*   render_audio_segment(1, NULL, -1, NULL, NULL, last_tc, fill_tc, chvols, 0., 0., abuf); */
-    //else
-    render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, fill_tc, chvols, 1., 1., abuf);
-    /* for (i = 0; i < nfiles; i++) { */
-    /*   // increase seek values */
-    /*   aseeks[i] += avels[i] * (fill_tc - last_tc) / TICKS_PER_SECOND_DBL; */
-    /* } */
+    render_audio_segment(ntracks, from_files, -1, avels, aseeks, last_tc, fill_tc, chvols, 1., 1., abuf);
   }
 
   if (THREADVAR(read_failed) > 0) {
@@ -3121,9 +3123,6 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
 void init_jack_audio_buffers(int achans, int arate, boolean exact) {
 #ifdef ENABLE_JACK
-
-  int chan;
-
   mainw->jackd->abufs = (lives_audio_buf_t **)lives_calloc(prefs->num_rtaudiobufs, sizeof(lives_audio_buf_t *));
 
   for (int i = 0; i < prefs->num_rtaudiobufs; i++) {
@@ -3132,7 +3131,7 @@ void init_jack_audio_buffers(int achans, int arate, boolean exact) {
     mainw->jackd->abufs[i]->arate = arate;
     mainw->jackd->abufs[i]->samp_space = XSAMPLES / prefs->num_rtaudiobufs;
     mainw->jackd->abufs[i]->bufferf = (float **)lives_calloc(achans, sizeof(float *));
-    for (chan = 0; chan < achans; chan++) {
+    for (int chan = 0; chan < achans; chan++) {
       mainw->jackd->abufs[i]->bufferf[chan] = (float *)lives_calloc_safety(XSAMPLES / prefs->num_rtaudiobufs, sizeof(float));
     }
   }
@@ -4350,7 +4349,6 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
 
       afile = get_aplay_clipno();
       if (CLIP_HAS_AUDIO(afile)) clipvol = lives_vol_from_linear(mainw->files[afile]->vol);
-
       for (i = 0; i < abuf->out_achans; i++) {
         // get buffer16 write_pos
         // write to abuf->bufferf at write_pos, from

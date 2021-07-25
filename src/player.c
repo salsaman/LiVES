@@ -705,8 +705,7 @@ boolean load_frame_image(frames_t frame) {
       if (mainw->is_rendering && !(mainw->proc_ptr && mainw->preview)) {
         // here if we are rendering from multitrack, previewing a recording, or applying realtime effects to a selection
         weed_timecode_t tc = mainw->cevent_tc;
-        if (mainw->scrap_file != -1 && mainw->clip_index[0]
-            == mainw->scrap_file && mainw->num_tracks == 1) {
+        if (mainw->scrap_file != -1 && mainw->clip_index[0] == mainw->scrap_file && mainw->num_tracks == 1) {
           // do not apply fx, just pull frame
           mainw->frame_layer = lives_layer_new_for_frame(mainw->clip_index[0], mainw->frame_index[0]);
           weed_layer_ref(mainw->frame_layer);
@@ -868,7 +867,7 @@ boolean load_frame_image(frames_t frame) {
                   if (delta < 0) g_printerr("cached frame    TOO LATE, got %ld, wanted %d !!!\n",
                                               labs(mainw->pred_frame), mainw->actual_frame);
                 }
-                if (delta > 0) g_print("    waiting...\n");
+                //if (delta > 0) g_print("    waiting...\n");
               }
               if (!got_preload) {
                 // if we didn't have a preloaded frame, we kick off a thread here to load it

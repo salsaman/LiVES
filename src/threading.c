@@ -984,7 +984,7 @@ static void *thrdpool(void *arg) {
         if (!pthread_mutex_trylock(&pool_mutex)) {
           npoolthreads--;
           pthread_mutex_unlock(&pool_mutex);
-          lives_widget_context_unref(tdata->ctx);
+          //lives_widget_context_unref(tdata->ctx);
           tdata->exited = TRUE;
           break;
         }
@@ -1100,6 +1100,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
       for (int i = 0; i < rnpoolthreads; i++) {
         lives_thread_data_t *tdata = get_thread_data_by_id(i + 1);
         if (tdata->exited) {
+          lives_widget_context_unref(tdata->ctx);
           lives_free(tdata);
           lives_free(poolthrds[i]);
           tdata = lives_thread_data_create(i + 1);

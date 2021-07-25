@@ -8770,8 +8770,10 @@ void close_current_file(int file_to_switch_to) {
           } else mainw->new_clip = index;
           if (need_new_blend_file) mainw->blend_file = mainw->current_file;
         } else {
-          mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
-          mt_clip_select(mainw->multitrack, TRUE);
+          if (old_file != mainw->multitrack->render_file) {
+            mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
+            mt_clip_select(mainw->multitrack, TRUE);
+          }
         }
         return;
       }
@@ -8785,8 +8787,10 @@ void close_current_file(int file_to_switch_to) {
               } else mainw->new_clip = index;
               if (need_new_blend_file) mainw->blend_file = mainw->current_file;
             } else {
-              mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
-              mt_clip_select(mainw->multitrack, TRUE);
+              if (old_file != mainw->multitrack->render_file) {
+                mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
+                mt_clip_select(mainw->multitrack, TRUE);
+              }
             }
             return;
           }
@@ -8800,8 +8804,10 @@ void close_current_file(int file_to_switch_to) {
               } else mainw->new_clip = index;
               if (need_new_blend_file) mainw->blend_file = mainw->current_file;
             } else {
-              mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
-              mt_clip_select(mainw->multitrack, TRUE);
+              if (old_file != mainw->multitrack->render_file) {
+                mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
+                mt_clip_select(mainw->multitrack, TRUE);
+              }
             }
             return;
 	      // *INDENT-OFF*
@@ -8822,7 +8828,8 @@ void close_current_file(int file_to_switch_to) {
   lives_widget_set_sensitive(mainw->export_proj, FALSE);
   lives_widget_set_sensitive(mainw->import_proj, FALSE);
 
-  if (mainw->multitrack) lives_widget_set_sensitive(mainw->multitrack->load_set, TRUE);
+  if (mainw->multitrack && old_file != mainw->multitrack->render_file)
+    lives_widget_set_sensitive(mainw->multitrack->load_set, TRUE);
 
   // can't use set_undoable, as we don't have a cfile
   lives_menu_item_set_text(mainw->undo, _("_Undo"), TRUE);
@@ -8859,13 +8866,18 @@ void close_current_file(int file_to_switch_to) {
     if (!LIVES_IS_PLAYING) d_print("");
 
     if (mainw->multitrack) {
-      mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
-      mt_clip_select(mainw->multitrack, TRUE);
+      if (old_file != mainw->multitrack->render_file) {
+        mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
+        mt_clip_select(mainw->multitrack, TRUE);
+      }
     }
   }
   if (!LIVES_IS_PLAYING && !mainw->is_processing && !mainw->preview) {
-    if (mainw->multitrack) mt_sensitise(mainw->multitrack);
-    else sensitize();
+    if (mainw->multitrack) {
+      if (old_file != mainw->multitrack->render_file) {
+        mt_sensitise(mainw->multitrack);
+      }
+    } else sensitize();
   }
 }
 

@@ -2326,18 +2326,20 @@ void play_file(void) {
     lives_widget_set_frozen(mainw->spinbutton_end, TRUE);
   }
 
+  if (!mainw->multitrack) {
 #ifdef ENABLE_JACK_TRANSPORT
-  if (mainw->jack_can_stop && !mainw->event_list && !mainw->preview
-      && (prefs->jack_opts & (JACK_OPTS_TIMEBASE_START | JACK_OPTS_TIMEBASE_SLAVE))) {
-    // calculate the start position from jack transport
-    double sttime = (double)jack_transport_get_current_ticks(mainw->jackd_trans) / TICKS_PER_SECOND_DBL;
-    cfile->pointer_time = cfile->real_pointer_time = sttime;
-    if (cfile->real_pointer_time > CLIP_TOTAL_TIME(mainw->current_file))
-      cfile->real_pointer_time = CLIP_TOTAL_TIME(mainw->current_file);
-    if (cfile->pointer_time > cfile->video_time) cfile->pointer_time = 0.;
-    mainw->play_start = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
-  }
+    if (mainw->jack_can_stop && !mainw->event_list && !mainw->preview
+        && (prefs->jack_opts & (JACK_OPTS_TIMEBASE_START | JACK_OPTS_TIMEBASE_SLAVE))) {
+      // calculate the start position from jack transport
+      double sttime = (double)jack_transport_get_current_ticks(mainw->jackd_trans) / TICKS_PER_SECOND_DBL;
+      cfile->pointer_time = cfile->real_pointer_time = sttime;
+      if (cfile->real_pointer_time > CLIP_TOTAL_TIME(mainw->current_file))
+        cfile->real_pointer_time = CLIP_TOTAL_TIME(mainw->current_file);
+      if (cfile->pointer_time > cfile->video_time) cfile->pointer_time = 0.;
+      mainw->play_start = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+    }
 #endif
+  }
 
   /// these values are only relevant for non-realtime audio players (e.g. sox)
   mainw->audio_start = mainw->audio_end = 0;
@@ -2823,7 +2825,7 @@ void play_file(void) {
           get_audio_and_effects_state_at(mainw->multitrack->event_list,
                                          mainw->multitrack->pb_start_event, 0,
                                          LIVES_PREVIEW_TYPE_VIDEO_ONLY,
-                                         mainw->multitrack->exact_preview);
+                                         mainw->multitrack->exact_preview, NULL);
         }
 
         do_progress_dialog(FALSE, FALSE, NULL);
@@ -2875,6 +2877,7 @@ void play_file(void) {
 
   if (!mainw->foreign) {
     /// deinit any active real time effects
+    really_deinit_effects();
     if (prefs->allow_easing && !mainw->multitrack) {
       // any effects which were "easing out" should be deinited now
       deinit_easing_effects();
@@ -5357,13 +5360,14 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       mainw->recovery_list = mainw->recovery_list->next;
     }
 
+    if (!*buff) continue;
     lives_chomp(buff, FALSE);
 
-    if (buff[strlen(buff) - 1] == '*') {
+    if (buff[lives_strlen(buff) - 1] == '*') {
       boolean crash_recovery = prefs->crash_recovery;
       LiVESResponseType resp;
       // set to be opened
-      buff[strlen(buff) - 1 - strlen(LIVES_DIR_SEP)] = 0;
+      buff[lives_strlen(buff) - 1 - strlen(LIVES_DIR_SEP)] = 0;
       do {
         resp = LIVES_RESPONSE_OK;
         if (!is_legal_set_name(buff, TRUE, TRUE)) {

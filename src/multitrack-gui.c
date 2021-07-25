@@ -2502,7 +2502,8 @@ weed_layer_t *mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       }
 
       // pass quickly through events_list, switching on and off effects and interpolating at current time
-      get_audio_and_effects_state_at(mt->event_list, mt->pb_start_event, 0, LIVES_PREVIEW_TYPE_VIDEO_ONLY, mt->exact_preview);
+      get_audio_and_effects_state_at(mt->event_list, mt->pb_start_event, 0, LIVES_PREVIEW_TYPE_VIDEO_ONLY, mt->exact_preview,
+                                     NULL);
 
       // if we are previewing a specific effect we also need to init it
       if (mt->current_rfx && mt->init_event) {
@@ -3625,12 +3626,16 @@ void amixer_show(LiVESButton * button, livespointer user_data) {
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(amixer->gang_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(lives_cool_toggled), NULL);
 
+  lives_widget_add_accelerator(close_button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+
   lives_cool_toggled(amixer->gang_checkbutton, NULL);
   after_amixer_gang_toggled(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton), amixer);
-
-  lives_widget_grab_focus(close_button);
 
   on_amixer_reset_clicked(NULL, mt);
 
   lives_widget_show_all(amixerw);
+  lives_widget_grab_focus(amixer->window);
+  lives_window_present(amixer->window);
+  lives_widget_grab_focus(close_button);
 }

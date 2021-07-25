@@ -250,7 +250,7 @@ void start_ce_thumb_mode(void) {
                                  LIVES_INT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
 
     ch_fns[i] = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(key_checks[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
-                LIVES_GUI_CALLBACK(rte_on_off_callback_hook), LIVES_INT_TO_POINTER(i + 1));
+                LIVES_GUI_CALLBACK(rte_on_off_callback_fg), LIVES_INT_TO_POINTER(i + 1));
 
     fxcombos[i] = lives_standard_combo_new(NULL, fxlist, LIVES_BOX(hbox), NULL);
 

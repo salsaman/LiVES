@@ -105,10 +105,24 @@ static void switch_fx_state(int hotkey) {
   // switch effect state when a connection to ACTIVATE is present
   uint32_t last_grabbable_effect = mainw->last_grabbable_effect;
 
+  // setting this causes SOFT_DEINIT
   THREADVAR(fx_is_auto) = TRUE;
-  rte_on_off_callback_hook(NULL, LIVES_INT_TO_POINTER(hotkey));
+  rte_on_off_callback_fg(NULL, LIVES_INT_TO_POINTER(hotkey));
   THREADVAR(fx_is_auto) = FALSE;
   mainw->last_grabbable_effect = last_grabbable_effect;
+}
+
+
+LIVES_GLOBAL_INLINE void really_deinit_effects(void) {
+  weed_plant_t *inst;
+  for (int key = 0; key < FX_KEYS_MAX_VIRTUAL; key++) {
+    if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
+      if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) {
+        weed_deinit_effect(key);
+      }
+      weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
+    }
+  }
 }
 
 
@@ -2785,8 +2799,6 @@ static void pdel_clicked(LiVESWidget * button, livespointer user_data) {
   int pidx_next;
 #endif
 
-  register int i;
-
 #if !LIVES_TABLE_IS_GRID
   hbox[3] = NULL;
 #endif
@@ -2794,7 +2806,7 @@ static void pdel_clicked(LiVESWidget * button, livespointer user_data) {
   totparams = pconx_get_numcons(conxwp, FX_DATA_WILDCARD);
   totchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
 
-  for (i = 0; i < totparams; i++) {
+  for (int i = 0; i < totparams; i++) {
     if (conxwp->del_button[i + totchans] == button) {
       ours = i;
       break;
@@ -2839,7 +2851,7 @@ static void pdel_clicked(LiVESWidget * button, livespointer user_data) {
   conxwp->trowsp--;
 
   // subtract 1 from trowsp because of title row
-  for (i = ours; i < conxwp->trowsp - 1; i++) {
+  for (int i = ours; i < conxwp->trowsp - 1; i++) {
 #if !LIVES_TABLE_IS_GRID
 
     // reparent widgets from row i to row i+1

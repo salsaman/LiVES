@@ -8285,8 +8285,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_separator(LiVESLayout 
 ////////////////////////////////////////////////////////////////////
 
 static LiVESWidget *add_warn_image(LiVESWidget * widget, LiVESWidget * hbox) {
-  LiVESWidget *warn_image = lives_image_new_from_stock_at_size(LIVES_STOCK_DIALOG_WARNING,
-                            LIVES_ICON_SIZE_CUSTOM, widget_opts.css_min_height + 4);
+
+  LiVESWidget *warn_image = lives_image_find_in_stock_at_size(widget_opts.css_min_height + 4, "dialog-warning", NULL);
+
   if (hbox) {
     if (!widget_opts.pack_end)
       lives_box_pack_start(LIVES_BOX(hbox), warn_image, FALSE, FALSE, 4);
@@ -11678,6 +11679,21 @@ LiVESWidget *lives_image_find_in_stock(LiVESIconSize size, ...) {
   }
   va_end(ap);
   if (iname) return lives_image_new_from_stock(iname, size);
+  return NULL;
+}
+
+
+LiVESWidget *lives_image_find_in_stock_at_size(int size, ...) {
+  va_list ap;
+  const char *iname;
+  char *match;
+  va_start(ap, size);
+  while ((match = va_arg(ap, char *))) {
+    iname = widget_helper_suggest_icons(match, 0);
+    if (iname) break;
+  }
+  va_end(ap);
+  if (iname) return lives_image_new_from_stock_at_size(iname, LIVES_ICON_SIZE_CUSTOM, size);
   return NULL;
 }
 

@@ -10,7 +10,14 @@
 #include <sys/time.h>
 struct timeval tv;
 
+#define LIVES_IS_IDLE (lives_get_status() == LIVES_STATUS_IDLE)
+
 #define LIVES_IS_PLAYING (mainw && mainw->playing_file > -1)
+
+#define LIVES_NORMAL_PLAYBACK (lives_get_status() == LIVES_STATUS_PLAYING)
+
+#define LIVES_CE_PLAYBACK (LIVES_NORMAL_PLAYBACK && !mainw->multitrack)
+#define LIVES_MT_PLAYBACK (LIVES_NORMAL_PLAYBACK && mainw->multitrack)
 
 #define LIVES_IS_RENDERING (mainw && ((!mainw->multitrack && mainw->is_rendering) \
 				      || (mainw->multitrack && mainw->multitrack->is_rendering)) \

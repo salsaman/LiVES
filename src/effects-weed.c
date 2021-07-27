@@ -9636,17 +9636,15 @@ char *rte_keymode_get_type(int key, int mode) {
 
 lives_fx_cat_t rte_keymode_get_category(int key, int mode) {
   weed_plant_t *filter;
-  int idx;
   lives_fx_cat_t cat;
+  int idx;
 
-  key--;
-  if (!rte_keymode_valid(key + 1, mode, TRUE)) return LIVES_FX_CAT_NONE;
+  if (!rte_keymode_valid(key, mode, TRUE)) return LIVES_FX_CAT_NONE;
 
-  if ((idx = key_to_fx[key][mode]) == -1) return LIVES_FX_CAT_NONE;
+  if ((idx = key_to_fx[--key][mode]) == -1) return LIVES_FX_CAT_NONE;
   if ((filter = weed_filters[idx]) == NULL) return LIVES_FX_CAT_NONE;
 
-  else cat = weed_filter_categorise(filter,
-                                      enabled_in_channels(filter, FALSE),
+  else cat = weed_filter_categorise(filter, enabled_in_channels(filter, FALSE),
                                       enabled_out_channels(filter, FALSE));
 
   return cat;
@@ -9992,14 +9990,11 @@ boolean rte_key_setmode(int key, int newmode) {
     if ((key = mainw->rte_keys) == -1) return FALSE;
   } else key--;
 
-  filter_mutex_lock(key);
-
   real_key = key;
 
   oldmode = key_modes[key];
 
   if (key_to_fx[key][0] == -1) {
-    filter_mutex_unlock(key);
     return FALSE; // nothing is mapped to effect key
   }
 
@@ -10023,19 +10018,16 @@ boolean rte_key_setmode(int key, int newmode) {
   }
 
   if (newmode < 0 || newmode > rte_key_getmaxmode(key + 1)) {
-    filter_mutex_unlock(key);
     return FALSE;
   }
 
   if (key_to_fx[key][newmode] == -1) {
-    filter_mutex_unlock(key);
     return FALSE;
   }
 
   if (rte_window) rtew_set_mode_radio(key, newmode);
   if (mainw->ce_thumbs) ce_thumbs_set_mode_combo(key, newmode);
 
-  mainw->osc_block = TRUE;
   mainw->blend_palette = WEED_PALETTE_END;
 
   // TODO - block template channel changes
@@ -10071,12 +10063,10 @@ boolean rte_key_setmode(int key, int newmode) {
     if (inst) {
       if (!weed_init_effect(key)) {
         weed_instance_unref(inst);
-        filter_mutex_unlock(key);
         // TODO - unblock template channel changes
         mainw->whentostop = whentostop;
         key = real_key;
         mainw->rte &= ~(GU641 << key);
-        mainw->osc_block = FALSE;
         return FALSE;
       }
       weed_instance_unref(inst);
@@ -10086,8 +10076,6 @@ boolean rte_key_setmode(int key, int newmode) {
     mainw->whentostop = whentostop;
   }
 
-  filter_mutex_unlock(real_key);
-  mainw->osc_block = FALSE;
   return TRUE;
 }
 

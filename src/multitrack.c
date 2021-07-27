@@ -2063,7 +2063,7 @@ void mt_center_on_cursor(LiVESMenuItem * menuitem, livespointer user_data) {
 
 void mt_zoom_in(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  mt_zoom(mt, 0.5);
+  mt_zoom(mt, menuitem ? 0.5 : - 0.5);
   if (LIVES_IS_PLAYING && mt->opts.follow_playback) {
     mt_zoom(mt, 1.);
   }
@@ -2073,7 +2073,7 @@ void mt_zoom_in(LiVESMenuItem * menuitem, livespointer user_data) {
 
 void mt_zoom_out(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  mt_zoom(mt, 2.);
+  mt_zoom(mt, menuitem ? 2. : -2.);
   if (LIVES_IS_PLAYING && mt->opts.follow_playback) {
     mt_zoom(mt, 1.);
   }
@@ -13944,7 +13944,6 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 	}}}}
   // *INDENT-ON*
 
-
   migrate_from_staging(mt->render_file);
 
   if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) THREAD_INTENTION = LIVES_INTENTION_RENDER;
@@ -17003,9 +17002,9 @@ void save_layout_map(int *lmap, double * lmap_audio, const char *file, const cha
       for (int i = 1; i <= MAX_FILES; i++) {
         // add or update
         if (mainw->files[i]) {
-
-          if (mainw->files[i]->layout_map) {
-            map = mainw->files[i]->layout_map;
+          lives_clip_t *sfile = mainw->files[i];
+          if (sfile->layout_map) {
+            map = sfile->layout_map;
             while (map) {
               map_next = map->next;
               if (map->data) {
@@ -17014,7 +17013,7 @@ void save_layout_map(int *lmap, double * lmap_audio, const char *file, const cha
                     !lives_file_test(array[0], LIVES_FILE_TEST_EXISTS))) {
                   // remove prior entry
                   lives_free((livespointer)map->data);
-                  mainw->files[i]->layout_map = lives_list_delete_link(mainw->files[i]->layout_map, map);
+                  sfile->layout_map = lives_list_delete_link(sfile->layout_map, map);
                   break;
                 }
                 lives_strfreev(array);
@@ -17028,22 +17027,23 @@ void save_layout_map(int *lmap, double * lmap_audio, const char *file, const cha
             else max_frame = 0;
             if (lmap_audio) max_atime = lmap_audio[i];
             else max_atime = 0.;
+            if (max_atime > sfile->laudio_time) max_atime = sfile->laudio_time;
 
-            new_entry = lives_strdup_printf("%s|%d|%d|%.8f|%.8f|%.8f", file, i, max_frame, mainw->files[i]->fps,
-                                            max_atime, (double)((int)((double)(mainw->files[i]->arps) /
-                                                (double)mainw->files[i]->arate * 10000. + .5)) / 10000.);
-            mainw->files[i]->layout_map = lives_list_prepend(mainw->files[i]->layout_map, new_entry);
+            new_entry = lives_strdup_printf("%s|%d|%d|%.8f|%.8f|%.8f", file, i, max_frame, sfile->fps,
+                                            max_atime, (double)((int)((double)(sfile->arps) /
+                                                (double)sfile->arate * 10000. + .5)) / 10000.);
+            sfile->layout_map = lives_list_prepend(sfile->layout_map, new_entry);
           }
 
-          if (write_to_file && ((map = mainw->files[i]->layout_map) != NULL)) {
+          if (write_to_file && ((map = sfile->layout_map) != NULL)) {
             written = TRUE;
-            len = strlen(mainw->files[i]->handle);
+            len = lives_strlen(sfile->handle);
             lives_write_le_buffered(fd, &len, 4, TRUE);
-            lives_write_buffered(fd, mainw->files[i]->handle, len, TRUE);
-            lives_write_le_buffered(fd, &mainw->files[i]->unique_id, 8, TRUE);
-            len = strlen(mainw->files[i]->name);
+            lives_write_buffered(fd, sfile->handle, len, TRUE);
+            lives_write_le_buffered(fd, &sfile->unique_id, 8, TRUE);
+            len = strlen(sfile->name);
             lives_write_le_buffered(fd, &len, 4, TRUE);
-            lives_write_buffered(fd, mainw->files[i]->name, len, TRUE);
+            lives_write_buffered(fd, sfile->name, len, TRUE);
             len = lives_list_length(map);
             lives_write_le_buffered(fd, &len, 4, TRUE);
             while (map) {

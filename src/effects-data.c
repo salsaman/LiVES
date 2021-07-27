@@ -1614,7 +1614,6 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
 
   if (inst) {
     weed_instance_unref(inst);
-    //filter_mutex_unlock(key);
   }
 
   if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams) lives_free(inparams);
@@ -2610,7 +2609,6 @@ static void acbutton_clicked(LiVESButton * button, livespointer user_data) {
 
   // set all ccombo with chans
   for (i = stchan; i < nichans; i++) {
-
     chan = ichans[i];
 
     if (!has_alpha_palette(chan, filter)) continue;
@@ -3024,8 +3022,7 @@ static void cadd_clicked(LiVESWidget * button, livespointer user_data) {
     hbox[i] = lives_hbox_new(FALSE, 0);
 
     lives_table_attach(LIVES_TABLE(conxwp->tablec), hbox[i], i, i + 1, conxwp->trowsc - 1, conxwp->trowsc,
-                       (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
-                       (LiVESAttachOptions)(0), 0, 0);
+                       (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND), (LiVESAttachOptions)(0), 0, 0);
   }
 
   ctable_row_add_standard_widgets(conxwp, totchans - 1);
@@ -3438,7 +3435,6 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
 
         if (weed_plant_has_leaf(param, WEED_LEAF_GROUP) && weed_get_int_value(param, WEED_LEAF_GROUP, NULL) != 0) continue;
 
-        //paramname = get_param_name(param, j - 1, TRUE);
         paramlabel = get_param_label(param, j - 1, TRUE);
 
         ptype = weed_seed_type_to_text((stype = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT)));
@@ -3457,25 +3453,21 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
             if ((double)weed_get_int_value(param, WEED_LEAF_MAX, NULL) < RANGE_DISP_MAX
                 && (double)weed_get_int_value(param, WEED_LEAF_MIN, NULL) > -RANGE_DISP_MAX) {
               lives_free(range);
-              range = lives_strdup_printf(_("Range: %d to %d"),
-                                          weed_get_int_value(param, WEED_LEAF_MIN, NULL),
+              range = lives_strdup_printf(_("Range: %d to %d"), weed_get_int_value(param, WEED_LEAF_MIN, NULL),
                                           - weed_get_int_value(param, WEED_LEAF_MAX, NULL));
             }
           } else if (stype == WEED_SEED_DOUBLE) {
             if (weed_get_double_value(param, WEED_LEAF_MAX, NULL) < RANGE_DISP_MAX
                 && weed_get_double_value(param, WEED_LEAF_MIN, NULL) > -RANGE_DISP_MAX) {
               lives_free(range);
-              range = lives_strdup_printf(_("Range: %f to %f"),
-                                          weed_get_double_value(param, WEED_LEAF_MIN, NULL),
+              range = lives_strdup_printf(_("Range: %f to %f"), weed_get_double_value(param, WEED_LEAF_MIN, NULL),
                                           weed_get_double_value(param, WEED_LEAF_MAX, NULL));
             }
           }
         }
 
         text = lives_strdup_printf("%s\n (%s%s) %s", paramlabel, ptype, array_type, range);
-        lives_free(paramlabel);
-        lives_free(array_type);
-        lives_free(range);
+        lives_free(paramlabel); lives_free(array_type); lives_free(range);
       }
       lives_free(ptype);
       plist = lives_list_append(plist, text);
@@ -3488,8 +3480,6 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
   lives_signal_handler_block(conxwp->pcombo[ours], conxwp->dpp_func[ours]);
   lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]), plist);
   lives_signal_handler_unblock(conxwp->pcombo[ours], conxwp->dpp_func[ours]);
-
-  //lives_combo_set_active_string(LIVES_COMBO(conxwp->pcombo[ours]), "");
 
   if (!pidx) if (conxwp->apbutton) lives_widget_set_sensitive(conxwp->apbutton, TRUE);
 
@@ -3647,7 +3637,6 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
       //if (ikey > 0) ikey--;
       pconx_delete(conxwp->okey, conxwp->omode, pidx, ikey, conxwp->imodes[nchans + ours],
                    conxwp->idx[nchans + ours]);
-
       conxwp->pconx = pconx_find(conxwp->okey, conxwp->omode);
     }
     conxwp->ikeys[nchans + ours] = -1;
@@ -3990,8 +3979,7 @@ static LiVESTreeModel *inparam_fx_model(boolean is_chans, int key) {
                                 LIVES_COL_TYPE_INT);
 
   lives_tree_store_append(tstore, &iter1, NULL);   /* Acquire an iterator */
-  lives_tree_store_set(tstore, &iter1,
-                       KEY_COLUMN, mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
+  lives_tree_store_set(tstore, &iter1, KEY_COLUMN, mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
                        NAME_COLUMN, mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
                        KEYVAL_COLUMN, 0, MODEVAL_COLUMN, 0, -1);
 
@@ -4185,8 +4173,7 @@ static void ctable_row_add_variable_widgets(lives_conx_w * conxwp, int idx, int 
   lives_widget_set_sensitive(conxwp->ccombo[idx], FALSE);
 
   lives_table_attach(LIVES_TABLE(conxwp->tablec), hbox, 3, 4, row, row + 1,
-                     (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
-                     (LiVESAttachOptions)(0), 0, 0);
+                     (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND), (LiVESAttachOptions)(0), 0, 0);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->cfxcombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(dfxc_changed), (livespointer)conxwp);
@@ -4263,8 +4250,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->del_button[idx], FALSE, FALSE, 0);
 
   lives_table_attach(LIVES_TABLE(conxwp->tablec), hbox, 4, 5, conxwp->trowsc - 1, conxwp->trowsc,
-                     (LiVESAttachOptions)(0),
-                     (LiVESAttachOptions)(0), 0, 0);
+                     (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->del_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(cdel_clicked), (livespointer)conxwp);
@@ -4447,15 +4433,13 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
     hbox = lives_hbox_new(FALSE, 0);
 
     lives_table_attach(LIVES_TABLE(conxwp->tablep), hbox, 4, 5, 0, 1,
-                       (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
-                       (LiVESAttachOptions)(0), 0, 0);
+                       (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND), (LiVESAttachOptions)(0), 0, 0);
 
     conxwp->allcheckc = lives_standard_check_button_new(_("Autoscale All"), TRUE, LIVES_BOX(hbox), NULL);
     conxwp->allcheck_label = widget_opts.last_label;
 
     conxwp->ascale_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(conxwp->allcheckc),
-                          LIVES_WIDGET_TOGGLED_SIGNAL,
-                          LIVES_GUI_CALLBACK(on_allcheck_toggled),
+                          LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(on_allcheck_toggled),
                           (livespointer)conxwp);
 
     if (EXTRA_PARAMS_OUT > 0) {
@@ -4482,10 +4466,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
           widget_opts.mnemonic_label = FALSE;
           lives_label_set_text(LIVES_LABEL(conxwp->pclabel[x + totchans]), text);
           widget_opts.mnemonic_label = TRUE;
-          lives_free(text);
-          lives_free(pname);
-          lives_free(ptype);
-
+          lives_free(text); lives_free(pname); lives_free(ptype);
           isfirst = FALSE;
         }
 
@@ -4548,10 +4529,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
           widget_opts.mnemonic_label = FALSE;
           lives_label_set_text(LIVES_LABEL(conxwp->pclabel[x + totchans]), text);
           widget_opts.mnemonic_label = TRUE;
-          lives_free(text);
-          lives_free(pname);
-          lives_free(ptype);
-
+          lives_free(text); lives_free(pname); lives_free(ptype);
           isfirst = FALSE;
         }
 
@@ -4965,12 +4943,10 @@ LiVESWidget *make_datacon_window(int key, int mode) {
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(conxw_cancel_clicked),
-                            (livespointer)&conxw);
+                            LIVES_GUI_CALLBACK(conxw_cancel_clicked), (livespointer)&conxw);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(conxw_ok_clicked),
-                            (livespointer)&conxw);
+                            LIVES_GUI_CALLBACK(conxw_ok_clicked), (livespointer)&conxw);
 
   lives_widget_show_all(conxw.conx_dialog);
 

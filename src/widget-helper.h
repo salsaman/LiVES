@@ -481,7 +481,9 @@ boolean lives_widget_color_mix(LiVESWidgetColor *c1, const LiVESWidgetColor *c2,
 LiVESWidget *lives_image_new(void);
 LiVESWidget *lives_image_new_from_file(const char *filename);
 LiVESWidget *lives_image_new_from_stock(const char *stock_id, LiVESIconSize size);
+
 LiVESWidget *lives_image_find_in_stock(LiVESIconSize size, ...) GNU_SENTINEL;
+LiVESWidget *lives_image_find_in_stock_at_size(int size, ...) GNU_SENTINEL;
 
 boolean lives_image_set_from_pixbuf(LiVESImage *, LiVESPixbuf *);
 LiVESPixbuf *lives_image_get_pixbuf(LiVESImage *);

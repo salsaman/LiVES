@@ -3636,6 +3636,6 @@ void amixer_show(LiVESButton * button, livespointer user_data) {
 
   lives_widget_show_all(amixerw);
   lives_widget_grab_focus(amixer->window);
-  lives_window_present(amixer->window);
+  lives_window_present(LIVES_WINDOW(amixer->window));
   lives_widget_grab_focus(close_button);
 }

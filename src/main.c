@@ -5654,7 +5654,6 @@ void sensitize_rfx(void) {
       for (int i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
            mainw->num_rendered_effects_test; i++) {
         if (i == mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate) continue;
-        //if (mainw->rendered_fx[i]->props & RFX_PROPS_MAY_RESIZE) continue;
         if (mainw->rendered_fx[i]->num_in_channels == 2) continue;
         menuitem = mainw->rendered_fx[i]->menuitem;
         if (menuitem && LIVES_IS_WIDGET(menuitem)) {
@@ -5666,8 +5665,7 @@ void sensitize_rfx(void) {
       if (menuitem && !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID
           && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
               (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
-               && has_audio_filters(AF_TYPE_ANY))
-              || mainw->agen_key != 0)) {
+               && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0)) {
         lives_widget_set_sensitive(menuitem, TRUE);
       }
 
@@ -9008,6 +9006,7 @@ void switch_to_file(int old_file, int new_file) {
 
   if (new_file > 0) {
     if (cfile->menuentry) {
+      g_print("%d %d : %s\n", mainw->current_file, new_file, cfile->name);
       set_main_title(cfile->name, 0);
     } else set_main_title(cfile->file_name, 0);
   }

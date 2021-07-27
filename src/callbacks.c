@@ -6309,19 +6309,8 @@ void switch_clip(int type, int newclip, boolean force) {
 
 void switch_clip_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // switch clips from the clips menu
-
-  register int i;
-  if (mainw->current_file < 1 || mainw->preview || (mainw->is_processing && cfile->is_loaded) || !mainw->cliplist) return;
-
-  for (i = 1; i < MAX_FILES; i++) {
-    if (mainw->files[i]) {
-      if (LIVES_MENU_ITEM(menuitem) == LIVES_MENU_ITEM(mainw->files[i]->menuentry) &&
-          lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->files[i]->menuentry))) {
-        switch_clip(0, i, FALSE);
-        return;
-	// *INDENT-OFF*
-      }}}
-  // *INDENT-ON*
+  if (!(LIVES_CE_PLAYBACK || LIVES_IS_IDLE)) return;
+  switch_clip(0, GET_INT_DATA(menuitem, "clipno"), FALSE);
 }
 
 

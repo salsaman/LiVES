@@ -1040,7 +1040,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
   // in automode we don't add the effect parameters in ce_thumbs mode, and we use SOFT_DEINIT
   // if non-automode, the user overrides effect toggling
   weed_plant_t *inst;
-  y  uint64_t new_rte;
+  uint64_t new_rte;
 
   if (mainw->go_away) return TRUE;
   if (!LIVES_IS_INTERACTIVE && from_menu) return TRUE;

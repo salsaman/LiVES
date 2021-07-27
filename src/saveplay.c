@@ -5367,6 +5367,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       boolean crash_recovery = prefs->crash_recovery;
       LiVESResponseType resp;
       // set to be opened
+
       buff[lives_strlen(buff) - 1 - strlen(LIVES_DIR_SEP)] = 0;
       do {
         resp = LIVES_RESPONSE_OK;

@@ -1862,8 +1862,7 @@ void create_LiVES(void) {
                                       prefs->audio_opts & AUDIO_OPTS_IS_LOCKED);
 
   mainw->lock_audio_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->lock_audio_checkbutton),
-                           LIVES_WIDGET_TOGGLED_SIGNAL,
-                           LIVES_GUI_CALLBACK(aud_lock_act), NULL);
+                           LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(aud_lock_act), NULL);
   widget_opts.expand = LIVES_EXPAND_NONE;
   lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
@@ -3765,9 +3764,9 @@ void fullscreen_internal(void) {
 
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &width, &height);
-    //g_print("inner sz = %d X %d\n", width, height);
+    g_print("inner sz = %d X %d\n", width, height);
 
-    height -= SCRN_BRDR * 32; // necessary, or screen expands too much (!?)
+    height -= SCRN_BRDR * 16; // necessary, or screen expands too much (!?)
 
     // expand the inner box to fit this
     lives_widget_set_size_request(mainw->top_vbox, width, height);
@@ -4810,8 +4809,7 @@ void add_to_clipmenu_any(int clipno) {
 
 #ifndef GTK_RADIO_MENU_BUG
   widget_opts.mnemonic_label = FALSE;
-  sfile->menuentry = lives_standard_radio_menu_item_new_with_label(mainw->clips_group, tmp = get_menu_name(sfile));
-  lives_free(tmp);
+  sfile->menuentry = lives_standard_radio_menu_item_new_with_label(mainw->clips_group, fname = get_menu_name(sfile));
   mainw->clips_group = lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(sfile->menuentry));
 #else
   widget_opts.mnemonic_label = FALSE;
@@ -4827,7 +4825,9 @@ void add_to_clipmenu_any(int clipno) {
   sfile->menuentry_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(sfile->menuentry), LIVES_WIDGET_TOGGLED_SIGNAL,
                           LIVES_GUI_CALLBACK(switch_clip_activate), NULL);
 
-  if (CURRENT_CLIP_IS_NORMAL) mainw->clips_available++;
+  SET_INT_DATA(sfile->menuentry, "clipno", clipno);
+
+  if (IS_NORMAL_CLIP(clipno)) mainw->clips_available++;
   pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(clipno));
   pthread_mutex_unlock(&mainw->clip_list_mutex);

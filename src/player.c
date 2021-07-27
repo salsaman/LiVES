@@ -132,6 +132,8 @@ void get_player_size(int *opwidth, int *opheight) {
     return;
   }
 
+#define SCRN_BRDR 2.
+
   if (!mainw->fs) {
     // embedded player
     *opwidth = rwidth = lives_widget_get_allocation_width(mainw->play_image);// - H_RESIZE_ADJUST;
@@ -139,6 +141,7 @@ void get_player_size(int *opwidth, int *opheight) {
   } else {
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), opwidth, opheight);
+    opheight -= (int)(SCRN_BRDR * 16); // necessary, or screen expands too much (!?)
     if (prefs->show_tool) *opheight -= lives_widget_get_allocation_height(mainw->btoolbar);
   }
 

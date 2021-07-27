@@ -12576,7 +12576,7 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *laye
         uint8_t *end;
 
         pixels += y * orowstride;
-        end = pixels + height * orowstride;
+        end = pixels + (height - 1) * orowstride;
 
         if (gamma_type == WEED_GAMMA_VARIANT)
           gamma_lut = create_gamma_lut(fileg, lgamma_type, gamma_type);

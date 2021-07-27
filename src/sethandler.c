@@ -709,7 +709,9 @@ void recover_layout_map(void) {
               }
 
               mainw->xlays = layout_audio_is_affected(i, sfile->laudio_time, 0., mainw->xlays);
+
               if (mainw->xlays) {
+                break_me("badaud");
                 add_lmap_error(LMAP_ERROR_DELETE_AUDIO, sfile->name, (livespointer)sfile->layout_map, i,
                                sfile->frames, sfile->laudio_time, FALSE);
                 lives_list_free_all(&mainw->xlays);
@@ -829,7 +831,8 @@ boolean reload_set(const char *set_name) {
   boolean hadbad = FALSE;
 
   int last_file = -1, new_file = -1;
-  int clipcount = 0, ignored = 0;
+  int start_clip = mainw->current_file;
+  int clipcount = start_clip, ignored = 0;
   frames_t maxframe;
 
   mainw->mt_needs_idlefunc = FALSE;
@@ -907,7 +910,7 @@ boolean reload_set(const char *set_name) {
         if (last_file > 0) switch_clip(1, last_file, TRUE);
       }
 
-      if (!clipcount) {
+      if (clipcount == start_clip) {
         // no clips recovered from set
         char *dirname = SET_DIR(set_name);
         // if dir exists, and there are no subdirs, ask user if they want to delete
@@ -936,7 +939,7 @@ boolean reload_set(const char *set_name) {
         if (hadbad) rewrite_orderfile(FALSE, FALSE, NULL);
 
         d_print(_("%d clips and %d layouts were recovered from set (%s).\n"),
-                clipcount, lives_list_length(mainw->current_layouts_map), (tmp = F2U8(set_name)));
+                clipcount - start_clip, lives_list_length(mainw->current_layouts_map), (tmp = F2U8(set_name)));
         lives_free(tmp);
         lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", set_name);
         lives_notify(LIVES_OSC_NOTIFY_CLIPSET_OPENED, mainw->set_name);
@@ -944,7 +947,7 @@ boolean reload_set(const char *set_name) {
 
       if (!mainw->multitrack) {
         if (mainw->is_ready) {
-          if (clipcount && CURRENT_CLIP_IS_VALID) {
+          if (clipcount != start_clip && CURRENT_CLIP_IS_VALID) {
             showclipimgs();
           }
           // force a redraw
@@ -961,7 +964,7 @@ boolean reload_set(const char *set_name) {
       lives_chdir(cwd, FALSE);
       lives_free(cwd);
 
-      if (clipcount && !mainw->recovering_files) {
+      if (clipcount != start_clip && !mainw->recovering_files) {
         // if we are truly recovering files, we allow error correction later on
         // otherwise we might end up calling this twice
         mainw->recovering_files = TRUE; // allow error correction
@@ -1138,7 +1141,7 @@ boolean reload_set(const char *set_name) {
 
     last_file = new_file;
 
-    if (++clipcount == 1) {
+    if (clipcount++ == start_clip) {
       // we recovered our first clip from the set...
       /** we need to set the set_name before calling add_to_clipmenu(), so that the clip gets the name of the set in
         its menuentry, and also prior to loading any layouts since they specirfy the clipset they need */

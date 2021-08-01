@@ -4918,10 +4918,10 @@ void filter_clips(lives_clipgrp_t *clipgrp, livespointer menuitem) {
         if (IS_VALID_CLIP(clipno)) {
           if (setting) hidden[clipno] = 0;
           else if (hidden[clipno] == -1) hidden[clipno] = 1;
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
+
   for (LiVESList *list = mainw->cliplist; list; list = list->next) {
     clipno = LIVES_POINTER_TO_INT(list->data);
     sfile = mainw->files[clipno];

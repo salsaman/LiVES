@@ -604,8 +604,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           in_framesd = fabs((double)shrink_factor * (double)pulseFramesAvailable);
 
           // add in a small random factor so on longer timescales we aren't losing or gaining samples
-          in_bytes = (int)(in_framesd + ((double)fastrand() / (double)LIVES_MAXUINT64))
-                     * pulsed->in_achans * (pulsed->in_asamps >> 3);
+          in_bytes = (int)(in_framesd + fastrand_dbl(1.)) * pulsed->in_achans * (pulsed->in_asamps >> 3);
 
           xin_bytes = (int)(in_framesd * pulsed->in_achans * (pulsed->in_asamps >> 3));
 

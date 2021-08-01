@@ -834,7 +834,7 @@ static void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_a
 #else
 #define MINPOOLTHREADS 2
 #endif
-static int npoolthreads, rnpoolthreads;
+static volatile int npoolthreads, rnpoolthreads;
 static pthread_t **poolthrds;
 static pthread_cond_t tcond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t tcond_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -984,7 +984,6 @@ static void *thrdpool(void *arg) {
         if (!pthread_mutex_trylock(&pool_mutex)) {
           npoolthreads--;
           pthread_mutex_unlock(&pool_mutex);
-          //lives_widget_context_unref(tdata->ctx);
           tdata->exited = TRUE;
           break;
         }
@@ -1005,6 +1004,7 @@ static void *thrdpool(void *arg) {
     rpmalloc_thread_finalize();
   }
 #endif
+  lives_widget_context_pop_thread_default(tdata->ctx);
   return NULL;
 }
 
@@ -1036,14 +1036,15 @@ void lives_threadpool_finish(void) {
       pthread_cond_broadcast(&tcond);
       pthread_mutex_unlock(&tcond_mutex);
       pthread_join(*(poolthrds[i]), NULL);
-      lives_widget_context_unref(tdata->ctx);
+      if (tdata->ctx && tdata->ctx != lives_widget_context_default())
+        lives_widget_context_unref(tdata->ctx);
       lives_free(tdata);
       lives_free(poolthrds[i]);
     }
   }
   lives_free(poolthrds);
   poolthrds = NULL;
-  npoolthreads = 0;
+  rnpoolthreads = npoolthreads = 0;
   lives_list_free_all((LiVESList **)&twork_first);
   twork_first = twork_last = NULL;
   ntasks = 0;
@@ -1100,7 +1101,8 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
       for (int i = 0; i < rnpoolthreads; i++) {
         lives_thread_data_t *tdata = get_thread_data_by_id(i + 1);
         if (tdata->exited) {
-          lives_widget_context_unref(tdata->ctx);
+          if (tdata->ctx && tdata->ctx != lives_widget_context_default())
+            lives_widget_context_unref(tdata->ctx);
           lives_free(tdata);
           lives_free(poolthrds[i]);
           tdata = lives_thread_data_create(i + 1);

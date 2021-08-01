@@ -711,7 +711,6 @@ void recover_layout_map(void) {
               mainw->xlays = layout_audio_is_affected(i, sfile->laudio_time, 0., mainw->xlays);
 
               if (mainw->xlays) {
-                break_me("badaud");
                 add_lmap_error(LMAP_ERROR_DELETE_AUDIO, sfile->name, (livespointer)sfile->layout_map, i,
                                sfile->frames, sfile->laudio_time, FALSE);
                 lives_list_free_all(&mainw->xlays);

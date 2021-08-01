@@ -1914,8 +1914,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       /// tbytes: how many bytes we want to read in. This is xsamples * the track velocity.
       /// we add a small random factor here, so half the time we round up, half the time we round down
       /// otherwise we would be gradually losing or gaining samples
-      tbytes = (int)((double)xsamples * fabs(zavel) + ((double)fastrand() / (double)LIVES_MAXUINT64)) *
-               in_asamps[track] * in_achans[track];
+      tbytes = (int)((double)xsamples * fabs(zavel) + fastrand_dbl(1.)) * in_asamps[track] * in_achans[track];
 
       if (tbytes <= 0) {
         for (c = 0; c < out_achans; c++) {
@@ -3002,7 +3001,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   static int *from_files = NULL;
   static double *aseeks = NULL, *avels = NULL;
 
-  int i;
+  int rr;
 
   if (!abuf) return;
 
@@ -3027,9 +3026,9 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     avels = (double *)lives_calloc(ntracks, sizdbl);
     aseeks = (double *)lives_calloc(ntracks, sizdbl);
 
-    for (i = 0; i < ntracks; i++) {
-      from_files[i] = -1;
-      avels[i] = aseeks[i] = 0.;
+    for (rr = 0; rr < ntracks; rr++) {
+      from_files[rr] = -1;
+      avels[rr] = aseeks[rr] = 0.;
     }
 
     // get audio and fx state at pt immediately before st_event
@@ -3042,13 +3041,13 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     }
 
     if (atstate) {
-      for (i = 0; i < nntracks; i++) {
-        if (i >= ntracks) from_files[i] = -1;
+      for (rr = 0; rr < nntracks; rr++) {
+        if (rr >= ntracks) from_files[rr] = -1;
         else {
-          if (atstate[i].afile > 0) {
-            from_files[i] = atstate[i].afile;
-            avels[i] = atstate[i].vel;
-            aseeks[i] = atstate[i].seek;
+          if (atstate[rr].afile > 0) {
+            from_files[rr] = atstate[rr].afile;
+            avels[rr] = atstate[rr].vel;
+            aseeks[rr] = atstate[rr].seek;
           }
         }
       }
@@ -3060,10 +3059,9 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   if (mainw->multitrack) {
     // get channel volumes from the mixer
-    for (i = 0; i < ntracks; i++) {
-      if (mainw->multitrack && mainw->multitrack->audio_vols) {
-        chvols[i] = (double)LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->multitrack->audio_vols, i)) / ONE_MILLION_DBL;
-      }
+    int ch = 0;
+    for (LiVESList *list = mainw->multitrack->audio_vols; list; list = list->next) {
+      chvols[ch++] = (double)LIVES_POINTER_TO_INT(list->data) / ONE_MILLION_DBL;
     }
   } else chvols[0] = 1.;
 
@@ -3081,13 +3079,13 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
       atstate = audio_frame_to_atstate(event, &nntracks);
 
       if (atstate) {
-        for (i = 0; i < nntracks; i++) {
-          if (i >= ntracks) from_files[i] = -1;
+        for (rr = 0; rr < nntracks; rr++) {
+          if (rr >= ntracks) from_files[rr] = -1;
           else {
-            if (atstate[i].afile > 0) {
-              from_files[i] = atstate[i].afile;
-              avels[i] = atstate[i].vel;
-              aseeks[i] = atstate[i].seek;
+            if (atstate[rr].afile > 0) {
+              from_files[rr] = atstate[rr].afile;
+              avels[rr] = atstate[rr].vel;
+              aseeks[rr] = atstate[rr].seek;
             }
           }
         }

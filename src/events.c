@@ -2458,7 +2458,7 @@ void add_track_to_avol_init(weed_plant_t *filter, weed_plant_t *event, int nbtra
   num_in_tracks = weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS) + 1;
   new_in_tracks = (int *)lives_malloc(num_in_tracks * sizint);
   for (i = 0; i < num_in_tracks; i++) {
-    new_in_tracks[i] = x++;
+    new_in_tracks[i] = i - nbtracks;
   }
   weed_set_int_array(event, WEED_LEAF_IN_TRACKS, num_in_tracks, new_in_tracks);
   lives_free(new_in_tracks);

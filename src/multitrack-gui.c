@@ -107,12 +107,12 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
   int offset_start, offset_end; // pixel values
   int fnum;
   int width = lives_widget_get_allocation_width(ebox);
-  int track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "layer_number"));
+  int track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), LAYER_NUMBER_KEY));
 
   aofile = -1;
   afd = -1;
 
-  THREADVAR(read_failed) = FALSE;
+  THREADVAR(read_failed) = 0;
 
   while (block) {
     event = block->start_event;
@@ -153,7 +153,6 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
     // open audio file here
 
     if (fnum != aofile) {
-      // does not make sense to use buffer reads, as we may read very sparsely from the file
       if (afd != -1) close(afd);
       filename = lives_get_audio_file_name(fnum);
       afd = lives_open_buffered_rdonly(filename);
@@ -179,8 +178,9 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
       lives_painter_stroke(cr);
     }
     block = block->next;
+    if (lives_read_buffered_eof(afd)) THREADVAR(read_failed) = -1;
 
-    if (THREADVAR(read_failed)) {
+    if (THREADVAR(read_failed) == afd + 1) {
       filename = lives_get_audio_file_name(fnum);
       do_read_failed_error_s(filename, NULL);
       lives_free(filename);
@@ -664,7 +664,7 @@ void mt_draw_block(lives_mt * mt, lives_painter_t *cairo,
 
   lives_painter_set_line_width(cr, 1.);
 
-  track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "layer_number"));
+  track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), LAYER_NUMBER_KEY));
   is_audio = is_audio_eventbox(eventbox);
   if (track < 0) is_audio = TRUE;
 
@@ -814,10 +814,8 @@ void mt_draw_block(lives_mt * mt, lives_painter_t *cairo,
           if (luma > 0.2) colr = &col_black;
         }
 
-        layout = render_text_to_cr(NULL, cr, fname, sfont, 10.,
-                                   LIVES_TEXT_MODE_FOREGROUND_ONLY, colr,
-                                   colr, FALSE, FALSE, &top, &text_start,
-                                   text_end - text_start, &height);
+        layout = render_text_to_cr(NULL, cr, fname, sfont, 10., LIVES_TEXT_MODE_FOREGROUND_ONLY, colr,
+                                   colr, FALSE, FALSE, &top, &text_start, text_end - text_start, &height);
 
         lingo_painter_show_layout(cr, layout);
 
@@ -922,7 +920,7 @@ void mt_draw_aparams(lives_mt * mt, LiVESWidget * eventbox, lives_painter_t *cr,
   else startpos = startx;
 
   track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),
-                               "layer_number")) + mt->opts.back_audio_tracks;
+                               LAYER_NUMBER_KEY)) + mt->opts.back_audio_tracks;
 
   lives_painter_set_line_width(cr, 1.);
   lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
@@ -1620,7 +1618,7 @@ static boolean atrack_ebox_pressed(LiVESWidget * labelbox, LiVESXEventButton * e
   lives_mt *mt = (lives_mt *)user_data;
   int current_track = mt->current_track;
   if (!LIVES_IS_INTERACTIVE) return FALSE;
-  mt->current_track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(labelbox), "layer_number"));
+  mt->current_track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(labelbox), LAYER_NUMBER_KEY));
   if (current_track != mt->current_track) mt->fm_edit_event = NULL;
   mt->aud_track_selected = TRUE;
   track_select(mt);
@@ -1634,7 +1632,7 @@ static boolean track_ebox_pressed(LiVESWidget * labelbox, LiVESXEventButton * ev
   lives_mt *mt = (lives_mt *)user_data;
   int current_track = mt->current_track;
   if (!LIVES_IS_INTERACTIVE) return FALSE;
-  mt->current_track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(labelbox), "layer_number"));
+  mt->current_track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(labelbox), LAYER_NUMBER_KEY));
   if (current_track != mt->current_track) mt->fm_edit_event = NULL;
   mt->aud_track_selected = FALSE;
   track_select(mt);
@@ -1881,7 +1879,7 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "labelbox", labelbox);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "ahbox", ahbox);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ahbox), "eventbox", (livespointer)mt->audio_draws->data);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(labelbox), "layer_number", LIVES_INT_TO_POINTER(-1));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(labelbox), LAYER_NUMBER_KEY, LIVES_INT_TO_POINTER(-1));
 
       lives_signal_connect(LIVES_GUI_OBJECT(labelbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                            LIVES_GUI_CALLBACK(atrack_ebox_pressed), (livespointer)mt);
@@ -1984,10 +1982,10 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
       }
 #endif
 
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(labelbox), "layer_number",
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(labelbox), LAYER_NUMBER_KEY,
                                    LIVES_INT_TO_POINTER(LIVES_POINTER_TO_INT
                                        (lives_widget_object_get_data
-                                        (LIVES_WIDGET_OBJECT(eventbox), "layer_number"))));
+                                        (LIVES_WIDGET_OBJECT(eventbox), LAYER_NUMBER_KEY))));
 
       lives_container_add(LIVES_CONTAINER(labelbox), hbox);
       lives_box_pack_start(LIVES_BOX(hbox), checkbutton, FALSE, FALSE, widget_opts.border_width);
@@ -2074,10 +2072,10 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox), "hbox", hbox);
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox), "ahbox", ahbox);
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ahbox), "eventbox", aeventbox);
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(labelbox), "layer_number",
+          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(labelbox), LAYER_NUMBER_KEY,
                                        LIVES_INT_TO_POINTER(LIVES_POINTER_TO_INT
                                            (lives_widget_object_get_data
-                                            (LIVES_WIDGET_OBJECT(eventbox), "layer_number"))));
+                                            (LIVES_WIDGET_OBJECT(eventbox), LAYER_NUMBER_KEY))));
 
           lives_signal_connect(LIVES_GUI_OBJECT(labelbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                                LIVES_GUI_CALLBACK(atrack_ebox_pressed), (livespointer)mt);
@@ -2125,8 +2123,7 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
               lives_table_attach(LIVES_TABLE(mt->timeline_table),
                                  labelbox, 2, 6, rows, rows + 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
               lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, TIMELINE_TABLE_COLUMNS, rows, rows + 1,
-                                 (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
-                                 (LiVESAttachOptions)(LIVES_FILL), 0, 0);
+                                 (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL), (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
               lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "labelbox", labelbox);
               lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "hbox", hbox);
@@ -2134,8 +2131,7 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
               lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &col);
               lives_widget_set_app_paintable(xeventbox, TRUE);
               lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_EXPOSE_EVENT,
-                                   LIVES_GUI_CALLBACK(mt_expose_audtrack_event),
-                                   (livespointer)mt);
+                                   LIVES_GUI_CALLBACK(mt_expose_audtrack_event), (livespointer)mt);
 
               rows++;
               if (rows == prefs->max_disp_vtracks) break;
@@ -2164,8 +2160,7 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
                 lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 2, 6, rows, rows + 1,
                                    LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
                 lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, TIMELINE_TABLE_COLUMNS, rows, rows + 1,
-                                   (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
-                                   (LiVESAttachOptions)(0), 0, 0);
+                                   (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL), (LiVESAttachOptions)(0), 0, 0);
 
                 lives_widget_set_valign(xeventbox, LIVES_ALIGN_CENTER);
 
@@ -2175,8 +2170,7 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
                 lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &col);
                 lives_widget_set_app_paintable(xeventbox, TRUE);
                 lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_EXPOSE_EVENT,
-                                     LIVES_GUI_CALLBACK(mt_expose_audtrack_event),
-                                     (livespointer)mt);
+                                     LIVES_GUI_CALLBACK(mt_expose_audtrack_event), (livespointer)mt);
 
                 rows++;
                 if (rows == prefs->max_disp_vtracks) break;
@@ -2195,8 +2189,7 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
                                       (int)lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment))));
 
   if (lives_adjustment_get_value(LIVES_ADJUSTMENT(mt->vadjustment)) + lives_adjustment_get_page_size(LIVES_ADJUSTMENT(
-        mt->vadjustment)) >
-      lives_adjustment_get_upper(LIVES_ADJUSTMENT(mt->vadjustment)))
+        mt->vadjustment)) > lives_adjustment_get_upper(LIVES_ADJUSTMENT(mt->vadjustment)))
     lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment), lives_adjustment_get_value(LIVES_ADJUSTMENT(mt->vadjustment)) +
                                lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment)));
 
@@ -2865,7 +2858,7 @@ void mt_set_in_out_spin_ranges(lives_mt * mt, weed_timecode_t start_tc, weed_tim
   double in_end_range = out_val - 1. / mt->fps, real_in_start_range = in_start_range;
   double avel = 1.;
 
-  int track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "layer_number"));
+  int track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), LAYER_NUMBER_KEY));
 
   lives_signal_handler_block(mt->spinbutton_out, mt->spin_out_func);
   lives_signal_handler_block(mt->spinbutton_in, mt->spin_in_func);

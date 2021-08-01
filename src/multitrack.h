@@ -78,6 +78,7 @@ typedef enum {
 
 typedef enum {
   INSERT_MODE_NORMAL,  ///< the default (only insert if it fits)
+  INSERT_MODE_AMATCH, // match audio overlaps
 
   // not implemented yet
   INSERT_MODE_OVERWRITE, ///< overwrite existing blocks
@@ -252,6 +253,7 @@ struct _mt {
   LiVESWidget *mm_select;
   LiVESWidget *ins_menuitem;
   LiVESWidget *ins_normal;
+  LiVESWidget *ins_audmatch;
   LiVESWidget *grav_menuitem;
   LiVESWidget *grav_label;
   LiVESWidget *grav_normal;
@@ -480,6 +482,7 @@ struct _mt {
   ulong mm_select_func;
 
   ulong ins_normal_func;
+  ulong ins_audmatch_func;
 
   ulong grav_normal_func;
   ulong grav_left_func;

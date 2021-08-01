@@ -9006,7 +9006,6 @@ void switch_to_file(int old_file, int new_file) {
 
   if (new_file > 0) {
     if (cfile->menuentry) {
-      g_print("%d %d : %s\n", mainw->current_file, new_file, cfile->name);
       set_main_title(cfile->name, 0);
     } else set_main_title(cfile->file_name, 0);
   }

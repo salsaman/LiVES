@@ -9892,8 +9892,14 @@ boolean on_mouse_scroll(LiVESWidget * widget, LiVESXEventScroll * event, livespo
   if (mt) {
     // multitrack mode
     if ((kstate & LIVES_DEFAULT_MOD_MASK) == LIVES_CONTROL_MASK) {
+      double tl_cur = mt->ptr_time, timesecs;
+      int offs_x;
+      lives_widget_get_position(mt->timeline_eb, &offs_x, NULL);
+      timesecs = get_time_from_x(mt, event->x - offs_x);
+      mt->ptr_time = timesecs;
       if (lives_get_scroll_direction(event) == LIVES_SCROLL_UP) mt_zoom_in(NULL, mt);
       else if (lives_get_scroll_direction(event) == LIVES_SCROLL_DOWN) mt_zoom_out(NULL, mt);
+      mt->ptr_time = tl_cur;
       return FALSE;
     }
 
@@ -9904,7 +9910,6 @@ boolean on_mouse_scroll(LiVESWidget * widget, LiVESXEventScroll * event, livespo
       LiVESXWindow *window = lives_display_get_window_at_pointer
                              ((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                               mt->display, NULL, NULL);
-
       if (widget == mt->clip_scroll || window == lives_widget_get_xwindow(mt->poly_box)) {
         // scroll fwd / back in clips
         if (lives_get_scroll_direction(event) == LIVES_SCROLL_UP) mt_prevclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
@@ -11988,7 +11993,7 @@ void on_recaudclip_ok_clicked(LiVESButton * button, livespointer user_data) {
       }
     }
 
-    THREADVAR(read_failed) = THREADVAR(write_failed) = FALSE;
+    THREADVAR(read_failed) = THREADVAR(write_failed) = 0;
     lives_freep((void **)&THREADVAR(read_failed_file));
 
     // insert audio from old (new) clip to current

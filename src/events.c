@@ -859,8 +859,7 @@ boolean init_event_is_relevant(weed_plant_t *init_event, int ctrack) {
 
   int *in_tracks, *out_tracks;
   int num_tracks;
-
-  register int j;
+  int j;
 
   //if (init_event_is_process_last(init_event)) return FALSE;
 
@@ -3787,10 +3786,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
           mainw->clip_index = weed_get_int_array_counted(event, WEED_LEAF_CLIPS, &mainw->num_tracks);
           mainw->frame_index = weed_get_int64_array(event, WEED_LEAF_FRAMES, &weed_error);
-
-          if (mainw->event_list) {
-            mainw->num_tracks = weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS);
-          }
 
           if (mainw->scrap_file != -1) {
             for (i = 0; i < mainw->num_tracks; i++) {

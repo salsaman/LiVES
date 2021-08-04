@@ -3874,15 +3874,15 @@ apply_inst3:
   for (int i = 0; layers[i]; i++) {
     if (layers[i] == mainw->blend_layer) mainw->blend_layer = NULL;
 
-    if ((mainw->multitrack && i == mainw->multitrack->preview_layer)
-        || ((!mainw->multitrack || mainw->multitrack->preview_layer < 0)
-            && (weed_layer_get_pixel_data(layers[i])
-                || (lives_layer_get_frame(layers[i]) != 0
-                    && (LIVES_IS_PLAYING || !mainw->multitrack || !mainw->multitrack->current_rfx
-                        || !mainw->multitrack->init_event || tc < get_event_timecode(mainw->multitrack->init_event) ||
-                        mainw->multitrack->init_event == mainw->multitrack->avol_init_event ||
-                        tc > get_event_timecode(weed_get_plantptr_value
-                            (mainw->multitrack->init_event, WEED_LEAF_DEINIT_EVENT, NULL))))))) {
+    if (((mainw->multitrack && i == mainw->multitrack->preview_layer)
+	 || (!mainw->multitrack || mainw->multitrack->preview_layer < 0))
+	&& (weed_layer_get_pixel_data(layers[i])
+	    || (lives_layer_get_frame(layers[i]) != 0
+		&& (LIVES_IS_PLAYING || !mainw->multitrack || !mainw->multitrack->current_rfx
+		    || !mainw->multitrack->init_event || tc < get_event_timecode(mainw->multitrack->init_event) ||
+		    mainw->multitrack->init_event == mainw->multitrack->avol_init_event ||
+		    tc > get_event_timecode(weed_get_plantptr_value
+					    (mainw->multitrack->init_event, WEED_LEAF_DEINIT_EVENT, NULL)))))) {
       if (output != -1 || weed_get_int_value(layers[i], WEED_LEAF_CLIP, NULL) == -1) {
         if (!weed_layer_get_pixel_data(layers[i]))
           check_layer_ready(layers[i]);

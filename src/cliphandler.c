@@ -1636,6 +1636,13 @@ void migrate_from_staging(int clipno) {
       lives_free(stfile);
       pthread_mutex_unlock(&sfile->transform_mutex);
     }
+    else {
+      char *new_clipdir = get_clip_dir(clipno);
+      if (lives_file_test(new_clipdir, LIVES_FILE_TEST_EXISTS)) {
+	lives_make_writeable_dir(new_clipdir);
+      }
+      lives_free(new_clipdir);
+    }
   }
 }
 

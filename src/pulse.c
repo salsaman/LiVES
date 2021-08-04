@@ -132,8 +132,7 @@ retry:
 
   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
   while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pa_state != PA_CONTEXT_READY) {
-    sched_yield();
-    lives_usleep(prefs->sleep_time);
+    lives_nanosleep(LIVES_QUICK_NAP);
     pa_state = pa_context_get_state(pcon);
   }
   lives_alarm_clear(alarm_handle);
@@ -235,7 +234,7 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, size_t nbytes) {
   if (nbytes <= 0) return;
   if (mainw->aplayer_broken) return;
 #if HAVE_PA_STREAM_BEGIN_WRITE
-  xbytes = nbytes;
+  xbytes = -1;
   // returns a buffer and size for us to write to
   ret = pa_stream_begin_write(pulsed->pstream, (void **)&buff, &xbytes);
   if (xbytes < nbytes) nbytes = xbytes;

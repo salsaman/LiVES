@@ -2449,7 +2449,7 @@ void add_track_to_avol_init(weed_plant_t *filter, weed_plant_t *event, int nbtra
   int *new_in_tracks;
   int *igns, *nigns;
 
-  int num_in_tracks, x = -nbtracks;
+  int num_in_tracks;
   int nparams, numigns;
 
   int bval, i, j;
@@ -4787,7 +4787,8 @@ boolean render_to_clip(boolean new_clip) {
   LiVESWidgetColor fadecol;
   lives_colRGBA64_t vfade_rgb;
 #endif
-  boolean retval = TRUE, rendaud = TRUE, response;
+  LiVESResponseType response;
+  boolean retval = TRUE, rendaud = TRUE, rendvid = TRUE;
   boolean norm_after = FALSE;
   boolean enc_lb = prefs->enc_letterbox;
   int xachans = 0, xarate = 0, xasamps = 0, xse = 0;
@@ -4863,8 +4864,14 @@ boolean render_to_clip(boolean new_clip) {
         return FALSE;
       }
     } else {
-      if (mainw->multitrack) rendaud = mainw->multitrack->opts.render_audp;
-      else rendaud = FALSE;
+      lives_capacity_t *caps = THREAD_CAPACITIES;
+      if (0 && caps) {
+        rendvid = lives_capacity_get(caps, LIVES_CAPACITY_VIDEO);
+        rendaud = lives_capacity_get(caps, LIVES_CAPACITY_AUDIO);
+      } else {
+        if (mainw->multitrack) rendaud = mainw->multitrack->opts.render_audp;
+        else rendaud = FALSE;
+      }
       // TODO: prompt just for clip name
     }
 
@@ -4982,7 +4989,8 @@ boolean render_to_clip(boolean new_clip) {
   if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
     if (!transcode_prep()) {
       THREAD_INTENTION = LIVES_INTENTION_NOTHING;
-      close_current_file(current_file);
+      if (!mainw->multitrack)
+        close_current_file(current_file);
       prefs->enc_letterbox = enc_lb;
       prefs->pb_quality = pbq;
       return FALSE;
@@ -4999,7 +5007,8 @@ boolean render_to_clip(boolean new_clip) {
         lives_capacities_free(caps);
         THREAD_CAPACITIES = NULL;
         transcode_cleanup(mainw->vpp);
-        close_current_file(current_file);
+        if (!mainw->multitrack)
+          close_current_file(current_file);
         prefs->enc_letterbox = enc_lb;
         prefs->pb_quality = pbq;
         return FALSE;
@@ -5028,7 +5037,8 @@ boolean render_to_clip(boolean new_clip) {
         lives_proc_thread_cancel(mainw->transrend_proc, FALSE);
         lives_proc_thread_join(mainw->transrend_proc);
         mainw->transrend_proc = NULL;
-        close_current_file(current_file);
+        if (!mainw->multitrack)
+          close_current_file(current_file);
         retval = FALSE;
         goto rtc_done;
       }
@@ -5084,7 +5094,7 @@ boolean render_to_clip(boolean new_clip) {
     //cfile->asampsize = xasamps;
   }
 
-  if (start_render_effect_events(mainw->event_list, TRUE, rendaud)) { // re-render, applying effects
+  if (start_render_effect_events(mainw->event_list, rendvid, rendaud)) { // re-render, applying effects
     // and reordering/resampling/resizing if necessary
     if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) {
       if (!mainw->multitrack && mainw->event_list) {
@@ -5114,7 +5124,8 @@ boolean render_to_clip(boolean new_clip) {
         lives_proc_thread_cancel(mainw->transrend_proc, FALSE);
         lives_proc_thread_join(mainw->transrend_proc);
         mainw->transrend_proc = NULL;
-        close_current_file(old_file);
+        if (!mainw->multitrack)
+          close_current_file(old_file);
         goto rtc_done;
       }
 
@@ -5136,7 +5147,7 @@ boolean render_to_clip(boolean new_clip) {
         }
       }
 
-      cfile->start = 1;
+      cfile->start = cfile->frames ? 1 : 0;
       cfile->end = cfile->frames;
 
       set_undoable(NULL, FALSE);
@@ -5384,6 +5395,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
 
   // return TRUE if we rendered to a new clip
   lives_proc_thread_t info = NULL;
+  lives_capacity_t *caps = NULL;
 
   LiVESWidget *elist_dialog;
 
@@ -5485,8 +5497,13 @@ boolean deal_with_render_choice(boolean add_deinit) {
     case RENDER_CHOICE_TRANSCODE:
       THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
     case RENDER_CHOICE_NEW_CLIP:
-      if (render_choice == RENDER_CHOICE_NEW_CLIP)
+      if (render_choice == RENDER_CHOICE_NEW_CLIP) {
+        caps = lives_capacities_new();
         THREAD_INTENTION = LIVES_INTENTION_RENDER;
+        lives_capacity_set(caps, LIVES_CAPACITY_VIDEO);
+        lives_capacity_set(caps, LIVES_CAPACITY_AUDIO);
+        THREAD_CAPACITIES = caps;
+      }
       dw = prefs->mt_def_width;
       dh = prefs->mt_def_height;
       df = prefs->mt_def_fps;
@@ -5528,6 +5545,10 @@ boolean deal_with_render_choice(boolean add_deinit) {
       }
       mainw->is_rendering = FALSE;
       THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+      if (caps) {
+        lives_capacities_free(caps);
+        caps = THREAD_CAPACITIES = NULL;
+      }
       break;
     case RENDER_CHOICE_SAME_CLIP:
       //cfile->undo_end = cfile->undo_start = oplay_start; ///< same clip frames start where recording started
@@ -5536,7 +5557,11 @@ boolean deal_with_render_choice(boolean add_deinit) {
         lives_proc_thread_join(info);
         info = NULL;
       }
+      caps = lives_capacities_new();
       THREAD_INTENTION = LIVES_INTENTION_RENDER;
+      lives_capacity_set(caps, LIVES_CAPACITY_VIDEO);
+      lives_capacity_set(caps, LIVES_CAPACITY_AUDIO);
+      THREAD_CAPACITIES = caps;
       if (!render_to_clip(FALSE)) render_choice = RENDER_CHOICE_PREVIEW;
       else {
         close_scrap_file(TRUE);
@@ -5544,6 +5569,10 @@ boolean deal_with_render_choice(boolean add_deinit) {
       }
       mainw->is_rendering = FALSE;
       THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+      if (caps) {
+        lives_capacities_free(caps);
+        caps = THREAD_CAPACITIES = NULL;
+      }
       break;
     case RENDER_CHOICE_MULTITRACK:
       if (mainw->stored_event_list && mainw->stored_event_list_changed) {

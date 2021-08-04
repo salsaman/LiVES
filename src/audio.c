@@ -3012,7 +3012,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     // this is only called for the first buffered read
     //
     event = st_event;
-    last_tc = get_event_timecode(event);
+    tc = last_tc = get_event_timecode(event);
 
     lives_freep((void **)&from_files);
     lives_freep((void **)&avels);
@@ -3095,6 +3095,8 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     }
     event = get_next_audio_frame_event(event);
   }
+
+  if (!event) fill_tc = tc;
 
   if (last_tc < fill_tc) {
     // fill the rest of the buffer

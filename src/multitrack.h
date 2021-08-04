@@ -176,6 +176,8 @@ struct _mt_opts {
   boolean show_info;
   int hpaned_pos;
   int vpaned_pos;
+  int avol_fx;
+  weed_plant_t *avol_init_event;
   double ptr_time;
   LiVESList *aparam_view_list;
 };

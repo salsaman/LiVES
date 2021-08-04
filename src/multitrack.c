@@ -667,9 +667,12 @@ boolean mt_load_recovery_layout(lives_mt *mt) {
     mt->event_list = mainw->event_list = load_event_list(mt, eload_file);
     mt->auto_reloading = FALSE;
     if (mt->event_list) {
+      weed_plant_t *avol_init_event = mt->avol_init_event;
       lives_rm(eload_file);
       lives_rm(aload_file);
+      mt->avol_init_event = NULL;
       mt_init_tracks(mt, TRUE);
+      mt->avol_init_event = avol_init_event;
       remove_markers(mt->event_list);
       save_mt_autoback(mt);
     }
@@ -2592,6 +2595,8 @@ void update_insert_mode(lives_mt * mt) {
   const char *mtext = NULL;
   if (mt->opts.insert_mode == INSERT_MODE_NORMAL) {
     mtext = lives_menu_item_get_text(mt->ins_normal);
+  } else if (mt->opts.insert_mode == INSERT_MODE_AMATCH) {
+    mtext = lives_menu_item_get_text(mt->ins_audmatch);
   }
 
   if (!mt->ins_label) {
@@ -2605,6 +2610,10 @@ void update_insert_mode(lives_mt * mt) {
   lives_signal_handler_block(mt->ins_normal, mt->ins_normal_func);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->ins_normal), mt->opts.insert_mode == INSERT_MODE_NORMAL);
   lives_signal_handler_unblock(mt->ins_normal, mt->ins_normal_func);
+
+  lives_signal_handler_block(mt->ins_audmatch, mt->ins_audmatch_func);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->ins_audmatch), mt->opts.insert_mode == INSERT_MODE_AMATCH);
+  lives_signal_handler_unblock(mt->ins_audmatch, mt->ins_audmatch_func);
 }
 
 
@@ -2615,6 +2624,8 @@ static void on_insert_mode_changed(LiVESMenuItem * menuitem, livespointer user_d
 
   if (menuitem == (LiVESMenuItem *)mt->ins_normal) {
     mt->opts.insert_mode = INSERT_MODE_NORMAL;
+  } else if (menuitem == (LiVESMenuItem *)mt->ins_audmatch) {
+    mt->opts.insert_mode = INSERT_MODE_AMATCH;
   }
   update_insert_mode(mt);
 }
@@ -3064,7 +3075,10 @@ static void apply_avol_filter(lives_mt * mt) {
     mt->current_fx = mt->avol_fx;
 
     mt->did_backup = TRUE; // this is a special internal event that we don't want to backup
+
+    // will be re-added unless init_event is non-NULL
     mt_add_region_effect(NULL, mt);
+
     mt->did_backup = did_backup;
     mt->avol_init_event = mt->init_event;
 
@@ -4280,6 +4294,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   if (mainw->multi_opts.set) {
     lives_memcpy(&mt->opts, &mainw->multi_opts, sizeof(mt->opts));
     mt->opts.aparam_view_list = lives_list_copy(mainw->multi_opts.aparam_view_list);
+    mt->avol_init_event = mt->opts.avol_init_event;
+    mt->avol_fx = mt->opts.avol_fx;
   } else {
     mt->opts.move_effects = TRUE;
     mt->opts.fx_auto_preview = TRUE;
@@ -4298,6 +4314,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mt->opts.hpaned_pos = mt->opts.vpaned_pos = -1;
     mt->opts.overlay_timecode = TRUE;
     mt->opts.ptr_time = 0.;
+    if (mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate != -1) {
+      // user (or system) has delegated an audio volume filter from the candidates
+      mt->avol_fx = LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].list,
+                                         mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate));
+    } else mt->avol_fx = -1;
+    mt->opts.avol_init_event = mt->avol_init_event = NULL;
+    mt->opts.avol_fx = mt->avol_fx;
   }
 
   mt->opts.insert_audio = TRUE;
@@ -4395,13 +4418,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->cb_list = NULL;
 
   mt->no_frame_update = FALSE;
-
-  if (mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate != -1) {
-    // user (or system) has delegated an audio volume filter from the candidates
-    mt->avol_fx = LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].list,
-                                       mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate));
-  } else mt->avol_fx = -1;
-  mt->avol_init_event = NULL;
 
   if (prefs->mt_enter_prompt && rdet) {
     mt->user_width = rdet->width;
@@ -5181,7 +5197,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->addback_audio = lives_standard_image_menu_item_new_with_label(_("Add Backing Audio Track"));
   lives_container_add(LIVES_CONTAINER(mt->tracks_menu), mt->addback_audio);
-  if (mt->opts.back_audio_tracks > 0 || !mainw->files[mt->render_file]->achans)
+
+  // FIXME **
+  if (1 || mt->opts.back_audio_tracks > 0 || !mainw->files[mt->render_file]->achans)
     lives_widget_set_sensitive(mt->addback_audio, FALSE);
 
   mt->delback_audio = lives_standard_image_menu_item_new_with_label(_("Delete Backing Audio"));
@@ -5994,6 +6012,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                    mt->opts.insert_mode == INSERT_MODE_NORMAL);
   mt->ins_audmatch = lives_standard_check_menu_item_new_with_label(_("Insert Mode: _Audio Match"),
                      mt->opts.insert_mode == INSERT_MODE_AMATCH);
+  lives_widget_set_tooltip_text(mt->ins_audmatch, (tmp = _("This mode is intended for cases where the end audio of "
+                                "one clip overlaps the start audio of the following."
+                                "Clips may be dragged so as to roughly overlap and the insert point will be "
+                                "adjusted to try to match the audio overlap")));
+  lives_free(tmp);
 
   if (in_menubar) {
     mt->ins_menuitem = lives_standard_menu_item_new_with_label("");
@@ -6015,12 +6038,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->ins_normal_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->ins_normal), LIVES_WIDGET_TOGGLED_SIGNAL,
                         LIVES_GUI_CALLBACK(on_insert_mode_changed), (livespointer)mt);
 
-#ifdef AUDIO_MATCH_INS
   lives_container_add(LIVES_CONTAINER(mt->ins_submenu), mt->ins_audmatch);
 
   mt->ins_audmatch_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->ins_audmatch), LIVES_WIDGET_TOGGLED_SIGNAL,
                           LIVES_GUI_CALLBACK(on_insert_mode_changed), (livespointer)mt);
-#endif
 
   lives_widget_show_all(mt->ins_submenu); // needed
 
@@ -6637,12 +6658,16 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mt->auto_reloading = FALSE;
     lives_free(eload_file);
     if (mt->event_list) {
+      weed_plant_t *avol_init_event = mt->avol_init_event;
+      mt->avol_init_event = NULL;
       mt_init_tracks(mt, TRUE);
+      mt->avol_init_event = avol_init_event;
       remove_markers(mt->event_list);
       set_string_pref(PREF_AR_LAYOUT, prefs->ar_layout_name);
     } else {
       prefs->ar_layout = FALSE;
       lives_memset(prefs->ar_layout_name, 0, 1);
+      mt->avol_init_event = NULL;
       mt_init_tracks(mt, TRUE);
       mainw->unordered_blocks = FALSE;
     }
@@ -6991,6 +7016,9 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
     lives_widget_object_unref(mt->frame_pixbuf);
     mt->frame_pixbuf = NULL;
   }
+
+  mt->opts.avol_init_event = mt->avol_init_event;
+  mt->opts.avol_fx = mt->avol_fx;
 
   if (save_layout || mainw->scrap_file != -1 || mainw->ascrap_file != -1) {
     if (!mainw->recording_recovered) {
@@ -7457,11 +7485,7 @@ static void set_track_labels(lives_mt * mt) {
 
 
 void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
-  LiVESList *tlist;
-
-  mt->avol_init_event = NULL;
-
-  tlist = mt->audio_draws;
+  LiVESList *tlist = mt->audio_draws;
 
   while (mt->audio_draws) {
     if (mt->audio_draws->data) lives_widget_destroy((LiVESWidget *)mt->audio_draws->data);
@@ -8039,7 +8063,7 @@ LiVESWidget *add_audio_track(lives_mt * mt, int track, boolean behind) {
 
   lives_widget_queue_draw(mt->vpaned);
 
-  if (!mt->was_undo_redo) {
+  if (!mt->was_undo_redo && !mainw->stored_event_list) {
     if (mt->avol_init_event) {
       weed_plant_t *filter = get_weed_filter(mt->avol_fx);
       add_track_to_avol_init(filter, mt->avol_init_event, mt->opts.back_audio_tracks, behind);
@@ -8098,7 +8122,7 @@ LiVESWidget *add_audio_track(lives_mt * mt, int track, boolean behind) {
     mt->amixer->ch_slider_fns = ch_slider_fns;
   }
 
-  if (track == -1) {
+  if (track < 0) {
     mt->audio_draws = lives_list_prepend(mt->audio_draws, (livespointer)audio_draw);
     lives_widget_set_sensitive(mt->cback_audio, TRUE);
     if (!mt->was_undo_redo) mt->audio_vols = lives_list_prepend(mt->audio_vols, LIVES_INT_TO_POINTER(vol));
@@ -8145,7 +8169,9 @@ LiVESWidget *add_audio_track(lives_mt * mt, int track, boolean behind) {
         }}}}
   // *INDENT-ON*
 
-  if (mt->avol_fx != -1) apply_avol_filter(mt);
+  if (!mt->was_undo_redo && !mainw->stored_event_list) {
+    if (mt->avol_init_event) apply_avol_filter(mt);
+  }
   return audio_draw;
 }
 
@@ -8554,6 +8580,7 @@ void mt_clear_timeline(lives_mt * mt) {
   if (mt->audio_vols) lives_list_free(mt->audio_vols);
   mt->audio_vols = NULL;
 
+  mt->avol_init_event = NULL;
   mt_init_tracks(mt, TRUE);
 
   unselect_all(mt);
@@ -13786,6 +13813,7 @@ void on_cback_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 void on_addback_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   if (mt->opts.back_audio_tracks > 0) return;
+  mt->opts.back_audio_tracks++;
   add_audio_track(mt, -1, FALSE);
   mt_view_audio_toggled(LIVES_MENU_ITEM(mt->view_audio), user_data);
 }
@@ -13800,6 +13828,7 @@ void on_delback_audio_activate(LiVESMenuItem * menuitem, livespointer user_data)
 
 boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
+  lives_capacity_t *caps = NULL;
   LiVESList *list;
   char *com;
 
@@ -13949,10 +13978,23 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   migrate_from_staging(mt->render_file);
 
-  if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) THREAD_INTENTION = LIVES_INTENTION_RENDER;
+  if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) {
+    caps = lives_capacities_new();
+    THREAD_INTENTION = LIVES_INTENTION_RENDER;
+    if (mt->opts.render_vidp)
+      lives_capacity_set(caps, LIVES_CAPACITY_VIDEO);
+    if (mt->opts.render_audp)
+      lives_capacity_set(caps, LIVES_CAPACITY_AUDIO);
+    THREAD_CAPACITIES = caps;
+  }
+
   if (render_to_clip(FALSE)) {
     // rendering was successful
     THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+    if (caps) {
+      lives_capacities_free(caps);
+      caps = THREAD_CAPACITIES = NULL;
+    }
 
     if (mt->pr_audio) {
       mt->pr_audio = FALSE;
@@ -14053,6 +14095,11 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
     cfile->frames = cfile->start = cfile->end = 0;
     mt->is_rendering = FALSE;
+    THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+    if (caps) {
+      lives_capacities_free(caps);
+      THREAD_CAPACITIES = NULL;
+    }
 
     mainw->event_list = NULL;
     if (mt->pr_audio) {
@@ -14895,81 +14942,81 @@ boolean multitrack_insert(LiVESMenuItem * menuitem, livespointer user_data) {
     ins_end = mt->insert_end;
   }
 
-#ifdef AUDIO_MATCH_INS
-  for (int i = 0; i < nvids; i++) {
-    if (i == mt->current_track) continue; ///< cannot transition with self !
-    oblock = get_block_from_time((LiVESWidget *)lives_list_nth_data(mt->video_draws, i),
-                                 secs + 0.5 / mt->fps, mt);
-    if (oblock) break;
-  }
+  if (mt->opts.insert_mode == INSERT_MODE_AMATCH) {
+    for (int i = 0; i < nvids; i++) {
+      if (i == mt->current_track) continue; ///< cannot transition with self !
+      oblock = get_block_from_time((LiVESWidget *)lives_list_nth_data(mt->video_draws, i),
+                                   secs + 0.5 / mt->fps, mt);
+      if (oblock) break;
+    }
 
-  if (oblock) {
-    // want to find the longest section emd audio in oblock which exactly matches sfile audio start
-    uint64_t hash1 = 0, hash2 = hash1;
-    int fnum = get_audio_frame_clip(oblock->start_event, mt->opts.back_audio_tracks);
-    g_print("fnum is %d\n", fnum);
-    if (CLIP_HAS_AUDIO(fnum)) {
-      lives_clip_t *tfile = mainw->files[fnum];
-      size_t pt2 = tfile->afilesize, mxsize = MAX(pt2, sfile->afilesize), z;
-      char *filename = lives_get_audio_file_name(mt->file_selected);
-      int64_t diff;
-      int afd = lives_open_buffered_rdonly(filename), afd2;
-      short val1, val2;
+    if (oblock) {
+      // want to find the longest section emd audio in oblock which exactly matches sfile audio start
+      uint64_t hash1 = 0, hash2 = hash1;
+      int fnum = get_audio_frame_clip(oblock->start_event, mt->opts.back_audio_tracks);
+      g_print("fnum is %d\n", fnum);
+      if (CLIP_HAS_AUDIO(fnum)) {
+        lives_clip_t *tfile = mainw->files[fnum];
+        size_t pt2 = tfile->afilesize, mxsize = MAX(pt2, sfile->afilesize), z;
+        char *filename = lives_get_audio_file_name(mt->file_selected);
+        int64_t diff;
+        int afd = lives_open_buffered_rdonly(filename), afd2;
+        short val1, val2;
 
 #define MIN_AMATCH_DIST 8192
 #define AMATCH_TRATIO 8192
 
-      lives_free(filename);
-      lives_buffered_rdonly_slurp(afd, 0);
-      filename = lives_get_audio_file_name(fnum);
-      afd2 = lives_open_buffered_rdonly(filename);
-      lives_free(filename);
-      lives_buffered_rdonly_set_reversed(afd2, TRUE);
-      lives_lseek_buffered_rdonly_absolute(afd2, tfile->afilesize - 3);
-      mxsize >>= 1;
-      for (z = 0; z < mxsize; z += 2) {
-        lives_read_le_buffered(afd2, &val2, 2, TRUE);
-        lives_read_le_buffered(afd, &val1, 2, TRUE);
-        hash1 += (val1 & 0X7F00) >> 13;
-        hash2 += (val2 & 0X7F00) >> 13;
-        if (z > 32768 && (diff = labs(hash1 - hash2)) < AMATCH_TRATIO) break;
-        lives_lseek_buffered_rdonly(afd2, -4);
-      }
-      if (z && z < mxsize) {
-        size_t y = z;
-        lives_buffered_rdonly_set_reversed(afd2, FALSE);
-        y = 2;
-        while (z && y) {
-          // align zeros
+        lives_free(filename);
+        lives_buffered_rdonly_slurp(afd, 0);
+        filename = lives_get_audio_file_name(fnum);
+        afd2 = lives_open_buffered_rdonly(filename);
+        lives_free(filename);
+        lives_buffered_rdonly_set_reversed(afd2, TRUE);
+        lives_lseek_buffered_rdonly_absolute(afd2, tfile->afilesize - 3);
+        mxsize >>= 1;
+        for (z = 0; z < mxsize; z += 2) {
           lives_read_le_buffered(afd2, &val2, 2, TRUE);
           lives_read_le_buffered(afd, &val1, 2, TRUE);
-          y -= 2;
-          if (!val2) {
-            while (val1) {
-              lives_read_le_buffered(afd, &val1, 2, TRUE);
-              z -= 2;
-              y -= 2;
-            }
-          } else if (!val1) {
-            while (val2) {
-              lives_read_le_buffered(afd2, &val2, 2, TRUE);
-              z -= 2;
-              y -= 2;
-            }
-          }
+          hash1 += (val1 & 0X7F00) >> 13;
+          hash2 += (val2 & 0X7F00) >> 13;
+          if (z > 32768 && (diff = labs(hash1 - hash2)) < AMATCH_TRATIO) break;
+          lives_lseek_buffered_rdonly(afd2, -4);
         }
-      }
-      lives_close_buffered(afd);
-      lives_close_buffered(afd2);
-      g_print("oook2 %lu and %lu\n", z, hash2);
-      secs = get_event_timecode(oblock->end_event) / TICKS_PER_SECOND_DBL
-             - (double)(z / (tfile->achans * (tfile->asampsize >> 3))) / (double)tfile->arate;
-      g_print("VALLLLLX %f and %f %f %f\n", secs, get_event_timecode(oblock->end_event) / TICKS_PER_SECOND_DBL,
-              (double)(z / (tfile->achans * (tfile->asampsize >> 3))), (double)tfile->arate);
+        g_print("GOT Z %ld\n", z);
+        if (z && z < mxsize) {
+          size_t y = z;
+          lives_buffered_rdonly_set_reversed(afd2, FALSE);
+          y = 2;
+          while (z && y) {
+            // align zeros
+            lives_read_le_buffered(afd2, &val2, 2, TRUE);
+            lives_read_le_buffered(afd, &val1, 2, TRUE);
+            y -= 2;
+            if (!val2) {
+              while (val1) {
+                lives_read_le_buffered(afd, &val1, 2, TRUE);
+                z -= 2;
+                y -= 2;
+              }
+            } else if (!val1) {
+              while (val2) {
+                lives_read_le_buffered(afd2, &val2, 2, TRUE);
+                z -= 2;
+                y -= 2;
+		// *INDENT-OFF*
+	      }}}}
+	// *INDENT-ON*
+        lives_close_buffered(afd);
+        lives_close_buffered(afd2);
+        g_print("oook2 %lu and %lu\n", z, hash2);
+        secs = get_event_timecode(oblock->end_event) / TICKS_PER_SECOND_DBL
+               - (double)(z / (tfile->achans * (tfile->asampsize >> 3))) / (double)tfile->arate;
+        g_print("VALLLLLX %f and %f %f %f\n", secs, get_event_timecode(oblock->end_event) / TICKS_PER_SECOND_DBL,
+                (double)(z / (tfile->achans * (tfile->asampsize >> 3))), (double)tfile->arate);
 
+      }
     }
   }
-#endif
 
   if (mt->opts.insert_mode == INSERT_MODE_NORMAL || mt->opts.insert_mode == INSERT_MODE_AMATCH) {
     // first check if there is space to insert the block to, otherwise we will abort the insert
@@ -19361,9 +19408,9 @@ void on_clear_event_list_activate(LiVESMenuItem * menuitem, livespointer user_da
 
 
 boolean on_load_event_list_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  int i;
   lives_mt *mt = (lives_mt *)user_data;
   weed_plant_t *new_event_list;
+  weed_plant_t *avol_init_event;
 
   if (LIVES_IS_INTERACTIVE)
     if (!check_for_layout_del(mt, FALSE)) return FALSE;
@@ -19393,7 +19440,7 @@ boolean on_load_event_list_activate(LiVESMenuItem * menuitem, livespointer user_
   mt_set_undoable(mt, MT_UNDO_NONE, NULL, FALSE);
   mt_set_redoable(mt, MT_UNDO_NONE, NULL, FALSE);
 
-  for (i = 0; i < mt->num_video_tracks; i++) {
+  for (int i = 0; i < mt->num_video_tracks; i++) {
     delete_video_track(mt, i, FALSE);
   }
   lives_list_free(mt->video_draws);
@@ -19413,7 +19460,11 @@ boolean on_load_event_list_activate(LiVESMenuItem * menuitem, livespointer user_
   if (mt->selected_tracks) lives_list_free(mt->selected_tracks);
   mt->selected_tracks = NULL;
 
+  // prevent audio tracks being added twice to avol_init_event
+  avol_init_event = mt->avol_init_event;
+  mt->avol_init_event = NULL;
   mt_init_tracks(mt, TRUE);
+  mt->avol_init_event = avol_init_event;
 
   if (!mt->ignore_load_vals) set_audio_mixer_vols(mt, mt->event_list);
 

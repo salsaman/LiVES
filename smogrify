@@ -7470,7 +7470,7 @@ sub cut_audio {
 	}
 
 	&smog_system_sync();
-	if (-s $audio_bak != $fsize) {
+	if (&align(-s $audio_bak) != $fsize) {
 	    $panic = &sig_write_error($audio_bak);
 	}
 	return;
@@ -7488,7 +7488,7 @@ sub cut_audio {
     if ($spos == 0) {
 	&smog_rename($audio_in, $audio_temp);
 	&smog_system_sync();
-	if (-s $audio_temp != $fsize) {
+	if (&align(-s $audio_temp) != $fsize) {
 	    $panic = &sig_write_error($audio_temp);
 	}
 
@@ -7501,7 +7501,7 @@ sub cut_audio {
 	$fdd_out = $audio_in;
 	&fast_dd($fsize, $epos, 0);
 	&smog_system_sync();
-	if (-s $audio_in != $fsize) {
+	if (&align(-s $audio_in) != $fsize) {
 	    $panic = &sig_write_error($audio_in);
 	    return;
 	}
@@ -7539,7 +7539,7 @@ sub cut_audio {
 	    &fast_dd($fsize - $epos, $epos, $spos);
 	    return if $panic;
 	    &smog_system_sync();
-	    if (-s $audio_in != $fsize) {
+	    if (&align(-s $audio_in) != $fsize) {
 		$panic = &sig_write_error($audio_in);
 		return;
 	    }
@@ -7551,7 +7551,7 @@ sub cut_audio {
 	truncate $fh, $fsize;
 	close $fh;
 	&smog_system_sync();
-	if (-s $audio_in != $fsize) {
+	if (&align(-s $audio_in) != $fsize) {
 	    $panic = &sig_write_error($audio_in);
 	    return;
 	}
@@ -7568,7 +7568,7 @@ sub cut_audio {
     $fsize = -s $audio_temp;
     &smog_rename($audio_temp, $audio_bak);
     &smog_system_sync();
-    if (-s $audio_bak != $fsize) {
+    if (&align(-s $audio_bak) != $fsize) {
 	$panic = &sig_write_error($audio_bak);
     }
 }

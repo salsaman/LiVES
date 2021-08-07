@@ -61,6 +61,7 @@
 #define DEF_AUTOTRANS "simple_blend|chroma blend|salsaman"
 
 #define LAYER_NUMBER_KEY "_layer_number"
+#define DRAWN_KEY "drawn"
 
 typedef struct _mt lives_mt;
 

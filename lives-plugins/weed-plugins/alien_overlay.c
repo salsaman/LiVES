@@ -125,19 +125,20 @@ static weed_error_t alien_overlay_process(weed_plant_t *inst, weed_timecode_t tc
       old_pixel_data = sdata->old_pixel_data + width * offset;
 
       for (int i = 0; i < height; i++) {
-        for (int j = offs; j < xwidth; j += psize) {
+        int l = 0;
+        for (int j = offs; j < xwidth; j += psize, l += 3) {
           for (int k = 0; k < 3; k++) {
             if (sdata->inited[row]) {
               if (!inplace) {
-                dst[orow * i + j + k] = ((char)(old_pixel_data[width * i + j + k])
+                dst[orow * i + j + k] = ((char)(old_pixel_data[width * i + l + k])
                   + (char)(src[irow * i + j + k])) >> 1;
-                old_pixel_data[width * i + j + k] = src[irow * i + j + k];
+                old_pixel_data[width * i + l + k] = src[irow * i + j + k];
               } else {
-                val = ((char)(old_pixel_data[width * i + j + k]) + (char)(src[irow * i + j + k])) >> 1;
-                old_pixel_data[width * i + j + k] = src[irow * i + j + k];
+                val = ((char)(old_pixel_data[width * i + l + k]) + (char)(src[irow * i + l + k])) >> 1;
+                old_pixel_data[width * i + l + k] = src[irow * i + j + k];
                 dst[orow * i + j + k] = val;
               }
-            } else old_pixel_data[width * i + j + k] = dst[orow * i + j + k] = src[irow * i + j + k];
+            } else old_pixel_data[width * i + l + k] = dst[orow * i + j + k] = src[irow * i + j + k];
           }
         }
         sdata->inited[row + i] = 1;

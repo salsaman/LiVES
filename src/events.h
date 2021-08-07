@@ -141,7 +141,7 @@ weed_event_t *append_filter_init_event(weed_event_t *event_list, ticks_t tc,
                                        int filter_idx, int num_in_tracks, int key, weed_plant_t *inst) WARN_UNUSED;
 weed_event_t *append_filter_deinit_event(weed_event_t *event_list, ticks_t tc,
     void *init_event, void **pchain) WARN_UNUSED;
-weed_event_t *append_filter_map_event(weed_event_t *event_list, ticks_t tc, void **init_events) WARN_UNUSED;
+weed_event_t *append_filter_map_event(weed_event_t *event_list, ticks_t tc, weed_event_t **init_events) WARN_UNUSED;
 weed_event_t *append_param_change_event(weed_event_t *event_list, ticks_t tc, int pnum,
                                         weed_plant_t *param, void *init_event, void **pchain) WARN_UNUSED;
 weed_event_t *append_marker_event(weed_event_t *event_list, ticks_t tc, int marker_type) WARN_UNUSED;
@@ -326,7 +326,7 @@ boolean insert_filter_map_event_at(weed_plant_t *event_list, weed_plant_t *at_ev
                                    boolean before_frames);
 weed_plant_t *get_filter_map_before(weed_plant_t *event, int ctrack, weed_plant_t *stop_event);
 weed_plant_t *get_filter_map_after(weed_plant_t *event, int ctrack);
-void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, boolean add);
+weed_event_t **get_init_events_before(weed_event_t *event, weed_event_t *init_event, boolean add);
 void update_filter_maps(weed_plant_t *event, weed_plant_t *end_event, weed_plant_t *init_event);
 void insert_param_change_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);
 weed_plant_t *insert_marker_event_at(weed_plant_t *event_list, weed_plant_t *at_event, int marker_type, livespointer data);

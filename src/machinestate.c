@@ -1519,8 +1519,8 @@ LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size
 
 #define HASHROOT 5381
 LIVES_GLOBAL_INLINE uint32_t lives_string_hash(const char *st) {
-  if (st) for (uint32_t hash = HASHROOT;; hash += (hash << 5)
-                 + * (st++)) if (!(*st)) return hash;
+  if (st && *st) for (uint32_t hash = HASHROOT;; hash += (hash << 5)
+                        + * (st++)) if (!(*st)) return hash;
   return 0;
 }
 
@@ -2477,7 +2477,7 @@ char *get_wid_for_name(const char *wname) {
 	}
 	lives_chomp(buff2, FALSE);
 	if (!lives_strcmp(wname, buff2)) {
-	  wid = lives_strdup_printf("0x%lX", atol(lines[l]));
+	  wid = lives_strdup_printf("0x%lX", lives_strtol(lines[l]));
 	  break;
 	}
       }
@@ -2485,11 +2485,92 @@ char *get_wid_for_name(const char *wname) {
     }
   }
   if (wid) {
-    g_print("GOT xxxxxxwm wid %s\n", wid);
+    //g_print("GOT xxxxxxwm wid %s\n", wid);
     return wid;
   }
   return wid;
 #endif
+}
+
+
+boolean lives_reenable_screensaver(void) {
+  char *com = NULL, *tmp;
+#ifdef GDK_WINDOWING_X11
+  uint64_t awinid = lives_xwindow_get_xwinid(capable->wm_caps.root_window, NULL);
+  com = lives_strdup_printf("%s s on 2>%s; %s +dpms 2>%s;",
+			    EXEC_XSET, LIVES_DEVNULL, EXEC_XSET, LIVES_DEVNULL);
+  if (capable->has_gconftool_2) {
+    char *xnew = lives_strdup_printf(" %s --set --type bool /apps/gnome-screensaver/"
+				     "idle_activation_enabled true 2>/dev/null ;",
+				     EXEC_GCONFTOOL_2);
+    tmp = lives_strconcat(com, xnew, NULL);
+    lives_free(com); lives_free(xnew);
+    com = tmp;
+  }
+  if (capable->has_xdg_screensaver && awinid) {
+    char *xnew = lives_strdup_printf(" %s resume %" PRIu64 " 2>%s;",
+				     EXEC_XDG_SCREENSAVER, awinid, LIVES_DEVNULL);
+    tmp = lives_strconcat(com, xnew, NULL);
+    lives_free(com); lives_free(xnew);
+    com = tmp;
+  }
+#else
+  if (capable->has_gconftool_2) {
+    com = lives_strdup_printf("%s --set --type bool /apps/gnome-screensaver/"
+			      "idle_activation_enabled true 2>%s;",
+			      EXEC_GCONFTOOL_2, LIVES_DEVNULL);
+  } else com = lives_strdup("");
+#endif
+
+  if (com) {
+    lives_cancel_t cancelled = mainw->cancelled;
+    lives_system(com, TRUE);
+    lives_free(com);
+    mainw->cancelled = cancelled;
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+boolean lives_disable_screensaver(void) {
+  char *com = NULL, *tmp;
+
+#ifdef GDK_WINDOWING_X11
+  uint64_t awinid = lives_xwindow_get_xwinid(capable->wm_caps.root_window, NULL);
+
+  com = lives_strdup_printf("%s s off 2>%s; %s -dpms 2>%s;",
+			    EXEC_XSET, LIVES_DEVNULL, EXEC_XSET, LIVES_DEVNULL);
+
+  if (capable->has_gconftool_2) {
+    char *xnew = lives_strdup_printf(" %s --set --type bool /apps/gnome-screensaver/"
+				     "idle_activation_enabled false 2>%s;",
+				     EXEC_GCONFTOOL_2, LIVES_DEVNULL);
+    tmp = lives_concat(com, xnew);
+    com = tmp;
+  }
+  if (capable->has_xdg_screensaver && awinid) {
+    char *xnew = lives_strdup_printf(" %s suspend %" PRIu64 " 2>%s;",
+				     EXEC_XDG_SCREENSAVER, awinid, LIVES_DEVNULL);
+    tmp = lives_concat(com, xnew);
+    com = tmp;
+  }
+#else
+  if (capable->has_gconftool_2) {
+    com = lives_strdup_printf("%s --set --type bool /apps/gnome-screensaver/"
+			       "idle_activation_enabled false 2>%s;",
+			       EXEC_GCONFTOOL_2, LIVES_DEVNULL);
+  } else com = lives_strdup("");
+#endif
+
+  if (com) {
+    lives_cancel_t cancelled = mainw->cancelled;
+    lives_system(com, TRUE);
+    lives_free(com);
+    mainw->cancelled = cancelled;
+    return TRUE;
+  }
+  return FALSE;
 }
 
 

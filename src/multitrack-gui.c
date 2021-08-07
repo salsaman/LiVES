@@ -1,3 +1,4 @@
+
 // multitrack-gui.c
 // LiVES
 // (c) G. Finch 2005 - 2020 <salsaman+lives@gmail.com>
@@ -233,7 +234,7 @@ static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox, user_data) {
 
   bgimage = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox), "bgimg");
 
-  if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox), "drawn"))) {
+  if (GET_INT_DATA(ebox, DRAWN_KEY)) {
     if (bgimage) {
       lives_painter_set_source_surface(cairo, bgimage, startx, starty);
       lives_painter_rectangle(cairo, startx, starty, width, height);
@@ -266,7 +267,7 @@ static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox, user_data) {
 
   if (bgimage) {
     draw_soundwave(ebox, bgimage, channum, mt);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ebox), "drawn", LIVES_INT_TO_POINTER(TRUE));
+    SET_INT_DATA(ebox, DRAWN_KEY, TRUE);
     lives_widget_queue_draw(ebox);
   } else if (bgimage) {
     lives_painter_surface_destroy(bgimage);
@@ -987,7 +988,7 @@ void mt_draw_aparams(lives_mt * mt, LiVESWidget * eventbox, lives_painter_t *cr,
 void mt_redraw_eventbox(lives_mt * mt, LiVESWidget * eventbox) {
   if (!LIVES_IS_WIDGET_OBJECT(eventbox)) return;
 
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "drawn", LIVES_INT_TO_POINTER(FALSE));
+  SET_INT_DATA(eventbox, DRAWN_KEY, FALSE);
   lives_widget_queue_draw(eventbox);  // redraw the track
 
   if (is_audio_eventbox(eventbox)) {
@@ -995,11 +996,11 @@ void mt_redraw_eventbox(lives_mt * mt, LiVESWidget * eventbox) {
     LiVESWidget *xeventbox;
     if (mainw->files[mt->render_file]->achans > 0) {
       xeventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "achan0");
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "drawn", LIVES_INT_TO_POINTER(FALSE));
+      SET_INT_DATA(xeventbox, DRAWN_KEY, FALSE);
       lives_widget_queue_draw(xeventbox);  // redraw the track
       if (mainw->files[mt->render_file]->achans > 1) {
         xeventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "achan1");
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "drawn", LIVES_INT_TO_POINTER(FALSE));
+        SET_INT_DATA(xeventbox, DRAWN_KEY, FALSE);
         lives_widget_queue_draw(xeventbox);  // redraw the track
       }
     }
@@ -1060,6 +1061,9 @@ static EXPOSE_FN_DECL(expose_track_event, eventbox, user_data) {
 
   bgimage = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg");
 
+  lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+  lives_widget_context_update();
+
 draw1:
 #if !GTK_CHECK_VERSION(3, 22, 0)
   if (!cairo) cr = lives_painter_create_from_surface(bgimage);
@@ -1068,7 +1072,7 @@ draw1:
   cr = cairo;
 #endif
 
-  if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "drawn"))) {
+  if (GET_INT_DATA(eventbox, DRAWN_KEY)) {
     if (bgimage) {
       lives_painter_set_source_surface(cr, bgimage, startx, starty);
       lives_painter_rectangle(cr, startx, starty, width, height);
@@ -1085,6 +1089,7 @@ draw1:
         mt->idlefunc = mt_idle_add(mt);
       }
       if (!cairo) lives_painter_destroy(cr);
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
       return TRUE;
     }
@@ -1099,8 +1104,6 @@ draw1:
   bgimage = lives_widget_create_painter_surface(eventbox);
 
   if (bgimage) {
-    lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-
     if (palette->style & STYLE_1) {
       lives_painter_t *crx = lives_painter_create_from_surface(bgimage);
       lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->mt_evbox);
@@ -1127,14 +1130,13 @@ draw1:
       sblock->state = BLOCK_SELECTED;
     }
 
-    lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   } else if (bgimage) {
     lives_painter_surface_destroy(bgimage);
     bgimage = NULL;
   }
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg", (livespointer)bgimage);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "drawn", LIVES_INT_TO_POINTER(bgimage != NULL));
+  SET_INT_DATA(eventbox, DRAWN_KEY, bgimage != NULL);
 
   if (bgimage) goto draw1;
 
@@ -1142,6 +1144,7 @@ draw1:
     mt->idlefunc = mt_idle_add(mt);
   }
 
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   return TRUE;
 }
 EXPOSE_FN_END

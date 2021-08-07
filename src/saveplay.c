@@ -2022,7 +2022,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
 }
 
 
-char *prep_audio_player(char *com2, char *com3, frames_t audio_end, int arate, int asigned, int aendian) {
+char *prep_audio_player(frames_t audio_end, int arate, int asigned, int aendian) {
   char *stfile = NULL;
   char *stopcom = NULL, *com;
   short audio_player = prefs->audio_player;
@@ -2053,34 +2053,31 @@ char *prep_audio_player(char *com2, char *com3, frames_t audio_end, int arate, i
 
   // deprecated
 
-  else if (audio_player != AUD_PLAYER_NONE && cfile->achans > 0) {
+  else if (audio_player != AUD_PLAYER_NONE) {
     // sox or mplayer audio - run as background process
     char *clipdir;
-    if (com3) {
-      if (mainw->loop_cont) {
-        // tell audio to loop forever
-        loop = -1;
+    char *com3 = NULL;
+
+    if (mainw->loop_cont) {
+      // tell audio to loop forever
+      loop = -1;
+    }
+
+    clipdir = get_clip_dir(mainw->current_file);
+    stfile = lives_build_filename(clipdir, ".stoploop", NULL);
+    lives_free(clipdir);
+    lives_rm(stfile);
+
+    if (cfile->achans > 0 || (!cfile->is_loaded && !mainw->is_generating)) {
+      if (loop) {
+        com3 = lives_strdup_printf("%s \"%s\" 2>\"%s\" 1>&2", capable->touch_cmd,
+                                   stfile, prefs->cmd_log);
       }
 
-      clipdir = get_clip_dir(mainw->current_file);
-      stfile = lives_build_filename(clipdir, ".stoploop", NULL);
-      lives_free(clipdir);
-      lives_rm(stfile);
-
-      if (cfile->achans > 0 || (!cfile->is_loaded && !mainw->is_generating)) {
-        if (loop) {
-          lives_free(com3);
-          com3 = lives_strdup_printf("%s \"%s\" 2>\"%s\" 1>&2", capable->touch_cmd,
-                                     stfile, prefs->cmd_log);
-        }
-
-        if (com2) {
-          if (cfile->achans > 0) {
-            com2 = lives_strdup_printf("%s stop_audio %s", prefs->backend_sync, cfile->handle);
-          }
-          stopcom = lives_strconcat(com3, com2, NULL);
-        }
-      }
+      if (cfile->achans > 0) {
+        char *com2 = lives_strdup_printf("%s stop_audio %s", prefs->backend_sync, cfile->handle);
+        if (com3) stopcom = lives_strconcat(com3, com2, NULL);
+      } else stopcom = com3;
     }
 
     lives_freep((void **)&stfile);
@@ -2219,16 +2216,8 @@ void play_file(void) {
   LiVESList *cliplist;
   weed_plant_t *pb_start_event = NULL;
 
-#ifdef GDK_WINDOWING_X11
-  uint64_t awinid = -1;
-#endif
-
-  char *com, *com2 = lives_strdup(" "), *com3 = lives_strdup(" ");
   char *stopcom = NULL;
   char *stfile;
-#ifdef GDK_WINDOWING_X11
-  char *tmp;
-#endif
 
   double pointer_time = cfile->pointer_time;
   double real_pointer_time = cfile->real_pointer_time;
@@ -2451,6 +2440,7 @@ void play_file(void) {
 
   if (mainw->record) {
     if (mainw->event_list) event_list_free(mainw->event_list);
+    mainw->event_list = NULL;
     mainw->record_starting = TRUE;
   }
 
@@ -2535,51 +2525,9 @@ void play_file(void) {
     }
   }
 
-  // moved down because xdg-screensaver requires a mapped windowID
   if (prefs->stop_screensaver) {
-    lives_freep((void **)&com2);
-#ifdef GDK_WINDOWING_X11
-    if (!prefs->show_gui && prefs->show_playwin && mainw->play_window) {
-      awinid = lives_widget_get_xwinid(mainw->play_window, NULL);
-    } else if (prefs->show_gui) {
-      awinid = lives_widget_get_xwinid(LIVES_MAIN_WINDOW_WIDGET, NULL);
-    }
-
-    com2 = lives_strdup("xset s off 2>/dev/null; xset -dpms 2>/dev/null ;");
-
-    if (capable->has_gconftool_2) {
-      char *xnew = lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/"
-                                "idle_activation_enabled false 2>/dev/null ;");
-      tmp = lives_concat(com2, xnew);
-      com2 = tmp;
-    }
-    if (capable->has_xdg_screensaver && awinid != -1) {
-      char *xnew = lives_strdup_printf(" xdg-screensaver suspend %"PRIu64" 2>/dev/null ;", awinid);
-      tmp = lives_concat(com2, xnew);
-      com2 = tmp;
-    }
-#else
-    if (capable->has_gconftool_2) {
-      com2 = lives_strdup("gconftool-2 --set --type bool /apps/gnome-screensaver/"
-                          "idle_activation_enabled false 2>/dev/null ;");
-    } else com2 = lives_strdup("");
-#endif
-    if (!com2) com2 = lives_strdup("");
+    lives_disable_screensaver();
   }
-
-  if (!mainw->foreign && prefs->midisynch && !mainw->preview) {
-    lives_free(com3);
-    com3 = lives_strdup(EXEC_MIDISTART);
-  }
-  com = lives_strconcat(com2, com3, NULL);
-  if (*com) {
-    // allow this to fail - not all sub-commands may be present
-    lives_system(com, TRUE);
-  }
-  lives_freep((void **)&com);
-  lives_freep((void **)&com2);
-  lives_free(com3);
-  com3 = lives_strdup(" ");
 
   if (!mainw->multitrack) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
@@ -2611,10 +2559,14 @@ void play_file(void) {
   if (!mainw->foreign && (!(prefs->audio_src == AUDIO_SRC_EXT &&
                             (audio_player == AUD_PLAYER_JACK ||
                              audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE)))) {
-    stopcom = prep_audio_player(com2, com3, audio_end, arate, asigned, aendian);
+    stopcom = prep_audio_player(audio_end, arate, asigned, aendian);
   }
 
-  lives_free(com3);
+  if (!mainw->foreign && prefs->midisynch && !mainw->preview) {
+    char *com3 = lives_strdup(EXEC_MIDISTART);
+    lives_system(com3, TRUE);
+    lives_free(com3);
+  }
 
   if (mainw->play_window && !mainw->multitrack) lives_widget_hide(mainw->preview_controls);
 
@@ -2780,9 +2732,9 @@ void play_file(void) {
             mainw->pulsed->read_abuf = 0;
             mainw->abufs_to_fill = 0;
             pthread_mutex_unlock(&mainw->abuf_mutex);
-            if (mainw->event_list) {
-              mainw->pulsed->in_use = TRUE;
-            }
+            /* if (mainw->event_list) { */
+            /*   mainw->pulsed->in_use = TRUE; */
+            /* } */
           }
 #endif
         }
@@ -3021,14 +2973,6 @@ void play_file(void) {
       }
     } else {
 #endif
-      if (!is_realtime_aplayer(audio_player) && stopcom) {
-        lives_cancel_t cancelled = mainw->cancelled;
-        // kill sound (if still playing)
-        lives_system(stopcom, TRUE);
-        mainw->aud_file_to_kill = -1;
-        lives_free(stopcom);
-        mainw->cancelled = cancelled;
-      }
 #ifdef ENABLE_JACK
     }
 #endif
@@ -3036,7 +2980,6 @@ void play_file(void) {
   }
 #endif
 
-  lives_freep((void **)&com);
   lives_freep((void **)&mainw->urgency_msg);
   mainw->actual_frame = 0;
 
@@ -3070,38 +3013,7 @@ void play_file(void) {
 
   // PLAY FINISHED...
 
-  // allow this to fail - not all sub-commands may be present
-  if (prefs->stop_screensaver) {
-#ifdef GDK_WINDOWING_X11
-    com = lives_strdup("xset s on 2>/dev/null; xset +dpms 2>/dev/null ;");
-
-    if (capable->has_gconftool_2) {
-      char *xnew = lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/"
-                                "idle_activation_enabled true 2>/dev/null ;");
-      tmp = lives_strconcat(com, xnew, NULL);
-      lives_free(com); lives_free(xnew);
-      com = tmp;
-    }
-    if (capable->has_xdg_screensaver && awinid != -1) {
-      char *xnew = lives_strdup_printf(" xdg-screensaver resume %"PRIu64" 2>/dev/null ;", awinid);
-      tmp = lives_strconcat(com, xnew, NULL);
-      lives_free(com); lives_free(xnew);
-      com = tmp;
-    }
-#else
-    if (capable->has_gconftool_2) {
-      com = lives_strdup("gconftool-2 --set --type bool /apps/gnome-screensaver/"
-                         "idle_activation_enabled true 2>/dev/null ;");
-    } else com = lives_strdup("");
-#endif
-
-    if (com) {
-      lives_cancel_t cancelled = mainw->cancelled;
-      lives_system(com, TRUE);
-      lives_free(com);
-      mainw->cancelled = cancelled;
-    }
-  }
+  if (prefs->stop_screensaver) lives_reenable_screensaver();
 
   if (mainw->play_window) {
     if (prefs->show_gui) {
@@ -3128,13 +3040,13 @@ void play_file(void) {
   // we could have started by playing a generator, which could've been closed
   if (!mainw->files[current_file]) current_file = mainw->current_file;
 
-  if (!is_realtime_aplayer(audio_player)) {
-    // wait for audio_ended...
-    if (cfile->achans > 0 && com2) {
-      wait_for_stop(com2);
-      mainw->aud_file_to_kill = -1;
-    }
-    lives_freep((void **)&com2);
+  if (!APLAYER_REALTIME && stopcom) {
+    lives_cancel_t cancelled = mainw->cancelled;
+    // kill sound (if still playing)
+    wait_for_stop(stopcom);
+    mainw->aud_file_to_kill = -1;
+    lives_free(stopcom);
+    mainw->cancelled = cancelled;
   }
 
   if (CURRENT_CLIP_IS_NORMAL) {

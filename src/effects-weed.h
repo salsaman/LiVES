@@ -108,6 +108,8 @@ typedef enum {
 
 #define LIVES_LEAF_SOFT_DEINIT "host_soft_deinit"
 
+#define LIVES_LEAF_NOQUANT "host_noquant"
+
 // compound plugins
 #define WEED_LEAF_HOST_INTERNAL_CONNECTION "host_internal_connection" // for chain plugins
 #define WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE "host_internal_connection_autoscale" // for chain plugins
@@ -336,8 +338,13 @@ int rte_fg_gen_mode(void) GNU_PURE;
 ////////////////////////////////////////////////////////////////////////
 
 char *get_weed_display_string(weed_plant_t *inst, int pnum);
+
 weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list);
 weed_plant_t *add_filter_init_events(weed_plant_t *event_list, ticks_t tc);
+
+boolean record_filter_init(int key);
+boolean record_filter_deinit(int key);
+
 void deinit_render_effects(void);
 void deinit_easing_effects(void);
 

@@ -928,22 +928,23 @@ weed_plant_t *get_filter_map_before(weed_plant_t *event, int ctrack, weed_plant_
 }
 
 
-void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, boolean add) {
+weed_event_t **get_init_events_before(weed_event_t *event, weed_event_t *init_event, boolean add) {
   // find previous FILTER_MAP event, and append or delete new init_event
-  void **init_events = NULL, **new_init_events;
+  weed_event_t **init_events = NULL, **new_init_events;
   int error, num_init_events = 0;
   register int i, j = 0;
 
   while (event) {
     if (WEED_EVENT_IS_FILTER_MAP(event)) {
-      if ((init_events = weed_get_voidptr_array_counted(event, WEED_LEAF_INIT_EVENTS, &num_init_events)) != NULL) {
-        if (add) new_init_events = (void **)lives_malloc((num_init_events + 2) * sizeof(void *));
-        else new_init_events = (void **)lives_malloc((num_init_events + 1) * sizeof(void *));
+      if ((init_events =
+             (weed_event_t **)weed_get_voidptr_array_counted(event, WEED_LEAF_INIT_EVENTS, &num_init_events)) != NULL) {
+        if (add) new_init_events = (weed_event_t **)lives_malloc((num_init_events + 2) * sizeof(weed_event_t *));
+        else new_init_events = (weed_event_t **)lives_malloc((num_init_events + 1) * sizeof(weed_event_t *));
 
-        for (i = 0; i < num_init_events; i++) if ((add || (init_event && (init_events[i] != (void *)init_event))) &&
+        for (i = 0; i < num_init_events; i++) if ((add || (init_event && (init_events[i] != init_event))) &&
               init_events[0]) {
             new_init_events[j++] = init_events[i];
-            if (add && init_events[i] == (void *)init_event) add = FALSE; // don't add twice
+            if (add && init_events[i] == init_event) add = FALSE; // don't add twice
           }
 
         if (add) {
@@ -958,7 +959,7 @@ void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, boo
               // add before the audio mixer
               continue;
             }
-            fhash = weed_get_string_value((weed_plant_t *)init_events[k], WEED_LEAF_FILTER, &error);
+            fhash = weed_get_string_value(init_events[k], WEED_LEAF_FILTER, &error);
             filter = get_weed_filter(weed_get_idx_for_hashname(fhash, TRUE));
             lives_free(fhash);
             if (weed_plant_has_leaf(filter, WEED_LEAF_FLAGS)) {
@@ -976,7 +977,7 @@ void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, boo
           for (l = j - 1; l >= k; l--) {
             new_init_events[l + 1] = new_init_events[l];
           }
-          new_init_events[k] = (void *)init_event;
+          new_init_events[k] = init_event;
           j++;
         }
 
@@ -990,11 +991,11 @@ void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, boo
   }
   // no previous init_events found
   if (add) {
-    new_init_events = (void **)lives_malloc(2 * sizeof(void *));
-    new_init_events[0] = (void *)init_event;
+    new_init_events = (weed_event_t **)lives_malloc(2 * sizeof(weed_event_t *));
+    new_init_events[0] = init_event;
     new_init_events[1] = NULL;
   } else {
-    new_init_events = (void **)lives_malloc(sizeof(void *));
+    new_init_events = (weed_event_t **)lives_malloc(sizeof(weed_event_t *));
     new_init_events[0] = NULL;
   }
   return new_init_events;
@@ -1416,7 +1417,7 @@ weed_event_list_t *append_marker_event(weed_event_list_t *event_list,
   weed_set_int_value(event, WEED_LEAF_LIVES_TYPE, marker_type);
 
 #ifdef DEBUG_EVENTS
-  g_print("adding marker event %p at tc %"PRId64"\n", init_events[0], tc);
+  g_print("adding marker event %p at tc %"PRId64"\n", event, tc);
 #endif
 
   if (set_event_ptrs(event_list, event) != WEED_SUCCESS) return NULL;
@@ -1493,7 +1494,7 @@ void remove_filter_from_event_list(weed_plant_t *event_list, weed_plant_t *init_
   weed_plant_t *deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
   weed_plant_t *event = init_event;
   weed_plant_t *filter_map = get_filter_map_before(init_event, LIVES_TRACK_ANY, NULL);
-  void **new_init_events;
+  weed_event_t **new_init_events;
   weed_timecode_t deinit_tc = get_event_timecode(deinit_event);
   weed_plant_t *event_next;
 
@@ -1506,7 +1507,7 @@ void remove_filter_from_event_list(weed_plant_t *event_list, weed_plant_t *init_
       new_init_events = get_init_events_before(event, init_event, FALSE);
       for (i = 0; new_init_events[i]; i++);
       if (i == 0) weed_set_voidptr_value(event, WEED_LEAF_INIT_EVENTS, NULL);
-      else weed_set_voidptr_array(event, WEED_LEAF_INIT_EVENTS, i, new_init_events);
+      else weed_set_voidptr_array(event, WEED_LEAF_INIT_EVENTS, i, (void **)new_init_events);
       lives_free(new_init_events);
 
       if ((!filter_map && i == 0) || (filter_map && compare_filter_maps(filter_map, event, LIVES_TRACK_ANY)))
@@ -1798,7 +1799,7 @@ void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, we
   weed_timecode_t deinit_tc = get_event_timecode(deinit_event);
   weed_plant_t *event = init_event, *event_next;
   weed_plant_t *filter_map, *copy_filter_map;
-  void **init_events;
+  weed_event_t **init_events;
   int num_inits;
   void **event_types = NULL;
   boolean is_null_filter_map;
@@ -1825,7 +1826,7 @@ void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, we
     event = get_next_frame_event(init_event);
 
     init_events = get_init_events_before(event, init_event, TRUE);
-    event_list = append_filter_map_event(event_list, new_tc, init_events);
+    event_list = append_filter_map_event(event_list, new_tc, (weed_event_t **)init_events);
     lives_free(init_events);
 
     filter_map = get_last_event(event_list);
@@ -1840,7 +1841,7 @@ void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, we
       if (get_event_timecode(event) > tc) break;
       if (WEED_EVENT_IS_FILTER_MAP(event) && filter_map_has_event(event, init_event)) {
         if (weed_plant_has_leaf(event, WEED_LEAF_INIT_EVENTS)) {
-          init_events = weed_get_voidptr_array_counted(event, WEED_LEAF_INIT_EVENTS, &num_inits);
+          init_events = (weed_event_t **)weed_get_voidptr_array_counted(event, WEED_LEAF_INIT_EVENTS, &num_inits);
           if (init_events[0]) {
             event_types = (void **)lives_malloc((num_inits + 1) * sizeof(void *));
             for (i = 0; i < num_inits; i++) {
@@ -1871,7 +1872,7 @@ void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, we
         add_init_event_to_filter_map(copy_filter_map, init_event, event_types);
         filter_map = copy_filter_map;
       } else {
-        init_events = (void **)lives_malloc(2 * sizeof(void *));
+        init_events = (weed_event_t **)lives_malloc(2 * sizeof(weed_event_t *));
         init_events[0] = init_event;
         init_events[1] = NULL;
         event_list = append_filter_map_event(event_list, new_tc, init_events);
@@ -2660,6 +2661,7 @@ void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, w
   weed_timecode_t tc = get_event_timecode(init_event);
 
   boolean is_inst = FALSE;
+  boolean noquant = FALSE;
 
   int num_params, i;
 
@@ -2714,6 +2716,7 @@ void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, w
     weed_set_boolean_value((weed_plant_t *)pchain[i], WEED_LEAF_IS_DEF_VALUE, WEED_TRUE);
 
     insert_param_change_event_at(event_list, init_event, (weed_plant_t *)pchain[i]);
+    if (noquant) weed_set_boolean_value(pchain[i], LIVES_LEAF_NOQUANT, WEED_TRUE);
   }
 
   if (in_pchanges) lives_free(in_pchanges);
@@ -2861,6 +2864,7 @@ weed_event_list_t *append_filter_init_event(weed_event_list_t *event_list,
     weed_set_int_value(event, WEED_LEAF_HOST_MODE, rte_key_getmode(key));
   }
 
+
   ///////////////////////////////////////////////////////////////////////////////////
 #ifdef DEBUG_EVENTS
   g_print("adding init event at tc %"PRId64"\n", tc);
@@ -2897,8 +2901,7 @@ weed_event_list_t *append_filter_deinit_event(weed_event_list_t *event_list,
 
 
 weed_event_list_t *append_param_change_event(weed_event_list_t *event_list,
-    weed_timecode_t tc, int pnum,
-    weed_plant_t *param, void *init_event, void **pchain) {
+    weed_timecode_t tc, int pnum, weed_plant_t *param, void *init_event, void **pchain) {
   weed_event_t *event, *xevent;
   weed_event_t *last_pchange_event;
 
@@ -2935,7 +2938,7 @@ weed_event_list_t *append_param_change_event(weed_event_list_t *event_list,
 
 
 weed_event_list_t *append_filter_map_event(weed_event_list_t *event_list,
-    weed_timecode_t tc, void **init_events) {
+    weed_timecode_t tc, weed_event_t **init_events) {
   weed_event_t *event;
   int i = 0;
 
@@ -2949,10 +2952,10 @@ weed_event_list_t *append_filter_map_event(weed_event_list_t *event_list,
   if (init_events) for (i = 0; init_events[i]; i++);
 
   if (i == 0) weed_set_voidptr_value(event, WEED_LEAF_INIT_EVENTS, NULL);
-  else weed_set_voidptr_array(event, WEED_LEAF_INIT_EVENTS, i, init_events);
+  else weed_set_voidptr_array(event, WEED_LEAF_INIT_EVENTS, i, (void **)init_events);
 
 #ifdef DEBUG_EVENTS
-  g_print("adding map event %p at tc %"PRId64"\n", init_events[0], tc);
+  g_print("adding map event %p with %d init_events at tc %"PRId64"\n", event, i, tc);
 #endif
 
   if (set_event_ptrs(event_list, event) != WEED_SUCCESS) return NULL;
@@ -3221,7 +3224,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       if (i == 2) mainw->blend_file = -1;
 
 #ifdef DEBUG_EVENTS
-      g_print("event: front frame is %d tc %"PRId64" curr_tc=%"PRId64"\n", mainw->frame_index[0], tc, curr_tc);
+      g_print("event: front frame is %"PRId64" tc %"PRId64" curr_tc=%"PRId64"\n", mainw->frame_index[0], tc, curr_tc);
 #endif
       if ((inst = weed_get_plantptr_value(next_event, WEED_LEAF_HOST_EASING_END, NULL))) {
         easing = weed_get_int_value(next_event, WEED_LEAF_EASE_OUT, NULL);
@@ -3294,12 +3297,13 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 
       key = get_next_free_key();
       weed_add_effectkey_by_idx(key + 1, idx);
+
       key_string = lives_strdup_printf("%d", key);
       weed_set_string_value(next_event, WEED_LEAF_HOST_TAG, key_string);
       lives_free(key_string);
 
 #ifdef DEBUG_EVENTS
-      g_print("event: init effect on key %d at tc %"PRId64" curr_tc=%"PRId64"\n", key, tc, curr_tc);
+      g_print("event: init effect (%d) on key %d at tc %"PRId64" curr_tc=%"PRId64"\n", idx, key, tc, curr_tc);
 #endif
       if (weed_plant_has_leaf(next_event, WEED_LEAF_IN_COUNT)) {
         in_count = weed_get_int_array_counted(next_event, WEED_LEAF_IN_COUNT, &num_in_count);
@@ -3454,7 +3458,7 @@ filterinit1:
   case WEED_EVENT_TYPE_FILTER_MAP:
     mainw->filter_map = next_event;
 #ifdef DEBUG_EVENTS
-    g_print("got new effect map\n");
+    g_print("got new filter map %p\n", mainw->filter_map);
 #endif
     break;
   case WEED_EVENT_TYPE_PARAM_CHANGE:
@@ -5754,9 +5758,10 @@ double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int nb
               /// TODO *** make selectable: linear or non-linear
               /* matrix[in_tracks[1] + nbtracks][j] *= lives_vol_from_linear(trans); */
               /* matrix[in_tracks[0] + nbtracks][j] *= lives_vol_from_linear((1. - trans)); */
-              matrix[in_tracks[1] + nbtracks][j] *= trans;
-              matrix[in_tracks[0] + nbtracks][j] *= 1. - trans;
-              matrix[out_tracks[0] + nbtracks][j] = matrix[in_tracks[0] + nbtracks][j] + matrix[in_tracks[1] + nbtracks][j];
+              matrix[in_tracks[1] + nbtracks][j] *= lives_vol_from_linear(trans);
+              matrix[in_tracks[0] + nbtracks][j] *= lives_vol_from_linear(1. - trans);
+              matrix[out_tracks[0] + nbtracks][j] = lives_vol_to_linear(matrix[in_tracks[0] + nbtracks][j]
+                                                    + matrix[in_tracks[1] + nbtracks][j]);
             }
             weed_instance_unref(inst);
           }
@@ -6096,6 +6101,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
           } else {
             lives_tree_store_append(treestore, &iter3, &iter2);
             lives_tree_store_set(treestore, &iter3, VALUE_COLUMN, strval, -1);
+            lives_tree_store_set(treestore, &iter3, DESC_COLUMN, desc, -1);
           }
           lives_freep((void **)&desc);
           lives_freep((void **)&strval);

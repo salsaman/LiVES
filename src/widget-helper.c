@@ -7668,23 +7668,37 @@ WIDGET_HELPER_GLOBAL_INLINE lives_display_t lives_widget_get_display_type(LiVESW
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE uint64_t lives_widget_get_xwinid(LiVESWidget *widget, const char *msg) {
-  uint64_t xwin = -1;
+WIDGET_HELPER_GLOBAL_INLINE lives_display_t lives_xwindow_get_display_type(LiVESXWindow *xwin) {
+  lives_display_t dtype = LIVES_DISPLAY_TYPE_UNKNOWN;
+#ifdef GUI_GTK
+  if (GDK_IS_X11_DISPLAY(gdk_window_get_display(xwin))) dtype = LIVES_DISPLAY_TYPE_X11;
+#ifdef GDK_WINDOWING_WAYLAND
+  else if (GDK_IS_WAYLAND_DISPLAY(gdk_window_get_display(xwin))) dtype = LIVES_DISPLAY_TYPE_WAYLAND;
+#endif
+  else if (GDK_IS_WIN32_DISPLAY(gdk_window_get_display(xwin))) dtype = LIVES_DISPLAY_TYPE_WIN32;
+#endif
+  return dtype;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE uint64_t lives_xwindow_get_xwinid(LiVESXWindow *xwin, const char *msg) {
 #ifdef GUI_GTK
 #ifdef GDK_WINDOWING_X11
-  if (lives_widget_get_display_type(widget) == LIVES_DISPLAY_TYPE_X11)
-    xwin = (uint64_t)GDK_WINDOW_XID(lives_widget_get_xwindow(widget));
-  else
+  if (lives_xwindow_get_display_type(xwin) == LIVES_DISPLAY_TYPE_X11)
+    return GDK_WINDOW_XID(xwin);
 #endif
 #ifdef GDK_WINDOWING_WIN32
-    if (lives_widget_get_display_type(widget) == LIVES_DISPLAY_TYPE_WIN32)
-      xwin = (uint64_t)gdk_win32_window_get_handle(lives_widget_get_xwindow(widget));
-    else
+  if (lives_xwindow_get_display_type(xwin) == LIVES_DISPLAY_TYPE_WIN32)
+    return gdk_win32_window_get_handle(xwin);
 #endif
 #endif
-      if (msg) LIVES_WARN(msg);
+  if (msg) LIVES_WARN(msg);
+  return 0;
+}
 
-  return xwin;
+
+WIDGET_HELPER_GLOBAL_INLINE uint64_t lives_widget_get_xwinid(LiVESWidget *widget, const char *msg) {
+  return lives_xwindow_get_xwinid(lives_widget_get_xwindow(widget), msg);
 }
 
 

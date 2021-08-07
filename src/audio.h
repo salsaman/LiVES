@@ -275,6 +275,8 @@ void audio_free_fnames(void);
 
 #define is_realtime_aplayer(ptype) ((ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE || ptype == AUD_PLAYER_NONE))
 
+#define APLAYER_REALTIME (is_realtime_aplayer(prefs->audio_player))
+
 void preview_aud_vol(void);
 
 lives_audio_buf_t *audio_cache_init(void);

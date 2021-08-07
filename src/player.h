@@ -50,6 +50,8 @@ void player_sensitize(void);
 void init_track_decoders(void);
 void free_track_decoders(void);
 
+boolean record_setup(ticks_t actual_ticks);
+
 boolean load_frame_image(frames_t frame);
 
 void reset_playback_clock(void);

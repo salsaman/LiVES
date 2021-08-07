@@ -66,6 +66,7 @@ typedef struct {
   int var_cancelled;
   int var_core_id;
   boolean var_fx_is_auto;
+  boolean var_fx_is_audio;
   boolean var_com_failed;
   boolean var_no_gui;
   boolean var_force_button_image;

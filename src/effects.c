@@ -1045,8 +1045,6 @@ static boolean _rte_on_off(boolean from_menu, int key) {
   if (mainw->go_away) return TRUE;
   if (!LIVES_IS_INTERACTIVE && from_menu) return TRUE;
 
-  mainw->osc_block = TRUE;
-
   if (key == EFFECT_NONE) {
     // switch off real time effects
     // also switch up/down keys to default (fps change)
@@ -1062,8 +1060,11 @@ static boolean _rte_on_off(boolean from_menu, int key) {
       // switch is ON
       filter_mutex_lock(key);
       if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-        if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) ==  WEED_TRUE) {
+        if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) {
           weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
+          if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+            record_filter_init(key);
+          }
         }
         weed_instance_unref(inst);
       } else {
@@ -1073,7 +1074,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
           mainw->rte &= ~new_rte;
           if (rte_window) rtew_set_keych(key, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
-          mainw->osc_block = FALSE;
+          filter_mutex_unlock(key);
           return TRUE;
         }
       }
@@ -1103,12 +1104,15 @@ static boolean _rte_on_off(boolean from_menu, int key) {
     } else {
       // effect is OFF
       if (THREADVAR(fx_is_auto)) {
-        // SOFT_DIENIT
+        // SOFT_DEINIT
         weed_plant_t *inst, *xinst;
         if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
           weed_set_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, WEED_TRUE);
           filter_mutex_lock(key);
           if ((xinst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) == inst) {
+            if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+              record_filter_deinit(key);
+            }
             mainw->rte &= ~new_rte;
             weed_instance_unref(xinst);
           }
@@ -1136,8 +1140,6 @@ static boolean _rte_on_off(boolean from_menu, int key) {
 	      // *INDENT-OFF*
 	    }}}}}}
       // *INDENT-ON*
-
-  mainw->osc_block = FALSE;
 
   if (mainw->rendered_fx) {
     if (mainw->rendered_fx[0]->menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0]->menuitem)) {
@@ -1188,16 +1190,13 @@ boolean grabkeys_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
     mainw->last_grabbable_effect = fx;
   }
   mainw->rte_keys = mainw->last_grabbable_effect;
-  mainw->osc_block = TRUE;
   if (rte_window) {
     if (group) rtew_set_keygr(mainw->rte_keys);
   }
   if (mainw->rte_keys == -1) {
-    mainw->osc_block = FALSE;
     return TRUE;
   }
   mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
-  mainw->osc_block = FALSE;
   return TRUE;
 }
 

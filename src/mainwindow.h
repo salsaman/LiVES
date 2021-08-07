@@ -455,6 +455,7 @@ enum {
 #define EXEC_CDDA2WAV "cdda2wav"
 #define EXEC_ICEDAX "icedax"
 #define EXEC_GDB "gdb"
+#define EXEC_XSET "xset"
 #define EXEC_XWININFO "xwininfo"
 #define EXEC_GCONFTOOL_2 "gconftool-2"
 #define EXEC_GSETTINGS "gsettings"

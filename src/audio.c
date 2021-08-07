@@ -2929,8 +2929,9 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
             weed_timecode_t delta = tc - last_tc;
             if (nntracks > ntracks) {
               audstate = resize_audstate(audstate, ntracks, nntracks);
+              ntracks = nntracks;
             }
-            for (int i = 0; i < nntracks; i++) {
+            for (int i = 0; i < ntracks; i++) {
               if (delta > 0) {
                 // increase seek values up to current frame
                 audstate[i].seek += audstate[i].vel * delta / TICKS_PER_SECOND_DBL;
@@ -2946,7 +2947,6 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
               }
             }
             lives_free(atstate);
-            if (nntracks > ntracks) ntracks = nntracks;
           }
         }
         break;
@@ -3073,20 +3073,18 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   while (event && (tc = get_event_timecode(event)) < fill_tc) {
     if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
       // got next audio frame
-      render_audio_segment(ntracks, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
+      if (tc > last_tc)
+        render_audio_segment(ntracks, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
       last_tc = tc;
       // process audio updates at this frame
       atstate = audio_frame_to_atstate(event, &nntracks);
 
       if (atstate) {
         for (rr = 0; rr < nntracks; rr++) {
-          if (rr >= ntracks) from_files[rr] = -1;
-          else {
-            if (atstate[rr].afile > 0) {
-              from_files[rr] = atstate[rr].afile;
-              avels[rr] = atstate[rr].vel;
-              aseeks[rr] = atstate[rr].seek;
-            }
+          if (atstate[rr].afile > 0) {
+            from_files[rr] = atstate[rr].afile;
+            avels[rr] = atstate[rr].vel;
+            aseeks[rr] = atstate[rr].seek;
           }
         }
         lives_free(atstate);
@@ -3095,8 +3093,6 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     }
     event = get_next_audio_frame_event(event);
   }
-
-  if (!event) fill_tc = tc;
 
   if (last_tc < fill_tc) {
     // fill the rest of the buffer
@@ -3768,10 +3764,11 @@ static void *cache_my_audio(void *arg) {
 
 
 void wake_audio_thread(void) {
+  pthread_mutex_lock(&mainw->cache_buffer_mutex);
   if (cache_buffer == cache_buffera) cache_buffer = cache_bufferb;
   else cache_buffer = cache_buffera;
-
   if (cache_buffer) cache_buffer->is_ready = FALSE;
+  pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
   pthread_mutex_lock(&cond_mutex);
   pthread_cond_signal(&cond);
@@ -3830,8 +3827,8 @@ void audio_cache_finish(void) {
     return;
   }
   cache_buffera->die = cache_bufferb->die = TRUE; ///< tell cache thread to exit when possible
-  wake_audio_thread();
   pthread_mutex_unlock(&mainw->cache_buffer_mutex);
+  wake_audio_thread();
 }
 
 
@@ -3840,43 +3837,49 @@ void audio_cache_end(void) {
   pthread_join(athread, NULL);
   pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
+  pthread_mutex_lock(&mainw->cache_buffer_mutex);
   if (!mainw->event_list) {
     // free all buffers
     for (int c = 0; c < 2; c++) {
       if (!c) cache_buffer = cache_buffera;
       else cache_buffer = cache_bufferb;
-      for (int i = 0; i < (cache_buffer->_cin_interleaf ? 1 : cache_buffer->_cachans); i++) {
-        if (cache_buffer->buffer8 && cache_buffer->buffer8[i]) lives_free(cache_buffer->buffer8[i]);
-        if (cache_buffer->buffer16 && cache_buffer->buffer16[i]) lives_free(cache_buffer->buffer16[i]);
-        if (cache_buffer->buffer24 && cache_buffer->buffer24[i]) lives_free(cache_buffer->buffer24[i]);
-        if (cache_buffer->buffer32 && cache_buffer->buffer32[i]) lives_free(cache_buffer->buffer32[i]);
-        if (cache_buffer->bufferf && cache_buffer->bufferf[i]) lives_free(cache_buffer->bufferf[i]);
+      if (cache_buffer) {
+        for (int i = 0; i < (cache_buffer->_cin_interleaf ? 1 : cache_buffer->_cachans); i++) {
+          if (cache_buffer->buffer8 && cache_buffer->buffer8[i]) lives_free(cache_buffer->buffer8[i]);
+          if (cache_buffer->buffer16 && cache_buffer->buffer16[i]) lives_free(cache_buffer->buffer16[i]);
+          if (cache_buffer->buffer24 && cache_buffer->buffer24[i]) lives_free(cache_buffer->buffer24[i]);
+          if (cache_buffer->buffer32 && cache_buffer->buffer32[i]) lives_free(cache_buffer->buffer32[i]);
+          if (cache_buffer->bufferf && cache_buffer->bufferf[i]) lives_free(cache_buffer->bufferf[i]);
+        }
+
+        if (cache_buffer->buffer8) lives_free(cache_buffer->buffer8);
+        if (cache_buffer->buffer16) lives_free(cache_buffer->buffer16);
+        if (cache_buffer->buffer24) lives_free(cache_buffer->buffer24);
+        if (cache_buffer->buffer32) lives_free(cache_buffer->buffer32);
+        if (cache_buffer->bufferf) lives_free(cache_buffer->bufferf);
+
+        if (cache_buffer->_filebuffer) lives_free(cache_buffer->_filebuffer);
       }
+    }
 
-      if (cache_buffer->buffer8) lives_free(cache_buffer->buffer8);
-      if (cache_buffer->buffer16) lives_free(cache_buffer->buffer16);
-      if (cache_buffer->buffer24) lives_free(cache_buffer->buffer24);
-      if (cache_buffer->buffer32) lives_free(cache_buffer->buffer32);
-      if (cache_buffer->bufferf) lives_free(cache_buffer->bufferf);
+    if (cache_buffera) {
+      cache_buffer = cache_buffera;
+      cache_buffera = NULL;
+      if (cache_buffer->_fd != -1) lives_close_buffered(cache_buffer->_fd);
+      pthread_mutex_destroy(&cache_buffer->atomic_mutex);
+      lives_free(cache_buffer);
+    }
 
-      if (cache_buffer->_filebuffer) lives_free(cache_buffer->_filebuffer);
+    if (cache_bufferb) {
+      cache_buffer = cache_bufferb;
+      cache_bufferb = NULL;
+      if (cache_buffer->_fd != -1 && (!cache_buffera || cache_buffer->_fd != cache_buffera->_fd))
+        lives_close_buffered(cache_buffer->_fd);
+      pthread_mutex_destroy(&cache_buffer->atomic_mutex);
+      lives_free(cache_buffer);
     }
   }
-
-  if (cache_buffera->_fd != -1) lives_close_buffered(cache_buffera->_fd);
-  if (cache_bufferb->_fd != -1 && cache_bufferb->_fd != cache_buffera->_fd) lives_close_buffered(cache_bufferb->_fd);
-
-  pthread_mutex_destroy(&cache_buffera->atomic_mutex);
-  pthread_mutex_destroy(&cache_bufferb->atomic_mutex);
-
-  // make this threadsafe (kind of)
-  cache_buffer = cache_buffera;
-  cache_buffera = NULL;
-  lives_free(cache_buffer);
-
-  cache_buffer = cache_bufferb;
-  cache_bufferb = NULL;
-  lives_free(cache_buffer);
+  pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK) {
@@ -3886,10 +3889,14 @@ void audio_cache_end(void) {
 }
 
 LIVES_GLOBAL_INLINE lives_audio_buf_t *audio_cache_get_buffer(void) {
+  lives_audio_buf_t *cb;
+  pthread_mutex_lock(&mainw->cache_buffer_mutex);
   if (cache_buffer == cache_buffera)
-    return cache_bufferb;
+    cb = cache_bufferb;
   else
-    return cache_buffera;
+    cb = cache_buffera;
+  pthread_mutex_unlock(&mainw->cache_buffer_mutex);
+  return cb;
 }
 
 

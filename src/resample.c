@@ -610,6 +610,7 @@ void pre_analyse(weed_plant_t *elist) {
 
     boolean allow_jump = FALSE;
     boolean nframe_event_tainted = FALSE;
+    boolean noquant = FALSE;
 
     int *clips = NULL, *naclips = NULL, *nclips = NULL, *pclips = NULL;;
     frames64_t *frames = NULL, *nframes = NULL, *pframes = NULL;
@@ -689,7 +690,12 @@ void pre_analyse(weed_plant_t *elist) {
         /// audio seeks
 
         /// events are added in the standard ordering, i.e filter_inits, param changes, filter map, frame, filter_deinits
-        if (event) in_tc = get_event_timecode(event);
+        noquant = FALSE;
+
+        if (event) {
+          in_tc = get_event_timecode(event);
+          if (weed_get_boolean_value(event, LIVES_LEAF_NOQUANT, NULL) == WEED_TRUE) noquant = TRUE;
+        }
 
         if (event && (is_final == 2 || (in_tc <= stop_tc && is_final != 1))) {
           /// update the state until we pass out_tc
@@ -811,19 +817,31 @@ void pre_analyse(weed_plant_t *elist) {
           case WEED_EVENT_TYPE_FILTER_INIT:
             // add to filter_inits list
             weed_leaf_delete(event, WEED_LEAF_HOST_TAG);
-            init_events = lives_list_prepend(init_events, event);
+            if (noquant) {
+              /// for non-quantised (audio changes from data cons) insert init_event now
+              // otherwise we will insert at frame
+              if (!(xout_list = copy_with_check(event, out_list, in_tc - offset_tc, what, 0, NULL))) {
+                event_list_free(out_list);
+                out_list = NULL;
+                goto q_done;
+              }
+              out_list = xout_list;
+            } else init_events = lives_list_prepend(init_events, event);
             break;
           case WEED_EVENT_TYPE_FILTER_DEINIT:
             /// if init_event is in list, discard it + this event
             init_event = weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, NULL);
-            for (list = init_events; list; list = list->next) {
-              if (list->data == init_event) {
-                if (list->prev) list->prev->next = list->next;
-                else init_events = list->next;
-                if (list->next) list->next->prev = list->prev;
-                list->next = list->prev = NULL;
-                lives_list_free(list);
-                break;
+            if (noquant) list = NULL;
+            else {
+              for (list = init_events; list; list = list->next) {
+                if (list->data == init_event) {
+                  if (list->prev) list->prev->next = list->next;
+                  else init_events = list->next;
+                  if (list->next) list->next->prev = list->prev;
+                  list->next = list->prev = NULL;
+                  lives_list_free(list);
+                  break;
+                }
               }
             }
             if (!list) {
@@ -833,15 +851,25 @@ void pre_analyse(weed_plant_t *elist) {
                 = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, NULL);
               init_event = weed_get_voidptr_value(out_event, WEED_LEAF_INIT_EVENT, NULL);
               weed_leaf_dup(out_event, init_event, WEED_LEAF_IN_PARAMETERS);
-              if (!is_final) deinit_events = lives_list_prepend(deinit_events, event);
-              else {
-                //g_print("adding deinit at %lld\n", out_tc);
-                if (!(xout_list = copy_with_check(event, out_list, out_tc, what, 0, NULL))) {
+              if (noquant) {
+                if (!(xout_list = copy_with_check(event, out_list, in_tc - offset_tc, what, 0, NULL))) {
                   event_list_free(out_list);
                   out_list = NULL;
                   goto q_done;
                 }
                 out_list = xout_list;
+                out_event = get_last_event(out_list);
+              } else {
+                if (!is_final) deinit_events = lives_list_prepend(deinit_events, event);
+                else {
+                  //g_print("adding deinit at %lld\n", out_tc);
+                  if (!(xout_list = copy_with_check(event, out_list, out_tc, what, 0, NULL))) {
+                    event_list_free(out_list);
+                    out_list = NULL;
+                    goto q_done;
+                  }
+                  out_list = xout_list;
+                }
               }
               iitc = weed_event_get_timecode(init_event);
               ddtc = weed_event_get_timecode(out_event);
@@ -859,20 +887,24 @@ void pre_analyse(weed_plant_t *elist) {
             /// param changes just get inserted at whatever timcode,
             // as long as their init_event isn't in the "to be added" list
             init_event = weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, NULL);
-            for (list = init_events; list; list = list->next) {
-              if (list->data == init_event) break;
+            if (noquant) list = NULL;
+            else {
+              for (list = init_events; list; list = list->next) {
+                if (list->data == init_event) break;
+              }
             }
             if (!list) {
               void **pchanges;
               weed_event_t *pch_event, *init_event, *pchange, *npchange;
               int nchanges, pnum;
-              if (!(xout_list = copy_with_check(event, out_list, out_tc, what, 0, &pch_event))) {
+              if (!(xout_list = copy_with_check(event, out_list, noquant ? in_tc - offset_tc : out_tc,
+                                                what, 0, &pch_event))) {
                 event_list_free(out_list);
                 out_list = NULL;
                 goto q_done;
               }
               // now we need to set PREV_CHANGE and NEXT_CHANGE
-              // starting at init_event, we check all init pchanges until we fins the matching INDEX
+              // starting at init_event, we check all init pchanges until we find the matching INDEX
               // then follow the NEXT_CHANGE ptrs until we get to NULL
               // then finally set NEXT_CHANGE to point to event, and PREV_CHANGE to point backwards
 
@@ -883,6 +915,11 @@ void pre_analyse(weed_plant_t *elist) {
               pnum = weed_get_int_value(pch_event, WEED_LEAF_INDEX, NULL);
               for (i = 0; i < nchanges; i++) {
                 pchange = (weed_event_t *)pchanges[i];
+                if (!pchange) {
+                  pchanges[i] = pch_event;
+                  weed_set_voidptr_array(init_event, WEED_LEAF_IN_PARAMETERS, nchanges, pchanges);
+                  break;
+                }
                 if (weed_get_int_value(pchange, WEED_LEAF_INDEX, NULL) == pnum) {
                   npchange = weed_get_voidptr_value((weed_plant_t *)pchange, WEED_LEAF_NEXT_CHANGE, NULL);
                   while (npchange) {
@@ -899,6 +936,14 @@ void pre_analyse(weed_plant_t *elist) {
             break;
           case WEED_EVENT_TYPE_FILTER_MAP:
             /// replace current filter map
+            if (noquant) {
+              if (!(xout_list = copy_with_check(event, out_list, in_tc - offset_tc, what, 0, NULL))) {
+                event_list_free(out_list);
+                out_list = NULL;
+                goto q_done;
+              }
+              out_list = xout_list;
+            }
             filter_map = event;
             break;
           default:

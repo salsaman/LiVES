@@ -1556,7 +1556,7 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   if (!chk_params && !rfx->num_in_channels && (nhid + nouts) > 0) {
     LiVESWidget *label;
     char *txt
-      = lives_big_and_bold(_("Filter has additional paramters which may be used for data connections"));
+      = lives_big_and_bold(_("Filter has additional parameters which may be used for data connections"));
     widget_opts.use_markup = TRUE;
     label = lives_standard_label_new(txt);
     widget_opts.use_markup = FALSE;

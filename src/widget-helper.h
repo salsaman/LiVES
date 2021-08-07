@@ -1009,7 +1009,9 @@ boolean lives_display_warp_pointer(LiVESXDevice *, LiVESXDisplay *, LiVESXScreen
 
 LiVESXDisplay *lives_widget_get_display(LiVESWidget *);
 lives_display_t lives_widget_get_display_type(LiVESWidget *);
+lives_display_t lives_xwindow_get_display_type(LiVESXWindow *);
 
+uint64_t lives_xwindow_get_xwinid(LiVESXWindow *, const char *failure_msg);
 uint64_t lives_widget_get_xwinid(LiVESWidget *, const char *failure_msg);
 LiVESWindow *lives_widget_get_window(LiVESWidget *);
 

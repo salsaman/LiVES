@@ -4485,8 +4485,8 @@ static void _resize_play_window(void) {
           if (mainw->play_window) {
             if (prefs->show_playwin) {
               xwinid = lives_widget_get_xwinid(mainw->play_window, "Unsupported display type for playback plugin");
-              if (xwinid == -1) return;
-            } else xwinid = -1;
+              if (!xwinid) return;
+            } else xwinid = 0;
           }
         }
         if (mainw->ext_playback) {

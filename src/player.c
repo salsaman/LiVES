@@ -338,6 +338,69 @@ static boolean avsync_check(void) {
 }
 
 
+boolean record_setup(ticks_t actual_ticks) {
+  if (mainw->record_starting) {
+#if defined ENABLE_JACK || defined HAVE_PULSE_AUDIO
+    ticks_t audio_timed_out = 1;
+    lives_alarm_t alarm_handle = 0;
+#endif
+
+    if (!mainw->event_list) {
+      mainw->event_list = lives_event_list_new(NULL, NULL);
+    }
+
+    // mark record start
+    mainw->event_list = append_marker_event(mainw->event_list, actual_ticks,
+                                            EVENT_MARKER_RECORD_START);
+
+    if (prefs->rec_opts & REC_EFFECTS) {
+      // add init events and pchanges for all active fx
+      add_filter_init_events(mainw->event_list, actual_ticks);
+    }
+
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd &&
+        (prefs->rec_opts & REC_AUDIO) && prefs->audio_src == AUDIO_SRC_INT
+        && mainw->rec_aclip != mainw->ascrap_file) {
+      alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
+      // wait for audio player message queue clearing
+      lives_nanosleep_until_zero((audio_timed_out = lives_alarm_check(alarm_handle)) > 0
+                                 && jack_get_msgq(mainw->jackd));
+      lives_alarm_clear(alarm_handle);
+      if (audio_timed_out == 0) {
+        mainw->cancelled = handle_audio_timeout();
+        if (mainw->cancelled != CANCEL_NONE)
+          return FALSE;
+      }
+      jack_get_rec_avals(mainw->jackd);
+    }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed &&
+        (prefs->rec_opts & REC_AUDIO) && prefs->audio_src
+        == AUDIO_SRC_INT && mainw->rec_aclip != mainw->ascrap_file) {
+      // get current seek position
+      alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
+      // wait for audio player message queue clearing
+      lives_nanosleep_until_zero((audio_timed_out = lives_alarm_check(alarm_handle)) > 0
+                                 && pulse_get_msgq(mainw->pulsed));
+      lives_alarm_clear(alarm_handle);
+      pulse_get_rec_avals(mainw->pulsed);
+    }
+#endif
+    mainw->record_starting = FALSE;
+    if (audio_timed_out == 0) {
+      mainw->cancelled = handle_audio_timeout();
+      if (mainw->cancelled != CANCEL_NONE)
+        return FALSE;
+    }
+    mainw->record = TRUE;
+    mainw->record_paused = FALSE;
+  }
+  return TRUE;
+}
+
+
 boolean load_frame_image(frames_t frame) {
   // this is where we do the actual load/record of a playback frame
   // it is called every 1/fps from do_progress_dialog() via process_one() in dialogs.c
@@ -363,8 +426,6 @@ boolean load_frame_image(frames_t frame) {
   LiVESInterpType interp;
   double scrap_file_size = -1;
 
-  ticks_t audio_timed_out = 1;
-
   boolean was_preview = FALSE;
   boolean rec_after_pb = FALSE;
   boolean success = FALSE;
@@ -383,10 +444,6 @@ boolean load_frame_image(frames_t frame) {
   int fg_file = mainw->current_file;
   int tgamma = WEED_GAMMA_UNKNOWN;
   boolean was_letterboxed = FALSE;
-
-#if defined ENABLE_JACK || defined HAVE_PULSE_AUDIO
-  lives_alarm_t alarm_handle;
-#endif
 
 #define BFC_LIMIT 1000
   if (LIVES_UNLIKELY(cfile->frames == 0 && !mainw->foreign && !mainw->is_rendering)) {
@@ -444,7 +501,7 @@ boolean load_frame_image(frames_t frame) {
       /////////////////////////////////////////////////
 
       // record performance
-      if ((mainw->record && !mainw->record_paused) || mainw->record_starting) {
+      if ((mainw->record && !mainw->record_paused)) {
         ticks_t actual_ticks;
         int fg_frame = mainw->record_frame;
         int bg_file = IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->current_file
@@ -473,67 +530,7 @@ boolean load_frame_image(frames_t frame) {
         }
 
         //actual_ticks = mainw->clock_ticks;//mainw->currticks;
-        actual_ticks = mainw->startticks; ///< use the "thoretical" time
-
-        if (mainw->record_starting) {
-          if (!mainw->event_list) {
-            mainw->event_list = lives_event_list_new(NULL, NULL);
-          }
-
-          // mark record start
-          mainw->event_list = append_marker_event(mainw->event_list, actual_ticks,
-                                                  EVENT_MARKER_RECORD_START);
-
-          if (prefs->rec_opts & REC_EFFECTS) {
-            // add init events and pchanges for all active fx
-            add_filter_init_events(mainw->event_list, actual_ticks);
-          }
-
-#ifdef ENABLE_JACK
-          if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd &&
-              (prefs->rec_opts & REC_AUDIO) && prefs->audio_src == AUDIO_SRC_INT
-              && mainw->rec_aclip != mainw->ascrap_file) {
-            // get current seek position
-            alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-
-            while ((audio_timed_out = lives_alarm_check(alarm_handle)) > 0
-                   && jack_get_msgq(mainw->jackd)) {
-              // wait for audio player message queue clearing
-              sched_yield();
-              lives_usleep(prefs->sleep_time);
-            }
-            lives_alarm_clear(alarm_handle);
-            if (audio_timed_out == 0) {
-              mainw->cancelled = handle_audio_timeout();
-              goto lfi_done;
-            }
-            jack_get_rec_avals(mainw->jackd);
-          }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-          if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed &&
-              (prefs->rec_opts & REC_AUDIO) && prefs->audio_src
-              == AUDIO_SRC_INT && mainw->rec_aclip != mainw->ascrap_file) {
-            // get current seek position
-            alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-            while ((audio_timed_out = lives_alarm_check(alarm_handle)) > 0
-                   && pulse_get_msgq(mainw->pulsed)) {
-              // wait for audio player message queue clearing
-              sched_yield();
-              lives_usleep(prefs->sleep_time);
-            }
-            lives_alarm_clear(alarm_handle);
-            pulse_get_rec_avals(mainw->pulsed);
-          }
-#endif
-          mainw->record_starting = FALSE;
-          if (audio_timed_out == 0) {
-            mainw->cancelled = handle_audio_timeout();
-            goto lfi_done;
-          }
-          mainw->record = TRUE;
-          mainw->record_paused = FALSE;
-        }
+        actual_ticks = mainw->startticks; ///< use the "theoretical" time
 
         numframes = (bg_file == -1) ? 1 : 2;
         clips = (int *)lives_malloc(numframes * sizint);

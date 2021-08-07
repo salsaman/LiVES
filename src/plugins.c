@@ -703,9 +703,7 @@ LiVESResponseType on_vppa_ok_clicked(boolean direct, _vppaw *vppw) {
               if (prefs->play_monitor != 0) {
                 if (mainw->play_window) {
                   xwinid = lives_widget_get_xwinid(mainw->play_window, "Unsupported display type for playback plugin");
-                  if (xwinid == -1) {
-                    return LIVES_RESPONSE_CANCEL;
-                  }
+                  if (!xwinid) return LIVES_RESPONSE_CANCEL;
                 }
               }
 

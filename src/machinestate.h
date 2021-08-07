@@ -276,6 +276,9 @@ typedef struct {
 void rec_desk(void *args);
 #endif
 
+boolean lives_disable_screensaver(void);
+boolean lives_reenable_screensaver(void);
+
 int get_window_stack_level(LiVESXWindow *, int *nwins);
 
 #define WM_XFWM4 "Xfwm4"

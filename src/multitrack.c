@@ -654,6 +654,8 @@ boolean mt_load_recovery_layout(lives_mt *mt) {
   boolean recovered = TRUE;
   char *aload_file = NULL, *eload_file, *fname;
 
+  lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+
   if (mt) {
     fname = lives_strdup_printf("%s.%d.%d.%d", LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
                                 capable->mainpid);
@@ -728,6 +730,7 @@ boolean mt_load_recovery_layout(lives_mt *mt) {
 
   lives_free(eload_file);
   lives_freep((void **)&aload_file);
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   return recovered;
 }
 
@@ -13276,7 +13279,7 @@ void multitrack_view_details(LiVESMenuItem * menuitem, livespointer user_data) {
 
 static void add_effect_inner(lives_mt * mt, int num_in_tracks, int *in_tracks, int num_out_tracks, int *out_tracks,
                              weed_plant_t *start_event, weed_plant_t *end_event) {
-  void **init_events;
+  weed_event_t **init_events;
 
   weed_event_t *event;
   weed_plant_t *filter = get_weed_filter(mt->current_fx);
@@ -14942,78 +14945,102 @@ boolean multitrack_insert(LiVESMenuItem * menuitem, livespointer user_data) {
     ins_end = mt->insert_end;
   }
 
+#define MIN_AMATCH_SIZE 32768
+#define AMATCH_TRATIO 8192
+#define AMATCH_DELTA 30.
+
   if (mt->opts.insert_mode == INSERT_MODE_AMATCH) {
-    for (int i = 0; i < nvids; i++) {
-      if (i == mt->current_track) continue; ///< cannot transition with self !
-      oblock = get_block_from_time((LiVESWidget *)lives_list_nth_data(mt->video_draws, i),
+    int other;
+    for (other = 0; other < nvids; other++) {
+      if (other == mt->current_track) continue; ///< cannot transition with self !
+      oblock = get_block_from_time((LiVESWidget *)lives_list_nth_data(mt->video_draws, other),
                                    secs + 0.5 / mt->fps, mt);
       if (oblock) break;
     }
 
     if (oblock) {
       // want to find the longest section emd audio in oblock which exactly matches sfile audio start
-      uint64_t hash1 = 0, hash2 = hash1;
-      int fnum = get_audio_frame_clip(oblock->start_event, mt->opts.back_audio_tracks);
+      // other is the other track when applying autotrans
+      int fnum = get_audio_frame_clip(oblock->start_event, other);
       g_print("fnum is %d\n", fnum);
       if (CLIP_HAS_AUDIO(fnum)) {
         lives_clip_t *tfile = mainw->files[fnum];
-        size_t pt2 = tfile->afilesize, mxsize = MAX(pt2, sfile->afilesize), z;
-        char *filename = lives_get_audio_file_name(mt->file_selected);
-        int64_t diff;
-        int afd = lives_open_buffered_rdonly(filename), afd2;
-        short val1, val2;
+        if (tfile->achans == sfile->achans && tfile->arate == sfile->arate && tfile->asampsize == sfile->asampsize
+            && tfile->signed_endian == sfile->signed_endian && tfile->arps == sfile->arps) {
+          size_t pt2 = tfile->afilesize, mxsize = MAX(pt2, sfile->afilesize);
+          ssize_t z, mxlen, zmxlen, minlen, bestz = 0;
+          char *filename = lives_get_audio_file_name(mt->file_selected);
+          uint64_t diff, mindiff = 10000000000000;
+          uint64_t hash1 = 0, hash2 = 0;
+          short val1, val2;
+          int afd = lives_open_buffered_rdonly(filename), afd2;
 
-#define MIN_AMATCH_DIST 8192
-#define AMATCH_TRATIO 8192
-
-        lives_free(filename);
-        lives_buffered_rdonly_slurp(afd, 0);
-        filename = lives_get_audio_file_name(fnum);
-        afd2 = lives_open_buffered_rdonly(filename);
-        lives_free(filename);
-        lives_buffered_rdonly_set_reversed(afd2, TRUE);
-        lives_lseek_buffered_rdonly_absolute(afd2, tfile->afilesize - 3);
-        mxsize >>= 1;
-        for (z = 0; z < mxsize; z += 2) {
-          lives_read_le_buffered(afd2, &val2, 2, TRUE);
-          lives_read_le_buffered(afd, &val1, 2, TRUE);
-          hash1 += (val1 & 0X7F00) >> 13;
-          hash2 += (val2 & 0X7F00) >> 13;
-          if (z > 32768 && (diff = labs(hash1 - hash2)) < AMATCH_TRATIO) break;
-          lives_lseek_buffered_rdonly(afd2, -4);
-        }
-        g_print("GOT Z %ld\n", z);
-        if (z && z < mxsize) {
-          size_t y = z;
-          lives_buffered_rdonly_set_reversed(afd2, FALSE);
-          y = 2;
-          while (z && y) {
-            // align zeros
+          lives_free(filename);
+          lives_buffered_rdonly_slurp(afd, 0);
+          filename = lives_get_audio_file_name(fnum);
+          afd2 = lives_open_buffered_rdonly(filename);
+          lives_free(filename);
+          lives_buffered_rdonly_set_reversed(afd2, TRUE);
+          lives_lseek_buffered_rdonly_absolute(afd2, tfile->afilesize - 3);
+          mxsize >>= 1;
+          // assume the insert point is roughly where we want it
+          zmxlen = get_event_timecode(oblock->end_event) / TICKS_PER_SECOND_DBL - secs;
+          mxlen = (zmxlen + AMATCH_DELTA) * sfile->arps * sfile->achans * (sfile->asampsize >> 3);
+          minlen = (zmxlen - AMATCH_DELTA / 3.) * sfile->arps * sfile->achans * (sfile->asampsize >> 3);
+          if (zmxlen * sfile->arps * sfile->achans * (sfile->asampsize >> 3)
+              > MIN_AMATCH_SIZE && minlen < MIN_AMATCH_SIZE) minlen = MIN_AMATCH_SIZE;
+          if (minlen < 0) minlen = 0;
+          if (mxsize > mxlen) mxsize = mxlen;
+          for (z = 0; z < mxsize; z += 2) {
+            lives_read_le_buffered(afd2, &val2, 2, TRUE);
+            lives_read_le_buffered(afd, &val1, 2, TRUE);
+            hash1 += (val1 & 0X7F00) >> 13;
+            hash2 += (val2 & 0X7F00) >> 13;
+            if (z > minlen) {
+              diff = labs(hash1 - hash2);
+              if (diff < mindiff) {
+                bestz = z;
+                mindiff = diff;
+              }
+              if (diff < AMATCH_TRATIO) break;
+            }
+            lives_lseek_buffered_rdonly(afd2, -4);
+          }
+          g_print("GOT Z %ld %ld %ld %ld %ld %ld\n", zmxlen, z, mindiff, mxsize, mxlen, minlen);
+          if (z == mxsize) z = bestz;
+          if (z) {
+            ssize_t y = z;
+            lives_buffered_rdonly_set_reversed(afd2, FALSE);
             lives_read_le_buffered(afd2, &val2, 2, TRUE);
             lives_read_le_buffered(afd, &val1, 2, TRUE);
             y -= 2;
-            if (!val2) {
-              while (val1) {
-                lives_read_le_buffered(afd, &val1, 2, TRUE);
-                z -= 2;
-                y -= 2;
-              }
-            } else if (!val1) {
-              while (val2) {
-                lives_read_le_buffered(afd2, &val2, 2, TRUE);
-                z -= 2;
-                y -= 2;
-		// *INDENT-OFF*
-	      }}}}
-	// *INDENT-ON*
-        lives_close_buffered(afd);
-        lives_close_buffered(afd2);
-        g_print("oook2 %lu and %lu\n", z, hash2);
-        secs = get_event_timecode(oblock->end_event) / TICKS_PER_SECOND_DBL
-               - (double)(z / (tfile->achans * (tfile->asampsize >> 3))) / (double)tfile->arate;
-        g_print("VALLLLLX %f and %f %f %f\n", secs, get_event_timecode(oblock->end_event) / TICKS_PER_SECOND_DBL,
-                (double)(z / (tfile->achans * (tfile->asampsize >> 3))), (double)tfile->arate);
+            while (y > 0) {
+              // align zeroes
+              // val2 is the TO file
+              lives_read_le_buffered(afd2, &val2, 2, TRUE);
+              lives_read_le_buffered(afd, &val1, 2, TRUE);
+              y -= 2;
+              if (y > 0 && !val1) {
+                while (val2 && y > 0) {
+                  if (z <= minlen) break;
+                  g_print("ZADJ %d\n", val2);
+                  lives_read_le_buffered(afd2, &val2, 2, TRUE);
+                  z -= 2;
+                  y -= 2;
+		  // *INDENT-OFF*
+		}}}}
+	  // *INDENT-ON*
+          lives_close_buffered(afd);
+          lives_close_buffered(afd2);
+          if (z) {
+            g_print("oook2 %lu and %lu\n", z, hash2);
+            secs = get_event_timecode(oblock->end_event) / TICKS_PER_SECOND_DBL
+                   - (double)(z / (tfile->achans * (tfile->asampsize >> 3))) / (double)tfile->arps;
+            g_print("VALLLLLX %f and %f %f %f\n", secs, get_event_timecode(oblock->end_event) / TICKS_PER_SECOND_DBL,
+                    (double)(z / (tfile->achans * (tfile->asampsize >> 3))), (double)tfile->arps);
 
+          }
+        }
       }
     }
   }
@@ -15041,7 +15068,7 @@ boolean multitrack_insert(LiVESMenuItem * menuitem, livespointer user_data) {
 
   mt_backup(mt, MT_UNDO_INSERT_BLOCK, 0);
 
-  insert_frames(mt->file_selected, ins_start, ins_end, secs * TICKS_PER_SECOND, LIVES_DIRECTION_FORWARD, eventbox, mt, NULL);
+  insert_frames(mt->file_selected, ins_start, ins_end, secs * TICKS_PER_SECOND_DBL, LIVES_DIRECTION_FORWARD, eventbox, mt, NULL);
 
   block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "block_last");
 

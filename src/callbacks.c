@@ -4804,8 +4804,10 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (LIVES_IS_PLAYING) {
     // we are playing a clip
     if (!mainw->record || mainw->record_paused) {
+      ticks_t actual_ticks = mainw->startticks; ///< use the "thoretical" time
       // recording is starting
       mainw->record_starting = TRUE;
+      if (!record_setup(actual_ticks)) return;
       toggle_record();
       if ((prefs->rec_opts & REC_AUDIO) && (mainw->agen_key != 0 || mainw->agen_needs_reinit
                                             || prefs->audio_src == AUDIO_SRC_EXT) &&
@@ -6671,7 +6673,7 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, doubl
 
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || preview_type == LIVES_PREVIEW_TYPE_RANGE) {
     xwin = lives_widget_get_xwinid(mainw->fs_playarea, "Unsupported display type for preview.");
-    if (xwin == -1) {
+    if (xwin) {
       end_fs_preview(fchoo, widget);
       lives_free(fsp_info_file);
       lives_widget_set_sensitive(widget, TRUE);

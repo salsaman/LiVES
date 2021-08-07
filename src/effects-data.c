@@ -12,6 +12,7 @@
 #include "effects.h"
 #include "ce_thumbs.h"
 #include "omc-learn.h"
+#include "rte_window.h"
 
 static lives_pconnect_t *spconx;
 static lives_cconnect_t *scconx;
@@ -119,8 +120,10 @@ LIVES_GLOBAL_INLINE void really_deinit_effects(void) {
     if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
       if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) {
         weed_deinit_effect(key);
-      }
-      weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
+        mainw->rte &= ~(GU641 << key);
+        if (rte_window) rtew_set_keych(key, FALSE);
+      } else weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
+      weed_instance_unref(inst);
     }
   }
 }
@@ -815,7 +818,7 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
 
 
 static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, weed_plant_t *dparam, int okey,
-                                        weed_plant_t *sparam, boolean autoscale, boolean is_audio_thread, boolean * toggle_fx) {
+                                        weed_plant_t *sparam, boolean autoscale, boolean * toggle_fx) {
   // try to convert values of various type, if we succeed, copy the "value" and return TRUE (if changed)
   weed_plant_t *dptmpl = NULL, *sptmpl;
 
@@ -1510,6 +1513,8 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
     filter_mutex_unlock(key);
   }
 
+  if (is_audio_thread) THREADVAR(fx_is_audio) = TRUE;
+
   for (i = start; i < nparams; i++) {
     if (okey_needs_unlock) abort();
     //okey_needs_unlock = FALSE;
@@ -1531,13 +1536,13 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
       oinst = NULL;
       /// we need to keep these locked for as little time as possible so as not to hang up the video / audio thread
 
-      filter_mutex_lock(okey);
-      okey_needs_unlock = TRUE;
+      /* filter_mutex_lock(okey); */
+      /* okey_needs_unlock = TRUE; */
 
       if (oparam != active_dummy) {
         oinst = rte_keymode_get_instance(okey + 1, omode);
         if (!oinst) {
-          filter_mutex_unlock(okey);
+          //filter_mutex_unlock(okey);
           if (inst) {
             weed_instance_unref(inst);
           }
@@ -1545,10 +1550,11 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
           return FALSE;
         }
       }
+      //filter_mutex_unlock(okey);
 
       changed = pconx_convert_value_data(inst, i, key, key == FX_DATA_KEY_PLAYBACK_PLUGIN
                                          ? (weed_plant_t *)pp_get_param(mainw->vpp->play_params, i)
-                                         : inparam, okey, oparam, autoscale, is_audio_thread, &toggle_fx);
+                                         : inparam, okey, oparam, autoscale, &toggle_fx);
 
       if (toggle_fx) {
         if (is_audio_thread) {
@@ -1641,7 +1647,7 @@ boolean pconx_chain_data_internal(weed_plant_t *inst) {
           weed_get_boolean_value(in_params[i],
                                  WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE, NULL) == WEED_TRUE) autoscale = TRUE;
       if (pconx_convert_value_data(inst, i, -1, in_params[i], -1, weed_get_plantptr_value(in_params[i],
-                                   WEED_LEAF_HOST_INTERNAL_CONNECTION, NULL), autoscale, FALSE, NULL)) {
+                                   WEED_LEAF_HOST_INTERNAL_CONNECTION, NULL), autoscale, NULL)) {
 
         pflags = weed_get_int_value(in_params[i], WEED_LEAF_FLAGS, NULL);
         if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE;

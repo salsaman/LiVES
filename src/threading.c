@@ -983,13 +983,17 @@ static void *thrdpool(void *arg) {
       if (rc == ETIMEDOUT) {
         if (!pthread_mutex_trylock(&pool_mutex)) {
           npoolthreads--;
-          pthread_mutex_unlock(&pool_mutex);
           tdata->exited = TRUE;
+          lives_widget_context_pop_thread_default(tdata->ctx);
+          pthread_mutex_unlock(&pool_mutex);
           break;
         }
       }
     }
-    if (LIVES_UNLIKELY(threads_die)) break;
+    if (LIVES_UNLIKELY(threads_die)) {
+      lives_widget_context_pop_thread_default(tdata->ctx);
+      break;
+    }
     skip_wait = do_something_useful(tdata);
 #ifdef USE_RPMALLOC
     if (skip_wait) {
@@ -1004,7 +1008,7 @@ static void *thrdpool(void *arg) {
     rpmalloc_thread_finalize();
   }
 #endif
-  lives_widget_context_pop_thread_default(tdata->ctx);
+
   return NULL;
 }
 

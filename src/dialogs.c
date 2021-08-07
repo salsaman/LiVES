@@ -1480,15 +1480,22 @@ static boolean reset_timebase(void) {
       handle_audio_timeout();
       return FALSE;
     }
+    if (mainw->event_list) {
+      mainw->pulsed->in_use = TRUE;
+    }
   }
 #endif
 
 #ifdef ENABLE_JACK
-  if (mainw->jackd) {
-    jack_time_reset(mainw->jackd, 0);
-  }
-  if (mainw->jackd_read) {
-    jack_time_reset(mainw->jackd_read, 0);
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
+    if (mainw->jackd) {
+      jack_time_reset(mainw->jackd, 0);
+    }
+    if (mainw->jackd_read) {
+      jack_time_reset(mainw->jackd_read, 0);
+    }
+    if (mainw->jackd && mainw->event_list)
+      mainw->jackd->in_use = TRUE;
   }
 #endif
 
@@ -1637,22 +1644,24 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
 #ifdef HAVE_PULSE_AUDIO
   // start audio recording now
-  if (mainw->pulsed_read) {
-    pulse_driver_uncork(mainw->pulsed_read);
-  }
-  if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_PULSE &&
-      prefs->ahold_threshold > 0.) {
-    cfile->progress_end = 0;
-    do_threaded_dialog(_("Waiting for external audio"), TRUE);
-    while (mainw->pulsed_read->abs_maxvol_heard < prefs->ahold_threshold && mainw->cancelled == CANCEL_NONE) {
-      lives_usleep(prefs->sleep_time);
-      threaded_dialog_spin(0.);
-      lives_widget_context_update();
+  if (prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_PULSE) {
+    if (mainw->pulsed_read) {
+      pulse_driver_uncork(mainw->pulsed_read);
     }
-    end_threaded_dialog();
-    if (mainw->cancelled != CANCEL_NONE) {
-      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
-      return FALSE;
+
+    if (mainw->record && prefs->ahold_threshold > 0.) {
+      cfile->progress_end = 0;
+      do_threaded_dialog(_("Waiting for external audio"), TRUE);
+      while (mainw->pulsed_read->abs_maxvol_heard < prefs->ahold_threshold && mainw->cancelled == CANCEL_NONE) {
+        lives_usleep(prefs->sleep_time);
+        threaded_dialog_spin(0.);
+        lives_widget_context_update();
+      }
+      end_threaded_dialog();
+      if (mainw->cancelled != CANCEL_NONE) {
+        if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
+        return FALSE;
+      }
     }
   }
 #endif
@@ -1666,6 +1675,12 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     return FALSE;
   }
   //////////////////////////
+
+  if (mainw->record_starting) {
+    if (!record_setup(lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL)))
+      return FALSE;
+  }
+
   //if (mainw->disk_mon & MONITOR_GROWTH) disk_monitor_start(mainw->monitor_dir);
   if ((mainw->disk_mon & MONITOR_QUOTA && prefs->disk_quota)) disk_monitor_start(prefs->workdir);
 

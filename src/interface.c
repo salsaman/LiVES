@@ -381,7 +381,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     start = offset_end;
     if (!cfile->audio_waveform[0]) {
       // re-read the audio
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
       cfile->audio_waveform[0] = (float *)lives_calloc((int)offset_end, sizeof(float));
       start = cfile->aw_sizes[0] = 0;
     } else if (cfile->aw_sizes[0] != offset_end) {
@@ -478,7 +477,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     start = offset_end;
     if (!cfile->audio_waveform[1]) {
       // re-read the audio and force a redraw
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
       cfile->audio_waveform[1] = (float *)lives_calloc((int)offset_end, sizeof(float));
       start = cfile->aw_sizes[1] = 0;
     } else if (cfile->aw_sizes[1] != offset_end) {

@@ -7,6 +7,7 @@
 #include "main.h"
 #include "rte_window.h"
 #include "effects.h"
+#include "interface.h"
 #include "paramwindow.h"
 #include "ce_thumbs.h"
 
@@ -99,8 +100,7 @@ void rtew_set_key_check_state(void) {
   for (i = 0; i < prefs->rte_keys_virtual; i++) {
     lives_signal_handler_block(key_checks[i], ch_fns[i]);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),
-                                   LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(key_checks[i]),
-                                       "active")));
+                                   GET_INT_DATA(key_checks[i], ACTIVE_KEY));
     lives_signal_handler_unblock(key_checks[i], ch_fns[i]);
   }
 }
@@ -150,7 +150,7 @@ boolean on_clear_all_clicked(LiVESButton *button, livespointer user_data) {
   for (i = 0; i < prefs->rte_keys_virtual; i++) {
     if (rte_window) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]), FALSE);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[i]), "active", LIVES_INT_TO_POINTER(FALSE));
+      SET_INT_DATA(key_checks[i], ACTIVE_KEY, FALSE);
     }
     for (j = modes - 1; j >= 0; j--) {
       weed_delete_effectkey(i + 1, j);
@@ -1914,6 +1914,8 @@ boolean on_rtew_delete_event(LiVESWidget * widget, LiVESXEventDelete * event, li
     lives_free(conx_buttons);
     lives_free(clear_buttons);
   }
+  pref_factory_int(PREF_SEPWIN_TYPE, (int *)&prefs->sepwin_type, future_prefs->sepwin_type, FALSE);
+  if (mainw->play_window) resize_play_window();
   return FALSE;
 }
 
@@ -2161,6 +2163,8 @@ static LiVESWidget *create_rte_window(boolean reshow) {
   winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
   winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
+  pref_factory_int(PREF_SEPWIN_TYPE, (int *)&prefs->sepwin_type, SEPWIN_TYPE_NON_STICKY, FALSE);
+
   if (irte_window) {
     if (prefs->rte_keys_virtual != old_rte_keys_virtual ||
         prefs->rte_modes_per_key != old_modes_per_key) {
@@ -2258,11 +2262,11 @@ static LiVESWidget *create_rte_window(boolean reshow) {
     lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]), mainw->rte & (GU641 << i));
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[i]), "active",
-                                 LIVES_INT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
+    SET_INT_DATA(key_checks[i], ACTIVE_KEY,
+                 lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i])));
 
-    ch_fns[i] = lives_signal_connect_after(LIVES_GUI_OBJECT(key_checks[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                           LIVES_GUI_CALLBACK(rte_on_off_callback_fg), LIVES_INT_TO_POINTER(i + 1));
+    ch_fns[i] = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(key_checks[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
+                LIVES_GUI_CALLBACK(rte_on_off_callback_fg), LIVES_INT_TO_POINTER(i + 1));
 
     hbox2 = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
@@ -2294,9 +2298,8 @@ static LiVESWidget *create_rte_window(boolean reshow) {
 
       if (rte_key_getmode(i + 1) == j) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mode_radios[idx]), TRUE);
 
-      mode_ra_fns[idx] = lives_signal_connect_after(LIVES_GUI_OBJECT(mode_radios[idx]), LIVES_WIDGET_TOGGLED_SIGNAL,
+      mode_ra_fns[idx] = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mode_radios[idx]), LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(rtemode_callback_hook), LIVES_INT_TO_POINTER(idx));
-
 
       type_labels[idx] = lives_standard_label_new("");
 
@@ -2452,10 +2455,9 @@ static LiVESWidget *create_rte_window(boolean reshow) {
 
 rte_window_ready:
   // TODO: ignore button clicks until window is fully shown
+  rte_window_is_hidden = FALSE;
 
   if (reshow) {
-    rte_window_is_hidden = FALSE;
-
     //lives_window_set_modal(LIVES_WINDOW(irte_window), TRUE);
     lives_widget_show_all(irte_window);
 
@@ -2481,7 +2483,6 @@ LiVESWidget *refresh_rte_window(void) {
     boolean reshow = FALSE;
     if (!rte_window_is_hidden) {
       reshow = TRUE;
-      lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
       lives_set_cursor_style(LIVES_CURSOR_BUSY, rte_window);
       lives_widget_context_update();
     }
@@ -2490,6 +2491,9 @@ LiVESWidget *refresh_rte_window(void) {
     rte_window = NULL;
     rte_window = create_rte_window(reshow);
     rte_window_set_interactive(prefs->interactive);
+    if (LIVES_IS_PLAYING && mainw->play_window) {
+      resize_play_window();
+    }
   }
   return rte_window;
 }
@@ -2503,9 +2507,8 @@ void on_assign_rte_keys_activate(LiVESMenuItem * menuitem, livespointer user_dat
     rte_window_set_interactive(prefs->interactive);
     lives_widget_show(rte_window);
     if (mainw->play_window && !mainw->fs && (prefs->play_monitor == widget_opts.monitor + 1 || capable->nmonitors == 1)) {
-      lives_widget_hide(mainw->play_window);
+      resize_play_window();
       lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), LIVES_WINDOW(rte_window));
-      lives_widget_show(mainw->play_window);
     }
   }
 }
@@ -2515,7 +2518,7 @@ void rtew_set_keych(int key, boolean on) {
   lives_signal_handler_block(key_checks[key], ch_fns[key]);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[key]), on);
   lives_signal_handler_unblock(key_checks[key], ch_fns[key]);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[key]), "active", LIVES_INT_TO_POINTER(on));
+  SET_INT_DATA(key_checks[key], ACTIVE_KEY, on);
 }
 
 

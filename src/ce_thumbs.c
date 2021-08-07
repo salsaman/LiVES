@@ -19,6 +19,7 @@
 #include "ce_thumbs.h"
 #include "callbacks.h"
 #include "multitrack-gui.h"
+#include "rte_window.h"
 
 static LiVESWidget **fxcombos;
 static LiVESWidget **pscrolls;
@@ -96,8 +97,7 @@ void ce_thumbs_set_key_check_state(void) {
   for (int i = 0; i < prefs->rte_keys_virtual; i++) {
     lives_signal_handler_block(key_checks[i], ch_fns[i]);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),
-                                   LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(key_checks[i]),
-                                       "active")));
+                                   GET_INT_DATA(key_checks[i], ACTIVE_KEY));
     if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i])) && pscrolls[i]) ce_thumbs_remove_param_box(i);
     lives_signal_handler_unblock(key_checks[i], ch_fns[i]);
   }
@@ -111,7 +111,7 @@ void ce_thumbs_set_keych(int key, boolean on) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[key]), on);
   if (!on && pscrolls[key]) ce_thumbs_remove_param_box(key);
   lives_signal_handler_unblock(key_checks[key], ch_fns[key]);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[key]), "active", LIVES_INT_TO_POINTER(on));
+  SET_INT_DATA(key_checks[key], ACTIVE_KEY, on);
 }
 
 
@@ -246,8 +246,9 @@ void start_ce_thumb_mode(void) {
     lives_free(tmp);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]), mainw->rte & (GU641 << i));
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[i]), "active",
-                                 LIVES_INT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
+
+    SET_INT_DATA(key_checks[i], ACTIVE_KEY,
+                 lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i])));
 
     ch_fns[i] = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(key_checks[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
                 LIVES_GUI_CALLBACK(rte_on_off_callback_fg), LIVES_INT_TO_POINTER(i + 1));

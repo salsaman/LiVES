@@ -102,6 +102,7 @@ void get_player_size(int *opwidth, int *opheight) {
 
     /* *opwidth = mainw->pwidth; */
     /* *opheight = mainw->pheight; */
+
     if (mainw->multitrack && prefs->letterbox_mt) {
       rwidth = *opwidth;
       rheight = *opheight;

@@ -25,6 +25,8 @@
 #define FX_DEFS_VERSIONSTRING_1_1 "LiVES filter defaults file version 1.1"
 #define FX_SIZES_VERSIONSTRING_2 "LiVES generator default sizes file version 2"
 
+#define ACTIVE_KEY "active"
+
 void rte_window_set_interactive(boolean interactive);
 
 void check_string_choice_params(weed_plant_t *inst);

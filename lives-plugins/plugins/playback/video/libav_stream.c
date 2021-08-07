@@ -691,7 +691,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     vStream->codec->mb_decision = 2;
   }
 
-  fprintf(stderr, "init_screen2 %d x %d %d\n", width, height, argc);
+  //fprintf(stderr, "init_screen2 %d x %d %d\n", width, height, argc);
 
   /* open video codec */
   if (avcodec_open2(encctx, codec, NULL) < 0) {
@@ -763,7 +763,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   /* open output file */
   if (!(fmtctx->oformat->flags & AVFMT_NOFILE)) {
-    fprintf(stderr, "opening file %s\n", uri);
+    //fprintf(stderr, "opening file %s\n", uri);
     ret = avio_open(&fmtctx->pb, uri, AVIO_FLAG_WRITE);
     if (ret < 0) {
       fprintf(stderr, "Could not open '%s': %s\n", uri,

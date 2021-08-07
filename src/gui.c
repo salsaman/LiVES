@@ -3270,7 +3270,7 @@ void create_LiVES(void) {
 
 void show_lives(void) {
   lives_widget_show_all(mainw->top_vbox);
-  lives_window_set_position(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIN_POS_CENTER_ALWAYS);
+  lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
 
   if (!prefs->show_gui && prefs->startup_interface == STARTUP_CE) {
     lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET); //this calls the config_event()
@@ -4312,6 +4312,7 @@ static void _resize_play_window(void) {
     lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), TRUE);
 
   if (lives_widget_is_visible(mainw->play_window)) {
+    // force reload of preview image
     width = lives_widget_get_allocation_width(mainw->play_window);
     height = lives_widget_get_allocation_height(mainw->play_window);
   }
@@ -4574,7 +4575,6 @@ static void _resize_play_window(void) {
       }
       if (pmonitor > 0 && pmonitor != widget_opts.monitor + 1)
         lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
-      //lives_window_center(LIVES_WINDOW(mainw->play_window));
     }
     if (prefs->show_playwin) {
       lives_window_present(LIVES_WINDOW(mainw->play_window));
@@ -4654,8 +4654,19 @@ static void _resize_play_window(void) {
 
   if (!LIVES_IS_PLAYING || !mainw->fs) {
     lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+    if (!rte_window_hidden()) {
+      nwidth >>= 1;
+      nheight >>= 1;
+      lives_widget_set_size_request(mainw->preview_image, nwidth, nheight);
+      lives_widget_hide(mainw->play_window);
+    }
     lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
-    lives_window_center(LIVES_WINDOW(mainw->play_window));
+    if (!rte_window_hidden()) {
+      lives_widget_show(mainw->play_window);
+      lives_window_uncenter(LIVES_WINDOW(mainw->play_window));
+      lives_window_move(LIVES_WINDOW(mainw->play_window), scr_width - nwidth - scr_width_safety,
+                        scr_height - nheight - scr_height_safety);
+    } else lives_window_center(LIVES_WINDOW(mainw->play_window));
     mainw->pwidth = nwidth;
     mainw->pheight = nheight;
   }

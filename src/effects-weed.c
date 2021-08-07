@@ -6914,7 +6914,6 @@ boolean weed_init_effect(int hotkey) {
   }
 
   idx = key_to_fx[hotkey][key_modes[hotkey]];
-  g_print("IDXXXX is %d for key %d\n", idx, hotkey);
   filter = weed_filters[idx];
 
   inc_count = enabled_in_channels(filter, FALSE);
@@ -7035,7 +7034,6 @@ boolean weed_init_effect(int hotkey) {
     update_widget_vis(NULL, hotkey, key_modes[hotkey]); // redraw our paramwindow
   } else {
     new_instance = weed_instance_from_filter(filter);
-    g_print("SETzzzz inst on key %d to %p (%s)\n", hotkey, new_instance, weed_instance_get_filter_name(new_instance, TRUE));
     // if it is a key effect, set key defaults
     if (hotkey < FX_KEYS_MAX_VIRTUAL && key_defaults[hotkey][key_modes[hotkey]]) {
       // TODO - handle compound fx
@@ -7249,8 +7247,6 @@ deinit2:
   filter_mutex_lock(hotkey);
   key_to_instance[hotkey][key_modes[hotkey]] = inst;
   filter_mutex_unlock(hotkey);
-
-  g_print("SET inst on key %d to %p (%s)\n", hotkey, inst, weed_instance_get_filter_name(inst, TRUE));
 
   // enable param recording, in case the instance was obtained from a param window
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD)) weed_leaf_delete(inst, WEED_LEAF_HOST_NORECORD);
@@ -10127,7 +10123,6 @@ int weed_add_effectkey_by_idx(int key, int idx) {
     if ((enabled_in_channels(weed_filters[idx], FALSE) == 0 && has_non_gen &&
          !all_outs_alpha(weed_filters[idx], TRUE) && has_video_chans_out(weed_filters[idx], TRUE)) ||
         (enabled_in_channels(weed_filters[idx], FALSE) > 0 && has_gen)) return -2;
-    g_print("DO MAPPING %d to %d\n", key, idx);
     key_to_fx[key][i] = idx;
     if (rte_window && !mainw->is_rendering && !mainw->multitrack) {
       // if rte window is visible add to combo box

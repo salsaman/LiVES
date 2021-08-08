@@ -153,7 +153,7 @@ boolean on_clear_all_clicked(LiVESButton *button, livespointer user_data) {
       SET_INT_DATA(key_checks[i], ACTIVE_KEY, FALSE);
     }
     for (j = modes - 1; j >= 0; j--) {
-      weed_delete_effectkey(i + 1, j);
+      weed_delete_effectkey(i, j);
       if (rte_window) {
         rtew_combo_set_text(i, j, "");
       }
@@ -1742,7 +1742,7 @@ void on_clear_clicked(LiVESButton * button, livespointer user_data) {
 
   register int i;
 
-  weed_delete_effectkey(key + 1, mode);
+  weed_delete_effectkey(key, mode);
 
   pconx_delete(FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD, key, mode, FX_DATA_WILDCARD);
   pconx_delete(key, mode, FX_DATA_WILDCARD, -1, FX_DATA_WILDCARD, FX_DATA_WILDCARD);
@@ -1995,7 +1995,7 @@ void fx_changed(LiVESCombo * combo, livespointer user_data) {
 
   lives_widget_grab_focus(combo_entries[key_mode]);
 
-  if ((error = rte_switch_keymode(key + 1, mode, hashname1)) < 0) {
+  if ((error = rte_switch_keymode(key, mode, hashname1)) < 0) {
     lives_entry_set_text(LIVES_ENTRY(combo_entries[key_mode]), (tmp = rte_keymode_get_filter_name(key + 1, mode, FALSE)));
     lives_free(tmp);
 

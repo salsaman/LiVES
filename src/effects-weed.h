@@ -362,7 +362,7 @@ void update_all_host_info(void);
 /// add default filler values to a parameter or pchange.
 void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot);
 
-//#define DEBUG_FILTER_MUTEXES
+#define DEBUG_FILTER_MUTEXES
 #ifdef DEBUG_FILTER_MUTEXES
 #define filter_mutex_lock(key) {g_print ("lock %d at line %d in file %s\n",key,__LINE__,__FILE__); \
   if (key >= 0 && key < FX_KEYS_MAX) {if (pthread_mutex_trylock(&mainw->fx_mutex[key])) { \

@@ -534,6 +534,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
     if (coder) {
       error = lives_proc_thread_join_boolean(coder);
+      lives_proc_thread_free(coder);
     }
     if (!error) {
       weed_plant_t *copy_frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);

@@ -4804,7 +4804,7 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (LIVES_IS_PLAYING) {
     // we are playing a clip
     if (!mainw->record || mainw->record_paused) {
-      ticks_t actual_ticks = mainw->startticks; ///< use the "thoretical" time
+      ticks_t actual_ticks = mainw->startticks; ///< use the "theoretical" time
       // recording is starting
       mainw->record_starting = TRUE;
       if (!record_setup(actual_ticks)) return;
@@ -7398,18 +7398,6 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     mainw->multitrack->redraw_block = FALSE;
   }
 
-  if (mainw->sep_win) {
-    lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Hide the play window (s)"));
-    lives_widget_set_tooltip_text(mainw->t_sepwin, _("Hide the play window (s)"));
-    lives_widget_set_opacity(mainw->m_sepwinbutton, 1.);
-    lives_widget_set_opacity(mainw->t_sepwin, 1.);
-  } else {
-    lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show the play window (s)"));
-    lives_widget_set_tooltip_text(mainw->t_sepwin, _("Play in separate window (s)"));
-    lives_widget_set_opacity(mainw->m_sepwinbutton, .75);
-    lives_widget_set_opacity(mainw->t_sepwin, .75);
-  }
-
   if (prefs->sepwin_type == SEPWIN_TYPE_STICKY && !LIVES_IS_PLAYING) {
     if (mainw->sep_win) make_play_window();
     else kill_play_window();
@@ -7541,6 +7529,19 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 	  hide_cursor(lives_widget_get_xwindow(mainw->playarea));
 	}}}}
   // *INDENT-ON*
+
+  if (mainw->sep_win) {
+    lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Hide the play window (s)"));
+    lives_widget_set_tooltip_text(mainw->t_sepwin, _("Hide the play window (s)"));
+    lives_widget_set_opacity(mainw->m_sepwinbutton, 1.);
+    lives_widget_set_opacity(mainw->t_sepwin, 1.);
+  } else {
+    lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show the play window (s)"));
+    lives_widget_set_tooltip_text(mainw->t_sepwin, _("Play in separate window (s)"));
+    lives_widget_set_opacity(mainw->m_sepwinbutton, .75);
+    lives_widget_set_opacity(mainw->t_sepwin, .75);
+  }
+
   if (mainw->play_window) play_window_set_title();
   if (LIVES_IS_PLAYING) mainw->force_show = TRUE;
 }

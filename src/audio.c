@@ -2840,7 +2840,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
   // optionally: gets audio state, sets atstate[0].tc
   // and initialises audio buffers
 
-  if (fill_tc == 0) {
+  if (fill_tc == 0 && event_list) {
     if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
       mainw->filter_map = NULL;
     if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_ONLY)
@@ -2851,10 +2851,12 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
     st_event = NULL;
   }
 
+  if (!event) return audstate;
+
   while ((st_event && event != st_event) || (!st_event && get_event_timecode(event) < fill_tc)) {
     etype = weed_event_get_type(event);
     if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || (etype != WEED_EVENT_TYPE_FRAME
-        && etype != WEED_EVENT_TYPE_PARAM_CHANGE)) {
+							  && (!event_list || etype != WEED_EVENT_TYPE_PARAM_CHANGE))) {
       switch (etype) {
       case WEED_EVENT_TYPE_FILTER_MAP:
         if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
@@ -2895,7 +2897,6 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
             weed_event_t *filter = get_weed_filter(idx), *inst;
             lives_free(filter_name);
             lives_free(key_string);
-
             if (!is_pure_audio(filter, FALSE)) {
               if (what_to_get == LIVES_PREVIEW_TYPE_AUDIO_ONLY)
                 break;
@@ -2996,7 +2997,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   static weed_timecode_t fill_tc;
   static weed_plant_t *event;
   static int ntracks;
-  int nntracks;
+  int nntracks = 0;
 
   static int *from_files = NULL;
   static double *aseeks = NULL, *avels = NULL;

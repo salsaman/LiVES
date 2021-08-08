@@ -937,7 +937,7 @@ xprocess *create_processing(const char *text) {
 
   if (mainw->internal_messaging && mainw->rte != 0 && !mainw->transrend_proc) {
     procw->rte_off_cb = lives_standard_check_button_new(_("Switch off real time effects when finished"),
-                        FALSE, LIVES_BOX(vbox3),
+                        TRUE, LIVES_BOX(vbox3),
                         (tmp = H_("Switch off all real time effects "
                                   "after processing\nso that the "
                                   "result can be viewed without them")));

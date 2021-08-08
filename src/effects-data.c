@@ -830,6 +830,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
   int minct = 0, maxct = 0;
   int sminct = 0, smaxct = 0;
   int nmax = 0, nmin = 0;
+  int copyto = -1;
   boolean retval = FALSE;
 
   int i;
@@ -953,12 +954,13 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       }
 
       if (retval) {
+        weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
+        copyto = set_copy_to(inst, pnum, NULL, TRUE);
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-        }
-
-        weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
+	  if (copyto != -1) rec_param_change(inst, copyto);
+	}
       }
       lives_free(maxd); lives_free(mind); lives_free(valsD); lives_free(valsd);
       return retval;
@@ -1005,12 +1007,13 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       }
 
       if (retval) {
+        weed_set_int_array(dparam, WEED_LEAF_VALUE, ndvals, valsi);
+        copyto = set_copy_to(inst, pnum, NULL, TRUE);
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-        }
-
-        weed_set_int_array(dparam, WEED_LEAF_VALUE, ndvals, valsi);
+	  if (copyto != -1) rec_param_change(inst, copyto);
+	}
       }
       lives_free(maxi); lives_free(mini); lives_free(valsD); lives_free(valsI); lives_free(valsi);
       return retval;
@@ -1169,12 +1172,13 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       }
 
       if (retval) {
+        weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
+        copyto = set_copy_to(inst, pnum, NULL, TRUE);
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-        }
-
-        weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
+	  if (copyto != -1) rec_param_change(inst, copyto);
+	}
       }
       lives_free(maxd); lives_free(mind);
       lives_free(valsi); lives_free(valsd);
@@ -1222,12 +1226,13 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       }
 
       if (retval) {
-        if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+        weed_set_int_array(dparam, WEED_LEAF_VALUE, ndvals, valsi);
+        copyto = set_copy_to(inst, pnum, NULL, TRUE);
+        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-        }
-
-        weed_set_int_array(dparam, WEED_LEAF_VALUE, ndvals, valsi);
+	  if (copyto != -1) rec_param_change(inst, copyto);
+	}
       }
       lives_free(maxi); lives_free(mini);
       lives_free(valsI); lives_free(valsi);
@@ -1326,12 +1331,13 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (++minct == nmin) minct = 0;
       }
       if (retval) {
+        weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
+        copyto = set_copy_to(inst, pnum, NULL, TRUE);
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-        }
-
-        weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
+	  if (copyto != -1) rec_param_change(inst, copyto);
+	}
       }
       lives_free(maxd); lives_free(mind);
       lives_free(valsb); lives_free(valsd);
@@ -1360,12 +1366,13 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (++minct == nmin) minct = 0;
       }
       if (retval) {
+        weed_set_int_array(dparam, WEED_LEAF_VALUE, ndvals, valsi);
+        copyto = set_copy_to(inst, pnum, NULL, TRUE);
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-        }
-
-        weed_set_int_array(dparam, WEED_LEAF_VALUE, ndvals, valsi);
+	  if (copyto != -1) rec_param_change(inst, copyto);
+	}
       }
       lives_free(maxi); lives_free(mini);
       lives_free(valsi); lives_free(valsb);
@@ -1384,11 +1391,13 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         }
       }
       if (retval) {
+        weed_set_boolean_array(dparam, WEED_LEAF_VALUE, ndvals, valsB);
+        copyto = set_copy_to(inst, pnum, NULL, TRUE);
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-        }
-        weed_set_boolean_array(dparam, WEED_LEAF_VALUE, ndvals, valsB);
+	  if (copyto != -1) rec_param_change(inst, copyto);
+	}
       }
       lives_free(valsb);
       lives_free(valsB);
@@ -1587,15 +1596,6 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
           weed_instance_unref(oinst);
         }
         if (changed && inst && key > -1) {
-          // only store value if it changed; for int, double or colour, store old value too
-
-          //copyto = set_copy_to(inst, i, TRUE);
-          if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
-            // if we are recording, add this change to our event_list
-            rec_param_change(inst, i);
-            //if (copyto != -1) rec_param_change(inst, copyto);
-          }
-
           pflags = weed_get_int_value(inparams[i], WEED_LEAF_FLAGS, NULL);
           if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE;
 

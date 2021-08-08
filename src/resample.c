@@ -397,7 +397,7 @@ void pre_analyse(weed_plant_t *elist) {
               // now have calculated the ratio, we can backtrack to start audio event, and adjust tcs
               // new_tc -> start_tc + diff / ratio
               weed_timecode_t otc = 0;
-              for (xevent = last; xevent != event; xevent = get_next_event(xevent)) {
+              for (xevent = last; xevent && xevent != event; xevent = get_next_event(xevent)) {
                 int etype = get_event_type(xevent);
                 otc = get_event_timecode(xevent);
                 dtime = (double)(otc - stc) / TICKS_PER_SECOND_DBL;
@@ -665,8 +665,10 @@ void pre_analyse(weed_plant_t *elist) {
     last_frame_event = get_last_frame_event(in_list);
     if (!last_frame_event) goto q_done;
 
+    // N.B. if we have last_frame_event, then by default we also have first_frame_event
     if (!allow_gap) offset_tc = get_event_timecode(get_first_frame_event(in_list));
     else out_tc = get_event_timecode(get_first_frame_event(in_list));
+
     end_tc = get_event_timecode(last_frame_event) - offset_tc;
     //if (end_tc == out_tc) q_gint64(end_tc + tl, qfps);
     end_tc = q_gint64(end_tc, qfps);
@@ -694,7 +696,8 @@ void pre_analyse(weed_plant_t *elist) {
 
         if (event) {
           in_tc = get_event_timecode(event);
-          if (weed_get_boolean_value(event, LIVES_LEAF_NOQUANT, NULL) == WEED_TRUE) noquant = TRUE;
+	  if (in_tc < offset_tc) in_tc = offset_tc;
+	  if (weed_get_boolean_value(event, LIVES_LEAF_NOQUANT, NULL) == WEED_TRUE) noquant = TRUE;
         }
 
         if (event && (is_final == 2 || (in_tc <= stop_tc && is_final != 1))) {
@@ -1363,7 +1366,6 @@ q_done:
 
     sfile->event_list = NULL;
     sfile->next_event = NULL;
-
 
     save_clip_value(clipno, CLIP_DETAILS_FRAMES, &sfile->frames);
 

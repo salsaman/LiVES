@@ -18474,7 +18474,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
               weed_leaf_delete(event, WEED_LEAF_IN_PARAMETERS);
               weed_set_voidptr_array(event, WEED_LEAF_IN_PARAMETERS, num_params, in_pchanges); // set array to last param_changes
               lives_free(in_pchanges);
-              lives_free(pchains[idx]);
+              //lives_free(pchains[idx]);
             }
           }
           lives_free(filter_hash);
@@ -19111,11 +19111,11 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
 
   LiVESResponseType retval2;
   int num_events = 0;
-  int old_avol_fx;
+  int old_avol_fx = -1;
   int fd;
 
   if (mt) {
-    old_avol_fx  = mt->avol_fx;
+    old_avol_fx = mt->avol_fx;
     if (mt->idlefunc > 0) {
       lives_source_remove(mt->idlefunc);
       mt->idlefunc = 0;
@@ -19167,7 +19167,7 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
   }
 
   do {
-    retval = 0;
+    retval = LIVES_RESPONSE_NONE;
     if ((event_list = load_event_list_inner(mt, fd, mt != NULL, &num_events, NULL, NULL)) == NULL) {
       lives_close_buffered(fd);
 
@@ -19187,13 +19187,15 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
     if (!mt) {
       lives_free(eload_name);
       renumber_from_backup_layout_numbering(NULL);
-      if (!event_list_rectify(NULL, event_list)) {
-        event_list_free(event_list);
-        event_list = NULL;
+      if (!mainw->recoverable_layout) {
+	if (!event_list_rectify(NULL, event_list)) {
+	  event_list_free(event_list);
+	  event_list = NULL;
+	}
       }
       if (!get_first_event(event_list)) {
-        event_list_free(event_list);
-        event_list = NULL;
+	event_list_free(event_list);
+	event_list = NULL;
       }
       return event_list;
     }

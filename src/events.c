@@ -3117,7 +3117,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
     }
     return next_event;
   }
-
+  
   if (mainw->cevent_tc != -1)
     aseek_tc += (weed_timecode_t)((double)(tc - mainw->cevent_tc) * stored_avel);
   mainw->cevent_tc = tc;
@@ -3427,6 +3427,7 @@ filterinit1:
 
   case WEED_EVENT_TYPE_FILTER_DEINIT:
     init_event = weed_get_voidptr_value((weed_plant_t *)next_event, WEED_LEAF_INIT_EVENT, NULL);
+    if (!init_event) break;
     if (weed_plant_has_leaf((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG)) {
       key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, NULL);
       key = atoi(key_string);
@@ -3445,11 +3446,10 @@ filterinit1:
       if (process_audio && !is_pure_audio(filter, FALSE)) break;
 
       if ((inst = rte_keymode_get_instance(key + 1, 0))) {
-        //weed_deinit_effect(key);
-        weed_delete_effectkey(key + 1, 0);
+        weed_deinit_effect(key);
+        weed_delete_effectkey(key, 0);
         weed_instance_unref(inst);
       }
-      // no freep !
       if (pchains[key]) lives_free(pchains[key]);
       pchains[key] = NULL;
     }
@@ -3756,6 +3756,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       if (etype != WEED_EVENT_TYPE_MARKER)
         etype = WEED_EVENT_TYPE_FRAME;
     }
+
     if (!r_video && etype != WEED_EVENT_TYPE_FRAME && etype != WEED_EVENT_TYPE_MARKER) etype = WEED_EVENT_TYPE_UNDEFINED;
 
     switch (etype) {
@@ -3954,6 +3955,10 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               if (lives_proc_thread_check_finished(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
 
               lives_nanosleep_until_nonzero(!mainw->transrend_ready);
+	      if (mainw->transrend_layer) {
+		weed_layer_free(mainw->transrend_layer);
+		mainw->transrend_layer = NULL;
+	      }
 
               if (lives_proc_thread_check_finished(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
 
@@ -4426,7 +4431,7 @@ filterinit2:
       break;
     case WEED_EVENT_TYPE_FILTER_DEINIT:
       init_event = weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, &weed_error);
-
+      if (!init_event) break;
       filter_name = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_FILTER, &weed_error);
       // for now, assume we can find hashname
       idx = weed_get_idx_for_hashname(filter_name, TRUE);
@@ -4439,10 +4444,10 @@ filterinit2:
       key = atoi(key_string);
       lives_free(key_string);
       if ((inst = rte_keymode_get_instance(key + 1, 0))) {
-        weed_delete_effectkey(key + 1, 0);
+        weed_deinit_effect(key);
+        weed_delete_effectkey(key, 0);
         weed_instance_unref(inst);
       }
-      // no freep !
       if (pchains[key]) lives_free(pchains[key]);
       pchains[key] = NULL;
       break;
@@ -4514,7 +4519,10 @@ filterinit2:
     }
 #endif
 
-    //if (mainw->transrend_layer) weed_layer_free(mainw->transrend_layer);
+    if (mainw->transrend_layer) {
+      weed_layer_free(mainw->transrend_layer);
+      mainw->transrend_layer = NULL;
+    }
 
     if (cfile->old_frames == 0) cfile->undo_start = cfile->undo_end = 0;
     if (r_video) {
@@ -4969,11 +4977,17 @@ boolean render_to_clip(boolean new_clip) {
 
   if (mainw->event_list && (!mainw->multitrack || mainw->unordered_blocks)) {
     if (old_fps == 0) {
-      weed_plant_t *qevent_list = quantise_events(mainw->event_list, cfile->fps, !new_clip);
+      weed_plant_t *qevent_list;
+      lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+      lives_widget_context_update();
+
+      qevent_list = quantise_events(mainw->event_list, cfile->fps, !new_clip);
+
       if (qevent_list) {
         event_list_replace_events(mainw->event_list, qevent_list);
         weed_set_double_value(mainw->event_list, WEED_LEAF_FPS, cfile->fps);
       }
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     }
   }
 

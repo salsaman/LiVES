@@ -841,7 +841,7 @@ static pthread_mutex_t tcond_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t twork_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t twork_count_mutex = PTHREAD_MUTEX_INITIALIZER;
-static LiVESList *twork_first, *twork_last; /// FIFO list of tasks
+static volatile LiVESList *twork_first, *twork_last; /// FIFO list of tasks
 static volatile int ntasks;
 static boolean threads_die;
 
@@ -911,15 +911,15 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   if (!tdata->idx) abort();
 
   pthread_mutex_lock(&twork_mutex);
-  list = twork_last;
+  list = (LiVESList *)twork_last;
   if (LIVES_UNLIKELY(!list)) {
     pthread_mutex_unlock(&twork_mutex);
     return FALSE;
   }
 
-  if (twork_first == list) twork_last = twork_first = NULL;
+  if ((LiVESList *)twork_first == list) twork_last = twork_first = NULL;
   else {
-    twork_last = list->prev;
+    twork_last = (volatile LiVESList *)list->prev;
     twork_last->next = NULL;
   }
   pthread_mutex_unlock(&twork_mutex);
@@ -985,6 +985,7 @@ static void *thrdpool(void *arg) {
           npoolthreads--;
           tdata->exited = TRUE;
           lives_widget_context_pop_thread_default(tdata->ctx);
+	  lives_widget_context_unref(tdata->ctx);
           pthread_mutex_unlock(&pool_mutex);
           break;
         }
@@ -1046,6 +1047,8 @@ void lives_threadpool_finish(void) {
       lives_free(poolthrds[i]);
     }
   }
+  lives_list_free(allctxs);
+  allctxs = NULL;
   lives_free(poolthrds);
   poolthrds = NULL;
   rnpoolthreads = npoolthreads = 0;
@@ -1084,11 +1087,11 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
   } else {
     if (!(attr & LIVES_THRDATTR_PRIORITY)) {
       twork_first->prev = list;
-      list->next = twork_first;
+      list->next = (LiVESList *)twork_first;
       twork_first = list;
     } else {
       twork_last->next = list;
-      list->prev = twork_last;
+      list->prev = (LiVESList *)twork_last;
       twork_last = list;
     }
   }
@@ -1105,9 +1108,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
       for (int i = 0; i < rnpoolthreads; i++) {
         lives_thread_data_t *tdata = get_thread_data_by_id(i + 1);
         if (tdata->exited) {
-          if (tdata->ctx && tdata->ctx != lives_widget_context_default())
-            lives_widget_context_unref(tdata->ctx);
-          lives_free(tdata);
+	  allctxs = lives_list_remove_data(allctxs, tdata, TRUE);
           lives_free(poolthrds[i]);
           tdata = lives_thread_data_create(i + 1);
           poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));

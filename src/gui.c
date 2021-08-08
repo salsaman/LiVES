@@ -4657,7 +4657,7 @@ static void _resize_play_window(void) {
     if (!rte_window_hidden()) {
       nwidth >>= 1;
       nheight >>= 1;
-      lives_widget_set_size_request(mainw->preview_image, nwidth, nheight);
+      if (mainw->preview_image) lives_widget_set_size_request(mainw->preview_image, nwidth, nheight);
       lives_widget_hide(mainw->play_window);
     }
     lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);

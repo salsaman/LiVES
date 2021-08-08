@@ -777,18 +777,18 @@ static void create_effects_map(uint64_t rteval) {
   for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (!THREADVAR(fx_is_audio)) {
       if (init_events[i] && weed_get_boolean_value(init_events[i], LIVES_LEAF_NOQUANT, NULL) == WEED_TRUE)
-	if (get_event_timecode(init_events[i]) > mainw->startticks) {
-	  // for video filters, the map will get pushed backwards to the previous frame event, so we
-	  // will omit any audio filters which are inited after that - they will have their own filter_map
-	  // and not be quantised to the prior frame event
-	  // - this is to guard against referring to init_events which occur in the future relative to the
-	  // video based filter map
-	  continue;
-	}
+        if (get_event_timecode(init_events[i]) > mainw->startticks) {
+          // for video filters, the map will get pushed backwards to the previous frame event, so we
+          // will omit any audio filters which are inited after that - they will have their own filter_map
+          // and not be quantised to the prior frame event
+          // - this is to guard against referring to init_events which occur in the future relative to the
+          // video based filter map
+          continue;
+        }
     }
     if (rteval & (GU641 << i) && (inst = weed_instance_obtain(i, key_modes[i])) != NULL) {
       if (enabled_in_channels(inst, FALSE) > 0 &&
-	  enabled_out_channels(inst, FALSE) > 0) {
+          enabled_out_channels(inst, FALSE) > 0) {
         effects_map[count++] = init_events[i];
       }
       weed_instance_unref(inst);
@@ -816,10 +816,10 @@ weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list) {
   for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (init_events[i]) {
       if ((inst = weed_instance_obtain(i, key_modes[i])) != NULL) {
-	if (enabled_in_channels(inst, FALSE) > 0 && enabled_out_channels(inst, FALSE)) {
-	  event_list = append_filter_deinit_event(event_list, last_tc, init_events[i], pchains[i]);
-	  needs_filter_map = TRUE;
-	}
+        if (enabled_in_channels(inst, FALSE) > 0 && enabled_out_channels(inst, FALSE)) {
+          event_list = append_filter_deinit_event(event_list, last_tc, init_events[i], pchains[i]);
+          needs_filter_map = TRUE;
+        }
       }
       init_events[i] = NULL;
       if (pchains[i]) lives_free(pchains[i]);
@@ -1205,6 +1205,7 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
         mainw->rte &= ~new_rte;
         // WEED_LEAF_EASE_OUT exists, so it'll get deinited right away
         weed_deinit_effect(key);
+        filter_mutex_unlock(key);
         return FILTER_ERROR_COULD_NOT_REINIT;
       }
       filter_mutex_unlock(key);
@@ -3301,13 +3302,13 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_la
         return FILTER_ERROR_INVALID_INSTANCE;
       }
       if (mainw->multitrack && !mainw->unordered_blocks && mainw->pchains && mainw->pchains[key]) {
-	/// interpolate the params, if we can get a mutex lock on the inst
-	if (!interpolate_params(instance, mainw->pchains[key], tc)) {
-	  weed_instance_unref(instance);
-	  lives_freep((void **)&in_tracks);
-	  lives_freep((void **)&out_tracks);
-	  return FILTER_ERROR_INTERPOLATION_FAILED;
-	}
+        /// interpolate the params, if we can get a mutex lock on the inst
+        if (!interpolate_params(instance, mainw->pchains[key], tc)) {
+          weed_instance_unref(instance);
+          lives_freep((void **)&in_tracks);
+          lives_freep((void **)&out_tracks);
+          return FILTER_ERROR_INTERPOLATION_FAILED;
+        }
       }
     } else {
       lives_freep((void **)&in_tracks);
@@ -3958,6 +3959,7 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
   weed_layer_t *layers[1];
   boolean needs_reinit;
   int nsamps, arate, nchans;
+  int idx;
 
   // free playback: apply any audio filters or analysers (but not generators)
   // Effects are applied in key order
@@ -3978,6 +3980,16 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
         if (is_audio_thread) {
           pconx_chain_data(i, key_modes[i], TRUE);
         }
+      }
+
+      // do a quick check before locking the key mutex - this prevents us hanging for example if
+      // trying to lock a generator
+      idx = key_to_fx[i][key_modes[i]];
+      if (idx != -1) filter = weed_filters[idx];
+      else filter = NULL;
+      if (!filter || !has_audio_chans_in(filter, FALSE)
+          || has_video_chans_in(filter, FALSE) || has_video_chans_out(filter, FALSE)) {
+        continue;
       }
 
       filter_mutex_lock(i);
@@ -4005,7 +4017,7 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
           continue;
         }
 
-	if (mainw->multitrack && !mainw->unordered_blocks && mainw->pchains && mainw->pchains[i]) {
+        if (mainw->multitrack && !mainw->unordered_blocks && mainw->pchains && mainw->pchains[i]) {
           interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
         }
 
@@ -6824,9 +6836,9 @@ boolean record_filter_init(int key) {
         uint64_t new_rte = GU641 << (key), rteval = mainw->rte | new_rte;
         int ntracks;
         if (THREADVAR(fx_is_audio)) {
-	  // use real time when recording audio fx
-	  actual_ticks = mainw->currticks;
-	}
+          // use real time when recording audio fx
+          actual_ticks = mainw->currticks;
+        }
         pthread_mutex_lock(&mainw->event_list_mutex);
         event_list = append_filter_init_event(mainw->event_list, actual_ticks, idx, -1, key, inst);
         if (!mainw->event_list) mainw->event_list = event_list;
@@ -6867,29 +6879,29 @@ boolean record_filter_deinit(int key) {
       ticks_t actual_ticks = mainw->startticks; ///< use the "theoretical" time
       uint64_t new_rte = GU641 << (key), rteval = mainw->rte & ~new_rte;
       if (THREADVAR(fx_is_audio)) {
-	// use real time when recording audio fx
-	actual_ticks = mainw->currticks;
+        // use real time when recording audio fx
+        actual_ticks = mainw->currticks;
       }
 
       pthread_mutex_lock(&mainw->event_list_mutex);
       mainw->event_list = append_filter_deinit_event(mainw->event_list, actual_ticks, init_events[key], pchains[key]);
       deinit_event = get_last_event(mainw->event_list);
       if (mainw->rte & new_rte) {
-	create_effects_map(rteval); // we create effects_map event_t * array with ordered effects
-	mainw->event_list = append_filter_map_event(mainw->event_list, actual_ticks, effects_map);
-	if (THREADVAR(fx_is_audio)) {
-	  weed_event_t *filter_map = get_last_event(mainw->event_list);
-	  weed_set_boolean_value(filter_map, LIVES_LEAF_NOQUANT, WEED_TRUE);
-	}
+        create_effects_map(rteval); // we create effects_map event_t * array with ordered effects
+        mainw->event_list = append_filter_map_event(mainw->event_list, actual_ticks, effects_map);
+        if (THREADVAR(fx_is_audio)) {
+          weed_event_t *filter_map = get_last_event(mainw->event_list);
+          weed_set_boolean_value(filter_map, LIVES_LEAF_NOQUANT, WEED_TRUE);
+        }
       }
       if (THREADVAR(fx_is_audio)) {
-	weed_set_boolean_value(deinit_event, LIVES_LEAF_NOQUANT, WEED_TRUE);
-	if (mainw->rte & new_rte) {
-	  // do this here as we won't do a proper deinit
-	  mainw->rte &= ~new_rte;
-	  if (rte_window) rtew_set_keych(key, FALSE);
-	  if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
-	}
+        weed_set_boolean_value(deinit_event, LIVES_LEAF_NOQUANT, WEED_TRUE);
+        if (mainw->rte & new_rte) {
+          // do this here as we won't do a proper deinit
+          mainw->rte &= ~new_rte;
+          if (rte_window) rtew_set_keych(key, FALSE);
+          if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
+        }
       }
       pthread_mutex_unlock(&mainw->event_list_mutex);
       return TRUE;
@@ -7647,8 +7659,8 @@ void deinit_render_effects(void) {
       // no mutex needed since we are rendering
       weed_deinit_effect(i);
       if (mainw->multitrack && mainw->multitrack->is_rendering && pchains[i]) {
-	if (pchains[i]) lives_free(pchains[i]);
-	pchains[i] = NULL;
+        if (pchains[i]) lives_free(pchains[i]);
+        pchains[i] = NULL;
 	// *INDENT-OFF*
       }}
     key_to_fx[i][0] = -1;
@@ -8912,8 +8924,7 @@ deinit4:
         int playing_file = mainw->playing_file;
         mainw->playing_file = -100; //kludge to stop playing a second time
         if (!weed_init_effect(bg_gen_to_start)) {
-          filter_mutex_unlock(bg_gen_to_start);
-          error++;
+          error = WEED_ERROR_NOT_READY;
         }
         mainw->playing_file = playing_file;
         orig_inst = weed_instance_obtain(bg_gen_to_start, key_modes[bg_gen_to_start]);
@@ -9004,9 +9015,6 @@ deinit5:
       }
     }
   }
-
-  // orig_inst = inst;
-  //if (orig_inst) weed_instance_unref(orig_inst);
 
   bg_gen_to_start = -1;
 
@@ -9441,7 +9449,7 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
   if (!weed_param_value_irrelevant(in_param)) {
     pthread_mutex_lock(&mainw->event_list_mutex);
     mainw->event_list = append_param_change_event(mainw->event_list, actual_ticks,
-						  pnum, in_param, init_events[key], pchains[key]);
+                        pnum, in_param, init_events[key], pchains[key]);
     if (THREADVAR(fx_is_audio)) {
       weed_event_t *event = get_last_event(mainw->event_list);
       weed_set_boolean_value(event, LIVES_LEAF_NOQUANT, WEED_TRUE);
@@ -9747,8 +9755,7 @@ boolean weed_delete_effectkey(int key, int mode) {
       key_to_instance[key][mode] = key_to_instance[key][mode + 1];
       key_defaults[key][mode] = key_defaults[key][mode + 1];
     }
-  }
-  else if (key < next_free_key) next_free_key = key;
+  } else if (key < next_free_key) next_free_key = key;
 
   if (key < FX_KEYS_MAX_VIRTUAL) {
     key_defaults[key][mode] = NULL;
@@ -9801,6 +9808,7 @@ int rte_key_getmode(int key) {
 
 int rte_key_getmaxmode(int key) {
   // gets the highest mode with filter mapped for a key
+  // or -1 if no modes are filled
   if (key < 1 || key > FX_KEYS_MAX) return -1;
   else {
     int maxmode = rte_key_num_modes(key);
@@ -10013,7 +10021,7 @@ boolean rte_key_setmode(int key, int newmode) {
   }
 
   maxmode = rte_key_getmaxmode(key + 1);
-  
+
   if (newmode == -1) {
     // cycle forwards
     if (oldmode == maxmode) newmode = 0;
@@ -10035,7 +10043,7 @@ boolean rte_key_setmode(int key, int newmode) {
 
   if ((inst = weed_instance_obtain(key, oldmode)) != NULL) {  // adds a ref
     if (enabled_in_channels(inst, FALSE) == 2
-	&& enabled_in_channels(weed_filters[key_to_fx[key][newmode]], FALSE) == 2) {
+        && enabled_in_channels(weed_filters[key_to_fx[key][newmode]], FALSE) == 2) {
       // transition --> transition, allow any bg generators to survive
       key = -key - 1;
     }
@@ -10050,11 +10058,11 @@ boolean rte_key_setmode(int key, int newmode) {
   }
 
   if (inst && (enabled_in_channels(inst, FALSE) > 0 || enabled_out_channels(last_inst, FALSE) == 0 ||
-	       is_pure_audio(inst, FALSE))) {
+               is_pure_audio(inst, FALSE))) {
     // not a (video or video/audio) generator
     weed_deinit_effect(key);
   } else if (enabled_in_channels(weed_filters[key_to_fx[key][newmode]], FALSE) == 0 &&
-	     has_video_chans_out(weed_filters[key_to_fx[key][newmode]], TRUE))
+             has_video_chans_out(weed_filters[key_to_fx[key][newmode]], TRUE))
     mainw->whentostop = NEVER_STOP; // when gen->gen, dont stop pb
 
   key_modes[real_key] = newmode;
@@ -10082,44 +10090,66 @@ boolean rte_key_setmode(int key, int newmode) {
    @brief
 
   we will add a filter_class at the next free slot for key, and return the slot number
-  if idx is -1 (probably meaning the filter was not found), we return -1
+  if idx or key is invalid, (probably meaning the filter was not found), we return -1
   if all slots are full, we return -3
   currently, generators and non-generators cannot be mixed on the same key (causes problems if the mode is switched)
   in this case a -2 is returned
+
+  key is 1 based !!!
+
 */
 int weed_add_effectkey_by_idx(int key, int idx) {
-  boolean has_gen = FALSE;
-  boolean has_non_gen = FALSE;
+  if (idx < 0 || idx >= num_weed_filters || key <= 0 || key >= FX_KEYS_MAX) return -1;
+  else {
+    boolean has_gen = FALSE;
+    boolean has_non_gen = FALSE;
+    int maxmode;
+    int i;
 
-  int i;
+    if (key <= FX_KEYS_MAX_VIRTUAL) {
+      filter_mutex_lock(key - 1);
 
-  if (idx == -1) return -1;
+      maxmode = rte_key_getmaxmode(key);
+      key--;
 
-  key--;
+      if (maxmode >= prefs->rte_modes_per_key - 1) {
+        filter_mutex_unlock(key);
+        return -3;
+      }
 
-  for (i = 0; i < rte_key_num_modes(key + 1); i++) {
-    if (key_to_fx[key][i] != -1) {
-      if (enabled_in_channels(weed_filters[key_to_fx[key][i]], FALSE) == 0
-          && has_video_chans_out(weed_filters[key_to_fx[key][i]], TRUE))
-        has_gen = TRUE;
-      else has_non_gen = TRUE;
+      for (i = 0; i <= maxmode; i++) {
+        if (enabled_in_channels(weed_filters[key_to_fx[key][i]], FALSE) == 0
+            && has_video_chans_out(weed_filters[key_to_fx[key][i]], TRUE))
+          has_gen = TRUE;
+        else has_non_gen = TRUE;
+      }
+
+      if ((enabled_in_channels(weed_filters[idx], FALSE) == 0 && has_non_gen &&
+           !all_outs_alpha(weed_filters[idx], TRUE) && has_video_chans_out(weed_filters[idx], TRUE)) ||
+          (enabled_in_channels(weed_filters[idx], FALSE) > 0 && has_gen)) {
+        filter_mutex_unlock(key);
+        return -2;
+      }
+
+      key_to_fx[key][i] = idx;
+      filter_mutex_unlock(key);
+
+      if (rte_window && !mainw->is_rendering && !mainw->multitrack) {
+        // if rte window is visible add to combo box
+        char *tmp;
+        rtew_combo_set_text(key, i, (tmp = rte_keymode_get_filter_name(key + 1, i, FALSE)));
+        lives_free(tmp);
+
+        // set in ce_thumb combos
+        if (mainw->ce_thumbs) ce_thumbs_reset_combo(key);
+      }
+      return i;
     }
-    if ((enabled_in_channels(weed_filters[idx], FALSE) == 0 && has_non_gen &&
-         !all_outs_alpha(weed_filters[idx], TRUE) && has_video_chans_out(weed_filters[idx], TRUE)) ||
-        (enabled_in_channels(weed_filters[idx], FALSE) > 0 && has_gen)) return -2;
-    key_to_fx[key][i] = idx;
-    if (rte_window && !mainw->is_rendering && !mainw->multitrack) {
-      // if rte window is visible add to combo box
-      char *tmp;
-      rtew_combo_set_text(key, i, (tmp = rte_keymode_get_filter_name(key + 1, i, FALSE)));
-      lives_free(tmp);
-
-      // set in ce_thumb combos
-      if (mainw->ce_thumbs) ce_thumbs_reset_combo(key);
-    }
-    return i;
+    if (key_to_instance[--key][0]) break_me("Instance leak");
+    if (key_to_fx[key][0]) break_me("Filter leak");
+    key_to_fx[key][0] = idx;
+    return 0;
   }
-  return -3;
 }
 
 
@@ -11226,7 +11256,7 @@ int weed_get_idx_for_hashname(const char *hashname, boolean fullname) {
   if (!fullname) type = 2;
 
   numhash = lives_string_hash(xhashname);
-  
+
   for (i = 0; i < num_weed_filters; i++) {
     if (numhash == hashnames[i][type].hash) {
       if (!lives_utf8_strcasecmp(xhashname, hashnames[i][type].string)) {

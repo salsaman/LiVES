@@ -1605,6 +1605,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 void vid_playback_plugin_exit(void) {
   // external plugin
   if (mainw->ext_playback) {
+    mainw->ext_playback = FALSE;
     pthread_mutex_lock(&mainw->vpp_stream_mutex);
     mainw->ext_audio = FALSE;
     pthread_mutex_unlock(&mainw->vpp_stream_mutex);
@@ -1616,7 +1617,6 @@ void vid_playback_plugin_exit(void) {
 #ifdef RT_AUDIO
     stop_audio_stream();
 #endif
-    mainw->ext_playback = FALSE;
     if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)
       if (mainw->play_window && prefs->play_monitor == 0)
         lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window), FALSE);

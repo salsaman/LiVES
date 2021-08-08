@@ -425,8 +425,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       lives_nanosleep_until_nonzero(mainw->transrend_ready
                                     || lives_proc_thread_get_cancelled(mainw->transrend_proc));
       if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) goto tr_err;
+      if (mainw->cancelled != CANCEL_NONE) break;
       frame_layer = mainw->transrend_layer;
-      mainw->transrend_layer = NULL;
     }
 
 #ifdef MATCH_PALETTES
@@ -556,7 +556,6 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       // so there is a normal progress dialog which is updated in the player)
       threaded_dialog_spin(1. - (double)(cfile->end - i) / (double)(cfile->end - cfile->start + 1.));
     } else {
-      if (frame_layer != mainw->scrap_layer) weed_layer_free(frame_layer);
       frame_layer = NULL;
       mainw->transrend_ready = FALSE;
     }

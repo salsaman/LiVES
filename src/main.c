@@ -7943,13 +7943,10 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 
   weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
 
-  mainw->osc_block = TRUE; // block OSC until we are done
-
   if (clip < 0 && frame == 0) clip_type = CLIP_TYPE_DISK;
   else {
     sfile = mainw->files[clip];
     if (!sfile) {
-      mainw->osc_block = FALSE;
       weed_layer_unref(layer);
       return FALSE;
     }
@@ -7958,7 +7955,6 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 
   switch (clip_type) {
   case CLIP_TYPE_NULL_VIDEO:
-    mainw->osc_block = FALSE;
     create_blank_layer(layer, image_ext, width, height, target_palette);
     weed_layer_unref(layer);
     return TRUE;
@@ -7966,7 +7962,6 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
   case CLIP_TYPE_FILE:
     // frame number can be 0 during rendering
     if (frame == 0) {
-      mainw->osc_block = FALSE;
       create_blank_layer(layer, image_ext, width, height, target_palette);
       weed_layer_unref(layer);
       return TRUE;
@@ -7986,8 +7981,6 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       }
       // realign
       copy_pixel_data(layer, NULL, THREADVAR(rowstride_alignment));
-
-      mainw->osc_block = FALSE;
       weed_layer_unref(layer);
       return TRUE;
     } else {
@@ -8169,7 +8162,6 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
               } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
             }
           }
-          mainw->osc_block = FALSE;
           weed_layer_unref(layer);
           return res;
         }
@@ -8194,7 +8186,6 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 #endif
 
         lives_free(fname);
-        mainw->osc_block = FALSE;
         if (!ret) {
           weed_layer_clear_pixel_data(layer);
           weed_layer_unref(layer);
@@ -8217,7 +8208,6 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         deinterlace_frame(layer, tc);
       } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
     }
-    mainw->osc_block = FALSE;
     weed_layer_unref(layer);
     return TRUE;
 #endif
@@ -8229,13 +8219,11 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         deinterlace_frame(layer, tc);
       } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
     }
-    mainw->osc_block = FALSE;
     weed_layer_unref(layer);
     return TRUE;
 #endif
   case CLIP_TYPE_LIVES2LIVES:
     weed_layer_set_from_lives2lives(layer, clip, (lives_vstream_t *)sfile->ext_src);
-    mainw->osc_block = FALSE;
     weed_layer_unref(layer);
     return TRUE;
   case CLIP_TYPE_GENERATOR: {
@@ -8247,26 +8235,27 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
     if (inst) {
       int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
       filter_mutex_lock(key);
-      vlayer = weed_layer_create_from_generator(inst, tc, clip);
-      weed_layer_copy(layer, vlayer); // layer is non-NULL, so copy by reference
-      weed_layer_nullify_pixel_data(vlayer);
+      if (!IS_VALID_CLIP(clip)) {
+        // gen was switched off
+        create_blank_layer(layer, image_ext, width, height, target_palette);
+      } else {
+        vlayer = weed_layer_create_from_generator(inst, tc, clip);
+        weed_layer_copy(layer, vlayer); // layer is non-NULL, so copy by reference
+        weed_layer_nullify_pixel_data(vlayer);
+      }
       filter_mutex_unlock(key);
       weed_instance_unref(inst);
     } else {
-      mainw->osc_block = FALSE;
       create_blank_layer(layer, image_ext, width, height, target_palette);
     }
-    mainw->osc_block = FALSE;
   }
   weed_layer_unref(layer);
   return TRUE;
   default:
-    mainw->osc_block = FALSE;
     create_blank_layer(layer, image_ext, width, height, target_palette);
     weed_layer_unref(layer);
     return FALSE;
   }
-  mainw->osc_block = FALSE;
 
   if (!is_thread) {
     // render subtitles from file

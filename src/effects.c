@@ -1090,7 +1090,9 @@ static boolean _rte_on_off(boolean from_menu, int key) {
         // otherwise, remove any which are not "pinned"
         if (!THREADVAR(fx_is_auto)) ce_thumbs_add_param_box(key, TRUE);
       }
+
       filter_mutex_unlock(key);
+
       if (!LIVES_IS_PLAYING) {
         // if anything is connected to ACTIVATE, the fx may be activated
         // during playback this is checked when we play a frame
@@ -1103,12 +1105,13 @@ static boolean _rte_on_off(boolean from_menu, int key) {
       // *INDENT-ON*
     } else {
       // effect is OFF
+      filter_mutex_lock(key);
+
       if (THREADVAR(fx_is_auto)) {
         // SOFT_DEINIT
         weed_plant_t *inst, *xinst;
         if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
           weed_set_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, WEED_TRUE);
-          filter_mutex_lock(key);
           if ((xinst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) == inst) {
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
               record_filter_deinit(key);
@@ -1117,7 +1120,6 @@ static boolean _rte_on_off(boolean from_menu, int key) {
             weed_instance_unref(xinst);
           }
           weed_instance_unref(inst);
-          filter_mutex_unlock(key);
         }
       }
 
@@ -1129,6 +1131,8 @@ static boolean _rte_on_off(boolean from_menu, int key) {
 
       if (rte_window) rtew_set_keych(key, FALSE);
       if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
+
+      filter_mutex_unlock(key);
 
       if (!LIVES_IS_PLAYING) {
         // if anything is connected to ACTIVATE, the fx may be de-activated

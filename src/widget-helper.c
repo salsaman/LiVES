@@ -3170,7 +3170,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_unfullscreen(LiVESWindow *windo
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_maximize(LiVESWindow *window) {
 #ifdef GUI_GTK
   gtk_window_maximize(window);
-  //lives_widget_process_updates(LIVES_WIDGET(window));
   return TRUE;
 #endif
   return FALSE;

@@ -141,9 +141,8 @@ void get_player_size(int *opwidth, int *opheight) {
     *opheight = rheight = lives_widget_get_allocation_height(mainw->play_image);// - V_RESIZE_ADJUST;
   } else {
     // try to get exact inner size of the main window
-    lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), opwidth, opheight);
-    opheight -= (int)(SCRN_BRDR * 16); // necessary, or screen expands too much (!?)
-    if (prefs->show_tool) *opheight -= lives_widget_get_allocation_height(mainw->btoolbar);
+    *opwidth = mainw->ce_frame_width;
+    *opheight = mainw->ce_frame_height;
   }
 
 align:

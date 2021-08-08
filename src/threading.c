@@ -985,7 +985,7 @@ static void *thrdpool(void *arg) {
           npoolthreads--;
           tdata->exited = TRUE;
           lives_widget_context_pop_thread_default(tdata->ctx);
-	  lives_widget_context_unref(tdata->ctx);
+          lives_widget_context_unref(tdata->ctx);
           pthread_mutex_unlock(&pool_mutex);
           break;
         }
@@ -1108,7 +1108,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
       for (int i = 0; i < rnpoolthreads; i++) {
         lives_thread_data_t *tdata = get_thread_data_by_id(i + 1);
         if (tdata->exited) {
-	  allctxs = lives_list_remove_data(allctxs, tdata, TRUE);
+          allctxs = lives_list_remove_data(allctxs, tdata, TRUE);
           lives_free(poolthrds[i]);
           tdata = lives_thread_data_create(i + 1);
           poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
@@ -1159,15 +1159,14 @@ uint64_t lives_thread_join(lives_thread_t work, void **retval) {
     pthread_cond_signal(&tcond);
     pthread_mutex_unlock(&tcond_mutex);
     if (task->busy) break;
-    sched_yield();
     lives_nanosleep(1000);
   }
 
-  if (!task->done) {
-    pthread_mutex_lock(&tcond_mutex);
-    pthread_cond_signal(&tcond);
-    pthread_mutex_unlock(&tcond_mutex);
-  }
+  /* if (!task->done) { */
+  /*   pthread_mutex_lock(&tcond_mutex); */
+  /*   pthread_cond_signal(&tcond); */
+  /*   pthread_mutex_unlock(&tcond_mutex); */
+  /* } */
 
   lives_nanosleep_until_nonzero(task->done);
   nthrd = task->done;

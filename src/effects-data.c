@@ -959,8 +959,8 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-	  if (copyto != -1) rec_param_change(inst, copyto);
-	}
+          if (copyto != -1) rec_param_change(inst, copyto);
+        }
       }
       lives_free(maxd); lives_free(mind); lives_free(valsD); lives_free(valsd);
       return retval;
@@ -1012,8 +1012,8 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-	  if (copyto != -1) rec_param_change(inst, copyto);
-	}
+          if (copyto != -1) rec_param_change(inst, copyto);
+        }
       }
       lives_free(maxi); lives_free(mini); lives_free(valsD); lives_free(valsI); lives_free(valsi);
       return retval;
@@ -1177,8 +1177,8 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-	  if (copyto != -1) rec_param_change(inst, copyto);
-	}
+          if (copyto != -1) rec_param_change(inst, copyto);
+        }
       }
       lives_free(maxd); lives_free(mind);
       lives_free(valsi); lives_free(valsd);
@@ -1231,8 +1231,8 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-	  if (copyto != -1) rec_param_change(inst, copyto);
-	}
+          if (copyto != -1) rec_param_change(inst, copyto);
+        }
       }
       lives_free(maxi); lives_free(mini);
       lives_free(valsI); lives_free(valsi);
@@ -1336,8 +1336,8 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-	  if (copyto != -1) rec_param_change(inst, copyto);
-	}
+          if (copyto != -1) rec_param_change(inst, copyto);
+        }
       }
       lives_free(maxd); lives_free(mind);
       lives_free(valsb); lives_free(valsd);
@@ -1371,8 +1371,8 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-	  if (copyto != -1) rec_param_change(inst, copyto);
-	}
+          if (copyto != -1) rec_param_change(inst, copyto);
+        }
       }
       lives_free(maxi); lives_free(mini);
       lives_free(valsi); lives_free(valsb);
@@ -1396,8 +1396,8 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-	  if (copyto != -1) rec_param_change(inst, copyto);
-	}
+          if (copyto != -1) rec_param_change(inst, copyto);
+        }
       }
       lives_free(valsb);
       lives_free(valsB);
@@ -1495,7 +1495,6 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
   int pflags;
   int okey, omode, i;
   boolean toggle_fx = FALSE;
-  boolean okey_needs_unlock = FALSE;
 
   if (mainw->is_rendering) return FALSE;
 
@@ -1525,8 +1524,6 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
   if (is_audio_thread) THREADVAR(fx_is_audio) = TRUE;
 
   for (i = start; i < nparams; i++) {
-    if (okey_needs_unlock) abort();
-    //okey_needs_unlock = FALSE;
     if ((oparam = pconx_get_out_param(FALSE, key, mode, i, &okey, &omode, NULL, &autoscale))) {
       //#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
@@ -1545,13 +1542,9 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
       oinst = NULL;
       /// we need to keep these locked for as little time as possible so as not to hang up the video / audio thread
 
-      /* filter_mutex_lock(okey); */
-      /* okey_needs_unlock = TRUE; */
-
       if (oparam != active_dummy) {
         oinst = rte_keymode_get_instance(okey + 1, omode);
         if (!oinst) {
-          //filter_mutex_unlock(okey);
           if (inst) {
             weed_instance_unref(inst);
           }
@@ -1559,7 +1552,6 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
           return FALSE;
         }
       }
-      //filter_mutex_unlock(okey);
 
       changed = pconx_convert_value_data(inst, i, key, key == FX_DATA_KEY_PLAYBACK_PLUGIN
                                          ? (weed_plant_t *)pp_get_param(mainw->vpp->play_params, i)
@@ -1571,16 +1563,11 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
           // let the video thread handle it
           weed_plant_t *filter = rte_keymode_get_filter(key + 1, rte_key_getmode(key + 1));
           if (!is_pure_audio(filter, FALSE)) {
-            if (okey_needs_unlock) filter_mutex_unlock(okey);
             if (oinst) weed_instance_unref(oinst);
             if (inst) weed_instance_unref(inst);
             if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams) lives_free(inparams);
             return FALSE;
           }
-        }
-        if (okey_needs_unlock) {
-          filter_mutex_unlock(okey);
-          okey_needs_unlock = FALSE;
         }
         switch_fx_state(key + 1);
         if (oinst) {
@@ -1588,10 +1575,6 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
         }
         break;
       } else {
-        if (okey_needs_unlock) {
-          filter_mutex_unlock(okey);
-          okey_needs_unlock = FALSE;
-        }
         if (oinst) {
           weed_instance_unref(oinst);
         }
@@ -1611,11 +1594,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
           }
           if (mainw->ce_thumbs) ce_thumbs_register_rfx_change(key, mode);
 	  // *INDENT-OFF*
-        }}
-      if (okey_needs_unlock) {
-	filter_mutex_unlock(okey);
-	okey_needs_unlock = FALSE;
-      }}}
+        }}}}
   // *INDENT-ON*
 
   if (inst) {

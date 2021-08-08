@@ -696,8 +696,8 @@ void pre_analyse(weed_plant_t *elist) {
 
         if (event) {
           in_tc = get_event_timecode(event);
-	  if (in_tc < offset_tc) in_tc = offset_tc;
-	  if (weed_get_boolean_value(event, LIVES_LEAF_NOQUANT, NULL) == WEED_TRUE) noquant = TRUE;
+          if (in_tc < offset_tc) in_tc = offset_tc;
+          if (weed_get_boolean_value(event, LIVES_LEAF_NOQUANT, NULL) == WEED_TRUE) noquant = TRUE;
         }
 
         if (event && (is_final == 2 || (in_tc <= stop_tc && is_final != 1))) {

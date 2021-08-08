@@ -3117,7 +3117,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
     }
     return next_event;
   }
-  
+
   if (mainw->cevent_tc != -1)
     aseek_tc += (weed_timecode_t)((double)(tc - mainw->cevent_tc) * stored_avel);
   mainw->cevent_tc = tc;
@@ -3817,7 +3817,9 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
             if (!layer && !pixbuf) {
               if (mainw->scrap_layer) {
-                if (!saveargs || mainw->scrap_layer != saveargs->layer) weed_layer_free(mainw->scrap_layer);
+                if (mainw->scrap_layer != mainw->transrend_layer &&
+                    (!saveargs || mainw->scrap_layer != saveargs->layer))
+                  weed_layer_free(mainw->scrap_layer);
                 mainw->scrap_layer = NULL;
               }
               if (mainw->scrap_pixbuf) {
@@ -3913,10 +3915,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               ztc = weed_get_int64_value(event, LIVES_LEAF_FAKE_TC, NULL);
             else ztc = tc;
 
-            /* for (i = 0; layers[i]; i++) { */
-            /*   check_layer_ready(layers[i]); */
-            /* } */
-
             layer = weed_apply_effects(layers, mainw->filter_map, ztc,
                                        cfile->hsize, cfile->vsize, pchains);
 
@@ -3954,13 +3952,14 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
               if (lives_proc_thread_check_finished(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
 
-              lives_nanosleep_until_nonzero(!mainw->transrend_ready);
-	      if (mainw->transrend_layer) {
-		weed_layer_free(mainw->transrend_layer);
-		mainw->transrend_layer = NULL;
-	      }
-
+              lives_nanosleep_until_zero(mainw->transrend_ready);
               if (lives_proc_thread_check_finished(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
+
+              if (mainw->transrend_layer) {
+                if (mainw->transrend_layer != mainw->scrap_layer)
+                  weed_layer_free(mainw->transrend_layer);
+                mainw->transrend_layer = NULL;
+              }
 
               if (scrap_track != -1) {
                 if (layer == mainw->scrap_layer) {
@@ -4503,7 +4502,7 @@ filterinit2:
           }
         }
       }
-      if (saveargs->layer) {
+      if (saveargs->layer && saveargs->layer != mainw->transrend_layer) {
         weed_layer_free(saveargs->layer);
         if (saveargs->layer == mainw->scrap_layer) mainw->scrap_layer = NULL;
       }
@@ -4520,6 +4519,7 @@ filterinit2:
 #endif
 
     if (mainw->transrend_layer) {
+      lives_nanosleep_until_zero(mainw->transrend_ready);
       weed_layer_free(mainw->transrend_layer);
       mainw->transrend_layer = NULL;
     }
@@ -4549,9 +4549,6 @@ filterinit2:
                              + TICKS_PER_SECOND_DBL / cfile->fps, cfile->fps);
       render_audio_segment(natracks, xaclips, mainw->multitrack != NULL ? mainw->multitrack->render_file :
                            mainw->current_file, xavel, xaseek, atc, next_out_tc, chvols, 1., 1., NULL);
-      /* render_audio_segment(1, NULL, mainw->multitrack != NULL */
-      /*                      ? mainw->multitrack->render_file : mainw->current_file, */
-      /*                      NULL, NULL, atc, next_out_tc, chvols, 0., 0., NULL); */
       cfile->afilesize = reget_afilesize_inner(mainw->current_file);
     }
     mainw->filter_map = NULL;

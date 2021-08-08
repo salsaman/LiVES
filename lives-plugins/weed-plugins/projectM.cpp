@@ -141,7 +141,7 @@ typedef struct {
   int nprs;
   int ctime;
   char **prnames;
-  uint8_t *bad_programs;
+  uint8_t *bad_programs, *good_programs;
   int program;
   bool bad_prog, checkforblanks;
   pthread_mutex_t mutex, pcm_mutex;
@@ -561,6 +561,8 @@ static void *worker(void *data) {
   projectM::Settings settings;
   _sdata *sd = (_sdata *)data;
   float hwratio;
+  int nprs;
+
   //  int new_stdout, new_stderr;
   //std::cerr << "worker start" << std::endl;
 
@@ -632,24 +634,30 @@ static void *worker(void *data) {
 
   //std::cerr << "worker start 4" << std::endl;
 
-  sd->nprs = sd->globalPM->getPlaylistSize() + 1;
+  nprs = sd->globalPM->getPlaylistSize() + 1;
   sd->checkforblanks = true;
   sd->cycadj = 0;
 
-  sd->prnames = (char **volatile)weed_malloc(sd->nprs * sizeof(char *));
+  sd->prnames = (char **volatile)weed_calloc(nprs, sizeof(char *));
   if (!sd->prnames) sd->error = WEED_ERROR_MEMORY_ALLOCATION;
-  else sd->bad_programs = (uint8_t *)weed_calloc((sd->nprs - 1), 1);
-  if (!sd->prnames) sd->error = WEED_ERROR_MEMORY_ALLOCATION;
+  else sd->bad_programs = (uint8_t *)weed_calloc(nprs - 1, 1);
+  if (!sd->bad_programs) sd->error = WEED_ERROR_MEMORY_ALLOCATION;
+  sd->good_programs = (uint8_t *)weed_calloc(nprs - 1, 1);
+  if (!sd->good_programs) sd->error = WEED_ERROR_MEMORY_ALLOCATION;
   if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) sd->rendering = false;
   else {
+    int ff = 1;
     sd->prnames[0] = strdup("- Random -");
-    for (int i = 1; i < sd->nprs; i++) {
+    sd->nprs = 1;
+    for (int i = 1; i < nprs; i++) {
       if (sd->globalPM->getPresetURL(i - 1).substr(sd->globalPM->getPresetURL(i - 1)
 						   .find_last_of(".") + 1) == "prjm") {
 	sd->bad_programs[i] = 1;
 	continue;
       }
-      sd->prnames[i] = strdup((sd->globalPM->getPresetName(i - 1)).c_str());
+      sd->good_programs[ff - 1] = i;
+      sd->prnames[ff++] = strdup((sd->globalPM->getPresetName(i - 1)).c_str());
+      sd->nprs++;
     }
   }
   //std::cerr << "worker start 5" << std::endl;
@@ -711,6 +719,7 @@ static void *worker(void *data) {
         sd->cycadj = 0;
         for (int rr = 0; rr < CHECKED_BIAS; rr++) {
           sd->program = fastrnd_int(sd->nprs - 2);
+	  sd->program = sd->good_programs[sd->program];
 
           // make it N times more likely to select a known good program than an untested one
           // values can be: 0 - unchecked, 1 - known bad, 2 - known good, 3 - bad if silent
@@ -983,7 +992,6 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
   weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
   weed_plant_t **inparams = weed_get_in_params(inst, NULL);
-  weed_plant_t *inparam = inparams[0];
   int ctime = weed_param_get_value_int(inparams[1]);
   unsigned char *dst = (unsigned char *)weed_channel_get_pixel_data(out_channel);
 
@@ -993,6 +1001,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   int palette = weed_channel_get_palette(out_channel);
   int psize = pixel_size(palette);
   int rowstride = weed_channel_get_stride(out_channel), xrowstride = width * psize;
+  int pidx = weed_param_get_value_int(inparams[0]);
   bool did_update = false;
   double timer;
 
@@ -1081,7 +1090,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   // 0 - 9, we just use the value - 1
   // else val % (nprs - 1) .e.g 9 mod 9 is 0, 10 mod 9 is 1, etc
 
-  sd->pidx = (weed_param_get_value_int(inparam) - 1) % (sd->nprs - 1);
+  sd->pidx = (pidx - 1) % sd->nprs;
 
   sd->ctime = ctime;
 
@@ -1247,6 +1256,7 @@ static void finalise(void) {
       weed_free(statsd->prnames);
     }
     if (statsd->bad_programs) weed_free(statsd->bad_programs);
+    if (statsd->good_programs) weed_free(statsd->good_programs);
     pthread_mutex_destroy(&statsd->mutex);
     pthread_mutex_destroy(&statsd->pcm_mutex);
     weed_free(statsd);

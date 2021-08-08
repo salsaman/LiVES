@@ -19188,14 +19188,14 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
       lives_free(eload_name);
       renumber_from_backup_layout_numbering(NULL);
       if (!mainw->recoverable_layout) {
-	if (!event_list_rectify(NULL, event_list)) {
-	  event_list_free(event_list);
-	  event_list = NULL;
-	}
+        if (!event_list_rectify(NULL, event_list)) {
+          event_list_free(event_list);
+          event_list = NULL;
+        }
       }
       if (!get_first_event(event_list)) {
-	event_list_free(event_list);
-	event_list = NULL;
+        event_list_free(event_list);
+        event_list = NULL;
       }
       return event_list;
     }

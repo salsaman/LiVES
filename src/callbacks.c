@@ -6673,7 +6673,7 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, doubl
 
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || preview_type == LIVES_PREVIEW_TYPE_RANGE) {
     xwin = lives_widget_get_xwinid(mainw->fs_playarea, "Unsupported display type for preview.");
-    if (xwin) {
+    if (!xwin) {
       end_fs_preview(fchoo, widget);
       lives_free(fsp_info_file);
       lives_widget_set_sensitive(widget, TRUE);

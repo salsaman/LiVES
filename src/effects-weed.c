@@ -7578,6 +7578,7 @@ boolean weed_deinit_effect(int hotkey) {
   filter_mutex_unlock(hotkey);
 
   if (hotkey < FX_KEYS_MAX_VIRTUAL) {
+    init_events[hotkey] = NULL;
     if (mainw->whentostop == STOP_ON_VID_END && mainw->current_file > -1 &&
         (cfile->frames == 0 || (mainw->loop && cfile->achans > 0 && !mainw->is_rendering && (mainw->audio_end / cfile->fps)
                                 < MAX(cfile->laudio_time, cfile->raudio_time)))) mainw->whentostop = STOP_ON_AUD_END;

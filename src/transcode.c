@@ -427,6 +427,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) goto tr_err;
       if (mainw->cancelled != CANCEL_NONE) break;
       frame_layer = mainw->transrend_layer;
+      weed_layer_ref(frame_layer);
     }
 
 #ifdef MATCH_PALETTES
@@ -440,6 +441,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       }
       if (!(*vpp->init_screen)(vpp->fwidth, vpp->fheight, FALSE, 0, vpp->extra_argc, vpp->extra_argv)) {
         error = TRUE;
+        if (internal) weed_layer_unref(frame_layer);
         goto tr_err;
       }
     }
@@ -451,6 +453,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       in_bytes = lives_read_buffered(fd, abuff, (size_t)spf * cfile->achans * (cfile->asampsize >> 3), TRUE);
       if (THREADVAR(read_failed) || in_bytes < 0) {
         error = TRUE;
+        if (internal) weed_layer_unref(frame_layer);
         goto tr_err;
       }
 
@@ -517,6 +520,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     if (((width ^ pwidth) >> 2) || ((height ^ pheight) >> 1)) {
       if (!resize_layer(frame_layer, pwidth, pheight, interp, vpp->palette, vpp->YUV_clamping)) {
         //break_me("tranres");
+        if (internal) weed_layer_unref(frame_layer);
         goto tr_err;
       }
     }
@@ -535,6 +539,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     if (coder) {
       error = lives_proc_thread_join_boolean(coder);
       lives_proc_thread_free(coder);
+      coder = NULL;
     }
     if (!error) {
       weed_plant_t *copy_frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
@@ -542,11 +547,13 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       /* weed_layer_nullify_pixel_data(frame_layer); */
       copy_frame_layer = weed_layer_copy(NULL, frame_layer);
 
+      if (internal) weed_layer_unref(frame_layer);
+
       copy_frame_layer = apply_watermark(copy_frame_layer, currticks);
 
       coder = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)send_layer,
                                        WEED_SEED_BOOLEAN, "PVI", copy_frame_layer, vpp, currticks);
-    }
+    } else if (internal) weed_layer_unref(frame_layer);
 
     if (error) goto tr_err;
 

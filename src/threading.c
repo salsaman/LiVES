@@ -54,7 +54,9 @@ static void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_a
 LIVES_GLOBAL_INLINE void lives_proc_thread_free(lives_proc_thread_t lpt) {
   pthread_mutex_t *state_mutex
     = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+  lives_nanosleep_until_nonzero(lives_proc_thread_check_finished(lpt));
   if (state_mutex) lives_free(state_mutex);
+  THREADVAR(tinfo) = NULL;
   weed_plant_free(lpt);
 }
 
@@ -145,7 +147,6 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
   lives_proc_thread_t lpt;
   lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
   ticks_t xtimeout = 1;
-  uint64_t tstate;
   boolean tres;
   lives_cancel_t cancel = CANCEL_NONE;
   int xreturn_type = return_type;
@@ -171,9 +172,7 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
     lives_proc_thread_sync_ready(lpt);
   }
 
-  tstate = lives_proc_thread_get_state(lpt);
-
-  if (tstate & THRD_STATE_BUSY) {
+  if (lives_proc_thread_check_states(lpt, THRD_STATE_BUSY) == THRD_STATE_BUSY) {
     // thread MUST unavoidably block; stop the timer (e.g showing a UI)
     // user or other condition may set cancelled
     if ((cancel = mainw->cancelled)) goto thrd_done;
@@ -183,13 +182,12 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
   while (!(tres = lives_proc_thread_check_finished(lpt))
          && (timeout == 0 || (xtimeout = lives_alarm_check(alarm_handle)) > 0)) {
     lives_nanosleep(LIVES_SHORT_SLEEP);
-    tstate = lives_proc_thread_get_state(lpt);
 
     if (is_fg_thread())
       // allow governor_loop to run its idle func
       lives_widget_context_update();
 
-    if (tstate & THRD_STATE_BUSY) {
+    if (lives_proc_thread_check_states(lpt, THRD_STATE_BUSY) == THRD_STATE_BUSY) {
       // thread MUST unavoidably block; stop the timer (e.g showing a UI)
       // user or other condition may set cancelled
       if ((cancel = mainw->cancelled) != CANCEL_NONE) break;
@@ -250,6 +248,8 @@ void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, c
     ret = fg_run_func(lpt, retval);
   } else {
     ret = lives_fg_run(lpt, retval);
+    lives_proc_thread_include_states(lpt, THRD_STATE_FINISHED);
+    lives_proc_thread_free(lpt);
   }
   va_end(xargs);
   return ret;
@@ -522,12 +522,28 @@ void call_funcsig(lives_proc_thread_t info) {
 
 
 LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_get_state(lives_proc_thread_t lpt) {
-  return lpt ? weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL) : 0;
+  if (lpt) {
+    pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+    uint64_t tstate;
+    pthread_mutex_lock(state_mutex);
+    tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
+    pthread_mutex_unlock(state_mutex);
+    return tstate;
+  }
+  return THRD_STATE_INVALID;
 }
 
 
 LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_check_states(lives_proc_thread_t lpt, uint64_t state_bits) {
-  return lpt ? (weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL) & state_bits) : 0;
+  if (lpt) {
+    pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+    uint64_t tstate;
+    pthread_mutex_lock(state_mutex);
+    tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
+    pthread_mutex_unlock(state_mutex);
+    return tstate & state_bits;
+  }
+  return THRD_STATE_INVALID;
 }
 
 
@@ -536,9 +552,8 @@ uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t stat
     uint64_t tstate;
     pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
     pthread_mutex_lock(state_mutex);
-    tstate = lives_proc_thread_get_state(lpt);
-    tstate |= state_bits;
-    weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate);
+    tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
+    weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate | state_bits);
     pthread_mutex_unlock(state_mutex);
     return tstate;
   }
@@ -547,9 +562,11 @@ uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t stat
 
 boolean lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state_bits) {
   if (lpt) {
+    uint64_t tstate;
     pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
     pthread_mutex_lock(state_mutex);
-    weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, lives_proc_thread_get_state(lpt) & ~state_bits);
+    tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
+    weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate & ~state_bits);
     pthread_mutex_unlock(state_mutex);
     return TRUE;
   }
@@ -569,12 +586,17 @@ boolean lives_proc_thread_set_state(lives_proc_thread_t lpt, uint64_t state) {
 
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_check_finished(lives_proc_thread_t tinfo) {
-  return (tinfo && (lives_proc_thread_get_state(tinfo) & THRD_STATE_FINISHED)) ? TRUE : FALSE;
+  if (tinfo && (lives_proc_thread_check_states(tinfo, THRD_STATE_FINISHED))
+      == THRD_STATE_FINISHED) {
+    return TRUE;
+  }
+  return FALSE;
 }
 
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_signalled(lives_proc_thread_t tinfo) {
-  return (tinfo && (lives_proc_thread_get_state(tinfo) & THRD_STATE_SIGNALLED)) ? TRUE : FALSE;
+  return (tinfo && (lives_proc_thread_check_states(tinfo, THRD_STATE_SIGNALLED))
+          == THRD_STATE_SIGNALLED) ? TRUE : FALSE;
 }
 
 
@@ -596,7 +618,8 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_set_cancellable(lives_proc_thread_t t
 
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancellable(lives_proc_thread_t tinfo) {
-  return (tinfo && (lives_proc_thread_get_state(tinfo) & THRD_OPT_CANCELLABLE)) ? TRUE : FALSE;
+  return (tinfo && (lives_proc_thread_check_states(tinfo, THRD_OPT_CANCELLABLE))
+          == THRD_OPT_CANCELLABLE) ? TRUE : FALSE;
 }
 
 
@@ -643,7 +666,8 @@ boolean lives_proc_thread_dontcare(lives_proc_thread_t tinfo) {
 
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancelled(lives_proc_thread_t tinfo) {
-  return (tinfo && (lives_proc_thread_get_state(tinfo) & THRD_STATE_CANCELLED)) ? TRUE : FALSE;
+  return (tinfo && (lives_proc_thread_check_states(tinfo, THRD_STATE_CANCELLED))
+          == THRD_STATE_CANCELLED) ? TRUE : FALSE;
 }
 
 
@@ -652,9 +676,11 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_set_signalled(lives_proc_thread_t 
   else {
     lives_thread_data_t *mydata = (lives_thread_data_t *)data;
     pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+    uint64_t tstate;
     if (mydata) mydata->signum = signum;
     pthread_mutex_lock(state_mutex);
-    weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, lives_proc_thread_get_state(lpt) | THRD_STATE_SIGNALLED);
+    tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
+    weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate | THRD_STATE_SIGNALLED);
     weed_set_voidptr_value(lpt, LIVES_LEAF_SIGNAL_DATA, data);
     pthread_mutex_unlock(state_mutex);
   }
@@ -672,7 +698,7 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_sync_ready(lives_proc_thread_t tinfo)
 }
 
 
-#define _join(tinfo, stype) if (is_fg_thread()) {while (!(lives_proc_thread_get_state(tinfo) & THRD_STATE_FINISHED)) { \
+#define _join(tinfo, stype) if (is_fg_thread()) {while (!(lives_proc_thread_check_finished(tinfo))) { \
       if (has_lpttorun()) lives_widget_context_update(); lives_nanosleep(LIVES_QUICK_NAP * 10);}} \
   else lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, _RV_)); \
   return weed_get_##stype##_value(tinfo, _RV_, NULL);
@@ -728,10 +754,14 @@ static funcsig_t make_funcsig(lives_proc_thread_t func_info) {
 static void pthread_cleanup_func(void *args) {
   lives_proc_thread_t info = (lives_proc_thread_t)args;
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
-  boolean dontcare = lives_proc_thread_check_states(info, THRD_OPT_DONTCARE) ? TRUE : FALSE;
-  if (dontcare || (!ret_type && !(lives_proc_thread_check_states(info, THRD_OPT_NOTIFY)))) {
+  boolean dontcare = (lives_proc_thread_check_states(info, THRD_OPT_DONTCARE)
+                      == THRD_OPT_DONTCARE) ? TRUE : FALSE;
+  if (dontcare || (!ret_type && lives_proc_thread_check_states(info, THRD_OPT_NOTIFY)
+                   != THRD_OPT_NOTIFY)) {
     lives_proc_thread_free(info);
-  } else lives_proc_thread_include_states(info, THRD_STATE_FINISHED);
+  } else {
+    lives_proc_thread_include_states(info, THRD_STATE_FINISHED);
+  }
 }
 
 
@@ -762,46 +792,54 @@ void *fg_run_func(lives_proc_thread_t lpt, void *retval) {
   case WEED_SEED_INT: {
     int *ival = (int *)retval;
     *ival = weed_get_int_value(lpt, _RV_, NULL);
+    lives_proc_thread_include_states(lpt, THRD_STATE_FINISHED);
     lives_proc_thread_free(lpt);
     return (void *)ival;
   }
   case WEED_SEED_BOOLEAN: {
     int *bval = (int *)retval;
     *bval = weed_get_boolean_value(lpt, _RV_, NULL);
+    lives_proc_thread_include_states(lpt, THRD_STATE_FINISHED);
     lives_proc_thread_free(lpt);
     return (void *)bval;
   }
   case WEED_SEED_DOUBLE: {
     double *dval = (double *)retval;
     *dval = weed_get_double_value(lpt, _RV_, NULL);
+    lives_proc_thread_include_states(lpt, THRD_STATE_FINISHED);
     lives_proc_thread_free(lpt);
     return (void *)dval;
   }
   case WEED_SEED_STRING: {
     char *chval = weed_get_string_value(lpt, _RV_, NULL);
+    lives_proc_thread_include_states(lpt, THRD_STATE_FINISHED);
     lives_proc_thread_free(lpt);
     return (void *)chval;
   }
   case WEED_SEED_INT64: {
     int64_t *i64val = (int64_t *)retval;
     *i64val = weed_get_int64_value(lpt, _RV_, NULL);
+    lives_proc_thread_include_states(lpt, THRD_STATE_FINISHED);
     lives_proc_thread_free(lpt);
     return (void *)i64val;
   }
   case WEED_SEED_VOIDPTR: {
     void *val;
     val = weed_get_voidptr_value(lpt, _RV_, NULL);
+    lives_proc_thread_include_states(lpt, THRD_STATE_FINISHED);
     lives_proc_thread_free(lpt);
     return val;
   }
   case WEED_SEED_PLANTPTR: {
     weed_plant_t *pval;
     pval = weed_get_plantptr_value(lpt, _RV_, NULL);
+    lives_proc_thread_include_states(lpt, THRD_STATE_FINISHED);
     lives_proc_thread_free(lpt);
     return (void *)pval;
   }
   /// no funcptrs or custom...yet
   default:
+    lives_proc_thread_include_states(lpt, THRD_STATE_FINISHED);
     lives_proc_thread_free(lpt);
     break;
   }

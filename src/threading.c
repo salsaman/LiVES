@@ -246,10 +246,10 @@ void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, c
   if (is_fg_thread()) {
     // run direct
     ret = fg_run_func(lpt, retval);
+    // calls lives_proc_thread_free(lpt)
   } else {
     ret = lives_fg_run(lpt, retval);
-    lives_proc_thread_include_states(lpt, THRD_STATE_FINISHED);
-    lives_proc_thread_free(lpt);
+    // will call fg_run_func() indirectly, so no need to call lives_proc_thread_free
   }
   va_end(xargs);
   return ret;
@@ -758,6 +758,7 @@ static void pthread_cleanup_func(void *args) {
                       == THRD_OPT_DONTCARE) ? TRUE : FALSE;
   if (dontcare || (!ret_type && lives_proc_thread_check_states(info, THRD_OPT_NOTIFY)
                    != THRD_OPT_NOTIFY)) {
+    lives_proc_thread_include_states(info, THRD_STATE_FINISHED);
     lives_proc_thread_free(info);
   } else {
     lives_proc_thread_include_states(info, THRD_STATE_FINISHED);
@@ -867,7 +868,7 @@ static void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_a
 //////// worker thread pool //////////////////////////////////////////
 
 ///////// thread pool ////////////////////////
-#ifndef VALGRIND_ON
+#ifndef VALGRIND_ONx
 #define MINPOOLTHREADS 8
 #else
 #define MINPOOLTHREADS 2
@@ -949,7 +950,9 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   if (!tdata->idx) abort();
 
   pthread_mutex_lock(&twork_mutex);
+
   list = (LiVESList *)twork_last;
+
   if (LIVES_UNLIKELY(!list)) {
     pthread_mutex_unlock(&twork_mutex);
     return FALSE;
@@ -975,16 +978,17 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
 
   lives_nanosleep_until_nonzero(mywork->sync_ready);
 
-  lives_widget_context_invoke(tdata->ctx, gsrc_wrapper, mywork);
+  pthread_mutex_lock(&twork_count_mutex);
+  ntasks--;
+  pthread_mutex_unlock(&twork_count_mutex);
+
+  g_main_context_invoke_full(tdata->ctx, G_PRIORITY_HIGH, gsrc_wrapper, mywork, NULL);
 
   if (myflags & LIVES_THRDFLAG_AUTODELETE) {
     lives_free(mywork);
     lives_thread_free((lives_thread_t *)list);
   } else mywork->done = tdata->idx;
 
-  pthread_mutex_lock(&twork_count_mutex);
-  ntasks--;
-  pthread_mutex_unlock(&twork_count_mutex);
 #ifdef USE_RPMALLOC
   rpmalloc_thread_collect();
 #endif
@@ -1147,6 +1151,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
         lives_thread_data_t *tdata = get_thread_data_by_id(i + 1);
         if (tdata->exited) {
           allctxs = lives_list_remove_data(allctxs, tdata, TRUE);
+          pthread_join(*poolthrds[i], NULL);
           lives_free(poolthrds[i]);
           tdata = lives_thread_data_create(i + 1);
           poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
@@ -1162,6 +1167,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
       pthread_cond_broadcast(&tcond);
       pthread_mutex_unlock(&tcond_mutex);
     } else {
+      // triiggering too often
       poolthrds =
         (pthread_t **)lives_realloc(poolthrds, (rnpoolthreads + MINPOOLTHREADS) * sizeof(pthread_t *));
       for (int i = rnpoolthreads; i < rnpoolthreads + MINPOOLTHREADS; i++) {

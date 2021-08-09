@@ -980,18 +980,6 @@ static volatile lives_proc_thread_t lpttorun = NULL;
 static volatile void *lpt_result = NULL;
 static volatile void *lpt_retval = NULL;
 
-#if 0
-static volatile lives_proc_thread_t get_lpttorun(boolean runit) {
-  if (lpttorun) {
-    if (runit && !gov_will_run) {
-      lpt_result = fg_run_func(lpttorun, (void *)lpt_retval);
-      lpttorun = NULL;
-    }
-  }
-  return lpttorun;
-}
-#endif
-
 boolean has_lpttorun(void) {return !!lpttorun;}
 
 static void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
@@ -1159,6 +1147,7 @@ reloop:
       // check if there is a foreground task to run
       lpt_recurse2 = TRUE; // prevent super-recursion
       // call fg task directly, bg thread will wait for lpttorun == NULL and read lpt_result
+      // will also call lives_proc_thread_free(lpttorun), so it must not be used again after this
       lpt_result = fg_run_func(lpttorun, (void *)lpt_retval);
       if (!is_timer) {
         lpttorun = NULL;

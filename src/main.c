@@ -7337,7 +7337,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 
 #ifdef PNG_BIO
   png_set_read_fn(png_ptr, LIVES_INT_TO_POINTER(fd), png_read_func);
-#ifndef VALGRIND_ON
+#ifndef VALGRIND_ONx
   if (mainw->debug)
     png_set_sig_bytes(png_ptr, 0);
   else
@@ -7726,7 +7726,7 @@ boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char 
   LiVESError *gerror = NULL;
   char *shmpath = NULL;
   boolean ret = TRUE;
-#ifndef VALGRIND_ON
+#ifndef VALGRIND_ONx
   boolean is_png = FALSE;
 #endif
   int fd = -1;
@@ -7738,7 +7738,7 @@ boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char 
   uint8_t ibuff[IMG_BUFF_SIZE];
   size_t bsize;
 
-#ifndef VALGRIND_ON
+#ifndef VALGRIND_ONx
   if (!mainw->debug)
     if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) is_png = TRUE;
 #endif
@@ -7750,7 +7750,7 @@ boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char 
 #ifdef HAVE_POSIX_FADVISE
   posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
 #endif
-#ifndef VALGRIND_ON
+#ifndef VALGRIND_ONx
   if (is_png) lives_buffered_rdonly_slurp(fd, 8);
   else lives_buffered_rdonly_slurp(fd, 0);
 #endif

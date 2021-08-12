@@ -182,16 +182,16 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   float rxval, gxval, bxval, rval, gval, bval;
 #endif
 
-  /* weed_plant_t *gui = weed_instance_get_gui(inst); */
-  /* int host_ease = weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL); */
-  /* if (host_ease > 0) { */
-  /*   if (sdata->ease_every == 0) { */
-  /*     // easing (experimental) part 1 */
-  /*     // how many cycles to ease by 1 */
-  /*     sdata->ease_every = (int)((float)host_ease / (float)sdata->ccache); */
-  /*   } */
-  /* } */
-  /* else sdata->ease_every = sdata->ease_counter = 0; */
+  weed_plant_t *gui = weed_instance_get_gui(inst);
+  int host_ease = weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL);
+  if (host_ease > 0) {
+    if (sdata->ease_every == 0) {
+      // easing (experimental) part 1
+      // how many cycles to ease by 1
+      sdata->ease_every = (int)((float)host_ease / (float)sdata->ccache);
+    }
+  }
+  else sdata->ease_every = sdata->ease_counter = 0;
 
   if (maxcache < 0) maxcache = 0;
   else if (maxcache > 50) maxcache = 50;
@@ -424,10 +424,10 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   weed_free(in_params);
 
   // easing part 2
-  if (1 || sdata->ease_every <= 0) {
-    //weed_plant_t *gui = weed_instance_get_gui(inst);
+  if (sdata->ease_every <= 0) {
+    weed_plant_t *gui = weed_instance_get_gui(inst);
     if (sdata->ccache < sdata->tcache) sdata->ccache++;
-    //weed_set_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, sdata->ccache);
+    weed_set_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, sdata->ccache);
   } else {
     weed_plant_t *gui = weed_instance_get_gui(inst);
     if (sdata->ease_counter++ >= sdata->ease_every) {

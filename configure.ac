@@ -1047,34 +1047,21 @@ if test "$IS_MINGW" = "false"; then
 
 if test "x$disable_system_weed" != "xyes"; then
 NEED_LOCAL_WEED=false
-NEED_LOCAL_WEED_GSLICE=false
 NEED_LOCAL_WEED_UTILS=false
 NEED_LOCAL_WEED_COMPAT=false
 NEED_LOCAL_WEED_PLUGIN=false
 else
 NEED_LOCAL_WEED=true
-NEED_LOCAL_WEED_GSLICE=true
 NEED_LOCAL_WEED_UTILS=true
 NEED_LOCAL_WEED_COMPAT=true
 NEED_LOCAL_WEED_PLUGIN=true
 fi
 
+DISABLE_GSLICE=true
+
 if test "$DISABLE_GSLICE" = "false"; then
-if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED_GSLICE, libweed_gslice >= 2.0.1, NEED_LOCAL_WEED_GSLICE=false, NEED_LOCAL_WEED_GSLICE=true)
-else
-echo "Check for system libweed_gslice is disabled"
+   DISABLE_GSLICE=false
 fi
-
-if test "$NEED_LOCAL_WEED_GSLICE" = "true"; then
-echo "...will try to build from included sources"
-NEED_LOCAL_WEED=true
-fi
-
-AC_SUBST(WEED_GSLICE_LIBS)
-
-else
-echo "gslice allocator disabled, so..."
 
 if test "x$disable_system_weed" != "xyes"; then
 PKG_CHECK_MODULES(WEED, libweed >= 2.0.1, NEED_LOCAL_WEED=false, NEED_LOCAL_WEED=true)
@@ -1119,7 +1106,7 @@ AC_SUBST(WEED_COMPAT_CFLAGS)
 AC_SUBST(WEED_COMPAT_LIBS)
 
 if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED_PLUGIN, libweed-plugin >= 2.0.1, NEED_LOCAL_WEED_PLUGIN=false, NEED_LOCAL_WEED_PLUGIN=true)
+PKG_CHECK_MODULES(WEED_PLUGIN, libweed-plugin >= 2.1.1, NEED_LOCAL_WEED_PLUGIN=false, NEED_LOCAL_WEED_PLUGIN=true)
 else
 echo "Check for system libweed-plugin is disabled"
 fi
@@ -1131,10 +1118,8 @@ fi
 AC_SUBST(WEED_PLUGIN_CFLAGS)
 AC_SUBST(WEED_PLUGIN_LIBS)
 
-fi
-
 AM_CONDITIONAL(NEED_LOCAL_WEED,         $NEED_LOCAL_WEED)
-AM_CONDITIONAL(NEED_LOCAL_WEED_GSLICE,  $NEED_LOCAL_WEED_GSLICE)
+AM_CONDITIONAL(DISABLE_GSLICE,  	$DISABLE_GSLICE)
 AM_CONDITIONAL(NEED_LOCAL_WEED_UTILS,   $NEED_LOCAL_WEED_UTILS)
 AM_CONDITIONAL(NEED_LOCAL_WEED_COMPAT,  $NEED_LOCAL_WEED_COMPAT)
 AM_CONDITIONAL(NEED_LOCAL_WEED_PLUGIN,  $NEED_LOCAL_WEED_PLUGIN)

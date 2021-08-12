@@ -475,11 +475,11 @@ if ($has_init) {
 	print OUT "    }\n";
     }
 
-    print OUT "    weed_set_voidptr_value(inst, \"plugin_internal\", sdata);\n";
+    print OUT "    weed_set_instance_data(inst, sdata);\n";
     print OUT "  }\n";
 
     if ($use_sdata) {
-	print OUT "  else sdata = weed_get_voidptr_value(inst, \"plugin_internal\", NULL);\n";
+	print OUT "  else sdata = weed_get_instance_data(inst, sdata);\n";
     }
 
     ## add gui init code
@@ -498,8 +498,7 @@ if ($has_deinit) {
     print OUT "\nstatic weed_error_t $deinit_func(weed_plant_t *inst) {\n";
 
     if ($use_sdata) {
-	print OUT "  sdata_t *sdata = (sdata_t *)weed_get_voidptr_value(inst, " .
-	    "\"plugin_internal\", NULL);\n";
+	print OUT "  sdata_t *sdata = weed_get_instance_data(inst, sdata);\n";
     }
 
     &gen_array(2, 2, @deinit);
@@ -523,7 +522,7 @@ if ($has_deinit) {
 	if ($has_destr) {
 	    print OUT "  }\n";
 	}
-	print OUT "  weed_set_voidptr_value(inst, \"plugin_internal\", NULL);\n";
+	print OUT "  weed_set_instance_data(inst, NULL);\n";
     }
 
     print OUT "\n  return WEED_SUCCESS;\n";
@@ -1198,7 +1197,7 @@ sub add_start {
     if ($use_sdata) {
 	print OUT "  sdata_t *sdata";
 	if ($is_procfunc) {
-	    print OUT " = weed_get_voidptr_value(inst, \"plugin_internal\", NULL);\n";
+	    print OUT " = weed_get_instance_data(inst, sdata);\n";
 	    print OUT "  if (!sdata) return WEED_ERROR_REINIT_NEEDED;\n";
 	    print OUT "  else {\n";
 	}

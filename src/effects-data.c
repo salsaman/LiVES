@@ -1521,7 +1521,10 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
     filter_mutex_unlock(key);
   }
 
-  if (is_audio_thread) THREADVAR(fx_is_audio) = TRUE;
+  if (LIVES_IS_PLAYING && is_audio_thread) {
+    THREADVAR(fx_is_audio) = TRUE;
+    THREADVAR(event_ticks) = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+  } else THREADVAR(fx_is_audio) = FALSE;
 
   for (i = start; i < nparams; i++) {
     if ((oparam = pconx_get_out_param(FALSE, key, mode, i, &okey, &omode, NULL, &autoscale))) {
@@ -1544,11 +1547,16 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
 
       if (oparam != active_dummy) {
         oinst = rte_keymode_get_instance(okey + 1, omode);
+        if (weed_get_boolean_value(oinst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) {
+          weed_instance_unref(oinst);
+          oinst = NULL;
+        }
         if (!oinst) {
           if (inst) {
             weed_instance_unref(inst);
           }
           if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams) lives_free(inparams);
+          THREADVAR(fx_is_audio) = FALSE;
           return FALSE;
         }
       }
@@ -1566,6 +1574,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
             if (oinst) weed_instance_unref(oinst);
             if (inst) weed_instance_unref(inst);
             if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams) lives_free(inparams);
+            THREADVAR(fx_is_audio) = FALSE;
             return FALSE;
           }
         }
@@ -1584,12 +1593,14 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
 
           if (fx_dialog[1] && !reinit_inst) {
             lives_rfx_t *rfx = fx_dialog[1]->rfx;
-            if (!rfx->is_template) {
-              int keyw = fx_dialog[1]->key;
-              int modew = fx_dialog[1]->mode;
-              if (keyw == key && modew == mode)
-                // ask the main thread to update the param window
-                mainw->vrfx_update = rfx;
+            if (rfx) {
+              if (!rfx->is_template) {
+                int keyw = fx_dialog[1]->key;
+                int modew = fx_dialog[1]->mode;
+                if (keyw == key && modew == mode)
+                  // ask the main thread to update the param window
+                  mainw->vrfx_update = rfx;
+              }
             }
           }
           if (mainw->ce_thumbs) ce_thumbs_register_rfx_change(key, mode);
@@ -1602,6 +1613,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
   }
 
   if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams) lives_free(inparams);
+  THREADVAR(fx_is_audio) = FALSE;
   return reinit_inst;
 }
 

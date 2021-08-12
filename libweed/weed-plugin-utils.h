@@ -85,7 +85,11 @@ extern "C"
 #undef ALLOW_UNUSED
 #endif
 
+#ifdef __GNUC__
+#define ALLOW_UNUSED __attribute__ ((unused))
+#else
 #define ALLOW_UNUSED
+#endif
 #define FN_DECL static
 
 // functions for weed_setup()
@@ -168,6 +172,14 @@ FN_DECL int weed_paramtmpl_get_flags(weed_plant_t *paramtmpl);
 
 // chan tmpl
 FN_DECL int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
+
+#ifndef PLUGIN_INTERNAL_DATA
+#define PLUGIN_INTERNAL_DATA "plugin_internal"
+#endif
+
+// inst static data
+#define weed_get_instance_data(inst, a) ((typeof((a)))weed_get_voidptr_value((inst), PLUGIN_INTERNAL_DATA, NULL))
+#define weed_set_instance_data(inst, v) weed_set_voidptr_value((inst), PLUGIN_INTERNAL_DATA, (v))
 
 // inst
 FN_DECL weed_plant_t *weed_get_in_channel(weed_plant_t *inst, int idx);

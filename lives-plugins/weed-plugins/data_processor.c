@@ -655,32 +655,26 @@ static double evaluate(const char *exp, _sdata *sdata) {
 //////////////////////////////////////////////////////////////////////////////////
 
 static weed_error_t dataproc_init(weed_plant_t *inst) {
-  register int i;
+  _sdata *sdata = (_sdata *)weed_calloc(1, sizeof(_sdata));
 
-  _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
+  if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
+  sdata->store = weed_calloc(NSTORE, sizeof(double));
 
-  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
-  sdata->store = weed_malloc(NSTORE * sizeof(double));
-
-  if (sdata->store == NULL) {
+  if (!sdata->store) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  for (i = 0; i < NSTORE; i++) {
-    sdata->store[i] = 0.;
-  }
-
-  weed_set_voidptr_value(inst, "plugin_internal", sdata);
+  weed_set_instance_data(inst, sdata);
 
   return WEED_SUCCESS;
 }
 
 
 static weed_error_t dataproc_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
-  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  _sdata *sdata = weed_get_instance_data(inst, sdata);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+  weed_plant_t **out_params = weed_get_out_params(inst, NULL);
 
   double res = 0.;
 
@@ -815,13 +809,12 @@ static weed_error_t dataproc_process(weed_plant_t *inst, weed_timecode_t timesta
 
 
 static weed_error_t dataproc_deinit(weed_plant_t *inst) {
-  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
-
+  _sdata *sdata = weed_get_instance_data(inst, sdata);
   if (sdata) {
     if (sdata->store) weed_free(sdata->store);
     weed_free(sdata);
   }
-  weed_set_voidptr_value(inst, "plugin_internal", NULL);
+  weed_set_instance_data(inst, NULL);
   return WEED_SUCCESS;
 }
 

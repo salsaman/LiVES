@@ -2857,6 +2857,10 @@ void play_file(void) {
   mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
   mainw->osc_auto = 0;
 
+  // do this here before closing the audio tracks
+  if (!mainw->record && mainw->record_paused)
+    event_list_add_end_events(mainw->event_list, TRUE);
+
   if (mainw->loop_locked) unlock_loop_lock();
   if (prefs->show_msg_area) {
     lives_widget_set_size_request(mainw->message_box, -1, MIN_MSGBAR_HEIGHT);
@@ -2925,7 +2929,7 @@ void play_file(void) {
       jack_message.next = NULL;
       mainw->jackd->msgq = &jack_message;
       if (timeout == 0) handle_audio_timeout();
-      else lives_nanosleep_until_zero(mainw->jackd->playing_file > -1);
+      else lives_nanosleep_while_true(mainw->jackd->playing_file > -1);
     }
   } else {
 #endif

@@ -279,8 +279,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     vpp = mainw->vpp;
     mainw->transrend_ready = TRUE;
     lives_proc_thread_set_cancellable(mainw->transrend_proc);
-    lives_nanosleep_until_nonzero(!mainw->transrend_ready
-                                  || lives_proc_thread_get_cancelled(mainw->transrend_proc));
+    lives_nanosleep_while_false(!mainw->transrend_ready
+                                || lives_proc_thread_get_cancelled(mainw->transrend_proc));
     if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) goto tr_err2;
   }
 
@@ -380,12 +380,6 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
   width = pwidth = vpp->fwidth;
   height = pheight = vpp->fheight;
 
-  /* if (prefs->enc_letterbox) { */
-  /*   width = cfile->hsize; */
-  /*   height = cfile->vsize; */
-  /*   get_letterbox_sizes(&pwidth, &pheight, &width, &height, (mainw->vpp->capabilities & VPP_CAN_RESIZE)); */
-  /* } */
-
   lives_snprintf(cfile->save_file_name, PATH_MAX, "%s", pname);
 
   if (!internal) {
@@ -422,8 +416,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
         frame_layer = on_rte_apply(frame_layer, vpp->fwidth, vpp->fheight, (weed_timecode_t)currticks);
       }
     } else {
-      lives_nanosleep_until_nonzero(mainw->transrend_ready
-                                    || lives_proc_thread_get_cancelled(mainw->transrend_proc));
+      lives_nanosleep_while_false(mainw->transrend_ready
+                                  || lives_proc_thread_get_cancelled(mainw->transrend_proc));
       if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) goto tr_err;
       if (mainw->cancelled != CANCEL_NONE) break;
       frame_layer = mainw->transrend_layer;
@@ -441,7 +435,6 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       }
       if (!(*vpp->init_screen)(vpp->fwidth, vpp->fheight, FALSE, 0, vpp->extra_argc, vpp->extra_argv)) {
         error = TRUE;
-        if (internal) weed_layer_unref(frame_layer);
         goto tr_err;
       }
     }
@@ -453,7 +446,6 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       in_bytes = lives_read_buffered(fd, abuff, (size_t)spf * cfile->achans * (cfile->asampsize >> 3), TRUE);
       if (THREADVAR(read_failed) || in_bytes < 0) {
         error = TRUE;
-        if (internal) weed_layer_unref(frame_layer);
         goto tr_err;
       }
 
@@ -520,7 +512,6 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     if (((width ^ pwidth) >> 2) || ((height ^ pheight) >> 1)) {
       if (!resize_layer(frame_layer, pwidth, pheight, interp, vpp->palette, vpp->YUV_clamping)) {
         //break_me("tranres");
-        if (internal) weed_layer_unref(frame_layer);
         goto tr_err;
       }
     }
@@ -540,20 +531,24 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       error = lives_proc_thread_join_boolean(coder);
       lives_proc_thread_free(coder);
       coder = NULL;
-    }
+    } else error = FALSE;
+
     if (!error) {
       weed_plant_t *copy_frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
       /* weed_layer_copy(copy_frame_layer, frame_layer); */
       /* weed_layer_nullify_pixel_data(frame_layer); */
       copy_frame_layer = weed_layer_copy(NULL, frame_layer);
 
-      if (internal) weed_layer_unref(frame_layer);
+      if (internal) {
+        weed_layer_unref(frame_layer);
+        frame_layer = NULL;
+      }
 
       copy_frame_layer = apply_watermark(copy_frame_layer, currticks);
 
       coder = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)send_layer,
                                        WEED_SEED_BOOLEAN, "PVI", copy_frame_layer, vpp, currticks);
-    } else if (internal) weed_layer_unref(frame_layer);
+    }
 
     if (error) goto tr_err;
 
@@ -573,6 +568,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
   //// encoding done
 
 tr_err:
+  if (internal && frame_layer) weed_layer_unref(frame_layer);
+
   mainw->cancel_type = CANCEL_KILL;
   prefs->pb_quality = pbq;
 

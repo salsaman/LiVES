@@ -3444,9 +3444,18 @@ LIVES_GLOBAL_INLINE void do_audrate_error_dialog(void) {
 
 
 LIVES_GLOBAL_INLINE boolean do_event_list_warning(void) {
-  return do_yesno_dialog(
-           _("\nEvent list will be very large\nand may take a long time to display.\n"
-             "Are you sure you wish to view it ?\n"));
+  if (prefs->event_window_show_frame_events) {
+    extra_cb_key = -1;
+    extra_cb_data = lives_hbox_new(FALSE, 0);
+    toggle_toggles_var(LIVES_TOGGLE_BUTTON(lives_standard_check_button_new
+                                           (_("Show all FRAME events (unselecting thsi may reduce the size)"),
+                                            prefs->event_window_show_frame_events, LIVES_BOX(extra_cb_data),
+                                            _("Uncheck this to avoid showing all frames and reduce the "
+                                                "event list size"))),
+                       &prefs->event_window_show_frame_events, FALSE);
+  }
+  return do_yesno_dialog(_("\nEvent list will be very large\n and may take a long time to display.\n"
+                           "Are you sure you wish to view it ?\n"));
 }
 
 

@@ -833,8 +833,8 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
 
     if (sfile->pumper) {
       if (mainw->effects_paused || mainw->preview) {
-        lives_nanosleep_until_nonzero((!mainw->effects_paused && !mainw->preview)
-                                      || lives_proc_thread_get_cancelled(sfile->pumper));
+        lives_nanosleep_while_true((mainw->effects_paused || mainw->preview)
+                                   && !lives_proc_thread_get_cancelled(sfile->pumper));
       }
       if (lives_proc_thread_get_cancelled(sfile->pumper)) break;
     }

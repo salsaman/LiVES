@@ -944,7 +944,7 @@ ssize_t lives_close_buffered(int fd) {
 
   if (fbuff->slurping) {
     fbuff->invalid = TRUE;
-    lives_nanosleep_until_zero(fbuff->slurping);
+    lives_nanosleep_while_true(fbuff->slurping);
   }
 
   lives_free(fbuff->pathname);

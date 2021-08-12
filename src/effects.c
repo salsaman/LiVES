@@ -938,7 +938,7 @@ void get_blend_layer(weed_timecode_t tc) {
     mainw->blend_file = mainw->playing_file;
   }
 
-  if (mainw->num_tr_applied && mainw->blend_file != mainw->playing_file &&
+  if (mainw->num_tr_applied && (prefs->tr_self || mainw->blend_file != mainw->playing_file) &&
       IS_VALID_CLIP(mainw->blend_file) && !resize_instance) {
     get_blend_layer_inner(tc);
   }
@@ -1105,6 +1105,17 @@ static boolean _rte_on_off(boolean from_menu, int key) {
       // *INDENT-ON*
     } else {
       // effect is OFF
+      if (key == prefs->autotrans_key && prefs->autotrans_amt >= 0.) {
+        prefs->autotrans_amt = -1.;
+        filter_mutex_lock(key);
+        if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
+          apply_key_defaults(inst, key, rte_key_getmode(key + 1));
+          weed_instance_unref(inst);
+        }
+        filter_mutex_unlock(key);
+        return TRUE;
+      }
+
       filter_mutex_lock(key);
 
       if (THREADVAR(fx_is_auto)) {
@@ -1124,8 +1135,34 @@ static boolean _rte_on_off(boolean from_menu, int key) {
       }
 
       if (!THREADVAR(fx_is_auto)) {
+        boolean easing_off = FALSE;
+        if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
+          weed_plant_t *gui = weed_instance_get_gui(inst, FALSE);
+          if (gui) {
+            if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
+              weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
+              weed_leaf_delete(inst, WEED_LEAF_HOST_EASE_OUT_COUNT);
+              weed_leaf_delete(inst, WEED_LEAF_AUTO_EASING);
+              easing_off = TRUE;
+            }
+          }
+          weed_instance_unref(inst);
+        }
         if (weed_deinit_effect(key)) {
           mainw->rte &= ~new_rte;
+        }
+        if (easing_off) {
+          if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
+            weed_plant_t *gui = weed_instance_get_gui(inst, FALSE);
+            if (gui) {
+              if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
+                weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
+                weed_leaf_delete(inst, WEED_LEAF_HOST_EASE_OUT_COUNT);
+                weed_leaf_delete(inst, WEED_LEAF_AUTO_EASING);
+              }
+            }
+            weed_instance_unref(inst);
+          }
         }
       }
 
@@ -1174,6 +1211,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
 
 boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                             livespointer user_data) {
+  // key is 1 based
   boolean ret;
   int key = LIVES_POINTER_TO_INT(user_data);
   main_thread_execute((lives_funcptr_t)_rte_on_off, WEED_SEED_BOOLEAN, &ret, "bi", (group != NULL), key);
@@ -1310,10 +1348,10 @@ boolean rte_key_on_off(int key, boolean on) {
   // returns the state of the key afterwards
   boolean state;
   if (key < 1 || key >= FX_KEYS_MAX_VIRTUAL) return FALSE;
-  state = rte_key_is_enabled(key, FALSE);
+  state = rte_key_is_enabled(key - 1, FALSE);
   if (state == on) return state;
   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(key));
-  return rte_key_is_enabled(key, FALSE);
+  return rte_key_is_enabled(key - 1, FALSE);
 }
 
 

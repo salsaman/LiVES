@@ -747,22 +747,24 @@ boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pla
 
 
 /**
-   @brief create an effect (filter) map
+   @brief create an effect (filter) map (during recording)
 
    here we create an effect map which defines the order in which effects are applied to a frame stack
    this is done during recording, the keymap is from mainw->rte which is a bitmap of effect keys
-   keys are applied here from smallest (ctrl-1) to largest (virtual key ctrl-FX_KEYS_MAX_VIRTUAL)
-
-   this is transformed into filter_map which holds init_events
-   these pointers are then stored in a filter_map event
+   keys are checked here from smallest (ctrl-1) to largest (FX_KEYS_MAX_VIRTUAL)
 
    what we actually point to are the init_events for the effects. The init_events are stored when we
-   init an effect
+   init an effect during recording
 
-   during rendering we read the filter_map event, and retrieve the new key, which is at that time
-   held in the
-   WEED_LEAF_HOST_TAG property of the init_event, and we apply our effects
-   (which are then bound to virtual keys >=FX_KEYS_MAX_VIRTUAL)
+   these arrays are then used as a template to create a filter_map event which is appended_to the event list
+
+   separate arrays are created for audio and video threads, this is because the audio thread events do not
+   get quantised to video frames, hence they may be out of order. After playback we reorder these events
+   and merge the two sets of filter maps in event_list_reorder_noquant()
+
+   during preview / rendering we read the filter_map event, and retrieve the new key, which is at that time
+   held in the WEED_LEAF_HOST_TAG property of the init_event, and we apply our effects
+   (which are then bound to virtual keys > FX_KEYS_MAX_VIRTUAL)
 
    [note] that we can do cool things, like mapping the same instance multiple times (though it will always
    apply itself to the same in/out tracks
@@ -775,18 +777,20 @@ static void create_effects_map(uint64_t rteval) {
   weed_plant_t *inst;
 
   for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
-    if (!THREADVAR(fx_is_audio)) {
-      if (init_events[i] && weed_get_boolean_value(init_events[i], LIVES_LEAF_NOQUANT, NULL) == WEED_TRUE)
-        if (get_event_timecode(init_events[i]) > mainw->startticks) {
-          // for video filters, the map will get pushed backwards to the previous frame event, so we
-          // will omit any audio filters which are inited after that - they will have their own filter_map
-          // and not be quantised to the prior frame event
-          // - this is to guard against referring to init_events which occur in the future relative to the
-          // video based filter map
-          continue;
-        }
-    }
     if (rteval & (GU641 << i) && (inst = weed_instance_obtain(i, key_modes[i])) != NULL) {
+      if (!mainw->record_starting) {
+        if (!THREADVAR(fx_is_audio)) {
+          if (weed_get_boolean_value(init_events[i], LIVES_LEAF_NOQUANT, NULL) == WEED_TRUE) {
+            weed_instance_unref(inst);
+            continue;
+          }
+        } else {
+          if (weed_get_boolean_value(init_events[i], LIVES_LEAF_NOQUANT, NULL) == WEED_FALSE) {
+            weed_instance_unref(inst);
+            continue;
+          }
+        }
+      }
       if (enabled_in_channels(inst, FALSE) > 0 &&
           enabled_out_channels(inst, FALSE) > 0) {
         effects_map[count++] = init_events[i];
@@ -801,10 +805,10 @@ static void create_effects_map(uint64_t rteval) {
 /**
    @brief add effect_deinit events to an event_list
 
-    during real time recording we use the "keys" 0 -> FX_KEYS_MAX_VIRTUAL
-    here we add effect_deinit events to an event_list
+   during real time recording we use the "keys" 0 -> FX_KEYS_MAX_VIRTUAL
+   here we add effect_deinit events to an event_list
 
-    @see deinit_render_effects()
+   @see deinit_render_effects()
 */
 weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list) {
   weed_plant_t *inst;
@@ -817,7 +821,8 @@ weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list) {
     if (init_events[i]) {
       if ((inst = weed_instance_obtain(i, key_modes[i])) != NULL) {
         if (enabled_in_channels(inst, FALSE) > 0 && enabled_out_channels(inst, FALSE)) {
-          event_list = append_filter_deinit_event(event_list, last_tc, init_events[i], pchains[i]);
+          event_list = append_filter_deinit_event(event_list, last_tc, init_events[i],
+                                                  mainw->multitrack ? pchains[i] : NULL);
           needs_filter_map = TRUE;
         }
       }
@@ -828,7 +833,7 @@ weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list) {
   }
 
   /// add an empty filter_map event (in case more frames are added)
-  create_effects_map(mainw->rte); ///< we create filter_map event_t * array with ordered effects
+  create_effects_map(0); ///< we create filter_map event_t * array with ordered effects
   if (needs_filter_map) {
     pthread_mutex_lock(&mainw->event_list_mutex);
     event_list = append_filter_map_event(event_list, last_tc, effects_map);
@@ -841,9 +846,9 @@ weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list) {
 /**
    @brief add init events for every effect which is switched on
 
-    during rendering we use the "keys" FX_KEYS_MAX_VIRTUAL -> FX_KEYS_MAX
-    here we are about to start playback, and we add init events for every effect which is switched on
-    we add the init events with a timecode of 0 */
+   during rendering we use the "keys" FX_KEYS_MAX_VIRTUAL -> FX_KEYS_MAX
+   here we are about to start playback, and we add init events for every effect which is switched on
+   we add the init events with a timecode of 0 */
 weed_plant_t *add_filter_init_events(weed_plant_t *event_list, weed_timecode_t tc) {
   weed_plant_t *inst;
   int fx_idx, ntracks;
@@ -857,6 +862,7 @@ weed_plant_t *add_filter_init_events(weed_plant_t *event_list, weed_timecode_t t
                                               (fx_idx = key_to_fx[i][key_modes[i]]), -1, i, inst);
         init_events[i] = get_last_event(event_list);
         ntracks = weed_leaf_num_elements(init_events[i], WEED_LEAF_IN_TRACKS);
+        // add values from inst
         pchains[i] = filter_init_add_pchanges(event_list, inst, init_events[i], ntracks, 0);
       }
       weed_instance_unref(inst);
@@ -870,11 +876,11 @@ weed_plant_t *add_filter_init_events(weed_plant_t *event_list, weed_timecode_t t
 
 
 /**
-    @brief check palette vs. palette list
+   @brief check palette vs. palette list
 
-    check if palette is in the palette_list
-    if not, return next best palette to use, using a heuristic method
-    num_palettes is the size of the palette list */
+   check if palette is in the palette_list
+   if not, return next best palette to use, using a heuristic method
+   num_palettes is the size of the palette list */
 int best_palette_match(int *palette_list, int num_palettes, int palette) {
   int best_palette = palette_list[0];
   boolean has_alpha, is_rgb, is_alpha, is_yuv, mismatch;
@@ -1039,19 +1045,19 @@ static boolean get_fixed_channel_size(weed_plant_t *template, int *width, int *h
 #define MAX_CHAN_HEIGHT 16384
 
 /**
-    @brief set the size of a video filter channel as near as possible to width (macropixels) * height
+   @brief set the size of a video filter channel as near as possible to width (macropixels) * height
 
-    We will comply with any restrictions set up for the channel, ie.
-    (fixed width(s), fixed height(s), hstep, vstep, maxwidth, maxheight, minwidth, minheight)
+   We will comply with any restrictions set up for the channel, ie.
+   (fixed width(s), fixed height(s), hstep, vstep, maxwidth, maxheight, minwidth, minheight)
 
-    if there are user defined defaults for the size (e.g it's the out channel of a generator) then we use
-    those, provided this doesn't confilct with the channel's fixed size requirements
+   if there are user defined defaults for the size (e.g it's the out channel of a generator) then we use
+   those, provided this doesn't confilct with the channel's fixed size requirements
 
-    we take the restrictions from the filter class owning the channel template from which the channel was modelled,
-    unless the filter flag WEED_FILTER_CHANNEL_SIZES_MAY_VARY, in which case the filter defaults may be
-    overridden by values in the channel template
+   we take the restrictions from the filter class owning the channel template from which the channel was modelled,
+   unless the filter flag WEED_FILTER_CHANNEL_SIZES_MAY_VARY, in which case the filter defaults may be
+   overridden by values in the channel template
 
-    function is called with dummy values when we first create the channels, and then with real values before we process a frame
+   function is called with dummy values when we first create the channels, and then with real values before we process a frame
 */
 static void set_channel_size(weed_plant_t *filter, weed_plant_t *channel, int width, int height) {
   weed_plant_t *chantmpl = weed_channel_get_template(channel);
@@ -1192,23 +1198,33 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
   // +1 ref
   weed_instance_ref(inst);
 
+  if (weed_plant_has_leaf(inst, LIVES_LEAF_SOFT_DEINIT)) weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
+
   if (!mainw->multitrack) {
     if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY))
       key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
     if (key != -1) {
       weed_plant_t *gui;
-      filter_mutex_lock(key);
       gui = weed_instance_get_gui(inst, FALSE);
-      if (weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL) > 0) {
-        // plugin is easing, so we need to deinit it
-        uint64_t new_rte = GU641 << (key);
-        mainw->rte &= ~new_rte;
-        // WEED_LEAF_EASE_OUT exists, so it'll get deinited right away
-        weed_deinit_effect(key);
+      if (gui) {
+        filter_mutex_lock(key);
+        if (weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL) > 0) {
+          // plugin is easing, so we need to deinit it
+          uint64_t new_rte = GU641 << (key);
+          mainw->rte &= ~new_rte;
+          if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
+            weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
+          }
+          weed_leaf_delete(inst, WEED_LEAF_HOST_EASE_OUT_COUNT);
+          weed_leaf_delete(inst, WEED_LEAF_AUTO_EASING);
+          // WEED_LEAF_EASE_OUT exists, so it'll get deinited right away
+          weed_deinit_effect(key);
+          weed_instance_unref(inst);
+          filter_mutex_unlock(key);
+          return FILTER_ERROR_COULD_NOT_REINIT;
+        }
         filter_mutex_unlock(key);
-        return FILTER_ERROR_COULD_NOT_REINIT;
       }
-      filter_mutex_unlock(key);
     }
 
     mainw->blend_palette = WEED_PALETTE_END;
@@ -2047,7 +2063,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           rminh = natinheight;
 	  // *INDENT-OFF*
 	}}}}
-    // *INDENT-ON*
+  // *INDENT-ON*
 
   if (opwidth != rmaxw || opwidth != rminw || opheight != rmaxh || opheight != rminh) {
     // there are at most 3 aspect ratios to consider:
@@ -2251,34 +2267,34 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   height = opheight;
 
   /** now we do a second pass, and we set up the palettes on the in channels
-    if it's the first channel, we try to change the channel palette to the layer palette*
-    if that is not possible then we set it to the nearest alternative
-    if it's not the first channel, we must use the palette from the first chan,
-    unless the filter has WEED_FILTER_PALETTES_MAY_VARY.
+      if it's the first channel, we try to change the channel palette to the layer palette*
+      if that is not possible then we set it to the nearest alternative
+      if it's not the first channel, we must use the palette from the first chan,
+      unless the filter has WEED_FILTER_PALETTES_MAY_VARY.
 
-     - if the channel template flags have WEED_FILTER_REINIT_ON_PALETTE_CHANGE, then we want to minimise palette changes, else
-    we may be reiniting the filter instance a lot. If the clip type is CLIP_TYPE_FILE then we actually have 2 alternatives:
-    the decoder palette, which will be used for unchanged frames pulled from the clip, + RGB24 which will be the case for
-    altered frames loaded from png / jpeg. We want to avoid the worst case where we are reiniting on each alternate frame.
-    so we'll pick in order of preference: RGB24, BGR24 (if the layer has no alpha), then RGBA32, BGRA32, ARGB32 (if it has alpha)
-    (if the layer is already RGB we'll try that first). If no RGB palettes are available then we'll pick:
-    YUV444P / YUVA4444P, YUV888 / YUVA8888, 422, 420 / UYVY / YUYV, 411
+      - if the channel template flags have WEED_FILTER_REINIT_ON_PALETTE_CHANGE, then we want to minimise palette changes, else
+      we may be reiniting the filter instance a lot. If the clip type is CLIP_TYPE_FILE then we actually have 2 alternatives:
+      the decoder palette, which will be used for unchanged frames pulled from the clip, + RGB24 which will be the case for
+      altered frames loaded from png / jpeg. We want to avoid the worst case where we are reiniting on each alternate frame.
+      so we'll pick in order of preference: RGB24, BGR24 (if the layer has no alpha), then RGBA32, BGRA32, ARGB32 (if it has alpha)
+      (if the layer is already RGB we'll try that first). If no RGB palettes are available then we'll pick:
+      YUV444P / YUVA4444P, YUV888 / YUVA8888, 422, 420 / UYVY / YUYV, 411
 
-    There are two points where we can alter the palette: when the instance has just been inited (we can reinit with near zero cost)
-    and if we are going to reinit anyway due to some other factor (e.g size change).
+      There are two points where we can alter the palette: when the instance has just been inited (we can reinit with near zero cost)
+      and if we are going to reinit anyway due to some other factor (e.g size change).
 
-    IF the template has WEED_FILTER_REINIT_ON_ROWSTRIDES_CHANGE then similar rules apply except we will look at the macropixel
-    sizes.
+      IF the template has WEED_FILTER_REINIT_ON_ROWSTRIDES_CHANGE then similar rules apply except we will look at the macropixel
+      sizes.
 
-    Once the channel palette is set then we'll do a palette conversion / resize of the layer.
+      Once the channel palette is set then we'll do a palette conversion / resize of the layer.
 
-    TODO: we should be smarter here and figure out the best palette when forced to change,
-    given the input palettes and output palettes
-    of the entire filter chain from sources to output, since each change has a cost in terms of time and possibly quality.
+      TODO: we should be smarter here and figure out the best palette when forced to change,
+      given the input palettes and output palettes
+      of the entire filter chain from sources to output, since each change has a cost in terms of time and possibly quality.
 
-    once the channel palette is set, then we may need to change the size and palette of the layer feeding in to it
-    we do the resize first, since it may be possible to resize and palette convert all in one go
-    after resizing we convert the palette if necessary
+      once the channel palette is set, then we may need to change the size and palette of the layer feeding in to it
+      we do the resize first, since it may be possible to resize and palette convert all in one go
+      after resizing we convert the palette if necessary
   */
   for (i = 0; i < num_in_tracks; i++) {
     int tgamma = WEED_GAMMA_UNKNOWN;
@@ -3188,27 +3204,27 @@ done_audio:
 /**
    @brief apply an audio filter to a stack of audio tracks
 
-    init_event may contain a pointer to the init_event in the event_list (if any)
-    this is used to map tracks to the in and out channels of the filter indtance
+   init_event may contain a pointer to the init_event in the event_list (if any)
+   this is used to map tracks to the in and out channels of the filter indtance
 
-    if NULL (e.g. during free playback) we create a fake channel map mapping layer 0 -> in, layer 0 -> out.
+   if NULL (e.g. during free playback) we create a fake channel map mapping layer 0 -> in, layer 0 -> out.
 
-    abuf is a float ** array of audio, with each element being 1 audio channel (as in left/ right)
-    grouped by track number
-    nchans is number of audio channels (1 or 2 currently) in each track
-    nbtracks is the number of backing tracks; track number will be -nbtracks <= track <= n
-    track no. >= 0 is audio from a video track in multitrack, < 0 is a backing audio track (audio only, no video)
-    nsamps is the sample size, arate the audio rate, tc the current timecode of the event_list or player
-    and vis is a matrix of "visibility": 1 = front layer, full volume, 0 - rear layer, no volume, and a value in between
-    can result from a transition.
+   abuf is a float ** array of audio, with each element being 1 audio channel (as in left/ right)
+   grouped by track number
+   nchans is number of audio channels (1 or 2 currently) in each track
+   nbtracks is the number of backing tracks; track number will be -nbtracks <= track <= n
+   track no. >= 0 is audio from a video track in multitrack, < 0 is a backing audio track (audio only, no video)
+   nsamps is the sample size, arate the audio rate, tc the current timecode of the event_list or player
+   and vis is a matrix of "visibility": 1 = front layer, full volume, 0 - rear layer, no volume, and a value in between
+   can result from a transition.
 
-    During rendering the audio render process feeds small chunks at a time to be processed, with the final result passing into
-    the channel mixer (volume and pan)
+   During rendering the audio render process feeds small chunks at a time to be processed, with the final result passing into
+   the channel mixer (volume and pan)
 
-    We set the values for the in and out channels, possibly disabling or enabling some.
-    IF the instance needs reiniting (because od our changes and its filter / chantmpl flags) then we reinit it
+   We set the values for the in and out channels, possibly disabling or enabling some.
+   IF the instance needs reiniting (because od our changes and its filter / chantmpl flags) then we reinit it
 
-    we runi the process_func and the output is returned to abuf, using the out_tracks to map the out channels
+   we runi the process_func and the output is returned to abuf, using the out_tracks to map the out channels
 */
 lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_layer_t **layers, int nbtracks, int nchans,
     int64_t nsamps, double arate, weed_timecode_t tc, double * vis) {
@@ -3504,22 +3520,22 @@ audret1:
 /**
    @brief - this is called during rendering - we will have previously received a filter_map event and now we apply this to layers
 
-  layers will be a NULL terminated array of channels, each with two extra leaves: clip and frame
-  clip corresponds to a LiVES file in mainw->files. WEED_LEAF_PIXEL_DATA will initially be NULL, we will pull this as necessary
-  and the effect output is written back to the layers
+   layers will be a NULL terminated array of channels, each with two extra leaves: clip and frame
+   clip corresponds to a LiVES file in mainw->files. WEED_LEAF_PIXEL_DATA will initially be NULL, we will pull this as necessary
+   and the effect output is written back to the layers
 
-  a frame number of 0 indicates a blank frame;
-  if an effect gets one of these it will not process (except if the channel is optional,
-  in which case the channel is disabled); the same is true for invalid track numbers -
-  hence disabled channels which do not have disabled in the template are re-enabled when a frame is available
+   a frame number of 0 indicates a blank frame;
+   if an effect gets one of these it will not process (except if the channel is optional,
+   in which case the channel is disabled); the same is true for invalid track numbers -
+   hence disabled channels which do not have disabled in the template are re-enabled when a frame is available
 
-  after all processing, we generally display/output the first non-NULL layer.
-  If all layers are NULL we generate a blank frame
+   after all processing, we generally display/output the first non-NULL layer.
+   If all layers are NULL we generate a blank frame
 
-  size and palettes of resulting layers may change during this
+   size and palettes of resulting layers may change during this
 
-  the channel sizes are set by the filter: all channels are all set to the size of the largest input layer.
-  (We attempt to do this, but some channels have fixed sizes).
+   the channel sizes are set by the filter: all channels are all set to the size of the largest input layer.
+   (We attempt to do this, but some channels have fixed sizes).
 **/
 static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_map, int opwidth, int opheight,
                                   weed_timecode_t tc, void ***pchains) {
@@ -3727,32 +3743,34 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
             continue;
           }
           gui = weed_instance_get_gui(instance, FALSE);
-          if (weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL) > 0) {
-            // if the plugin is easing out, check if it finished
-            if (!weed_plant_has_leaf(instance, WEED_LEAF_AUTO_EASING)) { // if auto_Easing then we'll deinit it on the event_list
-              if (!weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL)) {
-                // easing finished, deinit it
-                uint64_t new_rte = GU641 << (i);
-                // record
-                if (init_events[i]) {
-                  // if we are recording, mark the number of frames to ease out
-                  // we'll need to repeat the same process during preview / rendering
-                  // - when we hit the init_event, we'll find the deinit, then work back x frames and mark easing start
-                  weed_set_int_value(init_events[i], WEED_LEAF_EASE_OUT,
-                                     weed_get_int_value(instance, WEED_LEAF_EASE_OUT, NULL));
-                }
-                filter_mutex_lock(i);
-                weed_deinit_effect(i);
-                orig_inst = NULL;
-                if (rte_key_is_enabled(i, FALSE)) {
-                  mainw->rte &= ~new_rte;
-                  if (rte_window) rtew_set_keych(i, FALSE);
-                  if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
-                }
-                filter_mutex_unlock(i);
-                continue;
-		// *INDENT-OFF*
-              }}}
+          if (gui) {
+            if (weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL) > 0) {
+              // if the plugin is easing out, check if it finished
+              if (!weed_plant_has_leaf(instance, WEED_LEAF_AUTO_EASING)) { // if auto_Easing then we'll deinit it on the event_list
+                if (!weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL)) {
+                  // easing finished, deinit it
+                  uint64_t new_rte = GU641 << i;
+                  // record
+                  if (init_events[i]) {
+                    // if we are recording, mark the number of frames to ease out
+                    // we'll need to repeat the same process during preview / rendering
+                    // - when we hit the init_event, we'll find the deinit, then work back x frames and mark easing start
+                    weed_leaf_dup(init_events[i], instance, WEED_LEAF_EASE_OUT);
+                  }
+                  filter_mutex_lock(i);
+                  weed_deinit_effect(i);
+                  if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
+                    weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
+                  }
+                  if (rte_key_is_enabled(i, FALSE)) {
+                    mainw->rte &= ~new_rte;
+                    if (rte_window) rtew_set_keych(i, FALSE);
+                    if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
+                  }
+                  filter_mutex_unlock(i);
+                  continue;
+		  // *INDENT-OFF*
+		}}}}
 	  // *INDENT-ON*
 
           if (mainw->multitrack && !mainw->unordered_blocks && pchains && pchains[i]) {
@@ -3783,7 +3801,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
                 if (filter_error == FILTER_ERROR_COULD_NOT_REINIT || filter_error == FILTER_ERROR_INVALID_PLUGIN
                     || filter_error == FILTER_ERROR_INVALID_FILTER) {
                   continue;
-		// *INDENT-OFF*
+		  // *INDENT-OFF*
                 }}}}
 	  // *INDENT-ON*
 
@@ -3811,16 +3829,16 @@ apply_inst3:
               int xeaseval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL), myeaseval;
               myeaseval = weed_get_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, NULL);
               if (xeaseval > myeaseval) {
-                uint64_t new_rte = GU641 << (i);
+                uint64_t new_rte = GU641 << i;
                 filter_mutex_lock(i);
+                if (instance == orig_inst) orig_inst = NULL;
+                weed_deinit_effect(i);
                 if (rte_key_is_enabled(i, FALSE)) {
                   mainw->rte &= ~new_rte;
                   if (rte_window) rtew_set_keych(i, FALSE);
                   if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
                 }
                 filter_mutex_unlock(i);
-                if (instance == orig_inst) orig_inst = NULL;
-                weed_deinit_effect(i);
 
                 // remove extra ref we added
                 weed_instance_unref(instance);
@@ -3931,7 +3949,10 @@ void weed_apply_audio_effects(weed_plant_t *filter_map, weed_layer_t **layers, i
       !weed_get_voidptr_value(filter_map, WEED_LEAF_INIT_EVENTS, NULL)) {
     return;
   }
-  mainw->pchains = get_event_pchains();
+
+  if (mainw->multitrack && !mainw->unordered_blocks)
+    mainw->pchains = get_event_pchains();
+  else mainw->pchains = NULL;
   init_events = weed_get_voidptr_array_counted(filter_map, WEED_LEAF_INIT_EVENTS, &num_inst);
   if (init_events && (num_inst > 1 || init_events[0])) {
     for (int i = 0; i < num_inst; i++) {
@@ -4046,7 +4067,7 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
             if (filter_error == FILTER_ERROR_COULD_NOT_REINIT || filter_error == FILTER_ERROR_INVALID_PLUGIN
                 || filter_error == FILTER_ERROR_INVALID_FILTER) {
               continue;
-		// *INDENT-OFF*
+	      // *INDENT-OFF*
             }}}
 	// *INDENT-ON*
 
@@ -4576,7 +4597,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
           lives_fx_candidate_t *cand = &mainw->fx_candidates[FX_CANDIDATE_RESIZER];
           cand->list = lives_list_append(cand->list, LIVES_INT_TO_POINTER(filter_idx));
           cand->delegate = 0;
-	// *INDENT-OFF*
+	  // *INDENT-OFF*
         }}}}
   // *INDENT-ON*
 
@@ -6473,8 +6494,8 @@ LIVES_GLOBAL_INLINE weed_plant_t *weed_instance_obtain(int key, int mode) {
 /**
    @brief create channels for an instance, using the channel templates and filter class as a guide
 
-    for repeating channels, the selected number should already have been set in WEED_LEAF_HOST_REPEATS
-    for the template
+   for repeating channels, the selected number should already have been set in WEED_LEAF_HOST_REPEATS
+   for the template
 */
 static weed_plant_t **weed_channels_create(weed_plant_t *filter, boolean in) {
   weed_plant_t **channels, **chantmpls;
@@ -6837,19 +6858,21 @@ boolean record_filter_init(int key) {
         int ntracks;
         if (THREADVAR(fx_is_audio)) {
           // use real time when recording audio fx
-          actual_ticks = mainw->currticks;
+          actual_ticks = THREADVAR(event_ticks);
         }
         pthread_mutex_lock(&mainw->event_list_mutex);
         event_list = append_filter_init_event(mainw->event_list, actual_ticks, idx, -1, key, inst);
         if (!mainw->event_list) mainw->event_list = event_list;
         init_events[key] = get_last_event(mainw->event_list);
 
-        create_effects_map(rteval); // we create effects_map event_t * array with ordered effects
-
         if (THREADVAR(fx_is_audio)) {
           weed_set_boolean_value(init_events[key], LIVES_LEAF_NOQUANT, WEED_TRUE);
         }
+
+        create_effects_map(rteval); // we create effects_map event_t * array with ordered effects
+
         ntracks = weed_leaf_num_elements(init_events[key], WEED_LEAF_IN_TRACKS);
+        // add param values from inst
         pchains[key] = filter_init_add_pchanges(mainw->event_list, inst, init_events[key], ntracks, 0);
         mainw->event_list = append_filter_map_event(mainw->event_list, actual_ticks, effects_map);
         if (THREADVAR(fx_is_audio)) {
@@ -6877,33 +6900,24 @@ boolean record_filter_deinit(int key) {
     if (inc_count > 0 && out_count > 0) {
       weed_event_t *deinit_event;
       ticks_t actual_ticks = mainw->startticks; ///< use the "theoretical" time
-      uint64_t new_rte = GU641 << (key), rteval = mainw->rte & ~new_rte;
+      uint64_t new_rte = GU641 << key, rteval = mainw->rte & ~new_rte;
       if (THREADVAR(fx_is_audio)) {
         // use real time when recording audio fx
-        actual_ticks = mainw->currticks;
+        actual_ticks = THREADVAR(event_ticks);
       }
 
       pthread_mutex_lock(&mainw->event_list_mutex);
-      mainw->event_list = append_filter_deinit_event(mainw->event_list, actual_ticks, init_events[key], pchains[key]);
+      mainw->event_list = append_filter_deinit_event(mainw->event_list, actual_ticks, init_events[key], NULL);
       deinit_event = get_last_event(mainw->event_list);
-      if (mainw->rte & new_rte) {
-        create_effects_map(rteval); // we create effects_map event_t * array with ordered effects
-        mainw->event_list = append_filter_map_event(mainw->event_list, actual_ticks, effects_map);
-        if (THREADVAR(fx_is_audio)) {
-          weed_event_t *filter_map = get_last_event(mainw->event_list);
-          weed_set_boolean_value(filter_map, LIVES_LEAF_NOQUANT, WEED_TRUE);
-        }
-      }
-      if (THREADVAR(fx_is_audio)) {
-        weed_set_boolean_value(deinit_event, LIVES_LEAF_NOQUANT, WEED_TRUE);
-        if (mainw->rte & new_rte) {
-          // do this here as we won't do a proper deinit
-          mainw->rte &= ~new_rte;
-          if (rte_window) rtew_set_keych(key, FALSE);
-          if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
-        }
-      }
+      create_effects_map(rteval); // we create effects_map event_t * array with ordered effects
+      mainw->event_list = append_filter_map_event(mainw->event_list, actual_ticks, effects_map);
       pthread_mutex_unlock(&mainw->event_list_mutex);
+
+      if (THREADVAR(fx_is_audio)) {
+        weed_event_t *filter_map = get_last_event(mainw->event_list);
+        weed_set_boolean_value(filter_map, LIVES_LEAF_NOQUANT, WEED_TRUE);
+        weed_set_boolean_value(deinit_event, LIVES_LEAF_NOQUANT, WEED_TRUE);
+      }
       return TRUE;
     }
   }
@@ -7029,7 +7043,7 @@ boolean weed_init_effect(int hotkey) {
           mainw->current_file = -1;
 	  // *INDENT-OFF*
         }}}
-  // *INDENT-ON*
+    // *INDENT-ON*
     if (inc_count == 2) {
       pthread_mutex_lock(&mainw->trcount_mutex);
       mainw->num_tr_applied++; // increase trans count
@@ -7166,9 +7180,9 @@ deinit2:
               if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_FOREGROUND);
               if (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
                 mainw->active_sa_clips = SCREEN_AREA_FOREGROUND;
-		  // *INDENT-OFF*
-		}}}}
-	  // *INDENT-ON*
+		// *INDENT-OFF*
+	      }}}}
+	// *INDENT-ON*
 
         return FALSE;
       }
@@ -7285,6 +7299,7 @@ deinit2:
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD)) weed_leaf_delete(inst, WEED_LEAF_HOST_NORECORD);
 
   if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+    // record filter init event + parameters with key defaults applied
     record_filter_init(hotkey);
   }
 
@@ -7458,7 +7473,7 @@ boolean weed_deinit_effect(int hotkey) {
               return FALSE;
 	      // *INDENT-OFF*
 	    }}}}}}
-    // *INDENT-ON*
+  // *INDENT-ON*
   mainw->blend_palette = WEED_PALETTE_END;
 
   // disable param recording, in case the instance is still attached to a param window
@@ -7475,8 +7490,8 @@ boolean weed_deinit_effect(int hotkey) {
 
   // handle compound fx
   last_inst = instance;
-  while (weed_plant_has_leaf(last_inst, WEED_LEAF_HOST_NEXT_INSTANCE)) last_inst = weed_get_plantptr_value(last_inst,
-        WEED_LEAF_HOST_NEXT_INSTANCE, NULL);
+  while (weed_plant_has_leaf(last_inst, WEED_LEAF_HOST_NEXT_INSTANCE))
+    last_inst = weed_get_plantptr_value(last_inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL);
   num_out_chans = enabled_out_channels(last_inst, FALSE);
 
   if (hotkey + 1 == mainw->agen_key) is_audio_gen = TRUE;
@@ -7577,6 +7592,12 @@ boolean weed_deinit_effect(int hotkey) {
   key_to_instance[hotkey][key_modes[hotkey]] = NULL;
   filter_mutex_unlock(hotkey);
 
+  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
+      (prefs->rec_opts & REC_EFFECTS) && num_in_chans > 0) {
+    // must be done before removing init_event
+    record_filter_deinit(hotkey);
+  }
+
   if (hotkey < FX_KEYS_MAX_VIRTUAL) {
     init_events[hotkey] = NULL;
     if (mainw->whentostop == STOP_ON_VID_END && mainw->current_file > -1 &&
@@ -7632,11 +7653,6 @@ deinit3:
     }
   }
 
-  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && init_events[hotkey] &&
-      (prefs->rec_opts & REC_EFFECTS) && num_in_chans > 0) {
-    record_filter_deinit(hotkey);
-  }
-
   weed_instance_unref(inst);  // free if no other refs
 
   if (!THREADVAR(fx_is_audio)) {
@@ -7685,12 +7701,19 @@ void deinit_easing_effects(void) {
       weed_instance_ref(instance);
       filter_mutex_unlock(i);
       weed_plant_t *gui = weed_instance_get_gui(instance, FALSE);
-      if (weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT)) {
-        // no mutex needed since we are rendering. and since we aren't playing it will get deinited now
-        weed_deinit_effect(i);
-        weed_instance_unref(instance);
-        /// if recording, the deinit_event won't be recorded, since we are not playing now,
-        /// this will be handled in deal_with_render_choice() so it need not concern us
+      if (gui) {
+        if (weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT)) {
+          // no mutex needed since we are rendering. and since we aren't playing it will get deinited now
+          weed_deinit_effect(i);
+          if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
+            weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
+          }
+          weed_leaf_delete(instance, WEED_LEAF_HOST_EASE_OUT_COUNT);
+          weed_leaf_delete(instance, WEED_LEAF_AUTO_EASING);
+          weed_instance_unref(instance);
+          /// if recording, the deinit_event won't be recorded, since we are not playing now,
+          /// this will be handled in deal_with_render_choice() so it need not concern us
+        }
       }
       weed_instance_unref(instance);
     } else filter_mutex_unlock(i);
@@ -7701,7 +7724,7 @@ void deinit_easing_effects(void) {
 /**
    @brief deinit all effects (except generators* during playback)
    this is called on ctrl-0 or on shutdown
-     background generators will be killed because their transition will be deinited
+   background generators will be killed because their transition will be deinited
 */
 void weed_deinit_all(boolean shutdown) {
   weed_plant_t *instance;
@@ -9440,7 +9463,7 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
   actual_ticks = mainw->startticks; ///< use the "theoretical" time
   if (THREADVAR(fx_is_audio)) {
     // use real time when recording audio fx
-    actual_ticks = mainw->currticks;
+    actual_ticks = THREADVAR(event_ticks);
   }
 
   key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
@@ -9450,7 +9473,7 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
   if (!weed_param_value_irrelevant(in_param)) {
     pthread_mutex_lock(&mainw->event_list_mutex);
     mainw->event_list = append_param_change_event(mainw->event_list, actual_ticks,
-                        pnum, in_param, init_events[key], pchains[key]);
+                        pnum, in_param, init_events[key], NULL);//pchains[key]);
     if (THREADVAR(fx_is_audio)) {
       weed_event_t *event = get_last_event(mainw->event_list);
       weed_set_boolean_value(event, LIVES_LEAF_NOQUANT, WEED_TRUE);
@@ -9839,6 +9862,10 @@ weed_plant_t *rte_keymode_get_instance(int key, int mode) {
   if ((inst = weed_instance_obtain(--key, mode)) == NULL) {
     return NULL;
   }
+  /* if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) { */
+  /*   weed_instance_unref(inst); */
+  /*   return NULL; */
+  /* } */
   return inst;
 }
 
@@ -9953,9 +9980,9 @@ LIVES_GLOBAL_INLINE int rte_fg_gen_mode(void) {
 /**
    @brief
 
-  for rte textmode, get first string parameter for current key/mode instance
-  we will then forward all keystrokes to this parm WEED_LEAF_VALUE until the exit key (TAB)
-  is pressed
+   for rte textmode, get first string parameter for current key/mode instance
+   we will then forward all keystrokes to this parm WEED_LEAF_VALUE until the exit key (TAB)
+   is pressed
 */
 weed_plant_t *get_textparm(void) {
   weed_plant_t *inst, **in_params, *ptmpl, *ret;
@@ -9999,10 +10026,10 @@ weed_plant_t *get_textparm(void) {
 /**
    @brief
 
-  newmode has two special values, -1 = cycle forwards, -2 = cycle backwards
-  key is 1 based, but may be 0 to use the current mainw->rte_keys
-  special handling ensures that if we switch transitions, any background generators survive the switchover
-  call with filter mutex unlocked
+   newmode has two special values, -1 = cycle forwards, -2 = cycle backwards
+   key is 1 based, but may be 0 to use the current mainw->rte_keys
+   special handling ensures that if we switch transitions, any background generators survive the switchover
+   call with filter mutex unlocked
 */
 boolean rte_key_setmode(int key, int newmode) {
   weed_plant_t *inst, *last_inst;
@@ -10090,13 +10117,13 @@ boolean rte_key_setmode(int key, int newmode) {
 /**
    @brief
 
-  we will add a filter_class at the next free slot for key, and return the slot number
-  if idx or key is invalid, (probably meaning the filter was not found), we return -1
-  if all slots are full, we return -3
-  currently, generators and non-generators cannot be mixed on the same key (causes problems if the mode is switched)
-  in this case a -2 is returned
+   we will add a filter_class at the next free slot for key, and return the slot number
+   if idx or key is invalid, (probably meaning the filter was not found), we return -1
+   if all slots are full, we return -3
+   currently, generators and non-generators cannot be mixed on the same key (causes problems if the mode is switched)
+   in this case a -2 is returned
 
-  key is 1 based !!!
+   key is 1 based !!!
 
 */
 int weed_add_effectkey_by_idx(int key, int idx) {
@@ -10147,7 +10174,7 @@ int weed_add_effectkey_by_idx(int key, int idx) {
       return i;
     }
     if (key_to_instance[--key][0]) break_me("Instance leak");
-    if (key_to_fx[key][0]) break_me("Filter leak");
+    if (key_to_fx[key][0] != -1) break_me("Filter leak");
     key_to_fx[key][0] = idx;
     return 0;
   }
@@ -10192,13 +10219,9 @@ int rte_switch_keymode(int key, int mode, const char *hashname) {
     return -2;
   }
 
-  // must be freed before switching the key_to_fx
-  // as we need to know number of in_parameter_templates
-  if (key_defaults[key][mode]) free_key_defaults(key, mode);
-
   if ((inst = weed_instance_obtain(key, mode)) != NULL) {
     // deinit any old instance and init the new one
-    int oldkeymode = key_modes[--key];
+    int oldkeymode = key_modes[key];
     key_modes[key] = mode;
     // negative key: set is_modeswitch
     // this prevents playback from ending if we switch a generator
@@ -10280,10 +10303,10 @@ int rte_get_numfilters(void) {return num_weed_filters;}
 /**
    @brief
 
-  for a multi valued parameter or pchange, we will fill WEED_LEAF_VALUE up to element index with WEED_LEAF_NEW_DEFAULT
-  we will also create the ignore array if there is not one. The values of this are set to WEED_TRUE if the user
-  updates the values for that channel, so we know which values to set for interpolation later.
-  paramtmpl must be supplied, since pchanges do not have one directly
+   for a multi valued parameter or pchange, we will fill WEED_LEAF_VALUE up to element index with WEED_LEAF_NEW_DEFAULT
+   we will also create the ignore array if there is not one. The values of this are set to WEED_TRUE if the user
+   updates the values for that channel, so we know which values to set for interpolation later.
+   paramtmpl must be supplied, since pchanges do not have one directly
 */
 void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index) {
   int i, ptype;
@@ -11088,9 +11111,9 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
 /**
    @brief
 
-  interpolate all in_parameters for filter_instance inst, using void **pchain,
-  which is an array of param_change events in temporal order
-  values are calculated for timecode tc. We skip WEED_LEAF_HIDDEN parameters
+   interpolate all in_parameters for filter_instance inst, using void **pchain,
+   which is an array of param_change events in temporal order
+   values are calculated for timecode tc. We skip WEED_LEAF_HIDDEN parameters
 */
 boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc) {
   weed_plant_t **in_params;
@@ -11125,17 +11148,17 @@ boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t t
 /**
    @brief
 
-  return value should be freed after use
+   return value should be freed after use
 
-  make hashname from filter_idx
+   make hashname from filter_idx
 
-  if fullname is FALSE, return filename, filtername concatenated
-  if fullname is TRUE, return filename, filtername, author, version concatenated
+   if fullname is FALSE, return filename, filtername concatenated
+   if fullname is TRUE, return filename, filtername, author, version concatenated
 
-  if sep is not 0, we ignore the booleans and return filename, sep, filtername, sep, author concatenated
-  (suitable to be fed into weed_filter_highest_version() later)
+   if sep is not 0, we ignore the booleans and return filename, sep, filtername, sep, author concatenated
+   (suitable to be fed into weed_filter_highest_version() later)
 
-  use_extra_authors is only for backwards compatibility
+   use_extra_authors is only for backwards compatibility
 
 */
 char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_authors, char sep, boolean subs) {
@@ -11359,12 +11382,12 @@ static boolean check_match(weed_plant_t *filter, const char *pkg, const char *fx
 /**
    @brief
 
-  generate a list of filter indices from a given template. Char values may be NULL or "" to signify match-any.
-  version may be 0 to signify match-any
-  otherwise values must match those specified
+   generate a list of filter indices from a given template. Char values may be NULL or "" to signify match-any.
+   version may be 0 to signify match-any
+   otherwise values must match those specified
 
-  returns: a list of int indices, with the last value == -1
-  return value should be freed after use
+   returns: a list of int indices, with the last value == -1
+   return value should be freed after use
 */
 int *weed_get_indices_from_template(const char *pkg, const char *fxname, const char *auth, int version) {
   weed_plant_t *filter;
@@ -11731,18 +11754,18 @@ static int realign_typeleaf(int fd, weed_plant_t *plant) {
    if check_key set to TRUE - check that we read the correct key seed_type and n_elements
 
    return values:
-    -1 : check_key key mismatch
-    -2 : "type" leaf was not an INT
-    -3 : "type" leaf has invalid element count
-    -4 : short read
-    -5 : memory allocation error
-    -6 : unknown seed_type
-    -7 : plant "type" mismatch
-    -8 : 'type' was < 0
-    -9 : key length mismatch
+   -1 : check_key key mismatch
+   -2 : "type" leaf was not an INT
+   -3 : "type" leaf has invalid element count
+   -4 : short read
+   -5 : memory allocation error
+   -6 : unknown seed_type
+   -7 : plant "type" mismatch
+   -8 : 'type' was < 0
+   -9 : key length mismatch
    - 10 : key length too long
    - 11 : data length too long
-    -12 : data length too short
+   -12 : data length too short
 */
 static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, unsigned char **mem,
                                  boolean check_key) {
@@ -12309,7 +12332,7 @@ boolean write_filter_defaults(int fd, int idx) {
   size_t vlen;
   int ntowrite = 0;
 
-  ptmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &num_params);
+  ptmpls = weed_get_plantptr_array_counted(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &num_params);
   if (!ptmpls) return TRUE;
 
   for (i = 0; i < num_params; i++) {
@@ -12789,7 +12812,7 @@ void apply_key_defaults(weed_plant_t *inst, int key, int mode) {
       j++;
     }
     lives_free(params);
-  } while (weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL));
+  } while ((inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL)));
 }
 
 
@@ -12885,3 +12908,64 @@ boolean has_key_defaults(void) {
 }
 
 
+#define AUTOTRANS_STEP .01
+
+void set_trans_amt(int key, int mode, double * amt) {
+  weed_plant_t *filter = weed_filters[key_to_fx[key][mode]];
+  if (filter) {
+    int trans = get_transition_param(filter, FALSE);
+    if (trans != -1) {
+      weed_plant_t *inst = weed_instance_obtain(key, mode);
+      if (inst) {
+        weed_plant_t *param = weed_inst_in_param(inst, trans, FALSE, FALSE);
+        weed_plant_t *paramtmpl = weed_param_get_template(param);
+        if (weed_param_get_value_type(param) == WEED_SEED_DOUBLE) {
+          double mind = weed_get_double_value(paramtmpl, WEED_LEAF_MIN, NULL);
+          double maxd = weed_get_double_value(paramtmpl, WEED_LEAF_MAX, NULL);
+          double dval = mind + (maxd - mind) * *amt;
+          weed_set_double_value(param, WEED_LEAF_VALUE, dval);
+        } else {
+          int mini = weed_get_int_value(paramtmpl, WEED_LEAF_MIN, NULL);
+          int maxi = weed_get_int_value(paramtmpl, WEED_LEAF_MAX, NULL);
+          int ival = (int)(mini + (double)(maxi - mini) * *amt + .5);
+          weed_set_int_value(param, WEED_LEAF_VALUE, ival);
+        }
+        weed_instance_unref(inst);
+        *amt += AUTOTRANS_STEP;
+        if (*amt >= 1.) {
+          int bfile = mainw->blend_file;
+          *amt = -1.;
+          rte_key_on_off(key + 1, FALSE);
+          if (IS_VALID_CLIP(bfile)) switch_clip(1, bfile, FALSE);
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
+}
+
+
+boolean set_autotrans(int clip) {
+  // autotrans - switch on autotrans fx, increment trans param each frame
+  // when it reaches max, then we switch
+  int mode = prefs->autotrans_mode >= 0 ? prefs->autotrans_mode :
+             key_modes[prefs->autotrans_key];
+  weed_plant_t *filter = weed_filters[key_to_fx[prefs->autotrans_key][mode]];
+  if (filter) {
+    if (!key_to_instance[prefs->autotrans_key][mode]) {
+      int trans = get_transition_param(filter, FALSE);
+      if (trans != -1) {
+        weed_plant_t *inst;
+        key_modes[prefs->autotrans_key] = mode;
+        rte_key_on_off(prefs->autotrans_key + 1, TRUE);
+        inst = weed_instance_obtain(prefs->autotrans_key, mode);
+        if (inst) {
+          mainw->blend_file = clip;
+          prefs->autotrans_amt = 0.;
+          set_trans_amt(prefs->autotrans_key, mode, &prefs->autotrans_amt);
+          weed_instance_unref(inst);
+          pref_factory_bitmapped(PREF_AUDIO_OPTS, AUDIO_OPTS_IS_LOCKED, TRUE, FALSE);
+          return TRUE;
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
+  return FALSE;
+}

@@ -387,7 +387,8 @@ void pre_analyse(weed_plant_t *elist) {
         // alternately, we can adjust the audio velocity
 
         /// for older lists we didn't set the seek point at audio off, so ignore those
-        if (ststate[0].vel != 0. && (enstate[0].vel != 0. || ev_api >= 122) && enstate[0].afile == ststate[0].afile) {
+        if (enstate && ststate && ststate[0].vel != 0.
+            && (enstate[0].vel != 0. || ev_api >= 122) && enstate[0].afile == ststate[0].afile) {
           double dtime = (double)(etc - stc) / TICKS_PER_SECOND_DBL;
           double tpos = ststate[0].seek + ststate[0].vel * dtime;
           // ratio is real diff / est diff, e.g 1 / 2 we should go twice as fast

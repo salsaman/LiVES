@@ -370,6 +370,11 @@ typedef struct {
   boolean auto_deint;
   boolean auto_nobord;
 
+  boolean tr_self;
+  int autotrans_key;
+  int autotrans_mode;
+  double autotrans_amt;
+
   int gui_monitor;
   int play_monitor;
 
@@ -1294,7 +1299,7 @@ boolean pref_factory_utf8(const char *prefidx, const char *newval, boolean perma
 boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean permanent);
 boolean pref_factory_int64(const char *prefidx, int64_t newval, boolean permanent);
 boolean pref_factory_float(const char *prefidx, float newval, boolean permanent);
-boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval, boolean permanent);
+boolean pref_factory_bitmapped(const char *prefidx, uint32_t bitfield, boolean newval, boolean permanent);
 boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const char *strval, boolean permanent);
 LiVESList *pref_factory_list(const char *prefidx, LiVESList *);
 

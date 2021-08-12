@@ -70,7 +70,7 @@ int offsx, offsy, widthx, dx, dy, tt;
 double fscalex;
 
 START_STATEFUL_UPDATE
-if (trigger && sdata->otrig) sdata->count = 0;
+if (trigger && !sdata->otrig) sdata->count = 0;
 sdata->otrig = trigger;
 if (sdata->count <= 0) {
   float tscale, tx, ty;

@@ -5298,6 +5298,12 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
                                        && (!mainw->files[i]->frames
                                            || i == mainw->blend_file || i == mainw->playing_file)));
 
+  if (user_data) {
+    if (prefs->autotrans_key >= 0 && LIVES_NORMAL_PLAYBACK && !mainw->num_tr_applied) {
+      if (set_autotrans(i)) return TRUE;
+    }
+  }
+
   switch_clip(type, i, FALSE);
 
   return TRUE;
@@ -5345,6 +5351,12 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
                                        && (!mainw->files[i]->frames
                                            || i == mainw->blend_file || i == mainw->playing_file)));
 
+  if (user_data) {
+    if (prefs->autotrans_key >= 0 && LIVES_NORMAL_PLAYBACK && !mainw->num_tr_applied) {
+      if (set_autotrans(i)) return TRUE;
+    }
+  }
+
   switch_clip(type, i, FALSE);
 
   return TRUE;
@@ -5388,7 +5400,7 @@ static boolean handle_remnants(LiVESList * recnlist, const char *trashremdir, Li
   LiVESList *list = recnlist;
   char *unrecdir = lives_build_path(prefs->workdir, UNREC_CLIPS_DIR, NULL);
   char *text = lives_strdup_printf(_("Some clips could not be recovered.\n"
-                                     "These items can be deleted or moved to the directory\n%s\n"
+                                     "These items can be ignored, deleted or moved to the directory\n%s\n"
                                      "What would you like to do with them ?"), unrecdir);
   LiVESWidget *dialog = create_question_dialog(_("Unrecoverable Clips"), text), *bbox, *cancelbutton;
 
@@ -6259,6 +6271,8 @@ void switch_clip(int type, int newclip, boolean force) {
   // type = 0 : if we are playing and a transition is active, this will change the background clip
   // type = 1 fg only
   // type = 2 bg only
+
+  if (!IS_VALID_CLIP(newclip)) return;
 
   if (mainw->current_file < 1 || mainw->multitrack || mainw->preview || mainw->internal_messaging ||
       (mainw->is_processing && cfile && cfile->is_loaded) || !mainw->cliplist) return;

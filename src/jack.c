@@ -3494,7 +3494,7 @@ void jack_close_client(jack_driver_t *jackd) {
       if (cache_buffer) cache_buffer->die = TRUE;
     jack_deactivate(jackd->client);
     jack_set_process_callback(jackd->client, NULL, jackd);
-    lives_nanosleep_until_nonzero(!in_ap);
+    lives_nanosleep_while_true(in_ap);
     jack_client_close(jackd->client);
   }
 

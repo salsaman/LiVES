@@ -4637,7 +4637,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_menu_add_separator(LIVES_MENU(mt->files_menu));
 
-  mt->clear_ds = lives_standard_menu_item_new_with_label(_("Clean _up Diskspace"));
+  mt->clear_ds = lives_standard_menu_item_new_with_label(_("Clean _up Diskspace / Recover Missing Clips"));
   lives_container_add(LIVES_CONTAINER(mt->files_menu), mt->clear_ds);
 
   lives_signal_connect(LIVES_GUI_OBJECT(mt->clear_ds), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -13319,6 +13319,7 @@ static void add_effect_inner(lives_mt * mt, int num_in_tracks, int *in_tracks, i
     pchain = NULL;
   }
 
+  // add defaults from filter class
   if (num_in_params(filter, FALSE, FALSE) > 0)
     pchain = filter_init_add_pchanges(mt->event_list, filter, mt->init_event, num_in_tracks, 0);
 
@@ -13331,7 +13332,7 @@ static void add_effect_inner(lives_mt * mt, int num_in_tracks, int *in_tracks, i
   insert_filter_map_event_at(mt->event_list, start_event, event, TRUE);
 
   // update all effect maps in block, appending init_event
-  update_filter_maps(start_event, end_event, mt->init_event);
+  update_filter_maps(start_event, end_event, &mt->init_event, 1);
 
   // add effect deinit event
   mt->event_list = append_filter_deinit_event(mt->event_list, end_tc, (void *)mt->init_event, pchain);
@@ -18613,9 +18614,8 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
                           }
 
                           weed_leaf_delete((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS);
-                          weed_set_int64_array((weed_plant_t *)init_event,
-                                               WEED_LEAF_IN_PARAMETERS, num_params,
-                                               (int64_t *)pin_pchanges);
+                          weed_set_int64_array((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS,
+                                               num_params, (int64_t *)pin_pchanges);
 
                           lives_free(pin_pchanges);
                           lives_free(orig_pchanges);
@@ -18951,6 +18951,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
           filter = get_weed_filter(filter_idx);
           // fill in any newly added params
           num_tracks = weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS);
+          // add defaults from filter class
           pchain = filter_init_add_pchanges(event_list, filter, event, num_tracks, num_params);
           lives_free(pchain);
         }

@@ -54,7 +54,7 @@ static void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_a
 LIVES_GLOBAL_INLINE void lives_proc_thread_free(lives_proc_thread_t lpt) {
   pthread_mutex_t *state_mutex
     = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
-  lives_nanosleep_until_nonzero(lives_proc_thread_check_finished(lpt));
+  lives_nanosleep_while_false(lives_proc_thread_check_finished(lpt));
   if (state_mutex) lives_free(state_mutex);
   THREADVAR(tinfo) = NULL;
   weed_plant_free(lpt);
@@ -868,7 +868,7 @@ static void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_a
 //////// worker thread pool //////////////////////////////////////////
 
 ///////// thread pool ////////////////////////
-#ifndef VALGRIND_ONx
+#ifndef VALGRIND_ON
 #define MINPOOLTHREADS 8
 #else
 #define MINPOOLTHREADS 2
@@ -931,7 +931,7 @@ lives_thread_data_t *lives_thread_data_create(uint64_t idx) {
 }
 
 
-static boolean gsrc_wrapper(livespointer data) {
+static boolean widget_context_wrapper(livespointer data) {
   thrd_work_t *mywork = (thrd_work_t *)data;
   (*mywork->func)(mywork->arg);
   return FALSE;
@@ -976,18 +976,20 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   /*   fprintf(stderr, "thread id %ld reporting for duty, Sir !\n", get_thread_id()); */
   /* } */
 
-  lives_nanosleep_until_nonzero(mywork->sync_ready);
+  lives_nanosleep_while_false(mywork->sync_ready);
 
-  pthread_mutex_lock(&twork_count_mutex);
-  ntasks--;
-  pthread_mutex_unlock(&twork_count_mutex);
-
-  g_main_context_invoke_full(tdata->ctx, G_PRIORITY_HIGH, gsrc_wrapper, mywork, NULL);
+  lives_widget_context_invoke_full(tdata->ctx, mywork->attr & LIVES_THRDATTR_PRIORITY
+                                   ? LIVES_WIDGET_PRIORITY_HIGH - 100 : LIVES_WIDGET_PRIORITY_HIGH,
+                                   widget_context_wrapper, mywork, NULL);
 
   if (myflags & LIVES_THRDFLAG_AUTODELETE) {
     lives_free(mywork);
     lives_thread_free((lives_thread_t *)list);
   } else mywork->done = tdata->idx;
+
+  pthread_mutex_lock(&twork_count_mutex);
+  ntasks--;
+  pthread_mutex_unlock(&twork_count_mutex);
 
 #ifdef USE_RPMALLOC
   rpmalloc_thread_collect();
@@ -1113,6 +1115,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
   else list->next = list->prev = NULL;
   list->data = work;
   work->func = func;
+  work->attr = attr;
   work->arg = arg;
   work->sync_ready = TRUE;
 

@@ -1541,12 +1541,12 @@ success5:
 }
 
 
-boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval, boolean permanent) {
+boolean pref_factory_bitmapped(const char *prefidx, uint32_t bitfield, boolean newval, boolean permanent) {
   if (prefsw) prefsw->ignore_apply = TRUE;
 
   if (!lives_strcmp(prefidx, PREF_AUDIO_OPTS)) {
-    if (newval && !(prefs->audio_opts & bitfield)) prefs->audio_opts &= bitfield;
-    else if (!newval && (prefs->audio_opts & bitfield)) prefs->audio_opts ^= bitfield;
+    if (newval && !(prefs->audio_opts & bitfield)) prefs->audio_opts |= bitfield;
+    else if (!newval && (prefs->audio_opts & bitfield)) prefs->audio_opts &= ~bitfield;
     else goto fail6;
 
     if (permanent) set_int_pref(PREF_AUDIO_OPTS, prefs->audio_opts);
@@ -1589,12 +1589,16 @@ boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval
                                        (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC) ? TRUE : FALSE);
       }
     }
+    if (bitfield == AUDIO_OPTS_IS_LOCKED) {
+      lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->lock_audio_checkbutton),
+                                          (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) ? TRUE : FALSE);
+    }
     goto success6;
   }
 
   if (!lives_strcmp(prefidx, PREF_OMC_DEV_OPTS)) {
-    if (newval && !(prefs->omc_dev_opts & bitfield)) prefs->omc_dev_opts &= bitfield;
-    else if (!newval && (prefs->omc_dev_opts & bitfield)) prefs->omc_dev_opts ^= bitfield;
+    if (newval && !(prefs->omc_dev_opts & bitfield)) prefs->audio_opts |= bitfield;
+    else if (!newval && (prefs->omc_dev_opts & bitfield)) prefs->audio_opts &= ~bitfield;
     else goto fail6;
 
     if (permanent) set_int_pref(PREF_OMC_DEV_OPTS, prefs->omc_dev_opts);

@@ -475,6 +475,10 @@ boolean load_frame_image(frames_t frame) {
   }
 
   if (!mainw->foreign) {
+    if (prefs->autotrans_amt >= 0.) set_trans_amt(prefs->autotrans_key,
+          prefs->autotrans_mode >= 0 ? prefs->autotrans_mode
+          : rte_key_getmode(prefs->autotrans_key + 1),
+          &prefs->autotrans_amt);
     mainw->actual_frame = frame;
     if (!mainw->preview_rendering && (!((was_preview = mainw->preview) || mainw->is_rendering))) {
       /////////////////////////////////////////////////////////
@@ -3433,8 +3437,6 @@ proc_dialog:
   }
 
   if (LIVES_IS_PLAYING) {
-    if (mainw->record && !mainw->record_paused)
-      event_list_add_end_events(mainw->event_list, TRUE);
     mainw->jack_can_stop = FALSE;
   }
 

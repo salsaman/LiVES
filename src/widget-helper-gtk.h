@@ -139,6 +139,13 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 
 //////////////////////////////////////////////////
 
+#define LIVES_WIDGET_PRIORITY_HIGH G_PRIORITY_HIGH // - 100 (not used by GTK / GDK)
+#define LIVES_WIDGET_PRIORITY_DEFAULT G_PRIORITY_DEFAULT // 0 (timeouts)
+
+#define LIVES_WIDGET_PRIORITY_HIGH_IDLE G_PRIORITY_HIGH_IDLE // 100 (110 resize, 120 redraw)
+#define LIVES_WIDGET_PRIORITY_DEFAULT_IDLE G_PRIORITY_DEFAULT_IDLE // 200 (standard idle funcs)
+#define LIVES_WIDGET_PRIORITY_LOW G_PRIORITY_LOW // 300 (low priority, not used by GTK / GDK)
+
 #if GTK_CHECK_VERSION(3, 10, 0)
 #define LIVES_TABLE_IS_GRID 1
 #endif
@@ -178,6 +185,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_widget_context_push_thread_default(ctx) g_main_context_push_thread_default(ctx)
 #define lives_widget_context_pop_thread_default(ctx) g_main_context_pop_thread_default(ctx)
 #define lives_widget_context_invoke(ctx, func, arg) g_main_context_invoke(ctx, func, arg)
+#define lives_widget_context_invoke_full(ctx, prio, func, arg, delfunc) g_main_context_invoke_full(ctx, prio, func, arg, delfunc)
 #define lives_widget_context_iteration(ctx, block) g_main_context_iteration(ctx, block)
 #define lives_widget_context_pending(ctx) g_main_context_pending(ctx)
 #define lives_widgets_get_current_event() gtk_get_current_event()

@@ -324,10 +324,10 @@ void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *filter, 
 void insert_filter_deinit_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);
 boolean insert_filter_map_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event,
                                    boolean before_frames);
-weed_plant_t *get_filter_map_before(weed_plant_t *event, int ctrack, weed_plant_t *stop_event);
-weed_plant_t *get_filter_map_after(weed_plant_t *event, int ctrack);
+weed_event_t *get_filter_map_before(weed_event_t *event, int ctrack, weed_event_t *stop_event);
+weed_event_t *get_filter_map_after(weed_event_t *event, int ctrack);
 weed_event_t **get_init_events_before(weed_event_t *event, weed_event_t *init_event, boolean add);
-void update_filter_maps(weed_plant_t *event, weed_plant_t *end_event, weed_plant_t *init_event);
+void update_filter_maps(weed_event_t *event, weed_event_t *end_event, weed_event_t **init_event, int ninits);
 void insert_param_change_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);
 weed_plant_t *insert_marker_event_at(weed_plant_t *event_list, weed_plant_t *at_event, int marker_type, livespointer data);
 

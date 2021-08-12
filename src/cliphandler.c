@@ -1141,6 +1141,7 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
 
   boolean retval, retvala;
   boolean is_ascrap = FALSE;
+  boolean bak_tried = FALSE, binfmt_tried = FALSE;
 
   off_t sizhead = 28; //8 * 4 + 8 + 8;
 
@@ -1573,7 +1574,19 @@ rhd_failed:
     // *INDENT-ON*
 
     lives_free(clipdir);
+
+    if (hdrback && bak_tried) {
+      lives_free(hdrback);
+      hdrback = NULL;
+    }
+    if (binfmt && binfmt_tried) {
+      lives_free(binfmt);
+      binfmt = NULL;
+    }
+
     if (hdrback || binfmt) {
+      if (hdrback) bak_tried = TRUE;
+      else binfmt_tried = TRUE;
       if (recover_details(fileno, lives_header, hdrback, binfmt)) {
         if (hdrback) {
           lives_free(hdrback);

@@ -1023,6 +1023,13 @@ static boolean pre_init(void) {
   mainw->threaded_dialog = FALSE;
   clear_mainw_msg();
 
+  prefs->autotrans_key = 7;
+  //prefs->autotrans_mode = 2;
+  prefs->autotrans_mode = -1;
+  prefs->autotrans_amt = -1.;
+
+  prefs->tr_self = TRUE;
+
   info_only = FALSE;
   palette = (_palette *)(lives_malloc(sizeof(_palette)));
 
@@ -2922,6 +2929,7 @@ static double pick_custom_colours(double var, double timer) {
   double lmin, lmax;
   uint8_t ncr, ncg, ncb;
   boolean retried = FALSE, fixed = FALSE;
+  int ncols = 0;
 
   if (timer > 0.) fixed = TRUE;
   else timer = -timer;
@@ -2936,6 +2944,9 @@ retry:
   ncg = palette->menu_and_bars.green * 255.;
   ncb = palette->menu_and_bars.blue * 255.;
   prefs->pb_quality = PB_QUALITY_HIGH;
+
+  if (mainw->helper_procthreads[PT_CUSTOM_COLOURS])
+    lives_proc_thread_set_cancellable(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
 
   timeout = (ticks_t)(timer * TICKS_PER_SECOND_DBL);
   xtimerinfo = lives_get_current_ticks();
@@ -2958,6 +2969,11 @@ retry:
     ncg = palette->menu_and_bars.green * 255.;
     ncb = palette->menu_and_bars.blue * 255.;
 
+    ncols++;
+
+    if (mainw->helper_procthreads[PT_CUSTOM_COLOURS] &&
+        lives_proc_thread_get_cancelled(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) goto windup;
+
     if (pick_nice_colour(timeout, palette->nice1.red * 255., palette->nice1.green * 255.,
                          palette->nice1.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax)) {
       if ((timerinfo = lives_get_current_ticks()) - xtimerinfo < timeout / 2) var *= 1.02;
@@ -2965,7 +2981,6 @@ retry:
       timeout -= (timerinfo - xtimerinfo);
       xtimerinfo = timerinfo;
       if (var > MAX_CPICK_VAR) var = MAX_CPICK_VAR;
-      mainw->pretty_colours = TRUE;
       // nice2 - alt for menu_and_bars
       // insensitive colour ?
       palette->nice2.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
@@ -2973,6 +2988,10 @@ retry:
       palette->nice2.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
       palette->nice2.alpha = 1.;
       mainw->pretty_colours = TRUE;
+      ncols++;
+
+      if (mainw->helper_procthreads[PT_CUSTOM_COLOURS] &&
+          lives_proc_thread_get_cancelled(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) goto windup;
 
       if (!(palette->style & STYLE_LIGHT)) {
         lmin = .6; lmax = .8;
@@ -2989,6 +3008,7 @@ retry:
         palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
         palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
         palette->nice3.alpha = 1.;
+        ncols++;
       } else if (!fixed) var = -var;
       main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
     }
@@ -2998,6 +3018,17 @@ retry:
       var *= .98;
       goto retry;
     } else lives_widget_color_copy(&palette->nice2, &palette->menu_and_bars);
+  }
+  return var;
+
+windup:
+  if (ncols < 2) lives_widget_color_copy(&palette->nice2, &palette->menu_and_bars);
+  else {
+    palette->nice3.red = palette->nice2.red;
+    palette->nice3.green = palette->nice2.green;
+    palette->nice3.blue = palette->nice2.blue;
+    palette->nice3.alpha = 1.;
+    //main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
   }
   return var;
 }
@@ -4352,7 +4383,9 @@ static boolean lives_startup2(livespointer data) {
       / TICKS_PER_SECOND_DBL * .9;
     set_double_pref(PREF_CPICK_TIME, prefs->cptime);
     set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
-    lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+    lives_proc_thread_cancel(mainw->helper_procthreads[PT_CUSTOM_COLOURS], FALSE);
+    lives_proc_thread_join(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+    main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
   }
   mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
   if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
@@ -7337,7 +7370,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 
 #ifdef PNG_BIO
   png_set_read_fn(png_ptr, LIVES_INT_TO_POINTER(fd), png_read_func);
-#ifndef VALGRIND_ONx
+#ifndef VALGRIND_ON
   if (mainw->debug)
     png_set_sig_bytes(png_ptr, 0);
   else
@@ -7726,7 +7759,7 @@ boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char 
   LiVESError *gerror = NULL;
   char *shmpath = NULL;
   boolean ret = TRUE;
-#ifndef VALGRIND_ONx
+#ifndef VALGRIND_ON
   boolean is_png = FALSE;
 #endif
   int fd = -1;
@@ -7738,7 +7771,7 @@ boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char 
   uint8_t ibuff[IMG_BUFF_SIZE];
   size_t bsize;
 
-#ifndef VALGRIND_ONx
+#ifndef VALGRIND_ON
   if (!mainw->debug)
     if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) is_png = TRUE;
 #endif
@@ -7750,7 +7783,7 @@ boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char 
 #ifdef HAVE_POSIX_FADVISE
   posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
 #endif
-#ifndef VALGRIND_ONx
+#ifndef VALGRIND_ON
   if (is_png) lives_buffered_rdonly_slurp(fd, 8);
   else lives_buffered_rdonly_slurp(fd, 0);
 #endif

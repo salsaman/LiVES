@@ -23,6 +23,9 @@ typedef weed_funcptr_t(*funcptr_funcptr_t)();
 typedef void *(*funcptr_voidptr_t)();
 typedef weed_plant_t(*funcptr_plantptr_t)();
 
+typedef uint64_t lives_thread_attr_t;
+typedef LiVESList lives_thread_t;
+
 typedef union {
   weed_funcptr_t func;
   funcptr_int_t funcint;
@@ -55,6 +58,7 @@ typedef struct {
   lives_thread_data_t *var_mydata;
   char *var_read_failed_file, *var_write_failed_file, *var_bad_aud_file;
   uint64_t var_random_seed;
+  ticks_t var_event_ticks;
 
   lives_intentcap_t var_intentcap;
   int var_id;
@@ -88,6 +92,7 @@ typedef struct {
   void *arg;
   void *ret;
   uint64_t flags;
+  lives_thread_attr_t attr;
   volatile uint64_t busy;
   volatile uint64_t done;
   volatile boolean sync_ready;
@@ -121,9 +126,6 @@ typedef struct {
 #define LIVES_THRDFLAG_WAIT_SYNC	(1 << 1)
 #define LIVES_THRDFLAG_NO_GUI		(1 << 2)
 #define LIVES_THRDFLAG_TUNING		(1 << 3)
-
-typedef LiVESList lives_thread_t;
-typedef uint64_t lives_thread_attr_t;
 
 // internals
 

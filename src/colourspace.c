@@ -1910,8 +1910,7 @@ static void init_gamma_tx(void) {
   gamma_tx[WEED_GAMMA_BT709] = (gamma_const_t) {0.099, 4.5, 0.081, 1. / .45};
 }
 
-static void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) GNU_HOT;
-static void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) GNU_HOT;
+static void yuv2rgb_int(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) GNU_HOT;
 
 double get_luma8(uint8_t r, uint8_t g, uint8_t b) {
   /// return luma value between 0. (black) and 1. (white)
@@ -2286,27 +2285,22 @@ LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
   else yuv->u2 = a < min_UV ? min_UV : a;
 }
 
-LIVES_INLINE void yuv2rgb_int(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
+LIVES_LOCAL_INLINE void yuv2rgb_int(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
   *r = CLAMP0255f(spc_rnd(RGB_Y[y] + R_Cr[v]));
   *g = CLAMP0255f(spc_rnd(RGB_Y[y] + G_Cb[u] + G_Cr[v]));
   *b = CLAMP0255f(spc_rnd(RGB_Y[y] + B_Cb[u]));
 }
 
-LIVES_INLINE void yuv2rgb_float(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
+LIVES_LOCAL_INLINE void yuv2rgb_float(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
   *r = clamp0255f(RGBf_Y[y] + Rf_Cr[v]);
   *g = clamp0255f(RGBf_Y[y] + Gf_Cb[u] + Gf_Cr[v]);
   *b = clamp0255f(RGBf_Y[y] + Bf_Cb[u]);
 }
 
-LIVES_INLINE void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
-  //if (prefs->pb_quality == PB_QUALITY_HIGH) return yuv2rgb_float(y, u, v, r, g, b);
-  return yuv2rgb_int(y, u, v, r, g, b);
-}
-
-
+#define yuv2rgb(y, u, v, r, g, b) (yuv2rgb_int((y), (u), (v), (r), (g), (b)))
 #define yuv2bgr(y, u, v, b, g, r) yuv2rgb(y, u, v, r, g, b)
 
-LIVES_INLINE void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *lut) {
+LIVES_LOCAL_INLINE void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *lut) {
   *r = lut[(int)CLAMP0255f(spc_rnd(RGB_Y[y] + R_Cr[v]))];
   *g = lut[(int)CLAMP0255f(spc_rnd(RGB_Y[y] + G_Cb[u] + G_Cr[v]))];
   *b = lut[(int)CLAMP0255f(spc_rnd(RGB_Y[y] + B_Cb[u]))];

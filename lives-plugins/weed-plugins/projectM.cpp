@@ -55,7 +55,7 @@ static int next_pot(int val) {return val;}
 static int verbosity = WEED_VERBOSITY_ERROR;
 #define WORKER_TIMEOUT_SEC 30 /// how long to wait for worker thread startup
 #define MAX_AUDLEN 2048 /// this is defined by projectM itself, increasing the value above 2048 will only result in jumps in the audio
-#define DEF_SENS 1.5 /// beat sensitivity 0. -> 5.  (lower is more sensitive); too high -> less dynamic, too low - nothing w. silence
+#define DEF_SENS 2.5 /// beat sensitivity 0. -> 5.  (lower is more sensitive); too high -> less dynamic, too low - nothing w. silence
 /////////////////////////////////////////////////////////////
 
 #define USE_DBLBUF 1
@@ -86,6 +86,8 @@ static int verbosity = WEED_VERBOSITY_ERROR;
 
 #define PREF_FPS 30.
 #define MESHSIZE 32.
+
+#define AUTO_PRESET_TIME 20.
 
 static Display *dpy;
 
@@ -589,8 +591,8 @@ static void *worker(void *data) {
   settings.meshX = scrwidth / MESHSIZE;
   settings.meshY = ((int)(settings.meshX * hwratio + 1) >> 1) << 1;
   settings.fps = sd->fps;
-  settings.smoothPresetDuration = 30.;
-  settings.presetDuration = 60; /// ignored
+  settings.smoothPresetDuration = 20.;
+  settings.presetDuration = 20; /// ignored
   settings.beatSensitivity = DEF_SENS;
   settings.aspectCorrection = 1;
   settings.softCutRatingsEnabled = 1;
@@ -857,9 +859,9 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
         if (imgheight != height || xrowstride != sd->rowstride) {
           sd->rowstride = xrowstride;
           imgheight = height;
-          imgwidth = width;
           resize_buffer(sd);
         }
+	imgwidth = width;
       }
     } else {
       weed_plant_t **iparams = weed_get_in_params(inst, NULL);
@@ -1092,6 +1094,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   sd->pidx = (pidx - 1) % sd->nprs;
 
+  if (ctime == -1) ctime = AUTO_PRESET_TIME;
   sd->ctime = ctime;
 
   // if (sd->pidx != -1) {
@@ -1176,6 +1179,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
 copytodest:
   pthread_mutex_lock(&buffer_mutex);
+  if (height > scrheight) height = scrheight;
   for (int yy = 0; yy < height; yy++) {
     weed_memcpy(&dst[yy * rowstride], &sd->fbuffer[yy * xrowstride], xrowstride);
   }
@@ -1188,7 +1192,7 @@ copytodest:
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  if (imgwidth > scrwidth || imgheight > scrheight) {
+  if (1) {
     weed_plant_t *gui = weed_channel_get_gui(out_channel);
     int xgap = 0, ygap = 0;
     if (imgwidth > scrwidth) xgap = (imgwidth - scrwidth) >> 1;

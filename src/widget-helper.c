@@ -35,7 +35,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
                              const char *detail, const char *value);
 #endif
 
-#define NSLEEP_TIME 5000
+#define NSLEEP_TIME 500
 
 #define IS_GUI_THREAD (pthread_self() == capable->gui_thread)
 
@@ -1119,6 +1119,8 @@ boolean governor_loop(livespointer data) {
   gov_will_run = TRUE;
   copies++;
 
+  //g_print("IN gov\n");
+
   // reloop - for timers we cannot exit until we have the return code from the function
   // instead we loop back to here
 reloop:
@@ -1195,10 +1197,10 @@ reloop:
         if (sigdata->is_timer) {
           // this is complicated, We need to return to caller so it can exit with correct value
           // but we need to return to run the new task
-          lives_idle_priority(governor_loop, new_sigdata);
           //g_print("gov6\n");
           if (!--copies) gov_running = FALSE;
           gov_will_run = TRUE;
+          lives_idle_priority(governor_loop, new_sigdata);
           return FALSE;
         }
       }
@@ -1279,14 +1281,15 @@ reloop:
 
     if (!sigdata_check_alarm(sigdata)) {
       if (!--copies) gov_will_run = gov_running = FALSE;
+      //g_print("gov820n");
       return FALSE;
     }
     // add ourselves as an idlefunc and then return FALSE
-    lives_idle_priority(governor_loop, sigdata->alarm_handle ? sigdata : NULL);
     if (!--copies) gov_running = FALSE;
     // need to check for lpttorun here, after running all the context_iterations
     if (lpttorun) lpt_recurse = TRUE;
     //g_print("gov8\n");
+    lives_idle_priority(governor_loop, sigdata->alarm_handle ? sigdata : NULL);
     return FALSE;
   }
 
@@ -2081,6 +2084,12 @@ void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
     mainw->clutch = FALSE;
   }
   while (lpttorun || (waitgov && !mainw->clutch)) {
+    // WARNING - we may hang here if the main thread is blocked - eg. waiting for us to join()
+    // - however we should have added governor_loop as an idlefunc
+    //  -- thus if the main thread is waitng (e.g. in lives_proc_thread_join()) it should check the return value of
+    //  has_lpttorun() and if TRUE call
+    // lives_widget_context_update() in order to trigger the idle func and run our function
+    // - thus the deadlock situation will be averted
     lives_nanosleep(NSLEEP_TIME);
   }
   return (void *)lpt_result;
@@ -7690,6 +7699,17 @@ WIDGET_HELPER_GLOBAL_INLINE uint64_t lives_widget_get_xwinid(LiVESWidget *widget
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE uint32_t lives_timer_immediate(LiVESWidgetSourceFunc func, livespointer data) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 0, 0)
+  return g_timeout_add_full(0, LIVES_WIDGET_PRIORITY_HIGH, func, data, NULL);
+#else
+  return gtk_timeout_add_full(0, LIVES_WIDGET_PRIORITY_HIGH, func, data, NULL);
+#endif
+#endif
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE uint32_t lives_timer_add(uint32_t interval, LiVESWidgetSourceFunc function, livespointer data) {
   // interval in milliseconds
   lives_sigdata_t *sigdata = (lives_sigdata_t *)lives_calloc(1, sizeof(lives_sigdata_t));
@@ -12504,8 +12524,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean toggle_toggles_var(LiVESToggleButton * tbut,
   if (invert) lives_toggle_button_set_active(tbut, !(*var));
   else lives_toggle_button_set_active(tbut, *var);
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tbut), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(togglevar_cb),
-                                  (livespointer)var);
+                                  LIVES_GUI_CALLBACK(togglevar_cb), (livespointer)var);
   return TRUE;
 }
 
@@ -13011,7 +13030,9 @@ boolean lives_widget_context_update(void) {
         //LiVESXEvent *ev = lives_widgets_get_current_event();
         //if (ev) g_print("ev was %d\n", ev->type);
         //else g_print("NULL event\n");
+
         lives_widget_context_iteration(NULL, FALSE);
+
         lives_nanosleep(NSLEEP_TIME);
       }
     }

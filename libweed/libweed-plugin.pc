@@ -6,6 +6,6 @@ includedir=${prefix}/include/weed
 Name: libweed-plugins
 Description: Effect plugin header for libweed
 Requires:
-Version: 2.0.1
+Version: 2.1.1
 Libs:
 Cflags: -I${includedir}

@@ -308,6 +308,9 @@ boolean rte_key_setmode(int key, int newmode);  ///< set mode for a given key; i
 ///< returns -1 if the filter is not found; it will match the first name found - returns -2 if you try to switch a generator/non-generator
 int rte_switch_keymode(int key, int mode, const char *hashname);
 
+boolean set_autotrans(int clip);
+void set_trans_amt(int key, int mode, double *amt);
+
 /////////////////////////////////////////////////////////////
 
 LiVESList *weed_get_all_names(lives_fx_list_t list_type);

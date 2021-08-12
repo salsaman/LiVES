@@ -830,7 +830,7 @@ boolean reload_set(const char *set_name) {
   boolean hadbad = FALSE;
 
   int last_file = -1, new_file = -1;
-  int start_clip = mainw->current_file;
+  int start_clip = mainw->current_file == -1 ? 1 : mainw->current_file + 1;
   int clipcount = start_clip, ignored = 0;
   frames_t maxframe;
 

@@ -372,7 +372,7 @@ DISABLE_RPMALLOC=true
 AC_ARG_ENABLE(rpmalloc, [  --disable-rpmalloc           Disable rpmalloc memory allocator.] , disable_rpmalloc=yes)
 if test "x$disable_rpmalloc" != "xyes" ; then
 DISABLE_RPMALLOC=false
-echo "building with rpmalloc memory allocator features enabled"
+echo "built-in rpmalloc memory allocator is enabled"
 else
 echo "rpmalloc memory allocator features disabled"
 fi
@@ -411,6 +411,7 @@ echo "Not checking for gtk+ 3.x"
 
 fi
 
+
 if test "x$HAVE_GTK_VERSION3" = "xfalse"; then
 echo -n "checking for GTK+ >= 2.4.0... "
 PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.4.0)
@@ -447,15 +448,30 @@ AC_SUBST(GTK_LIBS_NODYNAMIC)
 PKG_CHECK_EXISTS([glib-2.0 >= 2.14.0],[HAVE_GLIB_VERSION214=true],[HAVE_GLIB_VERSION214=false])
 PKG_CHECK_EXISTS([glib-2.0 >= 2.4.0],[HAVE_GLIB_VERSION24=true],[HAVE_GLIB_VERSION24=false])
 
+
 DISABLE_GSLICE=true
-AC_ARG_ENABLE(glib-slice-allocator, [  --disable-glib-slice-allocator           Disable the glib slice allocator (not recommended).] , disable_gslice=yes)
-if test "x$disable_gslice" != "xyes" ; then
+
+if test "$DISABLE_RPMALLOC" = "false"; then
+echo "using built-in rpmalloc memory allocator; not checking for glib-slice-allocator"
+
+else
+
+AC_ARG_ENABLE(glib-slice-allocator, [  --disable-glib-slice-allocator           Disable the glib slice allocator (only relevant if --disable-rpmalloc is also set)] , disable_gslice=yes)
+
+if test "$disable_gslice" = "yes" ; then
 DISABLE_GSLICE=false
+echo "glib-slice-allocator disabled"
+echo "*** will use only standard memory allocators ***"
+
+else
+
+echo "WARNING:  *** rpmalloc memory allocator disabled; falling back to glib-slice-allocator"
+echo "(include option --disable-glib-slice-allocator to disable this behaviour)"
+
 if test "x$HAVE_GLIB_VERSION24" = "xfalse"; then
 echo "***********************************************"
 echo "LiVES requires glib-2.0 version 2.4.0 or higher"
 echo "version 2.10.0 or higher is strongly recommended"
-echo "***********************************************"
 else
 if test "x$HAVE_GLIB_VERSION214" = "xfalse"; then
 echo "***********************************************"
@@ -466,12 +482,16 @@ echo "***********************************************"
 fi
 fi
 
-if test "x$HAVE_GTK_VERSION216" = "xfalse"; then
+fi
+fi
+
+if test "$HAVE_GTK_VERSION216" = "false"; then
 echo "***********************************************"
 echo "LiVES runs best with gtk+-2.0 version 2.16.0 or higher"
 echo "***********************************************"
 fi
 
+if test "$DISABLE_GSLICE" = "false"; then
 PKG_CHECK_MODULES(GLIB,glib-2.0 >= 2.14.0)
 else
 PKG_CHECK_MODULES(GLIB,glib-2.0 >= 2.4.0)

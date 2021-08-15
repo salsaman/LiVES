@@ -15,82 +15,91 @@ You should read these installation instructions thoroughly before installing
 LiVES.
 
 
-DEPENDENCIES
-------------
+DEPENDENCIES (updated 15/08/2021)
+---------------------------------
 
-1) Mandatory dependencies include *at least*:
 Build
 -----
-GTK+ (>=3.0.0) + development libs [preferred]
-or GTK+ (>=2.16) + development libs
-gdk-pixbuf-loaders + development libs
-gettext + development libs
 
-Runtime
--------
-mplayer or mplayer2 (preferred) [or mpv] with jpeg/png output support
-ffmpeg with jpeg/png input support (preferably with x264 support)
-imageMagick
-perl
-sox (*with* libsox-fmt-all if applicable !)
+For building from source (Linux), you will require:
 
+autotools-dev
+autoconf
+autopoint
+libtool
+gettext + development libs (required)
+libgtk-3-dev (> 3.0.8 required - 3.24+ recommended)
+libpng-dev
+libx11-dev
+libxrender-dev
 
+Recommended:
 
-2) *Highly* Recommended build-dependencies include (devel versions of):
-libpulse, libjack, ffmpeg, mjpegtools, libogg, libtheora, libdv,
-libraw1394, libavc1394, libunicap, ( libavcodec, libavformat,
-libavutils, libswscale, ) or ( ffmpeg-libs), libpng, libasound2, libX11,
-libXrender, libGL, GLee, libfftwf3.
-
-(For compiling you should have development versions of these libraries
-installed. Check the output of ./configure *carefully* for missing
-optional dependencies.)
-
-*Optional*: openCV, LADSPA headers.frei0r-devel, libvisual, libSDL1.2, projectM.
-
-
-3) *Highly* Recommended runtime dependencies include:
-python, libtheora-bin, mkvtoolnix, vorbis-tools,
-libmatroska, ogmtools, dvgrab, frei0r-plugins,
-libdv2-apps/libdv-bin, cdda2wav/icedax, lame, ffmpeg, x264, youtube-dl, LADSPA plugins.
+libjack-jackd2-dev and / or libpulse-dev
+libgl-dev
+libsdl2-dev
+libavcodec-dev
+libavformat-dev
+libavutil-dev
+libswscale-dev
+libswresample-dev
+libfftw3-dev
+libunicap2-dev
+libprojectm-dev + projectm-data
+liborc-0.4-dev
+libopencv-dev
+frei0r-plugins-dev
+ladspa-sdk
 
 
 
-EXAMPLE: Ubuntu 16.04 Packages
+
+Running:
+perl (required)
+sox (with at least support for PCM wav and raw formats) (required for some audio conversions)
+
+imageMagick (optional required for rendered effects only)
+
+mplayer or mplayer2 (preferred) [or mpv] (required for decoding audio, and for filechooser previews)
+with png / alpha (preferred) or jpeg output support (optional - used as a fallback for some import methods)
+
+ffmpeg (recommended for encoding / identifying files)
+ - with jpeg/png input support (preferably with x264 support)
+
+youtube-dl (for downloading online clips)
+pip (optional, for updating the former)
 
 
 
-CORE (recommended packages):
+Optional extras:
 
-Build deps:
-autotools-dev autoconf autopoint libtool libgtk-3-dev libpulse-dev libavcodec-dev libavformat-dev libavutil-dev libswscale-dev glee-dev libglu1-mesa-dev libogg-dev libtheora-dev libtheora-bin libvorbis-dev libunicap2-dev libfftw3-dev libmjpegtools-dev libavc1394-dev libdv4-dev libbz2-dev
-
-Runtime deps:
-perl python mplayer2 sox imagemagick ffmpeg libgtk-3 libav-tools-links libpulse libavcodec libavformat libavutil libswscale libglee libglu1-mesa libogg libtheora libtheora-bin libvorbis libunicap2 libfftw3 libmjpegtools libavc1394 libdv4 libbz2 jackd dvgrab icedax youtube-dl
-
-
+python
 
 
 Extra effects:
 
-Build deps:
-libopencv-dev ladspa-sdk frei0r-plugins-dev libvisual-0.4-dev libsdl1.2-dev libprojectm-dev projectm-data
-
-Runtime deps:
-libopencv ladspa-sdk frei0r-plugins libvisual-0.4 libprojectm2v5 projectm-data libsdl1.2
+frei0r-plugins (extra effects)
+LADSPA plugins (extra effects)
 
 
+DV decoding / encoding
 
+dvgrab
+libdv2-apps/libdv-bin
 
 
 Extra encoders:
 
-Build deps:
-libmatroska-dev libschroedinger-dev
+libtheora-bin
+mkvtoolnix
+vorbis-tools,
+libmatroska,
+ogmtools
+lame
+x264
 
+mjpegtools
 
-Runtime deps:
-libmatroska libschroedinger ogmtools mkvtoolnix vorbis-tools lame x264 gpac mencoder
 
 
 

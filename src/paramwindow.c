@@ -80,10 +80,14 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
 }
 
 
-static void on_paramwindow_button_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
+void on_paramwindow_button_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
   // close from rte window
-  on_paramwindow_button_clicked(button, rfx);
-  lives_freep((void **)&fx_dialog[1]);
+  if (rfx) {
+    weed_plant_t *inst = (weed_plant_t *)rfx->source;
+    on_paramwindow_button_clicked(button, rfx);
+    lives_freep((void **)&fx_dialog[1]);
+    weed_set_voidptr_value(inst, "host_param_window", NULL);
+  }
 }
 
 
@@ -2274,12 +2278,14 @@ static void after_any_changed_2(lives_rfx_t *rfx, lives_param_t *param, boolean 
   if (fx_dialog[1]) {
     // transfer param changes from rte_window to ce_thumbs window, and vice-versa
     lives_rfx_t *rte_rfx = fx_dialog[1]->rfx;
-    int key = fx_dialog[1]->key;
-    int mode = fx_dialog[1]->mode;
-    mainw->block_param_updates = TRUE;
-    if (rfx == rte_rfx && mainw->ce_thumbs) ce_thumbs_update_visual_params(key);
-    else if (mode == rte_key_getmode(key + 1)) ce_thumbs_check_for_rte(rfx, rte_rfx, key);
-    mainw->block_param_updates = FALSE;
+    if (rfx) {
+      int key = fx_dialog[1]->key;
+      int mode = fx_dialog[1]->mode;
+      mainw->block_param_updates = TRUE;
+      if (rfx == rte_rfx && mainw->ce_thumbs) ce_thumbs_update_visual_params(key);
+      else if (mode == rte_key_getmode(key + 1)) ce_thumbs_check_for_rte(rfx, rte_rfx, key);
+      mainw->block_param_updates = FALSE;
+    }
   }
 
   if (!(param->source_type == LIVES_RFX_SOURCE_WEED

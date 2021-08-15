@@ -984,6 +984,7 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->avseek_mutex, NULL);
   pthread_mutex_init(&mainw->alarmlist_mutex, NULL);
   pthread_mutex_init(&mainw->trcount_mutex, NULL);
+  pthread_mutex_init(&mainw->fx_mutex, NULL);
 
   // conds
   pthread_cond_init(&mainw->avseek_cond, NULL);
@@ -992,10 +993,6 @@ static boolean pre_init(void) {
     prefs->load_rfx_builtin = FALSE;
   else
     prefs->load_rfx_builtin = get_boolean_prefd(PREF_LOAD_RFX_BUILTIN, TRUE);
-
-  for (i = 0; i < FX_KEYS_MAX; i++) {
-    pthread_mutex_init(&mainw->fx_mutex[i], &mattr);
-  }
 
   mainw->vrfx_update = NULL;
 
@@ -1023,12 +1020,11 @@ static boolean pre_init(void) {
   mainw->threaded_dialog = FALSE;
   clear_mainw_msg();
 
-  prefs->autotrans_key = 7;
-  //prefs->autotrans_mode = 2;
+  prefs->autotrans_key = get_int_prefd(PREF_ATRANS_KEY, 8);
   prefs->autotrans_mode = -1;
   prefs->autotrans_amt = -1.;
 
-  prefs->tr_self = TRUE;
+  prefs->tr_self = get_boolean_prefd(PREF_SELF_TRANS, FALSE);
 
   info_only = FALSE;
   palette = (_palette *)(lives_malloc(sizeof(_palette)));

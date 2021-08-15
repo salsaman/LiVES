@@ -21,6 +21,7 @@ void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
     if (!mainw->is_ready) {
       gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE); // dont know if this actually does anything...
       gtk_window_set_type_hint(LIVES_WINDOW(dialog), GDK_WINDOW_TYPE_HINT_NORMAL);
+      gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), TRUE);
     }
   }
   if (mainw->splash_window) {

@@ -1105,7 +1105,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
       // *INDENT-ON*
     } else {
       // effect is OFF
-      if (key == prefs->autotrans_key && prefs->autotrans_amt >= 0.) {
+      if (key == prefs->autotrans_key - 1 && prefs->autotrans_amt >= 0.) {
         prefs->autotrans_amt = -1.;
         filter_mutex_lock(key);
         if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
@@ -1220,6 +1220,7 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
 
 boolean rte_on_off_callback_fg(LiVESToggleButton * button, livespointer user_data) {
   int key = LIVES_POINTER_TO_INT(user_data);
+  g_print("TOGGLED\n");
   return _rte_on_off(FALSE, key);
 }
 
@@ -1328,6 +1329,7 @@ LIVES_GLOBAL_INLINE boolean rte_key_is_enabled(int key, boolean ign_soft_deinits
       filter_mutex_lock(key);
       if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
         if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_TRUE) enabled = FALSE;
+        weed_instance_unref(inst);
       }
       filter_mutex_unlock(key);
       return enabled;

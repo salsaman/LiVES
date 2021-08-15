@@ -93,7 +93,7 @@ static void getenv_piece(char *target, size_t tlen, char *envvar, int num) {
 
 static weed_error_t ladspa_init(weed_plant_t *inst) {
   weed_plant_t *filter = weed_instance_get_filter(inst);
-
+  fprintf(stderr, "ladspa init\n");
   if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {
     lad_instantiate_f lad_instantiate_func =
       (lad_instantiate_f)weed_get_funcptr_value(filter, "plugin_lad_instantiate_func", NULL);
@@ -145,6 +145,7 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
 
 
 static weed_error_t ladspa_deinit(weed_plant_t *inst) {
+  fprintf(stderr, "ladspa deinit\n");
   if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {
     _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", NULL);
     weed_plant_t *filter = weed_instance_get_filter(inst);
@@ -152,16 +153,17 @@ static weed_error_t ladspa_deinit(weed_plant_t *inst) {
     lad_cleanup_f lad_cleanup_func = (lad_cleanup_f)weed_get_funcptr_value(filter, "plugin_lad_cleanup_func", NULL);
     if (sdata) {
       if (sdata->activated_l == WEED_TRUE) {
-        if (lad_deactivate_func)(*lad_deactivate_func)(sdata->handle_l);
+        if (lad_deactivate_func) (*lad_deactivate_func)(sdata->handle_l);
       }
-      if (lad_cleanup_func)(*lad_cleanup_func)(sdata->handle_l);
-      ;
-      if (sdata->activated_r == WEED_TRUE) {
-        if (lad_deactivate_func)(*lad_deactivate_func)(sdata->handle_r);
-      }
-      if (lad_cleanup_func)(*lad_cleanup_func)(sdata->handle_r);
+      if (lad_cleanup_func) (*lad_cleanup_func)(sdata->handle_l);
 
-      if (sdata) weed_free(sdata);
+      if (sdata->activated_r == WEED_TRUE) {
+        if (lad_deactivate_func) (*lad_deactivate_func)(sdata->handle_r);
+      }
+      if (sdata->handle_r)
+	if (lad_cleanup_func) (*lad_cleanup_func)(sdata->handle_r);
+
+      weed_free(sdata);
       weed_set_voidptr_value(inst, "plugin_data", NULL);
     }
   }
@@ -314,55 +316,56 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
 
   (*lad_run_func)(handle, nsamps);
 
-  handle = sdata->handle_r;
-  if (srccnt > pinc) srccnt = 0;
+  if (sdata->handle_r) {
+    handle = sdata->handle_r;
+    if (srccnt > pinc) srccnt = 0;
 
-  if (pinc > 0 || poutc > 0) {
-    if (ioutc > 0 || iinc > 0) {
-      // if the second instance out channel is unconnected; we need to connect it to the second lad instance
-      // if we have an unconnected (second) in channel, we connect it here; otherwise we connect both input ports again
+    if (pinc > 0 || poutc > 0) {
+      if (ioutc > 0 || iinc > 0) {
+	// if the second instance out channel is unconnected; we need to connect it to the second lad instance
+	// if we have an unconnected (second) in channel, we connect it here; otherwise we connect both input ports again
 
-      for (i = 0; i < laddes->PortCount; i++) {
-        ladpdes = laddes->PortDescriptors[i];
-        if (ladpdes & LADSPA_PORT_AUDIO) {
-          // channel
-          if (ladpdes & LADSPA_PORT_INPUT) {
-            // connect to next instance audio in
-            (*lad_connect_port_func)(handle, i, (LADSPA_Data *)src[srccnt++]);
-          } else {
-            // connect to next instance audio out
-            (*lad_connect_port_func)(handle, i, (LADSPA_Data *)dst[dstcnt++]);
-	    // *INDENT-OFF*
-          }}}}}
+	for (i = 0; i < laddes->PortCount; i++) {
+	  ladpdes = laddes->PortDescriptors[i];
+	  if (ladpdes & LADSPA_PORT_AUDIO) {
+	    // channel
+	    if (ladpdes & LADSPA_PORT_INPUT) {
+	      // connect to next instance audio in
+	      (*lad_connect_port_func)(handle, i, (LADSPA_Data *)src[srccnt++]);
+	    } else {
+	      // connect to next instance audio out
+	      (*lad_connect_port_func)(handle, i, (LADSPA_Data *)dst[dstcnt++]);
+	      // *INDENT-OFF*
+	    }}}}}
   // *INDENT-ON*
 
-  if (iinp > 0 || ioutp > 0) {
-    if (pinp < iinp || poutp < ioutp) {
-      // need to use second instance
-      for (i = 0; i < laddes->PortCount; i++) {
-        ladpdes = laddes->PortDescriptors[i];
-        if (ladpdes & LADSPA_PORT_CONTROL) {
-          // control ports
-          ladphint = laddes->PortRangeHints[i];
-          ladphintdes = ladphint.HintDescriptor;
+      if (iinp > 0 || ioutp > 0) {
+	if (pinp < iinp || poutp < ioutp) {
+	  // need to use second instance
+	  for (i = 0; i < laddes->PortCount; i++) {
+	    ladpdes = laddes->PortDescriptors[i];
+	    if (ladpdes & LADSPA_PORT_CONTROL) {
+	      // control ports
+	      ladphint = laddes->PortRangeHints[i];
+	      ladphintdes = ladphint.HintDescriptor;
 
-          if (ladpdes & LADSPA_PORT_INPUT) {
-            // connect to next instance in param
-            if (ladphintdes & LADSPA_HINT_TOGGLED) {
-              invals[pinp] = (LADSPA_Data)weed_param_get_value_boolean(in_params[pinp]);
-            } else if (ladphintdes & LADSPA_HINT_INTEGER) {
-              invals[pinp] = (LADSPA_Data)weed_param_get_value_int(in_params[pinp]);
-            } else {
-              invals[pinp] = (LADSPA_Data)weed_param_get_value_double(in_params[pinp]);
-            }
-            ptmpl = weed_param_get_template(in_params[pinp]);
-            if (weed_get_boolean_value(ptmpl, "plugin_sample_rate", NULL) == WEED_TRUE) invals[pinp] *= (LADSPA_Data)rate;
-            (*lad_connect_port_func)(handle, i, (LADSPA_Data *)&invals[pinp++]);
-          } else {
-            // connect to store for out params
-            (*lad_connect_port_func)(handle, i, (LADSPA_Data *)&outvals[poutp++]);
-	    // *INDENT-OFF*
-          }}}}}
+	      if (ladpdes & LADSPA_PORT_INPUT) {
+		// connect to next instance in param
+		if (ladphintdes & LADSPA_HINT_TOGGLED) {
+		  invals[pinp] = (LADSPA_Data)weed_param_get_value_boolean(in_params[pinp]);
+		} else if (ladphintdes & LADSPA_HINT_INTEGER) {
+		  invals[pinp] = (LADSPA_Data)weed_param_get_value_int(in_params[pinp]);
+		} else {
+		  invals[pinp] = (LADSPA_Data)weed_param_get_value_double(in_params[pinp]);
+		}
+		ptmpl = weed_param_get_template(in_params[pinp]);
+		if (weed_get_boolean_value(ptmpl, "plugin_sample_rate", NULL) == WEED_TRUE) invals[pinp] *= (LADSPA_Data)rate;
+		(*lad_connect_port_func)(handle, i, (LADSPA_Data *)&invals[pinp++]);
+	      } else {
+		// connect to store for out params
+		(*lad_connect_port_func)(handle, i, (LADSPA_Data *)&outvals[poutp++]);
+		// *INDENT-OFF*
+	      }}}}}}
   // *INDENT-ON*
 
   if (dual)(*lad_run_func)(handle, nsamps);
@@ -616,28 +619,41 @@ WEED_SETUP_START(200, 200) {
         if (ninchs == 0) stcount2 = 3;
         else stcount2 = 4;
 
-        numstr = ninps + stcount2 + stcount;
-        rfx_strings = weed_malloc(numstr * sizeof(char *));
+	if (ninchs == 2 && !dual) {
+	  numstr = 2;
+	  stcount = stcount2 = 0;
+	}
+        else numstr = ninps + stcount2 + stcount;
+        rfx_strings = weed_calloc(numstr, sizeof(char *));
         for (pnum = 0; pnum < numstr; pnum++) {
           rfx_strings[pnum] = (char *)weed_calloc(256, 1);
         }
 
-        if (ninchs == 0) {
-          sprintf(rfx_strings[stcount + 1], "layout|\"Left output channel\"|");
-          sprintf(rfx_strings[oninps + 1 + stcount], "layout|hseparator|");
-          sprintf(rfx_strings[oninps + 2 + stcount], "layout|\"Right output channel\"|");
-        } else {
-          if (ninchs == 1) sprintf(rfx_strings[stcount + 1], "layout|\"Left/mono channel\"");
+	if (!dual && ninchs == 2) {
+          sprintf(rfx_strings[0], "layout|\"Stereo channels\"|");
+	  sprintf(rfx_strings[1], "layout|hseparator|");
+	}
+	else {
+	  if (ninchs == 0) {
+	    sprintf(rfx_strings[stcount + 1], "layout|\"Left output channel\"|");
+	    sprintf(rfx_strings[oninps + 1 + stcount], "layout|hseparator|");
+	    sprintf(rfx_strings[oninps + 2 + stcount], "layout|\"Right output channel\"|");
+	  } else {
+	    if (ninchs == 1) sprintf(rfx_strings[stcount + 1], "layout|\"Left/mono channel\"");
           else sprintf(rfx_strings[stcount + 1], "layout|\"Left channel\"|");
           sprintf(rfx_strings[oninps + 3 + stcount], "layout|\"Right channel\"|");
-        }
-        sprintf(rfx_strings[oninps + stcount2 - 2 + stcount], "layout|hseparator|");
+	  }
+	  sprintf(rfx_strings[oninps + stcount2 - 2 + stcount], "layout|hseparator|");
+	}
 
         if (ninps > 0) {
           // add extra in param for "link channels"
-          int numinparams = (++ninps + stcount) * (dual == WEED_TRUE ? 1 : 2)
-                            - (dual == WEED_TRUE ? 0 : 1);
-
+          int numinparams;
+	  if (ninchs == 2 && !dual) numinparams = ++ninps;
+	  else {
+	    numinparams = (++ninps + stcount) * (dual == WEED_TRUE ? 1 : 2)
+	      - (dual == WEED_TRUE ? 0 : 1);
+	  }
           in_params = (weed_plant_t **)weed_calloc(numinparams, sizeof(weed_plant_t *));
           in_params[numinparams - 1] = NULL;
           if (dual == WEED_TRUE) {
@@ -893,8 +909,10 @@ WEED_SETUP_START(200, 200) {
         weed_set_funcptr_value(filter_class, "plugin_lad_run_func", (weed_funcptr_t)lad_run_func);
         weed_set_funcptr_value(filter_class, "plugin_lad_cleanup_func", (weed_funcptr_t)lad_cleanup_func);
 
-        if (dual == WEED_TRUE) {
-          weed_set_boolean_value(filter_class, "plugin_dual", WEED_TRUE);
+	if (dual) weed_set_boolean_value(filter_class, "plugin_dual", WEED_TRUE);
+	else weed_set_boolean_value(filter_class, "plugin_dual", WEED_FALSE);
+
+	if (dual == WEED_TRUE || (!dual && ninchs == 2)) {
           if (ninps > 0) {
             gui = weed_filter_get_gui(filter_class);
             weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
@@ -904,11 +922,17 @@ WEED_SETUP_START(200, 200) {
             weed_set_string_array(gui, "layout_rfx_strings", numstr, rfx_strings);
 
           }
-        } else weed_set_boolean_value(filter_class, "plugin_dual", WEED_FALSE);
-
-        for (wnum = 0; wnum < ninps + stcount2 + stcount - 2; wnum++) {
-          weed_free(rfx_strings[wnum]);
         }
+
+	if (ninchs == 2 && !dual) {
+          weed_free(rfx_strings[0]);
+          weed_free(rfx_strings[1]);
+	}
+	else {
+	  for (wnum = 0; wnum < ninps + stcount2 + stcount - 2; wnum++) {
+	    weed_free(rfx_strings[wnum]);
+	  }
+	}
         weed_free(rfx_strings);
         rfx_strings = NULL;
 

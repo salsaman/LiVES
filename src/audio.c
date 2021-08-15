@@ -3984,8 +3984,10 @@ getaud1:
 
   if (mainw->pconx && !(mainw->preview || mainw->is_rendering)) {
     // chain any data pipelines
-    if (!pthread_mutex_trylock(&mainw->fx_mutex[mainw->agen_key - 1])) {
-      mainw->agen_needs_reinit = pconx_chain_data(mainw->agen_key - 1, rte_key_getmode(mainw->agen_key), is_audio_thread);
+    if (!filter_mutex_trylock(mainw->agen_key - 1)) {
+      mainw->agen_needs_reinit =
+        pconx_chain_data(mainw->agen_key - 1, rte_key_getmode(mainw->agen_key), is_audio_thread);
+      filter_mutex_unlock(mainw->agen_key - 1);
       if (mainw->agen_needs_reinit) {
         // allow main thread to complete the reinit so we do not delay; just return silence
         weed_instance_unref(orig_inst);

@@ -475,9 +475,9 @@ boolean load_frame_image(frames_t frame) {
   }
 
   if (!mainw->foreign) {
-    if (prefs->autotrans_amt >= 0.) set_trans_amt(prefs->autotrans_key,
+    if (prefs->autotrans_amt >= 0.) set_trans_amt(prefs->autotrans_key - 1,
           prefs->autotrans_mode >= 0 ? prefs->autotrans_mode
-          : rte_key_getmode(prefs->autotrans_key + 1),
+          : rte_key_getmode(prefs->autotrans_key - 1),
           &prefs->autotrans_amt);
     mainw->actual_frame = frame;
     if (!mainw->preview_rendering && (!((was_preview = mainw->preview) || mainw->is_rendering))) {
@@ -706,20 +706,35 @@ boolean load_frame_image(frames_t frame) {
         mainw->frame_layer = NULL;
       }
 
-      if (mainw->is_rendering && !(mainw->proc_ptr && mainw->preview)) {
+      if ((mainw->is_rendering && !(mainw->proc_ptr && mainw->preview))) {
+        //|| (!mainw->multitrack && mainw->num_tr_applied && IS_VALID_CLIP(mainw->blend_file))) {
         // here if we are rendering from multitrack, previewing a recording, or applying realtime effects to a selection
-        weed_timecode_t tc = mainw->cevent_tc;
+        //if (mainw->is_rendering && !(mainw->proc_ptr && mainw->preview)) {
         if (mainw->scrap_file != -1 && mainw->clip_index[0] == mainw->scrap_file && mainw->num_tracks == 1) {
           // do not apply fx, just pull frame
           mainw->frame_layer = lives_layer_new_for_frame(mainw->clip_index[0], mainw->frame_index[0]);
           weed_layer_ref(mainw->frame_layer);
           pull_frame_threaded(mainw->frame_layer, NULL, (weed_timecode_t)mainw->currticks, 0, 0);
         } else {
+          weed_timecode_t tc = mainw->cevent_tc;
           int oclip, nclip, i;
-          weed_plant_t **layers =
+          weed_plant_t **layers;
+          /* if (!mainw->multitrack && mainw->num_tr_applied && IS_VALID_CLIP(mainw->blend_file)) { */
+          /*   mainw->num_tracks = 2; */
+          /*   mainw->active_track_list[0] = mainw->playing_file; */
+          /*   mainw->active_track_list[1] = mainw->blend_file; */
+          /*   mainw->clip_index[0] = mainw->playing_file; */
+          /*   mainw->clip_index[1] = mainw->blend_file; */
+
+          /*   mainw->frame_index[0] = mainw->actual_frame; */
+          /*   mainw->frame_index[1] = mainw->files[mainw->blend_file]->frameno;; */
+          /* } */
+
+          layers =
             (weed_plant_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_plant_t *));
           // get list of active tracks from mainw->filter map
-          get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);
+          if (mainw->multitrack)
+            get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);
           for (i = 0; i < mainw->num_tracks; i++) {
             oclip = mainw->old_active_track_list[i];
             mainw->ext_src_used[oclip] = FALSE;
@@ -759,9 +774,9 @@ boolean load_frame_image(frames_t frame) {
                   } else {
                     // add new clone for nclip
                     mainw->track_decoders[i] = clone_decoder(nclip);
-		    // *INDENT-OFF*
-		  }}}}
-	    // *INDENT-ON*
+		      // *INDENT-OFF*
+		    }}}}
+	      // *INDENT-ON*
 
             mainw->old_active_track_list[i] = mainw->active_track_list[i];
 

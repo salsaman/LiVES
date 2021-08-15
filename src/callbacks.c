@@ -5299,7 +5299,7 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
                                            || i == mainw->blend_file || i == mainw->playing_file)));
 
   if (user_data) {
-    if (prefs->autotrans_key >= 0 && LIVES_NORMAL_PLAYBACK && !mainw->num_tr_applied) {
+    if (prefs->autotrans_key > 0 && LIVES_NORMAL_PLAYBACK && !mainw->num_tr_applied) {
       if (set_autotrans(i)) return TRUE;
     }
   }
@@ -5352,7 +5352,7 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
                                            || i == mainw->blend_file || i == mainw->playing_file)));
 
   if (user_data) {
-    if (prefs->autotrans_key >= 0 && LIVES_NORMAL_PLAYBACK && !mainw->num_tr_applied) {
+    if (prefs->autotrans_key > 0 && LIVES_NORMAL_PLAYBACK && !mainw->num_tr_applied) {
       if (set_autotrans(i)) return TRUE;
     }
   }

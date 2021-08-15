@@ -78,53 +78,71 @@ LIVES_GLOBAL_INLINE weed_error_t weed_leaf_copy_or_delete(weed_layer_t *dlayer, 
 }
 
 
-LIVES_GLOBAL_INLINE int filter_mutex_trylock(int key) {
-#ifdef DEBUG_FILTER_MUTEXES
-  int retval;
-  g_print("trylock of %d\n", key);
-#endif
-  if (key < 0 || key >= FX_KEYS_MAX) {
-    if (key != -1) {
-      char *msg = lives_strdup_printf("attempted lock of bad fx key %d", key);
-      LIVES_ERROR(msg);
-      lives_free(msg);
-    }
-    return 0;
-  }
-#ifdef DEBUG_FILTER_MUTEXES
-  retval = pthread_mutex_trylock(&mainw->fx_mutex[key]);
-  g_print("trylock of %d returned %d\n", key, retval);
-  return retval;
-#endif
-  return pthread_mutex_trylock(&mainw->fx_mutex[key]);
-}
-
-#ifndef DEBUG_FILTER_MUTEXES
 LIVES_GLOBAL_INLINE int filter_mutex_lock(int key) {
-  int ret = pthread_mutex_lock(&mainw->fx_mutex[key]);
-  return ret;
-}
-
-
-LIVES_GLOBAL_INLINE int filter_mutex_unlock(int key) {
-  if (key >= 0 && key < FX_KEYS_MAX) {
-    int ret = pthread_mutex_unlock(&mainw->fx_mutex[key]);
-    if (ret != 0 && !mainw->is_exiting) {
-      char *msg = lives_strdup_printf("attempted double unlock of fx key %d, err was %d", key, ret);
-      LIVES_ERROR(msg);
-      lives_free(msg);
+  if (key >= 0 && key < FX_KEYS_MAX_VIRTUAL) {
+    int tid, myid = THREADVAR(id) + 1;
+    while (1) {
+      pthread_mutex_lock(&mainw->fx_mutex);
+      tid = mainw->fx_mutex_tid[key];
+      if (!tid || tid == myid) {
+        mainw->fx_mutex_tid[key] = myid;
+        mainw->fx_mutex_nlocks[key]++;
+        pthread_mutex_unlock(&mainw->fx_mutex);
+        return 0;
+      }
+      pthread_mutex_unlock(&mainw->fx_mutex);
+      lives_nanosleep(LIVES_QUICK_NAP);
     }
-    return ret;
   } else {
-    if (key != -1) {
-      char *msg = lives_strdup_printf("attempted unlock of bad fx key %d", key);
-      LIVES_ERROR(msg);
-      lives_free(msg);
-    }
+    char *msg = lives_strdup_printf("attempted lock of bad fx key %d", key);
+    LIVES_ERROR(msg);
+    lives_free(msg);
   }
   return 0;
 }
-#endif
+
+
+LIVES_GLOBAL_INLINE int filter_mutex_trylock(int key) {
+  if (key >= 0 && key < FX_KEYS_MAX_VIRTUAL) {
+    int tid, myid = THREADVAR(id) + 1;
+    pthread_mutex_lock(&mainw->fx_mutex);
+    tid = mainw->fx_mutex_tid[key];
+    if (!tid || tid == myid) {
+      mainw->fx_mutex_tid[key] = myid;
+      mainw->fx_mutex_nlocks[key]++;
+      pthread_mutex_unlock(&mainw->fx_mutex);
+      return 0;
+    }
+    pthread_mutex_unlock(&mainw->fx_mutex);
+    return 1;
+  } else {
+    char *msg = lives_strdup_printf("attempted lock of bad fx key %d", key);
+    LIVES_ERROR(msg);
+    lives_free(msg);
+  }
+  return 0;
+}
+
+LIVES_GLOBAL_INLINE int filter_mutex_unlock(int key) {
+  if (key >= 0 && key < FX_KEYS_MAX_VIRTUAL) {
+    int tid, myid = THREADVAR(id) + 1;
+    pthread_mutex_lock(&mainw->fx_mutex);
+    tid = mainw->fx_mutex_tid[key];
+    if (tid == myid) {
+      if (!(--mainw->fx_mutex_nlocks[key]))
+        mainw->fx_mutex_tid[key] = 0;
+      pthread_mutex_unlock(&mainw->fx_mutex);
+      return 0;
+    }
+    pthread_mutex_unlock(&mainw->fx_mutex);
+    return 1;
+  } else {
+    char *msg = lives_strdup_printf("attempted unlock of bad fx key %d", key);
+    LIVES_ERROR(msg);
+    lives_free(msg);
+  }
+  return 0;
+}
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1177,7 +1195,6 @@ LIVES_GLOBAL_INLINE weed_plant_t *get_next_compound_inst(weed_plant_t *inst) {
 
 
 lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compound) {
-  // call with filter_mutex unlocked
   weed_plant_t *filter, *orig_inst = inst;
   lives_rfx_t *rfx = NULL;
   boolean deinit_first = FALSE;
@@ -1210,7 +1227,7 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
         filter_mutex_lock(key);
         if (weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL) > 0) {
           // plugin is easing, so we need to deinit it
-          uint64_t new_rte = GU641 << (key);
+          uint64_t new_rte = GU641 << key;
           mainw->rte &= ~new_rte;
           if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
             weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
@@ -1237,7 +1254,10 @@ reinit:
 
   filter = weed_instance_get_filter(inst, FALSE);
 
-  if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_TRUE) deinit_first = TRUE;
+  if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_TRUE) {
+    g_print("deinit 1st\n");
+    deinit_first = TRUE;
+  }
 
   if (deinit_first) {
     retval = weed_call_deinit_func(inst);
@@ -1302,7 +1322,6 @@ re_done:
   if (inst && inst != orig_inst) weed_instance_unref(inst);
   weed_instance_unref(orig_inst);
 
-  //if (key != -1) filter_mutex_unlock(key);
   mainw->blend_palette = WEED_PALETTE_END;
   if (retval == WEED_SUCCESS) return filter_error;
   if (retval == WEED_ERROR_PLUGIN_INVALID) return FILTER_ERROR_INVALID_PLUGIN;
@@ -1324,7 +1343,14 @@ void weed_reinit_all(void) {
           filter_mutex_unlock(i);
           continue;
         }
+
         filter_mutex_unlock(i);
+
+        if (weed_get_voidptr_value(instance, "host_param_window", NULL) != NULL) {
+          weed_instance_unref(instance);
+          continue;
+        }
+
         last_inst = instance;
 
         // ignore video generators
@@ -1616,7 +1642,6 @@ static lives_filter_error_t check_cconx(weed_plant_t *inst, int nchans, boolean 
 */
 lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers,
     int opwidth, int opheight, weed_timecode_t tc) {
-  // filter_mutex should be unlocked
 
   void *pdata;
 
@@ -3039,7 +3064,6 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
 /// we disable it temporarily. We don't disable channels permanently here since other functions will handle that more complex issue.
 static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, weed_plant_t *init_event,
     weed_plant_t **layers, weed_timecode_t tc, int nbtracks) {
-  // filter_mutex MUST be unlocked
 
   // TODO - handle the following:
   // input audio_channels are mono, but the plugin NEEDS stereo; we should duplicate the audio.
@@ -3774,10 +3798,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
 	  // *INDENT-ON*
 
           if (mainw->multitrack && !mainw->unordered_blocks && pchains && pchains[i]) {
-            if (!filter_mutex_trylock(i)) {
-              interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
-              filter_mutex_unlock(i);
-            }
+            interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
           }
 
           // TODO *** enable this, and apply pconx to audio gens in audio.c
@@ -3995,11 +4016,17 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
     if (orig_inst) weed_instance_unref(orig_inst);
     orig_inst = NULL;
 
+    filter_mutex_lock(i);
+
     if (rte_key_valid(i + 1, TRUE)) {
       if (!(rte_key_is_enabled(i, TRUE))) {
         // if anything is connected to ACTIVATE, the fx may be activated
         if (is_audio_thread) {
           pconx_chain_data(i, key_modes[i], TRUE);
+        }
+        if (!(rte_key_is_enabled(i, TRUE))) {
+          filter_mutex_unlock(i);
+          continue;
         }
       }
 
@@ -4010,10 +4037,9 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
       else filter = NULL;
       if (!filter || !has_audio_chans_in(filter, FALSE)
           || has_video_chans_in(filter, FALSE) || has_video_chans_out(filter, FALSE)) {
+        filter_mutex_unlock(i);
         continue;
       }
-
-      filter_mutex_lock(i);
 
       if (rte_key_is_enabled(i, TRUE)) {
         if ((orig_inst = instance = weed_instance_obtain(i, key_modes[i])) == NULL) {
@@ -4023,6 +4049,7 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
 
         if (weed_get_boolean_value(instance, LIVES_LEAF_SOFT_DEINIT, NULL) ==  WEED_TRUE) {
           weed_instance_unref(instance);
+          g_print("unLOCKED1allllll %d\n", i);
           filter_mutex_unlock(i);
           continue;
         }
@@ -4044,20 +4071,18 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
 
         if (mainw->pconx && is_audio_thread) {
           // chain any data pipelines
-          needs_reinit = pconx_chain_data(i, key_modes[i], TRUE);
-
           filter_mutex_lock(i);
+          needs_reinit = pconx_chain_data(i, key_modes[i], TRUE);
+          filter_mutex_unlock(i);
+
           // if anything is connected to ACTIVATE, the fx may be deactivated
           if ((new_inst = weed_instance_obtain(i, key_modes[i])) == NULL) {
-            filter_mutex_unlock(i);
             continue;
           }
-          filter_mutex_unlock(i);
 
           // either we just added another ref, or we dont need this
           // this should work both ways
           weed_instance_unref(instance);
-          //filter_mutex_unlock(i);
 
           if (orig_inst == instance) orig_inst = new_inst;
           instance = new_inst;
@@ -4109,15 +4134,22 @@ apply_audio_inst2:
 
         if (mainw->pconx && (filter_error == FILTER_SUCCESS || filter_error == FILTER_INFO_REINITED
                              || filter_error == FILTER_INFO_REDRAWN)) {
-          pconx_chain_data_omc((new_inst = weed_instance_obtain(i, key_modes[i])), i, key_modes[i]);
+
+          new_inst = weed_instance_obtain(i, key_modes[i]);
+
+          filter_mutex_lock(i);
+          pconx_chain_data_omc(new_inst, i, key_modes[i]);
+          filter_mutex_unlock(i);
+
           weed_instance_unref(instance);
           if (orig_inst == instance) orig_inst = new_inst;
           instance = new_inst;
 	  // *INDENT-OFF*
-        }}
-      else {
-	filter_mutex_unlock(i);
-      }}}
+        }
+      }
+    }
+    else filter_mutex_unlock(i);
+  }
   if (orig_inst) weed_instance_unref(orig_inst);
   // *INDENT-ON*
 }
@@ -6466,13 +6498,13 @@ weed_plant_t *_weed_instance_obtain(int line, char *file, int key, int mode) {
 
   if (mode < 0 || mode > rte_key_getmaxmode(key + 1)) return NULL;
 
-  filter_mutex_lock(key);
+  if (key < FX_KEYS_MAX_VIRTUAL) filter_mutex_lock(key);
   _weed_instance_ref(key_to_instance[key][mode]);
   instance = key_to_instance[key][mode];
 #ifdef DEBUG_REFCOUNT
   if (instance) g_print("wio %p at line %d in file %s\n", instance, line, file);
 #endif
-  filter_mutex_unlock(key);
+  if (key < FX_KEYS_MAX_VIRTUAL) filter_mutex_unlock(key);
   return instance;
 }
 
@@ -7160,7 +7192,7 @@ start1:
 deinit2:
 
         next_inst = get_next_compound_inst(inst);
-        weed_call_deinit_func(inst);
+        //weed_call_deinit_func(inst);
         weed_instance_unref(inst);
 
         if (next_inst && weed_get_boolean_value(next_inst, WEED_LEAF_HOST_INITED, &error) == WEED_TRUE) {
@@ -7290,10 +7322,10 @@ deinit2:
     mainw->blend_factor = weed_get_blend_factor(rte_keys);
   }
 
-  // need to do this *before* calling append_filter_map_event
-  filter_mutex_lock(hotkey);
+  if (hotkey < FX_KEYS_MAX_VIRTUAL) filter_mutex_lock(hotkey);
+  // need to do this *before* calling record_filter_init()
   key_to_instance[hotkey][key_modes[hotkey]] = inst;
-  filter_mutex_unlock(hotkey);
+  if (hotkey < FX_KEYS_MAX_VIRTUAL) filter_mutex_unlock(hotkey);
 
   // enable param recording, in case the instance was obtained from a param window
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD)) weed_leaf_delete(inst, WEED_LEAF_HOST_NORECORD);
@@ -7374,7 +7406,7 @@ weed_error_t weed_call_init_func(weed_plant_t *inst) {
   pthread_mutex_lock(&inited_mutex);
   if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_TRUE) {
     pthread_mutex_unlock(&inited_mutex);
-    return WEED_ERROR_NOT_READY;
+    return WEED_SUCCESS;
   }
   weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
   pthread_mutex_unlock(&inited_mutex);
@@ -7409,7 +7441,7 @@ weed_error_t weed_call_deinit_func(weed_plant_t *instance) {
   pthread_mutex_lock(&inited_mutex);
   if (weed_get_boolean_value(instance, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE) {
     pthread_mutex_unlock(&inited_mutex);
-    return WEED_ERROR_NOT_READY;
+    return WEED_SUCCESS;
   }
   weed_set_boolean_value(instance, WEED_LEAF_HOST_INITED, WEED_FALSE);
   pthread_mutex_unlock(&inited_mutex);
@@ -7588,9 +7620,9 @@ boolean weed_deinit_effect(int hotkey) {
           }}}}}
   // *INDENT-ON*
 
-  filter_mutex_lock(hotkey);
+  if (hotkey < FX_KEYS_MAX_VIRTUAL) filter_mutex_lock(hotkey);
   key_to_instance[hotkey][key_modes[hotkey]] = NULL;
-  filter_mutex_unlock(hotkey);
+  if (hotkey < FX_KEYS_MAX_VIRTUAL) filter_mutex_unlock(hotkey);
 
   if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS) && num_in_chans > 0) {
@@ -9505,9 +9537,7 @@ void weed_set_blend_factor(int hotkey) {
   inst = weed_instance_obtain(hotkey, key_modes[hotkey]);
   filter_mutex_unlock(hotkey);
 
-  if (!inst) {
-    return;
-  }
+  if (!inst) return;
 
   pnum = get_nth_simple_param(inst, 0);
 
@@ -9763,10 +9793,10 @@ boolean weed_delete_effectkey(int key, int mode) {
   // any instance bound to key / mode should be deinited / freed first as appropriate
   int maxmode;
 
-  filter_mutex_lock(key);
+  if (key < FX_KEYS_MAX_VIRTUAL) filter_mutex_lock(key);
 
   if (key_to_fx[key][mode] == -1) {
-    filter_mutex_unlock(key);
+    if (key < FX_KEYS_MAX_VIRTUAL) filter_mutex_unlock(key);
     return FALSE;
   }
 
@@ -9787,7 +9817,7 @@ boolean weed_delete_effectkey(int key, int mode) {
   key_to_fx[key][mode] = -1;
   key_to_instance[key][mode] = NULL;
 
-  filter_mutex_unlock(key);
+  if (key < FX_KEYS_MAX_VIRTUAL) filter_mutex_unlock(key);
 
   return TRUE;
 }
@@ -10585,7 +10615,6 @@ static char *get_default_element_string(weed_plant_t *param, int idx) {
 boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc) {
   // return FALSE if param has no "value"
   // - this can happen during realtime audio processing, if the effect is inited, but no "value" has been set yet
-  // filter_mutex should be locked for the key during realtime processing
 
   weed_plant_t *pchange = (weed_plant_t *)pchain, *last_pchange = NULL;
   weed_plant_t *wtmpl;
@@ -12790,7 +12819,6 @@ err123:
 
 
 void apply_key_defaults(weed_plant_t *inst, int key, int mode) {
-  // call with filter_mutex locked
   // apply key/mode param defaults to a filter instance
   weed_plant_t **defs, **params;
   weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
@@ -12946,26 +12974,27 @@ void set_trans_amt(int key, int mode, double * amt) {
 boolean set_autotrans(int clip) {
   // autotrans - switch on autotrans fx, increment trans param each frame
   // when it reaches max, then we switch
-  int mode = prefs->autotrans_mode >= 0 ? prefs->autotrans_mode :
-             key_modes[prefs->autotrans_key];
-  weed_plant_t *filter = weed_filters[key_to_fx[prefs->autotrans_key][mode]];
-  if (filter) {
-    if (!key_to_instance[prefs->autotrans_key][mode]) {
-      int trans = get_transition_param(filter, FALSE);
-      if (trans != -1) {
-        weed_plant_t *inst;
-        key_modes[prefs->autotrans_key] = mode;
-        rte_key_on_off(prefs->autotrans_key + 1, TRUE);
-        inst = weed_instance_obtain(prefs->autotrans_key, mode);
-        if (inst) {
-          mainw->blend_file = clip;
-          prefs->autotrans_amt = 0.;
-          set_trans_amt(prefs->autotrans_key, mode, &prefs->autotrans_amt);
-          weed_instance_unref(inst);
-          pref_factory_bitmapped(PREF_AUDIO_OPTS, AUDIO_OPTS_IS_LOCKED, TRUE, FALSE);
-          return TRUE;
+  int key = prefs->autotrans_key - 1;
+  if (key >= 0 && key < prefs->rte_keys_virtual) {
+    int mode = prefs->autotrans_mode >= 0 ? prefs->autotrans_mode : key_modes[key];
+    weed_plant_t *filter = weed_filters[key_to_fx[key][mode]];
+    if (filter) {
+      if (!key_to_instance[key][mode]) {
+        int trans = get_transition_param(filter, FALSE);
+        if (trans != -1) {
+          weed_plant_t *inst;
+          key_modes[key] = mode;
+          rte_key_on_off(key + 1, TRUE);
+          inst = weed_instance_obtain(key, mode);
+          if (inst) {
+            mainw->blend_file = clip;
+            prefs->autotrans_amt = 0.;
+            set_trans_amt(key, mode, &prefs->autotrans_amt);
+            weed_instance_unref(inst);
+            pref_factory_bitmapped(PREF_AUDIO_OPTS, AUDIO_OPTS_IS_LOCKED, TRUE, FALSE);
+            return TRUE;
 	  // *INDENT-OFF*
-	}}}}
+	}}}}}
   // *INDENT-ON*
   return FALSE;
 }

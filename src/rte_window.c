@@ -1844,16 +1844,12 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
     apply_key_defaults(inst, key, mode);
     filter_mutex_unlock(key);
     weed_reinit_effect(inst, TRUE);
-    filter_mutex_lock(key);
-  }
-
-  filter_mutex_unlock(key);
+  } else filter_mutex_unlock(key);
 
   if (fx_dialog[1]) {
     lives_widget_destroy(fx_dialog[1]->dialog);
     rfx = fx_dialog[1]->rfx;
-    on_paramwindow_button_clicked(NULL, rfx);
-    lives_freep((void **)&fx_dialog[1]);
+    on_paramwindow_button_clicked2(NULL, rfx);
   }
 
   rfx = weed_to_rfx(inst, FALSE);
@@ -1864,6 +1860,8 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
   widget_opts.non_modal = TRUE;
   on_fx_pre_activate(rfx, TRUE, NULL);
   widget_opts.non_modal = FALSE;
+
+  weed_set_voidptr_value(inst, "host_param_window", fx_dialog[1]);
 
   // record the key so we know whose parameters to record later
   weed_set_int_value((weed_plant_t *)rfx->source, WEED_LEAF_HOST_KEY, key);
@@ -2570,9 +2568,8 @@ void rte_set_defs_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (fx_dialog[1]) {
     rfx = fx_dialog[1]->rfx;
-    on_paramwindow_button_clicked(NULL, rfx);
     lives_widget_destroy(fx_dialog[1]->dialog);
-    lives_freep((void **)&fx_dialog[1]);
+    on_paramwindow_button_clicked2(NULL, rfx);
   }
 
   rfx = weed_to_rfx(filter, TRUE);
@@ -2657,8 +2654,7 @@ void rte_set_defs_ok(LiVESButton * button, lives_rfx_t *rfx) {
 
 
 void rte_set_defs_cancel(LiVESButton * button, lives_rfx_t *rfx) {
-  on_paramwindow_button_clicked(button, rfx);
-  lives_freep((void **)&fx_dialog[1]);
+  on_paramwindow_button_clicked2(button, rfx);
 }
 
 

@@ -7,7 +7,7 @@ dist: all-scripts
 		./build-weed-plugin-C $$script; \
 	done
 
-all: generate
+all: generate dist
 
 generate: build-weed-plugin-C
 

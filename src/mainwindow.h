@@ -1614,7 +1614,7 @@ typedef struct {
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
   pthread_mutex_t abuf_frame_mutex;  ///< used to synch audio buffer for generators
   pthread_mutex_t abuf_aux_frame_mutex;  ///< used to synch audio buffer for loopback
-  pthread_mutex_t fx_mutex[FX_KEYS_MAX];  ///< used to prevent fx processing when it is scheduled for deinit
+  pthread_mutex_t fx_mutex;  ///< used to prevent fx processing when it is scheduled for deinit
   pthread_mutex_t fxd_active_mutex; ///< prevent simultaneous writing to active_dummy by audio and video threads
   pthread_mutex_t event_list_mutex; ///< prevent simultaneous writing to event_list by audio and video threads
   pthread_mutex_t clip_list_mutex; ///< prevent adding/removing to cliplist while another thread could be reading it
@@ -1626,6 +1626,9 @@ typedef struct {
   pthread_mutex_t fbuffer_mutex; /// append / remove with file_buffer list
   pthread_mutex_t alarmlist_mutex; /// single access for updating alarm list
   pthread_mutex_t trcount_mutex; /// transition count mutex
+
+  int fx_mutex_tid[FX_KEYS_MAX_VIRTUAL];
+  int fx_mutex_nlocks[FX_KEYS_MAX_VIRTUAL];
 
   ///< set for param window updates from OSC or data connections, notifies main thread to do visual updates
   volatile lives_rfx_t *vrfx_update;

@@ -798,6 +798,8 @@ typedef struct {
   LiVESWidget *spinbutton_rte_keys;
   LiVESWidget *spinbutton_rte_modes;
   LiVESWidget *spinbutton_nfx_threads;
+  LiVESWidget *spinbutton_atrans_key;
+  LiVESWidget *self_trans;
   LiVESWidget *enable_OSC;
   LiVESWidget *enable_OSC_start;
   LiVESWidget *jack_tserver_entry;
@@ -1208,6 +1210,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_BADFILE_INTENT "badfile_intent"
 
+#define PREF_ATRANS_KEY "autotrans_key"
+
 ////////// boolean values
 #define PREF_MT_EXIT_RENDER "mt_exit_render"
 #define PREF_HFBWNP "hide_framebar_when_not_playing"
@@ -1275,6 +1279,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_RRRAMICRO "recrender_rend_amicro" /// option for rendering recordings
 
 #define PREF_BACK_COMPAT "backwards_compatibility" ///< forces backwards compatibility with earlier versions
+
+#define PREF_SELF_TRANS "self_transition"
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

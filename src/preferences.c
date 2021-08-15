@@ -1018,6 +1018,12 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto success2;
   }
 
+  /* if (!lives_strcmp(prefidx, PREF_SELF_TRANS)) { */
+  /*   if (prefs->tr_self == newval) goto fail2; */
+  /*   prefs->tr_self = newval; */
+  /*   goto success2; */
+  /* } */
+
   if (!lives_strcmp(prefidx, PREF_SHOW_BUTTON_ICONS)) {
     if (prefs->show_button_images == newval) goto fail2;
     prefs->show_button_images = widget_opts.show_button_images = newval;
@@ -2178,6 +2184,12 @@ boolean apply_prefs(boolean skip_warn) {
     future_prefs->def_fontstring = NULL;
   }
   pref_factory_utf8(PREF_INTERFACE_FONT, fontname, TRUE);
+
+  /* pref_factory_bool(PREF_SELF_TRANS, lives_toggle_button_get_active */
+  /* 		    (LIVES_TOGGLE_BUTTON(prefsw->self_trans)), TRUE); */
+
+  pref_factory_int(PREF_ATRANS_KEY, &prefs->autotrans_key, lives_spin_button_get_value_as_int
+                   (LIVES_SPIN_BUTTON(prefsw->spinbutton_atrans_key)), TRUE);
 
   if (fsize_to_warn != prefs->warn_file_size) {
     prefs->warn_file_size = fsize_to_warn;
@@ -5280,6 +5292,29 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                     prefs->apply_gamma, LIVES_BOX(hbox),
                                     (tmp = (_("Also affects the monitor gamma !! (for now...)"))));
   lives_free(tmp);
+
+  /* hbox = lives_layout_row_new(LIVES_LAYOUT(layout)); */
+
+  /* prefsw->self_trans = lives_standard_check_button_new(_("Allow clips to transition with themselves"), */
+  /* 						       prefs->tr_self, LIVES_BOX(hbox), */
+  /* 						       (tmp = H_("Enabling this allows clips to blend with themselves " */
+  /* 								 "during realtime playback.\nIf unset, enabling a " */
+  /* 								 "transition filter will have no effect until a " */
+  /* 								 "new background clip is selected."))); */
+  /* lives_free(tmp); */
+  /* ACTIVE(self_trans, TOGGLED); */
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  prefsw->spinbutton_atrans_key = lives_standard_spin_button_new
+                                  (_("Autotransition key (experimental)"), prefs->autotrans_key, 0., prefs->rte_keys_virtual, 1., 1., 0, LIVES_BOX(hbox),
+                                   (tmp = H_("During realtime playback, pressing shift-page-up and shift-page-down "
+                                          "can perform an smooth transition between clips\n"
+                                          "This value defines which effect key is used for the transition\n"
+                                          "A setting of zero disables this feature.")));
+
+  lives_free(tmp);
+  ACTIVE(spinbutton_atrans_key, VALUE_CHANGED);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_effects));
 

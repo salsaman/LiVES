@@ -240,6 +240,8 @@ EXTRA_DIST=data icons scripts syna.h weed-plugin-utils.c
 
 dist: distdir-am all
 
+dist: distdir-am all
+
 distdir-am:
 	$(MAKE) -C scripts dist
 

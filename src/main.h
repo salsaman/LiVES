@@ -290,18 +290,19 @@ typedef struct {
 #include "../libweed/weed-events.h"
 #include "../libweed/weed-palettes.h"
 #include "../libweed/weed-effects.h"
+#include "../libweed/weed-utils.h"
 #else
+
 #include <weed/weed-host.h>
 #include <weed/weed.h>
 #include <weed/weed-events.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
-#endif
-
 #if NEED_LOCAL_WEED_UTILS
 #include "../libweed/weed-utils.h"
 #else
 #include <weed/weed-utils.h>
+#endif
 #endif
 
 #ifdef USE_SWSCALE

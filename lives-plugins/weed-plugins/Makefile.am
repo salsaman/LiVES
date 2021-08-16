@@ -24,11 +24,15 @@ shared_cflags = -fPIC -DPIC -Wno-unused-function -Wno-unused-variable
 endif
 
 if NEED_LOCAL_WEED
-shared_cflags += -DNEED_LOCAL_WEED
+shared_cflags += -DNEED_LOCAL_WEED=1
 endif
 
 if NEED_LOCAL_WEED_PLUGIN
-shared_cflags += -DNEED_LOCAL_WEED_PLUGIN
+shared_cflags += -DNEED_LOCAL_WEED_PLUGIN=1
+endif
+
+if NEED_LOCAL_WEED_UTILS
+shared_cflags += -DNEED_LOCAL_WEED_UTILS=1
 endif
 
 if HAVE_SDL2

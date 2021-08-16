@@ -152,11 +152,18 @@ libexplain_CFLAGS = @LIBEXPLAIN_CFLAGS@ -DHAVE_LIBEXPLAIN=1
 endif
 
 if !NEED_LOCAL_WEED
-libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@
+libweed_LDADD = @WEED_LIBS@
 libweed_CFLAGS = @WEED_CFLAGS@
 else
-libweed_LDADD = $(abs_top_srcdir)/libweed/libweed.la $(abs_top_srcdir)/libweed/libweed-utils.la
+libweed_LDADD = $(abs_top_srcdir)/libweed/libweed.la
 libweed_CFLAGS = -DNEED_LOCAL_WEED=1
+endif
+
+if !NEED_LOCAL_WEED_UTILS
+libweed_LDADD += @WEED_UTILS_LIBS@
+else
+libweed_LDADD += $(abs_top_srcdir)/libweed/libweed-utils.la
+libweed_CFLAGS += -DNEED_LOCAL_WEED_UTILS=1
 endif
 
 if DISABLE_GSLICE

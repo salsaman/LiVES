@@ -26,7 +26,11 @@
 #else
 #include <weed/weed-host.h>
 #include <weed/weed.h>
+#if NEED_LOCAL_WEED_UTILS
+#include "../libweed/weed-utils.h"
+#else
 #include <weed/weed-utils.h>
+#endif
 #include <weed/weed-effects.h>
 #include <weed/weed-palettes.h>
 #endif

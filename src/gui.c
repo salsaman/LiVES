@@ -3783,7 +3783,6 @@ void fullscreen_internal(void) {
 
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &width, &height);
-    g_print("inner sz = %d X %d\n", width, height);
 
     height -= SCRN_BRDR * 16; // necessary, or screen expands too much (!?)
 

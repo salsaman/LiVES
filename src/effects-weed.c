@@ -1255,7 +1255,6 @@ reinit:
   filter = weed_instance_get_filter(inst, FALSE);
 
   if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_TRUE) {
-    g_print("deinit 1st\n");
     deinit_first = TRUE;
   }
 

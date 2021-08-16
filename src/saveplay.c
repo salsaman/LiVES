@@ -5204,10 +5204,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   if (!auto_recover) {
     char *tmp;
-    if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
-      lives_proc_thread_join(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-      mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
-    }
     lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_context_update();
     if (!do_yesno_dialogf_with_countdown
@@ -5217,11 +5213,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       goto recovery_done;
     }
     lives_free(tmp);
-  } else {
-    if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
-      lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-      mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
-    }
   }
   if (recovery_file) {
     do {
@@ -5733,36 +5724,52 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
 
   lives_pid_t lpid = capable->mainpid;
 
+  // recheck:
+
   // ask backend to find the latest recovery file which is not owned by a running version of LiVES
-  com = lives_strdup_printf("%s get_recovery_file %d %d %s recovery %d",
+  com = lives_strdup_printf("%s get_recovery_file %d %d %s %s %d",
                             prefs->backend_sync, luid, lgid,
-                            capable->myname, capable->mainpid);
+                            capable->myname, RECOVERY_LITERAL, capable->mainpid);
 
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
 
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
-    lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-    mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
     return FALSE;
   }
 
   recpid = atoi(mainw->msg);
   if (recpid == 0) {
-    if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
-      lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-      mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
-    }
-    return FALSE;
-  }
+    recfname4 = lives_strdup_printf("recorded-%s", LAYOUT_NUMBERING_FILENAME);
 
-  recfname = lives_strdup_printf("%s.%d.%d.%d", RECOVERY_LITERAL, luid, lgid, recpid);
-  recovery_file = lives_build_filename(prefs->workdir, recfname, NULL);
-  lives_free(recfname);
-  if (!no_recover) retval = recover_files(recovery_file, auto_recover);
-  else lives_rm(recovery_file);
-  lives_free(recovery_file);
+    com = lives_strdup_printf("%s get_recovery_file %d %d %s %s %d",
+                              prefs->backend_sync, luid, lgid,
+                              capable->myname, recfname4, capable->mainpid);
+    lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
+    lives_free(com); lives_free(recfname4);
+
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
+      return FALSE;
+    }
+    recpid = atoi(mainw->msg);
+
+    if (recpid != 0) {
+      // TODO - we should be able to rebuild a partial recvery file from the layout_numbering file
+      // - if so then prompt user if they want to try to reload, and goto recheck
+      break_me("can recover");
+
+    }
+    // otherwise, clean up
+  } else {
+    recfname = lives_strdup_printf("%s.%d.%d.%d", RECOVERY_LITERAL, luid, lgid, recpid);
+    recovery_file = lives_build_filename(prefs->workdir, recfname, NULL);
+    lives_free(recfname);
+    if (!no_recover) retval = recover_files(recovery_file, auto_recover);
+    else lives_rm(recovery_file);
+    lives_free(recovery_file);
+  }
 
   if (!retval || prefs->vj_mode) {
     com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d %d",
@@ -5837,10 +5844,22 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
     if (no_recover) lives_rm(recovery_file);
     found = TRUE;
   }
+
+  if (!found && !no_recover) {
+    if (lives_file_test(recovery_numbering_file, LIVES_FILE_TEST_EXISTS)) {
+      if (lives_file_test(recording_file, LIVES_FILE_TEST_EXISTS)) {
+        goto cleanse;
+      }
+    }
+  }
+
   if (found) {
     if (!lives_file_test(recovery_numbering_file, LIVES_FILE_TEST_EXISTS)) {
       found = FALSE;
     } else if (no_recover) {
+      if (!lives_file_test(uldir, LIVES_FILE_TEST_IS_DIR)) {
+        lives_mkdir_with_parents(uldir, capable->umask);
+      }
       ulf = lives_strdup_printf("%s.%lu", recfname2, uid);
       ulfile = lives_build_filename(uldir, ulf, NULL);
       lives_free(ulf);
@@ -5851,6 +5870,9 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
 
   if (no_recover) {
     if (lives_file_test(recording_file, LIVES_FILE_TEST_EXISTS)) {
+      if (!lives_file_test(uldir, LIVES_FILE_TEST_IS_DIR)) {
+        lives_mkdir_with_parents(uldir, capable->umask);
+      }
       ulf = lives_strdup_printf("%s.%lu", recfname3, uid);
       ulfile = lives_build_filename(uldir, ulf, NULL);
       lives_free(recfname3); lives_free(ulf);
@@ -5858,6 +5880,9 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
       lives_free(ulfile);
     }
     if (lives_file_test(recording_numbering_file, LIVES_FILE_TEST_EXISTS)) {
+      if (!lives_file_test(uldir, LIVES_FILE_TEST_IS_DIR)) {
+        lives_mkdir_with_parents(uldir, capable->umask);
+      }
       ulf = lives_strdup_printf("%s.%lu", recfname4, uid);
       ulfile = lives_build_filename(uldir, ulf, NULL);
       lives_free(recfname4); lives_free(ulf);
@@ -5890,6 +5915,8 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
     lives_free(xfile);
     mainw->recoverable_layout = TRUE;
   }
+
+cleanse:
 
   if (!found && !found_recording) {
     if (mainw->scrap_file != -1) close_scrap_file(TRUE);

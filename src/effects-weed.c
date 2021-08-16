@@ -3593,11 +3593,9 @@ static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_ma
       if (rte_key_valid(key + 1, FALSE)) {
         if ((instance = weed_instance_obtain(key, key_modes[key])) == NULL) continue;
         orig_inst = instance;
-
         if (is_pure_audio(instance, FALSE)) {
           continue; // audio effects are applied in the audio renderer
         }
-
         if (!LIVES_IS_PLAYING && mainw->multitrack && mainw->multitrack->current_rfx
             && mainw->multitrack->current_rfx->source
             && (mainw->multitrack->solo_inst || instance == mainw->multitrack->current_rfx->source)) {

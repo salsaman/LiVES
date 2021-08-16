@@ -4381,6 +4381,9 @@ static boolean lives_startup2(livespointer data) {
     set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
     lives_proc_thread_cancel(mainw->helper_procthreads[PT_CUSTOM_COLOURS], FALSE);
     lives_proc_thread_join(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+
+    // must take care to execute this here or in the function itself, otherwise
+    // gtk+ may crash later
     main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
   }
   mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;

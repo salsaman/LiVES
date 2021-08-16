@@ -1,6 +1,6 @@
 // simple_blend.c
 // weed plugin
-// (c) G. Finch (salsaman) 2005 - 2020
+// (c) G. Finch (salsaman) 2005 - 2021
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -16,8 +16,12 @@ static int package_version = 1; // version of this package
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
+#ifndef NEED_LOCAL_WEED_UTILS
 #include <weed/weed-utils.h> // optional
-#include <weed/weed-plugin-utils.h> // optional
+#else
+#include "../../libweed/weed-utils.h" // optional
+#endif
+#include <weed/weed-plugin-utils.h>
 #else
 #include "../../libweed/weed-plugin.h"
 #include "../../libweed/weed-utils.h" // optional

@@ -1160,17 +1160,62 @@ if (1) {
 
 	    while (my $file = readdir(DIR)) {
 		if ($file =~ /^recovery\.$uid\.$gid\.(.*)/ || $file =~ /^layout\.$uid\.$gid\.(.*)/
-		    || (!$leave_reco &&
-		    ($file =~ /^recorded-layout\.$uid\.$gid\.(.*)/ ||
-		     $file =~ /^recorded_layout_numbering\.$uid\.$gid\.(.*)/))) {
+		    || $file =~ /^layout_numbering\.$uid\.$gid\.(.*)/) {
 		    if ($pid eq "" || $pid ne $1) {
 			my $exe = readlink "/proc/$1/exe";
-			next if ($exe ne "" && &my_basename($exe) eq $exename);
+			if ($exe ne "" && &my_basename($exe) eq $exename) {
+			    $has_rec = 1;
+			    next;
+			}
 			unlink $file;
 		    }
 		}
 	    }
 	    closedir DIR;
+
+	    if (!$leave_reco) {
+		my @recnums;
+
+		opendir DIR, $workdir;
+		while (my $file = readdir(DIR)) {
+		    if ($file =~ /^recorded-layout\.$uid\.$gid\.(.*).lay/ ||
+			$file =~ /^recorded-layout_numbering\.$uid\.$gid\.(.*)/) {
+			if ($pid eq "" || $pid ne $1) {
+			    my $exe = readlink "/proc/$1/exe";
+			    if ($exe ne "" && &my_basename($exe) eq $exename) {
+				$has_rec = 1;
+				next;
+			    }
+			    if ($file =~ /^recorded-layout_numbering/) {
+				push (@recnums, $file);
+			    }
+			    else {
+				unlink $file;
+			    }
+			}
+		    }
+		}
+		closedir DIR;
+
+		if (@recnums) {
+		    opendir DIR, $workdir;
+		    while (my $file = readdir(DIR)) {
+			if (-d $file && &is_specialdir($file)) {
+			    foreach (@recnums) {
+				my $res = &smog_system("grep $file $_ >/dev/null 2>&1");
+				if (!$res) {
+				    remove_tree($file);
+				    last;
+				}
+			    }
+			}
+		    }
+		    closedir DIR;
+		    foreach (@recnums) {
+			unlink $_;
+		    }
+		}
+	    }
 	    exit 0;
 	}
 

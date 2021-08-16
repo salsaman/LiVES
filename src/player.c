@@ -719,17 +719,19 @@ boolean load_frame_image(frames_t frame) {
           weed_timecode_t tc = mainw->cevent_tc;
           int oclip, nclip, i;
           weed_plant_t **layers;
-          /* if (!mainw->multitrack && mainw->num_tr_applied && IS_VALID_CLIP(mainw->blend_file)) { */
-          /*   mainw->num_tracks = 2; */
-          /*   mainw->active_track_list[0] = mainw->playing_file; */
-          /*   mainw->active_track_list[1] = mainw->blend_file; */
-          /*   mainw->clip_index[0] = mainw->playing_file; */
-          /*   mainw->clip_index[1] = mainw->blend_file; */
+          if (!mainw->multitrack) {
+            mainw->num_tracks = 1;
+            mainw->active_track_list[0] = mainw->playing_file;
+            mainw->clip_index[0] = mainw->playing_file;
+            mainw->frame_index[0] = mainw->actual_frame;
 
-          /*   mainw->frame_index[0] = mainw->actual_frame; */
-          /*   mainw->frame_index[1] = mainw->files[mainw->blend_file]->frameno;; */
-          /* } */
-
+            if (mainw->num_tr_applied && IS_VALID_CLIP(mainw->blend_file)) {
+              mainw->num_tracks = 2;
+              mainw->active_track_list[1] = mainw->blend_file;
+              mainw->clip_index[1] = mainw->blend_file;
+              mainw->frame_index[1] = mainw->files[mainw->blend_file]->frameno;;
+            }
+          }
           layers =
             (weed_plant_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_plant_t *));
           // get list of active tracks from mainw->filter map

@@ -3594,7 +3594,7 @@ filterinit1:
             for (i = 0; i < easing && event; i++) {
               event = get_prev_frame_event(event);
             }
-            if (event != deinit && event) {
+            if (event && event != deinit) {
               weed_set_int_value(event, WEED_LEAF_EASE_OUT, easing);
               weed_set_plantptr_value(event, WEED_LEAF_HOST_EASING_END, inst);
 	    // *INDENT-OFF*

@@ -200,7 +200,7 @@ FN_TYPE weed_voidptr_t __weed_value_get__(weed_plant_t *plant, const char *key, 
   if ((*perr = __weed_leaf_check__(plant, key, seed_type)) == WEED_SUCCESS) *perr = __weed_get_value__(plant, key, retval);
   return retval;}
 
-#define _WEED_GET_(ctype, stype) ctype retval; \
+#define _WEED_GET_(ctype, stype) ctype retval = (ctype)0;		\
   return *((ctype *)(__weed_value_get__(plant, key, WEED_SEED_##stype, (weed_voidptr_t)&retval, error)));
 
   /*							--- SINGLE VALUE GETTERS ---						*/

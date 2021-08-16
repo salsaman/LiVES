@@ -1100,13 +1100,13 @@ fi
 AC_SUBST(WEED_CFLAGS)
 
 if test "x$disable_system_weed" != "xyes"; then
-PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 2.0.1, NEED_LOCAL_WEED_UTILS=false, NEED_LOCAL_WEED_UTILS=true)
+PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 2.1.1, NEED_LOCAL_WEED_UTILS=false, NEED_LOCAL_WEED_UTILS=true)
 else
 echo "Check for system libweed-utils is disabled"
 fi
 
 if test "$NEED_LOCAL_WEED_UTILS" = "true"; then
-echo "...will try to build from included sources"
+echo "...will use weed-utils.h from included sources"
 fi
 
 AC_SUBST(WEED_UTILS_CFLAGS)

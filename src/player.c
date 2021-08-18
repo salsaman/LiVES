@@ -177,8 +177,8 @@ LIVES_GLOBAL_INLINE void init_track_decoders(void) {
     mainw->track_decoders[i] = NULL;
     mainw->old_active_track_list[i] = mainw->active_track_list[i] = 0;
   }
-  for (i = 0; i < MAX_FILES; i++) mainw->ext_src_used[i] = FALSE;
 }
+
 
 LIVES_GLOBAL_INLINE void free_track_decoders(void) {
   for (int i = 0; i < MAX_TRACKS; i++) {
@@ -414,8 +414,8 @@ void track_decoder_free(int i, int oclip, int nclip) {
             if (xoclip->n_altsrcs > 0
                 && mainw->track_decoders[i] == (lives_decoder_t *)xoclip->alt_srcs[0]) {
               if (oclip == mainw->blend_file && mainw->blend_layer
-                  && weed_plant_has_leaf(mainw->blend_layer, "alt_src")) {
-                weed_leaf_delete(mainw->blend_layer, "alt_src");
+                  && weed_plant_has_leaf(mainw->blend_layer, LIVES_LEAF_ALTSRC)) {
+                weed_leaf_delete(mainw->blend_layer, LIVES_LEAF_ALTSRC);
               }
               lives_free(xoclip->alt_srcs);
               xoclip->alt_srcs = NULL;
@@ -427,6 +427,7 @@ void track_decoder_free(int i, int oclip, int nclip) {
         }
       }
       if (can_free) clip_decoder_free(mainw->track_decoders[i]);
+      else chill_decoder_plugin(oclip); /// free buffers to relesae memory
       mainw->track_decoders[i] = NULL;
     }
     mainw->old_active_track_list[i] = 0;
@@ -539,15 +540,21 @@ boolean load_frame_image(frames_t frame) {
 
       // record performance
       if ((mainw->record && !mainw->record_paused)) {
+        void **eevents;
+        weed_plant_t *event_list;
+        int64_t *frames;
         ticks_t actual_ticks;
+
         int fg_frame = mainw->record_frame;
-        int bg_file = IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->current_file
+        int bg_file = (IS_VALID_CLIP(mainw->blend_file) && (prefs->tr_self ||
+                       (mainw->blend_file != mainw->current_file)))
                       ? mainw->blend_file : -1;
-        int bg_frame = bg_file > 0 && bg_file != mainw->current_file ? mainw->files[bg_file]->frameno : 0;
+        int bg_frame = (bg_file > 0
+                        && (prefs->tr_self || (bg_file != mainw->current_file)))
+                       ? mainw->files[bg_file]->frameno : 0;
         int numframes;
         int *clips;
-        int64_t *frames;
-        weed_plant_t *event_list;
+        int nev;
 
         // should we record the output from the playback plugin ?
         if (mainw->record && (prefs->rec_opts & REC_AFTER_PB) && mainw->ext_playback &&
@@ -580,14 +587,15 @@ boolean load_frame_image(frames_t frame) {
           frames[1] = (int64_t)bg_frame;
         }
         if (framecount) lives_free(framecount);
+
+        // MUST do this before locking event_list_mutex, else we can fall into a deadlock
+        eevents = get_easing_events(&nev);
+
         pthread_mutex_lock(&mainw->event_list_mutex);
 
         /// usual function to record a frame event
         if ((event_list = append_frame_event(mainw->event_list, actual_ticks,
                                              numframes, clips, frames)) != NULL) {
-          int nev;
-          void **eevents = get_easing_events(&nev);
-
           if (!mainw->event_list) mainw->event_list = event_list;
 
           // TODO ***: do we need to perform more checks here ???
@@ -886,11 +894,9 @@ recheck:
 
           if (rndr) {
             if (nclip > 0) {
-              img_ext = get_image_ext_for_type(mainw->files[nclip]->img_type);
               // set alt src in layer
               weed_set_voidptr_value(layers[i], WEED_LEAF_HOST_DECODER,
                                      (void *)mainw->track_decoders[i]);
-              //pull_frame_threaded(layers[i], img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
             } else {
               weed_layer_pixel_data_free(layers[i]);
             }
@@ -1862,6 +1868,7 @@ static ticks_t delta = 0;
 
 void reset_playback_clock(void) {
   mainw->cadjticks = mainw->adjticks = mainw->syncticks = 0;
+  mainw->currticks = mainw->startticks = mainw->deltaticks = 0;
   lastt = LIVES_TIME_SOURCE_NONE;
   delta = 0;
 }

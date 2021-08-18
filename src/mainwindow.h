@@ -1074,7 +1074,7 @@ typedef struct {
   // for the internal player
   double period; ///< == 1./cfile->pb_fps (unless cfile->pb_fps is 0.)
   volatile ticks_t startticks; ///< effective ticks when current frame was (should have been) displayed
-  ticks_t last_startticks; ///< effective ticks when lasty frame was (should have been) displayed
+  ticks_t last_startticks; ///< effective ticks when last frame was (should have been) displayed
   ticks_t timeout_ticks; ///< incremented if effect/rendering is paused/previewed
   ticks_t origsecs; ///< playback start seconds - subtracted from all other ticks to keep numbers smaller
   ticks_t orignsecs; ///< usecs at start of playback - ditto
@@ -1627,7 +1627,7 @@ typedef struct {
   pthread_mutex_t alarmlist_mutex; /// single access for updating alarm list
   pthread_mutex_t trcount_mutex; /// transition count mutex
 
-  int fx_mutex_tid[FX_KEYS_MAX_VIRTUAL];
+  volatile int fx_mutex_tid[FX_KEYS_MAX_VIRTUAL];
   int fx_mutex_nlocks[FX_KEYS_MAX_VIRTUAL];
 
   ///< set for param window updates from OSC or data connections, notifies main thread to do visual updates

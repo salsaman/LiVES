@@ -894,10 +894,13 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
   }
 
   if (blend_file->clip_type == CLIP_TYPE_FILE) {
-    if (blend_file->n_altsrcs > 0 && blend_file->alt_src_types[0]
-        == LIVES_EXT_SRC_DECODER) {
-      altsrc = 0;
-    }
+    if (blend_file->n_altsrcs > 0)
+      for (int s = 0; s < blend_file->n_altsrcs; s++) {
+        if (blend_file->alt_src_types[s]  == LIVES_EXT_SRC_DECODER) {
+          altsrc = s;
+          break;
+        }
+      }
   }
 
   if (!cfile->play_paused) {
@@ -907,11 +910,6 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
     frames_t frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
 
     if (blend_file->clip_type == CLIP_TYPE_FILE) {
-      if (blend_file->n_altsrcs > 0 && blend_file->alt_src_types[0]
-          == LIVES_EXT_SRC_DECODER) {
-        dplug = (lives_decoder_t *)blend_file->alt_srcs[0];
-        altsrc = 0;
-      }
       if (altsrc >= 0) dplug = (lives_decoder_t *)blend_file->alt_srcs[altsrc];
       else dplug = (lives_decoder_t *)blend_file->ext_src;
       if (dplug) dpsys = (lives_decoder_sys_t *)dplug->dpsys;
@@ -937,7 +935,7 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
   }
 
   mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
-  if (altsrc >= 0) weed_set_int_value(mainw->blend_layer, "alt_src", altsrc);
+  if (altsrc >= 0) weed_set_int_value(mainw->blend_layer, LIVES_LEAF_ALTSRC, altsrc);
   pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), blend_tc, 0, 0);
   return mainw->blend_layer;
 }
@@ -1215,7 +1213,7 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
 
 boolean rte_on_off_callback_fg(LiVESToggleButton * button, livespointer user_data) {
   int key = LIVES_POINTER_TO_INT(user_data);
-  g_print("TOGGLED\n");
+  g_print("TOGGLED %d\n", key);
   return _rte_on_off(FALSE, key);
 }
 

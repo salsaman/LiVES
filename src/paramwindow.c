@@ -210,7 +210,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
   if (rfx && (rfx->status == RFX_STATUS_INTERFACE || (def_ok && rfx->status == RFX_STATUS_SCRAP))) return;
 
-  lives_general_button_clicked(button, NULL);
+  if (button) lives_general_button_clicked(button, NULL);
 
   if (rfx && def_ok) {
     if (rfx->status == RFX_STATUS_WEED) on_realfx_activate(NULL, rfx);

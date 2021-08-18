@@ -3643,12 +3643,72 @@ static void show_cmdlinehelp(LiVESWidget * w, livespointer data) {
 }
 
 
+#ifdef TPLAYWINDOW
 static void show_tplay_opts(LiVESButton * button, livespointer data) {
+  LiVESWidget *dialog = lives_standard_dialog_new(_("Trickplay Options"),
+                        TRUE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
+  LiVESWidget *dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  LiVESWidget *label, *layout, *hbox, *scrolledwindow;
+
+  char *tmp = lives_big_and_bold(_("Trickplay Options"));
+
+  LiVESResponseType ret;
+
+  widget_opts.use_markup = TRUE;
+  label = lives_standard_label_new(tmp);
+  widget_opts.use_markup = FALSE;
+  lives_free(tmp);
+
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+
+  layout = lives_layout_new(NULL);
+
+  scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, layout);
+
+  lives_container_add(LIVES_CONTAINER(dialog_vbox), scrolledwindow);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  prefsw->self_trans = lives_standard_check_button_new(_("Allow clips to transition with themselves"),
+                       prefs->tr_self, LIVES_BOX(hbox),
+                       (tmp = H_("Enabling this allows clips to blend with themselves "
+                                 "during realtime playback.\nIf unset, enabling a "
+                                 "transition filter will have no effect until a "
+                                 "new background clip is selected.")));
+  lives_free(tmp);
+  ACTIVE(self_trans, TOGGLED);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  lives_standard_check_button_new(_("Transition between foreground clips"),
+                                  prefs->autotrans_key > 0, LIVES_BOX(hbox),
+                                  (tmp = H_("During realtime playback, pressing shift-page-up and shift-page-down "
+                                         "can perform a smooth transition between clips\n")));
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  prefsw->spinbutton_atrans_key = lives_standard_spin_button_new
+                                  (_("Autotransition key (experimental)"), prefs->autotrans_key, 0.,
+                                   prefs->rte_keys_virtual, 1., 1., 0, LIVES_BOX(hbox),
+                                   (tmp = H_("This value defines which effect key is used for the transition\n"
+                                          "Transitions may be bound to the selected key in the fx mapping window\n"
+                                          "(A setting of zero disables this feature.)")));
+
+  lives_free(tmp);
+  ACTIVE(spinbutton_atrans_key, VALUE_CHANGED);
+
+  // TODO - add atrans time
+  // - cache frames when loop locked
+  // scratch vals
+  // faster / slower vals
+  // fx param +- vals
+  // randomise pb posn when switching clips
 
 
-
+  ret = lives_dialog_run(LIVES_DIALOG(dialog));
+  lives_widget_destroy(dialog);
 }
-
+#endif
 
 /*
   Function creates preferences dialog
@@ -3680,7 +3740,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #endif
 
   LiVESWidget *layout;
+#ifdef TPLAYWINDOW
   LiVESWidget *image;
+#endif
 
   LiVESWidget *hbox1;
   LiVESWidget *vbox;
@@ -4558,7 +4620,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                     prefs->show_player_stats,
                                     LIVES_BOX(hbox), H_("Print a message detailing the mean FPS rate after playback ends\n"
                                         "Can be useful for benchmarking"));
-
+#ifdef TPLAYWINDOW
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->tplay_butt = lives_standard_button_new_from_stock_full
                        (NULL, _("_Trickplay Options(Advanced)"), -1, -1, LIVES_BOX(hbox), TRUE, NULL);
@@ -4567,7 +4629,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->tplay_butt), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(show_tplay_opts), NULL);
-
+#endif
   add_hsep_to_box(LIVES_BOX(vbox));
 
   layout = lives_layout_new(LIVES_BOX(vbox));
@@ -5309,29 +5371,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                     prefs->apply_gamma, LIVES_BOX(hbox),
                                     (tmp = (_("Also affects the monitor gamma !! (for now...)"))));
   lives_free(tmp);
-
-  /* hbox = lives_layout_row_new(LIVES_LAYOUT(layout)); */
-
-  /* prefsw->self_trans = lives_standard_check_button_new(_("Allow clips to transition with themselves"), */
-  /* 						       prefs->tr_self, LIVES_BOX(hbox), */
-  /* 						       (tmp = H_("Enabling this allows clips to blend with themselves " */
-  /* 								 "during realtime playback.\nIf unset, enabling a " */
-  /* 								 "transition filter will have no effect until a " */
-  /* 								 "new background clip is selected."))); */
-  /* lives_free(tmp); */
-  /* ACTIVE(self_trans, TOGGLED); */
-
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-
-  prefsw->spinbutton_atrans_key = lives_standard_spin_button_new
-                                  (_("Autotransition key (experimental)"), prefs->autotrans_key, 0., prefs->rte_keys_virtual, 1., 1., 0, LIVES_BOX(hbox),
-                                   (tmp = H_("During realtime playback, pressing shift-page-up and shift-page-down "
-                                          "can perform an smooth transition between clips\n"
-                                          "This value defines which effect key is used for the transition\n"
-                                          "A setting of zero disables this feature.")));
-
-  lives_free(tmp);
-  ACTIVE(spinbutton_atrans_key, VALUE_CHANGED);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_effects));
 

@@ -1847,7 +1847,6 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
   } else filter_mutex_unlock(key);
 
   if (fx_dialog[1]) {
-    lives_widget_destroy(fx_dialog[1]->dialog);
     rfx = fx_dialog[1]->rfx;
     on_paramwindow_button_clicked2(NULL, rfx);
   }
@@ -2568,7 +2567,6 @@ void rte_set_defs_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (fx_dialog[1]) {
     rfx = fx_dialog[1]->rfx;
-    lives_widget_destroy(fx_dialog[1]->dialog);
     on_paramwindow_button_clicked2(NULL, rfx);
   }
 

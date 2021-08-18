@@ -2551,7 +2551,6 @@ void play_file(void) {
   cfile->play_paused = FALSE;
   mainw->actual_frame = 0;
 
-  mainw->currticks = 0;
   mainw->effort = -EFFORT_RANGE_MAX;
 
   find_when_to_stop();

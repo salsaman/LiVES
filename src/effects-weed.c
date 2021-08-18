@@ -80,7 +80,8 @@ LIVES_GLOBAL_INLINE weed_error_t weed_leaf_copy_or_delete(weed_layer_t *dlayer, 
 
 LIVES_GLOBAL_INLINE int filter_mutex_lock(int key) {
   if (key >= 0 && key < FX_KEYS_MAX_VIRTUAL) {
-    int tid, myid = THREADVAR(id) + 1;
+    volatile int tid;
+    int myid = THREADVAR(id) + 1;
     while (1) {
       pthread_mutex_lock(&mainw->fx_mutex);
       tid = mainw->fx_mutex_tid[key];
@@ -6866,15 +6867,19 @@ boolean record_filter_init(int key) {
           weed_set_boolean_value(init_events[key], LIVES_LEAF_NOQUANT, WEED_TRUE);
         }
 
+        pthread_mutex_unlock(&mainw->event_list_mutex);
         create_effects_map(rteval); // we create effects_map event_t * array with ordered effects
+        pthread_mutex_lock(&mainw->event_list_mutex);
 
-        ntracks = weed_leaf_num_elements(init_events[key], WEED_LEAF_IN_TRACKS);
-        // add param values from inst
-        pchains[key] = filter_init_add_pchanges(mainw->event_list, inst, init_events[key], ntracks, 0);
-        mainw->event_list = append_filter_map_event(mainw->event_list, actual_ticks, effects_map);
-        if (THREADVAR(fx_is_audio)) {
-          weed_event_t *filter_map = get_last_event(mainw->event_list);
-          weed_set_boolean_value(filter_map, LIVES_LEAF_NOQUANT, WEED_TRUE);
+        if (init_events[key]) {
+          ntracks = weed_leaf_num_elements(init_events[key], WEED_LEAF_IN_TRACKS);
+          // add param values from inst
+          pchains[key] = filter_init_add_pchanges(mainw->event_list, inst, init_events[key], ntracks, 0);
+          mainw->event_list = append_filter_map_event(mainw->event_list, actual_ticks, effects_map);
+          if (THREADVAR(fx_is_audio)) {
+            weed_event_t *filter_map = get_last_event(mainw->event_list);
+            weed_set_boolean_value(filter_map, LIVES_LEAF_NOQUANT, WEED_TRUE);
+          }
         }
         pthread_mutex_unlock(&mainw->event_list_mutex);
         return TRUE;
@@ -6906,7 +6911,9 @@ boolean record_filter_deinit(int key) {
       pthread_mutex_lock(&mainw->event_list_mutex);
       mainw->event_list = append_filter_deinit_event(mainw->event_list, actual_ticks, init_events[key], NULL);
       deinit_event = get_last_event(mainw->event_list);
+      pthread_mutex_unlock(&mainw->event_list_mutex);
       create_effects_map(rteval); // we create effects_map event_t * array with ordered effects
+      pthread_mutex_lock(&mainw->event_list_mutex);
       mainw->event_list = append_filter_map_event(mainw->event_list, actual_ticks, effects_map);
       pthread_mutex_unlock(&mainw->event_list_mutex);
 

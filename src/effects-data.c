@@ -103,7 +103,7 @@ static char *get_chan_name(weed_plant_t *chan, int cnum, boolean is_in) {
 
 
 static void switch_fx_state(int hotkey) {
-  // switch effect state when a connection to ACTIVATE is present
+  // switch effect estate when a connection to ACTIVATE is present
   uint32_t last_grabbable_effect = mainw->last_grabbable_effect;
 
   // setting this causes SOFT_DEINIT
@@ -1504,9 +1504,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
     inparams = mainw->vpp->play_params;
     nparams = mainw->vpp->num_play_params;
   } else {
-    filter_mutex_lock(key);
     inst = rte_keymode_get_instance(key + 1, mode);
-    if (inst) filter_mutex_unlock(key);
     start = -EXTRA_PARAMS_IN;
   }
 
@@ -1514,11 +1512,14 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
     if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS))
       inparams = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_PARAMETERS, &nparams);
   } else {
-    if (rte_keymode_get_filter_idx(key + 1, mode) == -1) {
-      if (key >= 0) filter_mutex_unlock(key);
-      return FALSE;
+    if (key >= 0) {
+      filter_mutex_lock(key);
+      if (rte_keymode_get_filter_idx(key + 1, mode) == -1) {
+        if (key >= 0) filter_mutex_unlock(key);
+        return FALSE;
+      }
+      filter_mutex_unlock(key);
     }
-    filter_mutex_unlock(key);
   }
 
   if (LIVES_IS_PLAYING && is_audio_thread) {
@@ -1552,9 +1553,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
           oinst = NULL;
         }
         if (!oinst) {
-          if (inst) {
-            weed_instance_unref(inst);
-          }
+          if (inst) weed_instance_unref(inst);
           if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams) lives_free(inparams);
           THREADVAR(fx_is_audio) = FALSE;
           return FALSE;
@@ -1579,18 +1578,13 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
           }
         }
         switch_fx_state(key + 1);
-        if (oinst) {
-          weed_instance_unref(oinst);
-        }
+        if (oinst) weed_instance_unref(oinst);
         break;
       } else {
-        if (oinst) {
-          weed_instance_unref(oinst);
-        }
+        if (oinst) weed_instance_unref(oinst);
         if (changed && inst && key > -1) {
           pflags = weed_get_int_value(inparams[i], WEED_LEAF_FLAGS, NULL);
           if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE;
-
           if (fx_dialog[1] && !reinit_inst) {
             lives_rfx_t *rfx = fx_dialog[1]->rfx;
             if (rfx) {
@@ -2251,9 +2245,9 @@ boolean cconx_chain_data(int key, int mode) {
   while ((ichan = (key == FX_DATA_KEY_PLAYBACK_PLUGIN ? (weed_plant_t *)pp_get_chan(mainw->vpp->play_params, i)
                    : get_enabled_channel(inst, i, TRUE))) != NULL) {
     if ((ochan = cconx_get_out_alpha(FALSE, key, mode, i++, NULL, NULL, NULL))) {
-      filter_mutex_lock(key);
+      if (key >= 0) filter_mutex_lock(key);
       if (cconx_convert_pixel_data(ichan, ochan)) needs_reinit = TRUE;
-      filter_mutex_unlock(key);
+      if (key >= 0) filter_mutex_unlock(key);
     }
   }
   if (inst) weed_instance_unref(inst);

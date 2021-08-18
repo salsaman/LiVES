@@ -8048,8 +8048,8 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
             dplug = (lives_decoder_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_DECODER, NULL);
           } else {
             /// experimental, multiple decoder plugins for each sfile,,,
-            if (weed_plant_has_leaf(layer, "alt_src")) {
-              int srcnum = weed_get_int_value(layer, "alt_src", NULL);
+            if (weed_plant_has_leaf(layer, LIVES_LEAF_ALTSRC)) {
+              int srcnum = weed_get_int_value(layer, LIVES_LEAF_ALTSRC, NULL);
               dplug = sfile->alt_srcs[srcnum];
             }
             if (!dplug) dplug = (lives_decoder_t *)sfile->ext_src;
@@ -8059,7 +8059,6 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
             weed_layer_unref(layer);
             return FALSE;
           }
-          g_print("DPLUG is %p\n", dplug);
           if (target_palette != dplug->cdata->current_palette) {
             if (dplug->dpsys->set_palette) {
               int opal = dplug->cdata->current_palette;
@@ -8459,11 +8458,12 @@ void pull_frame_threaded(weed_layer_t *layer, const char *img_ext, weed_timecode
     if (IS_VALID_CLIP(clip)) {
       lives_clip_t *sfile = mainw->files[clip];
       if (sfile->clip_type == CLIP_TYPE_FILE) {
-        if (!sfile->alt_srcs) {
+        if (!sfile->n_altsrcs) {
           sfile->alt_srcs = lives_calloc(1, sizeof(void *));
           sfile->alt_srcs[0] = clone_decoder(clip);
           if (sfile->alt_srcs[0]) {
-            weed_set_int_value(layer, "alt_src", 0);
+            weed_set_int_value(layer, LIVES_LEAF_ALTSRC, 0);
+            sfile->n_altsrcs;
             sfile->alt_src_types = lives_calloc(1, sizint);
             sfile->alt_src_types[0] = LIVES_EXT_SRC_DECODER;
 	    // *INDENT-OFF*
@@ -8684,6 +8684,17 @@ void close_current_file(int file_to_switch_to) {
       if (mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) remove_from_clipmenu();
     }
 
+    if (mainw->current_file == mainw->blend_file) {
+      need_new_blend_file = TRUE;
+      // set blend_file to -1. This in case the file is a generator - we need to distinguish between the cases where
+      // the generator is the blend file and we switch because it was deinited, and when we switch fg <-> bg
+      // in the former case the generator is killed off, in the latter it survives
+      track_decoder_free(1, mainw->blend_file, -1);
+      mainw->blend_file = -1;
+      weed_layer_free(mainw->blend_layer);
+      mainw->blend_layer = NULL;
+    }
+
     if (CURRENT_CLIP_IS_NORMAL && cfile->ext_src) {
       if (cfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
         close_clip_decoder(mainw->current_file);
@@ -8768,17 +8779,6 @@ void close_current_file(int file_to_switch_to) {
     }
     // file we were asked to switch to is invalid, thus we must find one
 
-    if (mainw->current_file == mainw->blend_file) {
-      need_new_blend_file = TRUE;
-      // set blend_file to -1. This in case the file is a generator - we need to distinguish between the cases where
-      // the generator is the blend file and we switch because it was deinited, and when we switch fg <-> bg
-      // in the former case the generator is killed off, in the latter it survives
-      track_decoder_free(1, mainw->blend_file, -1);
-      mainw->blend_file = -1;
-      weed_layer_free(mainw->blend_layer);
-      mainw->blend_layer = NULL;
-    }
-
     mainw->preview_frame = 0;
 
     if (!mainw->only_close) {
@@ -8790,7 +8790,6 @@ void close_current_file(int file_to_switch_to) {
             d_print("");
           } else mainw->new_clip = index;
           if (need_new_blend_file) {
-            track_decoder_free(1, mainw->blend_file, mainw->current_file);
             mainw->blend_file = mainw->current_file;
           }
         } else {
@@ -8810,7 +8809,6 @@ void close_current_file(int file_to_switch_to) {
                 d_print("");
               } else mainw->new_clip = index;
               if (need_new_blend_file) {
-                track_decoder_free(1, mainw->blend_file, mainw->current_file);
                 mainw->blend_file = mainw->current_file;
               }
             } else {
@@ -8845,7 +8843,6 @@ void close_current_file(int file_to_switch_to) {
     // *INDENT-ON*
 
   // no other clips
-  track_decoder_free(1, mainw->blend_file, -1);
   mainw->current_file = mainw->blend_file = -1;
   set_main_title(NULL, 0);
 

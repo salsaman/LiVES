@@ -27,6 +27,7 @@
 #define LIVES_LEAF_RESIZE_THREAD "res_thread"
 #define LIVES_LEAF_PROGSCAN "progscan"
 #define LIVES_LEAF_BBLOCKALLOC "bblockalloc"
+#define LIVES_LEAF_ALTSRC "alt_src"
 
 #define DEF_SCREEN_GAMMA 1.4 // extra gammm boost
 

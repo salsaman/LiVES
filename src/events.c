@@ -457,29 +457,33 @@ static void add_init_to_ttable(weed_event_t *in_event, weed_event_t *out_event) 
   trans_list = lives_list_prepend(trans_list, tr_entry);
 }
 
+
 static weed_event_t *find_init_event_by_id(weed_plant_t *event, boolean remove) {
   LiVESList *list = trans_list;
   for (; list; list = list->next) {
     trans_entry *tr_entry = (trans_entry *)list->data;
     if (tr_entry->in_event == event) {
-      if (!remove) return tr_entry->out_event;
-      else {
-        weed_event_t *out_event = tr_entry->out_event;
-        if (list->prev) list->prev->next = list->next;
-        else trans_list = list->next;
-        if (list->next) list->next->prev = list->prev;
-        list->prev = list->next = NULL;
-        lives_free(list->data);
-        list->data = NULL;
-        lives_list_free(list);
-        return out_event;
-      }
+      weed_event_t *out_event = tr_entry->out_event;
+      if (remove) trans_list = lives_list_remove_node(trans_list, list, TRUE);
+      return out_event;
     }
   }
   return NULL;
 }
 
 void reset_ttable(void) {lives_list_free_all(&trans_list);}
+
+
+void **append_to_easing_events(void **eevents, int *nev, weed_event_t *init_event) {
+  weed_event_t *out_event = find_init_event_by_id(init_event, FALSE);
+  for (int i = 0; i < *nev; i++) {
+    if (eevents[i] == out_event) return eevents;
+  }
+  (*nev)++;
+  eevents = lives_realloc(eevents, *nev * sizeof(void *));
+  eevents[*nev - 1] = out_event;
+  return eevents;
+}
 
 
 void remove_frame_from_event(weed_plant_t *event_list, weed_plant_t *event, int track) {
@@ -3235,7 +3239,7 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
 
   int *in_count = NULL;
 
-  void *init_event;
+  void *init_event, **eevents;
 
   weed_event_t *next_frame_event, *return_event;
   weed_plant_t *filter;
@@ -3256,7 +3260,7 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
   int new_file;
   int etype;
   int key, idx;
-  int easing;
+  int nev;
 
   int i;
 
@@ -3314,6 +3318,25 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
 #ifdef DEBUG_EVENTS
     g_print("event: frame event at tc %"PRId64" curr_tc=%"PRId64"\n", tc, curr_tc);
 #endif
+
+    eevents = weed_get_voidptr_array_counted(next_event, LIVES_LEAF_EASING_EVENTS, &nev);
+    if (eevents) {
+      weed_plant_t *gui;
+      for (i = 0; i < nev; i++) {
+        init_event = (weed_plant_t *)eevents[i];
+        key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, NULL);
+        key = atoi(key_string);
+        lives_free(key_string);
+        inst = rte_keymode_get_instance(key + 1, 0);
+        weed_set_boolean_value(inst, LIVES_LEAF_AUTO_EASING, WEED_TRUE);
+        gui = weed_instance_get_gui(inst, FALSE);
+        if (gui) {
+          int easeval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL);
+          if (easeval) weed_set_int_value(gui, WEED_LEAF_EASE_OUT, easeval);
+        }
+      }
+      lives_free(eevents);
+    }
 
     if (!mainw->multitrack && is_realtime_aplayer(prefs->audio_player) && WEED_EVENT_IS_AUDIO_FRAME(next_event)) {
       // keep track of current seek position, for animating playback pointers
@@ -3397,26 +3420,27 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
       } else spare_cycles++;
     } else {
       if (mainw->num_tracks > 1) {
-        mainw->blend_file = mainw->clip_index[1];
-        if (mainw->blend_file > -1) mainw->files[mainw->blend_file]->frameno = mainw->frame_index[1];
-      } else mainw->blend_file = -1;
-
+        if (mainw->blend_file != mainw->clip_index[1]) {
+          track_decoder_free(1, mainw->blend_file, mainw->clip_index[1]);
+          mainw->blend_file = mainw->clip_index[1];
+        }
+        if (IS_VALID_CLIP(mainw->blend_file)) mainw->files[mainw->blend_file]->frameno = mainw->frame_index[1];
+      } else {
+        track_decoder_free(1, mainw->blend_file, -1);
+        mainw->blend_file = -1;
+      }
       new_file = -1;
       for (i = 0; i < mainw->num_tracks && new_file == -1; i++) {
         new_file = mainw->clip_index[i];
       }
-      if (i == 2) mainw->blend_file = -1;
+      if (i == 2) {
+        track_decoder_free(1, mainw->blend_file, -1);
+        mainw->blend_file = -1;
+      }
 
 #ifdef DEBUG_EVENTS
       g_print("event: front frame is %"PRId64" tc %"PRId64" curr_tc=%"PRId64"\n", mainw->frame_index[0], tc, curr_tc);
 #endif
-      if ((inst = weed_get_plantptr_value(next_event, WEED_LEAF_HOST_EASING_END, NULL))) {
-        easing = weed_get_int_value(next_event, WEED_LEAF_EASE_OUT, NULL);
-        //if (weed_get_int_value(inst, WEED_LEAF_EASE_OUT_FRAMES, NULL) > 0) {
-        weed_set_int_value(inst, WEED_LEAF_EASE_OUT, easing);
-        weed_set_boolean_value(inst, WEED_LEAF_AUTO_EASING, WEED_TRUE);
-        //}
-      }
 
       // handle case where new_file==-1: we must somehow create a blank frame in load_frame_image
       if (new_file == -1) new_file = mainw->current_file;
@@ -3585,21 +3609,7 @@ filterinit1:
 
         weed_set_int_value(inst, WEED_LEAF_HOST_KEY, hostkey);
         weed_set_int_value(inst, WEED_LEAF_HOST_MODE, hostmode);
-
-        if ((easing = weed_get_int_value(next_event, WEED_LEAF_EASE_OUT, NULL)) > 0) {
-          g_print("procev found easing %d on %p\n", easing, next_event);
-          weed_plant_t *deinit = weed_get_plantptr_value(next_event, WEED_LEAF_DEINIT_EVENT, NULL);
-          if (deinit) {
-            weed_plant_t *event = deinit;
-            for (i = 0; i < easing && event; i++) {
-              event = get_prev_frame_event(event);
-            }
-            if (event && event != deinit) {
-              weed_set_int_value(event, WEED_LEAF_EASE_OUT, easing);
-              weed_set_plantptr_value(event, WEED_LEAF_HOST_EASING_END, inst);
-	    // *INDENT-OFF*
-            }}}}
-      // *INDENT-ON*
+      }
 
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
         // handle compound fx
@@ -3758,7 +3768,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
   static boolean r_audio, r_video;
 
   weed_timecode_t tc, next_out_tc = 0l, out_tc, dtc = atc, ztc;
-  void *init_event;
+  void *init_event, **eevents;
 
   LiVESPixbuf *pixbuf = NULL;
 
@@ -3784,7 +3794,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
   int num_in_channels = 0, num_out_channels = 0;
   int mytrack;
   int scrap_track = -1;
-  int easing;
+  int nev;
 
   static int progress;
   static int xaclips[MAX_AUDIO_TRACKS];
@@ -3962,6 +3972,25 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
     }
     break;
     case WEED_EVENT_TYPE_FRAME:
+      eevents = weed_get_voidptr_array_counted(event, LIVES_LEAF_EASING_EVENTS, &nev);
+      if (eevents) {
+        weed_plant_t *gui;
+        for (i = 0; i < nev; i++) {
+          init_event = (weed_plant_t *)eevents[i];
+          key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, NULL);
+          key = atoi(key_string);
+          lives_free(key_string);
+          inst = rte_keymode_get_instance(key + 1, 0);
+          weed_set_boolean_value(inst, LIVES_LEAF_AUTO_EASING, WEED_TRUE);
+          gui = weed_instance_get_gui(inst, FALSE);
+          if (gui) {
+            int easeval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL);
+            if (easeval) weed_set_int_value(gui, WEED_LEAF_EASE_OUT, easeval);
+          }
+        }
+        lives_free(eevents);
+      }
+
       out_tc = (weed_timecode_t)((out_frame - 1) / cfile->fps
                                  * TICKS_PER_SECOND_DBL - rec_delta_tc); // calculate tc of next out frame */
       out_tc = q_gint64(out_tc, cfile->fps);
@@ -4090,12 +4119,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               }
             }
             layers[i] = NULL;
-
-            if ((inst = weed_get_plantptr_value(event, WEED_LEAF_HOST_EASING_END, NULL))) {
-              easing = weed_get_int_value(event, WEED_LEAF_EASE_OUT, NULL);
-              weed_set_int_value(inst, WEED_LEAF_EASE_OUT, easing);
-              weed_set_boolean_value(inst, WEED_LEAF_AUTO_EASING, WEED_TRUE);
-            }
 
             if (weed_plant_has_leaf(event, LIVES_LEAF_FAKE_TC))
               ztc = weed_get_int64_value(event, LIVES_LEAF_FAKE_TC, NULL);
@@ -4234,6 +4257,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               layer = NULL;
             }
           }
+          track_decoder_free(1, mainw->blend_file, blend_file);
           mainw->blend_file = blend_file;
         }
         next_frame_event = get_next_frame_event(event);
@@ -4589,20 +4613,7 @@ filterinit2:
 
         weed_set_int_value(inst, WEED_LEAF_HOST_KEY, hostkey);
         weed_set_int_value(inst, WEED_LEAF_HOST_MODE, hostmode);
-
-        if ((easing = weed_get_int_value(event, WEED_LEAF_EASE_OUT, NULL)) > 0) {
-          weed_plant_t *deinit = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, NULL);
-          if (deinit) {
-            weed_plant_t *xevent = deinit;
-            for (i = 0; i < easing; i++) {
-              xevent = get_prev_frame_event(xevent);
-            }
-            if (xevent != deinit && xevent) {
-              weed_set_int_value(xevent, WEED_LEAF_EASE_OUT, easing);
-              weed_set_plantptr_value(xevent, WEED_LEAF_HOST_EASING_END, inst);
-	      // *INDENT-OFF*
-            }}}}
-	  // *INDENT-ON*
+      }
 
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
         // handle compound fx

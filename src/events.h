@@ -336,6 +336,8 @@ boolean init_event_in_list(void **init_events, int num_inits, weed_plant_t *even
 boolean filter_init_has_owner(weed_plant_t *init_event, int track);
 boolean init_event_is_process_last(weed_plant_t *event);
 
+void **append_to_easing_events(void **eevents, int *nev, weed_event_t *init_event);
+
 // effect deletion/moving
 boolean move_event_right(weed_plant_t *event_list, weed_plant_t *event, boolean can_stay, double fps);
 boolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, boolean can_stay, double fps);

@@ -6289,16 +6289,16 @@ void switch_clip(int type, int newclip, boolean force) {
       if (mainw->blend_layer) check_layer_ready(mainw->blend_layer);
       weed_plant_t *inst = mainw->files[mainw->blend_file]->ext_src;
       if (inst) {
-        mainw->osc_block = TRUE;
         if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
           int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
           rte_key_on_off(key + 1, FALSE);
         }
-        mainw->osc_block = FALSE;
       }
+      //chill_decoder_plugin(mainw->blend_file);
     }
 
-    //chill_decoder_plugin(mainw->blend_file);
+    track_decoder_free(1, mainw->blend_file, newclip);
+
     mainw->blend_file = newclip;
     mainw->whentostop = NEVER_STOP;
     if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {

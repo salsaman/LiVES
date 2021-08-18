@@ -881,6 +881,7 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
   static weed_timecode_t blend_tc = 0;
   lives_clip_t *blend_file;
   weed_timecode_t ntc = tc;
+  int altsrc = -1;
 
   if (!IS_VALID_CLIP(mainw->blend_file)) return NULL;
   blend_file = mainw->files[mainw->blend_file];
@@ -892,6 +893,13 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
     blend_tc = tc;
   }
 
+  if (blend_file->clip_type == CLIP_TYPE_FILE) {
+    if (blend_file->n_altsrcs > 0 && blend_file->alt_src_types[0]
+        == LIVES_EXT_SRC_DECODER) {
+      altsrc = 0;
+    }
+  }
+
   if (!cfile->play_paused) {
     lives_decoder_t *dplug = NULL;
     lives_decoder_sys_t *dpsys = NULL;
@@ -899,7 +907,13 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
     frames_t frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
 
     if (blend_file->clip_type == CLIP_TYPE_FILE) {
-      dplug = (lives_decoder_t *)blend_file->ext_src;
+      if (blend_file->n_altsrcs > 0 && blend_file->alt_src_types[0]
+          == LIVES_EXT_SRC_DECODER) {
+        dplug = (lives_decoder_t *)blend_file->alt_srcs[0];
+        altsrc = 0;
+      }
+      if (altsrc >= 0) dplug = (lives_decoder_t *)blend_file->alt_srcs[altsrc];
+      else dplug = (lives_decoder_t *)blend_file->ext_src;
       if (dplug) dpsys = (lives_decoder_sys_t *)dplug->dpsys;
     }
 
@@ -923,11 +937,13 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
   }
 
   mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
+  if (altsrc >= 0) weed_set_int_value(mainw->blend_layer, "alt_src", altsrc);
   pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), blend_tc, 0, 0);
   return mainw->blend_layer;
 }
 
-void get_blend_layer(weed_timecode_t tc) {
+
+boolean get_blend_layer(weed_timecode_t tc) {
   /// will set mainw->blend_layer
   if (mainw->blend_file > -1 && mainw->num_tr_applied > 0
       && (!mainw->files[mainw->blend_file] ||
@@ -935,13 +951,19 @@ void get_blend_layer(weed_timecode_t tc) {
            (!mainw->files[mainw->blend_file]->frames ||
             !mainw->files[mainw->blend_file]->is_loaded)))) {
     // invalid blend file
-    mainw->blend_file = mainw->playing_file;
+    if (mainw->blend_file != mainw->playing_file) {
+      track_decoder_free(1, mainw->blend_file, mainw->playing_file);
+      mainw->blend_file = mainw->playing_file;
+      return FALSE;
+    }
+    return TRUE;
   }
 
   if (mainw->num_tr_applied && (prefs->tr_self || mainw->blend_file != mainw->playing_file) &&
       IS_VALID_CLIP(mainw->blend_file) && !resize_instance) {
     get_blend_layer_inner(tc);
   }
+  return TRUE;
 }
 
 
@@ -1135,39 +1157,12 @@ static boolean _rte_on_off(boolean from_menu, int key) {
       }
 
       if (!THREADVAR(fx_is_auto)) {
-        boolean easing_off = FALSE;
-        if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-          weed_plant_t *gui = weed_instance_get_gui(inst, FALSE);
-          if (gui) {
-            if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
-              weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
-              weed_leaf_delete(inst, WEED_LEAF_HOST_EASE_OUT_COUNT);
-              weed_leaf_delete(inst, WEED_LEAF_AUTO_EASING);
-              easing_off = TRUE;
-            }
-          }
-          weed_instance_unref(inst);
-        }
         if (weed_deinit_effect(key)) {
           mainw->rte &= ~new_rte;
-        }
-        if (easing_off) {
-          if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
-            weed_plant_t *gui = weed_instance_get_gui(inst, FALSE);
-            if (gui) {
-              if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
-                weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
-                weed_leaf_delete(inst, WEED_LEAF_HOST_EASE_OUT_COUNT);
-                weed_leaf_delete(inst, WEED_LEAF_AUTO_EASING);
-              }
-            }
-            weed_instance_unref(inst);
-          }
+          if (rte_window) rtew_set_keych(key, FALSE);
+          if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         }
       }
-
-      if (rte_window) rtew_set_keych(key, FALSE);
-      if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
 
       filter_mutex_unlock(key);
 

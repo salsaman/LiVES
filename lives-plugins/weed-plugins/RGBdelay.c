@@ -38,8 +38,6 @@ typedef struct {
   unsigned char **cache;
   int *is_bgr;
   unsigned char lut[3][256];
-  int ease_every;
-  int ease_counter;
 } _sdata;
 
 
@@ -134,8 +132,6 @@ static weed_error_t RGBd_init(weed_plant_t *inst) {
   weed_free(in_params);
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
-  sdata->ease_every = 0;
-  sdata->ease_counter = 0;
 
   return WEED_SUCCESS;
 }
@@ -187,20 +183,15 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 #endif
 
   weed_plant_t *gui = weed_instance_get_gui(inst);
-  int host_ease = weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL);
-  if (host_ease > 0) {
-    if (sdata->ease_every == 0) {
-      // easing (experimental) part 1
-      // how many cycles to ease by 1
-      sdata->ease_every = (int)((float)host_ease / (float)sdata->ccache);
-    }
-  }
-  else sdata->ease_every = sdata->ease_counter = 0;
+  int host_ease = -1;
+
+  if (weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT))
+    host_ease = weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL);
 
   if (maxcache < 0) maxcache = 0;
   else if (maxcache > 50) maxcache = 50;
 
-  if (sdata->ease_every == 0) {
+  if (host_ease == -1) {
     for (i = 1; i < maxcache; i++) {
       if (weed_param_get_value_boolean(in_params[RED_ON(i)]) == WEED_TRUE ||
           weed_param_get_value_boolean(in_params[GREEN_ON(i)]) == WEED_TRUE ||
@@ -428,17 +419,14 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   weed_free(in_params);
 
   // easing part 2
-  if (sdata->ease_every <= 0) {
-    weed_plant_t *gui = weed_instance_get_gui(inst);
+  if (host_ease >= 0) {
+    if (host_ease > 0) host_ease--;
+    if (sdata->ccache > host_ease) sdata->ccache = host_ease;
+    weed_set_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, host_ease);
+  }
+  else {
     if (sdata->ccache < sdata->tcache) sdata->ccache++;
     weed_set_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, sdata->ccache);
-  } else {
-    weed_plant_t *gui = weed_instance_get_gui(inst);
-    if (sdata->ease_counter++ >= sdata->ease_every) {
-      if (sdata->ccache > 0) sdata->ccache--;
-      sdata->ease_counter = 0;
-    }
-    weed_set_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, sdata->ccache * sdata->ease_every - sdata->ease_counter);
   }
   return WEED_SUCCESS;
 }

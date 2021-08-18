@@ -8059,6 +8059,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
             weed_layer_unref(layer);
             return FALSE;
           }
+          g_print("DPLUG is %p\n", dplug);
           if (target_palette != dplug->cdata->current_palette) {
             if (dplug->dpsys->set_palette) {
               int opal = dplug->cdata->current_palette;
@@ -8772,6 +8773,7 @@ void close_current_file(int file_to_switch_to) {
       // set blend_file to -1. This in case the file is a generator - we need to distinguish between the cases where
       // the generator is the blend file and we switch because it was deinited, and when we switch fg <-> bg
       // in the former case the generator is killed off, in the latter it survives
+      track_decoder_free(1, mainw->blend_file, -1);
       mainw->blend_file = -1;
       weed_layer_free(mainw->blend_layer);
       mainw->blend_layer = NULL;
@@ -8787,7 +8789,10 @@ void close_current_file(int file_to_switch_to) {
             switch_clip(1, index, TRUE);
             d_print("");
           } else mainw->new_clip = index;
-          if (need_new_blend_file) mainw->blend_file = mainw->current_file;
+          if (need_new_blend_file) {
+            track_decoder_free(1, mainw->blend_file, mainw->current_file);
+            mainw->blend_file = mainw->current_file;
+          }
         } else {
           if (old_file != mainw->multitrack->render_file) {
             mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
@@ -8804,7 +8809,10 @@ void close_current_file(int file_to_switch_to) {
                 switch_clip(1, i, TRUE);
                 d_print("");
               } else mainw->new_clip = index;
-              if (need_new_blend_file) mainw->blend_file = mainw->current_file;
+              if (need_new_blend_file) {
+                track_decoder_free(1, mainw->blend_file, mainw->current_file);
+                mainw->blend_file = mainw->current_file;
+              }
             } else {
               if (old_file != mainw->multitrack->render_file) {
                 mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
@@ -8821,7 +8829,10 @@ void close_current_file(int file_to_switch_to) {
                 switch_clip(1, i, TRUE);
                 d_print("");
               } else mainw->new_clip = index;
-              if (need_new_blend_file) mainw->blend_file = mainw->current_file;
+              if (need_new_blend_file) {
+                track_decoder_free(1, mainw->blend_file, mainw->current_file);
+                mainw->blend_file = mainw->current_file;
+              }
             } else {
               if (old_file != mainw->multitrack->render_file) {
                 mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
@@ -8834,6 +8845,7 @@ void close_current_file(int file_to_switch_to) {
     // *INDENT-ON*
 
   // no other clips
+  track_decoder_free(1, mainw->blend_file, -1);
   mainw->current_file = mainw->blend_file = -1;
   set_main_title(NULL, 0);
 
@@ -9404,6 +9416,9 @@ void do_quick_switch(int new_file) {
     }
   }
 
+  if (mainw->playing_file == mainw->blend_file)
+    track_decoder_free(1, mainw->blend_file, new_file);
+
   osc_block = mainw->osc_block;
   mainw->osc_block = TRUE;
 
@@ -9495,6 +9510,7 @@ void do_quick_switch(int new_file) {
       weed_layer_free(mainw->blend_layer);
       mainw->blend_layer = NULL;
     }
+    track_decoder_free(1, mainw->blend_file, old_file);
     mainw->blend_file = old_file;
   }
 

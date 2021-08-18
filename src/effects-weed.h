@@ -10,6 +10,8 @@
 #define MAX_WEED_STRLEN 65535 // soft limit for LiVES
 #define MAX_WEED_ELEMENTS 65535 // soft limit for LiVES
 
+#define MAX_EASE_SECS 5. // sanity check for plugin easing feature
+
 // signature for serialisation / deserialisation
 #define WEED_LAYER_MARKER 0x44454557;
 
@@ -95,9 +97,8 @@ typedef enum {
 
 #define WEED_LEAF_HOST_IDENTIFIER "host_unique_id"
 
-#define WEED_LEAF_HOST_EASING_END "host_easing_end"
-#define WEED_LEAF_HOST_EASE_OUT_COUNT "host_ease_out_count"
-#define WEED_LEAF_AUTO_EASING "host_auto_easing"
+#define LIVES_LEAF_AUTO_EASING "host_auto_ease"
+#define LIVES_LEAF_EASING_EVENTS "host_eevents"
 
 #define WEED_LEAF_RFX_STRINGS "layout_rfx_strings"
 #define WEED_LEAF_RFX_DELIM "layout_rfx_delim"
@@ -204,6 +205,8 @@ int get_master_vol_param(weed_plant_t *filter, boolean skip_internal);
 boolean is_perchannel_multiw(weed_plant_t *param);
 boolean has_perchannel_multiw(weed_plant_t *filter);
 boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_plant_t *ptmpl);
+
+void **get_easing_events(int *nev);
 
 /// parameter interpolation
 boolean interpolate_param(weed_plant_t *param, void *pchain, ticks_t tc);

@@ -61,8 +61,6 @@ struct _sdata {
   Sint32 ctable[1024];
   Sint32 sintable[1024 + 256];
   int tval;
-  float ease_every;
-  float easeval;
 };
 
 static void initSinTable(struct _sdata *sdata) {
@@ -174,7 +172,6 @@ static weed_error_t warp_init(weed_plant_t *inst) {
   initDistTable(sdata, video_width, video_height);
 
   sdata->tval = 0;
-  sdata->ease_every = 0.;
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
@@ -196,24 +193,18 @@ static weed_error_t warp_deinit(weed_plant_t *inst) {
 static weed_error_t warp_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   RGB32 *src, *dest;
   struct _sdata *sdata;
+  weed_plant_t *gui = weed_instance_get_gui(inst);
+  weed_plant_t *in_channel, *out_channel;
 
   int xw, yw, cw;
   int width, height, irow, orow;
+  int host_ease = -1;
 
-  weed_plant_t *in_channel, *out_channel;
+  if (weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT)) host_ease = weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL);
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
-  if (sdata->ease_every == 0.) {
-    // easing (experimental) part 1
-    weed_plant_t *gui = weed_instance_get_gui(inst);
-    int host_ease = weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL);
-    if (host_ease > 0) {
-      // how many cycles to ease by 1
-      sdata->ease_every = (float)sdata->tval / (float)host_ease;
-      sdata->easeval = (float)sdata->tval;
-    }
-  }
+  if (host_ease != -1) sdata->tval = host_ease;
 
   in_channel = weed_get_in_channel(inst, 0);
   out_channel = weed_get_out_channel(inst, 0);
@@ -233,20 +224,18 @@ static weed_error_t warp_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   xw += (int)(sin((sdata->tval - 10) * M_PI / 512) * 40);
   yw += (int)(sin((sdata->tval + 30) * M_PI / 512) * 40);
 
-  if (sdata->ease_every != 0.) {
-    weed_plant_t *gui = weed_instance_get_gui(inst);
-    sdata->easeval -= sdata->ease_every;
-    sdata->tval = (int)sdata->easeval;
-    weed_set_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, (int)(sdata->easeval / sdata->ease_every));
+  if (host_ease >= 0) {
+    if (host_ease > 0) host_ease--;
+    sdata->tval = host_ease;
+    weed_set_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, host_ease);
   }
-
-  doWarp(xw, yw, cw, src, dest, width, height, irow, orow, sdata);
-
-  if (sdata->ease_every == 0.) {
-    weed_plant_t *gui = weed_instance_get_gui(inst);
+  else {
     sdata->tval = (sdata->tval + 1) & 511;
-    weed_set_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, 1);
+    weed_set_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, sdata->tval);
   }
+
+  //fprintf(stderr, "tval is now %d\n", sdata->tval);
+  doWarp(xw, yw, cw, src, dest, width, height, irow, orow, sdata);
 
   return WEED_SUCCESS;
 }

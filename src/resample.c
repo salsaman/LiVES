@@ -347,8 +347,8 @@ void pre_analyse(weed_plant_t *elist) {
                 // remove this one
 
                 break;
-		// *INDENT-OFF*
-              }}}}}
+	      // *INDENT-OFF*
+	    }}}}}
     // *INDENT-ON*
       event = get_first_event(elist);
 #endif
@@ -604,6 +604,8 @@ void pre_analyse(weed_plant_t *elist) {
     LiVESResponseType response;
     LiVESList *init_events = NULL, *deinit_events = NULL, *list;
 
+    void **eevents = NULL, **xeevents;
+
     ticks_t tl;
     double *xaseeks = NULL, *naseeks = NULL, *naccels = NULL;
     double old_fps;
@@ -621,6 +623,7 @@ void pre_analyse(weed_plant_t *elist) {
     int etype;
     int is_final = 0;
     int ev_api = 100;
+    int nev = 0, xnev;
 
     int i, j, k;
 
@@ -752,6 +755,15 @@ void pre_analyse(weed_plant_t *elist) {
                   nframe_event_tainted = FALSE;
                 } else nframe_event_tainted = TRUE;
               }
+            }
+
+            xeevents = weed_get_voidptr_array_counted(event, LIVES_LEAF_EASING_EVENTS, &xnev);
+            if (xeevents) {
+              for (i = 0; i < xnev; i++) {
+                init_event = (weed_plant_t *)xeevents[i];
+                eevents = append_to_easing_events(eevents, &nev, init_event);
+              }
+              lives_free(xeevents);
             }
 
             /// now we have a choice: we can either insert this frame at out_tc with the current fx state,
@@ -1071,6 +1083,13 @@ void pre_analyse(weed_plant_t *elist) {
           if (clips)
             out_list = append_frame_event(out_list, out_tc, tracks, clips, frames);
           newframe = get_last_event(out_list);
+
+          if (eevents) {
+            weed_set_voidptr_array(newframe, LIVES_LEAF_EASING_EVENTS, nev, eevents);
+            lives_free(eevents);
+            eevents = NULL;
+            nev = 0;
+          }
 
           /* g_print("frame (%p) with %d tracks %d %ld  going in at %ld\n", newframe, */
           /* 	tracks, clips[0], frames[0], out_tc); */

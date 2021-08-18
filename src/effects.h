@@ -76,7 +76,7 @@ boolean rtemode_callback_hook(LiVESToggleButton *, livespointer user_data);  ///
 
 boolean swap_fg_bg_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-void get_blend_layer(ticks_t tc);
+boolean get_blend_layer(ticks_t tc);
 
 weed_plant_t *on_rte_apply(weed_plant_t *main_layer, int opwidth, int opheight, ticks_t tc);
 

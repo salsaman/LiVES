@@ -3643,6 +3643,13 @@ static void show_cmdlinehelp(LiVESWidget * w, livespointer data) {
 }
 
 
+static void show_tplay_opts(LiVESButton * button, livespointer data) {
+
+
+
+}
+
+
 /*
   Function creates preferences dialog
 */
@@ -3673,6 +3680,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #endif
 
   LiVESWidget *layout;
+  LiVESWidget *image;
 
   LiVESWidget *hbox1;
   LiVESWidget *vbox;
@@ -4550,6 +4558,15 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                     prefs->show_player_stats,
                                     LIVES_BOX(hbox), H_("Print a message detailing the mean FPS rate after playback ends\n"
                                         "Can be useful for benchmarking"));
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  prefsw->tplay_butt = lives_standard_button_new_from_stock_full
+                       (NULL, _("_Trickplay Options(Advanced)"), -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+  image = lives_image_find_in_stock(LIVES_ICON_SIZE_LARGE_TOOLBAR, "trick", NULL);
+  lives_standard_button_set_image(LIVES_BUTTON(prefsw->tplay_butt), image, TRUE);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->tplay_butt), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(show_tplay_opts), NULL);
 
   add_hsep_to_box(LIVES_BOX(vbox));
 

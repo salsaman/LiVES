@@ -718,6 +718,7 @@ typedef struct {
   LiVESWidget *spinbutton_crit_ds;
   LiVESWidget *dsl_label;
   LiVESWidget *dsc_label;
+  LiVESWidget *tplay_butt;
   LiVESWidget *fontbutton;
   LiVESWidget *font_pre_button;
   LiVESWidget *font_size_spin;

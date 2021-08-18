@@ -2425,7 +2425,10 @@ void play_file(void) {
       || (mainw->event_list && (!mainw->is_rendering || !mainw->preview || mainw->preview_rendering)))
     audio_cache_init();
 
-  if (mainw->blend_file != -1 && !IS_VALID_CLIP(mainw->blend_file)) mainw->blend_file = -1;
+  if (mainw->blend_file != -1 && !IS_VALID_CLIP(mainw->blend_file)) {
+    track_decoder_free(1, mainw->blend_file, -1);
+    mainw->blend_file = -1;
+  }
 
   lives_widget_set_sensitive(mainw->m_stopbutton, TRUE);
   mainw->playing_file = mainw->current_file;
@@ -2827,15 +2830,6 @@ void play_file(void) {
   mainw->playing_file = -1;
   mainw->abufs_to_fill = 0;
 
-  if (!mainw->foreign) {
-    /// deinit any active real time effects
-    really_deinit_effects();
-    if (prefs->allow_easing && !mainw->multitrack) {
-      // any effects which were "easing out" should be deinited now
-      deinit_easing_effects();
-    }
-  }
-
   if (mainw->ext_playback) {
 #ifndef IS_MINGW
     vid_playback_plugin_exit();
@@ -2857,9 +2851,18 @@ void play_file(void) {
   mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
   mainw->osc_auto = 0;
 
-  // do this here before closing the audio tracks
+  // do this here before closing the audio tracks, easing_events, soft_deinits, etc
   if (!mainw->record && mainw->record_paused)
     event_list_add_end_events(mainw->event_list, TRUE);
+
+  if (!mainw->foreign) {
+    /// deinit any active real time effects
+    really_deinit_effects();
+    if (prefs->allow_easing && !mainw->multitrack) {
+      // any effects which were "easing out" should be deinited now
+      deinit_easing_effects();
+    }
+  }
 
   if (mainw->loop_locked) unlock_loop_lock();
   if (prefs->show_msg_area) {

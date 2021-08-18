@@ -1212,7 +1212,6 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
   if (LIVES_IS_PLAYING && !mainw->multitrack && mainw->scratch == SCRATCH_NONE)
     mainw->scratch = SCRATCH_JUMP_NORESYNC;
 
-  // +1 ref
   weed_instance_ref(inst);
 
   if (weed_plant_has_leaf(inst, LIVES_LEAF_SOFT_DEINIT)) weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
@@ -1221,29 +1220,26 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
     if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY))
       key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
     if (key != -1) {
-      weed_plant_t *gui;
-      gui = weed_instance_get_gui(inst, FALSE);
-      if (gui) {
-        filter_mutex_lock(key);
-        if (weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL) > 0) {
-          // plugin is easing, so we need to deinit it
-          uint64_t new_rte = GU641 << key;
-          mainw->rte &= ~new_rte;
-          if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
-            weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
+      if (!weed_plant_has_leaf(inst, LIVES_LEAF_AUTO_EASING)) {
+        weed_plant_t *gui;
+        gui = weed_instance_get_gui(inst, FALSE);
+        if (gui) {
+          filter_mutex_lock(key);
+          if (weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL) > 0) {
+            // plugin is easing, so we need to deinit it
+            uint64_t new_rte = GU641 << key;
+            weed_deinit_effect(key);
+            mainw->rte &= ~new_rte;
+            if (rte_window) rtew_set_keych(key, FALSE);
+            if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
+            weed_instance_unref(inst);
+            filter_mutex_unlock(key);
+            return FILTER_ERROR_COULD_NOT_REINIT;
           }
-          weed_leaf_delete(inst, WEED_LEAF_HOST_EASE_OUT_COUNT);
-          weed_leaf_delete(inst, WEED_LEAF_AUTO_EASING);
-          // WEED_LEAF_EASE_OUT exists, so it'll get deinited right away
-          weed_deinit_effect(key);
-          weed_instance_unref(inst);
           filter_mutex_unlock(key);
-          return FILTER_ERROR_COULD_NOT_REINIT;
         }
-        filter_mutex_unlock(key);
       }
     }
-
     mainw->blend_palette = WEED_PALETTE_END;
   }
 
@@ -3724,7 +3720,6 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
 
   int output = -1;
   int clip;
-  int easeval = 0;
 
   if (mainw->is_rendering && !(mainw->proc_ptr && mainw->preview)) {
     // rendering from multitrack
@@ -3737,6 +3732,8 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
   // Effects are applied in key order, in tracks are 0 and 1, out track is 0
   else {
     weed_plant_t *gui;
+    int myeaseval = -1;
+
     for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
       if (orig_inst) weed_instance_unref(orig_inst);
       orig_inst = NULL;
@@ -3763,36 +3760,6 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
           if (is_pure_audio(filter, TRUE)) {
             continue;
           }
-          gui = weed_instance_get_gui(instance, FALSE);
-          if (gui) {
-            if (weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL) > 0) {
-              // if the plugin is easing out, check if it finished
-              if (!weed_plant_has_leaf(instance, WEED_LEAF_AUTO_EASING)) { // if auto_Easing then we'll deinit it on the event_list
-                if (!weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL)) {
-                  // easing finished, deinit it
-                  uint64_t new_rte = GU641 << i;
-                  // record
-                  if (init_events[i]) {
-                    // if we are recording, mark the number of frames to ease out
-                    // we'll need to repeat the same process during preview / rendering
-                    // - when we hit the init_event, we'll find the deinit, then work back x frames and mark easing start
-                    weed_leaf_dup(init_events[i], instance, WEED_LEAF_EASE_OUT);
-                  }
-                  filter_mutex_lock(i);
-                  weed_deinit_effect(i);
-                  if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
-                    weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
-                  }
-                  if (rte_key_is_enabled(i, FALSE)) {
-                    mainw->rte &= ~new_rte;
-                    if (rte_window) rtew_set_keych(i, FALSE);
-                    if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
-                  }
-                  filter_mutex_unlock(i);
-                  continue;
-		  // *INDENT-OFF*
-		}}}}
-	  // *INDENT-ON*
 
           if (mainw->multitrack && !mainw->unordered_blocks && pchains && pchains[i]) {
             interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
@@ -3838,34 +3805,35 @@ apply_inst3:
               }}}
 	  // *INDENT-ON*
 
-          filter_error = weed_apply_instance(instance, NULL, layers, opwidth, opheight, tc);
+          // if the plugin is supposed to be easing out, make sure it is really doing so
+          gui = weed_instance_get_gui(orig_inst, FALSE);
+          if (gui && weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT))
+            myeaseval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL);
 
-          if (easeval > 0 && !weed_plant_has_leaf(orig_inst, WEED_LEAF_AUTO_EASING)) {
-            // if the plugin is supposed to be easing out, make sure it is really
-            weed_plant_t *gui = weed_instance_get_gui(orig_inst, FALSE);
-            if (gui) {
-              int xeaseval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL), myeaseval;
-              myeaseval = weed_get_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, NULL);
-              if (xeaseval > myeaseval) {
+          if (myeaseval) filter_error = weed_apply_instance(instance, NULL, layers, opwidth, opheight, tc);
+          else filter_error = FILTER_SUCCESS;
+
+          if (myeaseval >= 0) {
+            g_print("mev is %d\n", myeaseval);
+            int xeaseval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL);
+            if (!xeaseval) {
+              if (!weed_plant_has_leaf(instance, LIVES_LEAF_AUTO_EASING)) {
                 uint64_t new_rte = GU641 << i;
                 filter_mutex_lock(i);
                 if (instance == orig_inst) orig_inst = NULL;
                 weed_deinit_effect(i);
-                if (rte_key_is_enabled(i, FALSE)) {
-                  mainw->rte &= ~new_rte;
-                  if (rte_window) rtew_set_keych(i, FALSE);
-                  if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
-                }
+                mainw->rte &= ~new_rte;
+                if (rte_window) rtew_set_keych(i, FALSE);
+                if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
                 filter_mutex_unlock(i);
 
                 // remove extra ref we added
                 weed_instance_unref(instance);
                 continue;
               }
-              // count how many frames to ease out
-              weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT,
-                                 weed_get_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, NULL) + 1);
             }
+            // count how many frames to ease out
+            weed_set_int_value(gui, WEED_LEAF_EASE_OUT, xeaseval);
           }
           if (filter_error == FILTER_ERROR_NEEDS_REINIT) {
             // TODO...
@@ -6955,7 +6923,7 @@ boolean record_filter_deinit(int key) {
 
 
 boolean weed_init_effect(int hotkey) {
-  weed_plant_t *filter, *gui, *channel;
+  weed_plant_t *filter, *channel;
   weed_plant_t *new_instance, *inst;
   weed_error_t error;
 
@@ -7018,14 +6986,12 @@ boolean weed_init_effect(int hotkey) {
         int agen_key = mainw->agen_key - 1;
         filter_mutex_lock(agen_key);
         weed_deinit_effect(agen_key);
-        if ((rte_key_is_enabled(agen_key, FALSE))) {
-          // need to do this in case starting another audio gen caused us to come here
-          mainw->rte &= ~(GU641 << agen_key);
-          if (rte_window && !mainw->is_rendering && !mainw->multitrack) {
-            rtew_set_keych(agen_key, FALSE);
-          }
-          if (mainw->ce_thumbs) ce_thumbs_set_keych(agen_key, FALSE);
+        // need to do this in case starting another audio gen caused us to come here
+        mainw->rte &= ~(GU641 << agen_key);
+        if (rte_window && !mainw->is_rendering && !mainw->multitrack) {
+          rtew_set_keych(agen_key, FALSE);
         }
+        if (mainw->ce_thumbs) ce_thumbs_set_keych(agen_key, FALSE);
         filter_mutex_unlock(agen_key);
       }
       is_audio_gen = TRUE;
@@ -7049,6 +7015,7 @@ boolean weed_init_effect(int hotkey) {
       }
 
       bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
+      track_decoder_free(1, mainw->blend_file, -1);
       mainw->blend_file = -1;
     }
 
@@ -7082,7 +7049,12 @@ boolean weed_init_effect(int hotkey) {
       }
       if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_BACKGROUND);
       if (mainw->num_tr_applied == 1 && !is_modeswitch) {
+        track_decoder_free(1, mainw->blend_file, mainw->current_file);
         mainw->blend_file = mainw->current_file;
+        if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
+          bg_generator_key = fg_generator_key;
+          bg_generator_mode = fg_generator_mode;
+        }
       }
       is_trans = TRUE;
     } else if (is_gen && outc_count > 0 && !is_audio_gen && !all_out_alpha) {
@@ -7100,7 +7072,6 @@ boolean weed_init_effect(int hotkey) {
       }
     }
   }
-  // TODO - unblock template channel changes
 
   // if the param window is already open, use instance from there
   if (fx_dialog[1] && fx_dialog[1]->key == hotkey && fx_dialog[1]->mode == key_modes[hotkey]) {
@@ -7124,12 +7095,11 @@ boolean weed_init_effect(int hotkey) {
 
   inst = new_instance;
 
-  gui = weed_instance_get_gui(inst, FALSE);
-  if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
-    weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
-  }
-  weed_leaf_delete(inst, WEED_LEAF_HOST_EASE_OUT_COUNT);
-  weed_leaf_delete(inst, WEED_LEAF_AUTO_EASING);
+  /* gui = weed_instance_get_gui(inst, FALSE); */
+  /* if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) { */
+  /*   weed_leaf_delete(gui, WEED_LEAF_EASE_OUT); */
+  /* } */
+  /* weed_leaf_delete(inst, LIVES_LEAF_AUTO_EASING); */
 
   if (weed_plant_has_leaf(filter, WEED_LEAF_HOST_FPS))
     weed_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_HOST_FPS);
@@ -7490,17 +7460,21 @@ boolean weed_deinit_effect(int hotkey) {
   if (LIVES_IS_PLAYING && hotkey < FX_KEYS_MAX_VIRTUAL) {
     if (prefs->allow_easing) {
       // if it's a user key and the plugin supports easing out, we'll do that instead
-      weed_plant_t *gui = weed_instance_get_gui(instance, FALSE);
-      if (!weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT)) {
-        if (rte_key_is_enabled(hotkey, TRUE)) {
-          if ((easing = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL))) {
-            int myease = cfile->pb_fps * 2.;
-            if (easing < myease) {
-              weed_set_int_value(gui, WEED_LEAF_EASE_OUT, myease);
-              weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, myease);
+      if (!weed_plant_has_leaf(instance, LIVES_LEAF_AUTO_EASING)) {
+        weed_plant_t *gui = weed_instance_get_gui(instance, FALSE);
+        if (!weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT)) {
+          if (rte_key_is_enabled(hotkey, TRUE)) {
+            if ((easing = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL))) {
+              // try to avoid errors in plugins by ensuring we should be able to ease out quick
+              int myease = cfile->pb_fps * MAX_EASE_SECS;
+              if (easing > myease) easing = myease;
+              weed_set_int_value(gui, WEED_LEAF_EASE_OUT, easing);
+              if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
+                  (prefs->rec_opts & REC_EFFECTS) && init_events[hotkey])
+                weed_set_int_value(init_events[hotkey], WEED_LEAF_EASE_OUT, easing);
               weed_instance_unref(instance);
               return FALSE;
-	      // *INDENT-OFF*
+		// *INDENT-OFF*
 	    }}}}}}
   // *INDENT-ON*
   mainw->blend_palette = WEED_PALETTE_END;
@@ -7510,12 +7484,12 @@ boolean weed_deinit_effect(int hotkey) {
 
   num_in_chans = enabled_in_channels(instance, FALSE);
 
+  // ensure we are not still easing out if we aren't supposed to be
   gui = weed_instance_get_gui(instance, FALSE);
-  if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
+  if (gui && weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT)) {
     weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
   }
-  weed_leaf_delete(instance, WEED_LEAF_HOST_EASE_OUT_COUNT);
-  weed_leaf_delete(instance, WEED_LEAF_AUTO_EASING);
+  weed_leaf_delete(instance, LIVES_LEAF_AUTO_EASING);
 
   // handle compound fx
   last_inst = instance;
@@ -7675,9 +7649,16 @@ deinit3:
       if (bg_gen_to_start != -1) bg_gen_to_start = -1;
       if (mainw->blend_file != -1 && mainw->blend_file != mainw->current_file && mainw->files[mainw->blend_file] &&
           mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
+        int bgk = bg_generator_key;
         // all transitions off, so end the bg generator
-        weed_deinit_effect(bg_generator_key);
+        filter_mutex_lock(bgk);
+        weed_deinit_effect(bgk);
+        mainw->rte &= ~(GU641 << bgk);
+        if (rte_window) rtew_set_keych(bgk, FALSE);
+        if (mainw->ce_thumbs) ce_thumbs_set_keych(bgk, FALSE);
+        filter_mutex_unlock(bgk);
       }
+      track_decoder_free(1, mainw->blend_file, -1);
       mainw->blend_file = -1;
     }
   }
@@ -7715,6 +7696,34 @@ void deinit_render_effects(void) {
 }
 
 
+void **get_easing_events(int *nev) {
+  void **eevents = NULL;
+  uint8_t xevents[FX_KEYS_MAX_VIRTUAL];
+  *nev = 0;
+  lives_memset(xevents, 0, FX_KEYS_MAX_VIRTUAL);
+  for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+    filter_mutex_lock(i);
+    if (init_events[i] && weed_plant_has_leaf(init_events[i], WEED_LEAF_EASE_OUT)) {
+      weed_leaf_delete(init_events[i], WEED_LEAF_EASE_OUT);
+      filter_mutex_unlock(i);
+      xevents[i] = 1;
+      (*nev)++;
+    } else filter_mutex_unlock(i);
+  }
+  if (*nev) {
+    int xnev = *nev;
+    eevents = (void **)lives_calloc(xnev, sizeof(void *));
+    for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+      if (xevents[i]) {
+        eevents[--xnev] = init_events[i];
+        if (!xnev) break;
+      }
+    }
+  }
+  return eevents;
+}
+
+
 /**
    @brief switch off effects in easing out state after playback ends
    during playback, some effects don't deinit right awy, instead they ease out
@@ -7734,14 +7743,9 @@ void deinit_easing_effects(void) {
         if (weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT)) {
           // no mutex needed since we are rendering. and since we aren't playing it will get deinited now
           weed_deinit_effect(i);
-          if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
-            weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
-          }
-          weed_leaf_delete(instance, WEED_LEAF_HOST_EASE_OUT_COUNT);
-          weed_leaf_delete(instance, WEED_LEAF_AUTO_EASING);
           weed_instance_unref(instance);
           /// if recording, the deinit_event won't be recorded, since we are not playing now,
-          /// this will be handled in deal_with_render_choice() so it need not concern us
+          /// this will be handled in event_list_add_end_events() so it need not concern us
         }
       }
       weed_instance_unref(instance);
@@ -7777,10 +7781,10 @@ void weed_deinit_all(boolean shutdown) {
       if ((instance = weed_instance_obtain(i, key_modes[i])) != NULL) {
         weed_instance_unref(instance);
         if (shutdown || !LIVES_IS_PLAYING || mainw->current_file == -1 || cfile->ext_src != instance) {
-          if (rte_window) rtew_set_keych(i, FALSE);
-          if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
           weed_deinit_effect(i);
           mainw->rte &= ~(GU641 << i);
+          if (rte_window) rtew_set_keych(i, FALSE);
+          if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
           weed_instance_unref(instance);
         }
       }
@@ -8556,6 +8560,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   cfile->ext_src_type = LIVES_EXT_SRC_FILTER;
 
   if (is_bg) {
+    track_decoder_free(1, mainw->blend_file, mainw->current_file);
     mainw->blend_file = mainw->current_file;
     if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_highlight_current_clip();
   }
@@ -8614,10 +8619,12 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       mainw->play_start = 1;
       mainw->play_end = INT_MAX;
       if (is_bg) {
+        track_decoder_free(1, mainw->blend_file, mainw->current_file);
         mainw->blend_file = mainw->current_file;
         if (old_file != -1) mainw->current_file = old_file;
       }
     } else {
+      track_decoder_free(1, mainw->blend_file, mainw->current_file);
       mainw->blend_file = mainw->current_file;
       mainw->current_file = old_file;
       mainw->play_start = cfile->start;
@@ -8661,8 +8668,14 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     if (!is_bg || old_file == -1 || old_file == new_file) {
       if (new_file != old_file) {
         mainw->new_clip = new_file;
-        if (mainw->files[mainw->new_blend_file]) mainw->blend_file = mainw->new_blend_file;
+
+        // CHECK LOGIC HERE !!
+        /// if bg -> blend_file becomes new blend file (old_file == -1)
+        /// if fg -> blend file is unchanged
+
+        if (IS_VALID_CLIP(mainw->new_blend_file)) mainw->blend_file = mainw->new_blend_file;
         if (!is_bg && IS_VALID_CLIP(blend_file)) mainw->blend_file = blend_file;
+
         mainw->new_blend_file = -1;
       } else {
         lives_widget_show_all(mainw->playframe);
@@ -8671,6 +8684,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       }
     } else {
       if (IS_VALID_CLIP(new_file)) {
+        track_decoder_free(1, mainw->blend_file, new_file);
         mainw->blend_file = new_file;
         if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
                                  || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))
@@ -8772,7 +8786,10 @@ void weed_generator_end(weed_plant_t *inst) {
     key_to_instance[fg_generator_key][fg_generator_mode] = NULL;
     filter_mutex_unlock(fg_generator_key);
     fg_gen_to_start = fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
-    if (mainw->blend_file == mainw->current_file) mainw->blend_file = -1;
+    if (mainw->blend_file == mainw->current_file) {
+      track_decoder_free(1, mainw->blend_file, -1);
+      mainw->blend_file = -1;
+    }
   }
 
   if (inst) wge_inner(inst); // unref inst + compound parts
@@ -8804,6 +8821,7 @@ void weed_generator_end(weed_plant_t *inst) {
   if (is_bg) {
     mainw->pre_src_file = mainw->current_file;
     mainw->current_file = mainw->blend_file;
+    track_decoder_free(1, mainw->blend_file, mainw->new_blend_file);
     mainw->blend_file = mainw->new_blend_file;
     mainw->new_blend_file = -1;
     // close generator file and switch to original file if possible
@@ -8876,7 +8894,7 @@ boolean weed_playback_gen_start(void) {
 
   if (cfile->frames == 0 && fg_gen_to_start == -1 && bg_gen_to_start != -1) {
     fg_gen_to_start = bg_gen_to_start;
-    bg_gen_to_start = -1;
+    bgs = bg_gen_to_start = -1;
   }
 
   if (fg_gen_to_start != -1) {
@@ -8952,17 +8970,17 @@ deinit4:
 
   inst = NULL;
 
-  if (bg_gen_to_start != -1) {
-    filter_mutex_lock(bg_gen_to_start);
+  if (bgs != -1) {
+    filter_mutex_lock(bgs);
 
     // check is still gen
     if (mainw->num_tr_applied > 0
-        && enabled_in_channels(weed_filters[key_to_fx[bg_gen_to_start][key_modes[bg_gen_to_start]]],
+        && enabled_in_channels(weed_filters[key_to_fx[bgs][key_modes[bgs]]],
                                FALSE) == 0) {
-      if ((inst = weed_instance_obtain(bg_gen_to_start, key_modes[bg_gen_to_start])) == NULL) {
+      if ((inst = weed_instance_obtain(bgs, key_modes[bgs])) == NULL) {
         // restart bg generator
-        if (!weed_init_effect(bg_gen_to_start)) {
-          filter_mutex_unlock(bg_gen_to_start);
+        if (!weed_init_effect(bgs)) {
+          filter_mutex_unlock(bgs);
           return TRUE;
         }
         was_started = TRUE;
@@ -8976,11 +8994,11 @@ deinit4:
         // 2nd playback
         int playing_file = mainw->playing_file;
         mainw->playing_file = -100; //kludge to stop playing a second time
-        if (!weed_init_effect(bg_gen_to_start)) {
+        if (!weed_init_effect(bgs)) {
           error = WEED_ERROR_NOT_READY;
         }
         mainw->playing_file = playing_file;
-        orig_inst = weed_instance_obtain(bg_gen_to_start, key_modes[bg_gen_to_start]);
+        orig_inst = weed_instance_obtain(bgs, key_modes[bgs]);
       } else {
         if (!was_started) {
           orig_inst = inst;
@@ -9003,13 +9021,14 @@ genstart2:
 
       if (error != WEED_SUCCESS) {
 undoit:
+        track_decoder_free(1, mainw->blend_file, -1);
         mainw->blend_file = -1;
 
-        if (key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]] == inst) {
-          key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]] = NULL;
-          if (rte_key_is_enabled(ABS(bg_gen_to_start), FALSE)) mainw->rte &= ~(GU641 << ABS(bg_gen_to_start));
+        if (key_to_instance[bgs][key_modes[bgs]] == inst) {
+          key_to_instance[bgs][key_modes[bgs]] = NULL;
+          if (rte_key_is_enabled(ABS(bgs), FALSE)) mainw->rte &= ~(GU641 << ABS(bgs));
         }
-        filter_mutex_unlock(bg_gen_to_start);
+        filter_mutex_unlock(bgs);
         if (inst) {
           char *tmp;
           filter = weed_instance_get_filter(inst, TRUE);
@@ -9038,7 +9057,7 @@ deinit5:
         return FALSE;
       }
 
-      filter_mutex_unlock(bg_gen_to_start);
+      filter_mutex_unlock(bgs);
 
       if (!IS_VALID_CLIP(mainw->blend_file)
           || (mainw->files[mainw->blend_file]->frames > 0
@@ -9061,6 +9080,7 @@ deinit5:
 
         // open as a clip with 1 frame
         cfile->start = cfile->end = cfile->frames = 1;
+        track_decoder_free(1, mainw->blend_file, mainw->current_file);
         mainw->blend_file = mainw->current_file;
         mainw->files[mainw->blend_file]->ext_src = inst;
         mainw->files[mainw->blend_file]->ext_src_type = LIVES_EXT_SRC_FILTER;
@@ -10122,6 +10142,7 @@ boolean rte_key_setmode(int key, int newmode) {
 
   key_modes[real_key] = newmode;
 
+  track_decoder_free(1, mainw->blend_file, blend_file);
   mainw->blend_file = blend_file;
 
   if (inst) {
@@ -12984,6 +13005,7 @@ boolean set_autotrans(int clip) {
           rte_key_on_off(key + 1, TRUE);
           inst = weed_instance_obtain(key, mode);
           if (inst) {
+            track_decoder_free(1, mainw->blend_file, clip);
             mainw->blend_file = clip;
             prefs->autotrans_amt = 0.;
             set_trans_amt(key, mode, &prefs->autotrans_amt);

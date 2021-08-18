@@ -3310,64 +3310,60 @@ THIS IS AN EXPERIMENTAL ADDITION, AND SOME DETAILS MAY CHANGE.
 For some filters, it may be visually pleasing for the filter instance to "ease out", rather than being
 deinited and switching off right away.
 
-In this case, the plugin may
-- CREATE a GUI PLANT for the FILTER_INSTNACE withim the leaf "gui".
+In this case, the plugin may:
+- CREATE a GUI PLANT for the FILTER_INSTANCE withim the leaf "gui".
 
 
-- within the instance GUI, there are the folloewing leaves:
+- within the instance GUI, there are the following leaves:
 
 "ease_out_frames" : WEED_SEED_INT
 
-this value may be set by the plugin to a number representing the number of processing cycles for the
-filter to smoothly return to a "neutral" state, i.e. when this value reaches 0, the output will look identical
+this value may be set by the plugin to a number representing the number of processing cycles (including the current one)
+for the filter to smoothly return to a "neutral" state, i.e. when this value reaches 0, the output will look identical
 to the input. The value may be updated during each process_func() call.
 
 The value of the leaf is linked to some kind of internal state for the plugin.
-The value should be set such that decreasing it by one each cycle causes the plugin to return smoothly no neutral.
+The value should be set such that decreasing it by one each cycle causes the plugin to return smoothly to neutral.
 
 e.g it could be a count of previous frames stored in an internal  buffer, and reducing this count by 1 each cycle
 would gradually return the output to neutral.
 
+(this is somewhat analagous to the "transition" parameter for transition filters).
 
-The host can request "easing out" by setting a second leaf in the instance:
+
+The host can request "easing out" by setting a second leaf in the instance GUI:
 
 "ease_out" : WEED_SEED_INT
 
-If this value is set to non-zero, then for that process_func() call, and each following call, the filter must take 1 step
-towards returning the output channel to the neutral state, and additionally it MUST reduce the
-value of "ease_out_frames" by 1.
+the host must set the value of this leaf to be >= 0 and <= to the value which the plugin set in "ease_out_frames"
 
-Once "ease_out_frames" reaches zero, the process_func() should simply copy input to output unaltered,
+If the host does set this leaf, then the plugin should attempt to go to a state where it can return to neutral
+in that number of frames. It should also update the value of "ease_out_frames" to be equal to this value - 1.
+(subtracting 1 to represent the current processing cycle).
+
+The host should only ever reduce this value, but may do so at any rate desired. The plugin should attempt to keep track of
+the values set by the host.
+
+Once "ease_out" reaches zero, the process_func() should simply copy input to output unaltered,
 or if it is running 'inplace' then it should do nothing, but just return WEED_SUCCESS.
 Output parameters, if any, should be set as they normally would be.
 
 
 
-- If "ease_out" is subsequently deleted by the host, or set to 0, then the filter may resume normal operation.
+- If "ease_out" is subsequently deleted by the host, then the filter may resume normal operation.
 Thus the filter should check for this at the start of its process_func(), and if this is the case then it should
 abort the easing process.
 
 In case this is not possible (i.e the plugin has somehow committed to easing out), the plugin should ease down to
-zero as normal however it must in this case  return WEED_ERROR_REINIT_NEEDED from each process_func() call.
+zero as normal, however it must in this case return WEED_ERROR_REINIT_NEEDED from each process_func() call.
 
 
 In case for some reason it is not possible for the filter to continue easing out, then
 it should return WEED_ERROR_REINIT_NEEDED.
 
 
-The value of "ease_out_frames" may be reduced by zero or by more than 1; however this is undesirable behaviour
-and should be avoided if at all possible.
 
-
-Host controlled easing:
-
-In many cases, the plugin filter may be able to return to "neutral" over any number of steps. In this case it may indicate
-this to the host by setting "ease_out_frames" to a negative value.
-
-When the host wants to initiate easing out, it can set the value of "ease_out" to an integer greater than zero.
-The plugin should aknowledge this by setting "ease_out_frames" to the same value, and then continuing exactly as if the plugin
-had set this value itself. (i.e take one step towards neutral, subtract 1 from "ease_out_frames" and so on.)
-
+TODO:
 
 
 "ease_in_frames" : WEED_SEED_INT

@@ -1023,7 +1023,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int bleft = cdata->offs_x, bright = cdata->frame_width - cdata->width - bleft;
   int ret;
   int64_t jump_limit = cdata->jump_limit;
-  int64_t xframe;
+  int64_t xframe, cframe;
   int rowstride, xrowstride;
   int p, i;
 
@@ -1079,9 +1079,13 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     }
   }
 
-  //#define DEBUG
-  if (cdata->fps) time = ((double)tframe) / cdata->fps;
+#define DEBUG
+  if (cdata->fps) time = ((double)tframe + 1.) / cdata->fps;
   target_pts = time * (double)AV_TIME_BASE;
+
+#ifndef DEBUG
+  fprintf(stderr, "pt a1 %ld %ld\n", priv->last_frame, tframe);
+#endif
 
 #ifdef TEST_CACHING
   priv->pFrame = get_from_cache(priv, target_pts);
@@ -1110,9 +1114,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     int64_t xtarget_pts;
     xtimex = get_current_ticks();
 
-#ifdef DEBUG
-    fprintf(stderr, "pt a1 %ld %ld\n", priv->last_frame, tframe);
-#endif
     // seek to new frame
     if (priv->pFrame) {
       av_frame_unref(priv->pFrame);
@@ -1123,7 +1124,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       // seek to same frame - we need to ensure we go back at least one frame, else we will
       // read the next packets and be one frame ahead
       if (cdata->fps)
-        time = (tframe >= 0 ? (double)tframe - 1. : tframe) / cdata->fps;
+        time = (tframe >= 0 ? (double)tframe : tframe + 1.) / cdata->fps;
       xtarget_pts = time * (double)AV_TIME_BASE;
     } else {
       // try to seek straight to keyframe
@@ -1266,7 +1267,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       if (gotFrame) break;
     }
 #ifdef DEBUG
-    fprintf(stderr, "pt 1 %ld %d %ld %ld %d %d\n", tframe, gotFrame, MyPts, gotFrame ? priv->pFrame->best_effort_timestampy : 0,
+    fprintf(stderr, "pt 1 %ld %d %ld %ld %d %d\n", tframe, gotFrame, MyPts, gotFrame
+            ? (int64_t)(priv->pFrame->best_effort_timestamp
+                        * cdata->fps * s->time_base.num / s->time_base.den) : 0,
             priv->pFrame->color_trc, priv->pFrame->color_range);
 #endif
 
@@ -1317,12 +1320,16 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     }
 
     //fprintf(stderr, "VALS %ld -> %ld, %d\n", MyPts, target_pts, gotFrame);
-    if (MyPts >= target_pts - 1) {
+    if (cdata->fps && s->time_base.den) {
+      cframe = (int64_t)(priv->pFrame->best_effort_timestamp
+                         * cdata->fps * s->time_base.num / s->time_base.den) - 1;
+    } else cframe = -1;
+    if (cframe == tframe || MyPts >= target_pts - 1) {
       //fprintf(stderr, "frame found !\n");
-      if (cdata->fps) {
-        MyPts += (double)AV_TIME_BASE / cdata->fps;
-        priv->last_pts = MyPts;
-      }
+      /* if (cdata->fps) { */
+      /*   MyPts += (double)AV_TIME_BASE / cdata->fps; */
+      priv->last_pts = MyPts;
+      //}
       hit_target = TRUE;
       xtimex = timex;
       break;

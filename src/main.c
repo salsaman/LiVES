@@ -4431,6 +4431,11 @@ static boolean lives_startup2(livespointer data) {
   mainw->no_switch_dprint = TRUE;
   if (mainw->current_file > -1 && !mainw->multitrack) {
     switch_clip(1, mainw->current_file, TRUE);
+#ifdef ENABLE_GIW
+    giw_timeline_set_max_size(GIW_TIMELINE(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
+#endif
+    lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
+    lives_widget_queue_draw(mainw->hruler);
   }
 
   if (!palette || !(palette->style & STYLE_LIGHT)) {

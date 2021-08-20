@@ -1078,6 +1078,8 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
 
       fbuff->bytes = 0;
 
+      fbuff->ptr = fbuff->buffer;
+
       fbuff->eof = FALSE;
       newoffs = fbuff->offset;
     }

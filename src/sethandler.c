@@ -597,6 +597,19 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
     cleanup_set_dir(old_set);
   }
 
+  if (mainw->bad_lmaps) {
+    LiVESList *lmap_node = mainw->bad_lmaps;
+    while (lmap_node) {
+      layout_map *lmap_entry = (layout_map *)lmap_node->data;
+      if (lmap_entry->name) lives_free(lmap_entry->name);
+      if (lmap_entry->handle) lives_free(lmap_entry->handle);
+      lives_list_free_all(&lmap_entry->list);
+      lmap_node = lmap_node->next;
+    }
+    lives_list_free(mainw->bad_lmaps);
+    mainw->bad_lmaps = NULL;
+  }
+
   if (!mainw->was_set && !lives_strcmp(old_set, mainw->set_name)) {
     // set name was set by export or save layout, now we need to update our layout map
     layout_map_dir = LAYOUTS_DIR(old_set);
@@ -727,15 +740,8 @@ void recover_layout_map(void) {
       }
       if (!mlist) break;
     }
-    lmap_node = mlist;
-    while (lmap_node) {
-      lmap_entry = (layout_map *)lmap_node->data;
-      if (lmap_entry->name) lives_free(lmap_entry->name);
-      if (lmap_entry->handle) lives_free(lmap_entry->handle);
-      lives_list_free_all(&lmap_entry->list);
-      lmap_node = lmap_node->next;
-    }
-    if (mlist) lives_list_free(mlist);
+
+    mainw->bad_lmaps = mlist;
   }
   if (mask) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(mask));
 }

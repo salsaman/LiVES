@@ -95,7 +95,6 @@ static void getenv_piece(char *target, size_t tlen, char *envvar, int num) {
 
 static weed_error_t ladspa_init(weed_plant_t *inst) {
   weed_plant_t *filter = weed_instance_get_filter(inst);
-  fprintf(stderr, "ladspa init\n");
   if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {
     lad_instantiate_f lad_instantiate_func =
       (lad_instantiate_f)weed_get_funcptr_value(filter, "plugin_lad_instantiate_func", NULL);
@@ -147,7 +146,6 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
 
 
 static weed_error_t ladspa_deinit(weed_plant_t *inst) {
-  fprintf(stderr, "ladspa deinit\n");
   if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {
     _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", NULL);
     weed_plant_t *filter = weed_instance_get_filter(inst);

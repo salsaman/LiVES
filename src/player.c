@@ -171,6 +171,40 @@ void player_sensitize(void) {
 }
 
 
+void track_decoder_free(int i, int oclip, int nclip) {
+  if (oclip == nclip) return;
+  if (mainw->old_active_track_list[i] == oclip) {
+    if (mainw->track_decoders[i]) {
+      boolean can_free = TRUE;
+      if (oclip < 0 || IS_VALID_CLIP(oclip)) {
+        if (IS_VALID_CLIP(oclip)) {
+          lives_clip_t *xoclip = mainw->files[oclip];
+          if (mainw->track_decoders[i] != (lives_decoder_t *)xoclip->ext_src) {
+            // remove the clone for oclip
+            if (xoclip->n_altsrcs > 0
+                && mainw->track_decoders[i] == (lives_decoder_t *)xoclip->alt_srcs[0]) {
+              if (oclip == mainw->blend_file && mainw->blend_layer
+                  && weed_plant_has_leaf(mainw->blend_layer, LIVES_LEAF_ALTSRC)) {
+                weed_leaf_delete(mainw->blend_layer, LIVES_LEAF_ALTSRC);
+              }
+              lives_free(xoclip->alt_srcs);
+              xoclip->alt_srcs = NULL;
+              lives_free(xoclip->alt_src_types);
+              xoclip->alt_src_types = NULL;
+              xoclip->n_altsrcs = 0;
+            }
+          } else can_free = FALSE;
+        }
+      }
+      if (can_free) clip_decoder_free(mainw->track_decoders[i]);
+      else chill_decoder_plugin(oclip); /// free buffers to relesae memory
+      mainw->track_decoders[i] = NULL;
+    }
+    mainw->old_active_track_list[i] = 0;
+  }
+}
+
+
 LIVES_GLOBAL_INLINE void init_track_decoders(void) {
   int i;
   for (i = 0; i < MAX_TRACKS; i++) {
@@ -185,6 +219,7 @@ LIVES_GLOBAL_INLINE void free_track_decoders(void) {
     if (mainw->track_decoders[i] &&
         (mainw->active_track_list[i] <= 0 || mainw->track_decoders[i] != mainw->files[mainw->active_track_list[i]]->ext_src))
       clip_decoder_free(mainw->track_decoders[i]);
+    mainw->track_decoders[i] = NULL;
   }
 }
 
@@ -398,40 +433,6 @@ boolean record_setup(ticks_t actual_ticks) {
     mainw->record_paused = FALSE;
   }
   return TRUE;
-}
-
-
-void track_decoder_free(int i, int oclip, int nclip) {
-  if (oclip == nclip) return;
-  if (mainw->old_active_track_list[i] == oclip) {
-    if (mainw->track_decoders[i]) {
-      boolean can_free = TRUE;
-      if (oclip < 0 || IS_VALID_CLIP(oclip)) {
-        if (IS_VALID_CLIP(oclip)) {
-          lives_clip_t *xoclip = mainw->files[oclip];
-          if (mainw->track_decoders[i] != (lives_decoder_t *)xoclip->ext_src) {
-            // remove the clone for oclip
-            if (xoclip->n_altsrcs > 0
-                && mainw->track_decoders[i] == (lives_decoder_t *)xoclip->alt_srcs[0]) {
-              if (oclip == mainw->blend_file && mainw->blend_layer
-                  && weed_plant_has_leaf(mainw->blend_layer, LIVES_LEAF_ALTSRC)) {
-                weed_leaf_delete(mainw->blend_layer, LIVES_LEAF_ALTSRC);
-              }
-              lives_free(xoclip->alt_srcs);
-              xoclip->alt_srcs = NULL;
-              lives_free(xoclip->alt_src_types);
-              xoclip->alt_src_types = NULL;
-              xoclip->n_altsrcs = 0;
-            }
-          } else can_free = FALSE;
-        }
-      }
-      if (can_free) clip_decoder_free(mainw->track_decoders[i]);
-      else chill_decoder_plugin(oclip); /// free buffers to relesae memory
-      mainw->track_decoders[i] = NULL;
-    }
-    mainw->old_active_track_list[i] = 0;
-  }
 }
 
 

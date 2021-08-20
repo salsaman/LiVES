@@ -1069,7 +1069,7 @@ static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame)
 {return (int64_t)((double)(frame) * 1000. / cdata->fps);}
 
 static int64_t dts_to_frame(const lives_clip_data_t *cdata, int64_t dts)
-{ return (int64_t)((double)dts / 1000. * cdata->fps - .5);}
+{ return (int64_t)((double)dts / 1000. * cdata->fps);}
 
 //////////////////////////////////////////////////////////////////
 
@@ -2548,8 +2548,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
                   int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
   lives_mkv_priv_t *priv = cdata->priv;
+  AVStream *s = priv->vidst;
   int64_t target_pts = frame_to_dts(cdata, tframe);
-  int64_t nextframe = 0;
+  int64_t nextframe = 0, cframe;
   int64_t timex, xtimex, sbtime;
   int xheight = cdata->frame_height, pal = cdata->current_palette;
   int nplanes = 1, dstwidth = cdata->width, psize = 1;
@@ -2738,8 +2739,18 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
         if (got_picture) break;
       }
 
+      if (0 && cdata->fps && s->time_base.den) {
+        cframe = (int64_t)(priv->picture->best_effort_timestamp
+                           * cdata->fps * s->time_base.num / s->time_base.den);
+        if (cframe != nextframe) {
+          fprintf(stderr, "mkv_decoder: correcting frame index from %ld to %ld\n", nextframe, cframe);
+          nextframe = cframe;
+        }
+      } else cframe = -1;
+
       priv->last_frame = nextframe;
       nextframe++;
+
       if (nextframe > cdata->nframes) goto cleanup;
 
       xtimex = (timex = get_current_ticks()) - xtimex;

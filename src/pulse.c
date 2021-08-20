@@ -483,7 +483,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                (!mainw->multitrack && IS_VALID_CLIP(pulsed->playing_file) && pulsed->seek_pos > afile->afilesize))
               && pulsed->read_abuf < 0) && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack))
             || pulsed->is_paused || (mainw->pulsed_read && mainw->pulsed_read->playing_file != -1))) {
-
       if (pulsed->seek_pos < 0 && IS_VALID_CLIP(pulsed->playing_file) && pulsed->in_arate > 0) {
         pulsed->seek_pos += (double)(pulsed->in_arate / pulsed->out_arate) * nsamples * qnt;
         pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
@@ -495,8 +494,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
       if (IS_VALID_CLIP(pulsed->playing_file) && !mainw->multitrack
           && pulsed->seek_pos > afile->afilesize && pulsed->in_arate < 0) {
-        pulsed->seek_pos += (pulsed->in_arate / pulsed->out_arate) * nsamples * pulsed->in_achans * pulsed->in_asamps / 8;
-        pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos - qnt, qnt);
+        pulsed->seek_pos += (pulsed->in_arate / pulsed->out_arate) * nsamples * qnt;
+        pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos - qnt + 1, qnt);
         if (pulsed->seek_pos < afile->afilesize) {
           pad_bytes = (afile->afilesize - pulsed->real_seek_pos); // -ve val
           pulsed->real_seek_pos = pulsed->seek_pos = afile->afilesize;
@@ -759,7 +758,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 /// read remaining bytes
                 lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE);
                 pulsed->seek_pos = ALIGN_CEIL64(seek_start, qnt);
-                if (((mainw->agen_key == 0 && !mainw->agen_needs_reinit))) {
+                if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
                   lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
                   pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd,
                                            (void *)(pulsed->aPlayPtr->data) + in_bytes - pad_bytes -
@@ -812,6 +811,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           if (pulsed->aPlayPtr->size < in_bytes) {
             /// if we are a few bytes short, pad with silence. If playing fwd we pad at the end, backwards we pad the beginning
             /// (since the buffer will be reversed)
+
+            // NOTE: this is on the Input side - shortfalls in the output side after conversion
+            // are handled below
             if (pulsed->in_arate > 0) {
               append_silence(-1, (void *)pulsed->aPlayPtr->data, pulsed->aPlayPtr->size, in_bytes,
                              afile->asampsize >> 3, afile->signed_endian & AFORM_UNSIGNED,
@@ -915,11 +917,13 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #endif
             if (numFramesToWrite < pulseFramesAvailable) {
               // because of rounding, occasionally we get a sample or two short. Here we duplicate the last samples
-              // so as not to jump to leave a zero filled gap
-              size_t lack = (pulseFramesAvailable - numFramesToWrite) * pulsed->out_achans;
-              lives_memcpy((short *)pulsed->sound_buffer + numFramesToWrite,
-                           (short *)pulsed->sound_buffer + numFramesToWrite - lack, lack * 2);
-
+              // so as not to leave a zero filled gap
+              size_t lack = (pulseFramesAvailable - numFramesToWrite);
+              for (size_t ff = 0; ff < lack; ff++) {
+                lives_memcpy((short *)pulsed->sound_buffer + (numFramesToWrite + ff) * pulsed->out_achans,
+                             (short *)pulsed->sound_buffer + (numFramesToWrite - 1) * pulsed->out_achans,
+                             2 * pulsed->out_achans);
+              }
               numFramesToWrite = pulseFramesAvailable;
 #ifdef DEBUG_PULSE
               lives_printerr("duplicated last %ld samples\n", lack / pulsed->out_achans);

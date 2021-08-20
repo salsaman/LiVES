@@ -3988,7 +3988,9 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
       if (!(rte_key_is_enabled(i, TRUE))) {
         // if anything is connected to ACTIVATE, the fx may be activated
         if (is_audio_thread) {
+          filter_mutex_unlock(i);
           pconx_chain_data(i, key_modes[i], TRUE);
+          filter_mutex_lock(i);
         }
         if (!(rte_key_is_enabled(i, TRUE))) {
           filter_mutex_unlock(i);
@@ -6462,15 +6464,11 @@ weed_plant_t *_weed_instance_obtain(int line, char *file, int key, int mode) {
   // caller MUST call weed_instance_unref() when instance is no longer needed
   weed_plant_t *instance;
 
-  if (mode < 0 || mode > rte_key_getmaxmode(key + 1)) return NULL;
-
-  if (key < FX_KEYS_MAX_VIRTUAL) filter_mutex_lock(key);
-  _weed_instance_ref(key_to_instance[key][mode]);
-  instance = key_to_instance[key][mode];
+  if (key < 0 || key >= FX_KEYS_MAX || mode < 0 || mode > rte_key_getmaxmode(key + 1)) return NULL;
+  _weed_instance_ref((instance = key_to_instance[key][mode]));
 #ifdef DEBUG_REFCOUNT
   if (instance) g_print("wio %p at line %d in file %s\n", instance, line, file);
 #endif
-  if (key < FX_KEYS_MAX_VIRTUAL) filter_mutex_unlock(key);
   return instance;
 }
 

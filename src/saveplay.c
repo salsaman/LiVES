@@ -2570,8 +2570,16 @@ void play_file(void) {
     lives_free(com3);
   }
 
-  if (mainw->play_window && !mainw->multitrack) lives_widget_hide(mainw->preview_controls);
-
+  if (mainw->play_window && !mainw->multitrack) {
+    lives_widget_hide(mainw->preview_controls);
+    if (1) {
+      gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE);
+      gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), FALSE);
+      lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), NULL);
+      detach_accels(FALSE);
+      lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
+    }
+  }
   // if recording, refrain from writing audio until we are ready
   if (mainw->record) mainw->record_paused = TRUE;
 
@@ -3021,14 +3029,14 @@ void play_file(void) {
 
   if (prefs->stop_screensaver) lives_reenable_screensaver();
 
-  if (mainw->play_window) {
-    if (prefs->show_gui) {
+  if (prefs->show_gui) {
+    if (mainw->play_window) {
       detach_accels(TRUE);
       gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), TRUE);
       gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), TRUE);
       lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), get_transient_full());
-      lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
     }
+    lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
   }
 
   if (!mainw->multitrack && mainw->ext_audio_mon)

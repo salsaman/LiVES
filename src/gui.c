@@ -2919,8 +2919,8 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_undo_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->redo), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_redo_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->copy), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_copy_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->copy), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_copy_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->mt_menu), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_multitrack_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->cut), LIVES_WIDGET_ACTIVATE_SIGNAL,

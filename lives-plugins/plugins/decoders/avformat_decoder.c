@@ -1079,11 +1079,11 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     }
   }
 
-#define DEBUG
+  //#define DEBUG
   if (cdata->fps) time = ((double)tframe + 1.) / cdata->fps;
   target_pts = time * (double)AV_TIME_BASE;
 
-#ifndef DEBUG
+#ifdef DEBUG
   fprintf(stderr, "pt a1 %ld %ld\n", priv->last_frame, tframe);
 #endif
 

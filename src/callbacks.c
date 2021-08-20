@@ -11537,6 +11537,7 @@ void on_fade_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     if (!menuitem) {
       endt = cfile->undo1_dbl;
       startt = cfile->undo2_dbl;
+      time = endt - startt;
     } else {
       if (type == 0) {
         cfile->undo2_dbl = startt = 0.;
@@ -11568,8 +11569,10 @@ void on_fade_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
       return;
     }
+  }
 
-    if (!aud_d->is_sel)
+  if (menuitem || user_data) {
+    if (!menuitem || !aud_d->is_sel)
       msg = lives_strdup_printf(_("%s over %.1f seconds..."), msg2, time);
     else
       msg = lives_strdup_printf(_("%s from time %.2f seconds to %.2f seconds..."), msg2, startt, endt);
@@ -11608,7 +11611,7 @@ void on_fade_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_alarm_clear(alarm_handle);
 
   end_threaded_dialog();
-  d_print_done();
+  if (menuitem) d_print_done();
 
   cfile->changed = TRUE;
   reget_afilesize(mainw->current_file);

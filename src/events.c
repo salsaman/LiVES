@@ -3979,15 +3979,17 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         weed_plant_t *gui;
         for (i = 0; i < nev; i++) {
           init_event = (weed_plant_t *)eevents[i];
-          key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, NULL);
-          key = atoi(key_string);
-          lives_free(key_string);
-          inst = rte_keymode_get_instance(key + 1, 0);
-          weed_set_boolean_value(inst, LIVES_LEAF_AUTO_EASING, WEED_TRUE);
-          gui = weed_instance_get_gui(inst, FALSE);
-          if (gui) {
-            int easeval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL);
-            if (easeval) weed_set_int_value(gui, WEED_LEAF_EASE_OUT, easeval);
+          if (init_event) {
+            key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, NULL);
+            key = atoi(key_string);
+            lives_free(key_string);
+            inst = rte_keymode_get_instance(key + 1, 0);
+            weed_set_boolean_value(inst, LIVES_LEAF_AUTO_EASING, WEED_TRUE);
+            gui = weed_instance_get_gui(inst, FALSE);
+            if (gui) {
+              int easeval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL);
+              if (easeval) weed_set_int_value(gui, WEED_LEAF_EASE_OUT, easeval);
+            }
           }
         }
         lives_free(eevents);
@@ -4136,6 +4138,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                                        cfile->hsize, cfile->vsize, pchains);
 
             for (i = 0; layers[i]; i++) {
+              weed_layer_unref(layers[i]);
               if (layer != layers[i]) {
                 check_layer_ready(layers[i]);
                 weed_layer_free(layers[i]);
@@ -4999,6 +5002,7 @@ boolean render_to_clip(boolean new_clip) {
   LiVESResponseType response;
   boolean retval = TRUE, rendaud = TRUE, rendvid = TRUE;
   boolean norm_after = FALSE;
+  boolean trans_sel = TRUE; // TODO
   boolean enc_lb = prefs->enc_letterbox;
   int xachans = 0, xarate = 0, xasamps = 0, xse = 0;
   int current_file = mainw->current_file;
@@ -5261,16 +5265,29 @@ boolean render_to_clip(boolean new_clip) {
       if (afade_in_secs > 0.) {
         if (afade_in_secs > cfile->laudio_time) afade_in_secs = cfile->laudio_time;
         cfile->undo1_int = 0; // fade in
-        cfile->undo2_dbl = 0.;
-        cfile->undo1_dbl = afade_in_secs;
-        on_fade_audio_activate(NULL, NULL);
+
+        cfile->undo2_dbl = trans_sel ?  calc_time_from_frame(mainw->current_file, cfile->start) : 0.;
+        if (cfile->undo2_dbl + afade_in_secs > cfile->laudio_time) {
+          afade_in_secs -= cfile->undo2_dbl + afade_in_secs - cfile->laudio_time;
+        }
+        cfile->undo1_dbl = cfile->undo2_dbl + afade_in_secs;
+
+        on_fade_audio_activate(NULL, LIVES_INT_TO_POINTER(0));
       }
       if (afade_out_secs > 0.) {
+        double entime;
         cfile->undo1_int = 1; // fade out
-        if (afade_out_secs > cfile->laudio_time) afade_out_secs = cfile->laudio_time;
-        cfile->undo2_dbl = cfile->laudio_time - afade_out_secs;
-        cfile->undo1_dbl = cfile->laudio_time;
-        on_fade_audio_activate(NULL, NULL);
+        cfile->undo1_dbl = calc_time_from_frame(mainw->current_file, cfile->end);
+
+        if (cfile->undo1_dbl > cfile->laudio_time) cfile->undo1_dbl = cfile->laudio_time;
+
+        if (trans_sel) entime = calc_time_from_frame(mainw->current_file, cfile->end);
+        else entime = cfile->video_time;
+
+        if (cfile->undo1_dbl > entime) cfile->undo1_dbl = entime;
+        cfile->undo2_dbl = cfile->undo1_dbl - afade_out_secs;
+        if (cfile->undo2_dbl < 0.) cfile->undo2_dbl = 0.;
+        on_fade_audio_activate(NULL, LIVES_INT_TO_POINTER(0));
       }
       d_print_done();
       rendaud = FALSE;
@@ -5352,14 +5369,14 @@ boolean render_to_clip(boolean new_clip) {
           cfile->undo1_int = 0; // fade in
           cfile->undo2_dbl = 0.;
           cfile->undo1_dbl = afade_in_secs;
-          on_fade_audio_activate(NULL, NULL);
+          on_fade_audio_activate(NULL, LIVES_INT_TO_POINTER(0));
         }
         if (afade_out_secs > 0.) {
           if (afade_out_secs > cfile->laudio_time) afade_out_secs = cfile->laudio_time;
           cfile->undo1_int = 1; // fade out
           cfile->undo2_dbl = cfile->laudio_time - afade_out_secs;
           cfile->undo1_dbl = cfile->laudio_time;
-          on_fade_audio_activate(NULL, NULL);
+          on_fade_audio_activate(NULL, LIVES_INT_TO_POINTER(1));
         }
       }
 

@@ -1213,7 +1213,6 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
 
 boolean rte_on_off_callback_fg(LiVESToggleButton * button, livespointer user_data) {
   int key = LIVES_POINTER_TO_INT(user_data);
-  g_print("TOGGLED %d\n", key);
   return _rte_on_off(FALSE, key);
 }
 

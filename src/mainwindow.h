@@ -877,6 +877,8 @@ typedef struct {
 
   LiVESList *new_lmap_errors;
 
+  LiVESList *bad_lmaps;
+
   short endian;
 
   boolean go_away;

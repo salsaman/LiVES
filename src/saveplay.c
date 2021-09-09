@@ -2960,7 +2960,6 @@ void play_file(void) {
           if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
             lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
             while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed)) {
-              sched_yield(); // wait for seek
               lives_usleep(prefs->sleep_time);
             }
             lives_alarm_clear(alarm_handle);
@@ -2975,15 +2974,10 @@ void play_file(void) {
             mainw->pulsed->playing_file = -1;
             mainw->pulsed->fd = -1;
           } else {
-            while (mainw->pulsed->playing_file > -1 || mainw->pulsed->fd > 0) {
-              sched_yield();
-              lives_usleep(prefs->sleep_time);
-            }
-            pulse_driver_cork(mainw->pulsed);
+            lives_nanosleep_while_true((mainw->pulsed->playing_file > -1 || mainw->pulsed->fd > 0));
           }
-        } else {
-          pulse_driver_cork(mainw->pulsed);
         }
+        pulse_driver_cork(mainw->pulsed);
       }
     } else {
 #endif

@@ -2296,6 +2296,7 @@ ticks_t update_aud_pos(jack_driver_t *jackd, uint64_t nframes) {
 
 
 static volatile boolean in_ap = FALSE;
+
 static int audio_process(jack_nframes_t nframes, void *arg) {
   // JACK calls this periodically to get the next audio buffer
   float *out_buffer[JACK_MAX_PORTS];

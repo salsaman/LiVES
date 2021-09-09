@@ -652,29 +652,31 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less) {
 
 // read:
 // fbuff->buffer holds (fbuff->ptr - fbuff->buffer + fbuff->bytes) bytes
-// fbuff->offset is the next real read position
+// fbuff->offset is the next real read position (offest in source file), subtracting fbuff->bytes from this
+// gives the "virtual" read position
 
 // read x bytes : fbuff->ptr increases by x, fbuff->bytes decreases by x
 // if fbuff->bytes is < x, then we concat fbuff->bytes, refill buffer from file, concat remaining bytes
 // on read: fbuff->ptr = fbuff->buffer. fbuff->offset += bytes read, fbuff->bytes = bytes read
-// if fbuff->reversed is set then we seek to a position offset - 3 / 4 buffsize, fbuff->ptr = fbuff->buffer + 3 / 4 buffsz, bytes = 1 / 4 buffsz
+// if fbuff->reversed is set then when filling the buffer,
+// we first seek to a position (offset - 3 / 4 * buffsize), fbuff->ptr = fbuff->buffer + 3 / 4 buffsize, bytes = 1 / 4 buffsz
 
 
 // on seek (read only):
 // forward: seek by +z: if z < fbuff->bytes : fbuff->ptr += z, fbuff->bytes -= z
-// if z > fbuff->bytes: subtract fbuff->bytes from z. Increase fbuff->offset by remainder. Fill buffer.
+// if z > fbuff->bytes: subtract fbuff->bytes from z, and copy to out_buffer. Fill fbuff->buffer, and copy remainder.
 
 // backward: if fbuff->ptr - z >= fbuff->buffer : fbuff->ptr -= z, fbuff->bytes += z
-// fbuff->ptr - z < fbuff->buffer:  z -= (fbuff->ptr - fbuff->buffer) : fbuff->offset -= (fbuff->bytes + z) : Fill buffer
+// fbuff->ptr - z < fbuff->buffer:  z -= (fbuff->ptr - fbuff->buffer), copy to end of out_buffer : Fill fbuff->buffer
 
 // seek absolute: current viritual posn is fbuff->offset - fbuff->bytes : subtract this from absolute posn
 
-// return value is: fbuff->offset - fbuff->bytes ?
+// return value is always: fbuff->offset - fbuff->bytes
 
 // when writing we simply fill up the buffer until full, then flush the buffer to file io
 // buffer is finally flushed when we close the file (or we call file_buffer_flush)
 
-// in this case fbuff->bytes holds the number of bytes written to fbuff->buffer, fbuff->offset contains the offset in the underlying fil
+// in this case fbuff->bytes holds the number of bytes written to fbuff->buffer, fbuff->offset contains the offset in the underlying file
 
 // in append mode, seek is first the end of the file. In creat mode any existing file is truncated and overwritten.
 
@@ -747,8 +749,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
 
     if ((xbuff = find_in_file_buffers(fd)) != NULL) {
       char *msg = lives_strdup_printf("Duplicate fd (%d) in file buffers !\n%s was not removed, and\n%s will be added.", fd,
-                                      xbuff->pathname,
-                                      fbuff->pathname);
+                                      xbuff->pathname, fbuff->pathname);
       break_me("dupe fd in fbuffs");
       LIVES_ERROR(msg);
       lives_free(msg);
@@ -795,6 +796,22 @@ LIVES_GLOBAL_INLINE int lives_open_buffered_rdonly(const char *pathname) {
 #endif
 
 boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
+  // slurped files: start reading in from posn skip (bytes), done in a dedicated worker thread
+  // we keep reading until entire file is loaded
+  // fbuff->bytes increases as we read in from file, and for this type of file, fbuff->offest points to the 'virtual'
+  // read position
+  // fbuff->reversed can be set, in this case, reading n bytes will reduce offset by n, in other cases it will increase by n
+  // fbuff->skip is set to 'skip', fbuff->orig_size is set to the full size (ignoring skip)
+  // fbuff->bufsztypeis set to BUFF_SIZE_READ_SLURP;
+  // (volatile) fbuff->slurping is TRUE while the input file is being read in
+  // since the buffer is locked in memory, this should only be used for small / medium files, with short lived lifecycle
+  //
+  // seeking within the buffer is supported, provided we don't seek before 'skip'
+  // attempts to read part of the file not yet loaded will block until all data is loaded
+  // tests with mmap actually proved to be slower than simply reading in the file in chunks
+  // changing the read block size did not appear to make much difference, however
+  // we do read a smaller chunk to start with, so that small requests can be served more rapidly
+
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   off_t fsize = get_file_size(fd) - skip, bufsize = smedbytes, res;
 #if defined HAVE_POSIX_FADVISE
@@ -978,6 +995,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   ssize_t res;
   ssize_t delta = 0;
   size_t bufsize;
+  boolean reversed = fbuff->reversed;
 
   if (min < 0) min = 0;
 
@@ -989,9 +1007,16 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
     }
   } else bufsize = get_read_buff_size(fbuff->bufsztype);
 
-  if (fbuff->reversed) delta = (bufsize >> 2) * 3;
-  if (delta > fbuff->offset) delta = fbuff->offset;
-  if (bufsize - delta < min) bufsize = min + delta;
+  if (fbuff->reversed) {
+    if (min > bufsize) reversed = FALSE;
+    else {
+      delta = (bufsize >> 2);
+      if (min <= delta) {
+        delta *= 3;
+        if (delta > fbuff->offset) delta = fbuff->offset;
+      } else delta = 0;
+    }
+  }
   if (fbuff->buffer && bufsize > fbuff->ptr - fbuff->buffer + fbuff->bytes) {
     lives_freep((void **)&fbuff->buffer);
   }
@@ -1014,7 +1039,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   else fbuff->eof = FALSE;
 
 #if defined HAVE_POSIX_FADVISE || (defined _GNU_SOURCE && defined __linux__)
-  if (fbuff->reversed) {
+  if (reversed) {
 #if defined HAVE_POSIX_FADVISE
     posix_fadvise(fbuff->fd, 0, fbuff->offset - (bufsize >> 2) * 3, POSIX_FADV_RANDOM);
     posix_fadvise(fbuff->fd, fbuff->offset - (bufsize >> 2) * 3, bufsize, POSIX_FADV_WILLNEED);
@@ -1038,7 +1063,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
 
 
 static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, off_t offset) {
-  off_t newoffs;
+  off_t newoffs = 0;
   if (offset == 0) {
     if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return fbuff->offset;
     return fbuff->offset - fbuff->bytes;
@@ -1054,10 +1079,13 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
   if (offset > 0) {
     // seek forwards
     if (offset < fbuff->bytes) {
+      // we can fill with bytes in the buffer
       fbuff->ptr += offset;
       fbuff->bytes -= offset;
       newoffs =  fbuff->offset - fbuff->bytes;
     } else {
+      // otherwise, use up remaining bytes, and we will refill the buffer
+      // on the next read
       offset -= fbuff->bytes;
       fbuff->offset += offset;
       fbuff->bytes = 0;
@@ -1067,30 +1095,46 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
     // seek backwards
     offset = -offset;
     if (offset <= fbuff->ptr - fbuff->buffer) {
+      // we can use bytes in buffer
       fbuff->ptr -= offset;
       fbuff->bytes += offset;
       newoffs = fbuff->offset - fbuff->bytes;
+      //g_print("inbuff\n");
     } else {
-      offset -= fbuff->ptr - fbuff->buffer;
+      // otherwise, use up remaining bytes, and we will refill the buffer
+      // on the next read
+      size_t bufsize = fbuff->ptr - fbuff->buffer + fbuff->bytes;
+      if (fbuff->bytes > 0) {
+        // rewind virtual offset to start
+        offset -= fbuff->ptr - fbuff->buffer;
 
-      fbuff->offset = fbuff->offset - (fbuff->ptr - fbuff->buffer + fbuff->bytes) - offset;
-      if (fbuff->offset < 0) fbuff->offset = 0;
+        // rewind physical offset to start
+        fbuff->offset -= bufsize;
 
-      fbuff->bytes = 0;
+        while (offset >= bufsize) {
+          // continue stepping back if necessary
+          offset -= bufsize;
+          fbuff->offset -= bufsize;
+        }
 
-      fbuff->ptr = fbuff->buffer;
-
-      fbuff->eof = FALSE;
-      newoffs = fbuff->offset;
+        if (fbuff->offset < 0) fbuff->offset = 0;
+        newoffs = fbuff->offset - offset;
+        if (newoffs < 0) newoffs = 0;
+        fbuff->bytes = 0;
+        fbuff->ptr = fbuff->buffer;
+        fbuff->eof = FALSE;
+        fbuff->offset = newoffs;
+      }
     }
   }
-
 #ifdef HAVE_POSIX_FADVISE
   if (fbuff->reversed)
     posix_fadvise(fbuff->fd, 0, fbuff->offset - fbuff->bytes, POSIX_FADV_RANDOM);
   else
     posix_fadvise(fbuff->fd, fbuff->offset, 0, POSIX_FADV_SEQUENTIAL);
 #endif
+
+  //g_print("DOING SEEK TO %ld\n", fbuff->offset);
 
   lseek(fbuff->fd, fbuff->offset, SEEK_SET);
 
@@ -1110,27 +1154,30 @@ off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
 }
 
 
-off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset) {
+off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t posn) {
   lives_file_buffer_t *fbuff;
 
   if (!(fbuff = find_in_file_buffers(fd))) {
     LIVES_DEBUG("lives_lseek_buffered_rdonly_absolute: no file buffer found");
-    return lseek(fd, offset, SEEK_SET);
+    return lseek(fd, posn, SEEK_SET);
   }
 
   if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
-    offset -= fbuff->skip;
-    if (offset < 0) offset = 0;
-    if (offset > fbuff->orig_size) offset = fbuff->orig_size;
-    offset -= fbuff->offset;
+    posn -= fbuff->skip;
+    if (posn < 0) posn = 0;
+    if (posn > fbuff->orig_size) posn = fbuff->orig_size;
+    posn -= fbuff->offset;
   } else {
     if (!fbuff->ptr || !fbuff->buffer) {
-      fbuff->offset = offset;
+      fbuff->offset = posn;
       return fbuff->offset;
     }
-    offset -= fbuff->offset - fbuff->bytes;
+
+    // this calculation gives us the read posn
+    posn -= fbuff->offset - fbuff->bytes;
   }
-  return _lives_lseek_buffered_rdonly_relative(fbuff, offset);
+
+  return _lives_lseek_buffered_rdonly_relative(fbuff, posn);
 }
 
 
@@ -1140,6 +1187,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
   ssize_t ocount = count;
   uint8_t *ptr = (uint8_t *)buf;
   int bufsztype;
+  boolean reversed = FALSE;
 #ifdef AUTOTUNE
   double cost;
 #endif
@@ -1156,6 +1204,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
     return 0;
   }
 
+  reversed = fbuff->reversed;
   bufsztype = fbuff->bufsztype;
 
 #ifdef AUTOTUNE
@@ -1253,9 +1302,6 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
     if (count == 0) goto rd_done;
     if (fbuff->eof && !fbuff->reversed) goto rd_done;
     fbuff->nseqreads--;
-    if (fbuff->reversed) {
-      fbuff->offset -= (fbuff->ptr - fbuff->buffer) + count;
-    }
   }
 
   /// buffer used up
@@ -1286,6 +1332,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
     if (fbuff->bufsztype != bufsztype) fbuff->nseqreads = 0;
 
     while (count) {
+      fbuff->eof = FALSE;
       res = file_buffer_fill(fbuff, count);
       if (res < 0)  {
         retval = res;
@@ -1298,9 +1345,10 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       retval += res;
       fbuff->ptr += res;
       fbuff->bytes -= res;
-      if (res < count) count = 0;
-      else count -= res;
+      count -= res;
       fbuff->totbytes += res;
+      if (fbuff->eof) break;
+      if (fbuff->reversed && count > 0) fbuff->reversed = FALSE;
     }
   } else {
     // larger size -> direct read
@@ -1328,6 +1376,9 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
   }
 
 rd_done:
+
+  if (reversed) fbuff->reversed = TRUE;
+
 #ifdef AUTOTUNE
   if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
     if (tuners) {

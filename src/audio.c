@@ -662,7 +662,7 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
   if (!nSrcChannels) return;
 
   if (scale < 0.f) {
-    src_offset_d = ((double)nsamples * (-scale) + 1.);
+    src_offset_d = ((double)nsamples * (-scale));
     src_offset_i = (off_t)src_offset_d * nSrcChannels;
   }
 
@@ -717,7 +717,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
   if (!nSrcChannels) return;
 
   if (scale < 0.f) {
-    src_offset_d = ((double)nsamples * (-scale) + 1.);
+    src_offset_d = ((double)nsamples * (-scale));
     src_offset_i = (off_t)src_offset_d * nSrcChannels;
   }
 
@@ -804,7 +804,7 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
   if (!nSrcChannels) return;
 
   if (scale < 0.f) {
-    src_offset_d = ((double)nsamples * (-scale) + 1.);
+    src_offset_d = ((double)nsamples * (-scale));
     src_offset_i = (off_t)src_offset_d * nSrcChannels;
   }
 

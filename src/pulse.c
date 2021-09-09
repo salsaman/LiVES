@@ -293,6 +293,8 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, size_t nbytes) {
 
 static short *shortbuffer = NULL;
 
+static volatile boolean in_ap = FALSE;
+
 /**
    @brief write audio to pulse
 
@@ -339,6 +341,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   int new_file;
   int ret = 0;
 
+  in_ap = TRUE;
+
   sync_ready = FALSE;
 
 #ifdef USE_RPMALLOC
@@ -354,6 +358,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   if (!mainw->is_ready || !pulsed || (!LIVES_IS_PLAYING && !pulsed->msgq)) {
     sample_silence_pulse(pulsed, nbytes);
     //g_print("pt a1 %ld %d %p %d %p %ld\n",nsamples, mainw->is_ready, pulsed, mainw->playing_file, pulsed->msgq, nbytes);
+    in_ap = FALSE;
     return;
   }
 
@@ -433,6 +438,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   }
   if (got_cmd) {
     sample_silence_pulse(pulsed, nbytes);
+    in_ap = FALSE;
     return;
   }
 
@@ -494,6 +500,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
       if (IS_VALID_CLIP(pulsed->playing_file) && !mainw->multitrack
           && pulsed->seek_pos > afile->afilesize && pulsed->in_arate < 0) {
+
         pulsed->seek_pos += (pulsed->in_arate / pulsed->out_arate) * nsamples * qnt;
         pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos - qnt + 1, qnt);
         if (pulsed->seek_pos < afile->afilesize) {
@@ -506,6 +513,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #endif
       if (!pad_bytes || !pulsed->in_use) {
         sample_silence_pulse(pulsed, nbytes);
+        in_ap = FALSE;
         return;
       }
     }
@@ -526,6 +534,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         pulsed->usec_start += (pulsed->extrausec - xusec);
         pulsed->extrausec = xusec;
         //mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+        in_ap = FALSE;
         return;
         /// adjustment is .5 (rounding factor) + (if we switched clips) 1 frame (because video advances 1) + 1 (????)
       }
@@ -589,6 +598,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         ret = pa_stream_begin_write(pulsed->pstream, (void **)&pulsed->sound_buffer, &xbytes);
         if (ret) {
           sample_silence_pulse(pulsed, nbytes);
+          in_ap = FALSE;
           return;
         }
         if (xbytes < nbytes) {
@@ -681,7 +691,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #if !HAVE_PA_STREAM_BEGIN_WRITE
             pulsed->sound_buffer = (void *)(pulsed->aPlayPtr->data);
 #endif
-
             pulsed->seek_pos += in_bytes - pad_bytes;
             if (pulsed->seek_pos >= pulsed->seek_end && !afile->opening) {
               ssize_t rem = pulsed->seek_end - pulsed->real_seek_pos;
@@ -792,14 +801,20 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             if (((mainw->agen_key == 0 && !mainw->agen_needs_reinit)) && in_bytes - pulsed->aPlayPtr->size > 0) {
               /// seek / read
               pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
-              lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+
               if (pulsed->playing_file == mainw->ascrap_file || pulsed->in_arate > 0) {
+                lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
                 lives_buffered_rdonly_set_reversed(pulsed->fd, FALSE);
               } else {
                 lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE);
                 if (pulsed->aPlayPtr->size < in_bytes) {
+
+                  //g_print("SEEKING NOW %ld\n", pulsed->seek_pos);
+
+                  // here seek to pulsed->seek_pos
                   pulsed->real_seek_pos = pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
                   lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+
                   pulsed->aPlayPtr->size
                   += lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data)
                                          + pulsed->aPlayPtr->size,
@@ -838,6 +853,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #ifdef DEBUG_PULSE
           g_print("pt a4\n");
 #endif
+          in_ap = FALSE;
           return;
         }
 
@@ -888,6 +904,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             }
             if (!pulsed->sound_buffer) {
               sample_silence_pulse(pulsed, nbytes);
+              in_ap = FALSE;
               return;
             }
 #endif
@@ -1122,6 +1139,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         //}
         if (!buffer) {
           sample_silence_pulse(pulsed, nbytes);
+          in_ap = FALSE;
           return;
         }
 #endif
@@ -1169,6 +1187,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #ifdef DEBUG_PULSE
           g_print("pt X4\n");
 #endif
+          in_ap = FALSE;
           return;
         }
 
@@ -1512,8 +1531,8 @@ void pulse_shutdown(void) {
     pa_context_unref(pcon);
   }
   if (pa_mloop) {
+    lives_nanosleep_while_true(in_ap);
     pa_threaded_mainloop_stop(pa_mloop);
-    pa_threaded_mainloop_free(pa_mloop);
   }
   pcon = NULL;
   pa_mloop = NULL;
@@ -1918,13 +1937,14 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   if (msg && (msg->command == ASERVER_CMD_FILE_SEEK || msg->command == ASERVER_CMD_FILE_OPEN)) {
     alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
     while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(pulsed)) {
-      lives_nanosleep(1000);
+      lives_nanosleep(10000000);
     }
     lives_alarm_clear(alarm_handle);
     if (timeout == 0) return -1;
   }
   while (pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0) {
-    lives_nanosleep(10000);
+    //g_print("PA time delay\n");
+    lives_nanosleep(1000);
   }
   retval = (ticks_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
   if (retval == -1) retval = 0;

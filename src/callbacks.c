@@ -9850,7 +9850,7 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
   else sfile = mainw->files[mainw->playing_file];
 
   new_fps = lives_fix(lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton)), 3);
-  if (new_fps != 0.) mainw->period = TICKS_PER_SECOND_DBL / new_fps;
+  if (new_fps != 0.) mainw->period = TICKS_PER_SECOND_DBL / fabs(new_fps);
 
   if (!user_data && ((!sfile->play_paused && sfile->pb_fps == new_fps) || (sfile->play_paused && new_fps == 0.))) {
     return;

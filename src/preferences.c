@@ -1847,6 +1847,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean rec_effects = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->reffects));
   boolean rec_clips = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rclips));
   boolean rec_audio = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->raudio));
+  boolean rec_audio_alock = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->raudio_alock));
   boolean pa_gens = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->pa_gens));
   boolean rec_ext_audio = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio));
 #ifdef RT_AUDIO
@@ -1991,8 +1992,7 @@ boolean apply_prefs(boolean skip_warn) {
   char audio_player[256];
   int listlen = lives_list_length(prefs->acodec_list);
   int rec_opts = rec_frames * REC_FRAMES + rec_fps * REC_FPS + rec_effects * REC_EFFECTS + rec_clips * REC_CLIPS + rec_audio *
-                 REC_AUDIO
-                 + rec_after_pb * REC_AFTER_PB;
+                 REC_AUDIO + rec_after_pb * REC_AFTER_PB + rec_audio_alock * REC_AUDIO_AUTOLOCK;
   uint64_t warn_mask;
 
   unsigned char *new_undo_buf;
@@ -2188,8 +2188,10 @@ boolean apply_prefs(boolean skip_warn) {
   /* pref_factory_bool(PREF_SELF_TRANS, lives_toggle_button_get_active */
   /* 		    (LIVES_TOGGLE_BUTTON(prefsw->self_trans)), TRUE); */
 
+#ifdef TPLAYWINDOW
   pref_factory_int(PREF_ATRANS_KEY, &prefs->autotrans_key, lives_spin_button_get_value_as_int
                    (LIVES_SPIN_BUTTON(prefsw->spinbutton_atrans_key)), TRUE);
+#endif
 
   if (fsize_to_warn != prefs->warn_file_size) {
     prefs->warn_file_size = fsize_to_warn;
@@ -3124,6 +3126,7 @@ static void on_audp_entry_changed(LiVESWidget * audp_combo, livespointer ptr) {
     lives_widget_set_sensitive(prefsw->resync_adir, TRUE);
     lives_widget_set_sensitive(prefsw->resync_aclip, TRUE);
     lives_widget_set_sensitive(prefsw->raudio, TRUE);
+    lives_widget_set_sensitive(prefsw->raudio_alock, TRUE);
     lives_widget_set_sensitive(prefsw->pa_gens, TRUE);
     lives_widget_set_sensitive(prefsw->rextaudio, TRUE);
   } else {
@@ -3134,6 +3137,7 @@ static void on_audp_entry_changed(LiVESWidget * audp_combo, livespointer ptr) {
     lives_widget_set_sensitive(prefsw->resync_adir, FALSE);
     lives_widget_set_sensitive(prefsw->resync_aclip, FALSE);
     lives_widget_set_sensitive(prefsw->raudio, FALSE);
+    lives_widget_set_sensitive(prefsw->raudio_alock, FALSE);
     lives_widget_set_sensitive(prefsw->pa_gens, FALSE);
     lives_widget_set_sensitive(prefsw->rextaudio, FALSE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), FALSE);
@@ -3611,17 +3615,20 @@ static void do_full_reset(LiVESWidget * widget, livespointer data) {
 #define PANED_MIN 20
 
 static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
-  int pos = lives_paned_get_position(p);
+  int pos;
+  lives_widget_context_update();
+  pos = lives_paned_get_position(p);
   while (!gtk_widget_get_mapped(w)) {
     if (pos > PANED_MIN) lives_paned_set_position(p, --pos);
+    lives_nanosleep(LIVES_SHORT_SLEEP);
     lives_widget_context_update();
   }
   lives_paned_set_position(p, ++pos);
   if (gtk_widget_get_mapped(w)) {
     while (gtk_widget_get_mapped(w)) {
       lives_paned_set_position(p, ++pos);
-      lives_widget_context_update();
       lives_nanosleep(LIVES_SHORT_SLEEP);
+      lives_widget_context_update();
     }
   }
   lives_paned_set_position(p, pos + widget_opts.border_width);
@@ -5056,6 +5063,21 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   if (mainw->playing_file > 0 && mainw->record) {
     lives_widget_set_sensitive(prefsw->raudio, FALSE);
   }
+
+  if (!is_realtime_aplayer(prefs->audio_player)) {
+    lives_widget_set_sensitive(prefsw->raudio, FALSE);
+  }
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  prefsw->raudio_alock = lives_standard_check_button_new(_("Auto _lock audio on record start"),
+                         (prefs->rec_opts & REC_AUDIO_AUTOLOCK), LIVES_BOX(hbox),
+                         (tmp = H_("Setting this will cause audio to "
+                                   "become locked to the currently "
+                                   "playing clip whenever recording "
+                                   "begins. Only functions when playing internal "
+                                   "audio source.\n"
+                                   "Pressing shift + A will unlock audio.")));
+  lives_free(tmp);
 
   if (!is_realtime_aplayer(prefs->audio_player)) {
     lives_widget_set_sensitive(prefsw->raudio, FALSE);
@@ -7051,6 +7073,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(reffects, TOGGLED);
   ACTIVE(rclips, TOGGLED);
   ACTIVE(raudio, TOGGLED);
+  ACTIVE(raudio_alock, TOGGLED);
   ACTIVE(rextaudio, TOGGLED);
 
   ACTIVE(pa_gens, TOGGLED);

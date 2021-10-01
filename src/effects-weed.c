@@ -1198,7 +1198,7 @@ LIVES_GLOBAL_INLINE weed_plant_t *get_next_compound_inst(weed_plant_t *inst) {
 lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compound) {
   weed_plant_t *filter, *orig_inst = inst;
   lives_rfx_t *rfx = NULL;
-  boolean deinit_first = FALSE;
+  boolean deinit_first = FALSE, soft_deinit = FALSE;
   weed_error_t retval;
   lives_filter_error_t filter_error = FILTER_SUCCESS;
   int key = -1;
@@ -1215,7 +1215,10 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
 
   weed_instance_ref(inst);
 
-  if (weed_plant_has_leaf(inst, LIVES_LEAF_SOFT_DEINIT)) weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
+  if (weed_plant_has_leaf(inst, LIVES_LEAF_SOFT_DEINIT)) {
+    soft_deinit = weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL);
+    weed_leaf_delete(inst, LIVES_LEAF_SOFT_DEINIT);
+  }
 
   if (!mainw->multitrack) {
     if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY))
@@ -1314,6 +1317,7 @@ reinit:
     }
   }
 re_done:
+  if (soft_deinit == WEED_TRUE) weed_set_boolean_value(orig_inst, LIVES_LEAF_SOFT_DEINIT, soft_deinit);
 
   if (inst && inst != orig_inst) weed_instance_unref(inst);
   weed_instance_unref(orig_inst);
@@ -3740,7 +3744,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
       orig_inst = NULL;
 
       if (rte_key_valid(i + 1, TRUE)) {
-        if (!(rte_key_is_enabled(i, TRUE))) {
+        if (!(rte_key_is_enabled(i, FALSE))) {
           // if anything is connected to ACTIVATE, the fx may be activated
           pconx_chain_data(i, key_modes[i], FALSE);
         }
@@ -3985,7 +3989,7 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
     filter_mutex_lock(i);
 
     if (rte_key_valid(i + 1, TRUE)) {
-      if (!(rte_key_is_enabled(i, TRUE))) {
+      if (!(rte_key_is_enabled(i, FALSE))) {
         // if anything is connected to ACTIVATE, the fx may be activated
         if (is_audio_thread) {
           filter_mutex_unlock(i);

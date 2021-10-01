@@ -213,12 +213,13 @@ typedef struct {
   boolean discard_tv;
   boolean save_directories;
   int rec_opts;
-#define REC_FRAMES	(1 << 0)
-#define REC_FPS		(1 << 1)
-#define REC_EFFECTS	(1 << 2)
-#define REC_CLIPS	(1 << 3)
-#define REC_AUDIO	(1 << 4)
-#define REC_AFTER_PB	(1 << 5)
+#define REC_FRAMES		(1 << 0)
+#define REC_FPS			(1 << 1)
+#define REC_EFFECTS		(1 << 2)
+#define REC_CLIPS		(1 << 3)
+#define REC_AUDIO		(1 << 4)
+#define REC_AFTER_PB		(1 << 5)
+#define REC_AUDIO_AUTOLOCK	(1 << 6)
 
   int audio_src;
 #define AUDIO_SRC_INT 0
@@ -697,6 +698,7 @@ typedef struct {
   LiVESWidget *rclips;
   LiVESWidget *reffects;
   LiVESWidget *raudio;
+  LiVESWidget *raudio_alock;
   LiVESWidget *rextaudio;
   LiVESWidget *rintaudio;
   LiVESWidget *rdesk_audio;

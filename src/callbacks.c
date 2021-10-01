@@ -1328,7 +1328,7 @@ lives_remote_clip_request_t *utube_dl3(lives_remote_clip_request_t *req, const c
   }
 
   if (badfile) {
-    lives_kill_subprocesses(cfile->handle, TRUE);
+    if (CURRENT_CLIP_IS_VALID) lives_kill_subprocesses(cfile->handle, TRUE);
     if (mainw->error) {
       d_print_failed();
       do_error_dialog(
@@ -4809,6 +4809,12 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       mainw->record_starting = TRUE;
       if (!record_setup(actual_ticks)) return;
       toggle_record();
+      if ((prefs->rec_opts & REC_AUDIO_AUTOLOCK) && !(mainw->agen_key != 0 || mainw->agen_needs_reinit)) {
+        // TODO - use pref_factory_bitmapped
+        if (AUD_SRC_INTERNAL && AUD_SRC_REALTIME && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
+          aud_lock_act(NULL, LIVES_INT_TO_POINTER(TRUE));
+        }
+      }
       if ((prefs->rec_opts & REC_AUDIO) && (mainw->agen_key != 0 || mainw->agen_needs_reinit
                                             || prefs->audio_src == AUDIO_SRC_EXT) &&
           AUD_SRC_REALTIME)
@@ -4830,6 +4836,13 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
               "(To cancel, press 'r' or click on Play|Record Performance again before you play.)\n"));
     mainw->record = TRUE;
     toggle_record();
+    if (prefs->rec_opts & REC_AUDIO_AUTOLOCK) {
+      // TODO - use pref_factory_bitmapped
+      if (AUD_SRC_INTERNAL && is_realtime_aplayer(prefs->audio_player)
+          && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
+        aud_lock_act(NULL, LIVES_INT_TO_POINTER(TRUE));
+      }
+    }
     get_play_times();
   } else {
     d_print(_("Record cancelled.\n"));
@@ -8791,10 +8804,8 @@ void autolives_toggle(LiVESMenuItem * menuitem, livespointer user_data) {
   // store the current key/mode state
   rte_keymodes_backup(prefs->rte_keys_virtual);
 
-  com = lives_strdup_printf("/usr/bin/%s localhost %d %d%s%s%s%s", EXEC_AUTOLIVES_PL, prefs->osc_udp_port,
-                            prefs->osc_udp_port - 1, apb,
-                            trigopt, mute,
-                            debug);
+  com = lives_strdup_printf("%s localhost %d %d%s%s%s%s", EXEC_AUTOLIVES_PL, prefs->osc_udp_port,
+                            prefs->osc_udp_port - 1, apb, trigopt, mute, debug);
 
   mainw->alives_pid = lives_fork(com);
 

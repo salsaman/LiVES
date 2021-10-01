@@ -107,7 +107,7 @@ static void switch_fx_state(int hotkey) {
   uint32_t last_grabbable_effect = mainw->last_grabbable_effect;
 
   // setting this causes SOFT_DEINIT
-  THREADVAR(fx_is_auto) = TRUE;
+  if (LIVES_IS_PLAYING) THREADVAR(fx_is_auto) = TRUE;
   rte_on_off_callback_fg(NULL, LIVES_INT_TO_POINTER(hotkey));
   THREADVAR(fx_is_auto) = FALSE;
   mainw->last_grabbable_effect = last_grabbable_effect;
@@ -1247,8 +1247,8 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       // ACTIVATE / DEACTIVATE
       if (!autoscale) { // autoscale is now "user override"
         int valb = weed_get_boolean_value(sparam, WEED_LEAF_VALUE, NULL);
-        if ((valb == WEED_TRUE && (mainw->rte & (GU641 << (key))) == 0) ||
-            (valb == WEED_FALSE && (mainw->rte & (GU641 << (key)))) != 0) {
+        if ((valb == WEED_TRUE && !rte_key_is_enabled(key, FALSE)) ||
+            (valb == WEED_FALSE && rte_key_is_enabled(key, FALSE))) {
           if (toggle_fx) *toggle_fx = TRUE;
         }
       }

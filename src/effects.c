@@ -1118,7 +1118,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
         // during playback this is checked when we play a frame
         for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
           if (rte_key_valid(i + 1, TRUE)) {
-            if (!rte_key_is_enabled(i, TRUE)) {
+            if (!rte_key_is_enabled(i, FALSE)) {
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
 	      // *INDENT-OFF*
 	    }}}}
@@ -1169,11 +1169,11 @@ static boolean _rte_on_off(boolean from_menu, int key) {
         // during playback this is checked when we play a frame
         for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
           if (rte_key_valid(i + 1, TRUE)) {
-            if (rte_key_is_enabled(i, TRUE)) {
+            if (rte_key_is_enabled(i, FALSE)) {
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
 	      // *INDENT-OFF*
 	    }}}}}}
-      // *INDENT-ON*
+  // *INDENT-ON*
 
   if (mainw->rendered_fx) {
     if (mainw->rendered_fx[0]->menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0]->menuitem)) {
@@ -1356,6 +1356,7 @@ LIVES_GLOBAL_INLINE void rte_keys_reset(void) {
 
 
 static int backup_key_modes[FX_KEYS_MAX_VIRTUAL];
+static int backup_keymode_states[FX_KEYS_MAX_VIRTUAL];
 static uint64_t backup_rte = 0;
 
 void rte_keymodes_backup(int nkeys) {
@@ -1363,6 +1364,7 @@ void rte_keymodes_backup(int nkeys) {
   backup_rte = mainw->rte;
   for (int i = 0; i < nkeys; i++) {
     backup_key_modes[i] = rte_key_getmode(i + 1);
+    backup_keymode_states[i] = rte_key_is_enabled(i, FALSE);
   }
 }
 
@@ -1375,7 +1377,8 @@ void rte_keymodes_restore(int nkeys) {
     // set the mode
     rte_key_setmode(i + 1, backup_key_modes[i]);
     // activate the key
-    if (mainw->rte & (GU641 << i)) rte_key_toggle(i + 1);
+    if (rte_key_is_enabled(i, FALSE) != backup_keymode_states[i])
+      rte_key_toggle(i + 1);
   }
   if (mainw->rte_keys != -1) {
     mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);

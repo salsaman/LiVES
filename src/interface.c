@@ -810,7 +810,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   }
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  procw->label2 = lives_standard_label_new(_("\nPlease Wait"));
+  procw->label2 = lives_standard_label_new(_(""));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_box_pack_start(LIVES_BOX(vbox), procw->label2, FALSE, FALSE, 0);
 
@@ -822,6 +822,9 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   lives_box_pack_start(LIVES_BOX(vbox), procw->label3, FALSE, FALSE, 0);
 #endif
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+
+  add_procdlg_opts(procw, LIVES_VBOX(vbox));
+
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 8);
   add_fill_to_box(LIVES_BOX(hbox));
@@ -867,6 +870,31 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
 }
 
 
+void add_procdlg_opts(xprocess *procw, LiVESVBox *vbox) {
+  char *tmp;
+  if (mainw->internal_messaging && mainw->rte != 0 && !mainw->transrend_proc) {
+    procw->rte_off_cb = lives_standard_check_button_new(_("Switch off real time effects when finished"),
+                        TRUE, LIVES_BOX(vbox),
+                        (tmp = H_("Switch off all real time effects after processing\n"
+                                  "so that the result can be viewed without them")));
+    lives_free(tmp);
+  }
+
+  if (mainw->is_rendering && AUD_SRC_EXTERNAL) {
+    procw->audint_cb = lives_standard_check_button_new(_("Switch to intenal audio when finished"),
+                       FALSE, LIVES_BOX(vbox), NULL);
+  }
+
+  procw->notify_cb = lives_standard_check_button_new(_("Notify when finished"),
+                     FALSE, LIVES_BOX(vbox),
+                     (tmp = H_("Send a desktop notification\nwhen complete")));
+  lives_free(tmp);
+
+  lives_widget_set_opacity(lives_widget_get_parent(procw->notify_cb), 0.);
+  lives_widget_set_sensitive(procw->notify_cb, FALSE);
+}
+
+
 xprocess *create_processing(const char *text) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
@@ -875,7 +903,6 @@ xprocess *create_processing(const char *text) {
 
   xprocess *procw = (xprocess *)(lives_calloc(sizeof(xprocess), 1));
 
-  char *tmp;
   char tmp_label[256];
   boolean markup = widget_opts.use_markup;
 
@@ -922,40 +949,18 @@ xprocess *create_processing(const char *text) {
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   procw->label2 = lives_standard_label_new("");
-  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label2, FALSE, FALSE, 0);
 
-  widget_opts.justify = LIVES_JUSTIFY_CENTER;
 #ifdef PROGBAR_IS_ENTRY
   procw->label3 = procw->progressbar;
 #else
   procw->label3 = lives_standard_label_new("");
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label3, FALSE, FALSE, 0);
 #endif
+
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-  if (mainw->internal_messaging && mainw->rte != 0 && !mainw->transrend_proc) {
-    procw->rte_off_cb = lives_standard_check_button_new(_("Switch off real time effects when finished"),
-                        TRUE, LIVES_BOX(vbox3),
-                        (tmp = H_("Switch off all real time effects "
-                                  "after processing\nso that the "
-                                  "result can be viewed without them")));
-    lives_free(tmp);
-  }
-
-  if (mainw->is_rendering && AUD_SRC_EXTERNAL) {
-    procw->audint_cb = lives_standard_check_button_new(_("Switch to intenal audio when finished"),
-                       FALSE, LIVES_BOX(vbox3), NULL);
-  }
-
-  procw->notify_cb = lives_standard_check_button_new(_("Notify when finished"),
-                     FALSE, LIVES_BOX(vbox3),
-                     (tmp = H_("Send a desktop notification\nwhen complete")));
-  lives_free(tmp);
-
-  lives_widget_set_opacity(lives_widget_get_parent(procw->notify_cb), 0.);
-  lives_widget_set_sensitive(procw->notify_cb, FALSE);
+  add_procdlg_opts(procw, LIVES_VBOX(vbox3));
 
   widget_opts.last_container = vbox3;
   lives_hooks_trigger(PROGRESS_START_HOOK);

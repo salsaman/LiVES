@@ -62,7 +62,6 @@ typedef struct {
   LiVESWidget *maxflabel;
   LiVESWidget *preview_button;
 } opensel_win;
-
 opensel_win *create_opensel_window(int frames, double fps);
 
 LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, boolean opt_resize);
@@ -217,6 +216,8 @@ typedef struct {
 
 aud_dialog_t *create_audfade_dialog(int type);
 LiVESWidget *create_combo_dialog(int type, LiVESList *list);
+
+void add_procdlg_opts(xprocess *, LiVESVBox *);
 
 xprocess *create_processing(const char *text);
 xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had_focus);

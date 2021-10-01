@@ -4365,6 +4365,7 @@ if (1) {
 	    my $outp = "";
 	    my $fmt = "";
 	    my $kf = "";
+	    my $sockt = 300;
 	    my $xxdfile = "\"$xdfile\"";
 
 	    if ($matchsize < 0) {
@@ -4379,8 +4380,8 @@ if (1) {
 		$kf = "--keep-fragments";
 	    }
 
-	    $com = "'$prog' --ignore-config $vb --newline --audio-quality 0 --no-mark-watched --no-playlist $kf -o $xxdfile $extra " .
-		"--no-part --no-cache-dir $fmt \"$url\" $outp";
+	    $com = "'$prog' --ignore-config $vb --newline --audio-quality 0 --socket-timeout $sockt --no-mark-watched --no-playlist $kf " .
+		"-o $xxdfile $extra --no-part --no-cache-dir $fmt \"$url\" $outp";
 	    
 	    if ($debug) {
 		print STDERR "RUNNING $com\n";

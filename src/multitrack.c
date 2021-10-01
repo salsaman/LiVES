@@ -15650,9 +15650,11 @@ void insert_audio(int filenum, weed_timecode_t offset_start, weed_timecode_t off
     frame_event = get_frame_event_at(mt->event_list, xend_tc, frame_event, TRUE);
     avel = get_audio_frame_vel(ablock->start_event, -1);
     aseek = get_audio_frame_seek(ablock->start_event, -1);
-    aseek += q_gint64(avel * (double)(get_event_timecode(frame_event)
-                                      - get_event_timecode(block->start_event))
-                      + TICKS_PER_SECOND_DBL / mt->fps, mt->fps) / TICKS_PER_SECOND_DBL;
+    if (block) {
+      aseek += q_gint64(avel * (double)(get_event_timecode(frame_event)
+                                        - get_event_timecode(block->start_event))
+                        + TICKS_PER_SECOND_DBL / mt->fps, mt->fps) / TICKS_PER_SECOND_DBL;
+    }
     insert_audio_event_at(frame_event, -1, filenum, aseek, 0.);
     add_block_end_point((LiVESWidget *)mt->audio_draws->data, frame_event);
   } else add_block_end_point((LiVESWidget *)mt->audio_draws->data, block->start_event);

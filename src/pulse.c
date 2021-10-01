@@ -1935,9 +1935,12 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   lives_alarm_t alarm_handle;
   msg = pulsed->msgq;
   if (msg && (msg->command == ASERVER_CMD_FILE_SEEK || msg->command == ASERVER_CMD_FILE_OPEN)) {
+    // if called from audio thread, then we have nothing else to clear the message queue
+    // so just return the most recent value
+    if (THREADVAR(fx_is_audio)) return mainw->currticks;
     alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
     while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(pulsed)) {
-      lives_nanosleep(10000000);
+      lives_nanosleep(100000);
     }
     lives_alarm_clear(alarm_handle);
     if (timeout == 0) return -1;

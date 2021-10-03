@@ -7,6 +7,12 @@
 // dynamic window generation from parameter arrays :-)
 // special widgets
 
+// SPECIAL WIDGETS are an extension to the RFX standard. They are optional for the host to implement,
+// but can improve the interface for users by providing visual cues.
+// The general format is "special|type|[subtype]|linked parameters..."
+// e.g "special|aspect|1|2" which would hint the host to e.g. show a "Keep Aspect Ratio" button
+// with params 1 and 2 as width and height - however the host can decide whether and how to interprite such hints
+
 #include "main.h"
 #include "resample.h"
 #include "effects.h"
@@ -47,7 +53,7 @@ void init_special(void) {
 }
 
 
-const lives_special_aspect_t *paramspecial_get_aspect() {return &aspect;}
+const lives_special_aspect_t *paramspecial_get_aspect(void) {return &aspect;}
 
 
 void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
@@ -287,7 +293,8 @@ void check_for_special_type(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * p
   while (slist) {
     if (param == (lives_param_t *)(slist->data)) {
       param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEWRITE;
-      param->flags |= PARAM_FLAGS_VALUE_SET; // force check for overwrite
+      // force check for overwrite (if filebutton clicked, check there, and this is cleared)
+      param->flags |= PARAM_FLAGS_VALUE_SET;
     }
     slist = slist->next;
   }

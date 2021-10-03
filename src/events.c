@@ -5277,17 +5277,17 @@ boolean render_to_clip(boolean new_clip) {
       if (afade_out_secs > 0.) {
         double entime;
         cfile->undo1_int = 1; // fade out
-        cfile->undo1_dbl = calc_time_from_frame(mainw->current_file, cfile->end);
 
-        if (cfile->undo1_dbl > cfile->laudio_time) cfile->undo1_dbl = cfile->laudio_time;
-
-        if (trans_sel) entime = calc_time_from_frame(mainw->current_file, cfile->end);
-        else entime = cfile->video_time;
-
-        if (cfile->undo1_dbl > entime) cfile->undo1_dbl = entime;
+        if (!mainw->event_list) {
+          cfile->undo1_dbl = calc_time_from_frame(mainw->current_file, cfile->end);
+          if (cfile->undo1_dbl > cfile->laudio_time) cfile->undo1_dbl = cfile->laudio_time;
+          if (trans_sel) entime = calc_time_from_frame(mainw->current_file, cfile->end);
+          else entime = cfile->video_time;
+          if (cfile->undo1_dbl > entime) cfile->undo1_dbl = entime;
+        } else cfile->undo1_dbl = cfile->laudio_time;
         cfile->undo2_dbl = cfile->undo1_dbl - afade_out_secs;
         if (cfile->undo2_dbl < 0.) cfile->undo2_dbl = 0.;
-        on_fade_audio_activate(NULL, LIVES_INT_TO_POINTER(0));
+        on_fade_audio_activate(NULL, LIVES_INT_TO_POINTER(1));
       }
       d_print_done();
       rendaud = FALSE;

@@ -147,8 +147,6 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
   } else if (!strcmp(array[0], "filewrite")) {
     int idx = atoi(array[1]);
     filewrite = lives_list_append(filewrite, (livespointer)&rfx->params[idx]);
-    rfx->params[idx].flags |= PARAM_FLAGS_VALUE_SET;
-
     // ensure we get an entry and not a text_view
     if ((int)rfx->params[idx].max > RFX_TEXT_MAGIC) rfx->params[idx].max = (double)RFX_TEXT_MAGIC;
   } else if (!strcmp(array[0], "password")) {
@@ -289,6 +287,7 @@ void check_for_special_type(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * p
   while (slist) {
     if (param == (lives_param_t *)(slist->data)) {
       param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEWRITE;
+      param->flags |= PARAM_FLAGS_VALUE_SET; // force check for overwrite
     }
     slist = slist->next;
   }

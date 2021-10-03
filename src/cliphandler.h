@@ -264,6 +264,8 @@ typedef struct _lives_clip_t {
 
   volatile off64_t aseek_pos; ///< audio seek posn. (bytes) for when we switch clips
 
+  int aplay_fd; /// may point to a buffered file during playback, else -1
+
   // decoder data
 
   frames_t last_vframe_played; /// experimental for player

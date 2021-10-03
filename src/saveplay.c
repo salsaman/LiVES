@@ -3302,14 +3302,9 @@ void play_file(void) {
     ticks_t timeout;
     lives_alarm_t alarm_handle;
     alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-    while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd)) {
-      sched_yield(); ///< wait for seek
-      lives_usleep(prefs->sleep_time);
-    }
+    lives_nanosleep_until_zero((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd));
     lives_alarm_clear(alarm_handle);
-    if (timeout == 0)  {
-      handle_audio_timeout();
-    }
+    if (timeout == 0) handle_audio_timeout();
     if (has_audio_buffers) {
       free_jack_audio_buffers();
       audio_free_fnames();
@@ -3320,15 +3315,10 @@ void play_file(void) {
   if (audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
     ticks_t timeout;
     lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-    while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed)) {
-      sched_yield(); ///< wait for seek
-      lives_usleep(prefs->sleep_time);
-    }
+    lives_nanosleep_until_zero((timeout = lives_alarm_check(alarm_handle)) > 0
+                               && pulse_get_msgq(mainw->pulsed));
     lives_alarm_clear(alarm_handle);
-    if (timeout == 0)  {
-      handle_audio_timeout();
-    }
-
+    if (timeout == 0) handle_audio_timeout();
     if (has_audio_buffers) {
       free_pulse_audio_buffers();
       audio_free_fnames();
@@ -3340,6 +3330,16 @@ void play_file(void) {
     /// we got an error recording audio
     do_write_failed_error_s(THREADVAR(bad_aud_file), NULL);
     lives_freep((void **)&THREADVAR(bad_aud_file));
+  }
+
+  for (int i = 0; i < MAX_FILES; i++) {
+    if (IS_VALID_CLIP(i)) {
+      lives_clip_t *sfile = mainw->files[i];
+      if (sfile->aplay_fd > -1) {
+        lives_close_buffered(sfile->aplay_fd);
+        sfile->aplay_fd = -1;
+      }
+    }
   }
 
   //////
@@ -3591,6 +3591,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->afilesize = 0l;
   cfile->asampsize = 0;
   cfile->adirection = LIVES_DIRECTION_FORWARD;
+  cfile->aplay_fd = -1;
   cfile->undoable = FALSE;
   cfile->redoable = FALSE;
   cfile->changed = FALSE;

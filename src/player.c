@@ -3319,7 +3319,9 @@ switch_point:
         //g_print("DISK PR is %f\n", mainw->disk_pressure);
         cpuload = get_core_loadvar(0);
         if (*cpuload < CORE_LOAD_THRESH || mainw->pred_clip != -1) {
+          if (scratch == SCRATCH_JUMP || scratch == SCRATCH_JUMP_NORESYNC) mainw->scratch = SCRATCH_JUMP_NORESYNC;
           load_frame_image(sfile->frameno);
+          mainw->scratch = SCRATCH_NONE;
         }
         mainw->inst_fps = get_inst_fps(FALSE);
         if (prefs->show_player_stats) {

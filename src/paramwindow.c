@@ -1502,14 +1502,13 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     }
 
     // add any unused parameters
-    for (i = 0; i < rfx->num_params; i++) {
+    for (i = 0; i < rfx->num_params && !used[i]; i++) {
       param = &rfx->params[i];
+
       if (!chk_params && (rfx->flags & RFX_FLAGS_NO_RESET) != RFX_FLAGS_NO_RESET) {
         param->flags &= ~PARAM_FLAGS_VALUE_SET;
       }
-      if (used[i]) {
-        continue;
-      }
+
       layout_mode = FALSE;
       format = NULL;
 

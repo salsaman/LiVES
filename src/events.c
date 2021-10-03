@@ -4098,34 +4098,34 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 // check if ext_src survives old->new
 
                 ////
-                lives_clip_t *sfile = mainw->files[nclip];
                 if (mainw->track_decoders[i]) track_decoder_free(i, oclip, nclip);
 
-                if (sfile->clip_type == CLIP_TYPE_FILE) {
-                  if (!mainw->ext_src_used[nclip]) {
-                    mainw->track_decoders[i] = (lives_decoder_t *)sfile->ext_src;
+                if (IS_VALID_CLIP(nclip)) {
+                  lives_clip_t *sfile = mainw->files[nclip];
+                  if (sfile->clip_type == CLIP_TYPE_FILE) {
+                    if (!mainw->ext_src_used[nclip]) {
+                      mainw->track_decoders[i] = (lives_decoder_t *)sfile->ext_src;
+                    }
+                    if (mainw->track_decoders[i] == (lives_decoder_t *)sfile->ext_src) {
+                      mainw->ext_src_used[nclip] = TRUE;
+                    } else {
+                      // add new clone for nclip
+                      int nsrcs = sfile->n_altsrcs;
+                      mainw->track_decoders[i] = clone_decoder(nclip);
+                      //g_print("CLONING\n");
+                      sfile->alt_srcs = lives_realloc(sfile->alt_srcs, (nsrcs + 1) * sizeof(void *));
+                      sfile->alt_srcs[nsrcs] = mainw->track_decoders[i];
+                      sfile->alt_src_types = lives_realloc(sfile->alt_src_types, (nsrcs + 1) * sizint);
+                      sfile->alt_src_types[nsrcs] = LIVES_EXT_SRC_DECODER;
+                      sfile->n_altsrcs++;
+                    }
                   }
-                  if (mainw->track_decoders[i] == (lives_decoder_t *)sfile->ext_src) {
-                    mainw->ext_src_used[nclip] = TRUE;
-                  } else {
-                    // add new clone for nclip
-                    int nsrcs = sfile->n_altsrcs;
-                    mainw->track_decoders[i] = clone_decoder(nclip);
-                    //g_print("CLONING\n");
-                    sfile->alt_srcs = lives_realloc(sfile->alt_srcs, (nsrcs + 1) * sizeof(void *));
-                    sfile->alt_srcs[nsrcs] = mainw->track_decoders[i];
-                    sfile->alt_src_types = lives_realloc(sfile->alt_src_types, (nsrcs + 1) * sizint);
-                    sfile->alt_src_types[nsrcs] = LIVES_EXT_SRC_DECODER;
-                    sfile->n_altsrcs++;
-                  }
-                }
+                  // set alt src in layer
+                  weed_set_voidptr_value(layers[i], WEED_LEAF_HOST_DECODER,
+                                         (void *)mainw->track_decoders[i]);
+                } else weed_layer_pixel_data_free(layers[i]);
                 mainw->old_active_track_list[i] = mainw->active_track_list[i];
               }
-              if (nclip > 0) {
-                // set alt src in layer
-                weed_set_voidptr_value(layers[i], WEED_LEAF_HOST_DECODER,
-                                       (void *)mainw->track_decoders[i]);
-              } else weed_layer_pixel_data_free(layers[i]);
             }
 
             layers[i] = NULL;

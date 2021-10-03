@@ -874,15 +874,17 @@ weed_plant_t *add_filter_init_events(weed_plant_t *event_list, weed_timecode_t t
 
   for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if ((inst = weed_instance_obtain(i, key_modes[i])) != NULL) {
-      if (enabled_in_channels(inst, FALSE) > 0 && enabled_out_channels(inst, FALSE)) {
-        if (!weed_plant_has_leaf(inst, WEED_LEAF_RANDOM_SEED))
-          weed_set_int64_value(inst, WEED_LEAF_RANDOM_SEED, gen_unique_id());
-        event_list = append_filter_init_event(event_list, tc,
-                                              (fx_idx = key_to_fx[i][key_modes[i]]), -1, i, inst);
-        init_events[i] = get_last_event(event_list);
-        ntracks = weed_leaf_num_elements(init_events[i], WEED_LEAF_IN_TRACKS);
-        // add values from inst
-        pchains[i] = filter_init_add_pchanges(event_list, inst, init_events[i], ntracks, 0);
+      if (weed_get_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, NULL) == WEED_FALSE) {
+        if (enabled_in_channels(inst, FALSE) > 0 && enabled_out_channels(inst, FALSE)) {
+          if (!weed_plant_has_leaf(inst, WEED_LEAF_RANDOM_SEED))
+            weed_set_int64_value(inst, WEED_LEAF_RANDOM_SEED, gen_unique_id());
+          event_list = append_filter_init_event(event_list, tc,
+                                                (fx_idx = key_to_fx[i][key_modes[i]]), -1, i, inst);
+          init_events[i] = get_last_event(event_list);
+          ntracks = weed_leaf_num_elements(init_events[i], WEED_LEAF_IN_TRACKS);
+          // add values from inst
+          pchains[i] = filter_init_add_pchanges(event_list, inst, init_events[i], ntracks, 0);
+        }
       }
       weed_instance_unref(inst);
     }

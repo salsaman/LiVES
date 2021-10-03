@@ -372,15 +372,19 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       /* pa_operation_unref(paop); */
       new_file = atoi((char *)msg->data);
       if (pulsed->playing_file != new_file) {
-        filename = lives_get_audio_file_name(new_file);
-        pulsed->fd = lives_open_buffered_rdonly(filename);
-        if (pulsed->fd == -1) {
-          // dont show gui errors - we are running in realtime thread
-          LIVES_ERROR("pulsed: error opening");
-          LIVES_ERROR(filename);
-          pulsed->playing_file = -1;
+        if (IS_VALID_CLIP(new_file) && mainw->files[new_file]->aplay_fd > -1) {
+          pulsed->fd = mainw->files[new_file]->aplay_fd;
+        } else {
+          filename = lives_get_audio_file_name(new_file);
+          pulsed->fd = lives_open_buffered_rdonly(filename);
+          if (pulsed->fd == -1) {
+            // dont show gui errors - we are running in realtime thread
+            LIVES_ERROR("pulsed: error opening");
+            LIVES_ERROR(filename);
+            pulsed->playing_file = -1;
+          }
+          lives_free(filename);
         }
-        lives_free(filename);
       }
       fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = 0;
       pulsed->playing_file = new_file;
@@ -390,7 +394,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       pulsed->in_use = TRUE;
       /* paop = pa_stream_flush(pulsed->pstream, NULL, NULL); */
       /* pa_operation_unref(paop); */
-      if (pulsed->fd >= 0) lives_close_buffered(pulsed->fd);
+      if (pulsed->fd >= 0) {
+        if (LIVES_IS_PLAYING && IS_VALID_CLIP(pulsed->playing_file)) {
+          afile->aplay_fd = pulsed->fd;
+        } else lives_close_buffered(pulsed->fd);
+      }
       if (pulsed->sound_buffer == pulsed->aPlayPtr->data) pulsed->sound_buffer = NULL;
       if (pulsed->aPlayPtr->data) {
         lives_free((void *)(pulsed->aPlayPtr->data));

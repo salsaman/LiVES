@@ -1103,28 +1103,35 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
     } else {
       // otherwise, use up remaining bytes, and we will refill the buffer
       // on the next read
-      size_t bufsize = fbuff->ptr - fbuff->buffer + fbuff->bytes;
+      size_t bufsize;
+      if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) {
+        if (fbuff->buffer) bufsize = fbuff->ptr - fbuff->buffer + fbuff->bytes;
+        else {
+          bufsize = fbuff->bytes;
+        }
+      } else bufsize = get_read_buff_size(fbuff->bufsztype);
+
       if (fbuff->bytes > 0) {
         // rewind virtual offset to start
         offset -= fbuff->ptr - fbuff->buffer;
 
         // rewind physical offset to start
         fbuff->offset -= bufsize;
-
-        while (offset >= bufsize) {
-          // continue stepping back if necessary
-          offset -= bufsize;
-          fbuff->offset -= bufsize;
-        }
-
-        if (fbuff->offset < 0) fbuff->offset = 0;
-        newoffs = fbuff->offset - offset;
-        if (newoffs < 0) newoffs = 0;
-        fbuff->bytes = 0;
-        fbuff->ptr = fbuff->buffer;
-        fbuff->eof = FALSE;
-        fbuff->offset = newoffs;
       }
+
+      while (offset >= bufsize) {
+        // continue stepping back if necessary
+        offset -= bufsize;
+        fbuff->offset -= bufsize;
+      }
+
+      if (fbuff->offset < 0) fbuff->offset = 0;
+      newoffs = fbuff->offset - offset;
+      if (newoffs < 0) newoffs = 0;
+      fbuff->bytes = 0;
+      fbuff->ptr = fbuff->buffer;
+      fbuff->eof = FALSE;
+      fbuff->offset = newoffs;
     }
   }
 #ifdef HAVE_POSIX_FADVISE
@@ -1173,7 +1180,7 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t posn) {
       return fbuff->offset;
     }
 
-    // this calculation gives us the read posn
+    // this calculation gives us the relative read posn
     posn -= fbuff->offset - fbuff->bytes;
   }
 
@@ -1349,6 +1356,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       fbuff->totbytes += res;
       if (fbuff->eof) break;
       if (fbuff->reversed && count > 0) fbuff->reversed = FALSE;
+      ptr += res;
     }
   } else {
     // larger size -> direct read

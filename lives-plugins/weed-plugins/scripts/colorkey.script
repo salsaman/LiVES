@@ -55,6 +55,8 @@ col_red_max = col_red + (int)((255 - col_red) * delta + .5);
 col_green_max = col_green + (int)((255 - col_green) * delta + .5);
 col_blue_max = col_blue + (int)((255 - col_blue) * delta + .5);
 
+width *= 3;
+
 for (int i = 0; i < height; i++) {
   for (int j = 0; j < width; j += 3) {
     if (pal == WEED_PALETTE_RGB24) {

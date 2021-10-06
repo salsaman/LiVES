@@ -2097,6 +2097,12 @@ void jack_pb_stop(jack_driver_t *jackd) {
 ////////////////////////////////////////////
 // audio
 
+void jack_set_avel(jack_driver_t *jackd, double ratio) {
+  jackd->sample_in_rate = afile->arate * ratio;
+  jack_get_rec_avals(jackd);
+}
+
+
 // actually we only have 1 reader and 1 writer; trans client is callocated
 static jack_driver_t outdev[JACK_MAX_OUTDEVICES];
 static jack_driver_t indev[JACK_MAX_INDEVICES];

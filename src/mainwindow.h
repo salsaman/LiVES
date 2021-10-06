@@ -1654,6 +1654,8 @@ typedef struct {
   double rec_fps;
   frames_t rec_vid_frames;
 
+  int alock_fd; // experimental
+
   ///< values to be written to the event list concurrent with next video ftame event
   int rec_arate, rec_achans, rec_asamps, rec_signed_endian;
 

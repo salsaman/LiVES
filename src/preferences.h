@@ -319,6 +319,7 @@ typedef struct {
 #define AUDIO_OPTS_LOCKED_FREEZE	(1 << 17)
 #define AUDIO_OPTS_LOCKED_PING_PONG	(1 << 18)
 #define AUDIO_OPTS_LOCKED_RESYNC	(1 << 19)
+#define AUDIO_OPTS_LOCKED_RESET		(1 << 20)
 
 #define AUDIO_OPTS_EXT_FX		(1 << 25) // apply effects to external audio -> audio out
 #define AUDIO_OPTS_AUX_RECORD		(1 << 26) // mix aux in when saving
@@ -842,6 +843,7 @@ typedef struct {
   LiVESWidget *afreeze_lock;
   LiVESWidget *afreeze_ping;
   LiVESWidget *afreeze_sync;
+  LiVESWidget *alock_reset;
   LiVESWidget *spinbutton_ext_aud_thresh;
   LiVESWidget *spinbutton_mt_def_width;
   LiVESWidget *spinbutton_mt_def_height;

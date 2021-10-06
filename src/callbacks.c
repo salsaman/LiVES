@@ -5249,8 +5249,23 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     dirchange_callback(group, obj, keyval, LIVES_CONTROL_MASK, SCREEN_AREA_FOREGROUND);
   }
 
-  if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_FPS)) {
-    resync_audio(mainw->playing_file, (double)sfile->frameno);
+  if (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) {
+    if (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESET) {
+#ifdef ENABLE_JACK
+      if (prefs->audio_player == AUD_PLAYER_JACK) {
+        jack_set_avel(mainw->jackd, 1.);
+      }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+      if (prefs->audio_player == AUD_PLAYER_PULSE) {
+        pulse_set_avel(mainw->pulsed, 1.);
+      }
+#endif
+    }
+  } else {
+    if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_FPS)) {
+      resync_audio(mainw->playing_file, (double)sfile->frameno);
+    }
   }
 
   // change play direction
@@ -10568,16 +10583,30 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
   // lock OFF
   if (!state) {
     prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
-    if (!w) {
-      switch_audio_clip(mainw->playing_file, TRUE);
+    if (mainw->alock_fd >= 0) {
+      lives_close_buffered(mainw->alock_fd);
+      mainw->alock_fd = -1;
     }
+    if (!w) switch_audio_clip(mainw->playing_file, TRUE);
   }
 
   if (!w && (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC))
     resync_audio(mainw->playing_file, mainw->files[mainw->playing_file]->frameno);
 
   // lock ON
-  if (state) prefs->audio_opts |= AUDIO_OPTS_IS_LOCKED;
+  if (state) {
+    prefs->audio_opts |= AUDIO_OPTS_IS_LOCKED;
+#if 0
+    // TODO - in alock mode, buffer and resample all audio
+    if (LIVES_IS_PLAYING & CURRENT_CLIP_HAS_AUDIO) {
+      char *filename = lives_get_audio_file_name(mainw->playing_file);
+      mainw->alock_fd = lives_open_buffered_rdonly(filename);
+      if (mainw->alock_fd >= 0)
+        lives_buffered_rdonly_slurp(mainw->alock_fd, 0);
+      lives_free(filename);
+    }
+#endif
+  }
   return TRUE;
 }
 

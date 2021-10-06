@@ -179,6 +179,17 @@ retry:
 }
 
 
+void pulse_set_avel(pulse_driver_t *pulsed, double ratio) {
+  pulsed->in_arate = afile->arate * ratio;
+  pulse_get_rec_avals(pulsed);
+  if (pulsed->in_arate > 0.) {
+    lives_buffered_rdonly_set_reversed(pulsed->fd, FALSE);
+  } else {
+    lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE);
+  }
+}
+
+
 void pulse_get_rec_avals(pulse_driver_t *pulsed) {
   mainw->rec_aclip = pulsed->playing_file;
   if (mainw->rec_aclip != -1) {
@@ -563,7 +574,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       pulsed->seek_pos = (ssize_t)(rnd_samp * qnt);
       //g_print("rndfr = %d rnt = %ld skpo = %ld\n", rnd_frame + 1, rnd_samp, pulsed->seek_pos);
       pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
-      lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+
+      if (mainw->alock_fd >= 0)
+        lives_lseek_buffered_rdonly_absolute(mainw->alock_fd, pulsed->seek_pos);
+      else
+        lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
       //g_print("seek to %ld %ld\n", pulsed->seek_pos, (int64_t)((double)pulsed->seek_pos / 48000. / 4. * afile->fps) + 1);
       fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos;
 
@@ -578,8 +593,13 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
       // preload the buffer for first read
       in_bytes = (size_t)(in_framesd * pulsed->in_achans * (pulsed->in_asamps >> 3));
-      lives_read_buffered(pulsed->fd, NULL, in_bytes * 8, TRUE);
-      lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+      if (mainw->alock_fd >= 0) {
+        lives_read_buffered(mainw->alock_fd, NULL, in_bytes * 8, TRUE);
+        lives_lseek_buffered_rdonly_absolute(mainw->alock_fd, pulsed->seek_pos);
+      } else {
+        lives_read_buffered(pulsed->fd, NULL, in_bytes * 8, TRUE);
+        lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+      }
       //mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
 
       /* g_print("@ SYNC %d seek pos %ld = %f  ct %ld   st %ld\n", mainw->actual_frame, pulsed->seek_pos, */
@@ -692,8 +712,13 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 pad_bytes = ALIGN_CEIL64(pad_bytes - qnt, qnt);
               }
               if (pad_bytes) lives_memset((void *)pulsed->aPlayPtr->data, 0, pad_bytes);
-              pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data + pad_bytes),
-                                       in_bytes - pad_bytes, TRUE) + pad_bytes;
+              if (mainw->alock_fd >= 0) {
+                pulsed->aPlayPtr->size = lives_read_buffered(mainw->alock_fd, (void *)(pulsed->aPlayPtr->data + pad_bytes),
+                                         in_bytes - pad_bytes, TRUE) + pad_bytes;
+              } else {
+                pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data + pad_bytes),
+                                         in_bytes - pad_bytes, TRUE) + pad_bytes;
+              }
             } else pulsed->aPlayPtr->size = in_bytes;
 
 #if !HAVE_PA_STREAM_BEGIN_WRITE

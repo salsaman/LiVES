@@ -1587,6 +1587,7 @@ static boolean lives_init(_ign_opts *ign_opts) {
   mainw->aud_file_to_kill = -1;
 
   mainw->aud_rec_fd = -1;
+  mainw->alock_fd = -1;
 
   mainw->log_fd = -2;
 
@@ -2157,10 +2158,10 @@ static boolean lives_init(_ign_opts *ign_opts) {
       } else capable->has_decoder_plugins = MISSING;
     }
 
-    future_prefs->audio_opts = prefs->audio_opts = get_int_prefd(PREF_AUDIO_OPTS, 3);
-
-    prefs->audio_opts |= AUDIO_OPTS_EXT_FX;
-    prefs->audio_opts &= ~(AUDIO_OPTS_AUX_RECORD | AUDIO_OPTS_AUX_PLAY);
+    future_prefs->audio_opts = prefs->audio_opts =
+                                 get_int_prefd(PREF_AUDIO_OPTS,
+                                     AUDIO_OPTS_EXT_FX | AUDIO_OPTS_FOLLOW_CLIPS | AUDIO_OPTS_FOLLOW_FPS
+                                     | AUDIO_OPTS_LOCKED_RESYNC | AUDIO_OPTS_LOCKED_RESET);
 
     array = lives_strsplit(DEF_AUTOTRANS, "|", 3);
     mainw->def_trans_idx = weed_filter_highest_version(array[0], array[1], array[2], NULL);

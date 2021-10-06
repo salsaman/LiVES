@@ -3312,9 +3312,9 @@ boolean resync_audio(int clipno, double frameno) {
   lives_clip_t *sfile;
 
   if (!LIVES_IS_PLAYING || !CLIP_HAS_AUDIO(clipno)) return FALSE;
+
   if (!AV_CLIPS_EQUAL) return FALSE;
   if (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) return FALSE;
-
   sfile = mainw->files[clipno];
   if (!frameno && sfile->fps == 0.) return FALSE;
 
@@ -3332,18 +3332,15 @@ boolean resync_audio(int clipno, double frameno) {
         else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
       }
       mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
-    }
-
-    if (sfile->fps != 0.) mainw->jackd->sample_in_rate = sfile->arate * sfile->pb_fps / sfile->fps;
-
-    if (clipno == mainw->playing_file) jack_get_rec_avals(mainw->jackd);
-
-    if (frameno && sfile->fps != 0.) {
-      if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
-          && (prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART)) {
-        jack_transport_update(mainw->jackd_trans, (frameno - 1.) / sfile->fps);
+      if (sfile->fps != 0.) {
+        if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+            && (prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART)) {
+          jack_transport_update(mainw->jackd_trans, (frameno - 1.) / sfile->fps);
+        }
       }
     }
+
+    jack_set_avel(mainw->jackd, sfile->pb_fps / sfile->fps);
     return TRUE;
   }
 #endif
@@ -3355,19 +3352,10 @@ boolean resync_audio(int clipno, double frameno) {
         if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, frameno);
         else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
       }
-    }
-    mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
-
-    if (sfile->fps != 0.) {
-      mainw->pulsed->in_arate = sfile->arate * sfile->pb_fps / sfile->fps;
-      if (mainw->pulsed->in_arate > 0.) {
-        lives_buffered_rdonly_set_reversed(mainw->pulsed->fd, FALSE);
-      } else {
-        lives_buffered_rdonly_set_reversed(mainw->pulsed->fd, TRUE);
-      }
+      mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
     }
 
-    if (clipno == mainw->playing_file) pulse_get_rec_avals(mainw->pulsed);
+    pulse_set_avel(mainw->pulsed, sfile->pb_fps / sfile->fps);
     return TRUE;
   }
 #endif

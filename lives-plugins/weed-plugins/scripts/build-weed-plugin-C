@@ -588,10 +588,16 @@ if ($use_sdata) {
 }
 
 ## add threading
-if ($may_thread && $num_inc == 1 && $num_outc == 1) {
+if ($may_thread && $num_outc == 1) {
     print OUT "\n$xspcs  if (is_threading) {\n";
     print OUT "$xspcs    offset = weed_channel_get_offset(out_chan);\n";
-    print OUT "$xspcs    src += offset * irow;\n";
+    if ($num_inc == 1) {
+	print OUT "$xspcs    src += offset * irow;\n";
+    }
+    else {
+	print OUT "$xspcs    src0 += offset * irow0;\n";
+	print OUT "$xspcs    src1 += offset * irow1;\n";
+    }
     print OUT "$xspcs    dst += offset * orow;\n";
     print OUT "$xspcs  }\n";
 }
@@ -1191,8 +1197,13 @@ sub add_start {
 
     if ($is_procfunc) {
 	if ($may_thread) {
-	    if ($num_inc == 1 && $num_outc == 1) {
-		print OUT "  int iheight = weed_channel_get_height(in_chan);\n";
+	    if ($num_outc == 1) {
+		if ($num_inc == 1) {
+		    print OUT "  int iheight = weed_channel_get_height(in_chan);\n";
+		}
+		else {
+		    print OUT "  int iheight = weed_channel_get_height(in_chans[0]);\n";
+		}
 		print OUT "  int is_threading = weed_is_threading(inst);\n";
 	    }
 	    print OUT "  int offset = 0;\n";
@@ -1256,33 +1267,33 @@ sub add_end {
     if ($is_procfunc) {
 	if (@in_planar) {
 	    if (@in_planar == 1) {
-		print OUT "    weed_free(srcp);\n";
+		print OUT "  weed_free(srcp);\n";
 	    }
 	    else {
 		foreach (@in_planar) {
-		    print OUT "    weed_free(srcp$_);\n";
+		    print OUT "  weed_free(srcp$_);\n";
 		}
 	    }
 	}
 	if (@out_planar) {
 	    if (@out_planar == 1) {
-		print OUT "    weed_free(dstp);\n";
+		print OUT "  weed_free(dstp);\n";
 	    }
 	    else {
 		foreach (@in_planar) {
-		    print OUT "    weed_free(dstp$_);\n";
+		    print OUT "  weed_free(dstp$_);\n";
 		}
 	    }
 	}
     }
     if ($num_oparams) {
-	print OUT "    weed_free(out_params);\n";
+	print OUT "  weed_free(out_params);\n";
     }
     if ($num_inc > 1) {
-	print OUT "    weed_free(in_chans);\n";
+	print OUT "  weed_free(in_chans);\n";
     }
     if ($num_outc > 1) {
-	print OUT "    weed_free(out_chans);\n";
+	print OUT "  weed_free(out_chans);\n";
     }
 }
 

@@ -33,12 +33,20 @@ rstart|_Radius start|num0|10|0|100|
 sstart|_Sigma start|num0|4|1|100|
 rend|_Radius end|num0|10|0|100|
 send|_Sigma end|num0|4|1|100|
+sx|Start X|num0|0|0|100000|
+sy|Start Y|num0|0|0|100000|
+ex|End X|num0|0|0|100000|
+ey|End Y|num0|0|0|100000|
 </params>
 
 
 <param_window>
+layout|p4|p5|
+layout|p6|p7|
+layout|hseparator|
 layout|p1|p3|
 layout|p0|p2|
+special|framedraw|rectdemask|4|5|6|7|
 </param_window>
 
 # properties/capabilities (bitmap field)
@@ -62,11 +70,13 @@ else {
     $radstep=($p2-$p0)/($end-$start);
     $sigstep=($p3-$p1)/($end-$start);
 }
+$rwidth = $p6 - $p4 + 1;
+$rheight = $p7 - $p5 + 1;
 </pre>
 
 # loop code
 <loop>
-system("$convert_command $img_prefix$in -blur $p0"."x$p1 $out_prefix$out");
+system("$convert_command -region $rwidth\\!x$rheight\\!+$p4\\!+$p5\\! $img_prefix$in -blur $p0"."x$p1 $out_prefix$out");
 $p0+=$radstep;
 $p1+=$sigstep;
 </loop>
@@ -76,4 +86,10 @@ $p1+=$sigstep;
 </post>
 
 <onchange>
+init|$p4_max=$p6_max=$width-1;$p6=$width-1;$p4=0;
+init|$p5_max=$p7_max=$height-1;$p7=$height-1;$p5=0;
+4|if ($p4>$p6) {$p6=$p4;}
+5|if ($p5>$p7) {$p7=$p5;}
+6|if ($p6<$p4) {$p4=$p6;}
+7|if ($p7<$p5) {$p5=$p7;}
 </onchange>

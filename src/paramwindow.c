@@ -1111,7 +1111,7 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
   size_t fmtlen, ll;
 
-  boolean used[rfx->num_params];
+  boolean *used = NULL;
   boolean has_box = FALSE;
   boolean internal = FALSE;
   boolean noslid;
@@ -1141,12 +1141,12 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   lives_snprintf(sepnpnum, 1024, "s%s", rfx->delim);
   sepnpnumlen = strlen(sepnpnum);
 
+  if (rfx && rfx->num_params)
+    used = lives_calloc(rfx->num_params, sizint);
+
   if (!top_vbox) {
     // just check how many non-hidden params without displaying
     chk_params = TRUE;
-    for (i = 0; i < rfx->num_params; i++) {
-      used[i] = FALSE;
-    }
   } else {
     LiVESWidget *extraw;
     dummy_label = lives_label_new(NULL);
@@ -1172,7 +1172,6 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     if (extraw) lives_box_pack_start(LIVES_BOX(param_vbox), extraw, FALSE, TRUE, widget_opts.packing_height);
 
     for (i = 0; i < rfx->num_params; i++) {
-      used[i] = FALSE;
       for (j = 0; j < MAX_PARAM_WIDGETS; j++) {
         if (rfx->params[i].transition && j > 0 && j < 4) continue;
         rfx->params[i].widgets[j] = NULL;
@@ -1203,7 +1202,7 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     // extras for converters
     if (weed_instance_is_resizer((weed_plant_t *)rfx->source)) {
       has_param = add_sizes(LIVES_BOX(param_vbox), FALSE, FALSE, rfx);
-      if (chk_params && has_param) return TRUE;
+      if (chk_params && has_param) goto fin;
     }
     internal = TRUE;
     break;
@@ -1219,7 +1218,10 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       weed_plant_t *filter = weed_instance_get_filter((weed_plant_t *)rfx->source, TRUE);
       if (enabled_in_channels(filter, FALSE) == 2 && get_transition_param(filter, FALSE) != -1) {
         // add in/out for multitrack transition
-        if (chk_params) return TRUE;
+        if (chk_params) {
+          has_param = TRUE;
+          goto fin;
+        }
         has_param = TRUE;
         transition_add_in_out(LIVES_BOX(param_vbox), rfx, (mainw->multitrack->opts.pertrack_audio));
       }
@@ -1231,7 +1233,10 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     } else {
       if (rfx->status != RFX_STATUS_SCRAP && rfx->num_in_channels == 0 && rfx->min_frames > -1) {
         if (!mainw->multitrack) {
-          if (chk_params) return TRUE;
+          if (chk_params) {
+            has_param = TRUE;
+            goto fin;
+          }
           add_gen_to(LIVES_BOX(param_vbox), rfx);
         } else mainw->gen_to_clipboard = FALSE;
         /// add nframes, fps, width, height
@@ -1501,8 +1506,9 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       if (pass == 1) lives_list_free_all(&layout);
     }
 
-    // add any unused parameters
-    for (i = 0; i < rfx->num_params && !used[i]; i++) {
+    for (i = 0; i < rfx->num_params; i++) {
+      if (used[i]) continue;
+
       param = &rfx->params[i];
 
       if (!chk_params && (rfx->flags & RFX_FLAGS_NO_RESET) != RFX_FLAGS_NO_RESET) {
@@ -1536,9 +1542,10 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
         }
       }
 
-      if (chk_params) return TRUE;
-
       has_param = TRUE;
+
+      if (chk_params) goto fin;
+
       if (pass == 0) {
         if ((fmtlen = lives_strlen((const char *)format)) < FMT_STRING_SIZE) format[fmtlen] =
             (unsigned char)(param->type);
@@ -1568,7 +1575,7 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   }
 
   if (needs_sizes) has_param = add_sizes(chk_params ? NULL : LIVES_BOX(top_vbox), TRUE, has_param, rfx);
-  if (chk_params) return has_param;
+  if (chk_params) goto fin;
 
   if (!has_param) {
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
@@ -1594,6 +1601,9 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     update_widget_vis(rfx, -1, -1);
     rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
   }
+
+fin:
+  if (used) lives_free(used);
   return has_param;
 }
 

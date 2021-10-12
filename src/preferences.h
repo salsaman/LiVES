@@ -325,6 +325,8 @@ typedef struct {
 #define AUDIO_OPTS_AUX_RECORD		(1 << 26) // mix aux in when saving
 #define AUDIO_OPTS_AUX_PLAY		(1 << 27) // mix aux in during pb
 
+  boolean pogo_mode;
+
   boolean event_window_show_frame_events;
   boolean crash_recovery; ///< TRUE==maintain mainw->recovery file
 

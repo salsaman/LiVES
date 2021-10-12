@@ -1001,8 +1001,7 @@ load_done:
   }
 
   if (*cfile->staging_dir) {
-    lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                             (lives_funcptr_t)migrate_from_staging,
+    lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)migrate_from_staging,
                              0, "i", mainw->current_file);
   }
 
@@ -2558,7 +2557,7 @@ void play_file(void) {
   // reinit all active effects
   if (!mainw->preview && !mainw->is_rendering && !mainw->foreign) weed_reinit_all();
 
-  if (!mainw->foreign && (!(prefs->audio_src == AUDIO_SRC_EXT &&
+  if (!mainw->foreign && (!(AUD_SRC_EXTERNAL &&
                             (audio_player == AUD_PLAYER_JACK ||
                              audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE)))) {
     stopcom = prep_audio_player(audio_end, arate, asigned, aendian);
@@ -2584,7 +2583,9 @@ void play_file(void) {
   if (mainw->record) mainw->record_paused = TRUE;
 
   // if recording, set up recorder (jack or pulse)
-  if (!mainw->preview && (prefs->audio_src == AUDIO_SRC_EXT || (mainw->record && mainw->agen_key != 0))
+  if (!mainw->preview && (AUD_SRC_EXTERNAL
+                          || (mainw->record && (mainw->agen_key != 0
+                              || (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))))
       && (audio_player == AUD_PLAYER_JACK || audio_player == AUD_PLAYER_PULSE)) {
     mainw->rec_samples = -1; // record unlimited
     if (mainw->record) {
@@ -2598,18 +2599,21 @@ void play_file(void) {
     }
     if (audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-      if ((prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0 || mainw->agen_needs_reinit) && mainw->jackd) {
+      if ((AUD_SRC_EXTERNAL || mainw->agen_key != 0 || mainw->agen_needs_reinit
+           || (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) && mainw->jackd) {
         if (mainw->agen_key != 0 || mainw->agen_needs_reinit) {
           mainw->jackd->playing_file = mainw->current_file;
           if (mainw->ascrap_file != -1)
             jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
         } else {
-          if (mainw->ascrap_file != -1)
-            jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+          if (mainw->ascrap_file != -1) {
+            if (AUD_SRC_EXTERNAL) jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+            else jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
+          }
+          //mainw->jackd->in_use = TRUE;
         }
-        //mainw->jackd->in_use = TRUE;
       }
-      if (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read) {
+      if (AUD_SRC_EXTERNAL && mainw->jackd_read) {
         mainw->jackd_read->num_input_channels = mainw->jackd_read->num_output_channels = 2;
         mainw->jackd_read->sample_in_rate = mainw->jackd_read->sample_out_rate;
         mainw->jackd_read->is_paused = TRUE;
@@ -2619,18 +2623,21 @@ void play_file(void) {
     }
     if (audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-      if ((prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0  || mainw->agen_needs_reinit) && mainw->pulsed) {
+      if ((AUD_SRC_EXTERNAL || mainw->agen_key != 0  || mainw->agen_needs_reinit
+           || (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) && mainw->pulsed) {
         if (mainw->agen_key != 0 || mainw->agen_needs_reinit) {
           mainw->pulsed->playing_file = mainw->current_file;
           if (mainw->ascrap_file != -1)
             pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
         } else {
-          if (mainw->ascrap_file != -1)
-            pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+          if (mainw->ascrap_file != -1) {
+            if (AUD_SRC_EXTERNAL) pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+            else pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
+          }
         }
         //mainw->pulsed->in_use = TRUE;
       }
-      if (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read) {
+      if (AUD_SRC_EXTERNAL && mainw->pulsed_read) {
         mainw->pulsed_read->in_achans = mainw->pulsed_read->out_achans = PA_ACHANS;
         mainw->pulsed_read->in_asamps = mainw->pulsed_read->out_asamps = PA_SAMPSIZE;
         mainw->pulsed_read->in_arate = mainw->pulsed_read->out_arate;
@@ -2922,6 +2929,10 @@ void play_file(void) {
       }
     }
 
+    if (mainw->alock_abuf) {
+      free_audio_frame_buffer(mainw->alock_abuf);
+      mainw->alock_abuf = NULL;
+    }
     // tell jack client to close audio file
     if (mainw->jackd && mainw->jackd->playing_file > 0) {
       ticks_t timeout = 0;
@@ -5188,6 +5199,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   boolean retb = TRUE, retval;
   boolean load_from_set = TRUE;
   boolean rec_cleanup = FALSE;
+  boolean use_decoder;
 
   // setting is_ready allows us to get the correct transient window for dialogs
   // otherwise the dialogs will appear behind the main interface
@@ -5407,8 +5419,19 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       if (mainw->current_file < 1) continue;
       if (is_ascrap) continue;
 
+      use_decoder = FALSE;
+      if (cfile->header_version >= 104) {
+        uint64_t decoder_uid = 0;
+        get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_UID, &decoder_uid, 0);
+        if (decoder_uid > 0) use_decoder = TRUE;
+      } else {
+        char decplugname[PATH_MAX];
+        get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_NAME, decplugname, PATH_MAX);
+        if (*decplugname) use_decoder = TRUE;
+      }
+
       /// see function reload_set() for detailed comments
-      if ((maxframe = load_frame_index(mainw->current_file)) > 0) {
+      if ((maxframe = load_frame_index(mainw->current_file)) > 0 || use_decoder) {
         /// CLIP_TYPE_FILE
         if (!*cfile->file_name) continue;
         if (!reload_clip(mainw->current_file, maxframe)) continue;

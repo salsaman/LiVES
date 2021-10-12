@@ -983,8 +983,9 @@ float sample_move_d16_float_arena(float *dst, short *src, size_t offset, uint64_
 }
 
 
-size64_t sample_move_float_float(float *dst, float *src, size64_t in_samples, double scale, int dst_skip, float vol) {
-  // copy one channel of float to a buffer, applying the scale (scale 2.0 to double the rate, etc)
+size64_t sample_move_float_float(float *dst, float *src, size64_t in_samples, double scale, int dst_skip, float vol,
+                                 size64_t out_samples) {
+  // copy one channel of float to a buffer, applying the scale (scale 2.0 to halve the rate, etc)
   double offs_d = 0.;
   off64_t offs = 0;
   size64_t outsamps = 0;
@@ -1008,23 +1009,10 @@ size64_t sample_move_float_float(float *dst, float *src, size64_t in_samples, do
     if ((scale > 0. && offs > (off64_t)in_samples)
         || (scale < 0. && offs < 0)) break;
 
-#ifdef USE_INTRINSICSx
-    can_intrin = FALSE;
-    if (scale < 0.) {
-      xoffs = (off64_t)((offs_d + scale * 4.) - .4999);
-      if (xoffs >= 0) can_intrin = TRUE;
-    } else {
-      xoffs = (off64_t)((offs_d + scale * 4.) + .4999);
-      if (xoffs < in_samples) can_intrin = TRUE;
-    }
-    if (can_intrin) {
-      offs_d = intrin_resample_vol(&dst[dst_skip * outsamps], dst_skip, src, offs_d, scale, vol);
-      outsamps += 4;
-      continue;
-    }
-#endif
+    if (out_samples && outsamps > out_samples) break;
 
     dst[dst_skip * outsamps] = src[offs] * vol;
+
     if (scale < 0.) {
       offs = (off64_t)((offs_d += scale) - .4999);
       if (offs < 0) break;
@@ -1040,9 +1028,10 @@ size64_t sample_move_float_float(float *dst, float *src, size64_t in_samples, do
 
 //abuf->vclient_readlevel = sample_move_float_float_arena(dst[i], src, abuf->vclient_readpos, alen, scale, 1, 1.);
 
-size64_t sample_move_float_float_arena(float *dst, float *src, size_t offset, size64_t in_samples, double scale, int dst_skip,
-                                       float vol) {
-  // copy one channel of float to a buffer, applying the scale (scale 2.0 to double the rate, etc)
+static size64_t sample_move_float_float_arena(float *dst, float *src, size_t offset, size64_t in_samples, double scale,
+    int dst_skip,
+    float vol, size64_t out_samples) {
+  // copy one channel of float to a buffer, applying the scale (scale 2.0 to halve the rate, etc)
   double offs_d = 0.;
   off64_t offs = 0, xoffs;
   size64_t outsamps = 0;
@@ -1477,7 +1466,7 @@ size64_t float_interleave(float *out, float **in, size64_t nsamps, double scale,
   // (scale 2.0 to double the rate, etc)
   size64_t tot = 0;
   for (int i = 0; i < nchans; i++) {
-    tot += sample_move_float_float(&out[i], in[i], nsamps, scale, nchans, vol);
+    tot += sample_move_float_float(&out[i], in[i], nsamps, scale, nchans, vol, 0);
   }
   return tot;
 }
@@ -2168,7 +2157,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   if (to_file > -1) {
 #ifdef DEBUG_ARENDER
-    g_print("fs is %ld %s\n", get_file_size(out_fd), cfile->handle);
+    g_print("fs is %ld %s\n", get_file_size(out_fd, TRUE), cfile->handle);
 #endif
     lives_close_buffered(out_fd);
   }
@@ -2583,12 +2572,14 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
   if (rec_type == RECA_GENERATED) {
     mainw->pulsed->playing_file = fileno;
   } else {
-    mainw->pulsed_read = pulse_get_driver(FALSE);
-    mainw->pulsed_read->playing_file = fileno;
-    mainw->pulsed_read->frames_written = 0;
+    if (rec_type == RECA_EXTERNAL) {
+      mainw->pulsed_read = pulse_get_driver(FALSE);
+      mainw->pulsed_read->playing_file = fileno;
+      mainw->pulsed_read->frames_written = 0;
+    }
   }
 
-  if (rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED) {
+  if (rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED || rec_type == RECA_MIXED) {
     int asigned;
     int aendian;
     //off_t fsize = get_file_size(mainw->aud_rec_fd);
@@ -2642,7 +2633,8 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
   }
 
   // in grab window mode, just return, we will call rec_audio_end on playback end
-  if (rec_type == RECA_WINDOW_GRAB || rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED) return;
+  if (rec_type == RECA_WINDOW_GRAB || rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED
+      || rec_type == RECA_MIXED) return;
 
   mainw->cancelled = CANCEL_NONE;
   mainw->cancel_type = CANCEL_SOFT;
@@ -2732,9 +2724,11 @@ void start_audio_rec(void) {
       lives_free(lives_header);
 
       if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-        pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-        mainw->pulsed_read->is_paused = FALSE;
-        mainw->pulsed_read->in_use = TRUE;
+        if (AUD_SRC_EXTERNAL) {
+          pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+          mainw->pulsed_read->is_paused = FALSE;
+          mainw->pulsed_read->in_use = TRUE;
+        } else pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
       } else {
         if (mainw->pulsed) {
           pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
@@ -3314,7 +3308,7 @@ boolean resync_audio(int clipno, double frameno) {
   if (!LIVES_IS_PLAYING || !CLIP_HAS_AUDIO(clipno)) return FALSE;
 
   if (!AV_CLIPS_EQUAL) return FALSE;
-  if (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) return FALSE;
+  //if (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) return FALSE;
   sfile = mainw->files[clipno];
   if (!frameno && sfile->fps == 0.) return FALSE;
 
@@ -3340,7 +3334,8 @@ boolean resync_audio(int clipno, double frameno) {
       }
     }
 
-    jack_set_avel(mainw->jackd, sfile->pb_fps / sfile->fps);
+    if (!mainw->alock_abuf) jack_get_rec_avals(mainw->jackd);
+    else jack_set_avel(mainw->jackd, sfile->pb_fps / sfile->fps);
     return TRUE;
   }
 #endif
@@ -3355,7 +3350,8 @@ boolean resync_audio(int clipno, double frameno) {
       mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
     }
 
-    pulse_set_avel(mainw->pulsed, sfile->pb_fps / sfile->fps);
+    if (!mainw->alock_abuf) pulse_get_rec_avals(mainw->pulsed);
+    else pulse_set_avel(mainw->pulsed, sfile->pb_fps / sfile->fps);
     return TRUE;
   }
 #endif
@@ -4400,9 +4396,9 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
         // needs resample
         dst[i] = (float *)lives_calloc(olen * 2, sizeof(float));
         if (is_vid)
-          olen = sample_move_float_float_arena(dst[i], src, abuf->vclient_readpos, alen, scale, 1, 1.);
+          olen = sample_move_float_float_arena(dst[i], src, abuf->vclient_readpos, alen, scale, 1, 1., 0);
         else
-          olen = sample_move_float_float_arena(dst[i], src, abuf->aclient_readpos, alen, scale, 1, 1.);
+          olen = sample_move_float_float_arena(dst[i], src, abuf->aclient_readpos, alen, scale, 1, 1., 0);
       }
     } else dst[i] = NULL;
   }
@@ -4479,11 +4475,11 @@ boolean start_audio_stream(void) {
   } while ((timeout = lives_alarm_check(alarm_handle)) > 0);
   lives_alarm_clear(alarm_handle);
 
-  if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player == AUD_PLAYER_PULSE) {
     mainw->pulsed->astream_fd = afd;
-#endif
   }
+#endif
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK) {

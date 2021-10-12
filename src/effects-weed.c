@@ -3821,7 +3821,7 @@ apply_inst3:
           else filter_error = FILTER_SUCCESS;
 
           if (myeaseval >= 0) {
-            g_print("mev is %d\n", myeaseval);
+            //g_print("mev is %d\n", myeaseval);
             int xeaseval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL);
             if (!xeaseval) {
               if (!weed_plant_has_leaf(instance, LIVES_LEAF_AUTO_EASING)) {
@@ -3918,6 +3918,7 @@ apply_inst3:
         lives_free(msg);
         if (opwidth < 16) opwidth = 16;
         if (opheight < 16) opheight = 16;
+        weed_layer_pixel_data_free(layer);
         create_blank_layer(layer, get_image_ext_for_type(mainw->files[clip]->img_type), opwidth, opheight, WEED_PALETTE_END);
       }
     }

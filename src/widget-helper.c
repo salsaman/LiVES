@@ -10156,7 +10156,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   }
 
   if (widget_opts.apply_theme) {
-    set_css_min_size(spinbutton, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
+    set_css_min_size(spinbutton, widget_opts.css_min_width, (((widget_opts.css_min_height * 3 + 3) >> 2) << 1) - 2);
 
 #if !GTK_CHECK_VERSION(3, 16, 0)
     // breaks button insens !

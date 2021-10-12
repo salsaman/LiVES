@@ -1162,10 +1162,6 @@ typedef struct {
 
   lives_painter_surface_t *fsp_surface;
 
-  /// hook functions
-  // lists of lives_closure_t
-  LiVESList *hook_closures[N_HOOK_FUNCS];
-
   // selection pointers
   ulong mouse_fn1;
   boolean mouse_blocked;
@@ -1628,6 +1624,7 @@ typedef struct {
   pthread_mutex_t fbuffer_mutex; /// append / remove with file_buffer list
   pthread_mutex_t alarmlist_mutex; /// single access for updating alarm list
   pthread_mutex_t trcount_mutex; /// transition count mutex
+  pthread_mutex_t alock_mutex; /// audio lock / unlock
 
   volatile int fx_mutex_tid[FX_KEYS_MAX_VIRTUAL];
   int fx_mutex_nlocks[FX_KEYS_MAX_VIRTUAL];
@@ -1654,7 +1651,7 @@ typedef struct {
   double rec_fps;
   frames_t rec_vid_frames;
 
-  int alock_fd; // experimental
+  lives_audio_buf_t *alock_abuf; // experimental
 
   ///< values to be written to the event list concurrent with next video ftame event
   int rec_arate, rec_achans, rec_asamps, rec_signed_endian;

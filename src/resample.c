@@ -14,6 +14,8 @@
 #include "events.h"
 #include "cvirtual.h"
 
+#define LIVES_LEAF_NEW_TC "new_tc"
+
 static int reorder_width = 0;
 static int reorder_height = 0;
 static boolean reorder_leave_back = FALSE;
@@ -360,6 +362,12 @@ void pre_analyse(weed_plant_t *elist) {
       continue;
     }
 
+    if (weed_get_int_value(event, LIVES_LEAF_SCRATCH, NULL) != SCRATCH_NONE) {
+      lives_freep((void **)&ststate);
+      last = NULL;
+      continue;
+    }
+
     if (!WEED_EVENT_IS_AUDIO_FRAME(event)) continue;
     enstate = audio_frame_to_atstate(event, &ntracks);
     if (ntracks > 1) break;
@@ -388,46 +396,49 @@ void pre_analyse(weed_plant_t *elist) {
       // ratio is real diff / est diff, e.g 1 / 2 we should go twice as fast
       double ratio = fabs(enstate[0].seek - ststate[0].seek) / fabs(tpos - ststate[0].seek);
       if (dtime >= READJ_MIN_TIME) {
-        if (ratio >= READJ_MIN_RATIO && ratio < READJ_MAX_RATIO) {
-          // now have calculated the ratio, we can backtrack to start audio event, and adjust tcs
-          // new_tc -> start_tc + diff / ratio
-          weed_timecode_t otc = 0;
-          for (xevent = last; xevent && xevent != event; xevent = get_next_event(xevent)) {
-            int etype = get_event_type(xevent);
-            otc = get_event_timecode(xevent);
-            dtime = (double)(otc - stc) / TICKS_PER_SECOND_DBL;
-            dtime *= ratio;
-            ntc = stc + offs + (ticks_t)(dtime * TICKS_PER_SECOND_DBL);
-            if (etype == WEED_EVENT_TYPE_FILTER_DEINIT) {
-              weed_timecode_t new_tc;
-              weed_plant_t *init_event
-                = (weed_plant_t *)weed_get_voidptr_value(xevent, WEED_LEAF_INIT_EVENT, NULL);
-              if (weed_plant_has_leaf(init_event, "new_tc"))
-                new_tc = weed_get_int64_value(init_event, "new_tc", NULL);
+        if (!prefs->rr_qmode) {
+          // PRIORITIZE AUDIO RATE
+          if (ratio >= READJ_MIN_RATIO && ratio < READJ_MAX_RATIO) {
+            // now have calculated the ratio, we can backtrack to start audio event, and adjust tcs
+            // new_tc -> start_tc + diff / ratio
+            weed_timecode_t otc = 0;
+            for (xevent = last; xevent && xevent != event; xevent = get_next_event(xevent)) {
+              int etype = get_event_type(xevent);
+              otc = get_event_timecode(xevent);
+              dtime = (double)(otc - stc) / TICKS_PER_SECOND_DBL;
+              dtime *= ratio;
+              ntc = stc + offs + (ticks_t)(dtime * TICKS_PER_SECOND_DBL);
+              if (etype == WEED_EVENT_TYPE_FILTER_DEINIT) {
+                weed_timecode_t new_tc;
+                weed_plant_t *init_event
+                  = (weed_plant_t *)weed_get_voidptr_value(xevent, WEED_LEAF_INIT_EVENT, NULL);
+                if (weed_plant_has_leaf(init_event, LIVES_LEAF_NEW_TC))
+                  new_tc = weed_get_int64_value(init_event, LIVES_LEAF_NEW_TC, NULL);
+                else
+                  new_tc = weed_event_get_timecode(init_event);
+                rescale_param_changes(elist, init_event, new_tc, xevent, ntc, 0.);
+                weed_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, LIVES_LEAF_NEW_TC);
+                weed_leaf_delete(init_event, LIVES_LEAF_NEW_TC);
+              }
+              if (etype == WEED_EVENT_TYPE_FILTER_INIT)
+                weed_set_int64_value(xevent, LIVES_LEAF_NEW_TC, ntc);
               else
-                new_tc = weed_event_get_timecode(init_event);
-              rescale_param_changes(elist, init_event, new_tc, xevent, ntc, 0.);
-              weed_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, "new_tc");
-              weed_leaf_delete(init_event, "new_tc");
+                weed_event_set_timecode(xevent, ntc);
             }
-            if (etype == WEED_EVENT_TYPE_FILTER_INIT)
-              weed_set_int64_value(xevent, "new_tc", ntc);
-            else
-              weed_event_set_timecode(xevent, ntc);
+            /// offs is what we will add to remaining events when we hit the end
+            offs += ntc - otc;
           }
-          offs += ntc - otc;
-        }
-      } else {
-        // if the diff between audio frames is small, better to adjust the velocity instead
-        if (ratio >= READJ_MIN_TRATIO && ratio < READJ_MAX_TRATIO) {
-          double aseeks[2];
-          aseeks[0] = ststate[0].seek;
-          aseeks[1] = ststate[0].vel * ratio;
-          weed_set_double_array(last, WEED_LEAF_AUDIO_SEEKS, 2, aseeks);
+        } else {
+          // if the diff between audio frames is small, adjust the velocity instead
+          if (ratio >= READJ_MIN_TRATIO && ratio < READJ_MAX_TRATIO) {
+            double aseeks[2];
+            aseeks[0] = ststate[0].seek;
+            aseeks[1] = ststate[0].vel * ratio;
+            weed_set_double_array(last, WEED_LEAF_AUDIO_SEEKS, 2, aseeks);
+          }
         }
       }
     }
-    /// offs is what we will add to remaining events when we hit the end
     lives_free(ststate);
     ststate = enstate;
     last = event;
@@ -436,30 +447,31 @@ void pre_analyse(weed_plant_t *elist) {
 
   lives_freep((void **)&ststate);
 
-  // we hit the end, just add offs
-  for (xevent = last; xevent; xevent = get_next_event(xevent)) {
-    int etype = get_event_type(xevent);
-    tc = get_event_timecode(xevent);
-    ntc = tc + offs;
-    if (etype == WEED_EVENT_TYPE_FILTER_DEINIT) {
-      weed_timecode_t new_tc;
-      weed_plant_t *init_event
-        = (weed_plant_t *)weed_get_voidptr_value(xevent, WEED_LEAF_INIT_EVENT, NULL);
-      if (weed_plant_has_leaf(init_event, "new_tc"))
-        new_tc = weed_get_int64_value(init_event, "new_tc", NULL);
+  if (!prefs->rr_qmode) {
+    // we hit the end, just add offs
+    for (xevent = last; xevent; xevent = get_next_event(xevent)) {
+      int etype = get_event_type(xevent);
+      tc = get_event_timecode(xevent);
+      ntc = tc + offs;
+      if (etype == WEED_EVENT_TYPE_FILTER_DEINIT) {
+        weed_timecode_t new_tc;
+        weed_plant_t *init_event
+          = (weed_plant_t *)weed_get_voidptr_value(xevent, WEED_LEAF_INIT_EVENT, NULL);
+        if (weed_plant_has_leaf(init_event, LIVES_LEAF_NEW_TC))
+          new_tc = weed_get_int64_value(init_event, LIVES_LEAF_NEW_TC, NULL);
+        else
+          new_tc = weed_event_get_timecode(init_event);
+        rescale_param_changes(elist, init_event, new_tc, xevent, ntc, 0.);
+        weed_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, LIVES_LEAF_NEW_TC);
+        weed_leaf_delete(init_event, LIVES_LEAF_NEW_TC);
+      }
+      if (etype == WEED_EVENT_TYPE_FILTER_INIT)
+        weed_set_int64_value(xevent, LIVES_LEAF_NEW_TC, ntc);
       else
-        new_tc = weed_event_get_timecode(init_event);
-      rescale_param_changes(elist, init_event, new_tc, xevent, ntc, 0.);
-      weed_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, "new_tc");
-      weed_leaf_delete(init_event, "new_tc");
+        weed_event_set_timecode(xevent, ntc);
     }
-    if (etype == WEED_EVENT_TYPE_FILTER_INIT)
-      weed_set_int64_value(xevent, "new_tc", ntc);
-    else
-      weed_event_set_timecode(xevent, ntc);
   }
 }
-
 
 
 static boolean has_recstart_between(weed_event_t *event, weed_event_t *nframe_event) {
@@ -545,7 +557,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
   boolean allow_jump = FALSE;
   boolean nframe_event_tainted = FALSE;
-  boolean noquant = FALSE;
+  boolean noquant = FALSE, nointer = FALSE;
 
   int *clips = NULL, *naclips = NULL, *nclips = NULL, *pclips = NULL;;
   frames64_t *frames = NULL, *nframes = NULL, *pframes = NULL;
@@ -585,7 +597,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   if (weed_plant_has_leaf(in_list, WEED_LEAF_WEED_EVENT_API_VERSION))
     ev_api = weed_get_int_value(in_list, WEED_LEAF_WEED_EVENT_API_VERSION, NULL);
 
-  if (old_fps == 0. && prefs->rr_super && (!prefs->rr_qmode || prefs->rr_pre_smooth)) {
+  if (old_fps == 0. && prefs->rr_super && prefs->rr_pre_smooth) {
     /// in pre-analysis, we will look at the audio frames, and instead of correcting the audio veloicity, we will
     /// attempt to slightly modify (scale) the frame timings such that the audio hits the precise seek point
     pre_analyse(in_list);
@@ -677,11 +689,15 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           cframe_event = event;
           cin_tc = in_tc;
 
+          if (weed_get_int_value(event, LIVES_LEAF_SCRATCH, NULL) != SCRATCH_NONE) nointer = TRUE;
+
           if (!nframe_event || nframe_event == event) {
             // nframe_event gets next frame
             nframe_event = get_next_frame_event(event);
             if (!nframe_event) is_final = 1;
             else {
+              if (weed_get_int_value(nframe_event, LIVES_LEAF_SCRATCH, NULL) != SCRATCH_NONE)
+                nointer = TRUE;
               if (!has_recstart_between(event, nframe_event)) {
                 nx_tc = get_event_timecode(nframe_event);
                 nframe_event_tainted = FALSE;
@@ -735,7 +751,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             for (i = 0; i < atracks; i += 2) {
               for (j = 0; j < natracks; j += 2) {
                 if (naclips[j] == aclips[i]) {
-                  // replace (superseded)
+                  // replace (superceded)
                   naclips[j + 1] = aclips[i + 1];
                   naseeks[j] = aseeks[i];
                   naseeks[j + 1] = aseeks[i + 1];
@@ -990,8 +1006,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             }
           } else {
             if (event != frame_event && old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth
-                && pframe_event && nframe_event && !nframe_event_tainted
-                && weed_get_int_value(event, LIVES_LEAF_SCRATCH, NULL) == SCRATCH_NONE) {
+                && pframe_event && nframe_event && !nframe_event_tainted && !nointer) {
               /// interpolate frames if possible
               double ratio = (double)(out_tc + offset_tc - pframe_tc) / (double)(nx_tc - pframe_tc);
               //ratio = 0.5;
@@ -1015,6 +1030,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         if (clips)
           out_list = append_frame_event(out_list, out_tc, tracks, clips, frames);
         newframe = get_last_event(out_list);
+        if (nointer) weed_set_int_value(event, LIVES_LEAF_SCRATCH, SCRATCH_JUMP_NORESYNC);
 
         if (eevents) {
           weed_set_voidptr_array(newframe, LIVES_LEAF_EASING_EVENTS, nev, eevents);
@@ -1087,7 +1103,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           weed_set_int_array(newframe, WEED_LEAF_AUDIO_CLIPS, natracks, naclips);
           weed_set_double_array(newframe, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
 
-          if (prefs->rr_super && prefs->rr_amicro) {
+          if (!nointer && prefs->rr_super && prefs->rr_amicro) {
             /// the timecode of each audio frame is adjusted to the quantised time, and we update the seek position accordingly
             /// however, when playing back, any velocity change will come slightly later than when recorded; thus
             /// the player seek pos will be slightly off.
@@ -1095,80 +1111,81 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             /// arriving at the current audio frame
             double amicro_lim = 4. / qfps;
             prev_aframe = get_prev_audio_frame_event(newframe);
-            if ((double)(out_tc - get_event_timecode(prev_aframe)) / TICKS_PER_SECOND_DBL <= amicro_lim) {
-              //while (prev_aframe && (double)(out_tc - get_event_timecode(prev_aframe)) / TICKS_PER_SECOND_DBL <= amicro_lim) {
-              for (i = 0; i < natracks; i += 2) {
-                // check each track in natracks (currently active) to see if it is also in xatracks (all active)
-                boolean gottrack = FALSE;
-                ///< audio was off, older lists didn't store the offset
-                if (naseeks[i + 1] == 0. && ev_api < 122) continue;
-                for (k = 0; k < xatracks; k += 2) {
-                  if (xaclips[k] == naclips[i]) {
-                    //. track is in xatracks, so there must be a prev audio frame for the track;
-                    // if the clips match then we will find
-                    // the audio frame event and maybe adjust the velocity
-                    if (xaclips[k + 1] == naclips[i + 1]) gottrack = TRUE;
-                    break;
+            if (weed_get_int_value(prev_aframe, LIVES_LEAF_SCRATCH, NULL) == SCRATCH_NONE) {
+              if ((double)(out_tc - get_event_timecode(prev_aframe)) / TICKS_PER_SECOND_DBL <= amicro_lim) {
+                //while (prev_aframe && (double)(out_tc - get_event_timecode(prev_aframe)) / TICKS_PER_SECOND_DBL <= amicro_lim) {
+                for (i = 0; i < natracks; i += 2) {
+                  // check each track in natracks (currently active) to see if it is also in xatracks (all active)
+                  boolean gottrack = FALSE;
+                  ///< audio was off, older lists didn't store the offset
+                  if (naseeks[i + 1] == 0. && ev_api < 122) continue;
+                  for (k = 0; k < xatracks; k += 2) {
+                    if (xaclips[k] == naclips[i]) {
+                      //. track is in xatracks, so there must be a prev audio frame for the track;
+                      // if the clips match then we will find
+                      // the audio frame event and maybe adjust the velocity
+                      if (xaclips[k + 1] == naclips[i + 1]) gottrack = TRUE;
+                      break;
+                    }
                   }
-                }
-                if (!gottrack) continue;
+                  if (!gottrack) continue;
 
-                /// find the prior audio frame for the track
-                xprev_aframe = prev_aframe;
-                if (1) {
-                  //while (gottrack && xprev_aframe) {
-                  weed_timecode_t ptc = get_event_timecode(xprev_aframe);
-                  int *paclips;
-                  double *paseeks;
-                  int patracks;
-                  if (ptc < recst_tc) break;
+                  /// find the prior audio frame for the track
+                  xprev_aframe = prev_aframe;
+                  if (1) {
+                    //while (gottrack && xprev_aframe) {
+                    weed_timecode_t ptc = get_event_timecode(xprev_aframe);
+                    int *paclips;
+                    double *paseeks;
+                    int patracks;
+                    if (ptc < recst_tc) break;
 
-                  patracks = weed_frame_event_get_audio_tracks(xprev_aframe, &paclips, &paseeks);
+                    patracks = weed_frame_event_get_audio_tracks(xprev_aframe, &paclips, &paseeks);
 
-                  for (j = 0; j < patracks; j += 2) {
-                    if (paclips[j] == naclips[i]) {
-                      if (paclips[j + 1] == naclips[i + 1]) {
-                        if (paseeks[j + 1] != 0.) {
-                          double dt = (double)(out_tc - ptc) / TICKS_PER_SECOND_DBL;
-                          //if (dt > amicro_lim) continue;
-                          //else {
-                          if (1) {
-                            /// what we will do here is insert an extra audio event at the previous out_frame.
-                            /// the seek will be calculated from old_val, and we will adjust the velocity
-                            /// so we hit the seek value at this frame
-                            /// adjust velocity by seek_delta / frame_duration
-                            int in_arate = mainw->files[naclips[i + 1]]->arps;
-                            double nvel = (naseeks[i] - paseeks[j]) / dt, seek;
+                    for (j = 0; j < patracks; j += 2) {
+                      if (paclips[j] == naclips[i]) {
+                        if (paclips[j + 1] == naclips[i + 1]) {
+                          if (paseeks[j + 1] != 0.) {
+                            double dt = (double)(out_tc - ptc) / TICKS_PER_SECOND_DBL;
+                            //if (dt > amicro_lim) continue;
+                            //else {
+                            if (1) {
+                              /// what we will do here is insert an extra audio event at the previous out_frame.
+                              /// the seek will be calculated from old_val, and we will adjust the velocity
+                              /// so we hit the seek value at this frame
+                              /// adjust velocity by seek_delta / frame_duration
+                              int in_arate = mainw->files[naclips[i + 1]]->arps;
+                              double nvel = (naseeks[i] - paseeks[j]) / dt, seek;
 
-                            if (nvel * paseeks[j + 1] < 0.) break;
+                              if (nvel * paseeks[j + 1] < 0.) break;
 
-                            if (nvel > paseeks[j + 1]) {
-                              if (nvel / paseeks[j + 1] > SKJUMP_THRESH_RATIO) nvel = paseeks[j + 1] * SKJUMP_THRESH_RATIO;
-                            } else {
-                              if (paseeks[j + 1] / nvel > SKJUMP_THRESH_RATIO) nvel = paseeks[j + 1]  / SKJUMP_THRESH_RATIO;
+                              if (nvel > paseeks[j + 1]) {
+                                if (nvel / paseeks[j + 1] > SKJUMP_THRESH_RATIO) nvel = paseeks[j + 1] * SKJUMP_THRESH_RATIO;
+                              } else {
+                                if (paseeks[j + 1] / nvel > SKJUMP_THRESH_RATIO) nvel = paseeks[j + 1]  / SKJUMP_THRESH_RATIO;
+                              }
+
+                              insert_audio_event_at(xprev_aframe, paclips[j], paclips[j + 1], paseeks[j], nvel);
+                              //} else {
+                              // if velocity change is too great then we may adjust the seek a little instead
+                              seek = paseeks[j] + nvel * dt;
+
+                              if (naseeks[i] > seek) {
+                                if (naseeks[i] > seek + SKJUMP_THRESH_SECS) seek = naseeks[i] + SKJUMP_THRESH_SECS;
+                              } else {
+                                if (naseeks[i] < seek - SKJUMP_THRESH_SECS) seek = naseeks[i] - SKJUMP_THRESH_SECS;
+                              }
+                              naseeks[i] = quant_aseek(seek, in_arate);
+                              weed_set_double_array(newframe, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
                             }
-
-                            insert_audio_event_at(xprev_aframe, paclips[j], paclips[j + 1], paseeks[j], nvel);
-                            //} else {
-                            // if velocity change is too great then we may adjust the seek a little instead
-                            seek = paseeks[j] + nvel * dt;
-
-                            if (naseeks[i] > seek) {
-                              if (naseeks[i] > seek + SKJUMP_THRESH_SECS) seek = naseeks[i] + SKJUMP_THRESH_SECS;
-                            } else {
-                              if (naseeks[i] < seek - SKJUMP_THRESH_SECS) seek = naseeks[i] - SKJUMP_THRESH_SECS;
-                            }
-                            naseeks[i] = quant_aseek(seek, in_arate);
-                            weed_set_double_array(newframe, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
-                          }
-                          break;
-			  // *INDENT-OFF*
-			}}}}
-		  // *INDENT-ON*
-                  lives_freep((void **)&paclips);
-                  lives_freep((void **)&paseeks);
-		  // *INDENT-OFF*
-		}}}}
+                            break;
+			    // *INDENT-OFF*
+			  }}}}
+		    // *INDENT-ON*
+                    lives_freep((void **)&paclips);
+                    lives_freep((void **)&paseeks);
+		    // *INDENT-OFF*
+		  }}}}}
 	  // *INDENT-ON*
 
           /// merge natracks with xatracks
@@ -1199,6 +1216,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
         lives_freep((void **)&frames);
         lives_freep((void **)&clips);
+
+        nointer = FALSE;
 
         /// frame insertion done
 
@@ -2626,4 +2645,54 @@ boolean resample_clipboard(double new_fps) {
 
   mainw->no_switch_dprint = FALSE;
   return TRUE;
+}
+
+
+void resample_to_float(lives_audio_buf_t *abuf) {
+  // rsample buffer to float
+  //
+  if (!abuf || abuf->_fd < 0) return;
+  abuf->out_achans = 0;
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player == AUD_PLAYER_PULSE) {
+    abuf->out_achans = mainw->pulsed->out_achans;
+  }
+#endif
+#ifdef ENABLE_JACK
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
+    abuf->out_achans = mainw->jackd->num_output_channels;
+  }
+#endif
+  if (abuf->out_achans && IS_VALID_CLIP(abuf->fileno)) {
+    lives_clip_t *sfile = mainw->files[abuf->fileno];
+    abuf->in_asamps = sfile->asampsize;
+    abuf->in_achans = sfile->achans;
+    abuf->samp_space = lives_buffered_orig_size(abuf->_fd) / abuf->in_achans / (abuf->in_asamps >> 3);
+    abuf->bufferf = lives_calloc(abuf->out_achans, sizeof(float *));
+    for (int i = 0; i < abuf->out_achans; i++)  {
+      abuf->bufferf[i] = lives_calloc(abuf->samp_space, sizeof(float));
+      if (i >= abuf->in_achans) continue;
+      if (sfile->asampsize == 32) {
+        //sample_move_float_float(abuf->bufferf[i], fbuffer + i, aflen, 1., ichans, 1., 0);
+      } else {
+        if (sfile->asampsize == 16) {
+          int16_t *s16buffer = (int16_t *)lives_buffered_get_data(abuf->_fd);
+          boolean rev_endian = FALSE;
+          int abigendian = sfile->signed_endian & AFORM_BIG_ENDIAN;
+          int in_unsigned = sfile->signed_endian & AFORM_UNSIGNED;
+          if ((abigendian && capable->hw.byte_order == LIVES_LITTLE_ENDIAN)
+              || (!abigendian && capable->hw.byte_order == LIVES_BIG_ENDIAN)) rev_endian = TRUE;
+          sample_move_d16_float(abuf->bufferf[i], s16buffer, abuf->samp_space, abuf->in_achans, in_unsigned, rev_endian, 1.);
+        } else {
+          /* if (sfile->asampsize == 8) { */
+          /*   sample_move_d8_d16((short *)(pulsed->sound_buffer), (uint8_t *)buffer, nsamples, in_bytes, */
+          /* 		       shrink_factor, pulsed->out_achans, pulsed->in_achans, swap_sign ? SWAP_U_TO_S : 0); */
+          /*   sample_move_d16_float(abuf->bufferf[i], s16buffer, aflen, ichans, in_unsigned[, rev_endian, 1.); */
+          /* } */
+        }
+      }
+    }
+    abuf->seek = sfile->aseek_pos;
+    abuf->arate = sfile->arate;
+  }
 }

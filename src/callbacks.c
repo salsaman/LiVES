@@ -94,7 +94,10 @@ void lives_exit(int signum) {
     pthread_mutex_unlock(&mainw->fbuffer_mutex);
     pthread_mutex_trylock(&mainw->alarmlist_mutex);
     pthread_mutex_unlock(&mainw->alarmlist_mutex);
+    pthread_mutex_trylock(&mainw->trcount_mutex);
     pthread_mutex_unlock(&mainw->trcount_mutex);
+    pthread_mutex_trylock(&mainw->alock_mutex);
+    pthread_mutex_unlock(&mainw->alock_mutex);
     // filter mutexes are unlocked in weed_unload_all
 
     if (pthread_mutex_trylock(&mainw->exit_mutex)) pthread_exit(NULL);
@@ -4816,8 +4819,8 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         }
       }
       if ((prefs->rec_opts & REC_AUDIO) && (mainw->agen_key != 0 || mainw->agen_needs_reinit
-                                            || prefs->audio_src == AUDIO_SRC_EXT) &&
-          AUD_SRC_REALTIME)
+                                            || AUD_SRC_EXTERNAL || (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
+          && AUD_SRC_REALTIME)
         start_audio_rec();
     } else {
       // end record during playback
@@ -9902,13 +9905,27 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
       if ((sfile->pb_fps > 0. && sfile->adirection == LIVES_DIRECTION_REVERSE)
           || (sfile->pb_fps < 0. && sfile->adirection == LIVES_DIRECTION_FORWARD))
         frameno = sfile->frameno;
+      resync_audio(mainw->playing_file, (double)frameno);
     } else {
       if (AV_CLIPS_EQUAL && sfile->pb_fps < 0. && sfile->adirection == LIVES_DIRECTION_FORWARD) {
         calc_aframeno(mainw->playing_file);
         frameno = mainw->aframeno - 3.;
+        resync_audio(mainw->playing_file, (double)frameno);
       }
     }
-    resync_audio(mainw->playing_file, (double)frameno);
+  }
+
+  if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK) {
+      jack_set_avel(mainw->jackd, sfile->pb_fps / sfile->fps);
+    }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE) {
+      pulse_set_avel(mainw->pulsed, sfile->pb_fps / sfile->fps);
+    }
+#endif
   }
 
   if (sfile->play_paused && new_fps != 0.) {
@@ -10582,30 +10599,39 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
 
   // lock OFF
   if (!state) {
+    lives_audio_buf_t *abuf = mainw->alock_abuf;
     prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
-    if (mainw->alock_fd >= 0) {
-      lives_close_buffered(mainw->alock_fd);
-      mainw->alock_fd = -1;
+    if (abuf) {
+      pthread_mutex_lock(&mainw->alock_mutex);
+      mainw->alock_abuf = NULL;
+      pthread_mutex_unlock(&mainw->alock_mutex);
+      free_audio_frame_buffer(abuf);
     }
-    if (!w) switch_audio_clip(mainw->playing_file, TRUE);
+    if (LIVES_IS_PLAYING) switch_audio_clip(mainw->playing_file, TRUE);
   }
 
-  if (!w && (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC))
+  if (LIVES_IS_PLAYING && (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC))
     resync_audio(mainw->playing_file, mainw->files[mainw->playing_file]->frameno);
 
   // lock ON
   if (state) {
     prefs->audio_opts |= AUDIO_OPTS_IS_LOCKED;
-#if 0
     // TODO - in alock mode, buffer and resample all audio
     if (LIVES_IS_PLAYING & CURRENT_CLIP_HAS_AUDIO) {
       char *filename = lives_get_audio_file_name(mainw->playing_file);
-      mainw->alock_fd = lives_open_buffered_rdonly(filename);
-      if (mainw->alock_fd >= 0)
-        lives_buffered_rdonly_slurp(mainw->alock_fd, 0);
+      mainw->alock_abuf = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
+      if (mainw->alock_abuf) {
+        mainw->alock_abuf->_fd = lives_open_buffered_rdonly(filename);
+        if (mainw->alock_abuf->_fd >= 0) {
+          mainw->alock_abuf->fileno = mainw->playing_file;
+          lives_hook_append(SLURP_LOADED_HOOK, (lives_funcptr_t)resample_to_float,
+                            mainw->alock_abuf);
+          lives_buffered_rdonly_slurp(mainw->alock_abuf->_fd, 0);
+          mainw->alock_abuf->is_ready = TRUE;
+        }
+      }
       lives_free(filename);
     }
-#endif
   }
   return TRUE;
 }
@@ -10731,6 +10757,10 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     if ((LIVES_IS_PLAYING && mainw->clipstore[clip][0] != mainw->playing_file)
         || (!LIVES_IS_PLAYING && mainw->clipstore[clip][0] != mainw->current_file)) {
       switch_clip(0, mainw->clipstore[clip][0], TRUE);
+    } else {
+      if (LIVES_IS_PLAYING && !(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
+        resync_audio(mainw->playing_file, (double)cfile->frameno);
+      }
     }
     if (!LIVES_IS_PLAYING) {
       cfile->real_pointer_time = (mainw->clipstore[clip][1] - 1.) / cfile->fps;
@@ -10745,13 +10775,14 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 boolean retrigger_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer user_data) {
   if (IS_VALID_CLIP(mainw->playing_file)) {
-    uint32_t aud_locked = prefs->audio_opts & AUDIO_OPTS_IS_LOCKED;
+    //uint32_t aud_locked = prefs->audio_opts & AUDIO_OPTS_IS_LOCKED;
     lives_clip_t *sfile = mainw->files[mainw->playing_file];
     sfile->frameno = sfile->last_frameno = 1;
     mainw->scratch = SCRATCH_JUMP;
-    prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
-    resync_audio(mainw->playing_file, (double)sfile->frameno);
-    prefs->audio_opts |= aud_locked;
+    //prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
+    if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
+      resync_audio(mainw->playing_file, (double)sfile->frameno);
+    }
   }
   return TRUE;
 }

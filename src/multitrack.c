@@ -473,7 +473,7 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
         if (strcmp(mainw->files[offs]->handle, buf)) continue;
 
         // got a match - index the current clip order -> clip order in layout
-        g_print("RENUM pt a %d = %d\n", clipn, offs);
+        //g_print("RENUyM pt a %d = %d\n", clipn, offs);
         renumbered_clips[clipn] = offs;
         // lfps contains the fps at the time of the crash
         lfps[offs] = vard;
@@ -1051,13 +1051,13 @@ static void renumber_clips(void) {
 
         if (mainw->first_free_file == cclip) mainw->first_free_file++;
 
-        g_print("RENUM pt a2 %d = %d\n", i, cclip);
+        //g_print("RENUM pt a2 %d = %d\n", i, cclip);
         renumbered_clips[i] = cclip;
       }
       // process this clip again
       else cclip--;
     } else {
-      g_print("RENUM pt a3 %d = %d\n", cclip, cclip);
+      //g_print("RENUM pt a3 %d = %d\n", cclip, cclip);
       renumbered_clips[cclip] = cclip;
       if (i == cclip) i++;
     }
@@ -1097,7 +1097,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
   renumbered_clips[0] = 0;
 
   for (i = 1; i <= MAX_FILES && mainw->files[i]; i++) {
-    g_print("RENUM pt a4 %d = %d\n", i, 0);
+    //g_print("RENUM pt a4 %d = %d\n", i, 0);
     renumbered_clips[i] = 0;
     if (mainw->files[i]) lfps[i] = mainw->files[i]->fps;
     else lfps[i] = cfile->fps;
@@ -1117,7 +1117,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
           // piece 2 is the clip number within the specific layout
           rnc = atoi(array[1]);
           if (rnc < 0 || rnc > MAX_FILES) continue;
-          g_print("RENUM pt a5 %d = %d\n", rnc, i);
+          //g_print("RENUM pt a5 %d = %d\n", rnc, i);
           renumbered_clips[rnc] = i;
 
           // original fps
@@ -1132,7 +1132,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
     // current event_list
     for (i = 1; i <= MAX_FILES && mainw->files[i]; i++) {
       if (mainw->files[i]->stored_layout_idx != -1) {
-        g_print("RENUM pt a6 %d = %d\n", i, i);
+        //g_print("RENUM pt a6 %d = %d\n", i, i);
         renumbered_clips[mainw->files[i]->stored_layout_idx] = i;
       }
       lfps[i] = mainw->files[i]->stored_layout_fps;
@@ -7458,7 +7458,7 @@ static boolean on_tleb_enter(LiVESWidget * widget, LiVESXEventCrossing * event, 
 void reset_renumbering(void) {
   for (int i = 1; i <= MAX_FILES; i++) {
     if (mainw->files[i]) {
-      g_print("RENUM pt a7 %d = %d\n", i, i);
+      //g_print("RENUM pt a7 %d = %d\n", i, i);
       renumbered_clips[i] = i;
     } else renumbered_clips[i] = 0;
   }

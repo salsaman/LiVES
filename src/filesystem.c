@@ -15,21 +15,41 @@
 #endif
 
 
-off_t get_file_size(int fd) {
+off_t get_file_size(int fd, boolean maybe_padded) {
   // get the size of file fd
+  // for buffered write files, maybe_padded must be set
+  // otherwise unset to avoid mutex dealocks
+
   struct stat filestat;
-  off_t fsize;
+  off_t fsize = -1;
   lives_file_buffer_t *fbuff;
-  fstat(fd, &filestat);
-  fsize = filestat.st_size;
-  //g_printerr("fssize for %d is %ld\n", fd, fsize);
+
+  if (!maybe_padded) {
+    fstat(fd, &filestat);
+    return filestat.st_size;
+  }
+
   if ((fbuff = find_in_file_buffers(fd)) != NULL) {
+    if ((fd = fbuff->fd) >= 0) {
+      fstat(fd, &filestat);
+      fsize = filestat.st_size;
+    }
+  }
+
+  //g_printerr("fssize for %d is %ld\n", fd, fsize);
+  if (maybe_padded) {
     if (!fbuff->read) {
       /// because of padding bytes... !!!!
       off_t f2size;
       if ((f2size = (off_t)(fbuff->offset + fbuff->bytes)) > fsize) return f2size;
     }
   }
+
+  if (fsize == -1) {
+    if (fbuff) fsize = fbuff->orig_size;
+    else fsize = 0;
+  }
+
   return fsize;
 }
 
@@ -558,13 +578,12 @@ lives_file_buffer_t *find_in_file_buffers(int fd) {
 
   for (fblist = mainw->file_buffers; fblist; fblist = fblist->next) {
     fbuff = (lives_file_buffer_t *)fblist->data;
-    if (fbuff->fd == fd) break;
-    fbuff = NULL;
+    if (fbuff->idx == fd) break;
   }
-
   pthread_mutex_unlock(&mainw->fbuffer_mutex);
 
-  return fbuff;
+  if (fblist) return fbuff;
+  return NULL;
 }
 
 
@@ -729,10 +748,24 @@ void lives_invalidate_all_file_buffers(void) {
 }
 
 
+static pthread_mutex_t nxtidx_mutex = PTHREAD_MUTEX_INITIALIZER;
+static int fbuff_idx_base = 1000000;
+static int next_fbuff_idx(void) {
+  pthread_mutex_lock(&nxtidx_mutex);
+  if (fbuff_idx_base < 2000000000) {
+    int nxt = ++fbuff_idx_base;
+    pthread_mutex_unlock(&nxtidx_mutex);
+    return nxt;
+  }
+  pthread_mutex_unlock(&nxtidx_mutex);
+  return -1;
+}
+
+
 static int lives_open_real_buffered(const char *pathname, int flags, int mode, boolean isread) {
   lives_file_buffer_t *fbuff, *xbuff;
   boolean is_append = FALSE;
-  int fd;
+  int fd, idx;
 
   if (flags & O_APPEND) {
     is_append = TRUE;
@@ -742,6 +775,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
   fd = lives_open3(pathname, flags, mode);
   if (fd >= 0) {
     fbuff = (lives_file_buffer_t *)lives_calloc(sizeof(lives_file_buffer_t) >> 2, 4);
+    fbuff->idx = idx = next_fbuff_idx();
     fbuff->fd = fd;
     fbuff->read = isread;
     fbuff->pathname = lives_strdup(pathname);
@@ -753,20 +787,20 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
       break_me("dupe fd in fbuffs");
       LIVES_ERROR(msg);
       lives_free(msg);
-      lives_close_buffered(fd);
+      lives_close_buffered(idx);
     } else {
       if (!isread && !(flags & O_TRUNC)) {
         if (is_append) fbuff->offset = fbuff->orig_size = lseek(fd, 0, SEEK_END);
-        else fbuff->orig_size = (size_t)get_file_size(fd);
+        else fbuff->orig_size = (size_t)get_file_size(fd, FALSE);
         /// TODO - handle fsize < 0
       }
     }
     pthread_mutex_lock(&mainw->fbuffer_mutex);
     mainw->file_buffers = lives_list_prepend(mainw->file_buffers, (livespointer)fbuff);
     pthread_mutex_unlock(&mainw->fbuffer_mutex);
-  }
+  } else return fd;
 
-  return fd;
+  return idx;
 }
 
 static size_t bigbytes = BUFFER_FILL_BYTES_LARGE;
@@ -795,7 +829,7 @@ LIVES_GLOBAL_INLINE int lives_open_buffered_rdonly(const char *pathname) {
 #include <sys/mman.h>
 #endif
 
-boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
+static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t skip) {
   // slurped files: start reading in from posn skip (bytes), done in a dedicated worker thread
   // we keep reading until entire file is loaded
   // fbuff->bytes increases as we read in from file, and for this type of file, fbuff->offest points to the 'virtual'
@@ -812,12 +846,14 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
   // changing the read block size did not appear to make much difference, however
   // we do read a smaller chunk to start with, so that small requests can be served more rapidly
 
-  lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-  off_t fsize = get_file_size(fd) - skip, bufsize = smedbytes, res;
+  int fd = fbuff->fd;
+  off_t fsize = get_file_size(fd, FALSE) - skip, bufsize = smedbytes, res;
+  boolean run_hooks = TRUE;
+
 #if defined HAVE_POSIX_FADVISE
-  posix_fadvise(fbuff->fd, skip, 0, POSIX_FADV_SEQUENTIAL);
-  posix_fadvise(fbuff->fd, skip, 0, POSIX_FADV_NOREUSE);
-  posix_fadvise(fbuff->fd, skip, 0, POSIX_FADV_WILLNEED);
+  posix_fadvise(fd, skip, 0, POSIX_FADV_SEQUENTIAL);
+  posix_fadvise(fd, skip, 0, POSIX_FADV_NOREUSE);
+  posix_fadvise(fd, skip, 0, POSIX_FADV_WILLNEED);
 #endif
   fbuff->ptr = fbuff->buffer = lives_calloc(1, fsize);
   mlock(fbuff->buffer, fsize);
@@ -839,6 +875,7 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
     while (fsize > 0) {
       if (fbuff->invalid) {
         fbuff->invalid = FALSE;
+        run_hooks = FALSE;
         //g_print("slurp file %d closed\n", fd);
         break; // file was closed
       }
@@ -848,7 +885,7 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
       res = bufsize;
       offs += bufsize;
 #else
-      res = lives_read(fbuff->fd, fbuff->buffer + fbuff->bytes, bufsize, TRUE);
+      res = lives_read(fd, fbuff->buffer + fbuff->bytes, bufsize, TRUE);
       //g_printerr("slurp for %d, %s with size %ld, read %lu bytes, %lu remain\n", fd, fbuff->pathname, fbuff->orig_size, bufsize, fsize);
       if (res < 0) {
         fbuff->invalid = TRUE;
@@ -864,15 +901,27 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
       //g_printerr("slurp %d oof %ld %ld remain %lu  \n", fd, fbuff->offset, fsize, ofsize);
       //if (mainw->disk_pressure > 0.) mainw->disk_pressure = check_disk_pressure(0.);
 #ifdef __linux__
-      readahead(fbuff->fd, fbuff->bytes, bufsize * 4);
+      readahead(fd, fbuff->bytes + skip, bufsize * 4);
 #endif
     }
 #ifdef TEST_MMAP
     munmap(p, fsize);
 #endif
   }
-  if (fbuff) fbuff->slurping = FALSE;
+
+  if (run_hooks) lives_hooks_trigger(SLURP_LOADED_HOOK);
+
+  fbuff->fd = -1;
+  IGN_RET(close(fd));
+  fbuff->slurping = FALSE;
   return TRUE;
+}
+
+
+boolean lives_buffered_rdonly_is_slurping(int fd) {
+  lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
+  if (!fbuff || fbuff->bufsztype != BUFF_SIZE_READ_SLURP) return FALSE;
+  return fbuff->slurping;
 }
 
 
@@ -882,8 +931,10 @@ void lives_buffered_rdonly_slurp(int fd, off_t skip) {
   fbuff->slurping = TRUE;
   fbuff->bytes = fbuff->offset = 0;
   fbuff->bufsztype = BUFF_SIZE_READ_SLURP;
-  lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "iI", fd, skip);
-  lives_nanosleep_until_nonzero(fbuff->orig_size | !fbuff->slurping);
+
+  lives_proc_thread_create(LIVES_THRDATTR_INHERIT_HOOKS,
+                           (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "VI", fbuff, skip);
+  lives_nanosleep_until_nonzero(fbuff->orig_size || !fbuff->slurping);
 }
 
 
@@ -912,7 +963,7 @@ LIVES_GLOBAL_INLINE int lives_create_buffered_nosync(const char *pathname, int m
   return lives_open_real_buffered(pathname, O_CREAT | O_WRONLY | O_TRUNC, mode, FALSE);
 }
 
-int lives_open_buffered_writer(const char *pathname, int mode, boolean append) {
+LIVES_GLOBAL_INLINE int lives_open_buffered_writer(const char *pathname, int mode, boolean append) {
   return lives_open_real_buffered(pathname, O_CREAT | O_WRONLY | O_DSYNC | (append ? O_APPEND : 0), mode, FALSE);
 }
 
@@ -920,7 +971,6 @@ int lives_open_buffered_writer(const char *pathname, int mode, boolean append) {
 #undef O_DSYNC
 #undef NO_O_DSYNC
 #endif
-
 
 ssize_t lives_close_buffered(int fd) {
   lives_file_buffer_t *fbuff;
@@ -959,9 +1009,13 @@ ssize_t lives_close_buffered(int fd) {
 #endif
   }
 
-  if (fbuff->slurping) {
-    fbuff->invalid = TRUE;
-    lives_nanosleep_while_true(fbuff->slurping);
+  if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
+    if (fbuff->slurping) {
+      fbuff->invalid = TRUE;
+      lives_nanosleep_while_true(fbuff->slurping);
+    }
+    should_close = FALSE;
+    munlock(fbuff->buffer, fbuff->orig_size - fbuff->skip);
   }
 
   lives_free(fbuff->pathname);
@@ -969,13 +1023,14 @@ ssize_t lives_close_buffered(int fd) {
   pthread_mutex_lock(&mainw->fbuffer_mutex);
   if (should_close && fbuff->fd >= 0) ret = close(fbuff->fd);
   mainw->file_buffers = lives_list_remove(mainw->file_buffers, (livesconstpointer)fbuff);
-  pthread_mutex_unlock(&mainw->fbuffer_mutex);
 
   if (fbuff->buffer) {
     lives_free(fbuff->buffer);
   }
 
   lives_free(fbuff);
+  pthread_mutex_unlock(&mainw->fbuffer_mutex);
+
   return ret;
 }
 
@@ -1260,13 +1315,11 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
         fbuff->offset -= ocount;
         fbuff->ptr -= ocount;
       }
-      while ((nbytes = fbuff->bytes - fbuff->offset) < count && fbuff->slurping) {
-        lives_nanosleep(1000);
-      }
+      lives_nanosleep_while_true((nbytes = fbuff->bytes - fbuff->offset) < count && fbuff->slurping);
       if (fbuff->bytes - fbuff->offset <= count) {
         fbuff->eof = TRUE;
         count = fbuff->bytes - fbuff->offset;
-        if (!count) goto rd_exit;
+        if (count <= 0) goto rd_exit;
       }
     } else nbytes = fbuff->bytes;
     if (nbytes > count) nbytes = count;
@@ -1682,8 +1735,18 @@ size_t lives_buffered_orig_size(int fd) {
   }
 
   if (!fbuff->read) return fbuff->orig_size;
-  if (fbuff->orig_size == 0) fbuff->orig_size = (size_t)get_file_size(fd);
+  if (fbuff->orig_size == 0) fbuff->orig_size = (size_t)get_file_size(fd, TRUE);
   return fbuff->orig_size;
+}
+
+
+uint8_t *lives_buffered_get_data(int fd) {
+  lives_file_buffer_t *fbuff;
+  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+    LIVES_DEBUG("lives_buffered_offset: no file buffer found");
+    return NULL;
+  }
+  return fbuff->buffer;
 }
 
 

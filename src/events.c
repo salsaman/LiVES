@@ -4334,6 +4334,9 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           int *aclips = NULL;
           double *aseeks = NULL;
           int num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
+          boolean nointer = FALSE;
+
+          if (weed_get_int_value(event, LIVES_LEAF_SCRATCH, NULL) != SCRATCH_NONE) nointer = TRUE;
 
           for (i = 0; i < num_aclips; i += 2) {
             if (aclips[i + 1] > 0) { // clipnum
@@ -4341,7 +4344,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               mytrack = aclips[i] + nbtracks;
               if (mytrack < 0) mytrack = 0;
               //g_print("del was %f\n", xaseek[mytrack] - aseeks[i]);
-              if (prefs->rr_super && prefs->rr_ramicro
+              if (!nointer && prefs->rr_super && prefs->rr_ramicro
                   && weed_get_boolean_value(event, LIVES_LEAF_ALLOW_JUMP, NULL) != WEED_TRUE) {
                 /// smooth out audio by ignoring tiny seek differences
                 xaseek[mytrack] += xavel[mytrack] * dt;

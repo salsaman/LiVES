@@ -390,6 +390,13 @@ void call_funcsig(lives_proc_thread_t info) {
     default: CALL_VOID_2(voidptr, double); break;
     } break;
   }
+  case FUNCSIG_VOIDP_INT64: {
+    void *p0; int64_t p1;
+    switch (ret_type) {
+    case WEED_SEED_BOOLEAN: CALL_2(boolean, voidptr, int64); break;
+    default: CALL_VOID_2(voidptr, int64); break;
+    } break;
+  }
   case FUNCSIG_VOIDP_VOIDP: {
     void *p0, *p1;
     switch (ret_type) {
@@ -897,10 +904,28 @@ lives_thread_data_t *get_thread_data(void) {
   return NULL;
 }
 
+lives_thread_data_t *get_global_thread_data(void) {
+  LiVESWidgetContext *ctx = lives_widget_context_default();
+  LiVESList *list = allctxs;
+  for (; list; list = list->next) {
+    if (((lives_thread_data_t *)list->data)->ctx == ctx) return list->data;
+  }
+  return NULL;
+}
 
 LIVES_GLOBAL_INLINE lives_threadvars_t *get_threadvars(void) {
   static lives_threadvars_t *dummyvars = NULL;
   lives_thread_data_t *thrdat = get_thread_data();
+  if (!thrdat) {
+    if (!dummyvars) dummyvars = lives_calloc(1, sizeof(lives_threadvars_t));
+    return dummyvars;
+  }
+  return &thrdat->vars;
+}
+
+LIVES_GLOBAL_INLINE lives_threadvars_t *get_global_threadvars(void) {
+  static lives_threadvars_t *dummyvars = NULL;
+  lives_thread_data_t *thrdat = get_global_thread_data();
   if (!thrdat) {
     if (!dummyvars) dummyvars = lives_calloc(1, sizeof(lives_threadvars_t));
     return dummyvars;
@@ -940,6 +965,18 @@ static boolean widget_context_wrapper(livespointer data) {
 
 //static pthread_mutex_t cpusel_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+LIVES_LOCAL_INLINE LiVESList *lives_hooks_copy(LiVESList *in) {
+  LiVESList *out = NULL;
+  for (; in; in = in->next) {
+    lives_closure_t *inclosure = (lives_closure_t *)in->data;
+    lives_closure_t *outclosure = (lives_closure_t *)lives_malloc(sizeof(lives_closure_t));
+    outclosure->func = inclosure->func;
+    outclosure->data = inclosure->data;
+    out = lives_list_append(out, outclosure);
+  }
+  return out;
+}
+
 boolean do_something_useful(lives_thread_data_t *tdata) {
   /// yes, why don't you lend a hand instead of just lying around nanosleeping...
   LiVESList *list;
@@ -972,6 +1009,11 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   mywork->busy = tdata->idx;
   myflags = mywork->flags;
 
+  for (int type = N_GLOBAL_HOOKS + 1; type < N_HOOK_FUNCS; type++) {
+    THREADVAR(hook_closures[type]) = lives_hooks_copy(mywork->hook_closures[type]);
+    lives_list_free_all(&mywork->hook_closures[type]);
+  }
+
   /* if (prefs->jokes) { */
   /*   fprintf(stderr, "thread id %ld reporting for duty, Sir !\n", get_thread_id()); */
   /* } */
@@ -981,6 +1023,11 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   lives_widget_context_invoke_full(tdata->ctx, mywork->attr & LIVES_THRDATTR_PRIORITY
                                    ? LIVES_WIDGET_PRIORITY_HIGH - 100 : LIVES_WIDGET_PRIORITY_HIGH,
                                    widget_context_wrapper, mywork, NULL);
+
+  for (int type = N_GLOBAL_HOOKS + 1; type < N_HOOK_FUNCS; type++) {
+    lives_hooks_clear(type);
+    THREADVAR(hook_closures[type]) = NULL;
+  }
 
   if (myflags & LIVES_THRDFLAG_AUTODELETE) {
     lives_free(mywork);
@@ -1126,6 +1173,13 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
     work->sync_ready = FALSE;
   }
 
+  if (attr & LIVES_THRDATTR_INHERIT_HOOKS) {
+    for (int type = N_GLOBAL_HOOKS + 1; type < N_HOOK_FUNCS; type++) {
+      work->hook_closures[type] = lives_hooks_copy(THREADVAR(hook_closures[type]));
+      lives_hooks_clear(type);
+    }
+  }
+
   pthread_mutex_lock(&twork_mutex);
   if (!twork_first) {
     twork_first = twork_last = list;
@@ -1229,42 +1283,61 @@ LIVES_GLOBAL_INLINE uint64_t lives_thread_done(lives_thread_t work) {
   return task->done;
 }
 
-//// hook functions (not really threads, but here for now)
-
+//// hook functions
 
 LIVES_GLOBAL_INLINE void lives_hook_append(int type, lives_funcptr_t func, livespointer data) {
   lives_closure_t *closure = (lives_closure_t *)lives_malloc(sizeof(lives_closure_t));
   closure->func = func;
   closure->data = data;
-  mainw->hook_closures[type] = lives_list_append(mainw->hook_closures[type], closure);
+  if (type < N_GLOBAL_HOOKS)
+    GLOBAL_THREADVAR(hook_closures[type]) = lives_list_append(GLOBAL_THREADVAR(hook_closures[type]), closure);
+  else
+    THREADVAR(hook_closures[type]) = lives_list_append(THREADVAR(hook_closures[type]), closure);
 }
 
 LIVES_GLOBAL_INLINE void lives_hook_prepend(int type, lives_funcptr_t func, livespointer data) {
   lives_closure_t *closure = (lives_closure_t *)lives_malloc(sizeof(lives_closure_t));
   closure->func = func;
   closure->data = data;
-  mainw->hook_closures[type] = lives_list_prepend(mainw->hook_closures[type], closure);
+  if (type < N_GLOBAL_HOOKS)
+    GLOBAL_THREADVAR(hook_closures[type]) = lives_list_prepend(GLOBAL_THREADVAR(hook_closures[type]), closure);
+  else
+    THREADVAR(hook_closures[type]) = lives_list_prepend(THREADVAR(hook_closures[type]), closure);
 }
 
 LIVES_GLOBAL_INLINE void lives_hooks_trigger(int type) {
-  LiVESList *list = mainw->hook_closures[type];
+  LiVESList *list;
+  if (type < N_GLOBAL_HOOKS)
+    list = GLOBAL_THREADVAR(hook_closures[type]);
+  else
+    list = THREADVAR(hook_closures[type]);
   for (; list; list = list->next) {
     lives_closure_t *closure = (lives_closure_t *)list->data;
     (*closure->func)(closure->data);
   }
-  lives_list_free_all(&mainw->hook_closures[type]);
+  lives_hooks_clear(type);
 }
 
 LIVES_GLOBAL_INLINE void lives_hooks_clear(int type) {
-  lives_list_free_all(&mainw->hook_closures[type]);
+  if (type < N_GLOBAL_HOOKS)
+    lives_list_free_all(&GLOBAL_THREADVAR(hook_closures[type]));
+  else
+    lives_list_free_all(&THREADVAR(hook_closures[type]));
 }
 
 LIVES_GLOBAL_INLINE void lives_hook_remove(int type, lives_funcptr_t func, livespointer data) {
-  LiVESList *list = mainw->hook_closures[type];
+  LiVESList *list;
+  if (type < N_GLOBAL_HOOKS)
+    list = GLOBAL_THREADVAR(hook_closures[type]);
+  else
+    list = THREADVAR(hook_closures[type]);
   for (; list; list = list->next) {
     lives_closure_t *closure = (lives_closure_t *)list->data;
     if (closure->func == func && closure->data == data) {
-      mainw->hook_closures[type] = lives_list_remove_node(mainw->hook_closures[type], list, TRUE);
+      if (type < N_GLOBAL_HOOKS)
+        GLOBAL_THREADVAR(hook_closures[type]) = lives_list_remove_node(GLOBAL_THREADVAR(hook_closures[type]), list, TRUE);
+      else
+        THREADVAR(hook_closures[type]) = lives_list_remove_node(THREADVAR(hook_closures[type]), list, TRUE);
       return;
     }
   }

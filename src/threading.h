@@ -52,6 +52,33 @@ typedef struct {
   lives_alarm_t alarm_handle;
 } lives_sigdata_t;
 
+/// hook funcs
+
+enum {
+  ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
+  EXIT_HOOK,
+  N_GLOBAL_HOOKS,
+  PB_END_EARLY_HOOK,
+  PB_END_LATE_HOOK,
+  PB_START_EARLY_HOOK,
+  PB_START_LATE_HOOK,
+  PROGRESS_START_HOOK,
+  PROGRESS_END_HOOK,
+  SLURP_LOADED_HOOK,
+  N_HOOK_FUNCS,
+};
+
+typedef struct {
+  lives_funcptr_t func;
+  void *data;
+} lives_closure_t;
+
+void lives_hook_append(int type, lives_funcptr_t func, livespointer data);
+void lives_hook_prepend(int type, lives_funcptr_t func, livespointer data);
+void lives_hook_remove(int type, lives_funcptr_t func, livespointer data);
+void lives_hooks_clear(int type);
+void lives_hooks_trigger(int type);
+
 typedef struct {
   uint64_t var_uid;
   lives_proc_thread_t var_tinfo;
@@ -63,6 +90,8 @@ typedef struct {
   lives_intentcap_t var_intentcap;
   int var_id;
   int var_write_failed, var_read_failed;
+  boolean var_com_failed;
+  boolean var_chdir_failed;
   int var_rowstride_alignment;   // used to align the rowstride bytesize in create_empty_pixel_data
   int var_rowstride_alignment_hint;
   int var_last_sws_block;
@@ -71,10 +100,9 @@ typedef struct {
   int var_core_id;
   boolean var_fx_is_auto;
   boolean var_fx_is_audio;
-  boolean var_com_failed;
   boolean var_no_gui;
   boolean var_force_button_image;
-  boolean var_chdir_failed;
+  LiVESList *var_hook_closures[N_HOOK_FUNCS];
   volatile float *var_core_load_ptr; // pointer to value that monitors core load
 } lives_threadvars_t;
 
@@ -96,6 +124,7 @@ typedef struct {
   volatile uint64_t busy;
   volatile uint64_t done;
   volatile boolean sync_ready;
+  LiVESList *hook_closures[N_HOOK_FUNCS];
   pthread_t self;
 } thrd_work_t;
 
@@ -188,6 +217,7 @@ typedef struct {
 #define FUNCSIG_VOIDP_VOIDP 				       		0X000000DD
 #define FUNCSIG_VOIDP_STRING 				       		0X000000D4
 #define FUNCSIG_VOIDP_DOUBLE 				       		0X000000D2
+#define FUNCSIG_VOIDP_INT64 				       		0X000000D5
 #define FUNCSIG_DOUBLE_DOUBLE 				       		0X00000022
 #define FUNCSIG_PLANTP_BOOL 				       		0X000000E3
 // 3p
@@ -226,9 +256,12 @@ void lives_thread_free(lives_thread_t *thread);
 // thread functions
 lives_thread_data_t *get_thread_data(void);
 lives_threadvars_t *get_threadvars(void);
+lives_thread_data_t *get_global_thread_data(void);
+lives_threadvars_t *get_global_threadvars(void);
 lives_thread_data_t *lives_thread_data_create(uint64_t idx);
 
 #define THREADVAR(var) (get_threadvars()->var_##var)
+#define GLOBAL_THREADVAR(var) (get_global_threadvars()->var_##var)
 
 // lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -263,6 +296,7 @@ boolean lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state
 #define LIVES_THRDATTR_WAIT_SYNC	(1 << 2)
 #define LIVES_THRDATTR_FG_THREAD	(1 << 3)
 #define LIVES_THRDATTR_NO_GUI		(1 << 4)
+#define LIVES_THRDATTR_INHERIT_HOOKS   	(1 << 5)
 
 // extra info requests
 #define LIVES_LEAF_START_TICKS "_start_ticks"
@@ -335,31 +369,6 @@ boolean is_fg_thread(void);
 void call_funcsig(lives_proc_thread_t info);
 void *fg_run_func(lives_proc_thread_t lpt, void *retval);
 /////
-
-/// hook funcs
-
-enum {
-  ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
-  EXIT_HOOK,
-  PB_END_EARLY_HOOK,
-  PB_END_LATE_HOOK,
-  PB_START_EARLY_HOOK,
-  PB_START_LATE_HOOK,
-  PROGRESS_START_HOOK,
-  PROGRESS_END_HOOK,
-  N_HOOK_FUNCS,
-};
-
-typedef struct {
-  lives_funcptr_t func;
-  void *data;
-} lives_closure_t;
-
-void lives_hook_append(int type, lives_funcptr_t func, livespointer data);
-void lives_hook_prepend(int type, lives_funcptr_t func, livespointer data);
-void lives_hook_remove(int type, lives_funcptr_t func, livespointer data);
-void lives_hooks_clear(int type);
-void lives_hooks_trigger(int type);
 
 #define THREAD_INTENTION THREADVAR(intentcap).intent
 #define THREAD_CAPACITIES THREADVAR(intentcap).capacities

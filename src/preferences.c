@@ -4912,6 +4912,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Options for Audio Lock (a)"), FALSE);
+
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->afreeze_lock = lives_standard_check_button_new(_("Freeze button affects even clip-locked audio"),
@@ -4947,6 +4949,12 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                         H_("If set, then resetting the playback fps for the current clip "
                            "will also reset the playback rate of clip-locked audio "
                            "even when locked to a different clip."));
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  lives_standard_check_button_new(_("'POGO' mode audio locking"),
+                                  prefs->pogo_mode, LIVES_BOX(hbox),
+                                  H_("In 'POGO' mode, locked audio will be mixed with audio "
+                                     "from the current video clip, rather than completely overrding it"));
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->afreeze_sync = lives_standard_check_button_new(_("Resync to current video position when locking / unlocking audio"),
@@ -5080,7 +5088,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_widget_set_sensitive(prefsw->raudio, FALSE);
   }
 
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->raudio_alock = lives_standard_check_button_new(_("Auto _lock audio on record start"),
                          (prefs->rec_opts & REC_AUDIO_AUTOLOCK), LIVES_BOX(hbox),
                          (tmp = H_("Setting this will cause audio to "
@@ -5095,7 +5105,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_widget_set_sensitive(prefsw->raudio, FALSE);
   }
 
-  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
   layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_recording));
 

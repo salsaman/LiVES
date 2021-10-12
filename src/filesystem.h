@@ -27,7 +27,7 @@ char *get_dir(const char *filename);
 void get_basename(char *filename);
 void get_filename(char *filename, boolean strip_dir);
 
-off_t get_file_size(int fd);
+off_t get_file_size(int fd, boolean maybe_padded);
 off_t sget_file_size(const char *name);
 
 boolean lives_fsync(int fd);
@@ -52,7 +52,7 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 #define BUFFER_FILL_BYTES_SMALL 64   /// 1 -> 16 bytes
 #define BUFFER_FILL_BYTES_SMALLMED 1024 /// 17 - 256 bytes
 #define BUFFER_FILL_BYTES_MED 4096  /// 257 -> 2048 bytes
-#define BUFFER_FILL_BYTES_BIGMED 16386  /// 2049 - 8192 bytes
+#define BUFFER_FILL_BYTES_BIGMED 16384  /// 2049 - 8192 bytes
 #define BUFFER_FILL_BYTES_LARGE 65536
 
 #define BUFF_SIZE_READ_SMALL 0
@@ -76,6 +76,7 @@ typedef struct {
   uint8_t *buffer;   /// ptr to data  (ptr - buffer + bytes) gives the read size
   off_t offset; // file offs (of END of block)
   off_t skip;
+  int idx;
   int fd;
   int bufsztype;
   volatile boolean eof;
@@ -113,8 +114,9 @@ ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, ssize_t count, bo
 ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less);
 ssize_t lives_read_le_buffered(int fd, void *buf, ssize_t count, boolean allow_less);
 boolean lives_read_buffered_eof(int fd);
-lives_file_buffer_t *get_file_buffer(int fd);
 void lives_buffered_rdonly_slurp(int fd, off_t skip);
+boolean lives_buffered_rdonly_is_slurping(int fd);
+uint8_t *lives_buffered_get_data(int fd);
 
 off_t lives_buffered_flush(int fd);
 

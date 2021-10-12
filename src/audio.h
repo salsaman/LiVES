@@ -214,7 +214,8 @@ int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_ara
 
 int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arate) GNU_HOT;
 
-size64_t sample_move_float_float(float *dst, float *src, size64_t in_samples, double scale, int dst_skip, float vol) GNU_HOT;
+size64_t sample_move_float_float(float *dst, float *src, size64_t in_samples, double scale, int dst_skip,
+                                 float vol, size64_t out_samples) GNU_HOT;
 
 float float_deinterleave(float *dst, float *src, size64_t in_samples, double scale, int in_chans, float vol) GNU_HOT;
 size64_t float_interleave(float *out, float **in, size64_t nsamps, double scale, int nchans, float vol) GNU_HOT;
@@ -231,7 +232,8 @@ typedef enum {
   RECA_NEW_CLIP,
   RECA_EXISTING,
   RECA_EXTERNAL,
-  RECA_GENERATED
+  RECA_GENERATED,
+  RECA_MIXED
 } lives_rec_audio_type_t;
 
 #ifdef ENABLE_JACK

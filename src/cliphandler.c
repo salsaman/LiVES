@@ -1148,9 +1148,9 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
   time_t old_time = 0, new_time = 1;
   struct stat mystat;
 
-  if (!IS_VALID_CLIP(fileno)) return FALSE;
-
   if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
+
+  if (!IS_VALID_CLIP(fileno)) return FALSE;
 
   sfile = mainw->files[fileno];
 
@@ -1424,7 +1424,7 @@ old_check:
       goto rhd_failed;
     } else {
       THREADVAR(read_failed) = FALSE;
-      header_size = get_file_size(header_fd);
+      header_size = get_file_size(header_fd, TRUE);
 
       if (header_size < sizhead) {
         close(header_fd);

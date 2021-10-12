@@ -134,8 +134,7 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
       do {
         retval = LIVES_RESPONSE_NONE;
         if (!lives_file_test(keymap_template, LIVES_FILE_TEST_EXISTS)) {
-          retval = do_file_notfound_dialog(_("LiVES was unable to find the default keymap file"),
-                                           keymap_template);
+          retval = do_file_notfound_dialog(_("The default keymap file"), keymap_template);
           if (retval == LIVES_RESPONSE_BROWSE) {
             char *dirx = lives_build_path(prefs->prefix_dir, LIVES_DATA_DIR, NULL);
             char *xkeymap_template = choose_file(dirx, DEF_KEYMAP_FILE2, NULL,

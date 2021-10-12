@@ -373,12 +373,45 @@ static boolean avsync_check(void) {
 }
 
 
+static boolean aud_msgq_wait(void) {
+#if defined ENABLE_JACK || defined HAVE_PULSE_AUDIO
+  ticks_t audio_timed_out = 1;
+  lives_alarm_t alarm_handle = 0;
+#endif
+#ifdef ENABLE_JACK
+  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd &&
+      (prefs->rec_opts & REC_AUDIO) && AUD_SRC_INTERNAL
+      && mainw->rec_aclip != mainw->ascrap_file) {
+    alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
+    // wait for audio player message queue clearing
+    lives_nanosleep_until_zero((audio_timed_out = lives_alarm_check(alarm_handle)) > 0
+                               && jack_get_msgq(mainw->jackd));
+    lives_alarm_clear(alarm_handle);
+    if (audio_timed_out == 0) return TRUE;
+    jack_get_rec_avals(mainw->jackd);
+  }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed &&
+      (prefs->rec_opts & REC_AUDIO) && AUD_SRC_INTERNAL
+      && mainw->rec_aclip != mainw->ascrap_file) {
+    // get current seek position
+    alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
+    // wait for audio player message queue clearing
+    lives_nanosleep_until_zero((audio_timed_out = lives_alarm_check(alarm_handle)) > 0
+                               && pulse_get_msgq(mainw->pulsed));
+    lives_alarm_clear(alarm_handle);
+    if (audio_timed_out == 0) return TRUE;
+    pulse_get_rec_avals(mainw->pulsed);
+  }
+#endif
+  return FALSE;
+}
+
+
 boolean record_setup(ticks_t actual_ticks) {
   if (mainw->record_starting) {
-#if defined ENABLE_JACK || defined HAVE_PULSE_AUDIO
-    ticks_t audio_timed_out = 1;
-    lives_alarm_t alarm_handle = 0;
-#endif
+    boolean audio_timed_out;
 
     if (!mainw->event_list) {
       mainw->event_list = lives_event_list_new(NULL, NULL);
@@ -392,42 +425,11 @@ boolean record_setup(ticks_t actual_ticks) {
       // add init events and pchanges for all active fx
       add_filter_init_events(mainw->event_list, actual_ticks);
     }
-
-#ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd &&
-        (prefs->rec_opts & REC_AUDIO) && prefs->audio_src == AUDIO_SRC_INT
-        && mainw->rec_aclip != mainw->ascrap_file) {
-      alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-      // wait for audio player message queue clearing
-      lives_nanosleep_until_zero((audio_timed_out = lives_alarm_check(alarm_handle)) > 0
-                                 && jack_get_msgq(mainw->jackd));
-      lives_alarm_clear(alarm_handle);
-      if (audio_timed_out == 0) {
-        mainw->cancelled = handle_audio_timeout();
-        if (mainw->cancelled != CANCEL_NONE)
-          return FALSE;
-      }
-      jack_get_rec_avals(mainw->jackd);
-    }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed &&
-        (prefs->rec_opts & REC_AUDIO) && prefs->audio_src
-        == AUDIO_SRC_INT && mainw->rec_aclip != mainw->ascrap_file) {
-      // get current seek position
-      alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-      // wait for audio player message queue clearing
-      lives_nanosleep_until_zero((audio_timed_out = lives_alarm_check(alarm_handle)) > 0
-                                 && pulse_get_msgq(mainw->pulsed));
-      lives_alarm_clear(alarm_handle);
-      pulse_get_rec_avals(mainw->pulsed);
-    }
-#endif
+    audio_timed_out = aud_msgq_wait();
     mainw->record_starting = FALSE;
-    if (audio_timed_out == 0) {
+    if (audio_timed_out) {
       mainw->cancelled = handle_audio_timeout();
-      if (mainw->cancelled != CANCEL_NONE)
-        return FALSE;
+      if (mainw->cancelled != CANCEL_NONE) return FALSE;
     }
     mainw->record = TRUE;
     mainw->record_paused = FALSE;
@@ -478,7 +480,10 @@ boolean load_frame_image(frames_t frame) {
   int bad_frame_count = 0;
   int fg_file = mainw->current_file;
   int tgamma = WEED_GAMMA_UNKNOWN;
+  int scratch = (int)mainw->scratch;
   boolean was_letterboxed = FALSE;
+
+  mainw->scratch = SCRATCH_NONE;
 
 #define BFC_LIMIT 1000
   if (LIVES_UNLIKELY(cfile->frames == 0 && !mainw->foreign && !mainw->is_rendering)) {
@@ -600,7 +605,7 @@ boolean load_frame_image(frames_t frame) {
           if (!mainw->event_list) mainw->event_list = event_list;
 
           // TODO ***: do we need to perform more checks here ???
-          if (eevents || mainw->scratch != SCRATCH_NONE || scrap_file_size != -1
+          if (eevents || scratch != SCRATCH_NONE || scrap_file_size != -1
               || (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO))) {
             weed_plant_t *event = get_last_frame_event(mainw->event_list);
 
@@ -609,8 +614,9 @@ boolean load_frame_image(frames_t frame) {
               lives_free(eevents);
             }
 
-            if (mainw->scratch != SCRATCH_NONE)
-              weed_set_int_value(event, LIVES_LEAF_SCRATCH, (int)mainw->scratch);
+            if (scratch != SCRATCH_NONE) {
+              weed_set_int_value(event, LIVES_LEAF_SCRATCH, scratch);
+            }
 
             if (scrap_file_size != -1)
               weed_set_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, scrap_file_size);
@@ -972,7 +978,7 @@ recheck:
                     && mainw->pred_frame != 0 && is_layer_ready(mainw->frame_layer_preload)) {
                   frames_t delta = (labs(mainw->pred_frame) - mainw->actual_frame) * sig(cfile->pb_fps);
                   /* g_print("THANKS for %p,! %d %ld should be %d, right  --  %d",
-                              // mainw->frame_layer_preload, mainw->pred_clip, */
+                    // mainw->frame_layer_preload, mainw->pred_clip, */
                   /*         mainw->pred_frame, mainw->actual_frame, delta); */
                   if (delta <= 0 || (mainw->pred_frame < 0 && delta > 0)) {
                     check_layer_ready(mainw->frame_layer_preload);
@@ -3190,7 +3196,7 @@ switch_point:
                 if (scratch == SCRATCH_NONE && mainw->inst_fps < target_fps) {
                   update_effort(1 + target_fps / mainw->inst_fps, TRUE);
 		    // *INDENT-OFF*
-		}}}}
+		  }}}}
 	    // *INDENT-ON*
           else {
             /// update the effort calculation with dropped frames and spare_cycles
@@ -3319,9 +3325,12 @@ switch_point:
         //g_print("DISK PR is %f\n", mainw->disk_pressure);
         cpuload = get_core_loadvar(0);
         if (*cpuload < CORE_LOAD_THRESH || mainw->pred_clip != -1) {
-          if (scratch == SCRATCH_JUMP || scratch == SCRATCH_JUMP_NORESYNC) mainw->scratch = SCRATCH_JUMP_NORESYNC;
+          if (scratch == SCRATCH_JUMP || scratch == SCRATCH_JUMP_NORESYNC) {
+            mainw->scratch = SCRATCH_JUMP_NORESYNC;
+          }
+          // will reset mainw->scratch
           load_frame_image(sfile->frameno);
-          mainw->scratch = SCRATCH_NONE;
+          scratch = mainw->scratch;
         }
         mainw->inst_fps = get_inst_fps(FALSE);
         if (prefs->show_player_stats) {
@@ -3366,7 +3375,6 @@ switch_point:
     mainw->force_show = FALSE;
     /// set this in case we switch
     sfile->frameno = requested_frame;
-    scratch = SCRATCH_NONE;
   } // end show_frame
   else spare_cycles++;
 
@@ -3384,9 +3392,9 @@ switch_point:
         mainw->pred_frame = 0;
         mainw->pred_clip = 0;
         cleanup_preload = FALSE;
-	// *INDENT-OFF*
-      }}}
-  // *INDENT-ON*
+	  // *INDENT-OFF*
+	}}}
+    // *INDENT-ON*
 #endif
 
   // paused
@@ -3490,16 +3498,16 @@ switch_point:
                 mainw->pred_frame = -getahead;
                 mainw->force_show = TRUE;
               }
-	      // *INDENT-OFF*
-	    }}
-	  else mainw->pred_frame = 0;
-	}}
+		// *INDENT-OFF*
+	      }}
+	    else mainw->pred_frame = 0;
+	  }}
 #ifdef SHOW_CACHE_PREDICTIONS
-      //g_print("frame %ld already in cache\n", mainw->pred_frame);
+	//g_print("frame %ld already in cache\n", mainw->pred_frame);
 #endif
 #endif
-    }}
-  // *INDENT-ON*
+      }}
+    // *INDENT-ON*
 
   if (!spare_cycles) get_proc_loads(FALSE);
 

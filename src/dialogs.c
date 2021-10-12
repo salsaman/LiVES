@@ -418,7 +418,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
                                            LIVES_STOCK_CLOSE, _("_Exit Setup"), LIVES_RESPONSE_ABORT);
     }
 
-    if (diat == LIVES_DIALOG_RETRY_SKIP_BROWSE && diat == LIVES_DIALOG_RETRY_CANCEL_BROWSE)
+    if (diat == LIVES_DIALOG_RETRY_SKIP_BROWSE || diat == LIVES_DIALOG_RETRY_CANCEL_BROWSE)
       okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
                  _("_Retry"), LIVES_RESPONSE_RETRY);
 
@@ -2858,8 +2858,8 @@ static LiVESResponseType _do_df_notfound_dialog(const char *detail, const char *
   if (!is_dir) {
     if (!detail) {
       xdetail = lives_strdup(_("The file"));
-      extra = _("could not be found.");
-    } else extra = lives_strdup("");
+    }
+    extra = _("could not be found.");
     whatitis = (_("this file"));
   } else {
     if (!detail) {

@@ -319,7 +319,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   lives_clip_t *sfile = mainw->files[fileno], *binf = NULL;
   lives_img_type_t empirical_img_type = sfile->img_type, oemp = empirical_img_type;
   lives_img_type_t ximgtype;
-  frames_t last_real_frame = sfile->frames;
+  frames_t last_real_frame = sfile->frames, last_img_frame;
   int nimty = (int)N_IMG_TYPES, j;
   boolean has_missing_frames = FALSE, bad_imgfmts = FALSE;
   boolean mismatch = FALSE;
@@ -354,9 +354,17 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
             || binf->frames * binf->fps == sfile->laudio_time
             || (cdata && binf->frames * cdata->fps == sfile->laudio_time)) {
           has_missing_frames = TRUE;
+          if (prefs->show_dev_opts) {
+            g_printerr("AV timing mismatch\n");
+          }
         }
       }
-      if (!binf) has_missing_frames = TRUE;
+      if (!binf) {
+        if (prefs->show_dev_opts) {
+          g_printerr("no binfmt\n");
+        }
+        has_missing_frames = TRUE;
+      }
     }
   }
   // check the image type
@@ -437,10 +445,12 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 
     if (sfile->frame_index_back) {
       // old_frames should have been set in load_frame_index()
-      if (sfile->old_frames >= sfile->frames) xframes = sfile->old_frames;
-
+      if (sfile->old_frames >= sfile->frames) {
+        xframes = sfile->old_frames;
+      }
       // start by assuming backup is more correct
       backup_more_correct = TRUE;
+      if (xframes > sfile->frames) extend_frame_index(fileno, sfile->frames, xframes, empirical_img_type);
     }
 
     // check and attempt to correct frame_index
@@ -496,7 +506,11 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
               g_printerr("reset to clip frame %d\n", i);
             }
           }
-          if (sfile->frame_index[i] >= cdata->nframes) sfile->frame_index[i] = cdata->nframes - 1;
+          if (cdata) {
+            if (sfile->frame_index[i] >= cdata->nframes) sfile->frame_index[i] = cdata->nframes - 1;
+          } else {
+            //
+          }
         }
         lives_free(fname);
       } else {
@@ -510,6 +524,43 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
     lives_freep((void **)&sfile->frame_index);
     sfile->frame_index = sfile->frame_index_back;
     sfile->frame_index_back = NULL;
+  }
+
+  if (cdata && !sfile->frame_index) {
+    sfile->frames = sfile->old_frames = MAX(cdata->nframes, last_real_frame);
+    create_frame_index(fileno, TRUE, 0, sfile->frames);
+    if (last_real_frame > cdata->nframes) {
+      for (i = last_real_frame - 1; i > cdata->nframes; i--) {
+        fname = make_image_file_name(sfile, i, get_image_ext_for_type(empirical_img_type));
+        if (!lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+          last_real_frame = sfile->frames = i - 1;
+        } else sfile->frame_index[i - 1] = -1;
+      }
+      if (last_real_frame == cdata->nframes) {
+        fname = make_image_file_name(sfile, last_real_frame, get_image_ext_for_type(empirical_img_type));
+        if (!lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+          last_real_frame = 0;
+        }
+      }
+      last_img_frame = cdata->nframes;
+    } else last_img_frame = last_real_frame - 1;
+    if (sfile->frames < sfile->old_frames) {
+      delete_frames_from_virtual(fileno, sfile->frames + 1, sfile->old_frames);
+      sfile->old_frames = sfile->frames;
+    }
+    for (i = 1; i <= last_img_frame; i++) {
+      fname = make_image_file_name(sfile, i, get_image_ext_for_type(empirical_img_type));
+      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+        sfile->frame_index[i - 1] = -1;
+        if (i > last_real_frame) last_real_frame = i;
+      }
+    }
+    backup_more_correct = FALSE;
+    has_missing_frames = FALSE;
+    save_frame_index(fileno);
+  }
+
+  if (has_missing_frames && backup_more_correct) {
     if (sfile->old_frames > sfile->frames) {
       sfile->frames = sfile->old_frames;
       sfile->frames = scan_frames(sfile, sfile->frames, last_real_frame);
@@ -519,7 +570,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   if (sfile->frames > 0) {
     int hsize = sfile->hsize, chsize = hsize;
     int vsize = sfile->vsize, cvsize = vsize;
-    frames_t last_img_frame = -1;
+    last_img_frame = -1;
     if (last_real_frame > 0) {
       if (sfile->frame_index) {
         for (i = last_real_frame; i > 0; i--) {
@@ -567,6 +618,9 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
                 fframe = i;
                 lives_free(fname);
                 break;
+              }
+              if (prefs->show_dev_opts) {
+                g_printerr("img frame not found\n");
               }
               has_missing_frames = TRUE;
               lives_free(fname);
@@ -624,8 +678,12 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
     mainw->cancelled = CANCEL_NONE;
   }
 
-  if (has_missing_frames) mismatch = TRUE;
-  else {
+  if (has_missing_frames) {
+    if (prefs->show_dev_opts) {
+      g_printerr("missing frames detected\n");
+    }
+    mismatch = TRUE;
+  } else {
     if (sfile->frame_index) {
       for (i = 0; i < sfile->frames; i++) {
         if (sfile->frame_index[i] != -1) {

@@ -616,9 +616,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
       // preload the buffer for first read
       in_bytes = (size_t)(in_framesd * pulsed->in_achans * (pulsed->in_asamps >> 3));
-      lives_read_buffered(pulsed->fd, NULL, in_bytes * 8, TRUE);
 
-      lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+      if (!alock_mixer || !prefs->pogo_mode) {
+        lives_read_buffered(pulsed->fd, NULL, in_bytes * 8, TRUE);
+        lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+      }
 
       //mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
 
@@ -731,9 +733,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 pad_bytes *= shrink_factor;
                 pad_bytes = ALIGN_CEIL64(pad_bytes - qnt, qnt);
               }
-              if (pad_bytes) lives_memset((void *)pulsed->aPlayPtr->data, 0, pad_bytes);
-              pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data + pad_bytes),
-                                       in_bytes - pad_bytes, TRUE) + pad_bytes;
+              if (!alock_mixer || !prefs->pogo_mode) {
+                if (pad_bytes) lives_memset((void *)pulsed->aPlayPtr->data, 0, pad_bytes);
+                pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data + pad_bytes),
+                                         in_bytes - pad_bytes, TRUE) + pad_bytes;
+              }
             } else pulsed->aPlayPtr->size = in_bytes;
 
 #if !HAVE_PA_STREAM_BEGIN_WRITE
@@ -744,10 +748,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               ssize_t rem = pulsed->seek_end - pulsed->real_seek_pos;
               if (pulsed->aPlayPtr->size + rem > in_bytes) rem = in_bytes - pulsed->aPlayPtr->size;
               if (rem > 0)
-                pulsed->aPlayPtr->size += lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data)
-                                          + pulsed->aPlayPtr->size,
-                                          pulsed->seek_end - pulsed->real_seek_pos, TRUE);
-
+                if (!alock_mixer || !prefs->pogo_mode) {
+                  pulsed->aPlayPtr->size += lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data)
+                                            + pulsed->aPlayPtr->size,
+                                            pulsed->seek_end - pulsed->real_seek_pos, TRUE);
+                }
               if (pulsed->loop == AUDIO_LOOP_NONE) {
                 if (*pulsed->whentostop == STOP_ON_AUD_END) *pulsed->cancelled = CANCEL_AUD_END;
                 in_bytes = 0;
@@ -769,17 +774,21 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                       pulsed->real_seek_pos = pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
                     } else pulsed->seek_pos = 0;
                     if (pulsed->seek_pos == pulsed->seek_end) break;
-                    lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
-                    if (pulsed->aPlayPtr->size < in_bytes) {
-                      pulsed->aPlayPtr->size += lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data)
-                                                + pulsed->aPlayPtr->size, in_bytes - pulsed->aPlayPtr->size, TRUE);
-                      pulsed->real_seek_pos = pulsed->seek_pos = lives_buffered_offset(pulsed->fd);
+                    if (!alock_mixer || !prefs->pogo_mode) {
+                      lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+                      if (pulsed->aPlayPtr->size < in_bytes) {
+                        pulsed->aPlayPtr->size += lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data)
+                                                  + pulsed->aPlayPtr->size, in_bytes - pulsed->aPlayPtr->size, TRUE);
+                        pulsed->real_seek_pos = pulsed->seek_pos = lives_buffered_offset(pulsed->fd);
+                      }
                     }
                   } while (pulsed->aPlayPtr->size < in_bytes && !lives_read_buffered_eof(pulsed->fd));
-                  if (pulsed->aPlayPtr->size < in_bytes) {
-                    pad_bytes = in_bytes - pulsed->aPlayPtr->size;
-                    /// TODO: use append_silence() for all padding
-                    lives_memset((void *)pulsed->aPlayPtr->data + in_bytes - pad_bytes, 0, pad_bytes);
+                  if (!alock_mixer || !prefs->pogo_mode) {
+                    if (pulsed->aPlayPtr->size < in_bytes) {
+                      pad_bytes = in_bytes - pulsed->aPlayPtr->size;
+                      /// TODO: use append_silence() for all padding
+                      lives_memset((void *)pulsed->aPlayPtr->data + in_bytes - pad_bytes, 0, pad_bytes);
+                    }
                     pulsed->aPlayPtr->size = in_bytes;
                   }
                 }
@@ -816,21 +825,21 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE);
                 pulsed->seek_pos = ALIGN_CEIL64(seek_start, qnt);
                 if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-                  lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
-                  pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd,
-                                           (void *)(pulsed->aPlayPtr->data) + in_bytes - pad_bytes -
-                                           (pulsed->real_seek_pos - pulsed->seek_pos),
-                                           pulsed->real_seek_pos - pulsed->seek_pos, TRUE);
-                  if (pulsed->aPlayPtr->size < pulsed->real_seek_pos - seek_start) {
-                    /// short read, shift them up
-                    lives_memmove((void *)pulsed->aPlayPtr->data + in_bytes - pad_bytes - pulsed->aPlayPtr->size,
-                                  (void *)(pulsed->aPlayPtr->data) + in_bytes - pad_bytes -
-                                  (pulsed->real_seek_pos - seek_start), pulsed->aPlayPtr->size);
-                  }
+                  if (!alock_mixer || !prefs->pogo_mode) {
+                    lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+                    pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd,
+                                             (void *)(pulsed->aPlayPtr->data) + in_bytes - pad_bytes -
+                                             (pulsed->real_seek_pos - pulsed->seek_pos),
+                                             pulsed->real_seek_pos - pulsed->seek_pos, TRUE);
+                    if (pulsed->aPlayPtr->size < pulsed->real_seek_pos - seek_start) {
+                      /// short read, shift them up
+                      lives_memmove((void *)pulsed->aPlayPtr->data + in_bytes - pad_bytes - pulsed->aPlayPtr->size,
+                                    (void *)(pulsed->aPlayPtr->data) + in_bytes - pad_bytes -
+                                    (pulsed->real_seek_pos - seek_start), pulsed->aPlayPtr->size);
+                    }
+                    pulsed->aPlayPtr->size += pad_bytes;
+                  } else pulsed->aPlayPtr->size = in_bytes;
                 }
-
-                pulsed->aPlayPtr->size += pad_bytes;
-
                 /// bounce or loop round
                 if (pulsed->loop == AUDIO_LOOP_PINGPONG) {
                   /// TODO - we should really read the first few bytes, however we dont yet support partial buffer reversals
@@ -850,25 +859,28 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               /// seek / read
               pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
 
-              if (pulsed->playing_file == mainw->ascrap_file || pulsed->in_arate > 0) {
-                lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
-                lives_buffered_rdonly_set_reversed(pulsed->fd, FALSE);
-              } else {
-                lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE);
-                if (pulsed->aPlayPtr->size < in_bytes) {
-
-                  //g_print("SEEKING NOW %ld\n", pulsed->seek_pos);
-
-                  // here seek to pulsed->seek_pos
-                  pulsed->real_seek_pos = pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
+              if (!alock_mixer || !prefs->pogo_mode) {
+                if (pulsed->playing_file == mainw->ascrap_file || pulsed->in_arate > 0) {
                   lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+                  lives_buffered_rdonly_set_reversed(pulsed->fd, FALSE);
+                } else {
+                  lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE);
+                  if (pulsed->aPlayPtr->size < in_bytes) {
 
-                  pulsed->aPlayPtr->size
-                  += lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data)
-                                         + pulsed->aPlayPtr->size,
-                                         in_bytes - pulsed->aPlayPtr->size, TRUE);
-		  // *INDENT-OFF*
-		}}}}
+                    //g_print("SEEKING NOW %ld\n", pulsed->seek_pos);
+
+                    // here seek to pulsed->seek_pos
+                    pulsed->real_seek_pos = pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
+                    if (!alock_mixer || !prefs->pogo_mode) {
+                      lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+                      pulsed->aPlayPtr->size
+                      += lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data)
+                                             + pulsed->aPlayPtr->size,
+                                             in_bytes - pulsed->aPlayPtr->size, TRUE);
+		      // *INDENT-OFF*
+		    }}}}
+	      else pulsed->aPlayPtr->size = in_bytes;
+	    }}
 	  // *INDENT-ON*
 
           if (pulsed->aPlayPtr->size < in_bytes) {

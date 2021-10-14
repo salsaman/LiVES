@@ -1059,6 +1059,10 @@ static boolean pre_init(void) {
 
   prefs->no_lb_gens = get_boolean_prefd(PREF_NO_LB_GENS, TRUE);
 
+  //////////////////////////
+  load_prefs();
+  //////////////////////////
+
   prefs->rte_keys_virtual = get_int_prefd(PREF_RTE_KEYS_VIRTUAL, FX_KEYS_PHYSICAL_EXTRA);
   if (prefs->rte_keys_virtual < 0) prefs->rte_keys_virtual = 0;
   if (prefs->rte_keys_virtual > FX_KEYS_MAX_VIRTUAL) prefs->rte_keys_virtual = FX_KEYS_MAX_VIRTUAL;
@@ -1634,7 +1638,6 @@ static boolean lives_init(_ign_opts *ign_opts) {
   prefs->ocp = get_int_prefd(PREF_OPEN_COMPRESSION_PERCENT, 15);
 
   prefs->stop_screensaver = get_boolean_prefd(PREF_STOP_SCREENSAVER, TRUE);
-  prefs->show_tool = get_boolean_prefd(PREF_SHOW_TOOLBAR, TRUE);
 
   if (prefs->gui_monitor != 0) {
     lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));

@@ -24,9 +24,11 @@
 #include "omc-learn.h"
 #endif
 
-static LiVESWidget *saved_closebutton;
-static LiVESWidget *saved_applybutton;
-static LiVESWidget *saved_revertbutton;
+#define xFALSEx &xfalse
+#define xTRUEx &xtrue
+static boolean xfalse = FALSE, xtrue = TRUE;
+
+static LiVESWidget *saved_closebutton, *saved_applybutton, *saved_revertbutton;
 static  boolean mt_needs_idlefunc;
 
 static int nmons;
@@ -35,8 +37,199 @@ static uint32_t prefs_current_page;
 
 static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 
-#define ACTIVE(widget, signal) lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->widget), LIVES_WIDGET_ ##signal## \
-							 _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
+static LiVESList *allprefs = NULL;
+
+static void define_pref(const char *pref_idx, void *pref_ptr, int32_t vtype, void *pdef) {
+  weed_plant_t *prefplant = lives_plant_new(LIVES_WEED_SUBTYPE_PREFERENCE);
+  weed_set_string_value(prefplant, LIVES_LEAF_PREF_IDX, pref_idx);
+  // TODO
+  weed_set_voidptr_value(prefplant, LIVES_LEAF_VARPTR, pref_ptr);
+  ///
+  weed_leaf_set(prefplant, WEED_LEAF_DEFAULT, vtype, 1, pdef);
+  weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_UNSET);
+  allprefs = lives_list_append(allprefs, prefplant);
+}
+
+
+void free_prefs(void) {
+  for (LiVESList *list = allprefs; list; list = list->next) {
+    weed_plant_t *plant = (weed_plant_t *)list->data;
+    weed_plant_free(plant);
+    list->data = NULL;
+  }
+  lives_list_free_all(&allprefs);
+}
+
+
+void init_prefs(void) {
+  if (allprefs) return;
+
+  // PRREF_IDX, pref-><...>, default
+  DEFINE_PREF_BOOL(POGO_MODE, pogo_mode, FALSE);
+  DEFINE_PREF_BOOL(SHOW_TOOLBAR, show_tool, TRUE);
+}
+
+
+static weed_plant_t *find_pref(const char *pref_idx) {
+  for (LiVESList *list = allprefs; list; list = list->next) {
+    weed_plant_t *prefplant = (weed_plant_t *)list->data;
+    char *xpref_idx = weed_get_string_value(prefplant, LIVES_LEAF_PREF_IDX, NULL);
+    if (!lives_strcmp(xpref_idx, pref_idx)) {
+      lives_free(xpref_idx);
+      return list->data;
+    }
+    lives_free(xpref_idx);
+  }
+  return NULL;
+}
+
+
+static void remove_pref(const char *pref_idx) {
+  weed_plant_t *prefplant = find_pref(pref_idx);
+  if (prefplant) {
+    allprefs = lives_list_remove_data(allprefs, prefplant, FALSE);
+    weed_plant_free(prefplant);
+  }
+}
+
+
+void load_pref(const char *pref_idx) {
+  weed_plant_t *prefplant = find_pref(pref_idx);
+  if (!prefplant) return;
+  else {
+    void *ppref = weed_get_voidptr_value(prefplant, LIVES_LEAF_VARPTR, NULL);
+    int32_t type = weed_leaf_seed_type(prefplant, WEED_LEAF_DEFAULT);
+    switch (type) {
+    case WEED_SEED_BOOLEAN: {
+      boolean bdef = weed_get_boolean_value(prefplant, WEED_LEAF_DEFAULT, NULL);
+      *(boolean *)ppref = get_boolean_prefd(pref_idx, bdef);
+      weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
+    }
+    break;
+    default: break;
+    }
+  }
+}
+
+
+void load_prefs(void) {
+  if (!allprefs) init_prefs();
+  for (LiVESList *list = allprefs; list; list = list->next) {
+    weed_plant_t *prefplant = (weed_plant_t *)list->data;
+    if (weed_get_int_value(prefplant, LIVES_LEAF_STATUS, NULL) == PREFSTATUS_UNSET) {
+      char *xpref_idx = weed_get_string_value(prefplant, LIVES_LEAF_PREF_IDX, NULL);
+      load_pref(xpref_idx);
+      lives_free(xpref_idx);
+    }
+  }
+}
+
+
+boolean update_pref(const char *pref_idx, void *newval, boolean permanent) {
+  weed_plant_t *prefplant = find_pref(pref_idx);
+  if (!prefplant) return FALSE;
+  else {
+    LiVESWidget *widget = (LiVESWidget *)weed_get_voidptr_value(prefplant, LIVES_LEAF_WIDGET, NULL);
+    void *ppref = weed_get_voidptr_value(prefplant, LIVES_LEAF_VARPTR, NULL);
+    int32_t type = weed_leaf_seed_type(prefplant, WEED_LEAF_DEFAULT);
+    boolean bval;
+    switch (type) {
+    case WEED_SEED_BOOLEAN: {
+      boolean bpref;
+      if (newval) bval = *(boolean *)newval;
+      else bval = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget));
+      /// any nonstandard updates here
+      pref_factory_bool(pref_idx, bval, permanent);
+      ///
+      bpref = *(boolean *)ppref;
+      if (bpref == bval) goto fail;
+      *(boolean *)ppref = bval;
+      goto bool_success;
+    }
+    break;
+    default: break;
+    }
+
+fail:
+    if (prefsw) prefsw->ignore_apply = FALSE;
+    return FALSE;
+
+bool_success:
+    weed_set_boolean_value(prefplant, WEED_LEAF_VALUE, bval);
+    if (prefsw) {
+      lives_widget_process_updates(prefsw->prefs_dialog);
+      prefsw->ignore_apply = FALSE;
+    }
+    if (permanent) {
+      set_boolean_pref(pref_idx, bval);
+      weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
+    } else weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_TEMP);
+  }
+  return TRUE;
+}
+
+
+int get_pref_status(const char *pref_idx) {
+  weed_plant_t *prefplant = find_pref(pref_idx);
+  if (!prefplant) return PREFSTATUS_UNKNOWN;
+  return weed_get_int_value(prefplant, LIVES_LEAF_STATUS, NULL);
+}
+
+
+
+static void update_prefs(void) {
+  for (LiVESList *list = allprefs; list; list = list->next) {
+    weed_plant_t *plant = (weed_plant_t *)list->data;
+    char *pref_idx = weed_get_string_value(plant, LIVES_LEAF_PREF_IDX, NULL);
+    update_pref(pref_idx, NULL, TRUE);
+    lives_free(pref_idx);
+  }
+}
+
+
+boolean update_boolean_pref(const char *pref_idx, boolean val, boolean permanent) {
+  return update_pref(pref_idx, (void *)&val, permanent);
+}
+
+
+static LiVESWidget *set_pref_widget(const char *pref_idx, LiVESWidget *widget) {
+  weed_plant_t *prefplant = find_pref(pref_idx);
+  if (!prefplant) return NULL;
+  else {
+    if (widget) {
+      int32_t vtype = weed_leaf_seed_type(prefplant, WEED_LEAF_DEFAULT);
+      weed_set_voidptr_value(prefplant, LIVES_LEAF_WIDGET, widget);
+      switch (vtype) {
+      case WEED_SEED_BOOLEAN:
+        if (widget) ACTIVE_W(TOGGLED);
+        break;
+      default: break;
+      }
+    } else if (weed_plant_has_leaf(prefplant, LIVES_LEAF_WIDGET))
+      weed_leaf_delete(prefplant, LIVES_LEAF_WIDGET);
+  }
+  return widget;
+}
+
+
+void invalidate_pref_widgets(LiVESWidget *top) {
+  for (LiVESList *list = allprefs; list; list = list->next) {
+    weed_plant_t *prefplant = (weed_plant_t *)list->data;
+    LiVESWidget *widget = (LiVESWidget *)weed_get_voidptr_value(prefplant, LIVES_LEAF_WIDGET, NULL);
+    if (widget == top || lives_widget_is_ancestor(widget, top)) {
+      char *pref_idx = weed_get_string_value(prefplant, LIVES_LEAF_PREF_IDX, NULL);
+      set_pref_widget(pref_idx, NULL);
+      lives_free(pref_idx);
+    }
+  }
+}
+
+
+LiVESWidget *get_pref_widget(const char *pref_idx) {
+  weed_plant_t *prefplant = find_pref(pref_idx);
+  if (!prefplant) return NULL;
+  return weed_get_voidptr_value(prefplant, LIVES_LEAF_WIDGET, NULL);
+}
 
 
 /** @brief callback to set to make a togglebutton or check_menu_item directly control a boolean pref
@@ -285,6 +478,7 @@ int delete_pref(const char *key) {
   char *com = lives_strdup_printf("%s delete_pref \"%s\"", prefs->backend_sync, key);
   int ret = run_prefs_command(com);
   lives_free(com);
+  if (!ret) remove_pref(key);
   return ret;
 }
 
@@ -932,7 +1126,6 @@ success:
   if (permanent) set_utf8_pref(prefidx, newval);
   return TRUE;
 }
-
 
 
 boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent) {
@@ -1831,7 +2024,6 @@ boolean apply_prefs(boolean skip_warn) {
   boolean ins_speed = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->ins_speed));
   boolean show_player_stats = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_show_stats));
   boolean ext_jpeg = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jpeg));
-  boolean show_tool = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->show_tool));
   boolean mouse_scroll = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mouse_scroll));
   boolean ce_maxspect = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_ce_maxspect));
   boolean show_button_icons = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_button_icons));
@@ -2013,6 +2205,8 @@ boolean apply_prefs(boolean skip_warn) {
   char *tmp;
   char *cdplay_device = lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)),
                         -1, NULL, NULL, NULL);
+
+  update_prefs();
 
   if (prefsw->checkbutton_menu_icons)
     show_menu_icons = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_menu_icons));
@@ -2211,11 +2405,6 @@ boolean apply_prefs(boolean skip_warn) {
   if (ocp != prefs->ocp) {
     prefs->ocp = ocp;
     set_int_pref(PREF_OPEN_COMPRESSION_PERCENT, ocp);
-  }
-
-  if (show_tool != prefs->show_tool) {
-    prefs->show_tool = show_tool;
-    set_boolean_pref(PREF_SHOW_TOOLBAR, show_tool);
   }
 
   if (mouse_scroll != prefs->mouse_scroll_clips) {
@@ -4121,8 +4310,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  prefsw->show_tool =
-    lives_standard_check_button_new(_("Show toolbar when background is blanked"), prefs->show_tool, LIVES_BOX(hbox), NULL);
+  set_pref_widget(PREF_SHOW_TOOLBAR, lives_standard_check_button_new(_("Show toolbar when background is blanked"),
+                  prefs->show_tool, LIVES_BOX(hbox), NULL));
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -4951,10 +5140,12 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                            "even when locked to a different clip."));
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  lives_standard_check_button_new(_("'POGO' mode audio locking"),
-                                  prefs->pogo_mode, LIVES_BOX(hbox),
-                                  H_("In 'POGO' mode, locked audio will be mixed with audio "
-                                     "from the current video clip, rather than completely overrding it"));
+  set_pref_widget(PREF_POGO_MODE,
+                  lives_standard_check_button_new
+                  (_("'POGO' mode audio locking"),
+                   prefs->pogo_mode, LIVES_BOX(hbox),
+                   H_("In 'POGO' mode, locked audio will be mixed with audio "
+                      "from the current video clip, rather than completely overrding it")));
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->afreeze_sync = lives_standard_check_button_new(_("Resync to current video position when locking / unlocking audio"),
@@ -5026,6 +5217,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
 #ifndef RT_AUDIO
   lives_widget_set_sensitive(prefsw->rdesk_audio, FALSE);
+  lives_widget_set_sensitive(prefsw->pogo_mode, FALSE);
 #endif
 
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -6990,7 +7182,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(recent_check, TOGGLED);
   ACTIVE(stop_screensaver_check, TOGGLED);
   ACTIVE(open_maximised_check, TOGGLED);
-  ACTIVE(show_tool, TOGGLED);
   ACTIVE(mouse_scroll, TOGGLED);
   ACTIVE(checkbutton_ce_maxspect, TOGGLED);
   ACTIVE(ce_thumbs, TOGGLED);
@@ -7275,6 +7466,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_scrolled_window_scroll_to(LIVES_SCROLLED_WINDOW(prefsw->list_scroll), LIVES_POS_BOTTOM);
 
   lives_widget_queue_draw(prefsw->prefs_list);
+
   return prefsw;
 }
 
@@ -7318,6 +7510,7 @@ void on_preferences_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 void on_prefs_close_clicked(LiVESButton * button, livespointer user_data) {
   lives_list_free_all(&prefs->acodec_list);
   if (prefsw) {
+    invalidate_pref_widgets(prefsw->prefs_dialog);
     lives_list_free_all(&prefsw->pbq_list);
     lives_tree_view_set_model(LIVES_TREE_VIEW(prefsw->prefs_list), NULL);
     lives_free(prefsw->audp_name);

@@ -16,6 +16,24 @@
 #define LADSPA_LITERAL "ladspa"
 #endif
 
+#define DEFINE_PREF_BOOL(IDX, PR, PDEF) define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_BOOLEAN, x##PDEF##x);
+
+#define ACTIVE(widget, signal) lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->widget), LIVES_WIDGET_ ##signal## \
+							 _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
+#define ACTIVE_W(signal) lives_signal_sync_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_ ##signal## \
+							 _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
+
+
+#define LIVES_LEAF_PREF_IDX "pref_idx"
+#define LIVES_LEAF_WIDGET "widget"
+#define LIVES_LEAF_STATUS "status"
+#define LIVES_LEAF_VARPTR "p_variable"
+
+#define PREFSTATUS_UNKNOWN	0	///< unknown PREF_IDX (use old API)
+#define PREFSTATUS_UNSET	1	///< esists, but value has not been set
+#define PREFSTATUS_PERM		2	///< value consistent with config file
+#define PREFSTATUS_TEMP	       	3	///< value and config inconsistent; load_pref() may change the value
+
 // for the extended auto-colours
 // variance is actually 1. / VAR
 #define DEF_CPICK_VAR 0.4
@@ -34,6 +52,7 @@
 #define PREFS_THEME_MINOR_CHANGE       	(1 << 8)
 
 #define PREFS_NEEDS_REVERT		(1 << 28)
+
 
 typedef struct {
   char bgcolour[256];
@@ -671,7 +690,6 @@ typedef struct {
   LiVESWidget *cmdline_entry;
   LiVESWidget *stop_screensaver_check;
   LiVESWidget *open_maximised_check;
-  LiVESWidget *show_tool;
   LiVESWidget *mouse_scroll;
   LiVESWidget *fs_max_check;
   LiVESWidget *recent_check;
@@ -1035,23 +1053,31 @@ void pref_change_colours(void);
 
 void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
-// ADDING A PREF
-/*  add a field to prefs, eg int new_int;
-    add a widget in prefsw:  LiVESWidget *new_int_spin;
-    add a new pref_id eg. #define PREF_NEW_INT "new_int"
+/** NEW PREF API ---
+  -- adding a new pref is now as simple as:
+  - add a pref_idx, e.g #define PREF_FOO "foo"
+  - add a variable to the prefs struct, e.g. boolean foo;
+  - add a corresponding definition in preferences.c, init_prefs(), e.g.
+    DEFINE_PREF_BOOL(PREF_FOO, foo, FALSE)
+    - here we also set the default value, in this case, FALSE
+    - a widget can be attached for use in the prefs window, e.g
+    -- set_pref_widget(PREF_FOO, lives_standard_check_button_new(...))
 
-    in main.c:
+  -- initialising:
+    after a call to init_prefs(), an individual pref can be loaded from config with:
+    - load_pref(PREF_FOO)
+    -- this will load any existing value, and if not present in config, the default value is set internally
+    - load_prefs() - this will cause any remaining unloaded prefs to be loaded as if load_pref() were called
 
-    prefs->new_int = get_int_prefd(PREF_NEW_INT, 100);
+  -- reading the value:
+    e.g: boolean bval = prefs->foo;
+    -- underlying updates are reproduced in the variable
 
-    in preferences.c:
-    create the widget: prefsw->new_int_spin = lives_standard_spin_button(.....)
-    ACTIVE(new_int, VALUE_CHANGED);
+  -- updating the value:
+    - recommended to use update_pref()
 
-    in apply:
-    pref_factory_int(PREF_NEW_INT, &prefs->new_int, liuves_spin_button_get_value_as_int(), TRUE)
-
-    -done
+  -- getting widget
+    get_pref_widget(PREF_FOO)
 */
 
 // temp values (not saved)
@@ -1289,6 +1315,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_SELF_TRANS "self_transition"
 
+#define PREF_POGO_MODE "pogo_mode"
+
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"
 #define PREF_DEFAULT_FPS "default_fps"
@@ -1305,6 +1333,17 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 ////////// list values
 #define PREF_DISABLED_DECODERS "disabled_decoders"
+
+void load_prefs(void);
+void load_pref(const char *pref_idx);
+LiVESWidget *get_pref_widget(const char *pref_idx);
+boolean update_pref(const char *pref_idx, void *newval, boolean permanent);
+
+boolean update_boolean_pref(const char *pref_idx, boolean val, boolean permanent);
+
+void invalidate_pref_widgets(LiVESWidget *top);
+
+void free_prefs(void);
 
 boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent);
 boolean pref_factory_string(const char *prefidx, const char *newval, boolean permanent);

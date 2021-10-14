@@ -570,7 +570,7 @@ struct _param_t {
 
   void *value;  ///< current value(s)
 
-  double min; //< display len for strring
+  double min; //< display len for string
   double max; ///< for string this is max characters
 
   void *def; ///< default values

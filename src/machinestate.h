@@ -84,6 +84,7 @@ typedef enum {
 #define LIVES_WEED_SUBTYPE_TUNABLE 3
 #define LIVES_WEED_SUBTYPE_PROC_THREAD 4
 #define LIVES_WEED_SUBTYPE_OBJ_PARAM 5
+#define LIVES_WEED_SUBTYPE_PREFERENCE 6
 
 #define LIVES_WEED_SUBTYPE_BAG_OF_HOLDING 256 // generic - cant think of a better name right now
 

@@ -100,8 +100,7 @@ weed_plant_t *LiVESWidgetObject_to_weed_plant(LiVESWidgetObject *o) {
 
   if (!o || !G_IS_OBJECT(o)) return NULL;
 
-  plant = weed_plant_new(WEED_PLANT_LIVES);
-  weed_set_int_value(plant, WEED_LEAF_LIVES_SUBTYPE, LIVES_WEED_SUBTYPE_WIDGET);
+  plant = lives_plant_new(LIVES_WEED_SUBTYPE_WIDGET);
 
   oclass = G_OBJECT_GET_CLASS(o);
 
@@ -13797,7 +13796,6 @@ const char *lives_textsize_to_string(int val) {
 
 #define LIVES_LEAF_KLASS_ROLE "klass_role"
 #define LIVES_LEAF_INTENTION "lives_intention_"
-#define LIVES_LEAF_WIDGET "widget"
 #define LIVES_LEAF_KLASS "klass"
 #define LIVES_LEAF_KLASS_IDX "klass_idx"
 
@@ -13817,8 +13815,7 @@ const LiVESList *widget_toolkit_klasses_list(lives_toolkit_t tk) {
 
 
 WIDGET_HELPER_LOCAL_INLINE lives_widget_klass_t *lives_widget_klass_new(int idx) {
-  lives_widget_klass_t *k = weed_plant_new(WEED_PLANT_LIVES);
-  weed_set_int_value(k, WEED_LEAF_LIVES_SUBTYPE, LIVES_WEED_SUBTYPE_WIDGET);
+  lives_widget_klass_t *k = lives_plant_new(LIVES_WEED_SUBTYPE_WIDGET);
   if (idx >= 0) weed_set_int_value(k, LIVES_LEAF_KLASS_IDX, idx);
   return k;
 }

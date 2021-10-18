@@ -1558,6 +1558,8 @@ typedef struct {
   ulong pw_scroll_func;
   boolean msg_area_configed;
 
+  LiVESList *global_hook_closures[N_GLOBAL_HOOKS];
+
   /// jack audio player / transport
 #ifdef ENABLE_JACK
   boolean jack_trans_poll;
@@ -1636,12 +1638,12 @@ typedef struct {
   ///< effects which can have candidates from which a delegate is selected (current examples are: audio_volume, resize)
   fx_candidates[MAX_FX_CANDIDATE_TYPES];
 
-  /// file caches
+  /// file caches (readonly)
   LiVESList *prefs_cache;  ///< cache of preferences, used during startup phase
   LiVESList *hdrs_cache;  ///< cache of a file header (e.g. header.lives)
   LiVESList *gen_cache;  ///< general cache of fi
 
-  FILE *clip_header;
+  FILE *clip_header; /// for writing header.lives values
 
   LiVESList *file_buffers; ///< list of open files for buffered i/o
 
@@ -1944,7 +1946,6 @@ typedef struct {
   LiVESList *trans_list;
 } _merge_opts;
 
-
 typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *cancelbutton;
@@ -1955,7 +1956,6 @@ typedef struct {
   int key;
   int mode;
 } _fx_dialog;
-
 
 _merge_opts *merge_opts;
 

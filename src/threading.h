@@ -6,7 +6,6 @@
 #ifndef _THREADING_H_
 #define _THREADING_H_
 
-typedef void (*lives_funcptr_t)();
 typedef void *(*lives_thread_func_t)(void *);
 typedef struct _lives_thread_data_t lives_thread_data_t;
 typedef weed_plantptr_t lives_proc_thread_t;
@@ -54,30 +53,12 @@ typedef struct {
 
 /// hook funcs
 
-enum {
-  ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
-  EXIT_HOOK,
-  N_GLOBAL_HOOKS,
-  PB_END_EARLY_HOOK,
-  PB_END_LATE_HOOK,
-  PB_START_EARLY_HOOK,
-  PB_START_LATE_HOOK,
-  PROGRESS_START_HOOK,
-  PROGRESS_END_HOOK,
-  SLURP_LOADED_HOOK,
-  N_HOOK_FUNCS,
-};
+void lives_hook_append(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func, livespointer data);
+void lives_hook_prepend(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func, livespointer data);
+void lives_hook_remove(LiVESList **hooks, int type, hook_funcptr_t func, livespointer data);
 
-typedef struct {
-  lives_funcptr_t func;
-  void *data;
-} lives_closure_t;
-
-void lives_hook_append(int type, lives_funcptr_t func, livespointer data);
-void lives_hook_prepend(int type, lives_funcptr_t func, livespointer data);
-void lives_hook_remove(int type, lives_funcptr_t func, livespointer data);
-void lives_hooks_clear(int type);
-void lives_hooks_trigger(int type);
+void lives_hooks_trigger(lives_object_t *obj, LiVESList **xlist, int type);
+void lives_hooks_join(LiVESList **xlist, int type);
 
 typedef struct {
   uint64_t var_uid;
@@ -127,15 +108,6 @@ typedef struct {
   LiVESList *hook_closures[N_HOOK_FUNCS];
   pthread_t self;
 } thrd_work_t;
-
-typedef struct {
-  int category; // category type for function (0 for none)
-  lives_funcptr_t function; // pointer to a function
-  char *args_fmt; // definition of the params, e.g. "idV" (int, double, void *)
-  uint32_t rettype; // weed_seed type e.g. WEED_SEED_INT, a value of 0 implies a void *(fuunc)
-  void *data; // category specific data, may be NULL
-  uint64_t padding[3];
-} lives_func_info_t;
 
 #define LIVES_LEAF_THREADFUNC "tfunction"
 #define LIVES_LEAF_PTHREAD_SELF "pthread_self"
@@ -261,7 +233,6 @@ lives_threadvars_t *get_global_threadvars(void);
 lives_thread_data_t *lives_thread_data_create(uint64_t idx);
 
 #define THREADVAR(var) (get_threadvars()->var_##var)
-#define GLOBAL_THREADVAR(var) (get_global_threadvars()->var_##var)
 
 // lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////
 

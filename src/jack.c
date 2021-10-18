@@ -58,13 +58,6 @@ static jackctl_server_t *jackserver = NULL;
 static const char **in_ports = NULL;
 static const char **out_ports = NULL;
 
-#define JACK_READ_BYTES 262144  ///< 256 * 1024
-
-static uint8_t jrbuf[JACK_READ_BYTES * 2];
-static float jrfbuf[JACK_READ_BYTES >> 1];
-
-static size_t jrb = 0;
-
 static off_t fwd_seek_pos = 0;
 
 static text_window *tstwin = NULL;
@@ -132,6 +125,7 @@ void jack_conx_exclude(jack_driver_t *jackd_in, jack_driver_t *jackd_out, boolea
           if (!outports[j]) break;
           outs = jack_port_get_connections(outports[j]);
           if (outs) {
+            // TODO - timeout
             if (!jack_disconnect(jackd_in->client, ins[0], outs[0])) {
               xins[i] = ins[0];
               xouts[i] = outs[0];
@@ -758,14 +752,13 @@ static jackctl_driver_t *get_def_drivers(const JSList *drivers, LiVESList **slvl
     lives_signal_sync_connect(LIVES_GUI_OBJECT(rb), LIVES_WIDGET_TOGGLED_SIGNAL,
                               LIVES_GUI_CALLBACK(set_def_driver), list->data);
     if (mainw->is_ready) {
+      hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
       button = lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
                _("Configure"), -1, DEF_BUTTON_HEIGHT >> 1,
                LIVES_BOX(hbox), TRUE, NULL);
       lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
                                 LIVES_GUI_CALLBACK(config_driver), list->data);
 
-      hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-      lives_box_pack_start(LIVES_BOX(hbox), button, TRUE, FALSE, 0);
       toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), button, FALSE);
     }
   }
@@ -791,13 +784,12 @@ static jackctl_driver_t *get_def_drivers(const JSList *drivers, LiVESList **slvl
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(cb), LIVES_WIDGET_TOGGLED_SIGNAL,
                                     LIVES_GUI_CALLBACK(add_slave_driver), list->data);
     if (mainw->is_ready) {
+      hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
       button = lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
                _("Configure"), -1, DEF_BUTTON_HEIGHT >> 1,
                LIVES_BOX(hbox), TRUE, NULL);
       lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
                                 LIVES_GUI_CALLBACK(config_driver), list->data);
-      hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-      lives_box_pack_start(LIVES_BOX(hbox), button, TRUE, FALSE, 0);
 #ifdef JACK_V2
       toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(cb), button, FALSE);
 #else
@@ -1263,6 +1255,7 @@ boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd
   boolean was_started = FALSE;
   boolean needs_sigs = FALSE;
   boolean test_ret = FALSE;
+  boolean script_tried = FALSE;
 
 #ifndef JACK_V2
   int jackver = 1;
@@ -1536,63 +1529,66 @@ retry_connect:
   LIVES_ERROR(logmsg);
   lives_free(logmsg); lives_free(logmsg2);
 
-  // using a config file. We will run it via fork() and then try to connect
-  // for this to work we need to parse the config file and try to extract the server name
-  if (is_trans) {
-    scrfile = future_prefs->jack_tserver_cfg;
-  } else {
-    scrfile = future_prefs->jack_tserver_cfg;
-  }
-  com = lives_fread_line(scrfile);
-  if (com) {
-    int pidchk;
-
+  if (!script_tried) {
+    // using a config file. We will run it via fork() and then try to connect
+    // for this to work we need to parse the config file and try to extract the server name
+    script_tried = TRUE;
     if (is_trans) {
-      ts_scripted = FALSE;
-      if (*future_prefs->jack_tserver_cname) server_name = lives_strdup(future_prefs->jack_tserver_cname);
-      else server_name = lives_strdup(defservname);
+      scrfile = future_prefs->jack_tserver_cfg;
     } else {
-      as_scripted = FALSE;
-      if (*future_prefs->jack_aserver_cname) server_name = lives_strdup(future_prefs->jack_aserver_cname);
-      else server_name = lives_strdup(defservname);
+      scrfile = future_prefs->jack_tserver_cfg;
     }
+    com = lives_fread_line(scrfile);
+    if (com) {
+      int pidchk;
 
-    if (!sc_pid) {
-      logmsg = lives_strdup_printf("LiVES: Script file %s will be deployed", scrfile);
+      if (is_trans) {
+        ts_scripted = FALSE;
+        if (*future_prefs->jack_tserver_cname) server_name = lives_strdup(future_prefs->jack_tserver_cname);
+        else server_name = lives_strdup(defservname);
+      } else {
+        as_scripted = FALSE;
+        if (*future_prefs->jack_aserver_cname) server_name = lives_strdup(future_prefs->jack_aserver_cname);
+        else server_name = lives_strdup(defservname);
+      }
+
+      if (!sc_pid) {
+        logmsg = lives_strdup_printf("LiVES: Script file %s will be deployed", scrfile);
+        jack_log_errmsg(jackd, logmsg);
+        lives_free(logmsg);
+
+        sc_pid = lives_fork(com);
+        lives_free(com);
+        if (!sc_pid) goto ret_failed;
+        if (is_trans) tserver_pid = sc_pid;
+        else aserver_pid = sc_pid;
+      }
+
+      pidchk = lives_kill(sc_pid, 0);
+      if (!pidchk) {
+        if (is_trans) ts_scripted = TRUE;
+        else as_scripted = TRUE;
+        logmsg = lives_strdup_printf("LiVES: script running, retrying connection attempt to server named '%s'", server_name);
+      } else {
+        logmsg = lives_strdup_printf("LiVES: script not running, will abandon attempt to connect to '%s'", server_name);
+      }
+
       jack_log_errmsg(jackd, logmsg);
       lives_free(logmsg);
 
-      sc_pid = lives_fork(com);
-      lives_free(com);
-      if (!sc_pid) goto ret_failed;
-      if (is_trans) tserver_pid = sc_pid;
-      else aserver_pid = sc_pid;
-    }
+      if (!pidchk) {
+        if (con_attempts > 1) {
+          if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+          lives_nanosleep(LIVES_WAIT_A_SEC);
+          if (lpt) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+        }
 
-    pidchk = lives_kill(sc_pid, 0);
-    if (!pidchk) {
-      if (is_trans) ts_scripted = TRUE;
-      else as_scripted = TRUE;
-      logmsg = lives_strdup_printf("LiVES: script running, retrying connection attempt to server named '%s'", server_name);
-    } else {
-      logmsg = lives_strdup_printf("LiVES: script not running, will abandon attempt to connect to '%s'", server_name);
-    }
-
-    jack_log_errmsg(jackd, logmsg);
-    lives_free(logmsg);
-
-    if (!pidchk) {
-      if (con_attempts > 1) {
-        if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
-        lives_nanosleep(LIVES_WAIT_A_SEC);
-        if (lpt) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+        goto retry_connect;
       }
-
-      goto retry_connect;
+    } else {
+      if (is_trans) ts_scripted = FALSE;
+      else as_scripted = FALSE;
     }
-  } else {
-    if (is_trans) ts_scripted = FALSE;
-    else as_scripted = FALSE;
   }
 
   // start a server using internal settings
@@ -1686,7 +1682,8 @@ retry_connect:
           lives_free(logmsg);
           goto ret_failed;
         }
-        if (lpt && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+        if (!lpt) goto ret_failed;
+        if (!(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
         goto retry_connect;
       }
       future_prefs->jack_tdriver = lives_strdup(jackctl_driver_get_name(new_driver));
@@ -1705,7 +1702,8 @@ retry_connect:
           lives_free(logmsg);
           goto ret_failed;
         }
-        if (lpt && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
+        if (!lpt) goto ret_failed;
+        if (!(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
         goto retry_connect;
       }
       if (lpt && !(ostate & THRD_STATE_BUSY)) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
@@ -3263,97 +3261,107 @@ static int start_ready_callback(jack_transport_state_t state, jack_position_t *p
 }
 
 
-size_t jack_flush_read_data(size_t rbytes, void *data) {
-  // rbytes here is how many bytes to write
-  ssize_t bytes = 0;
-  boolean is_ascrap = FALSE;
-
-  if (mainw->ascrap_file != -1 && mainw->files[mainw->ascrap_file] &&
-      mainw->aud_rec_fd == mainw->files[mainw->ascrap_file]->cb_src)
-    is_ascrap = TRUE;
-
-  if (!data) {
-    // final flush at end
-    if (is_ascrap) data = jrfbuf;
-    else data = jrbuf;
-    rbytes = jrb;
-  }
-
-  jrb = 0;
-
-  if (!THREADVAR(bad_aud_file)) {
-    bytes = lives_write_buffered(mainw->aud_rec_fd, data, rbytes, TRUE);
-    if (bytes > 0) {
-      uint64_t chk = (mainw->aud_data_written & AUD_WRITE_CHECK);
-      mainw->aud_data_written += bytes;
-      if (is_ascrap)
-        add_to_ascrap_mb(bytes);
-      check_for_disk_space((mainw->aud_data_written & AUD_WRITE_CHECK) != chk);
-    }
-    if (bytes < rbytes) THREADVAR(bad_aud_file) = filename_from_fd(NULL, mainw->aud_rec_fd);
-  }
-  return bytes;
-}
-
-
 static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofileno, int nframes,
                                double out_scale, boolean rev_endian, boolean out_unsigned) {
-  // read audio, buffer it and when we have enough, write it to aud_rec_fd
-  lives_clip_t *ofile = mainw->files[ofileno];
-  void *holding_buff, *jbuf = jrbuf;
-  size_t rbytes;
+  return 0;
+}
+
+size_t jack_write_data(float out_scale, int achans, int fileno, size_t nframes, float **in_buffer) {
+  lives_clip_t *ofile;
+  void *holding_buff, *holding_buff2;;
+  size_t target_bytes;
+  ssize_t actual_bytes;
+  int64_t frames_out;
+
   boolean is_float = FALSE;
-  int sampsize = ofile->asampsize >> 3;
-  int achans = ofile->achans;
-  int frames_out;
+  boolean rev_endian = FALSE;
+  boolean out_unsigned;
 
-  if (mainw->ascrap_file != -1 && mainw->files[mainw->ascrap_file] &&
-      mainw->aud_rec_fd == mainw->files[mainw->ascrap_file]->cb_src) {
-    sampsize = 4;
-    is_float = TRUE;
-    if (prefs->audio_opts & AUDIO_OPTS_AUX_RECORD) achans <<= 1;
-  }
+  int sampsize;
+  int swap_sign;
 
-  if (is_float) jbuf = (void *)jrfbuf;
+  if (THREADVAR(bad_aud_file)) return 0;
+  if (mainw->rec_samples == 0) return 0;
+  if (nframes == 0) return 0;
+  if (!IS_VALID_CLIP(fileno)) return 0;
+
+  ofile = mainw->files[fileno];
+  sampsize = ofile->asampsize >> 3;
+
+  if (prefs->audio_opts & AUDIO_OPTS_AUX_RECORD) achans <<= 1;
 
   frames_out = (int64_t)((double)nframes / out_scale + .49999);
-
   holding_buff = lives_calloc(frames_out, achans * sampsize);
+
   if (!holding_buff) return 0;
 
-  if (!is_float)
-    frames_out = sample_move_float_int(holding_buff, in_buffer, nframes, out_scale, achans,
+  out_unsigned = ofile->signed_endian & AFORM_UNSIGNED;
+
+  if (!is_float) {
+    if (ofile->asampsize == 16) {
+      int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN);
+      if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN))
+          || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
+        rev_endian = TRUE;
+    }
+    frames_out = sample_move_float_int(holding_buff, in_buffer, frames_out, out_scale, achans,
                                        ofile->asampsize, out_unsigned, rev_endian, FALSE, 1.);
-  else
-    frames_out = float_interleave(holding_buff, in_buffer, nframes, out_scale, achans, 1.);
+  } else
+    frames_out = float_interleave(holding_buff, in_buffer, frames_out, out_scale, achans, 1.);
+
+  frames_out /= achans;
 
   if (mainw->rec_samples > 0) {
     if (frames_out > mainw->rec_samples * achans) frames_out = mainw->rec_samples * achans;
     mainw->rec_samples -= frames_out / achans;
   }
+  // for 16bit, generally we use S16, so if we want U16, we should change it
+  swap_sign = ofile->signed_endian & AFORM_UNSIGNED;
 
-  rbytes = frames_out * sampsize;
-  jrb += rbytes;
-
-  // write to jrbuf
-  if (jrb < JACK_READ_BYTES && (mainw->rec_samples == -1 || frames_out < mainw->rec_samples * achans)) {
-    // buffer until we have enough
-    lives_memcpy(jbuf + jrb - rbytes, holding_buff, rbytes);
-    return rbytes;
+  if (ofile->asampsize == 16) {
+    int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN);
+    if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN))
+        || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
+      rev_endian = TRUE;
   }
 
-  // if we have enough, flush it to file
-  if (jrb <= JACK_READ_BYTES * 2) {
-    lives_memcpy(jbuf + jrb - rbytes, holding_buff, rbytes);
-    jack_flush_read_data(jrb, jbuf);
+  target_bytes = frames_out * ofile->achans * (ofile->asampsize >> 3);
+
+  holding_buff2 = lives_malloc(target_bytes * 4);
+  if (!holding_buff2) {
+    lives_free(holding_buff);
+    return 0;
+  }
+
+  if (ofile->asampsize == 16) {
+    sample_move_d16_d16((short *)holding_buff2, holding_buff, frames_out, target_bytes, 1., ofile->achans, achans,
+                        rev_endian ? SWAP_L_TO_X : 0, swap_sign ? SWAP_S_TO_U : 0);
   } else {
-    if (jrb > rbytes) jack_flush_read_data(jrb - rbytes, jbuf);
-    jack_flush_read_data(rbytes, holding_buff);
+    sample_move_d16_d8((uint8_t *)holding_buff2, holding_buff, frames_out, target_bytes, 1., ofile->achans, achans,
+                       swap_sign ? SWAP_S_TO_U : 0);
   }
 
+  if (mainw->rec_samples > 0) {
+    if (frames_out > mainw->rec_samples) frames_out = mainw->rec_samples;
+    mainw->rec_samples -= frames_out;
+  }
+
+  actual_bytes = lives_write_buffered(mainw->aud_rec_fd, holding_buff2, target_bytes, TRUE);
+
+  if (actual_bytes > 0) {
+    uint64_t chk = (mainw->aud_data_written & AUD_WRITE_CHECK);
+    mainw->aud_data_written += actual_bytes;
+    if (fileno == mainw->ascrap_file) add_to_ascrap_mb(actual_bytes);
+    check_for_disk_space((mainw->aud_data_written & AUD_WRITE_CHECK) != chk);
+    ofile->aseek_pos += actual_bytes;
+  }
+  if (actual_bytes < target_bytes) THREADVAR(bad_aud_file) = filename_from_fd(NULL, mainw->aud_rec_fd);
+
+  //if (holding_buff != data)
+  lives_free(holding_buff2);
   lives_free(holding_buff);
 
-  return rbytes;
+  return actual_bytes;
 }
 
 
@@ -3367,22 +3375,17 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
   // or a normal file (for voiceovers), or -1 (just listening)
 
   // TODO - get abs_maxvol_heard
-
+  lives_clip_t *ofile;
   jack_driver_t *jackd = (jack_driver_t *)arg;
   float *in_buffer[jackd->num_input_channels];
-  void *jbuf = jrbuf;
-  float out_scale;
+  float out_scale = 1.;
   float tval = 0;
   size_t rbytes = 0;
-  boolean is_ascrap = FALSE;
-  int out_unsigned = AFORM_UNSIGNED;
   int nch = jackd->num_input_channels;
   int i;
 
-  if (!jackd->in_use) {
-    jrb = 0;
-    return 0;
-  }
+  if (!jackd->in_use) return 0;
+
   if (mainw->playing_file < 0 && prefs->audio_src == AUDIO_SRC_EXT) return 0;
 
   if (mainw->effects_paused) return 0; // pause during record
@@ -3410,7 +3413,7 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
   if (!mainw->fs && !mainw->faded && !mainw->multitrack && mainw->ext_audio_mon)
     lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_mon), tval > 0.);
 
-  jackd->frames_written += nframes;
+  jackd->frames_read += nframes;
 
   if (AUD_SRC_EXTERNAL && (jackd->playing_file == -1 || jackd->playing_file == mainw->ascrap_file)) {
     // TODO - dont apply filters when doing ext window grab, or voiceover
@@ -3437,23 +3440,7 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
     }
   }
 
-  // BAD - non realtime
-  pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
-
-  if (mainw->ascrap_file != -1 && mainw->files[mainw->ascrap_file] &&
-      mainw->aud_rec_fd == mainw->files[mainw->ascrap_file]->cb_src) {
-    is_ascrap = TRUE;
-    jbuf = jrfbuf;
-  }
-
-  if (mainw->record && mainw->record_paused && jrb > 0) {
-    // recording just transitioned to paused, so flush anything we have
-    jack_flush_read_data(jrb, jbuf);
-  }
-
-  if (jackd->playing_file == -1 || (mainw->record && mainw->record_paused)) {
-    jrb = 0;
-    pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
+  if (!IS_VALID_CLIP(jackd->playing_file) || (mainw->record && mainw->record_paused)) {
     return 0;
   }
 
@@ -3461,28 +3448,22 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
   // external audio, provided we are not applying fx to it it (handled in writer client)
   // aux audio - will be mixed with whatever is playing and saved there
 
-  if (!IS_VALID_CLIP(jackd->playing_file)) out_scale = 1.0; // just listening
-  else {
-    out_scale = (float)afile->arate / (float)jackd->sample_in_rate; // recording to ascrap_file
-    out_unsigned = afile->signed_endian & AFORM_UNSIGNED;
-  }
+  ofile = mainw->files[jackd->playing_file];
+  //out_scale = (float)jackd->sample_in_rate / (float)ofile->arate; // recording to ascrap_file
 
-  // here we read from jackd->playing_file, and write to mainw->playing_file
-  rbytes = audio_read_inner(jackd, in_buffer, jackd->playing_file, nframes, out_scale, jackd->reverse_endian,
-                            out_unsigned);
+  rbytes = jack_write_data(out_scale, jackd->num_input_channels, jackd->playing_file, nframes, in_buffer);
+  out_scale = (float)ofile->arate / (float)jackd->sample_in_rate;
 
-  if (is_ascrap)
-    mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
-  else {
-    if (mainw->playing_file != mainw->ascrap_file && IS_VALID_CLIP(mainw->playing_file))
-      mainw->files[mainw->playing_file]->aseek_pos += rbytes;
-  }
+  // need to pass: jackd->sample_in_rate, jackd->playing_file
+  // jackd->num_input_channels, nframes, in_buffer
 
+  lives_hooks_trigger(jackd->inst, jackd->inst->hook_closures, DATA_READY_HOOK);
   jackd->seek_pos += rbytes;
 
-  pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
+  //pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
 
-  if (mainw->rec_samples == 0 && mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_KEEP; // we wrote the required #
+  if (mainw->rec_samples == 0 && mainw->cancelled == CANCEL_NONE)
+    mainw->cancelled = CANCEL_KEEP; // we wrote the required #
 
   return 0;
 }
@@ -3708,8 +3689,6 @@ boolean jack_create_client_reader(jack_driver_t *jackd) {
      just decides to stop calling us. */
   jack_on_shutdown(jackd->client, jack_shutdown, jackd);
 
-  jrb = 0;
-
   return 0;
 }
 
@@ -3818,6 +3797,8 @@ boolean jack_read_client_activate(jack_driver_t *jackd, boolean autocon) {
 
   if (!jackd->is_active) {
     // set process callback and start
+    /* if (!pulsed->inst) pulsed->inst = lives_player_inst_create(PLAYER_SUBTYPE_AUDIO); */
+
     jack_set_process_callback(jackd->client, audio_read, jackd);
     if (jack_activate(jackd->client)) {
       logmsg = lives_strdup_printf("LiVES : Could not activate jack reader client");
@@ -3950,7 +3931,7 @@ int jack_audio_init(void) {
     jackd->out_ports_available = 0;
     jackd->read_abuf = -1;
     jackd->playing_file = -1;
-    jackd->frames_written = 0;
+    jackd->frames_written = jackd->frames_read = 0;
     *jackd->status_msg = 0;
   }
   return 0;
@@ -3980,7 +3961,7 @@ int jack_audio_read_init(void) {
     jackd->mute = FALSE;
     jackd->in_ports_available = 0;
     jackd->playing_file = -1;
-    jackd->frames_written = 0;
+    jackd->frames_written = jackd->frames_read = 0;
     *jackd->status_msg = 0;
   }
   return 0;
@@ -3999,7 +3980,7 @@ void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
                                    == JACK_CLIENT_TYPE_AUDIO_READER
                                    ? jackd->sample_in_rate
                                    : jackd->sample_out_rate) / 1000000.));
-  jackd->frames_written = 0;
+  jackd->frames_written = jackd->frames_read = 0;
   mainw->currticks = offset;
   mainw->deltaticks = mainw->startticks = 0;
 }
@@ -4033,9 +4014,15 @@ ticks_t lives_jack_get_time(jack_driver_t *jackd) {
   if (!jackd->client) return -1;
 
   retframes = frames;
-  if (last_frames > 0 && frames <= last_frames) {
-    retframes += jackd->frames_written;
-  } else jackd->frames_written = 0;
+  if (jackd->client_type == JACK_CLIENT_TYPE_AUDIO_WRITER) {
+    if (last_frames > 0 && frames <= last_frames) {
+      retframes += jackd->frames_written;
+    } else jackd->frames_written = 0;
+  } else {
+    if (last_frames > 0 && frames <= last_frames) {
+      retframes += jackd->frames_read;
+    } else jackd->frames_read = 0;
+  }
   last_frames = frames;
   return (double)(frames - jackd->nframes_start) * (1000000. / srate) * USEC_TO_TICKS;
 }
@@ -4046,7 +4033,10 @@ double lives_jack_get_pos(jack_driver_t *jackd) {
   if (jackd->playing_file > -1)
     return fwd_seek_pos / (double)(afile->arate * afile->achans * afile->asampsize / 8);
   // from memory
-  return (double)jackd->frames_written / (double)jackd->sample_out_rate;
+  if (jackd->client_type == JACK_CLIENT_TYPE_AUDIO_WRITER)
+    return (double)jackd->frames_written / (double)jackd->sample_out_rate;
+  else
+    return (double)jackd->frames_read / (double)jackd->sample_in_rate;
 }
 
 
@@ -4251,7 +4241,8 @@ static lives_pid_t iop_pid = 0;
 static boolean inter = FALSE;
 static boolean need_clnup = FALSE;
 
-void jack_interop_cleanup(jack_driver_t *jackd) {
+void *jack_interop_cleanup(lives_object_t *obj, void *data) {
+  jack_driver_t *jackd = (jack_driver_t *)data;
   // reconnect
   int nch = jackd->num_output_channels;
   for (int i = 0; i < nch; i++) {
@@ -4277,6 +4268,7 @@ void jack_interop_cleanup(jack_driver_t *jackd) {
     lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
     need_clnup = FALSE;
   }
+  return NULL;
 }
 
 
@@ -4335,7 +4327,7 @@ retry:
           iop_pid = lives_fork(com);
           lives_free(com);
           if (!iop_pid) {
-            jack_interop_cleanup(jackd);
+            jack_interop_cleanup(NULL, jackd);
             return FALSE;
           }
           retries = MAX_CON_TRIES;
@@ -4348,7 +4340,7 @@ retry:
             goto retry;
           }
         }
-        jack_interop_cleanup(jackd);
+        jack_interop_cleanup(NULL, jackd);
         return FALSE;
       }
 
@@ -4373,10 +4365,10 @@ retry:
         }
       }
 #endif
-      lives_hook_append(PB_END_EARLY_HOOK, jack_interop_cleanup, jackd);
+      lives_hook_append(THREADVAR(hook_closures), TX_POST_HOOK, HOOK_CB_SINGLE_SHOT, jack_interop_cleanup, jackd);
       need_clnup = TRUE;
     } else {
-      jack_interop_cleanup(jackd);
+      jack_interop_cleanup(NULL, jackd);
     }
     inter = !inter;
   }

@@ -909,7 +909,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 #endif
   }
 
-  if (run_hooks) lives_hooks_trigger(SLURP_LOADED_HOOK);
+  if (run_hooks) lives_hooks_trigger(NULL, THREADVAR(hook_closures), DATA_READY_HOOK);
 
   fbuff->fd = -1;
   IGN_RET(close(fd));
@@ -932,6 +932,7 @@ void lives_buffered_rdonly_slurp(int fd, off_t skip) {
   fbuff->bytes = fbuff->offset = 0;
   fbuff->bufsztype = BUFF_SIZE_READ_SLURP;
 
+  // TODO - inherits
   lives_proc_thread_create(LIVES_THRDATTR_INHERIT_HOOKS,
                            (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "VI", fbuff, skip);
   lives_nanosleep_until_nonzero(fbuff->orig_size || !fbuff->slurping);
@@ -942,8 +943,12 @@ LIVES_GLOBAL_INLINE boolean lives_buffered_rdonly_set_reversed(int fd, boolean v
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   if (!fbuff) {
     // normal non-buffered file
-    LIVES_DEBUG("lives_buffered_readonly_set_reversed: no file buffer found");
+    LIVES_DEBUG("lives_buffered_rdonly_set_reversed: no file buffer found");
     return FALSE;
+  }
+  if (!fbuff->read) {
+    LIVES_ERROR("lives_buffered_rdonly_set_reversed: wrong buffer type");
+    return 0;
   }
   fbuff->reversed = val;
   return TRUE;
@@ -1037,12 +1042,25 @@ ssize_t lives_close_buffered(int fd) {
 
 size_t get_read_buff_size(int sztype) {
   switch (sztype) {
+  case BUFF_SIZE_READ_SMALL: return smbytes;
   case BUFF_SIZE_READ_SMALLMED: return smedbytes;
   case BUFF_SIZE_READ_MED: return medbytes;
   case BUFF_SIZE_READ_LARGE: return bigbytes;
   default: break;
   }
-  return smbytes;
+  return 0;
+}
+
+LIVES_LOCAL_INLINE size_t get_write_buff_size(int sztype) {
+  switch (sztype) {
+  case BUFF_SIZE_WRITE_SMALL: return BUFFER_FILL_BYTES_SMALL;
+  case BUFF_SIZE_WRITE_SMALLMED: return BUFFER_FILL_BYTES_SMALLMED;
+  case BUFF_SIZE_WRITE_MED: return BUFFER_FILL_BYTES_MED;
+  case BUFF_SIZE_WRITE_BIGMED: return BUFFER_FILL_BYTES_BIGMED;
+  case BUFF_SIZE_WRITE_LARGE: return BUFFER_FILL_BYTES_LARGE;
+  default: break;
+  }
+  return 0; // custom perhaps
 }
 
 
@@ -1212,6 +1230,11 @@ off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
     return lseek(fd, offset, SEEK_CUR);
   }
 
+  if (!fbuff->read) {
+    LIVES_ERROR("lives_lseek_buffered_rdonly: wrong buffer type");
+    return 0;
+  }
+
   return _lives_lseek_buffered_rdonly_relative(fbuff, offset);
 }
 
@@ -1222,6 +1245,11 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t posn) {
   if (!(fbuff = find_in_file_buffers(fd))) {
     LIVES_DEBUG("lives_lseek_buffered_rdonly_absolute: no file buffer found");
     return lseek(fd, posn, SEEK_SET);
+  }
+
+  if (!fbuff->read) {
+    LIVES_ERROR("lives_lseek_buffered_rdonly_absolute: wrong buffer type");
+    return 0;
   }
 
   if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
@@ -1514,7 +1542,7 @@ ssize_t lives_read_le_buffered(int fd, void *buf, ssize_t count, boolean allow_l
 boolean lives_read_buffered_eof(int fd) {
   lives_file_buffer_t *fbuff;
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
-    LIVES_DEBUG("lives_read_buffered: no file buffer found");
+    LIVES_DEBUG("lives_read_buffered_eof: no file buffer found");
     return TRUE;
   }
 
@@ -1555,7 +1583,7 @@ static ssize_t lives_write_buffered_direct(lives_file_buffer_t *fbuff, const cha
       count -= bytes;
       res += bytes;
     } else {
-      LIVES_ERROR("lives_write_buffered: error in bigblock writer");
+      LIVES_ERROR("lives_write_buffered_direct: error in bigblock writer");
       if (!fbuff->allow_fail) {
         lives_close_buffered(-fbuff->fd); // use -fd as lives_write will have closed
         return res;
@@ -1586,39 +1614,32 @@ ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean all
 
   if (count <= 0) return 0;
 
-  if (count > BUFFER_FILL_BYTES_LARGE) return lives_write_buffered_direct(fbuff, buf, count, allow_fail);
+  if (fbuff->bufsztype != BUFF_SIZE_WRITE_CUSTOM) {
+    if (count > BUFFER_FILL_BYTES_LARGE) return lives_write_buffered_direct(fbuff, buf, count, allow_fail);
+
+    if (count >= BUFFER_FILL_BYTES_BIGMED >> 1)
+      bufsztype = BUFF_SIZE_WRITE_LARGE;
+    else if (count >= BUFFER_FILL_BYTES_MED >> 1)
+      bufsztype = BUFF_SIZE_WRITE_BIGMED;
+    else if (fbuff->totbytes >= BUFFER_FILL_BYTES_SMALLMED)
+      bufsztype = BUFF_SIZE_WRITE_MED;
+    else if (fbuff->totbytes >= BUFFER_FILL_BYTES_SMALL)
+      bufsztype = BUFF_SIZE_WRITE_SMALLMED;
+
+    if (bufsztype < fbuff->bufsztype) bufsztype = fbuff->bufsztype;
+  } else bufsztype = BUFF_SIZE_WRITE_CUSTOM;
 
   fbuff->totops++;
   fbuff->totbytes += count;
-
-  if (count >= BUFFER_FILL_BYTES_BIGMED >> 1)
-    bufsztype = BUFF_SIZE_WRITE_LARGE;
-  else if (count >= BUFFER_FILL_BYTES_MED >> 1)
-    bufsztype = BUFF_SIZE_WRITE_BIGMED;
-  else if (fbuff->totbytes >= BUFFER_FILL_BYTES_SMALLMED)
-    bufsztype = BUFF_SIZE_WRITE_MED;
-  else if (fbuff->totbytes >= BUFFER_FILL_BYTES_SMALL)
-    bufsztype = BUFF_SIZE_WRITE_SMALLMED;
-
-  if (bufsztype < fbuff->bufsztype) bufsztype = fbuff->bufsztype;
-
   fbuff->allow_fail = allow_fail;
 
   // write bytes to fbuff
   while (count) {
     if (!fbuff->buffer) fbuff->bufsztype = bufsztype;
 
-    if (fbuff->bufsztype == BUFF_SIZE_WRITE_SMALL)
-      buffsize = BUFFER_FILL_BYTES_SMALL;
-    else if (fbuff->bufsztype == BUFF_SIZE_WRITE_SMALLMED)
-      buffsize = BUFFER_FILL_BYTES_SMALLMED;
-    else if (fbuff->bufsztype == BUFF_SIZE_WRITE_MED)
-      buffsize = BUFFER_FILL_BYTES_MED;
-    else if (fbuff->bufsztype == BUFF_SIZE_WRITE_BIGMED)
-      buffsize = BUFFER_FILL_BYTES_BIGMED;
-    else
-      buffsize = BUFFER_FILL_BYTES_LARGE;
-
+    if (fbuff->bufsztype == BUFF_SIZE_WRITE_CUSTOM)
+      buffsize = fbuff->custom_size;
+    else buffsize = get_write_buff_size(fbuff->bufsztype);
     if (!fbuff->buffer) {
       fbuff->buffer = (uint8_t *)lives_calloc(buffsize >> 4, 16);
       fbuff->ptr = fbuff->buffer;
@@ -1655,6 +1676,36 @@ ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean all
   }
   return retval;
 }
+
+ssize_t lives_write_buffered_set_custom_size(int fd, size_t count) {
+  lives_file_buffer_t *fbuff;
+
+  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+    LIVES_DEBUG("lives_write_buffered_set_custom_size: no file buffer found");
+    return -1;
+  }
+
+  if (fbuff->read) {
+    LIVES_ERROR("lives_write_buffered_set_custom_size: wrong buffer type");
+    return -1;
+  }
+
+  if (fbuff->bytes > 0) {
+    file_buffer_flush(fbuff);
+  }
+
+  count = (count >> 4) << 4;
+  if (!count) return 0;
+
+  if (fbuff->buffer) {
+    lives_free(fbuff->buffer);
+    fbuff->buffer = NULL;
+  }
+  fbuff->bufsztype = BUFF_SIZE_WRITE_CUSTOM;
+  fbuff->custom_size = count;
+  return count;
+}
+
 
 
 ssize_t lives_buffered_write_printf(int fd, boolean allow_fail, const char *fmt, ...) {
@@ -1693,9 +1744,10 @@ off_t lives_lseek_buffered_writer(int fd, off_t offset) {
   }
 
   if (fbuff->bytes > 0) {
+    ssize_t bytes = fbuff->bytes;
     ssize_t res = file_buffer_flush(fbuff);
     if (res < 0) return res;
-    if (res < fbuff->bytes && !fbuff->allow_fail) {
+    if (res < bytes && !fbuff->allow_fail) {
       fbuff->eof = TRUE;
       return fbuff->offset;
     }
@@ -1726,7 +1778,7 @@ size_t lives_buffered_orig_size(int fd) {
   lives_file_buffer_t *fbuff;
 
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
-    LIVES_DEBUG("lives_buffered_offset: no file buffer found");
+    LIVES_DEBUG("lives_buffered_orig_size: no file buffer found");
     return lseek(fd, 0, SEEK_CUR);
   }
 
@@ -1743,7 +1795,7 @@ size_t lives_buffered_orig_size(int fd) {
 uint8_t *lives_buffered_get_data(int fd) {
   lives_file_buffer_t *fbuff;
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
-    LIVES_DEBUG("lives_buffered_offset: no file buffer found");
+    LIVES_DEBUG("lives_buffered_get_data: no file buffer found");
     return NULL;
   }
   return fbuff->buffer;
@@ -1754,19 +1806,20 @@ off_t lives_buffered_flush(int fd) {
   lives_file_buffer_t *fbuff;
 
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
-    LIVES_DEBUG("lives_lseek_buffered_writer: no file buffer found");
+    LIVES_DEBUG("lives_buffered_flush: no file buffer found");
     return 0;
   }
 
   if (fbuff->read) {
-    LIVES_ERROR("lives_lseek_buffered_writer: wrong buffer type");
+    LIVES_ERROR("lives_buffered_flush: wrong buffer type");
     return 0;
   }
 
   if (fbuff->bytes > 0) {
+    ssize_t bytes = fbuff->bytes;
     ssize_t res = file_buffer_flush(fbuff);
     if (res < 0) return res;
-    if (res < fbuff->bytes && !fbuff->allow_fail) {
+    if (res < bytes && !fbuff->allow_fail) {
       fbuff->eof = TRUE;
     }
   }

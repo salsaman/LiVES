@@ -334,7 +334,7 @@ void lives_exit(int signum) {
               if (IS_NORMAL_CLIP(i)) {
                 int fd;
                 char *fname;
-                if (i == mainw->ascrap_file)
+                if (IS_ASCRAP_CLIP(i))
                   fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
                                                LIVES_ACLIP_HEADER, NULL);
                 else
@@ -547,7 +547,7 @@ void lives_exit(int signum) {
     unload_decoder_plugins();
   }
 
-  lives_hooks_trigger(EXIT_HOOK);
+  lives_hooks_trigger(NULL, mainw->global_hook_closures, EXIT_HOOK);
 
   if (prefs->workdir_tx_intent == LIVES_INTENTION_DELETE) {
     // delete the old workdir
@@ -4818,9 +4818,9 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           aud_lock_act(NULL, LIVES_INT_TO_POINTER(TRUE));
         }
       }
-      if ((prefs->rec_opts & REC_AUDIO) && (mainw->agen_key != 0 || mainw->agen_needs_reinit
-                                            || AUD_SRC_EXTERNAL || (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
-          && AUD_SRC_REALTIME)
+      if ((prefs->rec_opts & REC_AUDIO) && (AUD_SRC_EXTERNAL || ((mainw->agen_key != 0 || mainw->agen_needs_reinit
+                                            || (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
+                                            && AUD_SRC_REALTIME)))
         start_audio_rec();
     } else {
       // end record during playback
@@ -7528,7 +7528,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       } else {
         // switch from separate window during playback
 #ifdef ENABLE_JACK
-        if (mainw->jackd) jack_interop_cleanup(mainw->jackd);
+        if (mainw->jackd) jack_interop_cleanup(NULL, mainw->jackd);
 #endif
         if (mainw->ext_playback) {
 #ifndef IS_MINGW
@@ -9899,33 +9899,35 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
     mainw->startticks = mainw->currticks - delta_ticks;
   }
 
-  if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) && (user_data || prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-    frames_t frameno = 0;
-    if ((prefs->audio_opts & AUDIO_OPTS_RESYNC_ADIR) && AV_CLIPS_EQUAL) {
-      if ((sfile->pb_fps > 0. && sfile->adirection == LIVES_DIRECTION_REVERSE)
-          || (sfile->pb_fps < 0. && sfile->adirection == LIVES_DIRECTION_FORWARD))
-        frameno = sfile->frameno;
-      resync_audio(mainw->playing_file, (double)frameno);
-    } else {
-      if (AV_CLIPS_EQUAL && sfile->pb_fps < 0. && sfile->adirection == LIVES_DIRECTION_FORWARD) {
-        calc_aframeno(mainw->playing_file);
-        frameno = mainw->aframeno - 3.;
+  if (AUD_SRC_INTERNAL && (!mainw->event_list || mainw->record)) {
+    if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) && (user_data || prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
+      frames_t frameno = 0;
+      if ((prefs->audio_opts & AUDIO_OPTS_RESYNC_ADIR) && AV_CLIPS_EQUAL) {
+        if ((sfile->pb_fps > 0. && sfile->adirection == LIVES_DIRECTION_REVERSE)
+            || (sfile->pb_fps < 0. && sfile->adirection == LIVES_DIRECTION_FORWARD))
+          frameno = sfile->frameno;
         resync_audio(mainw->playing_file, (double)frameno);
+      } else {
+        if (AV_CLIPS_EQUAL && sfile->pb_fps < 0. && sfile->adirection == LIVES_DIRECTION_FORWARD) {
+          calc_aframeno(mainw->playing_file);
+          frameno = mainw->aframeno - 3.;
+          resync_audio(mainw->playing_file, (double)frameno);
+        }
       }
     }
-  }
 
-  if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
+    if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
 #ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK) {
-      jack_set_avel(mainw->jackd, sfile->pb_fps / sfile->fps);
-    }
+      if (prefs->audio_player == AUD_PLAYER_JACK) {
+        jack_set_avel(mainw->jackd, sfile->pb_fps / sfile->fps);
+      }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE) {
-      pulse_set_avel(mainw->pulsed, sfile->pb_fps / sfile->fps);
-    }
+      if (prefs->audio_player == AUD_PLAYER_PULSE) {
+        pulse_set_avel(mainw->pulsed, sfile->pb_fps / sfile->fps);
+      }
 #endif
+    }
   }
 
   if (sfile->play_paused && new_fps != 0.) {
@@ -10624,8 +10626,8 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
         mainw->alock_abuf->_fd = lives_open_buffered_rdonly(filename);
         if (mainw->alock_abuf->_fd >= 0) {
           mainw->alock_abuf->fileno = mainw->playing_file;
-          lives_hook_append(SLURP_LOADED_HOOK, (lives_funcptr_t)resample_to_float,
-                            mainw->alock_abuf);
+          lives_hook_append(THREADVAR(hook_closures), DATA_READY_HOOK, HOOK_CB_CHILD_INHERITS,
+                            resample_to_float, mainw->alock_abuf);
           lives_buffered_rdonly_slurp(mainw->alock_abuf->_fd, 0);
           mainw->alock_abuf->is_ready = TRUE;
         }
@@ -12011,11 +12013,13 @@ void on_recaudclip_ok_clicked(LiVESButton * button, livespointer user_data) {
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK) {
     jack_rec_audio_to_clip(mainw->current_file, old_file, type == 0 ? RECA_NEW_CLIP : RECA_EXISTING);
+    // TODO - ascrap_file
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
     pulse_rec_audio_to_clip(mainw->current_file, old_file, type == 0 ? RECA_NEW_CLIP : RECA_EXISTING);
+    // TODO - ascrap_file
   }
 #endif
 

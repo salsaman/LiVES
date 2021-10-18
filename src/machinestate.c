@@ -2178,9 +2178,6 @@ static boolean rec_desk_done(livespointer data) {
   if (lives_get_status() != LIVES_STATUS_IDLE) return TRUE;
   else {
     lives_clip_t *sfile;
-    /* ticks_t tc; */
-    /* int from_files[1]; */
-    /* double aseeks[1], avels[1], chvols[1]; */
     double tsec = recargs->tottime / TICKS_PER_SECOND_DBL;
     char *com, *timestr = format_tstr(tsec, 0);
     int current_file = mainw->current_file;
@@ -2188,6 +2185,8 @@ static boolean rec_desk_done(livespointer data) {
     if (!IS_VALID_CLIP(recargs->clipno)) goto ohnoes2;
     sfile = mainw->files[recargs->clipno];
     sfile->is_loaded = TRUE;
+    sfile->ext_src_type = LIVES_EXT_SRC_NONE;
+    sfile->cb_src = -1;
 
     migrate_from_staging(recargs->clipno);
 
@@ -2199,19 +2198,6 @@ static boolean rec_desk_done(livespointer data) {
     lives_free(timestr);
 
     switch_clip(1, recargs->clipno, FALSE);
-
-    // render the audio track
-    /* from_files[0] = mainw->ascrap_file; */
-    /* avels[0] = 1.; */
-    /* aseeks[0] =01.; */
-    /* tc = 10 * TICKS_PER_SECOND_DBL; */
-    /* chvols[0] = 1.; */
-    /* cfile->achans = 2; */
-    /* cfile->asampsize = 16; */
-    /* cfile->arate = 48000; */
-
-    /* render_audio_segment(1, from_files, mainw->current_file, avels, aseeks, 0, tc, chvols, 1., 1., NULL); */
-    /* reget_afilesize(mainw->current_file); */
 
     cfile->undo1_dbl = recargs->fps;
     cfile->fps = 0.;
@@ -2225,12 +2211,18 @@ static boolean rec_desk_done(livespointer data) {
       return FALSE;
     }
 
+    reget_afilesize(recargs->clipno);
+    get_total_time(sfile);
+
     com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend, cfile->handle);
     lives_system(com, FALSE);
     lives_free(com);
     cfile->end = cfile->frames;
 
     switch_clip(1, mainw->current_file, TRUE);
+    get_play_times();
+
+    save_clip_values(mainw->current_file);
 
     lives_widget_set_sensitive(mainw->desk_rec, TRUE);
     lives_free(recargs);
@@ -2286,6 +2278,7 @@ void rec_desk(void *args) {
   sfile = mainw->files[recargs->clipno];
   clips[0] = recargs->clipno;
   migrate_from_staging(recargs->clipno);
+  sfile->ext_src_type = LIVES_EXT_SRC_RECORDER;
 
   lives_widget_set_sensitive(mainw->desk_rec, TRUE);
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->delay_time);
@@ -2301,9 +2294,12 @@ void rec_desk(void *args) {
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->rec_time);
 
   // temp kludge ahead !
-  //open_ascrap_file(recargs->clipno);
+  open_ascrap_file(recargs->clipno);
+  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
+  //pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_EXT);
+  mainw->rec_samples = -1; // record unlimited
   //
-
+  break_me("RDY");
   recargs->tottime = lives_get_current_ticks();
 
   while (1) {

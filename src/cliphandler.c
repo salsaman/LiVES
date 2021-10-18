@@ -135,7 +135,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     /// otherwise it may be wrongly classified as a recoverable clip
     /// (here this is largely academic, since the values are only read during crash recovery,
     /// and the header should have been cached)
-    if (which == mainw->ascrap_file) {
+    if (IS_ASCRAP_CLIP(which)) {
       lives_header = lives_build_filename(clipdir, LIVES_ACLIP_HEADER, NULL);
       if (!lives_file_test(lives_header, LIVES_FILE_TEST_EXISTS)) {
         lives_free(lives_header);
@@ -284,7 +284,7 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
   /// ascrap_file now uses a different header name; this is to facilitate diskspace cleanup
   /// otherwise it may be wrongly classified as a recoverable clip
   clipdir = get_clip_dir(which);
-  if (which == mainw->ascrap_file)
+  if (IS_ASCRAP_CLIP(which))
     lives_header = lives_build_filename(clipdir, LIVES_ACLIP_HEADER, NULL);
   else
     lives_header = lives_build_filename(clipdir, LIVES_CLIP_HEADER, NULL);
@@ -427,7 +427,7 @@ boolean save_clip_values(int which) {
   asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
   endian = sfile->signed_endian & AFORM_BIG_ENDIAN;
   clipdir = get_clip_dir(which);
-  if (which == mainw->ascrap_file)
+  if (IS_ASCRAP_CLIP(which))
     lives_header_new = lives_build_filename(clipdir, LIVES_ACLIP_HEADER "." LIVES_FILE_EXT_NEW, NULL);
   else
     lives_header_new = lives_build_filename(clipdir, LIVES_CLIP_HEADER "." LIVES_FILE_EXT_NEW, NULL);
@@ -496,7 +496,7 @@ boolean save_clip_values(int which) {
         retval = do_write_failed_error_s_with_retry(lives_header_new, NULL);
       } else {
         char *lives_header;
-        if (which == mainw->ascrap_file)
+        if (IS_ASCRAP_CLIP(which))
           lives_header = lives_build_filename(clipdir, LIVES_ACLIP_HEADER, NULL);
         else
           lives_header = lives_build_filename(clipdir, LIVES_CLIP_HEADER, NULL);
@@ -1142,6 +1142,7 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
   boolean retval, retvala;
   boolean is_ascrap = FALSE;
   boolean bak_tried = FALSE, binfmt_tried = FALSE;
+  boolean ahdr_tried = FALSE;
 
   off_t sizhead = 28; //8 * 4 + 8 + 8;
 
@@ -1156,7 +1157,7 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
 
   old_hdrfile = lives_build_filename(dir, LIVES_CLIP_HEADER_OLD, NULL);
 
-  if (fileno == mainw->ascrap_file) {
+  if (IS_ASCRAP_CLIP(fileno)) {
     is_ascrap = TRUE;
     /// ascrap_file now uses a different header name; this is to facilitate diskspace cleanup
     /// otherwise it may be wrongly classified as a recoverable clip
@@ -1224,12 +1225,28 @@ frombak:
         if (!sfile->unique_id) sfile->unique_id = uid;
       }
 
+      if (sfile->header_version >= 104) {
+        retval = get_clip_value(fileno, CLIP_DETAILS_DECODER_UID, &sfile->decoder_uid, 0);
+        if (!retval) {
+          retval = TRUE;
+          sfile->decoder_uid = 0;
+        }
+      }
+
       detail = CLIP_DETAILS_FRAMES;
       retval = get_clip_value(fileno, detail, &sfile->frames, 0);
+      if (!retval) {
+        sfile->needs_update = retval = TRUE;
+      }
 
       if (retval) {
+        int bpp = sfile->bpp;
         detail = CLIP_DETAILS_BPP;
-        retval = get_clip_value(fileno, detail, &sfile->bpp, 0);
+        get_clip_value(fileno, detail, &sfile->bpp, 0);
+        if (!retval) {
+          sfile->bpp = bpp;
+          retval = TRUE;
+        }
       }
       if (retval) {
         detail = CLIP_DETAILS_IMG_TYPE;
@@ -1258,10 +1275,18 @@ frombak:
       if (retval) {
         detail = CLIP_DETAILS_WIDTH;
         retval = get_clip_value(fileno, detail, &sfile->hsize, 0);
+        if (!retval) {
+          sfile->needs_update = TRUE;
+          retval = TRUE;
+        }
       }
       if (retval) {
         detail = CLIP_DETAILS_HEIGHT;
         retval = get_clip_value(fileno, detail, &sfile->vsize, 0);
+        if (!retval) {
+          sfile->needs_update = TRUE;
+          retval = TRUE;
+        }
       }
       if (retval) {
         if (sfile->header_version > 100) {
@@ -1530,7 +1555,7 @@ rhd_failed:
     char *clip_stdir = lives_build_path(stdir, sfile->handle, NULL);
     if (lives_file_test(clip_stdir, LIVES_FILE_TEST_IS_DIR)) {
       char *clipdir = get_clip_dir(fileno);
-      break_me("ready");
+      //break_me("ready");
       lives_cp_noclobber(clip_stdir, clipdir);
       lives_rmdir(clip_stdir, TRUE);
       lives_free(stdir);
@@ -1573,8 +1598,6 @@ rhd_failed:
 	    }}}}}
     // *INDENT-ON*
 
-    lives_free(clipdir);
-
     if (hdrback && bak_tried) {
       lives_free(hdrback);
       hdrback = NULL;
@@ -1584,9 +1607,24 @@ rhd_failed:
       binfmt = NULL;
     }
 
+    if (!hdrback && !is_ascrap && !ahdr_tried) {
+      char *alives_header = lives_build_filename(clipdir, LIVES_ACLIP_HEADER, NULL);
+      ahdr_tried = TRUE;
+      if (lives_file_test(alives_header, LIVES_FILE_TEST_EXISTS)) {
+        lives_mv(alives_header, lives_header);
+        lives_free(alives_header);
+      }
+      lives_free(clipdir);
+      goto frombak;
+    }
+
+    lives_free(clipdir);
+
     if (hdrback || binfmt) {
       if (hdrback) bak_tried = TRUE;
-      else binfmt_tried = TRUE;
+      else {
+        binfmt_tried = TRUE;
+      }
       if (recover_details(fileno, lives_header, hdrback, binfmt)) {
         if (hdrback) {
           lives_free(hdrback);
@@ -1598,6 +1636,7 @@ rhd_failed:
         return TRUE;
       }
     }
+
     do_delete_or_mark(fileno);
 
     // set this to force updating of the set details (e.g. order file)

@@ -1289,8 +1289,6 @@ reinit:
         }
 
         // do updates from "gui"
-        //rfx_params_free(rfx);
-        //lives_freep((void **)&rfx->params);
         if (rfx->num_params > 0 && !rfx->params)
           rfx->params = weed_params_to_rfx(rfx->num_params, inst, FALSE);
         if (fx_dialog[1]) {
@@ -8073,7 +8071,7 @@ weed_layer_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   mainw->inst_fps = get_inst_fps(FALSE);
 
   if (IS_VALID_CLIP(mainw->blend_file) && mainw->playing_file != mainw->blend_file && !is_bg) {
-    if (prefs->genq_mode == 0) {
+    if (!prefs->genq_mode) {
       // prefer speed
       if (IS_VALID_CLIP(mainw->blend_file)) {
         double pb_fps = fabs(mainw->files[mainw->blend_file]->pb_fps);
@@ -8808,8 +8806,13 @@ void weed_generator_end(weed_plant_t *inst) {
 
   // if the param window is already open, show any reinits now
   if (fx_dialog[1]) {
-    if (is_bg) update_widget_vis(NULL, bg_generator_key, bg_generator_mode); // redraw our paramwindow
-    else update_widget_vis(NULL, fg_generator_key, fg_generator_mode); // redraw our paramwindow
+    if (is_bg) {
+      if (fx_dialog[1]->key == bg_generator_key && fx_dialog[1]->mode == bg_generator_mode)
+        update_widget_vis(NULL, bg_generator_key, bg_generator_mode); // redraw our paramwindow
+    } else {
+      if (fx_dialog[1]->key == fg_generator_key && fx_dialog[1]->mode == fg_generator_mode)
+        update_widget_vis(NULL, fg_generator_key, fg_generator_mode); // redraw our paramwindow
+    }
   }
 
   if (!is_bg && cfile->achans > 0 && cfile->clip_type == CLIP_TYPE_GENERATOR) {

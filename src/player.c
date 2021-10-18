@@ -389,6 +389,10 @@ static boolean aud_msgq_wait(void) {
     lives_alarm_clear(alarm_handle);
     if (audio_timed_out == 0) return TRUE;
     jack_get_rec_avals(mainw->jackd);
+  } else if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd_read &&
+             (prefs->rec_opts & REC_AUDIO) && AUD_SRC_EXTERNAL
+             && mainw->rec_aclip != mainw->ascrap_file) {
+    jack_get_rec_avals(mainw->jackd_read);
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO

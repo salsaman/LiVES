@@ -2648,10 +2648,11 @@ boolean resample_clipboard(double new_fps) {
 }
 
 
-void resample_to_float(lives_audio_buf_t *abuf) {
-  // rsample buffer to float
+void *resample_to_float(lives_object_t *obj, void *data) {
+  lives_audio_buf_t *abuf = (lives_audio_buf_t *)data;
+  // resample buffer to float
   //
-  if (!abuf || abuf->_fd < 0) return;
+  if (!abuf || abuf->_fd < 0) return NULL;
   abuf->out_achans = 0;
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
@@ -2695,4 +2696,5 @@ void resample_to_float(lives_audio_buf_t *abuf) {
     abuf->seek = sfile->aseek_pos;
     abuf->arate = sfile->arate;
   }
+  return NULL;
 }

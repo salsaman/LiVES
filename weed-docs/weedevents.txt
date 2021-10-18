@@ -108,11 +108,14 @@ or may be serialised for offline storage / interchange, etc.
  * "audio_sample_size" : WEED_SEED_INT : audio sample size in bits per
    sample (e.g. 8 or 16), must be >0 if "audio_channels" > 0
 
+ * "audio_float" : WEED_SEED_BOOLEAN : WEED_TRUE means float audio
+   WEED_FALSE, integer (if not present, then sample_size >=32 may be assumed to be float, < 32, integer)
+
  * "audio_signed" : WEED_SEED_BOOLEAN : WEED_TRUE means signed,
-   WEED_FALSE, unsigned
+   WEED_FALSE, unsigned (may be omitted for float audio, which is always signed)
 
  * "audio_endian" : WEED_SEED_INT : May be WEED_AUDIO_LITTLE_ENDIAN (0) or WEED_AUDIO_BIG_ENDIAN (1)
-   endian, other values are invalid
+   endian, other values are invalid (ignored if sample_size is 8)
 
  * "audio_volume_tracks" : WEED_SEED_INT : an array that maps "audio_volume_values" to tracks. Track
    numbers < 0 are floating (backing) audio tracks. If there are fewer

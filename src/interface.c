@@ -297,7 +297,8 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
 
-  if (!CURRENT_CLIP_IS_VALID || mainw->foreign || mainw->multitrack || mainw->recoverable_layout) {
+  if (!CURRENT_CLIP_IS_VALID || (CURRENT_CLIP_IS_VALID && cfile->fps == 0.)
+      || mainw->foreign || mainw->multitrack || mainw->recoverable_layout) {
     mainw->current_file = current_file;
     return;
   }
@@ -963,7 +964,7 @@ xprocess *create_processing(const char *text) {
   add_procdlg_opts(procw, LIVES_VBOX(vbox3));
 
   widget_opts.last_container = vbox3;
-  lives_hooks_trigger(PROGRESS_START_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_START_HOOK);
 
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 8);

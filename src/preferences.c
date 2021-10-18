@@ -67,6 +67,7 @@ void init_prefs(void) {
   // PRREF_IDX, pref-><...>, default
   DEFINE_PREF_BOOL(POGO_MODE, pogo_mode, FALSE);
   DEFINE_PREF_BOOL(SHOW_TOOLBAR, show_tool, TRUE);
+  //DEFINE_PREF_BOOL(GENQ_MODE, genq_mode, FALSE);
 }
 
 
@@ -3772,14 +3773,16 @@ static void jack_make_perm(LiVESWidget * widget, livespointer data) {
 #endif
 
 
-static void _full_reset(char **pconfdir) {
-  char *config_file = lives_build_filename(*pconfdir, LIVES_DEF_CONFIG_FILE, NULL);
-  lives_rmdir(*pconfdir, TRUE);
+static void *_full_reset(lives_object_t *obj, void *pconfdir) {
+  char *confdir = *(char **)pconfdir;
+  char *config_file = lives_build_filename(confdir, LIVES_DEF_CONFIG_FILE, NULL);
+  lives_rmdir(confdir, TRUE);
   lives_rmdir(prefs->config_datadir, TRUE);
-  lives_mkdir_with_parents(*pconfdir, capable->umask);
-  lives_free(*pconfdir);
+  lives_mkdir_with_parents(confdir, capable->umask);
+  lives_free(confdir);
   lives_touch(config_file);
   lives_free(config_file);
+  return NULL;
 }
 
 
@@ -3801,7 +3804,7 @@ static void do_full_reset(LiVESWidget * widget, livespointer data) {
     lives_free(config_dir);
     return;
   }
-  lives_hook_append(EXIT_HOOK, _full_reset, (void *)&config_dir);
+  lives_hook_append(mainw->global_hook_closures, EXIT_HOOK, 0, _full_reset, (void *)&config_dir);
   lives_exit(0);
 }
 

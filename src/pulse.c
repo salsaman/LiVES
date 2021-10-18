@@ -26,12 +26,6 @@ static char pactxnm[512];
 
 static uint32_t pulse_server_rate = 0;
 
-#define PULSE_READ_BYTES 48000
-
-static uint8_t prbuf[PULSE_READ_BYTES * 2];
-
-static size_t prb = 0;
-
 static boolean seek_err;
 static boolean sync_ready = FALSE;
 
@@ -220,9 +214,6 @@ static void pulse_set_rec_avals(pulse_driver_t *pulsed) {
     pulse_get_rec_avals(pulsed);
   }
 }
-
-
-LIVES_GLOBAL_INLINE size_t pulse_get_buffsize(pulse_driver_t *pulsed) {return pulsed->chunk_size;}
 
 #if !HAVE_PA_STREAM_BEGIN_WRITE
 static void pulse_buff_free(void *ptr) {lives_free(ptr);}
@@ -476,8 +467,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   /// this is the value we will return from pulse_get_rec_avals
   fwd_seek_pos = pulsed->real_seek_pos;
 
-  if (pulsed->chunk_size != nbytes) pulsed->chunk_size = nbytes;
-
   pulsed->state = pa_stream_get_state(pulsed->pstream);
 
   if (pulsed->state == PA_STREAM_READY) {
@@ -497,6 +486,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     int swap_sign;
     int qnt = 1;
     boolean alock_mixer = FALSE;
+    boolean rec_output = FALSE;
 
     if (IS_VALID_CLIP(pulsed->playing_file)) qnt = afile->achans * (afile->asampsize >> 3);
 
@@ -1157,16 +1147,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             }
           }
 
-          if (mainw->record && !mainw->record_paused && mainw->ascrap_file != -1 && mainw->playing_file > 0) {
+          if (mainw->record && !mainw->record_paused && IS_VALID_CLIP(mainw->ascrap_file) && LIVES_IS_PLAYING) {
             /// if we are recording then write generated audio to ascrap_file
-            /// we may need to resample again to the file rate.
-            /// TODO: use markers to indicate when the rate changes, eliminating the necessity
-            size_t rbytes = numFramesToWrite * mainw->files[mainw->ascrap_file]->achans *
-                            mainw->files[mainw->ascrap_file]->asampsize >> 3;
-            pulse_flush_read_data(pulsed, mainw->ascrap_file,
-                                  rbytes, mainw->files[mainw->ascrap_file]->signed_endian & AFORM_BIG_ENDIAN,
-                                  pulsed->sound_buffer);
-            mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
+            rec_output = TRUE;
           }
           /* // end from gen */
         }
@@ -1235,6 +1218,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         append_to_audio_buffer16(pulsed->sound_buffer, nbytes / 4, 2);
       }
 
+
+#if HAVE_PA_STREAM_BEGIN_WRITE
+      buffer = pulsed->sound_buffer;
+#endif
+
       if (!pulsed->is_corked) {
         if (alock_mixer) {
           boolean had_fltbuf = FALSE;
@@ -1285,9 +1273,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           }
         }
 
-#if HAVE_PA_STREAM_BEGIN_WRITE
-        buffer = pulsed->sound_buffer;
-#endif
         if (fbdata) {
           for (int zz = 0; zz < nbytes / 2; zz++) {
             if (prefs->pogo_mode)
@@ -1299,14 +1284,22 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           fbdata = NULL;
         }
         if (mainw->alock_abuf && mainw->alock_abuf->is_ready && mainw->alock_abuf->_fd == -1) {
-          if (mainw->record && !mainw->record_paused && mainw->ascrap_file != -1 && mainw->playing_file > 0) {
+          if (mainw->record && !mainw->record_paused && IS_VALID_CLIP(mainw->ascrap_file) && LIVES_IS_PLAYING) {
             /// if we are recording then write mixed audio to ascrap_file
-            prb += nbytes;
-            pulse_flush_read_data(pulsed, mainw->ascrap_file, nbytes, mainw->files[mainw->ascrap_file]->signed_endian
-                                  & AFORM_BIG_ENDIAN, buffer);
-            mainw->files[mainw->ascrap_file]->aseek_pos += nbytes;
+            rec_output = TRUE;
           }
+        } else if (IS_VALID_CLIP(mainw->ascrap_file)
+                   && mainw->files[mainw->ascrap_file]->ext_src_type == LIVES_EXT_SRC_RECORDER) {
+          // here we are recrding for the desktop grabber
+          rec_output = TRUE;
         }
+      }
+
+      if (rec_output) {
+        float out_scale = (float)pulsed->out_arate / mainw->files[mainw->ascrap_file]->arate;
+        lives_hooks_trigger(pulsed->inst, pulsed->inst->hook_closures, DATA_READY_HOOK);
+        // recording internal - resample from out_arate to file arate
+        pulse_write_data(out_scale, pulsed->out_achans, mainw->ascrap_file, nbytes, buffer);
       }
 
       /// Finally... we actually write to pulse buffers
@@ -1395,100 +1388,67 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 }
 
 
-size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, boolean rev_endian, void *data) {
-  // prb is how many bytes to write, with rbytes as the latest addition
-
-  short *gbuf;
-  size_t bytes_out, frames_out, bytes = 0;
-  void *holding_buff;
-
-  float out_scale;
-  int swap_sign;
-
+size_t pulse_write_data(float out_scale, int achans, int fileno, size_t rbytes, void *data) {
   lives_clip_t *ofile;
+  size_t target_bytes, frames_out;
+  ssize_t actual_bytes;
+  void *holding_buff;
+  int swap_sign;
+  boolean rev_endian = FALSE;
 
-  if (!data) data = prbuf;
+  if (THREADVAR(bad_aud_file)) return 0;
+  if (mainw->rec_samples == 0) return 0;
+  if (rbytes == 0) return 0;
+  if (!IS_VALID_CLIP(fileno)) return 0;
 
-  if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-    if (prb == 0 || mainw->rec_samples == 0) return 0;
-    if (prb <= PULSE_READ_BYTES * 2) {
-      gbuf = (short *)data;
-    } else {
-      gbuf = (short *)lives_malloc(prb);
-      if (!gbuf) return 0;
-      if (prb > rbytes) lives_memcpy((void *)gbuf, prbuf, prb - rbytes);
-      lives_memcpy((void *)gbuf + (prb - rbytes > 0 ? prb - rbytes : 0), data, rbytes);
-    }
-    ofile = afile;
-  } else {
-    if (rbytes == 0) return 0;
-    if (fileno == -1) return 0;
-    gbuf = (short *)data;
-    prb = rbytes;
-    ofile = mainw->files[fileno];
-  }
+  ofile = mainw->files[fileno];
 
-  if (mainw->ascrap_file != -1 && mainw->record && !mainw->record_paused
-      && fileno == mainw->ascrap_file) {
-    ofile = mainw->files[mainw->ascrap_file];
-    out_scale = (float)pulsed->out_arate / ofile->arate;
-  } else {
-    if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-      out_scale = (float)pulsed->in_arate / (float)ofile->arate;
-    } else out_scale = 1.;
-  }
+  // for 16bit, generally we use S16, so if we want U16, we should change it
   swap_sign = ofile->signed_endian & AFORM_UNSIGNED;
 
-  frames_out = (size_t)((double)((prb / (ofile->asampsize >> 3) / ofile->achans)) / out_scale);
-
-  if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-    if (frames_out != pulsed->chunk_size) pulsed->chunk_size = frames_out;
-  }
-
-  bytes_out = frames_out * ofile->achans * (ofile->asampsize >> 3);
-
-  holding_buff = lives_malloc(bytes_out);
-
-  if (!holding_buff) {
-    if (gbuf != (short *)data) lives_free(gbuf);
-    prb = 0;
-    return 0;
-  }
-
   if (ofile->asampsize == 16) {
-    sample_move_d16_d16((short *)holding_buff, gbuf, frames_out, prb, out_scale, ofile->achans, pulsed->in_achans,
-                        pulsed->reverse_endian ? SWAP_L_TO_X : 0, swap_sign ? SWAP_S_TO_U : 0);
-  } else {
-    sample_move_d16_d8((uint8_t *)holding_buff, gbuf, frames_out, prb, out_scale, ofile->achans, pulsed->in_achans,
-                       swap_sign ? SWAP_S_TO_U : 0);
+    int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN);
+    if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN))
+        || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
+      rev_endian = TRUE;
   }
 
-  if (gbuf != (short *)data) lives_free(gbuf);
+  frames_out = (size_t)((double)((rbytes / (ofile->asampsize >> 3) / ofile->achans)) / out_scale);
 
-  prb = 0;
+  target_bytes = frames_out * ofile->achans * (ofile->asampsize >> 3);
+
+  if (target_bytes != rbytes || (ofile->asampsize == 16 && rev_endian) || swap_sign) {
+    holding_buff = lives_malloc(target_bytes);
+    if (!holding_buff) return 0;
+
+    if (ofile->asampsize == 16) {
+      sample_move_d16_d16((short *)holding_buff, data, frames_out, rbytes, out_scale, ofile->achans, achans,
+                          rev_endian ? SWAP_L_TO_X : 0, swap_sign ? SWAP_S_TO_U : 0);
+    } else {
+      sample_move_d16_d8((uint8_t *)holding_buff, data, frames_out, rbytes, out_scale, ofile->achans, achans,
+                         swap_sign ? SWAP_S_TO_U : 0);
+    }
+  } else holding_buff = data;
 
   if (mainw->rec_samples > 0) {
     if (frames_out > mainw->rec_samples) frames_out = mainw->rec_samples;
     mainw->rec_samples -= frames_out;
   }
 
-  if (!THREADVAR(bad_aud_file)) {
-    size_t target = frames_out * (ofile->asampsize / 8) * ofile->achans;
-    ssize_t bytes;
-    bytes = lives_write_buffered(mainw->aud_rec_fd, holding_buff, target, TRUE);
-    if (bytes > 0) {
-      uint64_t chk = (mainw->aud_data_written & AUD_WRITE_CHECK);
-      mainw->aud_data_written += bytes;
-      if (IS_VALID_CLIP(mainw->ascrap_file) && mainw->aud_rec_fd == mainw->files[mainw->ascrap_file]->cb_src)
-        add_to_ascrap_mb(bytes);
-      check_for_disk_space((mainw->aud_data_written & AUD_WRITE_CHECK) != chk);
-    }
-    if (bytes < target) THREADVAR(bad_aud_file) = filename_from_fd(NULL, mainw->aud_rec_fd);
+  actual_bytes = lives_write_buffered(mainw->aud_rec_fd, holding_buff, target_bytes, TRUE);
+
+  if (actual_bytes > 0) {
+    uint64_t chk = (mainw->aud_data_written & AUD_WRITE_CHECK);
+    mainw->aud_data_written += actual_bytes;
+    if (fileno == mainw->ascrap_file) add_to_ascrap_mb(actual_bytes);
+    check_for_disk_space((mainw->aud_data_written & AUD_WRITE_CHECK) != chk);
+    ofile->aseek_pos += actual_bytes;
   }
+  if (actual_bytes < target_bytes) THREADVAR(bad_aud_file) = filename_from_fd(NULL, mainw->aud_rec_fd);
 
-  lives_free(holding_buff);
+  if (holding_buff != data) lives_free(holding_buff);
 
-  return bytes;
+  return actual_bytes;
 }
 
 
@@ -1498,8 +1458,6 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   // this is the callback from pulse when we are recording or playing external audio
 
   pulse_driver_t *pulsed = (pulse_driver_t *)arg;
-  float out_scale;
-  size_t frames_out;
   void *data;
   size_t rbytes = nbytes, zbytes;
   int nch = pulsed->in_achans;
@@ -1514,7 +1472,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
       //g_print("PVAL %d\n", (*(uint8_t *)data & 0x80) >> 7);
       pa_stream_drop(pulsed->pstream);
     }
-    prb = 0;
+
     if (pulsed->in_use)
       pulsed->extrausec += ((double)nbytes / (double)(pulsed->out_arate) * 1000000.
                             / (double)(pulsed->out_achans * pulsed->out_asamps >> 3) + .5);
@@ -1548,27 +1506,6 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
 
   pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
 
-  if (pulsed->playing_file == -1) {
-    out_scale = 1.0; // just listening, no recording
-  } else {
-    out_scale = (float)afile->arate / (float)pulsed->in_arate; // recording to ascrap_file
-  }
-
-  if (mainw->record && mainw->record_paused && prb > 0) {
-    // flush audio when recording is paused
-    if (prb <= PULSE_READ_BYTES * 2) {
-      lives_memcpy(&prbuf[prb - rbytes], data, rbytes);
-      pulse_flush_read_data(pulsed, pulsed->playing_file, prb, pulsed->reverse_endian, prbuf);
-    } else {
-      pulse_flush_read_data(pulsed, pulsed->playing_file, rbytes, pulsed->reverse_endian, data);
-    }
-  }
-
-  if (pulsed->playing_file == -1 || (mainw->record && mainw->record_paused)) prb = 0;
-  else prb += rbytes;
-
-  frames_out = (size_t)((double)((prb / (pulsed->in_asamps >> 3) / nch)) / out_scale + .5);
-
   // should really be frames_read here
   if (!pulsed->is_paused) {
     pulsed->frames_written += nbytes / pulsed->out_achans / (pulsed->out_asamps >> 3);
@@ -1586,7 +1523,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
       // convert to float, apply any analysers
       boolean memok = TRUE;
       float **fltbuf = (float **)lives_calloc(nch, sizeof(float *));
-      register int i;
+      int i;
 
       size_t xnsamples = (size_t)(rbytes / (pulsed->in_asamps >> 3) / nch);
 
@@ -1655,22 +1592,19 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
     return;
   }
 
-  if (mainw->playing_file != mainw->ascrap_file && IS_VALID_CLIP(mainw->playing_file))
-    mainw->files[mainw->playing_file]->aseek_pos += rbytes;
-  if (mainw->ascrap_file != -1 && !mainw->record_paused) mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
-
   pulsed->seek_pos += rbytes;
 
-  if (prb < PULSE_READ_BYTES && (mainw->rec_samples == -1 || frames_out < mainw->rec_samples)) {
-    // buffer until we have enough
-    lives_memcpy(&prbuf[prb - rbytes], data, rbytes);
-  } else {
-    if (prb <= PULSE_READ_BYTES * 2) {
-      lives_memcpy(&prbuf[prb - rbytes], data, rbytes);
-      pulse_flush_read_data(pulsed, pulsed->playing_file, prb, pulsed->reverse_endian, prbuf);
-    } else {
-      pulse_flush_read_data(pulsed, pulsed->playing_file, rbytes, pulsed->reverse_endian, data);
-    }
+  // record the audio
+  // external -> pulsed->playing_file
+
+  if (mainw->playing_file != mainw->ascrap_file && IS_VALID_CLIP(mainw->playing_file))
+    mainw->files[mainw->playing_file]->aseek_pos += rbytes;
+
+  if (mainw->ascrap_file != -1 && !mainw->record_paused) {
+    float out_scale = (float)pulsed->in_arate / mainw->files[pulsed->playing_file]->arate;
+    // recording internal - resample from out_arate to file arate
+    pulse_write_data(out_scale, pulsed->in_achans, pulsed->playing_file, rbytes, data);
+    lives_hooks_trigger(pulsed->inst, pulsed->inst->hook_closures, DATA_READY_HOOK);
   }
 
   pa_stream_drop(pulsed->pstream);
@@ -1716,6 +1650,9 @@ void pulse_close_client(pulse_driver_t *pdriver) {
 
 
 int pulse_audio_init(void) {
+  /* if (!pulsed->inst) pulsed->inst = lives_player_inst_create(PLAYER_SUBTYPE_AUDIO); */
+  /* lives_object_set_param; */
+
   // initialise variables
   pulsed.in_use = FALSE;
   pulsed.mloop = pa_mloop;
@@ -1729,7 +1666,6 @@ int pulse_audio_init(void) {
   pulsed.seek_pos = pulsed.seek_end = pulsed.real_seek_pos = 0;
   pulsed.msgq = NULL;
   pulsed.num_calls = 0;
-  pulsed.chunk_size = 0;
   pulsed.astream_fd = -1;
   pulsed.abs_maxvol_heard = 0.;
   pulsed.pulsed_died = FALSE;
@@ -1750,6 +1686,11 @@ int pulse_audio_init(void) {
   pulsed.playing_file = -1;
   pulsed.sound_buffer = NULL;
   pulsed.extrausec = 0;
+
+
+
+
+
   return 0;
 }
 
@@ -1770,7 +1711,6 @@ int pulse_audio_read_init(void) {
   pulsed_reader.seek_pos = pulsed_reader.seek_end = 0;
   pulsed_reader.msgq = NULL;
   pulsed_reader.num_calls = 0;
-  pulsed_reader.chunk_size = 0;
   pulsed_reader.astream_fd = -1;
   pulsed_reader.abs_maxvol_heard = 0.;
   pulsed_reader.pulsed_died = FALSE;
@@ -1953,7 +1893,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pdriver->in_use = FALSE;
     pdriver->abs_maxvol_heard = 0.;
     pdriver->is_corked = TRUE;
-    prb = 0;
 
     pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, pdriver);
     pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, pdriver);
@@ -2275,7 +2214,8 @@ void pulse_aud_pb_ready(int fileno) {
       mainw->pulsed->seek_end = sfile->afilesize;
       mainw->pulsed->seek_pos = 0;
 
-      if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
+      if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN))
+          || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
         mainw->pulsed->reverse_endian = TRUE;
       else mainw->pulsed->reverse_endian = FALSE;
 

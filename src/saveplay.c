@@ -1142,12 +1142,15 @@ static void save_log_file(const char *prefix) {
   char *logfile = lives_strdup_printf("%s\\%s_%d_%d.txt", prefs->workdir, prefix, lives_getuid(), lives_getgid());
   if ((logfd = creat(logfile, S_IRUSR | S_IWUSR)) != -1) {
 #endif
-    char *btext = lives_text_view_get_text(mainw->optextview);
-    lives_write(logfd, btext, strlen(btext), TRUE); // not really important if it fails
-    lives_free(btext);
-    close(logfd);
+#if 0
   }
-  lives_free(logfile);
+#endif
+  char *btext = lives_text_view_get_text(mainw->optextview);
+  lives_write(logfd, btext, strlen(btext), TRUE); // not really important if it fails
+  lives_free(btext);
+  close(logfd);
+}
+lives_free(logfile);
 }
 
 
@@ -2256,7 +2259,7 @@ void play_file(void) {
 
   init_conversions(LIVES_INTENTION_PLAY);
 
-  lives_hooks_trigger(PB_START_EARLY_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_PRE_HOOK);
 
   if (mainw->pre_src_file == -2) mainw->pre_src_file = mainw->current_file;
   mainw->pre_src_audio_file = mainw->current_file;
@@ -2679,7 +2682,7 @@ void play_file(void) {
 
     mainw->abufs_to_fill = 0;
 
-    lives_hooks_trigger(PB_START_LATE_HOOK);
+    lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_START_HOOK);
 
     //lives_widget_context_update();
     //play until stopped or a stream finishes
@@ -3104,7 +3107,7 @@ void play_file(void) {
   mainw->blend_palette = WEED_PALETTE_END;
   mainw->audio_stretch = 1.;
 
-  lives_hooks_trigger(PB_END_EARLY_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_POST_HOOK);
 
   if (!mainw->multitrack) {
     if (mainw->faded || mainw->fs) {
@@ -3214,7 +3217,7 @@ void play_file(void) {
               clear_widget_bg(mainw->play_image, mainw->play_surface);
               load_preview_image(FALSE);
             }
-	  // *INDENT-OFF*
+	    // *INDENT-OFF*
 	  }}}}}
   // *INDENT-ON*
 
@@ -3375,7 +3378,7 @@ void play_file(void) {
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;
 
-  lives_hooks_trigger(PB_END_LATE_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_DONE_HOOK);
   /* if (prefs->show_dev_opts) */
   /*   g_print("nrefs = %d\n", check_ninstrefs()); */
 }
@@ -3428,7 +3431,7 @@ int close_temp_handle(int new_clip) {
 /**
    @brief get next free file slot, or -1 if we are full
 
-  can support MAX_FILES files (default 65536) */
+   can support MAX_FILES files (default 65536) */
 static int get_next_free_file(void) {
   int idx = mainw->first_free_file++;
   while ((mainw->first_free_file != ALL_USED) && mainw->files[mainw->first_free_file]) {
@@ -3440,32 +3443,32 @@ static int get_next_free_file(void) {
 
 
 /**
-    @brief get a temp "handle" from disk.
+   @brief get a temp "handle" from disk.
 
-    Call this to get a temp handle for returning info from the backend
-    (this is deprecated for simple data, use lives_popen() instead whenever possible)
+   Call this to get a temp handle for returning info from the backend
+   (this is deprecated for simple data, use lives_popen() instead whenever possible)
 
-    This function is also called from get_new_handle() to create a permanent handle
-    for an opened file.
+   This function is also called from get_new_handle() to create a permanent handle
+   for an opened file.
 
-    there are two special instances when this is called with an index != -1:
-    - when saving a set and a clip is moved from outside the set to inside it.
-    we need a new handle which is guaranteed unique for the set, but we retain all the other details
-    - when called from get_new_handle() to create the disk part of a clip
+   there are two special instances when this is called with an index != -1:
+   - when saving a set and a clip is moved from outside the set to inside it.
+   we need a new handle which is guaranteed unique for the set, but we retain all the other details
+   - when called from get_new_handle() to create the disk part of a clip
 
-    otherwise, index should be passed in as -1 (the normal case)
-    -- handle will be fetched and a directory created in workdir.
-    -- clip_type is set to CLIP_TYPE_TEMP.
-    call close_temp_handle() on it after use, then restore mainw->current_file
+   otherwise, index should be passed in as -1 (the normal case)
+   -- handle will be fetched and a directory created in workdir.
+   -- clip_type is set to CLIP_TYPE_TEMP.
+   call close_temp_handle() on it after use, then restore mainw->current_file
 
-    function returns FALSE if write to workdir fails.
+   function returns FALSE if write to workdir fails.
 
-    WARNING:
-    this function changes mainw->current_file, unless it returns FALSE (could not create cfile)
+   WARNING:
+   this function changes mainw->current_file, unless it returns FALSE (could not create cfile)
 
-    get_new_handle() calls this with the index value passed to it, which should not be -1,
-    sets defaults for the clip,
-    and also sets the clip name and filename. That function should be used instead to create permanent clips. */
+   get_new_handle() calls this with the index value passed to it, which should not be -1,
+   sets defaults for the clip,
+   and also sets the clip name and filename. That function should be used instead to create permanent clips. */
 boolean get_temp_handle(int index) {
   boolean is_unique, create = FALSE;
 
@@ -5199,7 +5202,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   boolean retb = TRUE, retval;
   boolean load_from_set = TRUE;
   boolean rec_cleanup = FALSE;
-  boolean use_decoder;
+  boolean use_decoder = TRUE;
 
   // setting is_ready allows us to get the correct transient window for dialogs
   // otherwise the dialogs will appear behind the main interface
@@ -5419,15 +5422,16 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       if (mainw->current_file < 1) continue;
       if (is_ascrap) continue;
 
-      use_decoder = FALSE;
-      if (cfile->header_version >= 104) {
-        uint64_t decoder_uid = 0;
-        get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_UID, &decoder_uid, 0);
-        if (decoder_uid > 0) use_decoder = TRUE;
-      } else {
-        char decplugname[PATH_MAX];
-        get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_NAME, decplugname, PATH_MAX);
-        if (*decplugname) use_decoder = TRUE;
+      if (!cfile->decoder_uid) {
+        use_decoder = FALSE;
+        if (cfile->header_version >= 104) {
+          if (get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_UID, &cfile->decoder_uid, 0))
+            use_decoder = TRUE;
+        } else {
+          char decplugname[PATH_MAX];
+          if (get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_NAME, decplugname, PATH_MAX))
+            use_decoder = TRUE;
+        }
       }
 
       /// see function reload_set() for detailed comments
@@ -5435,10 +5439,10 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         /// CLIP_TYPE_FILE
         if (!*cfile->file_name) continue;
         if (!reload_clip(mainw->current_file, maxframe)) continue;
-        if (cfile->img_type == IMG_TYPE_UNKNOWN) {
+        if (cfile->needs_update || cfile->img_type == IMG_TYPE_UNKNOWN) {
           lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
-          int fvirt = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
-          if (fvirt < cfile->frames) {
+          if (cfile->needs_update || count_virtual_frames(cfile->frame_index, 1, cfile->frames)
+              < cfile->frames) {
             if (!cfile->checked && !check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
               cfile->needs_update = TRUE;
             }
@@ -5447,18 +5451,17 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         }
       } else {
         /// CLIP_TYPE_DISK
-        boolean is_ok = TRUE;
         if (!cfile->checked) {
-          if (!(is_ok = check_clip_integrity(mainw->current_file, NULL, cfile->frames))) {
+          if (!check_clip_integrity(mainw->current_file, NULL, cfile->frames)) {
             cfile->needs_update = TRUE;
           }
           cfile->checked = TRUE;
         }
-        if (!prefs->vj_mode && !is_ok) {
+        if (!prefs->vj_mode && cfile->needs_update) {
           if (cfile->afilesize == 0) {
             reget_afilesize_inner(mainw->current_file);
           }
-          if (!check_frame_count(mainw->current_file, is_ok)) {
+          if (!check_frame_count(mainw->current_file, !cfile->needs_update)) {
             cfile->frames = get_frame_count(mainw->current_file, 1);
             cfile->needs_update = TRUE;
           }
@@ -5736,6 +5739,11 @@ boolean rewrite_recovery_file(void) {
 }
 
 
+static void *rewrite_recovery_file_cb(lives_object_t *obj, void *data) {
+  return LIVES_INT_TO_POINTER(rewrite_recovery_file());
+}
+
+
 boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
   uint32_t recpid = 0;
 
@@ -5828,7 +5836,8 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
   THREADVAR(com_failed) = FALSE;
 
   /// CRITICAL: make sure this gets called even on system failure and abort
-  if (prefs->crash_recovery && !no_recover) lives_hook_append(ABORT_HOOK, (lives_funcptr_t)rewrite_recovery_file, NULL);
+  if (prefs->crash_recovery && !no_recover)
+    lives_hook_append(mainw->global_hook_closures, ABORT_HOOK, 0, rewrite_recovery_file_cb, NULL);
 
   // check for layout recovery file
   recfname = lives_strdup_printf("%s.%d.%d.%d.%s", LAYOUT_FILENAME, luid, lgid, recpid,
@@ -6007,7 +6016,7 @@ cleanse:
   lives_free(recording_numbering_file);
 
   if (prefs->crash_recovery) rewrite_recovery_file();
-  lives_hook_remove(ABORT_HOOK, (lives_funcptr_t)rewrite_recovery_file, NULL);
+  lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, rewrite_recovery_file_cb, NULL);
 
   if (!mainw->recoverable_layout && !mainw->recording_recovered) {
     if (mainw->invalid_clips

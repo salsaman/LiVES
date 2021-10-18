@@ -65,7 +65,7 @@ boolean jack_log_errmsg(jack_driver_t *, const char *errtxt);
 boolean jack_interop_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod,
                               livespointer statep);
 
-void jack_interop_cleanup(jack_driver_t *);
+void *jack_interop_cleanup(lives_object_t *obj, void *jackd);
 
 // connect client or start server
 boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd);
@@ -190,7 +190,7 @@ typedef struct _lives_jack_driver_t {
   boolean jackd_died;                    /**< true if jackd has died and we should try to restart it */
 
   volatile jack_nframes_t nframes_start;
-  volatile uint64_t frames_written;
+  volatile uint64_t frames_written, frames_read;
 
   int out_ports_available;
   int in_ports_available;
@@ -244,8 +244,6 @@ boolean jack_try_reconnect(void);
 
 void jack_aud_pb_ready(int fileno);
 void jack_pb_end(void);
-
-size_t jack_flush_read_data(size_t rbytes, void *data);
 
 // utils
 volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg from msgq, or return NULL

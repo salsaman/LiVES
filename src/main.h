@@ -104,6 +104,8 @@ typedef int64_t ticks_t;
 typedef int frames_t; // nb. will chenge to int64_t at some future point
 typedef int64_t frames64_t; // will become the new standard
 
+typedef void (*lives_funcptr_t)();
+
 #define ENABLE_OSC2
 
 #ifndef GUI_QT
@@ -470,7 +472,7 @@ typedef struct {
 
 #include "lists.h"
 #include "alarms.h"
-#include "threading.h"
+
 #include "machinestate.h"
 #include "lsd-tab.h"
 
@@ -629,6 +631,7 @@ typedef enum {
 
 #include "intents.h"
 #include "maths.h"
+#include "threading.h"
 
 #ifdef ENABLE_JACK
 #include "jack.h"

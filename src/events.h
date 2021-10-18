@@ -31,47 +31,8 @@ typedef struct {
 } lives_audio_track_state_t;
 
 // event_list
-#define WEED_LEAF_WEED_EVENT_API_VERSION "weed_event_api_version"
-#define WEED_LEAF_AUDIO_SIGNED "audio_signed"
-#define WEED_LEAF_AUDIO_ENDIAN "audio_endian"
-#define WEED_LEAF_AUDIO_SAMPLE_SIZE "audio_sample_size"
-#define WEED_LEAF_AUDIO_VOLUME_TRACKS "audio_volume_tracks"
-#define WEED_LEAF_AUDIO_VOLUME_VALUES "audio_volume_values"
-#define WEED_LEAF_TRACK_LABEL_TRACKS "track_label_tracks"
-#define WEED_LEAF_TRACK_LABEL_VALUES "track_label_values"
-
-#define WEED_LEAF_AUTHOR "author"
-#define WEED_LEAF_TITLE "title"
-#define WEED_LEAF_COMMENTS "comments"
-
-#define WEED_LEAF_LIVES_CREATED_VERSION "created_version"
-#define WEED_LEAF_LIVES_EDITED_VERSION "edited_version"
-
-#define WEED_LEAF_CREATED_DATE "host_created_date"
-#define WEED_LEAF_EDITED_DATE "host_edited_date"
-
-// frame event
-#define WEED_LEAF_FRAMES "frames"
-#define WEED_LEAF_CLIPS "clips"
-#define WEED_LEAF_AUDIO_CLIPS "audio_clips"
-#define WEED_LEAF_AUDIO_SEEKS "audio_seeks"
-
-// init_event
-#define WEED_LEAF_FILTER "filter"
-#define WEED_LEAF_IN_COUNT "in_count"
-#define WEED_LEAF_OUT_COUNT "out_count"
-#define WEED_LEAF_IN_TRACKS "in_tracks"
-#define WEED_LEAF_OUT_TRACKS "out_tracks"
-#define WEED_LEAF_EVENT_ID "event_id"
-
-// deinit
-#define WEED_LEAF_INIT_EVENT "init_event"
-
-// filter map
-#define WEED_LEAF_INIT_EVENTS "init_events"
-
-// param change
-#define WEED_LEAF_INDEX "index"
+#define LIVES_LEAF_CREATED_DATE "host_created_date"
+#define LIVES_LEAF_EDITED_DATE "host_edited_date"
 
 // internal
 // event_list

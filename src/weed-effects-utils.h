@@ -50,6 +50,8 @@ int32_t weed_plant_get_type(weed_plant_t *);
 
 #define WEED_PLANT_IS_GUI(plant) (weed_plant_get_type(plant) == WEED_PLANT_GUI ? WEED_TRUE : WEED_FALSE)
 
+#define WEED_ERROR_WRONG_PLANT_TYPE	256
+
 // set flags for each leaf in a plant. If ign_prefix is not NULL, ignore leaves with keys that begin with ign_prefix
 // this enables a host to do: weed_add_plant_flags(plant, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, "plugin_")
 void weed_add_plant_flags(weed_plant_t *, uint32_t flags, const char *ign_prefix);
@@ -184,6 +186,12 @@ int weed_param_get_value_boolean(weed_plant_t *param);
 double weed_param_get_value_double(weed_plant_t *param);
 int64_t weed_param_get_value_int64(weed_plant_t *param);
 char *weed_param_get_value_string(weed_plant_t *param);
+
+weed_error_t weed_param_set_value_int(weed_plant_t *param, int val);
+weed_error_t weed_param_set_value_boolean(weed_plant_t *param, int val);
+weed_error_t weed_param_set_value_double(weed_plant_t *param, double val);
+weed_error_t weed_param_set_value_int64(weed_plant_t *param, int64_t val);
+weed_error_t weed_param_set_value_string(weed_plant_t *param, const char *val);
 
 /* if param is WEED_SEED_STRING and WEED_LEAF_CHOICES is set in param or template, returns the length, else returns 0 */
 int weed_param_get_nchoices(weed_plant_t *param);

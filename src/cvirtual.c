@@ -630,6 +630,11 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
       }}
     // *INDENT-ON*
 
+    if (sfile->hsize == 0 && sfile->vsize == 0 && hsize > 0 && vsize > 0) {
+      sfile->hsize = hsize;
+      sfile->vsize = vsize;
+    }
+
     hsize /= VSLICES;
 
     if (sfile->hsize != hsize || sfile->vsize != vsize) {

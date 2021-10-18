@@ -32,7 +32,7 @@
 //
 // - some requirements can be objects with a specific type / subtype(s) / state(s)
 // - reqs, can be optional, for some, caller can change the default, and let user / or an object provide the value.
-//    Some values can be set readonly.
+//    Some values n be set readonly.
 
 #ifndef HAS_LIVES_INTENTS_H
 #define HAS_LIVES_INTENTS_H
@@ -58,12 +58,47 @@
 #define LIVES_SEED_HOOK WEED_SEED_FUNCPTR
 #define LIVES_SEED_OBJECT 2048
 
+typedef lives_funcptr_t object_funcptr_t;
 typedef struct _object_t lives_object_t;
 typedef struct _object_t lives_object_template_t;
 typedef struct _object_t lives_object_instance_t;
 typedef struct _obj_status_t lives_transform_status_t;
 typedef struct _obj_transform_t lives_object_transform_t;
 typedef weed_param_t lives_obj_param_t;
+
+#define HOOK_CB_SINGLE_SHOT		(1 << 1)
+#define HOOK_CB_ASYNC			(1 << 2)
+#define HOOK_CB_ASYNC_JOIN		(1 << 3)
+#define HOOK_CB_CHILD_INHERITS		(1 << 4)
+
+enum {
+  ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
+  EXIT_HOOK,
+  N_GLOBAL_HOOKS,
+  TX_PRE_HOOK,
+  TX_START_HOOK, /// status -> running
+  TX_POST_HOOK,
+  TX_DONE_HOOK,   /// status -> success
+  DATA_PREP_HOOK,   // data supplied, may be altered
+  DATA_READY_HOOK, // data ready for processing
+  N_HOOK_FUNCS,
+};
+
+typedef void *(*hook_funcptr_t)(lives_object_t *, void *);
+
+typedef struct {
+  hook_funcptr_t func;
+  lives_object_t *obj;
+  void *data;
+  uint64_t flags;
+  lives_proc_thread_t tinfo; // for async_join
+} lives_closure_t;
+
+// TODO:
+/* typedef struct { */
+/*   void *data; */
+/*   uint64_t flags; */
+/* } hook_cb_t; */
 
 // lives_object_t
 struct _object_t {
@@ -72,8 +107,10 @@ struct _object_t {
   uint64_t type; // object type - from IMkType
   uint64_t subtype; // object subtype, can change during a transformation
   int state; // object state
-  lives_obj_param_t **params; // internal parameters
+  lives_obj_param_t **attributes; // internal parameters
   const lives_object_t *template; // pointer to template class which the instance was created from, or NULL
+  lives_object_transform_t *tx; // pointer to currently running transform (or NULL)
+  LiVESList *hook_closures[N_HOOK_FUNCS]; /// TODO - these should probably be part of tx
   void *priv; // internal data belonging to the object
 };
 
@@ -253,7 +290,6 @@ struct _obj_status_t {
 
 /// transforms
 
-
 typedef struct {
   //lives_intention intent;
   //int n_params; // to simplify
@@ -277,6 +313,15 @@ weed_plant_t *double_req_init(const char *name, double def, double min, double m
 weed_plant_t *string_req_init(const char *name, const char *def);
 weed_plant_t *obj_req_init(const char *name, lives_obj_stance stances);
 weed_plant_t *hook_req_init(const char *name, int status, lives_object_transform_t *trn, void *user_data);
+
+typedef struct {
+  int category; // category type for function (0 for none)
+  lives_funcptr_t function; // pointer to a function
+  char *args_fmt; // definition of the params, e.g. "idV" (int, double, void *)
+  uint32_t rettype; // weed_seed type e.g. WEED_SEED_INT, a value of 0 implies a void *(fuunc)
+  void *data; // category specific data, may be NULL
+  uint64_t padding[3];
+} lives_func_info_t;
 
 // rules which must be satisfied before the transformation can succeed
 typedef struct {
@@ -360,7 +405,7 @@ lives_capacity_t *lives_capacities_new(void);
 void lives_capacities_free(lives_capacity_t *);
 
 #define LIVES_ERROR_NOSUCH_CAP WEED_ERROR_NOSUCH_LEAF
-#define LIVES_ERROR_ICAP_NULL 65536
+#define LIVES_ERROR_ICAP_NULL 66000
 
 #define LIVES_CAPACITY_TRUE(caps, key) ((caps) ? weed_get_boolean_value((caps), (key)) == WEED_TRUE : FALSE)
 #define LIVES_CAPACITY_FALSE(caps, key) ((caps) ? weed_get_boolean_value((caps), (key), NULL) == WEED_FALSE \
@@ -428,26 +473,27 @@ lives_transform_status_t *transform(lives_object_transform_t *);
 
 //lives_object_transform_t *find_transform_for_intentcaps(lives_object_t *obj, lives_intentcaps icaps, lives_funct_t match_fn);
 
-lives_object_transform_t *find_transform_for_intent(lives_object_t *obj, lives_intention intent);
+lives_object_transform_t *find_transform_for_intentcaps(lives_object_t *, lives_intentcap_t *);
 
-boolean rules_lack_param(lives_rules_t *req, const char *pname);
-//boolean rules_lack_condition(lives_rules_t *req, int condition number);
+boolean rules_lack_param(lives_rules_t *, const char *pname);
+//boolean rules_lack_condition(lives_rules_t *, int condition number);
 // type mismatch, subtype mismatch, state mismatch, status mismatch
 
 // convert an iparam to a regular weed_param
-weed_param_t *weed_param_from_iparams(lives_intentparams_t *iparams, const char *name);
+weed_param_t *weed_param_from_iparams(lives_intentparams_t *, const char *name);
+weed_param_t *weed_param_from_object(lives_object_t *j, const char *name);
 
 #if 0
-const lives_transform_status_t *get_current_status(lives_object_t *obj);
-void lives_intentcaps_free(lives_intcaps_t **icap_pp);
-void lives_rules_ref(lives_rules_t *rules_pp);
-void lives_transform_list_free(LiVESTransformList **transform_list_pp);
-void lives_tx_map_free(LiVESTransformList **transform_list_pp);
+const lives_transform_status_t *get_current_status(lives_object_t *);
+void lives_intentcaps_free(lives_intcaps_t **);
+void lives_rules_ref(lives_rules_t *);
+void lives_transform_list_free(LiVESTransformList **);
+void lives_tx_map_free(LiVESTransformList **);
 #endif
 
-void lives_intentparams_free(lives_intentparams_t *p);
-void lives_transform_status_free(lives_transform_status_t *st);
-void lives_object_transform_free(lives_object_transform_t *tx);
+void lives_intentparams_free(lives_intentparams_t *);
+void lives_transform_status_free(lives_transform_status_t *);
+void lives_object_transform_free(lives_object_transform_t *);
 
 #endif
 

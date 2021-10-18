@@ -91,6 +91,6 @@ frames_t deorder_frames(frames_t old_framecount, boolean leave_bak); ///< leave_
 
 boolean resample_clipboard(double new_fps); ///< call this to resample clipboard video
 
-void resample_to_float(lives_audio_buf_t *);
+void *resample_to_float(lives_object_t *, void *audio_buf);
 
 #endif

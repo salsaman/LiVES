@@ -62,6 +62,7 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 #define BUFF_SIZE_READ_CUSTOM -1
 #define BUFF_SIZE_READ_SLURP -2
 
+#define BUFF_SIZE_WRITE_CUSTOM -1
 #define BUFF_SIZE_WRITE_SMALL 0
 #define BUFF_SIZE_WRITE_SMALLMED 1
 #define BUFF_SIZE_WRITE_MED 2
@@ -79,6 +80,7 @@ typedef struct {
   int idx;
   int fd;
   int bufsztype;
+  size_t custom_size;
   volatile boolean eof;
   boolean read;
   boolean reversed;
@@ -108,6 +110,7 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset);
 off_t lives_buffered_offset(int fd);
 size_t lives_buffered_orig_size(int fd);
 boolean lives_buffered_rdonly_set_reversed(int fd, boolean val);
+ssize_t lives_write_buffered_set_custom_size(int fd, size_t count);
 ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean allow_fail);
 ssize_t lives_buffered_write_printf(int fd, boolean allow_fail, const char *fmt, ...);
 ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, ssize_t count, boolean allow_fail);

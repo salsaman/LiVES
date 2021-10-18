@@ -4371,29 +4371,32 @@ static boolean lives_startup2(livespointer data) {
   boolean layout_recovered = FALSE;
 
 #ifndef VALGRIND_ON
-  if (lives_proc_thread_check_finished(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) {
-    double cpvar = lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-    lives_proc_thread_free(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-    if (prefs->cptime <= 0. && cpvar < MAX_CPICK_VAR) {
-      prefs->cptime *= 1.1 + .2;
+  if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
+    if (lives_proc_thread_check_finished(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) {
+      double cpvar = lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+      lives_proc_thread_free(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+      if (prefs->cptime <= 0. && cpvar < MAX_CPICK_VAR) {
+        prefs->cptime *= 1.1 + .2;
+        set_double_pref(PREF_CPICK_TIME, prefs->cptime);
+      }
+      set_double_pref(PREF_CPICK_VAR, fabs(cpvar));
+    } else {
+      prefs->cptime =
+        (double)(lives_get_current_ticks()
+                 - lives_proc_thread_get_start_ticks(mainw->helper_procthreads[PT_CUSTOM_COLOURS]))
+        / TICKS_PER_SECOND_DBL * .9;
       set_double_pref(PREF_CPICK_TIME, prefs->cptime);
+      set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
+      lives_proc_thread_cancel(mainw->helper_procthreads[PT_CUSTOM_COLOURS], FALSE);
+      lives_proc_thread_join(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+      // must take care to execute this here or in the function itself, otherwise
+      // gtk+ may crash later
+      main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
     }
-    set_double_pref(PREF_CPICK_VAR, fabs(cpvar));
-  } else {
-    prefs->cptime =
-      (double)(lives_get_current_ticks()
-               - lives_proc_thread_get_start_ticks(mainw->helper_procthreads[PT_CUSTOM_COLOURS]))
-      / TICKS_PER_SECOND_DBL * .9;
-    set_double_pref(PREF_CPICK_TIME, prefs->cptime);
-    set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
-    lives_proc_thread_cancel(mainw->helper_procthreads[PT_CUSTOM_COLOURS], FALSE);
-    lives_proc_thread_join(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-    // must take care to execute this here or in the function itself, otherwise
-    // gtk+ may crash later
-    main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
-  }
-  mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
+    mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
 #endif
+  }
+
   if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
@@ -9459,14 +9462,15 @@ void do_quick_switch(int new_file) {
   lives_spin_button_update(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps));
   lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
 
-  changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(1));
-
   // switch audio clip
-  if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
-      && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit
-                                  || prefs->audio_src == AUDIO_SRC_EXT))) {
-    switch_audio_clip(new_file, TRUE);
+  if (AUD_SRC_INTERNAL && (!mainw->event_list || mainw->record)) {
+    if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
+        && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit))) {
+      switch_audio_clip(new_file, TRUE);
+    }
   }
+
+  changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(1));
 
   mainw->deltaticks = 0;
 

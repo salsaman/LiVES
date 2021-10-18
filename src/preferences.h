@@ -23,7 +23,6 @@
 #define ACTIVE_W(signal) lives_signal_sync_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_ ##signal## \
 							 _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
 
-
 #define LIVES_LEAF_PREF_IDX "pref_idx"
 #define LIVES_LEAF_WIDGET "widget"
 #define LIVES_LEAF_STATUS "status"
@@ -466,7 +465,7 @@ typedef struct {
   boolean letterbox_mt; ///< playback with letterbox (multitrack)
   boolean enc_letterbox; ///< encode with letterbox
   boolean no_lb_gens; // do not letterbox generators
-  int genq_mode; // 0 == speed, 1 == quality (TODO)
+  boolean genq_mode; // FALSE == speed, TRUE == quality
 
   boolean force_system_clock; /// < force system clock (rather than soundcard) for timing ( better for high framerates )
 
@@ -1293,6 +1292,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_LETTERBOX_MT "letterbox_mt"
 #define PREF_LETTERBOX_ENC "letterbox_encoding"
 #define PREF_NO_LB_GENS "no_letterbox_gens"
+#define PREF_GENQ_MODE "genq_mode"
 #define PREF_PARESTART "pa_restart"
 #define PREF_PBQ_ADAPTIVE "pb_quality_adaptive"
 #define PREF_EXTRA_COLOURS "extra_colours"

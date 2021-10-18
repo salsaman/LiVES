@@ -635,6 +635,7 @@ typedef struct {
   uint32_t props;
 
   LiVESWidget *menuitem;  ///< the menu item which activates this effect
+  LiVESWidget *interface; // TODO
   int num_params;
   uint64_t flags; /// internal use
   // internal vals.

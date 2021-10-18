@@ -18,6 +18,15 @@ typedef int64_t ssize64_t;
 
 #define AFORM_UNKNOWN 65536
 
+#define AUDIO_PARAM_ARATE WEED_LEAF_AUDIO_RATE
+#define AUDIO_PARAM_ACHANS WEED_LEAF_AUDIO_CHANNELS
+#define AUDIO_PARAM_SAMPSIZE WEED_LEAF_AUDIO_SAMPLE_SIZE
+#define AUDIO_PARAM_SIGNED WEED_LEAF_AUDIO_SIGNED
+#define AUDIO_PARAM_ENDIAN WEED_LEAF_AUDIO_ENDIAN
+#define AUDIO_PARAM_INTERLEAVED "audio_inter"
+#define AUDIO_PARAM_DATA WEED_LEAF_AUDIO_DATA
+#define AUDIO_PARAM_DATA_LENGTH WEED_LEAF_AUDIO_DATA_LENGTH
+
 #define AUD_SRC_EXTERNAL (prefs->audio_src == AUDIO_SRC_EXT)
 #define AUD_SRC_INTERNAL (prefs->audio_src == AUDIO_SRC_INT)
 #define AUD_SRC_REALTIME (get_aplay_clipno() != -1)
@@ -44,6 +53,8 @@ typedef int64_t ssize64_t;
 
 // for afbuffer
 #define ABUF_ARENA_SIZE 768000
+
+#define AREC_BUF_SIZE 262144  ///< 256 * 1024
 
 /// max number of player channels
 #define MAX_ACHANS 2
@@ -207,8 +218,7 @@ float sample_move_d16_float(float *dst, short *src, size_t nsamples, size_t src_
                             float vol) GNU_HOT;
 
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, double scale, int chans, int asamps,
-                              int usigned,
-                              boolean swap_endian, boolean float_interleaved, float vol) GNU_HOT; ///< returns frames output
+                              int usigned, boolean swap_endian, boolean float_interleaved, float vol) GNU_HOT; ///< returns frames output
 
 int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_arate, float vol) GNU_HOT;
 
@@ -229,12 +239,37 @@ boolean adjust_clip_volume(int fileno, float newvol, boolean make_backup);
 typedef enum {
   RECA_MONITOR = 0,
   RECA_WINDOW_GRAB,
+  RECA_DESKTOP_GRAB_INT,
+  RECA_DESKTOP_GRAB_EXT,
   RECA_NEW_CLIP,
   RECA_EXISTING,
   RECA_EXTERNAL,
   RECA_GENERATED,
   RECA_MIXED
 } lives_rec_audio_type_t;
+
+/* #define ASINK_ERROR -1 */
+/* #define ASINK_NONE 0 */
+/* #define ASINK_READY 1 */
+/* #define ASINK_WAITING 2 */
+/* #define ASINK_RUNNING 3 */
+/* #define ASINK_PAUSED 4 */
+/* #define ASINK_BUSY 5 */
+/* #define ASINK_FINISHED 6 */
+
+/* tyepdef struct { */
+/*   int state; // e.g ASINK_RUNNING */
+/*   int  */
+/*   int buff_fd; */
+/*   int clipno; */
+/*   int achans; */
+/*   int arate; */
+/*   int asamps; */
+/*   int signed_endian; */
+/*   size_t fill_pos; */
+/*   size_t max_fill; */
+/* } lives_audio_sink_t; */
+
 
 #ifdef ENABLE_JACK
 void jack_rec_audio_to_clip(int fileno, int oldfileno,

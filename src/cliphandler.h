@@ -48,6 +48,9 @@
 
 #define CURRENT_CLIP_IS_CLIPBOARD (mainw->current_file == CLIPBOARD_FILE)
 
+#define IS_ASCRAP_CLIP(which) (mainw->ascrap_file == which && IS_VALID_CLIP(which) \
+			       && mainw->files[mainw->ascrap_file]->ext_src_type != LIVES_EXT_SRC_RECORDER)
+
 
 typedef union _binval {
   uint64_t num;
@@ -249,6 +252,8 @@ typedef struct _lives_clip_t {
 #define LIVES_EXT_SRC_STREAM 4
 #define LIVES_EXT_SRC_DEVICE 5
 #define LIVES_EXT_SRC_FILE_BUFF 6
+
+#define LIVES_EXT_SRC_RECORDER 1024
 
   int ext_src_type;
 

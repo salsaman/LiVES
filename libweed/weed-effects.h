@@ -338,7 +338,6 @@ typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed
 // mandatory for AUDIO
 #define WEED_LEAF_AUDIO_DATA "audio_data"
 #define WEED_LEAF_AUDIO_DATA_LENGTH "audio_data_len"
-#define WEED_LEAF_AUDIO_RATE "audio_rate"
 #define WEED_LEAF_AUDIO_CHANNELS "audio_channels"
 //#define WEED_LEAF_AUDIO_CHANNEL_LAYOUT "channel_layout"  /// ONLY if set in filter_class or channel_template
 

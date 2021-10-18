@@ -1099,7 +1099,7 @@ static size64_t sample_move_float_float_arena(float *dst, float *src, size_t off
 #define CLIP_DECAY ((double)16535. / (double)16536.)
 
 /**
-   @brief convert float samples back to int
+   @brief convert float samples to interleaved int
    interleaved is for the float buffer; output int is always interleaved
    scale is out_sample_rate / in_sample_rate (so 2.0 would play twice as fast, etc.)
    nsamps is number of out samples, asamps is out sample bit size (8 or 16)
@@ -2374,13 +2374,7 @@ boolean adjust_clip_volume(int fileno, float newvol, boolean make_backup) {
 void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
   lives_clip_t *outfile;
-
-  boolean jackd_read_started = (mainw->jackd_read != NULL);
-
   LiVESResponseType retval;
-
-  // should we set is_paused ? (yes)
-  // should we reset time (no)
 
   if (fileno == -1) {
     // respond to external audio, but do not record it (yet)
@@ -2404,7 +2398,6 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     char *outfilename = lives_get_audio_file_name(fileno);
     do {
       retval = 0;
-      //mainw->aud_rec_fd = lives_open3(outfilename, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
       mainw->aud_rec_fd = lives_open_buffered_writer(outfilename, DEF_FILE_PERMS, FALSE);
       if (mainw->aud_rec_fd < 0) {
         retval = do_write_failed_error_s_with_retry(outfilename, lives_strerror(errno));
@@ -2416,28 +2409,27 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     } while (retval == LIVES_RESPONSE_RETRY);
     lives_free(outfilename);
     if (fileno == mainw->ascrap_file) mainw->files[mainw->ascrap_file]->cb_src = mainw->aud_rec_fd;
+    lives_write_buffered_set_custom_size(mainw->aud_rec_fd, AREC_BUF_SIZE);
   }
 
   if (rec_type == RECA_GENERATED) {
     mainw->jackd->playing_file = fileno;
   } else {
-    if (!jackd_read_started) {
+    if (rec_type == RECA_EXTERNAL) {
       mainw->jackd_read = jack_get_driver(0, FALSE);
       mainw->jackd_read->playing_file = fileno;
       mainw->jackd_read->frames_written = 0;
     }
-    mainw->jackd_read->playing_file = fileno;
   }
 
-  if (rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED) {
+  if (rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED || rec_type == RECA_MIXED
+      || rec_type == RECA_DESKTOP_GRAB_INT || rec_type == RECA_DESKTOP_GRAB_EXT) {
     int asigned;
     int aendian;
     off_t fsize = lives_buffered_offset(mainw->aud_rec_fd);
 
     if (rec_type == RECA_EXTERNAL) {
-      mainw->pulsed_read->reverse_endian = FALSE;
-
-      pulse_driver_activate(mainw->pulsed_read);
+      mainw->jackd_read->reverse_endian = FALSE;
 
       outfile->arate = outfile->arps = mainw->jackd_read->sample_in_rate;
       outfile->achans = mainw->jackd_read->num_input_channels;
@@ -2479,7 +2471,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
       mainw->jackd_read->reverse_endian = TRUE;
     else mainw->jackd_read->reverse_endian = FALSE;
 
-    // start jack recording
+    // start jack recording; window grab
     jack_read_client_activate(mainw->jackd_read, TRUE);
   }
 
@@ -2512,9 +2504,6 @@ void jack_rec_audio_end(boolean close_fd) {
   // recording ended
 
   pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
-  if (mainw->jackd_read->playing_file > -1)
-    jack_flush_read_data(0, NULL);
-
   mainw->jackd_read->in_use = FALSE;
   mainw->jackd_read->playing_file = -1;
   pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
@@ -2529,13 +2518,13 @@ void jack_rec_audio_end(boolean close_fd) {
 
 
 #ifdef HAVE_PULSE_AUDIO
-
 void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
   lives_clip_t *outfile;
   int retval;
 
   if (fileno == -1) {
+    // just activate the reader (?)
     if (!mainw->pulsed_read) {
       mainw->pulsed_read = pulse_get_driver(FALSE);
       mainw->pulsed_read->playing_file = -1;
@@ -2554,7 +2543,6 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     do {
       retval = 0;
       mainw->aud_rec_fd = lives_open_buffered_writer(outfilename, DEF_FILE_PERMS, FALSE);
-      //mainw->aud_rec_fd = lives_open3(outfilename, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
       if (mainw->aud_rec_fd < 0) {
         retval = do_write_failed_error_s_with_retry(outfilename, lives_strerror(errno));
         if (retval == LIVES_RESPONSE_CANCEL) {
@@ -2564,9 +2552,8 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
       }
     } while (retval == LIVES_RESPONSE_RETRY);
     lives_free(outfilename);
-    if (fileno == mainw->ascrap_file) {
-      mainw->files[mainw->ascrap_file]->cb_src = mainw->aud_rec_fd;
-    }
+    if (fileno == mainw->ascrap_file) mainw->files[mainw->ascrap_file]->cb_src = mainw->aud_rec_fd;
+    lives_write_buffered_set_custom_size(mainw->aud_rec_fd, AREC_BUF_SIZE);
   }
 
   if (rec_type == RECA_GENERATED) {
@@ -2579,13 +2566,13 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     }
   }
 
-  if (rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED || rec_type == RECA_MIXED) {
+  if (rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED || rec_type == RECA_MIXED
+      || rec_type == RECA_DESKTOP_GRAB_INT || rec_type == RECA_DESKTOP_GRAB_EXT) {
     int asigned;
     int aendian;
-    //off_t fsize = get_file_size(mainw->aud_rec_fd);
     off_t fsize = lives_buffered_offset(mainw->aud_rec_fd);
 
-    if (rec_type == RECA_EXTERNAL) {
+    if (rec_type == RECA_EXTERNAL || rec_type == RECA_DESKTOP_GRAB_EXT) {
       mainw->pulsed_read->reverse_endian = FALSE;
 
       pulse_driver_activate(mainw->pulsed_read);
@@ -2634,7 +2621,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
 
   // in grab window mode, just return, we will call rec_audio_end on playback end
   if (rec_type == RECA_WINDOW_GRAB || rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED
-      || rec_type == RECA_MIXED) return;
+      || rec_type == RECA_MIXED || rec_type == RECA_DESKTOP_GRAB_INT || rec_type == RECA_DESKTOP_GRAB_EXT) return;
 
   mainw->cancelled = CANCEL_NONE;
   mainw->cancel_type = CANCEL_SOFT;
@@ -2665,8 +2652,6 @@ void pulse_rec_audio_end(boolean close_fd) {
 
   if (mainw->pulsed_read) {
     pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
-    if (mainw->pulsed_read->playing_file > -1)
-      pulse_flush_read_data(mainw->pulsed_read, mainw->pulsed_read->playing_file, 0, mainw->pulsed_read->reverse_endian, NULL);
     mainw->pulsed_read->in_use = FALSE;
     mainw->pulsed_read->playing_file = -1;
     pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
@@ -2703,9 +2688,11 @@ void start_audio_rec(void) {
       lives_free(lives_header);
 
       if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
-        jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-        mainw->jackd_read->is_paused = FALSE;
-        mainw->jackd_read->in_use = TRUE;
+        if (AUD_SRC_EXTERNAL) {
+          jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+          mainw->jackd_read->is_paused = FALSE;
+          mainw->jackd_read->in_use = TRUE;
+        } else jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
       } else {
         if (mainw->jackd) {
           jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
@@ -2740,18 +2727,20 @@ void start_audio_rec(void) {
 #endif
   }
 
-  if (prefs->rec_opts & REC_AUDIO) {
-    // recording INTERNAL audio
+  if (AUD_SRC_INTERNAL) {
+    if (prefs->rec_opts & REC_AUDIO) {
+      // recording INTERNAL audio
 #ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
-      jack_get_rec_avals(mainw->jackd);
-    }
+      if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
+        jack_get_rec_avals(mainw->jackd);
+      }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
-      pulse_get_rec_avals(mainw->pulsed);
-    }
+      if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
+        pulse_get_rec_avals(mainw->pulsed);
+      }
 #endif
+    }
   }
 }
 
@@ -4676,3 +4665,93 @@ static void nullaudio_set_rec_avals(boolean is_forward) {
 }
 
 #endif
+
+//////////// intents //////
+
+int lives_aplayer_get_arate(lives_object_t *aplayer) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_ARATE);
+  return weed_param_get_value_int(param);
+}
+
+weed_error_t lives_aplayer_set_arate(lives_object_t *aplayer, int arate) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_ARATE);
+  return weed_param_set_value_int(param, arate);
+}
+
+int lives_aplayer_get_achans(lives_object_t *aplayer) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_ACHANS);
+  return weed_param_get_value_int(param);
+}
+
+weed_error_t lives_aplayer_set_achans(lives_object_t *aplayer, int achans) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_ACHANS);
+  return weed_param_set_value_int(param, achans);
+}
+
+int lives_aplayer_get_sampsize(lives_object_t *aplayer) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_SAMPSIZE);
+  return weed_param_get_value_int(param);
+}
+
+weed_error_t lives_aplayer_set_sampsize(lives_object_t *aplayer, int asamps) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_SAMPSIZE);
+  return weed_param_set_value_int(param, asamps);
+}
+
+boolean lives_aplayer_get_signed(lives_object_t *aplayer) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_SIGNED);
+  return weed_param_get_value_int(param);
+}
+
+weed_error_t lives_aplayer_set_signed(lives_object_t *aplayer, boolean asigned) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_SIGNED);
+  return weed_param_set_value_int(param, asigned);
+}
+
+int lives_aplayer_get_endian(lives_object_t *aplayer) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_ENDIAN);
+  return weed_param_get_value_int(param);
+}
+
+weed_error_t lives_aplayer_set_endian(lives_object_t *aplayer, int aendian) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_ENDIAN);
+  return weed_param_set_value_int(param, aendian);
+}
+
+int64_t lives_aplayer_get_data_len(lives_object_t *aplayer) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_DATA_LENGTH);
+  return weed_param_get_value_int64(param);
+}
+
+weed_error_t lives_aplayer_set_data_len(lives_object_t *aplayer, int64_t alength) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_DATA_LENGTH);
+  return weed_param_set_value_int64(param, alength);
+}
+
+boolean lives_aplayer_get_interleaved(lives_object_t *aplayer) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_INTERLEAVED);
+  return weed_param_get_value_boolean(param);
+}
+
+weed_error_t lives_aplayer_set_interleaved(lives_object_t *aplayer, boolean ainter) {
+  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_INTERLEAVED);
+  return weed_param_set_value_boolean(param, ainter);
+}
+
+void *lives_aplayer_get_audio_data(lives_object_t *aplayer) {
+  weed_param_t *parami = weed_param_from_object(aplayer, AUDIO_PARAM_INTERLEAVED);
+  weed_param_t *paramd = weed_param_from_object(aplayer, AUDIO_PARAM_DATA);
+  boolean inter =  weed_param_get_value_boolean(parami);
+  if (inter) return weed_get_voidptr_value(paramd, WEED_LEAF_AUDIO_DATA, NULL);
+  return weed_get_voidptr_array(paramd, WEED_LEAF_AUDIO_DATA, NULL);
+}
+
+weed_error_t lives_aplayer_set_audio_data(lives_object_t *aplayer, void *data) {
+  weed_param_t *parami = weed_param_from_object(aplayer, AUDIO_PARAM_INTERLEAVED);
+  weed_param_t *paramd = weed_param_from_object(aplayer, AUDIO_PARAM_DATA);
+  weed_param_t *paramc = weed_param_from_object(aplayer, AUDIO_PARAM_ACHANS);
+  int nchans = weed_param_get_value_int(paramc);
+  boolean inter =  weed_param_get_value_boolean(parami);
+  if (inter) return weed_set_voidptr_value(paramd, WEED_LEAF_AUDIO_DATA, data);
+  else return weed_set_voidptr_array(paramd, WEED_LEAF_AUDIO_DATA, nchans, data);
+}

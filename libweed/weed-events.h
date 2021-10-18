@@ -57,7 +57,9 @@ typedef weed_plant_t weed_event_list_t;
 
 // event_list
 #define WEED_LEAF_WEED_EVENT_API_VERSION "weed_event_api_version"
+#ifndef WEED_LEAF_AUTHOR
 #define WEED_LEAF_AUTHOR "author"
+#endif
 #define WEED_LEAF_TITLE "title"
 #define WEED_LEAF_COMMENTS "comments"
 #define WEED_LEAF_LIVES_CREATED_VERSION "created_version"
@@ -84,6 +86,7 @@ typedef weed_plant_t weed_event_list_t;
 #endif
 
 #define WEED_LEAF_AUDIO_SAMPLE_SIZE "audio_sample_size"
+#define WEED_LEAF_AUDIO_FLOAT "audio_float"
 #define WEED_LEAF_AUDIO_SIGNED "audio_signed"
 #define WEED_LEAF_AUDIO_ENDIAN "audio_endian"
 #define WEED_LEAF_AUDIO_VOLUME_TRACKS "audio_volume_tracks"

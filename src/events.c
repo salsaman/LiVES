@@ -270,8 +270,8 @@ weed_event_t *lives_event_list_new(weed_event_t *elist, const char *cdate) {
     error = weed_set_string_value(evelist, WEED_LEAF_LIVES_CREATED_VERSION, cversion);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
   }
-  if (!weed_plant_has_leaf(evelist, WEED_LEAF_CREATED_DATE)) {
-    error = weed_set_string_value(evelist, WEED_LEAF_CREATED_DATE, xdate);
+  if (!weed_plant_has_leaf(evelist, LIVES_LEAF_CREATED_DATE)) {
+    error = weed_set_string_value(evelist, LIVES_LEAF_CREATED_DATE, xdate);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
   }
 
@@ -279,8 +279,8 @@ weed_event_t *lives_event_list_new(weed_event_t *elist, const char *cdate) {
     error = weed_set_string_value(evelist, WEED_LEAF_LIVES_EDITED_VERSION, cversion);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
   }
-  if (!weed_plant_has_leaf(evelist, WEED_LEAF_EDITED_DATE)) {
-    error = weed_set_string_value(evelist, WEED_LEAF_EDITED_DATE, xdate);
+  if (!weed_plant_has_leaf(evelist, LIVES_LEAF_EDITED_DATE)) {
+    error = weed_set_string_value(evelist, LIVES_LEAF_EDITED_DATE, xdate);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
   }
 
@@ -4779,7 +4779,8 @@ lives_render_error_t render_events_cb(boolean dummy) {
 }
 
 
-static void do_xdg_opt(LiVESToggleButton * cb) {
+static void *do_xdg_opt(lives_object_t *obj, void *data) {
+  LiVESToggleButton *cb = (LiVESToggleButton *)data;
   if (lives_toggle_button_get_active(cb)) {
     char *tmp, *com = lives_strdup_printf("%s \"%s\"", EXEC_XDG_OPEN,
                                           (tmp = U82L(cfile->save_file_name)));
@@ -4787,15 +4788,17 @@ static void do_xdg_opt(LiVESToggleButton * cb) {
     lives_free(com); lives_free(tmp);
     lives_widget_object_unref(cb);
   }
+  return NULL;
 }
 
-static void add_xdg_opt(livespointer data) {
+static void *add_xdg_opt(lives_object_t *obj, livespointer data) {
   if (check_for_executable(&capable->has_xdg_open, EXEC_XDG_OPEN) == PRESENT) {
     LiVESWidget *cb = lives_standard_check_button_new(_("Preview in default video player afterwards"),
                       FALSE, LIVES_BOX(widget_opts.last_container), NULL);
     lives_widget_object_ref(cb);
-    lives_hook_append(PROGRESS_END_HOOK, (lives_funcptr_t)do_xdg_opt, cb);
+    lives_hook_append(THREADVAR(hook_closures), TX_DONE_HOOK, HOOK_CB_SINGLE_SHOT, do_xdg_opt, cb);
   }
+  return NULL;
 }
 
 
@@ -4845,7 +4848,7 @@ boolean start_render_effect_events(weed_plant_t *event_list, boolean render_vid,
   if (cfile->old_frames > 0) cfile->nopreview = TRUE; /// FIXME...
 
   if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE && render_vid) {
-    lives_hook_append(PROGRESS_START_HOOK, (lives_funcptr_t)add_xdg_opt, NULL);
+    lives_hook_append(THREADVAR(hook_closures), TX_START_HOOK, HOOK_CB_SINGLE_SHOT, add_xdg_opt, NULL);
   }
 
   // play back the file as fast as possible, each time calling render_events()

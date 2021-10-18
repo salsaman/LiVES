@@ -648,6 +648,31 @@ WEED_GLOBAL_INLINE char *weed_param_get_value_string(weed_plant_t *param) {
   return weed_get_string_value(param, WEED_LEAF_VALUE, NULL);
 }
 
+WEED_GLOBAL_INLINE weed_error_t weed_param_set_value_int(weed_plant_t *param, int val) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_ERROR_WRONG_PLANT_TYPE;
+  return weed_set_int_value(param, WEED_LEAF_VALUE, val);
+}
+
+WEED_GLOBAL_INLINE weed_error_t weed_param_set_value_boolean(weed_plant_t *param, int val) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_ERROR_WRONG_PLANT_TYPE;
+  return weed_set_boolean_value(param, WEED_LEAF_VALUE, val);
+}
+
+WEED_GLOBAL_INLINE weed_error_t weed_param_set_value_double(weed_plant_t *param, double val) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_ERROR_WRONG_PLANT_TYPE;
+  return weed_set_double_value(param, WEED_LEAF_VALUE, val);
+}
+
+WEED_GLOBAL_INLINE weed_error_t weed_param_set_value_int64(weed_plant_t *param, int64_t val) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_ERROR_WRONG_PLANT_TYPE;
+  return weed_set_int64_value(param, WEED_LEAF_VALUE, val);
+}
+
+WEED_GLOBAL_INLINE weed_error_t weed_param_set_value_string(weed_plant_t *param, const char *val) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_ERROR_WRONG_PLANT_TYPE;
+  return weed_set_string_value(param, WEED_LEAF_VALUE, val);
+}
+
 WEED_GLOBAL_INLINE int weed_gui_get_flags(weed_plant_t *gui) {
   if (!WEED_PLANT_IS_GUI(gui)) return 0;
   return weed_get_int_value(gui, WEED_LEAF_FLAGS, NULL);

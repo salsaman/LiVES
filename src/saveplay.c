@@ -2760,6 +2760,8 @@ void play_file(void) {
         }
       }
 
+      if (AUD_SRC_EXTERNAL) audio_analyser_start(AUDIO_SRC_EXT);
+
       if (!mainw->foreign && !mainw->multitrack)
         mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
       else
@@ -2846,6 +2848,8 @@ void play_file(void) {
   mainw->rte_textparm = NULL;
   mainw->playing_file = -1;
   mainw->abufs_to_fill = 0;
+
+  if (AUD_SRC_EXTERNAL) audio_analyser_end(AUDIO_SRC_EXT);
 
   if (mainw->ext_playback) {
 #ifndef IS_MINGW
@@ -4542,9 +4546,9 @@ boolean open_scrap_file(void) {
   mainw->scrap_file = mainw->current_file;
   dir = get_clip_dir(mainw->current_file);
 
-  lives_snprintf(cfile->type, 40, "scrap");
+  lives_snprintf(cfile->type, 40, SCRAP_LITERAL);
 
-  scrap_handle = lives_strdup_printf("scrap|%s", cfile->handle);
+  scrap_handle = lives_strdup_printf(SCRAP_LITERAL "|%s", cfile->handle);
   if (prefs->crash_recovery) add_to_recovery_file(scrap_handle);
   lives_free(scrap_handle);
 
@@ -4556,6 +4560,7 @@ boolean open_scrap_file(void) {
   lives_free(dir);
 
   mainw->current_file = current_file;
+  mainw->scrap_file_size = -1;
 
   if (mainw->ascrap_file == -1) ascrap_mb = 0.;
 
@@ -4589,7 +4594,7 @@ boolean open_ascrap_file(int clipno) {
     }
     lives_free(handle);
     mainw->ascrap_file = mainw->current_file;
-    lives_snprintf(cfile->type, 40, "ascrap");
+    lives_snprintf(cfile->type, 40, ASCRAP_LITERAL);
     cfile->opening = FALSE;
     new_clip = TRUE;
   } else mainw->ascrap_file = clipno;
@@ -4630,7 +4635,7 @@ boolean open_ascrap_file(int clipno) {
   }
 #endif
   if (new_clip) {
-    ascrap_handle = lives_strdup_printf("ascrap|%s", sfile->handle);
+    ascrap_handle = lives_strdup_printf(ASCRAP_LITERAL "|%s", sfile->handle);
     if (prefs->crash_recovery) add_to_recovery_file(ascrap_handle);
     lives_free(ascrap_handle);
 
@@ -4915,6 +4920,7 @@ void close_scrap_file(boolean remove) {
   if (prefs->crash_recovery) rewrite_recovery_file();
 
   mainw->scrap_file = -1;
+  mainw->scrap_file_size = -1;
 }
 
 
@@ -5323,14 +5329,15 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       continue;
     } else {
       /// load single file
-      if (!strncmp(buff, "scrap|", 6)) {
+      if (!strncmp(buff, SCRAP_LITERAL "|", SCRAP_LITERAL_LEN + 1)) {
         is_scrap = TRUE;
         buffptr = buff + 6;
-      } else if (!strncmp(buff, "ascrap|", 7)) {
+      } else if (!strncmp(buff, ASCRAP_LITERAL "|", ASCRAP_LITERAL_LEN + 1)) {
         is_ascrap = TRUE;
         buffptr = buff + 7;
       } else {
-        if (!strncmp(buff, "ascrap", 6) || !strncmp(buff, "scrap", 5)) {
+        if (!strncmp(buff, ASCRAP_LITERAL, ASCRAP_LITERAL_LEN)
+            || !strncmp(buff, SCRAP_LITERAL, SCRAP_LITERAL_LEN)) {
           rec_cleanup = TRUE;
           continue;
         }
@@ -5390,7 +5397,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       if (is_scrap) {
         mainw->scrap_file = mainw->current_file;
         cfile->opening = FALSE;
-        lives_snprintf(cfile->type, 40, "scrap");
+        lives_snprintf(cfile->type, 40, SCRAP_LITERAL);
         cfile->frames = 1;
         cfile->hsize = 640;
         cfile->vsize = 480;
@@ -5400,7 +5407,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       if (is_ascrap) {
         mainw->ascrap_file = mainw->current_file;
         cfile->opening = FALSE;
-        lives_snprintf(cfile->type, 40, "ascrap");
+        lives_snprintf(cfile->type, 40, ASCRAP_LITERAL);
       }
 
       /// get file details; this will cache the header in mainw->hdrs_cache
@@ -5693,9 +5700,9 @@ boolean rewrite_recovery_file(void) {
       if (IS_NORMAL_CLIP(i)) {
         lives_clip_t *sfile = mainw->files[i];
         if (i == mainw->scrap_file) {
-          recovery_entry = lives_strdup_printf("scrap|%s\n", sfile->handle);
+          recovery_entry = lives_strdup_printf(SCRAP_LITERAL "|%s\n", sfile->handle);
         } else if (i == mainw->ascrap_file) {
-          recovery_entry = lives_strdup_printf("ascrap|%s\n", sfile->handle);
+          recovery_entry = lives_strdup_printf(ASCRAP_LITERAL "|%s\n", sfile->handle);
         } else {
           if (sfile->was_in_set && *mainw->set_name) {
             if (!wrote_set_entry) {

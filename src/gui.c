@@ -359,6 +359,13 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
 }
 
 
+static void asrc_toggle_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval,
+                                 LiVESXModifierType mod, livespointer user_data) {
+  if (!LIVES_IS_PLAYING && !mainw->multitrack)
+    lives_toggle_tool_button_toggle(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton));
+}
+
+
 void create_LiVES(void) {
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3, 0, 0)
@@ -1932,6 +1939,11 @@ void create_LiVES(void) {
 #endif
 
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->ext_audio_checkbutton), -1);
+
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_a,
+                            LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(asrc_toggle_callback),
+                                NULL, NULL));
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.apply_theme = 0;

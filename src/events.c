@@ -4756,8 +4756,8 @@ filterinit2:
     }
 
     if (r_audio) {
-      next_out_tc = q_gint64(get_event_timecode(get_last_frame_event(mainw->event_list)) + rec_delta_tc
-                             + TICKS_PER_SECOND_DBL / cfile->fps, cfile->fps);
+      next_out_tc = q_gint64(get_event_timecode(get_last_frame_event(mainw->event_list)) + rec_delta_tc,
+                             cfile->fps);
       render_audio_segment(natracks, xaclips, mainw->multitrack != NULL ? mainw->multitrack->render_file :
                            mainw->current_file, xavel, xaseek, atc, next_out_tc, chvols, 1., 1., NULL);
       cfile->afilesize = reget_afilesize_inner(mainw->current_file);

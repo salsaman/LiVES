@@ -6113,8 +6113,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTreeStore *lives_tree_store_new(int ncols, ...)
 #ifdef GUI_GTK
   if (ncols > 0) {
     GType types[ncols];
-    register int i;
-    for (i = 0; i < ncols; i++) {
+    for (int i = 0; i < ncols; i++) {
       types[i] = va_arg(argList, long unsigned int);
     }
     tstore = gtk_tree_store_newv(ncols, types);
@@ -6256,8 +6255,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESAdjustment *lives_tree_view_get_hadjustment(LiV
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESTreeViewColumn *lives_tree_view_column_new_with_attributes(const char *title,
-    LiVESCellRenderer *crend,
-    ...) {
+    LiVESCellRenderer *crend, ...) {
   LiVESTreeViewColumn *tvcol = NULL;
   va_list args;
   va_start(args, crend);

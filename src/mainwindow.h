@@ -533,7 +533,7 @@ enum {
 #define LIVES_FILE_EXT_PRE "pre"
 #define LIVES_FILE_EXT_NEW "new"
 #define LIVES_FILE_EXT_MAP "map"
-#define LIVES_FILE_EXT_SCRAP "scrap"
+#define LIVES_FILE_EXT_SCRAP SCRAP_LITERAL
 #define LIVES_FILE_EXT_TEXT "txt"
 #define LIVES_FILE_EXT_BAK "bak"
 #define LIVES_FILE_EXT_BACK "back"
@@ -585,6 +585,11 @@ enum {
 
 #define HEADER_LITERAL "header"
 #define AHEADER_LITERAL "aheader"
+
+#define SCRAP_LITERAL "scrap"
+#define SCRAP_LITERAL_LEN 5
+#define ASCRAP_LITERAL "ascrap"
+#define ASCRAP_LITERAL_LEN 6
 
 #define THEME_LITERAL "theme"
 #define THEME_SEP_IMG_LITERAL "main"
@@ -863,8 +868,9 @@ typedef struct {
   volatile lives_cancel_t cancelled;
   lives_cancel_type_t cancel_type;
 
-  weed_event_t *event_list; ///< current event_list, for recording
-  weed_event_t *stored_event_list; ///< stored mt -> clip editor
+  boolean elist_eom;
+  weed_event_list_t *event_list; ///< current event_list, for recording
+  weed_event_list_t *stored_event_list; ///< stored mt -> clip editor
   boolean stored_event_list_changed;
   boolean stored_event_list_auto_changed;
   boolean stored_layout_save_all_vals;
@@ -952,6 +958,7 @@ typedef struct {
 
   int scrap_file; ///< we throw odd sized frames here when recording in real time; used if a source is a generator or stream
   int ascrap_file; ///< scrap file for recording audio scraps
+  ssize_t scrap_file_size;
 
   lives_pid_t alives_pid; // 0, or pid for autolives
 

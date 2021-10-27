@@ -58,8 +58,7 @@ LIVES_GLOBAL_INLINE void pa_mloop_unlock(void) {
 
 
 static void pulse_server_cb(pa_context *c, const pa_server_info *info, void *userdata) {
-  if (!info) pulse_server_rate = 0;
-  else pulse_server_rate = info->sample_spec.rate;
+  if (info) pulse_server_rate = info->sample_spec.rate;
   pa_threaded_mainloop_signal(pa_mloop, 0);
 }
 
@@ -1452,6 +1451,8 @@ size_t pulse_write_data(float out_scale, int achans, int fileno, size_t rbytes, 
 }
 
 
+static void *back_buff = NULL;
+
 static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *arg) {
   // read nsamples from pulse buffer, and then possibly write to mainw->aud_rec_fd
 
@@ -1459,14 +1460,15 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
 
   pulse_driver_t *pulsed = (pulse_driver_t *)arg;
   void *data;
-  size_t rbytes = nbytes, zbytes;
-  int nch = pulsed->in_achans;
+  size_t rbytes = nbytes, zbytes, nframes;;
 
-  pulsed->pstream = pstream;
+  lives_hooks_join(pulsed->inst->hook_closures, DATA_READY_HOOK);
 
   if (pulsed->is_corked) return;
 
-  if (!pulsed->in_use || (mainw->playing_file < 0 && prefs->audio_src == AUDIO_SRC_EXT) || mainw->effects_paused) {
+  pulsed->pstream = pstream;
+
+  if (!pulsed->in_use || (mainw->playing_file < 0 && AUD_SRC_EXTERNAL) || mainw->effects_paused) {
     pa_stream_peek(pulsed->pstream, (const void **)&data, &rbytes);
     if (rbytes > 0) {
       //g_print("PVAL %d\n", (*(uint8_t *)data & 0x80) >> 7);
@@ -1474,8 +1476,8 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
     }
 
     if (pulsed->in_use)
-      pulsed->extrausec += ((double)nbytes / (double)(pulsed->out_arate) * 1000000.
-                            / (double)(pulsed->out_achans * pulsed->out_asamps >> 3) + .5);
+      pulsed->extrausec += ((double)nbytes / (double)(pulsed->in_arate) * 1000000.
+                            / (double)(pulsed->in_achans * pulsed->in_asamps >> 3) + .5);
     return;
   }
 
@@ -1491,124 +1493,57 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   }
 
   if (!data) {
-    if (rbytes > 0) {
-      pa_stream_drop(pulsed->pstream);
-    }
+    if (rbytes > 0) pa_stream_drop(pulsed->pstream);
     return;
   }
+
+  nframes = rbytes / pulsed->in_achans / (pulsed->in_asamps >> 3);
 
   if (!mainw->fs && !mainw->faded && !mainw->multitrack && mainw->ext_audio_mon)
     lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_mon), (*(uint8_t *)data & 0x80) >> 7);
 
   // time interpolation
-  pulsed->extrausec += ((double)rbytes / (double)(pulsed->out_arate) * 1000000.
-                        / (double)(pulsed->out_achans * pulsed->out_asamps >> 3) + .5);
-
-  pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
+  pulsed->extrausec += ((double)rbytes / (double)(pulsed->in_arate) * 1000000.
+                        / (double)(pulsed->in_achans * (pulsed->in_asamps >> 3)) + .5);
 
   // should really be frames_read here
   if (!pulsed->is_paused) {
-    pulsed->frames_written += nbytes / pulsed->out_achans / (pulsed->out_asamps >> 3);
+    pulsed->frames_written += nframes;
   }
 
-  if (prefs->audio_src == AUDIO_SRC_EXT && (pulsed->playing_file == -1 || pulsed->playing_file == mainw->ascrap_file)) {
-    // - (do not call this when recording ext window or voiceover)
+  // TODO
+  /* pthread_mutex_lock(&mainw->vpp_stream_mutex); */
+  /* if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) { */
+  /*   (*mainw->vpp->render_audio_frame_float)(fltbuf, xnsamples); */
+  /* } */
+  /* pthread_mutex_unlock(&mainw->vpp_stream_mutex); */
 
-    // in this case we read external audio, but maybe not record it
-    // we may wish to analyse the audio for example, or push it to a video generator
-    // or stream it to the video playback plugin
-
-    if ((!mainw->video_seek_ready && prefs->ahold_threshold > pulsed->abs_maxvol_heard)
-        || has_audio_filters(AF_TYPE_A) || mainw->ext_audio) {
-      // convert to float, apply any analysers
-      boolean memok = TRUE;
-      float **fltbuf = (float **)lives_calloc(nch, sizeof(float *));
-      int i;
-
-      size_t xnsamples = (size_t)(rbytes / (pulsed->in_asamps >> 3) / nch);
-
-      if (!fltbuf) {
-        pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
-        pa_stream_drop(pulsed->pstream);
-        return;
-      }
-
-      for (i = 0; i < nch; i++) {
-        // convert s16 to non-interleaved float
-        fltbuf[i] = (float *)lives_calloc(xnsamples, sizeof(float));
-        if (!fltbuf[i]) {
-          memok = FALSE;
-          for (--i; i >= 0; i--) lives_free(fltbuf[i]);
-          break;
-        }
-
-        pulsed->abs_maxvol_heard
-          = sample_move_d16_float(fltbuf[i], (short *)(data) + i, xnsamples, nch, FALSE, FALSE, 1.0);
-
-        if (mainw->afbuffer && prefs->audio_src == AUDIO_SRC_EXT) {
-          // if we have audio triggered gens., push audio to it
-          append_to_audio_bufferf(fltbuf[i], xnsamples, i == nch - 1 ? -i - 1 : i + 1);
-        }
-      }
-
-      if (memok) {
-        ticks_t tc = mainw->currticks;
-        // apply any audio effects with in channels but no out channels (analysers)
-
-        if (has_audio_filters(AF_TYPE_A)) {
-          weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
-          weed_layer_set_audio_data(layer, fltbuf, pulsed->in_arate, nch, xnsamples);
-          weed_apply_audio_effects_rt(layer, tc, TRUE, TRUE);
-          /* lives_free(fltbuf); */
-          /* fltbuf = weed_layer_get_audio_data(layer, NULL); */
-          weed_layer_free(layer);
-        }
-        // stream audio to video playback plugin if appropriate (probably needs retesting...)
-        pthread_mutex_lock(&mainw->vpp_stream_mutex);
-        if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
-          (*mainw->vpp->render_audio_frame_float)(fltbuf, xnsamples);
-        }
-        pthread_mutex_unlock(&mainw->vpp_stream_mutex);
-        for (i = 0; i < nch; i++) {
-          lives_free(fltbuf[i]);
-        }
-      }
-
-      lives_freep((void **)&fltbuf);
-    }
+  if (back_buff) {
+    lives_free(back_buff);
+    back_buff = NULL;
   }
+
+  if (!back_buff) back_buff = lives_calloc(nframes, pulsed->in_achans * (pulsed->in_asamps >> 3));
+  lives_memcpy(back_buff, data, rbytes);
+
+  lives_aplayer_set_data_len(pulsed->inst, nframes);
+  lives_aplayer_set_data(pulsed->inst, (void *)back_buff);
+
+  lives_hooks_trigger(pulsed->inst, pulsed->inst->hook_closures, DATA_READY_HOOK);
+
+  pulsed->seek_pos += rbytes;
+
+  pa_stream_drop(pulsed->pstream);
 
   if (pulsed->playing_file == -1 || (mainw->record && mainw->record_paused) || pulsed->is_paused) {
-    pa_stream_drop(pulsed->pstream);
     if (pulsed->is_paused) {
       // This is NECESSARY to reduce / eliminate huge latencies.
-
       // TODO: pa_threaded_mainloop_once_unlocked() (pa 13.0 +)
       pa_operation *paop = pa_stream_flush(pulsed->pstream, NULL,
                                            NULL); // if not recording, flush the rest of audio (to reduce latency)
       pa_operation_unref(paop);
     }
-    pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
-    return;
   }
-
-  pulsed->seek_pos += rbytes;
-
-  // record the audio
-  // external -> pulsed->playing_file
-
-  if (mainw->playing_file != mainw->ascrap_file && IS_VALID_CLIP(mainw->playing_file))
-    mainw->files[mainw->playing_file]->aseek_pos += rbytes;
-
-  if (mainw->ascrap_file != -1 && !mainw->record_paused) {
-    float out_scale = (float)pulsed->in_arate / mainw->files[pulsed->playing_file]->arate;
-    // recording internal - resample from out_arate to file arate
-    pulse_write_data(out_scale, pulsed->in_achans, pulsed->playing_file, rbytes, data);
-    lives_hooks_trigger(pulsed->inst, pulsed->inst->hook_closures, DATA_READY_HOOK);
-  }
-
-  pa_stream_drop(pulsed->pstream);
-  pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
 
   if (mainw->rec_samples == 0 && mainw->cancelled == CANCEL_NONE) {
     mainw->cancelled = CANCEL_KEEP; // we wrote the required #
@@ -1650,9 +1585,6 @@ void pulse_close_client(pulse_driver_t *pdriver) {
 
 
 int pulse_audio_init(void) {
-  /* if (!pulsed->inst) pulsed->inst = lives_player_inst_create(PLAYER_SUBTYPE_AUDIO); */
-  /* lives_object_set_param; */
-
   // initialise variables
   pulsed.in_use = FALSE;
   pulsed.mloop = pa_mloop;
@@ -1681,16 +1613,10 @@ int pulse_audio_init(void) {
   pulsed.is_output = TRUE;
   pulsed.read_abuf = -1;
   pulsed.is_paused = FALSE;
-  //pulsed.pstream = NULL;
   pulsed.pa_props = NULL;
   pulsed.playing_file = -1;
   pulsed.sound_buffer = NULL;
   pulsed.extrausec = 0;
-
-
-
-
-
   return 0;
 }
 
@@ -1723,6 +1649,7 @@ int pulse_audio_read_init(void) {
   pulsed_reader.pa_props = NULL;
   pulsed_reader.sound_buffer = NULL;
   pulsed_reader.extrausec = 0;
+
   return 0;
 }
 
@@ -1836,9 +1763,19 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
   /// TODO: try to set volume and mute state from sever rather then the other way round
 
+  if (!pdriver->inst) pdriver->inst = lives_player_inst_create(PLAYER_SUBTYPE_AUDIO);
+  lives_aplayer_set_float(pdriver->inst, FALSE);
+  lives_aplayer_set_interleaved(pdriver->inst, TRUE);
+  lives_aplayer_set_signed(pdriver->inst, TRUE);
+
   if (pdriver->is_output) {
     pa_volume_t pavol;
     pdriver->is_corked = TRUE;
+
+    lives_aplayer_set_source(pdriver->inst, AUDIO_SRC_INT);
+    lives_aplayer_set_achans(pdriver->inst, pdriver->out_achans);
+    lives_aplayer_set_arate(pdriver->inst, pdriver->out_arate);
+    lives_aplayer_set_sampsize(pdriver->inst, pdriver->out_asamps);
 
     // set write callback
     pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
@@ -1893,6 +1830,11 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pdriver->in_use = FALSE;
     pdriver->abs_maxvol_heard = 0.;
     pdriver->is_corked = TRUE;
+
+    lives_aplayer_set_source(pdriver->inst, AUDIO_SRC_EXT);
+    lives_aplayer_set_achans(pdriver->inst, pdriver->in_achans);
+    lives_aplayer_set_arate(pdriver->inst, pdriver->in_arate);
+    lives_aplayer_set_sampsize(pdriver->inst, pdriver->in_asamps);
 
     pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, pdriver);
     pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, pdriver);

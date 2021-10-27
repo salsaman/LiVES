@@ -60,16 +60,18 @@
 
 typedef lives_funcptr_t object_funcptr_t;
 typedef struct _object_t lives_object_t;
-typedef struct _object_t lives_object_template_t;
 typedef struct _object_t lives_object_instance_t;
 typedef struct _obj_status_t lives_transform_status_t;
 typedef struct _obj_transform_t lives_object_transform_t;
-typedef weed_param_t lives_obj_param_t;
+typedef weed_param_t lives_tx_param_t;
+typedef weed_param_t lives_obj_attr_t;
 
 #define HOOK_CB_SINGLE_SHOT		(1 << 1)
 #define HOOK_CB_ASYNC			(1 << 2)
 #define HOOK_CB_ASYNC_JOIN		(1 << 3)
-#define HOOK_CB_CHILD_INHERITS		(1 << 4)
+#define HOOK_CB_CHILD_INHERITS		(1 << 4) // TODO
+
+#define HOOK_BLOCKED			(1 << 16)
 
 enum {
   ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
@@ -94,34 +96,38 @@ typedef struct {
   lives_proc_thread_t tinfo; // for async_join
 } lives_closure_t;
 
-// TODO:
-/* typedef struct { */
-/*   void *data; */
-/*   uint64_t flags; */
-/* } hook_cb_t; */
-
 // lives_object_t
 struct _object_t {
-  uint64_t uid; // unique id for this object, for static objects (templates), should be a fixed value
+  uint64_t uid; // unique id for this object
   // for other objects should be randomly generated for the lifetime of the object
   uint64_t type; // object type - from IMkType
   uint64_t subtype; // object subtype, can change during a transformation
   int state; // object state
-  lives_obj_param_t **attributes; // internal parameters
-  const lives_object_t *template; // pointer to template class which the instance was created from, or NULL
-  lives_object_transform_t *tx; // pointer to currently running transform (or NULL)
-  LiVESList *hook_closures[N_HOOK_FUNCS]; /// TODO - these should probably be part of tx
+  lives_obj_attr_t **attributes; // internal parameters
+  lives_object_transform_t *active_tx; // pointer to currently running transform (or NULL)
+  LiVESList *hook_closures[N_HOOK_FUNCS]; /// TODO - these should probably be part of active_tx
   void *priv; // internal data belonging to the object
 };
 
-#define OBJECT_TYPE_UNDEFINED 0
-#define OBJECT_SUBTYPE_UNDEFINED 0
+// TODO - types should register themselves, and then be queried
+struct _objsubdef {
+  uint64_t subtype; // object subtype, can change during a transformation
+  lives_obj_attr_t **common_attributes; // internal parameters
+  int *states; // possible object states
+  /// per state (???)
+  lives_obj_attr_t **attributes; // internal parameters, some may point to common_attributes
+  lives_object_transform_t **tx; // array of tx
+};
 
 typedef struct {
-  uint64_t *types;
-  uint64_t *subtypes;
-  int *states;
-} lives_obj_stance;
+  uint64_t type; // object type - from IMkType
+  struct objsudef **subtypedefs; // NULL term. list
+} lives_obj_template;
+
+/////////////
+
+#define OBJECT_TYPE_UNDEFINED 0
+#define OBJECT_SUBTYPE_UNDEFINED 0
 
 enum {
   // some common intentions
@@ -223,7 +229,6 @@ enum {
 #define LIVES_ICAPS_LOAD LIVES_INTENTION_IMPORT
 #define LIVES_ICAPS_DOWNLOAD LIVES_INTENTION_IMPORT + 1
 
-
 #define LIVES_INTENCAP_IS_IMPORT_LOCAL(icap) (icap->intent = LIVE_INTENTION_IMPORT && lives_get_capacity(LIVES_CAPACITY_LOCAL))
 #define LIVES_INTENCAP_IS_IMPORT_REMOTE(icap) (icap->intent = LIVE_INTENTION_IMPORT && lives_get_capacity(LIVES_CAPACITY_REMOTE))
 
@@ -293,8 +298,22 @@ struct _obj_status_t {
 typedef struct {
   //lives_intention intent;
   //int n_params; // to simplify
-  lives_obj_param_t **params; ///< (can be converted to normal params via weed_param_from_iparams)
+  lives_tx_param_t **params; ///< (can be converted to normal params via weed_param_from_iparams)
 } lives_intentparams_t;
+
+// shorthand for calling LIVES_INTENTION_CREATE_INSTANCE in the template
+lives_object_instance_t *lives_object_instance_create(uint64_t type, uint64_t subtype);
+
+// when creating the instance, we should set the intial STATE, and declare its attributes
+// TODO - attributes are readonly and can only be altered by the object itself
+boolean lives_object_declare_attribute(lives_object_t *obj, const char *name, int stype);
+
+// TODO - add listeners for attribute value changes (also for subtype / state changes)
+
+// values can also be set
+weed_error_t lives_object_set_attribute_value(lives_object_t *obj, const char *name, ...);
+weed_error_t lives_object_set_attribute_array(lives_object_t *obj, const char *name, int n_elems, ...);
+lives_obj_attr_t *lives_attr_from_object(lives_object_t *obj, const char *name);
 
 /// NOT YET FULLY IMPLEMENTED
 
@@ -311,7 +330,7 @@ weed_plant_t *int_req_init(const char *name, int def, int min, int max);
 weed_plant_t *boolean_req_init(const char *name, int def);
 weed_plant_t *double_req_init(const char *name, double def, double min, double max);
 weed_plant_t *string_req_init(const char *name, const char *def);
-weed_plant_t *obj_req_init(const char *name, lives_obj_stance stances);
+weed_plant_t *obj_req_init(const char *name, lives_obj_template allowed);
 weed_plant_t *hook_req_init(const char *name, int status, lives_object_transform_t *trn, void *user_data);
 
 typedef struct {
@@ -386,7 +405,7 @@ struct _obj_transform_t {
   lives_intentcap_t icaps;
   lives_rules_t *prereqs; // pointer to the prerequisites for carrying out the transform (can be NULL)
   ///
-  lives_obj_param_t **oparams;  // a mix of params and objects
+  lives_tx_param_t **oparams;  // a mix of params and objects
   //
   int new_state; // the state of the subhect after tx
   uint64_t *new_subtype; // subtype of subhject after, assuming success
@@ -394,10 +413,6 @@ struct _obj_transform_t {
   tx_map *mappings; // internal mapping for the object
   uint64_t flags;
 };
-
-//
-//const lives_object_template_t *lives_object_template_for_type(uint64_t type, uint64_t subtype);
-const lives_object_template_t *lives_object_template_for_type(uint64_t type);
 
 #define LIVES_WEED_SUBTYPE_CAPACITIES 512
 

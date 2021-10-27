@@ -318,7 +318,7 @@ static boolean avsync_check(void) {
   if (mainw->debug) count *= 10;
 #endif
 
-  if (mainw->foreign || !LIVES_IS_PLAYING || prefs->audio_src == AUDIO_SRC_EXT || prefs->force_system_clock
+  if (mainw->foreign || !LIVES_IS_PLAYING || AUD_SRC_EXTERNAL || prefs->force_system_clock
       || (mainw->event_list && !(mainw->record || mainw->record_paused)) || prefs->audio_player == AUD_PLAYER_NONE
       || !is_realtime_aplayer(prefs->audio_player) || cfile->play_paused) {
     mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
@@ -407,6 +407,10 @@ static boolean aud_msgq_wait(void) {
     lives_alarm_clear(alarm_handle);
     if (audio_timed_out == 0) return TRUE;
     pulse_get_rec_avals(mainw->pulsed);
+  } else if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd_read &&
+             (prefs->rec_opts & REC_AUDIO) && AUD_SRC_EXTERNAL
+             && mainw->rec_aclip != mainw->ascrap_file) {
+    pulse_get_rec_avals(mainw->pulsed_read);
   }
 #endif
   return FALSE;
@@ -430,7 +434,6 @@ boolean record_setup(ticks_t actual_ticks) {
       add_filter_init_events(mainw->event_list, actual_ticks);
     }
     audio_timed_out = aud_msgq_wait();
-    mainw->record_starting = FALSE;
     if (audio_timed_out) {
       mainw->cancelled = handle_audio_timeout();
       if (mainw->cancelled != CANCEL_NONE) return FALSE;
@@ -465,7 +468,6 @@ boolean load_frame_image(frames_t frame) {
   const char *img_ext = NULL;
 
   LiVESInterpType interp;
-  double scrap_file_size = -1;
 
   boolean was_preview = FALSE;
   boolean rec_after_pb = FALSE;
@@ -482,15 +484,15 @@ boolean load_frame_image(frames_t frame) {
   int pwidth, pheight;
   int lb_width = 0, lb_height = 0;
   int bad_frame_count = 0;
-  int fg_file = mainw->current_file;
+  int fg_file = mainw->playing_file;
   int tgamma = WEED_GAMMA_UNKNOWN;
-  int scratch = (int)mainw->scratch;
   boolean was_letterboxed = FALSE;
 
   mainw->scratch = SCRATCH_NONE;
 
 #define BFC_LIMIT 1000
-  if (LIVES_UNLIKELY(cfile->frames == 0 && !mainw->foreign && !mainw->is_rendering)) {
+  if (LIVES_UNLIKELY(cfile->frames == 0 && !mainw->foreign && !mainw->is_rendering
+                     && AUD_SRC_INTERNAL)) {
     // playing a clip with zero frames...
     if (mainw->record && !mainw->record_paused) {
       // add blank frame
@@ -550,21 +552,13 @@ boolean load_frame_image(frames_t frame) {
 
       // record performance
       if ((mainw->record && !mainw->record_paused)) {
-        void **eevents;
-        weed_plant_t *event_list;
-        int64_t *frames;
-        ticks_t actual_ticks;
-
-        int fg_frame = mainw->record_frame;
+        //int fg_frame = mainw->record_frame;
         int bg_file = (IS_VALID_CLIP(mainw->blend_file) && (prefs->tr_self ||
                        (mainw->blend_file != mainw->current_file)))
                       ? mainw->blend_file : -1;
-        int bg_frame = (bg_file > 0
-                        && (prefs->tr_self || (bg_file != mainw->current_file)))
-                       ? mainw->files[bg_file]->frameno : 0;
-        int numframes;
-        int *clips;
-        int nev;
+        /* int bg_frame = (bg_file > 0 */
+        /*                 && (prefs->tr_self || (bg_file != mainw->current_file))) */
+        /*                ? mainw->files[bg_file]->frameno : 0; */
 
         // should we record the output from the playback plugin ?
         if (mainw->record && (prefs->rec_opts & REC_AFTER_PB) && mainw->ext_playback &&
@@ -577,86 +571,26 @@ boolean load_frame_image(frames_t frame) {
           // TODO - handle non-opening of scrap_file
           if (mainw->scrap_file == -1) open_scrap_file();
           fg_file = mainw->scrap_file;
-          fg_frame = mainw->files[mainw->scrap_file]->frames + 1;
-          scrap_file_size = mainw->files[mainw->scrap_file]->f_size;
+          //fg_frame = mainw->files[mainw->scrap_file]->frames + 1;
+          mainw->scrap_file_size = mainw->files[mainw->scrap_file]->f_size;
           bg_file = -1;
-          bg_frame = 0;
-        }
+          //bg_frame = 0;
+        } else mainw->scrap_file_size = -1;
 
-        //actual_ticks = mainw->clock_ticks;//mainw->currticks;
-        actual_ticks = mainw->startticks; ///< use the "theoretical" time
-
-        numframes = (bg_file == -1) ? 1 : 2;
-        clips = (int *)lives_malloc(numframes * sizint);
-        frames = (int64_t *)lives_malloc(numframes * 8);
-
-        clips[0] = fg_file;
-        frames[0] = (int64_t)fg_frame;
-        if (numframes == 2) {
-          clips[1] = bg_file;
-          frames[1] = (int64_t)bg_frame;
-        }
         if (framecount) lives_free(framecount);
 
-        // MUST do this before locking event_list_mutex, else we can fall into a deadlock
-        eevents = get_easing_events(&nev);
-
-        pthread_mutex_lock(&mainw->event_list_mutex);
-
-        /// usual function to record a frame event
-        if ((event_list = append_frame_event(mainw->event_list, actual_ticks,
-                                             numframes, clips, frames)) != NULL) {
-          if (!mainw->event_list) mainw->event_list = event_list;
-
-          // TODO ***: do we need to perform more checks here ???
-          if (eevents || scratch != SCRATCH_NONE || scrap_file_size != -1
-              || (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO))) {
-            weed_plant_t *event = get_last_frame_event(mainw->event_list);
-
-            if (eevents) {
-              weed_set_voidptr_array(event, LIVES_LEAF_EASING_EVENTS, nev, eevents);
-              lives_free(eevents);
-            }
-
-            if (scratch != SCRATCH_NONE) {
-              weed_set_int_value(event, LIVES_LEAF_SCRATCH, scratch);
-            }
-
-            if (scrap_file_size != -1)
-              weed_set_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, scrap_file_size);
-
-            if (mainw->rec_aclip != -1) {
-              if (mainw->rec_aclip == mainw->ascrap_file) {
-                mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
-                                   (double)(mainw->files[mainw->ascrap_file]->arps
-                                            * mainw->files[mainw->ascrap_file]->achans *
-                                            mainw->files[mainw->ascrap_file]->asampsize >> 3);
-                mainw->rec_avel = 1.;
-
-              }
-              if (!mainw->mute) {
-                weed_event_t *xevent = get_prev_frame_event(event);
-                if (!xevent) xevent = event;
-                insert_audio_event_at(xevent, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
-              }
-              mainw->rec_aclip = -1;
-            }
-          }
-          pthread_mutex_unlock(&mainw->event_list_mutex);
-
+        if (!mainw->elist_eom) {
           /* TRANSLATORS: rec(ord) */
           framecount = lives_strdup_printf((tmp = _("rec %9d / %d")), mainw->actual_frame,
                                            cfile->frames > mainw->actual_frame
                                            ? cfile->frames : mainw->actual_frame);
         } else {
-          pthread_mutex_unlock(&mainw->event_list_mutex);
+          //pthread_mutex_unlock(&mainw->event_list_mutex);
           /* TRANSLATORS: out of memory (rec(ord)) */
           framecount = lives_strdup_printf((tmp = _("!rec %9d / %d")),
                                            mainw->actual_frame, cfile->frames);
         }
         lives_free(tmp);
-        lives_free(clips);
-        lives_free(frames);
       } else {
         if (mainw->toy_type != LIVES_TOY_NONE) {
           if (mainw->toy_type == LIVES_TOY_MAD_FRAMES && !mainw->fs && CURRENT_CLIP_IS_NORMAL) {
@@ -1901,7 +1835,7 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
 
   if (*tsource == LIVES_TIME_SOURCE_EXTERNAL) *tsource = LIVES_TIME_SOURCE_NONE;
 
-  if (mainw->foreign || prefs->force_system_clock || (prefs->vj_mode && (prefs->audio_src == AUDIO_SRC_EXT))) {
+  if (mainw->foreign || prefs->force_system_clock || (prefs->vj_mode && AUD_SRC_EXTERNAL)) {
     *tsource = LIVES_TIME_SOURCE_SYSTEM;
     current = clock_ticks;
   }
@@ -2161,10 +2095,12 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
 
   // nframe is our new frame; convert dtc to seconds, and multiply by the frame rate, then add or subtract from current frame number
   // the small constant is just to account for rounding errors
-  if (fps >= 0.)
+  if (1 || fps >= 0.)
     nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps + .5);
   else
-    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps - .5);
+    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps + .5);
+
+  g_print("FRAMES %d and %d\n", cframe, nframe);
 
   if (nframe != cframe) {
     if (!IS_NORMAL_CLIP(fileno)) {
@@ -2451,7 +2387,7 @@ int process_one(boolean visible) {
   ticks_t new_ticks;
   lives_time_source_t time_source = LIVES_TIME_SOURCE_NONE;
   frames_t requested_frame = 0;
-  boolean show_frame = FALSE;
+  boolean show_frame = FALSE, showed_frame;
   boolean did_switch = FALSE;
   static boolean reset_on_tsource_change = FALSE;
   int old_current_file, old_playing_file;
@@ -2836,10 +2772,11 @@ switch_point:
 
     if (mainw->scratch == SCRATCH_NONE && scratch == SCRATCH_NONE
         && real_requested_frame > 0) sfile->last_frameno = real_requested_frame;
-    //g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_frameno, (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps);
+    g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_frameno,
+            (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps);
     real_requested_frame = requested_frame
                            = calc_new_playback_position(mainw->playing_file, mainw->startticks, &new_ticks);
-    //g_print("POST: %ld %ld %d\n", mainw->startticks, new_ticks, requested_frame);
+    g_print("POST: %ld %ld %d\n", mainw->startticks, new_ticks, requested_frame);
     //mainw->startticks = new_ticks;
     sfile->last_frameno = oframe;
     if (mainw->foreign) {
@@ -3327,15 +3264,109 @@ switch_point:
         }
 
         //g_print("DISK PR is %f\n", mainw->disk_pressure);
-        cpuload = get_core_loadvar(0);
-        if (*cpuload < CORE_LOAD_THRESH || mainw->pred_clip != -1) {
-          if (scratch == SCRATCH_JUMP || scratch == SCRATCH_JUMP_NORESYNC) {
-            mainw->scratch = SCRATCH_JUMP_NORESYNC;
-          }
+        showed_frame = FALSE;
+        if (mainw->pred_clip == -1) cpuload = get_core_loadvar(0);
+        if (mainw->pred_clip != -1 || *cpuload < CORE_LOAD_THRESH) {
           // will reset mainw->scratch
           load_frame_image(sfile->frameno);
-          scratch = mainw->scratch;
+          showed_frame = TRUE;
         }
+        if (mainw->record && !mainw->record_paused) {
+          void **eevents;
+          weed_event_list_t *event_list;
+          int64_t *frames;
+          int *clips;
+          ticks_t actual_ticks;
+          boolean rec_after_pb = FALSE, rec_to_scrap = FALSE;
+          int numframes, nev;
+          int fg_file = mainw->playing_file;
+          frames_t fg_frame = mainw->record_frame;
+          int bg_file = (IS_VALID_CLIP(mainw->blend_file)
+                         && (prefs->tr_self || (mainw->blend_file != mainw->current_file)))
+                        ? mainw->blend_file : -1;
+          frames_t bg_frame = (bg_file > 0 && (prefs->tr_self || (bg_file != mainw->current_file)))
+                              ? mainw->files[bg_file]->frameno : 0;
+
+          // should we record the output from the playback plugin ?
+          if ((prefs->rec_opts & REC_AFTER_PB) && mainw->ext_playback &&
+              (mainw->vpp->capabilities & VPP_CAN_RETURN))
+            rec_after_pb = TRUE;
+
+          if (rec_after_pb || !CURRENT_CLIP_IS_NORMAL ||
+              (prefs->rec_opts & REC_EFFECTS && bg_file != -1 && !IS_NORMAL_CLIP(bg_file)))
+            rec_to_scrap = TRUE;
+
+          if (showed_frame || !rec_to_scrap) {
+            if (rec_to_scrap) {
+              fg_file = mainw->scrap_file;
+              fg_frame = mainw->files[mainw->scrap_file]->frames;
+              bg_file = -1;
+              bg_frame = 0;
+            }
+            //actual_ticks = mainw->clock_ticks;//mainw->currticks;
+            actual_ticks = mainw->startticks; ///< use the "theoretical" time
+
+            numframes = (bg_file == -1) ? 1 : 2;
+            clips = (int *)lives_malloc(numframes * sizint);
+            frames = (int64_t *)lives_malloc(numframes * 8);
+
+            clips[0] = fg_file;
+            frames[0] = (int64_t)fg_frame;
+            if (numframes == 2) {
+              clips[1] = bg_file;
+              frames[1] = (int64_t)bg_frame;
+            }
+
+            // MUST do this before locking event_list_mutex, else we can fall into a deadlock
+            eevents = get_easing_events(&nev);
+            pthread_mutex_lock(&mainw->event_list_mutex);
+
+            /// usual function to record a frame event
+            if ((event_list = append_frame_event(mainw->event_list, actual_ticks,
+                                                 numframes, clips, frames)) != NULL) {
+              if (!mainw->event_list) mainw->event_list = event_list;
+              mainw->elist_eom = FALSE;
+              if (eevents || scratch == SCRATCH_JUMP || scratch == SCRATCH_JUMP_NORESYNC
+                  || mainw->scrap_file_size != -1 ||
+                  (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO))) {
+                weed_plant_t *event = get_last_frame_event(mainw->event_list);
+                if (eevents) {
+                  weed_set_voidptr_array(event, LIVES_LEAF_EASING_EVENTS, nev, eevents);
+                  lives_free(eevents);
+                }
+
+                if (scratch == SCRATCH_JUMP || scratch == SCRATCH_JUMP_NORESYNC) {
+                  weed_set_int_value(event, LIVES_LEAF_SCRATCH, scratch);
+                }
+
+                if (mainw->scrap_file_size != -1)
+                  weed_set_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, mainw->scrap_file_size);
+                if (AUD_SRC_INTERNAL || mainw->record_starting) {
+                  if (mainw->rec_aclip != -1) {
+                    if (mainw->rec_aclip == mainw->ascrap_file) {
+                      mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
+                                         (double)(mainw->files[mainw->ascrap_file]->arps
+                                                  * mainw->files[mainw->ascrap_file]->achans *
+                                                  mainw->files[mainw->ascrap_file]->asampsize >> 3);
+                      mainw->rec_avel = 1.;
+
+                    }
+                    if (!mainw->mute) {
+                      weed_event_t *xevent = get_prev_frame_event(event);
+                      if (!xevent) xevent = event;
+                      insert_audio_event_at(xevent, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
+                    }
+                    mainw->rec_aclip = -1;
+                    mainw->record_starting = FALSE;
+		    // *INDENT-OFF*
+		  }}}}
+	    // *INDENT-ON*
+            else mainw->elist_eom = TRUE;
+            pthread_mutex_unlock(&mainw->event_list_mutex);
+            mainw->record_starting = FALSE;
+          }
+        }
+
         mainw->inst_fps = get_inst_fps(FALSE);
         if (prefs->show_player_stats) {
           mainw->fps_measure++;
@@ -3512,91 +3543,93 @@ switch_point:
 #endif
       }}
     // *INDENT-ON*
+#if 0
+}
+#endif
+if (!spare_cycles) get_proc_loads(FALSE);
 
-  if (!spare_cycles) get_proc_loads(FALSE);
-
-  cancelled = THREADVAR(cancelled) = mainw->cancelled;
+cancelled = THREADVAR(cancelled) = mainw->cancelled;
 
 proc_dialog:
 
-  if (visible) {
-    proc_file = THREADVAR(proc_file) = mainw->current_file;
-    sfile = mainw->files[proc_file];
-    if (!mainw->proc_ptr) {
-      // fixes a problem with opening preview with bg generator
-      if (cancelled == CANCEL_NONE) {
-        cancelled = THREADVAR(cancelled) = mainw->cancelled = CANCEL_NO_PROPOGATE;
-      }
-    } else {
-      if (LIVES_IS_SPIN_BUTTON(mainw->framedraw_spinbutton))
-        lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), 1,
-                                    mainw->proc_ptr->frames_done);
-      // set the progress bar %
-      update_progress(visible, proc_file);
+if (visible) {
+  proc_file = THREADVAR(proc_file) = mainw->current_file;
+  sfile = mainw->files[proc_file];
+  if (!mainw->proc_ptr) {
+    // fixes a problem with opening preview with bg generator
+    if (cancelled == CANCEL_NONE) {
+      cancelled = THREADVAR(cancelled) = mainw->cancelled = CANCEL_NO_PROPOGATE;
     }
-  } else proc_file = THREADVAR(proc_file) = mainw->playing_file;
+  } else {
+    if (LIVES_IS_SPIN_BUTTON(mainw->framedraw_spinbutton))
+      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), 1,
+                                  mainw->proc_ptr->frames_done);
+    // set the progress bar %
+    update_progress(visible, proc_file);
+  }
+} else proc_file = THREADVAR(proc_file) = mainw->playing_file;
 
-  cancelled = THREADVAR(cancelled) = mainw->cancelled;
-  if (LIVES_LIKELY(cancelled == CANCEL_NONE)) {
-    if (proc_file != mainw->current_file) return 0;
-    else {
-      lives_rfx_t *xrfx;
+cancelled = THREADVAR(cancelled) = mainw->cancelled;
+if (LIVES_LIKELY(cancelled == CANCEL_NONE)) {
+  if (proc_file != mainw->current_file) return 0;
+  else {
+    lives_rfx_t *xrfx;
 
-      if ((xrfx = (lives_rfx_t *)mainw->vrfx_update) != NULL && fx_dialog[1]) {
-        // the audio thread wants to update the parameter window
-        mainw->vrfx_update = NULL;
-        update_visual_params(xrfx, FALSE);
-      }
-
-      // the audio thread wants to update the parameter scroll(s)
-      if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
-
-      /// we are permitted to switch clips here under very restricitive circumstances, e.g when opening a clip
-      if (mainw->cs_permitted) {
-        mainw->cs_is_permitted = TRUE;
-        old_current_file = mainw->current_file;
-      }
-
-      if (mainw->currticks - last_anim_ticks > ANIM_LIM || mainw->currticks < last_anim_ticks) {
-        // a segfault here can indicate memory corruption in an FX plugin
-        last_anim_ticks = mainw->currticks;
-        lives_widget_context_update();
-      }
-
-      //#define LOAD_ANALYSE_TICKS MILLIONS(10)
-
-      /* if (mainw->currticks - last_ana_ticks > LOAD_ANALYSE_TICKS) { */
-      /*   cpu_pressure = analyse_cpu_stats(); */
-      /*   last_ana_ticks = mainw->currticks; */
-      /* } */
-
-      /// if we did switch clips then cancel the dialog without cancelling the background process
-      if (mainw->cs_is_permitted) {
-        mainw->cs_is_permitted = FALSE;
-        if (mainw->current_file != old_current_file) mainw->cancelled = CANCEL_NO_PROPOGATE;
-      }
-
-      if (!CURRENT_CLIP_IS_VALID) {
-        if (IS_VALID_CLIP(mainw->new_clip)) goto switch_point;
-        mainw->cancelled = CANCEL_INTERNAL_ERROR;
-      }
-
-      if (mainw->cancelled != CANCEL_NONE) {
-        cancel_process(FALSE);
-        return ONE_MILLION + mainw->cancelled;
-      }
-      return 0;
+    if ((xrfx = (lives_rfx_t *)mainw->vrfx_update) != NULL && fx_dialog[1]) {
+      // the audio thread wants to update the parameter window
+      mainw->vrfx_update = NULL;
+      update_visual_params(xrfx, FALSE);
     }
+
+    // the audio thread wants to update the parameter scroll(s)
+    if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
+
+    /// we are permitted to switch clips here under very restricitive circumstances, e.g when opening a clip
+    if (mainw->cs_permitted) {
+      mainw->cs_is_permitted = TRUE;
+      old_current_file = mainw->current_file;
+    }
+
+    if (mainw->currticks - last_anim_ticks > ANIM_LIM || mainw->currticks < last_anim_ticks) {
+      // a segfault here can indicate memory corruption in an FX plugin
+      last_anim_ticks = mainw->currticks;
+      lives_widget_context_update();
+    }
+
+    //#define LOAD_ANALYSE_TICKS MILLIONS(10)
+
+    /* if (mainw->currticks - last_ana_ticks > LOAD_ANALYSE_TICKS) { */
+    /*   cpu_pressure = analyse_cpu_stats(); */
+    /*   last_ana_ticks = mainw->currticks; */
+    /* } */
+
+    /// if we did switch clips then cancel the dialog without cancelling the background process
+    if (mainw->cs_is_permitted) {
+      mainw->cs_is_permitted = FALSE;
+      if (mainw->current_file != old_current_file) mainw->cancelled = CANCEL_NO_PROPOGATE;
+    }
+
+    if (!CURRENT_CLIP_IS_VALID) {
+      if (IS_VALID_CLIP(mainw->new_clip)) goto switch_point;
+      mainw->cancelled = CANCEL_INTERNAL_ERROR;
+    }
+
+    if (mainw->cancelled != CANCEL_NONE) {
+      cancel_process(FALSE);
+      return ONE_MILLION + mainw->cancelled;
+    }
+    return 0;
   }
+}
 
-  if (LIVES_IS_PLAYING) {
-    mainw->jack_can_stop = FALSE;
-  }
+if (LIVES_IS_PLAYING) {
+  mainw->jack_can_stop = FALSE;
+}
 
-  cancel_process(visible);
-  //skipit:
+cancel_process(visible);
+//skipit:
 
-  return 2000000 + mainw->cancelled;
+return 2000000 + mainw->cancelled;
 }
 
 
@@ -3613,4 +3646,25 @@ boolean clip_can_reverse(int clipno) {
     }
   }
   return TRUE;
+}
+
+
+// objects / intents
+
+// TODO - will be part of LIVES_INTENTION_CREATE_INSTANCE (req == subtype)
+lives_object_instance_t *lives_player_inst_create(uint64_t subtype) {
+  lives_object_instance_t *inst = lives_object_instance_create(OBJECT_TYPE_PLAYER, subtype);
+  inst->state = OBJECT_STATE_NORMAL;
+  lives_object_declare_attribute(inst, AUDIO_ATTR_SOURCE, WEED_SEED_INT);
+  lives_object_declare_attribute(inst, AUDIO_ATTR_RATE, WEED_SEED_INT);
+  lives_object_declare_attribute(inst, AUDIO_ATTR_CHANNELS, WEED_SEED_INT);
+  lives_object_declare_attribute(inst, AUDIO_ATTR_SAMPSIZE, WEED_SEED_INT);
+  lives_object_declare_attribute(inst, AUDIO_ATTR_STATUS, WEED_SEED_INT64);
+  lives_object_declare_attribute(inst, AUDIO_ATTR_SIGNED, WEED_SEED_BOOLEAN);
+  lives_object_declare_attribute(inst, AUDIO_ATTR_ENDIAN, WEED_SEED_INT);
+  lives_object_declare_attribute(inst, AUDIO_ATTR_FLOAT, WEED_SEED_BOOLEAN);
+  lives_object_declare_attribute(inst, AUDIO_ATTR_INTERLEAVED, WEED_SEED_BOOLEAN);
+  lives_object_declare_attribute(inst, AUDIO_ATTR_DATA_LENGTH, WEED_SEED_INT64);
+  lives_object_declare_attribute(inst, AUDIO_ATTR_DATA, WEED_SEED_VOIDPTR);
+  return inst;
 }

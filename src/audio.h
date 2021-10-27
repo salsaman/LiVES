@@ -18,14 +18,49 @@ typedef int64_t ssize64_t;
 
 #define AFORM_UNKNOWN 65536
 
-#define AUDIO_PARAM_ARATE WEED_LEAF_AUDIO_RATE
-#define AUDIO_PARAM_ACHANS WEED_LEAF_AUDIO_CHANNELS
-#define AUDIO_PARAM_SAMPSIZE WEED_LEAF_AUDIO_SAMPLE_SIZE
-#define AUDIO_PARAM_SIGNED WEED_LEAF_AUDIO_SIGNED
-#define AUDIO_PARAM_ENDIAN WEED_LEAF_AUDIO_ENDIAN
-#define AUDIO_PARAM_INTERLEAVED "audio_inter"
-#define AUDIO_PARAM_DATA WEED_LEAF_AUDIO_DATA
-#define AUDIO_PARAM_DATA_LENGTH WEED_LEAF_AUDIO_DATA_LENGTH
+typedef struct {
+  int rec_type;
+  int clipno;
+  int fd;
+  ssize_t rec_samples;
+  char *bad_aud_file;
+} arec_details;
+
+#define LIVES_LEAF_AUDIO_SOURCE "audio_source"
+#define AUDIO_ATTR_SOURCE LIVES_LEAF_AUDIO_SOURCE
+#define AUDIO_ATTR_RATE WEED_LEAF_AUDIO_RATE
+#define AUDIO_ATTR_CHANNELS WEED_LEAF_AUDIO_CHANNELS
+#define AUDIO_ATTR_SAMPSIZE WEED_LEAF_AUDIO_SAMPLE_SIZE
+#define AUDIO_ATTR_SIGNED WEED_LEAF_AUDIO_SIGNED
+#define AUDIO_ATTR_ENDIAN WEED_LEAF_AUDIO_ENDIAN
+#define AUDIO_ATTR_FLOAT "is_float"
+#define AUDIO_ATTR_STATUS "current_status"
+#define AUDIO_ATTR_INTERLEAVED "audio_inter"
+#define AUDIO_ATTR_DATA WEED_LEAF_AUDIO_DATA
+#define AUDIO_ATTR_DATA_LENGTH WEED_LEAF_AUDIO_DATA_LENGTH
+
+lives_object_instance_t *get_aplayer_instance(int source);
+
+int lives_aplayer_get_source(lives_object_t *aplayer);
+weed_error_t lives_aplayer_set_source(lives_object_t *aplayer, int source);
+int lives_aplayer_get_arate(lives_object_t *aplayer);
+weed_error_t lives_aplayer_set_arate(lives_object_t *aplayer, int arate);
+int lives_aplayer_get_achans(lives_object_t *aplayer);
+weed_error_t lives_aplayer_set_achans(lives_object_t *aplayer, int achans);
+int lives_aplayer_get_sampsize(lives_object_t *aplayer);
+weed_error_t lives_aplayer_set_sampsize(lives_object_t *aplayer, int asamps);
+boolean lives_aplayer_get_signed(lives_object_t *aplayer);
+weed_error_t lives_aplayer_set_signed(lives_object_t *aplayer, boolean asigned);
+int lives_aplayer_get_endian(lives_object_t *aplayer);
+weed_error_t lives_aplayer_set_endian(lives_object_t *aplayer, int aendian);
+boolean lives_aplayer_get_float(lives_object_t *aplayer);
+weed_error_t lives_aplayer_set_float(lives_object_t *aplayer, boolean is_float);
+int64_t lives_aplayer_get_data_len(lives_object_t *aplayer);
+weed_error_t lives_aplayer_set_data_len(lives_object_t *aplayer, int64_t alength);
+boolean lives_aplayer_get_interleaved(lives_object_t *aplayer);
+weed_error_t lives_aplayer_set_interleaved(lives_object_t *aplayer, boolean ainter);
+void *lives_aplayer_get_data(lives_object_t *aplayer);
+weed_error_t lives_aplayer_set_data(lives_object_t *aplayer, void *data);
 
 #define AUD_SRC_EXTERNAL (prefs->audio_src == AUDIO_SRC_EXT)
 #define AUD_SRC_INTERNAL (prefs->audio_src == AUDIO_SRC_INT)
@@ -54,7 +89,8 @@ typedef int64_t ssize64_t;
 // for afbuffer
 #define ABUF_ARENA_SIZE 768000
 
-#define AREC_BUF_SIZE 262144  ///< 256 * 1024
+//#define AREC_BUF_SIZE 262144  ///< 256 * 1024
+#define AREC_BUF_SIZE 65536
 
 /// max number of player channels
 #define MAX_ACHANS 2
@@ -76,8 +112,10 @@ typedef int64_t ssize64_t;
 /// used when we have an event_list (i.e multitrack or previewing a recording in CE)
 #define XSAMPLES 393216
 
-#define AUD_WRITE_CHECK 0xFFFFFFFFF4000000 ///< after recording this many bytes we check disk space (default 128MB)
+#define AUD_WRITE_CHECK 0xFFFFFFFFFC000000 ///< after recording this many bytes we check disk space (default 128MB)
 
+// setting this ensures that the original audio data in the layer is not freed after fx processing
+// the data is simply replaced instead
 #define WEED_LEAF_HOST_KEEP_ADATA "keep_adata" /// set to WEED_TRUE in layer if doing zero-copy audio processing
 
 /////////////////////////////////////
@@ -248,28 +286,24 @@ typedef enum {
   RECA_MIXED
 } lives_rec_audio_type_t;
 
-/* #define ASINK_ERROR -1 */
-/* #define ASINK_NONE 0 */
-/* #define ASINK_READY 1 */
-/* #define ASINK_WAITING 2 */
-/* #define ASINK_RUNNING 3 */
-/* #define ASINK_PAUSED 4 */
-/* #define ASINK_BUSY 5 */
-/* #define ASINK_FINISHED 6 */
+#define APLAYER_STATUS_READY 1
+#define APLAYER_STATUS_RESYNC 2
+#define APLAYER_STATUS_RUNNING 3
 
-/* tyepdef struct { */
-/*   int state; // e.g ASINK_RUNNING */
-/*   int  */
-/*   int buff_fd; */
-/*   int clipno; */
-/*   int achans; */
-/*   int arate; */
-/*   int asamps; */
-/*   int signed_endian; */
-/*   size_t fill_pos; */
-/*   size_t max_fill; */
-/* } lives_audio_sink_t; */
+#define APLAYER_STATUS_PROCESSING	(1ul << 2)
 
+#define APLAYER_STATUS_PREP		(1ul << 5)
+
+#define APLAYER_STATUS_SILENT		(1ul << 16)
+#define APLAYER_STATUS_PAUSED		(1ul << 17)
+#define APLAYER_STATUS_CORKED		(1ul << 18)
+
+#define APLAYER_STATUS_ERROR		(1ul << 32)
+#define APLAYER_STATUS_DISCONNECTED	(1ul << 33)
+#define APLAYER_STATUS_BLOCKED		(1ul << 34)
+
+void audio_analyser_start(int source);
+void audio_analyser_end(int source);
 
 #ifdef ENABLE_JACK
 void jack_rec_audio_to_clip(int fileno, int oldfileno,
@@ -285,7 +319,8 @@ void pulse_rec_audio_end(boolean close_fd);
 
 void start_audio_rec(void);
 
-void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, boolean exact);
+void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list,
+                       weed_plant_t *st_event, boolean exact);
 void wake_audio_thread(void);
 
 int get_aplay_clipno(void);

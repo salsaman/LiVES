@@ -75,7 +75,7 @@ enum {
   MATH_INTENTION_DEV_FROM_MEAN
 };
 
-const lives_object_template_t *maths_object_with_subtype(uint64_t subtype);
+const lives_object_instance_t *maths_object_with_subtype(uint64_t subtype);
 lives_object_transform_t *math_transform_for_intent(lives_object_t *obj, lives_intention intent);
 
 // to init, call twice with newval NULL, 1st call sets nvals from idx, second sets maxsize

@@ -3194,6 +3194,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
     layer = layers[out_tracks[i] + nbtracks];
     if (weed_plant_has_leaf(channel, WEED_LEAF_AUDIO_DATA)) {
       /// free any old audio data in the layer, unless it's INPLACE
+      /// or KEEP_ADATA is set (i.e readonly input)
       if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, NULL) == WEED_FALSE
           && weed_get_boolean_value(layer, WEED_LEAF_HOST_KEEP_ADATA, NULL) == WEED_FALSE) {
         if (retval == FILTER_ERROR_BUSY) {
@@ -4689,10 +4690,8 @@ void lives_monitor_free(void *p) {
 
 weed_error_t weed_leaf_set_monitor(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_size_t num_elems,
                                    void *values) {
-  weed_error_t err;
-  err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
+  weed_error_t err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
   g_print("PL setting %s in type %d\n", key, weed_plant_get_type(plant));
-
   if (WEED_PLANT_IS_GUI(plant) && !strcmp(key, WEED_LEAF_FLAGS)) g_print("Err was %d\n", err);
   return err;
 }
@@ -11753,15 +11752,21 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
 }
 
 
-static int32_t weed_plant_mutate(weed_plantptr_t plant, int32_t newtype) {
+static pthread_mutex_t mutate_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+LIVES_GLOBAL_INLINE int32_t weed_plant_mutate(weed_plantptr_t plant, int32_t newtype) {
   // beware of mutant plants....
-  int32_t flags = weed_leaf_get_flags(plant, WEED_LEAF_TYPE);
+  int32_t flags;
+  pthread_mutex_lock(&mutate_mutex);
+  flags = weed_leaf_get_flags(plant, WEED_LEAF_TYPE);
   // clear the default flags to allow the "type" leaf to be altered
   weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags & ~(WEED_FLAG_IMMUTABLE));
-  weed_set_int_value(plant, WEED_LEAF_TYPE, newtype);
+  _weed_leaf_set(plant, WEED_LEAF_TYPE, WEED_SEED_INT, 1, &newtype);
+  //weed_set_int_value(plant, WEED_LEAF_TYPE, newtype);
   // lock the "type" leaf again so it cannot be altered accidentally
   weed_leaf_set_flags(plant, WEED_LEAF_TYPE, WEED_FLAG_IMMUTABLE);
-  return weed_plant_get_type(plant);
+  pthread_mutex_unlock(&mutate_mutex);
+  return newtype;
 }
 
 

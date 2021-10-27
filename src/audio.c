@@ -17,6 +17,27 @@ static boolean storedfdsset = FALSE;
 static const int std_arates[] =
 {8000, 11025, 22050, 32000, 44100, 48000, 88200, 96000, 128000, 256000, 0};
 
+static arec_details *rec_ext_dets = NULL;
+static arec_details *aud_ext_analyse_dets = NULL;
+
+static void *write_aud_data_cb(lives_object_t *aplayer, void *xdets);
+
+
+LIVES_GLOBAL_INLINE lives_object_instance_t *get_aplayer_instance(int source) {
+  lives_object_instance_t *aplayer = NULL;
+  if (source == AUDIO_SRC_EXT) {
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed_read)
+      aplayer = mainw->pulsed_read->inst;
+#endif
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd_read)
+      aplayer = mainw->jackd_read->inst;
+#endif
+  }
+  return aplayer;
+}
+
 
 LiVESList *get_std_arates(void) {
   LiVESList *list = NULL;
@@ -27,7 +48,6 @@ LiVESList *get_std_arates(void) {
   }
   return list;
 }
-
 
 int find_standard_arate(int rate) {
   int mindist, minval = 0, dist, arate;
@@ -46,7 +66,7 @@ int find_standard_arate(int rate) {
 }
 
 
-static void audio_reset_stored_fnames(void) {
+LIVES_LOCAL_INLINE void audio_reset_stored_fnames(void) {
   for (int i = 0; i < NSTOREDFDS; i++) {
     storedfnames[i] = NULL;
     storedfds[i] = -1;
@@ -722,7 +742,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
   }
 
   // take care of rounding errors
-  src_end = src + tbytes / 2 - nSrcChannels;
+  src_end = src + tbytes / 2;
 
   if ((off_t)((fabs(scale) * (double)nsamples)) * nSrcChannels * 2 > tbytes)
     scale = scale > 0. ? ((double)(tbytes  / nSrcChannels / 2)) / (double)nsamples
@@ -1098,6 +1118,8 @@ static size64_t sample_move_float_float_arena(float *dst, float *src, size_t off
 
 #define CLIP_DECAY ((double)16535. / (double)16536.)
 
+#define CLIP_LIMIT .95
+
 /**
    @brief convert float samples to interleaved int
    interleaved is for the float buffer; output int is always interleaved
@@ -1127,23 +1149,23 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
   unsigned char *hbuffc = (unsigned char *)holding_buff;
   short val[chans];
   unsigned short valu[chans];
-  static float clip = 1.0;
+  static float clip = CLIP_LIMIT;
   float ovalf[chans], valf[chans], fval;
   float volx = vol, ovolx = -1.;
   boolean checklim = FALSE;
 
   asamps >>= 3;
 
-  if (clip > 1.0) checklim = TRUE;
+  if (clip > CLIP_LIMIT) checklim = TRUE;
 
   while ((nsamps * chans - frames_out) > 0) {
     if (checklim) {
-      if (clip > 1.0)  {
+      if (clip > CLIP_LIMIT)  {
         clip = clip * CLIP_DECAY + add;
         volx = vol / clip;
       } else {
         checklim = FALSE;
-        clip = 1.0;
+        clip = CLIP_LIMIT;
         volx = vol;
       }
     }
@@ -1155,13 +1177,14 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
           checklim = TRUE;
           volx = (vol / clip);
           frames_out -= i;
+          offs -= i;
           i = -1;
           continue;
         }
       }
       if (volx != ovolx || coffs != lcoffs) {
         valf[i] = ovalf[i] * volx;
-        if (valf[i] > vol) valf[i] = vol;
+        if (valf[i] > vol * CLIP_LIMIT) valf[i] = vol * CLIP_LIMIT;
         else if (valf[i] < -vol) valf[i] = -vol;
         ovolx = volx;
         val[i] = (short)(valf[i] * (valf[i] > 0. ? SAMPLE_MAX_16BIT_P : SAMPLE_MAX_16BIT_N));
@@ -1194,7 +1217,8 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
   coffs_d -= (double)coffs;
   if (prefs->show_dev_opts) {
     if (frames_out != nsamps * chans) {
-      char *msg = lives_strdup_printf("audio float -> int: buffer mismatch of %ld samples\n", frames_out - nsamps * chans);
+      char *msg = lives_strdup_printf("audio float -> int: buffer mismatch of %ld samples\n",
+                                      frames_out - nsamps * chans);
       LIVES_WARN(msg);
       lives_free(msg);
     }
@@ -1699,6 +1723,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     g_print("writing to %s\n", outfilename);
 #endif
     out_fd = lives_open_buffered_writer(outfilename, S_IRUSR | S_IWUSR, FALSE);
+    lives_write_buffered_set_ringmode(out_fd);
     lives_free(outfilename);
 
     if (out_fd < 0) {
@@ -2006,7 +2031,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     blocksize = render_block_size; ///< this is our chunk size
 
     for (i = 0; i < xsamples; i += render_block_size) {
-      if (i + render_block_size > xsamples) blocksize = xsamples - i;
+      if (i + blocksize > xsamples) blocksize = xsamples - i;
 
       for (track = 0; track < nfiles; track++) {
         /* if (use_live_chvols) { */
@@ -2157,7 +2182,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   if (to_file > -1) {
 #ifdef DEBUG_ARENDER
-    g_print("fs is %ld %s\n", get_file_size(out_fd, TRUE), cfile->handle);
+    g_print("fs is %ld %s\n", get_file_size(out_fd, FALSE), cfile->handle);
 #endif
     lives_close_buffered(out_fd);
   }
@@ -2354,7 +2379,7 @@ void preview_aud_vol(void) {
 }
 
 
-boolean adjust_clip_volume(int fileno, float newvol, boolean make_backup) {
+LIVES_GLOBAL_INLINE boolean adjust_clip_volume(int fileno, float newvol, boolean make_backup) {
   double dvol = (double)newvol;
   if (make_backup) {
     char *com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, cfile->handle);
@@ -2398,7 +2423,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     char *outfilename = lives_get_audio_file_name(fileno);
     do {
       retval = 0;
-      mainw->aud_rec_fd = lives_open_buffered_writer(outfilename, DEF_FILE_PERMS, FALSE);
+      mainw->aud_rec_fd = lives_create_buffered_nosync(outfilename, DEF_FILE_PERMS);
       if (mainw->aud_rec_fd < 0) {
         retval = do_write_failed_error_s_with_retry(outfilename, lives_strerror(errno));
         if (retval == LIVES_RESPONSE_CANCEL) {
@@ -2410,6 +2435,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     lives_free(outfilename);
     if (fileno == mainw->ascrap_file) mainw->files[mainw->ascrap_file]->cb_src = mainw->aud_rec_fd;
     lives_write_buffered_set_custom_size(mainw->aud_rec_fd, AREC_BUF_SIZE);
+    lives_write_buffered_set_ringmode(mainw->aud_rec_fd);
   }
 
   if (rec_type == RECA_GENERATED) {
@@ -2503,6 +2529,23 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 void jack_rec_audio_end(boolean close_fd) {
   // recording ended
 
+  if (rec_ext_dets) {
+    lives_object_instance_t *aplayer = NULL;
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed_read)
+      aplayer = mainw->pulsed_read->inst;
+#endif
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd_read)
+      aplayer = mainw->jackd_read->inst;
+#endif
+    if (aplayer)
+      lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, write_aud_data_cb, rec_ext_dets);
+    if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
+    lives_free(rec_ext_dets);
+    rec_ext_dets = NULL;
+  }
+
   pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
   mainw->jackd_read->in_use = FALSE;
   mainw->jackd_read->playing_file = -1;
@@ -2524,7 +2567,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
   int retval;
 
   if (fileno == -1) {
-    // just activate the reader (?)
+    // just activate the reader
     if (!mainw->pulsed_read) {
       mainw->pulsed_read = pulse_get_driver(FALSE);
       mainw->pulsed_read->playing_file = -1;
@@ -2542,7 +2585,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     char *outfilename = lives_get_audio_file_name(fileno);
     do {
       retval = 0;
-      mainw->aud_rec_fd = lives_open_buffered_writer(outfilename, DEF_FILE_PERMS, FALSE);
+      mainw->aud_rec_fd = lives_create_buffered_nosync(outfilename, DEF_FILE_PERMS);
       if (mainw->aud_rec_fd < 0) {
         retval = do_write_failed_error_s_with_retry(outfilename, lives_strerror(errno));
         if (retval == LIVES_RESPONSE_CANCEL) {
@@ -2553,7 +2596,8 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     } while (retval == LIVES_RESPONSE_RETRY);
     lives_free(outfilename);
     if (fileno == mainw->ascrap_file) mainw->files[mainw->ascrap_file]->cb_src = mainw->aud_rec_fd;
-    lives_write_buffered_set_custom_size(mainw->aud_rec_fd, AREC_BUF_SIZE);
+    //lives_write_buffered_set_custom_size(mainw->aud_rec_fd, AREC_BUF_SIZE);
+    lives_write_buffered_set_ringmode(mainw->aud_rec_fd);
   }
 
   if (rec_type == RECA_GENERATED) {
@@ -2648,7 +2692,22 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
 void pulse_rec_audio_end(boolean close_fd) {
   // recording ended
 
-  // stop recording
+  if (rec_ext_dets) {
+    lives_object_instance_t *aplayer = NULL;
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed_read)
+      aplayer = mainw->pulsed_read->inst;
+#endif
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd_read)
+      aplayer = mainw->jackd_read->inst;
+#endif
+    if (aplayer)
+      lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, write_aud_data_cb, rec_ext_dets);
+    if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
+    lives_free(rec_ext_dets);
+    rec_ext_dets = NULL;
+  }
 
   if (mainw->pulsed_read) {
     pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
@@ -2665,6 +2724,219 @@ void pulse_rec_audio_end(boolean close_fd) {
 }
 
 #endif
+
+
+static void *write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
+  arec_details *dets = (arec_details *)xdets;
+  lives_clip_t *ofile;
+  void *holding_buff = NULL, *out_buff;
+  size_t nframes, frames_out, target_bytes, rbytes;
+  ssize_t actual_bytes;
+  float out_scale;
+  int in_achans, out_achans;
+  int in_arate, out_arate;
+  int in_sampsize, out_sampsize;
+  int swap_sign = 0;
+  boolean in_float, out_float = FALSE;
+  boolean in_interleaved, out_interleaved = TRUE;
+  boolean out_unsigned, in_unsigned;
+  boolean rev_endian = FALSE;
+
+  if (dets->rec_type == RECA_EXTERNAL &&
+      (lives_aplayer_get_source(aplayer) != AUDIO_SRC_EXT
+       || mainw->record_paused))
+    return NULL;
+
+  if (dets->bad_aud_file) return NULL;
+  if (dets->rec_samples == 0) return NULL;
+  if (!IS_VALID_CLIP(dets->clipno)) return NULL;
+  nframes = lives_aplayer_get_data_len(aplayer);
+  if (nframes == 0) return NULL;
+
+  in_float = lives_aplayer_get_float(aplayer);
+  in_achans = lives_aplayer_get_achans(aplayer);
+  in_arate = lives_aplayer_get_arate(aplayer);
+  in_sampsize = lives_aplayer_get_sampsize(aplayer) >> 3;
+  in_unsigned = !lives_aplayer_get_signed(aplayer);
+  in_interleaved = lives_aplayer_get_interleaved(aplayer);
+
+  ofile = mainw->files[dets->clipno];
+  out_sampsize = ofile->asampsize >> 3;
+  out_achans = ofile->achans;
+  out_arate = ofile->arate;
+  out_unsigned = ofile->signed_endian & AFORM_UNSIGNED;
+
+  if (prefs->audio_opts & AUDIO_OPTS_AUX_RECORD) in_achans <<= 1;
+
+  out_scale = out_arate / in_arate;
+  frames_out = (int64_t)((double)nframes / out_scale + .49999);
+
+  if (out_sampsize == 2) {
+    int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN);
+    if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN))
+        || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
+      rev_endian = TRUE;
+  }
+
+  if (in_float) {
+    holding_buff = lives_calloc(frames_out, out_achans * out_sampsize);
+    if (!holding_buff) return NULL;
+    if (!in_interleaved) {
+      float **in_buffer = (float **)lives_aplayer_get_data(aplayer);
+      if (!out_float) {
+        frames_out = sample_move_float_int(holding_buff, in_buffer, frames_out, out_scale, in_achans,
+                                           out_sampsize * 8, out_unsigned, rev_endian, FALSE, 1.);
+        rev_endian = FALSE;
+        in_unsigned = FALSE;
+        in_sampsize = 2;
+      } else frames_out = float_interleave(holding_buff, in_buffer, frames_out, out_scale, in_achans, 1.);
+      out_scale = 1.;
+    } else {
+      /// TODO
+    }
+    frames_out /= in_achans;
+  }
+
+  if (dets->rec_samples > 0) {
+    if (frames_out > dets->rec_samples) frames_out = mainw->rec_samples;
+    dets->rec_samples -= frames_out;
+  }
+
+  rbytes = frames_out * in_achans * in_sampsize;
+  frames_out = (size_t)((double)(rbytes / out_sampsize / out_achans) / (double)out_scale);
+  target_bytes = frames_out * out_achans * out_sampsize;
+
+  out_buff = lives_calloc(target_bytes, 4);
+
+  if (!out_buff) {
+    if (holding_buff) lives_free(holding_buff);
+    return NULL;
+  }
+  if (!holding_buff) holding_buff = lives_aplayer_get_data(aplayer);
+
+  if (!in_unsigned && out_unsigned) swap_sign = SWAP_S_TO_U;
+  else if (in_unsigned && !out_unsigned) swap_sign = SWAP_U_TO_S;
+
+  if (out_sampsize == 2) {
+    sample_move_d16_d16((short *)out_buff, holding_buff, frames_out, target_bytes, out_scale,
+                        out_achans, in_achans, rev_endian ? SWAP_L_TO_X : 0, swap_sign);
+  } else {
+    sample_move_d16_d8((uint8_t *)out_buff, holding_buff, frames_out, target_bytes, out_scale,
+                       out_achans, in_achans, swap_sign);
+  }
+  g_print("xxsamp is %d\n", ((short *)out_buff)[0]);
+
+  g_print("SWSSS222 is %ld\n", target_bytes);
+  actual_bytes = lives_write_buffered(dets->fd, out_buff, target_bytes, TRUE);
+
+  if (actual_bytes > 0) {
+    //uint64_t chk = (mainw->aud_data_written & AUD_WRITE_CHECK);
+
+    mainw->aud_data_written += actual_bytes;
+
+    if (dets->clipno == mainw->ascrap_file) add_to_ascrap_mb(actual_bytes);
+    //check_for_disk_space((mainw->aud_data_written & AUD_WRITE_CHECK) != chk);
+    ofile->aseek_pos += actual_bytes;
+  }
+  if (actual_bytes < target_bytes) dets->bad_aud_file = filename_from_fd(NULL, mainw->aud_rec_fd);
+
+  //if (holding_buff != data)
+  if (holding_buff != lives_aplayer_get_data(aplayer))
+    lives_free(holding_buff);
+  lives_free(out_buff);
+
+  //return actual_bytes;
+  return NULL;
+}
+
+
+static void *analyse_audio_rt(lives_object_t *aplayer, void *xdets) {
+  arec_details *dets = (arec_details *)xdets;
+  size_t nframes;
+  int in_arate, in_achans;
+  boolean is_float;
+
+  if (!LIVES_IS_PLAYING || (mainw->event_list && !mainw->record)) return NULL;
+
+  if (dets->rec_type == RECA_EXTERNAL
+      && (!AUD_SRC_EXTERNAL || lives_aplayer_get_source(aplayer) != AUDIO_SRC_EXT))
+    return NULL;
+
+  nframes = lives_aplayer_get_data_len(aplayer);
+  if (nframes == 0) return NULL;
+
+  in_achans = lives_aplayer_get_achans(aplayer);
+  in_arate = lives_aplayer_get_arate(aplayer);
+  is_float = lives_aplayer_get_float(aplayer);
+
+  if (has_audio_filters(AF_TYPE_A)) { // AF_TYPE_A are Analyser filters (audio in but no audio channels out)
+    ticks_t tc = mainw->currticks;
+    weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+    float **in_buffer;
+    if (is_float) in_buffer = (float **)lives_aplayer_get_data(aplayer);
+    else {
+      // TODO - in_asamps != 2
+      short *data = (short *)lives_aplayer_get_data(aplayer);
+      in_buffer = (float **)lives_calloc(in_achans, sizeof(float *));
+      for (int i = 0; i < in_achans; i++) {
+        in_buffer[i] = (float *)lives_calloc(nframes * 2, sizeof(float));
+        sample_move_d16_float(in_buffer[i], data + i, nframes, in_achans, FALSE, FALSE, 1.0);
+      }
+    }
+
+    if (mainw->afbuffer && AUD_SRC_EXTERNAL) {
+      // if we have audio triggered gens., push audio to it
+      // or if we want loopback to player
+      for (int i = 0; i < in_achans; i++) {
+        append_to_audio_bufferf(in_buffer[i], nframes, (i == in_achans - 1) ? -i - 1 : i + 1);
+      }
+    }
+
+    // apply any audio effects with in_channels and no out_channels
+    weed_layer_set_audio_data(layer, in_buffer, in_arate, in_achans, nframes);
+    weed_apply_audio_effects_rt(layer, tc, TRUE, TRUE);
+    weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
+    weed_layer_free(layer);
+
+    if (!is_float) {
+      for (int i = 0; i < in_achans; i++) {
+        lives_free(in_buffer[i]);
+      }
+      lives_free(in_buffer);
+    }
+  }
+  return NULL;
+}
+
+
+void audio_analyser_start(int source) {
+  if (source == AUDIO_SRC_EXT) {
+    if (!aud_ext_analyse_dets) {
+      arec_details *dets = (arec_details *)lives_calloc(1, sizeof(arec_details));
+      lives_object_instance_t *aplayer = get_aplayer_instance(source);
+      dets->rec_type = RECA_EXTERNAL;
+      dets->clipno = -1;
+      dets->fd = -1;
+      dets->rec_samples = -1;
+      aud_ext_analyse_dets = dets;
+      lives_hook_append(aplayer->hook_closures, DATA_READY_HOOK, HOOK_CB_ASYNC_JOIN,
+                        analyse_audio_rt, dets);
+    }
+  }
+}
+
+
+void audio_analyser_end(int source) {
+  if (source == AUDIO_SRC_EXT) {
+    lives_object_instance_t *aplayer = get_aplayer_instance(source);
+    if (aud_ext_analyse_dets) {
+      lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, analyse_audio_rt, aud_ext_analyse_dets);
+      if (aud_ext_analyse_dets->bad_aud_file) lives_free(aud_ext_analyse_dets->bad_aud_file);
+      lives_free(aud_ext_analyse_dets);
+      aud_ext_analyse_dets = NULL;
+    }
+  }
+}
 
 
 void start_audio_rec(void) {
@@ -2740,6 +3012,27 @@ void start_audio_rec(void) {
         pulse_get_rec_avals(mainw->pulsed);
       }
 #endif
+    }
+  }
+  if (AUD_SRC_EXTERNAL) {
+    lives_object_instance_t *aplayer = NULL;
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed_read)
+      aplayer = mainw->pulsed_read->inst;
+#endif
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd_read)
+      aplayer = mainw->jackd_read->inst;
+#endif
+    if (aplayer) {
+      arec_details *dets = (arec_details *)lives_calloc(1, sizeof(arec_details));
+      dets->rec_type = RECA_EXTERNAL;
+      dets->clipno = mainw->ascrap_file;
+      dets->fd = mainw->aud_rec_fd;
+      dets->rec_samples = -1;
+      rec_ext_dets = dets;
+      lives_hook_append(aplayer->hook_closures, DATA_READY_HOOK, HOOK_CB_ASYNC_JOIN,
+                        write_aud_data_cb, dets);
     }
   }
 }
@@ -4666,92 +4959,106 @@ static void nullaudio_set_rec_avals(boolean is_forward) {
 
 #endif
 
-//////////// intents //////
+//////////// objects / intents //////
+
+int lives_aplayer_get_source(lives_object_t *aplayer) {
+  weed_param_t *param = lives_attr_from_object(aplayer, AUDIO_ATTR_SOURCE);
+  return weed_param_get_value_int(param);
+}
+
+weed_error_t lives_aplayer_set_source(lives_object_t *aplayer, int source) {
+  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_SOURCE, source);
+}
 
 int lives_aplayer_get_arate(lives_object_t *aplayer) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_ARATE);
+  weed_param_t *param = lives_attr_from_object(aplayer, AUDIO_ATTR_RATE);
   return weed_param_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_arate(lives_object_t *aplayer, int arate) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_ARATE);
-  return weed_param_set_value_int(param, arate);
+  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_RATE, arate);
 }
 
 int lives_aplayer_get_achans(lives_object_t *aplayer) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_ACHANS);
+  weed_param_t *param = lives_attr_from_object(aplayer, AUDIO_ATTR_CHANNELS);
   return weed_param_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_achans(lives_object_t *aplayer, int achans) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_ACHANS);
-  return weed_param_set_value_int(param, achans);
+  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_CHANNELS, achans);
 }
 
 int lives_aplayer_get_sampsize(lives_object_t *aplayer) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_SAMPSIZE);
+  weed_param_t *param = lives_attr_from_object(aplayer, AUDIO_ATTR_SAMPSIZE);
   return weed_param_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_sampsize(lives_object_t *aplayer, int asamps) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_SAMPSIZE);
-  return weed_param_set_value_int(param, asamps);
+  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_SAMPSIZE, asamps);
 }
 
 boolean lives_aplayer_get_signed(lives_object_t *aplayer) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_SIGNED);
-  return weed_param_get_value_int(param);
+  weed_param_t *param = lives_attr_from_object(aplayer, AUDIO_ATTR_SIGNED);
+  return weed_param_get_value_boolean(param);
 }
 
 weed_error_t lives_aplayer_set_signed(lives_object_t *aplayer, boolean asigned) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_SIGNED);
-  return weed_param_set_value_int(param, asigned);
+  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_SIGNED, asigned);
 }
 
 int lives_aplayer_get_endian(lives_object_t *aplayer) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_ENDIAN);
+  weed_param_t *param = lives_attr_from_object(aplayer, AUDIO_ATTR_ENDIAN);
   return weed_param_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_endian(lives_object_t *aplayer, int aendian) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_ENDIAN);
-  return weed_param_set_value_int(param, aendian);
+  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_ENDIAN, aendian);
+}
+
+boolean lives_aplayer_get_float(lives_object_t *aplayer) {
+  weed_param_t *param = lives_attr_from_object(aplayer, AUDIO_ATTR_FLOAT);
+  return weed_param_get_value_boolean(param);
+}
+
+weed_error_t lives_aplayer_set_float(lives_object_t *aplayer, boolean is_float) {
+  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_FLOAT, is_float);
 }
 
 int64_t lives_aplayer_get_data_len(lives_object_t *aplayer) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_DATA_LENGTH);
+  weed_param_t *param = lives_attr_from_object(aplayer, AUDIO_ATTR_DATA_LENGTH);
   return weed_param_get_value_int64(param);
 }
 
 weed_error_t lives_aplayer_set_data_len(lives_object_t *aplayer, int64_t alength) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_DATA_LENGTH);
-  return weed_param_set_value_int64(param, alength);
+  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_DATA_LENGTH, alength);
 }
 
 boolean lives_aplayer_get_interleaved(lives_object_t *aplayer) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_INTERLEAVED);
+  weed_param_t *param = lives_attr_from_object(aplayer, AUDIO_ATTR_INTERLEAVED);
   return weed_param_get_value_boolean(param);
 }
 
 weed_error_t lives_aplayer_set_interleaved(lives_object_t *aplayer, boolean ainter) {
-  weed_param_t *param = weed_param_from_object(aplayer, AUDIO_PARAM_INTERLEAVED);
-  return weed_param_set_value_boolean(param, ainter);
+  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_INTERLEAVED, ainter);
 }
 
-void *lives_aplayer_get_audio_data(lives_object_t *aplayer) {
-  weed_param_t *parami = weed_param_from_object(aplayer, AUDIO_PARAM_INTERLEAVED);
-  weed_param_t *paramd = weed_param_from_object(aplayer, AUDIO_PARAM_DATA);
-  boolean inter =  weed_param_get_value_boolean(parami);
-  if (inter) return weed_get_voidptr_value(paramd, WEED_LEAF_AUDIO_DATA, NULL);
-  return weed_get_voidptr_array(paramd, WEED_LEAF_AUDIO_DATA, NULL);
+void *lives_aplayer_get_data(lives_object_t *aplayer) {
+  boolean inter = lives_aplayer_get_interleaved(aplayer);
+  weed_param_t *paramd = lives_attr_from_object(aplayer, AUDIO_ATTR_DATA);
+  if (inter) return weed_get_voidptr_value(paramd, WEED_LEAF_VALUE, NULL);
+  return weed_get_voidptr_array(paramd, WEED_LEAF_VALUE, NULL);
 }
 
-weed_error_t lives_aplayer_set_audio_data(lives_object_t *aplayer, void *data) {
-  weed_param_t *parami = weed_param_from_object(aplayer, AUDIO_PARAM_INTERLEAVED);
-  weed_param_t *paramd = weed_param_from_object(aplayer, AUDIO_PARAM_DATA);
-  weed_param_t *paramc = weed_param_from_object(aplayer, AUDIO_PARAM_ACHANS);
-  int nchans = weed_param_get_value_int(paramc);
-  boolean inter =  weed_param_get_value_boolean(parami);
-  if (inter) return weed_set_voidptr_value(paramd, WEED_LEAF_AUDIO_DATA, data);
-  else return weed_set_voidptr_array(paramd, WEED_LEAF_AUDIO_DATA, nchans, data);
+weed_error_t lives_aplayer_set_data(lives_object_t *aplayer, void *data) {
+  int nchans = lives_aplayer_get_achans(aplayer);
+  if (nchans) {
+    boolean inter = lives_aplayer_get_interleaved(aplayer);
+    if (inter) return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_DATA, data);
+    else {
+      // TODO - set_attribute_array
+      weed_param_t *paramd = lives_attr_from_object(aplayer, AUDIO_ATTR_DATA);
+      return weed_set_voidptr_array(paramd, WEED_LEAF_VALUE, nchans, data);
+    }
+  }
+  return WEED_SUCCESS;
 }

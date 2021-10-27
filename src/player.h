@@ -10,11 +10,11 @@
 #include <sys/time.h>
 struct timeval tv;
 
-const lives_object_template_t player_template;
-
-#define OBJECT_TYPE_PLAYER		IMkType("obj.PLAY")
+#define OBJECT_TYPE_PLAYER	IMkType("obj.PLAY")
 #define PLAYER_SUBTYPE_VIDEO	IMkType("PLAY.vid")
 #define PLAYER_SUBTYPE_AUDIO	IMkType("PLAY.aud")
+
+lives_object_instance_t *lives_player_inst_create(uint64_t subtype);
 
 #define LIVES_IS_IDLE (lives_get_status() == LIVES_STATUS_IDLE)
 

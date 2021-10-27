@@ -474,6 +474,13 @@ void call_funcsig(lives_proc_thread_t info) {
     default: CALL_VOID_3(plantptr, voidptr, int64); break;
     } break;
   }
+  case FUNCSIG_INT_VOIDP_INT64: {
+    int p0; void *p1; int64_t p2;
+    switch (ret_type) {
+    case WEED_SEED_INT64: CALL_3(int64, int, voidptr, int64); break;
+    default: CALL_VOID_3(int, voidptr, int64); break;
+    } break;
+  }
   case FUNCSIG_STRING_STRING_VOIDP_INT: {
     char *p0, *p1; void *p2; int p3;
     switch (ret_type) {
@@ -1290,7 +1297,7 @@ LIVES_GLOBAL_INLINE uint64_t lives_thread_done(lives_thread_t work) {
 
 LIVES_GLOBAL_INLINE void lives_hook_append(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func,
     livespointer data) {
-  lives_closure_t *closure = (lives_closure_t *)lives_malloc(sizeof(lives_closure_t));
+  lives_closure_t *closure = (lives_closure_t *)lives_calloc(1, sizeof(lives_closure_t));
   closure->func = func;
   closure->data = data;
   closure->flags = flags;
@@ -1299,7 +1306,7 @@ LIVES_GLOBAL_INLINE void lives_hook_append(LiVESList **hooks, int type, uint64_t
 
 LIVES_GLOBAL_INLINE void lives_hook_prepend(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func,
     livespointer data) {
-  lives_closure_t *closure = (lives_closure_t *)lives_malloc(sizeof(lives_closure_t));
+  lives_closure_t *closure = (lives_closure_t *)lives_calloc(1, sizeof(lives_closure_t));
   closure->func = func;
   closure->data = data;
   closure->flags = flags;
@@ -1310,6 +1317,7 @@ LIVES_GLOBAL_INLINE void lives_hooks_trigger(lives_object_t *obj, LiVESList **xl
   LiVESList *list = xlist[type];
   for (; list; list = list->next) {
     lives_closure_t *closure = (lives_closure_t *)list->data;
+    if (closure->flags & HOOK_BLOCKED) continue;
     if (closure->flags & HOOK_CB_ASYNC_JOIN) {
       closure->tinfo = lives_proc_thread_create(LIVES_THRDATTR_NO_GUI | LIVES_THRDATTR_PRIORITY,
                        (lives_funcptr_t)closure->func, WEED_SEED_VOIDPTR,
@@ -1323,17 +1331,20 @@ LIVES_GLOBAL_INLINE void lives_hooks_trigger(lives_object_t *obj, LiVESList **xl
 }
 
 LIVES_GLOBAL_INLINE void lives_hook_remove(LiVESList **xlist, int type, hook_funcptr_t func, livespointer data) {
+  // do not call for HOOK_CB_SINGLE_SHOT (TODO)
   LiVESList *list = xlist[type];
   for (; list; list = list->next) {
     lives_closure_t *closure = (lives_closure_t *)list->data;
     if (closure->func == func && closure->data == data) {
+      closure->flags |= HOOK_BLOCKED;
+      lives_nanosleep_until_zero(closure->tinfo);
       xlist[type] = lives_list_remove_node(xlist[type], list, TRUE);
       return;
     }
   }
 }
 
-LIVES_GLOBAL_INLINE void lives_hook_join(LiVESList **xlist, int type) {
+LIVES_GLOBAL_INLINE void lives_hooks_join(LiVESList **xlist, int type) {
   LiVESList *list = xlist[type], *listnext;
   for (; list; list = listnext) {
     lives_closure_t *closure = (lives_closure_t *)list->data;
@@ -1341,7 +1352,7 @@ LIVES_GLOBAL_INLINE void lives_hook_join(LiVESList **xlist, int type) {
     if (closure->tinfo) {
       lives_proc_thread_join(closure->tinfo);
       closure->tinfo = NULL;
-      if (closure->flags & HOOK_CB_SINGLE_SHOT && !(closure->flags & HOOK_CB_ASYNC_JOIN))
+      if (closure->flags & HOOK_CB_SINGLE_SHOT)
         xlist[type] = lives_list_remove_node(xlist[type], list, TRUE);
     }
   }

@@ -15,40 +15,40 @@
 #endif
 
 
-off_t get_file_size(int fd, boolean maybe_padded) {
+off_t get_file_size(int fd, boolean is_native) {
   // get the size of file fd
-  // for buffered write files, maybe_padded must be set
-  // otherwise unset to avoid mutex dealocks
+  // is_native should be set in special cases to avoid mutex deadlocks
 
   struct stat filestat;
   off_t fsize = -1;
   lives_file_buffer_t *fbuff;
 
-  if (!maybe_padded) {
+  if (fd < 0) return -1;
+
+retry:
+  if (is_native) {
     fstat(fd, &filestat);
     return filestat.st_size;
   }
 
-  if ((fbuff = find_in_file_buffers(fd)) != NULL) {
-    if ((fd = fbuff->fd) >= 0) {
-      fstat(fd, &filestat);
-      fsize = filestat.st_size;
-    }
+  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+    is_native = TRUE;
+    goto retry;
+  }
+
+  if ((fd = fbuff->fd) >= 0) {
+    fstat(fd, &filestat);
+    fsize = filestat.st_size;
   }
 
   //g_printerr("fssize for %d is %ld\n", fd, fsize);
-  if (maybe_padded) {
-    if (!fbuff->read) {
-      /// because of padding bytes... !!!!
-      off_t f2size;
-      if ((f2size = (off_t)(fbuff->offset + fbuff->bytes)) > fsize) return f2size;
-    }
+  if (fbuff->flags & FB_FLAG_PREALLOC) {
+    /// because of padding bytes... !!!!
+    off_t f2size;
+    if ((f2size = (off_t)(fbuff->offset + fbuff->bytes)) > fsize) return f2size;
   }
 
-  if (fsize == -1) {
-    if (fbuff) fsize = fbuff->orig_size;
-    else fsize = 0;
-  }
+  if (fsize == -1) fsize = fbuff->orig_size;
 
   return fsize;
 }
@@ -507,6 +507,13 @@ ssize_t lives_write(int fd, const void *buf, ssize_t count, boolean allow_fail) 
 }
 
 
+static ssize_t lives_write_cb(lives_file_buffer_t *fbuff) {
+  ssize_t res = lives_write(fbuff->fd, fbuff->ring_buffer, fbuff->rbf_size, TRUE);
+  fbuff->flags &= ~FB_FLAG_BG_OP;
+  return res;
+}
+
+
 ssize_t lives_write_le(int fd, const void *buf, ssize_t count, boolean allow_fail) {
   if (count <= 0) return 0;
   if (capable->hw.byte_order == LIVES_BIG_ENDIAN && (prefs->bigendbug != 1)) {
@@ -559,10 +566,10 @@ size_t lives_fread_string(char *buff, size_t stlen, const char *fname) {
 
 
 char *lives_fread_line(const char *fname) {
-  char buff[DEF_BUFFSIZE];
+  char buff[FREAD_BUFFSIZE];
   FILE *infofile = fopen(fname, "r");
   if (infofile) {
-    char *rets = lives_fgets(buff, DEF_BUFFSIZE, infofile);
+    char *rets = lives_fgets(buff, FREAD_BUFFSIZE, infofile);
     fclose(infofile);
     if (rets) return lives_strdup(rets);
   }
@@ -677,7 +684,7 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less) {
 // read x bytes : fbuff->ptr increases by x, fbuff->bytes decreases by x
 // if fbuff->bytes is < x, then we concat fbuff->bytes, refill buffer from file, concat remaining bytes
 // on read: fbuff->ptr = fbuff->buffer. fbuff->offset += bytes read, fbuff->bytes = bytes read
-// if fbuff->reversed is set then when filling the buffer,
+// if (fbuff->flags & FB_FLAG_REVERSE) is set then when filling the buffer,
 // we first seek to a position (offset - 3 / 4 * buffsize), fbuff->ptr = fbuff->buffer + 3 / 4 buffsize, bytes = 1 / 4 buffsz
 
 
@@ -708,10 +715,31 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
   // returns number of bytes written to file io, or error code
   ssize_t res = 0;
 
-  if (fbuff->buffer) res = lives_write(fbuff->fd, fbuff->buffer, fbuff->bytes, fbuff->allow_fail);
+  if (fbuff->buffer) {
+    if (fbuff->flags & FB_FLAG_USE_RINGBUFF) {
+      uint8_t *tmp_ptr = fbuff->ring_buffer;
+      size_t buffsize;
+      res = fbuff->bytes;
+      lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+      fbuff->flags |= FB_FLAG_BG_OP;
+      fbuff->ring_buffer = fbuff->buffer;
+      fbuff->rbf_size = fbuff->bytes;
+      lives_proc_thread_create(LIVES_THRDATTR_NONE,
+                               (lives_funcptr_t)lives_write_cb, 0, "V", fbuff);
+      if (fbuff->bufsztype == BUFF_SIZE_WRITE_CUSTOM)
+        buffsize = fbuff->custom_size;
+      else buffsize = get_write_buff_size(fbuff->bufsztype);
+      if (tmp_ptr) fbuff->buffer = tmp_ptr;
+      else fbuff->buffer = (uint8_t *)lives_calloc(buffsize >> 4, 16);
+    } else if (fbuff->buffer) {
+      res = lives_write(fbuff->fd, fbuff->buffer, fbuff->bytes,
+                        (fbuff->flags & FB_FLAG_ALLOW_FAIL) == FB_FLAG_ALLOW_FAIL);
+    }
+  }
+
   //g_print("writing %ld bytes to %d\n", fbuff->bytes, fbuff->fd);
 
-  if (!fbuff->allow_fail && res < fbuff->bytes) {
+  if (!(fbuff->flags & FB_FLAG_ALLOW_FAIL) && res < fbuff->bytes) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_write will have closed
     return res;
   }
@@ -736,11 +764,11 @@ void lives_invalidate_all_file_buffers(void) {
   for (fblist = mainw->file_buffers; fblist; fblist = fblist->next) {
     fbuff = (lives_file_buffer_t *)fblist->data;
     // if a writer, flush
-    if (!fbuff->read && mainw->memok) {
+    if (!(fbuff->flags & FB_FLAG_RDONLY) && mainw->memok) {
       file_buffer_flush(fbuff);
       fbuff->buffer = NULL;
     } else {
-      fbuff->invalid = TRUE;
+      fbuff->flags |= FB_FLAG_INVALID;
     }
   }
 
@@ -777,7 +805,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     fbuff = (lives_file_buffer_t *)lives_calloc(sizeof(lives_file_buffer_t) >> 2, 4);
     fbuff->idx = idx = next_fbuff_idx();
     fbuff->fd = fd;
-    fbuff->read = isread;
+    if (isread) fbuff->flags |= FB_FLAG_RDONLY;
     fbuff->pathname = lives_strdup(pathname);
     fbuff->bufsztype = isread ? BUFF_SIZE_READ_SMALL : BUFF_SIZE_WRITE_SMALL;
 
@@ -791,7 +819,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     } else {
       if (!isread && !(flags & O_TRUNC)) {
         if (is_append) fbuff->offset = fbuff->orig_size = lseek(fd, 0, SEEK_END);
-        else fbuff->orig_size = (size_t)get_file_size(fd, FALSE);
+        else fbuff->orig_size = (size_t)get_file_size(fd, TRUE);
         /// TODO - handle fsize < 0
       }
     }
@@ -834,10 +862,10 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   // we keep reading until entire file is loaded
   // fbuff->bytes increases as we read in from file, and for this type of file, fbuff->offest points to the 'virtual'
   // read position
-  // fbuff->reversed can be set, in this case, reading n bytes will reduce offset by n, in other cases it will increase by n
+  // FB_FLAG_REVERSE can be set, in this case, reading n bytes will reduce offset by n, in other cases it will increase by n
   // fbuff->skip is set to 'skip', fbuff->orig_size is set to the full size (ignoring skip)
   // fbuff->bufsztypeis set to BUFF_SIZE_READ_SLURP;
-  // (volatile) fbuff->slurping is TRUE while the input file is being read in
+  // FB_FLAG_BG_OP is TRUE while the input file is being read in
   // since the buffer is locked in memory, this should only be used for small / medium files, with short lived lifecycle
   //
   // seeking within the buffer is supported, provided we don't seek before 'skip'
@@ -847,7 +875,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   // we do read a smaller chunk to start with, so that small requests can be served more rapidly
 
   int fd = fbuff->fd;
-  off_t fsize = get_file_size(fd, FALSE) - skip, bufsize = smedbytes, res;
+  off_t fsize = get_file_size(fd, TRUE) - skip, bufsize = smedbytes, res;
   boolean run_hooks = TRUE;
 
 #if defined HAVE_POSIX_FADVISE
@@ -873,8 +901,8 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
     //fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
     //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
     while (fsize > 0) {
-      if (fbuff->invalid) {
-        fbuff->invalid = FALSE;
+      if (fbuff->flags & FB_FLAG_INVALID) {
+        fbuff->flags &= ~FB_FLAG_INVALID;
         run_hooks = FALSE;
         //g_print("slurp file %d closed\n", fd);
         break; // file was closed
@@ -888,7 +916,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
       res = lives_read(fd, fbuff->buffer + fbuff->bytes, bufsize, TRUE);
       //g_printerr("slurp for %d, %s with size %ld, read %lu bytes, %lu remain\n", fd, fbuff->pathname, fbuff->orig_size, bufsize, fsize);
       if (res < 0) {
-        fbuff->invalid = TRUE;
+        fbuff->flags |= FB_FLAG_INVALID;
         return FALSE;
       }
 #endif
@@ -913,7 +941,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 
   fbuff->fd = -1;
   IGN_RET(close(fd));
-  fbuff->slurping = FALSE;
+  fbuff->flags &= ~FB_FLAG_BG_OP;
   return TRUE;
 }
 
@@ -921,21 +949,21 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 boolean lives_buffered_rdonly_is_slurping(int fd) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   if (!fbuff || fbuff->bufsztype != BUFF_SIZE_READ_SLURP) return FALSE;
-  return fbuff->slurping;
+  return (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP;
 }
 
 
 void lives_buffered_rdonly_slurp(int fd, off_t skip) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   if (!fbuff || fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return;
-  fbuff->slurping = TRUE;
+  fbuff->flags |= FB_FLAG_BG_OP;
   fbuff->bytes = fbuff->offset = 0;
   fbuff->bufsztype = BUFF_SIZE_READ_SLURP;
 
   // TODO - inherits
   lives_proc_thread_create(LIVES_THRDATTR_INHERIT_HOOKS,
                            (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "VI", fbuff, skip);
-  lives_nanosleep_until_nonzero(fbuff->orig_size || !fbuff->slurping);
+  lives_nanosleep_until_nonzero(fbuff->orig_size || !(fbuff->flags & FB_FLAG_BG_OP));
 }
 
 
@@ -946,11 +974,12 @@ LIVES_GLOBAL_INLINE boolean lives_buffered_rdonly_set_reversed(int fd, boolean v
     LIVES_DEBUG("lives_buffered_rdonly_set_reversed: no file buffer found");
     return FALSE;
   }
-  if (!fbuff->read) {
+  if (!(fbuff->flags & FB_FLAG_RDONLY)) {
     LIVES_ERROR("lives_buffered_rdonly_set_reversed: wrong buffer type");
     return 0;
   }
-  fbuff->reversed = val;
+  if (val) fbuff->flags |= FB_FLAG_REVERSE;
+  else fbuff->flags &= ~FB_FLAG_REVERSE;
   return TRUE;
 }
 
@@ -999,9 +1028,11 @@ ssize_t lives_close_buffered(int fd) {
     return ret;
   }
 
-  if (!fbuff->read && should_close) {
-    boolean allow_fail = fbuff->allow_fail;
+  if (!(fbuff->flags & FB_FLAG_RDONLY) && should_close) {
+    boolean allow_fail = ((fbuff->flags & FB_FLAG_ALLOW_FAIL) == FB_FLAG_ALLOW_FAIL);
     ssize_t bytes = fbuff->bytes;
+
+    lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
 
     if (bytes > 0) {
       ret = file_buffer_flush(fbuff);
@@ -1009,15 +1040,18 @@ ssize_t lives_close_buffered(int fd) {
       if (!allow_fail && ret < bytes) return ret;
     }
 #ifdef HAVE_POSIX_FALLOCATE
-    IGN_RET(ftruncate(fbuff->fd, MAX(fbuff->offset, fbuff->orig_size)));
-    /* //g_print("truncated  at %ld bytes in %d\n", MAX(fbuff->offset, fbuff->orig_size), fbuff->fd); */
+    if (fbuff->flags & FB_FLAG_PREALLOC) {
+      IGN_RET(ftruncate(fbuff->fd, MAX(fbuff->offset, fbuff->orig_size)));
+      fbuff->flags &= ~FB_FLAG_PREALLOC;
+      /* //g_print("truncated  at %ld bytes in %d\n", MAX(fbuff->offset, fbuff->orig_size), fbuff->fd); */
+    }
 #endif
   }
 
   if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
-    if (fbuff->slurping) {
-      fbuff->invalid = TRUE;
-      lives_nanosleep_while_true(fbuff->slurping);
+    if (fbuff->flags & FB_FLAG_BG_OP) {
+      fbuff->flags |= FB_FLAG_INVALID;
+      lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
     }
     should_close = FALSE;
     munlock(fbuff->buffer, fbuff->orig_size - fbuff->skip);
@@ -1025,12 +1059,19 @@ ssize_t lives_close_buffered(int fd) {
 
   lives_free(fbuff->pathname);
 
+  lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+
   pthread_mutex_lock(&mainw->fbuffer_mutex);
   if (should_close && fbuff->fd >= 0) ret = close(fbuff->fd);
   mainw->file_buffers = lives_list_remove(mainw->file_buffers, (livesconstpointer)fbuff);
 
   if (fbuff->buffer) {
     lives_free(fbuff->buffer);
+  }
+
+  if (fbuff->ring_buffer) {
+    lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+    lives_free(fbuff->ring_buffer);
   }
 
   lives_free(fbuff);
@@ -1051,7 +1092,7 @@ size_t get_read_buff_size(int sztype) {
   return 0;
 }
 
-LIVES_LOCAL_INLINE size_t get_write_buff_size(int sztype) {
+size_t get_write_buff_size(int sztype) {
   switch (sztype) {
   case BUFF_SIZE_WRITE_SMALL: return BUFFER_FILL_BYTES_SMALL;
   case BUFF_SIZE_WRITE_SMALLMED: return BUFFER_FILL_BYTES_SMALLMED;
@@ -1068,7 +1109,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   ssize_t res;
   ssize_t delta = 0;
   size_t bufsize;
-  boolean reversed = fbuff->reversed;
+  boolean reversed = (fbuff->flags & FB_FLAG_REVERSE);
 
   if (min < 0) min = 0;
 
@@ -1080,7 +1121,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
     }
   } else bufsize = get_read_buff_size(fbuff->bufsztype);
 
-  if (fbuff->reversed) {
+  if (fbuff->flags & FB_FLAG_REVERSE) {
     if (min > bufsize) reversed = FALSE;
     else {
       delta = (bufsize >> 2);
@@ -1108,8 +1149,8 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   fbuff->bytes = res - delta;
   fbuff->ptr = fbuff->buffer + delta;
   fbuff->offset += res;
-  if (res < bufsize) fbuff->eof = TRUE;
-  else fbuff->eof = FALSE;
+  if (res < bufsize) fbuff->flags |= FB_FLAG_EOF;
+  else fbuff->flags &= ~FB_FLAG_EOF;
 
 #if defined HAVE_POSIX_FADVISE || (defined _GNU_SOURCE && defined __linux__)
   if (reversed) {
@@ -1203,12 +1244,12 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
       if (newoffs < 0) newoffs = 0;
       fbuff->bytes = 0;
       fbuff->ptr = fbuff->buffer;
-      fbuff->eof = FALSE;
+      fbuff->flags &= ~FB_FLAG_EOF;
       fbuff->offset = newoffs;
     }
   }
 #ifdef HAVE_POSIX_FADVISE
-  if (fbuff->reversed)
+  if (fbuff->flags & FB_FLAG_REVERSE)
     posix_fadvise(fbuff->fd, 0, fbuff->offset - fbuff->bytes, POSIX_FADV_RANDOM);
   else
     posix_fadvise(fbuff->fd, fbuff->offset, 0, POSIX_FADV_SEQUENTIAL);
@@ -1230,7 +1271,7 @@ off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
     return lseek(fd, offset, SEEK_CUR);
   }
 
-  if (!fbuff->read) {
+  if (!(fbuff->flags & FB_FLAG_RDONLY)) {
     LIVES_ERROR("lives_lseek_buffered_rdonly: wrong buffer type");
     return 0;
   }
@@ -1247,7 +1288,7 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t posn) {
     return lseek(fd, posn, SEEK_SET);
   }
 
-  if (!fbuff->read) {
+  if (!(fbuff->flags & FB_FLAG_RDONLY)) {
     LIVES_ERROR("lives_lseek_buffered_rdonly_absolute: wrong buffer type");
     return 0;
   }
@@ -1289,12 +1330,12 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
     return lives_read(fd, buf, count, allow_less);
   }
 
-  if (!fbuff->read) {
+  if (!(fbuff->flags & FB_FLAG_RDONLY)) {
     LIVES_ERROR("lives_read_buffered: wrong buffer type");
     return 0;
   }
 
-  reversed = fbuff->reversed;
+  reversed = (fbuff->flags & FB_FLAG_REVERSE) == FB_FLAG_REVERSE;
   bufsztype = fbuff->bufsztype;
 
 #ifdef AUTOTUNE
@@ -1338,14 +1379,15 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
   if (fbuff->bytes > 0 || fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
     ssize_t nbytes;
     if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
-      if (fbuff->reversed) {
+      if (fbuff->flags & FB_FLAG_REVERSE) {
         if (ocount > fbuff->offset) ocount = fbuff->offset;
         fbuff->offset -= ocount;
         fbuff->ptr -= ocount;
       }
-      lives_nanosleep_while_true((nbytes = fbuff->bytes - fbuff->offset) < count && fbuff->slurping);
+      lives_nanosleep_while_true((nbytes = fbuff->bytes - fbuff->offset) < count
+                                 && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
       if (fbuff->bytes - fbuff->offset <= count) {
-        fbuff->eof = TRUE;
+        fbuff->flags |= FB_FLAG_EOF;
         count = fbuff->bytes - fbuff->offset;
         if (count <= 0) goto rd_exit;
       }
@@ -1354,18 +1396,19 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
 
     // use up buffer
 
-    if (fbuff->invalid) {
+    if (fbuff->flags & FB_FLAG_INVALID) {
       if (mainw->is_exiting) {
         return retval;
       }
 
       if (fbuff->bufsztype != BUFF_SIZE_READ_SLURP) {
         fbuff->offset -= (fbuff->ptr - fbuff->buffer + fbuff->bytes);
-        if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) fbuff->bytes = (fbuff->ptr - fbuff->buffer + fbuff->bytes);
+        if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM)
+          fbuff->bytes = (fbuff->ptr - fbuff->buffer + fbuff->bytes);
         fbuff->buffer = NULL;
         file_buffer_fill(fbuff, fbuff->bytes);
       }
-      fbuff->invalid = FALSE;
+      fbuff->flags &= ~FB_FLAG_INVALID;
     }
 
     lives_memcpy(ptr, fbuff->ptr, nbytes);
@@ -1376,7 +1419,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
     fbuff->totbytes += nbytes;
 
     if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
-      if (!fbuff->reversed) {
+      if (!(fbuff->flags & FB_FLAG_REVERSE)) {
         fbuff->offset += nbytes;
         fbuff->ptr += nbytes;
       }
@@ -1388,7 +1431,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
     fbuff->nseqreads++;
     if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) goto rd_exit;
     if (count == 0) goto rd_done;
-    if (fbuff->eof && !fbuff->reversed) goto rd_done;
+    if ((fbuff->flags & FB_FLAG_EOF) && !(fbuff->flags & FB_FLAG_REVERSE)) goto rd_done;
     fbuff->nseqreads--;
   }
 
@@ -1402,7 +1445,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       if (ocount >= (medbytes >> 1) || count > medbytes) bufsztype = BUFF_SIZE_READ_LARGE;
       if (fbuff->bufsztype < bufsztype) fbuff->bufsztype = bufsztype;
     } else bufsztype = BUFF_SIZE_READ_CUSTOM;
-    if (fbuff->invalid) {
+    if (fbuff->flags & FB_FLAG_INVALID) {
       if (mainw->is_exiting) {
         return retval;
       }
@@ -1410,7 +1453,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) fbuff->bytes = (fbuff->ptr - fbuff->buffer + fbuff->bytes);
       fbuff->buffer = NULL;
       file_buffer_fill(fbuff, fbuff->bytes);
-      fbuff->invalid = FALSE;
+      fbuff->flags &= ~FB_FLAG_INVALID;
     } else {
       if (fbuff->bufsztype != bufsztype) {
         lives_freep((void **)&fbuff->buffer);
@@ -1420,7 +1463,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
     if (fbuff->bufsztype != bufsztype) fbuff->nseqreads = 0;
 
     while (count) {
-      fbuff->eof = FALSE;
+      fbuff->flags &= ~FB_FLAG_EOF;
       res = file_buffer_fill(fbuff, count);
       if (res < 0)  {
         retval = res;
@@ -1435,16 +1478,16 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       fbuff->bytes -= res;
       count -= res;
       fbuff->totbytes += res;
-      if (fbuff->eof) break;
-      if (fbuff->reversed && count > 0) fbuff->reversed = FALSE;
+      if (fbuff->flags & FB_FLAG_EOF) break;
+      if ((fbuff->flags & FB_FLAG_REVERSE) && count > 0) fbuff->flags &= ~FB_FLAG_REVERSE;
       ptr += res;
     }
   } else {
     // larger size -> direct read
     if (fbuff->bufsztype != bufsztype) {
-      if (fbuff->invalid) {
+      if (fbuff->flags & FB_FLAG_INVALID) {
         fbuff->buffer = NULL;
-        fbuff->invalid = FALSE;
+        fbuff->flags &= ~FB_FLAG_INVALID;
       } else {
         lives_freep((void **)&fbuff->buffer);
       }
@@ -1461,12 +1504,12 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
     count -= res;
     retval += res;
     fbuff->totbytes += res;
-    if (res < count) fbuff->eof = TRUE;
+    if (res < count) fbuff->flags |= FB_FLAG_EOF;
   }
 
 rd_done:
 
-  if (reversed) fbuff->reversed = TRUE;
+  if (reversed) fbuff->flags |= FB_FLAG_REVERSE;
 
 #ifdef AUTOTUNE
   if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
@@ -1546,12 +1589,12 @@ boolean lives_read_buffered_eof(int fd) {
     return TRUE;
   }
 
-  if (!fbuff->read) {
+  if (!(fbuff->flags & FB_FLAG_RDONLY)) {
     LIVES_ERROR("lives_read_buffered_eof: wrong buffer type");
     return FALSE;
   }
-  return (fbuff->eof && ((!fbuff->reversed && !fbuff->bytes)
-                         || (fbuff->reversed && fbuff->ptr == fbuff->buffer)));
+  return ((fbuff->flags & FB_FLAG_EOF) && ((!(fbuff->flags & FB_FLAG_REVERSE) && !fbuff->bytes)
+          || ((fbuff->flags & FB_FLAG_REVERSE) && fbuff->ptr == fbuff->buffer)));
 }
 
 
@@ -1584,7 +1627,7 @@ static ssize_t lives_write_buffered_direct(lives_file_buffer_t *fbuff, const cha
       res += bytes;
     } else {
       LIVES_ERROR("lives_write_buffered_direct: error in bigblock writer");
-      if (!fbuff->allow_fail) {
+      if (!(fbuff->flags & FB_FLAG_ALLOW_FAIL)) {
         lives_close_buffered(-fbuff->fd); // use -fd as lives_write will have closed
         return res;
       }
@@ -1607,7 +1650,7 @@ ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean all
     return lives_write(fd, buf, count, allow_fail);
   }
 
-  if (fbuff->read) {
+  if (fbuff->flags & FB_FLAG_RDONLY) {
     LIVES_ERROR("lives_write_buffered: wrong buffer type");
     return 0;
   }
@@ -1631,7 +1674,8 @@ ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean all
 
   fbuff->totops++;
   fbuff->totbytes += count;
-  fbuff->allow_fail = allow_fail;
+  if (allow_fail) fbuff->flags |= FB_FLAG_ALLOW_FAIL;
+  else fbuff->flags &= ~FB_FLAG_ALLOW_FAIL;
 
   // write bytes to fbuff
   while (count) {
@@ -1649,7 +1693,7 @@ ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean all
       // pre-allocate space for next buffer, we need to ftruncate this when closing the file
       //g_print("alloc space in %d from %ld to %ld\n", fbuff->fd, fbuff->offset, fbuff->offset + buffsize);
       posix_fallocate(fbuff->fd, fbuff->offset, buffsize);
-      /* lseek(fbuff->fd, fbuff->offset, SEEK_SET); */
+      fbuff->flags |= FB_FLAG_PREALLOC;
 #endif
     }
 
@@ -1671,11 +1715,35 @@ ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean all
       if (fbuff->bufsztype != bufsztype) {
         lives_free(fbuff->buffer);
         fbuff->buffer = NULL;
+        if (fbuff->ring_buffer) {
+          lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+          lives_free(fbuff->ring_buffer);
+          fbuff->ring_buffer = NULL;
+        }
       }
     }
   }
   return retval;
 }
+
+
+boolean lives_write_buffered_set_ringmode(int fd) {
+  lives_file_buffer_t *fbuff;
+
+  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+    LIVES_DEBUG("lives_write_buffered_set_ringmode: no file buffer found");
+    return FALSE;
+  }
+
+  if (fbuff->flags & FB_FLAG_RDONLY) {
+    LIVES_ERROR("lives_write_buffered_set_ringmode: wrong buffer type");
+    return FALSE;
+  }
+
+  fbuff->flags |= FB_FLAG_USE_RINGBUFF;
+  return TRUE;
+}
+
 
 ssize_t lives_write_buffered_set_custom_size(int fd, size_t count) {
   lives_file_buffer_t *fbuff;
@@ -1685,7 +1753,7 @@ ssize_t lives_write_buffered_set_custom_size(int fd, size_t count) {
     return -1;
   }
 
-  if (fbuff->read) {
+  if (fbuff->flags & FB_FLAG_RDONLY) {
     LIVES_ERROR("lives_write_buffered_set_custom_size: wrong buffer type");
     return -1;
   }
@@ -1701,6 +1769,13 @@ ssize_t lives_write_buffered_set_custom_size(int fd, size_t count) {
     lives_free(fbuff->buffer);
     fbuff->buffer = NULL;
   }
+
+  if (fbuff->ring_buffer) {
+    lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+    lives_free(fbuff->ring_buffer);
+    fbuff->ring_buffer = NULL;
+  }
+
   fbuff->bufsztype = BUFF_SIZE_WRITE_CUSTOM;
   fbuff->custom_size = count;
   return count;
@@ -1738,7 +1813,7 @@ off_t lives_lseek_buffered_writer(int fd, off_t offset) {
     return lseek(fd, offset, SEEK_SET);
   }
 
-  if (fbuff->read) {
+  if (fbuff->flags & FB_FLAG_RDONLY) {
     LIVES_ERROR("lives_lseek_buffered_writer: wrong buffer type");
     return 0;
   }
@@ -1747,8 +1822,8 @@ off_t lives_lseek_buffered_writer(int fd, off_t offset) {
     ssize_t bytes = fbuff->bytes;
     ssize_t res = file_buffer_flush(fbuff);
     if (res < 0) return res;
-    if (res < bytes && !fbuff->allow_fail) {
-      fbuff->eof = TRUE;
+    if (res < bytes && !(fbuff->flags & FB_FLAG_ALLOW_FAIL)) {
+      fbuff->flags |= FB_FLAG_EOF;
       return fbuff->offset;
     }
   }
@@ -1769,7 +1844,7 @@ off_t lives_buffered_offset(int fd) {
     return fbuff->offset + fbuff->skip;
   }
 
-  if (fbuff->read) return fbuff->offset - fbuff->bytes;
+  if (fbuff->flags & FB_FLAG_RDONLY) return fbuff->offset - fbuff->bytes;
   return fbuff->offset + fbuff->bytes;
 }
 
@@ -1786,8 +1861,8 @@ size_t lives_buffered_orig_size(int fd) {
     return fbuff->orig_size;// + fbuff->skip;
   }
 
-  if (!fbuff->read) return fbuff->orig_size;
-  if (fbuff->orig_size == 0) fbuff->orig_size = (size_t)get_file_size(fd, TRUE);
+  if (!(fbuff->flags & FB_FLAG_RDONLY)) return fbuff->orig_size;
+  if (fbuff->orig_size == 0) fbuff->orig_size = (size_t)get_file_size(fd, FALSE);
   return fbuff->orig_size;
 }
 
@@ -1810,7 +1885,7 @@ off_t lives_buffered_flush(int fd) {
     return 0;
   }
 
-  if (fbuff->read) {
+  if (fbuff->flags & FB_FLAG_RDONLY) {
     LIVES_ERROR("lives_buffered_flush: wrong buffer type");
     return 0;
   }
@@ -1819,8 +1894,8 @@ off_t lives_buffered_flush(int fd) {
     ssize_t bytes = fbuff->bytes;
     ssize_t res = file_buffer_flush(fbuff);
     if (res < 0) return res;
-    if (res < bytes && !fbuff->allow_fail) {
-      fbuff->eof = TRUE;
+    if (res < bytes && !(fbuff->flags & FB_FLAG_ALLOW_FAIL)) {
+      fbuff->flags |= FB_FLAG_EOF;
     }
   }
   return fbuff->offset;

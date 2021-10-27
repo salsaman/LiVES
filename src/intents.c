@@ -6,6 +6,102 @@
 
 #include "main.h"
 
+LIVES_GLOBAL_INLINE lives_object_instance_t *lives_object_instance_create(uint64_t type, uint64_t subtype) {
+  lives_object_instance_t *obj_inst = lives_calloc(1, sizeof(lives_object_instance_t));
+  obj_inst->uid = gen_unique_id();
+  obj_inst->type = type;
+  obj_inst->subtype = subtype;
+  obj_inst->state = OBJECT_STATE_UNDEFINED;
+  return obj_inst;
+}
+
+
+weed_error_t lives_object_set_attribute_value(lives_object_t *obj, const char *name, ...) {
+  weed_error_t err = WEED_SUCCESS;
+  if (obj && name && *name) {
+    lives_obj_attr_t *attr = lives_attr_from_object(obj, name);
+    if (!attr) return WEED_ERROR_NOSUCH_LEAF;
+    else {
+      va_list args;
+      int st;
+      st = weed_leaf_seed_type(attr, WEED_LEAF_VALUE);
+      va_start(args, name);
+      switch (st) {
+      case WEED_SEED_INT: {
+        int val = va_arg(args, int);
+        err = weed_set_int_value(attr, WEED_LEAF_VALUE, val);
+        break;
+      }
+      case WEED_SEED_BOOLEAN: {
+        boolean val = va_arg(args, int);
+        err = weed_set_boolean_value(attr, WEED_LEAF_VALUE, val);
+        break;
+      }
+      case WEED_SEED_DOUBLE: {
+        boolean val = va_arg(args, double);
+        err = weed_set_double_value(attr, WEED_LEAF_VALUE, val);
+        break;
+      }
+      case WEED_SEED_INT64: {
+        int64_t val = va_arg(args, int64_t);
+        err = weed_set_int64_value(attr, WEED_LEAF_VALUE, val);
+        break;
+      }
+      case WEED_SEED_STRING: {
+        char *val = va_arg(args, char *);
+        err = weed_set_string_value(attr, WEED_LEAF_VALUE, val);
+        break;
+      }
+      case WEED_SEED_VOIDPTR: {
+        void *val = va_arg(args, void *);
+        err = weed_set_voidptr_value(attr, WEED_LEAF_VALUE, val);
+        break;
+      }
+      case WEED_SEED_FUNCPTR: {
+        weed_funcptr_t val = va_arg(args, weed_funcptr_t);
+        err = weed_set_funcptr_value(attr, WEED_LEAF_VALUE, val);
+        break;
+      }
+      case WEED_SEED_PLANTPTR: {
+        weed_plantptr_t val = va_arg(args, weed_plantptr_t);
+        err = weed_set_plantptr_value(attr, WEED_LEAF_VALUE, val);
+        break;
+      }
+      // TODO - allow custom types - object and hook (?)
+      default:
+        va_end(args);
+        return WEED_ERROR_WRONG_SEED_TYPE;
+      }
+      va_end(args);
+    }
+  }
+  return err;
+}
+
+
+boolean lives_object_declare_attribute(lives_object_t *obj, const char *name, int32_t st) {
+  lives_obj_attr_t **attrs = obj->attributes;
+  lives_obj_attr_t *attr;
+  int count = 0;
+  if (attrs) {
+    for (count = 0; attrs[count]; count++) {
+      char *pname = weed_get_string_value(attrs[count], WEED_LEAF_NAME, NULL);
+      if (!lives_strcmp(name, pname)) {
+        lives_free(pname);
+        return FALSE;
+      }
+    }
+  }
+  obj->attributes = lives_realloc(obj->attributes, (count + 2) * sizeof(lives_obj_attr_t *));
+  attr = lives_plant_new(LIVES_WEED_SUBTYPE_OBJ_ATTR);
+  weed_set_string_value(attr, WEED_LEAF_NAME, name);
+  weed_leaf_set(attr, WEED_LEAF_VALUE, st, 0, NULL);
+  obj->attributes[count] = attr;
+  obj->attributes[count + 1] = NULL;
+  return TRUE;
+}
+
+
 LIVES_GLOBAL_INLINE lives_capacity_t *lives_capacities_new(void) {
   return lives_plant_new(LIVES_WEED_SUBTYPE_CAPACITIES);
 }
@@ -56,15 +152,17 @@ lives_intentcap_t *lives_intentcaps_new(int icapstype) {
 }
 
 
-weed_param_t *weed_param_from_iparams(lives_intentparams_t *iparams, const char *name) {
+extern int32_t weed_plant_mutate(weed_plantptr_t plant, int32_t newtype);
+
+lives_tx_param_t *weed_param_from_iparams(lives_intentparams_t *iparams, const char *name) {
   // find param by NAME, if it lacks a VALUE, set it from default
   // and also set the plant type to WEED_PLANT_PARAMETER - this is to allow
   // other functions to use the weed_parameter_get_*_value() functions etc.
   for (int i = 0; iparams->params[i]; i++) {
     char *pname = weed_get_string_value(iparams->params[i], WEED_LEAF_NAME, NULL);
     if (!lives_strcmp(name, pname)) {
-      free(pname);
-      weed_set_int_value(iparams->params[i], WEED_LEAF_TYPE, WEED_PLANT_PARAMETER);
+      lives_free(pname);
+      weed_plant_mutate(iparams->params[i], WEED_PLANT_PARAMETER);
       if (!weed_plant_has_leaf(iparams->params[i], WEED_LEAF_VALUE)) {
         if (weed_plant_has_leaf(iparams->params[i], WEED_LEAF_DEFAULT)) {
           weed_leaf_copy(iparams->params[i], WEED_LEAF_VALUE, iparams->params[i], WEED_LEAF_DEFAULT);
@@ -77,19 +175,19 @@ weed_param_t *weed_param_from_iparams(lives_intentparams_t *iparams, const char 
 }
 
 
-weed_param_t *weed_param_from_object(lives_object_t *obj, const char *name) {
-  return weed_param_from_iparams((lives_intentparams_t *)obj->attributes, name);
+LIVES_GLOBAL_INLINE lives_obj_attr_t *lives_attr_from_object(lives_object_t *obj, const char *name) {
+  lives_intentparams_t iparams;
+  iparams.params = obj->attributes;
+  return weed_param_from_iparams(&iparams, name);
 }
 
 
-static weed_param_t *iparam_from_name(weed_param_t **params, const char *name) {
-  // weed need to find the param by (voidptr) name
-  // and also set the plant type to WEED_PLANT_PARAMETER - this is to allow
-  // other functions to use the weed_parameter_get_*_value() functions etc.
+static lives_tx_param_t *iparam_from_name(lives_tx_param_t **params, const char *name) {
+  //  find the param by name
   for (int i = 0; params[i]; i++) {
     char *pname = weed_get_string_value(params[i], WEED_LEAF_NAME, NULL);
     if (!lives_strcmp(name, pname)) {
-      free(pname);
+      lives_free(pname);
       return params[i];
     }
   }
@@ -97,7 +195,7 @@ static weed_param_t *iparam_from_name(weed_param_t **params, const char *name) {
 }
 
 
-static weed_param_t *iparam_match_name(weed_param_t **params, weed_param_t *param) {
+static lives_tx_param_t *iparam_match_name(lives_tx_param_t **params, lives_tx_param_t *param) {
   // weed need to find the param by (voidptr) name
   // and also set the plant type to WEED_PLANT_PARAMETER - this is to allow
   // other functions to use the weed_parameter_get_*_value() functions etc.
@@ -105,17 +203,17 @@ static weed_param_t *iparam_match_name(weed_param_t **params, weed_param_t *para
   for (int i = 0; params[i]; i++) {
     char *pname = weed_get_string_value(params[i], WEED_LEAF_NAME, NULL);
     if (!lives_strcmp(name, pname)) {
-      free(name); free(pname);
+      lives_free(name); lives_free(pname);
       return params[i];
     }
-    free(name); free(pname);
+    lives_free(name); lives_free(pname);
   }
   return NULL;
 }
 
 
 weed_plant_t *int_req_init(const char *name, int def, int min, int max) {
-  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_OBJ_PARAM);
+  lives_tx_param_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
   int ptype = WEED_PARAM_INTEGER;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
@@ -126,7 +224,7 @@ weed_plant_t *int_req_init(const char *name, int def, int min, int max) {
 }
 
 weed_plant_t *boolean_req_init(const char *name, int def) {
-  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_OBJ_PARAM);
+  lives_tx_param_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
   int ptype = WEED_PARAM_SWITCH;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
@@ -135,7 +233,7 @@ weed_plant_t *boolean_req_init(const char *name, int def) {
 }
 
 weed_plant_t *double_req_init(const char *name, double def, double min, double max) {
-  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_OBJ_PARAM);
+  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
   int ptype = WEED_PARAM_FLOAT;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
@@ -146,7 +244,7 @@ weed_plant_t *double_req_init(const char *name, double def, double min, double m
 }
 
 weed_plant_t *string_req_init(const char *name, const char *def) {
-  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_OBJ_PARAM);
+  weed_param_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
   int ptype = WEED_PARAM_TEXT;
   weed_set_string_value(paramt, WEED_LEAF_NAME, name);
   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
@@ -155,16 +253,8 @@ weed_plant_t *string_req_init(const char *name, const char *def) {
 }
 
 
-LIVES_GLOBAL_INLINE
-const lives_object_template_t *lives_object_template_for_type(uint64_t type) {
-  if (type == (uint64_t)OBJECT_TYPE_PLAYER)
-    return &player_template;
-  return NULL;
-}
-
-
 boolean rules_lack_param(lives_rules_t *prereq, const char *pname) {
-  weed_param_t *iparam = iparam_from_name(prereq->reqs->params, pname);
+  lives_tx_param_t *iparam = iparam_from_name(prereq->reqs->params, pname);
   if (iparam) {
     if (!weed_plant_has_leaf(iparam, WEED_LEAF_VALUE)
         && !weed_plant_has_leaf(iparam, WEED_LEAF_DEFAULT)) {
@@ -190,7 +280,7 @@ void lives_transform_status_free(lives_transform_status_t *st) {
 
 
 boolean requirements_met(lives_object_transform_t *tx) {
-  lives_obj_param_t *req;
+  lives_tx_param_t *req;
   for (int i = 0; ((req = tx->prereqs->reqs->params[i])); i++) {
     if (!weed_plant_has_leaf(req, WEED_LEAF_VALUE) &&
         !weed_plant_has_leaf(req, WEED_LEAF_DEFAULT)) {
@@ -228,7 +318,7 @@ void lives_object_transform_free(lives_object_transform_t *tx) {
 
 lives_object_transform_t *find_transform_for_intentcaps(lives_object_t *obj, lives_intentcap_t *icaps) {
   uint64_t type = obj->type;
-  if (type == IMkType("MATH.obj")) {
+  if (type == OBJECT_TYPE_MATH) {
     return math_transform_for_intent(obj, icaps->intent);
   }
   return NULL;
@@ -236,13 +326,13 @@ lives_object_transform_t *find_transform_for_intentcaps(lives_object_t *obj, liv
 
 
 lives_transform_status_t *transform(lives_object_transform_t *tx) {
-  /* lives_obj_param_t *iparam; */
+  /* lives_tx_param_t *iparam; */
   /* lives_rules_t *prereq = tx->prereqs; */
   /* for (int i = 0; (iparam = prereq->reqs->params[i]) != NULL; i++) { */
   /*   int flags = weed_get_int_value(iparam, WEED_LEAF_FLAGS, NULL); */
   /*   if (!(flags & PARAM_FLAGS_VALUE_SET) && !(flags & PARAM_FLAGS_OPTIONAL)) { */
-  /*     weed_param_t *xparam = iparam_from_name(prereq->reqs->params, iparam->pname); */
-  /*     //lives_obj_param_t *xparam = iparam_from_name(tx->prereqs->oinst->params, iparam->name); */
+  /*     lives_tx_param_t *xparam = iparam_from_name(prereq->reqs->params, iparam->pname); */
+  /*     //lives_tx_param_t *xparam = iparam_from_name(tx->prereqs->oinst->params, iparam->name); */
   /*     weed_leaf_dup(iparam, xparam, WEED_LEAF_VALUE); */
   /*   } */
 
@@ -297,7 +387,7 @@ lives_intentcaps_t **list_intentcaps(void) {
     }
   }
 
-  if (obj->type == Imktype("MATH    ")) {
+  if (obj->type == OBJ_TYPE_MATH) {
     if (state == STATE_NONE) {
     }
   }

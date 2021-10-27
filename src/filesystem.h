@@ -55,12 +55,12 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 #define BUFFER_FILL_BYTES_BIGMED 16384  /// 2049 - 8192 bytes
 #define BUFFER_FILL_BYTES_LARGE 65536
 
+#define BUFF_SIZE_READ_SLURP -2
+#define BUFF_SIZE_READ_CUSTOM -1
 #define BUFF_SIZE_READ_SMALL 0
 #define BUFF_SIZE_READ_SMALLMED 1
 #define BUFF_SIZE_READ_MED 2
 #define BUFF_SIZE_READ_LARGE 3
-#define BUFF_SIZE_READ_CUSTOM -1
-#define BUFF_SIZE_READ_SLURP -2
 
 #define BUFF_SIZE_WRITE_CUSTOM -1
 #define BUFF_SIZE_WRITE_SMALL 0
@@ -69,35 +69,49 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 #define BUFF_SIZE_WRITE_BIGMED 3
 #define BUFF_SIZE_WRITE_LARGE 4
 
-#define DEF_BUFFSIZE 65536
+#define FREAD_BUFFSIZE 65536
+
+// options
+#define FB_FLAG_RDONLY		(1ul << 0)
+#define FB_FLAG_ALLOW_FAIL	(1ul << 1)
+#define FB_FLAG_REVERSE		(1ul << 2)
+#define FB_FLAG_USE_RINGBUFF   	(1ul << 3)
+
+// internal values
+#define FB_FLAG_BG_OP		(1ul << 16)
+#define FB_FLAG_PREALLOC	(1ul << 17)
+
+// status bits
+#define FB_FLAG_EOF		(1ul << 32)
+#define FB_FLAG_INVALID		(1ul << 33)
 
 typedef struct {
-  volatile ssize_t bytes;  /// buffer size for write, bytes left to read in case of read
-  uint8_t *ptr;   /// read point in buffer
-  uint8_t *buffer;   /// ptr to data  (ptr - buffer + bytes) gives the read size
-  off_t offset; // file offs (of END of block)
-  off_t skip;
-  int idx;
-  int fd;
+  int idx;  ///< identifier in list
+  int fd; ///< number of underlying file (maybe become -1 if detached)
+  volatile ssize_t bytes;  ///< bytes written in buffer / bytes left to read
+  uint8_t *ptr;   ///< read / write point in buffer
+  uint8_t *buffer;   ///< address of buffer start : (ptr - buffer + bytes) gives the read size
+  uint8_t *ring_buffer;   /// alt for bg flushing
+  size_t rbf_size; ///< ring buffer bytes filled
+  off_t offset; ///< offset in bytes of END of block, relative to start of file
+  off_t skip; ///< count of bytes skipped at start
   int bufsztype;
   size_t custom_size;
-  volatile boolean eof;
-  boolean read;
-  boolean reversed;
-  volatile boolean slurping;
-  int nseqreads;
-  int totops;
-  int64_t totbytes;
-  boolean allow_fail;
-  volatile boolean invalid;
-  size_t orig_size;
-  char *pathname;
+  int nseqreads; ///< count of sequential reads since last buffer fill
+  int totops; ///< count of operations peformed on buffer
+  int64_t totbytes; ///< total bytes read / written to / from buffer
+  size_t orig_size; ///< size in bytes of underlying file
+  char *pathname; ///< path to underlying file
+  volatile uint64_t flags;
 } lives_file_buffer_t;
 
 lives_file_buffer_t *find_in_file_buffers(int fd);
 lives_file_buffer_t *find_in_file_buffers_by_pathname(const char *pathname);
 
+/// standard buffer sizes - for CUSTOM sizes, use custom_size instead
+/// for read buffers, the size may adsjust depending on tuning
 size_t get_read_buff_size(int sztype);
+size_t get_write_buff_size(int sztype);
 
 int lives_open_buffered_rdonly(const char *pathname);
 int lives_open_buffered_writer(const char *pathname, int mode, boolean append);
@@ -107,19 +121,20 @@ ssize_t lives_close_buffered(int fd);
 off_t lives_lseek_buffered_writer(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset);
+uint8_t *lives_buffered_get_data(int fd);
 off_t lives_buffered_offset(int fd);
 size_t lives_buffered_orig_size(int fd);
+boolean lives_read_buffered_eof(int fd);
 boolean lives_buffered_rdonly_set_reversed(int fd, boolean val);
+boolean lives_write_buffered_set_ringmode(int fd);
 ssize_t lives_write_buffered_set_custom_size(int fd, size_t count);
 ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean allow_fail);
 ssize_t lives_buffered_write_printf(int fd, boolean allow_fail, const char *fmt, ...);
 ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, ssize_t count, boolean allow_fail);
 ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less);
 ssize_t lives_read_le_buffered(int fd, void *buf, ssize_t count, boolean allow_less);
-boolean lives_read_buffered_eof(int fd);
 void lives_buffered_rdonly_slurp(int fd, off_t skip);
 boolean lives_buffered_rdonly_is_slurping(int fd);
-uint8_t *lives_buffered_get_data(int fd);
 
 off_t lives_buffered_flush(int fd);
 

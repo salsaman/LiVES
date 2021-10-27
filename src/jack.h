@@ -129,6 +129,8 @@ boolean is_transport_locked(void);
 
 #define JACK_MAX_PORTS 10
 
+#define JACK_MAX_CHANNELS 1024
+
 #define ERR_PORT_NOT_FOUND 10
 
 #define JACK_DEFAULT_SERVER "JACK_DEFAULT_SERVER"
@@ -147,6 +149,7 @@ boolean is_transport_locked(void);
 
 typedef struct _lives_jack_driver_t {
   int dev_idx;                      /**< id of this device ??? */
+  lives_object_instance_t *inst;
   int sample_out_rate;                   /**< samples(frames) per second */
   volatile int sample_in_rate;                   /**< samples(frames) per second */
   uint64_t num_input_channels;            /**< number of input channels(1 is mono, 2 stereo etc..) */

@@ -3267,6 +3267,7 @@ static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofil
 }
 
 size_t jack_write_data(float out_scale, int achans, int fileno, size_t nframes, float **in_buffer) {
+  return 0;
   lives_clip_t *ofile;
   void *holding_buff, *holding_buff2;;
   size_t target_bytes;
@@ -3365,6 +3366,8 @@ size_t jack_write_data(float out_scale, int achans, int fileno, size_t nframes, 
 }
 
 
+static float **back_buff = NULL;
+
 static int audio_read(jack_nframes_t nframes, void *arg) {
   // read nframes from jack buffer, and then write to mainw->aud_rec_fd
 
@@ -3375,14 +3378,14 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
   // or a normal file (for voiceovers), or -1 (just listening)
 
   // TODO - get abs_maxvol_heard
-  lives_clip_t *ofile;
   jack_driver_t *jackd = (jack_driver_t *)arg;
   float *in_buffer[jackd->num_input_channels];
-  float out_scale = 1.;
   float tval = 0;
   size_t rbytes = 0;
   int nch = jackd->num_input_channels;
   int i;
+
+  lives_hooks_join(jackd->inst->hook_closures, DATA_READY_HOOK);
 
   if (!jackd->in_use) return 0;
 
@@ -3415,52 +3418,24 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
 
   jackd->frames_read += nframes;
 
-  if (AUD_SRC_EXTERNAL && (jackd->playing_file == -1 || jackd->playing_file == mainw->ascrap_file)) {
-    // TODO - dont apply filters when doing ext window grab, or voiceover
-
-    // in this case we read external audio, but maybe not record it
-    // we may wish to analyse the audio for example, or push it to a video generator
-
-    if (has_audio_filters(AF_TYPE_A)) { // AF_TYPE_A are Analyser filters (audio in but no audio channels out)
-      ticks_t tc = mainw->currticks;
-      weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
-
-      if (mainw->afbuffer && AUD_SRC_EXTERNAL) {
-        // if we have audio triggered gens., push audio to it
-        // or if we want loopback to player
-        for (i = 0; i < nch; i++) {
-          append_to_audio_bufferf(in_buffer[i], nframes, (i == nch - 1) ? -i - 1 : i + 1);
-        }
-      }
-      // apply any audio effects with in_channels and no out_channels
-      weed_layer_set_audio_data(layer, in_buffer, jackd->sample_in_rate, nch, nframes);
-      weed_apply_audio_effects_rt(layer, tc, TRUE, TRUE);
-      weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
-      weed_layer_free(layer);
-    }
-  }
-
-  if (!IS_VALID_CLIP(jackd->playing_file) || (mainw->record && mainw->record_paused)) {
-    return 0;
-  }
-
   // recording: what we record:-
   // external audio, provided we are not applying fx to it it (handled in writer client)
   // aux audio - will be mixed with whatever is playing and saved there
 
-  ofile = mainw->files[jackd->playing_file];
-  //out_scale = (float)jackd->sample_in_rate / (float)ofile->arate; // recording to ascrap_file
+  if (!back_buff) back_buff = lives_calloc(jackd->num_input_channels, sizeof(float *));
+  for (int cc = 0; cc < jackd->num_input_channels; cc++) {
+    if (back_buff[cc]) lives_free(back_buff[cc]);
+    back_buff[cc] = lives_malloc(nframes * 4);
+    lives_memcpy(back_buff[cc], in_buffer[cc], nframes * 4);
+  }
 
-  rbytes = jack_write_data(out_scale, jackd->num_input_channels, jackd->playing_file, nframes, in_buffer);
-  out_scale = (float)ofile->arate / (float)jackd->sample_in_rate;
-
-  // need to pass: jackd->sample_in_rate, jackd->playing_file
-  // jackd->num_input_channels, nframes, in_buffer
+  lives_aplayer_set_data_len(jackd->inst, nframes);
+  lives_aplayer_set_data(jackd->inst, (void *)back_buff);
 
   lives_hooks_trigger(jackd->inst, jackd->inst->hook_closures, DATA_READY_HOOK);
-  jackd->seek_pos += rbytes;
 
-  //pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
+  rbytes = nframes * jackd->num_input_channels * 4;
+  jackd->seek_pos += rbytes;
 
   if (mainw->rec_samples == 0 && mainw->cancelled == CANCEL_NONE)
     mainw->cancelled = CANCEL_KEEP; // we wrote the required #
@@ -3504,6 +3479,7 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
   // After return, clear the BUSY state with lives_proc_thread_exclude_states(), which will retstart the timer
   lives_proc_thread_t lpt;
   char portname[32];
+  char *logmsg;
   boolean is_test = FALSE;
   int nch = jackd->num_output_channels;
 
@@ -3520,6 +3496,10 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
 
     jackd->sample_out_rate = jackd->sample_in_rate = jack_get_sample_rate(jackd->client);
 
+    logmsg = lives_strdup_printf("Server sample rate is %d Hz\n", jackd->sample_out_rate);
+    jack_log_errmsg(jackd, logmsg);
+    lives_free(logmsg);
+
     if (prefs->startup_phase) {
       jackd->jack_port_flags |= JackPortIsInput;
       if (in_ports) lives_free(in_ports);
@@ -3527,9 +3507,6 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
     }
 
     if (is_test) {
-      char *logmsg = lives_strdup_printf("engine sample rate: %d\n", jackd->sample_out_rate);
-      jack_log_errmsg(jackd, logmsg);
-      lives_free(logmsg);
       // test reader first
       //finish_test(jackd, TRUE, FALSE, FALSE);
       return TRUE;
@@ -3689,6 +3666,14 @@ boolean jack_create_client_reader(jack_driver_t *jackd) {
      just decides to stop calling us. */
   jack_on_shutdown(jackd->client, jack_shutdown, jackd);
 
+  if (!jackd->inst) jackd->inst = lives_player_inst_create(PLAYER_SUBTYPE_AUDIO);
+  lives_aplayer_set_source(jackd->inst, AUDIO_SRC_EXT);
+  lives_aplayer_set_achans(jackd->inst, jackd->num_input_channels);
+  lives_aplayer_set_arate(jackd->inst, jackd->sample_in_rate);
+  lives_aplayer_set_sampsize(jackd->inst, jackd->sample_in_rate);
+  lives_aplayer_set_float(jackd->inst, TRUE);
+  lives_aplayer_set_interleaved(jackd->inst, FALSE);
+
   return 0;
 }
 
@@ -3796,9 +3781,6 @@ boolean jack_read_client_activate(jack_driver_t *jackd, boolean autocon) {
   int i, j = 0;
 
   if (!jackd->is_active) {
-    // set process callback and start
-    /* if (!pulsed->inst) pulsed->inst = lives_player_inst_create(PLAYER_SUBTYPE_AUDIO); */
-
     jack_set_process_callback(jackd->client, audio_read, jackd);
     if (jack_activate(jackd->client)) {
       logmsg = lives_strdup_printf("LiVES : Could not activate jack reader client");

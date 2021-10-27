@@ -1563,6 +1563,7 @@ static boolean lives_init(_ign_opts *ign_opts) {
   mainw->new_clip = -1;
   mainw->scrap_file = -1;
   mainw->ascrap_file = -1;
+  mainw->scrap_file_size = -1;
 
   mainw->did_rfx_preview = FALSE;
 
@@ -4394,8 +4395,8 @@ static boolean lives_startup2(livespointer data) {
       main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
     }
     mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
-#endif
   }
+#endif
 
   if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
 

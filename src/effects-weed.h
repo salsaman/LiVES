@@ -398,6 +398,8 @@ int weed_instance_unref(weed_plant_t *inst);
 weed_plant_t *weed_instance_obtain(int key, int mode);
 #endif
 
+int32_t weed_plant_mutate(weed_plantptr_t, int32_t newtype);
+
 #define WEED_ERROR_NOSUCH_PLANT 65536
 
 weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data);

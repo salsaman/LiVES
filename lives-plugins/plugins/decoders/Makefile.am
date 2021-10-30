@@ -14,6 +14,10 @@ if NEED_LOCAL_WEED_COMPAT
 weed_cflags += -DNEED_LOCAL_WEED_COMPAT=1
 endif
 
+if NEED_LOCAL_WEED_PLUGIN
+weed_cflags += -DNEED_LOCAL_WEED_PLUGIN=1
+endif
+
 if IS_DARWIN
 shared_ldflags =  -lpthread -dynamiclib -module -avoid-version --tag=disable-static
 shared_cflags = -fno-common -DIS_DARWIN=1 -I /sw/include $(weed_cflags)

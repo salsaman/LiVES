@@ -12,13 +12,13 @@
 #ifndef NEED_LOCAL_WEED_UTILS
 #include <weed/weed-utils.h> // optional
 #else
-#include "../../libweed/weed-utils.h" // optional
+#include "../../../libweed/weed-utils.h" // optional
 #endif
 #include <weed/weed-plugin-utils.h>
 #else
-#include "../../libweed/weed-plugin.h"
-#include "../../libweed/weed-utils.h" // optional
-#include "../../libweed/weed-plugin-utils.h" // optional
+#include "../../../libweed/weed-plugin.h"
+#include "../../../libweed/weed-utils.h" // optional
+#include "../../../libweed/weed-plugin-utils.h" // optional
 #endif
 
 ///////////////////////////////////////////////////////////////////

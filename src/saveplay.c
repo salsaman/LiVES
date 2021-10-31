@@ -2574,12 +2574,8 @@ void play_file(void) {
 
   if (mainw->play_window && !mainw->multitrack) {
     lives_widget_hide(mainw->preview_controls);
-    if (1) {
-      gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE);
-      gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), FALSE);
-      lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), NULL);
-      detach_accels(FALSE);
-      lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
+    if (prefs->pb_hide_gui) {
+      hide_main_gui();
     }
   }
   // if recording, refrain from writing audio until we are ready
@@ -2873,7 +2869,7 @@ void play_file(void) {
   mainw->osc_auto = 0;
 
   // do this here before closing the audio tracks, easing_events, soft_deinits, etc
-  if (!mainw->record && mainw->record_paused)
+  if (mainw->record && !mainw->record_paused)
     event_list_add_end_events(mainw->event_list, TRUE);
 
   if (!mainw->foreign) {
@@ -3042,13 +3038,8 @@ void play_file(void) {
   if (prefs->stop_screensaver) lives_reenable_screensaver();
 
   if (prefs->show_gui) {
-    if (mainw->play_window) {
-      detach_accels(TRUE);
-      gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), TRUE);
-      gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), TRUE);
-      lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), get_transient_full());
-    }
-    lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
+    if (mainw->gui_hidden) unhide_main_gui();
+    else lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET);
   }
 
   if (!mainw->multitrack && mainw->ext_audio_mon)

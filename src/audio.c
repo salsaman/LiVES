@@ -22,7 +22,6 @@ static arec_details *aud_ext_analyse_dets = NULL;
 
 static void *write_aud_data_cb(lives_object_t *aplayer, void *xdets);
 
-
 LIVES_GLOBAL_INLINE lives_object_instance_t *get_aplayer_instance(int source) {
   lives_object_instance_t *aplayer = NULL;
   if (source == AUDIO_SRC_EXT) {
@@ -2531,14 +2530,7 @@ void jack_rec_audio_end(boolean close_fd) {
 
   if (rec_ext_dets) {
     lives_object_instance_t *aplayer = NULL;
-#ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed_read)
-      aplayer = mainw->pulsed_read->inst;
-#endif
-#ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd_read)
-      aplayer = mainw->jackd_read->inst;
-#endif
+    if (mainw->jackd_read) aplayer = mainw->jackd_read->inst;
     if (aplayer)
       lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, write_aud_data_cb, rec_ext_dets);
     if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
@@ -2546,11 +2538,12 @@ void jack_rec_audio_end(boolean close_fd) {
     rec_ext_dets = NULL;
   }
 
-  pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
-  mainw->jackd_read->in_use = FALSE;
-  mainw->jackd_read->playing_file = -1;
-  pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
-
+  if (mainw->jackd_read) {
+    pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
+    mainw->jackd_read->in_use = FALSE;
+    mainw->jackd_read->playing_file = -1;
+    pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
+  }
   if (close_fd && mainw->aud_rec_fd != -1) {
     // close file
     lives_close_buffered(mainw->aud_rec_fd);
@@ -2694,14 +2687,7 @@ void pulse_rec_audio_end(boolean close_fd) {
 
   if (rec_ext_dets) {
     lives_object_instance_t *aplayer = NULL;
-#ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed_read)
-      aplayer = mainw->pulsed_read->inst;
-#endif
-#ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd_read)
-      aplayer = mainw->jackd_read->inst;
-#endif
+    if (mainw->pulsed_read) aplayer = mainw->pulsed_read->inst;
     if (aplayer)
       lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, write_aud_data_cb, rec_ext_dets);
     if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
@@ -2805,7 +2791,7 @@ static void *write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
   rbytes = frames_out * in_achans * in_sampsize;
   frames_out = (size_t)((double)(rbytes / out_sampsize / out_achans) / (double)out_scale);
   target_bytes = frames_out * out_achans * out_sampsize;
-
+  g_print("REC2: %ld %ld %ld\n", rbytes, target_bytes, frames_out);
   out_buff = lives_calloc(target_bytes, 4);
 
   if (!out_buff) {
@@ -2824,9 +2810,7 @@ static void *write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
     sample_move_d16_d8((uint8_t *)out_buff, holding_buff, frames_out, target_bytes, out_scale,
                        out_achans, in_achans, swap_sign);
   }
-  g_print("xxsamp is %d\n", ((short *)out_buff)[0]);
 
-  g_print("SWSSS222 is %ld\n", target_bytes);
   actual_bytes = lives_write_buffered(dets->fd, out_buff, target_bytes, TRUE);
 
   if (actual_bytes > 0) {

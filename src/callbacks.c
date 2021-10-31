@@ -7500,6 +7500,8 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
         }
         make_play_window();
+        if (LIVES_IS_PLAYING && !mainw->multitrack) hide_main_gui();
+        if (prefs->pb_hide_gui) hide_main_gui();
 
         mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
                                 LIVES_GUI_CALLBACK(on_mouse_scroll), NULL);
@@ -7511,8 +7513,6 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
             mainw->vpp->fheight = cfile->vsize;
           }
           get_player_size(&mainw->pwidth, &mainw->pheight);
-          /* mainw->pwidth = mainw->vpp->fwidth; */
-          /* mainw->pheight = mainw->vpp->fheight; */
 
           if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) {
             unfade_background();
@@ -7572,7 +7572,11 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 	    }}
 	  lives_widget_set_opacity(mainw->playframe, 1.);
 	  hide_cursor(lives_widget_get_xwindow(mainw->playarea));
-	}}}}
+	  if (mainw->gui_hidden) {
+	    unhide_main_gui();
+	    lives_widget_context_update();
+	    pop_to_front(LIVES_MAIN_WINDOW_WIDGET, NULL);
+	  }}}}};
   // *INDENT-ON*
 
   if (mainw->sep_win) {

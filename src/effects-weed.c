@@ -8548,6 +8548,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     cfile->frameno = 1;
     mainw->play_start = mainw->play_end = 1;
     mainw->startticks = mainw->currticks;
+
   } else {
     if (!create_cfile(-1, filter_name, TRUE)) {
       return 3;

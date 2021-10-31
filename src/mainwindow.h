@@ -1095,6 +1095,7 @@ typedef struct {
   ticks_t adjticks; ///< used to equalise the timecode between alternate timer sources (source -> clock adjustment)
   ticks_t cadjticks; ///< used to equalise the timecode between alternate timer sources (clock -> source adjustment)
   ticks_t firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
+  double sc_timing_ratio;
   ticks_t syncticks; ///< adjustment to compensate for missed clock updates when switching time sources
   ticks_t stream_ticks;  ///< ticks since first frame sent to playback plugin
   ticks_t last_display_ticks; /// currticks when last display was shown (used for fixed fps)
@@ -1784,6 +1785,8 @@ typedef struct {
   lives_cconnect_t *cconx; ///< list of out -> in alpha channel connections
 
   int sepwin_minwidth, sepwin_minheight;
+
+  boolean gui_hidden;
 
   uint32_t signal_caught;
   boolean signals_deferred;

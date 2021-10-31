@@ -89,8 +89,7 @@ weed_error_t lives_aplayer_set_data(lives_object_t *aplayer, void *data);
 // for afbuffer
 #define ABUF_ARENA_SIZE 768000
 
-//#define AREC_BUF_SIZE 262144  ///< 256 * 1024
-#define AREC_BUF_SIZE 65536
+#define AREC_BUF_SIZE 2 * 1024 * 1024
 
 /// max number of player channels
 #define MAX_ACHANS 2

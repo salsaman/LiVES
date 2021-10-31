@@ -342,6 +342,7 @@ weed_leaf_delete_f _weed_leaf_delete;
 
 #include "weed-effects-utils.h"
 #include "support.h"
+
 #include "widget-helper.h"
 
 #include "filesystem.h"
@@ -1182,6 +1183,8 @@ void frame_size_update(void);
 void splash_init(void);
 void splash_end(void);
 void splash_msg(const char *msg, double pct);
+void hide_main_gui(void);
+void unhide_main_gui(void);
 void resize_widgets_for_monitor(boolean get_play_times);
 void reset_message_area(void);
 void get_letterbox_sizes(int *pwidth, int *pheight, int *lb_width, int *lb_height, boolean player_can_upscale);

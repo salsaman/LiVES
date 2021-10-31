@@ -4112,7 +4112,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                       // add new clone for nclip
                       int nsrcs = sfile->n_altsrcs;
                       mainw->track_decoders[i] = clone_decoder(nclip);
-                      //g_print("CLONING\n");
+                      g_print("CLONING\n");
                       sfile->alt_srcs = lives_realloc(sfile->alt_srcs, (nsrcs + 1) * sizeof(void *));
                       sfile->alt_srcs[nsrcs] = mainw->track_decoders[i];
                       sfile->alt_src_types = lives_realloc(sfile->alt_src_types, (nsrcs + 1) * sizint);
@@ -5585,22 +5585,25 @@ void event_list_add_end_events(weed_event_t *event_list, boolean is_final) {
       // switch audio off
 #ifdef RT_AUDIO
       if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
-          && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
-          prefs->audio_src == AUDIO_SRC_INT) {
-        if (!mainw->mute) {
-          weed_plant_t *last_frame = get_last_event(event_list);
-          event_list = insert_blank_frame_event_at(event_list, mainw->currticks, &last_frame);
-          if (last_frame) {
+          && mainw->agen_key == 0 && !mainw->agen_needs_reinit && !mainw->mute) {
+        weed_plant_t *last_frame = get_last_event(event_list);
+        event_list = insert_blank_frame_event_at(event_list, mainw->currticks, &last_frame);
+        if (last_frame) {
 #ifdef ENABLE_JACK
-            if (prefs->audio_player == AUD_PLAYER_JACK) {
-              if (mainw->jackd)
-                jack_get_rec_avals(mainw->jackd);
+          if (prefs->audio_player == AUD_PLAYER_JACK) {
+            if (prefs->audio_src == AUDIO_SRC_INT) {
+              if (mainw->jackd) jack_get_rec_avals(mainw->jackd);
+            } else {
+              if (mainw->jackd_read) jack_get_rec_avals(mainw->jackd_read);
             }
+          }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-            if (prefs->audio_player == AUD_PLAYER_PULSE) {
-              if (mainw->pulsed)
-                pulse_get_rec_avals(mainw->pulsed);
+          if (prefs->audio_player == AUD_PLAYER_PULSE) {
+            if (prefs->audio_src == AUDIO_SRC_INT) {
+              if (mainw->pulsed) pulse_get_rec_avals(mainw->pulsed);
+            } else {
+              if (mainw->pulsed_read) pulse_get_rec_avals(mainw->pulsed_read);
             }
 #endif
 #if 0

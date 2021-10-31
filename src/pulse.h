@@ -20,9 +20,14 @@
 
 #define PULSE_MAX_OUTPUT_CHANS PA_CHANNEL_POSITION_MAX
 
+// pb and rec
 #define LIVES_PA_BUFF_MAXLEN 32768
+
+// pb only
 #define LIVES_PA_BUFF_TARGET 4096
 #define LIVES_PA_BUFF_MINREQ 2048
+
+// rec only
 #define LIVES_PA_BUFF_FRAGSIZE 4096
 
 #define PA_SAMPSIZE 16

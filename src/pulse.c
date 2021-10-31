@@ -197,10 +197,16 @@ void pulse_get_rec_avals(pulse_driver_t *pulsed) {
     return;
   }
   mainw->rec_aclip = pulsed->playing_file;
-  if (mainw->rec_aclip != -1) {
-    mainw->rec_aseek = fabs((double)(fwd_seek_pos / (double)(afile->achans * afile->asampsize / 8)) / (double)afile->arps)
-                       + (double)(mainw->startticks - mainw->currticks) / TICKS_PER_SECOND_DBL;
-    mainw->rec_avel = fabs((double)pulsed->in_arate / (double)afile->arps) * (double)afile->adirection;
+  if (CLIP_HAS_AUDIO(mainw->rec_aclip)) {
+    if (pulsed->is_output) {
+      mainw->rec_aseek = fabs((double)(fwd_seek_pos / (double)(afile->achans * afile->asampsize / 8)) / (double)afile->arps)
+                         + (double)(mainw->startticks - mainw->currticks) / TICKS_PER_SECOND_DBL;
+      mainw->rec_avel = fabs((double)pulsed->in_arate / (double)afile->arps) * (double)afile->adirection;
+    } else {
+      lives_clip_t *sfile = mainw->files[mainw->rec_aclip];
+      mainw->rec_aseek = (double)(sfile->aseek_pos / (double)(sfile->achans * sfile->asampsize / 8)) / (double)sfile->arps;
+      mainw->rec_avel = 1.;
+    }
     //g_print("RECSEEK is %f %ld\n", mainw->rec_aseek, pulsed->real_seek_pos);
   }
 }
@@ -1526,6 +1532,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   if (!back_buff) back_buff = lives_calloc(nframes, pulsed->in_achans * (pulsed->in_asamps >> 3));
   lives_memcpy(back_buff, data, rbytes);
 
+  g_print("REC:%ld -> %ld\n", nbytes, nframes);
   lives_aplayer_set_data_len(pulsed->inst, nframes);
   lives_aplayer_set_data(pulsed->inst, (void *)back_buff);
 
@@ -1738,8 +1745,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   } else {
     pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN * 2;
     pa_battr.fragsize = LIVES_PA_BUFF_FRAGSIZE * 4;
-    pa_battr.minreq = (uint32_t) - 1;
-    pa_battr.prebuf = -1;
   }
 
   pa_mloop_lock();
@@ -1845,7 +1850,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
     pa_stream_connect_record(pdriver->pstream, NULL, &pa_battr,
                              (pa_stream_flags_t)(PA_STREAM_START_CORKED
-                                 | PA_STREAM_ADJUST_LATENCY
                                  | PA_STREAM_INTERPOLATE_TIMING
                                  | PA_STREAM_AUTO_TIMING_UPDATE
                                  | PA_STREAM_NOT_MONOTONIC));
@@ -1970,6 +1974,7 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
 ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   // get the time in ticks since either playback started
   volatile aserver_message_t *msg;
+  static ticks_t last_retval = -1, lclk_ticks = 0;
   int64_t usec;
   ticks_t timeout, retval;
   lives_alarm_t alarm_handle;
@@ -1986,11 +1991,18 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     if (timeout == 0) return -1;
   }
   while (pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0) {
-    //g_print("PA time delay\n");
     lives_nanosleep(1000);
   }
+  if (usec == 0) return -1;
   retval = (ticks_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
   if (retval == -1) retval = 0;
+  if (retval < last_retval) {
+    //mainw->syncticks += last_retval - retval;
+    mainw->syncticks += mainw->clock_ticks - lclk_ticks;
+    retval = last_retval;
+  }
+  lclk_ticks = mainw->clock_ticks;
+  last_retval = retval;
   return retval;
 }
 

@@ -1466,6 +1466,91 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitemsep);
   lives_widget_set_sensitive(menuitemsep, FALSE);
 
+  // VJ menu
+
+  menuitem = lives_standard_menu_item_new_with_label(_("_VJ"));
+  lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
+
+  mainw->vj_menu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->vj_menu);
+
+  assign_rte_keys = lives_standard_menu_item_new_with_label(_("Real Time _Effect Mapping"));
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), assign_rte_keys);
+  lives_widget_add_accelerator(assign_rte_keys, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
+                               LIVES_KEY_v, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
+
+  lives_widget_set_tooltip_text(assign_rte_keys, (_("Bind real time effects to ctrl-number keys.")));
+
+  mainw->rte_defs_menu = lives_standard_menu_item_new_with_label(_("Set Real Time Effect _Defaults"));
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->rte_defs_menu);
+  lives_widget_set_tooltip_text(mainw->rte_defs_menu, (_("Set default parameter values for real time effects.")));
+
+  mainw->rte_defs = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->rte_defs_menu), mainw->rte_defs);
+
+  mainw->save_rte_defs = lives_standard_menu_item_new_with_label(_("Save Real Time Effect _Defaults"));
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->save_rte_defs);
+  lives_widget_set_tooltip_text(mainw->save_rte_defs,
+                                (_("Save real time effect defaults so they will be restored each time you use LiVES.")));
+
+  lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
+
+  mainw->vj_realize = lives_standard_menu_item_new_with_label(_("_Pre-decode all frames (unlocks reverse playback)"));
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_realize);
+  lives_widget_set_tooltip_text(mainw->vj_realize,
+                                (tmp = (_("Decode all frames to images. This will unlock reverse playback and can "
+                                          "improve random seek times,\n"
+                                          "but may require additional diskspace."))));
+  lives_free(tmp);
+  lives_widget_set_sensitive(mainw->vj_realize, FALSE);
+
+  mainw->vj_reset = lives_standard_menu_item_new_with_label(_("_Reset All Playback Speeds and Positions"));
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_reset);
+  lives_widget_set_tooltip_text(mainw->vj_reset,
+                                (_("Reset all playback positions to frame 1, and reset all playback frame rates.")));
+  lives_widget_set_sensitive(mainw->vj_reset, FALSE);
+
+  midi_submenu = lives_standard_menu_item_new_with_label(_("_MIDI/Joystick Interface"));
+
+#ifdef ENABLE_OSC
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), midi_submenu);
+#endif
+
+  midi_menu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(midi_submenu), midi_menu);
+
+  mainw->midi_learn = lives_standard_menu_item_new_with_label(_("_MIDI/Joystick Learner..."));
+
+  lives_container_add(LIVES_CONTAINER(midi_menu), mainw->midi_learn);
+
+  mainw->midi_save = lives_standard_menu_item_new_with_label(_("_Save Device Mapping..."));
+
+  lives_container_add(LIVES_CONTAINER(midi_menu), mainw->midi_save);
+  lives_widget_set_sensitive(mainw->midi_save, FALSE);
+
+  midi_load = lives_standard_menu_item_new_with_label(_("_Load Device Mapping..."));
+
+  lives_container_add(LIVES_CONTAINER(midi_menu), midi_load);
+
+  lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
+
+  mainw->vj_show_keys = lives_standard_menu_item_new_with_label(_("Show VJ _Keys"));
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_show_keys);
+
+  lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
+
+  mainw->vj_mode = lives_standard_check_menu_item_new_with_label(_("Restart in _VJ Mode"), future_prefs->vj_mode);
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_mode);
+  mainw->vj_mode_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->vj_mode), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                        LIVES_GUI_CALLBACK(vj_mode_toggled), NULL);
+
+  lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
+
+  mainw->autolives = lives_standard_check_menu_item_new_with_label(_("Start Playback in _Automatic Mode (autolives)..."), FALSE);
+#ifdef ENABLE_OSC
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->autolives);
+#endif
+
   menuitem = lives_standard_menu_item_new_with_label(_("A_dvanced"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
@@ -1577,90 +1662,51 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->export_theme);
   lives_widget_set_sensitive(mainw->export_theme, (palette->style & STYLE_1));
 
-  // VJ menu
+  lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
 
-  menuitem = lives_standard_menu_item_new_with_label(_("_VJ"));
-  lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
+  mainw->show_devopts = lives_standard_check_menu_item_new_with_label(_("Developer Mode"), prefs->show_dev_opts);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->show_devopts),  prefs->show_dev_opts);
 
-  mainw->vj_menu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->vj_menu);
+  lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->show_devopts);
 
-  assign_rte_keys = lives_standard_menu_item_new_with_label(_("Real Time _Effect Mapping"));
-  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), assign_rte_keys);
-  lives_widget_add_accelerator(assign_rte_keys, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                               LIVES_KEY_v, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
+  // submenu cannot be added directly to check_menu_item, due to gtkmenuitem having a broken implementation:
+  // 	       		https://gitlab.gnome.org/GNOME/gtk/-/issues/3802
+  // (otherwise this could look a lot nicer)
+  menuitem = lives_standard_menu_item_new_with_label(_("Developer Options"));
+  lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), menuitem);
 
-  lives_widget_set_tooltip_text(assign_rte_keys, (_("Bind real time effects to ctrl-number keys.")));
+  submenu = lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), submenu);
 
-  mainw->rte_defs_menu = lives_standard_menu_item_new_with_label(_("Set Real Time Effect _Defaults"));
-  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->rte_defs_menu);
-  lives_widget_set_tooltip_text(mainw->rte_defs_menu, (_("Set default parameter values for real time effects.")));
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->show_devopts), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                  LIVES_GUI_CALLBACK(toggle_sets_pref), (livespointer)PREF_SHOW_DEVOPTS);
 
-  mainw->rte_defs = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->rte_defs_menu), mainw->rte_defs);
+  menu_sets_sensitive(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), submenu, FALSE);
+  menu_sets_visible(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), menuitem, FALSE);
 
-  mainw->save_rte_defs = lives_standard_menu_item_new_with_label(_("Save Real Time Effect _Defaults"));
-  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->save_rte_defs);
-  lives_widget_set_tooltip_text(mainw->save_rte_defs,
-                                (_("Save real time effect defaults so they will be restored each time you use LiVES.")));
+  /* menuitem = lives_standard_menu_item_new_with_label(_("Run libweed test")); */
+  /* lives_container_add(LIVES_CONTAINER(submenu), menuitem); */
 
-  lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
+  /* lives_signal_sync_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL, */
+  /* 			    LIVES_GUI_CALLBACK(run_diagnostic), "libweed"); */
 
-  mainw->vj_realize = lives_standard_menu_item_new_with_label(_("_Pre-decode all frames (unlocks reverse playback)"));
-  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_realize);
-  lives_widget_set_tooltip_text(mainw->vj_realize,
-                                (tmp = (_("Decode all frames to images. This will unlock reverse playback and can "
-                                          "improve random seek times,\n"
-                                          "but may require additional diskspace."))));
-  lives_free(tmp);
-  lives_widget_set_sensitive(mainw->vj_realize, FALSE);
+  /* menuitem = lives_standard_menu_item_new_with_label(_("Struct size info")); */
+  /* lives_container_add(LIVES_CONTAINER(submenu), menuitem); */
 
-  mainw->vj_reset = lives_standard_menu_item_new_with_label(_("_Reset All Playback Speeds and Positions"));
-  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_reset);
-  lives_widget_set_tooltip_text(mainw->vj_reset,
-                                (_("Reset all playback positions to frame 1, and reset all playback frame rates.")));
-  lives_widget_set_sensitive(mainw->vj_reset, FALSE);
+  /* lives_signal_sync_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL, */
+  /* 			    LIVES_GUI_CALLBACK(run_diagnostic), "structsizes"); */
 
-  midi_submenu = lives_standard_menu_item_new_with_label(_("_MIDI/Joystick Interface"));
+  mainw->dev_dabg = lives_standard_check_menu_item_new_for_var(_("Show drawing area backgrounds"),
+                    &prefs->dev_show_dabg, FALSE);
+  lives_container_add(LIVES_CONTAINER(submenu), mainw->dev_dabg);
 
-#ifdef ENABLE_OSC
-  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), midi_submenu);
-#endif
+  mainw->dev_timing = lives_standard_check_menu_item_new_for_var(_("Show frame timings on console"),
+                      &prefs->dev_show_timing, FALSE);
+  lives_container_add(LIVES_CONTAINER(submenu), mainw->dev_timing);
 
-  midi_menu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(midi_submenu), midi_menu);
-
-  mainw->midi_learn = lives_standard_menu_item_new_with_label(_("_MIDI/Joystick Learner..."));
-
-  lives_container_add(LIVES_CONTAINER(midi_menu), mainw->midi_learn);
-
-  mainw->midi_save = lives_standard_menu_item_new_with_label(_("_Save Device Mapping..."));
-
-  lives_container_add(LIVES_CONTAINER(midi_menu), mainw->midi_save);
-  lives_widget_set_sensitive(mainw->midi_save, FALSE);
-
-  midi_load = lives_standard_menu_item_new_with_label(_("_Load Device Mapping..."));
-
-  lives_container_add(LIVES_CONTAINER(midi_menu), midi_load);
-
-  lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
-
-  mainw->vj_show_keys = lives_standard_menu_item_new_with_label(_("Show VJ _Keys"));
-  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_show_keys);
-
-  lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
-
-  mainw->vj_mode = lives_standard_check_menu_item_new_with_label(_("Restart in _VJ Mode"), future_prefs->vj_mode);
-  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_mode);
-  mainw->vj_mode_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->vj_mode), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                        LIVES_GUI_CALLBACK(vj_mode_toggled), NULL);
-
-  lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
-
-  mainw->autolives = lives_standard_check_menu_item_new_with_label(_("Start Playback in _Automatic Mode (autolives)..."), FALSE);
-#ifdef ENABLE_OSC
-  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->autolives);
-#endif
+  mainw->dev_caching = lives_standard_check_menu_item_new_for_var(_("Show cache predictions on console"),
+                       &prefs->dev_show_caching, FALSE);
+  lives_container_add(LIVES_CONTAINER(submenu), mainw->dev_caching);
 
   menuitem = lives_standard_menu_item_new_with_label(_("To_ys"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
@@ -1710,52 +1756,6 @@ void create_LiVES(void) {
   help_translate = lives_standard_menu_item_new_with_label(_("Assist with _Translating"));
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), help_translate);
   if (prefs->vj_mode) lives_widget_set_sensitive(help_translate, FALSE);
-
-  lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
-
-  mainw->show_devopts = lives_standard_check_menu_item_new_with_label(_("Developer Mode"), prefs->show_dev_opts);
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->show_devopts),  prefs->show_dev_opts);
-
-  lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->show_devopts);
-
-  // submenu cannot be added directly to check_menu_item, due to gtkmenuitem having a broken implementation:
-  // 	       		https://gitlab.gnome.org/GNOME/gtk/-/issues/3802
-  // (otherwise this could look a lot nicer)
-  menuitem = lives_standard_menu_item_new_with_label(_("Developer Options"));
-  lives_container_add(LIVES_CONTAINER(mainw->help_menu), menuitem);
-
-  submenu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), submenu);
-
-  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->show_devopts), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                                  LIVES_GUI_CALLBACK(toggle_sets_pref), (livespointer)PREF_SHOW_DEVOPTS);
-
-  menu_sets_sensitive(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), submenu, FALSE);
-  menu_sets_visible(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), menuitem, FALSE);
-
-  /* menuitem = lives_standard_menu_item_new_with_label(_("Run libweed test")); */
-  /* lives_container_add(LIVES_CONTAINER(submenu), menuitem); */
-
-  /* lives_signal_sync_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL, */
-  /* 			    LIVES_GUI_CALLBACK(run_diagnostic), "libweed"); */
-
-  /* menuitem = lives_standard_menu_item_new_with_label(_("Struct size info")); */
-  /* lives_container_add(LIVES_CONTAINER(submenu), menuitem); */
-
-  /* lives_signal_sync_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL, */
-  /* 			    LIVES_GUI_CALLBACK(run_diagnostic), "structsizes"); */
-
-  mainw->dev_dabg = lives_standard_check_menu_item_new_for_var(_("Show drawing area backgrounds"),
-                    &prefs->dev_show_dabg, FALSE);
-  lives_container_add(LIVES_CONTAINER(submenu), mainw->dev_dabg);
-
-  mainw->dev_timing = lives_standard_check_menu_item_new_for_var(_("Show frame timings on console"),
-                      &prefs->dev_show_timing, FALSE);
-  lives_container_add(LIVES_CONTAINER(submenu), mainw->dev_timing);
-
-  mainw->dev_caching = lives_standard_check_menu_item_new_for_var(_("Show cache predictions on console"),
-                       &prefs->dev_show_caching, FALSE);
-  lives_container_add(LIVES_CONTAINER(submenu), mainw->dev_caching);
 
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
@@ -4030,6 +4030,46 @@ void make_preview_box(void) {
   lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
 }
 
+
+LIVES_GLOBAL_INLINE void hide_main_gui(void) {
+  detach_accels(FALSE);
+  if (mainw->play_window) {
+#ifdef GUI_GTK
+    gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE);
+    gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), FALSE);
+#endif
+    lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), NULL);
+  }
+  lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
+  mainw->gui_hidden = TRUE;
+}
+
+LIVES_GLOBAL_INLINE void unhide_main_gui(void) {
+  char *wid = NULL;
+  detach_accels(TRUE);
+  if (mainw->play_window) {
+#ifdef GUI_GTK
+    gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), TRUE);
+    gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), TRUE);
+#endif
+    lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), get_transient_full());
+  }
+
+  lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
+  if (prefs->open_maximised && prefs->show_gui) {
+    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+  }
+  mainw->gui_hidden = FALSE;
+  lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  wid =
+    lives_strdup_printf("0x%08lx",
+                        (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET)));
+  if (wid) {
+    activate_x11_window(wid);
+    lives_free(wid);
+  }
+}
 
 void enable_record(void) {
   lives_menu_item_set_text(mainw->record_perf, _("Start _recording"), TRUE);

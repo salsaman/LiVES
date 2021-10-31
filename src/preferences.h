@@ -16,7 +16,12 @@
 #define LADSPA_LITERAL "ladspa"
 #endif
 
-#define DEFINE_PREF_BOOL(IDX, PR, PDEF) define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_BOOLEAN, x##PDEF##x);
+#define PREF_FLAG_EXPERIMENTAL		(1 << 0)
+
+
+#define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_BOOLEAN, x##PDEF##x, FLAGS);
+
+#define SET_PREF_WIDGET(IDX, WIDGET) set_pref_widget(PREF_##IDX, (WIDGET))
 
 #define ACTIVE(widget, signal) lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->widget), LIVES_WIDGET_ ##signal## \
 							 _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
@@ -210,6 +215,7 @@ typedef struct {
   char cdplay_device[PATH_MAX];  ///< locale encoding
   double default_fps;
   boolean open_decorated;
+  boolean pb_hide_gui;
   int sleep_time;
   boolean pause_during_pb;
   boolean fileselmax;
@@ -822,7 +828,6 @@ typedef struct {
   LiVESWidget *spinbutton_rte_modes;
   LiVESWidget *spinbutton_nfx_threads;
   LiVESWidget *spinbutton_atrans_key;
-  LiVESWidget *self_trans;
   LiVESWidget *enable_OSC;
   LiVESWidget *enable_OSC_start;
   LiVESWidget *jack_tserver_entry;
@@ -1312,6 +1317,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_RRRAMICRO "recrender_rend_amicro" /// option for rendering recordings
 
 #define PREF_BACK_COMPAT "backwards_compatibility" ///< forces backwards compatibility with earlier versions
+
+#define PREF_PB_HIDE_GUI "hide_main_window_during_playback"
 
 #define PREF_SELF_TRANS "self_transition"
 

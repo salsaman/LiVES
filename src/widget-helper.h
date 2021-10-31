@@ -1553,6 +1553,7 @@ char LIVES_STOCK_LABEL_RESET[32];
 
 typedef struct {
   /// commonly adjusted values //////
+  LiVESWidget *last_widget; ///< last standard widget created (spin,radio,check,entry,combo) (READONLY)
   LiVESWidget *last_label; ///< label widget of last standard widget (spin,radio,check,entry,combo) (READONLY)
   LiVESWidget *last_container; ///< container which wraps last widget created + subwidgets (READONLY)
   lives_expand_t expand; ///< how much space to apply between widgets
@@ -1593,6 +1594,7 @@ widget_opts_t def_widget_opts;
 #ifdef NEED_DEF_WIDGET_OPTS
 
 const widget_opts_t _def_widget_opts = {
+  NULL, ///< last_widget
   NULL, ///< last_label
   NULL, ///< last_container
   LIVES_EXPAND_DEFAULT, ///< default expand

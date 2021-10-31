@@ -1812,6 +1812,7 @@ static lives_time_source_t lastt = LIVES_TIME_SOURCE_NONE;
 static ticks_t delta = 0;
 
 void reset_playback_clock(void) {
+  mainw->sc_timing_ratio = -1.;
   mainw->cadjticks = mainw->adjticks = mainw->syncticks = 0;
   mainw->currticks = mainw->startticks = mainw->deltaticks = 0;
   lastt = LIVES_TIME_SOURCE_NONE;
@@ -1825,13 +1826,15 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
   // or another value to force it (EXTERNAL cannot be forced)
   lives_time_source_t *tsource, xtsource = LIVES_TIME_SOURCE_NONE;
   ticks_t clock_ticks, current = -1;
-  static ticks_t lclock_ticks, interticks;
+  static ticks_t lclock_ticks, interticks, last_sync_ticks;
+  static ticks_t sc_start, sys_start;
 
   if (time_source) tsource = time_source;
   else tsource = &xtsource;
 
-  clock_ticks = lives_get_relative_ticks(origsecs, orignsecs);
-  mainw->clock_ticks = clock_ticks;
+  if (lastt == LIVES_TIME_SOURCE_NONE) last_sync_ticks = mainw->syncticks;
+
+  mainw->clock_ticks = clock_ticks = lives_get_relative_ticks(origsecs, orignsecs);
 
   if (*tsource == LIVES_TIME_SOURCE_EXTERNAL) *tsource = LIVES_TIME_SOURCE_NONE;
 
@@ -1850,6 +1853,7 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
   }
 #endif
 
+  // generally tsource is set to NONE, - here we check first for soundcard time
   if (is_realtime_aplayer(prefs->audio_player) && (*tsource == LIVES_TIME_SOURCE_NONE ||
       *tsource == LIVES_TIME_SOURCE_SOUNDCARD)) {
     if ((!mainw->is_rendering || (mainw->multitrack && !cfile->opening && !mainw->multitrack->is_rendering)) &&
@@ -1858,12 +1862,13 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
       // this is done so as to synch video stream with the audio
       // we do this in two cases:
       // - for internal audio, playing back a clip with audio (writing)
-      // - or when audio source is set to external (reading) and we are recording, no internal audio generator is running
+      // - or when audio source is set to external (reading), no internal audio generator is running
 
       // we ignore this if we are running with a playback plugin which requires a fixed framerate (e.g a streaming plugin)
       // in that case we will adjust the audio rate to fit the system clock
-
       // or if we are rendering
+
+      // if the timecard cannot return current time we get a value of -1 back, and then fall back to system clock
 
 #ifdef ENABLE_JACK
       if (prefs->audio_player == AUD_PLAYER_JACK &&
@@ -1889,6 +1894,15 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
         else current = lives_pulse_get_time(mainw->pulsed);
       }
 #endif
+      if (current >= 0 && LIVES_IS_PLAYING && lastt == LIVES_TIME_SOURCE_SOUNDCARD
+          && *tsource == LIVES_TIME_SOURCE_SOUNDCARD) {
+        if (current - mainw->adjticks + mainw->syncticks < mainw->startticks) {
+          mainw->syncticks = mainw->startticks - current + mainw->adjticks;
+        }
+        if (current - mainw->adjticks + mainw->syncticks < mainw->currticks) {
+          mainw->syncticks = mainw->currticks - current + mainw->adjticks;
+        }
+      }
     }
   }
 
@@ -1903,27 +1917,19 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
   //}
 
   /// synchronised timing
-  /// it can be helpful to imagine a virtual clock which is at current time:
-  /// clock time - cadjticks = virtual time = other time + adjticks
-  /// cadjticks and adjticks are only set when we switch from one source to another, i.e the virtual clock will run @ different rates
+  /// it can be helpful to imagine a virtual clock which is at some "current time" (interticks):
+  /// clock time - cadjticks = virtual time = other time - adjticks
+  /// cadjticks and adjticks are only set when we switch from one source to another, after this the clock time runs at a rate
   /// depending on the source. This is fine as it enables sync with the clock source, provided the time doesn't jump when moving
   /// from one source to another.
-  /// when the source changes we then alter either cadjticks or adjticks so that the initial timing matches
-  /// e.g when switching to clock source, cadjticks and adjticks will have diverged. So we want to set new cadjtick s.t:
-  /// clock ticks - cadjticks == source ticks + adjticks. i.e cadjticks = clock ticks - (source ticks + adjticks).
-  /// we use the delta calculated the last time, since the other source may longer be available.
-  /// this should not be a concern since this function is called very frequently
-  /// recalling cadjticks_new = clock_ticks - (source_ticks + adjticks), and substituting for delta we get:
-  // cadjticks_new = clock_ticks - (source_ticks + adjticks) = delta + cadjticks_old
-  /// conversely, when switching from clock to source, adjticks_new = clock_ticks - cadjticks - source_ticks
-  /// again, this just delta + adjticks; in this case we can use current delta since it is assumed that the system clock is always available
+  /// when the source changes we therefor alter either cadjticks or adjticks so that the initial timing matches
 
-  /// this scheme does, however introduce a small problem, which is that when the sources are switched, we assume that the
-  /// time on both clocks is equivalent. This can lead to a problem when switching clips, since temporarily we switch to system
-  /// time and then back to soundcard. However, this can cause some updates to the timer to be missed, i.e the audio is playing but the
-  /// samples are not counted, however we cannot simply add these to the soundcard timer, as they will be lost due to the resync.
-  /// hence we need mainw->syncticks --> a global adjustment which is independent of the clock source. This is similar to
-  /// mainw->deltaticks for the player, however, deltaticks is a temporary impulse, whereas syncticks is a permanent adjustment.
+  /// occasionally when switching sources e.g from system -> soundcard, the new source may take a small time
+  /// to start running - in this case we can allow for this by increasing mainw->syncticks via system clock
+  /// until the audio source begins updating correctly. Alternately the source may be reste causing a jump in the timing.
+  /// here we can also compensate by making an adjust to mainw->syncticks so the rest becomes transparent.
+
+  // tl;dr - mainw->synticks is an external global adjustment factor
 
   if (*tsource == LIVES_TIME_SOURCE_SYSTEM)  {
     if (lastt != LIVES_TIME_SOURCE_SYSTEM && lastt != LIVES_TIME_SOURCE_NONE) {
@@ -1932,15 +1938,39 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
 
       // cadj = clock_ticks - interticks + (current - lcurrent) - since we may not have current
       // we have to approximate with clock_ticks - lclock_ticks
-      mainw->cadjticks = clock_ticks - interticks - (clock_ticks - lclock_ticks);
+
+      // this is the difference between clock ticks and last returned value
+      // since interticks was from the last cycle, we subtract the delt to compare times at that cycle
+      // - i.e, adding this value to interticks would give clock ticks at last cycle
+      // thus if we subtract this value from current clock ticks we get interticks for current cycle
+      mainw->cadjticks = (clock_ticks + mainw->syncticks) - (clock_ticks - lclock_ticks) - (interticks + last_sync_ticks);
     }
+    // on reset, mainw->cadjticks is 0, and lastt is NONE, so interticks is set to current ticks
     interticks = clock_ticks - mainw->cadjticks;
+    if (interticks + mainw->syncticks < mainw->startticks) break_me("oops 2");
+    mainw->sc_timing_ratio = -1.;
   } else {
-    if (lastt == LIVES_TIME_SOURCE_SYSTEM) {
+    if (lastt == LIVES_TIME_SOURCE_SYSTEM || lastt == LIVES_TIME_SOURCE_NONE) {
       // current - ds + adjt == clock_ticks - dc - cadj /// iinterticks == lclock_ticks - cadj ///
-      mainw->adjticks = interticks - current + (clock_ticks - lclock_ticks);
+
+      // here we calculate the difference between interticks and current. interticks was from the last cycle
+      // thus we subtract the clock time differenc between this cycle and the last to give an adjusted current
+      // (we have to use clock time for the adjustment as we don't have the s.card value from previous)
+      // subtracting from current would give interticks for this cycle
+      if (lastt == LIVES_TIME_SOURCE_SYSTEM)
+        mainw->adjticks = current + mainw->syncticks - (clock_ticks - lclock_ticks) - (interticks + last_sync_ticks);
+      if (*tsource == LIVES_TIME_SOURCE_SOUNDCARD) {
+        sc_start = current + mainw->syncticks;
+        sys_start = clock_ticks;
+      }
     }
-    interticks = current + mainw->adjticks;
+    if (*tsource == LIVES_TIME_SOURCE_SOUNDCARD && clock_ticks > sys_start) {
+      // here we can calculate the ratio sc_rate : sys_rate (< 1. means sc is playing slower)
+      mainw->sc_timing_ratio = (double)(current + mainw->syncticks - sc_start) / (double)(clock_ticks - sys_start);
+      //g_print("timing ratio is %.2f\n", mainw->sc_timing_ratio * 100.);
+    } else mainw->sc_timing_ratio = -1.;
+    // on reset, mainw->adjticks is 0, and lastt is NONE, so interticks is set to current ticks
+    interticks = current - mainw->adjticks;
   }
 
   /* if (lastt != *tsource) { */
@@ -1949,6 +1979,9 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
   /* } */
   lclock_ticks = clock_ticks;
   lastt = *tsource;
+  last_sync_ticks = mainw->syncticks;
+
+  // on reset mainw->syncticks is set to 0, so we just return interticks
   return interticks + mainw->syncticks;
 }
 
@@ -2088,19 +2121,24 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   }
 
   // dtc is delta ticks (last frame time - current time), quantise this to the frame rate and round down
-  dtc = q_gint64_floor(dtc, fps);
+  dtc = q_gint64_floor(dtc, fabs(fps));
 
   // ntc is the time when the next frame should be / have been played, or if dtc is zero we just set it to otc - the last frame time
   *ntc = otc + dtc;
 
+  if (*ntc > mainw->currticks && fileno == mainw->playing_file) {
+    break_me("uh oh\n");
+    g_print("ERR %ld and %ld and %ld %ld %ld %ld\n", otc, dtc, *ntc, mainw->currticks, mainw->startticks, mainw->syncticks);
+  }
+
   // nframe is our new frame; convert dtc to seconds, and multiply by the frame rate, then add or subtract from current frame number
   // the small constant is just to account for rounding errors
-  if (1 || fps >= 0.)
+  if (fps >= 0.)
     nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps + .5);
   else
-    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps + .5);
+    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps - .5);
 
-  g_print("FRAMES %d and %d\n", cframe, nframe);
+  //g_print("FRAMES %d and %d\n", cframe, nframe);
 
   if (nframe != cframe) {
     if (!IS_NORMAL_CLIP(fileno)) {
@@ -2458,6 +2496,9 @@ int process_one(boolean visible) {
   time_source = LIVES_TIME_SOURCE_NONE;
 
   mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, &time_source);
+  if (mainw->currticks < mainw->startticks) {
+    break_me("cur start");
+  }
   if (mainw->currticks == -1) {
     if (time_source == LIVES_TIME_SOURCE_SOUNDCARD) handle_audio_timeout();
     mainw->cancelled = CANCEL_ERROR;
@@ -2483,7 +2524,7 @@ int process_one(boolean visible) {
     mainw->offsetticks -= mainw->currticks;
     real_requested_frame = 0;
     get_proc_loads(FALSE);
-    reset_on_tsource_change = TRUE;
+    //reset_on_tsource_change = TRUE;
   }
 
   mainw->audio_stretch = 1.0;
@@ -2750,8 +2791,10 @@ switch_point:
 
   new_ticks = mainw->currticks;
 
-  if (mainw->scratch == SCRATCH_NONE)
-    if (new_ticks < mainw->startticks) new_ticks = mainw->startticks;
+  if (new_ticks < mainw->startticks) {
+    if (mainw->scratch == SCRATCH_NONE)
+      new_ticks = mainw->startticks;
+  }
 
   show_frame = FALSE;
   requested_frame = sfile->frameno;
@@ -2764,7 +2807,7 @@ switch_point:
     // sfile->last_frameno, sfile->pb_fps (if playing) or sfile->fps (if not) are also used in the calculation
     // as well as selection bounds and loop mode settings (if appropriate)
     //
-    // on return, new_ticks is set to either mainw->starticks or the timecode of the next frame to show
+    // on return, new_ticks is set to either mainw->startticks or the timecode of the next frame to show
     // which will be <= the current time
     // and requested_frame is set to the frame to show. By default this is the frame we show, but we may vary
     // this depending on the cached frame
@@ -2772,11 +2815,12 @@ switch_point:
 
     if (mainw->scratch == SCRATCH_NONE && scratch == SCRATCH_NONE
         && real_requested_frame > 0) sfile->last_frameno = real_requested_frame;
-    g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_frameno,
-            (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps);
+    /* g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_frameno, */
+    /*         (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps); */
     real_requested_frame = requested_frame
                            = calc_new_playback_position(mainw->playing_file, mainw->startticks, &new_ticks);
-    g_print("POST: %ld %ld %d\n", mainw->startticks, new_ticks, requested_frame);
+    /* g_print("POST: %ld %ld %d\n", mainw->startticks, new_ticks, requested_frame); */
+
     //mainw->startticks = new_ticks;
     sfile->last_frameno = oframe;
     if (mainw->foreign) {
@@ -3147,7 +3191,9 @@ switch_point:
         }
       }
 
-      if (new_ticks > mainw->startticks) mainw->startticks = new_ticks;
+      if (new_ticks > mainw->startticks) {
+        mainw->startticks = new_ticks;
+      }
 
       if (getahead < 0) {
         /// this is where we rebase the time for the next frame calculation
@@ -3157,8 +3203,8 @@ switch_point:
         sfile->last_frameno = requested_frame;
         // set
         if (scratch != SCRATCH_NONE) {
-          mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
-          mainw->startticks = mainw->currticks;
+          mainw->startticks = mainw->currticks
+                              = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
         }
       }
 
@@ -3271,6 +3317,7 @@ switch_point:
           load_frame_image(sfile->frameno);
           showed_frame = TRUE;
         }
+        scratch = SCRATCH_NONE;
         if (mainw->record && !mainw->record_paused) {
           void **eevents;
           weed_event_list_t *event_list;

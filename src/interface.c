@@ -394,17 +394,19 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         cfile->aw_sizes[0] = offset_end;
         filename = lives_get_audio_file_name(mainw->current_file);
         afd = lives_open_buffered_rdonly(filename);
-        lives_buffered_rdonly_slurp(afd, 0);
         lives_free(filename);
 
+        if (afd < 0) {
+          THREADVAR(read_failed) = -2;
+          return;
+        }
+
+        lives_buffered_rdonly_slurp(afd, 0);
         for (i = start; i < offset_end; i++) {
-          if (afd == -1) {
-            THREADVAR(read_failed) = -2;
-            return;
-          }
           atime = (double)i / scalex;
-          cfile->audio_waveform[0][i] = cfile->vol
-                                        * get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
+          cfile->audio_waveform[0][i] =
+            cfile->vol * get_float_audio_val_at_time(mainw->current_file,
+                afd, atime, 0, cfile->achans) * 2.;
         }
         lives_close_buffered(afd);
       }
@@ -492,15 +494,17 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         filename = lives_get_audio_file_name(mainw->current_file);
         afd = lives_open_buffered_rdonly(filename);
         lives_free(filename);
+        if (afd < 0) {
+          THREADVAR(read_failed) = -2;
+          return;
+        }
+
         lives_buffered_rdonly_slurp(afd, 0);
         for (i = start; i < offset_end; i++) {
-          if (afd == -1) {
-            THREADVAR(read_failed) = -2;
-            return;
-          }
           atime = (double)i / scalex;
-          cfile->audio_waveform[1][i] = cfile->vol
-                                        * get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
+          cfile->audio_waveform[1][i] =
+            cfile->vol * get_float_audio_val_at_time(mainw->current_file,
+                afd, atime, 1, cfile->achans) * 2.;
         }
         lives_close_buffered(afd);
         afd = -1;

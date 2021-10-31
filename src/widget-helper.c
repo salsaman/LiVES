@@ -169,6 +169,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean is_standard_widget(LiVESWidget *widget) {
 }
 
 WIDGET_HELPER_LOCAL_INLINE void set_standard_widget(LiVESWidget *widget, boolean is) {
+  widget_opts.last_widget = widget;
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), STD_KEY, LIVES_INT_TO_POINTER(is));
 }
 
@@ -8747,6 +8748,7 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
   LiVESWidget *button, *da;
 
   button = lives_button_new();
+
   if (!palette) return button;
 
   da = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), pbsurf);

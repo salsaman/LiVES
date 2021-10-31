@@ -39,7 +39,7 @@ static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 
 static LiVESList *allprefs = NULL;
 
-static void define_pref(const char *pref_idx, void *pref_ptr, int32_t vtype, void *pdef) {
+static void define_pref(const char *pref_idx, void *pref_ptr, int32_t vtype, void *pdef, uint32_t flags) {
   weed_plant_t *prefplant = lives_plant_new(LIVES_WEED_SUBTYPE_PREFERENCE);
   weed_set_string_value(prefplant, LIVES_LEAF_PREF_IDX, pref_idx);
   // TODO
@@ -47,6 +47,7 @@ static void define_pref(const char *pref_idx, void *pref_ptr, int32_t vtype, voi
   ///
   weed_leaf_set(prefplant, WEED_LEAF_DEFAULT, vtype, 1, pdef);
   weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_UNSET);
+  weed_set_int_value(prefplant, WEED_LEAF_FLAGS, flags);
   allprefs = lives_list_append(allprefs, prefplant);
 }
 
@@ -65,8 +66,10 @@ void init_prefs(void) {
   if (allprefs) return;
 
   // PRREF_IDX, pref-><...>, default
-  DEFINE_PREF_BOOL(POGO_MODE, pogo_mode, FALSE);
-  DEFINE_PREF_BOOL(SHOW_TOOLBAR, show_tool, TRUE);
+  DEFINE_PREF_BOOL(POGO_MODE, pogo_mode, FALSE, 0);
+  DEFINE_PREF_BOOL(SHOW_TOOLBAR, show_tool, TRUE, 0);
+  DEFINE_PREF_BOOL(PB_HIDE_GUI, pb_hide_gui, FALSE, PREF_FLAG_EXPERIMENTAL);
+  DEFINE_PREF_BOOL(SELF_TRANS, tr_self, FALSE, PREF_FLAG_EXPERIMENTAL);
   //DEFINE_PREF_BOOL(GENQ_MODE, genq_mode, FALSE);
 }
 
@@ -195,10 +198,11 @@ boolean update_boolean_pref(const char *pref_idx, boolean val, boolean permanent
 
 static LiVESWidget *set_pref_widget(const char *pref_idx, LiVESWidget *widget) {
   weed_plant_t *prefplant = find_pref(pref_idx);
+  uint32_t flags = 0;
   if (!prefplant) return NULL;
   else {
     if (widget) {
-      int32_t vtype = weed_leaf_seed_type(prefplant, WEED_LEAF_DEFAULT);
+      uint32_t vtype = weed_leaf_seed_type(prefplant, WEED_LEAF_DEFAULT);
       weed_set_voidptr_value(prefplant, LIVES_LEAF_WIDGET, widget);
       switch (vtype) {
       case WEED_SEED_BOOLEAN:
@@ -208,6 +212,14 @@ static LiVESWidget *set_pref_widget(const char *pref_idx, LiVESWidget *widget) {
       }
     } else if (weed_plant_has_leaf(prefplant, LIVES_LEAF_WIDGET))
       weed_leaf_delete(prefplant, LIVES_LEAF_WIDGET);
+  }
+  flags = weed_get_int_value(prefplant, WEED_LEAF_FLAGS, NULL);
+  if (widget && (flags & PREF_FLAG_EXPERIMENTAL)) {
+    if (prefs->show_dev_opts)
+      show_warn_image(widget, _("Experimental: altering the value of this preference\n"
+                                "may have undesired consquences - do so only with caution !"));
+    else
+      lives_widget_set_no_show_all(widget, TRUE);
   }
   return widget;
 }
@@ -1211,12 +1223,6 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     prefs->pref_trash = newval;
     goto success2;
   }
-
-  /* if (!lives_strcmp(prefidx, PREF_SELF_TRANS)) { */
-  /*   if (prefs->tr_self == newval) goto fail2; */
-  /*   prefs->tr_self = newval; */
-  /*   goto success2; */
-  /* } */
 
   if (!lives_strcmp(prefidx, PREF_SHOW_BUTTON_ICONS)) {
     if (prefs->show_button_images == newval) goto fail2;
@@ -2384,9 +2390,6 @@ boolean apply_prefs(boolean skip_warn) {
     future_prefs->def_fontstring = NULL;
   }
   pref_factory_utf8(PREF_INTERFACE_FONT, fontname, TRUE);
-
-  /* pref_factory_bool(PREF_SELF_TRANS, lives_toggle_button_get_active */
-  /* 		    (LIVES_TOGGLE_BUTTON(prefsw->self_trans)), TRUE); */
 
 #ifdef TPLAYWINDOW
   pref_factory_int(PREF_ATRANS_KEY, &prefs->autotrans_key, lives_spin_button_get_value_as_int
@@ -3873,14 +3876,14 @@ static void show_tplay_opts(LiVESButton * button, livespointer data) {
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  prefsw->self_trans = lives_standard_check_button_new(_("Allow clips to transition with themselves"),
-                       prefs->tr_self, LIVES_BOX(hbox),
-                       (tmp = H_("Enabling this allows clips to blend with themselves "
-                                 "during realtime playback.\nIf unset, enabling a "
-                                 "transition filter will have no effect until a "
-                                 "new background clip is selected.")));
-  lives_free(tmp);
-  ACTIVE(self_trans, TOGGLED);
+  /* set_pref_widget(SELF_TRANS, */
+  /* 		  lives_standard_check_button_new(_("Allow clips to transition with themselves"), */
+  /* 						  prefs->tr_self, LIVES_BOX(hbox), */
+  /* 						  (tmp = H_("Enabling this allows clips to blend with themselves " */
+  /* 							    "during realtime playback.\nIf unset, enabling a " */
+  /* 							    "transition filter will have no effect until a " */
+  /* 							    "new background clip is selected.")))); */
+  /* lives_free(tmp); */
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
@@ -4313,7 +4316,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  set_pref_widget(PREF_SHOW_TOOLBAR, lives_standard_check_button_new(_("Show toolbar when background is blanked"),
+  SET_PREF_WIDGET(SHOW_TOOLBAR, lives_standard_check_button_new(_("Show toolbar when background is blanked"),
                   prefs->show_tool, LIVES_BOX(hbox), NULL));
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
@@ -4838,8 +4841,21 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   layout = lives_layout_new(LIVES_BOX(vbox));
   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
-  lives_layout_add_row(LIVES_LAYOUT(layout));
 
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  SET_PREF_WIDGET(PB_HIDE_GUI,
+                  lives_standard_check_button_new
+                  (_("Hide main interface whenever playing in the separate window"),
+                   prefs->pb_hide_gui, LIVES_BOX(hbox), (tmp =
+                         H_("Checking this will cause the main interface window to become hidden\n"
+                            "whenever LiVES is playing in the separate playback window\n"
+                            "Ending playback or switching back to embedded player mode will cause the GUI\n"
+                            "to be reshown Only works in Clip Editor mode."))));
+  lives_free(tmp);
+
+  lives_layout_add_row(LIVES_LAYOUT(layout));
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Use letterboxing by default:"), TRUE);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -5143,7 +5159,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                            "even when locked to a different clip."));
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  set_pref_widget(PREF_POGO_MODE,
+  SET_PREF_WIDGET(POGO_MODE,
                   lives_standard_check_button_new
                   (_("'POGO' mode audio locking"),
                    prefs->pogo_mode, LIVES_BOX(hbox),
@@ -5602,6 +5618,21 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   prefsw->pa_gens = lives_standard_check_button_new(_("Push audio to video generators that support it"),
                     prefs->push_audio_to_gens, LIVES_BOX(hbox), NULL);
+
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  SET_PREF_WIDGET(SELF_TRANS,
+                  lives_standard_check_button_new(_("Allow clips to transition with themselves"),
+                      prefs->tr_self, LIVES_BOX(hbox),
+                      (tmp = H_("Enabling this allows clips to blend with themselves "
+                                "during realtime playback.\nSeparate effects can then be applied "
+                                "to each copy (background and foreground),\nand the result will be "
+                                "created by combining these separate copies.\n"
+                                "If unset, enabling a "
+                                "transition filter will do nothing until a "
+                                "new background clip is selected."))));
+  lives_free(tmp);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
@@ -6063,10 +6094,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                           !(prefs->warning_mask & WARN_MASK_CLEAN_AFTER_CRASH), LIVES_BOX(hbox), NULL);
   if (prefs->vj_mode)
     show_warn_image(prefsw->checkbutton_warn_after_crash,
-                    _("Warning is never show in VJ startup mode."));
+                    _("Warning is never shown in VJ startup mode."));
   else if (prefs->show_dev_opts)
     show_warn_image(prefsw->checkbutton_warn_after_crash,
-                    _("Warning is never show in developer mode."));
+                    _("Warning is never shown in developer mode."));
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_warn_no_pulse = lives_standard_check_button_new

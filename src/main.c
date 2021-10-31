@@ -1025,8 +1025,6 @@ static boolean pre_init(void) {
   prefs->autotrans_mode = -1;
   prefs->autotrans_amt = -1.;
 
-  prefs->tr_self = get_boolean_prefd(PREF_SELF_TRANS, FALSE);
-
   info_only = FALSE;
   palette = (_palette *)(lives_malloc(sizeof(_palette)));
 

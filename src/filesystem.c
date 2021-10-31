@@ -721,6 +721,7 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
       size_t buffsize;
       res = fbuff->bytes;
       lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
+
       fbuff->flags |= FB_FLAG_BG_OP;
       fbuff->ring_buffer = fbuff->buffer;
       fbuff->rbf_size = fbuff->bytes;
@@ -917,6 +918,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
       //g_printerr("slurp for %d, %s with size %ld, read %lu bytes, %lu remain\n", fd, fbuff->pathname, fbuff->orig_size, bufsize, fsize);
       if (res < 0) {
         fbuff->flags |= FB_FLAG_INVALID;
+        fbuff->flags &= ~FB_FLAG_BG_OP;
         return FALSE;
       }
 #endif

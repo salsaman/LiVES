@@ -379,17 +379,6 @@ typedef enum {
   CLIP_DETAILS_RESERVED0
 } lives_clip_details_t;
 
-typedef enum {
-  LIVES_MATCH_UNDEFINED = 0,
-  LIVES_MATCH_NEAREST,
-  LIVES_MATCH_AT_LEAST,
-  LIVES_MATCH_AT_MOST,
-  LIVES_MATCH_HIGHEST,
-  LIVES_MATCH_LOWEST,
-  LIVES_MATCH_CHOICE,
-  LIVES_MATCH_SPECIFIED
-} lives_size_match_t;
-
 // TODO - these should be requirements for the transform
 // changing clip object from not loaded to ready
 typedef struct {
@@ -401,7 +390,7 @@ typedef struct {
   int desired_width;
   int desired_height;
   float desired_fps;  // unused for now
-  lives_size_match_t matchsize;
+  lives_match_t matchsize;
   boolean do_update;
   boolean allownf;
   boolean debug;

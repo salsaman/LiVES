@@ -102,6 +102,7 @@ uint64_t lives_strtoul(const char *nptr);
 size_t lives_strlen(const char *) GNU_HOT GNU_PURE;
 boolean lives_strcmp(const char *, const char *) GNU_HOT GNU_PURE;
 boolean lives_strncmp(const char *, const char *, size_t) GNU_HOT GNU_PURE;
+boolean lives_str_starts_with(const char *, const char *);
 char *lives_strdup_quick(const char *s);
 int lives_strcmp_ordered(const char *, const char *) GNU_HOT GNU_PURE;
 char *lives_concat(char *, char *) GNU_HOT;
@@ -149,6 +150,7 @@ boolean check_mem_status(void);
 char *lives_format_storage_space_string(uint64_t space);
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval, int64_t resvd);
 uint64_t get_ds_free(const char *dir);
+uint64_t get_blocksize(const char *dir);
 
 lives_proc_thread_t disk_monitor_start(const char *dir);
 boolean disk_monitor_running(const char *dir);

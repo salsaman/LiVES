@@ -815,7 +815,9 @@ recheck:
                   mainw->ext_src_used[nclip] = TRUE;
                 } else {
                   // add new clone for nclip
+                  reset_timer_info();
                   mainw->track_decoders[i] = clone_decoder(nclip);
+                  show_timer_info();
                   //g_print("CLONING\n");
                   if (!mainw->multitrack) {
                     if (IS_VALID_CLIP(mainw->blend_file)) {
@@ -2061,7 +2063,7 @@ LIVES_GLOBAL_INLINE void calc_aframeno(int fileno) {
 }
 
 
-frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
+frames_t calc_new_playback_position(int fileno, boolean is_fg, ticks_t otc, ticks_t *ntc) {
   // returns a frame number (floor) using sfile->last_frameno and ntc-otc
   // takes into account looping modes
 
@@ -2104,7 +2106,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   if (norecurse) return cframe;
 
   if (sfile->frames == 0 && !mainw->foreign) {
-    if (fileno == mainw->playing_file) mainw->scratch = SCRATCH_NONE;
+    if (is_fg) mainw->scratch = SCRATCH_NONE;
     return 0;
   }
 
@@ -2113,7 +2115,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
 
   if (fps < 0.001 && fps > -0.001) {
     *ntc = otc;
-    if (fileno == mainw->playing_file) {
+    if (is_fg) {
       mainw->scratch = SCRATCH_NONE;
       if (prefs->audio_src == AUDIO_SRC_INT) calc_aframeno(fileno);
     }
@@ -2126,7 +2128,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   // ntc is the time when the next frame should be / have been played, or if dtc is zero we just set it to otc - the last frame time
   *ntc = otc + dtc;
 
-  if (*ntc > mainw->currticks && fileno == mainw->playing_file) {
+  if (*ntc > mainw->currticks && is_fg) {
     break_me("uh oh\n");
     g_print("ERR %ld and %ld and %ld %ld %ld %ld\n", otc, dtc, *ntc, mainw->currticks, mainw->startticks, mainw->syncticks);
   }
@@ -2147,7 +2149,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     if (mainw->foreign) return sfile->frameno + 1;
   }
 
-  if (fileno == mainw->playing_file) {
+  if (is_fg) {
     /// if we are scratching we do the following:
     /// the time since the last call is considered to have happened at an increased fps (fwd or back)
     /// we recalculate the frame at ntc as if we were at the faster framerate.
@@ -2190,14 +2192,13 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   last_frame = sfile->frames;
   first_frame = 1;
 
-  if (fileno == mainw->playing_file) {
+  if (is_fg) {
     // calculate audio "frame" from the number of samples played
     if (prefs->audio_src == AUDIO_SRC_INT) calc_aframeno(fileno);
 
     if (nframe == cframe || mainw->foreign) {
       if (mainw->scratch == SCRATCH_JUMP) {
-        if (!mainw->foreign && fileno == mainw->playing_file &&
-            (prefs->audio_src == AUDIO_SRC_INT) &&
+        if (!mainw->foreign && (prefs->audio_src == AUDIO_SRC_INT) &&
             !(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
           // check if audio stopped playback. The audio player will also be checking this, BUT: we have to check here too
           // before doing any resync, otherwise the video can loop and if the audio is then resynced it may never reach the end
@@ -2249,7 +2250,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     // lower bound and nloops and the remainder will be negative, so we subtract and add the negatvie value instead]
     // we must also set
 
-    if (fileno == mainw->playing_file) {
+    if (is_fg) {
       // check if video stopped playback
       if (mainw->whentostop == STOP_ON_VID_END && !mainw->loop_cont) {
         mainw->cancelled = CANCEL_VID_END;
@@ -2301,7 +2302,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       sfile->last_frameno = nframe - fdelta;
       if (fps < 0.) {
         // backwards -> forwards
-        if (fileno == mainw->playing_file) {
+        if (is_fg) {
           /// must set norecurse, otherwise we can end up in an infinite loop since dirchange_callback calls this function
           norecurse = TRUE;
           dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
@@ -2316,7 +2317,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       sfile->last_frameno = nframe + fdelta;
       if (fps > 0.) {
         // forwards -> backwards
-        if (fileno == mainw->playing_file) {
+        if (is_fg) {
           norecurse = TRUE;
           dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
                              LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
@@ -2328,7 +2329,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   }
 
   if (mainw->scratch == SCRATCH_JUMP) {
-    if (!mainw->foreign && fileno == mainw->playing_file &&
+    if (!mainw->foreign && is_fg &&
         (prefs->audio_src == AUDIO_SRC_INT) &&
         !(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
       if (mainw->whentostop == STOP_ON_AUD_END && !mainw->loop_cont) {
@@ -2345,7 +2346,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     } else sfile->last_frameno = nframe;
   }
 
-  if (fileno == mainw->playing_file) {
+  if (is_fg) {
     if (mainw->scratch != SCRATCH_NONE) {
       mainw->scratch = SCRATCH_JUMP_NORESYNC;
     }
@@ -2818,7 +2819,7 @@ switch_point:
     /* g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_frameno, */
     /*         (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps); */
     real_requested_frame = requested_frame
-                           = calc_new_playback_position(mainw->playing_file, mainw->startticks, &new_ticks);
+                           = calc_new_playback_position(mainw->playing_file, TRUE, mainw->startticks, &new_ticks);
     /* g_print("POST: %ld %ld %d\n", mainw->startticks, new_ticks, requested_frame); */
 
     //mainw->startticks = new_ticks;

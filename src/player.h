@@ -64,7 +64,7 @@ boolean load_frame_image(frames_t frame);
 
 void reset_playback_clock(void);
 ticks_t lives_get_current_playback_ticks(ticks_t origsecs, ticks_t origusecs, lives_time_source_t *time_source);
-frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc);
+frames_t calc_new_playback_position(int fileno, boolean is_fg, ticks_t otc, ticks_t *ntc);
 void calc_aframeno(int fileno);
 
 void ready_player_one(weed_timecode_t estart);

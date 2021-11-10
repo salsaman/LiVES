@@ -162,7 +162,8 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
 
 
 static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
-    lives_vdev_t *ldev, int palette, int width, int height) {
+    lives_vdev_t *ldev, int palette, lives_match_t matmet,
+    int width, int height) {
   // get nearest format for given palette, width and height
   // if palette is WEED_PALETTE_END, or cannot be matched, get best quality palette (preferring RGB)
   // width and height must be set, actual width and height will be set as near to this as possible
@@ -172,12 +173,13 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 
   // Note: we match first by palette, then by size
 
-  int format_count, i;
   unicap_format_t *format;
   int f = -1;
   int bestp = WEED_PALETTE_END;
   int bestw = 0, besth = 0;
+  double cpbytes;
   int cpal;
+  int format_count, i;
 
   // get details
   for (format_count = 0;
@@ -194,12 +196,13 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 #ifdef DEBUG_UNICAP
       // set format to try and get more data
       unicap_set_format(ldev->handle, format);
-      lives_printerr("Unusable palette with fourcc 0x%x  bpp=%d, size=%dx%d buf=%d\n", format->fourcc, format->bpp,
-                     format->size.width,
-                     format->size.height, (int)format->buffer_size);
+      lives_printerr("Unusable palette with fourcc 0x%x  %d bpp=%d, size=%dx%d buf=%d\n", format->fourcc,
+                     cpal, format->bpp, format->size.width, format->size.height, (int)format->buffer_size);
 #endif
       continue;
     }
+
+    cpbytes = weed_palette_get_bytes_per_pixel(cpal);
 
     if (bestp == WEED_PALETTE_END || cpal == palette || weed_palette_is_alpha(bestp) ||
         weed_palette_is_lower_quality(bestp, cpal) ||
@@ -209,30 +212,51 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
       // prefer exact match on target palette if we have it
       if (palette != WEED_PALETTE_END && bestp == palette && cpal != palette) continue;
 
-      // otherwise this is our best palette up to now
-      bestp = cpal;
-
       // TODO - try to minimise aspect delta
       // for now we just go with the smallest size >= target (or largest frame size if none are >= target)
 
-      if (width >= format->min_size.width && height >= format->min_size.height) {
+      if (matmet == LIVES_MATCH_HIGHEST
+          || (width >= format->min_size.width && height >= format->min_size.height)) {
         if (format->h_stepping > 0 && format->v_stepping > 0) {
+
+          if (matmet == LIVES_MATCH_HIGHEST) {
+            width = format->max_size.width;
+            height = format->max_size.height;
+          }
+
 #ifdef DEBUG_UNICAP
           lives_printerr("Can set any size with step %d and %d; min %d x %d, max %d x %d\n",
                          format->h_stepping, format->v_stepping,
                          format->min_size.width, format->min_size.height, format->max_size.width, format->max_size.height);
 #endif
-          // can set exact size (within stepping limits)
-          format->size.width = (int)(((double)width + (double)format->h_stepping / 2.)
-                                     / (double)format->h_stepping) * format->h_stepping;
+          if (matmet != LIVES_MATCH_HIGHEST) {
+            // can set exact size (within stepping limits)
+            format->size.width = (int)(((double)width + (double)format->h_stepping / 2.)
+                                       / (double)format->h_stepping) * format->h_stepping;
 
-          format->size.height = (int)(((double)height + (double)format->v_stepping / 2.)
-                                      / (double)format->v_stepping) * format->v_stepping;
+            format->size.height = (int)(((double)height + (double)format->v_stepping / 2.)
+                                        / (double)format->v_stepping) * format->v_stepping;
 
-          if (format->size.width > format->max_size.width) format->size.width = format->max_size.width;
-          if (format->size.height > format->max_size.height) format->size.height = format->max_size.height;
+            if (format->size.width > format->max_size.width) format->size.width = format->max_size.width;
+            if (format->size.height > format->max_size.height) format->size.height = format->max_size.height;
+          }
+          if (!SUCCESS(unicap_set_format(ldev->handle, format))) {
+#ifdef DEBUG_UNICAP
+            lives_printerr("Could not set Unicap format\n");
+#endif
+            continue;
+          }
+          if (format->buffer_size < (size_t)((double)(format->size.width * format->size.height) * cpbytes)) {
+#ifdef DEBUG_UNICAP
+            lives_printerr("Buffer size mismatch (%ld vs %ld, ratio %.2f) skipping 1\n",
+                           format->buffer_size, (size_t)((double)(format->size.width * format->size.height) * cpbytes),
+                           (double)format->buffer_size / ((double)(format->size.width * format->size.height) * cpbytes));
+#endif
+            continue;
+          }
 
-          if (format->size.width > bestw || format->size.height > besth) {
+          if (format->size.width >= bestw || format->size.height >= besth) {
+            bestp = cpal;
             bestw = format->size.width;
             besth = format->size.height;
             f = format_count;
@@ -241,14 +265,29 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
           // array of sizes supported
           // step through sizes
 #ifdef DEBUG_UNICAP
-          lives_printerr("Checking %d array sizes\n", format->size_count);
+          lives_printerr("Checking %d array sizes with palette %d\n", format->size_count, cpal);
 #endif
 
           if (format->size_count == 0) {
             // only one size we can use, this is it...
-
-            if ((format->size.width > bestw || format->size.height > besth) && (bestw < width || besth < height)) {
+            if (!SUCCESS(unicap_set_format(ldev->handle, format))) {
+#ifdef DEBUG_UNICAP
+              lives_printerr("Could not set Unicap format\n");
+#endif
+              continue;
+            }
+            if (format->buffer_size < (size_t)((double)(format->size.width * format->size.height) * cpbytes)) {
+#ifdef DEBUG_UNICAP
+              lives_printerr("Buffer size mismatch (%ld vs %ld, ratio %.2f) skipping 3\n",
+                             format->buffer_size, (size_t)((double)(format->size.width * format->size.height) * cpbytes),
+                             (double)format->buffer_size / ((double)(format->size.width * format->size.height) * cpbytes));
+#endif
+              continue;
+            }
+            if ((format->size.width >= bestw || format->size.height >= besth)
+                && (matmet = LIVES_MATCH_HIGHEST || (bestw <= width || besth <= height))) {
               // this format supports a better size match
+              bestp = cpal;
               bestw = format->size.width;
               besth = format->size.height;
               f = format_count;
@@ -264,9 +303,29 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 #ifdef DEBUG_UNICAP
             lives_printerr("entry %d:%d x %d\n", i, format->sizes[i].width, format->sizes[i].height);
 #endif
-            if (format->sizes[i].width > bestw && format->sizes[i].height > besth &&
-                (bestw < width || besth < height)) {
-              // this format supports a better size match
+
+            if (!SUCCESS(unicap_set_format(ldev->handle, format))) {
+#ifdef DEBUG_UNICAP
+              lives_printerr("Could not set Unicap format\n");
+#endif
+              continue;
+            }
+            if (format->buffer_size < (size_t)((double)(format->sizes[i].width * format->sizes[i].height) * cpbytes)) {
+              size_t ss1 = format->buffer_size;
+              size_t ss2 = (size_t)((double)(format->sizes[i].width * format->sizes[i].height) * cpbytes);
+
+
+#ifdef DEBUG_UNICAP
+              lives_printerr("Buffer size mismatch %ld and %ld (%ld vs %ld, ratio %.2f) skipping 2\n",
+                             ss1, ss2, format->buffer_size, (size_t)((double)(format->sizes[i].width * format->sizes[i].height) * cpbytes),
+                             (double)format->buffer_size / ((double)(format->sizes[i].width * format->sizes[i].height) * cpbytes));
+#endif
+              continue;
+            }
+            if (format->sizes[i].width >= bestw && format->sizes[i].height >= besth &&
+                (matmet == LIVES_MATCH_HIGHEST || (bestw <= width || besth <= height))) {
+              // this format supports a better size / palette match
+              bestp = cpal;
               bestw = format->size.width = format->sizes[i].width;
               besth = format->size.height = format->sizes[i].height;
               f = format_count;
@@ -278,7 +337,9 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
         }
       } else {
         // target is smaller than min width, height
-        if (bestw < format->min_size.width || besth < format->min_size.height) continue; // TODO - minimise aspect delta
+        if (matmet == LIVES_MATCH_AT_MOST
+            && (width < format->min_size.width || height < format->min_size.height)) continue; // TODO - minimise aspect delta
+        bestp = cpal;
         bestw = format->size.width = format->min_size.width;
         besth = format->size.height = format->min_size.height;
         f = format_count;
@@ -293,11 +354,12 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 
 /// get devnumber from user and open it to a new clip
 
-static boolean open_vdev_inner(unicap_device_t *device) {
+static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
   // create a virtual clip
   lives_vdev_t *ldev = (lives_vdev_t *)lives_malloc(sizeof(lives_vdev_t));
   unicap_format_t formats[MAX_FORMATS];
   unicap_format_t *format;
+  double cpbytes;
 
   // open dev
   unicap_open(&ldev->handle, device);
@@ -311,7 +373,8 @@ static boolean open_vdev_inner(unicap_device_t *device) {
 
   unicap_lock_stream(ldev->handle);
 
-  format = lvdev_get_best_format(formats, ldev, WEED_PALETTE_END, DEF_GEN_WIDTH, DEF_GEN_HEIGHT);
+  format = lvdev_get_best_format(formats, ldev, WEED_PALETTE_END,
+                                 matmet, DEF_GEN_WIDTH, DEF_GEN_HEIGHT);
 
   if (!format) {
     LIVES_INFO("No useful formats found");
@@ -336,6 +399,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
   // ignore YUV subspace for now
   ldev->current_palette = fourccp_to_weedp(format->fourcc, format->bpp, (int *)&cfile->interlace,
                           &ldev->YUV_sampling, &ldev->YUV_subspace, &ldev->YUV_clamping);
+  cpbytes = weed_palette_get_bytes_per_pixel(ldev->current_palette);
 
 #ifdef DEBUG_UNICAP
   lives_printerr("\nUsing palette with fourcc 0x%x, translated as %s\n", format->fourcc,
@@ -354,9 +418,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
           weed_palette_get_bits_per_macropixel(
             ldev->current_palette), weed_palette_get_pixels_per_macropixel(ldev->current_palette));
 
-  if (format->buffer_size != format->size.width * format->size.height * weed_palette_get_bits_per_macropixel(
-        ldev->current_palette) /
-      weed_palette_get_pixels_per_macropixel(ldev->current_palette) / 8) {
+  if (format->buffer_size < (size_t)((double)(format->size.width * format->size.height) * cpbytes)) {
     int wwidth = format->size.width, awidth;
     int wheight = format->size.height, aheight;
     // something went wrong setting the size - the buffer is wrongly sized
@@ -373,8 +435,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
     lives_printerr("Wanted frame size %d x %d, got %d x %d\n", wwidth, wheight, awidth, aheight);
 #endif
 
-    format->buffer_size = format->size.width * format->size.height * weed_palette_get_bits_per_macropixel(ldev->current_palette) /
-                          weed_palette_get_pixels_per_macropixel(ldev->current_palette) / 8;
+    format->buffer_size = (size_t)((double)(format->size.width * format->size.height) * cpbytes);
   }
 
   cfile->hsize = format->size.width;
@@ -416,26 +477,28 @@ void lives_vdev_free(lives_vdev_t *ldev) {
 }
 
 
-boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+boolean on_open_vdev_activate(LiVESMenuItem *menuitem, const char *devname) {
   unicap_device_t devices[MAX_DEVICES];
 
   LiVESList *devlist = NULL;
+  LiVESSList *rbgroup;
 
   LiVESWidget *card_dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *layout, *hbox;
 
   char *fname;
+  char mopts[N_MATCH_TYPES];
 
-  int devno = 0;
+  LiVESResponseType response;
+  lives_match_t matmet;
 
   int new_file = mainw->first_free_file;
   int old_file = mainw->current_file;
-
-  int response;
-
-  int dev_count;
+  int dev_count, devno = 0;
   int status = STATUS_SUCCESS;
 
-  register int i;
+  int i;
 
   mainw->open_deint = FALSE;
 
@@ -454,7 +517,7 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
   }
 
-  if (!user_data) {
+  if (!devname) {
     for (i = 0; i < dev_count; i++) {
       if (!unicap_is_stream_locked(&devices[i])) {
         devlist = lives_list_prepend(devlist, devices[i].identifier);
@@ -469,16 +532,44 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->fx1_val = 0;
     mainw->open_deint = FALSE;
     card_dialog = create_combo_dialog(1, (livespointer)devlist);
+    dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(card_dialog));
+
+    layout = lives_layout_new(NULL);
+    lives_standard_expander_new(_("Options"), LIVES_BOX(dialog_vbox), layout);
+
+    lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+    lives_layout_add_row(LIVES_LAYOUT(layout));
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("Desired frame size:"), FALSE);
+
+    lives_memset(mopts, 0, N_MATCH_TYPES);
+    mopts[LIVES_MATCH_AT_MOST] = mopts[LIVES_MATCH_HIGHEST] = 1;
+    mopts[LIVES_MATCH_AT_MOST] = 2;
+
+    rbgroup = add_match_methods(LIVES_LAYOUT(layout), mopts, 4, 4, FALSE);
+
+    lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+    lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+    add_deinterlace_checkbox(LIVES_BOX(hbox));
+
+    add_fill_to_box(LIVES_BOX(dialog_vbox));
+    add_fill_to_box(LIVES_BOX(dialog_vbox));
+
     response = lives_dialog_run(LIVES_DIALOG(card_dialog));
     lives_list_free(devlist); /// free only after runniong dialog !!!
     if (response == LIVES_RESPONSE_CANCEL) {
       return FALSE;
     }
+    matmet = (lives_match_t)rbgroup_get_data(rbgroup, MATCHTYPE_KEY, LIVES_MATCH_UNDEFINED);
     lives_widget_destroy(card_dialog);
+    if (matmet < 0) {
+      matmet = -matmet;
+      pref_factory_int(PREF_WEBCAM_MATMET, &prefs->webcam_matmet, matmet, TRUE);
+    }
   } else {
-    char *device = (char *)user_data;
     for (i = 0; i < dev_count; i++) {
-      if (!strcmp(device, devices[i].device)) {
+      if (!lives_strcmp(devname, devices[i].device)) {
         mainw->fx1_val = i;
         break;
       }
@@ -510,7 +601,7 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   g_print("checking formats for %s\n", fname);
 
-  if (!open_vdev_inner(&devices[devno])) {
+  if (!open_vdev_inner(&devices[devno], matmet)) {
     d_print(_("Unable to open device %s\n"), fname);
     lives_free(fname);
     close_current_file(old_file);

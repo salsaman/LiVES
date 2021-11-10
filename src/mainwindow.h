@@ -244,6 +244,18 @@ typedef enum {
 					      : (dir1) == LIVES_DIR_IN ? (dir2) == LIVES_DIR_OUT : (dir1) == LIVES_DIR_OUT \
 					      ? (dir2) == LIVES_DIR_IN : sig(dir1) != sig(dir2))
 
+typedef enum {
+  LIVES_MATCH_UNDEFINED = 0,
+  LIVES_MATCH_NEAREST,
+  LIVES_MATCH_AT_LEAST,
+  LIVES_MATCH_AT_MOST,
+  LIVES_MATCH_LOWEST,
+  LIVES_MATCH_HIGHEST,
+  LIVES_MATCH_CHOICE,
+  LIVES_MATCH_SPECIFIED,
+  N_MATCH_TYPES,
+} lives_match_t;
+
 /// toy types
 typedef enum {
   LIVES_TOY_NONE = 0,
@@ -1794,10 +1806,11 @@ typedef struct {
   boolean ce_thumbs;
   boolean ce_upd_clip;
 
-#define SCREEN_AREA_NONE -1
-#define SCREEN_AREA_FOREGROUND 0
-#define SCREEN_AREA_BACKGROUND 1
-#define SCREEN_AREA_USER_DEFINED1 2
+#define SCREEN_AREA_NONE		-1
+#define SCREEN_AREA_AUTO		0
+#define SCREEN_AREA_FOREGROUND		1
+#define SCREEN_AREA_BACKGROUND		2
+#define SCREEN_AREA_USER_DEFINED1	3
 
   int n_screen_areas; // number of screen areas
   int active_sa_fx; // active screen area for effects

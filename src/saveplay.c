@@ -4506,10 +4506,10 @@ ulong restore_file(const char *file_name) {
 static double ascrap_mb;  // MB written to audio file
 static uint64_t free_mb; // MB free to write
 
-void add_to_ascrap_mb(uint64_t bytes) {
-  ascrap_mb += bytes / 1000000.;
-}
+#define SCRAP_CHECK 30
+static ticks_t lscrap_check;
 
+void add_to_ascrap_mb(uint64_t bytes) {ascrap_mb += bytes / 1000000.;}
 
 boolean open_scrap_file(void) {
   // create a scrap file for recording generated video frames
@@ -4552,6 +4552,7 @@ boolean open_scrap_file(void) {
 
   mainw->current_file = current_file;
   mainw->scrap_file_size = -1;
+  lscrap_check = -1;
 
   if (mainw->ascrap_file == -1) ascrap_mb = 0.;
 
@@ -4817,12 +4818,17 @@ static int64_t _save_to_scrap_file(weed_layer_t *layer) {
   pdata_size = weed_plant_serialise(fd, layer, NULL);
   weed_layer_free(layer);
 
-  // check free space every 256 frames or every 10 MB of audio (TODO ****)
-  if ((scrapfile->frames & 0xFF) == 0) {
-    char *dir = get_clip_dir(mainw->scrap_file);
-    free_mb = (double)get_ds_free(dir) / 1000000.;
-    if (free_mb == 0) sf_writeable = is_writeable_dir(dir);
-    lives_free(dir);
+  // check free space every 2048 frames or after SCRAP_CHECK seconds (whichever comes first)
+  if (lscrap_check == -1) lscrap_check = mainw->clock_ticks;
+  else {
+    if (mainw->clock_ticks - lscrap_check >= SCRAP_CHECK * TICKS_PER_SECOND
+        || (scrapfile->frames & 0x800) == 0x800) {
+      char *dir = get_clip_dir(mainw->scrap_file);
+      free_mb = (double)get_ds_free(dir) / 1000000.;
+      if (free_mb == 0) sf_writeable = is_writeable_dir(dir);
+      lives_free(dir);
+      lscrap_check = mainw->clock_ticks;
+    }
   }
 
   return pdata_size;
@@ -4850,6 +4856,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
   check_for_disk_space(FALSE);
 
   if (scrap_file_procthrd) {
+    // skip saving if still handling the previous one
     if (mainw->rec_aclip == -1 && mainw->scratch == SCRATCH_NONE) {
       if (!lives_proc_thread_check_finished(scrap_file_procthrd)) return scrapfile->frames;
     }
@@ -4879,7 +4886,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
       lives_free(framecount);
     }
   }
-  scrap_file_procthrd = lives_proc_thread_create(LIVES_THRDATTR_NONE,
+  scrap_file_procthrd = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY,
                         (lives_funcptr_t)_save_to_scrap_file, WEED_SEED_INT64, "P", orig_layer);
   return ++scrapfile->frames;
 }

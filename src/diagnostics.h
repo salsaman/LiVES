@@ -17,6 +17,9 @@ void run_diagnostic(LiVESWidget *, const char *testname);
 char *get_stats_msg(boolean calc_only);
 double get_inst_fps(boolean get_msg);
 
+void reset_timer_info(void);
+double show_timer_info(void);
+
 #ifdef WEED_STARTUP_TESTS
 int run_weed_startup_tests(void);
 int test_palette_conversions(void);

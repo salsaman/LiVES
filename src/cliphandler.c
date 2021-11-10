@@ -1656,7 +1656,7 @@ rhd_failed:
 LIVES_GLOBAL_INLINE char *get_clip_dir(int clipno) {
   if (IS_VALID_CLIP(clipno)) {
     lives_clip_t *sfile = mainw->files[clipno];
-    if (IS_NORMAL_CLIP(clipno) || sfile->clip_type == CLIP_TYPE_TEMP) {
+    if (IS_NORMAL_CLIP(clipno) || sfile->clip_type == CLIP_TYPE_TEMP || sfile->clip_type == CLIP_TYPE_VIDEODEV) {
       if (*sfile->staging_dir) {
         return lives_build_path(sfile->staging_dir, sfile->handle, NULL);
       }

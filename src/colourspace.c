@@ -1640,14 +1640,14 @@ LIVES_LOCAL_INLINE boolean is_yuvchan(uint16_t ctype) {
   return (ctype == WEED_VCHAN_Y || ctype == WEED_VCHAN_U || ctype == WEED_VCHAN_V);
 }
 
-LIVES_GLOBAL_INLINE size_t pixel_size(int pal) {
-  /// This is actually the MACRO pixel size om bytes, to get the real pixel size, divide by weed_palette_pixels_per_macropixel()
+LIVES_GLOBAL_INLINE double pixel_size(int pal) {
+  /// This is actually the MACRO pixel size in bytes, to get the real pixel size, divide by weed_palette_pixels_per_macropixel()
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
   if (!mpx) return 0;
   else {
-    size_t psize = 0;
-    for (register int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++)
-      psize += mpx->bitsize[i] == 0 ? 1 : mpx->bitsize[i] / 8;
+    double psize = 0;
+    for (int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++)
+      psize += mpx->bitsize[i] == 0. ? 1. : (double)(mpx->bitsize[i]) / 8.;
     return psize;
   }
 }
@@ -1665,8 +1665,14 @@ LIVES_GLOBAL_INLINE int weed_palette_get_pixels_per_macropixel(int pal) {
 
 LIVES_GLOBAL_INLINE int weed_palette_get_bits_per_macropixel(int pal) {
   int ppm = weed_palette_get_pixels_per_macropixel(pal);
-  if (ppm) return pixel_size(pal) * 8;
+  if (ppm) return pixel_size(pal) * 8.;
   return 0;
+}
+
+LIVES_GLOBAL_INLINE double weed_palette_get_bytes_per_pixel(int pal) {
+  int ppm = weed_palette_get_pixels_per_macropixel(pal);
+  if (ppm) return pixel_size(pal) / (double)ppm;
+  return 0.;
 }
 
 LIVES_GLOBAL_INLINE int weed_palette_get_nplanes(int pal) {
@@ -10381,9 +10387,9 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   int pal = weed_layer_get_palette(layer);
   int width = weed_layer_get_width(layer);
   int height = weed_layer_get_height(layer);
-  int psize = pixel_size(pal);
   int i = numplanes, j;
   boolean newdata = FALSE;
+  double psize = pixel_size(pal);
 
   if (alignment != 0 && !old_layer) {
     rowstrides = weed_layer_get_rowstrides(layer, &i);
@@ -12563,7 +12569,7 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *laye
         int orowstride = weed_layer_get_rowstride(layer);
         int nthreads = 1;
         int dheight;
-        int psize = pixel_size(pal);
+        double psize = pixel_size(pal);
         lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(nfx_threads,
                                     sizeof(lives_cc_params));
         int xdheight = CEIL((double)height / (double)nfx_threads, 4);
@@ -12826,7 +12832,8 @@ void lives_layer_set_opaque(weed_layer_t *layer) {
       lives_free(rowstrides);
       lives_free(pixel_data);
     } else {
-      ssize_t frsize, psize = pixel_size(pal);
+      ssize_t frsize;
+      double psize = pixel_size(pal);
       uint8_t *pixel_data = weed_layer_get_pixel_data(layer);
       rowstride = weed_layer_get_rowstride(layer);
       frsize = height * rowstride;

@@ -2010,6 +2010,7 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata) {
   if (spriv) {
     clone->priv = dpriv = (lives_mkv_priv_t *)calloc(1, sizeof(lives_mkv_priv_t));
     dpriv->filesize = spriv->filesize;
+    //dpriv->idxc = copy_indices(spriv->idxc);
     dpriv->inited = TRUE;
   } else {
     clone = init_cdata(clone);

@@ -134,24 +134,39 @@ boolean update_pref(const char *pref_idx, void *newval, boolean permanent) {
   if (!prefplant) return FALSE;
   else {
     LiVESWidget *widget = (LiVESWidget *)weed_get_voidptr_value(prefplant, LIVES_LEAF_WIDGET, NULL);
-    void *ppref = weed_get_voidptr_value(prefplant, LIVES_LEAF_VARPTR, NULL);
-    int32_t type = weed_leaf_seed_type(prefplant, WEED_LEAF_DEFAULT);
-    boolean bval;
-    switch (type) {
-    case WEED_SEED_BOOLEAN: {
-      boolean bpref;
-      if (newval) bval = *(boolean *)newval;
-      else bval = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget));
-      /// any nonstandard updates here
-      pref_factory_bool(pref_idx, bval, permanent);
-      ///
-      bpref = *(boolean *)ppref;
-      if (bpref == bval) goto fail;
-      *(boolean *)ppref = bval;
-      goto bool_success;
-    }
-    break;
-    default: break;
+    if (widget || newval) {
+      void *ppref = weed_get_voidptr_value(prefplant, LIVES_LEAF_VARPTR, NULL);
+      int32_t type = weed_leaf_seed_type(prefplant, WEED_LEAF_DEFAULT);
+      boolean bval;
+      switch (type) {
+      case WEED_SEED_BOOLEAN: {
+        boolean bpref;
+        if (newval) bval = *(boolean *)newval;
+        else bval = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget));
+        /// any nonstandard updates here
+        pref_factory_bool(pref_idx, bval, permanent);
+        ///
+        bpref = *(boolean *)ppref;
+        if (bpref == bval) goto fail;
+        *(boolean *)ppref = bval;
+        goto bool_success;
+      }
+      break;
+      case WEED_SEED_INT: {
+        int ipref;
+        if (newval) ival = *(int *)newval;
+        else ival = lives_spin_button_get_value_int(LIVES_SPIN_BUTTON(widget));
+        /// any nonstandard updates here
+        pref_factory_int(pref_idx, ival, &pref, permanent);
+        ///
+        ipref = *(int *)ppref;
+        if (ipref == ival) goto fail;
+        *(int *)ppref = ival;
+        goto inr_success;
+      }
+      break;
+      default: break;
+      }
     }
 
 fail:
@@ -170,6 +185,19 @@ bool_success:
     } else weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_TEMP);
   }
   return TRUE;
+
+int_success:
+  weed_set_int_value(prefplant, WEED_LEAF_VALUE, ival);
+  if (prefsw) {
+    lives_widget_process_updates(prefsw->prefs_dialog);
+    prefsw->ignore_apply = FALSE;
+  }
+  if (permanent) {
+    set_int_pref(pref_idx, ival);
+    weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
+  } else weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_TEMP);
+}
+return TRUE;
 }
 
 
@@ -5302,14 +5330,16 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->raudio_alock = lives_standard_check_button_new(_("Auto _lock audio on record start"),
+  prefsw->raudio_alock = lives_standard_check_button_new(_("AUTO _LOCK AUDIO ON RECORD START"),
                          (prefs->rec_opts & REC_AUDIO_AUTOLOCK), LIVES_BOX(hbox),
-                         (tmp = H_("Setting this will cause audio to "
+                         (tmp = H_("Setting this will cause audio to automatically "
                                    "become locked to the currently "
                                    "playing clip whenever recording "
-                                   "begins. Only functions when playing internal "
-                                   "audio source.\n"
-                                   "Pressing shift + A will unlock audio.")));
+                                   "begins.\nOnly functions when playing internal "
+                                   "audio in Clip Edit mode.\n"
+                                   "Pressing shift + A will unlock audio so that it may follow "
+                                   "video track changes once more.\n"
+                                   "Related: Playback / Audio follows video clip switches.")));
   lives_free(tmp);
 
   if (!is_realtime_aplayer(prefs->audio_player)) {

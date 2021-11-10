@@ -4705,6 +4705,7 @@ void play_all(boolean from_menu) {
 
     mainw->playing_sel = FALSE;
     if (CURRENT_CLIP_IS_NORMAL) lives_rm(cfile->info_file);
+    if (from_menu) mainw->pre_src_file = -2;
 
     play_file();
 
@@ -4719,6 +4720,10 @@ void play_all(boolean from_menu) {
     /*     mainw->cancelled = CANCEL_USER; */
     /*   } */
     //}
+    if (from_menu) {
+      switch_clip(mainw->pre_src_file, 1, TRUE);
+      mainw->pre_src_file = -2;
+    }
   }
 }
 
@@ -5249,7 +5254,7 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   mainw->scratch = SCRATCH_JUMP_NORESYNC;
 
   if (mainw->loop_locked) {
-    dirchange_callback(group, obj, keyval, LIVES_CONTROL_MASK, SCREEN_AREA_FOREGROUND);
+    dirchange_callback(group, obj, keyval, LIVES_CONTROL_MASK, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
   }
 
   if (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) {
@@ -6299,9 +6304,9 @@ void switch_clip(int type, int newclip, boolean force) {
   // This is the new single entry function for switching clips.
   // It should eventually replace switch_to_file() and do_quick_switch()
 
-  // type = 0 : if we are playing and a transition is active, this will change the background clip
-  // type = 1 fg only
-  // type = 2 bg only
+  // type = auto : if we are playing and a transition is active, this will change the background clip
+  // type = foreground fg only
+  // type = background bg only
 
   if (!IS_VALID_CLIP(newclip)) return;
 
@@ -6310,8 +6315,10 @@ void switch_clip(int type, int newclip, boolean force) {
 
   mainw->blend_palette = WEED_PALETTE_END;
 
-  if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1
-                    && !(mainw->blend_file != -1 && !IS_NORMAL_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file))) {
+  if (type == SCREEN_AREA_BACKGROUND || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0
+                                         && type != SCREEN_AREA_FOREGROUND
+                                         && !(mainw->blend_file != -1 && !IS_NORMAL_CLIP(mainw->blend_file)
+                                             && mainw->blend_file != mainw->playing_file))) {
     if (mainw->num_tr_applied < 1 || newclip == mainw->blend_file) return;
 
     // switch bg clip
@@ -9918,19 +9925,19 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
           resync_audio(mainw->playing_file, (double)frameno);
         }
       }
-    }
 
-    if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
+      if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
 #ifdef ENABLE_JACK
-      if (prefs->audio_player == AUD_PLAYER_JACK) {
-        jack_set_avel(mainw->jackd, sfile->pb_fps / sfile->fps);
-      }
+        if (prefs->audio_player == AUD_PLAYER_JACK) {
+          jack_set_avel(mainw->jackd, sfile->pb_fps / sfile->fps);
+        }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player == AUD_PLAYER_PULSE) {
-        pulse_set_avel(mainw->pulsed, sfile->pb_fps / sfile->fps);
-      }
+        if (prefs->audio_player == AUD_PLAYER_PULSE) {
+          pulse_set_avel(mainw->pulsed, sfile->pb_fps / sfile->fps);
+        }
 #endif
+      }
     }
   }
 

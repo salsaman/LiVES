@@ -1117,7 +1117,7 @@ static size64_t sample_move_float_float_arena(float *dst, float *src, size_t off
 
 #define CLIP_DECAY ((double)16535. / (double)16536.)
 
-#define CLIP_LIMIT .95
+#define CLIP_LIMIT 1.
 
 /**
    @brief convert float samples to interleaved int
@@ -2724,7 +2724,7 @@ static void *write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
   int in_sampsize, out_sampsize;
   int swap_sign = 0;
   boolean in_float, out_float = FALSE;
-  boolean in_interleaved, out_interleaved = TRUE;
+  boolean in_interleaved = TRUE;
   boolean out_unsigned, in_unsigned;
   boolean rev_endian = FALSE;
 

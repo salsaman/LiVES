@@ -22,6 +22,8 @@
 #define MSG_AREA_VMARGIN 0
 #define LAYOUT_SIZE_MIN 0
 
+int rbgroup_get_data(LiVESSList *rbgroup, const char *key, int def);
+
 void restore_wm_stackpos(LiVESButton *button);
 
 boolean update_dsu(void *lab);
@@ -260,6 +262,12 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
 
 void add_suffix_check(LiVESBox *, const char *ext);
 
+LiVESSList *add_match_methods(LiVESLayout *, char *mopts, int height_step, int width_step, boolean add_aspect);
+
+int rbgroup_get_data(LiVESSList *rbgroup, const char *key, int def);
+
+LiVESWidget *add_deinterlace_checkbox(LiVESBox *parent);
+
 const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width, LiVESSpinButton *sp_height,
     LiVESBox *container);
 
@@ -321,6 +329,8 @@ text_window *textwindow;
 #define FC_ACTION_KEY "_fc_action"
 
 #define STRUCT_KEY "_struct"
+
+#define MATCHTYPE_KEY "_matchtype"
 
 #define PIXBUF_KEY "_pixbuf"
 #define PRV_TYPE_KEY "_preview_type"

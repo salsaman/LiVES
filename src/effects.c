@@ -907,7 +907,7 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
     lives_decoder_t *dplug = NULL;
     lives_decoder_sys_t *dpsys = NULL;
     double est_time = 0.;
-    frames_t frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
+    frames_t frameno = calc_new_playback_position(mainw->blend_file, FALSE, blend_tc, (ticks_t *)&ntc);
 
     if (blend_file->clip_type == CLIP_TYPE_FILE) {
       if (altsrc >= 0) dplug = (lives_decoder_t *)blend_file->alt_srcs[altsrc];
@@ -927,7 +927,7 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
 
     if (est_time >= 0.) {
       ntc = tc + est_time * TICKS_PER_SECOND_DBL;
-      frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
+      frameno = calc_new_playback_position(mainw->blend_file, FALSE, blend_tc, (ticks_t *)&ntc);
     }
 
     blend_file->last_frameno = blend_file->frameno = frameno;

@@ -9463,7 +9463,8 @@ void do_quick_switch(int new_file) {
 
   // switch audio clip
   if (AUD_SRC_INTERNAL && (!mainw->event_list || mainw->record)) {
-    if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
+    if (is_realtime_aplayer(prefs->audio_player) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+        && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
         && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit))) {
       switch_audio_clip(new_file, TRUE);
     }

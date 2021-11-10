@@ -10121,9 +10121,13 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
 
       if (layout) {
-        // pack end because box is a layout hbox
-        lives_widget_set_pack_type(LIVES_BOX(box), container, LIVES_PACK_END);
-        lives_widget_set_halign(LIVES_WIDGET(box), LIVES_ALIGN_END);
+        if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
+          lives_widget_set_halign(LIVES_WIDGET(box), LIVES_ALIGN_CENTER);
+        } else {
+          // pack end because box is a layout hbox
+          lives_widget_set_pack_type(LIVES_BOX(box), container, LIVES_PACK_END);
+          lives_widget_set_halign(LIVES_WIDGET(box), LIVES_ALIGN_END);
+        }
         box = LIVES_BOX(lives_layout_hbox_new(LIVES_TABLE(layout)));
         hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
       }
@@ -10138,6 +10142,9 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
     if (widget_opts.swap_label && eventbox) {
       if (layout) {
         box = LIVES_BOX(lives_layout_hbox_new(LIVES_TABLE(layout)));
+        if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
+          lives_widget_set_halign(LIVES_WIDGET(box), LIVES_ALIGN_CENTER);
+        }
         hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
         lives_widget_set_show_hide_with(spinbutton, hbox);
       }

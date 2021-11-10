@@ -20,6 +20,7 @@
 
 
 #define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_BOOLEAN, x##PDEF##x, FLAGS);
+#define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_INT, x##PDEF##x, FLAGS);
 
 #define SET_PREF_WIDGET(IDX, WIDGET) set_pref_widget(PREF_##IDX, (WIDGET))
 

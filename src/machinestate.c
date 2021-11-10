@@ -650,6 +650,18 @@ getfserr:
   return bytes;
 }
 
+LIVES_GLOBAL_INLINE uint64_t get_blocksize(const char *dir) {
+  struct statvfs sbuf;
+
+  if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return 0;
+
+  // use statvfs to get fs details
+  if (statvfs(dir, &sbuf) == -1) return 0;
+
+  // result is block size * blocks available
+  return sbuf.f_bsize;
+}
+
 
 LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs) {
   ticks_t ret = -1;
@@ -1381,12 +1393,13 @@ LIVES_GLOBAL_INLINE const char *lives_strappendf(const char *string, int len, co
 /// each byte B can be thought of as a signed char, subtracting 1 sets bit 7 if B was <= 0, then AND with ~B clears bit 7 if it
 /// was already set (i.e B was < 0), thus bit 7 only remains set if the byte started as 0.
 #define hasNulByte(x) (((x) - 0x0101010101010101) & ~(x) & 0x8080808080808080)
-#define getnulpos(nulmask) ((nulmask & 2155905152ul)	? ((nulmask & 32896ul) ? ((nulmask & 128ul) ? 0 : 1) : \
+#define getnulpos(nulmask) ((nulmask & 2155905152ul) ? ((nulmask & 32896ul) ? ((nulmask & 128ul) ? 0 : 1) : \
 							   ((nulmask & 8388608ul) ? 2 : 3)) : (nulmask & 141287244169216ul) ? \
 			    ((nulmask & 549755813888ul) ? 4 : 5) : ((nulmask & 36028797018963968ul) ? 6 : 7))
 
 #define getnulpos_be(nulmask) ((nulmask & 9259542121117908992ul) ? ((nulmask & 9259400833873739776ul) ? \
-								    ((nulmask & 9223372036854775808ul) ? 0 : 1) : ((nulmask & 140737488355328ul) ? 2 : 3)) \
+								    ((nulmask & 9223372036854775808ul) ? 0 : 1) : \
+								    ((nulmask & 140737488355328ul) ? 2 : 3)) \
 			       : (nulmask & 2155872256ul) ? ((nulmask & 2147483648ul) ? 4 : 5) : ((nulmask & 32768ul) ? 6 : 7))
 
 LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
@@ -1512,6 +1525,28 @@ LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size
       if (!(len--)) return FALSE;
       if (*st1 != *(st2++)) return TRUE;
       if (!(*(st1++))) return FALSE;
+    }
+  }
+  return (*st1 != *st2);
+}
+
+/// returns TRUE if st1 starts with st2
+LIVES_GLOBAL_INLINE boolean lives_str_starts_with(const char *st1, const char *st2) {
+  if (!st1 || !st2) return (st1 == st2);
+  else {
+    boolean hnb = FALSE;
+    uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
+    while (1) {
+      if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
+        do {
+          d1 = *(ip1++);
+          d2 = *(ip2++);
+        } while (d1 == d2 && !(hnb = hasNulByte(d2)));
+        if (!hnb) return FALSE;
+        st1 = (void *)ip1; st2 = (void *)ip2;
+      }
+      if (*(st1++) != *st2) return FALSE;
+      if (!(*(st1++))) return TRUE;
     }
   }
   return (*st1 != *st2);

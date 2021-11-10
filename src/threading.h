@@ -83,6 +83,7 @@ typedef struct {
   boolean var_fx_is_audio;
   boolean var_no_gui;
   boolean var_force_button_image;
+  ticks_t var_timerinfo;
   LiVESList *var_hook_closures[N_HOOK_FUNCS];
   volatile float *var_core_load_ptr; // pointer to value that monitors core load
 } lives_threadvars_t;

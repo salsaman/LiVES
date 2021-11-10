@@ -190,9 +190,10 @@ double cdist94(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8
 const weed_macropixel_t *get_advanced_palette(int weed_palette);
 boolean weed_palette_is_valid(int pal);
 int get_simple_palette(weed_macropixel_t *mpx);
-size_t pixel_size(int pal);
+double pixel_size(int pal); ///< actually MACROpixel size in bytes
 int weed_palette_get_pixels_per_macropixel(int pal);
 int weed_palette_get_bits_per_macropixel(int pal);
+double weed_palette_get_bytes_per_pixel(int pal);
 int weed_palette_get_nplanes(int pal);
 boolean weed_palette_is_rgb(int pal);
 boolean weed_palette_is_yuv(int pal);

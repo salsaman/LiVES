@@ -10,7 +10,6 @@
 #include "diagnostics.h"
 #include "callbacks.h"
 
-
 #define STATS_TC (TICKS_PER_SECOND_DBL)
 static double inst_fps = 0.;
 
@@ -230,7 +229,6 @@ static char *explain_missing_cpt(int idx) {
   return text;
 }
 
-
 #define ADD_TO_TEXT(what, exec)   if (!capable->has_##what)	\
     text = lives_concat(text, explain_missing(exec));
 
@@ -289,6 +287,77 @@ void explain_missing_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 #undef ADD_TO_TEXT
 
+#if 0
+//////////////// lives performance manager
+static LiVESList *checkdirs = NULL;
+boolean check_by_size = TRUE;
+
+void *run_perfmgr(void *data) {
+  // pref manager runs in a bg thread
+  // monitors system preformance
+  // - disk space
+  // other threads can update perfmgr with an amount of data (bytes) written
+  // or size 0 if unknown
+  // if size written is known we check every X bytes
+  // otherwise we go by time
+  // - we monitor free space on mountpoint of livesprojects (if warn / crit are set)
+  // - we monitor space used (if quota is set)
+  // - we may check volume containing tmp if the diskspace is known to be low
+  // (e.g downloading from remote site)
+
+  while (!cancelled) {
+    if (check_by_size) {
+      mutex_lock;
+      // is check_size > SIZE_THRESH ?
+      // - zero size
+      mutex_unlock;
+      // - check
+    } else {
+      // check if time_elapsed > TIME_THRESH
+      // if checkdirs exists, check each mountpoint
+      // if its our mountpoint check quota also, set ds_warn state
+      // otherwise, check time depends on fs fill level
+    }
+  }
+}
+
+
+uint64_t inform_perfmgr(const char *dir, uint64_t handle, size_t tsize) {
+  LiVESList *cdirs;
+  char *mp = get_mountpoint_for(dir);
+  if (tsize) {
+    mutex_lock;
+    if (check_by_size) {
+      // increase size count
+      check_size += tsize;
+    }
+    mutex_unlock();
+    return 0;
+  }
+  if (!handle) handle = gen_unique_id();
+  mutex_lock();
+  check_by_size = FALSE;
+  for (cdirs = checkdirs; cdirs; cdirs = cdirs->next) {
+    // thing is struct handle + thr_id
+    thing *th = (thing *)cdirs->data;
+    if (!lives_strcmp(mp, th->mp)) {
+      // save struct with handle + thr_id
+      th->handles = lives_list_append_unique(th->handles, handle_and_thrid);
+      break;
+    }
+  }
+  if (!cdirs) checkdirs = lives_list_append(checkdirs, new_thing);
+  mutex_unlock();
+  return handle;
+}
+
+void disinform_perfmgr(uint64_t handle, const char *dir) {
+  // remove handle from corresponding mountpoint
+  // if no more handles, remove node
+  // if no more list check_by_time = FALSE;
+
+}
+#endif
 
 /// TRASH area /////
 
@@ -304,7 +373,7 @@ void check_random(void) {
   int dist[8][256];
   int bval, dval;
   double prob;
-  register int d, x;
+  int d, x;
   uint64_t tt, r;
   /// check quality of random function
   /// - check 1: each binary digit should habe approx. equal 1s and 0s
@@ -379,14 +448,16 @@ static int run_weed_startup_tests(void);
 //static int test_palette_conversions(void);
 #endif
 
-ticks_t timerinfo;
+void reset_timer_info(void) {
+  THREADVAR(timerinfo) = lives_get_current_ticks();
+}
 
-static double show_timer_info(void) {
-  ticks_t xtimerinfo = lives_get_current_ticks();
+double show_timer_info(void) {
+  ticks_t xti = lives_get_current_ticks();
   double timesecs;
   g_print("\n\nTest completed in %.4f seconds\n\n",
-          (timesecs = ((double)xtimerinfo - (double)timerinfo) / TICKS_PER_SECOND_DBL));
-  timerinfo = xtimerinfo;
+          (timesecs = ((double)xti - (double)THREADVAR(timerinfo)) / TICKS_PER_SECOND_DBL));
+  THREADVAR(timerinfo) = xti;
   return timesecs;
 }
 
@@ -403,7 +474,7 @@ void hash_test(void) {
   int i;
   uint32_t val;
   int nr = 100000000;
-  timerinfo = lives_get_current_ticks();
+  THREADVAR(timerinfo) = lives_get_current_ticks();
   for (i = 0; i < nr; i++) {
     str = randstrg(fastrand_int(20));
     val = fast_hash(str) / 7;
@@ -443,7 +514,7 @@ void benchmark(void) {
   for (j = 0; j < 5; j++) {
     sz++;
     fprintf(stderr, "test %d runs with lives_strlen()", nruns);
-    timerinfo = lives_get_current_ticks();
+    THREADVAR(timerinfo) = lives_get_current_ticks();
     for (i = 0; i < nruns; i++) {
       sz = lives_strcmp(strg, strg2);
       //sz += lives_strlen(strg2);
@@ -451,7 +522,7 @@ void benchmark(void) {
     show_timer_info();
     sz++;
     fprintf(stderr, "test %d runs with strlen()", nruns);
-    timerinfo = lives_get_current_ticks();
+    THREADVAR(timerinfo) = lives_get_current_ticks();
     for (i = 0; i < nruns; i++) {
       sz = strcmp(strg, strg2);
       //sz += strlen(strg2);
@@ -476,7 +547,7 @@ void lives_struct_test(void) {
   lives_struct_init(lsd, tt, &tt->lsd);
   lives_free(tt);
 
-  timerinfo = lives_get_current_ticks();
+  THREADVAR(timerinfo) = lives_get_current_ticks();
   for (int i = 0; i < 1000000; i++) {
     tt = lives_struct_create(lsd);
     tt->strg = strdup("a string to be copied !");
@@ -526,7 +597,7 @@ int run_weed_startup_tests(void) {
 
   g_print("Testing libweed functionality:\n\n");
 
-  timerinfo = lives_get_current_ticks();
+  THREADVAR(timerinfo) = lives_get_current_ticks();
 
   // run some tests..
   plant = weed_plant_new(WEED_PLANT_HOST_INFO);
@@ -548,8 +619,6 @@ int run_weed_startup_tests(void) {
   flags = weed_leaf_get_flags(plant, WEED_LEAF_TYPE);
   fprintf(stderr, "flags is %d\n", flags);
 
-  /// flags ok here
-
   keys = weed_plant_list_leaves(plant, &nleaves);
   n = 0;
   while (keys[n] != NULL) {
@@ -561,7 +630,6 @@ int run_weed_startup_tests(void) {
   fprintf(stderr, "\n");
   show_quadstate(plant);
   fprintf(stderr, "\n");
-
 
   fprintf(stderr, "check NULL plant\n");
   type = weed_get_int_value(NULL, WEED_LEAF_TYPE, &werr);
@@ -589,13 +657,9 @@ int run_weed_startup_tests(void) {
   show_quadstate(plant);
   fprintf(stderr, "\n");
 
-  // flags ok here
-
-
   fprintf(stderr, "zzztype setfff\n");
   werr = weed_leaf_set_flags(plant, "type", 0);
   fprintf(stderr, "zzztype setflags %d\n", werr);
-
 
   fprintf(stderr, "Check NULL key \n");
 
@@ -606,8 +670,6 @@ int run_weed_startup_tests(void) {
   show_quadstate(plant);
   fprintf(stderr, "\n");
 
-  /// flags nok
-
   ne = weed_leaf_num_elements(plant, NULL);
   fprintf(stderr, "ne was %d\n", ne);
 
@@ -615,16 +677,12 @@ int run_weed_startup_tests(void) {
   show_quadstate(plant);
   fprintf(stderr, "\n");
 
-
-  /// flags nok
-
   st = weed_leaf_seed_type(plant, NULL);
   fprintf(stderr, "seedtype is %d\n", st);
 
   fprintf(stderr, "\n");
   show_quadstate(plant);
   fprintf(stderr, "\n");
-
 
   flags = weed_leaf_get_flags(plant, NULL);
   fprintf(stderr, "flags is %d\n", flags);
@@ -816,6 +874,7 @@ int run_weed_startup_tests(void) {
   }
   keys = weed_plant_list_leaves(plant, &nleaves);
   n = 0;
+
   while (keys[n] != NULL) {
     fprintf(stderr, "key %d is %s\n", n, keys[n]);
     free(keys[n]);
@@ -1176,8 +1235,6 @@ int run_weed_startup_tests(void) {
 
   werr = weed_leaf_set_flags(plant, "type", WEED_FLAG_UNDELETABLE | WEED_FLAG_IMMUTABLE);
   fprintf(stderr, "wlsf for type returned %d\n", werr);
-
-
 
   flags = weed_leaf_get_flags(plant, "type");
   fprintf(stderr, "get type flags returned %d\n", flags);

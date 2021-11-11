@@ -331,19 +331,19 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   snprintf(cmd, PATH_MAX * 2, "oggfwd -d \"LiVES stream\" \"%s\" %d \"%s\" \"%s\" < %s/video3-%d.ogv &",
            ics, icp, icpw, icmp, workdir, mypid);
-  IGN_RET(system(cmd)_;
+  IGN_RET(system(cmd));
 
-          // open first fifo for writing
-          make_path("stream", mypid, "fifo");
-          yuv4mpeg->fd = open(xfile, O_WRONLY);
+  // open first fifo for writing
+  make_path("stream", mypid, "fifo");
+  yuv4mpeg->fd = open(xfile, O_WRONLY);
 
-          ov_vsize = ov_hsize = 0;
+  ov_vsize = ov_hsize = 0;
 
-          y4m_si_set_framerate(&(yuv4mpeg->streaminfo), yuv4mpeg->fps);
-          y4m_si_set_interlace(&(yuv4mpeg->streaminfo), Y4M_ILACE_NONE);
+  y4m_si_set_framerate(&(yuv4mpeg->streaminfo), yuv4mpeg->fps);
+  y4m_si_set_interlace(&(yuv4mpeg->streaminfo), Y4M_ILACE_NONE);
 
   if (blankframe) {
-  free(blankframe);
+    free(blankframe);
     blankframe = NULL;
   }
 

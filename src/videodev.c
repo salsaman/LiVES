@@ -161,9 +161,8 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
 }
 
 
-static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
-    lives_vdev_t *ldev, int palette, lives_match_t matmet,
-    int width, int height) {
+static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats, lives_vdev_t *ldev,
+    int palette, lives_match_t matmet, int width, int height) {
   // get nearest format for given palette, width and height
   // if palette is WEED_PALETTE_END, or cannot be matched, get best quality palette (preferring RGB)
   // width and height must be set, actual width and height will be set as near to this as possible
@@ -218,7 +217,6 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
       if (matmet == LIVES_MATCH_HIGHEST
           || (width >= format->min_size.width && height >= format->min_size.height)) {
         if (format->h_stepping > 0 && format->v_stepping > 0) {
-
           if (matmet == LIVES_MATCH_HIGHEST) {
             width = format->max_size.width;
             height = format->max_size.height;
@@ -285,7 +283,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
               continue;
             }
             if ((format->size.width >= bestw || format->size.height >= besth)
-                && (matmet = LIVES_MATCH_HIGHEST || (bestw <= width || besth <= height))) {
+                && (matmet == LIVES_MATCH_HIGHEST || (bestw <= width || besth <= height))) {
               // this format supports a better size match
               bestp = cpal;
               bestw = format->size.width;
@@ -493,6 +491,7 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, const char *devname) {
   LiVESResponseType response;
   lives_match_t matmet;
 
+  int imatmet;
   int new_file = mainw->first_free_file;
   int old_file = mainw->current_file;
   int dev_count, devno = 0;
@@ -543,7 +542,8 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, const char *devname) {
 
     lives_memset(mopts, 0, N_MATCH_TYPES);
     mopts[LIVES_MATCH_AT_MOST] = mopts[LIVES_MATCH_HIGHEST] = 1;
-    mopts[LIVES_MATCH_AT_MOST] = 2;
+    if (mopts[prefs->webcam_matmet]) mopts[prefs->webcam_matmet] = 2;
+    else mopts[LIVES_MATCH_AT_MOST] = 2;
 
     rbgroup = add_match_methods(LIVES_LAYOUT(layout), mopts, 4, 4, FALSE);
 
@@ -561,13 +561,14 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, const char *devname) {
     if (response == LIVES_RESPONSE_CANCEL) {
       return FALSE;
     }
-    matmet = (lives_match_t)rbgroup_get_data(rbgroup, MATCHTYPE_KEY, LIVES_MATCH_UNDEFINED);
+    imatmet = rbgroup_get_data(rbgroup, MATCHTYPE_KEY, LIVES_MATCH_UNDEFINED);
     lives_widget_destroy(card_dialog);
-    if (matmet < 0) {
-      matmet = -matmet;
-      pref_factory_int(PREF_WEBCAM_MATMET, &prefs->webcam_matmet, matmet, TRUE);
-    }
+    if (imatmet < 0) {
+      matmet = (lives_match_t)(-imatmet);
+      update_int_pref(PREF_WEBCAM_MATMET, matmet, TRUE);
+    } else matmet = (lives_match_t)imatmet;
   } else {
+    matmet = prefs->webcam_matmet;
     for (i = 0; i < dev_count; i++) {
       if (!lives_strcmp(devname, devices[i].device)) {
         mainw->fx1_val = i;

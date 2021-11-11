@@ -4721,7 +4721,7 @@ void play_all(boolean from_menu) {
     /*   } */
     //}
     if (from_menu) {
-      switch_clip(mainw->pre_src_file, 1, TRUE);
+      switch_clip(1, mainw->pre_src_file, TRUE);
       mainw->pre_src_file = -2;
     }
   }

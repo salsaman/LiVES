@@ -24,10 +24,6 @@
 #include "omc-learn.h"
 #endif
 
-#define xFALSEx &xfalse
-#define xTRUEx &xtrue
-static boolean xfalse = FALSE, xtrue = TRUE;
-
 static LiVESWidget *saved_closebutton, *saved_applybutton, *saved_revertbutton;
 static  boolean mt_needs_idlefunc;
 
@@ -42,7 +38,7 @@ static LiVESList *allprefs = NULL;
 static void define_pref(const char *pref_idx, void *pref_ptr, int32_t vtype, void *pdef, uint32_t flags) {
   weed_plant_t *prefplant = lives_plant_new(LIVES_WEED_SUBTYPE_PREFERENCE);
   weed_set_string_value(prefplant, LIVES_LEAF_PREF_IDX, pref_idx);
-  // TODO
+
   weed_set_voidptr_value(prefplant, LIVES_LEAF_VARPTR, pref_ptr);
   ///
   weed_leaf_set(prefplant, WEED_LEAF_DEFAULT, vtype, 1, pdef);
@@ -71,6 +67,8 @@ void init_prefs(void) {
   DEFINE_PREF_BOOL(PB_HIDE_GUI, pb_hide_gui, FALSE, PREF_FLAG_EXPERIMENTAL);
   DEFINE_PREF_BOOL(SELF_TRANS, tr_self, FALSE, PREF_FLAG_EXPERIMENTAL);
   //DEFINE_PREF_BOOL(GENQ_MODE, genq_mode, FALSE);
+  DEFINE_PREF_INT(DLOAD_MATMET, dload_matmet, LIVES_MATCH_CHOICE, 0);
+  DEFINE_PREF_INT(WEBCAM_MATMET, webcam_matmet, LIVES_MATCH_AT_MOST, 0);
 }
 
 
@@ -109,6 +107,11 @@ void load_pref(const char *pref_idx) {
       *(boolean *)ppref = get_boolean_prefd(pref_idx, bdef);
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
     }
+    case WEED_SEED_INT: {
+      int idef = weed_get_int_value(prefplant, WEED_LEAF_DEFAULT, NULL);
+      *(int *)ppref = get_int_prefd(pref_idx, idef);
+      weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
+    }
     break;
     default: break;
     }
@@ -131,13 +134,13 @@ void load_prefs(void) {
 
 boolean update_pref(const char *pref_idx, void *newval, boolean permanent) {
   weed_plant_t *prefplant = find_pref(pref_idx);
-  if (!prefplant) return FALSE;
-  else {
+  if (prefplant) {
     LiVESWidget *widget = (LiVESWidget *)weed_get_voidptr_value(prefplant, LIVES_LEAF_WIDGET, NULL);
+    boolean bval;
+    int ival;
     if (widget || newval) {
       void *ppref = weed_get_voidptr_value(prefplant, LIVES_LEAF_VARPTR, NULL);
       int32_t type = weed_leaf_seed_type(prefplant, WEED_LEAF_DEFAULT);
-      boolean bval;
       switch (type) {
       case WEED_SEED_BOOLEAN: {
         boolean bpref;
@@ -155,14 +158,14 @@ boolean update_pref(const char *pref_idx, void *newval, boolean permanent) {
       case WEED_SEED_INT: {
         int ipref;
         if (newval) ival = *(int *)newval;
-        else ival = lives_spin_button_get_value_int(LIVES_SPIN_BUTTON(widget));
+        else ival = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(widget));
         /// any nonstandard updates here
-        pref_factory_int(pref_idx, ival, &pref, permanent);
+        pref_factory_int(pref_idx, &ipref, ival, permanent);
         ///
         ipref = *(int *)ppref;
         if (ipref == ival) goto fail;
         *(int *)ppref = ival;
-        goto inr_success;
+        goto int_success;
       }
       break;
       default: break;
@@ -183,21 +186,21 @@ bool_success:
       set_boolean_pref(pref_idx, bval);
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
     } else weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_TEMP);
-  }
-  return TRUE;
+    return TRUE;
 
 int_success:
-  weed_set_int_value(prefplant, WEED_LEAF_VALUE, ival);
-  if (prefsw) {
-    lives_widget_process_updates(prefsw->prefs_dialog);
-    prefsw->ignore_apply = FALSE;
+    weed_set_int_value(prefplant, WEED_LEAF_VALUE, ival);
+    if (prefsw) {
+      lives_widget_process_updates(prefsw->prefs_dialog);
+      prefsw->ignore_apply = FALSE;
+    }
+    if (permanent) {
+      set_int_pref(pref_idx, ival);
+      weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
+    } else weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_TEMP);
+    return TRUE;
   }
-  if (permanent) {
-    set_int_pref(pref_idx, ival);
-    weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
-  } else weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_TEMP);
-}
-return TRUE;
+  return FALSE;
 }
 
 
@@ -220,6 +223,10 @@ static void update_prefs(void) {
 
 
 boolean update_boolean_pref(const char *pref_idx, boolean val, boolean permanent) {
+  return update_pref(pref_idx, (void *)&val, permanent);
+}
+
+boolean update_int_pref(const char *pref_idx, int val, boolean permanent) {
   return update_pref(pref_idx, (void *)&val, permanent);
 }
 

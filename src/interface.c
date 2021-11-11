@@ -5525,8 +5525,11 @@ static void utsense(LiVESToggleButton * togglebutton, livespointer user_data) {
 LIVES_GLOBAL_INLINE int rbgroup_get_data(LiVESSList * rbgroup, const char *key, int def) {
   for (LiVESSList *list = rbgroup; list; list = list->next) {
     if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(list->data)))
-      return GET_INT_DATA(list->data, key);
+      def =  GET_INT_DATA(list->data, key);
   }
+  if (memo_check && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(memo_check)))
+    def = -def;
+
   return def;
 }
 
@@ -5676,7 +5679,7 @@ LiVESSList *add_match_methods(LiVESLayout * layout, char *mopts, int height_step
     lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                               LIVES_GUI_CALLBACK(utsense), LIVES_INT_TO_POINTER(FALSE));
 
-    SET_INT_DATA(radiobutton, MATCHTYPE_KEY, LIVES_MATCH_LOWEST);
+    SET_INT_DATA(radiobutton, MATCHTYPE_KEY, LIVES_MATCH_HIGHEST);
 
     if (mopts[LIVES_MATCH_HIGHEST] == 2)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
@@ -5963,7 +5966,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Desired frame size:"), TRUE);
 
   lives_memset(mopts, 1, N_MATCH_TYPES);
-  mopts[LIVES_MATCH_CHOICE] = 2;
+  if (mopts[prefs->dload_matmet]) mopts[prefs->dload_matmet] = 2;
+  else mopts[LIVES_MATCH_CHOICE] = 2;
 
   radiobutton_group2 = add_match_methods(LIVES_LAYOUT(layout), mopts,
                                          width_step, height_step, CURRENT_CLIP_HAS_VIDEO);
@@ -6057,7 +6061,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   req->matchsize = (lives_match_t)rbgroup_get_data(radiobutton_group2, MATCHTYPE_KEY, LIVES_MATCH_UNDEFINED);
   if (req->matchsize < 0) {
     req->matchsize = -req->matchsize;
-    pref_factory_int(PREF_DLOAD_MATMET, &prefs->dload_matmet, req->matchsize, TRUE);
+    update_int_pref(PREF_DLOAD_MATMET, req->matchsize, TRUE);
   }
   if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(checkbutton_update))) req->do_update = FALSE;
   else {

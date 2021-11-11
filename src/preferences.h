@@ -18,9 +18,8 @@
 
 #define PREF_FLAG_EXPERIMENTAL		(1 << 0)
 
-
-#define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_BOOLEAN, x##PDEF##x, FLAGS);
-#define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_INT, x##PDEF##x, FLAGS);
+#define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) {boolean a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_BOOLEAN, &a, FLAGS);}
+#define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) {int a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_INT, &a, FLAGS);}
 
 #define SET_PREF_WIDGET(IDX, WIDGET) set_pref_widget(PREF_##IDX, (WIDGET))
 
@@ -465,6 +464,9 @@ typedef struct {
   int nfx_threads;
 
   boolean alpha_post; ///< set to TRUE to force use of post alpha internally
+
+  // frame size selection match methods
+  lives_match_t  dload_matmet, webcam_matmet;
 
   boolean stream_audio_out;
   boolean unstable_fx;
@@ -1250,6 +1252,9 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_ATRANS_KEY "autotrans_key"
 
+#define PREF_DLOAD_MATMET "dload_match_method"
+#define PREF_WEBCAM_MATMET "webcam_match_method"
+
 ////////// boolean values
 #define PREF_MT_EXIT_RENDER "mt_exit_render"
 #define PREF_HFBWNP "hide_framebar_when_not_playing"
@@ -1348,6 +1353,7 @@ LiVESWidget *get_pref_widget(const char *pref_idx);
 boolean update_pref(const char *pref_idx, void *newval, boolean permanent);
 
 boolean update_boolean_pref(const char *pref_idx, boolean val, boolean permanent);
+boolean update_int_pref(const char *pref_idx, int val, boolean permanent);
 
 void invalidate_pref_widgets(LiVESWidget *top);
 

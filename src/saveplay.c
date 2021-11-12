@@ -2574,9 +2574,7 @@ void play_file(void) {
 
   if (mainw->play_window && !mainw->multitrack) {
     lives_widget_hide(mainw->preview_controls);
-    if (prefs->pb_hide_gui) {
-      hide_main_gui();
-    }
+    if (prefs->pb_hide_gui) hide_main_gui();
   }
   // if recording, refrain from writing audio until we are ready
   if (mainw->record) mainw->record_paused = TRUE;

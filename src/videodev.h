@@ -26,6 +26,7 @@ typedef struct {
 
 #define MAX_DEVICES 1024
 #define MAX_FORMATS 1024
+#define MAX_PROPS 1024
 
 boolean on_open_vdev_activate(LiVESMenuItem *, const char *devname);
 boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, double timeoutsecs);

@@ -32,9 +32,6 @@ static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t *
       if (!SUCCESS(unicap_wait_buffer(ldev->handle, buff))) return FALSE;
       return TRUE;
     }
-    lives_usleep(prefs->sleep_time);
-    lives_widget_context_update();
-    sched_yield();
   } while (lives_alarm_check(alarm_handle) > 0);
 
   return FALSE;
@@ -356,8 +353,11 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
   // create a virtual clip
   lives_vdev_t *ldev = (lives_vdev_t *)lives_malloc(sizeof(lives_vdev_t));
   unicap_format_t formats[MAX_FORMATS];
+  unicap_property_t props[MAX_PROPS];
+  unicap_property_t *prop;
   unicap_format_t *format;
   double cpbytes;
+  int prop_count;
 
   // open dev
   unicap_open(&ldev->handle, device);
@@ -454,6 +454,28 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
   cfile->bpp = format->bpp;
 
   unicap_start_capture(ldev->handle);
+
+  for (prop_count = 0;
+       SUCCESS(unicap_enumerate_properties(ldev->handle, NULL, (unicap_property_t *)&props[prop_count], prop_count))
+       && (prop_count < MAX_PROPS); prop_count++) {
+    prop = (unicap_property_t *)&props[prop_count];
+    g_print("PROP %d is %s == %f\n", prop_count, prop->identifier, prop->value);
+    if (!lives_strcmp(prop->identifier, "frame rate")) {
+      cfile->pb_fps = cfile->fps = prop->value;
+      /*   for prop in props: */
+      /* print prop['identifier'], ">>", prop */
+
+      /* 	       self.setGain(10) */
+      /* 	       self.setFramerate(5) */
+      /* 	       self.setExposure(1.0) */
+
+
+      /* 	       props = self.device.enumerate_properties() */
+      /* 	       for prop in props: */
+      /* print prop['identifier'], ">>", prop */
+    }
+  }
+
 
   // if it is greyscale, we will add fake U and V planes
   if (ldev->current_palette == WEED_PALETTE_A8) {

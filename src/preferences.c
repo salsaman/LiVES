@@ -67,8 +67,8 @@ void init_prefs(void) {
   DEFINE_PREF_BOOL(PB_HIDE_GUI, pb_hide_gui, FALSE, PREF_FLAG_EXPERIMENTAL);
   DEFINE_PREF_BOOL(SELF_TRANS, tr_self, FALSE, PREF_FLAG_EXPERIMENTAL);
   //DEFINE_PREF_BOOL(GENQ_MODE, genq_mode, FALSE);
-  DEFINE_PREF_INT(DLOAD_MATMET, dload_matmet, LIVES_MATCH_CHOICE, 0);
-  DEFINE_PREF_INT(WEBCAM_MATMET, webcam_matmet, LIVES_MATCH_AT_MOST, 0);
+  DEFINE_PREF_INT(DLOAD_MATMET, dload_matmet, LIVES_MATCH_CHOICE, LIVES_MATCH_UNDEFINED);
+  DEFINE_PREF_INT(WEBCAM_MATMET, webcam_matmet, LIVES_MATCH_AT_MOST, LIVES_MATCH_UNDEFINED);
 }
 
 
@@ -264,7 +264,7 @@ void invalidate_pref_widgets(LiVESWidget *top) {
   for (LiVESList *list = allprefs; list; list = list->next) {
     weed_plant_t *prefplant = (weed_plant_t *)list->data;
     LiVESWidget *widget = (LiVESWidget *)weed_get_voidptr_value(prefplant, LIVES_LEAF_WIDGET, NULL);
-    if (widget == top || lives_widget_is_ancestor(widget, top)) {
+    if (widget && (widget == top || lives_widget_is_ancestor(widget, top))) {
       char *pref_idx = weed_get_string_value(prefplant, LIVES_LEAF_PREF_IDX, NULL);
       set_pref_widget(pref_idx, NULL);
       lives_free(pref_idx);
@@ -4882,7 +4882,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   SET_PREF_WIDGET(PB_HIDE_GUI,
                   lives_standard_check_button_new
-                  (_("Hide main interface whenever playing in the separate window"),
+                  (_("HIDE MAIN INTERFACE WHEN PLAYNIG IN SEPARATE WINDOW"),
                    prefs->pb_hide_gui, LIVES_BOX(hbox), (tmp =
                          H_("Checking this will cause the main interface window to become hidden\n"
                             "whenever LiVES is playing in the separate playback window\n"

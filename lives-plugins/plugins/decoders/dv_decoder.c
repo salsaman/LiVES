@@ -179,9 +179,20 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
   lives_dv_priv_t *priv = cdata->priv;
+
+  if (cdata->palettes) free(cdata->palettes);
+  cdata->palettes = NULL;
+
+  if (!priv) return;
   if (priv) {
-    if (priv->fd != -1) close(priv->fd);
-    if (priv->dc_dec) dv_decoder_free(priv->dv_dec);
+    if (priv->fd != -1) {
+      close(priv->fd);
+      priv->fd = -1;
+    }
+    if (priv->dv_dec) {
+      dv_decoder_free(priv->dv_dec);
+      priv->dv_dec = NULL;
+    }
   }
 }
 
@@ -193,11 +204,6 @@ const char *module_check_init(void) {
   nulfile = fopen("/dev/null", "a");
 
   return NULL;
-}
-
-
-lives_plugin_id_t get_plugin_id(void) {
-  return _make_plugin_id(plugin_name, vmaj, vmin);
 }
 
 

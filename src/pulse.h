@@ -86,6 +86,8 @@ typedef struct {
   boolean in_use; /**< true if this device is currently in use */
   boolean mute;
 
+  lives_rfx_t *interface;
+
   /**< linked list of messages we are sending to the callback process */
   volatile aserver_message_t   *msgq;
 
@@ -110,9 +112,10 @@ typedef struct {
   volatile int playing_file;
 
   lives_audio_buf_t **abufs;
-  volatile int read_abuf;
 
   double volume_linear; ///< TODO: use perchannel volume[]
+
+  volatile int read_abuf;
 
   volatile int astream_fd;
 

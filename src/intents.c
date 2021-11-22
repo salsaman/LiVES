@@ -5,6 +5,91 @@
 // see file ../COPYING or www.gnu.org for licensing details
 
 #include "main.h"
+#include "weed-utils.h"
+
+static boolean lives_object_attribute_unref(lives_obj_attr_t *attr);
+
+/// refcounting
+
+LIVES_GLOBAL_INLINE int refcount_inc(obj_refcounter *refcount) {
+  int count;
+  if (!refcount->mutex_inited) {
+    refcount->mutex_inited = TRUE;
+    pthread_mutex_init(&refcount->mutex, NULL);
+  }
+  pthread_mutex_lock(&refcount->mutex);
+  count = ++refcount->count;
+  pthread_mutex_unlock(&refcount->mutex);
+  return count;
+}
+
+LIVES_GLOBAL_INLINE int refcount_dec(obj_refcounter *refcount) {
+  int count;
+  if (!refcount->mutex_inited) {
+    refcount->mutex_inited = TRUE;
+    pthread_mutex_init(&refcount->mutex, NULL);
+  }
+  pthread_mutex_lock(&refcount->mutex);
+  count = --refcount->count;
+  pthread_mutex_unlock(&refcount->mutex);
+  return count;
+}
+
+LIVES_GLOBAL_INLINE int refcount_query(obj_refcounter *refcount) {
+  int count;
+  if (!refcount->mutex_inited) {
+    refcount->mutex_inited = TRUE;
+    pthread_mutex_init(&refcount->mutex, NULL);
+  }
+  pthread_mutex_lock(&refcount->mutex);
+  count = refcount->count;
+  pthread_mutex_unlock(&refcount->mutex);
+  return count;
+}
+
+
+static void lives_object_instance_free(lives_object_instance_t *obj) {
+  lives_obj_attr_t **attrs = obj->attributes;
+
+  lives_hooks_trigger(obj, obj->hook_closures, FINAL_HOOK);
+
+  // invalidate hooks
+  for (int type = N_GLOBAL_HOOKS + 1; type < N_HOOK_FUNCS; type++) {
+    lives_hooks_clear(obj->hook_closures, type);
+  }
+
+  // unref attributes
+  if (attrs) {
+    for (int count = 0; attrs[count]; count++) {
+      lives_object_attribute_unref(attrs[count]);
+    }
+  }
+
+  // TODO - call destructor
+  if (obj->priv) lives_free(obj->priv);
+  lives_free(obj);
+}
+
+
+LIVES_GLOBAL_INLINE int lives_object_instance_unref(lives_object_instance_t *obj) {
+  int count;
+  if ((count = refcount_dec(&obj->refcount)) < 0) {
+    lives_object_instance_free(obj);
+  }
+  return count;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_object_instance_destroy(lives_object_instance_t *obj) {
+  // return FALSE if destroyed
+  return (lives_object_instance_unref(obj) >= 0);
+}
+
+
+LIVES_GLOBAL_INLINE int lives_object_instance_ref(lives_object_instance_t *obj) {
+  return refcount_inc(&obj->refcount);
+}
+
 
 LIVES_GLOBAL_INLINE lives_object_instance_t *lives_object_instance_create(uint64_t type, uint64_t subtype) {
   lives_object_instance_t *obj_inst = lives_calloc(1, sizeof(lives_object_instance_t));
@@ -12,14 +97,30 @@ LIVES_GLOBAL_INLINE lives_object_instance_t *lives_object_instance_create(uint64
   obj_inst->type = type;
   obj_inst->subtype = subtype;
   obj_inst->state = OBJECT_STATE_UNDEFINED;
+  obj_inst->refcount.mutex_inited = TRUE;
+  pthread_mutex_init(&obj_inst->refcount.mutex, NULL);
   return obj_inst;
+}
+
+
+////// object attributes //////////////
+
+static void lives_object_attribute_free(lives_obj_attr_t *attr) {
+  // TODO - free rfx_paeam
+
+  weed_plant_free((weed_plant_t *)attr);
+}
+
+LIVES_LOCAL_INLINE boolean lives_object_attribute_unref(lives_obj_attr_t *attr) {
+  lives_object_attribute_free(attr);
+  return FALSE;
 }
 
 
 weed_error_t lives_object_set_attribute_value(lives_object_t *obj, const char *name, ...) {
   weed_error_t err = WEED_SUCCESS;
   if (obj && name && *name) {
-    lives_obj_attr_t *attr = lives_attr_from_object(obj, name);
+    lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
     if (!attr) return WEED_ERROR_NOSUCH_LEAF;
     else {
       va_list args;
@@ -74,33 +175,166 @@ weed_error_t lives_object_set_attribute_value(lives_object_t *obj, const char *n
       }
       va_end(args);
     }
+    if (err == WEED_SUCCESS) {
+      lives_hooks_trigger(obj, obj->hook_closures, VALUE_CHANGED_HOOK);
+    }
   }
   return err;
 }
 
 
-boolean lives_object_declare_attribute(lives_object_t *obj, const char *name, int32_t st) {
-  lives_obj_attr_t **attrs = obj->attributes;
-  lives_obj_attr_t *attr;
-  int count = 0;
-  if (attrs) {
-    for (count = 0; attrs[count]; count++) {
-      char *pname = weed_get_string_value(attrs[count], WEED_LEAF_NAME, NULL);
-      if (!lives_strcmp(name, pname)) {
+lives_obj_attr_t *lives_object_get_attribute(lives_object_t *obj, const char *name) {
+  if (obj && name && *name) {
+    lives_obj_attr_t **attrs = obj->attributes;
+    if (attrs) {
+      for (int count = 0; attrs[count]; count++) {
+        char *pname = weed_get_string_value(attrs[count], WEED_LEAF_NAME, NULL);
+        if (!lives_strcmp(name, pname)) {
+          lives_free(pname);
+          return attrs[count];
+        }
         lives_free(pname);
-        return FALSE;
       }
     }
   }
-  obj->attributes = lives_realloc(obj->attributes, (count + 2) * sizeof(lives_obj_attr_t *));
-  attr = lives_plant_new(LIVES_WEED_SUBTYPE_OBJ_ATTR);
-  weed_set_string_value(attr, WEED_LEAF_NAME, name);
-  weed_leaf_set(attr, WEED_LEAF_VALUE, st, 0, NULL);
-  obj->attributes[count] = attr;
-  obj->attributes[count + 1] = NULL;
-  return TRUE;
+  return NULL;
 }
 
+
+int lives_object_get_num_attributes(lives_object_t *obj) {
+  int count = 0;
+  if (obj) {
+    lives_obj_attr_t **attrs = obj->attributes;
+    if (attrs) while (attrs[count++]);
+  }
+  return count;
+}
+
+
+int lives_object_dump_attributes(lives_object_t *obj) {
+  if (!obj) return -1;
+  else {
+    lives_obj_attr_t **attrs = obj->attributes;
+    int count = 0;
+    if (attrs) {
+      g_print("Object with UID 0X%016lX has the following attributes:\n", obj->uid);
+      for (; attrs[count]; count++) {
+        const char *notes, *obs;
+        char *pname = weed_get_string_value(attrs[count], WEED_LEAF_NAME, NULL);
+        if (weed_plant_has_leaf(attrs[count], WEED_LEAF_VALUE)) {
+          if (weed_get_int_value(attrs[count], WEED_LEAF_FLAGS, NULL) & WEED_PARAM_FLAG_READ_ONLY)
+            notes = " (readonly)";
+          else notes = "";
+          obs = "";
+        } else {
+          obs = "value undefined";
+          notes = "";
+        }
+        g_print("%s%s (%s)%s\n", pname, notes,
+                weed_seed_to_ctype(weed_leaf_seed_type(attrs[count], WEED_LEAF_VALUE), FALSE), obs);
+        lives_free(pname);
+      }
+    } else g_print("Object with UID 0X%016lX has no attributes\n", obj->uid);
+    return count;
+  }
+}
+
+
+lives_obj_attr_t *lives_object_declare_attribute(lives_object_t *obj, const char *name, int32_t st) {
+  if (obj) {
+    lives_obj_attr_t **attrs = obj->attributes;
+    lives_obj_attr_t *attr;
+    int count = 0;
+
+    if (attrs) {
+      for (count = 0; attrs[count]; count++) {
+        char *pname = weed_get_string_value(attrs[count], WEED_LEAF_NAME, NULL);
+        if (!lives_strcmp(name, pname)) {
+          lives_free(pname);
+          return attrs[count];
+        }
+      }
+    }
+    obj->attributes = lives_realloc(obj->attributes, (count + 2) * sizeof(lives_obj_attr_t *));
+    attr = lives_plant_new(LIVES_WEED_SUBTYPE_OBJ_ATTR);
+    weed_set_string_value(attr, WEED_LEAF_NAME, name);
+    weed_leaf_set(attr, WEED_LEAF_VALUE, st, 0, NULL);
+    obj->attributes[count] = attr;
+    obj->attributes[count + 1] = NULL;
+    return attr;
+  }
+  return NULL;
+}
+
+
+//// placeholder - should operate on transform requirements instead
+
+LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_readonly(lives_object_t *obj, const char *name, boolean state) {
+  lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
+  if (attr) {
+    if (state) {
+      boolean has_value = TRUE;
+      if (!weed_plant_has_leaf(attr, WEED_LEAF_VALUE)) {
+        if (weed_plant_has_leaf(attr, WEED_LEAF_DEFAULT)) {
+          weed_leaf_copy(attr, WEED_LEAF_VALUE, attr, WEED_LEAF_DEFAULT);
+        } else has_value = FALSE;
+      }
+      if (has_value) weed_leaf_set_flags(attr, WEED_LEAF_VALUE,
+                                           weed_leaf_get_flags(attr, WEED_LEAF_VALUE) | WEED_FLAG_IMMUTABLE);
+      weed_set_int_value(attr, WEED_LEAF_FLAGS, weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL) | WEED_PARAM_FLAG_READ_ONLY);
+    } else {
+      if (weed_plant_has_leaf(attr, WEED_LEAF_VALUE))
+        weed_leaf_set_flags(attr, WEED_LEAF_VALUE, weed_leaf_get_flags(attr, WEED_LEAF_VALUE) & ~WEED_FLAG_IMMUTABLE);
+      weed_set_int_value(attr, WEED_LEAF_FLAGS, weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL) & ~WEED_PARAM_FLAG_READ_ONLY);
+    }
+    return WEED_SUCCESS;
+  }
+  return LIVES_ERROR_NOSUCH_ATTRIBUTE;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_attribute_is_readonly(lives_object_t *obj, const char *name) {
+  lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
+  if (attr) {
+    if (weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL) & WEED_PARAM_FLAG_READ_ONLY)
+      return TRUE;
+  }
+  return FALSE;
+}
+
+
+LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_param_type(lives_object_t *obj, const char *name,
+    const char *label, int ptype) {
+  lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
+  if (attr) {
+    if (label) weed_set_string_value(attr, WEED_LEAF_LABEL, label);
+    weed_set_int_value(attr, WEED_LEAF_PARAM_TYPE, ptype);
+    return WEED_SUCCESS;
+  }
+  return LIVES_ERROR_NOSUCH_ATTRIBUTE;
+}
+
+
+LIVES_GLOBAL_INLINE int lives_attribute_get_param_type(lives_object_t *obj, const char *name) {
+  lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
+  if (attr) return weed_get_int_value(attr, WEED_LEAF_PARAM_TYPE, NULL);
+  return LIVES_PARAM_TYPE_UNDEFINED;
+}
+
+
+LIVES_GLOBAL_INLINE void lives_attribute_append_listener(lives_object_t *obj, const char *name, attr_listener_f func) {
+  lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
+  lives_hook_append(obj->hook_closures, VALUE_CHANGED_HOOK, 0, (hook_funcptr_t)func, attr);
+}
+
+
+LIVES_GLOBAL_INLINE void lives_attribute_prepend_listener(lives_object_t *obj, const char *name, attr_listener_f func) {
+  lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
+  lives_hook_prepend(obj->hook_closures, VALUE_CHANGED_HOOK, 0, (hook_funcptr_t)func, attr);
+}
+
+
+////// capacities ///////
 
 LIVES_GLOBAL_INLINE lives_capacity_t *lives_capacities_new(void) {
   return lives_plant_new(LIVES_WEED_SUBTYPE_CAPACITIES);
@@ -172,13 +406,6 @@ lives_tx_param_t *weed_param_from_iparams(lives_intentparams_t *iparams, const c
     }
   }
   return NULL;
-}
-
-
-LIVES_GLOBAL_INLINE lives_obj_attr_t *lives_attr_from_object(lives_object_t *obj, const char *name) {
-  lives_intentparams_t iparams;
-  iparams.params = obj->attributes;
-  return weed_param_from_iparams(&iparams, name);
 }
 
 
@@ -259,7 +486,7 @@ boolean rules_lack_param(lives_rules_t *prereq, const char *pname) {
     if (!weed_plant_has_leaf(iparam, WEED_LEAF_VALUE)
         && !weed_plant_has_leaf(iparam, WEED_LEAF_DEFAULT)) {
       int flags = weed_get_int_value(iparam, WEED_LEAF_FLAGS, NULL);
-      if (flags & PARAM_FLAGS_OPTIONAL) return TRUE;
+      if (flags & PARAM_FLAG_OPTIONAL) return TRUE;
       return FALSE;
     }
   }
@@ -269,13 +496,18 @@ boolean rules_lack_param(lives_rules_t *prereq, const char *pname) {
 }
 
 
-static void lives_transform_status_unref(lives_transform_status_t *st) {
-  if (--st->refcount < 0) lives_free(st);
+static boolean lives_transform_status_unref(lives_transform_status_t *st) {
+  // return FALSE if destroyed
+  if (refcount_dec(&st->refcount) < 0) {
+    lives_free(st);
+    return FALSE;
+  }
+  return TRUE;
 }
 
 
-void lives_transform_status_free(lives_transform_status_t *st) {
-  lives_transform_status_unref(st);
+boolean lives_transform_status_free(lives_transform_status_t *st) {
+  return lives_transform_status_unref(st);
 }
 
 
@@ -285,7 +517,7 @@ boolean requirements_met(lives_object_transform_t *tx) {
     if (!weed_plant_has_leaf(req, WEED_LEAF_VALUE) &&
         !weed_plant_has_leaf(req, WEED_LEAF_DEFAULT)) {
       int flags = weed_get_int_value(req, WEED_LEAF_FLAGS, NULL);
-      if (!(flags & PARAM_FLAGS_OPTIONAL)) return FALSE;
+      if (!(flags & PARAM_FLAG_OPTIONAL)) return FALSE;
     }
     continue;
   }
@@ -295,8 +527,9 @@ boolean requirements_met(lives_object_transform_t *tx) {
 }
 
 
-static void lives_rules_unref(lives_rules_t *rules) {
-  if (--rules->refcount < 0) {
+static boolean lives_rules_unref(lives_rules_t *rules) {
+  // return FALSE if destroyed
+  if (refcount_dec(&rules->refcount) < 0) {
     if (rules->reqs) {
       for (int i = 0; rules->reqs->params[i]; i++) {
         weed_plant_free(rules->reqs->params[i]);
@@ -304,7 +537,9 @@ static void lives_rules_unref(lives_rules_t *rules) {
       lives_free(rules->reqs);
     }
     lives_free(rules);
+    return FALSE;
   }
+  return TRUE;
 }
 
 
@@ -330,7 +565,7 @@ lives_transform_status_t *transform(lives_object_transform_t *tx) {
   /* lives_rules_t *prereq = tx->prereqs; */
   /* for (int i = 0; (iparam = prereq->reqs->params[i]) != NULL; i++) { */
   /*   int flags = weed_get_int_value(iparam, WEED_LEAF_FLAGS, NULL); */
-  /*   if (!(flags & PARAM_FLAGS_VALUE_SET) && !(flags & PARAM_FLAGS_OPTIONAL)) { */
+  /*   if (!(flags & PARAM_FLAG_VALUE_SET) && !(flags & PARAM_FLAG_OPTIONAL)) { */
   /*     lives_tx_param_t *xparam = iparam_from_name(prereq->reqs->params, iparam->pname); */
   /*     //lives_tx_param_t *xparam = iparam_from_name(tx->prereqs->oinst->params, iparam->name); */
   /*     weed_leaf_dup(iparam, xparam, WEED_LEAF_VALUE); */

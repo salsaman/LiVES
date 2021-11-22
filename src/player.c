@@ -3701,17 +3701,40 @@ boolean clip_can_reverse(int clipno) {
 
 // TODO - will be part of LIVES_INTENTION_CREATE_INSTANCE (req == subtype)
 lives_object_instance_t *lives_player_inst_create(uint64_t subtype) {
+  char *choices[2];
+  weed_plant_t *gui;
+  lives_obj_attr_t *attr;
   lives_object_instance_t *inst = lives_object_instance_create(OBJECT_TYPE_PLAYER, subtype);
   inst->state = OBJECT_STATE_NORMAL;
-  lives_object_declare_attribute(inst, AUDIO_ATTR_SOURCE, WEED_SEED_INT);
+  attr = lives_object_declare_attribute(inst, AUDIO_ATTR_SOURCE, WEED_SEED_INT);
+  lives_attribute_set_param_type(inst, AUDIO_ATTR_SOURCE, _("Source"), WEED_PARAM_INTEGER);
+  gui = weed_plant_new(WEED_PLANT_GUI);
+  weed_set_plantptr_value(attr, WEED_LEAF_GUI, gui);
+  choices[0] = lives_strdup("Internal");
+  choices[1] = lives_strdup("External");
+  weed_set_string_array(gui, WEED_LEAF_CHOICES, 2, choices);
+  lives_free(choices[0]); lives_free(choices[1]);
   lives_object_declare_attribute(inst, AUDIO_ATTR_RATE, WEED_SEED_INT);
+  lives_attribute_set_param_type(inst, AUDIO_ATTR_RATE, _("Rate Hz"), WEED_PARAM_INTEGER);
   lives_object_declare_attribute(inst, AUDIO_ATTR_CHANNELS, WEED_SEED_INT);
+  lives_attribute_set_param_type(inst, AUDIO_ATTR_CHANNELS, _("Channels"), WEED_PARAM_INTEGER);
   lives_object_declare_attribute(inst, AUDIO_ATTR_SAMPSIZE, WEED_SEED_INT);
+  lives_attribute_set_param_type(inst, AUDIO_ATTR_SAMPSIZE, _("Sample size (bits)"), WEED_PARAM_INTEGER);
   lives_object_declare_attribute(inst, AUDIO_ATTR_STATUS, WEED_SEED_INT64);
   lives_object_declare_attribute(inst, AUDIO_ATTR_SIGNED, WEED_SEED_BOOLEAN);
-  lives_object_declare_attribute(inst, AUDIO_ATTR_ENDIAN, WEED_SEED_INT);
+  lives_attribute_set_param_type(inst, AUDIO_ATTR_SIGNED, _("Signed"), WEED_PARAM_SWITCH);
+  attr = lives_object_declare_attribute(inst, AUDIO_ATTR_ENDIAN, WEED_SEED_INT);
+  lives_attribute_set_param_type(inst, AUDIO_ATTR_ENDIAN, _("Endian"), WEED_PARAM_INTEGER);
+  gui = weed_plant_new(WEED_PLANT_GUI);
+  weed_set_plantptr_value(attr, WEED_LEAF_GUI, gui);
+  choices[0] = lives_strdup("Little endian");
+  choices[1] = lives_strdup("Big endian");
+  weed_set_string_array(gui, WEED_LEAF_CHOICES, 2, choices);
+  lives_free(choices[0]); lives_free(choices[1]);
   lives_object_declare_attribute(inst, AUDIO_ATTR_FLOAT, WEED_SEED_BOOLEAN);
+  lives_attribute_set_param_type(inst, AUDIO_ATTR_FLOAT, _("Is float"), WEED_PARAM_SWITCH);
   lives_object_declare_attribute(inst, AUDIO_ATTR_INTERLEAVED, WEED_SEED_BOOLEAN);
+  lives_attribute_set_param_type(inst, AUDIO_ATTR_INTERLEAVED, _("Interleaved"), WEED_PARAM_SWITCH);
   lives_object_declare_attribute(inst, AUDIO_ATTR_DATA_LENGTH, WEED_SEED_INT64);
   lives_object_declare_attribute(inst, AUDIO_ATTR_DATA, WEED_SEED_VOIDPTR);
   return inst;

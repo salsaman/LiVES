@@ -779,7 +779,7 @@ LIVES_INLINE void set_params_unchanged(lives_mt *mt, lives_rfx_t *rfx) {
   int i, j;
 
   for (i = 0; i < rfx->num_params; i++) {
-    rfx->params[i].flags &= ~PARAM_FLAGS_VALUE_SET;
+    rfx->params[i].flags &= ~PARAM_FLAG_VALUE_SET;
     if ((wparam = weed_inst_in_param(inst, i, FALSE, FALSE))) {
       if (is_perchannel_multiw(wparam)) {
         int nvals = weed_leaf_num_elements(mt->init_event, WEED_LEAF_IN_TRACKS);
@@ -16543,14 +16543,14 @@ void on_resetp_clicked(LiVESWidget * button, livespointer user_data) {
         weed_leaf_dup_nth(in_params[i], def_params[i], WEED_LEAF_VALUE, mt->track_index);
         if (!weed_param_value_irrelevant(in_params[i])) {
           can_apply = TRUE;
-          mt->current_rfx->params[i].flags |= PARAM_FLAGS_VALUE_SET;
+          mt->current_rfx->params[i].flags |= PARAM_FLAG_VALUE_SET;
         }
       }
     } else {
       if (!weed_leaf_elements_equate(in_params[i], WEED_LEAF_VALUE, def_params[i], WEED_LEAF_VALUE, -1)) {
         weed_leaf_dup(in_params[i], def_params[i], WEED_LEAF_VALUE);
         if (!weed_param_value_irrelevant(in_params[i])) {
-          mt->current_rfx->params[i].flags |= PARAM_FLAGS_VALUE_SET;
+          mt->current_rfx->params[i].flags |= PARAM_FLAG_VALUE_SET;
           can_apply = TRUE;
         }
       }
@@ -16797,7 +16797,7 @@ void activate_mt_preview(lives_mt * mt) {
       lives_widget_set_sensitive(mt->apply_fx_button, FALSE);
       set_child_alt_colour(mt->apply_fx_button, TRUE);
       for (int i = 0; i < nparams; i++) {
-        if (mt->current_rfx->params[i].flags & PARAM_FLAGS_VALUE_SET) {
+        if (mt->current_rfx->params[i].flags & PARAM_FLAG_VALUE_SET) {
           lives_widget_set_sensitive(mt->apply_fx_button, TRUE);
           set_child_colour(mt->apply_fx_button, TRUE);
           break;
@@ -16855,11 +16855,11 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
   lives_widget_set_sensitive(mt->resetp_button, check_can_resetp(mt));
 
   for (i = 0; ((param = weed_inst_in_param(inst, i, FALSE, FALSE)) != NULL); i++) {
-    if (!(mt->current_rfx->params[i].flags & PARAM_FLAGS_VALUE_SET)) continue;// set only user changed parameters
+    if (!(mt->current_rfx->params[i].flags & PARAM_FLAG_VALUE_SET)) continue;// set only user changed parameters
 
     // the flags should not have VALUE_SET, but double check anyway
     if (weed_param_value_irrelevant(param)) {
-      mt->current_rfx->params[i].flags &= ~PARAM_FLAGS_VALUE_SET;
+      mt->current_rfx->params[i].flags &= ~PARAM_FLAG_VALUE_SET;
       continue;
     }
     pchange = weed_plant_new(WEED_PLANT_EVENT);
@@ -16911,7 +16911,7 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
   numtracks = enabled_in_channels(get_weed_filter(mt->current_fx), TRUE); // count repeated channels
 
   nparams = mt->current_rfx->num_params;
-  for (i = 0; i < nparams; i++) mt->current_rfx->params[i].flags &= ~PARAM_FLAGS_VALUE_SET;
+  for (i = 0; i < nparams; i++) mt->current_rfx->params[i].flags &= ~PARAM_FLAG_VALUE_SET;
   switch (numtracks) {
   case 1:
     tname = lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT, FALSE); // effect

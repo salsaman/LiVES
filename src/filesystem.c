@@ -892,8 +892,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
     off_t offs = skip;
     void *p = mmap(NULL, fsize, PROT_READ, MAP_PRIVATE, fd, 0);
     if (p == MAP_FAILED) {
-      perror("fubar");
-      abort();
+      lives_abort("memory map failed when background loading file (experimental)");
     }
 #else
     lseek(fd, skip, SEEK_SET);

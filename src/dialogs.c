@@ -730,10 +730,7 @@ void maybe_abort(boolean do_check) {
         lives_kill_subprocesses(cfile->handle, TRUE);
       }
     }
-    lives_hooks_trigger(NULL, mainw->global_hook_closures, ABORT_HOOK);
-    LIVES_FATAL("Aborted");
-    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Aborted");
-    exit(1);
+    lives_abort("User aborted");
   }
 }
 

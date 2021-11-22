@@ -1690,7 +1690,7 @@ LIVES_LOCAL_INLINE char *get_resource(char *fname) {
 static void quit_from_tests(LiVESWidget * dialog, livespointer button) {
   lives_widget_hide(dialog);
   if (!prefs->startup_phase || confirm_exit()) {
-    SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_DESTROY);
+    SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_DESTROY_INSTANCE);
     mainw->cancelled = CANCEL_USER;
   } else {
     SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_UNKNOWN);

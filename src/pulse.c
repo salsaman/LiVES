@@ -1689,6 +1689,8 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
   pa_operation *pa_op;
 
+  lives_rfx_t *rfx;
+
   if (pdriver->pstream) return 0;
 
   if (mainw->aplayer_broken) return 2;
@@ -1860,6 +1862,17 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
       lives_usleep(prefs->sleep_time);
     }
   }
+
+  rfx = obj_attrs_to_rfx(pdriver->inst, TRUE);
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|\"Pulse audio player details\"|"));
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p0|"));
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p1|"));
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p2|"));
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p3|"));
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p4|"));
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p5|p6|"));
+
+  pulsed.interface = rfx;
 
   return 0;
 }

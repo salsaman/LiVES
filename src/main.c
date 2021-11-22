@@ -413,14 +413,10 @@ void catch_sigint(int signum) {
   // trap for ctrl-C and others
   //if (mainw->jackd) lives_jack_end();
 
-  if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
-      && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
-      capable->wm_caps.pan_res & RESTYPE_ACTION) {
-    mainw->ignore_screen_size = TRUE;
-    show_desktop_panel();
-  }
+  lives_hooks_trigger(NULL, THREADVAR(hook_closures), ABORT_HOOK);
 
   if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
+    // if we are not the main thread, just exit
     lives_proc_thread_t lpt = THREADVAR(tinfo);
     lives_thread_data_t *mydata = THREADVAR(mydata);
     //if (mydata) {
@@ -428,7 +424,7 @@ void catch_sigint(int signum) {
     g_print("Thread got signal %d\n", signum);
     pthread_detach(pthread_self());
   }
-  if (mainw->record) backup_recording(NULL, NULL);
+
 #ifdef QUICK_EXIT
   /* shoatend(); */
   /* fprintf(stderr, "shoatt end"); */
@@ -436,10 +432,14 @@ void catch_sigint(int signum) {
   exit(signum);
 #endif
   if (mainw) {
+    lives_hooks_trigger(NULL, mainw->global_hook_closures, ABORT_HOOK);
+
     if (LIVES_MAIN_WINDOW_WIDGET) {
       if (mainw->foreign) {
         exit(signum);
       }
+
+      if (mainw->record) backup_recording(NULL, NULL);
 
       if (mainw->multitrack) mainw->multitrack->idlefunc = 0;
       mainw->fatal = TRUE;
@@ -2550,6 +2550,8 @@ rest3:
     future_prefs->jack_opts &= ~JACK_INFO_TEST_SETUP;
   }
 
+  reset_font_size();
+
   if (prefs->startup_phase != 0) {
     // splash_end() would normally kick us to MT mode, but we haven't queried for it yet
     // splash_end();
@@ -2564,7 +2566,7 @@ rest3:
     set_int_pref(PREF_STARTUP_PHASE, 6);
     prefs->startup_phase = 6;
 
-    reset_font_size();
+    //reset_font_size();
     mainw->first_shown = TRUE;
 
     if (prefs->show_disk_quota && !prefs->vj_mode) {
@@ -4997,6 +4999,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         if (c == '?') {
           msg = lives_strdup_printf(_("Invalid option %s on commandline\n"), xargv[count]);
           LIVES_FATAL(msg);
+          lives_free(msg);
+          msg = NULL;
         }
         if (!strcmp(charopt, "workdir") || !strcmp(charopt, "tmpdir")) {
           if (!*optarg) {
@@ -5616,11 +5620,7 @@ void startup_message_fatal(char *msg) {
   }
 
   do_error_dialog(msg);
-
   LIVES_FATAL(msg);
-  // needs notify_socket and prefs->omc_events, so seems unlikely it will do anything, but anyway...
-  lives_notify(LIVES_OSC_NOTIFY_QUIT, msg);
-  lives_free(msg);
   _exit(1);
 }
 

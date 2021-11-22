@@ -95,7 +95,7 @@ void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
   lives_system(com, TRUE); // clear any .pre files from before
 
   for (i = 0; i < rfx->num_params; i++) {
-    rfx->params[i].flags &= ~PARAM_FLAGS_VALUE_SET;
+    rfx->params[i].flags &= ~PARAM_FLAG_VALUE_SET;
   }
 
   mainw->cancelled = CANCEL_NONE;

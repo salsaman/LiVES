@@ -2313,8 +2313,8 @@ void play_file(void) {
   else if (mainw->event_list) cfile->next_event = get_first_event(mainw->event_list);
 
   if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
-    lives_widget_set_frozen(mainw->spinbutton_start, TRUE);
-    lives_widget_set_frozen(mainw->spinbutton_end, TRUE);
+    lives_widget_set_frozen(mainw->spinbutton_start, TRUE, 0.);
+    lives_widget_set_frozen(mainw->spinbutton_end, TRUE, 0.);
   }
 
   if (!mainw->multitrack) {
@@ -5972,6 +5972,7 @@ cleanse:
 
   if (THREADVAR(com_failed) && prefs->crash_recovery && !no_recover) {
     rewrite_recovery_file();
+    lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, rewrite_recovery_file_cb, NULL);
     return FALSE;
   }
 
@@ -5981,7 +5982,9 @@ cleanse:
   lives_system(com, FALSE);
   lives_free(com);
 
-  if (no_recover) return FALSE;
+  if (no_recover) {
+    return FALSE;
+  }
 
   recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir,
                                       LAYOUT_FILENAME, luid, lgid, lpid, LIVES_FILE_EXT_LAYOUT);
@@ -6018,8 +6021,10 @@ cleanse:
   lives_free(recording_file);
   lives_free(recording_numbering_file);
 
-  if (prefs->crash_recovery) rewrite_recovery_file();
-  lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, rewrite_recovery_file_cb, NULL);
+  if (prefs->crash_recovery) {
+    rewrite_recovery_file();
+    lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, rewrite_recovery_file_cb, NULL);
+  }
 
   if (!mainw->recoverable_layout && !mainw->recording_recovered) {
     if (mainw->invalid_clips

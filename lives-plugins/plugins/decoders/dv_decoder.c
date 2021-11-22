@@ -29,10 +29,6 @@
 
 #include "dv_decoder.h"
 
-static int vmaj = 1;
-static int vmin = 3;
-const char *plugin_name = "LiVES dvr";
-
 static FILE *nulfile;
 
 extern void dv_parse_audio_header(dv_decoder_t *, uint8_t *);

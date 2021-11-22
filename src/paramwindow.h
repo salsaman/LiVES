@@ -9,6 +9,7 @@
 
 enum {
   LIVES_PARAM_WIDGET_UNKNOWN,
+  LIVES_PARAM_WIDGET_LABEL,
   LIVES_PARAM_WIDGET_SPINBUTTON,
   LIVES_PARAM_WIDGET_SLIDER,
   LIVES_PARAM_WIDGET_KNOB
@@ -83,13 +84,14 @@ boolean lives_param_update_gui_num(lives_param_t *, double val);
 boolean lives_param_update_gui_double(lives_param_t *, double val);
 boolean lives_param_update_gui_int(lives_param_t *, int val);
 
-
 char *param_marshall(lives_rfx_t *, boolean with_min_max);
 char **param_marshall_to_argv(lives_rfx_t *);
 void param_demarshall(lives_rfx_t *, LiVESList *plist, boolean with_min_max, boolean update_widgets);
 LiVESList *set_param_from_list(LiVESList *plist, lives_param_t *param, boolean with_min_max,
                                boolean upd);
 LiVESList *argv_to_marshalled_list(lives_rfx_t *, int argc, char **argv);
+
+boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *s);
 
 /// object should have g_set_object_data "param_number" set to parameter number
 ///
@@ -104,5 +106,7 @@ void update_visual_params(lives_rfx_t *, boolean update_hidden);
 
 /// show / hide widgets set by plugin in init_func()
 boolean update_widget_vis(lives_rfx_t *, int key, int mode);
+
+#define LIVES_LEAF_DISPVAL "host_disp_val"
 
 #endif

@@ -10,18 +10,30 @@
 
 #include <unicap/unicap.h>
 
+#define OBJECT_TYPE_MEDIA_SOURCE	IMkType("obj.MSRC")
+#define MEDIA_SOURCE_SUBTYPE_UNICAP	IMkType("MSRCucap")
+
+#define VIDEO_DEV_UNICAP MEDIA_SOURCE_SUBTYPE_UNICAP
+
+#define VDEV_PROP_WIDTH WEED_LEAF_WIDTH
+#define VDEV_PROP_HEIGHT WEED_LEAF_HEIGHT
+#define VDEV_PROP_PALETTE WEED_LEAF_CURRENT_PALETTE
+#define VDEV_PROP_FPS WEED_LEAF_FPS
+
 typedef struct {
   unicap_handle_t handle;
   int fileno; ///< lives clip number
   int buffer_type; ///< system or user
   volatile int buffer_ready;
+  unicap_data_buffer_t *buffer;
   unicap_data_buffer_t buffer1;
   unicap_data_buffer_t buffer2;
-  int current_palette;
+  int palette;
   int YUV_sampling;
   int YUV_subspace;
   int YUV_clamping;
   boolean is_really_grey; ///< for greyscale we lie and say it is YUV444P (i.e we add U and V planes)
+  lives_object_instance_t *object;
 } lives_vdev_t;
 
 #define MAX_DEVICES 1024

@@ -42,7 +42,7 @@
 #define ashift8(a, b, c, d, e, f, g, h) ((uint64_t)(((ashift4((a), (b), (c), (d))) << 32) | \
 							      ashift4((e), (f), (g), (h))))
 #define IMkType(str) ((uint64_t)(ashift8((str)[0], (str)[1], (str)[2], (str)[3], \
-					(str)[4], (str)[5], (str)[6], (str)[7])))
+					       (str)[4], (str)[5], (str)[6], (str)[7])))
 
 #define LIVES_OBJECT(o) ((lives_object_t *)((o)))
 
@@ -66,12 +66,14 @@ typedef struct _obj_transform_t lives_object_transform_t;
 typedef weed_param_t lives_tx_param_t;
 typedef weed_param_t lives_obj_attr_t;
 
-#define HOOK_CB_SINGLE_SHOT		(1 << 1)
-#define HOOK_CB_ASYNC			(1 << 2)
-#define HOOK_CB_ASYNC_JOIN		(1 << 3)
-#define HOOK_CB_CHILD_INHERITS		(1 << 4) // TODO
+#define HOOK_CB_SINGLE_SHOT		(1 << 1) //< hook function should be called only once then removed
+#define HOOK_CB_ASYNC			(1 << 2) //< hook function should not block
+#define HOOK_CB_ASYNC_JOIN		(1 << 3) //< hook function should not block, but the thread should be joined
+///							at the end of processing, or before calling the hook
+///							a subsequent time
+#define HOOK_CB_CHILD_INHERITS		(1 << 4) // TODO - child threads should inherit the hook callbacks
 
-#define HOOK_BLOCKED			(1 << 16)
+#define HOOK_BLOCKED			(1 << 16) // hook function should not be called
 
 enum {
   ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
@@ -83,27 +85,41 @@ enum {
   TX_DONE_HOOK,   /// status -> success
   DATA_PREP_HOOK,   // data supplied, may be altered
   DATA_READY_HOOK, // data ready for processing
+  VALUE_CHANGED_HOOK, /// attribute value amended
+  FINAL_HOOK, ///< about to be freed
   N_HOOK_FUNCS,
 };
 
 typedef void *(*hook_funcptr_t)(lives_object_t *, void *);
+typedef void (*attr_listener_f)(lives_object_t *, lives_obj_attr_t *);
 
 typedef struct {
   hook_funcptr_t func;
   lives_object_t *obj;
+  void *attr;
   void *data;
   uint64_t flags;
   lives_proc_thread_t tinfo; // for async_join
 } lives_closure_t;
 
+typedef struct {
+  int count; // if count < 0, object should be destroyed
+  pthread_mutex_t mutex;
+  boolean mutex_inited;
+} obj_refcounter;
+
+int refcount_inc(obj_refcounter *);
+int refcount_dec(obj_refcounter *);
+int refcount_query(obj_refcounter *);
+
 // lives_object_t
 struct _object_t {
-  uint64_t uid; // unique id for this object
-  // for other objects should be randomly generated for the lifetime of the object
-  uint64_t type; // object type - from IMkType
+  uint64_t uid; // unique id for this instnace (const)
+  obj_refcounter refcount;
+  uint64_t type; // object type - from IMkType (const)
   uint64_t subtype; // object subtype, can change during a transformation
   int state; // object state
-  lives_obj_attr_t **attributes; // internal parameters
+  lives_obj_attr_t **attributes; // internal parameters (properties)
   lives_object_transform_t *active_tx; // pointer to currently running transform (or NULL)
   LiVESList *hook_closures[N_HOOK_FUNCS]; /// TODO - these should probably be part of active_tx
   void *priv; // internal data belonging to the object
@@ -112,16 +128,19 @@ struct _object_t {
 // TODO - types should register themselves, and then be queried
 struct _objsubdef {
   uint64_t subtype; // object subtype, can change during a transformation
-  lives_obj_attr_t **common_attributes; // internal parameters
-  int *states; // possible object states
-  /// per state (???)
-  lives_obj_attr_t **attributes; // internal parameters, some may point to common_attributes
-  lives_object_transform_t **tx; // array of tx
+  lives_obj_attr_t **common_attributes; // internal attributes common to all states
+  ////
+  struct _obj_state_details {
+    int *states; // possible object states
+    lives_obj_attr_t **state_attributes; // state specific attributes ???
+    lives_object_transform_t **tx; // array of transform functions for object type / subtype / state
+  } **state_dets;
 };
 
 typedef struct {
+  // for each enumnerated object type, we will define a set of subtypedefs
   uint64_t type; // object type - from IMkType
-  struct objsudef **subtypedefs; // NULL term. list
+  struct objsubdef **subtypedefs; // NULL term. list
 } lives_obj_template;
 
 /////////////
@@ -142,16 +161,22 @@ enum {
   LIVES_INTENTION_CANCEL, // requests an object with status "running" to transform to status "cancelled"
 
   // function like
-  LIVES_INTENTION_CREATE_INSTANCE = 0x00000100,
-  LIVES_INTENTION_DESTROY,
+  // MANDATORY for templates which can create instances
+  LIVES_INTENTION_CREATE_INSTANCE = 0x00000100, // create instance of type / subtype
 
+  // MANDATORY (builtin) for instances
   LIVES_INTENTION_ADDREF,
+
+  // MANDATORY (builtin) for instances
   LIVES_INTENTION_UNREF,
 
   LIVES_INTENTION_GET_VALUE,
   LIVES_INTENTION_SET_VALUE,
 
-  // an intent which converts an object's STATE from EXTERNAL
+  // an intent which converts an object's STATE from PREPARE to NORMAL
+  LIVES_INTENTION_PREPARE = 0x00000200,
+
+  // an intent which converts an object's STATE from EXTERNAL to NORMAL
   // caps define LOCAL or REMOTE source
   LIVES_INTENTION_IMPORT = 0x00000C00,
 
@@ -163,7 +188,7 @@ enum {
   // specialised intentions
 
   // video players
-  // an intent which creates frame objects / audio (depending on CAPACITIES) from an array of clip_like objects
+  // an intent which creates media_output from an array of media_inputs
   // or from an event_list object
   LIVES_INTENTION_PLAY = 0x00000200, // value fixed for all time, order of following must not change (see videoplugin.h)
 
@@ -172,12 +197,14 @@ enum {
 
   // alias for encode but with a weed_layer (frame ?) requirement
   // rather than a clip object (could also be an attachment to PLAY with realtime == FALSE and display == FALSE caps)
+  // media_output is created with state EXTERNAL
   LIVES_INTENTION_TRANSCODE,
 
   // an attachment (?) to a player which can create an event_list object
   LIVES_INTENTION_RECORD,  // record
 
   // intent which creates a new clip_object from an event_list
+  // media_src with state INTERNAL
   // (can also be an attachment to PLAY, with non-realtime, non-display and output clip in state READY)
   LIVES_INTENTION_RENDER,
 
@@ -193,6 +220,7 @@ enum {
 
   // decoders
   // this is a specialized intent for clip objects, for READY objects, produces frame objects from the clip object)
+  // media_src with realtime / non-realtime CAPS
   LIVES_INTENTION_DECODE = 0x00001000, // combine with caps to determine e.g. decode_audio, decode_video
 
   // use caps to further refine e.g REALTIME / NON_REALTIME (can be attachment to PLAY ?)
@@ -237,6 +265,8 @@ enum {
 #define LIVES_INTENTION_LEAVE LIVES_INTENTION_NOTHING
 #define LIVES_INTENTION_SKIP LIVES_INTENTION_NOTHING
 
+#define  LIVES_INTENTION_DESTROY_INSTANCE LIVES_INTENTION_UNREF
+
 // or maybe just set value with workdir param for LiVES object ?
 #define LIVES_INTENTION_MOVE LIVES_INTENTION_EXPORT
 
@@ -244,20 +274,25 @@ enum {
 
 //#define LIVES_INTENTION_DOWNLOAD LIVES_INTENTION_IMPORT_REMOTE
 
-#define LIVES_INTENTION_DELETE LIVES_INTENTION_DESTROY
+#define LIVES_INTENTION_DELETE LIVES_INTENTION_DESTROY_INSTANCE
 
 // generic STATES which can be altered by *transforms*
 #define OBJECT_STATE_UNDEFINED	0
 #define OBJECT_STATE_NORMAL	1
-#define OBJECT_STATE_PREVIEW	2 // ???
+#define OBJECT_STATE_PREPARE	2
+
+#define OBJECT_STATE_PREVIEW	3 // ???
 
 #define OBJECT_STATE_EXTERNAL	64
 
 #define OBJECT_STATE_FINALISED	512
 
+#define OBJECT_STATE_NOT_READY OBJECT_STATE_PREPARE
+#define OBJECT_STATE_READY OBJECT_STATE_NORMAL
+
 struct _obj_status_t {
   int *status; /// pointer to an int (some states are dynamic)
-  int refcount;
+  obj_refcounter refcount;
 };
 
 // create, destroy, set subtype, set state, set value, get value
@@ -295,25 +330,61 @@ struct _obj_status_t {
 
 /// transforms
 
+/* typedef struct { */
+/*   int type; */
+/*   // flags may include READONLY, OPTIONAL, GUI */
+/*   int flags; */
+/*   union { */
+/*     weed_param_t *param; // can be free standing or point to an attribute */
+/*     lives_object_t *object; // maybe hook is enough ?? */
+/*     hook_func hook; */
+/*   } */
+/* } tx_req_t; */
+
+
 typedef struct {
   //lives_intention intent;
-  //int n_params; // to simplify
   lives_tx_param_t **params; ///< (can be converted to normal params via weed_param_from_iparams)
 } lives_intentparams_t;
 
 // shorthand for calling LIVES_INTENTION_CREATE_INSTANCE in the template
 lives_object_instance_t *lives_object_instance_create(uint64_t type, uint64_t subtype);
 
+// shorthand for calling LIVES_INTENTION_UNREF in the instance
+boolean lives_object_instance_destroy(lives_object_instance_t *);
+
+// shorthand for calling LIVES_INTENTION_UNREF in the instance
+int lives_object_instance_unref(lives_object_instance_t *);
+
+// shorthand for calling LIVES_INTENTION_REF in the instance
+int lives_object_instance_ref(lives_object_instance_t *);
+
 // when creating the instance, we should set the intial STATE, and declare its attributes
-// TODO - attributes are readonly and can only be altered by the object itself
-boolean lives_object_declare_attribute(lives_object_t *obj, const char *name, int stype);
+lives_obj_attr_t *lives_object_declare_attribute(lives_object_t *, const char *name, int stype);
+
+lives_obj_attr_t *lives_object_get_attribute(lives_object_t *, const char *name);
 
 // TODO - add listeners for attribute value changes (also for subtype / state changes)
 
-// values can also be set
-weed_error_t lives_object_set_attribute_value(lives_object_t *obj, const char *name, ...);
-weed_error_t lives_object_set_attribute_array(lives_object_t *obj, const char *name, int n_elems, ...);
-lives_obj_attr_t *lives_attr_from_object(lives_object_t *obj, const char *name);
+// values can be set later
+weed_error_t lives_object_set_attribute_value(lives_object_t *, const char *name, ...);
+weed_error_t lives_object_set_attribute_array(lives_object_t *, const char *name, int n_elems, ...);
+
+//// placeholder - should operate on transform requirements instead
+weed_error_t lives_attribute_set_readonly(lives_object_t *, const char *name, boolean state);
+boolean lives_attribute_is_readonly(lives_object_t *, const char *name);
+
+// cast to / from lives_param_type_t
+int lives_attribute_get_param_type(lives_object_t *obj, const char *name);
+weed_error_t lives_attribute_set_param_type(lives_object_t *obj, const char *name,
+    const char *label, int ptype);
+
+void lives_attribute_append_listener(lives_object_t *obj, const char *name, attr_listener_f func);
+void lives_attribute_prepend_listener(lives_object_t *obj, const char *name, attr_listener_f func);
+
+int lives_object_get_num_attributes(lives_object_t *);
+
+int lives_object_dump_attributes(lives_object_t *);
 
 /// NOT YET FULLY IMPLEMENTED
 
@@ -347,14 +418,14 @@ typedef struct {
   // list of subtypes and states the owner object must be in to run the transform
   int *subtype;
   int *state;
-  lives_intentparams_t *reqs; // mix of params and object types, caller needs to set these
+
+  // TODO - use tx_req_t **
+
+  lives_intentparams_t *reqs;
   // --------
-  /// if caller cannot fill all values it can call a fn. and UI will run
-  char ui_schema; // schema for ui, eg. "RFX 1.x.x |"
-  char **uistrings; ///< strings to provide hints about constructing an interface for user entry, to get missing values
   // internal book keeping
   lives_object_instance_t *oinst; // owner instance / template
-  int refcount;
+  obj_refcounter refcount;
 } lives_rules_t;
 
 // flagbits for transformations
@@ -402,13 +473,14 @@ typedef struct {
 // separate default / value mappings for inputs ? multiple mappings for outputs ?
 
 struct _obj_transform_t {
-  lives_intentcap_t icaps;
+  lives_intentcap_t icaps; // intention and capacities satisfied
+
+  // inputs
   lives_rules_t *prereqs; // pointer to the prerequisites for carrying out the transform (can be NULL)
-  ///
-  lives_tx_param_t **oparams;  // a mix of params and objects
-  //
-  int new_state; // the state of the subhect after tx
-  uint64_t *new_subtype; // subtype of subhject after, assuming success
+
+  // outputs
+  /// first element is always SELF (or NULL if self is unchanged)
+  lives_tx_param_t **oparams;  // a mix of params and objects (type / subtype / state)
   ///
   tx_map *mappings; // internal mapping for the object
   uint64_t flags;
@@ -420,6 +492,7 @@ lives_capacity_t *lives_capacities_new(void);
 void lives_capacities_free(lives_capacity_t *);
 
 #define LIVES_ERROR_NOSUCH_CAP WEED_ERROR_NOSUCH_LEAF
+#define LIVES_ERROR_NOSUCH_ATTRIBUTE WEED_ERROR_NOSUCH_LEAF
 #define LIVES_ERROR_ICAP_NULL 66000
 
 #define LIVES_CAPACITY_TRUE(caps, key) ((caps) ? weed_get_boolean_value((caps), (key)) == WEED_TRUE : FALSE)
@@ -507,7 +580,7 @@ void lives_tx_map_free(LiVESTransformList **);
 #endif
 
 void lives_intentparams_free(lives_intentparams_t *);
-void lives_transform_status_free(lives_transform_status_t *);
+boolean lives_transform_status_free(lives_transform_status_t *);
 void lives_object_transform_free(lives_object_transform_t *);
 
 #endif

@@ -135,7 +135,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   if (mainw->did_rfx_preview) {
     if (def_ok && rfx) {
       for (i = 0; i < rfx->num_params; i++) {
-        if (rfx->params[i].flags & PARAM_FLAGS_VALUE_SET) {
+        if (rfx->params[i].flags & PARAM_FLAG_VALUE_SET) {
           mainw->keep_pre = FALSE;
           break;
         }
@@ -1082,7 +1082,7 @@ static boolean fmt_match(char *fmt_string) {
    if top_vbox is NULL: we just check for displayable params, returning FALSE there are none to be shown.
    otherwise, adds widgets to top_vbox, returning FALSE if nothing was added
 */
-static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
+boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   lives_param_t *param = NULL;
 
   LiVESWidget *param_vbox = NULL;
@@ -1156,7 +1156,8 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     // initialise special widgets
     init_special();
 
-    if (rfx->status == RFX_STATUS_WEED) usrgrp_to_livesgrp[1] = NULL;
+    if (rfx->status == RFX_STATUS_WEED || rfx->status == RFX_STATUS_OBJECT)
+      usrgrp_to_livesgrp[1] = NULL;
     else usrgrp_to_livesgrp[0] = NULL;
 
     // paramwindow start, everything goes in top_hbox
@@ -1355,7 +1356,7 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
           // parameter, eg. p1 ////////////////////////////
           param = &rfx->params[pnum];
           if (!chk_params && (rfx->flags & RFX_FLAGS_NO_RESET) != RFX_FLAGS_NO_RESET) {
-            rfx->params[pnum].flags &= ~PARAM_FLAGS_VALUE_SET;
+            rfx->params[pnum].flags &= ~PARAM_FLAG_VALUE_SET;
           }
           if (rfx->source_type == LIVES_RFX_SOURCE_WEED) {
             check_hidden_gui((weed_plant_t *)rfx->source, param, pnum);
@@ -1512,7 +1513,7 @@ static boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       param = &rfx->params[i];
 
       if (!chk_params && (rfx->flags & RFX_FLAGS_NO_RESET) != RFX_FLAGS_NO_RESET) {
-        param->flags &= ~PARAM_FLAGS_VALUE_SET;
+        param->flags &= ~PARAM_FLAG_VALUE_SET;
       }
 
       layout_mode = FALSE;
@@ -1619,6 +1620,9 @@ int get_param_widget_by_type(lives_param_t *param, int wtype) {
   LiVESWidget *widget = param->widgets[0];
   for (int i = 0; widget; widget = param->widgets[++i]) {
     switch (wtype) {
+    case LIVES_PARAM_WIDGET_LABEL:
+      if (LIVES_IS_LABEL(widget)) return i;
+      break;
     case LIVES_PARAM_WIDGET_SPINBUTTON:
       if (LIVES_IS_SPIN_BUTTON(widget)) return i;
       break;
@@ -1642,6 +1646,7 @@ int get_param_widget_by_type(lives_param_t *param, int wtype) {
 
 boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add_slider) {
   // box here is vbox inside top_hbox inside top_dialog
+  // or hbox in lives layout
 
   // add parameter pnum for rfx to box
 
@@ -1659,8 +1664,8 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
   LiVESWidget *combo;
   LiVESWidget *textview = NULL;
   LiVESWidget *scrolledwindow;
-  LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box),
-                        WH_LAYOUT_KEY);
+  LiVESWidget *layout =
+    (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box), WH_LAYOUT_KEY);
 
   LiVESAdjustment *spinbutton_adj;
 
@@ -1682,6 +1687,7 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
 
   boolean use_mnemonic;
   boolean was_num = FALSE;
+  boolean is_rdonly = FALSE;
 
   boolean add_scalers = TRUE;
 
@@ -1695,19 +1701,49 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
   name = param->label;
   use_mnemonic = param->use_mnemonic;
 
-  // reinit can cause the window to be redrawn, which invalidates the slider adjustment...and bang !
-  // so dont add sliders for such params
-  if (param->reinit) add_scalers = FALSE;
-
-  // for plugins (encoders and video playback) sliders look silly
-  if ((rfx->flags & RFX_FLAGS_NO_SLIDERS) == RFX_FLAGS_NO_SLIDERS) add_scalers = FALSE;
-
   if (LIVES_IS_HBOX(LIVES_WIDGET(box))) {
     hbox = LIVES_WIDGET(box);
   } else {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
   }
+
+  if (param->flags & PARAM_FLAG_READONLY) {
+    if (param->source_type == LIVES_RFX_SOURCE_OBJECT) {
+      weed_param_t *wpar = (weed_param_t *)param->source;
+      weed_plant_t *gui = weed_get_plantptr_value(wpar, WEED_LEAF_GUI, NULL);
+      if (gui && weed_plant_has_leaf(gui, LIVES_LEAF_DISPVAL)) {
+        char *txt = weed_get_string_value(gui, LIVES_LEAF_DISPVAL, NULL);
+
+        if (*name) {
+          param->widgets[1] = label = lives_standard_label_new(name);
+          lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+          if (layout) hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+          param->widgets[1] = label;
+        }
+
+        widget_opts.text_size = LIVES_TEXT_SIZE_LARGE;
+        param->widgets[0] = label = lives_standard_label_new(txt);
+        widget_opts.text_size = LIVES_TEXT_SIZE_NORMAL;
+
+        lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+        if (label && param->desc) lives_widget_set_tooltip_text(label, param->desc);
+        lives_free(txt);
+        if (param->widgets[1])
+          lives_widget_set_show_hide_with(param->widgets[0], param->widgets[1]);
+        return was_num;
+      }
+      is_rdonly = TRUE;
+      add_slider = FALSE;
+    }
+  }
+
+  // reinit can cause the window to be redrawn, which invalidates the slider adjustment...and bang !
+  // so dont add sliders for such params
+  if (param->reinit) add_scalers = FALSE;
+
+  // for plugins (encoders and video playback) sliders look silly
+  if ((rfx->flags & RFX_FLAGS_NO_SLIDERS) == RFX_FLAGS_NO_SLIDERS) add_scalers = FALSE;
 
   // see if there were any 'special' hints
   if (!layout)
@@ -1779,47 +1815,57 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
     widget_opts.mnemonic_label = use_mnemonic;
     if (param->dp) {
       if (param->max > param->min) {
+        if (layout) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), WH_LAYOUT_KEY, layout);
         spinbutton =
           lives_standard_spin_button_new(name, (pval = get_double_param(param->value)),
                                          param->min, param->max, param->step_size,
                                          param->snap_to_step ? -param->step_size : param->step_size, param->dp,
                                          (LiVESBox *)hbox, param->desc);
+        param->widgets[++wcount] = widget_opts.last_label;
       } else {
         size_t len = calc_spin_button_width(-DBL_MAX, DBL_MAX, param->dp);
         char *ntxt = lives_strdup_printf("%.*f", param->dp, (pval = get_double_param(param->value)));
-        param->widgets[1]
+        param->widgets[++wcount]
           = lives_standard_entry_new(name, ntxt, len, len, (LiVESBox *)hbox, param->desc);
+        param->widgets[++wcount] = widget_opts.last_label;
         spinbutton = lives_standard_spin_button_new(NULL, (pval = get_double_param(param->value)),
                      -DBL_MAX, DBL_MAX, 0., 0., param->dp, NULL, NULL);
-        lives_widget_destroy_with(param->widgets[1], spinbutton);
+        lives_widget_destroy_with(param->widgets[wcount - 1], spinbutton);
         lives_widget_set_show_hide_with(spinbutton, hbox);
-        lives_widget_set_sensitive_with(spinbutton, param->widgets[1]);
+        lives_widget_set_sensitive_with(spinbutton, param->widgets[wcount - 1]);
         lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                        LIVES_GUI_CALLBACK(update_entry_dbl), param->widgets[1]);
-        lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(param->widgets[1]),
+                                        LIVES_GUI_CALLBACK(update_entry_dbl), param->widgets[wcount - 1]);
+        lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(param->widgets[wcount - 1]),
                                         LIVES_WIDGET_CHANGED_SIGNAL,
                                         LIVES_GUI_CALLBACK(update_spin_dbl), spinbutton);
       }
     } else {
       if (param->max > param->min) {
+        if (layout) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), WH_LAYOUT_KEY, layout);
         spinbutton =
           lives_standard_spin_button_new(name, (pval = (double)get_int_param(param->value)),
                                          param->min, param->max, param->snap_to_step ? -param->step_size : param->step_size,
                                          param->step_size, param->dp,
                                          (LiVESBox *)hbox, param->desc);
+        param->widgets[++wcount] = widget_opts.last_label;
       } else {
         size_t len = calc_spin_button_width(-INT_MAX, INT_MAX, 0);
         char *ntxt = lives_strdup_printf("%d", (int)(pval = (double)get_int_param(param->value)));
-        param->widgets[1]
+        param->widgets[++wcount]
           = lives_standard_entry_new(name, ntxt, len, len, (LiVESBox *)hbox, param->desc);
+        param->widgets[++wcount] = widget_opts.last_label;
+        if (layout) {
+          hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+          //lives_widget_set_show_hide_with(spinbutton, hbox);
+        }
         spinbutton = lives_standard_spin_button_new(NULL, (pval = (double)get_int_param(param->value)),
                      -INT_MAX, INT_MAX, 0., 0., param->dp, NULL, NULL);
         lives_widget_destroy_with(param->widgets[1], spinbutton);
-        lives_widget_set_show_hide_with(spinbutton, param->widgets[1]);
-        lives_widget_set_sensitive_with(spinbutton, param->widgets[1]);
+        lives_widget_set_show_hide_with(spinbutton, param->widgets[wcount - 1]);
+        lives_widget_set_sensitive_with(spinbutton, param->widgets[wcount - 1]);
         lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                        LIVES_GUI_CALLBACK(update_entry_int), param->widgets[1]);
-        lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(param->widgets[1]),
+                                        LIVES_GUI_CALLBACK(update_entry_int), param->widgets[wcount - 1]);
+        lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(param->widgets[wcount - 1]),
                                         LIVES_WIDGET_CHANGED_SIGNAL,
                                         LIVES_GUI_CALLBACK(update_spin_int), spinbutton);
       }
@@ -1840,8 +1886,6 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton),
                                  PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
     param->widgets[0] = spinbutton;
-
-    param->widgets[++wcount] = widget_opts.last_label;
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(param->widgets[0]), RFX_KEY, rfx);
 
     if (add_scalers) {
@@ -1883,6 +1927,13 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
     }
 
     if (param->desc) lives_widget_set_tooltip_text(scale, param->desc);
+
+    if (is_rdonly) {
+      for (int i = 0; i <= wcount; i++) {
+        lives_widget_set_frozen(param->widgets[i], TRUE, .85);
+      }
+    }
+
     break;
 
   case LIVES_PARAM_COLRGB24:
@@ -2243,8 +2294,8 @@ static void after_any_changed_2(lives_rfx_t *rfx, lives_param_t *param, boolean 
   /// only the first param in the chain can reinit
   if (--ireinit > 0) {
     if (!(param->source_type == LIVES_RFX_SOURCE_WEED
-          && weed_paramtmpl_value_irrelevant((weed_plant_t *)param->source))) {
-      param->flags |= PARAM_FLAGS_VALUE_SET;
+          && weed_paramtmpl_value_irrelevant(weed_param_get_template((weed_plant_t *)param->source)))) {
+      param->flags |= PARAM_FLAG_VALUE_SET;
     }
     param->change_blocked = FALSE;
     return;
@@ -2298,8 +2349,8 @@ static void after_any_changed_2(lives_rfx_t *rfx, lives_param_t *param, boolean 
   }
 
   if (!(param->source_type == LIVES_RFX_SOURCE_WEED
-        && weed_paramtmpl_value_irrelevant((weed_plant_t *)param->source))) {
-    param->flags |= PARAM_FLAGS_VALUE_SET;
+        && weed_paramtmpl_value_irrelevant(weed_param_get_template((weed_plant_t *)param->source)))) {
+    param->flags |= PARAM_FLAG_VALUE_SET;
   }
 
   if (mainw->multitrack && rfx->status == RFX_STATUS_WEED) {

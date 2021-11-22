@@ -294,7 +294,7 @@ void check_for_special_type(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * p
     if (param == (lives_param_t *)(slist->data)) {
       param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEWRITE;
       // force check for overwrite (if filebutton clicked, check there, and this is cleared)
-      param->flags |= PARAM_FLAGS_VALUE_SET;
+      param->flags |= PARAM_FLAG_VALUE_SET;
     }
     slist = slist->next;
   }
@@ -650,7 +650,7 @@ boolean check_filewrite_overwrites(void) {
     LiVESList *slist = filewrite;
     while (slist) {
       lives_param_t *param = (lives_param_t *)(slist->data);
-      if (param->flags & PARAM_FLAGS_VALUE_SET) {
+      if (param->flags & PARAM_FLAG_VALUE_SET) {
         // check for overwrite
         if (LIVES_IS_ENTRY(param->widgets[0])) {
           if (*(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])))) {

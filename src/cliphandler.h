@@ -9,38 +9,39 @@
 
 #define CLIP_NAME_MAXLEN 256
 
-#define IS_VALID_CLIP(clip) (clip >= 0 && clip <= MAX_FILES && mainw->files[clip])
-#define CURRENT_CLIP_IS_VALID IS_VALID_CLIP(mainw->current_file)
+#define IS_VALID_CLIP(clip) (mainw && (clip) >= 0 && (clip) <= MAX_FILES && mainw->files[(clip)])
+#define CURRENT_CLIP_IS_VALID (mainw && IS_VALID_CLIP(mainw->current_file))
 
-#define IS_TEMP_CLIP(clip) (IS_VALID_CLIP(clip) && mainw->files[clip]->clip_type == CLIP_TYPE_TEMP)
-#define CURRENT_CLIP_IS_TEMP IS_TEMP_CLIP(mainw->current_file)
+#define IS_TEMP_CLIP(clip) (IS_VALID_CLIP((clip)) && mainw->files[(clip)]->clip_type == CLIP_TYPE_TEMP)
+#define CURRENT_CLIP_IS_TEMP (mainw && IS_TEMP_CLIP(mainw->current_file))
 
-#define CLIP_HAS_VIDEO(clip) (IS_VALID_CLIP(clip) ? mainw->files[clip]->frames > 0 : FALSE)
-#define CURRENT_CLIP_HAS_VIDEO CLIP_HAS_VIDEO(mainw->current_file)
+#define CLIP_HAS_VIDEO(clip) (IS_VALID_CLIP((clip)) ? mainw->files[(clip)]->frames > 0 : FALSE)
+#define CURRENT_CLIP_HAS_VIDEO (mainw && CLIP_HAS_VIDEO(mainw->current_file))
 
-#define CLIP_HAS_AUDIO(clip) (IS_VALID_CLIP(clip) ? (mainw->files[clip]->achans > 0 && mainw->files[clip]->asampsize > 0) : FALSE)
-#define CURRENT_CLIP_HAS_AUDIO CLIP_HAS_AUDIO(mainw->current_file)
+#define CLIP_HAS_AUDIO(clip) (IS_VALID_CLIP((clip)) ? (mainw->files[(clip)]->achans > 0 \
+						       && mainw->files[(clip)]->asampsize > 0) : FALSE)
+#define CURRENT_CLIP_HAS_AUDIO (mainw && CLIP_HAS_AUDIO(mainw->current_file))
 
-#define CLIP_VIDEO_TIME(clip) ((double)(CLIP_HAS_VIDEO(clip) ? mainw->files[clip]->video_time : 0.))
+#define CLIP_VIDEO_TIME(clip) (CLIP_HAS_VIDEO((clip)) ? mainw->files[(clip)]->video_time : 0.)
 
-#define CLIP_LEFT_AUDIO_TIME(clip) ((double)(CLIP_HAS_AUDIO(clip) ? mainw->files[clip]->laudio_time : 0.))
+#define CLIP_LEFT_AUDIO_TIME(clip) (CLIP_HAS_AUDIO((clip)) ? mainw->files[(clip)]->laudio_time : 0.)
 
-#define CLIP_RIGHT_AUDIO_TIME(clip) ((double)(CLIP_HAS_AUDIO(clip) ? (mainw->files[clip]->achans > 1 ? \
-								     mainw->files[clip]->raudio_time : 0.) : 0.))
+#define CLIP_RIGHT_AUDIO_TIME(clip) (CLIP_HAS_AUDIO((clip)) ? (mainw->files[(clip)]->achans > 1 ? \
+							       mainw->files[(clip)]->raudio_time : 0.) : 0.)
 
-#define CLIP_AUDIO_TIME(clip) ((double)(CLIP_LEFT_AUDIO_TIME(clip) >= CLIP_RIGHT_AUDIO_TIME(clip) \
-					? CLIP_LEFT_AUDIO_TIME(clip) : CLIP_RIGHT_AUDIO_TIME(clip)))
+#define CLIP_AUDIO_TIME(clip) (CLIP_LEFT_AUDIO_TIME((clip)) >= CLIP_RIGHT_AUDIO_TIME((clip)) \
+				? CLIP_LEFT_AUDIO_TIME((clip)) : CLIP_RIGHT_AUDIO_TIME((clip)))
 
-#define CLIP_TOTAL_TIME(clip) ((double)(CLIP_VIDEO_TIME(clip) > CLIP_AUDIO_TIME(clip) ? CLIP_VIDEO_TIME(clip) : \
-					CLIP_AUDIO_TIME(clip)))
+#define CLIP_TOTAL_TIME(clip) (CLIP_VIDEO_TIME((clip)) > CLIP_AUDIO_TIME((clip)) ? CLIP_VIDEO_TIME((clip)) : \
+			       CLIP_AUDIO_TIME((clip)))
 
-#define IS_NORMAL_CLIP(clip) (IS_VALID_CLIP(clip)			\
-			      ? (mainw->files[clip]->clip_type == CLIP_TYPE_DISK \
-				 || mainw->files[clip]->clip_type == CLIP_TYPE_FILE \
-				 || mainw->files[clip]->clip_type == CLIP_TYPE_NULL_VIDEO) : FALSE)
+#define IS_NORMAL_CLIP(clip) (IS_VALID_CLIP((clip))			\
+			      ? (mainw->files[(clip)]->clip_type == CLIP_TYPE_DISK \
+				 || mainw->files[(clip)]->clip_type == CLIP_TYPE_FILE \
+				 || mainw->files[(clip)]->clip_type == CLIP_TYPE_NULL_VIDEO) : FALSE)
 
-#define CURRENT_CLIP_IS_NORMAL IS_NORMAL_CLIP(mainw->current_file)
-#define CURRENT_CLIP_TOTAL_TIME CLIP_TOTAL_TIME(mainw->current_file)
+#define CURRENT_CLIP_IS_NORMAL (mainw && IS_NORMAL_CLIP(mainw->current_file))
+#define CURRENT_CLIP_TOTAL_TIME (mainw ? CLIP_TOTAL_TIME(mainw->current_file) : 0.)
 
 #define CLIPBOARD_FILE 0
 

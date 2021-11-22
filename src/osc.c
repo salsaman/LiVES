@@ -135,6 +135,8 @@ void *lives_osc_malloc(int num_bytes) {
 // notifications
 
 void lives_notify(int msgnumber, const char *msgstring) {
+  if (!mainw) return;
+
 #ifdef IS_LIBLIVES
   binding_cb(msgnumber, msgstring, mainw->id);
 #endif

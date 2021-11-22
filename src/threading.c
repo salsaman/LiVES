@@ -972,7 +972,7 @@ static boolean widget_context_wrapper(livespointer data) {
 
 //static pthread_mutex_t cpusel_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-LIVES_LOCAL_INLINE void lives_hooks_clear(LiVESList **xlist, int type) {
+LIVES_GLOBAL_INLINE void lives_hooks_clear(LiVESList **xlist, int type) {
   lives_list_free_all(&(xlist[type]));
 }
 
@@ -995,7 +995,7 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   uint64_t myflags = 0;
   //boolean didlock = FALSE;
 
-  if (!tdata->idx) abort();
+  if (!tdata->idx) lives_abort("Invalid worker thread ID - internal error");
 
   pthread_mutex_lock(&twork_mutex);
 

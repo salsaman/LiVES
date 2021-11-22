@@ -307,6 +307,12 @@ typedef struct {
 #endif
 #endif
 
+#ifndef WEED_EFFECT_HAS_PARAM_FLAGBITS
+#define WEED_PARAM_FLAG_READ_ONLY     		(1 << 0)
+#define WEED_PARAM_FLAG_VALUE_CHANGED           (1 << 1)
+#endif
+
+
 #ifdef USE_SWSCALE
 // for weed-compat.h
 #define HAVE_AVCODEC
@@ -1197,6 +1203,7 @@ boolean expose_eim(LiVESWidget *, lives_painter_t *, livespointer);
 #endif
 
 // system calls in utils.c
+void lives_abort(const char *reason);
 int lives_system(const char *com, boolean allow_error);
 ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t buflen);
 lives_pid_t lives_fork(const char *com);
@@ -1358,42 +1365,41 @@ void break_me(const char *dtl);
 
 #ifndef LIVES_INFO
 #ifndef LIVES_NO_INFO
-#define LIVES_INFO(x)      fprintf(stderr, "LiVES info: %s\n", x)
+#define LIVES_INFO(x)      fprintf(stderr, "LiVES info: %s\n", (x))
 #else // LIVES_NO_INFO
-#define LIVES_INFO(x)      dummychar = x
+#define LIVES_INFO(x)      dummychar = (x)
 #endif // LIVES_NO_INFO
 #endif // LIVES_INFO
 
 #ifndef LIVES_WARN
 #ifndef LIVES_NO_WARN
-#define LIVES_WARN(x)      fprintf(stderr, "LiVES warning: %s\n", x)
+#define LIVES_WARN(x)      fprintf(stderr, "LiVES warning: %s\n", (x))
 #else // LIVES_NO_WARN
-#define LIVES_WARN(x)      dummychar = x
+#define LIVES_WARN(x)      dummychar = (x)
 #endif // LIVES_NO_WARN
 #endif // LIVES_WARN
 
 #ifndef LIVES_ERROR
 #ifndef LIVES_NO_ERROR
-#define LIVES_ERROR(x)      {fprintf(stderr, "LiVES ERROR: %s\n", x); break_me(x);}
+#define LIVES_ERROR(x)      {fprintf(stderr, "LiVES ERROR: %s\n", (x)); break_me((x));}
 #else // LIVES_NO_ERROR
-#define LIVES_ERROR(x)      dummychar = x
+#define LIVES_ERROR(x)      dummychar = (x)
 #endif // LIVES_NO_ERROR
 #endif // LIVES_ERROR
 
 #ifndef LIVES_CRITICAL
 #ifndef LIVES_NO_CRITICAL
-#define LIVES_CRITICAL(x)      {fprintf(stderr, "LiVES CRITICAL: %s\n", x); break_me(x); raise (LIVES_SIGSEGV);}
+#define LIVES_CRITICAL(x)      {fprintf(stderr, "LiVES CRITICAL: %s\n", (x)); break_me((x)); raise (LIVES_SIGSEGV);}
 #else // LIVES_NO_CRITICAL
-#define LIVES_CRITICAL(x)      dummychar = x
+#define LIVES_CRITICAL(x)      dummychar = (x)
 #endif // LIVES_NO_CRITICAL
 #endif // LIVES_CRITICAL
 
 #ifndef LIVES_FATAL
-#ifndef LIVES_NO_FATAL
-#define LIVES_FATAL(x)      {fprintf(stderr, "LiVES FATAL: %s\n", x); lives_notify(LIVES_OSC_NOTIFY_QUIT, x), \
-									break_me(x); _exit (1);}
+#ifndef LIVES_NO_FATAL // WARNING - defining LIVES_NO_FATAL may result in DANGEROUS behaviour !!
+#define LIVES_FATAL(x)      lives_abort((x))
 #else // LIVES_NO_FATAL
-#define LIVES_FATAL(x)      dummychar = x
+#define LIVES_FATAL(x)      dummychar = (x)
 #endif // LIVES_NO_FATAL
 #endif // LIVES_FATAL
 
@@ -1436,7 +1442,7 @@ void break_me(const char *dtl);
 
 #define VSLICES 1
 
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

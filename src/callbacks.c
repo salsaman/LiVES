@@ -10683,7 +10683,7 @@ char *get_palette_name_for_clip(int clipno) {
     case CLIP_TYPE_VIDEODEV: {
 #ifdef HAVE_UNICAP
       lives_vdev_t *ldev = (lives_vdev_t *)sfile->ext_src;
-      palname = lives_strdup(weed_palette_get_name_full(ldev->current_palette, ldev->YUV_clamping, 0));
+      palname = lives_strdup(weed_palette_get_name_full(ldev->palette, ldev->YUV_clamping, 0));
 #endif
     }
     break;

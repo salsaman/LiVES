@@ -105,7 +105,7 @@ uint64_t gen_unique_id(void) {
   // a number < 1 billion is approx. 2 ^ 30 / 2 ^ 64 or about 1 chance in 17 trillion
   // the chance of it happening the first time is thus minscule
   // and the chance of it happening twice by chance is so unlikely we should discount it
-  if (rnum < BILLIONS(1) && last_rnum < BILLIONS(1)) abort();
+  if (rnum < BILLIONS(1) && last_rnum < BILLIONS(1)) lives_abort("Insufficient entropy for RNG, cannot continue");
   last_rnum = rnum;
   return rnum;
 }
@@ -2808,6 +2808,11 @@ int get_window_stack_level(LiVESXWindow *xwin, int *nwins) {
 }
 
 
+static void *show_dpanel_cb(lives_object_t *obj, void *data) {
+  show_desktop_panel();
+  return NULL;
+}
+
 boolean show_desktop_panel(void) {
   boolean ret = FALSE;
 #ifdef GDK_WINDOWING_X11
@@ -2815,10 +2820,12 @@ boolean show_desktop_panel(void) {
   if (wid) {
     ret = unhide_x11_window(wid);
     lives_free(wid);
+    lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, show_dpanel_cb, NULL);
   }
 #endif
   return ret;
 }
+
 
 boolean hide_desktop_panel(void) {
   boolean ret = FALSE;
@@ -2827,6 +2834,7 @@ boolean hide_desktop_panel(void) {
   if (wid) {
     ret = hide_x11_window(wid);
     lives_free(wid);
+    lives_hook_prepend(mainw->global_hook_closures, ABORT_HOOK, 0, show_dpanel_cb, NULL);
   }
 #endif
   return ret;

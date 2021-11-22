@@ -1096,7 +1096,7 @@ boolean hide_warn_image(LiVESWidget *);
 
 boolean is_standard_widget(LiVESWidget *);
 
-boolean lives_widget_set_frozen(LiVESWidget *, boolean state);
+boolean lives_widget_set_frozen(LiVESWidget *, boolean state, double opac);
 
 #ifdef USE_SPECIAL_BUTTONS
 void render_standard_button(LiVESButton *sbutton);
@@ -1312,6 +1312,8 @@ boolean lives_adjustment_configure_the_good_bits(LiVESAdjustment *, double value
 size_t calc_spin_button_width(double min, double max, int dp);
 
 double lives_spin_button_get_snapval(LiVESSpinButton *, double val);
+
+boolean lives_spin_button_clamp(LiVESSpinButton *);
 
 int get_box_child_index(LiVESBox *, LiVESWidget *child);
 

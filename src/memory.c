@@ -401,7 +401,7 @@ void *free_bigblock(void *bstart) {
       return NULL;
     }
   }
-  abort();
+  lives_abort("Attempt to free() invalid bigblock - aborting due to internal memory errors");
   return NULL;
 }
 

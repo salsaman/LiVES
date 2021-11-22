@@ -93,7 +93,7 @@ void weed_clear_plant_flags(weed_plant_t *plant, uint32_t flags, const char *ign
     char **leaves = weed_plant_list_leaves(plant, NULL);
     if (leaves) {
       if (ign_prefix) ign_prefix_len = strlen(ign_prefix);
-      for (register int i = 0; leaves[i]; i++) {
+      for (int i = 0; leaves[i]; i++) {
         if (!ign_prefix || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
           weed_leaf_clear_flagbits(plant, leaves[i], flags);
         }
@@ -343,7 +343,7 @@ WEED_GLOBAL_INLINE int weed_paramtmpl_has_value_perchannel(weed_plant_t *paramtm
 
 WEED_GLOBAL_INLINE int weed_paramtmpl_does_wrap(weed_plant_t *paramtmpl) {
   weed_plant_t *gui;
-  if (!WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)) return -1;
+  if (!WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)) return WEED_FALSE;
   if ((gui = weed_paramtmpl_get_gui(paramtmpl, WEED_FALSE))
       && weed_get_boolean_value(gui, WEED_LEAF_WRAP, NULL) == WEED_TRUE) return WEED_TRUE;
   return WEED_FALSE;
@@ -400,7 +400,7 @@ WEED_GLOBAL_INLINE int *weed_chantmpl_get_palette_list(weed_plant_t *filter, wee
   if ((weed_filter_get_flags(filter) & WEED_FILTER_PALETTES_MAY_VARY)
       && weed_plant_has_leaf(chantmpl, WEED_LEAF_PALETTE_LIST)) {
     pals = weed_get_int_array_counted(chantmpl, WEED_LEAF_PALETTE_LIST, &npals);
-    for (register int i = 0; i < npals; i++) {
+    for (int i = 0; i < npals; i++) {
     }
   } else {
     if (!weed_plant_has_leaf(filter, WEED_LEAF_PALETTE_LIST)) return NULL;
@@ -887,18 +887,15 @@ double weed_palette_get_compression_ratio(int pal) {
   int nplanes = weed_palette_get_nplanes(pal);
   int pbits;
 
-  register int i;
-
   if (!weed_palette_is_valid(pal)) return 0.;
   if (weed_palette_is_alpha(pal)) return 0.; // invalid for alpha palettes
-  for (i = 0; i < nplanes; i++) {
+  for (int i = 0; i < nplanes; i++) {
     pbits = weed_palette_get_bits_per_macropixel(pal) / weed_palette_get_pixels_per_macropixel(pal);
     tbits += pbits * weed_palette_get_plane_ratio_vertical(pal, i) * weed_palette_get_plane_ratio_horizontal(pal, i);
   }
   if (weed_palette_has_alpha(pal)) return tbits / 32.;
   return tbits / 24.;
 }
-
 
 WEED_GLOBAL_INLINE int weed_filter_is_resizer(weed_plant_t *filter) {
   if (weed_filter_is_converter(filter) && weed_filter_channel_sizes_vary(filter)) return WEED_TRUE;

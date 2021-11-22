@@ -4192,7 +4192,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
     after_param_text_changed(tentry, rfx);
 
     /// clear flag bit since no unapplied edits have been made
-    rfx->params[param_number].flags &= ~PARAM_FLAGS_VALUE_SET;
+    rfx->params[param_number].flags &= ~PARAM_FLAG_VALUE_SET;
   }
 }
 
@@ -7140,10 +7140,10 @@ static void changequota_cb(LiVESWidget * butt, livespointer data) {
     widget_opts.use_markup = TRUE;
     lives_label_set_text(LIVES_LABEL(dsq->inst_label), _("<b>Updated !</b>"));
     widget_opts.use_markup = FALSE;
-    lives_widget_set_frozen(dsq->checkbutton, TRUE);
-    lives_widget_set_frozen(dsq->vvlabel, TRUE);
-    lives_widget_set_frozen(dsq->vlabel, TRUE);
-    lives_widget_set_frozen(dsq->slider, TRUE);
+    lives_widget_set_frozen(dsq->checkbutton, TRUE, 0.);
+    lives_widget_set_frozen(dsq->vvlabel, TRUE, 0.);
+    lives_widget_set_frozen(dsq->vlabel, TRUE, 0.);
+    lives_widget_set_frozen(dsq->slider, TRUE, 0.);
     lives_standard_button_set_label(LIVES_BUTTON(dsq->button), otxt);
     dsq->setting = FALSE;
     dsu_fill_details(NULL, NULL);
@@ -7167,7 +7167,7 @@ static void resquota_cb(LiVESWidget * butt, livespointer data) {
 }
 
 static void dsu_abort_clicked(LiVESWidget * butt, livespointer data) {
-  if (do_abort_check()) abort();
+  if (do_abort_check()) lives_abort("User aborted within quota maintenance");
 }
 
 void run_diskspace_dialog(void) {
@@ -7426,16 +7426,16 @@ void run_diskspace_dialog(void) {
                                     LIVES_BOX(hbox), NULL);
   widget_opts.use_markup = FALSE;
 
-  lives_widget_set_frozen(dsq->checkbutton, TRUE);
-  lives_widget_set_frozen(widget_opts.last_label, TRUE);
+  lives_widget_set_frozen(dsq->checkbutton, TRUE, 0.);
+  lives_widget_set_frozen(widget_opts.last_label, TRUE, 0.);
 
   dsq->checkfunc = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(dsq->checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                    LIVES_GUI_CALLBACK(dsq_check_toggled), NULL);
 
   dsq->vvlabel = lives_layout_add_label(LIVES_LAYOUT(layout), (_("Value:")), TRUE);
-  lives_widget_set_frozen(dsq->vvlabel, TRUE);
+  lives_widget_set_frozen(dsq->vvlabel, TRUE, 0.);
   dsq->vlabel = label = lives_layout_add_label(LIVES_LAYOUT(layout), NULL, TRUE);
-  lives_widget_set_frozen(dsq->vlabel, TRUE);
+  lives_widget_set_frozen(dsq->vlabel, TRUE, 0.);
   lives_label_set_width_chars(LIVES_LABEL(dsq->vlabel), 12);
 
   add_fill_to_box(LIVES_BOX(lives_widget_get_parent(label)));

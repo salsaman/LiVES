@@ -2174,6 +2174,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
   char *widget_name, *wname, *selector;
   char *css_string;
   char *state_str, *selstr;
+  int prio = GTK_STYLE_PROVIDER_PRIORITY_APPLICATION;
 #ifdef ORD_NAMES
   static int widnum = 1;
   int brk_widnum = 3128;
@@ -2192,16 +2193,18 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
     provider = gtk_css_provider_new();
 
     // setting context provider for screen is VERY slow, so this should be used sparingly
+    prio = GTK_STYLE_PROVIDER_PRIORITY_USER;
     gtk_style_context_add_provider_for_screen(mainw->mgeom[widget_opts.monitor].screen, GTK_STYLE_PROVIDER
-        (provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
+        (provider), prio);
   } else {
     if (!LIVES_IS_WIDGET(widget)) return FALSE;
     selector = (char *)xselector;
 
     ctx = gtk_widget_get_style_context(widget);
     provider = gtk_css_provider_new();
-    gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                   (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    if (!strcmp(detail, "font-size")) prio = GTK_STYLE_PROVIDER_PRIORITY_USER;
+
+    gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER(provider), prio);
 
     widget_name = lives_strdup(gtk_widget_get_name(widget));
 
@@ -2473,10 +2476,21 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_border_color(LiVESWidget *w
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_text_size(LiVESWidget *widget, LiVESWidgetState state,
-    const char *size) {
+    const char *tsize) {
+
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 16, 0)
-  boolean retb = set_css_value(widget, state, "font-size", size);
+  char *xxsize;
+  int xsize = capable->font_size;
+  boolean retb;
+  if (!strcmp(tsize, LIVES_TEXT_SIZE_LARGE)) xsize *= 1.2;
+  else if (!strcmp(tsize, LIVES_TEXT_SIZE_X_LARGE)) xsize *= 1.4;
+  else if (!strcmp(tsize, LIVES_TEXT_SIZE_XX_LARGE)) xsize *= 1.6;
+  else if (!strcmp(tsize, LIVES_TEXT_SIZE_SMALL)) xsize *= .8;
+  else if (!strcmp(tsize, LIVES_TEXT_SIZE_X_SMALL)) xsize *= .6;
+  else if (!strcmp(tsize, LIVES_TEXT_SIZE_XX_SMALL)) xsize *= .4;
+  xxsize = lives_strdup_printf("%dpx", xsize);
+  retb = set_css_value(widget, state, "font-size", xxsize);
   return retb;
 #endif
 #endif
@@ -8435,13 +8449,16 @@ static LiVESWidget *make_inner_hbox(LiVESBox * box, boolean start) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_frozen(LiVESWidget * widget, boolean state) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_frozen(LiVESWidget * widget, boolean state, double opac) {
   // set insens. but w.out dimming
 #if GTK_CHECK_VERSION(3, 16, 0)
+  char *sopac;
   if (state) {
-    set_css_value_direct(widget, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.75");
-  } else
-    set_css_value_direct(widget, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+    if (opac == 0.) opac = .75;
+  } else opac = 0.5;
+  sopac = lives_strdup_printf("%f", opac);
+  set_css_value_direct(widget, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", sopac);
+  lives_free(sopac);
 #endif
   return lives_widget_set_sensitive(widget, !state);
 }
@@ -9174,7 +9191,8 @@ LiVESWidget *lives_standard_label_new(const char *text) {
   // allows markup
 
   if (text) lives_label_set_text(LIVES_LABEL(label), text);
-  lives_widget_set_text_size(label, LIVES_WIDGET_STATE_NORMAL, widget_opts.text_size);
+  if (strcmp(widget_opts.text_size, LIVES_TEXT_SIZE_NORMAL))
+    lives_widget_set_text_size(label, LIVES_WIDGET_STATE_NORMAL, widget_opts.text_size);
   lives_widget_set_halign(label, lives_justify_to_align(widget_opts.justify));
   if (widget_opts.apply_theme) {
     set_standard_widget(label, TRUE);
@@ -10099,10 +10117,10 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
                           WH_LAYOUT_KEY);
     int packing_width = 0;
 
-    if (layout) {
-      int nadded = GET_INT_DATA(layout, WADDED_KEY);
-      if (nadded <= 1) layout = NULL;
-    }
+    /* if (layout) { */
+    /*   int nadded = GET_INT_DATA(layout, WADDED_KEY); */
+    /*   if (nadded <= 1) layout = NULL; */
+    /* } */
 
     if (labeltext) {
       eventbox = make_label_eventbox(labeltext, spinbutton);
@@ -12624,6 +12642,13 @@ WIDGET_HELPER_GLOBAL_INLINE double lives_spin_button_get_snapval(LiVESSpinButton
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_clamp(LiVESSpinButton * button) {
+  double val = lives_spin_button_get_value(button);
+  lives_spin_button_set_range(button, val, val);
+  return TRUE;
+}
+
+
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 10, 0)
 static void dissect_filechooser(LiVESWidget * widget, livespointer user_data) {
@@ -13417,7 +13442,7 @@ void lives_general_button_clicked(LiVESButton * button, livespointer data_to_fre
   if (LIVES_IS_WIDGET(lives_widget_get_toplevel(LIVES_WIDGET(button)))) {
     lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-  } else abort();
+  } else lives_abort("Invalid toplevel widget for clicked button");
   if (data_to_free) lives_free(data_to_free);
 
   /// TODO: this is BAD. Need to check that mainw->mt_needs_idlefunc is set conistently

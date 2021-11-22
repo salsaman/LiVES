@@ -54,6 +54,15 @@ LIVES_GLOBAL_INLINE boolean lives_unsetenv(const char *name) {
 }
 
 
+LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
+  break_me(reason);
+  if (mainw) lives_hooks_trigger(NULL, mainw->global_hook_closures, ABORT_HOOK);
+  g_printerr("LIVES FATAL: %s\n", reason);
+  lives_notify(LIVES_OSC_NOTIFY_QUIT, reason);
+  abort();
+}
+
+
 int lives_system(const char *com, boolean allow_error) {
   LiVESResponseType response;
   static boolean shortcut = FALSE;
@@ -1792,9 +1801,9 @@ int lives_rmdir(const char *dir, boolean force) {
     // will abort if dir length < 7, if dir is $HOME, does not start with dir sep. or ends with a '*'
     if (dirlen < 7 || !lives_strcmp(dir, capable->home_dir)
         || lives_strncmp(dir, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP)) || dir[dirlen - 1] == '*') {
-      LIVES_FATAL("Refusing to lives_rmdir the following directory:");
-      LIVES_FATAL(dir);
-      abort();
+      char *msg = lives_strdup_printf("Refusing to lives_rmdir the following directory: %s", dir);
+      LIVES_FATAL(msg);
+      lives_free(msg);
     }
     if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
       char *com, *cmd;
@@ -1825,9 +1834,9 @@ int lives_rmdir_with_parents(const char *dir) {
     // will abort if dir length < 7, if dir is $HOME, does not start with dir sep. or ends with a '*'
     if (dirlen < 7 || !lives_strcmp(dir, capable->home_dir)
         || lives_strncmp(dir, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP)) || dir[dirlen - 1] == '*') {
-      LIVES_FATAL("Refusing to lives_rmdir_with_parents the following directory:");
-      LIVES_FATAL(dir);
-      abort();
+      char *msg = lives_strdup_printf("Refusing to lives_rmdir_with_parents the following directory: %s", dir);
+      LIVES_FATAL(msg);
+      lives_free(msg);
     }
   }
   if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {

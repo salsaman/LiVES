@@ -1554,7 +1554,7 @@ else if (mt->current_rfx && mt->init_event && mt->poly_state == POLY_PARAMS &&
       // if we are just switching tracks within the same effect, without changing the time,
       // and we have unapplied changes, we don't want to interpolate
       // otherwise we will lose those changes
-      if (mt->current_rfx->params[i].flags & PARAM_FLAGS_VALUE_SET) {
+      if (mt->current_rfx->params[i].flags & PARAM_FLAG_VALUE_SET) {
         interp = FALSE;
         break;
       }

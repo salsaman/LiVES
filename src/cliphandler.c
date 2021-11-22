@@ -1838,6 +1838,7 @@ lives_intentparams_t *get_txparams_for_intent(lives_object_t *obj, lives_intentc
 // placeholder function, until we have proper objects for clips
 lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intentcap_t *icaps) {
   lives_object_t obj;
+  lives_intentparams_t *iparams;
   clip_priv_data_t *priv;
   obj.type = OBJECT_TYPE_CLIP;
   priv = obj.priv = (clip_priv_data_t *)lives_calloc(1, sizeof(clip_priv_data_t));
@@ -1849,5 +1850,7 @@ lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intentcap_t *icaps
     priv->sfile = mainw->files[clipno];
     obj.state = CLIP_STATE_READY;
   }
-  return get_txparams_for_intent(&obj, icaps);
+  iparams = get_txparams_for_intent(&obj, icaps);
+  lives_free(priv);
+  return iparams;
 }

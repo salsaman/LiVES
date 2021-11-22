@@ -4639,7 +4639,7 @@ weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key) {
   if (err == WEED_ERROR_UNDELETABLE) {
     weed_leaf_clear_flagbits(plant, key, WEED_FLAG_UNDELETABLE);
     err = _weed_leaf_delete(plant, key);
-    if (err != WEED_SUCCESS) abort();
+    if (err != WEED_SUCCESS) lives_abort("Unable to delete weed leaf - internal error detected");
   }
   return err;
 }
@@ -8355,7 +8355,7 @@ recheck:
     }
   }
 
-  if (!weed_channel_get_pixel_data(channel)) abort();
+  if (!weed_channel_get_pixel_data(channel)) lives_abort("Unable to allocate channel pixel_data");
 
   if (!needs_reinit && (channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE)) {
     int *rowstrides2 = weed_channel_get_rowstrides(channel, &npl2);

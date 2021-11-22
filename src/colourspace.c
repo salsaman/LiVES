@@ -143,7 +143,7 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
     int startctx = swctx_count, endctx = startctx + nreq;
     if (endctx >= MAX_SWS_CTX
         || nb  >= MAX_SWS_BLOCKS - 1) {
-      if (bestidx == -1) abort();
+      if (bestidx == -1) lives_abort("Unable to allocate SWS context block");
       bestblock = &bloxx[bestidx];
       bestblock->in_use = TRUE;
       pthread_mutex_unlock(&ctxcnt_mutex);
@@ -9604,8 +9604,8 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
   if (!weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE)) {
     int nsize[2];
-    // set "natural_size" in case a filter needs it
-    nsize[0] = width;
+    // set "natural_size" in case a filter needs it (width is in PIXELS)
+    nsize[0] = width * weed_palette_get_pixels_per_macropixel(palette);
     nsize[1] = height;
     weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
   }
@@ -13899,8 +13899,8 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
   if (weed_plant_has_leaf(layer, LIVES_LEAF_SURFACE_SRC)) {
     surf = (lives_painter_surface_t *)weed_get_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, NULL);
   } else {
-    width = weed_layer_get_width(layer);
     pal = weed_layer_get_palette(layer);
+    width = weed_layer_get_width_pixels(layer);
     if (pal == WEED_PALETTE_A8) {
       cform = LIVES_PAINTER_FORMAT_A8;
       widthx = width;
@@ -13950,7 +13950,7 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
 #ifdef DEBUG_CAIRO_SURFACE
   g_print("VALaa1 = %d %p\n", cairo_surface_get_reference_count(surf), surf);
 #endif
-  weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, lives_painter_image_surface_get_data(surf));
+  weed_layer_set_pixel_data(layer, lives_painter_image_surface_get_data(surf));
   weed_set_voidptr_value(layer, LIVES_LEAF_SURFACE_SRC, surf);
   return cairo;
 }

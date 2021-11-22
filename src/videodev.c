@@ -12,14 +12,19 @@
 #include "interface.h"
 #include "callbacks.h"
 #include "effects-weed.h"
+#include "paramwindow.h"
+#include "rfx-builder.h"
 
 #include <unicap/unicap.h>
+
+static lives_object_instance_t *lives_videodev_inst_create(uint64_t subtype);
+
 
 static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, double timeout) {
   // wait for USER type buffer
   unicap_status_t status;
-  int ncount;
   lives_alarm_t alarm_handle = lives_alarm_set(timeout * TICKS_PER_SECOND_DBL);
+  int ncount;
 
   do {
     status = unicap_poll_buffer(ldev->handle, &ncount);
@@ -43,13 +48,11 @@ static boolean lives_wait_system_buffer(lives_vdev_t *ldev, double timeout) {
   lives_alarm_t alarm_handle = lives_alarm_set(timeout * TICKS_PER_SECOND_DBL);
 
   do {
-    if (ldev->buffer_ready != 0) {
+    if (ldev->buffer_ready) {
       lives_alarm_clear(alarm_handle);
       return TRUE;
     }
-    lives_usleep(prefs->sleep_time);
-    lives_widget_context_update();
-    sched_yield();
+    lives_nanosleep(1000);
   } while (lives_alarm_check(alarm_handle) > 0);
   lives_alarm_clear(alarm_handle);
 
@@ -60,7 +63,8 @@ static boolean lives_wait_system_buffer(lives_vdev_t *ldev, double timeout) {
 static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,
                          unicap_data_buffer_t *buffer, void *usr_data) {
   lives_vdev_t *ldev = (lives_vdev_t *)usr_data;
-  if (!LIVES_IS_PLAYING || (mainw->playing_file != ldev->fileno && mainw->blend_file != ldev->fileno)) {
+  if (!LIVES_IS_PLAYING || (mainw->playing_file != ldev->fileno
+                            && mainw->blend_file != ldev->fileno)) {
     ldev->buffer_ready = 0;
     return;
   }
@@ -79,27 +83,16 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
   lives_vdev_t *ldev = (lives_vdev_t *)sfile->ext_src;
   unicap_data_buffer_t *returned_buffer = NULL;
   void **pixel_data;
-  void *odata = ldev->buffer1.data;
+  int nplanes;
 
-  int error;
-
-  weed_set_int_value(layer, WEED_LEAF_WIDTH, sfile->hsize /
-                     weed_palette_get_pixels_per_macropixel(ldev->current_palette));
-  weed_set_int_value(layer, WEED_LEAF_HEIGHT, sfile->vsize);
-  weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, ldev->current_palette);
-  weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_YCBCR); // TODO - handle bt.709
-  weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, WEED_YUV_SAMPLING_DEFAULT); // TODO - use ldev->YUV_sampling
-  weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, ldev->YUV_clamping);
+  weed_layer_set_size(layer, sfile->hsize / weed_palette_get_pixels_per_macropixel(ldev->palette),
+                      sfile->vsize);
+  weed_layer_set_palette_yuv(layer, ldev->palette, ldev->YUV_clamping, ldev->YUV_subspace,
+                             ldev->YUV_clamping);
 
   create_empty_pixel_data(layer, TRUE, TRUE);
 
   if (ldev->buffer_type == UNICAP_BUFFER_TYPE_USER) {
-    if (weed_palette_get_nplanes(ldev->current_palette) == 1 || ldev->is_really_grey) {
-      ldev->buffer1.data = (unsigned char *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-    }
-
-    unicap_queue_buffer(ldev->handle, &ldev->buffer1);
-
     if (!lives_wait_user_buffer(ldev, &returned_buffer, timeoutsecs)) {
 #ifdef DEBUG_UNICAP
       lives_printerr("Failed to wait for user buffer!\n");
@@ -107,7 +100,6 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
       unicap_dequeue_buffer(ldev->handle, &returned_buffer);
       unicap_start_capture(ldev->handle);
 #endif
-      ldev->buffer1.data = (unsigned char *)odata;
       return FALSE;
     }
   } else {
@@ -121,15 +113,15 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
     else returned_buffer = &ldev->buffer2;
   }
 
-  pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
+  pixel_data = weed_layer_get_pixel_data_planar(layer, &nplanes);
 
-  if (weed_palette_get_nplanes(ldev->current_palette) > 1 && !ldev->is_really_grey) {
+  if (nplanes > 1 && !ldev->is_really_grey) {
     boolean contig = FALSE;
-    if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, &error) == WEED_TRUE) contig = TRUE;
-    pixel_data_planar_from_membuf(pixel_data, returned_buffer->data, sfile->hsize * sfile->vsize, ldev->current_palette, contig);
+    if (weed_get_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE) contig = TRUE;
+    pixel_data_planar_from_membuf(pixel_data, returned_buffer->data, sfile->hsize * sfile->vsize, ldev->palette, contig);
   } else {
     if (ldev->buffer_type == UNICAP_BUFFER_TYPE_SYSTEM) {
-      int rowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
+      int rowstride = weed_layer_get_rowstride(layer);
       size_t bsize = rowstride * sfile->vsize;
       if (bsize > returned_buffer->buffer_size) {
 #ifdef DEBUG_UNICAP
@@ -141,18 +133,9 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
     }
   }
 
-  // shouldn't be necessary since we specified black_fill in create_empty_pixel_data()
-
-  /* if (ldev->is_really_grey) { */
-  /*   // y contains our greyscale data */
-  /*   // set u and v planes to 128 */
-  /*   memset(pixel_data[1], 128, sfile->hsize * sfile->vsize); */
-  /*   memset(pixel_data[2], 128, sfile->hsize * sfile->vsize); */
-  /* } */
-
   lives_free(pixel_data);
 
-  ldev->buffer1.data = (unsigned char *)odata;
+  unicap_queue_buffer(ldev->handle, returned_buffer);
 
   return TRUE;
 }
@@ -347,17 +330,89 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats, li
 }
 
 
+void update_props_from_attributes(lives_vdev_t *ldev, lives_rfx_t *rfx) {
+  unicap_property_t props[MAX_PROPS];
+  //unicap_lock_properties(ldev->handle);
+  for (int prop_count = 0;
+       SUCCESS(unicap_enumerate_properties(ldev->handle, NULL, (unicap_property_t *)&props[prop_count], prop_count))
+       && (prop_count < MAX_PROPS); prop_count++) {
+    unicap_property_t *prop = (unicap_property_t *)&props[prop_count];
+    unicap_property_type_enum_t ptype = prop->type;
+    if (ptype == UNICAP_PROPERTY_TYPE_DATA || ptype == UNICAP_PROPERTY_TYPE_FLAGS || ptype == UNICAP_PROPERTY_TYPE_UNKNOWN
+        || ptype == UNICAP_PROPERTY_TYPE_MENU || ptype == UNICAP_PROPERTY_TYPE_VALUE_LIST) continue;
+    //if (ptype != UNICAP_PROPERTY_TYPE_RANGE) continue;
+    lives_obj_attr_t *attr = lives_object_get_attribute(ldev->object, prop->identifier);
+    if (attr) {
+      g_print("CHK %s\n", prop->identifier);
+      lives_param_t *param;
+      double val;
+      if (lives_attribute_is_readonly(ldev->object, prop->identifier)) continue;
+      param = find_rfx_param_by_name(rfx, prop->identifier);
+      if (param->type == LIVES_PARAM_TYPE_UNDEFINED) continue;
+      if (!(param->flags & PARAM_FLAG_VALUE_SET)) continue;
+      if (param->type == LIVES_PARAM_BOOL)
+        unicap_set_property_value(ldev->handle, prop->identifier, (double)weed_get_boolean_value(attr, WEED_LEAF_VALUE, NULL));
+      else if (param->type == LIVES_PARAM_NUM && param->dp == 0)
+        unicap_set_property_value(ldev->handle, prop->identifier, get_int_param(param->value));
+      else unicap_set_property_value(ldev->handle, prop->identifier, get_double_param(param->value));
+      unicap_get_property_value(ldev->handle, prop->identifier, &val);
+
+      if (param->type == LIVES_PARAM_BOOL || (param->type == LIVES_PARAM_NUM && param->dp == 0)) {
+        set_int_param(param->value, (int)val);
+        lives_object_set_attribute_value(ldev->object, prop->identifier, (int)val);
+      } else {
+        set_double_param(param->value, val);
+        lives_object_set_attribute_value(ldev->object, prop->identifier, val);
+      }
+    }
+  }
+  //unicap_unlock_properties(ldev->handle);
+}
+
+
+static void set_palette_desc(lives_object_t *obj, lives_obj_attr_t *attr) {
+  lives_param_t *rpar;
+  lives_vdev_t *ldev = (lives_vdev_t *)obj->priv;
+  char *palname = weed_palette_get_name_full(ldev->palette, ldev->YUV_clamping, ldev->YUV_subspace);
+  weed_plant_t *gui = weed_get_plantptr_value(attr, WEED_LEAF_GUI, NULL);
+  if (!gui) {
+    gui = weed_plant_new(WEED_PLANT_GUI);
+    weed_set_plantptr_value(attr, WEED_LEAF_GUI, gui);
+  }
+  weed_set_string_value(gui, LIVES_LEAF_DISPVAL, palname);
+  rpar = weed_get_voidptr_value(gui, LIVES_LEAF_RPAR, NULL);
+  if (rpar && rpar->widgets && rpar->widgets[0] && LIVES_IS_LABEL(rpar->widgets[0]))
+    lives_label_set_text(LIVES_LABEL(rpar->widgets[0]), palname);
+  if (palname) lives_free(palname);
+}
+
+
+static void *lives_ldev_free_cb(lives_object_t *obj, void *data) {
+  if (data) {
+    lives_vdev_t **pldev = (lives_vdev_t **)data;
+    lives_vdev_free(*pldev);
+  }
+  return NULL;
+}
+
+
 /// get devnumber from user and open it to a new clip
 
 static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
   // create a virtual clip
+  LiVESWidget *dialog;
+  lives_obj_attr_t *attr;
   lives_vdev_t *ldev = (lives_vdev_t *)lives_malloc(sizeof(lives_vdev_t));
   unicap_format_t formats[MAX_FORMATS];
   unicap_property_t props[MAX_PROPS];
-  unicap_property_t *prop;
   unicap_format_t *format;
+  lives_object_t *obj;
+  lives_rfx_t *rfx;
   double cpbytes;
-  int prop_count;
+  int prop_count, nprops;
+
+  // make sure we close the stream even on abort
+  lives_hook_append(mainw->global_hook_closures, ABORT_HOOK, 0, lives_ldev_free_cb, (void *)&ldev);
 
   // open dev
   unicap_open(&ldev->handle, device);
@@ -375,6 +430,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
                                  matmet, DEF_GEN_WIDTH, DEF_GEN_HEIGHT);
 
   if (!format) {
+    lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, lives_ldev_free_cb, (void *)&ldev);
     LIVES_INFO("No useful formats found");
     unicap_unlock_stream(ldev->handle);
     unicap_close(ldev->handle);
@@ -395,16 +451,17 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
   ldev->buffer_type = format->buffer_type;
 
   // ignore YUV subspace for now
-  ldev->current_palette = fourccp_to_weedp(format->fourcc, format->bpp, (int *)&cfile->interlace,
-                          &ldev->YUV_sampling, &ldev->YUV_subspace, &ldev->YUV_clamping);
-  cpbytes = weed_palette_get_bytes_per_pixel(ldev->current_palette);
+  ldev->palette = fourccp_to_weedp(format->fourcc, format->bpp, (int *)&cfile->interlace,
+                                   &ldev->YUV_sampling, &ldev->YUV_subspace, &ldev->YUV_clamping);
+  cpbytes = weed_palette_get_bytes_per_pixel(ldev->palette);
 
 #ifdef DEBUG_UNICAP
   lives_printerr("\nUsing palette with fourcc 0x%x, translated as %s\n", format->fourcc,
-                 weed_palette_get_name(ldev->current_palette));
+                 weed_palette_get_name(ldev->palette));
 #endif
 
   if (!SUCCESS(unicap_set_format(ldev->handle, format))) {
+    lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, lives_ldev_free_cb, (void *)&ldev);
     LIVES_ERROR("Unicap error setting format");
     unicap_unlock_stream(ldev->handle);
     unicap_close(ldev->handle);
@@ -414,7 +471,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
 
   g_print("ALLX %ld %d %d %d %d\n", format->buffer_size, format->size.width, format->size.height,
           weed_palette_get_bits_per_macropixel(
-            ldev->current_palette), weed_palette_get_pixels_per_macropixel(ldev->current_palette));
+            ldev->palette), weed_palette_get_pixels_per_macropixel(ldev->palette));
 
   if (format->buffer_size < (size_t)((double)(format->size.width * format->size.height) * cpbytes)) {
     int wwidth = format->size.width, awidth;
@@ -439,14 +496,27 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
   cfile->hsize = format->size.width;
   cfile->vsize = format->size.height;
 
+  obj = ldev->object = lives_videodev_inst_create(VIDEO_DEV_UNICAP);
+  obj->priv = (void *)ldev;
+
+  lives_object_set_attribute_value(obj, VDEV_PROP_WIDTH, cfile->hsize);
+  lives_attribute_set_readonly(obj, VDEV_PROP_WIDTH, TRUE);
+
+  lives_object_set_attribute_value(obj, VDEV_PROP_HEIGHT, cfile->vsize);
+  lives_attribute_set_readonly(obj, VDEV_PROP_HEIGHT, TRUE);
+
   cfile->ext_src = ldev;
   cfile->ext_src_type = LIVES_EXT_SRC_DEVICE;
 
   ldev->buffer1.data = (unsigned char *)lives_malloc(format->buffer_size);
   ldev->buffer1.buffer_size = format->buffer_size;
-
   ldev->buffer2.data = (unsigned char *)lives_malloc(format->buffer_size);
   ldev->buffer2.buffer_size = format->buffer_size;
+
+  if (ldev->buffer_type == UNICAP_BUFFER_TYPE_USER) {
+    unicap_queue_buffer(ldev->handle, &ldev->buffer1);
+    unicap_queue_buffer(ldev->handle, &ldev->buffer2);
+  }
 
   ldev->buffer_ready = 0;
   ldev->fileno = mainw->current_file;
@@ -455,45 +525,137 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
 
   unicap_start_capture(ldev->handle);
 
+  unicap_reenumerate_properties(ldev->handle, &nprops);
+
+  lives_attribute_set_readonly(obj, VDEV_PROP_WIDTH, TRUE);
+  lives_attribute_set_param_type(obj, VDEV_PROP_WIDTH, _("Width"), WEED_PARAM_INTEGER);
+
+  lives_attribute_set_readonly(obj, VDEV_PROP_HEIGHT, TRUE);
+  lives_attribute_set_param_type(obj, VDEV_PROP_HEIGHT, _("Height"), WEED_PARAM_INTEGER);
+
   for (prop_count = 0;
        SUCCESS(unicap_enumerate_properties(ldev->handle, NULL, (unicap_property_t *)&props[prop_count], prop_count))
        && (prop_count < MAX_PROPS); prop_count++) {
-    prop = (unicap_property_t *)&props[prop_count];
-    g_print("PROP %d is %s == %f\n", prop_count, prop->identifier, prop->value);
+    unicap_property_t *prop = (unicap_property_t *)&props[prop_count];
+    unicap_property_flags_t flags = prop->flags;
+    unicap_property_flags_t mask = prop->flags_mask;
+
+    // if flags & UNICAP_FLAGS_READ_OUT --> create out param
     if (!lives_strcmp(prop->identifier, "frame rate")) {
       cfile->pb_fps = cfile->fps = prop->value;
-      /*   for prop in props: */
-      /* print prop['identifier'], ">>", prop */
-
-      /* 	       self.setGain(10) */
-      /* 	       self.setFramerate(5) */
-      /* 	       self.setExposure(1.0) */
-
-
-      /* 	       props = self.device.enumerate_properties() */
-      /* 	       for prop in props: */
-      /* print prop['identifier'], ">>", prop */
+      lives_object_set_attribute_value(obj, VDEV_PROP_FPS, cfile->fps);
+      lives_attribute_set_readonly(obj, VDEV_PROP_FPS, TRUE);
+      lives_attribute_set_param_type(obj, VDEV_PROP_FPS, _("FPS"), WEED_PARAM_FLOAT);
+    } else {
+      boolean valid = TRUE;
+      double val;
+      if ((flags & UNICAP_FLAGS_ON_OFF) && (mask & UNICAP_FLAGS_ON_OFF)) {
+        attr = lives_object_declare_attribute(obj, prop->identifier, WEED_SEED_BOOLEAN);
+        unicap_get_property_value(ldev->handle, prop->identifier, &val);
+        lives_object_set_attribute_value(obj, prop->identifier,
+                                         val == 0. ? WEED_FALSE : WEED_TRUE);
+        lives_attribute_set_param_type(obj, prop->identifier, prop->identifier, WEED_PARAM_SWITCH);
+      } else {
+        unicap_property_type_enum_t ptype = prop->type;
+        switch (ptype) {
+        case UNICAP_PROPERTY_TYPE_DATA:
+        case UNICAP_PROPERTY_TYPE_FLAGS:
+        case UNICAP_PROPERTY_TYPE_UNKNOWN:
+          valid = FALSE;
+          break;
+        case UNICAP_PROPERTY_TYPE_VALUE_LIST:
+        case UNICAP_PROPERTY_TYPE_MENU: {
+          unicap_property_value_list_t vlist;
+          unicap_property_menu_t menu;
+          char **choices;
+          int n_choices;
+          weed_plant_t *gui;
+          if (ptype == UNICAP_PROPERTY_TYPE_MENU) {
+            menu = prop->menu;
+            choices = menu.menu_items;
+            n_choices = menu.menu_item_count;
+          } else {
+            vlist = prop->value_list;
+            n_choices = vlist.value_count;
+            choices = lives_calloc(n_choices, sizeof(char *));
+            for (int i = 0; i < n_choices; i++) {
+              choices[i] = lives_strdup_printf("%f", vlist.values[i]);
+            }
+          }
+          // choices with menu_items and menu_item_count
+          attr = lives_object_declare_attribute(obj, prop->identifier, WEED_SEED_INT);
+          lives_object_set_attribute_value(obj, prop->identifier, 0);
+          gui = weed_plant_new(WEED_PLANT_GUI);
+          weed_set_plantptr_value(attr, WEED_LEAF_GUI, gui);
+          weed_set_string_array(gui, WEED_LEAF_CHOICES, n_choices, choices);
+          lives_attribute_set_param_type(obj, prop->identifier, prop->identifier, WEED_PARAM_INTEGER);
+          break;
+        }
+        default:
+          attr = lives_object_declare_attribute(obj, prop->identifier, WEED_SEED_DOUBLE);
+          unicap_get_property_value(ldev->handle, prop->identifier, &val);
+          lives_object_set_attribute_value(obj, prop->identifier, val);
+          if (ptype == UNICAP_PROPERTY_TYPE_RANGE) {
+            unicap_property_range_t range = prop->range;
+            weed_set_double_value(attr, WEED_LEAF_MIN, range.min);
+            weed_set_double_value(attr, WEED_LEAF_MAX, range.max);
+          }
+          lives_attribute_set_param_type(obj, prop->identifier, prop->identifier, WEED_PARAM_FLOAT);
+          break;
+        }
+      }
+      if (!valid) continue;
     }
+    if ((flags & UNICAP_FLAGS_AUTO) && (mask & UNICAP_FLAGS_AUTO))
+      lives_attribute_set_readonly(obj, prop->identifier, TRUE);
+    else if ((flags & UNICAP_FLAGS_READ_ONLY) && (mask & UNICAP_FLAGS_READ_ONLY))
+      lives_attribute_set_readonly(obj, prop->identifier, TRUE);
   }
 
-
   // if it is greyscale, we will add fake U and V planes
-  if (ldev->current_palette == WEED_PALETTE_A8) {
-    ldev->current_palette = WEED_PALETTE_YUV444P;
+  if (ldev->palette == WEED_PALETTE_A8) {
+    ldev->palette = WEED_PALETTE_YUV444P;
     ldev->is_really_grey = TRUE;
   } else ldev->is_really_grey = FALSE;
+
+  lives_attribute_append_listener(obj, VDEV_PROP_PALETTE, set_palette_desc);
+  lives_attribute_set_param_type(obj, VDEV_PROP_PALETTE, _("Colourspace"), WEED_PARAM_INTEGER);
+  lives_object_set_attribute_value(obj, VDEV_PROP_PALETTE, ldev->palette);
+  lives_attribute_set_readonly(obj, VDEV_PROP_PALETTE, TRUE);
+
+  //
+  rfx = obj_attrs_to_rfx(obj, FALSE);
+
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p0|p1|"));
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p2|"));
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p3|"));
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|hseparator|"));
+
+  dialog = rfx_make_param_dialog(rfx, _("Webcam Settings"));
+  if (lives_dialog_run(LIVES_DIALOG(dialog)) == LIVES_RESPONSE_OK) {
+    update_props_from_attributes(ldev, rfx);
+    lives_widget_destroy(dialog);
+  }
 
   return TRUE;
 }
 
 
 void lives_vdev_free(lives_vdev_t *ldev) {
+  lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, lives_ldev_free_cb, (void *)&ldev);
   if (!ldev) return;
   unicap_stop_capture(ldev->handle);
   unicap_unlock_stream(ldev->handle);
   unicap_close(ldev->handle);
-  if (ldev->buffer1.data) lives_free(ldev->buffer1.data);
-  if (ldev->buffer2.data) lives_free(ldev->buffer2.data);
+  if (ldev->buffer1.data) {
+    lives_free(ldev->buffer1.data);
+    ldev->buffer1.data = NULL;
+  }
+  if (ldev->buffer2.data) {
+    lives_free(ldev->buffer2.data);
+    ldev->buffer2.data = NULL;
+  }
+  lives_object_instance_destroy(ldev->object);
 }
 
 
@@ -647,6 +809,21 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, const char *devname) {
   lives_free(fname);
 
   return TRUE;
+}
+
+
+/// objects / intents etc
+static lives_object_instance_t *lives_videodev_inst_create(uint64_t subtype) {
+  lives_object_instance_t *inst = lives_object_instance_create(OBJECT_TYPE_MEDIA_SOURCE, subtype);
+  inst->state = OBJECT_STATE_NORMAL;
+  lives_object_declare_attribute(inst, VDEV_PROP_WIDTH, WEED_SEED_INT);
+  lives_object_declare_attribute(inst, VDEV_PROP_HEIGHT, WEED_SEED_INT);
+  lives_object_declare_attribute(inst, VDEV_PROP_PALETTE, WEED_SEED_INT);
+  lives_object_declare_attribute(inst, VDEV_PROP_FPS, WEED_SEED_DOUBLE);
+
+  // other attributes defined by the device itself
+
+  return inst;
 }
 
 #endif

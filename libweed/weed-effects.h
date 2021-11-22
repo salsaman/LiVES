@@ -43,6 +43,9 @@ extern "C"
 /* API version * 201 */
 #define WEED_FILTER_API_VERSION 201
 
+/* included features */
+#define WEED_EFFECT_HAS_PARAM_FLAGBITS 2
+
 /* plant types */
 #define WEED_PLANT_PLUGIN_INFO        		1
 #define WEED_PLANT_FILTER_CLASS       		2
@@ -121,6 +124,10 @@ typedef struct {
 #define WEED_PARAMETER_VALUE_PER_CHANNEL              	(1 << 2)
 #define WEED_PARAMETER_VALUE_IRRELEVANT			(1 << 3)
 
+/* Parameter template flags */
+#define WEED_PARAM_FLAG_READ_ONLY     		(1 << 0)
+#define WEED_PARAM_FLAG_VALUE_CHANGED           (1 << 1)
+  
 /* Parameter template GUI flags */
 #define WEED_GUI_REINIT_ON_VALUE_CHANGE		(1 << 0)
 #define WEED_GUI_CHOICES_SET_ON_INIT	      	(1 << 1)

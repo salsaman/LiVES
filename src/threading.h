@@ -57,6 +57,8 @@ void lives_hook_append(LiVESList **hooks, int type, uint64_t flags, hook_funcptr
 void lives_hook_prepend(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func, livespointer data);
 void lives_hook_remove(LiVESList **hooks, int type, hook_funcptr_t func, livespointer data);
 
+void lives_hooks_clear(LiVESList **xlist, int type);
+
 void lives_hooks_trigger(lives_object_t *obj, LiVESList **xlist, int type);
 void lives_hooks_join(LiVESList **xlist, int type);
 

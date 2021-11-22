@@ -467,7 +467,8 @@ void clip_decoder_free(lives_decoder_t *);
 /// scraps are passed between programs to generate param windows
 #define PLUGIN_RFX_SCRAP ""
 
-/// max number of display widgets per parameter (currently 7 for transition param with mergealign -
+/// max number of display widgets per parameter
+/// (currently 7 in ppractice for transition param with mergealign -
 /// spin + label + knob + scale + in + out + dummy
 // TODO : use enum for widget type
 #define MAX_PARAM_WIDGETS 128
@@ -494,9 +495,12 @@ typedef enum {
   LIVES_PARAM_UNDISPLAYABLE = 65536
 } lives_param_type_t;
 
+#define LIVES_PARAM_TYPE_UNDEFINED LIVES_PARAM_UNKNOWN
+
 typedef enum {
   LIVES_RFX_SOURCE_RFX = 0,
   LIVES_RFX_SOURCE_WEED,
+  LIVES_RFX_SOURCE_OBJECT,
   LIVES_RFX_SOURCE_NEWCLIP,
   LIVES_RFX_SOURCE_EXTERNAL
 } lives_rfx_source_t;
@@ -521,17 +525,21 @@ typedef enum {
   LIVES_PARAM_SPECIAL_TYPE_ASPECT_RATIO
 } lives_param_special_t;
 
+/// parameter is for display only
+#define PARAM_FLAG_READONLY 	0x00000001
+// parameter is "optional"
+#define PARAM_FLAG_OPTIONAL 	0x10000000
+// the 'value' has been set (after being initialised to "default"
+#define PARAM_FLAG_VALUE_SET	0x20000000
+
 struct _param_t {
   // weed style part
   char *name;
   char *desc;
 
   char *label;
+
   uint64_t flags;
-  // parameter is "optional:
-#define PARAM_FLAGS_OPTIONAL 	0x10000000
-  // the 'value' has been set
-#define PARAM_FLAGS_VALUE_SET	0x20000000
 
   boolean use_mnemonic;
   uint32_t hidden;
@@ -560,23 +568,26 @@ struct _param_t {
 
   int reinit;
 
-  boolean wrap;
-  int group;
+  boolean wrap; // if TRUE value wraps from max -> min and min -> max (eg radians)
+  int group; // radiobutton group for SWITCH (ignore if <= 0)
+
   lives_param_type_t type;
 
   int dp;  ///<decimals, 0 for int and bool
 
   int nvalues; // if > 0, value is an array of n itemss, for colRG24i int[n][3], etc.
 
-  void *value;  ///< current value(s)
+  void *value;  ///< current value(s); may be cast to poiner of appropriate type
 
+  // TODO - use union {}
   double min; //< display len for string
   double max; ///< for string this is max characters
 
-  void *def; ///< default values
-  LiVESList *list; ///< for string list (choices), displayed values (const char *)
+  void *def; ///< default value(s)
 
-  ///< for string list, the actual (not display) values
+  LiVESList *list; ///< for string list (choices), DISPLAYED values (list->data os const char *)
+
+  ///< for string list, the ACTUAL (not display) values
   /// if they differ from idx value, otherwise NULL
   // if this points to list, then vlist_type is LIVES_PARAM_STRING, and vlist_dp is 0
   LiVESList *vlist;
@@ -593,6 +604,8 @@ struct _param_t {
 
   //--------------------------------------------------
   // extras for LiVES
+
+  char *units; // optional display detail (eg. "Hz", "sec."
 
   /// TODO - change to LiVESWidget **widgets, terminated with a NULL
   LiVESWidget *widgets[MAX_PARAM_WIDGETS]; ///< widgets which hold value/RGBA settings
@@ -617,12 +630,18 @@ typedef enum {
   RFX_STATUS_WEED, ///< indicates an internal RFX, created from a weed instance
   RFX_STATUS_SCRAP, ///< used for parsing RFX scraps from external apps
   RFX_STATUS_INTERNAL, ///< used for parsing RFX scraps generated internally (will possiblky replace SCRAP)
-  RFX_STATUS_INTERFACE, /// indicates a "dumb" interface, used just to display and collect param values
+  RFX_STATUS_INTERFACE, ///< indicates a "dumb" interface, used just to display and collect param values
+  RFX_STATUS_OBJECT, ///< created from a lives_object
 
   // these are only used when prompting for a name
   RFX_STATUS_COPY = 128, ///< indicates a copy operation to test
   RFX_STATUS_RENAME = 129 ///< indicates a copy operation to test
 } lives_rfx_status_t;
+
+#define RFX_FLAGS_NO_SLIDERS 	0x10000001
+#define RFX_FLAGS_NO_RESET 	0x10000002
+#define RFX_FLAGS_UPD_FROM_GUI 	0x10000004
+#define RFX_FLAGS_UPD_FROM_VAL 	0x10000008
 
 typedef struct {
   char *name;  ///< the name of the executable (so we can run it !)
@@ -638,11 +657,6 @@ typedef struct {
   LiVESWidget *interface; // TODO
   int num_params;
   uint64_t flags; /// internal use
-  // internal vals.
-#define RFX_FLAGS_NO_SLIDERS 	0x10000001
-#define RFX_FLAGS_NO_RESET 	0x10000002
-#define RFX_FLAGS_UPD_FROM_GUI 	0x10000004
-#define RFX_FLAGS_UPD_FROM_VAL 	0x10000008
 
   lives_param_t *params;
   lives_rfx_source_t source_type;
@@ -669,7 +683,7 @@ void free_rfx_params(lives_param_t *params, int num_params);
 
 void rfx_params_free(lives_rfx_t *);
 
-void rfx_free(lives_rfx_t *);
+void rfx_free(lives_rfx_t *); // calls rfx_params_free()
 
 void rfx_free_all(void);
 
@@ -741,6 +755,8 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *instance, boolean show
 
 void rfx_clean_exe(lives_rfx_t *rfx);
 
+LiVESWidget *rfx_make_param_dialog(lives_rfx_t *rfx, const char *title);
+
 char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx);
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -770,9 +786,9 @@ LiVESList *get_external_window_hints(lives_rfx_t *);
 boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, boolean save_all);
 
 /// for realtime effects, see effects-weed.h
-
 /// CAPACITIES - flavours
 
+// ^TODO -> object properties
 #define LIVES_CAPACITY_AUDIO_RATE "audio_rate"			// int value
 #define LIVES_CAPACITY_AUDIO_CHANS "audio_channels"		// int value
 
@@ -780,55 +796,55 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
 
 // vpp
 //"general"
-#define VPP_CAN_RESIZE    (1<<0)
-#define VPP_CAN_RETURN    (1<<1)
-#define VPP_LOCAL_DISPLAY (1<<2)
-#define VPP_LINEAR_GAMMA  (1<<3)
-#define VPP_CAN_RESIZE_WINDOW          		(1<<4)   /// can resize the image to fit the play window
-#define VPP_CAN_LETTERBOX                  	(1<<5)
-#define VPP_CAN_CHANGE_PALETTE			(1<<6)
+#define VPP_CAN_RESIZE				(1 << 0)
+#define VPP_CAN_RETURN				(1 << 1)
+#define VPP_LOCAL_DISPLAY			(1 << 2)
+#define VPP_LINEAR_GAMMA			(1 << 3)
+#define VPP_CAN_RESIZE_WINDOW          		(1 << 4)   /// can resize the image to fit the play window
+#define VPP_CAN_LETTERBOX                  	(1 << 5)
+#define VPP_CAN_CHANGE_PALETTE			(1 << 6)
 
 // encoder
 //"general"
-#define HAS_RFX (1<<0)
-#define CAN_ENCODE_PNG (1<<2)
-#define ENCODER_NON_NATIVE (1<<3)
+#define HAS_RFX (1 << 0)
+#define CAN_ENCODE_PNG (1 << 2)
+#define ENCODER_NON_NATIVE (1 << 3)
 
 //"acodecs"
-#define AUDIO_CODEC_NONE 0  /// was 32
+#define AUDIO_CODEC_NONE	0
 
-#define AUDIO_CODEC_MP3 1
-#define AUDIO_CODEC_PCM 2
-#define AUDIO_CODEC_MP2 3
-#define AUDIO_CODEC_VORBIS 4
-#define AUDIO_CODEC_AC3 5
-#define AUDIO_CODEC_AAC 6
-#define AUDIO_CODEC_AMR_NB 7
-#define AUDIO_CODEC_RAW 8
-#define AUDIO_CODEC_WMA2 9
-#define AUDIO_CODEC_OPUS 10
+#define AUDIO_CODEC_MP3		1
+#define AUDIO_CODEC_PCM		2
+#define AUDIO_CODEC_MP2		3
+#define AUDIO_CODEC_VORBIS	4
+#define AUDIO_CODEC_AC3		5
+#define AUDIO_CODEC_AAC		6
+#define AUDIO_CODEC_AMR_NB	7
+#define AUDIO_CODEC_RAW		8
+#define AUDIO_CODEC_WMA2	9
+#define AUDIO_CODEC_OPUS	10
 
-#define AUDIO_CODEC_MAX 63
-#define AUDIO_CODEC_UNKNOWN -1
+#define AUDIO_CODEC_MAX		63
+#define AUDIO_CODEC_UNKNOWN	-1
 
 // decoders
 // "sync_hint"
-#define SYNC_HINT_AUDIO_TRIM_START (1<<0)
-#define SYNC_HINT_AUDIO_PAD_START (1<<1)
-#define SYNC_HINT_AUDIO_TRIM_END (1<<2)
-#define SYNC_HINT_AUDIO_PAD_END (1<<3)
+#define SYNC_HINT_AUDIO_TRIM_START	(1 << 0)
+#define SYNC_HINT_AUDIO_PAD_START	(1 << 1)
+#define SYNC_HINT_AUDIO_TRIM_END 	(1 << 2)
+#define SYNC_HINT_AUDIO_PAD_END 	(1 << 3)
 
-#define SYNC_HINT_VIDEO_PAD_START (1<<4)
-#define SYNC_HINT_VIDEO_PAD_END (1<<5)
+#define SYNC_HINT_VIDEO_PAD_START 	(1 << 4)
+#define SYNC_HINT_VIDEO_PAD_END		(1 << 5)
 
 //"seek_flag"
 /// good
-#define LIVES_SEEK_FAST (1<<0)
-#define LIVES_SEEK_FAST_REV (1<<1)
+#define LIVES_SEEK_FAST (1 << 0)
+#define LIVES_SEEK_FAST_REV (1 << 1)
 
 /// not so good
-#define LIVES_SEEK_NEEDS_CALCULATION (1<<2)
-#define LIVES_SEEK_QUALITY_LOSS (1<<3)
+#define LIVES_SEEK_NEEDS_CALCULATION (1 << 2)
+#define LIVES_SEEK_QUALITY_LOSS (1 << 3)
 
 // rendered effects
 // "general"
@@ -844,5 +860,9 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
 
 // defined in plugins.c for the whole app
 extern const char *const anames[AUDIO_CODEC_MAX];
+
+lives_rfx_t *obj_attrs_to_rfx(lives_object_t *, boolean readonly);
+
+#define LIVES_LEAF_RPAR "host_rpar"
 
 #endif

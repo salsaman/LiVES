@@ -5760,7 +5760,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
     lives_widget_unparent(textwindow->vbox);
 
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
-    lives_standard_expander_new(_("Show _Log"), LIVES_BOX(top_vbox),
+    lives_standard_expander_new(_("Show _Log"), _("Hide _Log"), LIVES_BOX(top_vbox),
                                 textwindow->vbox);
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
     lives_widget_object_unref(textwindow->vbox);
@@ -6020,7 +6020,7 @@ cleanup:
       tview = scrolled_textview(NULL, tbuff, RFX_WINSIZE_H * 2, NULL);
       widget_opts.expand = LIVES_EXPAND_DEFAULT;
       widget_opts.justify = LIVES_JUSTIFY_CENTER;
-      lives_standard_expander_new(_("Show _Log"), LIVES_BOX(top_vbox), tview);
+      lives_standard_expander_new(_("Show _Log"), _("Hide _Log"), LIVES_BOX(top_vbox), tview);
       widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
     }
 
@@ -6048,7 +6048,7 @@ cleanup:
       lives_free(text);
 
       widget_opts.justify = LIVES_JUSTIFY_CENTER;
-      lives_standard_expander_new(_("Show _Remaining Items"),
+      lives_standard_expander_new(_("Show _Remaining Items"), _("Hide Items"),
                                   LIVES_BOX(top_vbox), tview);
       widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
     }

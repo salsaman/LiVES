@@ -2271,9 +2271,9 @@ jack_tcl_try:
             lives_widget_destroy(textwindow->dialog);
             lives_free(textwindow);
             if (orig_err) success = FALSE;
-          }
-        }
-      }
+	  // *INDENT-OFF*
+          }}}
+      // *INDENT-ON*
       if (!success) {
         if (mainw->cancelled == CANCEL_USER) {
           if (prefs->startup_phase) goto audio_choice;
@@ -2319,9 +2319,10 @@ rest1:
             pref_factory_string(PREF_JACK_LAST_ADRIVER, future_prefs->jack_tdriver, TRUE);
             pref_factory_string(PREF_JACK_LAST_ASERVER, future_prefs->jack_tserver_sname, TRUE);
           } else pref_factory_string(PREF_JACK_ADRIVER, future_prefs->jack_tdriver, TRUE);
-        }
-      }
-    }
+	  // *INDENT-OFF*
+        }}}
+    // *INDENT-ON*
+
 #endif
 
     if (prefs->audio_player == AUD_PLAYER_JACK) {
@@ -2393,10 +2394,9 @@ jack_acl_try:
               } else {
                 success = lives_proc_thread_join_boolean(info);
                 lives_proc_thread_free(info);
-              }
-            }
-          }
-        }
+		// *INDENT-OFF*
+              }}}}
+	// *INDENT-ON*
 
         if (!success || !mainw->jackd) {
           if (mainw->cancelled == CANCEL_USER) {
@@ -2481,9 +2481,9 @@ rest3:
                 pref_factory_string(PREF_JACK_LAST_TDRIVER, future_prefs->jack_adriver, TRUE);
                 pref_factory_string(PREF_JACK_LAST_TSERVER, future_prefs->jack_aserver_sname, TRUE);
               } else pref_factory_string(PREF_JACK_TDRIVER, future_prefs->jack_adriver, TRUE);
-            }
-          }
-        }
+	      // *INDENT-OFF*
+            }}}
+	// *INDENT-ON*
 
         if (!mainw->jackd_read) {
           // connect the reader - will also attempt to connect, and possibly start a server
@@ -8754,8 +8754,7 @@ void close_current_file(int file_to_switch_to) {
 
     if (cfile->clip_type == CLIP_TYPE_VIDEODEV) {
 #ifdef HAVE_UNICAP
-      lives_vdev_free((lives_vdev_t *)cfile->ext_src);
-      lives_free(cfile->ext_src);
+      if (cfile->ext_src) lives_vdev_free((lives_vdev_t *)cfile->ext_src);
 #endif
     }
 

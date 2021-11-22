@@ -387,4 +387,6 @@ lives_audio_track_state_t *audio_frame_to_atstate(weed_plant_t *event, int *ntra
 int find_standard_arate(int rate);
 LiVESList *get_std_arates(void);
 
+void show_aplayer_attribs(LiVESWidget *, void **player);
+
 #endif

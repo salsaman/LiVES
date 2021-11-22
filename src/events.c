@@ -7074,7 +7074,7 @@ render_details *create_render_details(int type) {
       hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, 0);
       layout = lives_layout_new(NULL);
-      expd = lives_standard_expander_new(_("_Encoder preferences (optional)"), LIVES_BOX(hbox), layout);
+      expd = lives_standard_expander_new(_("_Encoder preferences (optional)"), _("Hide preferences"), LIVES_BOX(hbox), layout);
       lives_widget_set_tooltip_text(expd, H_("Setting these options will not affect the output directly\n"
                                              "but a small number of formats may prefer specific video and audio\n"
                                              "configurations, which may be used to adjust the values above"));

@@ -1346,6 +1346,8 @@ typedef struct {
   LiVESWidget *show_file_comments;
   LiVESWidget *show_clipboard_info;
   LiVESWidget *show_messages;
+  LiVESWidget *show_aplayer_attr;
+  LiVESWidget *show_aplayer_read_attr;
   LiVESWidget *show_jackmsgs;
   LiVESWidget *show_layout_errors;
   LiVESWidget *show_quota;

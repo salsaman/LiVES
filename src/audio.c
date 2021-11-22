@@ -5046,3 +5046,25 @@ weed_error_t lives_aplayer_set_data(lives_object_t *aplayer, void *data) {
   }
   return WEED_SUCCESS;
 }
+
+
+void show_aplayer_attribs(LiVESWidget * w, void **player) {
+  lives_rfx_t *rfx = NULL;
+  char *title = NULL;
+#ifdef HAVE_PULSE_AUDIO
+  if (*player == (void *)mainw->pulsed) {
+    rfx = mainw->pulsed->interface;
+    title = _("Audio Player Details");
+  } else if (*player == (void *)mainw->pulsed_read) {
+    rfx = mainw->pulsed_read->interface;
+    title = _("Audio Reader Details");
+  }
+#endif
+  if (rfx) {
+    LiVESWidget *dialog = rfx_make_param_dialog(rfx, title, FALSE);
+    lives_dialog_run(LIVES_DIALOG(dialog));
+    lives_widget_destroy(dialog);
+  }
+  if (title) lives_free(title);
+}
+

@@ -75,9 +75,7 @@ void guess_font_size(LiVESWidget *window, LiVESLabel *xlabel, LiVESLabel *ylabel
       lives_free(tmp);
       capable->font_size = ofontsize;
       if (mainw->splash_label) {
-        tmp = lives_strdup_printf("%dpx", capable->font_size);
-        set_css_value_direct(mainw->splash_label, LIVES_WIDGET_STATE_NORMAL, "", "font-size", tmp);
-        lives_free(tmp);
+        lives_widget_set_text_size(LIVES_WIDGET(mainw->splash_label), LIVES_WIDGET_STATE_NORMAL, widget_opts.text_size);
       }
       mainw->first_shown = TRUE;
     }

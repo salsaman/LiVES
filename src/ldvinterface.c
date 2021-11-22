@@ -112,6 +112,7 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
                                        LIVES_STOCK_CLOSE, LIVES_STOCK_LABEL_CLOSE_WINDOW,
                                        LIVES_RESPONSE_ACCEPT);
 
+  lives_window_add_escape(LIVES_WINDOW(dvgrabw->dialog), dvgrabw->quit);
   lives_widget_set_can_focus_and_default(dvgrabw->quit);
 
   //////////////////////////////////////////////////////////////////////////////////////////

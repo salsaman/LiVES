@@ -1213,7 +1213,8 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 
 double lives_scrolled_window_scroll_to(LiVESScrolledWindow *, LiVESPositionType pos);
 
-LiVESWidget *lives_standard_expander_new(const char *labeltext, LiVESBox *parent, LiVESWidget *child);
+LiVESWidget *lives_standard_expander_new(const char *labeltext, const char *alt_text,
+    LiVESBox *parent, LiVESWidget *child);
 
 LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustment *, double volume);
 

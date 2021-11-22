@@ -89,6 +89,10 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 #define SBUTT_FORCEIMG_KEY "_sbutt_forceimg"
 #define SBUTT_FAKEDEF_KEY "_sbutt_fakedef"
 
+#define EXPANDER_TEXT_KEY "_exp_txt"
+#define EXPANDER_XTEXT_KEY "_exp_alt_txt"
+#define EXPANDER_XLABEL_KEY "_exp_expand_label"
+
 static LiVESWindow *modalw = NULL;
 
 #if 0
@@ -2489,6 +2493,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_text_size(LiVESWidget *widg
   else if (!strcmp(tsize, LIVES_TEXT_SIZE_SMALL)) xsize *= .8;
   else if (!strcmp(tsize, LIVES_TEXT_SIZE_X_SMALL)) xsize *= .6;
   else if (!strcmp(tsize, LIVES_TEXT_SIZE_XX_SMALL)) xsize *= .4;
+  else if (strcmp(tsize, LIVES_TEXT_SIZE_MEDIUM)) xsize = atoi(tsize);
   xxsize = lives_strdup_printf("%dpx", xsize);
   retb = set_css_value(widget, state, "font-size", xxsize);
   return retb;
@@ -4451,7 +4456,16 @@ LIVES_GLOBAL_INLINE boolean lives_button_set_image_from_stock(LiVESButton *butto
         LiVESPixbuf *pixbuf = lives_pixbuf_new_from_stock_at_size(stock_id, LIVES_ICON_SIZE_BUTTON, 0);
         if (LIVES_IS_PIXBUF(pixbuf)) {
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), SBUTT_PIXBUF_KEY, (livespointer)pixbuf);
-        } else return FALSE;
+        } else {
+          const char *iname = widget_helper_suggest_icons(stock_id, 0);
+          if (iname) {
+            LiVESPixbuf *pixbuf = lives_pixbuf_new_from_stock_at_size(iname, LIVES_ICON_SIZE_BUTTON, 0);
+            if (LIVES_IS_PIXBUF(pixbuf)) {
+              lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), SBUTT_PIXBUF_KEY, (livespointer)pixbuf);
+              if (prefs->show_dev_opts) g_print("Guessed icon %s for %s\n", iname, stock_id);
+            } else return FALSE;
+          } else return FALSE;
+        }
         if (always_show) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), SBUTT_FORCEIMG_KEY, pixbuf);
       }
     }
@@ -8319,7 +8333,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_separator(LiVESLayout 
 ////////////////////////////////////////////////////////////////////
 
 static LiVESWidget *add_warn_image(LiVESWidget * widget, LiVESWidget * hbox) {
-
   LiVESWidget *warn_image = lives_image_find_in_stock_at_size(widget_opts.css_min_height + 4, "dialog-warning", NULL);
 
   if (hbox) {
@@ -11108,19 +11121,44 @@ LiVESWidget *lives_standard_spinner_new(boolean start) {
 }
 
 
-LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox * box, LiVESWidget * child) {
+static void expander_swap_label(LiVESWidget * exp, livespointer data) {
+  const char *ltext;
+  char *labeltext;
+
+  if (!lives_expander_get_expanded(LIVES_EXPANDER(exp))) {
+    ltext = (const char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(exp),
+            EXPANDER_TEXT_KEY);
+  } else {
+    ltext = (const char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(exp),
+            EXPANDER_XTEXT_KEY);
+  }
+
+  if (GET_INT_DATA(exp, EXPANDER_XLABEL_KEY))
+    labeltext = lives_strdup_printf("<big>%s</big>", ltext);
+  else labeltext = (char *)ltext;
+
+  lives_expander_set_label(LIVES_EXPANDER(exp), labeltext);
+
+  if (labeltext != ltext) lives_free(labeltext);
+}
+
+
+LiVESWidget *lives_standard_expander_new(const char *ltext, const char *alt_text, LiVESBox * box, LiVESWidget * child) {
   LiVESWidget *expander = NULL, *container = NULL, *label = NULL;
 
 #ifdef GUI_GTK
   LiVESWidget *hbox;
-  char *labeltext;
 
-  if (LIVES_SHOULD_EXPAND) {
-    labeltext = lives_strdup_printf("<big>%s</big>", ltext);
-  } else labeltext = lives_strdup(ltext);
+  expander = lives_expander_new(NULL);
 
-  expander = lives_expander_new(labeltext);
-  lives_free(labeltext);
+  if (LIVES_SHOULD_EXPAND)
+    SET_INT_DATA(expander, EXPANDER_XLABEL_KEY, TRUE);
+  else
+    SET_INT_DATA(expander, EXPANDER_XLABEL_KEY, FALSE);
+
+  lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(expander), EXPANDER_TEXT_KEY,
+                                    (livespointer)(lives_strdup(ltext)));
+  expander_swap_label(expander, NULL);
 
   lives_expander_set_use_markup(LIVES_EXPANDER(expander), TRUE);
 
@@ -11179,6 +11217,13 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox * box, LiVE
 #endif
   widget_opts.last_container = container;
   widget_opts.last_label = label;
+
+  if (alt_text) {
+    lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(expander), EXPANDER_XTEXT_KEY,
+                                      (livespointer)(lives_strdup(alt_text)));
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(expander), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                    LIVES_GUI_CALLBACK(expander_swap_label), NULL);
+  }
   return expander;
 }
 
@@ -11702,11 +11747,25 @@ const char *widget_helper_suggest_icons(const char *part, int idx) {
   const char *iname = NULL;
   //boolean found = FALSE;
   if (!list || !part) return NULL;
+#ifdef GUI_GTK
+  // prefer icons starting with gtk-
   for (; list; list = list->next) {
-    if (strstr((iname = (const char *)list->data), part)) {
+    iname = (const char *)list->data;
+    if (strncmp(iname, "gtk-", 4) && strstr(iname, part)) {
       if (!idx--) break;
       //g_print("suggest for %s icon: %s\n", part, iname);
       //found = TRUE;
+    }
+  }
+  list = capable->all_icons;
+#endif
+  if (idx >= 0) {
+    for (; list; list = list->next) {
+      if (strstr((iname = (const char *)list->data), part)) {
+        if (!idx--) break;
+        //g_print("suggest for %s icon: %s\n", part, iname);
+        //found = TRUE;
+      }
     }
   }
   //if (!found) g_print("No suitable icons match %s\n", part);

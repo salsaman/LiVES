@@ -1680,9 +1680,6 @@ static void info_cb(pa_context * c, const pa_sink_input_info * i, int eol, void 
 
 int pulse_driver_activate(pulse_driver_t *pdriver) {
   // create a new client and connect it to pulse server
-  char *pa_clientname;
-  char *mypid;
-
   pa_sample_spec pa_spec;
   pa_channel_map pa_map;
   pa_buffer_attr pa_battr;
@@ -1690,6 +1687,10 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   pa_operation *pa_op;
 
   lives_rfx_t *rfx;
+
+  char *pa_clientname;
+  char *mypid;
+  char *desc;
 
   if (pdriver->pstream) return 0;
 
@@ -1812,11 +1813,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                &pdriver->volume, NULL);
 #endif
     pa_mloop_unlock();
-
-    while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
-      sched_yield();
-      lives_usleep(prefs->sleep_time);
-    }
+    lives_nanosleep_while_false(pa_stream_get_state(pdriver->pstream) == PA_STREAM_READY);
 
     pdriver->volume_linear = -1.;
 
@@ -1825,8 +1822,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_op = pa_context_get_sink_info(pdriver->con, info_cb, &pdriver);
 
     while (pa_operation_get_state(pa_op) == PA_OPERATION_RUNNING) {
-      sched_yield();
-      lives_usleep(prefs->sleep_time);
+      pa_threaded_mainloop_wait(pa_mloop);
     }
     pa_operation_unref(pa_op);
 #endif
@@ -1857,22 +1853,31 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                  | PA_STREAM_NOT_MONOTONIC));
 
     pa_mloop_unlock();
-    while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
-      sched_yield();
-      lives_usleep(prefs->sleep_time);
-    }
+    lives_nanosleep_while_false(pa_stream_get_state(pdriver->pstream) == PA_STREAM_READY);
   }
 
   rfx = obj_attrs_to_rfx(pdriver->inst, TRUE);
-  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|\"Pulse audio player details\"|"));
-  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p0|"));
-  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p1|"));
-  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p2|"));
-  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p3|"));
-  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p4|"));
-  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p5|p6|"));
+  if (pdriver->is_output) {
+    desc = _("Pulse audio player details");
+  } else {
+    desc = _("Pulse audio reader details");
+  }
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup_printf("layout|\"%s\"|", desc));
+  lives_free(desc);
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p0|")); // source
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p1|\"(from PA server)\"")); // rate
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p2|")); // channels
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p3|")); // sampsize
+  // skip status (uninteresting)
+  rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p5|p6|")); // signed / endian
 
-  pulsed.interface = rfx;
+  pdriver->interface = rfx;
+
+  if (pdriver->is_output) {
+    lives_widget_set_sensitive(mainw->show_aplayer_attr, TRUE);
+  } else {
+    lives_widget_set_sensitive(mainw->show_aplayer_read_attr, TRUE);
+  }
 
   return 0;
 }

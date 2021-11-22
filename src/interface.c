@@ -987,7 +987,7 @@ xprocess *create_processing(const char *text) {
                             LIVES_WIDGET(mainw->optextview));
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     widget_opts.apply_theme = woat;
-    lives_standard_expander_new(_("Show Details"), LIVES_BOX(vbox3), procw->scrolledwindow);
+    lives_standard_expander_new(_("Show Details"), _("Hide Details"), LIVES_BOX(vbox3), procw->scrolledwindow);
   }
 
   procw->stop_button = procw->preview_button = procw->pause_button = NULL;
@@ -1525,7 +1525,7 @@ void do_logger_dialog(const char *title, const char *text, const char *buff, boo
   lives_widget_unparent(textwindow->vbox);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  lives_standard_expander_new(_("Show _Log"), LIVES_BOX(top_vbox),
+  lives_standard_expander_new(_("Show _Log"), _("Hide _Log"), LIVES_BOX(top_vbox),
                               textwindow->vbox);
 
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
@@ -1534,10 +1534,11 @@ void do_logger_dialog(const char *title, const char *text, const char *buff, boo
   add_fill_to_box(LIVES_BOX(top_vbox));
 
   if (!add_abort) {
-    LiVESWidget *button =
-      lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
-                                         LIVES_STOCK_OK, LIVES_STOCK_LABEL_CLOSE_WINDOW, LIVES_RESPONSE_OK);
+    LiVESWidget *button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
+                          LIVES_STOCK_CLOSE, LIVES_STOCK_LABEL_CLOSE_WINDOW,
+                          LIVES_RESPONSE_OK);
     lives_window_add_escape(LIVES_WINDOW(textwindow->dialog), button);
+    lives_button_grab_default_special(button);
   } else {
     lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
                                        LIVES_STOCK_QUIT, _("_Abort"), LIVES_RESPONSE_ABORT);
@@ -2524,9 +2525,6 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
   *laylist = *clipslist = NULL;
 
   if (!lives_expander_get_expanded(LIVES_EXPANDER(exp))) {
-    widget_opts.use_markup = TRUE;
-    lives_expander_set_label(LIVES_EXPANDER(exp), _("<b>Show Contents</b>"));
-    widget_opts.use_markup = FALSE;
     if (renamew->layouts_layout) {
       lives_widget_destroy(renamew->layouts_layout);
       renamew->layouts_layout = NULL;
@@ -2551,10 +2549,6 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
 
     sizinfo = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
                                        setdir);
-
-    widget_opts.use_markup = TRUE;
-    lives_expander_set_label(LIVES_EXPANDER(exp), _("<b>Hide Contents</b>"));
-    widget_opts.use_markup = FALSE;
 
     layinfo = dir_to_file_details(laylist, ldirname, NULL, 0);
 
@@ -3061,7 +3055,8 @@ _entryw *create_rename_dialog(int type) {
     widget_opts.apply_theme = woat;
     lives_box_pack_start(LIVES_BOX(vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
-    renamew->expander = lives_standard_expander_new(NULL, LIVES_BOX(dialog_vbox), vbox);
+    renamew->expander = lives_standard_expander_new(_("<b>Show Contents</b>"), _("<b>Hide Contents</b>"),
+                        LIVES_BOX(dialog_vbox), vbox);
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(renamew->expander), LIVES_WIDGET_ACTIVATE_SIGNAL,
                                     LIVES_GUI_CALLBACK(on_set_exp), renamew);
@@ -3957,7 +3952,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
 
     lives_widget_set_size_request(vbox, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-    lives_standard_expander_new(_("_Options"), LIVES_BOX(dialog_vbox), vbox);
+    lives_standard_expander_new(_("_Options"), _("Hide _Options"), LIVES_BOX(dialog_vbox), vbox);
   }
 
   lives_widget_show_all(commentsw->comments_dialog);
@@ -5462,7 +5457,7 @@ LiVESWidget *add_list_expander(LiVESBox * box, const char *title, int width, int
 
   lives_widget_set_size_request(scrolledwindow, width, height);
 
-  expander = lives_standard_expander_new(title, LIVES_BOX(box), scrolledwindow);
+  expander = lives_standard_expander_new(title, NULL, LIVES_BOX(box), scrolledwindow);
 
   if (palette->style & STYLE_1) {
     LiVESWidget *label = lives_expander_get_label_widget(LIVES_EXPANDER(expander));
@@ -5978,7 +5973,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 2);
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
-  lives_standard_expander_new(_("_Other options (e.g audio, subtitles)..."), LIVES_BOX(hbox), NULL);
+  lives_standard_expander_new(_("Other _options (e.g audio, subtitles)..."),
+                              _("Hide _options"), LIVES_BOX(hbox), NULL);
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
   lives_widget_grab_focus(url_entry);
@@ -7358,7 +7354,7 @@ void run_diskspace_dialog(void) {
 
   layout = lives_layout_new(LIVES_BOX(dialog_vbox));
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  dsq->expander = lives_standard_expander_new(NULL, LIVES_BOX(hbox), dsq->exp_vbox);
+  dsq->expander = lives_standard_expander_new(NULL, NULL, LIVES_BOX(hbox), dsq->exp_vbox);
   lives_layout_expansion_row_new(LIVES_LAYOUT(layout), dsq->expander);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(dsq->expander), LIVES_WIDGET_ACTIVATE_SIGNAL,

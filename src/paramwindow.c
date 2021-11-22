@@ -1733,9 +1733,9 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
           lives_widget_set_show_hide_with(param->widgets[0], param->widgets[1]);
         return was_num;
       }
-      is_rdonly = TRUE;
-      add_slider = FALSE;
     }
+    is_rdonly = TRUE;
+    add_slider = FALSE;
   }
 
   // reinit can cause the window to be redrawn, which invalidates the slider adjustment...and bang !
@@ -1765,7 +1765,7 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
       // store parameter so we know whose trigger to use
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), PARAM_NUMBER_KEY,
                                    LIVES_INT_TO_POINTER(pnum));
-      param->widgets[0] = checkbutton;
+      param->widgets[wcount++] = checkbutton;
     } else {
       group = get_group(rfx, param);
 
@@ -1804,9 +1804,9 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
       // store parameter so we know whose trigger to use
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(radiobutton), PARAM_NUMBER_KEY,
                                    LIVES_INT_TO_POINTER(pnum));
-      param->widgets[0] = radiobutton;
+      param->widgets[wcount++] = radiobutton;
     }
-    param->widgets[1] = widget_opts.last_label;
+    param->widgets[wcount++] = widget_opts.last_label;
     break;
 
   case LIVES_PARAM_NUM:
@@ -1860,7 +1860,7 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
         }
         spinbutton = lives_standard_spin_button_new(NULL, (pval = (double)get_int_param(param->value)),
                      -INT_MAX, INT_MAX, 0., 0., param->dp, NULL, NULL);
-        lives_widget_destroy_with(param->widgets[1], spinbutton);
+        lives_widget_destroy_with(param->widgets[wcount - 1], spinbutton);
         lives_widget_set_show_hide_with(spinbutton, param->widgets[wcount - 1]);
         lives_widget_set_sensitive_with(spinbutton, param->widgets[wcount - 1]);
         lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -1925,14 +1925,8 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
         param->widgets[++wcount] = scale;
       }
     }
-
+    wcount++;
     if (param->desc) lives_widget_set_tooltip_text(scale, param->desc);
-
-    if (is_rdonly) {
-      for (int i = 0; i <= wcount; i++) {
-        lives_widget_set_frozen(param->widgets[i], TRUE, .85);
-      }
-    }
 
     break;
 
@@ -1968,12 +1962,12 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_green), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_blue), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
 
-    param->widgets[0] = spinbutton_red;
-    param->widgets[1] = spinbutton_green;
-    param->widgets[2] = spinbutton_blue;
+    param->widgets[wcount++] = spinbutton_red;
+    param->widgets[wcount++] = spinbutton_green;
+    param->widgets[wcount++] = spinbutton_blue;
     //param->widgets[3]=spinbutton_alpha;
-    param->widgets[4] = cbutton;
-    param->widgets[5] = widget_opts.last_label;
+    param->widgets[wcount++] = cbutton;
+    param->widgets[wcount++] = widget_opts.last_label;
     break;
 
   case LIVES_PARAM_STRING:
@@ -2007,7 +2001,7 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
       hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height >> 1);
 
-      param->widgets[0] = textview = lives_text_view_new();
+      param->widgets[wcount++] = textview = lives_text_view_new();
       if (param->desc) lives_widget_set_tooltip_text(textview, param->desc);
       textbuffer = lives_text_view_get_buffer(LIVES_TEXT_VIEW(textview));
 
@@ -2055,9 +2049,9 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
 
         lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
       }
-      param->widgets[0] = entry = lives_standard_entry_new(NULL, txt, param->min >= 0 ? (int)param->max
-                                  : -(int)param->min,
-                                  (int)param->max, LIVES_BOX(hbox2), param->desc);
+      param->widgets[wcount++] = entry = lives_standard_entry_new(NULL, txt, param->min >= 0 ? (int)param->max
+                                         : -(int)param->min,
+                                         (int)param->max, LIVES_BOX(hbox2), param->desc);
 
       if (rfx->status == RFX_STATUS_WEED && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
         lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(entry), LIVES_WIDGET_CHANGED_SIGNAL,
@@ -2081,7 +2075,7 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(param->widgets[0]), RFX_KEY, rfx);
 
     if (label) {
-      param->widgets[1] = label;
+      param->widgets[wcount++] = label;
       lives_widget_set_show_hide_with(param->widgets[0], param->widgets[1]);
     }
     break;
@@ -2105,8 +2099,9 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
 
     // store parameter so we know whose trigger to use
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
-    param->widgets[0] = combo;
-    param->widgets[1] = widget_opts.last_label;
+    param->widgets[wcount++] = combo;
+    param->widgets[wcount++] = widget_opts.last_label;
+
     break;
 
   default:
@@ -2119,6 +2114,12 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
     check_for_special(rfx, param, LIVES_BOX(lives_widget_get_parent(LIVES_WIDGET(box))));
   } else {
     check_for_special(rfx, param, LIVES_BOX(lives_widget_get_parent(layout)));
+  }
+
+  if (is_rdonly) {
+    for (int i = 0; i < wcount; i++) {
+      lives_widget_set_frozen(param->widgets[i], TRUE, .85);
+    }
   }
 
   return was_num;

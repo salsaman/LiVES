@@ -755,7 +755,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *instance, boolean show
 
 void rfx_clean_exe(lives_rfx_t *rfx);
 
-LiVESWidget *rfx_make_param_dialog(lives_rfx_t *rfx, const char *title);
+LiVESWidget *rfx_make_param_dialog(lives_rfx_t *rfx, const char *title, boolean add_cancel);
 
 char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx);
 

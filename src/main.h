@@ -1442,7 +1442,7 @@ void break_me(const char *dtl);
 
 #define VSLICES 1
 
-#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

@@ -4006,18 +4006,27 @@ void rfx_clean_exe(lives_rfx_t *rfx) {
 }
 
 
-LIVES_GLOBAL_INLINE LiVESWidget *rfx_make_param_dialog(lives_rfx_t *rfx, const char *title) {
+LIVES_GLOBAL_INLINE LiVESWidget *rfx_make_param_dialog(lives_rfx_t *rfx, const char *title, boolean add_cancel) {
   // for internally created rfx, e.g. from lives_objects
   // for external plugins which return RFX scripts, use plugin_run_param_window
-  LiVESWidget *dialog = lives_standard_dialog_new(title, TRUE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT * 1.5);
+  LiVESWidget *dialog = lives_standard_dialog_new(title, add_cancel, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT * 1.5);
   LiVESWidget *dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
   LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
   LiVESWidget *layout = lives_layout_new(LIVES_BOX(vbox));
+
+  if (!add_cancel) {
+    LiVESWidget *button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+                          LIVES_STOCK_CLOSE, LIVES_STOCK_LABEL_CLOSE_WINDOW,
+                          LIVES_RESPONSE_OK);
+    lives_window_add_escape(LIVES_WINDOW(dialog), button);
+    lives_button_grab_default_special(button);
+  }
 
   lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, TRUE, 0);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(vbox), WH_LAYOUT_KEY, layout);
 
   make_param_box(LIVES_BOX(vbox), rfx);
+  add_fill_to_box(LIVES_BOX(dialog_vbox));
 
   for (int p = 0; p < rfx->num_params; p++) {
     lives_param_t *param = &rfx->params[p];

@@ -131,7 +131,7 @@ static void add_perminfo(LiVESWidget *dialog) {
   lives_box_pack_end(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, 0);
   vbox = lives_vbox_new(FALSE, 0);
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  lives_standard_expander_new(_("_Show complete details"), LIVES_BOX(hbox), vbox);
+  lives_standard_expander_new(_("_Show complete details"), _("Hide details"), LIVES_BOX(hbox), vbox);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_apply_theme(vbox, LIVES_WIDGET_STATE_NORMAL);

@@ -24,6 +24,7 @@ typedef struct {
   unicap_handle_t handle;
   int fileno; ///< lives clip number
   int buffer_type; ///< system or user
+  unicap_format_t *format;
   volatile int buffer_ready;
   unicap_data_buffer_t *buffer;
   unicap_data_buffer_t buffer1;

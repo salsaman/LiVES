@@ -332,7 +332,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats, li
 
 void update_props_from_attributes(lives_vdev_t *ldev, lives_rfx_t *rfx) {
   unicap_property_t props[MAX_PROPS];
-  //unicap_lock_properties(ldev->handle);
+  unicap_lock_properties(ldev->handle);
   for (int prop_count = 0;
        SUCCESS(unicap_enumerate_properties(ldev->handle, NULL, (unicap_property_t *)&props[prop_count], prop_count))
        && (prop_count < MAX_PROPS); prop_count++) {
@@ -366,7 +366,7 @@ void update_props_from_attributes(lives_vdev_t *ldev, lives_rfx_t *rfx) {
       }
     }
   }
-  //unicap_unlock_properties(ldev->handle);
+  unicap_unlock_properties(ldev->handle);
 }
 
 
@@ -391,6 +391,7 @@ static void *lives_ldev_free_cb(lives_object_t *obj, void *data) {
   if (data) {
     lives_vdev_t **pldev = (lives_vdev_t **)data;
     lives_vdev_free(*pldev);
+    *pldev = NULL;
   }
   return NULL;
 }
@@ -398,14 +399,12 @@ static void *lives_ldev_free_cb(lives_object_t *obj, void *data) {
 
 /// get devnumber from user and open it to a new clip
 
-static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
+static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, boolean adj) {
   // create a virtual clip
-  LiVESWidget *dialog;
   lives_obj_attr_t *attr;
   lives_vdev_t *ldev = (lives_vdev_t *)lives_malloc(sizeof(lives_vdev_t));
   unicap_format_t formats[MAX_FORMATS];
   unicap_property_t props[MAX_PROPS];
-  unicap_format_t *format;
   lives_object_t *obj;
   lives_rfx_t *rfx;
   double cpbytes;
@@ -426,10 +425,10 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
 
   unicap_lock_stream(ldev->handle);
 
-  format = lvdev_get_best_format(formats, ldev, WEED_PALETTE_END,
-                                 matmet, DEF_GEN_WIDTH, DEF_GEN_HEIGHT);
+  ldev->format = lvdev_get_best_format(formats, ldev, WEED_PALETTE_END,
+                                       matmet, DEF_GEN_WIDTH, DEF_GEN_HEIGHT);
 
-  if (!format) {
+  if (!ldev->format) {
     lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, lives_ldev_free_cb, (void *)&ldev);
     LIVES_INFO("No useful formats found");
     unicap_unlock_stream(ldev->handle);
@@ -438,29 +437,29 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
     return FALSE;
   }
 
-  if (!(format->buffer_types & UNICAP_BUFFER_TYPE_USER)) {
+  if (!(ldev->format->buffer_types & UNICAP_BUFFER_TYPE_USER)) {
     // have to use system buffer type
-    format->buffer_type = UNICAP_BUFFER_TYPE_SYSTEM;
+    ldev->format->buffer_type = UNICAP_BUFFER_TYPE_SYSTEM;
 
     // set a callback for new frame
     unicap_register_callback(ldev->handle, UNICAP_EVENT_NEW_FRAME, (unicap_callback_t) new_frame_cb,
                              (void *) ldev);
 
-  } else format->buffer_type = UNICAP_BUFFER_TYPE_USER;
+  } else ldev->format->buffer_type = UNICAP_BUFFER_TYPE_USER;
 
-  ldev->buffer_type = format->buffer_type;
+  ldev->buffer_type = ldev->format->buffer_type;
 
   // ignore YUV subspace for now
-  ldev->palette = fourccp_to_weedp(format->fourcc, format->bpp, (int *)&cfile->interlace,
+  ldev->palette = fourccp_to_weedp(ldev->format->fourcc, ldev->format->bpp, (int *)&cfile->interlace,
                                    &ldev->YUV_sampling, &ldev->YUV_subspace, &ldev->YUV_clamping);
   cpbytes = weed_palette_get_bytes_per_pixel(ldev->palette);
 
 #ifdef DEBUG_UNICAP
-  lives_printerr("\nUsing palette with fourcc 0x%x, translated as %s\n", format->fourcc,
+  lives_printerr("\nUsing palette with fourcc 0x%x, translated as %s\n", ldev->format->fourcc,
                  weed_palette_get_name(ldev->palette));
 #endif
 
-  if (!SUCCESS(unicap_set_format(ldev->handle, format))) {
+  if (!SUCCESS(unicap_set_format(ldev->handle, ldev->format))) {
     lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, lives_ldev_free_cb, (void *)&ldev);
     LIVES_ERROR("Unicap error setting format");
     unicap_unlock_stream(ldev->handle);
@@ -469,32 +468,32 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
     return FALSE;
   }
 
-  g_print("ALLX %ld %d %d %d %d\n", format->buffer_size, format->size.width, format->size.height,
+  g_print("ALLX %ld %d %d %d %d\n", ldev->format->buffer_size, ldev->format->size.width, ldev->format->size.height,
           weed_palette_get_bits_per_macropixel(
             ldev->palette), weed_palette_get_pixels_per_macropixel(ldev->palette));
 
-  if (format->buffer_size < (size_t)((double)(format->size.width * format->size.height) * cpbytes)) {
-    int wwidth = format->size.width, awidth;
-    int wheight = format->size.height, aheight;
+  if (ldev->format->buffer_size < (size_t)((double)(ldev->format->size.width * ldev->format->size.height) * cpbytes)) {
+    int wwidth = ldev->format->size.width, awidth;
+    int wheight = ldev->format->size.height, aheight;
     // something went wrong setting the size - the buffer is wrongly sized
 #ifdef DEBUG_UNICAP
     lives_printerr("Unicap buffer size is wrong, resetting it.\n");
 #endif
     // get the size again
 
-    unicap_get_format(ldev->handle, format);
-    awidth = format->size.width;
-    aheight = format->size.height;
+    unicap_get_format(ldev->handle, ldev->format);
+    awidth = ldev->format->size.width;
+    aheight = ldev->format->size.height;
 
 #ifdef DEBUG_UNICAP
     lives_printerr("Wanted frame size %d x %d, got %d x %d\n", wwidth, wheight, awidth, aheight);
 #endif
 
-    format->buffer_size = (size_t)((double)(format->size.width * format->size.height) * cpbytes);
+    ldev->format->buffer_size = (size_t)((double)(ldev->format->size.width * ldev->format->size.height) * cpbytes);
   }
 
-  cfile->hsize = format->size.width;
-  cfile->vsize = format->size.height;
+  cfile->hsize = ldev->format->size.width;
+  cfile->vsize = ldev->format->size.height;
 
   obj = ldev->object = lives_videodev_inst_create(VIDEO_DEV_UNICAP);
   obj->priv = (void *)ldev;
@@ -508,10 +507,10 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
   cfile->ext_src = ldev;
   cfile->ext_src_type = LIVES_EXT_SRC_DEVICE;
 
-  ldev->buffer1.data = (unsigned char *)lives_malloc(format->buffer_size);
-  ldev->buffer1.buffer_size = format->buffer_size;
-  ldev->buffer2.data = (unsigned char *)lives_malloc(format->buffer_size);
-  ldev->buffer2.buffer_size = format->buffer_size;
+  ldev->buffer1.data = (unsigned char *)lives_malloc(ldev->format->buffer_size);
+  ldev->buffer1.buffer_size = ldev->format->buffer_size;
+  ldev->buffer2.data = (unsigned char *)lives_malloc(ldev->format->buffer_size);
+  ldev->buffer2.buffer_size = ldev->format->buffer_size;
 
   if (ldev->buffer_type == UNICAP_BUFFER_TYPE_USER) {
     unicap_queue_buffer(ldev->handle, &ldev->buffer1);
@@ -521,9 +520,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
   ldev->buffer_ready = 0;
   ldev->fileno = mainw->current_file;
 
-  cfile->bpp = format->bpp;
-
-  unicap_start_capture(ldev->handle);
+  cfile->bpp = ldev->format->bpp;
 
   unicap_reenumerate_properties(ldev->handle, &nprops);
 
@@ -631,19 +628,25 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet) {
   rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p3|"));
   rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|hseparator|"));
 
-  dialog = rfx_make_param_dialog(rfx, _("Webcam Settings"));
-  if (lives_dialog_run(LIVES_DIALOG(dialog)) == LIVES_RESPONSE_OK) {
-    update_props_from_attributes(ldev, rfx);
-    lives_widget_destroy(dialog);
+  if (adj) {
+    LiVESWidget *dialog = rfx_make_param_dialog(rfx, _("Webcam Settings"), TRUE);
+    if (lives_dialog_run(LIVES_DIALOG(dialog)) == LIVES_RESPONSE_OK) {
+      update_props_from_attributes(ldev, rfx);
+      lives_widget_destroy(dialog);
+    }
   }
+
+  unicap_start_capture(ldev->handle);
 
   return TRUE;
 }
 
 
 void lives_vdev_free(lives_vdev_t *ldev) {
-  lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, lives_ldev_free_cb, (void *)&ldev);
   if (!ldev) return;
+  lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, lives_ldev_free_cb, (void *)&ldev);
+  if (ldev->format->buffer_type == UNICAP_BUFFER_TYPE_SYSTEM)
+    unicap_unregister_callback(ldev->handle, UNICAP_EVENT_NEW_FRAME);
   unicap_stop_capture(ldev->handle);
   unicap_unlock_stream(ldev->handle);
   unicap_close(ldev->handle);
@@ -655,7 +658,9 @@ void lives_vdev_free(lives_vdev_t *ldev) {
     lives_free(ldev->buffer2.data);
     ldev->buffer2.data = NULL;
   }
+  ldev->object->priv = NULL;
   lives_object_instance_destroy(ldev->object);
+  lives_free(ldev);
 }
 
 
@@ -672,7 +677,7 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, const char *devname) {
   char *fname;
   char mopts[N_MATCH_TYPES];
 
-  LiVESResponseType response;
+  LiVESResponseType response = LIVES_RESPONSE_NONE;
   lives_match_t matmet;
 
   int imatmet;
@@ -717,8 +722,11 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, const char *devname) {
     card_dialog = create_combo_dialog(1, (livespointer)devlist);
     dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(card_dialog));
 
+    lives_dialog_add_button_from_stock(LIVES_DIALOG(card_dialog),
+                                       "settings", _("Adjust Settings"), LIVES_RESPONSE_SHOW_DETAILS);
+
     layout = lives_layout_new(NULL);
-    lives_standard_expander_new(_("Options"), LIVES_BOX(dialog_vbox), layout);
+    lives_standard_expander_new(_("Options"), _("Hide options"), LIVES_BOX(dialog_vbox), layout);
 
     lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
     lives_layout_add_row(LIVES_LAYOUT(layout));
@@ -742,9 +750,7 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, const char *devname) {
 
     response = lives_dialog_run(LIVES_DIALOG(card_dialog));
     lives_list_free(devlist); /// free only after runniong dialog !!!
-    if (response == LIVES_RESPONSE_CANCEL) {
-      return FALSE;
-    }
+    if (response == LIVES_RESPONSE_CANCEL) return FALSE;
     imatmet = rbgroup_get_data(rbgroup, MATCHTYPE_KEY, LIVES_MATCH_UNDEFINED);
     lives_widget_destroy(card_dialog);
     if (imatmet < 0) {
@@ -786,7 +792,7 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, const char *devname) {
 
   g_print("checking formats for %s\n", fname);
 
-  if (!open_vdev_inner(&devices[devno], matmet)) {
+  if (!open_vdev_inner(&devices[devno], matmet, response == LIVES_RESPONSE_SHOW_DETAILS)) {
     d_print(_("Unable to open device %s\n"), fname);
     lives_free(fname);
     close_current_file(old_file);

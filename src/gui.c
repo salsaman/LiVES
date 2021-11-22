@@ -1415,6 +1415,18 @@ void create_LiVES(void) {
   mainw->show_messages = lives_standard_image_menu_item_new_with_label(_("Show _Messages"));
   lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_messages);
 
+  lives_menu_add_separator(LIVES_MENU(mainw->info_menu));
+
+#ifdef HAVE_PULSE_AUDIO
+  mainw->show_aplayer_attr = lives_standard_image_menu_item_new_with_label(_("Show Audio Player Attributes"));
+  lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_aplayer_attr);
+  lives_widget_set_sensitive(mainw->show_aplayer_attr, FALSE);
+
+  mainw->show_aplayer_read_attr = lives_standard_image_menu_item_new_with_label(_("Show Audio Reader Attributes"));
+  lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_aplayer_read_attr);
+  lives_widget_set_sensitive(mainw->show_aplayer_read_attr, FALSE);
+#endif
+
 #ifdef ENABLE_JACK
   mainw->show_jackmsgs = lives_standard_image_menu_item_new_with_label(_("Show _Jack Status Messages"));
   lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_jackmsgs);
@@ -3089,6 +3101,12 @@ void create_LiVES(void) {
                             LIVES_GUI_CALLBACK(on_show_clipboard_info_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_messages), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_show_messages_activate), NULL);
+#ifdef HAVE_PULSE_AUDIO
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_aplayer_attr), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(show_aplayer_attribs), &mainw->pulsed);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_aplayer_read_attr), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(show_aplayer_attribs), &mainw->pulsed_read);
+#endif
 #ifdef ENABLE_JACK
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_jackmsgs), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(show_jack_status), LIVES_INT_TO_POINTER(3));
@@ -5088,6 +5106,7 @@ void splash_init(void) {
       lives_widget_set_fg_color(mainw->splash_progress, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     }
 
+    lives_widget_set_text_size(LIVES_WIDGET(mainw->splash_label), LIVES_WIDGET_STATE_NORMAL, LIVES_TEXT_SIZE_LARGE);
     hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
 
     lives_box_pack_start(LIVES_BOX(hbox), mainw->splash_progress, TRUE, TRUE, widget_opts.packing_width * 2);
@@ -5131,8 +5150,10 @@ void splash_msg(const char *msg, double pct) {
 #ifndef VALGRIND_ON
   if (!mainw->debug) {
 #if GTK_CHECK_VERSION(3, 16, 0)
-    if (!prefs->vj_mode)
+    if (!prefs->vj_mode) {
       set_progbar_colours(mainw->splash_progress, FALSE);
+      lives_widget_set_text_size(LIVES_WIDGET(mainw->splash_label), LIVES_WIDGET_STATE_NORMAL, LIVES_TEXT_SIZE_LARGE);
+    }
 #endif
   }
 #endif

@@ -942,8 +942,8 @@ LIVES_GLOBAL_INLINE void do_clip_divergence_error(int fileno) {
   char *msg = lives_strdup_printf(_("Errors were encountered when reloading LiVES' copy of the clip %s\n"
                                     "Please click %s if you wish to exit from LiVES,\n"
                                     "or %s to update the clip details in LiVES and continue anyway.\n"),
-                                  IS_VALID_CLIP(fileno) ? mainw->files[fileno]->name : "??????",
-                                  STOCK_LABEL_TEXT(ABORT), STOCK_LABEL_TEXT(OK));
+                                  (IS_VALID_CLIP(fileno) && *mainw->files[fileno]->name) ? mainw->files[fileno]->name
+                                  : "??????", STOCK_LABEL_TEXT(ABORT), STOCK_LABEL_TEXT(OK));
   do_abort_ok_dialog(msg);
   lives_free(msg);
   check_storage_space(fileno, FALSE);

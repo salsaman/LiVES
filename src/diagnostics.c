@@ -13,19 +13,48 @@
 #define STATS_TC (TICKS_PER_SECOND_DBL)
 static double inst_fps = 0.;
 
+boolean debug_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                       livespointer statep) {
+  break_me("debug_callback");
+  return TRUE;
+}
+
 LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
+  static int last_play_sequence = -1;
+  static ticks_t last_curr_tc = 0, currticks;
+  static ticks_t last_mini_ticks = 0;
+  static frames_t last_mm = 0;
+
+  currticks = mainw->clock_ticks;
+
+  if (mainw->play_sequence > last_play_sequence) {
+    last_curr_tc = currticks;
+    last_play_sequence = mainw->play_sequence;
+    inst_fps = cfile->pb_fps;
+    return inst_fps;
+  }
+
+  if (currticks > last_curr_tc + STATS_TC) {
+    if (mainw->fps_mini_ticks == last_mini_ticks) {
+      inst_fps = (double)(mainw->fps_mini_measure - last_mm
+                          + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL / cfile->pb_fps)
+                 / ((double)(currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
+      mainw->inst_fps = inst_fps;
+    }
+    last_curr_tc = currticks;
+    last_mini_ticks = mainw->fps_mini_ticks;
+    last_mm = mainw->fps_mini_measure;
+  }
+
   if (get_msg) get_stats_msg(TRUE);
   return inst_fps;
 }
 
 
 char *get_stats_msg(boolean calc_only) {
-  double avsync = 1.0;
-  static int last_play_sequence = -1;
-  static ticks_t last_curr_tc = 0, currticks;
-  static ticks_t last_mini_ticks = 0;
-  static frames_t last_mm = 0;
   volatile float *load;
+
+  double avsync = 1.0;
 
   boolean have_avsync = FALSE;
   char *msg, *audmsg = NULL, *bgmsg = NULL, *fgpal = NULL;
@@ -33,8 +62,6 @@ char *get_stats_msg(boolean calc_only) {
   char *msg2 = lives_strdup("");
 
   if (!LIVES_IS_PLAYING) return NULL;
-  //currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
-  currticks = mainw->clock_ticks;
 
   if (CURRENT_CLIP_HAS_AUDIO) {
 #ifdef ENABLE_JACK
@@ -59,25 +86,6 @@ char *get_stats_msg(boolean calc_only) {
 #endif
   }
   //currticks = lives_get_current_ticks();
-
-  if (mainw->play_sequence > last_play_sequence) {
-    last_curr_tc = currticks;
-    last_play_sequence = mainw->play_sequence;
-    inst_fps = cfile->pb_fps;
-    return NULL;
-  }
-
-  if (currticks > last_curr_tc + STATS_TC) {
-    if (mainw->fps_mini_ticks == last_mini_ticks) {
-      inst_fps = (double)(mainw->fps_mini_measure - last_mm
-                          + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL / cfile->pb_fps)
-                 / ((double)(currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
-      mainw->inst_fps = inst_fps;
-    }
-    last_curr_tc = currticks;
-    last_mini_ticks = mainw->fps_mini_ticks;
-    last_mm = mainw->fps_mini_measure;
-  }
 
   if (calc_only) return NULL;
   load = get_core_loadvar(0);

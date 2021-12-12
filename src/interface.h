@@ -34,6 +34,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which); //
 void redraw_timer_bars(double oldx, double newx, int which); ///< paint a damage region
 void show_playbar_labels(int clipno);
 void redraw_timeline(int clipno);
+void redraw_timeline_bg(int clipno);
 
 void msg_area_scroll(LiVESAdjustment *, livespointer userdata);
 void msg_area_scroll_to_end(LiVESWidget *, LiVESAdjustment *);
@@ -106,6 +107,18 @@ typedef struct {
 
 lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt);
 
+enum {
+  ENTRYW_INVALID,
+  ENTRYW_CLIP_RENAME,
+  ENTRYW_SAVE_SET,
+  ENTRYW_RELOAD_SET,
+  ENTRYW_SAVE_SET_MT,
+  ENTRYW_SAVE_SET_PROJ_EXPORT,
+  ENTRYW_INIT_WORKDIR,
+  ENTRYW_TRACKNAME_MT,
+  ENTRYW_EXPORT_THEME,
+};
+
 typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *entry;
@@ -125,7 +138,7 @@ typedef struct {
   LiVESWidget *parent;
 } _entryw;
 
-_entryw *create_rename_dialog(int type);
+_entryw *create_entry_dialog(int type);
 _entryw *create_location_dialog(void);
 _entryw *create_cds_dialog(int type);
 

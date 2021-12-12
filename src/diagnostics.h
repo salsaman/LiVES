@@ -10,6 +10,9 @@
 #include "main.h"
 #include "mainwindow.h"
 
+boolean debug_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod,
+                       livespointer statep);
+
 void explain_missing_activate(LiVESMenuItem *, livespointer user_data);
 
 void run_diagnostic(LiVESWidget *, const char *testname);

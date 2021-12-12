@@ -9,6 +9,8 @@
 /// defns. //////
 #define MAX_SET_NAME_LEN 128
 
+#define SET_LITERAL "set"
+
 #define LAYOUTS_DIRNAME "layouts"
 #define CLIPS_DIRNAME "clips"
 #define IMPORTS_DIRNAME "imports"
@@ -50,6 +52,8 @@ typedef struct {
 
 // directory of a clip in the current set
 #define CURRENT_SET_CLIP_DIR(handle) (_MAKE_CLIPS_DIRNAME_(mainw->set_name, (handle)))
+
+#define SET_ORDER_FILE(set) lives_build_filename(SET_DIR((set)), CLIP_ORDER_FILENAME, NULL);
 
 #define LAYOUTS_DIR(set) (lives_build_path(SET_DIR((set)), LAYOUTS_DIRNAME, NULL))
 #define FUTURE_LAYOUTS_DIR(set) (lives_build_path(FUTURE_SET_DIR((set)), LAYOUTS_DIRNAME, NULL))

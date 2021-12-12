@@ -102,6 +102,7 @@ typedef struct {
   int64_t totbytes; ///< total bytes read / written to / from buffer
   size_t orig_size; ///< size in bytes of underlying file
   char *pathname; ///< path to underlying file
+  pthread_mutex_t sync_mutex;
   volatile uint64_t flags;
 } lives_file_buffer_t;
 

@@ -261,6 +261,19 @@ static int Cr_Rc[256];
 static int Cr_Gc[256];
 static int Cr_Bc[256];
 
+static float Yf_Rc[256];
+static float Yf_Gc[256];
+static float Yf_Bc[256];
+
+#if 0
+static float Cbf_Rc[256];
+static float Cbf_Gc[256];
+static float Cbf_Bc[256];
+static float Crf_Rc[256];
+static float Crf_Gc[256];
+static float Crf_Bc[256];
+#endif
+
 // unclamped Y'CbCr
 static int Y_Ru[256];
 static int Y_Gu[256];
@@ -957,6 +970,10 @@ static void set_conversion_arrays(int clamping, int subspace) {
       Y_R = Y_Rc;
       Y_G = Y_Gc;
       Y_B = Y_Bc;
+
+      Yf_R = Yf_Rc;
+      Yf_G = Yf_Gc;
+      Yf_B = Yf_Bc;
 
       Cr_R = Cr_Rc;
       Cr_G = Cr_Gc;
@@ -2059,7 +2076,6 @@ LIVES_GLOBAL_INLINE void init_conversions(int intent) {
     // this ensures we render at the highest settings
     mainw->effort = -EFFORT_RANGE_MAX;
   } else {
-    //if (mainw && mainw->multitrack) prefs->pb_quality = PB_QUALITY_LOW;
     if (prefs) prefs->pb_quality = future_prefs->pb_quality;
   }
 }
@@ -2304,6 +2320,7 @@ LIVES_LOCAL_INLINE void yuv2rgb_float(uint8_t y, uint8_t u, uint8_t v, uint8_t *
 }
 
 #define yuv2rgb(y, u, v, r, g, b) (yuv2rgb_int((y), (u), (v), (r), (g), (b)))
+//#define yuv2rgb(y, u, v, r, g, b) (yuv2rgb_float((y), (u), (v), (r), (g), (b)))
 #define yuv2bgr(y, u, v, b, g, r) yuv2rgb(y, u, v, r, g, b)
 
 LIVES_LOCAL_INLINE void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *lut) {

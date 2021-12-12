@@ -1108,7 +1108,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
     for (i = 1; i <= MAX_FILES && mainw->files[i]; i++) {
       for (lmap = mainw->files[i]->layout_map; lmap; lmap = lmap->next) {
         // lmap->data starts with layout name
-        g_print("for i, got %s vs %s\n", (char *)lmap->data, lfile);
+        //g_print("for i, got %s vs %s\n", (char *)lmap->data, lfile);
         if (!lives_strncmp((char *)lmap->data, lfile, strlen(lfile))) {
           threaded_dialog_spin(0.);
           array = lives_strsplit((char *)lmap->data, "|", -1);
@@ -4232,20 +4232,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mainw->multitrack = mt;
 
-  mt->frame_pixbuf = NULL;
-
-  mt->is_ready = FALSE;
-  mt->tl_marks = NULL;
-
-  mt->timestring[0] = 0;
-
-  mt->idlefunc = 0; // idle function for auto backup
-  mt->auto_back_time = 0;
-
-  mt->playing_sel = FALSE;
-
-  mt->in_sensitise = FALSE;
-
   mt->render_file = mainw->current_file;
 
   if (!mainw->sl_undo_mem) {
@@ -4253,9 +4239,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     if (!mt->undo_mem) {
       do_mt_undo_mem_error();
     }
-    mt->undo_buffer_used = 0;
-    mt->undos = NULL;
-    mt->undo_offset = 0;
   } else {
     mt->undo_mem = mainw->sl_undo_mem;
     mt->undo_buffer_used = mainw->sl_undo_buffer_used;
@@ -4265,33 +4248,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->preview_layer = -1000000;
 
-  mt->solo_inst = NULL;
-
-  mt->apply_fx_button = NULL;
-  mt->resetp_button = NULL;
-
   mt->cursor_style = LIVES_CURSOR_NORMAL;
 
   mt->file_selected = orig_file;
-
-  mt->auto_changed = mt->changed = FALSE;
-
-  mt->was_undo_redo = FALSE;
-
-  mt->tl_mouse = FALSE;
-
-  mt->sel_locked = FALSE;
-
-  mt->clip_labels = NULL;
-
-  mt->force_load_name = NULL;
-
-  mt->dumlabel1 = mt->dumlabel2 = mt->tl_label = mt->timeline = mt->timeline_eb =
-                                    mt->timeline_reg = NULL;
-
-  mt->tl_surf = mt->tl_ev_surf = mt->tl_reg_surf = NULL;
-
-  mt->play_width = mt->play_height = 0;
 
   // init .opts =
   if (mainw->multi_opts.set) {
@@ -4335,92 +4294,30 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   if (force_pertrack_audio) mt->opts.pertrack_audio = TRUE;
   force_pertrack_audio = FALSE;
 
-  mt->tl_fixed_length = 0.;
-  mt->ptr_time = 0.;
-  mt->video_draws = NULL;
-  mt->block_selected = NULL;
   mt->event_list = event_list;
   mt->accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_remove_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->accel_group);
   lives_window_add_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mt->accel_group);
 
   mt->fps = fps;
-  mt->hotspot_x = mt->hotspot_y = 0;
-  mt->redraw_block = FALSE;
-
-  mt->region_start = mt->region_end = 0.;
-  mt->region_updating = FALSE;
-  mt->is_rendering = FALSE;
-  mt->pr_audio = FALSE;
-  mt->selected_tracks = NULL;
-  mt->mt_frame_preview = FALSE;
-  mt->current_rfx = NULL;
   mt->current_fx = -1;
-  mt->putative_block = NULL;
-  mt->specific_event = NULL;
-
-  mt->block_tl_move = FALSE;
-  mt->block_node_spin = FALSE;
-
-  mt->is_atrans = FALSE;
 
   mt->last_fx_type = MT_LAST_FX_NONE;
 
   mt->display = mainw->mgeom[widget_opts.monitor].disp;
 
-  mt->moving_block = FALSE;
-
   mt->insert_start = mt->insert_end = -1;
   mt->insert_avel = 1.;
 
-  mt->selected_init_event = mt->init_event = NULL;
-
-  mt->auto_reloading = FALSE;
-  mt->fm_edit_event = NULL;
-
-  mt->nb_label = NULL;
-  mt->fx_list_box = NULL;
-  mt->fx_list_scroll = NULL;
-  mt->fx_list_label = NULL;
-
-  mt->moving_fx = NULL;
   mt->fx_order = FX_ORD_NONE;
 
   lives_memset(mt->layout_name, 0, 1);
 
-  mt->did_backup = FALSE;
-  mt->framedraw = NULL;
-
-  mt->audio_draws = NULL;
-  mt->audio_vols = mt->audio_vols_back = NULL;
-  mt->amixer = NULL;
-  mt->ignore_load_vals = FALSE;
-
-  mt->exact_preview = 0;
-
   mt->context_time = -1.;
-  mt->use_context = FALSE;
 
   mt->no_expose = mt->no_expose_frame = TRUE;
 
-  mt->is_paused = FALSE;
-
-  mt->pb_start_event = NULL;
-
-  mt->aud_track_selected = FALSE;
-
-  mt->has_audio_file = FALSE;
-
-  mt->fx_params_label = NULL;
-  mt->fx_box = NULL;
-
   mt->selected_filter = -1;
-
-  mt->top_track = 0;
-
-  mt->cb_list = NULL;
-
-  mt->no_frame_update = FALSE;
 
   if (prefs->mt_enter_prompt && rdet) {
     mt->user_width = rdet->width;
@@ -13788,7 +13685,7 @@ void on_rename_track_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   cname = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "track_name");
 
-  rnentry = create_rename_dialog(7);
+  rnentry = create_entry_dialog(ENTRYW_TRACKNAME_MT);
 
   response = lives_dialog_run(LIVES_DIALOG(rnentry->dialog));
 
@@ -17337,10 +17234,10 @@ boolean set_new_set_name(lives_mt * mt) {
 
   do {
     // prompt for a set name, advise user to save set
-    _entryw *renamew = create_rename_dialog(4);
-    lives_widget_show(renamew->dialog);
+    _entryw *entryw = create_entry_dialog(ENTRYW_SAVE_SET_MT);
+    lives_widget_show(entryw->dialog);
     lives_widget_context_update();
-    response = lives_dialog_run(LIVES_DIALOG(renamew->dialog));
+    response = lives_dialog_run(LIVES_DIALOG(entryw->dialog));
     if (response == LIVES_RESPONSE_CANCEL) {
       mainw->cancelled = CANCEL_USER;
       if (mt) {
@@ -17351,9 +17248,9 @@ boolean set_new_set_name(lives_mt * mt) {
       }
       return FALSE;
     }
-    lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s", (tmp = U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
-    lives_widget_destroy(renamew->dialog);
-    lives_freep((void **)&renamew);
+    lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s", (tmp = U82F(lives_entry_get_text(LIVES_ENTRY(entryw->entry)))));
+    lives_widget_destroy(entryw->dialog);
+    lives_freep((void **)&entryw);
     lives_free(tmp);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   } while (!is_legal_set_name(new_set_name, FALSE, FALSE));

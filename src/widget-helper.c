@@ -19,6 +19,7 @@
 #define EV_LIM 64
 
 static boolean _lives_standard_button_set_label(LiVESButton *, const char *txt);
+static void lives_widget_show_all_cb(LiVESWidget *other, livespointer user_data);
 
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
@@ -299,8 +300,40 @@ static boolean widget_state_cb(LiVESWidgetObject *object, livespointer pspec, li
 
 
 WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_auto(LiVESWidgetObject *obj, const char *key, livespointer data) {
+  // free data on obj destroy
   lives_widget_object_set_data_full(obj, key, data, lives_free);
 }
+
+
+typedef struct {
+  LiVESWidgetObject *obj;
+  char *key;
+} lives_objkey;
+
+static void lives_widget_nullify_objkey(LiVESWidget *widget, livespointer xobjkey) {
+  lives_objkey *objkey = (lives_objkey *)xobjkey;
+  if (objkey->obj) {
+    lives_widget_object_set_data(objkey->obj, objkey->key, NULL);
+    if (!widget_opts.no_gui) {
+      lives_signal_handlers_sync_disconnect_by_func(LIVES_GUI_OBJECT(objkey->obj),
+          LIVES_GUI_CALLBACK(lives_widget_show_all_cb),
+          (livespointer)(widget));
+    }
+  }
+}
+
+WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_destroyable(LiVESWidgetObject *obj, const char *key,
+    LiVESWidgetObject *widget) {
+  // nullify data on target obj destroy
+  lives_objkey *objkey = lives_malloc(sizeof(lives_objkey));
+  objkey->obj = obj;
+  objkey->key = lives_strdup(key);
+  lives_widget_object_set_data(obj, key, (livespointer)widget);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_DESTROY_SIGNAL,
+                            LIVES_GUI_CALLBACK(lives_widget_nullify_objkey), objkey);
+  lives_widget_nullify_with((LiVESWidget *)obj, (void **)&objkey->obj);
+}
+
 
 static void weed_plant_free_cb(livespointer plant) {weed_plant_free((weed_plant_t *)plant);}
 
@@ -4462,7 +4495,7 @@ LIVES_GLOBAL_INLINE boolean lives_button_set_image_from_stock(LiVESButton *butto
             LiVESPixbuf *pixbuf = lives_pixbuf_new_from_stock_at_size(iname, LIVES_ICON_SIZE_BUTTON, 0);
             if (LIVES_IS_PIXBUF(pixbuf)) {
               lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), SBUTT_PIXBUF_KEY, (livespointer)pixbuf);
-              if (prefs->show_dev_opts) g_print("Guessed icon %s for %s\n", iname, stock_id);
+              //if (prefs->show_dev_opts) g_print("Guessed icon %s for %s\n", iname, stock_id);
             } else return FALSE;
           } else return FALSE;
         }
@@ -6406,11 +6439,22 @@ WIDGET_HELPER_GLOBAL_INLINE const char *lives_label_get_text(LiVESLabel *label) 
 }
 
 
+boolean _lives_label_set_text_with_mnemonic(LiVESLabel *label, const char *text) {
+#ifdef GUI_GTK
+  main_thread_execute((lives_funcptr_t)gtk_label_set_text_with_mnemonic, 0, NULL, "vs",
+                      label, text);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_text(LiVESLabel *label, const char *text) {
   if (!text) return lives_label_set_text(label, "");
   if (widget_opts.use_markup) return lives_label_set_markup(label, text);
 #ifdef GUI_GTK
-  if (widget_opts.mnemonic_label) gtk_label_set_text_with_mnemonic(label, text);
+  //if (widget_opts.mnemonic_label) _lives_label_set_text_with_mnemonic(_label_set_text_with_mnemonic(label, text);
+  if (widget_opts.mnemonic_label) _lives_label_set_text_with_mnemonic(label, text);
   else gtk_label_set_text(label, text);
   return TRUE;
 #endif
@@ -9503,8 +9547,13 @@ static void lives_widget_show_all_cb(LiVESWidget * other, livespointer user_data
 boolean lives_widget_set_show_hide_with(LiVESWidget * widget, LiVESWidget * other) {
   // show / hide the other widget when and only when the child is shown / hidden
   if (!widget || !other) return FALSE;
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(other),
-                               SHOWHIDE_CONTROLLER_KEY, widget);
+
+  // need to remove this key when widget is destroyed
+  // however we need to avoid doing so in the case where other is destryoed first
+  // thus we use lives_widget_object_set_data_destroyable()
+  lives_widget_object_set_data_destroyable(LIVES_WIDGET_OBJECT(other),
+      SHOWHIDE_CONTROLLER_KEY, (LiVESWidgetObject *)widget);
+
   if (!widget_opts.no_gui) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(other), LIVES_WIDGET_SHOW_SIGNAL,
                               LIVES_GUI_CALLBACK(lives_widget_show_all_cb),

@@ -277,7 +277,7 @@ void lives_exit(int signum) {
           }
           if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
 
-          if (IS_NORMAL_CLIP(i) && mainw->files[i]->ext_src
+          if (IS_PHYSICAL_CLIP(i) && mainw->files[i]->ext_src
               && mainw->files[i]->ext_src_type == LIVES_EXT_SRC_DECODER) {
             // must do this before we move it
             close_clip_decoder(i);
@@ -293,7 +293,7 @@ void lives_exit(int signum) {
           /// - scrap files, if we are not closing or crash recovery is disabled
           /// - "normal" clips, unless crash recovery is in effect, or
           /// - we are not exiting and it's the clipboard, or the mt render file
-          if (!IS_NORMAL_CLIP(i) || (i == 0 && !mainw->only_close)
+          if (!IS_PHYSICAL_CLIP(i) || (i == 0 && !mainw->only_close)
               || (!mainw->leave_files && !mainw->leave_recovery)
               || (i == mainw->scrap_file && (mainw->only_close ||
                                              !mainw->leave_recovery || !prefs->rr_crash))
@@ -302,7 +302,7 @@ void lives_exit(int signum) {
               || (i > 0 && !mainw->only_close && mainw->multitrack
                   && i == mainw->multitrack->render_file && !CLIP_HAS_VIDEO(i)
                   && !CLIP_HAS_AUDIO(i))) {
-            if (mainw->only_close || !IS_NORMAL_CLIP(i)) {
+            if (mainw->only_close || !IS_PHYSICAL_CLIP(i)) {
               int current_file = mainw->current_file;
               mainw->current_file = i;
               close_current_file(current_file);
@@ -331,7 +331,7 @@ void lives_exit(int signum) {
                 threaded_dialog_spin(0.);
                 lives_free(com);
               }
-              if (IS_NORMAL_CLIP(i)) {
+              if (IS_PHYSICAL_CLIP(i)) {
                 int fd;
                 char *fname;
                 if (IS_ASCRAP_CLIP(i))
@@ -1719,16 +1719,17 @@ void on_export_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     char new_set_name[MAX_SET_NAME_LEN];
     do {
       // prompt for a set name, advise user to save set
-      _entryw *renamew = create_rename_dialog(5);
-      lives_widget_show_all(renamew->dialog);
-      response = lives_dialog_run(LIVES_DIALOG(renamew->dialog));
+      _entryw *entryw = create_entry_dialog(ENTRYW_SAVE_SET_PROJ_EXPORT);
+      lives_widget_show_all(entryw->dialog);
+      response = lives_dialog_run(LIVES_DIALOG(entryw->dialog));
       if (response == LIVES_RESPONSE_CANCEL) {
         mainw->cancelled = CANCEL_USER;
         return;
       }
-      lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s", (tmp = U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
-      lives_widget_destroy(renamew->dialog);
-      lives_freep((void **)&renamew);
+      lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s",
+                     (tmp = U82F(lives_entry_get_text(LIVES_ENTRY(entryw->entry)))));
+      lives_widget_destroy(entryw->dialog);
+      lives_freep((void **)&entryw);
       lives_free(tmp);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
@@ -1798,14 +1799,14 @@ void on_export_theme_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   do {
     // prompt for a set name, advise user to save set
-    _entryw *renamew = create_rename_dialog(8);
-    lives_widget_show_all(renamew->dialog);
-    response = lives_dialog_run(LIVES_DIALOG(renamew->dialog));
+    _entryw *entryw = create_entry_dialog(ENTRYW_EXPORT_THEME);
+    lives_widget_show_all(entryw->dialog);
+    response = lives_dialog_run(LIVES_DIALOG(entryw->dialog));
     if (response == LIVES_RESPONSE_CANCEL) return;
     lives_snprintf(theme_name, 128, "%s",
-                   (tmp = U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
-    lives_widget_destroy(renamew->dialog);
-    lives_freep((void **)&renamew);
+                   (tmp = U82F(lives_entry_get_text(LIVES_ENTRY(entryw->entry)))));
+    lives_widget_destroy(entryw->dialog);
+    lives_freep((void **)&entryw);
     lives_free(tmp);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
@@ -6335,7 +6336,7 @@ void switch_clip(int type, int newclip, boolean force) {
       //chill_decoder_plugin(mainw->blend_file);
     }
 
-    track_decoder_free(1, mainw->blend_file, newclip);
+    track_decoder_free(1, mainw->blend_file);
 
     mainw->blend_file = newclip;
     mainw->whentostop = NEVER_STOP;
@@ -7772,7 +7773,7 @@ void on_ping_pong_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 
 void on_volume_slider_value_changed(LiVESScaleButton * sbutton, livespointer user_data) {
-  pref_factory_float(PREF_MASTER_VOLUME, lives_scale_button_get_value(sbutton), TRUE);
+  pref_factory_float(PREF_MASTER_VOLUME, lives_scale_button_get_value(sbutton), !LIVES_IS_PLAYING);
 }
 
 
@@ -8730,8 +8731,8 @@ void on_load_vcd_ok_clicked(LiVESButton * button, livespointer user_data) {
 
 
 void on_rename_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  _entryw *renamew = create_rename_dialog(1);
-  lives_widget_show_all(renamew->dialog);
+  _entryw *entryw = create_entry_dialog(ENTRYW_CLIP_RENAME);
+  lives_widget_show_all(entryw->dialog);
 }
 
 
@@ -8861,10 +8862,10 @@ void on_rename_clip_name(LiVESButton * button, livespointer user_data) {
   boolean bad_header = FALSE;
 
   if (!user_data) {
-    _entryw *renamew = (_entryw *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), STRUCT_KEY);
-    lives_snprintf(title, 256, "%s", lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
-    lives_widget_destroy(renamew->dialog);
-    lives_free(renamew);
+    _entryw *entryw = (_entryw *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), STRUCT_KEY);
+    lives_snprintf(title, 256, "%s", lives_entry_get_text(LIVES_ENTRY(entryw->entry)));
+    lives_widget_destroy(entryw->dialog);
+    lives_free(entryw);
   } else lives_snprintf(title, 256, "%s", (char *)user_data);
 
   if (!(strlen(title))) return;
@@ -10655,6 +10656,25 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 }
 
 
+#define DEF_VOL_ADJ .05
+
+boolean volup_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+                       livespointer statep) {
+  double vol = future_prefs->volume + DEF_VOL_ADJ;
+  if (vol > 1.0) vol = 1.0;
+  if (vol != future_prefs->volume) pref_factory_float(PREF_MASTER_VOLUME, vol, TRUE);
+  return TRUE;
+}
+
+boolean voldown_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+                         livespointer statep) {
+  double vol = future_prefs->volume - DEF_VOL_ADJ;
+  if (vol > 1.0) vol = 1.0;
+  if (vol != future_prefs->volume) pref_factory_float(PREF_MASTER_VOLUME, vol, TRUE);
+  return TRUE;
+}
+
+
 char *get_palette_name_for_clip(int clipno) {
   lives_clip_t *sfile;
   char *palname = NULL;
@@ -10718,6 +10738,7 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   if (!keybd) mainw->lockstats = !mainw->lockstats;
   if (!mainw->lockstats) return FALSE;
 
+  get_inst_fps(FALSE);
   mainw->overlay_msg = get_stats_msg(FALSE);
   return FALSE;
 }

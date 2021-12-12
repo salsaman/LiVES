@@ -1089,14 +1089,23 @@ static char *file_to_file_details(const char *filename, lives_file_dets_t *fdets
           if (read_headers(clipno, filename, NULL)) {
             lives_clip_t *sfile = mainw->files[clipno];
             char *name = lives_strdup(sfile->name);
+            char *hdrstring = lives_strdup_printf(_("Header version %d (%s)"), sfile->header_version,
+                                                  (tmp =
+                                                      (sfile->header_version == LIVES_CLIP_HEADER_VERSION) ?
+                                                      _("Same as current") :
+                                                      sfile->header_version < LIVES_CLIP_HEADER_VERSION ?
+                                                      lives_strdup_printf(_("Current is %d"),
+                                                          LIVES_CLIP_HEADER_VERSION) :
+                                                      lives_strdup_printf(_("Current is %d; consider updating before loading"),
+                                                          LIVES_CLIP_HEADER_VERSION)));
+            lives_free(tmp);
             extra_details =
               lives_strdup_printf("%s%s%s", extra_details, *extra_details ? ", " : "",
                                   (tmp = lives_strdup_printf
-                                         (_("Source: %s, frames: %d, size: %d X %d, fps: %.3f"),
-                                          name, sfile->frames, sfile->hsize,
+                                         (_("Source: %s\n%s\nFrames: %d, size: %d X %d, fps: %.3f"),
+                                          name, hdrstring, sfile->frames, sfile->hsize,
                                           sfile->vsize, sfile->fps)));
-            lives_free(tmp);
-            lives_free(name);
+            lives_free(tmp); lives_free(name); lives_free(hdrstring);
             lives_freep((void **)&mainw->files[clipno]);
             if (mainw->first_free_file == ALL_USED || mainw->first_free_file > clipno)
               mainw->first_free_file = clipno;
@@ -2223,8 +2232,6 @@ static boolean rec_desk_done(livespointer data) {
     sfile->ext_src_type = LIVES_EXT_SRC_NONE;
     sfile->cb_src = -1;
 
-    migrate_from_staging(recargs->clipno);
-
     if (sfile->frames <= 0) goto ohnoes;
     add_to_clipmenu_any(recargs->clipno);
 
@@ -2313,7 +2320,6 @@ void rec_desk(void *args) {
   sfile = mainw->files[recargs->clipno];
   clips[0] = recargs->clipno;
   migrate_from_staging(recargs->clipno);
-  sfile->ext_src_type = LIVES_EXT_SRC_RECORDER;
 
   lives_widget_set_sensitive(mainw->desk_rec, TRUE);
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->delay_time);
@@ -2330,11 +2336,16 @@ void rec_desk(void *args) {
 
   // temp kludge ahead !
   open_ascrap_file(recargs->clipno);
+
+#ifdef HAVE_PULSE_AUDIO
   pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
   //pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_EXT);
+#endif
+
+  sfile->ext_src_type = LIVES_EXT_SRC_RECORDER;
+
   mainw->rec_samples = -1; // record unlimited
   //
-  break_me("RDY");
   recargs->tottime = lives_get_current_ticks();
 
   while (1) {
@@ -2524,6 +2535,11 @@ char *get_wid_for_name(const char *wname) {
 }
 
 
+static void *enable_ss_cb(lives_object_t *obj, void *data) {
+  lives_reenable_screensaver();
+  return NULL;
+}
+
 boolean lives_reenable_screensaver(void) {
   char *com = NULL, *tmp;
 #ifdef GDK_WINDOWING_X11
@@ -2553,11 +2569,16 @@ boolean lives_reenable_screensaver(void) {
   } else com = lives_strdup("");
 #endif
 
+  lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, enable_ss_cb, NULL);
+
   if (com) {
     lives_cancel_t cancelled = mainw->cancelled;
     lives_system(com, TRUE);
     lives_free(com);
     mainw->cancelled = cancelled;
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
+    }
     return TRUE;
   }
   return FALSE;
@@ -2599,6 +2620,12 @@ boolean lives_disable_screensaver(void) {
     lives_system(com, TRUE);
     lives_free(com);
     mainw->cancelled = cancelled;
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
+    }
+    else {
+      lives_hook_prepend(mainw->global_hook_closures, ABORT_HOOK, 0, enable_ss_cb, NULL);
+    }
     return TRUE;
   }
   return FALSE;

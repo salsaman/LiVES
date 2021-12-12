@@ -316,6 +316,7 @@ lives_img_type_t resolve_img_type(lives_clip_t *sfile) {
 
 
 boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_t maxframe) {
+  // TODO - if we have binfmt, check md5sum, afilesize, video_time, laudio_time, etc.
   lives_clip_t *sfile = mainw->files[fileno], *binf = NULL;
   lives_img_type_t empirical_img_type = sfile->img_type, oemp = empirical_img_type;
   lives_img_type_t ximgtype;
@@ -393,6 +394,9 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
               }
             } else {
               if (ximgtype == oemp) empirical_img_type = oemp;
+              if (prefs->show_dev_opts) {
+                g_printerr("clip %s has wrong img formats\n", sfile->handle);
+              }
               bad_imgfmts = TRUE;
             }
             lives_free(fname);
@@ -660,7 +664,12 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
         mainw->cancelled = CANCEL_NONE;
         end_threaded_dialog();
         threaded_dialog_pop();
-      } else mismatch = TRUE;
+      } else {
+        if (prefs->show_dev_opts) {
+          g_printerr("bad frame sizes detected\n");
+        }
+        mismatch = TRUE;
+      }
     }
   }
   if (bad_imgfmts) {
@@ -679,7 +688,12 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
       mainw->cancelled = CANCEL_NONE;
       end_threaded_dialog();
       threaded_dialog_pop();
-    } else mismatch = TRUE;
+    } else {
+      if (prefs->show_dev_opts) {
+        g_printerr("Img format error\n");
+      }
+      mismatch = TRUE;
+    }
     mainw->cancelled = CANCEL_NONE;
   }
 

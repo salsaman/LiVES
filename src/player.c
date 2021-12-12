@@ -171,9 +171,8 @@ void player_sensitize(void) {
 }
 
 
-void track_decoder_free(int i, int oclip, int nclip) {
-  if (oclip == nclip) return;
-  if (mainw->old_active_track_list[i] == oclip) {
+void track_decoder_free(int i, int oclip) {
+  if (i < 0 || mainw->old_active_track_list[i] == oclip) {
     if (mainw->track_decoders[i]) {
       boolean can_free = TRUE;
       if (oclip < 0 || IS_VALID_CLIP(oclip)) {
@@ -200,7 +199,7 @@ void track_decoder_free(int i, int oclip, int nclip) {
       else chill_decoder_plugin(oclip); /// free buffers to relesae memory
       mainw->track_decoders[i] = NULL;
     }
-    mainw->old_active_track_list[i] = 0;
+    if (i >= 0) mainw->old_active_track_list[i] = 0;
   }
 }
 
@@ -216,10 +215,13 @@ LIVES_GLOBAL_INLINE void init_track_decoders(void) {
 
 LIVES_GLOBAL_INLINE void free_track_decoders(void) {
   for (int i = 0; i < MAX_TRACKS; i++) {
-    if (mainw->track_decoders[i] &&
-        (mainw->active_track_list[i] <= 0 || mainw->track_decoders[i] != mainw->files[mainw->active_track_list[i]]->ext_src))
-      clip_decoder_free(mainw->track_decoders[i]);
-    mainw->track_decoders[i] = NULL;
+    if (mainw->track_decoders[i]) {
+      if (mainw->active_track_list[i] <= 0 || mainw->track_decoders[i]
+          != mainw->files[mainw->active_track_list[i]]->ext_src)
+        clip_decoder_free(mainw->track_decoders[i]);
+      track_decoder_free(-1, i);
+      mainw->active_track_list[i] = 0;
+    }
   }
 }
 
@@ -804,7 +806,7 @@ recheck:
             // however, we may have more than one copy of the same clip -
             // in this case we want to create clones of the decoder plugin
             // this is to prevent constant seeking between different frames in the clip
-            if (mainw->track_decoders[i]) track_decoder_free(i, oclip, nclip);
+            if (mainw->track_decoders[i]) track_decoder_free(i, oclip);
 
             if (nclip > 0) {
               if (mainw->files[nclip]->clip_type == CLIP_TYPE_FILE) {
@@ -1300,7 +1302,7 @@ recheck:
       } else success = TRUE;
       if (!player_v2) lives_free(pd_array);
       if (prefs->dev_show_timing)
-        g_printerr("rend fr done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+        g_printerr("rend fr done @ %f\n\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       if (frame_layer != mainw->frame_layer) {
         check_layer_ready(frame_layer);
         weed_layer_free(frame_layer);
@@ -1888,8 +1890,9 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
 #ifdef HAVE_PULSE_AUDIO
       if (prefs->audio_player == AUD_PLAYER_PULSE &&
           ((prefs->audio_src == AUDIO_SRC_INT && mainw->pulsed && mainw->pulsed->in_use &&
-            IS_VALID_CLIP(mainw->pulsed->playing_file) && mainw->files[mainw->pulsed->playing_file]->achans > 0) ||
-           (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read && mainw->pulsed_read->in_use))) {
+            ((mainw->multitrack && cfile->achans > 0)
+             || (!mainw->multitrack && IS_VALID_CLIP(mainw->pulsed->playing_file) && mainw->files[mainw->pulsed->playing_file]->achans > 0)))
+           || (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read && mainw->pulsed_read->in_use))) {
         *tsource = LIVES_TIME_SOURCE_SOUNDCARD;
         if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
           current = lives_pulse_get_time(mainw->pulsed_read);
@@ -2742,15 +2745,16 @@ switch_point:
       mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE);
       if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
     } else {
-      if (mainw->multitrack) mainw->currticks += mainw->offsetticks; // add the offset of playback start time
-      if (mainw->currticks >= event_start) {
+      ticks_t currticks = mainw->currticks;
+      if (mainw->multitrack) currticks += mainw->offsetticks; // add the offset of playback start time
+      if (currticks >= event_start) {
         // see if we are playing a selection and reached the end
         if (mainw->multitrack && mainw->multitrack->playing_sel &&
             get_event_timecode(cfile->next_event) / TICKS_PER_SECOND_DBL >=
             mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
         else {
           mainw->noswitch = FALSE;
-          cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
+          cfile->next_event = process_events(cfile->next_event, FALSE, currticks);
           mainw->noswitch = TRUE;
           if (!cfile->next_event) mainw->cancelled = CANCEL_EVENT_LIST_END;
         }
@@ -2801,105 +2805,120 @@ switch_point:
   requested_frame = sfile->frameno;
 
   if (sfile->pb_fps != 0.) {
-    // calc_new_playback_postion returns a frame request based on the player mode and the time delta
-    //
-    // mainw->startticks is the timecode of the last frame shown
-    // new_ticks is the (adjusted) current time
-    // sfile->last_frameno, sfile->pb_fps (if playing) or sfile->fps (if not) are also used in the calculation
-    // as well as selection bounds and loop mode settings (if appropriate)
-    //
-    // on return, new_ticks is set to either mainw->startticks or the timecode of the next frame to show
-    // which will be <= the current time
-    // and requested_frame is set to the frame to show. By default this is the frame we show, but we may vary
-    // this depending on the cached frame
-    frames_t oframe = sfile->last_frameno;
+    if (sfile->delivery == LIVES_DELIVERY_PUSH) {
+      if (mainw->force_show) goto update_effort;
+    } else {
+      // calc_new_playback_postion returns a frame request based on the player mode and the time delta
+      //
+      // mainw->startticks is the timecode of the last frame shown
+      // new_ticks is the (adjusted) current time
+      // sfile->last_frameno, sfile->pb_fps (if playing) or sfile->fps (if not) are also used in the calculation
+      // as well as selection bounds and loop mode settings (if appropriate)
+      //
+      // on return, new_ticks is set to either mainw->startticks or the timecode of the next frame to show
+      // which will be <= the current time
+      // and requested_frame is set to the frame to show. By default this is the frame we show, but we may vary
+      // this depending on the cached frame
+      frames_t oframe = sfile->last_frameno;
 
-    if (mainw->scratch == SCRATCH_NONE && scratch == SCRATCH_NONE
-        && real_requested_frame > 0) sfile->last_frameno = real_requested_frame;
-    /* g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_frameno, */
-    /*         (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps); */
-    real_requested_frame = requested_frame
-                           = calc_new_playback_position(mainw->playing_file, TRUE, mainw->startticks, &new_ticks);
-    /* g_print("POST: %ld %ld %d\n", mainw->startticks, new_ticks, requested_frame); */
-
-    //mainw->startticks = new_ticks;
-    sfile->last_frameno = oframe;
-    if (mainw->foreign) {
-      if (requested_frame > sfile->frameno) {
-        load_frame_image(sfile->frameno++);
+      // clips can set a target_fps, which is the
+      if (sfile->delivery == LIVES_DELIVERY_PUSH_PULL) {
+        if (mainw->force_show) goto update_effort;
+        if (sfile->target_framerate) {
+          if (mainw->inst_fps > sfile->target_framerate) {
+            sfile->pb_fps *= .99;
+          } else if (mainw->inst_fps < sfile->target_framerate) {
+            sfile->pb_fps *= 1.01;
+          }
+        }
       }
-      lives_widget_context_update();
-      if (mainw->cancelled != CANCEL_NONE) return mainw->cancelled;
-      return 0;
-    }
-    if (requested_frame < 1 || requested_frame > sfile->frames) {
-      requested_frame = sfile->frameno;
-    } else sfile->frameno = requested_frame;
 
-    if (mainw->scratch != SCRATCH_NONE) scratch  = mainw->scratch;
-    mainw->scratch = SCRATCH_NONE;
+      if (mainw->scratch == SCRATCH_NONE && scratch == SCRATCH_NONE
+          && real_requested_frame > 0) sfile->last_frameno = real_requested_frame;
+      /* g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_frameno, */
+      /*         (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps); */
+      real_requested_frame = requested_frame
+                             = calc_new_playback_position(mainw->playing_file, TRUE, mainw->startticks, &new_ticks);
+      /* g_print("POST: %ld %ld %d\n", mainw->startticks, new_ticks, requested_frame); */
+
+      //mainw->startticks = new_ticks;
+      sfile->last_frameno = oframe;
+      if (mainw->foreign) {
+        if (requested_frame > sfile->frameno) {
+          load_frame_image(sfile->frameno++);
+        }
+        lives_widget_context_update();
+        if (mainw->cancelled != CANCEL_NONE) return mainw->cancelled;
+        return 0;
+      }
+      if (requested_frame < 1 || requested_frame > sfile->frames) {
+        requested_frame = sfile->frameno;
+      } else sfile->frameno = requested_frame;
+
+      if (mainw->scratch != SCRATCH_NONE) scratch  = mainw->scratch;
+      mainw->scratch = SCRATCH_NONE;
 #define SHOW_CACHE_PREDICTIONS
 #ifdef ENABLE_PRECACHE
-    if (scratch != SCRATCH_NONE) {
-      getahead = test_getahead = -1;
-      cleanup_preload = TRUE;
-      mainw->pred_frame = -1;
-      // fix for a/v sync
-      //if (!did_switch) sfile->last_play_sequence = mainw->play_sequence;
-    }
-#endif
-
-    if (new_ticks != mainw->startticks && new_ticks != mainw->last_startticks
-        && (requested_frame != last_req_frame || sfile->frames == 1
-            || (mainw->playing_sel && sfile->start == sfile->end))) {
-      //g_print("%ld %ld %ld %d %d %d\n", mainw->currticks, mainw->startticks, new_ticks,
-      //sfile->last_frameno, requested_frame, last_req_frame);
-      if (mainw->fixed_fpsd <= 0. && (!mainw->vpp || mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback)) {
-        show_frame = TRUE;
+      if (scratch != SCRATCH_NONE) {
+        getahead = test_getahead = -1;
+        cleanup_preload = TRUE;
+        mainw->pred_frame = -1;
+        // fix for a/v sync
+        //if (!did_switch) sfile->last_play_sequence = mainw->play_sequence;
       }
-      if (prefs->show_dev_opts) jitter = (double)(mainw->currticks - new_ticks) / TICKS_PER_SECOND_DBL;
-#ifdef ENABLE_PRECACHE
-      if (test_getahead > 0) {
-        if (recalc_bungle_frames) {
-          /// we want to avoid the condition where we are constantly seeking ahead and because the seek may take a while
-          /// to happen, we immediately need to seek again. This will cause the video stream to stutter.
-          /// So to try to avoid this
-          /// we will do an an EXTRA jump forwards which ideally will give the player a chance to catch up
-          /// - in this condition, instead of showing the reqiested frame we will do the following:
-          /// - if we have a cached frame, we will show that; otherwise we will advance the frame by 1 from the last frame.
-          ///   and show that, since we can decode it quickly.
-          /// - following this we will cache the "getahead" frame. The player will then render the getahead frame
-          //     and keep reshowing it until the time catches up.
-          /// (A future update will implement a more flexible caching system which will enable the possibility
-          /// of caching further frames while we waut)
-          /// - if we did not advance enough, we show the getahead frame and then do a larger jump.
-          // ..'bungle frames' is a rough estimate of how far ahead we need to jump so that we land exactly
-          /// on the player's frame. 'getahead' is the target frame.
-          /// after a jump, we adjust bungle_frames to try to jump more acurately the next tine
-          /// however, it is impossible to get it right 100% of the time, as the actual value can vary unpredictably
-          /// 'test_getahead' is used so that we can sometimes recalibrate without actually jumping the frame
-          /// in future, we could also get a more accurate estimate by integrating statistics from the decoder.
-          /// - useful values would be the frame decode time, keyframe positions, seek time to keyframe, keyframe decode time.
-          int dir = sig(sfile->pb_fps);
-          delta = (test_getahead - mainw->actual_frame) * dir;
-          if (prefs->dev_show_caching) {
-            g_print("gah (%d) %d, act %d %d %d, bungle %d, shouldabeen %d %s", mainw->effort, test_getahead,
-                    mainw->actual_frame, sfile->frameno, requested_frame,
-                    bungle_frames, bungle_frames - delta, getahead == -1 ? "(calibrating)" : "");
-            if (delta < 0) g_print(" !!!!!\n");
-            if (delta == 0) g_print(" EXACT\n");
-            if (delta > 0) g_print(" >>>>\n");
-          }
-          if (delta == 0)  bungle_frames++;
-          if (delta > 0 && delta < 3 && bungle_frames > 1) bungle_frames--;
-          else bungle_frames += (requested_frame - test_getahead) * dir;
-          if (bungle_frames <= -dir) bungle_frames = 0;
-          if (delta >= 0 && getahead > -1) drop_off = TRUE;
+#endif
+      if (new_ticks != mainw->startticks && new_ticks != mainw->last_startticks
+          && (requested_frame != last_req_frame || sfile->frames == 1
+              || (mainw->playing_sel && sfile->start == sfile->end))) {
+        //g_print("%ld %ld %ld %d %d %d\n", mainw->currticks, mainw->startticks, new_ticks,
+        //sfile->last_frameno, requested_frame, last_req_frame);
+        if (mainw->fixed_fpsd <= 0. && (!mainw->vpp || mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback)) {
+          show_frame = TRUE;
         }
-        recalc_bungle_frames = FALSE;
-        test_getahead = -1;
-      }
+        if (prefs->show_dev_opts) jitter = (double)(mainw->currticks - new_ticks) / TICKS_PER_SECOND_DBL;
+#ifdef ENABLE_PRECACHE
+        if (test_getahead > 0) {
+          if (recalc_bungle_frames) {
+            /// we want to avoid the condition where we are constantly seeking ahead and because the seek may take a while
+            /// to happen, we immediately need to seek again. This will cause the video stream to stutter.
+            /// So to try to avoid this
+            /// we will do an an EXTRA jump forwards which ideally will give the player a chance to catch up
+            /// - in this condition, instead of showing the reqiested frame we will do the following:
+            /// - if we have a cached frame, we will show that; otherwise we will advance the frame by 1 from the last frame.
+            ///   and show that, since we can decode it quickly.
+            /// - following this we will cache the "getahead" frame. The player will then render the getahead frame
+            //     and keep reshowing it until the time catches up.
+            /// (A future update will implement a more flexible caching system which will enable the possibility
+            /// of caching further frames while we waut)
+            /// - if we did not advance enough, we show the getahead frame and then do a larger jump.
+            // ..'bungle frames' is a rough estimate of how far ahead we need to jump so that we land exactly
+            /// on the player's frame. 'getahead' is the target frame.
+            /// after a jump, we adjust bungle_frames to try to jump more acurately the next tine
+            /// however, it is impossible to get it right 100% of the time, as the actual value can vary unpredictably
+            /// 'test_getahead' is used so that we can sometimes recalibrate without actually jumping the frame
+            /// in future, we could also get a more accurate estimate by integrating statistics from the decoder.
+            /// - useful values would be the frame decode time, keyframe positions, seek time to keyframe, keyframe decode time.
+            int dir = sig(sfile->pb_fps);
+            delta = (test_getahead - mainw->actual_frame) * dir;
+            if (prefs->dev_show_caching) {
+              g_print("gah (%d) %d, act %d %d %d, bungle %d, shouldabeen %d %s", mainw->effort, test_getahead,
+                      mainw->actual_frame, sfile->frameno, requested_frame,
+                      bungle_frames, bungle_frames - delta, getahead == -1 ? "(calibrating)" : "");
+              if (delta < 0) g_print(" !!!!!\n");
+              if (delta == 0) g_print(" EXACT\n");
+              if (delta > 0) g_print(" >>>>\n");
+            }
+            if (delta == 0)  bungle_frames++;
+            if (delta > 0 && delta < 3 && bungle_frames > 1) bungle_frames--;
+            else bungle_frames += (requested_frame - test_getahead) * dir;
+            if (bungle_frames <= -dir) bungle_frames = 0;
+            if (delta >= 0 && getahead > -1) drop_off = TRUE;
+          }
+          recalc_bungle_frames = FALSE;
+          test_getahead = -1;
+        }
 #endif
+      }
 
 #ifdef USE_GDK_FRAME_CLOCK
       if (display_ready) {
@@ -2923,6 +2942,7 @@ switch_point:
     }
 
     if (mainw->force_show) {
+      new_ticks = mainw->startticks = mainw->currticks;
       show_frame = TRUE;
     } else {
       if (mainw->fixed_fpsd > 0. || (mainw->vpp  && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)) {
@@ -2936,7 +2956,7 @@ switch_point:
       }
     }
 
-    if (show_frame) {
+    if (show_frame && sfile->delivery != LIVES_DELIVERY_PUSH) {
       // time to show a new frame
       get_proc_loads(FALSE);
       last_spare_cycles = spare_cycles;
@@ -3170,6 +3190,7 @@ switch_point:
 #endif
       }
 
+update_effort:
       if (prefs->pbq_adaptive && scratch == SCRATCH_NONE) {
         if (requested_frame != last_req_frame || sfile->frames == 1) {
           if (sfile->frames == 1) {
@@ -3195,7 +3216,10 @@ switch_point:
       if (new_ticks > mainw->startticks) {
         mainw->startticks = new_ticks;
       }
-
+      if (sfile->delivery == LIVES_DELIVERY_PUSH
+          || (sfile->delivery == LIVES_DELIVERY_PUSH_PULL && mainw->force_show)) {
+        goto play_frame;
+      }
       if (getahead < 0) {
         /// this is where we rebase the time for the next frame calculation
         /// if getahead >= 0 then we want to keep the base at the last "played" frame,
@@ -3310,11 +3334,15 @@ switch_point:
           /* #endif */
         }
 
+play_frame:
+
         //g_print("DISK PR is %f\n", mainw->disk_pressure);
         showed_frame = FALSE;
-        if (mainw->pred_clip == -1) cpuload = get_core_loadvar(0);
-        if (mainw->pred_clip != -1 || *cpuload < CORE_LOAD_THRESH) {
+        //if (mainw->pred_clip == -1) cpuload = get_core_loadvar(0);
+        if (mainw->force_show || mainw->pred_clip != -1
+            || (mainw->pred_clip == -1 && *(cpuload = get_core_loadvar(0)) < CORE_LOAD_THRESH)) {
           // will reset mainw->scratch
+          mainw->force_show = FALSE;
           load_frame_image(sfile->frameno);
           showed_frame = TRUE;
         }
@@ -3455,7 +3483,7 @@ switch_point:
       }
     }
 
-    mainw->force_show = FALSE;
+    //mainw->force_show = FALSE;
     /// set this in case we switch
     sfile->frameno = requested_frame;
   } // end show_frame

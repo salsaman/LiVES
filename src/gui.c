@@ -2645,11 +2645,11 @@ void create_LiVES(void) {
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Less, (LiVESXModifierType)(LIVES_SHIFT_MASK
                             | LIVES_SPECIAL_MASK),
-                            (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(voldown_callback), NULL, NULL));
+                            (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(clip_voldown_callback), NULL, NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Greater, (LiVESXModifierType)(LIVES_SHIFT_MASK
                             | LIVES_SPECIAL_MASK),
-                            (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(volup_callback), NULL, NULL));
+                            (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(clip_volup_callback), NULL, NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_k, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback), LIVES_INT_TO_POINTER(-1), NULL));
@@ -2684,6 +2684,11 @@ void create_LiVES(void) {
                             (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(aud_lock_callback), LIVES_INT_TO_POINTER(FALSE), NULL));
 
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Plus, (LiVESXModifierType)LIVES_SHIFT_MASK,
+                            (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(volup_callback), NULL, NULL));
+
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Underscore, (LiVESXModifierType)LIVES_SHIFT_MASK,
+                            (LiVESAccelFlags)0, lives_cclosure_new(LIVES_GUI_CALLBACK(voldown_callback), NULL, NULL));
   if (FN_KEYS > 0) {
     lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F1, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                               lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(1), NULL));

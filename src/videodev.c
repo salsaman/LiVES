@@ -68,7 +68,7 @@ static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,
     ldev->buffer_ready = 0;
     return;
   }
-
+  lives_get_current_ticks();
   if (ldev->buffer_ready != 1) {
     lives_memcpy(ldev->buffer1.data, buffer->data, ldev->buffer1.buffer_size);
     ldev->buffer_ready = 1;
@@ -76,6 +76,7 @@ static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,
     lives_memcpy(ldev->buffer2.data, buffer->data, ldev->buffer2.buffer_size);
     ldev->buffer_ready = 2;
   }
+  mainw->force_show = TRUE;
 }
 
 
@@ -104,7 +105,7 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
     }
   } else {
     // wait for callback to fill buffer
-    if (!lives_wait_system_buffer(ldev, timeoutsecs)) {
+    if (!ldev->buffer_ready && !lives_wait_system_buffer(ldev, timeoutsecs)) {
 #ifdef DEBUG_UNICAP
       lives_printerr("Failed to wait for system buffer!\n");
 #endif
@@ -135,9 +136,42 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
 
   lives_free(pixel_data);
 
-  unicap_queue_buffer(ldev->handle, returned_buffer);
+  if (ldev->buffer_type != UNICAP_BUFFER_TYPE_SYSTEM) {
+    unicap_queue_buffer(ldev->handle, returned_buffer);
+  }
 
   return TRUE;
+}
+
+
+static void canikill(lives_vdev_t *ldev) {
+  // if the device is busy, we can try "fuser /dev/videoXXX"
+  // return is e.g. '/dev/video0:         206494'
+  // then parse the pid, and "kill -9 <PID>"
+  char cbuf[1024];
+  char *com = lives_strdup_printf("fuser %s 2>%s", ldev->fname, LIVES_DEVNULL);
+  lives_popen(com, TRUE, cbuf, 1024);
+  if (THREADVAR(com_failed)) {
+    break_me("comf");
+    THREADVAR(com_failed) = FALSE;
+    lives_free(com);
+  } else {
+    int npids = get_token_count(cbuf, ' ') - 1;
+    if (npids > 0) {
+      char **pids = lives_strsplit(cbuf, " ", npids);
+      for (int i = npids - 1; i >= 0; i--) {
+        int pidd = atoi(pids[i]);
+        if (pidd == capable->mainpid || !pidd) continue;
+        if (do_yesno_dialogf("Can I free up %s by killing pid %d please ?",
+                             ldev->fname, pidd)) {
+          lives_kill((lives_pid_t)pidd, LIVES_SIGKILL);
+          break;
+        }
+      }
+      lives_strfreev(pids);
+    }
+  }
+  lives_free(com);
 }
 
 
@@ -171,6 +205,8 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats, li
     // TODO - prefer non-interlaced, YCbCr for YUV
     cpal = fourccp_to_weedp(format->fourcc, format->bpp, NULL, NULL, NULL, NULL);
 
+    g_print("Palette description is %s\n", format->identifier);
+
     if (cpal == WEED_PALETTE_END || weed_palette_is_alpha(cpal)) {
 #ifdef DEBUG_UNICAP
       // set format to try and get more data
@@ -184,6 +220,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats, li
     cpbytes = weed_palette_get_bytes_per_pixel(cpal);
 
     if (bestp == WEED_PALETTE_END || cpal == palette || weed_palette_is_alpha(bestp) ||
+        /// test if cpal is higher or same quality
         weed_palette_is_lower_quality(bestp, cpal) ||
         (weed_palette_is_yuv(bestp) && weed_palette_is_rgb(cpal))) {
       // got better palette, or exact match
@@ -222,6 +259,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats, li
 #ifdef DEBUG_UNICAP
             lives_printerr("Could not set Unicap format\n");
 #endif
+            canikill(ldev);
             continue;
           }
           if (format->buffer_size < (size_t)((double)(format->size.width * format->size.height) * cpbytes)) {
@@ -252,6 +290,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats, li
 #ifdef DEBUG_UNICAP
               lives_printerr("Could not set Unicap format\n");
 #endif
+              canikill(ldev);
               continue;
             }
             if (format->buffer_size < (size_t)((double)(format->size.width * format->size.height) * cpbytes)) {
@@ -286,6 +325,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats, li
 #ifdef DEBUG_UNICAP
               lives_printerr("Could not set Unicap format\n");
 #endif
+              canikill(ldev);
               continue;
             }
             if (format->buffer_size < (size_t)((double)(format->sizes[i].width * format->sizes[i].height) * cpbytes)) {
@@ -343,7 +383,6 @@ void update_props_from_attributes(lives_vdev_t *ldev, lives_rfx_t *rfx) {
     //if (ptype != UNICAP_PROPERTY_TYPE_RANGE) continue;
     lives_obj_attr_t *attr = lives_object_get_attribute(ldev->object, prop->identifier);
     if (attr) {
-      g_print("CHK %s\n", prop->identifier);
       lives_param_t *param;
       double val;
       if (lives_attribute_is_readonly(ldev->object, prop->identifier)) continue;
@@ -423,6 +462,9 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
     return FALSE;
   }
 
+  if (*device->device) ldev->fname = lives_strdup(device->device);
+  else ldev->fname = lives_strdup(device->identifier);
+
   unicap_lock_stream(ldev->handle);
 
   ldev->format = lvdev_get_best_format(formats, ldev, WEED_PALETTE_END,
@@ -438,12 +480,17 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   }
 
   if (!(ldev->format->buffer_types & UNICAP_BUFFER_TYPE_USER)) {
-    // have to use system buffer type
+    // use system buffer type
+    g_print("NB is %d\n", ldev->format->system_buffer_count);
     ldev->format->buffer_type = UNICAP_BUFFER_TYPE_SYSTEM;
+
+    cfile->delivery = LIVES_DELIVERY_PUSH_PULL;
 
     // set a callback for new frame
     unicap_register_callback(ldev->handle, UNICAP_EVENT_NEW_FRAME, (unicap_callback_t) new_frame_cb,
                              (void *) ldev);
+    /* unicap_register_callback(ldev->handle, UNICAP_EVENT_DROP_FRAME, (unicap_callback_t) drop_frame_cb, */
+    /*                          (void *) ldev); */
 
   } else ldev->format->buffer_type = UNICAP_BUFFER_TYPE_USER;
 
@@ -540,6 +587,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
     // if flags & UNICAP_FLAGS_READ_OUT --> create out param
     if (!lives_strcmp(prop->identifier, "frame rate")) {
       cfile->pb_fps = cfile->fps = prop->value;
+      cfile->target_framerate = cfile->fps;
       lives_object_set_attribute_value(obj, VDEV_PROP_FPS, cfile->fps);
       lives_attribute_set_readonly(obj, VDEV_PROP_FPS, TRUE);
       lives_attribute_set_param_type(obj, VDEV_PROP_FPS, _("FPS"), WEED_PARAM_FLOAT);

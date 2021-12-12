@@ -842,6 +842,7 @@ static boolean pre_init(void) {
   }
 
   prefs->show_dev_opts = get_boolean_prefd(PREF_SHOW_DEVOPTS, FALSE);
+  if (mainw->debug) prefs->show_dev_opts = TRUE;
 
   prefs->back_compat = get_boolean_prefd(PREF_BACK_COMPAT, TRUE);
 
@@ -1754,7 +1755,7 @@ static boolean lives_init(_ign_opts *ign_opts) {
   /// new prefs here:
   //////////////////////////////////////////////////////////////////
 
-  get_string_prefd(PREF_DEF_AUTHOR, prefs->def_author, 1024, "");
+  //get_string_prefd(PREF_DEF_AUTHOR, prefs->def_author, 1024, "");
 
   if (!mainw->foreign) {
     prefs->midi_check_rate = get_int_pref(PREF_MIDI_CHECK_RATE);
@@ -4469,7 +4470,10 @@ static boolean lives_startup2(livespointer data) {
   mainw->no_switch_dprint = FALSE;
   d_print("");
 
-  if (mainw->debug_log) close_logfile(mainw->debug_log);
+  if (mainw->debug_log) {
+    close_logfile(mainw->debug_log);
+    mainw->debug_log = NULL;
+  }
 
   if (mainw->multitrack) {
     lives_idle_add_simple(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
@@ -8702,7 +8706,7 @@ void close_current_file(int file_to_switch_to) {
       // set blend_file to -1. This in case the file is a generator - we need to distinguish between the cases where
       // the generator is the blend file and we switch because it was deinited, and when we switch fg <-> bg
       // in the former case the generator is killed off, in the latter it survives
-      track_decoder_free(1, mainw->blend_file, -1);
+      track_decoder_free(1, mainw->blend_file);
       mainw->blend_file = -1;
       weed_layer_free(mainw->blend_layer);
       mainw->blend_layer = NULL;
@@ -8840,7 +8844,7 @@ void close_current_file(int file_to_switch_to) {
                 d_print("");
               } else mainw->new_clip = index;
               if (need_new_blend_file) {
-                track_decoder_free(1, mainw->blend_file, mainw->current_file);
+                track_decoder_free(1, mainw->blend_file);
                 mainw->blend_file = mainw->current_file;
               }
             } else {
@@ -9434,7 +9438,7 @@ void do_quick_switch(int new_file) {
   }
 
   if (mainw->playing_file == mainw->blend_file)
-    track_decoder_free(1, mainw->blend_file, new_file);
+    track_decoder_free(1, mainw->blend_file);
 
   osc_block = mainw->osc_block;
   mainw->osc_block = TRUE;
@@ -9528,7 +9532,7 @@ void do_quick_switch(int new_file) {
       weed_layer_free(mainw->blend_layer);
       mainw->blend_layer = NULL;
     }
-    track_decoder_free(1, mainw->blend_file, old_file);
+    track_decoder_free(1, mainw->blend_file);
     mainw->blend_file = old_file;
   }
 
@@ -9548,7 +9552,7 @@ void do_quick_switch(int new_file) {
   lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
 
   if (!mainw->fs && !mainw->faded) {
-    redraw_timeline(mainw->current_file);
+    redraw_timeline_bg(mainw->current_file);
     set_sel_label(mainw->sel_label);
   }
 }

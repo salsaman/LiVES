@@ -35,16 +35,15 @@ static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 
 static LiVESList *allprefs = NULL;
 
-static void define_pref(const char *pref_idx, void *pref_ptr, int32_t vtype, void *pdef, uint32_t flags) {
+static weed_plant_t *define_pref(const char *pref_idx, void *pref_ptr, int32_t vtype, void *pdef, uint32_t flags) {
   weed_plant_t *prefplant = lives_plant_new(LIVES_WEED_SUBTYPE_PREFERENCE);
   weed_set_string_value(prefplant, LIVES_LEAF_PREF_IDX, pref_idx);
-
   weed_set_voidptr_value(prefplant, LIVES_LEAF_VARPTR, pref_ptr);
-  ///
   weed_leaf_set(prefplant, WEED_LEAF_DEFAULT, vtype, 1, pdef);
   weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_UNSET);
   weed_set_int_value(prefplant, WEED_LEAF_FLAGS, flags);
   allprefs = lives_list_append(allprefs, prefplant);
+  return prefplant;
 }
 
 
@@ -67,8 +66,9 @@ void init_prefs(void) {
   DEFINE_PREF_BOOL(PB_HIDE_GUI, pb_hide_gui, FALSE, PREF_FLAG_EXPERIMENTAL);
   DEFINE_PREF_BOOL(SELF_TRANS, tr_self, FALSE, PREF_FLAG_EXPERIMENTAL);
   //DEFINE_PREF_BOOL(GENQ_MODE, genq_mode, FALSE);
-  DEFINE_PREF_INT(DLOAD_MATMET, dload_matmet, LIVES_MATCH_CHOICE, LIVES_MATCH_UNDEFINED);
-  DEFINE_PREF_INT(WEBCAM_MATMET, webcam_matmet, LIVES_MATCH_AT_MOST, LIVES_MATCH_UNDEFINED);
+  DEFINE_PREF_INT(DLOAD_MATMET, dload_matmet, LIVES_MATCH_CHOICE, 0);
+  DEFINE_PREF_INT(WEBCAM_MATMET, webcam_matmet, LIVES_MATCH_AT_MOST, 0);
+  DEFINE_PREF_STRING(DEF_AUTHOR, def_author, 1024, "", 0);
 }
 
 
@@ -106,13 +106,22 @@ void load_pref(const char *pref_idx) {
       boolean bdef = weed_get_boolean_value(prefplant, WEED_LEAF_DEFAULT, NULL);
       *(boolean *)ppref = get_boolean_prefd(pref_idx, bdef);
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
+      break;
     }
     case WEED_SEED_INT: {
       int idef = weed_get_int_value(prefplant, WEED_LEAF_DEFAULT, NULL);
       *(int *)ppref = get_int_prefd(pref_idx, idef);
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
+      break;
     }
-    break;
+    case WEED_SEED_STRING: {
+      int slen = weed_get_int_value(prefplant, WEED_LEAF_MAXCHARS, NULL);
+      char *sdef = weed_get_string_value(prefplant, WEED_LEAF_DEFAULT, NULL);
+      get_string_prefd(pref_idx, (char *)ppref, slen, sdef);
+      lives_free(sdef);
+      weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
+      break;
+    }
     default: break;
     }
   }
@@ -242,6 +251,12 @@ static LiVESWidget *set_pref_widget(const char *pref_idx, LiVESWidget *widget) {
       switch (vtype) {
       case WEED_SEED_BOOLEAN:
         if (widget) ACTIVE_W(TOGGLED);
+        break;
+      case WEED_SEED_INT:
+        if (widget) ACTIVE_W(VALUE_CHANGED);
+        break;
+      case WEED_SEED_STRING:
+        if (widget) ACTIVE_W(CHANGED);
         break;
       default: break;
       }
@@ -5855,7 +5870,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                      (LiVESAttachOptions)(0), 0, 0);
 
   lives_entry_set_editable(LIVES_ENTRY(prefsw->proj_dir_entry), FALSE);
-  ACTIVE(image_dir_entry, CHANGED);
+  ACTIVE(proj_dir_entry, CHANGED);
 
   /// dirbuttons
 

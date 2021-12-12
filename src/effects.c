@@ -950,7 +950,7 @@ boolean get_blend_layer(weed_timecode_t tc) {
             !mainw->files[mainw->blend_file]->is_loaded)))) {
     // invalid blend file
     if (mainw->blend_file != mainw->playing_file) {
-      track_decoder_free(1, mainw->blend_file, mainw->playing_file);
+      track_decoder_free(1, mainw->blend_file);
       mainw->blend_file = mainw->playing_file;
       return FALSE;
     }

@@ -824,6 +824,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
         /// TODO - handle fsize < 0
       }
     }
+    pthread_mutex_init(&fbuff->sync_mutex, NULL);
     pthread_mutex_lock(&mainw->fbuffer_mutex);
     mainw->file_buffers = lives_list_prepend(mainw->file_buffers, (livespointer)fbuff);
     pthread_mutex_unlock(&mainw->fbuffer_mutex);
@@ -916,8 +917,10 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
       res = lives_read(fd, fbuff->buffer + fbuff->bytes, bufsize, TRUE);
       //g_printerr("slurp for %d, %s with size %ld, read %lu bytes, %lu remain\n", fd, fbuff->pathname, fbuff->orig_size, bufsize, fsize);
       if (res < 0) {
+        pthread_mutex_lock(&fbuff->sync_mutex);
         fbuff->flags |= FB_FLAG_INVALID;
         fbuff->flags &= ~FB_FLAG_BG_OP;
+        pthread_mutex_unlock(&fbuff->sync_mutex);
         return FALSE;
       }
 #endif
@@ -942,7 +945,9 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 
   fbuff->fd = -1;
   IGN_RET(close(fd));
+  pthread_mutex_lock(&fbuff->sync_mutex);
   fbuff->flags &= ~FB_FLAG_BG_OP;
+  pthread_mutex_unlock(&fbuff->sync_mutex);
   return TRUE;
 }
 
@@ -957,9 +962,11 @@ boolean lives_buffered_rdonly_is_slurping(int fd) {
 void lives_buffered_rdonly_slurp(int fd, off_t skip) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   if (!fbuff || fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return;
+  pthread_mutex_lock(&fbuff->sync_mutex);
   fbuff->flags |= FB_FLAG_BG_OP;
   fbuff->bytes = fbuff->offset = 0;
   fbuff->bufsztype = BUFF_SIZE_READ_SLURP;
+  pthread_mutex_unlock(&fbuff->sync_mutex);
 
   // TODO - inherits
   lives_proc_thread_create(LIVES_THRDATTR_INHERIT_HOOKS,
@@ -1051,7 +1058,9 @@ ssize_t lives_close_buffered(int fd) {
 
   if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
     if (fbuff->flags & FB_FLAG_BG_OP) {
+      pthread_mutex_lock(&fbuff->sync_mutex);
       fbuff->flags |= FB_FLAG_INVALID;
+      pthread_mutex_unlock(&fbuff->sync_mutex);
       lives_nanosleep_while_true((fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
     }
     should_close = FALSE;

@@ -1294,6 +1294,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #define LIVES_KEY_Tab GDK_KEY_Tab
 #define LIVES_KEY_Home GDK_KEY_Home
 #define LIVES_KEY_End GDK_KEY_End
+#define LIVES_KEY_Underscore GDK_KEY_underscore
 #define LIVES_KEY_Slash GDK_KEY_slash
 #define LIVES_KEY_Space GDK_KEY_space
 #define LIVES_KEY_Plus GDK_KEY_plus
@@ -1370,6 +1371,7 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #define LIVES_KEY_BackSpace GDK_BackSpace
 #define LIVES_KEY_Return GDK_Return
 #define LIVES_KEY_Tab GDK_Tab
+#define LIVES_KEY_Underscore GDK_underscore
 #define LIVES_KEY_Home GDK_Home
 #define LIVES_KEY_End GDK_End
 #define LIVES_KEY_Slash GDK_slash

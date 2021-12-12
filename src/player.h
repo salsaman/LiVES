@@ -56,7 +56,7 @@ void player_sensitize(void);
 void init_track_decoders(void);
 void free_track_decoders(void);
 
-void track_decoder_free(int i, int oclip, int nclip);
+void track_decoder_free(int i, int oclip);
 
 boolean record_setup(ticks_t actual_ticks);
 

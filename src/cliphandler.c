@@ -600,7 +600,7 @@ boolean read_file_details(const char *file_name, boolean is_audio, boolean is_im
 #define _RELOAD(field) sfile->field = loaded->field
 #define _RELOAD_STRING(field, len) lives_snprintf(sfile->field, len, "%s", loaded->field)
 
-#define DSIZE_MAX 100000
+#define LOADSIZE_MAX 1000000
 
 
 static boolean recover_from_forensics(int fileno, lives_clip_t *loaded) {
@@ -722,31 +722,46 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic, char *binfmtn
     lives_free(gzname);
     if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
       ssize_t bytes;
-      size_t cursize = (size_t)((char *)&sfile->binfmt_end - (char *)sfile), dsize;
+      size_t cursize = sizeof(lives_clip_t);
+      size_t curdatasize = offsetof(lives_clip_t, binfmt_end);
+      size_t loadsize;
+      size_t missing = 0, extra;
       char *xloaded = (char *)lives_calloc(1, cursize);
       boolean badsize = FALSE;
       int fd = lives_open_buffered_rdonly(fname);
-      size_t fsize = lives_buffered_orig_size(fd);
+      size_t filesize = lives_buffered_orig_size(fd);
       lives_clip_t *loaded = (lives_clip_t *)xloaded;
-      if (fsize < cursize) badsize = TRUE;
-      else {
-        bytes = lives_read_buffered(fd, xloaded, 8, TRUE);
-        if (bytes < 8 || lives_memcmp(loaded->binfmt_check.chars, CLIP_BINFMT_CHECK, 8)) badsize = TRUE;
-        else {
-          bytes += lives_read_buffered(fd, xloaded + 8, 16, TRUE);
-          if (bytes < 24) badsize = TRUE;
-          else {
-            dsize = loaded->binfmt_bytes.num;
-            if (dsize < cursize || dsize > fsize) badsize = TRUE;
-            else {
-              if (dsize > cursize && dsize < DSIZE_MAX) {
-                xloaded = lives_realloc(xloaded, dsize);
-                loaded = (lives_clip_t *)xloaded;
-              } else dsize = cursize;
-              bytes += lives_read_buffered(fd, xloaded + 24, dsize - 24, TRUE);
-              if (bytes < dsize) badsize = TRUE;
-	      // *INDENT-OFF*
-            }}}}
+      if (filesize < cursize) {
+        missing = cursize - filesize;
+      }
+      bytes = lives_read_buffered(fd, xloaded, 8, TRUE);
+      if (bytes < 8 || lives_memcmp(loaded->binfmt_check.chars, CLIP_BINFMT_CHECK, 8)) {
+        badsize = TRUE;
+      } else {
+        bytes += lives_read_buffered(fd, xloaded + 8, 16, TRUE);
+        if (bytes < 24) {
+          badsize = TRUE;
+        }
+        loadsize = loaded->binfmt_bytes.num;
+        if (loadsize > curdatasize) {
+          // anything from 'future LiVES' should end up in binfmt_reserved
+          // and be preserved, provided it fits
+          extra = loadsize - curdatasize;
+          if (extra > BINFMT_RSVD_BYTES) badsize = TRUE;
+        }
+        if (loadsize + missing < curdatasize) {
+          badsize = TRUE;
+        } else {
+          if (loadsize > cursize && loadsize < LOADSIZE_MAX) {
+            xloaded = lives_realloc(xloaded, loadsize);
+            loaded = (lives_clip_t *)xloaded;
+          } else loadsize = cursize;
+          bytes += lives_read_buffered(fd, xloaded + 24, loadsize - 24, TRUE);
+          if (bytes < loadsize) {
+            badsize = TRUE;
+          }
+	  // *INDENT-OFF*
+	}}
       // *INDENT-ON*
       lives_close_buffered(fd);
       //if (!forensic) lives_rm(fname);
@@ -772,9 +787,16 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic, char *binfmtn
       _RELOAD(ratio_fps); _RELOAD_STRING(mime_type, 256);
       _RELOAD(changed); _RELOAD(deinterlace); _RELOAD(vol);
 
+      if (missing < 2 * sizeof(double)) {
+        _RELOAD(pb_fps);
+        if (missing < sizeof(double)) _RELOAD(target_framerate);
+      }
+
       if (sfile->start < 1) sfile->start = 1;
+      if (sfile->end < 1) sfile->end = sfile->frames;
       if (sfile->end > sfile->frames) sfile->end = sfile->frames;
       if (sfile->start > sfile->end) sfile->start = sfile->end;
+      if (sfile->end < sfile->start) sfile->end = sfile->start;
       if (lives_strlen(sfile->save_file_name) > PATH_MAX) lives_memset(sfile->save_file_name, 0, PATH_MAX);
       if (sfile->pointer_time > sfile->video_time) sfile->pointer_time = 0.;
       if (sfile->real_pointer_time > CLIP_TOTAL_TIME(clipno)) sfile->real_pointer_time = sfile->pointer_time;
@@ -1236,6 +1258,9 @@ frombak:
       detail = CLIP_DETAILS_FRAMES;
       retval = get_clip_value(fileno, detail, &sfile->frames, 0);
       if (!retval) {
+        if (prefs->show_dev_opts) {
+          g_printerr("no framecount detected\n");
+        }
         sfile->needs_update = retval = TRUE;
       }
 
@@ -1276,6 +1301,9 @@ frombak:
         detail = CLIP_DETAILS_WIDTH;
         retval = get_clip_value(fileno, detail, &sfile->hsize, 0);
         if (!retval) {
+          if (prefs->show_dev_opts) {
+            g_printerr("no frame width detected\n");
+          }
           sfile->needs_update = TRUE;
           retval = TRUE;
         }
@@ -1284,6 +1312,9 @@ frombak:
         detail = CLIP_DETAILS_HEIGHT;
         retval = get_clip_value(fileno, detail, &sfile->vsize, 0);
         if (!retval) {
+          if (prefs->show_dev_opts) {
+            g_printerr("no frame height detected\n");
+          }
           sfile->needs_update = TRUE;
           retval = TRUE;
         }
@@ -1853,4 +1884,199 @@ lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intentcap_t *icaps
   iparams = get_txparams_for_intent(&obj, icaps);
   lives_free(priv);
   return iparams;
+}
+
+
+#define BINFMT_CHECK_CHARS "LiVESXXX"
+
+/**
+   @brief set default values for a clip (in memory)
+
+   if new_file == -1 we create (malloc) a new clip and switch to it
+   - setting its handle to "handle" (reload / crash recovery)
+
+   if new_file != -1 the parameter "handle" is ignored, and we switch to new_file, without mallocing anything
+   - "handle" in the clip must have been set already (called from get_new_handle() and get_temp_handle())
+   -- get_new_handle() will set name and fliename and switch back to original clip.
+
+   default values are then set for the clip
+   - a "unique_id" is assigned via uuidgen or lives_random()
+   - type is set to CLIP_TYPE_DISK
+   - img_type is set depending on prefs->image_type
+   - frames is set to 0
+   etc.
+
+   - loaded is set = to is_loaded
+
+   WARNING: on success, returns the clip, and changes the value of
+   mainw->current_file !!  returns NULL if: new_file is out of range
+   or points to a NULL clip; new_file is -1 and all free clips are
+   in use (unlikely), or malloc fails.
+*/
+lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) {
+  lives_clip_t *sfile;
+  char *stfile, *clipdir;
+
+  if (new_file == -1) {
+    // if new_file == -1, we are going to create a new clip
+    new_file = mainw->first_free_file;
+    if (new_file == -1) {
+      too_many_files();
+      return NULL;
+    }
+
+    mainw->current_file = new_file;
+    get_next_free_file();
+
+    if (new_file < 0 || new_file > MAX_FILES || IS_VALID_CLIP(new_file)) {
+      char *msg = lives_strdup_printf("Attempt to create invalid new clip %d\n", new_file);
+      LIVES_WARN(msg);
+      lives_free(msg);
+      return NULL;
+    }
+
+    if (!handle) {
+      // if handle is NULL, we create a new clip on disk, switch to it
+      // (unused)
+      if (!get_handle_from_info_file(new_file)) return NULL;
+      sfile = mainw->files[new_file];
+    } else {
+      // else just create the in-memory part and set the handle
+      sfile = mainw->files[new_file] = (lives_clip_t *)(lives_calloc(1, sizeof(lives_clip_t)));
+      if (!sfile) return NULL;
+      lives_snprintf(sfile->handle, 256, "%s", handle);
+    }
+  }
+
+  mainw->current_file = new_file;
+
+  cfile->is_loaded = is_loaded;
+
+  // any cfile (clip) initialisation goes in here
+  lives_memcpy((void *)&cfile->binfmt_check.chars, BINFMT_CHECK_CHARS, 8);
+  cfile->binfmt_version.num = make_version_hash(LiVES_VERSION);
+  cfile->binfmt_bytes.size = (size_t)(offsetof(lives_clip_t, binfmt_end));
+  cfile->menuentry = NULL;
+  cfile->start = cfile->end = 0;
+  cfile->old_frames = cfile->opening_frames = cfile->frames = 0;
+  lives_snprintf(cfile->type, 40, "%s", _("Unknown"));
+  cfile->f_size = 0l;
+  cfile->achans = 0;
+  cfile->arate = 0;
+  cfile->arps = 0;
+  cfile->afilesize = 0l;
+  cfile->asampsize = 0;
+  cfile->adirection = LIVES_DIRECTION_FORWARD;
+  cfile->aplay_fd = -1;
+  cfile->undoable = FALSE;
+  cfile->redoable = FALSE;
+  cfile->changed = FALSE;
+  cfile->was_in_set = FALSE;
+  cfile->hsize = cfile->vsize = cfile->ohsize = cfile->ovsize = 0;
+  cfile->fps = cfile->pb_fps = prefs->default_fps;
+  cfile->resample_events = NULL;
+  cfile->insert_start = cfile->insert_end = 0;
+  cfile->is_untitled = TRUE;
+  cfile->was_renamed = FALSE;
+  cfile->undo_action = UNDO_NONE;
+  cfile->delivery = LIVES_DELIVERY_PULL;
+  cfile->opening_audio = cfile->opening = cfile->opening_only_audio = FALSE;
+  cfile->pointer_time = 0.;
+  cfile->real_pointer_time = 0.;
+  cfile->restoring = cfile->opening_loc = cfile->nopreview = FALSE;
+  cfile->video_time = cfile->laudio_time = cfile->raudio_time = 0.;
+  cfile->freeze_fps = 0.;
+  cfile->last_vframe_played = 0;
+  cfile->frameno = cfile->last_frameno = cfile->saved_frameno = 1;
+  cfile->progress_start = cfile->progress_end = 0;
+  cfile->play_paused = cfile->nokeep = FALSE;
+  cfile->undo_start = cfile->undo_end = 0;
+  cfile->ext_src = NULL;
+  cfile->ext_src_type = LIVES_EXT_SRC_NONE;
+  cfile->clip_type = CLIP_TYPE_DISK;
+  cfile->ratio_fps = FALSE;
+  cfile->aseek_pos = 0;
+  cfile->unique_id = gen_unique_id();
+  cfile->layout_map = NULL;
+  cfile->frame_index = cfile->frame_index_back = NULL;
+  cfile->pumper = NULL;
+  cfile->stored_layout_frame = 0;
+  cfile->stored_layout_audio = 0.;
+  cfile->stored_layout_fps = 0.;
+  cfile->stored_layout_idx = -1;
+  cfile->interlace = LIVES_INTERLACE_NONE;
+  cfile->subt = NULL;
+  cfile->no_proc_sys_errors = cfile->no_proc_read_errors = cfile->no_proc_write_errors = FALSE;
+  cfile->keep_without_preview = FALSE;
+  cfile->cb_src = -1;
+  cfile->needs_update = cfile->needs_silent_update = FALSE;
+  cfile->audio_waveform = NULL;
+  cfile->md5sum[0] = 0;
+  cfile->gamma_type = WEED_GAMMA_SRGB;
+  cfile->last_play_sequence = 0;
+  cfile->tcache_dubious_from = 0;
+  cfile->tcache_height = 0;
+  cfile->tcache = NULL;
+  cfile->checked = FALSE;
+  cfile->has_binfmt = TRUE;
+
+  pthread_mutex_init(&cfile->transform_mutex, NULL);
+
+  cfile->img_type = lives_image_ext_to_img_type(prefs->image_ext);
+
+  cfile->bpp = (cfile->img_type == IMG_TYPE_JPEG) ? 24 : 32;
+  cfile->deinterlace = FALSE;
+
+  cfile->play_paused = FALSE;
+  cfile->header_version = LIVES_CLIP_HEADER_VERSION;
+
+  cfile->event_list = cfile->event_list_back = NULL;
+  cfile->next_event = NULL;
+  cfile->vol = 1.;
+
+  lives_memset(cfile->name, 0, 1);
+  lives_memset(cfile->mime_type, 0, 1);
+  lives_memset(cfile->file_name, 0, 1);
+  lives_memset(cfile->save_file_name, 0, 1);
+
+  lives_memset(cfile->comment, 0, 1);
+  lives_memset(cfile->author, 0, 1);
+  lives_memset(cfile->title, 0, 1);
+  lives_memset(cfile->keywords, 0, 1);
+
+  cfile->signed_endian = AFORM_UNKNOWN;
+  lives_snprintf(cfile->undo_text, 32, "%s", _("_Undo"));
+  lives_snprintf(cfile->redo_text, 32, "%s", _("_Redo"));
+
+  clipdir = get_clip_dir(mainw->current_file);
+  stfile = lives_build_filename(clipdir, LIVES_STATUS_FILE_NAME, NULL);
+  lives_free(clipdir);
+
+  lives_snprintf(cfile->info_file, PATH_MAX, "%s", stfile);
+  lives_free(stfile);
+
+  // backwards compat.
+  cfile->checked_for_old_header = FALSE;
+  cfile->has_old_header = FALSE;
+
+  return cfile;
+}
+
+
+LIVES_GLOBAL_INLINE char *get_untitled_name(int number) {
+  // utility function to get clip name
+  return lives_strdup_printf(_("Untitled%d"), number);
+}
+
+
+int create_nullvideo_clip(const char *handle) {
+  // create a file with no video, just produces blank frames
+  // may be used to playback with audio, for testign etc.
+  int new_file;
+  int current_file = mainw->current_file;
+  create_cfile(-1, handle, TRUE);
+  new_file = mainw->current_file;
+  mainw->current_file = current_file;
+  mainw->files[new_file]->clip_type = CLIP_TYPE_NULL_VIDEO;
+  return new_file;
 }

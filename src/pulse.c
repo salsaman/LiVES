@@ -501,10 +501,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
     pulsed->num_calls++;
 
-    if (lives_vol_from_linear(future_prefs->volume) * lives_vol_from_linear(clip_vol) != pulsed->volume_linear) {
+    if (future_prefs->volume * clip_vol != pulsed->volume_linear) {
       // TODO: pa_threaded_mainloop_once_unlocked() (pa 13.0 +) ??
       pa_operation *paop;
-      pulsed->volume_linear = lives_vol_from_linear(future_prefs->volume) * lives_vol_from_linear(clip_vol);
+      pulsed->volume_linear = future_prefs->volume * clip_vol;
       pavol = pa_sw_volume_from_linear(pulsed->volume_linear);
       pa_cvolume_set(&pulsed->volume, pulsed->out_achans, pavol);
       paop = pa_context_set_sink_input_volume(pulsed->con,
@@ -1167,11 +1167,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       }
 
       // playback from memory or file
-      if (pulsed->playing_file > -1 && !mainw->multitrack) clip_vol = afile->vol;//lives_vol_from_linear(afile->vol);
-      if (lives_vol_from_linear(future_prefs->volume) * lives_vol_from_linear(clip_vol) != pulsed->volume_linear) {
+      if (pulsed->playing_file > -1 && !mainw->multitrack) clip_vol = afile->vol;
+      if (future_prefs->volume * clip_vol != pulsed->volume_linear) {
         // TODO: pa_threaded_mainloop_once_unlocked() (pa 13.0 +) ??
         pa_operation *paop;
-        pulsed->volume_linear = lives_vol_from_linear(future_prefs->volume) * lives_vol_from_linear(clip_vol);
+        pulsed->volume_linear = future_prefs->volume * clip_vol;
         pavol = pa_sw_volume_from_linear(pulsed->volume_linear);
         pa_cvolume_set(&pulsed->volume, pulsed->out_achans, pavol);
         paop = pa_context_set_sink_input_volume(pulsed->con,

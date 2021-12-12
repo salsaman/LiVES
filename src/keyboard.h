@@ -68,8 +68,8 @@ boolean sepwin_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESX
 
 boolean fade_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean volup_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
-boolean voldown_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
+boolean clip_volup_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
+boolean clip_voldown_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
 #define EXT_TRIGGER_INTERVAL 4 // polling time for osc / midi / joystick etc. (milliseconds)
 

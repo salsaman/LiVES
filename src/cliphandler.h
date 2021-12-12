@@ -35,9 +35,14 @@
 #define CLIP_TOTAL_TIME(clip) (CLIP_VIDEO_TIME((clip)) > CLIP_AUDIO_TIME((clip)) ? CLIP_VIDEO_TIME((clip)) : \
 			       CLIP_AUDIO_TIME((clip)))
 
+#define IS_PHYSICAL_CLIP(clip) (IS_VALID_CLIP((clip))			\
+				? (mainw->files[(clip)]->clip_type == CLIP_TYPE_DISK \
+				   || mainw->files[(clip)]->clip_type == CLIP_TYPE_FILE) : FALSE)
+
+#define CURRENT_CLIP_IS_PHYSICAL (mainw && IS_PHYSICAL_CLIP(mainw->current_file))
+
 #define IS_NORMAL_CLIP(clip) (IS_VALID_CLIP((clip))			\
-			      ? (mainw->files[(clip)]->clip_type == CLIP_TYPE_DISK \
-				 || mainw->files[(clip)]->clip_type == CLIP_TYPE_FILE \
+			      ? (IS_PHYSICAL_CLIP((clip))		\
 				 || mainw->files[(clip)]->clip_type == CLIP_TYPE_NULL_VIDEO) : FALSE)
 
 #define CURRENT_CLIP_IS_NORMAL (mainw && IS_NORMAL_CLIP(mainw->current_file))
@@ -51,7 +56,6 @@
 
 #define IS_ASCRAP_CLIP(which) (mainw->ascrap_file == which && IS_VALID_CLIP(which) \
 			       && mainw->files[mainw->ascrap_file]->ext_src_type != LIVES_EXT_SRC_RECORDER)
-
 
 typedef union _binval {
   uint64_t num;
@@ -179,6 +183,9 @@ typedef struct _lives_clip_t {
   // used only for insert_silence, holds pre-padding length for undo
   double old_laudio_time, old_raudio_time;
 
+  double pb_fps;  ///< current playback rate, may vary from fps, can be 0. or negative
+
+  double target_framerate; ///< display rate we are trying to reach, may affect pb_fps
   /////
   // binfmt fields may be added here:
   ///
@@ -187,7 +194,9 @@ typedef struct _lives_clip_t {
   //// end add section ^^^^^^^
 
   /// binfmt is just a file dump of the struct up to the end of binfmt_end
-  char binfmt_rsvd[4096];
+
+#define BINFMT_RSVD_BYTES 4096
+  char binfmt_rsvd[BINFMT_RSVD_BYTES];
   uint64_t binfmt_end; ///< marks the end of anything "interesring" we may want to save via binfmt extension
 
   /// DO NOT remove or alter any fields before this ^^^^^
@@ -202,8 +211,6 @@ typedef struct _lives_clip_t {
   /// size must be >= frames, MUST be contiguous in memory
   frames_t *frame_index;
   frames_t *frame_index_back; ///< for undo
-
-  double pb_fps;  ///< current playback rate, may vary from fps, can be 0. or negative
 
   double img_decode_time;
 
@@ -228,6 +235,8 @@ typedef struct _lives_clip_t {
   char staging_dir[PATH_MAX];
 
   pthread_mutex_t transform_mutex;
+
+  lives_delivery_t delivery;
 
   /////////////////////////////////////////////////////////////
   // see resample.c for new events system
@@ -402,6 +411,10 @@ typedef struct {
   // TODO: add audio bitrate ?, audio_lang, get_sub, sub_format, sub_language, etc.
 } lives_remote_clip_request_t;
 
+lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded);
+int create_nullvideo_clip(const char *handle);
+char *get_untitled_name(int number);
+
 #define LIVES_LITERAL_EVENT "event"
 #define LIVES_LITERAL_FRAMES "frames"
 
@@ -444,9 +457,7 @@ char *get_clip_dir(int which);
 void permit_close(int which);
 
 char *get_staging_dir_for(int clipno, lives_intention intent);
-
 void migrate_from_staging(int clipno);
-
 char *use_staging_dir_for(int clipno);
 
 /// intents ////

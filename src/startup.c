@@ -478,7 +478,7 @@ static void workdir_entry_check(LiVESEntry * entry, livespointer data) {
 
 
 boolean do_workdir_query(void) {
-  _entryw *wizard = create_rename_dialog(6);
+  _entryw *wizard = create_entry_dialog(ENTRYW_INIT_WORKDIR);
   char *dirname = NULL, *mp;
   LiVESResponseType response;
 

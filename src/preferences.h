@@ -20,6 +20,10 @@
 
 #define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) {boolean a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_BOOLEAN, &a, FLAGS);}
 #define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) {int a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_INT, &a, FLAGS);}
+#define DEFINE_PREF_STRING(IDX, PR, SLEN, PDEF, FLAGS) {char *a = (PDEF); weed_plant_t *prefplant = \
+									    define_pref(PREF_##IDX, prefs->PR, WEED_SEED_STRING, \
+											&a, FLAGS); \
+    weed_set_int_value(prefplant, WEED_LEAF_MAXCHARS, (SLEN));}
 
 #define SET_PREF_WIDGET(IDX, WIDGET) set_pref_widget(PREF_##IDX, (WIDGET))
 

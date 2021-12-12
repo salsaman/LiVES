@@ -407,8 +407,8 @@ boolean skip_forward_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, ui
 }
 
 
-boolean volup_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
-                       livespointer user_data) {
+boolean clip_volup_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                            livespointer user_data) {
   // special flagbit we add, we want to generate these events from the player not from a real key
   if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
   on_volch_pressed(NULL, LIVES_INT_TO_POINTER(LIVES_DIRECTION_UP));
@@ -416,8 +416,8 @@ boolean volup_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t 
 }
 
 
-boolean voldown_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
-                         livespointer user_data) {
+boolean clip_voldown_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                              livespointer user_data) {
   // special flagbit we add, we want to generate these events from the player not from a real key
   if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
   on_volch_pressed(NULL, LIVES_INT_TO_POINTER(LIVES_DIRECTION_DOWN));

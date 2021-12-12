@@ -905,17 +905,15 @@ weed_event_t *get_filter_map_before(weed_event_t *event, int ctrack, weed_event_
   weed_event_t *init_event;
   int num_init_events;
 
-  while (event != stop_event && event) {
+  for (; event != stop_event && event; event = get_prev_event(event)) {
     if (WEED_EVENT_IS_FILTER_MAP(event)) {
       if (ctrack == LIVES_TRACK_ANY) return event;
       if (!weed_plant_has_leaf(event, WEED_LEAF_INIT_EVENTS)) {
-        event = get_prev_event(event);
         continue;
       }
       init_events = weed_get_voidptr_array_counted(event, WEED_LEAF_INIT_EVENTS, &num_init_events);
       if (!num_init_events || !init_events[0]) {
         lives_freep((void **)&init_events);
-        event = get_prev_event(event);
         continue;
       }
       for (int i = 0; i < num_init_events; i++) {
@@ -927,7 +925,6 @@ weed_event_t *get_filter_map_before(weed_event_t *event, int ctrack, weed_event_
       }
       lives_freep((void **)&init_events);
     }
-    event = get_prev_event(event);
   }
   return event;
 }
@@ -3225,7 +3222,7 @@ void get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter
   lives_free(init_events);
 }
 
-
+#define DEBUG_EVENTS
 weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, weed_timecode_t curr_tc) {
   // here we play back (preview) with an event_list
   // we process all events, but drop frames (unless mainw->nodrop is set)
@@ -3274,7 +3271,7 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
 
   tc = get_event_timecode(next_event);
 
-  if (mainw->playing_file != -1 && tc > curr_tc) {
+  if (LIVES_IS_PLAYING && tc > curr_tc) {
     // next event is in our future
     if (mainw->multitrack && mainw->last_display_ticks > 0) {
       if ((mainw->fixed_fpsd > 0. && (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->fixed_fpsd) ||
@@ -3423,12 +3420,12 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
     } else {
       if (mainw->num_tracks > 1) {
         if (mainw->blend_file != mainw->clip_index[1]) {
-          track_decoder_free(1, mainw->blend_file, mainw->clip_index[1]);
+          track_decoder_free(1, mainw->blend_file);
           mainw->blend_file = mainw->clip_index[1];
         }
         if (IS_VALID_CLIP(mainw->blend_file)) mainw->files[mainw->blend_file]->frameno = mainw->frame_index[1];
       } else {
-        track_decoder_free(1, mainw->blend_file, -1);
+        track_decoder_free(1, mainw->blend_file);
         mainw->blend_file = -1;
       }
       new_file = -1;
@@ -3436,7 +3433,7 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
         new_file = mainw->clip_index[i];
       }
       if (i == 2) {
-        track_decoder_free(1, mainw->blend_file, -1);
+        track_decoder_free(1, mainw->blend_file);
         mainw->blend_file = -1;
       }
 
@@ -4098,7 +4095,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 // check if ext_src survives old->new
 
                 ////
-                if (mainw->track_decoders[i]) track_decoder_free(i, oclip, nclip);
+                if (mainw->track_decoders[i]) track_decoder_free(i, oclip);
 
                 if (IS_VALID_CLIP(nclip)) {
                   lives_clip_t *sfile = mainw->files[nclip];
@@ -4268,7 +4265,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               layer = NULL;
             }
           }
-          track_decoder_free(1, mainw->blend_file, blend_file);
+          track_decoder_free(1, mainw->blend_file);
           mainw->blend_file = blend_file;
         }
         next_frame_event = get_next_frame_event(event);

@@ -7024,7 +7024,7 @@ boolean weed_init_effect(int hotkey) {
       }
 
       bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
-      track_decoder_free(1, mainw->blend_file, -1);
+      track_decoder_free(1, mainw->blend_file);
       mainw->blend_file = -1;
     }
 
@@ -7058,7 +7058,7 @@ boolean weed_init_effect(int hotkey) {
       }
       if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_BACKGROUND);
       if (mainw->num_tr_applied == 1 && !is_modeswitch) {
-        track_decoder_free(1, mainw->blend_file, mainw->current_file);
+        track_decoder_free(1, mainw->blend_file);
         mainw->blend_file = mainw->current_file;
         if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
           bg_generator_key = fg_generator_key;
@@ -7667,7 +7667,7 @@ deinit3:
         if (mainw->ce_thumbs) ce_thumbs_set_keych(bgk, FALSE);
         filter_mutex_unlock(bgk);
       }
-      track_decoder_free(1, mainw->blend_file, -1);
+      track_decoder_free(1, mainw->blend_file);
       mainw->blend_file = -1;
     }
   }
@@ -8570,8 +8570,10 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   cfile->ext_src_type = LIVES_EXT_SRC_FILTER;
 
   if (is_bg) {
-    track_decoder_free(1, mainw->blend_file, mainw->current_file);
-    mainw->blend_file = mainw->current_file;
+    if (mainw->blend_file != mainw->current_file) {
+      track_decoder_free(1, mainw->blend_file);
+      mainw->blend_file = mainw->current_file;
+    }
     if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_highlight_current_clip();
   }
 
@@ -8629,13 +8631,17 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       mainw->play_start = 1;
       mainw->play_end = INT_MAX;
       if (is_bg) {
-        track_decoder_free(1, mainw->blend_file, mainw->current_file);
-        mainw->blend_file = mainw->current_file;
+        if (mainw->blend_file != mainw->current_file) {
+          track_decoder_free(1, mainw->blend_file);
+          mainw->blend_file = mainw->current_file;
+        }
         if (old_file != -1) mainw->current_file = old_file;
       }
     } else {
-      track_decoder_free(1, mainw->blend_file, mainw->current_file);
-      mainw->blend_file = mainw->current_file;
+      if (mainw->blend_file != mainw->current_file) {
+        track_decoder_free(1, mainw->blend_file);
+        mainw->blend_file = mainw->current_file;
+      }
       mainw->current_file = old_file;
       mainw->play_start = cfile->start;
       mainw->play_end = cfile->end;
@@ -8694,8 +8700,10 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       }
     } else {
       if (IS_VALID_CLIP(new_file)) {
-        track_decoder_free(1, mainw->blend_file, new_file);
-        mainw->blend_file = new_file;
+        if (mainw->blend_file != new_file) {
+          track_decoder_free(1, mainw->blend_file);
+          mainw->blend_file = new_file;
+        }
         if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
                                  || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))
           ce_thumbs_highlight_current_clip();
@@ -8797,7 +8805,7 @@ void weed_generator_end(weed_plant_t *inst) {
     filter_mutex_unlock(fg_generator_key);
     fg_gen_to_start = fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
     if (mainw->blend_file == mainw->current_file) {
-      track_decoder_free(1, mainw->blend_file, -1);
+      track_decoder_free(1, mainw->blend_file);
       mainw->blend_file = -1;
     }
   }
@@ -8836,8 +8844,10 @@ void weed_generator_end(weed_plant_t *inst) {
   if (is_bg) {
     mainw->pre_src_file = mainw->current_file;
     mainw->current_file = mainw->blend_file;
-    track_decoder_free(1, mainw->blend_file, mainw->new_blend_file);
-    mainw->blend_file = mainw->new_blend_file;
+    if (mainw->blend_file != mainw->new_blend_file) {
+      track_decoder_free(1, mainw->blend_file);
+      mainw->blend_file = mainw->new_blend_file;
+    }
     mainw->new_blend_file = -1;
     // close generator file and switch to original file if possible
     if (!cfile || cfile->clip_type != CLIP_TYPE_GENERATOR) {
@@ -9036,7 +9046,7 @@ genstart2:
 
       if (error != WEED_SUCCESS) {
 undoit:
-        track_decoder_free(1, mainw->blend_file, -1);
+        track_decoder_free(1, mainw->blend_file);
         mainw->blend_file = -1;
 
         if (key_to_instance[bgs][key_modes[bgs]] == inst) {
@@ -9095,7 +9105,7 @@ deinit5:
 
         // open as a clip with 1 frame
         cfile->start = cfile->end = cfile->frames = 1;
-        track_decoder_free(1, mainw->blend_file, mainw->current_file);
+        track_decoder_free(1, mainw->blend_file);
         mainw->blend_file = mainw->current_file;
         mainw->files[mainw->blend_file]->ext_src = inst;
         mainw->files[mainw->blend_file]->ext_src_type = LIVES_EXT_SRC_FILTER;
@@ -10157,9 +10167,10 @@ boolean rte_key_setmode(int key, int newmode) {
 
   key_modes[real_key] = newmode;
 
-  track_decoder_free(1, mainw->blend_file, blend_file);
-  mainw->blend_file = blend_file;
-
+  if (mainw->blend_file != blend_file) {
+    track_decoder_free(1, mainw->blend_file);
+    mainw->blend_file = blend_file;
+  }
   if (inst) {
     if (!weed_init_effect(key)) {
       weed_instance_unref(inst);
@@ -13026,8 +13037,10 @@ boolean set_autotrans(int clip) {
           rte_key_on_off(key + 1, TRUE);
           inst = weed_instance_obtain(key, mode);
           if (inst) {
-            track_decoder_free(1, mainw->blend_file, clip);
-            mainw->blend_file = clip;
+            if (mainw->blend_file != clip) {
+              track_decoder_free(1, mainw->blend_file);
+              mainw->blend_file = clip;
+            }
             prefs->autotrans_amt = 0.;
             set_trans_amt(key, mode, &prefs->autotrans_amt);
             weed_instance_unref(inst);

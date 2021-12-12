@@ -106,7 +106,7 @@ LiVESList *get_set_list(const char *dir, boolean utf8) {
       subdirent = readdir(subdir);
       if (!subdirent) break;
 
-      if (!strcmp(subdirent->d_name, "order")) {
+      if (!strcmp(subdirent->d_name, CLIP_ORDER_FILENAME)) {
         if (!utf8)
           setlist = lives_list_append(setlist, lives_strdup(tdirent->d_name));
         else
@@ -198,6 +198,9 @@ void open_set_file(int clipnum) {
       lives_snprintf(name, CLIP_NAME_MAXLEN, "%s", (tmp = get_untitled_name(mainw->untitled_number++)));
       lives_free(tmp);
       sfile->needs_update = TRUE;
+      if (prefs->show_dev_opts) {
+        g_printerr("clip name not found\n");
+      }
     }
     retval = get_clip_value(clipnum, CLIP_DETAILS_UNIQUE_ID, &sfile->unique_id, 0);
     if (!retval) {
@@ -218,7 +221,7 @@ void open_set_file(int clipnum) {
     int retval;
 
     char *clipdir = get_clip_dir(clipnum);
-    char *xsetfile = lives_strdup_printf("set.%s", mainw->set_name);
+    char *xsetfile = lives_strdup_printf("%s.%s", SET_LITERAL, mainw->set_name);
     char *setfile = lives_build_path(clipdir, xsetfile, NULL);
 
     lives_free(clipdir); lives_free(xsetfile);
@@ -270,7 +273,7 @@ void open_set_file(int clipnum) {
 // it ought to be easy to recreate htis by parsing the subdirectories of /clips in the set but lack of time,,,
 // - also reordering via interface would be nice...
 static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boolean *got_new_handle) {
-  char *ordfile = lives_build_filename(CURRENT_SET_DIR, CLIP_ORDER_FILENAME, NULL);
+  char *ordfile = SET_ORDER_FILE(mainw->set_name);
   char *ordfile_new = lives_build_filename(CURRENT_SET_DIR, CLIP_ORDER_FILENAME "." LIVES_FILE_EXT_NEW, NULL);
   char *cwd = lives_get_current_dir();
   char *new_dir;
@@ -440,18 +443,18 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
 
   if (!user_data) {
     // this was called from the GUI
-    _entryw *renamew = create_rename_dialog(2);
+    _entryw *entryw = create_entry_dialog(ENTRYW_SAVE_SET);
     do {
       // prompt for a set name, advise user to save set
-      response = lives_dialog_run(LIVES_DIALOG(renamew->dialog));
+      response = lives_dialog_run(LIVES_DIALOG(entryw->dialog));
       if (response == LIVES_RESPONSE_CANCEL) return FALSE;
       lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s",
-                     (tmp = U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
+                     (tmp = U82F(lives_entry_get_text(LIVES_ENTRY(entryw->entry)))));
       lives_free(tmp);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     } while (!is_legal_set_name(new_set_name, TRUE, FALSE));
-    lives_widget_destroy(renamew->dialog);
-    lives_free(renamew);
+    lives_widget_destroy(entryw->dialog);
+    lives_free(entryw);
   } else lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s", (char *)user_data);
 
   lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
@@ -739,6 +742,7 @@ void recover_layout_map(void) {
         }
       }
       if (!mlist) break;
+
     }
 
     mainw->bad_lmaps = mlist;
@@ -749,7 +753,7 @@ void recover_layout_map(void) {
 
 char *on_load_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // get set name (use a modified rename window)
-  _entryw *renamew;
+  _entryw *entryw;
   char *set_name = NULL;
   LiVESResponseType resp;
   mainw->mt_needs_idlefunc = FALSE;
@@ -763,19 +767,19 @@ char *on_load_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mt_desensitise(mainw->multitrack);
   }
 
-  renamew = create_rename_dialog(3);
-  if (!renamew) return NULL; ///< no sets available
+  entryw = create_entry_dialog(ENTRYW_RELOAD_SET);
+  if (!entryw) return NULL; ///< no sets available
 
-  resp = lives_dialog_run(LIVES_DIALOG(renamew->dialog));
+  resp = lives_dialog_run(LIVES_DIALOG(entryw->dialog));
 
   if (resp == LIVES_RESPONSE_OK) {
-    set_name = U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
+    set_name = U82F(lives_entry_get_text(LIVES_ENTRY(entryw->entry)));
   }
 
-  // need to clean up renamew
-  lives_widget_destroy(renamew->dialog);
+  // need to clean up entryw
+  lives_widget_destroy(entryw->dialog);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-  lives_freep((void **)&renamew);
+  lives_freep((void **)&entryw);
 
   if (resp == LIVES_RESPONSE_OK) {
     if (!is_legal_set_name(set_name, TRUE, TRUE)) {
@@ -874,7 +878,7 @@ boolean reload_set(const char *set_name) {
     lives_free(tmp);
   }
 
-  ordfile = lives_build_filename(prefs->workdir, set_name, CLIP_ORDER_FILENAME, NULL);
+  ordfile = SET_ORDER_FILE(set_name);
 
   orderfile = fopen(ordfile, "r"); // no we can't assert this, because older sets did not have this file
   lives_free(ordfile);
@@ -1126,6 +1130,9 @@ boolean reload_set(const char *set_name) {
           close_current_file(0);
           if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
           continue;
+        }
+        if (prefs->show_dev_opts) {
+          g_printerr("invalid framecount detected\n");
         }
         cfile->needs_update = TRUE;
       }
@@ -1523,7 +1530,7 @@ void cleanup_set_dir(const char *set_name) {
   }
   lives_free(lfiles);
 
-  ofile = lives_build_filename(SET_DIR(set_name), CLIP_ORDER_FILENAME, NULL);
+  ofile = SET_ORDER_FILE(set_name);
   lives_rm(ofile);
   lives_free(ofile);
 
@@ -1918,7 +1925,7 @@ static boolean drag_end(LiVESWidget * widget, LiVESXEventButton * event, LiVESWi
       current_grp->list = lives_list_append(current_grp->list, uidstr);
       clipname = get_menu_name(sfile, FALSE);
 
-      g_print("ADD clip %s\n", clipname);
+      //g_print("ADD clip %s\n", clipname);
 
       lives_tree_store_set(xxtstore, &xxiter, 0, clipname, -1);
       lives_tree_store_append(xxtstore, &xxiter, NULL);

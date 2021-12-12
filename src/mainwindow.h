@@ -256,6 +256,14 @@ typedef enum {
   N_MATCH_TYPES,
 } lives_match_t;
 
+/// delivery types
+typedef enum {
+  LIVES_DELIVERY_UNDEFINED,
+  LIVES_DELIVERY_PULL,
+  LIVES_DELIVERY_PUSH,
+  LIVES_DELIVERY_PUSH_PULL,
+} lives_delivery_t;
+
 /// toy types
 typedef enum {
   LIVES_TOY_NONE = 0,
@@ -1894,7 +1902,8 @@ typedef struct {
   /// experimental value, primarily for testing
   volatile int uflow_count;
 
-  boolean force_show; /// if set to TRUE during playback then a new frame (or possibly the current one) will be displayed ASAP
+  volatile boolean
+  force_show; /// if set to TRUE during playback then a new frame (or possibly the current one) will be displayed ASAP
 
   /// adaptive quality settings
   ///< a roughly calibrated value that ranges from -64 (lightly loaded) -> +64 (heavily loaded)
@@ -1946,6 +1955,7 @@ typedef struct {
   volatile boolean transrend_ready;
   weed_layer_t *transrend_layer;
   lives_proc_thread_t transrend_proc;
+  lives_proc_thread_t drawtl_thread;
   boolean pr_audio;
   double vfade_in_secs, vfade_out_secs;
   lives_colRGBA64_t vfade_in_col, vfade_out_col;

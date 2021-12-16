@@ -322,7 +322,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   lives_img_type_t ximgtype;
   frames_t last_real_frame = sfile->frames, last_img_frame;
   int nimty = (int)N_IMG_TYPES, j;
-  boolean has_missing_frames = FALSE, bad_imgfmts = FALSE;
+  boolean has_missing_frames = FALSE, bad_imgfmts = FALSE, do_rescan = FALSE;
   boolean mismatch = FALSE;
   boolean isfirst = TRUE;
   boolean backup_more_correct = FALSE;
@@ -349,22 +349,22 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
     sfile->afilesize = reget_afilesize_inner(fileno);
     get_total_time(sfile);
     if (sfile->video_time < sfile->laudio_time) {
+      if (prefs->show_dev_opts) {
+        g_printerr("AV timing mismatch: video time == %.2f sec, audio time == %.2f\n",
+                   sfile->video_time, sfile->laudio_time);
+      }
       binf = clip_forensic(fileno, NULL);
       if (binf && binf->frames) {
         if (binf->frames * sfile->fps == sfile->laudio_time
             || binf->frames * binf->fps == sfile->laudio_time
             || (cdata && binf->frames * cdata->fps == sfile->laudio_time)) {
           has_missing_frames = TRUE;
-          if (prefs->show_dev_opts) {
-            g_printerr("AV timing mismatch\n");
-          }
         }
-      }
-      if (!binf) {
+      } else {
         if (prefs->show_dev_opts) {
-          g_printerr("no binfmt\n");
+          g_printerr("no binfmt->frames\n");
         }
-        has_missing_frames = TRUE;
+        do_rescan = TRUE;
       }
     }
   }
@@ -426,19 +426,18 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 
   if (cdata) {
     // check frame count
-    if (maxframe > cdata->nframes || has_missing_frames) {
+    if (maxframe > cdata->nframes || has_missing_frames || do_rescan) {
       if (prefs->show_dev_opts) {
         if (maxframe > cdata->nframes) {
           g_printerr("frame count mismatch for clip %d,  %s, maxframe is %d, decoder claims only %ld\nRescaning...",
                      fileno, sfile->handle, maxframe, cdata-> nframes);
         }
       }
-
-      has_missing_frames = TRUE;
       sfile->frames = scan_frames(sfile, cdata->nframes, last_real_frame);
       if (prefs->show_dev_opts) {
-        g_printerr("rescan counted %d frames\n.", sfile->frames);
+        g_printerr("rescan counted %d frames (expected %d)\n.", sfile->frames, maxframe);
       }
+      if (sfile->frames != maxframe) has_missing_frames = TRUE;
     }
   }
 

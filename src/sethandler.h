@@ -71,6 +71,7 @@ typedef struct {
 boolean do_reload_set_query(void);
 boolean do_set_noclips_query(const char *set_name);
 void do_set_noclips_error(const char *setname);
+void do_set_fail_load_error(const char *setname);
 LiVESResponseType prompt_for_set_save(void);
 boolean prompt_remove_layout_files(void);
 boolean do_set_locked_warning(const char *setname);

@@ -10618,7 +10618,9 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
       pthread_mutex_lock(&mainw->alock_mutex);
       mainw->alock_abuf = NULL;
       pthread_mutex_unlock(&mainw->alock_mutex);
+      pthread_mutex_lock(&abuf->atomic_mutex);
       free_audio_frame_buffer(abuf);
+      pthread_mutex_unlock(&abuf->atomic_mutex);
     }
     if (LIVES_IS_PLAYING) switch_audio_clip(mainw->playing_file, TRUE);
   }

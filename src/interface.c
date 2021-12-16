@@ -4900,10 +4900,12 @@ _entryw *create_cds_dialog(int type) {
       prefs->ar_clipset = prefs->ar_layout = FALSE;
     } else {
       prefs->ar_clipset = !mainw->only_close;
-      checkbutton = make_autoreload_check(LIVES_HBOX(hbox), prefs->ar_clipset);
+      if (!mainw->only_close) {
+        checkbutton = make_autoreload_check(LIVES_HBOX(hbox), prefs->ar_clipset);
 
-      lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                LIVES_GUI_CALLBACK(toggle_sets_pref), (livespointer)PREF_AR_CLIPSET);
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(toggle_sets_pref), (livespointer)PREF_AR_CLIPSET);
+      }
     }
   }
   if (type == 0 && !(prefs->warning_mask & WARN_MASK_EXIT_MT)) {

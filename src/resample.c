@@ -2653,6 +2653,7 @@ void *resample_to_float(lives_object_t *obj, void *data) {
   // resample buffer to float
   //
   if (!abuf || abuf->_fd < 0) return NULL;
+  pthread_mutex_lock(&abuf->atomic_mutex);
   abuf->out_achans = 0;
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
@@ -2684,6 +2685,7 @@ void *resample_to_float(lives_object_t *obj, void *data) {
           if ((abigendian && capable->hw.byte_order == LIVES_LITTLE_ENDIAN)
               || (!abigendian && capable->hw.byte_order == LIVES_BIG_ENDIAN)) rev_endian = TRUE;
           sample_move_d16_float(abuf->bufferf[i], s16buffer, abuf->samp_space, abuf->in_achans, in_unsigned, rev_endian, 1.);
+          pthread_mutex_unlock(&abuf->atomic_mutex);
         } else {
           /* if (sfile->asampsize == 8) { */
           /*   sample_move_d8_d16((short *)(pulsed->sound_buffer), (uint8_t *)buffer, nsamples, in_bytes, */
@@ -2696,5 +2698,6 @@ void *resample_to_float(lives_object_t *obj, void *data) {
     abuf->seek = sfile->aseek_pos;
     abuf->arate = sfile->arate;
   }
+  pthread_mutex_unlock(&abuf->atomic_mutex);
   return NULL;
 }

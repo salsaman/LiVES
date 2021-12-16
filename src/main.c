@@ -5707,6 +5707,10 @@ void sensitize_rfx(void) {
         if (mainw->rendered_fx[i]->num_in_channels == 2) continue;
         menuitem = mainw->rendered_fx[i]->menuitem;
         if (menuitem && LIVES_IS_WIDGET(menuitem)) {
+          if (mainw->rendered_fx[i]->num_in_channels == 0) {
+            lives_widget_set_sensitive(menuitem, TRUE);
+            continue;
+          }
           if (mainw->rendered_fx[i]->min_frames >= 0)
             lives_widget_set_sensitive(menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
         }
@@ -5914,8 +5918,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->autolives, TRUE);
   lives_widget_set_sensitive(mainw->toy_random_frames, TRUE);
   //lives_widget_set_sensitive(mainw->open_lives2lives, TRUE);
-  if (!prefs->vj_mode)
-    lives_widget_set_sensitive(mainw->gens_submenu, TRUE);
+  if (!prefs->vj_mode) lives_widget_set_sensitive(mainw->gens_submenu, TRUE);
   lives_widget_set_sensitive(mainw->troubleshoot, TRUE);
   lives_widget_set_sensitive(mainw->expl_missing, TRUE);
 
@@ -6070,7 +6073,6 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->append_audio, FALSE);
   lives_widget_set_sensitive(mainw->trim_submenu, FALSE);
   lives_widget_set_sensitive(mainw->delaudio_submenu, FALSE);
-  lives_widget_set_sensitive(mainw->gens_submenu, FALSE);
   lives_widget_set_sensitive(mainw->troubleshoot, FALSE);
   lives_widget_set_sensitive(mainw->expl_missing, FALSE);
   lives_widget_set_sensitive(mainw->resample_audio, FALSE);
@@ -6181,7 +6183,7 @@ void procw_desensitize(void) {
 
   lives_widget_set_sensitive(mainw->sa_button, FALSE);
   lives_widget_set_sensitive(mainw->select_submenu, FALSE);
-  //lives_widget_set_sensitive(mainw->toy_tv, FALSE);
+  lives_widget_set_sensitive(mainw->gens_submenu, FALSE);
   lives_widget_set_sensitive(mainw->autolives, FALSE);
   lives_widget_set_sensitive(mainw->export_submenu, FALSE);
   lives_widget_set_sensitive(mainw->trim_submenu, FALSE);

@@ -2418,7 +2418,6 @@ void clip_decoder_free(lives_decoder_t *decoder) {
       }
       if (dpsys)(*dpsys->clip_data_free)(cdata);
     }
-    lives_free(decoder);
   }
 }
 
@@ -2597,6 +2596,7 @@ void close_clip_decoder(int clipno) {
       lives_chdir(ppath, FALSE);
       lives_free(ppath);
       clip_decoder_free((lives_decoder_t *)sfile->ext_src);
+      lives_free(sfile->ext_src);
       sfile->ext_src = NULL;
       sfile->ext_src_type = LIVES_EXT_SRC_NONE;
       lives_chdir(cwd, FALSE);

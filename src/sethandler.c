@@ -545,13 +545,14 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
     return FALSE;
   }
 
-  if (mainw->num_sets > -1) {
-    mainw->num_sets++;
-    if (!*old_set) mainw->set_list = lives_list_prepend(mainw->set_list, lives_strdup(mainw->set_name));
-  } else {
-    mainw->num_sets = 1;
-    mainw->set_list = lives_list_prepend(mainw->set_list, lives_strdup(mainw->set_name));
+
+  if (mainw->num_sets == -1) {
+    mainw->set_list = get_set_list(prefs->workdir, TRUE);
+    mainw->num_sets = lives_list_length(mainw->set_list);
+    if (*old_set) mainw->num_sets--;
   }
+  mainw->num_sets++;
+  if (!*old_set) mainw->set_list = lives_list_prepend(mainw->set_list, lives_strdup(mainw->set_name));
 
   if (got_new_handle && !*old_set) migrate_layouts(NULL, mainw->set_name);
 
@@ -625,7 +626,7 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
     if (mainw->multitrack && !mainw->multitrack->changed) recover_layout_cancelled(FALSE);
   }
 
-  if (mainw->current_layouts_map && strcmp(old_set, mainw->set_name) && !mainw->suppress_layout_warnings) {
+  if (mainw->current_layouts_map && lives_strcmp(old_set, mainw->set_name) && !mainw->suppress_layout_warnings) {
     // warn the user about layouts if the set name changed
     // but, don't bother the user with errors if we are exiting
     add_lmap_error(LMAP_INFO_SETNAME_CHANGED, old_set, mainw->set_name, 0, 0, 0., FALSE);
@@ -742,10 +743,16 @@ void recover_layout_map(void) {
         }
       }
       if (!mlist) break;
-
     }
 
     mainw->bad_lmaps = mlist;
+    if (prefs->show_dev_opts) {
+      for (; mlist; mlist = mlist->next) {
+        lmap_entry = (layout_map *)mlist->data;
+        g_print("Failed to find clip %s with uid 0X%016lX, needed in layouts\n", lmap_entry->handle,
+                lmap_entry->unique_id);
+      }
+    }
   }
   if (mask) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(mask));
 }
@@ -926,26 +933,41 @@ boolean reload_set(const char *set_name) {
         if (lives_file_test(dirname, LIVES_FILE_TEST_IS_DIR)) {
           //// todo test if no subdirs
           if (ignored) {
-            // if all files ignored, ignore the entries set
+            // if all files ignored, ignore the entire set
             char *ignore = lives_build_filename(CURRENT_SET_DIR, LIVES_FILENAME_IGNORE, NULL);
             lives_touch(ignore);
             lives_free(ignore);
           } else {
-            if (do_set_noclips_query(set_name)) {
-              lives_rmdir(dirname, TRUE);
-              lives_free(dirname);
+            char *cdirname = CLIPS_DIR(set_name);
+            if (lives_file_test(cdirname, LIVES_FILE_TEST_IS_DIR)) {
+              do_set_fail_load_error(set_name);
+            } else {
+              if (do_set_noclips_query(set_name)) {
+                lives_rmdir(dirname, TRUE);
+              }
             }
+            lives_free(cdirname);
           }
         } else {
           // this is appropriate if the dir does not exist, and !recovery
           do_set_noclips_error(set_name);
         }
+        lives_free(dirname);
       } else {
         char *tmp;
         reset_clipmenu();
         lives_widget_set_sensitive(mainw->vj_load_set, FALSE);
 
         if (hadbad) rewrite_orderfile(FALSE, FALSE, NULL);
+
+        if (clipcount != start_clip && !mainw->recovering_files) {
+          // if we are truly recovering files, we allow error correction later on
+          // otherwise we might end up calling this twice
+          mainw->recovering_files = TRUE; // allow error correction
+          // MUST set set_name before calling this
+          recover_layout_map();
+          mainw->recovering_files = FALSE;
+        }
 
         d_print(_("%d clips and %d layouts were recovered from set (%s).\n"),
                 clipcount - start_clip, lives_list_length(mainw->current_layouts_map), (tmp = F2U8(set_name)));
@@ -972,15 +994,6 @@ boolean reload_set(const char *set_name) {
       }
       lives_chdir(cwd, FALSE);
       lives_free(cwd);
-
-      if (clipcount != start_clip && !mainw->recovering_files) {
-        // if we are truly recovering files, we allow error correction later on
-        // otherwise we might end up calling this twice
-        mainw->recovering_files = TRUE; // allow error correction
-        // MUST set set_name before calling this
-        recover_layout_map();
-        mainw->recovering_files = FALSE;
-      }
 
       if (mainw->multitrack) {
         mt_sensitise(mainw->multitrack);
@@ -1079,7 +1092,8 @@ boolean reload_set(const char *set_name) {
 
     if ((maxframe = load_frame_index(mainw->current_file)) > 0) {
       // CLIP_TYPE_FILE
-      /** here we attempt to reload the clip. First we load the frame_index if any, If it contains more frames than the metadata says, then
+      /** here we attempt to reload the clip. First we load the frame_index if any,
+        If it contains more frames than the metadata says, then
         we trust the frame_index for now, since the metadata may have been corrupted.
         If it contains fewer frames, then we will warn the user, but we cannot know whether the metadata is correct or not,
         and in any case we cannot reconstruct the frame_index, so we have to use what it tells us.
@@ -1563,10 +1577,15 @@ LIVES_GLOBAL_INLINE void do_set_noclips_error(const char *setname) {
 }
 
 
+LIVES_GLOBAL_INLINE void do_set_fail_load_error(const char *setname) {
+  do_error_dialogf(_("Set %s\ncannot be opened, it may have been moved from its original location.\n"), setname);
+}
+
+
 LIVES_GLOBAL_INLINE boolean do_set_noclips_query(const char *set_name) {
-  return do_yesno_dialogf(_("LiVES was unable to find any clips in the set %s\n"
-                            "Would you like to delete this set ?\nIt is no longer usable"),
-                          set_name);
+  return do_yesno_dialogf_with_countdown(3, TRUE, _("LiVES was unable to find any clips in the set %s\n"
+                                         "Would you like to delete this set ?\nIt is no longer usable"),
+                                         set_name);
 }
 
 
@@ -1580,14 +1599,15 @@ LIVES_GLOBAL_INLINE boolean do_set_locked_warning(const char *setname) {
 
 
 LIVES_GLOBAL_INLINE boolean prompt_remove_layout_files(void) {
-  return (do_yesno_dialog(
-            _("\nDo you wish to remove the layout files associated with this set ?\n"
-              "(They will not be usable without the set).\n")));
+  return (do_yesno_dialogf_with_countdown(2, TRUE, "%s",
+                                          _("\nDo you wish to remove the layout files associated with this set ?\n"
+                                              "(They will not be usable without the set).\n")));
 }
 
 
 LIVES_GLOBAL_INLINE boolean do_reload_set_query(void) {
-  return do_yesno_dialog(_("Current clips will be added to the clip set.\nIs that what you want ?\n"));
+  return do_yesno_dialogf_with_countdown(2, TRUE, "%s",
+                                         _("Current clips will be added to the clip set.\nIs that what you want ?\n"));
 }
 
 boolean do_set_duplicate_warning(const char *new_set) {

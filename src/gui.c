@@ -688,6 +688,17 @@ void create_LiVES(void) {
   }
   widget_opts.mnemonic_label = TRUE;
 
+  mainw->sw_sound = lives_standard_check_menu_item_new_with_label(_("Encode/Load/Backup _with Sound"), TRUE);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->sw_sound);
+
+  if (prefs->vj_mode) {
+    lives_widget_set_sensitive(mainw->sw_sound, FALSE);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sw_sound), FALSE);
+  }
+
+  mainw->aload_subs = lives_standard_check_menu_item_new_with_label(_("Auto load subtitles"), prefs->autoload_subs);
+  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->aload_subs);
+
   lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
 
   mainw->vj_load_set = lives_standard_menu_item_new_with_label(_("_Reload Clip Set..."));
@@ -741,19 +752,6 @@ void create_LiVES(void) {
 
   lives_widget_add_accelerator(mainw->restore, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_r, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
-
-  lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
-
-  mainw->sw_sound = lives_standard_check_menu_item_new_with_label(_("Encode/Load/Backup _with Sound"), TRUE);
-  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->sw_sound);
-
-  if (prefs->vj_mode) {
-    lives_widget_set_sensitive(mainw->sw_sound, FALSE);
-    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sw_sound), FALSE);
-  }
-
-  mainw->aload_subs = lives_standard_check_menu_item_new_with_label(_("Auto load subtitles"), prefs->autoload_subs);
-  lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->aload_subs);
 
   lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
 

@@ -172,27 +172,29 @@ void player_sensitize(void) {
 
 
 void track_decoder_free(int i, int oclip) {
-  if (i < 0 || mainw->old_active_track_list[i] == oclip) {
+  if (mainw->old_active_track_list[i] == oclip) {
     if (mainw->track_decoders[i]) {
       boolean can_free = TRUE;
-      if (oclip < 0 || IS_VALID_CLIP(oclip)) {
-        if (IS_VALID_CLIP(oclip)) {
-          lives_clip_t *xoclip = mainw->files[oclip];
-          if (mainw->track_decoders[i] != (lives_decoder_t *)xoclip->ext_src) {
-            // remove the clone for oclip
-            if (xoclip->n_altsrcs > 0
-                && mainw->track_decoders[i] == (lives_decoder_t *)xoclip->alt_srcs[0]) {
-              if (oclip == mainw->blend_file && mainw->blend_layer
-                  && weed_plant_has_leaf(mainw->blend_layer, LIVES_LEAF_ALTSRC)) {
-                weed_leaf_delete(mainw->blend_layer, LIVES_LEAF_ALTSRC);
+      if (!mainw->multitrack || mainw->active_track_list[i] > 0)  {
+        if (oclip < 0 || IS_VALID_CLIP(oclip)) {
+          if (IS_VALID_CLIP(oclip)) {
+            lives_clip_t *xoclip = mainw->files[oclip];
+            if (mainw->track_decoders[i] != (lives_decoder_t *)xoclip->ext_src) {
+              // remove the clone for oclip
+              if (xoclip->n_altsrcs > 0
+                  && mainw->track_decoders[i] == (lives_decoder_t *)xoclip->alt_srcs[0]) {
+                if (oclip == mainw->blend_file && mainw->blend_layer
+                    && weed_plant_has_leaf(mainw->blend_layer, LIVES_LEAF_ALTSRC)) {
+                  weed_leaf_delete(mainw->blend_layer, LIVES_LEAF_ALTSRC);
+                }
+                lives_free(xoclip->alt_srcs);
+                xoclip->alt_srcs = NULL;
+                lives_free(xoclip->alt_src_types);
+                xoclip->alt_src_types = NULL;
+                xoclip->n_altsrcs = 0;
               }
-              lives_free(xoclip->alt_srcs);
-              xoclip->alt_srcs = NULL;
-              lives_free(xoclip->alt_src_types);
-              xoclip->alt_src_types = NULL;
-              xoclip->n_altsrcs = 0;
-            }
-          } else can_free = FALSE;
+            } else can_free = FALSE;
+          }
         }
       }
       if (can_free) clip_decoder_free(mainw->track_decoders[i]);
@@ -216,10 +218,8 @@ LIVES_GLOBAL_INLINE void init_track_decoders(void) {
 LIVES_GLOBAL_INLINE void free_track_decoders(void) {
   for (int i = 0; i < MAX_TRACKS; i++) {
     if (mainw->track_decoders[i]) {
-      if (mainw->active_track_list[i] <= 0 || mainw->track_decoders[i]
-          != mainw->files[mainw->active_track_list[i]]->ext_src)
-        clip_decoder_free(mainw->track_decoders[i]);
-      track_decoder_free(-1, i);
+      mainw->old_active_track_list[i] = mainw->active_track_list[i];
+      track_decoder_free(i, mainw->active_track_list[i]);
       mainw->active_track_list[i] = 0;
     }
   }

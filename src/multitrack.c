@@ -4360,7 +4360,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   if (mainw->hdrbar) {
     lives_widget_object_ref(mainw->menubar);
     lives_widget_unparent(mainw->menubar);
-    gtk_header_bar_pack_start(LIVES_HEADER_BAR(mainw->hdrbar), mt->menubar);
+    lives_header_bar_pack_start(LIVES_HEADER_BAR(mainw->hdrbar), mt->menubar);
   } else lives_box_pack_start(LIVES_BOX(mt->menu_hbox), mt->menubar, FALSE, FALSE, 0);
 
   // File

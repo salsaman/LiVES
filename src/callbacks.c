@@ -12614,32 +12614,28 @@ void popup_lmap_errors(LiVESMenuItem * menuitem, livespointer user_data) {
   add_warn_check(LIVES_BOX(vbox), wmask, tmp);
   if (tmp) lives_free(tmp);
 
-  button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
-           LIVES_RESPONSE_OK);
+  textwindow->delete_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_DELETE,
+                              _("_Delete affected layouts"), LIVES_RESPONSE_REJECT);
+  lives_container_set_border_width(LIVES_CONTAINER(textwindow->delete_button), widget_opts.border_width);
 
-  lives_container_set_border_width(LIVES_CONTAINER(button), widget_opts.border_width);
-
-  textwindow->clear_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLEAR,
-                             mainw->recovering_files ? _("_Ignore or fix errors")
-                             : _("_Ignore errors"), LIVES_RESPONSE_RESET);
+  if (mainw->recovering_files)
+    textwindow->clear_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLEAR,
+                               _("_Try to _Fix Errors"), LIVES_RESPONSE_RESET);
 
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->clear_button), widget_opts.border_width);
 
-  textwindow->delete_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_DELETE,
-                              _("_Delete affected layouts"), LIVES_RESPONSE_REJECT);
+  button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
+           LIVES_RESPONSE_OK);
+  lives_container_set_border_width(LIVES_CONTAINER(button), widget_opts.border_width);
 
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(lives_widget_get_parent(textwindow->delete_button)), LIVES_BUTTONBOX_SPREAD);
-
-  lives_container_set_border_width(LIVES_CONTAINER(textwindow->delete_button), widget_opts.border_width);
-
-  lives_widget_show_all(textwindow->dialog);
+  lives_button_box_set_layout(LIVES_BUTTON_BOX(lives_widget_get_parent(button)), LIVES_BUTTONBOX_SPREAD);
 
   lives_widget_set_can_default(button, TRUE);
   lives_button_grab_default_special(button);
 
   lives_window_add_escape(LIVES_WINDOW(textwindow->dialog), button);
 
-  resp = lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
+  resp = lives_dialog_run_with_countdown(LIVES_DIALOG(textwindow->dialog), LIVES_RESPONSE_REJECT, 3);
   lives_widget_destroy(textwindow->dialog);
   lives_free(textwindow);
   textwindow = NULL;

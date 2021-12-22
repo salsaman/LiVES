@@ -2202,7 +2202,9 @@ static boolean lives_init(_ign_opts *ign_opts) {
     lives_free(recfname);
 
 audio_choice:
+#ifdef ENABLE_JACK
     orig_err = 0;
+#endif
 
     if (prefs->startup_phase > 0 && prefs->startup_phase <= 4) {
       splash_end();

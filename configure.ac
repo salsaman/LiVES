@@ -382,10 +382,6 @@ AM_CONDITIONAL(DISABLE_RPMALLOC,$DISABLE_RPMALLOC)
 HAVE_GTK_VERSION3=false
 GTK310_WARN=false
 
-AC_ARG_ENABLE(gtk3, [  --disable-gtk3     Disable gtk+ 3.x and compile with gtk+ 2.x] , disable_gtk3=yes)
-
-if test "x$disable_gtk3" != "xyes" ; then
-
 echo -n "checking for GTK+ >= 3.0.0... "
 
 PKG_CHECK_EXISTS([gtk+-3.0 >= 3.0.0],[HAVE_GTK_VERSION3=true],[HAVE_GTK_VERSION3=false])
@@ -405,22 +401,6 @@ else
 PKG_CHECK_MODULES(GTK, gtk+-3.0 >= 3.0.0)
 fi
 
-else
-
-echo "Not checking for gtk+ 3.x"
-
-fi
-
-
-if test "x$HAVE_GTK_VERSION3" = "xfalse"; then
-echo -n "checking for GTK+ >= 2.4.0... "
-PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.4.0)
-PKG_CHECK_EXISTS([gtk+-2.0 >= 2.16.0],[HAVE_GTK_VERSION216=true],[HAVE_GTK_VERSION216=false])
-PKG_CHECK_EXISTS([gtk+-2.0 >= 2.6.0],[HAVE_GTK_VERSION206=true],[HAVE_GTK_VERSION206=false])
-
-echo "- Compiling with gtk+ 2.x -"
-
-else
 GTK3_VERSION=`$PKG_CONFIG --modversion gtk+-3.0`
 
 echo "- Compiling with gtk+ version " $GTK3_VERSION " -"
@@ -435,8 +415,6 @@ if test "$HAVE_GTK_VERSION310" = "true"; then
 if test "$HAVE_GTK_VERSION311" = "false"; then
 GTK310_WARN=true
 fi
-fi
-
 fi
 
 AC_SUBST(GTK_CFLAGS)

@@ -561,6 +561,9 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 #ifdef GTK_HEADER_BAR
 #define LIVES_HAS_HEADER_BAR_WIDGET 1
   typedef GtkHeaderBar   		    LiVESHeaderBar;
+#else
+  typedef GtkWidget		    	    LiVESHeaderBar;
+#define LIVES_HEADER_BAR		    GTK_WIDGET
 #endif
   typedef GtkMenu                           LiVESMenu;
   typedef GtkMenuShell                      LiVESMenuShell;

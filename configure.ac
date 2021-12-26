@@ -127,7 +127,7 @@ AC_DEFINE_UNQUOTED(LiVES_VERSION, "${VERSION}", [])
 
 dnl Add the languages which your application supports here.
 ALL_LINGUAS="ar fr ca cs da ja nl_NL de_DE pt pt_BR hu es it pl tr ru zh_CN sk he en_GB fi et gl uz te ro uk oc hr ug pms"
-AM_GNU_GETTEXT
+AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.17)
 
 AC_PROG_MKDIR_P
@@ -1142,7 +1142,6 @@ libOSC/client/Makefile
 libOSC/sendOSC/Makefile
 po/Makefile.in
 Makefile
-intl/Makefile
 m4/Makefile
 src/Makefile
 resources/Makefile

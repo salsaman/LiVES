@@ -2660,7 +2660,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe,
       if (!rev)((lives_clip_data_t *)cdata)->fwd_seek_time = (cdata->fwd_seek_time + timex) / 2;
       else ((lives_clip_data_t *)cdata)->adv_timing.seekback_time =
           (cdata->adv_timing.seekback_time + (double)timex) / 2.;
-    } else nextframe = priv->last_fryame + 1;
+    } else nextframe = priv->last_frame + 1;
 
     xtimex = get_current_ticks();
 

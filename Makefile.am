@@ -32,7 +32,7 @@ endif
 
 endif
 
-SUBDIRS = $(OSC_SUBDIRS) intl $(WEED_SUBDIRS) src m4 lives-plugins po resources
+SUBDIRS = $(OSC_SUBDIRS) $(WEED_SUBDIRS) src m4 lives-plugins po resources
 PACKAGE_CAPITALISED = LiVES
 
 docdir = "$(prefix)/share/doc/$(PACKAGE)"

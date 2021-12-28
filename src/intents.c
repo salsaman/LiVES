@@ -5,7 +5,6 @@
 // see file ../COPYING or www.gnu.org for licensing details
 
 #include "main.h"
-#include "weed-utils.h"
 
 static boolean lives_object_attribute_unref(lives_obj_attr_t *attr);
 

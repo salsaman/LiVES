@@ -5122,6 +5122,9 @@ void unlock_loop_lock(void) {
   mainw->clip_switched = TRUE;
 }
 
+#ifndef ENABLE_JACK
+#define is_transport_locked() FALSE
+#endif
 
 boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer area_enum) {

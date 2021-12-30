@@ -2904,7 +2904,6 @@ LIVES_GLOBAL_INLINE void do_no_loadfile_error(const char *fname) {
 
 
 #ifdef ENABLE_JACK
-
 LIVES_GLOBAL_INLINE boolean do_jack_nonex_warn(const char *server_cfg) {
   return do_yesno_dialogf(_("The script file selected for server startup does not exist.\n"
                             "(%s)\nAre you sure you wish to continue with these settings ?\n"),
@@ -2937,9 +2936,9 @@ LIVES_LOCAL_INLINE char *get_jack_restart_warn(int suggest_opts, const char *srv
     if (*firstbit) lives_free(firstbit);
     return msg;
   }
-#endif
   return lives_strdup("");
 }
+
 
 LIVES_GLOBAL_INLINE void do_jack_restart_warn(int suggest_opts, const char *srvname) {
   char *msg = get_jack_restart_warn(suggest_opts, srvname);
@@ -3248,7 +3247,7 @@ boolean do_jack_no_connect_warn(boolean is_trans) {
   // *INDENT-ON*
   return FALSE;
 }
-
+#endif
 
 LIVES_GLOBAL_INLINE void do_mt_backup_space_error(lives_mt * mt, int memreq_mb) {
   char *msg = lives_strdup_printf(

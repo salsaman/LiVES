@@ -322,7 +322,7 @@ static boolean avsync_check(void) {
 
   if (mainw->foreign || !LIVES_IS_PLAYING || AUD_SRC_EXTERNAL || prefs->force_system_clock
       || (mainw->event_list && !(mainw->record || mainw->record_paused)) || prefs->audio_player == AUD_PLAYER_NONE
-      || !is_realtime_aplayer(prefs->audio_player) || cfile->play_paused) {
+      || !is_realtime_aplayer(prefs->audio_player) || (CURRENT_CLIP_IS_VALID && cfile->play_paused)) {
     mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
     return TRUE;
   }
@@ -1047,8 +1047,6 @@ recheck:
           }
         }
       }
-
-
     }
     // when playing backend previews, keep going until we run out of frames or the user cancels
 
@@ -1891,7 +1889,8 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
       if (prefs->audio_player == AUD_PLAYER_PULSE &&
           ((prefs->audio_src == AUDIO_SRC_INT && mainw->pulsed && mainw->pulsed->in_use &&
             ((mainw->multitrack && cfile->achans > 0)
-             || (!mainw->multitrack && IS_VALID_CLIP(mainw->pulsed->playing_file) && mainw->files[mainw->pulsed->playing_file]->achans > 0)))
+             || (!mainw->multitrack && IS_VALID_CLIP(mainw->pulsed->playing_file)
+                 && mainw->files[mainw->pulsed->playing_file]->achans > 0)))
            || (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read && mainw->pulsed_read->in_use))) {
         *tsource = LIVES_TIME_SOURCE_SOUNDCARD;
         if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
@@ -1899,17 +1898,19 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
         else current = lives_pulse_get_time(mainw->pulsed);
       }
 #endif
-      if (current >= 0 && LIVES_IS_PLAYING && lastt == LIVES_TIME_SOURCE_SOUNDCARD
-          && *tsource == LIVES_TIME_SOURCE_SOUNDCARD) {
-        if (current - mainw->adjticks + mainw->syncticks < mainw->startticks) {
-          mainw->syncticks = mainw->startticks - current + mainw->adjticks;
-        }
-        if (current - mainw->adjticks + mainw->syncticks < mainw->currticks) {
-          mainw->syncticks = mainw->currticks - current + mainw->adjticks;
-        }
+    }
+
+    if (current >= 0 && LIVES_IS_PLAYING && lastt == LIVES_TIME_SOURCE_SOUNDCARD
+        && *tsource == LIVES_TIME_SOURCE_SOUNDCARD) {
+      if (current - mainw->adjticks + mainw->syncticks < mainw->startticks) {
+        mainw->syncticks = mainw->startticks - current + mainw->adjticks;
+      }
+      if (current - mainw->adjticks + mainw->syncticks < mainw->currticks) {
+        mainw->syncticks = mainw->currticks - current + mainw->adjticks;
       }
     }
   }
+
 
   if (*tsource == LIVES_TIME_SOURCE_NONE || current == -1) {
     *tsource = LIVES_TIME_SOURCE_SYSTEM;
@@ -2418,7 +2419,7 @@ int process_one(boolean visible) {
   // INTERNAL PLAYER
   static frames_t last_req_frame = 0;
   static frames_t real_requested_frame = 0;
-#ifdef HAVE_PULSE_AUDIO
+#if defined HAVE_PULSE_AUDIO || defined ENABLE_JACK
   static int64_t last_seek_pos = 0;
 #endif
   //static ticks_t last_ana_ticks;
@@ -2736,14 +2737,19 @@ switch_point:
   // here we need to add mainw->offsetticks, to get the correct position when playing back in multitrack
   if (!mainw->proc_ptr && cfile->next_event) {
     // playing an event_list
-    if (0 && mainw->scratch != SCRATCH_NONE && mainw->multitrack && mainw->jackd_trans
-        && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
-        && (prefs->jack_opts & JACK_OPTS_TRANSPORT_SLAVE)
-        && (prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE)) {
-      // handle transport jump in multitrack : end current playback and restart it from the new position
-      ticks_t transtc = q_gint64(jack_transport_get_current_ticks(mainw->jackd_trans), cfile->fps);
-      mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE);
-      if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
+    if (0) {
+      // TODO -retest
+#ifdef ENABLE_JACK
+      if (mainw->scratch != SCRATCH_NONE && mainw->multitrack && mainw->jackd_trans
+          && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+          && (prefs->jack_opts & JACK_OPTS_TRANSPORT_SLAVE)
+          && (prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE)) {
+        // handle transport jump in multitrack : end current playback and restart it from the new position
+        ticks_t transtc = q_gint64(jack_transport_get_current_ticks(mainw->jackd_trans), cfile->fps);
+        mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE);
+        if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
+      }
+#endif
     } else {
       ticks_t currticks = mainw->currticks;
       if (mainw->multitrack) currticks += mainw->offsetticks; // add the offset of playback start time
@@ -3280,178 +3286,180 @@ update_effort:
           }
 #endif
         }
+      }
 #if 0
-        if (prefs->audio_player == AUD_PLAYER_NONE) {
-          aplay_file = mainw->nullaudio->playing_file;
-          if (IS_VALID_CLIP(aplay_file))
-            mainw->files[aplay_file]->aseek_pos = nullaudio_get_seek_pos();
-        }
+      if (prefs->audio_player == AUD_PLAYER_NONE) {
+        aplay_file = mainw->nullaudio->playing_file;
+        if (IS_VALID_CLIP(aplay_file))
+          mainw->files[aplay_file]->aseek_pos = nullaudio_get_seek_pos();
+      }
 #endif
 
-        // load and display the new frame
-        if (prefs->dev_show_caching) {
-          /* 	    /\* g_print("playing frame %d / %d at %ld (%ld : %ld) %.2f %ld %ld\n", sfile->frameno, requested_frame, mainw->currticks, *\/ */
-          /* 	    /\* 	    mainw->startticks, new_ticks, *\/ */
-          /* #ifdef HAVE_PULSE_AUDIO */
-          /* 	    prefs->audio_player == AUD_PLAYER_PULSE ? */
-          /* 	      ((mainw->pulsed->in_use && IS_VALID_CLIP(mainw->pulsed->playing_file) */
-          /* 		&& mainw->files[mainw->pulsed->playing_file]->arate != 0) */
-          /* 	       ? (double)mainw->pulsed->seek_pos */
-          /* 	       / (double)mainw->files[mainw->pulsed->playing_file]->arate */
-          /* 	       / 4. * sfile->fps + 1. : 0. * sfile->fps + 1) : */
+      // load and display the new frame
+      if (prefs->dev_show_caching) {
+        /* 	    /\* g_print("playing frame %d / %d at %ld (%ld : %ld) %.2f %ld %ld\n", sfile->frameno, requested_frame, mainw->currticks, *\/ */
+        /* 	    /\* 	    mainw->startticks, new_ticks, *\/ */
+        /* #ifdef HAVE_PULSE_AUDIO */
+        /* 	    prefs->audio_player == AUD_PLAYER_PULSE ? */
+        /* 	      ((mainw->pulsed->in_use && IS_VALID_CLIP(mainw->pulsed->playing_file) */
+        /* 		&& mainw->files[mainw->pulsed->playing_file]->arate != 0) */
+        /* 	       ? (double)mainw->pulsed->seek_pos */
+        /* 	       / (double)mainw->files[mainw->pulsed->playing_file]->arate */
+        /* 	       / 4. * sfile->fps + 1. : 0. * sfile->fps + 1) : */
 
-          /* #endif */
-          /* #ifdef ENABLE_JACK */
-          /* 	      prefs->audio_player == AUD_PLAYER_JACK ? */
-          /* 	      ((mainw->jackd->in_use && IS_VALID_CLIP(mainw->jackd->playing_file) */
-          /* 		&& mainw->files[mainw->jackd->playing_file]->arate != 0) */
-          /* 	       ? (double)mainw->jackd->seek_pos */
-          /* 	       / (double)mainw->files[mainw->jackd->playing_file]->arate */
-          /* 	       / 4. * sfile->fps + 1. : 0. * sfile->fps + 1) : */
-          /* #endif */
-          /* 	      0, */
-          /* #ifdef HAVE_PULSE_AUDIO */
-          /* 	      prefs->audio_player == AUD_PLAYER_PULSE ? */
-          /* 	      lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) : */
-          /* #endif */
-          /* #ifdef ENABLE_JACK */
-          /* 	      prefs->audio_player == AUD_PLAYER_JACK ? */
-          /* 	      lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) : */
-          /* #endif */
-          /* 	      0, */
-          /* #ifdef HAVE_PULSE_AUDIO */
-          /* 	      prefs->audio_player == AUD_PLAYER_PULSE ? */
-          /* 	      mainw->pulsed->seek_pos : */
-          /* #endif */
-          /* #ifdef ENABLE_JACK */
-          /* 	      prefs->audio_player == AUD_PLAYER_JACK ? */
-          /* 	      mainw->jackd->seek_pos : */
-          /* #endif */
-          /* 	      0); */
-          /* 	} */
-          /* #ifdef HAVE_PULSE_AUDIO */
-          /* 	if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) last_seek_pos = mainw->pulsed->seek_pos; */
-          /* #endif */
-        }
+        /* #endif */
+        /* #ifdef ENABLE_JACK */
+        /* 	      prefs->audio_player == AUD_PLAYER_JACK ? */
+        /* 	      ((mainw->jackd->in_use && IS_VALID_CLIP(mainw->jackd->playing_file) */
+        /* 		&& mainw->files[mainw->jackd->playing_file]->arate != 0) */
+        /* 	       ? (double)mainw->jackd->seek_pos */
+        /* 	       / (double)mainw->files[mainw->jackd->playing_file]->arate */
+        /* 	       / 4. * sfile->fps + 1. : 0. * sfile->fps + 1) : */
+        /* #endif */
+        /* 	      0, */
+        /* #ifdef HAVE_PULSE_AUDIO */
+        /* 	      prefs->audio_player == AUD_PLAYER_PULSE ? */
+        /* 	      lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) : */
+        /* #endif */
+        /* #ifdef ENABLE_JACK */
+        /* 	      prefs->audio_player == AUD_PLAYER_JACK ? */
+        /* 	      lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) : */
+        /* #endif */
+        /* 	      0, */
+        /* #ifdef HAVE_PULSE_AUDIO */
+        /* 	      prefs->audio_player == AUD_PLAYER_PULSE ? */
+        /* 	      mainw->pulsed->seek_pos : */
+        /* #endif */
+        /* #ifdef ENABLE_JACK */
+        /* 	      prefs->audio_player == AUD_PLAYER_JACK ? */
+        /* 	      mainw->jackd->seek_pos : */
+        /* #endif */
+        /* 	      0); */
+        /* 	} */
+        /* #ifdef HAVE_PULSE_AUDIO */
+        /* 	if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) last_seek_pos = mainw->pulsed->seek_pos; */
+        /* #endif */
+      }
 
 play_frame:
 
-        //g_print("DISK PR is %f\n", mainw->disk_pressure);
-        showed_frame = FALSE;
-        //if (mainw->pred_clip == -1) cpuload = get_core_loadvar(0);
-        if (mainw->force_show || mainw->pred_clip != -1
-            || (mainw->pred_clip == -1 && *(cpuload = get_core_loadvar(0)) < CORE_LOAD_THRESH)) {
-          // will reset mainw->scratch
-          mainw->force_show = FALSE;
-          load_frame_image(sfile->frameno);
-          showed_frame = TRUE;
-        }
-        scratch = SCRATCH_NONE;
-        if (mainw->record && !mainw->record_paused) {
-          void **eevents;
-          weed_event_list_t *event_list;
-          int64_t *frames;
-          int *clips;
-          ticks_t actual_ticks;
-          boolean rec_after_pb = FALSE, rec_to_scrap = FALSE;
-          int numframes, nev;
-          int fg_file = mainw->playing_file;
-          frames_t fg_frame = mainw->record_frame;
-          int bg_file = (IS_VALID_CLIP(mainw->blend_file)
-                         && (prefs->tr_self || (mainw->blend_file != mainw->current_file)))
-                        ? mainw->blend_file : -1;
-          frames_t bg_frame = (bg_file > 0 && (prefs->tr_self || (bg_file != mainw->current_file)))
-                              ? mainw->files[bg_file]->frameno : 0;
+      //g_print("DISK PR is %f\n", mainw->disk_pressure);
+      showed_frame = FALSE;
+      //if (mainw->pred_clip == -1) cpuload = get_core_loadvar(0);
+      if (mainw->force_show || mainw->pred_clip != -1
+          || (mainw->pred_clip == -1 && *(cpuload = get_core_loadvar(0)) < CORE_LOAD_THRESH)) {
+        // will reset mainw->scratch
+        mainw->force_show = FALSE;
+        load_frame_image(sfile->frameno);
+        showed_frame = TRUE;
+      }
+      scratch = SCRATCH_NONE;
+      if (mainw->record && !mainw->record_paused) {
+        void **eevents;
+        weed_event_list_t *event_list;
+        int64_t *frames;
+        int *clips;
+        ticks_t actual_ticks;
+        boolean rec_after_pb = FALSE, rec_to_scrap = FALSE;
+        int numframes, nev;
+        int fg_file = mainw->playing_file;
+        frames_t fg_frame = mainw->record_frame;
+        int bg_file = (IS_VALID_CLIP(mainw->blend_file)
+                       && (prefs->tr_self || (mainw->blend_file != mainw->current_file)))
+                      ? mainw->blend_file : -1;
+        frames_t bg_frame = (bg_file > 0 && (prefs->tr_self || (bg_file != mainw->current_file)))
+                            ? mainw->files[bg_file]->frameno : 0;
 
-          // should we record the output from the playback plugin ?
-          if ((prefs->rec_opts & REC_AFTER_PB) && mainw->ext_playback &&
-              (mainw->vpp->capabilities & VPP_CAN_RETURN))
-            rec_after_pb = TRUE;
+        // should we record the output from the playback plugin ?
+        if ((prefs->rec_opts & REC_AFTER_PB) && mainw->ext_playback &&
+            (mainw->vpp->capabilities & VPP_CAN_RETURN))
+          rec_after_pb = TRUE;
 
-          if (rec_after_pb || !CURRENT_CLIP_IS_NORMAL ||
-              (prefs->rec_opts & REC_EFFECTS && bg_file != -1 && !IS_NORMAL_CLIP(bg_file)))
-            rec_to_scrap = TRUE;
+        if (rec_after_pb || !CURRENT_CLIP_IS_NORMAL ||
+            (prefs->rec_opts & REC_EFFECTS && bg_file != -1 && !IS_NORMAL_CLIP(bg_file)))
+          rec_to_scrap = TRUE;
 
-          if (showed_frame || !rec_to_scrap) {
-            if (rec_to_scrap) {
-              fg_file = mainw->scrap_file;
-              fg_frame = mainw->files[mainw->scrap_file]->frames;
-              bg_file = -1;
-              bg_frame = 0;
-            }
-            //actual_ticks = mainw->clock_ticks;//mainw->currticks;
-            actual_ticks = mainw->startticks; ///< use the "theoretical" time
+        if (showed_frame || !rec_to_scrap) {
+          if (rec_to_scrap) {
+            fg_file = mainw->scrap_file;
+            fg_frame = mainw->files[mainw->scrap_file]->frames;
+            bg_file = -1;
+            bg_frame = 0;
+          }
+          //actual_ticks = mainw->clock_ticks;//mainw->currticks;
+          actual_ticks = mainw->startticks; ///< use the "theoretical" time
 
-            numframes = (bg_file == -1) ? 1 : 2;
-            clips = (int *)lives_malloc(numframes * sizint);
-            frames = (int64_t *)lives_malloc(numframes * 8);
+          numframes = (bg_file == -1) ? 1 : 2;
+          clips = (int *)lives_malloc(numframes * sizint);
+          frames = (int64_t *)lives_malloc(numframes * 8);
 
-            clips[0] = fg_file;
-            frames[0] = (int64_t)fg_frame;
-            if (numframes == 2) {
-              clips[1] = bg_file;
-              frames[1] = (int64_t)bg_frame;
-            }
+          clips[0] = fg_file;
+          frames[0] = (int64_t)fg_frame;
+          if (numframes == 2) {
+            clips[1] = bg_file;
+            frames[1] = (int64_t)bg_frame;
+          }
 
-            // MUST do this before locking event_list_mutex, else we can fall into a deadlock
-            eevents = get_easing_events(&nev);
-            pthread_mutex_lock(&mainw->event_list_mutex);
+          // MUST do this before locking event_list_mutex, else we can fall into a deadlock
+          eevents = get_easing_events(&nev);
+          pthread_mutex_lock(&mainw->event_list_mutex);
 
-            /// usual function to record a frame event
-            if ((event_list = append_frame_event(mainw->event_list, actual_ticks,
-                                                 numframes, clips, frames)) != NULL) {
-              if (!mainw->event_list) mainw->event_list = event_list;
-              mainw->elist_eom = FALSE;
-              if (eevents || scratch == SCRATCH_JUMP || scratch == SCRATCH_JUMP_NORESYNC
-                  || mainw->scrap_file_size != -1 ||
-                  (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO))) {
-                weed_plant_t *event = get_last_frame_event(mainw->event_list);
-                if (eevents) {
-                  weed_set_voidptr_array(event, LIVES_LEAF_EASING_EVENTS, nev, eevents);
-                  lives_free(eevents);
-                }
+          /// usual function to record a frame event
+          if ((event_list = append_frame_event(mainw->event_list, actual_ticks,
+                                               numframes, clips, frames)) != NULL) {
+            if (!mainw->event_list) mainw->event_list = event_list;
+            mainw->elist_eom = FALSE;
+            if (eevents || scratch == SCRATCH_JUMP || scratch == SCRATCH_JUMP_NORESYNC
+                || mainw->scrap_file_size != -1 ||
+                (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO))) {
+              weed_plant_t *event = get_last_frame_event(mainw->event_list);
+              if (eevents) {
+                weed_set_voidptr_array(event, LIVES_LEAF_EASING_EVENTS, nev, eevents);
+                lives_free(eevents);
+              }
 
-                if (scratch == SCRATCH_JUMP || scratch == SCRATCH_JUMP_NORESYNC) {
-                  weed_set_int_value(event, LIVES_LEAF_SCRATCH, scratch);
-                }
+              if (scratch == SCRATCH_JUMP || scratch == SCRATCH_JUMP_NORESYNC) {
+                weed_set_int_value(event, LIVES_LEAF_SCRATCH, scratch);
+              }
 
-                if (mainw->scrap_file_size != -1)
-                  weed_set_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, mainw->scrap_file_size);
-                if (AUD_SRC_INTERNAL || mainw->record_starting) {
-                  if (mainw->rec_aclip != -1) {
-                    if (mainw->rec_aclip == mainw->ascrap_file) {
-                      mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
-                                         (double)(mainw->files[mainw->ascrap_file]->arps
-                                                  * mainw->files[mainw->ascrap_file]->achans *
-                                                  mainw->files[mainw->ascrap_file]->asampsize >> 3);
-                      mainw->rec_avel = 1.;
+              if (mainw->scrap_file_size != -1)
+                weed_set_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, mainw->scrap_file_size);
+              if (AUD_SRC_INTERNAL || mainw->record_starting) {
+                if (mainw->rec_aclip != -1) {
+                  if (mainw->rec_aclip == mainw->ascrap_file) {
+                    mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
+                                       (double)(mainw->files[mainw->ascrap_file]->arps
+                                                * mainw->files[mainw->ascrap_file]->achans *
+                                                mainw->files[mainw->ascrap_file]->asampsize >> 3);
+                    mainw->rec_avel = 1.;
 
-                    }
-                    if (!mainw->mute) {
-                      weed_event_t *xevent = get_prev_frame_event(event);
-                      if (!xevent) xevent = event;
-                      insert_audio_event_at(xevent, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
-                    }
-                    mainw->rec_aclip = -1;
-                    mainw->record_starting = FALSE;
+                  }
+                  if (!mainw->mute) {
+                    weed_event_t *xevent = get_prev_frame_event(event);
+                    if (!xevent) xevent = event;
+                    insert_audio_event_at(xevent, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
+                  }
+                  mainw->rec_aclip = -1;
+                  mainw->record_starting = FALSE;
 		    // *INDENT-OFF*
 		  }}}}
 	    // *INDENT-ON*
-            else mainw->elist_eom = TRUE;
-            pthread_mutex_unlock(&mainw->event_list_mutex);
-            mainw->record_starting = FALSE;
-          }
+          else mainw->elist_eom = TRUE;
+          pthread_mutex_unlock(&mainw->event_list_mutex);
+          mainw->record_starting = FALSE;
         }
+      }
 
-        mainw->inst_fps = get_inst_fps(FALSE);
-        if (prefs->show_player_stats) {
-          mainw->fps_measure++;
-        }
+      mainw->inst_fps = get_inst_fps(FALSE);
+      if (prefs->show_player_stats) {
+        mainw->fps_measure++;
+      }
 
-        /// ignore actual value of actual_frame, since it can be messed with (e.g. nervous mode)
-        mainw->actual_frame = sfile->frameno;
-        mainw->fps_mini_measure++;
-      } // end load_frame_image()
+      /// ignore actual value of actual_frame, since it can be messed with (e.g. nervous mode)
+      mainw->actual_frame = sfile->frameno;
+      mainw->fps_mini_measure++;
+      // end load_frame_image()
+      //}
     } else spare_cycles++;
 
     last_req_frame = requested_frame;
@@ -3503,9 +3511,9 @@ play_frame:
         mainw->pred_frame = 0;
         mainw->pred_clip = 0;
         cleanup_preload = FALSE;
-	  // *INDENT-OFF*
-	}}}
-    // *INDENT-ON*
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 #endif
 
   // paused
@@ -3609,19 +3617,21 @@ play_frame:
                 mainw->pred_frame = -getahead;
                 mainw->force_show = TRUE;
               }
-		// *INDENT-OFF*
-	      }}
-	    else mainw->pred_frame = 0;
-	  }}
+	      // *INDENT-OFF*
+	    }}
+	  else mainw->pred_frame = 0;
+	}}
 #ifdef SHOW_CACHE_PREDICTIONS
-	//g_print("frame %ld already in cache\n", mainw->pred_frame);
+      //g_print("frame %ld already in cache\n", mainw->pred_frame);
 #endif
 #endif
-      }}
-    // *INDENT-ON*
+      }
+      // *INDENT-ON*
 #if 0
-}
+  }
 #endif
+}
+
 if (!spare_cycles) get_proc_loads(FALSE);
 
 cancelled = THREADVAR(cancelled) = mainw->cancelled;

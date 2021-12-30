@@ -5602,15 +5602,16 @@ void event_list_add_end_events(weed_event_t *event_list, boolean is_final) {
             } else {
               if (mainw->pulsed_read) pulse_get_rec_avals(mainw->pulsed_read);
             }
+          }
 #endif
 #if 0
-            if (prefs->audio_player == AUD_PLAYER_NONE) {
-              nullaudio_get_rec_avals();
-            }
+          if (prefs->audio_player == AUD_PLAYER_NONE) {
+            nullaudio_get_rec_avals();
+          }
 #endif
-            insert_audio_event_at(last_frame, -1, mainw->rec_aclip, mainw->rec_aseek, 0.);
-	    // *INDENT-OFF*
-	  }}}
+          insert_audio_event_at(last_frame, -1, mainw->rec_aclip, mainw->rec_aseek, 0.);
+	  // *INDENT-OFF*
+	}}
       // *INDENT-ON*
 #endif
     } else {

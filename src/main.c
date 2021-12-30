@@ -2201,8 +2201,8 @@ static boolean lives_init(_ign_opts *ign_opts) {
     mainw->recovery_file = lives_build_filename(prefs->workdir, recfname, NULL);
     lives_free(recfname);
 
-audio_choice:
 #ifdef ENABLE_JACK
+audio_choice:
     orig_err = 0;
 #endif
 
@@ -2214,6 +2214,7 @@ audio_choice:
         set_int_pref(PREF_STARTUP_PHASE, 3);
         lives_exit(0);
       }
+
 
 post_audio_choice:
       prefs->startup_phase = 4;
@@ -2513,45 +2514,47 @@ rest3:
           set_string_pref(PREF_JACK_AUXPORT_CLIENT, prefs->jack_auxport_client);
         }
       }
-#endif
     }
+#endif
+  }
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE) {
-      splash_msg(_("Starting pulseaudio server..."), SPLASH_LEVEL_LOAD_APLAYER);
+  if (prefs->audio_player == AUD_PLAYER_PULSE) {
+    splash_msg(_("Starting pulseaudio server..."), SPLASH_LEVEL_LOAD_APLAYER);
 
-      if (!mainw->foreign) {
-        if (prefs->pa_restart && !prefs->vj_mode) {
-          char *com = lives_strdup_printf("%s -k %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
-          lives_system(com, TRUE);
-          lives_free(com);
-        }
+    if (!mainw->foreign) {
+      if (prefs->pa_restart && !prefs->vj_mode) {
+        char *com = lives_strdup_printf("%s -k %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
+        lives_system(com, TRUE);
+        lives_free(com);
       }
+    }
 
-      if (!lives_pulse_init(prefs->startup_phase)) {
-        if (prefs->startup_phase == 4) {
-          lives_exit(0);
-        }
-      } else {
-        pulse_audio_init();
-        pulse_audio_read_init();
-        mainw->pulsed = pulse_get_driver(TRUE);
-        mainw->pulsed->whentostop = &mainw->whentostop;
-        mainw->pulsed->cancelled = &mainw->cancelled;
-        mainw->pulsed->in_use = FALSE;
+    if (!lives_pulse_init(prefs->startup_phase)) {
+      if (prefs->startup_phase == 4) {
+        lives_exit(0);
+      }
+    } else {
+      pulse_audio_init();
+      pulse_audio_read_init();
+      mainw->pulsed = pulse_get_driver(TRUE);
+      mainw->pulsed->whentostop = &mainw->whentostop;
+      mainw->pulsed->cancelled = &mainw->cancelled;
+      mainw->pulsed->in_use = FALSE;
 
-        pulse_driver_activate(mainw->pulsed);
+      pulse_driver_activate(mainw->pulsed);
 
-        // create reader connection now, if permanent
-        pulse_rec_audio_to_clip(-1, -1, RECA_MONITOR);
+      // create reader connection now, if permanent
+      pulse_rec_audio_to_clip(-1, -1, RECA_MONITOR);
 	// *INDENT-OFF*
       }}
     // *INDENT-ON*
 #endif
-  }
 
+#ifdef ENABLE_JACK
   if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
     future_prefs->jack_opts &= ~JACK_INFO_TEST_SETUP;
   }
+#endif
 
   reset_font_size();
 

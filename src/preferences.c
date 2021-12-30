@@ -1044,6 +1044,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     goto fail1;
   }
 
+#ifdef ENABLE_JACK
   if (!lives_strcmp(prefidx, PREF_JACK_ADRIVER)) {
     if (newval) set_string_pref(PREF_JACK_ADRIVER, newval);
     else set_string_pref(PREF_JACK_ADRIVER, "");
@@ -1081,6 +1082,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       delete_pref(PREF_JACK_LAST_TDRIVER);
     return TRUE;
   }
+#endif
 
   if (!lives_strcmp(prefidx, PREF_CMDLINE_ARGS)) {
     // TODO - parse args format
@@ -2143,14 +2145,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean show_quota = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->cb_show_quota));
   boolean autoclean = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->cb_autoclean));
 
-#ifndef ENABLE_JACK
-  boolean jack_tstart = FALSE;
-  boolean jack_master = FALSE;
-  boolean jack_client = FALSE;
-  boolean jack_tb_start = FALSE, jack_mtb_start = FALSE;
-  boolean jack_tb_client = FALSE;
-#else
-
+#ifdef ENABLE_JACK
 #ifdef ENABLE_JACK_TRANSPORT
   boolean jack_master = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master));
   boolean jack_client = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client));
@@ -2268,6 +2263,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (prefsw->checkbutton_menu_icons)
     show_menu_icons = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_menu_icons));
 
+#ifdef ENABLE_JACK
 #ifndef ENABLE_JACK_TRANSPORT
   jack_opts &= ~(JACK_OPTS_TRANSPORT_SLAVE | JACK_OPTS_TRANSPORT_MASTER
                  | JACK_OPTS_START_TSERVER | JACK_OPTS_TIMEBASE_START
@@ -2276,6 +2272,7 @@ boolean apply_prefs(boolean skip_warn) {
 #else
   // ignore transport startup unless the client is enabled
   if (!(jack_opts & JACK_OPTS_ENABLE_TCLIENT)) jack_opts &= ~(JACK_OPTS_START_TSERVER);
+#endif
 #endif
 
   lives_snprintf(prefworkdir, PATH_MAX, "%s", prefs->workdir);

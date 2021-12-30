@@ -1256,9 +1256,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     txt0 = lives_strdup("");
   }
 
-#ifdef ENABLE_JACK
 reloop:
-#endif
 
   txt1 = lives_strdup(
            _("Before starting LiVES, you need to choose an audio player.\n\n"

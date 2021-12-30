@@ -2438,9 +2438,11 @@ void play_file(void) {
   if (!mainw->preview || !cfile->opening) {
     enable_record();
     desensitize();
+#ifdef ENABLE_JACK
     if (!(mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
           && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)))
       lives_widget_set_sensitive(mainw->spinbutton_pb_fps, TRUE);
+#endif
   }
 
   if (mainw->record) {
@@ -2453,8 +2455,10 @@ void play_file(void) {
     lives_widget_hide(mainw->message_box);
   }
 
+#ifdef ENABLE_JACK
   if (!(mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
         && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)))
+#endif
     lives_widget_set_sensitive(mainw->stop, TRUE);
 
   if (!mainw->multitrack) lives_widget_set_sensitive(mainw->m_playbutton, FALSE);

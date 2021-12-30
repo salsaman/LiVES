@@ -8,7 +8,7 @@
 #ifndef _MACHINESTATE_H_
 #define _MACHINESTATE_H_
 
-#define USE_INTRINSICS 1
+//#define USE_INTRINSICS 1
 
 #include <sys/time.h>
 #include <time.h>

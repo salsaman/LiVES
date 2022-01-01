@@ -28,13 +28,6 @@ if ($USE_WARNINGS) {
     use warnings;
 }
 
-use Config;
-my $hasthreads = 0;
-if ($Config{useithreads}) {
-    $hasthreads = 1;
-    use threads;
-}
-
 use File::Copy;
 use File::Find;
 #use File::Touch;  y// would be nice
@@ -5559,89 +5552,15 @@ sub insert {
 			    return;
 			}
 		    } else {
-			if ($hasthreads) {
-			    ## test with threading - although it doesn't really seem any faster
-			    my $thr1, $thr2, $thr3, $thr4;
-			    my $com1, $com2, $com3, $com4;
-
-			    $com1 = "$smog_convert_command -antialias -size $width" .
-				"x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width" .
-				"x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
-			    $thr1 = threads->create(\&smog_system, $com1);
-
-			    if ($i < $nend) {
-				$i++;
-				$from = &mkname($i);
-				$to = &mkname($nwhere + $i - $nstart + 1);
-				$com2 = "$smog_convert_command -antialias -size $width" .
-				    "x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width" .
-				    "x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
-				$thr2 = threads->create(\&smog_system, $com2);
-
-				if ($i < $nend) {
-				    $i++;
-				    $from = &mkname($i);
-				    $to = &mkname($nwhere + $i - $nstart + 1);
-				    $com3 = "$smog_convert_command -antialias -size $width" .
-					"x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width" .
-					"x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
-				    $thr3 = threads->create(\&smog_system, $com3);
-
-				    if ($i < $nend) {
-					$i++;
-					$from = &mkname($i);
-					$to = &mkname($nwhere + $i - $nstart + 1);
-					$com4 = "$smog_convert_command -antialias -size $width" .
-					    "x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width" .
-					    "x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
-					$thr4 = threads->create(\&smog_system, $com4);
-				    }
-				}
-			    }
-			    my $smerr1, $smerr2, $smerr3, $smerr4;
-			    if ($thr1) {
-				$smerr1 = $thr1->join();
-			    }
-			    if ($thr2) {
-				$smerr2 = $thr2->join();
-			    }
-			    if ($thr3) {
-				$smerr3 = $thr3->join();
-			    }
-			    if ($thr4) {
-				$smerr4 = $thr4->join();
-			    }
-			    if ($smerr1) {
-				&sig_system_error($com1, $smerr1);
-				$panic = 1;
-				return;
-			    }
-			    if ($smerr2) {
-				&sig_system_error($com2, $smerr2);
-				$panic = 1;
-				return;
-			    }
-			    if ($smerr3) {
-				&sig_system_error($com3, $smerr3);
-				$panic = 1;
-				return;
-			    }
-			    if ($smerr4) {
-				&sig_system_error($com4, $smerr4);
-				$panic = 1;
-				return;
-			    }
-			}
-			else {
-			    $com = "$smog_convert_command -antialias -size $width" .
-				"x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width" .
-				"x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
-			    $smerr = &smog_system($com);
-			    if ($smerr) {
-				&sig_system_error($com, $smerr);
-				$panic = 1;
-				return;
-			    }}}}}
+			$com = "$smog_convert_command -antialias -size $width" .
+			    "x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width" .
+			    "x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
+			$smerr = &smog_system($com);
+			if ($smerr) {
+			    &sig_system_error($com, $smerr);
+			    $panic = 1;
+			    return;
+			}}}}
 	}
 
 	$times_inserted += $factor;

@@ -1521,6 +1521,9 @@ void on_close_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       mainw->mt_needs_idlefunc = TRUE;
     }
     mt_desensitise(mainw->multitrack);
+
+    // set current clip to the selected clip in multitrack
+    // in close_current_file() we will set a new mt->clip_selected
     mainw->current_file = mainw->multitrack->file_selected;
   } else desensitize();
 
@@ -1578,6 +1581,7 @@ void on_close_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   close_current_file(0);
 
   if (mainw->multitrack) {
+    // switch back to multitrack's render_clip
     mainw->current_file = mainw->multitrack->render_file;
     polymorph(mainw->multitrack, POLY_NONE);
     polymorph(mainw->multitrack, POLY_CLIPS);

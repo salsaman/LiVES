@@ -2176,7 +2176,7 @@ rerun:
     else lookfor = "png file";
 
 #ifndef IS_MINGW
-    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | %s -i \"%s\" >/dev/null 2>&1",
+    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo=help | %s -i \"%s\" >/dev/null 2>&1",
                               prefs->video_open_command, capable->grep_cmd, lookfor);
 #else
     com = lives_strdup_printf("%s -vo help | %s -i \"%s\" >NUL 2>&1", prefs->video_open_command,
@@ -2276,7 +2276,7 @@ rerun:
 
   if (success2) {
 #ifndef IS_MINGW
-    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | %s -i \"%s\" >/dev/null 2>&1",
+    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo=help | %s -i \"%s\" >/dev/null 2>&1",
                               prefs->video_open_command, capable->grep_cmd, lookfor);
     res = lives_system(com, TRUE);
     lives_free(com);

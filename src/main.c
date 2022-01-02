@@ -8655,19 +8655,15 @@ void close_current_file(int file_to_switch_to) {
     if (cfile->laudio_drawable) {
       if (mainw->laudio_drawable == cfile->laudio_drawable
           || mainw->drawsrc == mainw->current_file) mainw->laudio_drawable = NULL;
-      if (!mainw->multitrack) {
-        if (cairo_surface_get_reference_count(cfile->laudio_drawable))
-          lives_painter_surface_destroy(cfile->laudio_drawable);
-      }
+      if (cairo_surface_get_reference_count(cfile->laudio_drawable))
+        lives_painter_surface_destroy(cfile->laudio_drawable);
       cfile->laudio_drawable = NULL;
     }
     if (cfile->raudio_drawable) {
       if (mainw->raudio_drawable == cfile->raudio_drawable
           || mainw->drawsrc == mainw->current_file) mainw->raudio_drawable = NULL;
-      if (!mainw->multitrack) {
-        if (cairo_surface_get_reference_count(cfile->raudio_drawable))
-          lives_painter_surface_destroy(cfile->raudio_drawable);
-      }
+      if (cairo_surface_get_reference_count(cfile->raudio_drawable))
+        lives_painter_surface_destroy(cfile->raudio_drawable);
       cfile->raudio_drawable = NULL;
     }
     if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
@@ -8946,6 +8942,16 @@ void switch_to_file(int old_file, int new_file) {
     LIVES_WARN(msg);
     lives_free(msg);
     return;
+  }
+
+  if (!LIVES_IS_PLAYING) {
+    if (old_file != new_file) {
+      if (CURRENT_CLIP_IS_VALID) {
+        mainw->laudio_drawable = cfile->laudio_drawable;
+        mainw->raudio_drawable = cfile->raudio_drawable;
+        mainw->drawsrc = mainw->current_file;
+      }
+    }
   }
 
   if (mainw->multitrack) return;

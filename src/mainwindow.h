@@ -429,9 +429,6 @@ enum {
 // mandatory
 #define EXEC_SMOGRIFY "smogrify"
 #define EXEC_PERL "perl"
-#define EXEC_MPLAYER "mplayer"
-#define EXEC_MPLAYER2 "mplayer2"
-#define EXEC_MPV "mpv"
 
 #define EXEC_SED "sed"
 #define EXEC_GREP "grep"
@@ -442,6 +439,12 @@ enum {
 
 // recommended
 #define EXEC_SOX "sox"
+
+// at least one of these
+#define EXEC_MPLAYER "mplayer"
+#define EXEC_MPLAYER2 "mplayer2"
+#define EXEC_MPV "mpv"
+
 #define EXEC_PULSEAUDIO "pulseaudio"
 #define EXEC_CONVERT "convert"
 #define EXEC_COMPOSITE "composite"
@@ -449,8 +452,12 @@ enum {
 #define EXEC_FFPROBE "ffprobe"
 #define EXEC_FFMPEG "ffmpeg"
 #define EXEC_EJECT "eject"
+
+// at least one of these
 #define EXEC_YOUTUBE_DL "youtube-dl"
 #define EXEC_YOUTUBE_DLC "youtube-dlc"
+
+// at least one of these, depending on perl version
 #define EXEC_PIP "pip"
 #define EXEC_PIP3 "pip3"
 #ifdef IS_FREEBSD

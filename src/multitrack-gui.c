@@ -2280,13 +2280,13 @@ void mt_clip_select(lives_mt * mt, boolean scroll) {
 
   if (mt->clip_selected < 0 || (was_neg && mt->clip_selected == 0)) mt->clip_selected = len - 1;
 
-  if (!IS_VALID_CLIP(mt->clip_selected)) {
+  mt->file_selected = mt_file_from_clip(mt, mt->clip_selected);
+
+  if (!IS_VALID_CLIP(mt->file_selected)) {
     mt->file_selected = -1;
     lives_list_free(list);
     return;
   }
-
-  mt->file_selected = mt_file_from_clip(mt, mt->clip_selected);
 
   if (scroll) {
     LiVESAdjustment *adj = lives_scrolled_window_get_hadjustment(LIVES_SCROLLED_WINDOW(mt->clip_scroll));

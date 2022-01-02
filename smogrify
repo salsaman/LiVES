@@ -120,6 +120,8 @@ my $handle;
 my $statusfile;
 my $configfile = "";
 my $mplay_command = "";
+my $mp_command = "";
+my $is_mpv = 0;
 
 my $DEFTRASH = "_Trash";
 
@@ -1727,7 +1729,7 @@ if (1) {
 	}
 
 	if ($command eq "open_test") {
-	    $mplay_command = $ARGV[2];
+	    $mp_command = $ARGV[2];
 	    shift(@ARGV);
 	    $command = "open";
 	    $opentest = 1;
@@ -1765,34 +1767,37 @@ if (1) {
 		}
 	    }
 
-	    ## here we might set $mplay_command, $is_mpv
+	    my $orig_mp_command = $mp_command;
+
 	    &get_file_info($file, 1, 1);
 
-	    if (!$opentest) {
-		$mplay_command = "";
-	    }
-	    if ($mplay_command eq "") {
-		my $mp_command = &config_get("video_open_command");
-		if ($mp_command) {
-		    if ($mp_command =~ /mpv/) {
-			$is_mpv = 1;
-		    }
-		}
-		else {
-		    # sets $is_mpv
-		    $mp_command = qq("${\get_mplayer_location()}");
-		}
-		if ($mp_command eq "") {
-		    $panic = 1;
-		}
-		# try to force language to English
-		$mplay_command = "LANGUAGE=en LANG=en $mp_command";
-	    }
+	    $mp_command = $orig_mp_command;
 
+	    if (!$opentest) {
+		$mp_command = &config_get("video_open_command");
+	    }
+	    else {
+		$mp_command = $orig_mp_command;
+	    }
+	    if ($mp_command) {
+		if ($mp_command =~ /mpv/) {
+		    $is_mpv = 1;
+		}
+	    }
+	    else {
+		# sets $is_mpv
+		$mp_command = qq("${\get_mplayer_location()}");
+	    }
+	    if ($mp_command eq "") {
+		$panic = 1;
+	    }
 	    if ($panic) {
 		unlink $pidfile;
 		exit 1;
 	    }
+
+	    # try to force language to English
+	    $mplay_command = "LANGUAGE=en LANG=en $mp_command";
 
 	    if (defined($ARGV[5]) && $ARGV[5] > 0) {
 		if (!$is_mpv) {
@@ -6678,6 +6683,7 @@ sub get_file_info {
     my $P_VIDEO = 4;
 
     my $ptypes = $P_AUDIO | $P_VIDEO;
+
     if ($scantype == 0) {
 	$ptypes |= $P_IMAGE;
     }

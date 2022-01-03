@@ -2086,10 +2086,20 @@ void on_import_theme_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
 void on_backup_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *filt[] = {"*."LIVES_FILE_EXT_BACKUP, NULL};
-  char *file_name;
+  char *file_name = NULL;
   char *defname, *text;
 
-  defname = lives_strdup_printf("%s.%s", cfile->name, LIVES_FILE_EXT_BACKUP);
+  if (*cfile->file_name) {
+    file_name = lives_get_filename(cfile->file_name);
+  }
+  if (!file_name || !*file_name) {
+    file_name = lives_get_filename(cfile->name);
+  }
+
+  if (!file_name) file_name = lives_strdup("backup");
+
+  defname = ensure_extension(file_name, LIVES_FILE_EXT_BACKUP);
+  lives_free(file_name);
 
   text = lives_strdup_printf(_("Backup as %s File"), LIVES_FILE_EXT_BACKUP);
 

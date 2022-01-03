@@ -34,6 +34,7 @@ void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
 
   lives_widget_show_all(dialog);
   lives_window_present(LIVES_WINDOW(dialog));
+  lives_grab_add(dialog);
 }
 
 

@@ -2861,8 +2861,8 @@ if (1) {
 
 	    &smog_chdir($curworkdir);
 
-	    $com = "tar -zxf \"$nfile\" 2>$nulfile";
-	    &smog_system ($com);
+	    my $com = "tar -zxf \"$nfile\" 2>$nulfile";
+	    &smog_system($com);
 
 	    if ($smerr) {
 		&sig_system_error("$com", $smerr);
@@ -2885,6 +2885,26 @@ if (1) {
 	    &sig_complete;
 	    exit 0;
 	}
+
+
+	if ($command eq "restore_headers") {
+	    ## TODO - extract header.tar -> extract contents and return
+	    $nfile = $ARGV[2];
+
+	    &smog_chdir($curworkdir);
+
+	    my $com = "tar -zxf \"$nfile\" header.tar 2>$nulfile";
+	    &smog_system($com);
+
+	    if (-f "header.tar") {
+		$com = "tar -xf header.tar 2>$nulfile";
+		&smog_system($com);
+	    }
+
+	    &sig_complete;
+	    exit 0;
+	}
+
 
 	if ($command eq "reorder") {
 	    unlink "$curworkdir/pause";

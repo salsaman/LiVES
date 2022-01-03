@@ -3222,7 +3222,7 @@ void get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter
   lives_free(init_events);
 }
 
-#define DEBUG_EVENTS
+//#define DEBUG_EVENTS
 weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, weed_timecode_t curr_tc) {
   // here we play back (preview) with an event_list
   // we process all events, but drop frames (unless mainw->nodrop is set)

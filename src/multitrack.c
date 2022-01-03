@@ -655,6 +655,7 @@ boolean mt_load_recovery_layout(lives_mt *mt) {
   char *aload_file = NULL, *eload_file, *fname;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+  lives_widget_context_update();
 
   if (mt) {
     fname = lives_strdup_printf("%s.%d.%d.%d", LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
@@ -3773,6 +3774,12 @@ static void cl_ctx_clicked(LiVESWidget * widget, livespointer data) {
 }
 
 
+static void show_tcode_toggled(LiVESMenuItem * menuitem, livespointer user_data) {
+  lives_mt *mt = (lives_mt *)user_data;
+  mt->opts.overlay_timecode = !mt->opts.overlay_timecode;
+}
+
+
 void mt_set_autotrans(int idx) {
   prefs->atrans_fx = idx;
   if (idx == -1) set_string_pref(PREF_ACTIVE_AUTOTRANS, "none");
@@ -4783,6 +4790,14 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_add_accelerator(mt->mute_audio, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                                LIVES_KEY_z, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
 
+  lives_menu_add_separator(LIVES_MENU(mt->play_menu));
+
+  mt->show_tcode = lives_standard_check_menu_item_new_with_label(_("Overlay _Timecode (t)"), mt->opts.overlay_timecode);
+  lives_container_add(LIVES_CONTAINER(mt->play_menu), mt->show_tcode);
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mt->show_tcode), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(show_tcode_toggled),
+                                  (livespointer)mt);
   // Effects
 
   menuitem = lives_standard_menu_item_new_with_label(_("Effect_s"));
@@ -5913,9 +5928,15 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->ins_audmatch = lives_standard_check_menu_item_new_with_label(_("Insert Mode: _Audio Match"),
                      mt->opts.insert_mode == INSERT_MODE_AMATCH);
   lives_widget_set_tooltip_text(mt->ins_audmatch, (tmp = _("This mode is intended for cases where the end audio of "
-                                "one clip overlaps the start audio of the following."
-                                "Clips may be dragged so as to roughly overlap and the insert point will be "
-                                "adjusted to try to match the audio overlap")));
+                                "one clip overlaps the start audio of another.\n"
+                                "The later clip should be inserted in a different track "
+                                "from the earlier one,\n"
+                                "placed so as to roughly align the audio from both tracks.\n"
+                                "The insert point will be "
+                                "adjusted to try to match audio as closely as possible, "
+                                "allowing for a smoother audio transition\n"
+                                "It is IMPORTANT to get the original estimate as close as possible "
+                                "to the exact overlap point.")));
   lives_free(tmp);
 
   if (in_menubar) {
@@ -5943,6 +5964,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->ins_audmatch_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->ins_audmatch), LIVES_WIDGET_TOGGLED_SIGNAL,
                           LIVES_GUI_CALLBACK(on_insert_mode_changed), (livespointer)mt);
 
+  update_insert_mode(mt);
   lives_widget_show_all(mt->ins_submenu); // needed
 
   if (!in_menubar) {
@@ -11825,7 +11847,7 @@ boolean on_track_header_move(LiVESWidget * widget, LiVESXEventMotion * event, li
 
 static void _animate_multitrack(lives_mt * mt) {
   // update timeline pointer(s)
-  double currtime = mainw->currticks / TICKS_PER_SECOND_DBL;
+  double currtime = (mainw->currticks + mainw->offsetticks) / TICKS_PER_SECOND_DBL;
   double tl_page;
 
   int offset, offset_old;
@@ -14361,6 +14383,7 @@ static void on_delblock_activate(LiVESMenuItem * menuitem, livespointer user_dat
   int track;
 
   if (mt->is_rendering) return;
+  if (!mt->block_selected && !mt->putative_block) return;
 
   if (mt->idlefunc > 0) {
     needs_idlefunc = TRUE;
@@ -14843,9 +14866,10 @@ boolean multitrack_insert(LiVESMenuItem * menuitem, livespointer user_data) {
     ins_end = mt->insert_end;
   }
 
-#define MIN_AMATCH_SIZE 32768
-#define AMATCH_TRATIO 8192
-#define AMATCH_DELTA 30.
+  // TODO - allow these to be configurable
+#define MIN_AMATCH_SIZE 32768 // min runlength to avoid trivial matches
+#define AMATCH_THRESH 8192 // threshold in abs(hash1 - hash2) to trigger a possible match
+#define AMATCH_DELTA 30. // seconds to search around the estimate (backwards time; fwds time is 1 / 3 this)
 
   if (mt->opts.insert_mode == INSERT_MODE_AMATCH) {
     int other;
@@ -14857,10 +14881,22 @@ boolean multitrack_insert(LiVESMenuItem * menuitem, livespointer user_data) {
     }
 
     if (oblock) {
-      // want to find the longest section emd audio in oblock which exactly matches sfile audio start
+      // want to find the longest section end audio in oblock which closely matches sfile audio start
       // other is the other track when applying autotrans
+
+      // the algorithm keeps a running hash of the sign + 3 MSB of each audio sample
+      // this somewhat akin to peak level matching + sign matching
+
+      // we work backwards through clip1, and forwards through clip2
+      // and keep note of the nearest match (there is also a minimum runlength to avoid trivial matches)
+
+      // if we find a close match, the next step is to slide the insert point to attempt to align the zero crossings
+      // as much as possible
+
+      // the result is normally pretty good, provided the start point estimate is close to the actual overlap point
+
       int fnum = get_audio_frame_clip(oblock->start_event, other);
-      g_print("fnum is %d\n", fnum);
+      //g_print("fnum is %d\n", fnum);
       if (CLIP_HAS_AUDIO(fnum)) {
         lives_clip_t *tfile = mainw->files[fnum];
         if (tfile->achans == sfile->achans && tfile->arate == sfile->arate && tfile->asampsize == sfile->asampsize
@@ -14894,14 +14930,13 @@ boolean multitrack_insert(LiVESMenuItem * menuitem, livespointer user_data) {
             lives_read_le_buffered(afd, &val1, 2, TRUE);
             hash1 += (val1 & 0X7F00) >> 13;
             hash2 += (val2 & 0X7F00) >> 13;
-            if (z > minlen) {
-              diff = labs(hash1 - hash2);
-              if (diff < mindiff) {
+            diff = labs(hash1 - hash2);
+            if (diff < mindiff) {
+              if (z > minlen) {
                 bestz = z;
                 mindiff = diff;
               }
-              if (diff < AMATCH_TRATIO) break;
-            }
+            } else if (mindiff < AMATCH_THRESH) break;
             lives_lseek_buffered_rdonly(afd2, -4);
           }
           g_print("GOT Z %ld %ld %ld %ld %ld %ld\n", zmxlen, z, mindiff, mxsize, mxlen, minlen);
@@ -14921,7 +14956,7 @@ boolean multitrack_insert(LiVESMenuItem * menuitem, livespointer user_data) {
               if (y > 0 && !val1) {
                 while (val2 && y > 0) {
                   if (z <= minlen) break;
-                  g_print("ZADJ %d\n", val2);
+                  //g_print("ZADJ %d\n", val2);
                   lives_read_le_buffered(afd2, &val2, 2, TRUE);
                   z -= 2;
                   y -= 2;
@@ -14937,11 +14972,9 @@ boolean multitrack_insert(LiVESMenuItem * menuitem, livespointer user_data) {
             g_print("VALLLLLX %f and %f %f %f\n", secs, get_event_timecode(oblock->end_event) / TICKS_PER_SECOND_DBL,
                     (double)(z / (tfile->achans * (tfile->asampsize >> 3))), (double)tfile->arps);
 
-          }
-        }
-      }
-    }
-  }
+	    // *INDENT-OFF*
+          }}}}}
+  // *INDENT-ON*
 
   if (mt->opts.insert_mode == INSERT_MODE_NORMAL || mt->opts.insert_mode == INSERT_MODE_AMATCH) {
     // first check if there is space to insert the block to, otherwise we will abort the insert
@@ -16155,7 +16188,7 @@ boolean mt_tcoverlay_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, 
                               livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   if (LIVES_IS_PLAYING) {
-    mt->opts.overlay_timecode = !mt->opts.overlay_timecode;
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->show_tcode), !mt->opts.overlay_timecode);
   }
   return FALSE;
 }

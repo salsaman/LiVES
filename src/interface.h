@@ -269,8 +269,8 @@ void on_filesel_button_clicked(LiVESButton *, livespointer);
 
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act, const char *title,
                   LiVESWidget *extra);
-char *choose_file_bg(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act, const char *title,
-                     LiVESWidget *extra);
+/* char *choose_file_bg(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act, const char *title, */
+/*                      LiVESWidget *extra); */
 LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char **const filt, int preview_type);
 
 void add_suffix_check(LiVESBox *, const char *ext);

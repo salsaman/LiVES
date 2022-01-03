@@ -1285,7 +1285,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
     char *ttl = (_("Save Clip"));
     do {
       lives_freep((void **)&n_file_name);
-      n_file_name = choose_file_bg(mainw->vid_save_dir, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, ttl, hbox);
+      n_file_name = choose_file(mainw->vid_save_dir, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, ttl, hbox);
       if (!n_file_name) return;
     } while (!*n_file_name);
     lives_snprintf(mainw->vid_save_dir, PATH_MAX, "%s", n_file_name);

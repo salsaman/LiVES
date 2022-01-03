@@ -26,6 +26,7 @@ void get_dirname(char *filename);
 char *get_dir(const char *filename);
 void get_basename(char *filename);
 void get_filename(char *filename, boolean strip_dir);
+char *lives_get_filename(const char *uri);
 
 off_t get_file_size(int fd, boolean maybe_padded);
 off_t sget_file_size(const char *name);

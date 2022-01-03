@@ -214,6 +214,7 @@ struct _mt {
   LiVESWidget *infobar;
   LiVESWidget *stop;
   LiVESWidget *rewind;
+  LiVESWidget *show_tcode;
   LiVESWidget *sepwin;
   LiVESWidget *mute_audio;
   LiVESWidget *loop_continue;

@@ -359,7 +359,7 @@ LIVES_GLOBAL_INLINE void get_filename(char *filename, boolean strip_dir) {
 }
 
 /// return filename (no dir, no .ext)
-LIVES_GLOBAL_INLINE char *lives_get_filename(char *uri) {return lives_strstop(lives_path_get_basename(uri), '.');}
+LIVES_GLOBAL_INLINE char *lives_get_filename(const char *uri) {return lives_strstop(lives_path_get_basename(uri), '.');}
 
 
 char *get_extension(const char *filename) {

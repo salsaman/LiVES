@@ -4281,7 +4281,7 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
   // folder for non-idrs
   char *fold = NULL;
 
-  // filename fo non-dirs
+  // filename for non-dirs
   char *dirname = NULL;
   char *extra_dir = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(chooser), DEF_FILE_KEY);
 
@@ -4295,9 +4295,12 @@ static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
     lives_free(tmp);
   }
 
-  fold = lives_filename_to_utf8((tmp = gtk_file_chooser_get_current_folder(LIVES_FILE_CHOOSER(chooser))),
-                                -1, NULL, NULL, NULL);
-  lives_free(tmp);
+  tmp = gtk_file_chooser_get_current_folder(LIVES_FILE_CHOOSER(chooser));
+
+  if (tmp) {
+    fold = lives_filename_to_utf8(tmp, -1, NULL, NULL, NULL);
+    lives_free(tmp);
+  }
 
   if (!dirname && !fold) return;
 
@@ -4412,10 +4415,10 @@ static boolean dir_only_filt(const GtkFileFilterInfo * filter_info, livespointer
 }
 
 
-char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
-                  const char *title, LiVESWidget * extra_widget) {
+static char *_choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
+                          const char *title, LiVESWidget * extra_widget) {
   // new style file chooser
-  LiVESWidget *chooser;
+  LiVESWidget *chooser, *action_box;
 
 #if GTK_CHECK_VERSION(3, 10, 0)
   struct fc_dissection *diss;
@@ -4490,9 +4493,13 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
   gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser), TRUE);
 
+  action_box = lives_dialog_get_action_area(LIVES_DIALOG(chooser));
+
   if (mainw->is_ready && palette->style & STYLE_1) {
     lives_widget_set_bg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_fg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(action_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(action_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
 #if GTK_CHECK_VERSION(3, 10, 0)
@@ -4581,7 +4588,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
           lives_signal_sync_connect_after(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL,
                                           LIVES_GUI_CALLBACK(fc_folder_changed), diss);
 	// *INDENT-OFF*
-      }}}}
+	}}}}
   // *INDENT-ON*
   else {
     /* if (act == LIVES_FILE_CHOOSER_ACTION_SAVE || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER */
@@ -4611,11 +4618,11 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     gtk_file_chooser_add_shortcut_folder(LIVES_FILE_CHOOSER(chooser), dir, NULL);
   }
 
+  pop_to_front(chooser, NULL);
+
   if (extra_widget && extra_widget == LIVES_MAIN_WINDOW_WIDGET) {
     return (char *)chooser; // kludge to allow custom adding of extra widgets
   }
-
-  if (!mainw->is_ready) pop_to_front(chooser, NULL);
 
 rundlg:
   if ((response = lives_dialog_run(LIVES_DIALOG(chooser))) != LIVES_RESPONSE_CANCEL) {
@@ -4652,9 +4659,9 @@ rundlg:
   return filename;
 }
 
-char *choose_file_bg(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
-                     const char *title, LiVESWidget * extra_widget) {
-  return main_thread_execute((lives_funcptr_t)choose_file, WEED_SEED_STRING,
+char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
+                  const char *title, LiVESWidget * extra_widget) {
+  return main_thread_execute((lives_funcptr_t)_choose_file, WEED_SEED_STRING,
                              NULL, "ssvisv", dir, fname, filt, act, title, extra_widget);
 }
 
@@ -4677,18 +4684,18 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
 
   // unfortunately we cannot simply run this and return a filename, in case there is a selection
 
-  LiVESWidget *chooser, *pbut;
+  LiVESWidget *chooser, *pbut, *action_box;
   int preview_type;
 
   if (filesel_type == LIVES_DIR_SELECTION_CREATE_FOLDER) {
-    chooser = (LiVESWidget *)choose_file(dir, NULL, filt, LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                         title, LIVES_MAIN_WINDOW_WIDGET);
+    chooser = (LiVESWidget *)_choose_file(dir, NULL, filt, LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                          title, LIVES_MAIN_WINDOW_WIDGET);
     gtk_file_chooser_set_create_folders(LIVES_FILE_CHOOSER(chooser), TRUE);
   } else if (filesel_type == LIVES_DIR_SELECTION_SELECT_FOLDER)
-    chooser = (LiVESWidget *)choose_file(dir, NULL, filt, LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                         title, LIVES_MAIN_WINDOW_WIDGET);
+    chooser = (LiVESWidget *)_choose_file(dir, NULL, filt, LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                          title, LIVES_MAIN_WINDOW_WIDGET);
 
-  chooser = (LiVESWidget *)choose_file(dir, NULL, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, title, LIVES_MAIN_WINDOW_WIDGET);
+  chooser = (LiVESWidget *)_choose_file(dir, NULL, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, title, LIVES_MAIN_WINDOW_WIDGET);
 
   if (filesel_type == LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI) {
 #ifdef GUI_GTK
@@ -4708,9 +4715,10 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
     preview_type = LIVES_PREVIEW_TYPE_AUDIO_ONLY;
   }
 
+  action_box = lives_dialog_get_action_area(LIVES_DIALOG(chooser));
+
   pbut = widget_add_preview(chooser, LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
-                            NULL, LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(chooser))),
-                            preview_type);
+                            NULL, LIVES_BOX(action_box), preview_type);
 
   gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser), pbut);
 

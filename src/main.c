@@ -2164,7 +2164,7 @@ static boolean lives_init(_ign_opts *ign_opts) {
     future_prefs->audio_opts = prefs->audio_opts =
                                  get_int_prefd(PREF_AUDIO_OPTS,
                                      AUDIO_OPTS_EXT_FX | AUDIO_OPTS_FOLLOW_CLIPS | AUDIO_OPTS_FOLLOW_FPS
-                                     | AUDIO_OPTS_LOCKED_RESYNC | AUDIO_OPTS_LOCKED_RESET);
+                                     | AUDIO_OPTS_UNLOCK_RESYNC | AUDIO_OPTS_LOCKED_RESET);
 
     array = lives_strsplit(DEF_AUTOTRANS, "|", 3);
     mainw->def_trans_idx = weed_filter_highest_version(array[0], array[1], array[2], NULL);
@@ -8961,6 +8961,14 @@ void switch_to_file(int old_file, int new_file) {
     return;
   }
 
+  if (mainw->drawtl_thread) {
+    if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+      lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
+    }
+    lives_proc_thread_join(mainw->drawtl_thread);
+    mainw->drawtl_thread = NULL;
+  }
+
   mainw->current_file = new_file;
 
   if (old_file != new_file) {
@@ -9084,7 +9092,7 @@ void switch_to_file(int old_file, int new_file) {
 
     // redraw_tl can delay, so force upd.
     lives_widget_context_update();
-    redraw_timeline(mainw->current_file);
+    redraw_timeline_bg(mainw->current_file);
     lives_ce_update_timeline(0, cfile->pointer_time);
     mainw->ptrtime = cfile->pointer_time;
     lives_widget_queue_draw(mainw->eventbox2);
@@ -9465,6 +9473,14 @@ void do_quick_switch(int new_file) {
   mainw->clip_switched = TRUE;
 
   if (sfile) sfile->last_play_sequence = mainw->play_sequence;
+
+  if (mainw->drawtl_thread) {
+    if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+      lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
+    }
+    lives_proc_thread_join(mainw->drawtl_thread);
+    mainw->drawtl_thread = NULL;
+  }
 
   mainw->current_file = new_file;
 

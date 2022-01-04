@@ -3580,6 +3580,7 @@ void redraw_timeline_bg(int clipno) {
     lives_proc_thread_join(mainw->drawtl_thread);
     mainw->drawtl_thread = NULL;
   }
+
   mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
                          (lives_funcptr_t)redraw_timeline, -1,
                          "i", clipno);
@@ -5268,46 +5269,48 @@ void do_keys_window(void) {
 
   ADD_KEYDEF(_("You can use the following keys during playback to control LiVES:-"), NULL);
   ADD_KEYDEF(NULL, NULL);
-  ADD_KEYDEF(NULL, _("Recordable keys (press 'r' before playback to make a recording)"));
-  ADD_KEYDEF(_("ctrl-left"), _("skip / scratch backwards (video only)\nWhen not playing moves the playback cursor"));
-  ADD_KEYDEF(_("ctrl-right"), _("skip / scratch forwards (video only)\nWhen not playing moves the playback cursor"));
-  ADD_KEYDEF(_("ctrl-up"), _("play faster"));
-  ADD_KEYDEF(_("ctrl-down"), _("play slower"));
-  ADD_KEYDEF(_("shift-up"), _("background clip play faster"));
-  ADD_KEYDEF(_("shift-down"), _("background clip play slower"));
+  ADD_KEYDEF(NULL, _("Recordable keys (press 'r' before or during playback to toggle recording)"));
+  ADD_KEYDEF(_("ctrl + left"), _("skip / scratch backwards\nWhen not playing moves the playback cursor"));
+  ADD_KEYDEF(_("ctrl + right"), _("skip / scratch forwards\nWhen not playing moves the playback cursor"));
+  ADD_KEYDEF(_("ctrl + up"), _("play faster"));
+  ADD_KEYDEF(_("ctrl + down"), _("play slower"));
+  ADD_KEYDEF(_("shift + up"), _("background clip play faster"));
+  ADD_KEYDEF(_("shift + down"), _("background clip play slower"));
   ADD_KEYDEF(_("(The 'effect parameter' here is the first 'simple' numerical parameter)"), NULL);
-  ADD_KEYDEF(_("alt-up"), _("increase effect parameter for keygrabbed effect"));
-  ADD_KEYDEF(_("alt-down"), _("decrease effect parameter for keybrabbed effect"));
-  ADD_KEYDEF(_("ctrl-enter"), _("reset frame rate / resync audio (foreground clip)"));
-  ADD_KEYDEF(_("shift-enter"), _("reset frame rate (background clip)"));
-  ADD_KEYDEF(_("ctrl-space"), _("reverse direction (foreground clip)"));
-  ADD_KEYDEF(_("ctrl-shift-space"), _("reverse direction (background clip)"));
-  ADD_KEYDEF(_("ctrl-alt-space"),
+  ADD_KEYDEF(_("alt + up"), _("increase effect parameter for keygrabbed effect"));
+  ADD_KEYDEF(_("alt + down"), _("decrease effect parameter for keygrabbed effect"));
+  ADD_KEYDEF(_("ctrl + enter"), _("reset frame rate / resync audio (foreground clip)"));
+  ADD_KEYDEF(_("shift + enter"), _("reset frame rate (background clip)"));
+  ADD_KEYDEF(_("ctrl + space"), _("reverse direction (foreground clip)"));
+  ADD_KEYDEF(_("ctrl + shift + space"), _("reverse direction (background clip)"));
+  ADD_KEYDEF(_("ctrl + alt + space"),
              _("Loop Lock\n(press once to mark IN point, then again to mark OUT point;\n"
                "ctrl-space, ctrl-enter, or switching clips clears)"));
-  ADD_KEYDEF(_("ctrl-backspace"), _("freeze frame (foreground and background)"));
-  ADD_KEYDEF(_("ctrl-alt-backspace"), _("freeze frame (background clip only)"));
+  ADD_KEYDEF(_("ctrl + backspace"), _("freeze frame (foreground and background)"));
+  ADD_KEYDEF(_("ctrl + alt + backspace"), _("freeze frame (background clip only)"));
+  ADD_KEYDEF("x", _("swap background / foreground clips"));
+
+  ADD_KEYDEF(NULL, _("The following may also be used outside of playback:-"));
+  ADD_KEYDEF("n", _("nervous mode"));
+  ADD_KEYDEF(_("ctrl + page-up"), _("previous clip"));
+  ADD_KEYDEF(_("ctrl + page-down"), _("next clip"));
+  ADD_KEYDEF("", "");
+  ADD_KEYDEF(_("ctrl + 1"), _("toggle real-time effect 1"));
+  ADD_KEYDEF(_("ctrl + 2"), _("toggle real-time effect 2"));
+  ADD_KEYDEF(_("...etc..."), "");
+  ADD_KEYDEF(_("ctrl + 9"), _("toggle real-time effect 9"));
+  ADD_KEYDEF(_("ctrl + 0"), _("real-time effects (1 - 9) OFF"));
+  ADD_KEYDEF(_("ctrl + minus"), _("toggle real-time effect 10 (unaffected by ctrl-0)"));
+  ADD_KEYDEF(_("ctrl + equals"), _("toggle real-time effect 11 (unaffected by ctrl-0)"));
+  ADD_KEYDEF("", "");
   ADD_KEYDEF("a",
              _("audio lock ON: lock audio to the current foreground clip;\nignore video clip switches and rate / direction changes"));
-  ADD_KEYDEF("A", _("audio lock OFF; audio follows the foreground video clip\n(unless overridden in Preferences)"));
-  ADD_KEYDEF("n", _("nervous mode"));
-  ADD_KEYDEF(_("ctrl-page-up"), _("previous clip"));
-  ADD_KEYDEF(_("ctrl-page-down"), _("next clip"));
-  ADD_KEYDEF("", "");
-  ADD_KEYDEF(_("ctrl-1"), _("toggle real-time effect 1"));
-  ADD_KEYDEF(_("ctrl-2"), _("toggle real-time effect 2"));
-  ADD_KEYDEF(_("...etc..."), "");
-  ADD_KEYDEF(_("ctrl-9"), _("toggle real-time effect 9"));
-  ADD_KEYDEF(_("ctrl-0"), _("real-time effects (1 - 9) OFF"));
-  ADD_KEYDEF(_("ctrl-minus"), _("toggle real-time effect 10 (unaffected by ctrl-0)"));
-  ADD_KEYDEF(_("ctrl-equals"), _("toggle real-time effect 11 (unaffected by ctrl-0)"));
-  ADD_KEYDEF("x", _("swap background / foreground clips"));
-  ADD_KEYDEF("", "");
+  ADD_KEYDEF("A (shift + a)", _("audio lock OFF; audio follows the foreground video clip\n(unless overridden in Preferences)"));
   ADD_KEYDEF("k", _("grab keyboard for last activated effect key\n(affects m, M, t, tab and ctrl-alt-up, ctrl-alt-down keys)"));
   ADD_KEYDEF("m", _("next effect mode (for whichever key has keyboard grab)"));
-  ADD_KEYDEF("M", _("previous effect mode (for whichever key has keyboard grab)"));
-  ADD_KEYDEF(_("ctrl-alt-1"), _("grab keyboard for effect key 1 (similar to k key)"));
-  ADD_KEYDEF(_("ctrl-alt-2"), _("grab keyboard for effect key 2"));
+  ADD_KEYDEF("M (shift + m)", _("previous effect mode (for whichever key has keyboard grab)"));
+  ADD_KEYDEF(_("ctrl + alt + 1"), _("grab keyboard for effect key 1 (similar to k key)"));
+  ADD_KEYDEF(_("ctrl + alt + 2"), _("grab keyboard for effect key 2"));
   ADD_KEYDEF(_("...etc..."), "");
   ADD_KEYDEF("t", _("enter text parameter (when effect has keyboard grab)"));
   ADD_KEYDEF(_("TAB"), _("leave text parameter (reverse of 't')"));
@@ -5351,17 +5354,17 @@ void do_mt_keys_window(void) {
 
   ADD_KEYDEF(_("You can use the following keys to control the multitrack window:"), NULL);
   ADD_KEYDEF(NULL, NULL);
-  ADD_KEYDEF(_("ctrl-left-arrow"), _("move timeline cursor left 1 second"));
-  ADD_KEYDEF(_("ctrl-right-arrow"), _("move timeline cursor right 1 second"));
-  ADD_KEYDEF(_("shift-left-arrow"), _("move timeline cursor left 1 frame"));
-  ADD_KEYDEF(_("shift-right-arrow"), _("move timeline cursor right 1 frame"));
-  ADD_KEYDEF(_("ctrl-up-arrow"), _("move current track up"));
-  ADD_KEYDEF(_("ctrl-down-arrow"), _("move current track down"));
-  ADD_KEYDEF(_("ctrl-page-up"), _("select previous clip"));
-  ADD_KEYDEF(_("ctrl-page-down"), _("select next clip"));
-  ADD_KEYDEF(_("ctrl-space"), _("select/deselect current track"));
-  ADD_KEYDEF(_("ctrl-plus"), _("zoom in"));
-  ADD_KEYDEF(_("ctrl-minus"), _("zoom out"));
+  ADD_KEYDEF(_("ctrl + left-arrow"), _("move timeline cursor left 1 second"));
+  ADD_KEYDEF(_("ctrl + right-arrow"), _("move timeline cursor right 1 second"));
+  ADD_KEYDEF(_("shift + left-arrow"), _("move timeline cursor left 1 frame"));
+  ADD_KEYDEF(_("shift + right-arrow"), _("move timeline cursor right 1 frame"));
+  ADD_KEYDEF(_("ctrl + up-arrow"), _("move current track up"));
+  ADD_KEYDEF(_("ctrl + down-arrow"), _("move current track down"));
+  ADD_KEYDEF(_("ctrl + page-up"), _("select previous clip"));
+  ADD_KEYDEF(_("ctrl + page-down"), _("select next clip"));
+  ADD_KEYDEF(_("ctrl + space"), _("select/deselect current track"));
+  ADD_KEYDEF(_("ctrl + plus"), _("zoom in"));
+  ADD_KEYDEF(_("ctrl + minus"), _("zoom out"));
   ADD_KEYDEF("m", _("make a mark on the timeline (during playback)"));
   ADD_KEYDEF("w", _("rewind to play start."));
   ADD_KEYDEF("", "");

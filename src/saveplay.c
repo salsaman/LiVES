@@ -2936,6 +2936,7 @@ void play_file(void) {
     }
 
     if (mainw->alock_abuf) {
+      lives_hook_remove(THREADVAR(hook_closures), DATA_READY_HOOK, resample_to_float, &mainw->alock_abuf);
       free_audio_frame_buffer(mainw->alock_abuf);
       mainw->alock_abuf = NULL;
     }

@@ -2649,11 +2649,15 @@ boolean resample_clipboard(double new_fps) {
 
 
 void *resample_to_float(lives_object_t *obj, void *data) {
-  lives_audio_buf_t *abuf = (lives_audio_buf_t *)data;
+  lives_audio_buf_t *abuf = *(lives_audio_buf_t **)data;
   // resample buffer to float
   //
   if (!abuf || abuf->_fd < 0) return NULL;
   pthread_mutex_lock(&abuf->atomic_mutex);
+  if (*(lives_audio_buf_t **)data != abuf) {
+    pthread_mutex_unlock(&abuf->atomic_mutex);
+    return NULL;
+  }
   abuf->out_achans = 0;
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
@@ -2667,10 +2671,12 @@ void *resample_to_float(lives_object_t *obj, void *data) {
 #endif
   if (abuf->out_achans && IS_VALID_CLIP(abuf->fileno)) {
     lives_clip_t *sfile = mainw->files[abuf->fileno];
+    int j = 0;
     abuf->in_asamps = sfile->asampsize;
     abuf->in_achans = sfile->achans;
     abuf->samp_space = lives_buffered_orig_size(abuf->_fd) / abuf->in_achans / (abuf->in_asamps >> 3);
     abuf->bufferf = lives_calloc(abuf->out_achans, sizeof(float *));
+    g_print("pt b11\n");
     for (int i = 0; i < abuf->out_achans; i++)  {
       abuf->bufferf[i] = lives_calloc(abuf->samp_space, sizeof(float));
       if (i >= abuf->in_achans) continue;
@@ -2684,8 +2690,9 @@ void *resample_to_float(lives_object_t *obj, void *data) {
           int in_unsigned = sfile->signed_endian & AFORM_UNSIGNED;
           if ((abigendian && capable->hw.byte_order == LIVES_LITTLE_ENDIAN)
               || (!abigendian && capable->hw.byte_order == LIVES_BIG_ENDIAN)) rev_endian = TRUE;
-          sample_move_d16_float(abuf->bufferf[i], s16buffer, abuf->samp_space, abuf->in_achans, in_unsigned, rev_endian, 1.);
-          pthread_mutex_unlock(&abuf->atomic_mutex);
+          g_print("pt b112\n");
+          sample_move_d16_float(abuf->bufferf[i], s16buffer + j, abuf->samp_space, abuf->in_achans, in_unsigned, rev_endian, 1.);
+          g_print("pt b114\n");
         } else {
           /* if (sfile->asampsize == 8) { */
           /*   sample_move_d8_d16((short *)(pulsed->sound_buffer), (uint8_t *)buffer, nsamples, in_bytes, */
@@ -2694,10 +2701,12 @@ void *resample_to_float(lives_object_t *obj, void *data) {
           /* } */
         }
       }
+      if (++j >= abuf->in_achans) j = 0;
     }
     abuf->seek = sfile->aseek_pos;
     abuf->arate = sfile->arate;
   }
+  abuf->is_ready = TRUE;
   pthread_mutex_unlock(&abuf->atomic_mutex);
   return NULL;
 }

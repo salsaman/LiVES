@@ -10620,6 +10620,8 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
   if (w) state = lives_toggle_tool_button_get_active(w);
   else {
     state = LIVES_POINTER_TO_INT(statep);
+    if ((state && (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) ||
+        (!state && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))) return TRUE;
     if (mainw->lock_audio_checkbutton) {
       lives_signal_handler_block(mainw->lock_audio_checkbutton, mainw->lock_audio_func);
       lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->lock_audio_checkbutton), state);
@@ -10632,6 +10634,7 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
     lives_audio_buf_t *abuf = mainw->alock_abuf;
     prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
     if (abuf) {
+      lives_hook_remove(THREADVAR(hook_closures), DATA_READY_HOOK, resample_to_float, &mainw->alock_abuf);
       pthread_mutex_lock(&mainw->alock_mutex);
       mainw->alock_abuf = NULL;
       pthread_mutex_unlock(&mainw->alock_mutex);
@@ -10639,11 +10642,12 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
       free_audio_frame_buffer(abuf);
       pthread_mutex_unlock(&abuf->atomic_mutex);
     }
-    if (LIVES_IS_PLAYING) switch_audio_clip(mainw->playing_file, TRUE);
+    if (LIVES_IS_PLAYING) {
+      switch_audio_clip(mainw->playing_file, TRUE);
+      if (prefs->audio_opts & AUDIO_OPTS_UNLOCK_RESYNC)
+        resync_audio(mainw->playing_file, mainw->files[mainw->playing_file]->frameno);
+    }
   }
-
-  if (LIVES_IS_PLAYING && (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC))
-    resync_audio(mainw->playing_file, mainw->files[mainw->playing_file]->frameno);
 
   // lock ON
   if (state) {
@@ -10657,9 +10661,8 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
         if (mainw->alock_abuf->_fd >= 0) {
           mainw->alock_abuf->fileno = mainw->playing_file;
           lives_hook_append(THREADVAR(hook_closures), DATA_READY_HOOK, HOOK_CB_CHILD_INHERITS,
-                            resample_to_float, mainw->alock_abuf);
+                            resample_to_float, &mainw->alock_abuf);
           lives_buffered_rdonly_slurp(mainw->alock_abuf->_fd, 0);
-          mainw->alock_abuf->is_ready = TRUE;
         }
       }
       lives_free(filename);

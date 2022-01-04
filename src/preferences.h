@@ -346,7 +346,7 @@ typedef struct {
 #define AUDIO_OPTS_IS_LOCKED		(1 << 16)
 #define AUDIO_OPTS_LOCKED_FREEZE	(1 << 17)
 #define AUDIO_OPTS_LOCKED_PING_PONG	(1 << 18)
-#define AUDIO_OPTS_LOCKED_RESYNC	(1 << 19)
+#define AUDIO_OPTS_UNLOCK_RESYNC	(1 << 19)
 #define AUDIO_OPTS_LOCKED_RESET		(1 << 20)
 
 #define AUDIO_OPTS_EXT_FX		(1 << 25) // apply effects to external audio -> audio out

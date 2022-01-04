@@ -1842,9 +1842,9 @@ boolean pref_factory_bitmapped(const char *prefidx, uint32_t bitfield, boolean n
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->afreeze_ping),
                                        (prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG) ? TRUE : FALSE);
       }
-      if (bitfield == AUDIO_OPTS_LOCKED_RESYNC) {
+      if (bitfield == AUDIO_OPTS_UNLOCK_RESYNC) {
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->afreeze_sync),
-                                       (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC) ? TRUE : FALSE);
+                                       (prefs->audio_opts & AUDIO_OPTS_UNLOCK_RESYNC) ? TRUE : FALSE);
       }
       if (bitfield == AUDIO_OPTS_LOCKED_RESET) {
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->alock_reset),
@@ -2199,7 +2199,7 @@ boolean apply_prefs(boolean skip_warn) {
                          + AUDIO_OPTS_NO_RESYNC_FPS * !(resync_fps) + AUDIO_OPTS_NO_RESYNC_VPOS * !(resync_vpos)
                          + AUDIO_OPTS_RESYNC_ADIR * resync_adir + AUDIO_OPTS_RESYNC_ACLIP * resync_aclip
                          + AUDIO_OPTS_LOCKED_FREEZE * freeze_lock + AUDIO_OPTS_LOCKED_PING_PONG * freeze_ping
-                         + AUDIO_OPTS_LOCKED_RESYNC * freeze_resync) + AUDIO_OPTS_LOCKED_RESET * alock_reset;
+                         + AUDIO_OPTS_UNLOCK_RESYNC * freeze_resync) + AUDIO_OPTS_LOCKED_RESET * alock_reset;
 #endif
 
 #ifdef ENABLE_OSC
@@ -5214,8 +5214,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                       "from the current video clip, rather than completely overrding it")));
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->afreeze_sync = lives_standard_check_button_new(_("Resync to current video position when locking / unlocking audio"),
-                         (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESYNC) ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
+  prefsw->afreeze_sync = lives_standard_check_button_new(_("Resync to current video position when unlocking audio"),
+                         (prefs->audio_opts & AUDIO_OPTS_UNLOCK_RESYNC) ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
 
   add_hsep_to_box(LIVES_BOX(vbox));
   add_fill_to_box(LIVES_BOX(vbox));

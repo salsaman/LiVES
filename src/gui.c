@@ -1850,6 +1850,9 @@ void create_LiVES(void) {
   widget_opts.expand = LIVES_EXPAND_NONE;
   widget_opts.apply_theme = 0;
   mainw->l0_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("Audio Locked  "), mainw->lock_audio_checkbutton);
+  lives_widget_set_tooltip_text(mainw->l0_tb,
+                                _("When active, clip and fps changes during playback\nwill affect only the video stream.\n"
+                                  "(Certain exceptions apply, see Preferences / Playback / Options for Audio Lock)"));
   lives_widget_set_valign(mainw->l0_tb, LIVES_ALIGN_START);
 
   widget_opts.apply_theme = woat;
@@ -1885,6 +1888,7 @@ void create_LiVES(void) {
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   mainw->l1_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("Audio Source:    "), NULL);
+  lives_widget_set_tooltip_text(mainw->l1_tb, _("Keyboard shortcut: ctrl+shift+a"));
   lives_widget_set_valign(mainw->l1_tb, LIVES_ALIGN_START);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
@@ -1951,7 +1955,7 @@ void create_LiVES(void) {
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->ext_audio_checkbutton), -1);
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_a,
-                            LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                            LIVES_CONTROL_MASK | LIVES_SHIFT_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(asrc_toggle_callback),
                                 NULL, NULL));
 

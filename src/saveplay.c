@@ -493,7 +493,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                 d_print(_("Auto trimming %.4f seconds of audio at end..."),
                         cfile->laudio_time - cfile->video_time);
                 cfile->undo1_dbl = cfile->video_time;
-                cfile->undo2_dbl = cfile->video_time + cfile->laudio_time - cfile->video_time;
+                cfile->undo2_dbl = cfile->laudio_time;
                 cfile->opening_audio = TRUE;
                 if (on_del_audio_activate(NULL, NULL)) d_print_done();
                 else d_print("\n");

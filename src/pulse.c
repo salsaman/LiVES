@@ -12,7 +12,7 @@
 
 #define afile mainw->files[pulsed->playing_file]
 
-//#define DEBUG_PULSE
+#define DEBUG_PULSE
 
 #define THRESH_BASE 10000.
 #define THRESH_MAX 50000.
@@ -993,7 +993,13 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #ifdef DEBUG_PULSE
             lives_printerr("inputFramesAvailable after conversion2u %ld\n", numFramesToWrite);
 #endif
-            if (numFramesToWrite < pulseFramesAvailable) {
+
+            if (numFramesToWrite > pulseFramesAvailable) {
+#ifdef DEBUG_PULSE
+              lives_printerr("dropping last %ld samples\n", numFramesToWrite = pulseFramesAvailable);
+#endif
+              numFramesToWrite = pulseFramesAvailable;
+            } else if (numFramesToWrite < pulseFramesAvailable) {
               // because of rounding, occasionally we get a sample or two short. Here we duplicate the last samples
               // so as not to leave a zero filled gap
               size_t lack = (pulseFramesAvailable - numFramesToWrite);
@@ -1004,7 +1010,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               }
               numFramesToWrite = pulseFramesAvailable;
 #ifdef DEBUG_PULSE
-              lives_printerr("duplicated last %ld samples\n", lack / pulsed->out_achans);
+              lives_printerr("duplicated last %ld samples\n", lack);
 #endif
             }
           }
@@ -1316,6 +1322,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #else
       buffer = NULL;
       if (!pulsed->is_corked) {
+#ifdef DEBUG_PULSE
+        g_print("writing %ld bytes to pulse\n", nbytes);
+#endif
         pa_stream_write(pulsed->pstream, pulsed->sound_buffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
       }
 #endif
@@ -1352,6 +1361,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         } else pulse_buff_free(shortbuffer);
 #else
         if (!pulsed->is_corked) {
+#ifdef DEBUG_PULSE
+          g_print("2writing %ld bytes to pulse\n", nbytes);
+#endif
           pa_stream_write(pulsed->pstream, shortbuffer, nbytes, NULL, 0, PA_SEEK_RELATIVE);
         }
 #endif

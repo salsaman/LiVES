@@ -2970,7 +2970,12 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                 inputFramesAvailable = in_bytes / (jackd->num_input_channels * (afile->asampsize >> 3));
                 numFramesToWrite = (uint64_t)((double)inputFramesAvailable / (double)fabsf(shrink_factor) + .001);
 
-                if (numFramesToWrite < jackFramesAvailable) {
+                if (numFramesToWrite > pulseFramesAvailable) {
+#ifdef DEBUG_PULSE
+                  lives_printerr("dropping last %ld samples\n", numFramesToWrite = pulseFramesAvailable);
+#endif
+                  numFramesToWrite = pulseFramesAvailable;
+                } else if (numFramesToWrite < jackFramesAvailable) {
                   // because of rounding, occasionally we get a sample or two short. Here we duplicate the last samples
                   // so as not to jump to leave a zero filled gap
                   size_t lack = jackFramesAvailable - numFramesToWrite;

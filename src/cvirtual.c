@@ -593,13 +593,8 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
     }
 
     if (cdata) {
-      if (!prefs->auto_nobord) {
-        chsize = cdata->frame_width * weed_palette_get_pixels_per_macropixel(cdata->current_palette) / VSLICES;
-        cvsize = cdata->frame_height;
-      } else {
-        chsize = cdata->width * weed_palette_get_pixels_per_macropixel(cdata->current_palette) / VSLICES;
-        cvsize = cdata->height;
-      }
+      chsize = cdata->width * weed_palette_get_pixels_per_macropixel(cdata->current_palette) / VSLICES;
+      cvsize = cdata->height;
     }
 
     hsize /= VSLICES;

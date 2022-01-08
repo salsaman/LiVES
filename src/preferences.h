@@ -400,7 +400,6 @@ typedef struct {
 
   boolean instant_open;
   boolean auto_deint;
-  boolean auto_nobord;
 
   boolean tr_self;
   int autotrans_key;
@@ -896,7 +895,6 @@ typedef struct {
   LiVESWidget *checkbutton_instant_open;
   LiVESWidget *checkbutton_auto_deint;
   LiVESWidget *checkbutton_auto_trim;
-  LiVESWidget *checkbutton_nobord;
   LiVESWidget *checkbutton_concat_images;
   LiVESWidget *checkbutton_show_asrc;
   LiVESWidget *checkbutton_show_ttips;
@@ -1288,7 +1286,6 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_INSTANT_OPEN "instant_open"
 #define PREF_MIDISYNCH "midisynch"
 #define PREF_AUTO_DEINTERLACE "auto_deinterlace"
-#define PREF_AUTO_CUT_BORDERS "auto_cut_borders"
 #define PREF_REC_DESKTOP_AUDIO "rec_desktop_audio"
 #define PREF_INSERT_RESAMPLE "insert_resample"
 #define PREF_CONCAT_IMAGES "concat_images"

@@ -25,6 +25,8 @@
 # v 2.16 code cleanup, fix libtheora
 #######################################################################
 
+## TODO - test hwaccel auto
+
 my $USE_STRICT = 1;
 if ($USE_STRICT) {
     use strict;
@@ -240,8 +242,7 @@ if ($command eq "get_formats") {
 
     print "qtrle|QuickTime animation$errqtrle|0|none|mov|frame=|\n";
     
-    print "flv|flv$errflv$errmp3aac|33|arate=44100;22050;11025|flv|frame=|\n";
-    print "flv-youtubex|flv (optimised for youtube)$errflv$errmp3aac|33|arate=44100;22050;11025,aspect=1.3333:1|flv|frame=|\n";
+    print "flv|flv$errflv$errmp3aac|33|arate=44100;22050;11025,hstep=16|flv|frame=|\n";
 
     print "divx|divx/avi (25 fps)$errmpeg4$errmp3mp2|5|fps=25.00|avi|frame=|\n";
 

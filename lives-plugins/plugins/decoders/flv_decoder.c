@@ -646,7 +646,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   boolean got_picture = FALSE, got_avcextradata = FALSE;
 
-#define DEBUG
+  //#define DEBUG
 #ifdef DEBUG
   fprintf(stderr, "\n");
 #endif
@@ -1474,56 +1474,6 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 }
 
 
-static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y_black) {
-  unsigned char *dst = idst;
-  register int i;
-
-  for (i = 0; i < npixels; i++) {
-    switch (pal) {
-    case WEED_PALETTE_RGBA32:
-    case WEED_PALETTE_BGRA32:
-      dst[0] = dst[1] = dst[2] = 0;
-      dst[3] = 255;
-      dst += 4;
-      break;
-    case WEED_PALETTE_ARGB32:
-      dst[1] = dst[2] = dst[3] = 0;
-      dst[0] = 255;
-      dst += 4;
-      break;
-    case WEED_PALETTE_UYVY8888:
-      dst[1] = dst[3] = y_black;
-      dst[0] = dst[2] = 128;
-      dst += 4;
-      break;
-    case WEED_PALETTE_YUYV8888:
-      dst[0] = dst[2] = y_black;
-      dst[1] = dst[3] = 128;
-      dst += 4;
-      break;
-    case WEED_PALETTE_YUV888:
-      dst[0] = y_black;
-      dst[1] = dst[2] = 128;
-      dst += 3;
-      break;
-    case WEED_PALETTE_YUVA8888:
-      dst[0] = y_black;
-      dst[1] = dst[2] = 128;
-      dst[3] = 255;
-      dst += 4;
-      break;
-    case WEED_PALETTE_YUV411:
-      dst[0] = dst[3] = 128;
-      dst[1] = dst[2] = dst[4] = dst[5] = y_black;
-      dst += 6;
-    default:
-      break;
-    }
-  }
-  return idst - dst;
-}
-
-
 boolean chill_out(const lives_clip_data_t *cdata) {
   // free buffers because we are going to chill out for a while
   // (seriously, host can call this to free any buffers when we aren't palying sequentially)
@@ -1700,38 +1650,20 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   for (p = 0; p < nplanes; p++) {
     dst = pixel_data[p];
     src = priv->picture->data[p];
+    src += priv->picture->linesize[p] * btop;
 
-    for (i = 0; i < xheight; i++) {
-      if (i < btop || i > bbot) {
-        // top or bottom border, copy black row
-        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
-            pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
-          memset(dst, black[p], dstwidth + (bleft + bright)*psize);
-          dst += dstwidth + (bleft + bright) * psize;
-        } else dst += write_black_pixel(dst, pal, dstwidth / psize + bleft + bright, y_black);
-        continue;
+    if (cdata->rec_rowstrides) {
+      ((lives_clip_data_t *)cdata)->rec_rowstrides[p] = priv->picture->linesize[p];
+    }
+
+    if (rowstrides[p] == priv->picture->linesize[p] && bleft == bright && bleft == 0) {
+      (*cdata->ext_memcpy)(dst, src, rowstrides[p] * xheight);
+    } else {
+      for (i = btop; i <= bbot; i++) {
+        (*cdata->ext_memcpy)(dst, src, dstwidth);
+        dst += rowstrides[p];
+        src += priv->picture->linesize[p];
       }
-
-      if (bleft > 0) {
-        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
-            pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
-          memset(dst, black[p], bleft * psize);
-          dst += bleft * psize;
-        } else dst += write_black_pixel(dst, pal, bleft, y_black);
-      }
-
-      memcpy(dst, src, dstwidth);
-      dst += dstwidth;
-
-      if (bright > 0) {
-        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
-            pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
-          memset(dst, black[p], bright * psize);
-          dst += bright * psize;
-        } else dst += write_black_pixel(dst, pal, bright, y_black);
-      }
-
-      src += priv->picture->linesize[p];
     }
     if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P)) {
       dstwidth >>= 1;

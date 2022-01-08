@@ -2078,7 +2078,6 @@ boolean apply_prefs(boolean skip_warn) {
   boolean instant_open = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_instant_open));
   boolean auto_deint = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_auto_deint));
   boolean auto_trim = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_auto_trim));
-  boolean auto_nobord = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_nobord));
   boolean concat_images = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_concat_images));
   boolean ins_speed = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->ins_speed));
   boolean show_player_stats = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_show_stats));
@@ -2678,11 +2677,6 @@ boolean apply_prefs(boolean skip_warn) {
   // auto deinterlace
   if (prefs->auto_trim_audio != auto_trim) {
     set_boolean_pref(PREF_AUTO_TRIM_PAD_AUDIO, (prefs->auto_trim_audio = auto_trim));
-  }
-
-  // auto border cut
-  if (prefs->auto_nobord != auto_nobord) {
-    set_boolean_pref(PREF_AUTO_CUT_BORDERS, (prefs->auto_nobord = auto_nobord));
   }
 
   // concat images
@@ -4785,16 +4779,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                   (tmp2 = (H_("Automatically trim or pad audio to try to keep it in synch with video.\n"
                                           "This operation can be reversed after loading the clip, if so desired."))));
   lives_free(tmp); lives_free(tmp2);
-
-
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  prefsw->checkbutton_nobord = lives_standard_check_button_new((tmp = (_("Ignore blank borders when possible"))),
-                               prefs->auto_nobord, LIVES_BOX(hbox),
-                               (tmp2 = (H_("Clip any blank borders from frames if they are detected"))));
-  lives_free(tmp); lives_free(tmp2);
-
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
 
@@ -7334,7 +7318,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(checkbutton_instant_open, TOGGLED);
   ACTIVE(checkbutton_auto_deint, TOGGLED);
   ACTIVE(checkbutton_auto_trim, TOGGLED);
-  ACTIVE(checkbutton_nobord, TOGGLED);
   ACTIVE(checkbutton_concat_images, TOGGLED);
   ACTIVE(checkbutton_lb, TOGGLED);
   ACTIVE(checkbutton_lbmt, TOGGLED);

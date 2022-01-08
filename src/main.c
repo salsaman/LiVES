@@ -1822,7 +1822,6 @@ static boolean lives_init(_ign_opts *ign_opts) {
 
     prefs->instant_open = get_boolean_prefd(PREF_INSTANT_OPEN, TRUE);
     prefs->auto_deint = get_boolean_prefd(PREF_AUTO_DEINTERLACE, TRUE);
-    prefs->auto_nobord = get_boolean_prefd(PREF_AUTO_CUT_BORDERS, FALSE);
 
     future_prefs->ar_clipset = FALSE;
 
@@ -8099,16 +8098,8 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 		}}}}
 	  // *INDENT-ON*
 
-          // TODO *** - check for auto-border : we might use width,height instead of frame_width,frame_height,
-          // and handle this in the plugin
-
-          if (!prefs->auto_nobord) {
-            width = dplug->cdata->frame_width / weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
-            height = dplug->cdata->frame_height;
-          } else {
-            width = dplug->cdata->width / weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
-            height = dplug->cdata->height;
-          }
+          width = dplug->cdata->width / weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
+          height = dplug->cdata->height;
 
           weed_layer_set_size(layer, width, height);
 

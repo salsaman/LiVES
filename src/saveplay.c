@@ -331,13 +331,8 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
         cfile->img_type = IMG_TYPE_BEST; // override the pref
         cfile->clip_type = CLIP_TYPE_FILE;
 
-        if (cdata->frame_width > 0) {
-          cfile->hsize = cdata->frame_width;
-          cfile->vsize = cdata->frame_height;
-        } else {
-          cfile->hsize = cdata->width;
-          cfile->vsize = cdata->height;
-        }
+        cfile->hsize = cdata->width;
+        cfile->vsize = cdata->height;
 
         what = (_("creating the frame index for the clip"));
 

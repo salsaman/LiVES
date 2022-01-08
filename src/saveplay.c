@@ -493,7 +493,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                 d_print(_("Auto trimming %.4f seconds of audio at end..."),
                         cfile->laudio_time - cfile->video_time);
                 cfile->undo1_dbl = cfile->video_time;
-                cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
+                cfile->undo2_dbl = cfile->video_time + cfile->laudio_time - cfile->video_time;
                 cfile->opening_audio = TRUE;
                 if (on_del_audio_activate(NULL, NULL)) d_print_done();
                 else d_print("\n");
@@ -3662,6 +3662,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
       cfile->arps = cfile->arate = atoi(array[9]);
       cfile->achans = atoi(array[10]);
+
       cfile->asampsize = atoi(array[11]);
       cfile->signed_endian = get_signed_endian(atoi(array[12]), atoi(array[13]));
       cfile->afilesize = strtol(array[14], NULL, 10);
@@ -4178,6 +4179,54 @@ ulong restore_file(const char *file_name) {
     switch_to_file((mainw->current_file = old_file), new_file);
     set_main_title(cfile->file_name, 0);
   }
+
+#if 1
+
+  com = lives_strdup_printf("%s restore_headers %s %s", prefs->backend, cfile->handle,
+                            (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
+
+  lives_free(tmp);
+  lives_system(com, FALSE);
+  lives_free(com);
+
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
+    close_current_file(old_file);
+    return 0;
+  }
+
+  cfile->restoring = TRUE;
+  not_cancelled = do_progress_dialog(TRUE, TRUE, _("Restoring"));
+  cfile->restoring = FALSE;
+
+  if (mainw->error || !not_cancelled) {
+    if (mainw->error && mainw->cancelled != CANCEL_ERROR) {
+      do_error_dialog(mainw->msg);
+    }
+    close_current_file(old_file);
+    return 0;
+  }
+
+  // call function to return rest of file details
+  // fsize, afilesize and frames
+  clipdir = get_clip_dir(mainw->current_file);
+  is_OK = read_headers(mainw->current_file, clipdir, file_name);
+  lives_free(clipdir);
+
+  if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
+
+  if (!is_OK) {
+    mesg = lives_strdup_printf(_("\n\nThe file %s is corrupt.\nLiVES was unable to restore it.\n"),
+                               file_name);
+    do_error_dialog(mesg);
+    lives_free(mesg);
+
+    d_print_failed();
+    close_current_file(old_file);
+    return 0;
+  }
+
+#endif
 
   com = lives_strdup_printf("%s restore %s %s", prefs->backend, cfile->handle,
                             (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));

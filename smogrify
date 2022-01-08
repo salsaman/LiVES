@@ -2151,6 +2151,13 @@ if (1) {
 		}
 	    }
 
+	    if ($achans > 2) {
+		if ($VERBOSE > 1) {
+		    print STDERR "$achans audio chans not yet supported, will downmix to 2\n";
+		}
+		$achans = 2;
+	    }
+
 	    # if the last frame has zero size, delete it
 	    if ($count > 0) {
 		$name = &mkname($count);

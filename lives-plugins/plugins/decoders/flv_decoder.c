@@ -646,7 +646,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   boolean got_picture = FALSE, got_avcextradata = FALSE;
 
-  //  #define DEBUG
+#define DEBUG
 #ifdef DEBUG
   fprintf(stderr, "\n");
 #endif
@@ -1237,7 +1237,13 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   // so we fall back on the values we obtained ourselves
 
   if (cdata->width == 0) cdata->width = ctx->width - cdata->offs_x * 2;
+  else {
+    cdata->width -= cdata->offs_x * 2;
+  }
   if (cdata->height == 0) cdata->height = ctx->height - cdata->offs_y * 2;
+  else {
+    cdata->height -= cdata->offs_y * 2;
+  }
 
   if (cdata->width * cdata->height == 0) {
     fprintf(stderr, "flv_decoder: invalid width and height (%d X %d)\n", cdata->width, cdata->height);
@@ -1332,6 +1338,7 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
   } else cdata = data;
 
   cdata->priv = calloc(1, sizeof(lives_flv_priv_t));
+  cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_AUDIO_TRIM_END;
 
   return cdata;
 }

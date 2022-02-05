@@ -970,6 +970,7 @@ static boolean pre_init(void) {
 
   // recursive locks
   pthread_mutex_init(&mainw->abuf_mutex, &mattr);
+  pthread_mutex_init(&mainw->fgthread_mutex, &mattr);
   pthread_mutex_init(&mainw->instance_ref_mutex, &mattr);
 
   // non-recursive
@@ -987,6 +988,7 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->trcount_mutex, NULL);
   pthread_mutex_init(&mainw->fx_mutex, NULL);
   pthread_mutex_init(&mainw->alock_mutex, NULL);
+  pthread_mutex_init(&mainw->tlthread_mutex, NULL);
 
   // conds
   pthread_cond_init(&mainw->avseek_cond, NULL);
@@ -3879,6 +3881,7 @@ boolean render_choice_idle(livespointer data) {
   boolean is_recovery = LIVES_POINTER_TO_INT(data);
   if (norecurse) return FALSE;
   if (mainw->noswitch) return TRUE;
+  if (mainw->pre_src_file >= 0) return TRUE;
   norecurse = TRUE;
   if (!is_recovery || mt_load_recovery_layout(NULL)) {
     if (mainw->event_list) {
@@ -3921,7 +3924,7 @@ boolean lazy_startup_checks(void *data) {
 
   if (!tlshown) {
     //g_print("val is $d\n", check_snap("youtube-dl"));
-    if (!mainw->multitrack) redraw_timeline(mainw->current_file);
+    if (!mainw->multitrack) redraw_timeline_bg(mainw->current_file);
     tlshown = TRUE;
     return TRUE;
   }
@@ -8155,6 +8158,9 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           /* g_print("GF %d\n", frame); */
           /* int64_t timex = lives_get_current_ticks(); */
           /* double est_time = (*dplug->dpsys->estimate_delay)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame)); */
+
+          g_print("NOW %d\\n", get_indexed_frame(clip, frame));
+
           if (!(*dplug->dpsys->get_frame)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame),
                                           rowstrides, sfile->vsize, pixel_data)) {
 
@@ -8952,6 +8958,7 @@ void switch_to_file(int old_file, int new_file) {
     return;
   }
 
+  pthread_mutex_lock(&mainw->tlthread_mutex);
   if (mainw->drawtl_thread) {
     if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
       lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
@@ -8959,6 +8966,7 @@ void switch_to_file(int old_file, int new_file) {
     lives_proc_thread_join(mainw->drawtl_thread);
     mainw->drawtl_thread = NULL;
   }
+  pthread_mutex_unlock(&mainw->tlthread_mutex);
 
   mainw->current_file = new_file;
 
@@ -9080,10 +9088,7 @@ void switch_to_file(int old_file, int new_file) {
     open_file(cfile->file_name);
   } else {
     showclipimgs();
-
-    // redraw_tl can delay, so force upd.
-    lives_widget_context_update();
-    redraw_timeline_bg(mainw->current_file);
+    //lives_widget_context_update();
     lives_ce_update_timeline(0, cfile->pointer_time);
     mainw->ptrtime = cfile->pointer_time;
     lives_widget_queue_draw(mainw->eventbox2);
@@ -9307,8 +9312,6 @@ boolean switch_audio_clip(int new_file, boolean activate) {
           return FALSE;
         }
 
-        mainw->pulsed->in_use = TRUE;
-
         if (CLIP_HAS_AUDIO(new_file)) {
           int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
           int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
@@ -9465,6 +9468,7 @@ void do_quick_switch(int new_file) {
 
   if (sfile) sfile->last_play_sequence = mainw->play_sequence;
 
+  pthread_mutex_lock(&mainw->tlthread_mutex);
   if (mainw->drawtl_thread) {
     if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
       lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
@@ -9472,6 +9476,7 @@ void do_quick_switch(int new_file) {
     lives_proc_thread_join(mainw->drawtl_thread);
     mainw->drawtl_thread = NULL;
   }
+  pthread_mutex_unlock(&mainw->tlthread_mutex);
 
   mainw->current_file = new_file;
 
@@ -9572,6 +9577,7 @@ void do_quick_switch(int new_file) {
   lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
 
   if (!mainw->fs && !mainw->faded) {
+    show_playbar_labels(mainw->current_file);
     redraw_timeline_bg(mainw->current_file);
     set_sel_label(mainw->sel_label);
   }

@@ -3836,7 +3836,7 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
 
   xsutf = lives_markup_escape_text(sutf, -1);
 
-  if (errtext) {
+  if (!errtext) {
     emsg = lives_strdup_printf("Unable to write to file %s", fname);
     msg = lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\n"
                                 "Please check for possible error causes.\n%s"), xsutf, dsmsg);

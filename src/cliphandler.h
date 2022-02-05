@@ -211,6 +211,7 @@ typedef struct _lives_clip_t {
   /// size must be >= frames, MUST be contiguous in memory
   frames_t *frame_index;
   frames_t *frame_index_back; ///< for undo
+  pthread_mutex_t frame_index_mutex;
 
   double img_decode_time;
 
@@ -422,6 +423,7 @@ int find_clip_by_uid(uint64_t uid);
 
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
 
+boolean del_clip_value(int which, lives_clip_details_t what);
 boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
 boolean save_clip_value(int which, lives_clip_details_t, void *val);
 boolean save_clip_values(int which);

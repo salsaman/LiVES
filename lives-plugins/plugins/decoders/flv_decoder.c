@@ -492,13 +492,12 @@ static int amf_get_string(unsigned char *inp, char *buf, size_t size) {
 static index_container_t *idxc_for(lives_clip_data_t *cdata) {
   // check all idxc for string match with URI
   index_container_t *idxc;
-  register int i;
 
   pthread_mutex_lock(&indices_mutex);
 
-  for (i = 0; i < nidxc; i++) {
-    if (indices[i]->clients[0]->current_clip == cdata->current_clip &&
-        !strcmp(indices[i]->clients[0]->URI, cdata->URI)) {
+  for (int i = 0; i < nidxc; i++) {
+    if (!indices[i]->clients || (indices[i]->clients[0]->current_clip == cdata->current_clip &&
+                                 !strcmp(indices[i]->clients[0]->URI, cdata->URI))) {
       idxc = indices[i];
       // append cdata to clients
       idxc->clients = (lives_clip_data_t **)realloc(idxc->clients, (idxc->nclients + 1) * sizeof(lives_clip_data_t *));
@@ -548,6 +547,7 @@ static void idxc_release(lives_clip_data_t *cdata) {
       index_free(priv->idxc->idxth);
     if (idxc->idxhh != NULL) index_free(idxc->idxhh);
     free(idxc->clients);
+    idxc->clients = NULL;
     for (i = 0; i < nidxc; i++) {
       if (indices[i] == idxc) {
         nidxc--;
@@ -646,7 +646,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   boolean got_picture = FALSE, got_avcextradata = FALSE;
 
-  //#define DEBUG
+#define DEBUG
 #ifdef DEBUG
   fprintf(stderr, "\n");
 #endif

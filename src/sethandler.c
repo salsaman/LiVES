@@ -977,14 +977,14 @@ boolean reload_set(const char *set_name) {
       }
 
       if (!mainw->multitrack) {
+        if (clipcount != start_clip && CURRENT_CLIP_IS_VALID) {
+          showclipimgs();
+        }
         if (mainw->is_ready) {
-          if (clipcount != start_clip && CURRENT_CLIP_IS_VALID) {
-            showclipimgs();
-          }
           // force a redraw
-          update_play_times();
-          redraw_timeline(mainw->current_file);
-          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+          get_play_times();
+          redraw_timeline_bg(mainw->current_file);
+          //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
         }
       } else {
         mainw->current_file = mainw->multitrack->render_file;

@@ -148,16 +148,37 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   if (!CURRENT_CLIP_IS_VALID) return FALSE;
 
-  if (rfx->num_in_channels == 0 && !is_preview) current_file = mainw->pre_src_file;
-
-  if (is_preview) {
-    // generators start at 1, even though they have no initial frames
-    cfile->progress_start = cfile->undo_start = cfile->start;
-    cfile->progress_end = cfile->undo_end = cfile->end;
-  } else if (rfx->num_in_channels != 2) {
-    cfile->progress_start = cfile->undo_start = cfile->start;
-    cfile->progress_end = cfile->undo_end = cfile->end;
+  if (is_preview || rfx->num_in_channels != 2) {
+    if (rfx->props & RFX_PROPS_MAY_RESIZE) {
+      cfile->progress_start = cfile->undo_start = 1;
+      cfile->progress_end = cfile->undo_end = cfile->frames;
+    } else {
+      // NB. generators start at 1, even though they have no initial frames
+      cfile->progress_start = cfile->undo_start = cfile->start;
+      cfile->progress_end = cfile->undo_end = cfile->end;
+    }
   }
+
+  if (rfx->num_in_channels > 0) {
+    if (cfile->clip_type == CLIP_TYPE_FILE && rfx->status != RFX_STATUS_WEED) {
+      // start decoding frames for the rendered effect plugins to start processing
+      if (!cfile->pumper) {
+        if (rfx->props & RFX_PROPS_MAY_RESIZE) {
+          cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_WAIT_START,
+                          (lives_funcptr_t)virtual_to_images,
+                          -1, "iiibV", mainw->current_file,
+                          1, cfile->frames, FALSE, NULL);
+        } else {
+          cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_WAIT_START,
+                          (lives_funcptr_t)virtual_to_images,
+                          -1, "iiibV", mainw->current_file,
+                          cfile->undo_start, cfile->undo_end, FALSE, NULL);
+        }
+      }
+    }
+  }
+
+  else if (!is_preview) current_file = mainw->pre_src_file;
 
   if (!mainw->internal_messaging && !mainw->keep_pre) {
     char *pdefault;
@@ -217,21 +238,6 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   }
   mainw->effects_paused = FALSE;
 
-  if (cfile->clip_type == CLIP_TYPE_FILE && rfx->status != RFX_STATUS_WEED) {
-    // start decoding frames for the rendered effect plugins to start processing
-    if (!cfile->pumper) {
-      if (rfx->props & RFX_PROPS_MAY_RESIZE) {
-        cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)virtual_to_images,
-                        -1, "iiibV", mainw->current_file,
-                        1, cfile->frames, FALSE, NULL);
-      } else {
-        cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)virtual_to_images,
-                        -1, "iiibV", mainw->current_file,
-                        cfile->undo_start, cfile->undo_end, FALSE, NULL);
-      }
-    }
-  }
-
   if (is_preview) {
     cfile->undo_start = oundo_start;
     cfile->undo_end = oundo_end;
@@ -267,8 +273,6 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   ldfile = mainw->last_dprint_file;
 
   d_print(text);
-  lives_free(text);
-  lives_free(tmp);
   mainw->last_dprint_file = ldfile;
 
   cfile->redoable = cfile->undoable = FALSE;
@@ -286,23 +290,8 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   // 'play' as fast as we possibly can
   cfile->pb_fps = 1000000.;
-
-  if (rfx->num_in_channels == 2) {
-    tmp = (_("%s clipboard with selection"));
-    lives_snprintf(effectstring, 128, tmp, _(rfx->action_desc));
-  } else if (rfx->num_in_channels == 0) {
-    if (mainw->gen_to_clipboard) {
-      tmp = (_("%s to clipboard"));
-      lives_snprintf(effectstring, 128, tmp, _(rfx->action_desc));
-    } else {
-      tmp = (_("%s to new clip"));
-      lives_snprintf(effectstring, 128, tmp, _(rfx->action_desc));
-    }
-  } else {
-    tmp = (_("%s frames %d to %d"));
-    lives_snprintf(effectstring, 128, tmp, _(rfx->action_desc), cfile->undo_start, cfile->undo_end);
-  }
-  lives_free(tmp);
+  lives_snprintf(effectstring, 128, "%s", text);
+  lives_free(text);
 
   if (rfx->props & RFX_PROPS_MAY_RESIZE || !rfx->num_in_channels) {
     if (rfx->status == RFX_STATUS_WEED) {
@@ -605,23 +594,14 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
 lives_render_error_t realfx_progress(boolean reset) {
   static lives_render_error_t write_error;
-
   LiVESError *error = NULL;
-
   char oname[PATH_MAX];
-
   LiVESPixbuf *pixbuf;
-
   ticks_t frameticks;
-
   weed_layer_t *layer;
-
   char *com, *tmp;
-
   short pbq = prefs->pb_quality;
-
   static int i;
-
   int layer_palette;
   LiVESResponseType retval;
 
@@ -632,8 +612,10 @@ lives_render_error_t realfx_progress(boolean reset) {
     clear_mainw_msg();
 
     if (cfile->clip_type == CLIP_TYPE_FILE) {
+      pthread_mutex_lock(&cfile->frame_index_mutex);
       if (cfile->frame_index_back) lives_free(cfile->frame_index_back);
       cfile->frame_index_back = frame_index_copy(cfile->frame_index, cfile->frames, 0);
+      pthread_mutex_unlock(&cfile->frame_index_mutex);
     }
     write_error = LIVES_RENDER_ERROR_NONE;
     return LIVES_RENDER_READY;
@@ -730,7 +712,9 @@ lives_render_error_t realfx_progress(boolean reset) {
         weed_layer_free(layer);
 
       if (cfile->clip_type == CLIP_TYPE_FILE) {
+        pthread_mutex_lock(&cfile->frame_index_mutex);
         cfile->frame_index[i - 1] = -1;
+        pthread_mutex_unlock(&cfile->frame_index_mutex);
       }
     } else weed_plant_free(layer);
   }

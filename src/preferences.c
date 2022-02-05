@@ -1850,6 +1850,10 @@ boolean pref_factory_bitmapped(const char *prefidx, uint32_t bitfield, boolean n
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->alock_reset),
                                        (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESET) ? TRUE : FALSE);
       }
+      if (bitfield == AUDIO_OPTS_AUTO_UNLOCK) {
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->auto_unlock),
+                                       (prefs->audio_opts & AUDIO_OPTS_AUTO_UNLOCK) ? TRUE : FALSE);
+      }
     }
     if (bitfield == AUDIO_OPTS_IS_LOCKED) {
       lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->lock_audio_checkbutton),
@@ -2193,12 +2197,14 @@ boolean apply_prefs(boolean skip_warn) {
   boolean freeze_ping = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->afreeze_ping));
   boolean freeze_resync = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->afreeze_sync));
   boolean alock_reset = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->alock_reset));
-  uint32_t audio_opts = (AUDIO_OPTS_FOLLOW_FPS * audio_follow_fps
-                         + AUDIO_OPTS_FOLLOW_CLIPS * audio_follow_clips
-                         + AUDIO_OPTS_NO_RESYNC_FPS * !(resync_fps) + AUDIO_OPTS_NO_RESYNC_VPOS * !(resync_vpos)
-                         + AUDIO_OPTS_RESYNC_ADIR * resync_adir + AUDIO_OPTS_RESYNC_ACLIP * resync_aclip
-                         + AUDIO_OPTS_LOCKED_FREEZE * freeze_lock + AUDIO_OPTS_LOCKED_PING_PONG * freeze_ping
-                         + AUDIO_OPTS_UNLOCK_RESYNC * freeze_resync) + AUDIO_OPTS_LOCKED_RESET * alock_reset;
+  boolean auto_unlock = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->auto_unlock));
+  uint32_t audio_opts = AUDIO_OPTS_FOLLOW_FPS * audio_follow_fps
+                        + AUDIO_OPTS_FOLLOW_CLIPS * audio_follow_clips
+                        + AUDIO_OPTS_NO_RESYNC_FPS * !resync_fps + AUDIO_OPTS_NO_RESYNC_VPOS * !resync_vpos
+                        + AUDIO_OPTS_RESYNC_ADIR * resync_adir + AUDIO_OPTS_RESYNC_ACLIP * resync_aclip
+                        + AUDIO_OPTS_LOCKED_FREEZE * freeze_lock + AUDIO_OPTS_LOCKED_PING_PONG * freeze_ping
+                        + AUDIO_OPTS_UNLOCK_RESYNC * freeze_resync + AUDIO_OPTS_LOCKED_RESET * alock_reset
+                        + AUDIO_OPTS_AUTO_UNLOCK * auto_unlock;
 #endif
 
 #ifdef ENABLE_OSC
@@ -5155,7 +5161,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  prefsw->afreeze_lock = lives_standard_check_button_new(_("Freeze button affects even clip-locked audio"),
+  prefsw->afreeze_lock = lives_standard_check_button_new(_("Freeze button affects locked audio"),
                          (prefs->audio_opts & AUDIO_OPTS_LOCKED_FREEZE) ? TRUE : FALSE,
                          LIVES_BOX(hbox),
                          H_("Determines whether activating the freeze button affects audio "
@@ -5174,12 +5180,13 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_afollow), prefsw->afreeze_lock, FALSE);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  prefsw->afreeze_ping = lives_standard_check_button_new(_("Ping pong mode affects even clip-locked audio"),
-                         (prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG) ? TRUE : FALSE,
-                         LIVES_BOX(hbox),
-                         H_("Determines whether ping-pong mode affects audio "
-                            "when the audio is locked to a specific clip.\n"
-                            "If unset then audio direction will remain fixed when looping"));
+  prefsw->auto_unlock = lives_standard_check_button_new(_("Unlock audio after playback ends"),
+                        (prefs->audio_opts & AUDIO_OPTS_AUTO_UNLOCK) ? TRUE : FALSE,
+                        LIVES_BOX(hbox),
+                        H_("Setting this option will cause audio lock to always "
+                           "disengage whenever playback finishes.\n"
+                           "If unset then audio lock will remain active until "
+                           "explicitly disabled."));
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->alock_reset = lives_standard_check_button_new(_("Reset playback rate for locked audio when fps is reset"),
@@ -5190,16 +5197,24 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                            "even when locked to a different clip."));
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  prefsw->afreeze_ping = lives_standard_check_button_new(_("Ping pong mode affects locked audio"),
+                         (prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG) ? TRUE : FALSE,
+                         LIVES_BOX(hbox),
+                         H_("Determines whether ping-pong mode affects audio "
+                            "when the audio is locked to a specific clip.\n"
+                            "If unset then audio direction will remain fixed when looping"));
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->afreeze_sync = lives_standard_check_button_new(_("Resync to current video position when unlocking audio"),
+                         (prefs->audio_opts & AUDIO_OPTS_UNLOCK_RESYNC) ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   SET_PREF_WIDGET(POGO_MODE,
                   lives_standard_check_button_new
                   (_("'POGO' mode audio locking"),
                    prefs->pogo_mode, LIVES_BOX(hbox),
                    H_("In 'POGO' mode, locked audio will be mixed with audio "
                       "from the current video clip, rather than completely overrding it")));
-
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->afreeze_sync = lives_standard_check_button_new(_("Resync to current video position when unlocking audio"),
-                         (prefs->audio_opts & AUDIO_OPTS_UNLOCK_RESYNC) ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
 
   add_hsep_to_box(LIVES_BOX(vbox));
   add_fill_to_box(LIVES_BOX(vbox));
@@ -7345,6 +7360,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(afreeze_ping, TOGGLED);
   ACTIVE(afreeze_sync, TOGGLED);
   ACTIVE(alock_reset, TOGGLED);
+  ACTIVE(auto_unlock, TOGGLED);
 
   ACTIVE(rdesk_audio, TOGGLED);
 

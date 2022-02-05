@@ -19,34 +19,51 @@
 /** count virtual frames between start and end (inclusive) */
 frames_t count_virtual_frames(frames_t *findex, frames_t start, frames_t end) {
   frames_t count = 0;
-  for (register int i = start - 1; i < end; i++) if (findex[i] != -1) count++;
+  for (int i = start - 1; i < end; i++) if (findex[i] != -1) count++;
   return count;
 }
 
 
 boolean create_frame_index(int fileno, boolean init, frames_t start_offset, frames_t nframes) {
-  lives_clip_t *sfile = mainw->files[fileno];
+  lives_clip_t *sfile;
   size_t idxsize = (ALIGN_CEIL(nframes * sizeof(frames_t), DEF_ALIGN)) / DEF_ALIGN;
-  if (!IS_VALID_CLIP(fileno) || sfile->frame_index) return FALSE;
+
+  if (!IS_PHYSICAL_CLIP(fileno)) return FALSE;
+
+  sfile = mainw->files[fileno];
+  pthread_mutex_lock(&sfile->frame_index_mutex);
+  if (sfile->frame_index) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return FALSE;
+  }
+
   sfile->frame_index = (frames_t *)lives_calloc(idxsize, DEF_ALIGN);
-  if (!sfile->frame_index) return FALSE;
+  if (!sfile->frame_index) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return FALSE;
+  }
   if (init) for (int i = 0; i < nframes; i++) sfile->frame_index[i] = i + start_offset;
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
   return TRUE;
 }
 
 
 static frames_t extend_frame_index(int fileno, frames_t start, frames_t end, lives_img_type_t img_type) {
-  lives_clip_t *sfile = mainw->files[fileno];
+  lives_clip_t *sfile;
   size_t idxsize = (ALIGN_CEIL(end * sizeof(frames_t), DEF_ALIGN)) / DEF_ALIGN;
   frames_t i;
-  if (!IS_VALID_CLIP(fileno) || start > end) return FALSE;
+
+  if (!IS_PHYSICAL_CLIP(fileno) || start > end) return 0;
+  sfile = mainw->files[fileno];
+  pthread_mutex_lock(&sfile->frame_index_mutex);
   if (sfile->frame_index_back) lives_free(sfile->frame_index_back);
   sfile->frame_index_back = sfile->frame_index;
   sfile->frame_index = (frames_t *)lives_calloc(idxsize, DEF_ALIGN);
   if (!sfile->frame_index) {
     sfile->frame_index = sfile->frame_index_back;
     sfile->frame_index_back = NULL;
-    return FALSE;
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return 0;
   }
   for (i = start; i < end; i++) {
     char *fname = make_image_file_name(sfile, i + 1, get_image_ext_for_type(img_type));
@@ -59,6 +76,7 @@ static frames_t extend_frame_index(int fileno, frames_t start, frames_t end, liv
     }
     lives_free(fname);
   }
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
   return --i;
 }
 
@@ -68,11 +86,16 @@ boolean save_frame_index(int fileno) {
   int fd, i;
   int retval;
   char *fname, *fname_new, *clipdir;
-  lives_clip_t *sfile = mainw->files[fileno];
+  lives_clip_t *sfile;
 
-  if (fileno == 0) return TRUE;
+  if (!IS_PHYSICAL_CLIP(fileno)) return FALSE;
+  sfile = mainw->files[fileno];
 
-  if (!sfile || !sfile->frame_index) return FALSE;
+  if (!mainw->is_exiting) pthread_mutex_lock(&sfile->frame_index_mutex);
+  if (!sfile->frame_index) {
+    if (!mainw->is_exiting) pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return FALSE;
+  }
 
   clipdir = get_clip_dir(fileno);
   fname = lives_build_filename(clipdir, FRAME_INDEX_FNAME "." LIVES_FILE_EXT_BACK, NULL);
@@ -83,6 +106,7 @@ boolean save_frame_index(int fileno) {
     retval = 0;
     fd = lives_create_buffered(fname, DEF_FILE_PERMS);
     if (fd < 0) {
+      if (mainw->is_exiting) return FALSE;
       retval = do_write_failed_error_s_with_retry(fname, lives_strerror(errno));
     } else {
       for (i = 0; i < sfile->frames; i++) {
@@ -112,6 +136,8 @@ boolean save_frame_index(int fileno) {
     // *INDENT-ON*
   } while (retval == LIVES_RESPONSE_RETRY);
 
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
+
   lives_free(fname);
   lives_free(fname_new);
 
@@ -125,7 +151,7 @@ boolean save_frame_index(int fileno) {
 // or maxframe pointed to in clip
 
 frames_t load_frame_index(int fileno) {
-  lives_clip_t *sfile = mainw->files[fileno];
+  lives_clip_t *sfile;
   off_t filesize;
   char *fname, *fname_back;
   char *clipdir;
@@ -133,15 +159,21 @@ frames_t load_frame_index(int fileno) {
   int fd, retval;
   frames_t maxframe = -1;
 
-  if (!sfile || sfile->frame_index) return -1;
+  if (!IS_PHYSICAL_CLIP(fileno)) return -1;
 
-  lives_freep((void **)&sfile->frame_index);
+  sfile = mainw->files[fileno];
+  pthread_mutex_lock(&sfile->frame_index_mutex);
+  if (sfile->frame_index) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return -1;
+  }
 
   clipdir = get_clip_dir(fileno);
   fname = lives_build_filename(clipdir, FRAME_INDEX_FNAME, NULL);
   filesize = sget_file_size(fname);
 
   if (filesize <= 0) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
     if (clipdir) lives_free(clipdir);
     lives_free(fname);
     return 0;
@@ -174,6 +206,7 @@ frames_t load_frame_index(int fileno) {
         }
       }
       if (retval == LIVES_RESPONSE_CANCEL) {
+        pthread_mutex_unlock(&sfile->frame_index_mutex);
         lives_free(fname);
         lives_free(fname_back);
         return -1;
@@ -244,6 +277,7 @@ frames_t load_frame_index(int fileno) {
 	}}}} while (retval == LIVES_RESPONSE_RETRY);
   // *INDENT-ON*
 
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
   lives_free(fname);
   lives_free(fname_back);
 
@@ -258,14 +292,16 @@ void del_frame_index(int fileno) {
   lives_clip_t *sfile;
   char *idxfile;
 
-  if (!IS_VALID_CLIP(fileno)) return;
+  if (!IS_PHYSICAL_CLIP(fileno)) return;
   sfile = mainw->files[fileno];
 
   // cannot call check_if_non_virtual() else we end up recursing
 
+  pthread_mutex_lock(&sfile->frame_index_mutex);
   if (sfile->frame_index) {
     for (frames_t i = 1; i <= sfile->frames; i++) {
       if (sfile->frame_index[i - 1] != -1) {
+        pthread_mutex_unlock(&sfile->frame_index_mutex);
         LIVES_ERROR("deleting frame_index with virtual frames in it !");
         return;
       }
@@ -281,15 +317,27 @@ void del_frame_index(int fileno) {
   }
 
   lives_freep((void **)&sfile->frame_index);
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
 }
 
 
 static frames_t scan_frames(lives_clip_t *sfile, frames_t vframes, frames_t last_real_frame) {
   frames_t i;
+  if (!sfile) return 0;
+
+  pthread_mutex_lock(&sfile->frame_index_mutex);
+  if (!sfile->frame_index) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return last_real_frame;
+  }
   for (i = 0; i < sfile->frames; i++) {
     // assume all real frames up to last_real_frame are there
-    if ((sfile->frame_index[i] == -1 && i >= last_real_frame) || (sfile->frame_index[i] > vframes)) return i;
+    if ((sfile->frame_index[i] == -1 && i >= last_real_frame) || (sfile->frame_index[i] > vframes)) {
+      pthread_mutex_unlock(&sfile->frame_index_mutex);
+      return i;
+    }
   }
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
   return i;
 }
 
@@ -610,7 +658,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
         if (sfile->clip_type == CLIP_TYPE_DISK) fframe = 1;
         else {
           for (i = 1; i < last_real_frame; i++) {
-            if (sfile->frame_index[i - 1] == -1) {
+            if (!sfile->frame_index || sfile->frame_index[i - 1] == -1) {
               fname = make_image_file_name(sfile, i, get_image_ext_for_type(empirical_img_type));
               if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
                 fframe = i;
@@ -775,13 +823,23 @@ frames_t first_virtual_frame(int fileno, frames_t start, frames_t end) {
   // check all franes in frame_index between start and end inclusive
   // if we find a virtual frame, we stop checking and return the frame number
   // if all are non - virtual we return 0
-  lives_clip_t *sfile = mainw->files[fileno];
+  lives_clip_t *sfile;
+  if (!IS_PHYSICAL_CLIP(fileno)) return 0;
 
-  if (!sfile->frame_index) return  0;
-  for (frames_t i = start; i <= end; i++) {
-    if (sfile->frame_index[i - 1] != -1) return i;
+  sfile = mainw->files[fileno];
+
+  pthread_mutex_lock(&sfile->frame_index_mutex);
+  if (!sfile->frame_index) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return  0;
   }
-
+  for (frames_t i = start; i <= end; i++) {
+    if (sfile->frame_index[i - 1] != -1) {
+      pthread_mutex_unlock(&sfile->frame_index_mutex);
+      return i;
+    }
+  }
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
   return 0;
 }
 
@@ -794,24 +852,38 @@ boolean check_if_non_virtual(int fileno, frames_t start, frames_t end) {
 
   // also may change the clip_type and the interlace
 
-  lives_clip_t *sfile = mainw->files[fileno];
+  lives_clip_t *sfile;
   frames_t i;
 
-  if (sfile->clip_type != CLIP_TYPE_FILE) return TRUE;
+  if (!IS_PHYSICAL_CLIP(fileno)) return TRUE;
+  sfile = mainw->files[fileno];
 
-  if (sfile->frame_index) {
-    for (i = start; i <= end; i++) {
-      if (sfile->frame_index[i - 1] != -1) return FALSE;
+  pthread_mutex_lock(&sfile->frame_index_mutex);
+  if (!sfile->frame_index) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return TRUE;
+  }
+  for (i = start; i <= end; i++) {
+    if (sfile->frame_index[i - 1] != -1) {
+      pthread_mutex_unlock(&sfile->frame_index_mutex);
+      return FALSE;
     }
   }
 
-  if (start > 1 || end < sfile->frames) return TRUE;
-
+  if (start > 1 || end < sfile->frames) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return TRUE;
+  }
   // no virtual frames in entire clip - change to CLIP_TYPE_DISK
 
-  sfile->clip_type = CLIP_TYPE_DISK;
   del_frame_index(fileno);
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
+
+  sfile->clip_type = CLIP_TYPE_DISK;
   close_clip_decoder(fileno);
+
+  del_clip_value(fileno, CLIP_DETAILS_DECODER_NAME);
+  del_clip_value(fileno, CLIP_DETAILS_DECODER_UID);
 
   if (sfile->interlace != LIVES_INTERLACE_NONE) {
     sfile->interlace = LIVES_INTERLACE_NONE; // all frames should have been deinterlaced
@@ -828,12 +900,15 @@ boolean check_if_non_virtual(int fileno, frames_t start, frames_t end) {
 #define DS_SPACE_CHECK_FRAMES 100
 
 static boolean save_decoded(int fileno, frames_t i, LiVESPixbuf * pixbuf, boolean silent, int progress) {
-  lives_clip_t *sfile = mainw->files[fileno];
+  LiVESError *error = NULL;
+  lives_clip_t *sfile;
+  char *oname;
   boolean retb;
   int retval;
-  LiVESError *error = NULL;
-  char *oname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
 
+  if (!IS_PHYSICAL_CLIP(fileno)) return FALSE;
+  sfile = mainw->files[fileno];
+  oname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
   do {
     retval = LIVES_RESPONSE_NONE;
     retb = lives_pixbuf_save(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, sfile->hsize, sfile->vsize, &error);
@@ -873,7 +948,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
 
   // return index of last frame decoded, (negaive value on error)
 
-  lives_clip_t *sfile = mainw->files[sfileno];
+  lives_clip_t *sfile;
   LiVESPixbuf *pixbuf = NULL;
   weed_layer_t *layer = NULL;
   lives_proc_thread_t tinfo = THREADVAR(tinfo);
@@ -885,6 +960,27 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
   boolean intimg = FALSE;
   short pbq = prefs->pb_quality;
 
+  if (!IS_PHYSICAL_CLIP(sfileno)) return -1;
+  sfile = mainw->files[sfileno];
+
+  if (sframe > eframe) {
+    frames_t tmp = sframe;
+    eframe = sframe;
+    sframe = tmp;
+  }
+
+  if (sframe > sfile->frames) return sfile->frames;
+  if (eframe < 1) return 0;
+
+  if (eframe > sfile->frames) eframe = sfile->frames;
+  if (sframe < 1) sframe = 1;
+
+  pthread_mutex_lock(&sfile->frame_index_mutex);
+  if (!sfile->frame_index) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return eframe;
+  }
+
   if (tinfo) lives_proc_thread_set_cancellable(tinfo);
 
   prefs->pb_quality = PB_QUALITY_BEST;
@@ -894,10 +990,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
   if (sfile->img_type == IMG_TYPE_PNG) intimg = TRUE;
 #endif
 
-  if (sframe < 1) sframe = 1;
-
   for (i = sframe; i <= eframe; i++) {
-    if (i > sfile->frames) break;
     if (lives_proc_thread_get_cancelled(tinfo)) break;
 
     retval = i;
@@ -962,6 +1055,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
             saveargs->error = NULL;
           }
           if (retval != LIVES_RESPONSE_RETRY) {
+            pthread_mutex_unlock(&sfile->frame_index_mutex);
             if (intimg) {
               if (saveargs->layer) weed_layer_free(saveargs->layer);
             } else {
@@ -1021,6 +1115,8 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
       }
     }
   }
+
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
 
   if (saver_thread) {
     lives_thread_join(*saver_thread, NULL);
@@ -1115,42 +1211,47 @@ static void restore_gamma_cb(int gamma_type) {
 
 frames_t realize_all_frames(int clipno, const char *msg, boolean enough, frames_t start, frames_t end) {
   // if enough is set, we show Enough button instead of Cancel.
+  lives_clip_t *sfile;
   frames_t ret;
   int current_file = mainw->current_file;
   mainw->cancelled = CANCEL_NONE;
-  if (!IS_VALID_CLIP(clipno)) return 0;
+
+  if (!IS_PHYSICAL_CLIP(clipno)) return -1;
+
+  sfile = mainw->files[clipno];
 
   // in future we may have several versions of the clipboard each with a different gamma type
   // (sRGB, bt.701, etc)
   // here we would restore the version of the clipboard which has gamma type matching the target (current) clip
   // this will avoid quality loss due to constantly converting gamma in the clippboard
   // - This needs further testing before we can allow clips with "native" bt.701 gamma, etc.
-  if (clipno == CLIPBOARD_FILE && prefs->btgamma && CURRENT_CLIP_HAS_VIDEO && cfile->gamma_type
+  if (clipno == CLIPBOARD_FILE && prefs->btgamma && CLIP_HAS_VIDEO(clipno) && sfile->gamma_type
       != clipboard->gamma_type) {
-    restore_gamma_cb(cfile->gamma_type);
+    restore_gamma_cb(sfile->gamma_type);
   }
 
-  if (end <= 0) end = mainw->files[clipno]->frames + end;
+  if (end <= 0) end = sfile->frames + end;
   if (end < start) return 0;
 
+  pthread_mutex_lock(&sfile->frame_index_mutex);
   if (!check_if_non_virtual(clipno, start, end)) {
     mainw->current_file = clipno;
-    cfile->progress_start = start;
-    cfile->progress_end = count_virtual_frames(cfile->frame_index, start, end);
+    sfile->progress_start = start;
+    sfile->progress_end = count_virtual_frames(sfile->frame_index, start, end);
     if (enough) mainw->cancel_type = CANCEL_SOFT; // force "Enough" button to be shown
     do_threaded_dialog((char *)msg, TRUE);
     lives_widget_show_all(mainw->proc_ptr->processing);
     mainw->cancel_type = CANCEL_KILL;
-    ret = virtual_to_images(mainw->current_file, start, end, TRUE, NULL);
+    ret = virtual_to_images(clipno, start, end, TRUE, NULL);
     end_threaded_dialog();
     mainw->current_file = current_file;
 
     if (mainw->cancelled != CANCEL_NONE) {
       mainw->cancelled = CANCEL_USER;
-      return ret;
-    }
-    if (ret <= 0) return ret;
+      end = ret;
+    } else if (ret <= 0) end = ret;
   }
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
   return end;
 }
 
@@ -1163,20 +1264,27 @@ void insert_images_in_virtual(int sfileno, frames_t where, frames_t frames, fram
 
   // this is for clip type CLIP_TYPE_FILE only
 
-  lives_clip_t *sfile = mainw->files[sfileno];
+  lives_clip_t *sfile;
   LiVESResponseType response;
 
   char *what;
-  frames_t nframes = sfile->frames;
-  frames_t i, j = start - 1;
+  frames_t nframes, i, j = start - 1;
 
-  if (!sfile->frame_index) return;
+  if (!IS_PHYSICAL_CLIP(sfileno)) return;
+  sfile = mainw->files[sfileno];
+
+  pthread_mutex_lock(&sfile->frame_index_mutex);
+  if (!sfile->frame_index) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return;
+  }
 
   what = (_("creating the new frame index for the clip"));
   lives_freep((void **)&sfile->frame_index_back);
 
   sfile->frame_index_back = sfile->frame_index;
   sfile->frame_index = NULL;
+  nframes = sfile->frames;
 
   do {
     response = LIVES_RESPONSE_OK;
@@ -1189,6 +1297,7 @@ void insert_images_in_virtual(int sfileno, frames_t where, frames_t frames, fram
   if (response == LIVES_RESPONSE_CANCEL) {
     sfile->frame_index = sfile->frame_index_back;
     sfile->frame_index_back = NULL;
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
     return;
   }
 
@@ -1205,6 +1314,7 @@ void insert_images_in_virtual(int sfileno, frames_t where, frames_t frames, fram
   sfile->frames += frames;
   save_frame_index(sfileno);
   sfile->frames -= frames;
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
 }
 
 
@@ -1216,21 +1326,29 @@ void delete_frames_from_virtual(int sfileno, frames_t start, frames_t end) {
 
   // this is for clip type CLIP_TYPE_FILE only
 
-  lives_clip_t *sfile = mainw->files[sfileno];
+  lives_clip_t *sfile;
+  char *what;
   LiVESResponseType response;
+  frames_t nframes, frames = end - start + 1;
 
-  char *what = (_("creating the new frame index for the clip"));
-  frames_t nframes = sfile->frames, frames = end - start + 1;
+  if (!IS_PHYSICAL_CLIP(sfileno)) return;
+  sfile = mainw->files[sfileno];
 
+  pthread_mutex_lock(&sfile->frame_index_mutex);
   lives_freep((void **)&sfile->frame_index_back);
 
   sfile->frame_index_back = sfile->frame_index;
   sfile->frame_index = NULL;
 
+  nframes = sfile->frames;
+
   if (nframes - frames == 0) {
     del_frame_index(sfileno);
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
     return;
   }
+
+  what = (_("creating the new frame index for the clip"));
 
   do {
     response = LIVES_RESPONSE_OK;
@@ -1239,10 +1357,13 @@ void delete_frames_from_virtual(int sfileno, frames_t start, frames_t end) {
       response = do_memory_error_dialog(what, (nframes - frames) * sizeof(frames_t));
     }
   } while (response == LIVES_RESPONSE_RETRY);
+
   lives_free(what);
+
   if (response == LIVES_RESPONSE_CANCEL) {
     sfile->frame_index = sfile->frame_index_back;
     sfile->frame_index_back = NULL;
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
     return;
   }
 
@@ -1252,21 +1373,29 @@ void delete_frames_from_virtual(int sfileno, frames_t start, frames_t end) {
   sfile->frames = nframes - frames;
   save_frame_index(sfileno);
   sfile->frames = nframes;
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
 }
 
 
 void reverse_frame_index(int sfileno) {
   // reverse order of (virtual) frames in clip (only used for clipboard)
-  lives_clip_t *sfile = mainw->files[sfileno];
-  int bck;
+  lives_clip_t *sfile;
 
-  if (!sfile || !sfile->frame_index) return;
+  if (!IS_PHYSICAL_CLIP(sfileno)) return;
+
+  sfile = mainw->files[sfileno];
+  pthread_mutex_lock(&sfile->frame_index_mutex);
+  if (!sfile->frame_index) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return;
+  }
 
   for (frames_t i = 0; i < sfile->frames >> 1; i++) {
-    bck = sfile->frame_index[i];
+    int bck = sfile->frame_index[i];
     sfile->frame_index[i] = sfile->frame_index[sfile->frames - 1 - i];
     sfile->frame_index[sfile->frames - 1 - i] = bck;
   }
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
 }
 
 
@@ -1278,10 +1407,13 @@ void restore_frame_index_back(int sfileno) {
 
   // this is for clip type CLIP_TYPE_FILE only
 
-  lives_clip_t *sfile = mainw->files[sfileno];
+  lives_clip_t *sfile;
+  if (!IS_PHYSICAL_CLIP(sfileno)) return;
 
+  sfile = mainw->files[sfileno];
+
+  pthread_mutex_lock(&sfile->frame_index_mutex);
   lives_freep((void **)&sfile->frame_index);
-
   sfile->frame_index = sfile->frame_index_back;
   sfile->frame_index_back = NULL;
 
@@ -1292,6 +1424,7 @@ void restore_frame_index_back(int sfileno) {
     del_frame_index(sfileno);
     sfile->clip_type = CLIP_TYPE_DISK;
   }
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
 }
 
 
@@ -1310,8 +1443,13 @@ void clean_images_from_virtual(lives_clip_t *sfile, frames_t oldsframe, frames_t
 
   char *iname = NULL;
 
-  if (!sfile || !sfile->frame_index) return;
+  if (!sfile) return;
 
+  pthread_mutex_lock(&sfile->frame_index_mutex);
+  if (!sfile->frame_index) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return;
+  }
   for (frames_t i = oldsframe; i <= oldframes; i++) {
     threaded_dialog_spin(0.);
     if ((i <= sfile->frames && sfile->frame_index[i - 1] != -1) || i > sfile->frames) {
@@ -1319,12 +1457,14 @@ void clean_images_from_virtual(lives_clip_t *sfile, frames_t oldsframe, frames_t
       lives_rm(iname);
     }
   }
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
 }
 
 
 frames_t *frame_index_copy(frames_t *findex, frames_t nframes, frames_t offset) {
   // copy first nframes from findex and return them, adding offset to each value
   // no checking is done to make sure nframes is in range
+  // frame_index_mutex should be locked for src and dest
 
   // start at frame offset
   frames_t *findexc = (frames_t *)lives_calloc(nframes, sizeof(frames_t));;
@@ -1341,11 +1481,22 @@ boolean is_virtual_frame(int sfileno, frames_t frame) {
 
   // a CLIP_TYPE_FILE with no virtual frames becomes a CLIP_TYPE_DISK
 
-  lives_clip_t *sfile = mainw->files[sfileno];
-  if (!IS_VALID_CLIP(sfileno)) return FALSE;
-  if (!sfile->frame_index) return FALSE;
+  lives_clip_t *sfile;
+  if (!IS_PHYSICAL_CLIP(sfileno)) return FALSE;
+
+  sfile = mainw->files[sfileno];
   if (frame < 1 || frame > sfile->frames) return FALSE;
-  if (sfile->frame_index[frame - 1] != -1) return TRUE;
+
+  pthread_mutex_lock(&sfile->frame_index_mutex);
+  if (!sfile->frame_index) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return FALSE;
+  }
+  if (sfile->frame_index[frame - 1] != -1) {
+    pthread_mutex_unlock(&sfile->frame_index_mutex);
+    return TRUE;
+  }
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
   return FALSE;
 }
 
@@ -1355,7 +1506,7 @@ void insert_blank_frames(int sfileno, frames_t nframes, frames_t after, int pale
 
   // this is ugly, it should be moved to another file
 
-  lives_clip_t *sfile = mainw->files[sfileno];
+  lives_clip_t *sfile;
   LiVESPixbuf *blankp = NULL;
   LiVESError *error = NULL;
   char oname[PATH_MAX];
@@ -1364,21 +1515,25 @@ void insert_blank_frames(int sfileno, frames_t nframes, frames_t after, int pale
 
   frames_t i;
 
-  if (first_virtual_frame(sfileno, 1, sfile->frames) != 0) {
-    for (i = after + 1; i <= sfile->frames; i++) {
-      if (!sfile->frame_index || sfile->frame_index[i - 1] == -1) {
-        tmp = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
-        lives_snprintf(oname, PATH_MAX, "%s", tmp);
+  if (!IS_PHYSICAL_CLIP(sfileno)) return;
+  sfile = mainw->files[sfileno];
+
+  pthread_mutex_lock(&sfile->frame_index_mutex);
+  for (i = after + 1; i <= sfile->frames; i++) {
+    if (!sfile->frame_index || sfile->frame_index[i - 1] == -1) {
+      tmp = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
+      lives_snprintf(oname, PATH_MAX, "%s", tmp);
+      lives_free(tmp);
+      if (lives_file_test(oname, LIVES_FILE_TEST_EXISTS)) {
+        tmp = make_image_file_name(sfile, i + nframes, get_image_ext_for_type(sfile->img_type));
+        lives_snprintf(nname, PATH_MAX, "%s", tmp);
         lives_free(tmp);
-        if (lives_file_test(oname, LIVES_FILE_TEST_EXISTS)) {
-          tmp = make_image_file_name(sfile, i + nframes, get_image_ext_for_type(sfile->img_type));
-          lives_snprintf(nname, PATH_MAX, "%s", tmp);
-          lives_free(tmp);
-          lives_mv(oname, nname);
-          if (THREADVAR(com_failed)) {
-            return;
-	    // *INDENT-OFF*
-          }}}}}
+        lives_mv(oname, nname);
+        if (THREADVAR(com_failed)) {
+          pthread_mutex_unlock(&sfile->frame_index_mutex);
+          return;
+	  // *INDENT-OFF*
+	}}}}
   // *INDENT-ON*
 
   for (i = after; i < after + nframes; i++) {
@@ -1403,6 +1558,7 @@ void insert_blank_frames(int sfileno, frames_t nframes, frames_t after, int pale
     insert_images_in_virtual(sfileno, after, nframes, NULL, 0);
 
   sfile->frames += nframes;
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
 
   if (blankp) lives_widget_object_unref(blankp);
 }

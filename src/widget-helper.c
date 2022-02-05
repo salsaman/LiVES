@@ -11606,6 +11606,8 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox * box, const char *name, b
   lives_widget_apply_theme2(cbutton, LIVES_WIDGET_STATE_PRELIGHT, TRUE);
   lives_widget_set_border_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
+  //g_object_set(cbutton, "show-editor", TRUE, NULL);
+
 #if !LIVES_WIDGET_COLOR_HAS_ALPHA
   if (use_alpha)
     lives_color_button_set_alpha(LIVES_COLOR_BUTTON(cbutton), rgba->alpha);
@@ -13169,10 +13171,11 @@ boolean lives_widget_context_update(void) {
         //LiVESXEvent *ev = lives_widgets_get_current_event();
         //if (ev) g_print("ev was %d\n", ev->type);
         //else g_print("NULL event\n");
-
-        lives_widget_context_iteration(NULL, FALSE);
-
-        lives_nanosleep(NSLEEP_TIME);
+        if (!pthread_mutex_trylock(&mainw->fgthread_mutex)) {
+          lives_widget_context_iteration(NULL, FALSE);
+          pthread_mutex_unlock(&mainw->fgthread_mutex);
+          lives_nanosleep(NSLEEP_TIME);
+        } else break;
       }
     }
   }

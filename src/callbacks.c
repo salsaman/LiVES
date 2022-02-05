@@ -74,6 +74,7 @@ void lives_exit(int signum) {
     // recursive
     while (!pthread_mutex_unlock(&mainw->instance_ref_mutex));
     while (!pthread_mutex_unlock(&mainw->abuf_mutex));
+    while (!pthread_mutex_unlock(&mainw->fgthread_mutex));
 
     // non-recursive
     pthread_mutex_trylock(&mainw->abuf_aux_frame_mutex);
@@ -98,6 +99,7 @@ void lives_exit(int signum) {
     pthread_mutex_unlock(&mainw->trcount_mutex);
     pthread_mutex_trylock(&mainw->alock_mutex);
     pthread_mutex_unlock(&mainw->alock_mutex);
+    pthread_mutex_unlock(&mainw->tlthread_mutex);
     // filter mutexes are unlocked in weed_unload_all
 
     if (pthread_mutex_trylock(&mainw->exit_mutex)) pthread_exit(NULL);
@@ -604,7 +606,7 @@ static void open_sel_range_activate(char *fname, frames_t frames, double fps) {
     polymorph(mainw->multitrack, POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     maybe_add_mt_idlefunc();
-  }
+  } else sensitize();
 }
 
 
@@ -915,7 +917,7 @@ void on_location_select(LiVESButton * button, _entryw * locw) {
     polymorph(mainw->multitrack, POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     maybe_add_mt_idlefunc();
-  }
+  } else sensitize();
 }
 
 #define USE_YTDL
@@ -1438,7 +1440,7 @@ cancelled:
         polymorph(mainw->multitrack, POLY_NONE);
         polymorph(mainw->multitrack, POLY_CLIPS);
         mt_sensitise(mainw->multitrack);
-      }
+      } else sensitize();
     } else {
       do_error_dialog(_("LiVES was unable to download the clip\n"));
     }
@@ -2825,7 +2827,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
 
   if (!mainw->multitrack) {
     reget_afilesize(mainw->current_file);
-    if (CURRENT_CLIP_HAS_AUDIO) redraw_timeline(mainw->current_file);
+    if (CURRENT_CLIP_HAS_AUDIO) redraw_timeline_bg(mainw->current_file);
   }
 }
 
@@ -3046,7 +3048,13 @@ void on_copy_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     clipboard->clip_type = CLIP_TYPE_FILE;
     clipboard->interlace = cfile->interlace;
     clipboard->deinterlace = cfile->deinterlace;
+
+    pthread_mutex_lock(&cfile->frame_index_mutex);
+    pthread_mutex_lock(&clipboard->frame_index_mutex);
     clipboard->frame_index = frame_index_copy(cfile->frame_index, end - start + 1, start - 1);
+    pthread_mutex_unlock(&cfile->frame_index_mutex);
+    pthread_mutex_unlock(&clipboard->frame_index_mutex);
+
     clipboard->frames = end - start + 1;
     check_if_non_virtual(0, 1, clipboard->frames);
     if (clipboard->clip_type == CLIP_TYPE_FILE) {
@@ -3324,7 +3332,11 @@ void on_paste_as_new_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
 #ifdef VIRT_PASTE
   if (clipboard->frame_index) {
+    pthread_mutex_lock(&cfile->frame_index_mutex);
+    pthread_mutex_lock(&clipboard->frame_index_mutex);
     cfile->frame_index = frame_index_copy(clipboard->frame_index, cbframes, 0);
+    pthread_mutex_unlock(&cfile->frame_index_mutex);
+    pthread_mutex_unlock(&clipboard->frame_index_mutex);
   }
 
   cfile->clip_type = clipboard->clip_type;
@@ -4396,7 +4408,7 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     cfile->start = start;
     cfile->end = end;
     showclipimgs();
-    redraw_timeline(mainw->current_file);
+    redraw_timeline_bg(mainw->current_file);
     return;
   }
 
@@ -4576,7 +4588,7 @@ void on_select_activate(LiVESWidget * widget, livespointer user_data) {
 
   set_start_end_spins(mainw->current_file);
   showclipimgs();
-  redraw_timeline(mainw->current_file);
+  redraw_timeline_bg(mainw->current_file);
 }
 
 void sel_vismatch_activate(LiVESWidget * w, livespointer user_data) {
@@ -4736,7 +4748,7 @@ void play_all(boolean from_menu) {
     /*   } */
     //}
     if (from_menu) {
-      switch_clip(1, mainw->pre_src_file, TRUE);
+      main_thread_execute((lives_funcptr_t)switch_clip, 0, NULL, "iib", 1, mainw->pre_src_file, TRUE);
       mainw->pre_src_file = -2;
     }
   }
@@ -4838,8 +4850,7 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           aud_lock_act(NULL, LIVES_INT_TO_POINTER(TRUE));
         }
       }
-      if ((prefs->rec_opts & REC_AUDIO) && (AUD_SRC_EXTERNAL || ((mainw->agen_key != 0 || mainw->agen_needs_reinit
-                                            || (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
+      if ((prefs->rec_opts & REC_AUDIO) && (AUD_SRC_EXTERNAL || ((mainw->agen_key != 0 || mainw->agen_needs_reinit)
                                             && AUD_SRC_REALTIME)))
         start_audio_rec();
     } else {
@@ -5166,7 +5177,7 @@ boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
         return TRUE;
       }
 
-      /// set this so we invalid preload cache
+      /// set this so we invalidate preload cache
       if (mainw->scratch == SCRATCH_NONE) mainw->scratch = SCRATCH_REV;
 
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), -cfile->pb_fps);
@@ -6912,7 +6923,7 @@ void on_ok_file_open_clicked(LiVESFileChooser * chooser, LiVESSList * fnames) {
     polymorph(mainw->multitrack, POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     maybe_add_mt_idlefunc();
-  }
+  } else sensitize();
 }
 
 
@@ -7361,7 +7372,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
 	}}
       if (!mainw->multitrack && !mainw->faded) {
 	if (CURRENT_CLIP_IS_VALID) {
-	  redraw_timeline(mainw->current_file);
+	  redraw_timeline_bg(mainw->current_file);
 	  show_playbar_labels(mainw->current_file);
 	}}}
     // *INDENT-ON*
@@ -7671,7 +7682,7 @@ void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         lives_widget_show(mainw->framebar);
       }
       if (!mainw->multitrack && CURRENT_CLIP_IS_VALID) {
-        redraw_timeline(mainw->current_file);
+        redraw_timeline_bg(mainw->current_file);
         show_playbar_labels(mainw->current_file);
 	// *INDENT-OFF*
       }}}

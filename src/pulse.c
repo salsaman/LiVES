@@ -12,7 +12,7 @@
 
 #define afile mainw->files[pulsed->playing_file]
 
-#define DEBUG_PULSE
+//#define DEBUG_PULSE
 
 #define THRESH_BASE 10000.
 #define THRESH_MAX 50000.
@@ -998,7 +998,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #ifdef DEBUG_PULSE
               lives_printerr("dropping last %ld samples\n", numFramesToWrite = pulseFramesAvailable);
 #endif
-              numFramesToWrite = pulseFramesAvailable;
             } else if (numFramesToWrite < pulseFramesAvailable) {
               // because of rounding, occasionally we get a sample or two short. Here we duplicate the last samples
               // so as not to leave a zero filled gap
@@ -1008,12 +1007,13 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                              (short *)pulsed->sound_buffer + (numFramesToWrite - 1) * pulsed->out_achans,
                              2 * pulsed->out_achans);
               }
-              numFramesToWrite = pulseFramesAvailable;
 #ifdef DEBUG_PULSE
               lives_printerr("duplicated last %ld samples\n", lack);
 #endif
             }
           }
+
+          numFramesToWrite = pulseFramesAvailable;
 
           if ((has_audio_filters(AF_TYPE_ANY) || mainw->ext_audio) && (pulsed->playing_file != mainw->ascrap_file)) {
             boolean memok = TRUE;

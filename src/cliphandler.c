@@ -274,7 +274,7 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   if (!which || which == mainw->scrap_file) return FALSE;
 
-  if (!IS_VALID_CLIP(which)) return FALSE;
+  if (!IS_PHYSICAL_CLIP(which)) return FALSE;
 
   sfile = mainw->files[which];
 
@@ -527,6 +527,68 @@ boolean save_clip_values(int which) {
 
   return TRUE;
 }
+
+
+boolean del_clip_value(int which, lives_clip_details_t what) {
+  lives_clip_t *sfile;
+  char *clipdir, *lives_header, *key, *com;
+  char *lives_header_bak, *temp_backend;
+
+  boolean needs_sigs = FALSE;
+
+  if (!which || which == mainw->scrap_file) return FALSE;
+
+  if (!IS_PHYSICAL_CLIP(which)) return FALSE;
+
+  sfile = mainw->files[which];
+
+  // make sure we don't try to write in the brief moment when the metadata is being copied
+  pthread_mutex_lock(&sfile->transform_mutex);
+
+  clipdir = get_clip_dir(which);
+  if (IS_ASCRAP_CLIP(which))
+    lives_header = lives_build_filename(clipdir, LIVES_ACLIP_HEADER, NULL);
+  else
+    lives_header = lives_build_filename(clipdir, LIVES_CLIP_HEADER, NULL);
+
+  lives_free(clipdir);
+  key = clip_detail_to_string(what, NULL);
+
+  if (!key) {
+    char *tmp = lives_strdup_printf("Invalid detail %d to be deleted for file %s", which, lives_header);
+    LIVES_ERROR(tmp);
+    lives_free(tmp);
+    lives_free(lives_header);
+    pthread_mutex_unlock(&sfile->transform_mutex);
+    return FALSE;
+  }
+
+  lives_header_bak = lives_strdup_printf("%s.%s", lives_header, LIVES_FILE_EXT_BAK);
+  temp_backend = use_staging_dir_for(which);
+
+  THREADVAR(write_failed) = 0;
+  THREADVAR(com_failed) = FALSE;
+
+  if (!mainw->signals_deferred) {
+    set_signal_handlers((SignalHandlerPointer)defer_sigint);
+    needs_sigs = TRUE;
+  }
+
+  com = lives_strdup_printf("%s del_clip_value \"%s\" \"%s\"",
+                            temp_backend, lives_header, key);
+  lives_system(com, FALSE);
+  lives_free(com);
+
+  if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
+  else lives_cp(lives_header, lives_header_bak);
+  if (needs_sigs) set_signal_handlers((SignalHandlerPointer)catch_sigint);
+  lives_free(temp_backend);
+  lives_free(lives_header_bak);
+
+  pthread_mutex_unlock(&sfile->transform_mutex);
+  return TRUE;
+}
+
 
 
 size_t reget_afilesize(int fileno) {
@@ -1914,6 +1976,7 @@ lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intentcap_t *icaps
    in use (unlikely), or malloc fails.
 */
 lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) {
+  pthread_mutexattr_t mattr;
   lives_clip_t *sfile;
   char *stfile, *clipdir;
 
@@ -1947,6 +2010,9 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
       lives_snprintf(sfile->handle, 256, "%s", handle);
     }
   }
+
+  pthread_mutexattr_init(&mattr);
+  pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
 
   mainw->current_file = new_file;
 
@@ -1999,6 +2065,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->unique_id = gen_unique_id();
   cfile->layout_map = NULL;
   cfile->frame_index = cfile->frame_index_back = NULL;
+  pthread_mutex_init(&cfile->frame_index_mutex, &mattr);
   cfile->pumper = NULL;
   cfile->stored_layout_frame = 0;
   cfile->stored_layout_audio = 0.;

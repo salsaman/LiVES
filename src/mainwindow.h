@@ -769,9 +769,14 @@ typedef struct {
 
 /// helper proc_threads
 #define N_HLP_PROCTHREADS 128
+#define PT_DRAWTL 1
+#define PT_TRANSREND 2
 #define PT_LAZY_RFX 16
 #define PT_LAZY_DSUSED 17
 #define PT_CUSTOM_COLOURS 18
+
+#define drawtl_thread helper_procthreads[PT_DRAWTL]
+#define transrend_proc helper_procthreads[PT_TRANSREND]
 
 typedef struct {
   char *name;
@@ -1648,6 +1653,7 @@ typedef struct {
   mt_opts multi_opts; ///< some multitrack options that survive between mt calls
 
   /// mutices
+  pthread_mutex_t fgthread_mutex;  ///< used to ensure fgthread only runs one task at a time (but recursive)
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
   pthread_mutex_t abuf_frame_mutex;  ///< used to synch audio buffer for generators
   pthread_mutex_t abuf_aux_frame_mutex;  ///< used to synch audio buffer for loopback
@@ -1664,6 +1670,7 @@ typedef struct {
   pthread_mutex_t alarmlist_mutex; /// single access for updating alarm list
   pthread_mutex_t trcount_mutex; /// transition count mutex
   pthread_mutex_t alock_mutex; /// audio lock / unlock
+  pthread_mutex_t tlthread_mutex; /// timeline redraw thread
 
   volatile int fx_mutex_tid[FX_KEYS_MAX_VIRTUAL];
   int fx_mutex_nlocks[FX_KEYS_MAX_VIRTUAL];
@@ -1950,7 +1957,7 @@ typedef struct {
 
   boolean suppress_layout_warnings;
 
-  lives_proc_thread_t helper_procthreads[N_HLP_PROCTHREADS];
+  volatile lives_proc_thread_t helper_procthreads[N_HLP_PROCTHREADS];
   uint32_t lazy;
 
   boolean no_configs;
@@ -1961,8 +1968,6 @@ typedef struct {
 
   volatile boolean transrend_ready;
   weed_layer_t *transrend_layer;
-  lives_proc_thread_t transrend_proc;
-  lives_proc_thread_t drawtl_thread;
   boolean pr_audio;
   double vfade_in_secs, vfade_out_secs;
   lives_colRGBA64_t vfade_in_col, vfade_out_col;

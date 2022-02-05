@@ -709,6 +709,19 @@ if (1) {
 	}
 
 
+	if ($command eq "del_clip_value") {
+	    if ($USE_STRICT) {
+		no strict;
+	    }
+	    $prefs_file = $ARGV[1];
+	    if ($USE_STRICT) {
+		use strict;
+	    }
+	    shift(@ARGV);
+	    $command = "delete_pref";
+	}
+
+
 	if ($command eq "delete_pref") {
 	    my $key = $ARGV[1];
 	    &config_delete($key);
@@ -975,7 +988,7 @@ if (1) {
 	    $file = $ARGV[5];
 
 	    if (! -d $curworkdir) {
-		mkdir ($curworkdir);
+		mkdir $curworkdir;
 	    }
 
 	    $antialias = &config_get("antialias");
@@ -1271,7 +1284,7 @@ if (1) {
 	    }
 	    unless ($new_work eq "") {
 		# here is where we create a new work directory
-		unless (-d $new_work || (mkdir $new_work)) {
+		unless (-d $new_work || mkdir $new_work) {
 		    print STDERR "Smogrify: Unable to create new directory\n$new_work!\n";
 		    exit 1;
 		}
@@ -1741,7 +1754,7 @@ if (1) {
 	    # - the user chooses to disable instant opening
 	    # - all of the decoder plugins fail
 	    # - opening the audio track
-	    #$DEBUG_OPEN = 1;
+	    $DEBUG_OPEN = 1;
 
 	    unlink "$curworkdir/pause";
 
@@ -1808,7 +1821,6 @@ if (1) {
 	    }
 	    $stframes = "";
 	    if (defined($ARGV[6]) && $ARGV[6] > 0) {
-		$nframes = $ARGV[6]++;
 		if (!$is_mpv) {
 		    $stframes = " -frames $ARGV[6] ";
 		} else {
@@ -2904,7 +2916,7 @@ if (1) {
 	    &smog_system($com);
 
 	    if (-f "header.tar") {
-		$com = "tar -xf header.tar 2>$nulfile";
+		$com = "tar -xf header.tar header.lives 2>$nulfile";
 		&smog_system($com);
 	    }
 
@@ -5493,6 +5505,7 @@ sub smog_chdir {
 
 
 sub insert {
+    $HARDLINK_TEST = 1;
     my $from, $to, $frames_to_move;
     $times_inserted = 0;
     $factor = 1;
@@ -5501,6 +5514,7 @@ sub insert {
     my $nstart = $start;
     my $nwhere = $where;
     my $nfromdir = $fromdir;
+    my $fromdirx = $fromdir . "X";
 
     my $quick_copy = -1;
 
@@ -5570,8 +5584,22 @@ sub insert {
 			    }}}}
 
 		if ($quick_copy == 1) {
-		    &smog_copy("$fromdir/$from$img_ext2", "$curworkdir/$to$img_ext");
-		    return if $panic;
+		    print STDERR "quickcop\n";
+		    if ($HARDLINK_TEST) {
+			if (! -d $fromdirx) {
+		    print STDERR "quickcop2\n";
+			    mkdir $fromdirx;
+		    print STDERR "quickcop3\n";
+			}
+			&smog_rename("$fromdir/$from$img_ext2", "$fromdirx/$from$img_ext2");
+			$smcomret = system("$SYSBIN" . "cp -l \"$fromdirx/$from$img_ext2\", \"$fromdir/$from$img_ext2\"");
+			$smcomret = system("$SYSBIN" . "cp -l \"$fromdirx/$from$img_ext2\", \"$curworkdir/$to$img_ext\"");
+		    print STDERR "quickcop4\n";
+		    }
+		    else {
+			&smog_copy("$fromdir/$from$img_ext2", "$curworkdir/$to$img_ext");
+			return if $panic;
+		    }
 		} else {
 		    if ($antialias eq "false") {
 			$com = "$smog_convert_command +antialias -size $width" .

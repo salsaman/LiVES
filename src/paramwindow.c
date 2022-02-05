@@ -1965,7 +1965,7 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
     param->widgets[wcount++] = spinbutton_red;
     param->widgets[wcount++] = spinbutton_green;
     param->widgets[wcount++] = spinbutton_blue;
-    //param->widgets[3]=spinbutton_alpha;
+    //param->widgets[wcount++]=spinbutton_alpha;
     param->widgets[wcount++] = cbutton;
     param->widgets[wcount++] = widget_opts.last_label;
     break;
@@ -2116,11 +2116,16 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
     check_for_special(rfx, param, LIVES_BOX(lives_widget_get_parent(layout)));
   }
 
-  if (is_rdonly) {
-    for (int i = 0; i < wcount; i++) {
-      lives_widget_set_frozen(param->widgets[i], TRUE, .85);
+  for (int i = 0; i < wcount; i++) {
+    if (param->widgets[i]) {
+      lives_widget_nullify_with(param->widgets[i], (void **)&param->widgets[i]);
+      if (is_rdonly) {
+        lives_widget_set_frozen(param->widgets[i], TRUE, .85);
+      }
     }
   }
+
+  param->nwidgets = wcount;
 
   return was_num;
 }
@@ -3999,7 +4004,7 @@ void on_pwcolsel(LiVESButton * button, lives_rfx_t *rfx) {
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)r);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[1]), (double)g);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[2]), (double)b);
-  lives_color_button_set_color(LIVES_COLOR_BUTTON(param->widgets[4]), &selected);
+  lives_color_button_set_color(LIVES_COLOR_BUTTON(button), &selected);
 }
 
 

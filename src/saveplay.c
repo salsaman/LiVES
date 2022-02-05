@@ -316,8 +316,10 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
           return 0;
         }
 
-        if (!frames) frames = cfile->frames - st_frame;
-        else {
+        if (!frames) {
+          frames = cfile->frames - st_frame;
+          break_me("fr calc\n");
+        } else {
           if (st_frame + frames >= cfile->frames) frames = cfile->frames - st_frame;
         }
 
@@ -452,7 +454,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
               extra_frames -= st_extra_frames;
               showclipimgs();
               if (!mainw->multitrack)
-                redraw_timeline(mainw->current_file);
+                redraw_timeline_bg(mainw->current_file);
             }
 
             if ((cfile->frames + extra_frames) / cfile->fps > cfile->laudio_time) {
@@ -685,7 +687,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
           do_error_dialog(mainw->msg);
         }
         if (!mainw->multitrack)
-          redraw_timeline(mainw->current_file);
+          redraw_timeline_bg(mainw->current_file);
         showclipimgs();
         return 0;
       }
@@ -848,7 +850,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
           cfile->end = cfile->frames;
           showclipimgs();
           if (!mainw->multitrack)
-            redraw_timeline(mainw->current_file);
+            redraw_timeline_bg(mainw->current_file);
         }
       }
       if (cfile->laudio_time < cfile->video_time && cfile->achans > 0) {
@@ -891,7 +893,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
             resp = lives_dialog_run(LIVES_DIALOG(resaudw->dialog));
             if (resp == LIVES_RESPONSE_OK) {
               audio_details_clicked(NULL, LIVES_INT_TO_POINTER(mainw->current_file));
-              redraw_timeline(mainw->current_file);
+              redraw_timeline_bg(mainw->current_file);
             } else lives_widget_destroy(resaudw->dialog);
             lives_freep((void **)&resaudw);
 	    // *INDENT-OFF*
@@ -2132,14 +2134,6 @@ static void post_playback(void) {
     mainw->osc_block = TRUE;
     weed_generator_end((weed_plant_t *)cfile->ext_src);
     mainw->osc_block = FALSE;
-  } else {
-    if (mainw->current_file > -1) {
-      if (mainw->toy_type == LIVES_TOY_MAD_FRAMES && !cfile->opening) {
-        showclipimgs();
-        if (!mainw->multitrack)
-          redraw_timeline(mainw->current_file);
-      }
-    }
   }
 
   if (CURRENT_CLIP_IS_VALID) {
@@ -2199,7 +2193,7 @@ static void post_playback(void) {
   if (!mainw->multitrack && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
       cfile->clip_type == CLIP_TYPE_FILE)) {
     showclipimgs();
-    redraw_timeline(mainw->current_file);
+    redraw_timeline_bg(mainw->current_file);
   }
 
   player_sensitize();
@@ -3044,8 +3038,10 @@ void play_file(void) {
   if (!mainw->multitrack && mainw->ext_audio_mon)
     lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_mon), FALSE);
 
-  // reset in case audio lock was actioned
-  prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
+  if ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED
+       && (prefs->audio_opts & AUDIO_OPTS_AUTO_UNLOCK))) {
+    aud_lock_act(NULL, LIVES_INT_TO_POINTER(FALSE));
+  }
 
   // TODO ***: use MIDI output port for this
   if (!mainw->foreign && prefs->midisynch) {
@@ -4171,11 +4167,11 @@ ulong restore_file(const char *file_name) {
   cfile->vsize = mainw->def_height;
 
   if (!mainw->multitrack) {
-    switch_to_file((mainw->current_file = old_file), new_file);
-    set_main_title(cfile->file_name, 0);
+    switch_clip(1, mainw->current_file, TRUE);
   }
 
 #if 1
+  break_me("restoring");
 
   com = lives_strdup_printf("%s restore_headers %s %s", prefs->backend, cfile->handle,
                             (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
@@ -4190,14 +4186,9 @@ ulong restore_file(const char *file_name) {
     return 0;
   }
 
-  cfile->restoring = TRUE;
-  not_cancelled = do_progress_dialog(TRUE, TRUE, _("Restoring"));
-  cfile->restoring = FALSE;
+  do_progress_dialog(TRUE, FALSE, _("Restoring Metadata"));
 
-  if (mainw->error || !not_cancelled) {
-    if (mainw->error && mainw->cancelled != CANCEL_ERROR) {
-      do_error_dialog(mainw->msg);
-    }
+  if (mainw->error) {
     close_current_file(old_file);
     return 0;
   }
@@ -4220,6 +4211,8 @@ ulong restore_file(const char *file_name) {
     close_current_file(old_file);
     return 0;
   }
+
+  break_me("restored");
 
 #endif
 
@@ -5479,7 +5472,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       switch_to_file(mainw->current_file, start_file);
       showclipimgs();
     }
-    redraw_timeline(mainw->current_file);
+    redraw_timeline_bg(mainw->current_file);
   } else {
     mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen
   }

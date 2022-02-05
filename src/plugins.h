@@ -607,8 +607,10 @@ struct _param_t {
 
   char *units; // optional display detail (eg. "Hz", "sec."
 
-  /// TODO - change to LiVESWidget **widgets, terminated with a NULL
+
   LiVESWidget *widgets[MAX_PARAM_WIDGETS]; ///< widgets which hold value/RGBA settings
+  int nwidgets;
+
   boolean onchange; ///< is there a trigger ?
 
   boolean change_blocked;

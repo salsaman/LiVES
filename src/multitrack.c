@@ -14936,11 +14936,14 @@ boolean multitrack_insert(LiVESMenuItem * menuitem, livespointer user_data) {
                 bestz = z;
                 mindiff = diff;
               }
-            } else if (mindiff < AMATCH_THRESH) break;
+            } else if (mindiff < AMATCH_THRESH) {
+              z = bestz;
+              break;
+            }
             lives_lseek_buffered_rdonly(afd2, -4);
           }
-          g_print("GOT Z %ld %ld %ld %ld %ld %ld\n", zmxlen, z, mindiff, mxsize, mxlen, minlen);
-          if (z == mxsize) z = bestz;
+          g_print("GOT Z %ld %ld %ld %ld %ld %ld %ld\n", zmxlen, z, bestz, mindiff, mxsize, mxlen, minlen);
+          z = bestz;
           if (z) {
             ssize_t y = z;
             lives_buffered_rdonly_set_reversed(afd2, FALSE);

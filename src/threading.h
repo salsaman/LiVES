@@ -127,14 +127,21 @@ typedef struct {
 #define LIVES_LEAF_THREAD_PARAM2 _LIVES_LEAF_THREAD_PARAM("2")
 
 #define LIVES_THRDFLAG_AUTODELETE	(1 << 0)
-#define LIVES_THRDFLAG_WAIT_SYNC	(1 << 1)
-#define LIVES_THRDFLAG_NO_GUI		(1 << 2)
-#define LIVES_THRDFLAG_TUNING		(1 << 3)
+#define LIVES_THRDFLAG_RUNNING		(1 << 1)
+#define LIVES_THRDFLAG_FINISHED		(1 << 2)
+#define LIVES_THRDFLAG_WAIT_SYNC	(1 << 3)
+#define LIVES_THRDFLAG_NO_GUI		(1 << 4)
+#define LIVES_THRDFLAG_TUNING		(1 << 5)
 
 // internals
 
 #define GETARG(type, n) (p##n = WEED_LEAF_GET(info, _LIVES_LEAF_THREAD_PARAM(QUOTEME(n)), type))
 
+// since the codification of a param type only requires 4 bits, in theory we could go up to 16 parameters
+// however 8 is probably sufficient and looks neater
+// it is also possible to pass functions as parameters, using _FUNCP, so things like
+// FUNCSIG_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP
+// are a possibility
 #define ARGS1(t1) GETARG(t1, 0)
 #define ARGS2(t1, t2) ARGS1(t1), GETARG(t2, 1)
 #define ARGS3(t1, t2, t3) ARGS2(t1, t2), GETARG(t3, 2)
@@ -143,11 +150,7 @@ typedef struct {
 #define ARGS6(t1, t2, t3, t4, t5, t6) ARGS5(t1, t2, t3, t4, t5), GETARG(t6, 5)
 #define ARGS7(t1, t2, t3, t4, t5, t6, t7) ARGS6(t1, t2, t3, t4, t5, t6), GETARG(t7, 6)
 #define ARGS8(t1, t2, t3, t4, t5, t6, t7, t8) ARGS7(t1, t2, t3, t4, t5, t6, t7), GETARG(t8, 7)
-#define ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9) ARGS8(t1, t2, t3, t4, t5, t6, t7. t8), GETARG(t9, 8)
-#define ARGS10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9), GETARG(t10, 9)
 
-#define CALL_VOID_10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) (*thefunc->func)(ARGS10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10))
-#define CALL_VOID_9(t1, t2, t3, t4, t5, t6, t7, t8, t9) (*thefunc->func)(ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9))
 #define CALL_VOID_8(t1, t2, t3, t4, t5, t6, t7, t8) (*thefunc->func)(ARGS8(t1, t2, t3, t4, t5, t6, t7, t8))
 #define CALL_VOID_7(t1, t2, t3, t4, t5, t6, t7) (*thefunc->func)(ARGS7(t1, t2, t3, t4, t5, t6, t7))
 #define CALL_VOID_6(t1, t2, t3, t4, t5, t6) (*thefunc->func)(ARGS6(t1, t2, t3, t4, t5, t6))
@@ -158,10 +161,6 @@ typedef struct {
 #define CALL_VOID_1(t1) (*thefunc->func)(ARGS1(t1))
 #define CALL_VOID_0() (*thefunc->func)()
 
-#define CALL_10(ret, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) weed_set_##ret##_value(info, _RV_, \
-										     (*thefunc->func##ret)(ARGS10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t19)))
-#define CALL_9(ret, t1, t2, t3, t4, t5, t6, t7, t8, t9) weed_set_##ret##_value(info, _RV_, \
-									       (*thefunc->func##ret)(ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9)))
 #define CALL_8(ret, t1, t2, t3, t4, t5, t6, t7, t8) weed_set_##ret##_value(info, _RV_, \
 									   (*thefunc->func##ret)(ARGS8(t1, t2, t3, t4, t5, t6, t7, t7)))
 #define CALL_7(ret, t1, t2, t3, t4, t5, t6, t7) weed_set_##ret##_value(info, _RV_, \
@@ -204,6 +203,7 @@ typedef struct {
 #define FUNCSIG_BOOL_BOOL_STRING 		        		0X00000334
 #define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
 #define FUNCSIG_INT_VOIDP_INT64 		        		0X000001D5
+#define FUNCSIG_INT_INT_BOOL	 		        		0X00000113
 // 4p
 #define FUNCSIG_STRING_STRING_VOIDP_INT					0X000044D1
 #define FUNCSIG_INT_INT_BOOL_VOIDP					0X0000113D
@@ -268,10 +268,11 @@ boolean lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state
 
 // also LIVES_THRDATR_PRIORITY
 // also LIVES_THRDATR_AUTODELETE
-#define LIVES_THRDATTR_WAIT_SYNC	(1 << 2)
-#define LIVES_THRDATTR_FG_THREAD	(1 << 3)
-#define LIVES_THRDATTR_NO_GUI		(1 << 4)
-#define LIVES_THRDATTR_INHERIT_HOOKS   	(1 << 5)
+#define LIVES_THRDATTR_WAIT_START	(1 << 2)
+#define LIVES_THRDATTR_WAIT_SYNC	(1 << 3)
+#define LIVES_THRDATTR_FG_THREAD	(1 << 4)
+#define LIVES_THRDATTR_NO_GUI		(1 << 5)
+#define LIVES_THRDATTR_INHERIT_HOOKS   	(1 << 6)
 
 // extra info requests
 #define LIVES_LEAF_START_TICKS "_start_ticks"
@@ -341,7 +342,8 @@ int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
 // utility funcs (called from widget-helper.c)
 boolean is_fg_thread(void);
-void call_funcsig(lives_proc_thread_t info);
+int get_funcsig_nparms(funcsig_t sig);
+boolean call_funcsig(lives_proc_thread_t info);
 void *fg_run_func(lives_proc_thread_t lpt, void *retval);
 /////
 

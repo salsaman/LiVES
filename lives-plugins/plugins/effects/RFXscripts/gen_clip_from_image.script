@@ -55,9 +55,9 @@ $rdyfile = "";
 <loop>
 if ($rdyfile eq "") {
 if ($p0) {
-	`$convert_command $p1 $out_prefix$out`;
+	`$convert_command "$p1" $out_prefix$out`;
 } else {
-	`$convert_command $p1 -resize $width!x$height! $out_prefix$out`;
+	`$convert_command "$p1" -resize $width!x$height! $out_prefix$out`;
 }
  $rdyfile = $out;
 }

@@ -534,13 +534,13 @@ static boolean has_recstart_between(weed_event_t *event, weed_event_t *nframe_ev
 */
 weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
   weed_timecode_t out_tc = 0, offset_tc = 0, in_tc = 0, laud_tc = 0, nx_tc = 0;
-  weed_timecode_t end_tc, cin_tc = 0;
+  weed_timecode_t end_tc;
   weed_timecode_t recst_tc = 0;
   weed_timecode_t frame_tc = 0, pframe_tc = 0;
 
   weed_plant_t *out_list, *xout_list;
   weed_event_t *frame_event = NULL, *nframe_event = NULL, *pframe_event = NULL;
-  weed_event_t *last_frame_event, *cframe_event = NULL;
+  weed_event_t *last_frame_event;
   weed_event_t *event, *newframe = NULL;
   weed_event_t *init_event, *filter_map = NULL, *deinit_event;
   weed_event_t *prev_aframe, *xprev_aframe;
@@ -559,13 +559,13 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   boolean nframe_event_tainted = FALSE;
   boolean noquant = FALSE, nointer = FALSE;
 
-  int *clips = NULL, *naclips = NULL, *nclips = NULL, *pclips = NULL;;
-  frames64_t *frames = NULL, *nframes = NULL, *pframes = NULL;
+  int *clips = NULL, *naclips = NULL, *pclips = NULL, *nclips = NULL;
+  frames64_t *frames = NULL, *pframes = NULL, *nframes = NULL;
   int *xaclips = NULL;
 
   int tracks, ntracks = 0, natracks = 0, xatracks = 0, ptracks = 0;
-  int etype;
-  int is_final = 0;
+  int etype, scratch;
+  int is_final = 0; // when we get to the last frame_event, set to 1, when we reach last (any) event, set to 2
   int ev_api = 100;
   int nev = 0, xnev;
 
@@ -686,22 +686,29 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         }
         break;
         case WEED_EVENT_TYPE_FRAME:
-          cframe_event = event;
-          cin_tc = in_tc;
+          frame_event = event;
+          scratch = weed_get_int_value(event, LIVES_LEAF_SCRATCH, NULL);
+          if (scratch != SCRATCH_NONE && scratch != SCRATCH_REV) nointer = TRUE;
 
-          if (weed_get_int_value(event, LIVES_LEAF_SCRATCH, NULL) != SCRATCH_NONE) nointer = TRUE;
+          if (old_fps == 0.) {
+            if (scratch == SCRATCH_NONE || scratch == SCRATCH_REV) {
+              tracks = weed_frame_event_get_tracks(event, &clips, &frames);
 
-          if (!nframe_event || nframe_event == event) {
-            // nframe_event gets next frame
-            nframe_event = get_next_frame_event(event);
-            if (!nframe_event) is_final = 1;
-            else {
-              if (weed_get_int_value(nframe_event, LIVES_LEAF_SCRATCH, NULL) != SCRATCH_NONE)
-                nointer = TRUE;
-              if (!has_recstart_between(event, nframe_event)) {
-                nx_tc = get_event_timecode(nframe_event);
-                nframe_event_tainted = FALSE;
-              } else nframe_event_tainted = TRUE;
+              if (clips && frames && (!pframe_event || scratch == SCRATCH_REV
+                                      || clips[0] != pclips[0]
+                                      || frames[0] != pframes[0])) {
+                // pframe_event gets the current frame
+                pframe_tc = in_tc;
+                pframe_event = event;
+                lives_freep((void **)&pclips);
+                lives_freep((void **)&pframes);
+                pclips = clips;
+                pframes = frames;
+                ptracks = tracks;
+              } else {
+                lives_freep((void **)&clips);
+                lives_freep((void **)&frames);
+              }
             }
           }
 
@@ -919,22 +926,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         if (is_final == 2 && !event) break;
         /// insert the state
 
-        lives_freep((void **)&nclips);
-        lives_freep((void **)&nframes);
-
-        lives_freep((void **)&pclips);
-        lives_freep((void **)&pframes);
-
-        ntracks = ptracks = 0;
-
-        // pframe_event gets the previous frame
-        pframe_tc = frame_tc;
-        pframe_event = frame_event;
-
-        // cframe_event is this one
-        frame_tc = cin_tc;
-        frame_event = cframe_event;
-
         if (init_events) {
           void **pchanges;
           weed_event_t *xinit_event;
@@ -985,50 +976,59 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         /// INSERT A FRAME AT OUT_TC
 
         tracks = weed_frame_event_get_tracks(frame_event, &clips, &frames);
-        //oframe_tc = get_event_timecode(frame_event);
 
-        // frame_event is always <= out_tc, nframe_event is always > out_tc
-        if (nframe_event) {
-          ntracks = weed_frame_event_get_tracks(nframe_event, &nclips, &nframes);
-          if (mainw->scrap_file != -1 && (nclips[0] == mainw->scrap_file
-                                          || clips[0] == mainw->scrap_file)) {
-            if (nx_tc - (out_tc + offset_tc) < out_tc + offset_tc - frame_tc) {
-              // scrap file
-              frame_event = nframe_event;
-              lives_free(clips);
-              lives_free(frames);
-              frames = nframes;
-              clips = nclips;
-
-              tracks = ntracks;
-              nframes = NULL;
-              nclips = NULL;
+        if (clips && clips[0] >= 0) {
+          // frame_event is always <= out_tc, nframe_event is always > out_tc
+          // nframe_event gets next frame
+          nframe_event = get_next_frame_event(frame_event);
+          if (!nframe_event) is_final = 1;
+          else {
+            scratch = weed_get_int_value(nframe_event, LIVES_LEAF_SCRATCH, NULL);
+            if (scratch != SCRATCH_NONE && scratch != SCRATCH_REV) nointer = TRUE;
+            if (!has_recstart_between(frame_event, nframe_event)) {
+              nx_tc = get_event_timecode(nframe_event);
+              nframe_event_tainted = FALSE;
+            } else {
+              nframe_event_tainted = TRUE;
+              nframe_event = NULL;
             }
-          } else {
-            if (event != frame_event && old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth
-                && pframe_event && nframe_event && !nframe_event_tainted && !nointer) {
-              /// interpolate frames if possible
-              double ratio = (double)(out_tc + offset_tc - pframe_tc) / (double)(nx_tc - pframe_tc);
-              //ratio = 0.5;
-              if (!ntracks) ntracks = weed_frame_event_get_tracks(nframe_event, &nclips, &nframes);
-              if (!ptracks) ptracks = weed_frame_event_get_tracks(pframe_event, &pclips, &pframes);
-              if (nclips && pclips) {
-                for (i = 0; i < tracks; i++) {
-                  if (i >= ntracks) break;
-                  if (clips[i] == nclips[i] && clips[i] == pclips[i] && pframes[i] != nframes[i]) {// &&
-                    //(frames[i] == pframes[i] || frames[i] == nframes[i])) {
-                    //g_print("inter1 %ld -> %ld, %ld\n", pframes[i], nframes[i], frames[i]);
-                    frames[i] = (frames64_t)((double)pframes[i] + (double)(nframes[i] - pframes[i]) * ratio);
-                    //g_print("				inter2 %ld %f\n", frames[i], ratio);
-		    // *INDENT-OFF*
-		  }}
-		//weed_set_int64_array(frame_event, WEED_LEAF_FRAMES, tracks, frames);
-	      }}}}
+
+            if (nframe_event) {
+              ntracks = weed_frame_event_get_tracks(nframe_event, &nclips, &nframes);
+              if (nclips && nclips[0] >= 0) {
+                if (mainw->scrap_file != -1 && (nclips[0] == mainw->scrap_file
+                                                || clips[0] == mainw->scrap_file)) {
+                  if (nx_tc - (out_tc + offset_tc) < out_tc + offset_tc - frame_tc) {
+                    // scrap file
+                    frame_event = nframe_event;
+                    lives_free(clips);
+                    lives_free(frames);
+                    frames = nframes;
+                    clips = nclips;
+
+                    tracks = ntracks;
+                    nframes = NULL;
+                    nclips = NULL;
+                  }
+                } else {
+                  if (old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth
+                      && pframe_event && !nframe_event_tainted && !nointer) {
+                    /// interpolate frames if possible
+                    double ratio = (double)(out_tc + offset_tc - pframe_tc) / (double)(nx_tc - pframe_tc);
+                    //ratio = 0.5;
+                    if (nclips) {
+                      for (i = 0; i < tracks; i++) {
+                        if (i >= ntracks || i >= ptracks) break;
+                        if (clips[i] == nclips[i] && clips[i] == pclips[i] && pframes[i] != nframes[i]) {
+                          //g_print("inter1 %ld -> %ld, %ld\n", pframes[i], nframes[i], frames[i]);
+                          frames[i] = (frames64_t)((double)pframes[i] + (double)(nframes[i] - pframes[i]) * ratio);
+                          //g_print("				inter2 %ld %f\n", frames[i], ratio);
+			  // *INDENT-OFF*
+			}}}}}}}}}
 	// *INDENT-ON*
 
         /// now we insert the frame
-        if (clips)
-          out_list = append_frame_event(out_list, out_tc, tracks, clips, frames);
+        if (clips) out_list = append_frame_event(out_list, out_tc, tracks, clips, frames);
         newframe = get_last_event(out_list);
         if (nointer) weed_set_int_value(event, LIVES_LEAF_SCRATCH, SCRATCH_JUMP_NORESYNC);
 
@@ -2676,7 +2676,6 @@ void *resample_to_float(lives_object_t *obj, void *data) {
     abuf->in_achans = sfile->achans;
     abuf->samp_space = lives_buffered_orig_size(abuf->_fd) / abuf->in_achans / (abuf->in_asamps >> 3);
     abuf->bufferf = lives_calloc(abuf->out_achans, sizeof(float *));
-    g_print("pt b11\n");
     for (int i = 0; i < abuf->out_achans; i++)  {
       abuf->bufferf[i] = lives_calloc(abuf->samp_space, sizeof(float));
       if (i >= abuf->in_achans) continue;
@@ -2690,9 +2689,7 @@ void *resample_to_float(lives_object_t *obj, void *data) {
           int in_unsigned = sfile->signed_endian & AFORM_UNSIGNED;
           if ((abigendian && capable->hw.byte_order == LIVES_LITTLE_ENDIAN)
               || (!abigendian && capable->hw.byte_order == LIVES_BIG_ENDIAN)) rev_endian = TRUE;
-          g_print("pt b112\n");
           sample_move_d16_float(abuf->bufferf[i], s16buffer + j, abuf->samp_space, abuf->in_achans, in_unsigned, rev_endian, 1.);
-          g_print("pt b114\n");
         } else {
           /* if (sfile->asampsize == 8) { */
           /*   sample_move_d8_d16((short *)(pulsed->sound_buffer), (uint8_t *)buffer, nsamples, in_bytes, */

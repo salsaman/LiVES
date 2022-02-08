@@ -880,18 +880,25 @@ boolean check_if_non_virtual(int fileno, frames_t start, frames_t end) {
   pthread_mutex_unlock(&sfile->frame_index_mutex);
 
   sfile->clip_type = CLIP_TYPE_DISK;
-  close_clip_decoder(fileno);
 
-  del_clip_value(fileno, CLIP_DETAILS_DECODER_NAME);
-  del_clip_value(fileno, CLIP_DETAILS_DECODER_UID);
+  if (sfile->ext_src && sfile->ext_src_type == LIVES_EXT_SRC_DECODER) close_clip_decoder(fileno);
+
+  if (mainw->is_ready) {
+    sfile->old_dec_uid = sfile->decoder_uid;
+    del_clip_value(fileno, CLIP_DETAILS_DECODER_NAME);
+    del_clip_value(fileno, CLIP_DETAILS_DECODER_UID);
+  } else if (!sfile->needs_update) sfile->needs_silent_update = TRUE;
 
   if (sfile->interlace != LIVES_INTERLACE_NONE) {
+    sfile->old_interlace = sfile->interlace;
     sfile->interlace = LIVES_INTERLACE_NONE; // all frames should have been deinterlaced
     sfile->deinterlace = FALSE;
-    if (fileno > 0) {
-      if (!save_clip_value(fileno, CLIP_DETAILS_INTERLACE, &sfile->interlace))
-        do_header_write_error(fileno);
-    }
+    if (mainw->is_ready) {
+      if (fileno > 0) {
+        if (!save_clip_value(fileno, CLIP_DETAILS_INTERLACE, &sfile->interlace))
+          do_header_write_error(fileno);
+      }
+    } else if (!sfile->needs_update) sfile->needs_silent_update = TRUE;
   }
 
   return TRUE;
@@ -1418,7 +1425,36 @@ void restore_frame_index_back(int sfileno) {
   sfile->frame_index_back = NULL;
 
   if (sfile->frame_index) {
-    sfile->clip_type = CLIP_TYPE_FILE;
+    boolean bad_header = FALSE;
+    if (sfile->clip_type == CLIP_TYPE_DISK) {
+      if (sfile->old_interlace != sfile->interlace) {
+        sfile->interlace = sfile->old_interlace;
+        if (sfile->interlace != LIVES_INTERLACE_NONE) sfile->deinterlace = TRUE;
+        if (!save_clip_value(sfileno, CLIP_DETAILS_INTERLACE, &sfile->interlace))
+          bad_header = TRUE;
+      }
+      if (!bad_header) {
+        if (sfile->old_dec_uid && sfile->old_ext_src && sfile->old_ext_src_type == LIVES_EXT_SRC_DECODER) {
+          lives_decoder_t *dplug;
+          sfile->decoder_uid = sfile->old_dec_uid;
+          sfile->old_dec_uid = 0;
+          sfile->ext_src = sfile->old_ext_src;
+          sfile->old_ext_src = NULL;
+          sfile->ext_src_type = sfile->old_ext_src_type;
+          sfile->old_ext_src_type = LIVES_EXT_SRC_NONE;
+          dplug = (lives_decoder_t *)sfile->ext_src;
+          if (dplug) {
+            lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
+            if (!save_clip_value(sfileno, CLIP_DETAILS_DECODER_UID, (void *)&sfile->decoder_uid)) bad_header = TRUE;
+            else {
+              if (!save_clip_value(sfileno, CLIP_DETAILS_DECODER_NAME, (void *)dpsys->soname)) bad_header = TRUE;
+            }
+          }
+        }
+      }
+      sfile->clip_type = CLIP_TYPE_FILE;
+      if (bad_header) do_header_write_error(sfileno);
+    }
     save_frame_index(sfileno);
   } else {
     del_frame_index(sfileno);

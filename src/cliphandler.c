@@ -491,11 +491,16 @@ boolean save_clip_values(int which) {
       } while (FALSE);
 
       fclose(mainw->clip_header);
+      mainw->clip_header = NULL;
 
       if (!all_ok) {
         retval = do_write_failed_error_s_with_retry(lives_header_new, NULL);
       } else {
         char *lives_header;
+        if (sfile->clip_type == CLIP_TYPE_DISK) {
+          del_clip_value(which, CLIP_DETAILS_DECODER_NAME);
+          del_clip_value(which, CLIP_DETAILS_DECODER_UID);
+        }
         if (IS_ASCRAP_CLIP(which))
           lives_header = lives_build_filename(clipdir, LIVES_ACLIP_HEADER, NULL);
         else
@@ -521,7 +526,6 @@ boolean save_clip_values(int which) {
   set_signal_handlers((SignalHandlerPointer)catch_sigint);
 
   lives_free(lives_header_new);
-  mainw->clip_header = NULL;
 
   if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
 

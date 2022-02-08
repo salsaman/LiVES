@@ -8042,6 +8042,8 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       weed_layer_unref(layer);
       return TRUE;
     } else {
+      boolean need_unlock = TRUE;
+      pthread_mutex_lock(&sfile->frame_index_mutex);
       if (clip_type == CLIP_TYPE_FILE && sfile->frame_index && frame > 0 &&
           frame <= sfile->frames && is_virtual_frame(clip, frame)) {
         if (prefs->vj_mode && mainw->loop_locked && mainw->ping_pong && sfile->pb_fps >= 0. && !norecurse) {
@@ -8050,6 +8052,8 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           THREADVAR(tinfo) = NULL;
           norecurse = TRUE;
           virtual_to_images(clip, frame, frame, FALSE, &pixbuf);
+          pthread_mutex_unlock(&sfile->frame_index_mutex);
+          need_unlock = FALSE;
           norecurse = FALSE;
           THREADVAR(tinfo) = tinfo;
           if (pixbuf) {
@@ -8081,6 +8085,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
             if (!dplug) dplug = (lives_decoder_t *)sfile->ext_src;
           }
           if (!dplug || !dplug->cdata) {
+            if (need_unlock) pthread_mutex_unlock(&sfile->frame_index_mutex);
             create_blank_layer(layer, image_ext, width, height, target_palette);
             weed_layer_unref(layer);
             return FALSE;
@@ -8126,11 +8131,13 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           }
 #endif
           if (create_empty_pixel_data(layer, TRUE, TRUE)) {
+            if (need_unlock) pthread_mutex_unlock(&sfile->frame_index_mutex);
 #ifdef USE_REC_RS
             weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
 #endif
             pixel_data = weed_layer_get_pixel_data_planar(layer, NULL);
           } else {
+            if (need_unlock) pthread_mutex_unlock(&sfile->frame_index_mutex);
 #ifdef USE_REC_RS
             weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
 #endif
@@ -8145,6 +8152,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
                                                 dplug->cdata->YUV_clamping, dplug->cdata->YUV_subspace));
             LIVES_WARN(msg);
             lives_free(msg);
+            if (need_unlock) pthread_mutex_unlock(&sfile->frame_index_mutex);
             create_blank_layer(layer, image_ext, width, height, target_palette);
             weed_layer_unref(layer);
             return FALSE;
@@ -8159,19 +8167,20 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           /* int64_t timex = lives_get_current_ticks(); */
           /* double est_time = (*dplug->dpsys->estimate_delay)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame)); */
 
-          g_print("NOW %d\\n", get_indexed_frame(clip, frame));
+          //g_print("NOW %d\\n", get_indexed_frame(clip, frame));
 
           if (!(*dplug->dpsys->get_frame)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame),
                                           rowstrides, sfile->vsize, pixel_data)) {
-
-#ifdef USE_REC_RS
-            if (dplug->cdata->rec_rowstrides) lives_memset(dplug->cdata->rec_rowstrides, 0, nplanes * sizint);
-#endif
             if (prefs->show_dev_opts) {
               g_print("Error loading frame %d (index value %d)\n", frame,
                       sfile->frame_index[frame - 1]);
               break_me("load error");
             }
+            if (need_unlock) pthread_mutex_unlock(&sfile->frame_index_mutex);
+            need_unlock = FALSE;
+#ifdef USE_REC_RS
+            if (dplug->cdata->rec_rowstrides) lives_memset(dplug->cdata->rec_rowstrides, 0, nplanes * sizint);
+#endif
             // if get_frame fails, return a black frame
             if (!is_thread) {
               weed_layer_clear_pixel_data(layer);
@@ -8179,7 +8188,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
               return FALSE;
             }
             res = FALSE;
-          }
+          } else if (need_unlock) pthread_mutex_unlock(&sfile->frame_index_mutex);
           //g_print("ACT %f EST %f\n",  (double)(lives_get_current_ticks() - timex) / TICKS_PER_SECOND_DBL, est_time);
 
           lives_free(pixel_data);
@@ -8227,6 +8236,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 #ifdef USE_RESTHREAD
         lives_proc_thread_t resthread;
 #endif
+        pthread_mutex_unlock(&sfile->frame_index_mutex);
         if (!*image_ext) image_ext = get_image_ext_for_type(sfile->img_type);
         fname = make_image_file_name(sfile, frame, image_ext);
         ret = weed_layer_create_from_file_progressive(layer, fname, width, height, target_palette, image_ext);
@@ -8712,7 +8722,11 @@ void close_current_file(int file_to_switch_to) {
       mainw->blend_layer = NULL;
     }
 
-    if (CURRENT_CLIP_IS_NORMAL && cfile->ext_src) {
+    if (CURRENT_CLIP_IS_PHYSICAL && (cfile->ext_src || cfile->old_ext_src)) {
+      if (!cfile->ext_src && cfile->old_ext_src_type == LIVES_EXT_SRC_DECODER) {
+        cfile->ext_src = cfile->old_ext_src;
+        cfile->ext_src_type = cfile->old_ext_src_type;
+      }
       if (cfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
         close_clip_decoder(mainw->current_file);
       }

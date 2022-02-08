@@ -5412,6 +5412,7 @@ boolean render_to_clip(boolean new_clip) {
     }
 
     if (cfile->clip_type == CLIP_TYPE_FILE) {
+      pthread_mutex_lock(&cfile->frame_index_mutex);
       if (cfile->undo_start == 1 && cfile->undo_end == cfile->frames) {
         cfile->clip_type = CLIP_TYPE_DISK;
         lives_freep((void **)&cfile->frame_index_back);
@@ -5438,12 +5439,14 @@ boolean render_to_clip(boolean new_clip) {
         if (response == LIVES_RESPONSE_CANCEL) {
           if (!mainw->multitrack) {
             if (new_clip) { // check
+              pthread_mutex_unlock(&cfile->frame_index_mutex);
               close_current_file(current_file);
             } else {
               cfile->frame_index = cfile->frame_index_back;
               cfile->frame_index_back = NULL;
+              pthread_mutex_unlock(&cfile->frame_index_mutex);
             }
-          }
+          } else pthread_mutex_unlock(&cfile->frame_index_mutex);
           prefs->enc_letterbox = enc_lb;
           prefs->pb_quality = pbq;
           return FALSE; /// will reshow the dialog
@@ -5460,6 +5463,7 @@ boolean render_to_clip(boolean new_clip) {
 
         save_frame_index(mainw->current_file);
       }
+      pthread_mutex_unlock(&cfile->frame_index_mutex);
     }
     if (!new_clip) d_print_done();
   } else {

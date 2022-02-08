@@ -2587,7 +2587,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled,
 
 
 void close_clip_decoder(int clipno) {
-  if (!IS_VALID_CLIP(clipno)) return;
+  if (!IS_PHYSICAL_CLIP(clipno)) return;
   else {
     lives_clip_t *sfile = mainw->files[clipno];
     if (sfile->ext_src && sfile->ext_src_type == LIVES_EXT_SRC_DECODER) {

@@ -14067,9 +14067,11 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
   if (sfile->img_type == IMG_TYPE_PNG) intimg = TRUE;
 #endif
 
+  pthread_mutex_lock(&sfile->frame_index_mutex);
   for (int i = 0; i < sfile->frames; i++) {
     threaded_dialog_spin((double)i / (double)sfile->frames);
     if (mainw->cancelled) {
+      pthread_mutex_unlock(&sfile->frame_index_mutex);
       prefs->pb_quality = pbq;
       return nres;
     }
@@ -14144,6 +14146,7 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
     }
     lives_free(fname);
   }
+  pthread_mutex_unlock(&sfile->frame_index_mutex);
   prefs->pb_quality = pbq;
   if (nbad) *nbad = bad;
   if (nmiss) *nmiss = miss;

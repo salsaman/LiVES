@@ -40,6 +40,13 @@ convert
 
 <pre>
 $rdyfile = "";
+$fstype = &get_fs_type($curworkdir);
+if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
+   $can_ln = 0;
+}
+else {
+     $can_ln = 1;
+}
 </pre>
 
 <loop>
@@ -48,8 +55,13 @@ if ($rdyfile eq "") {
   $rdyfile = $out;
 }
 else {
- `cp $rdyfile $out`;
+ if ($can_ln) {
+   `ln $rdyfile $out`;
  }
+ else {
+   `cp $rdyfile $out`;
+ }
+}
 </loop>
 
 <post>

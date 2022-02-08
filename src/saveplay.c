@@ -5303,6 +5303,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
             cfile->checked = TRUE;
           }
         }
+        check_if_non_virtual(mainw->current_file, 1, cfile->frames);
       } else {
         /// CLIP_TYPE_DISK
         if (!cfile->checked) {

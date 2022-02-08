@@ -256,40 +256,45 @@ void lives_exit(int signum) {
       }
 
       for (i = 1; i <= MAX_FILES; i++) {
-        if (mainw->files[i]) {
-          mainw->current_file = i;
+        lives_clip_t *sfile = mainw->files[i];
+        if (sfile) {
           threaded_dialog_spin(0.);
-          if (cfile->event_list_back) event_list_free(cfile->event_list_back);
-          if (cfile->event_list) event_list_free(cfile->event_list);
+          if (sfile->event_list_back) event_list_free(sfile->event_list_back);
+          if (sfile->event_list) event_list_free(sfile->event_list);
 
-          cfile->event_list = cfile->event_list_back = NULL;
+          sfile->event_list = sfile->event_list_back = NULL;
 
-          lives_list_free_all(&cfile->layout_map);
+          lives_list_free_all(&sfile->layout_map);
 
-          if (cfile->laudio_drawable) {
-            if (mainw->laudio_drawable == cfile->laudio_drawable) mainw->laudio_drawable = NULL;
-            lives_painter_surface_destroy(cfile->laudio_drawable);
-            cfile->laudio_drawable = NULL;
+          if (sfile->laudio_drawable) {
+            if (mainw->laudio_drawable == sfile->laudio_drawable) mainw->laudio_drawable = NULL;
+            lives_painter_surface_destroy(sfile->laudio_drawable);
+            sfile->laudio_drawable = NULL;
           }
 
-          if (cfile->raudio_drawable) {
-            if (mainw->raudio_drawable == cfile->raudio_drawable) mainw->raudio_drawable = NULL;
-            lives_painter_surface_destroy(cfile->raudio_drawable);
-            cfile->raudio_drawable = NULL;
+          if (sfile->raudio_drawable) {
+            if (mainw->raudio_drawable == sfile->raudio_drawable) mainw->raudio_drawable = NULL;
+            lives_painter_surface_destroy(sfile->raudio_drawable);
+            sfile->raudio_drawable = NULL;
           }
           if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
 
-          if (IS_PHYSICAL_CLIP(i) && mainw->files[i]->ext_src
-              && mainw->files[i]->ext_src_type == LIVES_EXT_SRC_DECODER) {
-            // must do this before we move it
-            close_clip_decoder(i);
-            threaded_dialog_spin(0.);
+          if (IS_PHYSICAL_CLIP(i) && (sfile->ext_src || sfile->old_ext_src)) {
+            if (sfile->old_ext_src && sfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
+              sfile->ext_src = sfile->old_ext_src;
+              sfile->ext_src_type = sfile->old_ext_src_type;
+            }
+            if (sfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
+              // must do this before we move it
+              close_clip_decoder(i);
+              threaded_dialog_spin(0.);
+            }
           }
-          lives_freep((void **)&mainw->files[i]->frame_index);
-          cfile->layout_map = NULL;
+          lives_freep((void **)&sfile->frame_index);
+          sfile->layout_map = NULL;
         }
 
-        if (mainw->files[i]) {
+        if (sfile) {
           /// physically remove:
           /// - "device" clips, generators, etc.
           /// - scrap files, if we are not closing or crash recovery is disabled
@@ -311,9 +316,9 @@ void lives_exit(int signum) {
             } else {
               permit_close(i);
               threaded_dialog_spin(0.);
-              lives_kill_subprocesses(mainw->files[i]->handle, TRUE);
+              lives_kill_subprocesses(sfile->handle, TRUE);
               temp_backend = use_staging_dir_for(i);
-              com = lives_strdup_printf("%s close \"%s\"", temp_backend, mainw->files[i]->handle);
+              com = lives_strdup_printf("%s close \"%s\"", temp_backend, sfile->handle);
               lives_system(com, FALSE);
               lives_free(com);
               lives_free(temp_backend);
@@ -328,7 +333,7 @@ void lives_exit(int signum) {
             if (!prefs->vj_mode) {
               if (prefs->autoclean) {
                 com = lives_strdup_printf("%s clear_tmp_files \"%s\"",
-                                          prefs->backend_sync, mainw->files[i]->handle);
+                                          prefs->backend_sync, sfile->handle);
                 lives_system(com, FALSE);
                 threaded_dialog_spin(0.);
                 lives_free(com);
@@ -337,26 +342,26 @@ void lives_exit(int signum) {
                 int fd;
                 char *fname;
                 if (IS_ASCRAP_CLIP(i))
-                  fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+                  fname = lives_build_filename(prefs->workdir, sfile->handle,
                                                LIVES_ACLIP_HEADER, NULL);
                 else
-                  fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+                  fname = lives_build_filename(prefs->workdir, sfile->handle,
                                                LIVES_CLIP_HEADER, NULL);
                 if (!lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
                   break_me("lives_header missing from clip");
                   save_clip_values(i);
                 }
                 lives_free(fname);
-                fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+                fname = lives_build_filename(prefs->workdir, sfile->handle,
                                              "." TOTALSAVE_NAME, NULL);
                 fd = lives_create_buffered(fname, DEF_FILE_PERMS);
-                lives_write_buffered(fd, (const char *)mainw->files[i], sizeof(lives_clip_t), TRUE);
+                lives_write_buffered(fd, (const char *)sfile, sizeof(lives_clip_t), TRUE);
                 lives_close_buffered(fd);
                 lives_free(fname);
               }
             }
-            if (mainw->files[i]->frameno != mainw->files[i]->saved_frameno) {
-              save_clip_value(i, CLIP_DETAILS_PB_FRAMENO, &mainw->files[i]->frameno);
+            if (sfile->frameno != sfile->saved_frameno) {
+              save_clip_value(i, CLIP_DETAILS_PB_FRAMENO, &sfile->frameno);
 	      // *INDENT-OFF*
 	    }}}}
       // *INDENT-ON*
@@ -3049,8 +3054,8 @@ void on_copy_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     clipboard->interlace = cfile->interlace;
     clipboard->deinterlace = cfile->deinterlace;
 
-    pthread_mutex_lock(&cfile->frame_index_mutex);
     pthread_mutex_lock(&clipboard->frame_index_mutex);
+    pthread_mutex_lock(&cfile->frame_index_mutex);
     clipboard->frame_index = frame_index_copy(cfile->frame_index, end - start + 1, start - 1);
     pthread_mutex_unlock(&cfile->frame_index_mutex);
     pthread_mutex_unlock(&clipboard->frame_index_mutex);
@@ -3072,7 +3077,7 @@ void on_copy_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   // copy audio and frames
   com = lives_strdup_printf("%s insert \"%s\" \"%s\" 0 %d %d \"%s\" %d 0 0 0 %.3f %d %d %d %d %d", prefs->backend,
-                            clipboard->handle, get_image_ext_for_type(clipboard->img_type),
+                            clipboard->handle, get_image_ext_for_type(cfile->img_type),
                             start, end, cfile->handle, mainw->ccpd_with_sound, cfile->fps, cfile->arate,
                             cfile->achans, cfile->asampsize, !(cfile->signed_endian & AFORM_UNSIGNED),
                             !(cfile->signed_endian & AFORM_BIG_ENDIAN));
@@ -3332,8 +3337,8 @@ void on_paste_as_new_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
 #ifdef VIRT_PASTE
   if (clipboard->frame_index) {
-    pthread_mutex_lock(&cfile->frame_index_mutex);
     pthread_mutex_lock(&clipboard->frame_index_mutex);
+    pthread_mutex_lock(&cfile->frame_index_mutex);
     cfile->frame_index = frame_index_copy(clipboard->frame_index, cbframes, 0);
     pthread_mutex_unlock(&cfile->frame_index_mutex);
     pthread_mutex_unlock(&clipboard->frame_index_mutex);
@@ -4412,6 +4417,24 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     return;
   }
 
+  if (cfile->clip_type == CLIP_TYPE_FILE) {
+    // check if we now have only non-virtual frames
+    if (cfile->ext_src && cfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
+      // make sure we dont actually close the decoder yet, in case we later undo the deletion
+      cfile->old_ext_src = cfile->ext_src;
+      cfile->old_ext_src_type = cfile->ext_src_type;
+      cfile->ext_src = NULL;
+      cfile->ext_src_type = LIVES_EXT_SRC_NONE;
+    }
+    if (!check_if_non_virtual(mainw->current_file, 1, cfile->frames)) {
+      // there are still virtual frames, so restore the old values
+      cfile->ext_src = cfile->old_ext_src;
+      cfile->ext_src_type = cfile->old_ext_src_type;
+      cfile->old_ext_src = NULL;
+      cfile->old_ext_src_type = LIVES_EXT_SRC_NONE;
+    }
+  }
+
   if (user_data) return;
 
   if (!post_del_cleanup(!menuitem && !mainw->osc_auto)) return;
@@ -5322,6 +5345,7 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                           livespointer user_data) {
   LiVESList *list_index;
+  lives_clip_t *sfile;
   int i = 0;
   int num_tried = 0, num_clips;
   int type = 0;
@@ -5357,11 +5381,10 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if (!list_index || ((list_index = list_index->prev) == NULL)) list_index = lives_list_last(mainw->cliplist);
     i = LIVES_POINTER_TO_INT(list_index->data);
-  } while (!mainw->files[i] || mainw->files[i]->hidden || mainw->files[i]->opening
-           || mainw->files[i]->restoring || i == mainw->scrap_file ||
+    sfile = mainw->files[i];
+  } while (!sfile || sfile->hidden || sfile->opening || sfile->restoring || i == mainw->scrap_file ||
            i == mainw->ascrap_file || (LIVES_IS_PLAYING
-                                       && (!mainw->files[i]->frames
-                                           || i == mainw->blend_file || i == mainw->playing_file)));
+                                       && (!sfile->frames || i == mainw->blend_file || i == mainw->playing_file)));
 
   if (user_data) {
     if (prefs->autotrans_key > 0 && LIVES_NORMAL_PLAYBACK && !mainw->num_tr_applied) {
@@ -5378,6 +5401,7 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                           livespointer user_data) {
   LiVESList *list_index;
+  lives_clip_t *sfile;
   int i;
   int num_tried = 0, num_clips;
 
@@ -5410,11 +5434,10 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if (!list_index || ((list_index = list_index->next) == NULL)) list_index = mainw->cliplist;
     i = LIVES_POINTER_TO_INT(list_index->data);
-  } while (!mainw->files[i] || mainw->files[i]->hidden || mainw->files[i]->opening
-           || mainw->files[i]->restoring || i == mainw->scrap_file ||
+    sfile = mainw->files[i];
+  } while (!sfile || sfile->hidden || sfile->opening || sfile->restoring || i == mainw->scrap_file ||
            i == mainw->ascrap_file || (LIVES_IS_PLAYING
-                                       && (!mainw->files[i]->frames
-                                           || i == mainw->blend_file || i == mainw->playing_file)));
+                                       && (!sfile->frames || i == mainw->blend_file || i == mainw->playing_file)));
 
   if (user_data) {
     if (prefs->autotrans_key > 0 && LIVES_NORMAL_PLAYBACK && !mainw->num_tr_applied) {
@@ -5537,6 +5560,7 @@ static boolean handle_remnants(LiVESList * recnlist, const char *trashremdir, Li
 
 void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   // recover disk space
+  lives_clip_t *sfile;
   lives_file_dets_t *filedets;
   lives_proc_thread_t tinfo;
   LiVESTextBuffer *tbuff;
@@ -5635,13 +5659,14 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   for (i = 0; i < MAX_FILES; i++) {
     // mark all free-floating files (directories) which we do not want to remove
     // we do error checking here
-    if (mainw->files[i] && *mainw->files[i]->handle) {
-      filedir = lives_build_path(prefs->workdir, mainw->files[i]->handle, NULL);
+    sfile = mainw->files[i];
+    if (sfile && *sfile->handle) {
+      filedir = lives_build_path(prefs->workdir, sfile->handle, NULL);
       if (lives_file_test(filedir, LIVES_FILE_TEST_IS_DIR)) {
         markerfile = lives_build_filename(filedir, LIVES_FILENAME_INUSE, NULL);
         lives_echo(trashdir, markerfile, FALSE);
         lives_free(markerfile);
-        if (mainw->files[i]->undo_action != UNDO_NONE) {
+        if (sfile->undo_action != UNDO_NONE) {
           markerfile = lives_build_filename(filedir, LIVES_FILENAME_NOCLEAN, NULL);
           do {
             retval = LIVES_RESPONSE_NONE;
@@ -5711,15 +5736,15 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
   // remove the protective markers
   for (i = 0; i < MAX_FILES; i++) {
-    if (mainw->files[i] && *mainw->files[i]->handle) {
-      filedir = lives_build_path(prefs->workdir, mainw->files[i]->handle, NULL);
+    if (sfile && *sfile->handle) {
+      filedir = lives_build_path(prefs->workdir, sfile->handle, NULL);
       if (lives_file_test(filedir, LIVES_FILE_TEST_IS_DIR)) {
-        markerfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+        markerfile = lives_build_filename(prefs->workdir, sfile->handle,
                                           LIVES_FILENAME_INUSE, NULL);
         lives_rm(markerfile);
         lives_free(markerfile);
-        if (mainw->files[i]->undo_action != UNDO_NONE) {
-          markerfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+        if (sfile->undo_action != UNDO_NONE) {
+          markerfile = lives_build_filename(prefs->workdir, sfile->handle,
                                             LIVES_FILENAME_NOCLEAN, NULL);
           lives_rm(markerfile);
           lives_free(markerfile);
@@ -6159,9 +6184,8 @@ void on_vj_realize_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 void on_vj_reset_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   LiVESList *clip_list = mainw->cliplist;
-
+  lives_clip_t *sfile;
   boolean bad_header = FALSE;
-
   int i;
 
   //mainw->soft_debug=TRUE;
@@ -6170,12 +6194,13 @@ void on_vj_reset_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   while (clip_list) {
     i = LIVES_POINTER_TO_INT(clip_list->data);
-    mainw->files[i]->pb_fps = mainw->files[i]->fps;
-    mainw->files[i]->frameno = 1;
-    mainw->files[i]->aseek_pos = 0;
+    sfile = mainw->files[i];
+    sfile->pb_fps = sfile->fps;
+    sfile->frameno = 1;
+    sfile->aseek_pos = 0;
 
-    if (!save_clip_value(i, CLIP_DETAILS_PB_FPS, &mainw->files[i]->fps)) bad_header = TRUE;
-    if (!save_clip_value(i, CLIP_DETAILS_PB_FRAMENO, &mainw->files[i]->frameno)) bad_header = TRUE;
+    if (!save_clip_value(i, CLIP_DETAILS_PB_FPS, &sfile->fps)) bad_header = TRUE;
+    if (!save_clip_value(i, CLIP_DETAILS_PB_FRAMENO, &sfile->frameno)) bad_header = TRUE;
 
     threaded_dialog_spin((double)i / (double)mainw->clips_available);
 
@@ -9825,9 +9850,9 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
       lives_widget_set_sensitive(mainw->showfct, TRUE);
     } else {
       /*      for (i=1;i<MAX_FILES;i++) {
-        if (mainw->files[i]!=NULL) {
-        if (mainw->files[i]->menuentry!=NULL) {
-        lives_widget_set_sensitive (mainw->files[i]->menuentry, TRUE);
+        if (sfile!=NULL) {
+        if (sfile->menuentry!=NULL) {
+        lives_widget_set_sensitive (sfile->menuentry, TRUE);
         }}}*/
       if (!mainw->multitrack && mainw->play_window) {
         resize_play_window();
@@ -11136,14 +11161,13 @@ void on_capture_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 void on_capture2_activate(void) {
   // this is in the second copy of lives, we are now going to grab frames from the X window
+  lives_clip_t *sfile;
   char *capfilename = lives_strdup_printf(".capture.%d", mainw->foreign_key);
   char *capfile = lives_build_filename(prefs->workdir, capfilename, NULL);
-
   char buf[32];
-
   boolean retval;
   int capture_fd;
-  register int i;
+  int i;
 
   retval = prepare_to_play_foreign();
 
@@ -11163,8 +11187,9 @@ void on_capture2_activate(void) {
   }
 
   for (i = 1; i < MAX_FILES; i++) {
-    if (!mainw->files[i]) break;
-    lives_write(capture_fd, mainw->files[i]->handle, lives_strlen(mainw->files[i]->handle), TRUE);
+    sfile = mainw->files[i];
+    if (!sfile) break;
+    lives_write(capture_fd, sfile->handle, lives_strlen(sfile->handle), TRUE);
     lives_write(capture_fd, "|", 1, TRUE);
     lives_snprintf(buf, 32, "%d", cfile->frames);
     lives_write(capture_fd, buf, strlen(buf), TRUE);
@@ -12459,7 +12484,7 @@ static void fix_lmap_errors(void) {
   for (int i = 0; i < MAX_FILES; i++) {
     if (mainw->recovering_files) {
       if (IS_VALID_CLIP(i)) {
-        lives_clip_t *sfile = mainw->files[i];
+        lives_clip_t *sfile = sfile;
         if (sfile->lmap_fix_apad > 0.) {
           if (prefs->skip_lmap_afixes == 2) lmap_fix_silence(i);
           if (prefs->skip_lmap_afixes) {

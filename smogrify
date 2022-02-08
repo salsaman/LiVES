@@ -1754,7 +1754,7 @@ if (1) {
 	    # - the user chooses to disable instant opening
 	    # - all of the decoder plugins fail
 	    # - opening the audio track
-	    $DEBUG_OPEN = 1;
+	    #$DEBUG_OPEN = 1;
 
 	    unlink "$curworkdir/pause";
 
@@ -2672,7 +2672,7 @@ if (1) {
 			}
 		    }
 		    else {
-			$smerr =  &smog_system ("$SYSBIN" . "ln \"$curworkdir/$from$img_ext\" " .
+			$smerr =  &smog_system ("$SYSBIN" . "ln -L \"$curworkdir/$from$img_ext\" " .
 						"\"$linksdir/$name$img_ext\"");
 			if ($smerr) {
 			    &sig_system_error("Linking \"$curworkdir/$from$img_ext\" to " .
@@ -5513,8 +5513,6 @@ sub insert {
     my $nend = $end;
     my $nstart = $start;
     my $nwhere = $where;
-    my $nfromdir = $fromdir;
-    my $fromdirx = $fromdir . "X";
 
     my $quick_copy = -1;
 
@@ -5533,6 +5531,7 @@ sub insert {
     }
 
     $fromdir = "$workdir/$from_handle";
+
     $frames_to_move = ($nend - $nstart + 1) *$times;
 
     # make space for new frames
@@ -5546,6 +5545,7 @@ sub insert {
     }
 
     $resize_ext = $img_ext;
+    $fstype = &get_fs_type($curworkdir);
 
     #move from $from_handle
     $j = $start;
@@ -5572,29 +5572,21 @@ sub insert {
 		}
 		if ($quick_copy == -1) {
 		    $quick_copy = 0;
-		    if ($img_ext eq $img_ext2) {
-			if ($height * $width == 0) {
-			    $quick_copy = 1;
-			} else {
-			    &get_image_size("$fromdir/$from$img_ext2");
-			    return if $panic;
-
-			    if ($hsize == $width && $vsize == $height) {
+		    unless ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
+			if ($img_ext eq $img_ext2) {
+			    if ($height * $width == 0) {
 				$quick_copy = 1;
-			    }}}}
+			    } else {
+				&get_image_size("$fromdir/$from$img_ext2");
+				return if $panic;
+
+				if ($hsize == $width && $vsize == $height) {
+				    $quick_copy = 1;
+				}}}}}
 
 		if ($quick_copy == 1) {
-		    print STDERR "quickcop\n";
 		    if ($HARDLINK_TEST) {
-			if (! -d $fromdirx) {
-		    print STDERR "quickcop2\n";
-			    mkdir $fromdirx;
-		    print STDERR "quickcop3\n";
-			}
-			&smog_rename("$fromdir/$from$img_ext2", "$fromdirx/$from$img_ext2");
-			$smcomret = system("$SYSBIN" . "cp -l \"$fromdirx/$from$img_ext2\", \"$fromdir/$from$img_ext2\"");
-			$smcomret = system("$SYSBIN" . "cp -l \"$fromdirx/$from$img_ext2\", \"$curworkdir/$to$img_ext\"");
-		    print STDERR "quickcop4\n";
+			$smcomret = system("$SYSBIN" . "ln -L \"$fromdir/$from$img_ext2\" \"$curworkdir/$to$img_ext\"");
 		    }
 		    else {
 			&smog_copy("$fromdir/$from$img_ext2", "$curworkdir/$to$img_ext");

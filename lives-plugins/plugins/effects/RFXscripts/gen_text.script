@@ -60,6 +60,13 @@ $cstring1 = &RGB24_to_string($p3_red, $p3_green, $p3_blue);
 $cstring2 = &RGB24_to_string($p4_red, $p4_green, $p4_blue);
 $rdyfile = "";
 ($fam, $stretch, $style, $weight) = &parse_font_string($p7);
+$fstype = &get_fs_type($curworkdir);
+if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
+   $can_ln = 0;
+}
+else {
+     $can_ln = 1;
+}
 </pre>
 
 <loop>
@@ -69,8 +76,13 @@ if ($rdyfile eq "") {
   $rdyfile = $out;
 }
 else {
- `cp $rdyfile $out`;
+ if ($can_ln) {
+   `ln $rdyfile $out`;
  }
+ else {
+   `cp $rdyfile $out`;
+ }
+}
 </loop>
 
 <post>

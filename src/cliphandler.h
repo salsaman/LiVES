@@ -98,6 +98,7 @@ typedef struct _lives_clip_t {
   int vsize; ///< frame height (vertical) in pixels
 
   lives_interlace_t interlace; ///< interlace type (if known - none, topfirst, bottomfirst or : see plugins.h)
+  lives_interlace_t old_interlace;
 
   int bpp; ///< bits per pixel of the image frames, 24 or 32
 
@@ -142,7 +143,7 @@ typedef struct _lives_clip_t {
 #define LIVES_CLIP_HEADER_VERSION 104
 
   // uid of decoder plugin
-  uint64_t decoder_uid;
+  uint64_t decoder_uid, old_dec_uid;
 
   // extended info (not saved)
 
@@ -253,7 +254,7 @@ typedef struct _lives_clip_t {
   double lmap_fix_apad;
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  void *ext_src; ///< points to opaque source for non-disk types
+  void *ext_src, *old_ext_src; ///< points to opaque source for non-disk types
 
 #define LIVES_EXT_SRC_UNKNOWN -1
 #define LIVES_EXT_SRC_NONE 0
@@ -266,7 +267,7 @@ typedef struct _lives_clip_t {
 
 #define LIVES_EXT_SRC_RECORDER 1024
 
-  int ext_src_type;
+  int ext_src_type, old_ext_src_type;
 
   int n_altsrcs;
   void **alt_srcs;

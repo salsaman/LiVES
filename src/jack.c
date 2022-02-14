@@ -1,6 +1,6 @@
 // jack.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2021
+// (c) G. Finch 2005 - 2022
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -2970,11 +2970,10 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                 inputFramesAvailable = in_bytes / (jackd->num_input_channels * (afile->asampsize >> 3));
                 numFramesToWrite = (uint64_t)((double)inputFramesAvailable / (double)fabsf(shrink_factor) + .001);
 
-                if (numFramesToWrite > pulseFramesAvailable) {
+                if (numFramesToWrite > jackFramesAvailable) {
 #ifdef DEBUG_PULSE
                   lives_printerr("dropping last %ld samples\n", numFramesToWrite = pulseFramesAvailable);
 #endif
-                  numFramesToWrite = pulseFramesAvailable;
                 } else if (numFramesToWrite < jackFramesAvailable) {
                   // because of rounding, occasionally we get a sample or two short. Here we duplicate the last samples
                   // so as not to jump to leave a zero filled gap
@@ -2982,8 +2981,9 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
                   for (i = 0; i < nch; i++) {
                     lives_memcpy(out_buffer[i] + numFramesToWrite, out_buffer[i] + numFramesToWrite - lack, lack * 4);
                   }
-                  numFramesToWrite = jackFramesAvailable;
                 }
+
+                numFramesToWrite = jackFramesAvailable;
 
                 if (has_audio_filters(AF_TYPE_ANY) && jackd->playing_file != mainw->ascrap_file) {
                   float **xfltbuf;

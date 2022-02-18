@@ -325,7 +325,7 @@ typedef struct {
   char *ext;
 } _dsquotaw;
 
-void run_diskspace_dialog(void);
+void run_diskspace_dialog(const char *target);
 void run_diskspace_dialog_cb(LiVESWidget *, livespointer data);
 boolean run_diskspace_dialog_idle(livespointer data);
 

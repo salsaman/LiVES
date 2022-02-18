@@ -405,7 +405,6 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
         filename = lives_get_audio_file_name(fileno);
         afd = lives_open_buffered_rdonly(filename);
         lives_free(filename);
-
         if (afd < 0) {
           THREADVAR(read_failed) = -2;
           goto bail;
@@ -420,7 +419,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
             sfile->vol * get_float_audio_val_at_time(fileno,
                 afd, atime, 0, sfile->achans) * 2.;
         }
-        lives_close_buffered(afd);
+        //lives_close_buffered(afd);
       }
 
       if (mainw->current_file != fileno
@@ -521,15 +520,15 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
     if (sfile->audio_waveform[1]) {
       if (start != offset_end) {
         sfile->aw_sizes[1] = offset_end;
-        filename = lives_get_audio_file_name(fileno);
-        afd = lives_open_buffered_rdonly(filename);
-        lives_free(filename);
-        if (afd < 0) {
-          THREADVAR(read_failed) = -2;
-          goto bail;
-        }
+        /* filename = lives_get_audio_file_name(fileno); */
+        /* afd = lives_open_buffered_rdonly(filename); */
+        /* lives_free(filename); */
+        /* if (afd < 0) { */
+        /*   THREADVAR(read_failed) = -2; */
+        /*   goto bail; */
+        /* } */
 
-        lives_buffered_rdonly_slurp(afd, 0);
+        /* lives_buffered_rdonly_slurp(afd, 0); */
         for (i = start; i < offset_end; i++) {
           if (mainw->current_file != fileno
               || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
@@ -538,8 +537,6 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
             sfile->vol * get_float_audio_val_at_time(fileno,
                 afd, atime, 1, sfile->achans) * 2.;
         }
-        lives_close_buffered(afd);
-        afd = -1;
       }
 
       offset_right = NORMAL_CLAMP(offset_right, sfile->raudio_time * scalex);
@@ -613,6 +610,9 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       lives_painter_destroy(cr);
       cr = NULL;
     }
+
+    if (afd >= 0) lives_close_buffered(afd);
+    afd = -1;
   }
 
   if (mainw->current_file != fileno
@@ -1431,8 +1431,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
     lives_free(labeltext);
 
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                    LIVES_GUI_CALLBACK(on_boolean_toggled),
-                                    &mainw->fx1_bool);
+                                    LIVES_GUI_CALLBACK(on_boolean_toggled), &mainw->fx1_bool);
   } else if (!text2) mainw->fx1_bool = TRUE;
 
   if (text2 && (mainw->fx1_bool || opt_resize)) {
@@ -5860,6 +5859,9 @@ static void on_utupinfo_clicked(LiVESWidget * b, livespointer data) {
                   EXEC_YOUTUBE_DL);
 }
 
+
+#define EXAMPLE_DL_URL "http://www.youtube.com/watch?v=WCR6f6WzjP8"
+
 // prompt for the following:
 // - URL
 // save dir
@@ -5870,6 +5872,7 @@ static void on_utupinfo_clicked(LiVESWidget * b, livespointer data) {
 // advanced :: audio selection / save subs / sub language [TODO]
 
 lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req) {
+  static lives_remote_clip_request_t *def_req = NULL;
   LiVESWidget *dialog_vbox;
   LiVESWidget *label;
   LiVESWidget *ext_label;
@@ -5910,6 +5913,10 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   boolean debug = FALSE;
   static boolean trylocal = FALSE;
   static boolean firsttime = TRUE;
+
+  if (!req && def_req) {
+    only_free = def_req->allownf;
+  }
 
   if (!req || !req->do_update || trylocal) {
 #ifdef YTDL_URL
@@ -5995,8 +6002,11 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
-  label = lives_standard_label_new(_("Enter the URL of the clip below.\n"
-                                     "E.g: http://www.youtube.com/watch?v=WCR6f6WzjP8"));
+  tmp = lives_strdup_printf(_("Enter the URL of the clip below.\nE.g. %s"),
+                            EXAMPLE_DL_URL);
+  label = lives_standard_label_new(tmp);
+  lives_free(tmp);
+
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
@@ -6083,9 +6093,12 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Desired frame size:"), TRUE);
 
   lives_memset(mopts, 1, N_MATCH_TYPES);
-  if (mopts[prefs->dload_matmet]) mopts[prefs->dload_matmet] = 2;
-  else mopts[LIVES_MATCH_CHOICE] = 2;
-
+  if (def_req && def_req && mopts[def_req->matchsize])
+    mopts[def_req->matchsize] = 2;
+  else {
+    if (mopts[prefs->dload_matmet]) mopts[prefs->dload_matmet] = 2;
+    else mopts[LIVES_MATCH_CHOICE] = 2;
+  }
   radiobutton_group2 = add_match_methods(LIVES_LAYOUT(layout), mopts,
                                          width_step, height_step, CURRENT_CLIP_HAS_VIDEO);
 
@@ -6190,6 +6203,13 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_widget_destroy(dialog);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   firsttime = FALSE;
+  if (!def_req)
+    def_req = (lives_remote_clip_request_t *)lives_calloc(1, sizeof(lives_remote_clip_request_t));
+  if (def_req) {
+    // keep these around for next time
+    def_req->allownf = req->allownf;
+    def_req->matchsize = req->matchsize;
+  }
   return req;
 }
 
@@ -6448,7 +6468,7 @@ static boolean workdir_change_spacecheck(const char *new_dir, uint64_t *freeds) 
   if (dsval >= 0) capable->ds_used = dsval;
   dsfree = get_ds_free(new_dir);
 
-  if (dsfree < capable->ds_used) {
+  if ((int64_t)dsfree < capable->ds_used) {
     *freeds = dsfree;
     return FALSE;
   }
@@ -6456,11 +6476,39 @@ static boolean workdir_change_spacecheck(const char *new_dir, uint64_t *freeds) 
 }
 
 
+static boolean workdir_check_levels(const char *fpmp, uint64_t freeds) {
+  if (prefs->ds_crit_level <= 0 && prefs->ds_warn_level <= 0 && !prefs->disk_quota)
+    return TRUE;
+  LiVESWidget *dialog = lives_standard_dialog_new(_("Diskspace Options for New Location"),
+                        FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
+  LiVESWidget *dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  LiVESWidget *layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+  LiVESWidget *button, *hbox, *image;
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Diskspace critical levels"), TRUE);
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Diskspace warning levels"), TRUE);
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  button =
+    lives_standard_button_new_full(_("Set quota for new volume"), -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+
+  image = lives_image_find_in_stock(LIVES_ICON_SIZE_BUTTON, "quota", "settings", "preferences", NULL);
+  lives_standard_button_set_image(LIVES_BUTTON(button), image, FALSE);
+
+  lives_dialog_run(LIVES_DIALOG(dialog));
+
+  return FALSE;
+}
+
+
 boolean workdir_change_dialog(void) {
   // show a dialog with message and buttons, set the relevant prefs.
   // return FALSE on Cancel
-  LiVESWidget *dialog = lives_standard_dialog_new(_("Options for Changing Working Directory"), FALSE, DEF_DIALOG_WIDTH,
-                        DEF_DIALOG_HEIGHT);
+  LiVESWidget *dialog = lives_standard_dialog_new(_("Options for Changing Working Directory"),
+                        FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
   LiVESWidget *dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
   LiVESWidget *label, *hbox;
   LiVESWidget *warn_label;
@@ -6469,6 +6517,7 @@ boolean workdir_change_dialog(void) {
 #endif
   LiVESWidget *cancel_button;
   char *msg = workdir_ch_warning();
+  boolean ret = TRUE;
 
   widget_opts.use_markup = TRUE;
   label = lives_standard_formatted_label_new(msg);
@@ -6488,18 +6537,23 @@ boolean workdir_change_dialog(void) {
   //
   cancel_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                   LIVES_RESPONSE_CANCEL);
-  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_DELETE, _("_Delete the directory"),
+  widget_opts.use_markup = TRUE;
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_DELETE,
+                                     _("<b>_Delete</b> the old directory\nand its contents"),
                                      LIVES_RESPONSE_NO);
-  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_KEEP, _("_Leave the files"),
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_KEEP,
+                                     _("<b>_Leave</b> the contents,\nchange to a new directory"),
                                      LIVES_RESPONSE_ACCEPT);
-  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("Move all to the new directory"),
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
+                                     _("<b>_Move</b> everything\nto the new directory"),
                                      LIVES_RESPONSE_YES);
+  widget_opts.use_markup = FALSE;
 
   lives_window_add_escape(LIVES_WINDOW(dialog), cancel_button);
   lives_window_block_delete(LIVES_WINDOW(dialog));
 
   while (1) {
-    LiVESResponseType resp = lives_dialog_run(LIVES_DIALOG(dialog));
+    LiVESResponseType resp = lives_dialog_run_with_countdown(LIVES_DIALOG(dialog), LIVES_RESPONSE_NO, 3);
     if (resp == LIVES_RESPONSE_CANCEL) {
       lives_widget_destroy(dialog);
       return FALSE;
@@ -6542,6 +6596,16 @@ boolean workdir_change_dialog(void) {
           lives_free(fpmp); lives_free(fsz1); lives_free(fsz2);
           continue;
         }
+        // check if we are moving to a different device. If so first check if there is sufficient diskspace,
+        // then prompt the user to set disk warn / critical and quota levels
+        // then check the status post move. If we pass critical level, abandon the operation
+        // if we overshoot disk warn or quota levels, warn the user and allow them to cancel, adjust or ignore.
+
+        if (!workdir_check_levels(fpmp, fsp1)) {
+          lives_free(fpmp);
+          ret = FALSE;
+          break;
+        }
       }
       lives_free(fpmp);
       prefs->workdir_tx_intent = LIVES_INTENTION_MOVE;
@@ -6549,7 +6613,7 @@ boolean workdir_change_dialog(void) {
     break;
   }
   lives_widget_destroy(dialog);
-  return TRUE;
+  return ret;
 }
 
 
@@ -6588,11 +6652,11 @@ static void cleards_cb(LiVESWidget * w, LiVESWidget * dlg) {
 }
 
 void run_diskspace_dialog_cb(LiVESWidget * w, livespointer data) {
-  run_diskspace_dialog();
+  run_diskspace_dialog((const char *)data);
 }
 
 boolean run_diskspace_dialog_idle(livespointer data) {
-  run_diskspace_dialog();
+  run_diskspace_dialog((const char *)data);
   return FALSE;
 }
 
@@ -6909,7 +6973,9 @@ boolean update_dsu(livespointer data) {
   static boolean set_label = FALSE;
   int64_t dsu = -1;
   char *txt;
-  if ((!dsq || dsq->scanning) && (dsu = disk_monitor_check_result(prefs->workdir)) < 0) {
+  char *xtarget = (char *)data;
+  if (!xtarget) xtarget = prefs->workdir;
+  if ((!dsq || dsq->scanning) && (dsu = disk_monitor_check_result(xtarget)) < 0) {
     if (!dsq || !dsq->visible) {
       return FALSE;
     }
@@ -6922,7 +6988,7 @@ boolean update_dsu(livespointer data) {
     if (mainw->dsu_valid) {
       if (dsu > -1) capable->ds_used = dsu;
       dsu = capable->ds_used;
-      mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsu, 0);
+      mainw->ds_status = get_storage_status(xtarget, mainw->next_ds_warn_level, &dsu, 0);
       capable->ds_free = dsu;
       dsq->scanning = FALSE;
       if (mainw->dsu_widget) {
@@ -7076,33 +7142,37 @@ static void dsu_ok_clicked(LiVESWidget * butt, LiVESWidget * toshow) {
 }
 
 static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
+  LiVESWidget *layout2;
+  int64_t ds_free, ds_tot;
   uint64_t dsval;
   char *txt;
-  LiVESWidget *layout2;
+  char *xtarget = (char *)data, *mountpoint;
 
   if (dsq->exp_layout) lives_widget_destroy(dsq->exp_layout);
   dsq->exp_layout = NULL;
-  if (!lives_expander_get_expanded(LIVES_EXPANDER(dsq->expander))) {
-    widget_opts.use_markup = TRUE;
-    lives_expander_set_label(LIVES_EXPANDER(dsq->expander), _("<b>Click for Full _Details</b>"));
-    widget_opts.use_markup = FALSE;
-    return;
-  }
 
-  widget_opts.use_markup = TRUE;
-  lives_expander_set_label(LIVES_EXPANDER(dsq->expander), _("<b>Hide _Details</b>"));
-  widget_opts.use_markup = FALSE;
+  if (!lives_expander_get_expanded(LIVES_EXPANDER(dsq->expander))) return;
 
-  dsq->exp_layout = lives_layout_new(LIVES_BOX(dsq->exp_vbox));
-  layout2 = dsq->exp_layout;
+  ds_free = capable->ds_free;
+  ds_tot = capable->ds_tot;
 
-  lives_layout_add_label(LIVES_LAYOUT(layout2), _("Working directory"), TRUE);
-  lives_layout_add_label(LIVES_LAYOUT(layout2), prefs->workdir, TRUE);
+  if (!xtarget) xtarget = prefs->workdir;
+  xtarget = "/data";
+
+  layout2 = dsq->exp_layout = lives_layout_new(LIVES_BOX(dsq->exp_vbox));
+
+  if (!data)
+    lives_layout_add_label(LIVES_LAYOUT(layout2), _("Working directory"), TRUE);
+  else
+    lives_layout_add_label(LIVES_LAYOUT(layout2), _("New working directory"), TRUE);
+  lives_layout_add_label(LIVES_LAYOUT(layout2), xtarget, TRUE);
 
   lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Mount point"), TRUE);
-  if (!capable->mountpoint) capable->mountpoint = get_mountpoint_for(prefs->workdir);
-  lives_layout_add_label(LIVES_LAYOUT(layout2), capable->mountpoint, TRUE);
+  mountpoint = get_mountpoint_for(xtarget);
+  if (!capable->mountpoint && !data)
+    capable->mountpoint = mountpoint;
+  lives_layout_add_label(LIVES_LAYOUT(layout2), mountpoint, TRUE);
 
   lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Total size"), TRUE);
@@ -7116,10 +7186,22 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Disk space free"), TRUE);
   if (!mainw->dsu_valid || dsq->scanning)
     txt = dsu_label_calculating();
-  else
-    txt = lives_format_storage_space_string(capable->ds_free);
-  lives_layout_add_label(LIVES_LAYOUT(layout2), txt, TRUE);
-  lives_free(txt);
+  else {
+    if (data)
+      txt = lives_format_storage_space_string(capable->ds_free + capable->ds_used);
+    else
+      txt = lives_format_storage_space_string(capable->ds_free);
+    lives_layout_add_label(LIVES_LAYOUT(layout2), txt, TRUE);
+    lives_free(txt);
+
+    if (data) {
+      char *txt2;
+      txt = lives_format_storage_space_string(capable->ds_free);
+      txt2 = lives_strdup_printf(_("(After migrating working directory: %s)"), txt);
+      lives_layout_add_label(LIVES_LAYOUT(layout2), txt2, TRUE);
+      lives_free(txt); lives_free(txt2);
+    }
+  }
 
   if (mainw->dsu_valid && !dsq->scanning) {
     if (capable->ds_free <= prefs->ds_crit_level)
@@ -7149,17 +7231,19 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
   lives_layout_add_label(LIVES_LAYOUT(layout2), txt, TRUE);
   lives_free(txt);
 
-  lives_layout_add_row(LIVES_LAYOUT(layout2));
-  lives_layout_add_label(LIVES_LAYOUT(layout2), _("Sets on disk"), TRUE);
-  txt = lives_strdup_printf("%d", mainw->num_sets + mainw->was_set ? 1 : 0);
-  lives_layout_add_label(LIVES_LAYOUT(layout2), txt, TRUE);
-  lives_free(txt);
+  if (!data) {
+    lives_layout_add_row(LIVES_LAYOUT(layout2));
+    lives_layout_add_label(LIVES_LAYOUT(layout2), _("Sets on disk"), TRUE);
+    txt = lives_strdup_printf("%d", mainw->num_sets + mainw->was_set ? 1 : 0);
+    lives_layout_add_label(LIVES_LAYOUT(layout2), txt, TRUE);
+    lives_free(txt);
 
-  //lives_layout_add_row(LIVES_LAYOUT(layout2));
-  lives_layout_add_label(LIVES_LAYOUT(layout2), _("Currently opened clips"), TRUE);
-  txt = lives_strdup_printf("%d", mainw->clips_available);
-  lives_layout_add_label(LIVES_LAYOUT(layout2), txt, TRUE);
-  lives_free(txt);
+    //lives_layout_add_row(LIVES_LAYOUT(layout2));
+    lives_layout_add_label(LIVES_LAYOUT(layout2), _("Currently opened clips"), TRUE);
+    txt = lives_strdup_printf("%d", mainw->clips_available);
+    lives_layout_add_label(LIVES_LAYOUT(layout2), txt, TRUE);
+    lives_free(txt);
+  }
 
   lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Disk quota"), TRUE);
@@ -7205,6 +7289,12 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
       lives_free(txt);
     }
   }
+
+  if (!lives_strcmp(xtarget, prefs->workdir)) {
+    capable->ds_free = ds_free;
+    capable->ds_tot = ds_tot;
+  }
+
   lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Disk warning level"), TRUE);
   lives_widget_set_tooltip_text(widget_opts.last_label, H_("value can be set in Preferences . Warnings"));
@@ -7288,7 +7378,7 @@ static void dsu_abort_clicked(LiVESWidget * butt, livespointer data) {
   if (do_abort_check()) lives_abort("User aborted within quota maintenance");
 }
 
-void run_diskspace_dialog(void) {
+void run_diskspace_dialog(const char *target) {
   LiVESWidget *dialog, *dialog_vbox;
   LiVESWidget *layout;
   LiVESWidget *label;
@@ -7303,7 +7393,8 @@ void run_diskspace_dialog(void) {
 
   LiVESWidgetColor colr;
 
-  char *title, *tmp;
+  char *title, *tmp, *tmp2;
+  char *xtarget = (char *)target;
   int wofl;
 
   /// kick off a bg process to get free ds and ds used
@@ -7311,7 +7402,9 @@ void run_diskspace_dialog(void) {
   if (!dsq) dsq = (_dsquotaw *)lives_calloc(1, sizeof(_dsquotaw));
 
   dsq->scanning = TRUE;
-  disk_monitor_start(prefs->workdir);
+  if (!target) xtarget = prefs->workdir;
+  xtarget = "/data";
+  disk_monitor_start(xtarget);
 
   dsq->setting = FALSE;
   dsq->visible = TRUE;
@@ -7476,7 +7569,9 @@ void run_diskspace_dialog(void) {
 
   layout = lives_layout_new(LIVES_BOX(dialog_vbox));
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  dsq->expander = lives_standard_expander_new(NULL, NULL, LIVES_BOX(hbox), dsq->exp_vbox);
+  dsq->expander = lives_standard_expander_new(tmp = _("<b>Click for Full _Details</b>"),
+                  tmp2 = _("<b>Hide _Details</b>"), LIVES_BOX(hbox), dsq->exp_vbox);
+  lives_free(tmp); lives_free(tmp2);
   lives_layout_expansion_row_new(LIVES_LAYOUT(layout), dsq->expander);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(dsq->expander), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -7520,8 +7615,10 @@ void run_diskspace_dialog(void) {
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-  dsq->button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("Change _Quota"),
+  widget_opts.use_markup = TRUE;
+  dsq->button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("<b>Change _Quota</b>"),
                 DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+  widget_opts.use_markup = FALSE;
   lives_widget_set_focus_on_click(dsq->button, FALSE);
 
   lives_box_pack_start(LIVES_BOX(hbox), dsq->button, FALSE, FALSE, widget_opts.packing_width * 4);

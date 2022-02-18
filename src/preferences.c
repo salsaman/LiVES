@@ -4254,7 +4254,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->the_button = lives_standard_button_new_from_stock_full(LIVES_STOCK_REFRESH,
-                       _("\t\tCLICK HERE TO COMPLETELY RESET LiVES \t (confirmation required)\t\t"), -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+                       _("\t\tCLICK HERE TO COMPLETELY RESET LiVES \t (confirmation required)\t\t"),
+                       -1, -1, LIVES_BOX(hbox), TRUE, NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->the_button), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(do_full_reset), NULL);

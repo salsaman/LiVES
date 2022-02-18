@@ -2583,7 +2583,7 @@ rest3:
       capable->ds_used = disk_monitor_wait_result(prefs->workdir, LIVES_DEFAULT_TIMEOUT);
       if (capable->ds_used >= 0) {
         ran_ds_dlg = TRUE;
-        run_diskspace_dialog();
+        run_diskspace_dialog(NULL);
       } else {
         disk_monitor_forget();
         if (prefs->show_disk_quota)
@@ -3985,7 +3985,7 @@ boolean lazy_startup_checks(void *data) {
       }
     }
     if (do_show_quota) {
-      run_diskspace_dialog();
+      run_diskspace_dialog(NULL);
       return TRUE;
     }
   }

@@ -996,7 +996,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
             if (numFramesToWrite > pulseFramesAvailable) {
 #ifdef DEBUG_PULSE
-              lives_printerr("dropping last %ld samples\n", numFramesToWrite = pulseFramesAvailable);
+              lives_printerr("dropping last %ld samples\n", numFramesToWrite - pulseFramesAvailable);
 #endif
             } else if (numFramesToWrite < pulseFramesAvailable) {
               // because of rounding, occasionally we get a sample or two short. Here we duplicate the last samples

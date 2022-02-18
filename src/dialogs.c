@@ -646,11 +646,15 @@ LiVESResponseType lives_dialog_run_with_countdown(LiVESDialog *dialog, LiVESResp
   LiVESWidget *button = lives_dialog_get_widget_for_response(dialog, target);
   char *btext = lives_strdup(lives_standard_button_get_label(LIVES_BUTTON(button)));
   LiVESResponseType response = LIVES_RESPONSE_NONE;
+  boolean use_markup = GET_INT_DATA(button, SBUTT_MARKUP_KEY);
+  boolean woum = widget_opts.use_markup;
   for (; nclicks > 0; nclicks--) {
     char *tmp = lives_strdup_printf(P_("%s\n(Click %d more time)", "%s\n(Click %d more times)", nclicks),
                                     btext, nclicks);
+    widget_opts.use_markup = use_markup;
     lives_standard_button_set_label(LIVES_BUTTON(button), tmp);
     lives_free(tmp);
+    widget_opts.use_markup = woum;
     response = lives_dialog_run(LIVES_DIALOG(dialog));
     if (response != target) break;
   }
@@ -1226,7 +1230,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
   } while (ds == LIVES_STORAGE_STATUS_CRITICAL);
 
   if (ds == LIVES_STORAGE_STATUS_OVER_QUOTA && !mainw->is_processing) {
-    run_diskspace_dialog();
+    run_diskspace_dialog(NULL);
   }
 
   if (did_pause && mainw->effects_paused) {

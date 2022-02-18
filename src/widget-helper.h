@@ -1655,6 +1655,8 @@ const widget_opts_t _def_widget_opts = {
 #define WIDTH_KEY "_wh_width"
 #define HEIGHT_KEY "_wh_height"
 
+#define SBUTT_MARKUP_KEY "_sbutt_markup"
+
 // will be moved to separate header after testing
 //#define WEED_WIDGETS
 #ifdef WEED_WIDGETS

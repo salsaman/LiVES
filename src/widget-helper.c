@@ -82,7 +82,6 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 
 #define SBUTT_SURFACE_KEY "_sbutt_surf"
 #define SBUTT_TXT_KEY "_sbutt_txt"
-#define SBUTT_MARKUP_KEY "_sbutt_markup"
 #define SBUTT_LAYOUT_KEY "_sbutt_layout"
 #define SBUTT_LW_KEY "_sbutt_lw"
 #define SBUTT_LH_KEY "_sbutt_lh"
@@ -8959,8 +8958,7 @@ static LiVESWidget *_lives_standard_button_set_full(LiVESWidget * sbutt, LiVESBo
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_button_new_full(const char *label, int width,
-    int height, LiVESBox * box,
-    boolean fake_default,
+    int height, LiVESBox * box, boolean fake_default,
     const char *ttips) {
   LiVESWidget *sbutt = lives_standard_button_new_with_label(label, width, height);
   return _lives_standard_button_set_full(sbutt, box, fake_default, ttips);
@@ -8968,9 +8966,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_button_new_full(const ch
 
 
 LiVESWidget *lives_standard_button_new_from_stock_full(const char *stock_id, const char *label,
-    int width, int height,  LiVESBox * box,
-    boolean fake_default,
-    const char *ttips) {
+    int width, int height,  LiVESBox * box, boolean fake_default, const char *ttips) {
   LiVESWidget *sbutt = lives_standard_button_new_from_stock(stock_id, label, width, height);
   return _lives_standard_button_set_full(sbutt, box, fake_default, ttips);
 }

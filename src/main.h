@@ -199,7 +199,7 @@ typedef pid_t lives_pid_t;
 #endif
 
 #define LIVES_DIR_SEP "/"
-#define LIVES_COPYRIGHT_YEARS "2002 - 2021"
+#define LIVES_COPYRIGHT_YEARS "2002 - 2022"
 
 #if defined (IS_DARWIN) || defined (IS_FREEBSD)
 #ifndef off64_t

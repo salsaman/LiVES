@@ -15615,7 +15615,7 @@ void multitrack_view_events(LiVESMenuItem * menuitem, livespointer user_data) {
     if (!do_event_list_warning()) return;
   mt_desensitise(mt);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-  elist_dialog = create_event_list_dialog(mt->event_list, 0, 0);
+  elist_dialog = create_event_list_dialog(mt->event_list, 0, 0, EL_OPTS_SHOWALL);
   lives_dialog_run(LIVES_DIALOG(elist_dialog));
   mt_sensitise(mt);
 }
@@ -15634,7 +15634,7 @@ void multitrack_view_sel_events(LiVESMenuItem * menuitem, livespointer user_data
     if (!do_event_list_warning()) return;
   mt_desensitise(mt);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-  elist_dialog = create_event_list_dialog(mt->event_list, tc_start, tc_end);
+  elist_dialog = create_event_list_dialog(mt->event_list, tc_start, tc_end, EL_OPTS_SHOWALL);
   mt_sensitise(mt);
   lives_dialog_run(LIVES_DIALOG(elist_dialog));
 }

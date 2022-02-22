@@ -38,8 +38,6 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 
 #define NSLEEP_TIME 500
 
-#define IS_GUI_THREAD (pthread_self() == capable->gui_thread)
-
 /// internal data keys
 #define STD_KEY "_wh_is_standard"
 #define EXCL_KEY "_wh_excl"
@@ -1781,7 +1779,7 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_show_all(LiVESWidget *widget) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
 #ifdef GUI_GTK
-  if (!mainw || !mainw->is_ready || IS_GUI_THREAD) return _lives_widget_show_all(widget);
+  if (!mainw || !mainw->is_ready || is_fg_thread()) return _lives_widget_show_all(widget);
   return lives_widget_show_all_from_bg(widget);
 #endif
   return FALSE;
@@ -1843,7 +1841,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_realize(LiVESWidget *widget) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw(LiVESWidget *widget) {
+WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_queue_draw(LiVESWidget *widget) {
 #ifdef GUI_GTK
   if (!GTK_IS_WIDGET(widget)) {
     LIVES_WARN("Draw queue invalid widget");
@@ -1855,8 +1853,15 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw(LiVESWidget *widget)
   return FALSE;
 }
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw(LiVESWidget *widget) {
+  boolean resp;
+  if (is_fg_thread()) return _lives_widget_queue_draw(widget);
+  else main_thread_execute((lives_funcptr_t)_lives_widget_queue_draw, WEED_SEED_BOOLEAN, &resp, "v", widget);
+  return resp;
+}
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_area(LiVESWidget *widget, int x, int y, int width, int height) {
+
+WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_queue_draw_area(LiVESWidget *widget, int x, int y, int width, int height) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
   gtk_widget_queue_draw_area(widget, x, y, width, height);
@@ -1865,6 +1870,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_area(LiVESWidget *wi
 #endif
 #endif
   return FALSE;
+}
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_area(LiVESWidget *widget, int x, int y, int width, int height) {
+  boolean resp;
+  if (is_fg_thread()) return _lives_widget_queue_draw_area(widget, x, y, width, height);
+  else main_thread_execute((lives_funcptr_t)_lives_widget_queue_draw_area, WEED_SEED_BOOLEAN, &resp,
+                             "viiii", widget, x, y, width, height);
+  return resp;
 }
 
 
@@ -2100,7 +2113,7 @@ static LiVESResponseType _lives_dialog_run(LiVESDialog *dialog) {
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dialog) {
   LiVESResponseType resp;
-  if (IS_GUI_THREAD) return _lives_dialog_run(dialog);
+  if (is_fg_thread()) return _lives_dialog_run(dialog);
   else main_thread_execute((lives_funcptr_t)_lives_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
   return resp;
 }
@@ -8110,6 +8123,14 @@ WIDGET_HELPER_LOCAL_INLINE void lives_layout_attach(LiVESLayout *layout, LiVESWi
 }
 
 
+/**
+   This function adds an 'expansion row' to a LiVES layout. An expansion row is a single box which
+   expands to the width of a layout row. This can be useful to prevent a layout column from becoming overly wide.
+   The function can be used in two ways, if the second parameter is NULL, then an hbox is returned which a widget
+   can then be packed into. Otherwise, the second parameter can be set to point to an existing widget in the layout,
+   allowing it to be converted to an expansion row after it has already been added, permitting the use of anonymous
+   widgets.
+*/
 LiVESWidget *lives_layout_expansion_row_new(LiVESLayout *layout, LiVESWidget *widget) {
   LiVESList *xwidgets = (LiVESList *)lives_widget_object_steal_data(LIVES_WIDGET_OBJECT(layout), EXP_LIST_KEY);
   LiVESWidget *box = NULL;

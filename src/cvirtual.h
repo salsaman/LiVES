@@ -16,6 +16,8 @@ boolean save_frame_index(int fileno);
 frames_t load_frame_index(int fileno) WARN_UNUSED;
 boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_t maxframe);
 lives_img_type_t resolve_img_type(lives_clip_t *);
+boolean repair_frame_index(int fileno, frames_t offs);
+void repair_findex_cb(LiVESMenuItem *, livespointer offsp);
 
 frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean update_progress, LiVESPixbuf **pbr);
 void delete_frames_from_virtual(int sfileno, frames_t start, frames_t end);

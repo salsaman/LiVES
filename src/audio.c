@@ -3601,7 +3601,7 @@ boolean resync_audio(int clipno, double frameno) {
     }
 
     if (!mainw->alock_abuf) jack_get_rec_avals(mainw->jackd);
-    else jack_set_avel(mainw->jackd, sfile->pb_fps / sfile->fps);
+    else jack_set_avel(mainw->jackd, clipno, sfile->pb_fps / sfile->fps);
     return TRUE;
   }
 #endif
@@ -3617,7 +3617,7 @@ boolean resync_audio(int clipno, double frameno) {
     }
 
     if (!mainw->alock_abuf) pulse_get_rec_avals(mainw->pulsed);
-    else pulse_set_avel(mainw->pulsed, sfile->pb_fps / sfile->fps);
+    else pulse_set_avel(mainw->pulsed, clipno, sfile->pb_fps / sfile->fps);
     return TRUE;
   }
 #endif

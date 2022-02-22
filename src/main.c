@@ -970,10 +970,10 @@ static boolean pre_init(void) {
 
   // recursive locks
   pthread_mutex_init(&mainw->abuf_mutex, &mattr);
-  pthread_mutex_init(&mainw->fgthread_mutex, &mattr);
   pthread_mutex_init(&mainw->instance_ref_mutex, &mattr);
 
   // non-recursive
+  pthread_mutex_init(&mainw->fgthread_mutex, NULL);
   pthread_mutex_init(&mainw->abuf_aux_frame_mutex, NULL);
   pthread_mutex_init(&mainw->fxd_active_mutex, NULL);
   pthread_mutex_init(&mainw->event_list_mutex, NULL);
@@ -8070,6 +8070,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           int nplanes;
 #endif
           void **pixel_data;
+          frames_t iframe;
           boolean res = TRUE;
           int *rowstrides;
           lives_decoder_t *dplug = NULL;
@@ -8084,7 +8085,8 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
             }
             if (!dplug) dplug = (lives_decoder_t *)sfile->ext_src;
           }
-          if (!dplug || !dplug->cdata) {
+          iframe = get_indexed_frame(clip, frame);
+          if (!dplug || !dplug->cdata || iframe >= dplug->cdata->nframes) {
             if (need_unlock) pthread_mutex_unlock(&sfile->frame_index_mutex);
             create_blank_layer(layer, image_ext, width, height, target_palette);
             weed_layer_unref(layer);
@@ -8169,8 +8171,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 
           //g_print("NOW %d\\n", get_indexed_frame(clip, frame));
 
-          if (!(*dplug->dpsys->get_frame)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame),
-                                          rowstrides, sfile->vsize, pixel_data)) {
+          if (!(*dplug->dpsys->get_frame)(dplug->cdata, (int64_t)iframe, rowstrides, sfile->vsize, pixel_data)) {
             if (prefs->show_dev_opts) {
               g_print("Error loading frame %d (index value %d)\n", frame,
                       sfile->frame_index[frame - 1]);
@@ -8972,16 +8973,6 @@ void switch_to_file(int old_file, int new_file) {
     return;
   }
 
-  pthread_mutex_lock(&mainw->tlthread_mutex);
-  if (mainw->drawtl_thread) {
-    if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-      lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
-    }
-    lives_proc_thread_join(mainw->drawtl_thread);
-    mainw->drawtl_thread = NULL;
-  }
-  pthread_mutex_unlock(&mainw->tlthread_mutex);
-
   mainw->current_file = new_file;
 
   if (old_file != new_file) {
@@ -9120,13 +9111,11 @@ void switch_to_file(int old_file, int new_file) {
 }
 
 
-#define FIDDLE_FACTOR 0.007 // const seconds to subtract
-
 boolean switch_audio_clip(int new_file, boolean activate) {
   ticks_t timeout;
   lives_clip_t *sfile;
   lives_alarm_t alarm_handle;
-  double ratio = 0.;
+  boolean do_resync = FALSE;
   int aplay_file;
 
   if (!IS_VALID_CLIP(new_file)) return FALSE;
@@ -9134,10 +9123,6 @@ boolean switch_audio_clip(int new_file, boolean activate) {
   if (AUD_SRC_EXTERNAL) return FALSE;
   aplay_file = get_aplay_clipno();
   sfile = mainw->files[new_file];
-
-  if (IS_VALID_CLIP(aplay_file) && mainw->files[aplay_file]->pb_fps && sfile->pb_fps) {
-    ratio = sfile->pb_fps / mainw->files[aplay_file]->pb_fps;
-  }
 
   if ((aplay_file == new_file && (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
                                   || !CLIP_HAS_AUDIO(new_file)))
@@ -9150,20 +9135,20 @@ boolean switch_audio_clip(int new_file, boolean activate) {
   /*   return FALSE; */
   /* } */
 
-  if (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP) {
-    mainw->scratch = SCRATCH_JUMP;
-  }
 
   if (new_file == aplay_file) {
     if (sfile->pb_fps > 0. || (sfile->play_paused && sfile->freeze_fps > 0.))
       sfile->adirection = LIVES_DIRECTION_FORWARD;
     else sfile->adirection = LIVES_DIRECTION_REVERSE;
+  } else if (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP) {
+    mainw->scratch = SCRATCH_JUMP;
+    do_resync = TRUE;
   }
 
   if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
     if (mainw->jackd) {
-      if (mainw->scratch == SCRATCH_JUMP) {
+      if (do_resync) {
         sfile->aseek_pos =
           (off_t)((double)sfile->frameno / sfile->fps * sfile->arate)
           * sfile->achans * sfile->asampsize / 8;
@@ -9215,7 +9200,8 @@ boolean switch_audio_clip(int new_file, boolean activate) {
       if (CLIP_HAS_AUDIO(new_file)) {
         int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
         int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
-        sfile->aseek_pos += (off_t)(sfile->adirection * (-FIDDLE_FACTOR * ratio));
+        sfile->aseek_pos += (off_t)((sfile->adirection * 1. / sfile->fps
+                                     * sfile->arate)) * sfile->achans * (sfile->asampsize >> 3);
         mainw->jackd->num_input_channels = sfile->achans;
         mainw->jackd->bytes_per_channel = sfile->asampsize / 8;
         if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
@@ -9277,7 +9263,7 @@ boolean switch_audio_clip(int new_file, boolean activate) {
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed) {
-      if (mainw->scratch == SCRATCH_JUMP) {
+      if (do_resync) {
         sfile->aseek_pos =
           (off_t)((double)sfile->frameno / sfile->fps * sfile->arate)
           * sfile->achans * sfile->asampsize / 8;
@@ -9329,10 +9315,8 @@ boolean switch_audio_clip(int new_file, boolean activate) {
         if (CLIP_HAS_AUDIO(new_file)) {
           int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
           int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
-          sfile->aseek_pos += (off_t)((sfile->adirection * (-FIDDLE_FACTOR + 1. / fabs(sfile->pb_fps)
-                                       - (double)(mainw->currticks - mainw->startticks)
-                                       * ratio / TICKS_PER_SECOND_DBL)
-                                       * sfile->arps) * sfile->achans * (sfile->asampsize >> 3));
+          sfile->aseek_pos += (off_t)((sfile->adirection * 1. / sfile->fps
+                                       * sfile->arate)) * sfile->achans * (sfile->asampsize >> 3);
           mainw->pulsed->in_achans = sfile->achans;
           mainw->pulsed->in_asamps = sfile->asampsize;
           if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
@@ -9482,7 +9466,7 @@ void do_quick_switch(int new_file) {
 
   if (sfile) sfile->last_play_sequence = mainw->play_sequence;
 
-  pthread_mutex_lock(&mainw->tlthread_mutex);
+  lives_mutex_lock_carefully(&mainw->tlthread_mutex);
   if (mainw->drawtl_thread) {
     if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
       lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
@@ -9512,8 +9496,6 @@ void do_quick_switch(int new_file) {
     }
   }
 
-  changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(1));
-
   mainw->deltaticks = 0;
 
   set_main_title(cfile->name, 0);
@@ -9539,6 +9521,8 @@ void do_quick_switch(int new_file) {
   cfile->last_frameno = cfile->frameno;
 
   mainw->playing_file = new_file;
+
+  changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(1));
 
   cfile->next_event = NULL;
 
@@ -9590,11 +9574,7 @@ void do_quick_switch(int new_file) {
   mainw->osc_block = osc_block;
   lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
 
-  if (!mainw->fs && !mainw->faded) {
-    show_playbar_labels(mainw->current_file);
-    redraw_timeline_bg(mainw->current_file);
-    set_sel_label(mainw->sel_label);
-  }
+  do_tl_redraw(LIVES_INT_TO_POINTER(mainw->current_file));
 }
 
 

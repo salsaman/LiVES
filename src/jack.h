@@ -256,7 +256,7 @@ boolean jack_audio_seek_frame(jack_driver_t *, double frame);  ///< seek to (vid
 int64_t jack_audio_seek_bytes(jack_driver_t *, int64_t bytes, lives_clip_t *sfile);  ///< seek to byte position
 size_t jack_get_buffsize(jack_driver_t *);
 
-void jack_set_avel(jack_driver_t *, double ratio);
+void jack_set_avel(jack_driver_t *, int clipno, double ratio);
 
 void jack_get_rec_avals(jack_driver_t *);
 

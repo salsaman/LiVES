@@ -35,6 +35,7 @@ void redraw_timer_bars(double oldx, double newx, int which); ///< paint a damage
 void show_playbar_labels(int clipno);
 void redraw_timeline(int clipno);
 void redraw_timeline_bg(int clipno);
+void do_tl_redraw(void *xclipno);
 
 void msg_area_scroll(LiVESAdjustment *, livespointer userdata);
 void msg_area_scroll_to_end(LiVESWidget *, LiVESAdjustment *);

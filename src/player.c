@@ -361,7 +361,6 @@ static boolean avsync_check(void) {
       ts.tv_sec++;
       ts.tv_nsec -= ONE_BILLION;
     }
-    sched_yield();
     rc = pthread_cond_timedwait(&mainw->avseek_cond, &mainw->avseek_mutex, &ts);
     mainw->video_seek_ready = TRUE;
   }
@@ -2127,7 +2126,9 @@ frames_t calc_new_playback_position(int fileno, boolean is_fg, ticks_t otc, tick
   }
 
   // dtc is delta ticks (last frame time - current time), quantise this to the frame rate and round down
-  dtc = q_gint64_floor(dtc, fabs(fps));
+  //dtc = q_gint64_floor(dtc, fabs(fps));
+
+  if (dtc < 0) dtc = 0;
 
   // ntc is the time when the next frame should be / have been played, or if dtc is zero we just set it to otc - the last frame time
   *ntc = otc + dtc;
@@ -2140,9 +2141,9 @@ frames_t calc_new_playback_position(int fileno, boolean is_fg, ticks_t otc, tick
   // nframe is our new frame; convert dtc to seconds, and multiply by the frame rate, then add or subtract from current frame number
   // the small constant is just to account for rounding errors
   if (fps >= 0.)
-    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps + .5);
+    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps + .0);
   else
-    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps - .5);
+    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps - .0);
 
   //g_print("FRAMES %d and %d\n", cframe, nframe);
 
@@ -2630,22 +2631,37 @@ switch_point:
     mainw->deltaticks = 0;
 
     if (IS_VALID_CLIP(mainw->playing_file)) {
-      /* if (sfile->arate) { */
-      /*   g_print("HIB %d %d %d %d %ld %f %f %ld %ld %d %f\n", sfile->frameno, last_req_frame, mainw->playing_file, */
-      /*   	aplay_file, sfile->aseek_pos, */
-      /*   	sfile->fps * lives_jack_get_pos(mainw->jackd) + 1., (double)sfile->aseek_pos */
-      /*   	/ (double)sfile->arps / 4. * sfile->fps + 1., */
-      /*   	mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
-      /*   sfile->frameno = sfile->last_frameno = last_req_frame + sig(sfile->pb_fps); */
-      /* } */
-      /* if (sfile->arate) { */
-      /*   g_print("HIB %d %d %d %d %ld %f %f %ld %ld %d %f\n", sfile->frameno, last_req_frame, mainw->playing_file, */
-      /*   	aplay_file, sfile->aseek_pos, */
-      /*   	sfile->fps * lives_pulse_get_pos(mainw->pulsed) + 1., (double)sfile->aseek_pos */
-      /*   	/ (double)sfile->arps / 4. * sfile->fps + 1., */
-      /*   	mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
-      /*   sfile->frameno = sfile->last_frameno = last_req_frame + sig(sfile->pb_fps); */
-      /* } */
+#ifdef ENABLE_JACK
+      if (prefs->audio_player == AUD_PLAYER_JACK) {
+        if (sfile->arate) {
+          sfile->aseek_pos = (double)((frames_t)(sfile->fps *
+                                                 lives_jack_get_pos(mainw->jackd) + 1.5))
+                             / sfile->fps * (double)(sfile->achans * sfile->asampsize / 8. * sfile->arps);
+          /* g_print("HIB %d %d %d %d %ld %f %f %ld %ld %d %f\n", sfile->frameno, last_req_frame, mainw->playing_file, */
+          /* 	  aplay_file, sfile->aseek_pos, */
+          /* 	  sfile->fps * lives_jack_get_pos(mainw->jackd) + 1., (double)sfile->aseek_pos */
+          /* 	  / (double)sfile->arps / 4. * sfile->fps + 1., */
+          /* 	  mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
+          sfile->frameno = sfile->last_frameno = last_req_frame + sig(sfile->pb_fps);
+        }
+      }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+      if (prefs->audio_player == AUD_PLAYER_PULSE) {
+        if (sfile->arate) {
+          sfile->aseek_pos = (lives_pulse_get_pos(mainw->pulsed)
+                              - (mainw->startticks - mainw->currticks) / TICKS_PER_SECOND_DBL)
+                             * (double)(sfile->achans * sfile->asampsize / 8. * sfile->arate);
+
+          /* g_print("HIB %d %d %d %d %ld %f %f %ld %ld %d %f\n", sfile->frameno, last_req_frame, mainw->playing_file, */
+          /* 	  aplay_file, sfile->aseek_pos, */
+          /* 	  sfile->fps * lives_pulse_get_pos(mainw->pulsed) + 1., (double)sfile->aseek_pos */
+          /* 	  / (double)sfile->arps / 4. * sfile->fps + 1., */
+          /* 	  mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
+          sfile->frameno = sfile->last_frameno = last_req_frame + sig(sfile->pb_fps);
+        }
+      }
+#endif
       if (mainw->frame_layer_preload) {
         check_layer_ready(mainw->frame_layer_preload);
         weed_layer_free(mainw->frame_layer_preload);
@@ -2663,15 +2679,15 @@ switch_point:
     }
 #endif
 
-    if (AV_CLIPS_EQUAL) {
-      aplay_file = get_aplay_clipno();
-      if (IS_VALID_CLIP(aplay_file)) {
-        lives_clip_t *sfile = mainw->files[aplay_file];
-        int qnt = sfile->achans * (sfile->asampsize >> 3);
-        sfile->aseek_pos -= (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
-                            * sfile->arps * qnt;
-      }
-    }
+    /* if (AV_CLIPS_EQUAL) { */
+    /*   aplay_file = get_aplay_clipno(); */
+    /*   if (IS_VALID_CLIP(aplay_file)) { */
+    /*     lives_clip_t *sfile = mainw->files[aplay_file]; */
+    /*     int qnt = sfile->achans * (sfile->asampsize >> 3); */
+    /*     sfile->aseek_pos -= (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL */
+    /*                         * sfile->arps * qnt; */
+    /*   } */
+    /* } */
 
     do_quick_switch(mainw->new_clip);
     did_switch = TRUE;
@@ -2689,20 +2705,26 @@ switch_point:
     real_requested_frame = 0;
     dropped = 0;
 
-    /* if (sfile->arate) */
-    /*   g_print("HIB2 %d %d %d %d %d %ld %f %f %ld %ld %d %f\n", mainw->actual_frame, sfile->frameno, last_req_frame, */
-    /*   	      mainw->playing_file, aplay_file, sfile->aseek_pos, */
-    /*   	      sfile->fps * lives_jack_get_pos(mainw->jackd) + 1., */
-    /*   	      (double)sfile->aseek_pos / (double)sfile->arate / 4. * sfile->fps + 1., */
-    /*   	      mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
-
-    /* if (sfile->arate) */
-    /*   g_print("HIB2 %d %d %d %d %d %ld %f %f %ld %ld %d %f\n", mainw->actual_frame, sfile->frameno, last_req_frame, */
-    /*   	      mainw->playing_file, aplay_file, sfile->aseek_pos, */
-    /*   	      sfile->fps * lives_pulse_get_pos(mainw->pulsed) + 1., */
-    /*   	      (double)sfile->aseek_pos / (double)sfile->arate / 4. * sfile->fps + 1., */
-    /*   	      mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
-
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK) {
+      /* if (sfile->arate) */
+      /*   g_print("HIB2 %d %d %d %d %d %ld %f %f %ld %ld %d %f\n", mainw->actual_frame, sfile->frameno, last_req_frame, */
+      /* 	  mainw->playing_file, aplay_file, sfile->aseek_pos, */
+      /* 	  sfile->fps * lives_jack_get_pos(mainw->jackd) + 1., */
+      /* 	  (double)sfile->aseek_pos / (double)sfile->arate / 4. * sfile->fps + 1., */
+      /* 	  mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
+    }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE) {
+      /* if (sfile->arate) */
+      /*   g_print("HIB2 %d %d %d %d %d %ld %f %f %ld %ld %d %f\n", mainw->actual_frame, sfile->frameno, last_req_frame, */
+      /* 	  mainw->playing_file, aplay_file, sfile->aseek_pos, */
+      /* 	  sfile->fps * lives_pulse_get_pos(mainw->pulsed) + 1., */
+      /* 	  (double)sfile->aseek_pos / (double)sfile->arate / 4. * sfile->fps + 1., */
+      /* 	  mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
+    }
+#endif
     cache_hits = cache_misses = 0;
     mainw->force_show = TRUE;
     mainw->actual_frame = mainw->files[mainw->new_clip]->frameno;
@@ -2715,7 +2737,7 @@ switch_point:
     // this may be adjusted for accuracy | a value > 1.0 will slow audio down on switch
 #define SWITCH_COMPENSATION 1.0
 
-    mainw->audio_stretch = SWITCH_COMPENSATION;
+    //mainw->audio_stretch = SWITCH_COMPENSATION;
     scratch = SCRATCH_JUMP_NORESYNC;
     drop_off = TRUE;
     last_req_frame = sfile->frameno - 1;
@@ -3274,12 +3296,12 @@ update_effort:
 
 #ifdef HAVE_PULSE_AUDIO
           if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
-            mainw->files[aplay_file]->aseek_pos =
-              (double)((off_t)((double) mainw->pulsed->seek_pos / (double)mainw->files[aplay_file]->arps
-                               / (mainw->files[aplay_file]->achans * mainw->files[aplay_file]->asampsize / 8
-                                  + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL)
-                               * mainw->files[aplay_file]->fps + .5)) / mainw->files[aplay_file]->fps
-              * mainw->files[aplay_file]->arps * qnt;
+            /* mainw->files[aplay_file]->aseek_pos = */
+            /*   (double)((off_t)((double) mainw->pulsed->seek_pos / (double)mainw->files[aplay_file]->arps */
+            /*                    / (mainw->files[aplay_file]->achans * mainw->files[aplay_file]->asampsize / 8 */
+            /*                       + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL) */
+            /*                    * mainw->files[aplay_file]->fps + .5)) / mainw->files[aplay_file]->fps */
+            /*   * mainw->files[aplay_file]->arps * qnt; */
 
             //g_print("ASEEK VALS %ld for %d -> %d\n", mainw->files[aplay_file]->aseek_pos, aplay_file, mainw->playing_file);
 

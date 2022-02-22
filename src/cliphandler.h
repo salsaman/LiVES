@@ -323,6 +323,8 @@ typedef struct _lives_clip_t {
   boolean hidden; // hidden in menu by clip groups
 
   boolean tsavedone;
+
+  ticks_t sync_delta; // used for audio sync when switching back to the clip
 } lives_clip_t;
 
 typedef struct {

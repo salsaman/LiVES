@@ -2095,9 +2095,14 @@ void jack_pb_stop(jack_driver_t *jackd) {
 ////////////////////////////////////////////
 // audio
 
-void jack_set_avel(jack_driver_t *jackd, double ratio) {
-  jackd->sample_in_rate = afile->arate * ratio;
-  jack_get_rec_avals(jackd);
+void jack_set_avel(jack_driver_t *jackd, int clipno, double ratio) {
+  if (!CLIP_HAS_AUDIO(clipno)) {
+    jackd->sample_in_rate = jackd->sample_out_rate * ratio;
+  } else {
+    lives_clip_t *sfile = mainw->files[clipno];
+    jackd->sample_in_rate = sfile->arate * ratio;
+  }
+  if (jackd->playing_file == clipno) jack_get_rec_avals(jackd);
 }
 
 

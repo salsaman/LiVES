@@ -172,20 +172,22 @@ retry:
 }
 
 
-void pulse_set_avel(pulse_driver_t *pulsed, double ratio) {
-  if (!CLIP_HAS_AUDIO(pulsed->playing_file)) {
+void pulse_set_avel(pulse_driver_t *pulsed, int clipno, double ratio) {
+  if (!CLIP_HAS_AUDIO(clipno)) {
     pulsed->in_arate = pulsed->out_arate * ratio;
-    return;
-  }
-  pulsed->in_arate = afile->arate * ratio;
-  if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) && mainw->ascrap_file != -1) {
-    pulse_get_rec_avals(pulsed);
-    if (pulsed->in_arate > 0.) {
-      lives_buffered_rdonly_set_reversed(pulsed->fd, FALSE);
-    } else {
-      lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE);
+  } else {
+    lives_clip_t *sfile = mainw->files[clipno];
+    pulsed->in_arate = sfile->arate * ratio;
+    if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) && mainw->ascrap_file != -1) {
+      pulse_get_rec_avals(pulsed);
+      if (pulsed->in_arate > 0.) {
+        lives_buffered_rdonly_set_reversed(pulsed->fd, FALSE);
+      } else {
+        lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE);
+      }
     }
   }
+  if (pulsed->playing_file == clipno) pulse_get_rec_avals(pulsed);
 }
 
 
@@ -571,9 +573,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         int64_t xusec = pulsed->extrausec;
         sample_silence_pulse(pulsed, nbytes);
         //pulsed->seek_pos += nbytes;
-        fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos;
-        pulsed->usec_start += (pulsed->extrausec - xusec);
-        pulsed->extrausec = xusec;
+        //if (IS_VALID_CLIP(pulsed->playing_file)) afile->aseek_pos += nbytes;
+        //fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos;
+        /* pulsed->usec_start += (pulsed->extrausec - xusec); */
+        /* pulsed->extrausec = xusec; */
         //mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
         in_ap = FALSE;
         return;
@@ -581,20 +584,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       }
       dqnt = (double)afile->achans * afile->asampsize / 8.;
       qnt = afile->achans * (afile->asampsize >> 3);
-      /* g_print("@ SYNCxx %d seek pos %ld = %f  ct %ld   st %ld\n", mainw->actual_frame, pulsed->seek_pos, */
-      /*         ((double)pulsed->seek_pos / (double)afile->arps / 4. * afile->fps + 1.), mainw->currticks, mainw->startticks); */
-      /* pulsed->seek_pos += afile->adirection * (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL */
-      /*                     * (double)(afile->arps  * qnt); */
-      rnd_frame = (frames_t)((double)pulsed->seek_pos / (double)afile->arate / dqnt * afile->fps
-                             + (afile->last_play_sequence != mainw->play_sequence ? .000001 : .5));
-      //g_print("RND frame is %d\n", rnd_frame + 1);
-      //g_print("VALXXX %d %d %d\n", mainw->play_sequence, afile->last_play_sequence, mainw->switch_during_pb);
-      rnd_frame += afile->adirection * (mainw->switch_during_pb && afile->last_play_sequence == mainw->play_sequence ? 1 : 0);
-      mainw->switch_during_pb = FALSE;
       afile->last_play_sequence = mainw->play_sequence;
-      rnd_samp = (int64_t)((double)(rnd_frame + .00001) / afile->fps * (double)afile->arate + .5);
-      pulsed->seek_pos = (ssize_t)(rnd_samp * qnt);
-      //g_print("rndfr = %d rnt = %ld skpo = %ld\n", rnd_frame + 1, rnd_samp, pulsed->seek_pos);
       pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
       lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
       //g_print("seek to %ld %ld\n", pulsed->seek_pos, (int64_t)((double)pulsed->seek_pos / 48000. / 4. * afile->fps) + 1);

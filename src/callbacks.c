@@ -74,11 +74,12 @@ void lives_exit(int signum) {
     // recursive
     while (!pthread_mutex_unlock(&mainw->instance_ref_mutex));
     while (!pthread_mutex_unlock(&mainw->abuf_mutex));
-    while (!pthread_mutex_unlock(&mainw->fgthread_mutex));
 
     // non-recursive
     pthread_mutex_trylock(&mainw->abuf_aux_frame_mutex);
     pthread_mutex_unlock(&mainw->abuf_aux_frame_mutex);
+    pthread_mutex_trylock(&mainw->fgthread_mutex);
+    pthread_mutex_unlock(&mainw->fgthread_mutex);
     pthread_mutex_trylock(&mainw->fxd_active_mutex);
     pthread_mutex_unlock(&mainw->fxd_active_mutex);
     pthread_mutex_trylock(&mainw->event_list_mutex);
@@ -2376,6 +2377,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
           lives_free(com);
         }
 
+        // permit the copy frames to be removed on exit
         if (oundo_start > 1) make_cleanable(mainw->current_file, TRUE);
 
         com = lives_strdup_printf("%s insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d 0 0 %.3f %d %d %d %d %d -1",
@@ -4512,14 +4514,18 @@ void on_trim_vid_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       // must make sure we only ADD to previous backup
       frame_index_back = cfile->frame_index_back;
       cfile->frame_index_back = NULL;
+      // prevent the removed end frames from being deleted on exit
+      // - in case of crash and recovery
       make_cleanable(mainw->current_file, FALSE);
     }
 
     on_delete_activate(NULL, LIVES_MAIN_WINDOW_WIDGET);
 
+    // permit the removed end frames to be cleaned up on exit
     if (trimmed_end) make_cleanable(mainw->current_file, TRUE);
 
     if (cfile->frames == old_frames) {
+      // if we still have the same number of frames, something failed, so undo any audio trimming
       if (trimmed_end) {
         com = lives_strdup_printf("%s rename_audio \"%s\" .old_end .bak", prefs->backend, cfile->handle);
         lives_system(com, TRUE);
@@ -4531,8 +4537,10 @@ void on_trim_vid_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       cfile->end = oend;
       goto done;
     }
-    cfile->start = 1;
-    cfile->end = cfile->frames;
+  }
+  cfile->start = 1;
+  cfile->end = cfile->frames;
+  if (ostart > 1) {
     com = lives_strdup_printf("%s rename_audio \"%s\" .bak .old_start", prefs->backend, cfile->handle);
     lives_system(com, TRUE);
     lives_free(com);
@@ -5313,12 +5321,12 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     if (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESET) {
 #ifdef ENABLE_JACK
       if (prefs->audio_player == AUD_PLAYER_JACK) {
-        jack_set_avel(mainw->jackd, 1.);
+        jack_set_avel(mainw->jackd, mainw->jackd->playing_file, 1.);
       }
 #endif
 #ifdef HAVE_PULSE_AUDIO
       if (prefs->audio_player == AUD_PLAYER_PULSE) {
-        pulse_set_avel(mainw->pulsed, 1.);
+        pulse_set_avel(mainw->pulsed, mainw->pulsed->playing_file, 1.);
       }
 #endif
     }
@@ -9982,12 +9990,12 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
       if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
 #ifdef ENABLE_JACK
         if (prefs->audio_player == AUD_PLAYER_JACK) {
-          jack_set_avel(mainw->jackd, sfile->pb_fps / sfile->fps);
+          jack_set_avel(mainw->jackd, mainw->playing_file, sfile->pb_fps / sfile->fps);
         }
 #endif
 #ifdef HAVE_PULSE_AUDIO
         if (prefs->audio_player == AUD_PLAYER_PULSE) {
-          pulse_set_avel(mainw->pulsed, sfile->pb_fps / sfile->fps);
+          pulse_set_avel(mainw->pulsed, mainw->playing_file, sfile->pb_fps / sfile->fps);
         }
 #endif
       }

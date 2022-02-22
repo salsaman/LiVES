@@ -11,6 +11,8 @@ typedef struct _lives_thread_data_t lives_thread_data_t;
 typedef weed_plantptr_t lives_proc_thread_t;
 typedef uint64_t funcsig_t;
 
+void lives_mutex_lock_carefully(pthread_mutex_t *mutex);
+
 // thread internals
 
 typedef int(*funcptr_int_t)();
@@ -62,6 +64,10 @@ void lives_hooks_clear(LiVESList **xlist, int type);
 void lives_hooks_trigger(lives_object_t *obj, LiVESList **xlist, int type);
 void lives_hooks_join(LiVESList **xlist, int type);
 
+void add_to_exit_stack(hook_funcptr_t func, livespointer data);
+
+#define THRDNATIVE_CAN_CORRECT (1ul << 0)
+
 typedef struct {
   uint64_t var_uid;
   lives_proc_thread_t var_tinfo;
@@ -86,6 +92,7 @@ typedef struct {
   boolean var_no_gui;
   boolean var_force_button_image;
   ticks_t var_timerinfo;
+  uint64_t var_thrdnative_flags;
   LiVESList *var_hook_closures[N_HOOK_FUNCS];
   volatile float *var_core_load_ptr; // pointer to value that monitors core load
 } lives_threadvars_t;
@@ -208,6 +215,7 @@ typedef struct {
 #define FUNCSIG_STRING_STRING_VOIDP_INT					0X000044D1
 #define FUNCSIG_INT_INT_BOOL_VOIDP					0X0000113D
 // 5p
+#define FUNCSIG_VOIDP_INT_INT_INT_INT					0X000D1111
 #define FUNCSIG_INT_INT_INT_BOOL_VOIDP					0X0001113D
 #define FUNCSIG_VOIDP_STRING_STRING_INT64_INT			       	0X000D4451
 // 6p

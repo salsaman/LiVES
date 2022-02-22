@@ -18,6 +18,7 @@
 #include "startup.h"
 #include "diagnostics.h"
 #include "ce_thumbs.h"
+#include "cvirtual.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -1693,6 +1694,12 @@ void create_LiVES(void) {
 
   menu_sets_sensitive(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), submenu, FALSE);
   menu_sets_visible(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), menuitem, FALSE);
+
+  menuitem = lives_standard_menu_item_new_with_label(_("Repair frame index (Experts only)"));
+  lives_container_add(LIVES_CONTAINER(submenu), menuitem);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(repair_findex_cb), LIVES_INT_TO_POINTER(0));
 
   /* menuitem = lives_standard_menu_item_new_with_label(_("Run libweed test")); */
   /* lives_container_add(LIVES_CONTAINER(submenu), menuitem); */

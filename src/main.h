@@ -866,6 +866,7 @@ void do_abort_dialog(const char *text);
 LiVESResponseType do_abort_ok_dialog(const char *text);
 LiVESResponseType do_abort_retry_dialog(const char *text);
 LiVESResponseType do_abort_retry_cancel_dialog(const char *text) WARN_UNUSED;
+LiVESResponseType do_abort_retry_ignore_dialog(const char *text) WARN_UNUSED;
 
 LiVESResponseType do_retry_cancel_dialog(const char *text);
 

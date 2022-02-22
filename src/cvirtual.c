@@ -14,6 +14,7 @@
 // e.g 00000001.jpg or 00000010.png etc.
 
 #include "resample.h"
+#include "callbacks.h"
 #include "cvirtual.h"
 
 /** count virtual frames between start and end (inclusive) */
@@ -37,6 +38,7 @@ boolean create_frame_index(int fileno, boolean init, frames_t start_offset, fram
     return FALSE;
   }
 
+  // TODO fill with const value so we can better error check
   sfile->frame_index = (frames_t *)lives_calloc(idxsize, DEF_ALIGN);
   if (!sfile->frame_index) {
     pthread_mutex_unlock(&sfile->frame_index_mutex);
@@ -48,9 +50,10 @@ boolean create_frame_index(int fileno, boolean init, frames_t start_offset, fram
 }
 
 
-static frames_t extend_frame_index(int fileno, frames_t start, frames_t end, lives_img_type_t img_type) {
+// start is old flen, end is nframes in new
+static frames_t extend_frame_index(int fileno, frames_t start, frames_t end, frames_t nvframes,
+                                   frames_t offs, lives_img_type_t img_type) {
   lives_clip_t *sfile;
-  size_t idxsize = (ALIGN_CEIL(end * sizeof(frames_t), DEF_ALIGN)) / DEF_ALIGN;
   frames_t i;
 
   if (!IS_PHYSICAL_CLIP(fileno) || start > end) return 0;
@@ -58,26 +61,83 @@ static frames_t extend_frame_index(int fileno, frames_t start, frames_t end, liv
   pthread_mutex_lock(&sfile->frame_index_mutex);
   if (sfile->frame_index_back) lives_free(sfile->frame_index_back);
   sfile->frame_index_back = sfile->frame_index;
-  sfile->frame_index = (frames_t *)lives_calloc(idxsize, DEF_ALIGN);
+  sfile->frame_index = NULL;
+  create_frame_index(fileno, TRUE, offs, end);
   if (!sfile->frame_index) {
     sfile->frame_index = sfile->frame_index_back;
     sfile->frame_index_back = NULL;
     pthread_mutex_unlock(&sfile->frame_index_mutex);
     return 0;
   }
+  if (start > 0) lives_memcpy(sfile->frame_index, sfile->frame_index_back, start * sizeof(frames_t));
   for (i = start; i < end; i++) {
     char *fname = make_image_file_name(sfile, i + 1, get_image_ext_for_type(img_type));
     if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+      lives_free(fname);
       sfile->frame_index[i] = -1;
     } else {
       lives_free(fname);
-      delete_frames_from_virtual(fileno, i, end - 1);
-      break;
+      if (nvframes && i >= nvframes) {
+        delete_frames_from_virtual(fileno, i, end - 1);
+        i = - i;
+        break;
+      }
     }
-    lives_free(fname);
   }
   pthread_mutex_unlock(&sfile->frame_index_mutex);
-  return --i;
+  return i;
+}
+
+
+boolean repair_frame_index(int fileno, frames_t offs) {
+  if (IS_PHYSICAL_CLIP(fileno)) {
+    lives_clip_data_t *cdata = NULL;
+    lives_clip_t *sfile = mainw->files[fileno];
+    if (sfile->ext_src && sfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
+      cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
+    }
+    if (extend_frame_index(fileno, sfile->old_frames, sfile->frames,
+                           cdata ? cdata->nframes : 0, offs, sfile->img_type) == sfile->frames) {
+      save_frame_index(fileno);
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+void repair_findex_cb(LiVESMenuItem *menuitem, livespointer offsp) {
+  frames_t oldf = cfile->old_frames;
+  if (menuitem) cfile->old_frames = 0;
+  if (cfile->ext_src && cfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
+    // force full reload of decoder so we can check again
+
+    ///< retain original order to restore for freshly opened clips
+    // get_decoder_cdata() may alter this
+
+    LiVESList *odeclist = lives_list_copy(capable->plugins_list[PLUGIN_TYPE_DECODER]);
+    int fileno = mainw->current_file;
+    char *clipdir = get_clip_dir(fileno);
+    char *cwd = lives_get_current_dir();
+
+    close_clip_decoder(fileno);
+
+    lives_chdir(clipdir, FALSE);
+    lives_free(clipdir);
+
+    get_decoder_cdata(fileno, prefs->disabled_decoders, NULL);
+
+    lives_chdir(cwd, FALSE);
+    lives_free(cwd);
+
+    lives_list_free(capable->plugins_list[PLUGIN_TYPE_DECODER]);
+    capable->plugins_list[PLUGIN_TYPE_DECODER] = odeclist;
+  }
+  if (repair_frame_index(mainw->current_file, LIVES_POINTER_TO_INT(offsp))) {
+    switch_clip(1, mainw->current_file, TRUE);
+  } else {
+    // TODO - show error
+  }
+  cfile->old_frames = oldf;
 }
 
 
@@ -156,8 +216,8 @@ frames_t load_frame_index(int fileno) {
   char *fname, *fname_back;
   char *clipdir;
   boolean backuptried = FALSE;
-  int fd, retval;
   frames_t maxframe = -1;
+  int fd, retval, i;
 
   if (!IS_PHYSICAL_CLIP(fileno)) return -1;
 
@@ -187,7 +247,6 @@ frames_t load_frame_index(int fileno) {
     retval = 0;
     fd = lives_open_buffered_rdonly(fname);
     if (fd < 0) {
-      THREADVAR(read_failed) = 0;
       retval = do_read_failed_error_s_with_retry(fname, lives_strerror(errno));
       if (!backuptried) {
         fd = lives_open_buffered_rdonly(fname_back);
@@ -226,9 +285,9 @@ frames_t load_frame_index(int fileno) {
         break;
       }
 
-      for (int i = 0; i < sfile->frames; i++) {
+      for (i = 0; i < sfile->frames; i++) {
         lives_read_le_buffered(fd, &sfile->frame_index[i], sizeof(frames_t), FALSE);
-        if (THREADVAR(read_failed) == fd + 1) {
+        if (THREADVAR(read_failed)) {
           break;
         }
         if (sfile->frame_index[i] > maxframe) {
@@ -237,9 +296,14 @@ frames_t load_frame_index(int fileno) {
       }
       lives_close_buffered(fd);
 
-      if (THREADVAR(read_failed) == fd + 1) {
-        THREADVAR(read_failed) = 0;
+      if (THREADVAR(read_failed)) {
+        THREADVAR(thrdnative_flags) |= THRDNATIVE_CAN_CORRECT;
         retval = do_read_failed_error_s_with_retry(fname, NULL);
+        THREADVAR(thrdnative_flags) &= ~THRDNATIVE_CAN_CORRECT;
+        if (retval == LIVES_RESPONSE_CANCEL) {
+          sfile->old_frames = i;
+          repair_findex_cb(NULL, LIVES_INT_TO_POINTER(0));
+        }
       }
 
       if (!backuptried) {
@@ -251,11 +315,11 @@ frames_t load_frame_index(int fileno) {
           int count = 0;
           for (; lives_read_le_buffered(fd, &vframe,
                                         sizeof(frames_t), TRUE) == sizeof(frames_t); count++) {
-            if (THREADVAR(read_failed) == fd + 1) break;
+            if (THREADVAR(read_failed)) break;
             list = lives_list_prepend(list, LIVES_INT_TO_POINTER(vframe));
           }
           lives_close_buffered(fd);
-          if (THREADVAR(read_failed) == fd + 1) {
+          if (THREADVAR(read_failed)) {
             THREADVAR(read_failed) = 0;
           } else if (count) {
             frames_t *f_index = sfile->frame_index;
@@ -365,6 +429,9 @@ lives_img_type_t resolve_img_type(lives_clip_t *sfile) {
 
 boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_t maxframe) {
   // TODO - if we have binfmt, check md5sum, afilesize, video_time, laudio_time, etc.
+  // maxframe is highest vframe reffed in frame_index
+  // sfile->frames should be len of frame_index
+  // last_real_frame will point to highest 'real' frame detected
   lives_clip_t *sfile = mainw->files[fileno], *binf = NULL;
   lives_img_type_t empirical_img_type = sfile->img_type, oemp = empirical_img_type;
   lives_img_type_t ximgtype;
@@ -392,6 +459,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   // TODO: write errors to textbuffer type log
 
   if (prefs->vj_mode) return TRUE;
+  sfile->old_frames = sfile->frames;
 
   if (sfile->frames) {
     sfile->afilesize = reget_afilesize_inner(fileno);
@@ -474,6 +542,8 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 
   if (cdata) {
     // check frame count
+    // maxframe is highest frame in src clip, cdata->nframes should be nframes in src clip
+
     if (maxframe > cdata->nframes || has_missing_frames || do_rescan) {
       if (prefs->show_dev_opts) {
         if (maxframe > cdata->nframes) {
@@ -485,7 +555,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
       if (prefs->show_dev_opts) {
         g_printerr("rescan counted %d frames (expected %d)\n.", sfile->frames, maxframe);
       }
-      if (sfile->frames != maxframe) has_missing_frames = TRUE;
+      if (last_real_frame > sfile->frames) has_missing_frames = TRUE;
     }
   }
 
@@ -501,9 +571,12 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
       }
       // start by assuming backup is more correct
       backup_more_correct = TRUE;
-      if (xframes > sfile->frames) extend_frame_index(fileno, sfile->frames, xframes, empirical_img_type);
+      if (xframes > sfile->frames) {
+        sfile->old_frames = sfile->frames = abs(extend_frame_index(fileno, sfile->frames, xframes,
+                                                cdata ? cdata->nframes : 0, 0,
+                                                empirical_img_type));
+      }
     }
-
     // check and attempt to correct frame_index
     for (i = 0; i < xframes; i++) {
       frames_t fr;
@@ -796,7 +869,9 @@ mismatch:
                      && binf->frames * sfile->fps == sfile->laudio_time)) {
           sfile->frames = binf->frames;
           if (sfile->frames > cdata->nframes) {
-            sfile->frames = extend_frame_index(fileno, cdata->nframes, sfile->frames, empirical_img_type);
+            sfile->frames = sfile->old_frames = abs(extend_frame_index(fileno, cdata->nframes,
+                                                    sfile->frames, cdata->nframes,
+                                                    0, empirical_img_type));
             save_frame_index(fileno);
           }
           maxframe = sfile->frames;
@@ -812,7 +887,10 @@ mismatch:
   sfile->afilesize = reget_afilesize_inner(fileno);
 
   if (has_missing_frames && sfile->frame_index) {
-    if (sfile->frames > maxframe) extend_frame_index(fileno, maxframe, sfile->frames, empirical_img_type);
+    if (sfile->frames > sfile->old_frames)
+      sfile->frames = sfile->old_frames = abs(extend_frame_index(fileno, maxframe, sfile->frames,
+                                              cdata ? cdata->nframes : 0, 0,
+                                              empirical_img_type));
     save_frame_index(fileno);
   }
   return FALSE;
@@ -1503,8 +1581,9 @@ frames_t *frame_index_copy(frames_t *findex, frames_t nframes, frames_t offset) 
   // frame_index_mutex should be locked for src and dest
 
   // start at frame offset
-  frames_t *findexc = (frames_t *)lives_calloc(nframes, sizeof(frames_t));;
-  for (int i = 0; i < nframes; i++) findexc[i] = findex[i + offset];
+  frames_t *findexc = (frames_t *)lives_calloc(nframes, sizeof(frames_t));
+  if (!offset) lives_memcpy((void *)findexc, (void *)findex, nframes * sizeof(frames_t));
+  else for (int i = 0; i < nframes; i++) findexc[i] = findex[i + offset];
   return findexc;
 }
 

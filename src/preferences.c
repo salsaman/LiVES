@@ -3993,7 +3993,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   LiVESWidget *widget;
 #endif
 
-  LiVESWidget *layout;
+  LiVESWidget *layout, *layout2;
 #ifdef TPLAYWINDOW
   LiVESWidget *image;
 #endif
@@ -4881,7 +4881,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 
   lives_layout_add_row(LIVES_LAYOUT(layout));
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  hbox = lives_layout_expansion_row_new(LIVES_LAYOUT(layout), NULL);
 
   SET_PREF_WIDGET(PB_HIDE_GUI,
                   lives_standard_check_button_new
@@ -5115,10 +5115,13 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE,
                                LIVES_BOX(hbox), NULL);
 
-  lives_layout_add_row(LIVES_LAYOUT(layout));
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Resync audio when:"), TRUE);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  layout2 = lives_layout_new(LIVES_BOX(hbox));
 
-  hbox = widget_opts.last_container;
+  lives_layout_add_label(LIVES_LAYOUT(layout2), _("Resync audio when:"), TRUE);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout2));
+
+  //hbox = widget_opts.last_container;
 
   prefsw->resync_fps = lives_standard_check_button_new(_("fps is reset"),
                        (prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_FPS) ? FALSE : TRUE,
@@ -5127,6 +5130,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                           "resynchronised with video "
                           "whenever the 'Reset FPS' key is activated.\n"));
 
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout2));
   prefsw->resync_adir = lives_standard_check_button_new(_("audio direction changes"),
                         (prefs->audio_opts & AUDIO_OPTS_RESYNC_ADIR) ? TRUE : FALSE,
                         LIVES_BOX(hbox),
@@ -5135,7 +5139,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                            "whenever the audio playback direction changes\n"
                            "as a result of video direction changing"));
 
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  lives_layout_add_row(LIVES_LAYOUT(layout2));
+  lives_layout_add_fill(LIVES_LAYOUT(layout2), TRUE);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout2));
 
   prefsw->resync_vpos = lives_standard_check_button_new(_("video position 'jumps'"),
                         (prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS) ? FALSE : TRUE,
@@ -5146,6 +5152,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                            "via means other than normal playback\n"
                            "E.g when clicking on the timeline, or when a 'bookmark' is activated"));
 
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout2));
   prefsw->resync_aclip = lives_standard_check_button_new(_("audio clip changes"),
                          (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP) ? TRUE : FALSE,
                          LIVES_BOX(hbox),
@@ -5153,12 +5160,12 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                             "resynchronised with video "
                             "whenever the current audio clip changes"));
 
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("(Audio will only be resynchronised if unlocked and both audio and video "
-                         "are playing the identical clip)"), FALSE);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("(Audio will only be resynchronised if unlocked "
+                         "and both audio and video are playing the identical clip)"), FALSE);
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Options for Audio Lock (a)"), FALSE);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Options for Audio Lock (toggle with a / shift + A durign playback)"), FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 

@@ -257,8 +257,7 @@ double lives_ce_update_timeline(int frame, double x) {
     lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
   }
 
-  show_playbar_labels(mainw->current_file);
-  redraw_timeline_bg(mainw->current_file);
+  do_tl_redraw(LIVES_INT_TO_POINTER(mainw->current_file));
 
   last_current_file = mainw->current_file;
   return cfile->pointer_time;
@@ -401,7 +400,6 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
 
     if (sfile->audio_waveform[0]) {
       if (start != offset_end) {
-        sfile->aw_sizes[0] = offset_end;
         filename = lives_get_audio_file_name(fileno);
         afd = lives_open_buffered_rdonly(filename);
         lives_free(filename);
@@ -419,6 +417,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
             sfile->vol * get_float_audio_val_at_time(fileno,
                 afd, atime, 0, sfile->achans) * 2.;
         }
+        sfile->aw_sizes[0] = offset_end;
         //lives_close_buffered(afd);
       }
 
@@ -515,20 +514,20 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       start = 0;
       sfile->audio_waveform[1] = (float *)lives_realloc(sfile->audio_waveform[1], (int)offset_end * sizeof(float));
     }
-    sfile->aw_sizes[1] = offset_end;
 
     if (sfile->audio_waveform[1]) {
       if (start != offset_end) {
-        sfile->aw_sizes[1] = offset_end;
-        /* filename = lives_get_audio_file_name(fileno); */
-        /* afd = lives_open_buffered_rdonly(filename); */
-        /* lives_free(filename); */
-        /* if (afd < 0) { */
-        /*   THREADVAR(read_failed) = -2; */
-        /*   goto bail; */
-        /* } */
+        if (afd < 0) {
+          filename = lives_get_audio_file_name(fileno);
+          afd = lives_open_buffered_rdonly(filename);
+          lives_free(filename);
+          if (afd < 0) {
+            THREADVAR(read_failed) = -2;
+            goto bail;
+          }
+          lives_buffered_rdonly_slurp(afd, 0);
+        }
 
-        /* lives_buffered_rdonly_slurp(afd, 0); */
         for (i = start; i < offset_end; i++) {
           if (mainw->current_file != fileno
               || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
@@ -537,6 +536,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
             sfile->vol * get_float_audio_val_at_time(fileno,
                 afd, atime, 1, sfile->achans) * 2.;
         }
+        sfile->aw_sizes[1] = offset_end;
       }
 
       offset_right = NORMAL_CLAMP(offset_right, sfile->raudio_time * scalex);
@@ -3631,7 +3631,12 @@ void redraw_timeline_bg(int clipno) {
   sfile = mainw->files[clipno];
   if (sfile->clip_type == CLIP_TYPE_TEMP) return;
 
-  pthread_mutex_lock(&mainw->tlthread_mutex);
+  if (pthread_mutex_trylock(&mainw->fgthread_mutex)) {
+    add_to_exit_stack((hook_funcptr_t)do_tl_redraw, LIVES_INT_TO_POINTER(clipno));
+    return;
+  }
+  pthread_mutex_unlock(&mainw->fgthread_mutex);
+  lives_mutex_lock_carefully(&mainw->tlthread_mutex);
   if (mainw->drawtl_thread) {
     if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
       lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
@@ -3646,6 +3651,21 @@ void redraw_timeline_bg(int clipno) {
   pthread_mutex_unlock(&mainw->tlthread_mutex);
 }
 
+
+void do_tl_redraw(void *data) {
+  int clipno = LIVES_POINTER_TO_INT(data);
+  if (!IS_VALID_CLIP(clipno)) return;
+  if (pthread_mutex_trylock(&mainw->fgthread_mutex)) {
+    add_to_exit_stack((hook_funcptr_t)do_tl_redraw, data);
+    return;
+  }
+  pthread_mutex_unlock(&mainw->fgthread_mutex);
+  if (!mainw->fs && !mainw->faded) {
+    show_playbar_labels(clipno);
+    redraw_timeline_bg(clipno);
+    set_sel_label(mainw->sel_label);
+  }
+}
 
 //static void preview_aud_vol_cb(LiVESButton *button, livespointer data) {preview_aud_vol();}
 
@@ -5650,7 +5670,8 @@ LIVES_GLOBAL_INLINE int rbgroup_get_data(LiVESSList * rbgroup, const char *key, 
 }
 
 
-LiVESSList *add_match_methods(LiVESLayout * layout, char *mopts, int height_step, int width_step, boolean add_aspect) {
+LiVESSList *add_match_methods(LiVESLayout * layout, char *mopts, int height_step,
+                              int width_step, boolean add_aspect) {
   LiVESSList *rbgroup = NULL;
   LiVESWidget *radiobutton;
   LiVESWidget *hbox;
@@ -5671,7 +5692,7 @@ LiVESSList *add_match_methods(LiVESLayout * layout, char *mopts, int height_step
                               LIVES_GUI_CALLBACK(utsense), LIVES_INT_TO_POINTER(TRUE));
     SET_INT_DATA(radiobutton, MATCHTYPE_KEY, LIVES_MATCH_NEAREST);
 
-    if (mopts[LIVES_MATCH_NEAREST] == 2)
+    if (mopts[LIVES_MATCH_NEAREST] == MATCH_TYPE_DEFAULT)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
 
     n_added++;
@@ -5690,7 +5711,7 @@ LiVESSList *add_match_methods(LiVESLayout * layout, char *mopts, int height_step
                               LIVES_GUI_CALLBACK(utsense), LIVES_INT_TO_POINTER(TRUE));
     SET_INT_DATA(radiobutton, MATCHTYPE_KEY, LIVES_MATCH_AT_LEAST);
 
-    if (mopts[LIVES_MATCH_AT_LEAST] == 2)
+    if (mopts[LIVES_MATCH_AT_LEAST] == MATCH_TYPE_DEFAULT)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
 
     n_added++;
@@ -5710,7 +5731,7 @@ LiVESSList *add_match_methods(LiVESLayout * layout, char *mopts, int height_step
 
     SET_INT_DATA(radiobutton, MATCHTYPE_KEY, LIVES_MATCH_AT_MOST);
 
-    if (mopts[LIVES_MATCH_AT_MOST] == 2)
+    if (mopts[LIVES_MATCH_AT_MOST] == MATCH_TYPE_DEFAULT)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
 
     n_added++;
@@ -5776,7 +5797,7 @@ LiVESSList *add_match_methods(LiVESLayout * layout, char *mopts, int height_step
 
     SET_INT_DATA(radiobutton, MATCHTYPE_KEY, LIVES_MATCH_LOWEST);
 
-    if (mopts[LIVES_MATCH_LOWEST] == 2)
+    if (mopts[LIVES_MATCH_LOWEST] == MATCH_TYPE_DEFAULT)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
 
     n_added++;
@@ -5797,7 +5818,7 @@ LiVESSList *add_match_methods(LiVESLayout * layout, char *mopts, int height_step
 
     SET_INT_DATA(radiobutton, MATCHTYPE_KEY, LIVES_MATCH_HIGHEST);
 
-    if (mopts[LIVES_MATCH_HIGHEST] == 2)
+    if (mopts[LIVES_MATCH_HIGHEST] == MATCH_TYPE_DEFAULT)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
 
     n_added++;
@@ -5820,7 +5841,7 @@ LiVESSList *add_match_methods(LiVESLayout * layout, char *mopts, int height_step
 
     SET_INT_DATA(radiobutton, MATCHTYPE_KEY, LIVES_MATCH_CHOICE);
 
-    if (mopts[LIVES_MATCH_CHOICE] == 2)
+    if (mopts[LIVES_MATCH_CHOICE] == MATCH_TYPE_DEFAULT)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
 
     n_added++;
@@ -5915,7 +5936,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   static boolean firsttime = TRUE;
 
   if (!req && def_req) {
-    only_free = def_req->allownf;
+    only_free = !def_req->allownf;
   }
 
   if (!req || !req->do_update || trylocal) {
@@ -5923,8 +5944,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
     gflags |= INSTALL_CANLOCAL;
 #endif
     if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL) &&
-        !check_for_executable(&capable->has_youtube_dlc, EXEC_YOUTUBE_DLC)
-       ) {
+        !check_for_executable(&capable->has_youtube_dlc, EXEC_YOUTUBE_DLC)) {
       firsttime = trylocal = TRUE;
       if (do_please_install(NULL, EXEC_YOUTUBE_DL, EXEC_YOUTUBE_DLC, INSTALL_CANLOCAL) == LIVES_RESPONSE_CANCEL) {
         capable->has_youtube_dl = capable->has_youtube_dlc = UNCHECKED;
@@ -6092,12 +6112,12 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_layout_add_row(LIVES_LAYOUT(layout));
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Desired frame size:"), TRUE);
 
-  lives_memset(mopts, 1, N_MATCH_TYPES);
+  lives_memset(mopts, MATCH_TYPE_ENABLED, N_MATCH_TYPES);
   if (def_req && def_req && mopts[def_req->matchsize])
-    mopts[def_req->matchsize] = 2;
+    mopts[def_req->matchsize] = MATCH_TYPE_DEFAULT;
   else {
-    if (mopts[prefs->dload_matmet]) mopts[prefs->dload_matmet] = 2;
-    else mopts[LIVES_MATCH_CHOICE] = 2;
+    if (mopts[prefs->dload_matmet]) mopts[prefs->dload_matmet] = MATCH_TYPE_DEFAULT;
+    else mopts[LIVES_MATCH_CHOICE] = MATCH_TYPE_DEFAULT;
   }
   radiobutton_group2 = add_match_methods(LIVES_LAYOUT(layout), mopts,
                                          width_step, height_step, CURRENT_CLIP_HAS_VIDEO);
@@ -7832,11 +7852,11 @@ rec_args *do_rec_desk_dlg(void) {
   checkbutton = lives_standard_check_button_new(_("Unlimited (until cancelled from the menu)"), FALSE, LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  spinh = lives_standard_spin_button_new(_("_Hours"), 0., 0., 24., 1., 1., 0., LIVES_BOX(hbox), NULL);
+  spinh = lives_standard_spin_button_new(_("_Hours"), 0., 0., 23., 1., 1., 0., LIVES_BOX(hbox), NULL);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  spinm = lives_standard_spin_button_new(_("_Minutes"), 0., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
+  spinm = lives_standard_spin_button_new(_("_Minutes"), 0., 0., 59., 1., 1., 0., LIVES_BOX(hbox), NULL);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  spins = lives_standard_spin_button_new(_("_Seconds"), 10., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
+  spins = lives_standard_spin_button_new(_("_Seconds"), 10., 0., 59., 1., 1., 0., LIVES_BOX(hbox), NULL);
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbutton), spinh, TRUE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbutton), spinm, TRUE);
@@ -7850,11 +7870,11 @@ rec_args *do_rec_desk_dlg(void) {
   checkbuttond = lives_standard_check_button_new(_("Immediate"), TRUE, LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  spindh = lives_standard_spin_button_new(_("_Hours"), 0., 0., 24., 1., 1., 0., LIVES_BOX(hbox), NULL);
+  spindh = lives_standard_spin_button_new(_("_Hours"), 0., 0., 23., 1., 1., 0., LIVES_BOX(hbox), NULL);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  spindm = lives_standard_spin_button_new(_("_Minutes"), 0., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
+  spindm = lives_standard_spin_button_new(_("_Minutes"), 0., 0., 59., 1., 1., 0., LIVES_BOX(hbox), NULL);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  spinds = lives_standard_spin_button_new(_("_Seconds"), 5., 0., 60., 1., 1., 0., LIVES_BOX(hbox), NULL);
+  spinds = lives_standard_spin_button_new(_("_Seconds"), 10., 0., 59., 1., 1., 0., LIVES_BOX(hbox), NULL);
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbuttond), spindh, TRUE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(checkbuttond), spindm, TRUE);

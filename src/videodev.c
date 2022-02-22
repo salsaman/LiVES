@@ -781,9 +781,9 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, const char *devname) {
     lives_layout_add_label(LIVES_LAYOUT(layout), _("Desired frame size:"), FALSE);
 
     lives_memset(mopts, 0, N_MATCH_TYPES);
-    mopts[LIVES_MATCH_AT_MOST] = mopts[LIVES_MATCH_HIGHEST] = 1;
-    if (mopts[prefs->webcam_matmet]) mopts[prefs->webcam_matmet] = 2;
-    else mopts[LIVES_MATCH_AT_MOST] = 2;
+    mopts[LIVES_MATCH_AT_MOST] = mopts[LIVES_MATCH_HIGHEST] = MATCH_TYPE_ENABLED;
+    if (mopts[prefs->webcam_matmet]) mopts[prefs->webcam_matmet] = MATCH_TYPE_DEFAULT;
+    else mopts[LIVES_MATCH_AT_MOST] = MATCH_TYPE_DEFAULT;
 
     rbgroup = add_match_methods(LIVES_LAYOUT(layout), mopts, 4, 4, FALSE);
 

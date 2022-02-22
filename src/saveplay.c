@@ -2193,7 +2193,7 @@ static void post_playback(void) {
   if (!mainw->multitrack && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
       cfile->clip_type == CLIP_TYPE_FILE)) {
     showclipimgs();
-    redraw_timeline_bg(mainw->current_file);
+    add_to_exit_stack((hook_funcptr_t)do_tl_redraw, LIVES_INT_TO_POINTER(mainw->current_file));
   }
 
   player_sensitize();
@@ -4884,6 +4884,7 @@ boolean reload_clip(int fileno, frames_t maxframe) {
 
     fake_cdata->URI = lives_strdup(sfile->file_name);
     fake_cdata->fps = sfile->fps;
+
     fake_cdata->nframes = maxframe;
 
 #ifdef VALGRIND_ON

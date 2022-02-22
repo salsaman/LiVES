@@ -1141,9 +1141,9 @@ LIVES_GLOBAL_INLINE void get_play_times(void) {
 
 void update_play_times(void) {
   // force a redraw, reread audio
-  if (!CURRENT_CLIP_IS_VALID) return;
+  if (!CURRENT_CLIP_IS_PHYSICAL) return;
   if (cfile->audio_waveform) {
-    pthread_mutex_lock(&mainw->tlthread_mutex);
+    lives_mutex_lock_carefully(&mainw->tlthread_mutex);
     if (mainw->drawtl_thread) {
       if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
         lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);

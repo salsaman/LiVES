@@ -53,33 +53,34 @@ LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
 
 char *get_stats_msg(boolean calc_only) {
   volatile float *load;
-
-  double avsync = 1.0;
-
-  boolean have_avsync = FALSE;
   char *msg, *audmsg = NULL, *bgmsg = NULL, *fgpal = NULL;
   char *tmp, *tmp2;
   char *msg2 = lives_strdup("");
+  double avsync = 1.0;
+  boolean have_avsync = FALSE;
+  int clipno;
 
   if (!LIVES_IS_PLAYING) return NULL;
 
-  if (CURRENT_CLIP_HAS_AUDIO) {
+  clipno = get_aplay_clipno();
+  if (CLIP_HAS_AUDIO(clipno)) {
+    lives_clip_t *afile = mainw->files[clipno];
 #ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd && mainw->jackd->in_use &&
-        IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->arate != 0) {
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd && mainw->jackd->in_use
+        && afile->arate != 0) {
       avsync = (double)mainw->jackd->seek_pos
-               / (double)mainw->files[mainw->jackd->playing_file]->arate / 4.; //lives_pulse_get_pos(mainw->jackd);
-      avsync -= ((double)mainw->files[mainw->jackd->playing_file]->frameno - 1.) / mainw->files[mainw->jackd->playing_file]->fps
+               / (double)afile->arate / 4.; //lives_pulse_get_pos(mainw->jackd);
+      avsync -= ((double)afile->frameno - 1.) / afile->fps
                 + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
       have_avsync = TRUE;
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed && mainw->pulsed->in_use &&
-        IS_VALID_CLIP(mainw->pulsed->playing_file) && mainw->files[mainw->pulsed->playing_file]->arate != 0) {
+    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed && mainw->pulsed->in_use
+        && afile->arate != 0) {
       avsync = (double)mainw->pulsed->seek_pos
-               / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4.; //lives_pulse_get_pos(mainw->pulsed);
-      avsync -= ((double)mainw->files[mainw->pulsed->playing_file]->frameno - 1.) / mainw->files[mainw->pulsed->playing_file]->fps
+               / (double)afile->arate / 4.; //lives_pulse_get_pos(mainw->pulsed);
+      avsync -= ((double)afile->frameno - 1.) / afile->fps
                 + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
       have_avsync = TRUE;
     }

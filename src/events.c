@@ -6086,7 +6086,7 @@ static void quant_clicked(LiVESButton * button, livespointer elist) {
 LiVESWidget *create_event_list_dialog(weed_event_list_t *event_list, weed_timecode_t start_tc, weed_timecode_t end_tc,
                                       uint64_t opts) {
   // TODO - some event properties should be editable, e.g. parameter values
-  weed_timecode_t tc, tc_secs;
+  weed_timecode_t tc, tc_secs, ref_tc = -1;
 
   LiVESTreeStore *treestore;
   LiVESTreeIter iter1, iter2, iter3;
@@ -6165,6 +6165,20 @@ LiVESWidget *create_event_list_dialog(weed_event_list_t *event_list, weed_timeco
     }
 
     etype = get_event_type(event);
+    if (1) {
+      if (etype == WEED_EVENT_TYPE_MARKER) {
+        int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
+        if (marker_type == EVENT_MARKER_BLOCK_START) {
+          ref_tc = tc;
+          event = get_next_event(event);
+          continue;
+        }
+      } else if (tc != ref_tc || !WEED_EVENT_IS_FRAME(event)) {
+        event = get_next_event(event);
+        continue;
+      }
+    }
+
     /* if (WEED_EVENT_IS_FRAME(event)) { */
     /*   event = get_next_event(event); */
     /*   continue; */

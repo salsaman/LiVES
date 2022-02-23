@@ -567,17 +567,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     if (!mainw->audio_seek_ready) {
       double dqnt;
       size_t qnt;
-      int64_t rnd_samp;
-      frames_t rnd_frame;
       if (!mainw->video_seek_ready) {
-        int64_t xusec = pulsed->extrausec;
         sample_silence_pulse(pulsed, nbytes);
-        //pulsed->seek_pos += nbytes;
-        //if (IS_VALID_CLIP(pulsed->playing_file)) afile->aseek_pos += nbytes;
-        //fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos;
-        /* pulsed->usec_start += (pulsed->extrausec - xusec); */
-        /* pulsed->extrausec = xusec; */
-        //mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
         in_ap = FALSE;
         return;
         /// adjustment is .5 (rounding factor) + (if we switched clips) 1 frame (because video advances 1) + 1 (????)

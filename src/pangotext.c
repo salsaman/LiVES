@@ -10,6 +10,63 @@
 #include "pangotext.h"
 #include "effects-weed.h"
 
+#define N_MARKUP_TAGS 18
+
+static char *markup_tags[N_MARKUP_TAGS];
+static int n_markup_tags = 0;
+
+#define MARKUP_SIG "<"
+#define MARKUP_SIG_LEN 1
+
+static void init_markup_tags(void) {
+  markup_tags[0] = lives_strdup("b>");
+  markup_tags[1] = lives_strdup("big>");
+  markup_tags[2] = lives_strdup("i>");
+  markup_tags[3] = lives_strdup("s>");
+  markup_tags[4] = lives_strdup("sub>");
+  markup_tags[5] = lives_strdup("sup>");
+  markup_tags[6] = lives_strdup("small>");
+  markup_tags[7] = lives_strdup("tt>");
+  markup_tags[8] = lives_strdup("u>");
+  markup_tags[9] = lives_strdup("/b>");
+  markup_tags[10] = lives_strdup("/big>");
+  markup_tags[11] = lives_strdup("/i>");
+  markup_tags[12] = lives_strdup("/s>");
+  markup_tags[13] = lives_strdup("/sub>");
+  markup_tags[14] = lives_strdup("/sup>");
+  markup_tags[15] = lives_strdup("/small>");
+  markup_tags[16] = lives_strdup("/tt>");
+  markup_tags[17] = lives_strdup("/u>");
+  n_markup_tags = N_MARKUP_TAGS;
+}
+
+
+char *pango_text_strip_markup(const char *text) {
+  size_t tlen = lives_strlen(text), xlen, plen = 0;
+  off_t start = 0, p = 0;
+  char *newtext = lives_calloc(tlen + 1, 1);
+  int i;
+  if (!n_markup_tags) init_markup_tags();
+  for (i = 0; i < tlen - MARKUP_SIG_LEN - 1; i++) {
+    if (!lives_strncmp(text + i, MARKUP_SIG, MARKUP_SIG_LEN)) {
+      i += MARKUP_SIG_LEN;
+      for (int j = 0; j < n_markup_tags; j++) {
+        if (!lives_strncmp(text + i, markup_tags[j], (xlen = lives_strlen(markup_tags[j])))) {
+          plen = i - MARKUP_SIG_LEN - start;
+          lives_memcpy(newtext + p, text + start, plen);
+          p += plen;
+          i += xlen;
+          start = i;
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
+
+  plen = i - start + MARKUP_SIG_LEN + 1;
+  lives_memcpy(newtext + p, text + start, plen);
+  return newtext;
+}
+
+
 #ifdef GUI_GTK
 #include <pango/pangocairo.h>
 static int font_cmp(const void *p1, const void *p2);
@@ -31,7 +88,7 @@ LIVES_GLOBAL_INLINE void reset_font_size(void) {
 }
 
 
-void guess_font_size(LiVESWidget *window, LiVESLabel *xlabel, LiVESLabel *ylabel, double guess) {
+void guess_font_size(LiVESWidget * window, LiVESLabel * xlabel, LiVESLabel * ylabel, double guess) {
   // during startup, adjust the font size slightly so the text is more visible
   // this is done by comparing the size of a fixed label with the dialog box size
   // and multiplying by guess, which has been calibrated somewhat to produce a comfortable size
@@ -83,7 +140,7 @@ void guess_font_size(LiVESWidget *window, LiVESLabel *xlabel, LiVESLabel *ylabel
 }
 
 
-static void getxypos(LingoLayout *layout, int *px, int *py, int width, int height, boolean cent, double *pw, double *ph) {
+static void getxypos(LingoLayout * layout, int *px, int *py, int width, int height, boolean cent, double * pw, double * ph) {
   // calc coords of text, text will fit so it goes to bottom. Set cent to center text.
 
   // width and height are frame width / height in pixels
@@ -221,7 +278,7 @@ static char *deparagraph(char *text) {
 }
 
 
-void layout_to_lives_painter(LingoLayout *layout, lives_painter_t *cr, lives_text_mode_t mode, lives_colRGBA64_t *fg,
+void layout_to_lives_painter(LingoLayout * layout, lives_painter_t *cr, lives_text_mode_t mode, lives_colRGBA64_t *fg,
                              lives_colRGBA64_t *bg, int dwidth, int dheight, double x_bg, double y_bg, double x_text, double y_text) {
   double b_alpha = 1.;
   double f_alpha = 1.;
@@ -249,7 +306,7 @@ void layout_to_lives_painter(LingoLayout *layout, lives_painter_t *cr, lives_tex
 
 
 //#define DEBUG_MSGS
-LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWidget *widget, int *linecount) {
+LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWidget * widget, int *linecount) {
   // create a layout, using text properties for widget
   //
   // nth message in mainw->messages should be at the bottom
@@ -524,9 +581,9 @@ static int font_cmp(const void *p1, const void *p2) {
 }
 
 
-LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const char *text, const char *fontname,
+LingoLayout *render_text_to_cr(LiVESWidget * widget, lives_painter_t *cr, const char *text, const char *fontname,
                                double size, lives_text_mode_t mode, lives_colRGBA64_t *fg, lives_colRGBA64_t *bg,
-                               boolean center, boolean rising, double *top, int *offs_x, int dwidth, int *dheight) {
+                               boolean center, boolean rising, double * top, int *offs_x, int dwidth, int *dheight) {
   // fontname may be eg. "Sans"
 
   // size is in device units, i.e. pixels

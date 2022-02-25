@@ -10,6 +10,8 @@
 #ifndef LIVES_PANGOTEXT_H
 #define LIVES_PANGOTEXT_H
 
+char *pango_text_strip_markup(const char *text);
+
 #define SUB_OPACITY 20480 // TODO
 
 typedef enum {

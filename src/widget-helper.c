@@ -7,6 +7,7 @@
 #define NEED_DEF_WIDGET_OPTS
 
 #include "main.h"
+#include "startup.h"
 
 // The idea here is to replace toolkit specific functions with generic ones
 
@@ -1016,6 +1017,8 @@ static volatile void *lpt_retval = NULL;
 
 boolean has_lpttorun(void) {return !!lpttorun;}
 
+boolean will_gov_run(void) {return gov_will_run;}
+
 static void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
   lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
   if (cl) active_sigdets = lives_list_remove(active_sigdets, sigdata);
@@ -1042,8 +1045,10 @@ static lives_sigdata_t *tasks_running(void) {
         pthread_mutex_unlock(&task_list_mutex);
         return sigdata;
       }
-      if (sigdata->proc) lives_proc_thread_dontcare(sigdata->proc);
-      sigdata_free(sigdata, NULL);
+      if (sigdata->alarm_handle == LIVES_NO_ALARM) {
+        if (sigdata->proc) lives_proc_thread_dontcare(sigdata->proc);
+        sigdata_free(sigdata, NULL);
+      }
     }
   }
   pthread_mutex_unlock(&task_list_mutex);
@@ -2083,6 +2088,7 @@ static LiVESResponseType _dialog_run(LiVESDialog *dialog) {
                                           LIVES_GUI_CALLBACK(lives_dialog_destroyed), NULL);
   boolean dest;
   lives_widget_object_ref(dialog);
+  if (!mainw->is_ready) pop_to_front(LIVES_WIDGET(dialog), NULL);
   do {
     lives_widget_context_iteration(NULL, FALSE);
     lives_nanosleep(NSLEEP_TIME);
@@ -2119,8 +2125,13 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
 }
 
 
-void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
+// the purpose of this function is to force a lives_proc_thread to be run by the foreground
+// (i.e graphics) thread. Background threads which need to do GUI updates should use this
+// to run a lpt. Also note that fg service calls may not be nested, for some functions
+// it is now possible to call avoid_deadlock() to make those functions be called after return
+void *fg_service_call(lives_proc_thread_t lpt, void *retval) {
   boolean waitgov = FALSE;
+  THREADVAR(fg_service) = TRUE;
   while (lpttorun || (gov_will_run && !gov_running)) {
     lives_nanosleep(NSLEEP_TIME);
   }
@@ -2141,6 +2152,7 @@ void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
     // - thus the deadlock situation will be averted
     lives_nanosleep(NSLEEP_TIME);
   }
+  THREADVAR(fg_service) = FALSE;
   return (void *)lpt_result;
 }
 
@@ -8804,7 +8816,7 @@ void render_standard_button(LiVESButton * sbutt) {
         if (height < minheight) height = minheight;
         lives_widget_set_size_request(LIVES_WIDGET(sbutt), width, height);
       }
-      lives_widget_queue_draw(LIVES_WIDGET(sbutt));
+      if (is_fg_thread()) lives_widget_queue_draw(LIVES_WIDGET(sbutt));
     }
   }
 }
@@ -11324,7 +11336,10 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer * tb
 
   if (text) {
     if (widget_opts.use_markup) lives_text_view_set_markup(LIVES_TEXT_VIEW(textview), text);
-    else lives_text_view_set_text(LIVES_TEXT_VIEW(textview), text, -1);
+    else {
+      lives_text_view_set_text(LIVES_TEXT_VIEW(textview), text, -1);
+      lives_text_view_strip_markup(LIVES_TEXT_VIEW(textview));
+    }
   }
 
   if (widget_opts.apply_theme) {
@@ -12968,11 +12983,14 @@ WIDGET_HELPER_GLOBAL_INLINE void set_child_colour3(LiVESWidget * widget, boolean
 
 
 WIDGET_HELPER_GLOBAL_INLINE char *lives_text_view_get_text(LiVESTextView * textview) {
-  LiVESTextIter siter, eiter;
   LiVESTextBuffer *textbuf = lives_text_view_get_buffer(textview);
-  lives_text_buffer_get_start_iter(textbuf, &siter);
-  lives_text_buffer_get_end_iter(textbuf, &eiter);
-  return lives_text_buffer_get_text(textbuf, &siter, &eiter, FALSE);
+  if (textbuf) {
+    LiVESTextIter siter, eiter;
+    lives_text_buffer_get_start_iter(textbuf, &siter);
+    lives_text_buffer_get_end_iter(textbuf, &eiter);
+    return lives_text_buffer_get_text(textbuf, &siter, &eiter, FALSE);
+  }
+  return NULL;
 }
 
 
@@ -12986,6 +13004,20 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_view_set_text(LiVESTextView * tex
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_view_set_markup(LiVESTextView * textview, const char *markup) {
   LiVESTextBuffer *textbuf = lives_text_view_get_buffer(textview);
   if (textbuf) return lives_text_buffer_insert_markup_at_end(textbuf, markup);
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_view_strip_markup(LiVESTextView * textview) {
+  LiVESTextBuffer *textbuf = lives_text_view_get_buffer(textview);
+  if (textbuf) {
+    char *text = lives_text_buffer_get_all_text(textbuf);
+    char *stripped = lives_text_strip_markup(text);
+    lives_free(text);
+    lives_text_buffer_set_text(textbuf, stripped, -1);
+    lives_free(stripped);
+    return TRUE;
+  }
   return FALSE;
 }
 
@@ -13163,41 +13195,40 @@ static void do_more_stuff(void) {
 
 
 boolean lives_widget_context_update(void) {
-  volatile boolean clutch;
-  static pthread_mutex_t ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
-  if (timer_running) return FALSE;
-  if (mainw->no_context_update) return FALSE;
-  if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
-  else {
-    do_some_things();
-    if (!is_fg_thread()) {
-      while (gov_will_run && !gov_running) {
-        lives_nanosleep(NSLEEP_TIME);
-      }
-
-      if (gov_running) {
-        clutch = mainw->clutch = FALSE;
-        while (!clutch && !mainw->is_exiting) {
+  if (!THREADVAR(fg_service)) {
+    volatile boolean clutch;
+    static pthread_mutex_t ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
+    if (timer_running) return FALSE;
+    if (mainw->no_context_update) return FALSE;
+    if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
+    else {
+      do_some_things();
+      if (!is_fg_thread()) {
+        while (gov_will_run && !gov_running) {
           lives_nanosleep(NSLEEP_TIME);
-          clutch = mainw->clutch;
+        }
+
+        if (gov_running) {
+          clutch = mainw->clutch = FALSE;
+          while (!clutch && !mainw->is_exiting) {
+            lives_nanosleep(NSLEEP_TIME);
+            clutch = mainw->clutch;
+          }
+        }
+      } else {
+        int count = 0;
+        while (count++ < EV_LIM && !mainw->is_exiting && lives_widget_context_pending(NULL)) {
+          //LiVESXEvent *ev = lives_widgets_get_current_event();
+          //if (ev) g_print("ev was %d\n", ev->type);
+          //else g_print("NULL event\n");
+          lives_widget_context_iteration(NULL, FALSE);
+          lives_nanosleep(NSLEEP_TIME);
         }
       }
-    } else {
-      int count = 0;
-      while (count++ < EV_LIM && !mainw->is_exiting && lives_widget_context_pending(NULL)) {
-        //LiVESXEvent *ev = lives_widgets_get_current_event();
-        //if (ev) g_print("ev was %d\n", ev->type);
-        //else g_print("NULL event\n");
-        if (!pthread_mutex_trylock(&mainw->fgthread_mutex)) {
-          lives_widget_context_iteration(NULL, FALSE);
-          pthread_mutex_unlock(&mainw->fgthread_mutex);
-          lives_nanosleep(NSLEEP_TIME);
-        } else break;
-      }
     }
+    do_more_stuff();
+    pthread_mutex_unlock(&ctx_mutex);
   }
-  do_more_stuff();
-  pthread_mutex_unlock(&ctx_mutex);
   return TRUE;
 }
 

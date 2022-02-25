@@ -490,12 +490,14 @@ boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
       if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
       if (*errmsg == '#') logmsg = lives_strdup(errmsg + 1);
       else logmsg = lives_strdup_printf("%s:%s %s\n", tstamp, isjack, errmsg);
-      if (!widget_opts.use_markup)
-        lives_text_buffer_insert_at_end(textbuf, logmsg);
-      else
+      if (!widget_opts.use_markup) {
+        char *xlog = lives_markup_escape_text(logmsg, -1);
+        lives_text_buffer_insert_at_end(textbuf, xlog);
+        lives_free(xlog);
+      } else
         lives_text_buffer_insert_markup_at_end(textbuf, logmsg);
       lives_scrolled_window_scroll_to(LIVES_SCROLLED_WINDOW(tstwin->scrolledwindow), LIVES_POS_BOTTOM);
-      lives_widget_queue_draw(tstwin->dialog);
+      if (is_fg_thread()) lives_widget_queue_draw(tstwin->dialog);
       if (jackd != mainw->jackd_read)
         mainw->clutch = FALSE;
       else
@@ -572,7 +574,7 @@ void jack_dump_metadata(void) {
 	// *INDENT-OFF*
       }}}
   // *INDENT-OFF*
- (void) jack_client_close (client);
+  jack_client_close (client);
 }
 
 
@@ -592,7 +594,7 @@ void show_jack_status(LiVESButton * button, livespointer is_transp) {
   }
   if (is_trans == 1 || is_trans == 3 || (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)) {
     if (mainw->jackd_trans) {
-      if (*mainw->jackd_trans->status_msg == '*') text = lives_strdup(mainw->jackd_trans->status_msg);
+      if (1 || *mainw->jackd_trans->status_msg == '*') text = lives_strdup(mainw->jackd_trans->status_msg);
       else text = lives_markup_escape_text(mainw->jackd_trans->status_msg, -1);
     }
     else text = lives_strdup(_("Jack transport client was not started"));
@@ -601,12 +603,12 @@ void show_jack_status(LiVESButton * button, livespointer is_transp) {
   if (is_trans != 1) {
     char *txt1, *txt2;
     if (mainw->jackd) {
-      if (*mainw->jackd->status_msg == '*') txt1 = lives_strdup(mainw->jackd->status_msg + 1);
+      if (1 || *mainw->jackd->status_msg == '*') txt1 = lives_strdup(mainw->jackd->status_msg + 1);
       else txt1 = lives_markup_escape_text(mainw->jackd->status_msg, -1);
     }
     else txt1 = lives_strdup(_("Jack audio writer client was not started"));
     if (mainw->jackd_read) {
-      if (*mainw->jackd_read->status_msg == '*') txt2 = lives_strdup(mainw->jackd_read->status_msg + 1);
+      if (1 || *mainw->jackd_read->status_msg == '*') txt2 = lives_strdup(mainw->jackd_read->status_msg + 1);
       else txt2 = lives_markup_escape_text(mainw->jackd_read->status_msg, -1);
     }
     else txt2 = lives_strdup(_("Jack audio reader client was not started"));
@@ -621,9 +623,9 @@ void show_jack_status(LiVESButton * button, livespointer is_transp) {
 
     if (!is_trans) title = _("Status for jack audio write and audio read clients");
   }
-  widget_opts.use_markup = TRUE;
+  //widget_opts.use_markup = TRUE;
   textwindow = create_text_window(title, text, NULL, TRUE);
-  widget_opts.use_markup = FALSE;
+  //widget_opts.use_markup = FALSE;
   lives_free(title); lives_free(text);
   if (is_trans == 3) return;
 
@@ -841,8 +843,7 @@ static jackctl_driver_t *get_def_drivers(const JSList *drivers, LiVESList **slvl
     LiVESResponseType response = lives_dialog_run(LIVES_DIALOG(dialog));
     if (!is_setup) return NULL;
     if (response == LIVES_RESPONSE_SHOW_DETAILS) {
-      show_jack_status(LIVES_BUTTON(logbutton),
-		       LIVES_INT_TO_POINTER(2));
+      show_jack_status(LIVES_BUTTON(logbutton), LIVES_INT_TO_POINTER(2));
       continue;
     }
     lives_widget_destroy(dialog);
@@ -1373,12 +1374,15 @@ retry_connect:
     // if server name is NULL, then use 'default' or $JACK_DEFAULT_SERVER
     jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
 
+    mainw->crash_possible = 1;
+    lives_hook_append(THREADVAR(hook_closures), THREAD_EXIT_HOOK, HOOK_CB_SINGLE_SHOT,
+                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+
     if (!mainw->signals_deferred) {
       // try to handle crashes in jack_client_open()
       set_signal_handlers((SignalHandlerPointer)defer_sigint);
       needs_sigs = TRUE;
     }
-    mainw->crash_possible = 1;
 
     logmsg = lives_strdup_printf(_("%s client will try to connect to server named '%s'"),
                                  type_name, server_name);
@@ -1386,6 +1390,9 @@ retry_connect:
     lives_free(logmsg);
 
     jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
+
+    lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
+                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
@@ -1410,18 +1417,22 @@ retry_connect:
     // try to connect, then if we fail, start the server
     // if server name is NULL, then use 'default' or $JACK_DEFAULT_SERVER
     jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
+    mainw->crash_possible = 2;
+    lives_hook_append(THREADVAR(hook_closures), THREAD_EXIT_HOOK, HOOK_CB_SINGLE_SHOT,
+                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (!mainw->signals_deferred) {
       // try to handle crashes in jack_client_open()
       set_signal_handlers((SignalHandlerPointer)defer_sigint);
       needs_sigs = TRUE;
     }
-    mainw->crash_possible = 2;
 
     logmsg = lives_strdup_printf(_("%s client will try to connect to server named '%s'"),
                                  type_name, server_name);
     jack_log_errmsg(jackd, logmsg);
     lives_free(logmsg);
     jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
+    lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
+                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
       mainw->crash_possible = 0;
@@ -1536,7 +1547,7 @@ retry_connect:
     if (is_trans) {
       scrfile = future_prefs->jack_tserver_cfg;
     } else {
-      scrfile = future_prefs->jack_tserver_cfg;
+      scrfile = future_prefs->jack_aserver_cfg;
     }
     com = lives_fread_line(scrfile);
     if (com) {
@@ -1618,7 +1629,7 @@ retry_connect:
   if (!is_trans && !(future_prefs->jack_opts & JACK_OPTS_PERM_ASERVER))
     set_server_temp = TRUE;
 
-  if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) set_server_temp = TRUE;
+  if (is_test) set_server_temp = TRUE;
 
   params = jackctl_server_get_parameters(jackserver);
 
@@ -1747,18 +1758,22 @@ retry_connect:
   }
 
 #ifdef JACK_V2
-  if (!mainw->signals_deferred) {
-    // try to handle crashes in jack_client_open()
-    set_signal_handlers((SignalHandlerPointer)defer_sigint);
-    needs_sigs = TRUE;
-  }
   if (is_trans) {
     mainw->crash_possible = 3;
   } else {
     mainw->crash_possible = 4;
   }
+  lives_hook_append(THREADVAR(hook_closures), THREAD_EXIT_HOOK, HOOK_CB_SINGLE_SHOT,
+                    defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+  if (!mainw->signals_deferred) {
+    // try to handle crashes in jack_client_open()
+    set_signal_handlers((SignalHandlerPointer)defer_sigint);
+    needs_sigs = TRUE;
+  }
 
   if (!jackctl_server_open(jackserver, driver)) {
+    lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
+                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
       mainw->crash_possible = 0;
@@ -1773,13 +1788,20 @@ retry_connect:
     goto ret_failed;
   }
 
+  lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
+                    defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
   if (is_trans) {
     mainw->crash_possible = 5;
   } else {
     mainw->crash_possible = 6;
   }
 
+  lives_hook_append(THREADVAR(hook_closures), THREAD_EXIT_HOOK, HOOK_CB_SINGLE_SHOT,
+                    defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+
   if (!jackctl_server_start(jackserver)) {
+    lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
+                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
       mainw->crash_possible = 0;
@@ -1792,20 +1814,26 @@ retry_connect:
     jack_log_errmsg(jackd, NULL);
     goto ret_failed;
   }
+
 #else
+
+  if (is_trans) {
+    mainw->crash_possible = 5;
+  } else {
+    mainw->crash_possible = 6;
+  }
+  lives_hook_append(THREADVAR(hook_closures), THREAD_EXIT_HOOK, HOOK_CB_SINGLE_SHOT,
+                    defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   if (!mainw->signals_deferred) {
     // try to handle crashes in jack_client_open()
     set_signal_handlers((SignalHandlerPointer)defer_sigint);
     needs_sigs = TRUE;
   }
-  if (is_trans) {
-    mainw->crash_possible = 5;
-  } else {
-    mainw->crash_possible = 6;
-  }
 
   if (!jackctl_server_start(jackserver, driver)) {
+    lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
+                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
       mainw->crash_possible = 0;
@@ -1822,6 +1850,10 @@ retry_connect:
   }
 
 #endif
+
+
+  lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
+                    defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   if (needs_sigs) {
     set_signal_handlers((SignalHandlerPointer)catch_sigint);
@@ -3500,7 +3532,7 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
   if (!prefs->startup_phase || is_test) {
     jackd->is_active = FALSE;
     if (!lives_jack_init(JACK_CLIENT_TYPE_AUDIO_WRITER, jackd)) {
-      finish_test(jackd, FALSE, FALSE, FALSE);
+      if (is_test) finish_test(jackd, FALSE, FALSE, FALSE);
       return FALSE;
     }
 

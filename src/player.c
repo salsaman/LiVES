@@ -3078,7 +3078,8 @@ switch_point:
 
                       if (is_virtual_frame(mainw->playing_file, pred_frame)) {
                         if (!dpsys || !dpsys->estimate_delay) break;
-                        est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->playing_file, pred_frame));
+                        est_time = (*dpsys->estimate_delay)(dplug->cdata,
+                                                            get_indexed_frame(mainw->playing_file, pred_frame));
                       } else {
                         // img timings
                         est_time = sfile->img_decode_time;

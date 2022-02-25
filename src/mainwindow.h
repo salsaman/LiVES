@@ -1657,7 +1657,6 @@ typedef struct {
   mt_opts multi_opts; ///< some multitrack options that survive between mt calls
 
   /// mutices
-  pthread_mutex_t fgthread_mutex;  ///< used to ensure fgthread only runs one task at a time (but recursive)
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
   pthread_mutex_t abuf_frame_mutex;  ///< used to synch audio buffer for generators
   pthread_mutex_t abuf_aux_frame_mutex;  ///< used to synch audio buffer for loopback

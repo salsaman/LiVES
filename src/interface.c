@@ -257,7 +257,7 @@ double lives_ce_update_timeline(int frame, double x) {
     lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
   }
 
-  do_tl_redraw(LIVES_INT_TO_POINTER(mainw->current_file));
+  do_tl_redraw(NULL, LIVES_INT_TO_POINTER(mainw->current_file));
 
   last_current_file = mainw->current_file;
   return cfile->pointer_time;
@@ -3625,17 +3625,17 @@ boolean redraw_tl_idle(void *data) {
 
 
 void redraw_timeline_bg(int clipno) {
+  // need to take extra care with this function, as it can be called
+  // from fg_service call, and must avoid rcalling another such service or hanging
+  // in mutex deadlock
   lives_clip_t *sfile;
   if (mainw->ce_thumbs) return;
   if (!IS_VALID_CLIP(clipno)) return;
   sfile = mainw->files[clipno];
   if (sfile->clip_type == CLIP_TYPE_TEMP) return;
 
-  if (pthread_mutex_trylock(&mainw->fgthread_mutex)) {
-    add_to_exit_stack((hook_funcptr_t)do_tl_redraw, LIVES_INT_TO_POINTER(clipno));
-    return;
-  }
-  pthread_mutex_unlock(&mainw->fgthread_mutex);
+  if (avoid_deadlock((hook_funcptr_t)do_tl_redraw, LIVES_INT_TO_POINTER(clipno))) return;
+
   lives_mutex_lock_carefully(&mainw->tlthread_mutex);
   if (mainw->drawtl_thread) {
     if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
@@ -3652,18 +3652,19 @@ void redraw_timeline_bg(int clipno) {
 }
 
 
-void do_tl_redraw(void *data) {
-  int clipno = LIVES_POINTER_TO_INT(data);
-  if (!IS_VALID_CLIP(clipno)) return;
-  if (pthread_mutex_trylock(&mainw->fgthread_mutex)) {
-    add_to_exit_stack((hook_funcptr_t)do_tl_redraw, data);
-    return;
-  }
-  pthread_mutex_unlock(&mainw->fgthread_mutex);
-  if (!mainw->fs && !mainw->faded) {
-    show_playbar_labels(clipno);
-    redraw_timeline_bg(clipno);
-    set_sel_label(mainw->sel_label);
+void do_tl_redraw(lives_object_t *obj, void *data) {
+  // need to take extra care with this function, as it can be called
+  // from fg_service call, and must avoid rcalling another such service or hanging
+  // in mutex deadlock
+  if (avoid_deadlock((hook_funcptr_t)do_tl_redraw, data)) return;
+  else {
+    int clipno = LIVES_POINTER_TO_INT(data);
+    if (!IS_VALID_CLIP(clipno)) return;
+    if (!mainw->fs && !mainw->faded) {
+      show_playbar_labels(clipno);
+      redraw_timeline_bg(clipno);
+      set_sel_label(mainw->sel_label);
+    }
   }
 }
 

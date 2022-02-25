@@ -2193,7 +2193,7 @@ static void post_playback(void) {
   if (!mainw->multitrack && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
       cfile->clip_type == CLIP_TYPE_FILE)) {
     showclipimgs();
-    add_to_exit_stack((hook_funcptr_t)do_tl_redraw, LIVES_INT_TO_POINTER(mainw->current_file));
+    avoid_deadlock((hook_funcptr_t)do_tl_redraw, LIVES_INT_TO_POINTER(mainw->current_file));
   }
 
   player_sensitize();

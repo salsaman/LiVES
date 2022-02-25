@@ -75,11 +75,26 @@ typedef weed_param_t lives_obj_attr_t;
 
 #define HOOK_BLOCKED			(1 << 16) // hook function should not be called
 
+#define HOOK_UNIQUE_FUNC		(1 << 24) // do not add if func already in hooks
+
+#define HOOK_UNIQUE_DATA		(1 << 25) // do not add if data already in hooks (UNIQUE_FUNC assumed)
+#define HOOK_UNIQUE_REPLACE		(1 << 26) // remove other entries with same func and add this (UNIQUE_FUNC assumed)
+
+
+#define HOOK_UNIQUE_CHANGE_DATA 	(HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE) // change data but leave func
+
+#define HOOK_UNIQUE_REPLACE_FUNC	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_REPLACE) // replace other entries with same func
+
+// replace other entries having same func and data
+#define HOOK_UNIQUE_REPLACE_MATCH	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE)
+
 enum {
   ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
   EXIT_HOOK,
+  THREAD_EXIT_HOOK, // run on thread exit
   THREAD_INTERNAL_HOOK, /// reserved for internal use, should not be modified
   N_GLOBAL_HOOKS,
+  ///
   TX_PRE_HOOK,
   TX_START_HOOK, /// status -> running
   TX_POST_HOOK,

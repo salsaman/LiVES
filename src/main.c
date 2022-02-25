@@ -331,9 +331,9 @@ void defer_sigint(int signum) {
   // The main reason would be to show an error dialog and then exit, or transmit some error code first,
   // rather than simply doing nothing and aborting /exiting.
   // we should do the minimum necessary and exit, as the stack may be corrupted.
+  char *logmsg = NULL;
 #ifdef ENABLE_JACK
-  char *logmsg;
-  boolean ret;
+  boolean ret = TRUE;
 #endif
   switch (mainw->crash_possible) {
 #ifdef ENABLE_JACK
@@ -341,72 +341,66 @@ void defer_sigint(int signum) {
     if (mainw->jackd_trans) {
       logmsg = lives_strdup(_("Connection attempt timed out, aborting."));
       jack_log_errmsg(mainw->jackd_trans, logmsg);
-      lives_free(logmsg);
     }
-    while (1) {
+    while (ret) {
       // crash in jack_client_open() con - transport
       ret = jack_warn(TRUE, TRUE);
-      signal(signum, SIG_DFL);
-      pthread_detach(pthread_self());
-      if (!ret) break;
     }
-    if (!ret) break;
+    break;
   case 2:
     if (mainw->jackd) {
       logmsg = lives_strdup(_("Connection attempt timed out, aborting."));
       jack_log_errmsg(mainw->jackd, logmsg);
-      lives_free(logmsg);
     }
-    while (1) {
+    while (ret) {
       // crash in jack_client_open() con - audio
       ret = jack_warn(FALSE, TRUE);
-      signal(signum, SIG_DFL);
-      pthread_detach(pthread_self());
-      if (!ret) break;
     }
-    if (!ret) break;
+    break;
   case 3:
-    while (1) {
+    while (ret) {
       // crash in jackctl_server_open() - transport
       ret = jack_warn(TRUE, FALSE);
-      signal(signum, SIG_DFL);
-      pthread_detach(pthread_self());
-      if (!ret) break;
     }
-    if (!ret) break;
+    break;
   case 4:
-    while (1) {
+    while (ret) {
       // crash in jackctl_server_open() - audio
       ret = jack_warn(FALSE, FALSE);
-      signal(signum, SIG_DFL);
-      pthread_detach(pthread_self());
-      if (!ret) break;
     }
-    if (!ret) break;
+    break;
   case 5:
-    while (1) {
+    while (ret) {
       // crash in jackctl_server_start() - transport
       ret = jack_warn(TRUE, FALSE);
-      signal(signum, SIG_DFL);
-      pthread_detach(pthread_self());
-      if (!ret) break;
     }
-    if (!ret) break;
+    break;
   case 6:
-    while (1) {
+    while (ret) {
       // crash in jackctl_server_start() - audio
       ret = jack_warn(FALSE, FALSE);
-      signal(signum, SIG_DFL);
-      pthread_detach(pthread_self());
-      if (!ret) break;
     }
-    if (!ret) break;
+    break;
 #endif
   default:
     break;
   }
-  //return;
+  if (signum > 0) {
+    if (logmsg) lives_free(logmsg);
+    signal(signum, SIG_DFL);
+    pthread_detach(pthread_self());
+  } else lives_abort(logmsg);
 }
+
+
+void *defer_sigint_cb(lives_object_t *obj, void *pdtl) {
+  int crpos = mainw->crash_possible;
+  mainw->crash_possible = LIVES_POINTER_TO_INT(pdtl);
+  defer_sigint(-1);
+  mainw->crash_possible = crpos;
+  return NULL;
+}
+
 
 //#define QUICK_EXIT
 void catch_sigint(int signum) {
@@ -973,7 +967,6 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->instance_ref_mutex, &mattr);
 
   // non-recursive
-  pthread_mutex_init(&mainw->fgthread_mutex, NULL);
   pthread_mutex_init(&mainw->abuf_aux_frame_mutex, NULL);
   pthread_mutex_init(&mainw->fxd_active_mutex, NULL);
   pthread_mutex_init(&mainw->event_list_mutex, NULL);
@@ -3397,7 +3390,7 @@ boolean set_palette_colours(boolean force_reload) {
   set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "combobox window menu menuitem", "color", colref);
   lives_free(colref);
 
-  set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "combobox window menu menuitem", "border-width", "2px");
+  set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "csombobox window menu menuitem", "border-width", "2px");
 
   tmp = lives_strdup_printf("%dpx", ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
   set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "combobox window menu menuitem", "min-height", tmp);
@@ -4537,6 +4530,11 @@ static boolean lives_startup2(livespointer data) {
 
   mainw->is_ready = TRUE;
   lives_window_set_auto_startup_notification(TRUE);
+
+  if (prefs->show_gui) {
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_context_update();
+  }
 
   if (!mainw->multitrack)
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
@@ -9574,7 +9572,7 @@ void do_quick_switch(int new_file) {
   mainw->osc_block = osc_block;
   lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
 
-  do_tl_redraw(LIVES_INT_TO_POINTER(mainw->current_file));
+  do_tl_redraw(NULL, LIVES_INT_TO_POINTER(mainw->current_file));
 }
 
 

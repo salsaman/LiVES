@@ -80,8 +80,6 @@ char *get_stats_msg(boolean calc_only) {
         && afile->arate != 0) {
       avsync = (double)mainw->pulsed->seek_pos
                / (double)afile->arate / 4.; //lives_pulse_get_pos(mainw->pulsed);
-      avsync -= ((double)afile->frameno - 1.) / afile->fps
-                + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
       have_avsync = TRUE;
     }
 #endif

@@ -78,8 +78,6 @@ void lives_exit(int signum) {
     // non-recursive
     pthread_mutex_trylock(&mainw->abuf_aux_frame_mutex);
     pthread_mutex_unlock(&mainw->abuf_aux_frame_mutex);
-    pthread_mutex_trylock(&mainw->fgthread_mutex);
-    pthread_mutex_unlock(&mainw->fgthread_mutex);
     pthread_mutex_trylock(&mainw->fxd_active_mutex);
     pthread_mutex_unlock(&mainw->fxd_active_mutex);
     pthread_mutex_trylock(&mainw->event_list_mutex);

@@ -64,6 +64,8 @@ boolean governor_loop(livespointer data) GNU_RETURNS_TWICE;
 
 #ifdef LIVES_LINGO_IS_PANGO
 // pango stuff. I suppose it should be here on the offchance that it might one day be used with a non-gtk+ toolkit...
+#define lives_text_strip_markup(text) pango_text_strip_markup(text)
+
 typedef PangoLayout LingoLayout;
 typedef PangoContext LingoContext;
 typedef PangoWrapMode LingoWrapMode;
@@ -1298,6 +1300,7 @@ void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 char *lives_text_view_get_text(LiVESTextView *);
 boolean lives_text_view_set_text(LiVESTextView *, const char *text, int len);
 boolean lives_text_view_set_markup(LiVESTextView *, const char *markup);
+boolean lives_text_view_strip_markup(LiVESTextView *);
 
 boolean lives_text_buffer_insert_at_end(LiVESTextBuffer *, const char *text);
 boolean lives_text_buffer_insert_markup_at_end(LiVESTextBuffer *, const char *markup);
@@ -1404,10 +1407,12 @@ boolean lives_widget_destroy_with(LiVESWidget *, LiVESWidget *dieplease);
 LiVESPixbuf *get_desktop_icon(const char *dir);
 
 typedef weed_plantptr_t lives_proc_thread_t;
-void *lives_fg_run(lives_proc_thread_t lpt, void *retval);
+void *fg_service_call(lives_proc_thread_t lpt, void *retval);
 
 //volatile lives_proc_thread_t get_lpttorun(boolean runit);
 boolean has_lpttorun(void);
+
+boolean will_gov_run(void);
 
 // directions
 /// use REVERSE / FORWARD when a sign is used, BACKWARD / FORWARD when a parity is used

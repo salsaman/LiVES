@@ -64,7 +64,7 @@ void lives_hooks_clear(LiVESList **xlist, int type);
 void lives_hooks_trigger(lives_object_t *obj, LiVESList **xlist, int type);
 void lives_hooks_join(LiVESList **xlist, int type);
 
-void add_to_exit_stack(hook_funcptr_t func, livespointer data);
+boolean avoid_deadlock(hook_funcptr_t hfunc, livespointer data);
 
 #define THRDNATIVE_CAN_CORRECT (1ul << 0)
 
@@ -91,6 +91,7 @@ typedef struct {
   boolean var_fx_is_audio;
   boolean var_no_gui;
   boolean var_force_button_image;
+  volatile boolean var_fg_service;
   ticks_t var_timerinfo;
   uint64_t var_thrdnative_flags;
   LiVESList *var_hook_closures[N_HOOK_FUNCS];

@@ -160,6 +160,7 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
   lives_sigdata_t *sigdata;
   ticks_t xtimeout = 1;
   boolean tres;
+  boolean govrun = FALSE;
   lives_cancel_t cancel = CANCEL_NONE;
   int xreturn_type = return_type;
 
@@ -177,8 +178,10 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
   sigdata = lives_sigdata_new(lpt, TRUE);
   alarm_handle = sigdata->alarm_handle = lives_alarm_set(timeout);
 
-  if (is_fg_thread()) tres = governor_loop(sigdata);
-  else {
+  if (is_fg_thread()) {
+    govrun = TRUE;
+    tres = governor_loop(sigdata);
+  } else {
     resubmit_proc_thread(lpt, 0);
     lives_proc_thread_sync_ready(lpt);
   }
@@ -194,9 +197,13 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
          && (timeout == 0 || (xtimeout = lives_alarm_check(alarm_handle)) > 0)) {
     lives_nanosleep(LIVES_SHORT_SLEEP);
 
-    if (is_fg_thread())
+    if (is_fg_thread()) {
       // allow governor_loop to run its idle func
-      lives_widget_context_update();
+      govrun = will_gov_run();
+      if (!govrun) governor_loop(NULL);
+      else lives_widget_context_update();
+    }
+    //lives_widget_context_update();
 
     if (lives_proc_thread_check_states(lpt, THRD_STATE_BUSY) == THRD_STATE_BUSY) {
       // thread MUST unavoidably block; stop the timer (e.g showing a UI)
@@ -262,7 +269,10 @@ void lives_mutex_lock_carefully(pthread_mutex_t *mutex) {
   // - we will service the bg thread requests until it releases the lock and we can obtain it for ourselves
   if (is_fg_thread()) {
     while (pthread_mutex_trylock(mutex)) {
-      if (has_lpttorun()) governor_loop(NULL);
+      if (has_lpttorun()) {
+        if (!will_gov_run()) governor_loop(NULL);
+        else lives_widget_context_update();
+      }
     }
   } else pthread_mutex_lock(mutex);
 }
@@ -280,9 +290,7 @@ void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, c
     ret = fg_run_func(lpt, retval);
     // calls lives_proc_thread_free(lpt)
   } else {
-    pthread_mutex_lock(&mainw->fgthread_mutex);
-    ret = lives_fg_run(lpt, retval);
-    pthread_mutex_unlock(&mainw->fgthread_mutex);
+    ret = fg_service_call(lpt, retval);
     // will call fg_run_func() indirectly, so no need to call lives_proc_thread_free
     // some functions may have been stacked, since we cannot stack multiple fg service calls
     lives_hooks_trigger(NULL, THREADVAR(hook_closures), THREAD_INTERNAL_HOOK);
@@ -825,7 +833,11 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t tinfo) {
   // WARNING !! this version without a return value will free tinfo !
   if (is_fg_thread()) {
     while (!lives_proc_thread_check_finished(tinfo)) {
-      if (has_lpttorun()) governor_loop(NULL);//lives_widget_context_update();
+      if (has_lpttorun()) {
+        if (!will_gov_run()) governor_loop(NULL);
+        else lives_widget_context_update();
+      }
+      //governor_loop(NULL);//lives_widget_context_update();
       lives_nanosleep(LIVES_QUICK_NAP * 10);
     }
   } else lives_nanosleep_while_false(lives_proc_thread_check_finished(tinfo));
@@ -873,12 +885,14 @@ static void pthread_cleanup_func(void *args) {
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
   boolean dontcare = (lives_proc_thread_check_states(info, THRD_OPT_DONTCARE)
                       == THRD_OPT_DONTCARE) ? TRUE : FALSE;
+
+  lives_proc_thread_include_states(info, THRD_STATE_FINISHED);
+
+  lives_hooks_trigger(NULL, THREADVAR(hook_closures), THREAD_EXIT_HOOK);
+
   if (dontcare || (!ret_type && lives_proc_thread_check_states(info, THRD_OPT_NOTIFY)
                    != THRD_OPT_NOTIFY)) {
-    lives_proc_thread_include_states(info, THRD_STATE_FINISHED);
     lives_proc_thread_free(info);
-  } else {
-    lives_proc_thread_include_states(info, THRD_STATE_FINISHED);
   }
 }
 
@@ -1475,6 +1489,15 @@ LIVES_GLOBAL_INLINE void lives_hooks_join(LiVESList **xlist, int type) {
 }
 
 
-LIVES_GLOBAL_INLINE void add_to_exit_stack(hook_funcptr_t func, livespointer data) {
+LIVES_LOCAL_INLINE void add_to_deferral_stack(hook_funcptr_t func, livespointer data) {
   lives_hook_append(THREADVAR(hook_closures), THREAD_INTERNAL_HOOK, HOOK_CB_SINGLE_SHOT, func, data);
+}
+
+
+LIVES_GLOBAL_INLINE boolean avoid_deadlock(hook_funcptr_t hfunc, livespointer data) {
+  if (THREADVAR(fg_service)) {
+    add_to_deferral_stack(hfunc, data);
+    return TRUE;
+  }
+  return FALSE;
 }

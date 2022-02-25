@@ -565,7 +565,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       mainw->audio_seek_ready = TRUE;
 
     if (!mainw->audio_seek_ready) {
-      double dqnt;
       size_t qnt;
       if (!mainw->video_seek_ready) {
         sample_silence_pulse(pulsed, nbytes);
@@ -573,7 +572,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         return;
         /// adjustment is .5 (rounding factor) + (if we switched clips) 1 frame (because video advances 1) + 1 (????)
       }
-      dqnt = (double)afile->achans * afile->asampsize / 8.;
       qnt = afile->achans * (afile->asampsize >> 3);
       afile->last_play_sequence = mainw->play_sequence;
       pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);

@@ -1092,6 +1092,7 @@ typedef void (*SignalHandlerPointer)(int);
 void set_signal_handlers(SignalHandlerPointer sigfunc);
 void catch_sigint(int signum);
 void defer_sigint(int signum);
+void *defer_sigint_cb(lives_object_t *obj, void *pdtl);
 void startup_message_fatal(char *msg) GNU_NORETURN;
 boolean startup_message_choice(const char *msg, int msgtype);
 boolean startup_message_nonfatal(const char *msg);

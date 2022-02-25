@@ -55,10 +55,13 @@ LIVES_GLOBAL_INLINE boolean lives_unsetenv(const char *name) {
 
 
 LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
-  break_me(reason);
+  char *xreason = (char *)reason;
+  if (!xreason) xreason = lives_strdup(_("Aborting"));
+  break_me(xreason);
   if (mainw) lives_hooks_trigger(NULL, mainw->global_hook_closures, ABORT_HOOK);
-  g_printerr("LIVES FATAL: %s\n", reason);
-  lives_notify(LIVES_OSC_NOTIFY_QUIT, reason);
+  g_printerr("LIVES FATAL: %s\n", xreason);
+  lives_notify(LIVES_OSC_NOTIFY_QUIT, xreason);
+  if (xreason != reason) lives_free(xreason);
   abort();
 }
 

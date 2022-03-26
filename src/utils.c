@@ -2198,7 +2198,8 @@ void set_sel_label(LiVESWidget * sel_label) {
   char *sy, *sz;
 
   if (mainw->current_file == -1 || !cfile->frames || mainw->multitrack) {
-    lives_label_set_text(LIVES_LABEL(sel_label), _("-------------Selection------------"));
+    lives_label_set_text(LIVES_LABEL(sel_label), (tmp = _("-------------Selection------------")));
+    lives_free(tmp);
   } else {
     double xtime = calc_time_from_frame(mainw->current_file, cfile->end + 1) -
                    calc_time_from_frame(mainw->current_file, cfile->start);

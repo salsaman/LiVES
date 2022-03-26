@@ -66,6 +66,7 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dummy_widget), PARAM_NUMBER_KEY,
                                      LIVES_INT_TO_POINTER(-1));
         retvals = do_onchange(LIVES_WIDGET_OBJECT(dummy_widget), rfx);
+	lives_widget_object_ref_sink(dummy_widget);
         lives_widget_destroy(dummy_widget);
         lives_strfreev(array);
         break;
@@ -412,6 +413,7 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   // dummy radiobutton so we can have neither in nor out set
   radiobutton_dummy = lives_standard_radio_button_new(NULL, &radiobutton_group, LIVES_BOX(hbox), NULL);
   lives_widget_set_no_show_all(radiobutton_dummy, TRUE);
+  lives_widget_object_ref_sink(radiobutton_dummy);
 
   widget_opts.pack_end = TRUE;
   radiobutton_out = lives_standard_radio_button_new((tmp = (_("Transition _Out"))),
@@ -1595,6 +1597,7 @@ boolean _make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   } else scrolledwindow = lives_standard_scrolled_window_new(-1, -1, top_hbox);
 
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, 0);
+  lives_widget_object_ref_sink(dummy_label);
   lives_widget_destroy(dummy_label);
 
   if (has_param) {

@@ -125,6 +125,7 @@ weed_error_t lives_object_set_attribute_value(lives_object_t *obj, const char *n
       va_list args;
       int st;
       st = weed_leaf_seed_type(attr, WEED_LEAF_VALUE);
+      lives_hooks_trigger(obj, obj->hook_closures, PRE_VALUE_CHANGED_HOOK);
       va_start(args, name);
       switch (st) {
       case WEED_SEED_INT: {
@@ -175,7 +176,7 @@ weed_error_t lives_object_set_attribute_value(lives_object_t *obj, const char *n
       va_end(args);
     }
     if (err == WEED_SUCCESS) {
-      lives_hooks_trigger(obj, obj->hook_closures, VALUE_CHANGED_HOOK);
+      lives_hooks_trigger(obj, obj->hook_closures, POST_VALUE_CHANGED_HOOK);
     }
   }
   return err;
@@ -321,15 +322,17 @@ LIVES_GLOBAL_INLINE int lives_attribute_get_param_type(lives_object_t *obj, cons
 }
 
 
+// TODO - add pre hooks + new_data
+
 LIVES_GLOBAL_INLINE void lives_attribute_append_listener(lives_object_t *obj, const char *name, attr_listener_f func) {
   lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-  lives_hook_append(obj->hook_closures, VALUE_CHANGED_HOOK, 0, (hook_funcptr_t)func, attr);
+  lives_hook_append(obj->hook_closures, POST_VALUE_CHANGED_HOOK, 0, (hook_funcptr_t)func, attr);
 }
 
 
 LIVES_GLOBAL_INLINE void lives_attribute_prepend_listener(lives_object_t *obj, const char *name, attr_listener_f func) {
   lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-  lives_hook_prepend(obj->hook_closures, VALUE_CHANGED_HOOK, 0, (hook_funcptr_t)func, attr);
+  lives_hook_prepend(obj->hook_closures, POST_VALUE_CHANGED_HOOK, 0, (hook_funcptr_t)func, attr);
 }
 
 
@@ -367,10 +370,8 @@ lives_intentcap_t *lives_intentcaps_new(int icapstype) {
   case LIVES_ICAPS_DOWNLOAD:
     icaps = lives_icaps_new(LIVES_INTENTION_IMPORT);
     break;
-  default: break;
+  default: return NULL;;
   }
-
-  icaps->capacities = lives_capacities_new();
 
   switch (icapstype) {
   case LIVES_ICAPS_LOAD:

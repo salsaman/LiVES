@@ -1860,7 +1860,7 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_queue_draw(LiVESWidget *widget)
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw(LiVESWidget *widget) {
   boolean resp;
-  if (is_fg_thread()) return _lives_widget_queue_draw(widget);
+  if (1 || is_fg_thread()) return _lives_widget_queue_draw(widget);
   else main_thread_execute((lives_funcptr_t)_lives_widget_queue_draw, WEED_SEED_BOOLEAN, &resp, "v", widget);
   return resp;
 }
@@ -4937,7 +4937,6 @@ static LiVESWidget *make_ttips_image_for(LiVESWidget *widget, const char *text) 
   if (ttips_image) {
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (widget_opts.apply_theme) {
-      //set_css_value_direct(ttips_image, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "0.85");
       set_css_value_direct(ttips_image, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.75");
     }
 #endif
@@ -5357,7 +5356,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_progress_bar_new(void) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_set_fraction(LiVESProgressBar *pbar, double fraction) {
 #ifdef GUI_GTK
 #ifdef PROGBAR_IS_ENTRY
-  if (palette->style & STYLE_1) {
+  if (widget_opts.apply_theme) {
     lives_widget_set_sensitive(LIVES_WIDGET(pbar), FALSE);
   }
   gtk_entry_set_progress_fraction(pbar, fraction);
@@ -5390,7 +5389,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_set_pulse_step(LiVESProgr
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_pulse(LiVESProgressBar *pbar) {
 #ifdef GUI_GTK
 #ifdef PROGBAR_IS_ENTRY
-  if (palette->style & STYLE_1) {
+  if (widget_opts.apply_theme) {
     lives_widget_set_sensitive(LIVES_WIDGET(pbar), TRUE);
   }
   gtk_entry_progress_pulse(pbar);
@@ -8436,7 +8435,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean show_warn_image(LiVESWidget * widget, const 
   if (text) lives_widget_set_tooltip_text(warn_image, text);
   lives_widget_set_no_show_all(warn_image, FALSE);
   lives_widget_show_all(warn_image);
-  lives_widget_set_sensitive(warn_image, TRUE);
+  lives_widget_set_sensitive(warn_image, lives_widget_get_sensitive(widget));
   if (is_standard_widget(widget)) {
     if (LIVES_IS_ENTRY(widget) || LIVES_IS_SPIN_BUTTON(widget) || LIVES_IS_COMBO(widget)) {
       char *colref = gdk_rgba_to_string(&palette->dark_red);
@@ -11978,8 +11977,11 @@ boolean widget_opts_rescale(double scale) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_if_visible(LiVESWidget * widget) {
   if (GTK_IS_WIDGET(widget) && gtk_widget_is_drawable(widget)) {
-    lives_widget_queue_draw(widget);
-    return TRUE;
+    boolean resp = TRUE;
+    if (is_fg_thread()) return _lives_widget_queue_draw(widget);
+    else main_thread_execute((lives_funcptr_t)_lives_widget_queue_draw, WEED_SEED_BOOLEAN, &resp, "v", widget);
+    //lives_widget_queue_draw(widget);
+    return resp;
   }
   return FALSE;
 }
@@ -12124,7 +12126,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_cursor_unref(LiVESXCursor * cursor) {
 
 
 void lives_widget_apply_theme(LiVESWidget * widget, LiVESWidgetState state) {
-  if (!palette || ((palette->style & STYLE_1) && !widget_opts.apply_theme)) return;
+  if (!palette || !widget_opts.apply_theme) return;
   lives_widget_set_fg_color(widget, state, &palette->normal_fore);
   lives_widget_set_bg_color(widget, state, &palette->normal_back);
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -12138,10 +12140,8 @@ void lives_widget_apply_theme(LiVESWidget * widget, LiVESWidgetState state) {
 
 void lives_widget_apply_theme2(LiVESWidget * widget, LiVESWidgetState state, boolean set_fg) {
   if (!widget_opts.apply_theme) {
-    if (!(palette->style & STYLE_1)) {
-      lives_widget_set_fg_color(widget, state, &palette->normal_fore);
-      lives_widget_set_bg_color(widget, state, &palette->normal_back);
-    }
+    lives_widget_set_fg_color(widget, state, &palette->normal_fore);
+    lives_widget_set_bg_color(widget, state, &palette->normal_back);
     return;
   }
   if (set_fg)
@@ -12152,13 +12152,9 @@ void lives_widget_apply_theme2(LiVESWidget * widget, LiVESWidgetState state, boo
 
 void lives_widget_apply_theme3(LiVESWidget * widget, LiVESWidgetState state) {
   if (!widget_opts.apply_theme) {
-    if (!(palette->style & STYLE_1)) {
-      lives_widget_set_fg_color(widget, state, &palette->normal_fore);
-      lives_widget_set_bg_color(widget, state, &palette->normal_back);
-    }
-    return;
-  }
-  if (palette->style & STYLE_1) {
+    lives_widget_set_fg_color(widget, state, &palette->normal_fore);
+    lives_widget_set_bg_color(widget, state, &palette->normal_back);
+  } else {
     lives_widget_set_text_color(widget, state, &palette->info_text);
     lives_widget_set_base_color(widget, state, &palette->info_base);
     lives_widget_set_fg_color(widget, state, &palette->info_text);
@@ -12168,8 +12164,7 @@ void lives_widget_apply_theme3(LiVESWidget * widget, LiVESWidgetState state) {
 
 
 void lives_widget_apply_theme_dimmed(LiVESWidget * widget, LiVESWidgetState state, int dimval) {
-  if (!widget_opts.apply_theme) return;
-  if (palette->style & STYLE_1) {
+  if (widget_opts.apply_theme) {
     LiVESWidgetColor dimmed_fg;
     lives_widget_color_copy(&dimmed_fg, &palette->normal_fore);
     lives_widget_color_mix(&dimmed_fg, &palette->normal_back, (float)dimval / 65535.);
@@ -12180,8 +12175,7 @@ void lives_widget_apply_theme_dimmed(LiVESWidget * widget, LiVESWidgetState stat
 
 
 void lives_widget_apply_theme_dimmed2(LiVESWidget * widget, LiVESWidgetState state, int dimval) {
-  if (!widget_opts.apply_theme) return;
-  if (palette->style & STYLE_1) {
+  if (widget_opts.apply_theme) {
     LiVESWidgetColor dimmed_fg;
     lives_widget_color_copy(&dimmed_fg, &palette->menu_and_bars_fore);
     lives_widget_color_mix(&dimmed_fg, &palette->menu_and_bars, (float)dimval / 65535.);
@@ -12705,10 +12699,17 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_tool_button_toggle(LiVESToggleT
 }
 
 
-void entry_text_copy(LiVESEntry * e1, LiVESEntry * e2) {
+WIDGET_HELPER_GLOBAL_INLINE void entry_text_copy(LiVESEntry * e1, LiVESEntry * e2) {
   // convenience callback
   lives_entry_set_text(e2, lives_entry_get_text(e1));
 }
+
+
+WIDGET_HELPER_GLOBAL_INLINE void lives_entries_link(LiVESEntry * from, LiVESEntry * to) {
+  lives_signal_sync_connect(LIVES_WIDGET(from), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(entry_text_copy), to);
+}
+
 
 static void _set_tooltips_state(LiVESWidget * widget, livespointer state) {
 #ifdef GUI_GTK
@@ -13202,6 +13203,12 @@ boolean lives_widget_context_update(void) {
     if (mainw->no_context_update) return FALSE;
     if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
     else {
+      if (!is_fg_thread() && !gov_will_run && !gov_running) {
+	boolean ret;
+	main_thread_execute((lives_funcptr_t)lives_widget_context_update,
+			    WEED_SEED_BOOLEAN, &ret, "");
+	return ret;
+      }
       do_some_things();
       if (!is_fg_thread()) {
         while (gov_will_run && !gov_running) {

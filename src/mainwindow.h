@@ -232,7 +232,7 @@ typedef enum {
 } lives_time_source_t;
 
 #define LIVES_DIRECTION_FWD_OR_REV(dir) ((dir) == LIVES_DIRECTION_BACKWARD ? LIVES_DIRECTION_REVERSE : (dir))
-#define LIVES_DIRECTION_SIG(dir) ((lives_direction_t)sig(dir))  /// LIVES_DIRECTION_REVERSE or LIVES_DIRECTION_FORWARD
+#define LIVES_DIRECTION_SIG(dir) ((lives_direction_t)sig((dir)))  /// LIVES_DIRECTION_REVERSE or LIVES_DIRECTION_FORWARD
 #define LIVES_DIRECTION_PAR(dir) ((lives_direction_t)((dir) & 1)) /// LIVES_DIRECTION_BACKWARD or LIVES_DIRECTION_FORWARD
 
 #define LIVES_DIRECTION_OPPOSITE(dir1, dir2) (((dir1) == LIVES_DIR_BACKWARD || (dir1) == LIVES_DIR_REVERSED) \
@@ -871,7 +871,7 @@ typedef struct {
   boolean oping_pong;
   boolean loop_locked;
   boolean mute;
-  int audio_start, audio_end;
+  frames_t audio_start, audio_end;
 
   boolean ext_playback; ///< using external video playback plugin
   volatile boolean ext_audio; ///< using external video playback plugin to stream audio
@@ -1149,15 +1149,16 @@ typedef struct {
   boolean preview_req; // preview requested
 
   volatile short scratch;
-#define SCRATCH_NONE 0
-#define SCRATCH_BACK -1
-#define SCRATCH_FWD 1
-#define SCRATCH_REV 2 ///< set on direction change (video)
-#define SCRATCH_JUMP 3  ///< jump and resync audio
-#define SCRATCH_JUMP_NORESYNC 4 ///< jump with no audio resync
+#define SCRATCH_NONE		0
+#define SCRATCH_BACK		-1
+#define SCRATCH_FWD		1
+#define SCRATCH_REV	 	2 ///< set on direction change (video)
+#define SCRATCH_JUMP		3 ///< jump and resync audio
+#define SCRATCH_JUMP_NORESYNC	4 ///< jump with no audio resync
+#define SCRATCH_REALIGN		5 ///< realign played (actual) frame with theoretical frame
 
-#define SCRATCH_FWD_EXTRA 255
-#define SCRATCH_BACK_EXTRA 257
+#define SCRATCH_BACK_EXTRA 254
+#define SCRATCH_FWD_EXTRA 256
 
   /////
 

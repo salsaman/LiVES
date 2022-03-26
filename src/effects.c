@@ -903,6 +903,7 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
       if (is_virtual_frame(mainw->blend_file, frameno)) {
         if (dpsys && dpsys->estimate_delay)
           est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->blend_file, frameno));
+        if (fpclassify(est_time) != FP_NORMAL) est_time = -1.;
       } else {
         // img timings
         est_time = blend_file->img_decode_time;

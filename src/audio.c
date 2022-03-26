@@ -867,7 +867,7 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
 float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian,
                             float vol) {
   // convert 16 bit audio to float audio
-
+  // NO RESAMPLING
   // returns abs(maxvol heard)
 
   float svolp, svoln;
@@ -1681,7 +1681,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   int out_asamps = to_file > -1 ? outfile->asampsize / 8 : obuf->out_asamps / 8;
   int out_achans = to_file > -1 ? outfile->achans : obuf->out_achans;
-  int out_arate = to_file > -1 ? outfile->arate : obuf->arate;
+  int out_arate = to_file > -1 ? outfile->arps : obuf->arate;
   int out_unsigned = to_file > -1 ? outfile->signed_endian & AFORM_UNSIGNED : 0;
   int out_bendian = to_file > -1 ? outfile->signed_endian & AFORM_BIG_ENDIAN : 0;
 
@@ -1802,7 +1802,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       /// this is not the velocity we will use for reading, but we need to estimate how many bytes we will read in
       /// so we can calculate how many buffers to allocate
-      zavel = avels[track] * (double)in_arate[track] / (double)out_arate * in_asamps[track] * in_achans[track];
+      zavel = avels[track] * (double)in_arps[track] / (double)out_arate * in_asamps[track] * in_achans[track];
 
       if (fabs(zavel) > zavel_max) zavel_max = fabs(zavel);
 
@@ -1921,7 +1921,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         continue;
       }
       /// calculate tbytes for xsamples
-      zavel = avels[track] * (double)in_arate[track] / (double)out_arate;
+      zavel = avels[track] * (double)in_arps[track] / (double)out_arate;
 
       //g_print("zavel is %f\n", zavel);
       /// tbytes: how many bytes we want to read in. This is xsamples * the track velocity.
@@ -1960,7 +1960,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       }
 
       fromtime[track] = (double)lives_buffered_offset(in_fd[track])
-                        / (double)(in_asamps[track] * in_achans[track] * in_arate[track]);
+                        / (double)(in_asamps[track] * in_achans[track] * in_arps[track]);
 
       if (from_files[track] == mainw->ascrap_file) {
         // be forgiving with the ascrap file
@@ -2231,12 +2231,12 @@ void preview_audio(void) {
   // start up our audio player (jack or pulse)
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK) {
-    if (mainw->jackd) jack_aud_pb_ready(mainw->current_file);
+    if (mainw->jackd) jack_aud_pb_ready(mainw->jackd, mainw->current_file);
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
-    if (mainw->pulsed) pulse_aud_pb_ready(mainw->current_file);
+    if (mainw->pulsed) pulse_aud_pb_ready(mainw->pulsed, mainw->current_file);
   }
 #endif
 #ifdef ENABLE_JACK
@@ -2315,7 +2315,6 @@ void preview_audio(void) {
       if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
         lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
-          sched_yield(); // wait for seek
           lives_usleep(prefs->sleep_time);
         }
         lives_alarm_clear(alarm_handle);
@@ -2338,7 +2337,6 @@ void preview_audio(void) {
         if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
           lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
           while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
-            sched_yield(); // wait for seek
             lives_usleep(prefs->sleep_time);
           }
           lives_alarm_clear(alarm_handle);
@@ -3454,23 +3452,39 @@ void free_pulse_audio_buffers(void) {
 
 void freeze_unfreeze_audio(boolean is_frozen) {
   if (prefs->audio_src == AUDIO_SRC_INT) {
+    // TODO - what we need to do here is force the audio position back (or forwards)
+    // to the previous frame position, so when
+    int afile = get_aplay_clipno();
 #ifdef ENABLE_JACK
     if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK
         && mainw->jackd->is_paused != is_frozen
-        && ((mainw->jackd->playing_file == mainw->playing_file
+        && ((afile == mainw->playing_file
              && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS))
             || ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
                 && (!is_frozen || (prefs->audio_opts & AUDIO_OPTS_LOCKED_FREEZE))))) {
-      mainw->jackd->is_paused = is_frozen;
-      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&
-          !mainw->agen_needs_reinit) {
-        if (is_frozen) {
-          weed_plant_t *event = get_last_frame_event(mainw->event_list);
-          insert_audio_event_at(event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
-        } else {
-          jack_get_rec_avals(mainw->jackd);
+      if (IS_PHYSICAL_CLIP(afile)) {
+        lives_clip_t *xafile = mainw->files[afile];
+        if (!is_frozen) {
+          /* align_async_pos(afile); */
+          /* jack_audio_seek_bytes(mainw->jackd, xafile->async_pos, xafile); */
+	  mainw->startticks = mainw->currticks - xafile->async_delta;
+          //await_audio_queue(LIVES_DEFAULT_TIMEOUT);
         }
-      }
+	else {
+	  xafile->async_delta = mainw->currticks - mainw->startticks;
+	}
+        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&
+            !mainw->agen_needs_reinit) {
+          if (is_frozen) {
+            weed_plant_t *event = get_last_frame_event(mainw->event_list);
+            insert_audio_event_at(event, -1, afile, 0., 0.); // audio switch off
+          } else {
+            // seek to restart frame
+            jack_get_rec_avals(mainw->jackd);
+          }
+        }
+      } else mainw->rec_aclip = -1;
+      mainw->jackd->is_paused = is_frozen;
       if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
           && (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER)) {
         if (is_frozen) jack_pb_stop(mainw->jackd_trans);
@@ -3485,18 +3499,27 @@ void freeze_unfreeze_audio(boolean is_frozen) {
              && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS))
             || ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
                 && (!is_frozen || (prefs->audio_opts & AUDIO_OPTS_LOCKED_FREEZE))))) {
-      mainw->pulsed->is_paused = is_frozen;
-      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&
-          !mainw->agen_needs_reinit) {
-        if (is_frozen) {
-          if (!mainw->mute) {
-            weed_plant_t *event = get_last_frame_event(mainw->event_list);
-            insert_audio_event_at(event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
-          }
-        } else {
-          pulse_get_rec_avals(mainw->pulsed);
+      if (IS_PHYSICAL_CLIP(afile)) {
+        lives_clip_t *xafile = mainw->files[afile];
+        if (!is_frozen) {
+	  mainw->startticks = mainw->currticks - xafile->async_delta;
         }
-      }
+	else {
+	  xafile->async_delta = mainw->currticks - mainw->startticks;
+	}
+        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&
+            !mainw->agen_needs_reinit) {
+          if (is_frozen) {
+            if (!mainw->mute) {
+              weed_plant_t *event = get_last_frame_event(mainw->event_list);
+              insert_audio_event_at(event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
+            }
+          } else {
+            pulse_get_rec_avals(mainw->pulsed);
+          }
+        }
+      } else mainw->rec_aclip = -1;
+      mainw->pulsed->is_paused = is_frozen;
     }
 #endif
   }
@@ -3504,8 +3527,10 @@ void freeze_unfreeze_audio(boolean is_frozen) {
 
 
 LIVES_GLOBAL_INLINE void avsync_force(void) {
-#ifdef RESEEK_ENABLE
   /// force realignment of video and audio at current file->frameno / player->seek_pos
+  /// a corresponding call to avsync_check (done automatically after loading /showing a frame)
+  /// completes the alignment process
+  lives_time_source_t time_source = LIVES_TIME_SOURCE_NONE;
   if (mainw->foreign || !LIVES_IS_PLAYING || prefs->audio_src == AUDIO_SRC_EXT || prefs->force_system_clock
       || (mainw->event_list && !(mainw->record || mainw->record_paused)) || prefs->audio_player == AUD_PLAYER_NONE
       || !is_realtime_aplayer(prefs->audio_player)) {
@@ -3513,15 +3538,14 @@ LIVES_GLOBAL_INLINE void avsync_force(void) {
     return;
   }
 
-  if (!pthread_mutex_trylock(&mainw->avseek_mutex)) {
-    if (mainw->audio_seek_ready && mainw->video_seek_ready) {
-      mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
-      mainw->force_show = TRUE;
-      mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
-    }
-    pthread_mutex_unlock(&mainw->avseek_mutex);
+  pthread_mutex_lock(&mainw->avseek_mutex);
+  if (mainw->audio_seek_ready && mainw->video_seek_ready) {
+    mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
+    mainw->force_show = TRUE;
   }
-#endif
+  mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, &time_source);
+  cfile->async_delta = mainw->currticks - mainw->startticks;
+  pthread_mutex_unlock(&mainw->avseek_mutex);
 }
 
 
@@ -3534,6 +3558,21 @@ LIVES_GLOBAL_INLINE int get_aplay_clipno(void) {
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE)
       return mainw->pulsed->playing_file;
+#endif
+  }
+  return -1;
+}
+
+
+LIVES_GLOBAL_INLINE off_t get_aplay_offset(void) {
+  if (AUD_SRC_INTERNAL) {
+#ifdef ENABLE_JACK
+    if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK)
+      return lives_jack_get_offset(mainw->jackd);
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE)
+      return lives_pulse_get_offset(mainw->pulsed);
 #endif
   }
   return -1;
@@ -3570,11 +3609,11 @@ LIVES_GLOBAL_INLINE int get_aplay_rate(void) {
 */
 boolean resync_audio(int clipno, double frameno) {
   lives_clip_t *sfile;
+  boolean retval = FALSE;
 
   if (!LIVES_IS_PLAYING || !CLIP_HAS_AUDIO(clipno)) return FALSE;
+  if (!AV_CLIPS_EQUAL || AUD_SRC_EXTERNAL) return FALSE;
 
-  if (!AV_CLIPS_EQUAL) return FALSE;
-  //if (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) return FALSE;
   sfile = mainw->files[clipno];
   if (!frameno && sfile->fps == 0.) return FALSE;
 
@@ -3582,16 +3621,14 @@ boolean resync_audio(int clipno, double frameno) {
   if ((mainw->event_list && !mainw->multitrack && !mainw->record && !mainw->record_paused)
       || mainw->agen_key != 0 || mainw->agen_needs_reinit) return FALSE;
 
-  if (sfile->pb_fps >= 0.) sfile->adirection = LIVES_DIRECTION_FORWARD;
-  else sfile->adirection = LIVES_DIRECTION_REVERSE;
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK) {
     if (frameno) {
-      if (!jack_audio_seek_frame(mainw->jackd, frameno)) {
-        if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, frameno);
-        else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-      }
-      mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+      avsync_force();
+      /* if (!jack_audio_seek_frame_velocity(mainw->jackd, frameno, sfile->pb_fps / sfile->fps)) { */
+      /*   if (jack_try_reconnect()) jack_audio_seek_frame_velocity(mainw->jackd, frameno, sfile->pb_fps / sfile->fps); */
+      /*   else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE; */
+      /* } */
       if (sfile->fps != 0.) {
         if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
             && (prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART)) {
@@ -3599,30 +3636,25 @@ boolean resync_audio(int clipno, double frameno) {
         }
       }
     }
-
-    if (!mainw->alock_abuf) jack_get_rec_avals(mainw->jackd);
-    else jack_set_avel(mainw->jackd, clipno, sfile->pb_fps / sfile->fps);
-    return TRUE;
+    retval = TRUE;
   }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
     if (frameno) {
-      if (!pulse_audio_seek_frame(mainw->pulsed, frameno)) {
-        if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, frameno);
+      avsync_force();
+      if (!pulse_audio_seek_frame_velocity(mainw->pulsed, frameno, sfile->pb_fps / sfile->fps
+					   * sfile->arate / sfile->arps)) {
+	if (pulse_try_reconnect()) pulse_audio_seek_frame_velocity(mainw->pulsed, frameno, sfile->pb_fps / sfile->fps);
         else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
       }
-      mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
     }
-
-    if (!mainw->alock_abuf) pulse_get_rec_avals(mainw->pulsed);
-    else pulse_set_avel(mainw->pulsed, clipno, sfile->pb_fps / sfile->fps);
-    return TRUE;
+    retval = TRUE;
   }
 #endif
 
-  return FALSE;
+  return retval;
 }
 
 
@@ -3879,11 +3911,12 @@ static void *cache_my_audio(void *arg) {
     // lock the mutex - we need to make sure eveything is updated together
     pthread_mutex_lock(&cbuffer->atomic_mutex);
 
-    // open new file if necessary
-
     if (cbuffer->fileno != cbuffer->_cfileno) {
-      if (cbuffer->_fd != -1) {
-        lives_close_buffered(cbuffer->_fd);
+      if (cbuffer->_fd >= 0) {
+        if (0 && LIVES_IS_PLAYING && IS_VALID_CLIP(cbuffer->fileno)) {
+          lives_clip_t *afile = mainw->files[cbuffer->_fd];
+          afile->aplay_fd = cbuffer->_fd;
+        } else lives_close_buffered(cbuffer->_fd);
         cbuffer->_fd = -1;
       }
     }
@@ -3899,33 +3932,36 @@ static void *cache_my_audio(void *arg) {
     if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->_fd == -1) {
       lives_clip_t *afile;
       afile = mainw->files[cbuffer->fileno];
-      filename = get_audio_file_name(cbuffer->fileno, afile->opening);
-
-      cbuffer->_fd = lives_open_buffered_rdonly(filename);
-      if (cbuffer->_fd == -1) {
-        lives_printerr("audio cache thread: error opening %s\n", filename);
-        cbuffer->in_achans = 0;
-        cbuffer->_cfileno = cbuffer->fileno = -1; ///< let client handle this
-        cbuffer->is_ready = TRUE;
-        pthread_mutex_unlock(&cbuffer->atomic_mutex);
-        continue;
-      }
-      lives_free(filename);
-      cbuffer->_cfileno = -1;
-      lives_buffered_rdonly_slurp(cbuffer->_fd, 0);
-    }
-
-    if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek ||
-        cbuffer->shrink_factor != cbuffer->_shrink_factor) {
-      if (cbuffer->sequential || cbuffer->shrink_factor > 0.) {
-        lives_buffered_rdonly_set_reversed(cbuffer->_fd, FALSE);
+      if (0 && afile->aplay_fd > -1) {
+        cbuffer->_fd = afile->aplay_fd;
       } else {
-        lives_buffered_rdonly_set_reversed(cbuffer->_fd, TRUE);
+        filename = get_audio_file_name(cbuffer->fileno, afile->opening);
+        cbuffer->_fd = lives_open_buffered_rdonly(filename);
+        if (cbuffer->_fd == -1) {
+          lives_printerr("audio cache thread: error opening %s\n", filename);
+          cbuffer->in_achans = 0;
+          cbuffer->_cfileno = cbuffer->fileno = -1; ///< let client handle this
+          cbuffer->is_ready = TRUE;
+          pthread_mutex_unlock(&cbuffer->atomic_mutex);
+          continue;
+        }
+        lives_free(filename);
+        cbuffer->_cfileno = -1;
+        lives_buffered_rdonly_slurp(cbuffer->_fd, 0);
       }
-      if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek) {
-        lives_lseek_buffered_rdonly_absolute(cbuffer->_fd, cbuffer->seek);
+
+      if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek ||
+          cbuffer->shrink_factor != cbuffer->_shrink_factor) {
+        if (cbuffer->sequential || cbuffer->shrink_factor > 0.) {
+          lives_buffered_rdonly_set_reversed(cbuffer->_fd, FALSE);
+        } else {
+          lives_buffered_rdonly_set_reversed(cbuffer->_fd, TRUE);
+        }
+        if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek) {
+          lives_lseek_buffered_rdonly_absolute(cbuffer->_fd, cbuffer->seek);
+        }
+        cbuffer->_cseek = cbuffer->seek;
       }
-      cbuffer->_cseek = cbuffer->seek;
     }
 
     cbuffer->_cfileno = cbuffer->fileno;
@@ -3958,7 +3994,6 @@ static void *cache_my_audio(void *arg) {
       pthread_mutex_unlock(&cbuffer->atomic_mutex);
       continue;
     }
-
     if (cbuffer->_cbytesize < cbuffer->bytesize) {
       cbuffer->eof = TRUE;
       cbuffer->_csamp_space = (int64_t)((double)cbuffer->samp_space / (double)cbuffer->bytesize * (double)cbuffer->_cbytesize);
@@ -4851,8 +4886,7 @@ LIVES_GLOBAL_INLINE lives_cancel_t handle_audio_timeout(void) {
     switch_aud_to_none(FALSE);
     mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
   }
-  lives_free(msg);
-  lives_free(msg2);
+  lives_free(msg); lives_free(msg2);
   return CANCEL_ERROR;
 }
 
@@ -4928,7 +4962,7 @@ void nullaudio_get_rec_avals(void) {
 
   if (mainw->rec_aclip != -1) {
     mainw->rec_aseek = (double)mainw->nullaudio_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
-    mainw->rec_avel = SIGNED_DIVIDE((double)pulsed->in_arate, (double)afile->arate);
+    mainw->rec_avel = SIGNED_DIVIDE((double)pulsed->in_arate, (double)afile->arps);
   }
 }
 
@@ -5068,3 +5102,21 @@ void show_aplayer_attribs(LiVESWidget * w, void **player) {
   if (title) lives_free(title);
 }
 
+
+boolean await_audio_queue(ticks_t xtimeout) {
+  ticks_t timeout = xtimeout;
+  lives_alarm_t alarm_handle = lives_alarm_set(xtimeout);
+#ifdef ENABLE_JACK
+  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
+    lives_nanosleep_while_true((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd));
+  }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
+    lives_nanosleep_while_true((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed));
+  }
+#endif
+  lives_alarm_clear(alarm_handle);
+  if (timeout == 0) return FALSE;
+  return TRUE;
+}

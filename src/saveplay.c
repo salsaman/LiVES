@@ -2037,15 +2037,16 @@ char *prep_audio_player(frames_t audio_end, int arate, int asigned, int aendian)
     if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
     if (mainw->current_file == 0 && cfile->arate < 0) cfile->aseek_pos = cfile->afilesize;
   }
+  
   // start up our audio player (jack or pulse)
   if (audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-    if (mainw->jackd) jack_aud_pb_ready(mainw->current_file);
+    if (mainw->jackd) jack_aud_pb_ready(mainw->jackd, mainw->current_file);
     return NULL;
 #endif
   } else if (audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed) pulse_aud_pb_ready(mainw->current_file);
+    if (mainw->pulsed) pulse_aud_pb_ready(mainw->pulsed, mainw->current_file);
     return NULL;
 #endif
   }
@@ -2136,14 +2137,6 @@ static void post_playback(void) {
     mainw->osc_block = FALSE;
   }
 
-  if (CURRENT_CLIP_IS_VALID) {
-    if (!mainw->multitrack) {
-      lives_ce_update_timeline(0, cfile->real_pointer_time);
-      mainw->ptrtime = cfile->real_pointer_time;
-      lives_widget_queue_draw(mainw->eventbox2);
-    }
-  }
-
   if (prefs->open_maximised) {
     int bx, by;
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
@@ -2190,14 +2183,20 @@ static void post_playback(void) {
   if (!mainw->multitrack && CURRENT_CLIP_IS_VALID)
     set_main_title(cfile->name, 0);
 
+  if (mainw->drawtl_thread) {
+    if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+      lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
+    }
+    lives_proc_thread_join(mainw->drawtl_thread);
+    mainw->drawtl_thread = NULL;
+  }
+
   if (!mainw->multitrack && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
       cfile->clip_type == CLIP_TYPE_FILE)) {
     showclipimgs();
-    avoid_deadlock((hook_funcptr_t)do_tl_redraw, LIVES_INT_TO_POINTER(mainw->current_file));
   }
 
   player_sensitize();
-  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 }
 
 
@@ -2337,14 +2336,18 @@ void play_file(void) {
     }
 
     if (mainw->audio_end == 0) {
+      // values in FRAMES
       mainw->audio_start = calc_time_from_frame(mainw->current_file,
-                           mainw->play_start) * cfile->fps + 1. * cfile->arate / cfile->arps;
-      mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps
-                         + 1. * cfile->arate / cfile->arps;
+                           mainw->play_start) * cfile->fps + 1.;
+      mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1.;
       if (!mainw->playing_sel) {
         mainw->audio_end = 0;
       }
     }
+    cfile->aseek_pos = (off_t)((double)(mainw->audio_start - 1.)
+			       * cfile->fps * (double)cfile->arate)
+      * cfile->achans * (cfile->asampsize >> 3);
+    cfile->async_delta = 0;
   }
 
   if (!cfile->opening_audio && !mainw->loop) {
@@ -2399,6 +2402,7 @@ void play_file(void) {
 
   cfile->frameno = mainw->play_start;
   cfile->pb_fps = cfile->fps;
+
   if (mainw->reverse_pb) {
     cfile->pb_fps = -cfile->pb_fps;
     cfile->frameno = mainw->play_end;
@@ -2412,7 +2416,7 @@ void play_file(void) {
   cfile->play_paused = FALSE;
   mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
 
-  if (audio_player == AUD_PLAYER_JACK
+  if ((audio_player == AUD_PLAYER_JACK && AUD_SRC_INTERNAL)
       || (mainw->event_list && (!mainw->is_rendering || !mainw->preview || mainw->preview_rendering)))
     audio_cache_init();
 
@@ -2857,7 +2861,7 @@ void play_file(void) {
                    / TICKS_PER_SECOND_DBL);
     }
   }
-  mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
+
   mainw->osc_auto = 0;
 
   // do this here before closing the audio tracks, easing_events, soft_deinits, etc
@@ -3348,6 +3352,14 @@ void play_file(void) {
 
   //////
   main_thread_execute((lives_funcptr_t)post_playback, -1, NULL, "");
+
+  if (CURRENT_CLIP_IS_VALID) {
+    if (!mainw->multitrack) {
+      lives_ce_update_timeline(0, cfile->real_pointer_time);
+      mainw->ptrtime = cfile->real_pointer_time;
+      lives_widget_queue_draw(mainw->eventbox2);
+    }
+  }
 
   if (prefs->show_msg_area) {
     if (mainw->idlemax == 0) {
@@ -4324,7 +4336,9 @@ ulong restore_file(const char *file_name) {
   if (cfile->achans) {
     cfile->aseek_pos = (off64_t)((double)(cfile->real_pointer_time * cfile->arate) * cfile->achans *
                                  (cfile->asampsize / 8));
+    g_print("HHHHHH %d %f and %ld\n", cfile->frameno, cfile->real_pointer_time, cfile->aseek_pos);
     if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
+    cfile->async_delta = 0;
   }
 
   if (!save_clip_values(current_file)) {
@@ -5423,11 +5437,12 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
     if (cfile->real_pointer_time > CLIP_TOTAL_TIME(mainw->current_file))
       cfile->real_pointer_time = CLIP_TOTAL_TIME(mainw->current_file);
     if (cfile->pointer_time > cfile->video_time) cfile->pointer_time = 0.;
-
     if (cfile->achans) {
       cfile->aseek_pos = (off64_t)((double)(cfile->real_pointer_time * cfile->arate) * cfile->achans *
-                                   (cfile->asampsize / 8));
+                                   (cfile->asampsize >> 3));
       if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
+      g_print("HHHHHH 222 %d %f and %ld\n", cfile->frameno, cfile->real_pointer_time, cfile->aseek_pos);
+      cfile->async_delta = 0;
     }
 
     if (!mainw->multitrack) resize(1);

@@ -12,6 +12,8 @@
 #define IS_VALID_CLIP(clip) (mainw && (clip) >= 0 && (clip) <= MAX_FILES && mainw->files[(clip)])
 #define CURRENT_CLIP_IS_VALID (mainw && IS_VALID_CLIP(mainw->current_file))
 
+#define RETURN_VALID_CLIP(clip) (IS_VALID_CLIP((clip)) ? mainw->files[(clip)] : NULL)
+
 #define IS_TEMP_CLIP(clip) (IS_VALID_CLIP((clip)) && mainw->files[(clip)]->clip_type == CLIP_TYPE_TEMP)
 #define CURRENT_CLIP_IS_TEMP (mainw && IS_TEMP_CLIP(mainw->current_file))
 
@@ -41,11 +43,16 @@
 
 #define CURRENT_CLIP_IS_PHYSICAL (mainw && IS_PHYSICAL_CLIP(mainw->current_file))
 
+#define RETURN_PHYSICAL_CLIP(clip) (IS_PHYSICAL_CLIP((clip)) ? mainw->files[(clip)] : NULL)
+
 #define IS_NORMAL_CLIP(clip) (IS_VALID_CLIP((clip))			\
 			      ? (IS_PHYSICAL_CLIP((clip))		\
 				 || mainw->files[(clip)]->clip_type == CLIP_TYPE_NULL_VIDEO) : FALSE)
 
 #define CURRENT_CLIP_IS_NORMAL (mainw && IS_NORMAL_CLIP(mainw->current_file))
+
+#define RETURN_NORMAL_CLIP(clip) (IS_NORMAL_CLIP((clip)) ? mainw->files[(clip)] : NULL)
+
 #define CURRENT_CLIP_TOTAL_TIME (mainw ? CLIP_TOTAL_TIME(mainw->current_file) : 0.)
 
 #define CLIPBOARD_FILE 0
@@ -221,7 +228,7 @@ typedef struct _lives_clip_t {
   LiVESWidget *menuentry;
   ulong menuentry_func;
   double freeze_fps; ///< pb_fps for paused / frozen clips
-  boolean play_paused;
+  volatile boolean play_paused;
 
   lives_direction_t adirection; ///< audio play direction during playback, FORWARD or REVERSE.
 
@@ -280,6 +287,7 @@ typedef struct _lives_clip_t {
 #define IMG_BUFF_SIZE 262144  ///< 256 * 1024 < chunk size for reading images
 
   volatile off64_t aseek_pos; ///< audio seek posn. (bytes) for when we switch clips
+  ticks_t async_delta;
 
   int aplay_fd; /// may point to a buffered file during playback, else -1
 

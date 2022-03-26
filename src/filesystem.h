@@ -73,18 +73,18 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 #define FREAD_BUFFSIZE 65536
 
 // options
-#define FB_FLAG_RDONLY		(1ul << 0)
-#define FB_FLAG_ALLOW_FAIL	(1ul << 1)
-#define FB_FLAG_REVERSE		(1ul << 2)
-#define FB_FLAG_USE_RINGBUFF   	(1ul << 3)
+#define FB_FLAG_RDONLY		(1ull << 0)
+#define FB_FLAG_ALLOW_FAIL	(1ull << 1)
+#define FB_FLAG_REVERSE		(1ull << 2)
+#define FB_FLAG_USE_RINGBUFF   	(1ull << 3)
 
 // internal values
-#define FB_FLAG_BG_OP		(1ul << 16)
-#define FB_FLAG_PREALLOC	(1ul << 17)
+#define FB_FLAG_BG_OP		(1ull << 16)
+#define FB_FLAG_PREALLOC	(1ull << 17)
 
 // status bits
-#define FB_FLAG_EOF		(1ul << 32)
-#define FB_FLAG_INVALID		(1ul << 33)
+#define FB_FLAG_EOF		(1ull << 32)
+#define FB_FLAG_INVALID		(1ull << 33)
 
 typedef struct {
   int idx;  ///< identifier in list

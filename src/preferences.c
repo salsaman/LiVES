@@ -35,7 +35,17 @@ static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 
 static LiVESList *allprefs = NULL;
 
+
+
+// new prefs model. All prefs will be stored in WEED plants, with
+
+
 static weed_plant_t *define_pref(const char *pref_idx, void *pref_ptr, int32_t vtype, void *pdef, uint32_t flags) {
+  // TODO...
+  /* lives_object_instance_t *pref = lives_pref_inst_create(PLAYER_SUBTYPE_AUDIO); */
+  /* lives_pref_set_idx(pref, pref_idx); */
+  /* lives_pref_set_varptr(pref, prefptr); */
+
   weed_plant_t *prefplant = lives_plant_new(LIVES_WEED_SUBTYPE_PREFERENCE);
   weed_set_string_value(prefplant, LIVES_LEAF_PREF_IDX, pref_idx);
   weed_set_voidptr_value(prefplant, LIVES_LEAF_VARPTR, pref_ptr);
@@ -5290,7 +5300,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
 #ifndef RT_AUDIO
   lives_widget_set_sensitive(prefsw->rdesk_audio, FALSE);
-  lives_widget_set_sensitive(prefsw->pogo_mode, FALSE);
+  lives_widget_set_sensitive(GET_PREF_WIDGET(POGO_MODE), FALSE);
 #endif
 
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);

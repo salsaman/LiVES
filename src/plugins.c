@@ -3445,7 +3445,6 @@ void set_colRGB24_param(void *value, short red, short green, short blue) {
   rgbp->red = red;
   rgbp->green = green;
   rgbp->blue = blue;
-
 }
 
 

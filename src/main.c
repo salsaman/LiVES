@@ -319,7 +319,7 @@ LIVES_LOCAL_INLINE boolean jack_warn(boolean is_trans, boolean is_con) {
     fork_tried = TRUE;
   }
   // TODO - if we have backup config, restore from it
-  if (!fork_tried) set_int_pref(PREF_JACK_OPTS, 0);
+  if (!fork_tried && !ret) set_int_pref(PREF_JACK_OPTS, 0);
   return ret;
 }
 #endif
@@ -2402,7 +2402,7 @@ jack_acl_try:
               prefs->startup_phase = 4;
               goto audio_choice;
             }
-            goto jack_acl_try;
+            if (mainw->jackd) goto jack_acl_try;
           }
           // failed to connect
           if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
@@ -2416,7 +2416,7 @@ rest4:
                 goto audio_choice;
               }
               orig_err = 4;
-              goto jack_acl_try;
+              if (mainw->jackd) goto jack_acl_try;
             }
             if (prefs->startup_phase) {
               prefs->startup_phase = 4;
@@ -2433,7 +2433,7 @@ rest3:
                 goto audio_choice;
               }
               orig_err = 3;
-              goto jack_acl_try;
+              if (mainw->jackd) goto jack_acl_try;
             }
             if (prefs->startup_phase) {
               prefs->startup_phase = 4;
@@ -2507,7 +2507,7 @@ rest3:
           set_string_pref(PREF_JACK_OUTPORT_CLIENT, prefs->jack_outport_client);
           set_string_pref(PREF_JACK_AUXPORT_CLIENT, prefs->jack_auxport_client);
         }
-      }
+      } // if (mainw->jackd)
     }
 #endif
   }
@@ -7675,6 +7675,7 @@ static boolean save_to_png_inner(FILE * fp, weed_layer_t *layer, int comp) {
     // libpng will longjump to here on error
     if (info_ptr) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
     png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+    if (info_ptr) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
     THREADVAR(write_failed) = fileno(fp) + 1;
     return FALSE;
   }
@@ -7691,6 +7692,7 @@ static boolean save_to_png_inner(FILE * fp, weed_layer_t *layer, int comp) {
   palette = weed_layer_get_palette(layer);
 
   if (width <= 0 || height <= 0 || rowstride <= 0) {
+    png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
     if (info_ptr) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
     LIVES_WARN("Cannot make png with 0 width or height");
     return FALSE;
@@ -8159,15 +8161,6 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           }
 
           rowstrides = weed_layer_get_rowstrides(layer, NULL);
-
-          //static int last = -1;
-          // try to pull frame from decoder plugin
-
-          /* g_print("GF %d\n", frame); */
-          /* int64_t timex = lives_get_current_ticks(); */
-          /* double est_time = (*dplug->dpsys->estimate_delay)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame)); */
-
-          //g_print("NOW %d\\n", get_indexed_frame(clip, frame));
 
           if (!(*dplug->dpsys->get_frame)(dplug->cdata, (int64_t)iframe, rowstrides, sfile->vsize, pixel_data)) {
             if (prefs->show_dev_opts) {
@@ -9047,7 +9040,7 @@ void switch_to_file(int old_file, int new_file) {
     reset_clipmenu();
   }
 
-  if (!mainw->switch_during_pb && !cfile->opening) sensitize();
+  if (!mainw->clip_switched && !cfile->opening) sensitize();
 
   lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
   lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
@@ -9110,17 +9103,15 @@ void switch_to_file(int old_file, int new_file) {
 
 
 boolean switch_audio_clip(int new_file, boolean activate) {
-  ticks_t timeout;
+  //ticks_t cticks;
   lives_clip_t *sfile;
-  lives_alarm_t alarm_handle;
   boolean do_resync = FALSE;
   int aplay_file;
 
   if (!IS_VALID_CLIP(new_file)) return FALSE;
-
   if (AUD_SRC_EXTERNAL) return FALSE;
+
   aplay_file = get_aplay_clipno();
-  sfile = mainw->files[new_file];
 
   if ((aplay_file == new_file && (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
                                   || !CLIP_HAS_AUDIO(new_file)))
@@ -9128,11 +9119,14 @@ boolean switch_audio_clip(int new_file, boolean activate) {
     return FALSE;
   }
 
+  sfile = mainw->files[new_file];
+
   /* if (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) { */
   /*   if (!sfile->play_paused) freeze_unfreeze_audio(FALSE); */
   /*   return FALSE; */
   /* } */
 
+  //cticks = lives_get_current_ticks();
 
   if (new_file == aplay_file) {
     if (sfile->pb_fps > 0. || (sfile->play_paused && sfile->freeze_fps > 0.))
@@ -9155,17 +9149,10 @@ boolean switch_audio_clip(int new_file, boolean activate) {
       if (!activate) mainw->jackd->in_use = FALSE;
 
       if (new_file != aplay_file) {
-        alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd)) {
-          // wait for seek
-          lives_nanosleep(1000);
-        }
-        lives_alarm_clear(alarm_handle);
-        if (timeout == 0) {
+        if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
           mainw->cancelled = handle_audio_timeout();
           return FALSE;
         }
-
         if (mainw->jackd->playing_file > 0) {
           if (!CLIP_HAS_AUDIO(new_file)) {
             jack_get_rec_avals(mainw->jackd);
@@ -9176,17 +9163,12 @@ boolean switch_audio_clip(int new_file, boolean activate) {
           jack_message.next = NULL;
           mainw->jackd->msgq = &jack_message;
 
-          alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-          while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd)) {
-            // wait for seek
-            lives_nanosleep(1000);
-          }
-          lives_alarm_clear(alarm_handle);
-          if (timeout == 0)  {
+          if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
             mainw->cancelled = handle_audio_timeout();
             return FALSE;
-	    // *INDENT-OFF*
-          }}}}
+          }
+	  // *INDENT-OFF*
+	}}}
     // *INDENT-ON*
 
     if (!IS_VALID_CLIP(new_file)) {
@@ -9194,66 +9176,36 @@ boolean switch_audio_clip(int new_file, boolean activate) {
       return FALSE;
     }
 
-    if (CLIP_HAS_AUDIO(new_file) || !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
-      if (CLIP_HAS_AUDIO(new_file)) {
-        int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
-        int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
-        sfile->aseek_pos += (off_t)((sfile->adirection * 1. / sfile->fps
-                                     * sfile->arate)) * sfile->achans * (sfile->asampsize >> 3);
-        mainw->jackd->num_input_channels = sfile->achans;
-        mainw->jackd->bytes_per_channel = sfile->asampsize / 8;
-        if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-          if (!sfile->play_paused)
-            mainw->jackd->sample_in_rate = sfile->arate * sfile->pb_fps / sfile->fps;
-          else mainw->jackd->sample_in_rate = sfile->arate * sfile->freeze_fps / sfile->fps;
-        } else mainw->jackd->sample_in_rate = sfile->arate;
-        if (sfile->adirection == LIVES_DIRECTION_REVERSE)
-          mainw->jackd->sample_in_rate = -abs(mainw->jackd->sample_in_rate);
-        else
-          mainw->jackd->sample_in_rate = abs(mainw->jackd->sample_in_rate);
-        mainw->jackd->usigned = !asigned;
-        mainw->jackd->seek_end = sfile->afilesize;
+    if (new_file == aplay_file) return TRUE;
 
-        if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) ||
-            (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
-          mainw->jackd->reverse_endian = TRUE;
-        else mainw->jackd->reverse_endian = FALSE;
+    if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
+      // tell jack server to open audio file and start playing it
 
-        if (mainw->ping_pong) mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
-        else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
+      jack_message.command = ASERVER_CMD_FILE_OPEN;
 
-        if (new_file == aplay_file) return TRUE;
+      jack_message.data = lives_strdup_printf("%d", new_file);
 
-        avsync_force();
+      jack_message2.command = ASERVER_CMD_FILE_SEEK;
 
-        // tell jack server to open audio file and start playing it
+      jack_message.next = &jack_message2;
+      jack_message2.data = lives_strdup_printf("%"PRId64, sfile->aseek_pos);
+      jack_message2.next = NULL;
 
-        jack_message.command = ASERVER_CMD_FILE_OPEN;
+      mainw->jackd->msgq = &jack_message;
 
-        jack_message.data = lives_strdup_printf("%d", new_file);
+      mainw->jackd->in_use = TRUE;
 
-        jack_message2.command = ASERVER_CMD_FILE_SEEK;
-        jack_message.next = &jack_message2;
-        jack_message2.data = lives_strdup_printf("%"PRId64, sfile->aseek_pos);
-        if (LIVES_IS_PLAYING && !mainw->preview) jack_message2.tc = lives_get_current_ticks();
-        jack_message2.next = NULL;
-
-        mainw->jackd->msgq = &jack_message;
-        mainw->jackd->in_use = TRUE;
-
-        mainw->jackd->is_paused = sfile->play_paused;
-        mainw->jackd->is_silent = FALSE;
-        mainw->rec_aclip = new_file;
-        mainw->rec_avel = (double)mainw->jackd->sample_in_rate / (double)sfile->arps;
-        mainw->rec_aseek = fabs((double)(sfile->aseek_pos
-                                         / (sfile->achans * sfile->asampsize / 8))
-                                / (double)sfile->arps);
-      } else {
-        mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+      if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+	mainw->cancelled = handle_audio_timeout();
+	return FALSE;
       }
-      /* event = get_last_frame_event(mainw->event_list); */
-      /* insert_audio_event_at(event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel); */
-      /* mainw->rec_aclip = -1; */
+
+      //jack_time_reset(mainw->jackd, 0);
+
+      mainw->jackd->is_paused = sfile->play_paused;
+      mainw->jackd->is_silent = FALSE;
+    } else {
+      mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
     }
 #endif
   }
@@ -9270,39 +9222,25 @@ boolean switch_audio_clip(int new_file, boolean activate) {
       if (!activate) mainw->pulsed->in_use = FALSE;
 
       if (new_file != aplay_file) {
-        alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed)) {
-          // wait for seek
-          lives_nanosleep(1000);
-        }
-        lives_alarm_clear(alarm_handle);
-        if (timeout == 0)  {
+        if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
           mainw->cancelled = handle_audio_timeout();
           return FALSE;
         }
 
-        if (CLIP_HAS_AUDIO(new_file) || !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
-          if (mainw->pulsed->fd > 0) {
-            if (!CLIP_HAS_AUDIO(new_file)) {
-              pulse_get_rec_avals(mainw->pulsed);
-              mainw->rec_avel = 0.;
-            }
-            pulse_message.command = ASERVER_CMD_FILE_CLOSE;
-            pulse_message.data = NULL;
-            pulse_message.next = NULL;
-            mainw->pulsed->msgq = &pulse_message;
-
-            alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-            while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed)) {
-              // wait for seek
-              lives_nanosleep(1000);
-            }
-            lives_alarm_clear(alarm_handle);
-            if (timeout == 0)  {
-              mainw->cancelled = handle_audio_timeout();
-              return FALSE;
-            }
+        if (mainw->pulsed->playing_file > 0) {
+          if (!CLIP_HAS_AUDIO(new_file)) {
+            pulse_get_rec_avals(mainw->pulsed);
+            mainw->rec_avel = 0.;
           }
+	  pulse_message.command = ASERVER_CMD_FILE_CLOSE;
+	  pulse_message.data = NULL;
+	  pulse_message.next = NULL;
+	  mainw->pulsed->msgq = &pulse_message;
+
+	  if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+	    mainw->cancelled = handle_audio_timeout();
+	    return FALSE;
+	  }
         }
 
         if (!IS_VALID_CLIP(new_file)) {
@@ -9310,58 +9248,33 @@ boolean switch_audio_clip(int new_file, boolean activate) {
           return FALSE;
         }
 
-        if (CLIP_HAS_AUDIO(new_file)) {
-          int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
-          int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
-          sfile->aseek_pos += (off_t)((sfile->adirection * 1. / sfile->fps
-                                       * sfile->arate)) * sfile->achans * (sfile->asampsize >> 3);
-          mainw->pulsed->in_achans = sfile->achans;
-          mainw->pulsed->in_asamps = sfile->asampsize;
-          if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-            if (!sfile->play_paused)
-              mainw->pulsed->in_arate = sfile->arate * sfile->pb_fps / sfile->fps;
-            else mainw->pulsed->in_arate = sfile->arate * sfile->freeze_fps / sfile->fps;
-          } else mainw->pulsed->in_arate = sfile->arate;
-          if (sfile->adirection == LIVES_DIRECTION_REVERSE)
-            mainw->pulsed->in_arate = -abs(mainw->pulsed->in_arate);
-          else
-            mainw->pulsed->in_arate = abs(mainw->pulsed->in_arate);
-          mainw->pulsed->usigned = !asigned;
-          mainw->pulsed->seek_end = sfile->afilesize;
+	if (new_file == aplay_file) return TRUE;
 
-          if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) ||
-              (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
-            mainw->pulsed->reverse_endian = TRUE;
-          else mainw->pulsed->reverse_endian = FALSE;
-
-          if (mainw->ping_pong) mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
-          else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
-
-          if (new_file == aplay_file) return TRUE;
-
-          avsync_force();
-
+	if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
           // tell pulse server to open audio file and start playing it
 
           pulse_message.command = ASERVER_CMD_FILE_OPEN;
           pulse_message.data = lives_strdup_printf("%d", new_file);
 
           pulse_message2.command = ASERVER_CMD_FILE_SEEK;
-          if (LIVES_IS_PLAYING && !mainw->preview) pulse_message2.tc = lives_get_current_ticks();
+          /* if (LIVES_IS_PLAYING && !mainw->preview) { */
+          /*   pulse_message2.tc = cticks; */
+          /*   pulse_message2.command = ASERVER_CMD_FILE_SEEK_ADJUST; */
+          /* } */
           pulse_message.next = &pulse_message2;
           pulse_message2.data = lives_strdup_printf("%"PRId64, sfile->aseek_pos);
           pulse_message2.next = NULL;
+
           mainw->pulsed->msgq = &pulse_message;
           mainw->pulsed->in_use = TRUE;
 
-          if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
-            mainw->pulsed->is_paused = sfile->play_paused;
-            mainw->rec_aclip = new_file;
-            mainw->rec_avel = (double)mainw->pulsed->in_arate / (double)sfile->arps;
-            mainw->rec_aseek = fabs((double)(sfile->aseek_pos
-                                             / (sfile->achans * sfile->asampsize / 8))
-                                    / (double)sfile->arps);
-          }
+	  if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+	    mainw->cancelled = handle_audio_timeout();
+	    return FALSE;
+	  }
+
+	  mainw->pulsed->is_paused = sfile->play_paused;
+	  //pa_time_reset(mainw->pulsed, 0);
         } else {
           mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
         }
@@ -9371,31 +9284,30 @@ boolean switch_audio_clip(int new_file, boolean activate) {
   }
 
 #if 0
-}
-}
-if (prefs->audio_player == AUD_PLAYER_NONE) {
-  if (!IS_VALID_CLIP(new_file)) {
-    mainw->nullaudio_playing_file = -1;
-    return FALSE;
+
+  if (prefs->audio_player == AUD_PLAYER_NONE) {
+    if (!IS_VALID_CLIP(new_file)) {
+      mainw->nullaudio_playing_file = -1;
+      return FALSE;
+    }
+    if (mainw->nullaudio->playing_file == new_file) return FALSE;
+    nullaudio_clip_set(new_file);
+    if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
+      if (!sfile->play_paused)
+	nullaudio_arate_set(sfile->arate * sfile->pb_fps / sfile->fps);
+      else nullaudio_arate_set(sfile->arate * sfile->freeze_fps / sfile->fps);
+    } else nullaudio_arate_set(sfile->arate);
+    nullaudio_seek_set(sfile->aseek_pos);
+    if (CLIP_HAS_AUDIO(new_file)) {
+      nullaudio_get_rec_avals();
+    } else {
+      nullaudio_get_rec_avals();
+      mainw->rec_avel = 0.;
+    }
   }
-  if (mainw->nullaudio->playing_file == new_file) return FALSE;
-  nullaudio_clip_set(new_file);
-  if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-    if (!sfile->play_paused)
-      nullaudio_arate_set(sfile->arate * sfile->pb_fps / sfile->fps);
-    else nullaudio_arate_set(sfile->arate * sfile->freeze_fps / sfile->fps);
-  } else nullaudio_arate_set(sfile->arate);
-  nullaudio_seek_set(sfile->aseek_pos);
-  if (CLIP_HAS_AUDIO(new_file)) {
-    nullaudio_get_rec_avals();
-  } else {
-    nullaudio_get_rec_avals();
-    mainw->rec_avel = 0.;
-  }
-}
 #endif
 
-return TRUE;
+  return TRUE;
 }
 
 
@@ -9417,11 +9329,20 @@ void do_quick_switch(int new_file) {
       || (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_CLIPS)) ||
       mainw->foreign || (mainw->preview && !mainw->is_rendering)) return;
 
-
   if (mainw->noswitch) {
     mainw->new_clip = new_file;
     return;
   }
+
+  lives_mutex_lock_carefully(&mainw->tlthread_mutex);
+  if (mainw->drawtl_thread) {
+    if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+      lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
+    }
+    lives_proc_thread_join(mainw->drawtl_thread);
+    mainw->drawtl_thread = NULL;
+  }
+  pthread_mutex_unlock(&mainw->tlthread_mutex);
 
   if (IS_VALID_CLIP(old_file)) sfile = mainw->files[old_file];
 
@@ -9458,21 +9379,7 @@ void do_quick_switch(int new_file) {
     unlock_loop_lock();
   }
 
-  // TODO - can these be combined ?
-  mainw->switch_during_pb = TRUE;
   mainw->clip_switched = TRUE;
-
-  if (sfile) sfile->last_play_sequence = mainw->play_sequence;
-
-  lives_mutex_lock_carefully(&mainw->tlthread_mutex);
-  if (mainw->drawtl_thread) {
-    if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-      lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
-    }
-    lives_proc_thread_join(mainw->drawtl_thread);
-    mainw->drawtl_thread = NULL;
-  }
-  pthread_mutex_unlock(&mainw->tlthread_mutex);
 
   mainw->current_file = new_file;
 
@@ -9494,8 +9401,6 @@ void do_quick_switch(int new_file) {
     }
   }
 
-  mainw->deltaticks = 0;
-
   set_main_title(cfile->name, 0);
 
   if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_FOREGROUND) ce_thumbs_highlight_current_clip();
@@ -9514,9 +9419,9 @@ void do_quick_switch(int new_file) {
   // selection bounds)
   mainw->playing_sel = FALSE;
 
-  if (!cfile->frameno && cfile->frames)
+  if (cfile->last_play_sequence != mainw->play_sequence) {
     cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
-  cfile->last_frameno = cfile->frameno;
+  }
 
   mainw->playing_file = new_file;
 
@@ -9557,18 +9462,11 @@ void do_quick_switch(int new_file) {
     mainw->blend_file = old_file;
   }
 
-  // force loading of a frame from the new clip
-  mainw->force_show = TRUE;
-
-  mainw->fps_mini_measure = 1.;
-  mainw->fps_mini_ticks = mainw->currticks;
-
   if (mainw->play_window && prefs->show_playwin) {
     lives_window_present(LIVES_WINDOW(mainw->play_window));
     lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
   }
 
-  //mainw->switch_during_pb = FALSE;
   mainw->osc_block = osc_block;
   lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
 

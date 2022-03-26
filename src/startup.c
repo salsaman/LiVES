@@ -576,18 +576,55 @@ static void chk_setenv_conf(LiVESToggleButton * b, livespointer data) {
 }
 
 
-void chk_jack_cfgx(LiVESWidget * w, LiVESEntry * e) {
-  const char *server_cfgx = lives_entry_get_text(LIVES_ENTRY(e));
+static void chk_jack_cfgx(LiVESWidget * w, LiVESEntry * e) {
+  const char *server_cfgx = lives_entry_get_text(LIVES_ENTRY(w));
   if (lives_file_test(server_cfgx, LIVES_FILE_TEST_EXISTS)) {
     char *srv_name = jack_parse_script(server_cfgx);
     hide_warn_image(w);
-    if (srv_name) lives_entry_set_text(e, srv_name);
-    lives_free(srv_name);
-    return;
-  } else {
-    show_warn_image(w, _("The specified file does not exist"));
-    return;
-  }
+    if (e) {
+      if (srv_name) {
+        lives_entry_set_text(e, srv_name);
+        show_warn_image(LIVES_WIDGET(e), _("The server name was guessed from the config file defined below.\n"
+                                           "Please ensure this is correct, else after a restart, "
+                                           "LiVES may be unable to reconnect to its own server"));
+        lives_free(srv_name);
+      } else {
+        show_warn_image(LIVES_WIDGET(e), _("The script below does not appear to set a specific server name,"
+                                           "Thus it is recommended to use the option to connect to the "
+                                           "default server,\notherwise after a restart, "
+                                           "LiVES may be unable to reconnect"));
+      }
+    }
+  } else show_warn_image(w, _("The specified file does not exist"));
+}
+
+static void chk_def_match(LiVESWidget * w1, LiVESWidget * w2) {
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(w1))
+      != lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(w2)))
+    show_warn_image(w1, _("It is advisable to use identical settings here and for the initial\n"
+                          "connection attempt,\notherwise LiVES may be unable to reconnect "
+                          "following a restart"));
+  else hide_warn_image(w1);
+}
+
+static void chk_entries_match(LiVESWidget * e1, LiVESWidget * e2) {
+  if (lives_strcmp(lives_entry_get_text(LIVES_ENTRY(e1)), lives_entry_get_text(LIVES_ENTRY(e2))))
+    show_warn_image(e1, _("It is advisable to use identical names here and for the initial\n"
+                          "connection attempt,\notherwise LiVES may be unable to reconnect "
+                          "following a restart"));
+  else hide_warn_image(e1);
+}
+
+
+LIVES_LOCAL_INLINE void add_jackd_setup_label(LiVESWidget * layout) {
+  widget_opts.use_markup = TRUE;
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Please use the options below to define the "
+                         "basic initial settings for jackd.\n"
+                         "<b>After the setup process, you can review and update the full settings "
+                         "from within Preferences / Jack Integration\n</b>"
+                         "<big><b>Use of the default settings is recommended unless these fail, "
+                         "or you have some non-standard setup.</b></big>\n"), TRUE);
+  widget_opts.use_markup = FALSE;
 }
 
 
@@ -603,13 +640,7 @@ boolean prompt_for_jack_ports(boolean is_setup) {
 
   layout = lives_layout_new(LIVES_BOX(dialog_vbox));
 
-  widget_opts.use_markup = TRUE;
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Please use the options below to define the "
-                         "basic initial settings for jackd.\n"
-                         "<b>After the setup process, you can review and update the full settings "
-                         "from within Preferences / Jack Integration\n</b>"
-                         "Most of the time the default values should be fine.\n"), TRUE);
-  widget_opts.use_markup = FALSE;
+  add_jackd_setup_label(layout);
 
   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
   lives_layout_add_row(LIVES_LAYOUT(layout));
@@ -623,14 +654,15 @@ boolean prompt_for_jack_ports(boolean is_setup) {
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   incombo = lives_standard_combo_new(_("Input ports"), outp_list, LIVES_BOX(hbox),
-                                     H_("This is the source that LiVES will use when 'playing' external audio."));
+                                     H_("This is the source that LiVES will use when playing with External audio."));
   lives_combo_set_active_string(LIVES_COMBO(incombo), jack_get_best_client(JACK_PORT_TYPE_DEF_IN, outp_list));
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   outcombo = lives_standard_combo_new(_("Output ports"), inp_list, LIVES_BOX(hbox),
-                                      H_("Defines the (default) ports which LiVES will connect to when playing audio"));
+                                      H_("Defines the (default) ports which LiVES will connect to when playing audio\n"
+                                         "(Internal or External)"));
   lives_combo_set_active_string(LIVES_COMBO(outcombo), jack_get_best_client(JACK_PORT_TYPE_DEF_OUT, inp_list));
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
@@ -638,7 +670,8 @@ boolean prompt_for_jack_ports(boolean is_setup) {
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   auxcombo = lives_standard_combo_new(_("Aux ports"), outp_list, LIVES_BOX(hbox),
                                       H_("Defines the ports which LiVES will connect to as an auxiliary audio source\n"
-                                         "The default is to connect to microphone for voiceovers"));
+                                         "The default is to connect to microphone for voiceovers\n"
+                                         "Note: this feature is still in development"));
   lives_combo_set_active_string(LIVES_COMBO(auxcombo), jack_get_best_client(JACK_PORT_TYPE_AUX_IN, outp_list));
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
@@ -714,13 +747,7 @@ set_config:
   layout = lives_layout_new(LIVES_BOX(dialog_vbox));
 
   if (type == 1) {
-    widget_opts.use_markup = TRUE;
-    lives_layout_add_label(LIVES_LAYOUT(layout), _("Please use the options below to define the "
-                           "basic initial settings for jackd.\n"
-                           "<b>After the setup process, you can review and update the full settings "
-                           "from within Preferences / Jack Integration\n</b>Most of the time the default values should be fine.\n"), TRUE);
-    widget_opts.use_markup = FALSE;
-
+    add_jackd_setup_label(layout);
     lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
     lives_layout_add_row(LIVES_LAYOUT(layout));
   }
@@ -729,10 +756,8 @@ set_config:
 
   if (type) {
     widget_opts.use_markup = TRUE;
-    lives_layout_add_label(LIVES_LAYOUT(layout), _("<big><b>Connecting to a Server...</b></big>\n<small>(LiVES will always "
-                           "try this first)</small>"), TRUE);
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("<big><b>Connecting to a Server (first step)</b></big>\n"), TRUE);
     widget_opts.use_markup = FALSE;
-
 
     hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
@@ -741,7 +766,8 @@ set_config:
                                       !*future_prefs->jack_aserver_cname, LIVES_BOX(hbox),
                                       H_("The server name will be taken from the environment "
                                          "variable\n$JACK_DEFAULT_SERVER.\nIf that variable is not "
-                                         "set, then the name 'default' will be used instead"));
+                                         "set, then the name 'default' will be used.\n"
+                                         "Uncheck this option if you want to set a specific server name"));
 
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), WH_LAYOUT_KEY, NULL);
@@ -819,12 +845,15 @@ set_config:
 
   if (!cfg_exists) {
     show_warn_image(cfg_entry, _("The specified file does not exist"));
+  } else {
+    chk_jack_cfgx(cfg_entry, LIVES_ENTRY(acname));
   }
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(cfg_entry), LIVES_WIDGET_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(chk_jack_cfgx), LIVES_ENTRY(acname));
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(scrpt_rb), cfg_entry, FALSE);
+  toggle_shows_warn_img(LIVES_TOGGLE_BUTTON(scrpt_rb), acname, FALSE);
 
   if (!is_setup) lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
@@ -855,7 +884,15 @@ set_config:
   asdef = lives_standard_check_button_new(_("Use '_default' server name"), usedefsrv, LIVES_BOX(hbox),
                                           H_("The server name will be taken from the environment "
                                               "variable\n$JACK_DEFAULT_SERVER.\nIf that variable is not "
-                                              "set, then 'default' will be used instead"));
+                                              "set, then 'default' will be used"));
+
+  toggle_sets_active(LIVES_TOGGLE_BUTTON(acdef), LIVES_TOGGLE_BUTTON(asdef), FALSE);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(asdef), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(chk_def_match), acdef);
+
+  lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(acdef), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(chk_def_match), asdef);
 
   if (!is_setup) hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   else {
@@ -871,6 +908,13 @@ set_config:
                                     ? future_prefs->jack_aserver_sname :
                                     JACK_DEFAULT_SERVER_NAME, -1, JACK_PARAM_STRING_MAX,
                                     LIVES_BOX(hbox), NULL);
+
+  lives_entries_link(LIVES_ENTRY(acname), LIVES_ENTRY(asname));
+
+  lives_signal_sync_connect(LIVES_WIDGET(asname), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(chk_entries_match), acname);
+  lives_signal_sync_connect_swapped(LIVES_WIDGET(acname), LIVES_WIDGET_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(chk_entries_match), asname);
 
   if (prefs->jack_opts & JACK_INFO_TEMP_NAMES) show_warn_image(asname, _("Value was set from the commandline"));
 
@@ -1170,7 +1214,8 @@ retry:
         char *srvname, *tmp;
         future_prefs->jack_opts = prefs->jack_opts = 0;
         if (*prefs->jack_aserver_cname) {
-          srvname = lives_strdup_printf(_("jack server '%s'"), (tmp = lives_markup_escape_text(prefs->jack_aserver_cname, -1)));
+          srvname = lives_strdup_printf(_("jack server '%s'"),
+                                        (tmp = lives_markup_escape_text(prefs->jack_aserver_cname, -1)));
           lives_free(tmp);
         } else
           srvname = _("the default jack server");
@@ -1368,6 +1413,13 @@ reloop:
   widget_opts.use_markup = TRUE;
   radiobutton2 = lives_standard_radio_button_new(_("Use _<b>sox</b> audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
   widget_opts.use_markup = FALSE;
+
+#ifdef RT_AUDIO
+  msg = _("NOT recommended");
+  lives_layout_add_label(LIVES_LAYOUT(layout), msg, TRUE);
+  lives_free(msg);
+#endif
+
   if (capable->has_sox_play) {
     if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_SOX;
   } else lives_widget_set_sensitive(radiobutton2, FALSE);
@@ -1856,6 +1908,12 @@ rerun:
   add_test(table, ++testcase, _("Checking for components under 'prefix_dir'"));
   widget_opts.mnemonic_label = TRUE;
 
+  // TODO: if we have swresample we can remove dependency on sox
+  // - replace backend calls in resmaplv.v for stretch_audio and resample_audio
+  // replace in insert
+  // - convert to wav for save, export
+  // - convert to raw for append / commit_audio
+
   add_test(table, ++testcase, _("Checking for \"sox\" presence"));
 
   // test if sox can convert raw 44100 -> wav 22050
@@ -2043,6 +2101,10 @@ rerun:
         else pass_test(table, testcase);
       }
     }
+  } else {
+    tmp = (_("Not checking"));
+    skip_test(table, testcase, tmp);
+    lives_free(tmp);
   }
 
   prep_test(table, ++testcase);
@@ -2177,7 +2239,7 @@ rerun:
     else lookfor = "png file";
 
 #ifndef IS_MINGW
-    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo=help | %s -i \"%s\" >/dev/null 2>&1",
+    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | %s -i \"%s\" >/dev/null 2>&1",
                               prefs->video_open_command, capable->grep_cmd, lookfor);
 #else
     com = lives_strdup_printf("%s -vo help | %s -i \"%s\" >NUL 2>&1", prefs->video_open_command,
@@ -2277,7 +2339,7 @@ rerun:
 
   if (success2) {
 #ifndef IS_MINGW
-    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo=help | %s -i \"%s\" >/dev/null 2>&1",
+    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | %s -i \"%s\" >/dev/null 2>&1",
                               prefs->video_open_command, capable->grep_cmd, lookfor);
     res = lives_system(com, TRUE);
     lives_free(com);

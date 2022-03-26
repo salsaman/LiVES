@@ -796,6 +796,7 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       weed_leaf_set_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
       weed_leaf_delete(layer_slice, LIVES_LEAF_PIXBUF_SRC);
       weed_leaf_delete(layer_slice, LIVES_LEAF_SURFACE_SRC);
+      weed_leaf_delete(layer_slice, LIVES_LEAF_BBLOCKALLOC);
 
       // restore original values for the original layer
       weed_layer_set_height(layer, height);
@@ -838,10 +839,12 @@ weed_layer_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       }
 
       lives_painter_to_layer(cr, layer_slice);
+
       convert_layer_palette(layer_slice, pal, 0);
 
       pd = weed_layer_get_pixel_data(layer_slice);
-      if (pd != xsrc) {
+
+      if (pd && pd != xsrc) {
         int itop = (int)(top * height);
         int orow = weed_layer_get_rowstride(layer_slice);
         if (row != orow) {

@@ -905,7 +905,6 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
       if (fbuff->flags & FB_FLAG_INVALID) {
         fbuff->flags &= ~FB_FLAG_INVALID;
         run_hooks = FALSE;
-        //g_print("slurp file %d closed\n", fd);
         break; // file was closed
       }
       if (bufsize > fsize) bufsize = fsize;
@@ -963,15 +962,15 @@ void lives_buffered_rdonly_slurp(int fd, off_t skip) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   if (!fbuff || fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return;
   pthread_mutex_lock(&fbuff->sync_mutex);
+  fbuff->bufsztype = BUFF_SIZE_READ_SLURP;
   fbuff->flags |= FB_FLAG_BG_OP;
   fbuff->bytes = fbuff->offset = 0;
-  fbuff->bufsztype = BUFF_SIZE_READ_SLURP;
-  pthread_mutex_unlock(&fbuff->sync_mutex);
 
   // TODO - inherits
   lives_proc_thread_create(LIVES_THRDATTR_INHERIT_HOOKS,
                            (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "VI", fbuff, skip);
   lives_nanosleep_until_nonzero(fbuff->orig_size || !(fbuff->flags & FB_FLAG_BG_OP));
+  pthread_mutex_unlock(&fbuff->sync_mutex);
 }
 
 
@@ -1188,8 +1187,16 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
 
 static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, off_t offset) {
   off_t newoffs = 0;
+
+  pthread_mutex_lock(&fbuff->sync_mutex);
+  fbuff->flags &= ~FB_FLAG_EOF;
+  pthread_mutex_unlock(&fbuff->sync_mutex);
+
   if (offset == 0) {
-    if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return fbuff->offset;
+    if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
+      if (fbuff->offset + offset < fbuff->orig_size)
+      return fbuff->offset;
+    }
     return fbuff->offset - fbuff->bytes;
   }
   fbuff->nseqreads = 0;
@@ -1197,6 +1204,7 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
   if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
     fbuff->offset += offset;
     fbuff->ptr += offset;
+    // exclude "skip" here, butinclude it in get_offset fn.
     return fbuff->offset;
   }
 
@@ -1254,7 +1262,6 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
       if (newoffs < 0) newoffs = 0;
       fbuff->bytes = 0;
       fbuff->ptr = fbuff->buffer;
-      fbuff->flags &= ~FB_FLAG_EOF;
       fbuff->offset = newoffs;
     }
   }
@@ -1397,8 +1404,10 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       lives_nanosleep_while_true((nbytes = fbuff->bytes - fbuff->offset) < count
                                  && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
       if (fbuff->bytes - fbuff->offset <= count) {
-        fbuff->flags |= FB_FLAG_EOF;
-        count = fbuff->bytes - fbuff->offset;
+	pthread_mutex_lock(&fbuff->sync_mutex);
+	fbuff->flags |= FB_FLAG_EOF;
+	pthread_mutex_unlock(&fbuff->sync_mutex);
+	count -= fbuff->bytes - fbuff->offset;
         if (count <= 0) goto rd_exit;
       }
     } else nbytes = fbuff->bytes;
@@ -1433,6 +1442,10 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
         fbuff->offset += nbytes;
         fbuff->ptr += nbytes;
       }
+      pthread_mutex_lock(&fbuff->sync_mutex);
+      if (count > 0) fbuff->flags |= FB_FLAG_EOF;
+      else fbuff->flags &= ~FB_FLAG_EOF;
+      pthread_mutex_unlock(&fbuff->sync_mutex);
     } else {
       fbuff->bytes -= nbytes;
       fbuff->ptr += nbytes;
@@ -1465,7 +1478,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       file_buffer_fill(fbuff, fbuff->bytes);
       fbuff->flags &= ~FB_FLAG_INVALID;
     } else {
-      if (fbuff->bufsztype != bufsztype) {
+      if (fbuff->buffer && fbuff->bufsztype != bufsztype) {
         lives_freep((void **)&fbuff->buffer);
       }
     }
@@ -1501,6 +1514,9 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       } else {
         lives_freep((void **)&fbuff->buffer);
       }
+    }
+    else {
+      lives_freep((void **)&fbuff->buffer);
     }
 
     fbuff->offset = lseek(fbuff->fd, fbuff->offset, SEEK_SET);

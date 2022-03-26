@@ -26,6 +26,7 @@
     weed_set_int_value(prefplant, WEED_LEAF_MAXCHARS, (SLEN));}
 
 #define SET_PREF_WIDGET(IDX, WIDGET) set_pref_widget(PREF_##IDX, (WIDGET))
+#define GET_PREF_WIDGET(IDX, WIDGET) get_pref_widget(PREF_##IDX)
 
 #define ACTIVE(widget, signal) lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->widget), LIVES_WIDGET_ ##signal## \
 							 _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
@@ -338,30 +339,51 @@ typedef struct {
   volatile uint32_t audio_opts;
 #define AUDIO_OPTS_FOLLOW_CLIPS		(1 << 0)
 #define AUDIO_OPTS_FOLLOW_FPS		(1 << 1)
-#define AUDIO_OPTS_NO_RESYNC_FPS	(1 << 2) // on by default
-#define AUDIO_OPTS_NO_RESYNC_VPOS	(1 << 3) // on by default
-#define AUDIO_OPTS_RESYNC_ADIR		(1 << 4)
-#define AUDIO_OPTS_RESYNC_ACLIP		(1 << 5)
 
+  /// NOT resync when FPS is reset
+#define AUDIO_OPTS_NO_RESYNC_FPS	(1 << 2) // on (0) by default
+
+  /// NOT resync when video pos changes
+#define AUDIO_OPTS_NO_RESYNC_VPOS	(1 << 3) // on (0) by default
+
+  /// resync when audio directions inverts
+#define AUDIO_OPTS_RESYNC_ADIR		(1 << 4) // off (0) by default
+
+  /// resync when audio clip switches
+#define AUDIO_OPTS_RESYNC_ACLIP		(1 << 5) // off (0) by default
+
+  /// audio is locked (temporarily overrides FOLLOW_CLIPS | FOLLOW_FPS and all resyncs)
 #define AUDIO_OPTS_IS_LOCKED		(1 << 16)
+
+  /// video freeze / unfreeze still affects locked audio
 #define AUDIO_OPTS_LOCKED_FREEZE	(1 << 17)
+
+  /// locked audio should ping-pong loop
 #define AUDIO_OPTS_LOCKED_PING_PONG	(1 << 18)
+
+  /// resync audio when it becomes unlocked
 #define AUDIO_OPTS_UNLOCK_RESYNC	(1 << 19)
+
+  /// whether fps reset should resync locked audio
 #define AUDIO_OPTS_LOCKED_RESET		(1 << 20)
+
+  /// whether audio should auto unlock when playback ends
 #define AUDIO_OPTS_AUTO_UNLOCK		(1 << 21)
 
+  /// (see also REC_AUDIO_AUTOLOCK) ///
+  
 #define AUDIO_OPTS_EXT_FX		(1 << 25) // apply effects to external audio -> audio out
-#define AUDIO_OPTS_AUX_RECORD		(1 << 26) // mix aux in when saving
+#define AUDIO_OPTS_AUX_RECORD		(1 << 26) // mix aux in when recording
 #define AUDIO_OPTS_AUX_PLAY		(1 << 27) // mix aux in during pb
 
-  boolean pogo_mode;
+  boolean pogo_mode;   /// allow mixing of locked audio with current clip audio (experimental, in progress)
 
   boolean event_window_show_frame_events;
   boolean crash_recovery; ///< TRUE==maintain mainw->recovery file
 
   boolean show_rdet; ///< show render details (frame size, encoder type) before saving to file
 
-  boolean move_effects;
+  boolean move_effects; /// move fx with blocks in mt
 
 #define DEF_MT_UNDO_SIZE 32 ///< MB
 

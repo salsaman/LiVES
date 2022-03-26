@@ -326,8 +326,8 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_remove_node(LiVESList *list, LiVESList
   if (node->prev) node->prev->next = node->next;
   if (node->next) node->next->prev = node->prev;
   if (node == list) list = list->next;
-  node->next = node->prev = NULL;
   if (node->data && free_data) lives_free(node->data);
+  node->prev = node->next = NULL;
   lives_list_free(node);
   return list;
 }

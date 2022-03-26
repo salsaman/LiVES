@@ -1010,6 +1010,10 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
                     nframes = NULL;
                     nclips = NULL;
                   }
+		  else {
+                    lives_freep((void **)&nclips);
+                    lives_freep((void **)&nframes);
+		  }
                 } else {
                   if (old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth
                       && pframe_event && !nframe_event_tainted && !nointer) {
@@ -1024,7 +1028,10 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
                           frames[i] = (frames64_t)((double)pframes[i] + (double)(nframes[i] - pframes[i]) * ratio);
                           //g_print("				inter2 %ld %f\n", frames[i], ratio);
 			  // *INDENT-OFF*
-			}}}}}}}}}
+			}}}}}}
+	      lives_freep((void **)&nclips);
+	      lives_freep((void **)&nframes);
+	    }}}
 	// *INDENT-ON*
 
         /// now we insert the frame
@@ -1250,15 +1257,9 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         if (is_final == 1) {
           is_final = 2;
         } else break; /// increase out_tc
-      }
-    } /// end of the in_list
-  } /// end of out_list
-
-  lives_freep((void **)&nclips);
-  lives_freep((void **)&nframes);
-
-  lives_freep((void **)&pclips);
-  lives_freep((void **)&pframes);
+    }
+  } /// end of the in_list
+} /// end of out_list
 
   //g_print("RES: %p and %ld, %ld\n", event, out_tc + tl, end_tc);
   if (filter_map) {
@@ -1296,6 +1297,12 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   /// records the offsets)
 
 q_done:
+  lives_freep((void **)&nclips);
+  lives_freep((void **)&nframes);
+
+  lives_freep((void **)&pclips);
+  lives_freep((void **)&pframes);
+
   lives_list_free(init_events);
   lives_list_free(deinit_events);
   lives_free(what);

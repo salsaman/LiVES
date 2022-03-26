@@ -30,7 +30,6 @@ if ($USE_WARNINGS) {
 
 use File::Copy;
 use File::Find;
-#use File::Touch;  y// would be nice
 use File::Path 'make_path';
 use File::Path 'remove_tree';
 
@@ -3924,7 +3923,8 @@ if (1) {
 	    }
 
 	    ##print STDERR "DO UPDATE is $do_update\n";
-	    my $youtube_dl = "youtube-dl";
+	    #my $youtube_dl = "youtube-dl";
+	    my $youtube_dl = "yt-dlp";
 	    my $line;
 
 	    my $islocal = 0;
@@ -4984,7 +4984,7 @@ sub is_writeable {
     my ($file, $leave) = @_;
     return 1 if -f $file && -w $file;
     return 0 if (0 + -e $file);
-    my $err = &smog_system("$SYSBIN" . "touch \"$file\"");
+    my $err = &create_empty_file($file);
     if ($err) {
 	unlink $file;
 	return 0;
@@ -10068,7 +10068,7 @@ sub clean_workdir {
 		    last if $single_set;
 		}
 		else {
-		    &smog_system("$SYSBIN" . "touch $leavedir/$file");
+		    &create_empty_file("$leavedir/$file");
 		}
 
 		$nitems++;
@@ -10176,7 +10176,7 @@ sub clean_workdir {
 		    print "directory is empty and option 'Remove Empty Directories' " .
 			"is set\n";
 		    print "directory will be removed.\n";
-		    &smog_system("$SYSBIN" . "touch $remdir/$file");
+		    &create_empty_file("$remdir/$file");
 		    $nitems++;
 		    next;
 		}
@@ -10217,7 +10217,7 @@ sub clean_workdir {
 					   || &is_specialdir($file))) {
 			    print STDERR "Will remove $workdir/$file\n";
 			    print "Will remove $workdir/$file\n";
-			    &smog_system("$SYSBIN" . "touch $remdir/$file");
+			    &create_empty_file("$remdir/$file");
 			    $nitems++;
 			}
 			else {
@@ -10228,7 +10228,7 @@ sub clean_workdir {
 				    "need to check with the user first\n";
 				print "   - $workdir/$file/ contains header* and we " .
 				    "need to check with the user first\n";
-				&smog_system("$SYSBIN" . "touch $recdir/$file");
+				&create_empty_file("$recdir/$file");
 				$nitems++;
 				next;
 			    }
@@ -10269,7 +10269,7 @@ sub clean_workdir {
 				"directory is no longer needed\n";
 			    print "smogrify: manual cleanup may be required if this " .
 				"directory is no longer needed\n";
-			    &smog_system("$SYSBIN" . "touch $leavedir/$file");
+			    &create_empty_file("$leavedir/$file");
 			    $nitems++;
 			    push (@left, $file);
 			}}}
@@ -10336,7 +10336,7 @@ sub clean_workdir {
 		else {
 		    print STDERR "...with unknown type. Consider for manual removal\n";
 		    print "...with unknown type. Consider for manual removal\n";
-		    &smog_system("$SYSBIN" . "touch $leavedir/$file");
+		    &create_empty_file("$leavedir/$file");
 		    $nitems++;
 		    push (@left, $file);
 		}
@@ -10391,7 +10391,7 @@ sub clean_workdir {
 		    $nitems--;
 		}
 
-		&smog_system("$SYSBIN" . "touch $remdir/$filerem");
+		&create_empty_file("$remdir/$filerem");
 		$nitems++;
 	    }
 	}
@@ -10435,7 +10435,7 @@ sub clean_workdir {
 		    splice(@left, $index, 1);
 		    $nitems--;
 		}
-		&smog_system("$SYSBIN" . "touch $remdir/$filerem");
+		&create_empty_file("$remdir/$filerem");
 		$nitems++;
 	    }
 	}
@@ -10497,4 +10497,14 @@ sub is_non_empty_dir {
     my $dirname = shift;
     opendir (my $dh, $dirname) or return 0;
     return scalar(grep { $_ ne "." && $_ ne ".." } readdir($dh)) != 0;
+}
+
+
+sub create_empty_file {
+    eval {
+	open my $fh, '>', $_[0]
+	    or die "Cannot create $_[0]: $!\n";
+	close $fh or die "Cannot close $_[0]: $!\n";
+    };
+    return $@;
 }

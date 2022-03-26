@@ -2066,6 +2066,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->clip_type = CLIP_TYPE_DISK;
   cfile->ratio_fps = FALSE;
   cfile->aseek_pos = 0;
+  cfile->async_delta = 0;
   cfile->unique_id = gen_unique_id();
   cfile->layout_map = NULL;
   cfile->frame_index = cfile->frame_index_back = NULL;

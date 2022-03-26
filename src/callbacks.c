@@ -9955,18 +9955,19 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
     return;
   }
 
-  sfile->pb_fps = new_fps;
+  if (1 || !mainw->switch_during_pb) {
+    sfile->pb_fps = new_fps;
+    mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
 
-  mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
-
-  if (new_fps != sfile->pb_fps && fabs(new_fps) > .001 && !sfile->play_paused) {
-    /// we must scale the frame delta, since e.g if we were a halfway through the frame and the fps increased,
-    /// we could end up jumping several frames
-    ticks_t delta_ticks;
-    delta_ticks = (mainw->currticks - mainw->startticks);
-    delta_ticks = (ticks_t)((double)delta_ticks + fabs(sfile->pb_fps / new_fps));
-    /// the time we would shown the last frame at using the new fps
-    mainw->startticks = mainw->currticks - delta_ticks;
+    if (new_fps != sfile->pb_fps && fabs(new_fps) > .001 && !sfile->play_paused) {
+      /// we must scale the frame delta, since e.g if we were a halfway through the frame and the fps increased,
+      /// we could end up jumping several frames
+      ticks_t delta_ticks;
+      delta_ticks = (mainw->currticks - mainw->startticks);
+      delta_ticks = (ticks_t)((double)delta_ticks * fabs(new_fps / sfile->pb_fps));
+      /// the time we would shown the last frame at using the new fps
+      mainw->startticks = mainw->currticks - delta_ticks;
+    }
   }
 
   if (AUD_SRC_INTERNAL && (!mainw->event_list || mainw->record)) {
@@ -10602,6 +10603,8 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
       pthread_mutex_unlock(&mainw->event_list_mutex);
     }
   } else {
+    cfile->play_paused = TRUE;
+
     if (mainw->record) {
       pthread_mutex_lock(&mainw->event_list_mutex);
       // write a RECORD_END marker
@@ -10611,7 +10614,6 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
     }
 
     cfile->freeze_fps = cfile->pb_fps;
-    cfile->play_paused = TRUE;
     cfile->pb_fps = 0.;
     mainw->timeout_ticks = mainw->currticks;
   }

@@ -3033,7 +3033,9 @@ boolean do_jack_no_startup_warn(boolean is_trans) {
                           "or select another audio player.\n"));
   } else tmp4 = lives_strdup("");
 
-  if (!prefs->startup_phase) tmp5 = lives_strdup_printf("\n<b>%s</b>\n", _("Automatic jack startup will be disabled for now."));
+  if (!prefs->startup_phase) tmp5 = lives_strdup_printf("\n<b>%s</b>\n",
+                                      _("Automatic jack startup will be disabled for now.\n"
+                                        "If you have not done so already, try restarting LiVES."));
   else tmp5 = lives_strdup("");
 
   msg1 = lives_strdup_printf(_("LiVES failed to connect the %s client to %s,\n"

@@ -245,7 +245,7 @@ void jack_close_client(jack_driver_t *);
 
 boolean jack_try_reconnect(void);
 
-void jack_aud_pb_ready(int fileno);
+void jack_aud_pb_ready(jack_driver_t *, int fileno);
 void jack_pb_end(void);
 
 // utils
@@ -263,8 +263,9 @@ void jack_get_rec_avals(jack_driver_t *);
 ticks_t jack_transport_get_current_ticks(jack_driver_t *);
 
 double lives_jack_get_pos(jack_driver_t *);
+off_t lives_jack_get_offset(jack_driver_t *);
 
-ticks_t update_aud_pos(jack_driver_t *, uint64_t nframes);
+void lives_jack_set_client_attributes(jack_driver_t *, int fileno, boolean activate, boolean running);
 
 #endif
 

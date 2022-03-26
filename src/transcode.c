@@ -79,20 +79,21 @@ boolean transcode_prep(void) {
 }
 
 
-boolean transcode_get_params(char **fnameptr) {
-  // create the param window for the plugin, configure it, and retrieve the filename
+char *transcode_get_params(char *fname_def) {
+  // create the param window for the plugin, configure it, and return the filename
   LiVESList *retvals = NULL;
   _vppaw *vppa;
   lives_rfx_t *rfx;
+  char *fname;
   LiVESResponseType resp;
 
   vppa = on_vpp_advanced_clicked(NULL, NULL);
-  if (!*fnameptr) *fnameptr = lives_build_filename(mainw->vid_save_dir, DEF_TRANSCODE_FILENAME, NULL);
+  if (!fname_def) fname_def = lives_build_filename(mainw->vid_save_dir, DEF_TRANSCODE_FILENAME, NULL);
   rfx = vppa->rfx;
   if (!rfx) {
     lives_widget_destroy(vppa->dialog);
     lives_free(vppa);
-    return FALSE;
+    return NULL;
   }
 
   /// we want to keep the rfx around even after the dialog is run, so we can get the filename
@@ -100,8 +101,8 @@ boolean transcode_get_params(char **fnameptr) {
 
   // set the default value in the param window
   // TODO - consider setting in intentcaps ?
-  set_rfx_value_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, *fnameptr, TRUE);
-  lives_freep((void **)fnameptr);
+  set_rfx_value_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, fname_def, TRUE);
+  lives_free(fname_def);
 
   retvals = do_onchange_init(rfx);
   if (retvals) {
@@ -130,17 +131,17 @@ boolean transcode_get_params(char **fnameptr) {
     mainw->cancelled = CANCEL_USER;
     rfx_free(rfx);
     lives_free(rfx);
-    return FALSE;
+    return NULL;
   }
 
   mainw->cancelled = CANCEL_NONE;
 
   // get the value of the "filename" param (this is only so we can display it in status messages)
-  get_rfx_value_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, fnameptr);
+  get_rfx_value_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, &fname);
 
   rfx_free(rfx);
   lives_free(rfx);
-  return TRUE;
+  return fname;
 }
 
 
@@ -149,8 +150,7 @@ void transcode_cleanup(_vid_playback_plugin *vpp) {
   if (!ovpp || (vpp->handle != ovpp->handle)) {
     close_vid_playback_plugin(vpp);
   }
-
-  if (ovpp && (vpp->handle == ovpp->handle)) {
+  else {
     // we "borrowed" the playback plugin, so set these back how they were
     if (ovpp->set_fps)(*ovpp->set_fps)(ovpp->fixed_fpsd);
     if (ovpp->set_palette)(*ovpp->set_palette)(ovpp->palette);
@@ -215,16 +215,17 @@ static weed_layer_t *apply_watermark(weed_layer_t *layer, ticks_t currticks) {
 
 boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
   _vid_playback_plugin *vpp;
-  weed_plant_t *frame_layer = NULL;
+  weed_layer_t *frame_layer = NULL;
   lives_proc_thread_t coder = NULL;
   void *abuff = NULL;
   short *sbuff = NULL;
   float **fltbuf = NULL;
   ticks_t currticks;
   ssize_t in_bytes;
+  char *pname;
   const char *img_ext = NULL;
   char *afname = NULL;
-  char *msg = NULL, *pname = NULL;
+  char *msg = NULL;
   double spf = 0., ospf;
 
   boolean audio = FALSE;
@@ -252,6 +253,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
   THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
 
   if (def_pname) pname = lives_strdup(def_pname);
+  else pname = NULL;
 
   if (!internal) {
     if (!transcode_prep()) {
@@ -266,7 +268,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
       vpp = mainw->vpp;
       THREAD_CAPACITIES = caps;
-      if (!transcode_get_params(&pname)) {
+      if (!(pname = transcode_get_params(pname))) {
         THREAD_INTENTION = LIVES_INTENTION_NOTHING;
         lives_capacities_free(caps);
         THREAD_CAPACITIES = NULL;
@@ -534,10 +536,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     } else error = FALSE;
 
     if (!error) {
-      weed_plant_t *copy_frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-      /* weed_layer_copy(copy_frame_layer, frame_layer); */
-      /* weed_layer_nullify_pixel_data(frame_layer); */
-      copy_frame_layer = weed_layer_copy(NULL, frame_layer);
+      weed_layer_t *copy_frame_layer = weed_layer_copy(NULL, frame_layer);
 
       if (internal) {
         weed_layer_unref(frame_layer);
@@ -611,7 +610,7 @@ tr_err2:
     global_recent_manager_add(pname);
   }
 
-  lives_freep((void **)&pname);
+  lives_free(pname);
   lives_freep((void **)&msg);
 
   if (!internal && frame_layer) weed_layer_free(frame_layer);

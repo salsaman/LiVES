@@ -45,15 +45,15 @@ typedef weed_plant_t weed_param_t;
 #define PLUGIN_PKGTYPE_EXE 		129//	binary executable
 #define PLUGIN_PKGTYPE_SCRIPT 		130//	interpreted script
 
-#define PLUGIN_CHANNEL_NONE	0ul
-#define PLUGIN_CHANNEL_VIDEO	(1ul << 0)
-#define PLUGIN_CHANNEL_AUDIO	(1ul << 1)
-#define PLUGIN_CHANNEL_TEXT	(1ul << 2)
+#define PLUGIN_CHANNEL_NONE	0ull
+#define PLUGIN_CHANNEL_VIDEO	(1ull << 0)
+#define PLUGIN_CHANNEL_AUDIO	(1ull << 1)
+#define PLUGIN_CHANNEL_TEXT	(1ull << 2)
 
-#define PLUGIN_CHANNEL_DATA    		(1ul << 32)
-#define PLUGIN_CHANNEL_STREAM    	(1ul << 33)
-#define PLUGIN_CHANNEL_TTY    		(1ul << 34)
-#define PLUGIN_CHANNEL_FILE    		(1ul << 35)
+#define PLUGIN_CHANNEL_DATA    		(1ull << 32)
+#define PLUGIN_CHANNEL_STREAM    	(1ull << 33)
+#define PLUGIN_CHANNEL_TTY    		(1ull << 34)
+#define PLUGIN_CHANNEL_FILE    		(1ull << 35)
 
 #define LIVES_DEVSTATE_NORMAL 0 // normal development status, presumed bug free
 #define LIVES_DEVSTATE_RECOMMENDED 1 // recommended, suitable for default use

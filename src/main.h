@@ -94,7 +94,6 @@
 #  define LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
-
 #include <sys/types.h>
 #include <inttypes.h>
 #include <string.h>
@@ -348,6 +347,27 @@ weed_leaf_delete_f _weed_leaf_delete;
 
 #include "weed-effects-utils.h"
 #include "support.h"
+
+// directions
+/// use REVERSE / FORWARD when a sign is used, BACKWARD / FORWARD when a parity is used
+typedef enum {
+  LIVES_DIRECTION_REVERSE = -1,
+  LIVES_DIRECTION_BACKWARD,
+  LIVES_DIRECTION_FORWARD,
+  LIVES_DIRECTION_LEFT,
+  LIVES_DIRECTION_RIGHT,
+  LIVES_DIRECTION_UP,
+  LIVES_DIRECTION_DOWN,
+  LIVES_DIRECTION_IN,
+  LIVES_DIRECTION_OUT,
+  LIVES_DIRECTION_UNKNOWN,
+  LIVES_DIRECTION_STOPPED,
+  LIVES_DIRECTION_CYCLIC,
+  LIVES_DIRECTION_RANDOM,
+  LIVES_DIRECTION_OTHER,
+} lives_direction_t;
+
+#define LIVES_DIRECTION_NONE 0
 
 #include "widget-helper.h"
 
@@ -647,7 +667,6 @@ typedef enum {
 #define USE_16BIT_PCONV
 
 #include "paramspecial.h"
-#include "multitrack.h"
 #include "mainwindow.h"
 #include "keyboard.h"
 #include "preferences.h"

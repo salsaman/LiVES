@@ -893,6 +893,8 @@ boolean lives_entry_set_visibility(LiVESEntry *, boolean vis);
 boolean lives_entry_set_has_frame(LiVESEntry *, boolean has);
 boolean lives_entry_set_alignment(LiVESEntry *, float align);
 
+void lives_entries_link(LiVESEntry *from, LiVESEntry *to);
+
 double lives_scale_button_get_value(LiVESScaleButton *);
 boolean lives_scale_button_set_value(LiVESScaleButton *, double value);
 
@@ -1332,7 +1334,7 @@ boolean lives_container_child_set_shrinkable(LiVESContainer *, LiVESWidget *chil
 
 boolean set_submenu_colours(LiVESMenu *, LiVESWidgetColor *colf, LiVESWidgetColor *colb);
 
-typedef int (*condfuncptr_t)(void *);
+typedef boolean(*condfuncptr_t)(void *);
 
 /// set callbacks
 boolean toggle_sets_sensitive(LiVESToggleButton *, LiVESWidget *, boolean invert);
@@ -1413,25 +1415,6 @@ void *fg_service_call(lives_proc_thread_t lpt, void *retval);
 boolean has_lpttorun(void);
 
 boolean will_gov_run(void);
-
-// directions
-/// use REVERSE / FORWARD when a sign is used, BACKWARD / FORWARD when a parity is used
-typedef enum {
-  LIVES_DIRECTION_REVERSE = -1,
-  LIVES_DIRECTION_BACKWARD,
-  LIVES_DIRECTION_FORWARD,
-  LIVES_DIRECTION_LEFT,
-  LIVES_DIRECTION_RIGHT,
-  LIVES_DIRECTION_UP,
-  LIVES_DIRECTION_DOWN,
-  LIVES_DIRECTION_IN,
-  LIVES_DIRECTION_OUT,
-  LIVES_DIRECTION_UNKNOWN,
-  LIVES_DIRECTION_STOPPED,
-  LIVES_DIRECTION_CYCLIC,
-  LIVES_DIRECTION_RANDOM,
-  LIVES_DIRECTION_OTHER,
-} lives_direction_t;
 
 #define LIVES_JUSTIFY_DEFAULT (def_widget_opts.justify)
 

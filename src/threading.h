@@ -53,6 +53,15 @@ typedef struct {
   lives_alarm_t alarm_handle;
 } lives_sigdata_t;
 
+// for future use
+typedef struct {
+  lives_funcptr_t function;
+  funcsig_t funcsig;
+  int return_type;
+  uint64_t flags;
+} lives_funcdef_t;
+
+
 /// hook funcs
 
 void lives_hook_append(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func, livespointer data);
@@ -64,9 +73,9 @@ void lives_hooks_clear(LiVESList **xlist, int type);
 void lives_hooks_trigger(lives_object_t *obj, LiVESList **xlist, int type);
 void lives_hooks_join(LiVESList **xlist, int type);
 
-boolean avoid_deadlock(hook_funcptr_t hfunc, livespointer data);
+boolean avoid_deadlock(hook_funcptr_t hfunc, uint64_t xtraflags, livespointer data);
 
-#define THRDNATIVE_CAN_CORRECT (1ul << 0)
+#define THRDNATIVE_CAN_CORRECT (1ull << 0)
 
 typedef struct {
   uint64_t var_uid;
@@ -143,43 +152,43 @@ typedef struct {
 
 // internals
 
-#define GETARG(type, n) (p##n = WEED_LEAF_GET(info, _LIVES_LEAF_THREAD_PARAM(QUOTEME(n)), type))
+#define GETARG(thing, type, n) (p##n = WEED_LEAF_GET((thing), _LIVES_LEAF_THREAD_PARAM(QUOTEME(n)), type))
 
 // since the codification of a param type only requires 4 bits, in theory we could go up to 16 parameters
 // however 8 is probably sufficient and looks neater
 // it is also possible to pass functions as parameters, using _FUNCP, so things like
 // FUNCSIG_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP
 // are a possibility
-#define ARGS1(t1) GETARG(t1, 0)
-#define ARGS2(t1, t2) ARGS1(t1), GETARG(t2, 1)
-#define ARGS3(t1, t2, t3) ARGS2(t1, t2), GETARG(t3, 2)
-#define ARGS4(t1, t2, t3, t4) ARGS3(t1, t2, t3), GETARG(t4, 3)
-#define ARGS5(t1, t2, t3, t4, t5) ARGS4(t1, t2, t3, t4), GETARG(t5, 4)
-#define ARGS6(t1, t2, t3, t4, t5, t6) ARGS5(t1, t2, t3, t4, t5), GETARG(t6, 5)
-#define ARGS7(t1, t2, t3, t4, t5, t6, t7) ARGS6(t1, t2, t3, t4, t5, t6), GETARG(t7, 6)
-#define ARGS8(t1, t2, t3, t4, t5, t6, t7, t8) ARGS7(t1, t2, t3, t4, t5, t6, t7), GETARG(t8, 7)
+#define ARGS1(thing, t1) GETARG((thing), t1, 0)
+#define ARGS2(thing, t1, t2) ARGS1((thing), t1), GETARG((thing), t2, 1)
+#define ARGS3(thing, t1, t2, t3) ARGS2((thing), t1, t2), GETARG((thing), t3, 2)
+#define ARGS4(thing, t1, t2, t3, t4) ARGS3((thing), t1, t2, t3), GETARG((thing), t4, 3)
+#define ARGS5(thing, t1, t2, t3, t4, t5) ARGS4((thing), t1, t2, t3, t4), GETARG((thing), t5, 4)
+#define ARGS6(thing, t1, t2, t3, t4, t5, t6) ARGS5((thing), t1, t2, t3, t4, t5), GETARG((thing), t6, 5)
+#define ARGS7(thing, t1, t2, t3, t4, t5, t6, t7) ARGS6((thing), t1, t2, t3, t4, t5, t6), GETARG((thing), t7, 6)
+#define ARGS8(thing, t1, t2, t3, t4, t5, t6, t7, t8) ARGS7((thing), t1, t2, t3, t4, t5, t6, t7), GETARG((thing), t8, 7)
 
-#define CALL_VOID_8(t1, t2, t3, t4, t5, t6, t7, t8) (*thefunc->func)(ARGS8(t1, t2, t3, t4, t5, t6, t7, t8))
-#define CALL_VOID_7(t1, t2, t3, t4, t5, t6, t7) (*thefunc->func)(ARGS7(t1, t2, t3, t4, t5, t6, t7))
-#define CALL_VOID_6(t1, t2, t3, t4, t5, t6) (*thefunc->func)(ARGS6(t1, t2, t3, t4, t5, t6))
-#define CALL_VOID_5(t1, t2, t3, t4, t5) (*thefunc->func)(ARGS5(t1, t2, t3, t4, t5))
-#define CALL_VOID_4(t1, t2, t3, t4) (*thefunc->func)(ARGS4(t1, t2, t3, t4))
-#define CALL_VOID_3(t1, t2, t3) (*thefunc->func)(ARGS3(t1, t2, t3))
-#define CALL_VOID_2(t1, t2) (*thefunc->func)(ARGS2(t1, t2))
-#define CALL_VOID_1(t1) (*thefunc->func)(ARGS1(t1))
+#define CALL_VOID_8(thing, t1, t2, t3, t4, t5, t6, t7, t8) (*thefunc->func)(ARGS8((thing), t1, t2, t3, t4, t5, t6, t7, t8))
+#define CALL_VOID_7(thing, t1, t2, t3, t4, t5, t6, t7) (*thefunc->func)(ARGS7((thing), t1, t2, t3, t4, t5, t6, t7))
+#define CALL_VOID_6(thing, t1, t2, t3, t4, t5, t6) (*thefunc->func)(ARGS6((thing), t1, t2, t3, t4, t5, t6))
+#define CALL_VOID_5(thing, t1, t2, t3, t4, t5) (*thefunc->func)(ARGS5((thing), t1, t2, t3, t4, t5))
+#define CALL_VOID_4(thing, t1, t2, t3, t4) (*thefunc->func)(ARGS4((thing), t1, t2, t3, t4))
+#define CALL_VOID_3(thing, t1, t2, t3) (*thefunc->func)(ARGS3((thing), t1, t2, t3))
+#define CALL_VOID_2(thing, t1, t2) (*thefunc->func)(ARGS2((thing), t1, t2))
+#define CALL_VOID_1(thing, t1) (*thefunc->func)(ARGS1((thing), t1))
 #define CALL_VOID_0() (*thefunc->func)()
 
-#define CALL_8(ret, t1, t2, t3, t4, t5, t6, t7, t8) weed_set_##ret##_value(info, _RV_, \
-									   (*thefunc->func##ret)(ARGS8(t1, t2, t3, t4, t5, t6, t7, t7)))
-#define CALL_7(ret, t1, t2, t3, t4, t5, t6, t7) weed_set_##ret##_value(info, _RV_, \
-								       (*thefunc->func##ret)(ARGS7(t1, t2, t3, t4, t5, t6, t7)))
-#define CALL_6(ret, t1, t2, t3, t4, t5, t6) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS6(t1, t2, t3, t4, t5, t6)))
-#define CALL_5(ret, t1, t2, t3, t4, t5) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS5(t1, t2, t3, t4, t5)))
-#define CALL_4(ret, t1, t2, t3, t4) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS4(t1, t2, t3, t4)))
-#define CALL_3(ret, t1, t2, t3) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS3(t1, t2, t3)))
-#define CALL_2(ret, t1, t2) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS2(t1, t2)))
-#define CALL_1(ret, t1) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS1(t1)))
-#define CALL_0(ret) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)())
+#define CALL_8(thing, ret, t1, t2, t3, t4, t5, t6, t7, t8) weed_set_##ret##_value((thing), _RV_, \
+									   (*thefunc->func##ret)(ARGS8((thing), t1, t2, t3, t4, t5, t6, t7, t7)))
+#define CALL_7(thing, ret, t1, t2, t3, t4, t5, t6, t7) weed_set_##ret##_value((thing), _RV_, \
+								       (*thefunc->func##ret)(ARGS7((thing), t1, t2, t3, t4, t5, t6, t7)))
+#define CALL_6(thing, ret, t1, t2, t3, t4, t5, t6) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)(ARGS6((thing), t1, t2, t3, t4, t5, t6)))
+#define CALL_5(thing, ret, t1, t2, t3, t4, t5) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)(ARGS5((thing), t1, t2, t3, t4, t5)))
+#define CALL_4(thing, ret, t1, t2, t3, t4) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)(ARGS4((thing), t1, t2, t3, t4)))
+#define CALL_3(thing, ret, t1, t2, t3) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)(ARGS3((thing), t1, t2, t3)))
+#define CALL_2(thing, ret, t1, t2) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)(ARGS2((thing), t1, t2)))
+#define CALL_1(thing, ret, t1) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)(ARGS1((thing), t1)))
+#define CALL_0(thing, ret) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)())
 
 // 0p
 #define FUNCSIG_VOID				       			0X00000000
@@ -250,16 +259,16 @@ lives_thread_data_t *lives_thread_data_create(uint64_t idx);
 // lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // lives_proc_thread state flags
-#define THRD_STATE_FINISHED 	(1ul << 0)
-#define THRD_STATE_CANCELLED 	(1ul << 1)
-#define THRD_STATE_SIGNALLED 	(1ul << 2)
-#define THRD_STATE_BUSY 	(1ul << 3)
+#define THRD_STATE_FINISHED 	(1ull << 0)
+#define THRD_STATE_CANCELLED 	(1ull << 1)
+#define THRD_STATE_SIGNALLED 	(1ull << 2)
+#define THRD_STATE_BUSY 	(1ull << 3)
 
-#define THRD_STATE_INVALID 	(1ul << 31)
+#define THRD_STATE_INVALID 	(1ull << 31)
 
-#define THRD_OPT_NOTIFY 	(1ul << 32)
-#define THRD_OPT_CANCELLABLE 	(1ul << 34)
-#define THRD_OPT_DONTCARE 	(1ul << 35)
+#define THRD_OPT_NOTIFY 	(1ull << 32)
+#define THRD_OPT_CANCELLABLE 	(1ull << 34)
+#define THRD_OPT_DONTCARE 	(1ull << 35)
 
 boolean lives_proc_thread_set_state(lives_proc_thread_t lpt, uint64_t state);
 uint64_t lives_proc_thread_get_state(lives_proc_thread_t lpt);

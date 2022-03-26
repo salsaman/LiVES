@@ -21,7 +21,7 @@
 boolean transcode_prep(void);
 
 // if this returns FALSE, transcode_cleanup(mainw->vpp) must be called
-boolean transcode_get_params(char **fnameptr);
+char *transcode_get_params(char *fname_def);
 void transcode_cleanup(_vid_playback_plugin *vpp);
 
 boolean transcode_clip(int start, int end, boolean internal, char *def_pname);

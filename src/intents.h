@@ -72,6 +72,7 @@ typedef weed_param_t lives_obj_attr_t;
 ///							at the end of processing, or before calling the hook
 ///							a subsequent time
 #define HOOK_CB_CHILD_INHERITS		(1 << 4) // TODO - child threads should inherit the hook callbacks
+#define HOOK_CB_FG_THREAD		(1 << 5) // force fg service run
 
 #define HOOK_BLOCKED			(1 << 16) // hook function should not be called
 
@@ -101,7 +102,8 @@ enum {
   TX_DONE_HOOK,   /// status -> success
   DATA_PREP_HOOK,   // data supplied, may be altered
   DATA_READY_HOOK, // data ready for processing
-  VALUE_CHANGED_HOOK, /// attribute value amended
+  PRE_VALUE_CHANGED_HOOK, /// attribute value amended
+  POST_VALUE_CHANGED_HOOK, /// attribute value amended
   FINAL_HOOK, ///< about to be freed
   N_HOOK_FUNCS,
 };
@@ -380,7 +382,7 @@ lives_obj_attr_t *lives_object_declare_attribute(lives_object_t *, const char *n
 
 lives_obj_attr_t *lives_object_get_attribute(lives_object_t *, const char *name);
 
-// TODO - add listeners for attribute value changes (also for subtype / state changes)
+// listeners can attach to the pre_/ post_ value_changed hooks for the object
 
 // values can be set later
 weed_error_t lives_object_set_attribute_value(lives_object_t *, const char *name, ...);

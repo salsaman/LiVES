@@ -263,18 +263,18 @@ boolean deal_with_render_choice(boolean add_deinit);
 
 // *experimental - not all opts impleted / may change*
 #define EL_OPTS_SHOWALL			0 ///< show all
-#define EL_OPT_BLKSTARTS		(1ul << 0) ///< show block starts
-#define EL_OPT_BLKENDS			(1ul << 1) ///< show block ends
-#define EL_OPT_TRNS			(1ul << 2) ///< show transitions
-#define EL_OPT_FX			(1ul << 3) ///< show effects
+#define EL_OPT_BLKSTARTS		(1ull << 0) ///< show block starts
+#define EL_OPT_BLKENDS			(1ull << 1) ///< show block ends
+#define EL_OPT_TRNS			(1ull << 2) ///< show transitions
+#define EL_OPT_FX			(1ull << 3) ///< show effects
 
-#define EL_OPT_TRKAUDIO			(1ul << 16) ///< show track audio details
-#define EL_OPT_BACKAUDIO		(1ul << 17) ///< show backing audio details
-#define EL_OPT_SUBS			(1ul << 18) ///< merge with subtitles
+#define EL_OPT_TRKAUDIO			(1ull << 16) ///< show track audio details
+#define EL_OPT_BACKAUDIO		(1ull << 17) ///< show backing audio details
+#define EL_OPT_SUBS			(1ull << 18) ///< merge with subtitles
 
-#define EL_OPT_PREVIEW			(1ul << 32) ///< add preview play buttons
-#define EL_OPT_EDITABLE			(1ul << 33) ///< user changeable values
-#define EL_OPT_COMPACT			(1ul << 34) ///< show fewer details
+#define EL_OPT_PREVIEW			(1ull << 32) ///< add preview play buttons
+#define EL_OPT_EDITABLE			(1ull << 33) ///< user changeable values
+#define EL_OPT_COMPACT			(1ull << 34) ///< show fewer details
 
 LiVESWidget *create_event_list_dialog(weed_event_list_t *, ticks_t start_tc, ticks_t end_tc, uint64_t opts);
 

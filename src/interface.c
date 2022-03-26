@@ -257,7 +257,7 @@ double lives_ce_update_timeline(int frame, double x) {
     lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
   }
 
-  do_tl_redraw(NULL, LIVES_INT_TO_POINTER(mainw->current_file));
+  //do_tl_redraw(NULL, LIVES_INT_TO_POINTER(mainw->current_file));
 
   last_current_file = mainw->current_file;
   return cfile->pointer_time;
@@ -653,9 +653,12 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
 
   mainw->current_file = current_file;
-  if (which == 0 || which == 1) lives_widget_queue_draw_if_visible(mainw->video_draw);
-  if (which == 0 || which == 2) lives_widget_queue_draw_if_visible(mainw->laudio_draw);
-  if (which == 0 || which == 3) lives_widget_queue_draw_if_visible(mainw->raudio_draw);
+  if (which == 0 || which == 1)
+    avoid_deadlock((hook_funcptr_t)lives_widget_queue_draw_if_visible, HOOK_UNIQUE_REPLACE_MATCH, mainw->video_draw);
+  if (which == 0 || which == 2)
+    avoid_deadlock((hook_funcptr_t)lives_widget_queue_draw_if_visible, HOOK_UNIQUE_REPLACE_MATCH, mainw->laudio_draw);
+  if (which == 0 || which == 3)
+    avoid_deadlock((hook_funcptr_t)lives_widget_queue_draw_if_visible, HOOK_UNIQUE_REPLACE_MATCH, mainw->raudio_draw);
   return TRUE;
 
 bail:
@@ -3634,7 +3637,8 @@ void redraw_timeline_bg(int clipno) {
   sfile = mainw->files[clipno];
   if (sfile->clip_type == CLIP_TYPE_TEMP) return;
 
-  if (avoid_deadlock((hook_funcptr_t)do_tl_redraw, LIVES_INT_TO_POINTER(clipno))) return;
+  if (avoid_deadlock((hook_funcptr_t)do_tl_redraw, HOOK_UNIQUE_REPLACE_FUNC,
+                     LIVES_INT_TO_POINTER(clipno))) return;
 
   lives_mutex_lock_carefully(&mainw->tlthread_mutex);
   if (mainw->drawtl_thread) {
@@ -3656,7 +3660,8 @@ void do_tl_redraw(lives_object_t *obj, void *data) {
   // need to take extra care with this function, as it can be called
   // from fg_service call, and must avoid rcalling another such service or hanging
   // in mutex deadlock
-  if (avoid_deadlock((hook_funcptr_t)do_tl_redraw, data)) return;
+  if (avoid_deadlock((hook_funcptr_t)do_tl_redraw, HOOK_UNIQUE_REPLACE_FUNC,
+                     LIVES_INT_TO_POINTER(data))) return;
   else {
     int clipno = LIVES_POINTER_TO_INT(data);
     if (!IS_VALID_CLIP(clipno)) return;

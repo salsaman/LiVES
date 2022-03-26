@@ -1676,6 +1676,8 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe) {
     }
   }
   if (est > 0.) est *= cdata->adv_timing.ctiming_ratio / 1000000.;
+  if (fpclassify(est) != FP_NORMAL) est = -1.;
+
   //fprintf(stderr, "ESTIM is %f\n", est);
   return est;
 }

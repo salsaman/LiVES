@@ -20,31 +20,30 @@ boolean debug_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t 
 }
 
 LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
-  static int last_play_sequence = -1;
-  static ticks_t last_curr_tc = 0, currticks;
+  static ticks_t last_curr_tc = 0;
   static ticks_t last_mini_ticks = 0;
   static frames_t last_mm = 0;
+  lives_clip_t *sfile = mainw->files[mainw->playing_file];
 
-  currticks = mainw->clock_ticks;
+  ticks_t currticks = mainw->clock_ticks;
 
-  if (mainw->play_sequence > last_play_sequence) {
+  if (mainw->fps_mini_ticks != last_mini_ticks) {
+    inst_fps = 0.;
     last_curr_tc = currticks;
-    last_play_sequence = mainw->play_sequence;
-    inst_fps = cfile->pb_fps;
-    return inst_fps;
-  }
-
-  if (currticks > last_curr_tc + STATS_TC) {
-    if (mainw->fps_mini_ticks == last_mini_ticks) {
-      inst_fps = (double)(mainw->fps_mini_measure - last_mm
-                          + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL / cfile->pb_fps)
-                 / ((double)(currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
-      mainw->inst_fps = inst_fps;
-    }
-    last_curr_tc = currticks;
-    last_mini_ticks = mainw->fps_mini_ticks;
     last_mm = mainw->fps_mini_measure;
   }
+  else {
+    if (currticks > last_curr_tc + STATS_TC) {
+      mainw->inst_fps = inst_fps = (double)(mainw->fps_mini_measure - last_mm
+					    + (double)(mainw->currticks - mainw->startticks)
+					    / TICKS_PER_SECOND_DBL / sfile->pb_fps)
+	/ ((double)(currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
+      last_curr_tc = currticks;
+      last_mm = mainw->fps_mini_measure;
+    }
+  }
+
+  last_mini_ticks = mainw->fps_mini_ticks;
 
   if (get_msg) get_stats_msg(TRUE);
   return inst_fps;
@@ -53,36 +52,25 @@ LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
 
 char *get_stats_msg(boolean calc_only) {
   volatile float *load;
+  lives_clip_t *sfile = mainw->files[mainw->playing_file];
   char *msg, *audmsg = NULL, *bgmsg = NULL, *fgpal = NULL;
   char *tmp, *tmp2;
   char *msg2 = lives_strdup("");
   double avsync = 1.0;
   boolean have_avsync = FALSE;
-  int clipno;
 
   if (!LIVES_IS_PLAYING) return NULL;
 
-  clipno = get_aplay_clipno();
-  if (CLIP_HAS_AUDIO(clipno)) {
-    lives_clip_t *afile = mainw->files[clipno];
-#ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd && mainw->jackd->in_use
-        && afile->arate != 0) {
-      avsync = (double)mainw->jackd->seek_pos
-               / (double)afile->arate / 4.; //lives_pulse_get_pos(mainw->jackd);
-      avsync -= ((double)afile->frameno - 1.) / afile->fps
-                + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
+  if (AUD_SRC_INTERNAL && AV_CLIPS_EQUAL) {
+    int clipno = get_aplay_clipno();
+    if (CLIP_HAS_AUDIO(clipno)) {
+      lives_clip_t *afile = mainw->files[clipno];
+      avsync = (double)get_aplay_offset()
+	/ (double)afile->arate / (double)(afile->achans * (afile->asampsize >> 3)); //lives_pulse_get_pos(mainw->jackd);
+      avsync -= ((double)mainw->actual_frame - 1.) / afile->fps
+	+ (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
       have_avsync = TRUE;
     }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed && mainw->pulsed->in_use
-        && afile->arate != 0) {
-      avsync = (double)mainw->pulsed->seek_pos
-               / (double)afile->arate / 4.; //lives_pulse_get_pos(mainw->pulsed);
-      have_avsync = TRUE;
-    }
-#endif
   }
   //currticks = lives_get_current_ticks();
 
@@ -117,8 +105,8 @@ char *get_stats_msg(boolean calc_only) {
                                 "Effort: %d / %d, quality: %d, %s (%s)\n%s\n"
                                 "Fg clip: %d X %d, palette: %s\n%s\n%s"),
                               audmsg ? audmsg : "",
-                              mainw->actual_frame, cfile->frames,
-                              inst_fps * sig(cfile->pb_fps), cfile->pb_fps,
+                              mainw->actual_frame, sfile->frames,
+                              inst_fps * sig(sfile->pb_fps), sfile->pb_fps,
                               *load, mainw->disk_pressure,
                               mainw->effort, EFFORT_RANGE_MAX,
                               prefs->pb_quality,
@@ -126,7 +114,7 @@ char *get_stats_msg(boolean calc_only) {
                                     : prefs->pb_quality == 2 ? _("Med") : _("High")),
                               tmp2 = lives_strdup(prefs->pbq_adaptive ? _("adaptive") : _("fixed")),
                               get_cache_stats(),
-                              cfile->hsize, cfile->vsize,
+                              sfile->hsize, sfile->vsize,
                               fgpal, bgmsg ? bgmsg : "", msg2);
     lives_freep((void **)&msg2);
     lives_freep((void **)&bgmsg); lives_freep((void **)&audmsg);
@@ -138,8 +126,8 @@ char *get_stats_msg(boolean calc_only) {
                                   mainw->files[mainw->blend_file]->frames);
 
     msg = lives_strdup_printf("fg: %d/%d, fps %.3f / %.3f, CPU: %.2f, Eff. %d/%d, Q: %s %s",
-                              mainw->actual_frame, cfile->frames,
-                              inst_fps * sig(cfile->pb_fps), cfile->pb_fps,
+                              mainw->actual_frame, sfile->frames,
+                              inst_fps * sig(sfile->pb_fps), sfile->pb_fps,
                               *load, mainw->effort, EFFORT_RANGE_MAX,
                               tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
                                     : prefs->pb_quality == 2 ? _("Med") : _("High")),

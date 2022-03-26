@@ -1216,6 +1216,7 @@ boolean reload_set(const char *set_name) {
       cfile->aseek_pos = (off64_t)((double)(cfile->real_pointer_time * cfile->arate) * cfile->achans *
                                    (cfile->asampsize / 8));
       if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
+      cfile->async_delta = 0;
     }
 
     // add to clip menu

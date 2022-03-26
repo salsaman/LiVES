@@ -2334,6 +2334,9 @@ void event_list_replace_events(weed_event_list_t *event_list,
   event_list_free_events(event_list);
   weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, get_first_event(new_event_list));
   weed_set_voidptr_value(event_list, WEED_LEAF_LAST, get_last_event(new_event_list));
+  weed_leaf_delete(new_event_list, WEED_LEAF_FIRST);
+  weed_leaf_delete(new_event_list, WEED_LEAF_LAST);
+  weed_plant_free(new_event_list);
 }
 
 
@@ -4350,7 +4353,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 }
               } else xaseek[mytrack] = aseeks[i];
               if (xaclips[mytrack] != aclips[i + 1]) xaon[mytrack] = TRUE;
-              else xaon[mytrack] = TRUE;
+              else xaon[mytrack] = FALSE;
               xaclips[mytrack] = aclips[i + 1];
               xavel[mytrack] = aseeks[i + 1];
             }
@@ -5191,6 +5194,7 @@ boolean render_to_clip(boolean new_clip) {
       qevent_list = quantise_events(mainw->event_list, cfile->fps, !new_clip);
 
       if (qevent_list) {
+	// TODO - keep backup of original, so we can quantise to other fps
         event_list_replace_events(mainw->event_list, qevent_list);
         weed_set_double_value(mainw->event_list, WEED_LEAF_FPS, cfile->fps);
       }
@@ -5223,7 +5227,7 @@ boolean render_to_clip(boolean new_clip) {
 
       THREAD_CAPACITIES = caps;
 
-      if (!transcode_get_params(&pname)) {
+      if (!(pname = transcode_get_params(pname))) {
         lives_capacities_free(caps);
         THREAD_CAPACITIES = NULL;
         transcode_cleanup(mainw->vpp);
@@ -5720,8 +5724,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
       close_ascrap_file(TRUE);
       sensitize();
       break;
-    case RENDER_CHOICE_PREVIEW:
-      // preview
+    case RENDER_CHOICE_PREVIEW: {
+       // preview
       cfile->next_event = get_first_event(mainw->event_list);
       mainw->is_rendering = TRUE;
       mainw->preview_rendering = TRUE;
@@ -5737,6 +5741,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
       mainw->preview_rendering = FALSE;
       mainw->is_processing = mainw->is_rendering = FALSE;
       cfile->next_event = NULL;
+    }
       break;
     case RENDER_CHOICE_TRANSCODE:
       THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
@@ -6074,6 +6079,7 @@ static void quant_clicked(LiVESButton * button, livespointer elist) {
   weed_event_list_t *ev_list = (weed_event_list_t *)elist;
   weed_event_list_t *qevent_list = quantise_events(ev_list, cfile->fps, FALSE);
   if (qevent_list) {
+    // TODO - keep backup of original, so we can quantise to other fps
     /* reset_renumbering(); */
     /* event_list_rectify(NULL, qevent_list); */
     event_list_replace_events(ev_list, qevent_list);
@@ -6086,7 +6092,7 @@ static void quant_clicked(LiVESButton * button, livespointer elist) {
 LiVESWidget *create_event_list_dialog(weed_event_list_t *event_list, weed_timecode_t start_tc, weed_timecode_t end_tc,
                                       uint64_t opts) {
   // TODO - some event properties should be editable, e.g. parameter values
-  weed_timecode_t tc, tc_secs, ref_tc = -1;
+  weed_timecode_t tc, tc_secs;
 
   LiVESTreeStore *treestore;
   LiVESTreeIter iter1, iter2, iter3;
@@ -6165,18 +6171,16 @@ LiVESWidget *create_event_list_dialog(weed_event_list_t *event_list, weed_timeco
     }
 
     etype = get_event_type(event);
-    if (1) {
-      if (etype == WEED_EVENT_TYPE_MARKER) {
-        int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
-        if (marker_type == EVENT_MARKER_BLOCK_START) {
-          ref_tc = tc;
-          event = get_next_event(event);
-          continue;
-        }
-      } else if (tc != ref_tc || !WEED_EVENT_IS_FRAME(event)) {
-        event = get_next_event(event);
-        continue;
-      }
+    if (etype == WEED_EVENT_TYPE_MARKER) {
+      //int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
+      /*   if (marker_type == EVENT_MARKER_BLOCK_START) { */
+      /*     ref_tc = tc; */
+      /*     event = get_next_event(event); */
+      /*     continue; */
+      /*   } */
+      /* } else if (tc != ref_tc || !WEED_EVENT_IS_FRAME(event)) { */
+      event = get_next_event(event);
+      continue;
     }
 
     /* if (WEED_EVENT_IS_FRAME(event)) { */

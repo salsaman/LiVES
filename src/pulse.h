@@ -24,8 +24,8 @@
 #define LIVES_PA_BUFF_MAXLEN 32768
 
 // pb only
-#define LIVES_PA_BUFF_TARGET 4096
-#define LIVES_PA_BUFF_MINREQ 2048
+#define LIVES_PA_BUFF_TARGET 8192
+#define LIVES_PA_BUFF_MINREQ 4096
 
 // rec only
 #define LIVES_PA_BUFF_FRAGSIZE 4096
@@ -138,7 +138,7 @@ void pulse_close_client(pulse_driver_t *);
 
 void pulse_shutdown(void); ///< shudown server, mainloop, context
 
-void pulse_aud_pb_ready(int fileno);
+void pulse_aud_pb_ready(pulse_driver_t *, int fileno);
 
 size_t pulse_write_data(float out_scale, int achans, int fileno, size_t rbytes, void *data);
 
@@ -150,7 +150,8 @@ boolean pulse_try_reconnect(void);
 // utils
 volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); ///< pull last msg from msgq, or return NULL
 
-int64_t pulse_audio_seek_bytes(pulse_driver_t *, int64_t bytes, lives_clip_t *);
+off_t pulse_audio_seek_bytes(pulse_driver_t *, off_t bytes, lives_clip_t *);
+off_t pulse_audio_seek_bytes_velocity(pulse_driver_t *, off_t bytes, lives_clip_t *, double vel);
 
 boolean pa_time_reset(pulse_driver_t *, int64_t offset);
 void pulse_tscale_reset(pulse_driver_t *);
@@ -158,6 +159,7 @@ void pulse_tscale_reset(pulse_driver_t *);
 ticks_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 seconds
 
 double lives_pulse_get_pos(pulse_driver_t *);
+off_t lives_pulse_get_offset(pulse_driver_t *);
 
 size_t pulse_get_buffsize(pulse_driver_t *);
 
@@ -168,10 +170,13 @@ void pa_mloop_unlock(void);
 //////////////////////
 
 boolean pulse_audio_seek_frame(pulse_driver_t *, double frame);  ///< seek to (video) frame
+boolean pulse_audio_seek_frame_velocity(pulse_driver_t *, double frame, double vel);
 
 void pulse_set_avel(pulse_driver_t *, int clipno, double ratio);
 
 void pulse_get_rec_avals(pulse_driver_t *);
+
+void lives_pulse_set_client_attributes(pulse_driver_t *, int fileno, boolean activate, boolean running);
 
 #endif
 

@@ -124,12 +124,14 @@ weed_error_t lives_aplayer_set_data(lives_object_t *aplayer, void *data);
 #define ASERVER_CMD_FILE_OPEN 1
 #define ASERVER_CMD_FILE_CLOSE 2
 #define ASERVER_CMD_FILE_SEEK 3
+#define ASERVER_CMD_FILE_SEEK_ADJUST 4
 
 /* message passing structure */
 typedef struct _aserver_message_t {
   volatile int command;
   ticks_t tc;
   volatile char *data;
+  char *extra;
   volatile struct _aserver_message_t *next;
 } aserver_message_t;
 
@@ -273,6 +275,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 void aud_fade(int fileno, double startt, double endt, double startv, double endv); ///< fade in/fade out
 boolean adjust_clip_volume(int fileno, float newvol, boolean make_backup);
 
+boolean await_audio_queue(ticks_t xtimeout);
+
 typedef enum {
   RECA_MONITOR = 0,
   RECA_WINDOW_GRAB,
@@ -289,17 +293,17 @@ typedef enum {
 #define APLAYER_STATUS_RESYNC 2
 #define APLAYER_STATUS_RUNNING 3
 
-#define APLAYER_STATUS_PROCESSING	(1ul << 2)
+#define APLAYER_STATUS_PROCESSING	(1ull << 2)
 
-#define APLAYER_STATUS_PREP		(1ul << 5)
+#define APLAYER_STATUS_PREP		(1ull << 5)
 
-#define APLAYER_STATUS_SILENT		(1ul << 16)
-#define APLAYER_STATUS_PAUSED		(1ul << 17)
-#define APLAYER_STATUS_CORKED		(1ul << 18)
+#define APLAYER_STATUS_SILENT		(1ull << 16)
+#define APLAYER_STATUS_PAUSED		(1ull << 17)
+#define APLAYER_STATUS_CORKED		(1ull << 18)
 
-#define APLAYER_STATUS_ERROR		(1ul << 32)
-#define APLAYER_STATUS_DISCONNECTED	(1ul << 33)
-#define APLAYER_STATUS_BLOCKED		(1ul << 34)
+#define APLAYER_STATUS_ERROR		(1ull << 32)
+#define APLAYER_STATUS_DISCONNECTED	(1ull << 33)
+#define APLAYER_STATUS_BLOCKED		(1ull << 34)
 
 void audio_analyser_start(int source);
 void audio_analyser_end(int source);
@@ -324,6 +328,7 @@ void wake_audio_thread(void);
 
 int get_aplay_clipno(void);
 int get_aplay_rate(void);
+off_t get_aplay_offset(void);
 
 boolean resync_audio(int clipno, double frameno);
 void avsync_force(void);

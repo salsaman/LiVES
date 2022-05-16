@@ -11,8 +11,9 @@
 void d_print(const char *fmt, ...);
 char *dump_messages(int start, int end); // utils.c
 weed_plant_t *get_nth_info_message(int n); // utils.c
-int add_messages_to_list(const char *text);
-int free_n_msgs(int frval);
+weed_error_t add_messages_to_list(const char *text);
+weed_error_t add_messages_first(const char *text);
+weed_error_t free_n_msgs(int frval);
 
 FILE *open_logfile(const char *logfilename);
 void close_logfile(FILE *logfile);

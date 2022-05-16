@@ -20,28 +20,34 @@ lives_object_instance_t *lives_player_inst_create(uint64_t subtype);
 
 #define LIVES_IS_PLAYING (mainw && mainw->playing_file > -1)
 
+// normal playback, not previwing, processing, rendering or recording
 #define LIVES_NORMAL_PLAYBACK (lives_get_status() == LIVES_STATUS_PLAYING)
-
 #define LIVES_CE_PLAYBACK (LIVES_NORMAL_PLAYBACK && !mainw->multitrack)
 #define LIVES_MT_PLAYBACK (LIVES_NORMAL_PLAYBACK && mainw->multitrack)
-
+#define LIVES_IS_RECORDING (!RECORD_PAUSED && (lives_get_status() & LIVES_STATUS_RECORDING))
 #define LIVES_IS_RENDERING (mainw && ((!mainw->multitrack && mainw->is_rendering) \
 				      || (mainw->multitrack && mainw->multitrack->is_rendering)) \
 			    && !mainw->preview_rendering)
 
 #define LIVES_STATUS_IDLE			0
-#define LIVES_STATUS_NOTREADY			(1 << 0)
-#define LIVES_STATUS_PLAYING			(1 << 1)
-#define LIVES_STATUS_PROCESSING			(1 << 2)
-#define LIVES_STATUS_PREVIEW			(1 << 3)
-#define LIVES_STATUS_RENDERING			(1 << 4)
-#define LIVES_STATUS_EXITING			(1 << 5)
+#define LIVES_STATUS_PLAYING			(1 << 0)
+#define LIVES_STATUS_PROCESSING			(1 << 1)
+#define LIVES_STATUS_PREVIEW			(1 << 2)
+#define LIVES_STATUS_RENDERING			(1 << 3)
+#define LIVES_STATUS_RECORDING			(1 << 4)
+
+#define ACTIVE_STATUS ((1 << 14) - 1)
+
+// special states
+#define LIVES_STATUS_NOTREADY			(1 << 14)
+#define LIVES_STATUS_EXITING			(1 << 15)
 //
 #define LIVES_STATUS_ERROR 			(1 << 16)
 #define LIVES_STATUS_FATAL 			(1 << 17)
 
+#define RECORD_PAUSED (mainw && mainw->record && mainw->record_paused)
+
 // resizing ??
-// recording, record paused
 
 int lives_set_status(int status);
 int lives_unset_status(int status);

@@ -125,6 +125,9 @@ static _ign_opts ign_opts;
 static int zargc;
 static char **zargv;
 
+static int o_argc;
+static char **o_argv;
+
 #ifndef NO_PROG_LOAD
 static int xxwidth = 0, xxheight = 0;
 #endif
@@ -135,6 +138,9 @@ static boolean needs_workdir = FALSE;
 static boolean ran_ds_dlg = FALSE;
 
 static void do_start_messages(void);
+
+int orig_argc(void) {return o_argc;}
+char **orig_argv(void) {return o_argv;}
 
 ////////////////////
 
@@ -292,7 +298,8 @@ static GLogWriterOutput lives_log_writer(GLogLevelFlags log_level, const GLogFie
 
 #ifdef ENABLE_JACK
 LIVES_LOCAL_INLINE boolean jack_warn(boolean is_trans, boolean is_con) {
-  boolean ret = TRUE, fork_tried = FALSE;
+  char *com = NULL;
+  boolean ret = TRUE;
 
   mainw->fatal = TRUE;
 
@@ -301,25 +308,30 @@ LIVES_LOCAL_INLINE boolean jack_warn(boolean is_trans, boolean is_con) {
     ret = do_jack_no_startup_warn(is_trans);
     //if (!prefs->startup_phase) do_jack_restart_warn(-1, NULL);
   } else {
-    char *com = NULL;
     ret = do_jack_no_connect_warn(is_trans);
     //if (!prefs->startup_phase) do_jack_restart_warn(16, NULL);
 
     // as a last ditch attempt, try to launch the server
     if (is_trans) {
       if (prefs->jack_opts & JACK_OPTS_START_TSERVER) {
-        if (*future_prefs->jack_tserver_cfg) com = future_prefs->jack_tserver_cfg;
+        if (*future_prefs->jack_tserver_cfg) com = lives_strdup_printf("source '%s'", future_prefs->jack_tserver_cfg);
       }
     } else {
       if (prefs->jack_opts & JACK_OPTS_START_ASERVER) {
-        if (*future_prefs->jack_aserver_cfg) com = future_prefs->jack_aserver_cfg;
+        if (*future_prefs->jack_aserver_cfg) com = lives_strdup_printf("source '%s'", future_prefs->jack_aserver_cfg);
       }
     }
-    if (com) IGN_RET(lives_fork(com));
-    fork_tried = TRUE;
+    if (com) {
+      lives_hook_append(mainw->global_hook_closures, RESTART_HOOK, 0, lives_fork_cb, com);
+    }
   }
   // TODO - if we have backup config, restore from it
-  if (!fork_tried && !ret) set_int_pref(PREF_JACK_OPTS, 0);
+  if (!ret) {
+    maybe_abort(TRUE, mainw->restart_params);
+  }
+  if (com) {
+    lives_hook_remove(mainw->global_hook_closures, RESTART_HOOK, lives_fork_cb, com);
+  }
   return ret;
 }
 #endif
@@ -889,7 +901,7 @@ static boolean pre_init(void) {
   get_proc_loads(FALSE);
 
   /// check disk storage status /////////////////////////////////////
-  mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
+  capable->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
 
   if (!ign_opts.ign_dscrit)
     prefs->ds_crit_level = (uint64_t)get_int64_prefd(PREF_DS_CRIT_LEVEL, DEF_DS_CRIT_LEVEL);
@@ -920,9 +932,9 @@ static boolean pre_init(void) {
       int64_t dsval = disk_monitor_check_result(prefs->workdir);
       if (dsval > 0) capable->ds_used = dsval;
       else dsval = capable->ds_used;
-      mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
+      capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
       capable->ds_free = dsval;
-      if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL) {
+      if (capable->ds_status == LIVES_STORAGE_STATUS_CRITICAL) {
         tmp = ds_critical_msg(prefs->workdir, &capable->mountpoint, dsval);
         msg = lives_strdup_printf("\n%s\n", tmp);
         lives_free(tmp);
@@ -1134,13 +1146,14 @@ static boolean pre_init(void) {
   mainw->imsep = mainw->imframe = NULL;
 
   prefs->max_messages = get_int_prefd(PREF_MAX_MSGS, DEF_MAX_MSGS);
+  if (prefs->max_messages < mainw->n_messages + 1) {
+    free_n_msgs(mainw->n_messages - prefs->max_messages
+                + mainw->n_messages > prefs->max_messages ? 1 : 0);
+  }
+
   future_prefs->msg_textsize = prefs->msg_textsize = get_int_prefd(PREF_MSG_TEXTSIZE, DEF_MSG_TEXTSIZE);
 
-  mainw->msg_list = NULL;
-  mainw->n_messages = 0;
-  mainw->ref_message = NULL;
-  mainw->ref_message_n = 0;
-  add_messages_to_list(_("Starting...\n"));
+  add_messages_first(_("Starting...\n"));
 
   get_string_prefd(PREF_GUI_THEME, prefs->theme, 64, LIVES_DEF_THEME);
 
@@ -1425,7 +1438,7 @@ void replace_with_delegates(void) {
 
     if (!mainw->resize_menuitem) {
       rfx->menu_text = (_("_Resize All Frames..."));
-      mainw->resize_menuitem = lives_standard_menu_item_new_with_label(rfx->menu_text);
+      mainw->resize_menuitem = rfx->menuitem = lives_standard_menu_item_new_with_label(rfx->menu_text);
       lives_widget_show(mainw->resize_menuitem);
       lives_menu_shell_insert(LIVES_MENU_SHELL(mainw->tools_menu), mainw->resize_menuitem, RFX_TOOL_MENU_POSN);
     } else {
@@ -1440,7 +1453,11 @@ void replace_with_delegates(void) {
     mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx = rfx;
   }
 
-  if (mainw->resize_menuitem) lives_widget_set_sensitive(mainw->resize_menuitem, CURRENT_CLIP_HAS_VIDEO);
+  if (mainw->resize_menuitem) {
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->resize_menuitem), LINKED_RFX_KEY,
+                                 (livespointer)mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx);
+    lives_widget_set_sensitive(mainw->resize_menuitem, CURRENT_CLIP_HAS_VIDEO);
+  }
 
   deint_idx = weed_get_idx_for_hashname("deinterlacedeinterlace", FALSE);
   if (deint_idx > -1) {
@@ -2237,7 +2254,7 @@ jack_tcl_try:
       splash_msg(_("Connecting to jack transport server..."),
                  SPLASH_LEVEL_LOAD_APLAYER);
       success = TRUE;
-      timeout = LIVES_SHORTEST_TIMEOUT;
+      timeout = LIVES_SHORT_TIMEOUT;
       if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
       if (!(info = LPT_WITH_TIMEOUT(timeout, 0, (lives_funcptr_t)lives_jack_init,
                                     WEED_SEED_BOOLEAN, "iv",
@@ -3953,12 +3970,12 @@ boolean lazy_startup_checks(void *data) {
     if (mainw->helper_procthreads[PT_LAZY_DSUSED]) {
       if (disk_monitor_running(prefs->workdir)) {
         int64_t dsval = capable->ds_used = disk_monitor_check_result(prefs->workdir);
-        mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
+        capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
         capable->ds_free = dsval;
         if (capable->ds_used < 0)
           capable->ds_used = disk_monitor_check_result(prefs->workdir);
-        if (!prefs->disk_quota && (mainw->ds_status == LIVES_STORAGE_STATUS_NORMAL
-                                   || mainw->ds_status == LIVES_STORAGE_STATUS_UNKNOWN)) {
+        if (!prefs->disk_quota && (capable->ds_status == LIVES_STORAGE_STATUS_NORMAL
+                                   || capable->ds_status == LIVES_STORAGE_STATUS_UNKNOWN)) {
           if (capable->ds_used < 0) disk_monitor_forget();
         } else {
           if (capable->ds_used < 0) {
@@ -3967,12 +3984,12 @@ boolean lazy_startup_checks(void *data) {
         }
       }
       mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
-      if (capable->ds_used > prefs->disk_quota * .9 || (mainw->ds_status != LIVES_STORAGE_STATUS_NORMAL
-          && mainw->ds_status != LIVES_STORAGE_STATUS_UNKNOWN)) {
+      if (capable->ds_used > prefs->disk_quota * .9 || (capable->ds_status != LIVES_STORAGE_STATUS_NORMAL
+          && capable->ds_status != LIVES_STORAGE_STATUS_UNKNOWN)) {
         if (capable->ds_used > prefs->disk_quota * .9
-            && (mainw->ds_status == LIVES_STORAGE_STATUS_NORMAL
-                || mainw->ds_status == LIVES_STORAGE_STATUS_UNKNOWN)) {
-          mainw->ds_status = LIVES_STORAGE_STATUS_OVER_QUOTA;
+            && (capable->ds_status == LIVES_STORAGE_STATUS_NORMAL
+                || capable->ds_status == LIVES_STORAGE_STATUS_UNKNOWN)) {
+          capable->ds_status = LIVES_STORAGE_STATUS_OVER_QUOTA;
         }
         do_show_quota = TRUE;
       }
@@ -4269,7 +4286,7 @@ static boolean lives_startup(livespointer data) {
           startup_message_nonfatal_dismissable(msg, WARN_MASK_CHECK_PLUGINS);
 
         if (mainw->next_ds_warn_level > 0) {
-          if (mainw->ds_status == LIVES_STORAGE_STATUS_WARNING) {
+          if (capable->ds_status == LIVES_STORAGE_STATUS_WARNING) {
             uint64_t curr_ds_warn = mainw->next_ds_warn_level;
             mainw->next_ds_warn_level >>= 1;
             if (mainw->next_ds_warn_level > (capable->ds_free >> 1)) mainw->next_ds_warn_level = capable->ds_free >> 1;
@@ -4603,10 +4620,12 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   int winitopts = 0;
   int xargc = argc;
 
-
 #ifndef IS_LIBLIVES
   weed_plant_t *test_plant;
 #endif
+
+  o_argc = argc;
+  o_argv = argv;
 
   mainw = NULL;
   prefs = NULL;
@@ -4727,7 +4746,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
   mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
-  init_random();
 
 #ifdef WEED_STARTUP_TESTS
   run_weed_startup_tests();
@@ -4771,6 +4789,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   weed_plant_free = weed_plant_free_host;
   // weed_plant_new = weed_plant_new_host;
 
+  init_random();
+
   init_colour_engine();
 
   weed_threadsafe = FALSE;
@@ -4810,7 +4830,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->interactive = TRUE;
   prefs->show_disk_quota = FALSE;
 
-  lives_snprintf(prefs->cmd_log, PATH_MAX, LIVES_DEVNULL);
+  lives_snprintf(prefs->cmd_log, PATH_MAX, "%s", LIVES_DEVNULL);
 
 #ifdef HAVE_YUV4MPEG
   prefs->yuvin[0] = '\0';
@@ -4842,7 +4862,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->has_session_workdir = FALSE;
   mainw->old_vhash = NULL;
 
-  mainw->prefs_cache = mainw->hdrs_cache = mainw->gen_cache = NULL;
+  mainw->prefs_cache = mainw->hdrs_cache = mainw->gen_cache = mainw->meta_cache = NULL;
 
   // mainw->foreign is set if we are grabbing an external window
   mainw->foreign = FALSE;
@@ -4884,6 +4904,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // we can read some pre-commands from a file, there is something of a chicken / egg problem as we dont know
   // yet where config_datadir will be, so a fixed path is used: either
   // $HOME/.config/lives/cmdline or /etc/lives/cmdline
+
   capable->extracmds_file[0] = extracmds_file = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, EXTRA_CMD_FILE,
                                NULL);
   capable->extracmds_file[1] = lives_build_filename(LIVES_ETC_DIR, LIVES_DIR_LITERAL, EXTRA_CMD_FILE, NULL);
@@ -5567,6 +5588,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // get capabilities and if OK set some initial prefs
   theme_error = pre_init();
 
+  set_meta("status", "running");
+
   /* widget_helper_suggest_icons("filter"); */
   /* abort(); */
 
@@ -5610,6 +5633,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
   if (!gtk_thread) {
     gtk_main();
+    printf("LUVERLY !\n");
   }
 #endif
 
@@ -5618,8 +5642,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
   return 0;
-}
 
+}
 
 void startup_message_fatal(char *msg) {
   if (mainw) {
@@ -5635,7 +5659,7 @@ void startup_message_fatal(char *msg) {
 
 
 LIVES_GLOBAL_INLINE boolean startup_message_nonfatal(const char *msg) {
-  if (mainw && mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL) do_abort_ok_dialog(msg);
+  if (capable && capable->ds_status == LIVES_STORAGE_STATUS_CRITICAL) do_abort_ok_dialog(msg);
   else do_error_dialog(msg);
   return TRUE;
 }
@@ -6937,7 +6961,7 @@ int main(int argc, char *argv[]) {
   }
   return 0;
 #endif
-  return real_main(argc, argv, NULL, 0l);
+  real_main(argc, argv, NULL, 0l);
 }
 #endif
 
@@ -8001,15 +8025,16 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 
   weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
 
-  if (clip < 0 && frame == 0) clip_type = CLIP_TYPE_DISK;
-  else {
-    sfile = mainw->files[clip];
-    if (!sfile) {
-      weed_layer_unref(layer);
-      return FALSE;
-    }
-    clip_type = sfile->clip_type;
+  sfile = RETURN_VALID_CLIP(clip);
+
+  if (!sfile) {
+    if (target_palette != WEED_PALETTE_END) weed_layer_set_palette(layer, target_palette);
+    create_blank_layer(layer, NULL, width, height, target_palette);
+    weed_layer_unref(layer);
+    return FALSE;
   }
+
+  clip_type = sfile->clip_type;
 
   switch (clip_type) {
   case CLIP_TYPE_NULL_VIDEO:
@@ -8229,7 +8254,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         lives_proc_thread_t resthread;
 #endif
         pthread_mutex_unlock(&sfile->frame_index_mutex);
-        if (!*image_ext) image_ext = get_image_ext_for_type(sfile->img_type);
+        if (!image_ext || !*image_ext) image_ext = get_image_ext_for_type(sfile->img_type);
         fname = make_image_file_name(sfile, frame, image_ext);
         ret = weed_layer_create_from_file_progressive(layer, fname, width, height, target_palette, image_ext);
 
@@ -9105,28 +9130,20 @@ void switch_to_file(int old_file, int new_file) {
 boolean switch_audio_clip(int new_file, boolean activate) {
   //ticks_t cticks;
   lives_clip_t *sfile;
-  boolean do_resync = FALSE;
   int aplay_file;
 
-  if (!IS_VALID_CLIP(new_file)) return FALSE;
   if (AUD_SRC_EXTERNAL) return FALSE;
 
   aplay_file = get_aplay_clipno();
 
   if ((aplay_file == new_file && (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
-                                  || !CLIP_HAS_AUDIO(new_file)))
+                                  || !CLIP_HAS_AUDIO(aplay_file)))
       || (aplay_file != new_file && !(prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS))) {
     return FALSE;
   }
 
-  sfile = mainw->files[new_file];
-
-  /* if (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) { */
-  /*   if (!sfile->play_paused) freeze_unfreeze_audio(FALSE); */
-  /*   return FALSE; */
-  /* } */
-
-  //cticks = lives_get_current_ticks();
+  sfile = RETURN_VALID_CLIP(new_file);
+  if (!sfile) return FALSE;
 
   if (new_file == aplay_file) {
     if (sfile->pb_fps > 0. || (sfile->play_paused && sfile->freeze_fps > 0.))
@@ -9134,18 +9151,11 @@ boolean switch_audio_clip(int new_file, boolean activate) {
     else sfile->adirection = LIVES_DIRECTION_REVERSE;
   } else if (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP) {
     mainw->scratch = SCRATCH_JUMP;
-    do_resync = TRUE;
   }
 
   if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
     if (mainw->jackd) {
-      if (do_resync) {
-        sfile->aseek_pos =
-          (off_t)((double)sfile->frameno / sfile->fps * sfile->arate)
-          * sfile->achans * sfile->asampsize / 8;
-      }
-
       if (!activate) mainw->jackd->in_use = FALSE;
 
       if (new_file != aplay_file) {
@@ -9196,8 +9206,8 @@ boolean switch_audio_clip(int new_file, boolean activate) {
       mainw->jackd->in_use = TRUE;
 
       if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
-	mainw->cancelled = handle_audio_timeout();
-	return FALSE;
+        mainw->cancelled = handle_audio_timeout();
+        return FALSE;
       }
 
       //jack_time_reset(mainw->jackd, 0);
@@ -9213,11 +9223,6 @@ boolean switch_audio_clip(int new_file, boolean activate) {
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed) {
-      if (do_resync) {
-        sfile->aseek_pos =
-          (off_t)((double)sfile->frameno / sfile->fps * sfile->arate)
-          * sfile->achans * sfile->asampsize / 8;
-      }
 
       if (!activate) mainw->pulsed->in_use = FALSE;
 
@@ -9232,15 +9237,15 @@ boolean switch_audio_clip(int new_file, boolean activate) {
             pulse_get_rec_avals(mainw->pulsed);
             mainw->rec_avel = 0.;
           }
-	  pulse_message.command = ASERVER_CMD_FILE_CLOSE;
-	  pulse_message.data = NULL;
-	  pulse_message.next = NULL;
-	  mainw->pulsed->msgq = &pulse_message;
+          pulse_message.command = ASERVER_CMD_FILE_CLOSE;
+          pulse_message.data = NULL;
+          pulse_message.next = NULL;
+          mainw->pulsed->msgq = &pulse_message;
 
-	  if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
-	    mainw->cancelled = handle_audio_timeout();
-	    return FALSE;
-	  }
+          if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+            mainw->cancelled = handle_audio_timeout();
+            return FALSE;
+          }
         }
 
         if (!IS_VALID_CLIP(new_file)) {
@@ -9248,9 +9253,9 @@ boolean switch_audio_clip(int new_file, boolean activate) {
           return FALSE;
         }
 
-	if (new_file == aplay_file) return TRUE;
+        if (new_file == aplay_file) return TRUE;
 
-	if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
+        if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
           // tell pulse server to open audio file and start playing it
 
           pulse_message.command = ASERVER_CMD_FILE_OPEN;
@@ -9268,15 +9273,14 @@ boolean switch_audio_clip(int new_file, boolean activate) {
           mainw->pulsed->msgq = &pulse_message;
           mainw->pulsed->in_use = TRUE;
 
-	  if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
-	    mainw->cancelled = handle_audio_timeout();
-	    return FALSE;
-	  }
+          mainw->pulsed->is_paused = sfile->play_paused;
 
-	  mainw->pulsed->is_paused = sfile->play_paused;
-	  //pa_time_reset(mainw->pulsed, 0);
+          avsync_force();
+
+          //pa_time_reset(mainw->pulsed, 0);
         } else {
-          mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+          mainw->video_seek_ready = TRUE;
+          video_sync_ready();
         }
       }
     }
@@ -9294,7 +9298,7 @@ boolean switch_audio_clip(int new_file, boolean activate) {
     nullaudio_clip_set(new_file);
     if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
       if (!sfile->play_paused)
-	nullaudio_arate_set(sfile->arate * sfile->pb_fps / sfile->fps);
+        nullaudio_arate_set(sfile->arate * sfile->pb_fps / sfile->fps);
       else nullaudio_arate_set(sfile->arate * sfile->freeze_fps / sfile->fps);
     } else nullaudio_arate_set(sfile->arate);
     nullaudio_seek_set(sfile->aseek_pos);
@@ -9394,7 +9398,7 @@ void do_quick_switch(int new_file) {
 
   // switch audio clip
   if (AUD_SRC_INTERNAL && (!mainw->event_list || mainw->record)) {
-    if (is_realtime_aplayer(prefs->audio_player) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+    if (APLAYER_REALTIME && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
         && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
         && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit))) {
       switch_audio_clip(new_file, TRUE);

@@ -108,6 +108,7 @@ typedef struct {
 } lives_threadvars_t;
 
 struct _lives_thread_data_t {
+  pthread_t pthread;
   LiVESWidgetContext *ctx;
   int64_t idx;
   lives_threadvars_t vars;
@@ -250,8 +251,6 @@ void lives_thread_free(lives_thread_t *thread);
 // thread functions
 lives_thread_data_t *get_thread_data(void);
 lives_threadvars_t *get_threadvars(void);
-lives_thread_data_t *get_global_thread_data(void);
-lives_threadvars_t *get_global_threadvars(void);
 lives_thread_data_t *lives_thread_data_create(uint64_t idx);
 
 #define THREADVAR(var) (get_threadvars()->var_##var)

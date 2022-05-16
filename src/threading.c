@@ -66,7 +66,7 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_free(lives_proc_thread_t lpt) {
 
 
 void lives_plant_params_from_vargs(weed_plant_t *info, lives_funcptr_t func, int return_type,
-				   const char *args_fmt, va_list xargs) {
+                                   const char *args_fmt, va_list xargs) {
   const char *c;
   char *param_prefix = weed_get_string_value(info, "param_prefix", NULL);
   int p = 0;
@@ -108,7 +108,7 @@ lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, liv
   }
 
   lives_plant_params_from_vargs(thread_info, func, return_type, args_fmt, xargs);
-  
+
   if (attr & LIVES_THRDATTR_NOTE_STTIME) weed_set_int64_value(thread_info, LIVES_LEAF_START_TICKS, lives_get_current_ticks());
   if (!(attr & LIVES_THRDATTR_FG_THREAD)) {
     resubmit_proc_thread(thread_info, attr);
@@ -215,7 +215,6 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
       if (!govrun) governor_loop(NULL);
       else lives_widget_context_update();
     }
-    //lives_widget_context_update();
 
     if (lives_proc_thread_check_states(lpt, THRD_STATE_BUSY) == THRD_STATE_BUSY) {
       // thread MUST unavoidably block; stop the timer (e.g showing a UI)
@@ -302,10 +301,12 @@ void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, c
     ret = fg_run_func(lpt, retval);
     // calls lives_proc_thread_free(lpt)
   } else {
+    THREADVAR(fg_service) = TRUE;
     ret = fg_service_call(lpt, retval);
     // will call fg_run_func() indirectly, so no need to call lives_proc_thread_free
-    // some functions may have been stacked, since we cannot stack multiple fg service calls
+    // some functions may have been deferred, since we cannot stack multiple fg service calls
     lives_hooks_trigger(NULL, THREADVAR(hook_closures), THREAD_INTERNAL_HOOK);
+    THREADVAR(fg_service) = FALSE;
   }
   return ret;
 }
@@ -319,7 +320,7 @@ int get_funcsig_nparms(funcsig_t sig) {
 
 
 static boolean _call_funcsig_inner(lives_proc_thread_t thread_info, lives_funcptr_t func,
-				   uint32_t ret_type, funcsig_t sig) { 
+                                   uint32_t ret_type, funcsig_t sig) {
   /// funcsigs define the signature of any function we may wish to call via lives_proc_thread
   /// however since there are almost 3 quadrillion possibilities (nargs < 16 * all return types)
   /// it is not feasible to add every one; new funcsigs can be added as needed; then the only remaining thing is to
@@ -331,7 +332,7 @@ static boolean _call_funcsig_inner(lives_proc_thread_t thread_info, lives_funcpt
 
   if (thread_info) info = thread_info;
   else info = lives_plant_new(LIVES_WEED_SUBTYPE_PROC_THREAD);
-  
+
   thefunc->func = func;
 
   // Note: C compilers don't care about the type / number of function args., (else it would be impossible to alias any function pointer)
@@ -675,7 +676,7 @@ boolean call_funcsig(lives_proc_thread_t info) {
 
 
 /* } */
-  
+
 
 LIVES_GLOBAL_INLINE uint64_t lives_proc_thread_get_state(lives_proc_thread_t lpt) {
   if (lpt) {
@@ -1057,23 +1058,12 @@ static boolean threads_die;
 static LiVESList *allctxs = NULL;
 
 lives_thread_data_t *get_thread_data(void) {
-  LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
-  LiVESList *list = allctxs;
-  if (!ctx) ctx = lives_widget_context_default();
-  for (; list; list = list->next) {
-    if (((lives_thread_data_t *)list->data)->ctx == ctx) return list->data;
+  for (LiVESList *list = allctxs; list; list = list->next) {
+    if (pthread_equal(((lives_thread_data_t *)list->data)->pthread, pthread_self())) return list->data;
   }
   return NULL;
 }
 
-lives_thread_data_t *get_global_thread_data(void) {
-  LiVESWidgetContext *ctx = lives_widget_context_default();
-  LiVESList *list = allctxs;
-  for (; list; list = list->next) {
-    if (((lives_thread_data_t *)list->data)->ctx == ctx) return list->data;
-  }
-  return NULL;
-}
 
 LIVES_GLOBAL_INLINE lives_threadvars_t *get_threadvars(void) {
   static lives_threadvars_t *dummyvars = NULL;
@@ -1085,15 +1075,6 @@ LIVES_GLOBAL_INLINE lives_threadvars_t *get_threadvars(void) {
   return &thrdat->vars;
 }
 
-LIVES_GLOBAL_INLINE lives_threadvars_t *get_global_threadvars(void) {
-  static lives_threadvars_t *dummyvars = NULL;
-  lives_thread_data_t *thrdat = get_global_thread_data();
-  if (!thrdat) {
-    if (!dummyvars) dummyvars = lives_calloc(1, sizeof(lives_threadvars_t));
-    return dummyvars;
-  }
-  return &thrdat->vars;
-}
 
 static lives_thread_data_t *get_thread_data_by_id(uint64_t idx) {
   LiVESList *list = allctxs;
@@ -1106,6 +1087,7 @@ static lives_thread_data_t *get_thread_data_by_id(uint64_t idx) {
 
 lives_thread_data_t *lives_thread_data_create(uint64_t idx) {
   lives_thread_data_t *tdata = (lives_thread_data_t *)lives_calloc(1, sizeof(lives_thread_data_t));
+  tdata->pthread = pthread_self();
   if (idx != 0) tdata->ctx = lives_widget_context_new();
   else tdata->ctx = lives_widget_context_default();
   tdata->vars.var_id = tdata->idx = idx;
@@ -1130,7 +1112,10 @@ static boolean widget_context_wrapper(livespointer data) {
 //static pthread_mutex_t cpusel_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 LIVES_GLOBAL_INLINE void lives_hooks_clear(LiVESList **xlist, int type) {
-  lives_list_free_all(&(xlist[type]));
+  if (xlist) {
+    lives_list_free_all(&(xlist[type]));
+    xlist[type] = NULL;
+  }
 }
 
 LIVES_LOCAL_INLINE LiVESList *lives_hooks_copy(LiVESList *in) {
@@ -1144,6 +1129,17 @@ LIVES_LOCAL_INLINE LiVESList *lives_hooks_copy(LiVESList *in) {
   }
   return out;
 }
+
+
+LIVES_LOCAL_INLINE void lives_hooks_transfer(LiVESList **dest, LiVESList **src, boolean include_glob) {
+  int type = 0;
+  if (!include_glob) type = N_GLOBAL_HOOKS + 1;
+  for (; type < N_HOOK_FUNCS && src[type]; type++) {
+    dest[type] = src[type];
+    src[type] = NULL;
+  }
+}
+
 
 boolean do_something_useful(lives_thread_data_t *tdata) {
   /// yes, why don't you lend a hand instead of just lying around nanosleeping...
@@ -1177,11 +1173,10 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   mywork->busy = tdata->idx;
   myflags = mywork->flags;
 
-  for (int type = N_GLOBAL_HOOKS + 1; type < N_HOOK_FUNCS; type++) {
-    if (mywork->attr & LIVES_THRDATTR_INHERIT_HOOKS) {
-      THREADVAR(hook_closures[type]) = lives_hooks_copy(mywork->hook_closures[type]);
-    }
-    lives_list_free_all(&mywork->hook_closures[type]);
+  if (mywork->attr & LIVES_THRDATTR_INHERIT_HOOKS) {
+    // attribute is set to indicate that hook closures should be passed to thread which runs the job
+    // closures are first copied from caller to the task definition, then finally to the thread
+    lives_hooks_transfer(THREADVAR(hook_closures), mywork->hook_closures, FALSE);
   }
 
   /* if (prefs->jokes) { */
@@ -1345,10 +1340,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
   }
 
   if (attr & LIVES_THRDATTR_INHERIT_HOOKS) {
-    for (int type = N_GLOBAL_HOOKS + 1; type < N_HOOK_FUNCS; type++) {
-      work->hook_closures[type] = lives_hooks_copy(THREADVAR(hook_closures[type]));
-      lives_hooks_clear(THREADVAR(hook_closures), type);
-    }
+    lives_hooks_transfer(work->hook_closures, THREADVAR(hook_closures), FALSE);
   }
 
   lives_mutex_lock_carefully(&twork_mutex);
@@ -1452,14 +1444,22 @@ LIVES_GLOBAL_INLINE uint64_t lives_thread_done(lives_thread_t work) {
 LIVES_GLOBAL_INLINE void lives_hook_append(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func,
     livespointer data) {
   lives_closure_t *closure;
+  boolean skip = FALSE;
   if (flags & HOOK_UNIQUE_REPLACE_MATCH) {
     LiVESList *list = hooks[type], *listnext;
+    skip = TRUE;
     for (; list; list = listnext) {
       listnext = list->next;
       closure = (lives_closure_t *)list->data;
       if (closure->flags & HOOK_BLOCKED) break;
       if (closure->func != func) continue;
-      if ((flags & HOOK_UNIQUE_DATA) && closure->data != data) continue;
+      if ((flags & HOOK_UNIQUE_DATA) && closure->data != data) {
+        if (flags & HOOK_UNIQUE_CHANGE_DATA) {
+          closure->data = data;
+          break;
+        }
+        continue;
+      }
       if (!(flags & HOOK_UNIQUE_REPLACE)) break;
       if (!(flags & HOOK_UNIQUE_FUNC)) {
         closure->data = data;
@@ -1467,7 +1467,9 @@ LIVES_GLOBAL_INLINE void lives_hook_append(LiVESList **hooks, int type, uint64_t
       }
       hooks[type] = lives_list_remove_node(hooks[type], list, TRUE);
     }
+    if (!list) skip = FALSE;
   }
+  if (skip) return;
   closure = (lives_closure_t *)lives_calloc(1, sizeof(lives_closure_t));
   closure->func = func;
   closure->data = data;
@@ -1478,14 +1480,22 @@ LIVES_GLOBAL_INLINE void lives_hook_append(LiVESList **hooks, int type, uint64_t
 LIVES_GLOBAL_INLINE void lives_hook_prepend(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func,
     livespointer data) {
   lives_closure_t *closure;
+  boolean skip = FALSE;
   if (flags & HOOK_UNIQUE_REPLACE_MATCH) {
     LiVESList *list = hooks[type], *listnext;
+    skip = TRUE;
     for (; list; list = listnext) {
       listnext = list->next;
       closure = (lives_closure_t *)list->data;
       if (closure->flags & HOOK_BLOCKED) break;
       if (closure->func != func) continue;
-      if ((flags & HOOK_UNIQUE_DATA) && closure->data != data) continue;
+      if ((flags & HOOK_UNIQUE_DATA) && closure->data != data) {
+        if (flags & HOOK_UNIQUE_CHANGE_DATA) {
+          closure->data = data;
+          break;
+        }
+        continue;
+      }
       if (!(flags & HOOK_UNIQUE_REPLACE)) break;
       if (!(flags & HOOK_UNIQUE_FUNC)) {
         closure->data = data;
@@ -1493,7 +1503,9 @@ LIVES_GLOBAL_INLINE void lives_hook_prepend(LiVESList **hooks, int type, uint64_
       }
       hooks[type] = lives_list_remove_node(hooks[type], list, TRUE);
     }
+    if (!list) skip = FALSE;
   }
+  if (skip) return;
   closure = (lives_closure_t *)lives_calloc(1, sizeof(lives_closure_t));
   closure->func = func;
   closure->data = data;
@@ -1511,6 +1523,7 @@ LIVES_GLOBAL_INLINE void lives_hooks_trigger(lives_object_t *obj, LiVESList **xl
     if (closure->flags & HOOK_BLOCKED) continue;
     if (closure->flags & HOOK_CB_FG_THREAD) {
       main_thread_execute((lives_funcptr_t)closure->func, 0, NULL, "vv", obj, closure->data);
+      xlist[type] = lives_list_remove_node(xlist[type], list, TRUE);
       continue;
     }
     if (closure->flags & HOOK_CB_ASYNC_JOIN) {
@@ -1524,6 +1537,7 @@ LIVES_GLOBAL_INLINE void lives_hooks_trigger(lives_object_t *obj, LiVESList **xl
       xlist[type] = lives_list_remove_node(xlist[type], list, TRUE);
   }
 }
+
 
 LIVES_GLOBAL_INLINE void lives_hook_remove(LiVESList **xlist, int type, hook_funcptr_t func, livespointer data) {
   // do not call for HOOK_CB_SINGLE_SHOT (TODO)
@@ -1557,7 +1571,7 @@ LIVES_GLOBAL_INLINE void lives_hooks_join(LiVESList **xlist, int type) {
 
 
 LIVES_LOCAL_INLINE void add_to_deferral_stack(hook_funcptr_t func, uint64_t xtraflags,  livespointer data) {
-  uint64_t filtflags = HOOK_CB_SINGLE_SHOT | HOOK_CB_FG_THREAD | (xtraflags & HOOK_UNIQUE_REPLACE_FUNC);
+  uint64_t filtflags = HOOK_CB_SINGLE_SHOT | HOOK_CB_FG_THREAD | (xtraflags & HOOK_UNIQUE_DATA);
   lives_hook_append(THREADVAR(hook_closures), THREAD_INTERNAL_HOOK,
                     filtflags, func, data);
 }
@@ -1565,7 +1579,7 @@ LIVES_LOCAL_INLINE void add_to_deferral_stack(hook_funcptr_t func, uint64_t xtra
 
 LIVES_GLOBAL_INLINE boolean avoid_deadlock(hook_funcptr_t hfunc, uint64_t xtraflags, livespointer data) {
   if (THREADVAR(fg_service)) {
-    add_to_deferral_stack(hfunc, xtraflags, data);
+    //add_to_deferral_stack(hfunc, xtraflags, data);
     return TRUE;
   }
   return FALSE;

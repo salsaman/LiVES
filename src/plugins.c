@@ -2378,6 +2378,18 @@ static boolean sanity_check_cdata(lives_clip_data_t *cdata) {
 }
 
 
+LIVES_GLOBAL_INLINE lives_clip_data_t *get_clip_cdata(int clipno) {
+  lives_clip_t *sfile;
+  if ((sfile = RETURN_PHYSICAL_CLIP(clipno)) && sfile->clip_type != CLIP_TYPE_FILE
+      && !sfile->ext_src && sfile->ext_src_type != LIVES_EXT_SRC_DECODER) {
+    lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
+    if (dplug) return dplug->cdata;
+  }
+  return NULL;
+}
+
+
+
 typedef struct {
   LiVESList *disabled;
   lives_decoder_t *dplug;
@@ -2388,8 +2400,10 @@ lives_decoder_t *clone_decoder(int fileno) {
   lives_decoder_t *dplug;
   const lives_decoder_sys_t *dpsys;
   lives_clip_data_t *cdata = NULL;
+  lives_clip_t *sfile;
 
-  if (!mainw->files[fileno] || !mainw->files[fileno]->ext_src) return NULL;
+  if (!(sfile = RETURN_PHYSICAL_CLIP(fileno)) || !sfile->ext_src
+      || sfile->ext_src_type != LIVES_EXT_SRC_DECODER) return NULL;
   dplug = (lives_decoder_t *)mainw->files[fileno]->ext_src;
   if (dplug) {
     dpsys = dplug->dpsys;
@@ -4277,6 +4291,8 @@ LIVES_GLOBAL_INLINE lives_rfx_t *obj_attrs_to_rfx(lives_object_t *obj, boolean r
     build_rfx_param(&rfx->params[i], attr, param_type, label, gui, attr);
     weed_set_voidptr_value(gui, LIVES_LEAF_RPAR, (void *)(&rfx->params[i]));
     if (readonly || lives_attribute_is_readonly(obj, name)) rfx->params[i].flags |= PARAM_FLAG_READONLY;
+    lives_free(label);
+    lives_free(name);
   }
   return rfx;
 }

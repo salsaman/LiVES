@@ -654,11 +654,11 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
 
   mainw->current_file = current_file;
   if (which == 0 || which == 1)
-    avoid_deadlock((hook_funcptr_t)lives_widget_queue_draw_if_visible, HOOK_UNIQUE_REPLACE_MATCH, mainw->video_draw);
+    avoid_deadlock((hook_funcptr_t)lives_widget_queue_draw_if_visible, 0, mainw->video_draw);
   if (which == 0 || which == 2)
-    avoid_deadlock((hook_funcptr_t)lives_widget_queue_draw_if_visible, HOOK_UNIQUE_REPLACE_MATCH, mainw->laudio_draw);
+    avoid_deadlock((hook_funcptr_t)lives_widget_queue_draw_if_visible, 0, mainw->laudio_draw);
   if (which == 0 || which == 3)
-    avoid_deadlock((hook_funcptr_t)lives_widget_queue_draw_if_visible, HOOK_UNIQUE_REPLACE_MATCH, mainw->raudio_draw);
+    avoid_deadlock((hook_funcptr_t)lives_widget_queue_draw_if_visible, 0, mainw->raudio_draw);
   return TRUE;
 
 bail:
@@ -1615,7 +1615,7 @@ void do_logger_dialog(const char *title, const char *text, const char *buff, boo
   lives_widget_destroy(textwindow->dialog);
   lives_free(textwindow);
 
-  if (add_abort) maybe_abort(FALSE);
+  if (add_abort) maybe_abort(FALSE, NULL);
 }
 
 
@@ -3637,7 +3637,7 @@ void redraw_timeline_bg(int clipno) {
   sfile = mainw->files[clipno];
   if (sfile->clip_type == CLIP_TYPE_TEMP) return;
 
-  if (avoid_deadlock((hook_funcptr_t)do_tl_redraw, HOOK_UNIQUE_REPLACE_FUNC,
+  if (avoid_deadlock((hook_funcptr_t)do_tl_redraw, HOOK_UNIQUE_CHANGE_DATA,
                      LIVES_INT_TO_POINTER(clipno))) return;
 
   lives_mutex_lock_carefully(&mainw->tlthread_mutex);
@@ -3660,7 +3660,7 @@ void do_tl_redraw(lives_object_t *obj, void *data) {
   // need to take extra care with this function, as it can be called
   // from fg_service call, and must avoid rcalling another such service or hanging
   // in mutex deadlock
-  if (avoid_deadlock((hook_funcptr_t)do_tl_redraw, HOOK_UNIQUE_REPLACE_FUNC,
+  if (avoid_deadlock((hook_funcptr_t)do_tl_redraw, HOOK_UNIQUE_CHANGE_DATA,
                      LIVES_INT_TO_POINTER(data))) return;
   else {
     int clipno = LIVES_POINTER_TO_INT(data);
@@ -7014,7 +7014,7 @@ boolean update_dsu(livespointer data) {
     if (mainw->dsu_valid) {
       if (dsu > -1) capable->ds_used = dsu;
       dsu = capable->ds_used;
-      mainw->ds_status = get_storage_status(xtarget, mainw->next_ds_warn_level, &dsu, 0);
+      capable->ds_status = get_storage_status(xtarget, mainw->next_ds_warn_level, &dsu, 0);
       capable->ds_free = dsu;
       dsq->scanning = FALSE;
       if (mainw->dsu_widget) {
@@ -7855,8 +7855,7 @@ rec_args *do_rec_desk_dlg(void) {
   lives_layout_add_row(LIVES_LAYOUT(layout));
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  checkbutton = lives_standard_check_button_new(_("Unlimited (until cancelled from the menu)"), FALSE, LIVES_BOX(hbox), NULL);
-
+  checkbutton = lives_standard_check_button_new(_("Unlimited (until cancelled from the menu)"), TRUE, LIVES_BOX(hbox), NULL);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   spinh = lives_standard_spin_button_new(_("_Hours"), 0., 0., 23., 1., 1., 0., LIVES_BOX(hbox), NULL);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -7873,7 +7872,7 @@ rec_args *do_rec_desk_dlg(void) {
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Delay before starting"), FALSE);
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  checkbuttond = lives_standard_check_button_new(_("Immediate"), TRUE, LIVES_BOX(hbox), NULL);
+  checkbuttond = lives_standard_check_button_new(_("Immediate"), FALSE, LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   spindh = lives_standard_spin_button_new(_("_Hours"), 0., 0., 23., 1., 1., 0., LIVES_BOX(hbox), NULL);

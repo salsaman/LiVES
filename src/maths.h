@@ -48,9 +48,19 @@
 float LEFloat_to_BEFloat(float f) GNU_CONST;
 uint64_t lives_10pow(int pow) GNU_CONST;
 double lives_fix(double val, int decimals) GNU_CONST;
-uint32_t get_approx_ln(uint32_t val) GNU_CONST;
-uint64_t get_approx_ln64(uint64_t x)GNU_CONST;
+
+uint32_t get_2pow(uint32_t val) GNU_CONST;
+uint64_t get_2pow_64(uint64_t x)GNU_CONST;
+
 uint64_t get_near2pow(uint64_t val) GNU_CONST;
+
+uint32_t get_log2(uint32_t val) GNU_CONST;
+uint64_t get_log2_64(uint64_t x)GNU_CONST;
+
+#define LN_CONSTVAL 1.4427 // 1 / ln(2)
+
+float get_approx_ln(uint32_t val) GNU_CONST;
+double get_approx_ln64(uint64_t x)GNU_CONST;
 
 double gaussian(double x, double a, double m, double s1, double s2);
 

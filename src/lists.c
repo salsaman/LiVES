@@ -300,14 +300,14 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_sort_alpha(LiVESList *list, boolean fw
 }
 
 
-LIVES_GLOBAL_INLINE void lives_list_free_strings(LiVESList *list) {
+LIVES_GLOBAL_INLINE void lives_list_free_data(LiVESList *list) {
   for (; list; list = list->next) lives_freep((void **)&list->data);
 }
 
 
 LIVES_GLOBAL_INLINE void lives_slist_free_all(LiVESSList **list) {
   if (!list || !*list) return;
-  lives_list_free_strings((LiVESList *)*list);
+  lives_list_free_data((LiVESList *)*list);
   lives_slist_free(*list);
   *list = NULL;
 }
@@ -315,7 +315,7 @@ LIVES_GLOBAL_INLINE void lives_slist_free_all(LiVESSList **list) {
 
 LIVES_GLOBAL_INLINE void lives_list_free_all(LiVESList **list) {
   if (!list || !*list) return;
-  lives_list_free_strings(*list);
+  lives_list_free_data(*list);
   lives_list_free(*list);
   *list = NULL;
 }
@@ -354,4 +354,11 @@ LIVES_GLOBAL_INLINE int lives_list_strcmp_index(LiVESList *list,
     }
   }
   return -1;
+}
+
+
+LIVES_GLOBAL_INLINE char *lives_list_to_string(LiVESList *list, const char *delim) {
+  char *res = NULL;
+  for (; list; list = list->next) res = lives_strcollate(&res, delim, list->data);
+  return res;
 }

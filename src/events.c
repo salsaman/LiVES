@@ -5194,7 +5194,7 @@ boolean render_to_clip(boolean new_clip) {
       qevent_list = quantise_events(mainw->event_list, cfile->fps, !new_clip);
 
       if (qevent_list) {
-	// TODO - keep backup of original, so we can quantise to other fps
+        // TODO - keep backup of original, so we can quantise to other fps
         event_list_replace_events(mainw->event_list, qevent_list);
         weed_set_double_value(mainw->event_list, WEED_LEAF_FPS, cfile->fps);
       }
@@ -5725,7 +5725,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
       sensitize();
       break;
     case RENDER_CHOICE_PREVIEW: {
-       // preview
+      // preview
       cfile->next_event = get_first_event(mainw->event_list);
       mainw->is_rendering = TRUE;
       mainw->preview_rendering = TRUE;
@@ -5742,7 +5742,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
       mainw->is_processing = mainw->is_rendering = FALSE;
       cfile->next_event = NULL;
     }
-      break;
+    break;
     case RENDER_CHOICE_TRANSCODE:
       THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
     case RENDER_CHOICE_NEW_CLIP:

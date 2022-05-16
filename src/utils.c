@@ -17,6 +17,11 @@
 #include "callbacks.h"
 #include "cvirtual.h"
 
+
+#ifdef ENABLE_OSC
+boolean lives_osc_notify_failure(void) WARN_UNUSED;
+#endif
+
 #define ASPECT_ALLOWANCE 0.005
 
 typedef struct {
@@ -56,12 +61,47 @@ LIVES_GLOBAL_INLINE boolean lives_unsetenv(const char *name) {
 
 LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
   char *xreason = (char *)reason;
-  if (!xreason) xreason = lives_strdup(_("Aborting"));
+  if (!xreason) xreason = _("Aborting");
+  lives_set_status(LIVES_STATUS_FATAL);
   break_me(xreason);
   if (mainw) lives_hooks_trigger(NULL, mainw->global_hook_closures, ABORT_HOOK);
   g_printerr("LIVES FATAL: %s\n", xreason);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, xreason);
   if (xreason != reason) lives_free(xreason);
+  abort();
+}
+
+
+void restart_me(LiVESList *extra_argv, const char *xreason) {
+  int argc = orig_argc();
+  char *new_argv[256], **argv = orig_argv();
+  char more_argv[256][256];
+  int i;
+  for (i = 0; i < argc; i++) {
+    new_argv[i] = argv[i];
+  }
+  if (extra_argv && argc < 255) {
+    LiVESList *list = extra_argv;
+    argv = new_argv;
+    for (int j = 0; list; j++) {
+      lives_snprintf(more_argv[j], 256, "%s", (char *)list->data);
+      new_argv[i] = more_argv[j];
+      if (++i == 255) break;
+      list = list->next;
+    }
+    new_argv[i] = NULL;
+  }
+  if (mainw) lives_hooks_trigger(NULL, mainw->global_hook_closures, RESTART_HOOK);
+  lives_notify(LIVES_OSC_NOTIFY_QUIT, xreason ? xreason : "");
+  execve(orig_argv()[0], argv, environ);
+#ifdef ENABLE_OSC
+  IGN_RET(lives_osc_notify_failure());
+#endif
+  fprintf(stderr, "FAILED TO RESTART LiVES, aborting instead !");
+  if (mainw) {
+    mainw->error = TRUE;
+    lives_hooks_trigger(NULL, mainw->global_hook_closures, ABORT_HOOK);
+  }
   abort();
 }
 
@@ -245,6 +285,12 @@ lives_pid_t lives_fork(const char *com) {
 
   // original (parent) process returns with child pid (which is now equal to child pgig)
   return ret;
+}
+
+
+LIVES_GLOBAL_INLINE void *lives_fork_cb(lives_object_t *dummy, void *com) {
+  IGN_RET(lives_fork((const char *)com));
+  return NULL;
 }
 
 
@@ -2318,8 +2364,8 @@ char *get_val_from_cached_list(const char *key, size_t maxlen, LiVESList * cache
 
 boolean check_for_ratio_fps(double fps) {
   boolean ratio_fps;
-  char *test_fps_string1 = lives_strdup_printf("%.3f00000", fps);
-  char *test_fps_string2 = lives_strdup_printf("%.8f", fps);
+  char *test_fps_string1 = lives_strdup_printf("%.3f00", fps);
+  char *test_fps_string2 = lives_strdup_printf("%.5f", fps);
 
   if (strcmp(test_fps_string1, test_fps_string2)) {
     // got a ratio
@@ -2348,75 +2394,6 @@ double get_ratio_fps(const char *string) {
   fps = lives_strtod(fps_string);
   lives_free(fps_string);
   return fps;
-}
-
-
-/**
-   @brief return ratio fps (TRUE) or FALSE
-   we want to see if we can express fps as n : m
-   where n and m are integers, and m is close to a power of 10.
-
-   step 1: fps' = fps / (fps + 1.)
-   step 2: start with the number line 0. / 1. to 1. / 1. (a = 0., b = 1., c = 1., d = 1.)
-   step 3: take the fraction (a + c) / (b + d), if this is > fpsr, then this becomes new max
-           if this is < fps', then this becomes new min
-	   otherwise if equal to fps' then this is our estimate fraction
-	   otherwise timeout (cycles) will return FALSE
-
-	   fps' ~= x / y
-
-   step 4: find next power of 10 (curt) above x. mpy by (fps + 1.)
-           since fps / (fps + 1.) = x / y, y = x * (fps + 1.) / fps = x / fps'
-   step 5: return TRUE and values (fps + 1) * curt : curt / fps'
-*/
-boolean calc_ratio_fps(double fps, int *numer, int *denom) {
-  // inverse of get_ratio_fps
-
-  double res, fpsr;
-  double curt = 10., diff;
-  int a = 0, b = 1, c = 1, d = 1, m, n, i;
-
-  fpsr = (double)((int)(fps + 1.));
-  fps /= fpsr;
-
-  for (i = 0; i < 10000; i++) {
-    m = a + b;
-    n = c + d;
-    res = (double)m / (double)n;
-    if (fabs(res - fps) < 0.00000001) break;
-    if (res > fps) {
-      b = m;
-      d = n;
-    } else {
-      a = m;
-      c = n;
-    }
-  }
-  // now we have our answer, m / n, e.g 999 / 1000 ( * 30. = fps)
-  // but we want m to be a power of 10 (and it must be close, within say 1%)
-  while (1) {
-    diff = (double)m / curt;
-    if (diff >= 0.99 && diff <= 1.01) {
-      if (numer) *numer = (int)(fpsr * curt);
-      if (denom) *denom = (int)(curt / res);
-      return TRUE;
-    }
-    if (curt > (double)m) return FALSE;
-    curt *= 10.;
-  }
-}
-
-
-char *remove_trailing_zeroes(double val) {
-  int i;
-  double xval = val;
-
-  if (val == (int)val) return lives_strdup_printf("%d", (int)val);
-  for (i = 0; i <= 16; i++) {
-    xval *= 10.;
-    if (xval == (int)xval) return lives_strdup_printf("%.*f", i, val);
-  }
-  return lives_strdup_printf("%.*f", i, val);
 }
 
 

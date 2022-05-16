@@ -31,13 +31,12 @@ LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
     inst_fps = 0.;
     last_curr_tc = currticks;
     last_mm = mainw->fps_mini_measure;
-  }
-  else {
+  } else {
     if (currticks > last_curr_tc + STATS_TC) {
       mainw->inst_fps = inst_fps = (double)(mainw->fps_mini_measure - last_mm
-					    + (double)(mainw->currticks - mainw->startticks)
-					    / TICKS_PER_SECOND_DBL / sfile->pb_fps)
-	/ ((double)(currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
+                                            + (double)(mainw->currticks - mainw->startticks)
+                                            / TICKS_PER_SECOND_DBL / sfile->pb_fps)
+                                   / ((double)(currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
       last_curr_tc = currticks;
       last_mm = mainw->fps_mini_measure;
     }
@@ -66,16 +65,16 @@ char *get_stats_msg(boolean calc_only) {
     if (CLIP_HAS_AUDIO(clipno)) {
       lives_clip_t *afile = mainw->files[clipno];
       avsync = (double)get_aplay_offset()
-	/ (double)afile->arate / (double)(afile->achans * (afile->asampsize >> 3)); //lives_pulse_get_pos(mainw->jackd);
+               / (double)afile->arate / (double)(afile->achans * (afile->asampsize >> 3)); //lives_pulse_get_pos(mainw->jackd);
       avsync -= ((double)mainw->actual_frame - 1.) / afile->fps
-	+ (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
+                + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
       have_avsync = TRUE;
     }
   }
   //currticks = lives_get_current_ticks();
 
   if (calc_only) return NULL;
-  load = get_core_loadvar(0);
+  //load = get_core_loadvar(0);
 
   if (!prefs->vj_mode) {
     if (have_avsync) {
@@ -107,7 +106,7 @@ char *get_stats_msg(boolean calc_only) {
                               audmsg ? audmsg : "",
                               mainw->actual_frame, sfile->frames,
                               inst_fps * sig(sfile->pb_fps), sfile->pb_fps,
-                              *load, mainw->disk_pressure,
+                              1., mainw->disk_pressure,
                               mainw->effort, EFFORT_RANGE_MAX,
                               prefs->pb_quality,
                               tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
@@ -128,7 +127,7 @@ char *get_stats_msg(boolean calc_only) {
     msg = lives_strdup_printf("fg: %d/%d, fps %.3f / %.3f, CPU: %.2f, Eff. %d/%d, Q: %s %s",
                               mainw->actual_frame, sfile->frames,
                               inst_fps * sig(sfile->pb_fps), sfile->pb_fps,
-                              *load, mainw->effort, EFFORT_RANGE_MAX,
+                              1., mainw->effort, EFFORT_RANGE_MAX,
                               tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
                                     : prefs->pb_quality == 2 ? _("Med") : _("High")),
                               bgmsg ? bgmsg : "");

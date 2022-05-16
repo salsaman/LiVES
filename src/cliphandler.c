@@ -1022,11 +1022,14 @@ boolean update_clips_version(int fileno) {
     if (sfile->header_version < 103) {
       char *clipdir = get_clip_dir(fileno);
       char *binfmt = lives_build_filename(clipdir, TOTALSAVE_NAME, NULL);
+      lives_free(clipdir);
       if (lives_file_test(binfmt, LIVES_FILE_TEST_EXISTS)) {
         // this is mainly for aesthetic reasons
         char *binfmt_to = lives_build_filename(clipdir, "." TOTALSAVE_NAME, NULL);
         lives_mv(binfmt, binfmt_to);
+        lives_free(binfmt_to);
       }
+      lives_free(binfmt);
     }
   }
   return FALSE;
@@ -1471,7 +1474,7 @@ get_avals:
         /// need to maintain mainw->hdrs_cache in this case, as it may be
         // passed to further functions, but it needs to be freed and set to NULL
         // at some point
-        return TRUE;
+        goto cleanup;
       }
     } while (retval2 == LIVES_RESPONSE_RETRY);
     goto rhd_failed;
@@ -1528,7 +1531,7 @@ old_check:
     } else goto rhd_failed;
     lives_free(old_hdrfile);
     /// mainw->hdrs_cache never set
-    return TRUE;
+    goto cleanup;
   }
 
   do {
@@ -1643,6 +1646,17 @@ old_check:
   }
 
   lives_strfreev(array);
+
+cleanup:
+  sfile->ratio_fps = calc_ratio_fps(sfile->fps, NULL, NULL);
+  if (!sfile->ratio_fps) {
+    double fps = sfile->fps;
+    sfile->fps = lives_fix(sfile->fps, 3);
+    if (sfile->fps != fps) sfile->needs_silent_update = TRUE;
+    if (!calc_ratio_fps(sfile->pb_fps, NULL, NULL))
+      sfile->pb_fps = lives_fix(sfile->pb_fps, 3);
+  }
+
   return TRUE;
 
 rhd_failed:

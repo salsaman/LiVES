@@ -2037,7 +2037,7 @@ char *prep_audio_player(frames_t audio_end, int arate, int asigned, int aendian)
     if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
     if (mainw->current_file == 0 && cfile->arate < 0) cfile->aseek_pos = cfile->afilesize;
   }
-  
+
   // start up our audio player (jack or pulse)
   if (audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
@@ -2345,8 +2345,8 @@ void play_file(void) {
       }
     }
     cfile->aseek_pos = (off_t)((double)(mainw->audio_start - 1.)
-			       * cfile->fps * (double)cfile->arate)
-      * cfile->achans * (cfile->asampsize >> 3);
+                               * cfile->fps * (double)cfile->arate)
+                       * cfile->achans * (cfile->asampsize >> 3);
     cfile->async_delta = 0;
   }
 
@@ -2753,10 +2753,9 @@ void play_file(void) {
 
       if (AUD_SRC_EXTERNAL) audio_analyser_start(AUDIO_SRC_EXT);
 
-      if (!mainw->foreign && !mainw->multitrack)
-        mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
-      else
-        mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+      if (!mainw->foreign && !mainw->multitrack) {
+        avsync_force();
+      } else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
 
       if (!mainw->multitrack || !mainw->multitrack->pb_start_event) {
         do_progress_dialog(FALSE, FALSE, NULL);
@@ -3589,8 +3588,6 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
   // The first time, frames and afilesize may not be correct.
   char *mesg, *mesg1;
   char **array;
-  char *test_fps_string1;
-  char *test_fps_string2;
   char *temp_backend;
 
   if (aud_only && !mainw->save_with_sound) {
@@ -3708,17 +3705,6 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
   }
 
   cfile->video_time = 0;
-
-  test_fps_string1 = lives_strdup_printf("%.3f00000", cfile->fps);
-  test_fps_string2 = lives_strdup_printf("%.8f", cfile->fps);
-
-  if (strcmp(test_fps_string1, test_fps_string2)) {
-    cfile->ratio_fps = TRUE;
-  } else {
-    cfile->ratio_fps = FALSE;
-  }
-  lives_free(test_fps_string1);
-  lives_free(test_fps_string2);
 
   if (!mainw->save_with_sound) {
     cfile->arps = cfile->arate = cfile->achans = cfile->asampsize = 0;

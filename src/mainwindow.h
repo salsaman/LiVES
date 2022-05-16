@@ -38,13 +38,6 @@
 #define USEC_TO_TICKS (TICKS_PER_SECOND / ONE_MILLION) ///< multiplying factor uSec -> ticks_t  (def. 100)
 #define TICKS_TO_NANOSEC (ONE_BILLION / TICKS_PER_SECOND) /// multiplying factor ticks_t -> nSec (def 10)
 
-#define LIVES_NEGLIGIBLE_TIMEOUT  (.1 * TICKS_PER_SECOND_DBL) // .1 sec timeout
-#define LIVES_SHORTEST_TIMEOUT  (2. * TICKS_PER_SECOND_DBL) // 2 sec timeout
-#define LIVES_SHORT_TIMEOUT  (5. * TICKS_PER_SECOND_DBL) // 5 sec timeout
-#define LIVES_DEFAULT_TIMEOUT  (10. * TICKS_PER_SECOND_DBL) // 10 sec timeout
-#define LIVES_LONGER_TIMEOUT  (20. * TICKS_PER_SECOND_DBL) // 20 sec timeout
-#define LIVES_LONGEST_TIMEOUT  (30. * TICKS_PER_SECOND_DBL) // 30 sec timeout
-
 #define DEF_FPS 25.
 
 /// rate to change pb fps when faster/slower pressed (TODO: make pref)
@@ -284,6 +277,7 @@ typedef enum {
   // combinations: ABORT, RETRY, SKIP, CANCEL, OK, BROWSE
   LIVES_DIALOG_ABORT,
   LIVES_DIALOG_ABORT_OK,
+  LIVES_DIALOG_ABORT_RESTART,
   LIVES_DIALOG_ABORT_RETRY,
   //
   LIVES_DIALOG_RETRY_CANCEL,
@@ -717,6 +711,8 @@ enum {
 #define LIVES_DEF_CONFIG_DIR ".config" LIVES_DIR_SEP LIVES_DIR_LITERAL ///< in $HOME : used once to set configfile, and then discarded
 #define LIVES_DEF_CONFIG_FILE "settings" ///< in LIVES_DEF_CONFIG_DIR unless overridden
 
+#define LIVES_METADATA_FILE "metadata"
+
 #define LIVES_DEF_CONFIG_FILE_OLD ".lives" ///< pre 3.2.0
 #define LIVES_DEF_CONFIG_DATADIR_OLD ".lives-dir" ///< pre 3.2.0
 
@@ -839,6 +835,8 @@ typedef struct {
   char vpp_defs_file[PATH_MAX];
 
   char recent_file[PATH_MAX]; // for liblives only
+
+  char metafile[PATH_MAX];  ///< metadata
 
   int untitled_number;
   int cap_number; // capture device number
@@ -1587,13 +1585,16 @@ typedef struct {
   LiVESWidget *custom_utilities_separator;
   LiVESWidget *rte_separator;
 
+  LiVESWidget *dsu_widget;
+
+  LiVESWidget *resize_menuitem;
+  LiVESWidget *textwidget_focus;
+
   int num_tracks;
   int *clip_index;
 
   /// maps frame slots to the presentation values (if >= 0, points to a 'virtual' frame in the source clip, -1 indicates a decoded img. frame
   frames64_t *frame_index;
-
-  LiVESWidget *resize_menuitem;
 
   // TODO - can this be simplified ?
   boolean close_keep_frames; ///< special value for when generating to clipboard
@@ -1689,7 +1690,8 @@ typedef struct {
   /// file caches (readonly)
   LiVESList *prefs_cache;  ///< cache of preferences, used during startup phase
   LiVESList *hdrs_cache;  ///< cache of a file header (e.g. header.lives)
-  LiVESList *gen_cache;  ///< general cache of fi
+  LiVESList *meta_cache;  ///< metadata cache
+  LiVESList *gen_cache;  ///< general cache
 
   FILE *clip_header; /// for writing header.lives values
 
@@ -1736,8 +1738,6 @@ typedef struct {
   boolean is_generating;
 
   boolean keep_pre; ///< set if previewed frames should be retained as processed frames (for rendered effects / generators)
-
-  LiVESWidget *textwidget_focus;
 
   /// video plugin
   _vid_playback_plugin *vpp;
@@ -1906,8 +1906,6 @@ typedef struct {
 
   int def_trans_idx;
 
-  // disk space in workdir
-  lives_storage_status_t ds_status;
   int ds_mon;
 
 #define CHECK_CRIT		(1 << 0)
@@ -1928,6 +1926,7 @@ typedef struct {
   /// (currently only active during playback), i.e higher values represent more machine load
   /// some functions may change their behaviour according to this value if prefs->pbq_adaptive is FALSE then such changes
   /// should be minimal; if TRUE then more profound changes are permitted
+#define EFFORT_RANGE_MAXD ((double)64.0)
 #define EFFORT_RANGE_MAX 64
 #define EFFORT_LIMIT_LOW (EFFORT_RANGE_MAX >> 3)    ///< default 8
 #define EFFORT_LIMIT_MED (EFFORT_RANGE_MAX >> 2)  ///< default 32
@@ -1936,6 +1935,8 @@ typedef struct {
   double disk_pressure;
 
   boolean memok; ///< set to FALSE if a segfault is received, ie. we should assume all memory is corrupted and exit ASAP
+
+  LiVESList *restart_params;
 
   /// this is not really used yet, but the idea is that in future the clipboard may be reproduced in various
   /// sizes / palettes / gamma functions, so instead of having to transform it each time we can cache various versions
@@ -1952,8 +1953,6 @@ typedef struct {
 
   boolean dsu_valid;
   int max_textsize;
-
-  LiVESWidget *dsu_widget;
 
   lives_permmgr_t *permmgr;
 

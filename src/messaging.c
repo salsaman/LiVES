@@ -111,23 +111,19 @@ static weed_plant_t *make_msg(const char *text) {
 }
 
 
-int free_n_msgs(int frval) {
-  int error;
+weed_error_t free_n_msgs(int frval) {
+  weed_error_t error;
   weed_plant_t *next, *end;
 
   if (frval <= 0) return WEED_SUCCESS;
   if (frval > mainw->n_messages || !mainw->msg_list) frval = mainw->n_messages;
 
   end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error); // list end
-  if (error != WEED_SUCCESS) {
-    return error;
-  }
+  if (error != WEED_SUCCESS) return error;
 
   while (frval-- && mainw->msg_list) {
     next = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_NEXT, &error); // becomes new head
-    if (error != WEED_SUCCESS) {
-      return error;
-    }
+    if (error != WEED_SUCCESS) return error;
     weed_plant_free(mainw->msg_list);
     mainw->msg_list = next;
     if (mainw->msg_list) {
@@ -146,20 +142,30 @@ int free_n_msgs(int frval) {
 }
 
 
-int add_messages_to_list(const char *text) {
+static weed_error_t _add_messages_to_list(const char *text, boolean is_top) {
   // append text to our message list, splitting it into lines
   // if we hit the max message limit then free the oldest one
   // returns a weed error
-  weed_plant_t *msg, *end;;
+  weed_plant_t *msg, *end = NULL;
+  weed_plant_t *omsg_list = NULL;
   char **lines;
-  int error, i, numlines;
+  weed_error_t error;
+  int i, numlines, on_msgs = 0;
 
-  if (prefs->max_messages == 0) return WEED_SUCCESS;
+  if (prefs && prefs->max_messages == 0) return WEED_SUCCESS;
   if (!text || !*text) return WEED_SUCCESS;
 
   // split text into lines
   numlines = get_token_count(text, '\n');
   lines = lives_strsplit(text, "\n", numlines);
+
+  if (is_top) {
+    // first line becomes new top, old top is set aside temporarily
+    omsg_list = mainw->msg_list;
+    mainw->msg_list = NULL;
+    on_msgs = mainw->n_messages;
+    mainw->n_messages = 0;
+  }
 
   for (i = 0; i < numlines; i++) {
     if (!mainw->msg_list) {
@@ -173,12 +179,14 @@ int add_messages_to_list(const char *text) {
       continue;
     }
 
-    end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error);
-    if (error != WEED_SUCCESS) {
-      lives_strfreev(lines);
-      return error;
+    if (!end) {
+      end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error);
+      if (error != WEED_SUCCESS) {
+        lives_strfreev(lines);
+        return error;
+      }
+      if (!end) end = mainw->msg_list;
     }
-    if (!end) end = mainw->msg_list;
 
     if (i == 0) {
       // append first line to text of last msg
@@ -194,7 +202,7 @@ int add_messages_to_list(const char *text) {
       continue;
     }
 
-    if (prefs->max_messages > 0 && mainw->n_messages + 1 > prefs->max_messages) {
+    if (prefs && prefs->max_messages > 0 && mainw->n_messages + 1 > prefs->max_messages) {
       // retire the oldest if we reached the limit
       error = free_n_msgs(1);
       if (error != WEED_SUCCESS) {
@@ -223,10 +231,36 @@ int add_messages_to_list(const char *text) {
     weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, end);
     // end will get new next (us)
     weed_set_plantptr_value(end, WEED_LEAF_NEXT, msg);
+
+    end = msg;
   }
   lives_strfreev(lines);
+
+  if (omsg_list) {
+    mainw->n_messages += on_msgs;
+    if (prefs && prefs->max_messages > 0 && mainw->n_messages > prefs->max_messages) {
+      error = free_n_msgs(mainw->n_messages - prefs->max_messages);
+      if (error != WEED_SUCCESS) return error;
+    }
+
+    if (!mainw->msg_list) mainw->msg_list = omsg_list;
+    else {
+      end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error);
+      if (error != WEED_SUCCESS) return error;
+      // head will get new previous (oend)
+      weed_leaf_dup(mainw->msg_list, omsg_list, WEED_LEAF_PREVIOUS);
+      // omsg_list gets new previous (end)
+      weed_set_plantptr_value(omsg_list, WEED_LEAF_PREVIOUS, end);
+      // end will get new next omsg_list
+      weed_set_plantptr_value(end, WEED_LEAF_NEXT, omsg_list);
+    }
+  }
   return WEED_SUCCESS;
 }
+
+weed_error_t add_messages_to_list(const char *text) {return _add_messages_to_list(text, FALSE);}
+
+weed_error_t add_messages_first(const char *text) {return _add_messages_to_list(text, TRUE);}
 
 
 boolean d_print_urgency(double timeout, const char *fmt, ...) {

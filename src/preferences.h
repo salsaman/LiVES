@@ -38,10 +38,10 @@
 #define LIVES_LEAF_STATUS "status"
 #define LIVES_LEAF_VARPTR "p_variable"
 
-#define PREFSTATUS_UNKNOWN	0	///< unknown PREF_IDX (use old API)
-#define PREFSTATUS_UNSET	1	///< esists, but value has not been set
-#define PREFSTATUS_PERM		2	///< value consistent with config file
-#define PREFSTATUS_TEMP	       	3	///< value and config inconsistent; load_pref() may change the value
+#define PREFSTATUS_UNKNOWN	OBJECT_STATE_UNDEFINED	///< unknown PREF_IDX (use old API)
+#define PREFSTATUS_UNSET	OBJECT_STATE_NOT_READY	///< esists, but value has not been set
+#define PREFSTATUS_PERM		OBJECT_STATE_NORMAL	///< value consistent with config file
+#define PREFSTATUS_TEMP	       	OBJECT_STATE_PREVIEW	///< value and config inconsistent; load_pref() may change the value
 
 // for the extended auto-colours
 // variance is actually 1. / VAR
@@ -361,7 +361,7 @@ typedef struct {
   /// locked audio should ping-pong loop
 #define AUDIO_OPTS_LOCKED_PING_PONG	(1 << 18)
 
-  /// resync audio when it becomes unlocked
+  /// resync audio when it becomes unlocked (unless NO_RESYC_FPS is also set)
 #define AUDIO_OPTS_UNLOCK_RESYNC	(1 << 19)
 
   /// whether fps reset should resync locked audio
@@ -371,7 +371,7 @@ typedef struct {
 #define AUDIO_OPTS_AUTO_UNLOCK		(1 << 21)
 
   /// (see also REC_AUDIO_AUTOLOCK) ///
-  
+
 #define AUDIO_OPTS_EXT_FX		(1 << 25) // apply effects to external audio -> audio out
 #define AUDIO_OPTS_AUX_RECORD		(1 << 26) // mix aux in when recording
 #define AUDIO_OPTS_AUX_PLAY		(1 << 27) // mix aux in during pb
@@ -1371,6 +1371,9 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 ////////// list values
 #define PREF_DISABLED_DECODERS "disabled_decoders"
+
+char *get_meta(const char *key);
+void set_meta(const char *key, const char *value);
 
 void load_prefs(void);
 void load_pref(const char *pref_idx);

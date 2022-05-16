@@ -58,17 +58,6 @@
 #include "memory.h"
 //#include "threading.h"
 
-/// disk/storage status values
-typedef enum {
-  LIVES_STORAGE_STATUS_UNKNOWN = 0,
-  LIVES_STORAGE_STATUS_NORMAL,
-  LIVES_STORAGE_STATUS_WARNING,
-  LIVES_STORAGE_STATUS_CRITICAL,
-  LIVES_STORAGE_STATUS_OVERFLOW,
-  LIVES_STORAGE_STATUS_OVER_QUOTA,
-  LIVES_STORAGE_STATUS_OFFLINE
-} lives_storage_status_t;
-
 //void shoatend(void);
 
 #define WEED_LEAF_MD5SUM "md5sum"
@@ -163,6 +152,8 @@ char *get_symlink_for(const char *link);
 char *get_mountpoint_for(const char *dir);
 char *get_fstype_for(const char *vol);
 
+boolean file_is_ours(const char *fname);
+
 ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
 ticks_t lives_get_current_ticks(void);
 char *lives_datetime(uint64_t secs, boolean use_local);
@@ -243,7 +234,7 @@ char *lives_strtrim(const char *);
 
 int check_for_bad_ffmpeg(void);
 
-void update_effort(int nthings, boolean badthings);
+void update_effort(double nthings, boolean is_bad);
 void reset_effort(void);
 
 void free_fdets_list(LiVESList **);

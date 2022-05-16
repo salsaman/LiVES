@@ -31,9 +31,6 @@ static void *extra_cb_data = NULL;
 static int extra_cb_key = 0;
 static int del_cb_key = 0;
 
-// how often to we count frames when opening
-#define OPEN_CHECK_TICKS (TICKS_PER_SECOND/10l)
-
 static volatile boolean display_ready;
 static double disp_fraction_done;
 static ticks_t proc_start_ticks;
@@ -371,6 +368,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   case LIVES_DIALOG_ABORT_RETRY:
   case LIVES_DIALOG_ABORT_OK:
   case LIVES_DIALOG_ABORT:
+  case LIVES_DIALOG_ABORT_RESTART:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
 
     if (diat != LIVES_DIALOG_RETRY_CANCEL) {
@@ -391,9 +389,14 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
                          _("Ignore or fix the problem"),
                          LIVES_RESPONSE_CANCEL);
         }
-      } else if (diat == LIVES_DIALOG_ABORT_OK) {
-        okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
-                   LIVES_RESPONSE_OK);
+      } else {
+        if (diat == LIVES_DIALOG_ABORT_OK) {
+          okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+                     LIVES_RESPONSE_OK);
+        } else if (diat == LIVES_DIALOG_ABORT_RESTART) {
+          okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
+                     _("_Restart LiVES"), LIVES_RESPONSE_RESET);
+        }
       }
     }
     if (diat == LIVES_DIALOG_RETRY_CANCEL) {
@@ -477,6 +480,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width * 2);
   }
 
+  lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_SPREAD);
+
   widget_opts.use_markup = woum;
   label = lives_standard_formatted_label_new(text);
   widget_opts.use_markup = FALSE;
@@ -491,6 +496,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
   lives_label_set_selectable(LIVES_LABEL(label), TRUE);
+
+  if (diat == LIVES_DIALOG_YESNO || diat ==  LIVES_DIALOG_ABORT_RESTART)
+    lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_EDGE);
 
   if (mainw && mainw->permmgr && (mainw->permmgr->cmdlist || mainw->permmgr->futures))
     add_perminfo(dialog);
@@ -731,16 +739,20 @@ boolean do_yesno_dialog(const char *text) {
 }
 
 
-void maybe_abort(boolean do_check) {
-  if (!do_check || do_abort_check()) {
-    if (CURRENT_CLIP_IS_VALID) {
-      if (*cfile->handle) {
-        // stop any processing
-        lives_kill_subprocesses(cfile->handle, TRUE);
-      }
+void maybe_abort(boolean do_check, LiVESList *restart_opts) {
+  //LiVESList *xlists[1];
+  LiVESResponseType resp = LIVES_RESPONSE_ABORT;
+  //xlists[0] = restart_opts;
+  if (do_check)
+    resp = do_abort_restart_check(TRUE, NULL);
+  if (CURRENT_CLIP_IS_VALID) {
+    if (*cfile->handle) {
+      // stop any processing
+      lives_kill_subprocesses(cfile->handle, TRUE);
     }
-    lives_abort("User aborted");
   }
+  if (resp == LIVES_RESPONSE_RESET) restart_me(restart_opts, NULL);
+  lives_abort("User aborted");
 }
 
 
@@ -756,7 +768,7 @@ static LiVESResponseType _do_abort_cancel_retry_dialog(const char *mytext, lives
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
     if (response == LIVES_RESPONSE_ABORT) {
-      maybe_abort(mainw->is_ready && dtype != LIVES_DIALOG_ABORT);
+      maybe_abort(mainw->is_ready && dtype != LIVES_DIALOG_ABORT, NULL);
     }
   } while (response == LIVES_RESPONSE_ABORT);
 
@@ -1178,7 +1190,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
       dsval = disk_monitor_check_result(prefs->workdir);
       if (dsval >= 0) capable->ds_used = dsval;
     }
-    ds = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
+    ds = capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
     capable->ds_free = dsval;
     if (ds == LIVES_STORAGE_STATUS_WARNING) {
       uint64_t curr_ds_warn = mainw->next_ds_warn_level;
@@ -1401,8 +1413,8 @@ void update_progress(boolean visible, int clipno) {
       (sfile->hsize > 0 || sfile->vsize > 0 || sfile->frames > 0) && (!mainw->effects_paused || !shown_paused_frames)) {
     uint32_t apxl;
     ticks_t currticks = lives_get_current_ticks();
-    if ((currticks - last_open_check_ticks) > OPEN_CHECK_TICKS *
-        ((apxl = get_approx_ln((uint32_t)sfile->opening_frames)) < 50 ? apxl : 50) ||
+    if ((currticks - last_open_check_ticks) > TICKS_PER_SECOND *
+        ((apxl = 10 * get_log2((uint32_t)sfile->opening_frames)) < 50 ? apxl : 50) ||
         (mainw->effects_paused && !shown_paused_frames)) {
       mainw->proc_ptr->frames_done = sfile->end = sfile->opening_frames = get_frame_count(mainw->current_file,
                                      sfile->opening_frames > 1 ? sfile->opening_frames : 1);
@@ -2618,7 +2630,7 @@ static char *expl_missplug(const char *pltype) {
 
   if (!lives_strcmp(pltype, PLUGIN_RENDERED_EFFECTS_BUILTIN)) {
     return (_("\nLiVES was unable to find any rendered effect plugins.\n"
-              "Some editing tools and frame generators will be unvailable, "
+              "Some editing tools and frame generators will be unavailable, "
               "and effects will be limited to realtime effects only\n"));
   }
 
@@ -2689,7 +2701,7 @@ const char *miss_plugdirs_warn(const char *dirnm, LiVESList * subdirs) {
     lives_widget_context_update();
 
     if (response == LIVES_RESPONSE_ABORT) {
-      maybe_abort(TRUE);
+      maybe_abort(TRUE, NULL);
       continue;
     }
     if (response == LIVES_RESPONSE_BROWSE) {
@@ -2761,7 +2773,7 @@ const char *miss_prefix_warn(const char *dirnm, LiVESList * subdirs) {
     lives_widget_context_update();
 
     if (response == LIVES_RESPONSE_ABORT) {
-      maybe_abort(TRUE);
+      maybe_abort(TRUE, NULL);
       continue;
     }
     if (response == LIVES_RESPONSE_BROWSE) {
@@ -2918,14 +2930,6 @@ LIVES_GLOBAL_INLINE void do_no_loadfile_error(const char *fname) {
 }
 
 
-#ifdef ENABLE_JACK
-LIVES_GLOBAL_INLINE boolean do_jack_nonex_warn(const char *server_cfg) {
-  return do_yesno_dialogf(_("The script file selected for server startup does not exist.\n"
-                            "(%s)\nAre you sure you wish to continue with these settings ?\n"),
-                          server_cfg);
-}
-
-
 LIVES_LOCAL_INLINE char *get_jack_restart_warn(int suggest_opts, const char *srvname) {
   // suggest_opts is a hint for the -jackopts value to use on restart
   // a value of -1 will not add any recommendation
@@ -2934,24 +2938,46 @@ LIVES_LOCAL_INLINE char *get_jack_restart_warn(int suggest_opts, const char *srv
     char *firstbit, *msg;
     if (suggest_opts != -1) {
       char *suggest_srv;
+      char *rsparam = "-jackopts";
+      mainw->restart_params = lives_list_append(mainw->restart_params, (void *)rsparam);
+      rsparam = lives_strdup_printf("%u", suggest_opts);
+      mainw->restart_params = lives_list_append(mainw->restart_params, (void *)rsparam);
+
       if (!srvname) suggest_srv = "";
-      else suggest_srv = lives_strdup_printf(" -jackserver '%s'", srvname);
+      else {
+        suggest_srv = lives_strdup_printf(" -jackserver '%s'", srvname);
+        rsparam = lives_strdup("-jackserver");
+        mainw->restart_params = lives_list_append(mainw->restart_params, (void *)rsparam);
+        rsparam = lives_strdup_printf("%s", srvname);
+        mainw->restart_params = lives_list_append(mainw->restart_params, (void *)rsparam);
+      }
       firstbit = lives_strdup_printf("lives -jackopts %u%s\n(which will allow LiVES to start the server itself), "
                                      "or\n\n", suggest_opts & JACK_OPTS_OPTS_MASK, suggest_srv);
       if (srvname) lives_free(suggest_srv);
     } else firstbit = "";
 #ifdef HAVE_PULSE_AUDIO
-    if (capable->has_pulse_audio == PRESENT) otherbit = "lives -aplayer pulse";
-    else
+    if (capable->has_pulse_audio == PRESENT) {
+      //char *rsparam = lives_strdup("-aplayer pulse");
+      otherbit = "lives -aplayer pulse";
+      //mainw->restart_params = lives_list_append(mainw->restart_params, (void *)rsparam);
+    } else {
+#else
+    if (1) {
 #endif
+      //rsparam = lives_strdup("-aplayer none");
       otherbit = "lives -aplayer none";
-    msg = lives_strdup_printf(_("\nAlternatively, you may start lives with commandline option:\n\n"
-                                "%s%s\n(to avoid use of jack audio altogether)"),
-                              firstbit, otherbit);
-    if (*firstbit) lives_free(firstbit);
-    return msg;
+      //mainw->restart_params = lives_list_append(mainw->restart_params, (void *)rsparam);
+    }
+#if 0
   }
-  return lives_strdup("");
+#endif
+  msg = lives_strdup_printf(_("\nAlternatively, you may start lives with commandline option:\n\n"
+                              "%s%s\n(to avoid use of jack audio altogether)"),
+                            firstbit, otherbit);
+  if (*firstbit) lives_free(firstbit);
+  return msg;
+}
+return lives_strdup("");
 }
 
 
@@ -2977,6 +3003,7 @@ static void diag_button_clicked(LiVESWidget * w, livespointer dta) {
 }
 
 
+#ifdef ENABLE_JACK
 boolean do_jack_no_startup_warn(boolean is_trans) {
   char *tmp = NULL, *tmp2 = NULL, *tmp3 = NULL, *tmp4, *tmp5, *tmp6, *msg, *msg1;
   boolean chkname = FALSE;
@@ -3033,10 +3060,15 @@ boolean do_jack_no_startup_warn(boolean is_trans) {
                           "or select another audio player.\n"));
   } else tmp4 = lives_strdup("");
 
-  if (!prefs->startup_phase) tmp5 = lives_strdup_printf("\n<b>%s</b>\n",
-                                      _("Automatic jack startup will be disabled for now.\n"
-                                        "If you have not done so already, try restarting LiVES."));
-  else tmp5 = lives_strdup("");
+  if (!prefs->startup_phase) {
+    char *rsparam = "-jackopts";
+    mainw->restart_params = lives_list_append(mainw->restart_params, (void *)rsparam);
+    rsparam = "0";
+    mainw->restart_params = lives_list_append(mainw->restart_params, (void *)rsparam);
+    tmp5 = lives_strdup_printf("\n<b>%s</b>\n",
+                               _("Automatic jack startup will be disabled for now.\n"
+                                 "If you have not done so already, try restarting LiVES."));
+  } else tmp5 = lives_strdup("");
 
   msg1 = lives_strdup_printf(_("LiVES failed to connect the %s client to %s,\n"
                                "and in addition was unable to start %s.\n\n"),
@@ -3103,7 +3135,7 @@ boolean do_jack_no_startup_warn(boolean is_trans) {
       lives_signal_sync_connect(LIVES_GUI_OBJECT(diagbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                                 LIVES_GUI_CALLBACK(diag_button_clicked), NULL);
     }
-    cancbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_QUIT, _("_Exit LiVES"),
+    cancbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_QUIT, _("_Exit / Restart LiVES"),
                  LIVES_RESPONSE_CANCEL);
     lives_window_add_escape(LIVES_WINDOW(dlg), cancbutton);
 
@@ -3170,23 +3202,24 @@ boolean do_jack_no_connect_warn(boolean is_trans) {
     is_bad = TRUE;
   } else {
     if (!prefsw) {
-      if (!is_trans)
-        more = get_jack_restart_warn(future_prefs->jack_opts | JACK_OPTS_START_ASERVER,
+      if (!is_trans) {
+        more = get_jack_restart_warn(future_prefs->jack_opts & ~JACK_OPTS_ENABLE_TCLIENT,
                                      *future_prefs->jack_aserver_cname
                                      ? future_prefs->jack_aserver_cname : NULL);
-      else
-        more = get_jack_restart_warn(future_prefs->jack_opts | JACK_OPTS_START_TSERVER,
+      } else {
+        more = get_jack_restart_warn(future_prefs->jack_opts & ~JACK_OPTS_START_ASERVER,
                                      *future_prefs->jack_tserver_cname
                                      ? future_prefs->jack_tserver_cname : NULL);
+      }
     } else more = lives_strdup("");
 
-    if (!prefsw && !prefs->startup_phase)
+    if (!prefsw && !prefs->startup_phase) {
       warn = lives_strdup_printf(_("<big><b>Please try starting the jack server before restarting LiVES%s</b></big>"),
                                  is_trans ? _("\nJack transport features will be disabled for now, "
                                               "'Preferences / Jack Integration'\n"
                                               "may be selected in order to re-enable them")
                                  : _(", or use the button below to redefine the server setup"));
-    else {
+    } else {
       warn = _("Please ensure the server is running before trying again");
       if (prefs->startup_phase) {
         warn = lives_strcollate(&warn, ", ", _("or else adjust the jack configuration settings"));
@@ -3227,7 +3260,7 @@ boolean do_jack_no_connect_warn(boolean is_trans) {
       srvbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_PREFERENCES,
                   _("Jack _Server Setup"), LIVES_RESPONSE_RESET);
 
-    cancbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_QUIT, _("_Exit LiVES"),
+    cancbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_QUIT, _("_Exit / Restart LiVES"),
                  LIVES_RESPONSE_CANCEL);
 
     lives_window_add_escape(LIVES_WINDOW(dlg), cancbutton);
@@ -3677,6 +3710,7 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
   lives_storage_status_t ds = get_storage_status(prefs->workdir, prefs->ds_crit_level, &dsval, 0);
   LiVESResponseType response = LIVES_RESPONSE_NONE;
 
+  capable->ds_status = ds;
   capable->ds_free = dsval;
 
   if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
@@ -3744,27 +3778,28 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   char *addbit, *tmp;
   char *dsmsg = lives_strdup("");
 
-  char dirname[PATH_MAX];
   char *sutf = lives_filename_to_utf8(s, -1, NULL, NULL, NULL), *xsutf, *xaddbit;
 
-  boolean exists;
+  if (file_is_ours(s)) {
+    boolean exists;
+    int64_t dsval = capable->ds_used;
+    lives_storage_status_t ds;
+    char dirname[PATH_MAX];
 
-  int64_t dsval = capable->ds_used;
+    lives_snprintf(dirname, PATH_MAX, "%s", s);
+    get_dirname(dirname);
+    exists = lives_file_test(dirname, LIVES_FILE_TEST_EXISTS);
+    ds = get_storage_status(dirname, prefs->ds_crit_level, &dsval, 0);
+    capable->ds_status = ds;
+    capable->ds_free = dsval;
+    if (!exists) lives_rmdir(dirname, FALSE);
 
-  lives_storage_status_t ds;
-
-  lives_snprintf(dirname, PATH_MAX, "%s", s);
-  get_dirname(dirname);
-  exists = lives_file_test(dirname, LIVES_FILE_TEST_EXISTS);
-  ds = get_storage_status(dirname, prefs->ds_crit_level, &dsval, 0);
-  capable->ds_free = dsval;
-  if (!exists) lives_rmdir(dirname, FALSE);
-
-  if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
-    lives_free(dsmsg);
-    tmp = ds_critical_msg(dirname, &capable->mountpoint, dsval);
-    dsmsg = lives_strdup_printf("%s\n", tmp);
-    lives_free(tmp);
+    if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
+      lives_free(dsmsg);
+      tmp = ds_critical_msg(dirname, &capable->mountpoint, dsval);
+      dsmsg = lives_strdup_printf("%s\n", tmp);
+      lives_free(tmp);
+    }
   }
 
   if (addinfo) addbit = lives_strdup_printf(_("Additional info: %s\n"), addinfo);
@@ -3829,26 +3864,25 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
   char *sutf = lives_filename_to_utf8(fname, -1, NULL, NULL, NULL), *xsutf;
   char *dsmsg = lives_strdup("");
 
-  char dirname[PATH_MAX];
+  if (file_is_ours(fname)) {
+    char dirname[PATH_MAX];
+    boolean exists;
+    int64_t dsval = capable->ds_used;
+    lives_storage_status_t ds;
+    lives_snprintf(dirname, PATH_MAX, "%s", fname);
+    get_dirname(dirname);
+    exists = lives_file_test(dirname, LIVES_FILE_TEST_EXISTS);
+    ds = get_storage_status(dirname, prefs->ds_crit_level, &dsval, 0);
+    capable->ds_status = ds;
+    capable->ds_free = dsval;
+    if (!exists) lives_rmdir(dirname, FALSE);
 
-  boolean exists;
-
-  int64_t dsval = capable->ds_used;
-
-  lives_storage_status_t ds;
-
-  lives_snprintf(dirname, PATH_MAX, "%s", fname);
-  get_dirname(dirname);
-  exists = lives_file_test(dirname, LIVES_FILE_TEST_EXISTS);
-  ds = get_storage_status(dirname, prefs->ds_crit_level, &dsval, 0);
-  capable->ds_free = dsval;
-  if (!exists) lives_rmdir(dirname, FALSE);
-
-  if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
-    lives_free(dsmsg);
-    tmp = ds_critical_msg(dirname, &capable->mountpoint, dsval);
-    dsmsg = lives_strdup_printf("%s\n", tmp);
-    lives_free(tmp);
+    if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
+      lives_free(dsmsg);
+      tmp = ds_critical_msg(dirname, &capable->mountpoint, dsval);
+      dsmsg = lives_strdup_printf("%s\n", tmp);
+      lives_free(tmp);
+    }
   }
 
   xsutf = lives_markup_escape_text(sutf, -1);
@@ -4044,12 +4078,41 @@ void do_dir_perm_access_error(const char *dir_name) {
 }
 
 
-boolean do_abort_check(void) {
-  if (!prefs->startup_phase)
-    return do_yesno_dialog(_("\nAbort and exit immediately from LiVES\nAre you sure ?\n"));
-  else
-    return do_yesno_dialog(_("\nAre are you sure you would like to exit from LiVES setup ?\n"));
+LiVESResponseType do_abort_restart_check(boolean allow_restart, LiVESList * xrestart_opts) {
+  //LiVESList **restart_opts = NULL;
+  LiVESResponseType resp;
+  if (!allow_restart) {
+    boolean bval;
+    if (!prefs->startup_phase)
+      bval = do_yesno_dialog(_("\nAbort and exit immediately from LiVES\nAre you sure ?\n"));
+    else
+      bval = do_yesno_dialog(_("\nAre are you sure you would like to exit from LiVES setup ?\n"));
+    if (bval) return LIVES_RESPONSE_YES;
+    return LIVES_RESPONSE_NO;
+  } else {
+    LiVESWidget *dialog;
+    char *txt = lives_list_to_string(xrestart_opts, " ");
+    if (txt) {
+      char *labtxt = lives_strdup_printf(_("The following options will be appended to the commandline: %s\n"), txt);
+      lives_free(txt);
+      extra_cb_key = -1;
+      extra_cb_data = lives_standard_label_new(labtxt);
+      lives_free(labtxt);
+    }
+    dialog = create_message_dialog(LIVES_DIALOG_ABORT_RESTART, _("Would you like to exit from LiVES or "
+                                   "attempt to restart it ?"), 0);
+    resp = lives_dialog_run(LIVES_DIALOG(dialog));
+    lives_widget_destroy(dialog);
+    return resp;
+  }
 }
+
+
+LIVES_GLOBAL_INLINE boolean do_abort_check(void) {
+  LiVESResponseType resp = do_abort_restart_check(TRUE, NULL);
+  return (resp == LIVES_RESPONSE_YES);
+}
+
 
 
 boolean do_fxload_query(int maxkey, int maxmode) {

@@ -1130,7 +1130,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
     }
   } else bufsize = get_read_buff_size(fbuff->bufsztype);
 
-  if (fbuff->flags & FB_FLAG_REVERSE) {
+  if (reversed) {
     if (min > bufsize) reversed = FALSE;
     else {
       delta = (bufsize >> 2);
@@ -1195,7 +1195,7 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
   if (offset == 0) {
     if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
       if (fbuff->offset + offset < fbuff->orig_size)
-      return fbuff->offset;
+        return fbuff->offset;
     }
     return fbuff->offset - fbuff->bytes;
   }
@@ -1272,7 +1272,7 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
     posix_fadvise(fbuff->fd, fbuff->offset, 0, POSIX_FADV_SEQUENTIAL);
 #endif
 
-  //g_print("DOING SEEK TO %ld\n", fbuff->offset);
+  g_print("DOING SEEK TO %ld\n", fbuff->offset);
 
   lseek(fbuff->fd, fbuff->offset, SEEK_SET);
 
@@ -1404,10 +1404,10 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       lives_nanosleep_while_true((nbytes = fbuff->bytes - fbuff->offset) < count
                                  && (fbuff->flags & FB_FLAG_BG_OP) == FB_FLAG_BG_OP);
       if (fbuff->bytes - fbuff->offset <= count) {
-	pthread_mutex_lock(&fbuff->sync_mutex);
-	fbuff->flags |= FB_FLAG_EOF;
-	pthread_mutex_unlock(&fbuff->sync_mutex);
-	count -= fbuff->bytes - fbuff->offset;
+        pthread_mutex_lock(&fbuff->sync_mutex);
+        fbuff->flags |= FB_FLAG_EOF;
+        pthread_mutex_unlock(&fbuff->sync_mutex);
+        count -= fbuff->bytes - fbuff->offset;
         if (count <= 0) goto rd_exit;
       }
     } else nbytes = fbuff->bytes;
@@ -1514,8 +1514,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       } else {
         lives_freep((void **)&fbuff->buffer);
       }
-    }
-    else {
+    } else {
       lives_freep((void **)&fbuff->buffer);
     }
 
@@ -1530,8 +1529,9 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
     count -= res;
     retval += res;
     fbuff->totbytes += res;
-    if (res < count) fbuff->flags |= FB_FLAG_EOF;
   }
+
+  if (res < count) fbuff->flags |= FB_FLAG_EOF;
 
 rd_done:
 

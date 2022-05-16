@@ -149,8 +149,7 @@ void transcode_cleanup(_vid_playback_plugin *vpp) {
   // close vpp, unless mainw->vpp
   if (!ovpp || (vpp->handle != ovpp->handle)) {
     close_vid_playback_plugin(vpp);
-  }
-  else {
+  } else {
     // we "borrowed" the playback plugin, so set these back how they were
     if (ovpp->set_fps)(*ovpp->set_fps)(ovpp->fixed_fpsd);
     if (ovpp->set_palette)(*ovpp->set_palette)(ovpp->palette);

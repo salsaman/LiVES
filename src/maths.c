@@ -7,17 +7,33 @@
 #include "main.h"
 
 LIVES_GLOBAL_INLINE uint64_t lives_10pow(int pow) {
-  register int i;
   uint64_t res = 1;
-  for (i = 0; i < pow; i++) res *= 10;
+  for (int i = 0; i < pow; i++) res *= 10;
   return res;
 }
 
 
 LIVES_GLOBAL_INLINE double lives_fix(double val, int decimals) {
+#ifdef _GNU_SOURCE
+  double factor = exp10((double)decimals);
+#else
   double factor = (double)lives_10pow(decimals);
-  if (val >= 0.) return (double)((int)(val * factor + 0.5)) / factor;
-  return (double)((int)(val * factor - 0.5)) / factor;
+#endif
+  if (val >= 0.) return (double)((int)(val * factor + 0.4999999)) / factor;
+  return (double)((int)(val * factor - 0.49999999)) / factor;
+}
+
+
+char *remove_trailing_zeroes(double val) {
+  int i;
+  double xval = val;
+
+  if (val == (int)val) return lives_strdup_printf("%d", (int)val);
+  for (i = 0; i <= 16; i++) {
+    xval *= 10.;
+    if (xval == (int)xval) return lives_strdup_printf("%.*f", i, val);
+  }
+  return lives_strdup_printf("%.*f", i, val);
 }
 
 
@@ -28,19 +44,46 @@ LIVES_GLOBAL_INLINE double gaussian(double x, double a, double m, double s1, dou
   return a * exp(-(t * t) / 2.);
 }
 
-
-LIVES_GLOBAL_INLINE uint32_t get_approx_ln(uint32_t x) {
+LIVES_GLOBAL_INLINE uint32_t get_2pow(uint32_t x) {
   x |= (x >> 1); x |= (x >> 2); x |= (x >> 4); x |= (x >> 8); x |= (x >> 16);
   return (++x) >> 1;
 }
 
-LIVES_GLOBAL_INLINE uint64_t get_approx_ln64(uint64_t x) {
+LIVES_GLOBAL_INLINE uint64_t get_2pow_64(uint64_t x) {
   x |= (x >> 1); x |= (x >> 2); x |= (x >> 4); x |= (x >> 8); x |= (x >> 16); x |= (x >> 32);
   return (++x) >> 1;
 }
 
+#define get_log2_8(x) ((x) >= 128 ? 7 : (x) >= 64 ? 6 : (x) >= 32 ? 5 : (x) >= 16 ? 4 \
+		       : (x) >= 8 ? 3 : (x) >= 4 ? 2 : (x) >= 2 ? 1 : 0)
+
+LIVES_LOCAL_INLINE uint16_t get_log2_16(uint16_t x) {
+  if (!x) return 0;
+  if (x & 0xFF00) return get_log2_8((x & 0xFF00) >> 8) + 8;
+  return get_log2_8(x & 0xFF);
+}
+
+LIVES_GLOBAL_INLINE uint32_t get_log2(uint32_t x) {
+  if (x & 0xFFFF0000) return get_log2_16((x & 0xFFFF0000) >> 16) + 16;
+  return get_log2_16(x & 0xFFFF);
+}
+
+LIVES_GLOBAL_INLINE uint64_t get_log2_64(uint64_t x) {
+  if (x & 0xFFFFFFFF00000000) return get_log2((x & 0xFFFFFFFF00000000) >> 32) + 32;
+  return get_log2(x & 0xFFFFFFFF);
+}
+
+LIVES_GLOBAL_INLINE float get_approx_ln(uint32_t x) {
+  return (float)get_log2(x) / LN_CONSTVAL;
+}
+
+LIVES_GLOBAL_INLINE double get_approx_ln64(uint64_t x) {
+  return (double)get_log2_64(x) / LN_CONSTVAL;
+}
+
+
 LIVES_GLOBAL_INLINE uint64_t get_near2pow(uint64_t val) {
-  uint64_t low = get_approx_ln64(val), high = low * 2;
+  uint64_t low = get_log2_64(val), high = low * 2;
   if (high < low || (val - low < high - val)) return low;
   return high;
 }
@@ -71,6 +114,75 @@ LIVES_GLOBAL_INLINE int hextodec(const char *string) {
   for (char c = *string; c; c = *(++string)) tot = (tot << 4) + get_hex_digit(c);
   return tot;
 }
+
+
+/* start with the number line 0. / 1. to 1. / 1. (a = 0., b = 1., c = 1., d = 1.) */
+/* then: take the fraction (a + c) / (b + d), if this is > val, then this becomes new max */
+/* if this is < val, then this becomes new min */
+/* if equal->LIMIT val then this is our estimate fraction */
+/* else, we take the mid value and check...eg. min is a / b  max is c / d, want (a / b + c / d) / 2 */
+
+/* after timeout (cycles) will return FALSE */
+
+static boolean est_fraction(double val, uint32_t *numer, uint32_t *denom, double limit, int cycles) {
+  double res;
+  int a = 0, b = 1, c = 1, d = 1, m, n, i;
+  for (i = 0; i < cycles; i++) {
+    m = a + b;
+    n = c + d;
+    res = (double)m / (double)n;
+    if (fabs(res - val) <= limit) break;
+    if (res > val) {
+      b = m;
+      d = n;
+    } else {
+      a = m;
+      c = n;
+    }
+  }
+  *numer = m;
+  *denom = n;
+  if (i < cycles) return TRUE;
+  return FALSE;
+}
+
+
+/**
+   @brief return ratio fps (TRUE) or FALSE
+   we want to see if we can express fps as n : m
+   where n and m are integers, and m is close to a power of 10.
+
+   step 1: fps' = fps / (fps + 1.)
+
+   step 4: find next power of 10 (curt) above x. mpy by (fps + 1.)
+           since fps / (fps + 1.) = x / y, y = x * (fps + 1.) / fps = x / fps'
+   step 5: return TRUE and values (fps + 1) * curt : curt / fps'
+*/
+boolean calc_ratio_fps(double fps, int *numer, int *denom) {
+  // inverse of get_ratio_fps
+  double res, fpsr, curt = 10., diff;
+  uint32_t m, n;
+
+  fpsr = (double)((int)(fps + 1.));
+  fps /= fpsr;
+
+  est_fraction(fps, &m, &n, 0.00000001, 10000);
+
+  // now we have our answer, m / n, e.g 999 / 1000 ( * 30. = fps)
+  // but we want m to be a power of 10 (and it must be close, within say 1%)
+  while (1) {
+    diff = (double)m / curt;
+    res = (double)m / (double)n;
+    if (diff >= 0.99 && diff <= 1.01) {
+      if (numer) *numer = (int)(fpsr * curt);
+      if (denom) *denom = (int)(curt / res);
+      return TRUE;
+    }
+    if (curt > (double)m) return FALSE;
+    curt *= 10.;
+  }
+}
+
 
 
 // statistics

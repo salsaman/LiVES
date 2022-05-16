@@ -1373,7 +1373,7 @@ lives_remote_clip_request_t *utube_dl4(lives_remote_clip_request_t *req, const c
         dsu = capable->ds_used = get_dir_size(prefs->workdir);
       }
     }
-    dstat = mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsu, 0);
+    dstat = capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsu, 0);
     capable->ds_free = dsu;
     THREADVAR(com_failed) = FALSE;
     if (dstat != LIVES_STORAGE_STATUS_NORMAL) {
@@ -1397,7 +1397,7 @@ lives_remote_clip_request_t *utube_dl4(lives_remote_clip_request_t *req, const c
         mainw->dsu_valid = TRUE;
         dsu = capable->ds_used = get_dir_size(prefs->workdir);
       }
-      dstat = mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsu, 0);
+      dstat = capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsu, 0);
       capable->ds_free = dsu;
     }
     if (dstat != LIVES_STORAGE_STATUS_NORMAL) {
@@ -1412,7 +1412,7 @@ lives_remote_clip_request_t *utube_dl4(lives_remote_clip_request_t *req, const c
               if (prefs->disk_quota) {
                 dsu = capable->ds_used = get_dir_size(prefs->workdir);
               }
-              dstat = mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsu, 0);
+              dstat = capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsu, 0);
               capable->ds_free = dsu;
 	      // *INDENT-OFF*
             }}}}}
@@ -1420,7 +1420,7 @@ lives_remote_clip_request_t *utube_dl4(lives_remote_clip_request_t *req, const c
     if (dstat != LIVES_STORAGE_STATUS_NORMAL) {
       /// iff critical, delete file
       // we should probably offer if warn or quota too
-      if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL && dest) {
+      if (capable->ds_status == LIVES_STORAGE_STATUS_CRITICAL && dest) {
         lives_rm(dest);
         lives_free(dest);
         dest = NULL;
@@ -5309,30 +5309,16 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   }
 
   sfile = mainw->files[mainw->playing_file];
-  mainw->scratch = SCRATCH_JUMP_NORESYNC;
 
   if (mainw->loop_locked) {
     dirchange_callback(group, obj, keyval, LIVES_CONTROL_MASK, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
   }
 
-  if (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) {
-    if (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESET) {
-#ifdef ENABLE_JACK
-      if (prefs->audio_player == AUD_PLAYER_JACK) {
-        jack_set_avel(mainw->jackd, mainw->jackd->playing_file, 1.);
-      }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player == AUD_PLAYER_PULSE) {
-        pulse_set_avel(mainw->pulsed, mainw->pulsed->playing_file, 1.);
-      }
-#endif
-    }
-  } else {
-    if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_FPS)) {
-      resync_audio(mainw->playing_file, (double)sfile->frameno);
-    }
-  }
+  if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_FPS)
+      && (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+          || (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESET))) {
+    mainw->scratch = SCRATCH_JUMP;
+  } else if (mainw->scratch != SCRATCH_JUMP) mainw->scratch = SCRATCH_JUMP_NORESYNC;
 
   // change play direction
   if (sfile->play_paused) {
@@ -6369,11 +6355,10 @@ void switch_clip(int type, int newclip, boolean force) {
   // type = background bg only
 
   if (!IS_VALID_CLIP(newclip)) return;
+  if (!LIVES_IS_PLAYING && !force && newclip == mainw->current_file) return;
 
   if (mainw->current_file < 1 || mainw->multitrack || mainw->preview || mainw->internal_messaging ||
       (mainw->is_processing && cfile && cfile->is_loaded) || !mainw->cliplist) return;
-
-  mainw->blend_palette = WEED_PALETTE_END;
 
   if (type == SCREEN_AREA_BACKGROUND || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0
                                          && type != SCREEN_AREA_FOREGROUND
@@ -6408,13 +6393,10 @@ void switch_clip(int type, int newclip, boolean force) {
 
   // switch fg clip
 
-  if (!force && (newclip == mainw->current_file && (!LIVES_IS_PLAYING || mainw->playing_file == newclip))) return;
-  if (cfile && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
-
   if (LIVES_IS_PLAYING) {
     mainw->new_clip = newclip;
-    mainw->blend_palette = WEED_PALETTE_END;
   } else {
+    if (cfile && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
     if (!cfile || (force && newclip == mainw->current_file)) mainw->current_file = -1;
     switch_to_file(mainw->current_file, newclip);
   }
@@ -9286,6 +9268,8 @@ boolean all_expose(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf
 
 boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespointer psurf) {
   /// quick and dirty copy / paste
+
+  // draw the cursors dure CE playback
   if (mainw->go_away) return FALSE;
   if (LIVES_IS_PLAYING && mainw->faded) return FALSE;
   if (!CURRENT_CLIP_IS_VALID) return FALSE;
@@ -9335,7 +9319,7 @@ boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespoi
 #endif
 #ifdef HAVE_PULSE_AUDIO
           if (mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE) {
-            offset = allocwidth * ((double)mainw->pulsed->seek_pos / cfile->arate / cfile->achans /
+            offset = allocwidth * ((double)mainw->pulsed->seek_pos  / cfile->arps / cfile->achans /
                                    cfile->asampsize * 8) / CURRENT_CLIP_TOTAL_TIME;
           }
 #endif
@@ -9971,35 +9955,27 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
   }
 
   if (AUD_SRC_INTERNAL && (!mainw->event_list || mainw->record)) {
-    if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) && (user_data || prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-      frames_t frameno = 0;
+    if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) && (user_data || (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+        || (prefs->audio_opts & AUDIO_OPTS_RESYNC_ADIR))) {
       if ((prefs->audio_opts & AUDIO_OPTS_RESYNC_ADIR) && AV_CLIPS_EQUAL) {
         if ((sfile->pb_fps > 0. && sfile->adirection == LIVES_DIRECTION_REVERSE)
             || (sfile->pb_fps < 0. && sfile->adirection == LIVES_DIRECTION_FORWARD))
-          frameno = sfile->frameno;
-        resync_audio(mainw->playing_file, (double)frameno);
+          mainw->scratch = SCRATCH_JUMP;
       } else {
-        if (AV_CLIPS_EQUAL && sfile->pb_fps < 0. && sfile->adirection == LIVES_DIRECTION_FORWARD) {
-          calc_aframeno(mainw->playing_file);
-          frameno = mainw->aframeno - 3.;
-          resync_audio(mainw->playing_file, (double)frameno);
-        }
-      }
-
-      if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
+        if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
 #ifdef ENABLE_JACK
-        if (prefs->audio_player == AUD_PLAYER_JACK) {
-          jack_set_avel(mainw->jackd, mainw->playing_file, sfile->pb_fps / sfile->fps);
-        }
+          if (prefs->audio_player == AUD_PLAYER_JACK) {
+            jack_set_avel(mainw->jackd, mainw->playing_file, sfile->pb_fps / sfile->fps);
+          }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-        if (prefs->audio_player == AUD_PLAYER_PULSE) {
-          pulse_set_avel(mainw->pulsed, mainw->playing_file, sfile->pb_fps / sfile->fps);
-        }
+          if (prefs->audio_player == AUD_PLAYER_PULSE) {
+            pulse_set_avel(mainw->pulsed, mainw->playing_file, sfile->pb_fps / sfile->fps);
+          }
 #endif
-      }
-    }
-  }
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
 
   if (sfile->play_paused && new_fps != 0.) {
     sfile->freeze_fps = new_fps;
@@ -10214,17 +10190,27 @@ void on_hrule_value_changed(LiVESWidget * widget, livespointer user_data) {
   if (is_transport_locked()) return;
 
   if (LIVES_IS_PLAYING) {
-    lives_clip_t *pfile = mainw->files[mainw->playing_file];
-    if (pfile->frames > 0) {
-      pfile->frameno = pfile->last_frameno = calc_frame_from_time(mainw->playing_file,
-                                             giw_timeline_get_value(GIW_TIMELINE(widget)));
-      mainw->scratch = SCRATCH_JUMP;
+    lives_clip_t *pfile = RETURN_NORMAL_CLIP(mainw->playing_file);
+    if (pfile) {
+      int maf = mainw->actual_frame;
+      mainw->actual_frame = pfile->frameno;
+      pfile->frameno = calc_frame_from_time(mainw->playing_file,
+                                            giw_timeline_get_value(GIW_TIMELINE(widget)));
+      if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+          && !(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
+        mainw->scratch = SCRATCH_JUMP;
+      } else {
+        if (pfile->frameno >= pfile->frames) {
+          pfile->frameno = mainw->actual_frame;
+          mainw->actual_frame = maf;
+        } else if (mainw->scratch != SCRATCH_JUMP) mainw->scratch = SCRATCH_JUMP_NORESYNC;
+      }
     }
     return;
   }
-
   cfile->pointer_time = lives_ce_update_timeline(0, giw_timeline_get_value(GIW_TIMELINE(widget)));
-  if (cfile->frames > 0) cfile->frameno = cfile->last_frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+  if (cfile->frames > 0) cfile->frameno = cfile->last_frameno = calc_frame_from_time(mainw->current_file,
+                                            cfile->pointer_time);
 
   if (cfile->pointer_time > 0.) {
     lives_widget_set_sensitive(mainw->rewind, TRUE);
@@ -10325,7 +10311,11 @@ boolean on_hrule_set(LiVESWidget * widget, LiVESXEventButton * event, livespoint
                         (double)x / (double)(lives_widget_get_allocation_width(widget) - 1)
                         * CLIP_TOTAL_TIME(mainw->current_file));
   if (cfile->frames > 0) cfile->frameno = cfile->last_frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
-  if (LIVES_IS_PLAYING) mainw->scratch = SCRATCH_JUMP;
+
+  if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+      && !(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
+    mainw->scratch = SCRATCH_JUMP;
+  } else if (mainw->scratch != SCRATCH_JUMP) mainw->scratch = SCRATCH_JUMP_NORESYNC;
 
   mainw->ptrtime = cfile->pointer_time;
   lives_widget_queue_draw(mainw->eventbox2);
@@ -10689,7 +10679,7 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
     if (LIVES_IS_PLAYING) {
       switch_audio_clip(mainw->playing_file, TRUE);
       if (prefs->audio_opts & AUDIO_OPTS_UNLOCK_RESYNC)
-        resync_audio(mainw->playing_file, mainw->files[mainw->playing_file]->frameno);
+        mainw->scratch = SCRATCH_JUMP;
     }
   }
 
@@ -10849,22 +10839,19 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     }
   } else {
     lives_clip_t *sfile = mainw->files[mainw->clipstore[clip][0]];
-    if (LIVES_IS_PLAYING) {
-      sfile->frameno = sfile->last_frameno = mainw->clipstore[clip][1];
-      mainw->scratch = SCRATCH_JUMP;
-    }
-    if ((LIVES_IS_PLAYING && mainw->clipstore[clip][0] != mainw->playing_file)
-        || (!LIVES_IS_PLAYING && mainw->clipstore[clip][0] != mainw->current_file)) {
-      switch_clip(0, mainw->clipstore[clip][0], TRUE);
-    } else {
-      if (LIVES_IS_PLAYING && !(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
-        resync_audio(mainw->playing_file, (double)cfile->frameno);
+    if (LIVES_CE_PLAYBACK) {
+      if (mainw->clipstore[clip][0] != mainw->playing_file) {
+        // player will call do_quick_switch, and possiblt switch_audio_clip()
+        sfile->frameno = mainw->clipstore[clip][1];
+        mainw->new_clip = mainw->clipstore[clip][0];
       }
-    }
-    if (!LIVES_IS_PLAYING) {
+    } else {
+      if (mainw->clipstore[clip][0] != mainw->current_file)
+        switch_clip(0, mainw->clipstore[clip][0], TRUE);
       cfile->real_pointer_time = (mainw->clipstore[clip][1] - 1.) / cfile->fps;
       lives_ce_update_timeline(0, cfile->real_pointer_time);
     }
+
     if (mainw->loop_locked) unlock_loop_lock();
   }
   return TRUE;
@@ -10873,15 +10860,22 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 
 boolean retrigger_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer user_data) {
-  if (IS_VALID_CLIP(mainw->playing_file)) {
-    //uint32_t aud_locked = prefs->audio_opts & AUDIO_OPTS_IS_LOCKED;
-    lives_clip_t *sfile = mainw->files[mainw->playing_file];
-    sfile->frameno = sfile->last_frameno = 1;
-    mainw->scratch = SCRATCH_JUMP;
-    //prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
-    if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
-      resync_audio(mainw->playing_file, (double)sfile->frameno);
-    }
+  lives_clip_t *sfile;
+  if (mainw->new_clip) {
+    sfile = RETURN_VALID_CLIP(mainw->new_clip);
+    if (sfile && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+        && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
+        && (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP))
+      mainw->scratch = SCRATCH_JUMP;
+  } else {
+    sfile = RETURN_VALID_CLIP(mainw->playing_file);
+  }
+  if (sfile) {
+    sfile->frameno  = 1;
+    if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+        && !(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
+      mainw->scratch = SCRATCH_JUMP;
+    } else if (mainw->scratch != SCRATCH_JUMP) mainw->scratch = SCRATCH_JUMP_NORESYNC;
   }
   return TRUE;
 }

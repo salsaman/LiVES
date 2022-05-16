@@ -1009,11 +1009,10 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
                     tracks = ntracks;
                     nframes = NULL;
                     nclips = NULL;
-                  }
-		  else {
+                  } else {
                     lives_freep((void **)&nclips);
                     lives_freep((void **)&nframes);
-		  }
+                  }
                 } else {
                   if (old_fps == 0. && prefs->rr_super && prefs->rr_qsmooth
                       && pframe_event && !nframe_event_tainted && !nointer) {
@@ -1257,9 +1256,9 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         if (is_final == 1) {
           is_final = 2;
         } else break; /// increase out_tc
-    }
-  } /// end of the in_list
-} /// end of out_list
+      }
+    } /// end of the in_list
+  } /// end of out_list
 
   //g_print("RES: %p and %ld, %ld\n", event, out_tc + tl, end_tc);
   if (filter_map) {

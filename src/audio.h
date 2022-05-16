@@ -67,6 +67,24 @@ weed_error_t lives_aplayer_set_data(lives_object_t *aplayer, void *data);
 #define AUD_SRC_REALTIME (get_aplay_clipno() != -1)
 #define AV_CLIPS_EQUAL (get_aplay_clipno() == mainw->playing_file)
 
+#ifdef HAVE_PULSE_AUDIO
+#define IF_APLAYER_PULSE(code) \
+  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) { \
+    code								\
+      }
+#else
+#define IF_APLAYER_PULSE(code) ;
+#endif
+
+#ifdef ENABLE_JACK
+#define IF_APLAYER_JACK(code) \
+  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) { \
+    code								\
+      }
+#else
+#define IF_APLAYER_JACK(code) ;
+#endif
+
 #define SAMPLE_MAX_16BIT_P  32767.4999999f
 #define SAMPLE_MAX_16BIT_N  32768.0f
 #define SAMPLE_MAX_16BITI  32768
@@ -331,7 +349,10 @@ int get_aplay_rate(void);
 off_t get_aplay_offset(void);
 
 boolean resync_audio(int clipno, double frameno);
-void avsync_force(void);
+boolean avsync_force(void);
+
+void audio_sync_ready(void);
+boolean video_sync_ready(void);
 
 void freeze_unfreeze_audio(boolean is_frozen);
 

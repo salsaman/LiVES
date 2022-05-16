@@ -1860,7 +1860,7 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_queue_draw(LiVESWidget *widget)
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw(LiVESWidget *widget) {
   boolean resp;
-  if (1 || is_fg_thread()) return _lives_widget_queue_draw(widget);
+  if (!mainw->go_away || is_fg_thread()) return _lives_widget_queue_draw(widget);
   else main_thread_execute((lives_funcptr_t)_lives_widget_queue_draw, WEED_SEED_BOOLEAN, &resp, "v", widget);
   return resp;
 }
@@ -2131,7 +2131,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
 // it is now possible to call avoid_deadlock() to make those functions be called after return
 void *fg_service_call(lives_proc_thread_t lpt, void *retval) {
   boolean waitgov = FALSE;
-  THREADVAR(fg_service) = TRUE;
   while (lpttorun || (gov_will_run && !gov_running)) {
     lives_nanosleep(NSLEEP_TIME);
   }
@@ -13204,10 +13203,10 @@ boolean lives_widget_context_update(void) {
     if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
     else {
       if (!is_fg_thread() && !gov_will_run && !gov_running) {
-	boolean ret;
-	main_thread_execute((lives_funcptr_t)lives_widget_context_update,
-			    WEED_SEED_BOOLEAN, &ret, "");
-	return ret;
+        boolean ret;
+        main_thread_execute((lives_funcptr_t)lives_widget_context_update,
+                            WEED_SEED_BOOLEAN, &ret, "");
+        return ret;
       }
       do_some_things();
       if (!is_fg_thread()) {

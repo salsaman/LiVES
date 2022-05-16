@@ -80,10 +80,11 @@ typedef enum {
 } lives_interlace_t;
 
 typedef struct {
-  /// a ctiming_ratio of 0. indicates that none of the other values are set.
-  // a value > 0. indicates some values are set. Unset values may be left as 0., or
-  /// A value < 0. means that the value is known to be non-zero, but cannot be accurately measured.
-  /// In this case, calculations involving this quantity should be avoided, as the result cannot be determined.
+  // for each of these values, 0. means the value has not / cannot be measured or estimated
+  // a value < 0. implies a guessed / estimated value
+  // a value > 0. signifies that the value has been measured
+
+  // however all these values are dynamic and may change between succesive reads
 
   double ctiming_ratio; // dynamic multiplier for timing info, depends on machine load and other factors.
   double const_time; /// avg const time apart from seek / decode (e.g. memcpy)
@@ -212,7 +213,7 @@ typedef struct _lives_clip_data {
   int64_t jump_limit; ///< for internal use
 
   int64_t kframe_dist; /// number of frames from one keyframe to the next, for fixed gop only, 0 if unknown
-  int64_t kframe_dist_max; /// max number of frames fdetected rom one keyframe to the next, 0 if unknown
+  int64_t kframe_dist_max; /// max number of frames fdetected from one keyframe to the next, 0 if unknown
   //////////////////////////////////
 
   int *palettes; ///< list of palettes which the format supports, terminated with WEED_PALETTE_END
@@ -284,7 +285,10 @@ void rip_audio_cleanup(const lives_clip_data_t *);
 
 void module_unload(void);
 
-double estimate_delay(const lives_clip_data_t *cdata, int64_t tframe);
+double estimate_delay(const lives_clip_data_t *, int64_t tframe);
+double estimate_delay_full(const lives_clip_data_t *, int64_t tframe,  int64_t last_frame,
+                           double *confidence);
+int64_t update_stats(const lives_clip_data_t *);
 
 // little-endian
 #define get_le16int(p) (*(p + 1) << 8 | *(p))

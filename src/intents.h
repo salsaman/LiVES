@@ -91,6 +91,7 @@ typedef weed_param_t lives_obj_attr_t;
 
 enum {
   ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
+  RESTART_HOOK,
   EXIT_HOOK,
   THREAD_EXIT_HOOK, // run on thread exit
   THREAD_INTERNAL_HOOK, /// reserved for internal use, should not be modified

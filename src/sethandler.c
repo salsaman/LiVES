@@ -1222,6 +1222,9 @@ boolean reload_set(const char *set_name) {
     // add to clip menu
     threaded_dialog_spin(0.);
     add_to_clipmenu();
+
+
+
     cfile->start = cfile->frames > 0 ? 1 : 0;
     cfile->end = cfile->frames;
     cfile->is_loaded = TRUE;

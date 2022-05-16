@@ -66,7 +66,7 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dummy_widget), PARAM_NUMBER_KEY,
                                      LIVES_INT_TO_POINTER(-1));
         retvals = do_onchange(LIVES_WIDGET_OBJECT(dummy_widget), rfx);
-	lives_widget_object_ref_sink(dummy_widget);
+        lives_widget_object_ref_sink(dummy_widget);
         lives_widget_destroy(dummy_widget);
         lives_strfreev(array);
         break;

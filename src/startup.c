@@ -16,7 +16,7 @@ static boolean nowait;
 
 LiVESWidget *assist;
 
-void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
+static void _pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
   if (prefs->startup_phase && !LIVES_IS_FILE_CHOOSER_DIALOG(dialog)) {
     if (!mainw->is_ready) {
       gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE); // dont know if this actually does anything...
@@ -35,6 +35,14 @@ void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
   lives_widget_show_all(dialog);
   lives_window_present(LIVES_WINDOW(dialog));
   lives_grab_add(dialog);
+}
+
+
+void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
+  if (!mainw->is_ready && !is_fg_thread()) {
+    main_thread_execute((lives_funcptr_t)_pop_to_front, 0, NULL, "VV",
+                        dialog, extra);
+  } else _pop_to_front(dialog, extra);
 }
 
 
@@ -525,7 +533,7 @@ boolean do_workdir_query(void) {
   if (lives_strcmp(mp, capable->mountpoint) || !strcmp(mp, "??????")) {
     capable->ds_free = capable->ds_used = capable->ds_tot = -1;
     mainw->dsu_valid = FALSE;
-    mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
+    capable->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
     if (capable->mountpoint) lives_free(capable->mountpoint);
     capable->mountpoint = mp;
   }
@@ -1087,7 +1095,6 @@ set_config:
 
   lives_button_grab_default_special(okbutton);
 
-retry:
   if (is_setup) pop_to_front(dialog, NULL);
 
   response = lives_dialog_run(LIVES_DIALOG(dialog));
@@ -1106,12 +1113,6 @@ retry:
         future_prefs->jack_opts |= JACK_OPTS_START_ASERVER;
         if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(scrpt_rb))) {
           const char *server_cfg = lives_entry_get_text(LIVES_ENTRY(cfg_entry));
-
-          if (!lives_file_test(server_cfg, LIVES_FILE_TEST_EXISTS)) {
-            if (!do_jack_nonex_warn(server_cfg)) {
-              goto retry;
-            }
-          }
           pref_factory_string(PREF_JACK_ACONFIG, server_cfg, TRUE);
           pref_factory_string(PREF_JACK_TCONFIG, server_cfg, TRUE);
         } else {
@@ -1909,7 +1910,7 @@ rerun:
   widget_opts.mnemonic_label = TRUE;
 
   // TODO: if we have swresample we can remove dependency on sox
-  // - replace backend calls in resmaplv.v for stretch_audio and resample_audio
+  // - replace backend calls in resample.c for stretch_audio and resample_audio
   // replace in insert
   // - convert to wav for save, export
   // - convert to raw for append / commit_audio

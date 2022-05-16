@@ -77,7 +77,56 @@ LIVES_GLOBAL_INLINE uint32_t fastrand_int(uint32_t range) {return (uint32_t)(fas
 
 LIVES_GLOBAL_INLINE void lives_srandom(unsigned int seed) {srandom(seed);}
 
-LIVES_GLOBAL_INLINE uint64_t lives_random(void) {return random();}
+LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
+  static uint64_t last_rnum = 0;
+  static int strikes = 0;
+  static boolean is_32bit = FALSE;
+  uint64_t rnum;
+
+  /// if we have a genuine RNG for 64 bits, then the probability of generating
+  // two sequential numbers with difference < 1 trillion is approx. 2 ^ 40 / 2 ^ 64 or about 1 chance in 17 billion
+  // and the probability of it happening twice is < 0.000000000000000000001
+
+  rnum = random();
+
+  if (!is_32bit) {
+    if (rnum < 0x100000000) {
+      is_32bit = TRUE;
+      if (1) {
+        break_me("rnd");
+        uint64_t diff1 = lives_random() - lives_random();
+        uint64_t diff2 = lives_random() - lives_random();
+        uint64_t rbits = get_log2_64((diff1 >> 1) + (diff2 >> 1));
+        char *tmp;
+        if (rbits <= 32) strikes++;
+
+        tmp = lives_strdup_printf(_("RNG seems to be 32 bit only, injecting extra randomness...\n"
+                                    "...increased it from 32 bits to at least %ld bits\n"), rbits);
+        add_messages_to_list(tmp);
+        lives_free(tmp);
+        if (labs(diff1) < BILLIONS(1000)) strikes++;
+        if (labs(diff2) < BILLIONS(1000)) strikes++;
+      }
+    }
+  }
+
+  if (is_32bit) {
+    rnum = (rnum << 19) ^ (random() << 40);
+    rnum = (rnum << 7) ^ (random() & 0xFFFF);
+  }
+
+  if (labs(rnum - last_rnum) < BILLIONS(1000)) strikes++;
+
+  if (strikes > 1) {
+    char *msg = lives_strdup_printf("Insufficient entropy for RNG (last numbers were %ld and %ld), cannot continue.\n"
+                                    "Please fix your Random Number Generator\n", last_rnum, rnum);
+    lives_abort(msg);
+  }
+
+  last_rnum = rnum;
+  return rnum;
+}
+
 
 void lives_get_randbytes(void *ptr, size_t size) {
   if (size <= 8) {
@@ -89,24 +138,34 @@ void lives_get_randbytes(void *ptr, size_t size) {
 
 uint64_t gen_unique_id(void) {
   static uint64_t last_rnum = 0;
+  static int strikes = 0;
   uint64_t rnum;
 #if HAVE_GETENTROPY
   int randres = getentropy(&rnum, 8);
 #else
   int randres = 1;
 #endif
+
   if (randres) {
     fastrand_val = lives_random();
     fastrand();
     fastrand_val ^= lives_get_current_ticks();
-    rnum = fastrand();
+    rnum = fastrand() ^ lives_random();
   }
+
   /// if we have a genuine RNG for 64 bits, then the probability of generating
-  // a number < 1 billion is approx. 2 ^ 30 / 2 ^ 64 or about 1 chance in 17 trillion
-  // the chance of it happening the first time is thus minscule
-  // and the chance of it happening twice by chance is so unlikely we should discount it
-  if (rnum < BILLIONS(1) && last_rnum < BILLIONS(1)) lives_abort("Insufficient entropy for RNG, cannot continue");
+  // two sequential numbers with difference < 1 trillion is approx. 2 ^ 40 / 2 ^ 64 or about 1 chance in 17 billion
+  // and the probability of it happening twice is < 0.000000000000000000001
+  // this is checked in lives_random(), but we will check here to ensure the uid algo is sound
+  if (labs(rnum - last_rnum) < BILLIONS(1000)) {
+    if (strikes++) {
+      char *msg = lives_strdup_printf("Insufficient entropy for RNG (%ld and %ld), cannot continue", last_rnum, rnum);
+      lives_abort(msg);
+    }
+  }
   last_rnum = rnum;
+
+
   return rnum;
 }
 
@@ -537,7 +596,8 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
   int64_t ds;
   lives_storage_status_t status = LIVES_STORAGE_STATUS_UNKNOWN;
   if (dsval && prefs->disk_quota > 0 && *dsval > (int64_t)((double)prefs->disk_quota * prefs->quota_limit / 100.))
-    status = LIVES_STORAGE_STATUS_OVER_QUOTA;
+    if (!dir || !*dir || file_is_ours(dir))
+      status = LIVES_STORAGE_STATUS_OVER_QUOTA;
   if (!is_writeable_dir(dir)) return status;
   ds = (int64_t)get_ds_free(dir);
   ds -= ds_resvd;
@@ -954,6 +1014,12 @@ char *get_mountpoint_for(const char *dirx) {
   }
   lives_free(dir);
   return mp;
+}
+
+
+LIVES_GLOBAL_INLINE boolean file_is_ours(const char *fname) {
+  if (fname) return !lives_strcmp(get_mountpoint_for(fname), capable->mountpoint);
+  return FALSE;
 }
 
 
@@ -1878,19 +1944,17 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
 
 
 /// estimate the machine load
-static int16_t theflow[EFFORT_RANGE_MAX];
+static double theflow[EFFORT_RANGE_MAX];
 static int flowlen = 0;
 static boolean inited = FALSE;
 static int struggling = 0;
-static int badthingcount = 0;
-static int goodthingcount = 0;
+static double badthingcount = 0.;
+static double goodthingcount = 0.;
 
-static int pop_flowstate(void) {
-  int ret = theflow[0];
+static double pop_flowstate(void) {
+  double ret = theflow[0];
   flowlen--;
-  for (int i = 0; i < flowlen; i++) {
-    theflow[i] = theflow[i + 1];
-  }
+  lives_memmove(theflow, theflow + sizdbl, flowlen * sizdbl);
   return ret;
 }
 
@@ -1900,7 +1964,7 @@ void reset_effort(void) {
   mainw->blend_palette = WEED_PALETTE_END;
   lives_memset(theflow, 0, sizeof(theflow));
   inited = TRUE;
-  badthingcount = goodthingcount = 0;
+  badthingcount = goodthingcount = 0.;
   struggling = 0;
   if ((mainw->is_rendering || (mainw->multitrack
                                && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
@@ -1909,9 +1973,9 @@ void reset_effort(void) {
 }
 
 
-void update_effort(int nthings, boolean badthings) {
-  int spcycles;
+void update_effort(double nthings, boolean is_bad) {
   short pb_quality = prefs->pb_quality;
+  double newthings;
 
   if (LIVES_IS_RENDERING) {
     mainw->effort = -EFFORT_RANGE_MAX;
@@ -1920,33 +1984,32 @@ void update_effort(int nthings, boolean badthings) {
   }
 
   if (!inited) reset_effort();
-  if (!nthings) return;
+  if (nthings <= 0.001) return;
 
-  if (nthings > EFFORT_RANGE_MAX) nthings = EFFORT_RANGE_MAX;
+  if (nthings > EFFORT_RANGE_MAXD) nthings = EFFORT_RANGE_MAXD;
+  newthings = nthings;
 
   //g_print("VALS %d %d %d %d %d\n", nthings, badthings, mainw->effort, badthingcount, goodthingcount);
-  if (badthings)  {
-    badthingcount += nthings;
-    goodthingcount = 0;
-    spcycles = -1;
+  if (is_bad)  {
+    badthingcount += newthings;
+    goodthingcount = 0.;
+    newthings = -1;
   } else {
-    spcycles = nthings;
-    if (spcycles + goodthingcount > EFFORT_RANGE_MAX) spcycles = EFFORT_RANGE_MAX - goodthingcount;
-    goodthingcount += spcycles;
-    if (goodthingcount > EFFORT_RANGE_MAX) goodthingcount = EFFORT_RANGE_MAX;
-    nthings = 1;
+    nthings = 1.;
+    goodthingcount += newthings;
+    if (goodthingcount > EFFORT_RANGE_MAXD) goodthingcount = EFFORT_RANGE_MAXD;
   }
 
-  while (nthings-- > 0) {
+  while (nthings-- > 0.) {
     if (flowlen >= EFFORT_RANGE_MAX) {
       /// +1 for each badthing, so when it pops out we subtract it
-      int res = pop_flowstate();
-      if (res > 0) badthingcount -= res;
+      double res = pop_flowstate();
+      if (res > 0.) badthingcount -= res;
       else goodthingcount += res;
       //g_print("vals %d %d %d  ", res, badthingcount, goodthingcount);
     }
     /// - all the good things, so when it pops out we add it (i.e subtract the value)
-    theflow[flowlen] = -spcycles;
+    theflow[flowlen] = -newthings;
     flowlen++;
   }
 
@@ -1954,12 +2017,13 @@ void update_effort(int nthings, boolean badthings) {
 
   if (!badthingcount) {
     /// no badthings, good
-    if (goodthingcount > EFFORT_RANGE_MAX) goodthingcount = EFFORT_RANGE_MAX;
-    if (--mainw->effort < -EFFORT_RANGE_MAX) mainw->effort = -EFFORT_RANGE_MAX;
+    if (goodthingcount > EFFORT_RANGE_MAXD) goodthingcount = EFFORT_RANGE_MAXD;
+    if (--mainw->effort < -EFFORT_RANGE_MAXD) mainw->effort = -EFFORT_RANGE_MAXD;
   } else {
-    if (badthingcount > EFFORT_RANGE_MAX) badthingcount = EFFORT_RANGE_MAX;
-    mainw->effort = badthingcount;
+    if (badthingcount > EFFORT_RANGE_MAXD) badthingcount = EFFORT_RANGE_MAXD;
+    mainw->effort = (int)(badthingcount + .5);
   }
+
   //g_print("vals2 %d %d %d %d\n", mainw->effort, badthingcount, goodthingcount, struggling);
 
   if (mainw->effort < 0) {
@@ -2323,7 +2387,8 @@ void rec_desk(void *args) {
 
   lives_widget_set_sensitive(mainw->desk_rec, TRUE);
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->delay_time);
-  lives_nanosleep_until_nonzero(!lives_alarm_check(alarm_handle) || (lpt && lives_proc_thread_get_cancelled(lpt)));
+  lives_nanosleep_while_false(!lives_alarm_check(alarm_handle) == 0
+			      || (lpt && lives_proc_thread_get_cancelled(lpt)));
   lives_alarm_clear(alarm_handle);
 
   if (lpt && lives_proc_thread_get_cancelled(lpt)) goto done;
@@ -2337,10 +2402,13 @@ void rec_desk(void *args) {
   // temp kludge ahead !
   open_ascrap_file(recargs->clipno);
 
-#ifdef HAVE_PULSE_AUDIO
-  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
-  //pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_EXT);
-#endif
+  IF_APLAYER_PULSE ({
+      pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
+    })
+
+  IF_APLAYER_JACK ({
+      jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_DESKTOP_GRAB_INT);
+    })
 
   sfile->ext_src_type = LIVES_EXT_SRC_RECORDER;
 

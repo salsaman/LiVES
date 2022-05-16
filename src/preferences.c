@@ -43,8 +43,14 @@ static LiVESList *allprefs = NULL;
 static weed_plant_t *define_pref(const char *pref_idx, void *pref_ptr, int32_t vtype, void *pdef, uint32_t flags) {
   // TODO...
   /* lives_object_instance_t *pref = lives_pref_inst_create(PLAYER_SUBTYPE_AUDIO); */
+  /// -> lives_object_declare_attribute(pref, PREF_ATTR_IDX, WEED_SEED_STRING);
+  /// -> lives_object_declare_attribute(pref, PREF_ATTR_VALUE, WEED_SEED_VOIDPTR);
   /* lives_pref_set_idx(pref, pref_idx); */
   /* lives_pref_set_varptr(pref, prefptr); */
+  /* lives_pref_set_widget(pref, widget); */
+  // OR
+  // lives_attribute_set_param_type(pref, PREF_ATTR_VARPTR, label, WEED_PARAM_INTEGER);
+  // txfuncs: LIVES_INTENTION_BACKUP, RESTORE, SET_VALUE, GET_VALUE,
 
   weed_plant_t *prefplant = lives_plant_new(LIVES_WEED_SUBTYPE_PREFERENCE);
   weed_set_string_value(prefplant, LIVES_LEAF_PREF_IDX, pref_idx);
@@ -496,6 +502,35 @@ boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
   lives_strfreev(array);
 
   return TRUE;
+}
+
+
+char *get_meta(const char *key) {
+  char buff[1024];
+  if (!*mainw->metafile) {
+    char *tmp = lives_build_filename(prefs->config_datadir, LIVES_METADATA_FILE, NULL);
+    lives_snprintf(mainw->metafile, PATH_MAX, "%s", tmp);
+    lives_free(tmp);
+  }
+  if (!mainw->meta_cache) {
+    mainw->meta_cache = cache_file_contents(mainw->metafile);
+  }
+  get_pref_inner(NULL, key, buff, 1024, mainw->meta_cache);
+  return lives_strdup(buff);
+}
+
+
+void set_meta(const char *key, const char *value) {
+  if (!*mainw->metafile) {
+    char *tmp = lives_build_filename(prefs->config_datadir, LIVES_METADATA_FILE, NULL);
+    lives_snprintf(mainw->metafile, PATH_MAX, "%s", tmp);
+    lives_free(tmp);
+    if (!lives_file_test(mainw->metafile, LIVES_FILE_TEST_EXISTS)) {
+      lives_touch(mainw->metafile);
+      set_meta("", "");
+    }
+  }
+  set_theme_pref(mainw->metafile, key, value);
 }
 
 

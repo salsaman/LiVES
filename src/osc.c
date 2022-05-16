@@ -989,7 +989,7 @@ boolean lives_osc_cb_fgclip_select(void *context, int arglen, const void *vargs,
   i = LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->cliplist, clip - 1));
 
   if (i == mainw->current_file) return lives_osc_notify_failure();
-  if (mainw->playing_file != 0) {
+  if (LIVES_IS_PLAYING) {
     char *msg;
     switch_clip(1, i, FALSE);
     msg = lives_strdup_printf("%d", i);
@@ -1599,8 +1599,6 @@ boolean lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs
 boolean lives_osc_cb_fgclip_retrigger(void *context, int arglen, const void *vargs, OSCTimeTag when,
                                       NetworkReturnAddressPtr ra) {
   // switch fg clip and reset framenumber
-  lives_clip_t *sfile;
-
   if (mainw->playing_file < 1 || (mainw->preview || (mainw->event_list && !mainw->record)) ||
       mainw->is_processing) return lives_osc_notify_failure();
   if (mainw->multitrack) return lives_osc_notify_failure();
@@ -1608,15 +1606,8 @@ boolean lives_osc_cb_fgclip_retrigger(void *context, int arglen, const void *var
 
   lives_osc_cb_fgclip_select(context, arglen, vargs, when, ra);
 
-  sfile = mainw->files[mainw->playing_file];
-  if (sfile->pb_fps > 0. || (sfile->play_paused && sfile->freeze_fps > 0.)) sfile->frameno = sfile->last_frameno = 1;
-  else sfile->frameno = sfile->last_frameno = sfile->frames;
+  retrigger_callback(NULL, NULL, 0, 0, NULL);
 
-#ifdef RT_AUDIO
-  if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
-    resync_audio(mainw->playing_file, (double)sfile->frameno);
-  }
-#endif
   return lives_osc_notify_success(NULL);
 }
 
@@ -1887,23 +1878,21 @@ boolean lives_osc_cb_clip_goto(void *context, int arglen, const void *vargs, OSC
   lives_clip_t *sfile;
   frames_t frame;
 
-  if (mainw->current_file < 1 || (mainw->preview || (mainw->event_list && (!mainw->record || !LIVES_IS_PLAYING))) ||
-      mainw->playing_file < 1 ||
-      mainw->is_processing) return lives_osc_notify_failure();
-  if (mainw->multitrack) return lives_osc_notify_failure();
+  if (LIVES_CE_PLAYBACK) return lives_osc_notify_failure();
 
   if (!lives_osc_check_arguments(arglen, vargs, "i", TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs, &frame);
 
   sfile = mainw->files[mainw->playing_file];
   if (frame < 1 || frame > sfile->frames || !CURRENT_CLIP_IS_NORMAL) return lives_osc_notify_failure();
-  sfile->last_frameno = sfile->frameno = frame;
 
-#ifdef RT_AUDIO
-  if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
-    resync_audio(mainw->current_file, (double)frame);
-  }
-#endif
+  sfile->frameno = frame;
+
+  if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+      && !(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_VPOS)) {
+    mainw->scratch = SCRATCH_JUMP;
+  } else if (mainw->scratch != SCRATCH_JUMP) mainw->scratch = SCRATCH_JUMP_NORESYNC;
+
   return lives_osc_notify_success(NULL);
 }
 

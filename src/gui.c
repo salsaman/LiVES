@@ -217,6 +217,7 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
 
       set_css_value_direct(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, "", "background-image", tmp);
       set_css_value_direct(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, "", "background-image", tmp);
+      lives_free(tmp);
       tmp = lives_strdup_printf("%dpx", mh);
 
       lives_free(colref); lives_free(colref2);
@@ -4944,8 +4945,6 @@ void add_to_clipmenu_any(int clipno) {
   pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(clipno));
   pthread_mutex_unlock(&mainw->clip_list_mutex);
-  sfile->old_frames = sfile->frames;
-  sfile->ratio_fps = check_for_ratio_fps(sfile->fps);
 
 #ifdef TEST_NOTIFY
   detail = lives_strdup_printf(_("'LiVES opened the file' '%s'"), fname);

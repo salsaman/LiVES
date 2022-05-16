@@ -94,6 +94,10 @@
 #  define LIVES_IGNORE_DEPRECATIONS_END
 #endif
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE // for "environ"
+#endif
+
 #include <sys/types.h>
 #include <inttypes.h>
 #include <string.h>
@@ -500,6 +504,17 @@ typedef struct {
 #include "lists.h"
 #include "alarms.h"
 
+/// disk/storage status values
+typedef enum {
+  LIVES_STORAGE_STATUS_UNKNOWN = 0,
+  LIVES_STORAGE_STATUS_NORMAL,
+  LIVES_STORAGE_STATUS_WARNING,
+  LIVES_STORAGE_STATUS_CRITICAL,
+  LIVES_STORAGE_STATUS_OVERFLOW,
+  LIVES_STORAGE_STATUS_OVER_QUOTA,
+  LIVES_STORAGE_STATUS_OFFLINE
+} lives_storage_status_t;
+
 #include "machinestate.h"
 #include "lsd-tab.h"
 
@@ -788,12 +803,6 @@ typedef struct {
   char *myname_full;
   char *myname;
 
-  int64_t boot_time;
-  int xstdout;
-  int nmonitors;
-  int primary_monitor;
-  boolean can_show_msg_area;
-
   pid_t mainpid;
   pthread_t main_thread;
   pthread_t gui_thread;
@@ -802,8 +811,17 @@ typedef struct {
 
   mode_t umask;
 
+  // TODO - move to hwcaps
+  char *mach_name;
+  int64_t boot_time;
+  int xstdout;
+  int nmonitors;
+  int primary_monitor;
+  boolean can_show_msg_area;
+
   hw_caps_t hw;
 
+  // todo - move to gui_caps
   char *gui_theme_name;
   char *icon_theme_name;
   char *app_icon_path;
@@ -825,9 +843,13 @@ typedef struct {
   boolean has_wm_caps;
   wm_caps_t wm_caps;
 
+  // disk space in workdir
   int64_t ds_used, ds_free, ds_tot;
+  lives_storage_status_t ds_status;
+
   char *mountpoint;  ///< utf-8
 
+  // move to os_caps_t
   char *os_name;
   char *os_release;
   char *os_hardware;
@@ -839,13 +861,14 @@ typedef struct {
   char *distro_ver;
   char *distro_codename;
 
-  char *mach_name;
-
   int dclick_time;
   int dclick_dist;
   char *sysbindir;
 
   // cmdline defaults
+  int orig_argc;
+  char **orig_argv;
+
   char *extracmds_file[2];
   int extracmds_idx;
 
@@ -864,6 +887,9 @@ capability *capable;
 
 // some useful functions
 
+int orig_argc(void);
+char **orig_argv(void);
+
 // callbacks.c
 boolean all_config(LiVESWidget *, LiVESXEventConfigure *, livespointer ppsurf);
 boolean all_expose(LiVESWidget *, lives_painter_t *, livespointer psurf);
@@ -880,7 +906,7 @@ boolean do_yesno_dialogf(const char *fmt, ...);
 boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number);
 boolean do_yesno_dialogf_with_countdown(int nclicks, boolean isyes, const char *fmt, ...);
 
-void maybe_abort(boolean do_check);
+void maybe_abort(boolean do_check, LiVESList *restart_opts);
 void do_abort_dialog(const char *text);
 LiVESResponseType do_abort_ok_dialog(const char *text);
 LiVESResponseType do_abort_retry_dialog(const char *text);
@@ -932,6 +958,7 @@ void do_exec_missing_error(const char *execname);
 boolean ask_permission_dialog(int what);
 boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs, const char *sudocom);
 boolean do_abort_check(void);
+LiVESResponseType do_abort_restart_check(boolean allow_restart, LiVESList *restart_opts);
 
 // detail can be set to override default "do not show this warning again"
 // e.g "show this warning at startup"
@@ -1004,7 +1031,6 @@ LiVESResponseType do_dir_notfound_dialog(const char *detail, const char *dirname
 void do_no_decoder_error(const char *fname);
 void do_no_loadfile_error(const char *fname);
 #ifdef ENABLE_JACK
-boolean do_jack_nonex_warn(const char *server_config_file);
 boolean do_jack_no_startup_warn(boolean is_trans);
 void do_jack_setup_warn(void);
 boolean do_jack_no_connect_warn(boolean is_trans);
@@ -1226,6 +1252,7 @@ void lives_abort(const char *reason);
 int lives_system(const char *com, boolean allow_error);
 ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t buflen);
 lives_pid_t lives_fork(const char *com);
+void *lives_fork_cb(lives_object_t *dummy, void *com);
 
 int lives_chdir(const char *path, boolean no_error_dlg);
 pid_t lives_getpid(void);
@@ -1260,6 +1287,8 @@ boolean lives_string_ends_with(const char *string, const char *fmt, ...);
 uint64_t get_version_hash(const char *exe, const char *sep, int piece);
 uint64_t make_version_hash(const char *ver);
 char *unhash_version(uint64_t version);
+
+void restart_me(LiVESList *extra_argv, const char *xreason);
 
 void init_clipboard(void);
 
@@ -1461,7 +1490,7 @@ void break_me(const char *dtl);
 
 #define VSLICES 1
 
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

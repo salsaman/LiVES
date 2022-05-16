@@ -252,8 +252,13 @@ void jack_pb_end(void);
 volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg from msgq, or return NULL
 void jack_time_reset(jack_driver_t *, int64_t offset);
 ticks_t lives_jack_get_time(jack_driver_t *); ///< get time from jack, in 10^-8 seconds
+
 boolean jack_audio_seek_frame(jack_driver_t *, double frame);  ///< seek to (video) frame
+boolean jack_audio_seek_frame_velocity(jack_driver_t *jackd, double frame, double vel);
+
 int64_t jack_audio_seek_bytes(jack_driver_t *, int64_t bytes, lives_clip_t *sfile);  ///< seek to byte position
+
+
 size_t jack_get_buffsize(jack_driver_t *);
 
 void jack_set_avel(jack_driver_t *, int clipno, double ratio);

@@ -91,21 +91,21 @@ endif
 
 if ENABLE_OSC
 osc_SOURCES = osc.c osc.h omc-learn.c omc-learn.h osc_notify.h
-osc_LDADD = $(top_builddir)/libOSC/.libs/libOSC.a $(top_builddir)/libOSC/client/.libs/libOSC_client.a -lm
-#osc_shared_LDADD = $(top_builddir)/libOSC/.libs/libOSC.so $(top_builddir)/libOSC/client/.libs/libOSC_client.so -lm
+osc_LIBS = $(top_builddir)/libOSC/.libs/libOSC.a $(top_builddir)/libOSC/client/.libs/libOSC_client.a -lm
+#osc_shared_LIBS = $(top_builddir)/libOSC/.libs/libOSC.so $(top_builddir)/libOSC/client/.libs/libOSC_client.so -lm
 osc_CFLAGS = -DENABLE_OSC=1
 endif
 
 if ENABLE_LDVGRAB
 ldvgrab_SOURCES = ldvgrab.c ldvgrab.h ldvcallbacks.c ldvcallbacks.h ldvinterface.c ldvinterface.h
 ldvgrab_CFLAGS = -DHAVE_LDVGRAB=1 -I libavc1394/avc1394.h -I libraw1394/raw1394.h -I libraw1394/rom1394.h
-ldvgrab_LDADD = -lavc1394 -lraw1394 -lrom1394
+ldvgrab_LIBS = -lavc1394 -lraw1394 -lrom1394
 endif
 
 if ENABLE_JACK
 jack_CFLAGS = -DENABLE_JACK=1 @JACK_CFLAGS@
 jack_SOURCES = jack.c jack.h
-jack_LDADD = @JACK_LIBS@ @JACK_SERVER_LIBS@
+jack_LIBS = @JACK_LIBS@ @JACK_SERVER_LIBS@
 
 if ENABLE_JACK_TRANSPORT
 jack_CFLAGS += -DENABLE_JACK_TRANSPORT=1
@@ -137,32 +137,32 @@ endif
 endif
 
 if HAVE_ALSA
-alsa_LDADD = @ALSA_LIBS@
+alsa_LIBS = @ALSA_LIBS@
 alsa_CFLAGS = @ALSA_CFLAGS@ -DALSA_MIDI=1
 endif
 
 if HAVE_WAYLAND
-wayland_LDADD = @WAYLAND_LIBS@
+wayland_LIBS = @WAYLAND_LIBS@
 wayland_CFLAGS = @WAYLAND_CFLAGS@ -DHAVE_WAYLAND=1
 endif
 
 if HAVE_LIBEXPLAIN
-libexplain_LDADD = @LIBEXPLAIN_LIBS@
+libexplain_LIBS = @LIBEXPLAIN_LIBS@
 libexplain_CFLAGS = @LIBEXPLAIN_CFLAGS@ -DHAVE_LIBEXPLAIN=1
 endif
 
 if !NEED_LOCAL_WEED
-libweed_LDADD = @WEED_LIBS@
+libweed_LIBS = @WEED_LIBS@
 libweed_CFLAGS = @WEED_CFLAGS@
 else
-libweed_LDADD = $(abs_top_srcdir)/libweed/libweed.la
+libweed_LIBS = $(abs_top_srcdir)/libweed/libweed.la
 libweed_CFLAGS = -DNEED_LOCAL_WEED=1
 endif
 
 if !NEED_LOCAL_WEED_UTILS
-libweed_LDADD += @WEED_UTILS_LIBS@
+libweed_LIBS += @WEED_UTILS_LIBS@
 else
-libweed_LDADD += $(abs_top_srcdir)/libweed/libweed-utils.la
+libweed_LIBS += $(abs_top_srcdir)/libweed/libweed-utils.la
 libweed_CFLAGS += -DNEED_LOCAL_WEED_UTILS=1
 endif
 
@@ -179,7 +179,7 @@ libweed_compat_CFLAGS = -DNEED_LOCAL_WEED_COMPAT=1
 endif
 
 if HAVE_PULSE_AUDIO
-pulse_LDADD = @PULSE_LIBS@
+pulse_LIBS = @PULSE_LIBS@
 pulse_CFLAGS = @PULSE_CFLAGS@ -DHAVE_PULSE_AUDIO=1
 pulse_SOURCES = pulse.c pulse.h
 if HAVE_PA_STREAM_BEGIN_WRITE
@@ -188,14 +188,19 @@ endif
 endif
 
 if HAVE_LIBPNG
-png_LDADD = @PNG_LIBS@
+png_LIBS = @PNG_LIBS@
 png_CFLAGS = @PNG_CFLAGS@ -DUSE_LIBPNG=1
+endif
+
+if HAVE_SWRESAMPLE
+swresample_LIBS = @LIBSWRESAMPLE_LIBS@
+swresample_CFLAGS = @LIBSWRESAMPLE_CFLAGS@ -Wno-deprecated-declarations -DHAVE_SWRESAMPLE=1
 endif
 
 if HAVE_SWSCALE
 if HAVE_AVCODEC
 if HAVE_AVUTIL
-swscale_LDADD = @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
+swscale_LIBS = @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
 swscale_CFLAGS = @LIBSWSCALE_CFLAGS@ @LIBAVUTIL_CFLAGS@ -DUSE_SWSCALE=1
 if HAVE_SWRESAMPLE
 transcode_SOURCES = transcode.c transcode.h
@@ -207,7 +212,7 @@ endif
 
 if ENABLE_GIW
 giw_SOURCES = giw/giwknob.c giw/giwknob.h giw/giwvslider.c giw/giwvslider.h giw/giwled.c giw/giwled.h giw/giwtimeline.c giw/giwtimeline.h
-giw_LDADD = -lm
+giw_LIBS = -lm
 giw_CFLAGS = -DENABLE_GIW=1
 endif
 
@@ -280,9 +285,9 @@ lives_exe_SOURCES = \
 
 lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS)
 
-lives_exe_LDADD = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
-	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) $(libweed_LDADD) \
-	 $(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@ $(libexplain_LDADD) $(ffthumb_LDADD)
+lives_exe_LIBS = @X11_LIBS@ $(wayland_LIBS) @MJPEGTOOLS_LIBS@ $(osc_LIBS) $(jack_LIBS) $(ldvgrab_LIBS) \
+	$(alsa_LIBS) $(pulse_LIBS) $(png_LIBS) $(swscale_LIBS) $(pthread_LIBS) $(libweed_LIBS) \
+	 $(giw_LIBS) $(v4l1_LIBS) @UNICAP_LIBS@ $(libexplain_LIBS) $(ffthumb_LIBS)
 
 AM_CFLAGS = -fcommon -fPIE -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
 	$(oil_CFLAGS) $(wayland_CFLAGS) $(transcode_CFLAGS) $(cpu_CFLAGS) 	\
@@ -332,17 +337,17 @@ endif
 
 liblivesdir = $(libdir)
 
-extra_LDFLAGS = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ \
-        $(jack_LDADD) $(ldvgrab_LDADD) \
-	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) \
-	$(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@ $(gtk_LIBFLAGS) $(oil_LIBFLAGS)
+extra_LDFLAGS = @X11_LIBS@ $(wayland_LIBS) @MJPEGTOOLS_LIBS@ \
+        $(jack_LIBS) $(ldvgrab_LIBS) \
+	$(alsa_LIBS) $(pulse_LIBS) $(png_LIBS) $(swscale_LIBS) $(pthread_LIBS) \
+	$(giw_LIBS) $(v4l1_LIBS) @UNICAP_LIBS@ $(gtk_LIBFLAGS) $(oil_LIBFLAGS)
 
 #if NEED_SCRIPTING_LIBS
 #if !NEED_LOCAL_WEED
-#libweed_scripting_LDADD = -lweed_gslice -lweed-utils
+#libweed_scripting_LIBS = -lweed_gslice -lweed-utils
 #libweed_scripting_CFLAGS = @WEED_CFLAGS@
 #else
-#libweed_scripting_LDADD = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/libweed/libweed-utils.la
+#libweed_scripting_LIBS = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/libweed/libweed-utils.la
 #libweed_scripting_CFLAGS = @WEED_CFLAGS@ -D__LIBWED__ -DNEED_LOCAL_WEED=1
 #endif
 #endif

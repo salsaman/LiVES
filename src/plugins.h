@@ -429,6 +429,7 @@ typedef struct {
   lives_clip_data_t *cdata;
 } lives_decoder_t;
 
+lives_clip_data_t *get_clip_cdata(int clipno);
 LiVESList *locate_decoders(LiVESList *);
 LiVESList *load_decoders(void);
 boolean chill_decoder_plugin(int fileno);
@@ -441,7 +442,6 @@ void get_mime_type(char *text, int maxlen, const lives_clip_data_t *);
 void unload_decoder_plugins(void);
 lives_decoder_t *clone_decoder(int fileno);
 void clip_decoder_free(lives_decoder_t *);
-
 
 // RFX plugins
 

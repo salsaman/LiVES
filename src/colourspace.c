@@ -10399,7 +10399,7 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   // copy (deep) old_layer -> layer
 
   int numplanes, xheight, xwidth;
-  int *orowstrides = weed_layer_get_rowstrides(old_layer, &numplanes), *rowstrides;
+  int *orowstrides, *rowstrides;;
   void **pixel_data, **npixel_data;
   int pal = weed_layer_get_palette(layer);
   int width = weed_layer_get_width(layer);
@@ -10420,6 +10420,7 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
     old_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
     weed_layer_copy(old_layer, layer);
   }
+
   pixel_data = weed_layer_get_pixel_data_planar(old_layer, &numplanes);
   if (!pixel_data || !pixel_data[0]) {
     if (newdata) {
@@ -10429,6 +10430,7 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
     return FALSE;
   }
 
+  orowstrides = weed_layer_get_rowstrides(old_layer, &numplanes);
   weed_layer_nullify_pixel_data(layer);
 
   if (alignment != 0) THREADVAR(rowstride_alignment_hint) = alignment;

@@ -4668,7 +4668,7 @@ static void upd_statsplant(const char *key) {
   int freq;
   if (mainw->is_exiting) return;
   if (!statsplant) statsplant = weed_plant_new(0);
-  _weed_leaf_get(statsplant, key, WEED_SEED_INT, &freq);
+  _weed_leaf_get(statsplant, key, 0, &freq);
   _weed_leaf_set(statsplant, key, WEED_SEED_INT, 1, &freq);
 }
 

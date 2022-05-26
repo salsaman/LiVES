@@ -74,7 +74,7 @@ char *get_stats_msg(boolean calc_only) {
   //currticks = lives_get_current_ticks();
 
   if (calc_only) return NULL;
-  //load = get_core_loadvar(0);
+  load = get_core_loadvar(0);
 
   if (!prefs->vj_mode) {
     if (have_avsync) {
@@ -106,7 +106,7 @@ char *get_stats_msg(boolean calc_only) {
                               audmsg ? audmsg : "",
                               mainw->actual_frame, sfile->frames,
                               inst_fps * sig(sfile->pb_fps), sfile->pb_fps,
-                              1., mainw->disk_pressure,
+                              *load, mainw->disk_pressure,
                               mainw->effort, EFFORT_RANGE_MAX,
                               prefs->pb_quality,
                               tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
@@ -127,7 +127,7 @@ char *get_stats_msg(boolean calc_only) {
     msg = lives_strdup_printf("fg: %d/%d, fps %.3f / %.3f, CPU: %.2f, Eff. %d/%d, Q: %s %s",
                               mainw->actual_frame, sfile->frames,
                               inst_fps * sig(sfile->pb_fps), sfile->pb_fps,
-                              1., mainw->effort, EFFORT_RANGE_MAX,
+                              *load, mainw->effort, EFFORT_RANGE_MAX,
                               tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
                                     : prefs->pb_quality == 2 ? _("Med") : _("High")),
                               bgmsg ? bgmsg : "");

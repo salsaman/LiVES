@@ -93,7 +93,6 @@ LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
     if (rnum < 0x100000000) {
       is_32bit = TRUE;
       if (1) {
-        break_me("rnd");
         uint64_t diff1 = lives_random() - lives_random();
         uint64_t diff2 = lives_random() - lives_random();
         uint64_t rbits = get_log2_64((diff1 >> 1) + (diff2 >> 1));
@@ -559,6 +558,7 @@ const char *get_shmdir(void) {
   return NULL;
 }
 
+//// TODO: move a lot of this to filesystem.c //////////
 
 char *lives_format_storage_space_string(uint64_t space) {
   char *fmt;
@@ -2006,7 +2006,7 @@ void update_effort(double nthings, boolean is_bad) {
       double res = pop_flowstate();
       if (res > 0.) badthingcount -= res;
       else goodthingcount += res;
-      //g_print("vals %d %d %d  ", res, badthingcount, goodthingcount);
+      g_print("vals %f %f %f  ", res, badthingcount, goodthingcount);
     }
     /// - all the good things, so when it pops out we add it (i.e subtract the value)
     theflow[flowlen] = -newthings;
@@ -2015,7 +2015,7 @@ void update_effort(double nthings, boolean is_bad) {
 
   //g_print("vals2x %d %d %d %d\n", mainw->effort, badthingcount, goodthingcount, struggling);
 
-  if (!badthingcount) {
+  if (badthingcount <= 0.) {
     /// no badthings, good
     if (goodthingcount > EFFORT_RANGE_MAXD) goodthingcount = EFFORT_RANGE_MAXD;
     if (--mainw->effort < -EFFORT_RANGE_MAXD) mainw->effort = -EFFORT_RANGE_MAXD;

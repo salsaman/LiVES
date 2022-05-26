@@ -408,7 +408,11 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
           goto bail;
         }
 
+        if (mainw->current_file != fileno
+            || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
         lives_buffered_rdonly_slurp(afd, 0);
+        if (mainw->current_file != fileno
+            || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
         for (i = start; i < offset_end; i++) {
           if (mainw->current_file != fileno
               || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
@@ -525,7 +529,11 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
             THREADVAR(read_failed) = -2;
             goto bail;
           }
+          if (mainw->current_file != fileno
+              || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
           lives_buffered_rdonly_slurp(afd, 0);
+          if (mainw->current_file != fileno
+              || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
         }
 
         for (i = start; i < offset_end; i++) {
@@ -654,11 +662,11 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
 
   mainw->current_file = current_file;
   if (which == 0 || which == 1)
-    avoid_deadlock((hook_funcptr_t)lives_widget_queue_draw_if_visible, 0, mainw->video_draw);
+    main_thread_execute((lives_funcptr_t)lives_widget_queue_draw_if_visible, 0, NULL, "V", mainw->video_draw);
   if (which == 0 || which == 2)
-    avoid_deadlock((hook_funcptr_t)lives_widget_queue_draw_if_visible, 0, mainw->laudio_draw);
+    main_thread_execute((lives_funcptr_t)lives_widget_queue_draw_if_visible, 0, NULL, "V", mainw->laudio_draw);
   if (which == 0 || which == 3)
-    avoid_deadlock((hook_funcptr_t)lives_widget_queue_draw_if_visible, 0, mainw->raudio_draw);
+    main_thread_execute((lives_funcptr_t)lives_widget_queue_draw_if_visible, 0, NULL, "V", mainw->raudio_draw);
   return TRUE;
 
 bail:
@@ -3567,22 +3575,73 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
 }
 
 
+// this is a little tricky to handle - we want to redraw the timeline in a bg thread, however
+// GUI updates need to be done in the main thread
+
+// so: if main thread calls this, we kick off a bg thread to rerun this and then that thread will
+// push the GUI updates back
+
+// if a bg thread calls this, and there is no current fg_service being run, then continue
+// if an fg_service is being run, we cannot stack calls, so we must defer it till the fg_service finishes
+
+// if there is a bg thread running this then we first cancel it, so it should be cancelled on return here
+
 void redraw_timeline(int clipno) {
   lives_clip_t *sfile;
-  boolean is_thread = FALSE;
 
   if (mainw->ce_thumbs) return;
   if (!IS_VALID_CLIP(clipno)) return;
   sfile = mainw->files[clipno];
   if (sfile->clip_type == CLIP_TYPE_TEMP) return;
 
-  if (mainw->drawtl_thread && THREADVAR(tinfo) == mainw->drawtl_thread) {
-    if (lives_proc_thread_get_cancelled(mainw->drawtl_thread)) return;
-    is_thread = TRUE;
-    lives_proc_thread_set_cancellable(mainw->drawtl_thread);
-  }
+  if (LIVES_IS_PLAYING && (mainw->fs || mainw->faded)) return;
 
-  if (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread)) return;
+  if (mainw->drawtl_thread && THREADVAR(tinfo) == mainw->drawtl_thread) {
+    // check if this is the thread that was assigned to run this
+    if (lives_proc_thread_get_cancelled(mainw->drawtl_thread)) return;
+    lives_proc_thread_set_cancellable(mainw->drawtl_thread);
+    if (lives_proc_thread_get_cancelled(mainw->drawtl_thread)) return;
+  } else {
+    if (is_fg_thread()) {
+      // if this the fg thread, kick off a bg thread to actually run this
+      lives_mutex_lock_carefully(&mainw->tlthread_mutex);
+      if (mainw->drawtl_thread) {
+        if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+          lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
+        }
+        pthread_mutex_unlock(&mainw->tlthread_mutex);
+        lives_proc_thread_join(mainw->drawtl_thread);
+        mainw->drawtl_thread = NULL;
+      } else pthread_mutex_unlock(&mainw->tlthread_mutex);
+
+      lives_mutex_lock_carefully(&mainw->tlthread_mutex);
+      if (!mainw->drawtl_thread) {
+        mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
+                               (lives_funcptr_t)redraw_timeline, -1,
+                               "i", clipno);
+        lives_proc_thread_sync_ready(mainw->drawtl_thread);
+        lives_nanosleep_while_false(lives_proc_thread_get_cancellable(mainw->drawtl_thread));
+        pthread_mutex_unlock(&mainw->tlthread_mutex);
+      }
+      return;
+    } else {
+      // if a bg thread, we either call the main thread to run this which will spawn another bg thread,
+      // or if we are running it adds to deferral hooks
+      pthread_mutex_lock(&mainw->tlthread_mutex);
+      if (mainw->drawtl_thread) {
+        if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+          lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
+        }
+      }
+      pthread_mutex_unlock(&mainw->tlthread_mutex);
+
+      THREADVAR(hook_flag_hints) = HOOK_UNIQUE_CHANGE_DATA;
+      main_thread_execute((lives_funcptr_t)redraw_timeline, 0, NULL, "i", clipno);
+      THREADVAR(hook_flag_hints) = 0;
+
+      return;
+    }
+  }
 
   mainw->drawsrc = clipno;
 
@@ -3620,58 +3679,6 @@ void redraw_timeline(int clipno) {
   lives_widget_queue_draw(mainw->eventbox2);
 }
 
-
-boolean redraw_tl_idle(void *data) {
-  redraw_timeline(mainw->current_file);
-  return FALSE;
-}
-
-
-void redraw_timeline_bg(int clipno) {
-  // need to take extra care with this function, as it can be called
-  // from fg_service call, and must avoid rcalling another such service or hanging
-  // in mutex deadlock
-  lives_clip_t *sfile;
-  if (mainw->ce_thumbs) return;
-  if (!IS_VALID_CLIP(clipno)) return;
-  sfile = mainw->files[clipno];
-  if (sfile->clip_type == CLIP_TYPE_TEMP) return;
-
-  if (avoid_deadlock((hook_funcptr_t)do_tl_redraw, HOOK_UNIQUE_CHANGE_DATA,
-                     LIVES_INT_TO_POINTER(clipno))) return;
-
-  lives_mutex_lock_carefully(&mainw->tlthread_mutex);
-  if (mainw->drawtl_thread) {
-    if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-      lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
-    }
-    lives_proc_thread_join(mainw->drawtl_thread);
-    mainw->drawtl_thread = NULL;
-  }
-
-  mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                         (lives_funcptr_t)redraw_timeline, -1,
-                         "i", clipno);
-  pthread_mutex_unlock(&mainw->tlthread_mutex);
-}
-
-
-void do_tl_redraw(lives_object_t *obj, void *data) {
-  // need to take extra care with this function, as it can be called
-  // from fg_service call, and must avoid rcalling another such service or hanging
-  // in mutex deadlock
-  if (avoid_deadlock((hook_funcptr_t)do_tl_redraw, HOOK_UNIQUE_CHANGE_DATA,
-                     LIVES_INT_TO_POINTER(data))) return;
-  else {
-    int clipno = LIVES_POINTER_TO_INT(data);
-    if (!IS_VALID_CLIP(clipno)) return;
-    if (!mainw->fs && !mainw->faded) {
-      show_playbar_labels(clipno);
-      redraw_timeline_bg(clipno);
-      set_sel_label(mainw->sel_label);
-    }
-  }
-}
 
 //static void preview_aud_vol_cb(LiVESButton *button, livespointer data) {preview_aud_vol();}
 
@@ -4748,8 +4755,10 @@ rundlg:
 
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
                   const char *title, LiVESWidget * extra_widget) {
-  return main_thread_execute((lives_funcptr_t)_choose_file, WEED_SEED_STRING,
-                             NULL, "ssvisv", dir, fname, filt, act, title, extra_widget);
+  char *cret;
+  main_thread_execute((lives_funcptr_t)_choose_file, WEED_SEED_STRING,
+                      &cret, "ssvisv", dir, fname, filt, act, title, extra_widget);
+  return cret;
 }
 
 
@@ -8218,7 +8227,8 @@ boolean msg_area_config(LiVESWidget * widget) {
       if (height <= MIN_MSGBAR_HEIGHT) {
         height = MIN_MSGBAR_HEIGHT;
         mainw->mbar_res = height;
-        if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID) redraw_timeline_bg(mainw->current_file);
+        if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID)
+          redraw_timeline(mainw->current_file);
       }
 
       if (width < 0 || height < 0) return FALSE;

@@ -1680,8 +1680,6 @@ static boolean lives_init(_ign_opts *ign_opts) {
 
   prefs->ce_maxspect = get_boolean_prefd(PREF_CE_MAXSPECT, TRUE);
 
-  prefs->rec_stop_gb = get_double_prefd(PREF_REC_STOP_GB, DEF_REC_STOP_GB);
-
   if (!ign_opts->ign_rte_keymodes) {
     prefs->rte_modes_per_key = get_int_prefd(PREF_RTE_MODES_PERKEY, DEF_FX_KEYMODES);
     if (prefs->rte_modes_per_key < 1) prefs->rte_modes_per_key = 1;
@@ -3891,7 +3889,7 @@ boolean render_choice_idle(livespointer data) {
   boolean is_recovery = LIVES_POINTER_TO_INT(data);
   if (norecurse) return FALSE;
   if (mainw->noswitch) return TRUE;
-  if (mainw->pre_src_file >= 0) return TRUE;
+  //if (mainw->pre_src_file >= 0) return TRUE;
   norecurse = TRUE;
   if (!is_recovery || mt_load_recovery_layout(NULL)) {
     if (mainw->event_list) {
@@ -3934,7 +3932,7 @@ boolean lazy_startup_checks(void *data) {
 
   if (!tlshown) {
     //g_print("val is $d\n", check_snap("youtube-dl"));
-    if (!mainw->multitrack) redraw_timeline_bg(mainw->current_file);
+    if (!mainw->multitrack) redraw_timeline(mainw->current_file);
     tlshown = TRUE;
     return TRUE;
   }
@@ -7575,7 +7573,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
   weed_layer_pixel_data_free(layer);
 
   if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
-    create_blank_layer(layer, LIVES_FILE_EXT_PNG, 4, 4, weed_layer_get_palette(layer));
+    create_blank_layer(layer, LIVES_FILE_EXT_PNG, width, height, weed_layer_get_palette(layer));
 #ifndef PNG_BIO
     fclose(fp);
 #endif
@@ -8268,6 +8266,8 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         lives_free(fname);
         if (!ret) {
           weed_layer_clear_pixel_data(layer);
+          weed_leaf_delete(layer, WEED_LEAF_CURRENT_PALETTE);
+          create_blank_layer(layer, image_ext, width, height, target_palette);
           weed_layer_unref(layer);
           return FALSE;
         }
@@ -9232,7 +9232,8 @@ boolean switch_audio_clip(int new_file, boolean activate) {
           return FALSE;
         }
 
-        if (mainw->pulsed->playing_file > 0) {
+        if (IS_PHYSICAL_CLIP(aplay_file)) {
+          lives_clip_t *afile = mainw->files[aplay_file];
           if (!CLIP_HAS_AUDIO(new_file)) {
             pulse_get_rec_avals(mainw->pulsed);
             mainw->rec_avel = 0.;
@@ -9246,6 +9247,9 @@ boolean switch_audio_clip(int new_file, boolean activate) {
             mainw->cancelled = handle_audio_timeout();
             return FALSE;
           }
+
+          afile->sync_delta = lives_pulse_get_time(mainw->pulsed) - mainw->startticks;
+          afile->aseek_pos = mainw->pulsed->seek_pos;
         }
 
         if (!IS_VALID_CLIP(new_file)) {
@@ -9257,6 +9261,8 @@ boolean switch_audio_clip(int new_file, boolean activate) {
 
         if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
           // tell pulse server to open audio file and start playing it
+
+          mainw->video_seek_ready = FALSE;
 
           pulse_message.command = ASERVER_CMD_FILE_OPEN;
           pulse_message.data = lives_strdup_printf("%d", new_file);
@@ -9271,11 +9277,8 @@ boolean switch_audio_clip(int new_file, boolean activate) {
           pulse_message2.next = NULL;
 
           mainw->pulsed->msgq = &pulse_message;
-          mainw->pulsed->in_use = TRUE;
 
           mainw->pulsed->is_paused = sfile->play_paused;
-
-          avsync_force();
 
           //pa_time_reset(mainw->pulsed, 0);
         } else {
@@ -9338,16 +9341,6 @@ void do_quick_switch(int new_file) {
     return;
   }
 
-  lives_mutex_lock_carefully(&mainw->tlthread_mutex);
-  if (mainw->drawtl_thread) {
-    if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-      lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
-    }
-    lives_proc_thread_join(mainw->drawtl_thread);
-    mainw->drawtl_thread = NULL;
-  }
-  pthread_mutex_unlock(&mainw->tlthread_mutex);
-
   if (IS_VALID_CLIP(old_file)) sfile = mainw->files[old_file];
 
   mainw->whentostop = NEVER_STOP;
@@ -9384,6 +9377,17 @@ void do_quick_switch(int new_file) {
   }
 
   mainw->clip_switched = TRUE;
+
+  if (mainw->frame_layer) {
+    check_layer_ready(mainw->frame_layer);
+    weed_layer_free(mainw->frame_layer);
+    mainw->frame_layer = NULL;
+  }
+  if (mainw->blend_layer) {
+    check_layer_ready(mainw->blend_layer);
+    weed_layer_free(mainw->blend_layer);
+    mainw->blend_layer = NULL;
+  }
 
   mainw->current_file = new_file;
 
@@ -9474,7 +9478,7 @@ void do_quick_switch(int new_file) {
   mainw->osc_block = osc_block;
   lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
 
-  do_tl_redraw(NULL, LIVES_INT_TO_POINTER(mainw->current_file));
+  redraw_timeline(mainw->current_file);
 }
 
 

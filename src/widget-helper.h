@@ -1409,7 +1409,7 @@ boolean lives_widget_destroy_with(LiVESWidget *, LiVESWidget *dieplease);
 LiVESPixbuf *get_desktop_icon(const char *dir);
 
 typedef weed_plantptr_t lives_proc_thread_t;
-void *fg_service_call(lives_proc_thread_t lpt, void *retval);
+void fg_service_call(lives_proc_thread_t lpt, void *retval);
 
 //volatile lives_proc_thread_t get_lpttorun(boolean runit);
 boolean has_lpttorun(void);

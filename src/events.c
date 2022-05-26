@@ -3377,15 +3377,14 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
       for (i = 0; i < nclips; i++) {
         if (mainw->clip_index[i] == mainw->scrap_file) {
           int64_t offs = weed_get_int64_value(next_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, NULL);
-          if (!mainw->files[mainw->scrap_file]->ext_src) load_from_scrap_file(NULL, -1);
           lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), offs);
+          if (!mainw->files[mainw->scrap_file]->ext_src) load_from_scrap_file(NULL, -1);
         }
       }
     }
 
     // if we are in multitrack mode, we will just set up NULL layers and let the effects pull our frames
     if (mainw->multitrack) {
-
       if (!LIVES_IS_PLAYING || ((mainw->fixed_fpsd <= 0. && (!mainw->vpp || mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback))
                                 || (mainw->fixed_fpsd > 0. && (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1.
                                     / mainw->fixed_fpsd) ||

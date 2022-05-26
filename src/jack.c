@@ -1691,8 +1691,8 @@ retry_connect:
     if (is_trans && !all_equal && !prefs->jack_srv_dup) {
       uint64_t ostate = 0;
       if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
-      new_driver = (jackctl_driver_t *)main_thread_execute((lives_funcptr_t)get_def_drivers,
-                   WEED_SEED_VOIDPTR, &new_driver, "vvb", drivers, &slist, 4);
+      main_thread_execute((lives_funcptr_t)get_def_drivers,
+                          WEED_SEED_VOIDPTR, &new_driver, "vvb", drivers, &slist, 4);
       if (!new_driver) {
         if (mainw->cancelled) {
           logmsg = lives_strdup_printf("LiVES: User cancelled during driver selection for %s client", type_name);
@@ -1711,8 +1711,8 @@ retry_connect:
     } else {
       uint64_t ostate = 0;
       if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
-      new_driver = (jackctl_driver_t *)main_thread_execute((lives_funcptr_t)get_def_drivers,
-                   WEED_SEED_VOIDPTR, &new_driver, "vvb", drivers, &slist, is_trans ? 4 : 5);
+      main_thread_execute((lives_funcptr_t)get_def_drivers,
+                          WEED_SEED_VOIDPTR, &new_driver, "vvb", drivers, &slist, is_trans ? 4 : 5);
       if (!new_driver) {
         if (mainw->cancelled) {
           logmsg = lives_strdup_printf("LiVES: User cancelled during driver selection for %s client", type_name);

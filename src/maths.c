@@ -45,6 +45,7 @@ LIVES_GLOBAL_INLINE double gaussian(double x, double a, double m, double s1, dou
 }
 
 LIVES_GLOBAL_INLINE uint32_t get_2pow(uint32_t x) {
+  // return largest 2 ** n <= x
   x |= (x >> 1); x |= (x >> 2); x |= (x >> 4); x |= (x >> 8); x |= (x >> 16);
   return (++x) >> 1;
 }
@@ -81,11 +82,11 @@ LIVES_GLOBAL_INLINE double get_approx_ln64(uint64_t x) {
   return (double)get_log2_64(x) / LN_CONSTVAL;
 }
 
-
 LIVES_GLOBAL_INLINE uint64_t get_near2pow(uint64_t val) {
-  uint64_t low = get_log2_64(val), high = low * 2;
-  if (high < low || (val - low < high - val)) return low;
-  return high;
+  uint64_t low = get_2pow(val);
+  g_print("low = %lu, val - low = %lu, <<1 = %lu\n", low, val - low, (val - low) << 1);
+  if (((val - low) << 1) > val) return low << 1;
+  return low;
 }
 
 

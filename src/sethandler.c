@@ -983,7 +983,7 @@ boolean reload_set(const char *set_name) {
         if (mainw->is_ready) {
           // force a redraw
           get_play_times();
-          redraw_timeline_bg(mainw->current_file);
+          redraw_timeline(mainw->current_file);
           //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
         }
       } else {

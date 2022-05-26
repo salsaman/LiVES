@@ -20,18 +20,19 @@
 
 #define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) {boolean a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_BOOLEAN, &a, FLAGS);}
 #define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) {int a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_INT, &a, FLAGS);}
+#define DEFINE_PREF_DOUBLE(IDX, PR, PDEF, FLAGS) {double a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_DOUBLE, &a, FLAGS);}
 #define DEFINE_PREF_STRING(IDX, PR, SLEN, PDEF, FLAGS) {char *a = (PDEF); weed_plant_t *prefplant = \
 									    define_pref(PREF_##IDX, prefs->PR, WEED_SEED_STRING, \
 											&a, FLAGS); \
     weed_set_int_value(prefplant, WEED_LEAF_MAXCHARS, (SLEN));}
 
 #define SET_PREF_WIDGET(IDX, WIDGET) set_pref_widget(PREF_##IDX, (WIDGET))
-#define GET_PREF_WIDGET(IDX, WIDGET) get_pref_widget(PREF_##IDX)
+#define GET_PREF_WIDGET(IDX) get_pref_widget(PREF_##IDX)
 
 #define ACTIVE(widget, signal) lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->widget), LIVES_WIDGET_ ##signal## \
 							 _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
-#define ACTIVE_W(signal) lives_signal_sync_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_ ##signal## \
-							 _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
+#define ACTIVE_W(widget, signal) lives_signal_sync_connect(LIVES_GUI_OBJECT((widget)), LIVES_WIDGET_ ##signal## \
+							   _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
 
 #define LIVES_LEAF_PREF_IDX "pref_idx"
 #define LIVES_LEAF_WIDGET "widget"
@@ -482,6 +483,8 @@ typedef struct {
 
 #define DEF_REC_STOP_GB 10.
   double rec_stop_gb;
+  int rec_stop_quota;
+  boolean rec_stop_dwarn;
 
   // autotransitioning in mt
   int atrans_fx;
@@ -905,7 +908,6 @@ typedef struct {
   LiVESWidget *spinbutton_mt_undo_buf;
   LiVESWidget *spinbutton_mt_ab_time;
   LiVESWidget *spinbutton_max_disp_vtracks;
-  LiVESWidget *spinbutton_rec_gb;
   LiVESWidget *mt_autoback_every;
   LiVESWidget *mt_autoback_always;
   LiVESWidget *mt_autoback_never;
@@ -1216,6 +1218,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_PB_QUALITY "pb_quality"
 
 #define PREF_REC_STOP_GB "rec_stop-gb"
+#define PREF_REC_STOP_DWARN "rec_stop-dwarn"
+#define PREF_REC_STOP_QUOTA "rec_stop-quota"
 
 #define PREF_NFX_THREADS "nfx_threads"
 
@@ -1382,17 +1386,23 @@ boolean update_pref(const char *pref_idx, void *newval, boolean permanent);
 
 boolean update_boolean_pref(const char *pref_idx, boolean val, boolean permanent);
 boolean update_int_pref(const char *pref_idx, int val, boolean permanent);
+boolean update_double_pref(const char *pref_idx, double val, boolean permanent);
 
 void invalidate_pref_widgets(LiVESWidget *top);
 
 void free_prefs(void);
 
+boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean permanent);
+boolean pref_factory_double(const char *prefidx, double *pref, double newval, boolean permanent);
+
 boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent);
 boolean pref_factory_string(const char *prefidx, const char *newval, boolean permanent);
 boolean pref_factory_utf8(const char *prefidx, const char *newval, boolean permanent);
-boolean pref_factory_int(const char *prefidx, int *pref, int newval, boolean permanent);
 boolean pref_factory_int64(const char *prefidx, int64_t newval, boolean permanent);
+
+// for convenience - var is actually stored as double in config
 boolean pref_factory_float(const char *prefidx, float newval, boolean permanent);
+
 boolean pref_factory_bitmapped(const char *prefidx, uint32_t bitfield, boolean newval, boolean permanent);
 boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const char *strval, boolean permanent);
 LiVESList *pref_factory_list(const char *prefidx, LiVESList *);

@@ -454,7 +454,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
               extra_frames -= st_extra_frames;
               showclipimgs();
               if (!mainw->multitrack)
-                redraw_timeline_bg(mainw->current_file);
+                redraw_timeline(mainw->current_file);
             }
 
             if ((cfile->frames + extra_frames) / cfile->fps > cfile->laudio_time) {
@@ -687,7 +687,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
           do_error_dialog(mainw->msg);
         }
         if (!mainw->multitrack)
-          redraw_timeline_bg(mainw->current_file);
+          redraw_timeline(mainw->current_file);
         showclipimgs();
         return 0;
       }
@@ -850,7 +850,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
           cfile->end = cfile->frames;
           showclipimgs();
           if (!mainw->multitrack)
-            redraw_timeline_bg(mainw->current_file);
+            redraw_timeline(mainw->current_file);
         }
       }
       if (cfile->laudio_time < cfile->video_time && cfile->achans > 0) {
@@ -893,7 +893,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
             resp = lives_dialog_run(LIVES_DIALOG(resaudw->dialog));
             if (resp == LIVES_RESPONSE_OK) {
               audio_details_clicked(NULL, LIVES_INT_TO_POINTER(mainw->current_file));
-              redraw_timeline_bg(mainw->current_file);
+              redraw_timeline(mainw->current_file);
             } else lives_widget_destroy(resaudw->dialog);
             lives_freep((void **)&resaudw);
 	    // *INDENT-OFF*
@@ -2038,17 +2038,19 @@ char *prep_audio_player(frames_t audio_end, int arate, int asigned, int aendian)
     if (mainw->current_file == 0 && cfile->arate < 0) cfile->aseek_pos = cfile->afilesize;
   }
 
-  // start up our audio player (jack or pulse)
-  if (audio_player == AUD_PLAYER_JACK) {
+  if (CURRENT_CLIP_HAS_AUDIO) {
+    // start up our audio player (jack or pulse)
+    if (audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-    if (mainw->jackd) jack_aud_pb_ready(mainw->jackd, mainw->current_file);
-    return NULL;
+      if (mainw->jackd) jack_aud_pb_ready(mainw->jackd, mainw->current_file);
+      return NULL;
 #endif
-  } else if (audio_player == AUD_PLAYER_PULSE) {
+    } else if (audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed) pulse_aud_pb_ready(mainw->pulsed, mainw->current_file);
-    return NULL;
+      if (mainw->pulsed) pulse_aud_pb_ready(mainw->pulsed, mainw->current_file);
+      return NULL;
 #endif
+    }
   }
 
   // deprecated
@@ -2182,14 +2184,6 @@ static void post_playback(void) {
 
   if (!mainw->multitrack && CURRENT_CLIP_IS_VALID)
     set_main_title(cfile->name, 0);
-
-  if (mainw->drawtl_thread) {
-    if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-      lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
-    }
-    lives_proc_thread_join(mainw->drawtl_thread);
-    mainw->drawtl_thread = NULL;
-  }
 
   if (!mainw->multitrack && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
       cfile->clip_type == CLIP_TYPE_FILE)) {
@@ -2532,7 +2526,9 @@ void play_file(void) {
   }
 
   if (!mainw->multitrack) {
+    lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
+    lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
 
     mainw->last_blend_file = -1;
 
@@ -2752,11 +2748,6 @@ void play_file(void) {
       }
 
       if (AUD_SRC_EXTERNAL) audio_analyser_start(AUDIO_SRC_EXT);
-
-      if (!mainw->foreign && !mainw->multitrack) {
-        avsync_force();
-      } else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-
       if (!mainw->multitrack || !mainw->multitrack->pb_start_event) {
         do_progress_dialog(FALSE, FALSE, NULL);
 
@@ -3351,6 +3342,7 @@ void play_file(void) {
 
   //////
   main_thread_execute((lives_funcptr_t)post_playback, -1, NULL, "");
+  if (!mainw->multitrack) redraw_timeline(mainw->current_file);
 
   if (CURRENT_CLIP_IS_VALID) {
     if (!mainw->multitrack) {
@@ -4359,6 +4351,7 @@ static uint64_t free_mb; // MB free to write
 static ticks_t lscrap_check;
 
 void add_to_ascrap_mb(uint64_t bytes) {ascrap_mb += bytes / 1000000.;}
+double get_ascrap_mb(void) {return ascrap_mb;}
 
 boolean open_scrap_file(void) {
   // create a scrap file for recording generated video frames
@@ -4532,96 +4525,6 @@ boolean load_from_scrap_file(weed_layer_t *layer, frames_t frame) {
 }
 
 
-static void ds_warn(boolean freelow, uint64_t bytes) {
-  char *reason, *aorb;
-  char *amount = lives_format_storage_space_string(bytes);
-  if (freelow) {
-    reason = (_("FREE DISK SPACE"));
-    aorb = (_("BELOW"));
-  } else {
-    reason = (_("DISK SPACE USED"));
-    aorb = (_("ABOVE"));
-  }
-  d_print(_("\nRECORDING was PAUSED because %s in %s IS %s %s !\n"
-            "Diskspace limits can be set in Preferences / Misc.\n"),
-          reason, prefs->workdir, aorb, amount);
-  on_record_perf_activate(NULL, NULL);
-  d_print_urgency(URGENCY_MSG_TIMEOUT, _("RECORDING WAS PAUSED DUE TO DISKSPACE LIMITS\n"));
-  lives_free(reason);
-  lives_free(aorb);
-}
-
-
-boolean check_for_disk_space(boolean fullcheck) {
-  /// fullcheck == FALSE, we MAY check ds used, and we WILL check free ds using cached value
-  /// fullcheck == TRUE, we WILL update free ds
-  static int64_t free_ds = -1;
-  static double xscrap_mb = -1., xascrap_mb = -1.;
-  static double xxscrap_mb = -1., xxascrap_mb = -1.;
-  static int64_t ds_used = -1;
-  static boolean wrtable = FALSE;
-
-  double scrap_mb = 0.;
-
-  if (prefs->disk_quota == 0 && prefs->rec_stop_gb < 0.) return TRUE;
-
-  if (fullcheck) ds_used = -1;
-
-  if (IS_VALID_CLIP(mainw->scrap_file)) {
-    scrap_mb = (double)mainw->files[mainw->scrap_file]->f_size / (double)ONE_MILLION;
-  }
-
-  if (prefs->disk_quota > 0) {
-    int64_t xds_used = -1;
-
-    if ((ds_used = disk_monitor_check_result(prefs->workdir)) > -1) {
-      xds_used = ds_used;
-      xxscrap_mb = scrap_mb;
-      xxascrap_mb = ascrap_mb;
-    } else {
-      if (xxscrap_mb == -1. || xxscrap_mb > scrap_mb) xxscrap_mb = scrap_mb;
-      if (xxascrap_mb == -1. || xxascrap_mb > ascrap_mb) xxascrap_mb = ascrap_mb;
-      if (ds_used > -1) xds_used = ds_used
-                                     + (int64_t)(scrap_mb + ascrap_mb - xxscrap_mb - xxascrap_mb)
-                                     * ONE_MILLION;
-    }
-    if (xds_used > -1) {
-      /// value is in BYTES
-      if ((uint64_t)xds_used >= prefs->disk_quota * ONE_BILLION) {
-        if (mainw->record && !mainw->record_paused) {
-          ds_warn(FALSE, (uint64_t)ds_used);
-        }
-        return FALSE;
-      }
-    }
-  }
-
-  // check if we have enough free space left on the volume (return FALSE if not)
-  if (prefs->rec_stop_gb > -1.) {
-    // check free space again
-    if (fullcheck || free_ds == -1 || xscrap_mb == -1 || xascrap_mb == -1
-        || scrap_mb < xscrap_mb || ascrap_mb < xascrap_mb) {
-      free_ds = (int64_t)get_ds_free(prefs->workdir);
-      xscrap_mb = scrap_mb;
-      xascrap_mb = ascrap_mb;
-      if (free_ds == 0) wrtable = is_writeable_dir(prefs->workdir);
-      else wrtable = TRUE;
-    }
-    if (wrtable) {
-      double free_mb = (double)free_ds / (double)ONE_MILLION;
-      double freesp = free_mb - (scrap_mb + ascrap_mb - xscrap_mb - xascrap_mb);
-      if ((double)freesp / 1000. < prefs->rec_stop_gb) {
-        if (mainw->record && !mainw->record_paused) {
-          ds_warn(TRUE, freesp * ONE_MILLION);
-        }
-        return FALSE;
-      }
-    }
-  }
-  return TRUE;
-}
-
-
 static boolean sf_writeable = TRUE;
 
 static int64_t _save_to_scrap_file(weed_layer_t *layer) {
@@ -4697,8 +4600,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
   if ((scrapfile->frames & 0x3F) == 0x3F && !checked_disk) {
     /// check every 64 frames for quota overrun
     checked_disk = TRUE;
-    check_for_disk_space(TRUE);
-    return scrapfile->frames;
+    if (!check_for_disk_space(TRUE)) return scrapfile->frames;
   }
 
   checked_disk = FALSE;
@@ -4735,10 +4637,14 @@ int save_to_scrap_file(weed_layer_t *layer) {
       lives_free(framecount);
     }
   }
+
+  mainw->scrap_file_size = scrapfile->f_size;
+
   scrap_file_procthrd = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY,
                         (lives_funcptr_t)_save_to_scrap_file, WEED_SEED_INT64, "P", orig_layer);
   return ++scrapfile->frames;
 }
+
 
 void close_scrap_file(boolean remove) {
   int current_file = mainw->current_file;
@@ -5475,7 +5381,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       switch_to_file(mainw->current_file, start_file);
       showclipimgs();
     }
-    redraw_timeline_bg(mainw->current_file);
   } else {
     mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen
   }

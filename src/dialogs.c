@@ -1807,6 +1807,11 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   if (prefs->pbq_adaptive) reset_effort();
   if (mainw->multitrack && !mainw->multitrack->is_rendering) mainw->effort = EFFORT_RANGE_MAX;
 
+  // must call reset_timebase first, since we set playback ticks
+  if (!mainw->foreign && !mainw->multitrack) {
+    avsync_force();
+  } else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function
   while (1) {

@@ -2380,8 +2380,8 @@ static boolean sanity_check_cdata(lives_clip_data_t *cdata) {
 
 LIVES_GLOBAL_INLINE lives_clip_data_t *get_clip_cdata(int clipno) {
   lives_clip_t *sfile;
-  if ((sfile = RETURN_PHYSICAL_CLIP(clipno)) && sfile->clip_type != CLIP_TYPE_FILE
-      && !sfile->ext_src && sfile->ext_src_type != LIVES_EXT_SRC_DECODER) {
+  if ((sfile = RETURN_PHYSICAL_CLIP(clipno)) && sfile->clip_type == CLIP_TYPE_FILE
+      && sfile->ext_src && sfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
     lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
     if (dplug) return dplug->cdata;
   }

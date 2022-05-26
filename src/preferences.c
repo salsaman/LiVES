@@ -79,6 +79,11 @@ void init_prefs(void) {
   // PRREF_IDX, pref-><...>, default
   DEFINE_PREF_BOOL(POGO_MODE, pogo_mode, FALSE, 0);
   DEFINE_PREF_BOOL(SHOW_TOOLBAR, show_tool, TRUE, 0);
+
+  DEFINE_PREF_DOUBLE(REC_STOP_GB, rec_stop_gb, DEF_REC_STOP_GB, 0);
+  DEFINE_PREF_INT(REC_STOP_QUOTA, rec_stop_quota, 90, 0);
+  DEFINE_PREF_BOOL(REC_STOP_DWARN, rec_stop_dwarn, TRUE, 0);
+
   DEFINE_PREF_BOOL(PB_HIDE_GUI, pb_hide_gui, FALSE, PREF_FLAG_EXPERIMENTAL);
   DEFINE_PREF_BOOL(SELF_TRANS, tr_self, FALSE, PREF_FLAG_EXPERIMENTAL);
   //DEFINE_PREF_BOOL(GENQ_MODE, genq_mode, FALSE);
@@ -130,6 +135,12 @@ void load_pref(const char *pref_idx) {
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
       break;
     }
+    case WEED_SEED_DOUBLE: {
+      double ddef = weed_get_double_value(prefplant, WEED_LEAF_DEFAULT, NULL);
+      *(double *)ppref = get_double_prefd(pref_idx, ddef);
+      weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
+      break;
+    }
     case WEED_SEED_STRING: {
       int slen = weed_get_int_value(prefplant, WEED_LEAF_MAXCHARS, NULL);
       char *sdef = weed_get_string_value(prefplant, WEED_LEAF_DEFAULT, NULL);
@@ -163,6 +174,7 @@ boolean update_pref(const char *pref_idx, void *newval, boolean permanent) {
     LiVESWidget *widget = (LiVESWidget *)weed_get_voidptr_value(prefplant, LIVES_LEAF_WIDGET, NULL);
     boolean bval;
     int ival;
+    double dval;
     if (widget || newval) {
       void *ppref = weed_get_voidptr_value(prefplant, LIVES_LEAF_VARPTR, NULL);
       int32_t type = weed_leaf_seed_type(prefplant, WEED_LEAF_DEFAULT);
@@ -193,6 +205,19 @@ boolean update_pref(const char *pref_idx, void *newval, boolean permanent) {
         goto int_success;
       }
       break;
+      case WEED_SEED_DOUBLE: {
+        double dpref;
+        if (newval) dval = *(double *)newval;
+        else dval = lives_spin_button_get_value(LIVES_SPIN_BUTTON(widget));
+        /// any nonstandard updates here
+        pref_factory_double(pref_idx, &dpref, dval, permanent);
+        ///
+        dpref = *(double *)ppref;
+        if (dpref == dval) goto fail;
+        *(double *)ppref = dval;
+        goto double_success;
+      }
+      break;
       default: break;
       }
     }
@@ -221,6 +246,18 @@ int_success:
     }
     if (permanent) {
       set_int_pref(pref_idx, ival);
+      weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
+    } else weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_TEMP);
+    return TRUE;
+
+double_success:
+    weed_set_double_value(prefplant, WEED_LEAF_VALUE, dval);
+    if (prefsw) {
+      lives_widget_process_updates(prefsw->prefs_dialog);
+      prefsw->ignore_apply = FALSE;
+    }
+    if (permanent) {
+      set_double_pref(pref_idx, dval);
       weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_PERM);
     } else weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_TEMP);
     return TRUE;
@@ -255,6 +292,9 @@ boolean update_int_pref(const char *pref_idx, int val, boolean permanent) {
   return update_pref(pref_idx, (void *)&val, permanent);
 }
 
+boolean update_double_pref(const char *pref_idx, double val, boolean permanent) {
+  return update_pref(pref_idx, (void *)&val, permanent);
+}
 
 static LiVESWidget *set_pref_widget(const char *pref_idx, LiVESWidget *widget) {
   weed_plant_t *prefplant = find_pref(pref_idx);
@@ -266,13 +306,15 @@ static LiVESWidget *set_pref_widget(const char *pref_idx, LiVESWidget *widget) {
       weed_set_voidptr_value(prefplant, LIVES_LEAF_WIDGET, widget);
       switch (vtype) {
       case WEED_SEED_BOOLEAN:
-        if (widget) ACTIVE_W(TOGGLED);
+        if (widget) ACTIVE_W(widget, TOGGLED);
         break;
       case WEED_SEED_INT:
-        if (widget) ACTIVE_W(VALUE_CHANGED);
+      case WEED_SEED_INT64:
+      case WEED_SEED_DOUBLE:
+        if (widget) ACTIVE_W(widget, VALUE_CHANGED);
         break;
       case WEED_SEED_STRING:
-        if (widget) ACTIVE_W(CHANGED);
+        if (widget) ACTIVE_W(widget, CHANGED);
         break;
       default: break;
       }
@@ -1765,6 +1807,24 @@ success3:
   return TRUE;
 }
 
+boolean pref_factory_double(const char *prefidx, double * pref, double newval, boolean permanent) {
+  if (prefsw) prefsw->ignore_apply = TRUE;
+
+  if (pref && newval == *pref) goto fail;
+
+  if (pref) *pref = newval;
+  if (prefsw) {
+    lives_widget_process_updates(prefsw->prefs_dialog);
+    prefsw->ignore_apply = FALSE;
+  }
+  if (permanent) set_double_pref(prefidx, newval);
+  return TRUE;
+
+fail:
+  if (prefsw) prefsw->ignore_apply = FALSE;
+  return FALSE;
+}
+
 boolean pref_factory_string_choice(const char *prefidx, LiVESList * list, const char *strval, boolean permanent) {
   int idx = lives_list_strcmp_index(list, (livesconstpointer)strval, TRUE);
   if (prefsw) prefsw->ignore_apply = TRUE;
@@ -2285,8 +2345,6 @@ boolean apply_prefs(boolean skip_warn) {
   boolean pstyle2 = palette->style & STYLE_2;
   boolean pstyle3 = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style3));
   boolean pstyle4 = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style4));
-
-  int rec_gb = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_rec_gb));
 
   char audio_player[256];
   int listlen = lives_list_length(prefs->acodec_list);
@@ -2875,12 +2933,6 @@ boolean apply_prefs(boolean skip_warn) {
 
   // virtual rte keys
   pref_factory_int(PREF_RTE_MODES_PERKEY, &prefs->rte_modes_per_key, rte_modes_per_key, TRUE);
-
-  if (prefs->rec_stop_gb != rec_gb) {
-    // disk free level at which we must stop recording
-    prefs->rec_stop_gb = rec_gb;
-    set_int_pref(PREF_REC_STOP_GB, prefs->rec_stop_gb);
-  }
 
   if (ins_speed == prefs->ins_resample) {
     prefs->ins_resample = !ins_speed;
@@ -4046,7 +4098,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   LiVESWidget *hbox1;
   LiVESWidget *vbox;
 
-  LiVESWidget *dirbutton;
+  LiVESWidget *dirbutton, *cbut;
 
   LiVESWidget *pp_combo;
   LiVESWidget *png;
@@ -5425,13 +5477,14 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
+  // TODO - set to 0.
   lives_standard_check_button_new(_("Free disk space falls below"), TRUE, LIVES_BOX(hbox), NULL);
 
   widget_opts.swap_label = TRUE;
 
   // TRANSLATORS: gigabytes
-  prefsw->spinbutton_rec_gb = lives_standard_spin_button_new(_("GB"), prefs->rec_stop_gb, 0., 1024., 1., 10., 0,
-                              LIVES_BOX(hbox), NULL);
+  SET_PREF_WIDGET(REC_STOP_GB, lives_standard_spin_button_new(_("GB"), prefs->rec_stop_gb,
+                  0., 1024., 1., 10., 0, LIVES_BOX(hbox), NULL));
   widget_opts.swap_label = FALSE;
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
@@ -5439,15 +5492,24 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
 
+  // TODO - need implementing fully
+
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  lives_standard_check_button_new(_("More than"), TRUE, LIVES_BOX(hbox), NULL);
+
+  // TODO - set to 0.
+  cbut = lives_standard_check_button_new(_("More than"), TRUE, LIVES_BOX(hbox), NULL);
 
   widget_opts.swap_label = TRUE;
 
   // xgettext:no-c-format
-  lives_standard_spin_button_new(_("% of quota is used"), 90., 0., 100., 1., 5., 0,
-                                 LIVES_BOX(hbox), NULL);
+  SET_PREF_WIDGET(REC_STOP_QUOTA, lives_standard_spin_button_new(_("% of quota is used"),
+                  90., 0., 100., 1., 5., 0, LIVES_BOX(hbox), NULL));
   widget_opts.swap_label = FALSE;
+
+  if (!prefs->disk_quota) {
+    lives_widget_set_sensitive(cbut, FALSE);
+    lives_widget_set_sensitive(GET_PREF_WIDGET(REC_STOP_QUOTA), FALSE);
+  }
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
@@ -5455,7 +5517,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  lives_standard_check_button_new(_("Disk space warning level is passed"), TRUE, LIVES_BOX(hbox), NULL);
+
+  SET_PREF_WIDGET(REC_STOP_DWARN, lives_standard_check_button_new(_("Disk space warning level is passed"),
+                  TRUE, LIVES_BOX(hbox), NULL));
 
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Recording is always paused if the disk space critical level is reached"),
                          FALSE);
@@ -7428,7 +7492,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(pa_gens, TOGGLED);
 
   ACTIVE(spinbutton_ext_aud_thresh, VALUE_CHANGED);
-  ACTIVE(spinbutton_rec_gb, VALUE_CHANGED);
 
   ACTIVE(encoder_combo, CHANGED);
 

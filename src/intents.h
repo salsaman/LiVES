@@ -119,6 +119,7 @@ typedef struct {
   void *data;
   uint64_t flags;
   lives_proc_thread_t tinfo; // for async_join
+  void *retloc; // pointer to a var to store return val in
 } lives_closure_t;
 
 typedef struct {

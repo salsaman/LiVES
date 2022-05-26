@@ -54,13 +54,18 @@ typedef struct {
 } lives_sigdata_t;
 
 // for future use
+// - this can become a lives_object template
 typedef struct {
+  const char *funcname; // optional
   lives_funcptr_t function;
-  funcsig_t funcsig;
-  int return_type;
+  uint32_t return_type;
+  const char *args_fmt;
   uint64_t flags;
 } lives_funcdef_t;
 
+#define LIVES_LEAF_TEMPLATE "template"
+
+typedef weed_plant_t lives_funcinst_t;
 
 /// hook funcs
 
@@ -72,8 +77,6 @@ void lives_hooks_clear(LiVESList **xlist, int type);
 
 void lives_hooks_trigger(lives_object_t *obj, LiVESList **xlist, int type);
 void lives_hooks_join(LiVESList **xlist, int type);
-
-boolean avoid_deadlock(hook_funcptr_t hfunc, uint64_t xtraflags, livespointer data);
 
 #define THRDNATIVE_CAN_CORRECT (1ull << 0)
 
@@ -101,6 +104,7 @@ typedef struct {
   boolean var_no_gui;
   boolean var_force_button_image;
   volatile boolean var_fg_service;
+  uint64_t var_hook_flag_hints;
   ticks_t var_timerinfo;
   uint64_t var_thrdnative_flags;
   LiVESList *var_hook_closures[N_HOOK_FUNCS];
@@ -251,9 +255,12 @@ void lives_thread_free(lives_thread_t *thread);
 // thread functions
 lives_thread_data_t *get_thread_data(void);
 lives_threadvars_t *get_threadvars(void);
+lives_thread_data_t *get_global_thread_data(void);
+lives_threadvars_t *get_global_threadvars(void);
 lives_thread_data_t *lives_thread_data_create(uint64_t idx);
 
 #define THREADVAR(var) (get_threadvars()->var_##var)
+#define FG_THREADVAR(var) (get_global_threadvars()->var_##var)
 
 // lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -317,7 +324,7 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives
 void lives_proc_thread_free(lives_proc_thread_t lpt);
 
 // forces fg execution (safe to run in fg or bg)
-void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, const char *args_fmt, ...);
+boolean main_thread_execute(lives_funcptr_t func, int return_type, void *retval, const char *args_fmt, ...);
 
 /// returns FALSE while the thread is running, TRUE once it has finished
 boolean lives_proc_thread_check_finished(lives_proc_thread_t);
@@ -356,13 +363,22 @@ weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t) ;
 int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
 ////
+lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
+                                uint32_t return_type,  const char *args_fmt, uint64_t flags);
+void free_funcdef(lives_funcdef_t *);
+lives_funcinst_t *create_funcinst(lives_funcdef_t *template, void *retstore, ...);
+void free_funcinst(lives_funcinst_t *);
+
+funcsig_t funcsig_from_args_fmt(const char *args_fmt);
 
 // utility funcs (called from widget-helper.c)
 boolean is_fg_thread(void);
 int get_funcsig_nparms(funcsig_t sig);
 boolean call_funcsig(lives_proc_thread_t info);
-void *fg_run_func(lives_proc_thread_t lpt, void *retval);
+boolean fg_run_func(lives_proc_thread_t lpt, void *retval);
 /////
+
+#define LIVES_WEED_SUBTYPE_FUNCINST 150
 
 #define THREAD_INTENTION THREADVAR(intentcap).intent
 #define THREAD_CAPACITIES THREADVAR(intentcap).capacities

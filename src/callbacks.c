@@ -2832,7 +2832,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
 
   if (!mainw->multitrack) {
     reget_afilesize(mainw->current_file);
-    if (CURRENT_CLIP_HAS_AUDIO) redraw_timeline_bg(mainw->current_file);
+    if (CURRENT_CLIP_HAS_AUDIO) redraw_timeline(mainw->current_file);
   }
 }
 
@@ -4413,7 +4413,7 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     cfile->start = start;
     cfile->end = end;
     showclipimgs();
-    redraw_timeline_bg(mainw->current_file);
+    redraw_timeline(mainw->current_file);
     return;
   }
 
@@ -4617,7 +4617,7 @@ void on_select_activate(LiVESWidget * widget, livespointer user_data) {
 
   set_start_end_spins(mainw->current_file);
   showclipimgs();
-  redraw_timeline_bg(mainw->current_file);
+  redraw_timeline(mainw->current_file);
 }
 
 void sel_vismatch_activate(LiVESWidget * w, livespointer user_data) {
@@ -7385,7 +7385,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
 	}}
       if (!mainw->multitrack && !mainw->faded) {
 	if (CURRENT_CLIP_IS_VALID) {
-	  redraw_timeline_bg(mainw->current_file);
+	  redraw_timeline(mainw->current_file);
 	  show_playbar_labels(mainw->current_file);
 	}}}
     // *INDENT-ON*
@@ -7695,7 +7695,7 @@ void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         lives_widget_show(mainw->framebar);
       }
       if (!mainw->multitrack && CURRENT_CLIP_IS_VALID) {
-        redraw_timeline_bg(mainw->current_file);
+        redraw_timeline(mainw->current_file);
         show_playbar_labels(mainw->current_file);
 	// *INDENT-OFF*
       }}}

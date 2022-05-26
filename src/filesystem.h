@@ -140,4 +140,7 @@ boolean lives_buffered_rdonly_is_slurping(int fd);
 
 off_t lives_buffered_flush(int fd);
 
+// OS filesystems ////
+boolean check_for_disk_space(boolean fullcheck);
+
 #endif

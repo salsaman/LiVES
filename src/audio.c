@@ -784,11 +784,9 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
   // take care of rounding errors
   src_end = src + tbytes / 2;
 
-  g_print("SC b4 %f %ld %d %ld\n", scale, nsamples, nSrcChannels, tbytes);
   if ((off_t)((fabs(scale) * (double)nsamples)) * nSrcChannels * 2 > tbytes)
     scale = scale > 0. ? ((double)(tbytes  / nSrcChannels / 2)) / (double)nsamples
             :  -(((double)(tbytes  / nSrcChannels / 2)) / (double)nsamples);
-  g_print("SC after %f\n", scale);
 
   while (nsamples--) {
     if (src_offset_i * 2 > tbytes || src_offset_i < 0) break;
@@ -845,8 +843,8 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
     }
     /* advance the position */
     src_offset_d += scale;
-    /* if (scale < 0.) src_offset_i = (off_t)(src_offset_d - .4999); */
-    /* else src_offset_i = (off_t)(src_offset_d + .0); */
+    if (scale < 0.) src_offset_i = (off_t)(src_offset_d - .4999);
+    else src_offset_i = (off_t)(src_offset_d + .49999);
     src_offset_i *= nSrcChannels;
   }
 }

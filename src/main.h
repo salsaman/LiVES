@@ -1128,8 +1128,7 @@ boolean load_from_scrap_file(weed_layer_t *, frames_t frame);
 void close_ascrap_file(boolean remove);
 void close_scrap_file(boolean remove);
 void add_to_ascrap_mb(uint64_t bytes);
-
-boolean check_for_disk_space(boolean fullcheck);
+double get_ascrap_mb(void);
 
 // main.c
 typedef void (*SignalHandlerPointer)(int);
@@ -1490,7 +1489,7 @@ void break_me(const char *dtl);
 
 #define VSLICES 1
 
-#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

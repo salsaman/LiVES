@@ -6,6 +6,7 @@
 
 #include <sys/statvfs.h>
 #include "main.h"
+#include "callbacks.h"
 
 #include <sys/mman.h>
 
@@ -833,10 +834,10 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
   return idx;
 }
 
-static size_t bigbytes = BUFFER_FILL_BYTES_LARGE;
-static size_t medbytes = BUFFER_FILL_BYTES_MED;
-static size_t smedbytes = BUFFER_FILL_BYTES_SMALLMED;
-static size_t smbytes = BUFFER_FILL_BYTES_SMALL;
+static volatile size_t bigbytes = BUFFER_FILL_BYTES_LARGE;
+static volatile size_t medbytes = BUFFER_FILL_BYTES_MED;
+static volatile size_t smedbytes = BUFFER_FILL_BYTES_SMALLMED;
+static volatile size_t smbytes = BUFFER_FILL_BYTES_SMALL;
 #define AUTOTUNE
 #ifdef AUTOTUNE
 static weed_plant_t *tunerl = NULL;
@@ -1271,8 +1272,6 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
   else
     posix_fadvise(fbuff->fd, fbuff->offset, 0, POSIX_FADV_SEQUENTIAL);
 #endif
-
-  g_print("DOING SEEK TO %ld\n", fbuff->offset);
 
   lseek(fbuff->fd, fbuff->offset, SEEK_SET);
 
@@ -1925,4 +1924,97 @@ off_t lives_buffered_flush(int fd) {
     }
   }
   return fbuff->offset;
+}
+
+//////////////////////////////////////////////////////////
+
+static void ds_warn(boolean freelow, uint64_t bytes) {
+  char *reason, *aorb;
+  char *amount = lives_format_storage_space_string(bytes);
+  if (freelow) {
+    reason = (_("FREE DISK SPACE"));
+    aorb = (_("BELOW"));
+  } else {
+    reason = (_("DISK SPACE USED"));
+    aorb = (_("ABOVE"));
+  }
+  d_print(_("\nRECORDING was PAUSED because %s in %s IS %s %s !\n"
+            "Diskspace limits can be set in Preferences / Misc.\n"),
+          reason, prefs->workdir, aorb, amount);
+  on_record_perf_activate(NULL, NULL);
+  d_print_urgency(URGENCY_MSG_TIMEOUT, _("RECORDING WAS PAUSED DUE TO DISKSPACE LIMITS\n"));
+  lives_free(reason);
+  lives_free(aorb);
+}
+
+
+boolean check_for_disk_space(boolean fullcheck) {
+  /// fullcheck == FALSE, we MAY check ds used, and we WILL check free ds using cached value
+  /// fullcheck == TRUE, we WILL update free ds
+  int64_t free_ds = capable->ds_free;
+  int64_t ds_used = capable->ds_used;
+  static double xscrap_mb = -1., xascrap_mb = -1.;
+  static double xxscrap_mb = -1., xxascrap_mb = -1.;
+  static boolean wrtable = FALSE;
+
+  double scrap_mb = 0., ascrap_mb = get_ascrap_mb();
+
+  if (prefs->disk_quota == 0 && prefs->rec_stop_gb <= 0.
+      && (!prefs->rec_stop_dwarn || !mainw->next_ds_warn_level)) return TRUE;
+
+  if (IS_VALID_CLIP(mainw->scrap_file)) {
+    scrap_mb = (double)mainw->files[mainw->scrap_file]->f_size / (double)ONE_MILLION;
+  }
+
+  //capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
+  //capable->ds_free = dsval;
+
+  if (prefs->disk_quota > 0) {
+    int64_t ds_used;
+    if ((ds_used = disk_monitor_check_result(prefs->workdir)) > -1) {
+      capable->ds_used = ds_used;
+      xxscrap_mb = scrap_mb;
+      xxascrap_mb = ascrap_mb;
+    } else {
+      if (xxscrap_mb == -1. || xxscrap_mb > scrap_mb) xxscrap_mb = scrap_mb;
+      if (xxascrap_mb == -1. || xxascrap_mb > ascrap_mb) xxascrap_mb = ascrap_mb;
+    }
+    if (ds_used > -1) {
+      /// value is in BYTES
+      ds_used += (int64_t)(scrap_mb + ascrap_mb - xxscrap_mb - xxascrap_mb)
+                 * ONE_MILLION;
+      if ((double)ds_used >= (double)(prefs->disk_quota * ONE_BILLION) * prefs->rec_stop_quota / 100.) {
+        if (!RECORD_PAUSED && LIVES_IS_RECORDING) {
+          ds_warn(FALSE, (uint64_t)ds_used);
+        }
+        return FALSE;
+      }
+    }
+  }
+
+  // check if we have enough free space left on the volume (return FALSE if not)
+  if (prefs->rec_stop_gb > 0. || prefs->rec_stop_dwarn) {
+    // check free space again
+    if (fullcheck || free_ds == -1 || xscrap_mb == -1 || xascrap_mb == -1
+        || scrap_mb < xscrap_mb || ascrap_mb < xascrap_mb) {
+      capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &ds_used, 0);
+      capable->ds_free = free_ds = ds_used;
+      xscrap_mb = scrap_mb;
+      xascrap_mb = ascrap_mb;
+      if (free_ds == 0) wrtable = is_writeable_dir(prefs->workdir);
+      else wrtable = TRUE;
+    }
+    if (wrtable) {
+      double free_mb = (double)free_ds / (double)ONE_MILLION;
+      double freesp = free_mb - (scrap_mb + ascrap_mb - xscrap_mb - xascrap_mb);
+      if ((double)freesp / 1000. < prefs->rec_stop_gb
+          || (prefs->rec_stop_dwarn && free_ds <= mainw->next_ds_warn_level)) {
+        if (!RECORD_PAUSED && LIVES_IS_RECORDING) {
+          ds_warn(TRUE, free_ds);
+        }
+        return FALSE;
+      }
+    }
+  }
+  return TRUE;
 }

@@ -7254,7 +7254,7 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
 
   lives_widget_set_vexpand(mainw->play_image, FALSE);
 
-  lives_idle_add_simple(redraw_tl_idle, NULL);
+
 
   if (prefs->show_msg_area) {
     prefs->msg_textsize = future_prefs->msg_textsize;

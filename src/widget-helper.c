@@ -17,7 +17,7 @@
 
 // static defns
 
-#define EV_LIM 64
+#define EV_LIM 128 // max number of GUI events we process per update loop
 
 static boolean _lives_standard_button_set_label(LiVESButton *, const char *txt);
 static void lives_widget_show_all_cb(LiVESWidget *other, livespointer user_data);
@@ -37,7 +37,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
                              const char *detail, const char *value);
 #endif
 
-#define NSLEEP_TIME 500
+#define NSLEEP_TIME 500 // usec to wait in loops - a value of about 500 seems to be optimal
 
 /// internal data keys
 #define STD_KEY "_wh_is_standard"
@@ -1012,8 +1012,7 @@ static volatile boolean gov_running = FALSE;
 static volatile boolean gov_will_run = FALSE;
 static volatile boolean was_dest = FALSE;
 static volatile lives_proc_thread_t lpttorun = NULL;
-static volatile void *lpt_result = NULL;
-static volatile void *lpt_retval = NULL;
+static void *lpt_retval = NULL;
 
 boolean has_lpttorun(void) {return !!lpttorun;}
 
@@ -1102,6 +1101,9 @@ LIVES_LOCAL_INLINE boolean sigdata_check_alarm(lives_sigdata_t *sigdata) {
 // - there are some limitations - for simplicity, a foreground request passed via this method may not in turn call another fg task
 //     this generally is not an issue since fg tasks should only consist of simple graphical updates
 //
+//    however, some background task (such as redrawing the audio waveforms in the timeline), are more complex
+//    in this case any nested fg calls are deferred until the primary task completes (see threading.c)
+
 //   some gui functions when called in a bg thread are automatically rerouted to the fg:-
 //   g_main_context_iteration, gtk_dialog_run, gtk_widget_show_all, gtk_widget_destroy,
 //   seem to be the main offenders, as well as anything to do with gkt_file_chooser. Any other "problematic" functions can
@@ -1121,10 +1123,8 @@ LIVES_LOCAL_INLINE boolean sigdata_check_alarm(lives_sigdata_t *sigdata) {
 //
 // -- when a bg. thread wants to run a function in the fg thread, the thread can call
 /// main_thread_execute(), which will check whether it is being called by a bg thread or the fg thread and react appropriately
-// -- for bg threads this eventually call lives_fg_run_func() [not to be confused with fg_run_func, which is the fg equivalent !]
-//  lives_fg_run_func will then either signal the running loop governor by setting lpttorun,
-//  or else add an a new instance via an idle func call
-//
+// -- for bg threads this eventually calls fg_run_func()
+
 // - during playback this loop runs continually, and the player is run in the bg,
 // otherwise the entire GUI and any other processing would have to block until playback finished.
 // There is a single place where the player calls
@@ -1138,14 +1138,9 @@ LIVES_LOCAL_INLINE boolean sigdata_check_alarm(lives_sigdata_t *sigdata) {
 // allowing GUI updates, once all updates are done then it is set back to TRUE for the next cycle. Setting the value to FALSE is analagous
 // to the bg thread calling widget_context_update, however it should only be done via the accessor functions.
 //
-// gov_really running - another shared variable - bg threads can check this to see if the governor loop is running or not
-// (including if it is not actually in the loop, but is queued as an idle func)
-// if not running, then the thread can add the loop via an idle func, however care must be taken to ensure that only one thread does this,
-// else undefined behaviour will result (there is no checking for this - as mentioned above, fg requests must be handled one at a time
-// at present the code is designed in such a way that this should not occur)
+// gov_running - TRUE if the governor loop is being run by the fg thread
+// gov_will_run - if set then this is a kind of "promise" that the loop has been scheduled to run
 
-// TODO - look into allowing for multiple "simultaneous" fg requests by add them to queue - this will also require some means to manage
-// multiple return values
 
 boolean governor_loop(livespointer data) {
   volatile boolean clutch;
@@ -1189,11 +1184,11 @@ reloop:
       lpt_recurse2 = TRUE; // prevent super-recursion
       // call fg task directly, bg thread will wait for lpttorun == NULL and read lpt_result
       // will also call lives_proc_thread_free(lpttorun), so it must not be used again after this
-      lpt_result = fg_run_func(lpttorun, (void *)lpt_retval);
+      fg_run_func(lpttorun, lpt_retval);
+      lives_proc_thread_free(lpttorun);
+      lpttorun = NULL;
       if (!is_timer) {
-        lpttorun = NULL;
         lpt_recurse2 = FALSE;
-
         // some handling that needed to be added to prevent multiple idlefuncs
         if (!lpt_recurse) {
           //g_print("gov3\n");
@@ -1206,13 +1201,11 @@ reloop:
           return TRUE;
         }
       }
-      lpttorun = NULL;
     }
 
     lpt_recurse = FALSE;
     lpt_recurse2 = FALSE;
 
-    // some other handling for timers from trial and error
     if (timer_running) {
       if (!--copies) gov_will_run = gov_running = FALSE;
       mainw->clutch = FALSE;
@@ -1225,7 +1218,7 @@ reloop:
   mainw->clutch = TRUE;
 
   if (!new_sigdata || !lives_proc_thread_check_finished(new_sigdata->proc)) {
-    // either we rentered as an idle, or reloop for timer, or adding a new task
+    // either we re-entered as an idle, or reloop for timer, or adding a new task
 
     // sigdata will be set if the last task on the stack completed
     if (!(sigdata = tasks_running()) || new_sigdata) {
@@ -1859,10 +1852,12 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_queue_draw(LiVESWidget *widget)
 }
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw(LiVESWidget *widget) {
-  boolean resp;
-  if (!mainw->go_away || is_fg_thread()) return _lives_widget_queue_draw(widget);
-  else main_thread_execute((lives_funcptr_t)_lives_widget_queue_draw, WEED_SEED_BOOLEAN, &resp, "v", widget);
-  return resp;
+  if (is_fg_thread()) return _lives_widget_queue_draw(widget);
+  else {
+    boolean resp;
+    main_thread_execute((lives_funcptr_t)_lives_widget_queue_draw, WEED_SEED_BOOLEAN, &resp, "v", widget);
+    return resp;
+  }
 }
 
 
@@ -1878,11 +1873,13 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_queue_draw_area(LiVESWidget *wi
 }
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_area(LiVESWidget *widget, int x, int y, int width, int height) {
-  boolean resp;
   if (is_fg_thread()) return _lives_widget_queue_draw_area(widget, x, y, width, height);
-  else main_thread_execute((lives_funcptr_t)_lives_widget_queue_draw_area, WEED_SEED_BOOLEAN, &resp,
-                             "viiii", widget, x, y, width, height);
-  return resp;
+  else {
+    boolean resp;
+    main_thread_execute((lives_funcptr_t)_lives_widget_queue_draw_area, WEED_SEED_BOOLEAN, &resp,
+                        "viiii", widget, x, y, width, height);
+    return resp;
+  }
 }
 
 
@@ -2120,22 +2117,21 @@ static LiVESResponseType _lives_dialog_run(LiVESDialog *dialog) {
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dialog) {
   LiVESResponseType resp;
   if (is_fg_thread()) return _lives_dialog_run(dialog);
-  else main_thread_execute((lives_funcptr_t)_lives_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
+  main_thread_execute((lives_funcptr_t)_lives_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
   return resp;
 }
 
 
 // the purpose of this function is to force a lives_proc_thread to be run by the foreground
 // (i.e graphics) thread. Background threads which need to do GUI updates should use this
-// to run a lpt. Also note that fg service calls may not be nested, for some functions
-// it is now possible to call avoid_deadlock() to make those functions be called after return
-void *fg_service_call(lives_proc_thread_t lpt, void *retval) {
+// to run a lpt. Also note that fg service calls may not be nested, instead the calls will be deferred and run in sequence
+void fg_service_call(lives_proc_thread_t lpt, void *retval) {
   boolean waitgov = FALSE;
   while (lpttorun || (gov_will_run && !gov_running)) {
     lives_nanosleep(NSLEEP_TIME);
   }
   lpttorun = lpt;
-  lpt_retval = (volatile void *)retval;
+  lpt_retval = retval;
   if (!gov_running && !gov_will_run) {
     lives_idle_priority(governor_loop, NULL);
   } else {
@@ -2143,16 +2139,8 @@ void *fg_service_call(lives_proc_thread_t lpt, void *retval) {
     mainw->clutch = FALSE;
   }
   while (lpttorun || (waitgov && !mainw->clutch)) {
-    // WARNING - we may hang here if the main thread is blocked - eg. waiting for us to join()
-    // - however we should have added governor_loop as an idlefunc
-    //  -- thus if the main thread is waitng (e.g. in lives_proc_thread_join()) it should check the return value of
-    //  has_lpttorun() and if TRUE call
-    // lives_widget_context_update() in order to trigger the idle func and run our function
-    // - thus the deadlock situation will be averted
     lives_nanosleep(NSLEEP_TIME);
   }
-  THREADVAR(fg_service) = FALSE;
-  return (void *)lpt_result;
 }
 
 
@@ -2941,9 +2929,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_padding(LiVESWidget *widget
 
 
 WIDGET_HELPER_LOCAL_INLINE void _dialog_resp(LiVESWidget *w, LiVESDialog *dlg) {
-  lives_dialog_response(dlg,
-                        LIVES_POINTER_TO_INT(lives_widget_object_get_data
-                            (LIVES_WIDGET_OBJECT(w), RESPONSE_KEY)));
+  lives_dialog_response(dlg, GET_INT_DATA(w, RESPONSE_KEY));
 }
 
 
@@ -3028,7 +3014,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_modal(LiVESWindow *window, 
     modalw = window;
   }
 #ifdef GUI_GTK
-  gtk_window_set_modal(window, modal);
+  if (GTK_IS_WINDOW(window)) gtk_window_set_modal(window, modal);
   return TRUE;
 #endif
   return FALSE;
@@ -13195,46 +13181,44 @@ static void do_more_stuff(void) {
 
 
 boolean lives_widget_context_update(void) {
-  if (!THREADVAR(fg_service)) {
-    volatile boolean clutch;
-    static pthread_mutex_t ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
-    if (timer_running) return FALSE;
-    if (mainw->no_context_update) return FALSE;
-    if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
-    else {
-      if (!is_fg_thread() && !gov_will_run && !gov_running) {
-        boolean ret;
-        main_thread_execute((lives_funcptr_t)lives_widget_context_update,
-                            WEED_SEED_BOOLEAN, &ret, "");
-        return ret;
+  volatile boolean clutch;
+  static pthread_mutex_t ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
+  if (timer_running) return FALSE;
+  if (mainw->no_context_update) return FALSE;
+  if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
+  else {
+    if (!is_fg_thread() && !gov_will_run && !gov_running) {
+      boolean ret;
+      main_thread_execute((lives_funcptr_t)lives_widget_context_update,
+                          WEED_SEED_BOOLEAN, &ret, "");
+      return ret;
+    }
+    do_some_things();
+    if (!is_fg_thread()) {
+      while (gov_will_run && !gov_running) {
+        lives_nanosleep(NSLEEP_TIME);
       }
-      do_some_things();
-      if (!is_fg_thread()) {
-        while (gov_will_run && !gov_running) {
-          lives_nanosleep(NSLEEP_TIME);
-        }
 
-        if (gov_running) {
-          clutch = mainw->clutch = FALSE;
-          while (!clutch && !mainw->is_exiting) {
-            lives_nanosleep(NSLEEP_TIME);
-            clutch = mainw->clutch;
-          }
-        }
-      } else {
-        int count = 0;
-        while (count++ < EV_LIM && !mainw->is_exiting && lives_widget_context_pending(NULL)) {
-          //LiVESXEvent *ev = lives_widgets_get_current_event();
-          //if (ev) g_print("ev was %d\n", ev->type);
-          //else g_print("NULL event\n");
-          lives_widget_context_iteration(NULL, FALSE);
+      if (gov_running) {
+        clutch = mainw->clutch = FALSE;
+        while (!clutch && !mainw->is_exiting) {
           lives_nanosleep(NSLEEP_TIME);
+          clutch = mainw->clutch;
         }
+      }
+    } else {
+      int count = 0;
+      while (count++ < EV_LIM && !mainw->is_exiting && lives_widget_context_pending(NULL)) {
+        //LiVESXEvent *ev = lives_widgets_get_current_event();
+        //if (ev) g_print("ev was %d\n", ev->type);
+        //else g_print("NULL event\n");
+        lives_widget_context_iteration(NULL, FALSE);
+        lives_nanosleep(NSLEEP_TIME);
       }
     }
-    do_more_stuff();
-    pthread_mutex_unlock(&ctx_mutex);
   }
+  do_more_stuff();
+  pthread_mutex_unlock(&ctx_mutex);
   return TRUE;
 }
 

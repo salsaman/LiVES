@@ -98,6 +98,10 @@
 #define _GNU_SOURCE // for "environ"
 #endif
 
+#define LIVES_RESULT_SUCCESS	1
+#define LIVES_RESULT_FAIL	0
+#define LIVES_RESULT_ERROR	-1
+
 #include <sys/types.h>
 #include <inttypes.h>
 #include <string.h>
@@ -213,20 +217,6 @@ typedef pid_t lives_pid_t;
 #endif
 #endif
 
-#define DEF_FILE_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) ///< non-executable, is modified by the umask
-
-#define ALLOW_NONFREE_CODECS
-
-/// LiVES will show a warning if this (MBytes) is exceeded on load
-/// (can be overridden in prefs)
-#define WARN_FILE_SIZE 500
-
-/// maximum fps we will allow (double)
-#define FPS_MAX 200.
-
-#define MAX_FRAME_WIDTH 100000.
-#define MAX_FRAME_HEIGHT 100000.
-
 #define ENABLE_DVD_GRAB
 
 #ifdef HAVE_MJPEGTOOLS
@@ -265,9 +255,6 @@ typedef pid_t lives_pid_t;
 
 #define URL_MAX 2048
 
-#define strip_ext(fname) lives_strdup((char *)(fname ? strrchr(fname, '.') \
-					       ? lives_memset(strrchr(fname, '.'), 0, 1) \
-					       ? fname : fname : fname : NULL))
 #ifdef NEED_ENDIAN_TEST
 #undef NEED_ENDIAN_TEST
 static const int32_t testint = 0x12345678;
@@ -309,12 +296,6 @@ typedef struct {
 #include <weed/weed-utils.h>
 #endif
 #endif
-
-#ifndef WEED_EFFECT_HAS_PARAM_FLAGBITS
-#define WEED_PARAM_FLAG_READ_ONLY     		(1 << 0)
-#define WEED_PARAM_FLAG_VALUE_CHANGED           (1 << 1)
-#endif
-
 
 #ifdef USE_SWSCALE
 // for weed-compat.h
@@ -486,6 +467,10 @@ typedef struct {
   int64_t memtotal;
   int64_t memfree;
   int64_t memavail;
+  //
+#define OOM_ADJ_RANGE 1000
+  char *oom_adjust_file;
+  int oom_adj_value;
 } hw_caps_t;
 
 #define CPU_HAS_SSE2			1
@@ -698,6 +683,11 @@ extern mainwindow *mainw;
 /// type sizes
 extern ssize_t sizint, sizdbl, sizshrt;
 
+#include "dialogs.h"
+#include "saveplay.h"
+#include "gui.h"
+#include "utils.h"
+
 // capabilities (MUST come after plugins.h)
 // TODO - move into capabilities.h
 
@@ -794,7 +784,7 @@ typedef struct {
   /// used for returning startup messages from the backend
   char startup_msg[1024];
 
-  uint64_t uid; // non-volatile unique id
+  uint64_t uid; // non-volatile unique id (for current execution)
 
   lives_checkstatus_t has_python;
   lives_checkstatus_t has_python3;
@@ -819,6 +809,9 @@ typedef struct {
   int primary_monitor;
   boolean can_show_msg_area;
 
+  int64_t ds_used, ds_free, ds_tot;
+  lives_storage_status_t ds_status;
+
   hw_caps_t hw;
 
   // todo - move to gui_caps
@@ -842,10 +835,6 @@ typedef struct {
   char *wm_name; ///< window manager name, may be different from wm_caps.wwm_name
   boolean has_wm_caps;
   wm_caps_t wm_caps;
-
-  // disk space in workdir
-  int64_t ds_used, ds_free, ds_tot;
-  lives_storage_status_t ds_status;
 
   char *mountpoint;  ///< utf-8
 
@@ -885,250 +874,8 @@ typedef struct {
 
 capability *capable;
 
-// some useful functions
-
 int orig_argc(void);
 char **orig_argv(void);
-
-// callbacks.c
-boolean all_config(LiVESWidget *, LiVESXEventConfigure *, livespointer ppsurf);
-boolean all_expose(LiVESWidget *, lives_painter_t *, livespointer psurf);
-
-// dialogs.c
-boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text);
-
-boolean do_warning_dialog(const char *text);
-boolean do_warning_dialogf(const char *fmt, ...);
-boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number);
-
-boolean do_yesno_dialog(const char *text);
-boolean do_yesno_dialogf(const char *fmt, ...);
-boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number);
-boolean do_yesno_dialogf_with_countdown(int nclicks, boolean isyes, const char *fmt, ...);
-
-void maybe_abort(boolean do_check, LiVESList *restart_opts);
-void do_abort_dialog(const char *text);
-LiVESResponseType do_abort_ok_dialog(const char *text);
-LiVESResponseType do_abort_retry_dialog(const char *text);
-LiVESResponseType do_abort_retry_cancel_dialog(const char *text) WARN_UNUSED;
-LiVESResponseType do_abort_retry_ignore_dialog(const char *text) WARN_UNUSED;
-
-LiVESResponseType do_retry_cancel_dialog(const char *text);
-
-LiVESResponseType do_error_dialog(const char *text);
-LiVESResponseType do_error_dialogf(const char *fmt, ...);
-LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mask_number);
-
-LiVESResponseType do_info_dialog(const char *text);
-LiVESResponseType do_info_dialogf(const char *fmt, ...);
-LiVESResponseType do_info_dialog_with_expander(const char *text, const char *exp_text, LiVESList *);
-
-LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int warn_mask_number);
-LiVESWidget *create_question_dialog(const char *title, const char *text);
-
-LiVESResponseType lives_dialog_run_with_countdown(LiVESDialog *dialog, LiVESResponseType target, int nclicks);
-
-LiVESWindow *get_transient_full();
-
-void do_abortblank_error(const char *what);
-void do_optarg_blank_err(const char *what);
-void do_clip_divergence_error(int fileno);
-LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo, boolean can_retry,
-    boolean try_sudo);
-LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const char *errtext) WARN_UNUSED;
-void do_write_failed_error_s(const char *filename, const char *addinfo);
-LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const char *errtext) WARN_UNUSED;
-void do_read_failed_error_s(const char *filename, const char *addinfo);
-boolean do_header_write_error(int clip);
-LiVESResponseType do_header_read_error_with_retry(int clip) WARN_UNUSED;
-LiVESResponseType do_header_missing_detail_error(int clip, lives_clip_details_t detail) WARN_UNUSED;
-void do_chdir_failed_error(const char *dir);
-LiVESResponseType handle_backend_errors(boolean can_retry);
-boolean check_backend_return(lives_clip_t *sfile);
-const char *get_cache_stats(void);
-
-/** warn about disk space */
-char *ds_critical_msg(const char *dir, char **mountpoint, uint64_t dsval);
-char *ds_warning_msg(const char *dir, char **mountpoint, uint64_t dsval, uint64_t cwarn, uint64_t nwarn);
-boolean check_storage_space(int clipno, boolean is_processing);
-
-char *get_upd_msg(void);
-
-void do_exec_missing_error(const char *execname);
-boolean ask_permission_dialog(int what);
-boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs, const char *sudocom);
-boolean do_abort_check(void);
-LiVESResponseType do_abort_restart_check(boolean allow_restart, LiVESList *restart_opts);
-
-// detail can be set to override default "do not show this warning again"
-// e.g "show this warning at startup"
-void add_warn_check(LiVESBox *box, uint64_t warn_mask_number, const char *detail);
-LiVESResponseType do_memory_error_dialog(char *op, size_t bytes);
-void too_many_files(void);
-void workdir_warning(void);
-void do_audio_import_error(void);
-void do_mt_backup_space_error(lives_mt *, int memreq_mb);
-
-LiVESResponseType do_resize_dlg(int cwidth, int cheight, int fwidth, int fheight);
-LiVESResponseType do_imgfmts_error(lives_img_type_t imgtype);
-
-boolean check_del_workdir(const char *dirname);
-char *workdir_ch_warning(void);
-void do_shutdown_msg(void);
-
-boolean do_fxload_query(int maxkey, int maxmode);
-
-boolean do_close_changed_warn(void);
-boolean do_clipboard_fps_warning(void);
-void perf_mem_warning(void);
-void do_dvgrab_error(void);
-boolean do_comments_dialog(int fileno, char *filename);
-boolean do_auto_dialog(const char *text, int type);
-void do_encoder_acodec_error(void);
-void do_encoder_sox_error(void);
-boolean rdet_suggest_values(int width, int height, double fps, int fps_num, int fps_denom, int arate,
-                            int asigned, boolean swap_endian, boolean anr, boolean ignore_fps);
-boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_num, int fps_denom,
-                                   int arate, int asigned, boolean swap_endian, boolean anr, boolean save_all);
-void do_messages_window(boolean is_startup);
-void do_no_mplayer_sox_error(void);
-void do_need_mplayer_dialog(void);
-void do_need_mplayer_mpv_dialog(void);
-void do_aud_during_play_error(void);
-const char *miss_plugdirs_warn(const char *dirnm, LiVESList *subdirs);
-const char *miss_prefix_warn(const char *dirnm, LiVESList *subdirs);
-void do_layout_scrap_file_error(void);
-void do_layout_ascrap_file_error(void);
-void do_program_not_found_error(const char *progname);
-void do_lb_composite_error(void);
-void do_lb_convert_error(void);
-boolean do_set_rename_old_layouts_warning(const char *new_set);
-boolean do_layout_alter_frames_warning(void);
-boolean do_layout_alter_audio_warning(void);
-void do_no_sets_dialog(const char *dir);
-boolean findex_bk_dialog(const char *fname_back);
-boolean paste_enough_dlg(int lframe);
-boolean do_yuv4m_open_warning(void);
-void do_mt_undo_mem_error(void);
-void do_mt_undo_buf_error(void);
-void do_mt_set_mem_error(boolean has_mt);
-void do_mt_audchan_error(int warn_mask);
-void do_mt_no_audchan_error(void);
-void do_mt_no_jack_error(int warn_mask);
-boolean do_mt_rect_prompt(void);
-void do_audrate_error_dialog(void);
-int do_audexport_dlg(int arps, int arate);
-boolean do_event_list_warning(void);
-void do_nojack_rec_error(void);
-void do_vpp_palette_error(void);
-void do_vpp_fps_error(void);
-void do_decoder_palette_error(void);
-void do_rmem_max_error(int size);
-boolean do_gamma_import_warn(uint64_t fv, int gamma_type);
-boolean do_mt_lb_warn(boolean lb);
-LiVESResponseType do_file_notfound_dialog(const char *detail, const char *dirname);
-LiVESResponseType do_dir_notfound_dialog(const char *detail, const char *dirname);
-void do_no_decoder_error(const char *fname);
-void do_no_loadfile_error(const char *fname);
-#ifdef ENABLE_JACK
-boolean do_jack_no_startup_warn(boolean is_trans);
-void do_jack_setup_warn(void);
-boolean do_jack_no_connect_warn(boolean is_trans);
-void do_jack_restart_warn(int suggest_opts, const char *srvname);
-#endif
-LiVESResponseType do_file_perm_error(const char *file_name, boolean allow_cancel);
-LiVESResponseType do_dir_perm_error(const char *dir_name, boolean allow_cancel);
-void do_dir_perm_access_error(const char *dir_name);
-void do_encoder_img_fmt_error(render_details *rdet);
-void do_after_crash_warning(void);
-void do_after_invalid_warning(void);
-void do_bad_layout_error(void);
-void do_card_in_use_error(void);
-void do_dev_busy_error(const char *devstr);
-boolean do_existing_subs_warning(void);
-void do_invalid_subs_error(void);
-boolean do_erase_subs_warning(void);
-boolean do_sub_type_warning(const char *ext, const char *type_ext);
-boolean do_move_workdir_dialog(void);
-boolean do_noworkdirchange_dialog(void);
-void do_no_in_vdevs_error(void);
-void do_locked_in_vdevs_error(void);
-void do_do_not_close_d(void);
-boolean do_foundclips_query(void);
-void do_no_autolives_error(void);
-void do_autolives_needs_clips_error(void);
-void do_pulse_lost_conn_error(void);
-void do_jack_lost_conn_error(void);
-void do_cd_error_dialog(void);
-void do_bad_theme_error(const char *themefile);
-void do_bad_theme_import_error(const char *theme_file);
-boolean do_theme_exists_warn(const char *themename);
-boolean do_layout_recover_dialog(void);
-void add_resnn_label(LiVESDialog *dialog);
-
-void cancel_process(boolean visible);
-
-void update_progress(boolean visible, int clipno);
-void do_threaded_dialog(const char *translated_text, boolean has_cancel);
-void end_threaded_dialog(void);
-void threaded_dialog_spin(double fraction);
-void threaded_dialog_push(void);
-void threaded_dialog_pop(void);
-
-void response_ok(LiVESButton *button, livespointer user_data);
-void pump_io_chan(LiVESIOChannel *iochan);
-
-void do_splash_progress(void);
-
-// general
-void do_text_window(const char *title, const char *text);
-
-// saveplay.c
-boolean add_file_info(const char *check_handle, boolean aud_only);
-boolean save_file_comments(int fileno);
-void set_default_comment(lives_clip_t *sfile, const char *extract);
-boolean reload_clip(int fileno, frames_t maxframe);
-void wait_for_bg_audio_sync(int fileno);
-ulong deduce_file(const char *filename, double start_time, int end);
-ulong open_file(const char *filename);
-ulong open_file_sel(const char *file_name, double start_time, int frames);
-void open_fw_device(void);
-int get_next_free_file(void);
-boolean get_new_handle(int index, const char *name);
-boolean get_temp_handle(int index);
-int close_temp_handle(int new_clip);
-boolean get_handle_from_info_file(int index);
-void save_file(int clip, frames_t start, frames_t end, const char *filename);
-void play_file(void);
-void start_playback_async(int type);
-boolean start_playback(int type);
-void play_start_timer(int type);
-void save_frame(LiVESMenuItem *, livespointer user_data);
-boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int width, int height, boolean from_osc);
-void wait_for_stop(const char *stop_command);
-void add_to_recovery_file(const char *handle);
-boolean rewrite_recovery_file(void);
-boolean check_for_recovery_files(boolean auto_recover, boolean no_recover);
-boolean recover_files(char *recovery_file, boolean auto_recover);
-const char *get_deinterlace_string(void);
-void reload_subs(int fileno);
-void pad_with_silence(int clipno, boolean at_start, boolean is_auto);
-
-// saveplay.c backup
-void backup_file(int clip, int start, int end, const char *filename);
-
-// saveplay.c restore
-ulong restore_file(const char *filename);
-
-// saveplay.c scrap file
-boolean open_scrap_file(void);
-boolean open_ascrap_file(int clipno);
-int save_to_scrap_file(weed_layer_t *);
-boolean load_from_scrap_file(weed_layer_t *, frames_t frame);
-void close_ascrap_file(boolean remove);
-void close_scrap_file(boolean remove);
-void add_to_ascrap_mb(uint64_t bytes);
-double get_ascrap_mb(void);
 
 // main.c
 typedef void (*SignalHandlerPointer)(int);
@@ -1208,183 +955,6 @@ void resize(double scale);
 boolean set_palette_colours(boolean force_reload);
 void set_main_title(const char *filename, int or_untitled_number);
 void set_record(void);
-
-//gui.c
-void  create_LiVES(void);
-void show_lives(void);
-void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColor *colf2,
-                 LiVESWidgetColor *colb2, LiVESWidgetColor *coli, LiVESWidgetColor *colt);
-void set_preview_box_colours(void);
-void load_theme_images(void);
-void set_interactive(boolean interactive);
-char *get_menu_name(lives_clip_t *sfile, boolean add_set);
-int get_vspace(void);
-void enable_record(void);
-void toggle_record(void);
-void disable_record(void);
-void make_custom_submenus(void);
-void detach_accels(boolean connect);
-void fade_background(void);
-void unfade_background(void);
-void fullscreen_internal(void);
-void block_expose(void);
-void unblock_expose(void);
-void frame_size_update(void);
-void splash_init(void);
-void splash_end(void);
-void splash_msg(const char *msg, double pct);
-void hide_main_gui(void);
-void unhide_main_gui(void);
-void resize_widgets_for_monitor(boolean get_play_times);
-void reset_message_area(void);
-void get_letterbox_sizes(int *pwidth, int *pheight, int *lb_width, int *lb_height, boolean player_can_upscale);
-
-#if GTK_CHECK_VERSION(3, 0, 0)
-void calibrate_sepwin_size(void);
-boolean expose_pim(LiVESWidget *, lives_painter_t *, livespointer);
-boolean expose_sim(LiVESWidget *, lives_painter_t *, livespointer);
-boolean expose_eim(LiVESWidget *, lives_painter_t *, livespointer);
-#endif
-
-// system calls in utils.c
-void lives_abort(const char *reason);
-int lives_system(const char *com, boolean allow_error);
-ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t buflen);
-lives_pid_t lives_fork(const char *com);
-void *lives_fork_cb(lives_object_t *dummy, void *com);
-
-int lives_chdir(const char *path, boolean no_error_dlg);
-pid_t lives_getpid(void);
-int lives_getgid(void);
-int lives_getuid(void);
-void lives_kill_subprocesses(const char *dirname, boolean kill_parent);
-void lives_suspend_resume_process(const char *dirname, boolean suspend);
-int lives_kill(lives_pid_t pid, int sig);
-int lives_killpg(lives_pid_t pgrp, int sig);
-boolean lives_setenv(const char *name, const char *value);
-boolean lives_unsetenv(const char *name);
-int lives_rmdir(const char *dir, boolean force);
-int lives_rmdir_with_parents(const char *dir);
-int lives_rm(const char *file);
-int lives_rmglob(const char *files);
-int lives_cp(const char *from, const char *to);
-int lives_cp_noclobber(const char *from, const char *to);
-int lives_cp_recursive(const char *from, const char *to, boolean incl_dir);
-int lives_cp_keep_perms(const char *from, const char *to);
-int lives_mv(const char *from, const char *to);
-int lives_touch(const char *tfile);
-int lives_chmod(const char *target, const char *mode);
-int lives_cat(const char *from, const char *to, boolean append);
-int lives_echo(const char *text, const char *to, boolean append);
-int lives_ln(const char *from, const char *to);
-
-int lives_utf8_strcasecmp(const char *s1, const char *s2);
-int lives_utf8_strcmp(const char *s1, const char *s2);
-
-boolean lives_string_ends_with(const char *string, const char *fmt, ...);
-
-uint64_t get_version_hash(const char *exe, const char *sep, int piece);
-uint64_t make_version_hash(const char *ver);
-char *unhash_version(uint64_t version);
-
-void restart_me(LiVESList *extra_argv, const char *xreason);
-
-void init_clipboard(void);
-
-void print_cache(LiVESList *cache);
-
-LiVESList *cache_file_contents(const char *filename);
-char *get_val_from_cached_list(const char *key, size_t maxlen, LiVESList *cache);
-void cached_list_free(LiVESList **list);
-
-void get_location(const char *exe, char *val, int maxlen);
-boolean check_for_executable(lives_checkstatus_t *cap, const char *exec);
-//LiVESResponseType  do_please_install(const char *more, const char *exec, uint64_t guidance_flags);
-LiVESResponseType do_please_install(const char *info, const char *exec, const char *exec2, uint64_t guidance_flags);
-boolean do_please_install_either(const char *exec, const char *exec2);
-
-/// lives_image_type can be a string, lives_img_type_t is an enumeration
-char *make_image_file_name(lives_clip_t *, frames_t frame, const char *img_ext);// /workdir/handle/00000001.png
-char *make_image_short_name(lives_clip_t *, frames_t frame, const char *img_ext);// e.g. 00000001.png
-const char *get_image_ext_for_type(lives_img_type_t imgtype);
-lives_img_type_t lives_image_ext_to_img_type(const char *img_ext);
-lives_img_type_t lives_image_type_to_img_type(const char *lives_image_type);
-const char *image_ext_to_lives_image_type(const char *img_ext);
-
-void reset_clipmenu(void);
-
-void get_total_time(lives_clip_t
-                    *file); ///< calculate laudio, raudio and video time (may be deprecated and replaced with macros)
-void get_play_times(void); ///< recalculate video / audio lengths and draw the timer bars
-void update_play_times(void); ///< like get_play_times, but will force redraw of audio waveforms
-
-uint32_t get_signed_endian(boolean is_signed, boolean little_endian); ///< produce bitmapped value
-
-void switch_aud_to_none(boolean set_pref);
-boolean switch_aud_to_sox(boolean set_pref);
-boolean switch_aud_to_jack(boolean set_pref);
-boolean switch_aud_to_pulse(boolean set_pref);
-
-boolean prepare_to_play_foreign(void);
-boolean after_foreign_play(void);
-char *lives_ellipsize(char *, size_t maxlen, LiVESEllipsizeMode mode);
-char *lives_pad(char *, size_t minlen, int align);
-char *lives_pad_ellipsize(char *, size_t fixlen, int padlen, LiVESEllipsizeMode mode);
-void activate_url_inner(const char *link);
-void activate_url(LiVESAboutDialog *about, const char *link, livespointer data);
-void show_manual_section(const char *lang, const char *section);
-void maybe_add_mt_idlefunc(void);
-boolean render_choice_idle(livespointer data);
-
-double calc_time_from_frame(int clip, frames_t frame);
-frames_t calc_frame_from_time(int filenum, double time);   ///< nearest frame [1, frames]
-frames_t calc_frame_from_time2(int filenum, double time);  ///< nearest frame [1, frames+1]
-frames_t calc_frame_from_time3(int filenum, double time);  ///< nearest frame rounded down, [1, frames+1]
-frames_t calc_frame_from_time4(int filenum, double time);  ///<  nearest frame, no maximum
-
-boolean check_for_ratio_fps(double fps);
-double get_ratio_fps(const char *string);
-boolean calc_ratio_fps(double fps, int *numer, int *denom);
-
-void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight);
-void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight);
-void calc_minspect(int *rwidth, int *rheight, int cwidth, int cheight);
-
-char *remove_trailing_zeroes(double val);
-
-boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data,
-                       int clipno, int frameno, double atime, boolean affects_current);
-void buffer_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data, int clipno,
-                       int frameno, double atime, boolean affects_current);
-void unbuffer_lmap_errors(boolean add);
-
-void clear_lmap_errors(void);
-boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, const char *nreject);
-char *repl_workdir(const char *entry, boolean fwd);
-boolean check_frame_count(int idx, boolean last_chkd);
-frames_t get_frame_count(int idx, int xsize);
-boolean get_frames_sizes(int fileno, frames_t frame_to_test, int *hsize, int *vsize);
-frames_t count_resampled_frames(frames_t in_frames, double orig_fps, double resampled_fps);
-
-boolean create_event_space(int length_in_eventsb);
-void add_to_recent(const char *filename, double start, int frames, const char *file_open_params);
-int verhash(char *version);
-void zero_spinbuttons(void);
-void set_start_end_spins(int clipno);
-void set_sel_label(LiVESWidget *label);
-void clear_mainw_msg(void);
-size_t get_token_count(const char *string, int delim);
-LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
-void find_when_to_stop(void);
-
-void minimise_aspect_delta(double allowed_aspect, int hblock, int vblock, int hsize, int vsize, int *width, int *height);
-LiVESInterpType get_interp_value(short quality, boolean low_for_mt);
-
-char *subst(const char *string, const char *from, const char *to);
-char *subst_quote(const char *xstring, const char *quotes, const char *from, const char *to);
-char *insert_newlines(const char *text, int maxwidth);
-
-boolean get_screen_usable_size(int *w, int *h);
 
 // multitrack-gui.c
 void mt_desensitise(lives_mt *);
@@ -1489,7 +1059,7 @@ void break_me(const char *dtl);
 
 #define VSLICES 1
 
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

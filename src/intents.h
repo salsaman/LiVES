@@ -74,19 +74,27 @@ typedef weed_param_t lives_obj_attr_t;
 #define HOOK_CB_CHILD_INHERITS		(1 << 4) // TODO - child threads should inherit the hook callbacks
 #define HOOK_CB_FG_THREAD		(1 << 5) // force fg service run
 
+#define HOOK_CB_PRIORITY		(1 << 8) // prepend, not append
+
 #define HOOK_BLOCKED			(1 << 16) // hook function should not be called
 
 #define HOOK_UNIQUE_FUNC		(1 << 24) // do not add if func already in hooks
 
 #define HOOK_UNIQUE_DATA		(1 << 25) // do not add if data already in hooks (UNIQUE_FUNC assumed)
-#define HOOK_UNIQUE_REPLACE		(1 << 26) // remove other entries with same func and add this (UNIQUE_FUNC assumed)
 
 
-#define HOOK_UNIQUE_CHANGE_DATA 	(HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE) // change data but leave func
+// change data of first func of same type but leave func inplace,
+// remove others of same func, but never add, only replace
+#define HOOK_UNIQUE_REPLACE		(1 << 26)
 
-#define HOOK_UNIQUE_REPLACE_FUNC	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_REPLACE) // replace other entries with same func
+// change data of first func of same type but leave func inplace,
+// remove others of same func, add if no other copies of the func
+#define HOOK_UNIQUE_REPLACE_OR_ADD 	(HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE)
 
-// replace other entries having same func and data
+// replace (remove) other entries with same func and add
+#define HOOK_UNIQUE_REPLACE_FUNC	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_REPLACE)
+
+// replace (remove) other entries having same func and data, and add
 #define HOOK_UNIQUE_REPLACE_MATCH	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE)
 
 enum {
@@ -165,6 +173,8 @@ typedef struct {
 
 /////////////
 
+int set_thread_intention(lives_intention intent, lives_capacity_t *);
+
 #define OBJECT_TYPE_UNDEFINED 0
 #define OBJECT_SUBTYPE_UNDEFINED 0
 
@@ -174,7 +184,7 @@ enum {
   LIVES_INTENTION_UNKNOWN,
 
   // application types
-  LIVES_INTENTION_NOTHING,
+  LIVES_INTENTION_NOTHING = 0,
   LIVES_INTENTION_UNDO,
   LIVES_INTENTION_REDO,
   LIVES_INTENTION_RUN, // request status update to "running"
@@ -190,8 +200,7 @@ enum {
   // MANDATORY (builtin) for instances
   LIVES_INTENTION_UNREF,
 
-  LIVES_INTENTION_GET_VALUE,
-  LIVES_INTENTION_SET_VALUE,
+  LIVES_INTENTION_UPDATE_VALUE,
 
   // an intent which converts an object's STATE from PREPARE to NORMAL
   LIVES_INTENTION_PREPARE = 0x00000200,
@@ -230,7 +239,8 @@ enum {
 
   // an intent which creates a new clip object with STATE EXTERNAL
   // alias for EXPORT for clip objects ?
-  // actually this can just be PLAY but with non-realtime and non-display (like transcode)
+  // actually this can just be PLAY but with icaps non-realtime and non-display (like transcode)
+  // and with icap remote for streaming
   LIVES_INTENTION_ENCODE = 0x00000899,
 
   // these may be specialised for clip objects
@@ -350,20 +360,8 @@ struct _obj_status_t {
 
 /// transforms
 
-/* typedef struct { */
-/*   int type; */
-/*   // flags may include READONLY, OPTIONAL, GUI */
-/*   int flags; */
-/*   union { */
-/*     weed_param_t *param; // can be free standing or point to an attribute */
-/*     lives_object_t *object; // maybe hook is enough ?? */
-/*     hook_func hook; */
-/*   } */
-/* } tx_req_t; */
-
-
+// TODO - link these to transform requirements / inputs / outputs
 typedef struct {
-  //lives_intention intent;
   lives_tx_param_t **params; ///< (can be converted to normal params via weed_param_from_iparams)
 } lives_intentparams_t;
 
@@ -378,6 +376,13 @@ int lives_object_instance_unref(lives_object_instance_t *);
 
 // shorthand for calling LIVES_INTENTION_REF in the instance
 int lives_object_instance_ref(lives_object_instance_t *);
+
+#define OBJATTR_FLAG_READONLY 		PARAM_FLAG_READONLY
+#define OBJATTR_FLAG_OPTIONAL 		PARAM_FLAG_OPTIONAL
+// the 'value' has been set (after being initialised to "default"
+#define OBJATTR_FLAG_VALUE_SET 		PARAM_FLAG_VALUE_SET
+// attr updates via UPDATE_VALUE intent, and monitor with listeners
+#define OBJATTR_FLAG_UPDATES_ASYNC 	0x20000
 
 // when creating the instance, we should set the intial STATE, and declare its attributes
 lives_obj_attr_t *lives_object_declare_attribute(lives_object_t *, const char *name, int stype);
@@ -411,11 +416,12 @@ int lives_object_dump_attributes(lives_object_t *);
 // transform status
 #define LIVES_TRANSFORM_ERROR_REQ -1 // not all requirements met (e.g. params with no values and no way to
 //  find them, objects of wrong type / subtype / state)
-#define LIVES_TRANSFORM_STATUS_RUNNING 0 ///< transform is "running" and the state cannot be changed
-#define LIVES_TRANSFORM_STATUS_NEEDS_DATA 1 ///< reqmts. need updating
-#define LIVES_TRANSFORM_STATUS_SUCCESS 2 ///< normal / success
-#define LIVES_TRANSFORM_STATUS_CANCELLED 3 ///< transform was cancelled during running
-#define LIVES_TRANSFORM_STATUS_ERROR 4 ///< transform encountered an error during running
+#define LIVES_TRANSFORM_STATUS_NONE 0
+#define LIVES_TRANSFORM_STATUS_SUCCESS 1	///< normal / success
+#define LIVES_TRANSFORM_STATUS_RUNNING 16	///< transform is "running" and the state cannot be changed
+#define LIVES_TRANSFORM_STATUS_NEEDS_DATA 32	///< reqmts. need updating
+#define LIVES_TRANSFORM_STATUS_CANCELLED 256	///< transform was cancelled during running
+#define LIVES_TRANSFORM_STATUS_ERROR  512	///< transform encountered an error during running
 
 weed_plant_t *int_req_init(const char *name, int def, int min, int max);
 weed_plant_t *boolean_req_init(const char *name, int def);
@@ -423,15 +429,6 @@ weed_plant_t *double_req_init(const char *name, double def, double min, double m
 weed_plant_t *string_req_init(const char *name, const char *def);
 weed_plant_t *obj_req_init(const char *name, lives_obj_template allowed);
 weed_plant_t *hook_req_init(const char *name, int status, lives_object_transform_t *trn, void *user_data);
-
-typedef struct {
-  int category; // category type for function (0 for none)
-  lives_funcptr_t function; // pointer to a function
-  char *args_fmt; // definition of the params, e.g. "idV" (int, double, void *)
-  uint32_t rettype; // weed_seed type e.g. WEED_SEED_INT, a value of 0 implies a void *(fuunc)
-  void *data; // category specific data, may be NULL
-  uint64_t padding[3];
-} lives_func_info_t;
 
 // rules which must be satisfied before the transformation can succeed
 typedef struct {
@@ -463,14 +460,21 @@ typedef struct {
 #define TR_FLAGS_DIRECT (1 << 32) // function may be called directly (this is a transitional step
 // which may be deprecated
 
+typedef struct {
+  int category; // category type for function (0 for none)
+  const char *funcname; // optional
+  lives_funcptr_t function;
+  uint32_t return_type;
+  const char *args_fmt;
+  uint64_t flags;
+  void *data; // optional data, may be NULL
+} lives_funcdef_t;
+
 // maps in / out params to actual function parameters
 typedef struct {
-  int *obj_in_mapping; // maps reqts -> internal variables (can also be internal vars in other objects) (weed / weed) or obj / obj
-  int *fn_in_mapping; // maps internal variables -> fn params (weed or obj / idx)
-  lives_func_info_t func_info; /// function(s) to perform the transformation
-  int *fn_out_mapping; // maps fn variables -> internal params (ptr to var -> weed or obj)
-  int *obj_out_mapping; // maps internal params -> out params (weed / weed) or obj / obj
-  // hook mappings ???
+  weed_plant_t **inputs; // inputs to function
+  lives_funcdef_t func_info; /// function(s) to perform the transformation
+  weed_plant_t **outputs;
 } tx_map;
 
 // a transform(ation) is a function or sequence of functions which correspond to satistying some intention for the object
@@ -495,14 +499,10 @@ typedef struct {
 struct _obj_transform_t {
   lives_intentcap_t icaps; // intention and capacities satisfied
 
-  // inputs
+  // can be a sequence of these
   lives_rules_t *prereqs; // pointer to the prerequisites for carrying out the transform (can be NULL)
+  lives_funcdef_t *funcdef;
 
-  // outputs
-  /// first element is always SELF (or NULL if self is unchanged)
-  lives_tx_param_t **oparams;  // a mix of params and objects (type / subtype / state)
-  ///
-  tx_map *mappings; // internal mapping for the object
   uint64_t flags;
 };
 
@@ -513,6 +513,7 @@ void lives_capacities_free(lives_capacity_t *);
 
 #define LIVES_ERROR_NOSUCH_CAP WEED_ERROR_NOSUCH_LEAF
 #define LIVES_ERROR_NOSUCH_ATTRIBUTE WEED_ERROR_NOSUCH_LEAF
+#define LIVES_ERROR_CAP_INVALID WEED_ERROR_NOSUCH_ELEMENT
 #define LIVES_ERROR_ICAP_NULL 66000
 
 #define LIVES_CAPACITY_TRUE(caps, key) ((caps) ? weed_get_boolean_value((caps), (key)) == WEED_TRUE : FALSE)
@@ -550,6 +551,9 @@ void lives_capacities_free(lives_capacity_t *);
 
 void lives_intentcaps_free(lives_intentcap_t *);
 lives_intentcap_t *lives_intentcaps_new(int icapstype);
+
+/////////////// object broker ////
+const lives_funcdef_t *get_template_for_func(lives_funcptr_t);
 
 #if 0
 // base functions

@@ -12574,7 +12574,8 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *laye
   if (!prefs->apply_gamma) return TRUE;
   else {
     // convert layer from current gamma to target
-    int pal = weed_layer_get_palette(layer);
+    int pal;
+    pal = weed_layer_get_palette(layer);
     if (!weed_palette_is_rgb(pal)) return FALSE; //  dont know how to convert in yuv space
     else {
       int lgamma_type = weed_layer_get_gamma(layer);
@@ -13008,6 +13009,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   boolean progscan = FALSE;
   if (weed_get_int_value(layer, WEED_LEAF_PROGSCAN, NULL) > 0) progscan = TRUE;
 #endif
+
   if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA)) {
     weed_layer_set_size(layer, width / weed_palette_get_pixels_per_macropixel(opal_hint), height);
     if (opal_hint != WEED_PALETTE_END) {

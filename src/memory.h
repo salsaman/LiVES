@@ -62,6 +62,12 @@ void *alloc_bigblock(size_t s);
 void *calloc_bigblock(size_t nmemb, size_t align);
 void *free_bigblock(void *bstart);
 
+void swab2(const void *from, const void *to, size_t granularity) 	GNU_HOT;
+void swab4(const void *from, const void *to, size_t granularity) 	GNU_HOT;
+void swab8(const void *from, const void *to, size_t granularity) 	GNU_HOT;
+void reverse_bytes(char *buff, size_t count, size_t granularity) 	GNU_HOT GNU_FLATTEN;
+boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) 	GNU_HOT;
+
 #ifndef lives_malloc
 #define lives_malloc malloc
 #endif
@@ -183,11 +189,9 @@ static inline int _lsd_calloc_aligned_(void **memptr, size_t nmemb, size_t size)
 #include "lsd.h"
 #undef OVERRIDE_MEMFUNCS
 
-
 #ifdef USE_INTRINSICS
 double intrin_resample_vol(float *dst, size_t dst_skip, float *src, double offsd, double scale, float vol);
 #endif
-
 
 #ifdef __GNUC__
 #define LIVES_GNU

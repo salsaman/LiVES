@@ -8,6 +8,39 @@
 
 static boolean lives_object_attribute_unref(lives_obj_attr_t *attr);
 
+#define N_MAX_FUNCS 65536
+static const lives_funcdef_t *funcdefs[N_MAX_FUNCS];
+
+enum {
+  TRANSCODE_CLIP = 8192,
+};
+
+
+// eventually this will part of a fully fledged object broker
+const lives_funcdef_t *get_template_for_func(lives_funcptr_t func) {
+  static boolean funcdefs_cleared = FALSE;
+  if (!funcdefs_cleared) {
+    lives_memset(funcdefs, 0, N_MAX_FUNCS * sizeof(lives_funcdef_t *));
+    funcdefs_cleared = TRUE;
+  }
+  switch (func) {
+  case transcode_clip:
+    if (!funcdefs[TRANSCODE_CLIP]) {
+      funcdefs[TRANSCODE_CLIP] = create_funcdef("transcode_clip", transcode_clip,
+                                 WEED_SEED_BOOLEAN, "iibs", 0);
+    }
+    return funcdefs[TRANSCODE_CLIP];
+  default: return NULL;
+  }
+}
+
+
+LIVES_GLOBAL_INLINE int set_thread_intention(lives_intention intent, lives_capacity_t *capacities) {
+  THREAD_INTENTION = intent;
+  THREAD_CAPACITIES = capacities;
+  return LIVES_RESULT_SUCCESS;
+}
+
 /// refcounting
 
 LIVES_GLOBAL_INLINE int refcount_inc(obj_refcounter *refcount) {

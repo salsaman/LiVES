@@ -359,11 +359,8 @@ LIVES_GLOBAL_INLINE void get_filename(char *filename, boolean strip_dir) {
   lives_strstop(filename, '.');
 }
 
-/// return filename (no dir, no .ext)
-LIVES_GLOBAL_INLINE char *lives_get_filename(const char *uri) {return lives_strstop(lives_path_get_basename(uri), '.');}
 
-
-char *get_extension(const char *filename) {
+LIVES_GLOBAL_INLINE char *get_extension(const char *filename) {
   // return file extension without the "."
   char *tmp = lives_path_get_basename(filename);
   char *ptr = strrchr(tmp, '.');

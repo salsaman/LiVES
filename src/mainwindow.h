@@ -40,6 +40,12 @@
 
 #define DEF_FPS 25.
 
+// soft limit
+#define FPS_MAX 200.
+
+#define MAX_FRAME_WIDTH 100000.
+#define MAX_FRAME_HEIGHT 100000.
+
 /// rate to change pb fps when faster/slower pressed (TODO: make pref)
 #define DEF_FPSCHANGE_AMOUNT 30000
 
@@ -771,12 +777,14 @@ typedef struct {
 #define N_HLP_PROCTHREADS 128
 #define PT_DRAWTL 1
 #define PT_TRANSREND 2
+#define PT_DLG_SPINNER 3
 #define PT_LAZY_RFX 16
 #define PT_LAZY_DSUSED 17
 #define PT_CUSTOM_COLOURS 18
 
 #define drawtl_thread helper_procthreads[PT_DRAWTL]
 #define transrend_proc helper_procthreads[PT_TRANSREND]
+#define dlg_spin_thread helper_procthreads[PT_DLG_SPINNER]
 
 typedef struct {
   char *name;

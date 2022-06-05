@@ -1,5 +1,4 @@
-// LiVES - decoder plugin header
-// (c) G. Finch 2008 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2008 - 2022 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -49,23 +48,28 @@ extern "C"
 #define ALLOW_UNUSED
 #endif
 
-
-#define LSD_TEXTLEN 64
-#define LSD_NAMELEN 16
+#define LSD_TEXTLEN 64 ///< max len (bytes) for struct type names, and last field name 
+#define LSD_NAMELEN 32 ///< max field name length (bytes)
 #define LSD_MAX_ALLOC 65535
 #define LIVES_STRUCT_ID 0x4C7C56332D2D3035  /// 1st 8 bytes - L|V3--05 (be) or 50--3V|L (le)
 
-#define LSD_FIELD_LSD "lsd"
+#define LSD_N_SELF_FIELDS			10
 
-#define LSD_FIELD_IDENTIFIER			"identifier"
-#define LSD_FIELD_UNIQUE_ID			"unique_id"
-#define LSD_FIELD_REFCOUNT			"refcount"
-#define LSD_FIELD_GENERATION			"generation"
-#define LSD_FIELD_TOP				"top"
-#define LSD_FIELD_SPECIAL_FIELDS		"special_fields"
-#define LSD_FIELD_SELF_FIELDS			"self_fields"
-#define LSD_FIELD_USER_DATA			"user_data"
-#define LSD_FIELD_END_ID			"end_id"
+#define LSD_FIELD_LSD				"LSD"		// 0
+
+#define LSD_FIELD_IDENTIFIER			"identifier"	// 1
+#define LSD_FIELD_UNIQUE_ID			"unique_id"	// 2
+#define LSD_FIELD_REFCOUNT			"refcount"	// 3
+#define LSD_FIELD_GENERATION			"generation"	// 4
+#define LSD_FIELD_TOP				"top"		// 5
+#define LSD_FIELD_SPECIAL_FIELDS		"spcl_fields"	// 6
+#define LSD_FIELD_SELF_FIELDS			"self_fields"	// 7
+#define LSD_FIELD_USER_DATA			"user_data"	// 8
+#define LSD_FIELD_END_ID			"end_id"	// 9
+
+#define LSD_SUCCESS 1
+#define LSD_FAIL 0
+#define LSD_ERROR -1
 
 #include <stdint.h>
 #include <inttypes.h>
@@ -124,7 +128,7 @@ static char *_lsd_proxy_strdup(char *str) {
 /// alloc and copy on copy. If bytesize is set, that will be the allocated size,
 /// if bytesize is 0, then we do a strdup.
 /// For nullt arrays, this is applied to each non-zero element
-#define LIVES_FIELD_FLAG_ALLOC_AND_COPY (1ull << 0)
+#define LSD_FIELD_FLAG_ALLOC_AND_COPY (1ull << 0)
 
 /// for non arrays:
 /// if bytesize is 0, and ALLOC_AND_COPY is also set
@@ -152,30 +156,40 @@ static char *_lsd_proxy_strdup(char *str) {
 ///    setting ZERO_ON_COPY will result in each value being set to NULL
 ///     hence the array length will be lost !
 ///
-#define LIVES_FIELD_FLAG_ZERO_ON_COPY (1ull << 1)
+#define LSD_FIELD_FLAG_ZERO_ON_COPY (1ull << 1)
+
+// setting LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY results in init_func being called when a struct is copied
+// in anidentical fashion to when a new struct is created. This allows use of a single callback function to
+// set a default both on creation and when copying. If a copy_func is also defined, then then copy_func will be
+// called as normal as soon as the init_func callback returns. Both functions are called after the struct has been copied
+// and any automatic defualts hav been set
+
+// added in v1.0.1
+#define LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY (1ull << 2)
 
 // - delete flags
 /// field wiill be freed in lives_struct_delete
 /// free(struct->field)
 ///
-#define LIVES_FIELD_FLAG_FREE_ON_DELETE (1ull << 16)
+#define LSD_FIELD_FLAG_FREE_ON_DELETE (1ull << 16)
 
 /// for (i = 0; struct->field[i], i++) free(struct->field[i];
 /// - combined with IS_NULLT_ARRAY, frees all (non NULL) elements;
 ///   if that flagbit is not set, this one is ignored
 /// combined with FREE_ON_DELETE frees elements + array itself
 /// - advisable only to set this is ALLOC_AND_COPY is also set
-#define LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE (1ull << 17)
+#define LSD_FIELD_FLAG_FREE_ALL_ON_DELETE (1ull << 17)
 
 /// flags giving extra info about the field (affects copy and delete)
 
-/// field is a substruct with its own lives_struct_def_t; functions should be called recursively
-/// it must be possible to locate the lives_struct_def_t field from the first byte
-/// sequence matching LIVES_STRUCT_ID in its identifier field
-/// lives_struct_copy(struct->field
-/// if this is set, all other flag bits are ignored for the field
+/// field is a substruct with its own lives_struct_def_t; functions may be called depth first
+  /// descending into substructs of substructs. structs can even be substructs of themselves, provided
+  /// we have a limit on the depth
+
 /// - NOT YET IMPLEMENTED !
-#define LIVES_FIELD_FLAG_IS_SUBSTRUCT (1ull << 32)
+  // - for this to work we need a pointer or a copy of the lsd template for the substruct, and
+  //  there is currently no mechanism for setting this. 
+#define LSD_FIELD_FLAG_IS_SUBSTRUCT (1ull << 32)
 
 /// field is an array of elements each of size bytesize, last element has all bytes set to zero
 /// if bytesize is zero, it is an array of 0 terminated char * (strings), with last element NULL
@@ -192,7 +206,7 @@ static char *_lsd_proxy_strdup(char *str) {
 ///
 /// may be combined with ALLOC_AND_COPY, FREE_ON_DELETE, FREE_ALL_ON_DELETE
 /// combining with ZERO_ON_COPY is NOT recommended for reasons given above
-#define LIVES_FIELD_FLAG_IS_NULLT_ARRAY (1ull << 33)
+#define LSD_FIELD_FLAG_IS_NULLT_ARRAY (1ull << 33)
 
 // combinations:
 // Z : bytesize == 0 :: set any * to NULL
@@ -200,15 +214,15 @@ static char *_lsd_proxy_strdup(char *str) {
 
 // A&C : bytesize == 0 :: strdup
 // A&C : bytesize > 0 :: malloc(bytesize), memcpy(bytesize)
-// FREE_ON_DELETE recommended (LIVES_FIELD_IS_CHARPTR, LIVES_FIELD_IS_BLOB)
+// FREE_ON_DELETE recommended (LSD_FIELD_IS_CHARPTR, LSD_FIELD_IS_BLOB)
 
-// A&C | Z : bytesize == 0 :: strdup("")  (LIVES_FIELD_TO_EMPTY_STRING)
+// A&C | Z : bytesize == 0 :: strdup("")  (LSD_FIELD_TO_EMPTY_STRING)
 // A&C | Z : bytesize > 0 :: malloc(bytesize), memset(bytesize, 0)
 // FREE_ON_DELETE recommended
 
 // NULLT : bytesize == 0 :: copy string array (strings still point to original strings)
 // NULLT : bytesize > 0 :: copy array of elements of size bytesize
-// FREE_ON_DELETE recommended (LIVES_FIELD_IS_ARRAY)
+// FREE_ON_DELETE recommended (LSD_FIELD_IS_ARRAY)
 // setting FREE_ALL_ON_DELETE may be dangerous, as it would free the original values !
 
 // NULLT + Z : interpreted as NULLT + ACC + Z,
@@ -216,29 +230,29 @@ static char *_lsd_proxy_strdup(char *str) {
 
 // NULLT + A&C : bytesize == 0 :: strdup, multiple strings
 // NULLT + A&C : bytesize > 0 :: copy array of pointers to elements of size bytesize
-// FREE_ON_DELETE | FREE_ALL_ON_DELETE recommended (LIVES_FIELD_IS_
+// FREE_ON_DELETE | FREE_ALL_ON_DELETE recommended (LSD_FIELD_IS_
 
 // NULLT + A&C + Z : bytesize == 0 :: creates an equivalent number of empty strings
 // NULLT + A&C + Z : bytesize > 0 :: malloc(bytesize), memset(bytesize, 0), multiple elements
 // FREE_ON_DELETE | FREE_ALL_ON_DELETE recommended
 
-#define LIVES_FIELD_CHARPTR (LIVES_FIELD_FLAG_ALLOC_AND_COPY | LIVES_FIELD_FLAG_FREE_ON_DELETE)
-#define LIVES_FIELD_STRING LIVES_FIELD_CHARPTR
+#define LSD_FIELD_CHARPTR (LSD_FIELD_FLAG_ALLOC_AND_COPY | LSD_FIELD_FLAG_FREE_ON_DELETE)
+#define LSD_FIELD_STRING LSD_FIELD_CHARPTR
 
-#define LIVES_FIELD_BLOB LIVES_FIELD_CHARPTR // with bytesize > 0
-
-// copy by value, free array on delete
-#define LIVES_FIELD_ARRAY (LIVES_FIELD_FLAG_IS_NULLT_ARRAY | LIVES_FIELD_FLAG_FREE_ON_DELETE)
+#define LSD_FIELD_BLOB LSD_FIELD_CHARPTR // with bytesize > 0
 
 // copy by value, free array on delete
-#define LIVES_FIELD_PTR_ARRAY (LIVES_FIELD_ARRAY | LIVES_FIELD_FLAG_ALLOC_AND_COPY \
-			       | LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE)
+#define LSD_FIELD_ARRAY (LSD_FIELD_FLAG_IS_NULLT_ARRAY | LSD_FIELD_FLAG_FREE_ON_DELETE)
 
-#define LIVES_FIELD_STR_ARRAY LIVES_FIELD_PTR_ARRAY // with bsize == 0
+// copy by value, free array on delete
+#define LSD_FIELD_PTR_ARRAY (LSD_FIELD_ARRAY | LSD_FIELD_FLAG_ALLOC_AND_COPY \
+			     | LSD_FIELD_FLAG_FREE_ALL_ON_DELETE)
+
+#define LSD_FIELD_STR_ARRAY LSD_FIELD_PTR_ARRAY // with bsize == 0
 
 // with a bytesize of zero this will cause a string to be set to "" on copy
 // without the ALLOC_AND_COPY, the string would be set to NULL
-#define LIVES_FIELD_TO_EMPTY_STRING (LIVES_FIELD_FLAG_ALLOC_AND_COPY | LIVES_FIELD_FLAG_ZERO_ON_COPY)
+#define LSD_FIELD_TO_EMPTY_STRING (LSD_FIELD_FLAG_ALLOC_AND_COPY | LSD_FIELD_FLAG_ZERO_ON_COPY)
 
 // forward decl
 
@@ -262,13 +276,13 @@ typedef void (*lives_struct_destroy_cb)(void *strct, const char *strct_type, voi
 // field callbacks
 
 //called from lives_struct_new
-typedef void (*lives_field_init_cb)(void *strct, const char *struct_type,
-                                    const char *field_name, void *ptr_to_field);
+typedef void (*lsd_field_init_cb)(void *strct, const char *struct_type,
+                                  const char *field_name, void *ptr_to_field);
 
 // this is called from lives_struct_copy after all automatic updates are performed
-typedef void (*lives_field_copy_cb)(void *dst_struct, void *src_struct, const char *strct_type,
-                                    const char *field_name, void *ptr_to_dst_field,
-                                    void *ptr_to_src_field);
+typedef void (*lsd_field_copy_cb)(void *dst_struct, void *src_struct, const char *strct_type,
+                                  const char *field_name, void *ptr_to_dst_field,
+                                  void *ptr_to_src_field);
 // e,g, using field names:
 // strct_type *d = (strct_type *)dst_struct;
 // strct_type *s = (strct_type *)src_struct;
@@ -277,15 +291,15 @@ typedef void (*lives_field_copy_cb)(void *dst_struct, void *src_struct, const ch
 /// *(int *)dst_field = *(int *)src_field + 10;
 
 //called from lives_struct_free before any fields are finalised
-typedef void (*lives_field_delete_cb)(void *strct, const char *struct_type,
-                                      const char *field_name, void *ptr_to_field);
+typedef void (*lsd_field_delete_cb)(void *strct, const char *struct_type,
+                                    const char *field_name, void *ptr_to_field);
 // e,g
 // strct_type *mystruct = (strct_type *)strct;
 // free(mystryct->(field_name));
 
 // STRUCTS
 
-typedef struct _lives_special_field {
+typedef struct _lsd_special_field {
   /// flags may be  0 to optionally provide info re. the field name, bytesize,
   //(and optionally offset_to_field)
   uint64_t flags;
@@ -293,10 +307,10 @@ typedef struct _lives_special_field {
   off_t offset_to_field;
   char name[LSD_NAMELEN]; /// optional unless flags == 0 or any of the functions below are defined.
   size_t bytesize; /// defines the element size for
-  lives_field_init_cb init_func; ///< will be called from lives_struct_new
-  lives_field_copy_cb copy_func; ///< will be called from lives_struct_copy
-  lives_field_delete_cb delete_func; ///< called from lives_struct_free
-} lives_special_field_t; /// 112 bytes
+  lsd_field_init_cb init_func; ///< will be called from lives_struct_new
+  lsd_field_copy_cb copy_func; ///< will be called from lives_struct_copy
+  lsd_field_delete_cb delete_func; ///< called from lives_struct_free
+} lsd_special_field_t; /// 128 bytes
 
 typedef struct _lives_struct_def {
   uint64_t identifier;  /// default: LIVES_STRUCT_ID
@@ -320,8 +334,8 @@ typedef struct _lives_struct_def {
   lives_struct_destroy_cb destroy_struct_callback; /// called from lives_struct_free if refcount is 0
   void *destroy_user_data; /// user_data for delete_struct_callback
 
-  lives_special_field_t **special_fields;  /// may be NULL, else is pointer to NULL terminated array
-  lives_special_field_t **self_fields;  /// fields in the struct_def_t struct itself
+  lsd_special_field_t **special_fields;  /// may be NULL, else is pointer to NULL terminated array
+  lsd_special_field_t **self_fields;  /// fields in the struct_def_t struct itself
 
   void *class_data; /// user_data, value maintained across clones
   void *user_data; /// user_data for instances of struct, reset on copy
@@ -336,26 +350,48 @@ typedef struct _lives_struct_def {
 
 ///// API ////////////////////
 
-
 /// the process works as follows:
-/// - call lsd_create, passing in the name of the struct, size, last field name (optional),
+/// 1) call lsd_create(), passing in the (string) name of the struct, size in bytes, last field name (optional),
 /// and number of "special fields"
-/// special fields are any which have init / copy / delete functions
-/// If the struct has special_fields then:
-/// call make_special_field for each element in lsd->special_fields
-/// for this it is necessary to make 1 instance of struct via normal means
-/// field values in the struct are irrelevant, the struct is only needed to get the field offsets
-/// fpr any special fields
-/// finally, call lives_struct_init, passing in lsd, pointer to struct and pointer to lsd field in
-/// the struct.
+/// (special fields are any which want automatic init / copy / delete functions)
+/// the return value is an lsd "handle" to be used in the following steps
+///
+/// 2) If the struct has special_fields then:
+/// call make_special_field() for each element in lsd->special_fields
+/// for this it is necessary to make 1 instance of struct via normal means (e.g. malloc())
+/// field values in the dummy struct are irrelevant, the struct is only needed to get the offsets
+/// of the special fields.
+///
+/// 3) finally, call lives_struct_init(), passing in lsd, pointer to the 'dummy' struct and pointer to lsd field in
+/// the struct. If the lsd field is a pointer, call lives_struct_init_p() instead, and pass the address
+/// of the pointer field.
 /// This serves to finalise the lsd, and initialize field values in the struct + lsd in struct.
+  /// You can then decide whether to keep hold of the lsd template as is, in which case
+  // the dummy struct, should be freed and not reused - else the template can be created as the
+  // lsde field in the sample struct, which can then be utilised to make new structs, or copies (clones)
+  // of itself
+  // technical:
+  // Note each time a struct is created or copied, the lsd template creates a replica of
+  // itself using itself as the template. (self replicating code). This helps to keep the code base
+  // smaller and more efficient - the biggest complication is having to take pointers to field offests
+  // and dereference these as necessary. The main thing to note is the "bytesize" of the LSD field
+  // - if this is zero then the LSD is a static struct in the parent and we measure offsets from
+  // "top" (pointer to the start of containing struct) + offset to LSD; if this is non zero
+  /// (sizeof(lives_struct_def_t)) then it is a pointer and we must dereference the field pointer
+  /// and measure offsets from there instead
+
 ///
+/// NB. a field of type lives_struct_def_t must be somewhere in the "parent" struct, it can be anywhere
+/// inside it, and it can be a static struct, or pointer to struct (it will be automatically allocated
+/// copied and freed). This serves as a template for making copies and for freeing the the struct.
 ///
-/// the returned lives_struct_def_t can now be used as a "template" to make new structs
-/// lives_struct_new can take a static struct_def and return a new struct
-/// (this is just like lives_struct_copy, except that init_func is called on the fields
-/// instead of copy_func.)
-///
+/// the returned (lives_struct_def_t *)static_lsd from step 3) can now be used as a "template" to make new structs
+/// - lives_struct_create(static_lsd) will return a new struct from the template
+/// - lives_struct_copy(&struct->lsd) will make a copy of struct, following the special field rules
+//  - lives_struct_free(&struct->lsd) will free struct, following special field rules
+// other functions include: refcounting, generation values, classID, user_data
+// - you can get struct type, size, UID (unique per instance), check for equivalent structs,
+/// as well as getting and setting user data per instance
 
 /// NB. once support for substructs is added, it will possible for a single struct to cantain
 /// multiple lsd, each with its own size, last_field and special_fields
@@ -365,9 +401,9 @@ static int lsd_unref(const lives_struct_def_t *) ALLOW_UNUSED;
 static int lsd_ref(const lives_struct_def_t *) ALLOW_UNUSED;
 static int lsd_get_refcount(const lives_struct_def_t *) ALLOW_UNUSED;
 
-// returns 1 if both struct defs have  same identifier, end_id, structtype,
+// returns LSD_SUCCESS if both struct defs have  same identifier, end_id, structtype,
 // structsize, last_field, class_data (i.e one is copy / instance of another)
-// (lives_struct_get_generation can provide more information)
+// (lives_struct_get_generation can provide more information), otherwise LSD_FAIL
 static int lsd_same_family(const lives_struct_def_t *lsd1, lives_struct_def_t *lsd2) ALLOW_UNUSED;
 
 // sets class data which will be copied to all instances from template
@@ -381,17 +417,17 @@ static const lives_struct_def_t *lsd_create(const char *struct_type,
 
 // function to define special fields, array elements returned from make_structdef
 // should be assigned via this function
-static lives_special_field_t *
+static lsd_special_field_t *
 make_special_field(uint64_t flags, void *sample_struct, void *ptr_to_field,
                    const char *field_name, size_t data_size,
-                   lives_field_init_cb init_func, lives_field_copy_cb copy_func,
-                   lives_field_delete_cb delete_func) ALLOW_UNUSED;
+                   lsd_field_init_cb init_func, lsd_field_copy_cb copy_func,
+                   lsd_field_delete_cb delete_func) ALLOW_UNUSED;
 
 // Finishes the initialisation of the lsd template (passed as the first parameter)
 // a sample instance of the struct should be created (using malloc / calloc, etc)
 // and passed as the second parameter. The sample should be freed afterwards using normal free.
 // All subsequent instances must be created with lives_struct_create or lives_struct_copy.
-// The function returns 0 on success, EINVAL if a parameter is invalid.
+// The function returns LSD_SUCCESS on success, LSD_ERROR if a parameter is invalid.
 // this version should be used when sruct has a field with type (lives_struct_def_t)
 static int lives_struct_init(const lives_struct_def_t *, void *thestruct,
                              lives_struct_def_t *) ALLOW_UNUSED;
@@ -456,15 +492,19 @@ static size_t lives_struct_get_size(lives_struct_def_t *) ALLOW_UNUSED;
   static void lives_struct_set_destroy_callback(lives_struct_def_t *, void *destroy_user_data) ALLOW_UNUSED; // TODO
 */
 
-
 ////// FUNCTION BODIES //////
+
+#ifndef LSD_UIDLEN
+#define LSD_UIDLEN 8
+#endif
 
 #ifndef LSD_RANDFUNC
 #ifdef HAVE_GETENTROPY
 #define _LSD_IGN_RET(a) ((void)((a) + 1))
 #define LSD_RANDFUNC(ptr, size) _LSD_IGN_RET(getentropy(ptr, size))
 #else
-error("LSD_RANDFUNC(ptr, size) must be defined");
+error("\n\ngetentropy not found, so you need to #define LSD_RANDFUNC(ptr, size)\n"
+      "Did you include 'AC_CHECK_FUNCS(getentropy)' in configure.ac ?");
 #endif
 #endif
 
@@ -478,8 +518,7 @@ static void _lsd_init_copy(void *dst, void *strct, const char *strct_type, const
       return;
     }
     if (!strcmp(field_name, LSD_FIELD_END_ID)) {
-      *(uint64_t *)ptr_to_field =
-        (LIVES_STRUCT_ID ^ 0xFFFFFFFFFFFFFFFF);
+      *(uint64_t *)ptr_to_field = (LIVES_STRUCT_ID ^ 0xFFFFFFFFFFFFFFFF);
       return;
     }
   }
@@ -487,7 +526,7 @@ static void _lsd_init_copy(void *dst, void *strct, const char *strct_type, const
     if (dst) *(void **)ptr_to_field = dst;
     else *(void **)ptr_to_field = strct;
   } else if (!strcmp(field_name, LSD_FIELD_UNIQUE_ID)) {
-    LSD_RANDFUNC(ptr_to_field, 8);
+    LSD_RANDFUNC(ptr_to_field, LSD_UIDLEN);
   } else if (!strcmp(field_name, LSD_FIELD_REFCOUNT)) {
     *((int *)ptr_to_field) = 1;
   } else if (!strcmp(field_name, LSD_FIELD_GENERATION)) {
@@ -512,46 +551,43 @@ static void _lsd_copy_cb(void *dst, void *src, const char *strct_type, const cha
 // builtin delete_cb
 static void _lsd_delete_cb(void *, const char *, const char *, void *) ALLOW_UNUSED;
 static void _lsd_delete_cb(void *strct, const char *strct_type, const char *field_name,
-                           void *ptr_to_field) {
-  // nothing
-}
+                           void *ptr_to_field) {/* nothing */}
 
 // other internal funcs
 static int _lsd_generation_check_lt(lives_struct_def_t *lsd, int gen, int show_error) {
   /// check less than or error (check for static)
   if (lsd) {
-    if (lsd->generation < gen) return 1;
+    if (lsd->generation < gen) return LSD_SUCCESS;
     if (show_error)
       baderr_print("Function was called with an lsd-in-struct, but we wanted static lsd\n");
   }
-  return 0;
+  return LSD_FAIL;
 }
 static int _lsd_generation_check_gt(lives_struct_def_t *lsd, int gen, int show_error) {
   /// check greater than or error (check for lsd-in-struct)
   if (lsd) {
-    if (lsd->generation > gen) return 1;
+    if (lsd->generation > gen) return LSD_SUCCESS;
     if (show_error)
       baderr_print("Function was called with a static lsd, but we wanted lsd-in-struct\n");
   }
-  return 0;
+  return LSD_FAIL;
 }
 
-static lives_special_field_t *
+static lsd_special_field_t *
 _lsd_make_special_field(uint64_t flags, void *top, void *ptr_to_field,
                         const char *name, size_t data_size,
-                        lives_field_init_cb init_func,
-                        lives_field_copy_cb copy_func,
-                        lives_field_delete_cb delete_func) {
-  lives_special_field_t *specf;
+                        lsd_field_init_cb init_func,
+                        lsd_field_copy_cb copy_func,
+                        lsd_field_delete_cb delete_func) {
+  lsd_special_field_t *specf;
 
-  if ((*_lsd_calloc_aligned)((void **)&specf, 1, sizeof(lives_special_field_t))) {
-    memerr_print(sizeof(lives_special_field_t), name, "?????");
+  if ((*_lsd_calloc_aligned)((void **)&specf, 1, sizeof(lsd_special_field_t))) {
+    memerr_print(sizeof(lsd_special_field_t), name, "?????");
     return NULL;
   }
   specf->flags = flags;
   specf->offset_to_field = (off_t)((char *)ptr_to_field - (char *)top);
-  if (name)
-    snprintf(specf->name, LSD_NAMELEN, "%s", name);
+  if (name) snprintf(specf->name, LSD_NAMELEN, "%s", name);
   specf->bytesize = data_size;
   specf->init_func = init_func;
   specf->copy_func = copy_func;
@@ -560,15 +596,13 @@ _lsd_make_special_field(uint64_t flags, void *top, void *ptr_to_field,
 }
 
 static void *_lsd_get_field(char *top, int is_self_field,
-                            lives_special_field_t **spfields, int i) {
+                            lsd_special_field_t **spfields, int i) {
   // fo init / copy top is new_struct or parent, for delete, top is lsd->top
   debug_print("calculating offset: for %s number %d, %s, top is %p, ",
-              is_self_field ? "self_field" : "special_field", i,
-              spfields[i]->name, top);
+              is_self_field ? "self_field" : "special_field", i, spfields[i]->name, top);
   if (is_self_field) {
     top += spfields[0]->offset_to_field;
-    debug_print("lsd field is at offset %" PRIu64 ", %p\n",
-                spfields[0]->offset_to_field, top);
+    debug_print("lsd field is at offset %" PRIu64 ", %p\n", spfields[0]->offset_to_field, top);
     if (spfields[0]->bytesize) {
       if (!i) return top;
       top = *((char **)top);
@@ -582,28 +616,28 @@ static void *_lsd_get_field(char *top, int is_self_field,
 
 // auto (flagbit) handlers
 
-static int _lsd_auto_delete(void *ptr, uint64_t flags, size_t bsize) {
-  if (flags & LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE) {
-    if (!(flags & LIVES_FIELD_FLAG_IS_NULLT_ARRAY)) {
-      flags &= ~LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE;
-      flags |= LIVES_FIELD_FLAG_FREE_ON_DELETE;
+static void _lsd_auto_delete(void *ptr, uint64_t flags, size_t bsize) {
+  if (flags & LSD_FIELD_FLAG_FREE_ALL_ON_DELETE) {
+    if (!(flags & LSD_FIELD_FLAG_IS_NULLT_ARRAY)) {
+      flags &= ~LSD_FIELD_FLAG_FREE_ALL_ON_DELETE;
+      flags |= LSD_FIELD_FLAG_FREE_ON_DELETE;
     }
   }
-  if (flags & LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE) {
+  if (flags & LSD_FIELD_FLAG_FREE_ALL_ON_DELETE) {
     void **vptr = *((void ** *)ptr);
     if (vptr) {
-      if ((flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) && !bsize) {
+      if ((flags & LSD_FIELD_FLAG_ALLOC_AND_COPY) && !bsize) {
         for (int j = 0; vptr[j]; j++) if (vptr[j])(*_lsd_string_free)(vptr[j]);
       } else {
         for (int j = 0; vptr[j]; j++) if (vptr[j])(*_lsd_free)(vptr[j]);
       }
     }
   }
-  if (flags & LIVES_FIELD_FLAG_FREE_ON_DELETE) {
+  if (flags & LSD_FIELD_FLAG_FREE_ON_DELETE) {
     void *vptr = *((void **)ptr);
     if (vptr) {
-      if ((flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) && !bsize
-          && !(flags & LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE)) {
+      if ((flags & LSD_FIELD_FLAG_ALLOC_AND_COPY) && !bsize
+          && !(flags & LSD_FIELD_FLAG_FREE_ALL_ON_DELETE)) {
         //g_print("flags !!! %" PRIu64 " %" PRIu64 "\n", flags, sizee);
         (*_lsd_string_free)(vptr);
       } else {
@@ -612,16 +646,15 @@ static int _lsd_auto_delete(void *ptr, uint64_t flags, size_t bsize) {
       }
     }
   }
-  return 0;
 }
 
-static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field_t *spcf,
+static void _lsd_auto_copy(void *dst_field, void *src_field, lsd_special_field_t *spcf,
                            lives_struct_def_t *lsd) {
   size_t bsize = spcf->bytesize;
   int j;
-  if (!(spcf->flags & LIVES_FIELD_FLAG_IS_NULLT_ARRAY)) {
+  if (!(spcf->flags & LSD_FIELD_FLAG_IS_NULLT_ARRAY)) {
     // non-array
-    if (spcf->flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) {
+    if (spcf->flags & LSD_FIELD_FLAG_ALLOC_AND_COPY) {
       if (bsize) {
         // non-string
         if (bsize > LSD_MAX_ALLOC) {
@@ -629,7 +662,7 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
           return;
         } else {
           debug_print("allocating %" PRIu64 " bytes...", bsize);
-          if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
+          if (spcf->flags & LSD_FIELD_FLAG_ZERO_ON_COPY) {
             // alloc and zero
             if (!(*_lsd_calloc_aligned)((void **)dst_field, 1, bsize)) {
               debug_print("and set to zero.\n");
@@ -655,7 +688,7 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
       } else {
         // string (bsize == 0)
         char **cptr = (char **)dst_field;
-        if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
+        if (spcf->flags & LSD_FIELD_FLAG_ZERO_ON_COPY) {
           // set the string to an empty string
           *cptr = (*_lsd_strdup)("");
           debug_print("string was set to \"\"\n");
@@ -671,16 +704,16 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
           }
         }
       }
-      if (!(spcf->flags & LIVES_FIELD_FLAG_FREE_ON_DELETE)) {
+      if (!(spcf->flags & LSD_FIELD_FLAG_FREE_ON_DELETE)) {
         debug_print("WARNING: FREE_ON_DELETE not set\n");
       }
-      if (spcf->flags & LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE) {
+      if (spcf->flags & LSD_FIELD_FLAG_FREE_ALL_ON_DELETE) {
         debug_print("WARNING: FREE_ALL_ON_DELETE is set\n");
       }
       return;
     }
     // non-alloc
-    if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
+    if (spcf->flags & LSD_FIELD_FLAG_ZERO_ON_COPY) {
       if (bsize) {
         (*_lsd_memset)(dst_field, 0, bsize);
         debug_print("zeroed %" PRIu64 " bytes\n", bsize);
@@ -689,16 +722,16 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
         debug_print("set string to NULL\n");
       }
     }
-    if ((spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) && !bsize) {
-      if (!(spcf->flags & LIVES_FIELD_FLAG_FREE_ON_DELETE)) {
+    if ((spcf->flags & LSD_FIELD_FLAG_ZERO_ON_COPY) && !bsize) {
+      if (!(spcf->flags & LSD_FIELD_FLAG_FREE_ON_DELETE)) {
         debug_print("WARNING: FREE_ON_DELETE not set\n");
       }
     } else {
-      if (spcf->flags & LIVES_FIELD_FLAG_FREE_ON_DELETE) {
+      if (spcf->flags & LSD_FIELD_FLAG_FREE_ON_DELETE) {
         debug_print("WARNING: FREE_ON_DELETE is set\n");
       }
     }
-    if (spcf->flags & LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE) {
+    if (spcf->flags & LSD_FIELD_FLAG_FREE_ALL_ON_DELETE) {
       debug_print("WARNING: FREE_ALL_ON_DELETE is set\n");
     }
     return;
@@ -718,8 +751,8 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
         }
         for (j = 0; j < count; j++) {
           // flags tells us what to with each element
-          if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
-            if (spcf->flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) {
+          if (spcf->flags & LSD_FIELD_FLAG_ZERO_ON_COPY) {
+            if (spcf->flags & LSD_FIELD_FLAG_ALLOC_AND_COPY) {
               dptr[j] = (*_lsd_strdup)("");
             } else {
               ///set to NULL - but deliver a warning
@@ -727,7 +760,7 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
               dptr[j] = NULL;
             }
           } else {
-            if (spcf->flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) {
+            if (spcf->flags & LSD_FIELD_FLAG_ALLOC_AND_COPY) {
               dptr[j] = (*_lsd_strdup)(cptr[j]);
             } else dptr[j] = cptr[j];
           }
@@ -739,34 +772,34 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
       if (!cptr) {
         debug_print("value is NULL, not copying\n");
       } else {
-        if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
+        if (spcf->flags & LSD_FIELD_FLAG_ZERO_ON_COPY) {
           debug_print("created %d empty strings (+ terminating NULL)\n", count);
         } else {
-          if (spcf->flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) {
+          if (spcf->flags & LSD_FIELD_FLAG_ALLOC_AND_COPY) {
             debug_print("duplicated %d strings (+ terminating NULL)\n", count);
           } else {
             debug_print("copy-by-ref %d strings (+ terminating NULL)\n", count);
           }
         }
       }
-      if (!(spcf->flags & LIVES_FIELD_FLAG_FREE_ON_DELETE)) {
+      if (!(spcf->flags & LSD_FIELD_FLAG_FREE_ON_DELETE)) {
         debug_print("WARNING: FREE_ON_DELETE not set\n");
       }
-      if (!(spcf->flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) &&
-          !(spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY)) {
-        if (spcf->flags & LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE) {
+      if (!(spcf->flags & LSD_FIELD_FLAG_ALLOC_AND_COPY) &&
+          !(spcf->flags & LSD_FIELD_FLAG_ZERO_ON_COPY)) {
+        if (spcf->flags & LSD_FIELD_FLAG_FREE_ALL_ON_DELETE) {
           debug_print("WARNING: FREE_ALL_ON_DELETE is set\n");
         }
       } else {
-        if (!(spcf->flags & LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE)) {
+        if (!(spcf->flags & LSD_FIELD_FLAG_FREE_ALL_ON_DELETE)) {
           debug_print("WARNING: FREE_ALL_ON_DELETE not set\n");
         }
       }
       return;
     } else {
       /// array of elemnts of bsize
-      if (spcf->flags & (LIVES_FIELD_FLAG_ALLOC_AND_COPY
-                         | LIVES_FIELD_FLAG_ZERO_ON_COPY)) {
+      if (spcf->flags & (LSD_FIELD_FLAG_ALLOC_AND_COPY
+                         | LSD_FIELD_FLAG_ZERO_ON_COPY)) {
         /// alloc and copy elements of size bsize
         void **vptr = (*(void ** *)src_field), **dptr;
         if (vptr) {
@@ -778,12 +811,12 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
           }
           for (j = 0; j < count; j++) {
             // flags tells us what to with each element
-            if (spcf->flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) {
+            if (spcf->flags & LSD_FIELD_FLAG_ALLOC_AND_COPY) {
               if ((*_lsd_calloc_aligned)((void **)&dptr[j], 1, bsize)) {
                 memerr_print(bsize, spcf->name, lsd->structtype);
                 return;
               } else {
-                if (!(spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY)) {
+                if (!(spcf->flags & LSD_FIELD_FLAG_ZERO_ON_COPY)) {
                   (*_lsd_memcpy)(dptr[j], vptr[j], bsize);
                 }
               }
@@ -795,7 +828,7 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
         if (!vptr) {
           debug_print("value is NULL, not copying\n");
         } else {
-          if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
+          if (spcf->flags & LSD_FIELD_FLAG_ZERO_ON_COPY) {
             debug_print("created %d pointers to empty elements of size %" PRIu64 " "
                         "(+ terminating NULL)\n", count, bsize);
           } else {
@@ -804,10 +837,10 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
                         count, bsize);
           }
         }
-        if (!(spcf->flags & LIVES_FIELD_FLAG_FREE_ON_DELETE)) {
+        if (!(spcf->flags & LSD_FIELD_FLAG_FREE_ON_DELETE)) {
           debug_print("WARNING: FREE_ON_DELETE not set\n");
         }
-        if (!(spcf->flags & LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE)) {
+        if (!(spcf->flags & LSD_FIELD_FLAG_FREE_ALL_ON_DELETE)) {
           debug_print("WARNING: FREE_ALL_ON_DELETE not set\n");
         }
       } else {
@@ -836,10 +869,10 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
           debug_print("- copied %d values of size %" PRId64 " (including final 0's)\n",
                       count, bsize);
         }
-        if (!(spcf->flags & LIVES_FIELD_FLAG_FREE_ON_DELETE)) {
+        if (!(spcf->flags & LSD_FIELD_FLAG_FREE_ON_DELETE)) {
           debug_print("WARNING: FREE_ON_DELETE not set\n");
         }
-        if (spcf->flags & LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE) {
+        if (spcf->flags & LSD_FIELD_FLAG_FREE_ALL_ON_DELETE) {
           debug_print("WARNING: FREE_ALL_ON_DELETE is set\n");
         }
 	  // *INDENT-OFF*
@@ -849,7 +882,7 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
 
 static void _lsd_struct_free(lives_struct_def_t *) ALLOW_UNUSED;
 static void _lsd_struct_free(lives_struct_def_t *lsd) {
-  lives_special_field_t **spfields, *self_spcf = NULL;
+  lsd_special_field_t **spfields, *self_spcf = NULL;
   uint64_t lsd_flags = 0;
   size_t lsd_size = 0;
   void *src_field, *self_fields = NULL;
@@ -857,7 +890,7 @@ static void _lsd_struct_free(lives_struct_def_t *lsd) {
 
   if (!lsd) return;
 
-  if (_lsd_generation_check_lt(lsd, 1, 0)) {
+  if (_lsd_generation_check_lt(lsd, 1, 0) == LSD_SUCCESS) {
     thestruct = lsd;
     spfields = lsd->self_fields;
   } else {
@@ -867,10 +900,10 @@ static void _lsd_struct_free(lives_struct_def_t *lsd) {
     spfields = lsd->special_fields;
   }
 
-recurse_free:
+iterate_free:
   if (spfields) {
     for (int i = 0; spfields[i]; i++) {
-      lives_special_field_t *spcf = spfields[i];
+      lsd_special_field_t *spcf = spfields[i];
       src_field = _lsd_get_field(thestruct, thestruct == lsd, spfields, i);
       if (thestruct == lsd) {
         if (!i) {
@@ -878,17 +911,15 @@ recurse_free:
           lsd_flags = spcf->flags;
         }
         if (spcf->delete_func)
-          (*spcf->delete_func)(lsd->top, SELF_STRUCT_TYPE,
-                               spcf->name, src_field);
+          (*spcf->delete_func)(lsd->top, SELF_STRUCT_TYPE, spcf->name, src_field);
       } else {
         if (spcf->delete_func)
-          (*spcf->delete_func)(lsd->top, lsd->structtype,
-                               spcf->name, src_field);
+          (*spcf->delete_func)(lsd->top, lsd->structtype, spcf->name, src_field);
       }
     }
 
     for (int i = 0; spfields[i]; i++) {
-      lives_special_field_t *spcf = spfields[i];
+      lsd_special_field_t *spcf = spfields[i];
       uint64_t flags = spcf->flags;
       src_field = _lsd_get_field(thestruct, spfields == lsd->self_fields, spfields, i);
       if (src_field == &lsd->self_fields) {
@@ -899,7 +930,7 @@ recurse_free:
       }
 
       if (!flags) continue;
-      if (flags & LIVES_FIELD_FLAG_IS_SUBSTRUCT) {
+      if (flags & LSD_FIELD_FLAG_IS_SUBSTRUCT) {
         /// some other kind of substruct, find its lsd and call again
         /// TODO
         continue;
@@ -912,12 +943,10 @@ recurse_free:
   // this is done using the values contained in selfdata
   if (spfields == lsd->special_fields) {
     spfields = lsd->self_fields;
-    goto recurse_free;
+    goto iterate_free;
   }
 
-  if (self_fields) {
-    _lsd_auto_delete(self_fields, self_spcf->flags, 1);
-  }
+  if (self_fields) _lsd_auto_delete(self_fields, self_spcf->flags, 1);
 
   if (lsd_flags) {
     src_field = (void *)lsd;
@@ -928,11 +957,79 @@ recurse_free:
   else (*_lsd_free)(lsd);
 }
 
+static void  _lsd_copy_fields(lives_struct_def_t *lsd, lsd_special_field_t **spfields,
+                              void *new_struct, void *parent) {
+  for (int i = 0; spfields[i]; i++) {
+    lsd_special_field_t *spcf = spfields[i];
+    char *dst_field, *src_field;
+
+    if (!spcf->flags) continue;
+    if (i > 1) debug_print("field done\n\n");
+
+    dst_field = _lsd_get_field(new_struct, spfields == lsd->self_fields, spfields, i);
+
+    debug_print("handling field %s with flags 0X%016lX\n", spcf->name, spcf->flags);
+
+    if (spcf->flags & LSD_FIELD_FLAG_IS_SUBSTRUCT) {
+      // otherwise we descend into the substruct and locate its lives_struct_def *
+      // TODO...
+      debug_print("field is another substruct {TODO}\n");
+      continue;
+    }
+
+    if (!parent) {
+      off_t offset = spfields[0]->offset_to_field;
+      size_t bytesize = spfields[0]->bytesize;
+      /// when creating a new struct, we update src fields teomporarily
+      /// offset_to_field for lsd is only valid for the dest struct, for src it is 0
+      /// also src is a pointer, not pointer to pointer, so set src bytesize to zero
+      spfields[0]->offset_to_field = 0;
+      spfields[0]->bytesize = 0;
+      src_field = _lsd_get_field((char *)lsd, spfields == lsd->self_fields, spfields, i);
+      spfields[0]->offset_to_field = offset;
+      spfields[0]->bytesize = bytesize;
+    } else {
+      src_field = _lsd_get_field(parent, spfields == lsd->self_fields, spfields, i);
+      if (!i && spfields == lsd->self_fields && lsd->self_fields[0]->bytesize) src_field = *(char **)src_field;
+    }
+    _lsd_auto_copy(dst_field, src_field, spcf, lsd);
+  }
+}
+
+static void _lsd_run_callbacks(lives_struct_def_t *lsd, lsd_special_field_t **spfields,
+                               void *new_struct, void *parent) {
+  for (int i = 0; spfields[i]; i++) {
+    lsd_special_field_t *spcf = spfields[i];
+    char *dst_field = _lsd_get_field(new_struct, spfields == lsd->self_fields, spfields, i);
+    if (!i && spfields == lsd->self_fields && lsd->self_fields[0]->bytesize) dst_field = *(char **)dst_field;
+
+    if (!parent || (spcf->flags & LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY)) {
+      if (spcf->init_func) {
+        debug_print("calling init_func for %s\n", spcf->name);
+        (*spcf->init_func)(new_struct, (spfields == lsd->special_fields)
+                           ? lsd->structtype : SELF_STRUCT_TYPE, spcf->name, dst_field);
+      }
+    }
+    if (parent) {
+      if (spcf->copy_func) {
+        char *src_field = (char *)lsd->top + spcf->offset_to_field;
+        debug_print("calling copy_func for %s\n", spcf->name);
+        (*spcf->copy_func)(new_struct, lsd->top, (spfields == lsd->special_fields)
+                           ? lsd->structtype : SELF_STRUCT_TYPE, spcf->name, dst_field, src_field);
+      }
+    }
+  }
+}
+
 static void *_lsd_struct_copy(lives_struct_def_t *lsd, void *new_struct) {
-  lives_special_field_t **spfields;
+  lsd_special_field_t **spfields;
   lives_struct_def_t *dst_lsd;
   void *parent = NULL;
-  char *dst_field, *src_field;
+
+  if (!lsd->structsize) {
+    baderr_print("Cannot create or copy a struct type %s with size 0", lsd->structtype);
+    return NULL;
+  }
 
   spfields = lsd->self_fields;
 
@@ -943,97 +1040,37 @@ static void *_lsd_struct_copy(lives_struct_def_t *lsd, void *new_struct) {
       return NULL;
     }
     debug_print("copying struct of type: %s, %p -> %p, with size %" PRIu64 "\n", lsd->structtype,
-                parent, new_struct,
-                lsd->structsize);
-    parent = lsd->top;
+                parent, new_struct, lsd->structsize);
+    parent = lsd->top; // pointer to struct containing the lsd template
     (*_lsd_memcpy)(new_struct, parent, lsd->structsize);
   } else {
     debug_print("initing struct %p of type: %s\n", new_struct, lsd->structtype);
   }
 
   // copy self_fields first:
-
   debug_print("copying lives_struct_def_t fields first\n");
 
-recurse_copy:
-
   if (spfields) {
-    for (int i = 0; spfields[i]; i++) {
-      lives_special_field_t *spcf = spfields[i];
+    _lsd_copy_fields(lsd, spfields, new_struct, parent);
+    _lsd_run_callbacks(lsd, spfields, new_struct, parent);
+    debug_print("all self fields in struct copied\n\n");
+  }
 
-      if (!spcf->flags) continue;
-      if (i > 1) debug_print("field done\n\n");
-
-      dst_field = _lsd_get_field(new_struct, spfields == lsd->self_fields, spfields, i);
-
-      debug_print("handling field %s with flags 0X%016lX\n",
-                  spcf->name, spcf->flags);
-
-      if (spcf->flags & LIVES_FIELD_FLAG_IS_SUBSTRUCT) {
-        // otherwise we descend into the substruct and locate its lives_struct_def *
-        // TODO...
-        debug_print("field is another substruct {TODO}\n");
-        continue;
-      }
-
-      if (!parent) {
-        off_t offset = spfields[0]->offset_to_field;
-        size_t bytesize = spfields[0]->bytesize;
-        /// when creating a new struct, we update src fields teomporarily
-        /// offset_to_field for lsd is only valid for the dest struct, for src it is 0
-        /// also src is a pointer, not pointer to pointer, so set src bytesize to zero
-        spfields[0]->offset_to_field = 0;
-        spfields[0]->bytesize = 0;
-        src_field = _lsd_get_field((char *)lsd, spfields == lsd->self_fields, spfields, i);
-        spfields[0]->offset_to_field = offset;
-        spfields[0]->bytesize = bytesize;
-      } else src_field = _lsd_get_field(parent, spfields == lsd->self_fields, spfields, i);
-      _lsd_auto_copy(dst_field, src_field, spcf, lsd);
-    }
-
-    debug_print("all fields in struct copied\n\n");
-
-recurse_callbacks:
-    /// call callbacks
-    if (spfields) {
-      for (int i = 0; spfields[i]; i++) {
-        lives_special_field_t *spcf = spfields[i];
-        dst_field = _lsd_get_field(new_struct, spfields == lsd->self_fields, spfields, i);
-
-        if (parent) {
-          if (spcf->copy_func) {
-            debug_print("calling copy_func for %s\n", spcf->name);
-            src_field = (char *)lsd->top + spcf->offset_to_field;
-            (*spcf->copy_func)(new_struct, lsd->top, (spfields == lsd->special_fields)
-                               ? lsd->structtype : SELF_STRUCT_TYPE,
-                               spcf->name, dst_field, src_field);
-          }
-        } else {
-          if (spcf->init_func) {
-            debug_print("calling init_func for %s\n", spcf->name);
-            (*spcf->init_func)(new_struct, (spfields == lsd->special_fields)
-                               ? lsd->structtype : SELF_STRUCT_TYPE,
-                               spcf->name, dst_field);
-	      // *INDENT-OFF*
-	    }}}}}
-    // *INDENT-ON*
-
-  if (spfields != lsd->special_fields) {
-    // after copying structdef, we copy the normal fields
-    spfields = lsd->special_fields;
+  // after copying structdef, we copy the normal fields
+  spfields = lsd->special_fields;
+  if (spfields) {
     if (!parent) {
       debug_print("initing normal fields\n");
-      if (spfields) goto recurse_callbacks;
+      _lsd_run_callbacks(lsd, spfields, new_struct, parent);
     } else {
       debug_print("copying normal fields\n");
-      if (spfields) goto recurse_copy;
+      _lsd_copy_fields(lsd, spfields, new_struct, parent);
+      _lsd_run_callbacks(lsd, spfields, new_struct, parent);
     }
   }
 
-  if (parent)
-    debug_print("struct copy done\n\n");
-  else
-    debug_print("struct init done\n\n");
+  if (parent) debug_print("struct copy done\n\n");
+  else debug_print("struct init done\n\n");
 
   debug_print("triggering any struct callbacks\n\n");
 
@@ -1043,6 +1080,8 @@ recurse_callbacks:
   }
 
   dst_lsd = _lsd_get_field(new_struct, 1, lsd->self_fields, 0);
+  spfields = lsd->self_fields;
+  if (spfields[0]->bytesize) dst_lsd = *(lives_struct_def_t **)dst_lsd;
   if (dst_lsd->new_struct_callback)
     (*dst_lsd->new_struct_callback)(new_struct, parent, lsd->structtype, dst_lsd->new_user_data);
 
@@ -1052,20 +1091,19 @@ recurse_callbacks:
 static int _lsd_struct_init(const lives_struct_def_t *lsd, void *thestruct,
                             lives_struct_def_t **lsd_in_structp, int is_ptr) {
   lives_struct_def_t *lsd_in_struct;
-  if (!lsd || !thestruct || !lsd_in_structp) return EINVAL;
-  if (!is_ptr && !(lsd_in_struct = (lives_struct_def_t *)*lsd_in_structp))
-    return EINVAL;
-  if (!_lsd_generation_check_lt((lives_struct_def_t *)lsd, 1, 0)) return EINVAL;
+  if (!lsd || !thestruct || !lsd_in_structp) return LSD_ERROR;
+  if (!is_ptr && !(lsd_in_struct = (lives_struct_def_t *)*lsd_in_structp)) return LSD_ERROR;
+  if (_lsd_generation_check_lt((lives_struct_def_t *)lsd, 1, 0) != LSD_SUCCESS) return LSD_ERROR;
   else {
-    lives_special_field_t **spfields = lsd->self_fields;
+    lsd_special_field_t **spfields = lsd->self_fields;
     if (is_ptr)
-      spfields[0] = _lsd_make_special_field(LIVES_FIELD_FLAG_ALLOC_AND_COPY, thestruct,
+      spfields[0] = _lsd_make_special_field(LSD_FIELD_FLAG_ALLOC_AND_COPY, thestruct,
                                             lsd_in_structp, LSD_FIELD_LSD,
                                             sizeof(lives_struct_def_t), NULL, NULL, NULL);
     else
       spfields[0] = _lsd_make_special_field(0, thestruct, lsd_in_struct, LSD_FIELD_LSD, 0, NULL, NULL, NULL);
   }
-  return 0;
+  return LSD_SUCCESS;
 }
 
 static void _lsd_lsd_free(lives_struct_def_t *lsd) {
@@ -1108,13 +1146,13 @@ static void lives_struct_set_class_data(lives_struct_def_t *lsd, void *data) {
   if (lsd) lsd->class_data = data;
 }
 
-static lives_special_field_t *make_special_field(uint64_t flags, void *thestruct,
+static lsd_special_field_t *make_special_field(uint64_t flags, void *thestruct,
     void *ptr_to_field,
     const char *name,
     size_t data_size,
-    lives_field_init_cb init_func,
-    lives_field_copy_cb copy_func,
-    lives_field_delete_cb delete_func) {
+    lsd_field_init_cb init_func,
+    lsd_field_copy_cb copy_func,
+    lsd_field_delete_cb delete_func) {
   return _lsd_make_special_field(flags, thestruct, ptr_to_field, name, data_size,
                                  init_func, copy_func, delete_func);
 }
@@ -1132,7 +1170,7 @@ static int lives_struct_unref(lives_struct_def_t *lsd) {
     }
     int rc = --(((lives_struct_def_t *)lsd)->refcount);
     if (rc <= 0) {
-      if (_lsd_generation_check_lt((lives_struct_def_t *)lsd, 1, 0))
+      if (_lsd_generation_check_lt((lives_struct_def_t *)lsd, 1, 0) == LSD_SUCCESS)
         _lsd_lsd_free((lives_struct_def_t *)lsd);
       else _lsd_struct_free((lives_struct_def_t *)lsd);
       return rc;
@@ -1150,7 +1188,7 @@ static int lives_struct_free(lives_struct_def_t *lsd) {
 }
 
 static void *lives_struct_copy(lives_struct_def_t *lsd) {
-  if (!_lsd_generation_check_gt(lsd, 0, 1)) return NULL;
+  if (_lsd_generation_check_gt(lsd, 0, 1) != LSD_SUCCESS) return NULL;
   return _lsd_struct_copy(lsd, NULL);
 }
 
@@ -1173,9 +1211,8 @@ static int lives_struct_init(const lives_struct_def_t *lsd, void *thestruct,
 }
 
 static void *lives_struct_create(const lives_struct_def_t *lsd) {
-  void *thestruct, *lsd_in_struct;
-  lives_special_field_t **spfields;
-  off_t offset;
+  void *thestruct;
+  lsd_special_field_t **spfields;
 
   if (!lsd) return NULL;
   spfields = lsd->self_fields;
@@ -1186,16 +1223,12 @@ static void *lives_struct_create(const lives_struct_def_t *lsd) {
                  lsd->structtype);
     return NULL;
   }
-  offset = spfields[0]->offset_to_field;
+
   if ((*_lsd_calloc_aligned)((void **)&thestruct, 1, lsd->structsize)) {
     memerr_print(lsd->structsize, "ALL", lsd->structtype);
     return NULL;
   }
 
-  if (!(spfields[0]->bytesize)) {
-    lsd_in_struct = (void *)((char *)thestruct + offset);
-    (*_lsd_memcpy)(lsd_in_struct, lsd, sizeof(lives_struct_def_t));
-  }
   _lsd_struct_copy((lives_struct_def_t *)lsd, thestruct);
   return thestruct;
 }
@@ -1220,14 +1253,13 @@ static int lsd_same_family(const lives_struct_def_t *lsd1, lives_struct_def_t *l
       && lsd1->end_id == lsd2->end_id
       && (!(*_lsd_strcmp)(lsd1->structtype, lsd2->structtype))
       && (!(*_lsd_strcmp)(lsd1->class_data, lsd2->class_data))
-      && (!(*_lsd_strcmp)(lsd1->last_field, lsd2->last_field))) return 1;
-  return 0;
+      && (!(*_lsd_strcmp)(lsd1->last_field, lsd2->last_field))) return LSD_SUCCESS;
+  return LSD_FAIL;
 }
-
 
 static const lives_struct_def_t *lsd_create(const char *struct_type, size_t struct_size,
     const char *last_field, int nspecial) {
-  lives_special_field_t **xspecf;
+  lsd_special_field_t **xspecf;
   lives_struct_def_t *lsd;
 
   if ((*_lsd_calloc_aligned)((void **)&lsd, 1, sizeof(lives_struct_def_t))) {
@@ -1235,27 +1267,26 @@ static const lives_struct_def_t *lsd_create(const char *struct_type, size_t stru
     return NULL;
   }
 
-  if (struct_type)
-    snprintf(lsd->structtype, LSD_TEXTLEN, "%s", struct_type);
+  if (struct_type) snprintf(lsd->structtype, LSD_TEXTLEN, "%s", struct_type);
 
   lsd->structsize = struct_size;
   lsd->refcount = 1;
 
-  if (last_field)
-    snprintf(lsd->last_field, LSD_TEXTLEN, "%s", last_field);
+  if (last_field) snprintf(lsd->last_field, LSD_TEXTLEN, "%s", last_field);
 
   if (nspecial > 0) {
     if ((*_lsd_calloc_aligned)((void **)&lsd->special_fields, nspecial + 1,
-                               sizeof(lives_special_field_t *))) {
-      memerr_print((nspecial + 1) * sizeof(lives_special_field_t *), LSD_FIELD_LSD "." LSD_FIELD_SPECIAL_FIELDS,
+                               sizeof(lsd_special_field_t *))) {
+      memerr_print((nspecial + 1) * sizeof(lsd_special_field_t *), LSD_FIELD_LSD "." LSD_FIELD_SPECIAL_FIELDS,
                    SELF_STRUCT_TYPE);
       return NULL;
     }
     lsd->special_fields[nspecial] = NULL;
   }
 
-  if ((*_lsd_calloc_aligned)((void **) & (lsd->self_fields), 11, sizeof(lives_special_field_t *))) {
-    memerr_print(8 * sizeof(lives_special_field_t *), LSD_FIELD_LSD "." LSD_FIELD_SELF_FIELDS, SELF_STRUCT_TYPE);
+  if ((*_lsd_calloc_aligned)((void **) & (lsd->self_fields), LSD_N_SELF_FIELDS + 1, sizeof(lsd_special_field_t *))) {
+    memerr_print(LSD_N_SELF_FIELDS * sizeof(lsd_special_field_t *), LSD_FIELD_LSD "." LSD_FIELD_SELF_FIELDS,
+                 SELF_STRUCT_TYPE);
     return NULL;
   }
   xspecf = lsd->self_fields;
@@ -1278,22 +1309,18 @@ static const lives_struct_def_t *lsd_create(const char *struct_type, size_t stru
   xspecf[5] = _lsd_make_special_field(0, lsd, &lsd->top, LSD_FIELD_TOP, 0, _lsd_init_cb, _lsd_copy_cb, NULL);
 
   // values will be alloced and copied to a copy struct,
-  xspecf[6] = _lsd_make_special_field(LIVES_FIELD_PTR_ARRAY, lsd,
+  xspecf[6] = _lsd_make_special_field(LSD_FIELD_PTR_ARRAY, lsd,
                                       &lsd->special_fields, LSD_FIELD_SPECIAL_FIELDS,
-                                      sizeof(lives_special_field_t), NULL, NULL, NULL);
+                                      sizeof(lsd_special_field_t), NULL, NULL, NULL);
   // NULL terminated array - array allocated / freed elements copied
-  xspecf[7] = _lsd_make_special_field(LIVES_FIELD_PTR_ARRAY, lsd,
-                                      &lsd->self_fields, LSD_FIELD_SELF_FIELDS,
-                                      sizeof(lives_special_field_t),
-                                      NULL, NULL, NULL);
+  xspecf[7] = _lsd_make_special_field(LSD_FIELD_PTR_ARRAY, lsd, &lsd->self_fields, LSD_FIELD_SELF_FIELDS,
+                                      sizeof(lsd_special_field_t), NULL, NULL, NULL);
   // value will be set to zero after copying
-  xspecf[8] = _lsd_make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, lsd,
+  xspecf[8] = _lsd_make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY, lsd,
                                       &lsd->user_data, LSD_FIELD_USER_DATA, 8, NULL, NULL, NULL);
   // set to val
   xspecf[9] = _lsd_make_special_field(0, lsd, &lsd->end_id, LSD_FIELD_END_ID, 0, _lsd_init_cb,
                                       NULL, NULL);
-
-  xspecf[10] = NULL;
 
   return lsd;
 }

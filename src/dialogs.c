@@ -98,8 +98,8 @@ static void add_clear_ds_button(LiVESDialog *dialog) {
   if (mainw->tried_ds_recover) lives_widget_set_sensitive(button, FALSE);
   lives_dialog_make_widget_first(LIVES_DIALOG(dialog), button);
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_cleardisk_activate), (livespointer)button);
+  lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_cleardisk_activate), (livespointer)button);
 }
 
 
@@ -3587,10 +3587,13 @@ void threaded_dialog_pop(void) {
   }
 }
 
+static double xfraction = 0.;
 
 static void _threaded_dialog_spin(double fraction) {
   double timesofar;
   int progress;
+
+  xfraction = fraction;
 
   if (fraction > 0.) {
     timesofar = (double)(lives_get_current_ticks() - sttime) / TICKS_PER_SECOND_DBL;
@@ -3621,12 +3624,13 @@ static void _threaded_dialog_spin(double fraction) {
 void threaded_dialog_spin(double fraction) {
   if (!mainw->threaded_dialog || mainw->splash_window || !mainw->proc_ptr
       || !mainw->is_ready || !prefs->show_gui) return;
-  if (!mainw->is_exiting) {
+  if (!mainw->is_exiting && !is_fg_thread()) {
     if (THREADVAR(no_gui)) return;
     main_thread_execute((lives_funcptr_t)_threaded_dialog_spin, 0,
                         NULL, "d", fraction);
   } else _threaded_dialog_spin(fraction);
 }
+
 
 static void _do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   // calling this causes a threaded progress dialog to appear
@@ -3644,19 +3648,59 @@ static void _do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 }
 
 
+static void _thdlg_auto_spin(void) {
+  lives_proc_thread_set_cancellable(mainw->dlg_spin_thread);
+  while (mainw->threaded_dialog
+         && !lives_proc_thread_get_cancelled(mainw->dlg_spin_thread)) {
+    int count = 10000;
+    boolean spun = FALSE;
+    while (!lives_proc_thread_get_cancelled(mainw->dlg_spin_thread) && --count) {
+      if (mainw->threaded_dialog && !mainw->cancelled && !spun && !FG_THREADVAR(fg_service)) {
+        threaded_dialog_spin(xfraction);
+        spun = TRUE;
+      }
+      lives_nanosleep(10000);
+    }
+  }
+}
+
+
+void threaded_dialog_auto_spin(void) {
+  if (!prefs->show_gui) return;
+  if (!mainw->threaded_dialog || mainw->dlg_spin_thread) return;
+  if (!is_fg_thread()) {
+    main_thread_execute((lives_funcptr_t)threaded_dialog_auto_spin, 0, NULL, NULL);
+  }
+  mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
+                           (lives_funcptr_t)_thdlg_auto_spin, 0, NULL);
+}
+
+
+void threaded_dialog_stop_spin(void) {
+  if (mainw->dlg_spin_thread  && is_fg_thread()) {
+    if (!lives_proc_thread_get_cancelled(mainw->dlg_spin_thread)) {
+      while (fg_service_fulfill()) lives_widget_context_update();
+      lives_nanosleep(1000);
+    }
+  }
+}
+
+
 void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   if (!prefs->show_gui) return;
-  if (mainw->threaded_dialog || !prefs->show_gui) return;
-  if (!mainw->is_exiting)
+  if (mainw->threaded_dialog || mainw->dlg_spin_thread) return;
+  if (!mainw->is_exiting && !is_fg_thread()) {
     main_thread_execute((lives_funcptr_t)_do_threaded_dialog, 0,
                         NULL, "sb", trans_text, has_cancel);
-  else
-    _do_threaded_dialog(trans_text, has_cancel);
+  } else _do_threaded_dialog(trans_text, has_cancel);
 }
 
 
 static void _end_threaded_dialog(void) {
   if (!mainw->threaded_dialog) return;
+
+  if (mainw->dlg_spin_thread) threaded_dialog_stop_spin();
+
   mainw->cancel_type = CANCEL_KILL;
 
   if (mainw->proc_ptr && mainw->proc_ptr->processing) {
@@ -3684,7 +3728,7 @@ static void _end_threaded_dialog(void) {
 void end_threaded_dialog(void) {
   if (THREADVAR(no_gui)) return;
   if (!mainw->threaded_dialog) return;
-  if (!mainw->is_exiting)
+  if (!mainw->is_exiting && !is_fg_thread())
     main_thread_execute((lives_funcptr_t)_end_threaded_dialog, 0, NULL, "");
   else _end_threaded_dialog();
 }

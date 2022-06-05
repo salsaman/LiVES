@@ -2397,7 +2397,8 @@ typedef struct {
 } tdp_data;
 
 lives_decoder_t *clone_decoder(int fileno) {
-  lives_decoder_t *dplug;
+  lives_decoder_t *dplug, *dplug2;
+  pthread_mutexattr_t mattr;
   const lives_decoder_sys_t *dpsys;
   lives_clip_data_t *cdata = NULL;
   lives_clip_t *sfile;
@@ -2407,23 +2408,44 @@ lives_decoder_t *clone_decoder(int fileno) {
   dplug = (lives_decoder_t *)mainw->files[fileno]->ext_src;
   if (dplug) {
     dpsys = dplug->dpsys;
-    if (dpsys)cdata = (*dpsys->get_clip_data)(NULL, dplug->cdata);
+    if (dpsys) cdata = (*dpsys->get_clip_data)(NULL, dplug->cdata);
   }
 
   if (!cdata) return NULL;
 
-  dplug = (lives_decoder_t *)lives_calloc(1, sizeof(lives_decoder_t));
-  dplug->dpsys = dpsys;
-  dplug->cdata = cdata;
+  dplug2 = (lives_decoder_t *)lives_calloc(1, sizeof(lives_decoder_t));
+  dplug2->dpsys = dpsys;
+  pthread_mutexattr_init(&mattr);
+  pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK);
+  pthread_mutex_init(&dplug2->mutex, &mattr);
+  dplug2->cdata = cdata;
   set_cdata_memfuncs((lives_clip_data_t *)cdata);
   cdata->rec_rowstrides = NULL;
-  return dplug;
+  dplug->relations.offspring = lives_list_append(dplug->relations.offspring, (void *)dplug2);
+  dplug2->relations.parent = (void *)dplug;
+  return dplug2;
 }
 
 
 void clip_decoder_free(lives_decoder_t *decoder) {
-  if (decoder) {
+  if (decoder && !pthread_mutex_lock(&decoder->mutex)) {
     lives_clip_data_t *cdata = decoder->cdata;
+    lives_decoder_t *parent = decoder->relations.parent;
+    if (parent) {
+      pthread_mutex_lock(&parent->mutex);
+      if (parent->relations.offspring) {
+        parent->relations.offspring = lives_list_remove_data(parent->relations.offspring, decoder, FALSE);
+      }
+    }
+    for (LiVESList *list = decoder->relations.offspring; list; list = list->next) {
+      lives_decoder_t *child = (lives_decoder_t *)list->data;
+      pthread_mutex_lock(&child->mutex);
+      child->relations.parent = parent;
+      if (parent)
+        parent->relations.offspring = lives_list_append(parent->relations.offspring, child);
+      pthread_mutex_unlock(&child->mutex);
+    }
+    if (parent) pthread_mutex_unlock(&parent->mutex);
     if (cdata) {
       const lives_decoder_sys_t *dpsys = decoder->dpsys;
       if (cdata->rec_rowstrides) {
@@ -2431,8 +2453,129 @@ void clip_decoder_free(lives_decoder_t *decoder) {
         cdata->rec_rowstrides = NULL;
       }
       if (dpsys)(*dpsys->clip_data_free)(cdata);
+      decoder->cdata = NULL;
+    }
+    pthread_mutex_unlock(&decoder->mutex);
+    pthread_mutex_destroy(&decoder->mutex);
+  }
+}
+
+
+void propogate_timing_data(lives_decoder_t *dplug) {
+  if (!dplug || !dplug->cdata) return;
+  else {
+    static boolean orig = TRUE;
+    boolean was_orig = orig;
+    boolean need_unlock = FALSE;
+    if (!pthread_mutex_trylock(&dplug->mutex)) need_unlock = TRUE;
+    if (orig) {
+      // copy upwards
+      lives_decoder_t *parent = (lives_decoder_t *)dplug->relations.parent;
+      if (parent) {
+        if (parent->cdata) lives_memcpy(&parent->cdata->adv_timing, &dplug->cdata->adv_timing,
+                                          (char *) & (dplug->cdata->adv_timing.xvals)
+                                          - (char *) & (dplug->cdata->adv_timing));
+        // copy downwards
+        propogate_timing_data(parent);
+        if (need_unlock) pthread_mutex_unlock(&dplug->mutex);
+        return;
+      }
+      orig = FALSE;
+    }
+    for (LiVESList *offspring = dplug->relations.offspring; offspring; offspring = offspring->next) {
+      lives_decoder_t *child = (lives_decoder_t *)offspring->data;
+      if (!pthread_mutex_trylock(&child->mutex)) {
+        if (child->cdata) {
+          lives_memcpy(&child->cdata->adv_timing, &dplug->cdata->adv_timing,
+                       (char *) & (dplug->cdata->adv_timing.xvals)
+                       - (char *) & (dplug->cdata->adv_timing));
+          propogate_timing_data(child);
+        }
+        pthread_mutex_unlock(&child->mutex);
+      }
+    }
+    if (was_orig) orig = TRUE;
+    if (need_unlock) pthread_mutex_unlock(&dplug->mutex);
+  }
+}
+
+
+lives_decoder_t *add_decoder_clone(int nclip) {
+  lives_decoder_t *dec = NULL;
+  lives_clip_t *sfile = RETURN_PHYSICAL_CLIP(nclip);
+  if (sfile) {
+    dec = clone_decoder(nclip);
+    if (dec) {
+      int nsrcs = sfile->n_altsrcs;
+      sfile->alt_srcs = lives_realloc(sfile->alt_srcs, (nsrcs + 1) * sizeof(void *));
+      sfile->alt_srcs[nsrcs] = dec;
+      sfile->alt_src_types = lives_realloc(sfile->alt_src_types, (nsrcs + 1) * sizint);
+      sfile->alt_src_types[nsrcs] = LIVES_EXT_SRC_DECODER;
+      sfile->n_altsrcs++;
     }
   }
+  return dec;
+}
+
+
+lives_decoder_t *get_decoder_clone(int nclip) {
+  lives_clip_t *sfile = RETURN_PHYSICAL_CLIP(nclip);
+  if (sfile) {
+    int nsrcs = sfile->n_altsrcs;
+    for (int i = 0; i < nsrcs; i++) {
+      if (sfile->alt_src_types[i] == LIVES_EXT_SRC_DECODER) return sfile->alt_srcs[i];
+    }
+  }
+  return NULL;
+}
+
+
+boolean swap_decoder_clone(int nclip, lives_decoder_t *dec) {
+  lives_clip_t *sfile = RETURN_PHYSICAL_CLIP(nclip);
+  if (sfile) {
+    if (dec != sfile->ext_src) {
+      int nsrcs = sfile->n_altsrcs;
+      for (int i = 0; i < nsrcs; i++) {
+        if (sfile->alt_src_types[i] == LIVES_EXT_SRC_DECODER
+            && (lives_decoder_t *)sfile->alt_srcs[i] == dec) {
+          lives_decoder_t *tmp = dec;
+          sfile->alt_srcs[i] = sfile->ext_src;
+          sfile->ext_src = tmp;
+          return TRUE;
+        }
+      }
+    }
+  }
+  return FALSE;
+}
+
+
+boolean free_decoder_clone(int nclip, lives_decoder_t *dec) {
+  lives_clip_t *sfile = RETURN_PHYSICAL_CLIP(nclip);
+  if (sfile) {
+    int nsrcs = sfile->n_altsrcs;
+    for (int i = 0; i < nsrcs; i++) {
+      if (sfile->alt_src_types[i] == LIVES_EXT_SRC_DECODER
+          && (lives_decoder_t *)sfile->alt_srcs[i] == dec) {
+        clip_decoder_free(dec);
+        sfile->n_altsrcs--;
+        while (i < sfile->n_altsrcs) {
+          sfile->alt_srcs[i] = sfile->alt_srcs[i + 1];
+          sfile->alt_src_types[i] = sfile->alt_src_types[i + 1];
+          i++;
+        }
+        if (sfile->n_altsrcs > 0) {
+          sfile->alt_srcs = lives_realloc(sfile->alt_srcs, sfile->n_altsrcs * sizeof(void *));
+          sfile->alt_src_types = lives_realloc(sfile->alt_src_types, sfile->n_altsrcs * sizint);
+        } else {
+          sfile->alt_srcs = NULL;
+          sfile->alt_src_types = NULL;
+        }
+        return TRUE;
+      }
+    }
+  }
+  return FALSE;
 }
 
 
@@ -2450,6 +2593,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
   // decoder and the frames could come out different
 
   lives_decoder_t *dplug = NULL;
+  pthread_mutexattr_t mattr;
   lives_clip_data_t *cdata = NULL;
   LiVESList *decoder_plugin = capable->plugins_list[PLUGIN_TYPE_DECODER];
   LiVESList *xdis;
@@ -2476,8 +2620,8 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
 
     cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
 
-    // use fake_cdata only on first (reloaded)
     if (fake_cdata) {
+      // use fake_cdata only on first (reloaded)
       file_name = lives_strdup(fake_cdata->URI);
       fake_cdata = NULL;
     }
@@ -2486,19 +2630,22 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
       // check for sanity
       //g_print("Checking return data from %s\n", dpsys->soname);
       if (lsd_check_match((lives_struct_def_t *)get_lsd(LIVES_STRUCT_CLIP_DATA_T),
-                          &cdata->lsd)) {
+                          cdata->lsd)) {
         char *msg = lives_strdup_printf("Error in cdata received from decoder plugin:\n%s\nAborting.", dpsys->soname);
         lives_abort(msg);
         lives_free(msg);
       }
       if (!sanity_check_cdata(cdata)) {
-        lives_struct_free(&cdata->lsd);
+        lives_struct_free(cdata->lsd);
         cdata = NULL;
         continue;
       }
-      dplug = (lives_decoder_t *)lives_malloc(sizeof(lives_decoder_t));
+      dplug = (lives_decoder_t *)lives_calloc(1, sizeof(lives_decoder_t));
       dplug->dpsys = dpsys;
       dplug->cdata = cdata;
+      pthread_mutexattr_init(&mattr);
+      pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK);
+      pthread_mutex_init(&dplug->mutex, &mattr);
       dplug->cdata->rec_rowstrides = NULL;
       set_cdata_memfuncs(cdata);
       break;
@@ -2579,7 +2726,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled,
 
   while (!lives_proc_thread_check_finished(info)) {
     threaded_dialog_spin(0.);
-    lives_nanosleep(MILLIONS(10));
+    lives_nanosleep(LIVES_FORTY_WINKS);
   }
 
   dplug = (lives_decoder_t *)lives_proc_thread_join_voidptr(info);
@@ -2648,8 +2795,15 @@ boolean chill_decoder_plugin(int fileno) {
     lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
     lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->dpsys;
     lives_clip_data_t *cdata = dplug->cdata;
-    if (cdata)
-      if (dpsys->chill_out) return (*dpsys->chill_out)(cdata);
+    if (cdata) {
+      if (dpsys->chill_out) {
+        boolean ret;
+        pthread_mutex_lock(&dplug->mutex);
+        ret = (*dpsys->chill_out)(cdata);
+        pthread_mutex_unlock(&dplug->mutex);
+        return ret;
+      }
+    }
   }
   return FALSE;
 }
@@ -2708,6 +2862,8 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   dpsys->rip_audio_cleanup = (void (*)(const lives_clip_data_t *))dlsym(dpsys->handle, "rip_audio_cleanup");
 
   dpsys->estimate_delay = (double (*)(const lives_clip_data_t *, int64_t))dlsym(dpsys->handle, "estimate_delay");
+  dpsys->estimate_delay_full = (double (*)(const lives_clip_data_t *, int64_t tframe,  int64_t last_frame,
+                                double * confidence))dlsym(dpsys->handle, "estimate_delay_full");
 
   if (dpsys->module_check_init) {
     err = (*dpsys->module_check_init)();

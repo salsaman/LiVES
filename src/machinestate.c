@@ -1696,11 +1696,13 @@ LIVES_GLOBAL_INLINE char *lives_chomp(char *buff, boolean multi) {
   /// chop off final newline
   /// see also lives_strchomp() which removes all whitespace
   if (buff) {
-    size_t xs = lives_strlen(buff);
-    do {
-      if (xs && buff[xs - 1] == '\n') buff[--xs] = '\0'; // remove trailing newline
-      else break;
-    } while (multi);
+    int slen, start = -1;
+    for (slen = 0; buff[slen]; slen++) {
+      if (buff[slen] == '\n') {
+        if (start == -1) start = slen;
+      } else start = -1;
+    }
+    if (start >= 0) lives_memset(&buff[multi ? start : --slen], 0, 1);
   }
   return buff;
 }
@@ -1742,206 +1744,6 @@ LIVES_GLOBAL_INLINE pid_t lives_getpid(void) {
 LIVES_GLOBAL_INLINE int lives_getuid(void) {return geteuid();}
 
 LIVES_GLOBAL_INLINE int lives_getgid(void) {return getegid();}
-
-static uint16_t swabtab[65536];
-static boolean swabtab_inited = FALSE;
-
-static void init_swabtab(void) {
-  for (int i = 0; i < 256; i++) {
-    int z = i << 8;
-    for (int j = 0; j < 256; j++) {
-      swabtab[z++] = (j << 8) + i;
-    }
-  }
-  swabtab_inited = TRUE;
-}
-
-union split8 {
-  uint64_t u64;
-  uint32_t u32[2];
-};
-
-union split4 {
-  uint32_t u32;
-  uint16_t u16[2];
-};
-
-// gran(ularity) may be 1, or 2
-LIVES_GLOBAL_INLINE void swab2(const void *from, const void *to, size_t gran) {
-  uint16_t *s = (uint16_t *)from;
-  uint16_t *d = (uint16_t *)to;
-  if (gran == 2) {
-    uint16_t tmp = *s;
-    *s = *d;
-    *d = tmp;
-    return;
-  }
-  if (!swabtab_inited) init_swabtab();
-  *d = swabtab[*s];
-}
-
-// gran(ularity) may be 1, 2 or 4
-LIVES_GLOBAL_INLINE void swab4(const void *from, const void *to, size_t gran) {
-  union split4 *d = (union split4 *)to, s;
-  uint16_t tmp;
-
-  if (gran > 2) {
-    lives_memcpy((void *)to, from, gran);
-    return;
-  }
-  s.u32 = *(uint32_t *)from;
-  tmp = s.u16[0];
-  if (gran == 2) {
-    d->u16[0] = s.u16[1];
-    d->u16[1] = tmp;
-  } else {
-    swab2(&s.u16[1], &d->u16[0], 1);
-    swab2(&tmp, &d->u16[1], 1);
-  }
-}
-
-
-// gran(ularity) may be 1, 2 or 4
-LIVES_GLOBAL_INLINE void swab8(const void *from, const void *to, size_t gran) {
-  union split8 *d = (union split8 *)to, s;
-  uint32_t tmp;
-  if (gran > 4) {
-    lives_memcpy((void *)to, from, gran);
-    return;
-  }
-  s.u64 = *(uint64_t *)from;
-  tmp = s.u32[0];
-  if (gran == 4) {
-    d->u32[0] = s.u32[1];
-    d->u32[1] = tmp;
-  } else {
-    swab4(&s.u32[1], &d->u32[0], gran);
-    swab4(&tmp, &d->u32[1], gran);
-  }
-}
-
-
-LIVES_GLOBAL_INLINE void reverse_bytes(char *buff, size_t count, size_t gran) {
-  if (count == 2) swab2(buff, buff, 1);
-  else if (count == 4) swab4(buff, buff, gran);
-  else if (count == 8) swab8(buff, buff, gran);
-}
-
-
-boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
-  // reverse chunk sized bytes in buff, count must be a multiple of chunk
-  ssize_t start = -1, end;
-  size_t ocount = count;
-
-  if (chunk < 8) {
-    if ((chunk != 4 && chunk != 2 && chunk != 1) || (count % chunk) != 0) return FALSE;
-  } else {
-    if ((chunk & 0x01) || (count % chunk) != 0) return FALSE;
-    else {
-#ifdef USE_RPMALLOC
-      void *tbuff = rpmalloc(chunk);
-#else
-      void *tbuff = lives_malloc(chunk);
-#endif
-      start++;
-      end = ocount - 1 - chunk;
-      while (start + chunk < end) {
-        lives_memcpy(tbuff, &buff[end], chunk);
-        lives_memcpy(&buff[end], &buff[start], chunk);
-        lives_memcpy(&buff[start], tbuff, chunk);
-        start += chunk;
-        end -= chunk;
-      }
-#ifdef USE_RPMALLOC
-      rpfree(tbuff);
-#else
-      lives_free(tbuff);
-#endif
-      return TRUE;
-    }
-  }
-
-  /// halve the number of bytes, since we will work forwards and back to meet in the middle
-  count >>= 1;
-
-  if (count >= 8 && (ocount & 0x07) == 0) {
-    // start by swapping 8 bytes from each end
-    uint64_t *buff8 = (uint64_t *)buff;
-    if ((void *)buff8 == (void *)buff) {
-      end = ocount  >> 3;
-      for (; count >= 8; count -= 8) {
-        /// swap 8 bytes at a time from start and end
-        uint64_t tmp8 = buff8[--end];
-        if (chunk == 8) {
-          buff8[end] = buff8[++start];
-          buff8[start] = tmp8;
-        } else {
-          swab8(&buff8[++start], &buff8[end], chunk);
-          swab8(&tmp8, &buff8[start], chunk);
-        }
-      }
-      if (count <= chunk / 2) return TRUE;
-      start = (start + 1) << 3;
-      start--;
-    }
-  }
-
-  /// remainder should be only 6, 4, or 2 bytes in the middle
-  if (chunk >= 8) return FALSE;
-
-  if (count >= 4 && (ocount & 0x03) == 0) {
-    uint32_t *buff4 = (uint32_t *)buff;
-    if ((void *)buff4 == (void *)buff) {
-      if (start > 0) {
-        end = (ocount - start) >> 2;
-        start >>= 2;
-      } else end = ocount >> 2;
-      for (; count >= 4; count -= 4) {
-        /// swap 4 bytes at a time from start and end
-        uint32_t tmp4 = buff4[--end];
-        if (chunk == 4) {
-          buff4[end] = buff4[++start];
-          buff4[start] = tmp4;
-        } else {
-          swab4(&buff4[++start], &buff4[end], chunk);
-          swab4(&tmp4, &buff4[start], chunk);
-        }
-      }
-      if (count <= chunk / 2) return TRUE;
-      start = (start + 1) << 2;
-      start--;
-    }
-  }
-
-  /// remainder should be only 6 or 2 bytes in the middle, with a chunk size of 4 or 2 or 1
-  if (chunk >= 4) return FALSE;
-
-  if (count > 0) {
-    uint16_t *buff2 = (uint16_t *)buff;
-    if ((void *)buff2 == (void *)buff) {
-      if (start > 0) {
-        end = (ocount - start) >> 1;
-        start >>= 1;
-      } else end = ocount >> 1;
-      for (; count >= chunk / 2; count -= 2) {
-        /// swap 2 bytes at a time from start and end
-        uint16_t tmp2 = buff2[--end];
-        if (chunk >= 2) {
-          buff2[end] = buff2[++start];
-          buff2[start] = tmp2;
-        }
-        /// swap single bytes
-        else {
-          swab2(&buff2[++start], &buff2[end], 1);
-          swab2(&tmp2, &buff2[start], 1);
-	  // *INDENT-OFF*
-        }}}}
-  // *INDENT-ON*
-
-  if (count == 0) return TRUE;
-  return FALSE;
-}
-
 
 /// estimate the machine load
 static double theflow[EFFORT_RANGE_MAX];
@@ -2006,7 +1808,7 @@ void update_effort(double nthings, boolean is_bad) {
       double res = pop_flowstate();
       if (res > 0.) badthingcount -= res;
       else goodthingcount += res;
-      g_print("vals %f %f %f  ", res, badthingcount, goodthingcount);
+      //g_print("vals %f %f %f  ", res, badthingcount, goodthingcount);
     }
     /// - all the good things, so when it pops out we add it (i.e subtract the value)
     theflow[flowlen] = -newthings;
@@ -3180,6 +2982,22 @@ boolean get_distro_dets(void) {
 #endif
   return FALSE;
 }
+
+
+///////////////// future directions --- this will become part of the performance manager object //////
+// the idea is to have it continually montioring the hardware and optimising for memory, io, disksapce
+// cpu load, temperature, battery status and so on
+// as well as managing the autotuning parameters which should be rechecked periodically
+// also it would be good to have other objects feeding data into it, for example frame decode times
+// av sync drift, instant fps, widget event calls, as well as timing data for running key functions
+//
+// in addition it can manage the adaptive quality settings from the input data, and also adjust the
+// amount of processing devoted to each thread, using
+
+
+void set_thread_loveliness(double howmuch) {
+
+
 
 
 int get_num_cpus(void) {

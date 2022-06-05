@@ -278,9 +278,10 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     }
   } else {
     vpp = mainw->vpp;
-    mainw->transrend_ready = TRUE;
+    // indicate ready status
+    mainw->transcoder_state = TRUE;
     lives_proc_thread_set_cancellable(mainw->transrend_proc);
-    lives_nanosleep_while_false(!mainw->transrend_ready
+    lives_nanosleep_while_false(mainw->transrend_send
                                 || lives_proc_thread_get_cancelled(mainw->transrend_proc));
     if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) goto tr_err2;
   }

@@ -1065,8 +1065,8 @@ typedef struct {
   AVPacket avpkt;
   uint8_t *ovpdata;
   boolean needs_pkt;
-  int64_t last_frame; ///< last frame displayed
   index_container_t *idxc;
+  index_container_t *idxb;
   boolean expect_eof;
   boolean ext_memfuncs;
   int index_scale;

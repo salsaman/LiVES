@@ -608,58 +608,28 @@ static inline char *weed_param_get_value_string(weed_plant_t *param) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
+#define LEAF_COPY(type) { \
+  type data = (type *)weed_malloc(num * sizeof(type)); \
+  for (i = 0; (weed_size_t)i < num; i++) weed_leaf_get(from, key, i, &data[i]); \
+  weed_leaf_set(to, key, seed_type, num, data); weed_free(data);} break;
+
+
 static void _weed_clone_leaf(weed_plant_t *from, const char *key, weed_plant_t *to) {
-  int i, *datai;
-  double *datad;
-  char **datac;
-  int64_t *datai6;
-  void **datav;
-  weed_funcptr_t *dataf;
-  weed_plant_t **datap;
   int32_t seed_type = weed_leaf_seed_type(from, key);
-  weed_size_t stlen, num = wlne(from, key);
+  int num = wlne(from, key);
   if (num == 0) weed_leaf_set(to, key, seed_type, 0, NULL);
   else {
     switch (seed_type) {
     case WEED_SEED_BOOLEAN:
-    case WEED_SEED_INT:
-      datai = (int *)weed_malloc(num * sizeof(int));
-      for (i = 0; (weed_size_t)i < num; i++) weed_leaf_get(from, key, i, &datai[i]);
-      weed_leaf_set(to, key, seed_type, num, datai);
-      weed_free(datai);
-      break;
-    case WEED_SEED_INT64:
-      datai6 = (int64_t *)weed_malloc(num * sizeof(int64_t));
-      for (i = 0; (weed_size_t)i < num; i++) weed_leaf_get(from, key, i, &datai6[i]);
-      weed_leaf_set(to, key, WEED_SEED_INT64, num, datai6);
-      weed_free(datai6);
-      break;
-    case WEED_SEED_DOUBLE:
-      datad = (double *)weed_malloc(num * sizeof(double));
-      for (i = 0; (weed_size_t)i < num; i++) weed_leaf_get(from, key, i, &datad[i]);
-      weed_leaf_set(to, key, WEED_SEED_DOUBLE, num, datad);
-      weed_free(datad);
-      break;
-    case WEED_SEED_FUNCPTR:
-      dataf = (weed_funcptr_t *)weed_malloc(num * sizeof(weed_funcptr_t));
-      for (i = 0; (weed_size_t)i < num; i++) weed_leaf_get(from, key, i, &dataf[i]);
-      weed_leaf_set(to, key, WEED_SEED_FUNCPTR, num, dataf);
-      weed_free(dataf);
-      break;
-    case WEED_SEED_VOIDPTR:
-      datav = (void **)weed_malloc(num * sizeof(void *));
-      for (i = 0; (weed_size_t)i < num; i++) weed_leaf_get(from, key, i, &datav[i]);
-      weed_leaf_set(to, key, WEED_SEED_VOIDPTR, num, datav);
-      weed_free(datav);
-      break;
-    case WEED_SEED_PLANTPTR:
-      datap = (weed_plant_t **)weed_malloc(num * sizeof(weed_plant_t *));
-      for (i = 0; (weed_size_t)i < num; i++) weed_leaf_get(from, key, i, &datap[i]);
-      weed_leaf_set(to, key, WEED_SEED_PLANTPTR, num, datap);
-      weed_free(datap);
-      break;
-    case WEED_SEED_STRING:
-      datac = (char **)weed_malloc(num * sizeof(char *));
+    case WEED_SEED_INT: LEAF_COPY(int);
+    case WEED_SEED_INT64: LEAF_COPY(int64_t);
+    case WEED_SEED_DOUBLE: LEAF_COPY(double);
+    case WEED_SEED_FUNCPTR: LEAF_COPY(weed_funcptr_t);
+    case WEED_SEED_VOIDPTR: LEAF_COPY(void *);
+    case WEED_SEED_PLANTPTR: LEAF_COPY(weed_plantptr_t);
+    case WEED_SEED_STRING: {
+      weed_size_t stlen;
+      char **datac = (char **)weed_malloc(num * sizeof(char *));
       for (i = 0; (weed_size_t)i < num; i++) {
         stlen = weed_leaf_element_size(from, key, i);
         datac[i] = (char *)weed_malloc(stlen + 1);
@@ -813,9 +783,7 @@ static inline double fastrand_dbl_re(double range, weed_plant_t *inst, const cha
   return val / divd * range;
 }
 
-static inline uint32_t fastrnd_int(uint32_t range) {
-  return (uint32_t)fastrnd_dbl((double)(++range));
-}
+static inline uint32_t fastrnd_int(uint32_t range) {return (uint32_t)fastrnd_dbl((double)(++range));}
 
 static inline uint32_t fastrand_int_re(uint32_t range, weed_plant_t *inst, const char *leaf) {
   return (uint32_t)fastrand_dbl_re((double)(++range), inst, leaf);

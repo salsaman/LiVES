@@ -5716,7 +5716,9 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   lives_popen(com, TRUE, (char *)tbuff, 0);
   lives_free(com);
 
+  mainw->cancelled = CANCEL_NO_MORE_PREVIEW;
   lives_proc_thread_join(tinfo);
+  mainw->cancelled = CANCEL_NONE;
 
   if (*mainw->msg && (ntok = get_token_count(mainw->msg, '|')) > 1) {
     char **array = lives_strsplit(mainw->msg, "|", 2);
@@ -6543,9 +6545,6 @@ static void on_fs_preview_clicked(LiVESWidget * widget, LiVESDialog * dlg, doubl
     end_fs_preview(fchoo, widget);
     do_program_not_found_error(EXEC_MKTEMP);
     return;
-  }
-
-  if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
   }
 
   // get file details
@@ -10647,7 +10646,8 @@ boolean nervous_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint3
 
 boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
   boolean state;
-  if ((lives_get_status() != LIVES_STATUS_PLAYING && mainw->status != LIVES_STATUS_IDLE)
+  if ((lives_get_status() != LIVES_STATUS_PLAYING && mainw->status != LIVES_STATUS_IDLE
+       && !LIVES_IS_RECORDING)
       || !is_realtime_aplayer(prefs->audio_player) || mainw->multitrack
       || mainw->agen_key != 0 || mainw->agen_needs_reinit || AUD_SRC_EXTERNAL) return TRUE;
 
@@ -11389,7 +11389,7 @@ void on_normalise_audio_activate(LiVESMenuItem * menuitem, livespointer user_dat
 
   if (mainw->cancelled != CANCEL_NONE) {
     com = lives_strdup_printf("%s undo_audio \"%s\"", prefs->backend_sync, cfile->handle);
-    mainw->cancelled = CANCEL_NONE;
+    if (menuitem) mainw->cancelled = CANCEL_NONE;
     lives_system(com, FALSE);
     lives_free(com);
     end_threaded_dialog();
@@ -12331,6 +12331,7 @@ boolean on_ins_silence_activate(LiVESMenuItem * menuitem, livespointer user_data
   sfile->old_raudio_time = sfile->raudio_time;
 
   // with_sound is 2 (audio only), therefore start, end, where, are in seconds. rate is -ve to indicate silence
+  // TODO - avoid using backend
   temp_backend = use_staging_dir_for(clipno);
   com = lives_strdup_printf("%s insert \"%s\" \"%s\" %.8f 0. %.8f \"%s\" 2 0 0 0 0 %d %d %d %d %d 1",
                             temp_backend, sfile->handle, get_image_ext_for_type(sfile->img_type),

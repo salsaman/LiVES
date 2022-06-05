@@ -16,6 +16,8 @@
 #define LADSPA_LITERAL "ladspa"
 #endif
 
+#define ALLOW_NONFREE_CODECS 1
+
 #define PREF_FLAG_EXPERIMENTAL		(1 << 0)
 
 #define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) {boolean a = (PDEF); define_pref(PREF_##IDX, &prefs->PR, WEED_SEED_BOOLEAN, &a, FLAGS);}
@@ -50,6 +52,10 @@
 #define MAX_CPICK_VAR 1.0
 #define DEF_CPICK_TIME 2.0
 
+/// LiVES will show a warning if this (MBytes) is exceeded on load
+/// (can be overridden in prefs)
+#define WARN_FILE_SIZE 500
+
 // for mainw->prefs_changed
 #define PREFS_THEME_CHANGED		(1 << 0)
 #define PREFS_JACK_CHANGED		(1 << 1)
@@ -62,7 +68,6 @@
 #define PREFS_THEME_MINOR_CHANGE       	(1 << 8)
 
 #define PREFS_NEEDS_REVERT		(1 << 28)
-
 
 typedef struct {
   char bgcolour[256];

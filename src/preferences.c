@@ -429,7 +429,7 @@ LiVESResponseType get_utf8_pref(const char *key, char *val, int maxlen) {
   // get a pref in locale encoding, then convert it to utf8
   char *tmp;
   int retval = get_string_pref(key, val, maxlen);
-  tmp = lives_filename_to_utf8(val, -1, NULL, NULL, NULL);
+  tmp = F2U8(val);
   lives_snprintf(val, maxlen, "%s", tmp);
   lives_free(tmp);
   return retval;

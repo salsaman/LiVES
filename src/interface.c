@@ -3621,8 +3621,8 @@ void redraw_timeline(int clipno) {
                                "i", clipno);
         lives_proc_thread_sync_ready(mainw->drawtl_thread);
         lives_nanosleep_while_false(lives_proc_thread_get_cancellable(mainw->drawtl_thread));
-        pthread_mutex_unlock(&mainw->tlthread_mutex);
       }
+      pthread_mutex_unlock(&mainw->tlthread_mutex);
       return;
     } else {
       // if a bg thread, we either call the main thread to run this which will spawn another bg thread,
@@ -3635,7 +3635,7 @@ void redraw_timeline(int clipno) {
       }
       pthread_mutex_unlock(&mainw->tlthread_mutex);
 
-      THREADVAR(hook_flag_hints) = HOOK_UNIQUE_CHANGE_DATA;
+      THREADVAR(hook_flag_hints) = HOOK_UNIQUE_REPLACE_OR_ADD;
       main_thread_execute((lives_funcptr_t)redraw_timeline, 0, NULL, "i", clipno);
       THREADVAR(hook_flag_hints) = 0;
 
@@ -8082,6 +8082,8 @@ boolean msg_area_config(LiVESWidget * widget) {
   static int gui_posx = 1000000;
   static int gui_posy = 1000000;
 
+  static boolean norecurse = FALSE;
+
   LingoLayout *layout;
   lives_rect_t rect;
 
@@ -8095,6 +8097,8 @@ boolean msg_area_config(LiVESWidget * widget) {
   int overflowx = 0, overflowy = 0;
   int ww, hh, vvmin, hhmin;
   int paisize = 0, opaisize;
+
+  if (norecurse) return FALSE;
 
   if (!mainw->is_ready) return FALSE;
   if (!prefs->show_msg_area) return FALSE;
@@ -8227,11 +8231,14 @@ boolean msg_area_config(LiVESWidget * widget) {
       if (height <= MIN_MSGBAR_HEIGHT) {
         height = MIN_MSGBAR_HEIGHT;
         mainw->mbar_res = height;
-        if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID)
+        if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID && !THREADVAR(fg_service)
+            && !FG_THREADVAR(fg_service)) {
+          norecurse = TRUE;
           redraw_timeline(mainw->current_file);
+          norecurse = FALSE;
+        }
+        if (width < 0 || height < 0) return FALSE;
       }
-
-      if (width < 0 || height < 0) return FALSE;
     }
 
     w = ww - overflowx + abs(bx);

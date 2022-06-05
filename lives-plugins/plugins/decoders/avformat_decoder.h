@@ -36,8 +36,6 @@ typedef struct  {
 
   int64_t last_pts;
 
-  int64_t last_frame;
-
   size_t pkt_offs;
 #ifdef TEST_CACHING
   int cachemax;

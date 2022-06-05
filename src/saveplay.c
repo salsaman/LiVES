@@ -233,9 +233,10 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
     }
 
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    lives_widget_context_update();
+    //lives_widget_context_update();
 
-    d_print(_("Opening %s"), file_name);
+    msgstr = lives_strdup_printf(_("Opening %s"), file_name);
+    d_print(msgstr);
     if (start > 0.) d_print(_(" from time %.2f"), start);
     if (frames > 0) d_print(_(" max. frames %d"), frames);
 
@@ -246,12 +247,18 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
 
     d_print(""); // exhaust "switch" message
 
+    do_threaded_dialog(msgstr, TRUE);
+    threaded_dialog_spin(0.);
+    threaded_dialog_auto_spin();
+
     mainw->current_file = new_file;
 
     /// probe the file to see what it might be...
     read_file_details(file_name, FALSE, FALSE);
     lives_rm(cfile->info_file);
     if (THREADVAR(com_failed)) {
+      end_threaded_dialog();
+      lives_free(msgstr);
       return 0;
     }
 
@@ -269,6 +276,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
       cfile->img_type = lives_image_ext_to_img_type(prefs->image_ext);
 
     if ((!strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) || !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG))) {
+      lives_free(msgstr);
       read_file_details(file_name, FALSE, TRUE);
       add_file_info(cfile->handle, FALSE);
       if (cfile->frames == 0) {
@@ -280,6 +288,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
         }
         lives_freep((void **)&mainw->file_open_params);
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+        end_threaded_dialog();
         return 0;
       }
       goto img_load;
@@ -313,6 +322,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
         cfile->frames = cdata->nframes;
 
         if (st_frame >= cfile->frames) {
+          lives_free(msgstr);
           return 0;
         }
 
@@ -339,16 +349,26 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
         what = (_("creating the frame index for the clip"));
 
         do {
-          response = LIVES_RESPONSE_OK;
+          response = LIVES_RESPONSE_NONE;
           create_frame_index(mainw->current_file, TRUE, st_frame, frames);
           if (!cfile->frame_index) {
+            end_threaded_dialog();
             response = do_memory_error_dialog(what, frames * 4);
           }
         } while (response == LIVES_RESPONSE_RETRY);
         lives_free(what);
         if (response == LIVES_RESPONSE_CANCEL) {
+          lives_free(msgstr);
           return 0;
         }
+
+        if (response == LIVES_RESPONSE_OK) {
+          do_threaded_dialog(msgstr, TRUE);
+          threaded_dialog_spin(0.);
+          threaded_dialog_auto_spin();
+        }
+
+        lives_free(msgstr);
 
         if (!*cfile->author)
           lives_snprintf(cfile->author, 1024, "%s", cdata->author);
@@ -400,6 +420,8 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
 
           mainw->effects_paused = FALSE; // set to TRUE if user clicks "Enough"
 
+          end_threaded_dialog();
+
           msgstr = lives_strdup_printf(_("Opening audio"), file_name);
           if (!do_progress_dialog(TRUE, TRUE, msgstr)) {
             use_staging_dir_for(0);
@@ -415,6 +437,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
 
             if (mainw->cancelled == CANCEL_NO_PROPOGATE) {
               lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+              lives_widget_context_update();
               mainw->cancelled = CANCEL_NONE;
               return 0;
             }
@@ -427,6 +450,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
             lives_freep((void **)&mainw->file_open_params);
             close_current_file(old_file);
             lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+            lives_widget_context_update();
             if (mainw->error) {
               do_error_dialog(mainw->msg);
               mainw->error = 0;
@@ -449,6 +473,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
             if ((cdata->sync_hint & SYNC_HINT_VIDEO_PAD_START) && cdata->video_start_time <= 1.) {
               // pad with blank frames at start
               int st_extra_frames = cdata->video_start_time * cfile->fps;
+              end_threaded_dialog();
               insert_blank_frames(mainw->current_file, st_extra_frames, 0, WEED_PALETTE_RGB24);
               cfile->video_time += st_extra_frames / cfile->fps;
               extra_frames -= st_extra_frames;
@@ -471,6 +496,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
               }
               insert_blank_frames(mainw->current_file, extra_frames, cfile->frames, WEED_PALETTE_RGB24);
               cfile->video_time += extra_frames / cfile->fps;
+              end_threaded_dialog();
               load_end_image(cfile->end);
             }
             if (cfile->laudio_time > cfile->video_time + AV_TRACK_MIN_DIFF && cfile->frames > 0) {
@@ -479,6 +505,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                 cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
                 d_print(_("Auto trimming %.4f seconds of audio at start..."), cfile->undo2_dbl);
                 cfile->opening_audio = TRUE;
+                end_threaded_dialog();
                 if (on_del_audio_activate(NULL, NULL)) d_print_done();
                 else d_print("\n");
                 cfile->changed = FALSE;
@@ -491,6 +518,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                         cfile->laudio_time - cfile->video_time);
                 cfile->undo1_dbl = cfile->video_time;
                 cfile->undo2_dbl = cfile->laudio_time;
+                end_threaded_dialog();
                 cfile->opening_audio = TRUE;
                 if (on_del_audio_activate(NULL, NULL)) d_print_done();
                 else d_print("\n");
@@ -500,10 +528,12 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
             if (!mainw->effects_paused && cfile->afilesize > 0 && cfile->achans > 0
                 && CLIP_TOTAL_TIME(mainw->current_file) > cfile->laudio_time + AV_TRACK_MIN_DIFF) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_PAD_START) {
+                end_threaded_dialog();
                 pad_with_silence(mainw->current_file, TRUE, TRUE);
                 cfile->changed = FALSE;
               }
               if (cdata->sync_hint & SYNC_HINT_AUDIO_PAD_END) {
+                end_threaded_dialog();
                 pad_with_silence(mainw->current_file, FALSE, TRUE);
                 cfile->changed = FALSE;
 		// *INDENT-OFF*
@@ -513,8 +543,8 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
 
         get_mime_type(cfile->type, 40, cdata);
         save_frame_index(mainw->current_file);
-      }
-    }
+      } else lives_free(msgstr);
+    } else lives_free(msgstr);
 
     if (cfile->ext_src) {
       if (mainw->open_deint) {
@@ -522,10 +552,13 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
         cfile->deinterlace = TRUE;
         cfile->interlace = LIVES_INTERLACE_TOP_FIRST; // guessing
         save_clip_value(mainw->current_file, CLIP_DETAILS_INTERLACE, &cfile->interlace);
-        if (THREADVAR(com_failed) || THREADVAR(write_failed))
+        if (THREADVAR(com_failed) || THREADVAR(write_failed)) {
+          end_threaded_dialog();
           do_header_write_error(mainw->current_file);
+        }
       }
     } else {
+      end_threaded_dialog();
       // be careful, here we switch from mainw->opening_loc to cfile->opening_loc
       if (mainw->opening_loc) {
         cfile->opening_loc = TRUE;
@@ -545,6 +578,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
               mainw->multitrack->has_audio_file = mt_has_audio_file;
             }
             lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+            lives_widget_context_update();
             return 0;
           }
           lives_free(warn);
@@ -624,6 +658,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
 
       if (mainw->toy_type == LIVES_TOY_TV) {
         // for LiVES TV we do an auto-preview
+        end_threaded_dialog();
         mainw->play_start = cfile->start = cfile->undo_start;
         mainw->play_end = cfile->end = cfile->undo_end;
         mainw->preview = TRUE;
@@ -637,6 +672,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
         lives_freep((void **)&mainw->file_open_params);
         mainw->cancelled = CANCEL_NONE;
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+        lives_widget_context_update();
         return 0;
       }
     }
@@ -653,6 +689,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
     msgstr = lives_strdup_printf(_("Opening %s"), file_name);
 
     if (!cfile->ext_src && mainw->toy_type != LIVES_TOY_TV) {
+      end_threaded_dialog();
       mainw->cs_permitted = TRUE;
       mainw->disk_mon = MONITOR_QUOTA;
       if (!do_progress_dialog(TRUE, TRUE, msgstr)) {
@@ -666,6 +703,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
         if (mainw->cancelled == CANCEL_NO_PROPOGATE) {
           mainw->cancelled = CANCEL_NONE;
           lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+          lives_widget_context_update();
           return 0;
         }
 
@@ -680,6 +718,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
           mainw->multitrack->has_audio_file = mt_has_audio_file;
         }
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+        lives_widget_context_update();
 
         // mainw->error is TRUE if we could not open the file
         if (mainw->error) {
@@ -698,7 +737,6 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
   }
 
   if (cfile->ext_src && cfile->achans > 0) {
-    // unneccessary ?
     char *afile = get_audio_file_name(mainw->current_file, TRUE);
     char *ofile = get_audio_file_name(mainw->current_file, FALSE);
     rename(afile, ofile);
@@ -721,11 +759,13 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
 
   // mainw->error is TRUE if we could not open the file
   if (mainw->error) {
+    end_threaded_dialog();
     do_error_dialog(mainw->msg);
     d_print_failed();
     close_current_file(old_file);
     lives_freep((void **)&mainw->file_open_params);
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+    lives_widget_context_update();
     return 0;
   }
 
@@ -796,6 +836,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
                                       "Tools|Preferences|Decoding\n"));
         }
       }
+      end_threaded_dialog();
       widget_opts.non_modal = TRUE;
       do_error_dialog(msg);
       widget_opts.non_modal = FALSE;
@@ -807,6 +848,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
       }
       lives_freep((void **)&mainw->file_open_params);
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+      lives_widget_context_update();
       return 0;
     }
     cfile->frames = 0;
@@ -837,6 +879,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
           cfile->undo1_dbl = cfile->video_time;
           cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
           cfile->opening_audio = TRUE;
+          end_threaded_dialog();
           if (on_del_audio_activate(NULL, NULL)) d_print_done();
           else d_print("\n");
           cfile->changed = FALSE;
@@ -848,6 +891,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
           insert_blank_frames(mainw->current_file, extra_frames, cfile->frames, WEED_PALETTE_RGB24);
           cfile->video_time += extra_frames / cfile->fps;
           cfile->end = cfile->frames;
+          end_threaded_dialog();
           showclipimgs();
           if (!mainw->multitrack)
             redraw_timeline(mainw->current_file);
@@ -871,6 +915,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
       off_t fsize = sget_file_size(afname);
       if (fsize > 0) {
         LiVESResponseType resp;
+        end_threaded_dialog();
         do {
           if (!do_yesno_dialog_with_check(_("This clip may have damaged audio.\n"
                                             "Should I attempt to load it anyway ?\n"),
@@ -879,6 +924,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
             close_current_file(old_file);
             lives_freep((void **)&mainw->file_open_params);
             lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+            lives_widget_context_update();
             return 0;
           }
           mainw->fx3_val = cfile->asampsize ? cfile->asampsize : DEFAULT_AUDIO_SAMPS;
@@ -911,8 +957,10 @@ img_load:
   // TODO - prompt for copy to origs (unless it is already there)
 
   if (prefs->show_recent && !mainw->is_generating) {
-    add_to_recent(file_name, start, frames, mainw->file_open_params);
+    lives_proc_thread_create(0, (lives_funcptr_t)add_to_recent, 0, "sdis",
+                             file_name, start, frames, mainw->file_open_params);
   }
+
   lives_freep((void **)&mainw->file_open_params);
 
   if (!strcmp(cfile->type, "Frames") || !strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) ||
@@ -920,6 +968,8 @@ img_load:
       !strcmp(cfile->type, "Audio")) {
     cfile->is_untitled = TRUE;
   }
+
+  end_threaded_dialog();
 
   if ((!strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) || !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG))) {
     migrate_from_staging(mainw->current_file);
@@ -963,6 +1013,7 @@ img_load:
       set_start_end_spins(mainw->current_file);
 
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+      lives_widget_context_update();
       return 0;
     }
   }
@@ -970,6 +1021,7 @@ img_load:
   // set new style file details
   if (!save_clip_values(current_file)) {
     close_current_file(old_file);
+    lives_widget_context_update();
     return 0;
   }
 
@@ -1003,6 +1055,7 @@ load_done:
   }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+  lives_widget_context_update();
   check_storage_space(-1, FALSE);
 
   lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
@@ -3207,11 +3260,13 @@ void play_file(void) {
 
   /// free the last frame image(s)
   if (mainw->frame_layer) {
+    check_layer_ready(mainw->frame_layer);
     weed_layer_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
   }
 
   if (mainw->blend_layer) {
+    check_layer_ready(mainw->blend_layer);
     weed_layer_free(mainw->blend_layer);
     mainw->blend_layer = NULL;
   }
@@ -4744,7 +4799,7 @@ boolean reload_clip(int fileno, frames_t maxframe) {
   LiVESList *odeclist;
   lives_clip_t *sfile = mainw->files[fileno];
   const lives_clip_data_t *cdata = NULL;
-  lives_clip_data_t *fake_cdata = (lives_clip_data_t *)lives_calloc(sizeof(lives_clip_data_t), 1);
+  lives_clip_data_t *fake_cdata;
 
   double orig_fps = sfile->fps;
 
@@ -4846,7 +4901,7 @@ manual_locate:
           close_current_file(current_file);
         }
       }
-      unref_struct(&fake_cdata->lsd);
+      unref_struct(fake_cdata->lsd);
 
       lives_free(orig_filename);
       lives_list_free(capable->plugins_list[PLUGIN_TYPE_DECODER]);
@@ -4892,7 +4947,7 @@ manual_locate:
     }
 
     threaded_dialog_spin(0.);
-    if (cdata != fake_cdata) unref_struct(&fake_cdata->lsd);
+    if (cdata != fake_cdata) unref_struct(fake_cdata->lsd);
     break;
   }
 

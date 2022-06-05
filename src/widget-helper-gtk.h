@@ -186,7 +186,6 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_widget_context_pop_thread_default(ctx) g_main_context_pop_thread_default(ctx)
 #define lives_widget_context_invoke(ctx, func, arg) g_main_context_invoke(ctx, func, arg)
 #define lives_widget_context_invoke_full(ctx, prio, func, arg, delfunc) g_main_context_invoke_full(ctx, prio, func, arg, delfunc)
-#define lives_widget_context_iteration(ctx, block) g_main_context_iteration(ctx, block)
 #define lives_widget_context_pending(ctx) g_main_context_pending(ctx)
 #define lives_widgets_get_current_event() gtk_get_current_event()
 
@@ -271,8 +270,6 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 
 #define lives_set_application_name(a) g_set_application_name(a)
 #define lives_get_application_name() g_get_application_name()
-
-#define lives_usleep(a) g_usleep(a)
 
 #define lives_mkdir_with_parents(a, b) g_mkdir_with_parents(a, b)
 

@@ -2985,24 +2985,24 @@ void create_LiVES(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_end_only), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_END_ONLY));
   // etc.
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_vismatch), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(sel_vismatch_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_skipbl), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(sel_skipbl_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_invert), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_INVERT));
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_new), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_select_new_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_to_end), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_TOEND));
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_to_aend), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_select_to_aend_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_from_start), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_FROMSTART));
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_last), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_select_last_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->lock_selwidth), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_lock_selwidth_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->select_vismatch), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(sel_vismatch_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->select_skipbl), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(sel_skipbl_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->select_invert), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_INVERT));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->select_new), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_select_new_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->select_to_end), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_TOEND));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->select_to_aend), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_select_to_aend_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->select_from_start), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_select_activate), LIVES_INT_TO_POINTER(LIVES_SELECT_FROMSTART));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->select_last), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_select_last_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->lock_selwidth), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_lock_selwidth_activate), NULL);
   mainw->record_perf_func
     = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->record_perf), LIVES_WIDGET_ACTIVATE_SIGNAL,
                                 LIVES_GUI_CALLBACK(on_record_perf_activate), NULL);
@@ -3876,6 +3876,7 @@ void set_preview_box_colours(void) {
 void make_preview_box(void) {
   // create a box to show frames in, this will go in the sepwin when we are not playing
   LiVESWidget *eventbox;
+  LiVESWidget *preview_box;
   LiVESWidget *hbox_buttons;
   LiVESWidget *radiobutton_free;
   LiVESWidget *radiobutton_start;
@@ -3890,7 +3891,7 @@ void make_preview_box(void) {
 
   char *tmp, *tmp2;
 
-  mainw->preview_box = lives_vbox_new(FALSE, 0);
+  preview_box = lives_vbox_new(FALSE, 0);
 
   eventbox = lives_event_box_new();
   lives_widget_set_events(eventbox, LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK);
@@ -3898,7 +3899,7 @@ void make_preview_box(void) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_SCROLL_EVENT,
                             LIVES_GUI_CALLBACK(on_mouse_scroll), NULL);
 
-  lives_box_pack_start(LIVES_BOX(mainw->preview_box), eventbox, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(preview_box), eventbox, TRUE, TRUE, 0);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                             LIVES_GUI_CALLBACK(frame_context), LIVES_INT_TO_POINTER(3));
@@ -3918,13 +3919,13 @@ void make_preview_box(void) {
       lives_widget_set_size_request(mainw->preview_image, MAX(mainw->pwidth, mainw->sepwin_minwidth), mainw->pheight);
   }
 
-  lives_widget_set_hexpand(mainw->preview_box, TRUE);
-  lives_widget_set_vexpand(mainw->preview_box, TRUE);
+  lives_widget_set_hexpand(preview_box, TRUE);
+  lives_widget_set_vexpand(preview_box, TRUE);
 
   mainw->preview_controls = lives_vbox_new(FALSE, 0);
   add_hsep_to_box(LIVES_BOX(mainw->preview_controls));
 
-  lives_box_pack_start(LIVES_BOX(mainw->preview_box), mainw->preview_controls, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(preview_box), mainw->preview_controls, FALSE, FALSE, 0);
   lives_widget_set_vexpand(mainw->preview_controls, FALSE);
 
   mainw->preview_hbox = lives_hbox_new(FALSE, 0);
@@ -4056,9 +4057,10 @@ void make_preview_box(void) {
                              LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_preview_spinbutton_changed), NULL);
 
+  mainw->preview_box = preview_box;
   if (palette->style & STYLE_1) set_preview_box_colours();
 
-  lives_widget_show_all(mainw->preview_box);
+  lives_widget_show_all(preview_box);
   lives_widget_hide(mainw->preview_controls);
   lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
 }
@@ -4323,7 +4325,9 @@ static void _make_play_window(void) {
       lives_widget_show_all(mainw->preview_box);
       lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
     }
+    THREADVAR(hook_hints) = HOOK_UNIQUE_FUNC;
     load_preview_image(FALSE);
+    THREADVAR(hook_hints) = 0;
   }
 
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Hide Play Window"));
@@ -4776,7 +4780,9 @@ static void _resize_play_window(void) {
 
   if (!LIVES_IS_PLAYING) {
     if (pb_added && width != -1 && (width != nwidth || height != nheight) && mainw->preview_spinbutton) {
+      THREADVAR(hook_hints) = HOOK_UNIQUE_FUNC;
       load_preview_image(FALSE);
+      THREADVAR(hook_hints) = 0;
     }
     play_window_set_title();
   }
@@ -4784,8 +4790,10 @@ static void _resize_play_window(void) {
 }
 
 
-void resize_play_window(void) {
+LIVES_GLOBAL_INLINE void resize_play_window(void) {
+  THREADVAR(hook_hints) = HOOK_UNIQUE_FUNC;
   main_thread_execute((lives_funcptr_t)_resize_play_window, 0, NULL, "");
+  THREADVAR(hook_hints) = 0;
 }
 
 

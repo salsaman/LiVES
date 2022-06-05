@@ -5025,7 +5025,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   suspect = TRUE;
   expected_hi = expected_pi = NULL;
   ncbcalls = 0;
-  fxname = strip_ext(plugin_name);
+  fxname = lives_get_filename(plugin_name);
 
   plugin_info = (*setup_fn)(weed_bootstrap);
 
@@ -12053,7 +12053,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
           lives_free(rs);
 
-          weed_layer_pixel_data_free(layer);
+          //weed_layer_pixel_data_free(layer);
 #define USE_BIGBLOCKS
 #ifdef USE_BIGBLOCKS
           if ((values[0] = calloc_bigblock(ALIGN_CEIL(vlen64_tot + EXTRA_BYTES, 16) / 16, 16)))

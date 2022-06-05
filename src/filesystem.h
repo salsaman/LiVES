@@ -7,6 +7,11 @@
 #ifndef _FILESYSTEM_H_
 #define _FILESYSTEM_H_
 
+#define DEF_FILE_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) ///< non-executable, is modified by umask
+
+/// return filename (no dir, no .ext) (c.f get_filename for inplace version)
+#define lives_get_filename(fullname) lives_strstop(lives_path_get_basename((fullname)), '.')
+
 char *filename_from_fd(char *val, int fd);
 
 ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz);
@@ -26,7 +31,6 @@ void get_dirname(char *filename);
 char *get_dir(const char *filename);
 void get_basename(char *filename);
 void get_filename(char *filename, boolean strip_dir);
-char *lives_get_filename(const char *uri);
 
 off_t get_file_size(int fd, boolean maybe_padded);
 off_t sget_file_size(const char *name);
@@ -94,7 +98,7 @@ typedef struct {
   uint8_t *buffer;   ///< address of buffer start : (ptr - buffer + bytes) gives the read size
   uint8_t *ring_buffer;   /// alt for bg flushing
   size_t rbf_size; ///< ring buffer bytes filled
-  off_t offset; ///< offset in bytes of END of block, relative to start of file
+  volatile off_t offset; ///< offset in bytes of END of block, relative to start of file
   off_t skip; ///< count of bytes skipped at start
   int bufsztype;
   size_t custom_size;

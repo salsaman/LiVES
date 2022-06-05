@@ -58,7 +58,24 @@ typedef struct {
 #include "widget-helper-gtk.h"
 #endif
 
+typedef weed_plantptr_t lives_proc_thread_t;
+
 boolean governor_loop(livespointer data) GNU_RETURNS_TWICE;
+
+void fg_service_call(lives_proc_thread_t lpt, void *retval);
+boolean fg_service_fulfill(void);
+
+boolean has_lpttorun(void);
+
+boolean will_gov_run(void);
+
+#define GOV_NOT_RUNNING 0
+#define GOV_RUNNING 1
+#define GOV_FREEWHEEL 2
+#define GOV_WILL_RUN 3
+#define GOV_LONGTIME 4
+
+int get_gov_status(void);
 
 // basic functions (wrappers for Toolkit functions)
 
@@ -1280,6 +1297,7 @@ boolean lives_cursor_unref(LiVESXCursor *);
 boolean lives_tree_store_find_iter(LiVESTreeStore *, int col, const char *val, LiVESTreeIter *existing, LiVESTreeIter *newiter);
 
 boolean lives_widget_context_update(void);
+boolean lives_widget_context_iteration(LiVESWidgetContext *, boolean may_block);
 
 LiVESWidget *lives_menu_add_separator(LiVESMenu *);
 
@@ -1407,14 +1425,6 @@ boolean lives_widget_nullify_with(LiVESWidget *, void **);
 boolean lives_widget_destroy_with(LiVESWidget *, LiVESWidget *dieplease);
 
 LiVESPixbuf *get_desktop_icon(const char *dir);
-
-typedef weed_plantptr_t lives_proc_thread_t;
-void fg_service_call(lives_proc_thread_t lpt, void *retval);
-
-//volatile lives_proc_thread_t get_lpttorun(boolean runit);
-boolean has_lpttorun(void);
-
-boolean will_gov_run(void);
 
 #define LIVES_JUSTIFY_DEFAULT (def_widget_opts.justify)
 

@@ -2161,7 +2161,8 @@ void add_to_recent(const char *filename, double start, frames_t frames, const ch
   const char *mtext;
   char buff[PATH_MAX * 2];
   char *file, *mfile, *prefname;
-  register int i;
+  boolean free_cache = FALSE;
+  int i;
 
   if (frames > 0) {
     mfile = lives_strdup_printf("%s|%.2f|%d", filename, start, frames);
@@ -2178,10 +2179,14 @@ void add_to_recent(const char *filename, double start, frames_t frames, const ch
     if (!lives_strcmp(mfile, mtext)) break;
   }
 
-  if (i == 0) return;
+  if (!i) return;
 
   if (i == N_RECENT_FILES) --i;
 
+  if (!mainw->prefs_cache) {
+    mainw->prefs_cache = cache_file_contents(prefs->configfile);
+    free_cache = TRUE;
+  }
   for (; i > 0; i--) {
     mtext = lives_menu_item_get_text(mainw->recent[i - 1]);
     lives_menu_item_set_text(mainw->recent[i], mtext, FALSE);
@@ -2195,6 +2200,8 @@ void add_to_recent(const char *filename, double start, frames_t frames, const ch
     set_utf8_pref(prefname, buff);
     lives_free(prefname);
   }
+
+  if (free_cache) cached_list_free(&mainw->prefs_cache);
 
   lives_menu_item_set_text(mainw->recent[0], mfile, FALSE);
   if (mainw->multitrack) lives_menu_item_set_text(mainw->multitrack->recent[0], mfile, FALSE);

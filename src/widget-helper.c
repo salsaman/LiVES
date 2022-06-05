@@ -9,6 +9,9 @@
 #include "main.h"
 #include "startup.h"
 
+extern boolean all_config(LiVESWidget *, LiVESXEventConfigure *, livespointer ppsurf);
+extern boolean all_expose(LiVESWidget *, lives_painter_t *, livespointer psurf);
+
 // The idea here is to replace toolkit specific functions with generic ones
 
 // TODO - replace as much code in the other files with these functions as possible
@@ -1008,15 +1011,48 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_stop_emission_by_name(livespoin
 }
 
 
+LIVES_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext *ctx, boolean may_block) {
+  static boolean norecurse = FALSE;
+  if (!norecurse) {
+    boolean ret;
+    //norecurse = TRUE;
+    ret = g_main_context_iteration(ctx, may_block);
+    //norecurse = FALSE;
+    return ret;
+  }
+  return FALSE;
+}
+
+
 static volatile boolean gov_running = FALSE;
-static volatile boolean gov_will_run = FALSE;
+static volatile boolean in_gov_loop = FALSE;
+static volatile uint32_t gov_will_run = 0;
 static volatile boolean was_dest = FALSE;
 static volatile lives_proc_thread_t lpttorun = NULL;
 static void *lpt_retval = NULL;
 
 boolean has_lpttorun(void) {return !!lpttorun;}
 
-boolean will_gov_run(void) {return gov_will_run;}
+boolean is_gov_running(void) {
+  if (in_gov_loop && !gov_running) lives_nanosleep(LIVES_FORTY_WINKS);
+  return gov_running;
+}
+
+boolean will_gov_run(void) {return gov_will_run != 0 && !in_gov_loop;}
+
+int get_gov_status(void) {
+  if (in_gov_loop) {
+    if (gov_running || (is_gov_running() && in_gov_loop)) {
+      if (!mainw->clutch) return GOV_FREEWHEEL;
+      return GOV_RUNNING;
+    }
+    if (in_gov_loop) return GOV_LONGTIME;
+  }
+  if (gov_running) return GOV_LONGTIME;
+  if (gov_will_run) return GOV_WILL_RUN;
+  return GOV_NOT_RUNNING;
+}
+
 
 static void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
   lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
@@ -1058,6 +1094,30 @@ LIVES_LOCAL_INLINE boolean sigdata_check_alarm(lives_sigdata_t *sigdata) {
   /// returns FALSE on timeout
   return (!sigdata || sigdata->alarm_handle == LIVES_NO_ALARM
           || lives_alarm_check(sigdata->alarm_handle) > 0);
+}
+
+
+boolean fg_service_fulfill(void) {
+  // does not call lives_proc_thread_free(), caller will do that
+  if (!is_fg_thread() || !lpttorun) return FALSE;
+  if (!lives_proc_thread_get_cancelled(lpttorun)
+      && !lives_proc_thread_check_finished(lpttorun)) {
+    if (lives_proc_thread_is_running(lpttorun)) return FALSE;
+    else {
+      boolean is_fg_service = FALSE;
+      // check if there is a foreground task to run
+      // call fg task directly, bg thread will wait for lpttorun == NULL and read lpt_result
+      // will also call lives_proc_thread_free(lpttorun), so it must not be used again after this
+      if (THREADVAR(fg_service)) {
+        is_fg_service = TRUE;
+      } else THREADVAR(fg_service) = TRUE;
+      fg_run_func(lpttorun, lpt_retval);
+      //lives_hooks_trigger(NULL, THREADVAR(hook_closures), THREAD_INTERNAL_HOOK);
+      if (!is_fg_service) THREADVAR(fg_service) = FALSE;
+    }
+    lpttorun = NULL;
+  }
+  return TRUE;
 }
 
 // this loop is designed to allow blocking background threads to run and to perform async graphical updates,
@@ -1139,7 +1199,7 @@ LIVES_LOCAL_INLINE boolean sigdata_check_alarm(lives_sigdata_t *sigdata) {
 // to the bg thread calling widget_context_update, however it should only be done via the accessor functions.
 //
 // gov_running - TRUE if the governor loop is being run by the fg thread
-// gov_will_run - if set then this is a kind of "promise" that the loop has been scheduled to run
+// gov_will_run - if gov_loop has been added as an idlefunc, holds the source handle
 
 
 boolean governor_loop(livespointer data) {
@@ -1148,10 +1208,16 @@ boolean governor_loop(livespointer data) {
   static boolean lpt_recurse2 = FALSE;
   static int copies = 0;
   boolean is_timer = FALSE;
+  boolean retv = FALSE;
   lives_sigdata_t *sigdata = NULL;
   lives_sigdata_t *new_sigdata = (lives_sigdata_t *)data;
-  gov_will_run = TRUE;
+  uint32_t mysource = gov_will_run;
+
+  in_gov_loop = TRUE;
+
   copies++;
+
+  if (copies != g_main_depth()) break_me("gov_loop: copy / depth mismatch");
 
   //g_print("IN gov\n");
 
@@ -1162,55 +1228,44 @@ reloop:
     // prevent recursion UNLESS a specific function is called
     mainw->clutch = TRUE;
     //g_print("gov1\n");
-    copies--;
-    return FALSE;
+    goto exit_loop;
   }
   if (mainw->is_exiting) {
-    copies--;
-    return FALSE;
+    goto exit_loop;
   }
   if (lpt_recurse2) {
     // prevent super-recursion
     //g_print("gov2\n");
-    copies--;
-    return TRUE;
+    retv = TRUE;
+    goto exit_loop;
   }
 
   if (!new_sigdata) {
     // sigdata is set when called from a (retouted) signal handler callback
     // here we ar either re-entering as an idlefunc, or we are in a timer and looped back
     if (lpttorun) {
-      // check if there is a foreground task to run
-      lpt_recurse2 = TRUE; // prevent super-recursion
-      // call fg task directly, bg thread will wait for lpttorun == NULL and read lpt_result
-      // will also call lives_proc_thread_free(lpttorun), so it must not be used again after this
-      fg_run_func(lpttorun, lpt_retval);
-      lives_proc_thread_free(lpttorun);
-      lpttorun = NULL;
+      lpt_recurse2 = TRUE;
+      fg_service_fulfill();
+      lpt_recurse2 = FALSE;
       if (!is_timer) {
-        lpt_recurse2 = FALSE;
         // some handling that needed to be added to prevent multiple idlefuncs
         if (!lpt_recurse) {
           //g_print("gov3\n");
-          if (!--copies) gov_will_run = gov_running = FALSE;
-          return FALSE;
+          goto exit_loop;
         } else {
           lpt_recurse = FALSE;
           //g_print("gov4\n");
-          copies--;
-          return TRUE;
+          retv = TRUE;
+          goto exit_loop;
         }
       }
     }
 
     lpt_recurse = FALSE;
-    lpt_recurse2 = FALSE;
 
     if (timer_running) {
-      if (!--copies) gov_will_run = gov_running = FALSE;
       mainw->clutch = FALSE;
-      //g_print("gov5\n");
-      return FALSE;
+      goto exit_loop;
     }
   }
 
@@ -1230,10 +1285,8 @@ reloop:
           // this is complicated, We need to return to caller so it can exit with correct value
           // but we need to return to run the new task
           //g_print("gov6\n");
-          if (!--copies) gov_running = FALSE;
-          gov_will_run = TRUE;
-          lives_idle_priority(governor_loop, new_sigdata);
-          return FALSE;
+          gov_will_run = lives_idle_priority(governor_loop, new_sigdata);
+          goto exit_loop;
         }
       }
       // signal that ww are in the loop
@@ -1257,6 +1310,7 @@ reloop:
 
       // use clutch and mainw->clutch - not sure why but the value of mainw->clutch isnt always read correctly
       // even though it is daeclared volatile
+once_more:
       clutch = mainw->clutch;
       while ((!new_sigdata || sigdata_check_alarm(new_sigdata))
              && task_list && !lpttorun && clutch && !mainw->is_exiting && !(sigdata = tasks_running())) {
@@ -1270,23 +1324,28 @@ reloop:
         //sched_yield();
         clutch = mainw->clutch;
       }
+      if (!clutch) {
+        int count = 0;
+        while (count++ < EV_LIM && lives_widget_context_iteration(NULL, FALSE))
+          lives_nanosleep(NSLEEP_TIME);
+        clutch = mainw->clutch = TRUE;
+        goto once_more;
+      }
     }
   }
   //else sigdata = new_sigdata;
   if (new_sigdata && !sigdata_check_alarm(new_sigdata)) {
     // timed out
-    if (!--copies) gov_will_run = gov_running = FALSE;
     //g_print("gov10\n");
-    return FALSE;
+    goto exit_loop;
   }
 
-  if (mainw->is_exiting) return FALSE; // app exit
+  if (mainw->is_exiting) goto exit_loop;
 
   if (!task_list && !lpttorun && !sigdata) {
     // seems there is nothing left to do, so exit
-    if (!--copies) gov_will_run = gov_running = FALSE;
     //g_print("gov7\n");
-    return FALSE;
+    goto exit_loop;
   }
 
   if (lpttorun || (!mainw->clutch && !sigdata)) {
@@ -1296,7 +1355,6 @@ reloop:
     if (sigdata && sigdata->is_timer) {
       // this is also complicated. We are running in a timer and we need to run mainloop
       is_timer = TRUE;
-
       // here we try to simulate the effect of exiting with TRUE after re-adding
       while (!lives_proc_thread_check_finished(sigdata->proc) && lives_widget_context_iteration(NULL, FALSE));
       sigdata = NULL;
@@ -1307,34 +1365,32 @@ reloop:
     // set lpt_recurse which will trigger the fg task
     // this part ensures that the idlefunc isnt called right away before any gui updates have a chance
     while (count++ < EV_LIM && lives_widget_context_iteration(NULL, FALSE)
-           && sigdata_check_alarm(sigdata) && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
+           && sigdata_check_alarm(sigdata) && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)))
+      lives_nanosleep(NSLEEP_TIME);
 
     //g_print("XX %d %d %d\n", count, sigdata_check_alarm(sigdata), !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
 
     if (!sigdata_check_alarm(sigdata)) {
-      if (!--copies) gov_will_run = gov_running = FALSE;
       //g_print("gov820n");
-      return FALSE;
+      goto exit_loop;
     }
-    // add ourselves as an idlefunc and then return FALSE
-    if (!--copies) gov_running = FALSE;
     // need to check for lpttorun here, after running all the context_iterations
     if (lpttorun) lpt_recurse = TRUE;
     //g_print("gov8\n");
-    lives_idle_priority(governor_loop, sigdata->alarm_handle ? sigdata : NULL);
-    return FALSE;
+    gov_will_run = lives_idle_priority(governor_loop, sigdata->alarm_handle ? sigdata : NULL);
+    goto exit_loop;
   }
 
   /// something else might have removed the clutch, so check again if the handler is still running
   if (!lives_proc_thread_check_finished(sigdata->proc)) {
     int count = 0;
     while (count++ < EV_LIM && lives_widget_context_iteration(NULL, FALSE)
-           && sigdata_check_alarm(sigdata) && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
+           && sigdata_check_alarm(sigdata) && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)))
+      lives_nanosleep(NSLEEP_TIME);
 
     if (!sigdata_check_alarm(sigdata)) {
-      if (!--copies) gov_will_run = gov_running = FALSE;
       //g_print("gov11\n");
-      return FALSE;
+      goto exit_loop;
     }
     lpt_recurse = TRUE;
     goto reloop;
@@ -1343,8 +1399,11 @@ reloop:
   // if we arrive here it means that some signal handler initiated the loops, and it's
   // actual callback has finished, now we can return to the proxy signal handler
 
-  if (!g_main_depth())
-    gov_will_run = gov_running = FALSE;
+  if (!g_main_depth()) {
+    gov_will_run = 0;
+    gov_running = FALSE;
+  }
+
   if (sigdata->alarm_handle == LIVES_NO_ALARM) {
     // if a timer, set sigdata->swapped, this signals that the bg thread completed
     if (sigdata->is_timer) {
@@ -1359,8 +1418,14 @@ reloop:
       sigdata_free(sigdata, NULL);
     }
   }
-  if (!--copies) gov_will_run = gov_running = FALSE;
-  return FALSE;
+
+exit_loop:
+  if (mainw->is_exiting || !--copies) {
+    if (!retv && gov_will_run == mysource) gov_will_run = 0;
+    gov_running = FALSE;
+  }
+  in_gov_loop = FALSE;
+  return retv;
 }
 
 
@@ -1786,7 +1851,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all_from_bg(LiVESWidget *widget) {
   // run in main thread as it seems to give a smoother result
   boolean ret;
+  THREADVAR(hook_hints) = HOOK_UNIQUE_DATA;
   main_thread_execute((lives_funcptr_t)_lives_widget_show_all, WEED_SEED_BOOLEAN, &ret, "v", widget);
+  THREADVAR(hook_hints) = 0;
   return ret;
   //return lives_widget_show_all(widget);
 }
@@ -1804,7 +1871,9 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_show_now(LiVESWidget *widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget *widget) {
   // run in main thread as it seems to give a smoother result
   boolean ret;
+  THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY;
   main_thread_execute((lives_funcptr_t)_lives_widget_show_now, WEED_SEED_BOOLEAN, &ret, "v", widget);
+  THREADVAR(hook_hints) = 0;
   return ret;
   //return lives_widget_show_all(widget);
 }
@@ -1823,7 +1892,9 @@ LIVES_LOCAL_INLINE boolean _lives_widget_destroy(LiVESWidget *widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
   if (mainw && mainw->is_ready) {
     boolean ret;
+    THREADVAR(hook_hints) = HOOK_UNIQUE_DATA;
     main_thread_execute((lives_funcptr_t)_lives_widget_destroy, WEED_SEED_BOOLEAN, &ret, "v", widget);
+    THREADVAR(hook_hints) = 0;
     return ret;
   }
   return _lives_widget_destroy(widget);
@@ -1855,7 +1926,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw(LiVESWidget *widget)
   if (is_fg_thread()) return _lives_widget_queue_draw(widget);
   else {
     boolean resp;
-    main_thread_execute((lives_funcptr_t)_lives_widget_queue_draw, WEED_SEED_BOOLEAN, &resp, "v", widget);
+    THREADVAR(hook_hints) = HOOK_UNIQUE_DATA;
+    main_thread_execute((lives_funcptr_t)lives_widget_queue_draw,
+                        WEED_SEED_BOOLEAN, &resp, "v", widget);
+    THREADVAR(hook_hints) = 0;
     return resp;
   }
 }
@@ -2127,18 +2201,31 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
 // to run a lpt. Also note that fg service calls may not be nested, instead the calls will be deferred and run in sequence
 void fg_service_call(lives_proc_thread_t lpt, void *retval) {
   boolean waitgov = FALSE;
+  uint32_t mysource = 0;
+
+  if (is_fg_thread()) abort();
+
   while (lpttorun || (gov_will_run && !gov_running)) {
+    if (lives_proc_thread_get_cancelled(lpt)) return;
     lives_nanosleep(NSLEEP_TIME);
   }
+
   lpttorun = lpt;
   lpt_retval = retval;
-  if (!gov_running && !gov_will_run) {
-    lives_idle_priority(governor_loop, NULL);
+  if (get_gov_status() == GOV_NOT_RUNNING) {
+    mysource = gov_will_run = lives_idle_priority(governor_loop, NULL);
   } else {
     waitgov = TRUE;
     mainw->clutch = FALSE;
   }
   while (lpttorun || (waitgov && !mainw->clutch)) {
+    if (lives_proc_thread_get_cancelled(lpt)) {
+      if (gov_will_run == mysource && !in_gov_loop) {
+        gov_will_run = 0;
+        lives_source_remove(mysource);
+        return;
+      }
+    }
     lives_nanosleep(NSLEEP_TIME);
   }
 }
@@ -5230,6 +5317,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_is_sensitive(LiVESWidget *widge
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_is_visible(LiVESWidget *widget) {
 #ifdef GUI_GTK
+  if (!GTK_IS_WIDGET(widget)) return FALSE;
 #if GTK_CHECK_VERSION(2, 18, 0)
   return gtk_widget_get_visible(widget);
 #else
@@ -6449,8 +6537,12 @@ WIDGET_HELPER_GLOBAL_INLINE const char *lives_label_get_text(LiVESLabel *label) 
 
 boolean _lives_label_set_text_with_mnemonic(LiVESLabel *label, const char *text) {
 #ifdef GUI_GTK
+  THREADVAR(hook_hints) = HOOK_UNIQUE_DATA;
+  THREADVAR(hook_match_nparams) = 1;
   main_thread_execute((lives_funcptr_t)gtk_label_set_text_with_mnemonic, 0, NULL, "vs",
                       label, text);
+  THREADVAR(hook_hints) = 0;
+  THREADVAR(hook_match_nparams) = 0;
   return TRUE;
 #endif
   return FALSE;
@@ -11964,7 +12056,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_if_visible(LiVESWidg
   if (GTK_IS_WIDGET(widget) && gtk_widget_is_drawable(widget)) {
     boolean resp = TRUE;
     if (is_fg_thread()) return _lives_widget_queue_draw(widget);
-    else main_thread_execute((lives_funcptr_t)_lives_widget_queue_draw, WEED_SEED_BOOLEAN, &resp, "v", widget);
+    else {
+      THREADVAR(hook_hints) = HOOK_UNIQUE_DATA;
+      THREADVAR(hook_match_nparams) = 1;
+      main_thread_execute((lives_funcptr_t)_lives_widget_queue_draw, WEED_SEED_BOOLEAN, &resp, "v", widget);
+      THREADVAR(hook_hints) = 0;
+      THREADVAR(hook_match_nparams) = 0;
+    }
     //lives_widget_queue_draw(widget);
     return resp;
   }
@@ -13183,18 +13281,21 @@ static void do_more_stuff(void) {
 boolean lives_widget_context_update(void) {
   volatile boolean clutch;
   static pthread_mutex_t ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
+  static pthread_mutex_t fg_ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
   if (timer_running) return FALSE;
   if (mainw->no_context_update) return FALSE;
-  if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
-  else {
+
+  if (1) {
     if (!is_fg_thread() && !gov_will_run && !gov_running) {
       boolean ret;
+      THREADVAR(hook_hints) = HOOK_UNIQUE_FUNC;
       main_thread_execute((lives_funcptr_t)lives_widget_context_update,
                           WEED_SEED_BOOLEAN, &ret, "");
+      THREADVAR(hook_hints) = 0;
       return ret;
     }
-    do_some_things();
     if (!is_fg_thread()) {
+      if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
       while (gov_will_run && !gov_running) {
         lives_nanosleep(NSLEEP_TIME);
       }
@@ -13206,8 +13307,15 @@ boolean lives_widget_context_update(void) {
           clutch = mainw->clutch;
         }
       }
+      pthread_mutex_unlock(&ctx_mutex);
     } else {
       int count = 0;
+      boolean is_fg_service = FALSE;
+      if (pthread_mutex_trylock(&fg_ctx_mutex)) return FALSE;
+      do_some_things();
+      if (THREADVAR(fg_service)) {
+        is_fg_service = TRUE;
+      } else THREADVAR(fg_service) = TRUE;
       while (count++ < EV_LIM && !mainw->is_exiting && lives_widget_context_pending(NULL)) {
         //LiVESXEvent *ev = lives_widgets_get_current_event();
         //if (ev) g_print("ev was %d\n", ev->type);
@@ -13215,10 +13323,11 @@ boolean lives_widget_context_update(void) {
         lives_widget_context_iteration(NULL, FALSE);
         lives_nanosleep(NSLEEP_TIME);
       }
+      if (!is_fg_service) THREADVAR(fg_service) = FALSE;
+      do_more_stuff();
+      pthread_mutex_unlock(&fg_ctx_mutex);
     }
   }
-  do_more_stuff();
-  pthread_mutex_unlock(&ctx_mutex);
   return TRUE;
 }
 
@@ -14169,7 +14278,7 @@ const lives_widget_klass_t *widget_instance_get_klass(lives_widget_instance_t *w
 double widget_func_double(lives_widget_instance_t *winst, lives_intention intent, ...) {
   if (!winst || !weed_get_voidptr_value(winst, LIVES_LEAF_WIDGET, NULL)) return 0.;
   else {
-    // get transform with ouptu
+    // get transform with output
     lives_func_info_t *funcinf = get_intent_with_rettype(winst, intent, WEED_SEED_DOUBLE);
     if (!funcinf) return 0.;
     else {

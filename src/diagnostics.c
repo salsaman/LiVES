@@ -1467,7 +1467,7 @@ void show_widgets_info(void) {
       g_print("Klass type '%s' (%s) provides functions:\n", kname, krole);
       list3 = fnlist = widget_klass_list_funcs(k, TRUE);
       for (; list3; list3 = list3->next) {
-        lives_func_info_t **funcinfo;
+        lives_funcdef_t **funcinfo;
         int nfuncs, fnidx = LIVES_POINTER_TO_INT(list3->data);
         const char *fname = widget_functype_get_name(fnidx);
         g_print("%s:", fname);
@@ -1517,7 +1517,7 @@ void show_widgets_info(void) {
 void show_struct_sizes(void) {
   show_size(lives_plugin_id_t);
   show_size(thrd_work_t);
-  show_size(lives_func_info_t);
+  show_size(lives_funcdef_t);
   show_size(struct _lives_thread_data_t);
   show_size(lives_cc_params);
   show_size(lives_sw_params);

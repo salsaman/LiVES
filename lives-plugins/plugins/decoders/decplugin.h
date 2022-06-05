@@ -81,17 +81,20 @@ typedef enum {
 
 typedef struct {
   // for each of these values, 0. means the value has not / cannot be measured or estimated
+  // (exceptionally ctimng_ratio starts as 1.)
   // a value < 0. implies a guessed / estimated value
   // a value > 0. signifies that the value has been measured
 
-  // however all these values are dynamic and may change between succesive reads
+  // all these values are dynamic and may change between succesive reads
 
   double ctiming_ratio; // dynamic multiplier for timing info, depends on machine load and other factors.
   double const_time; /// avg const time apart from seek / decode (e.g. memcpy)
   double ib_time; /// avg time to decode inter / b frame
-  double k_time; /// avg time to decode keyframe
-  double ks_time; /// avg time to decode keyframe following seek / flush
-  double seekback_time; /// avg extra time per iframe to arrive at backwd kframe
+  double k_time; /// avg time to decode keyframe not following seek (if we can distinguish from ib_time. else use ib_time)
+  double ks_time; /// avg time to seek and decode kframe
+  double kb_time; /// avg time to seek / decode backwd kframe
+  double blockread_time; /// avg time to read . parse a data block
+  double seekback_time; // unused
 
   double xvals[64];  /// extra values which may be stored depending on codec
 } adv_timing_t;
@@ -113,7 +116,7 @@ typedef void *(*memmove_f)(void *, const void *, size_t);
 #include <sys/time.h>
 #endif
 
-static inline int64_t get_current_ticks(void) {
+static inline int64_t get_current_usec(void) {
   int64_t ret;
 #if _POSIX_TIMERS
   struct timespec ts;
@@ -139,9 +142,7 @@ static inline int64_t get_current_ticks(void) {
 
 static inline void myrand(void *ptr, size_t size) {
   static uint64_t fval = 0;
-  if (fval == 0) {
-    fval = 0xAAAAAAAAAAAAAAAA ^ (get_current_ticks() >> 17);
-  }
+  if (!fval) fval = 0xAAAAAAAAAAAAAAAA ^ (get_current_usec() >> 17);
   fval = myfastrand0(fval);
   memcpy(ptr, &fval, size);
 }
@@ -159,12 +160,22 @@ static inline void myrand(void *ptr, size_t size) {
 #define LIVES_SEEK_NEEDS_CALCULATION (1<<2)
 #define LIVES_SEEK_QUALITY_LOSS (1<<3)
 
-//typedef weed_plant_t weed_layer_t;
+typedef struct _lives_memfuncs {
+  malloc_f  *ext_malloc;
+  free_f    *ext_free;
+  memcpy_f  *ext_memcpy;
+  memset_f  *ext_memset;
+  memmove_f *ext_memmove;
+  realloc_f *ext_realloc;
+  calloc_f  *ext_calloc;
+} ext_memfuncs_t;
+
 
 typedef struct _lives_clip_data {
-  // fixed parLUt
-  lives_struct_def_t lsd;
+  // fixed part
+  lives_struct_def_t *lsd;
 
+  // TODO - replace with ext_memfuncs_t
   malloc_f  *ext_malloc;
   free_f    *ext_free;
   memcpy_f  *ext_memcpy;
@@ -178,7 +189,7 @@ typedef struct _lives_clip_data {
   char *URI; ///< the URI of this cdata
 
   int nclips; ///< number of clips (titles) in container
-  char container_name[512]; ///< name of container, e.g. "ogg" or NULL
+  char container_name[512]; ///< name of container, e.g. "ogg" (if known)
 
   char title[1024];
   char author[1024];
@@ -188,33 +199,26 @@ typedef struct _lives_clip_data {
   int current_clip; ///< current clip number in container (starts at 0, MUST be <= nclips) [rw host]
 
   // video data
-  int width;
-  int height;
-  int64_t nframes;
-  lives_interlace_t interlace;
-  int *rec_rowstrides; ///< if non-NULL, plugin can set recommended vals, pointer to single value set by host
+  int width, height;
+  int64_t nframes; // number of frames in current clip
+  lives_interlace_t interlace; // frame interlacing (if any)
+
+  // the host may initialise this by creating an array of n ints, where n is the number of planes in the current palette
+  // the plugin may then fill the n values with its own rowstride values. The host can then use the values on the
+  // subsequent call to get_frame(). The plugin MUST set the values each time a frame is returned.
+  int *rec_rowstrides;
 
   /// x and y offsets of picture within frame
   /// for primary pixel plane
-  int offs_x;
-  int offs_y;
-  int frame_width;  ///< frame is the surrounding part, including any black border (>=width)
-  int frame_height;
+  int offs_x, offs_y;
+  ///< frame is the surrounding part, including any blank border ( >= width, height )
+  int frame_width, frame_height;
 
-  float par; ///< pixel aspect ratio (sample width / sample height)
+  float par; ///< pixel aspect ratio (sample width / sample height) (default of 0. implies square pixels)
 
-  float video_start_time;
+  float video_start_time; // if the clip is a chapter, thhen this can be set to the chapter start time, info only
 
-  float fps;
-
-  /// optional info ////////////////
-  float max_decode_fps; ///< theoretical value with no memcpy
-  int64_t fwd_seek_time;
-  int64_t jump_limit; ///< for internal use
-
-  int64_t kframe_dist; /// number of frames from one keyframe to the next, for fixed gop only, 0 if unknown
-  int64_t kframe_dist_max; /// max number of frames fdetected from one keyframe to the next, 0 if unknown
-  //////////////////////////////////
+  float fps; // playback frame rate (variable rates not supported currently)
 
   int *palettes; ///< list of palettes which the format supports, terminated with WEED_PALETTE_END
 
@@ -222,9 +226,7 @@ typedef struct _lives_clip_data {
   int current_palette;  ///< current palette [rw host]; must be contained in palettes
 
   /// plugin can change per frame
-  int YUV_sampling;
-  int YUV_clamping;
-  int YUV_subspace;
+  int YUV_sampling, YUV_clamping, YUV_subspace;
   int frame_gamma; ///< values WEED_GAMMA_UNKNOWN (0), WEED_GAMMA_SRGB (1), WEED_GAMMA_LINEAR (2)
 
   char video_name[512]; ///< name of video codec, e.g. "theora" or NULL
@@ -248,7 +250,35 @@ typedef struct _lives_clip_data {
 #define SYNC_HINT_VIDEO_PAD_START (1<<4)
 #define SYNC_HINT_VIDEO_PAD_END (1<<5)
 
-  int sync_hint;
+  int sync_hint; ///< hint to host how to correct in case of audio / video stream misalignments
+
+  /// decoder details /////
+
+  int64_t last_frame_decoded; // last frame read / decoded from video stream
+
+  /// optional info ////////////////
+
+  //< estimate of the forward frame difference beyond which it always becomes
+  // quicker to re-seek rathere than decode sequntially
+  // 0 means no estimate, it is suggested to set this either to kframe_dist if valid, else to some other measured value
+  int64_t jump_limit;
+
+  float max_decode_fps; ///< theoretical value with no memcpy
+  int64_t fwd_seek_time; // deprecated
+
+  // handling for keyframes / seek points
+  // these values are intended for use with delay estimation
+  // (it is ASSUMED that we can jump to any keyframe and begin decoding forward from there)
+
+
+  boolean kframes_complete; /// TRUE if all keyframes have been mapped (e.g read from index)
+
+  // Otherwise,
+  // if keyframes are regularly spaced, then this information can be used to guess the positions
+  // of as yet unmapped keyframes.
+
+  int64_t kframe_dist;
+  //////////////////////////////////
 
   adv_timing_t adv_timing;
 
@@ -286,8 +316,7 @@ void rip_audio_cleanup(const lives_clip_data_t *);
 void module_unload(void);
 
 double estimate_delay(const lives_clip_data_t *, int64_t tframe);
-double estimate_delay_full(const lives_clip_data_t *, int64_t tframe,  int64_t last_frame,
-                           double *confidence);
+double estimate_delay_full(const lives_clip_data_t *, int64_t tframe,  int64_t last_frame, double *confidence);
 int64_t update_stats(const lives_clip_data_t *);
 
 // little-endian
@@ -301,26 +330,33 @@ double get_fps(const char *uri);
 #define CREATOR_ID "LiVES decoder plugin"
 static const lives_struct_def_t *cdata_lsd = NULL;
 
+static void lfd_setdef(void *strct, const char *stype, const char *fname, int64_t *ptr) {*ptr = -1;}
+static void adv_timing_init(void *strct, const char *stype, const char *fname, adv_timing_t *adv) {adv->ctiming_ratio = 1.;}
+
 static void make_acid(void) {
-  cdata_lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "debug", 6);
+  cdata_lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "debug", 8);
   if (!cdata_lsd) return;
   else {
-    lives_special_field_t **specf = cdata_lsd->special_fields;
+    lsd_special_field_t **specf = cdata_lsd->special_fields;
     lives_clip_data_t *cdata = (lives_clip_data_t *)calloc(1, sizeof(lives_clip_data_t));
-    specf[0] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY
-                                  | LIVES_FIELD_FLAG_FREE_ON_DELETE, cdata, &cdata->priv,
+    specf[0] = make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY
+                                  | LSD_FIELD_FLAG_FREE_ON_DELETE, cdata, &cdata->priv,
                                   "priv", 0, NULL, NULL, NULL);
-    specf[1] = make_special_field(LIVES_FIELD_CHARPTR, cdata, &cdata->URI,
+    specf[1] = make_special_field(LSD_FIELD_CHARPTR, cdata, &cdata->URI,
                                   "URI", 0, NULL, NULL, NULL);
-    specf[2] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->title,
+    specf[2] = make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->title,
                                   "title", 1024, NULL, NULL, NULL);
-    specf[3] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->author,
+    specf[3] = make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->author,
                                   "author", 1024, NULL, NULL, NULL);
-    specf[4] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->comment,
+    specf[4] = make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->comment,
                                   "comment", 1024, NULL, NULL, NULL);
-    specf[5] = make_special_field(LIVES_FIELD_ARRAY, cdata, &cdata->palettes,
+    specf[5] = make_special_field(LSD_FIELD_ARRAY, cdata, &cdata->palettes,
                                   "palettes", 4, NULL, NULL, NULL);
-    lives_struct_init(cdata_lsd, cdata, &cdata->lsd);
+    specf[6] = make_special_field(LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY, cdata, &cdata->last_frame_decoded,
+                                  "last_frame_decoded", 8, (lsd_field_init_cb)lfd_setdef, NULL, NULL);
+    specf[7] = make_special_field(LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY, cdata, &cdata->adv_timing,
+                                  "adv_timing", sizeof(adv_timing_t), (lsd_field_init_cb)adv_timing_init, NULL, NULL);
+    lives_struct_init_p(cdata_lsd, cdata, (lives_struct_def_t **)&cdata->lsd);
     free(cdata);
     lives_struct_set_class_data((lives_struct_def_t *)cdata_lsd, CREATOR_ID);
   }
@@ -342,15 +378,22 @@ static lives_clip_data_t *cdata_new(lives_clip_data_t *data) {
   return cdata;
 }
 
-
 #ifdef NEED_CLONEFUNC
 static lives_clip_data_t *clone_cdata(const lives_clip_data_t *cdata) {
   if (!cdata) return NULL;
-  if (!cdata_lsd) make_acid();
-  return lives_struct_copy((void *)&cdata->lsd);
+  else {
+    lives_clip_data_t *clone;
+    //lives_struct_def_t *lsd = cdata->lsd;
+    // make sure we use our model of the struct when cloning
+    //if (!cdata_lsd) make_acid();
+    //_lsd_inject((lives_struct_def_t *)cdata_lsd, (void *)cdata, NULL);
+    clone = lives_struct_copy((void *)cdata->lsd);
+    //lives_struct_unref((lives_struct_def_t *)cdata->lsd);
+    //((lives_clip_data_t *)cdata)->lsd = lsd;
+    return clone;
+  }
 }
 #endif
-
 
 /////////////////////////////////////////////////////
 
@@ -358,21 +401,17 @@ static lives_clip_data_t *clone_cdata(const lives_clip_data_t *cdata) {
 
 #include <pthread.h>
 
-static pthread_mutex_t indices_mutex;
-static int nidxc;
-
 typedef struct _index_entry index_entry;
 
 struct _index_entry {
   index_entry *next; ///< ptr to next entry
-  int64_t dts; ///< dts of keyframe
+  int64_t dts; /// dts or frame number as preferred
   uint64_t offs;  ///< offset in file
 };
 
 typedef struct {
   index_entry *idxhh;  ///< head of head list
   index_entry *idxht; ///< tail of head list
-
   int nclients;
   lives_clip_data_t **clients;
   pthread_mutex_t mutex;
@@ -380,175 +419,178 @@ typedef struct {
 
 static index_container_t **indices;
 
-static void index_free(index_entry *idx) {
-  index_entry *cidx = idx, *next;
-
-  while (cidx) {
+static inline void _index_free(index_container_t *idxc) {
+  for (index_entry *cidx = idxc->idxhh, *next; cidx; cidx = next) {
     next = cidx->next;
     free(cidx);
-    cidx = next;
   }
+  free(idxc->clients);
+  free(idxc);
 }
 
-/// here we assume that pts of interframes > pts of previous keyframe
-// should be true for most formats (except eg. dirac)
-
-// we further assume that pts == dts for all frames
-
-static index_entry *index_walk(index_entry *idx, int64_t pts) {
-  index_entry *xidx = idx;
-  while (xidx) {
-    //fprintf(stderr, "VALS %ld %ld\n", pts, xidx->dts);
-    //if (xidx->next)
-    //fprintf(stderr, "VALS2 %ld\n", xidx->next->dts);
-    //if (xidx->next) fprintf(stderr, "WALK: %ld %ld %ld\n", xidx->dts, pts, xidx->next->dts);
+static inline index_entry *_index_walk(index_entry *idx, int64_t pts) {
+  for (index_entry *xidx = idx; xidx; xidx = xidx->next)
     if (pts >= xidx->dts && (!xidx->next || pts < xidx->next->dts)) return xidx;
-    xidx = xidx->next;
-  }
-  /// oops. something went wrong
   return NULL;
 }
 
-static index_entry *index_add(index_container_t *idxc, uint64_t offset, int64_t pts) {
-  //lives_mkv_priv_t *priv = cdata->priv;
-  index_entry *nidx;
-  index_entry *nentry;
+static index_entry *index_add(index_container_t *idxc, uint64_t pts, int64_t offset) {
+  if (!idxc) return NULL;
+  else {
+    index_entry *nidx = idxc->idxht, *nentry = calloc(1, sizeof(index_entry));
+    nentry->dts = pts;
+    nentry->offs = offset;
 
-  nidx = idxc->idxht;
-
-  nentry = malloc(sizeof(index_entry));
-
-  nentry->dts = pts;
-  nentry->offs = offset;
-  nentry->next = NULL;
-
-  if (!nidx) {
-    // first entry in list
-    idxc->idxhh = idxc->idxht = nentry;
+    if (!nidx) idxc->idxhh = idxc->idxht = nentry; // first entry in list
+    else if (nidx->dts < pts) nidx->next = idxc->idxht = nentry; // last entry in list
+    else if (idxc->idxhh->dts > pts) { // before head
+      nentry->next = idxc->idxhh;
+      idxc->idxhh = nentry;
+    } else {
+      nidx = _index_walk(idxc->idxhh, pts);
+      if (nidx->dts == pts) {
+        nidx->offs = nentry->offs;
+        free(nentry);
+        nentry = nidx;
+      } else { // after nidx in list
+        nentry->next = nidx->next;
+        nidx->next = nentry;
+      }
+    }
     return nentry;
   }
-
-  if (nidx->dts < pts) {
-    // last entry in list
-    nidx->next = nentry;
-    idxc->idxht = nentry;
-    return nentry;
-  }
-
-  if (idxc->idxhh->dts > pts) {
-    // before head
-    nentry->next = idxc->idxhh;
-    idxc->idxhh = nentry;
-    return nentry;
-  }
-
-  nidx = index_walk(idxc->idxhh, pts);
-
-  // after nidx in list
-
-  nentry->next = nidx->next;
-  nidx->next = nentry;
-
-  return nentry;
 }
 
-static inline index_entry *index_get(index_container_t *idxc, int64_t pts) {
-  return index_walk(idxc->idxhh, pts);
-}
+static inline index_entry *index_get(index_container_t *idxc, int64_t pts) {return _index_walk(idxc->idxhh, pts);}
 
-///////////////////////////////////////////////////////
+static pthread_mutex_t indices_mutex = PTHREAD_MUTEX_INITIALIZER;
+static int nidxc = 0;
 
 static index_container_t *idxc_for(lives_clip_data_t *cdata) {
   // check all idxc for string match with URI
   index_container_t *idxc;
-  int i;
+  int j;
 
   pthread_mutex_lock(&indices_mutex);
 
-  for (i = 0; i < nidxc; i++) {
-    if (indices[i]->clients[0]->current_clip == cdata->current_clip &&
-        !strcmp(indices[i]->clients[0]->URI, cdata->URI)) {
-      idxc = indices[i];
-      // append cdata to clients
-      idxc->clients = (lives_clip_data_t **)realloc(idxc->clients, (idxc->nclients + 1) * sizeof(lives_clip_data_t *));
-      idxc->clients[idxc->nclients] = cdata;
-      idxc->nclients++;
-      //
-      pthread_mutex_unlock(&indices_mutex);
-      return idxc;
-    }
+  for (int i = 0; i < nidxc; i++) {
+    idxc = indices[i];
+    if (idxc->clients[0] == cdata || idxc->clients[0]->current_clip != cdata->current_clip
+        || strcmp(idxc->clients[0]->URI, cdata->URI)) continue;
+    for (j = 1; j < idxc->nclients; j++) if (idxc->clients[j] == cdata) break;
+    if (j < idxc->nclients) continue;
+
+    // append cdata to clients
+    idxc->clients =
+      (lives_clip_data_t **)realloc(idxc->clients, (idxc->nclients + 1) * sizeof(lives_clip_data_t *));
+    idxc->clients[idxc->nclients++] = cdata;
+    //
+    pthread_mutex_unlock(&indices_mutex);
+    return idxc;
   }
 
+  // match not found, or already in list - create a new index container
   indices = (index_container_t **)realloc(indices, (nidxc + 1) * sizeof(index_container_t *));
-
-  // match not found, create a new index container
-  idxc = (index_container_t *)malloc(sizeof(index_container_t));
-
-  idxc->idxhh = NULL;
-  idxc->idxht = NULL;
+  indices[nidxc] = idxc = (index_container_t *)calloc(1, sizeof(index_container_t));
 
   idxc->nclients = 1;
   idxc->clients = (lives_clip_data_t **)malloc(sizeof(lives_clip_data_t *));
   idxc->clients[0] = cdata;
   pthread_mutex_init(&idxc->mutex, NULL);
 
-  indices[nidxc] = idxc;
-  pthread_mutex_unlock(&indices_mutex);
-
   nidxc++;
-
+  pthread_mutex_unlock(&indices_mutex);
   return idxc;
 }
 
 static void idxc_release(lives_clip_data_t *cdata, index_container_t *idxc) {
   int i, j;
-
   if (!idxc) return;
 
   pthread_mutex_lock(&indices_mutex);
 
-  if (idxc->nclients == 1) {
+  if (idxc->nclients == 1 && idxc->clients[0] == cdata) {
     // remove this index
-    index_free(idxc->idxhh);
-    free(idxc->clients);
-    for (i = 0; i < nidxc; i++) {
+    _index_free(idxc);
+    for (i = 0; i < nidxc; i++)
       if (indices[i] == idxc) {
         nidxc--;
-        for (j = i; j < nidxc; j++) {
-          indices[j] = indices[j + 1];
-        }
-        free(idxc);
+        for (j = i; j < nidxc; indices[j] = indices[j + 1], j++);
         if (nidxc == 0) {
           free(indices);
           indices = NULL;
         } else indices = (index_container_t **)realloc(indices, nidxc * sizeof(index_container_t *));
         break;
       }
-    }
   } else {
     // reduce client count by 1
-    for (i = 0; i < idxc->nclients; i++) {
+    for (i = 0; i < idxc->nclients; i++)
       if (idxc->clients[i] == cdata) {
         // remove this entry
         idxc->nclients--;
-        for (j = i; j < idxc->nclients; j++) {
-          idxc->clients[j] = idxc->clients[j + 1];
-        }
-        idxc->clients = (lives_clip_data_t **)realloc(idxc->clients, idxc->nclients * sizeof(lives_clip_data_t *));
+        for (j = i; j < idxc->nclients; idxc->clients[j] = idxc->clients[j + 1], j++);
+        idxc->clients =
+          (lives_clip_data_t **)realloc(idxc->clients, idxc->nclients * sizeof(lives_clip_data_t *));
         break;
       }
-    }
   }
   pthread_mutex_unlock(&indices_mutex);
 }
 
 static void idxc_release_all(void) {
-  for (int i = 0; i < nidxc; i++) {
-    index_free(indices[i]->idxhh);
-    free(indices[i]->clients);
-    free(indices[i]);
-  }
+  pthread_mutex_lock(&indices_mutex);
+  for (int i = 0; i < nidxc; i++) _index_free(indices[i]);
+  free(indices);
+  indices = NULL;
   nidxc = 0;
+  pthread_mutex_unlock(&indices_mutex);
+}
+
+static int count_between(index_container_t *idxc, int64_t start, int64_t end, int64_t *tot) {
+  int64_t xtot = 0;
+  int count = 0;
+  if (idxc) {
+    for (index_entry *xidx = idxc->idxhh; xidx; xidx = xidx->next) {
+      if (xidx->dts < start) continue;
+      if (xidx->dts > end) return count;
+      count++;
+      xtot += xidx->offs;
+    }
+  }
+  if (tot) *tot = xtot;
+  return count;
+}
+
+typedef int64_t (*kframe_check_cb_f)(int64_t tframe, void *user_data);
+
+// function can be called to try to determine if keyframes are regularly spaced. A return of 0 indicates no
+// pattern, any other value will be the distance, however if there are unmapped keyframes, then this could be
+// invalidated by discovery or non confroming or lack of conforming values
+// the value returned may be used to set cdata->kframe_dist in order to aid delay estimates
+static int64_t idxc_analyse(index_container_t *idxc, double fpsc, kframe_check_cb_f chk_cb, void *cb_data) {
+  // fpsc is conversion factor, frame == floor(dts * fpsc)
+  int64_t frame, dist = 0;
+  if (idxc && fpsc > 0.) {
+    index_entry *xidx = idxc->idxhh;
+    if (!xidx) return 0;
+    for (frame = (int64_t)(xidx->dts * fpsc - 0.5); !frame; frame = (int64_t)(xidx->dts * fpsc - 0.5)) {
+      xidx = xidx->next;
+      if (!xidx) return 0;
+    }
+    dist = frame;
+    frame = (*chk_cb)(--frame, cb_data);
+    if (frame) {
+      if (dist % (dist - frame)) return 0;
+      dist -= frame;
+      if (frame % dist) return 0;
+    }
+    frame += dist;
+    for (xidx = xidx->next; xidx; xidx = xidx->next) {
+      frame = (int64_t)(xidx->dts * fpsc - 0.5);
+      if (frame % dist) return 0;
+    }
+  }
+  return dist;
 }
 
 #endif

@@ -10,6 +10,7 @@
 
 #include "main.h"
 
+///////////////////////////// testing - not used /////////
 #ifdef USE_INTRINSICS
 /// intrinsics
 #if defined(_MSC_VER)
@@ -51,6 +52,19 @@ uint64_t get_thread_id(void) {
   return _thread_id;
 }
 #endif
+
+////////////////////////////////////////////
+
+// TODO
+/* LIVES_GLOBAL_INLINE boolean make_critical(boolean is_crit) { */
+/*   if (capable) { */
+/*     if (!capable->hw.oom_adj_file) { */
+/*       capable->hw_oom_adj_file =  */
+
+/*     } */
+/*     if (!*capable->hw.oom_adj_file) return FALSE; */
+/*   } */
+/* } */
 
 
 static uint64_t totalloc = 0, totfree = 0;
@@ -406,8 +420,207 @@ void *free_bigblock(void *bstart) {
 }
 
 
+static uint16_t swabtab[65536];
+static boolean swabtab_inited = FALSE;
+
+static void init_swabtab(void) {
+  for (int i = 0; i < 256; i++) {
+    int z = i << 8;
+    for (int j = 0; j < 256; j++) {
+      swabtab[z++] = (j << 8) + i;
+    }
+  }
+  swabtab_inited = TRUE;
+}
+
+union split8 {
+  uint64_t u64;
+  uint32_t u32[2];
+};
+
+union split4 {
+  uint32_t u32;
+  uint16_t u16[2];
+};
+
+// gran(ularity) may be 1, or 2
+LIVES_GLOBAL_INLINE void swab2(const void *from, const void *to, size_t gran) {
+  uint16_t *s = (uint16_t *)from;
+  uint16_t *d = (uint16_t *)to;
+  if (gran == 2) {
+    uint16_t tmp = *s;
+    *s = *d;
+    *d = tmp;
+    return;
+  }
+  if (!swabtab_inited) init_swabtab();
+  *d = swabtab[*s];
+}
+
+// gran(ularity) may be 1, 2 or 4
+LIVES_GLOBAL_INLINE void swab4(const void *from, const void *to, size_t gran) {
+  union split4 *d = (union split4 *)to, s;
+  uint16_t tmp;
+
+  if (gran > 2) {
+    lives_memcpy((void *)to, from, gran);
+    return;
+  }
+  s.u32 = *(uint32_t *)from;
+  tmp = s.u16[0];
+  if (gran == 2) {
+    d->u16[0] = s.u16[1];
+    d->u16[1] = tmp;
+  } else {
+    swab2(&s.u16[1], &d->u16[0], 1);
+    swab2(&tmp, &d->u16[1], 1);
+  }
+}
+
+
+// gran(ularity) may be 1, 2 or 4
+LIVES_GLOBAL_INLINE void swab8(const void *from, const void *to, size_t gran) {
+  union split8 *d = (union split8 *)to, s;
+  uint32_t tmp;
+  if (gran > 4) {
+    lives_memcpy((void *)to, from, gran);
+    return;
+  }
+  s.u64 = *(uint64_t *)from;
+  tmp = s.u32[0];
+  if (gran == 4) {
+    d->u32[0] = s.u32[1];
+    d->u32[1] = tmp;
+  } else {
+    swab4(&s.u32[1], &d->u32[0], gran);
+    swab4(&tmp, &d->u32[1], gran);
+  }
+}
+
+
+LIVES_GLOBAL_INLINE void reverse_bytes(char *buff, size_t count, size_t gran) {
+  if (count == 2) swab2(buff, buff, 1);
+  else if (count == 4) swab4(buff, buff, gran);
+  else if (count == 8) swab8(buff, buff, gran);
+}
+
+
+boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
+  // reverse chunk sized bytes in buff, count must be a multiple of chunk
+  ssize_t start = -1, end;
+  size_t ocount = count;
+
+  if (chunk < 8) {
+    if ((chunk != 4 && chunk != 2 && chunk != 1) || (count % chunk) != 0) return FALSE;
+  } else {
+    if ((chunk & 0x01) || (count % chunk) != 0) return FALSE;
+    else {
+#ifdef USE_RPMALLOC
+      void *tbuff = rpmalloc(chunk);
+#else
+      void *tbuff = lives_malloc(chunk);
+#endif
+      start++;
+      end = ocount - 1 - chunk;
+      while (start + chunk < end) {
+        lives_memcpy(tbuff, &buff[end], chunk);
+        lives_memcpy(&buff[end], &buff[start], chunk);
+        lives_memcpy(&buff[start], tbuff, chunk);
+        start += chunk;
+        end -= chunk;
+      }
+#ifdef USE_RPMALLOC
+      rpfree(tbuff);
+#else
+      lives_free(tbuff);
+#endif
+      return TRUE;
+    }
+  }
+
+  /// halve the number of bytes, since we will work forwards and back to meet in the middle
+  count >>= 1;
+
+  if (count >= 8 && (ocount & 0x07) == 0) {
+    // start by swapping 8 bytes from each end
+    uint64_t *buff8 = (uint64_t *)buff;
+    if ((void *)buff8 == (void *)buff) {
+      end = ocount  >> 3;
+      for (; count >= 8; count -= 8) {
+        /// swap 8 bytes at a time from start and end
+        uint64_t tmp8 = buff8[--end];
+        if (chunk == 8) {
+          buff8[end] = buff8[++start];
+          buff8[start] = tmp8;
+        } else {
+          swab8(&buff8[++start], &buff8[end], chunk);
+          swab8(&tmp8, &buff8[start], chunk);
+        }
+      }
+      if (count <= chunk / 2) return TRUE;
+      start = (start + 1) << 3;
+      start--;
+    }
+  }
+
+  /// remainder should be only 6, 4, or 2 bytes in the middle
+  if (chunk >= 8) return FALSE;
+
+  if (count >= 4 && (ocount & 0x03) == 0) {
+    uint32_t *buff4 = (uint32_t *)buff;
+    if ((void *)buff4 == (void *)buff) {
+      if (start > 0) {
+        end = (ocount - start) >> 2;
+        start >>= 2;
+      } else end = ocount >> 2;
+      for (; count >= 4; count -= 4) {
+        /// swap 4 bytes at a time from start and end
+        uint32_t tmp4 = buff4[--end];
+        if (chunk == 4) {
+          buff4[end] = buff4[++start];
+          buff4[start] = tmp4;
+        } else {
+          swab4(&buff4[++start], &buff4[end], chunk);
+          swab4(&tmp4, &buff4[start], chunk);
+        }
+      }
+      if (count <= chunk / 2) return TRUE;
+      start = (start + 1) << 2;
+      start--;
+    }
+  }
+
+  /// remainder should be only 6 or 2 bytes in the middle, with a chunk size of 4 or 2 or 1
+  if (chunk >= 4) return FALSE;
+
+  if (count > 0) {
+    uint16_t *buff2 = (uint16_t *)buff;
+    if ((void *)buff2 == (void *)buff) {
+      if (start > 0) {
+        end = (ocount - start) >> 1;
+        start >>= 1;
+      } else end = ocount >> 1;
+      for (; count >= chunk / 2; count -= 2) {
+        /// swap 2 bytes at a time from start and end
+        uint16_t tmp2 = buff2[--end];
+        if (chunk >= 2) {
+          buff2[end] = buff2[++start];
+          buff2[start] = tmp2;
+        }
+        /// swap single bytes
+        else {
+          swab2(&buff2[++start], &buff2[end], 1);
+          swab2(&tmp2, &buff2[start], 1);
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
+
+  if (!count) return TRUE;
+  return FALSE;
+}
+
 #ifdef USE_INTRINSICS
-double intrin_resample_vol(float *dst, size_t dst_skip, float *src, double offsd, double scale, float vol) {
+double intrin_resample_vol(float * dst, size_t dst_skip, float * src, double offsd, double scale, float vol) {
   // *dst = src[offs] * vol; dst += dst_skip; offs = rnd(offs + scale);
   // returns: offs after last float
   // load 4 vols
@@ -436,4 +649,5 @@ double intrin_resample_vol(float *dst, size_t dst_skip, float *src, double offsd
   }
   return offsd;
 }
+
 #endif

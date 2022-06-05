@@ -6,6 +6,10 @@ gtk_def =
 
 cpu_CFLAGS =
 
+if HAVE_PTHREAD
+pthread_CFLAGS = -DHAVE_PTHREAD=1
+endif
+
 if ENABLE_OSC
 osc_CPPFLAGS = -I "$(top_srcdir)/libOSC"
 endif
@@ -243,13 +247,13 @@ lives_exe_SOURCES = \
 	$(yuv4mpeg_SOURCES)\
 	preferences.c preferences.h\
 	rte_window.c rte_window.h\
-	gui.c \
+	gui.c gui.h \
 	ce_thumbs.c ce_thumbs.h \
 	htmsocket.c htmsocket.h \
 	merge.c merge.h \
 	cliphandler.c cliphandler.h \
 	sethandler.c sethandler.h \
-	dialogs.c saveplay.c \
+	dialogs.c dialogs.h saveplay.c saveplay.h \
 	player.c player.h \
 	audio.c audio.h \
 	events.c events.h \
@@ -259,7 +263,7 @@ lives_exe_SOURCES = \
 	colourspace.c colourspace.h\
 	keyboard.c keyboard.h\
 	intents.c intents.h\
-	utils.c \
+	utils.c utils.h\
         main.h \
         mainwindow.h \
         effects.h \
@@ -295,7 +299,7 @@ AM_CFLAGS = -fcommon -fPIE -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgra
 	$(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(libexplain_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def) @TURBO_CFLAGS@ \
-	$(libvisual_CFLAGS) $(frei0r_CFLAGS) $(ladspa_CFLAGS) $(ffthumb_CFLAGS) $(xrender_CFLAGS) $(x11_CFLAGS) $(opengl_CFLAGS)
+	$(libvisual_CFLAGS) $(frei0r_CFLAGS) $(ladspa_CFLAGS) $(ffthumb_CFLAGS) $(xrender_CFLAGS) $(x11_CFLAGS) $(opengl_CFLAGS) $(pthread_CFLAGS)
 
 if HAVE_AVFORMAT
 if HAVE_AVCODEC

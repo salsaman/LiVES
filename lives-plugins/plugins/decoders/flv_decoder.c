@@ -1682,7 +1682,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 
 void clip_data_free(lives_clip_data_t *cdata) {
-  lives_struct_free(&cdata->lsd);
+  lives_struct_free(cdata->lsd);
 }
 
 

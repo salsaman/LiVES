@@ -8949,7 +8949,7 @@ sub config_set {
     }
 
     unlink $newconfigfile;
-    if (0 + -e $newconfigfile) {
+    if (-e $newconfigfile) {
 	startup_error(4, "config_set_new", "remove_new0", "$newconfigfile:\@:");
     }
     if (!defined(open OUT, ">", $newconfigfile)) {
@@ -9027,7 +9027,7 @@ sub config_set {
     }
     else {
 	if ($oconfigsize) {
-	    if (!defined(open IN, "<", $xconfigfile) && (0 + -e $xconfigfile)) {
+	    if (!defined(open IN, "<", $xconfigfile) && -e $xconfigfile) {
 		close OUT;
 		unlink $newconfigfile;
 		startup_error(3, "config_get", "config_set_open_file", "$xconfigfile:\@:");

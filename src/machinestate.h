@@ -101,12 +101,6 @@ int lives_strappend(const char *string, int len, const char *xnew);
 const char *lives_strappendf(const char *string, int len, const char *fmt, ...);
 char *lives_strcollate(char **pstrng, const char *sep, const char *xnew);
 
-void swab2(const void *from, const void *to, size_t granularity) 	GNU_HOT;
-void swab4(const void *from, const void *to, size_t granularity) 	GNU_HOT;
-void swab8(const void *from, const void *to, size_t granularity) 	GNU_HOT;
-void reverse_bytes(char *buff, size_t count, size_t granularity) 	GNU_HOT GNU_FLATTEN;
-boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) 	GNU_HOT;
-
 uint64_t nxtval(uint64_t val, uint64_t lim, boolean less);
 uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val);
 void autotune_u64(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials, double cost);
@@ -174,6 +168,8 @@ char *format_tstr(double xtime, int minlim);
 #define lives_nanosleep_until_zero(condition) {while ((condition)) lives_nanosleep(LIVES_QUICK_NAP);}
 #define lives_nanosleep_while_false(c) lives_nanosleep_until_nonzero(c)
 #define lives_nanosleep_while_true(c) lives_nanosleep_until_zero(c)
+
+#define lives_usleep(a) lives_nanosleep(1000 * (a))
 
 int check_dev_busy(char *devstr);
 

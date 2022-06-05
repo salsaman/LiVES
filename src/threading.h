@@ -6,6 +6,8 @@
 #ifndef _THREADING_H_
 #define _THREADING_H_
 
+
+
 typedef void *(*lives_thread_func_t)(void *);
 typedef struct _lives_thread_data_t lives_thread_data_t;
 typedef weed_plantptr_t lives_proc_thread_t;
@@ -22,7 +24,7 @@ typedef char *(*funcptr_string_t)();
 typedef int64_t(*funcptr_int64_t)();
 typedef weed_funcptr_t(*funcptr_funcptr_t)();
 typedef void *(*funcptr_voidptr_t)();
-typedef weed_plant_t(*funcptr_plantptr_t)();
+typedef weed_plant_t *(*funcptr_plantptr_t)();
 
 typedef uint64_t lives_thread_attr_t;
 typedef LiVESList lives_thread_t;
@@ -53,24 +55,14 @@ typedef struct {
   lives_alarm_t alarm_handle;
 } lives_sigdata_t;
 
-// for future use
-// - this can become a lives_object template
-typedef struct {
-  const char *funcname; // optional
-  lives_funcptr_t function;
-  uint32_t return_type;
-  const char *args_fmt;
-  uint64_t flags;
-} lives_funcdef_t;
-
 #define LIVES_LEAF_TEMPLATE "template"
 
 typedef weed_plant_t lives_funcinst_t;
 
 /// hook funcs
 
-void lives_hook_append(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func, livespointer data);
-void lives_hook_prepend(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func, livespointer data);
+lives_proc_thread_t lives_hook_append(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func, livespointer data);
+lives_proc_thread_t  lives_hook_prepend(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func, livespointer data);
 void lives_hook_remove(LiVESList **hooks, int type, hook_funcptr_t func, livespointer data);
 
 void lives_hooks_clear(LiVESList **xlist, int type);
@@ -107,14 +99,19 @@ typedef struct {
   uint64_t var_hook_flag_hints;
   ticks_t var_timerinfo;
   uint64_t var_thrdnative_flags;
+  uint64_t var_hook_hints;
+  int var_hook_match_nparams;
+  pthread_mutex_t var_hook_mutex[N_HOOK_FUNCS];
   LiVESList *var_hook_closures[N_HOOK_FUNCS];
+  // hardware - values
+  double loveliness; // a bit like 'niceness', only better
   volatile float *var_core_load_ptr; // pointer to value that monitors core load
 } lives_threadvars_t;
 
 struct _lives_thread_data_t {
   pthread_t pthread;
   LiVESWidgetContext *ctx;
-  int64_t idx;
+  int64_t idx; // thread index
   lives_threadvars_t vars;
   boolean exited;
   int signum;
@@ -143,10 +140,13 @@ typedef struct {
 #define LIVES_LEAF_FUNCSIG "funcsig"
 
 #define LIVES_LEAF_THREAD_PARAM "thrd_param"
+
 #define _LIVES_LEAF_THREAD_PARAM(n) LIVES_LEAF_THREAD_PARAM  n
 #define LIVES_LEAF_THREAD_PARAM0 _LIVES_LEAF_THREAD_PARAM("0")
 #define LIVES_LEAF_THREAD_PARAM1 _LIVES_LEAF_THREAD_PARAM("1")
 #define LIVES_LEAF_THREAD_PARAM2 _LIVES_LEAF_THREAD_PARAM("2")
+
+#define lpt_param_name(i) lives_strdup_printf("%s%d", LIVES_LEAF_THREAD_PARAM, (i))
 
 #define LIVES_THRDFLAG_AUTODELETE	(1 << 0)
 #define LIVES_THRDFLAG_RUNNING		(1 << 1)
@@ -164,6 +164,18 @@ typedef struct {
 // it is also possible to pass functions as parameters, using _FUNCP, so things like
 // FUNCSIG_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP
 // are a possibility
+
+#define GEN_SET(thing, wret, funcname, FUNCARGS) err =			\
+    (wret == WEED_SEED_INT ? weed_set_int_value((thing), _RV_, (*funcname->funcint)(FUNCARGS)) : \
+     wret == WEED_SEED_DOUBLE ? weed_set_double_value((thing), _RV_, (*funcname->funcdouble)(FUNCARGS)) : \
+     wret == WEED_SEED_BOOLEAN ? weed_set_boolean_value((thing), _RV_, (*funcname->funcboolean)(FUNCARGS)) : \
+     wret == WEED_SEED_STRING ? weed_set_string_value((thing), _RV_, (*funcname->funcstring)(FUNCARGS)) : \
+     wret == WEED_SEED_INT64 ? weed_set_int64_value((thing), _RV_, (*funcname->funcint64)(FUNCARGS)) : \
+     wret == WEED_SEED_FUNCPTR ? weed_set_funcptr_value((thing), _RV_, (*funcname->funcfuncptr)(FUNCARGS)) : \
+     wret == WEED_SEED_VOIDPTR ? weed_set_voidptr_value((thing), _RV_, (*funcname->funcvoidptr)(FUNCARGS)) : \
+     wret == WEED_SEED_PLANTPTR ? weed_set_plantptr_value((thing), _RV_, (*funcname->funcplantptr)(FUNCARGS)) : \
+     WEED_ERROR_WRONG_SEED_TYPE)
+
 #define ARGS1(thing, t1) GETARG((thing), t1, 0)
 #define ARGS2(thing, t1, t2) ARGS1((thing), t1), GETARG((thing), t2, 1)
 #define ARGS3(thing, t1, t2, t3) ARGS2((thing), t1, t2), GETARG((thing), t3, 2)
@@ -172,7 +184,6 @@ typedef struct {
 #define ARGS6(thing, t1, t2, t3, t4, t5, t6) ARGS5((thing), t1, t2, t3, t4, t5), GETARG((thing), t6, 5)
 #define ARGS7(thing, t1, t2, t3, t4, t5, t6, t7) ARGS6((thing), t1, t2, t3, t4, t5, t6), GETARG((thing), t7, 6)
 #define ARGS8(thing, t1, t2, t3, t4, t5, t6, t7, t8) ARGS7((thing), t1, t2, t3, t4, t5, t6, t7), GETARG((thing), t8, 7)
-
 #define CALL_VOID_8(thing, t1, t2, t3, t4, t5, t6, t7, t8) (*thefunc->func)(ARGS8((thing), t1, t2, t3, t4, t5, t6, t7, t8))
 #define CALL_VOID_7(thing, t1, t2, t3, t4, t5, t6, t7) (*thefunc->func)(ARGS7((thing), t1, t2, t3, t4, t5, t6, t7))
 #define CALL_VOID_6(thing, t1, t2, t3, t4, t5, t6) (*thefunc->func)(ARGS6((thing), t1, t2, t3, t4, t5, t6))
@@ -181,25 +192,45 @@ typedef struct {
 #define CALL_VOID_3(thing, t1, t2, t3) (*thefunc->func)(ARGS3((thing), t1, t2, t3))
 #define CALL_VOID_2(thing, t1, t2) (*thefunc->func)(ARGS2((thing), t1, t2))
 #define CALL_VOID_1(thing, t1) (*thefunc->func)(ARGS1((thing), t1))
-#define CALL_VOID_0() (*thefunc->func)()
-
-#define CALL_8(thing, ret, t1, t2, t3, t4, t5, t6, t7, t8) weed_set_##ret##_value((thing), _RV_, \
-									   (*thefunc->func##ret)(ARGS8((thing), t1, t2, t3, t4, t5, t6, t7, t7)))
-#define CALL_7(thing, ret, t1, t2, t3, t4, t5, t6, t7) weed_set_##ret##_value((thing), _RV_, \
-								       (*thefunc->func##ret)(ARGS7((thing), t1, t2, t3, t4, t5, t6, t7)))
-#define CALL_6(thing, ret, t1, t2, t3, t4, t5, t6) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)(ARGS6((thing), t1, t2, t3, t4, t5, t6)))
-#define CALL_5(thing, ret, t1, t2, t3, t4, t5) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)(ARGS5((thing), t1, t2, t3, t4, t5)))
-#define CALL_4(thing, ret, t1, t2, t3, t4) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)(ARGS4((thing), t1, t2, t3, t4)))
-#define CALL_3(thing, ret, t1, t2, t3) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)(ARGS3((thing), t1, t2, t3)))
-#define CALL_2(thing, ret, t1, t2) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)(ARGS2((thing), t1, t2)))
-#define CALL_1(thing, ret, t1) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)(ARGS1((thing), t1)))
-#define CALL_0(thing, ret) weed_set_##ret##_value((thing), _RV_, (*thefunc->func##ret)())
+#define XCALL_VOID_1(t1) CALL_VOID_1((info), t1)
+#define XCALL_VOID_2(t1, t2) CALL_VOID_2((info), t1, t2)
+#define XCALL_VOID_3(t1, t2, t3) CALL_VOID_3((info), t1, t2, t3)
+#define XCALL_VOID_4(t1, t2, t3, t4) CALL_VOID_4((info), t1, t2, t3, t4)
+#define XCALL_VOID_5(t1, t2, t3, t4, t5) CALL_VOID_5((info), t1, t2, t3, t4, t5)
+#define XCALL_VOID_6(t1, t2, t3, t4, t5, t6) CALL_VOID_6((info), t1, t2, t3, t4, t5, t6)
+#define XCALL_VOID_0() (*thefunc->func)()
+#define XCALL_VOID_7(t1, t2, t3, t4, t5, t6, t7) CALL_VOID_7((info), t1, t2, t3, t4, t5, t6, t7)
+#define XCALL_VOID_8(t1, t2, t3, t4, t5, t6, t7, t8) CALL_VOID_8((info), t1, t2, t3, t4, t5, t6, t7, t8)
+#define XCALL_8(t1, t2, t3, t4, t5, t6, t7, t8) ACALL_8(info, ret_type, thefunc, t1, t2, t3, t4, t5, t6, t7, t8)
+#define XCALL_7(t1, t2, t3, t4, t5, t6, t7) ACALL_7(info, ret_type, thefunc, t1, t2, t3, t4, t5, t6, t7)
+#define XCALL_6(t1, t2, t3, t4, t5, t6) ACALL_6(info, ret_type, thefunc, t1, t2, t3, t4, t5, t6)
+#define XCALL_5(t1, t2, t3, t4, t5) ACALL_5(info, ret_type, thefunc, t1, t2, t3, t4, t5)
+#define XCALL_4(t1, t2, t3, t4) ACALL_4(info, ret_type, thefunc, t1, t2, t3, t4)
+#define XCALL_3(t1, t2, t3) ACALL_3(info, ret_type, thefunc, t1, t2, t3)
+#define XCALL_2(t1, t2) ACALL_2(info, ret_type, thefunc, t1, t2)
+#define XCALL_1(t1) ACALL_1(info, ret_type, thefunc, t1)
+#define XCALL_0() ACALL_0(info, ret_type, thefunc)
+#define ACALL_8(thing, wret, funcname, t1, t2, t3, t4, t5, t6, t7, t8)	\
+  GEN_SET(thing, wret, funcname, ARGS8((thing), t1, t2, t3, t4, t5, t6, t7, t8))
+#define ACALL_7(thing, wret, funcname, t1, t2, t3, t4, t5, t6, t7) \
+  GEN_SET(thing, wret, funcname, ARGS7((thing), t1, t2, t3, t4, t5, t6, t7))
+#define ACALL_6(thing, wret, funcname, t1, t2, t3, t4, t5, t6) \
+  GEN_SET(thing, wret, funcname, ARGS6((thing), t1, t2, t3, t4, t5, t6))
+#define ACALL_5(thing, wret, funcname, t1, t2, t3, t4, t5) \
+  GEN_SET(thing, wret, funcname, ARGS5((thing), t1, t2, t3, t4, t5))
+#define ACALL_4(thing, wret, funcname, t1, t2, t3, t4) \
+  GEN_SET(thing, wret, funcname, ARGS4((thing), t1, t2, t3, t4))
+#define ACALL_3(thing, wret, funcname, t1, t2, t3) GEN_SET(thing, wret, funcname, ARGS3((thing), t1, t2, t3))
+#define ACALL_2(thing, wret, funcname, t1, t2) GEN_SET(thing, wret, funcname, ARGS2((thing), t1, t2))
+#define ACALL_1(thing, wret, funcname, t1) GEN_SET(thing, wret, funcname, ARGS1((thing), t1))
+#define ACALL_0(thing, wret, funcname) GEN_SET(thing, wret, funcname, )
 
 // 0p
 #define FUNCSIG_VOID				       			0X00000000
 // 1p
 #define FUNCSIG_INT 			       				0X00000001
 #define FUNCSIG_DOUBLE 				       			0X00000002
+#define FUNCSIG_BOOL 				       			0X00000003
 #define FUNCSIG_STRING 				       			0X00000004
 #define FUNCSIG_INT64 			       				0X00000005
 #define FUNCSIG_VOIDP 				       			0X0000000D
@@ -228,6 +259,7 @@ typedef struct {
 #define FUNCSIG_INT_INT_BOOL	 		        		0X00000113
 // 4p
 #define FUNCSIG_STRING_STRING_VOIDP_INT					0X000044D1
+#define FUNCSIG_STRING_DOUBLE_INT_STRING       				0X00004214
 #define FUNCSIG_INT_INT_BOOL_VOIDP					0X0000113D
 // 5p
 #define FUNCSIG_VOIDP_INT_INT_INT_INT					0X000D1111
@@ -253,11 +285,14 @@ uint64_t lives_thread_join(lives_thread_t work, void **retval);
 void lives_thread_free(lives_thread_t *thread);
 
 // thread functions
+lives_thread_data_t *get_thread_data_by_id(uint64_t idx);
+int get_n_active_threads(void);
+
 lives_thread_data_t *get_thread_data(void);
 lives_threadvars_t *get_threadvars(void);
 lives_thread_data_t *get_global_thread_data(void);
 lives_threadvars_t *get_global_threadvars(void);
-lives_thread_data_t *lives_thread_data_create(uint64_t idx);
+lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 
 #define THREADVAR(var) (get_threadvars()->var_##var)
 #define FG_THREADVAR(var) (get_global_threadvars()->var_##var)
@@ -269,6 +304,8 @@ lives_thread_data_t *lives_thread_data_create(uint64_t idx);
 #define THRD_STATE_CANCELLED 	(1ull << 1)
 #define THRD_STATE_SIGNALLED 	(1ull << 2)
 #define THRD_STATE_BUSY 	(1ull << 3)
+
+#define THRD_STATE_RUNNING 	(1ull << 16)
 
 #define THRD_STATE_INVALID 	(1ull << 31)
 
@@ -310,6 +347,9 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_
 lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, lives_funcptr_t func,
     int return_type, const char *args_fmt, va_list xargs);
 
+lives_proc_thread_t lives_proc_thread_create_nullvargs(lives_thread_attr_t attr, lives_funcptr_t func,
+    int return_type);
+
 #define LPT_WITH_TIMEOUT(to, attr, func, rtype, args_fmt, ...) \
       (lives_proc_thread_create_with_timeout_named((to), (attr),	\
 						   (lives_funcptr_t)(func), #func, \
@@ -324,13 +364,17 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives
 void lives_proc_thread_free(lives_proc_thread_t lpt);
 
 // forces fg execution (safe to run in fg or bg)
-boolean main_thread_execute(lives_funcptr_t func, int return_type, void *retval, const char *args_fmt, ...);
+boolean main_thread_execute(lives_funcptr_t, int return_type, void *retval, const char *args_fmt, ...);
+
+// returns TRUE once the proc_thread will call the target function
+// the thread can also be cancelled or finished
+boolean lives_proc_thread_is_running(lives_proc_thread_t);
 
 /// returns FALSE while the thread is running, TRUE once it has finished
 boolean lives_proc_thread_check_finished(lives_proc_thread_t);
-boolean lives_proc_thread_get_signalled(lives_proc_thread_t tinfo);
-boolean lives_proc_thread_set_signalled(lives_proc_thread_t tinfo, int signum, void *data);
-int lives_proc_thread_get_signal_data(lives_proc_thread_t tinfo, int64_t *tidx_return, void **data_return);
+boolean lives_proc_thread_get_signalled(lives_proc_thread_t);
+boolean lives_proc_thread_set_signalled(lives_proc_thread_t, int signum, void *data);
+int lives_proc_thread_get_signal_data(lives_proc_thread_t, int64_t *tidx_return, void **data_return);
 
 void lives_proc_thread_set_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
@@ -341,7 +385,7 @@ boolean lives_proc_thread_cancel(lives_proc_thread_t, boolean dontcare);
 boolean lives_proc_thread_get_cancelled(lives_proc_thread_t);
 
 // low level cancel, which will cause the thread to abort
-boolean lives_proc_thread_cancel_immediate(lives_proc_thread_t tinfo);
+boolean lives_proc_thread_cancel_immediate(lives_proc_thread_t);
 
 /// tell a thread with return value that we no longer need the value so it can free itself
 /// after setting this, no further operations may be done on the proc_thread
@@ -370,6 +414,10 @@ lives_funcinst_t *create_funcinst(lives_funcdef_t *template, void *retstore, ...
 void free_funcinst(lives_funcinst_t *);
 
 funcsig_t funcsig_from_args_fmt(const char *args_fmt);
+
+int fn_func_match(lives_proc_thread_t lpt1, lives_proc_thread_t lpt2);
+boolean fn_data_match(lives_proc_thread_t lpt1, lives_proc_thread_t lpt2, int maxp);
+boolean fn_data_replace(lives_proc_thread_t src, lives_proc_thread_t dst);
 
 // utility funcs (called from widget-helper.c)
 boolean is_fg_thread(void);

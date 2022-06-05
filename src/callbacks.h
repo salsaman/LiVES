@@ -11,6 +11,9 @@
 
 void lives_exit(int signum);
 
+boolean all_config(LiVESWidget *, LiVESXEventConfigure *, livespointer ppsurf);
+boolean all_expose(LiVESWidget *, lives_painter_t *, livespointer psurf);
+
 void play_all(boolean from_menu);
 void play_sel(void);
 

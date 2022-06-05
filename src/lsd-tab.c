@@ -20,6 +20,9 @@ static void init_lsd_tab(void) {
   tab_inited = TRUE;
 }
 
+static void lfd_setdef(void *strct, const char *stype, const char *fname, int64_t *ptr) {*ptr = -1;}
+static void adv_timing_init(void *strct, const char *stype, const char *fname, adv_timing_t *adv) {adv->ctiming_ratio = 1.;}
+
 const lives_struct_def_t *get_lsd(lives_struct_type st_type) {
   const lives_struct_def_t *lsd;
   if (st_type < LIVES_STRUCT_FIRST || st_type >= LIVES_N_STRUCTS) return NULL;
@@ -27,37 +30,41 @@ const lives_struct_def_t *get_lsd(lives_struct_type st_type) {
   else if (lsd_table[st_type]) return lsd_table[st_type];
   switch (st_type) {
   case LIVES_STRUCT_CLIP_DATA_T:
-    lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "debug", 6);
+    lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "debug", 8);
     if (lsd) {
-      lives_special_field_t **specf = lsd->special_fields;
+      lsd_special_field_t **specf = lsd->special_fields;
       lives_clip_data_t *cdata = (lives_clip_data_t *)lives_calloc(1, sizeof(lives_clip_data_t));
-      specf[0] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY |
-                                    LIVES_FIELD_FLAG_FREE_ON_DELETE, cdata, &cdata->priv,
+      specf[0] = make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY |
+                                    LSD_FIELD_FLAG_FREE_ON_DELETE, cdata, &cdata->priv,
                                     "priv", 0, NULL, NULL, NULL);
-      specf[1] = make_special_field(LIVES_FIELD_CHARPTR, cdata, &cdata->URI,
+      specf[1] = make_special_field(LSD_FIELD_CHARPTR, cdata, &cdata->URI,
                                     "URI", 0, NULL, NULL, NULL);
-      specf[2] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->title,
+      specf[2] = make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->title,
                                     "title", 1024, NULL, NULL, NULL);
-      specf[3] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->author,
+      specf[3] = make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->author,
                                     "author", 1024, NULL, NULL, NULL);
-      specf[4] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->comment,
+      specf[4] = make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->comment,
                                     "comment", 1024, NULL, NULL, NULL);
-      specf[5] = make_special_field(LIVES_FIELD_ARRAY, cdata, &cdata->palettes,
+      specf[5] = make_special_field(LSD_FIELD_ARRAY, cdata, &cdata->palettes,
                                     "palettes", 4, NULL, NULL, NULL);
-      lives_struct_init(lsd, cdata, &cdata->lsd);
+      specf[6] = make_special_field(LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY, cdata, &cdata->last_frame_decoded,
+                                    "last_frame_decoded", 8, (lsd_field_init_cb)lfd_setdef, NULL, NULL);
+      specf[7] = make_special_field(LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY, cdata, &cdata->adv_timing,
+                                    "adv_timing", sizeof(adv_timing_t), (lsd_field_init_cb)adv_timing_init, NULL, NULL);
+      lives_struct_init_p(lsd, cdata, &cdata->lsd);
       lives_free(cdata);
     }
     break;
   case LIVES_STRUCT_FILE_DETS_T:
     lsd = lsd_create("lives_file_dets_t", sizeof(lives_file_dets_t), "widgets", 3);
     if (lsd) {
-      lives_special_field_t **specf = lsd->special_fields;
+      lsd_special_field_t **specf = lsd->special_fields;
       lives_file_dets_t *fdets = (lives_file_dets_t *)lives_calloc(1, sizeof(lives_file_dets_t));
-      specf[0] = make_special_field(LIVES_FIELD_CHARPTR, fdets, &fdets->name,
+      specf[0] = make_special_field(LSD_FIELD_CHARPTR, fdets, &fdets->name,
                                     "name", 0, NULL, NULL, NULL);
-      specf[1] = make_special_field(LIVES_FIELD_CHARPTR, fdets, &fdets->md5sum,
+      specf[1] = make_special_field(LSD_FIELD_CHARPTR, fdets, &fdets->md5sum,
                                     "md5sum", 0, NULL, NULL, NULL);
-      specf[2] = make_special_field(LIVES_FIELD_CHARPTR, fdets, &fdets->extra_details,
+      specf[2] = make_special_field(LSD_FIELD_CHARPTR, fdets, &fdets->extra_details,
                                     "extra_details", 0, NULL, NULL, NULL);
       lives_struct_init_p(lsd, fdets, &fdets->lsd);
       lives_free(fdets);
@@ -144,12 +151,12 @@ uint64_t lsd_check_struct(lives_struct_def_t *lsd) {
   /// non-error warnings
   id = lives_struct_get_identifier(lsd);
 
-  if (id != LIVES_STRUCT_ID)
+  if (id != LSD_STRUCT_ID)
     errprint("lsd_check: lsd (%p) has non-standard identifier 0X%016lX\n", lsd, id);
 
   eid = lives_struct_get_end_id(lsd);
 
-  if (eid != (LIVES_STRUCT_ID ^ 0xFFFFFFFFFFFFFFFF))
+  if (eid != (LSD_STRUCT_ID ^ 0xFFFFFFFFFFFFFFFF))
     errprint("lsd_check: lsd (%p) has non-standard end_id 0X%016lX\n", lsd, eid);
 
   if (eid != (id ^ 0xFFFFFFFFFFFFFFFF))

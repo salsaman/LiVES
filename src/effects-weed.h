@@ -7,6 +7,11 @@
 #ifndef HAS_LIVES_EFFECTS_WEED_H
 #define HAS_LIVES_EFFECTS_WEED_H
 
+#ifndef WEED_EFFECT_HAS_PARAM_FLAGBITS
+#define WEED_PARAM_FLAG_READ_ONLY     		(1 << 0)
+#define WEED_PARAM_FLAG_VALUE_CHANGED           (1 << 1)
+#endif
+
 #define MAX_WEED_STRLEN 65535 // soft limit for LiVES
 #define MAX_WEED_ELEMENTS 65535 // soft limit for LiVES
 

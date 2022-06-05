@@ -90,6 +90,11 @@ typedef struct {
   void *pl_priv;
 } lives_plugin_t;
 
+typedef struct {
+  void *parent;
+  LiVESList *offspring;
+} lives_relation_t;
+
 LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex,
                            const char *plugdir, const char *filter_ext);
 
@@ -288,9 +293,11 @@ typedef struct {
   double ctiming_ratio; // dynamic multiplier for timing info, depends on machine load and other factors.
   double const_time; /// avg const time apart from seek / decode (e.g. memcpy)
   double ib_time; /// avg time to decode inter / b frame
-  double k_time; /// avg time to decode keyframe
-  double ks_time; /// avg time to decode keyframe following seek / flush
-  double seekback_time; /// avg extra time per iframe to arrive at backwd kframe
+  double k_time; /// avg time to decode keyframe not following seek (if we can distinguish from ib_time. else use ib_time)
+  double ks_time; /// avg time to seek and decode kframe
+  double kb_time; /// avg time to seek / decode backwd kframe
+  double blockread_time; /// avg time to read . parse a data block
+  double seekback_time; // unused
 
   double xvals[64];  /// extra values which may be stored depending on codec
 } adv_timing_t;
@@ -299,10 +306,21 @@ typedef struct {
 
 // seek_flags is a bitmap
 
+typedef struct _lives_memfuncs {
+  malloc_f  *ext_malloc;
+  free_f    *ext_free;
+  memcpy_f  *ext_memcpy;
+  memset_f  *ext_memset;
+  memmove_f *ext_memmove;
+  realloc_f *ext_realloc;
+  calloc_f  *ext_calloc;
+} ext_memfuncs_t;
+
 typedef struct _lives_clip_data {
   // fixed part
-  lives_struct_def_t lsd;
+  lives_struct_def_t *lsd;
 
+  // TODO - replace with ext_memfuncs_t
   malloc_f  *ext_malloc;
   free_f    *ext_free;
   memcpy_f  *ext_memcpy;
@@ -316,7 +334,7 @@ typedef struct _lives_clip_data {
   char *URI; ///< the URI of this cdata
 
   int nclips; ///< number of clips (titles) in container
-  char container_name[512]; ///< name of container, e.g. "ogg" or NULL
+  char container_name[512]; ///< name of container, e.g. "ogg" (if known)
 
   char title[1024];
   char author[1024];
@@ -326,33 +344,26 @@ typedef struct _lives_clip_data {
   int current_clip; ///< current clip number in container (starts at 0, MUST be <= nclips) [rw host]
 
   // video data
-  int width;
-  int height;
-  int64_t nframes;
-  lives_interlace_t interlace;
-  int *rec_rowstrides; ///< if non-NULL, plugin can set recommended vals, pointer to single value set by host
+  int width, height;
+  int64_t nframes; // number of frames in current clip
+  lives_interlace_t interlace; // frame interlacing (if any)
+
+  // the host may initialise this by creating an array of n ints, where n is the number of planes in the current palette
+  // the plugin may then fill the n values with its own rowstride values. The host can then use the values on the
+  // subsequent call to get_frame(). The plugin MUST set the values each time a frame is returned.
+  int *rec_rowstrides;
 
   /// x and y offsets of picture within frame
   /// for primary pixel plane
-  int offs_x;
-  int offs_y;
-  int frame_width;  ///< frame is the surrounding part, including any black border (>=width)
-  int frame_height;
+  int offs_x, offs_y;
+  ///< frame is the surrounding part, including any blank border ( >= width, height )
+  int frame_width, frame_height;
 
-  float par; ///< pixel aspect ratio (sample width / sample height)
+  float par; ///< pixel aspect ratio (sample width / sample height) (default of 0. implies square pixels)
 
-  float video_start_time;
+  float video_start_time; // if the clip is a chapter, thhen this can be set to the chapter start time, info only
 
-  float fps;
-
-  /// optional info ////////////////
-  float max_decode_fps; ///< theoretical value with no memcpy
-  int64_t fwd_seek_time;
-  int64_t jump_limit; ///< for internal use
-
-  int64_t kframe_start; /// frame number of first keyframe (usually 0)
-  int64_t kframe_dist; /// number forames from one keyframe to the next, 0 if unknown
-  //////////////////////////////////
+  float fps; // playback frame rate (variable rates not supported currently)
 
   int *palettes; ///< list of palettes which the format supports, terminated with WEED_PALETTE_END
 
@@ -360,9 +371,7 @@ typedef struct _lives_clip_data {
   int current_palette;  ///< current palette [rw host]; must be contained in palettes
 
   /// plugin can change per frame
-  int YUV_sampling;
-  int YUV_clamping;
-  int YUV_subspace;
+  int YUV_sampling, YUV_clamping, YUV_subspace;
   int frame_gamma; ///< values WEED_GAMMA_UNKNOWN (0), WEED_GAMMA_SRGB (1), WEED_GAMMA_LINEAR (2)
 
   char video_name[512]; ///< name of video codec, e.g. "theora" or NULL
@@ -378,13 +387,40 @@ typedef struct _lives_clip_data {
   /// plugin can change per frame
   int seek_flag; ///< bitmap of seek properties
 
-  int sync_hint;
+  int sync_hint; ///< hint to host how to correct in case of audio / video stream misalignments
+
+  /// decoder details /////
+
+  int64_t last_frame_decoded; // last frame read / decoded from video stream
+
+  /// optional info ////////////////
+
+  //< estimate of the forward frame difference beyond which it always becomes
+  // quicker to re-seek rathere than decode sequntially
+  // 0 means no estimate, it is suggested to set this either to kframe_dist if valid, else to some other measured value
+  int64_t jump_limit;
+
+  float max_decode_fps; ///< theoretical value with no memcpy
+  int64_t fwd_seek_time; // deprecated
+
+  // handling for keyframes / seek points
+  // these values are intended for use with delay estimation
+  // (it is ASSUMED that we can jump to any keyframe and begin decoding forward from there)
+
+
+  boolean kframes_complete; /// TRUE if all keyframes have been mapped (e.g read from index)
+
+  // Otherwise,
+  // if keyframes are regularly spaced, then this information can be used to guess the positions
+  // of as yet unmapped keyframes.
+
+  int64_t kframe_dist;
+  //////////////////////////////////
 
   adv_timing_t adv_timing;
 
   boolean debug;
 } lives_clip_data_t;
-
 
 typedef struct {
   // mandatory
@@ -422,11 +458,17 @@ typedef struct {
   void (*rip_audio_cleanup)(const lives_clip_data_t *);
   void (*module_unload)(void);
   double (*estimate_delay)(const lives_clip_data_t *, int64_t tframe);
+  double (*estimate_delay_full)(const lives_clip_data_t *, int64_t tframe,  int64_t last_frame,
+                                double *confidence);
 } lives_decoder_sys_t;
 
 typedef struct {
   const lives_decoder_sys_t *dpsys;
   lives_clip_data_t *cdata;
+  double timing_ratio;
+  double timing_const;
+  pthread_mutex_t mutex;
+  lives_relation_t relations;
 } lives_decoder_t;
 
 lives_clip_data_t *get_clip_cdata(int clipno);
@@ -440,8 +482,15 @@ void close_clip_decoder(int clipno);
 lives_decoder_sys_t *open_decoder_plugin(const char *plname);
 void get_mime_type(char *text, int maxlen, const lives_clip_data_t *);
 void unload_decoder_plugins(void);
-lives_decoder_t *clone_decoder(int fileno);
 void clip_decoder_free(lives_decoder_t *);
+
+lives_decoder_t *clone_decoder(int fileno);
+lives_decoder_t *add_decoder_clone(int nclip);
+lives_decoder_t *get_decoder_clone(int nclip);
+boolean swap_decoder_clone(int nclip, lives_decoder_t *);
+boolean free_decoder_clone(int nclip, lives_decoder_t *);
+
+void propogate_timing_data(lives_decoder_t *);
 
 // RFX plugins
 
@@ -830,6 +879,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
 #define AUDIO_CODEC_UNKNOWN	-1
 
 // decoders
+
 // "sync_hint"
 #define SYNC_HINT_AUDIO_TRIM_START	(1 << 0)
 #define SYNC_HINT_AUDIO_PAD_START	(1 << 1)

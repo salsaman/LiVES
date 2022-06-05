@@ -865,7 +865,6 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
   static weed_timecode_t blend_tc = 0;
   lives_clip_t *blend_file;
   weed_timecode_t ntc = tc;
-  int altsrc = -1;
 
   if (!IS_VALID_CLIP(mainw->blend_file)) return NULL;
   blend_file = mainw->files[mainw->blend_file];
@@ -875,52 +874,22 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
     mainw->last_blend_file = mainw->blend_file;
     blend_file->last_frameno = blend_file->frameno;
     blend_tc = tc;
-  }
-
-  if (blend_file->clip_type == CLIP_TYPE_FILE) {
-    if (blend_file->n_altsrcs > 0)
-      for (int s = 0; s < blend_file->n_altsrcs; s++) {
-        if (blend_file->alt_src_types[s]  == LIVES_EXT_SRC_DECODER) {
-          altsrc = s;
-          break;
-        }
-      }
-  }
-
-  if (!cfile->play_paused) {
-    lives_decoder_t *dplug = NULL;
-    lives_decoder_sys_t *dpsys = NULL;
-    double est_time = 0.;
-    frames_t frameno = calc_new_playback_position(mainw->blend_file, FALSE, blend_tc, (ticks_t *)&ntc);
-
-    if (blend_file->clip_type == CLIP_TYPE_FILE) {
-      if (altsrc >= 0) dplug = (lives_decoder_t *)blend_file->alt_srcs[altsrc];
-      else dplug = (lives_decoder_t *)blend_file->ext_src;
-      if (dplug) dpsys = (lives_decoder_sys_t *)dplug->dpsys;
+  } else {
+    if (!cfile->play_paused) {
+      frames_t frameno = calc_new_playback_position(mainw->blend_file, FALSE, blend_tc, (ticks_t *)&ntc);
+      blend_file->last_frameno = blend_file->frameno = frameno;
+      blend_tc = ntc;
     }
-
-    if (IS_NORMAL_CLIP(mainw->blend_file)) {
-      if (is_virtual_frame(mainw->blend_file, frameno)) {
-        if (dpsys && dpsys->estimate_delay)
-          est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->blend_file, frameno));
-        if (fpclassify(est_time) != FP_NORMAL) est_time = -1.;
-      } else {
-        // img timings
-        est_time = blend_file->img_decode_time;
-      }
-    }
-
-    if (est_time >= 0.) {
-      ntc = tc + est_time * TICKS_PER_SECOND_DBL;
-      frameno = calc_new_playback_position(mainw->blend_file, FALSE, blend_tc, (ticks_t *)&ntc);
-    }
-
-    blend_file->last_frameno = blend_file->frameno = frameno;
-    blend_tc = ntc;
   }
 
   mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
-  if (altsrc >= 0) weed_set_int_value(mainw->blend_layer, LIVES_LEAF_ALTSRC, altsrc);
+  if (mainw->blend_file == mainw->playing_file) {
+    if (blend_file->clip_type == CLIP_TYPE_FILE) {
+      lives_decoder_t *dplug = get_decoder_clone(mainw->blend_file);
+      if (!dplug) dplug = add_decoder_clone(mainw->blend_file);
+      if (dplug) weed_set_voidptr_value(mainw->blend_layer, WEED_LEAF_HOST_DECODER, dplug);
+    }
+  }
   pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), blend_tc, 0, 0);
   return mainw->blend_layer;
 }
@@ -928,11 +897,12 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
 
 boolean get_blend_layer(weed_timecode_t tc) {
   /// will set mainw->blend_layer
-  if (mainw->blend_file > -1 && mainw->num_tr_applied > 0
-      && (!mainw->files[mainw->blend_file] ||
-          (mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_DISK &&
-           (!mainw->files[mainw->blend_file]->frames ||
-            !mainw->files[mainw->blend_file]->is_loaded)))) {
+  if ((mainw->num_tr_applied > 0
+       && !IS_VALID_CLIP(mainw->blend_file)) ||
+      (IS_VALID_CLIP(mainw->blend_file) &&
+       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_DISK &&
+       (!mainw->files[mainw->blend_file]->frames ||
+        !mainw->files[mainw->blend_file]->is_loaded))) {
     // invalid blend file
     if (mainw->blend_file != mainw->playing_file) {
       track_decoder_free(1, mainw->blend_file);
@@ -964,8 +934,10 @@ weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_
 
   layers = (weed_plant_t **)lives_malloc(3 * sizeof(weed_plant_t *));
   layers[0] = layer;
-  layers[1] = mainw->blend_layer;
-  layers[2] = NULL;
+  if (mainw->num_tracks > 1) {
+    layers[1] = mainw->blend_layer;
+    layers[2] = NULL;
+  } else layers[1] = layers[2] = NULL;
 
   if (resize_instance) {
     lives_filter_error_t ret;

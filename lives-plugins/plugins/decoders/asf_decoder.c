@@ -2821,7 +2821,7 @@ void clip_data_free(lives_clip_data_t *cdata) {
   if (cdata->URI != NULL) {
     detach_stream(cdata);
   }
-  lives_struct_free(&cdata->lsd);
+  lives_struct_free(cdata->lsd);
 }
 
 

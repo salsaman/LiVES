@@ -67,6 +67,7 @@
 #endif
 
 #define NEED_CLONEFUNC
+#define NEED_INDEX
 #include "decplugin.h"
 #include "libav_helper.h"
 
@@ -87,11 +88,6 @@ static enum AVCodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag) 
   }
   return AV_CODEC_ID_NONE;
 }
-
-static index_container_t **indices;
-static int nidxc;
-static pthread_mutex_t indices_mutex;
-static pthread_mutexattr_t mattr;
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -343,66 +339,20 @@ got_0:
 
 /////////////////////////////////////////////////////
 
-static void index_free(index_entry *idx) {
-  index_entry *cidx = idx, *next;
-
-  while (cidx != NULL) {
-    next = cidx->next;
-    free(cidx);
-    cidx = next;
-  }
-}
-
-
-static index_entry *idx_alloc(int64_t offs, int frag, int dts) {
-  index_entry *nidx = (index_entry *)malloc(sizeof(index_entry));
-  nidx->offs = offs;
-  nidx->dts = dts;
-  nidx->frag = frag;
-  return nidx;
-}
-
 
 /// here we assume that pts of interframes > pts of previous keyframe
 // should be true for most formats (except eg. dirac)
 
 // we further assume that pts == dts for all frames
 
-static index_entry *add_keyframe(const lives_clip_data_t *cdata, int64_t offs, int frag, int dts) {
+static index_entry *add_keyframe(const lives_clip_data_t *cdata, int64_t offs, int64_t frag, int dts) {
   // dts 0 is start (i.e excluding start_dts)
   lives_asf_priv_t *priv = cdata->priv;
-  index_entry *idx, *lidx, *nidx;
-
-  lidx = idx = priv->idxc->idx;
-
-  while (idx != NULL) {
-    if (idx->dts == dts) return idx; // already indexed
-    if (idx->dts > dts) {
-      // insert before idx
-      nidx = idx_alloc(offs, frag, dts);
-      nidx->next = idx;
-      if (idx == priv->idxc->idx) priv->idxc->idx = nidx;
-      else lidx->next = nidx;
-      return nidx;
-    }
-    lidx = idx;
-    idx = idx->next;
-  }
-
-  // insert at tail
-
-  nidx = idx_alloc(offs, frag, dts);
-
-  if (lidx != NULL) lidx->next = nidx;
-  else priv->idxc->idx = nidx;
-
-  nidx->next = NULL;
-
-  return nidx;
+  return index_add_with_data(priv->idxc, dts, offs, frag);
 }
 
 
-static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int64_t tdts) {
+static int get_next_video_packet(const lives_clip_data_t *cdata, int64_t tfrag, int64_t tdts) {
   lives_asf_priv_t *priv = cdata->priv;
   uint32_t packet_length, padsize;
   unsigned char buffer[8];
@@ -756,18 +706,14 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
 static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts) {
   lives_asf_priv_t *priv = cdata->priv;
   int64_t tdts = pts;
-  index_entry *idx = priv->idxc->idx, *lidx = idx;
+  index_entry *lidx;
   int ret;
 
-  while (idx != NULL) {
-    if (idx->dts > tdts) return lidx;
-    lidx = idx;
-    idx = idx->next;
-  }
+  lidx = index_get(priv->idxc, tdts);
   priv->kframe = lidx;
   priv->input_position = lidx->offs;
   do {
-    ret = get_next_video_packet(cdata, lidx->frag, tdts);
+    ret = get_next_video_packet(cdata, lidx->data, tdts);
   } while (ret < 0 && ret != -2);
   if (ret != -2) return priv->kframe;
   return NULL;
@@ -779,13 +725,13 @@ static int get_last_video_dts(const lives_clip_data_t *cdata) {
   lives_asf_priv_t *priv = cdata->priv;
 
   pthread_mutex_lock(&priv->idxc->mutex);
-  priv->kframe = get_idx_for_pts(cdata, frame_to_dts(cdata, 0) - priv->start_dts);
+  priv->kframe = index_get(priv->idxc, frame_to_dts(cdata, 0) - priv->start_dts);
   pthread_mutex_unlock(&priv->idxc->mutex);
   // this will parse through the file, adding keyframes, until we reach EOF
 
   priv->input_position = priv->kframe->offs;
   asf_reset_header(priv->s);
-  get_next_video_packet(cdata, priv->kframe->frag, INT_MAX);
+  get_next_video_packet(cdata, priv->kframe->data, INT_MAX);
 
   // priv->kframe will hold last kframe in the clip
   return priv->frame_dts - priv->start_dts;
@@ -794,106 +740,6 @@ static int get_last_video_dts(const lives_clip_data_t *cdata) {
 
 //////////////////////////////////////////////
 
-static index_container_t *idxc_for(lives_clip_data_t *cdata) {
-  // check all idxc for string match with URI
-  index_container_t *idxc;
-  register int i;
-
-  pthread_mutex_lock(&indices_mutex);
-
-  for (i = 0; i < nidxc; i++) {
-    if (indices[i]->clients[0]->current_clip == cdata->current_clip &&
-        !strcmp(indices[i]->clients[0]->URI, cdata->URI)) {
-      idxc = indices[i];
-      // append cdata to clients
-      idxc->clients = (lives_clip_data_t **)realloc(idxc->clients, (idxc->nclients + 1) * sizeof(lives_clip_data_t *));
-      idxc->clients[idxc->nclients] = cdata;
-      idxc->nclients++;
-      //
-      pthread_mutex_unlock(&indices_mutex);
-      return idxc;
-    }
-  }
-
-  indices = (index_container_t **)realloc(indices, (nidxc + 1) * sizeof(index_container_t *));
-
-  // match not found, create a new index container
-  idxc = (index_container_t *)malloc(sizeof(index_container_t));
-
-  idxc->idx = NULL;
-
-  idxc->nclients = 1;
-  idxc->clients = (lives_clip_data_t **)malloc(sizeof(lives_clip_data_t *));
-  idxc->clients[0] = cdata;
-
-  pthread_mutex_init(&idxc->mutex, &mattr);
-
-  indices[nidxc] = idxc;
-  pthread_mutex_unlock(&indices_mutex);
-
-  nidxc++;
-
-  return idxc;
-}
-
-
-static void idxc_release(lives_clip_data_t *cdata) {
-  lives_asf_priv_t *priv = cdata->priv;
-  index_container_t *idxc = priv->idxc;
-  register int i, j;
-
-  if (idxc == NULL) return;
-
-  pthread_mutex_lock(&indices_mutex);
-
-  if (idxc->nclients == 1) {
-    // remove this index
-    index_free(idxc->idx);
-    free(idxc->clients);
-    for (i = 0; i < nidxc; i++) {
-      if (indices[i] == idxc) {
-        nidxc--;
-        for (j = i; j < nidxc; j++) {
-          indices[j] = indices[j + 1];
-        }
-        free(idxc);
-        if (nidxc == 0) {
-          free(indices);
-          indices = NULL;
-        } else indices = (index_container_t **)realloc(indices, nidxc * sizeof(index_container_t *));
-        break;
-      }
-    }
-  } else {
-    // reduce client count by 1
-    for (i = 0; i < idxc->nclients; i++) {
-      if (idxc->clients[i] == cdata) {
-        // remove this entry
-        idxc->nclients--;
-        for (j = i; j < idxc->nclients; j++) {
-          idxc->clients[j] = idxc->clients[j + 1];
-        }
-        idxc->clients = (lives_clip_data_t **)realloc(idxc->clients, idxc->nclients * sizeof(lives_clip_data_t *));
-        break;
-      }
-    }
-  }
-
-  pthread_mutex_unlock(&indices_mutex);
-}
-
-
-static void idxc_release_all(void) {
-  register int i;
-
-  for (i = 0; i < nidxc; i++) {
-    index_free(indices[i]->idx);
-    free(indices[i]->clients);
-    free(indices[i]);
-  }
-  nidxc = 0;
-}
-
 
 static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
@@ -901,21 +747,21 @@ static void detach_stream(lives_clip_data_t *cdata) {
 
   cdata->seek_flag = 0;
 
-  if (priv->avpkt.data != NULL) free(priv->avpkt.data);
+  if (priv->avpkt.data) free(priv->avpkt.data);
   priv->avpkt.data = NULL;
   priv->avpkt.size = 0;
 
-  if (priv->ctx != NULL) {
+  if (priv->ctx) {
     avcodec_close(priv->ctx);
     av_free(priv->ctx);
   }
 
-  if (priv->picture != NULL) av_frame_unref(priv->picture);
+  if (priv->picture) av_frame_unref(priv->picture);
 
   priv->ctx = NULL;
   priv->picture = NULL;
 
-  if (cdata->palettes != NULL) free(cdata->palettes);
+  if (cdata->palettes) free(cdata->palettes);
   cdata->palettes = NULL;
 
   free(priv->asf);
@@ -923,11 +769,11 @@ static void detach_stream(lives_clip_data_t *cdata) {
   av_free(priv->s);
   //avformat_free_context(priv->s);
 
-  if (priv->st != NULL) {
+  if (priv->st) {
     if (priv->st->codec->extradata_size != 0) free(priv->st->codec->extradata);
   }
 
-  if (priv->asf_st != NULL) free(priv->asf_st);
+  if (priv->asf_st) free(priv->asf_st);
 
   close(priv->fd);
 }
@@ -2147,7 +1993,7 @@ seek_skip:
   priv->picture = av_frame_alloc();
 
   do {
-    if (priv->avpkt.data != NULL) free(priv->avpkt.data);
+    if (priv->avpkt.data) free(priv->avpkt.data);
     retval = get_next_video_packet(cdata, 0, -1);
     if (retval == -2) {
       fprintf(stderr, "asf_decoder: No frames found.\n");
@@ -2369,19 +2215,14 @@ seek_skip:
 
 const char *module_check_init(void) {
   avcodec_register_all();
-  indices = NULL;
-  nidxc = 0;
-
-  pthread_mutexattr_init(&mattr);
-  pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
-
-  pthread_mutex_init(&indices_mutex, NULL);
   return NULL;
 }
 
 
 static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
+  static memcpy_f  ext_memcpy = (memcpy_f)memcpy;
   lives_clip_data_t *cdata;
+  lives_asf_priv_t *priv;
 
   if (!data) {
     cdata = cdata_new(NULL);
@@ -2389,7 +2230,21 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
     cdata->palettes[1] = WEED_PALETTE_END;
   } else cdata = data;
 
-  cdata->priv = calloc(1, sizeof(lives_asf_priv_t));
+  priv = cdata->priv = calloc(1, sizeof(lives_asf_priv_t));
+  cdata->seek_flag = LIVES_SEEK_FAST | LIVES_SEEK_FAST_REV;
+
+  cdata->interlace = LIVES_INTERLACE_NONE;
+  cdata->frame_gamma = WEED_GAMMA_UNKNOWN;
+
+  cdata->ext_memcpy = &ext_memcpy;
+
+  cdata->last_frame_decoded = -1;
+
+  priv->fd = -1;
+
+  //errval = 0;
+  cdata->max_decode_fps = 0.;
+  cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_AUDIO_TRIM_END;
 
   return cdata;
 }
@@ -2527,7 +2382,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   cdata->asigned = TRUE;
   cdata->ainterleaf = TRUE;
 
-  if (priv->picture != NULL) av_frame_unref(priv->picture);
+  if (priv->picture) av_frame_unref(priv->picture);
   priv->picture = NULL;
 
   return cdata;
@@ -2587,12 +2442,12 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
 boolean chill_out(const lives_clip_data_t *cdata) {
   // free buffers because we are going to chill out for a while
   // (seriously, host can call this to free any buffers when we aren't palying sequentially)
-  if (cdata != NULL) {
+  if (cdata) {
     lives_asf_priv_t *priv = cdata->priv;
-    if (priv != NULL) {
-      if (priv->picture != NULL) av_frame_unref(priv->picture);
+    if (priv) {
+      if (priv->picture) av_frame_unref(priv->picture);
       priv->picture = NULL;
-      if (priv->ctx != NULL) avcodec_flush_buffers(priv->ctx);
+      if (priv->ctx) avcodec_flush_buffers(priv->ctx);
     }
   }
   return TRUE;
@@ -2613,20 +2468,20 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   boolean got_picture = FALSE;
   boolean hit_target = FALSE;
 
-  int tfrag = 0;
+  int64_t tfrag = 0;
   int xheight = cdata->frame_height, pal = cdata->current_palette, nplanes = 1, dstwidth = cdata->width, psize = 1;
   int btop = cdata->offs_y, bbot = xheight - 1 - btop;
   int bleft = cdata->offs_x, bright = cdata->frame_width - cdata->width - bleft;
   int rescan_limit = 16; // pick some arbitrary value
   int y_black = (cdata->YUV_clamping == WEED_YUV_CLAMPING_CLAMPED) ? 16 : 0;
 
-  register int i, p;
+  int i, p;
 
 #ifdef DEBUG_KFRAMES
   fprintf(stderr, "vals %ld %ld\n", tframe, priv->last_frame);
 #endif
 
-  if (pixel_data != NULL) {
+  if (pixel_data) {
 
     // calc frame width and height, including any border
 
@@ -2669,12 +2524,12 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   if (tframe != priv->last_frame) {
 
-    if (priv->picture != NULL) av_frame_unref(priv->picture);
+    if (priv->picture) av_frame_unref(priv->picture);
     priv->picture = NULL;
 
     if (priv->last_frame == -1 || (tframe < priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
 
-      if (priv->avpkt.data != NULL) free(priv->avpkt.data);
+      if (priv->avpkt.data) free(priv->avpkt.data);
       priv->avpkt.data = NULL;
       priv->avpkt.size = 0;
 
@@ -2682,7 +2537,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       if ((priv->kframe = get_idx_for_pts(cdata, target_pts - priv->start_dts)) != NULL) {
         priv->input_position = priv->kframe->offs;
         nextframe = dts_to_frame(cdata, priv->kframe->dts + priv->start_dts);
-        tfrag = priv->kframe->frag;
+        tfrag = priv->kframe->data;
       } else priv->input_position = priv->data_start;
       pthread_mutex_unlock(&priv->idxc->mutex);
 
@@ -2690,8 +2545,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
       //#define DEBUG_KFRAMES
 #ifdef DEBUG_KFRAMES
-      if (priv->kframe != NULL) printf("got kframe %ld frag %d for frame %ld\n",
-                                         dts_to_frame(cdata, priv->kframe->dts + priv->start_dts), priv->kframe->frag, tframe);
+      if (priv->kframe) printf("got kframe %ld frag %d for frame %ld\n",
+                                 dts_to_frame(cdata, priv->kframe->dts + priv->start_dts), priv->kframe->data, tframe);
 #endif
 
       avcodec_flush_buffers(priv->ctx);
@@ -2719,7 +2574,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
           priv->avpkt.size = 0;
           if (ret == -2) {
             // EOF
-            if (pixel_data == NULL) return FALSE;
+            if (!pixel_data) return FALSE;
             priv->black_fill = TRUE;
             break;
           }
@@ -2729,7 +2584,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       }
 
       // decode any frames from this packet
-      if (priv->picture == NULL) priv->picture = av_frame_alloc();
+      if (!priv->picture) priv->picture = av_frame_alloc();
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
       avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
@@ -2755,7 +2610,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     }
   }
 
-  if (priv->picture == NULL || pixel_data == NULL) return TRUE;
+  if (!priv->picture || !pixel_data) return TRUE;
 
   if (priv->black_fill) btop = cdata->frame_height;
 
@@ -2813,12 +2668,11 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 void clip_data_free(lives_clip_data_t *cdata) {
   lives_asf_priv_t *priv = cdata->priv;
-  if (priv->idxc != NULL)
-    idxc_release(cdata);
+  if (priv->idxc) idxc_release(cdata, priv->idxc);
 
   priv->idxc = NULL;
 
-  if (cdata->URI != NULL) {
+  if (cdata->URI) {
     detach_stream(cdata);
   }
   lives_struct_free(cdata->lsd);

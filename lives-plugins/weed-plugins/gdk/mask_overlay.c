@@ -294,7 +294,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(in_params[1], WEED_LEAF_FLAGS, flags);
   in_params[2] = NULL;
 
-  weed_free(defmaskfile);
+  g_free(defmaskfile);
 
   filter_class = weed_filter_class_init("mask_overlay", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                         masko_init, masko_process, masko_deinit, in_chantmpls, out_chantmpls, in_params, NULL);

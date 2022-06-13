@@ -251,7 +251,7 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, ssize_t nbytes) {
   }
 #endif
   if (!buff) {
-    buff = (uint8_t *)lives_calloc(nbytes, 1);
+    buff = (uint8_t *)lives_calloc(1, nbytes);
     do_free = TRUE;
   }
   if (!buff || ret != 0) goto done;

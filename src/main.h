@@ -69,6 +69,7 @@
 #  define GNU_ALIGN(argx) __attribute__((alloc_align(argx)))
 #  define GNU_ALIGNED(sizex) __attribute__((assume_aligned(sizex)))
 #  define GNU_NORETURN __attribute__((noreturn))
+#  define GNU_ALWAYS_INLINE __attribute__((always_inline))
 #  define GNU_FLATTEN  __attribute__((flatten)) // inline all function calls
 #  define GNU_HOT  __attribute__((hot))
 #  define GNU_SENTINEL  __attribute__((sentinel))
@@ -86,6 +87,7 @@
 #  define GNU_ALIGN(x)
 #  define GNU_ALIGNED(x)
 #  define GNU_NORETURN
+#  define GNU_ALWAYS_INLINE
 #  define GNU_FLATTEN
 #  define GNU_HOT
 #  define GNU_SENTINEL
@@ -97,6 +99,21 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE // for "environ"
 #endif
+
+#  define LIVES_PURE				GNU_PURE
+#  define LIVES_DEPRECATED(msg)			GNU_DEPRECATED(msg)
+#  define LIVES_CONST				GNU_CONST
+#  define LIVES_MALLOC				GNU_MALLOC
+#  define LIVES_MALLOC_size(argx)		GNU_MALLOC_SIZE(argx)
+#  define LIVES_MALLOC_SIZE2(argx, argy)	GNU_MALLOC_SIZE2(argx, argy)
+#  define LIVES_ALIGN(argx)			GNU_ALIGN(argx)
+#  define LIVES_ALIGNED(sizex)			GNU_ALIGNED(sizex)
+#  define LIVES_NORETURN			GNU_NORETURN
+#  define LIVES_ALWAYS_INLINE			GNU_ALWAYS_INLINE
+#  define LIVES_FLATTEN				GNU_FLATTEN
+#  define LIVES_HOT				GNU_HOT
+#  define LIVES_SENTINEL			GNU_SENTINEL
+#  define LIVES_RETURNS_TWICE	       		GNU_RETURNS_TWICE
 
 #define LIVES_RESULT_SUCCESS	1
 #define LIVES_RESULT_FAIL	0
@@ -192,6 +209,8 @@ typedef pid_t lives_pid_t;
 #endif
 
 #define QUOTEME(x) #x
+#define QUOTEME_ALL(...) QUOTEME(__VA_ARGS__)
+#define PREFIX_IT(A, B) QUOTEME_ALL(A B)
 
 /// max files is actually 1 more than this, since file 0 is the clipboard
 #define MAX_FILES 65535
@@ -330,6 +349,9 @@ weed_leaf_delete_f _weed_leaf_delete;
 #define EXPECTED(x) __builtin_expect((x), 1)
 #define UNEXPECTED(x) __builtin_expect((x), 0)
 
+typedef struct _capabilities capabilities;
+extern capabilities *capable;
+
 #include "weed-effects-utils.h"
 #include "support.h"
 
@@ -462,6 +484,7 @@ typedef struct {
   char *cpu_vendor;
   uint64_t cpu_features;
   int cacheline_size;
+  size_t pagesize;
   //
   int mem_status;
   int64_t memtotal;
@@ -473,34 +496,29 @@ typedef struct {
   int oom_adj_value;
 } hw_caps_t;
 
-#define CPU_HAS_SSE2			1
 
-#define DEF_ALIGN (sizeof(void *) * 8)
+#ifndef USE_STD_MEMFUNCS
+//#define USE_RPMALLOC
+#endif
 
-// avoiding using an enum allows the list to be extended in other headers
-typedef int32_t lives_intention;
-typedef weed_plant_t lives_capacity_t;
+#define HW_ALIGNMENT ((capable && capable->hw.cacheline_size > 0) ? capable->hw.cacheline_size \
+		      : DEF_ALIGN)
 
-typedef struct {
-  lives_intention intent;
-  lives_capacity_t *capacities; ///< type specific capabilities
-} lives_intentcap_t;
+#include "memory.h"
+
+#include "stringfuncs.h"
+
+#include "machinestate.h"
+
+#define _BASE_DEFS_ONLY_
+#include "intents.h"
+#ifdef  _BASE_DEFS_ONLY_
+#undef _BASE_DEFS_ONLY_
+#endif
 
 #include "lists.h"
 #include "alarms.h"
 
-/// disk/storage status values
-typedef enum {
-  LIVES_STORAGE_STATUS_UNKNOWN = 0,
-  LIVES_STORAGE_STATUS_NORMAL,
-  LIVES_STORAGE_STATUS_WARNING,
-  LIVES_STORAGE_STATUS_CRITICAL,
-  LIVES_STORAGE_STATUS_OVERFLOW,
-  LIVES_STORAGE_STATUS_OVER_QUOTA,
-  LIVES_STORAGE_STATUS_OFFLINE
-} lives_storage_status_t;
-
-#include "machinestate.h"
 #include "lsd-tab.h"
 
 boolean weed_threadsafe;
@@ -691,7 +709,7 @@ extern ssize_t sizint, sizdbl, sizshrt;
 // capabilities (MUST come after plugins.h)
 // TODO - move into capabilities.h
 
-typedef struct {
+struct _capabilities {
   // the following can be assumed TRUE / PRESENT, they are checked on startup
   boolean smog_version_correct;
   boolean can_read_from_config;
@@ -784,7 +802,8 @@ typedef struct {
   /// used for returning startup messages from the backend
   char startup_msg[1024];
 
-  uint64_t uid; // non-volatile unique id (for current execution)
+  uint64_t uid; // non-volatile unique id (set in prefs)
+  uint64_t session_uid; // uid for the session, changed each time we run
 
   lives_checkstatus_t has_python;
   lives_checkstatus_t has_python3;
@@ -870,9 +889,7 @@ typedef struct {
 
   // devices
   LiVESList *videodevs;
-} capability;
-
-capability *capable;
+};
 
 int orig_argc(void);
 char **orig_argv(void);
@@ -890,7 +907,7 @@ boolean startup_message_nonfatal(const char *msg);
 boolean startup_message_info(const char *msg);
 boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_mask);
 void print_opthelp(LiVESTextBuffer *, const char *extracmds_file1, const char *extracmds_file2);
-capability *get_capabilities(void);
+capabilities *get_capabilities(void);
 void get_monitors(boolean reset);
 void replace_with_delegates(void);
 void set_drawing_area_from_pixbuf(LiVESWidget *darea, LiVESPixbuf *, lives_painter_surface_t *);
@@ -900,6 +917,8 @@ void showclipimgs(void);
 void load_preview_image(boolean update_always);
 boolean resize_message_area(livespointer data);
 boolean lazy_startup_checks(void *data);
+
+boolean render_choice_idle(livespointer data);
 
 #define is_layer_ready(layer) (weed_get_boolean_value((layer), LIVES_LEAF_THREAD_PROCESSING, NULL) == WEED_FALSE \
 			       && weed_get_voidptr_value(layer, LIVES_LEAF_RESIZE_THREAD, NULL) == NULL)
@@ -959,6 +978,16 @@ void set_record(void);
 // multitrack-gui.c
 void mt_desensitise(lives_mt *);
 void mt_sensitise(lives_mt *);
+
+// effects-weed.c
+weed_error_t weed_leaf_set_autofree(weed_plant_t *, const char *, boolean state);
+weed_plant_t *lives_plant_copy(weed_plant_t *orig); // weed_plant_copy_clean
+void weed_plant_duplicate_clean(weed_plant_t *dst, weed_plant_t *src);
+void weed_plant_dup_add_clean(weed_plant_t *dst, weed_plant_t *src);
+void weed_plant_sanitize(weed_plant_t *plant);
+boolean weed_leaf_autofree(weed_plant_t *, const char *key);
+
+int32_t weed_plant_mutate(weed_plantptr_t, int32_t newtype);
 
 #include "osc_notify.h"
 
@@ -1020,46 +1049,9 @@ void break_me(const char *dtl);
 #endif // LIVES_NO_FATAL
 #endif // LIVES_FATAL
 
-#ifndef USE_STD_MEMFUNCS
-
-#ifdef _lives_malloc
-#undef  lives_malloc
-#define lives_malloc _lives_malloc
-#endif
-#ifdef _lives_realloc
-#undef  lives_realloc
-#define lives_realloc _lives_realloc
-#endif
-#ifdef _lives_free
-#undef  lives_free
-#define lives_free _lives_free
-#endif
-#ifdef _lives_memcpy
-#undef  lives_memcpy
-#define lives_memcpy _lives_memcpy
-#endif
-#ifdef _lives_memcmp
-#undef  lives_memcmp
-#define lives_memcmp _lives_memcmp
-#endif
-#ifdef _lives_memset
-#undef  lives_memset
-#define lives_memset _lives_memset
-#endif
-#ifdef _lives_memmove
-#undef  lives_memmove
-#define lives_memmove _lives_memmove
-#endif
-#ifdef _lives_calloc
-#undef  lives_calloc
-#define lives_calloc _lives_calloc
-#endif
-
-#endif
-
 #define VSLICES 1
 
-#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

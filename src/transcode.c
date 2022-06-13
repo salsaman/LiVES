@@ -17,7 +17,7 @@
 #include "paramwindow.h"
 #include "effects-weed.h"
 #include "rfx-builder.h"
-
+#include "threading.h"
 
 boolean send_layer(weed_layer_t *layer, _vid_playback_plugin *vpp, int64_t timecode) {
   // send a weed layer to a (prepared) video playback plugin
@@ -245,6 +245,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
   int i = 0, j;
 
+  ADD_FUNC_DEF(transcode_clip, "b", "iibs");
+
   out_asamps = cfile->asampsize;
 
   if (cfile->asampsize == 32) cfile->asampsize = 16;
@@ -259,30 +261,35 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       THREAD_INTENTION = LIVES_INTENTION_NOTHING;
       return FALSE;
     } else {
-      lives_capacity_t *caps = lives_capacities_new();
+      lives_obj_attr_t *attr1, *attr2;
+      attr1 = lives_object_declare_attribute(NULL, AUDIO_ATTR_RATE, WEED_SEED_INT);
+      lives_object_set_attribute_value(NULL, AUDIO_ATTR_RATE, cfile->arate);
+      obj_attr_set_readonly(attr1, TRUE);
+
+      attr2 = lives_object_declare_attribute(NULL, AUDIO_ATTR_CHANNELS, WEED_SEED_INT);
       if (mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
-        lives_capacity_set_int(caps, LIVES_CAPACITY_AUDIO_RATE, cfile->arate);
-        lives_capacity_set_int(caps, LIVES_CAPACITY_AUDIO_CHANS, cfile->achans);
-      } else lives_capacity_set_int(caps, LIVES_CAPACITY_AUDIO_CHANS, cfile->achans);
+        lives_object_set_attribute_value(NULL, AUDIO_ATTR_CHANNELS, cfile->achans);
+      } else {
+        lives_object_set_attribute_value(NULL, AUDIO_ATTR_CHANNELS, 0);
+      }
+      obj_attr_set_readonly(attr2, TRUE);
 
       vpp = mainw->vpp;
-      THREAD_CAPACITIES = caps;
+
       if (!(pname = transcode_get_params(pname))) {
-        THREAD_INTENTION = LIVES_INTENTION_NOTHING;
-        lives_capacities_free(caps);
-        THREAD_CAPACITIES = NULL;
+        lives_object_attribute_unref(NULL, attr1);
+        lives_object_attribute_unref(NULL, attr2);
+        lives_thread_set_intentcap(ICAP(IDLE));
         goto tr_err2;
       }
-      lives_capacities_free(caps);
-      THREAD_CAPACITIES = NULL;
+      lives_object_attribute_unref(NULL, attr1);
+      lives_object_attribute_unref(NULL, attr2);
     }
   } else {
     vpp = mainw->vpp;
     // indicate ready status
-    mainw->transcoder_state = TRUE;
     lives_proc_thread_set_cancellable(mainw->transrend_proc);
-    lives_nanosleep_while_false(mainw->transrend_send
-                                || lives_proc_thread_get_cancelled(mainw->transrend_proc));
+    sync_point("transcoder: ready");
     if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) goto tr_err2;
   }
 
@@ -418,12 +425,13 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
         frame_layer = on_rte_apply(frame_layer, vpp->fwidth, vpp->fheight, (weed_timecode_t)currticks);
       }
     } else {
-      lives_nanosleep_while_false(mainw->transrend_ready
-                                  || lives_proc_thread_get_cancelled(mainw->transrend_proc));
+      sync_point("transcode: waiting for frame");
       if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) goto tr_err;
       if (mainw->cancelled != CANCEL_NONE) break;
-      frame_layer = mainw->transrend_layer;
+      frame_layer = (weed_layer_t *)mainw->transrend_layer;
       weed_layer_ref(frame_layer);
+      sync_point("transcode: processed frame");
+      if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) break;
     }
 
 #ifdef MATCH_PALETTES
@@ -550,6 +558,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     }
 
     if (error) goto tr_err;
+    tot_frames++;
 
     if (!internal) {
       // update progress dialog with fraction done
@@ -558,9 +567,9 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       threaded_dialog_spin(1. - (double)(cfile->end - i) / (double)(cfile->end - cfile->start + 1.));
     } else {
       frame_layer = NULL;
-      mainw->transrend_ready = FALSE;
+      /* sync_point("transcode: processed frame"); */
+      /* if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) break; */
     }
-    tot_frames++;
     if (mainw->cancelled != CANCEL_NONE) break;
   }
 
@@ -626,8 +635,6 @@ tr_err2:
   }
 
   lives_freep((void **)&sbuff);
-
-  if (internal) mainw->transrend_ready = FALSE;
 
   return !error;
 }

@@ -27,6 +27,12 @@ static weed_timecode_t last_rec_start_tc = -1;
 static void **pchains[FX_KEYS_MAX]; // each pchain is an array of void *, these are parameter changes used for rendering
 
 ///////////////////////////////////////////////////////
+static void *transrend_sync(lives_object_t *obj, void *data) {
+  g_print("in hook cb\n");
+  mainw->transrend_waiting = TRUE;
+  return NULL;
+}
+
 
 //lib stuff
 LIVES_GLOBAL_INLINE int weed_event_get_type(weed_event_t *event) {
@@ -4161,14 +4167,23 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             int lpal, width, height;
             boolean was_lbox = FALSE;
             if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
-              if (lives_proc_thread_check_finished(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
-
-              lives_nanosleep_while_true(mainw->transrend_ready);
-              if (lives_proc_thread_check_finished(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
 
               if (mainw->transrend_layer) {
+
+                // transcoder processed frame, now we can prep the next
+                g_print("wait for transcoder proc\n");
+                lives_nanosleep_while_false(mainw->transrend_waiting
+                                            || lives_proc_thread_check_states(mainw->transrend_proc,
+                                                THRD_STATE_INVALID)
+                                            || lives_proc_thread_check_finished(mainw->transrend_proc));
+                if (lives_proc_thread_check_finished(mainw->transrend_proc)
+                    || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID))
+                  return LIVES_RENDER_ERROR;
+                mainw->transrend_waiting = FALSE;
+                lives_proc_thread_sync_ready(mainw->transrend_proc);
+                g_print("trans processed\n");
                 if (mainw->transrend_layer != mainw->scrap_layer)
-                  weed_layer_free(mainw->transrend_layer);
+                  weed_layer_free((weed_layer_t *)mainw->transrend_layer);
                 mainw->transrend_layer = NULL;
               }
 
@@ -4206,8 +4221,20 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                   lives_free(texto);
                 }
               }
+              g_print("set layer and wait for syncpoint\n");
               mainw->transrend_layer = layer;
-              mainw->transrend_ready = TRUE;
+              // transcoder will wait for the next frame
+              lives_nanosleep_while_false(mainw->transrend_waiting
+                                          || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID)
+                                          || lives_proc_thread_check_finished(mainw->transrend_proc));
+              if (lives_proc_thread_check_finished(mainw->transrend_proc)
+                  || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID))
+                return LIVES_RENDER_ERROR;
+
+              mainw->transrend_waiting = FALSE;
+              lives_proc_thread_sync_ready(mainw->transrend_proc);
+              g_print("sent syn\n");
+
               // sig_progress...
               lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d", progress++);
               break;
@@ -4721,8 +4748,7 @@ filterinit2:
 #endif
 
     if (mainw->transrend_layer) {
-      lives_nanosleep_while_true(mainw->transrend_ready);
-      weed_layer_free(mainw->transrend_layer);
+      weed_layer_free((weed_layer_t *)mainw->transrend_layer);
       mainw->transrend_layer = NULL;
     }
 
@@ -4991,6 +5017,7 @@ boolean render_to_clip(boolean new_clip) {
   char *com, *tmp, *clipname = NULL;
   double old_fps = 0.;
   double afade_in_secs = 0., afade_out_secs = 0.;
+  thrd_work_t *work;
 #ifdef VFADE_RENDER
   double vfade_in_secs = 0., vfade_out_secs = 0.;
   LiVESWidgetColor fadecol;
@@ -5001,7 +5028,6 @@ boolean render_to_clip(boolean new_clip) {
   boolean norm_after = FALSE;
   boolean trans_sel = TRUE; // TODO
   boolean enc_lb = prefs->enc_letterbox;
-  int close_file = -100;
   int xachans = 0, xarate = 0, xasamps = 0, xse = 0;
   int current_file = mainw->current_file;
   int pbq = prefs->pb_quality;
@@ -5075,10 +5101,10 @@ boolean render_to_clip(boolean new_clip) {
         return FALSE;
       }
     } else {
-      lives_capacity_t *caps = THREAD_CAPACITIES;
+      lives_capacities_t *caps = THREAD_CAPACITIES;
       if (0 && caps) {
-        rendvid = lives_capacity_get(caps, LIVES_CAPACITY_VIDEO);
-        rendaud = lives_capacity_get(caps, LIVES_CAPACITY_AUDIO);
+        rendvid = lives_has_capacity(caps, LIVES_CAPACITY_VIDEO);
+        rendaud = lives_has_capacity(caps, LIVES_CAPACITY_AUDIO);
       } else {
         if (mainw->multitrack) rendaud = mainw->multitrack->opts.render_audp;
         else rendaud = FALSE;
@@ -5105,7 +5131,6 @@ boolean render_to_clip(boolean new_clip) {
       return FALSE; // show dialog again
     }
 
-    close_file = current_file;
     migrate_from_staging(mainw->current_file);
 
     lives_freep((void **)&clipname);
@@ -5207,24 +5232,26 @@ boolean render_to_clip(boolean new_clip) {
 #ifdef LIBAV_TRANSCODE
   if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
     if (!transcode_prep()) {
-      set_thread_intention(0, NULL);
+      lives_thread_set_intentcap(ICAP(IDLE));
       if (!mainw->multitrack)
         close_current_file(current_file);
       prefs->enc_letterbox = enc_lb;
       prefs->pb_quality = pbq;
       return FALSE;
     } else {
-      lives_capacity_t *caps = lives_capacities_new();
-      lives_capacity_set_int(caps, LIVES_CAPACITY_AUDIO_RATE, cfile->arate);
-      lives_capacity_set_int(caps, LIVES_CAPACITY_AUDIO_CHANS, cfile->achans);
-      lives_capacity_set_readonly(caps, LIVES_CAPACITY_AUDIO_RATE, TRUE);
-      lives_capacity_set_readonly(caps, LIVES_CAPACITY_AUDIO_CHANS, TRUE);
+      lives_obj_attr_t *attr1, *attr2;
+      attr1 = lives_object_declare_attribute(NULL, AUDIO_ATTR_RATE, WEED_SEED_INT);
+      lives_object_set_attribute_value(NULL, AUDIO_ATTR_RATE, cfile->arate);
 
-      THREAD_CAPACITIES = caps;
+      obj_attr_set_readonly(attr1, TRUE);
+
+      attr2 = lives_object_declare_attribute(NULL, AUDIO_ATTR_CHANNELS, WEED_SEED_INT);
+      lives_object_set_attribute_value(NULL, AUDIO_ATTR_CHANNELS, cfile->achans);
+      obj_attr_set_readonly(attr2, TRUE);
 
       if (!(pname = transcode_get_params(pname))) {
-        lives_capacities_free(caps);
-        THREAD_CAPACITIES = NULL;
+        lives_object_attribute_unref(NULL, attr1);
+        lives_object_attribute_unref(NULL, attr2);
         transcode_cleanup(mainw->vpp);
         if (!mainw->multitrack) close_current_file(current_file);
         prefs->enc_letterbox = enc_lb;
@@ -5232,8 +5259,8 @@ boolean render_to_clip(boolean new_clip) {
         return FALSE;
       }
 
-      lives_capacities_free(caps);
-      THREAD_CAPACITIES = NULL;
+      lives_object_attribute_unref(NULL, attr1);
+      lives_object_attribute_unref(NULL, attr2);
     }
 
     cfile->nopreview = TRUE;
@@ -5297,7 +5324,7 @@ boolean render_to_clip(boolean new_clip) {
       mainw->vfade_out_col = vfade_rgb;
     }
 #endif
-    mainw->transrend_ready = FALSE;
+    mainw->transrend_waiting = FALSE;
   }
 #endif
 
@@ -5311,13 +5338,23 @@ boolean render_to_clip(boolean new_clip) {
     d_print(_("Rendering..."));
   else {
     mainw->transrend_layer = NULL;
-    mainw->transrend_ready = FALSE;
+    mainw->transrend_waiting = FALSE;
 
-    mainw->transrend_proc = lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                            (lives_funcptr_t)transcode_clip,
-                            WEED_SEED_BOOLEAN, "iibV", 1, 0, TRUE, pname);
+    mainw->transrend_proc
+      = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
+                                 (lives_funcptr_t)transcode_clip,
+                                 WEED_SEED_BOOLEAN, "iibV", 1, 0, TRUE, pname);
 
-    lives_nanosleep_while_false(mainw->transrend_ready);
+    work = lives_proc_thread_get_work(mainw->transrend_proc);
+    lives_hook_append(work->hook_closures, WAIT_SYNC_HOOK, 0, transrend_sync, NULL);
+    lives_proc_thread_sync_ready(mainw->transrend_proc);
+
+    g_print("wait for transcoder ready\n");
+
+    lives_nanosleep_while_false(mainw->transrend_waiting);
+    lives_proc_thread_sync_ready(mainw->transrend_proc);
+
+    mainw->transrend_waiting = FALSE;
 
     d_print(_("Transcoding..."));
   }
@@ -5354,8 +5391,6 @@ boolean render_to_clip(boolean new_clip) {
     }
     if (new_clip) {
       char *tmp;
-      int old_file = current_file;
-
       if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
         goto rtc_done;
       }
@@ -5391,7 +5426,6 @@ boolean render_to_clip(boolean new_clip) {
       add_to_clipmenu();
       current_file = mainw->current_file;
       if (!save_clip_values(current_file)) {
-        close_file = old_file;
         d_print_failed();
         retval = FALSE;
         goto rtc_done;
@@ -5472,17 +5506,17 @@ boolean render_to_clip(boolean new_clip) {
 rtc_done:
 
   if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
-    mainw->transrend_ready = FALSE;
     if (mainw->transrend_proc) {
       lives_proc_thread_cancel(mainw->transrend_proc, FALSE);
       lives_proc_thread_join(mainw->transrend_proc);
       mainw->transrend_proc = NULL;
     }
   }
-  if (close_file != -100 && (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE
-                             || (new_clip && !mainw->multitrack))) {
+
+  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE
+      || (!retval && new_clip && !mainw->multitrack)) {
     // for mt we are rendering to the actual mt file, so we cant close it (CHECK: did we delete all images ?)
-    close_current_file(close_file);
+    close_current_file(current_file);
   }
 
   mainw->effects_paused = FALSE;
@@ -5642,7 +5676,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
 
   // return TRUE if we rendered to a new clip
   lives_proc_thread_t info = NULL;
-  lives_capacity_t *caps = NULL;
+  lives_capacities_t *caps = NULL;
 
   LiVESWidget *elist_dialog;
 
@@ -5654,6 +5688,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
 
   int dh, dw, dar, das, dac, dse;
   frames_t oplay_start = 1;
+
+  lives_intentcap_t *icaps;
 
   render_choice = RENDER_CHOICE_NONE;
 
@@ -5745,14 +5781,11 @@ boolean deal_with_render_choice(boolean add_deinit) {
     }
     break;
     case RENDER_CHOICE_TRANSCODE:
-      THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
+      lives_thread_set_intention(LIVES_INTENTION_TRANSCODE, NULL);
     case RENDER_CHOICE_NEW_CLIP:
       if (render_choice == RENDER_CHOICE_NEW_CLIP) {
-        caps = lives_capacities_new();
-        THREAD_INTENTION = LIVES_INTENTION_RENDER;
-        lives_capacity_set(caps, LIVES_CAPACITY_VIDEO);
-        lives_capacity_set(caps, LIVES_CAPACITY_AUDIO);
-        THREAD_CAPACITIES = caps;
+        icaps = make_icap(LIVES_INTENTION_RENDER, LIVES_CAPACITY_VIDEO, LIVES_CAPACITY_AUDIO, NULL);
+        lives_thread_set_intentcap(icaps);
       }
       dw = prefs->mt_def_width;
       dh = prefs->mt_def_height;

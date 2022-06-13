@@ -1670,14 +1670,12 @@ typedef struct {
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
   pthread_mutex_t abuf_frame_mutex;  ///< used to synch audio buffer for generators
   pthread_mutex_t abuf_aux_frame_mutex;  ///< used to synch audio buffer for loopback
-  pthread_mutex_t fx_mutex;  ///< used to prevent fx processing when it is scheduled for deinit
   pthread_mutex_t fxd_active_mutex; ///< prevent simultaneous writing to active_dummy by audio and video threads
   pthread_mutex_t event_list_mutex; ///< prevent simultaneous writing to event_list by audio and video threads
   pthread_mutex_t clip_list_mutex; ///< prevent adding/removing to cliplist while another thread could be reading it
   pthread_mutex_t vpp_stream_mutex; ///< prevent from writing audio when stream is closing
   pthread_mutex_t cache_buffer_mutex; ///< sync for jack playback termination
   pthread_mutex_t audio_filewriteend_mutex; ///< sync for ending writing audio to file
-  pthread_mutex_t instance_ref_mutex; ///< refcounting for instances
   pthread_mutex_t exit_mutex; ///< prevent multiple threads trying to run cleanup
   pthread_mutex_t fbuffer_mutex; /// append / remove with file_buffer list
   pthread_mutex_t alarmlist_mutex; /// single access for updating alarm list
@@ -1685,9 +1683,14 @@ typedef struct {
   pthread_mutex_t alock_mutex; /// audio lock / unlock
   pthread_mutex_t tlthread_mutex; /// timeline redraw thread
 
-  volatile int fx_mutex_tid[FX_KEYS_MAX_VIRTUAL];
+  pthread_mutex_t fx_key_mutex[FX_KEYS_MAX_VIRTUAL];
   int fx_mutex_nlocks[FX_KEYS_MAX_VIRTUAL];
+  int fx_mutex_tid[FX_KEYS_MAX_VIRTUAL];
 
+  /*
+    volatile int fx_mutex_tid[FX_KEYS_MAX_VIRTUAL];
+    int fx_mutex_nlocks[FX_KEYS_MAX_VIRTUAL];
+  */
   ///< set for param window updates from OSC or data connections, notifies main thread to do visual updates
   volatile lives_rfx_t *vrfx_update;
 
@@ -1977,8 +1980,8 @@ typedef struct {
 
   uint32_t disk_mon;
 
-  volatile boolean transrend_ready;
-  weed_layer_t *transrend_layer;
+  volatile boolean transrend_waiting;
+  volatile weed_layer_t *transrend_layer;
   boolean pr_audio;
   double vfade_in_secs, vfade_out_secs;
   lives_colRGBA64_t vfade_in_col, vfade_out_col;

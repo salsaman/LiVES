@@ -3156,7 +3156,7 @@ double estimate_delay_full(const lives_clip_data_t *xcdata, int64_t tframe, int6
       est = (kfd - 1) * ibtime;
 
       if (breadtime > 0 && kf >= 0 && tframe > kf) {
-        int64_t bbytes;
+        int64_t bbytes = 0;
         count_between(priv->idxb, kf + 1, tframe, &bbytes);
         est += breadtime * bbytes;
         //printf("EST 1vv is %.4f %f\n",est, breadtime);
@@ -3186,7 +3186,7 @@ double estimate_delay_full(const lives_clip_data_t *xcdata, int64_t tframe, int6
         est_noseek = nks * fabs(ktime) + (delta - nks) * ibtime;
 
         if (breadtime > 0) {
-          int64_t bbytes;
+          int64_t bbytes = 0;
           count_between(priv->idxb, last_frame, tframe, &bbytes);
           est_noseek += breadtime * bbytes;
           //fprintf(stderr, "ESTIMbb is %ld\n", bbytes);

@@ -4817,10 +4817,12 @@ static void _kill_play_window(void) {
       lives_widget_object_ref(mainw->preview_image);
       lives_container_remove(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
     }
+
     if (LIVES_IS_WINDOW(mainw->play_window)) {
-      lives_widget_destroy(mainw->play_window);
-    }
-    mainw->play_window = NULL;
+      LiVESWidget *widget = mainw->play_window;
+      mainw->play_window = NULL;
+      lives_widget_destroy(widget);
+    } else mainw->play_window = NULL;
   }
   if ((!CURRENT_CLIP_IS_VALID || cfile->frames > 0) && !mainw->multitrack && LIVES_IS_PLAYING) {
     lives_widget_show_all(mainw->playframe);

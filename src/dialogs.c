@@ -1168,104 +1168,6 @@ void pump_io_chan(LiVESIOChannel *iochan) {
 }
 
 
-boolean check_storage_space(int clipno, boolean is_processing) {
-  // check storage space in prefs->workdir
-  lives_clip_t *sfile = NULL;
-
-  int64_t dsval = -1;
-
-  lives_storage_status_t ds;
-  int retval;
-  boolean did_pause = FALSE;
-
-  char *msg, *tmp;
-  char *pausstr = (_("Processing has been paused."));
-
-  if (IS_VALID_CLIP(clipno)) sfile = mainw->files[clipno];
-
-  do {
-    if (mainw->dsu_valid && capable->ds_used > -1) {
-      dsval = capable->ds_used;
-    } else if (prefs->disk_quota) {
-      dsval = disk_monitor_check_result(prefs->workdir);
-      if (dsval >= 0) capable->ds_used = dsval;
-    }
-    ds = capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
-    capable->ds_free = dsval;
-    if (ds == LIVES_STORAGE_STATUS_WARNING) {
-      uint64_t curr_ds_warn = mainw->next_ds_warn_level;
-      mainw->next_ds_warn_level >>= 1;
-      if (mainw->next_ds_warn_level > (dsval >> 1)) mainw->next_ds_warn_level = dsval >> 1;
-      if (mainw->next_ds_warn_level < prefs->ds_crit_level) mainw->next_ds_warn_level = prefs->ds_crit_level;
-      if (is_processing && sfile && mainw->proc_ptr && !mainw->effects_paused &&
-          lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
-        on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
-        did_pause = TRUE;
-      }
-
-      tmp = ds_warning_msg(prefs->workdir, &capable->mountpoint, dsval, curr_ds_warn, mainw->next_ds_warn_level);
-      if (!did_pause)
-        msg = lives_strdup_printf("\n%s\n", tmp);
-      else
-        msg = lives_strdup_printf("\n%s\n%s\n", tmp, pausstr);
-      lives_free(tmp);
-      mainw->add_clear_ds_button = TRUE; // gets reset by do_warning_dialog()
-      if (!do_warning_dialog(msg)) {
-        lives_free(msg);
-        lives_free(pausstr);
-        mainw->cancelled = CANCEL_USER;
-        if (is_processing) {
-          if (sfile) sfile->nokeep = TRUE;
-          on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
-        }
-        return FALSE;
-      }
-      lives_free(msg);
-    } else if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
-      if (is_processing && sfile && mainw->proc_ptr && !mainw->effects_paused &&
-          lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
-        on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
-        did_pause = TRUE;
-      }
-      tmp = ds_critical_msg(prefs->workdir, &capable->mountpoint, dsval);
-      if (!did_pause)
-        msg = lives_strdup_printf("\n%s\n", tmp);
-      else {
-        char *xpausstr = lives_markup_escape_text(pausstr, -1);
-        msg = lives_strdup_printf("\n%s\n%s\n", tmp, xpausstr);
-        lives_free(xpausstr);
-      }
-      lives_free(tmp);
-      widget_opts.use_markup = TRUE;
-      retval = do_abort_retry_cancel_dialog(msg);
-      widget_opts.use_markup = FALSE;
-      lives_free(msg);
-      if (retval == LIVES_RESPONSE_CANCEL) {
-        if (is_processing) {
-          if (sfile) sfile->nokeep = TRUE;
-          on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
-        }
-        mainw->cancelled = CANCEL_ERROR;
-        lives_free(pausstr);
-        return FALSE;
-      }
-    }
-  } while (ds == LIVES_STORAGE_STATUS_CRITICAL);
-
-  if (ds == LIVES_STORAGE_STATUS_OVER_QUOTA && !mainw->is_processing) {
-    run_diskspace_dialog(NULL);
-  }
-
-  if (did_pause && mainw->effects_paused) {
-    on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
-  }
-
-  lives_free(pausstr);
-
-  return TRUE;
-}
-
-
 static boolean accelerators_swapped;
 
 void cancel_process(boolean visible) {
@@ -3591,7 +3493,7 @@ static double xfraction = 0.;
 
 static void _threaded_dialog_spin(double fraction) {
   double timesofar;
-  int progress;
+  int progress = 0;
 
   xfraction = fraction;
 
@@ -3599,8 +3501,9 @@ static void _threaded_dialog_spin(double fraction) {
     timesofar = (double)(lives_get_current_ticks() - sttime) / TICKS_PER_SECOND_DBL;
     disp_fraction(fraction, timesofar, mainw->proc_ptr);
   } else {
-    if (!CURRENT_CLIP_IS_VALID || !mainw->proc_ptr->progress_start || !mainw->proc_ptr->progress_end ||
-        *(mainw->msg) || !(progress = atoi(mainw->msg))) {
+    if (*mainw->msg) progress = atoi(mainw->msg);
+    if (!CURRENT_CLIP_IS_VALID || !progress || !mainw->proc_ptr ||
+        !mainw->proc_ptr->progress_start || !mainw->proc_ptr->progress_end) {
       // pulse the progress bar
       //#define GDB
 #ifndef GDB

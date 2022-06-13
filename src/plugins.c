@@ -909,7 +909,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   char *tmp, *tmp2;
 
   char *ctext = NULL;
-  lives_capacity_t *ocaps;
+  lives_capacities_t *ocaps;
 
   // TODO - set default values from tmpvpp
 
@@ -924,10 +924,10 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   ocaps = THREAD_CAPACITIES;
 
   if (button) {
-    lives_capacity_t *caps = lives_capacities_new();
+    lives_capacities_t *caps = lives_capacities_new();
     THREAD_INTENTION = LIVES_INTENTION_PLAY;
     // TODO - set from plugin - can be local or remote
-    lives_capacity_unset(caps, LIVES_CAPACITY_REMOTE);
+    lives_capacity_set(caps, LIVES_CAPACITY_LOCAL);
     THREAD_CAPACITIES = caps;
   }
 
@@ -2406,6 +2406,8 @@ lives_decoder_t *clone_decoder(int fileno) {
   if (!(sfile = RETURN_PHYSICAL_CLIP(fileno)) || !sfile->ext_src
       || sfile->ext_src_type != LIVES_EXT_SRC_DECODER) return NULL;
   dplug = (lives_decoder_t *)mainw->files[fileno]->ext_src;
+  if (strcmp(dplug->cdata->lsd->self_fields[0]->name, "LSD")) abort();
+
   if (dplug) {
     dpsys = dplug->dpsys;
     if (dpsys) cdata = (*dpsys->get_clip_data)(NULL, dplug->cdata);
@@ -2607,7 +2609,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
         break;
       }
     if (xdis) continue;
-
+#define DEBUG_DECPLUG
 #ifdef DEBUG_DECPLUG
     g_print("trying decoder %s\n", dpsys->id->name);
 #endif
@@ -2617,8 +2619,10 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
       set_cdata_memfuncs(fcdata);
       fcdata->seek_flag = LIVES_SEEK_FAST;
     }
-
+    // !!! check dpsys
     cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
+
+    if (strcmp(cdata->lsd->self_fields[0]->name, "LSD")) abort();
 
     if (fake_cdata) {
       // use fake_cdata only on first (reloaded)
@@ -2710,6 +2714,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled,
       get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decplugname, PATH_MAX);
 
     if ((use_uids && sfile->decoder_uid) || (!use_uids && *decplugname)) {
+      g_print("trying first with %d %s 0X%016lX\n", use_uids, decplugname, sfile->decoder_uid);
       LiVESList *decoder_plugin = move_decplug_to_first(sfile->decoder_uid, decplugname);
       if (decoder_plugin) {
         xdisabled = lives_list_remove(xdisabled, decoder_plugin);

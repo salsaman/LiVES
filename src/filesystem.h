@@ -138,11 +138,20 @@ ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean all
 ssize_t lives_buffered_write_printf(int fd, boolean allow_fail, const char *fmt, ...);
 ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, ssize_t count, boolean allow_fail);
 ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less);
+ssize_t lives_read_buffered_line(int fd, void *buf, const char sep, size_t maxlen);
 ssize_t lives_read_le_buffered(int fd, void *buf, ssize_t count, boolean allow_less);
 void lives_buffered_rdonly_slurp(int fd, off_t skip);
 boolean lives_buffered_rdonly_is_slurping(int fd);
 
 off_t lives_buffered_flush(int fd);
+
+//////////////////////////// prefs file caching ////
+
+LiVESList *cache_file_contents(const char *filename);
+char *get_val_from_cached_list(const char *key, size_t maxlen, LiVESList *cache);
+void cached_list_free(LiVESList **list);
+
+void print_cache(LiVESList *cache);
 
 // OS filesystems ////
 boolean check_for_disk_space(boolean fullcheck);

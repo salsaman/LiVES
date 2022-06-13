@@ -6,8 +6,11 @@ gtk_def =
 
 cpu_CFLAGS =
 
+AM_CFLAGS =
+
 if HAVE_PTHREAD
 pthread_CFLAGS = -DHAVE_PTHREAD=1
+pthread_LIBFLAGS = -pthread
 endif
 
 if ENABLE_OSC
@@ -67,35 +70,25 @@ if HAVE_OPENGL
 opengl_CFLAGS = -DHAVE_OPENGL=1
 endif
 
-gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -pthread
-
-AM_CPPFLAGS = \
-	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
-	-DLIVES_DIR=\""$(livesdir)"\" \
-	-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
-	-I $(top_srcdir) \
-	$(osc_CPPFLAGS) \
-	@MJPEGTOOLS_CFLAGS@ \
-	@UNICAP_CFLAGS@ \
-	@GTK_CFLAGS@ \
-	@X11_CFLAGS@ \
-	$(darwin_CPPFLAGS) @TURBO_CFLAGS@
+gtk_LDADD = @GTK_LIBS_NODYNAMIC@
 
 bin_PROGRAMS = lives-exe
 
 if HAVE_MJPEGTOOLS
 yuv4mpeg_SOURCES = lives-yuv4mpeg.c lives-yuv4mpeg.h
 yuv4mpeg_CFLAGS = -DHAVE_YUV4MPEG=1
+yuvmpeg_LIBS = @MJPEGTOOLS_LIBS@
 endif
 
 if HAVE_UNICAP
 unicap_SOURCES = videodev.c videodev.h
 unicap_CFLAGS = -DHAVE_UNICAP=1
+unicap_LDADD = @UNICAP_LIBS@
 endif
 
 if ENABLE_OSC
 osc_SOURCES = osc.c osc.h omc-learn.c omc-learn.h osc_notify.h
-osc_LIBS = $(top_builddir)/libOSC/.libs/libOSC.a $(top_builddir)/libOSC/client/.libs/libOSC_client.a -lm
+osc_LDADD = $(top_builddir)/libOSC/.libs/libOSC.a $(top_builddir)/libOSC/client/.libs/libOSC_client.a -lm
 #osc_shared_LIBS = $(top_builddir)/libOSC/.libs/libOSC.so $(top_builddir)/libOSC/client/.libs/libOSC_client.so -lm
 osc_CFLAGS = -DENABLE_OSC=1
 endif
@@ -103,13 +96,13 @@ endif
 if ENABLE_LDVGRAB
 ldvgrab_SOURCES = ldvgrab.c ldvgrab.h ldvcallbacks.c ldvcallbacks.h ldvinterface.c ldvinterface.h
 ldvgrab_CFLAGS = -DHAVE_LDVGRAB=1 -I libavc1394/avc1394.h -I libraw1394/raw1394.h -I libraw1394/rom1394.h
-ldvgrab_LIBS = -lavc1394 -lraw1394 -lrom1394
+ldvgrab_LDADD = -lavc1394 -lraw1394 -lrom1394
 endif
 
 if ENABLE_JACK
 jack_CFLAGS = -DENABLE_JACK=1 @JACK_CFLAGS@
 jack_SOURCES = jack.c jack.h
-jack_LIBS = @JACK_LIBS@ @JACK_SERVER_LIBS@
+jack_LDADD = @JACK_LIBS@ @JACK_SERVER_LIBS@
 
 if ENABLE_JACK_TRANSPORT
 jack_CFLAGS += -DENABLE_JACK_TRANSPORT=1
@@ -121,52 +114,52 @@ endif
 endif
 
 if ENABLE_LIBOIL
+oil_LDADD = @OIL_LIBS@
 if IS_MINGW
-oil_LIBFLAGS = @OIL_LIBS@
 else
-oil_LIBFLAGS = @OIL_LIBS@ -loil-0.3
+oil_LIBFLAGS = -loil-0.3
 endif
 oil_CFLAGS = @OIL_CFLAGS@ -DENABLE_OIL=1
 
 else
 
 if ENABLE_LIBORC
+oil_LIBS = @ORC_LIBS@
 if IS_MINGW
-oil_LIBFLAGS = @ORC_LIBS@
 else
-oil_LIBFLAGS = @ORC_LIBS@ -lorc-0.4
+oil_LIBFLAGS = -lorc-0.4
 endif
 oil_CFLAGS = @ORC_CFLAGS@ -DENABLE_ORC=1
 endif
 endif
 
 if HAVE_ALSA
-alsa_LIBS = @ALSA_LIBS@
+alsa_LDADD = @ALSA_LIBS@
 alsa_CFLAGS = @ALSA_CFLAGS@ -DALSA_MIDI=1
 endif
 
 if HAVE_WAYLAND
-wayland_LIBS = @WAYLAND_LIBS@
+wayland_LDADD = @WAYLAND_LIBS@
 wayland_CFLAGS = @WAYLAND_CFLAGS@ -DHAVE_WAYLAND=1
 endif
 
 if HAVE_LIBEXPLAIN
-libexplain_LIBS = @LIBEXPLAIN_LIBS@
+libexplain_LDADD = @LIBEXPLAIN_LIBS@
 libexplain_CFLAGS = @LIBEXPLAIN_CFLAGS@ -DHAVE_LIBEXPLAIN=1
 endif
 
 if !NEED_LOCAL_WEED
-libweed_LIBS = @WEED_LIBS@
+libweed_LDADD = @WEED_LIBS@
 libweed_CFLAGS = @WEED_CFLAGS@
 else
-libweed_LIBS = $(abs_top_srcdir)/libweed/libweed.la
+libweed_LDADD = $(abs_top_srcdir)/libweed/libweed.la
 libweed_CFLAGS = -DNEED_LOCAL_WEED=1
 endif
 
 if !NEED_LOCAL_WEED_UTILS
-libweed_LIBS += @WEED_UTILS_LIBS@
+libweed_LDADD += @WEED_UTILS_LIBS@
 else
-libweed_LIBS += $(abs_top_srcdir)/libweed/libweed-utils.la
+libweed_LDADD += $(abs_top_srcdir)/libweed/libweed-utils.la
 libweed_CFLAGS += -DNEED_LOCAL_WEED_UTILS=1
 endif
 
@@ -183,7 +176,7 @@ libweed_compat_CFLAGS = -DNEED_LOCAL_WEED_COMPAT=1
 endif
 
 if HAVE_PULSE_AUDIO
-pulse_LIBS = @PULSE_LIBS@
+pulse_LDADD = @PULSE_LIBS@
 pulse_CFLAGS = @PULSE_CFLAGS@ -DHAVE_PULSE_AUDIO=1
 pulse_SOURCES = pulse.c pulse.h
 if HAVE_PA_STREAM_BEGIN_WRITE
@@ -192,19 +185,19 @@ endif
 endif
 
 if HAVE_LIBPNG
-png_LIBS = @PNG_LIBS@
+png_LDADD = @PNG_LIBS@
 png_CFLAGS = @PNG_CFLAGS@ -DUSE_LIBPNG=1
 endif
 
 if HAVE_SWRESAMPLE
-swresample_LIBS = @LIBSWRESAMPLE_LIBS@
+swresample_LDADD = @LIBSWRESAMPLE_LIBS@
 swresample_CFLAGS = @LIBSWRESAMPLE_CFLAGS@ -Wno-deprecated-declarations -DHAVE_SWRESAMPLE=1
 endif
 
 if HAVE_SWSCALE
 if HAVE_AVCODEC
 if HAVE_AVUTIL
-swscale_LIBS = @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
+swscale_LDADD = @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
 swscale_CFLAGS = @LIBSWSCALE_CFLAGS@ @LIBAVUTIL_CFLAGS@ -DUSE_SWSCALE=1
 if HAVE_SWRESAMPLE
 transcode_SOURCES = transcode.c transcode.h
@@ -216,7 +209,7 @@ endif
 
 if ENABLE_GIW
 giw_SOURCES = giw/giwknob.c giw/giwknob.h giw/giwvslider.c giw/giwvslider.h giw/giwled.c giw/giwled.h giw/giwtimeline.c giw/giwtimeline.h
-giw_LIBS = -lm
+giw_LDADD = -lm
 giw_CFLAGS = -DENABLE_GIW=1
 endif
 
@@ -225,81 +218,117 @@ rpmalloc_SOURCES = rpmalloc.c rpmalloc.h
 rpmalloc_CFLAGS = -DUSE_RPMALLOC=1
 endif
 
+##################### all sources ################3
+
 lives_exe_SOURCES = \
 	$(rpmalloc_SOURCES)\
-	widget-helper.c widget-helper.h \
-	widget-helper-gtk.h widget-helper-qt.h \
-	alarms.c alarms.h \
-	messaging.c messaging.h \
-	maths.c maths.h \
-	main.c\
-	support.c support.h \
-	effects.c\
-	lsd.h lsd-tab.c lsd-tab.h \
-	plugins.c plugins.h\
-	effects-weed.c effects-weed.h\
-	effects-data.c effects-data.h \
-	framedraw.c framedraw.h\
-	interface.c interface.h \
-	paramspecial.c paramspecial.h\
-	paramwindow.c paramwindow.h\
-	rfx-builder.c rfx-builder.h\
-	$(yuv4mpeg_SOURCES)\
-	preferences.c preferences.h\
-	rte_window.c rte_window.h\
-	gui.c gui.h \
-	ce_thumbs.c ce_thumbs.h \
-	htmsocket.c htmsocket.h \
-	merge.c merge.h \
-	cliphandler.c cliphandler.h \
-	sethandler.c sethandler.h \
-	dialogs.c dialogs.h saveplay.c saveplay.h \
-	player.c player.h \
-	audio.c audio.h \
-	events.c events.h \
-	resample.c resample.h \
-	$(osc_SOURCES) \
-	callbacks.c callbacks.h \
-	colourspace.c colourspace.h\
-	keyboard.c keyboard.h\
-	intents.c intents.h\
-	utils.c utils.h\
-        main.h \
-        mainwindow.h \
-        effects.h \
-	multitrack.h multitrack.c \
-	multitrack-gui.h multitrack-gui.c \
-	stream.h stream.c \
-	cvirtual.c cvirtual.h \
-	startup.c startup.h \
-	pangotext.c pangotext.h \
+	machinestate.c machinestate.h \
 	memory.c memory.h \
 	threading.c threading.h \
-	machinestate.c machinestate.h \
+	intents.c intents.h\
+	lsd.h lsd-tab.c lsd-tab.h \
+	widget-helper.c widget-helper.h \
+	widget-helper-gtk.h widget-helper-qt.h \
+	main.c main.h \
+        mainwindow.h \
+	preferences.c preferences.h\
+	plugins.c plugins.h\
+	effects-weed.c effects-weed.h\
+	cvirtual.c cvirtual.h \
+	startup.c startup.h \
 	filesystem.c filesystem.h \
 	lists.c lists.h \
+	cliphandler.c cliphandler.h \
+	saveplay.c saveplay.h \
+	player.c player.h \
+	dialogs.c dialogs.h\
+	callbacks.c callbacks.h \
+	colourspace.c colourspace.h\
+	events.c events.h \
+	interface.c interface.h \
+	gui.c gui.h \
+	sethandler.c sethandler.h \
+	audio.c audio.h \
+	resample.c resample.h \
 	weed-effects-utils.c weed-effects-utils.h \
-	diagnostics.c diagnostics.h \
-	$(transcode_SOURCES) \
-	$(unicap_SOURCES) \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
+	paramwindow.c paramwindow.h\
+	utils.c utils.h\
+	maths.c maths.h \
+	diagnostics.c diagnostics.h \
+	effects-data.c effects-data.h \
+	multitrack.h multitrack.c \
+	multitrack-gui.h multitrack-gui.c \
+	effects.c effects.h\
+	paramspecial.c paramspecial.h\
+	rfx-builder.c rfx-builder.h\
+	$(yuv4mpeg_SOURCES)\
+	rte_window.c rte_window.h\
+	stringfuncs.c stingfuncs.h \
+	ce_thumbs.c ce_thumbs.h \
+	pangotext.c pangotext.h \
+	alarms.c alarms.h \
+	messaging.c messaging.h \
+	merge.c merge.h \
+	framedraw.c framedraw.h\
+	$(osc_SOURCES) \
+	support.c support.h \
+	keyboard.c keyboard.h\
+	stream.h stream.c \
+	htmsocket.c htmsocket.h \
+	$(transcode_SOURCES) \
+	$(unicap_SOURCES) \
 	$(ldvgrab_SOURCES) \
 	$(giw_SOURCES)
 
-lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS)
 
-lives_exe_LIBS = @X11_LIBS@ $(wayland_LIBS) @MJPEGTOOLS_LIBS@ $(osc_LIBS) $(jack_LIBS) $(ldvgrab_LIBS) \
-	$(alsa_LIBS) $(pulse_LIBS) $(png_LIBS) $(swscale_LIBS) $(pthread_LIBS) $(libweed_LIBS) \
-	 $(giw_LIBS) $(v4l1_LIBS) @UNICAP_LIBS@ $(libexplain_LIBS) $(ffthumb_LIBS)
+#############
+## not sure what the differece is between CPPFLAGS and CFLAS
 
-AM_CFLAGS = -fcommon -fPIE -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
+AM_CPPFLAGS = \
+	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
+	-DLIVES_DIR=\""$(livesdir)"\" \
+	-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
+	-I $(top_srcdir) \
+	$(osc_CPPFLAGS) \
+	@MJPEGTOOLS_CFLAGS@ \
+	@UNICAP_CFLAGS@ \
+	@GTK_CFLAGS@ \
+	@X11_CFLAGS@ \
+	$(darwin_CPPFLAGS) @TURBO_CFLAGS@
+
+###
+
+AM_CFLAGS += -fcommon -fPIE -Wstrict-aliasing=0 -Wall \
+	$(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
 	$(oil_CFLAGS) $(wayland_CFLAGS) $(transcode_CFLAGS) $(cpu_CFLAGS) 	\
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(freeBSD_CFLAGS) \
 	$(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
-	$(jack_CFLAGS) $(pulse_CFLAGS) $(libexplain_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
+	$(jack_CFLAGS) $(pulse_CFLAGS) $(libexplain_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) \
+	$(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def) @TURBO_CFLAGS@ \
-	$(libvisual_CFLAGS) $(frei0r_CFLAGS) $(ladspa_CFLAGS) $(ffthumb_CFLAGS) $(xrender_CFLAGS) $(x11_CFLAGS) $(opengl_CFLAGS) $(pthread_CFLAGS)
+	$(libvisual_CFLAGS) $(frei0r_CFLAGS) $(ladspa_CFLAGS) $(ffthumb_CFLAGS) \
+	$(xrender_CFLAGS) $(x11_CFLAGS) $(opengl_CFLAGS) $(pthread_CFLAGS)
+
+## NOTE: we also add to AM_CFLAGS below then set AM_CXX_FLAGS ???
+
+## this below is correct; items like -pthread need to go in _LDFLAGS
+## libraries go in _LDADD, because, confusingly, if you add them in _LIBS they get placed
+## BEFORE the source file, and apparently that makes a difference...
+
+## also it has to be oil_LIBFLAGS instead of oil_LDFLAGS because  otherwise
+## automake complains (it should be liboil_LDFLAGS) etc. same with pthread amd yuv4mpeg
+
+lives_exe_LDFLAGS = $(oil_LIBFLAGS)
+
+lives_exe_LDADD = @X11_LIBS@ $(wayland_LDADD) $(gtk_LDADD) $(oil_LDADD)\
+	$(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
+	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) \
+	$(pthread_LIBADD) $(libweed_LDADD) $(swresample_LDADD) \
+	$(giw_LDADD) $(libexplain_LDADD) $(unicap_LDADD) $(yuv4mpeg_LIBS)
+
+################################
 
 if HAVE_AVFORMAT
 if HAVE_AVCODEC
@@ -321,7 +350,11 @@ if ENABLE_PROFILING
 AM_CFLAGS += -pg
 endif
 
+################################3
+
 AM_CXXFLAGS = $(AM_CFLAGS)
+
+####################################3
 
 if BUILD_LIBLIVES
 
@@ -344,7 +377,9 @@ liblivesdir = $(libdir)
 extra_LDFLAGS = @X11_LIBS@ $(wayland_LIBS) @MJPEGTOOLS_LIBS@ \
         $(jack_LIBS) $(ldvgrab_LIBS) \
 	$(alsa_LIBS) $(pulse_LIBS) $(png_LIBS) $(swscale_LIBS) $(pthread_LIBS) \
-	$(giw_LIBS) $(v4l1_LIBS) @UNICAP_LIBS@ $(gtk_LIBFLAGS) $(oil_LIBFLAGS)
+	$(giw_LIBS) @UNICAP_LIBS@ $(gtk_LIBFLAGS) $(oil_LIBFLAGS)
+
+lives_exe_LDFLAGS += -shared $(extra_LDFLAGS)
 
 #if NEED_SCRIPTING_LIBS
 #if !NEED_LOCAL_WEED

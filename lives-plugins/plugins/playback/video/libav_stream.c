@@ -171,15 +171,18 @@ uint64_t get_capabilities(int palette) {
 
 #define IFBUFSIZE 16384
 
-const char *get_init_rfx(plugin_intentcap_t *icaps) {
+contract_status negotiate_contract(pl_contract *contract) {
   // intent / capabilities allows switching between different tailored interfaces
+  pl_intentcap *icaps = pl_contract_get_icap(contract);
+  pl_attribute *attr;
   static char ifbuf[IFBUFSIZE];
+  double xfps = 0.;
   int defchans = 1, defrate, defrateval = 1;
   char *extra;
 
-  switch (icaps->intent) {
-  case PLUGIN_INTENTION_PLAY: // for now...
-  case PLUGIN_INTENTION_STREAM: // LiVES VPP (streaming output)
+  switch (icaps->intention) {
+  case PL_INTENTION_PLAY: // for now...
+  case PL_INTENTION_STREAM: // LiVES VPP (streaming output)
     snprintf(ifbuf, IFBUFSIZE, "%s",
              "<define>\\n\
 |1.8.5\\n		  \
@@ -216,22 +219,53 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill|\\n\
 </onchange>\\n\
 ");
     break;
-  case PLUGIN_INTENTION_TRANSCODE: // LiVES transcoding
-    if (weed_plant_has_leaf(icaps->capacities, PLUGIN_REQUIREMENT_AUDIO_CHANS)) {
-      defchans = plugin_requirement_get_int(icaps->capacities, PLUGIN_REQUIREMENT_AUDIO_CHANS);
-      defrate = plugin_requirement_get_int(icaps->capacities, PLUGIN_REQUIREMENT_AUDIO_RATE);
-      if (plugin_requirement_is_readonly(icaps->capacities, PLUGIN_REQUIREMENT_AUDIO_CHANS))
-        extra = strdup("special|ignored|2|3|");
-      else extra = strdup("");
+
+  // this is actually play, with local but without realtime or local-display hooks
+  // with frame and audio data input hooks, and a transform product of a new clip (media)
+  // object in the "external" state
+  // caller may pass in clip object template which plugin can use to produce the clip object
+  // via the template'screate instance transform
+  case PL_INTENTION_TRANSCODE: // LiVES transcoding
+    // mandatiry requirements - video with, height, fps, format
+    // - audio rate and channels
+    // - output URI, with cap local this should be filename format.
+    if (pl_has_capacity(icaps, PL_CAPACITY_AUDIO)) {
+      // in future these will be mandatroy requirements
+      pl_attribute *attr = pl_contract_get_attr(contract, ATTR_AUDIO_RATE);
+      if (attr) defrate = pl_attr_get_value(attr, int);
+      else {
+        // if host did not set channels set a (read / write) default of 2
+        // but make setting the value mandatory (we provide a UI template for this)
+        attr = pl_declare_attribute(contract, ATTR_AUDIO_RATE, PL_ATTR_INT);
+        defrate = 44100; // or wahtever
+        pl_attr_set_def_value(attr, defrate);
+      }
       if (defrate == 22050) defrateval = 0;
       else if (defrate == 44100) defrateval = 1;
       else if (defrate == 48000) defrateval = 2;
+
+      attr = pl_contract_get_attr(contract, ATTR_AUDIO_CHANNELS);
+      if (attr) {
+        defchans = pl_attr_get_value(attr, int);
+        extra = strdup("");
+      } else {
+        if (pl_attr_get_rdonly(attr))  extra = strdup("special|ignored|2|3|");
+        else {
+          // if host did not set channels set a (read / write) default of 2
+          // but make setting the value mandatory (we provide a UI template for this)
+          attr = pl_declare_attribute(contract, ATTR_AUDIO_CHANNELS, PL_ATTR_INT);
+          pl_attr_set_def_value(attr, 2);
+          extra = strdup("");
+        }
+      }
     } else extra = strdup("");
-    /* if (weed_plant_has_leaf(icaps->capacities, PLUGIN_REQUIREMENT_FPS)) { */
-    /*   fps = plugin_requirement_get_double(icaps->capacities, PLUGIN_REQUIREMENT_FPS); */
+    /* if ((attr = pl_contract_get_attr(contract, ATTR_VIDEO_FPS))) { */
+    /*   xfps = pl_attr_get_value(attr, double); */
     /* } */
+    if (!(attr = pl_declare_attribute(contract, ATTR_UI_RFX_TEMPLATE, PL_ATTR_STRING)))
+      attr = pl_contract_get_attr(contract, ATTR_UI_RFX_TEMPLATE);
     snprintf(ifbuf, IFBUFSIZE, "<define>\\n\
-|1.8.5\\n				    \
+|1.8.5\\n				 \
 </define>\\n\
 <language_code>\\n\
 0xF0\\n\
@@ -263,11 +297,12 @@ init|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} elsif ($p0 ==
 </onchange>\\n\
 ", defchans, defrateval, extra);
     free(extra);
+    pl_attr_set_value(attr, ifbuf);
+    return CONTRACT_STATUS_NOTREADY;
     break;
-  default:
-    return "";
+  default: break;
   }
-  return ifbuf;
+  return CONTRACT_STATUS_AGREED;
 }
 
 
@@ -543,7 +578,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     fprintf(stderr, "libav stream plugin error: No palette was set !\n");
     return FALSE;
   }
-  if (intent == PLUGIN_INTENTION_STREAM)
+  if (intent == PL_INTENTION_STREAM)
     fmtstring = "flv";
   else
     fmtstring = "mp4";
@@ -582,7 +617,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     maxvbitrate = atoi(argv[1]);
 
     switch (intent) {
-    case PLUGIN_INTENTION_STREAM:
+    case PL_INTENTION_STREAM:
       stream_encode = TRUE;
       snprintf(uri, PATH_MAX, "udp://%s.%s.%s.%s:%s", argv[5], argv[6], argv[7], argv[8], argv[9]);
       break;

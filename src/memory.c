@@ -10,6 +10,10 @@
 
 #include "main.h"
 
+#ifdef USE_RPMALLOC
+//void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
+#endif
+
 ///////////////////////////// testing - not used /////////
 #ifdef USE_INTRINSICS
 /// intrinsics
@@ -89,11 +93,95 @@ void *lives_slice_alloc_and_copy(size_t sz, void *p) {
 }
 #endif
 
+#if 0
+typedef struct {
+  // if set then *ptr_to points to real memory and should be freed
+  // free (*ptr); ptr = NULL;
+  // else just ptr = NULL;
+  // ptr_from is unique, but ptr_to can be replicated
+  uint8_t isr;
+  void **ptr_to;
+  void **ptr_from;
+} lives_weak;
+
+static LiVESList *weak_list = NULL;
+
+LIVES_GLOBAL_INLINE void make_weak_ptr(void **ptr_new, void **ptr_old) {
+  // if we create a weak ptr of type (void *)a = (void)*b, we can have problems
+  // if ptr a is freed, via freep((void**)&a), then b will point to freed memory
+  // thus we can use MAKE_WEAK(&a, &b); instead. then we must call LIVES_NULLIFY(&a)
+  // or LIVES_NULLIFY(&b), now both if both pointers are still pointing to the same memory, they
+  // will be nullified together, and the real target will only be freed once.
+  // also calling WEAK_UPPDATE(&a) or WEAK_UPDATE(&b)
+
+  // for now it is simple and just goes 1 level deep
+  if (ptr_new) {
+    lives_weak *weak = (lives_weak *)lives_calloc(1, sizeof(lives_weak));
+    weak->weak = ptr_new;
+    weak->real = ptr_old;
+    *ptr_new = *ptr_old;
+    weak_list = lives_list_prepend(weak_list, &weak);
+  }
+}
+
+
+LIVES_GLOBAL_INLINE void **get_other_ptr(void **ptr, int op) {
+  // op == 0, return real ptr
+  // op == 1 return and remove node
+
+  // TODO
+  // op == 1, return real ptr recursively
+
+  // op = 2, as 1, but nullify it and its partner
+
+  // op 3, as 2 but then search for any other weak pointers
+  // - find lowest level realptr, nullify, then coming back up, if it was straight,
+  // find any other weaks pointed to it recursively, and nullify
+  // if it was crooked, skip over. until we return to top level, then free target)
+
+  // op = 2, remove a single node
+
+  LiVESList *list = weak_list;
+  lives_weak *xweak;
+  void **weak, void **real;
+  FIND_BY_DATA_2FIELD(list, lives_weak, weak, real, ptr);
+  if (!list) return NULL;
+  xweak = (lives_weak *)list->data;
+  weak = xweak->weak;
+  real = xweak->real;
+  if (op == 1) weak_list = lives_list_remove_node(weak_list, xweak, TRUE);
+  if (*weak != *real) return NULL;
+  if (ptr == real) return weak;
+  // is this what they call "tail recursion" ??
+  //real = get_real_ptr(weak->real);
+  return real;
+}
+
+
+LIVES_GLOBAL_INLINE boolean is_weak_ptr(void **ptrptr) {
+  LiVESList *list = weak_list;
+  return !!(FIND_BY_DATA_FIELD(list, lives_weak, weak, ptrptr));
+}
+
+
+void *lives_nullify_weak_check(void **pp) {
+  if (weak_list) {
+    other = get_other_ptr(ptr. 1);
+    if (other) *other = NULL;
+  }
+  return 0;
+}
+
+#endif
+
 LIVES_GLOBAL_INLINE boolean lives_freep(void **ptr) {
   // free a pointer and nullify it, only if it is non-null to start with
   // pass the address of the pointer in
+  // WARNING !! if ptr == WEAK(other_ptr) then other_ptr will not be set to NULL !!
+
   if (ptr && *ptr) {
     lives_free(*ptr);
+    //lives_nullify_weak_check(ptr);
     *ptr = NULL;
     return TRUE;
   }
@@ -204,7 +292,7 @@ void *_ext_malloc(size_t n) {
 #ifdef USE_RPMALLOC
   return rpmalloc(n);
 #else
-  return (n == 0 ? NULL : lives_malloc(n));
+  return (n == 0 ? NULL : default_malloc(n));
 #endif
 }
 
@@ -226,14 +314,19 @@ void _ext_unmalloc_and_copy(size_t bsize, void *p) {
 #endif
 }
 
+#ifdef USE_RPMALLOC
+void *lsd_calloc_aligned(void **memptr, size_t nmemb, size_t size) {
+  return !memptr ? NULL : (!(*memptr = (rpaligned_calloc)(HW_ALIGNMENT, nmemb, size))) ? NULL : *memptr;
+}
+#endif
+
 void _ext_free(void *p) {
 #ifdef USE_RPMALLOC
   rpfree(p);
 #else
-  if (p) lives_free(p);
+  if (p) default_free(p);
 #endif
 }
-
 
 void *_ext_free_and_return(void *p) {if (p) _ext_free(p); return NULL;}
 
@@ -257,47 +350,163 @@ void *_ext_calloc(size_t nmemb, size_t msize) {
 #ifdef USE_RPMALLOC
   return quick_calloc(nmemb, msize);
 #else
-  return lives_calloc(nmemb, msize);
+  return default_calloc(nmemb, msize);
 #endif
 }
 
 LIVES_GLOBAL_INLINE void *lives_free_and_return(void *p) {if (p) lives_free(p); return NULL;}
 
 
-LIVES_GLOBAL_INLINE size_t get_max_align(size_t req_size, size_t align_max) {
-  size_t align = 1;
-  while (align < align_max && !(req_size & align)) align *= 2;
-  return align;
+LIVES_GLOBAL_INLINE void *lives_malloc_aligned(size_t nblocks, size_t align) {
+  return aligned_alloc(align, nblocks * align);
+}
+
+
+static size_t hwlim = 0;
+static LiVESList *smblock_list = NULL;
+static LiVESList *smu_list = NULL;
+static int smblock_count = 0;
+static char *smblock = 0;
+
+static pthread_mutex_t smblock_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+#define SMBLOCKS 1024 * 1024
+
+static int n_smblocks = SMBLOCKS;
+
+static size_t memsize;
+
+void smallblock_init(void) {
+  hwlim = HW_ALIGNMENT;
+  memsize = n_smblocks * hwlim;
+  if (capable->hw.pagesize) {
+    memsize = (size_t)(memsize / capable->hw.pagesize) * capable->hw.pagesize;
+#ifdef HAVE_POSIX_MEMALIGN
+    IGN_RET(posix_memalign((void **)&smblock, capable->hw.pagesize, memsize));
+#endif
+  }
+
+  if (!smblock) {
+    if (capable->hw.pagesize) {
+      smblock = lives_calloc_aligned(memsize / capable->hw.pagesize, capable->hw.pagesize);
+    } else {
+      smblock = lives_calloc_align(memsize);
+    }
+  }
+
+  if (smblock) {
+    char *smbptr;
+
+    if (mlock(smblock, memsize)) {
+      lives_free(smblock);
+      return;
+    }
+
+    smbptr = smblock;
+    n_smblocks = memsize / hwlim;
+
+    for (int i = 0; i < n_smblocks; i++) {
+      smblock_list = lives_list_prepend(smblock_list, (void *)smbptr);
+      smbptr += hwlim;
+    }
+    g_print("LAST is %p\n", smbptr);
+    smblock_list = lives_list_reverse(smblock_list);
+    smblock_count = n_smblocks;
+    pthread_mutex_lock(&smblock_mutex);
+    lives_free = speedy_free;
+    lives_malloc = speedy_malloc;
+    lives_calloc = speedy_calloc;
+    pthread_mutex_unlock(&smblock_mutex);
+  }
+}
+
+
+void *speedy_malloc(size_t xsize) {
+  if (xsize <= hwlim) {
+    void *p;
+    pthread_mutex_lock(&smblock_mutex);
+    if (smblock_list) {
+      p = smblock_list->data;
+      smblock_list = smblock_list->next;
+      smu_list = lives_list_prepend(smu_list, p);
+      smblock_count--;
+    } else {
+      lives_malloc = default_malloc;
+      lives_calloc = default_calloc;
+      return lives_malloc(xsize);
+    }
+    pthread_mutex_unlock(&smblock_mutex);
+    return p;
+  }
+  return (*default_malloc)(xsize);
+}
+
+
+void *speedy_calloc(size_t nelems, size_t esize) {
+  if (smblock_count >= nelems && esize <= hwlim) {
+    if (nelems == 1) return speedy_malloc(esize);
+    pthread_mutex_lock(&smblock_mutex);
+    if (smblock_count >= nelems) {
+      void *p = smblock_list->data;
+      for (int i = 0; i < nelems; i++) {
+        smu_list = lives_list_prepend(smu_list, smblock_list->data);
+        smblock_list = smblock_list->next;
+      }
+      smblock_count -= nelems;
+      pthread_mutex_unlock(&smblock_mutex);
+      return p;
+    }
+    pthread_mutex_unlock(&smblock_mutex);
+  }
+  return (*default_calloc)(nelems, esize);
+}
+
+void speedy_free(void *p) {
+  if ((char *)p >= smblock && (char *)p < smblock + memsize) return;
+  default_free(p);
+  if (!smblock_count) lives_free = default_free;
+}
+
+
+
+// WARNING - size allocated is nblocks * align
+LIVES_GLOBAL_INLINE void *lives_calloc_aligned(size_t nblocks, size_t align) {
+  void *p = lives_malloc_aligned(nblocks, align);
+  if (p) lives_memset(p, 0, nblocks * align);
+  return p;
+}
+
+
+LIVES_GLOBAL_INLINE void *lives_calloc_align(size_t xsize) {
+  if (!xsize) return NULL;
+  else {
+    size_t align = HW_ALIGNMENT;
+    xsize = ((xsize + align - 1) / align);
+    return lives_calloc_aligned(xsize, align);
+  }
 }
 
 
 LIVES_GLOBAL_INLINE void *lives_calloc_safety(size_t nmemb, size_t xsize) {
-  void *p;
-  size_t totsize = nmemb * xsize;
-  size_t align = DEF_ALIGN;
-  if (capable->hw.cacheline_size > 0) align = capable->hw.cacheline_size;
-  if (!totsize) return NULL;
-  if (xsize < align) {
-    xsize = align;
-    nmemb = (totsize / xsize) + 1;
-  }
-  p = __builtin_assume_aligned(lives_calloc(nmemb + (EXTRA_BYTES / xsize), xsize), DEF_ALIGN);
-  return p;
+  return lives_calloc_align(nmemb * xsize + EXTRA_BYTES);
 }
 
-LIVES_GLOBAL_INLINE void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize) {
+
+LIVES_GLOBAL_INLINE void *lives_calloc_aligned_safety(size_t xsize, size_t align) {
+  xsize = ((size_t)(xsize + EXTRA_BYTES + align - 1) / align);
+  return lives_calloc_aligned(xsize, align);
+}
+
+
+LIVES_GLOBAL_INLINE void *lives_recalloc(void *op, size_t nmemb, size_t omemb, size_t xsize) {
   /// realloc from omemb * size to nmemb * size
-  /// memory allocated via calloc, with DEF_ALIGN alignment and EXTRA_BYTES extra padding
-  size_t align = DEF_ALIGN;
-  if (capable->hw.cacheline_size > 0) align = capable->hw.cacheline_size;
   do {
-    void *np = __builtin_assume_aligned(lives_calloc_safety(nmemb, xsize), align);
-    if (p && omemb > 0) {
-      void *op = __builtin_assume_aligned(p, align);
+    void *np = lives_calloc_safety(nmemb, xsize);
+    if (op && omemb > 0) {
       if (omemb > nmemb) omemb = nmemb;
       lives_memcpy(np, op, omemb * xsize);
     }
-    if (p) lives_free(p);
+    if (op) lives_free(op);
     return np;
   } while (FALSE);
 }
@@ -308,17 +517,28 @@ void quick_free(void *p) {rpfree(p);}
 
 #ifdef USE_RPMALLOC
 void *quick_calloc(size_t n, size_t s) {
-  size_t align = DEF_ALIGN;
-  if (capable->hw.cacheline_size > 0) align = capable->hw.cacheline_size;
+  size_t align = HW_ALIGNMENT;
   return rpaligned_calloc(align, n, s);
 }
 #endif
 
-boolean init_memfuncs(void) {
+boolean init_memfuncs(int stage) {
+  if (stage == 0) {
+    lives_malloc = default_malloc;
+    lives_calloc = default_calloc;
+    lives_free = default_free;
+
 #ifdef USE_RPMALLOC
-  rpmalloc_initialize();
+    //_lsd_calloc_aligned_ = lsd_calloc_aligned;
+    rpmalloc_initialize();
 #endif
-  bigblock_init();
+  }
+
+  else if (stage == 1) {
+    bigblock_init();
+    //smallblock_init();
+  }
+
   return TRUE;
 }
 
@@ -339,29 +559,56 @@ static volatile int used[NBIGBLOCKS];
 
 static int NBBLOCKS = 0;
 
+#define NBAD_LIM 8
+#define BBL_TEST
 #ifdef BBL_TEST
 static int bbused = 0;
 #endif
 
+static int nbads = 0;
+
 static pthread_mutex_t bigblock_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+static size_t bmemsize;
+
 void bigblock_init(void) {
-  for (int i = 0; i < NBIGBLOCKS; i++) {
-    bigblocks[i] = lives_calloc(1, BBLOCKSIZE);
-    if (mlock(bigblocks[i], BBLOCKSIZE)) return;
-    used[NBBLOCKS++] = 0;
+  bmemsize = BBLOCKSIZE;
+  hwlim = HW_ALIGNMENT;
+  bmemsize = (size_t)(bmemsize / hwlim) * hwlim;
+
+  if (capable->hw.pagesize) {
+    bmemsize = (size_t)(bmemsize / capable->hw.pagesize) * capable->hw.pagesize;
   }
+  for (int i = 0; i < NBIGBLOCKS; i++) {
+#ifdef HAVE_POSIX_MEMALIGN
+    IGN_RET(posix_memalign(&bigblocks[i], capable->hw.pagesize, bmemsize));
+#endif
+    if (!bigblocks[i]) {
+      if (capable->hw.pagesize) {
+        bigblocks[i] = lives_calloc_aligned(bmemsize / capable->hw.pagesize, capable->hw.pagesize);
+      } else {
+        bigblocks[i] = lives_calloc_align(bmemsize);
+      }
+    }
+    if (mlock(bigblocks[i], bmemsize)) {
+      lives_free(bigblocks[i]);
+      return;
+    }
+    used[NBBLOCKS++] = -1;
+  }
+  bmemsize -= EXTRA_BYTES;
 }
 
 void *alloc_bigblock(size_t sizeb) {
-  if (sizeb >= BBLOCKSIZE) {
-    if (prefs->show_dev_opts) g_print("msize req %lu > %lu, cannot use bblockalloc\n", sizeb, BBLOCKSIZE);
+  if (sizeb >= bmemsize) {
+    if (prefs->show_dev_opts) g_print("msize req %lu > %lu, cannot use bblockalloc\n",
+                                        sizeb, bmemsize);
     return NULL;
   }
   pthread_mutex_lock(&bigblock_mutex);
   for (int i = 0; i < NBBLOCKS; i++) {
-    if (!used[i]) {
-      used[i] = 1;
+    if (used[i] == -1) {
+      used[i] = 0;
 #ifdef BBL_TEST
       bbused++;
 #endif
@@ -374,44 +621,52 @@ void *alloc_bigblock(size_t sizeb) {
   return NULL;
 }
 
-void *calloc_bigblock(size_t nmemb, size_t align) {
+void *calloc_bigblock(size_t xsize) {
   void *start;
-  if (nmemb * align + align >= BBLOCKSIZE) {
-    if (prefs->show_dev_opts) g_print("size req %lu > %lu, cannot use bblockalloc\n", nmemb * align + align, BBLOCKSIZE);
+  if (xsize > bmemsize) {
+    if (prefs->show_dev_opts) g_print("size req %lu > %lu, "
+                                        "cannot use bblockalloc\n", xsize,
+                                        bmemsize);
     return NULL;
   }
   pthread_mutex_lock(&bigblock_mutex);
   for (int i = 0; i < NBBLOCKS; i++) {
-    if (!used[i]) {
-      used[i] = 1;
+    if (used[i] == -1) {
+      used[i] = 0;
 #ifdef BBL_TEST
       bbused++;
 #endif
       pthread_mutex_unlock(&bigblock_mutex);
-      //g_print("CALLOBIG %p %d\n", bigblocks[i], i);
-      start = (void *)((size_t)((size_t)((char *)bigblocks[i] + align - 1) / align) * align);
-      lives_memset(start, 0, nmemb * align);
+      g_print("CALLOBIG %p %d\n", bigblocks[i], i);
+      break_me("callobig");
+      nbads = 0;
+      start = bigblocks[i];
+      /* start = (void *)((size_t)((size_t)((char *)bigblocks[i] + align - 1) / align) * align); */
+      /* used[i] = (char *)start - (char *)bigblocks[i]; */
+      lives_memset(start, 0, xsize + EXTRA_BYTES);
       return start;
     }
   }
   pthread_mutex_unlock(&bigblock_mutex);
   break_me("bblock");
   g_print("OUT OF BIGBLOCKS !!\n");
+  if (++nbads > NBAD_LIM) lives_abort("Aborting due to probable internal memory errors");
   return NULL;
 }
 
 void *free_bigblock(void *bstart) {
   for (int i = 0; i < NBBLOCKS; i++) {
     if ((char *)bstart >= (char *)bigblocks[i]
-        && (char *)bstart - (char *)bigblocks[i] < BBLOCKSIZE) {
-      used[i] = 0;
+        && (char *)bstart - (char *)bigblocks[i] < bmemsize + EXTRA_BYTES) {
+      if (used[i] == -1) lives_abort("Bigblock freed twice, Aborting due to probable internal memory errors");
+      used[i] = -1;
 #ifdef BBL_TEST
       pthread_mutex_lock(&bigblock_mutex);
       if (prefs->show_dev_opts) g_print("bblocks in use: %d\n", bbused);
       bbused--;
       pthread_mutex_unlock(&bigblock_mutex);
 #endif
-      //g_print("FREEBIG %p %d\n", bigblocks[i], i);
+      g_print("FREEBIG %p %d\n", bigblocks[i], i);
       return NULL;
     }
   }

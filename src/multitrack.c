@@ -13751,7 +13751,7 @@ void on_delback_audio_activate(LiVESMenuItem * menuitem, livespointer user_data)
 
 boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  lives_capacity_t *caps = NULL;
+  lives_capacities_t *caps = NULL;
   LiVESList *list;
   char *com;
 
@@ -14018,6 +14018,7 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
     cfile->frames = cfile->start = cfile->end = 0;
     mt->is_rendering = FALSE;
+
     THREAD_INTENTION = LIVES_INTENTION_NOTHING;
     if (caps) {
       lives_capacities_free(caps);

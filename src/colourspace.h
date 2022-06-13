@@ -32,8 +32,10 @@
 #define DEF_SCREEN_GAMMA 1.4 // extra gammm boost
 
 /// rowstride alignment values
-#define ALIGN_MIN 4
-#define ALIGN_DEF 16
+
+#define RS_ALIGN_DEF 16
+#define RA_MIN 4
+#define RA_MAX 128
 
 // rgb / yuv conversion factors ////////////
 #define FP_BITS 16 /// max fp bits

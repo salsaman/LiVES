@@ -21,20 +21,17 @@ LIVES_GLOBAL_INLINE int find_clip_by_uid(uint64_t uid) {
 }
 
 
-char *get_staging_dir_for(int index, lives_intention intent) {
+char *get_staging_dir_for(int index, const lives_intentcap_t *icaps) {
   // optionally we can stage the clip open in an alt directory
   char *shm_path = NULL;
-  lives_intentparams_t *iparams;
-  lives_intentcap_t *icaps = lives_intentcaps_new(intent);
-  iparams = get_txparams_for_clip(index, icaps);
-  lives_intentcaps_free(icaps);
-
-  if (iparams) {
+  lives_object_instance_t *obj = get_object_for_clip(index, icaps);
+  if (obj) {
     weed_param_t *adir_param =
-      weed_param_from_iparams(iparams, CLIP_PARAM_STAGING_DIR);
+      weed_param_from_attribute(obj, CLIP_ATTR_STAGING_DIR);
     if (adir_param) shm_path = weed_param_get_value_string(adir_param);
-    lives_intentparams_free(iparams);
+    weed_plant_free(adir_param);
   }
+  lives_object_instance_unref(obj);
   return shm_path;
 }
 
@@ -177,6 +174,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
 
   if (mainw->hdrs_cache) {
     val = get_val_from_cached_list(key, maxlen, mainw->hdrs_cache);
+    g_print("get val %s %ld\n", key, maxlen);
     lives_free(key);
     if (!val) return FALSE;
   } else {
@@ -250,6 +248,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     break;
   case CLIP_DETAILS_DECODER_UID:
     *(uint64_t *)retval = (uint64_t)lives_strtol(val);
+    g_print("got dec uid 0x%016lX\n", *(uint64_t *)retval);
     break;
   default:
     lives_free(val);
@@ -1661,7 +1660,7 @@ cleanup:
 
 rhd_failed:
 
-  stdir = get_staging_dir_for(fileno, LIVES_ICAPS_LOAD);
+  stdir = get_staging_dir_for(fileno, ICAP(LOAD));
   if (stdir) {
     char *clip_stdir = lives_build_path(stdir, sfile->handle, NULL);
     if (lives_file_test(clip_stdir, LIVES_FILE_TEST_IS_DIR)) {
@@ -1892,78 +1891,73 @@ typedef struct {
 } clip_priv_data_t;
 
 
-lives_intentparams_t *_get_params_for_clip_tx(lives_object_t *obj, int state,
-    lives_intentcap_t *icaps) {
+LIVES_LOCAL_INLINE void add_attributes_for_clip_instance(lives_object_instance_t *obj,
+    const lives_intentcap_t *icaps) {
+  // here we would check the object state, and if it is external, then the icap
+  // intention should be import, caps will have local or remote, and we set up the attributes
+  // these will eventually form part of the import transform, which will convert the state to
+  // normal and create a new set of attributes
+
   lives_intention intent = icaps->intent;
-  lives_intentparams_t *iparams = NULL;
   clip_priv_data_t *priv = (clip_priv_data_t *)obj->priv;
 
-  if (intent != LIVES_INTENTION_IMPORT) return NULL;
+  if (intent != LIVES_INTENTION_IMPORT) return;
 
-  if (LIVES_CAPACITY_FALSE(icaps->capacities, LIVES_CAPACITY_REMOTE)) {
-    if (prefs->startup_phase != 0) return NULL;
-    if (capable->writeable_shmdir == MISSING) return NULL;
-    if (state == CLIP_STATE_READY) {
-      if (!*priv->sfile->staging_dir) return NULL;
+  if (lives_has_capacity(icaps->capacities, LIVES_CAPACITY_LOCAL)) {
+    lives_obj_attr_t *attr;
+
+    if (prefs->startup_phase != 0) return;
+    if (capable->writeable_shmdir == MISSING) return;
+    if (obj->state == CLIP_STATE_READY) {
+      if (!*priv->sfile->staging_dir) return;
     } else get_shmdir();
 
-    iparams = (lives_intentparams_t *)lives_calloc(sizeof(lives_intentparams_t), 1);
-    iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 2);
+    /* iparams = (lives_intentparams_t *)lives_calloc(sizeof(lives_intentparams_t), 1); */
+    /* iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 2); */
+
+    attr = lives_object_declare_attribute(obj, CLIP_ATTR_STAGING_DIR, WEED_SEED_STRING);
 
     // TODO - need to mark
-    if (state == CLIP_STATE_READY) {
-      iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, priv->sfile->staging_dir);
+    if (obj->state == CLIP_STATE_READY) {
+      lives_object_set_attr_value(obj, attr, priv->sfile->staging_dir);
     } else {
-      iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, capable->shmdir_path);
+      lives_object_set_attr_value(obj, attr, capable->shmdir_path);
     }
-    iparams->params[1] = NULL;
-  } else if (lives_capacity_get(icaps->capacities, LIVES_CAPACITY_REMOTE)) {
+  } else if (lives_has_capacity(icaps->capacities, LIVES_CAPACITY_REMOTE)) {
     char *uidstr, *tmpdir;
-    iparams = (lives_intentparams_t *)lives_calloc(sizeof(lives_intentparams_t), 1);
-    //iparams->intent = intent;
-    iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 2);
-
-    // eventually 'ytdl' should come from an optional req CLIP_STAGING_PARAM
+    lives_obj_attr_t *attr = lives_object_declare_attribute(obj, CLIP_ATTR_STAGING_DIR, WEED_SEED_STRING);
+    // eventually 'ytdl' should come from an optional req CLIP_ATTR_STAGING_PARAM
     // to perform the IMPORT transformation, which would resolve to open_file_sel for LiVES
     // and get_clip_data for the clip
+
     uidstr = lives_strdup_printf("ytdl-%lu", gen_unique_id());
     tmpdir = get_systmp(uidstr, TRUE);
-    iparams->params[0] = string_req_init(CLIP_PARAM_STAGING_DIR, tmpdir);
+
+    lives_object_set_attr_value(obj, attr, capable->shmdir_path);
     lives_free(tmpdir);
-    iparams->params[1] = NULL;
   }
-  return iparams;
-}
-
-
-// TODO - merge with transform for intent, or whatever it ends up being...
-LIVES_LOCAL_INLINE
-lives_intentparams_t *get_txparams_for_intent(lives_object_t *obj, lives_intentcap_t *icaps) {
-  if (obj->type == OBJECT_TYPE_CLIP) {
-    return _get_params_for_clip_tx(obj, obj->state, icaps);
-  }
-  return NULL;
 }
 
 
 // placeholder function, until we have proper objects for clips
-lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intentcap_t *icaps) {
-  lives_object_t obj;
-  lives_intentparams_t *iparams;
+lives_object_instance_t *get_object_for_clip(int clipno, const lives_intentcap_t *icaps) {
+  lives_object_t *obj;
   clip_priv_data_t *priv;
-  obj.type = OBJECT_TYPE_CLIP;
-  priv = obj.priv = (clip_priv_data_t *)lives_calloc(1, sizeof(clip_priv_data_t));
+  obj = lives_object_instance_create(OBJECT_TYPE_CLIP, NO_SUBTYPE);
+  priv = obj->priv = (clip_priv_data_t *)lives_calloc(1, sizeof(clip_priv_data_t));
   priv->idx = clipno;
   if (!IS_VALID_CLIP(clipno) || mainw->recovering_files) {
     priv->sfile = NULL;
-    obj.state = CLIP_STATE_NOT_LOADED;
+    obj->state = CLIP_STATE_NOT_LOADED;
   } else {
     priv->sfile = mainw->files[clipno];
-    obj.state = CLIP_STATE_READY;
+    obj->state = CLIP_STATE_READY;
   }
-  iparams = get_txparams_for_intent(&obj, icaps);
+  //add_attributes_for_icaps(obj, icaps);
+  add_attributes_for_clip_instance(obj, icaps);
   lives_free(priv);
-  return iparams;
+  obj->priv = NULL;
+  return obj;
 }
 
 
@@ -2166,3 +2160,39 @@ int create_nullvideo_clip(const char *handle) {
   mainw->files[new_file]->clip_type = CLIP_TYPE_NULL_VIDEO;
   return new_file;
 }
+
+
+boolean check_for_ratio_fps(double fps) {
+  boolean ratio_fps;
+  char *test_fps_string1 = lives_strdup_printf("%.3f00", fps);
+  char *test_fps_string2 = lives_strdup_printf("%.5f", fps);
+
+  if (strcmp(test_fps_string1, test_fps_string2)) {
+    // got a ratio
+    ratio_fps = TRUE;
+  } else {
+    ratio_fps = FALSE;
+  }
+  lives_free(test_fps_string1);
+  lives_free(test_fps_string2);
+
+  return ratio_fps;
+}
+
+
+double get_ratio_fps(const char *string) {
+  // return a ratio (8dp) fps from a string with format num:denom
+  // inverse of calc_ratio_fps
+  double fps;
+  char *fps_string;
+  char **array = lives_strsplit(string, ":", 2);
+  int num = atoi(array[0]);
+  int denom = atoi(array[1]);
+  lives_strfreev(array);
+  fps = (double)num / (double)denom;
+  fps_string = lives_strdup_printf("%.8f", fps);
+  fps = lives_strtod(fps_string);
+  lives_free(fps_string);
+  return fps;
+}
+

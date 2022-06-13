@@ -883,7 +883,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   posix_fadvise(fd, skip, 0, POSIX_FADV_NOREUSE);
   posix_fadvise(fd, skip, 0, POSIX_FADV_WILLNEED);
 #endif
-  fbuff->ptr = fbuff->buffer = lives_calloc(1, fsize);
+  fbuff->ptr = fbuff->buffer = lives_calloc_align(fsize);
   mlock(fbuff->buffer, fsize);
   fbuff->skip = skip;
   if (fsize > 0) {
@@ -1324,6 +1324,60 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t posn) {
   return _lives_lseek_buffered_rdonly_relative(fbuff, posn);
 }
 
+
+#if 0
+ssize_t lives_buffered_readline(int fd, void *buf, const char sep, size_t maxlen,
+                                boolean binmode) {
+  ssize_t count = 0;
+  int i;
+
+  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+    LIVES_DEBUG("lives_read_buffered: no file buffer found");
+    return lives_read(fd, buf, count, allow_less);
+  }
+
+  if (!(fbuff->flags & FB_FLAG_RDONLY)) {
+    LIVES_ERROR("lives_read_buffered: wrong buffer type");
+    return 0;
+  }
+  lives_buffered_rdonly_set_reversed(fd, FALSE);
+  while (1) {
+    if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) {
+      nbytes = fbuff->bytes - fbuff->offset;
+    } else nbytes = fbuff->bytes;
+    if (!nbytes) {
+      if (fbuff->bufsztype != BUFF_SIZE_READ_SLURP) {
+        ssize_t ret = file_buffer_fill(fbuff, fbuff->bytes);
+        if (ret < 0) return ret;
+      } else {
+        if (!(fbuff->flags & FB_FLAG_BG_OP)) break;
+        else lives_nanosleep(1000);
+        continue;
+      }
+    }
+    for (i = 0; i < nbytes; i++) {
+      c = fbuff->ptr[i];
+      if (maxlen && i >= maxlen) break;
+      if (!binmode && !c) break;
+      if (c == sep) break;
+    }
+    if (!i) {
+      if (!binmode) lives_memset(buf + count, 0, 1);
+      break;
+    }
+    if (i < nbytes || (maxlen <= i)) {
+      if (i > maxlen) i = maxlen;
+      lives_memcpy(buf. fbuff->ptr, i);
+      count += i;
+      break;
+    }
+    count += i;
+    maxlen -= i;
+  }
+  lives_lseek_buffered_rdonly_relative(fd, count);
+  return count;
+}
+#endif
 
 ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less) {
   lives_file_buffer_t *fbuff;
@@ -2015,3 +2069,111 @@ boolean check_for_disk_space(boolean fullcheck) {
   }
   return TRUE;
 }
+
+
+////////////////// file caching //////
+
+typedef struct {
+  uint32_t hash;
+  char *key;
+  char *data;
+} lives_speed_cache_t;
+
+
+char *get_val_from_cached_list(const char *key, size_t maxlen, LiVESList * cache) {
+  // WARNING - contents may be invalid if the underlying file is updated (e.g with set_*_pref())
+  LiVESList *list = cache;
+  uint32_t khash = fast_hash(key, 0);
+  lives_speed_cache_t *speedy;
+  for (; list; list = list->next) {
+    speedy = (lives_speed_cache_t *)list->data;
+    if (khash == speedy->hash && !lives_strcmp(key, speedy->key))
+      return lives_strndup(speedy->data, maxlen);
+  }
+  return NULL;
+}
+
+
+LIVES_GLOBAL_INLINE void cached_list_free(LiVESList **list) {
+  lives_speed_cache_t *speedy;
+  for (LiVESList *xlist = *list; xlist; xlist = xlist->next) {
+    speedy = (lives_speed_cache_t *)(*list)->data;
+    if (speedy) {
+      if (speedy->key) lives_free(speedy->key);
+      if (speedy->data) lives_free(speedy->data);
+      lives_free(speedy);
+    }
+    xlist->data = NULL;
+  }
+  lives_list_free(*list);
+  *list = NULL;
+}
+
+
+void print_cache(LiVESList * cache) {
+  /// for debugging
+  lives_speed_cache_t *speedy;
+  LiVESList *ll = cache;
+  g_print("dumping cache %p\n", cache);
+  for (; ll; ll = ll->next) {
+    speedy = (lives_speed_cache_t *)ll->data;
+    g_print("cache dets: %s = %s\n", speedy->key, speedy->data);
+  }
+}
+
+
+LiVESList *cache_file_contents(const char *filename) {
+  lives_speed_cache_t *speedy;
+  LiVESList *list = NULL;
+  FILE *hfile;
+  size_t kelen;
+  char buff[65536];
+  char *key = NULL, *keystr_end = NULL, *cptr, *tmp, *data = NULL;
+  if (!(hfile = fopen(filename, "r"))) return NULL;
+  while (fgets(buff, 65536, hfile)) {
+    if (!*buff) continue;
+    if (*buff == '#') continue;
+    if (key) {
+      if (!lives_strncmp(buff, keystr_end, kelen)) {
+        speedy = (lives_speed_cache_t *)lives_calloc(1, sizeof(lives_speed_cache_t));
+        speedy->hash = fast_hash(key, 0);
+        speedy->key = key;
+        speedy->data = data;
+        key = data = NULL;
+        lives_free(keystr_end);
+        keystr_end = NULL;
+        list = lives_list_prepend(list, speedy);
+        continue;
+      }
+      cptr = buff;
+      if (data) {
+        if (*buff != '|') continue;
+        cptr++;
+      }
+      lives_chomp(cptr, FALSE);
+      tmp = lives_strdup_printf("%s%s", data ? data : "", cptr);
+      if (data) lives_free(data);
+      data = tmp;
+      continue;
+    }
+    if (*buff != '<') continue;
+    kelen = 0;
+    for (cptr = buff; cptr; cptr++) {
+      if (*cptr == '>') {
+        kelen = cptr - buff;
+        if (kelen > 2) {
+          *cptr = 0;
+          key = lives_strdup(buff + 1);
+          keystr_end = lives_strdup_printf("</%s>", key);
+          kelen++;
+        }
+        break;
+      }
+    }
+  }
+  fclose(hfile);
+  if (key) lives_free(key);
+  if (keystr_end) lives_free(keystr_end);
+  return lives_list_reverse(list);
+}
+

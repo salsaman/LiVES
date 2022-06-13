@@ -322,13 +322,19 @@ LIVES_GLOBAL_INLINE void lives_list_free_all(LiVESList **list) {
 
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_remove_node(LiVESList *list, LiVESList *node, boolean free_data) {
-  if (!node) return NULL;
+  list = lives_list_detatch_node(list, node);
+  if (node->data && free_data) lives_free(node->data);
+  lives_list_free(node);
+  return list;
+}
+
+
+LIVES_GLOBAL_INLINE LiVESList *lives_list_detatch_node(LiVESList *list, LiVESList *node) {
+  if (!node || !list) return list;
   if (node->prev) node->prev->next = node->next;
   if (node->next) node->next->prev = node->prev;
   if (node == list) list = list->next;
-  if (node->data && free_data) lives_free(node->data);
   node->prev = node->next = NULL;
-  lives_list_free(node);
   return list;
 }
 
@@ -338,6 +344,29 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_remove_data(LiVESList *list, livespoin
   for (; xlist; xlist = xlist->next) if (xlist->data == data) break;
   if (xlist) return lives_list_remove_node(list, xlist, free_data);
   return NULL;
+}
+
+
+LIVES_GLOBAL_INLINE LiVESList *lives_list_detatch_data(LiVESList **list, livespointer data) {
+  LiVESList *xlist = *list;
+  for (; xlist; xlist = xlist->next) if (xlist->data == data) break;
+  if (xlist) {
+    *list = lives_list_detatch_node(*list, xlist);
+    return xlist;
+  }
+  return NULL;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_list_check_remove_data(LiVESList **list, livespointer data, boolean free_data) {
+  // check if data is in list, id so remove it and return TRUE
+  LiVESList *xlist = *list;
+  for (; xlist; xlist = xlist->next) if (xlist->data == data) break;
+  if (xlist) {
+    *list = lives_list_remove_node(*list, xlist, free_data);
+    return TRUE;
+  }
+  return FALSE;
 }
 
 
@@ -361,4 +390,56 @@ LIVES_GLOBAL_INLINE char *lives_list_to_string(LiVESList *list, const char *deli
   char *res = NULL;
   for (; list; list = list->next) res = lives_strcollate(&res, delim, list->data);
   return res;
+}
+
+/////////////////// hash stores  //////
+
+LIVES_GLOBAL_INLINE lives_hash_store_t *lives_hash_store_new(const char *id) {
+  lives_hash_store_t *store = lives_plant_new(LIVES_WEED_SUBTYPE_HASH_STORE);
+  if (id) weed_set_string_value(store, LIVES_LEAF_ID, id);
+  return store;
+}
+
+LIVES_GLOBAL_INLINE void *get_from_hash_store_i(lives_hash_store_t *store, uint64_t key) {
+  if (!store) return NULL;
+  else {
+    char *xkey = lives_strdup_printf("k_%lu", key);
+    void *vret = weed_get_voidptr_value(store, xkey, NULL);
+    lives_free(xkey);
+    return vret;
+  }
+}
+
+LIVES_GLOBAL_INLINE void *get_from_hash_store(lives_hash_store_t *store, const char *key) {
+  uint64_t ikey = fast_hash64(key);
+  return get_from_hash_store_i(store, ikey);
+}
+
+
+LIVES_GLOBAL_INLINE lives_hash_store_t *add_to_hash_store_i(lives_hash_store_t *store, uint64_t key, void *data) {
+  if (!store) store = lives_hash_store_new(NULL);
+  if (store) {
+    char *xkey = lives_strdup_printf("k_%lu", key);
+    weed_set_voidptr_value(store, xkey, data);
+  }
+  return store;
+}
+
+LIVES_GLOBAL_INLINE lives_hash_store_t *add_to_hash_store(lives_hash_store_t *store, const char *key, void *data) {
+  uint64_t ikey = fast_hash64(key);
+  return add_to_hash_store_i(store, ikey, data);
+}
+
+
+LIVES_GLOBAL_INLINE lives_hash_store_t *remove_from_hash_store_i(lives_hash_store_t *store, uint64_t key) {
+  if (store) {
+    char *xkey = lives_strdup_printf("k_%lu", key);
+    weed_leaf_delete(store, xkey);
+  }
+  return store;
+}
+
+LIVES_GLOBAL_INLINE lives_hash_store_t *remove_from_hash_store(lives_hash_store_t *store, const char *key) {
+  uint64_t ikey = fast_hash64(key);
+  return remove_from_hash_store_i(store, ikey);
 }

@@ -8,6 +8,28 @@
 #define _MATHS_H_
 
 // math macros / functions
+#define MASK64_h32	0xFFFFFFFF00000000
+#define MASK64_l32	0x00000000FFFFFFFF
+#define MASK64_hh16	0xFFFF000000000000
+#define MASK64_hl16	0x0000FFFF00000000
+#define MASK64_lh16	0x00000000FFFF0000
+#define MASK64_ll16	0x0000FFFF00000000
+
+#define MASK64_hhh8	0xFF00000000000000
+#define MASK64_hhl8	0x00FF000000000000
+#define MASK64_hlh8	0x0000FF0000000000
+#define MASK64_hll8	0x000000FF00000000
+#define MASK64_lhh8	0x00000000FF000000
+#define MASK64_lhl8	0x0000000000FF0000
+#define MASK64_llh8	0x000000000000FF00
+#define MASK64_lll8	0x00000000000000FF
+
+#define MASK64_01_x8	0x0101010101010101
+#define MASK64_80_x8	0x8080808080808080
+
+#define MASK64_x8(n)	0x##n##n##n##n##n##n##n##n
+
+///
 
 #define squared(a) ((a) * (a))
 
@@ -61,6 +83,8 @@ uint64_t get_log2_64(uint64_t x) GNU_CONST;
 
 float get_approx_ln(uint32_t val) GNU_CONST;
 double get_approx_ln64(uint64_t x) GNU_CONST;
+
+int lcm(int x, int y, int max);
 
 double gaussian(double x, double a, double m, double s1, double s2);
 

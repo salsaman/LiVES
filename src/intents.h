@@ -37,6 +37,12 @@
 #ifndef HAS_LIVES_INTENTS_H
 #define HAS_LIVES_INTENTS_H
 
+#if defined (_BASE_DEFS_ONLY_) || !defined (HAS_LIVES_INTENTS_H_BASE_DEFS)
+// call with _BASE_DEFS_ONLY_ defined to get early definitions
+#define ADD_BASE_DEFS
+#endif
+
+#ifndef _BASE_DEFS_ONLY_
 #define ashift(v0, v1) ((uint64_t)(((v0) << 8) | (v1)))
 #define ashift4(a, b, c, d) ((uint64_t)(((ashift((a), (b)) << 16) | (ashift((c), (d))))))
 #define ashift8(a, b, c, d, e, f, g, h) ((uint64_t)(((ashift4((a), (b), (c), (d))) << 32) | \
@@ -54,8 +60,8 @@
 #define OBJECT_TYPE_PLUGIN		IMkType("obj.PLUG"
 #define OBJECT_TYPE_WIDGET		IMkType("obj.WDGT")
 #define OBJECT_TYPE_THREAD		IMkType("obj.THRD")
+#define OBJECT_TYPE_DICTIONARY		IMkType("obj.DICT")
 
-#define LIVES_SEED_HOOK WEED_SEED_FUNCPTR
 #define LIVES_SEED_OBJECT 2048
 
 typedef lives_funcptr_t object_funcptr_t;
@@ -64,86 +70,20 @@ typedef struct _object_t lives_object_instance_t;
 typedef struct _obj_status_t lives_transform_status_t;
 typedef struct _obj_transform_t lives_object_transform_t;
 typedef weed_param_t lives_tx_param_t;
-typedef weed_param_t lives_obj_attr_t;
+typedef weed_plant_t lives_obj_attr_t;
 
-#define HOOK_CB_SINGLE_SHOT		(1 << 1) //< hook function should be called only once then removed
-#define HOOK_CB_ASYNC			(1 << 2) //< hook function should not block
-#define HOOK_CB_ASYNC_JOIN		(1 << 3) //< hook function should not block, but the thread should be joined
-///							at the end of processing, or before calling the hook
-///							a subsequent time
-#define HOOK_CB_CHILD_INHERITS		(1 << 4) // TODO - child threads should inherit the hook callbacks
-#define HOOK_CB_FG_THREAD		(1 << 5) // force fg service run
+#define HOOKFUNCS_ONLY
+#include "threading.h"
+#ifdef HOOKFUNCS_ONLY
+#undef HOOKFUNCS_ONLY
+#endif
 
-#define HOOK_CB_PRIORITY		(1 << 8) // prepend, not append
-
-#define HOOK_BLOCKED			(1 << 16) // hook function should not be called
-
-#define HOOK_UNIQUE_FUNC		(1 << 24) // do not add if func already in hooks
-
-#define HOOK_UNIQUE_DATA		(1 << 25) // do not add if data already in hooks (UNIQUE_FUNC assumed)
-
-
-// change data of first func of same type but leave func inplace,
-// remove others of same func, but never add, only replace
-#define HOOK_UNIQUE_REPLACE		(1 << 26)
-
-// change data of first func of same type but leave func inplace,
-// remove others of same func, add if no other copies of the func
-#define HOOK_UNIQUE_REPLACE_OR_ADD 	(HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE)
-
-// replace (remove) other entries with same func and add
-#define HOOK_UNIQUE_REPLACE_FUNC	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_REPLACE)
-
-// replace (remove) other entries having same func and data, and add
-#define HOOK_UNIQUE_REPLACE_MATCH	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE)
-
-enum {
-  ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
-  RESTART_HOOK,
-  EXIT_HOOK,
-  THREAD_EXIT_HOOK, // run on thread exit
-  THREAD_INTERNAL_HOOK, /// reserved for internal use, should not be modified
-  N_GLOBAL_HOOKS,
-  ///
-  TX_PRE_HOOK,
-  TX_START_HOOK, /// status -> running
-  TX_POST_HOOK,
-  TX_DONE_HOOK,   /// status -> success
-  DATA_PREP_HOOK,   // data supplied, may be altered
-  DATA_READY_HOOK, // data ready for processing
-  PRE_VALUE_CHANGED_HOOK, /// attribute value amended
-  POST_VALUE_CHANGED_HOOK, /// attribute value amended
-  FINAL_HOOK, ///< about to be freed
-  N_HOOK_FUNCS,
-};
-
-typedef void *(*hook_funcptr_t)(lives_object_t *, void *);
-typedef void (*attr_listener_f)(lives_object_t *, lives_obj_attr_t *);
-
-typedef struct {
-  hook_funcptr_t func;
-  lives_object_t *obj;
-  void *attr;
-  void *data;
-  uint64_t flags;
-  lives_proc_thread_t tinfo; // for async_join
-  void *retloc; // pointer to a var to store return val in
-} lives_closure_t;
-
-typedef struct {
-  int count; // if count < 0, object should be destroyed
-  pthread_mutex_t mutex;
-  boolean mutex_inited;
-} obj_refcounter;
-
-int refcount_inc(obj_refcounter *);
-int refcount_dec(obj_refcounter *);
-int refcount_query(obj_refcounter *);
+typedef lives_refcounter_t obj_refcounter;
 
 // lives_object_t
 struct _object_t {
   uint64_t uid; // unique id for this instnace (const)
-  obj_refcounter refcount;
+  obj_refcounter refcounter;
   uint64_t type; // object type - from IMkType (const)
   uint64_t subtype; // object subtype, can change during a transformation
   int state; // object state
@@ -173,10 +113,44 @@ typedef struct {
 
 /////////////
 
-int set_thread_intention(lives_intention intent, lives_capacity_t *);
+#endif // _BASE_DEFS_ONLY_ is defined
+
+#ifdef ADD_BASE_DEFS
+// set base defs early, as we need these at the start
+
+#ifndef HAS_LIVES_INTENTS_H_BASE_DEFS
+#define HAS_LIVES_INTENTS_H_BASE_DEFS
+
+#ifdef _BASE_DEFS_ONLY_
+#undef  HAS_LIVES_INTENTS_H
+#endif
+
+// avoiding using an enum allows the list to be extended in other headers
+typedef int32_t lives_intention;
+typedef weed_plant_t lives_capacities_t;
+
+#define ICAP_DESC_LEN 64
+
+typedef struct {
+  char desc[ICAP_DESC_LEN];  // descriptive name of icaps (e.g load, download)
+  lives_intention intent;
+  lives_capacities_t *capacities; ///< type specific capabilities
+  lives_struct_def_t *lsd;
+} lives_intentcap_t;
+
+#endif // not def HAS_LIVES_INTENTS_H_BASE_DEFS
+
+#undef ADD_BASE_DEFS
+#endif // ADD_BASE_DEFS
+
+#ifdef _BASE_DEFS_ONLY_
+#undef _BASE_DEFS_ONLY_
+#else
 
 #define OBJECT_TYPE_UNDEFINED 0
 #define OBJECT_SUBTYPE_UNDEFINED 0
+
+#define NO_SUBTYPE 0
 
 enum {
   // some common intentions
@@ -202,7 +176,7 @@ enum {
 
   LIVES_INTENTION_UPDATE_VALUE,
 
-  // an intent which converts an object's STATE from PREPARE to NORMAL
+  // an intent which converts an object's STATE from PREPARE to NORMAL / READY
   LIVES_INTENTION_PREPARE = 0x00000200,
 
   // an intent which converts an object's STATE from EXTERNAL to NORMAL
@@ -210,7 +184,7 @@ enum {
   LIVES_INTENTION_IMPORT = 0x00000C00,
 
   // an intent which creates a copy object in STATE EXTERNAL
-  // with LOCAL - export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
+  // withLOCAL - export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
   // with REMOTE - export raw format to online location, e.g. export audio, save frame
   LIVES_INTENTION_EXPORT,
 
@@ -267,30 +241,7 @@ enum {
   LIVES_INTENTION_MAX = 0xFFFFFFFF
 };
 
-// generic capacities, type specific ones may also exist
-// key name is defined here. Values are int32_t interpreted as boolean: FALSE (0) or TRUE (1 or non-zero)
-// absent values are assumed FALSE
-//#define LIVES_CAPACITY_LOCAL		"local"
-#define LIVES_CAPACITY_REMOTE		"remote"
-
-#define LIVES_CAPACITY_REALTIME		"realtime"
-#define LIVES_CAPACITY_DISPLAY		"display" // provides some type of (local) display output
-
-#define LIVES_CAPACITY_VIDEO		"video"
-#define LIVES_CAPACITY_AUDIO		"audio"
-#define LIVES_CAPACITY_TEXT		"text"
-
-#define LIVES_CAPACITY_DATA		"data"
-
-/////// intentcaps //
-
-#define LIVES_ICAPS_LOAD LIVES_INTENTION_IMPORT
-#define LIVES_ICAPS_DOWNLOAD LIVES_INTENTION_IMPORT + 1
-
-#define LIVES_INTENCAP_IS_IMPORT_LOCAL(icap) (icap->intent = LIVE_INTENTION_IMPORT && lives_get_capacity(LIVES_CAPACITY_LOCAL))
-#define LIVES_INTENCAP_IS_IMPORT_REMOTE(icap) (icap->intent = LIVE_INTENTION_IMPORT && lives_get_capacity(LIVES_CAPACITY_REMOTE))
-
-// aliases
+// aliases (depending on context, intentions can be used to signify a choice amongst various alternatives)
 #define LIVES_INTENTION_IGNORE LIVES_INTENTION_NOTHING
 #define LIVES_INTENTION_LEAVE LIVES_INTENTION_NOTHING
 #define LIVES_INTENTION_SKIP LIVES_INTENTION_NOTHING
@@ -298,13 +249,20 @@ enum {
 #define  LIVES_INTENTION_DESTROY_INSTANCE LIVES_INTENTION_UNREF
 
 // or maybe just set value with workdir param for LiVES object ?
-#define LIVES_INTENTION_MOVE LIVES_INTENTION_EXPORT
 
-#define LIVES_INTENTION_UPLOAD LIVES_INTENTION_EXPORT // with "local" set to FALSE
+// in context with capacity "local" set
+#define LIVES_INTENTION_MOVE LIVES_INTENTION_EXPORT
+//#define LIVES_INTENTION_MOVE check_intentcaps(intent, LIVES_INTENTION_EXPORT, icaps, CAP_XOR(LIVES_CAPICTY_LOCAL, WITHOUT_CAP(LIVES_CAPACITY_RENOTE)))
+
+// in context with capacity "remote" set
+#define LIVES_INTENTION_UPLOAD LIVES_INTENTION_EXPORT
 
 //#define LIVES_INTENTION_DOWNLOAD LIVES_INTENTION_IMPORT_REMOTE
 
 #define LIVES_INTENTION_DELETE LIVES_INTENTION_DESTROY_INSTANCE
+
+#define LIVES_INTENTION_UPDATE LIVES_INTENTION_UPDATE_VALUE
+#define LIVES_INTENTION_REPLACE LIVES_INTENTION_DELETE
 
 // generic STATES which can be altered by *transforms*
 #define OBJECT_STATE_UNDEFINED	0
@@ -322,7 +280,7 @@ enum {
 
 struct _obj_status_t {
   int *status; /// pointer to an int (some states are dynamic)
-  obj_refcounter refcount;
+  obj_refcounter refcounter;
 };
 
 // create, destroy, set subtype, set state, set value, get value
@@ -384,20 +342,51 @@ int lives_object_instance_ref(lives_object_instance_t *);
 // attr updates via UPDATE_VALUE intent, and monitor with listeners
 #define OBJATTR_FLAG_UPDATES_ASYNC 	0x20000
 
+#define LIVES_LEAF_OWNER "owner_uid"
+
 // when creating the instance, we should set the intial STATE, and declare its attributes
-lives_obj_attr_t *lives_object_declare_attribute(lives_object_t *, const char *name, int stype);
+lives_obj_attr_t *lives_object_declare_attribute(lives_object_t *, const char *name, uint stype);
 
 lives_obj_attr_t *lives_object_get_attribute(lives_object_t *, const char *name);
+
+boolean lives_object_attribute_unref(lives_object_t *, lives_obj_attr_t *);
+void lives_object_attributes_unref_all(lives_object_t *);
 
 // listeners can attach to the pre_/ post_ value_changed hooks for the object
 
 // values can be set later
 weed_error_t lives_object_set_attribute_value(lives_object_t *, const char *name, ...);
-weed_error_t lives_object_set_attribute_array(lives_object_t *, const char *name, int n_elems, ...);
+weed_error_t lives_object_set_attribute_default(lives_object_t *obj, const char *name, ...);
+weed_error_t lives_object_set_attribute_array(lives_object_t *, const char *name, weed_size_t ne, ...);
+weed_error_t lives_object_set_attribute_def_array(lives_object_t *obj, const char *name, weed_size_t ne, ...);
+weed_error_t lives_object_set_attr_value(lives_object_t *, lives_obj_attr_t *, ...);
+weed_error_t lives_object_set_attr_default(lives_object_t *obj, lives_obj_attr_t *attr, ...);
+weed_error_t lives_object_set_attr_array(lives_object_t *, lives_obj_attr_t *, weed_size_t ne,  ...);
+weed_error_t lives_object_set_attr_def_array(lives_object_t *obj, lives_obj_attr_t *attr,
+    weed_size_t ne,  ...);
 
-//// placeholder - should operate on transform requirements instead
-weed_error_t lives_attribute_set_readonly(lives_object_t *, const char *name, boolean state);
+uint32_t obj_attr_get_value_type(lives_obj_attr_t *);
+
+int lives_attribute_get_value_int(lives_obj_attr_t *);
+
+uint64_t obj_attr_get_owner(lives_obj_attr_t *);
+uint64_t lives_attribute_get_owner(lives_object_t *, const char *name);
+
+boolean obj_attr_is_mine(lives_obj_attr_t *);
+boolean lives_attribute_is_mine(lives_object_t *, const char *name);
+
+boolean obj_attr_is_readonly(lives_obj_attr_t *);
 boolean lives_attribute_is_readonly(lives_object_t *, const char *name);
+
+weed_error_t obj_attr_set_readonly(lives_obj_attr_t *, boolean state);
+weed_error_t lives_attribute_set_readonly(lives_object_t *, const char *name, boolean state);
+
+boolean obj_attr_is_leaf_readonly(lives_obj_attr_t *, const char *key);
+boolean lives_attribute_is_leaf_readonly(lives_object_t *, const char *name, const char *key);
+
+weed_error_t obj_attr_set_leaf_readonly(lives_obj_attr_t *, const char *key, boolean state);
+weed_error_t lives_attribute_set_leaf_readonly(lives_object_t *, const char *name,
+    const char *key, boolean state);
 
 // cast to / from lives_param_type_t
 int lives_attribute_get_param_type(lives_object_t *obj, const char *name);
@@ -409,7 +398,9 @@ void lives_attribute_prepend_listener(lives_object_t *obj, const char *name, att
 
 int lives_object_get_num_attributes(lives_object_t *);
 
-int lives_object_dump_attributes(lives_object_t *);
+char *lives_object_dump_attributes(lives_object_t *);
+
+char *interpret_uid(uint64_t uid);
 
 /// NOT YET FULLY IMPLEMENTED
 
@@ -442,7 +433,7 @@ typedef struct {
   // --------
   // internal book keeping
   lives_object_instance_t *oinst; // owner instance / template
-  obj_refcounter refcount;
+  obj_refcounter refcounter;
 } lives_rules_t;
 
 // flagbits for transformations
@@ -459,16 +450,6 @@ typedef struct {
 
 #define TR_FLAGS_DIRECT (1 << 32) // function may be called directly (this is a transitional step
 // which may be deprecated
-
-typedef struct {
-  int category; // category type for function (0 for none)
-  const char *funcname; // optional
-  lives_funcptr_t function;
-  uint32_t return_type;
-  const char *args_fmt;
-  uint64_t flags;
-  void *data; // optional data, may be NULL
-} lives_funcdef_t;
 
 // maps in / out params to actual function parameters
 typedef struct {
@@ -508,56 +489,98 @@ struct _obj_transform_t {
 
 #define LIVES_WEED_SUBTYPE_CAPACITIES 512
 
-lives_capacity_t *lives_capacities_new(void);
-void lives_capacities_free(lives_capacity_t *);
+lives_capacities_t *lives_capacities_new(void);
 
-#define LIVES_ERROR_NOSUCH_CAP WEED_ERROR_NOSUCH_LEAF
-#define LIVES_ERROR_NOSUCH_ATTRIBUTE WEED_ERROR_NOSUCH_LEAF
-#define LIVES_ERROR_CAP_INVALID WEED_ERROR_NOSUCH_ELEMENT
-#define LIVES_ERROR_ICAP_NULL 66000
+void lives_capacities_free(lives_capacities_t *); // calls unref
 
-#define LIVES_CAPACITY_TRUE(caps, key) ((caps) ? weed_get_boolean_value((caps), (key)) == WEED_TRUE : FALSE)
-#define LIVES_CAPACITY_FALSE(caps, key) ((caps) ? weed_get_boolean_value((caps), (key), NULL) == WEED_FALSE \
-					 ? TRUE : FALSE : FALSE)
+boolean lives_capacities_unref(lives_capacities_t *); // ret TRUE if freed
 
-#define LIVES_CAPACITY_NEGATED(caps, key) ((caps) ? lives_capacity_exists((caps), (key)) \
-					 ? weed_get_boolean_value((caps), (key)) == WEED_TRUE \
-					 ? TRUE : FALSE : FALSE : FALSE)
+// if dst is NULL returns a copy, else overwirtes caps in dst and returns dst
+lives_capacities_t *lives_capacities_copy(lives_capacities_t *dst, lives_capacities_t *src);
 
-#define LIVES_HAS_CAPACITY(caps, key) (lives_capacity_exists((caps), (key)))
+#define LIVES_ERROR_NULL_OBJECT WEED_ERROR_NOSUCH_PLANT
 
-#define lives_capacity_exists(caps, key) ((caps) ? (weed_plant_has_leaf((caps), (key)) == WEED_TRUE ? TRUE : FALSE) \
-					  FALSE)
+#define LIVES_ERROR_NULL_CAP WEED_ERROR_NOSUCH_LEAF
+#define LIVES_ERROR_NULL_ATTRIBUTE WEED_ERROR_NOSUCH_LEAF
+#define LIVES_ERROR_ICAP_NULL WEED_ERROR_NOSUCH_LEAF
 
-#define lives_capacity_delete(caps, key) ((caps) ? weed_leaf_delete((caps), (key)) : LIVES_ERROR_ICAP_NULL)
+#define LIVES_ERROR_NOSUCH_CAP WEED_ERROR_NOSUCH_ELEMENT
+#define LIVES_ERROR_NOSUCH_ATTRIBUTE WEED_ERROR_NOSUCH_ELEMENT
 
-#define lives_capacity_set(caps, key) ((caps) ? weed_set_boolean_value((caps), (key), WEED_TRUE) : LIVES_ERROR_ICAP_NULL)
-#define lives_capacity_unset(caps, key) ((caps) ? weed_set_boolean_value((caps), (key), WEED_FALSE) : LIVES_ERROR_ICAP_NULL)
+#define LIVES_ERROR_CAP_INVALID WEED_ERROR_WRONG_SEED_TYPE
+#define LIVES_ERROR_ATTRIBUTE_INVALID WEED_ERROR_WRONG_SEED_TYPE
 
-#define lives_capacity_set_int(caps, key, val) weed_set_int_value((caps), (key), val)
-#define lives_capacity_set_string(caps, key, val) weed_set_string_value((caps), (key), val)
+#define LIVES_ERROR_NOT_OWNER WEED_ERROR_IMMUTABLE
 
-// TODO - add some error handling
-#define lives_capacity_get(caps, key) ((caps) ? weed_get_boolean_value((caps), (key), 0) == WEED_TRUE ? TRUE : FALSE : FALSE)
-#define lives_capacity_get_int(caps, key) ((caps) ? weed_get_int_value((caps), (key), 0) : 0)
-#define lives_capacity_get_string(caps, key) ((caps) ? weed_get_string_value((caps), (key), 0) : 0)
+///////////////// capacities ////
 
-#define lives_capacity_set_readonly(caps, key, state) \
-  ((caps) ? weed_leaf_set_flags((caps), (key), weed_leaf_get_flags((caps), (key)) | (state ? WEED_FLAG_IMMUTABLE : 0)) \
-   : LIVES_ERROR_NOSUCH_CAP)
+#define CAP_PREFIX "cap_"
+#define CAP_PREFIX_LEN 4
 
-#define lives_capacity_is_readonly(caps, key) (cap ? ((weed_leaf_get_flags((caps), (key)) & WEED_FLAG_IMMUTABLE) \
-						      ? TRUE : FALSE) : FALSE)
+#define MAKE_CAPNAME(name) (lives_strdup_printf("%s%s", CAP_PREFIX, (name)))
+#define IS_CAPNAME(name) ((!strncmp((name), CAP_PREFIX, CAP_PREFIX_LEN)))
 
-void lives_intentcaps_free(lives_intentcap_t *);
-lives_intentcap_t *lives_intentcaps_new(int icapstype);
+void lives_capacity_set(lives_capacities_t *, const char *key);
+void lives_capacity_unset(lives_capacities_t *, const char *key);
+boolean lives_has_capacity(lives_capacities_t *, const char *key);
+
+// generic capacities, type specific ones may also exist
+// key name is defined here. Values are int32_t interpreted as boolean: FALSE (0) or TRUE (1 or non-zero)
+// absent values are assumed FALSE
+
+#define LIVES_CAPACITY_LOCAL		"local"
+#define LIVES_CAPACITY_REMOTE		"remote"
+
+#define LIVES_CAPACITY_REALTIME		"realtime"
+#define LIVES_CAPACITY_DISPLAY		"display" // provides some type of (local) display output
+
+#define LIVES_CAPACITY_VIDEO		"video"
+#define LIVES_CAPACITY_AUDIO		"audio"
+#define LIVES_CAPACITY_TEXT		"text"
+
+#define LIVES_CAPACITY_DATA		"data"
+
+enum {
+  _ICAP_IDLE = 0,
+  _ICAP_DOWNLOAD,
+  _ICAP_LOAD,
+  N_STD_ICAPS
+};
+
+/* #define __ICAP_DOWNLOAD _ICAP_DOWNLOAD */
+/* #define __ICAP_LOAD _ICAP_LOAD */
+
+// e.g ICAP(LOAD) or ICAP(DOWNLOAD)
+
+#define ICAP(type) get_std_icap(_ICAP_##type)
+
+void make_std_icaps(void);
+
+void lives_icap_init(lives_intentcap_t *);
+
+void lives_thread_set_intention(lives_intention intent, lives_capacities_t *icap);
+void lives_thread_set_intentcap(const lives_intentcap_t *icap);
+
+//lives_intentcap_t *lives_intentcaps_new(int icapstype);
+lives_intentcap_t *make_icap(lives_intention intent, ...) LIVES_SENTINEL;
+LiVESList *find_std_icaps_v(lives_intention intention, boolean allow_fuzzy,  ...) LIVES_SENTINEL;
+LiVESList *find_std_icaps(lives_intentcap_t *icap, boolean allow_fuzzy);
+void lives_icap_ref(lives_intentcap_t *);
+void lives_icap_unref(lives_intentcap_t *);
+void lives_icap_free(lives_intentcap_t *);
+const lives_intentcap_t *get_std_icap(int ref_id);
+int count_caps(lives_capacities_t *icaps);
+char *list_caps(lives_capacities_t *caps);
 
 /////////////// object broker ////
-const lives_funcdef_t *get_template_for_func(lives_funcptr_t);
+const lives_funcdef_t *get_template_for_func(funcidx_t funcidx);
+const lives_funcdef_t *get_template_for_func_by_uid(uint64_t uid);
+char *get_argstring_for_func(funcidx_t funcidx);
+char *lives_funcdef_explain(const lives_funcdef_t *funcdef);
 
 #if 0
 // base functions
-lives_intentcaps_t **list_intentcaps(void);
+lives_intentcap_t **list_intentcaps(void);
 get_transform_for(intentcap);
 #endif
 
@@ -591,13 +614,13 @@ boolean rules_lack_param(lives_rules_t *, const char *pname);
 //boolean rules_lack_condition(lives_rules_t *, int condition number);
 // type mismatch, subtype mismatch, state mismatch, status mismatch
 
-// convert an iparam to a regular weed_param
-weed_param_t *weed_param_from_iparams(lives_intentparams_t *, const char *name);
-weed_param_t *weed_param_from_object(lives_object_t *j, const char *name);
+// convert an attribute to a regular weed_param
+
+weed_param_t *weed_param_from_attribute(lives_object_instance_t *, const char *name);
+weed_param_t *weed_param_from_attr(lives_obj_attr_t *);
 
 #if 0
 const lives_transform_status_t *get_current_status(lives_object_t *);
-void lives_intentcaps_free(lives_intcaps_t **);
 void lives_rules_ref(lives_rules_t *);
 void lives_transform_list_free(LiVESTransformList **);
 void lives_tx_map_free(LiVESTransformList **);
@@ -607,5 +630,30 @@ void lives_intentparams_free(lives_intentparams_t *);
 boolean lives_transform_status_free(lives_transform_status_t *);
 void lives_object_transform_free(lives_object_transform_t *);
 
+////////////////// object broker part ///////////
+typedef lives_hash_store_t lives_dict_t;
+typedef lives_object_instance_t lives_dictent_t;
+
+// add attributes from obj into dictionary entry. attributes is a list of char *anames, NULL as final
+
+// update attributes. leave rest in place
+lives_dictent_t  *update_dictent(lives_dictent_t *, lives_object_t *, ...) LIVES_SENTINEL;
+
+// replace attributes
+lives_dictent_t  *replace_dictent(lives_dictent_t *, lives_object_t *, ...) LIVES_SENTINEL;
+
+lives_dictent_t *weed_plant_to_dictent(weed_plant_t *);
+
+void add_fn_lookup(lives_funcptr_t func, const char *name, const char *rtype, const char *args_fmt, int flags);
+
+size_t add_weed_plant_to_dict(weed_plant_t *);
+
+size_t add_object_to_dict(lives_object_t *);
+
+size_t weigh_object(lives_object_instance_t *obj);
+
+#endif // _BASE_DEFS_ONLY_ ! defined
+
 #endif
+
 

@@ -53,15 +53,12 @@
 # define PRId64		__PRI64_PREFIX "d"
 # define PRIu64		__PRI64_PREFIX "u"
 
-/// TODO: this file should be split into at least: memory functions, thread functions, file utils
+#define LIVES_LEAF_MD5SUM "md5sum"
 
-#include "memory.h"
-//#include "threading.h"
+#define LIVES_LEAF_UID "uid"
 
-//void shoatend(void);
-
-#define WEED_LEAF_MD5SUM "md5sum"
-
+/// TODO - move elsewhere, does not really belong here
+///
 // weed plants with type >= 16384 are reserved for custom use, so let's take advantage of that
 #define WEED_PLANT_LIVES 31337
 
@@ -79,10 +76,22 @@
 
 #define LIVES_WEED_SUBTYPE_BAG_OF_HOLDING 256 // generic - cant think of a better name right now
 
-// 512 == CAPACITIES
+#define LIVES_WEED_SUBTYPE_HASH_STORE 513
+
+/// disk/storage status values
+typedef enum {
+  LIVES_STORAGE_STATUS_UNKNOWN = 0,
+  LIVES_STORAGE_STATUS_NORMAL,
+  LIVES_STORAGE_STATUS_WARNING,
+  LIVES_STORAGE_STATUS_CRITICAL,
+  LIVES_STORAGE_STATUS_OVERFLOW,
+  LIVES_STORAGE_STATUS_OVER_QUOTA,
+  LIVES_STORAGE_STATUS_OFFLINE
+} lives_storage_status_t;
 
 weed_plant_t *lives_plant_new(int subtype);
 weed_plant_t *lives_plant_new_with_index(int subtype, int64_t index);
+weed_plant_t *lives_plant_new_with_refcount(int subtype);
 
 void lives_get_randbytes(void *ptr, size_t size);
 
@@ -92,7 +101,8 @@ size_t lives_strlen(const char *) GNU_HOT GNU_PURE;
 boolean lives_strcmp(const char *, const char *) GNU_HOT GNU_PURE;
 boolean lives_strncmp(const char *, const char *, size_t) GNU_HOT GNU_PURE;
 boolean lives_str_starts_with(const char *, const char *);
-char *lives_strdup_quick(const char *s);
+//char *lives_strdup_quick(const char *s);
+char *lives_strdup_concat(char *str, const char *sep, const char *fmt, ...);
 int lives_strcmp_ordered(const char *, const char *) GNU_HOT GNU_PURE;
 char *lives_concat(char *, char *) GNU_HOT;
 char *lives_concat_sep(char *st, const char *sep, char *x);
@@ -141,6 +151,8 @@ int64_t disk_monitor_check_result(const char *dir);
 int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout);
 void disk_monitor_forget(void);
 
+boolean check_storage_space(int clipno, boolean is_processing);
+
 char *get_symlink_for(const char *link);
 
 char *get_mountpoint_for(const char *dir);
@@ -153,7 +165,6 @@ ticks_t lives_get_current_ticks(void);
 char *lives_datetime(uint64_t secs, boolean use_local);
 char *lives_datetime_rel(const char *datetime);
 char *get_current_timestamp(void);
-char *format_tstr(double xtime, int minlim);
 
 #define LIVES_QUICK_NAP 1000. // 1 uSec
 #define LIVES_SHORT_SLEEP 1000000. // 1 mSec
@@ -164,7 +175,8 @@ char *format_tstr(double xtime, int minlim);
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
 								     errno != ETIMEDOUT);} while (0);
 
-#define lives_nanosleep_until_nonzero(condition) {while (!(condition)) lives_nanosleep(LIVES_QUICK_NAP);}
+#define lives_nanosleep_until_nonzero(condition) \
+  {while (!(condition)) lives_nanosleep(LIVES_QUICK_NAP);}
 #define lives_nanosleep_until_zero(condition) {while ((condition)) lives_nanosleep(LIVES_QUICK_NAP);}
 #define lives_nanosleep_while_false(c) lives_nanosleep_until_nonzero(c)
 #define lives_nanosleep_while_true(c) lives_nanosleep_until_zero(c)
@@ -224,11 +236,8 @@ void lives_log(const char *what);
 
 uint64_t lives_bin_hash(uint8_t *bin, size_t binlen) GNU_PURE GNU_HOT;
 uint32_t lives_string_hash(const char *) GNU_PURE GNU_HOT;
-uint32_t fast_hash(const char *) GNU_PURE GNU_HOT;
-char *lives_chomp(char *, boolean multi);
-char *lives_strtrim(const char *);
-
-int check_for_bad_ffmpeg(void);
+uint32_t fast_hash(const char *, size_t strln) GNU_PURE GNU_HOT;
+uint64_t fast_hash64(const char *);
 
 void update_effort(double nthings, boolean is_bad);
 void reset_effort(void);
@@ -240,7 +249,8 @@ lives_proc_thread_t ordfile_to_file_details(LiVESList **listp, const char *ofnam
     const char *orig_loc, uint64_t extra);
 
 ///// cmdline
-//char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase, int ridx, int rlen);
+
+char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase, int ridx, int rlen, boolean partial);
 
 /// x11
 char *get_wid_for_name(const char *wname);
@@ -307,6 +317,9 @@ char *wm_property_get(const char *key, int *type_guess);
 
 boolean get_wm_caps(void);
 boolean get_distro_dets(void);
+
+#define CPU_FEATURE_HAS_SSE2 1
+
 boolean get_machine_dets(void);
 int get_num_cpus(void);
 double get_disk_load(const char *mp);
@@ -328,10 +341,5 @@ char *get_worktmp(const char *prefix);
 char *get_worktmpfile(const char *prefix);
 char *get_localsharedir(const char *subdir);
 boolean notify_user(const char *detail);
-
-char *get_install_cmd(const char *distro, const char *exe);
-char *get_install_lib_cmd(const char *distro, const char *libname);
-
-boolean check_snap(const char *prog);
 
 #endif

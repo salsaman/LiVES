@@ -11,14 +11,19 @@
 typedef enum {
   LIVES_STRUCT_CLIP_DATA_T,
   LIVES_STRUCT_FILE_DETS_T,
+  LIVES_STRUCT_INTENTCAP_T,
   LIVES_N_STRUCTS
 } lives_struct_type;
 
 #define LIVES_STRUCT_FIRST LIVES_STRUCT_CLIP_DATA_T
 
+const lives_struct_def_t *lsd_from_store(lives_struct_type st_type);
+
 const lives_struct_def_t *get_lsd(lives_struct_type st_type);
 void *struct_from_template(lives_struct_type st_type);
+void *struct_from_template_inplace(lives_struct_type st_type, void *thestruct);
 void *copy_struct(lives_struct_def_t *);
+void *copy_struct_inplace(lives_struct_def_t *, void *thestruct);
 const char *lives_struct_get_creator(lives_struct_def_t *);
 void unref_struct(lives_struct_def_t *);
 void ref_struct(lives_struct_def_t *);

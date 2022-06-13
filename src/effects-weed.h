@@ -62,6 +62,12 @@ typedef enum {
 // set some custom Weed values
 
 #define WEED_FLAG_HOST_READONLY (1 << 16)
+#define WEED_FLAG_FREE_ON_DELETE (1 << 17)
+
+boolean weed_leaf_autofree(weed_plant_t *plant, const char *key);
+
+weed_error_t weed_leaf_set_autofree(weed_plant_t *, const char *key, boolean state);
+void  weed_plant_autofree(weed_plant_t *);
 
 // plugin specific values
 #define WEED_LEAF_HOST_SUSPICIOUS "host_suspicious" // plugin is badly behaved
@@ -81,7 +87,6 @@ typedef enum {
 #define WEED_LEAF_HOST_INPLACE "host_inplace" // inplace effect
 #define WEED_LEAF_HOST_DISABLED "host_disabled" // channel is disabled
 #define WEED_LEAF_HOST_TEMP_DISABLED "host_temp_dis" // channel is temp disabled
-#define WEED_LEAF_HOST_REFS "host_refs" // host ref counting
 #define WEED_LEAF_HOST_REPEATS "host_repeats" // host channel repeats
 #define WEED_LEAF_HOST_INITED "host_inited" // inited or not
 #define WEED_LEAF_HOST_PLUGIN_PATH "host_plugin_path" // plugin path
@@ -220,6 +225,7 @@ boolean interpolate_params(weed_plant_t *inst, void **pchains, ticks_t tc);
 int filter_mutex_lock(int key);  // 0 based key
 int filter_mutex_trylock(int key);  // 0 based key
 int filter_mutex_unlock(int key); // 0 based key
+
 
 size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem);
 weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *plant);
@@ -402,10 +408,6 @@ int weed_instance_ref(weed_plant_t *inst);
 int weed_instance_unref(weed_plant_t *inst);
 weed_plant_t *weed_instance_obtain(int key, int mode);
 #endif
-
-int32_t weed_plant_mutate(weed_plantptr_t, int32_t newtype);
-
-#define WEED_ERROR_NOSUCH_PLANT 65536
 
 weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data);
 

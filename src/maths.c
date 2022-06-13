@@ -24,19 +24,6 @@ LIVES_GLOBAL_INLINE double lives_fix(double val, int decimals) {
 }
 
 
-char *remove_trailing_zeroes(double val) {
-  int i;
-  double xval = val;
-
-  if (val == (int)val) return lives_strdup_printf("%d", (int)val);
-  for (i = 0; i <= 16; i++) {
-    xval *= 10.;
-    if (xval == (int)xval) return lives_strdup_printf("%.*f", i, val);
-  }
-  return lives_strdup_printf("%.*f", i, val);
-}
-
-
 // bell curve with its peak at x = m, spread/standard deviation of s1 to the left of the mean,
 // spread of s2 to the right of the mean, and scaling parameter a.
 LIVES_GLOBAL_INLINE double gaussian(double x, double a, double m, double s1, double s2) {
@@ -114,6 +101,26 @@ LIVES_GLOBAL_INLINE int hextodec(const char *string) {
   int tot = 0;
   for (char c = *string; c; c = *(++string)) tot = (tot << 4) + get_hex_digit(c);
   return tot;
+}
+
+int lcm(int x, int y, int max) {
+  // find the lowest common multiple of a and b, if it is > max, return 0
+  if (y >= x) {
+    if (x == y) return x;
+    if (x <= 0 || y > max) return 0;
+  } else {
+    int a;
+    if (y <= 0 || x > max) return 0;
+    a = y;
+    y = x;
+    x = a;
+  }
+  for (int val = x, rem = y - x; val <= max; val += x) {
+    if (rem == y) return val;
+    rem += x;
+    if (rem > y) rem -= y;
+  }
+  return max;
 }
 
 

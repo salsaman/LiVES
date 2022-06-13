@@ -358,7 +358,7 @@ static void make_acid(void) {
                                   "adv_timing", sizeof(adv_timing_t), (lsd_field_init_cb)adv_timing_init, NULL, NULL);
     lives_struct_init_p(cdata_lsd, cdata, (lives_struct_def_t **)&cdata->lsd);
     free(cdata);
-    lives_struct_set_class_data((lives_struct_def_t *)cdata_lsd, CREATOR_ID);
+    lives_struct_set_class_id((lives_struct_def_t *)cdata_lsd, CREATOR_ID);
   }
 }
 #endif
@@ -407,6 +407,7 @@ struct _index_entry {
   index_entry *next; ///< ptr to next entry
   int64_t dts; /// dts or frame number as preferred
   uint64_t offs;  ///< offset in file
+  int64_t data;
 };
 
 typedef struct {
@@ -434,12 +435,13 @@ static inline index_entry *_index_walk(index_entry *idx, int64_t pts) {
   return NULL;
 }
 
-static index_entry *index_add(index_container_t *idxc, uint64_t pts, int64_t offset) {
+static index_entry *_index_add(index_container_t *idxc, uint64_t pts, int64_t offset, int64_t data) {
   if (!idxc) return NULL;
   else {
     index_entry *nidx = idxc->idxht, *nentry = calloc(1, sizeof(index_entry));
     nentry->dts = pts;
     nentry->offs = offset;
+    nentry->data = data;
 
     if (!nidx) idxc->idxhh = idxc->idxht = nentry; // first entry in list
     else if (nidx->dts < pts) nidx->next = idxc->idxht = nentry; // last entry in list
@@ -460,6 +462,16 @@ static index_entry *index_add(index_container_t *idxc, uint64_t pts, int64_t off
     return nentry;
   }
 }
+
+static index_entry *index_add(index_container_t *idxc, uint64_t pts, int64_t offset) {
+  return _index_add(idxc, pts, offset, 0);
+}
+
+static index_entry *index_add_with_data(index_container_t *idxc, uint64_t pts, int64_t offset, int64_t data) {
+  return _index_add(idxc, pts, offset, data);
+}
+
+
 
 static inline index_entry *index_get(index_container_t *idxc, int64_t pts) {return _index_walk(idxc->idxhh, pts);}
 

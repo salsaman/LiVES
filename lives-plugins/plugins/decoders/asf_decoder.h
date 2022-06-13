@@ -273,23 +273,6 @@ typedef struct {
 
 #define FRAME_HEADER_SIZE 17
 
-typedef struct _index_entry index_entry;
-
-struct _index_entry {
-  index_entry *next; ///< ptr to next entry
-  uint32_t dts; ///< dts of keyframe
-  uint64_t offs;  ///< offset in file to asf packet header
-  uint8_t frag; ///< fragment number (counting only video fragments)
-};
-
-typedef struct {
-  index_entry *idx;  ///< linked list of index (keyframes)
-
-  int nclients;
-  lives_clip_data_t **clients;
-  pthread_mutex_t mutex;
-} index_container_t;
-
 typedef struct {
   int fd; ///< file handle 208 477373 22415 108fat32
   int64_t input_position; /// current or next input position

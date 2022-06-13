@@ -24,6 +24,8 @@ AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_CXX
 
+AC_PROG_MKDIR_P
+
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_LIBTOOL_DLOPEN
@@ -130,10 +132,7 @@ AC_DEFINE_UNQUOTED(LiVES_VERSION, "${VERSION}", [])
 dnl Add the languages which your application supports here.
 ALL_LINGUAS="ar fr ca cs da ja nl_NL de_DE pt pt_BR hu es it pl tr ru zh_CN sk he en_GB fi et gl uz te ro uk oc hr ug pms"
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION(0.17)
-
-AC_PROG_MKDIR_P
-
+AM_GNU_GETTEXT_VERSION(0.19)
 dnl Use -Wall if we have gcc.
 changequote(,)dnl
 if test "x$GCC" = "xyes"; then

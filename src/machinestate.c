@@ -6,6 +6,29 @@
 
 // functions for dealing with externalities
 
+/// TODO - create an active "hardware manager" object. It should constantly monitor the system
+// environment in real time, and be able to receive performance data from other parts of the code
+// It should handle autotuning and configure things like like thread resources, memory usage
+// disk buffering to maximise performance without overloading the system
+//
+// It should also manage memory dynamically, for example refreshing smallblocks
+// seeing if we need to allocate more memory or if we can free some
+// It can also keep track of cpu load, and expose this to other threads, such as the player
+// monitor disk io, and in active mode. take over the role of diskspace monitoring.
+// In addition in could measure things like cpu temperature, cpu frequency and respond accordingly.
+// It should also manage the adaptive quality settings in the background.
+// A lot of that is already here but needs combining and running in the bacjground as well
+// as communicating with threads. The lives_object / attributes model should help with this.
+
+
+//   #include <sys/resource.h> // needed for getrusage
+//       struct rusage usage;   #include <sys/time.h> // needed for getrusage
+
+//getrusage(RUSAGE_SELF, &usage);
+
+// getrlimit RLIMIT_MEMLOCK, RLIMIT_AS, RLIMIT_NICE. RLIMIT_NPROC, RLIMIT_RTPRIO, RLIMIT_STACK
+//
+
 #ifdef _GNU_SOURCE
 #include <sched.h>
 #endif
@@ -41,7 +64,7 @@ static void get_cpuinfo(void) {
   if (vendor.i[0] >= 0x00000001) {
     cpuid(0x00000001, regs);
     capable->hw.cacheline_size = ((regs[1] >> 8) & 0xFF) << 3; // ebx
-    if (regs[3] & 0x4000000) capable->hw.cpu_features |= CPU_HAS_SSE2;
+    if (regs[3] & 0x4000000) capable->hw.cpu_features |= CPU_FEATURE_HAS_SSE2;
     // 25 == sse, 1 == sse3, 0x200 == ssse3, 0x80000 == sse4, 0x100000 == sse42,
     // cpuid(7, eax, ebx, ecx, edx)
     //if ((ecx & 0x18000000) == 0x18000000) {
@@ -163,8 +186,6 @@ uint64_t gen_unique_id(void) {
     }
   }
   last_rnum = rnum;
-
-
   return rnum;
 }
 
@@ -710,6 +731,105 @@ getfserr:
   return bytes;
 }
 
+
+boolean check_storage_space(int clipno, boolean is_processing) {
+  // check storage space in prefs->workdir
+  lives_clip_t *sfile = NULL;
+
+  int64_t dsval = -1;
+
+  lives_storage_status_t ds;
+  int retval;
+  boolean did_pause = FALSE;
+
+  char *msg, *tmp;
+  char *pausstr = (_("Processing has been paused."));
+
+  if (IS_VALID_CLIP(clipno)) sfile = mainw->files[clipno];
+
+  do {
+    if (mainw->dsu_valid && capable->ds_used > -1) {
+      dsval = capable->ds_used;
+    } else if (prefs->disk_quota) {
+      dsval = disk_monitor_check_result(prefs->workdir);
+      if (dsval >= 0) capable->ds_used = dsval;
+    }
+    ds = capable->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
+    capable->ds_free = dsval;
+    if (ds == LIVES_STORAGE_STATUS_WARNING) {
+      uint64_t curr_ds_warn = mainw->next_ds_warn_level;
+      mainw->next_ds_warn_level >>= 1;
+      if (mainw->next_ds_warn_level > (dsval >> 1)) mainw->next_ds_warn_level = dsval >> 1;
+      if (mainw->next_ds_warn_level < prefs->ds_crit_level) mainw->next_ds_warn_level = prefs->ds_crit_level;
+      if (is_processing && sfile && mainw->proc_ptr && !mainw->effects_paused &&
+          lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
+        on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
+        did_pause = TRUE;
+      }
+
+      tmp = ds_warning_msg(prefs->workdir, &capable->mountpoint, dsval, curr_ds_warn, mainw->next_ds_warn_level);
+      if (!did_pause)
+        msg = lives_strdup_printf("\n%s\n", tmp);
+      else
+        msg = lives_strdup_printf("\n%s\n%s\n", tmp, pausstr);
+      lives_free(tmp);
+      mainw->add_clear_ds_button = TRUE; // gets reset by do_warning_dialog()
+      if (!do_warning_dialog(msg)) {
+        lives_free(msg);
+        lives_free(pausstr);
+        mainw->cancelled = CANCEL_USER;
+        if (is_processing) {
+          if (sfile) sfile->nokeep = TRUE;
+          on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
+        }
+        return FALSE;
+      }
+      lives_free(msg);
+    } else if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
+      if (is_processing && sfile && mainw->proc_ptr && !mainw->effects_paused &&
+          lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
+        on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
+        did_pause = TRUE;
+      }
+      tmp = ds_critical_msg(prefs->workdir, &capable->mountpoint, dsval);
+      if (!did_pause)
+        msg = lives_strdup_printf("\n%s\n", tmp);
+      else {
+        char *xpausstr = lives_markup_escape_text(pausstr, -1);
+        msg = lives_strdup_printf("\n%s\n%s\n", tmp, xpausstr);
+        lives_free(xpausstr);
+      }
+      lives_free(tmp);
+      widget_opts.use_markup = TRUE;
+      retval = do_abort_retry_cancel_dialog(msg);
+      widget_opts.use_markup = FALSE;
+      lives_free(msg);
+      if (retval == LIVES_RESPONSE_CANCEL) {
+        if (is_processing) {
+          if (sfile) sfile->nokeep = TRUE;
+          on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
+        }
+        mainw->cancelled = CANCEL_ERROR;
+        lives_free(pausstr);
+        return FALSE;
+      }
+    }
+  } while (ds == LIVES_STORAGE_STATUS_CRITICAL);
+
+  if (ds == LIVES_STORAGE_STATUS_OVER_QUOTA && !mainw->is_processing) {
+    run_diskspace_dialog(NULL);
+  }
+
+  if (did_pause && mainw->effects_paused) {
+    on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
+  }
+
+  lives_free(pausstr);
+
+  return TRUE;
+}
+
+
 LIVES_GLOBAL_INLINE uint64_t get_blocksize(const char *dir) {
   struct statvfs sbuf;
 
@@ -750,46 +870,6 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t o
 LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
   //  return current (wallclock) time in ticks (units of 10 nanoseconds)
   return lives_get_relative_ticks(0, 0);
-}
-
-
-char *format_tstr(double xtime, int minlim) {
-  // format xtime (secs) as h/min/secs
-  // if minlim > 0 then for mins >= minlim we don't show secs.
-  char *tstr;
-  int hrs = (int64_t)xtime / 3600, min;
-  xtime -= hrs * 3600;
-  min = (int64_t)xtime / 60;
-  xtime -= min * 60;
-  if (xtime >= 60.) {
-    min++;
-    xtime -= 60.;
-  }
-  if (min >= 60) {
-    hrs++;
-    min -= 60;
-  }
-  if (hrs > 0) {
-    // TRANSLATORS: h(ours) min(utes)
-    if (minlim) tstr = lives_strdup_printf(_("%d h %d min"), hrs, min);
-    // TRANSLATORS: h(ours) min(utes) sec(onds)
-    else tstr = lives_strdup_printf("%d h %d min %.2f sec", hrs, min, xtime);
-  } else {
-    if (min > 0) {
-      if (minlim) {
-        // TRANSLATORS: min(utes)
-        if (min >= minlim) tstr = lives_strdup_printf(_("%d min"), min);
-        // TRANSLATORS: min(utes) sec(onds)
-        else tstr = lives_strdup_printf("%d min %d sec", min, (int)(xtime + .5));
-      }
-      // TRANSLATORS: min(utes) sec(onds)
-      else tstr = lives_strdup_printf("%d min %.2f sec", min, xtime);
-    } else {
-      if (minlim) tstr = lives_strdup_printf("%d sec", (int)(xtime + .5));
-      else tstr = lives_strdup_printf("%.2f sec", xtime);
-    }
-  }
-  return tstr;
 }
 
 
@@ -1155,22 +1235,25 @@ static char *file_to_file_details(const char *filename, lives_file_dets_t *fdets
           if (read_headers(clipno, filename, NULL)) {
             lives_clip_t *sfile = mainw->files[clipno];
             char *name = lives_strdup(sfile->name);
-            char *hdrstring = lives_strdup_printf(_("Header version %d (%s)"), sfile->header_version,
-                                                  (tmp =
-                                                      (sfile->header_version == LIVES_CLIP_HEADER_VERSION) ?
-                                                      _("Same as current") :
-                                                      sfile->header_version < LIVES_CLIP_HEADER_VERSION ?
-                                                      lives_strdup_printf(_("Current is %d"),
-                                                          LIVES_CLIP_HEADER_VERSION) :
-                                                      lives_strdup_printf(_("Current is %d; consider updating before loading"),
-                                                          LIVES_CLIP_HEADER_VERSION)));
+            char *hdrstring =
+              lives_strdup_printf
+              (_("Header version %d (%s)"), sfile->header_version,
+               (tmp =
+                  (sfile->header_version == LIVES_CLIP_HEADER_VERSION) ?
+                  _("Same as current") :
+                  sfile->header_version < LIVES_CLIP_HEADER_VERSION ?
+                  lives_strdup_printf(_("Current is %d"),
+                                      LIVES_CLIP_HEADER_VERSION) :
+                  lives_strdup_printf(_("Current is %d; consider updating before loading"),
+                                      LIVES_CLIP_HEADER_VERSION)));
             lives_free(tmp);
             extra_details =
-              lives_strdup_printf("%s%s%s", extra_details, *extra_details ? ", " : "",
-                                  (tmp = lives_strdup_printf
-                                         (_("Source: %s\n%s\nFrames: %d, size: %d X %d, fps: %.3f"),
-                                          name, hdrstring, sfile->frames, sfile->hsize,
-                                          sfile->vsize, sfile->fps)));
+              lives_strdup_printf
+              ("%s%s%s", extra_details, *extra_details ? ", " : "",
+               (tmp = lives_strdup_printf
+                      (_("Source: %s\n%s\nFrames: %d, size: %d X %d, fps: %.3f"),
+                       name, hdrstring, sfile->frames, sfile->hsize,
+                       sfile->vsize, sfile->fps)));
             lives_free(tmp); lives_free(name); lives_free(hdrstring);
             lives_freep((void **)&mainw->files[clipno]);
             if (mainw->first_free_file == ALL_USED || mainw->first_free_file > clipno)
@@ -1378,263 +1461,6 @@ void lives_log(const char *what) {
 #endif
 
 
-int check_for_bad_ffmpeg(void) {
-  int i, fcount;
-  char *fname_next;
-  boolean maybeok = FALSE;
-
-  fcount = get_frame_count(mainw->current_file, 1);
-
-  for (i = 1; i <= fcount; i++) {
-    fname_next = make_image_file_name(cfile, i, get_image_ext_for_type(cfile->img_type));
-    if (sget_file_size(fname_next) > 0) {
-      lives_free(fname_next);
-      maybeok = TRUE;
-      break;
-    }
-    lives_free(fname_next);
-  }
-
-  if (!maybeok) {
-    widget_opts.non_modal = TRUE;
-    do_error_dialog(
-      _("Your version of mplayer/ffmpeg may be broken !\n"
-        "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n\n"
-        "You can work around this temporarily by switching to jpeg output in Preferences/Decoding.\n\n"
-        "Try running Help/Troubleshoot for more information."));
-    widget_opts.non_modal = FALSE;
-    return CANCEL_ERROR;
-  }
-  return CANCEL_NONE;
-}
-
-
-LIVES_GLOBAL_INLINE char *lives_concat_sep(char *st, const char *sep, char *x) {
-  /// nb: lives strconcat
-  // uses realloc / memcpy, frees x; st becomes invalid
-  char *tmp;
-  if (st) {
-    size_t s1 = lives_strlen(st), s2 = lives_strlen(x), s3 = lives_strlen(sep);
-    tmp = (char *)lives_realloc(st, ++s2 + s1 + s3);
-    lives_memcpy(tmp + s1, sep, s3);
-    lives_memcpy(tmp + s1 + s3, x, s2);
-  } else tmp = lives_strdup(x);
-  lives_free(x);
-  return tmp;
-}
-
-LIVES_GLOBAL_INLINE char *lives_concat(char *st, char *x) {
-  /// nb: lives strconcat
-  // uses realloc / memcpy, frees x; st becomes invalid
-  size_t s1 = lives_strlen(st), s2 = lives_strlen(x);
-  char *tmp = (char *)lives_realloc(st, ++s2 + s1);
-  lives_memcpy(tmp + s1, x, s2);
-  lives_free(x);
-  return tmp;
-}
-
-
-LIVES_GLOBAL_INLINE char *lives_strcollate(char **strng, const char *sep, const char *xnew) {
-  // appends xnew to *string, if strlen(*string) > 0 appends sep first
-  //
-  char *tmp = (strng && *strng && **strng) ? *strng : lives_strdup("");
-  char *strng2 = lives_strdup_printf("%s%s%s", tmp, (sep && *tmp) ? sep : "", xnew);
-  lives_freep((void **)strng);
-  return strng2;
-}
-
-
-LIVES_GLOBAL_INLINE int lives_strappend(const char *string, int len, const char *xnew) {
-  /// see also: lives_concat()
-  size_t sz = lives_strlen(string);
-  int newln = lives_snprintf((char *)(string + sz), len - sz, "%s", xnew);
-  if (newln > len) newln = len;
-  return --newln - sz; // returns strlen(xnew)
-}
-
-LIVES_GLOBAL_INLINE const char *lives_strappendf(const char *string, int len, const char *fmt, ...) {
-  va_list xargs;
-  char *text;
-
-  va_start(xargs, fmt);
-  text = lives_strdup_vprintf(fmt, xargs);
-  va_end(xargs);
-
-  lives_strappend(string, len, text);
-  lives_free(text);
-  return string;
-}
-
-/// each byte B can be thought of as a signed char, subtracting 1 sets bit 7 if B was <= 0, then AND with ~B clears bit 7 if it
-/// was already set (i.e B was < 0), thus bit 7 only remains set if the byte started as 0.
-#define hasNulByte(x) (((x) - 0x0101010101010101) & ~(x) & 0x8080808080808080)
-#define getnulpos(nulmask) ((nulmask & 2155905152ul) ? ((nulmask & 32896ul) ? ((nulmask & 128ul) ? 0 : 1) : \
-							   ((nulmask & 8388608ul) ? 2 : 3)) : (nulmask & 141287244169216ul) ? \
-			    ((nulmask & 549755813888ul) ? 4 : 5) : ((nulmask & 36028797018963968ul) ? 6 : 7))
-
-#define getnulpos_be(nulmask) ((nulmask & 9259542121117908992ul) ? ((nulmask & 9259400833873739776ul) ? \
-								    ((nulmask & 9223372036854775808ul) ? 0 : 1) : \
-								    ((nulmask & 140737488355328ul) ? 2 : 3)) \
-			       : (nulmask & 2155872256ul) ? ((nulmask & 2147483648ul) ? 4 : 5) : ((nulmask & 32768ul) ? 6 : 7))
-
-LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
-  if (!s) return 0;
-#ifndef STD_STRINGFUNCS
-  else {
-    uint64_t *pi = (uint64_t *)s, nulmask;
-    if ((void *)pi == (void *)s) {
-      while (!(nulmask = hasNulByte(*pi))) pi++;
-      return (char *)pi - s + (capable->hw.byte_order == LIVES_LITTLE_ENDIAN ? getnulpos(nulmask)
-                               : getnulpos_be(nulmask));
-    }
-  }
-#endif
-  return strlen(s);
-}
-
-
-LIVES_GLOBAL_INLINE int64_t lives_strtol(const char *nptr) {
-  if (sizeof(long int) == 8) return strtol(nptr, NULL, 10);
-  else return strtoll(nptr, NULL, 10);
-}
-
-
-LIVES_GLOBAL_INLINE uint64_t lives_strtoul(const char *nptr) {
-  if (sizeof(long int) == 8) return strtoul(nptr, NULL, 10);
-  else return strtoull(nptr, NULL, 10);
-}
-
-
-LIVES_GLOBAL_INLINE char *lives_strdup_quick(const char *s) {
-  if (!s) return NULL;
-#ifndef STD_STRINGFUNCS
-  else {
-    uint64_t *pi = (uint64_t *)s, nulmask, stlen;
-    if (!s) return NULL;
-    if ((void *)pi == (void *)s) {
-      while (!(nulmask = hasNulByte(*pi))) pi++;
-      stlen = (char *)pi - s + 1
-              + (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)
-              ? getnulpos(nulmask) : getnulpos_be(nulmask);
-      return lives_memcpy(lives_malloc(stlen), s, stlen);
-    }
-  }
-#endif
-  return lives_strdup(s);
-}
-
-
-
-
-/// returns FALSE if strings match
-LIVES_GLOBAL_INLINE boolean lives_strcmp(const char *st1, const char *st2) {
-  if (!st1 || !st2) return (st1 != st2);
-  else {
-#ifdef STD_STRINGFUNCS
-    return strcmp(st1, st2);
-#endif
-    uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
-    while (1) {
-      if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
-        while (1) {
-          if ((d1 = *(ip1++)) == (d2 = *(ip2++))) {if (hasNulByte(d1)) return FALSE;}
-          else {
-            if (!hasNulByte(d1 | d2)) return TRUE;
-            break;
-          }
-        }
-        st1 = (const char *)(--ip1); st2 = (const char *)(--ip2);
-      }
-      if (*st1 != *(st2++)) return TRUE;
-      if (!(*(st1++))) return FALSE;
-    }
-  }
-  return FALSE;
-}
-
-LIVES_GLOBAL_INLINE int lives_strcmp_ordered(const char *st1, const char *st2) {
-  if (!st1 || !st2) return (st1 != st2);
-  else {
-#ifdef STD_STRINGFUNCS
-    return strcmp(st1, st2);
-#endif
-    uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
-    while (1) {
-      if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
-        do {
-          d1 = *(ip1++);
-          d2 = *(ip2++);
-        } while (d1 == d2 && !hasNulByte(d1));
-        st1 = (const char *)(--ip1); st2 = (const char *)(--ip2);
-      }
-      if (*st1 != *st2 || !(*st1)) break;
-      st1++; st2++;
-    }
-  }
-  return (*st1 > *st2) - (*st1 < *st2);
-}
-
-/// returns FALSE if strings match
-LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size_t len) {
-  if (!st1 || !st2) return (st1 != st2);
-  else {
-#ifdef STD_STRINGFUNCS
-    return strncmp(st1, st2, len);
-#endif
-    size_t xlen = len >> 3;
-    uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
-    while (1) {
-      if (xlen && (void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
-        do {
-          d1 = *(ip1++);
-          d2 = *(ip2++);
-        } while (d1 == d2 && !hasNulByte(d1) && --xlen);
-        if (xlen) {
-          if (!hasNulByte(d2)) return TRUE;
-          ip1--;
-          ip2--;
-        }
-        st1 = (void *)ip1; st2 = (void *)ip2;
-        len -= ((len >> 3) - xlen) << 3;
-      }
-      if (!(len--)) return FALSE;
-      if (*st1 != *(st2++)) return TRUE;
-      if (!(*(st1++))) return FALSE;
-    }
-  }
-  return (*st1 != *st2);
-}
-
-/// returns TRUE if st1 starts with st2
-LIVES_GLOBAL_INLINE boolean lives_str_starts_with(const char *st1, const char *st2) {
-  if (!st1 || !st2) return (st1 == st2);
-  else {
-    boolean hnb = FALSE;
-    uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
-    while (1) {
-      if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
-        do {
-          d1 = *(ip1++);
-          d2 = *(ip2++);
-        } while (d1 == d2 && !(hnb = hasNulByte(d2)));
-        if (!hnb) return FALSE;
-        st1 = (void *)ip1; st2 = (void *)ip2;
-      }
-      if (*(st1++) != *st2) return FALSE;
-      if (!(*(st1++))) return TRUE;
-    }
-  }
-  return (*st1 != *st2);
-}
-
-#define HASHROOT 5381
-LIVES_GLOBAL_INLINE uint32_t lives_string_hash(const char *st) {
-  if (st && *st) for (uint32_t hash = HASHROOT;; hash += (hash << 5)
-                        + * (st++)) if (!(*st)) return hash;
-  return 0;
-}
-
-
 #define HASHROOT 5381
 LIVES_GLOBAL_INLINE uint64_t lives_bin_hash(uint8_t *bin, size_t binlen) {
   uint64_t hash = HASHROOT;
@@ -1647,10 +1473,10 @@ LIVES_GLOBAL_INLINE uint64_t lives_bin_hash(uint8_t *bin, size_t binlen) {
 // (c) Paul Hsieh
 #define get16bits(d) (*((const uint16_t *) (d)))
 
-LIVES_GLOBAL_INLINE uint32_t fast_hash(const char *key) {
+LIVES_GLOBAL_INLINE uint32_t fast_hash(const char *key, size_t ss) {
   /// approx 5 - 10 % faster than lives_string_hash
   if (key && *key) {
-    int len = lives_strlen(key), rem = len & 3;
+    int len = ss ? ss : lives_strlen(key), rem = len & 3;
     uint32_t hash = len + HASHROOT, tmp;
     len >>= 2;
     for (; len > 0; len--) {
@@ -1685,43 +1511,37 @@ LIVES_GLOBAL_INLINE uint32_t fast_hash(const char *key) {
   return 0;
 }
 
-LIVES_GLOBAL_INLINE char *lives_strstop(char *st, const char term) {
-  /// truncate st, replacing term with \0
-  if (st && term) for (int i = 0; st[i]; i++) if (st[i] == term) {st[i] = 0; break;}
-  return st;
-}
-
-
-LIVES_GLOBAL_INLINE char *lives_chomp(char *buff, boolean multi) {
-  /// chop off final newline
-  /// see also lives_strchomp() which removes all whitespace
-  if (buff) {
-    int slen, start = -1;
-    for (slen = 0; buff[slen]; slen++) {
-      if (buff[slen] == '\n') {
-        if (start == -1) start = slen;
-      } else start = -1;
+LIVES_GLOBAL_INLINE uint64_t fast_hash64(const char *key) {
+  char *c = (char *)key;
+  uint64_t hash64 = 0;
+  if (*c) {
+    size_t hslen = (strlen(key) + 3) >> 1, ss1 = 0, ss2 = 0;
+    char *str1 = (char *)malloc(hslen);
+    char *str2 = (char *)malloc(hslen);
+    --hslen; // make doubly sure to allow for \0
+    for (int j = 0; j < hslen; j++) {
+      str1[j] = *c;
+      ss1++;
+      if (!*(++c)) break;
+      str2[j] = *c;
+      ss2++;
+      if (!*(++c)) break;
     }
-    if (start >= 0) lives_memset(&buff[multi ? start : --slen], 0, 1);
+    hash64 = fast_hash(str1, ss1);
+    hash64 = (hash64 << 32) | fast_hash(str2, ss2);
+    free(str1); free(str2);
   }
-  return buff;
+  return hash64;
 }
 
 
-LIVES_GLOBAL_INLINE char *lives_strtrim(const char *buff) {
-  /// return string with start and end newlines stripped
-  /// see also lives_strstrip() which removes all whitespace
-  int i, j;
-  if (!buff) return NULL;
-  for (i = 0; buff[i] == '\n'; i++);
-  for (j = i; buff[j]; j++) if (buff[j] == '\n') break;
-  return lives_strndup(buff + i, j - i);
-}
-
+/////////////// move to other file ////
 
 LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new(int subtype) {
   weed_plant_t *plant = weed_plant_new(WEED_PLANT_LIVES);
   weed_set_int_value(plant, WEED_LEAF_LIVES_SUBTYPE, subtype);
+  weed_set_int64_value(plant, LIVES_LEAF_UID, gen_unique_id());
+  weed_add_plant_flags(plant, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, NULL);
   return plant;
 }
 
@@ -1733,17 +1553,13 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new_with_index(int subtype, int64_
 }
 
 
-LIVES_GLOBAL_INLINE pid_t lives_getpid(void) {
-#ifdef IS_MINGW
-  return GetCurrentProcessId(),
-#else
-  return getpid();
-#endif
+LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new_with_refcount(int subtype) {
+  weed_plant_t *plant = lives_plant_new(subtype);
+  weed_add_refcounter(plant);
+  return plant;
 }
 
-LIVES_GLOBAL_INLINE int lives_getuid(void) {return geteuid();}
-
-LIVES_GLOBAL_INLINE int lives_getgid(void) {return getegid();}
+///////////////// to do - move to performance manager ////
 
 /// estimate the machine load
 static double theflow[EFFORT_RANGE_MAX];
@@ -1752,6 +1568,7 @@ static boolean inited = FALSE;
 static int struggling = 0;
 static double badthingcount = 0.;
 static double goodthingcount = 0.;
+
 
 static double pop_flowstate(void) {
   double ret = theflow[0];
@@ -1881,7 +1698,7 @@ void update_effort(double nthings, boolean is_bad) {
 }
 
 
-static char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase, int ridx, int rlen, boolean partial) {
+char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase, int ridx, int rlen, boolean partial) {
   char **lines, **words, **mwords;
   char *match = NULL, *wline;
   char buff[65536];
@@ -2898,63 +2715,6 @@ boolean notify_user(const char *detail) {
 }
 
 
-boolean check_snap(const char *prog) {
-  // not working yet...
-  if (!check_for_executable(&capable->has_snap, EXEC_SNAP)) return FALSE;
-  char *com = lives_strdup_printf("%s find %s", EXEC_SNAP, prog);
-  char *res = grep_in_cmd(com, 0, 1, prog, 0, 1, FALSE);
-  if (!res) return FALSE;
-  lives_free(res);
-  return TRUE;
-}
-
-
-#define SUDO_APT_INSTALL "sudo apt install %s"
-#define SU_PKG_INSTALL "su pkg install %s"
-
-char *get_install_cmd(const char *distro, const char *exe) {
-  char *cmd = NULL;
-  const char *pkgname = NULL;
-
-  if (!distro) distro = capable->distro_name;
-
-  if (!lives_strcmp(exe, EXEC_PIP)) {
-    if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
-      if (capable->python_version >= 3000000) pkgname = "python3-pip";
-      else if (capable->python_version >= 2000000) pkgname = "python-pip";
-      else pkgname = "python3 python3-pip";
-    }
-    if (!lives_strcmp(distro, DISTRO_FREEBSD)) {
-      if (capable->python_version >= 3000000) pkgname = "py3-pip";
-      else if (capable->python_version >= 2000000) pkgname = "py2-pip";
-      else pkgname = "python py3-pip";
-    }
-  }
-  if (!strcmp(exe, EXEC_GZIP)) pkgname = EXEC_GZIP;
-  if (!strcmp(exe, EXEC_YOUTUBE_DL)) pkgname = EXEC_YOUTUBE_DL;
-  if (!strcmp(exe, EXEC_YOUTUBE_DLC)) pkgname = EXEC_YOUTUBE_DLC;
-
-  if (!pkgname) pkgname = exe;
-
-  // TODO - add more, eg. pacman, dpkg
-  if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
-    cmd = lives_strdup_printf(SUDO_APT_INSTALL, pkgname);
-  }
-  if (!lives_strcmp(distro, DISTRO_FREEBSD)) {
-    cmd = lives_strdup_printf(SU_PKG_INSTALL, pkgname);
-  }
-  return cmd;
-}
-
-
-char *get_install_lib_cmd(const char *distro, const char *libname) {
-  char *libpkg = lives_strdup_printf("lib%s-dev", libname);
-  char *cmd = get_install_cmd(NULL, libpkg);
-  lives_free(libpkg);
-  return cmd;
-}
-
-
 boolean get_distro_dets(void) {
 #ifndef IS_LINUX_GNU
   capable->distro_name = lives_strdup(capable->os_name);
@@ -2995,10 +2755,11 @@ boolean get_distro_dets(void) {
 // amount of processing devoted to each thread, using
 
 
-void set_thread_loveliness(double howmuch) {
-
-
-
+void set_thread_loveliness(uint64_t tid, double howmuch) {
+  // set the loveliness for a thread, a prettier one can run faster than a more homely instance
+  lives_thread_data_t *tdata = get_thread_data_by_id(tid);
+  if (tdata) tdata->vars.var_loveliness = howmuch;
+}
 
 int get_num_cpus(void) {
 #ifdef IS_DARWIN
@@ -3047,6 +2808,9 @@ boolean get_machine_dets(void) {
 
   capable->hw.cacheline_size = capable->hw.cpu_bits * 8;
 
+#ifdef _SC_PAGESIZE
+  capable->hw.pagesize = sysconf(_SC_PAGESIZE);
+#endif
   if (!mainw->debug && !strcmp(capable->os_hardware, "x86_64"))
     get_cpuinfo();
 

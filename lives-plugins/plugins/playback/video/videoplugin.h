@@ -17,15 +17,6 @@ extern "C"
 #ifndef PLUGIN_TYPE
 #define PLUGIN_TYPE PLUGIN_TYPE_PLAYER
 #endif
-
-#ifndef PLUGIN_DEVSTATE
-#define PLUGIN_DEVSTATE PLUGIN_DEVSTATE_NORMAL
-#endif
-
-#ifndef PLUGIN_PKGTYPE
-#define PLUGIN_PKGTYPE PLUGIN_PKGTYPE_DYNAMIC
-#endif
-
 #include <inttypes.h>
 
 #ifndef PRId64
@@ -81,6 +72,18 @@ typedef void (*func_ptr)(void *);
 #endif
 
 #include "../../../weed-plugins/weed-plugin-utils.c"
+#define _EARLY_DEFS_
+#include "lives-plugin.h"
+#undef _EARLY_DEFS_
+
+
+#ifndef PLUGIN_DEVSTATE
+#define PLUGIN_DEVSTATE PLUGIN_DEVSTATE_NORMAL
+#endif
+
+#ifndef PLUGIN_PKGTYPE
+#define PLUGIN_PKGTYPE PLUGIN_PKGTYPE_DYNAMIC
+#endif
 
 typedef weed_plant_t weed_layer_t;
 
@@ -90,13 +93,23 @@ typedef weed_plant_t weed_layer_t;
 typedef int boolean;
 #endif
 
+typedef pl_intentcap  plugin_intentcap_t; // DEPRECATED
+
 // all playback modules need to implement these functions, unless they are marked (optional)
 
 /// host calls at startup
 const char *module_check_init(void);
 const char *get_description(void);   ///< optional
 
-const char *get_init_rfx(plugin_intentcap_t *icaps);   ///< optional
+// new plugin model, this will likely become a step in running "transform" operations
+// it may be called several times with plugin and host negotiating conditions
+// for running the process
+// host will provide certain attributes, and the plugin may create attributes in
+// the plugin object. The host indicates its intent and capacities required in icaps
+// (in future this may become a transform "contract")
+contract_status negotiate_contract(pl_contract *contract);
+
+const char *get_init_rfx(pl_intentcap *icaps);   ///< optional
 
 ///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
 const weed_plant_t **get_play_params(weed_bootstrap_f boot);

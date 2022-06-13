@@ -1104,7 +1104,7 @@ boolean get_handle_from_info_file(int index) {
   // because until we know the handle we can't use the normal info file yet
   char *com, *shm_path;
 
-  shm_path = get_staging_dir_for(index, LIVES_ICAPS_LOAD);
+  shm_path = get_staging_dir_for(index, ICAP(LOAD));
 
   if (shm_path)
     com = lives_strdup_printf("%s new \"%s\"", prefs->backend_sync, shm_path);
@@ -2276,6 +2276,16 @@ void play_file(void) {
   int current_file = mainw->current_file;
   int audio_end = 0;
 
+  if (!mainw->preview || !cfile->opening) {
+    enable_record();
+    desensitize();
+#ifdef ENABLE_JACK
+    if (!(mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
+          && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)))
+      lives_widget_set_sensitive(mainw->spinbutton_pb_fps, TRUE);
+#endif
+  }
+
   /// from now on we can only switch at the designated SWITCH POINT
   mainw->noswitch = TRUE;
   mainw->cancelled = CANCEL_NONE;
@@ -2474,16 +2484,6 @@ void play_file(void) {
 
   lives_widget_set_sensitive(mainw->m_stopbutton, TRUE);
   mainw->playing_file = mainw->current_file;
-
-  if (!mainw->preview || !cfile->opening) {
-    enable_record();
-    desensitize();
-#ifdef ENABLE_JACK
-    if (!(mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
-          && (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE)))
-      lives_widget_set_sensitive(mainw->spinbutton_pb_fps, TRUE);
-#endif
-  }
 
   if (mainw->record) {
     if (mainw->event_list) event_list_free(mainw->event_list);

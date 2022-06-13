@@ -24,12 +24,6 @@ boolean lives_osc_notify_failure(void) WARN_UNUSED;
 
 #define ASPECT_ALLOWANCE 0.005
 
-typedef struct {
-  uint32_t hash;
-  char *key;
-  char *data;
-} lives_speed_cache_t;
-
 
 static boolean omute, osepwin, ofs, ofaded, odouble;
 
@@ -312,6 +306,232 @@ int lives_chdir(const char *path, boolean no_error_dlg) {
 }
 
 
+int lives_rmdir(const char *dir, boolean force) {
+  // if force is TRUE, removes non-empty dirs, otherwise leaves them
+  // may fail
+  if (!dir) return 1;
+  else {
+    size_t dirlen = lives_strlen(dir);
+    // will abort if dir length < 7, if dir is $HOME, does not start with dir sep. or ends with a '*'
+    if (dirlen < 7 || !lives_strcmp(dir, capable->home_dir)
+        || lives_strncmp(dir, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP)) || dir[dirlen - 1] == '*') {
+      char *msg = lives_strdup_printf("Refusing to lives_rmdir the following directory: %s", dir);
+      LIVES_FATAL(msg);
+      lives_free(msg);
+    }
+    if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
+      char *com, *cmd;
+      int retval;
+
+      if (force) {
+        cmd = lives_strdup_printf("%s -rf", capable->rm_cmd);
+      } else {
+        cmd = lives_strdup(capable->rmdir_cmd);
+      }
+
+      com = lives_strdup_printf("%s \"%s/\" >\"%s\" 2>&1", cmd, dir, prefs->cmd_log);
+      retval = lives_system(com, TRUE);
+      lives_free(com);
+      lives_free(cmd);
+      return retval;
+    }
+  }
+  return 1;
+}
+
+
+int lives_rmdir_with_parents(const char *dir) {
+  // may fail, will not remove non empty dirs
+  if (!dir) return 1;
+  else {
+    size_t dirlen = lives_strlen(dir);
+    // will abort if dir length < 7, if dir is $HOME, does not start with dir sep. or ends with a '*'
+    if (dirlen < 7 || !lives_strcmp(dir, capable->home_dir)
+        || lives_strncmp(dir, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP)) || dir[dirlen - 1] == '*') {
+      char *msg = lives_strdup_printf("Refusing to lives_rmdir_with_parents the following directory: %s", dir);
+      LIVES_FATAL(msg);
+      lives_free(msg);
+    }
+  }
+  if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
+    char *com = lives_strdup_printf("%s -p \"%s\" >\"%s\" 2>&1", capable->rmdir_cmd, dir, prefs->cmd_log);
+    int retval = lives_system(com, TRUE);
+    lives_free(com);
+    return retval;
+  }
+  return 1;
+}
+
+
+
+int lives_rm(const char *file) {
+  // may fail - will not remove directories or symlinks
+  if (!file) return 1;
+  if (lives_file_test(file, LIVES_FILE_TEST_IS_REGULAR)) {
+    char *com = lives_strdup_printf("%s -f \"%s\" >\"%s\" 2>&1", capable->rm_cmd, file, prefs->cmd_log);
+    int retval = lives_system(com, TRUE);
+    lives_free(com);
+    return retval;
+  }
+  return 1;
+}
+
+
+int lives_rmglob(const char *files) {
+  // delete files with name "files"*
+  // may fail
+  // should chdir first to target dir
+  if (!files) return 1;
+  else {
+    // files may not be empty string, or start with a '.' or dir separator
+    if (!*files || *files == '.' || !lives_strncmp(files, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP))) return 2;
+    else {
+      int retval;
+      char *com;
+      if (!lives_strcmp(files, "*"))
+        com = lives_strdup_printf("%s * >\"%s\" 2>&1", capable->rm_cmd, prefs->cmd_log);
+      else
+        com = lives_strdup_printf("%s \"%s\"* >\"%s\" 2>&1", capable->rm_cmd, files, prefs->cmd_log);
+      retval = lives_system(com, TRUE);
+      lives_free(com);
+      return retval;
+    }
+  }
+}
+
+
+int lives_cp(const char *from, const char *to) {
+  // may not fail - BUT seems to return -1 sometimes
+  char *com = lives_strdup_printf("%s \"%s\" \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
+  int retval = lives_system(com, FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_cp_noclobber(const char *from, const char *to) {
+  char *com = lives_strdup_printf("%s -n \"%s\"/* \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
+  int retval = lives_system(com, TRUE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_cp_recursive(const char *from, const char *to, boolean incl_dir) {
+  // we do allow fail since the source may be empty dir
+  int retval;
+  char *com;
+  boolean mayfail = FALSE;
+  if (incl_dir) com = lives_strdup_printf("%s -r \"%s\" \"%s\" >\"%s\" 2>&1",
+                                            capable->cp_cmd, from, to, prefs->cmd_log);
+  else {
+    // we do allow fail since the source dir may be empty dir
+    com = lives_strdup_printf("%s -rf \"%s\"/* \"%s\" >\"%s\" 2>&1",
+                              capable->cp_cmd, from, to, prefs->cmd_log);
+    mayfail = TRUE;
+  }
+  if (!lives_file_test(to, LIVES_FILE_TEST_EXISTS))
+    lives_mkdir_with_parents(to, capable->umask);
+
+  retval = lives_system(com, mayfail);
+
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_cp_keep_perms(const char *from, const char *to) {
+  // may not fail
+  char *com = lives_strdup_printf("%s -a \"%s\" \"%s/\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
+  int retval = lives_system(com, FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_mv(const char *from, const char *to) {
+  // may not fail
+  char *com = lives_strdup_printf("%s \"%s\" \"%s\"", capable->mv_cmd, from, to);
+  int retval = lives_system(com, FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_touch(const char *tfile) {
+  // may not fail
+  char *com = lives_strdup_printf("%s \"%s\" >\"%s\" 2>&1", capable->touch_cmd, tfile, prefs->cmd_log);
+  int retval = lives_system(com, FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_ln(const char *from, const char *to) {
+  // may not fail
+  char *com;
+  int retval;
+  com = lives_strdup_printf("%s -s \"%s\" \"%s\" >\"%s\" 2>&1", capable->ln_cmd, from, to, prefs->cmd_log);
+  retval = lives_system(com, FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_chmod(const char *target, const char *mode) {
+  // may not fail
+  char *com = lives_strdup_printf("%s %s \"%s\" >\"%s\" 2>&1", capable->chmod_cmd, mode, target, prefs->cmd_log);
+  int retval = lives_system(com, FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_cat(const char *from, const char *to, boolean append) {
+  // may not fail
+  char *com;
+  char *op;
+  int retval;
+
+  if (append) op = ">>";
+  else op = ">";
+
+  com = lives_strdup_printf("%s \"%s\" %s \"%s\" >\"%s\" 2>&1", capable->cat_cmd, from, op, to, prefs->cmd_log);
+  retval = lives_system(com, FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+int lives_echo(const char *text, const char *to, boolean append) {
+  // may not fail
+  char *com;
+  char *op;
+  int retval;
+
+  if (append) op = ">>";
+  else op = ">";
+
+  com = lives_strdup_printf("%s \"%s\" %s \"%s\" 2>\"%s\"", capable->echo_cmd, text, op, to, prefs->cmd_log);
+  retval = lives_system(com, FALSE);
+  lives_free(com);
+  return retval;
+}
+
+
+LIVES_GLOBAL_INLINE pid_t lives_getpid(void) {
+#ifdef IS_MINGW
+  return GetCurrentProcessId(),
+#else
+  return getpid();
+#endif
+}
+
+LIVES_GLOBAL_INLINE int lives_getuid(void) {return geteuid();}
+
+LIVES_GLOBAL_INLINE int lives_getgid(void) {return getegid();}
+
+
 LIVES_GLOBAL_INLINE int lives_kill(lives_pid_t pid, int sig) {
   if (pid == 0) {
     LIVES_ERROR("Tried to kill pid 0");
@@ -323,8 +543,30 @@ LIVES_GLOBAL_INLINE int lives_kill(lives_pid_t pid, int sig) {
 
 LIVES_GLOBAL_INLINE int lives_killpg(lives_pid_t pid, int sig) {return killpg(getpgid(pid), sig);}
 
+void lives_kill_subprocesses(const char *dirname, boolean kill_parent) {
+  char *com;
+  if (kill_parent)
+    com = lives_strdup_printf("%s stopsubsub \"%s\"", prefs->backend_sync, dirname);
+  else
+    com = lives_strdup_printf("%s stopsubsubs \"%s\"", prefs->backend_sync, dirname);
+  lives_system(com, TRUE);
+  lives_free(com);
+}
 
-LIVES_GLOBAL_INLINE void clear_mainw_msg(void) {lives_memset(mainw->msg, 0, MAINW_MSG_SIZE);}
+
+void lives_suspend_resume_process(const char *dirname, boolean suspend) {
+  char *com;
+  if (!suspend)
+    com = lives_strdup_printf("%s stopsubsub \"%s\" SIGCONT 2>/dev/null", prefs->backend_sync, dirname);
+  else
+    com = lives_strdup_printf("%s stopsubsub \"%s\" SIGTSTP 2>/dev/null", prefs->backend_sync, dirname);
+  lives_system(com, TRUE);
+  lives_free(com);
+
+  com = lives_strdup_printf("%s resume \"%s\"", prefs->backend_sync, dirname);
+  lives_system(com, FALSE);
+  lives_free(com);
+}
 
 ///////////////////////////////////////////////////////////
 
@@ -921,116 +1163,6 @@ boolean get_frames_sizes(int fileno, frames_t frame, int *hsize, int *vsize) {
 }
 
 
-boolean lives_string_ends_with(const char *string, const char *fmt, ...) {
-  char *textx;
-  va_list xargs;
-  size_t slen, cklen;
-  boolean ret = FALSE;
-
-  if (!string) return FALSE;
-
-  va_start(xargs, fmt);
-  textx = lives_strdup_vprintf(fmt, xargs);
-  va_end(xargs);
-  if (!textx) return FALSE;
-  slen = lives_strlen(string);
-  cklen = lives_strlen(textx);
-  if (cklen == 0 || cklen > slen) {
-    lives_free(textx);
-    return FALSE;
-  }
-  if (!lives_strncmp(string + slen - cklen, textx, cklen)) ret = TRUE;
-  lives_free(textx);
-  return ret;
-}
-
-
-// input length includes terminating NUL
-
-LIVES_GLOBAL_INLINE char *lives_ellipsize(char *txt, size_t maxlen, LiVESEllipsizeMode mode) {
-  /// eg. txt = "abcdefgh", maxlen = 6, LIVES_ELLIPSIZE_END  -> txt == "...gh" + NUL
-  ///     txt = "abcdefgh", maxlen = 6, LIVES_ELLIPSIZE_START  -> txt == "ab..." + NUL
-  ///     txt = "abcdefgh", maxlen = 6, LIVES_ELLIPSIZE_MIDDLE  -> txt == "a...h" + NUL
-  // LIVES_ELLIPSIZE_NONE - do not ellipsise
-  // return value should be freed, unless txt is returned
-  const char ellipsis[4] = "...\0";
-  size_t slen = lives_strlen(txt);
-  off_t stlen, enlen;
-  char *retval = txt;
-  if (!maxlen) return NULL;
-  if (slen >= maxlen) {
-    if (maxlen == 1) return lives_strdup("");
-    retval = (char *)lives_malloc(maxlen);
-    if (maxlen == 2) return lives_strdup(".");
-    if (maxlen == 3) return lives_strdup("..");
-    if (maxlen == 4) return lives_strdup("...");
-    maxlen -= 4;
-    switch (mode) {
-    case LIVES_ELLIPSIZE_END:
-      lives_memcpy(retval, ellipsis, 3);
-      lives_memcpy(retval + 3, txt + slen - maxlen, maxlen + 1);
-      break;
-    case LIVES_ELLIPSIZE_START:
-      lives_memcpy(retval, txt, maxlen);
-      lives_memcpy(retval + maxlen, ellipsis, 4);
-      break;
-    case LIVES_ELLIPSIZE_MIDDLE:
-      enlen = maxlen >> 1;
-      stlen = maxlen - enlen;
-      lives_memcpy(retval, txt, stlen);
-      lives_memcpy(retval + stlen, ellipsis, 3);
-      lives_memcpy(retval + stlen + 3, txt + slen - enlen, enlen + 1);
-      break;
-    default: break;
-    }
-  }
-  return retval;
-}
-
-
-LIVES_GLOBAL_INLINE char *lives_pad(char *txt, size_t minlen, int align) {
-  // pad with spaces at start and end respectively
-  // ealign gives ellipsis pos, palign can be LIVES_ALIGN_START, LIVES_ALIGN_END
-  // LIVES_ALIGN_START -> pad end, LIVES_ALIGN_END -> pad start
-  // LIVES_ALIGN_CENTER -> pad on both sides
-  // LIVES_ALIGN_FILL - do not pad
-  size_t slen = lives_strlen(txt);
-  char *retval = txt;
-  off_t ipos = 0;
-  if (align == LIVES_ALIGN_FILL) return txt;
-  if (slen < minlen - 1) {
-    retval = (char *)lives_malloc(minlen);
-    lives_memset(retval, ' ', --minlen);
-    retval[minlen] = 0;
-    switch (align) {
-    case LIVES_ALIGN_END:
-      ipos = minlen - slen;
-      break;
-    case LIVES_ALIGN_CENTER:
-      ipos = minlen - slen;
-      break;
-    default:
-      break;
-    }
-    lives_memcpy(retval + ipos, txt, slen);
-  }
-  return retval;
-}
-
-
-LIVES_GLOBAL_INLINE char *lives_pad_ellipsize(char *txt, size_t fixlen, int palign,  LiVESEllipsizeMode emode) {
-  // if len of txt < fixlen it will be padded, if longer, ellipsised
-  // ealign gives ellipsis pos, palign can be LIVES_ALIGN_START, LIVES_ALIGN_END
-  // pad with spaces at start and end respectively
-  // LIVES_ALIGN_CENTER -> pad on both sides
-  // LIVES_ALIGN_FILL - do not pad
-  size_t slen = lives_strlen(txt);
-  if (slen == fixlen - 1) return txt;
-  if (slen >= fixlen) return lives_ellipsize(txt, fixlen, emode);
-  return lives_pad(txt, fixlen, palign);
-}
-
-
 void get_location(const char *exe, char *val, int maxlen) {
   // find location of "exe" in path
   // sets it in val which is a char array of maxlen bytes
@@ -1155,6 +1287,63 @@ char *unhash_version(uint64_t version) {
     version -= min * VER_MINOR_MULT;
     return lives_strdup_printf("%lu.%lu.%lu", maj, min, version);
   }
+}
+
+
+boolean check_snap(const char *prog) {
+  // not working yet...
+  /* if (!check_for_executable(&capable->has_snap, EXEC_SNAP)) return FALSE; */
+  /* char *com = lives_strdup_printf("%s find %s", EXEC_SNAP, prog); */
+  /* char *res = grep_in_cmd(com, 0, 1, prog, 0, 1, FALSE); */
+  /* if (!res) return FALSE; */
+  /* lives_free(res); */
+  return TRUE;
+}
+
+
+#define SUDO_APT_INSTALL "sudo apt install %s"
+#define SU_PKG_INSTALL "su pkg install %s"
+
+char *get_install_cmd(const char *distro, const char *exe) {
+  char *cmd = NULL;
+  const char *pkgname = NULL;
+
+  if (!distro) distro = capable->distro_name;
+
+  if (!lives_strcmp(exe, EXEC_PIP)) {
+    if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
+      if (capable->python_version >= 3000000) pkgname = "python3-pip";
+      else if (capable->python_version >= 2000000) pkgname = "python-pip";
+      else pkgname = "python3 python3-pip";
+    }
+    if (!lives_strcmp(distro, DISTRO_FREEBSD)) {
+      if (capable->python_version >= 3000000) pkgname = "py3-pip";
+      else if (capable->python_version >= 2000000) pkgname = "py2-pip";
+      else pkgname = "python py3-pip";
+    }
+  }
+  if (!strcmp(exe, EXEC_GZIP)) pkgname = EXEC_GZIP;
+  if (!strcmp(exe, EXEC_YOUTUBE_DL)) pkgname = EXEC_YOUTUBE_DL;
+  if (!strcmp(exe, EXEC_YOUTUBE_DLC)) pkgname = EXEC_YOUTUBE_DLC;
+
+  if (!pkgname) pkgname = exe;
+
+  // TODO - add more, eg. pacman, dpkg
+  if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
+    cmd = lives_strdup_printf(SUDO_APT_INSTALL, pkgname);
+  }
+  if (!lives_strcmp(distro, DISTRO_FREEBSD)) {
+    cmd = lives_strdup_printf(SU_PKG_INSTALL, pkgname);
+  }
+  return cmd;
+}
+
+
+char *get_install_lib_cmd(const char *distro, const char *libname) {
+  char *libpkg = lives_strdup_printf("lib%s-dev", libname);
+  char *cmd = get_install_cmd(NULL, libpkg);
+  lives_free(libpkg);
+  return cmd;
 }
 
 
@@ -1849,245 +2038,6 @@ void reset_clipmenu(void) {
 }
 
 
-int lives_rmdir(const char *dir, boolean force) {
-  // if force is TRUE, removes non-empty dirs, otherwise leaves them
-  // may fail
-  if (!dir) return 1;
-  else {
-    size_t dirlen = lives_strlen(dir);
-    // will abort if dir length < 7, if dir is $HOME, does not start with dir sep. or ends with a '*'
-    if (dirlen < 7 || !lives_strcmp(dir, capable->home_dir)
-        || lives_strncmp(dir, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP)) || dir[dirlen - 1] == '*') {
-      char *msg = lives_strdup_printf("Refusing to lives_rmdir the following directory: %s", dir);
-      LIVES_FATAL(msg);
-      lives_free(msg);
-    }
-    if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
-      char *com, *cmd;
-      int retval;
-
-      if (force) {
-        cmd = lives_strdup_printf("%s -rf", capable->rm_cmd);
-      } else {
-        cmd = lives_strdup(capable->rmdir_cmd);
-      }
-
-      com = lives_strdup_printf("%s \"%s/\" >\"%s\" 2>&1", cmd, dir, prefs->cmd_log);
-      retval = lives_system(com, TRUE);
-      lives_free(com);
-      lives_free(cmd);
-      return retval;
-    }
-  }
-  return 1;
-}
-
-
-int lives_rmdir_with_parents(const char *dir) {
-  // may fail, will not remove non empty dirs
-  if (!dir) return 1;
-  else {
-    size_t dirlen = lives_strlen(dir);
-    // will abort if dir length < 7, if dir is $HOME, does not start with dir sep. or ends with a '*'
-    if (dirlen < 7 || !lives_strcmp(dir, capable->home_dir)
-        || lives_strncmp(dir, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP)) || dir[dirlen - 1] == '*') {
-      char *msg = lives_strdup_printf("Refusing to lives_rmdir_with_parents the following directory: %s", dir);
-      LIVES_FATAL(msg);
-      lives_free(msg);
-    }
-  }
-  if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
-    char *com = lives_strdup_printf("%s -p \"%s\" >\"%s\" 2>&1", capable->rmdir_cmd, dir, prefs->cmd_log);
-    int retval = lives_system(com, TRUE);
-    lives_free(com);
-    return retval;
-  }
-  return 1;
-}
-
-
-
-int lives_rm(const char *file) {
-  // may fail - will not remove directories or symlinks
-  if (!file) return 1;
-  if (lives_file_test(file, LIVES_FILE_TEST_IS_REGULAR)) {
-    char *com = lives_strdup_printf("%s -f \"%s\" >\"%s\" 2>&1", capable->rm_cmd, file, prefs->cmd_log);
-    int retval = lives_system(com, TRUE);
-    lives_free(com);
-    return retval;
-  }
-  return 1;
-}
-
-
-int lives_rmglob(const char *files) {
-  // delete files with name "files"*
-  // may fail
-  // should chdir first to target dir
-  if (!files) return 1;
-  else {
-    // files may not be empty string, or start with a '.' or dir separator
-    if (!*files || *files == '.' || !lives_strncmp(files, LIVES_DIR_SEP, lives_strlen(LIVES_DIR_SEP))) return 2;
-    else {
-      int retval;
-      char *com;
-      if (!lives_strcmp(files, "*"))
-        com = lives_strdup_printf("%s * >\"%s\" 2>&1", capable->rm_cmd, prefs->cmd_log);
-      else
-        com = lives_strdup_printf("%s \"%s\"* >\"%s\" 2>&1", capable->rm_cmd, files, prefs->cmd_log);
-      retval = lives_system(com, TRUE);
-      lives_free(com);
-      return retval;
-    }
-  }
-}
-
-
-int lives_cp(const char *from, const char *to) {
-  // may not fail - BUT seems to return -1 sometimes
-  char *com = lives_strdup_printf("%s \"%s\" \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
-  int retval = lives_system(com, FALSE);
-  lives_free(com);
-  return retval;
-}
-
-
-int lives_cp_noclobber(const char *from, const char *to) {
-  char *com = lives_strdup_printf("%s -n \"%s\"/* \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
-  int retval = lives_system(com, TRUE);
-  lives_free(com);
-  return retval;
-}
-
-
-int lives_cp_recursive(const char *from, const char *to, boolean incl_dir) {
-  // we do allow fail since the source may be empty dir
-  int retval;
-  char *com;
-  boolean mayfail = FALSE;
-  if (incl_dir) com = lives_strdup_printf("%s -r \"%s\" \"%s\" >\"%s\" 2>&1",
-                                            capable->cp_cmd, from, to, prefs->cmd_log);
-  else {
-    // we do allow fail since the source dir may be empty dir
-    com = lives_strdup_printf("%s -rf \"%s\"/* \"%s\" >\"%s\" 2>&1",
-                              capable->cp_cmd, from, to, prefs->cmd_log);
-    mayfail = TRUE;
-  }
-  if (!lives_file_test(to, LIVES_FILE_TEST_EXISTS))
-    lives_mkdir_with_parents(to, capable->umask);
-
-  retval = lives_system(com, mayfail);
-
-  lives_free(com);
-  return retval;
-}
-
-
-int lives_cp_keep_perms(const char *from, const char *to) {
-  // may not fail
-  char *com = lives_strdup_printf("%s -a \"%s\" \"%s/\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
-  int retval = lives_system(com, FALSE);
-  lives_free(com);
-  return retval;
-}
-
-
-int lives_mv(const char *from, const char *to) {
-  // may not fail
-  char *com = lives_strdup_printf("%s \"%s\" \"%s\"", capable->mv_cmd, from, to);
-  int retval = lives_system(com, FALSE);
-  lives_free(com);
-  return retval;
-}
-
-
-int lives_touch(const char *tfile) {
-  // may not fail
-  char *com = lives_strdup_printf("%s \"%s\" >\"%s\" 2>&1", capable->touch_cmd, tfile, prefs->cmd_log);
-  int retval = lives_system(com, FALSE);
-  lives_free(com);
-  return retval;
-}
-
-
-int lives_ln(const char *from, const char *to) {
-  // may not fail
-  char *com;
-  int retval;
-  com = lives_strdup_printf("%s -s \"%s\" \"%s\" >\"%s\" 2>&1", capable->ln_cmd, from, to, prefs->cmd_log);
-  retval = lives_system(com, FALSE);
-  lives_free(com);
-  return retval;
-}
-
-
-int lives_chmod(const char *target, const char *mode) {
-  // may not fail
-  char *com = lives_strdup_printf("%s %s \"%s\" >\"%s\" 2>&1", capable->chmod_cmd, mode, target, prefs->cmd_log);
-  int retval = lives_system(com, FALSE);
-  lives_free(com);
-  return retval;
-}
-
-
-int lives_cat(const char *from, const char *to, boolean append) {
-  // may not fail
-  char *com;
-  char *op;
-  int retval;
-
-  if (append) op = ">>";
-  else op = ">";
-
-  com = lives_strdup_printf("%s \"%s\" %s \"%s\" >\"%s\" 2>&1", capable->cat_cmd, from, op, to, prefs->cmd_log);
-  retval = lives_system(com, FALSE);
-  lives_free(com);
-  return retval;
-}
-
-
-int lives_echo(const char *text, const char *to, boolean append) {
-  // may not fail
-  char *com;
-  char *op;
-  int retval;
-
-  if (append) op = ">>";
-  else op = ">";
-
-  com = lives_strdup_printf("%s \"%s\" %s \"%s\" 2>\"%s\"", capable->echo_cmd, text, op, to, prefs->cmd_log);
-  retval = lives_system(com, FALSE);
-  lives_free(com);
-  return retval;
-}
-
-
-void lives_kill_subprocesses(const char *dirname, boolean kill_parent) {
-  char *com;
-  if (kill_parent)
-    com = lives_strdup_printf("%s stopsubsub \"%s\"", prefs->backend_sync, dirname);
-  else
-    com = lives_strdup_printf("%s stopsubsubs \"%s\"", prefs->backend_sync, dirname);
-  lives_system(com, TRUE);
-  lives_free(com);
-}
-
-
-void lives_suspend_resume_process(const char *dirname, boolean suspend) {
-  char *com;
-  if (!suspend)
-    com = lives_strdup_printf("%s stopsubsub \"%s\" SIGCONT 2>/dev/null", prefs->backend_sync, dirname);
-  else
-    com = lives_strdup_printf("%s stopsubsub \"%s\" SIGTSTP 2>/dev/null", prefs->backend_sync, dirname);
-  lives_system(com, TRUE);
-  lives_free(com);
-
-  com = lives_strdup_printf("%s resume \"%s\"", prefs->backend_sync, dirname);
-  lives_system(com, FALSE);
-  lives_free(com);
-}
-
-
 void activate_url_inner(const char *link) {
 #if GTK_CHECK_VERSION(2, 14, 0)
   LiVESError *err = NULL;
@@ -2271,139 +2221,6 @@ void set_sel_label(LiVESWidget * sel_label) {
 }
 
 
-LIVES_GLOBAL_INLINE void cached_list_free(LiVESList **list) {
-  lives_speed_cache_t *speedy;
-  for (LiVESList *xlist = *list; xlist; xlist = xlist->next) {
-    speedy = (lives_speed_cache_t *)(*list)->data;
-    if (speedy) {
-      if (speedy->key) lives_free(speedy->key);
-      if (speedy->data) lives_free(speedy->data);
-      lives_free(speedy);
-    }
-    xlist->data = NULL;
-  }
-  lives_list_free(*list);
-  *list = NULL;
-}
-
-
-void print_cache(LiVESList * cache) {
-  /// for debugging
-  lives_speed_cache_t *speedy;
-  LiVESList *ll = cache;
-  g_print("dumping cache %p\n", cache);
-  for (; ll; ll = ll->next) {
-    speedy = (lives_speed_cache_t *)ll->data;
-    g_print("cache dets: %s = %s\n", speedy->key, speedy->data);
-  }
-}
-
-
-LiVESList *cache_file_contents(const char *filename) {
-  lives_speed_cache_t *speedy;
-  LiVESList *list = NULL;
-  FILE *hfile;
-  size_t kelen;
-  char buff[65536];
-  char *key = NULL, *keystr_end = NULL, *cptr, *tmp, *data = NULL;
-  if (!(hfile = fopen(filename, "r"))) return NULL;
-  while (fgets(buff, 65536, hfile)) {
-    if (!*buff) continue;
-    if (*buff == '#') continue;
-    if (key) {
-      if (!lives_strncmp(buff, keystr_end, kelen)) {
-        speedy = (lives_speed_cache_t *)lives_calloc(1, sizeof(lives_speed_cache_t));
-        speedy->hash = fast_hash(key);
-        speedy->key = key;
-        speedy->data = data;
-        key = data = NULL;
-        lives_free(keystr_end);
-        keystr_end = NULL;
-        list = lives_list_prepend(list, speedy);
-        continue;
-      }
-      cptr = buff;
-      if (data) {
-        if (*buff != '|') continue;
-        cptr++;
-      }
-      lives_chomp(cptr, FALSE);
-      tmp = lives_strdup_printf("%s%s", data ? data : "", cptr);
-      if (data) lives_free(data);
-      data = tmp;
-      continue;
-    }
-    if (*buff != '<') continue;
-    kelen = 0;
-    for (cptr = buff; cptr; cptr++) {
-      if (*cptr == '>') {
-        kelen = cptr - buff;
-        if (kelen > 2) {
-          *cptr = 0;
-          key = lives_strdup(buff + 1);
-          keystr_end = lives_strdup_printf("</%s>", key);
-          kelen++;
-        }
-        break;
-      }
-    }
-  }
-  fclose(hfile);
-  if (key) lives_free(key);
-  if (keystr_end) lives_free(keystr_end);
-  return lives_list_reverse(list);
-}
-
-
-char *get_val_from_cached_list(const char *key, size_t maxlen, LiVESList * cache) {
-  // WARNING - contents may be invalid if the underlying file is updated (e.g with set_*_pref())
-  LiVESList *list = cache;
-  uint32_t khash = fast_hash(key);
-  lives_speed_cache_t *speedy;
-  for (; list; list = list->next) {
-    speedy = (lives_speed_cache_t *)list->data;
-    if (khash == speedy->hash && !lives_strcmp(key, speedy->key))
-      return lives_strndup(speedy->data, maxlen);
-  }
-  return NULL;
-}
-
-
-boolean check_for_ratio_fps(double fps) {
-  boolean ratio_fps;
-  char *test_fps_string1 = lives_strdup_printf("%.3f00", fps);
-  char *test_fps_string2 = lives_strdup_printf("%.5f", fps);
-
-  if (strcmp(test_fps_string1, test_fps_string2)) {
-    // got a ratio
-    ratio_fps = TRUE;
-  } else {
-    ratio_fps = FALSE;
-  }
-  lives_free(test_fps_string1);
-  lives_free(test_fps_string2);
-
-  return ratio_fps;
-}
-
-
-double get_ratio_fps(const char *string) {
-  // return a ratio (8dp) fps from a string with format num:denom
-  // inverse of calc_ratio_fps
-  double fps;
-  char *fps_string;
-  char **array = lives_strsplit(string, ":", 2);
-  int num = atoi(array[0]);
-  int denom = atoi(array[1]);
-  lives_strfreev(array);
-  fps = (double)num / (double)denom;
-  fps_string = lives_strdup_printf("%.8f", fps);
-  fps = lives_strtod(fps_string);
-  lives_free(fps_string);
-  return fps;
-}
-
-
 uint32_t get_signed_endian(boolean is_signed, boolean little_endian) {
   // asigned TRUE == signed, FALSE == unsigned
 
@@ -2426,268 +2243,44 @@ uint32_t get_signed_endian(boolean is_signed, boolean little_endian) {
 }
 
 
-size_t get_token_count(const char *string, int delim) {
-  size_t pieces = 1;
-  if (!string) return 0;
-  if (delim <= 0 || delim > 255) return 1;
-
-  while ((string = strchr(string, delim)) != NULL) {
-    pieces++;
-    string++;
-  }
-  return pieces;
-}
-
-
-char *get_nth_token(const char *string, const char *delim, int pnumber) {
-  char **array;
-  char *ret = NULL;
-  register int i;
-  if (pnumber < 0 || pnumber >= get_token_count(string, (int)delim[0])) return NULL;
-  array = lives_strsplit(string, delim, pnumber + 1);
-  for (i = 0; i < pnumber; i++) {
-    if (i == pnumber) ret = array[i];
-    else lives_free(array[i]);
-  }
-  lives_free(array);
-  return ret;
-}
-
-
-int lives_utf8_strcasecmp(const char *s1, const char *s2) {
-  // ignore case
-  char *s1u = lives_utf8_casefold(s1, -1);
-  char *s2u = lives_utf8_casefold(s2, -1);
-  int ret = lives_strcmp(s1u, s2u);
-  lives_free(s1u);
-  lives_free(s2u);
-  return ret;
-}
-
-
-LIVES_GLOBAL_INLINE int lives_utf8_strcmp(const char *s1, const char *s2) {
-  return lives_utf8_collate(s1, s2);
-}
-
-
-#define BSIZE (8)
-#define INITSIZE 32
-
-char *subst(const char *xstring, const char *from, const char *to) {
-  // return a string with all occurrences of from replaced with to
-  // return value should be freed after use
-  char *ret = lives_calloc(INITSIZE, BSIZE);
-  uint64_t ubuff = 0;
-  char *buff;
-
-  const size_t fromlen = strlen(from);
-  const size_t tolen = strlen(to);
-  const size_t tolim = BSIZE - tolen;
-
-  size_t match = 0;
-  size_t xtolen = tolen;
-  size_t bufil = 0;
-  size_t retfil = 0;
-  size_t retsize = INITSIZE;
-  size_t retlimit = retsize - BSIZE;
-
-  buff = (char *)&ubuff;
-
-  for (char *cptr = (char *)xstring; *cptr; cptr++) {
-    if (*cptr == from[match++]) {
-      if (match == fromlen) {
-        // got complete match
-        match = 0;
-        if (bufil > tolim) xtolen = BSIZE - bufil;
-        lives_memcpy(buff + bufil, to, xtolen);
-        if ((bufil += xtolen) == BSIZE) {
-          if (retfil > retlimit) {
-            // increase size of return string
-            ret = lives_recalloc(ret, retsize * 2, retsize, BSIZE);
-            retsize *= 2;
-            retlimit = (retsize - 1) *  BSIZE;
-          }
-          lives_memcpy(ret + retfil, buff, BSIZE);
-          retfil += BSIZE;
-          bufil = 0;
-          if (xtolen < tolen) {
-            lives_memcpy(buff, to + xtolen, tolen - xtolen);
-            bufil += tolen - xtolen;
-            xtolen = tolen;
-          }
-        }
-      }
-      continue;
-    }
-
-    if (--match > 0) {
-      xtolen = match;
-      if (bufil > BSIZE - match) xtolen = BSIZE - bufil;
-      lives_memcpy(buff + bufil, from, xtolen);
-      if ((bufil += xtolen) == BSIZE) {
-        if (retfil > retlimit) {
-          ret = lives_recalloc(ret, retsize * 2, retsize, BSIZE);
-          retsize *= 2;
-          retlimit = (retsize - 1) *  BSIZE;
-        }
-        lives_memcpy(ret + retfil, buff, BSIZE);
-        retfil += BSIZE;
-        bufil = 0;
-        if (xtolen < fromlen) {
-          lives_memcpy(buff, from + xtolen, fromlen - xtolen);
-          bufil += fromlen - xtolen - match;
-          xtolen = tolen;
-        }
-      }
-      match = 0;
-    }
-    if (match < 0) match = 0;
-    buff[bufil] = *cptr;
-    if (++bufil == BSIZE) {
-      if (retfil > retlimit) {
-        ret = lives_recalloc(ret, retsize * 2, retsize, BSIZE);
-        retsize *= 2;
-        retlimit = (retsize - 1) *  BSIZE;
-      }
-      lives_memcpy(ret + retfil, buff, BSIZE);
-      retfil += BSIZE;
-      bufil = 0;
-    }
-  }
-
-  if (bufil) {
-    if (retsize > retlimit) {
-      ret = lives_recalloc(ret, retsize + 1, retsize, BSIZE);
-      retsize++;
-    }
-    lives_memcpy(ret + retfil, buff, bufil);
-    retfil += bufil;
-  }
-  if (match) {
-    if (retsize > retlimit) {
-      ret = lives_recalloc(ret, retsize + 1, retsize, BSIZE);
-      retsize++;
-    }
-    lives_memcpy(ret + retsize, from, match);
-    retfil += match;
-  }
-  ret[retfil++] = 0;
-  retsize *= BSIZE;
-
-  if (retsize - retfil > (retsize >> 2)) {
-    char *tmp = lives_malloc(retfil);
-    lives_memcpy(tmp, ret, retfil);
-    lives_free(ret);
-    return tmp;
-  }
-  return ret;
-}
-
-
-char *subst_quote(const char *xstring, const char *quotes, const char *from, const char *to) {
-  char *res = subst(xstring, from, to);
-  char *res2 = lives_strdup_printf("%s%s%s", quotes, res, quotes);
-  lives_free(res);
-  return res2;
-}
-
-
-char *insert_newlines(const char *text, int maxwidth) {
-  // crude formatting of strings, ensure a newline after every run of maxwidth chars
-  // does not take into account for example utf8 multi byte chars
-
-  wchar_t utfsym;
-  char *retstr;
-
-  size_t runlen = 0;
-  size_t req_size = 1; // for the terminating \0
-  size_t tlen, align = 1;
-
-  int xtoffs;
-
-  boolean needsnl = FALSE;
-
-  int i;
-
-  if (!text) return NULL;
-
-  if (maxwidth < 1) return lives_strdup("Bad maxwidth, dummy");
-
-  tlen = lives_strlen(text);
-
-  xtoffs = mbtowc(NULL, NULL, 0); // reset read state
-
-  //pass 1, get the required size
-  for (i = 0; i < tlen; i += xtoffs) {
-    xtoffs = mbtowc(&utfsym, &text[i], 4); // get next utf8 wchar
-    if (!xtoffs) break;
-    if (xtoffs == -1) {
-      LIVES_WARN("mbtowc returned -1");
-      return lives_strdup(text);
-    }
-
-    if (*(text + i) == '\n') runlen = 0; // is a newline (in any encoding)
-    else {
-      runlen++;
-      if (needsnl) req_size++; ///< we will insert a nl here
-    }
-
-    if (runlen == maxwidth) {
-      if (i < tlen - 1 && (*(text + i + 1) != '\n')) {
-        // needs a newline
-        needsnl = TRUE;
-        runlen = 0;
-      }
-    } else needsnl = FALSE;
-    req_size += xtoffs;
-  }
-
-  xtoffs = mbtowc(NULL, NULL, 0); // reset read state
-
-  align = get_max_align(req_size, DEF_ALIGN);
-
-  retstr = (char *)lives_calloc(req_size / align, align);
-  req_size = 0; // reuse as a ptr to offset in retstr
-  runlen = 0;
-  needsnl = FALSE;
-
-  //pass 2, copy and insert newlines
-
-  for (i = 0; i < tlen; i += xtoffs) {
-    xtoffs = mbtowc(&utfsym, &text[i], 4); // get next utf8 wchar
-    if (!xtoffs) break;
-    if (*(text + i) == '\n') runlen = 0; // is a newline (in any encoding)
-    else {
-      runlen++;
-      if (needsnl) {
-        *(retstr + req_size) = '\n';
-        req_size++;
-      }
-    }
-
-    if (runlen == maxwidth) {
-      if (i < tlen - 1 && (*(text + i + 1) != '\n')) {
-        // needs a newline
-        needsnl = TRUE;
-        runlen = 0;
-      }
-    } else needsnl = FALSE;
-    lives_memcpy(retstr + req_size, &utfsym, xtoffs);
-    req_size += xtoffs;
-  }
-
-  *(retstr + req_size) = 0;
-
-  return retstr;
-}
-
-
 LIVES_GLOBAL_INLINE LiVESInterpType get_interp_value(short quality, boolean low_for_mt) {
-  if ((mainw->is_rendering || (mainw->multitrack && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
+  if ((mainw->is_rendering || (mainw->multitrack && mainw->multitrack->is_rendering))
+      && !mainw->preview_rendering)
     return LIVES_INTERP_BEST;
   if (low_for_mt && mainw->multitrack) return LIVES_INTERP_FAST;
   if (quality <= PB_QUALITY_LOW) return LIVES_INTERP_FAST;
   else if (quality == PB_QUALITY_MED) return LIVES_INTERP_NORMAL;
   return LIVES_INTERP_BEST;
+}
+
+
+int check_for_bad_ffmpeg(void) {
+  int i, fcount;
+  char *fname_next;
+  boolean maybeok = FALSE;
+
+  fcount = get_frame_count(mainw->current_file, 1);
+
+  for (i = 1; i <= fcount; i++) {
+    fname_next = make_image_file_name(cfile, i, get_image_ext_for_type(cfile->img_type));
+    if (sget_file_size(fname_next) > 0) {
+      lives_free(fname_next);
+      maybeok = TRUE;
+      break;
+    }
+    lives_free(fname_next);
+  }
+
+  if (!maybeok) {
+    widget_opts.non_modal = TRUE;
+    do_error_dialog(
+      _("Your version of mplayer/ffmpeg may be broken !\n"
+        "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n\n"
+        "You can work around this temporarily by switching to jpeg output in Preferences/Decoding.\n\n"
+        "Try running Help/Troubleshoot for more information."));
+    widget_opts.non_modal = FALSE;
+    return CANCEL_ERROR;
+  }
+  return CANCEL_NONE;
 }
 

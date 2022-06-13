@@ -7,27 +7,29 @@
 // functions for handling the LiVES Struct Def Table
 
 #include "main.h"
-
 #include "lsd.h"
 
+static lives_hash_store_t *lsd_store = NULL;
+
 #define CREATOR_ID "Created in LiVES main"
-
-static const lives_struct_def_t *lsd_table[LIVES_N_STRUCTS];
-boolean tab_inited = FALSE;
-
-static void init_lsd_tab(void) {
-  for (int i = 0; i < LIVES_N_STRUCTS; i++) lsd_table[i] = NULL;
-  tab_inited = TRUE;
-}
 
 static void lfd_setdef(void *strct, const char *stype, const char *fname, int64_t *ptr) {*ptr = -1;}
 static void adv_timing_init(void *strct, const char *stype, const char *fname, adv_timing_t *adv) {adv->ctiming_ratio = 1.;}
 
+const lives_struct_def_t *lsd_from_store(lives_struct_type st_type) {
+  const lives_struct_def_t *lsd = NULL;
+  if (st_type >= LIVES_STRUCT_FIRST && st_type < LIVES_N_STRUCTS) {
+    lsd = (const lives_struct_def_t *)get_from_hash_store_i(lsd_store, (uint64_t)st_type);
+  }
+  return lsd;
+}
+
 const lives_struct_def_t *get_lsd(lives_struct_type st_type) {
   const lives_struct_def_t *lsd;
   if (st_type < LIVES_STRUCT_FIRST || st_type >= LIVES_N_STRUCTS) return NULL;
-  if (!tab_inited) init_lsd_tab();
-  else if (lsd_table[st_type]) return lsd_table[st_type];
+  lsd = get_from_hash_store_i(lsd_store, (uint64_t)st_type);
+  if (lsd) return lsd;
+
   switch (st_type) {
   case LIVES_STRUCT_CLIP_DATA_T:
     lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "debug", 8);
@@ -70,12 +72,22 @@ const lives_struct_def_t *get_lsd(lives_struct_type st_type) {
       lives_free(fdets);
     }
     break;
-  default:
-    return NULL;
-  }
-  if (lsd) {
-    lives_struct_set_class_data((lives_struct_def_t *)lsd, CREATOR_ID);
-    lsd_table[st_type] = lsd;
+  case LIVES_STRUCT_INTENTCAP_T: {
+    lsd = lsd_create("lives_intentcap_t", sizeof(lives_intentcap_t), "lsd", 1);
+    if (lsd) {
+      lives_intentcap_t *icap = (lives_intentcap_t *)lives_calloc(1, sizeof(lives_intentcap_t));
+      // caller will define special field 0, because ptrs to callbacks are needed
+      lives_struct_init_p(lsd, icap, &icap->lsd);
+      lives_free(icap);
+    }
+    break;
+    default:
+      return NULL;
+    }
+    if (lsd) {
+      lives_struct_set_class_id((lives_struct_def_t *)lsd, CREATOR_ID);
+      lsd_store = add_to_hash_store_i(lsd_store, (uint64_t)st_type, (void *)lsd);
+    }
   }
   return lsd;
 }
@@ -83,12 +95,23 @@ const lives_struct_def_t *get_lsd(lives_struct_type st_type) {
 void *struct_from_template(lives_struct_type st_type) {
   const lives_struct_def_t *lsd = get_lsd(st_type);
   if (!lsd) return NULL;
+  if (strcmp(lsd->self_fields[0]->name, "LSD")) abort();
   return lives_struct_create(lsd);
+}
+
+void *struct_from_template_inplace(lives_struct_type st_type, void *thestruct) {
+  const lives_struct_def_t *lsd = get_lsd(st_type);
+  if (!lsd) return NULL;
+  return lives_struct_create_static(lsd, thestruct);
 }
 
 
 LIVES_GLOBAL_INLINE void *copy_struct(lives_struct_def_t *lsd) {
-  if (lsd) return lives_struct_copy(lsd);
+  if (lsd) {
+    lives_struct_def_t *xlsd = lives_struct_copy(lsd);
+    if (strcmp(xlsd->self_fields[0]->name, "LSD")) abort();
+    return xlsd;
+  }
   return NULL;
 }
 
@@ -104,7 +127,7 @@ LIVES_GLOBAL_INLINE void ref_struct(lives_struct_def_t *lsd) {
 
 
 LIVES_GLOBAL_INLINE const char *lives_struct_get_creator(lives_struct_def_t *lsd) {
-  if (lsd) return lives_struct_get_class_data(lsd);
+  if (lsd) return lives_struct_get_class_id(lsd);
   return NULL;
 }
 
@@ -171,9 +194,9 @@ uint64_t lsd_check_struct(lives_struct_def_t *lsd) {
     errprint("lsd_check: lsd (%p) has unique_id 0X%016lX\n"
              "The probability of this is < 1 in 17.5 trillion\n", lsd, uid);
 
-  if (lives_strcmp(lives_struct_get_class_data(lsd), CREATOR_ID))
-    errprint("lsd_check: lsd (%p) has alternate class_data [%s]\n"
-             "Ours is [%s]\n", lsd, (char *)lives_struct_get_class_data(lsd), CREATOR_ID);
+  if (lives_strcmp(lives_struct_get_class_id(lsd), CREATOR_ID))
+    errprint("lsd_check: lsd (%p) has alternate class_id [%s]\n"
+             "Ours is [%s]\n", lsd, (char *)lives_struct_get_class_id(lsd), CREATOR_ID);
 #endif
   return err;
 }
@@ -258,3 +281,19 @@ char *weed_plant_to_header(weed_plant_t *plant, const char *tname) {
   return hdr;
 }
 
+
+#if 0
+weed_plant_t *header_to_weed_plant(const char *fname, const char *sruct_type) {
+  // we are looking for something like "} structtype;"
+  // the work back from there to something like "typedef struct {"
+
+  int bfd = lives_open_rdonly_buffered(fname);
+  if (bfd >= 0) {
+    char line[512];
+    while (lives_buffered_readline(bfd, line, '\n', 512) > 0) {
+      g_print("line is %s\n", line);
+    }
+  }
+  lives_close_buffered(bfd);
+}
+#endif

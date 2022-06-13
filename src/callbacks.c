@@ -52,7 +52,7 @@ boolean on_LiVES_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, liv
 #ifndef VALGRIND_ON
 #ifdef _lives_free
 #undef  lives_free
-#define lives_free(a) (mainw->is_exiting ? a : _lives_free(a))
+#define lives_free(a) (mainw->is_exiting ? 0 : _lives_free(a))
 #endif
 #endif
 
@@ -72,7 +72,6 @@ void lives_exit(int signum) {
     // unlock all mutexes to prevent deadlocks
 
     // recursive
-    while (!pthread_mutex_unlock(&mainw->instance_ref_mutex));
     while (!pthread_mutex_unlock(&mainw->abuf_mutex));
 
     // non-recursive
@@ -795,7 +794,7 @@ void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     return;
   }
 
-  tmpdir = get_staging_dir_for(-1, LIVES_ICAPS_DOWNLOAD);
+  tmpdir = get_staging_dir_for(-1, ICAP(DOWNLOAD));
 
   if (!tmpdir) return;
 

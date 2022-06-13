@@ -1,5 +1,76 @@
 = Technical Specification =
 
+Preface: Weed is a general purpose data storage and retrieval system based on the concept of objects (plants),
+with any number of 'leaves' (locations to store data of any type, single values or arrays, or even null data just with a
+type). Each 'leaf' in a plant must have a unique 'key' and the type of data (integer, double, string, void *) may not change
+unless the leaf is deleted and then recreated. A plant itself is simply a collection of leaves, and must always include a
+'type' leaf, a single value of type integer which (except for very special circumstances) may not be altered.
+The 'type' leaf is thus flagged as 'immutable' and 'undeletable'. These flagbits can also be applied to other leaves
+as required. Before continuing a word about the reference implementation (i.e. libweed).
+
+The author has been using this library for several years, in practice it runs in a performance demanding, highly concurrent
+environment. During the last two years (since 2020), the library has not crashed or hung even one single time.
+In cases where it has appeared to fail, 100% of the time it turned out to be duie to memory errors in the calling
+program itself. The library is extremely well optimised, the design concept is that there will be many sunultaneous read
+operations, relatively fewer write operations, and fewer still deletions.
+
+See appendix Z for more technical details.
+
+Appendix Z.
+The data is stored in a linked list in the reference implementation, since we anticipate mostly read operations, then
+generally each thread will traverse the list and just aquire a shared read lock on the data (leaf) in question.
+For write operations, the functionality is similar, the writer will put an advisory lock on the plant, this prevents
+other threads from adding or deleting leaves. But without disrupting other read / write operations provided they are
+only updating existing data. It will then traverse the list looking for the target, and if it finds it, it
+aquires a write lock to the data updates it and unlocks everything.
+
+If the leaf is not found, then this becomes an add operation. The thread will aquire a write lock on the plant itself,
+it can only obtain this if there are no other writers traversing the list, thus it will stop new writers from entering
+and once all wirters have finished traversing it will obtain the plant write lock. Once this occurs, no other threads
+may enter the list, however those further down can continue as nornal. The lock is held very briefly, the thread will
+have already prepared the new data and simply appends it after the head, and then unlocks the plant.
+
+Other threads are only blocked for entering for the miniscule amount of time it takes to redirect the "next"
+pointer of the first element of the list. the already prepared data is simply slotted in and the thread can exit.
+
+Deletion operations are the slowest but still very optimised the thread traverses the list, with the same "no structure
+changes" lock as for a writer. If the target is not in the list it can simpley remove the lock and exit.
+If the target is found, the leaf is removed with the minimum of disruption. The idea is simply to briefly stop threads
+from entering the previos leaf and reading its "next pointer". It can do so by lecking the prior leaf thus preventing
+threads from entering. However, there is a chance that one or more threads are currently reading the prior leaf, and
+so the lock would be placed too late. Thus the thread needs to ensure that there are no threads upstream of it first.
+How it achieves this, each reader or writer thread increments a counter when it enters and then decrements it when it
+leaves. Thus is this is non-zero, the thread knows that there are others traversing the list, but nor whether they
+are upstream or downstream. To resolve this, the thread places a special lock on the first leaf, a "check mode" marker.
+In this mode, new threads entering will not increment the counter but before moving to the next leaf, they will check
+whether it is locked. Since this may create performance issues, this is only done before a deletion is scheduled.
+During this time also, readers and writers can continue as normal, other than being in "check mode" and not
+incrementing / decrementing the counter, all contiues as normal. However, writers may not update the structure as it
+could interfere. Now once the thread counter reaches zero, the deletion thread knows that all the earlier ones not
+in check mode have departed. The remaining threads are in check mode. The thread will have already placed an advisory on the prior leaf blocking threads from entering, so as soon as the counter reaches zero it can simply update the "next" pointer of the prior leaf, remove the advisory, and its job is done. The remaining threads will continue in check mode so if another thread comes to delete a leaf they will block. In fact they will check and lock the next leaf before moving onto it, this lock
+will ensure that a deletion threa cannot update the next pointer of the current leaf or of the next one, This means
+that in the unliekly event there is another deleion thread waiting it is blocked from updating the current leaf or the one
+ahead. After this, new threads entering will no longer be in check mode, (unless another deletion thread happens to
+ne waiting) and will begin incrementing / decrementing  the counter again.
+
+If the plant itself needs freeing, then that thread will lock it such a way that no nwe threads may enter and it will
+wait for all traversing threads to exit. If threads are running in check mode, this thread will detect that,
+as once the counter reaches zero, it will attempt to lock all leaves as if it were about to delete them all
+(which in fact it will do).
+
+Again for deletion, disruption is kept to a minumum. Other threads may continue as normal,
+those already traversing are unaffected. New threads entering are slowed a little by locking
+and unlocking the leaf ahead of it. This disruption only continues until all the counted threads have finished,
+and the deletion thread is able to attain a lock on the previous leaf. Once it has that, it is a simple matter of updating
+the "next" pointer on that leaf. Then it can free the data in the now detached leaf at leisure. It is possible that
+all leaves between it and head get deleted, then other leaves are added, so it can lose track of which is the previous leaf.
+It has to maintain the lock on theprevious leaf and there seems to be no other way to ensure that, other than by
+decreeing a ban on structure updates.
+
+
+
+
+
 TBD: - plugin parameter interpolation
       - zero copy for generators - host supplies buffer to be filled between process_func() calls
 
@@ -189,9 +260,11 @@ weed_display_value_f
 Added "copy_value_to" for boolean out_params, enabling push buttons to be used in interfaces.
 
 
+--> various sundry changes to the API, such as allowing for custom memory functions,
+in addition the locking method was overhauled to almost completely reduce thread contentions.
 
 
-(C) Gabriel "Salsaman" Finch 2005 - 2021
+(C) Gabriel "Salsaman" Finch 2005 - 2022
 
 With contributions by: Niels Elburg, Dennis "Jaromil" Rojo, Andraz
 Tori, and Oyvind "Pippin" Kolas.
@@ -371,7 +444,12 @@ WEED_SEED_FIRST_CUSTOM	[1024]
 Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
 (A future version of the API may allow for non pointer custom types)
 
-
+!!!	  Under consideration:
+	  Acase could be made for adding a pseudo type WEED_SEED_FLOAT. This may be stored internally as a double,
+	however the new seed type can serve as a guide for converting values, for example
+	when linking to a function parameter - in the same way that "boolean" values are actually ints
+	just with a different name and contextual meaning.
+	!!!.
 
 == WEED CORE FUNCTIONS ==
 

@@ -735,34 +735,60 @@ const char *module_check_init(void) {
 
 
 static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
-  lives_av_priv_t *priv;
+  static memcpy_f  ext_memcpy = (memcpy_f)memcpy;
   lives_clip_data_t *cdata;
+  lives_av_priv_t *priv;
 
   if (!data) {
     cdata = cdata_new(NULL);
-    cdata->palettes = malloc(2 * sizeof(int));
+    cdata->palettes = (int *)malloc(2 * sizeof(int));
     cdata->palettes[1] = WEED_PALETTE_END;
-    cdata->priv = calloc(1, sizeof(lives_av_priv_t));
   } else cdata = data;
 
-  priv = (lives_av_priv_t *)cdata->priv;
+  priv = cdata->priv = calloc(1, sizeof(lives_av_priv_t));
+  cdata->seek_flag = LIVES_SEEK_FAST | LIVES_SEEK_FAST_REV;
 
-  if (!priv) cdata->priv = priv = calloc(1, sizeof(lives_av_priv_t));
+  cdata->interlace = LIVES_INTERLACE_NONE;
+  cdata->frame_gamma = WEED_GAMMA_UNKNOWN;
+
+  cdata->ext_memcpy = &ext_memcpy;
+
+  cdata->last_frame_decoded = -1;
+
+  priv->fd = -1;
+
+  //errval = 0;
+  cdata->max_decode_fps = 0.;
+  cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_AUDIO_TRIM_END;
 
   priv->astream = -1;
   priv->vstream = -1;
 
-  cdata->seek_flag = LIVES_SEEK_FAST | LIVES_SEEK_FAST_REV;
+  /*   if (!data) { */
+  /*     cdata = cdata_new(NULL); */
+  /*     cdata->palettes = malloc(2 * sizeof(int)); */
+  /*     cdata->palettes[1] = WEED_PALETTE_END; */
+  /*     cdata->priv = calloc(1, sizeof(lives_av_priv_t)); */
+  /*   } else cdata = data; */
 
-  cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_AUDIO_TRIM_END;
+  /*   priv = (lives_av_priv_t *)cdata->priv; */
 
-  cdata->jump_limit = JUMP_FRAMES_FAST;
+  /*   if (!priv) cdata->priv = priv = calloc(1, sizeof(lives_av_priv_t)); */
 
-#ifdef TEST_CACHING
-  // TODO: needs to have refcounting enabled
-  priv->cachemax = 128;
-  priv->cache = NULL;
-#endif
+  /*   priv->astream = -1; */
+  /*   priv->vstream = -1; */
+
+  /*   cdata->seek_flag = LIVES_SEEK_FAST | LIVES_SEEK_FAST_REV; */
+
+  /*   cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_AUDIO_TRIM_END; */
+
+  /*   cdata->jump_limit = JUMP_FRAMES_FAST; */
+
+  /* #ifdef TEST_CACHING */
+  /*   // TODO: needs to have refcounting enabled */
+  /*   priv->cachemax = 128; */
+  /*   priv->cache = NULL; */
+  /* #endif */
   return cdata;
 }
 

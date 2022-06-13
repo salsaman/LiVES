@@ -46,8 +46,6 @@ typedef enum PixelFormat swpixfmt;
 typedef enum AVPixelFormat swpixfmt;
 #endif
 
-static pthread_mutex_t layer_reflock = PTHREAD_MUTEX_INITIALIZER;
-
 #if USE_SWSCALE
 #include <pthread.h>
 typedef struct {
@@ -9554,6 +9552,7 @@ static void blank_frame(void **pdata, int width, int height, int *rs,
 
 
 boolean weed_layer_clear_pixel_data(weed_layer_t *layer) {
+  // reset the layer to black, without freeing the pixel_data
   void **pd;
   int *rs;
   int pal, clamping, nplanes;
@@ -9568,10 +9567,6 @@ boolean weed_layer_clear_pixel_data(weed_layer_t *layer) {
   lives_free(pd);
   return TRUE;
 }
-
-
-#define SHIFTVAL sbits
-#define ALIGN_SIZE (1 << SHIFTVAL)
 
 /**
    @brief creates pixel data for layer
@@ -9588,12 +9583,33 @@ boolean weed_layer_clear_pixel_data(weed_layer_t *layer) {
    otherwise it will be set to WEED_YUV_CLAMPING_CLAMPED.
 
    may_contig should normally be set to TRUE, except for special uses during palette conversion
-   if set, then for planar palettes, only plane 0 will be allocated, so only this value should be freed
-   in this case, the leaf LIVES_LEAF_PIXEL_DATA_CONTIGUOUS will be set to WEED_TRUE
+   if set, then for planar palettes, only plane 0 will be allocated but with size sufficient to
+   contain all planes, and the pointers will point to locations inside the bigger block.
+   with rowstrides properly aligned, and only the pointer to plane 0 should be freed.
+   Amongst other things, this allows for more optimised memory use.
 
-   the allocated frames will be aligned to the pixel size for whatever palette and may be padded with extra bytes
-   to guard against accidental overwrites
+   In this case, the leaf LIVES_LEAF_PIXEL_DATA_CONTIGUOUS will be set to WEED_TRUE. If this is
+   not set (or WEED_FALSE) then each plane should be freed individually.
+
+   the allocated frames will be aligned to the pixel size for whatever palette
+   and may be padded with extra bytes to guard against accidental overwrites.
+   The default rowstride alignment is 16 (or RS_ALIGN_DEF) bytes
+   NB.
+   since and RGBA8 pixel is 4 bytes, this implies
+   a rowstride multiple of 4 pixels. If this is converted to RGB8, each pixel is now 3 bytes,
+   so 4 pixels would take up 12 bytes and there wull be an extra 4 bytes of space between rows.
+   The other way round, if we start with RGB8 and go in terms of 4 bytes then we get 12 byte
+   multiples, and when converting to RGBA this is only 3 pixels, which can casue problems for
+   openGL for example. Thus it is better to use an alignment of 16 and add some blank space for
+   RGB.
+   If a thread wants a rowstride alignment other than 16, it can set rowstride_alignment_hint.
+   This value must be a multiple of 4 and in the range RA_MIN <-> RA_MAX, otherwise it will be
+   ignored. If the values is accepted, it will be reset to zero, and the current rowstride_alignment
+   is always maintiened in threadvar rowstride_alignment.
+   The memory blocks are allocated from the bigblock allocator if possible, and are aligned to
+   either DEF_ALIGN or the machine cacheline size if known.
 */
+
 boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean may_contig) {
   int palette = weed_layer_get_palette(layer);
   int width = weed_layer_get_width(layer);
@@ -9615,9 +9631,12 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
   size_t framesize, framesize2;
 
-  // max is 128 min is 32,  and it must be a power of 2 (i.e 32, 64, 128)
-  int sbits = 7, al, r;
-  int rowstride_alignment = 16;
+  int rowstride_alignment = 0;
+  int align = HW_ALIGNMENT;
+  int max_ra = RA_MAX;
+
+  if (HW_ALIGNMENT > max_ra) max_ra = HW_ALIGNMENT;
+  else max_ra -= max_ra % HW_ALIGNMENT;
 
   if (!weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE)) {
     int nsize[2];
@@ -9633,23 +9652,14 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     /// force use of fixed rowstrides, eg. decoder plugin
     fixed_rs = weed_layer_get_rowstrides(layer, NULL);
   } else {
-    if (THREADVAR(rowstride_alignment) < ALIGN_DEF) THREADVAR(rowstride_alignment) = ALIGN_DEF;
-    rowstride_alignment = THREADVAR(rowstride_alignment);
-
-    if (THREADVAR(rowstride_alignment_hint) > 0) {
-      r = rowstride_alignment = THREADVAR(rowstride_alignment_hint);
-      for (al = 1 << sbits; (al > ALIGN_MIN && !(al & r)); al >>= 1) sbits--;
-      rowstride_alignment = al;
-    }
-    if (THREADVAR(rowstride_alignment_hint) < 0 || (weed_palette_is_alpha(palette) && THREADVAR(rowstride_alignment_hint) == 0)) {
-      compact = TRUE;
-      rowstride_alignment = 1;
-    }
+    rowstride_alignment = THREADVAR(rowstride_alignment_hint);
+    if (rowstride_alignment < RA_MIN || (rowstride_alignment & 3))
+      rowstride_alignment = 0;
+    if (!rowstride_alignment) rowstride_alignment = RS_ALIGN_DEF;
+    if (rowstride_alignment > max_ra) rowstride_alignment = max_ra;
+    THREADVAR(rowstride_alignment) = rowstride_alignment;
     THREADVAR(rowstride_alignment_hint) = 0;
-
-    for (sbits = 7; (1 << sbits) > rowstride_alignment; sbits--);
   }
-
   if (weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC)) {
     weed_leaf_delete(layer, LIVES_LEAF_BBLOCKALLOC);
   }
@@ -9677,13 +9687,13 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width * 4;
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
+    framesize = rowstride * height;
 #ifdef USE_BIGBLOCKS
-    if ((pixel_data = calloc_bigblock(framesize >> SHIFTVAL, ALIGN_SIZE)))
+    if ((pixel_data = calloc_bigblock(framesize)))
       weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
     else
 #endif
-      pixel_data = lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+      pixel_data = lives_calloc_aligned_safety(framesize, align);
     if (!pixel_data) return FALSE;
     weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
@@ -9705,13 +9715,17 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width * 3;
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
+    framesize = rowstride * height;
+    g_print("fs is %ld, rs %d. h %d, ra %d\n", framesize, rowstride, height, rowstride_alignment);
 #ifdef USE_BIGBLOCKS
-    if ((pixel_data = calloc_bigblock(framesize >> SHIFTVAL, ALIGN_SIZE)))
+    g_print("Ttry bb with %ld\n", framesize);
+    if ((pixel_data = calloc_bigblock(framesize)))
       weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
-    else
+    else {
 #endif
-      pixel_data = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+      g_print("fail %d\n", align);
+      pixel_data = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
+    }
     if (!pixel_data) return FALSE;
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
     weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
@@ -9723,8 +9737,13 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width * 3;
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
-    pixel_data = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+    framesize = rowstride * height;
+#ifdef USE_BIGBLOCKS
+    if ((pixel_data = calloc_bigblock(framesize)))
+      weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
+    else
+#endif
+      pixel_data = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
     if (!pixel_data) return FALSE;
     if (black_fill) fill_plane(pixel_data, 3, width, height, rowstride, yuv_black);
     weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
@@ -9737,8 +9756,13 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width * 4;
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
-    pixel_data = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+    framesize = rowstride * height;
+#ifdef USE_BIGBLOCKS
+    if ((pixel_data = calloc_bigblock(framesize)))
+      weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
+    else
+#endif
+      pixel_data = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
     if (!pixel_data) return FALSE;
     if (black_fill) fill_plane(pixel_data, 4, width, height, rowstride, yuv_black);
     weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
@@ -9751,8 +9775,13 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width * 4;
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
-    pixel_data = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+    framesize = rowstride * height;
+#ifdef USE_BIGBLOCKS
+    if ((pixel_data = calloc_bigblock(framesize)))
+      weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
+    else
+#endif
+      pixel_data = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
     if (!pixel_data) return FALSE;
     if (black_fill) {
       yuv_black[1] = yuv_black[3] = yuv_black[0];
@@ -9769,8 +9798,13 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width * 4;
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
-    pixel_data = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+    framesize = rowstride * height;
+#ifdef USE_BIGBLOCKS
+    if ((pixel_data = calloc_bigblock(framesize)))
+      weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
+    else
+#endif
+      pixel_data = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
     if (!pixel_data) return FALSE;
     if (black_fill) {
       yuv_black[2] = yuv_black[0];
@@ -9791,7 +9825,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width;
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE);
+    framesize = rowstride * height;
     rowstrides = (int *)lives_malloc(sizint * 3);
     if (fixed_rs) {
       rowstrides[0] = fixed_rs[0];
@@ -9803,7 +9837,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstrides[1] = rowstrides[2] = rowstride;
     }
     //if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
-    framesize2 = ALIGN_CEIL(rowstride * (height >> 1), ALIGN_SIZE);
+    framesize2 = rowstride * (height >> 1);
     weed_set_int_array(layer, WEED_LEAF_ROWSTRIDES, 3, rowstrides);
     lives_free(rowstrides);
 
@@ -9811,18 +9845,18 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
     if (!may_contig) {
       weed_leaf_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
-      pd_array[0] = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[0] = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
       if (!pd_array[0]) {
         lives_free(pd_array);
         return FALSE;
       }
-      pd_array[1] = (uint8_t *)lives_calloc((framesize2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[1] = (uint8_t *)lives_calloc_aligned_safety(framesize2, align);
       if (!pd_array[1]) {
         lives_free(pd_array[0]);
         lives_free(pd_array);
         return FALSE;
       }
-      pd_array[2] = (uint8_t *)lives_calloc((framesize2  + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[2] = (uint8_t *)lives_calloc_aligned_safety(framesize2, align);
       if (!pd_array[2]) {
         lives_free(pd_array[1]);
         lives_free(pd_array[0]);
@@ -9832,11 +9866,11 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     } else {
       weed_set_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
 #ifdef USE_BIGBLOCKS
-      if ((memblock = calloc_bigblock((framesize + framesize2 * 2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE))) {
+      if ((memblock = calloc_bigblock(framesize + framesize2 * 2))) {
         weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
       } else
 #endif
-        memblock = (uint8_t *)lives_calloc((framesize + framesize2 * 2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+        memblock = (uint8_t *)lives_calloc_aligned_safety(framesize + framesize2 * 2, align);
       if (!memblock) return FALSE;
       pd_array[0] = (uint8_t *)memblock;
       pd_array[1] = (uint8_t *)(memblock + framesize);
@@ -9864,7 +9898,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width;
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE);
+    framesize = rowstride * height;
     rowstrides = (int *)lives_malloc(sizint * 3);
     if (fixed_rs) rowstride = fixed_rs[1];
     else {
@@ -9872,7 +9906,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width >> 1;
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    framesize2 = ALIGN_CEIL(rowstride * height, ALIGN_SIZE);
+    framesize2 = rowstride * height;
     if (fixed_rs) {
       rowstrides[0] = fixed_rs[0];
       rowstrides[1] = fixed_rs[1];
@@ -9884,18 +9918,18 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
     if (!may_contig) {
       weed_leaf_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
-      pd_array[0] = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[0] = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
       if (!pd_array[0]) {
         lives_free(pd_array);
         return FALSE;
       }
-      pd_array[1] = (uint8_t *)lives_calloc(framesize2 >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[1] = (uint8_t *)lives_calloc_aligned_safety(framesize2, align);
       if (!pd_array[1]) {
         lives_free(pd_array[0]);
         lives_free(pd_array);
         return FALSE;
       }
-      pd_array[2] = (uint8_t *)lives_calloc((framesize2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[2] = (uint8_t *)lives_calloc_aligned_safety(framesize2, align);
       if (!pd_array[2]) {
         lives_free(pd_array[1]);
         lives_free(pd_array[0]);
@@ -9904,7 +9938,12 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       }
     } else {
       weed_set_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
-      memblock = (uint8_t *)lives_calloc((framesize + framesize2 * 2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+#ifdef USE_BIGBLOCKS
+      if ((memblock = calloc_bigblock(framesize + framesize2 * 2))) {
+        weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
+      } else
+#endif
+        memblock = (uint8_t *)lives_calloc_aligned_safety(framesize + framesize2 * 2, align);
       if (!memblock) return FALSE;
       pd_array[0] = (uint8_t *)memblock;
       pd_array[1] = (uint8_t *)(memblock + framesize);
@@ -9937,22 +9976,22 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     weed_set_int_array(layer, WEED_LEAF_ROWSTRIDES, 3, rowstrides);
     lives_free(rowstrides);
     pd_array = (uint8_t **)lives_malloc(3 * sizeof(uint8_t *));
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE);
+    framesize = rowstride * height;
 
     if (!may_contig) {
       weed_leaf_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
-      pd_array[0] = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[0] = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
       if (!pd_array[0]) {
         lives_free(pd_array);
         return FALSE;
       }
-      pd_array[1] = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[1] = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
       if (!pd_array[1]) {
         lives_free(pd_array[0]);
         lives_free(pd_array);
         return FALSE;
       }
-      pd_array[2] = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[2] = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
       if (!pd_array[2]) {
         lives_free(pd_array[1]);
         lives_free(pd_array[0]);
@@ -9961,7 +10000,12 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       }
     } else {
       weed_set_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
-      memblock = (uint8_t *)lives_calloc((framesize * 3 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+#ifdef USE_BIGBLOCKS
+      if ((memblock = calloc_bigblock(framesize * 3))) {
+        weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
+      } else
+#endif
+        memblock = (uint8_t *)lives_calloc_aligned_safety(framesize * 3, align);
       if (!memblock) return FALSE;
       pd_array[0] = memblock;
       pd_array[1] = memblock + framesize;
@@ -9995,29 +10039,29 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     weed_set_int_array(layer, WEED_LEAF_ROWSTRIDES, 4, rowstrides);
     lives_free(rowstrides);
     pd_array = (uint8_t **)lives_malloc(4 * sizeof(uint8_t *));
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE);
+    framesize = rowstride * height;
 
     if (!may_contig) {
       weed_leaf_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
-      pd_array[0] = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[0] = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
       if (!pd_array[0]) {
         lives_free(pd_array);
         return FALSE;
       }
-      pd_array[1] = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[1] = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
       if (!pd_array[1]) {
         lives_free(pd_array[0]);
         lives_free(pd_array);
         return FALSE;
       }
-      pd_array[2] = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[2] = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
       if (!pd_array[2]) {
         lives_free(pd_array[1]);
         lives_free(pd_array[0]);
         lives_free(pd_array);
         return FALSE;
       }
-      pd_array[3] = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[3] = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
       if (!pd_array[3]) {
         lives_free(pd_array[2]);
         lives_free(pd_array[1]);
@@ -10027,7 +10071,12 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       }
     } else {
       weed_set_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
-      memblock = (uint8_t *)lives_calloc((framesize * 4 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+#ifdef USE_BIGBLOCKS
+      if ((memblock = calloc_bigblock(framesize * 4))) {
+        weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
+      } else
+#endif
+        memblock = (uint8_t *)lives_calloc_aligned_safety(framesize * 4, align);
       if (!memblock) return FALSE;
       pd_array[0] = memblock;
       pd_array[1] = memblock + framesize;
@@ -10057,17 +10106,20 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
     weed_layer_set_width(layer, width);
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE);
-    pixel_data = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+    framesize = rowstride * height;
+    framesize = rowstride * height;
+#ifdef USE_BIGBLOCKS
+    if ((pixel_data = calloc_bigblock(framesize))) {
+      weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
+    } else
+#endif
+      pixel_data = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
     if (!pixel_data) return FALSE;
     if (black_fill) {
       yuv_black[3] = yuv_black[1];
       yuv_black[1] = yuv_black[2] = yuv_black[4] = yuv_black[5] = yuv_black[0];
       yuv_black[0] = yuv_black[3];
-      pixel_data = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
-      if (black_fill) {
-        fill_plane(pixel_data, 6, width, height, rowstride, black);
-      }
+      fill_plane(pixel_data, 6, width, height, rowstride, black);
     }
     if (!pixel_data) return FALSE;
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
@@ -10080,7 +10132,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width * 3 * sizeof(float);
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    pixel_data = (uint8_t *)lives_calloc((rowstride * height + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+    pixel_data = (uint8_t *)lives_calloc_aligned_safety(rowstride * height, align);
     if (!pixel_data) return FALSE;
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
     weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
@@ -10092,7 +10144,12 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width * 4 * sizeof(float);
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    pixel_data = (uint8_t *)lives_calloc((rowstride * height + EXTRA_BYTES), ALIGN_SIZE);
+#ifdef USE_BIGBLOCKS
+    if ((pixel_data = calloc_bigblock(rowstride * height))) {
+      weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
+    } else
+#endif
+      pixel_data = (uint8_t *)lives_calloc_aligned_safety(rowstride * height, align);
     if (black_fill) {
       fill_plane(pixel_data, 4 * sizeof(float), width, height, rowstride, (uint8_t *)blackf);
     }
@@ -10107,7 +10164,12 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width * sizeof(float);
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    pixel_data = (uint8_t *)lives_calloc((width * height + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+#ifdef USE_BIGBLOCKS
+    if ((pixel_data = calloc_bigblock(width * height))) {
+      weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
+    } else
+#endif
+      pixel_data = (uint8_t *)lives_calloc_aligned_safety(width * height, align);
     if (!pixel_data) return FALSE;
     if (black_fill) {
       blackf[0] = 1.;
@@ -10123,8 +10185,8 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width;
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    framesize = ALIGN_CEIL((rowstride * height + EXTRA_BYTES), ALIGN_SIZE);
-    pixel_data = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+    framesize = rowstride * height;
+    pixel_data = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
     if (!pixel_data) return FALSE;
     if (black_fill) {
       lives_memset(pixel_data, 255, rowstride * height);
@@ -10137,8 +10199,8 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
   case WEED_PALETTE_A1:
     if (fixed_rs) rowstride = fixed_rs[0];
     else rowstride = (width + 7) >> 3;
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE);
-    pixel_data = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+    framesize = rowstride * height;
+    pixel_data = (uint8_t *)lives_calloc_aligned_safety(framesize, align);
     if (!pixel_data) return FALSE;
     lives_memset(pixel_data, 255, rowstride * height);
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
@@ -10159,10 +10221,11 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
    If either width or height are zero, then dimensions will be taken from the layer or
    defaults used
    if layer has a palette set, that will be maintained, else it will be set to target_palette
-   if targette palette is WEED_PALETTE_END then default will be set depending on image_ext
+   if targette palette is WEED_PALETTE_NONE then default will be set depending on image_ext
    if this is "jpg" then it will be RGB24, otherwise RGBA32
    finally we create the pixel data for layer */
-weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext, int width, int height, int target_palette) {
+weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext,
+                                 int width, int height, int target_palette) {
   if (!layer) layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   else {
     if (!width) width = weed_layer_get_width(layer);
@@ -10175,11 +10238,11 @@ weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext, int
       }
     }
   }
-  if (width == 0) width = DEF_FRAME_HSIZE_UNSCALED;
-  if (height == 0) height = DEF_FRAME_VSIZE_UNSCALED;
+  if (!width) width = DEF_FRAME_HSIZE_UNSCALED;
+  if (!height) height = DEF_FRAME_VSIZE_UNSCALED;
   weed_layer_set_size(layer, width, height);
-  if (!weed_plant_has_leaf(layer, WEED_LEAF_CURRENT_PALETTE)) {
-    if (target_palette != WEED_PALETTE_END) weed_layer_set_palette(layer, target_palette);
+  if (weed_layer_get_palette(layer) == WEED_PALETTE_NONE) {
+    if (target_palette != WEED_PALETTE_NONE) weed_layer_set_palette(layer, target_palette);
     else {
       if (!image_ext || !strcmp(image_ext, LIVES_FILE_EXT_JPG))
         weed_layer_set_palette(layer, WEED_PALETTE_RGB24);
@@ -10209,6 +10272,7 @@ LIVES_GLOBAL_INLINE boolean rowstrides_differ(int n1, int *n1_array, int n2, int
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new(int layer_type) {
   weed_layer_t *layer = weed_plant_new(WEED_PLANT_LAYER);
   weed_set_int_value(layer, WEED_LEAF_LAYER_TYPE, layer_type);
+  weed_add_refcounter(layer);
   return layer;
 }
 
@@ -12779,8 +12843,6 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
     }
     rowstride = get_last_pixbuf_rowstride_value(width, n_channels);
     lives_memcpy(&pixels[orowstride * k], &pixel_data[irowstride * k], rowstride);
-
-    weed_layer_pixel_data_free(layer);
   }
 
   return pixbuf;
@@ -13821,7 +13883,7 @@ boolean pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
     return TRUE;
   }
 
-  framesize = ALIGN_CEIL(rowstride * height, 32);
+  framesize = rowstride * height;
   pixel_data = lives_calloc(framesize >> 5, 32);
 
   if (pixel_data) {
@@ -14292,8 +14354,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
 
 
 LIVES_GLOBAL_INLINE int weed_layer_count_refs(weed_layer_t *layer) {
-  if (!layer) return -2;
-  return weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
+  return weed_refcount_query(layer);
 }
 
 
@@ -14358,13 +14419,10 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
           }
         }
         lives_free(pixel_data);
-        weed_layer_nullify_pixel_data(layer);
       }
     }
   }
-  weed_leaf_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
-  weed_leaf_delete(layer, LIVES_LEAF_PIXBUF_SRC);
-  weed_leaf_delete(layer, LIVES_LEAF_SURFACE_SRC);
+  weed_layer_nullify_pixel_data(layer);
 }
 
 
@@ -14381,27 +14439,17 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
 }
 
 int weed_layer_unref(weed_layer_t *layer) {
-  int refs;
-  if (!layer) return -2;
-  pthread_mutex_lock(&layer_reflock);
-  refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
-  weed_set_int_value(layer, WEED_LEAF_HOST_REFS, --refs);
-  pthread_mutex_unlock(&layer_reflock);
-  if (refs < -1) break_me("double unref");
-  if (refs >= 0) return refs;
+  int refs = weed_refcount_dec(layer);
+  if (refs == -100) lives_abort("layer missing REF_COUNT_MUTEX in weed_layer_unref");
+  if (refs != -1) return refs;
   weed_layer_pixel_data_free(layer);
+  weed_refcounter_unlock(layer);
   weed_plant_free(layer);
-  return -1;
+  return refs;
 }
 
 LIVES_GLOBAL_INLINE int weed_layer_ref(weed_layer_t *layer) {
-  int refs;
-  if (!layer) return -2;
-  pthread_mutex_lock(&layer_reflock);
-  refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
-  weed_set_int_value(layer, WEED_LEAF_HOST_REFS, ++refs);
-  pthread_mutex_unlock(&layer_reflock);
-  return refs;
+  return weed_refcount_inc(layer);
 }
 
 

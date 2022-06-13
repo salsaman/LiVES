@@ -52,6 +52,26 @@ int32_t weed_plant_get_type(weed_plant_t *);
 
 #define WEED_ERROR_WRONG_PLANT_TYPE	256
 
+#define WEED_ERROR_NOSUCH_PLANT 65536
+
+#ifndef LIVES_SEED_FLOAT
+#ifdef WEED_SEED_FLOAT
+#define LIVES_SEED_FLOAT WEED_SEED_FLOAT
+#else
+#define LIVES_SEED_FLOAT 6
+#endif
+#endif
+
+#define LIVES_SEED_UNKNOWN 10000
+
+// duplicate leaves of src plant to dst. If add == WEED_FALSE then also delete pther leaves in dst not n src
+// following useal rulse for UNELETABLE, IMMUTABLE;  plants must be same type also
+weed_error_t weed_plant_duplicate(weed_plant_t *dst, weed_plant_t *src, int add);
+
+weed_error_t weed_plant_mutate_type(weed_plantptr_t, int32_t newtype);
+
+size_t weed_plant_weigh(weed_plant_t *); // get total size in bytes
+
 // set flags for each leaf in a plant. If ign_prefix is not NULL, ignore leaves with keys that begin with ign_prefix
 // this enables a host to do: weed_add_plant_flags(plant, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, "plugin_")
 void weed_add_plant_flags(weed_plant_t *, uint32_t flags, const char *ign_prefix);
@@ -184,12 +204,14 @@ int weed_param_value_irrelevant(weed_plant_t *param);
 int weed_param_get_value_int(weed_plant_t *param);
 int weed_param_get_value_boolean(weed_plant_t *param);
 double weed_param_get_value_double(weed_plant_t *param);
+float weed_param_get_value_float(weed_plant_t *param);
 int64_t weed_param_get_value_int64(weed_plant_t *param);
 char *weed_param_get_value_string(weed_plant_t *param);
 
 weed_error_t weed_param_set_value_int(weed_plant_t *param, int val);
 weed_error_t weed_param_set_value_boolean(weed_plant_t *param, int val);
 weed_error_t weed_param_set_value_double(weed_plant_t *param, double val);
+weed_error_t weed_param_set_value_float(weed_plant_t *param, float val);
 weed_error_t weed_param_set_value_int64(weed_plant_t *param, int64_t val);
 weed_error_t weed_param_set_value_string(weed_plant_t *param, const char *val);
 
@@ -204,7 +226,9 @@ const char *weed_seed_to_ctype(uint32_t st, int add_space);
 const char *weed_seed_type_to_short_text(uint32_t seed_type);
 char *weed_seed_type_to_text(uint32_t seed_type) WARN_UNUSED;
 char *weed_error_to_text(weed_error_t error) WARN_UNUSED;
+char *weed_error_to_literal(weed_error_t error) WARN_UNUSED;
 char *weed_palette_get_name_full(int pal, int clamping, int subspace) WARN_UNUSED;
+uint32_t ctypes_to_weed_seed(const char *ctype);
 
 const char *weed_palette_get_name(int pal);
 const char *weed_yuv_clamping_get_name(int clamping);

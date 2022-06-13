@@ -1024,7 +1024,7 @@ static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param, int idx) 
     param->hidden |= HIDDEN_UNDISPLAYABLE;
   if (!mainw->multitrack && (param->reinit & REINIT_FUNCTIONAL)
       && weed_get_boolean_value(inst, WEED_LEAF_HOST_REINITING, NULL) == WEED_FALSE
-      && weed_get_int_value(inst, WEED_LEAF_HOST_REFS, NULL) >= 2) {
+      && weed_refcount_query(inst) >= 2) {
     // effect is running and user is editing the params, we should hide reinit params
     // so as not to disturb the flow !
     param->hidden |= HIDDEN_NEEDS_REINIT;

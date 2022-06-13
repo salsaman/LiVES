@@ -27,7 +27,7 @@ frames_t count_virtual_frames(frames_t *findex, frames_t start, frames_t end) {
 
 boolean create_frame_index(int fileno, boolean init, frames_t start_offset, frames_t nframes) {
   lives_clip_t *sfile;
-  size_t idxsize = (ALIGN_CEIL(nframes * sizeof(frames_t), DEF_ALIGN)) / DEF_ALIGN;
+  size_t idxsize = nframes * sizeof(frames_t);
 
   if (!IS_PHYSICAL_CLIP(fileno)) return FALSE;
 
@@ -39,7 +39,7 @@ boolean create_frame_index(int fileno, boolean init, frames_t start_offset, fram
   }
 
   // TODO fill with const value so we can better error check
-  sfile->frame_index = (frames_t *)lives_calloc(idxsize, DEF_ALIGN);
+  sfile->frame_index = (frames_t *)lives_calloc_align(idxsize);
   if (!sfile->frame_index) {
     pthread_mutex_unlock(&sfile->frame_index_mutex);
     return FALSE;
@@ -1581,7 +1581,7 @@ frames_t *frame_index_copy(frames_t *findex, frames_t nframes, frames_t offset) 
   // frame_index_mutex should be locked for src and dest
 
   // start at frame offset
-  frames_t *findexc = (frames_t *)lives_calloc(nframes, sizeof(frames_t));
+  frames_t *findexc = (frames_t *)lives_calloc_align(nframes * sizeof(frames_t));
   if (!offset) lives_memcpy((void *)findexc, (void *)findex, nframes * sizeof(frames_t));
   else for (int i = 0; i < nframes; i++) findexc[i] = findex[i + offset];
   return findexc;

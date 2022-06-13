@@ -457,6 +457,12 @@ void set_undoable(const char *what, boolean sensitive);
 void set_redoable(const char *what, boolean sensitive);
 
 // query function //
+boolean check_for_ratio_fps(double fps);
+
+double get_ratio_fps(const char *string);
+
+boolean calc_ratio_fps(double fps, int *numer, int *denom);
+
 boolean ignore_clip(int which);
 
 void make_cleanable(int clipno, boolean isit);
@@ -469,7 +475,7 @@ char *get_clip_dir(int which);
 
 void permit_close(int which);
 
-char *get_staging_dir_for(int clipno, lives_intention intent);
+char *get_staging_dir_for(int clipno, const lives_intentcap_t *);
 void migrate_from_staging(int clipno);
 char *use_staging_dir_for(int clipno);
 
@@ -479,9 +485,8 @@ char *use_staging_dir_for(int clipno);
 #define CLIP_STATE_NOT_LOADED 	OBJECT_STATE_EXTERNAL
 #define CLIP_STATE_READY	OBJECT_STATE_NORMAL
 
-// txparams
-#define CLIP_PARAM_STAGING_DIR "staging_dir"
+#define CLIP_ATTR_STAGING_DIR "staging_dir"
 
-lives_intentparams_t *get_txparams_for_clip(int clipno, lives_intentcap_t *icaps);
+lives_object_instance_t *get_object_for_clip(int clipno, const lives_intentcap_t *icaps);
 
 #endif

@@ -79,4 +79,6 @@ int process_one(boolean visible);
 
 boolean clip_can_reverse(int clipno);
 
+const char *get_cache_stats(void);
+
 #endif

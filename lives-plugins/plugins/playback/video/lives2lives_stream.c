@@ -218,7 +218,7 @@ boolean set_palette(int palette) {
 }
 
 
-const char *get_init_rfx(plugin_intentcap_t *icaps) {
+const char *get_init_rfx(pl_intentcap *icaps) {
   return \
          "<define>\\n\
 |1.7\\n\

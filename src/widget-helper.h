@@ -399,6 +399,7 @@ boolean lives_widget_show_now(LiVESWidget *);
 boolean lives_widget_show_all(LiVESWidget *);
 boolean lives_widget_show_all_from_bg(LiVESWidget *);
 boolean lives_widget_hide(LiVESWidget *);
+
 boolean lives_widget_destroy(LiVESWidget *);
 boolean lives_widget_realize(LiVESWidget *);
 

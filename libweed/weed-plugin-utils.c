@@ -609,8 +609,8 @@ static inline char *weed_param_get_value_string(weed_plant_t *param) {
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 #define LEAF_COPY(type) { \
-  type data = (type *)weed_malloc(num * sizeof(type)); \
-  for (i = 0; (weed_size_t)i < num; i++) weed_leaf_get(from, key, i, &data[i]); \
+  type *data = (type *)weed_malloc(num * sizeof(type)); \
+  for (int i = 0; (weed_size_t)i < num; i++) weed_leaf_get(from, key, i, &data[i]); \
   weed_leaf_set(to, key, seed_type, num, data); weed_free(data);} break;
 
 
@@ -630,15 +630,17 @@ static void _weed_clone_leaf(weed_plant_t *from, const char *key, weed_plant_t *
     case WEED_SEED_STRING: {
       weed_size_t stlen;
       char **datac = (char **)weed_malloc(num * sizeof(char *));
-      for (i = 0; (weed_size_t)i < num; i++) {
+      for (int i = 0; (weed_size_t)i < num; i++) {
         stlen = weed_leaf_element_size(from, key, i);
         datac[i] = (char *)weed_malloc(stlen + 1);
         weed_leaf_get(from, key, i, &datac[i]);
       }
       weed_leaf_set(to, key, WEED_SEED_STRING, num, datac);
-      for (i = 0; (weed_size_t)i < num; i++) weed_free(datac[i]);
+      for (int i = 0; (weed_size_t)i < num; i++) weed_free(datac[i]);
       weed_free(datac);
       break;
+    }
+    default: break;
     }
   }
 }

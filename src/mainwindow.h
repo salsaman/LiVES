@@ -781,6 +781,7 @@ typedef struct {
 #define PT_LAZY_RFX 16
 #define PT_LAZY_DSUSED 17
 #define PT_CUSTOM_COLOURS 18
+#define PT_PERF_MANAGER 32
 
 #define drawtl_thread helper_procthreads[PT_DRAWTL]
 #define transrend_proc helper_procthreads[PT_TRANSREND]
@@ -1889,6 +1890,7 @@ typedef struct {
   uint64_t aud_data_written;
 
   int crash_possible; // set this to a number before defer_sigint
+  const lives_funcdef_t *err_funcdef;
 
   LiVESPixbuf *scrap_pixbuf; ///< cached image for speeding up rendering
   weed_layer_t *scrap_layer; ///< cached image for speeding up rendering

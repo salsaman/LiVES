@@ -10,6 +10,7 @@ integer, which must NEVER change for the plugin]"
 
 #if !defined _LIVES_PLUGIN_H_INC_1_ && !defined _LIVES_PLUGIN_H_
 #define _LIVES_PLUGIN_H_INC_1_ 1
+
 // pre-defined plugin types (normally set in a type specific header)
 // some plugins may choose to omit this and set PLUGIN_INTENTCAPS instead
 #define PLUGIN_TYPE_DECODER		256//		"decoder"
@@ -33,7 +34,7 @@ integer, which must NEVER change for the plugin]"
 #define PLUGIN_DEVSTATE_TESTING 3 // waring - plugin is being tested and may not function correctly
 
 #define PLUGIN_DEVSTATE_UNSTABLE -1 // warning - may be unstable in specific circumstances
-#define PLUGIN_DEVSTATE_BROKEN -2 // WARNING - plugin is know to function incorrectly
+#define PLUGIN_DEVSTATE_BROKEN -2 // WARNING - plugin is known to function incorrectly
 #define PLUGIN_DEVSTATE_AVOID -3 // WARNING - plugin should be completely ignored
 
 #include <error.h>
@@ -76,6 +77,7 @@ static inline void _show_lp_warn(void) {
 #define _LIVES_PLUGIN_H_VERSION_ 201
 
 #include <inttypes.h>
+#include <stdio.h>
 
 #ifndef __WEED_UTILS_H__
 // internal functions

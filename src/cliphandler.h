@@ -333,6 +333,8 @@ typedef struct _lives_clip_t {
   boolean tsavedone;
 
   ticks_t sync_delta; // used for audio sync when switching back to the clip
+
+  lives_object_instance_t *instance;
 } lives_clip_t;
 
 typedef struct {
@@ -479,6 +481,9 @@ char *get_staging_dir_for(int clipno, const lives_intentcap_t *);
 void migrate_from_staging(int clipno);
 char *use_staging_dir_for(int clipno);
 
+// should we use a decoder to reload ?
+boolean should_use_decoder(int clipno);
+
 /// intents ////
 
 // aliases for object states
@@ -487,6 +492,6 @@ char *use_staging_dir_for(int clipno);
 
 #define CLIP_ATTR_STAGING_DIR "staging_dir"
 
-lives_object_instance_t *get_object_for_clip(int clipno, const lives_intentcap_t *icaps);
+void make_object_for_clip(int clipno, lives_intentcap_t *);
 
 #endif

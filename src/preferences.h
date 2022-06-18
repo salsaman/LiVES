@@ -69,6 +69,16 @@
 
 #define PREFS_NEEDS_REVERT		(1 << 28)
 
+typedef enum {
+	      RET_FALSE,
+	      RET_TRUE,
+	      RET_WARN,
+	      RET_ALWAYS,
+} warn_mask_state;
+
+
+warn_mask_state get_warn_mask_state(uint64_t warn_mask_number);
+
 typedef struct {
   char bgcolour[256];
   boolean stop_screensaver;
@@ -127,8 +137,7 @@ typedef struct {
   char image_ext[16];
 
   uint64_t warning_mask;
-
-  /// bits 10, 11, 13, 18 and 19 set (off by default)
+  /// bits (2), 10, 11, 13, 18 and 19 set (off by default)
   // (should have been done by reversing the sense of these bits (so the default would be 0), but it is too late now
 #define DEF_WARNING_MASK 0x000C2C04ul
 
@@ -180,10 +189,11 @@ typedef struct {
 #define WARN_MASK_LAYOUT_LB	 		       		(1ull << 30)
 #define WARN_MASK_JACK_SCRPT		       			(1ull << 31)
 #define WARN_MASK_DMGD_AUDIO					(1ull << 32)
-
-  // reserved (on / unset by default) -> i.e sense is reversed so 0 is OFF (by default)
-#define WARN_MASK_RSVD_14					(1ull << 33)
-#define WARN_MASK_RSVD_13					(1ull << 34)
+#define WARN_MASK_MISSING_DECODER				(1ull << 33) //TODO
+#define WARN_MASK_DISABLED_DECODER				(1ull << 34)
+    
+  // reserved (on / unset by default) -> i.e sense is reversed so 0 is ON (by default)
+  // so we DO show the warnings, unless the user sets it to 1
 #define WARN_MASK_RSVD_12					(1ull << 35)
 #define WARN_MASK_RSVD_11					(1ull << 36)
 #define WARN_MASK_RSVD_10					(1ull << 37)
@@ -198,11 +208,11 @@ typedef struct {
 #define WARN_MASK_RSVD_1					(1ull << 46)
 #define WARN_MASK_RSVD_0					(1ull << 47)
 
-  // for bits 48 - 63, the sense will be reversed, in case we need anything else ON
+  // for bits 48 - 63, the sense will be reversed, in case we need anything else OFF
   // by default (this only affects the checkbutton state in the warning dialog)
-#define WARN_MASK_DEF_ON					(1ull << 48)
-#define WARN_MASK_LAYOUT_RELOAD					(1ull << 48)
-
+  // i.e if the bit is set, we DO show the warning, default is not show
+#define WARN_MASK_DEF_OFF					(1ull << 48)
+#define WARN_MASK_LAYOUT_RELOAD					(1ull << 48) // popup layout errors when loading a set
 #define WARN_MASK_RSVD_OFF_14					(1ull << 49)
 #define WARN_MASK_RSVD_OFF_13					(1ull << 50)
 #define WARN_MASK_RSVD_OFF_12					(1ull << 51)
@@ -218,6 +228,14 @@ typedef struct {
 #define WARN_MASK_RSVD_OFF_2					(1ull << 61)
 #define WARN_MASK_RSVD_OFF_1					(1ull << 62)
 #define WARN_MASK_RSVD_OFF_0					(1ull << 63)
+
+  uint64_t always_mask;
+  uint64_t remember_mask;
+  // if a bit is set in remember_mask, then instead of 'disable the warning', 'always do this' is shown
+  // the warning bit is ignored, until the user clicks 'always do this' then always_mask is set to 1,
+  // and warning mask holds the chosen setting
+
+#define REMEMBER_MASK WARN_MASK_DISABLED_DECODER
 
   char *cmdline_args; // defaults, prepended
 
@@ -819,6 +837,7 @@ typedef struct {
   LiVESWidget *checkbutton_warn_mt_backup_space;
   LiVESWidget *checkbutton_warn_after_crash;
   LiVESWidget *checkbutton_warn_invalid_clip;
+  LiVESWidget *checkbutton_warn_dis_dec;
 #ifdef ENABLE_JACK
   LiVESWidget *checkbutton_warn_jack_scrpts;
 #endif

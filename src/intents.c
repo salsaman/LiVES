@@ -7,9 +7,8 @@
 #include "main.h"
 
 // eventually will become lookup for all recognised uids
-lives_dict_t *main_dict = NULL;
-
-static const lives_funcdef_t **funcdefs = NULL;
+lives_objstore_t *main_objstore = NULL;
+lives_objstore_t *fn_objstore = NULL;
 
 static size_t dict_size = 0;
 
@@ -30,10 +29,49 @@ static const lives_intentcap_t *std_icaps[N_STD_ICAPS];
 
 // eventually this will part of a fully fledged object broker
 
-typedef lives_object_t lives_dictentry_t;
 
-lives_dictent_t  *_make_dictent(lives_dictent_t *dicte, lives_intention intent,
-                                lives_object_t *obj, va_list xargs) {
+void *lookup_entry_full(uint64_t uid) {
+  // check dictionary objects (objects and plant snapshots)
+  void *thing = (void *)get_from_hash_store_i(main_objstore, uid);
+  // check structdefs
+  if (!thing) thing = (void *)lsd_from_store(uid);
+  // check plugins
+  if (!thing) thing = (void *)plugin_from_store(uid);
+  return thing;
+}
+
+
+static lives_dicto_t *lookup_entry(uint64_t uid) {
+  return get_from_hash_store_i(main_objstore, uid);
+}
+
+
+void dump_plantdesc(lives_dicto_t *dicto) {
+  //int
+}
+
+
+char *interpret_uid(uint64_t uid) {
+  char *info = NULL;
+  lives_dicto_t *dicto = lookup_entry(uid);
+  if (dicto) {
+    uint64_t sub = dicto->subtype;
+    if (sub == DICT_SUBTYPE_OBJECT || sub == DICT_SUBTYPE_WEED_PLANT) {
+      //if (sub == DICT_SUBTYPE_WEED_PLANT) dump_plantdesc(dicto);
+      //else dump_obdesc(dicto);
+      info = lives_object_dump_attributes(dicto);
+    } else if (sub == DICT_SUBTYPE_FUNCDEF) {
+      lives_obj_attr_t *attr = lives_object_get_attribute(dicto, ATTR_INTROSPECTION_NATIVE_PTR);
+      lives_funcdef_t *funcdef = (lives_funcdef_t *)weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
+      info = lives_funcdef_explain(funcdef);
+    }
+  }
+  return info;
+}
+
+
+lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
+                            lives_object_t *obj, va_list xargs) {
   // dict entry, object with any type of attributes but no transforms
   // copy specified attributes from obj into the dictionary
   // if intent is LIVES_INTENTION_UPDATE then we only overwrite, otherwise we replace all
@@ -45,9 +83,9 @@ lives_dictent_t  *_make_dictent(lives_dictent_t *dicte, lives_intention intent,
   // intents - update - set with new vals, no delete
   // replace - delete old add new
 
-  if (!dicte) dicte = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_OBJECT);
-  else if (intent == LIVES_INTENTION_REPLACE && dicte->attributes) {
-    lives_object_attributes_unref_all(dicte);
+  if (!dicto) dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_OBJECT);
+  else if (intent == LIVES_INTENTION_REPLACE && dicto->attributes) {
+    lives_object_attributes_unref_all(dicto);
   }
   while (1) {
     lives_obj_attr_t *attr = NULL, *xattr = NULL;
@@ -63,10 +101,10 @@ lives_dictent_t  *_make_dictent(lives_dictent_t *dicte, lives_intention intent,
 
     st = obj_attr_get_value_type(attr);
     if (intent != LIVES_INTENTION_REPLACE) {
-      xattr  = lives_object_get_attribute(dicte, aname);
-      if (xattr) lives_object_attribute_unref(dicte, xattr);
+      xattr  = lives_object_get_attribute(dicto, aname);
+      if (xattr) lives_object_attribute_unref(dicto, xattr);
     }
-    xattr = lives_object_declare_attribute(dicte, aname, st);
+    xattr = lives_object_declare_attribute(dicto, aname, st);
     if (xattr) {
       // TODO = warn if attr type changing
       weed_plant_duplicate_clean(xattr, attr);
@@ -77,146 +115,145 @@ lives_dictent_t  *_make_dictent(lives_dictent_t *dicte, lives_intention intent,
     }
     if (!xargs) lives_free(aname);
   }
-  return dicte;
+  return dicto;
 }
 
 
-lives_dictentry_t  *replace_dictent(lives_dictent_t *dicte, lives_object_t *obj, ...) {
+lives_dicto_t  *replace_dicto(lives_dicto_t *dicto, lives_object_t *obj, ...) {
   // replace attributes if already there
   va_list xargs;
   va_start(xargs, obj);
-  dicte = _make_dictent(dicte, LIVES_INTENTION_REPLACE, obj, xargs);
+  dicto = _make_dicto(dicto, LIVES_INTENTION_REPLACE, obj, xargs);
   va_end(xargs);
-  return dicte;
+  return dicto;
 }
 
 
-lives_dictentry_t  *update_dictent(lives_dictent_t *dicte, lives_object_t *obj, ...) {
+lives_dicto_t  *update_dicto(lives_dicto_t *dicto, lives_object_t *obj, ...) {
   // update a subset of attributes if already there
   va_list xargs;
   va_start(xargs, obj);
-  dicte = _make_dictent(dicte, LIVES_INTENTION_UPDATE, obj, xargs);
+  dicto = _make_dicto(dicto, LIVES_INTENTION_UPDATE, obj, xargs);
   va_end(xargs);
-  return dicte;
+  return dicto;
 }
 
 
-static lives_dict_t *_update_dictionary(lives_dict_t *dict, lives_intention intent, uint64_t uid,
-                                        lives_dictentry_t *dicte) {
+static lives_objstore_t *_update_dictionary(lives_objstore_t *objstore, lives_intention intent, uint64_t uid,
+                                        lives_dicto_t *dicto) {
   // if intent == REPLACE replace existing entry, otherwise do not add if already there
-  if (!dict) dict = lives_hash_store_new("main store");
-  else if (intent != LIVES_INTENTION_REPLACE && get_from_hash_store_i(dict, uid)) return dict;
-  return add_to_hash_store_i(dict, uid, (void *)dicte);
+  if (!objstore) objstore = lives_hash_store_new("main store");
+  else if (intent != LIVES_INTENTION_REPLACE && get_from_hash_store_i(objstore, uid)) return objstore;
+  return add_to_hash_store_i(objstore, uid, (void *)dicto);
 }
 
 
-static lives_dict_t *add_to_dictionary(lives_dict_t *dict, uint64_t uid, lives_dictentry_t *dicte) {
+static lives_objstore_t *add_to_objstore(lives_objstore_t *objstore, uint64_t uid, lives_dicto_t *dicto) {
   // add only if not there
-  return _update_dictionary(dict, LIVES_INTENTION_NOTHING, uid, dicte);
+  return _update_dictionary(objstore, LIVES_INTENTION_NOTHING, uid, dicto);
 }
 
 
-static lives_dict_t *update_dictionary(lives_dict_t *dict, uint64_t uid, lives_dictentry_t *dicte) {
+static lives_objstore_t *update_dictionary(lives_objstore_t *objstore, uint64_t uid, lives_dicto_t *dicto) {
   // add if not there, else update
-  return _update_dictionary(dict, LIVES_INTENTION_REPLACE, uid, dicte);
+  return _update_dictionary(objstore, LIVES_INTENTION_REPLACE, uid, dicto);
 }
 
 
-uint64_t add_object_to_dict(lives_object_t *obj) {
-  lives_dictent_t *dicte = _make_dictent(NULL, 0, obj, NULL);
-  main_dict = add_to_dictionary(main_dict, obj->uid, dicte);
+uint64_t add_object_to_objstore(lives_object_t *obj) {
+  lives_dicto_t *dicto = _make_dicto(NULL, 0, obj, NULL);
+  main_objstore = add_to_objstore(main_objstore, obj->uid, dicto);
   dict_size += weigh_object(obj);
   return dict_size;
 }
 
 
-uint64_t update_object_in_dict(lives_object_t *obj) {
+uint64_t update_object_in_objstore(lives_object_t *obj) {
   // add or update
-  lives_dictent_t *dicte = _make_dictent(NULL, 0, obj, NULL);
-  main_dict = update_dictionary(main_dict, obj->uid, dicte);
+  lives_dicto_t *dicto = _make_dicto(NULL, 0, obj, NULL);
+  main_objstore = update_dictionary(main_objstore, obj->uid, dicto);
   //dict_size += weigh_object(obj);
   return dict_size;
 }
 
 
-uint64_t add_weed_plant_to_dict(weed_plant_t *plant) {
+uint64_t add_weed_plant_to_objstore(weed_plant_t *plant) {
   // only add if not there
-  lives_dictent_t *dicte;
+  lives_dicto_t *dicto;
   weed_error_t err;
   uint64_t uid = weed_get_int64_value(plant, LIVES_LEAF_UID, &err);
   if (err == WEED_ERROR_NOSUCH_LEAF) {
     uid = gen_unique_id();
     weed_set_int64_value(plant, LIVES_LEAF_UID, uid);
   } else if (err != WEED_SUCCESS) return 0;
-  dicte  = weed_plant_to_dictent(plant);
+  dicto  = weed_plant_to_dicto(plant);
   dict_size += weed_plant_weigh(plant);
-  main_dict = update_dictionary(main_dict, uid, dicte);
+  main_objstore = update_dictionary(main_objstore, uid, dicto);
   return dict_size;
 }
 
 
-lives_dict_t *remove_from_dict(uint64_t key) {
-  main_dict = remove_from_hash_store_i(main_dict, key);
-  return main_dict;
+lives_objstore_t *remove_from_objstore(uint64_t key) {
+  main_objstore = remove_from_hash_store_i(main_objstore, key);
+  return main_objstore;
 }
 
 
-static lives_dictent_t *lookup_entry(uint64_t uid) {
-  return get_from_hash_store_i(main_dict, uid);
+LIVES_GLOBAL_INLINE lives_dicto_t *lives_dicto_new(uint64_t subtype) {
+  return lives_object_instance_create(OBJECT_TYPE_DICTIONARY, subtype);
 }
 
-
-lives_dictent_t *weed_plant_to_dictent(weed_plant_t *plant) {
-  lives_dictent_t *dicte = NULL;
+lives_dicto_t *weed_plant_to_dicto(weed_plant_t *plant) {
+  lives_dicto_t *dicto = NULL;
   weed_size_t nleaves;
   char **leaves = weed_plant_list_leaves(plant, &nleaves);
   if (nleaves) {
-    dicte = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_WEED_PLANT);
+    dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_WEED_PLANT);
     for (int i = 0; leaves[i]; i++) {
       char *key = leaves[i];
       uint32_t st = weed_leaf_seed_type(plant, key);
-      lives_obj_attr_t *attr = lives_object_declare_attribute(dicte, key, st);
+      lives_obj_attr_t *attr = lives_object_declare_attribute(dicto, key, st);
       weed_leaf_copy(attr, WEED_LEAF_VALUE, plant, key);
       lives_free(leaves[i]);
     }
     lives_free(leaves);
   }
-  return dicte;
+  return dicto;
 }
 
 
-void add_fn_lookup(lives_funcptr_t func, const char *name, const char *rrtype, const char *args_fmt, int flags) {
-  uint32_t rtype = get_seedtype(rrtype[0]);
-  int funcidx = get_fn_idx(name);
-  if (!funcdefs) funcdefs = lives_calloc(N_MAX_FUNCS, sizeof(lives_funcdef_t *));
-  else if (funcdefs[funcidx]) return;
-  if (1) {
-    lives_dictentry_t *dicte = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_FUNCDEF);
-    lives_obj_attr_t *xattr = lives_object_declare_attribute(dicte, ATTR_INTROSPECTION_NATIVE_PTR, WEED_SEED_VOIDPTR);
-    const lives_funcdef_t *funcdef = funcdefs[funcidx] = create_funcdef(name, func, rtype, args_fmt, flags);
-    lives_object_set_attr_value(dicte, xattr, funcdef);
-    add_to_dictionary(main_dict, funcdef->uid, dicte);
+const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, const char *rttype,
+				    const char *args_fmt, char *file, int line, void *txmap) {
+  uint32_t rtype = get_seedtype(rttype[0]);
+  const lives_funcdef_t *funcdef = get_from_hash_store(fn_objstore, name);
+  if (!funcdef) {
+    lives_dicto_t *dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_FUNCDEF);
+    lives_obj_attr_t *xattr = lives_object_declare_attribute(dicto, ATTR_INTROSPECTION_NATIVE_PTR, WEED_SEED_VOIDPTR);
+    funcdef = create_funcdef(name, func, rtype, args_fmt, file, line ? ++line : 0, txmap);
+    lives_object_set_attr_value(dicto, xattr, funcdef);
+    fn_objstore = add_to_objstore(fn_objstore, funcdef->uid, dicto);
   }
+  return funcdef;
 }
 
 
-const lives_funcdef_t *get_template_for_func(funcidx_t funcidx) {
-  return funcdefs[funcidx];
+const lives_funcdef_t *get_template_for_func(const char *funcname) {
+  return get_from_hash_store(fn_objstore, funcname);
 }
 
 
 const lives_funcdef_t *get_template_for_func_by_uid(uint64_t uid) {
-  lives_dictent_t *dicte = lookup_entry(uid);
-  if (dicte && dicte->subtype == DICT_SUBTYPE_FUNCDEF) {
-    lives_obj_attr_t *attr = lives_object_get_attribute(dicte, ATTR_INTROSPECTION_NATIVE_PTR);
+  lives_dicto_t *dicto = lookup_entry(uid);
+  if (dicto && dicto->subtype == DICT_SUBTYPE_FUNCDEF) {
+    lives_obj_attr_t *attr = lives_object_get_attribute(dicto, ATTR_INTROSPECTION_NATIVE_PTR);
     return weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
   }
   return NULL;
 }
 
 
-LIVES_GLOBAL_INLINE char *get_argstring_for_func(funcidx_t funcidx) {
-  const lives_funcdef_t *fdef = get_template_for_func(funcidx);
+LIVES_GLOBAL_INLINE char *get_argstring_for_func(const char *funcname) {
+  const lives_funcdef_t *fdef = get_template_for_func(funcname);
   if (!fdef) return NULL;
   return funcsig_to_string(funcsig_from_args_fmt(fdef->args_fmt));
 }
@@ -226,11 +263,11 @@ char *lives_funcdef_explain(const lives_funcdef_t *funcdef) {
   if (funcdef) {
     char *out = lives_strdup_printf("Function with uid 0X%016lX has prototype:\n"
                                     "\t%s %s(%s)\n"
-                                    "function category is %d, flags = 0X%016lX",
+                                    "function category is %d",
                                     funcdef->uid, weed_seed_to_ctype(funcdef->return_type, FALSE),
                                     funcdef->funcname ? funcdef->funcname : "??????",
                                     funcsig_to_string(funcsig_from_args_fmt(funcdef->args_fmt)),
-                                    funcdef->category, funcdef->flags);
+                                    funcdef->category);
     return out;
   }
   return NULL;
@@ -265,31 +302,7 @@ LIVES_GLOBAL_INLINE int lives_attribute_get_value_int(lives_obj_attr_t *attr) {
 }
 
 
-void dump_plantdesc(lives_dictent_t *dicte) {
-  //int
-}
-
-
-char *interpret_uid(uint64_t uid) {
-  char *info = NULL;
-  lives_dictent_t *dicte = lookup_entry(uid);
-  if (dicte) {
-    uint64_t sub = dicte->subtype;
-    if (sub == DICT_SUBTYPE_OBJECT || sub == DICT_SUBTYPE_WEED_PLANT) {
-      //if (sub == DICT_SUBTYPE_WEED_PLANT) dump_plantdesc(dicte);
-      //else dump_obdesc(dicte);
-      info = lives_object_dump_attributes(dicte);
-    } else if (sub == DICT_SUBTYPE_FUNCDEF) {
-      lives_obj_attr_t *attr = lives_object_get_attribute(dicte, ATTR_INTROSPECTION_NATIVE_PTR);
-      lives_funcdef_t *funcdef = (lives_funcdef_t *)weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
-      info = lives_funcdef_explain(funcdef);
-    }
-  }
-  return info;
-}
-
 /// refcounting
-
 
 static void lives_object_instance_free(lives_object_instance_t *obj) {
   lives_hooks_trigger(obj, obj->hook_closures, FINAL_HOOK);
@@ -350,6 +363,12 @@ LIVES_GLOBAL_INLINE lives_object_instance_t *lives_object_instance_create(uint64
 
 
 ////// object attributes //////////////
+
+LIVES_GLOBAL_INLINE char *lives_attr_get_name(lives_obj_attr_t *attr) {
+  if (attr) return weed_get_string_value(attr, WEED_LEAF_NAME, NULL);
+  return NULL;
+}
+
 
 static void lives_object_attribute_free(lives_object_t *obj, lives_obj_attr_t *attr) {
   // TODO - free rfx_param
@@ -720,8 +739,7 @@ char *lives_object_dump_attributes(lives_object_t *obj) {
       }
       out = lives_strdup_concat(out, NULL, "\n%s%s (%s)%s%s", pname, notes,
                                 weed_seed_to_ctype(weed_leaf_seed_type(attrs[count],
-                                    WEED_LEAF_VALUE), FALSE), obs,
-                                valstr);
+                                    WEED_LEAF_VALUE), FALSE), obs, valstr);
       if (valstr) lives_free(valstr);
       lives_free(pname);
       if (type) {
@@ -750,7 +768,7 @@ char *lives_object_dump_attributes(lives_object_t *obj) {
 
 void weed_plant_take_snapshot(weed_plant_t *plant) {
   if (plant) {
-    //lives_dictent_t *dicte = weed_plant_to_dictent(plant);
+    //lives_dicto_t *dicto = weed_plant_to_objstoreo(plant);
   }
 }
 
@@ -996,10 +1014,11 @@ LIVES_GLOBAL_INLINE lives_capacities_t *lives_capacities_copy(lives_capacities_t
 }
 
 
-void icap_caps_copy(lives_intentcap_t *dst, lives_intentcap_t *src) {
+void icap_copy(lives_intentcap_t *dst, lives_intentcap_t *src) {
   if (dst && src) {
     if (dst->capacities) lives_capacities_unref(dst->capacities);
     dst->capacities = lives_capacities_copy(NULL, src->capacities);
+    dst->intent = src->intent;
   }
 }
 
@@ -1021,23 +1040,22 @@ static void icap_caps_delete_cb(void *strct, const char *sttype,
 
 
 LIVES_LOCAL_INLINE lives_intentcap_t *lives_icap_new(lives_intention intent, lives_intentcap_t *stat) {
-  static const lives_struct_def_t *lsd = NULL;
+  static const lsd_struct_def_t *lsd = NULL;
   lives_intentcap_t *icap = NULL;
   if (!lsd) {
     lsd = get_lsd(LIVES_STRUCT_INTENTCAP_T);
     if (1) {
       lives_intentcap_t *icap = (lives_intentcap_t *)lives_calloc(1, sizeof(lives_intentcap_t));
-      lsd_special_field_t **specf = lsd->special_fields;
-      specf[0] = make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY, icap, &icap->capacities,
-                                    "capacities", 0, NULL, (lsd_field_copy_cb)icap_caps_copy_cb,
-                                    (lsd_field_delete_cb)icap_caps_delete_cb);
+      add_special_field((lsd_struct_def_t *)lsd, "capacities", LSD_FIELD_FLAG_ZERO_ON_COPY, &icap->capacities,
+			0, icap, NULL, (lsd_field_copy_cb)icap_caps_copy_cb,
+			(lsd_field_delete_cb)icap_caps_delete_cb);
+      lives_free(icap);
     }
   }
   if (lsd) {
     if (stat) {
-      lives_struct_create_static(lsd, stat);
-      icap = stat;
-    } else icap = lives_struct_create(lsd);
+      icap = lsd_struct_initialise(lsd, stat);
+    } else icap = lsd_struct_create(lsd);
     if (icap) {
       icap->intent = intent;
       if (intent != LIVES_INTENTION_NOTHING) {
@@ -1050,15 +1068,15 @@ LIVES_LOCAL_INLINE lives_intentcap_t *lives_icap_new(lives_intention intent, liv
 
 
 void lives_icap_init(lives_intentcap_t *stat) {
-  lives_icap_new(LIVES_INTENTION_NOTHING, stat);
+  //lives_icap_new(LIVES_INTENTION_NOTHING, stat);
 }
 
 
 void lives_icap_free(lives_intentcap_t *icap) {
   if (icap) {
     // make sure we are not freeing a std index entry
-    if (lives_struct_get_generation(icap->lsd) == 1 &&
-        !lives_strcmp(lives_struct_get_class_id(icap->lsd), STD_ICAP_ID)) return;
+    if (lsd_struct_get_generation(icap->lsd) == 1 &&
+        !lives_strcmp(lsd_struct_get_class_id(icap->lsd), STD_ICAP_ID)) return;
     g_print("here\n");
     unref_struct(icap->lsd);
     g_print("here2\n");
@@ -1120,7 +1138,7 @@ lives_intentcap_t *make_icap(lives_intention intent, ...) {
   va_start(xargs, intent);
   icap = _make_icap(intent, xargs);
   va_end(xargs);
-  if (icap) lives_struct_set_class_id(icap->lsd, CUSTOM_ICAP_ID);
+  if (icap) lsd_struct_set_class_id(icap->lsd, CUSTOM_ICAP_ID);
   return icap;
 }
 
@@ -1133,7 +1151,7 @@ LIVES_LOCAL_INLINE const lives_intentcap_t *make_std_icap(const char *desc,
   icap = _make_icap(intent, xargs);
   if (icap) {
     if (desc) lives_snprintf(icap->desc, ICAP_DESC_LEN, "%s", desc);
-    lives_struct_set_class_id(icap->lsd, STD_ICAP_ID);
+    lsd_struct_set_class_id(icap->lsd, STD_ICAP_ID);
   }
   va_end(xargs);
   return icap;

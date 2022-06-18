@@ -50,20 +50,7 @@ extern "C"
   // changes in 200 -> 201: weed_leaf_element_size now returns (strlen + 1) for WEED_SEED_STRING values,
   // allowing NULL strings, which return size 0; prior to this, strlen was returned, and NULLS
   // were treated like empty strings.
-  // 201 -> 202 :: added convenience functions weed_get_data_t_size(), weed_get_leaf_t_size()
-  //		:: weed_leaf_get_byte_size(plant, key), weed_plant_get_byte_size(plant)
-  //		:: corrected type of 'idx' arguments, (should be weed_size_t)
-  //		:: added typedef weed_hash_t, HAVE_HASHFUNC (allows overriding the default (int32_t))
-  //		:: added WEED_SEED_FLOAT - a convenience alias for WEED_SEED_DOUBLE
-  //		:: - (the stored double value may be cast to / from float if required)
-  //		:: added weed_leaf_set_element_size(plant, key, idx, size)
-  //		:: - for voidptr or custom seed types, this can be used to note the size of
-  //		::   data pointed to, For information only, has no other effect.
-  //		:: added macros WEED_IS_TRUE(), WEED_IS_FALSE(), WEED_SEED_IS_ (STANDARD / CUSTOM /
-  //		:: POINTER / VAKID), added definitions WEED_SEED_ (FIRST_PTR_TYPE / :LAST_PTR_TYPE
-  //		:: FIRST_NON_PTR_TYPE / LAST_NON_PTR_TYPE)
-  //		:: weed_get_element_size() formerly returned WEED_VOIDPTR_SIZE for
-  //		:: WEED_PLANTPTR_T. It now returns WEED_PLANTPTR_SIZE.
+  // 201 -> 202 :: technical updates (see spec for details)
 
 #define WEED_ABI_VERSION 		202
 #define WEED_API_VERSION 		WEED_ABI_VERSION
@@ -73,7 +60,7 @@ extern "C"
 
 #define WEED_IS_TRUE(expression) ((expression) == WEED_TRUE)
 #define WEED_IS_FALSE(expression) ((expression) == WEED_FALSE)
-  
+
 #define WEED_ABI_CHECK_VERSION(version) (WEED_ABI_VERSION  >= version)
 #define WEED_API_CHECK_VERSION(version) WEED_ABI_CHECK_VERSION(version)
 
@@ -132,7 +119,7 @@ struct _weed_leaf_nopadding {
 
 /* N.B. padbytes are not wasted, they may be used to store key names provided they fit */
 /* as of 202, key is moved to before padding, so the key can be stored in the char *
-   + padding */  
+   + padding */
 #define _WEED_PADBYTES_ ((_CACHE_SIZE_-(int)(sizeof(struct _weed_leaf_nopadding)))%_CACHE_SIZE_)
 
 struct _weed_leaf {
@@ -295,10 +282,10 @@ __WEED_FN_DEF__ weed_memmove_f weed_memmove;
   ((((st) >= WEED_SEED_FIRST_NON_PTR_TYPE && (st) <= WEED_SEED_LAST_NON_PTR_TYPE) \
     || ((st) >= WEED_SEED_FIRST_PTR_TYPE && (st) <= WEED_SEED_LAST_PTR_TYPE)) ? WEED_TRUE : WEED_FALSE)
 
-#define WEED_SEED_IS_CUSTOM(st) ((st) >= WEED_SEED_FIRST_CUSTOM ? WEED_TRUE : WEED_FALSE))
+#define WEED_SEED_IS_CUSTOM(st) ((st) >= WEED_SEED_FIRST_CUSTOM ? WEED_TRUE : WEED_FALSE)
 
 #define WEED_SEED_IS_POINTER(st) (WEED_IS_TRUE(WEED_SEED_IS_CUSTOM(st)) \
-				  || (st >= WEED_SEED_FIRST_PTR_TYPE\
+				  || (st >= WEED_SEED_FIRST_PTR_TYPE	\
 				      && st <= WEED_SEED_LAST_PTR_TYPE)	\
 				  ? WEED_TRUE : WEED_FALSE)
 

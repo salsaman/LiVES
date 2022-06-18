@@ -98,7 +98,7 @@
 #ifdef LIVES_OS_UNIX
 #include <glib-unix.h>
 #endif
-
+//#define WEED_STARTUP_TESTS
 ////////////////////////////////
 //// externs - 'global' variables
 
@@ -150,6 +150,9 @@ static void do_start_messages(void);
 int orig_argc(void) {return o_argc;}
 char **orig_argv(void) {return o_argv;}
 
+#ifdef WEED_STARTUP_TESTS
+extern int run_weed_startup_tests(void);
+#endif
 ////////////////////
 
 #ifdef GUI_GTK
@@ -344,6 +347,10 @@ LIVES_LOCAL_INLINE boolean jack_warn(boolean is_trans, boolean is_con) {
 }
 #endif
 
+#ifdef ENABLE_JACK
+boolean ret = TRUE;
+#endif
+static char errdets[512], errmsg[512];
 
 void defer_sigint(int signum) {
   // here we can prepare for and handle specific fn calls which we know may crash / abort
@@ -351,16 +358,21 @@ void defer_sigint(int signum) {
   // The main reason would be to show an error dialog and then exit, or transmit some error code first,
   // rather than simply doing nothing and aborting /exiting.
   // we should do the minimum necessary and exit, as the stack may be corrupted.
-  char *logmsg = NULL;
-#ifdef ENABLE_JACK
-  boolean ret = TRUE;
-#endif
+  
+  if (mainw->err_funcdef) lives_snprintf(errdets, 512, " in function %s, %s line %d", mainw->err_funcdef->funcname,
+					 mainw->err_funcdef->file, mainw->err_funcdef->line);
+
+  lives_snprintf(errmsg, 512, "received signal %d at tracepoint (%d), %s\n", signum, mainw->crash_possible,
+		 *errdets ? errdets : NULL);
+
+  LIVES_ERROR_NOBRK(errmsg);
+  
   switch (mainw->crash_possible) {
 #ifdef ENABLE_JACK
   case 1:
     if (mainw->jackd_trans) {
-      logmsg = lives_strdup(_("Connection attempt timed out, aborting."));
-      jack_log_errmsg(mainw->jackd_trans, logmsg);
+      lives_snprintf(errmsg, 512, "Connection attempt timed out, aborting.");
+      jack_log_errmsg(mainw->jackd_trans, errmsg);
     }
     while (ret) {
       // crash in jack_client_open() con - transport
@@ -369,8 +381,8 @@ void defer_sigint(int signum) {
     break;
   case 2:
     if (mainw->jackd) {
-      logmsg = lives_strdup(_("Connection attempt timed out, aborting."));
-      jack_log_errmsg(mainw->jackd, logmsg);
+      lives_snprintf(errmsg, 512, "Connection attempt timed out, aborting.");
+      jack_log_errmsg(mainw->jackd, errmsg);
     }
     while (ret) {
       // crash in jack_client_open() con - audio
@@ -401,15 +413,18 @@ void defer_sigint(int signum) {
       ret = jack_warn(FALSE, FALSE);
     }
     break;
+  case 16: // crash getting cdata from decoder plugin
+
+
+    break;
 #endif
   default:
     break;
   }
   if (signum > 0) {
-    if (logmsg) lives_free(logmsg);
     signal(signum, SIG_DFL);
     pthread_detach(pthread_self());
-  } else lives_abort(logmsg);
+  } else lives_abort(errmsg);
 }
 
 
@@ -2182,14 +2197,7 @@ static boolean lives_init(_ign_opts *ign_opts) {
     load_default_keymap();
     threaded_dialog_spin(0.);
 
-    //load_decoders();
-    if (ARE_UNCHECKED(decoder_plugins)) {
-      prefs->disabled_decoders = locate_decoders(get_list_pref(PREF_DISABLED_DECODERS));
-      capable->plugins_list[PLUGIN_TYPE_DECODER] = load_decoders();
-      if (capable->plugins_list[PLUGIN_TYPE_DECODER]) {
-        capable->has_decoder_plugins = PRESENT;
-      } else capable->has_decoder_plugins = MISSING;
-    }
+    if (ARE_UNCHECKED(decoder_plugins)) load_decoders();
 
     future_prefs->audio_opts = prefs->audio_opts =
                                  get_int_prefd(PREF_AUDIO_OPTS,
@@ -4430,7 +4438,11 @@ static boolean lives_startup2(livespointer data) {
   }
 #endif
 
-  if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
+ /* mainw->helper_procthreads[PT_PERF_MANAGER] = */
+ /*    lives_proc_thread_create(LIVES_THRDATTR_NONE, */
+ /* 			     (lives_funcptr_t)perf_manager, -1, ""); */
+
+ if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
     d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));
@@ -4579,6 +4591,9 @@ static boolean lives_startup2(livespointer data) {
 void set_signal_handlers(SignalHandlerPointer sigfunc) {
   sigset_t smask;
   struct sigaction sact;
+
+  memset(errmsg, 0, 512);
+  memset(errdets, 0, 512);
 
   sigemptyset(&smask);
 
@@ -4763,6 +4778,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 #ifdef WEED_STARTUP_TESTS
   run_weed_startup_tests();
+  abort();
 #if 0
   fprintf(stderr, "\n\nRetesting with API 200, bugfix mode\n");
   werr = weed_init(200, winitopts | WEED_INIT_ALLBUGFIXES);
@@ -9181,6 +9197,7 @@ void switch_to_file(int old_file, int new_file) {
       }
       mainw->idlemax = DEF_IDLE_MAX;
     }
+    redraw_timeline(mainw->current_file);
   }
 }
 

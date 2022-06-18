@@ -1657,10 +1657,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     }
 
     if (rowstrides[p] == priv->picture->linesize[p] && bleft == bright && bleft == 0) {
-      (*cdata->ext_memcpy)(dst, src, rowstrides[p] * xheight);
+      (*cdata->ext_funcs.memcpy)(dst, src, rowstrides[p] * xheight);
     } else {
       for (i = btop; i <= bbot; i++) {
-        (*cdata->ext_memcpy)(dst, src, dstwidth);
+        (*cdata->ext_funcs.memcpy)(dst, src, dstwidth);
         dst += rowstrides[p];
         src += priv->picture->linesize[p];
       }
@@ -1682,7 +1682,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 
 void clip_data_free(lives_clip_data_t *cdata) {
-  lives_struct_free(cdata->lsd);
+  lsd_struct_free(cdata->lsd);
 }
 
 

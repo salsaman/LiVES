@@ -124,7 +124,7 @@ void repair_findex_cb(LiVESMenuItem *menuitem, livespointer offsp) {
     lives_chdir(clipdir, FALSE);
     lives_free(clipdir);
 
-    get_decoder_cdata(fileno, prefs->disabled_decoders, NULL);
+    get_decoder_cdata(fileno, NULL);
 
     lives_chdir(cwd, FALSE);
     lives_free(cwd);
@@ -286,8 +286,9 @@ frames_t load_frame_index(int fileno) {
       }
 
       for (i = 0; i < sfile->frames; i++) {
-        lives_read_le_buffered(fd, &sfile->frame_index[i], sizeof(frames_t), FALSE);
+        lives_read_le_buffered(fd, &sfile->frame_index[i], sizeof(frames_t), TRUE);
         if (THREADVAR(read_failed)) {
+          g_print("only read %d of %d frames from index\n", i, sfile->frames);
           break;
         }
         if (sfile->frame_index[i] > maxframe) {
@@ -961,6 +962,7 @@ boolean check_if_non_virtual(int fileno, frames_t start, frames_t end) {
 
   if (sfile->ext_src && sfile->ext_src_type == LIVES_EXT_SRC_DECODER) close_clip_decoder(fileno);
 
+  sfile->old_dec_uid = 0;
   if (mainw->is_ready) {
     sfile->old_dec_uid = sfile->decoder_uid;
     del_clip_value(fileno, CLIP_DETAILS_DECODER_NAME);

@@ -23,16 +23,22 @@ LIVES_GLOBAL_INLINE int find_clip_by_uid(uint64_t uid) {
 
 char *get_staging_dir_for(int index, const lives_intentcap_t *icaps) {
   // optionally we can stage the clip open in an alt directory
-  char *shm_path = NULL;
-  lives_object_instance_t *obj = get_object_for_clip(index, icaps);
-  if (obj) {
-    weed_param_t *adir_param =
-      weed_param_from_attribute(obj, CLIP_ATTR_STAGING_DIR);
-    if (adir_param) shm_path = weed_param_get_value_string(adir_param);
-    weed_plant_free(adir_param);
+  lives_clip_t *sfile = RETURN_NORMAL_CLIP(index);
+  if (sfile) {
+    char *shm_path = NULL;
+    lives_object_instance_t *obj;
+    make_object_for_clip(index, (lives_intentcap_t *)icaps);
+    obj = sfile->instance;
+
+    if (obj) {
+      weed_param_t *adir_param =
+        weed_param_from_attribute(obj, CLIP_ATTR_STAGING_DIR);
+      if (adir_param) shm_path = weed_param_get_value_string(adir_param);
+      weed_plant_free(adir_param);
+    }
+    return shm_path;
   }
-  lives_object_instance_unref(obj);
-  return shm_path;
+  return NULL;
 }
 
 
@@ -121,6 +127,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   lives_clip_t *sfile = mainw->files[which];
   char *clipdir, *lives_header = NULL;
   char *val, *key, *tmp;
+  uint32_t st = 1;
 
   int retval2 = LIVES_RESPONSE_NONE;
 
@@ -174,7 +181,6 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
 
   if (mainw->hdrs_cache) {
     val = get_val_from_cached_list(key, maxlen, mainw->hdrs_cache);
-    g_print("get val %s %ld\n", key, maxlen);
     lives_free(key);
     if (!val) return FALSE;
   } else {
@@ -224,13 +230,16 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   case CLIP_DETAILS_FPS:
     *(double *)retval = lives_strtod(val);
     if (*(double *)retval == 0.) *(double *)retval = prefs->default_fps;
+    st = WEED_SEED_DOUBLE;
     break;
   case CLIP_DETAILS_PB_FPS:
     *(double *)retval = lives_strtod(val);
     if (*(double *)retval == 0.) *(double *)retval = sfile->fps;
+    st = WEED_SEED_DOUBLE;
     break;
   case CLIP_DETAILS_UNIQUE_ID:
     *(uint64_t *)retval = (uint64_t)lives_strtoul(val);
+    st = WEED_SEED_INT64;
     break;
   case CLIP_DETAILS_AENDIAN:
     *(int *)retval = atoi(val) * 2; break;
@@ -240,20 +249,28 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   case CLIP_DETAILS_CLIPNAME:
   case CLIP_DETAILS_KEYWORDS:
     lives_snprintf((char *)retval, maxlen, "%s", val);
+    st = WEED_SEED_STRING;
     break;
   case CLIP_DETAILS_FILENAME:
   case CLIP_DETAILS_DECODER_NAME:
     lives_snprintf((char *)retval, maxlen, "%s", (tmp = F2U8(val)));
     lives_free(tmp);
+    st = WEED_SEED_STRING;
     break;
   case CLIP_DETAILS_DECODER_UID:
-    *(uint64_t *)retval = (uint64_t)lives_strtol(val);
-    g_print("got dec uid 0x%016lX\n", *(uint64_t *)retval);
+    *(uint64_t *)retval = (uint64_t)lives_strtoul(val);
+    st = WEED_SEED_INT64;
     break;
   default:
     lives_free(val);
     return FALSE;
   }
+  (void)st;
+  /* // TODO */
+  /* make_object_for_clip(index, icaps); */
+  /* if (st == WEED_SEED_INT) { */
+  // add clip detail as attribute
+  /* } */
   lives_free(val);
   return TRUE;
 }
@@ -662,6 +679,31 @@ boolean read_file_details(const char *file_name, boolean is_audio, boolean is_im
 }
 
 
+boolean should_use_decoder(int clipno) {
+  boolean use_decoder = FALSE;
+  lives_clip_t *sfile = RETURN_NORMAL_CLIP(clipno);
+  if (sfile) {
+    if (sfile->decoder_uid || sfile->old_dec_uid) {
+      if (!sfile->old_dec_uid) sfile->old_dec_uid = sfile->decoder_uid;
+      use_decoder = TRUE;
+    }
+    else {
+      if (sfile->header_version >= 104) {
+	if (get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_UID, &sfile->old_dec_uid, 0))
+	  use_decoder = TRUE;
+      } else {
+	char decplugname[PATH_MAX];
+	if (get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_NAME, decplugname, PATH_MAX)) {
+	  sfile->old_dec_uid = 1;
+	  use_decoder = TRUE;
+	  // *INDENT-OFF*
+	}}}}
+// *INDENT-ON*
+
+  return use_decoder;
+}
+
+
 #define _RELOAD(field) sfile->field = loaded->field
 #define _RELOAD_STRING(field, len) lives_snprintf(sfile->field, len, "%s", loaded->field)
 
@@ -762,8 +804,8 @@ void dump_clip_binfmt(int which) {
 
 
 static lives_clip_t *_restore_binfmt(int clipno, boolean forensic, char *binfmtname) {
-  if (IS_NORMAL_CLIP(clipno)) {
-    lives_clip_t *sfile = mainw->files[clipno];
+  lives_clip_t *sfile = RETURN_NORMAL_CLIP(clipno);
+  if (sfile) {
     char *clipdir = get_clip_dir(clipno);
     char *fname = lives_build_filename(clipdir, "." TOTALSAVE_NAME, NULL);
     char *gzname = lives_strdup_printf("%s.%s", fname, LIVES_FILE_EXT_GZIP);
@@ -1764,9 +1806,10 @@ rhd_failed:
 
 
 LIVES_GLOBAL_INLINE char *get_clip_dir(int clipno) {
-  if (IS_VALID_CLIP(clipno)) {
-    lives_clip_t *sfile = mainw->files[clipno];
-    if (IS_NORMAL_CLIP(clipno) || sfile->clip_type == CLIP_TYPE_TEMP || sfile->clip_type == CLIP_TYPE_VIDEODEV) {
+  lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
+  if (sfile) {
+    if (IS_NORMAL_CLIP(clipno) || sfile->clip_type == CLIP_TYPE_TEMP
+        || sfile->clip_type == CLIP_TYPE_VIDEODEV) {
       if (*sfile->staging_dir) {
         return lives_build_path(sfile->staging_dir, sfile->handle, NULL);
       }
@@ -1779,8 +1822,8 @@ LIVES_GLOBAL_INLINE char *get_clip_dir(int clipno) {
 
 
 void migrate_from_staging(int clipno) {
+  lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
   if (IS_NORMAL_CLIP(clipno) || IS_TEMP_CLIP(clipno)) {
-    lives_clip_t *sfile = mainw->files[clipno];
     if (*sfile->staging_dir) {
       char *old_clipdir, *new_clipdir, *stfile;
       old_clipdir = get_clip_dir(clipno);
@@ -1892,7 +1935,7 @@ typedef struct {
 
 
 LIVES_LOCAL_INLINE void add_attributes_for_clip_instance(lives_object_instance_t *obj,
-    const lives_intentcap_t *icaps) {
+    lives_intentcap_t *icaps) {
   // here we would check the object state, and if it is external, then the icap
   // intention should be import, caps will have local or remote, and we set up the attributes
   // these will eventually form part of the import transform, which will convert the state to
@@ -1900,6 +1943,8 @@ LIVES_LOCAL_INLINE void add_attributes_for_clip_instance(lives_object_instance_t
 
   lives_intention intent = icaps->intent;
   clip_priv_data_t *priv = (clip_priv_data_t *)obj->priv;
+
+  icap_copy(&obj->icap, icaps);
 
   if (intent != LIVES_INTENTION_IMPORT) return;
 
@@ -1911,9 +1956,6 @@ LIVES_LOCAL_INLINE void add_attributes_for_clip_instance(lives_object_instance_t
     if (obj->state == CLIP_STATE_READY) {
       if (!*priv->sfile->staging_dir) return;
     } else get_shmdir();
-
-    /* iparams = (lives_intentparams_t *)lives_calloc(sizeof(lives_intentparams_t), 1); */
-    /* iparams->params = (weed_param_t **)lives_calloc(sizeof(weed_param_t *), 2); */
 
     attr = lives_object_declare_attribute(obj, CLIP_ATTR_STAGING_DIR, WEED_SEED_STRING);
 
@@ -1940,26 +1982,34 @@ LIVES_LOCAL_INLINE void add_attributes_for_clip_instance(lives_object_instance_t
 
 
 // placeholder function, until we have proper objects for clips
-lives_object_instance_t *get_object_for_clip(int clipno, const lives_intentcap_t *icaps) {
-  lives_object_t *obj;
-  clip_priv_data_t *priv;
-  obj = lives_object_instance_create(OBJECT_TYPE_CLIP, NO_SUBTYPE);
-  priv = obj->priv = (clip_priv_data_t *)lives_calloc(1, sizeof(clip_priv_data_t));
-  priv->idx = clipno;
-  if (!IS_VALID_CLIP(clipno) || mainw->recovering_files) {
-    priv->sfile = NULL;
-    obj->state = CLIP_STATE_NOT_LOADED;
-  } else {
-    priv->sfile = mainw->files[clipno];
-    obj->state = CLIP_STATE_READY;
-  }
-  //add_attributes_for_icaps(obj, icaps);
-  add_attributes_for_clip_instance(obj, icaps);
-  lives_free(priv);
-  obj->priv = NULL;
-  return obj;
-}
+void make_object_for_clip(int clipno, lives_intentcap_t *icaps) {
+  lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
+  if (sfile) {
+    lives_object_instance_t *obj;
+    clip_priv_data_t *priv;
+    if (!sfile->instance) {
+      sfile->instance = lives_object_instance_create(OBJECT_TYPE_CLIP, NO_SUBTYPE);
+    }
 
+    obj = sfile->instance;
+    priv = obj->priv = (clip_priv_data_t *)lives_calloc(1, sizeof(clip_priv_data_t));
+    priv->idx = clipno;
+
+    if (!IS_VALID_CLIP(clipno) || mainw->recovering_files) {
+      // TODO - update state when loaded
+      priv->sfile = NULL;
+      obj->state = CLIP_STATE_NOT_LOADED;
+    } else {
+      priv->sfile = mainw->files[clipno];
+      obj->state = CLIP_STATE_READY;
+    }
+    //add_attributes_for_icaps(obj, icaps);
+    if (icaps) add_attributes_for_clip_instance(obj, icaps);
+
+    lives_free(priv);
+    obj->priv = NULL;
+  }
+}
 
 #define BINFMT_CHECK_CHARS "LiVESXXX"
 

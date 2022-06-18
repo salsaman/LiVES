@@ -196,14 +196,17 @@ static weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t w
   int32_t filter_api_version = WEED_API_VERSION;
   weed_error_t err;
 
-  if (!host_info) return NULL; // matching version was not found
-
+  if (!host_info) {
+    fprintf(stderr, "NO MATCHING FILTER API FOUND\n");
+    return NULL; // matching version was not found
+  }
   // we must use the default getter to bootstrap our actual API functions
 
   //////////// get weed api version /////////
   if ((*weed_default_getp)(host_info, WEED_LEAF_WEED_API_VERSION,
                            (weed_funcptr_t *)&weed_abi_version) != WEED_SUCCESS) return NULL;
-  if ((*weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t *)&weed_leaf_get) != WEED_SUCCESS) return NULL;
+
+if ((*weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t *)&weed_leaf_get) != WEED_SUCCESS) return NULL;
   if ((*weed_default_getp)(host_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t *)&weed_malloc) != WEED_SUCCESS) return NULL;
   if ((*weed_default_getp)(host_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t *)&weed_free) != WEED_SUCCESS) return NULL;
   if ((*weed_default_getp)(host_info, WEED_LEAF_MEMSET_FUNC, (weed_funcptr_t *)&weed_memset) != WEED_SUCCESS) return NULL;
@@ -217,7 +220,11 @@ static weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t w
 
   // 2.0
   if (weed_abi_version >= 200) {
-    if (weed_leaf_get(host_info, WEED_LEAF_REALLOC_FUNC, 0, &weed_realloc) != WEED_SUCCESS) return NULL;
+    if (weed_leaf_get(host_info, WEED_LEAF_REALLOC_FUNC, 0, &weed_realloc) != WEED_SUCCESS) {
+      fprintf(stderr, "NO REALLOC fond\n");
+      
+      return NULL;
+    }
     if (weed_leaf_get(host_info, WEED_LEAF_CALLOC_FUNC, 0, &weed_calloc) != WEED_SUCCESS) return NULL;
     if (weed_leaf_get(host_info, WEED_LEAF_MEMMOVE_FUNC, 0, &weed_memmove) != WEED_SUCCESS) return NULL;
   }
@@ -254,6 +261,7 @@ static weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t w
 
   if (!plugin_info) if (!(plugin_info = weed_plant_new(WEED_PLANT_PLUGIN_INFO))) return NULL;
   weed_leaf_set(plugin_info, WEED_LEAF_HOST_INFO, WEED_SEED_PLANTPTR, 1, &host_info);
+  fprintf(stderr, "returning plugin info %p\n", plugin_info);
   return plugin_info;
 }
 
@@ -316,8 +324,9 @@ static weed_plant_t *weed_filter_class_init(const char *name, const char *author
 }
 
 static void weed_plugin_info_add_filter_class(weed_plant_t *plugin_info, weed_plant_t *filter_class) {
-  int num_filters = 0, i;
   weed_plant_t **filters;
+  weed_size_t num_filters = 0;
+  weed_size_t  i;
   if (_leaf_has_value(plugin_info, WEED_LEAF_FILTERS)) num_filters = weed_leaf_num_elements(plugin_info, WEED_LEAF_FILTERS);
   filters = (weed_plant_t **)weed_malloc((num_filters + 1) * sizeof(weed_plant_t *));
   if (!filters) return;
@@ -615,8 +624,8 @@ static inline char *weed_param_get_value_string(weed_plant_t *param) {
 
 
 static void _weed_clone_leaf(weed_plant_t *from, const char *key, weed_plant_t *to) {
-  int32_t seed_type = weed_leaf_seed_type(from, key);
-  int num = wlne(from, key);
+  uint32_t seed_type = weed_leaf_seed_type(from, key);
+  weed_size_t num = wlne(from, key);
   if (num == 0) weed_leaf_set(to, key, seed_type, 0, NULL);
   else {
     switch (seed_type) {
@@ -630,7 +639,7 @@ static void _weed_clone_leaf(weed_plant_t *from, const char *key, weed_plant_t *
     case WEED_SEED_STRING: {
       weed_size_t stlen;
       char **datac = (char **)weed_malloc(num * sizeof(char *));
-      for (int i = 0; (weed_size_t)i < num; i++) {
+      for (weed_size_t i = 0; (weed_size_t)i < num; i++) {
         stlen = weed_leaf_element_size(from, key, i);
         datac[i] = (char *)weed_malloc(stlen + 1);
         weed_leaf_get(from, key, i, &datac[i]);

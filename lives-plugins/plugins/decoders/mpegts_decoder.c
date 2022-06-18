@@ -2579,7 +2579,7 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
   cdata->interlace = LIVES_INTERLACE_NONE;
   cdata->frame_gamma = WEED_GAMMA_UNKNOWN;
 
-  cdata->ext_memcpy = &ext_memcpy;
+  cdata->ext_funcs.memcpy = &ext_memcpy;
 
   cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_AUDIO_TRIM_END;
   return cdata;
@@ -3789,7 +3789,7 @@ void clip_data_free(lives_clip_data_t *cdata) {
   if (cdata->URI != NULL) {
     detach_stream(cdata);
   }
-  lives_struct_free(cdata->lsd);
+  lsd_struct_free(cdata->lsd);
 }
 
 

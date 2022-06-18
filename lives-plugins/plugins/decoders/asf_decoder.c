@@ -42,6 +42,7 @@
 // include once to get constants. decplugin.h will include it a second time.
 #include "lives-plugin.h"
 
+#define PLUGIN_DEVSTATE PLUGIN_DEVSTATE_BROKEN
 #define PLUGIN_NAME "LiVES asf/wmv"
 #define PLUGIN_VERSION_MAJOR 1
 #define PLUGIN_VERSION_MINOR 1
@@ -774,6 +775,11 @@ static void detach_stream(lives_clip_data_t *cdata) {
   }
 
   if (priv->asf_st) free(priv->asf_st);
+
+  if (cdata->URI) {
+    free(cdata->URI);
+    cdata->URI = NULL;
+  }
 
   close(priv->fd);
 }
@@ -2236,7 +2242,7 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
   cdata->interlace = LIVES_INTERLACE_NONE;
   cdata->frame_gamma = WEED_GAMMA_UNKNOWN;
 
-  cdata->ext_memcpy = &ext_memcpy;
+  cdata->ext_funcs.memcpy = &ext_memcpy;
 
   cdata->last_frame_decoded = -1;
 
@@ -2672,10 +2678,9 @@ void clip_data_free(lives_clip_data_t *cdata) {
 
   priv->idxc = NULL;
 
-  if (cdata->URI) {
-    detach_stream(cdata);
-  }
-  lives_struct_free(cdata->lsd);
+  if (cdata->URI) detach_stream(cdata);
+
+  lsd_struct_free(cdata->lsd);
 }
 
 

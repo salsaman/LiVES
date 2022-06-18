@@ -20,7 +20,7 @@ extern boolean all_expose(LiVESWidget *, lives_painter_t *, livespointer psurf);
 
 // static defns
 
-#define EV_LIM 128 // max number of GUI events we process per update loop
+#define EV_LIM 2656 // max number of GUI events we process per update loop
 
 static boolean _lives_standard_button_set_label(LiVESButton *, const char *txt);
 static void lives_widget_show_all_cb(LiVESWidget *other, livespointer user_data);
@@ -40,7 +40,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
                              const char *detail, const char *value);
 #endif
 
-#define NSLEEP_TIME 500 // usec to wait in loops - a value of about 500 seems to be optimal
+#define NSLEEP_TIME 1000 // nanosec to wait in loops - a value of about 500 seems to be optimal
 
 /// internal data keys
 #define STD_KEY "_wh_is_standard"
@@ -369,9 +369,6 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_surface(l
 #ifdef LIVES_PAINTER_IS_CAIRO
   cr = cairo_create(target);
 #endif
-#ifdef PAINTER_QPAINTER
-  cr = new lives_painter_t(target);
-#endif
   return cr;
 }
 
@@ -382,12 +379,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_pixbuf(lives_painte
   // blit pixbuf to cairo at x,y
 #ifdef LIVES_PAINTER_IS_CAIRO
   gdk_cairo_set_source_pixbuf(cr, pixbuf, pixbuf_x, pixbuf_y);
-  return TRUE;
-#endif
-#ifdef PAINTER_QPAINTER
-  QPointF qp(pixbuf_x, pixbuf_y);
-  const QImage *qi = (const QImage *)pixbuf;
-  cr->drawImage(qp, *qi);
   return TRUE;
 #endif
   return FALSE;
@@ -401,11 +392,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_surface(lives_paint
   cairo_set_source_surface(cr, surface, x, y);
   return TRUE;
 #endif
-#ifdef PAINTER_QPAINTER
-  QPointF qp(x, y);
-  cr->drawImage(qp, *surface);
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -413,9 +399,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_surface(lives_paint
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_paint(lives_painter_t *cr) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_paint(cr);
-  return TRUE;
-#endif
-#ifdef PAINTER_QPAINTER
   return TRUE;
 #endif
   return FALSE;
@@ -427,12 +410,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_fill(lives_painter_t *cr) {
   cairo_fill(cr);
   return TRUE;
 #endif
-#ifdef PAINTER_QPAINTER
-  cr->fillPath(*(cr->p), cr->pen.color());
-  delete cr->p;
-  cr->p = new QPainterPath;
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -440,12 +417,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_fill(lives_painter_t *cr) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_stroke(lives_painter_t *cr) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_stroke(cr);
-  return TRUE;
-#endif
-#ifdef PAINTER_QPAINTER
-  cr->strokePath(*(cr->p), cr->pen);
-  delete cr->p;
-  cr->p = new QPainterPath;
   return TRUE;
 #endif
   return FALSE;
@@ -457,12 +428,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_clip(lives_painter_t *cr) {
   cairo_clip(cr);
   return TRUE;
 #endif
-#ifdef PAINTER_QPAINTER
-  cr->setClipPath(*(cr->p), Qt::IntersectClip);
-  delete cr->p;
-  cr->p = new QPainterPath;
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -470,11 +435,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_clip(lives_painter_t *cr) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_destroy(lives_painter_t *cr) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_destroy(cr);
-  return TRUE;
-#endif
-#ifdef PAINTER_QPAINTER
-  cr->end();
-  delete cr;
   return TRUE;
 #endif
   return FALSE;
@@ -539,10 +499,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_destroy(lives_painter_
   cairo_surface_destroy(surf);
   return TRUE;
 #endif
-#ifdef PAINTER_QPAINTER
-  surf->dec_refcount();
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -560,11 +516,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_new_path(lives_painter_t *cr) 
   cairo_new_path(cr);
   return TRUE;
 #endif
-#ifdef PAINTER_QPAINTER
-  delete cr->p;
-  cr->p = new QPainterPath;
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -572,12 +523,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_new_path(lives_painter_t *cr) 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_translate(lives_painter_t *cr, double x, double y) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_translate(cr, x, y);
-  return TRUE;
-#endif
-#ifdef PAINTER_QPAINTER
-  QTransform qt;
-  qt.translate(x, y);
-  cr->setTransform(qt, true);
   return TRUE;
 #endif
   return FALSE;
@@ -589,10 +534,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_line_width(lives_painter_t
   cairo_set_line_width(cr, width);
   return TRUE;
 #endif
-#ifdef PAINTER_QPAINTER
-  cr->pen.setWidthF(width);
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -602,10 +543,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_move_to(lives_painter_t *cr, d
   cairo_move_to(cr, x, y);
   return TRUE;
 #endif
-#ifdef PAINTER_QPAINTER
-  cr->p->moveTo(x, y);
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -613,10 +550,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_move_to(lives_painter_t *cr, d
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_line_to(lives_painter_t *cr, double x, double y) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_line_to(cr, x, y);
-  return TRUE;
-#endif
-#ifdef PAINTER_QPAINTER
-  cr->p->lineTo(x, y);
   return TRUE;
 #endif
   return FALSE;
@@ -638,10 +571,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_rectangle(lives_painter_t *cr,
   cairo_rectangle(cr, x, y, width, height);
   return TRUE;
 #endif
-#ifdef PAINTER_QPAINTER
-  cr->p->addRect(x, y, width, height);
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -650,15 +579,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_arc(lives_painter_t *cr, doubl
     double angle2) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_arc(cr, xc, yc, radius, angle1, angle2);
-  return TRUE;
-#endif
-#ifdef PAINTER_QPAINTER
-  double l = xc - radius;
-  double t = yc - radius;
-  double w = radius * 2, h = w;
-  angle1 = angle1 / M_PI * 180.;
-  angle2 = angle2 / M_PI * 180.;
-  cr->p->arcTo(l, t, w, h, angle1, angle2 - angle1);
   return TRUE;
 #endif
   return FALSE;
@@ -673,10 +593,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_operator(lives_painter_t *
   if (op == LIVES_PAINTER_OPERATOR_UNKNOWN) return FALSE;
   return TRUE;
 #endif
-#ifdef PAINTER_QPAINTER
-  cr->setCompositionMode(op);
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -685,11 +601,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgb(lives_painter_t
   // r,g,b values 0.0 -> 1.0
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_set_source_rgb(cr, red, green, blue);
-  return TRUE;
-#endif
-#ifdef PAINTER_QPAINTER
-  QColor qc(red * 255., green * 255., blue * 255.);
-  cr->pen.setColor(qc);
   return TRUE;
 #endif
   return FALSE;
@@ -703,11 +614,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgba(lives_painter_
   cairo_set_source_rgba(cr, red, green, blue, alpha);
   return TRUE;
 #endif
-#ifdef PAINTER_QPAINTER
-  QColor qc(red * 255., green * 255., blue * 255., alpha * 255.);
-  cr->pen.setColor(qc);
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -717,10 +623,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_fill_rule(lives_painter_t 
   cairo_set_fill_rule(cr, fill_rule);
   return TRUE;
 #endif
-#ifdef PAINTER_QPAINTER
-  cr->p->setFillRule(fill_rule);
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -728,9 +630,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_fill_rule(lives_painter_t 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_flush(lives_painter_surface_t *surf) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_surface_flush(surf);
-  return TRUE;
-#endif
-#ifdef PAINTER_QPAINTER
   return TRUE;
 #endif
   return FALSE;
@@ -744,9 +643,6 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface
 #ifdef LIVES_PAINTER_IS_CAIRO
 
   surf = cairo_image_surface_create_for_data(data, format, width, height, stride);
-#endif
-#ifdef PAINTER_QPAINTER
-  surf = new lives_painter_surface_t(data, format, width, height, stride);
 #endif
   return surf;
 }
@@ -784,9 +680,7 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_get_target(li
 #ifdef LIVES_PAINTER_IS_CAIRO
   surf = cairo_get_target(cr);
 #endif
-#ifdef PAINTER_QPAINTER
-  surf = cr->target;
-#endif
+
   return surf;
 }
 
@@ -795,9 +689,6 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_painter_format_stride_for_width(lives_pain
   int stride = -1;
 #ifdef LIVES_PAINTER_IS_CAIRO
   stride = cairo_format_stride_for_width(form, width);
-#endif
-#ifdef PAINTER_QPAINTER
-  stride = width * 4; //TODO !!
 #endif
   return stride;
 }
@@ -808,9 +699,6 @@ WIDGET_HELPER_GLOBAL_INLINE uint8_t *lives_painter_image_surface_get_data(lives_
 #ifdef LIVES_PAINTER_IS_CAIRO
   data = cairo_image_surface_get_data(surf);
 #endif
-#ifdef PAINTER_QPAINTER
-  data = (uint8_t *)surf->bits();
-#endif
   return data;
 }
 
@@ -819,9 +707,6 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_painter_image_surface_get_width(lives_pain
   int width = 0;
 #ifdef LIVES_PAINTER_IS_CAIRO
   width = cairo_image_surface_get_width(surf);
-#endif
-#ifdef PAINTER_QPAINTER
-  width = ((QImage *)surf)->width();
 #endif
   return width;
 }
@@ -832,9 +717,6 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_painter_image_surface_get_height(lives_pai
 #ifdef LIVES_PAINTER_IS_CAIRO
   height = cairo_image_surface_get_height(surf);
 #endif
-#ifdef PAINTER_QPAINTER
-  height = ((QImage *)surf)->height();
-#endif
   return height;
 }
 
@@ -844,9 +726,6 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_painter_image_surface_get_stride(lives_pai
 #ifdef LIVES_PAINTER_IS_CAIRO
   stride = cairo_image_surface_get_stride(surf);
 #endif
-#ifdef PAINTER_QPAINTER
-  stride = ((QImage *)surf)->bytesPerLine();
-#endif
   return stride;
 }
 
@@ -855,9 +734,6 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_format_t lives_painter_image_surface_g
   lives_painter_format_t format = (lives_painter_format_t)0;
 #ifdef LIVES_PAINTER_IS_CAIRO
   format = cairo_image_surface_get_format(surf);
-#endif
-#ifdef PAINTER_QPAINTER
-  format = ((QImage *)surf)->format();
 #endif
   return format;
 }
@@ -1226,20 +1102,24 @@ boolean governor_loop(livespointer data) {
   static int copies = 0;
   boolean is_timer = FALSE;
   boolean retv = FALSE;
-  int exitpt = 0;
   lives_sigdata_t *sigdata = NULL;
   lives_sigdata_t *new_sigdata = (lives_sigdata_t *)data;
   uint32_t mysource = gov_will_run;
+  int exitpt = 0;
 
+  if (gov_will_run && g_main_current_source() ==
+      g_main_context_find_source_by_id(NULL, gov_will_run)) gov_will_run = 0;
+  
   in_gov_loop = TRUE;
 
   copies++;
 
   if (copies != g_main_depth()) break_me("gov_loop: copy / depth mismatch");
 
+#ifdef DEBUG_GOV
   g_print("IN gov, lpttorun %p, r %d r2 %d nsd %p cop %d, clutch %d\n", lpttorun, lpt_recurse, lpt_recurse2,
           new_sigdata, copies, mainw->clutch);
-
+#endif
   // reloop - for timers we cannot exit until we have the return code from the function
   // instead we loop back to here
 reloop:
@@ -1263,9 +1143,7 @@ reloop:
   if (!new_sigdata) {
     // sigdata is set when called from a (retouted) signal handler callback
     // here we ar either re-entering as an idlefunc, or we are in a timer and looped back
-    g_print("PT A123\n");
     if (lpttorun) {
-      g_print("PT A123b\n");
       lpt_recurse2 = TRUE;
       fg_service_fulfill();
       lpt_recurse2 = FALSE;
@@ -1307,7 +1185,6 @@ reloop:
         if (sigdata->is_timer) {
           // this is complicated, We need to return to caller so it can exit with correct value
           // but we need to return to run the new task
-          //g_print("gov6\n");
           gov_will_run = lives_idle_priority(governor_loop, new_sigdata);
           exitpt = 7;
           goto exit_loop;
@@ -1392,15 +1269,12 @@ once_more:
            && sigdata_check_alarm(sigdata) && !(sigdata && lives_proc_thread_check_finished(sigdata->proc)))
       lives_nanosleep(NSLEEP_TIME);
 
-    //g_print("XX %d %d %d\n", count, sigdata_check_alarm(sigdata), !(sigdata && lives_proc_thread_check_finished(sigdata->proc)));
-
     if (!lpttorun && !sigdata_check_alarm(sigdata)) {
       exitpt = 10;
       goto exit_loop;
     }
     // need to check for lpttorun here, after running all the context_iterations
     if (lpttorun) lpt_recurse = TRUE;
-    //g_print("gov8\n");
     gov_will_run = lives_idle_priority(governor_loop, (sigdata && sigdata->alarm_handle) ? sigdata
                                        : NULL);
     exitpt = 11;
@@ -1452,7 +1326,11 @@ exit_loop:
     gov_running = FALSE;
   }
   in_gov_loop = FALSE;
+#ifdef DEBUG_GOV
   g_print("EXIT point %d, retval %d, gwr %u, gr %d\n", exitpt, retv, gov_will_run, gov_running);
+#else
+  (void)exitpt;
+#endif
   return retv;
 }
 
@@ -2038,6 +1916,54 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget *w
 }
 
 
+uint32_t  wait_for_fg_response(lives_proc_thread_t lpt) {
+  int gstat;
+  uint32_t mysource = 0;
+
+  gstat = get_gov_status();
+
+  lives_nanosleep(NSLEEP_TIME);
+
+#ifdef DEBUG_GUI_THREADS
+  g_print("gstat is %d\n", gstat);
+#endif
+  if (gstat == GOV_NOT_RUNNING) {
+    //mysource = gov_will_run = lives_idle_priority(governor_loop, NULL);
+    mysource = gov_will_run = lives_timer_immediate(governor_loop, NULL);
+    g_main_context_wakeup(NULL);
+#ifdef DEBUG_GUI_THREADS
+    g_print("ADD source %u\n", mysource);
+#endif
+  } else mainw->clutch = FALSE;
+
+  while ((!lpt && !mainw->clutch) || (lpt && lpttorun)) {
+    if (lpt && lives_proc_thread_get_cancelled(lpt)) {
+#ifdef DEBUG_GUI_THREADS
+      g_print("CANCELLED\n");
+#endif
+      return mysource;
+    }
+    else {
+      if (mysource) {
+	if (g_source_is_destroyed(g_main_context_find_source_by_id(NULL, mysource))) {
+	  g_print("my source was destroyed\n");
+	  mysource = 0;
+	  continue;
+	}
+	else {
+	  g_print("waiting for source %d st is %d %p %d %d\n", mysource, get_gov_status(), lpttorun, mainw->clutch,
+		  FG_THREADVAR(fg_service));
+	}
+	lives_nanosleep(ONE_BILLION);
+	continue;
+      }
+      else lives_nanosleep(NSLEEP_TIME);
+    }
+  }
+  return 0;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *widget) {
 #ifdef GUI_GTK
   LiVESWindow *win, *modalold = modalw;
@@ -2053,18 +1979,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *wi
     if (!was_modal) lives_window_set_modal(win, TRUE);
   }
 
-  while (gov_will_run && !gov_running) {
-    lives_nanosleep(NSLEEP_TIME);
-  }
-
-  if (gov_running) {
-    mainw->clutch = FALSE;
-    if (!mainw->is_exiting) {
-      while (!mainw->clutch) {
-        lives_nanosleep(NSLEEP_TIME);
-      }
-    }
-  }
+  wait_for_fg_response(NULL);
 
   if (!was_modal) {
     if (win) lives_window_set_modal(win, FALSE);
@@ -2230,10 +2145,11 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
 void fg_service_call(lives_proc_thread_t lpt, void *retval) {
   uint32_t mysource = 0;
   int gstat;
-
-  if (is_fg_thread()) abort();
+  //#define DEBUG_GUI_THREADS
+  if (is_fg_thread()) return;
 
   gstat = get_gov_status();
+#define DEBUG_GUI_THREADS
 #ifdef DEBUG_GUI_THREADS
   g_print("gstat1 is %d\n", gstat);
 #endif
@@ -2243,39 +2159,20 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
     gstat = get_gov_status();
   }
 
+  lives_nanosleep(NSLEEP_TIME);
+
 #ifdef DEBUG_GUI_THREADS
   g_print("gstat1.5 is %d\n", gstat);
 #endif
 
   lpttorun = lpt;
   lpt_retval = retval;
-  gstat = get_gov_status();
-#ifdef DEBUG_GUI_THREADS
-  g_print("gstat is %d\n", gstat);
-#endif
-  if (gstat == GOV_NOT_RUNNING) {
-    mysource = gov_will_run = lives_idle_priority(governor_loop, NULL);
-#ifdef DEBUG_GUI_THREADS
-    g_print("ADD source %u\n", mysource);
-#endif
-  } else {
-    mainw->clutch = FALSE;
-  }
-  while (lpttorun) {
-    if (lives_proc_thread_get_cancelled(lpt)) {
-#ifdef DEBUG_GUI_THREADS
-      g_print("CANCELLED\n");
-#endif
-      if (gov_will_run == mysource && !in_gov_loop) {
-#ifdef DEBUG_GUI_THREADS
-        g_print("REM source %u\n", mysource);
-#endif
-        gov_will_run = 0;
-        lives_source_remove(mysource);
-      }
-      return;
+
+  if ((mysource = wait_for_fg_response(lpt))) {
+    if (!g_source_is_destroyed(g_main_context_find_source_by_id(NULL, mysource))) {
+      lives_source_remove(mysource);
+      if (gov_will_run == mysource) gov_will_run = 0;
     }
-    lives_nanosleep(NSLEEP_TIME);
   }
 }
 
@@ -8991,6 +8888,7 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
   lives_widget_set_show_hide_with(button, da);
 
   SET_INT_DATA(button, EXPANSION_KEY, widget_opts.expand);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), SBUTT_SURFACE_KEY, NULL);
 
   if (widget_opts.apply_theme) {
     set_standard_widget(button, TRUE);
@@ -13329,7 +13227,6 @@ static void do_more_stuff(void) {
 
 
 boolean lives_widget_context_update(void) {
-  volatile boolean clutch;
   static pthread_mutex_t ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
   static pthread_mutex_t fg_ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
   if (timer_running) return FALSE;
@@ -13346,17 +13243,7 @@ boolean lives_widget_context_update(void) {
     }
     if (!is_fg_thread()) {
       if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
-      while (gov_will_run && !gov_running) {
-        lives_nanosleep(NSLEEP_TIME);
-      }
-
-      if (gov_running) {
-        clutch = mainw->clutch = FALSE;
-        while (!clutch && !mainw->is_exiting) {
-          lives_nanosleep(NSLEEP_TIME);
-          clutch = mainw->clutch;
-        }
-      }
+      wait_for_fg_response(NULL);
       pthread_mutex_unlock(&ctx_mutex);
     } else {
       int count = 0;

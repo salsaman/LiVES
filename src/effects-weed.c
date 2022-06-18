@@ -4891,10 +4891,10 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
     weed_set_funcptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)_ext_realloc);
     weed_set_funcptr_value(xhost_info, WEED_LEAF_CALLOC_FUNC, (weed_funcptr_t)_ext_calloc);
   } else {
-    weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)_ext_malloc);
-    weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)_ext_free);
-    weed_set_funcptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)_ext_realloc);
-    weed_set_funcptr_value(xhost_info, WEED_LEAF_CALLOC_FUNC, (weed_funcptr_t)_ext_calloc);
+    weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)malloc);
+    weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)free);
+    weed_set_funcptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)realloc);
+    weed_set_funcptr_value(xhost_info, WEED_LEAF_CALLOC_FUNC, (weed_funcptr_t)calloc);
   }
   //weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMCPY_FUNC, (weed_funcptr_t)lives_memcpy_monitor);
   weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMCPY_FUNC, (weed_funcptr_t)lives_memcpy);
@@ -4991,7 +4991,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   boolean blacklisted;
   boolean none_valid = TRUE;
 
-  int i;
+  int i, nf = 0;
 
 #ifdef RTLD_DEEPBIND
   dlflags |= RTLD_DEEPBIND;
@@ -5064,7 +5064,8 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 
   plugin_info = (*setup_fn)(weed_bootstrap);
 
-  if (!plugin_info || (filters_in_plugin = check_weed_plugin_info(plugin_info)) < 1) {
+  if (!plugin_info || ((nf = filters_in_plugin = check_weed_plugin_info(plugin_info)) < 1)) {
+    g_print("vals for filt %p, %d\n", plugin_info, nf);
     msg = lives_strdup_printf(_("No usable filters found in plugin:\n%s\n"), plugin_path);
     LIVES_INFO(msg);
     lives_free(msg);
@@ -5074,6 +5075,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
     lives_freep((void **)&fxname);
     return;
   }
+  g_print("Loaded plugin:\n%s\n", plugin_path);
 
   lives_freep((void **)&fxname);
 
@@ -11414,6 +11416,8 @@ static boolean check_match(weed_plant_t *filter, const char *pkg, const char *fx
 
   int filter_version;
 
+  //g_print("looking for %s / %s / %s / %d\n", pkg, fxname, auth, version);
+
   if (pkg && *pkg) {
     char *filename;
 
@@ -11421,17 +11425,20 @@ static boolean check_match(weed_plant_t *filter, const char *pkg, const char *fx
       plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, NULL);
       if (weed_plant_has_leaf(plugin_info, WEED_LEAF_PACKAGE_NAME)) {
         filename = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, NULL);
+        //g_print("xfnm = %s\n", filename);
       } else {
         plugin_name = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, NULL);
+        //g_print("plnm = %s\n", plugin_name);
         lives_snprintf(plugin_fname, PATH_MAX, "%s", plugin_name);
         lives_freep((void **)&plugin_name);
         get_filename(plugin_fname, TRUE);
+        //g_print("plfnm = %s\n", plugin_fname);
         filename = F2U8(plugin_fname);
+        //g_print("fnm = %s\n", filename);
       }
-    } else {
-      return FALSE;
-    }
+    } else return FALSE;
 
+    //g_print("pkg = %s\n", pkg);
     if (lives_utf8_strcasecmp(pkg, filename)) {
       lives_freep((void **)&filename);
       return FALSE;

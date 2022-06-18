@@ -438,24 +438,12 @@ LiVESResponseType get_utf8_pref(const char *key, char *val, int maxlen) {
 
 LiVESList *get_list_pref(const char *key) {
   // get a list of values from a preference
-  char **array;
   char buf[65536];
-  int nvals, i;
-
-  LiVESList *retlist = NULL;
-
+  LiVESList *toks;
+  size_t ntoks;
   if (get_string_pref(key, buf, 65535) == LIVES_RESPONSE_NO) return NULL;
-  if (!(*buf)) return NULL;
-
-  nvals = get_token_count(buf, '\n');
-  array = lives_strsplit(buf, "\n", nvals);
-  for (i = 0; i < nvals; i++) {
-    retlist = lives_list_append(retlist, lives_strdup(array[i]));
-  }
-
-  lives_strfreev(array);
-
-  return retlist;
+  toks = get_token_count_split(buf, '\n', &ntoks);
+  return toks;
 }
 
 
@@ -2138,51 +2126,33 @@ boolean apply_prefs(boolean skip_warn) {
   uint64_t ds_warn_level = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_ds)) * 1000000;
   uint64_t ds_crit_level = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_crit_ds)) * 1000000;
 
-  boolean warn_fps = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_fps));
-  boolean warn_save_set = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_save_set));
-  boolean warn_fsize = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_fsize));
-  boolean warn_mplayer = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mplayer));
-  boolean warn_missplugs = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_missplugs));
-  boolean warn_prefix = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_prefix));
-  boolean warn_duplicate_set = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_dup_set));
-  boolean warn_layout_missing_clips = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_clips));
-  boolean warn_layout_close = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_close));
-  boolean warn_layout_delete = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_delete));
-  boolean warn_layout_shift = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_shift));
-  boolean warn_layout_alter = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_alter));
-  boolean warn_discard_layout = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_discard_layout));
+#define WARN_BIT(bname) boolean warn_##bname = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON\
+									      (prefsw->checkbutton_warn_##bname))
+
+  WARN_BIT(fps); WARN_BIT(save_set); WARN_BIT(mplayer); WARN_BIT(missplugs); WARN_BIT(prefix); WARN_BIT(dup_set);
+  WARN_BIT(layout_clips); WARN_BIT(layout_close); WARN_BIT(fsize);
+  WARN_BIT(layout_delete); WARN_BIT(layout_shift); WARN_BIT(layout_alter); WARN_BIT(discard_layout); WARN_BIT(mt_no_jack);
+  WARN_BIT(layout_adel); WARN_BIT(layout_ashift); WARN_BIT(layout_aalt); WARN_BIT(layout_wipe); WARN_BIT(mt_achans);
+  WARN_BIT(layout_gamma); WARN_BIT(layout_popup); WARN_BIT(layout_reload); WARN_BIT(dis_dec); WARN_BIT(dmgd_audio);
+  WARN_BIT(mt_backup_space); WARN_BIT(after_crash); WARN_BIT(no_pulse); WARN_BIT(layout_lb); WARN_BIT(vjmode_enter);
+
   boolean warn_after_dvgrab =
 #ifdef HAVE_LDVGRAB
     lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_after_dvgrab));
 #else
     !(prefs->warning_mask & WARN_MASK_AFTER_DVGRAB);
 #endif
-  boolean warn_mt_achans = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_achans));
-  boolean warn_mt_no_jack = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_no_jack));
-  boolean warn_yuv4m_open =
+   boolean warn_yuv4m_open =
 #ifdef HAVE_YUV4MPEG
     lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4m_open));
 #else
-    !(prefs->warning_mask & WARN_MASK_OPEN_YUV4M);
+  !(prefs->warning_mask & WARN_MASK_OPEN_YUV4M);
 #endif
 
-  boolean warn_layout_adel = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_adel));
-  boolean warn_layout_ashift = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_ashift));
-  boolean warn_layout_aalt = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_aalt));
-  boolean warn_layout_popup = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_popup));
-  boolean warn_layout_reload = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_reload));
-  boolean warn_mt_backup_space
-    = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_backup_space));
-  boolean warn_after_crash = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_after_crash));
-  boolean warn_no_pulse = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_no_pulse));
-  boolean warn_layout_wipe = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_wipe));
-  boolean warn_layout_gamma = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_gamma));
-  boolean warn_layout_lb = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_lb));
-  boolean warn_vjmode_enter = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_vjmode_enter));
 #ifdef ENABLE_JACK
-  boolean warn_jack_scrpts = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_jack_scrpts));
+ WARN_BIT(jack_scrpts);
 #endif
-  boolean warn_dmgd_audio = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_dmgd_audio));
+
   boolean midisynch = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->check_midi));
   boolean instant_open = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_instant_open));
   boolean auto_deint = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_auto_deint));
@@ -2493,20 +2463,20 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   warn_mask = !warn_fps * WARN_MASK_FPS + !warn_save_set * WARN_MASK_SAVE_SET
-              + !warn_fsize * WARN_MASK_FSIZE + !warn_mplayer *
-              WARN_MASK_NO_MPLAYER + !warn_missplugs * WARN_MASK_CHECK_PLUGINS + !warn_prefix *
-              WARN_MASK_CHECK_PREFIX + !warn_layout_missing_clips * WARN_MASK_LAYOUT_MISSING_CLIPS + !warn_duplicate_set *
-              WARN_MASK_DUPLICATE_SET + !warn_layout_close * WARN_MASK_LAYOUT_CLOSE_FILE + !warn_layout_delete *
-              WARN_MASK_LAYOUT_DELETE_FRAMES + !warn_layout_shift * WARN_MASK_LAYOUT_SHIFT_FRAMES + !warn_layout_alter *
-              WARN_MASK_LAYOUT_ALTER_FRAMES + !warn_discard_layout * WARN_MASK_EXIT_MT + !warn_after_dvgrab *
-              WARN_MASK_AFTER_DVGRAB + !warn_mt_achans * WARN_MASK_MT_ACHANS + !warn_mt_no_jack *
-              WARN_MASK_MT_NO_JACK + !warn_layout_adel * WARN_MASK_LAYOUT_DELETE_AUDIO + !warn_layout_ashift *
-              WARN_MASK_LAYOUT_SHIFT_AUDIO + !warn_layout_aalt * WARN_MASK_LAYOUT_ALTER_AUDIO + !warn_layout_popup *
-              WARN_MASK_LAYOUT_POPUP + +!warn_layout_reload * WARN_MASK_LAYOUT_RELOAD + !warn_yuv4m_open * WARN_MASK_OPEN_YUV4M
-              + !warn_mt_backup_space * WARN_MASK_MT_BACKUP_SPACE + !warn_after_crash * WARN_MASK_CLEAN_AFTER_CRASH
-              + !warn_no_pulse * WARN_MASK_NO_PULSE_CONNECT + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE +
-              !warn_layout_gamma * WARN_MASK_LAYOUT_GAMMA + !warn_layout_lb * WARN_MASK_LAYOUT_LB + !warn_vjmode_enter *
-              WARN_MASK_VJMODE_ENTER + !warn_dmgd_audio * WARN_MASK_DMGD_AUDIO;
+    + !warn_fsize * WARN_MASK_FSIZE + !warn_mplayer *
+    WARN_MASK_NO_MPLAYER + !warn_missplugs * WARN_MASK_CHECK_PLUGINS + !warn_prefix *
+    WARN_MASK_CHECK_PREFIX + !warn_layout_clips * WARN_MASK_LAYOUT_MISSING_CLIPS + !warn_dup_set *
+    WARN_MASK_DUPLICATE_SET + !warn_layout_close * WARN_MASK_LAYOUT_CLOSE_FILE + !warn_layout_delete *
+    WARN_MASK_LAYOUT_DELETE_FRAMES + !warn_layout_shift * WARN_MASK_LAYOUT_SHIFT_FRAMES + !warn_layout_alter *
+    WARN_MASK_LAYOUT_ALTER_FRAMES + !warn_discard_layout * WARN_MASK_EXIT_MT + !warn_after_dvgrab *
+    WARN_MASK_AFTER_DVGRAB + !warn_mt_achans * WARN_MASK_MT_ACHANS + !warn_mt_no_jack *
+    WARN_MASK_MT_NO_JACK + !warn_layout_adel * WARN_MASK_LAYOUT_DELETE_AUDIO + !warn_layout_ashift *
+    WARN_MASK_LAYOUT_SHIFT_AUDIO + !warn_layout_aalt * WARN_MASK_LAYOUT_ALTER_AUDIO + !warn_layout_popup *
+    WARN_MASK_LAYOUT_POPUP + +!warn_layout_reload * WARN_MASK_LAYOUT_RELOAD + !warn_yuv4m_open * WARN_MASK_OPEN_YUV4M
+    + !warn_mt_backup_space * WARN_MASK_MT_BACKUP_SPACE + !warn_after_crash * WARN_MASK_CLEAN_AFTER_CRASH
+    + !warn_no_pulse * WARN_MASK_NO_PULSE_CONNECT + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE +
+    !warn_layout_gamma * WARN_MASK_LAYOUT_GAMMA + !warn_layout_lb * WARN_MASK_LAYOUT_LB + !warn_vjmode_enter *
+    WARN_MASK_VJMODE_ENTER + !warn_dmgd_audio * WARN_MASK_DMGD_AUDIO + !warn_dis_dec * WARN_MASK_DISABLED_DECODER;
 
 #ifdef ENABLE_JACK
   warn_mask += !WARN_MASK_JACK_SCRPT * warn_jack_scrpts;
@@ -5508,7 +5478,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   if (!prefs->disk_quota) {
     lives_widget_set_sensitive(cbut, FALSE);
-    lives_widget_set_sensitive(GET_PREF_WIDGET(REC_STOP_QUOTA), FALSE);
+    //lives_widget_set_sensitive(GET_PREF_WIDGET(REC_STOP_QUOTA), FALSE);
   }
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
@@ -6304,6 +6274,11 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                             "and allow attempted recovery."),
                                          !(prefs->warning_mask & WARN_MASK_DMGD_AUDIO),
                                          LIVES_BOX(hbox), NULL);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->checkbutton_warn_dis_dec = lives_standard_check_button_new
+    (_("Show a warning if a clip to be reloaded was using a disabled decoder plugin."),
+     !(prefs->warning_mask & WARN_MASK_DISABLED_DECODER), LIVES_BOX(hbox), NULL);
 
   pixbuf_warnings = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_WARNING,
                     LIVES_ICON_SIZE_CUSTOM, -1);
@@ -7530,6 +7505,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(checkbutton_warn_discard_layout, TOGGLED);
   ACTIVE(checkbutton_warn_mt_achans, TOGGLED);
   ACTIVE(checkbutton_warn_mt_no_jack, TOGGLED);
+  ACTIVE(checkbutton_warn_dis_dec, TOGGLED);
 
   ACTIVE(spinbutton_warn_fsize, VALUE_CHANGED);
 

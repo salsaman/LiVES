@@ -3,7 +3,7 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#define PLUGIN_UID 0X11E4474233EB27EEull
+#define PLUGIN_UID 0X11E4474233EB27EE
 
 #include <stdio.h>
 #include <pthread.h>

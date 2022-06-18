@@ -2947,7 +2947,7 @@ void clip_data_free(lives_clip_data_t *cdata) {
   }
 
   if (priv->opriv) free(priv->opriv);
-  lives_struct_free(cdata->lsd);
+  lsd_struct_free(cdata->lsd);
 }
 
 

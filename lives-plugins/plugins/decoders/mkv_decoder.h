@@ -1068,7 +1068,9 @@ typedef struct {
   index_container_t *idxc;
   index_container_t *idxb;
   boolean expect_eof;
-  boolean ext_memfuncs;
+  boolean got_eof;
+  int errval;
+  boolean use_ext_memfuncs;
   int index_scale;
 } lives_mkv_priv_t;
 

@@ -982,7 +982,10 @@ boolean compress_files_in_dir(const char *dir, int method, void *data) {
 }
 
 
-// check with list like subdir1, subdir2|subsubdir2,.. for subdirs in dirname. Returns list wuth matched subdirs removed.
+// check with list like dirname, subdir|subsubdir,..
+// for subdirs in dirname. Returns list wuth matched subdirs removed.
+// i.e returned list will contain only those sudirs in the original list which are NOT found in dirname
+// see also dir_to_pieces()
 LiVESList *check_for_subdirs(const char *dirname, LiVESList * subdirs) {
   DIR *tldir, *xsubdir;
   struct dirent *tdirent, *xtdirent;
@@ -1153,7 +1156,7 @@ void free_fdets_list(LiVESList **listp) {
   lives_file_dets_t *filedets;
   for (; list && list->data; list = list->next) {
     filedets = (lives_file_dets_t *)list->data;
-    lives_struct_free(filedets->lsd);
+    lsd_struct_free(filedets->lsd);
     list->data = NULL;
   }
   if (*listp) {
@@ -3197,4 +3200,52 @@ double analyse_cpu_stats(void) {
   return (float)weed_param_get_value_double(param);
 #endif
   return 0.;
+}
+
+
+static void show_info(void) {
+  char *memstr = get_memstats();
+  char *thrdstr = get_threadstats();
+  g_print("%s\n%sn", memstr, thrdstr);
+  lives_free(memstr); lives_free(thrdstr);
+}
+
+
+void perf_manager(void) {
+  ticks_t counter = 0;
+  uint64_t seconds = 0, minutes = 0;
+  boolean second_trigger = FALSE, minute_trigger = FALSE;
+  boolean halfmin_trigger = FALSE;
+
+  lives_proc_thread_t self = THREADVAR(tinfo);
+  lives_proc_thread_set_cancellable(self);
+  while (!lives_proc_thread_get_cancelled(self)) {
+    if (second_trigger) {
+      second_trigger = FALSE;
+    }
+    if (halfmin_trigger) {
+      halfmin_trigger = FALSE;
+      show_info();
+    }
+    if (minute_trigger) {
+      minute_trigger = TRUE;
+    }
+
+    lives_nanosleep(100);
+    ++counter;
+
+    g_print("%lu\n", counter);
+
+    if (counter == 1000) {
+      second_trigger = TRUE;
+      if (++seconds == 30) halfmin_trigger = TRUE;
+      if (seconds == 60) {
+	halfmin_trigger = TRUE;
+	minute_trigger = TRUE;
+	minutes++;
+	seconds = 0;
+      }
+      counter = 0;
+    }
+  }
 }

@@ -147,28 +147,25 @@ LIVES_GLOBAL_INLINE LiVESList *buff_to_list(const char *buffer, const char *deli
 
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique_str(LiVESList *xlist, const char *add) {
-  LiVESList *list = xlist, *listlast = NULL;
-  while (list) {
-    listlast = list;
+  LiVESList *listlast = NULL;
+  for (LiVESList *list = xlist; list; list = list->next) {
     if (!lives_utf8_strcasecmp((const char *)list->data, add)) return xlist;
-    list = list->next;
+    listlast = list;
   }
-  list = lives_list_append(listlast, lives_strdup(add));
-  if (!xlist) return list;
-  return xlist;
+  return lives_list_append(listlast, (void *)add);
 }
 
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList *xlist, livespointer add) {
-  LiVESList *list = xlist, *listlast = NULL;
-  while (list) {
-    listlast = list;
+  LiVESList *listlast = NULL;
+  for (LiVESList *list = xlist; list; list = list->next) {
     if (list->data == add) return xlist;
-    list = list->next;
+    listlast = list;
   }
-  list = lives_list_append(listlast, add);
-  if (!xlist) return list;
+  listlast = lives_list_append(listlast, add);
+  if (!xlist) xlist = listlast;
   return xlist;
+  
 }
 
 
@@ -321,6 +318,11 @@ LIVES_GLOBAL_INLINE void lives_list_free_all(LiVESList **list) {
 }
 
 
+LIVES_GLOBAL_INLINE LiVESList *lives_list_find_by_data(LiVESList *list, livespointer data) {
+  FIND_BY_DATA(list, data);
+}
+
+
 LIVES_GLOBAL_INLINE LiVESList *lives_list_remove_node(LiVESList *list, LiVESList *node, boolean free_data) {
   list = lives_list_detatch_node(list, node);
   if (node->data && free_data) lives_free(node->data);
@@ -340,16 +342,14 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_detatch_node(LiVESList *list, LiVESLis
 
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_remove_data(LiVESList *list, livespointer data, boolean free_data) {
-  LiVESList *xlist = list;
-  for (; xlist; xlist = xlist->next) if (xlist->data == data) break;
+  LiVESList *xlist = lives_list_find_by_data(list, data);
   if (xlist) return lives_list_remove_node(list, xlist, free_data);
   return NULL;
 }
 
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_detatch_data(LiVESList **list, livespointer data) {
-  LiVESList *xlist = *list;
-  for (; xlist; xlist = xlist->next) if (xlist->data == data) break;
+  LiVESList *xlist = lives_list_find_by_data(*list, data);
   if (xlist) {
     *list = lives_list_detatch_node(*list, xlist);
     return xlist;
@@ -360,8 +360,7 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_detatch_data(LiVESList **list, livespo
 
 LIVES_GLOBAL_INLINE boolean lives_list_check_remove_data(LiVESList **list, livespointer data, boolean free_data) {
   // check if data is in list, id so remove it and return TRUE
-  LiVESList *xlist = *list;
-  for (; xlist; xlist = xlist->next) if (xlist->data == data) break;
+  LiVESList *xlist = lives_list_find_by_data(*list, data);
   if (xlist) {
     *list = lives_list_remove_node(*list, xlist, free_data);
     return TRUE;

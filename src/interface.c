@@ -395,7 +395,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       start = sfile->aw_sizes[0] = 0;
     } else if (sfile->aw_sizes[0] != offset_end) {
       start = 0;
-      sfile->audio_waveform[0] = (float *)lives_realloc(sfile->audio_waveform[0], (int)offset_end * sizeof(float));
+      (float *)lives_recalloc(sfile->audio_waveform[0], (int)offset_end, sfile->aw_sizes[0],  sizeof(float));
     }
 
     if (sfile->audio_waveform[0]) {
@@ -516,7 +516,8 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       start = sfile->aw_sizes[1] = 0;
     } else if (sfile->aw_sizes[1] != offset_end) {
       start = 0;
-      sfile->audio_waveform[1] = (float *)lives_realloc(sfile->audio_waveform[1], (int)offset_end * sizeof(float));
+      sfile->audio_waveform[1] =
+        (float *)lives_recalloc(sfile->audio_waveform[1], (int)offset_end, sfile->aw_sizes[1],  sizeof(float));
     }
 
     if (sfile->audio_waveform[1]) {
@@ -3610,10 +3611,9 @@ void redraw_timeline(int clipno) {
           lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
         }
         pthread_mutex_unlock(&mainw->tlthread_mutex);
-        lives_proc_thread_join(mainw->drawtl_thread);
-        mainw->drawtl_thread = NULL;
+        lives_nanosleep_until_zero(mainw->drawtl_thread);
       } else pthread_mutex_unlock(&mainw->tlthread_mutex);
-
+      if (mainw->multitrack || mainw->reconfig) return;
       lives_mutex_lock_carefully(&mainw->tlthread_mutex);
       if (!mainw->drawtl_thread) {
         mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
@@ -3621,6 +3621,7 @@ void redraw_timeline(int clipno) {
                                "i", clipno);
         lives_proc_thread_sync_ready(mainw->drawtl_thread);
         lives_nanosleep_while_false(lives_proc_thread_get_cancellable(mainw->drawtl_thread));
+	lives_proc_thread_dontcare_nullify(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
       }
       pthread_mutex_unlock(&mainw->tlthread_mutex);
       return;

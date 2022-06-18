@@ -78,6 +78,8 @@ void *lives_slice_alloc_and_copy(size_t sz, void *p);
 
 void smallblock_init(void);
 
+char *get_memstats(void);
+
 void bigblock_init(void);
 void *alloc_bigblock(size_t s);
 void *calloc_bigblock(size_t s);
@@ -219,7 +221,6 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 #define LSD_RANDFUNC(ptr, size) (lives_get_randbytes((ptr), (size)))
 #endif
 
-#include "lsd.h"
 #undef OVERRIDE_MEMFUNCS
 
 #ifdef USE_RPMALLOC
@@ -227,7 +228,6 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 #endif
 #endif
 ///////////////////// here we can set ultimate overrides
-#include "lsd.h"
 
 void speedy_free(void *);
 void *speedy_malloc(size_t s);

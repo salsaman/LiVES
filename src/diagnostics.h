@@ -23,8 +23,9 @@ double get_inst_fps(boolean get_msg);
 void reset_timer_info(void);
 double show_timer_info(void);
 
-#ifdef WEED_STARTUP_TESTS
 int run_weed_startup_tests(void);
+
+#ifdef WEED_STARTUP_TESTS
 int test_palette_conversions(void);
 #endif
 

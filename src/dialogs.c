@@ -43,8 +43,12 @@ static int64_t sttime;
 
 void on_warn_mask_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
   LiVESWidget *tbutton;
+  uint64_t wmn = *(uint64_t *)user_data;
+  if (get_warn_mask_state(wmn) == RET_ALWAYS) {
+    prefs->always_mask |= wmn;
+  }
 
-  if (lives_toggle_button_get_active(togglebutton)) prefs->warning_mask |= LIVES_POINTER_TO_INT(user_data);
+  if (lives_toggle_button_get_active(togglebutton)) prefs->warning_mask |= wmn;
   else prefs->warning_mask &= ~(LIVES_POINTER_TO_INT(user_data));
   set_int_pref(PREF_LIVES_WARNING_MASK, prefs->warning_mask);
 
@@ -70,14 +74,20 @@ static void add_xlays_widget(LiVESBox *box) {
 void add_warn_check(LiVESBox *box, uint64_t warn_mask_number, const char *detail) {
   LiVESWidget *checkbutton;
   char *text, *xdetail = (char *)detail, *tmp;
+  warn_mask_state  wmstate;
   boolean defstate = FALSE;
 
   if (!box || !warn_mask_number) return;
 
-  if (warn_mask_number >= WARN_MASK_DEF_ON) defstate = TRUE;
+  if (warn_mask_number >= WARN_MASK_DEF_OFF) defstate = TRUE;
+
+  wmstate = get_warn_mask_state(warn_mask_number);
 
   if (!xdetail) {
-    xdetail = _("Do not show this _warning any more");
+    if (wmstate == RET_ALWAYS)
+      xdetail = _("Remember my decision and always do this");
+    else
+      xdetail = _("Do not show this _warning any more");
     defstate = FALSE;
   }
 
@@ -88,7 +98,7 @@ void add_warn_check(LiVESBox *box, uint64_t warn_mask_number, const char *detail
   if (xdetail != detail) lives_free(xdetail);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_warn_mask_toggled), LIVES_INT_TO_POINTER(warn_mask_number));
+                            LIVES_GUI_CALLBACK(on_warn_mask_toggled), (void *)&warn_mask_number);
 }
 
 
@@ -595,7 +605,7 @@ boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number
   int response = 1;
   char *mytext;
 
-  if (warn_mask_number >= (1ull << 48)) {
+  if (warn_mask_number >= WARN_MASK_DEF_OFF) {
     if (!(prefs->warning_mask & warn_mask_number)) return TRUE;
   } else {
     if (prefs->warning_mask & warn_mask_number) return TRUE;
@@ -615,17 +625,32 @@ boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number
 }
 
 
+LIVES_GLOBAL_INLINE warn_mask_state get_warn_mask_state(uint64_t warn_mask_number) {
+  if (warn_mask_number & REMEMBER_MASK) {
+    if (warn_mask_number & prefs->always_mask) {
+      return (warn_mask_number & prefs->warning_mask ? RET_TRUE : RET_FALSE);
+    }
+    return RET_ALWAYS;
+  }
+
+  if (warn_mask_number >= WARN_MASK_DEF_OFF) {
+    if (!(prefs->warning_mask & warn_mask_number)) return RET_TRUE;
+  } else {
+    if (prefs->warning_mask & warn_mask_number) return RET_TRUE;
+  }
+  return RET_WARN;
+}
+
+
 boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number) {
   // show YES/NO, returns TRUE for YES
+  // if warning is disabled, does not show the dialog and returns TRUE
   LiVESWidget *warning;
   int response = 1;
   char *mytext;
-
-  if (warn_mask_number >= (1ull << 48)) {
-    if (!(prefs->warning_mask & warn_mask_number)) return TRUE;
-  } else {
-    if (prefs->warning_mask & warn_mask_number) return TRUE;
-  }
+  warn_mask_state  wmstate = get_warn_mask_state(warn_mask_number);
+  if (wmstate == RET_TRUE) return TRUE;
+  if (wmstate == -RET_FALSE) return FALSE;
 
   mytext = lives_strdup(text); // must copy this because of translation issues
 
@@ -635,6 +660,11 @@ boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number) 
     lives_widget_destroy(warning);
   } while (response == LIVES_RESPONSE_RETRY);
 
+  if (wmstate == RET_ALWAYS) {
+    if (response == LIVES_RESPONSE_YES) prefs->warning_mask |= warn_mask_number;
+    else prefs->warning_mask &= ~warn_mask_number;
+  }
+  
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   lives_freep((void **)&mytext);
 
@@ -880,7 +910,7 @@ LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mas
   LiVESWidget *err_box;
   LiVESResponseType ret = LIVES_RESPONSE_NONE;
 
-  if (warn_mask_number >= (1ull << 48)) {
+  if (warn_mask_number >= WARN_MASK_DEF_OFF) {
     if (!(prefs->warning_mask & warn_mask_number)) return TRUE;
   } else {
     if (prefs->warning_mask & warn_mask_number) return TRUE;

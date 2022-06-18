@@ -292,7 +292,8 @@ void *_ext_malloc(size_t n) {
 #ifdef USE_RPMALLOC
   return rpmalloc(n);
 #else
-  return (n == 0 ? NULL : default_malloc(n));
+  //return (n == 0 ? NULL : default_malloc(n));
+  return (n == 0 ? NULL : malloc(n));
 #endif
 }
 
@@ -324,7 +325,8 @@ void _ext_free(void *p) {
 #ifdef USE_RPMALLOC
   rpfree(p);
 #else
-  if (p) default_free(p);
+  //if (p) default_free(p);
+  if (p) free(p);
 #endif
 }
 
@@ -342,7 +344,8 @@ void *_ext_realloc(void *p, size_t n) {
 #ifdef USE_RPMALLOC
   return rprealloc(p, n);
 #else
-  return lives_realloc(p, n);
+  //return lives_realloc(p, n);
+  return realloc(p, n);
 #endif
 }
 
@@ -350,7 +353,8 @@ void *_ext_calloc(size_t nmemb, size_t msize) {
 #ifdef USE_RPMALLOC
   return quick_calloc(nmemb, msize);
 #else
-  return default_calloc(nmemb, msize);
+  //return default_calloc(nmemb, msize);
+  return calloc(nmemb, msize);
 #endif
 }
 
@@ -375,6 +379,20 @@ static pthread_mutex_t smblock_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int n_smblocks = SMBLOCKS;
 
 static size_t memsize;
+char *get_memstats(void) {
+  char *msg;
+
+  if (smblock) msg = lives_strdup_printf("smallblock: total size %ld, block size %ld, page_size = %ld, "
+					 "cachline_size = %d\n"
+					 "Blocks in use: %d of %d (%.2f %%)\n",
+					 memsize, hwlim, capable->hw.pagesize, capable->hw.cacheline_size,
+					 n_smblocks - smblock_count, n_smblocks,
+					 (double)(n_smblocks - smblock_count)
+					 / (double)smblock_count * 100.);
+  else msg = lives_strdup_printf("smallblock not in use\n");
+  return msg;
+}
+				 
 
 void smallblock_init(void) {
   hwlim = HW_ALIGNMENT;
@@ -396,12 +414,11 @@ void smallblock_init(void) {
 
   if (smblock) {
     char *smbptr;
-
     if (mlock(smblock, memsize)) {
       lives_free(smblock);
       return;
     }
-
+    memset(smblock, 0, memsize);
     smbptr = smblock;
     n_smblocks = memsize / hwlim;
 
@@ -409,7 +426,6 @@ void smallblock_init(void) {
       smblock_list = lives_list_prepend(smblock_list, (void *)smbptr);
       smbptr += hwlim;
     }
-    g_print("LAST is %p\n", smbptr);
     smblock_list = lives_list_reverse(smblock_list);
     smblock_count = n_smblocks;
     pthread_mutex_lock(&smblock_mutex);
@@ -536,7 +552,7 @@ boolean init_memfuncs(int stage) {
 
   else if (stage == 1) {
     bigblock_init();
-    //smallblock_init();
+    smallblock_init();
   }
 
   return TRUE;

@@ -2128,7 +2128,7 @@ LiVESList *cache_file_contents(const char *filename) {
   FILE *hfile;
   size_t kelen;
   char buff[65536];
-  char *key = NULL, *keystr_end = NULL, *cptr, *tmp, *data = NULL;
+  char *key = NULL, *keystr_end = NULL, *cptr, *data = NULL;
   if (!(hfile = fopen(filename, "r"))) return NULL;
   while (fgets(buff, 65536, hfile)) {
     if (!*buff) continue;
@@ -2151,9 +2151,7 @@ LiVESList *cache_file_contents(const char *filename) {
         cptr++;
       }
       lives_chomp(cptr, FALSE);
-      tmp = lives_strdup_printf("%s%s", data ? data : "", cptr);
-      if (data) lives_free(data);
-      data = tmp;
+      data = lives_strcollate(&data, "\n", cptr);
       continue;
     }
     if (*buff != '<') continue;

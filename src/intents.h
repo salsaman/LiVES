@@ -52,6 +52,17 @@
 
 #define LIVES_OBJECT(o) ((lives_object_t *)((o)))
 
+typedef union {
+  uint8_t c[8];
+  uint64_t u;
+} charbytes;
+
+#define IMKType2(type) do {\
+  charbtytes c;		   \
+  snprintf(c.c, 8, "%s".#type); \
+  return c.u;			\
+  } while (0);
+
 // for external object data (e.g g_obect)
 #define INTENTION_KEY "intention_"
 
@@ -87,6 +98,7 @@ struct _object_t {
   uint64_t type; // object type - from IMkType (const)
   uint64_t subtype; // object subtype, can change during a transformation
   int state; // object state
+  lives_intentcap_t icap;
   lives_obj_attr_t **attributes; // internal parameters (properties)
   lives_object_transform_t *active_tx; // pointer to currently running transform (or NULL)
   LiVESList *hook_closures[N_HOOK_FUNCS]; /// TODO - these should probably be part of active_tx
@@ -135,7 +147,7 @@ typedef struct {
   char desc[ICAP_DESC_LEN];  // descriptive name of icaps (e.g load, download)
   lives_intention intent;
   lives_capacities_t *capacities; ///< type specific capabilities
-  lives_struct_def_t *lsd;
+  lsd_struct_def_t *lsd;
 } lives_intentcap_t;
 
 #endif // not def HAS_LIVES_INTENTS_H_BASE_DEFS
@@ -352,34 +364,34 @@ lives_obj_attr_t *lives_object_get_attribute(lives_object_t *, const char *name)
 boolean lives_object_attribute_unref(lives_object_t *, lives_obj_attr_t *);
 void lives_object_attributes_unref_all(lives_object_t *);
 
-// listeners can attach to the pre_/ post_ value_changed hooks for the object
+/// TODO - standardise :: lives_attribute_*(obj, name, ...  and lives_attr(attr, ...
+
+///////////// get values
+char *lives_attr_get_name(lives_obj_attr_t *);
+int lives_attr_get_value_int(lives_obj_attr_t *);
+uint32_t obj_attr_get_value_type(lives_obj_attr_t *);
+uint64_t obj_attr_get_owner(lives_obj_attr_t *);
+boolean obj_attr_is_mine(lives_obj_attr_t *);
+boolean obj_attr_is_readonly(lives_obj_attr_t *);
+weed_error_t obj_attr_set_readonly(lives_obj_attr_t *, boolean state);
+
+// todo, - should take attr param
+uint64_t lives_attribute_get_owner(lives_object_t *, const char *name);
+boolean lives_attribute_is_mine(lives_object_t *, const char *name);
+boolean lives_attribute_is_readonly(lives_object_t *, const char *name);
+weed_error_t lives_attribute_set_readonly(lives_object_t *, const char *name, boolean state);
 
 // values can be set later
 weed_error_t lives_object_set_attribute_value(lives_object_t *, const char *name, ...);
 weed_error_t lives_object_set_attribute_default(lives_object_t *obj, const char *name, ...);
 weed_error_t lives_object_set_attribute_array(lives_object_t *, const char *name, weed_size_t ne, ...);
 weed_error_t lives_object_set_attribute_def_array(lives_object_t *obj, const char *name, weed_size_t ne, ...);
+
 weed_error_t lives_object_set_attr_value(lives_object_t *, lives_obj_attr_t *, ...);
 weed_error_t lives_object_set_attr_default(lives_object_t *obj, lives_obj_attr_t *attr, ...);
 weed_error_t lives_object_set_attr_array(lives_object_t *, lives_obj_attr_t *, weed_size_t ne,  ...);
 weed_error_t lives_object_set_attr_def_array(lives_object_t *obj, lives_obj_attr_t *attr,
     weed_size_t ne,  ...);
-
-uint32_t obj_attr_get_value_type(lives_obj_attr_t *);
-
-int lives_attribute_get_value_int(lives_obj_attr_t *);
-
-uint64_t obj_attr_get_owner(lives_obj_attr_t *);
-uint64_t lives_attribute_get_owner(lives_object_t *, const char *name);
-
-boolean obj_attr_is_mine(lives_obj_attr_t *);
-boolean lives_attribute_is_mine(lives_object_t *, const char *name);
-
-boolean obj_attr_is_readonly(lives_obj_attr_t *);
-boolean lives_attribute_is_readonly(lives_object_t *, const char *name);
-
-weed_error_t obj_attr_set_readonly(lives_obj_attr_t *, boolean state);
-weed_error_t lives_attribute_set_readonly(lives_object_t *, const char *name, boolean state);
 
 boolean obj_attr_is_leaf_readonly(lives_obj_attr_t *, const char *key);
 boolean lives_attribute_is_leaf_readonly(lives_object_t *, const char *name, const char *key);
@@ -393,12 +405,15 @@ int lives_attribute_get_param_type(lives_object_t *obj, const char *name);
 weed_error_t lives_attribute_set_param_type(lives_object_t *obj, const char *name,
     const char *label, int ptype);
 
+// listeners can attach to the pre_/ post_ value_changed hooks for the object
 void lives_attribute_append_listener(lives_object_t *obj, const char *name, attr_listener_f func);
 void lives_attribute_prepend_listener(lives_object_t *obj, const char *name, attr_listener_f func);
 
 int lives_object_get_num_attributes(lives_object_t *);
 
 char *lives_object_dump_attributes(lives_object_t *);
+
+void *lookup_entry_full(uint64_t uid);
 
 char *interpret_uid(uint64_t uid);
 
@@ -414,12 +429,12 @@ char *interpret_uid(uint64_t uid);
 #define LIVES_TRANSFORM_STATUS_CANCELLED 256	///< transform was cancelled during running
 #define LIVES_TRANSFORM_STATUS_ERROR  512	///< transform encountered an error during running
 
-weed_plant_t *int_req_init(const char *name, int def, int min, int max);
-weed_plant_t *boolean_req_init(const char *name, int def);
-weed_plant_t *double_req_init(const char *name, double def, double min, double max);
-weed_plant_t *string_req_init(const char *name, const char *def);
-weed_plant_t *obj_req_init(const char *name, lives_obj_template allowed);
-weed_plant_t *hook_req_init(const char *name, int status, lives_object_transform_t *trn, void *user_data);
+// update value is a transform, no attrs in, attrs out
+// can be ondemand, async, volatile
+
+// attr type object, attr type hook in -> attrs in / attrs out trig from status to status
+
+// HAS_CAP, HAS_NOT_CAP / AND(x, y) / OR (x, y)
 
 // rules which must be satisfied before the transformation can succeed
 typedef struct {
@@ -498,6 +513,8 @@ boolean lives_capacities_unref(lives_capacities_t *); // ret TRUE if freed
 // if dst is NULL returns a copy, else overwirtes caps in dst and returns dst
 lives_capacities_t *lives_capacities_copy(lives_capacities_t *dst, lives_capacities_t *src);
 
+void icap_copy(lives_intentcap_t *dst, lives_intentcap_t *src);
+
 #define LIVES_ERROR_NULL_OBJECT WEED_ERROR_NOSUCH_PLANT
 
 #define LIVES_ERROR_NULL_CAP WEED_ERROR_NOSUCH_LEAF
@@ -523,6 +540,21 @@ lives_capacities_t *lives_capacities_copy(lives_capacities_t *dst, lives_capacit
 void lives_capacity_set(lives_capacities_t *, const char *key);
 void lives_capacity_unset(lives_capacities_t *, const char *key);
 boolean lives_has_capacity(lives_capacities_t *, const char *key);
+
+#define HAS_CAP(caps, name) (lives_has_capacity((lives_capacities_t *)(caps), (name)))
+#define HAS_NOT_CAP(caps, name) (!lives_has_capacity((caps), (name)))
+#define CAPS_AND(a, b) ((a) && (b))
+#define CAPS_OR(a, b) ((a) || (b))
+#define CAPS_XOR(a, b) (CAPS_AND(CAPS_OR(a, b) && !CAPS_AND(a, b)))
+
+/* #define I2(intn, exp) intn) && exp */
+/* #define HAS_CAPr(cap) HAS_CAP(icap, cap)  */
+/* #define INT_SYNTH_TRANSCODE LIVES_INTENTION_PLAY, HAS_CAPr(LIVES_CAPACITY_LOCAL) */
+/* #define INT_SYNTH_MAKEX(icap, bar) (icap->intent == I2(INT_SYNTH_##bar) */
+/* #define INT_SYNTH(bar, icap) INT_SYNTH_MAKEX(icap, bar) */
+/* #define EQUALS_SYNTH(icap, bar) INT_SYNTH(bar, icap) */
+
+// if (EQUALS_SYTNH(icap, TRANSCODE)) ->  INT_SYNTH(TRANSCODE, icap) -> INT_SYNTH_TRANSCODEx(icap)
 
 // generic capacities, type specific ones may also exist
 // key name is defined here. Values are int32_t interpreted as boolean: FALSE (0) or TRUE (1 or non-zero)
@@ -573,9 +605,9 @@ int count_caps(lives_capacities_t *icaps);
 char *list_caps(lives_capacities_t *caps);
 
 /////////////// object broker ////
-const lives_funcdef_t *get_template_for_func(funcidx_t funcidx);
-const lives_funcdef_t *get_template_for_func_by_uid(uint64_t uid);
-char *get_argstring_for_func(funcidx_t funcidx);
+/* const lives_funcdef_t *get_template_for_func(funcidx_t funcidx); */
+/* const lives_funcdef_t *get_template_for_func_by_uid(uint64_t uid); */
+/* char *get_argstring_for_func(funcidx_t funcidx); */
 char *lives_funcdef_explain(const lives_funcdef_t *funcdef);
 
 #if 0
@@ -583,6 +615,9 @@ char *lives_funcdef_explain(const lives_funcdef_t *funcdef);
 lives_intentcap_t **list_intentcaps(void);
 get_transform_for(intentcap);
 #endif
+
+// 
+
 
 // check all requmnts and mark - filled (value set) / can_fill (value unset, but has means to obtain) / missing / optional (unset)
 // value readonly (constant) or variable, default readonly or variable
@@ -631,24 +666,28 @@ boolean lives_transform_status_free(lives_transform_status_t *);
 void lives_object_transform_free(lives_object_transform_t *);
 
 ////////////////// object broker part ///////////
-typedef lives_hash_store_t lives_dict_t;
-typedef lives_object_instance_t lives_dictent_t;
+typedef lives_hash_store_t lives_objstore_t;
 
-// add attributes from obj into dictionary entry. attributes is a list of char *anames, NULL as final
+// this is now a dictionary
+typedef lives_object_instance_t lives_dicto_t;
+
+// create a new dictionary object
+lives_dicto_t *lives_dicto_new(uint64_t subtype);
 
 // update attributes. leave rest in place
-lives_dictent_t  *update_dictent(lives_dictent_t *, lives_object_t *, ...) LIVES_SENTINEL;
+lives_dicto_t  *update_dicto(lives_dicto_t *, lives_object_t *, ...) LIVES_SENTINEL;
 
 // replace attributes
-lives_dictent_t  *replace_dictent(lives_dictent_t *, lives_object_t *, ...) LIVES_SENTINEL;
+lives_dicto_t  *replace_dicto(lives_dicto_t *, lives_object_t *, ...) LIVES_SENTINEL;
 
-lives_dictent_t *weed_plant_to_dictent(weed_plant_t *);
+lives_dicto_t *weed_plant_to_dicto(weed_plant_t *);
 
-void add_fn_lookup(lives_funcptr_t func, const char *name, const char *rtype, const char *args_fmt, int flags);
+const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, const char *rtype,
+				     const char *args_fmt, char *file, int linei, void *txmap);
 
-size_t add_weed_plant_to_dict(weed_plant_t *);
+size_t add_weed_plant_to_objstore(weed_plant_t *);
 
-size_t add_object_to_dict(lives_object_t *);
+size_t add_object_to_objstore(lives_object_t *);
 
 size_t weigh_object(lives_object_instance_t *obj);
 

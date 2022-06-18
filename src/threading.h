@@ -91,22 +91,25 @@ typedef struct {
   lives_funcptr_t function;
   uint32_t return_type;
   const char *args_fmt;
-  uint64_t flags;
+  const char *file;
+  int line;
   void *data; // optional data, may be NULL
 } lives_funcdef_t;
 
-typedef enum {
-  FN_TRANSCODE_CLIP,
-  N_MAX_FUNCS
-} funcidx_t;
-
-int get_fn_idx(const char *funcname);
-
-#define ADD_FUNC(func, rettype, args_fmt, flags) \
-	   add_fn_lookup((lives_funcptr_t)(func), QUOTEME(func), rettype, args_fmt, flags)
+#ifdef __FILE__
+#define _FILE_REF_ __FILE__
+#else
+#define _FILE_REF_ ""
+#endif
+#ifdef __LINE__
+#define _LINE_REF_ __LINE__
+#else
+#define _LINE_REF_ 0
+#endif
 
 #define ADD_FUNC_DEF(func, rettype, args_fmt) \
-  add_fn_lookup((lives_funcptr_t)(func), QUOTEME(func), rettype, args_fmt, 0)
+  add_fn_lookup((lives_funcptr_t)(func), QUOTEME(func), rettype, args_fmt, \
+		_FILE_REF_, _LINE_REF_, NULL)
 
 /// hook funcs
 
@@ -270,6 +273,8 @@ typedef struct {
 #define LIVES_LEAF_FUNCSIG "funcsig"
 
 #define LIVES_LEAF_THREAD_PARAM "thrd_param"
+
+#define LIVES_LEAF_NULLIFY "nullify_ptr"
 
 #define _LIVES_LEAF_THREAD_PARAM(n) LIVES_LEAF_THREAD_PARAM  n
 #define LIVES_LEAF_THREAD_PARAM0 _LIVES_LEAF_THREAD_PARAM("0")
@@ -549,6 +554,9 @@ boolean lives_proc_thread_cancel_immediate(lives_proc_thread_t);
 /// after setting this, no further operations may be done on the proc_thread
 boolean lives_proc_thread_dontcare(lives_proc_thread_t);
 
+// as above but will set *thing = NULL when finished or cancelled
+void lives_proc_thread_dontcare_nullify(lives_proc_thread_t tinfo, void **thing);
+
 void lives_proc_thread_sync_ready(lives_proc_thread_t);
 
 boolean sync_point(const char *motive);
@@ -567,9 +575,12 @@ weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t) ;
 int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
 ////
+char *get_threadstats(void);
 
 lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
-                                uint32_t return_type,  const char *args_fmt, uint64_t flags);
+                                uint32_t return_type,  const char *args_fmt, const char *file, int line,
+				void *data);
+
 void free_funcdef(lives_funcdef_t *);
 lives_funcinst_t *create_funcinst(lives_funcdef_t *template, void *retstore, ...);
 void free_funcinst(lives_funcinst_t *);

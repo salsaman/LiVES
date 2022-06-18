@@ -845,6 +845,7 @@ boolean reload_set(const char *set_name) {
 
   boolean added_recovery = FALSE;
   boolean hadbad = FALSE;
+  boolean use_dec;
 
   int last_file = -1, new_file = -1;
   int start_clip = mainw->current_file == -1 ? 1 : mainw->current_file + 1;
@@ -1089,8 +1090,11 @@ boolean reload_set(const char *set_name) {
       we want to do as little checking here as possible, since it can slow down the startup, but if we detect a problem then we'll
       do increasingly more checking.
     */
+    
+    use_dec = should_use_decoder(mainw->current_file);
+    maxframe = load_frame_index(mainw->current_file);
 
-    if ((maxframe = load_frame_index(mainw->current_file)) > 0) {
+    if (use_dec || maxframe) {
       // CLIP_TYPE_FILE
       /** here we attempt to reload the clip. First we load the frame_index if any,
         If it contains more frames than the metadata says, then

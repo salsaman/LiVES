@@ -299,16 +299,12 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
       char *clipdir = get_clip_dir(mainw->current_file);
       char *cwd = lives_get_current_dir();
 
-      if (ARE_UNCHECKED(decoder_plugins)) {
-        capable->plugins_list[PLUGIN_TYPE_DECODER] = load_decoders();
-        if (capable->plugins_list[PLUGIN_TYPE_DECODER]) capable->has_decoder_plugins = PRESENT;
-        else capable->has_decoder_plugins = MISSING;
-      }
+      load_decoders();
 
       lives_chdir(clipdir, FALSE);
       lives_free(clipdir);
 
-      cdata = get_decoder_cdata(mainw->current_file, prefs->disabled_decoders, NULL);
+      cdata = get_decoder_cdata(mainw->current_file, NULL);
 
       lives_chdir(cwd, FALSE);
       lives_free(cwd);
@@ -4825,13 +4821,7 @@ boolean reload_clip(int fileno, frames_t maxframe) {
 
   fake_cdata = (lives_clip_data_t *)struct_from_template(LIVES_STRUCT_CLIP_DATA_T);
 
-  if (ARE_UNCHECKED(decoder_plugins)) {
-    prefs->disabled_decoders = locate_decoders(get_list_pref(PREF_DISABLED_DECODERS));
-    capable->plugins_list[PLUGIN_TYPE_DECODER] = load_decoders();
-    if (capable->plugins_list[PLUGIN_TYPE_DECODER]) {
-      capable->has_decoder_plugins = PRESENT;
-    } else capable->has_decoder_plugins = MISSING;
-  }
+  load_decoders();
 
   ///< retain original order to restore for freshly opened clips
   // get_decoder_cdata() may alter this
@@ -4854,9 +4844,7 @@ boolean reload_clip(int fileno, frames_t maxframe) {
 
     response = LIVES_RESPONSE_NONE;
 
-    if ((cdata = get_decoder_cdata(fileno, prefs->disabled_decoders,
-                                   fake_cdata->fps != 0. ? fake_cdata : NULL)) == NULL) {
-
+    if ((cdata = get_decoder_cdata(fileno, fake_cdata->fps != 0. ? fake_cdata : NULL)) == NULL) {
 manual_locate:
       if (mainw->error || was_renamed) {
         mainw->error = FALSE;
@@ -4874,7 +4862,7 @@ manual_locate:
         }
       } else {
         // unopenable
-        do_no_decoder_error(sfile->file_name);
+	if (!sfile->old_dec_uid) do_no_decoder_error(sfile->file_name);
         ignore = TRUE;
       }
 
@@ -5017,7 +5005,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   boolean retb = TRUE, retval;
   boolean load_from_set = TRUE;
   boolean rec_cleanup = FALSE;
-  boolean use_decoder = TRUE;
+  boolean use_decoder;
 
   // setting is_ready allows us to get the correct transient window for dialogs
   // otherwise the dialogs will appear behind the main interface
@@ -5238,20 +5226,11 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       if (mainw->current_file < 1) continue;
       if (is_ascrap) continue;
 
-      if (!cfile->decoder_uid) {
-        use_decoder = FALSE;
-        if (cfile->header_version >= 104) {
-          if (get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_UID, &cfile->decoder_uid, 0))
-            use_decoder = TRUE;
-        } else {
-          char decplugname[PATH_MAX];
-          if (get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_NAME, decplugname, PATH_MAX))
-            use_decoder = TRUE;
-        }
-      }
+      use_decoder = should_use_decoder(mainw->current_file);
+      maxframe = load_frame_index(mainw->current_file);
 
       /// see function reload_set() for detailed comments
-      if ((maxframe = load_frame_index(mainw->current_file)) > 0 || use_decoder) {
+      if (use_decoder || maxframe) {
         /// CLIP_TYPE_FILE
         if (!*cfile->file_name) continue;
         if (!reload_clip(mainw->current_file, maxframe)) continue;

@@ -160,29 +160,21 @@ static inline void myrand(void *ptr, size_t size) {
 #define LIVES_SEEK_NEEDS_CALCULATION (1<<2)
 #define LIVES_SEEK_QUALITY_LOSS (1<<3)
 
-typedef struct _lives_memfuncs {
-  malloc_f  *ext_malloc;
-  free_f    *ext_free;
-  memcpy_f  *ext_memcpy;
-  memset_f  *ext_memset;
-  memmove_f *ext_memmove;
-  realloc_f *ext_realloc;
-  calloc_f  *ext_calloc;
-} ext_memfuncs_t;
-
+typedef struct {
+  malloc_f  *malloc;
+  free_f    *free;
+  memcpy_f  *memcpy;
+  memset_f  *memset;
+  memmove_f *memmove;
+  realloc_f *realloc;
+  calloc_f  *calloc;
+} ext_funcs_t;
 
 typedef struct _lives_clip_data {
   // fixed part
-  lives_struct_def_t *lsd;
+  lsd_struct_def_t *lsd;
 
-  // TODO - replace with ext_memfuncs_t
-  malloc_f  *ext_malloc;
-  free_f    *ext_free;
-  memcpy_f  *ext_memcpy;
-  memset_f  *ext_memset;
-  memmove_f *ext_memmove;
-  realloc_f *ext_realloc;
-  calloc_f  *ext_calloc;
+  ext_funcs_t ext_funcs;
 
   void *priv;
 
@@ -285,6 +277,7 @@ typedef struct _lives_clip_data {
   boolean debug;
 } lives_clip_data_t;
 
+
 /// pass in NULL clip_data for the first call, subsequent calls (if the URI, current_clip or current_palette changes)
 /// should reuse the previous value. If URI or current_clip are invalid, clip_data will be freed and NULL returned.
 ///
@@ -327,50 +320,53 @@ int64_t update_stats(const lives_clip_data_t *);
 double get_fps(const char *uri);
 
 #ifdef NEED_CLONEFUNC
-#define CREATOR_ID "LiVES decoder plugin"
-static const lives_struct_def_t *cdata_lsd = NULL;
+#define CLASS_ID "LiVES decoder plugin"
 
 static void lfd_setdef(void *strct, const char *stype, const char *fname, int64_t *ptr) {*ptr = -1;}
 static void adv_timing_init(void *strct, const char *stype, const char *fname, adv_timing_t *adv) {adv->ctiming_ratio = 1.;}
 
-static void make_acid(void) {
-  cdata_lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "debug", 8);
-  if (!cdata_lsd) return;
-  else {
-    lsd_special_field_t **specf = cdata_lsd->special_fields;
+static lives_clip_data_t * cdata_create(void) {
+  static const lsd_struct_def_t *cdata_lsd = NULL;
+  if (!cdata_lsd) {
     lives_clip_data_t *cdata = (lives_clip_data_t *)calloc(1, sizeof(lives_clip_data_t));
-    specf[0] = make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY
-                                  | LSD_FIELD_FLAG_FREE_ON_DELETE, cdata, &cdata->priv,
-                                  "priv", 0, NULL, NULL, NULL);
-    specf[1] = make_special_field(LSD_FIELD_CHARPTR, cdata, &cdata->URI,
-                                  "URI", 0, NULL, NULL, NULL);
-    specf[2] = make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->title,
-                                  "title", 1024, NULL, NULL, NULL);
-    specf[3] = make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->author,
-                                  "author", 1024, NULL, NULL, NULL);
-    specf[4] = make_special_field(LSD_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->comment,
-                                  "comment", 1024, NULL, NULL, NULL);
-    specf[5] = make_special_field(LSD_FIELD_ARRAY, cdata, &cdata->palettes,
-                                  "palettes", 4, NULL, NULL, NULL);
-    specf[6] = make_special_field(LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY, cdata, &cdata->last_frame_decoded,
-                                  "last_frame_decoded", 8, (lsd_field_init_cb)lfd_setdef, NULL, NULL);
-    specf[7] = make_special_field(LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY, cdata, &cdata->adv_timing,
-                                  "adv_timing", sizeof(adv_timing_t), (lsd_field_init_cb)adv_timing_init, NULL, NULL);
-    lives_struct_init_p(cdata_lsd, cdata, (lives_struct_def_t **)&cdata->lsd);
+    cdata_lsd = lsd_create_p("lives_clip_data_t", cdata, sizeof(lives_clip_data_t), &cdata->lsd);
+    if (!cdata_lsd) return NULL;
+    add_special_field((lsd_struct_def_t *)cdata_lsd, "priv", LSD_FIELD_FLAG_ZERO_ON_COPY |
+		      LSD_FIELD_FLAG_FREE_ON_DELETE, &cdata->priv, 0, cdata, NULL, NULL, NULL);
+    add_special_field((lsd_struct_def_t *)cdata_lsd, "URI", LSD_FIELD_CHARPTR, &cdata->URI,
+		      0, cdata, NULL, NULL, NULL);
+    add_special_field((lsd_struct_def_t *)cdata_lsd, "title", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->title,
+		      1024, cdata, NULL, NULL, NULL);
+    add_special_field((lsd_struct_def_t *)cdata_lsd, "author", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->author,
+		      1024, cdata, NULL, NULL, NULL);
+    add_special_field((lsd_struct_def_t *)cdata_lsd, "comment", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->comment,
+		      1024, cdata, NULL, NULL, NULL);
+    add_special_field((lsd_struct_def_t *)cdata_lsd, "palettes", LSD_FIELD_ARRAY, &cdata->palettes,
+		      4, cdata, NULL, NULL, NULL);
+    add_special_field((lsd_struct_def_t *)cdata_lsd, "last_frame_decoded", LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY,
+		      &cdata->last_frame_decoded, 0, cdata, (lsd_field_init_cb)lfd_setdef, NULL, NULL);
+    add_special_field((lsd_struct_def_t *)cdata_lsd, "adv_timing", LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY, &cdata->adv_timing,
+		      0, cdata, (lsd_field_init_cb)adv_timing_init, NULL, NULL);
     free(cdata);
-    lives_struct_set_class_id((lives_struct_def_t *)cdata_lsd, CREATOR_ID);
+    lsd_struct_set_creator_uid((lsd_struct_def_t *)cdata_lsd, PLUGIN_UID);
   }
+  return lsd_struct_create(cdata_lsd);
+}
+
+static int cdata_is_mine(lives_clip_data_t *data) ALLOW_UNUSED;
+static int cdata_is_mine(lives_clip_data_t *data) {
+  if (lsd_struct_get_creator_uid(data->lsd) == PLUGIN_UID) return 1;
+  return 0;
 }
 #endif
+
 
 static lives_clip_data_t *cdata_new(lives_clip_data_t *data) {
   lives_clip_data_t *cdata;
   if (data) cdata = data;
   else {
 #ifdef NEED_CLONEFUNC
-    if (!cdata_lsd) make_acid();
-    if (!cdata_lsd) return NULL;
-    cdata = lives_struct_create(cdata_lsd);
+    cdata = cdata_create();
 #else
     cdata = calloc(1, sizeof(lives_clip_data_t));
 #endif
@@ -383,13 +379,7 @@ static lives_clip_data_t *clone_cdata(const lives_clip_data_t *cdata) {
   if (!cdata) return NULL;
   else {
     lives_clip_data_t *clone;
-    //lives_struct_def_t *lsd = cdata->lsd;
-    // make sure we use our model of the struct when cloning
-    //if (!cdata_lsd) make_acid();
-    //_lsd_inject((lives_struct_def_t *)cdata_lsd, (void *)cdata, NULL);
-    clone = lives_struct_copy((void *)cdata->lsd);
-    //lives_struct_unref((lives_struct_def_t *)cdata->lsd);
-    //((lives_clip_data_t *)cdata)->lsd = lsd;
+    clone = lsd_struct_copy(cdata->lsd);
     return clone;
   }
 }

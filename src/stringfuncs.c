@@ -9,7 +9,6 @@ size_t get_token_count(const char *string, int delim) {
   size_t pieces = 1;
   if (!string) return 0;
   if (delim <= 0 || delim > 255) return 1;
-
   while ((string = strchr(string, delim)) != NULL) {
     pieces++;
     string++;
@@ -18,29 +17,60 @@ size_t get_token_count(const char *string, int delim) {
 }
 
 
-char *get_nth_token(const char *string, const char *delim, int pnumber) {
-  char **array;
-  char *ret = NULL;
-  register int i;
-  if (pnumber < 0 || pnumber >= get_token_count(string, (int)delim[0])) return NULL;
-  array = lives_strsplit(string, delim, pnumber + 1);
-  for (i = 0; i < pnumber; i++) {
-    if (i == pnumber) ret = array[i];
-    else lives_free(array[i]);
+LiVESList *get_token_count_split_nth(char *string, int delim, size_t *ntoks, int nt) {
+  LiVESList *list = NULL;
+  size_t pieces = 1;
+  char *base = string;
+  if (ntoks) *ntoks = 0;
+  if (!string) return NULL;
+  if (delim <= 0 || delim > 255) return NULL;
+  while ((string = strchr(string, delim)) != NULL) {
+    *string = 0;
+    if (nt >= 0) {
+      if (pieces > nt) return lives_list_append(list, (void *)lives_strdup(base));
+    }
+    else list = lives_list_append(list, (void *)lives_strdup(base));
+    pieces++;
+    base = (char *)(++string);
   }
-  lives_free(array);
-  return ret;
+  if (nt >= 0) {
+    if (pieces > nt) return lives_list_append(list, (void *)lives_strdup(base));
+  }
+  else list = lives_list_append(list, (void *)lives_strdup(base));
+  if (ntoks) *ntoks = pieces;
+  return list;
+}
+
+
+LIVES_GLOBAL_INLINE LiVESList *get_token_count_split(char *string, int delim, size_t *ntoks) {
+  return get_token_count_split_nth(string, delim, ntoks, -1);
+}
+
+
+char *get_nth_token(const char *string, const char *delim, int pnumber) {
+  if (!string || !delim || pnumber < 0) return NULL;
+  else {
+    char *str = lives_strdup(string), *ret;
+    LiVESList *list = get_token_count_split_nth(str, delim[0], NULL, pnumber);
+    lives_free(str);
+    ret = (char *)list->data;
+    lives_list_free(list);
+    return ret;
+  }
 }
 
 
 int lives_utf8_strcasecmp(const char *s1, const char *s2) {
   // ignore case
-  char *s1u = lives_utf8_casefold(s1, -1);
-  char *s2u = lives_utf8_casefold(s2, -1);
-  int ret = lives_strcmp(s1u, s2u);
-  lives_free(s1u);
-  lives_free(s2u);
-  return ret;
+  if (!s1 || !s2) return (s1 != s2);
+  else {
+    char *s1u = lives_utf8_casefold(s1, -1);
+    char *s2u = lives_utf8_casefold(s2, -1);
+    int ret = lives_strcmp(s1u, s2u);
+    lives_free(s1u);
+    lives_free(s2u);
+    return ret;
+  }
 }
 
 
@@ -131,28 +161,24 @@ LIVES_GLOBAL_INLINE char *lives_strdup_quick(const char *s) {
 }
 
 
-typedef union {
-  uint8_t c[8];
-  uint64_t u;
-} charbytes;
-
 /// returns FALSE if strings match
 // safer version of strcmp, which can handle NULL strings
 LIVES_GLOBAL_INLINE boolean lives_strcmp(const char *st1, const char *st2) {
   if (!st1 || !st2) return (st1 != st2);
   else {
-#ifdef STD_STRINGFUNCS
     return strcmp(st1, st2);
-#endif
-    charbytes d1, d2, *ip1 = (charbytes *)st1, *ip2 = (charbytes *)st2;
-    int x = 0;
-    while ((d1 = *(ip1++)).u == (d2 = *(ip2++)).u && !(x = (hasNulByte(d1.u))));
-    if (!x) return FALSE;
-    for (int i = 0; i < 8; i++) {
-      if (d1.c[i] != d2.c[i]) return TRUE;
-      if (!d1.c[i]) return FALSE;
-    }
   }
+  /*   charbytes d1, d2, *ip1 = (charbytes *)st1, *ip2 = (charbytes *)st2; */
+  /*   int x = 0; */
+  /*   while (!(x = (hasNulByte((d1 = *(ip++)).u))) && d1.u == (d2 = *(ip2++)).u); */
+  /*   if (!x) return TRUE; */
+  /*   g_print("%s and %s 0x%016lX 0x%016lx %s %s\n", st1, st2, d1.u, d2.u, d1.c, d2.c); */
+  /*   for (int i = 0; i < 8; i++) { */
+  /*     if (d1.c[i] != d2.c[i]) return TRUE; */
+  /*     if (!d1.c[i]) return FALSE; */
+  /*   } */
+  /* } */
+  /* return TRUE; */
 }
 
 LIVES_GLOBAL_INLINE int lives_strcmp_ordered(const char *st1, const char *st2) {
@@ -239,7 +265,10 @@ LIVES_GLOBAL_INLINE uint32_t lives_string_hash(const char *st) {
 
 LIVES_GLOBAL_INLINE char *lives_strstop(char *st, const char term) {
   /// truncate st, replacing term with \0
-  if (st && term) for (int i = 0; st[i]; i++) if (st[i] == term) {st[i] = 0; break;}
+  if (st && term) {
+    char *c = index(st, term);
+    if (c) *c = 0;
+  }
   return st;
 }
 
@@ -711,5 +740,22 @@ char *lives_strdup_concat(char *str, const char *sep, const char *fmt, ...) {
   }
   if (str) lives_free(str);
   return out;
+}
+
+
+char *dir_to_pieces(const char *dirnm) {
+  // rewrite a pathname with multiple // collapsed and then each remaining / translated to '|'
+  char *pcs = subst(dirnm, LIVES_DIR_SEP, "|"), *pcs2;
+  size_t plen = lives_strlen(pcs), plen2;
+  for (; pcs[plen - 1] == '|'; plen--) pcs[plen - 1] = 0;
+  while (1) {
+    plen2 = plen;
+    pcs2 = subst(pcs, "||", "|");
+    plen = lives_strlen(pcs2);
+    if (plen == plen2) break;
+    lives_free(pcs);
+    pcs = pcs2;
+  }
+  return pcs2;
 }
 

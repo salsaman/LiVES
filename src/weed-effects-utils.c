@@ -1024,6 +1024,7 @@ weed_error_t weed_plant_duplicate(weed_plant_t *dst, weed_plant_t *src, int add)
 
 size_t weed_plant_weigh(weed_plant_t *plant) {
   return weed_plant_get_byte_size(plant);
+  return 0;
 }
 
 WEED_GLOBAL_INLINE weed_error_t weed_plant_mutate_type(weed_plantptr_t plant, int32_t newtype) {

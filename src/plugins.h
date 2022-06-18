@@ -61,7 +61,7 @@ typedef weed_plant_t weed_param_t;
 #define LIVES_DEVSTATE_TESTING 3 // waring - plugin is being tested and may not function correctly
 
 #define LIVES_DEVSTATE_UNSTABLE -1 // warning - may be unstable in specific circumstances
-#define LIVES_DEVSTATE_BROKEN -2 // WARNING - plugin is know to function incorrectly
+#define LIVES_DEVSTATE_BROKEN -2 // WARNING - plugin is known to function incorrectly
 #define LIVES_DEVSTATE_AVOID -3 // WARNING - plugin should be completely ignored
 
 // in future, all plugins will have only a single mandatory function, get_plugin_id
@@ -84,6 +84,11 @@ typedef struct {
   // if intentcaps is set, then type, api_version_* become optional
   lives_intentcap_t *intentcaps;  /// array of intentcaps (NULL terminated)
 } lives_plugin_id_t;
+
+const lives_plugin_id_t *plugin_from_store(uint64_t uid);
+const char *lives_plugin_get_name(uint64_t uid);
+char *get_pltype(uint64_t type, boolean plural, boolean caps, boolean full);
+char *get_full_plname(uint64_t uid); // eg. "decoder plugin version x.y"
 
 typedef struct {
   lives_plugin_id_t *pl_id;
@@ -307,27 +312,20 @@ typedef struct {
 // seek_flags is a bitmap
 
 typedef struct _lives_memfuncs {
-  malloc_f  *ext_malloc;
-  free_f    *ext_free;
-  memcpy_f  *ext_memcpy;
-  memset_f  *ext_memset;
-  memmove_f *ext_memmove;
-  realloc_f *ext_realloc;
-  calloc_f  *ext_calloc;
-} ext_memfuncs_t;
+  malloc_f  *malloc;
+  free_f    *free;
+  memcpy_f  *memcpy;
+  memset_f  *memset;
+  memmove_f *memmove;
+  realloc_f *realloc;
+  calloc_f  *calloc;
+} ext_funcs_t;
 
 typedef struct _lives_clip_data {
   // fixed part
-  lives_struct_def_t *lsd;
+  lsd_struct_def_t *lsd;
 
-  // TODO - replace with ext_memfuncs_t
-  malloc_f  *ext_malloc;
-  free_f    *ext_free;
-  memcpy_f  *ext_memcpy;
-  memset_f  *ext_memset;
-  memmove_f *ext_memmove;
-  realloc_f *ext_realloc;
-  calloc_f  *ext_calloc;
+  ext_funcs_t ext_funcs;
 
   void *priv;
 
@@ -471,12 +469,11 @@ typedef struct {
   lives_relation_t relations;
 } lives_decoder_t;
 
+const lives_clip_data_t *get_decoder_cdata(int fileno, const lives_clip_data_t *fake_cdata);
+
 lives_clip_data_t *get_clip_cdata(int clipno);
-LiVESList *locate_decoders(LiVESList *);
-LiVESList *load_decoders(void);
+void load_decoders(void);
 boolean chill_decoder_plugin(int fileno);
-boolean decoder_plugin_move_to_first(const char *name, uint64_t uid);
-const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, const lives_clip_data_t *fake_cdata);
 void close_decoder_plugin(lives_decoder_sys_t *);
 void close_clip_decoder(int clipno);
 lives_decoder_sys_t *open_decoder_plugin(const char *plname);
@@ -655,7 +652,6 @@ struct _param_t {
   // extras for LiVES
 
   char *units; // optional display detail (eg. "Hz", "sec."
-
 
   LiVESWidget *widgets[MAX_PARAM_WIDGETS]; ///< widgets which hold value/RGBA settings
   int nwidgets;

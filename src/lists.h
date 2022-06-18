@@ -43,11 +43,10 @@ void lives_slist_free_all(LiVESSList **);
 
 #define DATA/**/=  DATAx
 
-#define DATAx(list, x) (list##->data == (void *)(x))
+#define DATAx(list, x) (list->data == (void *)(x))
 
-
-#define FIND_BY_DATA(list, xdata) {for (LiVESList *qlist = (list); qlist; qlist = qilist->next) \
-      if (DATAx(qlist, xdata)) return qlist;}
+#define FIND_BY_DATA(list, xdata) {for (LiVESList *qlist = (list); qlist; qlist = qlist->next) \
+      if (DATAx(qlist, xdata)) return qlist;} return NULL;
 
 #define DATA_FIELD(l, t, f, x) ((void *)(((t *)(l/**/->data))->/**/f) == x)
 
@@ -62,6 +61,8 @@ void lives_slist_free_all(LiVESSList **);
 	    || DATA_FIELD(qlist, struct_type, field2, target))	\
 	  {list = qlist; break;}; list = NULL;} while(0);
 
+// locate in list
+LiVESList *lives_list_find_by_data(LiVESList *, livespointer data);
 
 // detatch and free node
 LiVESList *lives_list_remove_node(LiVESList *, LiVESList *node, boolean free_data);

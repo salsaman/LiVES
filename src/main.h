@@ -498,13 +498,15 @@ typedef struct {
 
 
 #ifndef USE_STD_MEMFUNCS
-//#define USE_RPMALLOC
+#define USE_RPMALLOC
 #endif
 
 #define HW_ALIGNMENT ((capable && capable->hw.cacheline_size > 0) ? capable->hw.cacheline_size \
 		      : DEF_ALIGN)
 
 #include "memory.h"
+
+#include "lsd.h"
 
 #include "stringfuncs.h"
 
@@ -1032,6 +1034,14 @@ void break_me(const char *dtl);
 #define LIVES_ERROR(x)      dummychar = (x)
 #endif // LIVES_NO_ERROR
 #endif // LIVES_ERROR
+
+#ifndef LIVES_ERROR_NOBRK
+#ifndef LIVES_NO_ERROR
+#define LIVES_ERROR_NOBRK(x)      {fprintf(stderr, "LiVES ERROR: %s\n", (x));}
+#else // LIVES_NO_ERROR
+#define LIVES_ERROR_NOBRK(x)      dummychar = (x)
+#endif // LIVES_NO_ERROR
+#endif // LIVES_ERROR_NOBRK
 
 #ifndef LIVES_CRITICAL
 #ifndef LIVES_NO_CRITICAL

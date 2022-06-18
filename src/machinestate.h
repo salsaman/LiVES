@@ -210,7 +210,7 @@ typedef struct {
   ///< if we can retrieve some kind of uinque id, we set it here
   ///< may be useful in future for dictionary lookups
   uint64_t uniq;
-  lives_struct_def_t *lsd;
+  lsd_struct_def_t *lsd;
   char *name;
   uint64_t type; /// e.g. LIVES_FILE_TYPE_FILE
   off_t size; // -1 not checked, -2 unreadable
@@ -341,5 +341,7 @@ char *get_worktmp(const char *prefix);
 char *get_worktmpfile(const char *prefix);
 char *get_localsharedir(const char *subdir);
 boolean notify_user(const char *detail);
+
+void perf_manager(void);
 
 #endif

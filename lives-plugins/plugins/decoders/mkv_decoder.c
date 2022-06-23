@@ -1764,7 +1764,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, int clonetype) {
 
   // need to call this as it sets priv->vidst
   // it will in any case set fps etc, even for partial clone
-  if (lives_mkv_read_header(cdata, clonetype)) {
+  if (lives_mkv_read_header(cdata, clonetype == 1)) {
     close(priv->fd);
     return FALSE;
   }

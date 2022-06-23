@@ -3540,6 +3540,8 @@ static void _threaded_dialog_spin(double fraction) {
 
   xfraction = fraction;
 
+  if (!mainw->proc_ptr) return;
+
   if (fraction > 0.) {
     timesofar = (double)(lives_get_current_ticks() - sttime) / TICKS_PER_SECOND_DBL;
     disp_fraction(fraction, timesofar, mainw->proc_ptr);

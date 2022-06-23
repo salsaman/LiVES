@@ -841,7 +841,7 @@ static weed_error_t _weed_leaf_set(weed_plant_t *plant, const char *key,
 				   uint32_t seed_type, weed_size_t num_elems,
                                    weed_voidptr_t values) {
   weed_data_t **data = NULL, **old_data = NULL;
-  weed_leaf_t *leaf, *refleaf = NULL;
+  weed_leaf_t *leaf = NULL, *refleaf = NULL;
   weed_hash_t hash = 0;
   weed_size_t old_num_elems = 0;
   int isnew = 0;
@@ -873,8 +873,8 @@ static weed_error_t _weed_leaf_set(weed_plant_t *plant, const char *key,
   // with deletion threads.
   // In addition, the new data is prepared before we even start the first scan. We either switch it with
   // the old data, or else insert it.
-
-  leaf = weed_find_leaf(plant, key, &hash, &refleaf);
+  if (plant->next) leaf = weed_find_leaf(plant, key, &hash, &refleaf);
+  else refleaf = plant;
   if (!leaf) {
     chain_lock_upgrade(plant, 0, 0);
     // search only until we reach refnode

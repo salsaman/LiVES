@@ -663,11 +663,11 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
 
   mainw->current_file = current_file;
   if (which == 0 || which == 1)
-    main_thread_execute((lives_funcptr_t)lives_widget_queue_draw_if_visible, 0, NULL, "V", mainw->video_draw);
+    lives_widget_queue_draw_if_visible(mainw->video_draw);
   if (which == 0 || which == 2)
-    main_thread_execute((lives_funcptr_t)lives_widget_queue_draw_if_visible, 0, NULL, "V", mainw->laudio_draw);
+    lives_widget_queue_draw_if_visible(mainw->laudio_draw);
   if (which == 0 || which == 3)
-    main_thread_execute((lives_funcptr_t)lives_widget_queue_draw_if_visible, 0, NULL, "V", mainw->raudio_draw);
+    lives_widget_queue_draw_if_visible(mainw->raudio_draw);
   return TRUE;
 
 bail:

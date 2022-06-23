@@ -4598,7 +4598,7 @@ static void _resize_play_window(void) {
           }
         }
         if (mainw->ext_playback) {
-          lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
+          //lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
 #ifdef RT_AUDIO
           stop_audio_stream();
 #endif

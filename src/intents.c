@@ -323,6 +323,7 @@ static void lives_object_instance_free(lives_object_instance_t *obj) {
 LIVES_GLOBAL_INLINE int lives_object_instance_unref(lives_object_instance_t *obj) {
   int count;
   if ((count = refcount_dec(&obj->refcounter)) < 0) {
+    refcount_unlock(&obj->refcounter);
     lives_object_instance_free(obj);
   }
   return count;
@@ -395,6 +396,7 @@ LIVES_GLOBAL_INLINE boolean lives_object_attribute_unref(lives_object_t *obj, li
   int refs = weed_refcount_dec(attr);
   if (refs == -100) lives_abort("attr missing REFCOUNTER in weed_layer_unref");
   if (refs != -1) return TRUE;
+  weed_refcounter_unlock(attr);
   lives_object_attribute_free(obj, attr);
   return FALSE;
 }
@@ -1605,6 +1607,7 @@ weed_plant_t *string_req_init(const char *name, const char *def) {
 static boolean lives_transform_status_unref(lives_transform_status_t *st) {
   // return FALSE if destroyed
   if (refcount_dec(&st->refcounter) < 0) {
+    refcount_unlock(&st->refcounter);
     lives_free(st);
     return FALSE;
   }
@@ -1636,6 +1639,7 @@ boolean lives_transform_status_free(lives_transform_status_t *st) {
 static boolean lives_rules_unref(lives_rules_t *rules) {
   // return FALSE if destroyed
   if (refcount_dec(&rules->refcounter) < 0) {
+    refcount_unlock(&rules->refcounter);
     if (rules->reqs) {
       for (int i = 0; rules->reqs->params[i]; i++) {
         weed_plant_free(rules->reqs->params[i]);

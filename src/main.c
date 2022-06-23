@@ -919,8 +919,6 @@ static boolean pre_init(void) {
 #endif
 
   lives_threadpool_init();
-
-  capable->gui_thread = pthread_self();
   lives_thread_data_create(0);
 
   // initialise cpu load monitoring
@@ -4579,7 +4577,7 @@ static boolean lives_startup2(livespointer data) {
     lives_widget_context_update();
   }
 
-  lives_idle_priority(fg_service_fulfill_cb, NULL);
+  mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL);
 
   if (!mainw->multitrack)
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
@@ -4702,6 +4700,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     capable->hw.byte_order = LIVES_LITTLE_ENDIAN;
 
   capable->main_thread = pthread_self();
+  capable->gui_thread = pthread_self();
 
   zargc = argc;
   zargv = argv;

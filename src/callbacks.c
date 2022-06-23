@@ -4955,7 +4955,7 @@ void on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     lives_widget_set_sensitive(mainw->m_stopbutton, FALSE);
     return;
   }
-
+  lives_widget_show(mainw->menu_hbox);
   mainw->cancelled = CANCEL_USER;
 }
 

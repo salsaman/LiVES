@@ -115,25 +115,25 @@ typedef struct {
 
 #define LIVES_SEED_HOOK WEED_SEED_FUNCPTR
 
-#define HOOK_CB_SINGLE_SHOT		(1 << 1) //< hook function should be called only once then removed
-#define HOOK_CB_ASYNC			(1 << 2) //< hook function should not block
-#define HOOK_CB_ASYNC_JOIN		(1 << 3) //< hook function should not block, but the thread should be joined
+#define HOOK_CB_SINGLE_SHOT		(1ull << 1) //< hook function should be called only once then removed
+#define HOOK_CB_ASYNC			(1ull << 2) //< hook function should not block
+#define HOOK_CB_ASYNC_JOIN		(1ull << 3) //< hook function should not block, but the thread should be joined
 ///							at the end of processing, or before calling the hook
 ///							a subsequent time
-#define HOOK_CB_CHILD_INHERITS		(1 << 4) // TODO - child threads should inherit the hook callbacks
-#define HOOK_CB_FG_THREAD		(1 << 5) // force fg service run
+#define HOOK_CB_CHILD_INHERITS		(1ull << 4) // TODO - child threads should inherit the hook callbacks
+#define HOOK_CB_FG_THREAD		(1ull << 5) // force fg service run
 
-#define HOOK_CB_PRIORITY		(1 << 8) // prepend, not append
+#define HOOK_CB_PRIORITY		(1ull << 8) // prepend, not append
 
-#define HOOK_BLOCKED			(1 << 16) // hook function should not be called
+#define HOOK_CB_WAIT			(1ull << 9) // block till hook has run, do not free anything
 
-#define HOOK_UNIQUE_FUNC		(1 << 24) // do not add if func already in hooks
+#define HOOK_UNIQUE_FUNC		(1ull << 24) // do not add if func already in hooks
 
-#define HOOK_UNIQUE_DATA		(1 << 25) // do not add if data already in hooks (UNIQUE_FUNC assumed)
+#define HOOK_UNIQUE_DATA		(1ull << 25) // do not add if data already in hooks (UNIQUE_FUNC assumed)
 
 // change data of first func of same type but leave func inplace,
 // remove others of same func, but never add, only replace
-#define HOOK_UNIQUE_REPLACE		(1 << 26)
+#define HOOK_UNIQUE_REPLACE		(1ull << 26)
 
 // change data of first func of same type but leave func inplace,
 // remove others of same func, add if no other copies of the func
@@ -144,6 +144,9 @@ typedef struct {
 
 // replace (remove) other entries having same func and data, and add
 #define HOOK_UNIQUE_REPLACE_MATCH	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE)
+
+#define HOOK_STATUS_BLOCKED			(1ull << 32) // hook function should not be called
+#define HOOK_STATUS_RUNNING			(1ull << 33) // hook running, do not recurse
 
 enum {
   ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
@@ -477,6 +480,8 @@ uint64_t get_worker_status(uint64_t tid);
 
 #define LIVES_LEAF_SIGNAL_DATA "signal_data"
 
+#define LIVES_LEAF_THREAD_ATTRS "thread_attibutes" // attributes used to create pro_thread
+
 // also LIVES_THRDATR_PRIORITY
 // also LIVES_THRDATR_AUTODELETE
 #define LIVES_THRDATTR_WAIT_START	(1 << 2)
@@ -485,6 +490,7 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_THRDATTR_NO_GUI		(1 << 5)
 #define LIVES_THRDATTR_INHERIT_HOOKS   	(1 << 6)
 #define LIVES_THRDATTR_IGNORE_SYNCPT   	(1 << 7)
+#define LIVES_THRDATTR_NOFREE   	(1 << 8)
 
 // extra info requests
 #define LIVES_LEAF_START_TICKS "_start_ticks"
@@ -633,6 +639,7 @@ boolean check_refcnt_init(lives_refcounter_t *);
 int refcount_inc(lives_refcounter_t *);
 int refcount_dec(lives_refcounter_t *);
 int refcount_query(lives_refcounter_t *);
+void refcount_unlock(lives_refcounter_t *);
 
 int weed_refcount_inc(weed_plant_t *);
 int weed_refcount_dec(weed_plant_t *);

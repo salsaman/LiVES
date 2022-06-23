@@ -940,6 +940,8 @@ typedef struct {
   boolean error; //  --> status
   volatile boolean fatal; ///< got fatal signal --> status
 
+  uint32_t fg_service_handle;
+
   boolean is_processing;
   boolean is_rendering;
   boolean resizing; // ignore frame size check during previews

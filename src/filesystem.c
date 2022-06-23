@@ -967,7 +967,7 @@ void lives_buffered_rdonly_slurp(int fd, off_t skip) {
   // TODO - inherits
   lives_proc_thread_create(LIVES_THRDATTR_INHERIT_HOOKS,
                            (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "VI", fbuff, skip);
-  lives_nanosleep_until_nonzero(fbuff->orig_size || !(fbuff->flags & FB_FLAG_BG_OP));
+  lives_nanosleep_until_nonzero(fbuff->orig_size || (fbuff->flags & FB_FLAG_EOF) || !(fbuff->flags & FB_FLAG_BG_OP));
   pthread_mutex_unlock(&fbuff->sync_mutex);
 }
 

@@ -5064,7 +5064,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   plugin_info = (*setup_fn)(weed_bootstrap);
 
   if (!plugin_info || ((nf = filters_in_plugin = check_weed_plugin_info(plugin_info)) < 1)) {
-    g_print("vals for filt %p, %d\n", plugin_info, nf);
+    //g_print("vals for filt %p, %d\n", plugin_info, nf);
     msg = lives_strdup_printf(_("No usable filters found in plugin:\n%s\n"), plugin_path);
     LIVES_INFO(msg);
     lives_free(msg);
@@ -5074,7 +5074,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
     lives_freep((void **)&fxname);
     return;
   }
-  g_print("Loaded plugin:\n%s\n", plugin_path);
+  //g_print("Loaded plugin:\n%s\n", plugin_path);
 
   lives_freep((void **)&fxname);
 

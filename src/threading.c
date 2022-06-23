@@ -133,13 +133,15 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_free(lives_proc_thread_t lpt) {
   if (!lpt) return;
 
   lives_nanosleep_while_false(lives_proc_thread_check_finished(lpt));
-
-  state_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
-  if (!state_mutex) lives_abort("proc_thread missing STATE_MUTEX in lives_proc_thread_free");
-  pthread_mutex_lock(state_mutex);
-  weed_plant_free(lpt);
-  pthread_mutex_unlock(state_mutex);
-  lives_free(state_mutex);
+  if (weed_refcount_dec(lpt) == -1) {
+    weed_refcounter_unlock(lpt);
+    state_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+    if (!state_mutex) lives_abort("proc_thread missing STATE_MUTEX in lives_proc_thread_free");
+    pthread_mutex_lock(state_mutex);
+    weed_plant_free(lpt);
+    pthread_mutex_unlock(state_mutex);
+    lives_free(state_mutex);
+  }
 }
 
 
@@ -184,6 +186,7 @@ static lives_proc_thread_t lives_proc_thread_run(lives_thread_attr_t attr, lives
     uint32_t return_type) {
   // make proc_threads joinable and if not FG. run it
   if (thread_info) {
+    weed_set_int64_value(thread_info, LIVES_LEAF_THREAD_ATTRS, attr);
     if (!(attr & LIVES_THRDATTR_FG_THREAD)) {
       if (return_type) lives_proc_thread_set_state(thread_info, THRD_OPT_NOTIFY);
       if (attr & LIVES_THRDATTR_NOTE_STTIME) weed_set_int64_value(thread_info, LIVES_LEAF_START_TICKS,
@@ -210,6 +213,7 @@ LIVES_LOCAL_INLINE lives_proc_thread_t lives_proc_thread_new(void) {
 
 lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, lives_funcptr_t func,
     int return_type, const char *args_fmt, va_list xargs) {
+
   lives_proc_thread_t thread_info = lives_proc_thread_new();
   lives_plant_params_from_vargs(thread_info, func, return_type, args_fmt, xargs);
   return lives_proc_thread_run(attr, thread_info, return_type);
@@ -349,7 +353,7 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives
 
 
 boolean is_fg_thread(void) {
-  if (!mainw || !capable || !capable->gui_thread || !mainw->is_ready) return TRUE;
+  if (!mainw || !capable || !capable->gui_thread) return TRUE;
   else {
     LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
     if (!ctx) return pthread_equal(pthread_self(), capable->gui_thread);
@@ -423,9 +427,19 @@ boolean main_thread_execute(lives_funcptr_t func, int return_type, void *retval,
     lives_hooks_trigger(NULL, THREADVAR(hook_closures), THREAD_INTERNAL_HOOK);
   } else {
     if (!is_fg_service) {
-      if (FG_THREADVAR(fg_service)) {
+      if (get_gov_status() != GOV_RUNNING && FG_THREADVAR(fg_service)) {
+        if (THREADVAR(hook_hints) & HOOK_CB_WAIT) weed_refcount_inc(lpt);
         if (add_to_fg_deferral_stack(FG_THREADVAR(hook_flag_hints), lpt) != lpt) {
           lives_proc_thread_include_states(lpt, THRD_STATE_FINISHED);
+          weed_refcount_dec(lpt);
+          lives_proc_thread_free(lpt);
+        } else {
+          if (THREADVAR(hook_hints) & HOOK_CB_WAIT) {
+            lives_nanosleep_until_nonzero(lives_proc_thread_check_finished(lpt));
+          }
+        }
+        if (THREADVAR(hook_hints) & HOOK_CB_WAIT) {
+          weed_refcount_dec(lpt);
           lives_proc_thread_free(lpt);
         }
       } else {
@@ -1173,9 +1187,18 @@ LIVES_GLOBAL_INLINE int isstck(void *ptr) {
 
 
 lives_thread_data_t *lives_thread_data_create(uint64_t idx) {
-  lives_thread_data_t *tdata =
-    (lives_thread_data_t *)lives_calloc(1, sizeof(lives_thread_data_t));
-  pthread_t self = pthread_self();
+  lives_thread_data_t *tdata;
+  pthread_t self;
+
+#ifdef USE_RPMALLOC
+  // must be done before anything else
+  if (!rpmalloc_is_thread_initialized()) {
+    rpmalloc_thread_initialize();
+  }
+#endif
+
+  self = pthread_self();
+  tdata = (lives_thread_data_t *)lives_calloc(1, sizeof(lives_thread_data_t));
 
   if (idx != 0) tdata->ctx = lives_widget_context_new();
   else tdata->ctx = lives_widget_context_default();
@@ -1340,13 +1363,7 @@ static void *thrdpool(void *arg) {
 
   lives_thread_data_t *tdata;
 
-#ifdef USE_RPMALLOC
-  // must be done before anything else
-  if (!rpmalloc_is_thread_initialized()) {
-    rpmalloc_thread_initialize();
-  }
-#endif
-
+  // must do before anything else
   tdata = lives_thread_data_create(tid);
 
   lives_widget_context_push_thread_default(tdata->ctx);
@@ -1585,7 +1602,7 @@ static lives_proc_thread_t _lives_hook_add(LiVESList **hooks, int type, uint64_t
     for (; list; list = listnext) {
       listnext = list->next;
       closure = (lives_closure_t *)list->data;
-      if (closure->flags & HOOK_BLOCKED) continue;
+      if (closure->flags & HOOK_STATUS_BLOCKED) continue;
       if (lpt) {
         if (!(closure->flags & HOOK_CB_FG_THREAD)) continue;
         lpt2 = (lives_proc_thread_t)data;
@@ -1676,7 +1693,9 @@ LIVES_GLOBAL_INLINE void lives_hooks_trigger(lives_object_t *obj, LiVESList **xl
   for (list = xlist[type]; list; list = listnext) {
     listnext = list->next;
     closure = (lives_closure_t *)list->data;
-    if (closure->flags & HOOK_BLOCKED) continue;
+    if (closure->flags & HOOK_STATUS_BLOCKED) continue;
+    if (closure->flags & HOOK_STATUS_RUNNING) return;
+    if (closure->flags |= HOOK_STATUS_RUNNING);
     if (closure->flags & HOOK_CB_FG_THREAD) {
       if (!pthread_mutex_lock(&THREADVAR(hook_mutex[type]))) {
         LiVESList *zlist = xlist[type], *zlistnext;
@@ -1729,7 +1748,7 @@ LIVES_GLOBAL_INLINE void lives_hook_remove(LiVESList **xlist, int type, hook_fun
   for (; list; list = list->next) {
     closure = (lives_closure_t *)list->data;
     if (closure->func == func && closure->data == data) {
-      closure->flags |= HOOK_BLOCKED;
+      closure->flags |= HOOK_STATUS_BLOCKED;
       lives_nanosleep_until_zero(closure->tinfo);
       pthread_mutex_lock(&THREADVAR(hook_mutex[type]));
       xlist[type] = lives_list_remove_node(xlist[type], list, TRUE);
@@ -2060,13 +2079,20 @@ LIVES_GLOBAL_INLINE int weed_refcount_query(weed_plant_t *plant) {
 }
 
 
+LIVES_GLOBAL_INLINE void refcount_unlock(lives_refcounter_t *refcnt) {
+  if (refcnt) {
+    pthread_mutex_trylock(&refcnt->mutex);
+    pthread_mutex_unlock(&refcnt->mutex);
+  }
+}
+
+
 LIVES_GLOBAL_INLINE void weed_refcounter_unlock(weed_plant_t *plant) {
   if (plant) {
     lives_refcounter_t *refcnt =
       (lives_refcounter_t *)weed_get_voidptr_value(plant, LIVES_LEAF_REFCOUNTER, NULL);
     if (refcnt) {
-      pthread_mutex_trylock(&refcnt->mutex);
-      pthread_mutex_unlock(&refcnt->mutex);
+      refcount_unlock(refcnt);
     }
   }
 }

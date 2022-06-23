@@ -3848,7 +3848,7 @@ boolean resync_audio(int clipno, double frameno) {
 static lives_audio_buf_t *cache_buffer = NULL;
 static lives_audio_buf_t *cache_buffera = NULL;
 static lives_audio_buf_t *cache_bufferb = NULL;
-static pthread_t athread;
+static lives_proc_thread_t athread;
 
 static pthread_cond_t cond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -4286,8 +4286,8 @@ lives_audio_buf_t *audio_cache_init(void) {
   }
 
   // init the audio caching thread for rt playback
-  pthread_create(&athread, NULL, cache_my_audio, &cache_buffer);
-
+  athread = lives_proc_thread_create(LIVES_THRDATTR_NO_GUI,
+                                     (lives_funcptr_t)cache_my_audio, -1, "v", &cache_buffer);
   return cache_buffer;
 }
 
@@ -4306,7 +4306,7 @@ void audio_cache_finish(void) {
 
 void audio_cache_end(void) {
   pthread_mutex_lock(&mainw->cache_buffer_mutex);
-  pthread_join(athread, NULL);
+  lives_proc_thread_join(athread);
   pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
   pthread_mutex_lock(&mainw->cache_buffer_mutex);

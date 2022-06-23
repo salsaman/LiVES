@@ -37,6 +37,8 @@
 #include "main.h"
 #include "callbacks.h"
 
+#include "../libweed/weed-host-utils.h"
+
 LIVES_LOCAL_INLINE char *mini_popen(char *cmd);
 
 #if IS_X86_64
@@ -1744,7 +1746,7 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
 	tmp = wline;
 	llen = tlen;
       }
-      lives_free(tmp);
+      //lives_free(tmp);
 
       if (*wline && get_token_count(wline, ' ') >= minpieces) {
 	words = lives_strsplit(wline, " ", npieces);
@@ -1772,7 +1774,7 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
 	}
 	lives_strfreev(words);
       }
-      lives_free(wline);
+      //lives_free(wline);
       if (match) break;
     }
   }

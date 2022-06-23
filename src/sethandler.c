@@ -1090,7 +1090,7 @@ boolean reload_set(const char *set_name) {
       we want to do as little checking here as possible, since it can slow down the startup, but if we detect a problem then we'll
       do increasingly more checking.
     */
-    
+
     use_dec = should_use_decoder(mainw->current_file);
     maxframe = load_frame_index(mainw->current_file);
 

@@ -482,15 +482,6 @@ void hash_test(void) {
 #endif
 
 
-typedef struct {
-  lsd_struct_def_t lsd;
-  char buff[100000];
-  char *strg;
-  uint64_t num0, num1;
-  void *p;
-  char **strgs;
-} lives_test_t;
-
 
 #ifdef WEED_STARTUP_TESTS
 
@@ -523,48 +514,61 @@ void benchmark(void) {
   lives_free(strg2);
 }
 
+#endif
+
+typedef struct {
+  lsd_struct_def_t *lsd;
+  char buff[100000];
+  char *strg;
+  uint64_t num0, num1;
+  void *p;
+  char **strgs;
+} lives_test_t;
+
+
 
 void lives_struct_test(void) {
   const lsd_struct_def_t *lsd;
 
   lives_test_t *tt = (lives_test_t *)lives_calloc(1, sizeof(lives_test_t)), *tt2;
+  lives_clip_data_t *cdata = (lives_clip_data_t *)lives_calloc(1, sizeof(lives_clip_data_t));
+  //LSD_CREATE_P(lsd, lives_clip_data_t);
+  lsd = lsd_create_p("lives_test_t", tt, sizeof(lives_test_t), &tt->lsd);
 
-  lsd = lsd_create("lives_test_t", sizeof(lives_test_t), "strgs", 1);
-
-  lsd->special_fields[0] = make_special_field(LSD_FIELD_CHARPTR, tt,
-                           &tt->strg, "strg", 0,
-                           NULL, NULL, NULL);
-  lives_struct_init(lsd, tt, &tt->lsd);
+  add_special_field((lsd_struct_def_t *)lsd, "strg", LSD_FIELD_CHARPTR,
+                    &tt->strg, 0, tt, NULL);
   lives_free(tt);
 
+  lsd_struct_create(lsd);
+
   THREADVAR(timerinfo) = lives_get_current_ticks();
-  for (int i = 0; i < 1000000; i++) {
-    tt = lives_struct_create(lsd);
+  for (int i = 0; i < 1000; i++) {
+    tt = lsd_struct_create(lsd);
     tt->strg = strdup("a string to be copied !");
 
-    /* //g_print("done\n"); */
-    /* //g_print("fields: struct ^%p lsd: %s %p, id %08lX uid: %08lX self %p  type %s " */
-    /* 	    "top %p len %lu  last field %s  spcl %p  user_data %p \n", tt, tt->strg, &tt->lsd, */
-    /* 	    tt->lsd.identifier, */
-    /* 	    tt->lsd.unique_id, tt->lsd.self_fields, tt->lsd.structtype, tt->lsd.top, */
-    /* 	    tt->lsd.structsize, tt->lsd.last_field, tt->lsd.special_fields, tt->lsd.user_data); */
+    /* g_print("done\n"); */
+    /* g_print("fields: struct ^%p lsd: %s %p, id %08lX uid: %08lX self %p  type %s " */
+    /* 	    "top %p len %lu  spcl %p  user_data %p \n", tt, tt->strg, tt->lsd, */
+    /* 	    tt->lsd->identifier, */
+    /* 	    tt->lsd->unique_id, tt->lsd->self_fields, tt->lsd->struct_type, tt->lsd->top, */
+    /* 	    tt->lsd->struct_size, tt->lsd->special_fields, tt->lsd->user_data); */
 
     //g_print("copy struct 1\n");
-    tt2 = lives_struct_copy(&tt->lsd);
-    ///
-    //g_print("done\n");
-    //g_print("fields: struct ^%p lsd: %s, %p id %08lX uid: %08lX self %p  type %s "
-    //"top %p len %lu  last field %s  spcl %p  user_data %p \n", tt2, tt2->strg, &tt2->lsd, tt2->lsd.identifier,
-    //tt2->lsd.unique_id, tt2->lsd.self_fields, tt2->lsd.structtype, tt2->lsd.top,
-    //tt2->lsd.structsize, tt2->lsd.last_field, tt2->lsd.special_fields, tt2->lsd.user_data);
+    tt2 = lsd_struct_copy(tt->lsd);
 
-    lives_struct_free(&tt->lsd);
-    lives_struct_free(&tt2->lsd);
+    /* g_print("done\n"); */
+    /* g_print("fields: struct ^%p lsd: %s, %p id %08lX uid: %08lX self %p  type %s " */
+    /* "top %p len %lu  spcl %p  user_data %p \n", tt2, tt2->strg, tt2->lsd, tt2->lsd->identifier, */
+    /* tt2->lsd->unique_id, tt2->lsd->self_fields, tt2->lsd->struct_type, tt2->lsd->top, */
+    /* tt2->lsd->struct_size, tt2->lsd->special_fields, tt2->lsd->user_data); */
+
+    lsd_struct_free(tt->lsd);
+    lsd_struct_free(tt2->lsd);
   }
   show_timer_info();
 }
 
-#endif
+//#endif
 
 LIVES_LOCAL_INLINE void show_quadstate(weed_plant_t *p) {
   // do nothing
@@ -1625,8 +1629,78 @@ void show_widgets_info(void) {
   }
 }
 #endif
-
+q
 #endif
+
+
+void do_lsd_tests(void) {
+  const lsd_struct_def_t *lsd;
+  lives_clip_data_t *fcd1, *fcd2;
+
+  g_print("create test template\n");
+  lsd = get_lsd(LIVES_STRUCT_CLIP_DATA_T);
+
+  g_print("lsd1 is %p\n", lsd);
+
+  g_print("test struct from template\n");
+
+  break_me("lsd0");
+
+  fcd1 = lsd_struct_create(lsd);
+
+  g_print("fcd1 is %p\n", fcd1);
+
+  break_me("lsd1");
+
+  fcd2 = (lives_clip_data_t *)struct_from_template(LIVES_STRUCT_CLIP_DATA_T);
+
+  g_print("fcd is %p\n", fcd2);
+
+  break_me("lsd2");
+
+  g_print("check integrity\n");
+
+  g_print("\n\nResult is %lu\n", lsd_check_match(fcd1->lsd, fcd2->lsd));
+
+  g_print("check unref\n");
+
+  lsd_struct_unref(fcd2->lsd);
+
+  break_me("lsd3");
+
+  g_print("check copy\n");
+
+  fcd2 = lsd_struct_copy(fcd1->lsd);
+
+  break_me("lsd4");
+
+  g_print("check integrity\n");
+
+  g_print("\n\nResult is %lu\n", lsd_check_match(fcd1->lsd, fcd2->lsd));
+
+  lsd_struct_unref(fcd1->lsd);
+
+  return;
+
+  g_print("test static\n");
+
+
+  fcd1 = (lives_clip_data_t *)lives_calloc(1, sizeof(lives_clip_data_t));
+
+  lsd_struct_initialise(fcd2->lsd, fcd1);
+
+  g_print("check integrity\n");
+
+  g_print("\n\nResult is %lu\n", lsd_check_match(fcd1->lsd, fcd2->lsd));
+
+  g_print("check static unref\n");
+
+  lsd_struct_unref(fcd2->lsd);
+
+  lsd_struct_unref(fcd1->lsd);
+
+  lives_free(fcd1);
+}
 
 #define show_size(s) fprintf(stderr, "sizeof s is %lu\n", sizeof(s))
 

@@ -66,6 +66,7 @@ extern "C"
 
 #ifdef __LIBWEED__
 #define  __WEED_FN_DEF__ extern
+#define _wbg(a,b,c,d,e) __wbg__(a,b,1,c,d,e)
 #else
 #ifdef __WEED_HOST__
 #define  __WEED_FN_DEF__
@@ -145,6 +146,9 @@ typedef weed_plant_t * weed_plantptr_t;
 
 #define WEED_PLANTPTR_SIZE sizeof(weed_plantptr_t)
 
+#define weed_get_leaf_t_size() ((size_t)(libweed_get_leaf_t_size()))
+#define weed_get_data_t_size() ((size_t)(libweed_get_data_t_size()))
+
 typedef void *(*weed_malloc_f)(size_t);
 typedef void (*weed_free_f)(void *);
 typedef void *(*weed_memset_f)(void *, int, size_t);
@@ -193,20 +197,28 @@ __WEED_FN_DEF__ size_t weed_plant_get_byte_size(weed_plant_t *);
     /// set this to expose extra debug functions
 #define WEED_INIT_DEBUGMODE			(1<<1)
 
-int32_t weed_get_abi_version(void);
+int32_t libweed_get_abi_version(void);
+int32_t libweed_get_abi_min_supported_version(void);
+int32_t libweed_get_abi_max_supported_version(void);
 
-size_t weed_get_leaf_t_size(void);
-size_t weed_get_data_t_size(void);
-
-weed_error_t weed_init(int32_t abi, uint64_t init_flags);
-int weed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_free);
+weed_error_t libweed_init(int32_t abi, uint64_t init_flags);
+int libweed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_free);
 
 typedef void *(*libweed_slab_alloc_f)(size_t);
 typedef void *(*libweed_slab_alloc_and_copy_f)(size_t, void *);
 typedef void (*libweed_slab_unalloc_f)(size_t, void *);
 typedef void (*libweed_unmalloc_and_copy_f)(size_t, void *);
 
-int weed_set_slab_funcs(libweed_slab_alloc_f, libweed_slab_unalloc_f, libweed_slab_alloc_and_copy_f);
+int libweed_set_slab_funcs(libweed_slab_alloc_f, libweed_slab_unalloc_f, libweed_slab_alloc_and_copy_f);
+
+#ifdef __LIBWEED__
+  // for plugin bootstrap, only relevant for libweed
+  __WEED_FN_DEF__ weed_error_t __wbg__(size_t, weed_hash_t, int, weed_plant_t *, const char *,  weed_voidptr_t);
+#else
+#ifndef _wbg
+#define _wbg(...) 2
+#endif
+#endif
 
 #endif // without libweed
 #endif // host only functions
@@ -255,23 +267,45 @@ __WEED_FN_DEF__ weed_memmove_f weed_memmove;
 #define WEED_ERROR_FIRST_CUSTOM 1024
 
 /* Seed types */
-#define WEED_SEED_INVALID		0 // the "seed_type" of a non-existent leaf
+#define WEED_SEED_INVALID		0
 
 /* Fundamental seeds */
 #define WEED_SEED_INT			1 // int32_t / uint_32t
+#define WEED_SEED_INT32			WEED_SEED_INT
+#define WEED_SEED_int			WEED_SEED_INT
+
 #define WEED_SEED_DOUBLE		2 // 64 bit signed double
+#define WEED_SEED_double		WEED_SEED_DOUBLE
+
 #define WEED_SEED_BOOLEAN		3 // int32_t: restrict to values WEED_TRUE or WEED_FALSE
+#define WEED_SEED_boolean		WEED_SEED_BOOLEAN
+
 #define WEED_SEED_STRING		4 // NUL terminated array of char
+#define WEED_SEED_string		WEED_SEED_STRING
+
 #define WEED_SEED_INT64			5 // int64_t
-#define WEED_SEED_FLOAT			6 // for conveniance (values are stored as double)
+#define WEED_SEED_int64			WEED_SEED_INT64
+
+  // annotation types
+#define WEED_SEED_VOID			0
+
+#define WEED_SEED_UINT			6 // alias for WEED_SEED_INT
+#define WEED_SEED_UINT32		WEED_SEED_UINT
+
+#define WEED_SEED_FLOAT			7 // alias for WEED_SEED_DOUBLE
+
+#define WEED_SEED_UINT64		8 // alias for WEED_SEED_INT64
 
 #define WEED_SEED_FIRST_NON_PTR_TYPE	WEED_SEED_INT
-#define WEED_SEED_LAST_NON_PTR_TYPE	WEED_SEED_FLOAT
+#define WEED_SEED_LAST_NON_PTR_TYPE	WEED_SEED_UINT64
 
 /* Pointer seeds */
 #define WEED_SEED_FUNCPTR		64 // weed_funcptr_t
+#define WEED_SEED_funcptr		WEED_SEED_FUNCPTR
 #define WEED_SEED_VOIDPTR		65 // weed_voidptr_t
+#define WEED_SEED_voidptr		WEED_SEED_VOIDPTR
 #define WEED_SEED_PLANTPTR		66 // weed_plant_t *
+#define WEED_SEED_plantptr		WEED_SEED_PLANTPTR
 
 #define WEED_SEED_FIRST_PTR_TYPE	WEED_SEED_FUNCPTR
 #define WEED_SEED_LAST_PTR_TYPE		WEED_SEED_PLANTPTR

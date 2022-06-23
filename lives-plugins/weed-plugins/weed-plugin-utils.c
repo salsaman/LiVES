@@ -221,8 +221,6 @@ if ((*weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t *)&weed_
   // 2.0
   if (weed_abi_version >= 200) {
     if (weed_leaf_get(host_info, WEED_LEAF_REALLOC_FUNC, 0, &weed_realloc) != WEED_SUCCESS) {
-      fprintf(stderr, "NO REALLOC fond\n");
-      
       return NULL;
     }
     if (weed_leaf_get(host_info, WEED_LEAF_CALLOC_FUNC, 0, &weed_calloc) != WEED_SUCCESS) return NULL;
@@ -261,7 +259,6 @@ if ((*weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t *)&weed_
 
   if (!plugin_info) if (!(plugin_info = weed_plant_new(WEED_PLANT_PLUGIN_INFO))) return NULL;
   weed_leaf_set(plugin_info, WEED_LEAF_HOST_INFO, WEED_SEED_PLANTPTR, 1, &host_info);
-  fprintf(stderr, "returning plugin info %p\n", plugin_info);
   return plugin_info;
 }
 

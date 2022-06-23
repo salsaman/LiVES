@@ -67,22 +67,22 @@
 
 #define myround(n) ((n) >= 0. ? (int)((n) + 0.5) : (int)((n) - 0.5))
 
-float LEFloat_to_BEFloat(float f) GNU_CONST;
-uint64_t lives_10pow(int pow) GNU_CONST;
-double lives_fix(double val, int decimals) GNU_CONST;
+float LEFloat_to_BEFloat(float f) LIVES_CONST;
+uint64_t lives_10pow(int pow) LIVES_CONST;
+double lives_fix(double val, int decimals) LIVES_CONST;
 
-uint32_t get_2pow(uint32_t val) GNU_CONST;
-uint64_t get_2pow_64(uint64_t x)GNU_CONST;
+uint32_t get_2pow(uint32_t val) LIVES_CONST;
+uint64_t get_2pow_64(uint64_t x)LIVES_CONST;
 
-uint64_t get_near2pow(uint64_t val) GNU_CONST;
+uint64_t get_near2pow(uint64_t val) LIVES_CONST;
 
-uint32_t get_log2(uint32_t val) GNU_CONST;
-uint64_t get_log2_64(uint64_t x) GNU_CONST;
+uint32_t get_log2(uint32_t val) LIVES_CONST;
+uint64_t get_log2_64(uint64_t x) LIVES_CONST;
 
 #define LN_CONSTVAL 1.4427 // 1 / ln(2)
 
-float get_approx_ln(uint32_t val) GNU_CONST;
-double get_approx_ln64(uint64_t x) GNU_CONST;
+float get_approx_ln(uint32_t val) LIVES_CONST;
+double get_approx_ln64(uint64_t x) LIVES_CONST;
 
 int lcm(int x, int y, int max);
 

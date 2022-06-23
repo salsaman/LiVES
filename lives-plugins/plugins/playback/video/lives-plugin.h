@@ -1,7 +1,16 @@
+// lives-plugin.h
+// LiVES
+// (c) G. Finch 2022 <salsaman+lives@gmail.com>
+// released under the GNU GPL 3 or later
+// see file ../COPYING or www.gnu.org for licensing details
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif /* __cplusplus */
+
+#if !defined _LIVES_PLUGIN_H_INC_1_ && !defined _LIVES_PLUGIN_H_
+#define _LIVES_PLUGIN_H_INC_1_ 1
 
 #ifndef NO_STDARGS
 #include <stdarg.h>
@@ -17,13 +26,15 @@ extern "C"
 #define ALLOW_UNUSED
 #endif
 
-#ifndef PLUGIN_UID
-#error "PLUGIN_UID must be defined before including lives_plugin.h.\n[This should be a randomly generated 64 bit (unsigned) \
-integer, which must NEVER change for the plugin]"
-#endif
+#include "object-constants.h"
 
-#if !defined _LIVES_PLUGIN_H_INC_1_ && !defined _LIVES_PLUGIN_H_
-#define _LIVES_PLUGIN_H_INC_1_ 1
+#ifndef PLUGIN_UID
+#error "PLUGIN_UID must be defined before including lives_plugin.h."
+#error "[This should be an unquoted, randomly generated 64 bit hexadecimal value"
+#error "which must NEVER change for the plugin]"
+#error "Please put a line in your plugin like: #define PLUGIN_UID 0x123456789ABCDEF0"
+#error "Replacing the number 123456789ABCDEF0 with a rendomly generated (unique) value"
+#endif
 
 #define _PL_ERROR_ATTRIBUTE_INVALID		WEED_ERROR_WRONG_SEED_TYPE
 
@@ -35,8 +46,6 @@ integer, which must NEVER change for the plugin]"
 #define PL_ATTR_FUNCPTR		WEED_SEED_FUNCPTR
 #define PL_ATTR_VOIDPTR		WEED_SEED_VOIDPTR
 #define PL_ATTR_PLANTPTR       	WEED_SEED_PLANTPTR
-
-#define _ADD_CONSTANTS_
 
 ////////////////////////////////////////////////
 
@@ -74,11 +83,14 @@ static inline void _show_lp_warn(void) {
 }
 
 #define _make_plugin_id(a) _show_lp_warn()
-#else
+
+#else // pl1 
 
 #ifndef _LIVES_PLUGIN_H_
-
+#define _LIVES_PLUGIN_H_
 #undef _make_plugin_id
+
+#undef make_wwed_plugin_id
 
 #define MIN_WEED_ABI_VERSION 201
 
@@ -101,7 +113,6 @@ static inline void _show_lp_warn(void) {
 #error "You must define PLUGIN_VERSION_MINOR before including lives-plugin.h"
 #endif
 
-#ifndef _LIVES_PLUGIN_H_VERSION_
 #define _LIVES_PLUGIN_H_VERSION_ 300
 
 #include <inttypes.h>
@@ -309,7 +320,7 @@ static pl_error_t _set_con_attr_vargs(pl_attribute  *attr, const char *key,
     }
     default: return _PL_ERROR_ATTRIBUTE_INVALID;
     }
-#endif
+#endif  // weed_utils
   } return err;
 }
 
@@ -342,7 +353,7 @@ pl_error_t _pl_attr_set_def_array(pl_attribute *attr, int ne,  ...) {
   } return err;
 }
 
-#endif
+#endif // stdargs
 
 #define CAP_PREFIX "cap_"
 #define CAP_PREFIX_LEN 4
@@ -374,8 +385,6 @@ static pl_attribute *_pl_contract_get_attr(pl_contract *cn, const char *aname) {
     if (!strcmp(aname, n)) {free(n); return cn->attributes[c];} free(n);
   } return 0;
 }
-
-
 
 #define _pl_contract_get_attr(contract, aname) _pl_contract_get_attr(contract, aname)
 #define _pl_attribute_is_mine(attr) ((weed_get_int64_value((attr), PL_UID, 0) == PLUGIN_UID) \
@@ -415,7 +424,7 @@ static pl_attribute *_pl_declare_attribute(pl_contract *contract, const char *na
   contract->attributes = (pl_attribute **)realloc(contract->attributes,
                          (c + 2) * sizeof(pl_attribute *));
   if (contract->attributes) {
-    pl_error_t err, err2;
+    pl_error_t err;
     attr = weed_plant_new(PL_SUBTYPE_ATTR);
     if (attr) {
       weed_set_string_value(attr, PL_NAME, name);
@@ -492,6 +501,7 @@ static inline plugin_id_t *_make_plugin_id(const pl_contract **contracts) {
 }
 
 #ifndef HAVE_GET_PLUGIN_ID
+
 #ifndef HAVE_CONTRACTS
 const plugin_id_t *get_plugin_id_default(void) {
   // set plugin_id for the plugin, and return it to the host
@@ -505,6 +515,8 @@ const plugin_id_t *get_plugin_id_default(const pl_contract **contracts) {
 }
 #endif
 
+#endif // get_plid
+
 ///////////////////////////////////
 
 // std functions (older API)
@@ -513,55 +525,8 @@ const plugin_id_t *get_plugin_id_default(const pl_contract **contracts) {
 // HAVE_GET_PLUGIN_ID may optionally be defined to avoid exporting get_plugin_id_default()
 const plugin_id_t *get_plugin_id(void);
 
-#endif
-#endif
 
-#ifdef _ADD_CONSTANTS_
-#undef _ADD_CONSTANTS_
-
-// INTENTIONS
-#define PL_INTENTION_DECODE 		0x00001000
-
-#define PL_INTENTION_PLAY		0x00000200
-#define PL_INTENTION_STREAM		0x00000201
-#define PL_INTENTION_TRANSCODE		0x00000202
-
-// generic capacities, type specific ones may also exist in another header
-// values can either be present or absent
-#define PL_CAPACITY_LOCAL		"local"
-#define PL_CAPACITY_REMOTE		"remote"
-
-#define PL_CAPACITY_REALTIME		"realtime"
-#define PL_CAPACITY_DISPLAY		"display"
-
-#define PL_CAPACITY_VIDEO		"video"
-#define PL_CAPACITY_AUDIO		"audio"
-#define PL_CAPACITY_TEXT		"text"
-
-#define PL_CAPACITY_DATA		"data"
-
-////// standard ATTRIBUTES ////
-
-#define ATTR_AUDIO_RATE WEED_LEAF_AUDIO_RATE
-#define ATTR_AUDIO_CHANNELS WEED_LEAF_AUDIO_CHANNELS
-#define ATTR_AUDIO_SAMPSIZE WEED_LEAF_AUDIO_SAMPLE_SIZE
-#define ATTR_AUDIO_SIGNED WEED_LEAF_AUDIO_SIGNED
-#define ATTR_AUDIO_ENDIAN WEED_LEAF_AUDIO_ENDIAN
-#define ATTR_AUDIO_FLOAT "is_float"
-#define ATTR_AUDIO_STATUS "current_status"
-#define ATTR_AUDIO_INTERLEAVED "audio_inter"
-#define ATTR_AUDIO_DATA WEED_LEAF_AUDIO_DATA
-#define ATTR_AUDIO_DATA_LENGTH WEED_LEAF_AUDIO_DATA_LENGTH
-
-// video
-#define ATTR_VIDEO_FPS WEED_LEAF_FPS
-
-// UI
-#define ATTR_UI_RFX_TEMPLATE "ui_rfx_template"
-
-#ifdef _PL_ERROR_ATTRIBUTE_INVALID
-#define PL_ERROR_ATTRIBUTE_INVALID		_PL_ERROR_ATTRIBUTE_INVALID
-#endif
+//#endif
 
 // API functions (for NEW API) ////////////
 
@@ -769,13 +734,9 @@ typedef enum {
 
 // ..... this is a work in progress.
 
-
-#endif // ...INC1
-#endif
-#endif
+#endif // plh
+#endif // ...pl1  pl.h
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
-
-//#endif /* _LIVES_PLUGIN_H_VERSION_ */

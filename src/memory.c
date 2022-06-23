@@ -4,58 +4,74 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
-/// susbtitute memory functions. These must be real functions and not #defines since we need fn pointers
-
 #include <sys/mman.h> // for mlock()
 
 #include "main.h"
 
-#ifdef USE_RPMALLOC
-//void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
-#endif
+malloc_f lives_malloc;
+calloc_f lives_calloc;
+realloc_f lives_realloc;
+free_f lives_free;
+memcpy_f lives_memcpy;
+memset_f lives_memset;
+memcmp_f lives_memcmp;
+memmove_f lives_memmove;
+
+/* void *lives_malloc(size_t n); */
+/* void *lives_calloc(size_t, size_t); */
+/* void *lives_realloc(void *, size_t); */
+/* void lives_free(void *); */
+/* void *lives_free_and_return(void *); */
+/* void *lives_memcpy(void *, const void *, size_t); */
+/* void *lives_memset(void *, int, size_t); */
+/* int lives_memcmp(const void *, const void *, size_t); */
+/* void *lives_memmove(void *, const void *, size_t); */
+
+/* #ifdef USE_RPMALLOC */
+/* void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size); */
+/* #endif */
 
 ///////////////////////////// testing - not used /////////
-#ifdef USE_INTRINSICS
-/// intrinsics
-#if defined(_MSC_VER)
-/* Microsoft C/C++-compatible compiler */
-#include <intrin.h>
-// SSE SIMD intrinsics
-#include <xmmintrin.h>
-#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
-/* GCC-compatible compiler, targeting x86/x86-64 */
-// AVX SIMD intrinsics included
-#include <x86intrin.h>
-// SSE SIMD intrinsics
-#include <xmmintrin.h>
-#elif defined(__GNUC__) && defined(__ARM_NEON__)
-/* GCC-compatible compiler, targeting ARM with NEON */
-#include <arm_neon.h>
-#elif defined(__GNUC__) && defined(__IWMMXT__)
-/* GCC-compatible compiler, targeting ARM with WMMX */
-#include <mmintrin.h>
-#endif
-#endif
+/* #ifdef USE_INTRINSICS */
+/* /// intrinsics */
+/* #if defined(_MSC_VER) */
+/* /\* Microsoft C/C++-compatible compiler *\/ */
+/* #include <intrin.h> */
+/* // SSE SIMD intrinsics */
+/* #include <xmmintrin.h> */
+/* #elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__)) */
+/* /\* GCC-compatible compiler, targeting x86/x86-64 *\/ */
+/* // AVX SIMD intrinsics included */
+/* #include <x86intrin.h> */
+/* // SSE SIMD intrinsics */
+/* #include <xmmintrin.h> */
+/* #elif defined(__GNUC__) && defined(__ARM_NEON__) */
+/* /\* GCC-compatible compiler, targeting ARM with NEON *\/ */
+/* #include <arm_neon.h> */
+/* #elif defined(__GNUC__) && defined(__IWMMXT__) */
+/* /\* GCC-compatible compiler, targeting ARM with WMMX *\/ */
+/* #include <mmintrin.h> */
+/* #endif */
+/* #endif */
 
-#ifdef THRD_SPECIFIC
-//global-dynamic, local-dynamic, initial-exec, local-exec
-#define TLS_MODEL __attribute__((tls_model("initial-exec")))
+/* #ifdef THRD_SPECIFIC */
+/* //global-dynamic, local-dynamic, initial-exec, local-exec */
+/* #define TLS_MODEL __attribute__((tls_model("initial-exec"))) */
 
-#if !defined(__clang__) && defined(__GNUC__)
-#define _Thread_local __thread
-#endif
+/* #if !defined(__clang__) && defined(__GNUC__) */
+/* #define _Thread_local __thread */
+/* #endif */
 
-static _Thread_local uint64_t _thread_id TLS_MODEL;
+/* static _Thread_local uint64_t _thread_id TLS_MODEL; */
 
+/* void set_thread_id(uint64_t id) { */
+/*   _thread_id = id; */
+/* } */
 
-void set_thread_id(uint64_t id) {
-  _thread_id = id;
-}
-
-uint64_t get_thread_id(void) {
-  return _thread_id;
-}
-#endif
+/* uint64_t get_thread_id(void) { */
+/*   return _thread_id; */
+/* } */
+/* #endif */
 
 ////////////////////////////////////////////
 
@@ -93,86 +109,86 @@ void *lives_slice_alloc_and_copy(size_t sz, void *p) {
 }
 #endif
 
-#if 0
-typedef struct {
-  // if set then *ptr_to points to real memory and should be freed
-  // free (*ptr); ptr = NULL;
-  // else just ptr = NULL;
-  // ptr_from is unique, but ptr_to can be replicated
-  uint8_t isr;
-  void **ptr_to;
-  void **ptr_from;
-} lives_weak;
+//#if 0
+/* typedef struct { */
+/*   // if set then *ptr_to points to real memory and should be freed */
+/*   // free (*ptr); ptr = NULL; */
+/*   // else just ptr = NULL; */
+/*   // ptr_from is unique, but ptr_to can be replicated */
+/*   uint8_t isr; */
+/*   void **ptr_to; */
+/*   void **ptr_from; */
+/* } lives_weak; */
 
-static LiVESList *weak_list = NULL;
+/* static LiVESList *weak_list = NULL; */
 
-LIVES_GLOBAL_INLINE void make_weak_ptr(void **ptr_new, void **ptr_old) {
-  // if we create a weak ptr of type (void *)a = (void)*b, we can have problems
-  // if ptr a is freed, via freep((void**)&a), then b will point to freed memory
-  // thus we can use MAKE_WEAK(&a, &b); instead. then we must call LIVES_NULLIFY(&a)
-  // or LIVES_NULLIFY(&b), now both if both pointers are still pointing to the same memory, they
-  // will be nullified together, and the real target will only be freed once.
-  // also calling WEAK_UPPDATE(&a) or WEAK_UPDATE(&b)
+/* LIVES_GLOBAL_INLINE void make_weak_ptr(void **ptr_new, void **ptr_old) { */
+/*   // if we create a weak ptr of type (void *)a = (void)*b, we can have problems */
+/*   // if ptr a is freed, via freep((void**)&a), then b will point to freed memory */
+/*   // thus we can use MAKE_WEAK(&a, &b); instead. then we must call LIVES_NULLIFY(&a) */
+/*   // or LIVES_NULLIFY(&b), now both if both pointers are still pointing to the same memory, they */
+/*   // will be nullified together, and the real target will only be freed once. */
+/*   // also calling WEAK_UPPDATE(&a) or WEAK_UPDATE(&b) */
 
-  // for now it is simple and just goes 1 level deep
-  if (ptr_new) {
-    lives_weak *weak = (lives_weak *)lives_calloc(1, sizeof(lives_weak));
-    weak->weak = ptr_new;
-    weak->real = ptr_old;
-    *ptr_new = *ptr_old;
-    weak_list = lives_list_prepend(weak_list, &weak);
-  }
-}
-
-
-LIVES_GLOBAL_INLINE void **get_other_ptr(void **ptr, int op) {
-  // op == 0, return real ptr
-  // op == 1 return and remove node
-
-  // TODO
-  // op == 1, return real ptr recursively
-
-  // op = 2, as 1, but nullify it and its partner
-
-  // op 3, as 2 but then search for any other weak pointers
-  // - find lowest level realptr, nullify, then coming back up, if it was straight,
-  // find any other weaks pointed to it recursively, and nullify
-  // if it was crooked, skip over. until we return to top level, then free target)
-
-  // op = 2, remove a single node
-
-  LiVESList *list = weak_list;
-  lives_weak *xweak;
-  void **weak, void **real;
-  FIND_BY_DATA_2FIELD(list, lives_weak, weak, real, ptr);
-  if (!list) return NULL;
-  xweak = (lives_weak *)list->data;
-  weak = xweak->weak;
-  real = xweak->real;
-  if (op == 1) weak_list = lives_list_remove_node(weak_list, xweak, TRUE);
-  if (*weak != *real) return NULL;
-  if (ptr == real) return weak;
-  // is this what they call "tail recursion" ??
-  //real = get_real_ptr(weak->real);
-  return real;
-}
+/*   // for now it is simple and just goes 1 level deep */
+/*   if (ptr_new) { */
+/*     lives_weak *weak = (lives_weak *)lives_calloc(1, sizeof(lives_weak)); */
+/*     weak->weak = ptr_new; */
+/*     weak->real = ptr_old; */
+/*     *ptr_new = *ptr_old; */
+/*     weak_list = lives_list_prepend(weak_list, &weak); */
+/*   } */
+/* } */
 
 
-LIVES_GLOBAL_INLINE boolean is_weak_ptr(void **ptrptr) {
-  LiVESList *list = weak_list;
-  return !!(FIND_BY_DATA_FIELD(list, lives_weak, weak, ptrptr));
-}
+/* LIVES_GLOBAL_INLINE void **get_other_ptr(void **ptr, int op) { */
+/*   // op == 0, return real ptr */
+/*   // op == 1 return and remove node */
+
+/*   // TODO */
+/*   // op == 1, return real ptr recursively */
+
+/*   // op = 2, as 1, but nullify it and its partner */
+
+/*   // op 3, as 2 but then search for any other weak pointers */
+/*   // - find lowest level realptr, nullify, then coming back up, if it was straight, */
+/*   // find any other weaks pointed to it recursively, and nullify */
+/*   // if it was crooked, skip over. until we return to top level, then free target) */
+
+/*   // op = 2, remove a single node */
+
+/*   LiVESList *list = weak_list; */
+/*   lives_weak *xweak; */
+/*   void **weak, void **real; */
+/*   FIND_BY_DATA_2FIELD(list, lives_weak, weak, real, ptr); */
+/*   if (!list) return NULL; */
+/*   xweak = (lives_weak *)list->data; */
+/*   weak = xweak->weak; */
+/*   real = xweak->real; */
+/*   if (op == 1) weak_list = lives_list_remove_node(weak_list, xweak, TRUE); */
+/*   if (*weak != *real) return NULL; */
+/*   if (ptr == real) return weak; */
+/*   // is this what they call "tail recursion" ?? */
+/*   //real = get_real_ptr(weak->real); */
+/*   return real; */
+/* } */
 
 
-void *lives_nullify_weak_check(void **pp) {
-  if (weak_list) {
-    other = get_other_ptr(ptr. 1);
-    if (other) *other = NULL;
-  }
-  return 0;
-}
+/* LIVES_GLOBAL_INLINE boolean is_weak_ptr(void **ptrptr) { */
+/*   LiVESList *list = weak_list; */
+/*   return !!(FIND_BY_DATA_FIELD(list, lives_weak, weak, ptrptr)); */
+/* } */
 
-#endif
+
+/* void *lives_nullify_weak_check(void **pp) { */
+/*   if (weak_list) { */
+/*     other = get_other_ptr(ptr. 1); */
+/*     if (other) *other = NULL; */
+/*   } */
+/*   return 0; */
+/* } */
+
+/* #endif */
 
 LIVES_GLOBAL_INLINE boolean lives_freep(void **ptr) {
   // free a pointer and nullify it, only if it is non-null to start with
@@ -215,7 +231,8 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
     /// the tuner will time from here until autotune_end and multiply the cost by the time
     /// we also reveal the value of the variable in autotune_end
     /// the tuner will run this ntrials times, then select a new value for the variable which is returned
-    /// the costs for each value are totalled and averaged and finally the value with the lowest average cost / time is selected
+    /// the costs for each value are totalled and averaged
+    /// and finally the value with the lowest average cost / time is selected
     /// in this case what we are tuning is the bytesize threshold to select between one memory allocation function and another
     /// the cost in both cases is defined is 1.0 / n where n is the block size.
     /// The cost is the same for both functions - since time is also a factor
@@ -288,22 +305,21 @@ livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n
 #define _cpy_if_nonnull(d, s, size) (d ? lives_memcpy(d, s, size) : d)
 
 // functions with fixed pointers that we can pass to plugins ///
+
 void *_ext_malloc(size_t n) {
 #ifdef USE_RPMALLOC
   return rpmalloc(n);
 #else
-  //return (n == 0 ? NULL : default_malloc(n));
-  return (n == 0 ? NULL : malloc(n));
+  return (n == 0 ? NULL : _lives_malloc(n));
 #endif
 }
-
 
 void *_ext_malloc_and_copy(size_t bsize, const void *block) {
   if (!block || bsize == 0) return NULL;
 #ifdef lives_malloc_and_copy
   return lives_malloc_and_copy(bsize, block);
 #endif
-  return (_cpy_if_nonnull(malloc(bsize), block, bsize));
+  return (_cpy_if_nonnull(_lives_malloc(bsize), block, bsize));
 }
 
 void _ext_unmalloc_and_copy(size_t bsize, void *p) {
@@ -316,36 +332,34 @@ void _ext_unmalloc_and_copy(size_t bsize, void *p) {
 }
 
 #ifdef USE_RPMALLOC
-void *lsd_calloc_aligned(void **memptr, size_t nmemb, size_t size) {
-  return !memptr ? NULL : (!(*memptr = (rpaligned_calloc)(HW_ALIGNMENT, nmemb, size))) ? NULL : *memptr;
-}
+/* void *lsd_calloc_aligned(void **memptr, size_t nmemb, size_t size) { */
+/*   return !memptr ? NULL : (!(*memptr = (rpaligned_calloc)(HW_ALIGNMENT, nmemb, size))) ? NULL : *memptr; */
+/* } */
 #endif
 
 void _ext_free(void *p) {
 #ifdef USE_RPMALLOC
   rpfree(p);
 #else
-  //if (p) default_free(p);
-  if (p) free(p);
+  if (p) _lives_free(p);
 #endif
 }
 
 void *_ext_free_and_return(void *p) {if (p) _ext_free(p); return NULL;}
 
-void *_ext_memcpy(void *dest, const void *src, size_t n) {return lives_memcpy(dest, src, n);}
+void *_ext_memcpy(void *dest, const void *src, size_t n) {return _lives_memcpy(dest, src, n);}
 
-int _ext_memcmp(const void *s1, const void *s2, size_t n) {return lives_memcmp(s1, s2, n);}
+int _ext_memcmp(const void *s1, const void *s2, size_t n) {return _lives_memcmp(s1, s2, n);}
 
-void *_ext_memset(void *p, int i, size_t n) {return lives_memset(p, i, n);}
+void *_ext_memset(void *p, int i, size_t n) {return _lives_memset(p, i, n);}
 
-void *_ext_memmove(void *dest, const void *src, size_t n) {return lives_memmove(dest, src, n);}
+void *_ext_memmove(void *dest, const void *src, size_t n) {return _lives_memmove(dest, src, n);}
 
 void *_ext_realloc(void *p, size_t n) {
 #ifdef USE_RPMALLOC
   return rprealloc(p, n);
 #else
-  //return lives_realloc(p, n);
-  return realloc(p, n);
+  return _lives_realloc(p, n);
 #endif
 }
 
@@ -353,26 +367,20 @@ void *_ext_calloc(size_t nmemb, size_t msize) {
 #ifdef USE_RPMALLOC
   return quick_calloc(nmemb, msize);
 #else
-  //return default_calloc(nmemb, msize);
-  return calloc(nmemb, msize);
+  return _lives_calloc(nmemb, msize);
 #endif
 }
 
 LIVES_GLOBAL_INLINE void *lives_free_and_return(void *p) {if (p) lives_free(p); return NULL;}
 
 
-LIVES_GLOBAL_INLINE void *lives_malloc_aligned(size_t nblocks, size_t align) {
-  return aligned_alloc(align, nblocks * align);
-}
-
+size_t PAGESIZE = 0;
 
 static size_t hwlim = 0;
-static LiVESList *smblock_list = NULL;
-static LiVESList *smu_list = NULL;
-static int smblock_count = 0;
+//static LiVESList *smblock_list = NULL;
+//static LiVESList *smu_list = NULL;
+static int smblock_count;
 static char *smblock = 0;
-
-static pthread_mutex_t smblock_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define SMBLOCKS 1024 * 1024
 
@@ -383,122 +391,332 @@ char *get_memstats(void) {
   char *msg;
 
   if (smblock) msg = lives_strdup_printf("smallblock: total size %ld, block size %ld, page_size = %ld, "
-					 "cachline_size = %d\n"
-					 "Blocks in use: %d of %d (%.2f %%)\n",
-					 memsize, hwlim, capable->hw.pagesize, capable->hw.cacheline_size,
-					 n_smblocks - smblock_count, n_smblocks,
-					 (double)(n_smblocks - smblock_count)
-					 / (double)smblock_count * 100.);
+                                           "cachline_size = %d\n"
+                                           "Blocks in use: %d of %d (%.2f %%)\n",
+                                           memsize, hwlim, capable->hw.pagesize, capable->hw.cacheline_size,
+                                           smblock_count, n_smblocks,
+                                           (double)smblock_count
+                                           / (double)n_smblocks * 100.);
   else msg = lives_strdup_printf("smallblock not in use\n");
   return msg;
 }
-				 
+
+#if 0
+////////////// small allocators //////////////
+
+// we start with for example 1024 * 1024 blocks. Then starting from block 0 we give it a 'size' of 1024.
+// then do the same for ever 1024th block. The 'next' of each block points to the next idx, and 'prev' points back.
+// head points to start and tail points to end. All blocks are marked as avaialble. We also not max_size == 1024.
+//
+// when we get a request for n blocks, we check max_size, if n > max_size, we fail. Otherwise,
+// we start from head and check the size. If size < n, we skip forward
+// n nlocks and jump over the gap, and check again, keeping track of the largest. If we go through the list,
+// and mx_size is > than what we found, we lock the mutex briefly, check again
+// and write the max size WE found. Then  fail.
+//
+// otherwise, if we find a large enough block, we allocate it.
+
+// lock the list, make sure block is not now in use, and if size is still OK.
+// if so, allocate the n blocks. Lock the list. If it is the first block, head goes to head + n.
+// Otherwise, block->prev->next ==> (block + n - 1) -> next, (block + n - 1)->next->prev ==> block -> prev.
+// Then if size of block + n is zero (because there was no gap before it before)
+// is set to (size of block) - n. all blocks in its sub chain are marked as in use.
+// it is thus "snipped off". If old size - nblocks > max_size, update it.
+// Unlock the list.
+// Size of block is set to n
+//
+// when a block is freed, we lock the list
+// we mark all our blocks as free.
+// if the previous block is 'in use', we need to back up until we find a free block. Then block->tail-><next
+// == other-next, other->next == block, block prev == other, block->tail->next->prev = block->tail.
+// Then if there is no gap betwwen our tail and next, we add its size to ours and set its to zero.
+// if block before us is not in use, then we back up and find the previous block,
+// with a size, and add our size to it, and set ours to zero, otherwise we keep our size. If the new size >
+// max size, we increase max_size, we mark all our blocks free / dirty and then unlock the list.
+
+// each uint64_t represents: 24 bits next_idx (relative to i + 1),
+// 24 bits prev_idx (- relative to i - 1)
+// 12 bits size and 4 bits flags
+// we maintain the index of first and last free list
+
+static uint32_t head_idx = 0;
+static uint64_t block_idx[SMBLOCKS];
+static uint32_t max_size;
+static uint32_t soft_lim = 1024;
+
+#define _GET_NEXT(u) (uint32_t)(((u) &	0x8FFFFF0000000000) >> 40) // upper 24 bits shifted right 40
+#define _GET_PREV(u)  (uint32_t)(((u) &	0x0000008FFFFF0000) >> 16) // next 24 bits shifted right 16
+#define _GET_SIZE(u) (uint32_t)(((u)  &	0x000000000000FFF8) >> 4)  // next 12 bits shifted right 4
+#define FLAG_BITS(u) (uint32_t)((u)  &	0x000000000000000F)  	   // lower 4 bits flags
+
+#define NXT_MASK		0x000000FFFFFFFFFF
+#define PREV_MASK		0xFFFFFF000000FFFF
+#define SIZE_MASK		0xFFFFFFFFFFFF000F
+#define FLAG_MASK		0xFFFFFFFFFFFFFFF0
+
+#define IN_USE(i) (block_idx[(i)] & 1)
+#define IS_DIRTY(i) (block_idx[(i)] & 2)
+
+#define SET_IN_USE(i) do {(block_idx[(i)] |= 1);} while (0);
+#define SET_FREE(i) do {block_idx[(i)] = (block_idx[(i)] & 0xFFFFFFFFFFFFFFFE) | 2;} while (0);
+
+#define SET_DIRTY(i) do {(block_idx[(i)] |= 2);} while (0);
+
+#define SET_NEXT(i, n) do {block_idx[(i)] = (block_idx[(i)] & NXT_MASK) \
+      | (((uint64_t)((n) -(i) - 1)) << 40);} while (0);
+#define SET_PREV(i, p) do {block_idx[(i)] = (block_idx[(i)] & PREV_MASK) | (((uint64_t)((i) \
+											- (p) - 1)) << 16);} while (0);
+#define SET_SIZE(i, s) do {block_idx[(i)] = (block_idx[(i)] & SIZE_MASK) | ((uint64_t)(s) << 4);} while (0);
+
+#define GET_PREV(i) i - 1 - _GET_PREV(block_idx[(i)])
+#define GET_NEXT(i) i + 1 + _GET_NEXT(block_idx[(i)])
+#define GET_NEXT_N(i, n) GET_NEXT((i) + (n) - 1)
+#define GET_SIZE(i) _GET_SIZE(block_idx[i])
+
+#define GET_PTR(i) (void *)(smblock + (i) * hwlim)
+
+#define GET_BLOCK(addr) ((size_t)((char *)(addr) - smblock) / hwlim)
+
+#define IN_SMALLBLOCK(p)   ((char *)(p) >= smblock && (char *)(p) < smblock + memsize)
+
+static pthread_rwlock_t memlist_lock;
 
 void smallblock_init(void) {
+  int i;
   hwlim = HW_ALIGNMENT;
   memsize = n_smblocks * hwlim;
-  if (capable->hw.pagesize) {
-    memsize = (size_t)(memsize / capable->hw.pagesize) * capable->hw.pagesize;
-#ifdef HAVE_POSIX_MEMALIGN
-    IGN_RET(posix_memalign((void **)&smblock, capable->hw.pagesize, memsize));
-#endif
-  }
 
-  if (!smblock) {
-    if (capable->hw.pagesize) {
-      smblock = lives_calloc_aligned(memsize / capable->hw.pagesize, capable->hw.pagesize);
-    } else {
-      smblock = lives_calloc_align(memsize);
-    }
-  }
+  if (PAGESIZE) memsize = (size_t)(memsize / PAGESIZE) * PAGESIZE;
+  smblock = lives_calloc_medium(memsize);
 
   if (smblock) {
-    char *smbptr;
     if (mlock(smblock, memsize)) {
       lives_free(smblock);
       return;
     }
-    memset(smblock, 0, memsize);
-    smbptr = smblock;
+
     n_smblocks = memsize / hwlim;
 
-    for (int i = 0; i < n_smblocks; i++) {
-      smblock_list = lives_list_prepend(smblock_list, (void *)smbptr);
-      smbptr += hwlim;
+    if (PAGESIZE) soft_lim = PAGESIZE / hwlim;
+
+    /* for (int i = 0; i < n_smblocks; i++) { */
+    /*   smblock_list = lives_list_prepend(smblock_list, (void *)smbptr); */
+    /*   smbptr += hwlim; */
+    /* } */
+    /* smblock_list = lives_list_reverse(smblock_list); */
+    /* smblock_count = n_smblocks; */
+
+    for (i = 0; i < n_smblocks; i += soft_lim) {
+      SET_SIZE(i, soft_lim - 1);
+
+      if (i > 0) {
+        SET_IN_USE(i - 1);
+        SET_NEXT(i - 2, i);
+        SET_PREV(i, i - 2);
+      }
     }
-    smblock_list = lives_list_reverse(smblock_list);
+    for (i -= soft_lim; i < n_smblocks; i++) {
+      SET_SIZE(i, 0);
+      SET_IN_USE(i);
+    }
+
+    max_size = soft_lim;
+
     smblock_count = n_smblocks;
-    pthread_mutex_lock(&smblock_mutex);
+
+    pthread_rwlock_init(&memlist_lock, NULL);
+
+    pthread_rwlock_wrlock(&memlist_lock);
     lives_free = speedy_free;
     lives_malloc = speedy_malloc;
     lives_calloc = speedy_calloc;
-    pthread_mutex_unlock(&smblock_mutex);
+    pthread_rwlock_unlock(&memlist_lock);
   }
 }
 
 
 void *speedy_malloc(size_t xsize) {
-  if (xsize <= hwlim) {
-    void *p;
-    pthread_mutex_lock(&smblock_mutex);
-    if (smblock_list) {
-      p = smblock_list->data;
-      smblock_list = smblock_list->next;
-      smu_list = lives_list_prepend(smu_list, p);
-      smblock_count--;
-    } else {
-      lives_malloc = default_malloc;
-      lives_calloc = default_calloc;
-      return lives_malloc(xsize);
+  if (xsize <= 0) return NULL;
+  if (PAGESIZE && xsize >= PAGESIZE) return lives_malloc_medium(xsize);
+  if (xsize > hwlim) return default_malloc(xsize);
+  else {
+    if (xsize > max_size) return default_malloc(xsize);
+    else {
+      int nblocks = (xsize + hwlim - 1) / hwlim;
+      int i;
+      uint32_t bsize, largest = 0, omax_size = max_size;
+      pthread_rwlock_rdlock(&memlist_lock);
+      i = head_idx;
+      while (i < n_smblocks) {
+        bsize = GET_SIZE(i);
+        //g_print("CHK %d %d %d\n", i, nblocks, bsize);
+        if (bsize >= nblocks) {
+          //g_print("size ok\n");
+          pthread_rwlock_unlock(&memlist_lock);
+          pthread_rwlock_wrlock(&memlist_lock);
+          if (!IN_USE(i) && GET_SIZE(i) >= nblocks) {
+            // ALLOC
+            //g_print("size ok2\n");
+            int next = GET_NEXT_N(i, nblocks);
+            //g_print("NXT is %d\n", next);
+            smblock_count -= nblocks;
+            if (i == head_idx) {
+              // i.e all blocks before this are in use
+              head_idx = next;
+              //g_print("set head\n");
+            } else {
+              int prev = GET_PREV(i);
+              SET_NEXT(prev, next);
+              SET_PREV(next, prev);
+              //g_print("set prev %d\n", prev);
+            }
+
+            //for (j = i; j < i + nblocks; j++) SET_IN_USE(j);
+
+            if (!GET_SIZE(next)) SET_SIZE(next, bsize - nblocks);
+            //g_print("set nxt size to %d and my size to %d\n", bsize - nblocks, nblocks);
+            if (bsize - nblocks > largest) largest = bsize - nblocks;
+            if (largest > max_size) max_size = largest;
+            SET_SIZE(i, nblocks);
+            pthread_rwlock_unlock(&memlist_lock);
+            return GET_PTR(i);
+          }
+          pthread_rwlock_unlock(&memlist_lock);
+          pthread_rwlock_rdlock(&memlist_lock);
+          i = head_idx;
+          //g_print("bad going to %d\n", i);
+        } else {
+          i = GET_NEXT(i);
+          //g_print("going to %d\n", i);
+        }
+        if (bsize > largest) largest = bsize;
+      }
+      pthread_rwlock_unlock(&memlist_lock);
+      if (largest < max_size && max_size == omax_size) {
+        if (!pthread_rwlock_trywrlock(&memlist_lock)) {
+          if (largest < max_size && max_size == omax_size) {
+            max_size = largest;
+          }
+          pthread_rwlock_unlock(&memlist_lock);
+        }
+      }
     }
-    pthread_mutex_unlock(&smblock_mutex);
-    return p;
   }
-  return (*default_malloc)(xsize);
+  return default_malloc(xsize);
 }
 
+/* if (xsize <= hwlim) { */
+/*   void *p; */
+/*   pthread_mutex_lock(&smblock_mutex); */
+/*   if (smblock_list) { */
+/*     p = smblock_list->data; */
+/*     smblock_list = smblock_list->next; */
+/*     smu_list = lives_list_prepend(smu_list, p); */
+/*     smblock_count--; */
+/*   } else { */
+/*     lives_malloc = default_malloc; */
+/*     lives_calloc = default_calloc; */
+/*     return lives_malloc(xsize); */
+/*   } */
+/*   pthread_mutex_unlock(&smblock_mutex); */
+/*   return p; */
+/* } */
+/* return (*default_malloc)(xsize); */
 
 void *speedy_calloc(size_t nelems, size_t esize) {
-  if (smblock_count >= nelems && esize <= hwlim) {
-    if (nelems == 1) return speedy_malloc(esize);
-    pthread_mutex_lock(&smblock_mutex);
-    if (smblock_count >= nelems) {
-      void *p = smblock_list->data;
-      for (int i = 0; i < nelems; i++) {
-        smu_list = lives_list_prepend(smu_list, smblock_list->data);
-        smblock_list = smblock_list->next;
-      }
-      smblock_count -= nelems;
-      pthread_mutex_unlock(&smblock_mutex);
-      return p;
-    }
-    pthread_mutex_unlock(&smblock_mutex);
+  if (esize > hwlim) return default_calloc(nelems, esize);
+  void *p = speedy_malloc(nelems * esize);
+  if (p) {
+    if (IN_SMALLBLOCK(p))
+      if (IS_DIRTY(GET_BLOCK(p))) lives_memset(p, 0, nelems * esize);
+    return p;
   }
   return (*default_calloc)(nelems, esize);
 }
 
+
 void speedy_free(void *p) {
-  if ((char *)p >= smblock && (char *)p < smblock + memsize) return;
+  if (IN_SMALLBLOCK(p)) {
+    int i = GET_BLOCK(p), next, prev = -1000, j;
+    size_t bsize = GET_SIZE(i);
+    pthread_rwlock_wrlock(&memlist_lock);
+    for (j = i; j < i + bsize; j++) SET_FREE(j);
+    if (head_idx > i) {
+      next = head_idx;
+      head_idx = i;
+    } else {
+      for (j = i - 1; j--;) if (!IN_USE(j)) break;
+      prev = j;
+      next = GET_NEXT(prev);
+      SET_NEXT(prev, i);
+      SET_PREV(i, prev);
+    }
+    SET_NEXT(i + bsize - 1, next);
+    ///
+    SET_PREV(next, i + bsize - 1);
+    ///
+    if (next == i + bsize) {
+      size_t xsize = GET_SIZE(next);
+      SET_SIZE(next, 0);
+      bsize += xsize;
+    }
+    if (i != head_idx && prev == i - 1) {
+      for (j = i - 1; j--;) {
+        if (!IN_USE(j) && GET_SIZE(j)) {
+          bsize += GET_SIZE(j);
+          SET_SIZE(j, bsize);
+          SET_SIZE(i, 0);
+        }
+      }
+    } else SET_SIZE(i, bsize);
+    if (bsize > max_size) max_size = bsize;
+    smblock_count += bsize;
+    /* if (i < 40) { */
+    /*   for (j = 0; j < 40; j++) { */
+    /* 	g_print("%d %d %d    ", GET_PREV(j), GET_NEXT(j), GET_SIZE(j)); */
+    /*   } */
+    /*   g_print("\n"); */
+    /* } */
+    pthread_rwlock_unlock(&memlist_lock);
+    return;
+  }
   default_free(p);
-  if (!smblock_count) lives_free = default_free;
+}
+#endif
+/////////////////////// medium allocators ////////////
+
+LIVES_LOCAL_INLINE void *lives_malloc_aligned(size_t nblocks, size_t align) {
+  return aligned_alloc(align, nblocks * align);
 }
 
-
-
-// WARNING - size allocated is nblocks * align
-LIVES_GLOBAL_INLINE void *lives_calloc_aligned(size_t nblocks, size_t align) {
-  void *p = lives_malloc_aligned(nblocks, align);
-  if (p) lives_memset(p, 0, nblocks * align);
+LIVES_GLOBAL_INLINE void *lives_malloc_medium(size_t msize) {
+  void *p;
+  if (!PAGESIZE || msize < PAGESIZE) return default_malloc((msize + HW_ALIGNMENT - 1) / HW_ALIGNMENT * HW_ALIGNMENT);
+  p = lives_malloc_aligned((msize + PAGESIZE - 1) / PAGESIZE, PAGESIZE);
+  if (p) lives_memset(p, 0, msize);
   return p;
 }
 
+LIVES_GLOBAL_INLINE void *lives_calloc_medium(size_t msize) {
+  void *p;
+  if (!PAGESIZE || msize < PAGESIZE) return default_calloc((msize + HW_ALIGNMENT - 1) / HW_ALIGNMENT, HW_ALIGNMENT);
+  p = lives_malloc_medium(msize);
+  if (p) lives_memset(p, 0, msize);
+  return p;
+}
+
+///////////////////////////////////////////////
+
+/// for sizes < PAGESIZE, we use HW_ALIGNMENT, which is either cacheline size, or a default (64)
+// if we dont have that
 
 LIVES_GLOBAL_INLINE void *lives_calloc_align(size_t xsize) {
   if (!xsize) return NULL;
+  if (xsize >= PAGESIZE) return lives_calloc_medium(xsize);
   else {
     size_t align = HW_ALIGNMENT;
     xsize = ((xsize + align - 1) / align);
-    return lives_calloc_aligned(xsize, align);
+    return default_calloc(xsize, align);
   }
 }
 
@@ -508,14 +726,33 @@ LIVES_GLOBAL_INLINE void *lives_calloc_safety(size_t nmemb, size_t xsize) {
 }
 
 
-LIVES_GLOBAL_INLINE void *lives_calloc_aligned_safety(size_t xsize, size_t align) {
-  xsize = ((size_t)(xsize + EXTRA_BYTES + align - 1) / align);
-  return lives_calloc_aligned(xsize, align);
-}
-
-
 LIVES_GLOBAL_INLINE void *lives_recalloc(void *op, size_t nmemb, size_t omemb, size_t xsize) {
   /// realloc from omemb * size to nmemb * size
+  if (nmemb <= omemb) return op;
+#if 0
+  if (IN_SMALLBLOCK(op)) {
+    int i = GET_BLOCK(op);
+    int nblocks = (GET_SIZE(i));
+    if (i + nblocks < n_smblocks && !IN_USE(i + nblocks)) {
+      int xblocks = ((nmemb - omemb) * xsize + hwlim - 1) / hwlim;
+      int ysize = GET_SIZE(i + nblocks);
+      if (!IN_USE(i + nblocks) && xblocks <= ysize) {
+        pthread_rwlock_wrlock(&memlist_lock);
+        ysize = GET_SIZE(i + nblocks);
+        if (!IN_USE(i + nblocks) && xblocks <= ysize) {
+          SET_PREV(i + nblocks, i + nblocks - 1);
+          SET_NEXT(i + nblocks - 1, i + nblocks);
+          SET_SIZE(i, nblocks + xblocks);
+          SET_SIZE(i + nblocks, ysize - xblocks);
+          smblock_count -= xblocks;
+          for (int j = i + nblocks; j < i + nblocks + xblocks; j++) SET_IN_USE(j);
+        }
+        pthread_rwlock_unlock(&memlist_lock);
+        return op;
+      }
+    }
+  }
+#endif
   do {
     void *np = lives_calloc_safety(nmemb, xsize);
     if (op && omemb > 0) {
@@ -540,9 +777,14 @@ void *quick_calloc(size_t n, size_t s) {
 
 boolean init_memfuncs(int stage) {
   if (stage == 0) {
-    lives_malloc = default_malloc;
-    lives_calloc = default_calloc;
-    lives_free = default_free;
+    lives_malloc = _lives_malloc;
+    lives_calloc = _lives_calloc;
+    lives_realloc = _lives_realloc;
+    lives_free = _lives_free;
+    lives_memcpy = _lives_memcpy;
+    lives_memset = _lives_memset;
+    lives_memcmp = _lives_memcmp;
+    lives_memmove = _lives_memmove;
 
 #ifdef USE_RPMALLOC
     //_lsd_calloc_aligned_ = lsd_calloc_aligned;
@@ -551,8 +793,10 @@ boolean init_memfuncs(int stage) {
   }
 
   else if (stage == 1) {
+    // should be called after we have pagesize
+    if (capable && capable->hw.pagesize) PAGESIZE = capable->hw.pagesize;
+    //smallblock_init();
     bigblock_init();
-    smallblock_init();
   }
 
   return TRUE;
@@ -592,20 +836,11 @@ void bigblock_init(void) {
   hwlim = HW_ALIGNMENT;
   bmemsize = (size_t)(bmemsize / hwlim) * hwlim;
 
-  if (capable->hw.pagesize) {
-    bmemsize = (size_t)(bmemsize / capable->hw.pagesize) * capable->hw.pagesize;
+  if (PAGESIZE) {
+    bmemsize = (size_t)(bmemsize / PAGESIZE) * PAGESIZE;
   }
   for (int i = 0; i < NBIGBLOCKS; i++) {
-#ifdef HAVE_POSIX_MEMALIGN
-    IGN_RET(posix_memalign(&bigblocks[i], capable->hw.pagesize, bmemsize));
-#endif
-    if (!bigblocks[i]) {
-      if (capable->hw.pagesize) {
-        bigblocks[i] = lives_calloc_aligned(bmemsize / capable->hw.pagesize, capable->hw.pagesize);
-      } else {
-        bigblocks[i] = lives_calloc_align(bmemsize);
-      }
-    }
+    bigblocks[i] = lives_calloc_medium(bmemsize);
     if (mlock(bigblocks[i], bmemsize)) {
       lives_free(bigblocks[i]);
       return;

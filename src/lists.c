@@ -165,7 +165,7 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList *xlist, livesp
   listlast = lives_list_append(listlast, add);
   if (!xlist) xlist = listlast;
   return xlist;
-  
+
 }
 
 

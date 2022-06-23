@@ -37,6 +37,8 @@
 #ifndef HAS_LIVES_INTENTS_H
 #define HAS_LIVES_INTENTS_H
 
+#include "object-constants.h"
+
 #if defined (_BASE_DEFS_ONLY_) || !defined (HAS_LIVES_INTENTS_H_BASE_DEFS)
 // call with _BASE_DEFS_ONLY_ defined to get early definitions
 #define ADD_BASE_DEFS
@@ -63,15 +65,8 @@ typedef union {
   return c.u;			\
   } while (0);
 
-// for external object data (e.g g_obect)
+// for external object data (e.g g_object)
 #define INTENTION_KEY "intention_"
-
-// example types
-#define OBJECT_TYPE_CLIP		IMkType("obj.CLIP")  // could do with a more generic name
-#define OBJECT_TYPE_PLUGIN		IMkType("obj.PLUG"
-#define OBJECT_TYPE_WIDGET		IMkType("obj.WDGT")
-#define OBJECT_TYPE_THREAD		IMkType("obj.THRD")
-#define OBJECT_TYPE_DICTIONARY		IMkType("obj.DICT")
 
 #define LIVES_SEED_OBJECT 2048
 
@@ -159,137 +154,6 @@ typedef struct {
 #undef _BASE_DEFS_ONLY_
 #else
 
-#define OBJECT_TYPE_UNDEFINED 0
-#define OBJECT_SUBTYPE_UNDEFINED 0
-
-#define NO_SUBTYPE 0
-
-enum {
-  // some common intentions
-  // internal or (possibly) non-functional types
-  LIVES_INTENTION_UNKNOWN,
-
-  // application types
-  LIVES_INTENTION_NOTHING = 0,
-  LIVES_INTENTION_UNDO,
-  LIVES_INTENTION_REDO,
-  LIVES_INTENTION_RUN, // request status update to "running"
-  LIVES_INTENTION_CANCEL, // requests an object with status "running" to transform to status "cancelled"
-
-  // function like
-  // MANDATORY for templates which can create instances
-  LIVES_INTENTION_CREATE_INSTANCE = 0x00000100, // create instance of type / subtype
-
-  // MANDATORY (builtin) for instances
-  LIVES_INTENTION_ADDREF,
-
-  // MANDATORY (builtin) for instances
-  LIVES_INTENTION_UNREF,
-
-  LIVES_INTENTION_UPDATE_VALUE,
-
-  // an intent which converts an object's STATE from PREPARE to NORMAL / READY
-  LIVES_INTENTION_PREPARE = 0x00000200,
-
-  // an intent which converts an object's STATE from EXTERNAL to NORMAL
-  // caps define LOCAL or REMOTE source
-  LIVES_INTENTION_IMPORT = 0x00000C00,
-
-  // an intent which creates a copy object in STATE EXTERNAL
-  // withLOCAL - export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
-  // with REMOTE - export raw format to online location, e.g. export audio, save frame
-  LIVES_INTENTION_EXPORT,
-
-  // specialised intentions
-
-  // video players
-  // an intent which creates media_output from an array of media_inputs
-  // or from an event_list object
-  LIVES_INTENTION_PLAY = 0x00000200, // value fixed for all time, order of following must not change (see videoplugin.h)
-
-  // like play, but with the REMOTE capacity (can also be an attachment to PLAY)
-  LIVES_INTENTION_STREAM,  // encode / data in -> remote stream
-
-  // alias for encode but with a weed_layer (frame ?) requirement
-  // rather than a clip object (could also be an attachment to PLAY with realtime == FALSE and display == FALSE caps)
-  // media_output is created with state EXTERNAL
-  LIVES_INTENTION_TRANSCODE,
-
-  // an attachment (?) to a player which can create an event_list object
-  LIVES_INTENTION_RECORD,  // record
-
-  // intent which creates a new clip_object from an event_list
-  // media_src with state INTERNAL
-  // (can also be an attachment to PLAY, with non-realtime, non-display and output clip in state READY)
-  LIVES_INTENTION_RENDER,
-
-  // an intent which creates a new clip object with STATE EXTERNAL
-  // alias for EXPORT for clip objects ?
-  // actually this can just be PLAY but with icaps non-realtime and non-display (like transcode)
-  // and with icap remote for streaming
-  LIVES_INTENTION_ENCODE = 0x00000899,
-
-  // these may be specialised for clip objects
-
-  LIVES_INTENTION_BACKUP, // internal clip -> restorable object
-  LIVES_INTENTION_RESTORE, // restore from object -> internal clip
-
-  // decoders
-  // this is a specialized intent for clip objects, for READY objects, produces frame objects from the clip object)
-  // media_src with realtime / non-realtime CAPS
-  LIVES_INTENTION_DECODE = 0x00001000, // combine with caps to determine e.g. decode_audio, decode_video
-
-  // use caps to further refine e.g REALTIME / NON_REALTIME (can be attachment to PLAY ?)
-  LIVES_INTENTION_EFFECT = 0x00001400,
-
-  // do we need so many ? maybe these can become CAPS
-  LIVES_INTENTION_ANALYSE,
-  LIVES_INTENTION_CONVERT,
-  LIVES_INTENTION_MIX,
-  LIVES_INTENTION_SPLIT,
-  LIVES_INTENTION_DUPLICATE,
-
-  LiVES_INTENTION_FIRST_CUSTOM = 0x80000000,
-  LIVES_INTENTION_MAX = 0xFFFFFFFF
-};
-
-// aliases (depending on context, intentions can be used to signify a choice amongst various alternatives)
-#define LIVES_INTENTION_IGNORE LIVES_INTENTION_NOTHING
-#define LIVES_INTENTION_LEAVE LIVES_INTENTION_NOTHING
-#define LIVES_INTENTION_SKIP LIVES_INTENTION_NOTHING
-
-#define  LIVES_INTENTION_DESTROY_INSTANCE LIVES_INTENTION_UNREF
-
-// or maybe just set value with workdir param for LiVES object ?
-
-// in context with capacity "local" set
-#define LIVES_INTENTION_MOVE LIVES_INTENTION_EXPORT
-//#define LIVES_INTENTION_MOVE check_intentcaps(intent, LIVES_INTENTION_EXPORT, icaps, CAP_XOR(LIVES_CAPICTY_LOCAL, WITHOUT_CAP(LIVES_CAPACITY_RENOTE)))
-
-// in context with capacity "remote" set
-#define LIVES_INTENTION_UPLOAD LIVES_INTENTION_EXPORT
-
-//#define LIVES_INTENTION_DOWNLOAD LIVES_INTENTION_IMPORT_REMOTE
-
-#define LIVES_INTENTION_DELETE LIVES_INTENTION_DESTROY_INSTANCE
-
-#define LIVES_INTENTION_UPDATE LIVES_INTENTION_UPDATE_VALUE
-#define LIVES_INTENTION_REPLACE LIVES_INTENTION_DELETE
-
-// generic STATES which can be altered by *transforms*
-#define OBJECT_STATE_UNDEFINED	0
-#define OBJECT_STATE_NORMAL	1
-#define OBJECT_STATE_PREPARE	2
-
-#define OBJECT_STATE_PREVIEW	3 // ???
-
-#define OBJECT_STATE_EXTERNAL	64
-
-#define OBJECT_STATE_FINALISED	512
-
-#define OBJECT_STATE_NOT_READY OBJECT_STATE_PREPARE
-#define OBJECT_STATE_READY OBJECT_STATE_NORMAL
-
 struct _obj_status_t {
   int *status; /// pointer to an int (some states are dynamic)
   obj_refcounter refcounter;
@@ -346,13 +210,6 @@ int lives_object_instance_unref(lives_object_instance_t *);
 
 // shorthand for calling LIVES_INTENTION_REF in the instance
 int lives_object_instance_ref(lives_object_instance_t *);
-
-#define OBJATTR_FLAG_READONLY 		PARAM_FLAG_READONLY
-#define OBJATTR_FLAG_OPTIONAL 		PARAM_FLAG_OPTIONAL
-// the 'value' has been set (after being initialised to "default"
-#define OBJATTR_FLAG_VALUE_SET 		PARAM_FLAG_VALUE_SET
-// attr updates via UPDATE_VALUE intent, and monitor with listeners
-#define OBJATTR_FLAG_UPDATES_ASYNC 	0x20000
 
 #define LIVES_LEAF_OWNER "owner_uid"
 
@@ -419,15 +276,6 @@ char *interpret_uid(uint64_t uid);
 
 /// NOT YET FULLY IMPLEMENTED
 
-// transform status
-#define LIVES_TRANSFORM_ERROR_REQ -1 // not all requirements met (e.g. params with no values and no way to
-//  find them, objects of wrong type / subtype / state)
-#define LIVES_TRANSFORM_STATUS_NONE 0
-#define LIVES_TRANSFORM_STATUS_SUCCESS 1	///< normal / success
-#define LIVES_TRANSFORM_STATUS_RUNNING 16	///< transform is "running" and the state cannot be changed
-#define LIVES_TRANSFORM_STATUS_NEEDS_DATA 32	///< reqmts. need updating
-#define LIVES_TRANSFORM_STATUS_CANCELLED 256	///< transform was cancelled during running
-#define LIVES_TRANSFORM_STATUS_ERROR  512	///< transform encountered an error during running
 
 // update value is a transform, no attrs in, attrs out
 // can be ondemand, async, volatile
@@ -515,24 +363,7 @@ lives_capacities_t *lives_capacities_copy(lives_capacities_t *dst, lives_capacit
 
 void icap_copy(lives_intentcap_t *dst, lives_intentcap_t *src);
 
-#define LIVES_ERROR_NULL_OBJECT WEED_ERROR_NOSUCH_PLANT
-
-#define LIVES_ERROR_NULL_CAP WEED_ERROR_NOSUCH_LEAF
-#define LIVES_ERROR_NULL_ATTRIBUTE WEED_ERROR_NOSUCH_LEAF
-#define LIVES_ERROR_ICAP_NULL WEED_ERROR_NOSUCH_LEAF
-
-#define LIVES_ERROR_NOSUCH_CAP WEED_ERROR_NOSUCH_ELEMENT
-#define LIVES_ERROR_NOSUCH_ATTRIBUTE WEED_ERROR_NOSUCH_ELEMENT
-
-#define LIVES_ERROR_CAP_INVALID WEED_ERROR_WRONG_SEED_TYPE
-#define LIVES_ERROR_ATTRIBUTE_INVALID WEED_ERROR_WRONG_SEED_TYPE
-
-#define LIVES_ERROR_NOT_OWNER WEED_ERROR_IMMUTABLE
-
 ///////////////// capacities ////
-
-#define CAP_PREFIX "cap_"
-#define CAP_PREFIX_LEN 4
 
 #define MAKE_CAPNAME(name) (lives_strdup_printf("%s%s", CAP_PREFIX, (name)))
 #define IS_CAPNAME(name) ((!strncmp((name), CAP_PREFIX, CAP_PREFIX_LEN)))
@@ -540,44 +371,6 @@ void icap_copy(lives_intentcap_t *dst, lives_intentcap_t *src);
 void lives_capacity_set(lives_capacities_t *, const char *key);
 void lives_capacity_unset(lives_capacities_t *, const char *key);
 boolean lives_has_capacity(lives_capacities_t *, const char *key);
-
-#define HAS_CAP(caps, name) (lives_has_capacity((lives_capacities_t *)(caps), (name)))
-#define HAS_NOT_CAP(caps, name) (!lives_has_capacity((caps), (name)))
-#define CAPS_AND(a, b) ((a) && (b))
-#define CAPS_OR(a, b) ((a) || (b))
-#define CAPS_XOR(a, b) (CAPS_AND(CAPS_OR(a, b) && !CAPS_AND(a, b)))
-
-/* #define I2(intn, exp) intn) && exp */
-/* #define HAS_CAPr(cap) HAS_CAP(icap, cap)  */
-/* #define INT_SYNTH_TRANSCODE LIVES_INTENTION_PLAY, HAS_CAPr(LIVES_CAPACITY_LOCAL) */
-/* #define INT_SYNTH_MAKEX(icap, bar) (icap->intent == I2(INT_SYNTH_##bar) */
-/* #define INT_SYNTH(bar, icap) INT_SYNTH_MAKEX(icap, bar) */
-/* #define EQUALS_SYNTH(icap, bar) INT_SYNTH(bar, icap) */
-
-// if (EQUALS_SYTNH(icap, TRANSCODE)) ->  INT_SYNTH(TRANSCODE, icap) -> INT_SYNTH_TRANSCODEx(icap)
-
-// generic capacities, type specific ones may also exist
-// key name is defined here. Values are int32_t interpreted as boolean: FALSE (0) or TRUE (1 or non-zero)
-// absent values are assumed FALSE
-
-#define LIVES_CAPACITY_LOCAL		"local"
-#define LIVES_CAPACITY_REMOTE		"remote"
-
-#define LIVES_CAPACITY_REALTIME		"realtime"
-#define LIVES_CAPACITY_DISPLAY		"display" // provides some type of (local) display output
-
-#define LIVES_CAPACITY_VIDEO		"video"
-#define LIVES_CAPACITY_AUDIO		"audio"
-#define LIVES_CAPACITY_TEXT		"text"
-
-#define LIVES_CAPACITY_DATA		"data"
-
-enum {
-  _ICAP_IDLE = 0,
-  _ICAP_DOWNLOAD,
-  _ICAP_LOAD,
-  N_STD_ICAPS
-};
 
 /* #define __ICAP_DOWNLOAD _ICAP_DOWNLOAD */
 /* #define __ICAP_LOAD _ICAP_LOAD */
@@ -616,8 +409,7 @@ lives_intentcap_t **list_intentcaps(void);
 get_transform_for(intentcap);
 #endif
 
-// 
-
+//
 
 // check all requmnts and mark - filled (value set) / can_fill (value unset, but has means to obtain) / missing / optional (unset)
 // value readonly (constant) or variable, default readonly or variable
@@ -683,7 +475,7 @@ lives_dicto_t  *replace_dicto(lives_dicto_t *, lives_object_t *, ...) LIVES_SENT
 lives_dicto_t *weed_plant_to_dicto(weed_plant_t *);
 
 const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, const char *rtype,
-				     const char *args_fmt, char *file, int linei, void *txmap);
+                                     const char *args_fmt, char *file, int linei, void *txmap);
 
 size_t add_weed_plant_to_objstore(weed_plant_t *);
 

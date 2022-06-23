@@ -270,7 +270,26 @@ in addition the locking method was overhauled to almost completely reduce thread
 API 202
 - mostly technical changes.
   core ABI:
-- WEED_SEED_FLOAT (type 6) has been added for convenience.
+
+The following seed types are defined, 
+
+- WEED_SEED_UINT (type 6) has been added for convenience
+
+- WEED_SEED_FLOAT (type 7) has been added for convenience. (stored as double)
+
+- WEED_SEED_UINT64 (type 8) has been added for convenience
+
+- added aliases:
+WEED_SEED_VOID (type 0)
+
+WEED_SEED_INT32			WEED_SEED_INT
+
+WEED_SEED_int			WEED_SEED_INT
+WEED_SEED_double		WEED_SEED_DOUBLE
+WEED_SEED_boolean		WEED_SEED_BOOLEAN
+WEED_SEED_string		WEED_SEED_STRING
+WEED_SEED_int64			WEED_SEED_INT64
+
 -  added weed_leaf_set_element_size(plant, key, idx, size)
    for voidptr or custom seed types, this can be used to note the size of
     data pointed to, For information only, has no other effet.
@@ -340,8 +359,8 @@ The fundament types are defined along with some error numbers and so on.
 Level 1: an application #includes weed.h and uses the built-in type definitions weed_data_t, weed_leaf_t, weed_plant_t.
 
 The application may now use the a reference implementation of libweed for all of the core functions. An application wishing to use
-libweed just needs to call weed_init(abi_level, init_flags) to get the correct version of the functions for that abi version.
-In most cases it suffices to just call weed_init(WEED_ABI_VERSION, 0)
+libweed just needs to call libweed_init(abi_level, init_flags) to get the correct version of the functions for that abi version.
+In most cases it suffices to just call libweed_init(WEED_ABI_VERSION, 0)
 and check that the returned value is not WEED_ERROR_BADVERSION.
 
 - weed_get_abi_version() may be called first to get the ABI level the library was compiled with.
@@ -454,21 +473,27 @@ Weed provides the following 'fundamental' types:
 
  * WEED_SEED_INT64   [5] : signed /unsigned 64 bit integer . size = 8 bytes
 
- * WEED_SEED_FLOAT [6] :: (API 202) this is an alias for WEED_SEED_DOUBLE, and is stored as double. The distinction
- 				exists simply for compatibility. The value may be cast to and from float if desired.
 
+'''Pointer''' types (number >= 64) 
 
  * WEED_SEED_FUNCPTR    [64]  : corresponds to a function pointer. In the case of getting / setting values, the address of a variable
                                 or an array holding the function pointer should be used.
 				Size == WEED_FUNCPTR_SIZE
 
-'''Pointer''' types (number > 64) Size = WEED_VOIDPTR_SIZE.
-
  * WEED_SEED_VOIDPTR    [65]  : corresponds to a C void * type. (size is dependent on the operating system)
 
-
  * WEED_SEED_PLANTPTR   [66]  : a pointer to another weed plant.
-   			   
+
+
+Convenience valuse:
+The following types are for infromation, but cannot be used to create leaves.
+ * WEED_SEED_INVALID [0] :: undefined or erroneous type (depending on context)
+
+ * WEED_SEED_VOID [0] :: (API 202) can be used to represent a return type void, intentended for mapping functions, etc
+ 			(not used in libweed)
+
+ * WEED_SEED_FLOAT [6] :: (API 202) this is an alias for WEED_SEED_DOUBLE, and is stored as double. The distinction
+ 				exists simply for annotation purposes.
 
 WEED_SEED_FIRST_CUSTOM	[1024]
 Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
@@ -843,7 +868,7 @@ Errors are listed here in order of precedence from highest to lowest.
     or delete a leaf simultaneously (see: thread concurremcy)
 
  *   WEED_ERROR_BADVERSION
-    returned from weed_init() if the host specifies an api version that the library cannot support.
+    returned from libweed_init() if the host specifies an api version that the library cannot support.
 
 
 * WEED_ERROR_FIRST_CUSTOM		1024
@@ -957,7 +982,7 @@ NULL strings are handled as if they were empty strings.
 However this eventually turned out to be an ovesight, as extended use of libweed
 required NULL strings to be handled separately. In view of this, the major version number of libweed was increased from 1 to 2.
 - libweed 1.0 will always adhere to the old behvaior, whereas libweed 2.0 adopts the new behavior selectively.
-If api vesion 201 or higher is passed into weed_init(), then the new behaviour is enabled.
+If api vesion 201 or higher is passed into libweed_init(), then the new behaviour is enabled.
 If api 200 or lower is passed, then the old behaviour is retained, UNLESS the flagbit WEED_INIT_ALLBUGFIXES is set, in which
 case the new behaviour is backported to the older API.
 
@@ -983,32 +1008,54 @@ and optionally link with libweed (libweed-gslice).
 Some uses of Weed (e.g for effects plugins or events may require further headers, see below for an example).
 
 
+Note: prior to ABI version 202, these functions were named weed_*. This was amended in ABI 202 to libweed_*,
+to claarify that these are library supplied functions, and not part of the core WEED definition,
+(although for simplicity's sake, their prototypes are defined in weed.h)
 
-== weed_get_abi_version() ==
+This is a one-time breaking change, as at the time of writing there is only one known host using libweed.
 
-   int32_t weed_get_abi_version(void)
 
-Prior to calling weed_init(), weed_get_abi_version will return the Weed ABI version used to compile libweed.
-When calling weed_init(), the ABI version selected should be no higher than this, else WEED_ERROR_BADVERSION will be returned.
-If the minimum version which the host supports is higher than this, then the implementation of libweed in question may not be used.
 
-After a successful call to weed_init(), this function returns the ABI version which was specified in that function.
+
+== libweed_get_abi_version() ==
+
+   int32_t libweed_get_abi_version(void)
+
+
+
+Prior to calling libweed_init(), weed_get_abi_version will return the Weed ABI version used to compile libweed.
+
+This can also be obtained by calling
+int32_t libweed_get_abi_max_supported_version(void);
+
+the minumin ABI level supported by libweed can be obtained by calling:
+int32_t libweed_get_abi_min_supported_version(void);
+
+the ABI version selected should be in the integer range min_version to max_version, else WEED_ERROR_BADVERSION will be returned.
+If the minimum version which the host supports is higher than max_version, then
+the implementation of libweed in question may not be used without making changes in the host.
+Likewise, if the maximum version which the host supports is less than min_version, the library cannot be used
+without making changes in the host.
+
+(Please consult this specification to find details of any breaking changes).
+
+After a successful call to libweed_init(), this function returns the ABI version which was specified in that function.
 
 
 The following two functions were added in libweed 2.0:
 
-    int weed_set_memory_funcs(weed_malloc_f malloc_func, weed_free_f free_func);
+    int libweed_set_memory_funcs(weed_malloc_f malloc_func, weed_free_f free_func);
 
-example: weed_set_memory_funcs(my_malloc, my_free);
+example: ;ibweed_set_memory_funcs(my_malloc, my_free);
 
 This function allows the host to define the memory functions to be utilized internally in libweed. Use of this function is
 optional and it may be called at any time. weed_plants created with one set of functions may not function correctly
 if the new functions are incompatible. The return value is always zero.
 
-   int weed_set_slab_funcs(libweed_slab_alloc_f slab_alloc, libweed_slab_unalloc_f slab_unalloc,
+   int libweed_set_slab_funcs(libweed_slab_alloc_f slab_alloc, libweed_slab_unalloc_f slab_unalloc,
 				 libweed_slab_alloc_and_copy_f slab_alloc_and_copy);
 
-example: weed_set_slab_funcs(g_slice_alloc, g_slice_free1, g_slice_copy);
+example: libweed_set_slab_funcs(g_slice_alloc, g_slice_free1, g_slice_copy);
 
 This function allows the host to define the memory functions to be utilized internally in libweed. The difference
 between this function and the previous one is that this version is intended for slab memory allocators. The only
@@ -1024,11 +1071,11 @@ The return value is always zero.
 
 
 
-== weed_init() ==
+== libweed_init() ==
 
    Prior to calling any libweed functions other than those listed above, a program (host, but not a plugin) must call:
 
- * weed_error_t weed_init(int32_t api_version, uint64_t flags)
+ * weed_error_t libweed_init(int32_t api_version, uint64_t flags)
 
      The application passes in the ABI version it wants to use. The function will set function
      pointers to the correct ABI versions of the core functions. Usually the program would use WEED_ABI_VERSION defined in
@@ -1037,17 +1084,17 @@ The return value is always zero.
      If the host selects an ABI version < 100 or > the highest version the library supports, WEED_ERROR_BADVERSION will
      be returned, otherwise WEED_SUCCESS is returned.
 
-     A call to weed_get_abi_version() prior to calling weed_init() will return the highest ABI version the library supports, as
+     A call to weed_get_abi_version() prior to calling libweed_init() will return the highest ABI version the library supports, as
      detailed above.
 
 Flags:
-	as of Weed ABI version 201, the flag bits defined for the flags passed to weed_init() are:
+	as of Weed ABI version 201, the flag bits defined for the flags passed to libweed_init() are:
 
-	WEED_INIT_ALLBUGFIXES			(1 << 0)
+	LIBWEED_INIT_ALLBUGFIXES			(1 << 0)
 	set this flagbit to enable potential backported bugfixes which may theoretically impact existing behaviour, as explained below
 
 
-	WEED_INIT_DEBUG_MODE			(1 << 1)
+	LIBWEED_INIT_DEBUG_MODE			(1 << 1)
 	outputs debug information on stderr.
 
 	Additional flagbits may be added in future versions of the ABI.
@@ -1062,8 +1109,8 @@ Flags:
 
      If a code amendment is likely to affect the behaviour of existing programs in an adverse way - for example if programs
      rely on the old buggy implementation to function correctly, then the ABI version will be increased and the bugfix applied in the
-     new ABI version. Such amendments will only be applied in prior ABI versions if WEED_INIT_ALLBUGFIXES is set
-     in the flags when calling weed_init().
+     new ABI version. Such amendments will only be applied in prior ABI versions if LIBWEED_INIT_ALLBUGFIXES is set
+     in the flags when calling libweed_init().
      Use of this flagbit allows a host to use the bugfixed version without updating the ABI version and thus continue using existing plugins.
      There is a chance that this  may cause problems with older plugins in cases where they rely on the buggy implementation to function
      correctly. The ideal is thus for both host and plugins to upgrade, but in practice this may not be possible.
@@ -3609,7 +3656,7 @@ The returned plant MUST have '''type''' WEED_PLANT_PLUGIN_INFO.
 
 To recap:
 
-1) host calls weed_init() once with an API version to get its weed functions
+1) host calls libweed_init() once with an API version to get its weed functions
 
 2) host dlopens a plugin, then calls weed_setup() in the plugin, passing in a pointer to the bootstrap_fn
 
@@ -4476,7 +4523,7 @@ or use perceptual brightness values without any reference to absolute colour val
 
 == OUTLINE WEED PROCESS FLOW OVERVIEW ==
 
- * Host calls weed_init(), passing in the weed api version it wants to use. If successful, the function sets the core Weed functions
+ * Host calls libweed_init(), passing in the weed api version it wants to use. If successful, the function sets the core Weed functions
    for the host.
 
  *  Host loads plugin (using dlopen)
@@ -5559,7 +5606,7 @@ WRITING A MINIMAL HOST
 INITIALIZING LIBWEED
 
 simple version:
-	if (weed_init(WEED_ABI_VERSION, 0) != WEED_SUCCESS) return;
+	if (libweed_init(WEED_ABI_VERSION, 0) != WEED_SUCCESS) return;
 
 
 
@@ -5571,14 +5618,11 @@ complete version:
 
 	int flags = 0;
 
-	// if want standard stringfuncs, we can set that; can be useful when debugging with valgrind
-	flags |= WEED_INIT_STD_STRINGFUNCS;
-
 	// if we want all possible backported bugfixes, we can allow that, aknowledging the
 	// possibility that this will break anything which relied on the buggy behaviour
-	flags |= WEED_INIT_ALLBUFIXES;
+	flags |= LIBWEED_INIT_ALLBUFIXES;
 
- 	weed_error_t werr = weed_init(weed_abi_version, flags);
+ 	weed_error_t werr = libweed_init(weed_abi_version, flags);
 	if (werr == WEED_ERROR_BADVERSION) return;
 
 

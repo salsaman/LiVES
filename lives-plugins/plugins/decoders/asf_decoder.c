@@ -1115,11 +1115,11 @@ seek_skip:
 
       test_for_ext_stream_audio = 0;
       if (!guidcmp(&g, &lives_asf_audio_stream)) {
-        type = PLUGIN_CAPACITY_AUDIO;
+        type = OBJ_CAPACITY_AUDIO;
       } else if (!guidcmp(&g, &lives_asf_video_stream)) {
-        type = PLUGIN_CAPACITY_VIDEO;
+        type = OBJ_CAPACITY_VIDEO;
       } else if (!guidcmp(&g, &lives_asf_command_stream)) {
-        type = PLUGIN_CAPACITY_DATA;
+        type = OBJ_CAPACITY_DATA;
       } else if (!guidcmp(&g, &lives_asf_ext_stream_embed_stream_header)) {
         test_for_ext_stream_audio = 1;
         type = NULL;
@@ -1173,7 +1173,7 @@ seek_skip:
         priv->input_position += sizeof(lives_asf_guid);
 
         if (!guidcmp(&g, &lives_asf_ext_stream_audio_stream)) {
-          type = PLUGIN_CAPACITY_AUDIO;
+          type = OBJ_CAPACITY_AUDIO;
           //is_dvr_ms_audio=1;
           get_guid(priv->fd, &g);
           priv->input_position += sizeof(lives_asf_guid);
@@ -1189,10 +1189,10 @@ seek_skip:
         }
       }
 
-      if (strcmp(type, PLUGIN_CAPACITY_AUDIO)) {
+      if (strcmp(type, OBJ_CAPACITY_AUDIO)) {
         priv->st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
 
-      } else if (strcmp(type, PLUGIN_CAPACITY_VIDEO)) {
+      } else if (strcmp(type, OBJ_CAPACITY_VIDEO)) {
         priv->st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
         if (vidindex != -1 && vidindex != priv->st->id) {
           fprintf(stderr, "asf_decoder: unhandled multiple vidstreams %d and %d in %s\n", vidindex, priv->st->id, cdata->URI);

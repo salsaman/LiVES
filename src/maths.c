@@ -14,7 +14,7 @@ LIVES_GLOBAL_INLINE uint64_t lives_10pow(int pow) {
 
 
 LIVES_GLOBAL_INLINE double lives_fix(double val, int decimals) {
-#ifdef _GNU_SOURCE
+#ifdef _LIVES_SOURCE
   double factor = exp10((double)decimals);
 #else
   double factor = (double)lives_10pow(decimals);
@@ -83,9 +83,7 @@ LIVES_GLOBAL_INLINE float LEFloat_to_BEFloat(float f) {
   return f;
 }
 
-static int get_hex_digit(const char c) GNU_CONST;
-
-static int get_hex_digit(const char c) {
+static LIVES_CONST int get_hex_digit(const char c) {
   switch (c) {
   case 'a': case 'A': return 10;
   case 'b': case 'B': return 11;

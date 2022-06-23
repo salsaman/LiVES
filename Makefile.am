@@ -22,6 +22,10 @@ if NEED_LOCAL_WEED_UTILS
 WEED_SUBDIRS=libweed
 endif
 
+if NEED_LOCAL_WEED_HOST_UTILS
+WEED_SUBDIRS=libweed
+endif
+
 if NEED_LOCAL_WEED_COMPAT
 WEED_SUBDIRS=libweed
 endif
@@ -82,7 +86,6 @@ EXTRA_DIST = \
 	src/lbindings.h \
 	$(doc_DATA)
 
-
 installdirs: 
 	mkinstalldirs
 	"$(srcdir)/mkinstalldirs" \
@@ -111,7 +114,6 @@ if NEED_LOCAL_WEED
 endif
 
 endif
-
 	$(MKDIR_P) "$(DESTDIR)$(docdir)"
 	@echo $(VERSION) > "$(DESTDIR)$(docdir)/version"
 
@@ -158,7 +160,6 @@ install-exec-local:
 
 install-exec-hook:
 	$(LN_S) "lives-exe" "$(DESTDIR)$(bindir)/lives"
-
 
 uninstall-local:
 	rm -rf "$(bindir)/lives"

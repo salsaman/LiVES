@@ -5166,89 +5166,89 @@ static void nullaudio_set_rec_avals(boolean is_forward) {
 //////////// objects / intents //////
 
 int lives_aplayer_get_source(lives_object_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, AUDIO_ATTR_SOURCE);
+  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_SOURCE);
   return weed_param_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_source(lives_object_t *aplayer, int source) {
-  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_SOURCE, source);
+  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_SOURCE, source);
 }
 
 int lives_aplayer_get_arate(lives_object_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, AUDIO_ATTR_RATE);
+  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_RATE);
   return weed_param_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_arate(lives_object_t *aplayer, int arate) {
-  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_RATE, arate);
+  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_RATE, arate);
 }
 
 int lives_aplayer_get_achans(lives_object_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, AUDIO_ATTR_CHANNELS);
+  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_CHANNELS);
   return weed_param_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_achans(lives_object_t *aplayer, int achans) {
-  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_CHANNELS, achans);
+  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_CHANNELS, achans);
 }
 
 int lives_aplayer_get_sampsize(lives_object_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, AUDIO_ATTR_SAMPSIZE);
+  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_SAMPSIZE);
   return weed_param_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_sampsize(lives_object_t *aplayer, int asamps) {
-  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_SAMPSIZE, asamps);
+  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_SAMPSIZE, asamps);
 }
 
 boolean lives_aplayer_get_signed(lives_object_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, AUDIO_ATTR_SIGNED);
+  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_SIGNED);
   return weed_param_get_value_boolean(param);
 }
 
 weed_error_t lives_aplayer_set_signed(lives_object_t *aplayer, boolean asigned) {
-  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_SIGNED, asigned);
+  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_SIGNED, asigned);
 }
 
 int lives_aplayer_get_endian(lives_object_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, AUDIO_ATTR_ENDIAN);
+  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_ENDIAN);
   return weed_param_get_value_int(param);
 }
 
 weed_error_t lives_aplayer_set_endian(lives_object_t *aplayer, int aendian) {
-  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_ENDIAN, aendian);
+  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_ENDIAN, aendian);
 }
 
 boolean lives_aplayer_get_float(lives_object_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, AUDIO_ATTR_FLOAT);
+  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_FLOAT);
   return weed_param_get_value_boolean(param);
 }
 
 weed_error_t lives_aplayer_set_float(lives_object_t *aplayer, boolean is_float) {
-  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_FLOAT, is_float);
+  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_FLOAT, is_float);
 }
 
 int64_t lives_aplayer_get_data_len(lives_object_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, AUDIO_ATTR_DATA_LENGTH);
+  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_DATA_LENGTH);
   return weed_param_get_value_int64(param);
 }
 
 weed_error_t lives_aplayer_set_data_len(lives_object_t *aplayer, int64_t alength) {
-  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_DATA_LENGTH, alength);
+  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_DATA_LENGTH, alength);
 }
 
 boolean lives_aplayer_get_interleaved(lives_object_t *aplayer) {
-  weed_param_t *param = lives_object_get_attribute(aplayer, AUDIO_ATTR_INTERLEAVED);
+  weed_param_t *param = lives_object_get_attribute(aplayer, ATTR_AUDIO_INTERLEAVED);
   return weed_param_get_value_boolean(param);
 }
 
 weed_error_t lives_aplayer_set_interleaved(lives_object_t *aplayer, boolean ainter) {
-  return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_INTERLEAVED, ainter);
+  return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_INTERLEAVED, ainter);
 }
 
 void *lives_aplayer_get_data(lives_object_t *aplayer) {
   boolean inter = lives_aplayer_get_interleaved(aplayer);
-  weed_param_t *paramd = lives_object_get_attribute(aplayer, AUDIO_ATTR_DATA);
+  weed_param_t *paramd = lives_object_get_attribute(aplayer, ATTR_AUDIO_DATA);
   if (inter) return weed_get_voidptr_value(paramd, WEED_LEAF_VALUE, NULL);
   return weed_get_voidptr_array(paramd, WEED_LEAF_VALUE, NULL);
 }
@@ -5257,10 +5257,10 @@ weed_error_t lives_aplayer_set_data(lives_object_t *aplayer, void *data) {
   int nchans = lives_aplayer_get_achans(aplayer);
   if (nchans) {
     boolean inter = lives_aplayer_get_interleaved(aplayer);
-    if (inter) return lives_object_set_attribute_value(aplayer, AUDIO_ATTR_DATA, data);
+    if (inter) return lives_object_set_attribute_value(aplayer, ATTR_AUDIO_DATA, data);
     else {
       // TODO - set_attribute_array
-      weed_param_t *paramd = lives_object_get_attribute(aplayer, AUDIO_ATTR_DATA);
+      weed_param_t *paramd = lives_object_get_attribute(aplayer, ATTR_AUDIO_DATA);
       return weed_set_voidptr_array(paramd, WEED_LEAF_VALUE, nchans, data);
     }
   }

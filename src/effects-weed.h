@@ -137,7 +137,7 @@ char *weed_filter_idx_get_name(int idx, boolean add_subcats, boolean add_notes) 
 char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_parent) WARN_UNUSED;
 char *make_weed_hashname(int filter_idx, boolean fullname,
                          boolean use_extra_authors, char sep, boolean spc_to_underscore) WARN_UNUSED;  ///< fullname includes author and version
-int weed_get_idx_for_hashname(const char *hashname, boolean fullname) GNU_CONST;  ///< fullname includes author and version
+int weed_get_idx_for_hashname(const char *hashname, boolean fullname) LIVES_CONST;  ///< fullname includes author and version
 int *weed_get_indices_from_template(const char *package_name, const char *filter_name, const char *author, int version);
 int weed_filter_highest_version(const char *pkg, const char *fxname, const char *auth, int *return_version);
 int enabled_in_channels(weed_plant_t *plant, boolean count_repeats);
@@ -345,12 +345,12 @@ boolean has_key_defaults(void);
 // 0 based keys
 void rte_swap_fg_bg(void);
 
-int rte_bg_gen_key(void) GNU_PURE;
+int rte_bg_gen_key(void) LIVES_PURE;
 
-int rte_fg_gen_key(void) GNU_PURE;
+int rte_fg_gen_key(void) LIVES_PURE;
 
-int rte_bg_gen_mode(void) GNU_PURE;
-int rte_fg_gen_mode(void) GNU_PURE;
+int rte_bg_gen_mode(void) LIVES_PURE;
+int rte_fg_gen_mode(void) LIVES_PURE;
 
 ////////////////////////////////////////////////////////////////////////
 

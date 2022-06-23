@@ -43,4 +43,6 @@ void show_widgets_info(void);
 
 void show_struct_sizes(void);
 
+void do_lsd_tests(void) LIVES_NEVER_INLINE;
+
 #endif

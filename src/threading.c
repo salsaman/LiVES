@@ -710,7 +710,7 @@ static boolean _call_funcsig_inner(lives_proc_thread_t thread_info, lives_funcpt
   // invalid nparms
   default: goto funcerr;
   }
-  lives_free(thefunc);
+  //lives_free(thefunc);
   if (err == WEED_SUCCESS) return TRUE;
   msg = lives_strdup_printf("Got error %d running prothread ", err);
   goto funcerr2;
@@ -1338,13 +1338,16 @@ static void *thrdpool(void *arg) {
   int rc = 0;
   int tid = LIVES_POINTER_TO_INT(arg);
 
-  lives_thread_data_t *tdata = lives_thread_data_create(tid);
+  lives_thread_data_t *tdata;
 
 #ifdef USE_RPMALLOC
+  // must be done before anything else
   if (!rpmalloc_is_thread_initialized()) {
     rpmalloc_thread_initialize();
   }
 #endif
+
+  tdata = lives_thread_data_create(tid);
 
   lives_widget_context_push_thread_default(tdata->ctx);
 
@@ -1843,8 +1846,8 @@ char *funcsig_to_string(funcsig_t sig) {
 
 
 LIVES_GLOBAL_INLINE lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
-						    uint32_t return_type,  const char *args_fmt,
-						    const char *file, int line, void *data) {
+    uint32_t return_type,  const char *args_fmt,
+    const char *file, int line, void *data) {
   lives_funcdef_t *fdef = (lives_funcdef_t *)lives_malloc(sizeof(lives_funcdef_t));
   if (fdef) {
     if (funcname) fdef->funcname = lives_strdup(funcname);
@@ -2108,7 +2111,7 @@ char *get_threadstats(void) {
       if (pthread_equal(thrdinfo->var_self, capable->gui_thread)) notes = lives_strdup("GUI thread");
       if (pthread_equal(thrdinfo->var_self, capable->gui_thread)) notes = lives_strdup("me !");
       msg = lives_strdup_concat(msg, "\n", "Thread %d (%s) is %d", thrdinfo->var_id, notes,
-				work ? "busy" : "idle");
+                                work ? "busy" : "idle");
       if (notes) lives_free(notes);
     }
   }

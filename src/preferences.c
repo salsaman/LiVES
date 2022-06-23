@@ -2142,15 +2142,15 @@ boolean apply_prefs(boolean skip_warn) {
 #else
     !(prefs->warning_mask & WARN_MASK_AFTER_DVGRAB);
 #endif
-   boolean warn_yuv4m_open =
+  boolean warn_yuv4m_open =
 #ifdef HAVE_YUV4MPEG
     lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4m_open));
 #else
-  !(prefs->warning_mask & WARN_MASK_OPEN_YUV4M);
+    !(prefs->warning_mask & WARN_MASK_OPEN_YUV4M);
 #endif
 
 #ifdef ENABLE_JACK
- WARN_BIT(jack_scrpts);
+  WARN_BIT(jack_scrpts);
 #endif
 
   boolean midisynch = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->check_midi));
@@ -2463,20 +2463,20 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   warn_mask = !warn_fps * WARN_MASK_FPS + !warn_save_set * WARN_MASK_SAVE_SET
-    + !warn_fsize * WARN_MASK_FSIZE + !warn_mplayer *
-    WARN_MASK_NO_MPLAYER + !warn_missplugs * WARN_MASK_CHECK_PLUGINS + !warn_prefix *
-    WARN_MASK_CHECK_PREFIX + !warn_layout_clips * WARN_MASK_LAYOUT_MISSING_CLIPS + !warn_dup_set *
-    WARN_MASK_DUPLICATE_SET + !warn_layout_close * WARN_MASK_LAYOUT_CLOSE_FILE + !warn_layout_delete *
-    WARN_MASK_LAYOUT_DELETE_FRAMES + !warn_layout_shift * WARN_MASK_LAYOUT_SHIFT_FRAMES + !warn_layout_alter *
-    WARN_MASK_LAYOUT_ALTER_FRAMES + !warn_discard_layout * WARN_MASK_EXIT_MT + !warn_after_dvgrab *
-    WARN_MASK_AFTER_DVGRAB + !warn_mt_achans * WARN_MASK_MT_ACHANS + !warn_mt_no_jack *
-    WARN_MASK_MT_NO_JACK + !warn_layout_adel * WARN_MASK_LAYOUT_DELETE_AUDIO + !warn_layout_ashift *
-    WARN_MASK_LAYOUT_SHIFT_AUDIO + !warn_layout_aalt * WARN_MASK_LAYOUT_ALTER_AUDIO + !warn_layout_popup *
-    WARN_MASK_LAYOUT_POPUP + +!warn_layout_reload * WARN_MASK_LAYOUT_RELOAD + !warn_yuv4m_open * WARN_MASK_OPEN_YUV4M
-    + !warn_mt_backup_space * WARN_MASK_MT_BACKUP_SPACE + !warn_after_crash * WARN_MASK_CLEAN_AFTER_CRASH
-    + !warn_no_pulse * WARN_MASK_NO_PULSE_CONNECT + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE +
-    !warn_layout_gamma * WARN_MASK_LAYOUT_GAMMA + !warn_layout_lb * WARN_MASK_LAYOUT_LB + !warn_vjmode_enter *
-    WARN_MASK_VJMODE_ENTER + !warn_dmgd_audio * WARN_MASK_DMGD_AUDIO + !warn_dis_dec * WARN_MASK_DISABLED_DECODER;
+              + !warn_fsize * WARN_MASK_FSIZE + !warn_mplayer *
+              WARN_MASK_NO_MPLAYER + !warn_missplugs * WARN_MASK_CHECK_PLUGINS + !warn_prefix *
+              WARN_MASK_CHECK_PREFIX + !warn_layout_clips * WARN_MASK_LAYOUT_MISSING_CLIPS + !warn_dup_set *
+              WARN_MASK_DUPLICATE_SET + !warn_layout_close * WARN_MASK_LAYOUT_CLOSE_FILE + !warn_layout_delete *
+              WARN_MASK_LAYOUT_DELETE_FRAMES + !warn_layout_shift * WARN_MASK_LAYOUT_SHIFT_FRAMES + !warn_layout_alter *
+              WARN_MASK_LAYOUT_ALTER_FRAMES + !warn_discard_layout * WARN_MASK_EXIT_MT + !warn_after_dvgrab *
+              WARN_MASK_AFTER_DVGRAB + !warn_mt_achans * WARN_MASK_MT_ACHANS + !warn_mt_no_jack *
+              WARN_MASK_MT_NO_JACK + !warn_layout_adel * WARN_MASK_LAYOUT_DELETE_AUDIO + !warn_layout_ashift *
+              WARN_MASK_LAYOUT_SHIFT_AUDIO + !warn_layout_aalt * WARN_MASK_LAYOUT_ALTER_AUDIO + !warn_layout_popup *
+              WARN_MASK_LAYOUT_POPUP + +!warn_layout_reload * WARN_MASK_LAYOUT_RELOAD + !warn_yuv4m_open * WARN_MASK_OPEN_YUV4M
+              + !warn_mt_backup_space * WARN_MASK_MT_BACKUP_SPACE + !warn_after_crash * WARN_MASK_CLEAN_AFTER_CRASH
+              + !warn_no_pulse * WARN_MASK_NO_PULSE_CONNECT + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE +
+              !warn_layout_gamma * WARN_MASK_LAYOUT_GAMMA + !warn_layout_lb * WARN_MASK_LAYOUT_LB + !warn_vjmode_enter *
+              WARN_MASK_VJMODE_ENTER + !warn_dmgd_audio * WARN_MASK_DMGD_AUDIO + !warn_dis_dec * WARN_MASK_DISABLED_DECODER;
 
 #ifdef ENABLE_JACK
   warn_mask += !WARN_MASK_JACK_SCRPT * warn_jack_scrpts;
@@ -6277,8 +6277,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_warn_dis_dec = lives_standard_check_button_new
-    (_("Show a warning if a clip to be reloaded was using a disabled decoder plugin."),
-     !(prefs->warning_mask & WARN_MASK_DISABLED_DECODER), LIVES_BOX(hbox), NULL);
+                                     (_("Show a warning if a clip to be reloaded was using a disabled decoder plugin."),
+                                      !(prefs->warning_mask & WARN_MASK_DISABLED_DECODER), LIVES_BOX(hbox), NULL);
 
   pixbuf_warnings = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_WARNING,
                     LIVES_ICON_SIZE_CUSTOM, -1);

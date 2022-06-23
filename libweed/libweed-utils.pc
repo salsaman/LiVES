@@ -7,7 +7,7 @@ Name: libweed-plugins
 Description: Common host/plugin utilities for libweed
 Requires: 
 Requires.private: 
-Version: 2.1.1
+Version: 2.2.2
 Libs: -L${libdir} -lweed-utils
 Static: -L${libdir} -lweed-utils_scripting
 Cflags: -I${includedir}

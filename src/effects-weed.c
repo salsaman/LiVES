@@ -20,8 +20,6 @@ using namespace cv;
 #include "main.h"
 #include "effects.h"
 
-#include "weed-effects-utils.h"
-
 ///////////////////////////////////
 
 #include "callbacks.h"
@@ -4792,7 +4790,8 @@ void show_weed_stats(weed_plant_t *statsplant) {
 
 
 weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
-  // if the plugin called weed_boostrap during its weed_setup() as we requested, then we will end up here
+  // if the plugin called weed_boostrap during its weed_setup() as we requested,
+  // then we will end up here
   // from weed_bootstrap()
   int id = LIVES_POINTER_TO_INT(data);
 
@@ -4885,7 +4884,7 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
 
 #ifndef USE_STD_MEMFUNCS
   // let's override some plugin functions...
-  if (id == 100) {
+  if (0 && id == 100) {
     weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)_ext_malloc);
     weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)_ext_free);
     weed_set_funcptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)_ext_realloc);

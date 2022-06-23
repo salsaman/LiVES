@@ -13905,9 +13905,9 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     caps = lives_capacities_new();
     THREAD_INTENTION = LIVES_INTENTION_RENDER;
     if (mt->opts.render_vidp)
-      lives_capacity_set(caps, LIVES_CAPACITY_VIDEO);
+      lives_capacity_set(caps, OBJ_CAPACITY_VIDEO);
     if (mt->opts.render_audp)
-      lives_capacity_set(caps, LIVES_CAPACITY_AUDIO);
+      lives_capacity_set(caps, OBJ_CAPACITY_AUDIO);
     THREAD_CAPACITIES = caps;
   }
 

@@ -24,8 +24,9 @@ docs-doxygen:
 	@echo "Doxygen not installed, skipping sourcecode documentation"
 endif
 
-WEED_SO_VERSION = 2:0:1
-WEED_PSO_VERSION = 1:14:1
+WEED_SO_VERSION = 2:0:2
+WEED_PSO_VERSION = 1:15:1
+WEED_HSO_VERSION = 1:15:1
 
 LIBS =
 
@@ -47,9 +48,13 @@ if NEED_LOCAL_WEED_PLUGIN
 extra_cflags += -DNEED_LOCAL_WEED_PLUGIN
 endif
 
-lib_LTLIBRARIES = libweed.la libweed-utils.la libweed-utils_scripting.la
+if NEED_LOCAL_WEED_HOST_UTILS
+extra_cflags += -DNEED_LOCAL_WEED_HOST_UTILS
+endif
 
-EXTRA_DIST = libweed.doxygen libweed.pc libweed-plugin.pc libweed-utils.pc libweed-compat.pc
+lib_LTLIBRARIES = libweed.la libweed-utils.la libweed-host-utils.la libweed-utils_scripting.la
+
+EXTRA_DIST = libweed.doxygen libweed.pc libweed-plugin.pc libweed-host-utils.pc libweed-utils.pc libweed-compat.pc
 
 libweed_la_SOURCES = weed.c
 
@@ -59,8 +64,10 @@ libweed_utils_la_SOURCES = weed-utils.c
 
 libweed_utils_scripting_la_SOURCES = weed-utils_scripting.c 
 
+libweed_host_utils_la_SOURCES = weed-host-utils.c
+
 libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h weed-effects.h \
-	weed-compat.h weed-plugin-utils.h
+	weed-compat.h weed-plugin-utils.h weed-host-utils.h
 
 libweedincludedir = "$(includedir)/weed"
 
@@ -78,6 +85,9 @@ libweed_la_CFLAGS += -pthread
 
 libweed_utils_la_CFLAGS = $(extra_cflags)
 libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION)
+
+libweed_host_utils_la_CFLAGS = $(extra_cflags)
+libweed_host_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_HSO_VERSION)
 
 #libweed_plugin_utils_la_CFLAGS =
 #libweed_plugin_utils_la_LDFLAGS = -version-info $(WEED_PSO_VERSION) -static

@@ -160,8 +160,16 @@ if !NEED_LOCAL_WEED_UTILS
 libweed_LDADD += @WEED_UTILS_LIBS@
 else
 libweed_LDADD += $(abs_top_srcdir)/libweed/libweed-utils.la
-libweed_CFLAGS += -DNEED_LOCAL_WEED_UTILS=1
+libweed_CFLAGS += -DNEED_LOCAL_WEED_UTILS = 1
 endif
+
+if !NEED_LOCAL_WEED_HOST_UTILS
+libweed_LDADD += @WEED_HOST_UTILS_LIBS@
+else
+libweed_LDADD += $(abs_top_srcdir)/libweed/libweed-host-utils.la
+libweed_CFLAGS += -DNEED_LOCAL_WEED_HOST_UTILS = 1
+endif
+
 
 if DISABLE_GSLICE
 libweed_CFLAGS += -DDISABLE_GSLICE=1
@@ -225,7 +233,7 @@ lives_exe_SOURCES = \
 	machinestate.c machinestate.h \
 	memory.c memory.h \
 	threading.c threading.h \
-	intents.c intents.h\
+	intents.c intents.h object-constants.h\
 	lsd.h lsd-tab.c lsd-tab.h \
 	widget-helper.c widget-helper.h \
 	widget-helper-gtk.h widget-helper-qt.h \
@@ -250,7 +258,6 @@ lives_exe_SOURCES = \
 	sethandler.c sethandler.h \
 	audio.c audio.h \
 	resample.c resample.h \
-	weed-effects-utils.c weed-effects-utils.h \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
 	paramwindow.c paramwindow.h\
@@ -265,7 +272,7 @@ lives_exe_SOURCES = \
 	rfx-builder.c rfx-builder.h\
 	$(yuv4mpeg_SOURCES)\
 	rte_window.c rte_window.h\
-	stringfuncs.c stingfuncs.h \
+	stringfuncs.c stringfuncs.h \
 	ce_thumbs.c ce_thumbs.h \
 	pangotext.c pangotext.h \
 	alarms.c alarms.h \

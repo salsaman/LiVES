@@ -262,15 +262,15 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       return FALSE;
     } else {
       lives_obj_attr_t *attr1, *attr2;
-      attr1 = lives_object_declare_attribute(NULL, AUDIO_ATTR_RATE, WEED_SEED_INT);
-      lives_object_set_attribute_value(NULL, AUDIO_ATTR_RATE, cfile->arate);
+      attr1 = lives_object_declare_attribute(NULL, ATTR_AUDIO_RATE, WEED_SEED_INT);
+      lives_object_set_attribute_value(NULL, ATTR_AUDIO_RATE, cfile->arate);
       obj_attr_set_readonly(attr1, TRUE);
 
-      attr2 = lives_object_declare_attribute(NULL, AUDIO_ATTR_CHANNELS, WEED_SEED_INT);
+      attr2 = lives_object_declare_attribute(NULL, ATTR_AUDIO_CHANNELS, WEED_SEED_INT);
       if (mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
-        lives_object_set_attribute_value(NULL, AUDIO_ATTR_CHANNELS, cfile->achans);
+        lives_object_set_attribute_value(NULL, ATTR_AUDIO_CHANNELS, cfile->achans);
       } else {
-        lives_object_set_attribute_value(NULL, AUDIO_ATTR_CHANNELS, 0);
+        lives_object_set_attribute_value(NULL, ATTR_AUDIO_CHANNELS, 0);
       }
       obj_attr_set_readonly(attr2, TRUE);
 

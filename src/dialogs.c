@@ -251,7 +251,7 @@ static void del_event_cb(LiVESWidget *dialog, livespointer data) {
 // the type of message box here is with 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/CANCEL/RETRY)
 // if a single OK button is needed, use create_message_dialog() in interface.c instead
 
-LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int warn_mask_number) {
+LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, uint64_t warn_mask_number) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *label;
@@ -594,6 +594,19 @@ boolean do_warning_dialogf(const char *fmt, ...) {
 }
 
 
+boolean do_warning_dialog_with_checkf(uint64_t warn_mask_number, const char *fmt, ...) {
+  va_list xargs;
+  boolean resb;
+  char *textx;
+  va_start(xargs, fmt);
+  textx = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  resb = do_warning_dialog_with_check(textx, warn_mask_number);
+  lives_free(textx);
+  return resb;
+}
+
+
 LIVES_GLOBAL_INLINE boolean do_warning_dialog(const char *text) {
   return do_warning_dialog_with_check(text, 0);
 }
@@ -664,7 +677,7 @@ boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number) 
     if (response == LIVES_RESPONSE_YES) prefs->warning_mask |= warn_mask_number;
     else prefs->warning_mask &= ~warn_mask_number;
   }
-  
+
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   lives_freep((void **)&mytext);
 

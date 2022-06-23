@@ -686,16 +686,15 @@ boolean should_use_decoder(int clipno) {
     if (sfile->decoder_uid || sfile->old_dec_uid) {
       if (!sfile->old_dec_uid) sfile->old_dec_uid = sfile->decoder_uid;
       use_decoder = TRUE;
-    }
-    else {
+    } else {
       if (sfile->header_version >= 104) {
-	if (get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_UID, &sfile->old_dec_uid, 0))
-	  use_decoder = TRUE;
+        if (get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_UID, &sfile->old_dec_uid, 0))
+          use_decoder = TRUE;
       } else {
-	char decplugname[PATH_MAX];
-	if (get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_NAME, decplugname, PATH_MAX)) {
-	  sfile->old_dec_uid = 1;
-	  use_decoder = TRUE;
+        char decplugname[PATH_MAX];
+        if (get_clip_value(mainw->current_file, CLIP_DETAILS_DECODER_NAME, decplugname, PATH_MAX)) {
+          sfile->old_dec_uid = 1;
+          use_decoder = TRUE;
 	  // *INDENT-OFF*
 	}}}}
 // *INDENT-ON*
@@ -1948,7 +1947,7 @@ LIVES_LOCAL_INLINE void add_attributes_for_clip_instance(lives_object_instance_t
 
   if (intent != LIVES_INTENTION_IMPORT) return;
 
-  if (lives_has_capacity(icaps->capacities, LIVES_CAPACITY_LOCAL)) {
+  if (lives_has_capacity(icaps->capacities, OBJ_CAPACITY_LOCAL)) {
     lives_obj_attr_t *attr;
 
     if (prefs->startup_phase != 0) return;
@@ -1965,7 +1964,7 @@ LIVES_LOCAL_INLINE void add_attributes_for_clip_instance(lives_object_instance_t
     } else {
       lives_object_set_attr_value(obj, attr, capable->shmdir_path);
     }
-  } else if (lives_has_capacity(icaps->capacities, LIVES_CAPACITY_REMOTE)) {
+  } else if (lives_has_capacity(icaps->capacities, OBJ_CAPACITY_REMOTE)) {
     char *uidstr, *tmpdir;
     lives_obj_attr_t *attr = lives_object_declare_attribute(obj, CLIP_ATTR_STAGING_DIR, WEED_SEED_STRING);
     // eventually 'ytdl' should come from an optional req CLIP_ATTR_STAGING_PARAM

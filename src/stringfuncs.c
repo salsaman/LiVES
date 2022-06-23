@@ -28,15 +28,13 @@ LiVESList *get_token_count_split_nth(char *string, int delim, size_t *ntoks, int
     *string = 0;
     if (nt >= 0) {
       if (pieces > nt) return lives_list_append(list, (void *)lives_strdup(base));
-    }
-    else list = lives_list_append(list, (void *)lives_strdup(base));
+    } else list = lives_list_append(list, (void *)lives_strdup(base));
     pieces++;
     base = (char *)(++string);
   }
   if (nt >= 0) {
     if (pieces > nt) return lives_list_append(list, (void *)lives_strdup(base));
-  }
-  else list = lives_list_append(list, (void *)lives_strdup(base));
+  } else list = lives_list_append(list, (void *)lives_strdup(base));
   if (ntoks) *ntoks = pieces;
   return list;
 }

@@ -160,10 +160,10 @@ typedef weed_error_t (*weed_default_getter_f)(weed_plant_t *plant, const char *k
 
 /* host bootstrap function */
 typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *,
-    int32_t plugin_weed_min_api_version,
-    int32_t plugin_weed_max_api_version,
-    int32_t plugin_filter_min_api_version,
-    int32_t plugin_filter_max_api_version);
+					  int32_t plugin_weed_min_api_version,
+					  int32_t plugin_weed_max_api_version,
+					  int32_t plugin_filter_min_api_version,
+					  int32_t plugin_filter_max_api_version);
 
 /* mandatory plugin functions */
 typedef weed_plant_t *(*weed_setup_f)(weed_bootstrap_f weed_boot);
@@ -177,7 +177,6 @@ typedef weed_error_t (*weed_deinit_f)(weed_plant_t *filter_instance);
 /* special plugin functions */
 typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed_plant_t *parameter,
 					     int inverse);
-
 
 // PLUGIN_INFO
 // mandatory:
@@ -291,7 +290,6 @@ typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed
 // FILTER_CLASS GUI
 #define WEED_LEAF_LAYOUT_SCHEME "layout_scheme"
 
-
 // FILTER_INSTANCE
 // mandatory
 #define WEED_LEAF_FILTER_CLASS "filter_class"
@@ -315,7 +313,6 @@ typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed
 #define WEED_LEAF_EASE_IN "ease_in" // host request, set prior to first process_func() call
 #define WEED_LEAF_EASE_OUT "ease_out" // host request, set prior to andy process_func() call
 
-
 // CHANNEL_TEMPLATE
 // mandatory
 /// WEED_LEAF_NAME
@@ -328,7 +325,6 @@ typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed
 /// WEED_LEAF_DESCRIPTION
 #define WEED_LEAF_MAX_REPEATS "max_repeats"
 /// WEED_LEAF_PALETTE_LIST
-
 
 // CHANNEL
 // mandatory
@@ -365,7 +361,6 @@ typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed
 #define WEED_LEAF_PIXEL_ASPECT_RATIO "par"
 #define WEED_LEAF_GAMMA_TYPE "gamma_type"
 #define WEED_LEAF_ALPHA_PREMULTIPLIED "alpha_premult"
-
 
 // PARAM_TEMPLATE
 // mandatory
@@ -407,6 +402,13 @@ typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed
 // PARAM_GUI
 #define WEED_LEAF_CHOICES_LANGUAGE "choices_lang"
 #define WEED_LEAF_DISPLAY_VALUE "display_value"
+
+#define WEED_LEAF_MIN_WEED_API_VERSION   "min_weed_api_version"
+#define WEED_LEAF_MAX_WEED_API_VERSION   "max_weed_api_version"
+#define WEED_LEAF_MIN_WEED_ABI_VERSION WEED_LEAF_MIN_WEED_API_VERSION
+#define WEED_LEAF_MAX_WEED_ABI_VERSION WEED_LEAF_MAX_WEED_API_VERSION
+#define WEED_LEAF_MIN_FILTER_API_VERSION "min_weed_filter_version"
+#define WEED_LEAF_MAX_FILTER_API_VERSION "max_weed_filter_version"
 
 #ifdef __cplusplus
 }

@@ -3611,7 +3611,10 @@ void redraw_timeline(int clipno) {
           lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
         }
         pthread_mutex_unlock(&mainw->tlthread_mutex);
-        lives_nanosleep_until_zero(mainw->drawtl_thread);
+        while (mainw->drawtl_thread) {
+          fg_service_fulfill();
+          lives_nanosleep(1000);
+        }
       } else pthread_mutex_unlock(&mainw->tlthread_mutex);
       if (mainw->multitrack || mainw->reconfig) return;
       lives_mutex_lock_carefully(&mainw->tlthread_mutex);
@@ -3621,7 +3624,7 @@ void redraw_timeline(int clipno) {
                                "i", clipno);
         lives_proc_thread_sync_ready(mainw->drawtl_thread);
         lives_nanosleep_while_false(lives_proc_thread_get_cancellable(mainw->drawtl_thread));
-	lives_proc_thread_dontcare_nullify(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
+        lives_proc_thread_dontcare_nullify(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
       }
       pthread_mutex_unlock(&mainw->tlthread_mutex);
       return;

@@ -13,13 +13,23 @@ extern "C"
 {
 #endif
 
+  // reminder to self (!)
+  // if we have a struct type *s == 0xF00000
+  // field n is at offset (char *)s + x == p
+  // this is a pointer to the field
+  // if we dereference this *p == field n
+  // then if p is a pointer, field x is at *p + offset to field.
+  // this is a pointer to the field
+
 #include <stdio.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <string.h>
+#if !defined LSD_OVERRIDE_STRGFUNCS || !defined LSD_OVERRIDE_MEMFUNCS
 #include <stdlib.h>
+#include <string.h>
+#endif
+#include <inttypes.h>
+#include <stdarg.h>
+
 #include <unistd.h>
-#include <errno.h>
 
   //#define DEBUG
 
@@ -49,27 +59,12 @@ extern "C"
 
 #ifdef __GNUC__
 #define ALLOW_UNUSED __attribute__((unused))
-#define GNU_MALLOC_SIZE2(argx, argy) __attribute__((alloc_size(argx, argy)))
 #define GNU_HOT __attribute__((hot))
-
-#ifndef OVERRIDE_MEMFUNCS
-#ifdef USE_POSIX_MEMALIGN
-#define GNU_ALIGNED(sizex) __attribute__((assume_aligned(sizex)))
-#endif
-#endif
-
 #else
 #define ALLOW_UNUSED
-#define GNU_MALLOC_SIZE2(x, y)
 #define GNU_HOT
-
-#ifndef OVERRIDE_MEMFUNCS
-#ifdef USE_POSIX_MEMALIGN
-#define GNU_ALIGNED(x)
-#endif
 #endif
 
-#endif
 #define _SELF_STRUCT_STRUCT_ struct _lsd_struct_def
 
 #define LSD_SELF_TYPE lsd_struct_def_t
@@ -96,100 +91,165 @@ extern "C"
 #define LSD_FIELD_USER_DATA			"user_data"
 #define LSD_FIELD_END_ID			"end_id"
 
-#define LSD_SUCCESS 1
-#define LSD_FAIL 0
+#define LSD_SUCCESS 0
+#define LSD_FAIL 1
 #define LSD_ERROR -1
-
-#define LSD_IN_STRUCT_IDX -1
   
-#ifndef OVERRIDE_MEMFUNCS
-#ifndef USE_POSIX_MEMALIGN
+#ifndef LSD_OVERRIDE_MEMFUNCS
   static void *(*_lsd_calloc)(size_t nmemb, size_t size) = calloc;
-#endif
   static void *(*_lsd_memcpy)(void *dest, const void *src, size_t n) = memcpy;
   static void *(*_lsd_memset)(void *s, int c, size_t n) = memset;
   static void (*_lsd_free)(void *ptr) = free;
+#else
+  extern void *(*_lsd_calloc)(size_t nmemb, size_t size);
+  extern void *(*_lsd_memcpy)(void *dest, const void *src, size_t n);
+  extern void *(*_lsd_memset)(void *s, int c, size_t n);
+  extern void (*_lsd_free)(void *ptr);
 #endif
 
-#ifndef OVERRIDE_STRFUNCS
+#ifndef LSD_OVERRIDE_STRFUNCS
   static int(*_lsd_strcmp)(const char *s1, const char *s2) = strcmp;
   static char *(*_lsd_strdup)(const char *s) = strdup;
-static int(*_lsd_snprintf)(char *s, size_t n, const char *format, ...) = snprintf;
-static void (*_lsd_string_free)(void *ptr) = free;
-#endif
-
-#ifndef OVERRIDE_CALLOC_ALIGNED
-
-#ifdef USE_POSIX_MEMALIGN
-
-#ifndef _MEM_ALIGNMENT_
-#define _MEM_ALIGNMENT_ 64 // or whatever power of 2
-#endif
-static void *_lsd_calloc_aligned_(void **memptr, size_t nmemb, size_t size)
-GNU_ALIGNED(MEM_ALIGNMENT) GNU_MALLOC_SIZE2(2, 3);
-
-static void *_lsd_calloc_aligned_(void **memptr, size_t nmemb, size_t size);
-GNU_ALIGNED(MEM_ALIGNMENT) GNU_MALLOC_SIZE2(2, 3) {
-  int ret = posix_memalign(memptr, _MEM_ALIGNMENT_, nmemb * size);
-  if (!ret && *memptr)(*_lsd_memset)(*memptr, 0, nmemb * size);
-  return !ret ? *memptr : NULL;
-}
-#else // posix
-static void *_lsd_calloc_aligned_(void **memptr, size_t nmemb, size_t size) GNU_MALLOC_SIZE2(2, 3);
-static void *_lsd_calloc_aligned_(void **memptr, size_t nmemb, size_t size) {
-  return !memptr ? NULL : (!(*memptr = (*_lsd_calloc)(nmemb, size))) ? NULL : *memptr;
-}
-#endif  // over
+  static int(*_lsd_snprintf)(char *s, size_t n, const char *format, ...) = snprintf;
+  static void (*_lsd_string_free)(void *ptr) = free;
 #else
-// fn overiden
-extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
-#endif //
+  extern int(*_lsd_strcmp)(const char *s1, const char *s2);
+  extern char *(*_lsd_strdup)(const char *s);
+  extern int(*_lsd_snprintf)(char *s, size_t n, const char *format, ...);
+  extern void (*_lsd_string_free)(void *ptr);
+#endif
 
-/// AUTOMATION FLAGS
+#ifndef LSD_OVERRIDE_CALLOC_ALIGNED
+  static void *_lsd_calloc_aligned_(void **memptr, size_t nmemb, size_t size) {
+    return !memptr ? NULL : (!(*memptr = (*_lsd_calloc)(nmemb, size))) ? NULL : *memptr;}
+#else
+  extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
+#endif
+
+  typedef _SELF_STRUCT_STRUCT_ LSD_SELF_TYPE;
+
+  typedef void(*_lsd_cb_func)(void *);
+
+  //static _lsd_cb_func lsd_null_cb ALLOW_UNUSED;
+  static void lsd_null_cb(void *none) {/* dummy cb */};
+
+  typedef struct {
+    _lsd_cb_func func;
+    void *data;
+  } _lsd_cb;
+
+  // CALLBACK FUNCTION TYPEDEFS
+
+  // struct callbacks
+
+  // this is called from lsd_struct_new after all fields have been initialised via init_cbunc
+  typedef void (*lsd_struct_new_cb)(void *strct, void *parent, const char *strct_type,
+				    void *new_user_data);
+
+  // this is called from lsd_struct_copy after a copy is made
+  typedef void (*lsd_struct_copied_cb)(void *strct, void *child, const char *strct_type,
+				       void *copied_user_data);
+
+  // this is called from lsd_struct_free before any fields are freed or delete_func called
+  typedef void (*lsd_struct_destroy_cb)(void *strct, const char *strct_type, void *delete_user_data);
+
+  // field callbacks
+
+  //called from lsd_struct_new
+  typedef void (*lsd_field_init_cb)(void *strct, const char *struct_type,
+				    const char *field_name, void *ptr_to_field, void *user_data);
+
+  // this is called from lsd_struct_copy after all automatic updates are performed
+  typedef void (*lsd_field_copy_cb)(void *dst_struct, void *src_struct, const char *strct_type,
+				    const char *field_name, void *ptr_to_dst_field,
+				    void *ptr_to_src_field, void *user_data);
+
+  //called from lsd_struct_free before any fields are finalised
+  typedef void (*lsd_field_delete_cb)(void *strct, const char *struct_type,
+				      const char *field_name, void *ptr_to_field, void *user_data);
+  // STRUCTS
+  typedef struct _lsd_special_field lsd_special_field_t;
+
+  struct _lsd_special_field {
+    lsd_special_field_t *next;
+    /// flags may be  0 to optionally provide info re. the field name, byte_size,
+    //(and optionally offset_to_field)
+    uint64_t flags;
+    /// must be set when creating the struct
+    off_t offset_to_field;
+    char name[LSD_FIELD_NAME_LEN]; /// optional unless flags == 0 or any of the fns. below are defined.
+    size_t byte_size; /// defines the element size for alloc and copy
+    // for the LSD field, these hold the struct callbacks
+    _lsd_cb init_cb; ///< will be called from lsd_struct_new
+    _lsd_cb copy_cb; ///< will be called from lsd_struct_copy
+    _lsd_cb delete_cb; ///< called from lsd_struct_free
+  };
+
+#define LSD_SPECIAL_FIELD_SIZE (sizeof(lsd_special_field_t))
+
+  typedef _SELF_STRUCT_STRUCT_ {
+    uint64_t identifier;  /// default: LSD_STRUCT_ID
+    uint64_t unique_id; /// randomly generated id, unique to each instance
+    void *top; ///< ptr to the start of parent struct itself, typecast to a void *
+    char struct_type[LSD_STRUCT_TYPE_LEN]; /// type of the struct as string, e.g "lsd_struct_def_t"
+    size_t struct_size; ///< byte_size of parent struct (sizef(struct))
+    lsd_special_field_t *self_fields;  /// fields in the struct_def_t struct itself
+    lsd_special_field_t *special_fields;  /// may be NULL, else is pointer to NULL terminated array
+    uint64_t owner_uid; ///< can be set to identify the owner, should only be set once, in template
+    uint32_t generation; ///< initialized as 1 and incremented on each copy
+    char class_id[LSD_CLASS_ID_LEN]; /// user definable class_id, value is copied to any clones
+    int32_t refcount; ///< refcount, set to 1 on creation, free unrefs and only frees when 0.
+    void *user_data; /// user_data for instances of struct, reset on copy
+    uint64_t end_id;  /// end marker. == identifier ^ 0xFFFFFFFFFFFFFFFF
+  } LSD_SELF_TYPE; /// 256 bytes
+
+  //////////////////////////////////// USER API ////////////////////////////////////
+
+  /// AUTOMATION FLAGS
 
 #define LSD_FIELD_FLAGS_NONE 0
 
-///  - copying flags
-/// alloc and copy on copy. If byte_size is set, that will be the allocated size,
-/// if byte_size is 0, then we do a strdup.
-/// For nullt arrays, this is applied to each non-zero element
+  ///  - copying flags
+  /// alloc and copy on copy. If byte_size is set, that will be the allocated size,
+  /// if byte_size is 0, then we do a strdup.
+  /// For nullt arrays, this is applied to each non-zero element
 #define LSD_FIELD_FLAG_ALLOC_AND_COPY (1ull << 1)
 
-/// for non arrays:
-/// if byte_size is 0, and ALLOC_AND_COPY is also set
-/// will be set to empty string i.e memset(dest->field, 0, byte_size)
-/// else set to NULL
-///
-/// if byte_size > 0 then field will will be filled with byte_size zeros
-/// i.e. memset(dest->field, 0, byte_size)
-//
-/// for NULLT_ARRAYS, the process will be applied to each element in turn
-/// for bsize == 0:
-/// - if COPY_AND_ALLOC is NOT set, we do a copy by value
-/// -- setting ZERO_ON_COPY is *dangerous* as all elements will instead be set to NULL
-///     hence the array length will be lost !
-///
-/// - if COPY_AND_ALLOC is set:
-/// -- we do a strdup, unless ZERO_ON_COPY is also set in which case we create all empty strings
-///      (up to the NULL element)
-///
-/// for bsize > 0:
-/// - if COPY_AND_ALLOC is NOT set, we do a copy by value
-///    setting ZERO_ON_COPY will result in each value being set to bsize zeroes
-///
-/// - if COPY_AND_ALLOC is set, we do a copy by reference
-///    setting ZERO_ON_COPY will result in each value being set to NULL
-///     hence the array length will be lost !
-///
+  /// for non arrays:
+  /// if byte_size is 0, and ALLOC_AND_COPY is also set
+  /// will be set to empty string i.e memset(dest->field, 0, byte_size)
+  /// else set to NULL
+  ///
+  /// if byte_size > 0 then field will will be filled with byte_size zeros
+  /// i.e. memset(dest->field, 0, byte_size)
+  //
+  /// for NULLT_ARRAYS, the process will be applied to each element in turn
+  /// for bsize == 0:
+  /// - if COPY_AND_ALLOC is NOT set, we do a copy by value
+  /// -- setting ZERO_ON_COPY is *dangerous* as all elements will instead be set to NULL
+  ///     hence the array length will be lost !
+  ///
+  /// - if COPY_AND_ALLOC is set:
+  /// -- we do a strdup, unless ZERO_ON_COPY is also set in which case we create all empty strings
+  ///      (up to the NULL element)
+  ///
+  /// for bsize > 0:
+  /// - if COPY_AND_ALLOC is NOT set, we do a copy by value
+  ///    setting ZERO_ON_COPY will result in each value being set to bsize zeroes
+  ///
+  /// - if COPY_AND_ALLOC is set, we do a copy by reference
+  ///    setting ZERO_ON_COPY will result in each value being set to NULL
+  ///     hence the array length will be lost !
+  ///
 #define LSD_FIELD_FLAG_ZERO_ON_COPY (1ull << 2)
 
-// setting LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY results in init_func being called when a struct is copied
-// in anidentical fashion to when a new struct is created. This allows use of a single callback function to
-// set a default both on creation and when copying. If a copy_func is also defined, then then copy_func will be
-// called as normal as soon as the init_func callback returns. Both functions are called after the struct has been copied
-// and any automatic defualts hav been set
+  // setting LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY results in init_func being called when a struct is copied
+  // in anidentical fashion to when a new struct is created. This allows use of a single callback function to
+  // set a default both on creation and when copying. If a copy_func is also defined, then then copy_func will be
+  // called as normal as soon as the init_func callback returns. Both functions are called after the struct has been copied
+  // and any automatic defualts hav been set
 
-// added in v1.0.1
+  // added in v1.0.1
 #define LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY (1ull << 3)
 
   // - delete flags
@@ -234,8 +294,8 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 #define LSD_FIELD_FLAG_IS_NULLT_ARRAY (1ull << 25)
 
   // combinations:
-  // Z : byte_size == 0 :: set any * to NULL
-  // Z : byte_size > 0 :: memset(byte_size, 0)
+    // Z : byte_size == 0 :: set any * to NULL
+    // Z : byte_size > 0 :: memset(byte_size, 0)
 
   // A&C : byte_size == 0 :: strdup
   // A&C : byte_size > 0 :: malloc(byte_size), memcpy(byte_size)
@@ -282,80 +342,7 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
   // flagbits >= 32 are reserved for  internal flags that should not be messed with
 #define LSD_PRIV_NO_DEL_STRUCT (1ull << 40)	// free all fields but not the struct itself
 
-  // forward decl
-
-  typedef _SELF_STRUCT_STRUCT_ LSD_SELF_TYPE;
-
-  // CALLBACK FUNCTION TYPEDEFS
-
-  // struct callbacks
-
-  // this is called from lsd_struct_new after all fields have been initialised via init_cbunc
-  typedef void (*lsd_struct_new_cb)(void *strct, void *parent, const char *strct_type,
-				    void *new_user_data);
-
-  // this is called from lsd_struct_copy after a copy is made
-  typedef void (*lsd_struct_copied_cb)(void *strct, void *child, const char *strct_type,
-				       void *copied_user_data);
-
-  // this is called from lsd_struct_free before any fields are freed or delete_func called
-  typedef void (*lsd_struct_destroy_cb)(void *strct, const char *strct_type, void *delete_user_data);
-
-  // field callbacks
-
-  //called from lsd_struct_new
-  typedef void (*lsd_field_init_cb)(void *strct, const char *struct_type,
-				    const char *field_name, void *ptr_to_field);
-
-  // this is called from lsd_struct_copy after all automatic updates are performed
-  typedef void (*lsd_field_copy_cb)(void *dst_struct, void *src_struct, const char *strct_type,
-				    const char *field_name, void *ptr_to_dst_field,
-				    void *ptr_to_src_field);
-
-  //called from lsd_struct_free before any fields are finalised
-  typedef void (*lsd_field_delete_cb)(void *strct, const char *struct_type,
-				      const char *field_name, void *ptr_to_field);
-  // STRUCTS
-  typedef struct _lsd_special_field lsd_special_field_t;
-
-  struct _lsd_special_field {
-    lsd_special_field_t *next;
-    /// flags may be  0 to optionally provide info re. the field name, byte_size,
-    //(and optionally offset_to_field)
-    uint64_t flags;
-    /// must be set when creating the struct
-    off_t offset_to_field;
-    char name[LSD_FIELD_NAME_LEN]; /// optional unless flags == 0 or any of the fns. below are defined.
-    size_t byte_size; /// defines the element size for alloc and copy
-    lsd_field_init_cb init_func; ///< will be called from lsd_struct_new
-    lsd_field_copy_cb copy_func; ///< will be called from lsd_struct_copy
-    lsd_field_delete_cb delete_func; ///< called from lsd_struct_free
-  };
-
-
-#define LSD_SPECIAL_FIELD_SIZE (sizeof(lsd_special_field_t))
-
-  typedef _SELF_STRUCT_STRUCT_ {
-    uint64_t identifier;  /// default: LSD_STRUCT_ID
-    uint64_t unique_id; /// randomly generated id, unique to each instance
-    void *top; ///< ptr to the start of parent struct itself, typecast to a void *
-    char struct_type[LSD_STRUCT_TYPE_LEN]; /// type of the struct as string, e.g "lsd_struct_def_t"
-    size_t struct_size; ///< byte_size of parent struct (sizef(struct))
-    lsd_special_field_t *self_fields;  /// fields in the struct_def_t struct itself
-    lsd_special_field_t *special_fields;  /// may be NULL, else is pointer to NULL terminated array
-    uint64_t creator_uid; ///< can be set to identify the creator, should only be set once, in template
-    uint32_t generation; ///< initialized as 1 and incremented on each copy
-    char class_id[LSD_CLASS_ID_LEN]; /// user definable class_id, value is copied to any clones
-    lsd_struct_new_cb new_struct_callback;  ///< called from lsd_struct_new
-    void *new_user_data; /// user_data for new_struct_callback
-    lsd_struct_copied_cb copied_struct_callback;  ///< called from lsd_struct_copy
-    void *copied_user_data; /// user_data for clone_struct_callback
-    lsd_struct_destroy_cb destroy_struct_callback; /// called from lsd_struct_free if refcount is 0
-    void *destroy_user_data; /// user_data for delete_struct_callback
-    int32_t refcount; ///< refcount, set to 1 on creation, free unrefs and only frees when 0.
-    void *user_data; /// user_data for instances of struct, reset on copy
-    uint64_t end_id;  /// end marker. == identifier ^ 0xFFFFFFFFFFFFFFFF
-  } LSD_SELF_TYPE; /// 256 bytes
+  /// API functions ///////////
 
 #define LSD_CREATE_P(lsd, type) do {type *thestruct; lsd = 0;		\
     if (!(*_lsd_calloc_aligned_)((void **)&thestruct, 1, sizeof(type)))	\
@@ -369,43 +356,26 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
     else {lsd = lsd_create(#type, thestruct, sizeof(type), &thestruct->lsd); \
       (*_lsd_free)(thestruct);}} while (0);
 
-  static int lsd_free(const lsd_struct_def_t *) ALLOW_UNUSED;
-  static int lsd_unref(const lsd_struct_def_t *) ALLOW_UNUSED;
-  static int lsd_ref(const lsd_struct_def_t *) ALLOW_UNUSED;
-  static int lsd_get_refcount(const lsd_struct_def_t *) ALLOW_UNUSED;
-
-  // returns LSD_SUCCESS if both struct defs have  same identifier, end_id, struct_type,
-  // struct_size, and class_id (i.e one is copy / instance of another)
-  // (lsd_struct_get_generation can provide more information), otherwise LSD_FAIL
-  static int lsd_same_family(const lsd_struct_def_t *lsd1, lsd_struct_def_t *lsd2) ALLOW_UNUSED;
-
-  // sets class data which will be copied to all instances from template
-  // and from instance to copies.
-  static void lsd_struct_set_class_id(lsd_struct_def_t *, const char *class_id) ALLOW_UNUSED;
-
-  // The returned value must not be freed or written to.
-  static const char *lsd_struct_get_class_id(lsd_struct_def_t *) ALLOW_UNUSED;
-
-  // set creator_uid, but only works for templates, and if the value is currently unset (0)
-  // returns the new value. This is passed to all structs created
-  static uint64_t lsd_struct_set_creator_uid(const lsd_struct_def_t *, uint64_t creator_uid)
-    ALLOW_UNUSED;
-
-  // The returned value must not be freed or written to.
-  static uint64_t lsd_struct_get_creator_uid(lsd_struct_def_t *) ALLOW_UNUSED;
-
   static const lsd_struct_def_t *lsd_create(const char *struct_type, void *mystruct, size_t struct_size,
 					    lsd_struct_def_t *lsd_in_struct) ALLOW_UNUSED;
 
   static const lsd_struct_def_t *lsd_create_p(const char *struct_type, void *mystruct, size_t struct_size,
 					      lsd_struct_def_t **lsd_in_struct) ALLOW_UNUSED;
 
-  // function to define special fields, array elements returned from make_structdef
-  // should be assigned via this function
+  // function to define special fields
+  // if the flags are LSD_FIELD_IS_SUBSTRUCT, the parameter following sample_struct
+  // MUST be a pointer to the lsd_struct_def of the substruct, and any further parameters will be ignored.
+  //
+  // otherwise, the parameter after sample_struct MUST be EITHER:
+  // NULL -> any further parameters will be ignored,
+  //
+  // OR a set of callbacks:
+  // init_callback, init_callback_data, copy_callback, copy_callback_data, free_callback, free_callback_data
+  // if a callback is not used, then it MUST be set to lsd_null_cb, and the following data parameter omitted
+  // all three callbacks MUST be defined.
+  //
   static void add_special_field(lsd_struct_def_t *, const char *field_name, uint64_t flags, void *ptr_to_field,
-				size_t data_size, void *sample_struct,
-				lsd_field_init_cb init_func, lsd_field_copy_cb copy_func,
-				lsd_field_delete_cb delete_func) ALLOW_UNUSED;
+				size_t data_size, void *sample_struct, ...) ALLOW_UNUSED;
 
   /// creates a new instance of struct. lsd must  be one returned from create_lsd / lsd_struct_init
   // otherwise you can copy
@@ -419,21 +389,44 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
   // lsd must be within a struct, not a static template
   static void *lsd_struct_copy(lsd_struct_def_t *) ALLOW_UNUSED;
 
-  // just calls lsd_struct_unref
+  // this is an alias for lsd_struct_unref. If you want to force free, then set lsd->refcount <= 0 first.
   static int lsd_struct_free(lsd_struct_def_t *) ALLOW_UNUSED;
 
-  // decrements refcount, then if <=0 frees struct. Returns refcount (so value <=0 means struct freed)
-  // returns -1 if parameter is NULL. It is left to the creator to implement locking
+  // decrements refcount, then if <= 0 frees struct. Returns LSD_SUCCESS (0) if freed, otherwise returns the
+  // new refcount.
+  // returns LSD_ERROR (-1) if parameter is NULL, or the lsd is badly formed.
+  // It is left to the caller to implement mutex locking if needed.
   static int lsd_struct_unref(lsd_struct_def_t *) ALLOW_UNUSED;
 
-  // increments refcount, returns new value. Returns 0 if parameter is NULL
+  // increments refcount, returns new value. Returns LSD_ERROR (-1) if parameter is NULL
+  // It is left to the caller to implement mutex locking if needed.
   static int lsd_struct_ref(lsd_struct_def_t *) ALLOW_UNUSED;
 
   // Values returned from the get_* functions below refer to the actual fields in the lsd struct,
   // and must not be freed or written to, except via the corresponding API functions
 
-  // returns current refcount, or 0 if NULL is passed
+  // returns current refcount, or LSD_ERROR if NULL is passed
   static int lsd_struct_get_refcount(lsd_struct_def_t *) ALLOW_UNUSED;
+
+  // returns LSD_SUCCESS if both struct defs have  same identifier, end_id, struct_type,
+  // struct_size, and class_id (i.e one is copy / instance of another)
+  // (lsd_struct_get_generation can provide more information), otherwise LSD_FAIL
+  static int lsd_same_family(const lsd_struct_def_t *lsd1, lsd_struct_def_t *lsd2) ALLOW_UNUSED;
+
+  // sets class data which will be copied to all instances from template
+  // and from instance to copies.
+  static void lsd_struct_set_class_id(lsd_struct_def_t *, const char *class_id) ALLOW_UNUSED;
+
+  // The returned value must not be freed or written to.
+  static const char *lsd_struct_get_class_id(lsd_struct_def_t *) ALLOW_UNUSED;
+
+  // set owner_uid, but only works for templates, and if the value is currently unset (0)
+  // returns the new value. This is passed to all structs created
+  static uint64_t lsd_struct_set_owner_uid(const lsd_struct_def_t *, uint64_t owner_uid)
+    ALLOW_UNUSED;
+
+  // The returned value must not be freed or written to.
+  static uint64_t lsd_struct_get_owner_uid(lsd_struct_def_t *) ALLOW_UNUSED;
 
   // set user data for an instance, reset for copies
   static void lsd_struct_set_user_data(lsd_struct_def_t *, void *data) ALLOW_UNUSED;
@@ -441,6 +434,7 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 
   // returns generation number, 0 for a template, 1 for instance created via lsd_struct_new,
   // 2 for copy of instance, 3 for copy of copy, etc
+  // returns LSD_ERROR if the parameter is NULL.
   static int lsd_struct_get_generation(lsd_struct_def_t *) ALLOW_UNUSED;
 
   static uint64_t lsd_struct_get_uid(lsd_struct_def_t *) ALLOW_UNUSED;
@@ -468,23 +462,23 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
   static void lsd_struct_set_destroy_callback(lsd_struct_def_t *, void *destroy_user_data) ALLOW_UNUSED; // TODO
   */
 
-  ////// FUNCTION BODIES //////
+  ////////////////////////////////// END USER API /////////////////////////////////////////////////////////////
 
 #ifndef LSD_UIDLEN
 #define LSD_UIDLEN 8
 #endif
 
 #ifndef LSD_RANDFUNC
-#ifdef HAVE_GETENTROPY
+#if defined _UNISTD_H && defined  _DEFAULT_SOURCE
 #define _LSD_IGN_RET(a) ((void)((a) + 1))
 #define LSD_RANDFUNC(ptr, size) _LSD_IGN_RET(getentropy(ptr, size))
 #else
-  error("\n\ngetentropy not found, so you need to #define LSD_RANDFUNC(ptr, size)\n"
-	"Did you include 'AC_CHECK_FUNCS(getentropy)' in configure.ac ?");
+  #define LSD_RANDFUNC
+#error "getentropy not found, so you need to #define LSD_RANDFUNC(ptr, size)"
+#error "Did you inlcude 'AC_CHECK_FUNCS(getentropy)' in configure.ac ?"
 #endif
 #endif
 
-  static void _lsd_init_copy(void *, void *, const char *, const char *, void *) ALLOW_UNUSED;
   static void _lsd_init_copy(void *dst_struct, void *src_struct, const char *strct_type, const char *field_name,
 			     void *ptr_to_field) {
     // self_fields callbacks. These are run when creating (initng) a template (src_struct == NULL)
@@ -503,7 +497,8 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 
     // copy / init new struct
     if (src_struct) {
-      if (!(*_lsd_strcmp)(field_name, LSD_FIELD_TOP))
+      if (!(*_lsd_strcmp)(field_name, LSD_FIELD_TOP)
+	  && !(*_lsd_strcmp)(strct_type, LSD_SELF_STRUCT_TYPE))
 	(*(void **)ptr_to_field) = dst_struct;
       else if (!(*_lsd_strcmp)(field_name, LSD_FIELD_GENERATION))
 	(*(int *)ptr_to_field)++;
@@ -517,7 +512,6 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
   }
 
   // builtin init_cb
-  static void _lsd_init_cb(void *, const char *, const char *, void *) ALLOW_UNUSED;
   static void _lsd_init_cb(void *strct, const char *strct_type, const char *field_name,
 			   void *ptr_to_field) {
     _lsd_init_copy(strct, NULL, strct_type, field_name, ptr_to_field);
@@ -526,70 +520,125 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
   static void _lsd_list_append(lsd_special_field_t **list, lsd_special_field_t *data) {
     if (!*list) *list = data;
     else {
-      for (; (*list)->next; *list = (*list)->next);
-      (*list)->next = data;
+      lsd_special_field_t *xlist;
+      for (xlist = *list; xlist->next; xlist = xlist->next);
+      xlist->next = data;
     }
   }
 
   // builtin copy cb
-  static void _lsd_copy_cb(void *, void *, const char *, const char *, void *, void *) ALLOW_UNUSED;
   static void _lsd_copy_cb(void *dst, void *src, const char *strct_type, const char *field_name,
 			   void *dst_fld_ptr, void *src_fld_ptr) {
-    _lsd_init_copy(dst, src, strct_type, field_name, dst_fld_ptr);
-  }
+    _lsd_init_copy(dst, src, strct_type, field_name, dst_fld_ptr);}
 
-  static void _lsd_list_copy_cb(void *, void *, const char *, const char *, void *, void *) ALLOW_UNUSED;
-  static void _lsd_list_copy_cb(void *dst, void *src, const char *strct_type, const char *field_name,
+  static GNU_HOT void _lsd_list_copy_cb(void *dst, void *src, const char *strct_type, const char *field_name,
 				void *dst_fld_ptr, void *src_fld_ptr) {
-    lsd_special_field_t **slist = (lsd_special_field_t **)src_fld_ptr;
-    lsd_special_field_t **dlist = (lsd_special_field_t **)dst_fld_ptr;
-    for (; *slist; *slist = (*slist)->next) {
+    lsd_special_field_t **slistp = (lsd_special_field_t **)src_fld_ptr;
+    lsd_special_field_t **dlistp = (lsd_special_field_t **)dst_fld_ptr, *dlist = NULL;
+    for (lsd_special_field_t *slist = *slistp; slist; slist = slist->next) {
       lsd_special_field_t *spcf;
       if (!(*_lsd_calloc_aligned_)((void **)&spcf, 1, LSD_SPECIAL_FIELD_SIZE)) {
 	lsd_memerr_print(LSD_SPECIAL_FIELD_SIZE, spcf->name, strct_type);
 	break;
       }
-      if (*dlist) (*dlist)->next = spcf;
-      *dlist = spcf;
-    }
-  }
+      (*_lsd_memcpy)(spcf, slist, LSD_SPECIAL_FIELD_SIZE);
+      if (!dlist) *dlistp = dlist = spcf;
+      else {
+	dlist->next = spcf;
+	dlist = dlist->next;
+      }}}
 
   // builtin delete_cb
-  static void _lsd_delete_cb(void *, const char *, const char *, void *) ALLOW_UNUSED;
+  static void _lsd_delete_cb(void *strct, const char *strct_type, const char *field_name,
+			     void *ptr_to_field) ALLOW_UNUSED;
   static void _lsd_delete_cb(void *strct, const char *strct_type, const char *field_name,
 			     void *ptr_to_field) {/* nothing */}
 
-  static void _lsd_list_delete_cb(void *, const char *, const char *, void *) ALLOW_UNUSED;
-  static void _lsd_list_delete_cb(void *strct, const char *strct_type, const char *field_name,
+  static void _lsd_list_free_cb(void *strct, const char *strct_type, const char *field_name,
 				  void *ptr_to_field) {
-    lsd_special_field_t **slist = (lsd_special_field_t **)ptr_to_field, *slist_next;;
+    lsd_special_field_t **slist = (lsd_special_field_t **)ptr_to_field, *slist_next;
     for (; *slist; *slist = slist_next) {
       slist_next = (*slist)->next;
       (*_lsd_free)(*slist);
     }
   }
 
-  static void  _lsd_add_special_field(lsd_special_field_t **list, const char *field_name, uint64_t flags,
-				      char *ptr_to_field, size_t data_size, char *sample_struct,
-				      lsd_field_init_cb init_func, lsd_field_copy_cb copy_func,
-				      lsd_field_delete_cb delete_func) {
+  static int  _lsd_add_special_field(lsd_special_field_t **list, const char *field_name, uint64_t flags,
+				     void *ptr_to_field, size_t data_size, void *sample_struct, va_list vargs,
+				     lsd_special_field_t **list_last) {
+
+    _lsd_cb_func cb_func;
+    void *cb_data;
     lsd_special_field_t *spcf;
-    if (!(*_lsd_calloc_aligned_)((void **)&spcf, 1, LSD_SPECIAL_FIELD_SIZE)) {
-      lsd_memerr_print(LSD_SPECIAL_FIELD_SIZE, field_name, "?????");
-      return;
+
+    if (flags & LSD_FIELD_FLAG_IS_SUBSTRUCT) {
+      if (flags != LSD_FIELD_FLAG_IS_SUBSTRUCT) return LSD_ERROR;
     }
+
+    if (flags == LSD_FIELD_FLAG_IS_SUBSTRUCT) {
+      cb_data = va_arg(vargs, void *);
+      if (!cb_data) return LSD_ERROR;
+      if (!(*_lsd_calloc_aligned_)((void **)&spcf, 1, LSD_SPECIAL_FIELD_SIZE)) {
+	lsd_memerr_print(LSD_SPECIAL_FIELD_SIZE, field_name, "?????");
+	return LSD_FAIL;
+      }
+      spcf->init_cb.data = spcf->copy_cb.data = spcf->delete_cb.data = cb_data;
+    }
+    else {
+      if (!(*_lsd_calloc_aligned_)((void **)&spcf, 1, LSD_SPECIAL_FIELD_SIZE)) {
+	lsd_memerr_print(LSD_SPECIAL_FIELD_SIZE, field_name, "?????");
+	return LSD_FAIL;
+      }
+      cb_func = va_arg(vargs, void *);
+      if (cb_func){
+	if (cb_func != lsd_null_cb) {
+	  spcf->init_cb.func = cb_func;
+	  if (!list_last) {
+	    cb_data = va_arg(vargs, void *);
+	    spcf->init_cb.data = cb_data;
+	  }
+	}
+	cb_func = va_arg(vargs, void *);
+	if (!cb_func) {
+	  (*_lsd_free)(spcf);
+	  return LSD_ERROR;
+	}
+	if (cb_func != lsd_null_cb) {
+	  spcf->copy_cb.func = cb_func;
+	  if (!list_last) {
+	    cb_data = va_arg(vargs, void *);
+	    spcf->copy_cb.data = cb_data;
+	  }
+	}
+	cb_func = va_arg(vargs, void *);
+	if (!cb_func) {
+	  (*_lsd_free)(spcf);
+	  return LSD_ERROR;
+	}
+	if (cb_func != lsd_null_cb) {
+	  spcf->delete_cb.func = cb_func;
+	  if (!list_last) {
+	    cb_data = va_arg(vargs, void *);
+	    spcf->delete_cb.data = cb_data;
+	  }}}}
+
     spcf->flags = flags;
     spcf->offset_to_field = ptr_to_field - sample_struct;
     if (field_name)(*_lsd_snprintf)(spcf->name, LSD_FIELD_NAME_LEN, "%s", field_name);
     spcf->byte_size = data_size;
-    spcf->init_func = init_func;
-    spcf->copy_func = copy_func;
-    spcf->delete_func = delete_func;
-    _lsd_list_append(list, spcf);
+    if (!*list || !list_last) _lsd_list_append(list, spcf);
+    else _lsd_list_append(list_last, spcf);
+    if (list_last) *list_last = spcf;
+    return LSD_SUCCESS;
   }
 
-  static inline int _lsd_is_ptr(lsd_struct_def_t *lsd) {
-    return (lsd && lsd->self_fields) ? lsd->self_fields->byte_size != 0 : 0;
+  static inline void _lsd_add_self_field(lsd_struct_def_t *lsd, const char *field_name, uint64_t flags,
+							  void *ptr_to_field, size_t data_size, void *sample_struct,
+							  lsd_special_field_t **list_last, ...) {
+    va_list vargs;
+    va_start(vargs, list_last);
+    _lsd_add_special_field(&lsd->self_fields, field_name, flags, ptr_to_field, data_size, sample_struct, vargs, list_last);
+    va_end(vargs);
   }
 
   // auto (flagbit) handlers
@@ -617,9 +666,7 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 	    && !(flags & LSD_FIELD_FLAG_FREE_ALL_ON_DELETE))
 	  (*_lsd_string_free)(vptr);
 	else (*_lsd_free)(vptr);
-	// *INDENT-OFF*
       }}}
-  // *INDENT-ON*
 
   static void _lsd_auto_copy(void *dst_field, void *src_field, lsd_special_field_t *spcf,
 			     lsd_struct_def_t *lsd) GNU_HOT;
@@ -636,10 +683,10 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 	    lsd_debug_print("error: memory request too large (%" PRIu64 " > %" PRIu64 ")\n", bsize, LSD_MAX_ALLOC);
 	    return;
 	  } else {
-	    lsd_debug_print("allocating %" PRIu64 " bytes...", bsize);
+	    lsd_debug_print("allocating %" PRIu64 " bytes at %p (%p)...", bsize, dst_field, *(void **)dst_field);
 	    if (spcf->flags & LSD_FIELD_FLAG_ZERO_ON_COPY) {
 	      // alloc and zero
-	      if ((*_lsd_calloc_aligned_)((void **)dst_field, 1, bsize)) {
+	      if ((*_lsd_calloc_aligned_)((void **)&dst_field, 1, bsize)) {
 		lsd_debug_print("and set to zero.\n");
 	      } else lsd_memerr_print(bsize, spcf->name, lsd->struct_type);
 	      return;
@@ -649,15 +696,13 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 		lsd_debug_print("value is NULL, not copying\n");
 	      } else {
 		if ((*_lsd_calloc_aligned_)((void **)dst_field, 1, bsize)) {
+		  lsd_debug_print("and copying from src %p to dest %p.\n",
+				  *(void **)src_field, *(void **)dst_field);
 		  (*_lsd_memcpy)(*(void **)dst_field, src_field, bsize);
-		  lsd_debug_print("and copying from src to dest.\n");
 		} else {
 		  lsd_memerr_print(bsize, spcf->name, lsd->struct_type);
 		  return;
-		  // *INDENT-OFF*
-		}}}}}
-	// *INDENT-ON*
-	else {
+		}}}}} else {
 	  // string (bsize == 0)
 	  char **cptr = (char **)dst_field;
 	  if (spcf->flags & LSD_FIELD_FLAG_ZERO_ON_COPY) {
@@ -671,9 +716,8 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 	    } else {
 	      *cptr = NULL;
 	      lsd_debug_print("value is NULL, not copying\n");
-	    }
-	  }
-	}
+	    }}}
+
 	if (!(spcf->flags & LSD_FIELD_FLAG_FREE_ON_DELETE))
 	  lsd_debug_print("WARNING: FREE_ON_DELETE not set\n");
 	if (spcf->flags & LSD_FIELD_FLAG_FREE_ALL_ON_DELETE)
@@ -758,15 +802,15 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 	}
 	return;
       } else {
-	/// array of elemnts of bsize
+	/// array of elements of bsize
 	if (spcf->flags & (LSD_FIELD_FLAG_ALLOC_AND_COPY
 			   | LSD_FIELD_FLAG_ZERO_ON_COPY)) {
 	  /// alloc and copy elements of size bsize
-	  void **vptr = (*(void ** *)src_field), **dptr;
+	  void **vptr = (*(void ** *)src_field), **dptr = NULL;
 	  if (vptr) {
 	    count = 0;
 	    while (vptr[count]) count++;
-	    if (!(*_lsd_calloc_aligned_)((void **)&dptr, count + 1, sizeof(void *))) {
+	    if (!(*_lsd_calloc_aligned_)((void **)dptr, count + 1, sizeof(void *))) {
 	      lsd_memerr_print((count + 1) * sizeof(void *), spcf->name, lsd->struct_type);
 	      return;
 	    }
@@ -829,9 +873,7 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 	  if (spcf->flags & LSD_FIELD_FLAG_FREE_ALL_ON_DELETE) {
 	    lsd_debug_print("WARNING: FREE_ALL_ON_DELETE is set\n");
 	  }
-	  // *INDENT-OFF*
 	}}}
-    // *INDENT-ON*
   }
 
   static void _lsd_struct_free(lsd_struct_def_t *) ALLOW_UNUSED;
@@ -840,28 +882,29 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
     uint64_t flags = 0;
     size_t lsd_size = 0;
     void *src_field;
-    char *top;
+    void *top;
 
     if (!lsd) return;
 
     if (lsd->top) {
-      if (lsd->destroy_struct_callback)
-	(*lsd->destroy_struct_callback)(lsd->top, lsd->struct_type, lsd->destroy_user_data);
+      /* if (lsd->destroy_struct_callback) */
+      /* 	(*lsd->destroy_struct_callback)(lsd->top, lsd->struct_type, lsd->destroy_user_data); */
 
-      spcf = lsd->special_fields;
-
-      for (spcf = lsd->special_fields; spcf; spcf = spcf->next) {
+    for (spcf = lsd->special_fields; spcf; spcf = spcf->next) {
 	flags = spcf->flags;
-	if (!flags) continue;
 	if (flags & LSD_FIELD_FLAG_IS_SUBSTRUCT) {
 	  /// some other kind of substruct, find its lsd and call again
 	  /// TODO
 	  continue;
 	}
-	if (spcf->delete_func) {
-	  src_field = (char *)lsd->top + spcf->offset_to_field;
-	  (*spcf->delete_func)(lsd->top, lsd->struct_type, spcf->name, &src_field);
+	src_field = lsd->top + spcf->offset_to_field;
+
+	if (spcf->delete_cb.func) {
+	  (*((lsd_field_delete_cb)spcf->delete_cb.func))(lsd->top, lsd->struct_type, spcf->name,
+							 src_field, spcf->delete_cb.data);
 	}
+	if (!flags) continue;
+	_lsd_auto_delete(src_field, flags, spcf->byte_size);
       }
     }
 
@@ -877,10 +920,12 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 	/// TODO
 	continue;
       }
-      if (spcf->delete_func) {
-	src_field = top + spcf->offset_to_field;
-	_lsd_auto_delete(&src_field, flags, spcf->byte_size);
-      }
+      if (spcf->delete_cb.func) {
+	(*((lsd_field_delete_cb)spcf->delete_cb.func))(top, LSD_SELF_STRUCT_TYPE,
+						       spcf->name, &src_field,
+						       spcf->delete_cb.data);
+      src_field = top + spcf->offset_to_field;
+      _lsd_auto_delete(&src_field, flags, spcf->byte_size);
     }
 
     spcf = lsd->self_fields;
@@ -890,43 +935,42 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 
     _lsd_auto_delete(spcf, spcf->flags, 1);
 
-    if (lsd_size) {
-      (*_lsd_free)(lsd);
-    }
+    if (lsd_size) (*_lsd_free)(lsd);
+
     if (!(flags & LSD_PRIV_NO_DEL_STRUCT))
       if (top)(*_lsd_free)(top);
+    }
   }
 
   static void  _lsd_copy_fields(lsd_struct_def_t *lsd, lsd_special_field_t *spfields,
 				void *new_struct) {
-    int is_lsd = 0;
-    lsd_special_field_t *spcf = spfields;
-    char *stop, *dtop;
-
-    if (spfields == lsd->self_fields) {
-      stop = (char *)lsd;
-      dtop = (char *)new_struct;
-      if (spcf->byte_size) {
-	stop = *((char **)stop);
-	dtop = *((char **)dtop);
-      }
-      is_lsd = 1;
-    }
-    else {
-      stop = lsd->top;
-      dtop = new_struct;
-    }
-
-    for (; spcf; spcf = spcf->next) {
-      char *dst_field, *src_field;
+    for (lsd_special_field_t *spcf = spfields; spcf; spcf = spcf->next) {
+      void *dst_field, *src_field;
       if (spcf->flags) {
-	if (is_lsd) {
-	  src_field = stop;
-	  dst_field = dtop;
+	if (spfields == lsd->self_fields) {
+	  if (spcf == lsd->self_fields) {
+	    src_field = (char *)lsd;
+	    if (lsd->self_fields->byte_size) {
+	      //dst_Field is lsd_struct_def_t **
+	      dst_field = (char *)new_struct + spcf->offset_to_field;
+	    }
+	    else
+	      dst_field = (char *)new_struct + spcf->offset_to_field;
+	  }
+	  else {
+	    src_field = (char *)lsd + spcf->offset_to_field;
+	    if (lsd->self_fields->byte_size) {
+	      dst_field = (char *)((lsd_struct_def_t *)((char *)new_struct + lsd->self_fields->offset_to_field))
+		+ spcf->offset_to_field;
+	    }
+	    else {
+	      dst_field = (char *)new_struct + lsd->self_fields->offset_to_field + spcf->offset_to_field;
+	    }
+	  }
 	}
 	else {
-	  src_field = stop + spcf->offset_to_field;
-	  dst_field = dtop + spcf->offset_to_field;
+	  src_field = (char *)lsd->top + spcf->offset_to_field;
+	  dst_field = (char *)new_struct + spcf->offset_to_field;
 	}
 
 	lsd_debug_print("handling field %s with flags 0X%016lX\n", spcf->name, spcf->flags);
@@ -937,56 +981,61 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 	  lsd_debug_print("field is another substruct {TODO}\n");
 	  continue;
 	}
-	_lsd_auto_copy(&dst_field, &src_field, spcf, lsd);
+	_lsd_auto_copy(dst_field, src_field, spcf, lsd);
 	lsd_debug_print("field done\n\n");
       }
-      is_lsd = 0;
     }
   }
 
   static void _lsd_run_callbacks(lsd_struct_def_t *lsd, lsd_special_field_t *spfields,
 				 void *new_struct, int is_copy) {
-    int is_lsd = 0, is_self = 0;
-    lsd_special_field_t *spcf = spfields;
-    char *stop, *dtop = NULL;
 
-    if (spfields == lsd->self_fields) {
-      stop = (char *)lsd;
-      if (is_copy){
-	dtop = (char *)new_struct + spfields->offset_to_field;
-	if (spcf->byte_size && is_copy) dtop = *((char **)dtop);
+    for (lsd_special_field_t *spcf = spfields; spcf; spcf = spcf->next) {
+      char *src_field, *dst_field = NULL;
+      if (spcf == lsd->self_fields
+	  || (is_copy && !(spcf->flags & LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY)
+	      && !spcf->copy_cb.func)
+	  || ((!is_copy || (spcf->flags & LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY))
+	      && !spcf->init_cb.func)) continue;
+
+      if (spfields == lsd->self_fields) {
+	if (spcf == lsd->self_fields) continue;
+	// ptr to field in lsd
+	// this is correct if lsd->top == 0
+	src_field = (char *)lsd + spcf->offset_to_field;
+	//
+	if (is_copy) {
+	  if (lsd->self_fields->byte_size) {
+	    lsd_struct_def_t *dst_lsd = *((lsd_struct_def_t **)((char *)new_struct
+								+ lsd->self_fields->offset_to_field));
+	    dst_field = (char *)dst_lsd + spcf->offset_to_field;
+	  }
+	  else {
+	    dst_field = (char *)new_struct + lsd->self_fields->offset_to_field + spcf->offset_to_field;
+	  }
+	}
       }
-      is_lsd = is_self = 1;
-    }
-    else {
-      stop = lsd->top;
-      if (is_copy) dtop = new_struct;
-    }
+      else {
+	src_field = (char *)lsd->top + spcf->offset_to_field;
+	dst_field = (char *)new_struct + spcf->offset_to_field;
+      }
 
-    for (spcf = spfields; spcf; spcf = spcf->next) {
-      char *src_field;
-      if (is_lsd) src_field = stop;
-      else src_field = stop + spcf->offset_to_field;
       if (!is_copy || (spcf->flags & LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY)) {
-	if (spcf->init_func) {
-	  lsd_debug_print("calling init_func for %s\n", spcf->name);
-	  (*spcf->init_func)(new_struct, (spfields == lsd->special_fields)
-			     ? lsd->struct_type : LSD_SELF_STRUCT_TYPE, spcf->name, &src_field);
-	}
+	lsd_debug_print("calling init_func for %s\n", spcf->name);
+	(*((lsd_field_init_cb)spcf->init_cb.func))(new_struct, (spfields == lsd->special_fields)
+						? lsd->struct_type : LSD_SELF_STRUCT_TYPE, spcf->name,
+						   spfields == lsd->self_fields ? src_field : dst_field,
+						   spcf->init_cb.data);
       }
-      if (is_copy) {
-	if (spcf->copy_func) {
-	  char *dst_field;
-	  if (is_lsd) dst_field = dtop;
-	  else dst_field = dtop + spcf->offset_to_field;
-	  lsd_debug_print("calling copy_func for %s\n", spcf->name);
-	  // for self fields, the src_struct is irrelevant, it just needs to be non zero, so we know it is copy
-	  (*spcf->copy_func)(new_struct, is_self ? lsd : lsd->top, (spfields == lsd->special_fields)
-			     ? lsd->struct_type : LSD_SELF_STRUCT_TYPE, spcf->name,
-			     &dst_field, &src_field);
-	}
+
+      if (is_copy && spcf->copy_cb.func) {
+	lsd_debug_print("calling copy_func for %s\n", spcf->name);
+	// for self fields, the src_struct is irrelevent, it just needs to be non zero, so we know it is copy
+	(*((lsd_field_copy_cb)spcf->copy_cb.func))(new_struct, spfields == lsd->self_fields ? lsd : lsd->top,
+						   (spfields == lsd->special_fields)
+						   ? lsd->struct_type : LSD_SELF_STRUCT_TYPE,
+						   spcf->name, dst_field, src_field, spcf->copy_cb.data);
       }
-      is_lsd = 0;
     }
   }
 
@@ -997,14 +1046,13 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
     spfields = lsd->self_fields;
 
     if (!spfields) {
-      lsd_baderr_print("This does not appear to be a valid "
-		       "structure definition. Cannot create or "
-		       "copy using it.\n");
+      lsd_baderr_print("This does not appear to be a valid structure definition. "
+		       "Cannot create or copy using it.\n");
       return NULL;
     }
     if (is_copy && !lsd->top) {
       lsd_baderr_print("Unable to copy struct of type %s, "
-		       "thisis a template which can only be used to create new structs\n",
+		       "this is a template which can only be used to create new structs\n",
 		       lsd->struct_type);
       return NULL;
     }
@@ -1054,11 +1102,13 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
     if (is_copy) {lsd_debug_print("struct copy done\n\n");}
     else {lsd_debug_print("struct init done\n\n");}
 
-    if (is_copy && lsd->copied_struct_callback)
-      (*lsd->copied_struct_callback)(lsd->top, new_struct, lsd->struct_type, lsd->copied_user_data);
+    if (is_copy && lsd->self_fields->copy_cb.func)
+      (((lsd_struct_copied_cb)lsd->self_fields->copy_cb.func))
+	(lsd->top, new_struct, lsd->struct_type, lsd->self_fields->copy_cb.data);
 
-    if (lsd->new_struct_callback)
-      (lsd->new_struct_callback)(new_struct, lsd->top, lsd->struct_type, lsd->new_user_data);
+    if (lsd->self_fields->init_cb.func)
+      ((lsd_struct_new_cb)lsd->self_fields->init_cb.func)(new_struct, lsd->top, lsd->struct_type,
+							  lsd->self_fields->init_cb.data);
 
     return new_struct;
   }
@@ -1070,6 +1120,7 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
   static const lsd_struct_def_t *_lsd_create(const char *struct_type, char *mystruct, size_t struct_size,
 					     lsd_struct_def_t **lsd_in_struct, int is_ptr) {
     lsd_struct_def_t *lsd;
+    lsd_special_field_t *list_last = NULL;
 
     if (!struct_type || !mystruct || !struct_size || (is_ptr && !lsd_in_struct)
 	|| (!is_ptr && !*lsd_in_struct)) return NULL;
@@ -1083,116 +1134,88 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 
     lsd->struct_size = struct_size;
 
-    if (is_ptr) _lsd_add_special_field(&lsd->self_fields, LSD_FIELD_LSD, LSD_FIELD_FLAG_ALLOC_AND_COPY,
-				       (char *)lsd_in_struct, LSD_SELF_STRUCT_SIZE, (char *)lsd, NULL, NULL, NULL);
-    else _lsd_add_special_field(&lsd->self_fields, LSD_FIELD_LSD, LSD_FIELD_FLAGS_NONE,
-				(char *)(*lsd_in_struct), 0, (char *)lsd, NULL, NULL, NULL);
+    // this is synthetic field which holds details of the LSD struct itself
+    if (is_ptr) _lsd_add_self_field(lsd, LSD_FIELD_LSD, LSD_FIELD_FLAG_ALLOC_AND_COPY, (char *)lsd_in_struct,
+				    LSD_SELF_STRUCT_SIZE, (char *)mystruct, &list_last, NULL);
+    else _lsd_add_self_field(lsd, LSD_FIELD_LSD, LSD_FIELD_FLAGS_NONE, (char *)(*lsd_in_struct),
+			     0, (char *)mystruct, &list_last, NULL);
 
-    _lsd_add_special_field(&lsd->self_fields, LSD_FIELD_IDENTIFIER, LSD_FIELD_FLAGS_NONE,
-			   (char *)&lsd->identifier, 0, (char *)lsd, _lsd_init_cb, NULL, NULL);
+    _lsd_add_self_field(lsd, LSD_FIELD_IDENTIFIER, LSD_FIELD_FLAGS_NONE, (char *)&lsd->identifier,
+			0, (char *)lsd, &list_last, _lsd_init_cb, lsd_null_cb, lsd_null_cb);
     // set a new random value on init / copy
-    _lsd_add_special_field(&lsd->self_fields, LSD_FIELD_UNIQUE_ID, LSD_FIELD_FLAGS_NONE,
-			   (char *)&lsd->unique_id, 0, (char *)lsd, _lsd_init_cb, _lsd_copy_cb, NULL);
-    _lsd_add_special_field(&lsd->self_fields, LSD_FIELD_TOP, LSD_FIELD_FLAGS_NONE,
-			   (char *)&lsd->top, 0, (char *)lsd, NULL, _lsd_copy_cb, NULL);
-    _lsd_add_special_field(&lsd->self_fields, LSD_FIELD_SELF_FIELDS, LSD_FIELD_FLAGS_NONE,
-			   (char *)&lsd->self_fields, 0, (char *)lsd, NULL, _lsd_list_copy_cb, _lsd_list_delete_cb);
-    _lsd_add_special_field(&lsd->self_fields, LSD_FIELD_SPECIAL_FIELDS, LSD_FIELD_FLAGS_NONE,
-			   (char *)&lsd->special_fields, 0, (char *)lsd, NULL, _lsd_list_copy_cb, _lsd_list_delete_cb);
+    _lsd_add_self_field(lsd, LSD_FIELD_UNIQUE_ID, LSD_FIELD_FLAGS_NONE, (char *)&lsd->unique_id,
+			0, (char *)lsd, &list_last, _lsd_init_cb, _lsd_copy_cb, lsd_null_cb);
+    _lsd_add_self_field(lsd, LSD_FIELD_TOP, LSD_FIELD_FLAGS_NONE, (char *)&lsd->top,
+			0, (char *)lsd, &list_last, _lsd_init_cb, _lsd_copy_cb, lsd_null_cb);
+
+    _lsd_add_self_field(lsd, LSD_FIELD_SELF_FIELDS, LSD_FIELD_FLAGS_NONE, (char *)&lsd->self_fields,
+			0, (char *)lsd, &list_last, lsd_null_cb, _lsd_list_copy_cb, _lsd_list_free_cb);
+    _lsd_add_self_field(lsd, LSD_FIELD_SPECIAL_FIELDS, LSD_FIELD_FLAGS_NONE, (char *)&lsd->special_fields,
+			0, (char *)lsd, &list_last, lsd_null_cb, _lsd_list_copy_cb, _lsd_list_free_cb);
+
     // set to 1 on init, increment on copy
-    _lsd_add_special_field(&lsd->self_fields, LSD_FIELD_GENERATION, LSD_FIELD_FLAGS_NONE,
-			   (char *)&lsd->generation, 0, (char *)lsd, _lsd_init_cb, _lsd_copy_cb, NULL);
+    _lsd_add_self_field(lsd, LSD_FIELD_GENERATION, LSD_FIELD_FLAGS_NONE, (char *)&lsd->generation,
+			0, (char *)lsd, &list_last, _lsd_init_cb, _lsd_copy_cb, lsd_null_cb);
     // value will be set to zero after copying
-    _lsd_add_special_field(&lsd->self_fields, LSD_FIELD_REFCOUNT, LSD_FIELD_FLAGS_NONE,
-			   (char *)&lsd->refcount, 0, (char *)lsd, _lsd_init_cb, _lsd_copy_cb, NULL);
-    _lsd_add_special_field(&lsd->self_fields, LSD_FIELD_USER_DATA, LSD_FIELD_FLAGS_NONE,
-			   (char *)&lsd->user_data, 0, (char *)lsd, NULL, NULL, NULL);
+    _lsd_add_self_field(lsd, LSD_FIELD_REFCOUNT, LSD_FIELD_FLAGS_NONE,(char *)&lsd->refcount,
+			0, (char *)lsd, &list_last, _lsd_init_cb, _lsd_copy_cb, lsd_null_cb);
+    _lsd_add_self_field(lsd, LSD_FIELD_USER_DATA, LSD_FIELD_FLAGS_NONE,	(char *)&lsd->user_data,
+			0, (char *)lsd, &list_last, NULL);
     // set to value
-    _lsd_add_special_field(&lsd->self_fields, LSD_FIELD_END_ID, LSD_FIELD_FLAGS_NONE,
-			   (char *)&lsd->end_id, 0, (char *)lsd, _lsd_init_cb, NULL, NULL);
+    _lsd_add_self_field(lsd, LSD_FIELD_END_ID, LSD_FIELD_FLAGS_NONE, (char *)&lsd->end_id,
+			0, (char *)lsd, &list_last, _lsd_init_cb, lsd_null_cb, lsd_null_cb);
 
-    _lsd_run_callbacks((lsd_struct_def_t *)lsd, lsd->self_fields, mystruct, 0);
-
+    _lsd_run_callbacks(lsd, lsd->self_fields, mystruct, 0);
     return lsd;
   }
 
-  //// API FUNCTIONS /////////
-
   static int lsd_struct_get_generation(lsd_struct_def_t *lsd) {return !lsd ? -1 : lsd->generation;}
-
   static uint64_t lsd_struct_get_uid(lsd_struct_def_t *lsd) {return !lsd ? 0 : lsd->unique_id;}
-
   static const char *lsd_struct_get_type(lsd_struct_def_t *lsd) {return !lsd ? NULL : lsd->struct_type;}
-
   static uint64_t lsd_struct_get_identifier(lsd_struct_def_t *lsd) {return !lsd ? 0ul : lsd->identifier;}
-
   static uint64_t lsd_struct_get_end_id(lsd_struct_def_t *lsd) {return !lsd ? 0ul : lsd->end_id;}
-
   static void *lsd_struct_get_user_data(lsd_struct_def_t *lsd) {return !lsd ? NULL : lsd->user_data;}
-
   static size_t lsd_struct_get_size(lsd_struct_def_t *lsd) {return !lsd ? 0 : lsd->struct_size;}
-
   static void lsd_struct_set_user_data(lsd_struct_def_t *lsd, void *data) {if (lsd) lsd->user_data = data;}
-
   static const char *lsd_struct_get_class_id(lsd_struct_def_t *lsd) {return !lsd ? NULL : lsd->class_id;}
-
   static void lsd_struct_set_class_id(lsd_struct_def_t *lsd, const char *class_id) {
     if (lsd)(*_lsd_snprintf)(lsd->class_id, LSD_CLASS_ID_LEN, "%s", class_id);
   }
-  static uint64_t lsd_struct_get_creator_uid(lsd_struct_def_t *lsd) {return !lsd ? 0 : lsd->creator_uid;}
-
-  static uint64_t lsd_struct_set_creator_uid(const lsd_struct_def_t *lsd, uint64_t creator_uid) {
+  static uint64_t lsd_struct_get_owner_uid(lsd_struct_def_t *lsd) {return !lsd ? 0 : lsd->owner_uid;}
+  static uint64_t lsd_struct_set_owner_uid(const lsd_struct_def_t *lsd, uint64_t owner_uid) {
     if (!lsd) return 0;
-    if (!lsd->generation && !lsd->creator_uid && !lsd->top) ((lsd_struct_def_t *)lsd)->creator_uid = creator_uid;
-    return lsd->creator_uid;
-  }
-
+    if (!lsd->generation && !lsd->owner_uid && !lsd->top) ((lsd_struct_def_t *)lsd)->owner_uid = owner_uid;
+    return lsd->owner_uid; }
   static void add_special_field(lsd_struct_def_t *lsd, const char *field_name, uint64_t flags, void *ptr_to_field,
-				size_t data_size, void *sample_struct,
-				lsd_field_init_cb init_func, lsd_field_copy_cb copy_func,
-				lsd_field_delete_cb delete_func) {
+				size_t data_size, void *sample_struct, ...) {
+    va_list vargs; va_start(vargs, sample_struct);
     _lsd_add_special_field(&lsd->special_fields, field_name, flags, (char *)ptr_to_field, data_size,
-			   (char *)sample_struct, init_func, copy_func, delete_func);
-  }
-
-  static int lsd_struct_ref(lsd_struct_def_t *lsd) {return lsd ? ++((lsd_struct_def_t *)lsd)->refcount : 0;}
-
+			   (char *)sample_struct, vargs, NULL); va_end(vargs);}
+  static int lsd_struct_ref(lsd_struct_def_t *lsd) {return lsd ? ++((lsd_struct_def_t *)lsd)->refcount : LSD_ERROR;}
   static int lsd_struct_unref(lsd_struct_def_t *lsd) {
     if (lsd) {
-      int rc;
       if (!lsd->self_fields) {
 	lsd_baderr_print("Invalid LSD, cannot free it.\n");
-	return -1;;
+	return LSD_ERROR;;
       }
-      rc = --(((lsd_struct_def_t *)lsd)->refcount);
-      if (rc <= 0)
-	_lsd_struct_free((lsd_struct_def_t *)lsd);
-      return rc;
+      else {
+	int rc = --(((lsd_struct_def_t *)lsd)->refcount);
+	if (rc <= 0) _lsd_struct_free((lsd_struct_def_t *)lsd);
+	return LSD_SUCCESS;
+      }
     }
-    return 0;
+    return LSD_ERROR;
   }
-
-  static int lsd_struct_get_refcount(lsd_struct_def_t *lsd) {return lsd->refcount;}
-
+  static int lsd_struct_get_refcount(lsd_struct_def_t *lsd) {return lsd ? lsd->refcount : LSD_ERROR;}
   static int lsd_struct_free(lsd_struct_def_t *lsd) {return lsd_struct_unref(lsd);}
-
-  static void *lsd_struct_copy(lsd_struct_def_t *lsd) {
-    // alloc and replicate
-    return lsd->top ? _lsd_struct_copy_init(lsd, NULL, 1) : NULL;
-  }
-
-  static void *lsd_struct_create(const lsd_struct_def_t *lsd) {
-    // standard create, will produce a new struct of the specified type
-    return __lsd_struct_create(lsd, NULL);
-  }
-
+  static void *lsd_struct_copy(lsd_struct_def_t *lsd) {return lsd->top ? _lsd_struct_copy_init(lsd, NULL, 1) : 0;}
+  static void *lsd_struct_create(const lsd_struct_def_t *lsd) {return __lsd_struct_create(lsd, NULL);}
   static void *lsd_struct_initialise(const lsd_struct_def_t *lsd, void *thestruct) {
     // initialises an already allocaed struct
     thestruct =  __lsd_struct_create(lsd, thestruct);
     if (thestruct) {
       lsd_struct_def_t *dst_lsd = NULL;
-      lsd_struct_def_t *_lsd = (lsd_struct_def_t *)lsd;
-      if (_lsd_is_ptr(_lsd)) {
+      if (lsd->self_fields->byte_size) {
 	lsd_struct_def_t **dst_lsdp = (lsd_struct_def_t **)((char *)thestruct + lsd->self_fields->offset_to_field);
 	dst_lsd = *dst_lsdp;
       } else dst_lsd = (lsd_struct_def_t *)((char *)thestruct +  lsd->self_fields->offset_to_field);
@@ -1201,20 +1224,6 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
     }
     return thestruct;
   }
-
-  static int lsd_ref(const lsd_struct_def_t *lsd) {
-    return lsd_struct_ref((lsd_struct_def_t *)lsd);
-  }
-  static int lsd_unref(const lsd_struct_def_t *lsd) {
-    return lsd_struct_unref((lsd_struct_def_t *)lsd);
-  }
-  static int lsd_get_refcount(const lsd_struct_def_t *lsd) {
-    return lsd_struct_get_refcount((lsd_struct_def_t *)lsd);
-  }
-  static int lsd_free(const lsd_struct_def_t *lsd) {
-    return lsd_unref(lsd);
-  }
-
   static int lsd_same_family(const lsd_struct_def_t *lsd1, lsd_struct_def_t *lsd2) {
     // must have same identifier, end_id, struct_type, struct_size, class_id
     if (lsd1->struct_size == lsd2->struct_size
@@ -1222,18 +1231,15 @@ extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size);
 	&& lsd1->end_id == lsd2->end_id
 	&& (!(*_lsd_strcmp)(lsd1->struct_type, lsd2->struct_type))
 	&& (!(*_lsd_strcmp)(lsd1->class_id, lsd2->class_id))) return LSD_SUCCESS;
-    return LSD_FAIL;
-  }
+    return LSD_FAIL;}
 
   static const lsd_struct_def_t *lsd_create(const char *struct_type, void *mystruct, size_t struct_size,
 					    lsd_struct_def_t *lsd_in_struct) {
-    return _lsd_create(struct_type, mystruct, struct_size, &lsd_in_struct, 0);
-  }
+    return _lsd_create(struct_type, mystruct, struct_size, &lsd_in_struct, 0); }
 
   static const lsd_struct_def_t *lsd_create_p(const char *struct_type, void *mystruct, size_t struct_size,
 					      lsd_struct_def_t **lsd_in_struct) {
-    return _lsd_create(struct_type, mystruct, struct_size, lsd_in_struct, 1);
-  }
+    return _lsd_create(struct_type, mystruct, struct_size, lsd_in_struct, 1); }
 
   /////////////////////////////////////////////////////////////////////////////////////////////
 

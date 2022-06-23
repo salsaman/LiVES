@@ -557,17 +557,15 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
       end_threaded_dialog();
       // be careful, here we switch from mainw->opening_loc to cfile->opening_loc
       if (mainw->opening_loc) {
-        cfile->opening_loc = TRUE;
-        mainw->opening_loc = FALSE;
+        cfile->opening_loc = mainw->opening_loc = FALSE;
       } else {
         if (cfile->f_size > prefs->warn_file_size * 1000000. && mainw->is_ready && frames == 0) {
           char *fsize_ds = lives_format_storage_space_string((uint64_t)cfile->f_size);
-          char *warn = lives_strdup_printf(
-                         _("\nLiVES cannot Instant Open this file, it may take some time to load.\n"
-                           "Are you sure you wish to continue ?"), fsize_ds);
-          lives_free(fsize_ds);
-          if (!do_warning_dialog_with_check(warn, WARN_MASK_FSIZE)) {
-            lives_free(warn);
+          if (!do_warning_dialog_with_checkf(WARN_MASK_FSIZE,
+                                             _("\nLiVES cannot Instant Open this file, it may take some time to load.\n"
+                                               "File size is %s\n"
+                                               "Are you sure you wish to continue ?"), fsize_ds)) {
+            lives_free(fsize_ds);
             close_current_file(old_file);
             if (mainw->multitrack) {
               mainw->multitrack->pb_start_event = mt_pb_start_event;
@@ -577,7 +575,7 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
             lives_widget_context_update();
             return 0;
           }
-          lives_free(warn);
+          lives_free(fsize_ds);
           d_print(_(" - please be patient."));
 
         }
@@ -4862,7 +4860,7 @@ manual_locate:
         }
       } else {
         // unopenable
-	if (!sfile->old_dec_uid) do_no_decoder_error(sfile->file_name);
+        if (!sfile->old_dec_uid) do_no_decoder_error(sfile->file_name);
         ignore = TRUE;
       }
 

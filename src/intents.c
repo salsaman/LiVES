@@ -89,7 +89,6 @@ lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
   }
   while (1) {
     lives_obj_attr_t *attr = NULL, *xattr = NULL;
-
     if (xargs) {
       aname = va_arg(xargs, char *);
       if (aname) attr = lives_object_get_attribute(obj, aname);
@@ -140,7 +139,7 @@ lives_dicto_t  *update_dicto(lives_dicto_t *dicto, lives_object_t *obj, ...) {
 
 
 static lives_objstore_t *_update_dictionary(lives_objstore_t *objstore, lives_intention intent, uint64_t uid,
-                                        lives_dicto_t *dicto) {
+    lives_dicto_t *dicto) {
   // if intent == REPLACE replace existing entry, otherwise do not add if already there
   if (!objstore) objstore = lives_hash_store_new("main store");
   else if (intent != LIVES_INTENTION_REPLACE && get_from_hash_store_i(objstore, uid)) return objstore;
@@ -223,7 +222,7 @@ lives_dicto_t *weed_plant_to_dicto(weed_plant_t *plant) {
 
 
 const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, const char *rttype,
-				    const char *args_fmt, char *file, int line, void *txmap) {
+                                     const char *args_fmt, char *file, int line, void *txmap) {
   uint32_t rtype = get_seedtype(rttype[0]);
   const lives_funcdef_t *funcdef = get_from_hash_store(fn_objstore, name);
   if (!funcdef) {
@@ -1042,15 +1041,14 @@ static void icap_caps_delete_cb(void *strct, const char *sttype,
 LIVES_LOCAL_INLINE lives_intentcap_t *lives_icap_new(lives_intention intent, lives_intentcap_t *stat) {
   static const lsd_struct_def_t *lsd = NULL;
   lives_intentcap_t *icap = NULL;
+  lsd = get_lsd(LIVES_STRUCT_INTENTCAP_T);
   if (!lsd) {
-    lsd = get_lsd(LIVES_STRUCT_INTENTCAP_T);
-    if (1) {
-      lives_intentcap_t *icap = (lives_intentcap_t *)lives_calloc(1, sizeof(lives_intentcap_t));
-      add_special_field((lsd_struct_def_t *)lsd, "capacities", LSD_FIELD_FLAG_ZERO_ON_COPY, &icap->capacities,
-			0, icap, NULL, (lsd_field_copy_cb)icap_caps_copy_cb,
-			(lsd_field_delete_cb)icap_caps_delete_cb);
-      lives_free(icap);
-    }
+    icap = (lives_intentcap_t *)lives_calloc(1, sizeof(lives_intentcap_t));
+    add_special_field((lsd_struct_def_t *)lsd, "capacities", LSD_FIELD_FLAG_ZERO_ON_COPY, &icap->capacities,
+                      0, icap, lsd_null_cb, (lsd_field_copy_cb)icap_caps_copy_cb, NULL,
+                      (lsd_field_delete_cb)icap_caps_delete_cb, NULL);
+    lives_free(icap);
+    icap = NULL;
   }
   if (lsd) {
     if (stat) {
@@ -1149,11 +1147,11 @@ LIVES_LOCAL_INLINE const lives_intentcap_t *make_std_icap(const char *desc,
   va_list xargs;
   va_start(xargs, intent);
   icap = _make_icap(intent, xargs);
+  va_end(xargs);
   if (icap) {
     if (desc) lives_snprintf(icap->desc, ICAP_DESC_LEN, "%s", desc);
     lsd_struct_set_class_id(icap->lsd, STD_ICAP_ID);
   }
-  va_end(xargs);
   return icap;
 }
 
@@ -1478,8 +1476,8 @@ void make_std_icaps(void) {
   }
   std_icaps[_ICAP_IDLE] = make_std_icap("idle", LIVES_INTENTION_NOTHING, NULL);
   std_icaps[_ICAP_DOWNLOAD] = make_std_icap("download", LIVES_INTENTION_IMPORT,
-                              LIVES_CAPACITY_REMOTE, NULL);
-  std_icaps[_ICAP_LOAD] = make_std_icap("load", LIVES_INTENTION_IMPORT, LIVES_CAPACITY_LOCAL, NULL);
+                              OBJ_CAPACITY_REMOTE, NULL);
+  std_icaps[_ICAP_LOAD] = make_std_icap("load", LIVES_INTENTION_IMPORT, OBJ_CAPACITY_LOCAL, NULL);
 }
 
 

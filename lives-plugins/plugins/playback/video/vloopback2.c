@@ -5,8 +5,6 @@
 
 #define PLUGIN_UID 0X9F9490472BEF94Dull
 
-#include "lives-plugin.h"
-
 #define PLUGIN_NAME "LiVES vloopback2 output"
 #define PLUGIN_VERSION_MAJOR 1
 #define PLUGIN_VERSION_MINOR 1

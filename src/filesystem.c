@@ -424,13 +424,13 @@ boolean ensure_isdir(char *fname) {
       tmp = tmp2;
       tlen = tlen2;
     } else {
-      lives_free(tmp2);
+      //lives_free(tmp2);
       break;
     }
   }
 
   if (ret) lives_snprintf(fname, PATH_MAX, "%s", tmp);
-  lives_free(tmp);
+  //lives_free(tmp);
 
   slen = tlen - 1;
   offs = slen;

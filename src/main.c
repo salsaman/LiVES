@@ -358,15 +358,15 @@ void defer_sigint(int signum) {
   // The main reason would be to show an error dialog and then exit, or transmit some error code first,
   // rather than simply doing nothing and aborting /exiting.
   // we should do the minimum necessary and exit, as the stack may be corrupted.
-  
+
   if (mainw->err_funcdef) lives_snprintf(errdets, 512, " in function %s, %s line %d", mainw->err_funcdef->funcname,
-					 mainw->err_funcdef->file, mainw->err_funcdef->line);
+                                           mainw->err_funcdef->file, mainw->err_funcdef->line);
 
   lives_snprintf(errmsg, 512, "received signal %d at tracepoint (%d), %s\n", signum, mainw->crash_possible,
-		 *errdets ? errdets : NULL);
+                 *errdets ? errdets : NULL);
 
   LIVES_ERROR_NOBRK(errmsg);
-  
+
   switch (mainw->crash_possible) {
 #ifdef ENABLE_JACK
   case 1:
@@ -4438,11 +4438,11 @@ static boolean lives_startup2(livespointer data) {
   }
 #endif
 
- /* mainw->helper_procthreads[PT_PERF_MANAGER] = */
- /*    lives_proc_thread_create(LIVES_THRDATTR_NONE, */
- /* 			     (lives_funcptr_t)perf_manager, -1, ""); */
+  /* mainw->helper_procthreads[PT_PERF_MANAGER] = */
+  /*    lives_proc_thread_create(LIVES_THRDATTR_NONE, */
+  /* 			     (lives_funcptr_t)perf_manager, -1, ""); */
 
- if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
+  if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
     d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));
@@ -4578,6 +4578,8 @@ static boolean lives_startup2(livespointer data) {
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_context_update();
   }
+
+  lives_idle_priority(fg_service_fulfill_cb, NULL);
 
   if (!mainw->multitrack)
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
@@ -4731,12 +4733,12 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 #ifndef IS_LIBLIVES
   // start up the Weed system
-  weed_abi_version = weed_get_abi_version();
+  weed_abi_version = libweed_get_abi_version();
   if (weed_abi_version > WEED_ABI_VERSION) weed_abi_version = WEED_ABI_VERSION;
 #ifdef WEED_STARTUP_TESTS
   winitopts |= WEED_INIT_DEBUGMODE;
 #endif
-  werr = weed_init(weed_abi_version, winitopts);
+  werr = libweed_init(weed_abi_version, winitopts);
   if (werr != WEED_SUCCESS) {
     lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
     LIVES_FATAL("Failed to init Weed");
@@ -4745,16 +4747,16 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 #ifndef USE_STD_MEMFUNCS
 #ifdef USE_RPMALLOC
-  weed_set_memory_funcs(rpmalloc, rpfree);
+  libweed_set_memory_funcs(rpmalloc, rpfree);
 #else
 #ifndef DISABLE_GSLICE
 #if GLIB_CHECK_VERSION(2, 14, 0)
-  weed_set_slab_funcs(lives_slice_alloc, lives_slice_unalloc, lives_slice_alloc_and_copy);
+  libweed_set_slab_funcs(lives_slice_alloc, lives_slice_unalloc, lives_slice_alloc_and_copy);
 #else
-  weed_set_slab_funcs(lives_slice_alloc, lives_slice_unalloc, NULL);
+  libweed_set_slab_funcs(lives_slice_alloc, lives_slice_unalloc, NULL);
 #endif
 #else
-  weed_set_memory_funcs(lives_malloc, lives_free);
+  libweed_set_memory_funcs(lives_malloc, lives_free);
 #endif // DISABLE_GSLICE
 #endif // USE_RPMALLOC
   weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
@@ -4781,15 +4783,15 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   abort();
 #if 0
   fprintf(stderr, "\n\nRetesting with API 200, bugfix mode\n");
-  werr = weed_init(200, winitopts | WEED_INIT_ALLBUGFIXES);
+  werr = libweed_init(200, winitopts | WEED_INIT_ALLBUGFIXES);
   if (werr != WEED_SUCCESS) {
     lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
     LIVES_FATAL("Failed to init Weed");
     _exit(1);
   }
   run_weed_startup_tests();
-  fprintf(stderr, "\n\nRetesting with API 200, epecting problesm libweed-utils\n");
-  werr = weed_init(200, winitopts);
+  fprintf(stderr, "\n\nRetesting with API 200, epecting problems in libweed-utils\n");
+  werr = libweed_init(200, winitopts);
   if (werr != WEED_SUCCESS) {
     lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
     LIVES_FATAL("Failed to init Weed");

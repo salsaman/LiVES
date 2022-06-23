@@ -101,21 +101,26 @@ typedef struct {
 
 // memfuncs
 typedef void *(*malloc_f)(size_t);
-typedef void (*free_f)(void *);
-typedef void *(*memset_f)(void *, int, size_t);
-typedef void *(*memcpy_f)(void *, const void *, size_t);
-typedef void *(*realloc_f)(void *, size_t);
 typedef void *(*calloc_f)(size_t, size_t);
+typedef void *(*realloc_f)(void *, size_t);
+typedef void (*free_f)(void *);
+typedef void *(*memcpy_f)(void *, const void *, size_t);
+typedef void *(*memset_f)(void *, int, size_t);
+typedef int (*memcmp_f)(const void *, const void *, size_t);
 typedef void *(*memmove_f)(void *, const void *, size_t);
 
-#if defined NEED_TIMING || !defined HAVE_GETENTROPY
+#ifndef HAVE_GETENTROPY
+#if defined _UNISTD_H && defined  _DEFAULT_SOURCE
+#define HAVE_GETENTROPY
+#endif
+#endif
 
+#if defined NEED_TIMING || !defined HAVE_GETENTROPY
 #ifdef _POSIX_TIMERS
 #include <time.h>
 #else
 #include <sys/time.h>
 #endif
-
 static inline int64_t get_current_usec(void) {
   int64_t ret;
 #if _POSIX_TIMERS
@@ -132,22 +137,15 @@ static inline int64_t get_current_usec(void) {
 #endif
 
 #ifndef HAVE_GETENTROPY
-
 #include <string.h>
-
-#define myfastrand1(fval) ((fval) ^ ((fval) << 13))
-#define myfastrand2(fval) ((fval) ^ ((fval) >> 7))
-#define myfastrand3(fval) ((fval) ^ ((fval) << 17))
-#define myfastrand0(fval) (myfastrand3(myfastrand2(myfastrand1((fval)))))
-
+#define _myfastrand(fval, n) (fval ^ (fval << n))
+#define myfastrand(fval) (_myfastrand(_myfastrand(_myfastrand((fval), 13), 7), 17))
 static inline void myrand(void *ptr, size_t size) {
   static uint64_t fval = 0;
   if (!fval) fval = 0xAAAAAAAAAAAAAAAA ^ (get_current_usec() >> 17);
-  fval = myfastrand0(fval);
+  fval = myfastrand(fval);
   memcpy(ptr, &fval, size);
 }
-
-#define LSD_RANDFUNC(ptr, size) myrand(ptr, size)
 #endif
 
 #include "../../../src/lsd.h"
@@ -162,12 +160,13 @@ static inline void myrand(void *ptr, size_t size) {
 
 typedef struct {
   malloc_f  *malloc;
+  calloc_f  *calloc;
+  realloc_f *realloc;
   free_f    *free;
   memcpy_f  *memcpy;
   memset_f  *memset;
+  memcmp_f  *memcmp;
   memmove_f *memmove;
-  realloc_f *realloc;
-  calloc_f  *calloc;
 } ext_funcs_t;
 
 typedef struct _lives_clip_data {
@@ -322,40 +321,40 @@ double get_fps(const char *uri);
 #ifdef NEED_CLONEFUNC
 #define CLASS_ID "LiVES decoder plugin"
 
-static void lfd_setdef(void *strct, const char *stype, const char *fname, int64_t *ptr) {*ptr = -1;}
-static void adv_timing_init(void *strct, const char *stype, const char *fname, adv_timing_t *adv) {adv->ctiming_ratio = 1.;}
+static void lfd_setdef(void *strct, const char *stype, const char *fname, int64_t *ptr, void *data) {*ptr = -1;}
+static void adv_timing_init(void *strct, const char *stype, const char *fname, adv_timing_t *adv, void *data) {adv->ctiming_ratio = 1.;}
 
-static lives_clip_data_t * cdata_create(void) {
+static lives_clip_data_t *cdata_create(void) {
   static const lsd_struct_def_t *cdata_lsd = NULL;
   if (!cdata_lsd) {
     lives_clip_data_t *cdata = (lives_clip_data_t *)calloc(1, sizeof(lives_clip_data_t));
     cdata_lsd = lsd_create_p("lives_clip_data_t", cdata, sizeof(lives_clip_data_t), &cdata->lsd);
     if (!cdata_lsd) return NULL;
     add_special_field((lsd_struct_def_t *)cdata_lsd, "priv", LSD_FIELD_FLAG_ZERO_ON_COPY |
-		      LSD_FIELD_FLAG_FREE_ON_DELETE, &cdata->priv, 0, cdata, NULL, NULL, NULL);
+                      LSD_FIELD_FLAG_FREE_ON_DELETE, &cdata->priv, 0, cdata, NULL);
     add_special_field((lsd_struct_def_t *)cdata_lsd, "URI", LSD_FIELD_CHARPTR, &cdata->URI,
-		      0, cdata, NULL, NULL, NULL);
+                      0, cdata, NULL);
     add_special_field((lsd_struct_def_t *)cdata_lsd, "title", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->title,
-		      1024, cdata, NULL, NULL, NULL);
+                      1024, cdata, NULL);
     add_special_field((lsd_struct_def_t *)cdata_lsd, "author", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->author,
-		      1024, cdata, NULL, NULL, NULL);
+                      1024, cdata, NULL);
     add_special_field((lsd_struct_def_t *)cdata_lsd, "comment", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->comment,
-		      1024, cdata, NULL, NULL, NULL);
+                      1024, cdata, NULL);
     add_special_field((lsd_struct_def_t *)cdata_lsd, "palettes", LSD_FIELD_ARRAY, &cdata->palettes,
-		      4, cdata, NULL, NULL, NULL);
+                      4, cdata, NULL);
     add_special_field((lsd_struct_def_t *)cdata_lsd, "last_frame_decoded", LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY,
-		      &cdata->last_frame_decoded, 0, cdata, (lsd_field_init_cb)lfd_setdef, NULL, NULL);
+                      &cdata->last_frame_decoded, 0, cdata, (lsd_field_init_cb)lfd_setdef, NULL, lsd_null_cb, lsd_null_cb);
     add_special_field((lsd_struct_def_t *)cdata_lsd, "adv_timing", LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY, &cdata->adv_timing,
-		      0, cdata, (lsd_field_init_cb)adv_timing_init, NULL, NULL);
+                      0, cdata, (lsd_field_init_cb)adv_timing_init, NULL, lsd_null_cb, lsd_null_cb);
     free(cdata);
-    lsd_struct_set_creator_uid((lsd_struct_def_t *)cdata_lsd, PLUGIN_UID);
+    lsd_struct_set_owner_uid((lsd_struct_def_t *)cdata_lsd, PLUGIN_UID);
   }
   return lsd_struct_create(cdata_lsd);
 }
 
 static int cdata_is_mine(lives_clip_data_t *data) ALLOW_UNUSED;
 static int cdata_is_mine(lives_clip_data_t *data) {
-  if (lsd_struct_get_creator_uid(data->lsd) == PLUGIN_UID) return 1;
+  if (lsd_struct_get_owner_uid(data->lsd) == PLUGIN_UID) return 1;
   return 0;
 }
 #endif
@@ -595,7 +594,7 @@ static int64_t idxc_analyse(index_container_t *idxc, double fpsc, kframe_check_c
   return dist;
 }
 
-#endif
+#endif // need index
 
 #ifdef __cplusplus
 }

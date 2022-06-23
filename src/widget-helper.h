@@ -60,11 +60,11 @@ typedef struct {
 
 typedef weed_plantptr_t lives_proc_thread_t;
 
-boolean governor_loop(livespointer data) GNU_RETURNS_TWICE;
+boolean governor_loop(livespointer data) LIVES_RETURNS_TWICE;
 
 void fg_service_call(lives_proc_thread_t lpt, void *retval);
 boolean fg_service_fulfill(void);
-
+boolean fg_service_fulfill_cb(void *dummy);
 boolean has_lpttorun(void);
 
 boolean will_gov_run(void);
@@ -506,8 +506,8 @@ LiVESWidget *lives_image_new(void);
 LiVESWidget *lives_image_new_from_file(const char *filename);
 LiVESWidget *lives_image_new_from_stock(const char *stock_id, LiVESIconSize size);
 
-LiVESWidget *lives_image_find_in_stock(LiVESIconSize size, ...) GNU_SENTINEL;
-LiVESWidget *lives_image_find_in_stock_at_size(int size, ...) GNU_SENTINEL;
+LiVESWidget *lives_image_find_in_stock(LiVESIconSize size, ...) LIVES_SENTINEL;
+LiVESWidget *lives_image_find_in_stock_at_size(int size, ...) LIVES_SENTINEL;
 
 boolean lives_image_set_from_pixbuf(LiVESImage *, LiVESPixbuf *);
 LiVESPixbuf *lives_image_get_pixbuf(LiVESImage *);
@@ -1288,7 +1288,7 @@ boolean lives_image_scale(LiVESImage *, int width, int height, LiVESInterpType i
 LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int custom_size);
 LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int custom_size);
 
-boolean lives_widget_queue_draw_if_visible(LiVESWidget *);
+void lives_widget_queue_draw_if_visible(LiVESWidget *);
 boolean lives_widget_queue_draw_and_update(LiVESWidget *);
 
 boolean global_recent_manager_add(const char *file_name);

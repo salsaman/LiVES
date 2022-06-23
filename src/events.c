@@ -96,7 +96,7 @@ LIVES_GLOBAL_INLINE weed_timecode_t weed_event_get_timecode(weed_event_t *event)
 }
 
 
-GNU_PURE void ** *get_event_pchains(void) {return pchains;}
+LIVES_PURE void ** *get_event_pchains(void) {return pchains;}
 
 #define _get_or_zero(a, b, c) (a ? weed_get_##b##_value(a, c, NULL) : 0)
 
@@ -5103,8 +5103,8 @@ boolean render_to_clip(boolean new_clip) {
     } else {
       lives_capacities_t *caps = THREAD_CAPACITIES;
       if (0 && caps) {
-        rendvid = lives_has_capacity(caps, LIVES_CAPACITY_VIDEO);
-        rendaud = lives_has_capacity(caps, LIVES_CAPACITY_AUDIO);
+        rendvid = lives_has_capacity(caps, OBJ_CAPACITY_VIDEO);
+        rendaud = lives_has_capacity(caps, OBJ_CAPACITY_AUDIO);
       } else {
         if (mainw->multitrack) rendaud = mainw->multitrack->opts.render_audp;
         else rendaud = FALSE;
@@ -5240,13 +5240,13 @@ boolean render_to_clip(boolean new_clip) {
       return FALSE;
     } else {
       lives_obj_attr_t *attr1, *attr2;
-      attr1 = lives_object_declare_attribute(NULL, AUDIO_ATTR_RATE, WEED_SEED_INT);
-      lives_object_set_attribute_value(NULL, AUDIO_ATTR_RATE, cfile->arate);
+      attr1 = lives_object_declare_attribute(NULL, ATTR_AUDIO_RATE, WEED_SEED_INT);
+      lives_object_set_attribute_value(NULL, ATTR_AUDIO_RATE, cfile->arate);
 
       obj_attr_set_readonly(attr1, TRUE);
 
-      attr2 = lives_object_declare_attribute(NULL, AUDIO_ATTR_CHANNELS, WEED_SEED_INT);
-      lives_object_set_attribute_value(NULL, AUDIO_ATTR_CHANNELS, cfile->achans);
+      attr2 = lives_object_declare_attribute(NULL, ATTR_AUDIO_CHANNELS, WEED_SEED_INT);
+      lives_object_set_attribute_value(NULL, ATTR_AUDIO_CHANNELS, cfile->achans);
       obj_attr_set_readonly(attr2, TRUE);
 
       if (!(pname = transcode_get_params(pname))) {
@@ -5784,7 +5784,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
       lives_thread_set_intention(LIVES_INTENTION_TRANSCODE, NULL);
     case RENDER_CHOICE_NEW_CLIP:
       if (render_choice == RENDER_CHOICE_NEW_CLIP) {
-        icaps = make_icap(LIVES_INTENTION_RENDER, LIVES_CAPACITY_VIDEO, LIVES_CAPACITY_AUDIO, NULL);
+        icaps = make_icap(LIVES_INTENTION_RENDER, OBJ_CAPACITY_VIDEO, OBJ_CAPACITY_AUDIO, NULL);
         lives_thread_set_intentcap(icaps);
       }
       dw = prefs->mt_def_width;
@@ -5842,8 +5842,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
       }
       caps = lives_capacities_new();
       THREAD_INTENTION = LIVES_INTENTION_RENDER;
-      lives_capacity_set(caps, LIVES_CAPACITY_VIDEO);
-      lives_capacity_set(caps, LIVES_CAPACITY_AUDIO);
+      lives_capacity_set(caps, OBJ_CAPACITY_VIDEO);
+      lives_capacity_set(caps, OBJ_CAPACITY_AUDIO);
       THREAD_CAPACITIES = caps;
       if (!render_to_clip(FALSE)) render_choice = RENDER_CHOICE_PREVIEW;
       else {

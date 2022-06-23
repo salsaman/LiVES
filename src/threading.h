@@ -525,9 +525,21 @@ boolean main_thread_execute(lives_funcptr_t, int return_type, void *retval, cons
 
 // safer version which only calls it for bg threads (note that must be retloc instead of &retloc)
 #define MAIN_THREAD_EXECUTE(func, st, retloc, args_fmt, ...) do { \
-  if (is_fg_thread()) (retloc) = (func)(__VA_ARGS__);		  \
+  if (is_fg_thread()) (retloc) = (func)(__VA_ARGS__);			\
   else main_thread_execute((lives_funcptr_t)(func), st, &/**/retloc, args_fmt, __VA_ARGS__); \
   } while(0);
+
+
+#define MAIN_THREAD_EXECUTE_VOID(func, args_fmt, ...) do { \
+  if (is_fg_thread()) (func)(__VA_ARGS__);		  \
+  else main_thread_execute((lives_funcptr_t)(func), 0, NULL, args_fmt, __VA_ARGS__); \
+  } while(0);
+
+#define MAIN_THREAD_EXECUTE_VOID_VOID(func) do { \
+  if (is_fg_thread()) (func)();		  \
+  else main_thread_execute((lives_funcptr_t)(func), 0, NULL, ""); \
+  } while(0);
+
 
 // returns TRUE once the proc_thread will call the target function
 // the thread can also be cancelled or finished
@@ -579,7 +591,7 @@ char *get_threadstats(void);
 
 lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
                                 uint32_t return_type,  const char *args_fmt, const char *file, int line,
-				void *data);
+                                void *data);
 
 void free_funcdef(lives_funcdef_t *);
 lives_funcinst_t *create_funcinst(lives_funcdef_t *template, void *retstore, ...);

@@ -13,6 +13,7 @@ LiVESWindow *get_transient_full();
 boolean do_warning_dialog(const char *text);
 boolean do_warning_dialogf(const char *fmt, ...);
 boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number);
+boolean do_warning_dialog_with_checkf(uint64_t warn_mask_number, const char *fmt, ...);
 
 boolean do_yesno_dialog(const char *text);
 boolean do_yesno_dialogf(const char *fmt, ...);
@@ -37,7 +38,7 @@ LiVESResponseType do_info_dialog(const char *text);
 LiVESResponseType do_info_dialogf(const char *fmt, ...);
 LiVESResponseType do_info_dialog_with_expander(const char *text, const char *exp_text, LiVESList *);
 
-LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int warn_mask_number);
+LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, uint64_t warn_mask_number);
 LiVESWidget *create_question_dialog(const char *title, const char *text);
 
 void do_text_window(const char *title, const char *text);

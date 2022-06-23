@@ -133,25 +133,6 @@ int weed_leaf_elements_equate(weed_plant_t *p0, const char *k0, weed_plant_t *p1
 
 /* returns the value of the "type" leaf; returns WEED_PLANT_UNKNOWN if plant is NULL */
 int32_t weed_get_plant_type(weed_plant_t *);
-
-/* returns WEED_TRUE if higher and lower versions are compatible, WEED_FALSE if not */
-int check_weed_abi_compat(int32_t higher, int32_t lower);
-
-/* returns WEED_TRUE if higher and lower versions are compatible, WEED_FALSE if not */
-int check_filter_api_compat(int32_t higher, int32_t lower);
-
-#ifdef __WEED_EFFECTS_H__
-/* plugin only function; host should pass a pointer to this to the plugin as the sole parameter when calling  weed_setup()
-  in the plugin */
-weed_plant_t *weed_bootstrap(weed_default_getter_f *, int32_t plugin_weed_min_api_version, int32_t plugin_weed_max_api_version,
-                             int32_t plugin_filter_min_api_version, int32_t plugin_filter_max_api_version);
-#endif
-
-/* typedef for host callback from weed_bootstrap; host MUST return a host_info, either the original one or a new one */
-typedef weed_plant_t *(*weed_host_info_callback_f)(weed_plant_t *host_info, void *user_data);
-
-/* set a host callback function to be called from within weed_bootstrap() */
-void weed_set_host_info_callback(weed_host_info_callback_f, void *user_data);
 #endif
 
 #ifdef __WEED_PLUGIN__
@@ -252,6 +233,8 @@ FN_TYPE weed_voidptr_t __weed_get_arrayx__(weed_plant_t *plant, const char *key,
   return (ctype *)(__weed_get_arrayx__(plant, key, WEED_SEED_##stype, sizeof(ctype), NULL, count));
 #define _ARRAY_NORM_(ctype, stype) \
   return (ctype *)(__weed_get_arrayx__(plant, key, WEED_SEED_##stype, sizeof(ctype), error, NULL));
+#define _SET_ARRAY_(ctype, stype) \
+  return (ctype *)(__weed_get_arrayx__(plant, key, WEED_SEED_##stype, sizeof(ctype), error, NULL));
 
 /*							--- ARRAY GETTERS ---						*/
 FN_TYPE int32_t *weed_get_int_array_counted(weed_plant_t *plant, const char *key, int *count){_ARRAY_COUNT_(int32_t, INT)}
@@ -311,7 +294,6 @@ FN_TYPE weed_plant_t **weed_get_plantptr_array(weed_plant_t *plant, const char *
 #undef _ARRAY_NORM_
 #define _SET_ARRAY_(stype)  return weed_leaf_set(plant, key, WEED_SEED_##stype, num_elems, (weed_voidptr_t)values);
 
- /*							--- ARRAY SETTERS ---						*/
 FN_TYPE weed_error_t weed_set_int_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, int32_t *values) {
   _SET_ARRAY_(INT)}
 
@@ -333,20 +315,13 @@ FN_TYPE weed_error_t weed_set_funcptr_array(weed_plant_t *plant, const char *key
 FN_TYPE weed_error_t weed_set_voidptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, weed_voidptr_t *values) {
   _SET_ARRAY_(VOIDPTR)}
 
-FN_TYPE weed_error_t weed_set_plantptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, weed_plant_t **values) {
+FN_TYPE weed_error_t weed_set_plantptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, weed_plantptr_t *values) {
   _SET_ARRAY_(PLANTPTR)}
 #undef _SET_ARRAY_
 
 #undef __weed_get_value__
 #undef __weed_check_leaf__
 #endif
-
-#define WEED_LEAF_MIN_WEED_API_VERSION   "min_weed_api_version"
-#define WEED_LEAF_MAX_WEED_API_VERSION   "max_weed_api_version"
-#define WEED_LEAF_MIN_WEED_ABI_VERSION WEED_LEAF_MIN_WEED_API_VERSION
-#define WEED_LEAF_MAX_WEED_ABI_VERSION WEED_LEAF_MAX_WEED_API_VERSION
-#define WEED_LEAF_MIN_FILTER_API_VERSION "min_weed_filter_version"
-#define WEED_LEAF_MAX_FILTER_API_VERSION "max_weed_filter_version"
 
 #ifdef __cplusplus
 }

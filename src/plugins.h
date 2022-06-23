@@ -313,12 +313,13 @@ typedef struct {
 
 typedef struct _lives_memfuncs {
   malloc_f  *malloc;
+  calloc_f  *calloc;
+  realloc_f *realloc;
   free_f    *free;
   memcpy_f  *memcpy;
   memset_f  *memset;
+  memcmp_f  *memcmp;
   memmove_f *memmove;
-  realloc_f *realloc;
-  calloc_f  *calloc;
 } ext_funcs_t;
 
 typedef struct _lives_clip_data {

@@ -70,10 +70,10 @@
 #define PREFS_NEEDS_REVERT		(1 << 28)
 
 typedef enum {
-	      RET_FALSE,
-	      RET_TRUE,
-	      RET_WARN,
-	      RET_ALWAYS,
+  RET_FALSE,
+  RET_TRUE,
+  RET_WARN,
+  RET_ALWAYS,
 } warn_mask_state;
 
 
@@ -191,7 +191,7 @@ typedef struct {
 #define WARN_MASK_DMGD_AUDIO					(1ull << 32)
 #define WARN_MASK_MISSING_DECODER				(1ull << 33) //TODO
 #define WARN_MASK_DISABLED_DECODER				(1ull << 34)
-    
+
   // reserved (on / unset by default) -> i.e sense is reversed so 0 is ON (by default)
   // so we DO show the warnings, unless the user sets it to 1
 #define WARN_MASK_RSVD_12					(1ull << 35)

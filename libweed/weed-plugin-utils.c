@@ -196,8 +196,6 @@ static weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t w
   int32_t filter_api_version = WEED_API_VERSION;
   weed_error_t err;
 
-  fprintf(stderr, "IN WPII\n\n");
-
   if (!host_info) {
     fprintf(stderr, "NO MATCHING FILTER API FOUND\n");
     return NULL; // matching version was not found
@@ -208,13 +206,10 @@ static weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t w
   if ((*weed_default_getp)(host_info, WEED_LEAF_WEED_API_VERSION,
                            (weed_funcptr_t *)&weed_abi_version) != WEED_SUCCESS) return NULL;
 
-  //fprintf(stderr, "IN WPIIxx\n\n");
 if ((*weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t *)&weed_leaf_get) != WEED_SUCCESS) return NULL;
   if ((*weed_default_getp)(host_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t *)&weed_malloc) != WEED_SUCCESS) return NULL;
-  //fprintf(stderr, "IN WPIIcxczxc\n\n");
   if ((*weed_default_getp)(host_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t *)&weed_free) != WEED_SUCCESS) return NULL;
   if ((*weed_default_getp)(host_info, WEED_LEAF_MEMSET_FUNC, (weed_funcptr_t *)&weed_memset) != WEED_SUCCESS) return NULL;
-  //fprintf(stderr, "IN WPfdsfII\n\n");
   if ((*weed_default_getp)(host_info, WEED_LEAF_MEMCPY_FUNC, (weed_funcptr_t *)&weed_memcpy) != WEED_SUCCESS) return NULL;
 
   // now we can use the normal get function (weed_leaf_get)
@@ -222,19 +217,15 @@ if ((*weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t *)&weed_
   // get any additional functions for higher API versions ////////////
   weed_realloc = NULL;
   weed_plant_free = NULL;
-  fprintf(stderr, "IN WPII 2\n\n");
 
   // 2.0
   if (weed_abi_version >= 200) {
     if (weed_leaf_get(host_info, WEED_LEAF_REALLOC_FUNC, 0, &weed_realloc) != WEED_SUCCESS) {
-      fprintf(stderr, "NO REALLOC fond\n");
-
       return NULL;
     }
     if (weed_leaf_get(host_info, WEED_LEAF_CALLOC_FUNC, 0, &weed_calloc) != WEED_SUCCESS) return NULL;
     if (weed_leaf_get(host_info, WEED_LEAF_MEMMOVE_FUNC, 0, &weed_memmove) != WEED_SUCCESS) return NULL;
   }
-  fprintf(stderr, "IN WPII3 \n\n");
 
   // base functions 1.0
   if (weed_leaf_get(host_info, WEED_LEAF_SET_FUNC, 0, &weed_leaf_set) != WEED_SUCCESS) return NULL;
@@ -246,7 +237,6 @@ if ((*weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t *)&weed_
   if (weed_leaf_get(host_info, WEED_LEAF_GET_FLAGS_FUNC, 0, &weed_leaf_get_flags) != WEED_SUCCESS) return NULL;
 
   weed_leaf_get(host_info, WEED_LEAF_FILTER_API_VERSION, 0, &filter_api_version);
-  fprintf(stderr, "IN WPII  4\n\n");
 
   // base functions 2.0
   if (filter_api_version >= 200) {
@@ -267,10 +257,8 @@ if ((*weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t *)&weed_
     } else return NULL;
   }
 
-  fprintf(stderr, "IN WPII 5\n\n");
   if (!plugin_info) if (!(plugin_info = weed_plant_new(WEED_PLANT_PLUGIN_INFO))) return NULL;
   weed_leaf_set(plugin_info, WEED_LEAF_HOST_INFO, WEED_SEED_PLANTPTR, 1, &host_info);
-  fprintf(stderr, "returning plugin info %p\n", plugin_info);
   return plugin_info;
 }
 

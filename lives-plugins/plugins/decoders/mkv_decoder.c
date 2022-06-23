@@ -1827,7 +1827,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, int clonetype) {
               "PLEASE SEND A PATCH FOR %s FORMAT.\n", cdata->video_name);
       return FALSE;
     }
-
+    cdata->palettes = (int *)calloc(2, sizeof(int));
+    cdata->palettes[1] = WEED_PALETTE_END;
     cdata->palettes[0] = avi_pix_fmt_to_weed_palette(ctx->pix_fmt, &cdata->YUV_clamping);
 
     if (cdata->palettes[0] == WEED_PALETTE_END) {
@@ -1972,14 +1973,14 @@ const char *module_check_init(void) {
 }
 
 
-static lives_clip_data_t *init_cdata(void) {
+static lives_clip_data_t *init_cdata(int clonetype) {
   static memcpy_f  ext_memcpy = (memcpy_f)memcpy;
   lives_clip_data_t *cdata = cdata_new(NULL);
   lives_mkv_priv_t *priv = cdata->priv = calloc(1, sizeof(lives_mkv_priv_t));
-
-  cdata->palettes = (int *)malloc(2 * sizeof(int));
-  cdata->palettes[0] = cdata->palettes[1] = WEED_PALETTE_END;
-
+  if (!clonetype) {
+    cdata->palettes = (int *)malloc(2 * sizeof(int));
+    cdata->palettes[0] = cdata->palettes[1] = WEED_PALETTE_END;
+  }
   cdata->seek_flag = LIVES_SEEK_FAST | LIVES_SEEK_FAST_REV;
 
   cdata->interlace = LIVES_INTERLACE_NONE;
@@ -2018,7 +2019,7 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata, int clonetype) {
     dpriv->s = NULL;
     dpriv->input_position = 0;
   } else {
-    clone = init_cdata();
+    clone = init_cdata(clonetype);
     if (cdata->fps > 0. && cdata->nframes > 0) {
       clone->fps = cdata->fps;
       clone->nframes = cdata->nframes;
@@ -2030,9 +2031,11 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata, int clonetype) {
       clone->YUV_clamping = cdata->YUV_clamping;
       clone->YUV_sampling = cdata->YUV_sampling;
       clone->YUV_subspace = cdata->YUV_subspace;
+    } else {
+      // or create new and set current to wpe
+      cdata->palettes = (int *)malloc(2 * sizeof(int));
+      cdata->palettes[0] = cdata->palettes[1] = WEED_PALETTE_END;
     }
-    // or create new and set current to wpe
-
     clone->width = cdata->width;
     clone->height = cdata->height;
     clone->par = cdata->par;
@@ -2067,7 +2070,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   lives_mkv_priv_t *priv;
   int clonetype = 0;
 
-  if (!cdata) cdata = init_cdata();
+  if (!cdata) cdata = init_cdata(clonetype);
   else {
     if (cdata->current_clip > 0) {
       // currently we only support one clip per container

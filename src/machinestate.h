@@ -97,16 +97,16 @@ void lives_get_randbytes(void *ptr, size_t size);
 
 int64_t lives_strtol(const char *nptr);
 uint64_t lives_strtoul(const char *nptr);
-size_t lives_strlen(const char *) GNU_HOT GNU_PURE;
-boolean lives_strcmp(const char *, const char *) GNU_HOT GNU_PURE;
-boolean lives_strncmp(const char *, const char *, size_t) GNU_HOT GNU_PURE;
+size_t lives_strlen(const char *) LIVES_HOT LIVES_PURE;
+boolean lives_strcmp(const char *, const char *) LIVES_HOT LIVES_PURE;
+boolean lives_strncmp(const char *, const char *, size_t) LIVES_HOT LIVES_PURE;
 boolean lives_str_starts_with(const char *, const char *);
 //char *lives_strdup_quick(const char *s);
 char *lives_strdup_concat(char *str, const char *sep, const char *fmt, ...);
-int lives_strcmp_ordered(const char *, const char *) GNU_HOT GNU_PURE;
-char *lives_concat(char *, char *) GNU_HOT;
+int lives_strcmp_ordered(const char *, const char *) LIVES_HOT LIVES_PURE;
+char *lives_concat(char *, char *) LIVES_HOT;
 char *lives_concat_sep(char *st, const char *sep, char *x);
-char *lives_strstop(char *, const char term) GNU_HOT;
+char *lives_strstop(char *, const char term) LIVES_HOT;
 int lives_strappend(const char *string, int len, const char *xnew);
 const char *lives_strappendf(const char *string, int len, const char *fmt, ...);
 char *lives_strcollate(char **pstrng, const char *sep, const char *xnew);
@@ -119,7 +119,7 @@ void init_random(void);
 void lives_srandom(unsigned int seed);
 uint64_t lives_random(void);
 
-uint64_t fastrand(void) GNU_HOT;
+uint64_t fastrand(void) LIVES_HOT;
 void fastrand_add(uint64_t entropy);
 double fastrand_dbl(double range);
 uint32_t fastrand_int(uint32_t range);
@@ -234,9 +234,9 @@ typedef struct {
 void lives_log(const char *what);
 #endif
 
-uint64_t lives_bin_hash(uint8_t *bin, size_t binlen) GNU_PURE GNU_HOT;
-uint32_t lives_string_hash(const char *) GNU_PURE GNU_HOT;
-uint32_t fast_hash(const char *, size_t strln) GNU_PURE GNU_HOT;
+uint64_t lives_bin_hash(uint8_t *bin, size_t binlen) LIVES_PURE LIVES_HOT;
+uint32_t lives_string_hash(const char *) LIVES_PURE LIVES_HOT;
+uint32_t fast_hash(const char *, size_t strln) LIVES_PURE LIVES_HOT;
 uint64_t fast_hash64(const char *);
 
 void update_effort(double nthings, boolean is_bad);

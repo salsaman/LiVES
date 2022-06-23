@@ -60,38 +60,40 @@
 
 #ifdef __GNUC__
 #  define WARN_UNUSED  __attribute__((warn_unused_result))
-#  define GNU_PURE  __attribute__((pure))
-#  define GNU_DEPRECATED(msg)  __attribute__((deprecated(msg)))
-#  define GNU_CONST  __attribute__((const))
-#  define GNU_MALLOC  __attribute__((malloc))
-#  define GNU_MALLOC_SIZE(argx) __attribute__((alloc_size(argx)))
-#  define GNU_MALLOC_SIZE2(argx, argy) __attribute__((alloc_size(argx, argy)))
-#  define GNU_ALIGN(argx) __attribute__((alloc_align(argx)))
-#  define GNU_ALIGNED(sizex) __attribute__((assume_aligned(sizex)))
-#  define GNU_NORETURN __attribute__((noreturn))
-#  define GNU_ALWAYS_INLINE __attribute__((always_inline))
-#  define GNU_FLATTEN  __attribute__((flatten)) // inline all function calls
-#  define GNU_HOT  __attribute__((hot))
-#  define GNU_SENTINEL  __attribute__((sentinel))
-#  define GNU_RETURNS_TWICE  __attribute__((returns_twice))
+#  define LIVES_PURE  __attribute__((pure))
+#  define LIVES_DEPRECATED(msg)  __attribute__((deprecated(msg)))
+#  define LIVES_CONST  __attribute__((const))
+#  define LIVES_MALLOC  __attribute__((malloc))
+#  define LIVES_MALLOC_SIZE(argx) __attribute__((alloc_size(argx)))
+#  define LIVES_MALLOC_SIZE2(argx, argy) __attribute__((alloc_size(argx, argy)))
+#  define LIVES_ALIGN(argx) __attribute__((alloc_align(argx)))
+#  define LIVES_ALIGNED(sizex) __attribute__((assume_aligned(sizex)))
+#  define LIVES_NORETURN __attribute__((noreturn))
+#  define LIVES_ALWAYS_INLINE __attribute__((always_inline))
+#  define LIVES_NEVER_INLINE __attribute__((noipa)) __attribute__((optimize(0)))
+#  define LIVES_FLATTEN  __attribute__((flatten)) // inline all function calls
+#  define LIVES_HOT  __attribute__((hot))
+#  define LIVES_SENTINEL  __attribute__((sentinel))
+#  define LIVES_RETURNS_TWICE  __attribute__((returns_twice))
 #  define LIVES_IGNORE_DEPRECATIONS G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 #  define LIVES_IGNORE_DEPRECATIONS_END G_GNUC_END_IGNORE_DEPRECATIONS
 #else
 #  define WARN_UNUSED
-#  define GNU_PURE
-#  define GNU_CONST
-#  define GNU_MALLOC
-#  define GNU_MALLOC_SIZE(x)
-#  define GNU_MALLOC_SIZE2(x, y)
-#  define GNU_DEPRECATED(msg)
-#  define GNU_ALIGN(x)
-#  define GNU_ALIGNED(x)
-#  define GNU_NORETURN
-#  define GNU_ALWAYS_INLINE
-#  define GNU_FLATTEN
-#  define GNU_HOT
-#  define GNU_SENTINEL
-#  define GNU_RETURNS_TWICE
+#  define LIVES_PURE
+#  define LIVES_CONST
+#  define LIVES_MALLOC
+#  define LIVES_MALLOC_SIZE(x)
+#  define LIVES_MALLOC_SIZE2(x, y)
+#  define LIVES_DEPRECATED(msg)
+#  define LIVES_ALIGN(x)
+#  define LIVES_ALIGNED(x)
+#  define LIVES_NORETURN
+#  define LIVES_ALWAYS_INLINE
+#  define LIVES_NEVER_INLINE
+#  define LIVES_FLATTEN
+#  define LIVES_HOT
+#  define LIVES_SENTINEL
+#  define LIVES_RETURNS_TWICE
 #  define LIVES_IGNORE_DEPRECATIONS
 #  define LIVES_IGNORE_DEPRECATIONS_END
 #endif
@@ -99,21 +101,6 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE // for "environ"
 #endif
-
-#  define LIVES_PURE				GNU_PURE
-#  define LIVES_DEPRECATED(msg)			GNU_DEPRECATED(msg)
-#  define LIVES_CONST				GNU_CONST
-#  define LIVES_MALLOC				GNU_MALLOC
-#  define LIVES_MALLOC_size(argx)		GNU_MALLOC_SIZE(argx)
-#  define LIVES_MALLOC_SIZE2(argx, argy)	GNU_MALLOC_SIZE2(argx, argy)
-#  define LIVES_ALIGN(argx)			GNU_ALIGN(argx)
-#  define LIVES_ALIGNED(sizex)			GNU_ALIGNED(sizex)
-#  define LIVES_NORETURN			GNU_NORETURN
-#  define LIVES_ALWAYS_INLINE			GNU_ALWAYS_INLINE
-#  define LIVES_FLATTEN				GNU_FLATTEN
-#  define LIVES_HOT				GNU_HOT
-#  define LIVES_SENTINEL			GNU_SENTINEL
-#  define LIVES_RETURNS_TWICE	       		GNU_RETURNS_TWICE
 
 #define LIVES_RESULT_SUCCESS	1
 #define LIVES_RESULT_FAIL	0
@@ -302,6 +289,7 @@ typedef struct {
 #include "../libweed/weed-palettes.h"
 #include "../libweed/weed-effects.h"
 #include "../libweed/weed-utils.h"
+#include "../libweed/weed-host-utils.h"
 #else
 
 #include <weed/weed-host.h>
@@ -313,6 +301,11 @@ typedef struct {
 #include "../libweed/weed-utils.h"
 #else
 #include <weed/weed-utils.h>
+#endif
+#if NEED_LOCAL_WEED_HOST_UTILS
+#include "../libweed/weed-host-utils.h"
+#else
+#include <weed/weed-host-utils.h>
 #endif
 #endif
 
@@ -352,7 +345,6 @@ weed_leaf_delete_f _weed_leaf_delete;
 typedef struct _capabilities capabilities;
 extern capabilities *capable;
 
-#include "weed-effects-utils.h"
 #include "support.h"
 
 // directions
@@ -503,6 +495,10 @@ typedef struct {
 
 #define HW_ALIGNMENT ((capable && capable->hw.cacheline_size > 0) ? capable->hw.cacheline_size \
 		      : DEF_ALIGN)
+
+#ifdef FINALISE_MEMFUNCS
+#undef FINALISE_MEMFUNCS
+#endif
 
 #include "memory.h"
 
@@ -903,7 +899,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc);
 void catch_sigint(int signum);
 void defer_sigint(int signum);
 void *defer_sigint_cb(lives_object_t *obj, void *pdtl);
-void startup_message_fatal(char *msg) GNU_NORETURN;
+void startup_message_fatal(char *msg) LIVES_NORETURN;
 boolean startup_message_choice(const char *msg, int msgtype);
 boolean startup_message_nonfatal(const char *msg);
 boolean startup_message_info(const char *msg);
@@ -1067,6 +1063,9 @@ void break_me(const char *dtl);
 #else
 #define USE_REC_RS
 #endif
+
+#define FINALISE_MEMFUNCS
+#include "memory.h"
 
 #endif // #ifndef HAS_LIVES_MAIN_H
 

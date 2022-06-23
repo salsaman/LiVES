@@ -229,7 +229,7 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill|\\n\
     // mandatiry requirements - video with, height, fps, format
     // - audio rate and channels
     // - output URI, with cap local this should be filename format.
-    if (pl_has_capacity(icaps, PL_CAPACITY_AUDIO)) {
+    if (pl_has_capacity(icaps, OBJ_CAPACITY_AUDIO)) {
       // in future these will be mandatroy requirements
       pl_attribute *attr = pl_contract_get_attr(contract, ATTR_AUDIO_RATE);
       if (attr) defrate = pl_attr_get_value(attr, int);

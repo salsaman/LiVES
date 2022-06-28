@@ -1,0 +1,13 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include/weed
+
+Name: libweed-host-utils
+Description: Host utilities for libweed
+Requires: 
+Requires.private: 
+Version: 0.1.15
+Libs: -L${libdir} -lweed -lweed-utils -lweed-host-utils
+Static:
+Cflags: -I${includedir}

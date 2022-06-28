@@ -292,36 +292,36 @@ char *get_memstats(void);
 // at the end of the header we check if the values have been set and update lives_malloc from _lives_malloc, etc.
 // the same values are passed into realtime fx plugins via Weed function overloading
 
-/* #if defined (HAVE_OPENCV) || defined (HAVE_OPENCV4) */
-/* #ifndef NO_OPENCV_MEMFUNCS */
-/* #define _lives_malloc(sz)  alignPtr(sz, HW_ALIGNMENTE); */
-/* #define _lives_free    fastFree */
-/* #define _lives_realloc proxy_realloc */
-/* #endif */
-/* #endif */
+#if defined (HAVE_OPENCV) || defined (HAVE_OPENCV4)
+#ifndef NO_OPENCV_MEMFUNCS
+#define _lives_malloc(sz)  alignPtr(sz, HW_ALIGNMENTE);
+#define _lives_free    fastFree
+#define _lives_realloc proxy_realloc
+#endif
+#endif
 
-/* #ifndef __cplusplus */
+#ifndef __cplusplus
 
-/* #ifdef ENABLE_ORC */
+#ifdef ENABLE_ORC
 
-/* #ifndef NO_ORC_MEMFUNCS */
-/* #define _lives_memcpy lives_orc_memcpy */
-/* #endif */
+#ifndef NO_ORC_MEMFUNCS
+#define _lives_memcpy lives_orc_memcpy
+#endif
 
-/* #else */
+#else
 
-/* #ifdef ENABLE_OIL */
-/* #ifndef NO_OIL_MEMFUNCS */
-/* #define _lives_memcpy(dest, src, n) {if (n >= 32 && n <= OIL_MEMCPY_MAX_BYTES) { \ */
-/*       oil_memcpy((uint8_t *)dest, (const uint8_t *)src, n);		\ */
-/*       return dest;\							\ */
-/*     } */
-/* #endif */
-/* #endif */
+#ifdef ENABLE_OIL
+#ifndef NO_OIL_MEMFUNCS
+#define _lives_memcpy(dest, src, n) {if (n >= 32 && n <= OIL_MEMCPY_MAX_BYTES) { \
+      oil_memcpy((uint8_t *)dest, (const uint8_t *)src, n);		\
+      return dest;\							\
+    }
+#endif
+#endif
 
-/* #endif */
+#endif
 
-/* #endif // c++ */
+#endif // c++
 
 
 #endif // HAVE_MEMFUNC
@@ -373,7 +373,6 @@ char *get_memstats(void);
 ///////////////////// TRASH SECTION ///////////////
 
 #if 0
-bbbbbbbbbbbbbbb
 // these defines can be for lsd.h which uses self contained definitions
 #define OVERRIDE_MEMFUNCS
 

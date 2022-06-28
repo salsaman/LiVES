@@ -1184,7 +1184,7 @@ static boolean do_delete_or_mark(int clipno) {
   boolean rember = FALSE, ret = FALSE;
   LiVESResponseType resp = LIVES_RESPONSE_NONE;
   clipdir = get_clip_dir(clipno);
-  if (prefs->badfile_intent == LIVES_INTENTION_UNKNOWN) {
+  if (prefs->badfile_intent == OBJ_INTENTION_UNKNOWN) {
     LiVESWidget *vbox, *check;
     LiVESWidget *dialog;
     dialog = create_question_dialog(_("Cleanup options"), _("LiVES was unable to load a clip which seems to be "
@@ -1208,15 +1208,15 @@ static boolean do_delete_or_mark(int clipno) {
     resp = lives_dialog_run_with_countdown(LIVES_DIALOG(dialog), LIVES_RESPONSE_YES, 2);
     lives_widget_destroy(dialog);
   }
-  if (prefs->badfile_intent == LIVES_INTENTION_DELETE || resp == LIVES_RESPONSE_YES) {
+  if (prefs->badfile_intent == OBJ_INTENTION_DELETE || resp == LIVES_RESPONSE_YES) {
     lives_rmdir(clipdir, TRUE);
-    if (rember) pref_factory_int(PREF_BADFILE_INTENT, &prefs->badfile_intent, LIVES_INTENTION_DELETE, TRUE);
+    if (rember) pref_factory_int(PREF_BADFILE_INTENT, &prefs->badfile_intent, OBJ_INTENTION_DELETE, TRUE);
     ret = TRUE;
   } else {
     char *ignore = lives_build_filename(clipdir, LIVES_FILENAME_IGNORE, NULL);
     lives_touch(ignore);
     lives_free(ignore);
-    if (rember) pref_factory_int(PREF_BADFILE_INTENT, &prefs->badfile_intent, LIVES_INTENTION_IGNORE, TRUE);
+    if (rember) pref_factory_int(PREF_BADFILE_INTENT, &prefs->badfile_intent, OBJ_INTENTION_IGNORE, TRUE);
   }
   lives_free(clipdir);
   return ret;
@@ -1945,9 +1945,9 @@ LIVES_LOCAL_INLINE void add_attributes_for_clip_instance(lives_object_instance_t
 
   icap_copy(&obj->icap, icaps);
 
-  if (intent != LIVES_INTENTION_IMPORT) return;
+  if (intent != OBJ_INTENTION_IMPORT) return;
 
-  if (lives_has_capacity(icaps->capacities, OBJ_CAPACITY_LOCAL)) {
+  if (lives_has_capacity(icaps->capacities, CAP_LOCAL)) {
     lives_obj_attr_t *attr;
 
     if (prefs->startup_phase != 0) return;
@@ -1964,7 +1964,7 @@ LIVES_LOCAL_INLINE void add_attributes_for_clip_instance(lives_object_instance_t
     } else {
       lives_object_set_attr_value(obj, attr, capable->shmdir_path);
     }
-  } else if (lives_has_capacity(icaps->capacities, OBJ_CAPACITY_REMOTE)) {
+  } else if (lives_has_capacity(icaps->capacities, CAP_REMOTE)) {
     char *uidstr, *tmpdir;
     lives_obj_attr_t *attr = lives_object_declare_attribute(obj, CLIP_ATTR_STAGING_DIR, WEED_SEED_STRING);
     // eventually 'ytdl' should come from an optional req CLIP_ATTR_STAGING_PARAM

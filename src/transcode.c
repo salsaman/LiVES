@@ -251,20 +251,20 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
   if (cfile->asampsize == 32) cfile->asampsize = 16;
 
-  THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
+  THREAD_INTENTION = OBJ_INTENTION_TRANSCODE;
 
   if (def_pname) pname = lives_strdup(def_pname);
   else pname = NULL;
 
   if (!internal) {
     if (!transcode_prep()) {
-      THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+      THREAD_INTENTION = OBJ_INTENTION_NOTHING;
       return FALSE;
     } else {
       lives_obj_attr_t *attr1, *attr2;
       attr1 = lives_object_declare_attribute(NULL, ATTR_AUDIO_RATE, WEED_SEED_INT);
       lives_object_set_attribute_value(NULL, ATTR_AUDIO_RATE, cfile->arate);
-      obj_attr_set_readonly(attr1, TRUE);
+      lives_attr_set_readonly(attr1, TRUE);
 
       attr2 = lives_object_declare_attribute(NULL, ATTR_AUDIO_CHANNELS, WEED_SEED_INT);
       if (mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
@@ -272,7 +272,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       } else {
         lives_object_set_attribute_value(NULL, ATTR_AUDIO_CHANNELS, 0);
       }
-      obj_attr_set_readonly(attr2, TRUE);
+      lives_attr_set_readonly(attr2, TRUE);
 
       vpp = mainw->vpp;
 
@@ -601,7 +601,7 @@ tr_err:
 
 tr_err2:
   transcode_cleanup(vpp);
-  THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+  THREAD_INTENTION = OBJ_INTENTION_NOTHING;
   if (!internal) {
     if (needs_dprint) {
       if (mainw->cancelled != CANCEL_NONE) {

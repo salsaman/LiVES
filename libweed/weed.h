@@ -77,7 +77,7 @@ extern "C"
 
 typedef uint32_t weed_size_t;
 typedef int32_t weed_error_t;
-typedef void *weed_voidptr_t;
+typedef void * weed_voidptr_t;
 typedef void (*weed_funcptr_t)();
 
 #ifndef HAVE_HASHFUNC

@@ -984,9 +984,9 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   if (button) {
     lives_capacities_t *caps = lives_capacities_new();
-    THREAD_INTENTION = LIVES_INTENTION_PLAY;
+    THREAD_INTENTION = OBJ_INTENTION_PLAY;
     // TODO - set from plugin - can be local or remote
-    lives_capacity_set(caps, OBJ_CAPACITY_LOCAL);
+    lives_capacity_set(caps, CAP_LOCAL);
     THREAD_CAPACITIES = caps;
   }
 
@@ -996,10 +996,10 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   vppa->intention = THREAD_INTENTION;
 
-  if (THREAD_INTENTION == LIVES_INTENTION_PLAY)
+  if (THREAD_INTENTION == OBJ_INTENTION_PLAY)
     title = lives_strdup_printf("%s", tmpvpp->soname);
   else {
-    // LIVES_INTENTION_TRANSCODE
+    // OBJ_INTENTION_TRANSCODE
     title = (_("Quick Transcoding"));
     wscale = 2. * widget_opts.scale;
     hscale = 1.5;
@@ -1011,14 +1011,14 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(vppa->dialog));
 
   // the filling...
-  if (THREAD_INTENTION == LIVES_INTENTION_PLAY && tmpvpp->get_description) {
+  if (THREAD_INTENTION == OBJ_INTENTION_PLAY && tmpvpp->get_description) {
     desc = (tmpvpp->get_description)();
     if (desc) {
       label = lives_standard_label_new(desc);
       lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
     }
   }
-  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
+  if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
     tmp = lives_big_and_bold("%s", _("Quick transcode provides a rapid, high quality preview of the selected frames and audio."));
     widget_opts.use_markup = TRUE;
     label = lives_standard_label_new(tmp);
@@ -1040,7 +1040,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       }
     }
 
-    if (THREAD_INTENTION == LIVES_INTENTION_PLAY) {
+    if (THREAD_INTENTION == OBJ_INTENTION_PLAY) {
       // fps
       combo = lives_standard_combo_new((tmp = (_("_FPS"))), fps_list_strings,
                                        LIVES_BOX(dialog_vbox), (tmp2 = (_("Fixed framerate for plugin.\n"))));
@@ -1073,7 +1073,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     add_fill_to_box(LIVES_BOX(hbox));
 
     hsize = tmpvpp->fwidth > 0 ? tmpvpp->fwidth :
-            THREAD_INTENTION == LIVES_INTENTION_TRANSCODE ? cfile->hsize : DEF_VPP_HSIZE;
+            THREAD_INTENTION == OBJ_INTENTION_TRANSCODE ? cfile->hsize : DEF_VPP_HSIZE;
 
     vppa->spinbuttonw = lives_standard_spin_button_new(_("_Width"),
                         hsize,
@@ -1082,13 +1082,13 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     add_fill_to_box(LIVES_BOX(hbox));
 
     vsize = tmpvpp->fheight > 0 ? tmpvpp->fheight :
-            THREAD_INTENTION == LIVES_INTENTION_TRANSCODE ? cfile->vsize : DEF_VPP_VSIZE;
+            THREAD_INTENTION == OBJ_INTENTION_TRANSCODE ? cfile->vsize : DEF_VPP_VSIZE;
 
     vppa->spinbuttonh = lives_standard_spin_button_new(_("_Height"),
                         vsize,
                         4., MAX_FRAME_HEIGHT, -4., 16., 0, LIVES_BOX(hbox), NULL);
 
-    if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
+    if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
       if (mainw->event_list) {
         lives_widget_set_no_show_all(hbox, TRUE);
       } else {
@@ -1103,7 +1103,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     add_fill_to_box(LIVES_BOX(hbox));
   }
 
-  if (THREAD_INTENTION == LIVES_INTENTION_PLAY) {
+  if (THREAD_INTENTION == OBJ_INTENTION_PLAY) {
     if (tmpvpp->get_palette_list && (pal_list = (*tmpvpp->get_palette_list)())) {
       int i;
 
@@ -1141,7 +1141,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       lives_list_free_all(&pal_list_strings);
     }
   }
-  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
+  if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
     vppa->apply_fx = lives_standard_check_button_new(_("Apply current realtime effects"),
                      FALSE, LIVES_BOX(dialog_vbox), NULL);
     if (mainw->event_list) lives_widget_set_no_show_all(widget_opts.last_container, TRUE);
@@ -1158,7 +1158,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     plugin_run_param_window((*tmpvpp->get_init_rfx)(&icaps), LIVES_VBOX(vbox), &(vppa->rfx));
 
-    /* if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) { */
+    /* if (THREAD_INTENTION != OBJ_INTENTION_TRANSCODE) { */
     /*   char *fnamex = lives_build_filename(prefs->workdir, vppa->rfx->name, NULL); */
     /*   if (lives_file_test(fnamex, LIVES_FILE_TEST_EXISTS)) */
     /*     lives_rm(fnamex); */
@@ -1174,7 +1174,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     }
   }
 
-  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
+  if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
     LiVESList *overlay_list = NULL;
     LiVESWidget *hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
     overlay_list = lives_list_append(overlay_list, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
@@ -1190,7 +1190,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_window_add_escape(LIVES_WINDOW(vppa->dialog), cancelbutton);
 
-  if (THREAD_INTENTION == LIVES_INTENTION_PLAY) {
+  if (THREAD_INTENTION == OBJ_INTENTION_PLAY) {
     savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(vppa->dialog), LIVES_STOCK_SAVE_AS, NULL,
                  LIVES_RESPONSE_BROWSE);
 
@@ -1202,7 +1202,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_button_grab_default_special(okbutton);
 
-  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) return vppa;
+  if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) return vppa;
 
   do {
     resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));

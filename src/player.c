@@ -705,6 +705,7 @@ recheck:
             // however, we may have more than one copy of the same clip -
             // in this case we want to create clones of the decoder plugin
             // this is to prevent constant seeking between different frames in the clip
+
             if (mainw->track_decoders[i]) track_decoder_free(i, oclip);
 
             if (nclip > 0) {
@@ -712,6 +713,8 @@ recheck:
                 if ((!mainw->multitrack)  || !mainw->ext_src_used[nclip]) {
                   mainw->track_decoders[i] = (lives_decoder_t *)mainw->files[nclip]->ext_src;
                 }
+
+                mainw->old_active_track_list[i] = mainw->active_track_list[i] = nclip;
                 if (!mainw->multitrack) continue;
                 if (mainw->track_decoders[i] == (lives_decoder_t *)mainw->files[nclip]->ext_src) {
                   mainw->ext_src_used[nclip] = TRUE;
@@ -725,7 +728,7 @@ recheck:
 		}}}
 	    // *INDENT-ON*
 
-            mainw->old_active_track_list[i] = mainw->active_track_list[i];
+            else mainw->old_active_track_list[i] = mainw->active_track_list[i] = nclip;
 
             if (i == 1 && !mainw->multitrack && mainw->track_decoders[0] == mainw->track_decoders[1]) {
               mainw->track_decoders[1] = get_decoder_clone(mainw->blend_file);
@@ -3742,7 +3745,7 @@ boolean clip_can_reverse(int clipno) {
 
 // objects / intents
 
-// TODO - will be part of LIVES_INTENTION_CREATE_INSTANCE (req == subtype)
+// TODO - will be part of OBJ_INTENTION_CREATE_INSTANCE (req == subtype)
 lives_object_instance_t *lives_player_inst_create(uint64_t subtype) {
   char *choices[2];
   weed_plant_t *gui;

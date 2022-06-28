@@ -1953,7 +1953,7 @@ void init_colour_engine(void) {
   init_average();
   init_unal();
   init_gamma_tx();
-  init_conversions(LIVES_INTENTION_PLAY);
+  init_conversions(OBJ_INTENTION_PLAY);
 #ifdef WEED_ADVANCED_PALETTES
   init_advanced_palettes();
 #endif
@@ -2067,7 +2067,7 @@ static uint8_t avg_chromaf_fast(uint8_t x, uint8_t y) {
 
 LIVES_GLOBAL_INLINE void init_conversions(int intent) {
   avg_chromaf = avg_chromaf_fast;
-  if (intent == LIVES_INTENTION_RENDER || intent == LIVES_INTENTION_TRANSCODE) {
+  if (intent == OBJ_INTENTION_RENDER || intent == OBJ_INTENTION_TRANSCODE) {
     //avg_chromaf = avg_chromaf_high;
     if (prefs) prefs->pb_quality = PB_QUALITY_HIGH;
     /// set the 'effort' to as low as possible; if using adaptive quality
@@ -9716,9 +9716,9 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
     framesize = rowstride * height;
-    g_print("fs is %ld, rs %d. h %d, ra %d\n", framesize, rowstride, height, rowstride_alignment);
+    //g_print("fs is %ld, rs %d. h %d, ra %d\n", framesize, rowstride, height, rowstride_alignment);
 #ifdef USE_BIGBLOCKS
-    g_print("Ttry bb with %ld\n", framesize);
+    //g_print("Ttry bb with %ld\n", framesize);
     if ((pixel_data = calloc_bigblock(framesize)))
       weed_set_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, WEED_TRUE);
     else {

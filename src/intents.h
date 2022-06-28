@@ -26,8 +26,16 @@
 // - modular implementation allows for the various components to be used independently (e.g "intention" can be used anywhere
 //		like an enum) (modular design)
 //
-// - transforms also have hooks, these allow some parameters to be updated internally during processing
-//    some hooks can be mandatory as part of the requts. some objects will have "attachments" which can connect to hooks
+// transforms are desribed in "contracts", which need to be negotiated between
+// two or more objects.
+// the contract has intentcaps, attributes, hooks,
+// every object / instance MUST have an attribute ATTR_GENERIC_CONTRACTS
+// the value can be read, and contains a NULL terminated arrayof contracts
+// one of the contracts must be for a transform negotiate_contract.
+// this is a special transform which takes a contract object as input attributes
+// and has the effect of changing the value of the 'status' attribute for the contract.
+// This contract must be marked as "no_negotiate" as obviously it would be impossible to
+// negotiate to negotiate.
 //     'needs_data' status corresponds to a transform waiting for a hook to return new data
 //
 // - some requirements can be objects with a specific type / subtype(s) / state(s)
@@ -49,7 +57,7 @@
 #define ashift4(a, b, c, d) ((uint64_t)(((ashift((a), (b)) << 16) | (ashift((c), (d))))))
 #define ashift8(a, b, c, d, e, f, g, h) ((uint64_t)(((ashift4((a), (b), (c), (d))) << 32) | \
 							      ashift4((e), (f), (g), (h))))
-#define IMkType(str) ((uint64_t)(ashift8((str)[0], (str)[1], (str)[2], (str)[3], \
+#define IMkType(str) ((const uint64_t)(ashift8((str)[0], (str)[1], (str)[2], (str)[3], \
 					       (str)[4], (str)[5], (str)[6], (str)[7])))
 
 #define LIVES_OBJECT(o) ((lives_object_t *)((o)))
@@ -59,16 +67,8 @@ typedef union {
   uint64_t u;
 } charbytes;
 
-#define IMKType2(type) do {\
-  charbtytes c;		   \
-  snprintf(c.c, 8, "%s".#type); \
-  return c.u;			\
-  } while (0);
-
 // for external object data (e.g g_object)
 #define INTENTION_KEY "intention_"
-
-#define LIVES_SEED_OBJECT 2048
 
 typedef lives_funcptr_t object_funcptr_t;
 typedef struct _object_t lives_object_t;
@@ -77,6 +77,8 @@ typedef struct _obj_status_t lives_transform_status_t;
 typedef struct _obj_transform_t lives_object_transform_t;
 typedef weed_param_t lives_tx_param_t;
 typedef weed_plant_t lives_obj_attr_t;
+typedef lives_object_t lives_contract_t;
+typedef weed_plant_t lives_bundle_t;
 
 #define HOOKFUNCS_ONLY
 #include "threading.h"
@@ -85,6 +87,10 @@ typedef weed_plant_t lives_obj_attr_t;
 #endif
 
 typedef lives_refcounter_t obj_refcounter;
+// attr generec_uid, attr generic_refcount, attr_object_type, subtype
+// attr_object_state, attr_generic_icap, attr_generic_attributes
+// attr_generic_transform, attr_generic_hooks
+// attr_generic_private_data
 
 // lives_object_t
 struct _object_t {
@@ -187,7 +193,7 @@ struct _obj_status_t {
 // mand att. SET_VALUE timecode, layer
 
 // displayer ::
-/// LIVES_INTENTION_DISPLAY
+/// OBJ_INTENTION_DISPLAY
 // mand att: layer
 //
 // GET_SET_VALUES: width heigth, sepwin
@@ -199,16 +205,16 @@ typedef struct {
   lives_tx_param_t **params; ///< (can be converted to normal params via weed_param_from_iparams)
 } lives_intentparams_t;
 
-// shorthand for calling LIVES_INTENTION_CREATE_INSTANCE in the template
+// shorthand for calling OBJ_INTENTION_CREATE_INSTANCE in the template
 lives_object_instance_t *lives_object_instance_create(uint64_t type, uint64_t subtype);
 
-// shorthand for calling LIVES_INTENTION_UNREF in the instance
+// shorthand for calling OBJ_INTENTION_UNREF in the instance
 boolean lives_object_instance_destroy(lives_object_instance_t *);
 
-// shorthand for calling LIVES_INTENTION_UNREF in the instance
+// shorthand for calling OBJ_INTENTION_UNREF in the instance
 int lives_object_instance_unref(lives_object_instance_t *);
 
-// shorthand for calling LIVES_INTENTION_REF in the instance
+// shorthand for calling OBJ_INTENTION_REF in the instance
 int lives_object_instance_ref(lives_object_instance_t *);
 
 #define LIVES_LEAF_OWNER "owner_uid"
@@ -226,14 +232,11 @@ void lives_object_attributes_unref_all(lives_object_t *);
 ///////////// get values
 char *lives_attr_get_name(lives_obj_attr_t *);
 int lives_attr_get_value_int(lives_obj_attr_t *);
-uint32_t obj_attr_get_value_type(lives_obj_attr_t *);
-uint64_t obj_attr_get_owner(lives_obj_attr_t *);
-boolean obj_attr_is_mine(lives_obj_attr_t *);
-boolean obj_attr_is_readonly(lives_obj_attr_t *);
-weed_error_t obj_attr_set_readonly(lives_obj_attr_t *, boolean state);
+uint32_t lives_attr_get_value_type(lives_obj_attr_t *);
+boolean lives_attr_is_readonly(lives_obj_attr_t *);
+weed_error_t lives_attr_set_readonly(lives_obj_attr_t *, boolean state);
 
 // todo, - should take attr param
-uint64_t lives_attribute_get_owner(lives_object_t *, const char *name);
 boolean lives_attribute_is_mine(lives_object_t *, const char *name);
 boolean lives_attribute_is_readonly(lives_object_t *, const char *name);
 weed_error_t lives_attribute_set_readonly(lives_object_t *, const char *name, boolean state);
@@ -284,37 +287,9 @@ char *interpret_uid(uint64_t uid);
 
 // HAS_CAP, HAS_NOT_CAP / AND(x, y) / OR (x, y)
 
-// rules which must be satisfied before the transformation can succeed
-typedef struct {
-  // list of subtypes and states the owner object must be in to run the transform
-  int *subtype;
-  int *state;
+#define CAP_PREFIX "cap_"
+#define CAP_PREFIX_LEN 4
 
-  // TODO - use tx_req_t **
-
-  lives_intentparams_t *reqs;
-  // --------
-  // internal book keeping
-  lives_object_instance_t *oinst; // owner instance / template
-  obj_refcounter refcounter;
-} lives_rules_t;
-
-// flagbits for transformations
-// combine : child for template, copy for instance
-#define TR_FLAGS_CREATES_CHILD (1 << 0) // creates child instance from template
-#define TR_FLAGS_CREATES_COPY  (1 << 1) // creates a copy of an instance with a different uid
-
-// remove: use list
-#define TR_FLAGS_CHANGES_SUBTYPE  (1 << 2) // object subtype may change during the transformation
-
-#define TR_FLAGS_FINAL (1 << 3) // state is final after tx, and can be destroyed
-#define TR_FLAGS_INSTANT (1 << 4) // must immediately be followed by another transformation (should the object be able to specify it
-/// 					e,g a cleanup to be run after processing, or just define it ?)
-
-#define TR_FLAGS_DIRECT (1 << 32) // function may be called directly (this is a transitional step
-// which may be deprecated
-
-// maps in / out params to actual function parameters
 typedef struct {
   weed_plant_t **inputs; // inputs to function
   lives_funcdef_t func_info; /// function(s) to perform the transformation
@@ -344,7 +319,6 @@ struct _obj_transform_t {
   lives_intentcap_t icaps; // intention and capacities satisfied
 
   // can be a sequence of these
-  lives_rules_t *prereqs; // pointer to the prerequisites for carrying out the transform (can be NULL)
   lives_funcdef_t *funcdef;
 
   uint64_t flags;
@@ -403,6 +377,20 @@ char *list_caps(lives_capacities_t *caps);
 /* char *get_argstring_for_func(funcidx_t funcidx); */
 char *lives_funcdef_explain(const lives_funcdef_t *funcdef);
 
+// contracts
+
+lives_contract_t *create_contract(lives_intentcap_t *icap);
+
+lives_obj_attr_t *lives_contract_declare_attribute(lives_contract_t *, const char *aname,
+    uint32_t atype);
+
+uint64_t contract_attribute_get_owner(lives_contract_t *, const char *name);
+
+uint64_t contract_attr_get_owner(lives_obj_attr_t *);
+boolean contract_attr_is_mine(lives_obj_attr_t *);
+
+char *contract_attr_get_value_string(lives_obj_attr_t *);
+
 #if 0
 // base functions
 lives_intentcap_t **list_intentcaps(void);
@@ -410,13 +398,6 @@ get_transform_for(intentcap);
 #endif
 
 //
-
-// check all requmnts and mark - filled (value set) / can_fill (value unset, but has means to obtain) / missing / optional (unset)
-// value readonly (constant) or variable, default readonly or variable
-boolean check_requirements(lives_object_transform_t *);
-
-// as above, but any can_fill values will become filled, unless the value is readonly
-boolean fill_requirements(lives_object_transform_t *);
 
 // the return value belongs to the object, and should only be freed with lives_transform_status_free
 // will call check_requirements() then fill_requirements() if any mandatory values are missing
@@ -436,12 +417,6 @@ lives_transform_status_t *transform(lives_object_transform_t *);
 //lives_object_transform_t *find_transform_for_intentcaps(lives_object_t *obj, lives_intentcaps icaps, lives_funct_t match_fn);
 
 lives_object_transform_t *find_transform_for_intentcaps(lives_object_t *, lives_intentcap_t *);
-
-boolean rules_lack_param(lives_rules_t *, const char *pname);
-//boolean rules_lack_condition(lives_rules_t *, int condition number);
-// type mismatch, subtype mismatch, state mismatch, status mismatch
-
-// convert an attribute to a regular weed_param
 
 weed_param_t *weed_param_from_attribute(lives_object_instance_t *, const char *name);
 weed_param_t *weed_param_from_attr(lives_obj_attr_t *);

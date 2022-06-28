@@ -700,9 +700,9 @@ LIVES_GLOBAL_INLINE weed_layer_t *render_text_overlay(weed_layer_t *layer, const
       lives_free(colz);
     }
 
-    if ((THREAD_INTENTION == LIVES_INTENTION_TRANSCODE
+    if ((THREAD_INTENTION == OBJ_INTENTION_TRANSCODE
          && prefs->twater_type != TWATER_TYPE_DIAGNOSTICS)
-        || THREAD_INTENTION == LIVES_INTENTION_RENDER) {
+        || THREAD_INTENTION == OBJ_INTENTION_RENDER) {
       layer = render_text_to_layer(layer, text, font_name, font_size,
                                    LIVES_TEXT_MODE_FOREGROUND_ONLY,
                                    &fg_col, &col_black_a, FALSE, FALSE, 0.);

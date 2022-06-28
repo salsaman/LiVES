@@ -2414,7 +2414,7 @@ frames_t reorder_frames(int clipno, int rwidth, int rheight) {
   new_frames = sfile->old_frames;
   cur_frames = sfile->frames;
 
-  if (intention == LIVES_INTENTION_RECORD) {
+  if (intention == OBJ_INTENTION_RECORD) {
     reorder_leave_back = TRUE;
     reorder_width = reorder_height = 0;
   }
@@ -2423,7 +2423,7 @@ frames_t reorder_frames(int clipno, int rwidth, int rheight) {
                                      get_image_ext_for_type(sfile->img_type), !mainw->endian,
                                      reorder_leave_back, sfile->frames);
   else {
-    if (intention != LIVES_INTENTION_ENCODE || !prefs->enc_letterbox) {
+    if (intention != OBJ_INTENTION_ENCODE || !prefs->enc_letterbox) {
       com = lives_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d 0 %d", prefs->backend, sfile->handle,
                                 get_image_ext_for_type(sfile->img_type), !mainw->endian, rwidth, rheight, sfile->frames);
     } else {
@@ -2452,7 +2452,7 @@ frames_t reorder_frames(int clipno, int rwidth, int rheight) {
     }
   }
 
-  if (intention == LIVES_INTENTION_RECORD) reorder_leave_back = FALSE;
+  if (intention == OBJ_INTENTION_RECORD) reorder_leave_back = FALSE;
 
   sfile->frames = 0;
 

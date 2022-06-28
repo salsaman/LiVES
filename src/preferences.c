@@ -50,7 +50,7 @@ static weed_plant_t *define_pref(const char *pref_idx, void *pref_ptr, int32_t v
   /* lives_pref_set_widget(pref, widget); */
   // OR
   // lives_attribute_set_param_type(pref, PREF_ATTR_VARPTR, label, WEED_PARAM_INTEGER);
-  // txfuncs: LIVES_INTENTION_BACKUP, RESTORE, SET_VALUE, GET_VALUE,
+  // txfuncs: OBJ_INTENTION_BACKUP, RESTORE, SET_VALUE, GET_VALUE,
 
   weed_plant_t *prefplant = lives_plant_new(LIVES_WEED_SUBTYPE_PREFERENCE);
   weed_set_string_value(prefplant, LIVES_LEAF_PREF_IDX, pref_idx);
@@ -5024,7 +5024,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   advbutton = lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES, _("_Advanced"),
               DEF_BUTTON_WIDTH, -1, LIVES_BOX(hbox), TRUE, NULL);
 
-  THREAD_INTENTION = LIVES_INTENTION_PLAY;
+  THREAD_INTENTION = OBJ_INTENTION_PLAY;
   lives_signal_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_vpp_advanced_clicked), NULL);
 

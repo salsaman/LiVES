@@ -1742,16 +1742,16 @@ LIVES_LOCAL_INLINE char *get_resource(char *fname) {
 static void quit_from_tests(LiVESWidget * dialog, livespointer button) {
   lives_widget_hide(dialog);
   if (!prefs->startup_phase || confirm_exit()) {
-    SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_DESTROY_INSTANCE);
+    SET_INT_DATA(dialog, INTENTION_KEY, OBJ_INTENTION_DESTROY_INSTANCE);
     mainw->cancelled = CANCEL_USER;
   } else {
-    SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_UNKNOWN);
+    SET_INT_DATA(dialog, INTENTION_KEY, OBJ_INTENTION_UNKNOWN);
     lives_widget_show(dialog);
   }
 }
 
 static void back_from_tests(LiVESWidget * dialog, livespointer button) {
-  SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_UNDO);
+  SET_INT_DATA(dialog, INTENTION_KEY, OBJ_INTENTION_UNDO);
   mainw->cancelled = CANCEL_USER;
 }
 
@@ -2450,7 +2450,7 @@ jpgdone:
   }
 
   if (response == LIVES_RESPONSE_RETRY) {
-    SET_INT_DATA(dialog, INTENTION_KEY, LIVES_INTENTION_UNDO);
+    SET_INT_DATA(dialog, INTENTION_KEY, OBJ_INTENTION_UNDO);
     goto cancld;
   }
 
@@ -2479,7 +2479,7 @@ cancld:
 
   lives_freep((void **)&temp_backend);
 
-  if (intent == LIVES_INTENTION_UNDO) {
+  if (intent == OBJ_INTENTION_UNDO) {
     if (do_workdir_query()) goto rerun;
   }
 

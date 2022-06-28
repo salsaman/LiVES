@@ -1216,7 +1216,7 @@ static boolean pre_init(void) {
 
   prefs->warning_mask = (uint64_t)get_int64_prefd(PREF_LIVES_WARNING_MASK, DEF_WARNING_MASK);
 
-  prefs->badfile_intent = get_int_prefd(PREF_BADFILE_INTENT, LIVES_INTENTION_UNKNOWN);
+  prefs->badfile_intent = get_int_prefd(PREF_BADFILE_INTENT, OBJ_INTENTION_UNKNOWN);
 
   get_utf8_pref(PREF_INTERFACE_FONT, buff, 256);
 
@@ -4577,7 +4577,7 @@ static boolean lives_startup2(livespointer data) {
     lives_widget_context_update();
   }
 
-  mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL);
+  mainw->fg_service_handle = lives_idle_add(fg_service_fulfill_cb, NULL);
 
   if (!mainw->multitrack)
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
@@ -8289,7 +8289,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
             if (est > 0.) {
               xtimex = lives_get_current_ticks() / TICKS_PER_SECOND_DBL;
               timex = xtimex - timex;
-              g_print("\n\nERROR DELTAS: %f and %f\n\n", timex - est, timex / est);
+              //g_print("\n\nERROR DELTAS: %f and %f\n\n", timex - est, timex / est);
             } else if (prefs->dev_show_timing) xtimex = lives_get_current_ticks() / TICKS_PER_SECOND_DBL;
             if (prefs->dev_show_timing) g_printerr("get_frame pre @ %f\n", xtimex);
           }

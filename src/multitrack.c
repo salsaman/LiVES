@@ -13901,19 +13901,19 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   migrate_from_staging(mt->render_file);
 
-  if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) {
+  if (THREAD_INTENTION != OBJ_INTENTION_TRANSCODE) {
     caps = lives_capacities_new();
-    THREAD_INTENTION = LIVES_INTENTION_RENDER;
+    THREAD_INTENTION = OBJ_INTENTION_RENDER;
     if (mt->opts.render_vidp)
-      lives_capacity_set(caps, OBJ_CAPACITY_VIDEO);
+      lives_capacity_set(caps, CAP_VIDEO);
     if (mt->opts.render_audp)
-      lives_capacity_set(caps, OBJ_CAPACITY_AUDIO);
+      lives_capacity_set(caps, CAP_AUDIO);
     THREAD_CAPACITIES = caps;
   }
 
   if (render_to_clip(FALSE)) {
     // rendering was successful
-    THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+    THREAD_INTENTION = OBJ_INTENTION_NOTHING;
     if (caps) {
       lives_capacities_free(caps);
       caps = THREAD_CAPACITIES = NULL;
@@ -14019,7 +14019,7 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     cfile->frames = cfile->start = cfile->end = 0;
     mt->is_rendering = FALSE;
 
-    THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+    THREAD_INTENTION = OBJ_INTENTION_NOTHING;
     if (caps) {
       lives_capacities_free(caps);
       THREAD_CAPACITIES = NULL;
@@ -17305,7 +17305,7 @@ boolean set_new_set_name(lives_mt * mt) {
 void on_mt_transcode_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   if (!mt->event_list || !get_first_event(mt->event_list)) return;
-  THREAD_INTENTION = LIVES_INTENTION_TRANSCODE;
+  THREAD_INTENTION = OBJ_INTENTION_TRANSCODE;
   on_render_activate(NULL, mt);
 }
 #endif

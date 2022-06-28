@@ -995,7 +995,7 @@ void on_send_lives2lives_activate(LiVESMenuItem *menuitem, livespointer user_dat
   if (!mainw->vpp || strcmp(mainw->vpp->soname, "lives2lives_stream")) {
     lives_snprintf(future_prefs->vpp_name, 64, "lives2lives_stream");
   }
-  vppa = on_vpp_advanced_clicked(NULL, LIVES_INT_TO_POINTER(LIVES_INTENTION_STREAM));
+  vppa = on_vpp_advanced_clicked(NULL, LIVES_INT_TO_POINTER(OBJ_INTENTION_STREAM));
   resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
 
   if (vppa->rfx) {

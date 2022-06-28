@@ -255,32 +255,6 @@ size_t running_average(float *newval, int idx, void **data) {
 
 
 lives_object_transform_t *math_transform_for_intent(lives_object_t *obj, lives_intention intent) {
-  if (obj->subtype == MATH_OBJECT_SUBTYPE_STATS) {
-    if (intent == MATH_INTENTION_DEV_FROM_MEAN) {
-      //lives_req_t *req;
-      lives_object_transform_t *tx =
-        (lives_object_transform_t *)lives_calloc(sizeof(lives_object_transform_t), 1);
-      tx->prereqs = (lives_rules_t *)lives_calloc(sizeof(lives_rules_t), 1);
-      tx->prereqs->reqs = (lives_intentparams_t *)lives_calloc(sizeof(lives_intentparams_t), 1);
-      tx->prereqs->reqs->params = (lives_tx_param_t **)lives_calloc(sizeof(lives_tx_param_t *), 4);
-
-      tx->prereqs->reqs->params[0] = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
-      weed_set_string_value(tx->prereqs->reqs->params[0], WEED_LEAF_NAME, MATH_PARAM_DATA);
-      weed_set_int_value(tx->prereqs->reqs->params[0], WEED_LEAF_PARAM_TYPE, WEED_PARAM_UNSPECIFIED);
-
-      tx->prereqs->reqs->params[1] = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
-      weed_set_string_value(tx->prereqs->reqs->params[1], WEED_LEAF_NAME, MATH_PARAM_DATA_SIZE);
-      weed_set_int_value(tx->prereqs->reqs->params[1], WEED_LEAF_PARAM_TYPE, WEED_PARAM_INTEGER);
-
-      tx->prereqs->reqs->params[2] = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
-      weed_set_string_value(tx->prereqs->reqs->params[2], WEED_LEAF_NAME, MATH_PARAM_VALUE);
-      weed_set_int_value(tx->prereqs->reqs->params[2], WEED_LEAF_PARAM_TYPE, WEED_PARAM_FLOAT);
-
-      tx->prereqs->reqs->params[3] = 0;
-      return tx;
-    }
-    return NULL;
-  }
   return NULL;
 }
 

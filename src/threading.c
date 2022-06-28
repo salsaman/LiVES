@@ -405,10 +405,20 @@ LIVES_LOCAL_INLINE lives_proc_thread_t add_to_fg_deferral_stack(uint64_t xtrafla
 
 
 boolean main_thread_execute(lives_funcptr_t func, int return_type, void *retval, const char *args_fmt, ...) {
-  // this function exists because GTK+ can only run certain functions in the thread which called gtk_main
-  // amy other function can be called via this, if the main thread calls it then it will simply run the target itself
-  // for other threads, the main thread will run the function as a fg_service.
-  // however care must be taken since fg_service cannot run another fg_service
+  /* this function exists because GTK+ can only run certain functions in the thread which called gtk_main */
+  /* amy other function can be called via this, if the main thread calls it then it will simply run the target itself */
+  /* for other threads, the main thread will run the function as a fg_service. */
+  /* however care must be taken since fg_service cannot run another fg_service */
+
+  /* - this has now become quite complex. There can be severla bg threads all wanting to do GUI updates. */
+  /* if the main thread is idle, then it will simply pick up the request and run it. Otherewise, */
+  /* the requests are queued to be run in series. If a bg thread should re-enter here itself, then the second request will be added to its deferral queue. There are some rules to prevent multiple requests. */
+  /* otherwise, the main thread may be busy running a request from a different thread. In this case, */
+  /* the request is added to the main thread's deferral stack, which it will process after finishing the current request. */
+  /* as a further complication, the bg thread may need to wait for its request to complete, e.g running a dialog where it needs a response, in this case it will refecount the task so it is not freed, and then monitor it to see when it completes. */
+  /* for the main thread, it also needs to service GUI callbacks like key press responses. In this case it will monitor the task until it finsishes, since it must run this in another background thread, and return to the gtk main loop, in this case it may re add itslef via an idel func so it can return and continue monitoring. While doin so it must still be ready to service requests from other threads, as well as more requests from the onitored thread. As well as this if the fg thread is running a service for aidle func or timer, it cannot return to the gtk main loop, as it needs to wait for the final response (TRUE or FALSE) from the subordinate timer task. Thus it will keep looping without returning, but still it needs to be servicing other threads. In particular one thread may be waitng for antother to complete and if not serviced the second thread can hagn waiting and block the first thread, wwhich can in turn block the main thread. */
+
+
   lives_proc_thread_t lpt;
   va_list xargs;
   boolean is_fg_service = FALSE;
@@ -435,12 +445,16 @@ boolean main_thread_execute(lives_funcptr_t func, int return_type, void *retval,
           lives_proc_thread_free(lpt);
         } else {
           if (THREADVAR(hook_hints) & HOOK_CB_WAIT) {
-            lives_nanosleep_until_nonzero(lives_proc_thread_check_finished(lpt));
+            while (!lives_proc_thread_check_finished(lpt)
+                   && !lives_proc_thread_get_cancelled(lpt)) {
+              if (get_gov_status() == GOV_RUNNING) {
+                mainw->clutch = FALSE;
+                lives_nanosleep_until_nonzero(mainw->clutch);
+              } else lives_nanosleep(1000);
+            }
+            weed_refcount_dec(lpt);
+            lives_proc_thread_free(lpt);
           }
-        }
-        if (THREADVAR(hook_hints) & HOOK_CB_WAIT) {
-          weed_refcount_dec(lpt);
-          lives_proc_thread_free(lpt);
         }
       } else {
         // will call fg_run_func() indirectly, so no need to call lives_proc_thread_free
@@ -485,8 +499,10 @@ static boolean _call_funcsig_inner(lives_proc_thread_t thread_info, lives_funcpt
   weed_error_t err = WEED_SUCCESS;
   int nparms = get_funcsig_nparms(sig);
 
-  if (thread_info) info = thread_info;
-  else info = lives_proc_thread_new();
+  if (thread_info) {
+    info = thread_info;
+    lives_proc_thread_include_states(thread_info, THRD_STATE_RUNNING);
+  } else info = lives_proc_thread_new();
 
   thefunc->func = func;
 

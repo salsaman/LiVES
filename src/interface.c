@@ -5032,14 +5032,14 @@ _entryw *create_cds_dialog(int type) {
     lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Wipe layout"));
   else if (type == 0) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Ignore changes"));
   else if (type == 1) {
-    if (mainw->was_set && prefs->workdir_tx_intent != LIVES_INTENTION_DELETE)
+    if (mainw->was_set && prefs->workdir_tx_intent != OBJ_INTENTION_DELETE)
       lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete clip set"));
     else
       lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Discard all clips"));
   } else if (type == 2) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete layout"));
 
-  if (prefs->workdir_tx_intent != LIVES_INTENTION_UNKNOWN) {
-    if (prefs->workdir_tx_intent == LIVES_INTENTION_LEAVE) {
+  if (prefs->workdir_tx_intent != OBJ_INTENTION_UNKNOWN) {
+    if (prefs->workdir_tx_intent == OBJ_INTENTION_LEAVE) {
       savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog),
                    LIVES_STOCK_SAVE, _("Save in _Current Work Directory"),
                    LIVES_RESPONSE_ACCEPT);
@@ -6603,9 +6603,9 @@ boolean workdir_change_dialog(void) {
         lives_widget_show_all(dialog);
         continue;
       }
-      prefs->workdir_tx_intent = LIVES_INTENTION_DELETE;
+      prefs->workdir_tx_intent = OBJ_INTENTION_DELETE;
     }
-    if (resp == LIVES_RESPONSE_ACCEPT) prefs->workdir_tx_intent = LIVES_INTENTION_LEAVE;
+    if (resp == LIVES_RESPONSE_ACCEPT) prefs->workdir_tx_intent = OBJ_INTENTION_LEAVE;
     if (resp == LIVES_RESPONSE_YES) {
       char *fpmp;
       if (!capable->mountpoint) capable->mountpoint = get_mountpoint_for(prefs->workdir);
@@ -6647,7 +6647,7 @@ boolean workdir_change_dialog(void) {
         }
       }
       lives_free(fpmp);
-      prefs->workdir_tx_intent = LIVES_INTENTION_MOVE;
+      prefs->workdir_tx_intent = OBJ_INTENTION_MOVE;
     }
     break;
   }

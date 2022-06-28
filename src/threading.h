@@ -666,10 +666,10 @@ void make_thrdattrs(void);
 
 // intents - for future use
 // type = thread, subtype livesproc
-#define PROC_THREAD_INTENTION_CREATE LIVES_INTENTION_CREATE // timeout is an optional ivar, default 0, how to handle
+#define PROC_THREAD_INTENTION_CREATE OBJ_INTENTION_CREATE // timeout is an optional ivar, default 0, how to handle
 //						argc, argv in reqmts. ?
-#define PROC_THREAD_INTENTION_DESTROY LIVES_INTENTION_DESTROY // free func
-#define PROC_THREAD_INTENTION_CANCEL LIVES_INTENTION_CANCEL // -> cancel_immediate
+#define PROC_THREAD_INTENTION_DESTROY OBJ_INTENTION_DESTROY // free func
+#define PROC_THREAD_INTENTION_CANCEL OBJ_INTENTION_CANCEL // -> cancel_immediate
 
 // main_thread_execute etc will be a transform to the running state
 
@@ -677,8 +677,8 @@ void make_thrdattrs(void);
 // sync_wait - set in flags, and waits in prep state
 //
 
-#define PROC_THREAD_INTENTION_GET_VALUE LIVES_INTENTION_GET_VALUE // e.g cancellable
-#define PROC_THREAD_INTENTION_SET_VALUE LIVES_INTENTION_SET_VALUE // e.g cancellable
+#define PROC_THREAD_INTENTION_GET_VALUE OBJ_INTENTION_GET_VALUE // e.g cancellable
+#define PROC_THREAD_INTENTION_SET_VALUE OBJ_INTENTION_SET_VALUE // e.g cancellable
 
 #endif // HOOKFUNCS_ONLY
 

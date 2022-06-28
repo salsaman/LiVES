@@ -1933,7 +1933,7 @@ static boolean rec_desk_done(livespointer data) {
     cfile->fps = 0.;
     mainw->cancelled = CANCEL_NONE;
 
-    THREAD_INTENTION = LIVES_INTENTION_RECORD;
+    THREAD_INTENTION = OBJ_INTENTION_RECORD;
 
     on_resample_vid_ok(NULL, NULL);
     if (mainw->cancelled != CANCEL_NONE) {
@@ -3158,8 +3158,8 @@ double analyse_cpu_stats(void) {
 								    MATH_OBJECT_SUBTYPE_STATS);
     // get the math.stats template
     // we want to know how to get an instantc of it, we can look for the transform for
-    // the LIVES_INTENTION_CREATE_INSTANCE intent
-    tx = find_transform_for_intent(LIVES_OBJECT(math_obj), LIVES_INTENTION_CREATE_INSTANCE);
+    // the OBJ_INTENTION_CREATE_INSTANCE intent
+    tx = find_transform_for_intent(LIVES_OBJECT(math_obj), OBJ_INTENTION_CREATE_INSTANCE);
     if (requirements_met(tx)) {
       transform(LIVES_OBJECT(math_obj), tx, &statsinst);
     }

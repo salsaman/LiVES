@@ -4,6 +4,8 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
+#define NEED_OBJECT_BUNDLES
+
 #include "main.h"
 
 // eventually will become lookup for all recognised uids
@@ -23,11 +25,55 @@ static const lives_intentcap_t *std_icaps[N_STD_ICAPS];
 #define DICT_SUBTYPE_WEED_PLANT		IMkType("DICT.pla")
 #define DICT_SUBTYPE_FUNCDEF		IMkType("DICT.fun")
 
-#define ATTR_INTROSPECTION_NATIVE_PTR "native_ptr"
-#define ATTR_INTROSPECTION_NATIVE_TYPE "native_type"
-#define ATTR_INTROSPECTION_NATIVE_SIZE "native_size"
-
 // eventually this will part of a fully fledged object broker
+
+
+lives_contract_t *create_contract(lives_intentcap_t *icap) {
+  // here we take an icaps and begin the process for a contract - a dictionary type instance
+  // which can be used to negotiate access to a transform between objects
+  // normally and object would offer a set of contracts which determine the range of
+  // intentcaps it can satisfy
+  // - here we create one ourselves. The contrac is ngotiated between the caller obejct
+  // (agent) and called object (patient). I consists of various parts:
+  // icaps - fixed intent it satisfies, and capacities which deliniate the ways
+  // attributes - a contract will specify a set of attributes which need to have defined values
+  // hooks - a contract can require that certain hook points (consumer hooks)
+  // have a producer available. These hooks will be associated with one or more 'mutable'
+  // attributes which must be update when the hook is triggered
+  // there can also be optional attributes. There is also a signature slot -
+  // the contract must be signed by the patient before it can be called.
+  // Finally there will be a description of the effects of the transform - it can update the value(s)
+  // of input or output attribute, it can mutate, destroy or create objects /instances.
+  // and some transforms have data output hooks, and will produce reults while in th running state.
+  // The agent slects a contract offered by the pateint, and may manipulate the caps, reducing the
+  // set. It may provide values for some attributes, and attach producers to the hook attributes.
+  // The changed contract is then passed to the patient's negotiation function. The pateint may add
+  // more attributes, adjust the caps, and possibly amend the output results. It will return a status
+  // which can include not ready, and agreed. The agent may accept the updated contract if agrreed,
+  // and sign the contract. The patient should then also sign, and th transform can be triggered.
+  // If not agreed, the agent can examine the updated contract and see what is lacking,
+  // try to fix this and return it to the patient.
+
+  /* lives_contract_t *contract = lives_object_instance_create(OBJECT_TYPE_CONTRACT, */
+  /* 							    NO_SUBTYPE); */
+  /* lives_obj_attr_t *attr = lives_object_declare_attribute(contract, ATTR_GENERIC_ICAP, */
+  /* 							   WEED_SEED_INT); */
+  /// caller may add attibutes to the attibutes attribute, hooks to hooks
+
+  return NULL;
+}
+
+
+lives_obj_attr_t *lives_contract_declare_attribute(lives_contract_t *contract, const char *name,
+    uint32_t atype) {
+  // TODO
+
+
+  return NULL;
+}
+
+
+
 
 
 void *lookup_entry_full(uint64_t uid) {
@@ -74,7 +120,7 @@ lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
                             lives_object_t *obj, va_list xargs) {
   // dict entry, object with any type of attributes but no transforms
   // copy specified attributes from obj into the dictionary
-  // if intent is LIVES_INTENTION_UPDATE then we only overwrite, otherwise we replace all
+  // if intent is OBJ_INTENTION_UPDATE then we only overwrite, otherwise we replace all
 
   char *aname;
   int count = 0;
@@ -84,7 +130,7 @@ lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
   // replace - delete old add new
 
   if (!dicto) dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_OBJECT);
-  else if (intent == LIVES_INTENTION_REPLACE && dicto->attributes) {
+  else if (intent == OBJ_INTENTION_REPLACE && dicto->attributes) {
     lives_object_attributes_unref_all(dicto);
   }
   while (1) {
@@ -98,8 +144,8 @@ lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
     }
     if (!attr) break;
 
-    st = obj_attr_get_value_type(attr);
-    if (intent != LIVES_INTENTION_REPLACE) {
+    st = lives_attr_get_value_type(attr);
+    if (intent != OBJ_INTENTION_REPLACE) {
       xattr  = lives_object_get_attribute(dicto, aname);
       if (xattr) lives_object_attribute_unref(dicto, xattr);
     }
@@ -107,8 +153,8 @@ lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
     if (xattr) {
       // TODO = warn if attr type changing
       weed_plant_duplicate_clean(xattr, attr);
-      obj_attr_set_readonly(xattr, obj_attr_is_readonly(attr));
-      if (!obj_attr_is_mine(xattr))
+      lives_attr_set_readonly(xattr, lives_attr_is_readonly(attr));
+      if (!contract_attr_is_mine(xattr))
         weed_leaf_clear_flagbits(xattr, WEED_LEAF_VALUE,
                                  WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
     }
@@ -122,7 +168,7 @@ lives_dicto_t  *replace_dicto(lives_dicto_t *dicto, lives_object_t *obj, ...) {
   // replace attributes if already there
   va_list xargs;
   va_start(xargs, obj);
-  dicto = _make_dicto(dicto, LIVES_INTENTION_REPLACE, obj, xargs);
+  dicto = _make_dicto(dicto, OBJ_INTENTION_REPLACE, obj, xargs);
   va_end(xargs);
   return dicto;
 }
@@ -132,7 +178,7 @@ lives_dicto_t  *update_dicto(lives_dicto_t *dicto, lives_object_t *obj, ...) {
   // update a subset of attributes if already there
   va_list xargs;
   va_start(xargs, obj);
-  dicto = _make_dicto(dicto, LIVES_INTENTION_UPDATE, obj, xargs);
+  dicto = _make_dicto(dicto, OBJ_INTENTION_UPDATE, obj, xargs);
   va_end(xargs);
   return dicto;
 }
@@ -142,20 +188,20 @@ static lives_objstore_t *_update_dictionary(lives_objstore_t *objstore, lives_in
     lives_dicto_t *dicto) {
   // if intent == REPLACE replace existing entry, otherwise do not add if already there
   if (!objstore) objstore = lives_hash_store_new("main store");
-  else if (intent != LIVES_INTENTION_REPLACE && get_from_hash_store_i(objstore, uid)) return objstore;
+  else if (intent != OBJ_INTENTION_REPLACE && get_from_hash_store_i(objstore, uid)) return objstore;
   return add_to_hash_store_i(objstore, uid, (void *)dicto);
 }
 
 
 static lives_objstore_t *add_to_objstore(lives_objstore_t *objstore, uint64_t uid, lives_dicto_t *dicto) {
   // add only if not there
-  return _update_dictionary(objstore, LIVES_INTENTION_NOTHING, uid, dicto);
+  return _update_dictionary(objstore, OBJ_INTENTION_NOTHING, uid, dicto);
 }
 
 
 static lives_objstore_t *update_dictionary(lives_objstore_t *objstore, uint64_t uid, lives_dicto_t *dicto) {
   // add if not there, else update
-  return _update_dictionary(objstore, LIVES_INTENTION_REPLACE, uid, dicto);
+  return _update_dictionary(objstore, OBJ_INTENTION_REPLACE, uid, dicto);
 }
 
 
@@ -227,7 +273,8 @@ const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, con
   const lives_funcdef_t *funcdef = get_from_hash_store(fn_objstore, name);
   if (!funcdef) {
     lives_dicto_t *dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_FUNCDEF);
-    lives_obj_attr_t *xattr = lives_object_declare_attribute(dicto, ATTR_INTROSPECTION_NATIVE_PTR, WEED_SEED_VOIDPTR);
+    lives_obj_attr_t *xattr = lives_object_declare_attribute(dicto, ATTR_INTROSPECTION_NATIVE_PTR,
+                              WEED_SEED_VOIDPTR);
     funcdef = create_funcdef(name, func, rtype, args_fmt, file, line ? ++line : 0, txmap);
     lives_object_set_attr_value(dicto, xattr, funcdef);
     fn_objstore = add_to_objstore(fn_objstore, funcdef->uid, dicto);
@@ -351,6 +398,531 @@ size_t weigh_object(lives_object_instance_t *obj) {
 }
 
 
+#define CONTRACT_BUNDLE ATTR_QUARK(GENERIC, UID), ATTR_QUARK(INTROSPECTION, REFCOUNT), \
+    _OBJDEF_BUNDLE, _ICAP_BUNDLE, ATTR_QUARK(CONTRACT, ATTRIBUTES), \
+    ATTR_QUARK(GENERIC, FLAGS), ATTR_QUARK(GENERIC, TRANSFORMS), \
+    ATTR_QUARK(OBJECT, CONTRACTS), ATTR_QUARK(GENERIC, HOOKS),   \
+    ATTR_QUARK(INTROSPECTION, PRIVATE_DATA), ATTR_END
+
+static bundledef_t get_obj_bundledef(uint64_t otype, uint64_t osubtype) {
+  if (otype == OBJECT_TYPE_CONTRACT) {
+    static bundle_element cb[] = {CONTRACT_BUNDLE};
+    return cb;
+  }
+  return NULL;
+}
+
+
+static void lives_bundle_free(lives_bundle_t *bundle) {
+  if (bundle) {
+    char **leaves = weed_plant_list_leaves(bundle, NULL);
+    int i = 0, nvals;
+    for (char *leaf = leaves[0]; leaf; leaf = leaves[++i]) {
+      if (weed_leaf_seed_type(bundle, leaf) == WEED_SEED_PLANTPTR) {
+        lives_bundle_t **sub = weed_get_plantptr_array_counted(bundle, leaf, &nvals);
+        for (int k = 0; k < nvals; k++) if (sub[k]) lives_bundle_free(sub[k]);
+        weed_leaf_delete(bundle, leaf);
+      }
+      lives_free(leaf);
+    }
+    if (nvals) lives_free(leaves);
+    weed_plant_free(bundle);
+  }
+}
+
+
+LIVES_GLOBAL_INLINE uint64_t lives_object_get_type(weed_plant_t *obj) {
+  uint64_t otype = 0;
+  if (obj) {
+    lives_bundle_t *vb = weed_get_plantptr_value(obj, ATTR_OBJECT_TYPE, NULL);
+    otype = (uint64_t)weed_get_int64_value(vb, ATTR_VALUE_VALUE, NULL);
+  }
+  return otype;
+}
+
+
+LIVES_GLOBAL_INLINE uint64_t lives_object_get_subtype(weed_plant_t *obj) {
+  uint64_t osubtype = 0;
+  if (obj) {
+    lives_bundle_t *vb = weed_get_plantptr_value(obj, ATTR_OBJECT_SUBTYPE, NULL);
+    osubtype = (uint64_t)weed_get_int64_value(vb, ATTR_VALUE_VALUE, NULL);
+  }
+  return osubtype;
+}
+
+
+LIVES_GLOBAL_INLINE int lives_object_get_state(weed_plant_t *obj) {
+  int ostate = 0;
+  if (obj) {
+    lives_bundle_t *vb = weed_get_plantptr_value(obj, ATTR_OBJECT_STATE, NULL);
+    ostate = (uint64_t)weed_get_int64_value(vb, ATTR_VALUE_VALUE, NULL);
+  }
+  return ostate;
+}
+
+
+static int handle_special_value(lives_bundle_t *bundle, bundle_type btype,
+                                uint64_t otype, uint64_t osubtype, const char *iname, va_list vargs) {
+  if (btype == attr_bundle) {
+    // setting value, default, or new_default
+    lives_bundle_t *vb = weed_get_plantptr_value(bundle, ATTR_OBJECT_TYPE, NULL);
+    uint32_t atype = (uint32_t)weed_get_int_value(vb, ATTR_VALUE_VALUE, NULL);
+    // TODO - set attr "value", "default" or "new_default"
+  }
+  //if (elem->domain ICAP && item CAPACITIES) prefix iname and det boolean in bndle
+  //if (elem->domain CONTRACT && item ATTRIBUTES) check list of lists, if iname there
+  // - check if owner, check ir readonly, else add to owner list
+  return 0;
+}
+
+
+static uint64_t get_vflags(const char *q) {
+  uint64_t vflags = 0;
+  if (*q == '?') vflags |= BUNDLE_FLAG_OPTIONAL;
+  return vflags;
+}
+
+static uint32_t get_vtype(const char *q) {
+  off_t op = 1;
+  if (*q == '?') op++;
+  return q[op];
+}
+
+static const char *get_vname(const char *q) {
+  off_t op = 2;
+  if (*q == '?') op++;
+  return q + op;
+}
+
+
+static lives_bundle_t *create_bundle_vargs(bundle_type btype,
+    uint64_t otype, va_list vargs) {
+  lives_bundle_t *bundle = NULL;
+  if (btype >= 0 || btype < n_bundles) {
+    bundledef_t bundledef;
+    if (btype == object_bundle) bundledef = get_obj_bundledef(otype, 0);
+    if (!bundledef) bundledef = (bundledef_t)get_bundledef(btype);
+    if (bundledef) {
+      va_list xargs;
+      lives_obj_attr_t *attr;
+      bundle_element elem;
+      int err = 0;
+      int bsubtype = LIVES_WEED_SUBTYPE_BUNDLE;
+      if (btype == object_bundle) bsubtype = LIVES_WEED_SUBTYPE_OBJECT;
+      else if (btype == object_bundle) bsubtype = LIVES_WEED_SUBTYPE_OBJ_ATTR;
+      va_copy(xargs, vargs);
+      bundle = lives_plant_new(bsubtype);
+      // go through va_list and assign
+
+      // do three passes, first the normal values, then the "special" values
+      for (int pass = 0; pass < 2; pass++) {
+        while (1) {
+          uint64_t vflags;
+          uint32_t vtype;
+          const char *vname;
+          int ne;
+          char *iname;
+          if (!pass) iname = va_arg(xargs, char *);
+          else iname = va_arg(vargs, char *);
+          if (!iname) break;
+          for (int i = 0; ; i++) {
+            elem = bundledef[i];
+            vflags = get_vflags(elem);
+            vtype = get_vtype(elem);
+            vname = get_vname(elem);
+            if (!vtype) break;
+            if (!lives_strcmp(iname, vname)) break;
+          }
+          if (!vtype) {
+            g_print("attribute %s not found in bundle !", iname);
+            err = 1;
+            break;
+          }
+          ne = va_arg(xargs, int);
+          if (ne <= 0) {
+            g_print("invalid nvals for %s in bundle, you sent %d !", iname, ne);
+            err = 2;
+            break;
+          }
+          if (pass == 1) {
+            if (vtype == (uint32_t)*ATTR_TYPE_SPECIAL) {
+              err = handle_special_value(bundle, btype, otype, 0, iname, xargs);
+              if (err) break;
+            }
+            continue;
+          }
+          /* if (vmax_repeats != -1 */
+          /*     && ne > vmax_repeats ? vmax_repeats : 1) { */
+          /*   g_print("too many values for %s in bundle, max is %d, you sent %d !", iname, */
+          /* 	    vmax_repeats ? vmax_repeats : 1, ne); */
+          /*   err = 2; */
+          /*   break; */
+          /* } */
+          if (vtype == (uint32_t)*ATTR_TYPE_SPECIAL) continue;
+          /* if (!(flags & BUNDLE_FLAG_SIMPLE_VALUES)) { */
+          /*   if (ne == 1 || vtype == (uint32_t)*ATTR_TYPE_CHAR) { */
+          /*     switch (vtype) { */
+          /*     case (uint32_t)*ATTR_TYPE_INT: */
+          /*     case (uint32_t)*ATTR_TYPE_BOOLEAN: { */
+          /* 	int val = va_arg(xargs, int); */
+          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*     } */
+          /* 	break; */
+          /*     case (uint32_t)*ATTR_TYPE_CHAR: { */
+          /* 	char *val = lives_malloc(ne); */
+          /* 	if (!val) { */
+          /* 	  g_print("OOM assigning %d bytes for char for %s in bundle !", iname, ne); */
+          /* 	  err = 2; */
+          /* 	  break; */
+          /* 	} */
+          /* 	lives_memcpy(val, &va_arg(xargs, char); */
+          /* 	  sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				     ATTR_VALUE_VALUE, ne, val, NULL); */
+          /* 	} */
+          /* 	break; */
+          /*     case (uint32_t)*ATTR_TYPE_UINT: { */
+          /* 	  uint32_t val = va_arg(xargs, uint32_t); */
+          /* 	  sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				     ATTR_VALUE_VALUE, ne, val, NULL); */
+          /* 	} */
+          /* 	break; */
+          /*     case (uint32_t)*ATTR_TYPE_DOUBLE: { */
+          /* 	double val = va_arg(xargs, double); */
+          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*     } */
+          /* 	break; */
+          /*     case (uint32_t)*ATTR_TYPE_STRING: { */
+          /* 	char *val = lives_strdup(va_arg(xargs, char *)); */
+          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*     } */
+          /* 	break; */
+          /*     case (uint32_t)*ATTR_TYPE_INT64: { */
+          /* 	int64_t val = va_arg(xargs, int64_t); */
+          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*     } */
+          /* 	break; */
+          /*     case (uint32_t)*ATTR_TYPE_UINT64: { */
+          /* 	uint64_t val = va_arg(xargs, uint64_t); */
+          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*     } */
+          /* 	break; */
+          /*     case (uint32_t)*ATTR_TYPE_FLOAT: { */
+          /* 	float val = xargs, float); */
+          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*     } */
+          /*     break; */
+          /*   case (uint32_t)*ATTR_TYPE_ATTRPTR: */
+          /*   case (uint32_t)*ATTR_TYPE_BUNDLEPTR: */
+          /*   case (uint32_t)*ATTR_TYPE_HOOKPTR: */
+          /*   case (uint32_t)*ATTR_TYPE_VOIDPTR: { */
+          /*     void *val = va_arg(xargs, void *); */
+          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				 ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*   } */
+          /*     break; */
+          /*   case (uint32_t)*ATTR_TYPE_OBJPTR: { */
+          /*     weed_plant_t *obj = va_arg(xargs, weed_plant_t *); */
+          /*     //uint64_t xotype = lives_get_attribute_value_int64(val, ATTR_OBJECT_TYPP); */
+          /*     uint64_t xotype; */
+          /*     if (vobj_type != OBJECT_TYPE_ANY */
+          /* 	  && vobj_type != lives_object_get_type(obj)) { */
+          /* 	g_print("object type invalid for %s in bundle !", iname); */
+          /* 	err = 3; */
+          /* 	break; */
+          /*     } */
+          /*     if (vobj_subtype != OBJECT_SUBTYPE_ANY */
+          /* 	  && vobj_subtype != lives_object_get_subtype(obj)) { */
+          /* 	// TODO - see if the object has a transform to change the subtype */
+          /* 	g_print("object subtype invalid for %s in bundle !", iname); */
+          /* 	err = 4; */
+          /* 	break; */
+          /*     } */
+          /*     if (vobj_state != OBJECT_STATE_ANY */
+          /* 	  && vobj_state != lives_object_get_state(obj)) { */
+          /* 	// TODO - see if the object has a transform to change the state */
+          /* 	g_print("object state invalid for %s in bundle !", iname); */
+          /* 	err = 5; */
+          /* 	break; */
+          /*     } */
+          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				 ATTR_VALUE_VALUE, ne, obj, NULL); */
+          /*   } */
+          /*     break; */
+          /*   default: */
+          /*     g_print("type invalid for %s in bundle !", iname); */
+          /*     err = 5; */
+          /*     break; */
+          /*   } */
+          /*   if (err) break; */
+          /*   weed_set_plantptr_value(bundle, iname, sub_bundle);  */
+          /* } else { */
+          /*   // arrays */
+          /*   switch (vtype) { */
+          /*   case (uint32_t)*ATTR_TYPE_INT: */
+          /*   case (uint32_t)*ATTR_TYPE_BOOLEAN: { */
+          /* 	int *val = va_arg(xargs, int *); */
+          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				   ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
+          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*     } */
+          /*     break; */
+          /*   case (uint32_t)*ATTR_TYPE_UINT: */
+          /*     { */
+          /* 	uint32_t *val = va_arg(xargs, uint32_t *); */
+          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				   ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
+          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*     } */
+          /*     break; */
+          /*   case (uint32_t)*ATTR_TYPE_DOUBLE: { */
+          /*     double *val = va_arg(xargs, double *); */
+          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
+          /* 				 ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*   } */
+          /*     break; */
+          /*   case (uint32_t)*ATTR_TYPE_STRING: { */
+          /*     char **val = va_arg(xargs, char *); */
+          /*     char **xval = lives_calloc(ne, sizeof(char *)); */
+          /*     for (int j = 0; j < ne; j++) { */
+          /* 	if (val[i]) xval[i] = lives_strdup(val[i]); */
+          /* 	else xval[i] = NULL; */
+          /*     } */
+          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
+          /* 				 ATTR_VALUE_VALUE, ne, xval, NULL); */
+          /*   } */
+          /*     break; */
+          /*   case (uint32_t)*ATTR_TYPE_INT64: { */
+          /*     int64_t *val = va_arg(xargs, int64_t *); */
+          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
+          /* 				 ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*   } */
+          /*     break; */
+          /*   case (uint32_t)*ATTR_TYPE_UINT64: { */
+          /*     uint64_t *val = va_arg(xargs, uint64_t *); */
+          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
+          /* 				 ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*   } */
+          /*     break; */
+          /*   case (uint32_t)*ATTR_TYPE_FLOAT: { */
+          /*     float *val = lives_strdup(va_arg(xargs, float *)); */
+          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
+          /* 				 ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*   } */
+          /*     break; */
+          /*   case (uint32_t)*ATTR_TYPE_ATTRPTR: */
+          /*   case (uint32_t)*ATTR_TYPE_BUNDLEPTR: */
+          /*   case (uint32_t)*ATTR_TYPE_HOOKPTR: */
+          /*   case (uint32_t)*ATTR_TYPE_VOIDPTR: { */
+          /*     void **val = va_arg(xargs, void **); */
+          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
+          /* 				 ATTR_VALUE_VALUE, ne, val, NULL); */
+          /*   } */
+          /*     break; */
+          /*   case (uint32_t)*ATTR_TYPE_OBJPTR: { */
+          /*     weed_plant_t *obj = lives_strdup(va_arg(xargs, weed_plant_t *)); */
+          /*     //uint64_t xotype = lives_get_attribute_value_int64(val, ATTR_OBJECT_TYPP); */
+          /*     uint64_t xotype; */
+          /*     if (vobj_type != OBJECT_TYPE_ANY */
+          /* 	  && vobj_type != lives_oject_get_type(obj)) { */
+          /* 	g_print("object type invalid for %s in bundle !", iname); */
+          /* 	err = 3; */
+          /* 	break; */
+          /*     } */
+          /*     if (vobj_subtype != OBJECT_SUBTYPE_ANY */
+          /* 	  && vobj_subtype != lives_oject_get_subtype(obj)) { */
+          /* 	// TODO - see if the object has a transform to change the subtype */
+          /* 	g_print("object subtype invalid for %s in bundle !", iname); */
+          /* 	err = 4; */
+          /* 	break; */
+          /*     } */
+          /*     if (vobj_state != OBJECT_STATE_ANY */
+          /* 	  && vobj_state != lives_oject_get_state(obj)) { */
+          /* 	// TODO - see if the object has a transform to change the state */
+          /* 	g_print("object state invalid for %s in bundle !", iname); */
+          /* 	err = 5; */
+          /* 	break; */
+          /*     } */
+          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
+          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
+          /* 				 ATTR_VALUE_VALUE, ne, obj, NULL); */
+          /*   } */
+          /*     break; */
+          /*   default: */
+          /*     g_print("type invalid for %s in bundle !", iname); */
+          /*     err = 6; */
+          /*     break; */
+          /*   } */
+          /* } */
+          /* else { */
+          /*   default: */
+          /*     g_print("type invalid for %s in bundle !", iname); */
+          /*     err = 5; */
+          /*     break; */
+          /* } */
+          /* if (err) break; */
+          // simple values
+          if (ne == 1 || vtype == (uint32_t)*ATTR_TYPE_CHAR) {
+            switch (vtype) {
+            case (UATTR_TYPE_INT): {
+              int val = va_arg(xargs, int);
+              weed_set_int_value(bundle, iname, val);
+            }
+            break;
+            case UATTR_TYPE_BOOLEAN: {
+              int val = va_arg(xargs, int);
+              weed_set_boolean_value(bundle, iname, val);
+            }
+            break;
+            case UATTR_TYPE_UINT: {
+              uint32_t val = va_arg(xargs, uint32_t);
+              weed_set_int_value(bundle, iname, (int)val);
+            }
+            break;
+            case UATTR_TYPE_FLOAT:
+            case UATTR_TYPE_DOUBLE: {
+              double val = va_arg(xargs, double);
+              weed_set_double_value(bundle, iname, val);
+            }
+            break;
+            case UATTR_TYPE_STRING: {
+              char *val = lives_strdup(va_arg(xargs, char *));
+              weed_set_string_value(bundle, iname, val);
+              lives_free(val);
+            }
+            break;
+            case UATTR_TYPE_INT64: {
+              int64_t val = va_arg(xargs, int64_t);
+              weed_set_int64_value(bundle, iname, val);
+            }
+            break;
+            case UATTR_TYPE_UINT64: {
+              uint64_t val = va_arg(xargs, uint64_t);
+              weed_set_int64_value(bundle, iname, (int64_t)val);
+            }
+            break;
+            case UATTR_TYPE_ATTRPTR:
+            case UATTR_TYPE_OBJPTR:
+            case UATTR_TYPE_HOOKPTR:
+            case UATTR_TYPE_BUNDLEPTR: {
+              weed_plant_t *val = va_arg(xargs, weed_plant_t *);
+              weed_set_plantptr_value(bundle, iname, val);
+            }
+            case UATTR_TYPE_VOIDPTR: {
+              void *val = va_arg(xargs, void *);
+              weed_set_voidptr_value(bundle, iname, val);
+            }
+            break;
+            default:
+              g_print("type invalid for %s in bundle !", iname);
+              err = 5;
+              break;
+            }
+            if (err) break;
+          } else {
+            switch (vtype) {
+            case UATTR_TYPE_INT: {
+              int *val = va_arg(xargs, int *);
+              weed_set_int_array(bundle, iname, ne, val);
+            }
+            break;
+            case UATTR_TYPE_BOOLEAN: {
+              int *val = va_arg(xargs, int *);
+              weed_set_boolean_array(bundle, iname, ne, val);
+            }
+            break;
+            //
+            case UATTR_TYPE_DOUBLE: {
+              double *val = va_arg(xargs, double *);
+              weed_set_double_array(bundle, iname, ne, val);
+            }
+            break;
+            case UATTR_TYPE_STRING: {
+              char **val = va_arg(xargs, char **);
+              char **xval = lives_calloc(ne, sizeof(char *));
+              for (int j = 0; j < ne; j++) {
+                if (val[j]) xval[j] = lives_strdup(val[j]);
+                else xval[j] = NULL;
+              }
+              weed_set_string_array(bundle, iname, ne, val);
+              for (int j = 0; j < ne; j++) if (xval[j]) lives_free(xval[j]);
+              lives_free(xval);
+            }
+            break;
+            case UATTR_TYPE_INT64: {
+              int64_t *val = va_arg(xargs, int64_t *);
+              weed_set_int64_array(bundle, iname, ne, val);
+            }
+            break;
+            case UATTR_TYPE_UINT64: {
+              uint64_t *val = va_arg(xargs, uint64_t *);
+              weed_set_int64_array(bundle, iname, ne, (int64_t *)val);
+            }
+            break;
+            case UATTR_TYPE_FLOAT: {
+              float *val = va_arg(xargs, float *);
+              double *dval  = (double *)lives_calloc(ne, sizdbl);
+              for (int k = 0; k < ne; k++) dval[k] = (double)val[k];
+              weed_set_double_array(bundle, iname, ne, dval);
+              lives_free(dval);
+            }
+            break;
+            case UATTR_TYPE_ATTRPTR:
+            case UATTR_TYPE_OBJPTR:
+            case UATTR_TYPE_HOOKPTR:
+            case UATTR_TYPE_BUNDLEPTR: {
+              weed_plant_t **val = va_arg(xargs, weed_plant_t **);
+              weed_set_plantptr_array(bundle, iname, ne, val);
+            }
+            break;
+            case UATTR_TYPE_VOIDPTR: {
+              void **val = va_arg(xargs, void **);
+              weed_set_voidptr_array(bundle, iname, ne, val);
+            }
+            break;
+            default:
+              g_print("type invalid for %s in bundle !", iname);
+              err = 6;
+              break;
+            }
+          }
+          if (xargs != vargs) va_end(xargs);
+          if (err) {
+            lives_bundle_free(bundle);
+            return NULL;
+          }
+        }
+      }
+    }
+  }
+  return bundle;
+}
+
+
+static LIVES_SENTINEL lives_bundle_t *create_bundle(bundle_type btype, ...) {
+  lives_bundle_t *bundle;
+  int bsubtype = LIVES_WEED_SUBTYPE_BUNDLE;
+  va_list xargs;
+  va_start(xargs, btype);
+  if (btype == object_bundle) bsubtype = LIVES_WEED_SUBTYPE_OBJECT;
+  else if (btype == attr_bundle) bsubtype = LIVES_WEED_SUBTYPE_OBJ_ATTR;
+  bundle = create_bundle_vargs(btype, bsubtype, xargs);
+  va_end(xargs);
+  return bundle;
+}
+
+
 LIVES_GLOBAL_INLINE lives_object_instance_t *lives_object_instance_create(uint64_t type, uint64_t subtype) {
   lives_object_instance_t *obj_inst = lives_calloc(1, sizeof(lives_object_instance_t));
   obj_inst->uid = gen_unique_id();
@@ -417,7 +989,7 @@ LIVES_GLOBAL_INLINE void lives_object_attributes_unref_all(lives_object_t *obj) 
 static weed_error_t _set_obj_attribute_vargs(lives_obj_attr_t  *attr, const char *key,
     int ne, va_list args) {
   if (attr) {
-    weed_error_t err; uint32_t st = obj_attr_get_value_type(attr);
+    weed_error_t err; uint32_t st = lives_attr_get_value_type(attr);
     if (ne == 1) {
       switch (st) {
       case WEED_SEED_INT: {
@@ -452,7 +1024,7 @@ static weed_error_t _set_obj_attribute_vargs(lives_obj_attr_t  *attr, const char
         weed_plantptr_t val = va_arg(args, weed_plantptr_t);
         err = weed_set_plantptr_value(attr, key, val); break;
       }
-      default: return LIVES_ERROR_ATTRIBUTE_INVALID;
+      default: return OBJ_ERROR_ATTRIBUTE_INVALID;
       }
     } else {
       switch (st) {
@@ -488,18 +1060,18 @@ static weed_error_t _set_obj_attribute_vargs(lives_obj_attr_t  *attr, const char
         weed_plantptr_t *vals = va_arg(args, weed_plantptr_t *);
         err = weed_set_plantptr_array(attr, key, ne, vals); break;
       }
-      default: return LIVES_ERROR_ATTRIBUTE_INVALID;
+      default: return OBJ_ERROR_ATTRIBUTE_INVALID;
       }
     } return err;
   }
-  return LIVES_ERROR_NOSUCH_ATTRIBUTE;
+  return OBJ_ERROR_NOSUCH_ATTRIBUTE;
 }
 
 weed_error_t lives_object_set_attribute_value(lives_object_t *obj, const char *name, ...) {
   weed_error_t err = WEED_SUCCESS;
   if (name && *name) {
     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    if (!attr) return LIVES_ERROR_NOSUCH_ATTRIBUTE;
+    if (!attr) return OBJ_ERROR_NOSUCH_ATTRIBUTE;
     else {
       va_list xargs;
       va_start(xargs, name);
@@ -519,7 +1091,7 @@ weed_error_t lives_object_set_attribute_default(lives_object_t *obj, const char 
   weed_error_t err = WEED_SUCCESS;
   if (name && *name) {
     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    if (!attr) return LIVES_ERROR_NOSUCH_ATTRIBUTE;
+    if (!attr) return OBJ_ERROR_NOSUCH_ATTRIBUTE;
     else {
       va_list xargs;
       va_start(xargs, name);
@@ -574,7 +1146,7 @@ weed_error_t lives_object_set_attribute_array(lives_object_t *obj, const char *n
   weed_error_t err = WEED_SUCCESS;
   if (name && *name && ne > 0) {
     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    if (!attr) return LIVES_ERROR_NOSUCH_ATTRIBUTE;
+    if (!attr) return OBJ_ERROR_NOSUCH_ATTRIBUTE;
     else {
       va_list xargs;
       va_start(xargs, ne);
@@ -595,7 +1167,7 @@ weed_error_t lives_object_set_attribute_def_array(lives_object_t *obj,
   weed_error_t err = WEED_SUCCESS;
   if (name && *name && ne > 0) {
     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    if (!attr) return LIVES_ERROR_NOSUCH_ATTRIBUTE;
+    if (!attr) return OBJ_ERROR_NOSUCH_ATTRIBUTE;
     else {
       va_list xargs;
       va_start(xargs, ne);
@@ -814,7 +1386,7 @@ lives_obj_attr_t *lives_object_declare_attribute(lives_object_t *obj, const char
 }
 
 
-LIVES_GLOBAL_INLINE uint32_t obj_attr_get_value_type(lives_obj_attr_t *attr) {
+LIVES_GLOBAL_INLINE uint32_t lives_attr_get_value_type(lives_obj_attr_t *attr) {
   if (!attr) return WEED_SEED_INVALID;
   if (weed_plant_has_leaf(attr, WEED_LEAF_DEFAULT))
     return weed_leaf_seed_type(attr, WEED_LEAF_DEFAULT);
@@ -822,34 +1394,39 @@ LIVES_GLOBAL_INLINE uint32_t obj_attr_get_value_type(lives_obj_attr_t *attr) {
 }
 
 
-LIVES_GLOBAL_INLINE uint64_t obj_attr_get_owner(lives_obj_attr_t *attr) {
+LIVES_GLOBAL_INLINE uint64_t contract_attr_get_owner(lives_obj_attr_t *attr) {
   if (attr) return weed_get_int64_value(attr, LIVES_LEAF_OWNER, NULL);
   return 0;
 }
 
 
-LIVES_GLOBAL_INLINE uint64_t lives_attribute_get_owner(lives_object_t *obj, const char *name) {
-  if (obj) return obj_attr_get_owner(lives_object_get_attribute(obj, name));
+LIVES_GLOBAL_INLINE uint64_t contract_attribute_get_owner(lives_object_t *obj, const char *name) {
+  if (obj) return contract_attr_get_owner(lives_object_get_attribute(obj, name));
   return 0;
 }
 
 
-LIVES_GLOBAL_INLINE boolean obj_attr_is_mine(lives_obj_attr_t *attr) {
-  if (attr && obj_attr_get_owner(attr) == capable->uid) return TRUE;
+LIVES_GLOBAL_INLINE boolean contract_attr_is_mine(lives_obj_attr_t *attr) {
+  if (attr && contract_attr_get_owner(attr) == capable->uid) return TRUE;
   return FALSE;
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_attribute_is_mine(lives_object_t *obj, const char *name) {
-  if (obj) return obj_attr_is_mine(lives_object_get_attribute(obj, name));
+LIVES_GLOBAL_INLINE boolean contract_attribute_is_mine(lives_object_t *obj, const char *name) {
+  if (obj) return contract_attr_is_mine(lives_object_get_attribute(obj, name));
   return FALSE;
 }
 
+char *contract_attr_get_value_string(lives_obj_attr_t *attr) {
 
-LIVES_GLOBAL_INLINE weed_error_t obj_attr_set_leaf_readonly(lives_obj_attr_t *attr, const char *key, boolean state) {
-  if (!attr) return LIVES_ERROR_NOSUCH_ATTRIBUTE;
-  if (!obj_attr_is_mine(attr)) return LIVES_ERROR_NOT_OWNER;
-  if (!strcmp(key, WEED_LEAF_VALUE)) return obj_attr_set_readonly(attr, state);
+  return NULL;
+}
+
+
+LIVES_GLOBAL_INLINE weed_error_t lives_attr_set_leaf_readonly(lives_obj_attr_t *attr, const char *key, boolean state) {
+  if (!attr) return OBJ_ERROR_NOSUCH_ATTRIBUTE;
+  if (!contract_attr_is_mine(attr)) return OBJ_ERROR_NOT_OWNER;
+  if (!strcmp(key, WEED_LEAF_VALUE)) return lives_attr_set_readonly(attr, state);
   if (state)
     return weed_leaf_set_flagbits(attr, key, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
   else
@@ -857,10 +1434,10 @@ LIVES_GLOBAL_INLINE weed_error_t obj_attr_set_leaf_readonly(lives_obj_attr_t *at
 }
 
 
-LIVES_GLOBAL_INLINE weed_error_t obj_attr_set_readonly(lives_obj_attr_t *attr, boolean state) {
-  if (!attr) return LIVES_ERROR_NOSUCH_ATTRIBUTE;
-  if (!obj_attr_is_mine(attr)) return LIVES_ERROR_NOT_OWNER;
-  if (!weed_leaf_num_elements(attr, WEED_LEAF_VALUE)) return LIVES_ERROR_ATTRIBUTE_INVALID;
+LIVES_GLOBAL_INLINE weed_error_t lives_attr_set_readonly(lives_obj_attr_t *attr, boolean state) {
+  if (!attr) return OBJ_ERROR_NOSUCH_ATTRIBUTE;
+  if (!contract_attr_is_mine(attr)) return OBJ_ERROR_NOT_OWNER;
+  if (!weed_leaf_num_elements(attr, WEED_LEAF_VALUE)) return OBJ_ERROR_ATTRIBUTE_INVALID;
   if (state) {
     weed_leaf_set_flagbits(attr, WEED_LEAF_VALUE, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
     return weed_set_int_value(attr, WEED_LEAF_FLAGS, weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL)
@@ -878,9 +1455,9 @@ LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_leaf_readonly(lives_object_
     const char *key, boolean state) {
   if (obj) {
     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    return obj_attr_set_leaf_readonly(attr, key, state);
+    return lives_attr_set_leaf_readonly(attr, key, state);
   }
-  return LIVES_ERROR_NULL_OBJECT;
+  return OBJ_ERROR_NULL_OBJECT;
 }
 
 
@@ -888,30 +1465,30 @@ LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_readonly(lives_object_t *ob
     boolean state) {
   if (obj) {
     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    return obj_attr_set_readonly(attr, state);
+    return lives_attr_set_readonly(attr, state);
   }
-  return LIVES_ERROR_NULL_OBJECT;
+  return OBJ_ERROR_NULL_OBJECT;
 }
 
 
-LIVES_GLOBAL_INLINE boolean obj_attr_is_leaf_readonly(lives_obj_attr_t *attr, const char *key) {
+LIVES_GLOBAL_INLINE boolean lives_attr_is_leaf_readonly(lives_obj_attr_t *attr, const char *key) {
   if (attr) {
-    if (!lives_strcmp(key, WEED_LEAF_VALUE)) return obj_attr_is_readonly(attr);
+    if (!lives_strcmp(key, WEED_LEAF_VALUE)) return lives_attr_is_readonly(attr);
     if (weed_leaf_get_flags(attr, key) & WEED_FLAG_IMMUTABLE) return TRUE;
   }
   return FALSE;
 }
 
 
-LIVES_GLOBAL_INLINE boolean obj_attr_is_readonly(lives_obj_attr_t *attr) {
+LIVES_GLOBAL_INLINE boolean lives_attr_is_readonly(lives_obj_attr_t *attr) {
   if (attr) {
     if (weed_leaf_get_flags(attr, WEED_LEAF_VALUE) & WEED_FLAG_IMMUTABLE
         || (weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL)
             & PARAM_FLAG_READONLY) == PARAM_FLAG_READONLY) {
-      if (obj_attr_is_mine(attr)) obj_attr_set_readonly(attr, TRUE);
+      if (contract_attr_is_mine(attr)) lives_attr_set_readonly(attr, TRUE);
       return TRUE;
     }
-    if (obj_attr_is_mine(attr)) obj_attr_set_readonly(attr, FALSE);
+    if (contract_attr_is_mine(attr)) lives_attr_set_readonly(attr, FALSE);
   }
   return FALSE;
 }
@@ -919,7 +1496,7 @@ LIVES_GLOBAL_INLINE boolean obj_attr_is_readonly(lives_obj_attr_t *attr) {
 LIVES_GLOBAL_INLINE boolean lives_attribute_is_leaf_readonly(lives_object_t *obj, const char *name, const char *key) {
   if (obj) {
     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    if (attr) return obj_attr_is_leaf_readonly(attr, key);
+    if (attr) return lives_attr_is_leaf_readonly(attr, key);
   }
   return FALSE;
 }
@@ -928,7 +1505,7 @@ LIVES_GLOBAL_INLINE boolean lives_attribute_is_leaf_readonly(lives_object_t *obj
 LIVES_GLOBAL_INLINE boolean lives_attribute_is_readonly(lives_object_t *obj, const char *name) {
   if (obj) {
     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    if (attr) return obj_attr_is_readonly(attr);
+    if (attr) return lives_attr_is_readonly(attr);
   }
   return FALSE;
 }
@@ -944,9 +1521,9 @@ LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_param_type(lives_object_t *
       weed_set_int_value(attr, WEED_LEAF_PARAM_TYPE, ptype);
       return WEED_SUCCESS;
     }
-    return LIVES_ERROR_NOSUCH_ATTRIBUTE;
+    return OBJ_ERROR_NOSUCH_ATTRIBUTE;
   }
-  return LIVES_ERROR_NULL_OBJECT;
+  return OBJ_ERROR_NULL_OBJECT;
 }
 
 
@@ -1058,7 +1635,7 @@ LIVES_LOCAL_INLINE lives_intentcap_t *lives_icap_new(lives_intention intent, liv
     } else icap = lsd_struct_create(lsd);
     if (icap) {
       icap->intent = intent;
-      if (intent != LIVES_INTENTION_NOTHING) {
+      if (intent != OBJ_INTENTION_NOTHING) {
         icap->capacities = lives_capacities_new();
       }
     }
@@ -1068,7 +1645,7 @@ LIVES_LOCAL_INLINE lives_intentcap_t *lives_icap_new(lives_intention intent, liv
 
 
 void lives_icap_init(lives_intentcap_t *stat) {
-  //lives_icap_new(LIVES_INTENTION_NOTHING, stat);
+  //lives_icap_new(OBJ_INTENTION_NOTHING, stat);
 }
 
 
@@ -1476,10 +2053,10 @@ void make_std_icaps(void) {
     lives_memset(std_icaps, 0, N_STD_ICAPS * sizeof(lives_intentcap_t *));
     icaps_inited = TRUE;
   }
-  std_icaps[_ICAP_IDLE] = make_std_icap("idle", LIVES_INTENTION_NOTHING, NULL);
-  std_icaps[_ICAP_DOWNLOAD] = make_std_icap("download", LIVES_INTENTION_IMPORT,
-                              OBJ_CAPACITY_REMOTE, NULL);
-  std_icaps[_ICAP_LOAD] = make_std_icap("load", LIVES_INTENTION_IMPORT, OBJ_CAPACITY_LOCAL, NULL);
+  std_icaps[_ICAP_IDLE] = make_std_icap("idle", OBJ_INTENTION_NOTHING, NULL);
+  std_icaps[_ICAP_DOWNLOAD] = make_std_icap("download", OBJ_INTENTION_IMPORT,
+                              CAP_REMOTE, NULL);
+  std_icaps[_ICAP_LOAD] = make_std_icap("load", OBJ_INTENTION_IMPORT, CAP_LOCAL, NULL);
 }
 
 
@@ -1547,45 +2124,45 @@ weed_param_t *weed_param_from_attribute(lives_object_instance_t *obj, const char
 /* } */
 
 
-weed_plant_t *int_req_init(const char *name, int def, int min, int max) {
-  lives_tx_param_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
-  int ptype = WEED_PARAM_INTEGER;
-  weed_set_string_value(paramt, WEED_LEAF_NAME, name);
-  weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
-  weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_INT, 1, &def);
-  weed_leaf_set(paramt, WEED_LEAF_MIN, WEED_SEED_INT, 1, &min);
-  weed_leaf_set(paramt, WEED_LEAF_MAX, WEED_SEED_INT, 1, &max);
-  return paramt;
-}
+/* weed_plant_t *int_req_init(const char *name, int def, int min, int max) { */
+/*   lives_tx_param_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM); */
+/*   int ptype = WEED_PARAM_INTEGER; */
+/*   weed_set_string_value(paramt, WEED_LEAF_NAME, name); */
+/*   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype); */
+/*   weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_INT, 1, &def); */
+/*   weed_leaf_set(paramt, WEED_LEAF_MIN, WEED_SEED_INT, 1, &min); */
+/*   weed_leaf_set(paramt, WEED_LEAF_MAX, WEED_SEED_INT, 1, &max); */
+/*   return paramt; */
+/* } */
 
-weed_plant_t *boolean_req_init(const char *name, int def) {
-  lives_tx_param_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
-  int ptype = WEED_PARAM_SWITCH;
-  weed_set_string_value(paramt, WEED_LEAF_NAME, name);
-  weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
-  weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_BOOLEAN, 1, &def);
-  return paramt;
-}
+/* weed_plant_t *boolean_req_init(const char *name, int def) { */
+/*   lives_tx_param_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM); */
+/*   int ptype = WEED_PARAM_SWITCH; */
+/*   weed_set_string_value(paramt, WEED_LEAF_NAME, name); */
+/*   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype); */
+/*   weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_BOOLEAN, 1, &def); */
+/*   return paramt; */
+/* } */
 
-weed_plant_t *double_req_init(const char *name, double def, double min, double max) {
-  weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
-  int ptype = WEED_PARAM_FLOAT;
-  weed_set_string_value(paramt, WEED_LEAF_NAME, name);
-  weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
-  weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_DOUBLE, 1, &def);
-  weed_leaf_set(paramt, WEED_LEAF_MIN, WEED_SEED_DOUBLE, 1, &min);
-  weed_leaf_set(paramt, WEED_LEAF_MAX, WEED_SEED_DOUBLE, 1, &max);
-  return paramt;
-}
+/* weed_plant_t *double_req_init(const char *name, double def, double min, double max) { */
+/*   weed_plant_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM); */
+/*   int ptype = WEED_PARAM_FLOAT; */
+/*   weed_set_string_value(paramt, WEED_LEAF_NAME, name); */
+/*   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype); */
+/*   weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_DOUBLE, 1, &def); */
+/*   weed_leaf_set(paramt, WEED_LEAF_MIN, WEED_SEED_DOUBLE, 1, &min); */
+/*   weed_leaf_set(paramt, WEED_LEAF_MAX, WEED_SEED_DOUBLE, 1, &max); */
+/*   return paramt; */
+/* } */
 
-weed_plant_t *string_req_init(const char *name, const char *def) {
-  weed_param_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM);
-  int ptype = WEED_PARAM_TEXT;
-  weed_set_string_value(paramt, WEED_LEAF_NAME, name);
-  weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype);
-  weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_STRING, 1, &def);
-  return paramt;
-}
+/* weed_plant_t *string_req_init(const char *name, const char *def) { */
+/*   weed_param_t *paramt = lives_plant_new(LIVES_WEED_SUBTYPE_TX_PARAM); */
+/*   int ptype = WEED_PARAM_TEXT; */
+/*   weed_set_string_value(paramt, WEED_LEAF_NAME, name); */
+/*   weed_leaf_set(paramt, WEED_LEAF_PARAM_TYPE, WEED_SEED_INT, 1, &ptype); */
+/*   weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_STRING, 1, &def); */
+/*   return paramt; */
+/* } */
 
 
 /* boolean rules_lack_param(lives_rules_t *prereq, const char *pname) { */
@@ -1636,30 +2213,6 @@ boolean lives_transform_status_free(lives_transform_status_t *st) {
 /* } */
 
 
-static boolean lives_rules_unref(lives_rules_t *rules) {
-  // return FALSE if destroyed
-  if (refcount_dec(&rules->refcounter) < 0) {
-    refcount_unlock(&rules->refcounter);
-    if (rules->reqs) {
-      for (int i = 0; rules->reqs->params[i]; i++) {
-        weed_plant_free(rules->reqs->params[i]);
-      }
-      lives_free(rules->reqs);
-    }
-    lives_free(rules);
-    return FALSE;
-  }
-  return TRUE;
-}
-
-
-void lives_object_transform_free(lives_object_transform_t *tx) {
-  lives_rules_unref(tx->prereqs);
-  //if (tx->mappings) tx_mappings_free(tx->mappings);
-  //if (tx->oparams) tx_oparams_free(tx->oparams);
-  lives_free(tx);
-}
-
 
 lives_object_transform_t *find_transform_for_intentcaps(lives_object_t *obj, lives_intentcap_t *icaps) {
   uint64_t type = obj->type;
@@ -1707,7 +2260,7 @@ lives_intentcaps_t **list_intentcaps(void) {
 
       lives_transform_t *tx = (lives_transform_t *)lives_calloc(sizeof(lives_transform_t), 1);
       tx->start_state = state;
-      tx->icaps.intent = LIVES_INTENTION_IMPORT;
+      tx->icaps.intent = OBJ_INTENTION_IMPORT;
       tx->n_caps = 1;
       tx->caps = lives_calloc(sizint, 1);
       tx->caps[0] = IMPORT_LOCAL;

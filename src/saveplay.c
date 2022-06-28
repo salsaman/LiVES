@@ -2296,7 +2296,7 @@ void play_file(void) {
 
   mainw->rec_aclip = -1;
 
-  init_conversions(LIVES_INTENTION_PLAY);
+  init_conversions(OBJ_INTENTION_PLAY);
 
   lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_PRE_HOOK);
 

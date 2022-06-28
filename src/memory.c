@@ -888,8 +888,8 @@ void *calloc_bigblock(size_t xsize) {
       bbused++;
 #endif
       pthread_mutex_unlock(&bigblock_mutex);
-      g_print("CALLOBIG %p %d\n", bigblocks[i], i);
-      break_me("callobig");
+      //g_print("CALLOBIG %p %d\n", bigblocks[i], i);
+      //break_me("callobig");
       nbads = 0;
       start = bigblocks[i];
       /* start = (void *)((size_t)((size_t)((char *)bigblocks[i] + align - 1) / align) * align); */
@@ -913,11 +913,11 @@ void *free_bigblock(void *bstart) {
       used[i] = -1;
 #ifdef BBL_TEST
       pthread_mutex_lock(&bigblock_mutex);
-      if (prefs->show_dev_opts) g_print("bblocks in use: %d\n", bbused);
+      //if (prefs->show_dev_opts) g_print("bblocks in use: %d\n", bbused);
       bbused--;
       pthread_mutex_unlock(&bigblock_mutex);
 #endif
-      g_print("FREEBIG %p %d\n", bigblocks[i], i);
+      //g_print("FREEBIG %p %d\n", bigblocks[i], i);
       return NULL;
     }
   }

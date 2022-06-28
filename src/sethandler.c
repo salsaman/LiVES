@@ -1492,7 +1492,7 @@ LiVESResponseType prompt_for_set_save(void) {
     }
     if (resp == LIVES_RESPONSE_RESET) {
       // wipe from disk
-      if (prefs->workdir_tx_intent != LIVES_INTENTION_DELETE) {
+      if (prefs->workdir_tx_intent != OBJ_INTENTION_DELETE) {
         char *what, *expl;
         // TODO
         //if (check_for_executable(&capable->has_gio, EXEC_GIO)) mainw->add_trash_rb = TRUE;

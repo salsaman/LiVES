@@ -901,7 +901,7 @@ LIVES_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext *c
     }
     ret = g_main_context_iteration(ctx, may_block);
     if (need_service_handle)
-      mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL);
+      mainw->fg_service_handle = lives_idle_add(fg_service_fulfill_cb, NULL);
     //norecurse = FALSE;
     return ret;
   }
@@ -7867,7 +7867,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_timer_remove(uint32_t timer) {
 
 WIDGET_HELPER_GLOBAL_INLINE uint32_t lives_idle_priority(LiVESWidgetSourceFunc function, livespointer data) {
 #ifdef GUI_GTK
-  return g_idle_add_full(G_PRIORITY_HIGH, function, data, NULL);
+  return g_idle_add_full(LIVES_WIDGET_PRIORITY_HIGH, function, data, NULL);
 #endif
   return 0;
 }
@@ -14149,12 +14149,12 @@ boolean widget_klasses_init(lives_toolkit_t tk) {
       = lives_func_info_new(0, (lives_funcptr_t)lives_spin_button_get_value_as_int,
                             WEED_SEED_INT, "V", (void *)k);
 
-    lname = lives_strdup_printf("%s%d", LIVES_LEAF_INTENTION, LIVES_INTENTION_GET_VALUE);
+    lname = lives_strdup_printf("%s%d", LIVES_LEAF_INTENTION, OBJ_INTENTION_GET_VALUE);
     weed_set_voidptr_array(k, lname, 2, (void **)afunc_info);
     lives_free(lname);
 
     // SET_VALUE
-    add_method(k, LIVES_INTENTION_SET_VALUE, (lives_funcptr_t)lives_spin_button_set_value,
+    add_method(k, OBJ_INTENTION_SET_VALUE, (lives_funcptr_t)lives_spin_button_set_value,
                WEED_SEED_BOOLEAN, "Vd");
 
     widget_klass_set_role(k, KLASS_ROLE_WIDGET);
@@ -14179,7 +14179,7 @@ lives_widget_instance_t *widget_instance_from_klass(const lives_widget_klass_t *
   else {
     lives_func_info_t *funcinf
       = get_func_with_rettype((lives_widget_instance_t *)k,
-                              LIVES_INTENTION_CREATE_INSTANCE, WEED_SEED_VOIDPTR);
+                              OBJ_INTENTION_CREATE_INSTANCE, WEED_SEED_VOIDPTR);
     if (!funcinf) return NULL;
     else {
       // create fake proc_thread, which we will pass to run_funsig

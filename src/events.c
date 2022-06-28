@@ -3315,6 +3315,7 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
 
   return_event = get_next_event(next_event);
   etype = get_event_type(next_event);
+
   switch (etype) {
   case WEED_EVENT_TYPE_FRAME:
 
@@ -3862,7 +3863,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
     out_frame = calc_frame_from_time4(mainw->current_file, atime);
 
     /// set the highest quality palette conversions
-    init_conversions(LIVES_INTENTION_RENDER);
+    init_conversions(OBJ_INTENTION_RENDER);
 
     if (cfile->frames < out_frame) out_frame = cfile->frames + 1;
     cfile->undo_start = out_frame;
@@ -4166,7 +4167,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           if (layer && weed_layer_get_width(layer) > 0) {
             int lpal, width, height;
             boolean was_lbox = FALSE;
-            if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
+            if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
 
               if (mainw->transrend_layer) {
 
@@ -4432,7 +4433,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 #else
 
       if (!saver_thread) {
-        if (THREAD_INTENTION == LIVES_INTENTION_RENDER) {
+        if (THREAD_INTENTION == OBJ_INTENTION_RENDER) {
           saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
           saveargs->img_type = cfile->img_type;
           saveargs->compression = 100 - prefs->ocp;
@@ -4474,7 +4475,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         lives_free(saveargs->fname);
         saveargs->fname = NULL;
       }
-      if (THREAD_INTENTION == LIVES_INTENTION_RENDER) {
+      if (THREAD_INTENTION == OBJ_INTENTION_RENDER) {
         if (cfile->old_frames > 0) {
           saveargs->fname = make_image_file_name(cfile, out_frame, LIVES_FILE_EXT_MGK);
         } else {
@@ -4501,7 +4502,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       if (cfile->start == 0) cfile->start = 1;
       out_frame++;
 
-      if (THREAD_INTENTION == LIVES_INTENTION_RENDER) {
+      if (THREAD_INTENTION == OBJ_INTENTION_RENDER) {
         // if our pixbuf came from scrap file, and next frame is also from scrap file with same frame number,
         // save the pixbuf and re-use it
         if (scrap_track != -1) {
@@ -4858,18 +4859,18 @@ boolean start_render_effect_events(weed_event_list_t *event_list, boolean render
   lives_system(com, FALSE);
   lives_free(com);
 
-  if (THREAD_INTENTION == LIVES_INTENTION_RENDER)
+  if (THREAD_INTENTION == OBJ_INTENTION_RENDER)
     mainw->disk_mon = MONITOR_QUOTA;
   else cfile->nopreview = TRUE;
 
   if (cfile->old_frames > 0) cfile->nopreview = TRUE; /// FIXME...
 
-  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE && render_vid) {
+  if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE && render_vid) {
     lives_hook_append(THREADVAR(hook_closures), TX_START_HOOK, HOOK_CB_SINGLE_SHOT, add_xdg_opt, NULL);
   }
 
   // play back the file as fast as possible, each time calling render_events()
-  if ((!do_progress_dialog(TRUE, TRUE, render_vid ? (THREAD_INTENTION == LIVES_INTENTION_RENDER ? _("Rendering")
+  if ((!do_progress_dialog(TRUE, TRUE, render_vid ? (THREAD_INTENTION == OBJ_INTENTION_RENDER ? _("Rendering")
                            : _("Transcoding")) : _("Pre-rendering audio"))
        && mainw->cancelled != CANCEL_KEEP) || mainw->error ||
       mainw->render_error >= LIVES_RENDER_ERROR
@@ -5037,7 +5038,7 @@ boolean render_to_clip(boolean new_clip) {
   if (new_clip) {
     if (prefs->render_prompt) {
       //set file details
-      rdet = create_render_details(THREAD_INTENTION == LIVES_INTENTION_TRANSCODE ? 5 : 2);
+      rdet = create_render_details(THREAD_INTENTION == OBJ_INTENTION_TRANSCODE ? 5 : 2);
       if (!has_audio_frame(mainw->event_list)) {
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), FALSE);
         lives_widget_set_sensitive(resaudw->aud_checkbutton, FALSE);
@@ -5078,7 +5079,7 @@ boolean render_to_clip(boolean new_clip) {
         xse |= AFORM_BIG_ENDIAN;
       } else xse |= AFORM_LITTLE_ENDIAN;
 
-      if (THREAD_INTENTION == LIVES_INTENTION_RENDER) {
+      if (THREAD_INTENTION == OBJ_INTENTION_RENDER) {
         clipname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(rdet->clipname_entry)));
         tmp = get_untitled_name(mainw->untitled_number);
         if (!strcmp(clipname, tmp)) mainw->untitled_number++;
@@ -5091,7 +5092,7 @@ boolean render_to_clip(boolean new_clip) {
       lives_widget_destroy(rdet->dialog);
 
       if (response == LIVES_RESPONSE_CANCEL) {
-        if (THREAD_INTENTION == LIVES_INTENTION_RENDER)
+        if (THREAD_INTENTION == OBJ_INTENTION_RENDER)
           lives_free(rdet->encoder_name);
         lives_free(clipname);
         lives_freep((void **)&rdet);
@@ -5103,8 +5104,8 @@ boolean render_to_clip(boolean new_clip) {
     } else {
       lives_capacities_t *caps = THREAD_CAPACITIES;
       if (0 && caps) {
-        rendvid = lives_has_capacity(caps, OBJ_CAPACITY_VIDEO);
-        rendaud = lives_has_capacity(caps, OBJ_CAPACITY_AUDIO);
+        rendvid = lives_has_capacity(caps, CAP_VIDEO);
+        rendaud = lives_has_capacity(caps, CAP_AUDIO);
       } else {
         if (mainw->multitrack) rendaud = mainw->multitrack->opts.render_audp;
         else rendaud = FALSE;
@@ -5120,7 +5121,7 @@ boolean render_to_clip(boolean new_clip) {
     if (!get_new_handle(mainw->current_file, clipname)) {
       mainw->current_file = current_file;
       if (prefs->mt_enter_prompt) {
-        if (THREAD_INTENTION == LIVES_INTENTION_RENDER)
+        if (THREAD_INTENTION == OBJ_INTENTION_RENDER)
           lives_free(rdet->encoder_name);
         lives_freep((void **)&rdet);
         lives_freep((void **)&resaudw);
@@ -5152,7 +5153,7 @@ boolean render_to_clip(boolean new_clip) {
       cfile->asampsize = xasamps;
       cfile->signed_endian = xse;
 
-      if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) {
+      if (THREAD_INTENTION != OBJ_INTENTION_TRANSCODE) {
         lives_free(rdet->encoder_name);
       }
       lives_freep((void **)&rdet);
@@ -5230,7 +5231,7 @@ boolean render_to_clip(boolean new_clip) {
   mainw->vfade_in_secs = mainw->vfade_out_secs = 0.;
 
 #ifdef LIBAV_TRANSCODE
-  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
+  if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
     if (!transcode_prep()) {
       lives_thread_set_intentcap(ICAP(IDLE));
       if (!mainw->multitrack)
@@ -5239,17 +5240,34 @@ boolean render_to_clip(boolean new_clip) {
       prefs->pb_quality = pbq;
       return FALSE;
     } else {
-      lives_obj_attr_t *attr1, *attr2;
-      attr1 = lives_object_declare_attribute(NULL, ATTR_AUDIO_RATE, WEED_SEED_INT);
-      lives_object_set_attribute_value(NULL, ATTR_AUDIO_RATE, cfile->arate);
+      lives_contract_t *contract;
+      /// this part normally would be done by plugin
+      lives_intentcap_t *icap;
+      lives_obj_attr_t *attr, *attr1, *attr2;
+      if (rendvid) {
+        if (rendaud) icap = make_icap(OBJ_INTENTION_TRANSCODE, CAP_VIDEO, CAP_AUDIO, NULL);
+        else icap = make_icap(OBJ_INTENTION_TRANSCODE, CAP_VIDEO, NULL);
+      }
+      icap = make_icap(OBJ_INTENTION_TRANSCODE, CAP_AUDIO, NULL);
+      contract = create_contract(icap);
+      //////
 
-      obj_attr_set_readonly(attr1, TRUE);
+      attr = lives_contract_declare_attribute(contract, ATTR_AUDIO_RATE, WEED_SEED_INT);
+      lives_object_set_attr_value(attr, cfile->arate);
+      lives_attr_set_readonly(attr, TRUE);
 
-      attr2 = lives_object_declare_attribute(NULL, ATTR_AUDIO_CHANNELS, WEED_SEED_INT);
-      lives_object_set_attribute_value(NULL, ATTR_AUDIO_CHANNELS, cfile->achans);
-      obj_attr_set_readonly(attr2, TRUE);
+      attr = lives_contract_declare_attribute(contract, ATTR_AUDIO_CHANNELS, WEED_SEED_INT);
+      lives_object_set_attr_value(attr, cfile->achans);
+      lives_attr_set_readonly(attr, TRUE);
 
-      if (!(pname = transcode_get_params(pname))) {
+      attr = lives_contract_declare_attribute(contract, ATTR_URI_FILENAME, WEED_SEED_STRING);
+
+      // normally, we would fill in the values we know then call get_attrs_from_user(contract);
+      // and allow the user to set any missing values (via the UI object)
+      transcode_get_params(contract);
+      pname = contract_attr_get_value_string(ATTR_URI_FILENAME);
+
+      if (!pname) {
         lives_object_attribute_unref(NULL, attr1);
         lives_object_attribute_unref(NULL, attr2);
         transcode_cleanup(mainw->vpp);
@@ -5334,7 +5352,7 @@ boolean render_to_clip(boolean new_clip) {
     return FALSE;
   }
 
-  if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE)
+  if (THREAD_INTENTION != OBJ_INTENTION_TRANSCODE)
     d_print(_("Rendering..."));
   else {
     mainw->transrend_layer = NULL;
@@ -5362,7 +5380,7 @@ boolean render_to_clip(boolean new_clip) {
   // set all current track -> clips to 0
   init_track_decoders();
 
-  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
+  if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
     cfile->progress_start = 0;
     cfile->progress_end = cfile->frames;
     //cfile->asampsize = xasamps;
@@ -5370,7 +5388,7 @@ boolean render_to_clip(boolean new_clip) {
 
   if (start_render_effect_events(mainw->event_list, rendvid, rendaud)) { // re-render, applying effects
     // and reordering/resampling/resizing if necessary
-    if (THREAD_INTENTION != LIVES_INTENTION_TRANSCODE) {
+    if (THREAD_INTENTION != OBJ_INTENTION_TRANSCODE) {
       if (!mainw->multitrack && mainw->event_list) {
         if (!new_clip) {
           // this is needed in case we render to same clip, and then undo ///////
@@ -5391,7 +5409,7 @@ boolean render_to_clip(boolean new_clip) {
     }
     if (new_clip) {
       char *tmp;
-      if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
+      if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
         goto rtc_done;
       }
 
@@ -5505,7 +5523,7 @@ boolean render_to_clip(boolean new_clip) {
 
 rtc_done:
 
-  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE) {
+  if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
     if (mainw->transrend_proc) {
       lives_proc_thread_cancel(mainw->transrend_proc, FALSE);
       lives_proc_thread_join(mainw->transrend_proc);
@@ -5513,7 +5531,7 @@ rtc_done:
     }
   }
 
-  if (THREAD_INTENTION == LIVES_INTENTION_TRANSCODE
+  if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE
       || (!retval && new_clip && !mainw->multitrack)) {
     // for mt we are rendering to the actual mt file, so we cant close it (CHECK: did we delete all images ?)
     close_current_file(current_file);
@@ -5781,10 +5799,10 @@ boolean deal_with_render_choice(boolean add_deinit) {
     }
     break;
     case RENDER_CHOICE_TRANSCODE:
-      lives_thread_set_intention(LIVES_INTENTION_TRANSCODE, NULL);
+      lives_thread_set_intention(OBJ_INTENTION_TRANSCODE, NULL);
     case RENDER_CHOICE_NEW_CLIP:
       if (render_choice == RENDER_CHOICE_NEW_CLIP) {
-        icaps = make_icap(LIVES_INTENTION_RENDER, OBJ_CAPACITY_VIDEO, OBJ_CAPACITY_AUDIO, NULL);
+        icaps = make_icap(OBJ_INTENTION_RENDER, CAP_VIDEO, CAP_AUDIO, NULL);
         lives_thread_set_intentcap(icaps);
       }
       dw = prefs->mt_def_width;
@@ -5827,7 +5845,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
         new_clip = TRUE;
       }
       mainw->is_rendering = FALSE;
-      THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+      THREAD_INTENTION = OBJ_INTENTION_NOTHING;
       if (caps) {
         lives_capacities_free(caps);
         caps = THREAD_CAPACITIES = NULL;
@@ -5841,9 +5859,9 @@ boolean deal_with_render_choice(boolean add_deinit) {
         info = NULL;
       }
       caps = lives_capacities_new();
-      THREAD_INTENTION = LIVES_INTENTION_RENDER;
-      lives_capacity_set(caps, OBJ_CAPACITY_VIDEO);
-      lives_capacity_set(caps, OBJ_CAPACITY_AUDIO);
+      THREAD_INTENTION = OBJ_INTENTION_RENDER;
+      lives_capacity_set(caps, CAP_VIDEO);
+      lives_capacity_set(caps, CAP_AUDIO);
       THREAD_CAPACITIES = caps;
       if (!render_to_clip(FALSE)) render_choice = RENDER_CHOICE_PREVIEW;
       else {
@@ -5851,7 +5869,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
         close_ascrap_file(TRUE);
       }
       mainw->is_rendering = FALSE;
-      THREAD_INTENTION = LIVES_INTENTION_NOTHING;
+      THREAD_INTENTION = OBJ_INTENTION_NOTHING;
       if (caps) {
         lives_capacities_free(caps);
         caps = THREAD_CAPACITIES = NULL;

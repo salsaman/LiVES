@@ -219,7 +219,7 @@ void lives_exit(int signum) {
         // create the new directory, and then move any sets over
         // for some cases we only move a single set
 
-        if (prefs->workdir_tx_intent == LIVES_INTENTION_MOVE) {
+        if (prefs->workdir_tx_intent == OBJ_INTENTION_MOVE) {
           end_threaded_dialog();
           // ask user if they want to clean the old directory and recover clips
           if (do_move_workdir_dialog()) {
@@ -232,7 +232,7 @@ void lives_exit(int signum) {
                 if (prompt_for_set_save() == LIVES_RESPONSE_CANCEL) {
                   if (do_noworkdirchange_dialog()) {
                     *future_prefs->workdir = 0;
-                    prefs->workdir_tx_intent = LIVES_INTENTION_UNKNOWN;
+                    prefs->workdir_tx_intent = OBJ_INTENTION_UNKNOWN;
                     return;
                   }
                   continue;
@@ -385,7 +385,7 @@ void lives_exit(int signum) {
           }
           mainw->close_keep_frames = FALSE;
 
-          if (prefs->workdir_tx_intent != LIVES_INTENTION_DELETE) {
+          if (prefs->workdir_tx_intent != OBJ_INTENTION_DELETE) {
             if (!mainw->leave_files && !mainw->leave_recovery) {
               // delete the current set (this is for DELETE_SET)
               cleanup_set_dir(mainw->set_name);
@@ -405,7 +405,7 @@ void lives_exit(int signum) {
           && lives_strcmp(future_prefs->workdir, prefs->workdir)) {
         // use backend to move the sets
         com = NULL;
-        if (prefs->workdir_tx_intent != LIVES_INTENTION_MOVE) {
+        if (prefs->workdir_tx_intent != OBJ_INTENTION_MOVE) {
           if (mainw->set_name && mainw->fx1_bool) {
             // delete or leave old workdir - user wants to move current set to new location
             com = lives_strdup_printf("%s move_workdir \"%s\" \"%s\"", prefs->backend_sync,
@@ -554,7 +554,7 @@ void lives_exit(int signum) {
 
   lives_hooks_trigger(NULL, mainw->global_hook_closures, EXIT_HOOK);
 
-  if (prefs->workdir_tx_intent == LIVES_INTENTION_DELETE) {
+  if (prefs->workdir_tx_intent == OBJ_INTENTION_DELETE) {
     // delete the old workdir
     lives_rmdir(prefs->workdir, TRUE);
   }
@@ -2216,7 +2216,7 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       if (response == LIVES_RESPONSE_CANCEL && *future_prefs->workdir) {
         if (do_noworkdirchange_dialog()) {
           *future_prefs->workdir = 0;
-          prefs->workdir_tx_intent = LIVES_INTENTION_UNKNOWN;
+          prefs->workdir_tx_intent = OBJ_INTENTION_UNKNOWN;
         } else continue;
       }
       break;
@@ -9805,7 +9805,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     }
 
     if (mainw->is_rendering) {
-      init_conversions(LIVES_INTENTION_RENDER);
+      init_conversions(OBJ_INTENTION_RENDER);
       mainw->effort = -EFFORT_RANGE_MAX;
     }
 

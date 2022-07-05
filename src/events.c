@@ -5249,23 +5249,23 @@ boolean render_to_clip(boolean new_clip) {
         else icap = make_icap(OBJ_INTENTION_TRANSCODE, CAP_VIDEO, NULL);
       }
       icap = make_icap(OBJ_INTENTION_TRANSCODE, CAP_AUDIO, NULL);
-      contract = create_contract(icap);
+      //contract = create_contract(icap);
       //////
 
       attr = lives_contract_declare_attribute(contract, ATTR_AUDIO_RATE, WEED_SEED_INT);
-      lives_object_set_attr_value(attr, cfile->arate);
-      lives_attr_set_readonly(attr, TRUE);
+      lives_object_set_attr_value(contract, attr, cfile->arate);
+      //lives_attr_set_readonly(attr, TRUE);
 
       attr = lives_contract_declare_attribute(contract, ATTR_AUDIO_CHANNELS, WEED_SEED_INT);
-      lives_object_set_attr_value(attr, cfile->achans);
-      lives_attr_set_readonly(attr, TRUE);
+      lives_object_set_attr_value(contract, attr, cfile->achans);
+      //lives_attr_set_readonly(attr, TRUE);
 
       attr = lives_contract_declare_attribute(contract, ATTR_URI_FILENAME, WEED_SEED_STRING);
 
       // normally, we would fill in the values we know then call get_attrs_from_user(contract);
       // and allow the user to set any missing values (via the UI object)
       transcode_get_params(contract);
-      pname = contract_attr_get_value_string(ATTR_URI_FILENAME);
+      //pname = contract_attribute_get_value_string(contract, ATTR_URI_FILENAME);
 
       if (!pname) {
         lives_object_attribute_unref(NULL, attr1);

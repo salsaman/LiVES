@@ -12,7 +12,7 @@
 
 ########################################################
 # this will auto-generate a Weed C plugin from the script info in $file
-
+#my $DEBUG = 1;
 my $USE_STRICT = 1;
 if ($USE_STRICT) {
     use strict;
@@ -35,7 +35,7 @@ my $license_version = "3 or higher";
 my $copyright_authors = "";
 my $copyright_years = "";
 
-my $CURRENT_YEAR = "2021"; ## TODO
+my $CURRENT_YEAR = "2022"; ## TODO
 ##################################
 
 my ($section, $file);
@@ -74,6 +74,9 @@ if ($delim =~ /^[\^\$\.\*\+\?\|\(\)\[\]\{\}\\]+/) {
 }
 
 my $pf_name = (&rc_read("name", $file))[0];
+if (!$pf_name) {
+    print STDERR "WARNING - no 'name' in $file\n";
+}
 @pieces = split(/$delim/, $pf_name);
 my $plugin_name = @pieces[0];
 my $filter_name = @pieces[1];
@@ -82,6 +85,9 @@ if (!$filter_name) {
 }
 
 my @authors = &rc_read("author", $file);
+if (!@authors) {
+    print STDERR "WARNING - no lang_code in $file\n";
+}
 @pieces = split(/$delim/, @authors[0]);
 
 my $author = @pieces[0];
@@ -92,8 +98,14 @@ if (@authors > 1) {
 }
 
 my $lang_code = (&rc_read("language_code", $file))[0];
+if (!$lang_code) {
+    print STDERR "WARNING - no lang_code in $file\n";
+}
 
 my $uid = (&rc_read("unique_id", $file))[0];
+if (!$uid) {
+    print STDERR "WARNING - no uid in $file\n";
+}
 
 my $versions = (&rc_read("version", $file))[0];
 @pieces = split(/$delim/, $versions);
@@ -114,6 +126,10 @@ my @static = &rc_read("static", $file);
 
 my @pal_list = &rc_read("palette_list", $file);
 
+if (!@pal_list) {
+    print STDERR "WARNING - no palette_list section in $file\n";
+}
+
 my @in_chans = &rc_read("in_chans", $file);
 my @out_chans = &rc_read("out_chans", $file);
 
@@ -125,9 +141,16 @@ my $nwlines = @param_window;
 
 my @init = &rc_read("init", $file);
 my @proc= &rc_read("process", $file);
+if (!@proc) {
+    print STDERR "WARNING - no proc section in $file\n";
+}
 my @deinit = &rc_read("deinit", $file);
 
 my @setup= &rc_read("setup", $file);
+
+#if (!@setup) {
+#    print STDERR "WARNING - no setup section in $file\n";
+#}
 
 my @disp = &rc_read("display_vals", $file);
 

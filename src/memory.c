@@ -209,12 +209,31 @@ LIVES_GLOBAL_INLINE boolean lives_freep(void **ptr) {
 #ifdef ENABLE_ORC
 livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n) {
   static size_t maxbytes = OIL_MEMCPY_MAX_BYTES;
+
+#if AUTOTUNE_MALLOC_SIZES
   static weed_plant_t *tuner = NULL;
   static boolean tuned = FALSE;
   static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
   boolean haslock = FALSE;
+#endif
+
   if (n == 0) return dest;
   if (n < 32) return memcpy(dest, src, n);
+
+#if AUTOTUNE_MALLOC_SIZES
+  /// autotuning: first of all we provide the tuning parameters:
+  /// (opaque) weed_plant_t *tuner, (int64_t)min range, (int64_t)max range, (int)ntrials,(double) cost
+  /// the tuner will time from here until autotune_end and multiply the cost by the time
+  /// we also reveal the value of the variable in autotune_end
+  /// the tuner will run this ntrials times, then select a new value for the variable which is returned
+  /// the costs for each value are totalled and averaged
+  /// and finally the value with the lowest average cost / time is selected
+  /// in this case what we are tuning is the bytesize threshold to select between one memory allocation function and another
+  /// the cost in both cases is defined is 1.0 / n where n is the block size.
+  /// The cost is the same for both functions - since time is also a factor
+  /// the value should simply be the one with the lowest time per byte
+  /// obviously this is very simplistic since there are many other costs than simply the malloc time
+  /// however, it is a simple matter to adjust the cost calculation
 
   if (!mainw->multitrack && !LIVES_IS_PLAYING) {
     if (!tuned && !tuner) tuner = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 2);
@@ -224,38 +243,40 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
       }
     }
   }
+#endif
 
   if (maxbytes > 0 ? n <= maxbytes : n >= -maxbytes) {
-    /// autotuning: first of all we provide the tuning parameters:
-    /// (opaque) weed_plant_t *tuner, (int64_t)min range, (int64_t)max range, (int)ntrials,(double) cost
-    /// the tuner will time from here until autotune_end and multiply the cost by the time
-    /// we also reveal the value of the variable in autotune_end
-    /// the tuner will run this ntrials times, then select a new value for the variable which is returned
-    /// the costs for each value are totalled and averaged
-    /// and finally the value with the lowest average cost / time is selected
-    /// in this case what we are tuning is the bytesize threshold to select between one memory allocation function and another
-    /// the cost in both cases is defined is 1.0 / n where n is the block size.
-    /// The cost is the same for both functions - since time is also a factor
-    /// the value should simply be the one with the lowest time per byte
-    /// obviously this is very simplistic since there are many other costs than simply the malloc time
-    /// however, it is a simple matter to adjust the cost calculation
-    if (haslock) autotune_u64(tuner, -1024 * 1024, 1024 * 1024, 32, 1. / (double)n);
+#if AUTOTUNE_MALLOC_SIZES
+    if (haslock) autotune_u64_start(tuner, -1024 * 1024, 1024 * 1024, 32);
+#endif
+
     orc_memcpy((uint8_t *)dest, (const uint8_t *)src, n);
 
+#if AUTOTUNE_MALLOC_SIZES
     if (haslock) {
-      maxbytes = autotune_u64_end(&tuner, maxbytes);
+      maxbytes = autotune_u64_end(&tuner, maxbytes, 1. / (double)n);
       if (!tuner) tuned = TRUE;
       pthread_mutex_unlock(&tuner_mutex);
     }
+#endif
+
     return dest;
   }
-  if (haslock) autotune_u64(tuner, -1024 * 1024, 1024 * 1024, 128, -1. / (double)n);
+
+#if AUTOTUNE_MALLOC_SIZES
+  if (haslock) autotune_u64_start(tuner, -1024 * 1024, 1024 * 1024, 128);
+#endif
+
   memcpy(dest, src, n);
+
+#if AUTOTUNE_MALLOC_SIZES
   if (haslock) {
-    maxbytes = autotune_u64_end(&tuner, maxbytes);
+    maxbytes = autotune_u64_end(&tuner, maxbytes, 1. / (double)n);
     if (!tuner) tuned = TRUE;
     pthread_mutex_unlock(&tuner_mutex);
   }
+#endif
+
   return dest;
 }
 #endif
@@ -264,13 +285,18 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
 #ifdef ENABLE_OIL
 livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n) {
   static size_t maxbytes = OIL_MEMCPY_MAX_BYTES;
+
+#if AUTOTUNE_MALLOC_SIZES
   static weed_plant_t *tuner = NULL;
   static boolean tuned = FALSE;
   static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
   boolean haslock = FALSE;
+#endif
+
   if (n == 0) return dest;
   if (n < 32) return memcpy(dest, src, n);
 
+#if AUTOTUNE_MALLOC_SIZES
   if (!mainw->multitrack && !LIVES_IS_PLAYING) {
     if (!tuned && !tuner) tuner = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 2);
     if (tuner) {
@@ -279,30 +305,43 @@ livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n
       }
     }
   }
+#endif
 
   if (maxbytes > 0 ? n <= maxbytes : n >= -maxbytes) {
-    if (haslock) autotune_u64(tuner, -1024 * 1024, 1024 * 1024, 32, 1. / (double)n);
+
+#if AUTOTUNE_MALLOC_SIZES
+    if (haslock) autotune_u64_start(tuner, -1024 * 1024, 1024 * 1024, 32);
+#endif
+
     oil_memcpy((uint8_t *)dest, (const uint8_t *)src, n);
 
+#if AUTOTUNE_MALLOC_SIZES
     if (haslock) {
-      maxbytes = autotune_u64_end(&tuner, maxbytes);
+      maxbytes = autotune_u64_end(&tuner, 1. / (double)n);
       if (!tuner) tuned = TRUE;
       pthread_mutex_unlock(&tuner_mutex);
     }
+#endif
     return dest;
   }
-  if (haslock) autotune_u64(tuner, -1024 * 1024, 1024 * 1024, 128, -1. / (double)n);
+#if AUTOTUNE_MALLOC_SIZES
+  if (haslock) autotune_u64_start(tuner, -1024 * 1024, 1024 * 1024, 128);
+#endif
   memcpy(dest, src, n);
+
+#if AUTOTUNE_MALLOC_SIZES
   if (haslock) {
-    maxbytes = autotune_u64_end(&tuner, maxbytes);
+    maxbytes = autotune_u64_end(&tuner, maxbytes, 1. / (double)n);
     if (!tuner) tuned = TRUE;
     pthread_mutex_unlock(&tuner_mutex);
   }
+#endif
   return dest;
 }
 #endif
 
 #define _cpy_if_nonnull(d, s, size) (d ? lives_memcpy(d, s, size) : d)
+
 
 // functions with fixed pointers that we can pass to plugins ///
 
@@ -401,7 +440,7 @@ char *get_memstats(void) {
   return msg;
 }
 
-#if 0
+
 ////////////// small allocators //////////////
 
 // we start with for example 1024 * 1024 blocks. Then starting from block 0 we give it a 'size' of 1024.
@@ -529,7 +568,7 @@ void smallblock_init(void) {
     pthread_rwlock_wrlock(&memlist_lock);
     lives_free = speedy_free;
     lives_malloc = speedy_malloc;
-    lives_calloc = speedy_calloc;
+    //lives_calloc = speedy_calloc;
     pthread_rwlock_unlock(&memlist_lock);
   }
 }
@@ -682,7 +721,7 @@ void speedy_free(void *p) {
   }
   default_free(p);
 }
-#endif
+
 /////////////////////// medium allocators ////////////
 
 LIVES_LOCAL_INLINE void *lives_malloc_aligned(size_t nblocks, size_t align) {

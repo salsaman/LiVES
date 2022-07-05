@@ -1389,10 +1389,10 @@ void update_play_times(void) {
       lives_proc_thread_join(mainw->drawtl_thread);
       mainw->drawtl_thread = NULL;
     }
-    pthread_mutex_unlock(&mainw->tlthread_mutex);
     for (int i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
     lives_freep((void **)&cfile->audio_waveform);
     lives_freep((void **)&cfile->aw_sizes);
+    pthread_mutex_unlock(&mainw->tlthread_mutex);
   }
   get_play_times();
 }

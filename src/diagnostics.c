@@ -1702,6 +1702,7 @@ void do_lsd_tests(void) {
   lives_free(fcd1);
 }
 
+
 #define show_size(s) fprintf(stderr, "sizeof s is %lu\n", sizeof(s))
 
 void show_struct_sizes(void) {
@@ -1725,5 +1726,170 @@ void run_diagnostic(LiVESWidget *mi, const char *testname) {
   if (!lives_strcmp(testname, "libweed")) run_weed_startup_tests();
   if (!lives_strcmp(testname, "structsizes")) show_struct_sizes();
 }
+
+/// bonus functions
+
+char *weed_plant_to_header(weed_plant_t *plant, const char *tname) {
+  char **leaves = weed_plant_list_leaves(plant, NULL);
+  char *hdr, *ar = NULL, *line;
+
+  if (tname)
+    hdr  = lives_strdup("typedef struct {");
+  else
+    hdr = lives_strdup("struct {");
+
+  for (int i = 0; leaves[i]; i++) {
+    uint32_t st = weed_leaf_seed_type(plant, leaves[i]);
+    weed_size_t ne = weed_leaf_num_elements(plant, leaves[i]);
+    const char *tp = weed_seed_to_ctype(st, TRUE);
+    if (ne > 1) ar = lives_strdup_printf("[%d]", ne);
+    line = lives_strdup_printf("\n  %s%s%s;", tp, leaves[i], ar ? ar : "");
+    hdr = lives_concat(hdr, line);
+    if (ar) {
+      lives_free(ar);
+      ar = NULL;
+    }
+    lives_free(leaves[i]);
+  }
+  lives_free(leaves);
+
+  if (!tname)
+    line = lives_strdup("\n}");
+  else
+    line = lives_strdup_printf("\n} %s;", tname);
+  lives_concat(hdr, line);
+  return hdr;
+}
+
+
+char *bundle_to_header(lives_bundle_t *bundle, const char *tname) {
+  bundledef_t bdef;
+  char *hdr, *ar = NULL, *line;
+  uint32_t st;
+  weed_size_t ne;
+  const char *tp;
+
+  if (tname)
+    hdr  = lives_strdup("typedef struct {");
+  else
+    hdr = lives_strdup("struct {");
+
+  bdef = get_bundledef_from_bundle(bundle);
+  if (bdef) {
+    bundle_element elem, elem2;
+    for (int i = 0; (elem = bdef[i]); i++) {
+      off_t offx = 0;
+      uint64_t vflags;
+      const char *vname;
+      char *sname;
+      uint32_t vtype;
+      boolean addaster = FALSE;
+
+      vflags = get_vflags(elem, &offx);
+      if (vflags & ELEM_FLAG_COMMENT) continue;
+      if (!(elem2 = bdef[++i])) break;
+
+      vtype = get_vtype(elem, &offx);
+      vname = get_vname(elem + offx);
+      sname = get_short_name(vname);
+
+      g_print("ELEM is %s\n", elem);
+
+      if (bundle_has_item(bundle, sname)) {
+        st = weed_leaf_seed_type(bundle, sname);
+        ne = weed_leaf_num_elements(bundle, sname);
+        tp = weed_seed_to_ctype(st, TRUE);
+
+        if (st == WEED_SEED_PLANTPTR) tp = "bundle_t *";
+
+        if (ne > 1) ar = lives_strdup_printf("[%d]", ne);
+        else if (st < 64 && get_is_array(elem2)) addaster = TRUE;
+        line = lives_strdup_printf("\n  %s%s%s%s;", tp, addaster ? "*" : "", sname + 1, ar ? ar : "");
+        hdr = lives_concat(hdr, line);
+        if (ar) {
+          lives_free(ar);
+          ar = NULL;
+        }
+        lives_free(sname);
+      }
+    }
+  } else {
+    char **leaves = weed_plant_list_leaves(bundle, NULL);
+    for (int i = 0; leaves[i]; i++) {
+      if (*leaves[i] == '.') {
+        st = weed_leaf_seed_type(bundle, leaves[i]);
+        ne = weed_leaf_num_elements(bundle, leaves[i]);
+        tp = weed_seed_to_ctype(st, TRUE);
+        if (st == WEED_SEED_PLANTPTR) tp = "bundle_t *";
+        if (ne > 1) ar = lives_strdup_printf("[%d]", ne);
+        line = lives_strdup_printf("\n  %s%s%s;", tp, leaves[i] + 1, ar ? ar : "");
+        hdr = lives_concat(hdr, line);
+        if (ar) {
+          lives_free(ar);
+          ar = NULL;
+        }
+      }
+      lives_free(leaves[i]);
+    }
+    lives_free(leaves);
+  }
+  if (!tname)
+    line = lives_strdup("\n}");
+  else
+    line = lives_strdup_printf("\n} %s;", tname);
+  lives_concat(hdr, line);
+  return hdr;
+}
+
+/* weed_plant_t *header_to_weed_plant(const char *fname, const char *sruct_type) { */
+/*   // we are looking for something like "} structtype;" */
+/*   // the work back from there to something like "typedef struct {" */
+
+/*   int bfd = lives_open_buffered_rdonly(fname); */
+/*   if (bfd >= 0) { */
+/*     char line[512]; */
+/*     while (lives_buffered_readline(bfd, line, '\n', 512) > 0) { */
+/*       g_print("line is %s\n", line); */
+/*     } */
+/*   } */
+/*   lives_close_buffered(bfd); */
+/* } */
+
+
+/* void bundle_test(void) { */
+/*   //lives_contract_t *c = create_contract_instance(OBJ_INTENTION_NONE, NULL); */
+/*   bundledef_t bdef; */
+/*   lives_obj_t *c = create_bundle(vtrack_bundle, NULL); */
+/*   char *buf; */
+/*   size_t ts = 0; */
+/*   g_print("%s\n\n", bundle_to_header(c, "matroska_vtrack_t")); */
+/*   reset_timer_info(); */
+/*   for (int i = 0; i < 10000; i++) { */
+/*     tinymd5((void *)buf, ts); */
+/*   } */
+/*   g_print("mini is 0X%016lX\n", x); */
+/*   show_timer_info(); */
+/*   lives_free(buf); */
+/*   g_print("size is %ld\n", ts); */
+/* } */
+
+
+void md5test(void) {
+  char bb[1024 * 1024];
+  void *ret;
+  const char *bytes = "hello world";
+  reset_timer_info();
+  for (int i = 0; i < 49; i++) {
+    ret = tinymd5((void *)bytes, strlen(bytes));
+    g_print("0x");
+    for (int j = 0; j < 16; j++) {
+      g_print("%02x", ((uint8_t *)ret)[j]);
+    }
+    g_print("\n");
+  }
+  show_timer_info();
+}
+
+
 
 #pragma GCC diagnostic pop

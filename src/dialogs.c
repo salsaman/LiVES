@@ -2176,7 +2176,9 @@ boolean do_auto_dialog(const char *text, int type) {
           ticks_t tl;
           while ((tl = lives_alarm_check(alarm_handle)) > 0 && !mainw->cancelled) {
             lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
-            //lives_widget_process_updates(mainw->proc_ptr->processing);
+            lives_widget_process_updates(mainw->proc_ptr->processing);
+            // need to recheck after calling process_updates
+            if (!mainw->proc_ptr || !mainw->proc_ptr->processing) break;
             lives_usleep(prefs->sleep_time);
           }
           lives_alarm_clear(alarm_handle);
@@ -2186,7 +2188,8 @@ boolean do_auto_dialog(const char *text, int type) {
   }
 
   if (mainw->proc_ptr) {
-    lives_widget_destroy(mainw->proc_ptr->processing);
+    if (mainw->proc_ptr->processing)
+      lives_widget_destroy(mainw->proc_ptr->processing);
     lives_freep((void **)&mainw->proc_ptr->text);
     lives_free(mainw->proc_ptr);
     mainw->proc_ptr = NULL;
@@ -3527,7 +3530,9 @@ void threaded_dialog_pop(void) {
       lives_widget_show(mainw->proc_ptr->processing);
       lives_window_set_modal(LIVES_WINDOW(mainw->proc_ptr->processing), TRUE);
       lives_widget_process_updates(mainw->proc_ptr->processing);
-      mainw->threaded_dialog = TRUE;
+      // need to recheck after calling process_updates
+      if (mainw->proc_ptr && mainw->proc_ptr->processing)
+        mainw->threaded_dialog = TRUE;
     }
   }
 }

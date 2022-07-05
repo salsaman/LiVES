@@ -1836,7 +1836,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
     layer = layers[in_tracks[i]];
     if (mainw->is_rendering && !(mainw->proc_ptr && mainw->preview)) {
-      if (!weed_plant_has_leaf(layer, LIVES_LEAF_THREAD_PROCESSING)) {
+      if (!weed_plant_has_leaf(layer, LIVES_LEAF_PROC_THREAD)) {
         const char *img_ext;
         int nclip = lives_layer_get_clip(layer);
         if (IS_VALID_CLIP(nclip)) {
@@ -1865,6 +1865,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (prefs->dev_show_timing)
       g_printerr("fx clr pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
+    //!!!!!!!!!!!!!!!!!!!!!!11
     check_layer_ready(layer);
 
     if (prefs->dev_show_timing)
@@ -4884,12 +4885,13 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
 
 #ifndef USE_STD_MEMFUNCS
   // let's override some plugin functions...
-  if (0 && id == 100) {
+  if (0 && id != 100) {
     weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)_ext_malloc);
     weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)_ext_free);
     weed_set_funcptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)_ext_realloc);
     weed_set_funcptr_value(xhost_info, WEED_LEAF_CALLOC_FUNC, (weed_funcptr_t)_ext_calloc);
   } else {
+    // id 100 is what we set for a playback plugin, openGL uses its own memory allocator in hardware
     weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)malloc);
     weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)free);
     weed_set_funcptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)realloc);

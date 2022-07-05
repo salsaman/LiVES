@@ -1,40 +1,37 @@
-// startup.h
+// startup.h.
 // LiVES
-// (c) G. Finch 2010 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2019 - 2022 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-#ifndef HAS_LIVES_STARTUP_H
-#define HAS_LIVES_STARTUP_H
+// startup functionss -- the functions that were previoulsy in this file have been moved to setup,
 
-#define LIVES_TEST_VIDEO_NAME "vidtest.avi"
+#ifndef _HAS_STARTUP_H
+#define _HAS_STARTUP_H
 
-boolean migrate_config(const char *old_vhash, const char *newconfigfile);
-void cleanup_old_config(uint64_t oldver);
-boolean build_init_config(const char *config_datadir, boolean prompt);
+int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id);
 
-boolean do_workdir_query(void);
-LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *, boolean full);
+void startup_message_fatal(char *msg) LIVES_NORETURN;
 
-void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra);
+boolean startup_message_choice(const char *msg, int msgtype);
 
-#ifdef ENABLE_JACK
-boolean do_jack_config(boolean is_setup, boolean is_trans);
-boolean prompt_for_jack_ports(boolean is_setup);
-#endif
+boolean startup_message_nonfatal(const char *msg);
 
-boolean do_audio_choice_dialog(short startup_phase);
-boolean do_startup_tests(boolean tshoot);
-boolean do_startup_interface_query(void);
+boolean startup_message_info(const char *msg);
 
-void run_lives_setup_wizard(int page);
+boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_mask);
 
-void on_troubleshoot_activate(LiVESMenuItem *, livespointer);
+void print_opthelp(LiVESTextBuffer *, const char *extracmds_file1, const char *extracmds_file2);
 
-void do_bad_dir_perms_error(const char *dirname);
-void dir_toolong_error(const char *dirname, const char *dirtype, size_t max, boolean can_retry);
-void filename_toolong_error(const char *fname, const char *ftype, size_t max, boolean can_retry);
+capabilities *get_capabilities(void);
 
-#define MISC_KEY "_misc_"
+// startup idle funcs
+boolean resize_message_area(livespointer data);
+
+boolean lazy_startup_checks(void *data);
+
+boolean render_choice_idle(livespointer data);
+//
+void replace_with_delegates(void);
 
 #endif

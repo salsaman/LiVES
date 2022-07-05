@@ -663,6 +663,11 @@ WEED_GLOBAL_INLINE int64_t weed_param_get_value_int64(weed_plant_t *param) {
   return weed_get_int64_value(param, WEED_LEAF_VALUE, NULL);
 }
 
+WEED_GLOBAL_INLINE uint64_t weed_param_get_value_uint64(weed_plant_t *param) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return 0;
+  return weed_get_uint64_value(param, WEED_LEAF_VALUE, NULL);
+}
+
 WEED_GLOBAL_INLINE char *weed_param_get_value_string(weed_plant_t *param) {
   if (!WEED_PLANT_IS_PARAMETER(param)) return NULL;
   if (weed_leaf_num_elements(param, WEED_LEAF_VALUE) == 0) return NULL;
@@ -694,6 +699,11 @@ WEED_GLOBAL_INLINE weed_error_t weed_param_set_value_int64(weed_plant_t *param, 
   return weed_set_int64_value(param, WEED_LEAF_VALUE, val);
 }
 
+WEED_GLOBAL_INLINE weed_error_t weed_param_set_value_uint64(weed_plant_t *param, uint64_t val) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_ERROR_WRONG_PLANT_TYPE;
+  return weed_set_uint64_value(param, WEED_LEAF_VALUE, val);
+}
+
 WEED_GLOBAL_INLINE weed_error_t weed_param_set_value_string(weed_plant_t *param, const char *val) {
   if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_ERROR_WRONG_PLANT_TYPE;
   return weed_set_string_value(param, WEED_LEAF_VALUE, val);
@@ -707,7 +717,7 @@ WEED_GLOBAL_INLINE int weed_gui_get_flags(weed_plant_t *gui) {
 
 //////////////////////////////////////////// utilities ///////////////////////
 
-char *weed_error_to_text(weed_error_t error) {
+char *weed_strerror(weed_error_t error) {
   // return value should be freed after use
   switch (error) {
   case (WEED_ERROR_MEMORY_ALLOCATION):
@@ -769,8 +779,12 @@ char *weed_seed_type_to_text(uint32_t seed_type) {
   switch (seed_type) {
   case WEED_SEED_INT:
     return strdup("integer");
+  case WEED_SEED_UINT:
+    return strdup("unsigned integer");
   case WEED_SEED_INT64:
     return strdup("int64");
+  case WEED_SEED_UINT64:
+    return strdup("uint64");
   case WEED_SEED_BOOLEAN:
     return strdup("boolean");
   case WEED_SEED_DOUBLE:
@@ -794,6 +808,8 @@ const char *weed_seed_type_to_short_text(uint32_t seed_type) {
   switch (seed_type) {
   case WEED_SEED_INT: return "int";
   case WEED_SEED_INT64: return "int64";
+  case WEED_SEED_UINT: return "uint";
+  case WEED_SEED_UINT64: return "uint64";
   case WEED_SEED_BOOLEAN: return "boolean";
   case WEED_SEED_DOUBLE: return "double";
   case WEED_SEED_FLOAT: return "float";
@@ -812,22 +828,27 @@ const char *weed_seed_to_ctype(uint32_t st, int add_space) {
   case WEED_SEED_FUNCPTR: return "lives_func_t *";
   case WEED_SEED_VOIDPTR: return "void *";
   case WEED_SEED_PLANTPTR: return "weed_plant_t *";
-  case WEED_SEED_INT: case WEED_SEED_BOOLEAN: case WEED_SEED_DOUBLE: case WEED_SEED_INT64: case WEED_SEED_FLOAT:
+  case WEED_SEED_INT: case WEED_SEED_UINT: case WEED_SEED_BOOLEAN: case WEED_SEED_DOUBLE:
+  case WEED_SEED_INT64: case WEED_SEED_FLOAT: case WEED_SEED_UINT64:
     if (add_space) {
       switch (st) {
       case WEED_SEED_INT: return "int ";
+      case WEED_SEED_UINT: return "uint32_t ";
       case WEED_SEED_BOOLEAN: return "boolean ";
       case WEED_SEED_DOUBLE: return "double ";
       case WEED_SEED_FLOAT: return "float ";
       case WEED_SEED_INT64: return "int64_t ";
+      case WEED_SEED_UINT64: return "uint64_t ";
       }
     } else {
       switch (st) {
       case WEED_SEED_INT: return "int";
+      case WEED_SEED_UINT: return "uint32_t";
       case WEED_SEED_BOOLEAN: return "boolean";
       case WEED_SEED_DOUBLE: return "double";
       case WEED_SEED_FLOAT: return "float";
       case WEED_SEED_INT64: return "int64_t";
+      case WEED_SEED_UINT64: return "uint64_t";
       }
     }
   default:
@@ -841,8 +862,10 @@ const char *weed_seed_to_ctype(uint32_t st, int add_space) {
 uint32_t ctypes_to_weed_seed(const char *ctype) {
   if (!ctype || !*ctype || !strcmp(ctype, "void")) return 0;
   if (!strcmp(ctype, "int")
-      || !strcmp(ctype, "int32_2")
-      || !strcmp(ctype, "uint_32_t"))
+      || !strcmp(ctype, "int32_2"))
+    return WEED_SEED_INT;
+  if (!strcmp(ctype, "uint")
+      || !strcmp(ctype, "uint32_2"))
     return WEED_SEED_INT;
   if (!strcmp(ctype, "boolean")
       || !strcmp(ctype, "bool"))
@@ -852,9 +875,10 @@ uint32_t ctypes_to_weed_seed(const char *ctype) {
   if (!strcmp(ctype, "char *")
       || !strcmp(ctype, "const char *"))
     return WEED_SEED_STRING;
-  if (!strcmp(ctype, "int64_t")
-      || !strcmp(ctype, "uint64_t"))
+  if (!strcmp(ctype, "int64_t"))
     return WEED_SEED_INT64;
+  if (!strcmp(ctype, "uint64_t"))
+    return WEED_SEED_UINT64;
   if (!strcmp(ctype, "void *")
       || !strcmp(ctype, "weed_voidptr_t")
       || !strcmp(ctype, "livespointer"))

@@ -1,3 +1,4 @@
+
 /// experimental feature
 // transcode.c
 // LiVES
@@ -245,7 +246,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
   int i = 0, j;
 
-  ADD_FUNC_DEF(transcode_clip, "b", "iibs");
+  ____FUNC_ENTRY____(transcode_clip, "b", "iibs");
 
   out_asamps = cfile->asampsize;
 
@@ -264,7 +265,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       lives_obj_attr_t *attr1, *attr2;
       attr1 = lives_object_declare_attribute(NULL, ATTR_AUDIO_RATE, WEED_SEED_INT);
       lives_object_set_attribute_value(NULL, ATTR_AUDIO_RATE, cfile->arate);
-      lives_attr_set_readonly(attr1, TRUE);
+      //lives_attr_set_readonly(attr1, TRUE);
 
       attr2 = lives_object_declare_attribute(NULL, ATTR_AUDIO_CHANNELS, WEED_SEED_INT);
       if (mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
@@ -272,7 +273,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       } else {
         lives_object_set_attribute_value(NULL, ATTR_AUDIO_CHANNELS, 0);
       }
-      lives_attr_set_readonly(attr2, TRUE);
+      //lives_attr_set_readonly(attr2, TRUE);
 
       vpp = mainw->vpp;
 
@@ -635,6 +636,8 @@ tr_err2:
   }
 
   lives_freep((void **)&sbuff);
+
+  ____FUNC_EXIT____;
 
   return !error;
 }

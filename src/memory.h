@@ -367,6 +367,10 @@ char *get_memstats(void);
 #define _lives_memmove default_memmove
 #endif
 
+void speedy_free(void *);
+void *speedy_malloc(size_t s);
+void *speedy_calloc(size_t, size_t);
+
 #endif // !HAVE_FINAL_MEMFUNCS
 #endif // FINALISE_MEMFUNCS
 
@@ -406,9 +410,6 @@ static void (*_lsd_free)(void *ptr) = _ext_free;
 
 ///////////////////// here we can set ultimate overrides
 
-void speedy_free(void *);
-void *speedy_malloc(size_t s);
-void *speedy_calloc(size_t, size_t);
 
 ////////////////// test functions /////
 

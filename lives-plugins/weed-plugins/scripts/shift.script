@@ -26,9 +26,9 @@ putils
 may_thread
 </filter_flags>
 
-<palette_lists>
+<palette_list>
 ALL_PACKED_PALETTES
-</palette_lists>
+</palette_list>
 
 <in_chans>
 in_channel0

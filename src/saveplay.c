@@ -16,6 +16,8 @@
 #include "cvirtual.h"
 #include "interface.h"
 #include "multitrack-gui.h"
+#include "startup.h"
+
 
 static boolean _start_playback(livespointer data) {
   int new_file, old_file;
@@ -3025,6 +3027,8 @@ void play_file(void) {
             lives_nanosleep_while_true((mainw->pulsed->playing_file > -1 || mainw->pulsed->fd > 0));
           }
         }
+
+        // MAKE SURE TO UNCORK THIS LATER
         pulse_driver_cork(mainw->pulsed);
       }
     } else {
@@ -3244,9 +3248,12 @@ void play_file(void) {
             lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
             if (mainw->play_window) {
               lives_widget_process_updates(mainw->play_window);
-              lives_window_center(LIVES_WINDOW(mainw->play_window));
-              clear_widget_bg(mainw->play_image, mainw->play_surface);
-              load_preview_image(FALSE);
+              // need to recheck after calling process_updates
+              if (mainw->play_window) {
+                lives_window_center(LIVES_WINDOW(mainw->play_window));
+                clear_widget_bg(mainw->play_image, mainw->play_surface);
+                load_preview_image(FALSE);
+              }
             }
 	    // *INDENT-OFF*
 	  }}}}}
@@ -3343,6 +3350,8 @@ void play_file(void) {
   if (mainw->cancelled == CANCEL_APP_QUIT) on_quit_activate(NULL, NULL);
 
   /// end record performance
+
+  // TODO - use awai_audio_queue
 
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && mainw->jackd) {

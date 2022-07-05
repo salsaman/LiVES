@@ -19,26 +19,26 @@
 
 // begin legal warning
 /*
-    NO WARRANTY
+  NO WARRANTY
 
-    BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
-      FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
+  BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+  FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
   OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
-      PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
-      OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
+  OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
   MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS
   TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE
-      PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,
+  PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,
   REPAIR OR CORRECTION.
 
-      IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
-      WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-      REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,
-      INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING
-      OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED
+  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+  WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+  REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,
+  INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING
+  OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED
   TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY
   YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER
-      PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
+  PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGES.
 */
 // end legal warning
@@ -49,130 +49,14 @@
 // note: preferred formatting style is: astyle --style=java -H -Y -s2 -U -k3 -W3 -xC128 -xL -p -o -O -Q -xp
 
 #ifndef HAS_LIVES_MAIN_H
-#define HAS_LIVES_MAIN_H
-
-#ifdef __cplusplus
-#undef HAVE_UNICAP
-#endif
-
-//#define WEED_STARTUP_TESTS
-#define STD_STRINGFUNCS
-
-#ifdef __GNUC__
-#  define WARN_UNUSED  __attribute__((warn_unused_result))
-#  define LIVES_PURE  __attribute__((pure))
-#  define LIVES_DEPRECATED(msg)  __attribute__((deprecated(msg)))
-#  define LIVES_CONST  __attribute__((const))
-#  define LIVES_MALLOC  __attribute__((malloc))
-#  define LIVES_MALLOC_SIZE(argx) __attribute__((alloc_size(argx)))
-#  define LIVES_MALLOC_SIZE2(argx, argy) __attribute__((alloc_size(argx, argy)))
-#  define LIVES_ALIGN(argx) __attribute__((alloc_align(argx)))
-#  define LIVES_ALIGNED(sizex) __attribute__((assume_aligned(sizex)))
-#  define LIVES_NORETURN __attribute__((noreturn))
-#  define LIVES_ALWAYS_INLINE __attribute__((always_inline))
-#  define LIVES_NEVER_INLINE __attribute__((noipa)) __attribute__((optimize(0)))
-#  define LIVES_FLATTEN  __attribute__((flatten)) // inline all function calls
-#  define LIVES_HOT  __attribute__((hot))
-#  define LIVES_SENTINEL  __attribute__((sentinel))
-#  define LIVES_RETURNS_TWICE  __attribute__((returns_twice))
-#  define LIVES_IGNORE_DEPRECATIONS G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-#  define LIVES_IGNORE_DEPRECATIONS_END G_GNUC_END_IGNORE_DEPRECATIONS
-#else
-#  define WARN_UNUSED
-#  define LIVES_PURE
-#  define LIVES_CONST
-#  define LIVES_MALLOC
-#  define LIVES_MALLOC_SIZE(x)
-#  define LIVES_MALLOC_SIZE2(x, y)
-#  define LIVES_DEPRECATED(msg)
-#  define LIVES_ALIGN(x)
-#  define LIVES_ALIGNED(x)
-#  define LIVES_NORETURN
-#  define LIVES_ALWAYS_INLINE
-#  define LIVES_NEVER_INLINE
-#  define LIVES_FLATTEN
-#  define LIVES_HOT
-#  define LIVES_SENTINEL
-#  define LIVES_RETURNS_TWICE
-#  define LIVES_IGNORE_DEPRECATIONS
-#  define LIVES_IGNORE_DEPRECATIONS_END
-#endif
-
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE // for "environ"
-#endif
-
-#define LIVES_RESULT_SUCCESS	1
-#define LIVES_RESULT_FAIL	0
-#define LIVES_RESULT_ERROR	-1
+#define HAS_LIVES_MAIN_H 1
 
 #include <sys/types.h>
 #include <inttypes.h>
 #include <string.h>
 
-typedef int64_t ticks_t;
-
-typedef int frames_t; // nb. will chenge to int64_t at some future point
-typedef int64_t frames64_t; // will become the new standard
-
-typedef void (*lives_funcptr_t)();
-
-#define ENABLE_OSC2
-
-#ifndef GUI_QT
-#define GUI_GTK
-#define LIVES_PAINTER_IS_CAIRO
-#define LIVES_LINGO_IS_PANGO
-#else
-#define PAINTER_QPAINTER
-#define NO_PROG_LOAD
-#undef ENABLE_GIW
-#endif
-
 #include <sys/file.h>
 #include <unistd.h>
-
-typedef pid_t lives_pid_t;
-
-#ifdef GUI_GTK
-#ifndef GDK_WINDOWING_X11
-#define GDK_WINDOWING_X11
-#endif
-#endif // GUI_GTK
-
-#ifdef GUI_GTK
-
-#define USE_GLIB
-
-#define LIVES_OS_UNIX G_OS_UNIX
-
-#include <gtk/gtk.h>
-#include <gdk/gdkkeysyms.h>
-
-#if GTK_CHECK_VERSION(3, 0, 0)
-#ifdef ENABLE_GIW
-#define ENABLE_GIW_3
-#endif
-#else
-#undef ENABLE_GIW_3
-#endif
-
-#endif
-
-#if !GTK_CHECK_VERSION(3, 0, 0)
-// borked in < 3.0
-#undef HAVE_WAYLAND
-#endif
-
-#ifdef HAVE_WAYLAND
-#include <gdk/gdkwayland.h>
-#endif
-
-#ifdef GDK_WINDOWING_WAYLAND
-#ifndef GDK_IS_WAYLAND_DISPLAY
-#define GDK_IS_WAYLAND_DISPLAY(a) FALSE
-#endif
-#endif
 
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -191,96 +75,8 @@ typedef pid_t lives_pid_t;
 #include <stdint.h>
 #include <stdarg.h>
 
-#ifndef ulong
-#define ulong unsigned long
-#endif
-
-#define QUOTEME(x) #x
-#define QUOTEME_ALL(...) QUOTEME(__VA_ARGS__)
-#define PREFIX_IT(A, B) QUOTEME_ALL(A B)
-
-/// max files is actually 1 more than this, since file 0 is the clipboard
-#define MAX_FILES 65535
-
-#ifndef PREFIX_DEFAULT
-#define PREFIX_DEFAULT "/usr"
-#endif
-
-/// if --prefix= was not set, this is set to "NONE"
-#ifndef PREFIX
-#define PREFIX PREFIX_DEFAULT
-#endif
-
-#define LIVES_DIR_SEP "/"
-#define LIVES_COPYRIGHT_YEARS "2002 - 2022"
-
-#if defined (IS_DARWIN) || defined (IS_FREEBSD)
-#ifndef off64_t
-#define off64_t off_t
-#endif
-#ifndef lseek64
-#define lseek64 lseek
-#endif
-#endif
-
-#define ENABLE_DVD_GRAB
-
-#ifdef HAVE_MJPEGTOOLS
-#define HAVE_YUV4MPEG
-#endif
-
-#ifdef ENABLE_ORC
-#include <orc/orc.h>
-#endif
-
-#ifdef ENABLE_OIL
-#include <liboil/liboil.h>
-#endif
-
-#ifndef IS_SOLARIS
-#define LIVES_INLINE static inline
-#define LIVES_GLOBAL_INLINE inline
-#else
-#define LIVES_INLINE static
-#define LIVES_GLOBAL_INLINE
-#define LIVES_LOCAL_INLINE
-#endif
-
-#define LIVES_LOCAL_INLINE LIVES_INLINE
-
-#include <limits.h>
-#include <float.h>
-
-#ifndef PATH_MAX
-#ifdef MAX_PATH
-#define PATH_MAX MAX_PATH
-#else
-#define PATH_MAX 4096
-#endif
-#endif
-
-#define URL_MAX 2048
-
-#ifdef NEED_ENDIAN_TEST
-#undef NEED_ENDIAN_TEST
-static const int32_t testint = 0x12345678;
-#define IS_BIG_ENDIAN (((char *)&testint)[0] == 0x12)  // runtime test only !
-#endif
-
-typedef struct {
-  uint16_t red;
-  uint16_t green;
-  uint16_t blue;
-} lives_colRGB48_t;
-
-typedef struct {
-  uint16_t red;
-  uint16_t green;
-  uint16_t blue;
-  uint16_t alpha;
-} lives_colRGBA64_t;
-
-#define WEED_ADVANCED_PALETTES
+#define NEED_ENDIANTEST 0
+#include "defs.h"
 
 #if NEED_LOCAL_WEED
 #include "../libweed/weed-host.h"
@@ -329,6 +125,7 @@ weed_plant_new_f _weed_plant_new;
 weed_plant_list_leaves_f _weed_plant_list_leaves;
 weed_leaf_num_elements_f _weed_leaf_num_elements;
 weed_leaf_element_size_f _weed_leaf_element_size;
+weed_leaf_set_element_size_f _weed_leaf_set_element_size;
 weed_leaf_seed_type_f _weed_leaf_seed_type;
 weed_leaf_get_flags_f _weed_leaf_get_flags;
 weed_plant_free_f _weed_plant_free;
@@ -347,26 +144,7 @@ extern capabilities *capable;
 
 #include "support.h"
 
-// directions
-/// use REVERSE / FORWARD when a sign is used, BACKWARD / FORWARD when a parity is used
-typedef enum {
-  LIVES_DIRECTION_REVERSE = -1,
-  LIVES_DIRECTION_BACKWARD,
-  LIVES_DIRECTION_FORWARD,
-  LIVES_DIRECTION_LEFT,
-  LIVES_DIRECTION_RIGHT,
-  LIVES_DIRECTION_UP,
-  LIVES_DIRECTION_DOWN,
-  LIVES_DIRECTION_IN,
-  LIVES_DIRECTION_OUT,
-  LIVES_DIRECTION_UNKNOWN,
-  LIVES_DIRECTION_STOPPED,
-  LIVES_DIRECTION_CYCLIC,
-  LIVES_DIRECTION_RANDOM,
-  LIVES_DIRECTION_OTHER,
-} lives_direction_t;
-
-#define LIVES_DIRECTION_NONE 0
+#include "user-interface.h"
 
 #include "widget-helper.h"
 
@@ -407,7 +185,6 @@ typedef enum {
 #define CHECK_AVAILABLE(item, EXEC) (IS_UNCHECKED(item) ? (((capable->has_##item = has_executable(EXEC)) \
 							    == PRESENT || IS_LOCAL(item)) ? TRUE : FALSE) \
 				     : IS_AVAILABLE(item))
-
 typedef struct {
   char wm_name[64];
   uint64_t ver_major;
@@ -488,14 +265,6 @@ typedef struct {
   int oom_adj_value;
 } hw_caps_t;
 
-
-#ifndef USE_STD_MEMFUNCS
-#define USE_RPMALLOC
-#endif
-
-#define HW_ALIGNMENT ((capable && capable->hw.cacheline_size > 0) ? capable->hw.cacheline_size \
-		      : DEF_ALIGN)
-
 #ifdef FINALISE_MEMFUNCS
 #undef FINALISE_MEMFUNCS
 #endif
@@ -506,13 +275,18 @@ typedef struct {
 
 #include "stringfuncs.h"
 
-#include "machinestate.h"
-
 #define _BASE_DEFS_ONLY_
+
 #include "intents.h"
 #ifdef  _BASE_DEFS_ONLY_
 #undef _BASE_DEFS_ONLY_
 #endif
+
+#include "colourspace.h"
+
+#include "frameloader.h"
+
+#include "machinestate.h"
 
 #include "lists.h"
 #include "alarms.h"
@@ -637,13 +411,6 @@ typedef enum {
   CANCEL_SOFT     ///< just cancel in GUI (for keep, etc)
 } lives_cancel_type_t;
 
-typedef enum {
-  IMG_TYPE_UNKNOWN = 0,
-  IMG_TYPE_JPEG,
-  IMG_TYPE_PNG,
-  N_IMG_TYPES
-} lives_img_type_t;
-
 #define IMG_TYPE_BEST IMG_TYPE_PNG
 
 typedef enum {
@@ -658,7 +425,6 @@ typedef enum {
 #define WEED_LEAF_HOST_DEINTERLACE "host_deint" // frame needs deinterlacing
 #define WEED_LEAF_HOST_TC "host_tc" // timecode for deinterlace
 #define WEED_LEAF_HOST_DECODER "host_decoder" // pointer to decoder for a layer
-#define WEED_LEAF_HOST_PTHREAD "host_pthread" // thread for a layer
 
 #define AV_TRACK_MIN_DIFF 0.001 ///< ignore track time differences < this (seconds)
 
@@ -699,6 +465,7 @@ extern mainwindow *mainw;
 /// type sizes
 extern ssize_t sizint, sizdbl, sizshrt;
 
+#include "setup.h"
 #include "dialogs.h"
 #include "saveplay.h"
 #include "gui.h"
@@ -899,79 +666,6 @@ void set_signal_handlers(SignalHandlerPointer sigfunc);
 void catch_sigint(int signum);
 void defer_sigint(int signum);
 void *defer_sigint_cb(lives_object_t *obj, void *pdtl);
-void startup_message_fatal(char *msg) LIVES_NORETURN;
-boolean startup_message_choice(const char *msg, int msgtype);
-boolean startup_message_nonfatal(const char *msg);
-boolean startup_message_info(const char *msg);
-boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_mask);
-void print_opthelp(LiVESTextBuffer *, const char *extracmds_file1, const char *extracmds_file2);
-capabilities *get_capabilities(void);
-void get_monitors(boolean reset);
-void replace_with_delegates(void);
-void set_drawing_area_from_pixbuf(LiVESWidget *darea, LiVESPixbuf *, lives_painter_surface_t *);
-void load_start_image(frames_t frame);
-void load_end_image(frames_t frame);
-void showclipimgs(void);
-void load_preview_image(boolean update_always);
-boolean resize_message_area(livespointer data);
-boolean lazy_startup_checks(void *data);
-
-boolean render_choice_idle(livespointer data);
-
-#define is_layer_ready(layer) (weed_get_boolean_value((layer), LIVES_LEAF_THREAD_PROCESSING, NULL) == WEED_FALSE \
-			       && weed_get_voidptr_value(layer, LIVES_LEAF_RESIZE_THREAD, NULL) == NULL)
-
-boolean pull_frame(weed_layer_t *, const char *image_ext, ticks_t tc);
-void pull_frame_threaded(weed_layer_t *, const char *img_ext, ticks_t tc, int width, int height);
-boolean check_layer_ready(weed_layer_t *);
-boolean pull_frame_at_size(weed_layer_t *, const char *image_ext, ticks_t tc,
-                           int width, int height, int target_palette);
-LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, ticks_t tc,
-                                       int width, int height, LiVESInterpType interp, boolean fordisp);
-LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, ticks_t tc);
-
-boolean weed_layer_create_from_file_progressive(weed_layer_t *, const char *fname, int width,
-    int height, int tpalette, const char *img_ext);
-
-boolean lives_pixbuf_save(LiVESPixbuf *, char *fname, lives_img_type_t imgtype, int quality,
-                          int width, int height, LiVESError **gerrorptr);
-
-typedef struct {
-  char *fname;
-
-  // for pixbuf (e.g. jpeg)
-  LiVESPixbuf *pixbuf;
-  LiVESError *error;
-  lives_img_type_t img_type;
-  int width, height;
-
-  // for layer (e.g. png) (may also set TGREADVAR(write_failed)
-  weed_layer_t *layer;
-  boolean success;
-
-  int compression;
-} savethread_priv_t;
-
-void *lives_pixbuf_save_threaded(void *saveargs);
-
-#ifdef USE_LIBPNG
-boolean layer_from_png(int fd, weed_layer_t *layer, int width, int height, int tpalette, boolean prog);
-boolean save_to_png(weed_layer_t *layer, const char *fname, int comp);
-void *save_to_png_threaded(void *args);
-#endif
-
-void sensitize(void);
-void sensitize_rfx(void);
-void desensitize(void);
-void procw_desensitize(void);
-void close_current_file(int file_to_switch_to);   ///< close current file, and try to switch to file_to_switch_to
-void switch_to_file(int old_file, int new_file);
-void do_quick_switch(int new_file);
-boolean switch_audio_clip(int new_file, boolean activate);
-void resize(double scale);
-boolean set_palette_colours(boolean force_reload);
-void set_main_title(const char *filename, int or_untitled_number);
-void set_record(void);
 
 // multitrack-gui.c
 void mt_desensitise(lives_mt *);

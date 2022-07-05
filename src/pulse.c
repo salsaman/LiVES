@@ -375,30 +375,34 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     case ASERVER_CMD_FILE_OPEN:
       paop = pa_stream_flush(pulsed->pstream, NULL, NULL);
       pa_operation_unref(paop);
-      pulsed->in_use = TRUE;
       new_file = atoi((char *)msg->data);
-      if (pulsed->playing_file != new_file) {
-        pulsed->playing_file = new_file;
-        lives_pulse_set_client_attributes(pulsed, new_file, FALSE, TRUE);
-        if (IS_VALID_CLIP(new_file) && mainw->files[new_file]->aplay_fd > -1) {
-          pulsed->fd = mainw->files[new_file]->aplay_fd;
-        } else {
-          filename = lives_get_audio_file_name(new_file);
-          pulsed->fd = lives_open_buffered_rdonly(filename);
-          lives_buffered_rdonly_slurp(pulsed->fd, 0);
-          if (pulsed->fd == -1) {
-            // dont show gui errors - we are running in realtime thread
-            LIVES_ERROR("pulsed: error opening");
-            LIVES_ERROR(filename);
-            pulsed->playing_file = -1;
+
+      if (IS_VALID_CLIP(new_file)) {
+        // if !valid, continue on to CLOSE
+        pulsed->in_use = TRUE;
+        if (pulsed->playing_file != new_file) {
+          pulsed->playing_file = new_file;
+          lives_pulse_set_client_attributes(pulsed, new_file, FALSE, TRUE);
+          if (IS_VALID_CLIP(new_file) && mainw->files[new_file]->aplay_fd > -1) {
+            pulsed->fd = mainw->files[new_file]->aplay_fd;
+          } else {
+            filename = lives_get_audio_file_name(new_file);
+            pulsed->fd = lives_open_buffered_rdonly(filename);
+            lives_buffered_rdonly_slurp(pulsed->fd, 0);
+            if (pulsed->fd == -1) {
+              // dont show gui errors - we are running in realtime thread
+              LIVES_ERROR("pulsed: error opening");
+              LIVES_ERROR(filename);
+              pulsed->playing_file = -1;
+            }
+            lives_free(filename);
           }
-          lives_free(filename);
         }
+        fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = 0;
+        pulsed->playing_file = new_file;
+        //pa_stream_trigger(pulsed->pstream, NULL, NULL); // only needed for prebuffer
+        break;
       }
-      fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = 0;
-      pulsed->playing_file = new_file;
-      //pa_stream_trigger(pulsed->pstream, NULL, NULL); // only needed for prebuffer
-      break;
     case ASERVER_CMD_FILE_CLOSE:
       paop = pa_stream_flush(pulsed->pstream, NULL, NULL);
       pa_operation_unref(paop);
@@ -419,7 +423,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       break;
     case ASERVER_CMD_FILE_SEEK:
     case ASERVER_CMD_FILE_SEEK_ADJUST:
-      if (pulsed->fd < 0) break;
+      if (!IS_VALID_CLIP(pulsed->playing_file) || pulsed->fd < 0) break;
       pulsed->in_use = TRUE;
       paop = pa_stream_flush(pulsed->pstream, NULL, NULL);
       pa_operation_unref(paop);
@@ -1851,6 +1855,7 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
     return; // let it uncork in its own time...
   }
   pa_operation_unref(paop);
+  while (!await_audio_queue(LIVES_DEFAULT_TIMEOUT));
 }
 
 
@@ -1862,6 +1867,8 @@ void pulse_driver_cork(pulse_driver_t *pdriver) {
     //g_print("IS CORKED\n");
     return;
   }
+
+  while (!await_audio_queue(LIVES_DEFAULT_TIMEOUT));
 
   do {
     alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
@@ -1941,15 +1948,14 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     if (THREADVAR(fx_is_audio)) return mainw->currticks;
     if (!await_audio_queue(LIVES_SHORT_TIMEOUT)) return -1;
   }
-  while (pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0) {
-    lives_nanosleep(1000);
+  if (lives_five_second_check(pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec)) < 0 || usec == 0)
+    retval = -1;
+  else {
+    retval = (ticks_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
+    if (retval < 0) retval = 0;
+    if (retval < last_retval) last_retval = -1;
   }
-  if (usec == 0) return -1;
-  retval = (ticks_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
-  if (retval < 0) retval = 0;
-  if (retval < last_retval) last_retval = -1;
-
-  if (retval == last_retval) {
+  if (retval == last_retval || retval == -1) {
     if (have_cticks) {
       syncticks += (mainw->clock_ticks - lclk_ticks) * ratio;
       mainw->syncticks += (double)(mainw->clock_ticks - lclk_ticks) * ratio;
@@ -2183,6 +2189,7 @@ void pulse_aud_pb_ready(pulse_driver_t *pulsed, int fileno) {
 
   avsync_force();
 
+  // hmmm
   if (pulsed) pulse_driver_uncork(pulsed);
 
   sfile = mainw->files[fileno];
@@ -2196,6 +2203,7 @@ void pulse_aud_pb_ready(pulse_driver_t *pulsed, int fileno) {
       pulse_message.data = lives_strdup_printf("%d", fileno);
       pulse_message.next = NULL;
       pulsed->msgq = &pulse_message;
+      if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) seek_err = TRUE;
 
       if (sfile->achans > 0 && (!mainw->preview || (mainw->preview && mainw->is_processing)) &&
           (sfile->laudio_time > 0. || sfile->opening ||
@@ -2203,6 +2211,7 @@ void pulse_aud_pb_ready(pulse_driver_t *pulsed, int fileno) {
             lives_file_test((tmpfilename = lives_get_audio_file_name(fileno)), LIVES_FILE_TEST_EXISTS)))) {
         lives_pulse_set_client_attributes(pulsed, fileno, TRUE, FALSE);
       }
+
       pulse_audio_seek_bytes(pulsed, sfile->aseek_pos, sfile);
 
       if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) seek_err = TRUE;

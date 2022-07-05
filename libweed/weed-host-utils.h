@@ -254,7 +254,7 @@ int weed_gui_get_flags(weed_plant_t *gui);
 const char *weed_seed_to_ctype(uint32_t st, int add_space);
 const char *weed_seed_type_to_short_text(uint32_t seed_type);
 char *weed_seed_type_to_text(uint32_t seed_type) WARN_UNUSED;
-char *weed_error_to_text(weed_error_t error) WARN_UNUSED;
+char *weed_strerror(weed_error_t error) WARN_UNUSED;
 char *weed_error_to_literal(weed_error_t error) WARN_UNUSED;
 char *weed_palette_get_name_full(int pal, int clamping, int subspace) WARN_UNUSED;
 uint32_t ctypes_to_weed_seed(const char *ctype);

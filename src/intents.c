@@ -11,6 +11,7 @@
 // eventually will become lookup for all recognised uids
 lives_objstore_t *main_objstore = NULL;
 lives_objstore_t *fn_objstore = NULL;
+lives_objstore_t *bdef_store = NULL;
 
 static size_t dict_size = 0;
 
@@ -27,40 +28,374 @@ static const lives_intentcap_t *std_icaps[N_STD_ICAPS];
 
 // eventually this will part of a fully fledged object broker
 
+#define DEBUG_BUNDLES 1
+LIVES_GLOBAL_INLINE char *get_short_name(const char *q) {
+  if (!q) return NULL;
+  else {
+    char *xiname = lives_strdup(".");
+    char *p = (char *)q;
+    if (*p != '.') {
+      if (!lives_strncmp(q, "ELEM_", 5)) for (p += 5; *p && *p != '_'; p++);
+      else if (!lives_strncmp(q, "ATTR_", 5)) p += 5;
+      if (p != q && *p) p++;
+      xiname = lives_concat(xiname, lives_string_tolower(p));
+      return xiname;
+    }
+    return lives_strdup(p);
+  }
+}
 
-lives_contract_t *create_contract(lives_intentcap_t *icap) {
-  // here we take an icaps and begin the process for a contract - a dictionary type instance
-  // which can be used to negotiate access to a transform between objects
-  // normally and object would offer a set of contracts which determine the range of
-  // intentcaps it can satisfy
-  // - here we create one ourselves. The contrac is ngotiated between the caller obejct
-  // (agent) and called object (patient). I consists of various parts:
-  // icaps - fixed intent it satisfies, and capacities which deliniate the ways
-  // attributes - a contract will specify a set of attributes which need to have defined values
-  // hooks - a contract can require that certain hook points (consumer hooks)
-  // have a producer available. These hooks will be associated with one or more 'mutable'
-  // attributes which must be update when the hook is triggered
-  // there can also be optional attributes. There is also a signature slot -
-  // the contract must be signed by the patient before it can be called.
-  // Finally there will be a description of the effects of the transform - it can update the value(s)
-  // of input or output attribute, it can mutate, destroy or create objects /instances.
-  // and some transforms have data output hooks, and will produce reults while in th running state.
-  // The agent slects a contract offered by the pateint, and may manipulate the caps, reducing the
-  // set. It may provide values for some attributes, and attach producers to the hook attributes.
-  // The changed contract is then passed to the patient's negotiation function. The pateint may add
-  // more attributes, adjust the caps, and possibly amend the output results. It will return a status
-  // which can include not ready, and agreed. The agent may accept the updated contract if agrreed,
-  // and sign the contract. The patient should then also sign, and th transform can be triggered.
-  // If not agreed, the agent can examine the updated contract and see what is lacking,
-  // try to fix this and return it to the patient.
 
-  /* lives_contract_t *contract = lives_object_instance_create(OBJECT_TYPE_CONTRACT, */
-  /* 							    NO_SUBTYPE); */
-  /* lives_obj_attr_t *attr = lives_object_declare_attribute(contract, ATTR_GENERIC_ICAP, */
-  /* 							   WEED_SEED_INT); */
-  /// caller may add attibutes to the attibutes attribute, hooks to hooks
+uint64_t get_vflags(const char *q, off_t *offx) {
+  uint64_t vflags = 0;
+  if (offx)(*offx) = 0;
+  if (*q == '#') {
+    vflags = ELEM_FLAG_COMMENT;
+    return vflags;
+  }
+  if (*q == '?') {
+    vflags |= ELEM_FLAG_OPTIONAL;
+    if (offx)(*offx)++;
+  }
+  return vflags;
+}
 
-  return NULL;
+uint32_t get_vtype(const char *q, off_t *offx) {
+  off_t op = 0;
+  if (offx) {
+    op = *offx;
+    (*offx)++;
+  }
+  return q[op];
+}
+
+LIVES_GLOBAL_INLINE const char *get_vname(const char *q) {return q;}
+
+LIVES_GLOBAL_INLINE boolean get_is_array(const char *q) {return (q && *q == '1');}
+
+uint32_t weed_seed_to_elem_type(uint32_t st) {
+  switch (st) {
+  case WEED_SEED_INT: return ELEM_TYPE_INT;
+  case WEED_SEED_UINT: return ELEM_TYPE_UINT;
+  case WEED_SEED_BOOLEAN: return ELEM_TYPE_BOOLEAN;
+  case WEED_SEED_INT64: return ELEM_TYPE_INT64;
+  case WEED_SEED_UINT64: return ELEM_TYPE_UINT64;
+  case WEED_SEED_DOUBLE: return ELEM_TYPE_DOUBLE;
+  case WEED_SEED_STRING: return ELEM_TYPE_STRING;
+  case WEED_SEED_VOIDPTR: return ELEM_TYPE_VOIDPTR;
+  case WEED_SEED_PLANTPTR: return ELEM_TYPE_BUNDLEPTR;
+  default: break;
+  }
+  return ELEM_TYPE_NONE;
+}
+
+
+bundledef_t get_bundledef_from_bundle(lives_bundle_t *bundle) {
+  char *sname2 = get_short_name(ELEM_INTROSPECTION_QUARKS_PTR);
+  bundledef_t bundledef = (bundledef_t)weed_get_voidptr_value(bundle, sname2, NULL);
+  lives_free(sname2);
+  return bundledef;
+}
+
+
+static int bundledef_get_item_idx(bundledef_t bundledef,
+                                  const char *item, boolean exact) {
+  bundle_element elem;
+  off_t offx;
+  uint64_t vflags;
+  const char *vname;
+  char *sname = exact ? (char *)item : get_short_name(item);
+  for (int i = 0; (elem = bundledef[i]); i++) {
+    offx = 0;
+    vflags = get_vflags(elem, &offx);
+    if (vflags & ELEM_FLAG_COMMENT) continue;
+    get_vtype(elem, &offx);
+    vname = get_vname(elem + offx);
+    if (!exact) {
+      char *sname2 = exact ? (char *)item : get_short_name(vname);
+      if (!lives_strcmp(sname2, sname)) {
+        if (sname != item) lives_free(sname);
+        if (sname2 != vname) lives_free(sname2);
+        return i;
+      }
+      if (sname2 != vname) lives_free(sname2);
+    } else if (!lives_strcmp(vname, item)) {
+      if (sname != item) lives_free(sname);
+      return i;
+    }
+  }
+  if (sname != item) lives_free(sname);
+  return -1;
+}
+
+
+static uint32_t get_bundle_elem_type(lives_bundle_t *bundle, const char *name) {
+  // get elem type for existing or optional element in bundle
+  bundledef_t bundledef;
+  char *sname = get_short_name(name);
+  uint32_t st;
+  st = weed_leaf_seed_type(bundle, sname);
+  if (st) {
+    lives_free(sname);
+    return weed_seed_to_elem_type(st);
+  }
+  // may be an optional param
+  bundledef = get_bundledef_from_bundle(bundle);
+  if (bundledef) {
+    int eidx = bundledef_get_item_idx(bundledef, sname, FALSE);
+    if (eidx >= 0) {
+      bundle_element elem = bundledef[eidx];
+      off_t offx = 0;
+      uint32_t vtype;
+      get_vflags(elem, &offx);
+      vtype = get_vtype(elem, &offx);
+      lives_free(sname);
+      return vtype;
+    }
+  }
+  return ELEM_TYPE_NONE;
+}
+
+
+static boolean set_bundle_val_varg(lives_bundle_t *bundle, const char *iname, uint32_t vtype,
+                                   uint32_t ne, boolean array, va_list vargs) {
+  // THIS IS FOR ELEM_* values, we handle ATTR_* elsewhere
+  // set a value / array in bundle, element with name "name"
+  // ne holds number of elements, array tells us whether value is array or scalar
+  // value holds the data to be set
+  // vtype is the 'extended' type, which can be one of:
+  // INT, UINT, DOUBLE, FLOAT, BOOLEAN, STRING, CHAR, INT64, UINT64
+  // VOIDPTR, BUNDLEPTR or SPECIAL
+  // - SPECIAL types are handled elsewhere
+  char *etext = NULL, *xiname = lives_strdup(".");
+  boolean err = FALSE;
+  xiname = get_short_name(iname);
+  if (!vargs) {
+    etext = lives_strdup_concat(etext, "\n", "missing value setting item %s [%s] in bundle.",
+                                xiname, iname);
+    err = TRUE;
+  } else {
+    if (!array) {
+      switch (vtype) {
+      case (ELEM_TYPE_INT): {
+        int val = va_arg(vargs, int);
+        weed_set_int_value(bundle, xiname, val);
+      }
+      break;
+      case (ELEM_TYPE_UINT): {
+        uint val = va_arg(vargs, uint);
+        weed_set_uint_value(bundle, xiname, val);
+      }
+      break;
+      case ELEM_TYPE_BOOLEAN: {
+        int val = va_arg(vargs, int);
+        weed_set_boolean_value(bundle, xiname, val);
+      }
+      break;
+      case ELEM_TYPE_DOUBLE: {
+        double val = va_arg(vargs, double);
+        weed_set_double_value(bundle, xiname, val);
+      }
+      break;
+      case ELEM_TYPE_STRING: {
+        char *val = lives_strdup(va_arg(vargs, char *));
+        weed_set_string_value(bundle, xiname, val);
+        lives_free(val);
+      }
+      break;
+      case ELEM_TYPE_INT64: {
+        int64_t val = va_arg(vargs, int64_t);
+        weed_set_int64_value(bundle, xiname, val);
+      }
+      break;
+      case ELEM_TYPE_UINT64: {
+        uint64_t val = va_arg(vargs, uint64_t);
+        weed_set_uint64_value(bundle, xiname, (uint64_t)val);
+      }
+      break;
+      case ELEM_TYPE_BUNDLEPTR: {
+        weed_plant_t *val = va_arg(vargs, weed_plant_t *);
+        weed_set_plantptr_value(bundle, xiname, val);
+      }
+      break;
+      case ELEM_TYPE_VOIDPTR: {
+        void *val = va_arg(vargs, void *);
+        weed_set_voidptr_value(bundle, xiname, val);
+      }
+      break;
+      default:
+        etext = lives_strdup_concat(etext, "\n", "type invalid for %s in bundle.", xiname);
+        err = TRUE;
+        break;
+      }
+    } else {
+      switch (vtype) {
+      case ELEM_TYPE_INT: {
+        int *val = va_arg(vargs, int *);
+        weed_set_int_array(bundle, xiname, ne, val);
+      }
+      break;
+      case ELEM_TYPE_UINT: {
+        uint32_t *val = va_arg(vargs, uint32_t *);
+        weed_set_uint_array(bundle, xiname, ne, val);
+      }
+      break;
+      case ELEM_TYPE_BOOLEAN: {
+        int *val = va_arg(vargs, int *);
+        weed_set_boolean_array(bundle, xiname, ne, val);
+      }
+      break;
+      //
+      case ELEM_TYPE_DOUBLE: {
+        double *val = va_arg(vargs, double *);
+        weed_set_double_array(bundle, xiname, ne, val);
+      }
+      break;
+      case ELEM_TYPE_STRING: {
+        char **val = va_arg(vargs, char **);
+        char **xval = lives_calloc(ne, sizeof(char *));
+        for (int j = 0; j < ne; j++) {
+          if (val[j]) xval[j] = lives_strdup(val[j]);
+          else xval[j] = NULL;
+        }
+        weed_set_string_array(bundle, xiname, ne, val);
+        for (int j = 0; j < ne; j++) if (xval[j]) lives_free(xval[j]);
+        lives_free(xval);
+      }
+      break;
+      case ELEM_TYPE_INT64: {
+        int64_t *val = va_arg(vargs, int64_t *);
+        weed_set_int64_array(bundle, xiname, ne, val);
+      }
+      break;
+      case ELEM_TYPE_UINT64: {
+        uint64_t *val = va_arg(vargs, uint64_t *);
+        weed_set_uint64_array(bundle, xiname, ne, val);
+      }
+      break;
+      case ELEM_TYPE_BUNDLEPTR: {
+        weed_plant_t **val = va_arg(vargs, weed_plant_t **);
+        weed_set_plantptr_array(bundle, xiname, ne, val);
+      }
+      break;
+      case ELEM_TYPE_VOIDPTR: {
+        void **val = va_arg(vargs, void **);
+        weed_set_voidptr_array(bundle, xiname, ne, val);
+      }
+      break;
+      default:
+        etext = lives_strdup_concat(etext, "\n", "type invalid for %s in bundle.", xiname);
+        err = TRUE;
+        break;
+      }
+    }
+  }
+  if (err) {
+    if (etext) {
+#if DEBUG_BUNDLES
+      g_printerr("\nERROR: %s\n", etext);
+#endif
+      lives_free(etext);
+    }
+#if DEBUG_BUNDLES
+    else g_printerr("\nUnspecified error\n");
+#endif
+  }
+  lives_free(xiname);
+  return err;
+}
+
+
+static boolean set_bundle_val(lives_bundle_t *bundle, const char *name, uint32_t vtype,
+                              uint32_t ne, boolean array, ...) {
+  va_list vargs;
+  boolean bval;
+  va_start(vargs, array);
+  bval = set_bundle_val_varg(bundle, name, vtype, ne, array, vargs);
+  va_end(vargs);
+  return bval;
+}
+
+
+static boolean set_bundle_value(lives_bundle_t *bundle, const char *name, ...) {
+  va_list varg;
+  char *sname = get_short_name(name);
+  uint32_t vtype = get_bundle_elem_type(bundle, name);
+  boolean bval = FALSE;
+  if (!vtype) {
+#if DEBUG_BUNDLES
+    g_printerr("Item %s [%s] not found in bundle\n", sname, name);
+#endif
+  } else {
+    va_start(varg, name);
+    bval = set_bundle_val_varg(bundle, name, vtype, 1, FALSE, varg);
+    va_end(varg);
+  }
+  lives_free(sname);
+  return bval;
+}
+
+
+static boolean set_bundle_values(lives_bundle_t *bundle, ...) {
+  va_list vargs;
+  char *name, *sname;
+  boolean bval;
+  va_start(vargs, bundle);
+  while (1) {
+    va_list xargs;
+    uint32_t vtype;
+    name = va_arg(vargs, char *);
+    if (!name) break;
+    sname = get_short_name(name);
+    va_copy(xargs, vargs);
+    vtype = get_bundle_elem_type(bundle, name);
+    bval = set_bundle_val_varg(bundle, name, vtype, 1, FALSE, xargs);
+    va_end(vargs);
+    va_copy(vargs, xargs);
+    va_end(xargs);
+    lives_free(sname);
+    if (bval) break;
+  }
+  va_end(vargs);
+  return bval;
+}
+
+
+// create a contract for negociating a "transform"
+// negotiation steps:
+// - remove unecessary capacties
+// call negotiate for target object, object will respond by either
+//   readjusting the caps, or
+// adding (more) mandatory / optional attributes / hooks,
+// and marking exisiting ones optional / mandatory
+// or updating contract state
+// - host can readjust caps again,
+// or set values for mandatory / opt attrs and hooks and try again
+static lives_contract_t *create_contract_instance_vargs(lives_intention intent, va_list caps) {
+  // TODO: call get_contracts on a contract template with "create instance" intent
+  // the transform for that should call this function to create the output attribute
+  // the created object should be in state "preview"
+  // and should have its own contracts
+  // - one to convert from state preview to prepare
+  // -- either:
+  // - one to convert from state prepare to state ready (a.k.a negotiate contract), or
+  // - one to convert from state preview to ready, (IF the transform is flagged "no negociate")
+  lives_bundle_t *contract = create_object_bundle(OBJECT_TYPE_CONTRACT, NO_SUBTYPE);
+  if (contract) {
+    //set_bundle_value(contract, "intention", intent);
+    if (caps) {
+      lives_capacities_t *cap = lives_capacities_new();
+      while (1) {
+        char *cname = va_arg(caps, char *);
+        if (cname == CAP_END) break;
+        lives_capacity_set(cap, cname);
+      }
+      set_bundle_value(contract, "capacities", cap);
+    }
+    // TODO - should be PREVIEW
+    set_bundle_value(contract, "state", OBJECT_STATE_PREPARE);
+  }
+  return contract;
 }
 
 
@@ -71,9 +406,6 @@ lives_obj_attr_t *lives_contract_declare_attribute(lives_contract_t *contract, c
 
   return NULL;
 }
-
-
-
 
 
 void *lookup_entry_full(uint64_t uid) {
@@ -107,7 +439,8 @@ char *interpret_uid(uint64_t uid) {
       //else dump_obdesc(dicto);
       info = lives_object_dump_attributes(dicto);
     } else if (sub == DICT_SUBTYPE_FUNCDEF) {
-      lives_obj_attr_t *attr = lives_object_get_attribute(dicto, ATTR_INTROSPECTION_NATIVE_PTR);
+      //lives_obj_attr_t *attr = lives_object_get_attribute(dicto, ELEM_INTROSPECTION_NATIVE_PTR);
+      lives_obj_attr_t *attr = lives_object_get_attribute(dicto, ELEM_INTROSPECTION_NATIVE_PTR);
       lives_funcdef_t *funcdef = (lives_funcdef_t *)weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
       info = lives_funcdef_explain(funcdef);
     }
@@ -153,10 +486,10 @@ lives_dicto_t  *_make_dicto(lives_dicto_t *dicto, lives_intention intent,
     if (xattr) {
       // TODO = warn if attr type changing
       weed_plant_duplicate_clean(xattr, attr);
-      lives_attr_set_readonly(xattr, lives_attr_is_readonly(attr));
-      if (!contract_attr_is_mine(xattr))
-        weed_leaf_clear_flagbits(xattr, WEED_LEAF_VALUE,
-                                 WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
+      //lives_attr_set_readonly(xattr, lives_attr_is_readonly(attr));
+      /* if (!contract_attr_is_mine(xattr)) */
+      /*   weed_leaf_clear_flagbits(xattr, WEED_LEAF_VALUE, */
+      /*                            WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE); */
     }
     if (!xargs) lives_free(aname);
   }
@@ -226,10 +559,10 @@ uint64_t add_weed_plant_to_objstore(weed_plant_t *plant) {
   // only add if not there
   lives_dicto_t *dicto;
   weed_error_t err;
-  uint64_t uid = weed_get_int64_value(plant, LIVES_LEAF_UID, &err);
+  uint64_t uid = weed_get_uint64_value(plant, LIVES_LEAF_UID, &err);
   if (err == WEED_ERROR_NOSUCH_LEAF) {
     uid = gen_unique_id();
-    weed_set_int64_value(plant, LIVES_LEAF_UID, uid);
+    weed_set_uint64_value(plant, LIVES_LEAF_UID, uid);
   } else if (err != WEED_SUCCESS) return 0;
   dicto  = weed_plant_to_dicto(plant);
   dict_size += weed_plant_weigh(plant);
@@ -273,7 +606,7 @@ const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, con
   const lives_funcdef_t *funcdef = get_from_hash_store(fn_objstore, name);
   if (!funcdef) {
     lives_dicto_t *dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_FUNCDEF);
-    lives_obj_attr_t *xattr = lives_object_declare_attribute(dicto, ATTR_INTROSPECTION_NATIVE_PTR,
+    lives_obj_attr_t *xattr = lives_object_declare_attribute(dicto, ELEM_INTROSPECTION_NATIVE_PTR,
                               WEED_SEED_VOIDPTR);
     funcdef = create_funcdef(name, func, rtype, args_fmt, file, line ? ++line : 0, txmap);
     lives_object_set_attr_value(dicto, xattr, funcdef);
@@ -291,7 +624,7 @@ const lives_funcdef_t *get_template_for_func(const char *funcname) {
 const lives_funcdef_t *get_template_for_func_by_uid(uint64_t uid) {
   lives_dicto_t *dicto = lookup_entry(uid);
   if (dicto && dicto->subtype == DICT_SUBTYPE_FUNCDEF) {
-    lives_obj_attr_t *attr = lives_object_get_attribute(dicto, ATTR_INTROSPECTION_NATIVE_PTR);
+    lives_obj_attr_t *attr = lives_object_get_attribute(dicto, ELEM_INTROSPECTION_NATIVE_PTR);
     return weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
   }
   return NULL;
@@ -397,21 +730,13 @@ size_t weigh_object(lives_object_instance_t *obj) {
   return tot;
 }
 
-
-#define CONTRACT_BUNDLE ATTR_QUARK(GENERIC, UID), ATTR_QUARK(INTROSPECTION, REFCOUNT), \
-    _OBJDEF_BUNDLE, _ICAP_BUNDLE, ATTR_QUARK(CONTRACT, ATTRIBUTES), \
-    ATTR_QUARK(GENERIC, FLAGS), ATTR_QUARK(GENERIC, TRANSFORMS), \
-    ATTR_QUARK(OBJECT, CONTRACTS), ATTR_QUARK(GENERIC, HOOKS),   \
-    ATTR_QUARK(INTROSPECTION, PRIVATE_DATA), ATTR_END
-
 static bundledef_t get_obj_bundledef(uint64_t otype, uint64_t osubtype) {
   if (otype == OBJECT_TYPE_CONTRACT) {
     static bundle_element cb[] = {CONTRACT_BUNDLE};
-    return cb;
+    return (bundledef_t)cb;
   }
   return NULL;
 }
-
 
 static void lives_bundle_free(lives_bundle_t *bundle) {
   if (bundle) {
@@ -422,6 +747,9 @@ static void lives_bundle_free(lives_bundle_t *bundle) {
         lives_bundle_t **sub = weed_get_plantptr_array_counted(bundle, leaf, &nvals);
         for (int k = 0; k < nvals; k++) if (sub[k]) lives_bundle_free(sub[k]);
         weed_leaf_delete(bundle, leaf);
+      } else if (weed_leaf_seed_type(bundle, leaf) == WEED_SEED_VOIDPTR) {
+        if (weed_leaf_element_size(bundle, leaf, 0) > 0)
+          lives_free(weed_get_voidptr_value(bundle, leaf, NULL));
       }
       lives_free(leaf);
     }
@@ -434,8 +762,8 @@ static void lives_bundle_free(lives_bundle_t *bundle) {
 LIVES_GLOBAL_INLINE uint64_t lives_object_get_type(weed_plant_t *obj) {
   uint64_t otype = 0;
   if (obj) {
-    lives_bundle_t *vb = weed_get_plantptr_value(obj, ATTR_OBJECT_TYPE, NULL);
-    otype = (uint64_t)weed_get_int64_value(vb, ATTR_VALUE_VALUE, NULL);
+    lives_bundle_t *vb = weed_get_plantptr_value(obj, ELEM_OBJECT_TYPE, NULL);
+    otype = (uint64_t)weed_get_uint64_value(vb, ELEM_VALUE_DATA, NULL);
   }
   return otype;
 }
@@ -444,8 +772,8 @@ LIVES_GLOBAL_INLINE uint64_t lives_object_get_type(weed_plant_t *obj) {
 LIVES_GLOBAL_INLINE uint64_t lives_object_get_subtype(weed_plant_t *obj) {
   uint64_t osubtype = 0;
   if (obj) {
-    lives_bundle_t *vb = weed_get_plantptr_value(obj, ATTR_OBJECT_SUBTYPE, NULL);
-    osubtype = (uint64_t)weed_get_int64_value(vb, ATTR_VALUE_VALUE, NULL);
+    lives_bundle_t *vb = weed_get_plantptr_value(obj, ELEM_OBJECT_SUBTYPE, NULL);
+    osubtype = (uint64_t)weed_get_int64_value(vb, ELEM_VALUE_DATA, NULL);
   }
   return osubtype;
 }
@@ -454,472 +782,577 @@ LIVES_GLOBAL_INLINE uint64_t lives_object_get_subtype(weed_plant_t *obj) {
 LIVES_GLOBAL_INLINE int lives_object_get_state(weed_plant_t *obj) {
   int ostate = 0;
   if (obj) {
-    lives_bundle_t *vb = weed_get_plantptr_value(obj, ATTR_OBJECT_STATE, NULL);
-    ostate = (uint64_t)weed_get_int64_value(vb, ATTR_VALUE_VALUE, NULL);
+    lives_bundle_t *vb = weed_get_plantptr_value(obj, ELEM_OBJECT_STATE, NULL);
+    ostate = (uint64_t)weed_get_int64_value(vb, ELEM_VALUE_DATA, NULL);
   }
   return ostate;
 }
 
 
-static int handle_special_value(lives_bundle_t *bundle, bundle_type btype,
-                                uint64_t otype, uint64_t osubtype, const char *iname, va_list vargs) {
-  if (btype == attr_bundle) {
-    // setting value, default, or new_default
-    lives_bundle_t *vb = weed_get_plantptr_value(bundle, ATTR_OBJECT_TYPE, NULL);
-    uint32_t atype = (uint32_t)weed_get_int_value(vb, ATTR_VALUE_VALUE, NULL);
-    // TODO - set attr "value", "default" or "new_default"
-  }
+/* static boolean handle_special_value(lives_bundle_t *bundle, bundle_type btype, */
+/* 				    uint64_t otype, uint64_t osubtype, */
+/* 				    const char *iname, va_list vargs) { */
+
+static boolean init_special_value(lives_bundle_t *bundle, int btype, bundle_element elem,
+                                  bundle_element elem2) {
+  //if (btype == attr_bundle) {
+  // setting value, default, or new_default
+  //lives_bundle_t *vb = weed_get_plantptr_value(bundle, ATTR_OBJECT_TYPE, NULL);
+  //uint32_t atype = (uint32_t)weed_get_int_value(vb, ATTR_VALUE_DATA, NULL);
+  // TODO - set attr "value", "default" or "new_default"
+  //}
   //if (elem->domain ICAP && item CAPACITIES) prefix iname and det boolean in bndle
   //if (elem->domain CONTRACT && item ATTRIBUTES) check list of lists, if iname there
   // - check if owner, check ir readonly, else add to owner list
-  return 0;
+  return FALSE;
 }
 
 
-static uint64_t get_vflags(const char *q) {
-  uint64_t vflags = 0;
-  if (*q == '?') vflags |= BUNDLE_FLAG_OPTIONAL;
-  return vflags;
+static boolean set_def_value(lives_bundle_t *bundle, int btype,
+                             bundle_element elem, bundle_element elem2) {
+  const char *vname;
+  char *sname;
+  off_t offx = 0;
+  uint32_t vtype;
+  uint64_t vflags = get_vflags(elem, &offx);
+  boolean err = FALSE;
+  if (vflags & ELEM_FLAG_COMMENT) {
+#if DEBUG_BUNDLES
+    g_printerr("ERROR: Trying to set default value for comment %s\n", elem);
+#endif
+    return TRUE;
+  }
+  vtype = get_vtype(elem, &offx);
+  vname = get_vname(elem + offx);
+  sname = get_short_name(vname);
+  if (lives_strlen_atleast(elem2, 2)) {
+    const char *defval = elem2 + 2;
+    //boolean is_array = get_is_array(elem2);
+    boolean is_array = FALSE; // just set to scalar and 1 value - defaults are mostly just 0 oe NULL
+    switch (vtype) {
+    case (ELEM_TYPE_SPECIAL):
+      err = init_special_value(bundle, btype, elem, elem2);
+      break;
+    case (ELEM_TYPE_STRING): case (ELEM_TYPE_VOIDPTR):
+    case (ELEM_TYPE_BUNDLEPTR):
+      if (!lives_strcmp(defval, "NULL"))
+        err = set_bundle_val(bundle, sname, vtype, 1, is_array, NULL);
+      else if (vtype == ELEM_TYPE_STRING)
+        err = set_bundle_val(bundle, sname, vtype, 1, is_array, defval);
+      break;
+    case (ELEM_TYPE_INT):
+    case (ELEM_TYPE_UINT):
+    case (ELEM_TYPE_BOOLEAN):
+      err = set_bundle_val(bundle, sname, vtype, 1, is_array, atoi(defval));
+      break;
+    case (ELEM_TYPE_INT64):
+      err = set_bundle_val(bundle, sname, vtype, 1, is_array, lives_strtol(defval));
+      break;
+    case (ELEM_TYPE_UINT64):
+      err = set_bundle_val(bundle, sname, vtype, 1, is_array, lives_strtoul(defval));
+      break;
+    case (ELEM_TYPE_DOUBLE):
+      err = set_bundle_val(bundle, sname, vtype, 1, is_array, lives_strtod(defval));
+      break;
+    default: break;
+    }
+#if DEBUG_BUNDLES
+    if (!err) g_printerr("Setting default for %s [%s] to %s\n", sname, vname, defval);
+#endif
+    lives_free(sname);
+  } else {
+#if DEBUG_BUNDLES
+    g_printerr("ERROR: Missing default for %s [%s]\n", sname, vname);
+#endif
+    err = TRUE;
+  }
+  return err;
 }
 
-static uint32_t get_vtype(const char *q) {
-  off_t op = 1;
-  if (*q == '?') op++;
-  return q[op];
+
+static bundledef_t validate_bdef(int btype, bundledef_t bun, boolean base_only) {
+#if DEBUG_BUNDLES
+  g_printerr("\nParsing bundle definition for bundle type %d\n", btype);
+#endif
+  bundledef_t newq = NULL;
+  bundle_element elema;
+  boolean err = FALSE;
+  int nq = 0;
+  for (int i = 0; (elema = bun[i]); i++) {
+    bundle_element elema2, elemb, elemb2;
+    off_t offx = 0;
+    uint64_t vflagsa, vflagsb;
+    const char *vnamea, *vnameb;
+    char *snamea, *snameb;
+    uint32_t vtypea, vtypeb;
+    int j;
+
+    vflagsa = get_vflags(elema, &offx);
+    if (vflagsa & ELEM_FLAG_COMMENT) {
+#if DEBUG_BUNDLES
+      g_print("%s\n", elema);
+#endif
+      continue;
+    }
+    if (!(elema2 = bun[++i])) {
+#if DEBUG_BUNDLES
+      g_print("%s\n", elema);
+      g_print("Second quark not found !\n");
+#endif
+      err = TRUE;
+      break;
+    }
+    vtypea = get_vtype(elema, &offx);
+    vnamea = get_vname(elema + offx);
+    snamea = get_short_name(vnamea);
+    if (!newq) elemb = NULL;
+    else {
+      for (j = 0; (elemb = newq[j]); j += 2) {
+        offx = 0;
+        vflagsb = get_vflags(elemb, &offx);
+        vtypeb = get_vtype(elemb, &offx);
+        vnameb = get_vname(elemb + offx);
+        snameb = get_short_name(vnameb);
+        if (!lives_strcmp(snamea, snameb)) break;
+      }
+    }
+    if (!elemb) {
+      nq += 2;
+      g_print("ADD2 %s\n", elema);
+      newq = lives_realloc(newq, (nq + 1) * sizeof(char *));
+      newq[nq - 2] = lives_strdup(elema);
+      newq[nq - 1] = lives_strdup(elema2);
+      newq[nq] = NULL;
+#if DEBUG_BUNDLES
+      if (!(vflagsa & ELEM_FLAG_OPTIONAL)) {
+        g_print("mandatory");
+      } else g_print("optional");
+      if (!atoi(elema2)) g_print(" scalar");
+      else g_print(" array");
+      g_print(" %s [%s] found (data is %s)\n", snamea, vnamea, elema2);
+#endif
+      lives_free(snamea);
+      continue;
+    } else {
+      elemb2 = newq[++j];
+      //
+      if (lives_strcmp(vnamea, vnameb)) {
+        // dupl from2 domains
+#if DEBUG_BUNDLES
+        g_print("Duplicate items found: %s and %s cannot co-exist in same bundledef !\n",
+                vnamea, vnameb);
+#endif
+        err = TRUE;
+      } else {
+#if DEBUG_BUNDLES
+        g_print("Duplicate item found for %s [%s]\n", snamea, vnamea);
+#endif
+        if (vtypea != vtypeb) {
+#if DEBUG_BUNDLES
+          g_print("ERROR: types do not match, we had %d and now we have %d\n",
+                  vtypeb, vtypea);
+#endif
+          err = TRUE;
+        } else {
+          if (lives_strcmp(elema2, elemb2)) {
+            g_print("Mismatch in quark2: we had %s and now we have %s\n",
+                    elemb2, elema2);
+            err = TRUE;
+          } else {
+            g_print("This is normal due to the extendable nature of bundles\n");
+            if ((vflagsb & ELEM_FLAG_OPTIONAL)
+                && !(vflagsa & ELEM_FLAG_OPTIONAL)) {
+              g_print("Replacing optional value with mandatory\n");
+              lives_free(newq[j]); lives_free(newq[j + 1]);
+              newq[j] = lives_strdup(elema);
+              newq[j + 1] = lives_strdup(elema2);
+            } else {
+              g_print("Ignoring duplicate\n");
+	      // *INDENT-OFF*
+	    }}}}}
+    lives_free(snameb);
+  }
+  // *INDENT-ON*
+  if (err) {
+    g_print("ERRORS found in bundledef - INVALID - please correct its definition\n");
+    if (newq) {
+      for (int i = 0; i < nq; i++) lives_free(newq[i]);
+      lives_free(newq);
+      newq = NULL;
+    }
+  }
+  return newq;
 }
 
-static const char *get_vname(const char *q) {
-  off_t op = 2;
-  if (*q == '?') op++;
-  return q + op;
+
+static lives_objstore_t *add_to_bdef_store(uint64_t fixed, lives_obj_t *bstore) {
+  // if intent == REPLACE replace existing entry, otherwise do not add if already there
+  if (!bdef_store) bdef_store = lives_hash_store_new("flat_bundledef store");
+  else if (get_from_hash_store_i(bdef_store, fixed)) return bdef_store;
+  return add_to_hash_store_i(bdef_store, fixed, (void *)bstore);
 }
 
 
-static lives_bundle_t *create_bundle_vargs(bundle_type btype,
-    uint64_t otype, va_list vargs) {
-  lives_bundle_t *bundle = NULL;
-  if (btype >= 0 || btype < n_bundles) {
-    bundledef_t bundledef;
-    if (btype == object_bundle) bundledef = get_obj_bundledef(otype, 0);
-    if (!bundledef) bundledef = (bundledef_t)get_bundledef(btype);
-    if (bundledef) {
-      va_list xargs;
-      lives_obj_attr_t *attr;
-      bundle_element elem;
-      int err = 0;
-      int bsubtype = LIVES_WEED_SUBTYPE_BUNDLE;
-      if (btype == object_bundle) bsubtype = LIVES_WEED_SUBTYPE_OBJECT;
-      else if (btype == object_bundle) bsubtype = LIVES_WEED_SUBTYPE_OBJ_ATTR;
-      va_copy(xargs, vargs);
-      bundle = lives_plant_new(bsubtype);
-      // go through va_list and assign
+LIVES_GLOBAL_INLINE boolean bundle_has_item(lives_bundle_t *bundle, const char *item) {
+  char *sname = get_short_name(item);
+  boolean bval;
+  bval = weed_plant_has_leaf(bundle, sname);
+  lives_free(sname);
+  return bval == WEED_TRUE;
+}
 
-      // do three passes, first the normal values, then the "special" values
-      for (int pass = 0; pass < 2; pass++) {
+
+static boolean bundledef_has_item(bundledef_t bundledef,
+                                  const char *item, boolean exact) {
+  if (bundledef_get_item_idx(bundledef, item, exact) >= 0) return TRUE;
+  return FALSE;
+}
+
+
+static boolean add_item_to_bundle(bundle_type btype, bundledef_t bundledef,
+                                  boolean base_only, lives_bundle_t *bundle,
+                                  const char *item, boolean add_value, bundledef_t *bdef, int *nq) {
+  // check if ITEM is in bundledef, if so && add_value: add it to bundle, if not already there
+  // if exact then match by full name, else by short name
+  // if quarks and nq, then we will added to bdef and add 2 to nq
+  bundle_element elem, elem2;
+  off_t offx;
+  uint64_t vflags;
+  const char *vname;
+  char *sname = NULL, *sname2 = NULL;
+  char *etext = NULL;
+  boolean err = FALSE;
+  int i;
+
+  sname = get_short_name(item);
+  if (base_only && sname != item) {
+    // if adding to a BASE bundle, we can only add simple elements (for now)
+    if (lives_strncmp(item, "ELEM_", 5)) {
+      etext = lives_strdup_concat(etext, "\n", "%s is not a base element.", item);
+      err = TRUE;
+      goto endit;
+    }
+  }
+  for (i = 0; (elem = bundledef[i]); i++) {
+    offx = 0;
+    vflags = get_vflags(elem, &offx);
+    if (vflags & ELEM_FLAG_COMMENT) continue;
+    get_vtype(elem, &offx); // dont care about type for now
+    vname = get_vname(elem + offx);
+    if (!lives_strcmp(vname, item)) break;
+    sname2 = get_short_name(vname);
+    if (!lives_strcmp(sname2, sname)) break;
+    lives_free(sname2);
+    sname2 = NULL;
+  }
+  if (err) goto endit;
+  if (!elem) {
+    etext = lives_strdup_concat(etext, "\n", "item %s not found in bundledef.", item);
+    err = TRUE;
+    goto endit;
+  }
+  if (!(elem2 = bundledef[++i])) {
+    etext = lives_strdup_concat(etext, "\n",
+                                "quark2 for %s not found in bundledef !", bundledef[--i]);
+    err = TRUE;
+    goto endit;
+  }
+
+  if (!bundle_has_item(bundle, item)) {
+    if (add_value) {
+      err = set_def_value(bundle, btype, elem, elem2);
+      if (err) goto endit;
+    }
+    if (bdef) {
+      *nq += 2;
+      *bdef = lives_realloc(*bdef, (*nq + 1) * sizeof(char *));
+      (*bdef)[*nq - 2] = lives_strdup(elem);
+      (*bdef)[*nq - 1] = lives_strdup(elem2);
+      (*bdef)[*nq] = NULL;
+      g_print("ADD %s\n", elem);
+    }
+  }
+endit:
+  if (err) {
+    if (etext) {
+#if DEBUG_BUNDLES
+      g_printerr("\nERROR: %s\n", etext);
+#endif
+      lives_free(etext);
+    }
+  }
+  if (sname) lives_free(sname);
+  if (sname2) lives_free(sname2);
+  return err;
+}
+
+
+static lives_bundle_t *create_bundle_from_def_vargs(bundle_type btype, bundledef_t xbundledef,
+    va_list vargs) {
+  // what we do in this function is parse vargs, a list of minimum item names to be included
+  // in the bundle. If an item is not found in the bundldef, show an error and return NULL.
+  // if a name is given multiple times, we ingore the duplicates after the first.
+  // After doing this, we then add defaults for any non-optional items not specified in the
+  // parameter list.
+  // if an item appears more than once in the  bundldef, then we should eliminate the duplicates.
+  // However if it appears as both "optional" and "non-optional" then the copy marked as optional
+  // should be the one to be removed.
+  // Fianlly we will end up with a bundle with all non-optional items set to defaults,
+  // and any optional items in the parameter list included and set to defaults.
+  // For convenience, if the bundle includes optional "INTROSPECTION_QUARKS", we place a copy
+  // of the pared dwon quark array in it. This will be used later when adding or removing items
+  // from the bundle. New optional items may be added, and optional items may also be removed
+  // (deleted).
+  lives_bundle_t *bundle = NULL, *xbundle = NULL;
+  bundledef_t bundledef;
+  char *etext = NULL;
+
+  if (!(bundledef = validate_bdef(btype, xbundledef, btype != attr_bundle))) {
+    g_printerr("ERROR: INVALID BUNDLEDEF !!\n");
+    return NULL;
+  }
+  //
+
+  bundle = weed_plant_new(LIVES_PLANT_BUNDLE);
+
+  if (bundle) {
+    // first we check the vargs. If an item is optional, we create it and set default,
+    // and append the quarks to new_quakrs.
+    //
+    // Then we parse the original quarks. Any optional ones are skipped.
+    // If we find a non-optional item, we insert in new_quarks
+    // before the optional user added ones.
+    // If it was already created as optional, we remove the optional version from new_quarks,
+    // otherwise we create the element and set it to its default value.
+    bundledef_t new_quarks = NULL;
+    boolean err = FALSE;
+    bundle_element elem;
+    const char *vname;
+    char *sname;
+    off_t offx;
+    uint64_t vflags;
+    boolean add_qptr = FALSE;
+    int nq = 0;
+
+    // step 0, add default optional things
+    if (bundledef_has_item(bundledef, ELEM_INTROSPECTION_QUARKS_PTR, TRUE)) {
+      // add this first
+      err = add_item_to_bundle(btype, bundledef, TRUE, bundle, ELEM_INTROSPECTION_QUARKS_PTR,
+                               FALSE, &new_quarks, &nq);
+      add_qptr = TRUE;
+    }
+    if (bundledef_has_item(bundledef, ELEM_GENERIC_UID, TRUE)) {
+      // add this first
+      add_item_to_bundle(btype, bundledef, TRUE, bundle,
+                         ELEM_GENERIC_UID, FALSE, &new_quarks, &nq);
+      sname = get_short_name(ELEM_GENERIC_UID);
+      weed_set_uint64_value(bundle, sname, gen_unique_id());
+      lives_free(sname);
+      sname = NULL;
+    }
+
+    if (!err) {
+      // step 1, go through params
+      if (vargs) {
         while (1) {
-          uint64_t vflags;
-          uint32_t vtype;
-          const char *vname;
-          int ne;
+          // caller should provide vargs, list of optional items to be initialized
           char *iname;
-          if (!pass) iname = va_arg(xargs, char *);
-          else iname = va_arg(vargs, char *);
-          if (!iname) break;
-          for (int i = 0; ; i++) {
-            elem = bundledef[i];
-            vflags = get_vflags(elem);
-            vtype = get_vtype(elem);
-            vname = get_vname(elem);
-            if (!vtype) break;
-            if (!lives_strcmp(iname, vname)) break;
-          }
-          if (!vtype) {
-            g_print("attribute %s not found in bundle !", iname);
-            err = 1;
-            break;
-          }
-          ne = va_arg(xargs, int);
-          if (ne <= 0) {
-            g_print("invalid nvals for %s in bundle, you sent %d !", iname, ne);
-            err = 2;
-            break;
-          }
-          if (pass == 1) {
-            if (vtype == (uint32_t)*ATTR_TYPE_SPECIAL) {
-              err = handle_special_value(bundle, btype, otype, 0, iname, xargs);
-              if (err) break;
-            }
+          iname = va_arg(vargs, char *);
+          if (!iname) break; // done parsing params
+          err = add_item_to_bundle(btype, bundledef, TRUE, bundle, iname, TRUE, NULL, NULL);
+          if (err) break;
+        }
+      }
+      if (!err) {
+        // add any missing mandos
+        for (int i = 0; (elem = bundledef[i]); i += 2) {
+          offx = 0;
+          vflags = get_vflags(elem, &offx);
+          if (vflags & ELEM_FLAG_COMMENT) {
+#if DEBUG_BUNDLES
+            g_print("%s\n", elem);
+#endif
             continue;
           }
-          /* if (vmax_repeats != -1 */
-          /*     && ne > vmax_repeats ? vmax_repeats : 1) { */
-          /*   g_print("too many values for %s in bundle, max is %d, you sent %d !", iname, */
-          /* 	    vmax_repeats ? vmax_repeats : 1, ne); */
-          /*   err = 2; */
-          /*   break; */
-          /* } */
-          if (vtype == (uint32_t)*ATTR_TYPE_SPECIAL) continue;
-          /* if (!(flags & BUNDLE_FLAG_SIMPLE_VALUES)) { */
-          /*   if (ne == 1 || vtype == (uint32_t)*ATTR_TYPE_CHAR) { */
-          /*     switch (vtype) { */
-          /*     case (uint32_t)*ATTR_TYPE_INT: */
-          /*     case (uint32_t)*ATTR_TYPE_BOOLEAN: { */
-          /* 	int val = va_arg(xargs, int); */
-          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*     } */
-          /* 	break; */
-          /*     case (uint32_t)*ATTR_TYPE_CHAR: { */
-          /* 	char *val = lives_malloc(ne); */
-          /* 	if (!val) { */
-          /* 	  g_print("OOM assigning %d bytes for char for %s in bundle !", iname, ne); */
-          /* 	  err = 2; */
-          /* 	  break; */
-          /* 	} */
-          /* 	lives_memcpy(val, &va_arg(xargs, char); */
-          /* 	  sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				     ATTR_VALUE_VALUE, ne, val, NULL); */
-          /* 	} */
-          /* 	break; */
-          /*     case (uint32_t)*ATTR_TYPE_UINT: { */
-          /* 	  uint32_t val = va_arg(xargs, uint32_t); */
-          /* 	  sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				     ATTR_VALUE_VALUE, ne, val, NULL); */
-          /* 	} */
-          /* 	break; */
-          /*     case (uint32_t)*ATTR_TYPE_DOUBLE: { */
-          /* 	double val = va_arg(xargs, double); */
-          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*     } */
-          /* 	break; */
-          /*     case (uint32_t)*ATTR_TYPE_STRING: { */
-          /* 	char *val = lives_strdup(va_arg(xargs, char *)); */
-          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*     } */
-          /* 	break; */
-          /*     case (uint32_t)*ATTR_TYPE_INT64: { */
-          /* 	int64_t val = va_arg(xargs, int64_t); */
-          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*     } */
-          /* 	break; */
-          /*     case (uint32_t)*ATTR_TYPE_UINT64: { */
-          /* 	uint64_t val = va_arg(xargs, uint64_t); */
-          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*     } */
-          /* 	break; */
-          /*     case (uint32_t)*ATTR_TYPE_FLOAT: { */
-          /* 	float val = xargs, float); */
-          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*     } */
-          /*     break; */
-          /*   case (uint32_t)*ATTR_TYPE_ATTRPTR: */
-          /*   case (uint32_t)*ATTR_TYPE_BUNDLEPTR: */
-          /*   case (uint32_t)*ATTR_TYPE_HOOKPTR: */
-          /*   case (uint32_t)*ATTR_TYPE_VOIDPTR: { */
-          /*     void *val = va_arg(xargs, void *); */
-          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				 ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*   } */
-          /*     break; */
-          /*   case (uint32_t)*ATTR_TYPE_OBJPTR: { */
-          /*     weed_plant_t *obj = va_arg(xargs, weed_plant_t *); */
-          /*     //uint64_t xotype = lives_get_attribute_value_int64(val, ATTR_OBJECT_TYPP); */
-          /*     uint64_t xotype; */
-          /*     if (vobj_type != OBJECT_TYPE_ANY */
-          /* 	  && vobj_type != lives_object_get_type(obj)) { */
-          /* 	g_print("object type invalid for %s in bundle !", iname); */
-          /* 	err = 3; */
-          /* 	break; */
-          /*     } */
-          /*     if (vobj_subtype != OBJECT_SUBTYPE_ANY */
-          /* 	  && vobj_subtype != lives_object_get_subtype(obj)) { */
-          /* 	// TODO - see if the object has a transform to change the subtype */
-          /* 	g_print("object subtype invalid for %s in bundle !", iname); */
-          /* 	err = 4; */
-          /* 	break; */
-          /*     } */
-          /*     if (vobj_state != OBJECT_STATE_ANY */
-          /* 	  && vobj_state != lives_object_get_state(obj)) { */
-          /* 	// TODO - see if the object has a transform to change the state */
-          /* 	g_print("object state invalid for %s in bundle !", iname); */
-          /* 	err = 5; */
-          /* 	break; */
-          /*     } */
-          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				 ATTR_VALUE_VALUE, ne, obj, NULL); */
-          /*   } */
-          /*     break; */
-          /*   default: */
-          /*     g_print("type invalid for %s in bundle !", iname); */
-          /*     err = 5; */
-          /*     break; */
-          /*   } */
-          /*   if (err) break; */
-          /*   weed_set_plantptr_value(bundle, iname, sub_bundle);  */
-          /* } else { */
-          /*   // arrays */
-          /*   switch (vtype) { */
-          /*   case (uint32_t)*ATTR_TYPE_INT: */
-          /*   case (uint32_t)*ATTR_TYPE_BOOLEAN: { */
-          /* 	int *val = va_arg(xargs, int *); */
-          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				   ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
-          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*     } */
-          /*     break; */
-          /*   case (uint32_t)*ATTR_TYPE_UINT: */
-          /*     { */
-          /* 	uint32_t *val = va_arg(xargs, uint32_t *); */
-          /* 	sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				   ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
-          /* 				   ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*     } */
-          /*     break; */
-          /*   case (uint32_t)*ATTR_TYPE_DOUBLE: { */
-          /*     double *val = va_arg(xargs, double *); */
-          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
-          /* 				 ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*   } */
-          /*     break; */
-          /*   case (uint32_t)*ATTR_TYPE_STRING: { */
-          /*     char **val = va_arg(xargs, char *); */
-          /*     char **xval = lives_calloc(ne, sizeof(char *)); */
-          /*     for (int j = 0; j < ne; j++) { */
-          /* 	if (val[i]) xval[i] = lives_strdup(val[i]); */
-          /* 	else xval[i] = NULL; */
-          /*     } */
-          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
-          /* 				 ATTR_VALUE_VALUE, ne, xval, NULL); */
-          /*   } */
-          /*     break; */
-          /*   case (uint32_t)*ATTR_TYPE_INT64: { */
-          /*     int64_t *val = va_arg(xargs, int64_t *); */
-          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
-          /* 				 ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*   } */
-          /*     break; */
-          /*   case (uint32_t)*ATTR_TYPE_UINT64: { */
-          /*     uint64_t *val = va_arg(xargs, uint64_t *); */
-          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
-          /* 				 ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*   } */
-          /*     break; */
-          /*   case (uint32_t)*ATTR_TYPE_FLOAT: { */
-          /*     float *val = lives_strdup(va_arg(xargs, float *)); */
-          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
-          /* 				 ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*   } */
-          /*     break; */
-          /*   case (uint32_t)*ATTR_TYPE_ATTRPTR: */
-          /*   case (uint32_t)*ATTR_TYPE_BUNDLEPTR: */
-          /*   case (uint32_t)*ATTR_TYPE_HOOKPTR: */
-          /*   case (uint32_t)*ATTR_TYPE_VOIDPTR: { */
-          /*     void **val = va_arg(xargs, void **); */
-          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
-          /* 				 ATTR_VALUE_VALUE, ne, val, NULL); */
-          /*   } */
-          /*     break; */
-          /*   case (uint32_t)*ATTR_TYPE_OBJPTR: { */
-          /*     weed_plant_t *obj = lives_strdup(va_arg(xargs, weed_plant_t *)); */
-          /*     //uint64_t xotype = lives_get_attribute_value_int64(val, ATTR_OBJECT_TYPP); */
-          /*     uint64_t xotype; */
-          /*     if (vobj_type != OBJECT_TYPE_ANY */
-          /* 	  && vobj_type != lives_oject_get_type(obj)) { */
-          /* 	g_print("object type invalid for %s in bundle !", iname); */
-          /* 	err = 3; */
-          /* 	break; */
-          /*     } */
-          /*     if (vobj_subtype != OBJECT_SUBTYPE_ANY */
-          /* 	  && vobj_subtype != lives_oject_get_subtype(obj)) { */
-          /* 	// TODO - see if the object has a transform to change the subtype */
-          /* 	g_print("object subtype invalid for %s in bundle !", iname); */
-          /* 	err = 4; */
-          /* 	break; */
-          /*     } */
-          /*     if (vobj_state != OBJECT_STATE_ANY */
-          /* 	  && vobj_state != lives_oject_get_state(obj)) { */
-          /* 	// TODO - see if the object has a transform to change the state */
-          /* 	g_print("object state invalid for %s in bundle !", iname); */
-          /* 	err = 5; */
-          /* 	break; */
-          /*     } */
-          /*     sub_bundle = create_bundle(value_bundle, ATTR_VALUE_TYPE, 1, vtype, */
-          /* 				 ATTR_VALUE_MAX_REPEATS, 1, vmax_repeats, */
-          /* 				 ATTR_VALUE_VALUE, ne, obj, NULL); */
-          /*   } */
-          /*     break; */
-          /*   default: */
-          /*     g_print("type invalid for %s in bundle !", iname); */
-          /*     err = 6; */
-          /*     break; */
-          /*   } */
-          /* } */
-          /* else { */
-          /*   default: */
-          /*     g_print("type invalid for %s in bundle !", iname); */
-          /*     err = 5; */
-          /*     break; */
-          /* } */
-          /* if (err) break; */
-          // simple values
-          if (ne == 1 || vtype == (uint32_t)*ATTR_TYPE_CHAR) {
-            switch (vtype) {
-            case (UATTR_TYPE_INT): {
-              int val = va_arg(xargs, int);
-              weed_set_int_value(bundle, iname, val);
-            }
-            break;
-            case UATTR_TYPE_BOOLEAN: {
-              int val = va_arg(xargs, int);
-              weed_set_boolean_value(bundle, iname, val);
-            }
-            break;
-            case UATTR_TYPE_UINT: {
-              uint32_t val = va_arg(xargs, uint32_t);
-              weed_set_int_value(bundle, iname, (int)val);
-            }
-            break;
-            case UATTR_TYPE_FLOAT:
-            case UATTR_TYPE_DOUBLE: {
-              double val = va_arg(xargs, double);
-              weed_set_double_value(bundle, iname, val);
-            }
-            break;
-            case UATTR_TYPE_STRING: {
-              char *val = lives_strdup(va_arg(xargs, char *));
-              weed_set_string_value(bundle, iname, val);
-              lives_free(val);
-            }
-            break;
-            case UATTR_TYPE_INT64: {
-              int64_t val = va_arg(xargs, int64_t);
-              weed_set_int64_value(bundle, iname, val);
-            }
-            break;
-            case UATTR_TYPE_UINT64: {
-              uint64_t val = va_arg(xargs, uint64_t);
-              weed_set_int64_value(bundle, iname, (int64_t)val);
-            }
-            break;
-            case UATTR_TYPE_ATTRPTR:
-            case UATTR_TYPE_OBJPTR:
-            case UATTR_TYPE_HOOKPTR:
-            case UATTR_TYPE_BUNDLEPTR: {
-              weed_plant_t *val = va_arg(xargs, weed_plant_t *);
-              weed_set_plantptr_value(bundle, iname, val);
-            }
-            case UATTR_TYPE_VOIDPTR: {
-              void *val = va_arg(xargs, void *);
-              weed_set_voidptr_value(bundle, iname, val);
-            }
-            break;
-            default:
-              g_print("type invalid for %s in bundle !", iname);
-              err = 5;
-              break;
-            }
-            if (err) break;
+          get_vtype(elem, &offx);
+          vname = get_vname(elem + offx);
+          sname = get_short_name(vname);
+          if (bundle_has_item(bundle, sname)) {
+            g_print("ADD222 %s\n", vname);
+            err = add_item_to_bundle(btype, bundledef, TRUE, bundle, vname,
+                                     FALSE, &new_quarks, &nq);
           } else {
-            switch (vtype) {
-            case UATTR_TYPE_INT: {
-              int *val = va_arg(xargs, int *);
-              weed_set_int_array(bundle, iname, ne, val);
-            }
-            break;
-            case UATTR_TYPE_BOOLEAN: {
-              int *val = va_arg(xargs, int *);
-              weed_set_boolean_array(bundle, iname, ne, val);
-            }
-            break;
-            //
-            case UATTR_TYPE_DOUBLE: {
-              double *val = va_arg(xargs, double *);
-              weed_set_double_array(bundle, iname, ne, val);
-            }
-            break;
-            case UATTR_TYPE_STRING: {
-              char **val = va_arg(xargs, char **);
-              char **xval = lives_calloc(ne, sizeof(char *));
-              for (int j = 0; j < ne; j++) {
-                if (val[j]) xval[j] = lives_strdup(val[j]);
-                else xval[j] = NULL;
-              }
-              weed_set_string_array(bundle, iname, ne, val);
-              for (int j = 0; j < ne; j++) if (xval[j]) lives_free(xval[j]);
-              lives_free(xval);
-            }
-            break;
-            case UATTR_TYPE_INT64: {
-              int64_t *val = va_arg(xargs, int64_t *);
-              weed_set_int64_array(bundle, iname, ne, val);
-            }
-            break;
-            case UATTR_TYPE_UINT64: {
-              uint64_t *val = va_arg(xargs, uint64_t *);
-              weed_set_int64_array(bundle, iname, ne, (int64_t *)val);
-            }
-            break;
-            case UATTR_TYPE_FLOAT: {
-              float *val = va_arg(xargs, float *);
-              double *dval  = (double *)lives_calloc(ne, sizdbl);
-              for (int k = 0; k < ne; k++) dval[k] = (double)val[k];
-              weed_set_double_array(bundle, iname, ne, dval);
-              lives_free(dval);
-            }
-            break;
-            case UATTR_TYPE_ATTRPTR:
-            case UATTR_TYPE_OBJPTR:
-            case UATTR_TYPE_HOOKPTR:
-            case UATTR_TYPE_BUNDLEPTR: {
-              weed_plant_t **val = va_arg(xargs, weed_plant_t **);
-              weed_set_plantptr_array(bundle, iname, ne, val);
-            }
-            break;
-            case UATTR_TYPE_VOIDPTR: {
-              void **val = va_arg(xargs, void **);
-              weed_set_voidptr_array(bundle, iname, ne, val);
-            }
-            break;
-            default:
-              g_print("type invalid for %s in bundle !", iname);
-              err = 6;
-              break;
+            if (!(vflags & ELEM_FLAG_OPTIONAL)) {
+              err = add_item_to_bundle(btype, bundledef, TRUE, bundle, vname,
+                                       TRUE, &new_quarks, &nq);
+            } else {
+              g_print("ADD2227777 %s\n", vname);
+              err = add_item_to_bundle(btype, bundledef, TRUE, bundle, vname,
+                                       FALSE, &new_quarks, &nq);
             }
           }
-          if (xargs != vargs) va_end(xargs);
-          if (err) {
-            lives_bundle_free(bundle);
-            return NULL;
+          if (sname) {
+            lives_free(sname);
+            sname = NULL;
           }
-        }
+          if (err) break;
+	  // *INDENT-OFF*
+	}}}
+    // *INDENT-ON*
+    if (err) {
+      if (etext) {
+#if DEBUG_BUNDLES
+        g_printerr("\nERROR: %s\n", etext);
+#endif
+        lives_free(etext);
+      }
+#if DEBUG_BUNDLES
+      else g_printerr("\nUnspecified error\n");
+      g_print("Unable to create bundle.\n");
+#endif
+      lives_bundle_free(bundle);
+      bundle = NULL;
+    } else {
+      bundledef_t bundledef = validate_bdef(btype, new_quarks, btype != attr_bundle);
+      lives_bundle_t *bstore = create_bundle(storage_bundle, "comment", "native_ptr", NULL);
+      if (bstore) {
+        char *flat;
+        uint64_t fixed_id = get_bundledef64sum(bundledef, &flat);
+        set_bundle_value(bstore, "native_ptr", ELEM_TYPE_STRING, 1, FALSE, flat);
+        set_bundle_value(bstore, "comment", ELEM_TYPE_STRING, 1, FALSE, "anon bundledef");
+        bdef_store = add_to_bdef_store(fixed_id, bstore);
+      }
+      if (add_qptr) {
+        set_bundle_val(bundle, ELEM_INTROSPECTION_QUARKS_PTR,
+                       ELEM_TYPE_VOIDPTR, 1, FALSE, (void *)bundledef);
       }
     }
   }
+
+  // reverse the leaves
+  if (bundle) xbundle = weed_plant_copy(bundle);
+  return xbundle;
+}
+
+
+char *flatten_bundledef(bundledef_t bdef) {
+  char *buf;
+  off_t offs = 0;
+  size_t ts = 0;
+  for (int i = 0; bdef[i]; i++) ts += strlen(bdef[i]) + 1;
+  buf = (char *)lives_calloc(1, ts);
+  for (int i = 0; bdef[i]; i++) {
+    size_t s = strlen(bdef[i]);
+    buf[offs++] = (uint8_t)(s & 255);
+    lives_memcpy(buf + offs, bdef[i], s);
+    offs += s;
+  }
+  return buf;
+}
+
+
+LIVES_GLOBAL_INLINE char *flatten_bundle(lives_bundle_t *bundle) {
+  bundledef_t bdef = get_bundledef_from_bundle(bundle);
+  return flatten_bundledef(bdef);
+}
+
+
+uint64_t get_bundledef64sum(bundledef_t bdef, char **flattened) {
+  char *xfla;
+  uint64_t uval;
+  if (!flattened || !*flattened) {
+    xfla = flatten_bundledef(bdef);
+    if (flattened) *flattened = xfla;
+  } else xfla = *flattened;
+  uval = minimd5(xfla, lives_strlen(xfla));
+  if (!flattened) lives_free(xfla);
+  return uval;
+}
+
+
+LIVES_GLOBAL_INLINE uint64_t get_bundle64sum(lives_bundle_t *bundle, char **flattened) {
+  bundledef_t bdef = get_bundledef_from_bundle(bundle);
+  return get_bundledef64sum(bdef, flattened);
+}
+
+
+LIVES_SENTINEL lives_bundle_t *create_bundle(bundle_type btype, ...) {
+  const_bundledef_t cbundledef;
+  lives_bundle_t *bundle;
+  va_list xargs;
+  if (btype >= 0 || btype < n_bundles) {
+    cbundledef = (const_bundledef_t)get_bundledef(btype);
+  } else return NULL;
+  va_start(xargs, btype);
+  bundle = create_bundle_from_def_vargs(btype, (bundledef_t)cbundledef, xargs);
+  va_end(xargs);
   return bundle;
 }
 
 
-static LIVES_SENTINEL lives_bundle_t *create_bundle(bundle_type btype, ...) {
+lives_bundle_t *create_object_bundle(uint64_t otype, uint64_t subtype) {
+  bundledef_t bundledef;
   lives_bundle_t *bundle;
-  int bsubtype = LIVES_WEED_SUBTYPE_BUNDLE;
-  va_list xargs;
-  va_start(xargs, btype);
-  if (btype == object_bundle) bsubtype = LIVES_WEED_SUBTYPE_OBJECT;
-  else if (btype == attr_bundle) bsubtype = LIVES_WEED_SUBTYPE_OBJ_ATTR;
-  bundle = create_bundle_vargs(btype, bsubtype, xargs);
-  va_end(xargs);
+
+  bundledef = get_obj_bundledef(otype, subtype);
+  bundle = create_bundle_from_def_vargs(object_bundle, bundledef, NULL);
+
+  // after this, we need to create contracts for the object
+  // - (1) call get_contracts on a contract template with "create instance" intent
+  ///
+  //  (2) create a first instance with intent "negotiate", caps none, and flagged "no negotiate"
+  // and mandatory attr: object type contract, state prepare.
+  //
+  // -- call more times to create contracts for other object transforms
+
+  set_bundle_values(bundle, "type", otype, "subtype", subtype, NULL);
   return bundle;
+}
+
+
+LIVES_GLOBAL_INLINE const lives_contract_t *create_contract_template(void) {
+  // a contract template will have a static contract "create instance"
+  // no negociate, creates new instance in state preview, mandatory attrs intent / capacities
+
+  // the create instance transform will create an instancem with a single
+  // contract of its own for transform copy / no negoiate with new state == prepare
+
+  return create_object_bundle(OBJECT_TYPE_CONTRACT, NO_SUBTYPE);
+}
+
+
+
+// - (1) call this on object to get contracts for various intents, these will all be in state preview
+// - if the contract is flagged "no negociate" then the transform can be called directly, it just needs
+//   mandatory attributes set
+//
+// - (2) otherwise, call the object with intent "negotiate" to find an object's negotiate function
+//     (flagged no negotiate)
+//  note that the negotiate transform only accepts contract instances in state prepare
+///
+//  (3) call this on a contract instance to get a second contract to convert preview to prepare
+///        (flagged no negociate)
+//    (call the transform in the contract instance to  create a copy instance
+///   which can be passed to the negotiate transform)
+//
+
+lives_contract_t *get_contract_for(lives_obj_t *object, lives_intention intention) {
+  //return create_object_bundle(OBJECT_TYPE_CONTRACT, NO_SUBTYPE, OBJECT_STATE_PREPARE);
+  return NULL;
+}
+
+
+// this will get (or create) the static contract object template, get the contract in it
+// for create instance, create the instance in state preview, and then return it
+// for testing, this is short circuited, we return an instance already in state prepare
+
+LIVES_GLOBAL_INLINE lives_contract_t *create_contract_instance(lives_intention intent, ...) {
+  lives_contract_t *contract;
+  va_list vargs;
+  va_start(vargs, intent);
+  contract = create_contract_instance_vargs(intent, vargs);
+  va_end(vargs);
+  return contract;
 }
 
 
@@ -974,7 +1407,6 @@ LIVES_GLOBAL_INLINE boolean lives_object_attribute_unref(lives_object_t *obj, li
 }
 
 
-
 LIVES_GLOBAL_INLINE void lives_object_attributes_unref_all(lives_object_t *obj) {
   lives_obj_attr_t **attrs = obj->attributes;
   if (attrs) {
@@ -988,6 +1420,7 @@ LIVES_GLOBAL_INLINE void lives_object_attributes_unref_all(lives_object_t *obj) 
 
 static weed_error_t _set_obj_attribute_vargs(lives_obj_attr_t  *attr, const char *key,
     int ne, va_list args) {
+  if (!args) return WEED_ERROR_NOSUCH_LEAF;
   if (attr) {
     weed_error_t err; uint32_t st = lives_attr_get_value_type(attr);
     if (ne == 1) {
@@ -1218,18 +1651,21 @@ weed_error_t lives_object_set_attr_def_array(lives_object_t *obj, lives_obj_attr
 lives_obj_attr_t *lives_object_get_attribute(lives_object_t *obj, const char *name) {
   if (name && *name) {
     lives_obj_attr_t **attrs;
+    char *xname = get_short_name(name);
     if (obj) attrs = obj->attributes;
     else attrs = THREADVAR(attributes);
     if (attrs) {
       for (int count = 0; attrs[count]; count++) {
         char *pname = weed_get_string_value(attrs[count], WEED_LEAF_NAME, NULL);
         if (!lives_strcmp(name, pname)) {
-          lives_free(pname);
+          lives_free(pname); lives_free(xname);
           return attrs[count];
         }
         lives_free(pname);
       }
     }
+    lives_free(xname);
+    xname = NULL;
   }
   return NULL;
 }
@@ -1368,20 +1804,27 @@ lives_obj_attr_t *lives_object_declare_attribute(lives_object_t *obj, const char
       lives_free(pname);
     }
   }
+
   attrs = lives_realloc(attrs, (count + 2) * sizeof(lives_obj_attr_t *));
+
   attr = lives_plant_new_with_refcount(LIVES_WEED_SUBTYPE_OBJ_ATTR);
   weed_set_string_value(attr, WEED_LEAF_NAME, name);
   weed_set_int64_value(attr, LIVES_LEAF_OWNER, uid);
+
   if (obj) weed_add_plant_flags(attr, WEED_FLAG_IMMUTABLE, LIVES_LEAF_REFCOUNTER);
 
   // set types for default and for value
   weed_leaf_set(attr, WEED_LEAF_VALUE, st, 0, NULL);
   weed_leaf_set(attr, WEED_LEAF_DEFAULT, st, 0, NULL);
+
   if (obj) weed_add_plant_flags(attr, WEED_FLAG_UNDELETABLE, NULL);
+
   attrs[count] = attr;
   attrs[count + 1] = NULL;
+
   if (obj) obj->attributes = attrs;
   else THREADVAR(attributes) = attrs;
+
   return attr;
 }
 
@@ -1400,115 +1843,116 @@ LIVES_GLOBAL_INLINE uint64_t contract_attr_get_owner(lives_obj_attr_t *attr) {
 }
 
 
-LIVES_GLOBAL_INLINE uint64_t contract_attribute_get_owner(lives_object_t *obj, const char *name) {
-  if (obj) return contract_attr_get_owner(lives_object_get_attribute(obj, name));
-  return 0;
-}
+/* LIVES_GLOBAL_INLINE uint64_t contract_attribute_get_owner(lives_contract_t *contract, */
+/* 							  const char *name) { */
+/*   if (contract) return contract_attr_get_owner(lives_contract_get_attribute(contract, name)); */
+/*   return 0; */
+/* } */
 
 
-LIVES_GLOBAL_INLINE boolean contract_attr_is_mine(lives_obj_attr_t *attr) {
-  if (attr && contract_attr_get_owner(attr) == capable->uid) return TRUE;
-  return FALSE;
-}
+/* LIVES_GLOBAL_INLINE boolean contract_attr_is_mine(lives_obj_attr_t *attr) { */
+/*   if (attr && contract_attr_get_owner(attr) == capable->uid) return TRUE; */
+/*   return FALSE; */
+/* } */
 
 
-LIVES_GLOBAL_INLINE boolean contract_attribute_is_mine(lives_object_t *obj, const char *name) {
-  if (obj) return contract_attr_is_mine(lives_object_get_attribute(obj, name));
-  return FALSE;
-}
+/* LIVES_GLOBAL_INLINE boolean contract_attribute_is_mine(lives_object_t *obj, const char *name) { */
+/*   if (obj) return contract_attr_is_mine(lives_object_get_attribute(obj, name)); */
+/*   return FALSE; */
+/* } */
 
-char *contract_attr_get_value_string(lives_obj_attr_t *attr) {
+char *contract_attr_get_value_string(lives_contract_t *contract, lives_obj_attr_t *attr) {
 
   return NULL;
 }
 
 
-LIVES_GLOBAL_INLINE weed_error_t lives_attr_set_leaf_readonly(lives_obj_attr_t *attr, const char *key, boolean state) {
-  if (!attr) return OBJ_ERROR_NOSUCH_ATTRIBUTE;
-  if (!contract_attr_is_mine(attr)) return OBJ_ERROR_NOT_OWNER;
-  if (!strcmp(key, WEED_LEAF_VALUE)) return lives_attr_set_readonly(attr, state);
-  if (state)
-    return weed_leaf_set_flagbits(attr, key, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
-  else
-    return weed_leaf_clear_flagbits(attr, key, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
-}
+/* LIVES_GLOBAL_INLINE weed_error_t lives_attr_set_leaf_readonly(lives_obj_attr_t *attr, const char *key, boolean state) { */
+/*   if (!attr) return OBJ_ERROR_NOSUCH_ATTRIBUTE; */
+/*   if (!contract_attr_is_mine(attr)) return OBJ_ERROR_NOT_OWNER; */
+/*   if (!strcmp(key, WEED_LEAF_VALUE)) return lives_attr_set_readonly(attr, state); */
+/*   if (state) */
+/*     return weed_leaf_set_flagbits(attr, key, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE); */
+/*   else */
+/*     return weed_leaf_clear_flagbits(attr, key, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE); */
+/* } */
 
 
-LIVES_GLOBAL_INLINE weed_error_t lives_attr_set_readonly(lives_obj_attr_t *attr, boolean state) {
-  if (!attr) return OBJ_ERROR_NOSUCH_ATTRIBUTE;
-  if (!contract_attr_is_mine(attr)) return OBJ_ERROR_NOT_OWNER;
-  if (!weed_leaf_num_elements(attr, WEED_LEAF_VALUE)) return OBJ_ERROR_ATTRIBUTE_INVALID;
-  if (state) {
-    weed_leaf_set_flagbits(attr, WEED_LEAF_VALUE, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
-    return weed_set_int_value(attr, WEED_LEAF_FLAGS, weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL)
-                              | PARAM_FLAG_READONLY);
-  } else {
-    weed_leaf_clear_flagbits(attr, WEED_LEAF_VALUE, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
-    return weed_set_int_value(attr, WEED_LEAF_FLAGS,
-                              (weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL)
-                               & ~PARAM_FLAG_READONLY));
-  }
-}
+/* LIVES_GLOBAL_INLINE weed_error_t lives_attr_set_readonly(lives_obj_attr_t *attr, boolean state) { */
+/*   if (!attr) return OBJ_ERROR_NOSUCH_ATTRIBUTE; */
+/*   if (!contract_attr_is_mine(attr)) return OBJ_ERROR_NOT_OWNER; */
+/*   if (!weed_leaf_num_elements(attr, WEED_LEAF_VALUE)) return OBJ_ERROR_ATTRIBUTE_INVALID; */
+/*   if (state) { */
+/*     weed_leaf_set_flagbits(attr, WEED_LEAF_VALUE, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE); */
+/*     return weed_set_int_value(attr, WEED_LEAF_FLAGS, weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL) */
+/*                               | PARAM_FLAG_READONLY); */
+/*   } else { */
+/*     weed_leaf_clear_flagbits(attr, WEED_LEAF_VALUE, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE); */
+/*     return weed_set_int_value(attr, WEED_LEAF_FLAGS, */
+/*                               (weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL) */
+/*                                & ~PARAM_FLAG_READONLY)); */
+/*   } */
+/* } */
 
 
-LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_leaf_readonly(lives_object_t *obj, const char *name,
-    const char *key, boolean state) {
-  if (obj) {
-    lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    return lives_attr_set_leaf_readonly(attr, key, state);
-  }
-  return OBJ_ERROR_NULL_OBJECT;
-}
+/* LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_leaf_readonly(lives_object_t *obj, const char *name, */
+/*     const char *key, boolean state) { */
+/*   if (obj) { */
+/*     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name); */
+/*     return lives_attr_set_leaf_readonly(attr, key, state); */
+/*   } */
+/*   return OBJ_ERROR_NULL_OBJECT; */
+/* } */
 
 
-LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_readonly(lives_object_t *obj, const char *name,
-    boolean state) {
-  if (obj) {
-    lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    return lives_attr_set_readonly(attr, state);
-  }
-  return OBJ_ERROR_NULL_OBJECT;
-}
+/* LIVES_GLOBAL_INLINE weed_error_t lives_attribute_set_readonly(lives_object_t *obj, const char *name, */
+/*     boolean state) { */
+/*   if (obj) { */
+/*     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name); */
+/*     return lives_attr_set_readonly(attr, state); */
+/*   } */
+/*   return OBJ_ERROR_NULL_OBJECT; */
+/* } */
 
 
-LIVES_GLOBAL_INLINE boolean lives_attr_is_leaf_readonly(lives_obj_attr_t *attr, const char *key) {
-  if (attr) {
-    if (!lives_strcmp(key, WEED_LEAF_VALUE)) return lives_attr_is_readonly(attr);
-    if (weed_leaf_get_flags(attr, key) & WEED_FLAG_IMMUTABLE) return TRUE;
-  }
-  return FALSE;
-}
+/* LIVES_GLOBAL_INLINE boolean lives_attr_is_leaf_readonly(lives_obj_attr_t *attr, const char *key) { */
+/*   if (attr) { */
+/*     if (!lives_strcmp(key, WEED_LEAF_VALUE)) return lives_attr_is_readonly(attr); */
+/*     if (weed_leaf_get_flags(attr, key) & WEED_FLAG_IMMUTABLE) return TRUE; */
+/*   } */
+/*   return FALSE; */
+/* } */
 
 
-LIVES_GLOBAL_INLINE boolean lives_attr_is_readonly(lives_obj_attr_t *attr) {
-  if (attr) {
-    if (weed_leaf_get_flags(attr, WEED_LEAF_VALUE) & WEED_FLAG_IMMUTABLE
-        || (weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL)
-            & PARAM_FLAG_READONLY) == PARAM_FLAG_READONLY) {
-      if (contract_attr_is_mine(attr)) lives_attr_set_readonly(attr, TRUE);
-      return TRUE;
-    }
-    if (contract_attr_is_mine(attr)) lives_attr_set_readonly(attr, FALSE);
-  }
-  return FALSE;
-}
+/* LIVES_GLOBAL_INLINE boolean lives_attr_is_readonly(lives_obj_attr_t *attr) { */
+/*   if (attr) { */
+/*     if (weed_leaf_get_flags(attr, WEED_LEAF_VALUE) & WEED_FLAG_IMMUTABLE */
+/*         || (weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL) */
+/*             & PARAM_FLAG_READONLY) == PARAM_FLAG_READONLY) { */
+/*       if (contract_attr_is_mine(attr)) lives_attr_set_readonly(attr, TRUE); */
+/*       return TRUE; */
+/*     } */
+/*     if (contract_attr_is_mine(attr)) lives_attr_set_readonly(attr, FALSE); */
+/*   } */
+/*   return FALSE; */
+/* } */
 
-LIVES_GLOBAL_INLINE boolean lives_attribute_is_leaf_readonly(lives_object_t *obj, const char *name, const char *key) {
-  if (obj) {
-    lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    if (attr) return lives_attr_is_leaf_readonly(attr, key);
-  }
-  return FALSE;
-}
+/* LIVES_GLOBAL_INLINE boolean lives_attribute_is_leaf_readonly(lives_object_t *obj, const char *name, const char *key) { */
+/*   if (obj) { */
+/*     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name); */
+/*     if (attr) return lives_attr_is_leaf_readonly(attr, key); */
+/*   } */
+/*   return FALSE; */
+/* } */
 
 
-LIVES_GLOBAL_INLINE boolean lives_attribute_is_readonly(lives_object_t *obj, const char *name) {
-  if (obj) {
-    lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    if (attr) return lives_attr_is_readonly(attr);
-  }
-  return FALSE;
-}
+/* LIVES_GLOBAL_INLINE boolean lives_attribute_is_readonly(lives_object_t *obj, const char *name) { */
+/*   if (obj) { */
+/*     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name); */
+/*     if (attr) return lives_attr_is_readonly(attr); */
+/*   } */
+/*   return FALSE; */
+/* } */
 
 ///////////////////////////////
 
@@ -1623,7 +2067,8 @@ LIVES_LOCAL_INLINE lives_intentcap_t *lives_icap_new(lives_intention intent, liv
   lsd = get_lsd(LIVES_STRUCT_INTENTCAP_T);
   if (!lsd) {
     icap = (lives_intentcap_t *)lives_calloc(1, sizeof(lives_intentcap_t));
-    add_special_field((lsd_struct_def_t *)lsd, "capacities", LSD_FIELD_FLAG_ZERO_ON_COPY, &icap->capacities,
+    add_special_field((lsd_struct_def_t *)lsd,
+                      "capacities", LSD_FIELD_FLAG_ZERO_ON_COPY, &icap->capacities,
                       0, icap, lsd_null_cb, (lsd_field_copy_cb)icap_caps_copy_cb, NULL,
                       (lsd_field_delete_cb)icap_caps_delete_cb, NULL);
     lives_free(icap);
@@ -1784,6 +2229,7 @@ static int _check_caps_match_vargs(va_list xargs, lives_capacities_t *caps, int 
   // if no misses, we return -(ncaps)
   int misses = 0;
   char *name;
+  if (!xargs) return 0;
   while ((name = va_arg(xargs, char *))) {
     if (lives_has_capacity(caps, name)) {
       if (misses <= 0) misses--; // no misses - count hits (negative)
@@ -1897,20 +2343,21 @@ static lives_capacities_t *_add_cap(lives_capacities_t *caps, const char *cname)
 
 lives_obj_attr_t *mk_attr(const char *ctype, const char *name, size_t size, void *vptr, int ne) {
   lives_obj_attr_t *attr = lives_object_declare_attribute(NULL, name, WEED_SEED_VOIDPTR);
-  weed_set_string_value(attr, ATTR_INTROSPECTION_NATIVE_TYPE, ctype);
-  weed_set_int64_value(attr, ATTR_INTROSPECTION_NATIVE_SIZE, size);
+  weed_set_string_value(attr, ELEM_INTROSPECTION_NATIVE_TYPE, ctype);
+  weed_set_int64_value(attr, ELEM_INTROSPECTION_NATIVE_SIZE, size);
   lives_object_set_attr_value(NULL, attr, vptr);
   return attr;
 }
 
-#define MK_ATTR(ctype, name) mk_attr(QUOTEME(ctype), QUOTEME(name), sizeof(THREADVAR(name)), \
-				     (void *)&(THREADVAR(name)), 1)
+#define MK_ATTR(ctype, name) mk_attr(QUOTEME(ctype), QUOTEME(name), sizeof(CTHREADVAR(name)), \
+				     (void *)&(CTHREADVAR(name)), 1)
 
 #define MK_ATTR_P(ctype, name) mk_attr(QUOTEME(ctype), QUOTEME(name), sizeof(ctype), \
-				     (void *)THREADVAR(name), 1)
+				     (void *)CTHREADVAR(name), 1)
 
 
 void make_thrdattrs(void) {
+  CACHE_THREADVARS;
   MK_ATTR(uint64_t, uid);
   MK_ATTR(int, id);
   MK_ATTR(lives_proc_thread_t, tinfo);

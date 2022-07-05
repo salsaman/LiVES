@@ -19,6 +19,7 @@
 #include "rfx-builder.h"
 #include "effects-weed.h"
 #include "multitrack-gui.h"
+#include "setup.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"

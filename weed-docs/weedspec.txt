@@ -275,20 +275,25 @@ The following seed types are defined,
 
 - WEED_SEED_UINT (type 6) has been added for convenience
 
-- WEED_SEED_FLOAT (type 7) has been added for convenience. (stored as double)
+- WEED_SEED_UINT64 (type 7) has been added for convenience
 
-- WEED_SEED_UINT64 (type 8) has been added for convenience
+- WEED_SEED_FLOAT (type 8) has been added for convenience. (stored as double)
+
 
 - added aliases:
 WEED_SEED_VOID (type 0)
 
 WEED_SEED_INT32			WEED_SEED_INT
+WEED_SEED_UINT32		WEED_SEED_UINT
 
 WEED_SEED_int			WEED_SEED_INT
+WEED_SEED_uint			WEED_SEED_UINT
+
 WEED_SEED_double		WEED_SEED_DOUBLE
 WEED_SEED_boolean		WEED_SEED_BOOLEAN
 WEED_SEED_string		WEED_SEED_STRING
 WEED_SEED_int64			WEED_SEED_INT64
+WEED_SEED_uint64		WEED_SEED_UINT64
 
 -  added weed_leaf_set_element_size(plant, key, idx, size)
    for voidptr or custom seed types, this can be used to note the size of

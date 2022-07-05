@@ -1062,7 +1062,7 @@ typedef struct {
   AVCodec *codec;
   AVCodecContext *ctx;
   AVFrame *picture;
-  AVPacket avpkt;
+  AVPacket *avpkt;
   uint8_t *ovpdata;
   boolean needs_pkt;
   index_container_t *idxc;

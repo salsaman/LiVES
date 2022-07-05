@@ -1735,7 +1735,7 @@ boolean lives_osc_cb_getname(void *context, int arglen, const void *vargs, OSCTi
 
 
 boolean lives_osc_cb_getversion(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  return lives_status_send(VERSION);
+  return lives_status_send(PACKAGE_VERSION);
 }
 
 

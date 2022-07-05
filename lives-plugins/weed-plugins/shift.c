@@ -6,7 +6,7 @@
 // released under the GNU GPL version 3 or higher
 // see file COPYING or www.gnu.org for details
 
-// (c) salsaman 2021
+// (c) salsaman 2022
 /////////////////////////////////////////////////////////////////////////////
 
 static int package_version = 1; // version of this package
@@ -164,6 +164,7 @@ static weed_error_t shift_process(weed_plant_t *inst, weed_timecode_t tc) {
 WEED_SETUP_START(200, 200) {
   weed_plant_t *host_info = weed_get_host_info(plugin_info);
   weed_plant_t *filter_class;
+  int palette_list[] = ALL_PACKED_PALETTES;
   weed_plant_t *in_chantmpls[] = {
       weed_channel_template_init("in_channel0", 0),
       NULL};
@@ -186,7 +187,7 @@ WEED_SETUP_START(200, 200) {
   pgui = weed_paramtmpl_get_gui(in_paramtmpls[P_yshift]);
   weed_set_int_value(pgui, WEED_LEAF_DECIMALS, 2);
 
-  filter_class = weed_filter_class_init("shift", "salsaman", 1, filter_flags, NULL,
+  filter_class = weed_filter_class_init("shift", "salsaman", 1, filter_flags, palette_list,
     NULL, shift_process, NULL, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

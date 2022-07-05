@@ -2484,8 +2484,6 @@ lives_decoder_t *clone_decoder(int fileno) {
       || sfile->ext_src_type != LIVES_EXT_SRC_DECODER) return NULL;
   dplug = (lives_decoder_t *)mainw->files[fileno]->ext_src;
 
-  if (strcmp(dplug->cdata->lsd->self_fields->name, "LSD")) abort();
-
   if (dplug) {
     dpsys = dplug->dpsys;
     if (dpsys) cdata = (*dpsys->get_clip_data)(NULL, dplug->cdata);
@@ -2611,8 +2609,12 @@ lives_decoder_t *get_decoder_clone(int nclip) {
 
 
 boolean swap_decoder_clone(int nclip, lives_decoder_t *dec) {
+  // clips can have multiple decoder sources. Here we will swap in dec, which must in sfile->alt_srcs,
+  // so it will become sfile->ext_src, and the old sfile->ext_src will swap into alt_srcs
+  // returns TRUE if the src was swapped
   lives_clip_t *sfile = RETURN_PHYSICAL_CLIP(nclip);
   if (sfile) {
+    // if dec is already ext_src, we do nothing, just return FALSE
     if (dec != sfile->ext_src) {
       int nsrcs = sfile->n_altsrcs;
       for (int i = 0; i < nsrcs; i++) {
@@ -2707,7 +2709,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
     set_signal_handlers((SignalHandlerPointer)defer_sigint);
 
     /// may crash
-    mainw->err_funcdef = ADD_FUNC_DEF(try_decoder_plugins, "v", "svv");
+    mainw->err_funcdef = ____FUNC_ENTRY____(try_decoder_plugins, "v", "svv");
     cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
     ////
 
@@ -2716,6 +2718,8 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
 
     set_signal_handlers((SignalHandlerPointer)catch_sigint);
     mainw->crash_possible = 0;
+
+    ____FUNC_EXIT____
     ////////////////
 
     if (fake_cdata) {
@@ -4566,7 +4570,9 @@ LIVES_GLOBAL_INLINE lives_rfx_t *obj_attrs_to_rfx(lives_object_t *obj, boolean r
     rfx->params[i].source_type = LIVES_RFX_SOURCE_OBJECT;
     build_rfx_param(&rfx->params[i], attr, param_type, label, gui, attr);
     weed_set_voidptr_value(gui, LIVES_LEAF_RPAR, (void *)(&rfx->params[i]));
-    if (readonly || lives_attribute_is_readonly(obj, name)) rfx->params[i].flags |= PARAM_FLAG_READONLY;
+    //if (readonly || contract_attribute_is_readonly(obj, name))
+    //rfx->params[i].flags |= PARAM_FLAG_READONLY;
+    if (readonly) rfx->params[i].flags |= PARAM_FLAG_READONLY;
     lives_free(label);
     lives_free(name);
   }

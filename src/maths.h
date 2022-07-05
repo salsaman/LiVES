@@ -29,7 +29,27 @@
 
 #define MASK64_x8(n)	0x##n##n##n##n##n##n##n##n
 
-///
+// md5sum //////////////////
+#define _A(b,c,d)(d^(b&(c^d)))
+#define _B(b,c,d)_A(d,b,c)
+#define _C(b,c,d)(b^c^d)
+#define _D(b,c,d)(c^(b|~d))
+#define A_(w,s)(w=(w<<s)|(w>>(32-s)))
+#define B_(g,h,i,j,s,T)do{g+=_A(h,i,j)+(*_X++=*w)+T;++w;A_(g,s);g+=h;}while(0)
+#define BX(W,X,Y,Z)B_(A,B,C,D,7,W);B_(B,C,D,A,22,X);B_(C,D,A,B,17,Y);B_(D,A,B,X,12,Z);
+#define C_(f,k,s,T,g,h,i,j)do{g+=f(h,i,j)+X[k]+T;A_(g,s);g+=h;}while(0)
+#define CA_(M,w,W,x,X,y,Y,z,Z,g,h,i,j)C_(M,w,g,W,A,B,C,D);C_(M,x,h,X,D,A,B,C);C_(M,y,i,Y,C,D,A,B);C_(M,z,j,Z,B,C,D,A);
+#define CW(w,W,x,X,y,Y,z,Z)CA_(_B,w,W,x,W,y,Y,z,Z,5,9,14,20)
+#define CX(w,W,x,X,y,Y,z,Z)CA_(_C,w,W,x,W,y,Y,z,Z,4,11,16,23)
+#define CY(w,W,x,X,y,Y,z,Z)CA_(_D,w,W,x,W,y,Y,z,Z,6,10,15,21)
+
+typedef struct {uint32_t A, B, C, D, t[2], bl; char buf[128];} md5priv;
+
+// returns array of uint8_t output[16]
+uint8_t *tinymd5(void *data, size_t dsize) WARN_UNUSED LIVES_PURE;
+uint64_t minimd5(void *data, size_t dsize) LIVES_PURE;
+
+////////////////////////////////////////
 
 #define squared(a) ((a) * (a))
 
@@ -85,6 +105,9 @@ float get_approx_ln(uint32_t val) LIVES_CONST;
 double get_approx_ln64(uint64_t x) LIVES_CONST;
 
 int lcm(int x, int y, int max);
+
+uint64_t nxtval(uint64_t val, uint64_t lim, boolean less);
+uint64_t get_satisfactory_value(uint64_t val, uint64_t lim, boolean less);
 
 double gaussian(double x, double a, double m, double s1, double s2);
 

@@ -4,35 +4,20 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
+// if usage of BUNDLES is desired,
+// exactly one file should #define NEED_OBJECT_BUNDLES before including this header
+// as well as #define BUNDLE_TYPE to b
+
+
 #ifndef OBJECT_CONSTANTS_H
 #define OBJECT_CONSTANTS_H
-
-typedef enum {
-  atom_bundle, // x
-  attr_bundle, // x
-  object_bundle, // x
-  objdef_bundle, // x
-  icap_bundle, // x
-  hook_bundle, // x
-  // sub-bundles
-  hook_attr_bundle,
-  attr_ptr_bundle,
-  //
-  list_bundle, // x
-  list_of_lists_bundle,
-  list_header_bundle,
-  attr_list_bundle,
-  n_bundles
-} bundle_type;
-
-typedef const char **bundledef_t;
 
 #define ashift(v0, v1) ((uint64_t)(((v0) << 8) | (v1)))
 #define ashift4(a, b, c, d) ((uint64_t)(((ashift((a), (b)) << 16) | (ashift((c), (d))))))
 #define ashift8(a, b, c, d, e, f, g, h) ((uint64_t)(((ashift4((a), (b), (c), (d))) << 32) | \
 						    ashift4((e), (f), (g), (h))))
 #define IMkType(str) ((const uint64_t)(ashift8((str)[0], (str)[1], (str)[2], (str)[3], \
-					 (str)[4], (str)[5], (str)[6], (str)[7])))
+					       (str)[4], (str)[5], (str)[6], (str)[7])))
 // defined object types
 #define OBJECT_TYPE_CLIP		IMkType("obj.CLIP")  // could do with a more generic name
 #define OBJECT_TYPE_PLUGIN		IMkType("obj.PLUG"
@@ -49,6 +34,8 @@ typedef const char **bundledef_t;
 
 #define NO_SUBTYPE 0
 
+#define OBJ_INTENTION_NONE 0
+
 // INTENTIONS
 enum {
   // some common intentions
@@ -56,7 +43,7 @@ enum {
   OBJ_INTENTION_UNKNOWN,
 
   // application types
-  OBJ_INTENTION_NOTHING = 0,
+  OBJ_INTENTION_NOTHING = OBJ_INTENTION_NONE,
 
   // for CHANGE_STATE, CHANGE_SUBTYPE, EDIT_DATA, and MANIPULATE_STREAM, when feasable / possible
   OBJ_INTENTION_UNDO, // undo effects of previous transform
@@ -204,6 +191,8 @@ enum {
 // generic capacities, type specific ones may also exist in another header
 // values can either be present or absent
 
+#define CAP_END			NULL // marks end of caps list for vargs
+
 // either / or
 #define CAP_LOCAL		"local"  // inputs from or outputs to local hardwares
 #define CAP_REMOTE		"remote" // inputs from or outputs to remote hardwares
@@ -235,226 +224,293 @@ enum {
   N_STD_ICAPS
 };
 
-////// standard ATTRIBUTES ////
+////// standard ITEMS ////
 
-///////// attribute types ////////
+// const char * versions
 
-#define ATTR_TYPE_NONE					"0"
-
-// flag bits
-#define ATTR_TYPE_FLAG_OPTIONAL				"?"	// "?"
-#define ATTR_TYPE_FLAG_ARRAY				"*"	// "*"
-
-#define ATTR_TYPE_INT					"i"	// "i"
-#define ATTR_TYPE_DOUBLE				"d"	// "d"
-#define ATTR_TYPE_BOOLEAN				"b"	// "b"
-#define ATTR_TYPE_STRING				"s"	// "s"
-#define ATTR_TYPE_INT64					"I"	// "I"
-#define ATTR_TYPE_UINT					"u"	// "u"
-#define ATTR_TYPE_FLOAT					"f"	// "f"
-#define ATTR_TYPE_UINT64				"U"	// "U"
-#define ATTR_TYPE_CHAR					"c"	// "c"
-
-#define ATTR_TYPE_VOIDPTR				"v"	// "v"
-
-// void * aliases
-#define ATTR_TYPE_BUNDLEPTR	       			"B" // ptr to bundle "B"
-#define ATTR_TYPE_OBJPTR				"O" // == ptr to obj_bundle "O"
-#define ATTR_TYPE_ATTRPTR      				"A" // == ptr to attr_bundle "A"
-#define ATTR_TYPE_HOOKPTR      				"H" // == ptr to hook_bundle "H"
-
-#define ATTR_TYPE_SPECIAL				"$" // type rqeuires special handling "$"
-
-#define UATTR_TYPE_NONE					(uint32_t)'0'
+#define _ELEM_TYPE_NONE					"0"
 
 // flag bits
-#define UATTR_TYPE_FLAG_OPTIONAL	      		(uint32_t)'?'	// '?'
-#define UATTR_TYPE_FLAG_ARRAY				(uint32_t)'*'	// '*'
+#define _ELEM_TYPE_FLAG_OPTIONAL       			"?"
+#define _ELEM_TYPE_FLAG_ARRAY				"*"
+#define _ELEM_TYPE_FLAG_COMMENT				"#"
 
-#define UATTR_TYPE_INT					(uint32_t)'i'	// 'i'
-#define UATTR_TYPE_DOUBLE				(uint32_t)'d'	// 'd'
-#define UATTR_TYPE_BOOLEAN				(uint32_t)'b'	// 'b'
-#define UATTR_TYPE_STRING				(uint32_t)'s'	// 's'
-#define UATTR_TYPE_INT64	       		     	(uint32_t)'I'	// 'I'
-#define UATTR_TYPE_UINT					(uint32_t)'u'	// 'u'
-#define UATTR_TYPE_FLOAT	       			(uint32_t)'f'	// 'f'
-#define UATTR_TYPE_UINT64				(uint32_t)'U'	// 'U'
-#define UATTR_TYPE_CHAR					(uint32_t)'c'	// 'c'
+#define _ELEM_TYPE_INT					"i"
+#define _ELEM_TYPE_DOUBLE				"d"
+#define _ELEM_TYPE_BOOLEAN				"b"
+#define _ELEM_TYPE_STRING				"s"
+#define _ELEM_TYPE_INT64	       			"I"
+#define _ELEM_TYPE_UINT					"u"
+#define _ELEM_TYPE_UINT64				"U"
 
-#define UATTR_TYPE_VOIDPTR				(uint32_t)'v'	// 'v'
+#define _ELEM_TYPE_VOIDPTR				"v"
+#define _ELEM_TYPE_BUNDLEPTR	       			"B"
 
-// void * aliases
-#define UATTR_TYPE_BUNDLEPTR	       			(uint32_t)'B' // ptr to bundle 'B'
-#define UATTR_TYPE_OBJPTR				(uint32_t)'O' // == ptr to obj_bundle 'O'
-#define UATTR_TYPE_ATTRPTR     				(uint32_t)'A' // == ptr to attr_bundle 'A'
-#define UATTR_TYPE_HOOKPTR     				(uint32_t)'H' // == ptr to hook_bundle 'H'
-
-#define UATTR_TYPE_SPECIAL				(uint32_t)'$' // type rqeuires special handling "$"
+#define _ELEM_TYPE_SPECIAL				"$"
 
 ////////////////////////////
 
-#define ATTR_NAMEU(a, b) a "_" b
-#define _ATTR_NAMER(c) #c
-#define ATTR_NAME(a, b) ATTR_NAMEU(a, b)
+///////// element types ////////
 
-// bundle domain
+#define ELEM_TYPE_NONE					(uint32_t)'0'	// invalid type
 
+// flag bits
+#define ELEM_TYPE_FLAG_OPTIONAL		      		(uint32_t)'?'	// optional element
+#define ELEM_TYPE_FLAG_ARRAY				(uint32_t)'*'	// value is *array
+#define ELEM_TYPE_FLAG_COMMENT		      		(uint32_t)'#'	// comment
 
-#define ATTR_BUNDLE_FLAGS				ATTR_NAME("DOMAIN", "FLAGS")
-#define ATTR_BUNDLE_FLAGS_TYPE              		SPECIAL, 1
+#define ELEM_TYPE_INT					(uint32_t)'i'	// 4 byte int
+#define ELEM_TYPE_DOUBLE				(uint32_t)'d'	// 8 byte float
+#define ELEM_TYPE_BOOLEAN				(uint32_t)'b'	// 1 - 4 byte int
+#define ELEM_TYPE_STRING				(uint32_t)'s'	// \0 terminated string
+#define ELEM_TYPE_INT64	       			     	(uint32_t)'I'	// 8 byte int
+#define ELEM_TYPE_UINT					(uint32_t)'u'	// 4 byte int
+#define ELEM_TYPE_UINT64				(uint32_t)'U'	// 8 byte int
 
-// domain generic
+#define ELEM_TYPE_VOIDPTR				(uint32_t)'v'	// void *
 
-#define ATTR_GENERIC_NAME				ATTR_NAME("GENERIC", "NAME")
-#define ATTR_GENERIC_NAME_TYPE              		STRING, 1
+// void * aliases
+#define ELEM_TYPE_BUNDLEPTR	       			(uint32_t)'B' // void * to other bundle
 
-#define ATTR_GENERIC_TYPE				ATTR_NAME("GENERIC", "TYPE")
-#define ATTR_GENERIC_TYPE_TYPE              		UINT, 1
+#define ELEM_TYPE_SPECIAL				(uint32_t)'$' // special rule applies
 
-#define ATTR_GENERIC_FLAGS				ATTR_NAME("GENERIC", "FLAGS")
-#define ATTR_GENERIC_FLAGS_TYPE              		UINT64, 1
+#ifdef VERSION
+#undef VERSION
+#endif
 
-#define ATTR_GENERIC_UID				ATTR_NAME("GENERIC", "UID")
-#define ATTR_GENERIC_UID_TYPE				UINT64, 1
+#define ELEM_NAMEU(a, b) "ELEM_" a "_" b
+#define ELEM_NAME(a, b) ELEM_NAMEU(a, b)
 
-// currently active transforms ?
-#define ATTR_GENERIC_TRANSFORMS				"transforms"
-#define ATTR_GENERIC_TRANSFORMS_TYPE			OBJPTR, -1
-#define ATTR_GENERIC_TRANSFORMS_OBJDEF				\
-  OBJECT_TYPE_TRANSFORM, OBJECT_SUBTYPE_ANY, OBJECT_STATE_ANY
+// domain BASE
+#define ELEM_BASE_VERSION				ELEM_NAME("BASE", "VERSION")
+#define ELEM_BASE_VERSION_TYPE              		INT, 1, 100
 
-// each hook has attributes - state from / state to, attributes. Each sub attribute
-// has a flags attribute, and a provider attribute, which must be set to the corresponding
-// attribute of some object which will supply data, the connected attribute
-// may also have flags like 'needs update'
-#define ATTR_GENERIC_HOOKS				"hooks"
-#define ATTR_GENERIC_HOOKS_TYPE		       	       	HOOKPTR, -1
+#define ELEM_FUNDAMENTAL_BUNDLE_PTR			ELEM_NAME("FUNDAMENTAL", "BUNDLE_PTR");
+#define ELEM_FUNDAMENTAL_BUNDLE_PTR_TYPE	       	BUNDLEPTR, 1, NULL
 
-#define ATTR_HOOK_STATUS_FROM				"hook_status_from"
-#define ATTR_HOOK_STATUS_FROM_TYPE       	       	INT, 1
+// domain GENERIC
 
-#define ATTR_HOOK_STATUS_TO				"hook_status_to"
-#define ATTR_HOOK_STATUS_TO_TYPE       	       		INT, 1
+#define ELEM_GENERIC_NAME				ELEM_NAME("GENERIC", "NAME")
+#define ELEM_GENERIC_NAME_TYPE              		STRING, 1, NULL
 
-#define ATTR_HOOK_ATTRIBUTES				"hook_attributes"
-#define ATTR_HOOK_ATTRIBUTES_TYPE       	       	BUNDLEPTR, -1
-#define ATTR_HOOK_ATTRIBUTES_BUNDLE_TYPE       	       	hook_attr_bundle
+#define ELEM_GENERIC_FLAGS				ELEM_NAME("GENERIC", "FLAGS")
+#define ELEM_GENERIC_FLAGS_TYPE              		UINT64, 1, 0
+
+#define ELEM_GENERIC_UID				ELEM_NAME("GENERIC", "UID")
+#define ELEM_GENERIC_UID_TYPE				SPECIAL, 1, 0
+
+#define ELEM_GENERIC_DESCRIPTION			ELEM_NAME("GENERIC", "DESCRIPTION")
+#define ELEM_GENERIC_DESCRIPTION_TYPE              	STRING, 1, NULL
+
+///// domain ICAP
+#define ELEM_ICAP_INTENTION				ELEM_NAME("ICAP", "INTENTION")
+#define ELEM_ICAP_INTENTION_TYPE              		INT, 1, OBJ_INTENTION_NONE
+
+#define ELEM_ICAP_CAPACITIES				ELEM_NAME("ICAP", "CAPACITIES")
+#define ELEM_ICAP_CAPACITIES_TYPE              		BUNDLEPTR, 1, NULL // icap_bundle
 
 ////////// domain object
 
-#define ATTR_OBJECT_ATTRIBUTES				"attributes"
-#define ATTR_OBJECT_ATTRIBUTES_TYPE	       		ATTRPTR, -1
+#define ELEM_OBJECT_ATTRIBUTES				ELEM_NAME("OBJECT", "ATTRIBUTES")
+#define ELEM_OBJECT_ATTRIBUTES_TYPE	       		BUNDLEPTR, -1, NULL // attr_bundle
 
-#define ATTR_OBJECT_TYPE				ATTR_NAME("OBJECT", "TYPE")
-#define ATTR_OBJECT_TYPE_TYPE				UINT64, 1
+#define ELEM_OBJECT_TYPE				ELEM_NAME("OBJECT", "TYPE")
+#define ELEM_OBJECT_TYPE_TYPE				UINT64, 1, OBJECT_TYPE_UNDEFINED
 
-#define ATTR_OBJECT_SUBTYPE				ATTR_NAME("OBJECT", "SUBTYPE")
-#define ATTR_OBJECT_SUBTYPE_TYPE       			UINT64, 1
+#define ELEM_OBJECT_SUBTYPE				ELEM_NAME("OBJECT", "SUBTYPE")
+#define ELEM_OBJECT_SUBTYPE_TYPE       			UINT64, 1, OBJECT_SUBTYPE_UNDEFINED
 
-#define ATTR_OBJECT_STATE				ATTR_NAME("OBJECT", "STATE")
-#define ATTR_OBJECT_STATE_TYPE       			INT, 1
+#define ELEM_OBJECT_STATE				ELEM_NAME("OBJECT", "STATE")
+#define ELEM_OBJECT_STATE_TYPE       			INT, 1, OBJECT_STATE_UNDEFINED
 
-#define ATTR_OBJECT_CONTRACTS				"contracts"
-#define ATTR_OBJECT_CONTRACTS_TYPE       		OBJPTR, -1
+// There are two types of hooks, object hooks and transform hooks
+// object hooks may be triggered when an object changes state and / or subtype
+// transform hooks may be triggered when a transform status changes
+#define ELEM_OBJECT_HOOKS				ELEM_NAME("OBJECT", "HOOKS")
+#define ELEM_OBJECT_HOOKS_TYPE		       	       	BUNDLEPTR, -1, NULL // hook_bundle
 
-#define ATTR_OBJECT_CONTRACTS_OBJDEF					\
+#define ELEM_OBJECT_ACTIVE_TRANSFORMS		       	ELEM_NAME("OBJECT", "ACTIVE_TRANSFORMS")
+#define ELEM_OBJECT_ACTIVE_TRANSFORMS_TYPE	       	BUNDLEPTR, -1, NULL
+#define ELEM_OBJECT_ACTIVE_TRANSFORMS_OBJDEF			\
+  OBJECT_TYPE_TRANSFORM, OBJECT_SUBTYPE_ANY, OBJECT_STATE_ANY
+
+#define ELEM_OBJECT_CONTRACTS				ELEM_NAME("OBJECT", "CONTRACTS")
+#define ELEM_OBJECT_CONTRACTS_TYPE       		BUNDLEPTR, -1, NULL
+#define ELEM_OBJECT_CONTRACTS_OBJDEF					\
   OBJECT_TYPE_CONTRACT, OBJECT_SUBTYPE_ANY, OBJECT_STATE_PREVIEW
 
-// max number of elements allowed in data, a value of -1 means no limit
-// for scalar values, 0 or 1 indicates a single value, -1 indicates an unbounded array
-// for attributes, this is resolved as.-1 (unbounded), or MAX(1, max_repeats, nvalues(default))
-#define ATTR_VALUE_MAX_REPEATS				"max_repeats"
-#define ATTR_VALUE_MAX_REPEATS_TYPE	       		INT, 1
+// max number of elements allowed in DATA
+//
+// - if absent or 1, indicates a scalar value
+//
+// a value of -1 means no limit (unbounded array)
+//
+// if > 1, denotes the maximum number of array elements
+// if DEFAULT is present, then this is modified to MAX(1, MAX_REPEATS, n_elements(DEFAULT))
+// "element size" is 1 value by default - other factors may modify this, however
+//
+// a MAX_REPEATS of 0 indicates "undefined"; the data should not be written to or read
+// until this vallue is changed or deleted.
+//
+#define ELEM_VALUE_MAX_REPEATS				ELEM_NAME("VALUE", "MAX_REPEATS")
+#define ELEM_VALUE_MAX_REPEATS_TYPE	       		INT, 0, 1
 
-// this stores the actual data of the scalar value.
-// the type and number of elements must accord with value_type and max_repeats
-// (0 or 1 for a single value, -1 for an array)
-#define ATTR_VALUE_VALUE	      			ATTR_NAME("VALUE", "VALUE")
-#define ATTR_VALUE_VALUE_TYPE       			SPECIAL, 0
+#define ELEM_VALUE_DATA		      			ELEM_NAME("VALUE", "DATA")
+#define ELEM_VALUE_DATA_TYPE       			SPECIAL, 1,
 
-#define ATTR_VALUE_DEFALT	      			"value_default"
-#define ATTR_VALUE_DEFAULT_TYPE       			SPECIAL, 0
+#define ELEM_VALUE_VALUE_TYPE	      			ELEM_NAME("VALUE", "VALUE_TYPE")
+#define ELEM_VALUE_VALUE_TYPE_TYPE     			UINT, 1, ATTR_TYPE_NONE
 
-#define ATTR_VALUE_NEW_DEFALT	      			"value_new_default"
-#define ATTR_VALUE_NEW_DEFAULT_TYPE   			SPECIAL, 0
+#define ELEM_VALUE_DEFALT	      			ELEM_NAME("VALUE", "DEFAULT")
+#define ELEM_VALUE_DEFAULT_TYPE       			SPECIAL, 0,
 
-// domain introspection
+#define ELEM_VALUE_NEW_DEFALT	      			ELEM_NAME("VALUE", "NEW_DEFAULT")
+#define ELEM_VALUE_NEW_DEFAULT_TYPE   			SPECIAL, 0,
 
-#define ATTR_INTROSPECTION_DOMAIN    			ATTR_NAME("INTROSPECTION", "DOMAIN")
-#define ATTR_INTROSPECTION_DOMAIN_TYPE       	       	STRING, 1
+// domain TRANSFORMS
+// There are two types of hooks, object hooks and transform hooks
+// object hooks may be triggered when an object changes state and / or subtype
+// transform hooks may be triggered when a transform status changes
+// When a "contract" is being negotiated, the hooks will be pinned to the contract,
+// and the negotiating parties should ensure that the any input hooks with mandatory
+// attribute connections are connected before the contract is agreed.
+// During transform preparation, the hooks will be transferred from contract to
+// the transaction instance.
+#define ELEM_TRANSFORM_HOOKS				ELEM_NAME("TRANSFORM", "HOOKS")
+#define ELEM_TRANSFORM_HOOKS_TYPE      	       	       	BUNDLEPTR, -1, NULL // hook_bundle
 
-#define ATTR_INTROSPECTION_COMMENT    			ATTR_NAME("INTROSPECTION", "COMMENT")
-#define ATTR_INTROSPECTION_COMMENT_TYPE       	       	STRING, 1
+///// domain CONTRACT
+// attributes for a contract (replace normal attributes)
+// these are pooled attributes, with each negotiating party contributing to
+// or removing attributes from the pool
+// all mandatory attributes in the contract must have values set before the contract
+// can be agreed. During the transform preparation step, all attributes with values will be
+// copied to the the transform object, after which the pooled attributes will be returned to
+// their respective owners.
+#define ELEM_CONTRACT_ATTR_POOL			      	ELEM_NAME("CONTRACT", "ATTR_POOL")
+#define ELEM_CONTRACT_ATTR_POOL_TYPE		       	BUNDLEPTR, -1, NULL
+//#define ELEM_CONTRACT_ATTR_POOL_BUNDLE_TYPE	       	list_of_lists_bundle
 
-#define ATTR_INTROSPECTION_REFCOUNT    			"refcount"
-#define ATTR_INTROSPECTION_REFCOUNT_TYPE       	       	INT, 1
+///// domain HOOKS
+// status for transform hooks
+#define ELEM_HOOK_STATUS_FROM				ELEM_NAME("HOOK", "STATUS_FROM")
+#define ELEM_HOOK_STATUS_FROM_TYPE       	       	INT, 1, TRANSFORM_STATUS_NONE
 
-#define ATTR_INTROSPECTION_PRIVATE_DATA			ATTR_NAME("INTROSPECTION", "PRIVATE_DATA")
-#define ATTR_INTROSPECTION_PRIVATE_DATA_TYPE		VOIDPTR, -1
+#define ELEM_HOOK_STATUS_TO				ELEM_NAME("HOOK", "STATUS_TO")
+#define ELEM_HOOK_STATUS_TO_TYPE       	       		INT, 1, TRANSFORM_STATUS_NONE
 
-#define ATTR_INTROSPECTION_NATIVE_PTR 			ATTR_NAME("INTROSPECTION", "NATIVE_PTR")
-#define ATTR_INTROSPECTION_NATIVE_PTR_TYPE		VOIDPTR, -1
+#define ELEM_HOOK_ATTRIBUTES				ELEM_NAME("HOOK", "ATTRIBUTES")
+#define ELEM_HOOK_ATTRIBUTES_TYPE       	       	BUNDLEPTR, -1, NULL
+#define ELEM_HOOK_ATTRIBUTES_BUNDLE_TYPE       	       	hook_attr_bundle
 
-#define ATTR_INTROSPECTION_NATIVE_TYPE 			ATTR_NAME("INTROSPECTION", "NATIVE_TYPE")
-#define ATTR_INTROSPECTION_NATIVE_TYPE_TYPE 	       	INT, -1
+// state for object hooks
+#define ELEM_HOOK_STATE_FROM				ELEM_NAME("HOOK", "STATE_FROM")
+#define ELEM_HOOK_STATE_FROM_TYPE       	       	INT, 1, OBJECT_STATE_UNDEFINED
 
-#define ATTR_INTROSPECTION_NATIVE_SIZE 			ATTR_NAME("INTROSPECTION", "NATIVE_SIZE")
-#define ATTR_INTROSPECTION_NATIVE_SIZE_TYPE		UINT64, -1
+#define ELEM_HOOK_STATE_TO				ELEM_NAME("HOOK", "STATE_TO")
+#define ELEM_HOOK_STATE_TO_TYPE       	       		INT, 1, OBJECT_STATE_UNDEFINED
 
-// domain attribute
+// domain INTROSPECTION
+// this is an optional item which should be added to ever bundldef, it is designed to allow
+// the bundle creator to store the pared down quarks used to construct the bundle
+#define ELEM_INTROSPECTION_QUARKS    			ELEM_NAME("INTROSPECTION", "QUARKS")
+#define ELEM_INTROSPECTION_QUARKS_TYPE       	       	STRING, -1, NULL
 
-#define ATTR_ATTRIBUTE_OWNER				"owner_object"
-#define ATTR_ATTRIBUTE_OWNER_TYPE      			OBJPTR, 1
-#define ATTR_ATTRIBUTE_OWNER_OBJDEF			\
-  OBJECT_TYPE_ANY, OBJECT_SUBTYPE_ANY, OBJECT_STATE_ANY
+// as an alternative this can be used instead to point to a static copy of the quarks
+#define ELEM_INTROSPECTION_QUARKS_PTR    	       	ELEM_NAME("INTROSPECTION", "QUARKS_PTR")
+#define ELEM_INTROSPECTION_QUARKS_PTR_TYPE            	VOIDPTR, 1, NULL
 
-#define ATTR_ATTRIBUTE_TO				"attr_to"
-#define ATTR_ATTRIBUTE_TO_TYPE				ATTRPTR, 1
+#define ELEM_INTROSPECTION_COMMENT    			ELEM_NAME("INTROSPECTION", "COMMENT")
+#define ELEM_INTROSPECTION_COMMENT_TYPE       	       	STRING, 1, NULL
 
-#define ATTR_ATTRIBUTE_ATTRPTR				"attr_pointer"
-#define ATTR_ATTRIBUTE_ATTRPTR_TYPE			ATTRPTR, 1
+#define ELEM_INTROSPECTION_REFCOUNT    			ELEM_NAME("INTROSPECTION", "REFCOUNT")
+#define ELEM_INTROSPECTION_REFCOUNT_TYPE       	       	INT, 1, 0
 
-////////// domain icap /////////
+#define ELEM_INTROSPECTION_PRIVATE_DATA			ELEM_NAME("INTROSPECTION", "PRIVATE_DATA")
+#define ELEM_INTROSPECTION_PRIVATE_DATA_TYPE		VOIDPTR, 1, NULL
 
-#define ATTR_ICAP_DESCRIPTION				"description"
-#define ATTR_ICAP_DESCRIPTION_TYPE              	STRING, 1
+#define ELEM_INTROSPECTION_NATIVE_TYPE 			ELEM_NAME("INTROSPECTION", "NATIVE_TYPE")
+#define ELEM_INTROSPECTION_NATIVE_TYPE_TYPE 	       	INT, 1, NULL
 
-#define ATTR_ICAP_INTENTION				"intention"
-#define ATTR_ICAP_INTENTION_TYPE              		INT, 1
+#define ELEM_INTROSPECTION_NATIVE_SIZE	 	       	ELEM_NAME("INTROSPECTION", "NATIVE_SIZE")
+#define ELEM_INTROSPECTION_NATIVE_SIZE_TYPE		UINT64, -1, NULL
 
-#define ATTR_ICAP_CAPACITIES				"CAP_*"
-#define ATTR_ICAP_CAPACITIES_TYPE              		SPECIAL, -1 // name is prefixed, val is bool
+#define ELEM_INTROSPECTION_NATIVE_PTR 			ELEM_NAME("INTROSPECTION", "NATIVE_PTR")
+#define ELEM_INTROSPECTION_NATIVE_PTR_TYPE		VOIDPTR, -1, NULL
 
-/////
+///// domain ATTRIBUTE
+#define ELEM_ATTRIBUTE_LOCAL				ELEM_NAME("ATTRIBUTE", "LOCAL")
+#define ELEM_ATTRIBUTE_LOCAL_TYPE			BUNDLEPTR, 1, NULL // attr_bundle
 
-#define ATTR_LIST_NEXT					"next"
-#define ATTR_LIST_NEXT_TYPE              		BUNDLEPTR, 1
-#define ATTR_LIST_NEXT_BUNDLE_TYPE              	list_bundle
+#define ELEM_ATTRIBUTE_OWNER_OBJECT		      	ELEM_NAME("ATTRIBUTE", "OWNER_OBJECT")
+#define ELEM_ATTRIBUTE_OWNER_OBJECT_TYPE      	       	BUNDLEPTR, 1, NULL // obj_bundle
 
-#define ATTR_LIST_PREV					"prev"
-#define ATTR_LIST_PREV_TYPE              		BUNDLEPTR, 1
-#define ATTR_LIST_PREV_BUNDLE_TYPE              	list_bundle
+#define ELEM_ATTRIBUTE_FOREIGN				ELEM_NAME("ATTRIBUTE", "FOREIGN")
+#define ELEM_ATTRIBUTE_FOREIGN_TYPE			BUNDLEPTR, 1, NULL // attr_bundle
 
-#define ATTR_LIST_ATTRDATA				"data"
-#define ATTR_LIST_ATTRDATA_TYPE              		ATTRPTR, 1
+#define ELEM_ATTRIBUTE_ATTRPTR				ELEM_NAME("ATTRIBUTE", "ATTRPTR")
+#define ELEM_ATTRIBUTE_ATTRPTR_TYPE			BUNDLEPTR, 1, NULL // attr_bundle
 
-#define ATTR_LIST_LISTDATA				"data"
-#define ATTR_LIST_LISTDATA_TYPE              		BUNDLEPTR, 1
-#define ATTR_LIST_LISTDATA_BUNDLE_TYPE              	list_header_bundle
+///// domain LIST
+#define ELEM_LIST_NEXT					ELEM_NAME("LIST", "NEXT")
+#define ELEM_LIST_NEXT_TYPE              		BUNDLEPTR, 1, NULL
+#define ELEM_LIST_NEXT_BUNDLE_TYPE              	list_bundle
 
-#define ATTR_LIST_ATTRLIST				"data"
-#define ATTR_LIST_ATTRLIST_TYPE              		BUNDLEPTR, 1
-#define ATTR_LIST_ATTRLIST_BUNDLE_TYPE              	attr_list_bundle
+#define ELEM_LIST_PREV					ELEM_NAME("LIST", "PREV")
+#define ELEM_LIST_PREV_TYPE              		BUNDLEPTR, 1, NULL
+#define ELEM_LIST_PREV_BUNDLE_TYPE              	list_bundle
+
+#define ELEM_LIST_DATA					ELEM_NAME("LIST", "DATA")
+#define ELEM_LIST_DATA_TYPE              		VOIDPTR, 1, NULL
+
+#define ELEM_LIST_STRING_DATA		       		ELEM_NAME("LIST", "STRING_DATA")
+#define ELEM_LIST_STRING_DATA_TYPE             		STRING, 1, NULL
+
+#define ELEM_LIST_ATTRDATA				ELEM_NAME("LIST", "ATTRDATA")
+#define ELEM_LIST_ATTRDATA_TYPE              		BUNDLEPTR, 1, NULL // attr_bundle
+
+#define ELEM_LIST_HDRDATA				ELEM_NAME("LIST", "HDRDATA")
+#define ELEM_LIST_HDRDATA_TYPE              		BUNDLEPTR, 1, NULL
+#define ELEM_LIST_HDRDATA_BUNDLE_TYPE              	list_header_bundle
+
+#define ELEM_LIST_OWNED_LIST				ELEM_NAME("LIST", "OWNED_LIST")
+#define ELEM_LIST_OWNED_LIST_TYPE              		BUNDLEPTR, 1, NULL
+#define ELEM_LIST_OWNED_LIST_BUNDLE_TYPE              	attr_list_bundle
+
+////////////////////////////////////////////////////////////////////////////////////
+
+// OBJECT / HOOK / CONTRACT ATTRIBUTES
+// these are created as bundle_type attr_bundle
+// similar to bundle items, these also have the form DOMAIN, ITEM
+// however rather than simple data elements, they should be create as attr_bundle
+#define ATTR_TYPE_NONE					(uint32_t)'0'	// invalid type
+
+#define ATTR_TYPE_INT					1	// 4 byte int
+#define ATTR_TYPE_DOUBLE				2	// 8 byte float
+#define ATTR_TYPE_BOOLEAN				3	// 1 - 4 byte int
+#define ATTR_TYPE_STRING				4	// \0 terminated string
+#define ATTR_TYPE_INT64	       			     	5	// 8 byte int
+#define ATTR_TYPE_UINT					6	// 4 byte int
+#define ATTR_TYPE_UINT64				7	// 8 byte int
+#define ATTR_TYPE_FLOAT	       				6	// 4 or 8 byte float
+
+#define ATTR_TYPE_VOIDPTR				64	// void *
+
+// void * aliases
+#define ATTR_TYPE_BUNDLEPTR	       			80 // void * to other bundle
+
+/////////
+
+#define ATTR_NAMEU(a, b) "ATTR_" a "_" b
+#define ATTR_NAME(a, b) ATTR_NAMEU(a, b)
 
 /// domain URI
 #define ATTR_URI_FILENAME				ATTR_NAME("URI", "FILENAME")
+#define ATTR_URI_FILENAME_TYPE 				STRING, 1, NULL
 
-/// domain contract
-
-// attributes for a contract (replaces normal attributes)
-#define ATTR_CONTRACT_ATTRIBUTES		      	"attributes"
-#define ATTR_CONTRACT_ATTRIBUTES_TYPE		       	SPECIAL, -1
-//#define ATTR_CONTRACT_ATTRIBUTES_BUNDLE_TYPE	       	list_of_lists_bundle
+///// domain UI
+#define ATTR_UI_TEMPLATE 				ATTR_NAME("UI", "TEMPLATE")
+#define ATTR_UI_TEMPLATE_TYPE 				STRING, -1, NULL
 
 // audio
 #define ATTR_AUDIO_SOURCE				"audio_source"
@@ -469,28 +525,47 @@ enum {
 #define ATTR_AUDIO_DATA					"audio_data"
 #define ATTR_AUDIO_DATA_LENGTH				"audio_data_length"
 
-// video
-#define ATTR_VIDEO_FPS					"fps"
+///// domain VIDEO (incomplete)
+#define ELEM_VIDEO_FRAME_RATE	       			ELEM_NAME(VIDEO, FRAME_RATE)
+#define ELEM_VIDEO_FRAME_RATE_TYPE    			DOUBLE, 1, 0.
 
-// UI (can be general - ie. standalod, or a sub attribute of a main attribute)
-#define ATTR_UI_TEMPLATE "ui_template"
+#define ELEM_VIDEO_DISPLAY_WIDTH  	       		ELEM_NAME(VIDEO, DISPLAY_WIDTH)
+#define ELEM_VIDEO_DISPLAY_WIDTH_TYPE    	 	UINT64, 1, 0
+
+#define ELEM_VIDEO_DISPLAY_HEIGHT  	       		ELEM_NAME(VIDEO, DISPLAY_HEIGHT)
+#define ELEM_VIDEO_DISPLAY_HEIGHT_TYPE    	 	UINT64, 1, 0
+
+#define ELEM_VIDEO_PIXEL_WIDTH  	       		ELEM_NAME(VIDEO, PIXEL_WIDTH)
+#define ELEM_VIDEO_PIXEL_WIDTH_TYPE 	   	 	UINT64, 1, 0
+
+#define ELEM_VIDEO_PIXEL_HEIGHT  	       		ELEM_NAME(VIDEO, PIXEL_HEIGHT)
+#define ELEM_VIDEO_PIXEL_HEIGHT_TYPE    	 	UINT64, 1, 0
+
+#define ELEM_VIDEO_COLOR_SPACE  	       		ELEM_NAME(VIDEO, COLOR_SPACE)
+#define ELEM_VIDEO_COLOR_SPACE_TYPE 	   	 	INT, -1, 0
+
+#define ELEM_VIDEO_STEREO_MODE  	       		ELEM_NAME(VIDEO, STEREO_MODE)
+#define ELEM_VIDEO_STEREO_MODE_TYPE 	   	 	UINT64, 1, 0
+
+#define ELEM_VIDEO_FLAG_INTERLACED  	       		ELEM_NAME(VIDEO, FLAG_INTERLACED)
+#define ELEM_VIDEO_FLAG_INTERLACED_TYPE    	 	UINT64, 1, 0
 
 // attribute flag bits //
 // these flagbits are for input attributes, for output attributes they are ignored
-#define OBJBUNDLE_FLAG_READONLY 		0x00001
-#define OBJBUNDLE_FLAG_MANDATORY 		0x00002
+#define OBJ_ATTR_FLAG_READONLY 		0x00001
+#define OBJ_ATTR_FLAG_MANDATORY        	0x00002
 //
 // output value - indicates that the value will be updated by a transform
 // at the end of processing, and / or in a hook during the transform
-#define OBJBUNDLE_FLAG_OUTPUT	 	0x1000
+#define OBJ_ATTR_FLAG_OUTPUT	 	0x1000
 
 // attr value may update spontaneously (may or may not have a value changed hook)
 // otherwise the value will only update as the result of a transform
-#define OBJBUNDLE_FLAG_VOLATILE	 	0x2000
+#define OBJ_ATTR_FLAG_VOLATILE	 	0x2000
 
 // each update returns the next value in a sequence, i.e it should only be updated
 // once for each read, otherwise, the value returned is the "current value"
-#define OBJBUNDLE_FLAG_SEQUENTIAL	 	0x4000
+#define OBJ_ATTR_FLAG_SEQUENTIAL       	0x4000
 
 // attr updates via UPDATE_VALUE transform; atach to hook to read value
 #define TC_FLAG_ASYNC // the transform does not return immediately
@@ -511,68 +586,253 @@ enum {
 #define OBJ_ERROR_NOT_OWNER			8
 
 // transform status
-#define OBJ_TRANSFORM_ERROR_REQ -1 // not all requirements to run the transform have been satisfied
-#define OBJ_TRANSFORM_STATUS_NONE 0
-#define OBJ_TRANSFORM_STATUS_SUCCESS 1	///< normal / success
-#define OBJ_TRANSFORM_STATUS_RUNNING 16	///< transform is "running" and the state cannot be changed
-#define OBJ_TRANSFORM_STATUS_NEEDS_DATA 32	///< reqmts. need updating
-#define OBJ_TRANSFORM_STATUS_CANCELLED 256	///< transform was cancelled during running
-#define OBJ_TRANSFORM_STATUS_ERROR  512	///< transform encountered an error during running
+#define TRANSFORM_ERROR_REQ -1 // not all requirements to run the transform have been satisfied
+#define TRANSFORM_STATUS_NONE 0
+#define TRANSFORM_STATUS_SUCCESS 1	///< normal / success
+#define TRANSFORM_STATUS_RUNNING 16	///< transform is "running" and the state cannot be changed
+#define TRANSFORM_STATUS_NEEDS_DATA 32	///< reqmts. need updating
+#define TRANSFORM_STATUS_CANCELLED 256	///< transform was cancelled during running
+#define TRANSFORM_STATUS_ERROR  512	///< transform encountered an error during running
 
 /////////////////////////// bundles //
+//
+/**
+   Let us consider a single 'data element' (node) consisting of a name, type and data;
+   we can represent that data element as a string 's'
+   where s[0] denotes the type, and the remainder of the string is the element name.
+   So for example a string "sCOMMENT" could represent a data element of TYPE 's' (string)
+   with NAME == "COMMENT".
 
-#ifdef NEED_OBJECT_BUNDLES
-#ifndef HAVE_OBJECT_BUNDLES
-#undef NEED_OBJECT_BUNDLES
-#define HAVE_OBJECT_BUNDLES
+   The idea here is that by constructing an array of these strings (quarks)
+   we can then process this, allocate some type of container object (an empty BUNDLE)
+   and then create elements inside it following the template of the quark array
+   which we shall call a BUNDLE DEFINITION or simply BUNDLEDEF) and thus create within
+   the container a collection of "data elements", which taken together with the container,
+   form a complete bundle.
 
-#define _GET_QUARK_TYPE(a) (char)((uint8_t)ATTR_TYPE_##a)
-#define _GET_TYPE(a, b) ATTR_TYPE_##a
-#define _GET_MAX_REPEATS(a, b) b
-#define _GET_OBJ_TYPE(a, b, c) a
-#define _GET_OBJ_SUBTYPE(a, b, c) b
-#define _GET_OBJ_STATE(a, b, c) c
+   Furthermore, we can elaborate on these quarks by adding more information; in this case
+   we say that a quark starting with a '?' character represents an optional element,
+   and we may follow each quark with additional quarks with more information.
+   In this case we will add a second quark, following the first:
+   quark2[0] defines whether the data is a scalar '0', or an array '1'
+   this is followed by a space ' ' and subsequently the default value as string
+   which can be cast to the type specific to the element. Let us also say that any quark
+   beginning with the character '#' is a comment and may be skipped past when constructing a bundle.
+
+   We can construct a bundledef simply by concatenating these definitions, and specify whether
+   each is mandatory or optional. It is possible to include one bundledef inside another,
+   to extend one by adding extra elements, and we also have a type "pointer to bundle" which can be
+   used within the bundledef to create element to point to a pre-created sub bundle, or array of these.
+   Thus in this manner it is possible to build up from basic building blocks
+   to increasingly more sophisticated and specialised bundles.
+
+   There are TWO TYPES of bundledef: BASE and ATTRIBUTES.
+
+   A BASE BUNDLEDEF is constructed from elementary items, the FULL NAMES
+   of all the elements are prefixed ELEM_. For example a base element (DOMAIN, ITEM)
+   would have full name ELEM_DOMAIN_ITEM.
+
+   To simplify the task of creating base bundledefs, the header provided macro
+   ELEM_NAME(DOMAIN, ITEM) will produce a symbol: ELEM_DOMAIN_ITEM.
+
+   Many such base elements are already defined.
+
+   the values here are created as simple name / value pairs, using the SHORTENED NAME.
+
+   The ELEM_DOMAIN_ part of the full name should be ommited when creating the
+   item - thus ELEM_GENERIC_FLAGS would create an item called "FLAGS" in the bundle.
+
+   This allows for simple polymorphism when creating base bundledefs, and also allows for
+   the SPECIAL rules to apply to only particular variants. Thus there should be a bundledef
+   "validator" which checks that there is no duplication of the same item from two different domains.
+   In case this occurs, the bundledef should be rejected as invalid and the definition should be
+   corrected to remove th duplication.
+   Duplication of items from the same domain may occur du to the way bundledefs are constructed.
+
+   Due to the way that bundledefs build upon each other, it may happen that an element
+   (ELEM_DOMAIN_ITEM or ATTR_CDOMAIN_ITEM) appears multiple times in a bundledef.
+   In this case only a single copy of the element should be added.
+
+   The shortened names in the bundle MUST be unique.
+
+   (However it is permitted for an element of the same shortened name to appear in both
+   the main bundle and any sub bundle pointed to by an element in the bundle, the element
+   may be optional in one bundle and non optional in the other).
+
+   If an item appears as both optional and non-optional in the same bundle,
+   then it shall be considered mandatory, and the instance marking it as optional ignored.
+
+   If so desired, the array of quarks may be "pruned" to remove any duplicate entries,
+   taking care to leave a copy marked as non-optional in the case where optional and non-optional
+   variants both exist in the original.
+   Comments in the original may optionally be removed for the pruned copy.
+
+   ///
+
+   There are a handful of SPECIAL RULES for the treatment of a few elements.
+   For exmple, the type of the (VALUE, DATA) element is determined by the value of the
+   (VALUE, TYPE) element, which must be present in the same bundledef.
+
+   The second type of bundledef is an ATTRIBUTES bundledef.
+   This time the full names appear as ATTR_DOMAIN_ITEM.
+
+   Thes items are not to be constructed by a builder, instead they are created later and
+   can have DEFAULT and / or VALUE items set. The attribute bundledef simply records the names
+   o the the attributes, their type and maximum number of data elements,
+   and whether the attribute is mandatory or optional.
+
+   In this case, the optional '?' indicates that the entire bundle is optional.
+
+   Using the macro ATTR_NAME(DOMAIN, ITEM) will create the symbol: ATTR_DOMAIN_ITEM.
+
+   The goal of the implementor should be to create a "transcriber" which passes throught a
+   bundledef and appends the items to an empty bundle container.
+
+   If the full item names are ELEM_*_*, then we are dealing with a base bundle.
+   and simple elemnts should be created in the bundle.
+
+   If the full item names are ATTR_*_*, then this is an attribute bundledef.
+
+   When setting values after intiialisation, firstly any applicable SPECIAL RULES must be
+   followed. Otherwis, of a base bundle, jus tupdate the value of the data element in the bundle.
+
+   In an attributes, bundle, the elements are created as bundles of a specific type.
+
+   If the full item name is ATTR_*_*, then it should create a bundle of type attr_bundle,
+   amd set the NAME, TYPE, and other elements inside accordingly.
+   In this case the attribute name should include the DOMAIN - for example
+   ATTR_AUDIO_RATE would create an attr_bundle and set the NAME item in it to
+   "AUDIO_RATE". This allows for multiple ATTRIBUTE domains to include items with the same item
+   name.
+
+   To recap:
+   if the FULL NAME in a quark is ELEM_DOMAIN_ITEM, then the SHORTENED name is simply ITEM,
+   and this should be created as a name / value pair with the shortened name and the specified type.
+
+   if the FULL NAME is ATTR_DOMAIN_ITEM, then th SHORTENED name is DOMAIN_ITEM.
+   The creator function should create an attr_bundle and an item DOMAIN_ITEM to hold the
+   attr_bundle. When setting or reading the value of an "attribute", take the value from the
+   DATA (full name ELEM_VALUE_DATA) item inside the attr_bundle, the type of this is whatever is in
+   TYPE (full name == ELEM_VALUE_TYPE) which is also in the bundle.
+   The SPECIAL RULES describe this in more detail.
+
+   SUGGESTED implementation:
+   It is recommended to implement a variadic function which takes a copy of the bundldef
+   and allows the caller to follow this with the shortened names of optional
+   elements to be included in the final bundle.
+
+   (To assist this it may be wise to implement a function to display the shortened names of items
+   inside a bundledef, noting the name, type and whether they are optional or not).
+
+   in a bundle definition, the full name is always of the format ELEM_DOMAIN_ITEM,
+   or ATTR_DOMAIN_ITEM. The type can be looked up, and the element listed as optional or mandatory.
+
+   Names in the parameters not matching the shortened name of an element in the bundledef
+   should not be created, and the bundle builder function should throw an error and return NULL.
+
+   After adding the optional items provided in the parameter list by the caller, the creator
+   function should include any remaining non optional elements and set their default values.
+
+   Some bundles provide an optional INTROSPECTION_QUARKS element which can (should) be used to
+   hold the "pruned" list of quarks; in this case there will also be an optional
+   INTROSPECTION_QUARKS_PTR element which can be used instead to hold a pointer to
+   a static copy of the pruned quarks.
+
+   Following the bundle creation, the values in a bundle may be updated,
+   simply by passing the bundle, shortened name and data of the correct TYPE
+   and numeration (scalar or array).
+
+   For attributes, an attr_bundle should be created and the values set accordingly.
+
+   Optional elements may be added to or removed from the bundle at any time, unless a SPECIAL RULE
+   prevnts this.
+
+   The TYPE of an element MUST always be as defined in the bundledef (accounting for
+   any SPECIAL RULES) and arrays and scalars may not be switched from one to the other.
+
+   When freeing (unreferencing) a bundle, the implementor should first unreference (recursively)
+   any sub bundles pointed to before freeing the bundle itself.
+
+   SPECIAL RULES:
+   1.	For the items, ELEM_VALUE_DATA, ELEM_VALUE_DEFAULT and ELEM_VALUE_NEW_DEFAULT,
+   the data type is determined by the value of the ELEM_VALUE_TYPE item
+   which MUST be present in the same bundle. The number of data elements which can be set is
+   defined by the ELEM_VALUE_MAX_REPEATS item, which may optionally be present in the same
+   bundle. If ELEM_VALUE_DEFAULT is set and ELEM_VALUE_DATA is not set, then ELEM_VALUE_DEFAULT
+   should copied to ELEM_VALUE_DATA.
+
+   2.	For item ELEM_ICAP_CAPACITIES, the type is BUNDLEPTR, intialised as NULL.
+   The bundle_type is icap_bundle - a special bundle;
+   EVERY possible valid name is considered an optional element inside it.
+   The data in these elements is irrelevant, the only factor is whether an item with a given
+   name exists or not.
+   (It is suggeseted to prefix the names internally, e.g with "CAP_"
+   to ensure these items do not clash with "fundamental" items in the sub-bundle.)
+
+   Additionally, if a bundle containg icap_bundle is copied, a copy of the sub bundle
+   should be made in the new container bundle, with the exact same items as the original
+   (but see Rule 3 for an exception)
+
+   3.	For item ELEM_GENERIC_UID, a randomly generate uint64_t number should be generated
+   as the default value and never changed.	If a bundle containing this element is copied,
+   then a new random value shall be generated for the copy bundle.
+
+   4.	Items ELEM_LIST_NEXT and ELEM_LIST_PREV may be used like any normal linked list pointers
+   (doubly linked if LIST_PREV is present, otherwise singly linked). They are pointers to
+   other instances of the same bundle type containing them. and the usual methods for
+   appending, listing, freeing and removing nodes should be implemented.
+
+   5.	The item ELEM_CONTRACT_ATTR_POOL is a doubly linked list with data type list_header_bundle.
+   List header bundle  has a slot for "owner object" and a pointer to a
+   sub list of attributes.
+
+   If an item is to be added to the pool, the caller must check if the item already exists
+   in any of the existing sub nodes - if so do not re create it.
+
+   If the item does not exist in any subnode, then the attribute should be added to
+   the object's own list. (If the object does not have an own list,
+   then it should create a list_header_bundle, set the owner to self, and add it to the pool list.)
+
+   In this way, it is possible to free the main list without having to free the sub lists
+   containing items (attributes) belonging to other objects. When the list is freed simply
+   detach all the subnodes, and allow each owner object to free its own sub list.
+   The implementation will require some means by which owner objects can be notified when
+   they should free their own sub lists.
+**/
+
+typedef const char *bundle_element;
+typedef const char **const_bundledef_t;
+typedef char **bundledef_t;
+
+#define _GET_TYPE(a, b, c) _ELEM_TYPE_##a
+#define _GET_MAX_REPEATS(a, b, c) b
+#define _GET_DEFAULT(a, b, c) #c
+
 #define _CALL(MACRO, ...) MACRO(__VA_ARGS__)
 
-#define GET_QUARK_TYPE(item) _CALL(_GET_QUARK_TYPE, ATTR_##xitem##_TYPE)
-#define GET_ATTR_TYPE(xdomain, xitem) _CALL(_GET_TYPE, ATTR_##xdomain##_##xitem##_TYPE)
+#define GET_ELEM_TYPE(xdomain, xitem) _CALL(_GET_TYPE, ELEM_##xdomain##_##xitem##_TYPE)
 
-#define GET_MAX_REPEATS(xdomain, xitem) _CALL(_GET_MAX_REPEATS, ATTR_##xdomain##_##xitem##_TYPE)
-#define GET_BUNDLE_TYPE(xdomain, xitem) ATTR_##xdomain##_##xitem##_BUNDLE_TYPE
-#define GET_OBJ_TYPE(xdomain, xitem) _CALL(_GET_OBJ_TYPE, ATTR_##xdomain##_##xitem##_OBJDEF)
-#define GET_OBJ_SUBTYPE(xdomain, xitem) _CALL(_GET_OBJ_SUBTYPE, ATTR_##xdomain##_##xitem##_OBJDEF)
-#define GET_OBJ_STATE(xdomain, xitem) _CALL(_GET_OBJ_STATE, ATTR_##xdomain##_##xitem##_OBJDEF)
+#define GET_DEFAULT(xdomain, xitem) _CALL(_GET_DEFAULT, ELEM_##xdomain##_##xitem##_TYPE)
 
-#define ATTR_END NULL
+#define GET_MAX_REPEATS(xdomain, xitem) _CALL(_GET_MAX_REPEATS, ELEM_##xdomain##_##xitem##_TYPE)
+
+// TODO - need some method to get these, ideally without forcing all attibutes to
+// 		#define 3 unused values
+
+#define ELEM_END NULL
 
 /// builtin bundledefs ////
-static char *quark;
 
-#define VSNPRINTF(c, len, fmt, args) (vsnprintf(c, len, fmy, args) ? c : NULL)
+#define JOIN(a, b) GET_ELEM_TYPE(a, b) ELEM_NAMEU(#a, #b)
 
-#define STRNDUP_VPRINTF(fmt, len, vargs) (quark = (*calloc_f)(1, len)) ? (VSNPRINTF(quark, len, fmt, vargs) : NULL)
+#define _ADD_ELEM(domain, item) JOIN(domain, item)
+#define _ADD_OPT_ELEM(domain, item) "?" JOIN(domain, item)
+#define _ADD_ELEM2(domain, item) ((GET_MAX_REPEATS(domain, item) == -1) \
+				  ? "1 " GET_DEFAULT(domain, item)	\
+				  : "0 " GET_DEFAULT(domain, item))
 
-#define STRNDUP_PRINTF(fmt, len, ...) STRNDUP_VPRINTF(fmt, len, __VA_ARGS__)
-
-// at runtime, _ATTR_QUARK(item) will return an allocated string "char(item_type) item"
-#define MAKE_QUARK(item) (STRNDUP_PRINTF("%c%s", strlen((item)) + 2, GET_QUARK_TYPE((item)), #item))
-
-#define MAKE__OPT_QUARK(item) (STRNDUP_PRINTF("?%c%s", strlen((item)) + 3, \
-					     GET_QUARK_TYPE((item)), #item))
-#define QUOTE(c) #c
-#define _JOIN(a, b) a##b
-#define JOIN(a, b) GET_ATTR_TYPE(a, b) ATTR_NAMEU(#a, #b)
-#define JOIN3(a, b, c) "/**/a/**/b/**/c/**/"
-
-#define _ATTR_QUARK(domain, item) JOIN(domain, item)
-
-
-#define _ATTR_OPT_QUARK(domain, item) "?" JOIN(domain, item)
-
-//#define _ATTR_QUARK2(domain, item) ((GET_MAX_REPEATS(domain, item) == -1) ? "1" : "0")
-
-#define ATTR_QUARK(d, i) _ATTR_QUARK(d, i) //, _ATTR_QUARK2(d, i)
-#define ATTR_OPT_QUARK(d, i) _ATTR_OPT_QUARK(d, i)//, _ATTR_QUARK2(d, i)
+#define ADD_ELEM(d, i) _ADD_ELEM(d, i) , _ADD_ELEM2(d, i)
+#define ADD_OPT_ELEM(d, i) _ADD_OPT_ELEM(d, i), _ADD_ELEM2(d, i)
 
 // then, we can create a linked list of these values. a_slist_bundle_p
 // should be a pointer to a bundle created from the slist_bundle
@@ -580,44 +840,89 @@ static char *quark;
 // be created
 #define LLIST_MAKE(a_list_bundle_p, ...) do {llist_make(a_list_handle_p, __VA_ARGS__);) while (0);
 
-#define _VALUE_BUNDLE ATTR_QUARK(GENERIC, NAME), ATTR_QUARK(GENERIC, TYPE), \
-    ATTR_OPT_QUARK(VALUE, VALUE), ATTR_OPT_QUARK(BUNDLE, FLAGS), \
-    ATTR_OPT_QUARK(INTROSPECTION, COMMENT), ATTR_OPT_QUARK(INTROSPECTION, PRIVATE_DATA)
+#define BUNDLE_COMMENT(text) "#" text
+#define _BUNDLE_COMMENT(text) BUNDLE_COMMENT(#text)
+#define BUNDLE_EXTENDS(what) _BUNDLE_COMMENT(extends what##_BUNDLE {),  _##what##_BUNDLE, \
+    BUNDLE_COMMENT("}")
+#define BUNDLE_INCLUDES(what) _BUNDLE_COMMENT(includes what##_BUNDLE {),  _##what##_BUNDLE, \
+    BUNDLE_COMMENT("}")
 
-#define VALUE_BUNDLE _VALUE_BUNDLE, ATTR_END
+#define _BASE_BUNDLE BUNDLE_COMMENT("BUNDLE BASE"), ADD_OPT_ELEM(BASE, VERSION), \
+    ADD_OPT_ELEM(INTROSPECTION, QUARKS), ADD_OPT_ELEM(INTROSPECTION, QUARKS_PTR), \
+    ADD_OPT_ELEM(GENERIC, UID), ADD_OPT_ELEM(INTROSPECTION, COMMENT),	\
+    ADD_OPT_ELEM(INTROSPECTION, PRIVATE_DATA)
 
-#define _OBJDEF_BUNDLE ATTR_QUARK(OBJECT, TYPE), ATTR_QUARK(OBJECT, SUBTYPE), ATTR_QUARK(OBJECT, STATE)
-#define OBJDEF_BUNDLE _OBJDEF_BUNDLE, ATTR_END
+// a bundle that just holds a single data item
+#define _VALUE_BUNDLE BUNDLE_COMMENT("VALUE BUNDLE"), BUNDLE_EXTENDS(BASE), \
+    ADD_ELEM(GENERIC, NAME), ADD_ELEM(VALUE, VALUE_TYPE), ADD_OPT_ELEM(VALUE, DATA)
+#define VALUE_BUNDLE _VALUE_BUNDLE, ELEM_END
 
-#define _OBJDEF_OPT_BUNDLE ATTR_OPT_QUARK(OBJECT, TYPE), ATTR_OPT_QUARK(OBJECT, SUBTYPE), \
-    ATTR_OPT_QUARK(OBJECT, STATE)
-#define OBJDEF_OPT_BUNDLE _OBJDEF_OPT_BUNDLE, ATTR_END
+// a bundle that defines object type / subtype / state
+#define _OBJDEF_BUNDLE ADD_ELEM(OBJECT, TYPE), ADD_ELEM(OBJECT, SUBTYPE), ADD_ELEM(OBJECT, STATE)
+#define OBJDEF_BUNDLE _OBJDEF_BUNDLE, ELEM_END
+
+// a bundle that defines object type with optional subtype / state
+// can also be used to enumerate a bundle_type
+#define _OBJDEF_OPT_BUNDLE ADD_OPT_ELEM(OBJECT, TYPE), ADD_OPT_ELEM(OBJECT, SUBTYPE), \
+    ADD_OPT_ELEM(OBJECT, STATE)
+#define OBJDEF_OPT_BUNDLE _OBJDEF_OPT_BUNDLE, ELEM_END
+
+#define _NATIVE_BUNDLE  ADD_OPT_ELEM(INTROSPECTION, NATIVE_TYPE), \
+    ADD_OPT_ELEM(INTROSPECTION, NATIVE_SIZE), ADD_OPT_ELEM(INTROSPECTION, NATIVE_PTR)
+#define NATIVE_BUNDLE _NATIVE_BUNDLE, ELEM_END
 
 /////////////////////
 
-#define _ATOM_BUNDLE _VALUE_BUNDLE, _OBJDEF_OPT_BUNDLE
-#define ATOM_BUNDLE _ATOM_BUNDLE, ATTR_END
+// a bundle that defines a standard object attribute
+#define _ATTR_BUNDLE BUNDLE_COMMENT("STANDARD OBJECT ATTRIBUTE"), BUNDLE_EXTENDS(BASE), \
+    BUNDLE_INCLUDES(VALUE), ADD_ELEM(VALUE, DEFAULT),			\
+    ADD_OPT_ELEM(VALUE, MAX_REPEATS), ADD_OPT_ELEM(VALUE, NEW_DEFAULT), \
+    ADD_ELEM(INTROSPECTION, REFCOUNT), BUNDLE_INCLUDES(NATIVE)
+#define ATTR_BUNDLE _ATTR_BUNDLE, ELEM_END
 
-// must maintain this order - type and flags msut come ahead of default and value
-#define _ATTR_BUNDLE ATTR_QUARK(GENERIC, UID), _VALUE_BUNDLE, ATTR_QUARK(VALUE, DEFAULT),	\
-      ATTR_OPT_QUARK(VALUE, MAX_REPEATS), ATTR_QUARK(INTROSPECTION, REFCOUNT)
-#define ATTR_BUNDLE _ATTR_BUNDLE, ATTR_END
+// a base bundle with pointer to attribute, and pointer to "owner" object
+// generally this would indicate an attribute inside the object's own attributes
+// unless the object is a proxy for another
+#define _ATTR_CONNECTION_BUNDLE ADD_ELEM(ATTRIBUTE, FOREIGN), ADD_ELEM(ATTRIBUTE, OWNER_OBJECT)
+#define ATTR_CONNECTION_BUNDLE _ATTR_CONNECTION_BUNDLE, ELEM_END
 
-#define _ATTR_PTR_BUNDLE ATTR_QUARK(ATTRIBUTE, ATTRPTR), ATTR_QUARK(ATTRIBUTE, OWNER)
+// a hook bundle - defines the transform status change that triggers it
+// along with an array of hook attributes - each one has a slot for a conneting
+// in or out
+#define _HOOK_BUNDLE ADD_ELEM(HOOK, STATUS_FROM), ADD_ELEM(HOOK, STATUS_TO), \
+    ADD_ELEM(HOOK, ATTRIBUTES)
+#define HOOK_BUNDLE _HOOK_BUNDLE, ELEM_END
 
-#define ATTR_PTR_BUNDLE _ATTR_PTR_BUNDLE, ATTR_END
+// attribute type used in input hook functions, connects an object attribute
+// (within the contract or within the object providing the contract ?)
+// to a pointer to an attribute owned by another object
+#define _HOOK_ATTR_BUNDLE BUNDLE_EXTENDS(ATTR_CONNECTION), ADD_ELEM(ATTRIBUTE, LOCAL)
+#define HOOK_ATTR_BUNDLE _HOOK_ATTR_BUNDLE, ELEM_END
 
-#define _HOOK_ATTR_BUNDLE ATTR_QUARK(ATTRIBUTE, TO), _ATTR_PTR_BUNDLE
-#define HOOK_ATTR_BUNDLE _HOOK_ATTR_BUNDLE, ATTR_END
+// intent / capacities bundle
+#define _ICAP_BUNDLE BUNDLE_COMMENT("ICAP BUNDLE"), ADD_OPT_ELEM(GENERIC, DESCRIPTION), \
+    ADD_ELEM(ICAP, INTENTION), ADD_ELEM(ICAP, CAPACITIES)
+#define ICAP_BUNDLE _ICAP_BUNDLE, ELEM_END
 
-#define _ICAP_BUNDLE ATTR_QUARK(ICAP, DESCRIPTION), ATTR_QUARK(ICAP, INTENTION), ATTR_QUARK(ICAP, CAPACITIES)
-#define ICAP_BUNDLE _ICAP_BUNDLE, ATTR_END
+// base bundle for objects / instances
+#define _OBJ_BUNDLE BUNDLE_COMMENT("BASE OBJECT BUNDLE"),		\
+    BUNDLE_INCLUDES(BASE), BUNDLE_INCLUDES(OBJDEF), BUNDLE_INCLUDES(ICAP), \
+    ADD_OPT_ELEM(OBJECT, ATTRIBUTES), ADD_OPT_ELEM(OBJECT, ACTIVE_TRANSFORMS), \
+    ADD_OPT_ELEM(OBJECT, CONTRACTS), ADD_OPT_ELEM(OBJECT, HOOKS),	\
+    ADD_ELEM(INTROSPECTION, REFCOUNT)
+#define OBJ_BUNDLE _OBJ_BUNDLE, ELEM_END
 
-#define _OBJ_BUNDLE ATTR_QUARK(GENERIC, UID), ATTR_QUARK(INTROSPECTION, REFCOUNT), _OBJDEF_BUNDLE, \
-    _ICAP_BUNDLE, ATTR_QUARK(OBJECT, ATTRIBUTES), ATTR_QUARK(GENERIC, TRANSFORMS), \
-      ATTR_QUARK(OBJECT, CONTRACTS),					\
-      ATTR_QUARK(GENERIC, HOOKS), ATTR_QUARK(INTROSPECTION, PRIVATE_DATA)
-#define OBJ_BUNDLE _OBJ_BUNDLE, ATTR_END
+#define _VIDEO_TRACK_BUNDLE BUNDLE_COMMENT("Matroska Video Track"), BUNDLE_EXTENDS(BASE), \
+    ADD_ELEM(VIDEO, FRAME_RATE),					\
+    ADD_ELEM(VIDEO, DISPLAY_WIDTH), ADD_ELEM(VIDEO, DISPLAY_HEIGHT),	\
+    ADD_ELEM(VIDEO, PIXEL_WIDTH), ADD_ELEM(VIDEO, PIXEL_HEIGHT),	\
+    ADD_ELEM(VIDEO, COLOR_SPACE), ADD_ELEM(VIDEO, STEREO_MODE),	\
+    ADD_ELEM(VIDEO, FLAG_INTERLACED)
+#define VIDEO_TRACK_BUNDLE _VIDEO_TRACK_BUNDLE, ELEM_END
+
+#define _STORAGE_BUNDLE BUNDLE_COMMENT("A utility bundle for stroring things"), ADD_OPT_ELEM(GENERIC, UID), \
+    BUNDLE_INCLUDES(NATIVE), ADD_OPT_ELEM(INTROSPECTION, COMMENT)
+#define STORAGE_BUNDLE _STORAGE_BUNDLE, ELEM_END
 
 // contract will have std transforms: create instance -> create in state PREVIEW
 // copy instance -> create copy with state prepare
@@ -625,87 +930,101 @@ static char *quark;
 // list_remove
 // ...
 
-#define _HOOK_BUNDLE ATTR_QUARK(HOOK, STATUS_FROM), ATTR_QUARK(HOOK, STATUS_TO), \
-    ATTR_QUARK(HOOK, ATTRIBUTES)
-#define HOOK_BUNDLE _HOOK_BUNDLE, ATTR_END
+// base bundle for a singly linked list
+#define _SLIST_BUNDLE ADD_ELEM(LIST, NEXT)
+#define SLIST_BUNDLE _SLIST_BUNDLE, ELEM_END
 
-#define _LIST_BUNDLE ATTR_QUARK(LIST, NEXT), ATTR_QUARK(LIST, PREV)
-#define LIST_BUNDLE _LIST_BUNDLE, ATTR_END
+// base bundle for a doubly linked list
+#define _DLIST_BUNDLE BUNDLE_EXTENDS(SLIST), ADD_ELEM(LIST, PREV)
+#define DLIST_BUNDLE _DLIST_BUNDLE, ELEM_END
 
-#define _LIST_OF_LISTS_BUNDLE LIST_BUNDLE, ATTR_QUARK(LIST, LISTDATA)
-#define LIST_OF_LISTS_BUNDLE _LIST_OF_LISTS_BUNDLE, ATTR_END
+// special bundles for "contract" objects
 
-#define _LIST_HEADER_BUNDLE ATTR_QUARK(ATTRIBUTE, OWNER), ATTR_QUARK(LIST, ATTRLIST)
-#define LIST_HEADER_BUNDLE _LIST_HEADER_BUNDLE, ATTR_END
+// a list 'header' with owner uid and pointer to attr_list_bundle
+#define _LIST_HEADER_BUNDLE ADD_ELEM(ATTRIBUTE, OWNER_OBJECT), ADD_ELEM(LIST, ATTRDATA)
+#define LIST_HEADER_BUNDLE _LIST_HEADER_BUNDLE, ELEM_END
 
-#define _ATTR_LIST_BUNDLE LIST_BUNDLE, ATTR_QUARK(LIST, ATTRDATA)
-#define ATTR_LIST_BUNDLE _ATTR_LIST_BUNDLE, ATTR_END
+// a single linked list of attribute *
+#define _ATTR_LIST_BUNDLE BUNDLE_EXTENDS(SLIST), ADD_ELEM(LIST, ATTRDATA)
+#define ATTR_LIST_BUNDLE _ATTR_LIST_BUNDLE, ELEM_END
 
-#define BUNDLE_FLAG_OPTIONAL 		1 // denotes the bundle is a linked list
-#define BUNDLE_FLAG_ARRAY 		2 // denotes the bundle is a linked list
+// a dlist with data pointer to list_header
+#define _LIST_OF_LISTS_BUNDLE BUNDLE_INCLUDES(DLIST), ADD_ELEM(LIST, OWNED_LIST)
+#define LIST_OF_LISTS_BUNDLE _LIST_OF_LISTS_BUNDLE, ELEM_END
 
-typedef const char *bundle_element;
-typedef const char **bundledef_t;
+#define _CONTRACT_BUNDLE BUNDLE_COMMENT("CONTRACT_BUNDLE"), BUNDLE_EXTENDS(OBJ), \
+    ADD_OPT_ELEM(CONTRACT, ATTR_POOL)
+#define CONTRACT_BUNDLE _CONTRACT_BUNDLE, ELEM_END
 
-static const bundle_element attr_bundledef[] = {ATTR_BUNDLE};
+// flag bits may optionally be used to store information derived from the quarks
+#define ELEM_FLAG_COMMENT 		(1ull << 0)	// denotes a comment entry
+#define ELEM_FLAG_OPTIONAL 		(1ull << 1)	// denotes the entry is optional
+#define ELEM_FLAG_ARRAY 		(iull << 2)	// denotes the data type is array
 
-static const bundle_element obj_bundledef[] = {OBJ_BUNDLE};
+typedef enum {
+  attr_bundle, // x
+  object_bundle, // x
+  objdef_bundle, // x
+  icap_bundle, // x
+  hook_bundle, // x
+  slist_bundle, // x
+  dlist_bundle, // x
+  //
+  // sub-bundles
+  hook_attr_bundle,
+  attr_ptr_bundle,
+  list_of_lists_bundle,
+  list_header_bundle,
+  attr_list_bundle,
+  value_bundle,
+  vtrack_bundle,
+  storage_bundle,
+  n_bundles
+} bundle_type;
 
-static const bundle_element objdef_bundledef[] = {OBJDEF_BUNDLE,};
+#ifdef NEED_OBJECT_BUNDLES
+#ifndef HAVE_OBJECT_BUNDLES
+#undef NEED_OBJECT_BUNDLES
+#define HAVE_OBJECT_BUNDLES
 
-static const bundle_element icap_bundledef[] = {ICAP_BUNDLE};
-
-static const bundle_element hook_bundledef[] =  {HOOK_BUNDLE};
-
-static const bundle_element hook_attr_bundledef[] =  {HOOK_ATTR_BUNDLE};
-
-static const bundle_element attr_ptr_bundledef[] =  {ATTR_PTR_BUNDLE};
-
-static const bundle_element list_bundledef[] =  {LIST_BUNDLE};
-
-static const bundle_element list_of_lists_bundledef[] = {LIST_OF_LISTS_BUNDLE};
-
-static const bundle_element list_header_bundledef[] =  {LIST_HEADER_BUNDLE};
-
-static const bundle_element attr_list_bundledef[] =  {ATTR_LIST_BUNDLE};
-
-static const bundle_element value_bundledef[] =  {VALUE_BUNDLE};
-
-static const bundledef_t bundledefs[] = {(const bundledef_t)attr_bundledef,
-                                         (const bundledef_t)obj_bundledef,
-                                         (const bundledef_t)objdef_bundledef,
-                                         (const bundledef_t)icap_bundledef,
-                                         (const bundledef_t)hook_bundledef,
-                                         (const bundledef_t)hook_attr_bundledef,
-                                         (const bundledef_t)attr_ptr_bundledef,
-                                         (const bundledef_t)list_bundledef,
-                                         (const bundledef_t)list_of_lists_bundledef,
-                                         (const bundledef_t)list_header_bundledef,
-                                         (const bundledef_t)attr_list_bundledef,
-                                         (const bundledef_t) value_bundledef
-                                        };
-
-#define GET_BUNDLE_TYPE_FOR(whatever) (atom_bundle)
 #define GET_BUNDLEDEF(btype) (get_bundledef((btype))
 
+#define ADD_BUNDLE(a, b) static const bundle_element a##_bundledef[] = {b##_BUNDLE};
 
-const bundledef_t *get_bundledef(bundle_type btype) {
-  if (btype < object_bundle || btype >= n_bundles) return NULL;
-  return &bundledefs[btype];
+#define CBUN(name) (const_bundledef_t)(name##_bundledef),
+
+ADD_BUNDLE(attr, ATTR)
+ADD_BUNDLE(obj, OBJ)
+ADD_BUNDLE(objdef, OBJDEF)
+ADD_BUNDLE(icap, ICAP)
+ADD_BUNDLE(hook, HOOK)
+ADD_BUNDLE(hook_attr, HOOK_ATTR)
+ADD_BUNDLE(attr_connection, ATTR_CONNECTION)
+ADD_BUNDLE(slist, SLIST)
+ADD_BUNDLE(dlist, DLIST)
+ADD_BUNDLE(storage, STORAGE)
+ADD_BUNDLE(native, NATIVE)
+ADD_BUNDLE(value, VALUE)
+ADD_BUNDLE(list_of_lists, LIST_OF_LISTS)
+ADD_BUNDLE(list_header, LIST_HEADER)
+ADD_BUNDLE(attr_list, ATTR_LIST)
+ADD_BUNDLE(vtrack, VIDEO_TRACK)
+
+static const_bundledef_t bundledefs[] = {
+  CBUN(attr) CBUN(obj) CBUN(objdef) CBUN(icap) CBUN(hook) CBUN(slist) CBUN(dlist) CBUN(hook_attr)
+  CBUN(storage) CBUN(native) CBUN(value) CBUN(hook_attr) CBUN(attr_connection) CBUN(list_of_lists)
+  CBUN(list_header) CBUN(attr_list) CBUN(vtrack) CBUN(storage)
+};
+
+const_bundledef_t get_bundledef(bundle_type btype) {
+  if (btype < 0 || btype >= n_bundles) return NULL;
+  return bundledefs[btype];
 }
 
 #endif
 #else
-extern const bundledef_t *get_bundledef(bundle_type type);
+extern const_bundledef_t get_bundledef(bundle_type type);
 #endif
 
 #endif
 
-/* To make a custom bundle: */
-/* #define ATTR_BUNDLE ATTR_QUARK(GENERIC, UID), ATTR_QUARK(ATTRIBUTE, NAME),	\ */
-/*     ATTR_QUARK(ATTRIBUTE, TYPE), ATTR_QUARK(GENERIC, FLAGS),		\ */
-/* ATTR_QUARK(ATTRIBUTE, DEFAULT), ATTR_QUARK(ATTRIBUTE, VALUE), ATTR_QUARK(INTROSPECTION, REFCOUNT)  */
-
-/* int flags = 0; */
-/* bundle_element elements[] = {ATTR_BUNDLE}; */
-/* bundledef_t my_bundle = {flags, elements}; */

@@ -20,7 +20,57 @@
 #include "paramwindow.h"
 #include "startup.h"
 
-#define MAX_CON_TRIES 10
+#define MAX_CONX_TRIES 10
+
+boolean jack_warn(boolean is_trans, boolean is_con) {
+  // this function gets called via a signla handler handler:- if the thread trying to
+  // open or connect to a jack server hangs for too loknf, then the underlying thread is signalled and should and we
+  // should end up here, either via s ignal handler, or via the thread's own "cleanup" function.
+  // Here. We ought not to sinply exit the program - the user should have an opportunity to troubleshoot and
+  // correct whatever is going wrong. Without this, it could happen that the program becomes unusable as each time
+  // we reload the same situation repeats. One solution is to diiable the player in preferences, but still the user has to
+  // be able to intervene - it may be some temporary condition - server not started for example which doesnt warrant
+  // disableing the player plugin and forcing the user to set it up again. Hence w do as much as is feasible here, given
+  // that we are in a signal handler after receiving a non-ignorable, fatal signal. Eventually we have to exit
+  // ideally we would allow for going through several cycles of troublehsoot -> alter settings -> retest andonce succesfull,
+  // allow the user to continue as normal.
+  // At a minimum, we try to be polite and allow the user to restart the program and try again.
+  char *com = NULL;
+  boolean ret = TRUE;
+
+  mainw->fatal = TRUE;
+
+  if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
+  if (!is_con) {
+    ret = do_jack_no_startup_warn(is_trans);
+    //if (!prefs->startup_phase) do_jack_restart_warn(-1, NULL);
+  } else {
+    ret = do_jack_no_connect_warn(is_trans);
+    //if (!prefs->startup_phase) do_jack_restart_warn(16, NULL);
+    // as a last ditch attempt, try to launch the server
+    if (is_trans) {
+      if (prefs->jack_opts & JACK_OPTS_START_TSERVER) {
+        if (*future_prefs->jack_tserver_cfg) com = lives_strdup_printf("source '%s'", future_prefs->jack_tserver_cfg);
+      }
+    } else {
+      if (prefs->jack_opts & JACK_OPTS_START_ASERVER) {
+        if (*future_prefs->jack_aserver_cfg) com = lives_strdup_printf("source '%s'", future_prefs->jack_aserver_cfg);
+      }
+    }
+    if (com) {
+      lives_hook_append(mainw->global_hook_closures, RESTART_HOOK, 0, lives_fork_cb, com);
+    }
+  }
+  // TODO - if we have backup config, restore from it
+  if (!ret) {
+    maybe_abort(TRUE, mainw->restart_params);
+  }
+  if (com) {
+    lives_hook_remove(mainw->global_hook_closures, RESTART_HOOK, lives_fork_cb, com);
+  }
+  return ret;
+}
+
 
 static int start_ready_callback(jack_transport_state_t state, jack_position_t *pos, void *jackd);
 //static int xrun_callback(void *jackd);
@@ -1527,7 +1577,7 @@ retry_connect:
     }
   }
 
-  if (con_attempts++ > MAX_CON_TRIES) {
+  if (con_attempts++ > MAX_CONX_TRIES) {
     logmsg = lives_strdup_printf("#failed to connect to the server named '%s', perhaps there was an error in the config file "
                                  "or the given server name does not match the one in the script\n", server_name);
     jack_log_errmsg(jackd, logmsg);
@@ -4397,7 +4447,7 @@ retry:
             jack_interop_cleanup(NULL, jackd);
             return FALSE;
           }
-          retries = MAX_CON_TRIES;
+          retries = MAX_CONX_TRIES;
           launched = TRUE;
         }
         if (retries-- > 0) {

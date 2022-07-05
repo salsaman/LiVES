@@ -226,6 +226,8 @@ typedef struct _lives_jack_driver_t {
 ////////////////////////////////////////////////////////////////////////////
 void jack_dump_metadata(void);
 
+boolean jack_warn(boolean is_trans, boolean is_con);
+
 char *jack_parse_script(const char *fname);
 
 jack_driver_t *jack_get_driver(int dev_idx, boolean is_output); ///< get driver

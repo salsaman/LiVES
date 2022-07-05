@@ -383,6 +383,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
     offset_right = ROUND_I((double)(sfile->end) / sfile->fps * scalex);
     offset_end = ROUND_I(sfile->laudio_time * scalex);
 
+    pthread_mutex_lock(&mainw->tlthread_mutex);
     if (!sfile->audio_waveform) {
       sfile->audio_waveform = (float **)lives_calloc(sfile->achans, sizeof(float *));
       sfile->aw_sizes = (size_t *)lives_calloc(sfile->achans, sizeof(size_t));
@@ -424,6 +425,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
         sfile->aw_sizes[0] = offset_end;
         //lives_close_buffered(afd);
       }
+      pthread_mutex_unlock(&mainw->tlthread_mutex);
 
       if (mainw->current_file != fileno
           || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
@@ -509,6 +511,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
     offset_right = ROUND_I((double)(sfile->end) / sfile->fps * scalex);
     offset_end = ROUND_I(sfile->raudio_time * scalex);
 
+    pthread_mutex_lock(&mainw->tlthread_mutex);
     start = offset_end;
     if (!sfile->audio_waveform[1]) {
       // re-read the audio and force a redraw
@@ -547,6 +550,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
         }
         sfile->aw_sizes[1] = offset_end;
       }
+      pthread_mutex_unlock(&mainw->tlthread_mutex);
 
       offset_right = NORMAL_CLAMP(offset_right, sfile->raudio_time * scalex);
       xwidth = UTIL_CLAMP(width, allocwidth);
@@ -3661,9 +3665,7 @@ void redraw_timeline(int clipno) {
     if (!update_timer_bars(0, 0, 0, 0, 2)) return;
   } else {
     mainw->laudio_drawable = sfile->laudio_drawable;
-    if (1 || !LIVES_IS_PLAYING) {
-      if (!update_timer_bars(0, 0, 0, 0, 2)) return;
-    }
+    if (!update_timer_bars(0, 0, 0, 0, 2)) return;
   }
   if (!sfile->raudio_drawable) {
     sfile->raudio_drawable = lives_widget_create_painter_surface(mainw->raudio_draw);
@@ -3672,9 +3674,7 @@ void redraw_timeline(int clipno) {
     if (!update_timer_bars(0, 0, 0, 0, 3)) return;
   } else {
     mainw->raudio_drawable = sfile->raudio_drawable;
-    if (1 || !LIVES_IS_PLAYING) {
-      if (!update_timer_bars(0, 0, 0, 0, 3)) return;
-    }
+    if (!update_timer_bars(0, 0, 0, 0, 3)) return;
   }
 
   lives_widget_queue_draw(mainw->video_draw);

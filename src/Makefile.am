@@ -230,57 +230,60 @@ endif
 
 lives_exe_SOURCES = \
 	$(rpmalloc_SOURCES)\
-	machinestate.c machinestate.h \
-	memory.c memory.h \
+	lsd.h lsd-tab.c lsd-tab.h \
+	effects.c effects.h\
+	colourspace.c colourspace.h\
+	cvirtual.c cvirtual.h \
+	audio.c audio.h \
 	threading.c threading.h \
 	intents.c intents.h object-constants.h\
-	lsd.h lsd-tab.c lsd-tab.h \
+	preferences.c preferences.h\
+	effects-weed.c effects-weed.h\
+	memory.c memory.h \
+	diagnostics.c diagnostics.h \
+	machinestate.c machinestate.h \
+	events.c events.h \
+	support.c support.h \
+	messaging.c messaging.h \
+	callbacks.c callbacks.h \
+	saveplay.c saveplay.h \
 	widget-helper.c widget-helper.h \
 	widget-helper-gtk.h widget-helper-qt.h \
 	main.c main.h \
         mainwindow.h \
-	preferences.c preferences.h\
 	plugins.c plugins.h\
-	effects-weed.c effects-weed.h\
-	cvirtual.c cvirtual.h \
 	startup.c startup.h \
 	filesystem.c filesystem.h \
 	lists.c lists.h \
 	cliphandler.c cliphandler.h \
-	saveplay.c saveplay.h \
 	player.c player.h \
 	dialogs.c dialogs.h\
-	callbacks.c callbacks.h \
-	colourspace.c colourspace.h\
-	events.c events.h \
 	interface.c interface.h \
 	gui.c gui.h \
 	sethandler.c sethandler.h \
-	audio.c audio.h \
 	resample.c resample.h \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
 	paramwindow.c paramwindow.h\
 	utils.c utils.h\
 	maths.c maths.h \
-	diagnostics.c diagnostics.h \
 	effects-data.c effects-data.h \
 	multitrack.h multitrack.c \
 	multitrack-gui.h multitrack-gui.c \
-	effects.c effects.h\
 	paramspecial.c paramspecial.h\
 	rfx-builder.c rfx-builder.h\
 	$(yuv4mpeg_SOURCES)\
 	rte_window.c rte_window.h\
+	user-interface.c user-interface.h \
+	frameloader.c frameloader.h \
+	setup.c setup,h \
 	stringfuncs.c stringfuncs.h \
 	ce_thumbs.c ce_thumbs.h \
 	pangotext.c pangotext.h \
 	alarms.c alarms.h \
-	messaging.c messaging.h \
 	merge.c merge.h \
 	framedraw.c framedraw.h\
 	$(osc_SOURCES) \
-	support.c support.h \
 	keyboard.c keyboard.h\
 	stream.h stream.c \
 	htmsocket.c htmsocket.h \

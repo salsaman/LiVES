@@ -109,9 +109,7 @@ int lcm(int x, int y, int max) {
   } else {
     int a;
     if (y <= 0 || x > max) return 0;
-    a = y;
-    y = x;
-    x = a;
+    a = y; y = x; x = a;
   }
   for (int val = x, rem = y - x; val <= max; val += x) {
     if (rem == y) return val;
@@ -119,6 +117,187 @@ int lcm(int x, int y, int max) {
     if (rem > y) rem -= y;
   }
   return max;
+}
+
+
+
+struct _decomp {
+  uint64_t value;
+  int i, j;
+};
+
+struct _decomp_tab {
+  uint64_t value;
+  int i, j;
+  struct _decomp_tab *lower,  *higher;
+};
+
+static struct _decomp_tab nxttbl[64][25];
+static boolean nxttab_inited = FALSE;
+
+void make_nxttab(void) {
+  LiVESList *preplist = NULL, *dccl, *dccl_last = NULL;
+  uint64_t val6 = 1ul, val;
+  struct _decomp *dcc;
+  int max2pow, xi, xj;
+  if (nxttab_inited) return;
+  for (int j = 0; j < 25; j++) {
+    val = val6;
+    max2pow = 64 - ((j * 10 + 7) >> 2);
+    dccl = preplist;
+    for (int i = 0; i < max2pow; i++) {
+      dcc = (struct _decomp *)lives_malloc(sizeof(struct _decomp));
+      dcc->value = val;
+      dcc->i = i;
+      dcc->j = j;
+      if (!preplist) dccl = preplist = lives_list_append(preplist, dcc);
+      else {
+        LiVESList *dccl2 = lives_list_append(NULL, (livespointer)dcc);
+        for (; dccl; dccl = dccl->next) {
+          dcc = (struct _decomp *)dccl->data;
+          if (dcc->value > val) break;
+          dccl_last = dccl;
+        }
+        if (!dccl) {
+          dccl_last->next = dccl2;
+          dccl2->prev = dccl_last;
+          dccl2->next = NULL;
+          dccl = dccl2;
+        } else {
+          dccl2->next = dccl;
+          dccl2->prev = dccl->prev;
+          if (dccl->prev) dccl->prev->next = dccl2;
+          else preplist = dccl2;
+          dccl->prev = dccl2;
+        }
+      }
+      val *= 2;
+    }
+    val6 *= 6;
+  }
+  for (dccl = preplist; dccl; dccl = dccl->next) {
+    dcc = (struct _decomp *)dccl->data;
+    xi = dcc->i;
+    xj = dcc->j;
+    nxttbl[xi][xj].value = dcc->value;
+    nxttbl[xi][xj].i = xi;
+    nxttbl[xi][xj].j = xj;
+    if (dccl->prev) {
+      dcc = (struct _decomp *)dccl->prev->data;
+      nxttbl[xi][xj].lower = &(nxttbl[dcc->i][dcc->j]);
+    } else nxttbl[xi][xj].lower = NULL;
+    if (dccl->next) {
+      dcc = (struct _decomp *)dccl->next->data;
+      nxttbl[xi][xj].higher = &(nxttbl[dcc->i][dcc->j]);
+    } else nxttbl[xi][xj].higher = NULL;
+  }
+  lives_list_free_all(&preplist);
+  nxttab_inited = TRUE;
+}
+
+
+uint64_t nxtval(uint64_t val, uint64_t lim, boolean less) {
+  // to avoid only checking powers of 2, we want some number which is (2 ** i) * (6 ** j)
+  // which gives a nice range of results
+  uint64_t oval = val;
+  int i = 0, j = 0;
+  if (!nxttab_inited) make_nxttab();
+  /// decompose val into i, j
+  /// divide by 6 until val mod 6 is non zero
+  if (val & 1) {
+    if (less) val--;
+    else val++;
+  }
+  for (; !(val % 6) && val > 0; j++, val /= 6);
+  /// divide by 2 until we reach 1; if the result of a division is odd we add or subtract 1
+  for (; val > 1; i++, val /= 2) {
+    if (val & 1) {
+      if (less) val--;
+      else val++;
+    }
+  }
+  val = nxttbl[i][j].value;
+  if (less) {
+    if (val == oval) {
+      if (nxttbl[i][j].lower) val = nxttbl[i][j].lower->value;
+    } else {
+      while (nxttbl[i][j].higher->value < oval) {
+        int xi = nxttbl[i][j].higher->i;
+        val = nxttbl[i][j].value;
+        j = nxttbl[i][j].higher->j;
+        i = xi;
+      }
+    }
+    return val > lim ? val : lim;
+  }
+  if (val == oval) {
+    if (nxttbl[i][j].higher) val = nxttbl[i][j].higher->value;
+  } else {
+    while (nxttbl[i][j].lower && nxttbl[i][j].lower->value > oval) {
+      int xi = nxttbl[i][j].lower->i;
+      j = nxttbl[i][j].lower->j;
+      i = xi;
+      val = nxttbl[i][j].value;
+    }
+  }
+  return val < lim ? val : lim;
+}
+
+
+
+// find a "satisfactory" value (my definition) - for a given valau
+// return the nearest nummber which can be expressed as 2 ** i + 6 ** j
+// we start making a first estimate. If x is odd we add or subtract one,
+// then repeatedly divide by six until ww get a non divisible value.
+// Then we take the remainder and keep dividing by 2, adding or subtracting in case we get a remainder 1
+// with thees factors as a starting value we consult a lookup tabl and
+
+uint64_t get_satisfactory_value(uint64_t val, uint64_t lim, boolean less) {
+  // to avoid only checking powers of 2, we want some number which is (2 ** i) + (6 ** j)
+  // which gives a nice range of results
+  uint64_t oval = val;
+  int i = 0, j = 0;
+  if (!nxttab_inited) make_nxttab();
+  /// decompose val into i, j
+  /// divide by 6 until val mod 6 is non zero
+  // add or subtract 1 to make the value even (since we know the final result must be a power of two or of 6)
+  if (val & 1) {
+    if (less) val--;
+    else val++;
+  }
+  for (; !(val % 6) && val > 0; j++, val /= 6);
+  /// divide by 2 until we reach 1; if the result of a division is odd we add or subtract 1
+  for (; val > 1; i++, val /= 2) {
+    if (val & 1) {
+      if (less) val--;
+      else val++;
+    }
+  }
+  val = nxttbl[i][j].value;
+  if (less) {
+    if (val == oval) {
+      if (nxttbl[i][j].lower) val = nxttbl[i][j].lower->value;
+    } else {
+      while (nxttbl[i][j].higher->value < oval) {
+        int xi = nxttbl[i][j].higher->i;
+        val = nxttbl[i][j].value;
+        j = nxttbl[i][j].higher->j;
+        i = xi;
+      }
+    }
+    return val > lim ? val : lim;
+  }
+  if (val == oval) {
+    if (nxttbl[i][j].higher) val = nxttbl[i][j].higher->value;
+  } else {
+    while (nxttbl[i][j].lower && nxttbl[i][j].lower->value > oval) {
+      int xi = nxttbl[i][j].lower->i;
+      j = nxttbl[i][j].lower->j;
+      i = xi;
+      val = nxttbl[i][j].value;
+    }
+  }
+  return val < lim ? val : lim;
 }
 
 
@@ -134,16 +313,13 @@ static boolean est_fraction(double val, uint32_t *numer, uint32_t *denom, double
   double res;
   int a = 0, b = 1, c = 1, d = 1, m, n, i;
   for (i = 0; i < cycles; i++) {
-    m = a + b;
-    n = c + d;
+    m = a + b; n = c + d;
     res = (double)m / (double)n;
     if (fabs(res - val) <= limit) break;
     if (res > val) {
-      b = m;
-      d = n;
+      b = m; d = n;
     } else {
-      a = m;
-      c = n;
+      a = m; c = n;
     }
   }
   *numer = m;
@@ -156,7 +332,8 @@ static boolean est_fraction(double val, uint32_t *numer, uint32_t *denom, double
 /**
    @brief return ratio fps (TRUE) or FALSE
    we want to see if we can express fps as n : m
-   where n and m are integers, and m is close to a power of 10.
+   where n and m are integers, and m is close to a multiple of 10.
+   so we would start with something like (F - b) / (F * 10. + c)    == 1.
 
    step 1: fps' = fps / (fps + 1.)
 
@@ -185,11 +362,120 @@ boolean calc_ratio_fps(double fps, int *numer, int *denom) {
       return TRUE;
     }
     if (curt > (double)m) return FALSE;
-    curt *= 10.;
+    curt += 10.;
+  }
+}
+///////////////////////////////////////////////////////////////////////////////
+// MD5SUM functions - adapted from busybox source by Ulrich Drepper <drepper@gnu.ai.mit.edu>
+static const uint8_t padding[64] = {0x80, 0};
+
+LIVES_LOCAL_INLINE void lives_md5_start(md5priv *priv) {
+  priv->A = 0x67452301; priv->B = 0xefcdab89; priv->C = 0x98badcfe; priv->D = 0x10325476;
+  priv->t[0] = priv->t[1] = 0; priv->bl = 0;
+}
+
+// puts the final value in ret (a 16 byte array of uint8_t - (here cast to uint32_[4])
+LIVES_LOCAL_INLINE void *lives_md5_read(md5priv *priv, void *ret) {
+  ((uint32_t *) ret)[0] = priv->A; ((uint32_t *) ret)[1] = priv->B;
+  ((uint32_t *) ret)[2] = priv->C; ((uint32_t *) ret)[3] = priv->D;
+  return ret;
+}
+
+static LIVES_HOT void lives_md5_proc(const void *p, size_t len, md5priv *priv) {
+  // process one block of data, values are placed in priv->A / B / C / D
+  size_t nw = len / sizeof(uint32_t);
+  const uint32_t *w = p, *e = w + nw;
+  // backup current values of A, B, C, D - will be resotred after
+  uint32_t X[16], A = priv->A, B = priv->B, C = priv->C, D = priv->D;
+  priv->t[0] += len;
+  if (priv->t[0] < len) priv->t[1]++;
+  while (w < e) {
+    uint32_t *_X = X, _A_ = A, _B_ = B, _C_ = C, _D_ = D;
+    BX(0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee)BX(0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501);
+    BX(0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be)BX(0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821);
+    CW(1, 0xf61e2562, 6, 0xc040b340, 11, 0x265e5a51, 0, 0xe9b6c7aa) CW(5, 0xd62f105d, 10, 0x02441453, 15, 0xd8a1e681, 4,
+        0xe7d3fbc8);
+    CW(9, 0x21e1cde6, 14, 0xc33707d6, 3, 0xf4d50d87, 8, 0x455a14ed) CW(13, 0xa9e3e905, 2, 0xfcefa3f8, 7, 0x676f02d9, 12,
+        0x8d2a4c8a);
+    CX(5, 0xfffa3942, 8, 0x8771f681, 11, 0x6d9d6122, 14, 0xfde5380c) CX(1, 0xa4beea44, 4, 0x4bdecfa9, 7, 0xf6bb4b60, 10,
+        0xbebfbc70);
+    CX(13, 0x289b7ec6, 0, 0xeaa127fa, 3, 0xd4ef3085, 6, 0x04881d05) CX(9, 0xd9d4d039, 12, 0xe6db99e5, 15, 0x1fa27cf8, 2,
+        0xc4ac5665);
+    CY(0, 0xf4292244, 7, 0x432aff97, 14, 0xab9423a7, 5, 0xfc93a039) CY(12, 0x655b59c3, 3, 0x8f0ccc92, 10, 0xffeff47d, 1,
+        0x85845dd1);
+    CY(8, 0x6fa87e4f, 15, 0xfe2ce6e0, 6, 0xa3014314, 13, 0x4e0811a1) CY(4, 0xf7537e82, 11, 0xbd3af235, 2, 0x2ad7d2bb, 9,
+        0xeb86d391);
+    A += _A_; B += _B_; C += _C_; D += _D_;
+  }
+  priv->A = A; priv->B = B; priv->C = C; priv->D = D;
+}
+
+static void lives_md5_calc(const void *p, size_t len, md5priv *priv) {
+  if (priv->bl) {
+    size_t rem = priv->bl, extra = 128 - rem > len ? len : 128 - rem;
+    lives_memcpy(&priv->buf[rem], p, extra);
+    priv->bl += extra;
+    rem += extra;
+    if (rem > 64) {
+      lives_md5_proc(priv->buf, rem & ~63, priv);
+      lives_memcpy(priv->buf, &priv->buf[rem & ~63], rem & 63);
+      priv->bl = rem & 63;
+    }
+    p = (const char *) p + extra;
+    len -= extra;
+  }
+
+  if (len > 64) {
+    lives_md5_proc(p, len & ~63, priv);
+    p = (const char *)p + (len & ~63);
+    len &= 63;
+  }
+
+  if (len > 0) {
+    lives_memcpy(priv->buf, p, len);
+    priv->bl = len;
   }
 }
 
+static void *lives_md5_end(md5priv *priv, void *ret) {
+  uint32_t dlen = priv->bl;
+  size_t padsize = dlen >= 56 ? 64 + 56 - dlen : 56 - dlen;
+  priv->t[0] += dlen;
+  if (priv->t[0] < dlen) priv->t[1]++;
+  lives_memcpy(&priv->buf[dlen], padding, padsize);
+  dlen += padsize;
+  *(uint32_t *)&priv->buf[dlen] = priv->t[0] << 3;
+  *(uint32_t *)&priv->buf[dlen + 4] = (priv->t[1] << 3) | (priv->t[0] >> 29);
+  lives_md5_proc(priv->buf, dlen + 8, priv);
+  return lives_md5_read(priv, ret);
+}
 
+LIVES_LOCAL_INLINE void *lives_md5_make(const char *p, size_t len, void *ret) {
+  md5priv priv;
+  lives_md5_start(&priv);
+  lives_md5_calc(p, len, &priv);
+  return lives_md5_end(&priv, ret);
+}
+
+uint8_t *tinymd5(void *data, size_t dsize) {
+  uint8_t *md5buf = lives_calloc(1, 16);
+  lives_md5_make(data, dsize, md5buf);
+  return md5buf;
+}
+
+
+uint64_t minimd5(void *data, size_t dsize) {
+  static union md5conv {
+    uint64_t U[2];
+    uint8_t u[16];
+  } res;
+  uint64_t ret;
+  lives_md5_make(data, dsize, (uint8_t *)&res.u);
+  ret = res.U[0] ^ res.U[1];
+  return ret;
+}
+
+///////////////////////////////////////////////////////// end md5sum code /////////////
 
 // statistics
 

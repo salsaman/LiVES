@@ -45,4 +45,11 @@ void show_struct_sizes(void);
 
 void do_lsd_tests(void) LIVES_NEVER_INLINE;
 
+void bundle_test(void);
+
+char *weed_plant_to_header(weed_plant_t *, const char *tname);
+char *bundle_to_header(lives_bundle_t *, const char *tname);
+
+void md5test(void);
+
 #endif

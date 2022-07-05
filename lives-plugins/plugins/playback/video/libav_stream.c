@@ -181,8 +181,8 @@ contract_status negotiate_contract(pl_contract *contract) {
   char *extra;
 
   switch (icaps->intention) {
-  case PL_INTENTION_PLAY: // for now...
-  case PL_INTENTION_STREAM: // LiVES VPP (streaming output)
+  case OBJ_INTENTION_PLAY: // for now...
+  case OBJ_INTENTION_STREAM: // LiVES VPP (streaming output)
     snprintf(ifbuf, IFBUFSIZE, "%s",
              "<define>\\n\
 |1.8.5\\n		  \
@@ -225,11 +225,11 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill|\\n\
   // object in the "external" state
   // caller may pass in clip object template which plugin can use to produce the clip object
   // via the template'screate instance transform
-  case PL_INTENTION_TRANSCODE: // LiVES transcoding
+  case OBJ_INTENTION_TRANSCODE: // LiVES transcoding
     // mandatiry requirements - video with, height, fps, format
     // - audio rate and channels
     // - output URI, with cap local this should be filename format.
-    if (pl_has_capacity(icaps, OBJ_CAPACITY_AUDIO)) {
+    if (pl_has_capacity(icaps, CAP_AUDIO)) {
       // in future these will be mandatroy requirements
       pl_attribute *attr = pl_contract_get_attr(contract, ATTR_AUDIO_RATE);
       if (attr) defrate = pl_attr_get_value(attr, int);
@@ -262,8 +262,8 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill|\\n\
     /* if ((attr = pl_contract_get_attr(contract, ATTR_VIDEO_FPS))) { */
     /*   xfps = pl_attr_get_value(attr, double); */
     /* } */
-    if (!(attr = pl_declare_attribute(contract, ATTR_UI_RFX_TEMPLATE, PL_ATTR_STRING)))
-      attr = pl_contract_get_attr(contract, ATTR_UI_RFX_TEMPLATE);
+    if (!(attr = pl_declare_attribute(contract, ATTR_UI_TEMPLATE, PL_ATTR_STRING)))
+      attr = pl_contract_get_attr(contract, ATTR_UI_TEMPLATE);
     snprintf(ifbuf, IFBUFSIZE, "<define>\\n\
 |1.8.5\\n				 \
 </define>\\n\
@@ -578,7 +578,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     fprintf(stderr, "libav stream plugin error: No palette was set !\n");
     return FALSE;
   }
-  if (intent == PL_INTENTION_STREAM)
+  if (intent == OBJ_INTENTION_STREAM)
     fmtstring = "flv";
   else
     fmtstring = "mp4";
@@ -617,7 +617,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     maxvbitrate = atoi(argv[1]);
 
     switch (intent) {
-    case PL_INTENTION_STREAM:
+    case OBJ_INTENTION_STREAM:
       stream_encode = TRUE;
       snprintf(uri, PATH_MAX, "udp://%s.%s.%s.%s:%s", argv[5], argv[6], argv[7], argv[8], argv[9]);
       break;

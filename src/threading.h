@@ -107,9 +107,13 @@ typedef struct {
 #define _LINE_REF_ 0
 #endif
 
-#define ADD_FUNC_DEF(func, rettype, args_fmt) \
-  add_fn_lookup((lives_funcptr_t)(func), QUOTEME(func), rettype, args_fmt, \
-		_FILE_REF_, _LINE_REF_, NULL)
+#define ____FUNC_ENTRY____(func, rettype, args_fmt) ((THREADVAR(func_stack) = lives_list_prepend(THREADVAR(func_stack), \
+											 QUOTEME(func))) \
+					     ? add_fn_lookup((lives_funcptr_t)(func), QUOTEME(func), rettype, args_fmt, \
+							     _FILE_REF_, _LINE_REF_, NULL) : NULL)
+
+#define ____FUNC_EXIT____ do {LiVESList *list = THREADVAR(func_stack);		\
+    THREADVAR(func_stack) = list->next; list->next = NULL; lives_list_free(list);} while (0);
 
 /// hook funcs
 
@@ -210,6 +214,7 @@ typedef struct {
   char *var_read_failed_file, *var_write_failed_file, *var_bad_aud_file;
   uint64_t var_random_seed;
   ticks_t var_event_ticks;
+  LiVESList *var_func_stack;
 
   lives_intentcap_t var_intentcap;
 
@@ -235,6 +240,7 @@ typedef struct {
   uint64_t var_hook_hints;
   uint64_t var_sync_timeout;
   uint64_t var_blocked_limit;
+  char *var_sync_motive; // contains reason why it might be waiting fro sync
 
   int var_hook_match_nparams;
   pthread_mutex_t var_hook_mutex[N_HOOK_FUNCS];
@@ -255,6 +261,7 @@ struct _lives_thread_data_t {
 };
 
 typedef struct {
+  lives_proc_thread_t lpt;  // may be NULL
   lives_thread_func_t func;
   void *arg;
   void *ret;
@@ -269,7 +276,7 @@ typedef struct {
 
 #define LIVES_LEAF_THREADFUNC "tfunction"
 #define LIVES_LEAF_PTHREAD_SELF "pthread_self"
-#define LIVES_LEAF_THREAD_PROCESSING "t_processing"
+//#define LIVES_LEAF_THREAD_PROCESSING "t_processing"
 #define LIVES_LEAF_RETURN_VALUE "return_value"
 #define _RV_ LIVES_LEAF_RETURN_VALUE
 
@@ -434,31 +441,60 @@ lives_thread_data_t *get_global_thread_data(void);
 lives_threadvars_t *get_global_threadvars(void);
 lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 
+#define CACHE_THREADVARS lives_threadvars_t *TDATA = get_threadvars();
+
+#define CTHREADVAR(var) (TDATA->var_##var)
+
 #define THREADVAR(var) (get_threadvars()->var_##var)
 #define FG_THREADVAR(var) (get_global_threadvars()->var_##var)
 
 // lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define BLOCKED_LIMIT 10000 // mSec
+#define LIVES_LEAF_PROC_THREAD "proc_thread"
+
+#define BLOCKED_LIMIT 10000 // mSec before thread in sync_point gets state blocked
 
 // lives_proc_thread state flags
-#define THRD_STATE_FINISHED 	(1ull << 0)
-#define THRD_STATE_CANCELLED 	(1ull << 1)
-#define THRD_STATE_SIGNALLED 	(1ull << 2)
-#define THRD_STATE_BUSY 	(1ull << 3)
-#define THRD_STATE_ERROR 	(1ull << 4)
-#define THRD_STATE_BLOCKED 	(1ull << 5)
-#define THRD_STATE_IDLE 	(1ull << 8)
+#define THRD_STATE_NONE		0
 
-#define THRD_STATE_WAITING 	(1ull << 9)
+// LIFECYLCE - pproc_threads created in state NONE, the for a FG_THREAD, returned in UNQUEUED
+// for bg threads, returned in state QUEUED
+// when a pool thread picks up the work, states goes to PREPARING, and if wait sync is set, then
+// will get state WAITING
+// state goes to running, then finished : note running continues even after finished
+#define THRD_STATE_UNQUEUED 	(1ull << 1)
+#define THRD_STATE_QUEUED 	(1ull << 2)
+#define THRD_STATE_PREPARING 	(1ull << 3)
+#define THRD_STATE_RUNNING 	(1ull << 4) // check for FINISHED or CANCELLED
+#define THRD_STATE_FINISHED 	(1ull << 5)
 
-#define THRD_STATE_RUNNING 	(1ull << 16)
+// temporary states
+#define THRD_STATE_BUSY 	(1ull << 16)
+// waiting for sync_ready
+#define THRD_STATE_WAITING 	(1ull << 17) // waiting for sync_ready() or mainw->clutch
+// blimit passed, blocked waiting in sync_point
+#define THRD_STATE_BLOCKED 	(1ull << 18)
+// thread doing nothing
+#define THRD_STATE_IDLE 	(1ull << 19)
 
-#define THRD_STATE_INVALID 	(1ull << 31)
+// abnormal states
+#define THRD_STATE_CANCELLED 	(1ull << 32)
+// received system signal
+#define THRD_STATE_SIGNALLED 	(1ull << 33)
+#define THRD_STATE_ERROR 	(1ull << 34)
+// called with invalid args_fmt
+#define THRD_STATE_INVALID 	(1ull << 35)
+// timed out waiting for sync_ready
+#define THRD_STATE_TIMED_OUT	(1ull << 36)
 
-#define THRD_OPT_NOTIFY 	(1ull << 32)
-#define THRD_OPT_CANCELLABLE 	(1ull << 34)
-#define THRD_OPT_DONTCARE 	(1ull << 35)
+// options
+// wait for join, even if return type is void
+#define THRD_OPT_NOTIFY 	(1ull << 48)
+// can be cancelled by calling proc_thread_cancel
+#define THRD_OPT_CANCELLABLE 	(1ull << 49)
+// return value irrelevant, thread should simply finish and lcean up its resources
+// calling proc_thread_join after this is bad.
+#define THRD_OPT_DONTCARE 	(1ull << 50)
 
 boolean lives_proc_thread_set_state(lives_proc_thread_t lpt, uint64_t state);
 uint64_t lives_proc_thread_get_state(lives_proc_thread_t lpt);
@@ -495,6 +531,8 @@ uint64_t get_worker_status(uint64_t tid);
 // extra info requests
 #define LIVES_LEAF_START_TICKS "_start_ticks"
 #define LIVES_THRDATTR_NOTE_STTIME	(1 << 16)
+
+#define LIVES_THRDATTR_IS_PROC_THREAD   	(1 << 24)
 
 #define lives_proc_thread_get_work(tinfo)				\
   ((thrd_work_t *)weed_get_voidptr_value((tinfo), LIVES_LEAF_THREAD_WORK, NULL))
@@ -551,6 +589,9 @@ boolean main_thread_execute(lives_funcptr_t, int return_type, void *retval, cons
 // the thread can also be cancelled or finished
 boolean lives_proc_thread_is_running(lives_proc_thread_t);
 
+// returns TRUE if state id cancelled or finished
+boolean lives_proc_thread_is_done(lives_proc_thread_t);
+
 /// returns FALSE while the thread is running, TRUE once it has finished
 boolean lives_proc_thread_check_finished(lives_proc_thread_t);
 boolean lives_proc_thread_get_signalled(lives_proc_thread_t);
@@ -578,6 +619,7 @@ void lives_proc_thread_dontcare_nullify(lives_proc_thread_t tinfo, void **thing)
 void lives_proc_thread_sync_ready(lives_proc_thread_t);
 
 boolean sync_point(const char *motive);
+boolean thread_wait_loop(lives_proc_thread_t, thrd_work_t *, boolean trigger_sync_hooks, boolean wake_gui);
 
 // WARNING !! version without a return value will free tinfo !
 void lives_proc_thread_join(lives_proc_thread_t);

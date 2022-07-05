@@ -206,144 +206,19 @@ void init_random() {
 
 //// AUTO-TUNING ///////
 
-struct _decomp {
-  uint64_t value;
-  int i, j;
-};
-
-struct _decomp_tab {
-  uint64_t value;
-  int i, j;
-  struct _decomp_tab *lower,  *higher;
-};
-
-static struct _decomp_tab nxttbl[64][25];
-static boolean nxttab_inited = FALSE;
-
-void make_nxttab(void) {
-  LiVESList *preplist = NULL, *dccl, *dccl_last = NULL;
-  uint64_t val6 = 1ul, val;
-  struct _decomp *dcc;
-  int max2pow, xi, xj;
-  if (nxttab_inited) return;
-  for (int j = 0; j < 25; j++) {
-    val = val6;
-    max2pow = 64 - ((j * 10 + 7) >> 2);
-    dccl = preplist;
-    for (int i = 0; i < max2pow; i++) {
-      dcc = (struct _decomp *)lives_malloc(sizeof(struct _decomp));
-      dcc->value = val;
-      dcc->i = i;
-      dcc->j = j;
-      if (!preplist) dccl = preplist = lives_list_append(preplist, dcc);
-      else {
-        LiVESList *dccl2 = lives_list_append(NULL, (livespointer)dcc);
-        for (; dccl; dccl = dccl->next) {
-          dcc = (struct _decomp *)dccl->data;
-          if (dcc->value > val) break;
-          dccl_last = dccl;
-        }
-        if (!dccl) {
-          dccl_last->next = dccl2;
-          dccl2->prev = dccl_last;
-          dccl2->next = NULL;
-          dccl = dccl2;
-        } else {
-          dccl2->next = dccl;
-          dccl2->prev = dccl->prev;
-          if (dccl->prev) dccl->prev->next = dccl2;
-          else preplist = dccl2;
-          dccl->prev = dccl2;
-        }
-      }
-      val *= 2;
-    }
-    val6 *= 6;
-  }
-  for (dccl = preplist; dccl; dccl = dccl->next) {
-    dcc = (struct _decomp *)dccl->data;
-    xi = dcc->i;
-    xj = dcc->j;
-    nxttbl[xi][xj].value = dcc->value;
-    nxttbl[xi][xj].i = xi;
-    nxttbl[xi][xj].j = xj;
-    if (dccl->prev) {
-      dcc = (struct _decomp *)dccl->prev->data;
-      nxttbl[xi][xj].lower = &(nxttbl[dcc->i][dcc->j]);
-    } else nxttbl[xi][xj].lower = NULL;
-    if (dccl->next) {
-      dcc = (struct _decomp *)dccl->next->data;
-      nxttbl[xi][xj].higher = &(nxttbl[dcc->i][dcc->j]);
-    } else nxttbl[xi][xj].higher = NULL;
-  }
-  lives_list_free_all(&preplist);
-  nxttab_inited = TRUE;
-}
-
-
-void autotune_u64(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials, double cost) {
+void autotune_u64_start(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials) {
   if (tuner) {
-    double tc = cost;
-    int trials = weed_get_int_value(tuner, "trials", NULL);
+    int trials = weed_get_int_value(tuner, LIVES_LEAF_TRIALS, NULL);
     if (trials == 0) {
-      weed_set_int_value(tuner, "ntrials", ntrials);
-      weed_set_int64_value(tuner, "min", min);
-      weed_set_int64_value(tuner, "max", max);
-    } else tc += weed_get_double_value(tuner, "tcost", NULL);
-    weed_set_double_value(tuner, "tcost", tc);
-    weed_set_int64_value(tuner, "tstart", lives_get_current_ticks());
+      weed_set_int_value(tuner, LIVES_LEAF_NTRIALS, ntrials);
+      weed_set_int64_value(tuner, WEED_LEAF_MIN, min);
+      weed_set_int64_value(tuner, WEED_LEAF_MAX, max);
+    }
+    weed_set_int64_value(tuner, LIVES_LEAF_TSTART, lives_get_current_ticks());
   }
 }
 
 #define NCYCS 16
-
-uint64_t nxtval(uint64_t val, uint64_t lim, boolean less) {
-  // to avoid only checking powers of 2, we want some number which is (2 ** i) * (6 ** j)
-  // which gives a nice range of results
-  uint64_t oval = val;
-  int i = 0, j = 0;
-  if (!nxttab_inited) make_nxttab();
-  /// decompose val into i, j
-  /// divide by 6 until val mod 6 is non zero
-  if (val & 1) {
-    if (less) val--;
-    else val++;
-  }
-  for (; !(val % 6) && val > 0; j++, val /= 6);
-  /// divide by 2 until we reach 1; if the result of a division is odd we add or subtract 1
-  for (; val > 1; i++, val /= 2) {
-    if (val & 1) {
-      if (less) val--;
-      else val++;
-    }
-  }
-  val = nxttbl[i][j].value;
-  if (less) {
-    if (val == oval) {
-      if (nxttbl[i][j].lower) val = nxttbl[i][j].lower->value;
-    } else {
-      while (nxttbl[i][j].higher->value < oval) {
-        int xi = nxttbl[i][j].higher->i;
-        val = nxttbl[i][j].value;
-        j = nxttbl[i][j].higher->j;
-        i = xi;
-      }
-    }
-    return val > lim ? val : lim;
-  }
-  if (val == oval) {
-    if (nxttbl[i][j].higher) val = nxttbl[i][j].higher->value;
-  } else {
-    while (nxttbl[i][j].lower && nxttbl[i][j].lower->value > oval) {
-      int xi = nxttbl[i][j].lower->i;
-      j = nxttbl[i][j].lower->j;
-      i = xi;
-      val = nxttbl[i][j].value;
-    }
-  }
-  return val < lim ? val : lim;
-}
-
 
 static const char *get_tunert(int idx) {
   switch (idx) {
@@ -358,41 +233,44 @@ static const char *get_tunert(int idx) {
 }
 
 
-uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
+uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val, double cost) {
   if (!tuner || !*tuner) return val;
   else {
     ticks_t tottime = lives_get_current_ticks();
     int ntrials, trials;
     int64_t max;
-    int64_t min = weed_get_int64_value(*tuner, "min", NULL);
+    int64_t min = weed_get_int64_value(*tuner, WEED_LEAF_MIN, NULL);
+    double tc = weed_get_double_value(*tuner, LIVES_LEAF_TOT_COST, NULL);
+    weed_set_double_value(*tuner, LIVES_LEAF_TOT_COST, tc + cost);
 
     if (val < min) {
       val = min;
-      weed_set_int_value(*tuner, "trials", 0);
-      weed_set_int64_value(*tuner, "tottime", 0);
-      weed_set_double_value(*tuner, "tcost", 0);
+      weed_set_int_value(*tuner, LIVES_LEAF_TRIALS, 0);
+      weed_set_int64_value(*tuner, LIVES_LEAF_TOT_TIME, 0);
+      weed_set_double_value(*tuner, LIVES_LEAF_TOT_COST, 0);
       return val;
     }
-    max = weed_get_int64_value(*tuner, "max", NULL);
+    max = weed_get_int64_value(*tuner, WEED_LEAF_MAX, NULL);
     if (val > max) {
       val = max;
-      weed_set_int_value(*tuner, "trials", 0);
-      weed_set_int64_value(*tuner, "tottime", 0);
-      weed_set_double_value(*tuner, "tcost", 0);
+      weed_set_int_value(*tuner, LIVES_LEAF_TRIALS, 0);
+      weed_set_int64_value(*tuner, LIVES_LEAF_TOT_TIME, 0);
+      weed_set_double_value(*tuner, LIVES_LEAF_TOT_COST, 0);
       return val;
     }
 
-    ntrials = weed_get_int_value(*tuner, "ntrials", NULL);
-    trials = weed_get_int_value(*tuner, "trials", NULL);
+    ntrials = weed_get_int_value(*tuner, LIVES_LEAF_NTRIALS, NULL);
+    trials = weed_get_int_value(*tuner, LIVES_LEAF_TRIALS, NULL);
 
-    weed_set_int_value(*tuner, "trials", ++trials);
-    tottime += (weed_get_int64_value(*tuner, "tottime", NULL)) - weed_get_int64_value(*tuner, "tstart", NULL);
-    weed_set_int64_value(*tuner, "tottime", tottime);
+    weed_set_int_value(*tuner, LIVES_LEAF_TRIALS, ++trials);
+    tottime += (weed_get_int64_value(*tuner, LIVES_LEAF_TOT_TIME, NULL)) - weed_get_int64_value(*tuner, LIVES_LEAF_TSTART, NULL);
+
+    weed_set_int64_value(*tuner, LIVES_LEAF_TOT_TIME, tottime);
 
     if (trials >= ntrials) {
-      int cycs = weed_get_int_value(*tuner, "cycles", NULL) + 1;
+      int cycs = weed_get_int_value(*tuner, LIVES_LEAF_CYCLES, NULL) + 1;
       if (cycs < NCYCS) {
-        double tcost = (double)weed_get_double_value(*tuner, "tcost", NULL);
+        double tcost = (double)weed_get_double_value(*tuner, LIVES_LEAF_TOT_COST, NULL);
         double totcost = (double)tottime * tcost;
         double avcost = totcost / (double)(cycs * ntrials);
         double ccosts, ccostl;
@@ -401,74 +279,75 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
         char *key2 = lives_strdup_printf("totcost_%lu", val);
 
         weed_set_int_value(*tuner, key1, weed_get_int_value(*tuner, key1, NULL) + trials);
+
         weed_set_double_value(*tuner, key2, weed_get_double_value(*tuner, key2, NULL) + totcost);
 
         lives_free(key1);
         lives_free(key2);
 
         if (cycs & 1) smfirst = TRUE;
-        weed_set_int_value(*tuner, "cycles", cycs);
+        weed_set_int_value(*tuner, LIVES_LEAF_CYCLES, cycs);
 
-        weed_set_int_value(*tuner, "trials", 0);
-        weed_set_int64_value(*tuner, "tottime", 0);
-        weed_set_double_value(*tuner, "tcost", 0);
+        weed_set_int_value(*tuner, LIVES_LEAF_TRIALS, 0);
+        weed_set_int64_value(*tuner, LIVES_LEAF_TOT_TIME, 0);
+        weed_set_double_value(*tuner, LIVES_LEAF_TOT_COST, 0);
 
         if (smfirst) {
-          if (val > max || weed_plant_has_leaf(*tuner, "smaller")) {
-            ccosts = weed_get_double_value(*tuner, "smaller", NULL);
+          if (val > max || weed_plant_has_leaf(*tuner, LIVES_LEAF_SMALLER)) {
+            ccosts = weed_get_double_value(*tuner, LIVES_LEAF_SMALLER, NULL);
             if (val > max || (ccosts < avcost)) {
-              weed_set_double_value(*tuner, "larger", avcost);
-              weed_leaf_delete(*tuner, "smaller");
+              weed_set_double_value(*tuner, LIVES_LEAF_LARGER, avcost);
+              weed_leaf_delete(*tuner, LIVES_LEAF_SMALLER);
               if (val > max) return max;
               return nxtval(val, min, TRUE); // TRUE to get smaller val
             }
           }
         }
 
-        if (val < min || weed_plant_has_leaf(*tuner, "larger")) {
-          ccostl = weed_get_double_value(*tuner, "larger", NULL);
+        if (val < min || weed_plant_has_leaf(*tuner, LIVES_LEAF_LARGER)) {
+          ccostl = weed_get_double_value(*tuner, LIVES_LEAF_LARGER, NULL);
           if (val < min || (ccostl < avcost)) {
-            weed_set_double_value(*tuner, "smaller", avcost);
-            weed_leaf_delete(*tuner, "larger");
+            weed_set_double_value(*tuner, LIVES_LEAF_SMALLER, avcost);
+            weed_leaf_delete(*tuner, LIVES_LEAF_LARGER);
             if (val < min) return min;
             return nxtval(val, max, FALSE);
           }
         }
 
         if (!smfirst) {
-          if (val > max || weed_plant_has_leaf(*tuner, "smaller")) {
-            ccosts = weed_get_double_value(*tuner, "smaller", NULL);
+          if (val > max || weed_plant_has_leaf(*tuner, LIVES_LEAF_SMALLER)) {
+            ccosts = weed_get_double_value(*tuner, LIVES_LEAF_SMALLER, NULL);
             if (val > max || (ccosts < avcost)) {
-              weed_set_double_value(*tuner, "larger", avcost);
-              weed_leaf_delete(*tuner, "smaller");
+              weed_set_double_value(*tuner, LIVES_LEAF_LARGER, avcost);
+              weed_leaf_delete(*tuner, LIVES_LEAF_SMALLER);
               if (val > max) return max;
               return nxtval(val, min, TRUE);
             }
           }
 
-          if (!weed_plant_has_leaf(*tuner, "larger")) {
-            weed_set_double_value(*tuner, "smaller", avcost);
-            weed_leaf_delete(*tuner, "larger");
+          if (!weed_plant_has_leaf(*tuner, LIVES_LEAF_LARGER)) {
+            weed_set_double_value(*tuner, LIVES_LEAF_SMALLER, avcost);
+            weed_leaf_delete(*tuner, LIVES_LEAF_LARGER);
             return nxtval(val, max, FALSE);
           }
         }
 
-        if (!weed_plant_has_leaf(*tuner, "smaller")) {
-          weed_set_double_value(*tuner, "larger", avcost);
-          weed_leaf_delete(*tuner, "smaller");
+        if (!weed_plant_has_leaf(*tuner, LIVES_LEAF_SMALLER)) {
+          weed_set_double_value(*tuner, LIVES_LEAF_LARGER, avcost);
+          weed_leaf_delete(*tuner, LIVES_LEAF_SMALLER);
           return nxtval(val, min, TRUE);
         }
 
         if (smfirst) {
-          if (!weed_plant_has_leaf(*tuner, "larger")) {
-            weed_set_double_value(*tuner, "smaller", avcost);
-            weed_leaf_delete(*tuner, "larger");
+          if (!weed_plant_has_leaf(*tuner, LIVES_LEAF_LARGER)) {
+            weed_set_double_value(*tuner, LIVES_LEAF_SMALLER, avcost);
+            weed_leaf_delete(*tuner, LIVES_LEAF_LARGER);
             return nxtval(val, max, FALSE);
           }
         }
 
-        weed_leaf_delete(*tuner, "smaller");
-        weed_leaf_delete(*tuner, "larger");
+        weed_leaf_delete(*tuner, LIVES_LEAF_SMALLER);
+        weed_leaf_delete(*tuner, LIVES_LEAF_LARGER);
         if (!smfirst) {
           return nxtval(nxtval(val, max, FALSE), max, FALSE);
         } else {
@@ -522,7 +401,7 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
       }
       return val;
     }
-    weed_set_int64_value(*tuner, "tottime", tottime);
+    weed_set_int64_value(*tuner, LIVES_LEAF_TOT_TIME, tottime);
   }
   return val;
 }
@@ -2746,6 +2625,199 @@ boolean get_distro_dets(void) {
   }
 #endif
   return FALSE;
+}
+
+
+#ifdef GUI_GTK
+static double get_screen_scale(GdkScreen *screen, double *pdpi) {
+  double scale = 1.0;
+  double dpi = gdk_screen_get_resolution(screen);
+  if (dpi == 120.) scale = 1.25;
+  else if (dpi == 144.) scale = 1.5;
+  else if (dpi == 192.) scale = 2.0;
+  if (pdpi) *pdpi = dpi;
+  return scale;
+}
+#endif
+
+
+void get_monitors(boolean reset) {
+#ifdef GUI_GTK
+  GdkDisplay *disp;
+  GdkScreen *screen;
+#if GTK_CHECK_VERSION(3, 22, 0)
+  GdkMonitor *moni;
+#endif
+  GdkRectangle rect;
+  GdkDevice *device;
+  double scale, dpi;
+  int play_moni = 1;
+  char buff[256];
+#if !GTK_CHECK_VERSION(3, 22, 0)
+  GSList *dlist, *dislist;
+  int nscreens, nmonitors;
+#if LIVES_HAS_DEVICE_MANAGER
+  GdkDeviceManager *devman;
+  LiVESList *devlist;
+  int k;
+#endif
+  int i, j;
+#endif
+  int idx = 0;
+
+  if (mainw->ignore_screen_size) return;
+
+  lives_freep((void **)&mainw->mgeom);
+  capable->nmonitors = 0;
+
+#if !GTK_CHECK_VERSION(3, 22, 0)
+  dlist = dislist = gdk_display_manager_list_displays(gdk_display_manager_get());
+  // gdk_display_manager_get_default_display(gdk_display_manager_get());
+  // for each display get list of screens
+
+  while (dlist) {
+    disp = (GdkDisplay *)dlist->data;
+
+    // get screens
+    nscreens = lives_display_get_n_screens(disp);
+    for (i = 0; i < nscreens; i++) {
+      screen = gdk_display_get_screen(disp, i);
+      capable->nmonitors += gdk_screen_get_n_monitors(screen);
+    }
+    dlist = dlist->next;
+  }
+#else
+  disp = gdk_display_get_default();
+  capable->nmonitors += gdk_display_get_n_monitors(disp);
+#endif
+
+  mainw->mgeom = (lives_mgeometry_t *)lives_calloc(capable->nmonitors, sizeof(lives_mgeometry_t));
+
+
+#if !GTK_CHECK_VERSION(3, 22, 0)
+  dlist = dislist;
+
+  while (dlist) {
+    disp = (GdkDisplay *)dlist->data;
+
+#if LIVES_HAS_DEVICE_MANAGER
+    devman = gdk_display_get_device_manager(disp);
+    devlist = gdk_device_manager_list_devices(devman, GDK_DEVICE_TYPE_MASTER);
+#endif
+    // get screens
+    nscreens = lives_display_get_n_screens(disp);
+    for (i = 0; i < nscreens; i++) {
+      screen = gdk_display_get_screen(disp, i);
+      scale = get_screen_scale(screen, &dpi);
+      nmonitors = gdk_screen_get_n_monitors(screen);
+      for (j = 0; j < nmonitors; j++) {
+        gdk_screen_get_monitor_geometry(screen, j, &(rect));
+        mainw->mgeom[idx].x = rect.x;
+        mainw->mgeom[idx].y = rect.y;
+        mainw->mgeom[idx].width = mainw->mgeom[idx].phys_width = rect.width;
+        mainw->mgeom[idx].height = mainw->mgeom[idx].phys_height = rect.height;
+        mainw->mgeom[idx].mouse_device = NULL;
+        mainw->mgeom[idx].dpi = dpi;
+        mainw->mgeom[idx].scale = scale;
+#if GTK_CHECK_VERSION(3, 4, 0)
+        gdk_screen_get_monitor_workarea(screen, j, &(rect));
+        mainw->mgeom[idx].width = rect.width;
+        mainw->mgeom[idx].height = rect.height;
+#endif
+#if LIVES_HAS_DEVICE_MANAGER
+        // get (virtual) mouse device for this screen
+        for (k = 0; k < lives_list_length(devlist); k++) {
+          device = (GdkDevice *)lives_list_nth_data(devlist, k);
+          if (gdk_device_get_display(device) == disp &&
+              gdk_device_get_source(device) == GDK_SOURCE_MOUSE) {
+            mainw->mgeom[idx].mouse_device = device;
+            break;
+          }
+        }
+#endif
+        mainw->mgeom[idx].disp = disp;
+        mainw->mgeom[idx].screen = screen;
+        idx++;
+        if (idx >= capable->nmonitors) break;
+      }
+    }
+#if LIVES_HAS_DEVICE_MANAGER
+    lives_list_free(devlist);
+#endif
+    dlist = dlist->next;
+  }
+
+  lives_slist_free(dislist);
+#else
+  screen = gdk_display_get_default_screen(disp);
+  scale = get_screen_scale(screen, &dpi);
+  device = gdk_seat_get_pointer(gdk_display_get_default_seat(disp));
+  for (idx = 0; idx < capable->nmonitors; idx++) {
+    mainw->mgeom[idx].disp = disp;
+    mainw->mgeom[idx].monitor = moni = gdk_display_get_monitor(disp, idx);
+    mainw->mgeom[idx].screen = screen;
+    gdk_monitor_get_geometry(moni, (GdkRectangle *)&rect);
+    mainw->mgeom[idx].x = rect.x;
+    mainw->mgeom[idx].y = rect.y;
+    mainw->mgeom[idx].phys_width = rect.width;
+    mainw->mgeom[idx].phys_height = rect.height;
+    mainw->mgeom[idx].mouse_device = device;
+    mainw->mgeom[idx].dpi = dpi;
+    mainw->mgeom[idx].scale = scale;
+    gdk_monitor_get_workarea(moni, &(rect));
+    mainw->mgeom[idx].width = rect.width;
+    mainw->mgeom[idx].height = rect.height;
+    if (gdk_monitor_is_primary(moni)) {
+      capable->primary_monitor = idx;
+      mainw->mgeom[idx].primary = TRUE;
+    } else if (play_moni == 1) play_moni = idx + 1;
+  }
+#endif
+#endif
+
+  if (prefs->force_single_monitor) capable->nmonitors = 1; // force for clone mode
+
+  if (!reset) return;
+
+  prefs->gui_monitor = 0;
+  prefs->play_monitor = play_moni;
+
+  if (capable->nmonitors > 1) {
+    get_string_pref(PREF_MONITORS, buff, 256);
+
+    if (*buff && get_token_count(buff, ',') > 1) {
+      char **array = lives_strsplit(buff, ",", 2);
+      prefs->gui_monitor = atoi(array[0]);
+      prefs->play_monitor = atoi(array[1]);
+      lives_strfreev(array);
+    }
+
+    if (prefs->gui_monitor < 1) prefs->gui_monitor = 1;
+    if (prefs->play_monitor < 0) prefs->play_monitor = 0;
+    if (prefs->gui_monitor > capable->nmonitors) prefs->gui_monitor = capable->nmonitors;
+    if (prefs->play_monitor > capable->nmonitors) prefs->play_monitor = capable->nmonitors;
+  }
+
+  widget_opts.monitor = prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : capable->primary_monitor;
+
+  mainw->old_scr_width = GUI_SCREEN_WIDTH;
+  mainw->old_scr_height = GUI_SCREEN_HEIGHT;
+
+  prefs->screen_scale = get_double_prefd(PREF_SCREEN_SCALE, 0.);
+  if (prefs->screen_scale == 0.) {
+    prefs->screen_scale = (double)GUI_SCREEN_WIDTH / (double)SCREEN_SCALE_DEF_WIDTH;
+    prefs->screen_scale = (prefs->screen_scale - 1.) * 1.5 + 1.;
+  }
+
+  widget_opts_rescale(prefs->screen_scale);
+
+  if (!prefs->vj_mode && GUI_SCREEN_HEIGHT >= MIN_MSG_AREA_SCRNHEIGHT) {
+    capable->can_show_msg_area = TRUE;
+    if (future_prefs->show_msg_area) prefs->show_msg_area = TRUE;
+  } else {
+    prefs->show_msg_area = FALSE;
+    capable->can_show_msg_area = FALSE;
+  }
 }
 
 

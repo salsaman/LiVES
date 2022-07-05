@@ -1,6 +1,6 @@
 // filesystem.h
 // LiVES
-// (c) G. Finch 2019 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2019 - 2022 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -54,12 +54,21 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 // buffered io
 
 /// fixed values only for write buffers (must be multiples of 16)
-#define BUFFER_FILL_BYTES_SMALL 64   /// 1 -> 16 bytes
-#define BUFFER_FILL_BYTES_SMALLMED 1024 /// 17 - 256 bytes
-#define BUFFER_FILL_BYTES_MED 4096  /// 257 -> 2048 bytes
-#define BUFFER_FILL_BYTES_BIGMED 16384  /// 2049 - 8192 bytes
-#define BUFFER_FILL_BYTES_LARGE 65536
+// selection of buufer / flush size is determined by the chunk of the data being written
+// the idea of course it to buffer a few writes and flush them at once
+#define BUFFER_FILL_BYTES_SMALL 64   /// 1 -> 8 byte chunks
+#define BUFFER_FILL_BYTES_SMALLMED 1024 /// 65 - 256 byte chunks
+#define BUFFER_FILL_BYTES_MED 4096  /// 257 -> 4096 bytes  ---> also size of a memory page
+#define BUFFER_FILL_BYTES_BIGMED 32768  ///  - 8192 bytes
+#define BUFFER_FILL_BYTES_LARGE 256 * 1024 /// 256KB
+// chunk sizes > LARGE are written directly
 
+// these are the defined type sizes, we attempt to tune things by testing various values in a specified range
+// using a variety of binary search to arrive at the empirically 'best' value. The value is rounded to the nearest
+// power of 2 in any case, but we may be able to determin for example,
+// if 64K reads are drastically better or worse than 128K, and try to use the better values
+// an idea for the future would be periodically retest, in case spme temporay condition was occutring
+// and going one step further everything would be coordinated by the 'performance manager' task
 #define BUFF_SIZE_READ_SLURP -2
 #define BUFF_SIZE_READ_CUSTOM -1
 #define BUFF_SIZE_READ_SMALL 0
@@ -67,12 +76,25 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 #define BUFF_SIZE_READ_MED 2
 #define BUFF_SIZE_READ_LARGE 3
 
-#define BUFF_SIZE_WRITE_CUSTOM -1
-#define BUFF_SIZE_WRITE_SMALL 0
-#define BUFF_SIZE_WRITE_SMALLMED 1
-#define BUFF_SIZE_WRITE_MED 2
-#define BUFF_SIZE_WRITE_BIGMED 3
-#define BUFF_SIZE_WRITE_LARGE 4
+#define TUNABLE_SMALLFILE_FLUSH_RANGEMIN 8
+#define TUNABLE_SMALLFILE_FLUSH_RANGEMAX 268
+
+#define TUNABLE_SMEDFILE_FLUSH_RANGEMIN (smbytes * 4)
+#define TUNABLE_SMEDFILE_FLUSH_RANGEMAX 16384
+
+#define TUNABLE_MEDFILE_FLUSH_RANGEMIN (smedbytes * 4)
+#define TUNABLE_MEDFILE_FLUSH_RANGEMAX 131072
+
+#define TUNABLE_LARGEFILE_FLUSH_RANGEMIN (medbytes * 4)
+#define TUNABLE_LARGEFILE_FLUSH_RANGEMAX 838860			// 8MB
+// sizes larger than this are written directly
+
+#define BUFF_SIZE_WRITE_CUSTOM 		-1
+#define BUFF_SIZE_WRITE_SMALL 		0
+#define BUFF_SIZE_WRITE_SMALLMED	1
+#define BUFF_SIZE_WRITE_MED		2
+#define BUFF_SIZE_WRITE_BIGMED		3
+#define BUFF_SIZE_WRITE_LARGE		4
 
 #define FREAD_BUFFSIZE 65536
 
@@ -85,6 +107,7 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 // internal values
 #define FB_FLAG_BG_OP		(1ull << 16)
 #define FB_FLAG_PREALLOC	(1ull << 17)
+#define FB_FLAG_TUNING		(1ull << 18)
 
 // status bits
 #define FB_FLAG_EOF		(1ull << 32)

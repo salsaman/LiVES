@@ -835,8 +835,8 @@ static volatile size_t bigbytes = BUFFER_FILL_BYTES_LARGE;
 static volatile size_t medbytes = BUFFER_FILL_BYTES_MED;
 static volatile size_t smedbytes = BUFFER_FILL_BYTES_SMALLMED;
 static volatile size_t smbytes = BUFFER_FILL_BYTES_SMALL;
-#define AUTOTUNE
-#ifdef AUTOTUNE
+
+#if AUTOTUNE_FILEBUFF_SIZES
 static weed_plant_t *tunerl = NULL;
 static boolean tunedl = FALSE;
 static weed_plant_t *tunerm = NULL;
@@ -877,69 +877,73 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
   int fd = fbuff->fd;
   off_t fsize = get_file_size(fd, TRUE) - skip, bufsize = smedbytes, res;
   boolean run_hooks = TRUE;
-
+  if (fsize > skip) {
 #if defined HAVE_POSIX_FADVISE
-  posix_fadvise(fd, skip, 0, POSIX_FADV_SEQUENTIAL);
-  posix_fadvise(fd, skip, 0, POSIX_FADV_NOREUSE);
-  posix_fadvise(fd, skip, 0, POSIX_FADV_WILLNEED);
+    posix_fadvise(fd, skip, 0, POSIX_FADV_SEQUENTIAL);
+    posix_fadvise(fd, skip, 0, POSIX_FADV_NOREUSE);
+    posix_fadvise(fd, skip, 0, POSIX_FADV_WILLNEED);
 #endif
-  fbuff->ptr = fbuff->buffer = lives_calloc_align(fsize);
-  mlock(fbuff->buffer, fsize);
-  fbuff->skip = skip;
-  if (fsize > 0) {
+    fbuff->ptr = fbuff->buffer = lives_calloc_align(fsize);
+    mlock(fbuff->buffer, fsize);
+    fbuff->skip = skip;
+    if (fsize > 0) {
 #ifdef TEST_MMAP
-    off_t offs = skip;
-    void *p = mmap(NULL, fsize, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (p == MAP_FAILED) {
-      lives_abort("memory map failed when background loading file (experimental)");
-    }
-#else
-    lseek(fd, skip, SEEK_SET);
-#endif
-    fbuff->orig_size = fsize + skip;
-    //fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
-    //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
-    while (fsize > 0) {
-      if (fbuff->flags & FB_FLAG_INVALID) {
-        fbuff->flags &= ~FB_FLAG_INVALID;
-        run_hooks = FALSE;
-        break; // file was closed
+      off_t offs = skip;
+      void *p = mmap(NULL, fsize, PROT_READ, MAP_PRIVATE, fd, 0);
+      if (p == MAP_FAILED) {
+        lives_abort("memory map failed when background loading file (experimental)");
       }
-      if (bufsize > fsize) bufsize = fsize;
+#else
+      lseek(fd, skip, SEEK_SET);
+#endif
+      fbuff->orig_size = fsize + skip;
+      //fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
+      //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
+      while (fsize > 0) {
+        if (fbuff->flags & FB_FLAG_INVALID) {
+          fbuff->flags &= ~FB_FLAG_INVALID;
+          run_hooks = FALSE;
+          break; // file was closed
+        }
+        if (bufsize > fsize) bufsize = fsize;
 #ifdef TEST_MMAP
-      lives_memcpy(fbuff->buffer + fbuff->bytes, p + offs, bufsize);
-      res = bufsize;
-      offs += bufsize;
+        lives_memcpy(fbuff->buffer + fbuff->bytes, p + offs, bufsize);
+        res = bufsize;
+        offs += bufsize;
 #else
-      res = lives_read(fd, fbuff->buffer + fbuff->bytes, bufsize, TRUE);
-      //g_printerr("slurp for %d, %s with size %ld, read %lu bytes, %lu remain\n", fd, fbuff->pathname, fbuff->orig_size, bufsize, fsize);
-      if (res < 0) {
-        pthread_mutex_lock(&fbuff->sync_mutex);
-        fbuff->flags |= FB_FLAG_INVALID;
-        fbuff->flags &= ~FB_FLAG_BG_OP;
-        pthread_mutex_unlock(&fbuff->sync_mutex);
-        return FALSE;
-      }
+        res = lives_read(fd, fbuff->buffer + fbuff->bytes, bufsize, TRUE);
+        //g_printerr("slurp for %d, %s with size %ld, read %lu bytes, %lu remain\n", fd, fbuff->pathname, fbuff->orig_size, bufsize, fsize);
+        if (res < 0) {
+          pthread_mutex_lock(&fbuff->sync_mutex);
+          fbuff->flags |= FB_FLAG_INVALID;
+          fbuff->flags &= ~FB_FLAG_BG_OP;
+          pthread_mutex_unlock(&fbuff->sync_mutex);
+          return FALSE;
+        }
 #endif
-      if (res > fsize) res = fsize;
-      fbuff->bytes += res;
-      fsize -= res;
-      if (fsize >= bigbytes && bufsize >= medbytes) bufsize = bigbytes;
-      else if (fsize >= medbytes && bufsize >= smedbytes) bufsize = medbytes;
-      else if (fsize >= smedbytes) bufsize = smedbytes;
-      //g_printerr("slurp %d oof %ld %ld remain %lu  \n", fd, fbuff->offset, fsize, ofsize);
-      //if (mainw->disk_pressure > 0.) mainw->disk_pressure = check_disk_pressure(0.);
+        if (res > fsize) res = fsize;
+        fbuff->bytes += res;
+        fsize -= res;
+        if (fsize >= bigbytes && bufsize >= medbytes) bufsize = bigbytes;
+        else if (fsize >= medbytes && bufsize >= smedbytes) bufsize = medbytes;
+        else if (fsize >= smedbytes) bufsize = smedbytes;
+        //g_printerr("slurp %d oof %ld %ld remain %lu  \n", fd, fbuff->offset, fsize, ofsize);
+        //if (mainw->disk_pressure > 0.) mainw->disk_pressure = check_disk_pressure(0.);
 #ifdef __linux__
-      readahead(fd, fbuff->bytes + skip, bufsize * 4);
+        readahead(fd, fbuff->bytes + skip, bufsize * 4);
+#endif
+      }
+#ifdef TEST_MMAP
+      munmap(p, fsize);
 #endif
     }
-#ifdef TEST_MMAP
-    munmap(p, fsize);
-#endif
+    if (run_hooks) lives_hooks_trigger(NULL, THREADVAR(hook_closures), DATA_READY_HOOK);
+  } else {
+    // if there is not enough data to even try reading, we must set EOF
+    // else clllaer wil not relinquish the sync_mutes
+    fbuff->flags |= FB_FLAG_EOF;
+
   }
-
-  if (run_hooks) lives_hooks_trigger(NULL, THREADVAR(hook_closures), DATA_READY_HOOK);
-
   fbuff->fd = -1;
   IGN_RET(close(fd));
   pthread_mutex_lock(&fbuff->sync_mutex);
@@ -1114,9 +1118,18 @@ size_t get_write_buff_size(int sztype) {
 
 static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   ssize_t res;
-  ssize_t delta = 0;
-  size_t bufsize;
+  ssize_t delta = 0, bufsize;
   boolean reversed = (fbuff->flags & FB_FLAG_REVERSE);
+  boolean autotune = FALSE;
+  ticks_t xti;
+
+#if AUTOTUNE_FILEBUFF_SIZES
+  if ((fbuff->bufsztype != BUFF_SIZE_READ_CUSTOM && fbuff->bufsztype != BUFF_SIZE_READ_SLURP)
+      && ((fbuff->bufsztype == BUFF_SIZE_READ_SMALL && !tuneds && (!tuners || (tunedsm && !tunedm)))
+          || (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED && tuneds && !tunedsm && !tunersm)
+          || (fbuff->bufsztype == BUFF_SIZE_READ_MED && tunedsm && !tunedm && !tunerm)
+          || (fbuff->bufsztype == BUFF_SIZE_READ_LARGE && tunedm && !tunedl))) autotune = TRUE;
+#endif
 
   if (min < 0) min = 0;
 
@@ -1147,11 +1160,80 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   fbuff->offset -= delta;
   fbuff->offset = lseek(fbuff->fd, fbuff->offset, SEEK_SET);
 
+#if AUTOTUNE_FILEBUFF_SIZES
+  if (autotune) {
+    if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
+      if (!tuneds && (!tuners || (tunedsm && !tunedm))) tuners = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 3);
+      autotune_u64_start(tuners, TUNABLE_SMALLFILE_FLUSH_RANGEMIN, TUNABLE_SMALLFILE_FLUSH_RANGEMAX, 64);
+    } else if (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED) {
+      if (tuneds && !tunedsm && !tunersm) tunersm = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 4);
+      autotune_u64_start(tunersm, TUNABLE_SMEDFILE_FLUSH_RANGEMIN, TUNABLE_SMEDFILE_FLUSH_RANGEMAX, 32);
+    } else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) {
+      if (tunedsm && !tunedm && !tunerm) tunerm = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 5);
+      autotune_u64_start(tunerm, TUNABLE_MEDFILE_FLUSH_RANGEMIN, TUNABLE_MEDFILE_FLUSH_RANGEMAX, 32);
+    } else if (fbuff->bufsztype == BUFF_SIZE_READ_LARGE) {
+      if (tunedm && !tunedl && !tunerl) tunerl = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 6);
+      autotune_u64_start(tunerl, TUNABLE_LARGEFILE_FLUSH_RANGEMIN, TUNABLE_LARGEFILE_FLUSH_RANGEMAX, 32);
+    }
+  }
+#endif
+
   res = lives_read(fbuff->fd, fbuff->buffer, bufsize, TRUE);
+
   if (res < 0) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_read will have closed
     return res;
   }
+
+#if AUTOTUNE_FILEBUFF_SIZES
+  if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
+    if (tuners) {
+      smbytes = autotune_u64_end(&tuners, smbytes, 1. / (double)res);
+      if (!tuners) {
+        tuneds = TRUE;
+      }
+    }
+  } else if (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED) {
+    if (tunersm) {
+      smedbytes = autotune_u64_end(&tunersm, smedbytes, 1. / (double)res);
+      if (!tunersm) {
+        tunedsm = TRUE;
+        smedbytes = get_near2pow(smedbytes);
+        if (prefs->show_dev_opts) {
+          char *tmp;
+          g_printerr("value rounded to %s\n", (tmp = lives_format_storage_space_string(smedbytes)));
+          lives_free(tmp);
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
+  else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) {
+    if (tunerm) {
+      medbytes = autotune_u64_end(&tunerm, medbytes, 1. / (double)res);
+      if (!tunerm) {
+        tunedm = TRUE;
+        medbytes = get_near2pow(medbytes);
+        if (prefs->show_dev_opts) {
+          char *tmp;
+          g_printerr("value rounded to %s\n", (tmp = lives_format_storage_space_string(medbytes)));
+          lives_free(tmp);
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
+  else {
+    if (tunerl) {
+      bigbytes = autotune_u64_end(&tunerl, bigbytes, 1. / (double)res);
+      if (!tunerl) {
+        tunedl = TRUE;
+        bigbytes = get_near2pow(bigbytes);
+        if (prefs->show_dev_opts) {
+          char *tmp;
+          g_printerr("value rounded to %s\n", (tmp = lives_format_storage_space_string(bigbytes)));
+          lives_free(tmp);
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
+
+#endif
 
   fbuff->bytes = res - delta;
   fbuff->ptr = fbuff->buffer + delta;
@@ -1386,9 +1468,6 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
   uint8_t *ptr = (uint8_t *)buf;
   int bufsztype;
   boolean reversed = FALSE;
-#ifdef AUTOTUNE
-  double cost;
-#endif
 
   if (count <= 0) return retval;
 
@@ -1405,24 +1484,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
   reversed = (fbuff->flags & FB_FLAG_REVERSE) == FB_FLAG_REVERSE;
   bufsztype = fbuff->bufsztype;
 
-#ifdef AUTOTUNE
-  if (fbuff->bufsztype != BUFF_SIZE_READ_CUSTOM && fbuff->bufsztype != BUFF_SIZE_READ_SLURP) {
-    cost = 1. / (1. + (double)fbuff->nseqreads);
-    if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
-      if (!tuneds && (!tuners || (tunedsm && !tunedm))) tuners = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 3);
-      autotune_u64(tuners, 8, smedbytes / 4, 16, cost);
-    } else if (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED) {
-      if (tuneds && !tunedsm && !tunersm) tunersm = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 4);
-      autotune_u64(tunersm, smbytes * 4, 32768, 16, cost);
-    } else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) {
-      if (tunedsm && !tunedm && !tunerm) tunerm = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 5);
-      autotune_u64(tunerm, smedbytes * 4, 65536 * 2, 32, cost);
-    } else if (fbuff->bufsztype == BUFF_SIZE_READ_LARGE) {
-      if (tunedm && !tunedl && !tunerl) tunerl = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 6);
-      autotune_u64(tunerl, medbytes * 4, 8192 * 1024, 256, cost);
-    }
-  }
-#endif
+
   if (!buf) {
     if (fbuff->bufsztype == BUFF_SIZE_READ_SLURP) return count;
     /// function can be called with buf == NULL to preload a buffer with at least (count) bytes
@@ -1587,55 +1649,6 @@ rd_done:
 
   if (reversed) fbuff->flags |= FB_FLAG_REVERSE;
 
-#ifdef AUTOTUNE
-  if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
-    if (tuners) {
-      smbytes = autotune_u64_end(&tuners, smbytes);
-      if (!tuners) {
-        tuneds = TRUE;
-      }
-    }
-  } else if (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED) {
-    if (tunersm) {
-      smedbytes = autotune_u64_end(&tunersm, smedbytes);
-      if (!tunersm) {
-        tunedsm = TRUE;
-        smedbytes = get_near2pow(smedbytes);
-        if (prefs->show_dev_opts) {
-          char *tmp;
-          g_printerr("value rounded to %s\n", (tmp = lives_format_storage_space_string(smedbytes)));
-          lives_free(tmp);
-	  // *INDENT-OFF*
-        }}}}
-  // *INDENT-ON*
-  else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) {
-    if (tunerm) {
-      medbytes = autotune_u64_end(&tunerm, medbytes);
-      if (!tunerm) {
-        tunedm = TRUE;
-        medbytes = get_near2pow(medbytes);
-        if (prefs->show_dev_opts) {
-          char *tmp;
-          g_printerr("value rounded to %s\n", (tmp = lives_format_storage_space_string(medbytes)));
-          lives_free(tmp);
-	  // *INDENT-OFF*
-        }}}}
-  // *INDENT-ON*
-  else {
-    if (tunerl) {
-      bigbytes = autotune_u64_end(&tunerl, bigbytes);
-      if (!tunerl) {
-        tunedl = TRUE;
-        bigbytes = get_near2pow(bigbytes);
-        if (prefs->show_dev_opts) {
-          char *tmp;
-          g_printerr("value rounded to %s\n", (tmp = lives_format_storage_space_string(bigbytes)));
-          lives_free(tmp);
-	  // *INDENT-OFF*
-        }}}}
-  // *INDENT-ON*
-
-#endif
 rd_exit:
   if (!allow_less && count > 0) {
     do_file_read_error(fd, retval, NULL, ocount);

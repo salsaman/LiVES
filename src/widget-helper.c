@@ -1937,35 +1937,14 @@ uint32_t  wait_for_fg_response(lives_proc_thread_t lpt) {
 #endif
   if (gstat == GOV_NOT_RUNNING) {
     //mysource = gov_will_run = lives_timer_immediate(governor_loop, NULL);
-    g_main_context_wakeup(NULL);
 #ifdef DEBUG_GUI_THREADS
     g_print("ADD source %u\n", mysource);
 #endif
   } else mainw->clutch = FALSE;
 
-  while ((!lpt && !mainw->clutch) || (lpt && lpttorun)) {
-    if (lpt && lives_proc_thread_get_cancelled(lpt)) {
-#ifdef DEBUG_GUI_THREADS
-      g_print("CANCELLED\n");
-#endif
-      return mysource;
-    } else {
-      if (mysource) {
-        if (g_source_is_destroyed(g_main_context_find_source_by_id(NULL, mysource))) {
-          g_print("my source was destroyed\n");
-          mysource = 0;
-          continue;
-        } else {
-          //g_print("waiting for source %d st is %d %p %d %d\n", mysource, get_gov_status(), lpttorun, mainw->clutch,
-          //	  FG_THREADVAR(fg_service));
-          g_main_context_wakeup(NULL);
-        }
-        lives_nanosleep(ONE_MILLION);
-        continue;
-      } else lives_nanosleep(NSLEEP_TIME);
-    }
-  }
-  return 0;
+  thread_wait_loop(lpt, NULL, FALSE, TRUE);
+
+  return mysource;
 }
 
 

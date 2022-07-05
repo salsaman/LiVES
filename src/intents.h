@@ -70,15 +70,32 @@ typedef union {
 // for external object data (e.g g_object)
 #define INTENTION_KEY "intention_"
 
-typedef lives_funcptr_t object_funcptr_t;
-typedef struct _object_t lives_object_t;
-typedef struct _object_t lives_object_instance_t;
-typedef struct _obj_status_t lives_transform_status_t;
 typedef struct _obj_transform_t lives_object_transform_t;
+//
 typedef weed_param_t lives_tx_param_t;
 typedef weed_plant_t lives_obj_attr_t;
-typedef lives_object_t lives_contract_t;
-typedef weed_plant_t lives_bundle_t;
+typedef weed_plant_t lives_obj_t;
+typedef weed_plant_t lives_contract_t;
+
+#define LIVES_PLANT_BUNDLE 21212
+char *get_short_name(const char *q);
+uint64_t get_vflags(const char *q, off_t *offx);
+uint32_t get_vtype(const char *q, off_t *offx);
+const char *get_vname(const char *q);
+boolean get_is_array(const char *q);
+
+lives_bundle_t *create_bundle(bundle_type btype, ...) LIVES_SENTINEL;
+
+lives_bundle_t *create_object_bundle(uint64_t otype, uint64_t subtype);
+
+bundledef_t get_bundledef_from_bundle(lives_bundle_t *bundle);
+
+boolean bundle_has_item(lives_bundle_t *bundle, const char *item);
+
+char *flatten_bundledef(bundledef_t);
+char *flatten_bundle(lives_bundle_t *);
+uint64_t get_bundledef64sum(bundledef_t bdef, char **flattened);
+uint64_t get_bundle64sum(lives_bundle_t *, char **flattened);
 
 #define HOOKFUNCS_ONLY
 #include "threading.h"
@@ -87,10 +104,6 @@ typedef weed_plant_t lives_bundle_t;
 #endif
 
 typedef lives_refcounter_t obj_refcounter;
-// attr generec_uid, attr generic_refcount, attr_object_type, subtype
-// attr_object_state, attr_generic_icap, attr_generic_attributes
-// attr_generic_transform, attr_generic_hooks
-// attr_generic_private_data
 
 // lives_object_t
 struct _object_t {
@@ -141,6 +154,7 @@ typedef struct {
 // avoiding using an enum allows the list to be extended in other headers
 typedef int32_t lives_intention;
 typedef weed_plant_t lives_capacities_t;
+typedef weed_plant_t lives_bundle_t;
 
 #define ICAP_DESC_LEN 64
 
@@ -157,6 +171,12 @@ typedef struct {
 #endif // ADD_BASE_DEFS
 
 #ifdef _BASE_DEFS_ONLY_
+
+typedef lives_funcptr_t object_funcptr_t;
+typedef struct _object_t lives_object_t;
+typedef struct _object_t lives_object_instance_t;
+typedef struct _obj_status_t lives_transform_status_t;
+
 #undef _BASE_DEFS_ONLY_
 #else
 
@@ -232,14 +252,8 @@ void lives_object_attributes_unref_all(lives_object_t *);
 ///////////// get values
 char *lives_attr_get_name(lives_obj_attr_t *);
 int lives_attr_get_value_int(lives_obj_attr_t *);
+char *lives_attr_get_value_string(lives_object_t *, lives_obj_attr_t *);
 uint32_t lives_attr_get_value_type(lives_obj_attr_t *);
-boolean lives_attr_is_readonly(lives_obj_attr_t *);
-weed_error_t lives_attr_set_readonly(lives_obj_attr_t *, boolean state);
-
-// todo, - should take attr param
-boolean lives_attribute_is_mine(lives_object_t *, const char *name);
-boolean lives_attribute_is_readonly(lives_object_t *, const char *name);
-weed_error_t lives_attribute_set_readonly(lives_object_t *, const char *name, boolean state);
 
 // values can be set later
 weed_error_t lives_object_set_attribute_value(lives_object_t *, const char *name, ...);
@@ -278,7 +292,6 @@ void *lookup_entry_full(uint64_t uid);
 char *interpret_uid(uint64_t uid);
 
 /// NOT YET FULLY IMPLEMENTED
-
 
 // update value is a transform, no attrs in, attrs out
 // can be ondemand, async, volatile
@@ -379,17 +392,49 @@ char *lives_funcdef_explain(const lives_funcdef_t *funcdef);
 
 // contracts
 
-lives_contract_t *create_contract(lives_intentcap_t *icap);
+lives_contract_t *create_contract_instance(lives_intention intent, ...);
 
-lives_obj_attr_t *lives_contract_declare_attribute(lives_contract_t *, const char *aname,
-    uint32_t atype);
+//contract_attr_t *contract_add_attribute(lives_contract_t *, const char *aname, uint32_t atype);
+//contract_attr_t *contract_has_attribute(lives_contract_t *, const char *aname);
 
+//contract_t *contract_get_template(lives_contract_t *);
+//obj *contract_get_owner(lives_contract_t *);
+//obj_state *contract_get_state(lives_contract_t *);
+
+//contract_attr_t *contract_add_hook(lives_contract_t *, status_from, status_to, in_attrs, out_attrs);
+//contract_attr_t *hookattr_connect(lives_contract_t *, hook, attr_other, attr_mine, self);
+//contract_attr_t *hookattr_is_connected(lives_contract_t *, hook, name);
+//contract_attr_t *hookattr_get_local(lives_contract_t *, hook, name);
+//contract_attr_t *hookattr_get_remote(lives_contract_t *, hook, name);
+//contract_attr_t *hookattr_get_remote_owner(lives_contract_t *, hook, name);
+
+/* boolean contract_has_attribute(lives_contract_t *, const char *aname, uint32_t atype); */
+
+/* boolean contract_add_cap(lives_contract_t *, const char *cap); */
+/* boolean contract_has_cap(lives_contract_t *, const char *cap); */
+/* boolean contract_has_not_cap(lives_contract_t *, const char *cap); */
+/* boolean contract_add_caps(lives_contract_t *, ...); */
+/* boolean contract_has_caps(lives_contract_t *, ...); */
+/* boolean contract_can_add_cap(lives_contract_t *, const char *cap); */
+/* boolean contract_remove_cap(lives_contract_t *, const char *cap); */
+/* boolean contract_can_add_caps(lives_contract_t *, ...); */
+/* boolean contract_remove_caps(lives_contract_t *, ...); */
+
+/* uint64_t contract_attr_get_owner(contract_attr_t *); */
+/* boolean contract_attr_is_mine(contract_attr_t *); */
+
+/* // contract attr */
+/* boolean contract_attr_is_readonly(contract_attr_t *); */
+/* weed_error_t contract_attr_set_readonly(contract_attr_t *, boolean state); */
+
+/* boolean contract_attr_is_optional(contract_attr_t *); */
+/* weed_error_t contract_attr_set_optional(contract_attr_t *, boolean state); */
+
+// todo, - should take attr param
 uint64_t contract_attribute_get_owner(lives_contract_t *, const char *name);
-
-uint64_t contract_attr_get_owner(lives_obj_attr_t *);
-boolean contract_attr_is_mine(lives_obj_attr_t *);
-
-char *contract_attr_get_value_string(lives_obj_attr_t *);
+boolean contract_attribute_is_mine(lives_contract_t *, const char *name);
+boolean contract_attribute_is_readonly(lives_contract_t *, const char *name);
+weed_error_t contract_attribute_set_readonly(lives_contract_t *, const char *name, boolean state);
 
 #if 0
 // base functions

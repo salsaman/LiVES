@@ -34,6 +34,4 @@ boolean lsd_structs_same_type(lsd_struct_def_t *, lsd_struct_def_t *);
 uint64_t lsd_check_struct(lsd_struct_def_t *);
 uint64_t lsd_check_match(lsd_struct_def_t *, lsd_struct_def_t *);
 
-char *weed_plant_to_header(weed_plant_t *, const char *tname);
-
 #endif

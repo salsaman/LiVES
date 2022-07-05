@@ -1427,6 +1427,8 @@ boolean lives_widget_destroy_with(LiVESWidget *, LiVESWidget *dieplease);
 
 LiVESPixbuf *get_desktop_icon(const char *dir);
 
+extern void pop_to_front(LiVESWidget *, LiVESWidget *extra);
+
 #define LIVES_JUSTIFY_DEFAULT (def_widget_opts.justify)
 
 typedef enum {

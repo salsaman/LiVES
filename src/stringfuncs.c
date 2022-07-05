@@ -5,6 +5,19 @@
 
 #include "main.h"
 
+#include <ctype.h>
+
+LIVES_GLOBAL_INLINE char *lives_string_tolower(const char *st) {
+  char *lst;
+  size_t slen = lives_strlen(st);
+  int i = 0;
+  lst = lives_malloc(slen + 1);
+  for (char *c = (char *)st; *c; c++) lst[i++] = (char)tolower(*c);
+  lst[i] = 0;
+  return lst;
+}
+
+
 size_t get_token_count(const char *string, int delim) {
   size_t pieces = 1;
   if (!string) return 0;
@@ -125,6 +138,13 @@ LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
   }
 #endif
   return strlen(s);
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_strlen_atleast(const char *s, size_t min) {
+  if (!s) return FALSE;
+  for (int i = 0; i < min; i++) if (!s[i]) return FALSE;
+  return TRUE;
 }
 
 

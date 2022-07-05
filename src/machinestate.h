@@ -96,25 +96,17 @@ weed_plant_t *lives_plant_new_with_refcount(int subtype);
 
 void lives_get_randbytes(void *ptr, size_t size);
 
-int64_t lives_strtol(const char *nptr);
-uint64_t lives_strtoul(const char *nptr);
-size_t lives_strlen(const char *) LIVES_HOT LIVES_PURE;
-boolean lives_strcmp(const char *, const char *) LIVES_HOT LIVES_PURE;
-boolean lives_strncmp(const char *, const char *, size_t) LIVES_HOT LIVES_PURE;
-boolean lives_str_starts_with(const char *, const char *);
-//char *lives_strdup_quick(const char *s);
-char *lives_strdup_concat(char *str, const char *sep, const char *fmt, ...);
-int lives_strcmp_ordered(const char *, const char *) LIVES_HOT LIVES_PURE;
-char *lives_concat(char *, char *) LIVES_HOT;
-char *lives_concat_sep(char *st, const char *sep, char *x);
-char *lives_strstop(char *, const char term) LIVES_HOT;
-int lives_strappend(const char *string, int len, const char *xnew);
-const char *lives_strappendf(const char *string, int len, const char *fmt, ...);
-char *lives_strcollate(char **pstrng, const char *sep, const char *xnew);
+#define LIVES_LEAF_TRIALS "trials"
+#define LIVES_LEAF_NTRIALS "ntrials"
+#define LIVES_LEAF_TSTART "tstart"
+#define LIVES_LEAF_TOT_TIME "tot_time"
+#define LIVES_LEAF_TOT_COST "tot_cost"
+#define LIVES_LEAF_SMALLER "smaller"
+#define LIVES_LEAF_LARGER "larger"
+#define LIVES_LEAF_CYCLES "cycles"
 
-uint64_t nxtval(uint64_t val, uint64_t lim, boolean less);
-uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val);
-void autotune_u64(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials, double cost);
+void autotune_u64_start(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials);
+uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val, double cost);
 
 void init_random(void);
 void lives_srandom(unsigned int seed);
@@ -176,11 +168,42 @@ char *get_current_timestamp(void);
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
 								     errno != ETIMEDOUT);} while (0);
 
+#define lives_nanosleep_times(nanosec, times) do {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
+    ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
+								     errno != ETIMEDOUT);} while (0);
+
+// sleep for 1 msec, regardless of the value returned, sets euqal to cond
+#define _nsleep1(cond) (usleep(1000) ? (cond) :  (cond))
+// sleep for 1 msec, if cons still TRUE, sleep for another 1 msec and return cond, else return cond
+#define _nsleep2(cond) _nsleep1(cond) ? _nsleep1(cond) : (cond)
+// sleep for up to 2 msec, if cons still TRUE, sleep for up to 2 more  msec and return cond, else return cond
+#define _nsleep4(cond) _nsleep2(cond) ? _nsleep2(cond) : (cond)
+// etc
+#define _nsleep8(cond) _nsleep4(cond) ? _nsleep4(cond) : (cond)
+#define _nsleep16(cond) _nsleep8(cond) ? _nsleep8(cond) : (cond)
+#define _nsleep32(cond) _nsleep16(cond) ? _nsleep16(cond) : (cond)
+#define _nsleep64(cond) _nsleep32(cond) ? _nsleep32(cond) : (cond)
+#define _nsleep128(cond) _nsleep64(cond) ? _nsleep64(cond) : (cond)
+#define _nsleep256(cond) _nsleep128(cond) ? _nsleep128(cond) : (cond)
+#define _nsleep512(cond) _nsleep256(cond) ? _nsleep256(cond) : (cond)
+#define _nsleep1024(cond) _nsleep512(cond) ? _nsleep512(cond) : (cond)
+#define _nsleep2048(cond) _nsleep1024(cond) ? _nsleep1024(cond) : (cond)
+#define _nsleep4096(cond) _nsleep2048(cond) ? _nsleep2048(cond) : (cond)
+
+// sleep for up to 5 seconds whil cond is TRUE
+// -- construction of value 5000 in binary digits
+#define lives_five_second_check(cond) _nsleep4096(cond) ? _nsleep512(cond) ? _nsleep256(cond) ? _nsleep128(cond) ? \
+    _nsleep8(cond) : (cond) : (cond) : (cond) : (cond)
+
+// sleep fo 1usec
 #define lives_nanosleep_until_nonzero(condition) \
   {while (!(condition)) lives_nanosleep(LIVES_QUICK_NAP);}
 #define lives_nanosleep_until_zero(condition) {while ((condition)) lives_nanosleep(LIVES_QUICK_NAP);}
 #define lives_nanosleep_while_false(c) lives_nanosleep_until_nonzero(c)
 #define lives_nanosleep_while_true(c) lives_nanosleep_until_zero(c)
+
+#define lives_nanosleep_until_nonzero_timeout(condition) \
+  {while (!(condition)) lives_nanosleep(LIVES_QUICK_NAP);}
 
 #define lives_usleep(a) lives_nanosleep(1000 * (a))
 
@@ -318,6 +341,8 @@ char *wm_property_get(const char *key, int *type_guess);
 
 boolean get_wm_caps(void);
 boolean get_distro_dets(void);
+
+void get_monitors(boolean reset);
 
 #define CPU_FEATURE_HAS_SSE2 1
 

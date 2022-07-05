@@ -385,7 +385,7 @@ void update_props_from_attributes(lives_vdev_t *ldev, lives_rfx_t *rfx) {
     if (attr) {
       lives_param_t *param;
       double val;
-      if (lives_attribute_is_readonly(ldev->object, prop->identifier)) continue;
+      //if (lives_attribute_is_readonly(ldev->object, prop->identifier)) continue;
       param = find_rfx_param_by_name(rfx, prop->identifier);
       if (param->type == LIVES_PARAM_TYPE_UNDEFINED) continue;
       if (!(param->flags & PARAM_FLAG_VALUE_SET)) continue;
@@ -546,10 +546,10 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   obj->priv = (void *)ldev;
 
   lives_object_set_attribute_value(obj, VDEV_PROP_WIDTH, cfile->hsize);
-  lives_attribute_set_readonly(obj, VDEV_PROP_WIDTH, TRUE);
+  //lives_attribute_set_readonly(obj, VDEV_PROP_WIDTH, TRUE);
 
   lives_object_set_attribute_value(obj, VDEV_PROP_HEIGHT, cfile->vsize);
-  lives_attribute_set_readonly(obj, VDEV_PROP_HEIGHT, TRUE);
+  //lives_attribute_set_readonly(obj, VDEV_PROP_HEIGHT, TRUE);
 
   cfile->ext_src = ldev;
   cfile->ext_src_type = LIVES_EXT_SRC_DEVICE;
@@ -571,10 +571,10 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
 
   unicap_reenumerate_properties(ldev->handle, &nprops);
 
-  lives_attribute_set_readonly(obj, VDEV_PROP_WIDTH, TRUE);
+  //lives_attribute_set_readonly(obj, VDEV_PROP_WIDTH, TRUE);
   lives_attribute_set_param_type(obj, VDEV_PROP_WIDTH, _("Width"), WEED_PARAM_INTEGER);
 
-  lives_attribute_set_readonly(obj, VDEV_PROP_HEIGHT, TRUE);
+  //lives_attribute_set_readonly(obj, VDEV_PROP_HEIGHT, TRUE);
   lives_attribute_set_param_type(obj, VDEV_PROP_HEIGHT, _("Height"), WEED_PARAM_INTEGER);
 
   for (prop_count = 0;
@@ -589,7 +589,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
       cfile->pb_fps = cfile->fps = prop->value;
       cfile->target_framerate = cfile->fps;
       lives_object_set_attribute_value(obj, VDEV_PROP_FPS, cfile->fps);
-      lives_attribute_set_readonly(obj, VDEV_PROP_FPS, TRUE);
+      //lives_attribute_set_readonly(obj, VDEV_PROP_FPS, TRUE);
       lives_attribute_set_param_type(obj, VDEV_PROP_FPS, _("FPS"), WEED_PARAM_FLOAT);
     } else {
       boolean valid = TRUE;
@@ -651,10 +651,10 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
       }
       if (!valid) continue;
     }
-    if ((flags & UNICAP_FLAGS_AUTO) && (mask & UNICAP_FLAGS_AUTO))
-      lives_attribute_set_readonly(obj, prop->identifier, TRUE);
-    else if ((flags & UNICAP_FLAGS_READ_ONLY) && (mask & UNICAP_FLAGS_READ_ONLY))
-      lives_attribute_set_readonly(obj, prop->identifier, TRUE);
+    /* if ((flags & UNICAP_FLAGS_AUTO) && (mask & UNICAP_FLAGS_AUTO)) */
+    /*   lives_attribute_set_readonly(obj, prop->identifier, TRUE); */
+    /* else if ((flags & UNICAP_FLAGS_READ_ONLY) && (mask & UNICAP_FLAGS_READ_ONLY)) */
+    /*   lives_attribute_set_readonly(obj, prop->identifier, TRUE); */
   }
 
   // if it is greyscale, we will add fake U and V planes
@@ -666,7 +666,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   lives_attribute_append_listener(obj, VDEV_PROP_PALETTE, set_palette_desc);
   lives_attribute_set_param_type(obj, VDEV_PROP_PALETTE, _("Colourspace"), WEED_PARAM_INTEGER);
   lives_object_set_attribute_value(obj, VDEV_PROP_PALETTE, ldev->palette);
-  lives_attribute_set_readonly(obj, VDEV_PROP_PALETTE, TRUE);
+  // lives_attribute_set_readonly(obj, VDEV_PROP_PALETTE, TRUE);
 
   //
   rfx = obj_attrs_to_rfx(obj, FALSE);

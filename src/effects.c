@@ -1341,3 +1341,4 @@ void rte_keymodes_restore(int nkeys) {
     mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
   }
 }
+

@@ -498,13 +498,6 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 
 
 int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
-  weed_error_t werr;
-  int winitopts = 0;
-
-#ifndef IS_LIBLIVES
-  weed_plant_t *test_plant;
-#endif
-
   o_argc = argc;
   o_argv = argv;
 
@@ -516,6 +509,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   XInitThreads();
 #endif
 
+  init_memfuncs(0);
+
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(4, 0, 0)
   gtk_init();
@@ -525,8 +520,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
   set_signal_handlers((SignalHandlerPointer)catch_sigint);
-
-  init_memfuncs(0);
 
   lives_memset(&ign_opts, 0, sizeof(ign_opts));
 
@@ -581,129 +574,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   g_printerr("FULL DEBUGGING IS ON !!\n");
 #endif
 #endif
-
-#ifndef IS_LIBLIVES
-  // start up the Weed system
-  weed_abi_version = libweed_get_abi_version();
-  if (weed_abi_version > WEED_ABI_VERSION) weed_abi_version = WEED_ABI_VERSION;
-#ifdef WEED_STARTUP_TESTS
-  winitopts |= WEED_INIT_DEBUGMODE;
-#endif
-  werr = libweed_init(weed_abi_version, winitopts);
-  if (werr != WEED_SUCCESS) {
-    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
-    LIVES_FATAL("Failed to init Weed");
-    _exit(1);
-  }
-
-#ifndef USE_STD_MEMFUNCS
-#ifdef USE_RPMALLOC
-  libweed_set_memory_funcs(rpmalloc, rpfree);
-#else
-#ifndef DISABLE_GSLICE
-#if GLIB_CHECK_VERSION(2, 14, 0)
-  libweed_set_slab_funcs(lives_slice_alloc, lives_slice_unalloc, lives_slice_alloc_and_copy);
-#else
-  libweed_set_slab_funcs(lives_slice_alloc, lives_slice_unalloc, NULL);
-#endif
-#else
-  libweed_set_memory_funcs(lives_malloc, lives_free);
-#endif // DISABLE_GSLICE
-#endif // USE_RPMALLOC
-  weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
-#endif // USE_STD_MEMFUNCS
-#endif //IS_LIBLIVES
-
-  // backup the core functions so we can override them
-  _weed_plant_new = weed_plant_new;
-  _weed_plant_free = weed_plant_free;
-  _weed_leaf_set = weed_leaf_set;
-  _weed_leaf_get = weed_leaf_get;
-  _weed_leaf_delete = weed_leaf_delete;
-  _weed_plant_list_leaves = weed_plant_list_leaves;
-  _weed_leaf_num_elements = weed_leaf_num_elements;
-  _weed_leaf_element_size = weed_leaf_element_size;
-
-#if WEED_ABI_CHECK_VERSION(202)
-  _weed_leaf_set_element_size = weed_leaf_set_element_size;
-#endif
-
-  _weed_leaf_seed_type = weed_leaf_seed_type;
-  _weed_leaf_get_flags = weed_leaf_get_flags;
-  _weed_leaf_set_flags = weed_leaf_set_flags;
-
-  mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
-
-#ifdef WEED_STARTUP_TESTS
-  run_weed_startup_tests();
-  abort();
-#if 0
-  fprintf(stderr, "\n\nRetesting with API 200, bugfix mode\n");
-  werr = libweed_init(200, winitopts | WEED_INIT_ALLBUGFIXES);
-  if (werr != WEED_SUCCESS) {
-    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
-    LIVES_FATAL("Failed to init Weed");
-    _exit(1);
-  }
-  run_weed_startup_tests();
-  fprintf(stderr, "\n\nRetesting with API 200, epecting problems in libweed-utils\n");
-  werr = libweed_init(200, winitopts);
-  if (werr != WEED_SUCCESS) {
-    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
-    LIVES_FATAL("Failed to init Weed");
-    _exit(1);
-  }
-  run_weed_startup_tests();
-#endif
-  abort();
-#endif
-
-#ifdef ENABLE_DIAGNOSTICS
-  check_random();
-  lives_struct_test();
-  test_palette_conversions();
-#endif
-
-  // allow us to set immutable values (plugins can't)
-  weed_leaf_set = weed_leaf_set_host;
-
-  // allow us to delete undeletable leaves (plugins can't)
-  weed_leaf_delete = weed_leaf_delete_host;
-
-  // allow us to set immutable values (plugins can't)
-  //weed_leaf_get = weed_leaf_get_monitor;
-
-  // allow us to free undeletable plants (plugins cant')
-  weed_plant_free = weed_plant_free_host;
-  // weed_plant_new = weed_plant_new_host;
-
-  init_random();
-
-  init_colour_engine();
-
-  make_std_icaps();
-
-  weed_threadsafe = FALSE;
-  test_plant = weed_plant_new(0);
-  if (weed_leaf_set_private_data(test_plant, WEED_LEAF_TYPE, NULL) == WEED_ERROR_CONCURRENCY)
-    weed_threadsafe = TRUE;
-  else weed_threadsafe = FALSE;
-  weed_plant_free(test_plant);
-
-  widget_helper_init();
-
-#ifdef WEED_WIDGETS
-  widget_klasses_init(LIVES_TOOLKIT_GTK);
-  //show_widgets_info();
-#endif
-
-  // non-localised name
-  lives_set_prgname("LIVES");
-
-  /* TRANSLATORS: localised name may be used here */
-  lives_set_application_name(_("LiVES"));
-  widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ",
-                             lives_get_application_name(), LiVES_VERSION);
 
   run_the_program(argc, argv, gtk_thread, id);
 

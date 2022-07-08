@@ -10,6 +10,7 @@
 #include "effects-weed.h"
 #include "callbacks.h"
 #include "omc-learn.h"
+#include "startup.h"
 
 static void _pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
   if (prefs->startup_phase && !LIVES_IS_FILE_CHOOSER_DIALOG(dialog)) {

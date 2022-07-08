@@ -5,6 +5,7 @@
 
 #include "main.h"
 #include "cvirtual.h"
+#include "startup.h"
 
 
 LIVES_GLOBAL_INLINE int find_clip_by_uid(uint64_t uid) {

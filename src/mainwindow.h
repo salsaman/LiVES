@@ -243,29 +243,6 @@ typedef enum {
 					      : (dir1) == LIVES_DIR_IN ? (dir2) == LIVES_DIR_OUT : (dir1) == LIVES_DIR_OUT \
 					      ? (dir2) == LIVES_DIR_IN : sig(dir1) != sig(dir2))
 
-typedef enum {
-  LIVES_MATCH_UNDEFINED = 0,
-  LIVES_MATCH_NEAREST,
-  LIVES_MATCH_AT_LEAST,
-  LIVES_MATCH_AT_MOST,
-  LIVES_MATCH_LOWEST,
-  LIVES_MATCH_HIGHEST,
-  LIVES_MATCH_CHOICE,
-  LIVES_MATCH_SPECIFIED,
-  N_MATCH_TYPES,
-} lives_match_t;
-
-#define MATCH_TYPE_ENABLED 1
-#define MATCH_TYPE_DEFAULT 2
-
-/// delivery types
-typedef enum {
-  LIVES_DELIVERY_UNDEFINED,
-  LIVES_DELIVERY_PULL,
-  LIVES_DELIVERY_PUSH,
-  LIVES_DELIVERY_PUSH_PULL,
-} lives_delivery_t;
-
 /// toy types
 typedef enum {
   LIVES_TOY_NONE = 0,

@@ -14,6 +14,7 @@
 #include "resample.h"
 #include "audio.h"
 #include "cvirtual.h"
+#include "startup.h"
 #include "rfx-builder.h"
 #ifdef LIBAV_TRANSCODE
 #include "transcode.h"

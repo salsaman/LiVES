@@ -489,6 +489,9 @@ static int ebml_parse_id(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
     if (id == syntax[i].id)
       break;
   }
+
+  // valgrind complains about unitialised value here
+  // could be syntax, sytntax->type, syntax[i], num_levels, eves
   if (syntax->type == EBML_NONE || (!syntax[i].id && id == MATROSKA_ID_CLUSTER &&
                                     matroska->num_levels > 0 &&
                                     matroska->levels[matroska->num_levels - 1].length == 0xffffffffffffff))

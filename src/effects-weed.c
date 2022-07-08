@@ -32,6 +32,21 @@ using namespace cv;
 
 ////////////////////////////////////////////////////////////////////////
 
+// leaves which should be deleted when nullifying pixel_data
+const char *PIXDATA_NULLIFY_LEAVES[] = {LIVES_LEAF_BBLOCKALLOC,
+                                        LIVES_LEAF_PIXEL_DATA_CONTIGUOUS,
+                                        WEED_LEAF_HOST_ORIG_PDATA,
+                                        LIVES_LEAF_PIXBUF_SRC,
+                                        LIVES_LEAF_SURFACE_SRC,
+                                        WEED_LEAF_NATURAL_SIZE,
+                                        LIVES_LEAF_MD5SUM,
+                                        LIVES_LEAF_MD5_CHKSIZE,
+                                        NULL
+                                       };
+
+// additional leaves which should be removed / reset after copying
+const char *NO_COPY_LEAVES[] = { LIVES_LEAF_REFCOUNTER, NULL};
+
 static int our_plugin_id = 0;
 static weed_plant_t *expected_hi = NULL, *expected_pi = NULL;
 static boolean suspect = FALSE;
@@ -77,7 +92,7 @@ LIVES_GLOBAL_INLINE int filter_mutex_lock(int key) {
   if (key >= 0 && key < FX_KEYS_MAX_VIRTUAL) {
     pthread_mutex_lock(&mainw->fx_key_mutex[key]);
     if (mainw->fx_mutex_tid[key] == -1) {
-      mainw->fx_mutex_tid[key] = THREADVAR(id);
+      mainw->fx_mutex_tid[key] = THREADVAR(idx);
       mainw->fx_mutex_nlocks[key] = 0;
     }
     mainw->fx_mutex_nlocks[key]++;
@@ -103,7 +118,7 @@ LIVES_GLOBAL_INLINE int filter_mutex_trylock(int key) {
 
 LIVES_GLOBAL_INLINE int filter_mutex_unlock(int key) {
   if (key >= 0 && key < FX_KEYS_MAX_VIRTUAL) {
-    if (mainw->fx_mutex_tid[key] == THREADVAR(id)
+    if (mainw->fx_mutex_tid[key] == THREADVAR(idx)
         && mainw->fx_mutex_nlocks[key]) {
       mainw->fx_mutex_nlocks[key]--;
       if (!mainw->fx_mutex_nlocks[key]) {
@@ -4590,35 +4605,35 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
 // Weed function overrides /////////////////
 
 boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
-  int flags = weed_leaf_get_flags(plant, key);
-  if (flags & WEED_FLAG_FREE_ON_DELETE) {
-    uint32_t st = weed_leaf_seed_type(plant, key);
-    int nvals;
-    if (st == WEED_SEED_PLANTPTR) {
-      weed_plantptr_t *pls = weed_get_plantptr_array_counted(plant, key, &nvals);
-      if (nvals) {
+  boolean bret = FALSE;
+  if (plant && weed_plant_has_leaf(plant, key)) {
+    int flags = weed_leaf_get_flags(plant, key);
+    if ((flags & WEED_FLAG_FREE_ON_DELETE) && !(flags & WEED_FLAG_UNDELETABLE)) {
+      uint32_t st = weed_leaf_seed_type(plant, key);
+      int nvals;
+      switch (st) {
+      case WEED_SEED_PLANTPTR: {
+        weed_plantptr_t *pls = weed_get_plantptr_array_counted(plant, key, &nvals);
         for (int i = 0; i < nvals; i++) if (pls[i]) weed_plant_free(pls[i]);
-        lives_free(pls);
+        if (pls) lives_free(pls);
+        weed_set_plantptr_value(plant, key, NULL);
+        bret = TRUE;
       }
-    } else if (st >= WEED_SEED_VOIDPTR) {
-      void **data = weed_get_voidptr_array_counted(plant, key, &nvals);
-      if (nvals) {
+      break;
+      case WEED_SEED_VOIDPTR: {
+        void **data = weed_get_voidptr_array_counted(plant, key, &nvals);
         for (int i = 0; i < nvals; i++) if (data[i]) lives_free(data[i]);
-        lives_free(data);
+        if (data) lives_free(data);
+        weed_set_voidptr_value(plant, key, NULL);
+        bret = TRUE;
       }
+      break;
+      default: break;
+      }
+      weed_leaf_clear_flagbits(plant, key, WEED_FLAG_FREE_ON_DELETE);
     }
-    if (st == WEED_SEED_VOIDPTR) {
-      weed_leaf_clear_flagbits(plant, key, WEED_FLAG_UNDELETABLE | WEED_FLAG_FREE_ON_DELETE
-                               | WEED_FLAG_IMMUTABLE);
-      weed_set_voidptr_value(plant, key, NULL);
-    } else if (st == WEED_SEED_PLANTPTR) {
-      weed_leaf_clear_flagbits(plant, key, WEED_FLAG_UNDELETABLE | WEED_FLAG_FREE_ON_DELETE
-                               | WEED_FLAG_IMMUTABLE);
-      weed_set_plantptr_value(plant, key, NULL);
-    } else weed_leaf_clear_flagbits(plant, key, WEED_FLAG_FREE_ON_DELETE);
-    return TRUE;
   }
-  return FALSE;
+  return bret;
 }
 
 
@@ -7179,7 +7194,7 @@ start1:
         char *filter_name, *tmp;
         filter = weed_filters[idx];
         filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
-        d_print(_("Failed to start instance %s, (%s)\n"), filter_name, (tmp = weed_error_to_text(error)));
+        d_print(_("Failed to start instance %s, (%s)\n"), filter_name, (tmp = weed_strerror(error)));
         lives_free(tmp);
         lives_free(filter_name);
 deinit2:
@@ -8957,7 +8972,7 @@ geninit1:
           filter = weed_instance_get_filter(inst, TRUE);
           filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
           d_print(_("Failed to start generator %s (%s)\n"), filter_name,
-                  (tmp = lives_strdup(weed_error_to_text(error))));
+                  (tmp = lives_strdup(weed_strerror(error))));
           lives_free(tmp);
           lives_free(filter_name);
 
@@ -9076,7 +9091,7 @@ undoit:
           filter = weed_instance_get_filter(inst, TRUE);
           filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
           d_print(_("Failed to start generator %s, (%s)\n"), filter_name,
-                  (tmp = lives_strdup(weed_error_to_text(error))));
+                  (tmp = lives_strdup(weed_strerror(error))));
           lives_free(tmp);
           lives_free(filter_name);
 
@@ -11797,42 +11812,61 @@ LIVES_GLOBAL_INLINE int32_t weed_plant_mutate(weed_plantptr_t plant, int32_t new
 }
 
 
-boolean no_copy_leaf(const char *key) {
-  if (!lives_strcmp(key, LIVES_LEAF_BBLOCKALLOC)
-      || !lives_strcmp(key, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS)
-      || !lives_strcmp(key, WEED_LEAF_HOST_ORIG_PDATA)
-      || !lives_strcmp(key, LIVES_LEAF_REFCOUNTER)
-      || !lives_strcmp(key, LIVES_LEAF_PIXBUF_SRC)
-      || !lives_strcmp(key, LIVES_LEAF_SURFACE_SRC)
-     ) return TRUE;
+boolean pixdata_nullify_leaf(const char *key) {
+  for (int i = 0; PIXDATA_NULLIFY_LEAVES[i]; i++) {
+    if (!lives_strcmp(key, PIXDATA_NULLIFY_LEAVES[i])) {
+      return TRUE;
+    }
+  }
   return FALSE;
 }
 
 
-LIVES_GLOBAL_INLINE void weed_plant_sanitize(weed_plant_t *plant) {
+boolean no_copy_leaf(const char *key) {
+  for (int i = 0; NO_COPY_LEAVES[i]; i++) {
+    if (!lives_strcmp(key, NO_COPY_LEAVES[i])) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+
+LIVES_GLOBAL_INLINE void weed_plant_sanitize(weed_plant_t *plant, boolean sterilize) {
+  // sterilize should be used when dealing with a "dormant" plante, e.g loaded from
+  // external storage
+  // for nullifying the pixel_datya of a "live" plant, 'sterilize' should not be set
+  // as it remove leaves need specific handling (e.g refcounter)
   if (plant) {
     char **leaves = weed_plant_list_leaves(plant, NULL);
     for (int i = 0; leaves[i]; i++) {
       // remove things like the refcounter, pixel data sources, that could cause problems
       // if left intact
       weed_leaf_clear_flagbits(plant, leaves[i], WEED_FLAG_FREE_ON_DELETE);
-      if (no_copy_leaf(leaves[i])) weed_leaf_delete(plant, leaves[i]);
+      if (pixdata_nullify_leaf(leaves[i])) weed_leaf_delete(plant, leaves[i]);
+      else if (sterilize && no_copy_leaf(leaves[i])) weed_leaf_delete(plant, leaves[i]);
       lives_free(leaves[i]);
     }
     lives_free(leaves);
   }
 }
 
-
+// duplicate, clean and reset refcount for copy
 LIVES_GLOBAL_INLINE void weed_plant_duplicate_clean(weed_plant_t *dst, weed_plant_t *src) {
   weed_plant_duplicate(dst, src, FALSE);
-  weed_plant_sanitize(dst);
+  weed_plant_sanitize(dst, TRUE);
 }
 
-
+// duplicate / add, clean and reset refcount
 LIVES_GLOBAL_INLINE void weed_plant_dup_add_clean(weed_plant_t *dst, weed_plant_t *src) {
   weed_plant_duplicate(dst, src, TRUE);
-  weed_plant_sanitize(dst);
+  weed_plant_sanitize(dst, TRUE);
+}
+
+// TBD
+LIVES_GLOBAL_INLINE void weed_plant_dup_add_sterilize(weed_plant_t *dst, weed_plant_t *src) {
+  weed_plant_duplicate(dst, src, TRUE);
+  weed_plant_sanitize(dst, TRUE);
 }
 
 
@@ -11840,7 +11874,7 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_copy(weed_plant_t *orig) {
   weed_plant_t *plant = NULL;
   if (orig) {
     plant = weed_plant_copy(orig);
-    weed_plant_sanitize(plant);
+    weed_plant_sanitize(plant, TRUE);
   }
   return plant;
 }
@@ -12296,7 +12330,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
           }
         } else {
           if (check_ptrs) {
-            if (no_copy_leaf(key)) add_leaf = FALSE;
+            if (pixdata_nullify_leaf(key) || no_copy_leaf(key)) add_leaf = FALSE;
           }
           if (add_leaf) weed_leaf_set(plant, key, st, ne, (void *)ints);
         }

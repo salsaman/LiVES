@@ -386,7 +386,7 @@ static LIVES_HOT void lives_md5_proc(const void *p, size_t len, md5priv *priv) {
   size_t nw = len / sizeof(uint32_t);
   const uint32_t *w = p, *e = w + nw;
   // backup current values of A, B, C, D - will be resotred after
-  uint32_t X[16], A = priv->A, B = priv->B, C = priv->C, D = priv->D;
+  uint32_t X[MD5_SIZE], A = priv->A, B = priv->B, C = priv->C, D = priv->D;
   priv->t[0] += len;
   if (priv->t[0] < len) priv->t[1]++;
   while (w < e) {
@@ -457,8 +457,29 @@ LIVES_LOCAL_INLINE void *lives_md5_make(const char *p, size_t len, void *ret) {
   return lives_md5_end(&priv, ret);
 }
 
+
+void *lives_md5_sum(const char *filename, int64_t *fsize) {
+  char buff[65536];
+  uint8_t *md5buf = lives_calloc(1, MD5_SIZE);
+  md5priv priv;
+  int64_t tot = 0;
+  int fd = lives_open_buffered_rdonly(filename);
+  if (fd < 0) return NULL;
+  lives_md5_start(&priv);
+  while (!lives_read_buffered_eof(fd)) {
+    ssize_t dsize = lives_read_buffered(fd, buff, 65536, TRUE);
+    if (dsize < 0) return NULL;
+    lives_md5_calc(buff, dsize, &priv);
+    tot += dsize;
+  }
+  lives_close_buffered(fd);
+  if (fsize) *fsize = tot;
+  return lives_md5_end(&priv, md5buf);
+}
+
+
 uint8_t *tinymd5(void *data, size_t dsize) {
-  uint8_t *md5buf = lives_calloc(1, 16);
+  uint8_t *md5buf = lives_calloc(1, MD5_SIZE);
   lives_md5_make(data, dsize, md5buf);
   return md5buf;
 }
@@ -466,8 +487,8 @@ uint8_t *tinymd5(void *data, size_t dsize) {
 
 uint64_t minimd5(void *data, size_t dsize) {
   static union md5conv {
-    uint64_t U[2];
-    uint8_t u[16];
+    uint64_t U[MD5_SIZE >> 3];
+    uint8_t u[MD5_SIZE];
   } res;
   uint64_t ret;
   lives_md5_make(data, dsize, (uint8_t *)&res.u);

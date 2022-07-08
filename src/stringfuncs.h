@@ -60,3 +60,5 @@ char *lives_pad_ellipsize(char *, size_t fixlen, int padlen, LiVESEllipsizeMode 
 char *format_tstr(double xtime, int minlim);
 
 char *dir_to_pieces(const char *dirnm);
+
+char *md5_print(void *md5sum);

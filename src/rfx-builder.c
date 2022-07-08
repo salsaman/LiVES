@@ -11,8 +11,7 @@
 #include "interface.h"
 #include "paramwindow.h"
 #include "effects.h"
-
-#define BG_LOAD
+#include "startup.h"
 
 static LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder);
 static LiVESWidget *make_param_window_dialog(int hnum, rfx_build_window_t *rfxbuilder);
@@ -4359,7 +4358,7 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
 
     for (;; rfx_list = rfx_list->next) {
       if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
-#ifndef BG_LOAD
+#if !BG_LOAD_RFX
       if (!mainw->splash_window) lives_widget_context_update();
 #endif
       if (!rfx_list) {
@@ -4380,7 +4379,7 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
 
       plugin_name = lives_strdup((char *)rfx_list->data);
 
-#ifndef BG_LOAD
+#if !BG_LOAD_RFX
       if (mainw->splash_window) {
         splash_msg((tmp = lives_strdup_printf(_("Loading rendered effect %s..."), plugin_name)),
 		   SPLASH_LEVEL_LOAD_RFX);

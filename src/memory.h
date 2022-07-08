@@ -268,11 +268,6 @@ void *free_bigblock(void *bstart);
 void *lives_malloc_medium(size_t msize);
 void *lives_calloc_medium(size_t msize);
 
-#ifdef USE_RPMALLOC
-void *quick_calloc(size_t n, size_t s);
-void quick_free(void *p);
-#endif
-
 //////////////////////////// utility functions ///
 
 void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize);
@@ -292,13 +287,13 @@ char *get_memstats(void);
 // at the end of the header we check if the values have been set and update lives_malloc from _lives_malloc, etc.
 // the same values are passed into realtime fx plugins via Weed function overloading
 
-#if defined (HAVE_OPENCV) || defined (HAVE_OPENCV4)
-#ifndef NO_OPENCV_MEMFUNCS
-#define _lives_malloc(sz)  alignPtr(sz, HW_ALIGNMENTE);
-#define _lives_free    fastFree
-#define _lives_realloc proxy_realloc
-#endif
-#endif
+/* #if defined (HAVE_OPENCV) || defined (HAVE_OPENCV4) */
+/* #ifndef NO_OPENCV_MEMFUNCS */
+/* #define _lives_malloc(sz) alignPtr(sz, HW_ALIGNMENT); */
+/* #define _lives_free    fastFree */
+/* #define _lives_realloc proxy_realloc */
+/* #endif */
+/* #endif */
 
 #ifndef __cplusplus
 
@@ -313,9 +308,7 @@ char *get_memstats(void);
 #ifdef ENABLE_OIL
 #ifndef NO_OIL_MEMFUNCS
 #define _lives_memcpy(dest, src, n) {if (n >= 32 && n <= OIL_MEMCPY_MAX_BYTES) { \
-      oil_memcpy((uint8_t *)dest, (const uint8_t *)src, n);		\
-      return dest;\							\
-    }
+      oil_memcpy((uint8_t *)dest, (const uint8_t *)src, n); return dest;}
 #endif
 #endif
 

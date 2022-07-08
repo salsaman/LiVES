@@ -15,40 +15,6 @@ char *pango_text_strip_markup(const char *text);
 #define SUB_OPACITY 20480 // TODO
 
 typedef enum {
-  SUBTITLE_TYPE_NONE = 0,
-  SUBTITLE_TYPE_SRT,
-  SUBTITLE_TYPE_SUB
-} lives_subtitle_type_t;
-
-// for future use
-typedef struct {
-  lives_colRGB48_t fg;
-  lives_colRGB48_t bg;
-} lives_subtitle_style_t;
-
-typedef struct _lives_subtitle_t xlives_subtitle_t;
-
-typedef struct _lives_subtitle_t {
-  double start_time;
-  double end_time;
-  lives_subtitle_style_t *style; ///< for future use
-  long textpos;
-  xlives_subtitle_t *prev; ///< for future use
-  xlives_subtitle_t *next;
-} lives_subtitle_t;
-
-typedef struct {
-  lives_subtitle_type_t type;
-  int tfile;
-  char *text;
-  lives_subtitle_t *current; ///< pointer to current entry in index
-  lives_subtitle_t *first;
-  lives_subtitle_t *last;
-  int offset; ///< offset in frames (default 0)
-  double last_time;
-} lives_subtitles_t;
-
-typedef enum {
   LIVES_TEXT_MODE_FOREGROUND_ONLY,
   LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,
   LIVES_TEXT_MODE_BACKGROUND_ONLY,

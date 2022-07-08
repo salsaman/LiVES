@@ -50,28 +50,6 @@ uint64_t make_version_hash(const char *ver);
 char *unhash_version(uint64_t version);
 int verhash(char *version);
 
-////////////////// executables ///
-
-void get_location(const char *exe, char *val, int maxlen);
-boolean check_for_executable(lives_checkstatus_t *cap, const char *exec);
-
-///////// package management ////
-
-char *get_install_cmd(const char *distro, const char *exe);
-char *get_install_lib_cmd(const char *distro, const char *libname);
-
-boolean check_snap(const char *prog);
-
-/////////////////// image filennames ////////
-
-/// lives_image_type can be a string, lives_img_type_t is an enumeration
-char *make_image_file_name(lives_clip_t *, frames_t frame, const char *img_ext);// /workdir/handle/00000001.png
-char *make_image_short_name(lives_clip_t *, frames_t frame, const char *img_ext);// e.g. 00000001.png
-const char *get_image_ext_for_type(lives_img_type_t imgtype);
-lives_img_type_t lives_image_ext_to_img_type(const char *img_ext);
-lives_img_type_t lives_image_type_to_img_type(const char *lives_image_type);
-const char *image_ext_to_lives_image_type(const char *img_ext);
-
 /////////////////// clip and frame utils ////
 
 double calc_time_from_frame(int clip, frames_t frame);
@@ -86,6 +64,8 @@ void calc_minspect(int *rwidth, int *rheight, int cwidth, int cheight);
 
 void minimise_aspect_delta(double allowed_aspect, int hblock, int vblock, int hsize, int vsize,
                            int *width, int *height);
+
+int get_next_free_file(void);
 
 void init_clipboard(void);
 

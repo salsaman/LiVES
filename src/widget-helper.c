@@ -942,9 +942,6 @@ int get_gov_status(void) {
 static void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
   lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
   if (cl) active_sigdets = lives_list_remove(active_sigdets, sigdata);
-
-  //if (sigdata->proc) weed_plant_free(sigdata->proc);
-
   if (sigdata->detsig) lives_free(sigdata->detsig);
   lives_free(sigdata);
 }
@@ -966,6 +963,7 @@ static lives_sigdata_t *tasks_running(void) {
         return sigdata;
       }
       if (sigdata->alarm_handle == LIVES_NO_ALARM) {
+        // must not free sigdata->proc after this
         if (sigdata->proc) lives_proc_thread_dontcare(sigdata->proc);
         sigdata_free(sigdata, NULL);
       }
@@ -995,8 +993,7 @@ boolean fg_service_fulfill(void) {
   g_print("FGSF 12 %d %d\n", lives_proc_thread_get_cancelled(lpttorun),
           lives_proc_thread_check_finished(lpttorun));
 #endif
-  if (!lives_proc_thread_get_cancelled(lpttorun)
-      && !lives_proc_thread_check_finished(lpttorun)) {
+  if (!lives_proc_thread_is_done(lpttorun)) {
 #ifdef DEBUG_GUI_THREADS
     g_print("FGSF 13\n");
 #endif
@@ -1005,7 +1002,7 @@ boolean fg_service_fulfill(void) {
       boolean is_fg_service = FALSE;
       // check if there is a foreground task to run
       // call fg task directly, bg thread will wait for lpttorun == NULL and read lpt_result
-      // will also call lives_proc_thread_free(lpttorun), so it must not be used again after this
+      // we should not free it, just set it to NULL
       if (THREADVAR(fg_service)) {
         is_fg_service = TRUE;
       } else THREADVAR(fg_service) = TRUE;
@@ -1013,7 +1010,6 @@ boolean fg_service_fulfill(void) {
       g_print("FGSF 14 %d\n", is_fg_service);
 #endif
       fg_run_func(lpttorun, lpt_retval);
-      //lives_hooks_trigger(NULL, THREADVAR(hook_closures), THREAD_INTERNAL_HOOK);
       if (!is_fg_service) THREADVAR(fg_service) = FALSE;
     }
 #ifdef DEBUG_GUI_THREADS
@@ -1433,6 +1429,7 @@ static boolean async_timer_handler(livespointer data) {
         if (sigdata->proc) {
           pthread_mutex_lock(&task_list_mutex);
           task_list = lives_list_remove_data(task_list, sigdata, FALSE);
+          // must not free sigdata->proc after this
           lives_proc_thread_dontcare(sigdata->proc);
           pthread_mutex_unlock(&task_list_mutex);
         }
@@ -2008,7 +2005,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_invalidate_rect(LiVESXWindow *
     boolean inv_childs) {
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(4, 0, 0)
-  gdk_window_invalidate_rect(window, (const GdkRectangle *)rect, inv_childs);
+  MAIN_THREAD_EXECUTE_VOID(gdk_window_invalidate_rect, "vvb", window, (void *)rect, inv_childs);
   return TRUE;
 #endif
 #endif
@@ -2150,6 +2147,9 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
   g_print("gstat1.5 is %d\n", gstat);
 #endif
 
+  // should not be necessary, but just in case
+  weed_refcount_inc(lpt);
+
   lpttorun = lpt;
   lpt_retval = retval;
 
@@ -2159,6 +2159,9 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
       if (gov_will_run == mysource) gov_will_run = 0;
     }
   }
+
+  // remove our added ref
+  weed_refcount_dec(lpt);
 }
 
 
@@ -6633,7 +6636,7 @@ boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
   if (widget_opts.justify == LIVES_JUSTIFY_START) lives_entry_set_alignment(entry, 0.);
   else if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_entry_set_alignment(entry, 0.5);
   if (widget_opts.justify == LIVES_JUSTIFY_END) lives_entry_set_alignment(entry, 1.);
-  gtk_entry_set_text(entry, text);
+  MAIN_THREAD_EXECUTE_VOID(gtk_entry_set_text, "vs", entry, text);
   return TRUE;
 #endif
   return FALSE;
@@ -8550,11 +8553,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_frozen(LiVESWidget * widget
   // set insens. but w.out dimming
 #if GTK_CHECK_VERSION(3, 16, 0)
   char *sopac;
-  if (state) {
-    if (opac == 0.) opac = .75;
-  } else opac = 0.5;
+  if (opac == 0.) {
+    if (state) opac = .75;
+    else opac = 0.5;
+  }
   sopac = lives_strdup_printf("%f", opac);
   set_css_value_direct(widget, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", sopac);
+  set_css_value_direct(widget, LIVES_WIDGET_STATE_INSENSITIVE, "*", "opacity", sopac);
   lives_free(sopac);
 #endif
   return lives_widget_set_sensitive(widget, !state);

@@ -7,7 +7,23 @@
 #ifndef _FRAME_LOADER_H
 #define _FRAME_LOADER_H
 
+#define GET_BASE_DEFNS
+#include "cliphandler.h"
+#undef GET_BASE_DEFNS
+
 // functions that deal with loading (and saving) frames
+
+/////////////////// image filennames ////////
+
+/// lives_image_type can be a string, lives_img_type_t is an enumeration
+char *make_image_file_name(lives_clip_t *, frames_t frame, const char *img_ext);// /workdir/handle/00000001.png
+char *make_image_short_name(lives_clip_t *, frames_t frame, const char *img_ext);// e.g. 00000001.png
+const char *get_image_ext_for_type(lives_img_type_t imgtype);
+lives_img_type_t lives_image_ext_to_img_type(const char *img_ext);
+lives_img_type_t lives_image_type_to_img_type(const char *lives_image_type);
+const char *image_ext_to_lives_image_type(const char *img_ext);
+
+///////////
 
 boolean pull_frame(weed_layer_t *, const char *image_ext, ticks_t tc);
 void pull_frame_threaded(weed_layer_t *, const char *img_ext, ticks_t tc, int width, int height);

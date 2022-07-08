@@ -400,7 +400,13 @@ retry_configfile:
   get_location(EXEC_EJECT, capable->eject_cmd, PATH_MAX);
 
   check_for_executable(&capable->has_du, EXEC_DU);
+
+#if USE_INTERNAL_MD5SUM
+  capable->has_md5sum = INTERNAL;
+#else
   check_for_executable(&capable->has_md5sum, EXEC_MD5SUM);
+#endif
+
   check_for_executable(&capable->has_ffprobe, EXEC_FFPROBE);
   check_for_executable(&capable->has_sox_play, EXEC_PLAY);
 
@@ -451,7 +457,6 @@ static boolean pre_init(void) {
 #endif
 
   pthread_mutexattr_t mattr;
-  lives_thread_data_t *tdata;
 
   char *msg, *tmp, *tmp2, *cfgdir, *old_libdir = NULL;
 
@@ -460,8 +465,15 @@ static boolean pre_init(void) {
   int i;
 
   /// create context data for main thread; must be called before get_capabilities()
-  tdata = lives_thread_data_create(0);
-  tdata->pthread = pthread_self();
+  lives_thread_data_create(0);
+
+#ifdef VALGRIND_ON
+  prefs->nfx_threads = 8;
+#else
+  if (mainw->debug) prefs->nfx_threads = 2;
+#endif
+
+  lives_threadpool_init();
 
   // locate shell commands that may be used in processing
   //
@@ -621,14 +633,6 @@ static boolean pre_init(void) {
     future_prefs->nfx_threads = prefs->nfx_threads;
   }
 
-#ifdef VALGRIND_ON
-  prefs->nfx_threads = 8;
-#else
-  if (mainw->debug) prefs->nfx_threads = 2;
-#endif
-
-  lives_thread_data_create(0);
-
   // initialise cpu load monitoring
   get_proc_loads(TRUE);
   get_proc_loads(FALSE);
@@ -742,8 +746,6 @@ static boolean pre_init(void) {
   prefs->sleep_time = 1000;
 
   prefs->present = FALSE;
-
-  lives_threadpool_init();
 
   get_string_prefd(PREF_DEFAULT_IMAGE_TYPE, prefs->image_type, 16, LIVES_IMAGE_TYPE_PNG);
   lives_snprintf(prefs->image_ext, 16, "%s",
@@ -1823,7 +1825,7 @@ static boolean lives_startup2(livespointer data) {
       set_double_pref(PREF_CPICK_TIME, prefs->cptime);
       set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
       lives_proc_thread_cancel(mainw->helper_procthreads[PT_CUSTOM_COLOURS], FALSE);
-      lives_proc_thread_join(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+      //lives_proc_thread_join(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       // must take care to execute this here or in the function itself, otherwise
       // gtk+ may crash later
       main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
@@ -1941,10 +1943,10 @@ static boolean lives_startup2(livespointer data) {
                                (lives_funcptr_t)add_rfx_effects, WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY);
   }
 
-  mainw->lazy = lives_idle_add_simple(lazy_startup_checks, NULL);
-
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
+
+  mainw->lazy = lives_idle_add(lazy_startup_checks, NULL);
 
   if (!CURRENT_CLIP_IS_VALID) lives_ce_update_timeline(0, 0.);
 
@@ -1995,6 +1997,135 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   ssize_t mynsize;
   boolean toolong = FALSE;
   int xargc = argc;
+  weed_error_t werr;
+  int winitopts = 0;
+
+#ifndef IS_LIBLIVES
+  weed_plant_t *test_plant;
+#endif
+
+#ifndef IS_LIBLIVES
+  // start up the Weed system
+  weed_abi_version = libweed_get_abi_version();
+  if (weed_abi_version > WEED_ABI_VERSION) weed_abi_version = WEED_ABI_VERSION;
+#ifdef WEED_STARTUP_TESTS
+  winitopts |= WEED_INIT_DEBUGMODE;
+#endif
+  werr = libweed_init(weed_abi_version, winitopts);
+  if (werr != WEED_SUCCESS) {
+    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
+    LIVES_FATAL("Failed to init Weed");
+    _exit(1);
+  }
+
+#ifndef USE_STD_MEMFUNCS
+#if USE_RPMALLOC
+  libweed_set_memory_funcs(rpmalloc, rpfree);
+#else
+#ifndef DISABLE_GSLICE
+#if GLIB_CHECK_VERSION(2, 14, 0)
+  libweed_set_slab_funcs(lives_slice_alloc, lives_slice_unalloc, lives_slice_alloc_and_copy);
+#else
+  libweed_set_slab_funcs(lives_slice_alloc, lives_slice_unalloc, NULL);
+#endif
+#else
+  libweed_set_memory_funcs(lives_malloc, lives_free);
+#endif // DISABLE_GSLICE
+#endif // USE_RPMALLOC
+  weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
+#endif // USE_STD_MEMFUNCS
+#endif //IS_LIBLIVES
+
+  // backup the core functions so we can override them
+  _weed_plant_new = weed_plant_new;
+  _weed_plant_free = weed_plant_free;
+  _weed_leaf_set = weed_leaf_set;
+  _weed_leaf_get = weed_leaf_get;
+  _weed_leaf_delete = weed_leaf_delete;
+  _weed_plant_list_leaves = weed_plant_list_leaves;
+  _weed_leaf_num_elements = weed_leaf_num_elements;
+  _weed_leaf_element_size = weed_leaf_element_size;
+
+#if WEED_ABI_CHECK_VERSION(202)
+  _weed_leaf_set_element_size = weed_leaf_set_element_size;
+#endif
+
+  _weed_leaf_seed_type = weed_leaf_seed_type;
+  _weed_leaf_get_flags = weed_leaf_get_flags;
+  _weed_leaf_set_flags = weed_leaf_set_flags;
+
+  mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
+
+#ifdef WEED_STARTUP_TESTS
+  run_weed_startup_tests();
+  abort();
+#if 0
+  fprintf(stderr, "\n\nRetesting with API 200, bugfix mode\n");
+  werr = libweed_init(200, winitopts | WEED_INIT_ALLBUGFIXES);
+  if (werr != WEED_SUCCESS) {
+    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
+    LIVES_FATAL("Failed to init Weed");
+    _exit(1);
+  }
+  run_weed_startup_tests();
+  fprintf(stderr, "\n\nRetesting with API 200, epecting problems in libweed-utils\n");
+  werr = libweed_init(200, winitopts);
+  if (werr != WEED_SUCCESS) {
+    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
+    LIVES_FATAL("Failed to init Weed");
+    _exit(1);
+  }
+  run_weed_startup_tests();
+#endif
+  abort();
+#endif
+
+#ifdef ENABLE_DIAGNOSTICS
+  check_random();
+  lives_struct_test();
+  test_palette_conversions();
+#endif
+
+  // allow us to set immutable values (plugins can't)
+  weed_leaf_set = weed_leaf_set_host;
+
+  // allow us to delete undeletable leaves (plugins can't)
+  weed_leaf_delete = weed_leaf_delete_host;
+
+  // allow us to set immutable values (plugins can't)
+  //weed_leaf_get = weed_leaf_get_monitor;
+
+  // allow us to free undeletable plants (plugins cant')
+  weed_plant_free = weed_plant_free_host;
+  // weed_plant_new = weed_plant_new_host;
+
+  init_random();
+
+  init_colour_engine();
+
+  make_std_icaps();
+
+  weed_threadsafe = FALSE;
+  test_plant = weed_plant_new(0);
+  if (weed_leaf_set_private_data(test_plant, WEED_LEAF_TYPE, NULL) == WEED_ERROR_CONCURRENCY)
+    weed_threadsafe = TRUE;
+  else weed_threadsafe = FALSE;
+  weed_plant_free(test_plant);
+
+  widget_helper_init();
+
+#ifdef WEED_WIDGETS
+  widget_klasses_init(LIVES_TOOLKIT_GTK);
+  //show_widgets_info();
+#endif
+
+  // non-localised name
+  lives_set_prgname("LIVES");
+
+  /* TRANSLATORS: localised name may be used here */
+  lives_set_application_name(_("LiVES"));
+  widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ",
+                             lives_get_application_name(), LiVES_VERSION);
 
   prefs = (_prefs *)lives_calloc(1, sizeof(_prefs));
   future_prefs = (_future_prefs *)lives_calloc(1, sizeof(_future_prefs));
@@ -4840,4 +4971,129 @@ void replace_with_delegates(void) {
                           LIVES_INT_TO_POINTER(deint_idx));
     mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate = 0;
   }
+}
+
+
+boolean check_snap(const char *prog) {
+  // not working yet...
+  /* if (!check_for_executable(&capable->has_snap, EXEC_SNAP)) return FALSE; */
+  /* char *com = lives_strdup_printf("%s find %s", EXEC_SNAP, prog); */
+  /* char *res = grep_in_cmd(com, 0, 1, prog, 0, 1, FALSE); */
+  /* if (!res) return FALSE; */
+  /* lives_free(res); */
+  return TRUE;
+}
+
+
+#define SUDO_APT_INSTALL "sudo apt install %s"
+#define SU_PKG_INSTALL "su pkg install %s"
+
+char *get_install_cmd(const char *distro, const char *exe) {
+  char *cmd = NULL;
+  const char *pkgname = NULL;
+
+  if (!distro) distro = capable->distro_name;
+
+  if (!lives_strcmp(exe, EXEC_PIP)) {
+    if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
+      if (capable->python_version >= 3000000) pkgname = "python3-pip";
+      else if (capable->python_version >= 2000000) pkgname = "python-pip";
+      else pkgname = "python3 python3-pip";
+    }
+    if (!lives_strcmp(distro, DISTRO_FREEBSD)) {
+      if (capable->python_version >= 3000000) pkgname = "py3-pip";
+      else if (capable->python_version >= 2000000) pkgname = "py2-pip";
+      else pkgname = "python py3-pip";
+    }
+  }
+  if (!strcmp(exe, EXEC_GZIP)) pkgname = EXEC_GZIP;
+  if (!strcmp(exe, EXEC_YOUTUBE_DL)) pkgname = EXEC_YOUTUBE_DL;
+  if (!strcmp(exe, EXEC_YOUTUBE_DLC)) pkgname = EXEC_YOUTUBE_DLC;
+
+  if (!pkgname) pkgname = exe;
+
+  // TODO - add more, eg. pacman, dpkg
+  if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
+    cmd = lives_strdup_printf(SUDO_APT_INSTALL, pkgname);
+  }
+  if (!lives_strcmp(distro, DISTRO_FREEBSD)) {
+    cmd = lives_strdup_printf(SU_PKG_INSTALL, pkgname);
+  }
+  return cmd;
+}
+
+
+char *get_install_lib_cmd(const char *distro, const char *libname) {
+  char *libpkg = lives_strdup_printf("lib%s-dev", libname);
+  char *cmd = get_install_cmd(NULL, libpkg);
+  lives_free(libpkg);
+  return cmd;
+}
+
+
+void get_location(const char *exe, char *val, int maxlen) {
+  // find location of "exe" in path
+  // sets it in val which is a char array of maxlen bytes
+
+  char *loc;
+  if ((loc = lives_find_program_in_path(exe)) != NULL) {
+    lives_snprintf(val, maxlen, "%s", loc);
+    lives_free(loc);
+  } else {
+    lives_memset(val, 0, 1);
+  }
+}
+
+
+LIVES_LOCAL_INLINE lives_checkstatus_t has_executable(const char *exe) {
+  char *loc;
+  if ((loc = lives_find_program_in_path(exe)) != NULL) {
+    lives_free(loc);
+    return PRESENT;
+  }
+  // for now we don't return MISSING (requires code update to differentiate MISSING / UNCHECKED / PRESENT)
+  return FALSE;
+}
+
+
+// check if executable is present, missing or unchecked
+// if unchecked, check for it, and if not found ask the user politely to install it
+boolean check_for_executable(lives_checkstatus_t *cap, const char *exec) {
+#ifdef NEW_CHECKSTATUS
+  if (!cap || (*cap)->present == UNCHECKED) {
+    if (!cap || ((*cap)->flags & INSTALL_CANLOCAL)) {
+      /// TODO (next version)
+#else
+  if (!cap || *cap == UNCHECKED) {
+    if (!lives_strcmp(exec, EXEC_YOUTUBE_DL)) {
+#endif
+      char *localv = lives_build_filename(capable->home_dir, LOCAL_HOME_DIR, "bin", exec, NULL);
+      if (lives_file_test(localv, LIVES_FILE_TEST_IS_EXECUTABLE)) {
+        lives_free(localv);
+        if (cap) *cap = LOCAL;
+        return TRUE;
+      }
+      lives_free(localv);
+    }
+    if (has_executable(exec)) {
+      if (cap) *cap = PRESENT;
+      return TRUE;
+    } else {
+      if (!lives_strcmp(exec, EXEC_XDOTOOL) || !lives_strcmp(exec, EXEC_WMCTRL)) {
+        if (cap) *cap = MISSING;
+      }
+      //if (importance == necessary)
+      //do_please_install(exec);
+#ifdef HAS_MISSING_PRESENCE
+      if (cap) *cap = MISSING;
+#endif
+      //do_program_not_found_error(exec);
+      return FALSE;
+    }
+  }
+#if 0
+}
+}
+#endif
+return (*cap == PRESENT || *cap == LOCAL);
 }

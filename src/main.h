@@ -160,13 +160,15 @@ typedef enum {
   MISSING = -1, ///< not yet implemented (TODO)
   UNCHECKED = 0,
   PRESENT,
-  LOCAL,
+  LOCAL,	// user compiled code
+  INTERNAL,	// executable replaced by internal function
 } lives_checkstatus_t;
 
-#define XCAPABLE(foo, EXE_FOO) ((capable->has_##foo->present == UNCHECKED \
-				 ? ((capable->has_##foo->present =	\
-				     (has_executable(EXE_FOO) ? PRESENT : MISSING))) : \
-				 capable->has_##foo->present) == PRESENT)
+#define XCAPABLE(foo, EXE_FOO) \
+  (capable->has_##foo->present == INTERNAL ? PRESENT :  ((capable->has_##foo->present == UNCHECKED \
+							  ? ((capable->has_##foo->present = \
+							      (has_executable(EXE_FOO) ? PRESENT : MISSING))) : \
+							  capable->has_##foo->present) == PRESENT))
 #define GET_EXE(foo) QUOTEME(foo)
 #define PRESENT(foo) (XCAPABLE(foo, GET_EXE(foo)) == PRESENT)
 #define MISSING(foo) (XCAPABLE(foo, GET_EXE(foo)) == MISSING)
@@ -175,12 +177,13 @@ typedef enum {
 #define IS_MISSING(item) (capable->has_##item == MISSING)
 #define IS_UNCHECKED(item) (capable->has_##item == UNCHECKED)
 #define IS_LOCAL(item) (capable->has_##item == LOCAL)
+#define IS_INTERNAL(item) (capable->has_##item == INTERNAL)
 
 #define ARE_PRESENT(item) IS_PRESENT(item)
 #define ARE_MISSING(item) IS_MISSING(item)
 #define ARE_UNCHECKED(item) IS_UNCHECKED(item)
 
-#define IS_AVAILABLE(item) (IS_PRESENT(item) || IS_LOCAL(item))
+#define IS_AVAILABLE(item) (IS_PRESENT(item) || IS_LOCAL(item) || IS_INTERNAL(item))
 
 #define CHECK_AVAILABLE(item, EXEC) (IS_UNCHECKED(item) ? (((capable->has_##item = has_executable(EXEC)) \
 							    == PRESENT || IS_LOCAL(item)) ? TRUE : FALSE) \
@@ -305,39 +308,6 @@ int weed_abi_version;
 
 #define N_RECENT_FILES 16
 
-typedef enum {
-  UNDO_NONE = 0,
-  UNDO_EFFECT,
-  UNDO_RESIZABLE,
-  UNDO_MERGE,
-  UNDO_RESAMPLE,
-  UNDO_TRIM_AUDIO,
-  UNDO_TRIM_VIDEO,
-  UNDO_CHANGE_SPEED,
-  UNDO_AUDIO_RESAMPLE,
-  UNDO_APPEND_AUDIO,
-  UNDO_INSERT,
-  UNDO_CUT,
-  UNDO_DELETE,
-  UNDO_DELETE_AUDIO,
-  UNDO_INSERT_SILENCE,
-  UNDO_NEW_AUDIO,
-
-  /// resample/resize and resample audio for encoding
-  UNDO_ATOMIC_RESAMPLE_RESIZE,
-
-  /// resample/reorder/resize/apply effects
-  UNDO_RENDER,
-
-  UNDO_FADE_AUDIO,
-  UNDO_AUDIO_VOL,
-
-  /// record audio to selection
-  UNDO_REC_AUDIO,
-
-  UNDO_INSERT_WITH_AUDIO
-} lives_undo_t;
-
 /// which stream end should cause playback to finish ?
 typedef enum {
   NEVER_STOP = 0,
@@ -413,14 +383,9 @@ typedef enum {
 
 #define IMG_TYPE_BEST IMG_TYPE_PNG
 
-typedef enum {
-  LIVES_INTERLACE_NONE = 0,
-  LIVES_INTERLACE_BOTTOM_FIRST = 1,
-  LIVES_INTERLACE_TOP_FIRST = 2
-} lives_interlace_t;
-
-#include "colourspace.h"
 #include "pangotext.h"
+
+extern const char *NO_COPY_LEAVES[];
 
 #define WEED_LEAF_HOST_DEINTERLACE "host_deint" // frame needs deinterlacing
 #define WEED_LEAF_HOST_TC "host_tc" // timecode for deinterlace
@@ -457,6 +422,8 @@ extern mainwindow *mainw;
 
 #define BACKEND_NAME EXEC_SMOGRIFY
 
+#include "clip_load_save.h"
+
 #include "player.h"
 #include "cliphandler.h"
 #include "sethandler.h"
@@ -467,7 +434,7 @@ extern ssize_t sizint, sizdbl, sizshrt;
 
 #include "setup.h"
 #include "dialogs.h"
-#include "saveplay.h"
+#include "player-control.h"
 #include "gui.h"
 #include "utils.h"
 
@@ -676,7 +643,7 @@ weed_error_t weed_leaf_set_autofree(weed_plant_t *, const char *, boolean state)
 weed_plant_t *lives_plant_copy(weed_plant_t *orig); // weed_plant_copy_clean
 void weed_plant_duplicate_clean(weed_plant_t *dst, weed_plant_t *src);
 void weed_plant_dup_add_clean(weed_plant_t *dst, weed_plant_t *src);
-void weed_plant_sanitize(weed_plant_t *plant);
+void weed_plant_sanitize(weed_plant_t *, boolean sterilize);
 boolean weed_leaf_autofree(weed_plant_t *, const char *key);
 
 int32_t weed_plant_mutate(weed_plantptr_t, int32_t newtype);

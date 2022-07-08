@@ -397,6 +397,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
     } else if (sfile->aw_sizes[0] != offset_end) {
       start = 0;
       (float *)lives_recalloc(sfile->audio_waveform[0], (int)offset_end, sfile->aw_sizes[0],  sizeof(float));
+      sfile->aw_sizes[0] = offset_end;
     }
 
     if (sfile->audio_waveform[0]) {
@@ -405,24 +406,33 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
         afd = lives_open_buffered_rdonly(filename);
         lives_free(filename);
         if (afd < 0) {
+          pthread_mutex_unlock(&mainw->tlthread_mutex);
           THREADVAR(read_failed) = -2;
           goto bail;
         }
 
         if (mainw->current_file != fileno
-            || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
+            || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) {
+          pthread_mutex_unlock(&mainw->tlthread_mutex);
+          goto bail;
+        }
         lives_buffered_rdonly_slurp(afd, 0);
         if (mainw->current_file != fileno
-            || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
+            || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) {
+          pthread_mutex_unlock(&mainw->tlthread_mutex);
+          goto bail;
+        }
         for (i = start; i < offset_end; i++) {
           if (mainw->current_file != fileno
-              || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
+              || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) {
+            pthread_mutex_unlock(&mainw->tlthread_mutex);
+            goto bail;
+          }
           atime = (double)i / scalex;
           sfile->audio_waveform[0][i] =
             sfile->vol * get_float_audio_val_at_time(fileno,
                 afd, atime, 0, sfile->achans) * 2.;
         }
-        sfile->aw_sizes[0] = offset_end;
         //lives_close_buffered(afd);
       }
       pthread_mutex_unlock(&mainw->tlthread_mutex);
@@ -521,6 +531,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       start = 0;
       sfile->audio_waveform[1] =
         (float *)lives_recalloc(sfile->audio_waveform[1], (int)offset_end, sfile->aw_sizes[1],  sizeof(float));
+      sfile->aw_sizes[1] = offset_end;
     }
 
     if (sfile->audio_waveform[1]) {
@@ -530,25 +541,34 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
           afd = lives_open_buffered_rdonly(filename);
           lives_free(filename);
           if (afd < 0) {
+            pthread_mutex_unlock(&mainw->tlthread_mutex);
             THREADVAR(read_failed) = -2;
             goto bail;
           }
           if (mainw->current_file != fileno
-              || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
+              || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) {
+            pthread_mutex_unlock(&mainw->tlthread_mutex);
+            goto bail;
+          }
           lives_buffered_rdonly_slurp(afd, 0);
           if (mainw->current_file != fileno
-              || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
+              || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) {
+            pthread_mutex_unlock(&mainw->tlthread_mutex);
+            goto bail;
+          }
         }
 
         for (i = start; i < offset_end; i++) {
           if (mainw->current_file != fileno
-              || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) goto bail;
+              || (is_thread && lives_proc_thread_get_cancelled(mainw->drawtl_thread))) {
+            pthread_mutex_unlock(&mainw->tlthread_mutex);
+            goto bail;
+          }
           atime = (double)i / scalex;
           sfile->audio_waveform[1][i] =
             sfile->vol * get_float_audio_val_at_time(fileno,
                 afd, atime, 1, sfile->achans) * 2.;
         }
-        sfile->aw_sizes[1] = offset_end;
       }
       pthread_mutex_unlock(&mainw->tlthread_mutex);
 
@@ -3593,7 +3613,7 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
 
 void redraw_timeline(int clipno) {
   lives_clip_t *sfile;
-
+  return;
   if (mainw->ce_thumbs) return;
   if (!IS_VALID_CLIP(clipno)) return;
   sfile = mainw->files[clipno];
@@ -6953,6 +6973,12 @@ static void dsu_set_toplabel(void) {
   widget_opts.text_size = LIVES_TEXT_SIZE_LARGE;
 
   if (mainw->dsu_valid && !dsq->scanning) {
+    dtxt = lives_format_storage_space_string(capable->ds_free);
+    ltext = lives_strdup_printf(_("Free space\n %s"), dtxt);
+    lives_freep((void **)&dtxt);
+    lives_label_set_text(LIVES_LABEL(dsq->legend_labels[3]), ltext);
+    lives_freep((void **)&ltext);
+
     if (capable->ds_free < prefs->ds_crit_level) {
       if (!capable->mountpoint) capable->mountpoint = get_mountpoint_for(prefs->workdir);
       dtxt = lives_format_storage_space_string(prefs->ds_crit_level);
@@ -7552,8 +7578,9 @@ void run_diskspace_dialog(const char *target) {
   colr.red = colr.green = 0.; colr.blue = 1.;
   cbut = lives_color_button_new_with_color(&colr);
   lives_widget_set_can_focus(cbut, FALSE);
+  lives_widget_set_frozen(cbut, TRUE, 1.);
   lives_box_pack_start(LIVES_BOX(hbox2), cbut, FALSE, FALSE, widget_opts.packing_width);
-  label = lives_standard_label_new(_("Used by other apps"));
+  dsq->legend_labels[0] = label = lives_standard_label_new(_("Used by other apps"));
   lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
 
   hbox2 = lives_hbox_new(FALSE, 0);
@@ -7561,8 +7588,9 @@ void run_diskspace_dialog(const char *target) {
   colr.red = 0.; colr.green = colr.blue = 1.;
   cbut = lives_color_button_new_with_color(&colr);
   lives_widget_set_can_focus(cbut, FALSE);
+  lives_widget_set_frozen(cbut, TRUE, 1.);
   lives_box_pack_start(LIVES_BOX(hbox2), cbut, FALSE, FALSE, widget_opts.packing_width);
-  label = lives_standard_label_new(_("Used by LiVES"));
+  dsq->legend_labels[1] = label = lives_standard_label_new(_("Used by LiVES"));
   lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
 
   hbox2 = lives_hbox_new(FALSE, 0);
@@ -7570,8 +7598,9 @@ void run_diskspace_dialog(const char *target) {
   colr.red = colr.green = 1.; colr.blue = 0.;
   cbut = lives_color_button_new_with_color(&colr);
   lives_widget_set_can_focus(cbut, FALSE);
+  lives_widget_set_frozen(cbut, TRUE, 1.);
   lives_box_pack_start(LIVES_BOX(hbox2), cbut, FALSE, FALSE, widget_opts.packing_width);
-  label = lives_standard_label_new(_("Quota"));
+  dsq->legend_labels[2] = label = lives_standard_label_new(_("Quota"));
   lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
 
   hbox2 = lives_hbox_new(FALSE, 0);
@@ -7579,8 +7608,9 @@ void run_diskspace_dialog(const char *target) {
   colr.red = colr.blue = 0.; colr.green = 1.;
   cbut = lives_color_button_new_with_color(&colr);
   lives_widget_set_can_focus(cbut, FALSE);
+  lives_widget_set_frozen(cbut, TRUE, 1.);
   lives_box_pack_start(LIVES_BOX(hbox2), cbut, FALSE, FALSE, widget_opts.packing_width);
-  label = lives_standard_label_new(_("Free space"));
+  dsq->legend_labels[3] = label = lives_standard_label_new(_("Free space"));
   lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
 
   hbox2 = lives_hbox_new(FALSE, 0);
@@ -7588,8 +7618,9 @@ void run_diskspace_dialog(const char *target) {
   colr.red = 1.; colr.green = .5; colr.blue = 0.;
   cbut = lives_color_button_new_with_color(&colr);
   lives_widget_set_can_focus(cbut, FALSE);
+  lives_widget_set_frozen(cbut, TRUE, 1.);
   lives_box_pack_start(LIVES_BOX(hbox2), cbut, FALSE, FALSE, widget_opts.packing_width);
-  label = lives_standard_label_new(_("Warn level"));
+  dsq->legend_labels[4] = label = lives_standard_label_new(_("Warn level"));
   lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
 
   hbox2 = lives_hbox_new(FALSE, 0);
@@ -7597,8 +7628,9 @@ void run_diskspace_dialog(const char *target) {
   colr.red = 1.; colr.green = colr.blue = 0.;
   cbut = lives_color_button_new_with_color(&colr);
   lives_widget_set_can_focus(cbut, FALSE);
+  lives_widget_set_frozen(cbut, TRUE, 1.);
   lives_box_pack_start(LIVES_BOX(hbox2), cbut, FALSE, FALSE, widget_opts.packing_width);
-  label = lives_standard_label_new(_("Critical level"));
+  dsq->legend_labels[5] = label = lives_standard_label_new(_("Critical level"));
   lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
 
   //// expander section ////

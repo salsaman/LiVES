@@ -116,6 +116,7 @@ retry:
   pa_mloop = pa_threaded_mainloop_new();
   lives_snprintf(pactxnm, 512, "LiVES-%"PRId64, lives_random());
   pcon = pa_context_new(pa_threaded_mainloop_get_api(pa_mloop), pactxnm);
+
   pa_context_connect(pcon, NULL, (pa_context_flags_t)0, NULL);
   pa_threaded_mainloop_start(pa_mloop);
 

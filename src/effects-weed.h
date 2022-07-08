@@ -69,6 +69,12 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key);
 weed_error_t weed_leaf_set_autofree(weed_plant_t *, const char *key, boolean state);
 void  weed_plant_autofree(weed_plant_t *);
 
+// for copy and cleanup
+boolean pixdata_nullify_leaf(const char *key);
+// for sterilzing "dormant" plants
+boolean no_copy_leaf(const char *key);
+void weed_plant_sanitize(weed_plant_t *plant, boolean sterilize);
+
 // plugin specific values
 #define WEED_LEAF_HOST_SUSPICIOUS "host_suspicious" // plugin is badly behaved
 

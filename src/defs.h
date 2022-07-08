@@ -241,24 +241,82 @@ static const int32_t testint = 0x12345678;
 // GLOBAL VALUES
 #define MAX_FILES 65535
 
+typedef struct {
+  uint16_t red,  green, blue;
+} lives_colRGB48_t;
 
-// OPTIONS
+typedef struct {
+  uint16_t red, green, blue, alpha;
+} lives_colRGBA64_t;
 
-#define AUTOTUNE_FILEBUFF_SIZES 1
-#define AUTOTUNE_MALLOC_SIZES 1
+typedef enum {
+  LIVES_MATCH_UNDEFINED = 0,
+  LIVES_MATCH_NEAREST,
+  LIVES_MATCH_AT_LEAST,
+  LIVES_MATCH_AT_MOST,
+  LIVES_MATCH_LOWEST,
+  LIVES_MATCH_HIGHEST,
+  LIVES_MATCH_CHOICE,
+  LIVES_MATCH_SPECIFIED,
+  N_MATCH_TYPES,
+} lives_match_t;
 
-#define WEED_ADVANCED_PALETTES 1
-#define ENABLE_DVD_GRAB 1
+#define MATCH_TYPE_ENABLED 1
+#define MATCH_TYPE_DEFAULT 2
 
-#ifdef HAVE_MJPEGTOOLS
-#define HAVE_YUV4MPEG		1
-#endif
+/// delivery types
+typedef enum {
+  LIVES_DELIVERY_UNDEFINED,
+  LIVES_DELIVERY_PULL,
+  LIVES_DELIVERY_PUSH,
+  LIVES_DELIVERY_PUSH_PULL,
+} lives_delivery_t;
 
-#ifdef __cplusplus
-#ifdef HAVE_UNICAP
-#undef HAVE_UNICAP
-#endif
-#endif
+typedef struct {
+  lives_colRGB48_t fg;
+  lives_colRGB48_t bg;
+} lives_subtitle_style_t;
+
+typedef enum {
+  SUBTITLE_TYPE_NONE = 0,
+  SUBTITLE_TYPE_SRT,
+  SUBTITLE_TYPE_SUB
+} lives_subtitle_type_t;
+
+typedef struct _lives_subtitle_t xlives_subtitle_t;
+
+typedef struct _lives_subtitle_t {
+  double start_time;
+  double end_time;
+  lives_subtitle_style_t *style; ///< for future use
+  long textpos;
+  xlives_subtitle_t *prev; ///< for future use
+  xlives_subtitle_t *next;
+} lives_subtitle_t;
+
+typedef struct {
+  lives_subtitle_type_t type;
+  int tfile;
+  char *text;
+  lives_subtitle_t *current; ///< pointer to current entry in index
+  lives_subtitle_t *first;
+  lives_subtitle_t *last;
+  int offset; ///< offset in frames (default 0)
+  double last_time;
+} lives_subtitles_t;
+
+typedef enum {
+  LIVES_INTERLACE_NONE = 0,
+  LIVES_INTERLACE_BOTTOM_FIRST = 1,
+  LIVES_INTERLACE_TOP_FIRST = 2
+} lives_interlace_t;
+
+/// this struct is used only when physically resampling frames on the disk
+/// we create an array of these and write them to the disk
+typedef struct {
+  int value;
+  int64_t reltime;
+} resample_event;
 
 // directions
 /// use REVERSE / FORWARD when a sign is used, BACKWARD / FORWARD when a parity is used
@@ -282,18 +340,67 @@ typedef enum {
 #define LIVES_DIRECTION_NONE 0
 
 typedef enum {
+  UNDO_NONE = 0,
+  UNDO_EFFECT,
+  UNDO_RESIZABLE,
+  UNDO_MERGE,
+  UNDO_RESAMPLE,
+  UNDO_TRIM_AUDIO,
+  UNDO_TRIM_VIDEO,
+  UNDO_CHANGE_SPEED,
+  UNDO_AUDIO_RESAMPLE,
+  UNDO_APPEND_AUDIO,
+  UNDO_INSERT,
+  UNDO_CUT,
+  UNDO_DELETE,
+  UNDO_DELETE_AUDIO,
+  UNDO_INSERT_SILENCE,
+  UNDO_NEW_AUDIO,
+
+  /// resample/resize and resample audio for encoding
+  UNDO_ATOMIC_RESAMPLE_RESIZE,
+
+  /// resample/reorder/resize/apply effects
+  UNDO_RENDER,
+
+  UNDO_FADE_AUDIO,
+  UNDO_AUDIO_VOL,
+
+  /// record audio to selection
+  UNDO_REC_AUDIO,
+
+  UNDO_INSERT_WITH_AUDIO
+} lives_undo_t;
+
+typedef enum {
   IMG_TYPE_UNKNOWN = 0,
   IMG_TYPE_JPEG,
   IMG_TYPE_PNG,
   N_IMG_TYPES
 } lives_img_type_t;
 
-typedef struct {
-  uint16_t red,  green, blue;
-} lives_colRGB48_t;
+// OPTIONS
 
-typedef struct {
-  uint16_t red, green, blue, alpha;
-} lives_colRGBA64_t;
+#define USE_INTERNAL_MD5SUM 1
+
+#define AUTOTUNE_FILEBUFF_SIZES 1
+#define AUTOTUNE_MALLOC_SIZES 1
+
+#define WEED_ADVANCED_PALETTES 1
+#define ENABLE_DVD_GRAB 1
+
+#define BG_LOAD_RFX 1
+
+#define USE_RESTHREAD 0
+
+#ifdef HAVE_MJPEGTOOLS
+#define HAVE_YUV4MPEG		1
+#endif
+
+#ifdef __cplusplus
+#ifdef HAVE_UNICAP
+#undef HAVE_UNICAP
+#endif
+#endif
 
 #endif

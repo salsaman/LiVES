@@ -1121,7 +1121,6 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   ssize_t delta = 0, bufsize;
   boolean reversed = (fbuff->flags & FB_FLAG_REVERSE);
   boolean autotune = FALSE;
-  ticks_t xti;
 
 #if AUTOTUNE_FILEBUFF_SIZES
   if ((fbuff->bufsztype != BUFF_SIZE_READ_CUSTOM && fbuff->bufsztype != BUFF_SIZE_READ_SLURP)
@@ -1188,14 +1187,14 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
 #if AUTOTUNE_FILEBUFF_SIZES
   if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
     if (tuners) {
-      smbytes = autotune_u64_end(&tuners, smbytes, 1. / (double)res);
+      smbytes = autotune_u64_end(&tuners, smbytes, 1. / (double)min);
       if (!tuners) {
         tuneds = TRUE;
       }
     }
   } else if (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED) {
     if (tunersm) {
-      smedbytes = autotune_u64_end(&tunersm, smedbytes, 1. / (double)res);
+      smedbytes = autotune_u64_end(&tunersm, smedbytes, 1. / (double)min);
       if (!tunersm) {
         tunedsm = TRUE;
         smedbytes = get_near2pow(smedbytes);
@@ -1208,7 +1207,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   // *INDENT-ON*
   else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) {
     if (tunerm) {
-      medbytes = autotune_u64_end(&tunerm, medbytes, 1. / (double)res);
+      medbytes = autotune_u64_end(&tunerm, medbytes, 1. / (double)min);
       if (!tunerm) {
         tunedm = TRUE;
         medbytes = get_near2pow(medbytes);
@@ -1221,7 +1220,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   // *INDENT-ON*
   else {
     if (tunerl) {
-      bigbytes = autotune_u64_end(&tunerl, bigbytes, 1. / (double)res);
+      bigbytes = autotune_u64_end(&tunerl, bigbytes, 1. / (double)min);
       if (!tunerl) {
         tunedl = TRUE;
         bigbytes = get_near2pow(bigbytes);

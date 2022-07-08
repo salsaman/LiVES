@@ -246,7 +246,8 @@ lives_exe_SOURCES = \
 	support.c support.h \
 	messaging.c messaging.h \
 	callbacks.c callbacks.h \
-	saveplay.c saveplay.h \
+	clip_load_save.c clip_load_save.h \
+	player-control.c player-control.h \
 	widget-helper.c widget-helper.h \
 	widget-helper-gtk.h widget-helper-qt.h \
 	main.c main.h \

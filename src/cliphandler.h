@@ -3,9 +3,9 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
-#ifndef _CLIPHANDLER_H_
-#define _CLIPHANDLER_H_
+#ifndef GET_BASE_DEFFNS
 
+#ifndef _CLIPHANDLER_H_
 
 #define CLIP_NAME_MAXLEN 256
 
@@ -69,6 +69,12 @@ typedef union _binval {
   const char chars[8];
   size_t size;
 } binval;
+
+#endif
+#endif
+
+#ifndef HAVE_CLIP_T
+#define HAVE_CLIP_T
 
 typedef enum {
   CLIP_TYPE_DISK, ///< imported video, broken into frames
@@ -336,6 +342,11 @@ typedef struct _lives_clip_t {
 
   lives_object_instance_t *instance;
 } lives_clip_t;
+
+#endif
+
+#ifndef _CLIPHANDLER_H_
+#define _CLIPHANDLER_H_
 
 typedef struct {
   /// list of entries in clip thumbnail cache (for multitrack timeline)

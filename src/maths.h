@@ -45,10 +45,11 @@
 
 typedef struct {uint32_t A, B, C, D, t[2], bl; char buf[128];} md5priv;
 
+#define MD5_SIZE 16
 // returns array of uint8_t output[16]
 uint8_t *tinymd5(void *data, size_t dsize) WARN_UNUSED LIVES_PURE;
 uint64_t minimd5(void *data, size_t dsize) LIVES_PURE;
-
+void *lives_md5_sum(const char *filename, int64_t *size);
 ////////////////////////////////////////
 
 #define squared(a) ((a) * (a))

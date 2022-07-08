@@ -119,17 +119,17 @@ typedef struct {
 
 #define LIVES_SEED_HOOK WEED_SEED_FUNCPTR
 
-#define HOOK_CB_SINGLE_SHOT		(1ull << 1) //< hook function should be called only once then removed
-#define HOOK_CB_ASYNC			(1ull << 2) //< hook function should not block
-#define HOOK_CB_ASYNC_JOIN		(1ull << 3) //< hook function should not block, but the thread should be joined
+#define HOOK_CB_SINGLE_SHOT		(1ull << 0) //< hook function should be called only once then removed
+#define HOOK_CB_ASYNC			(1ull << 1) //< hook function should not block
+#define HOOK_CB_ASYNC_JOIN		(1ull << 2) //< hook function should not block, but the thread should be joined
 ///							at the end of processing, or before calling the hook
 ///							a subsequent time
-#define HOOK_CB_CHILD_INHERITS		(1ull << 4) // TODO - child threads should inherit the hook callbacks
-#define HOOK_CB_FG_THREAD		(1ull << 5) // force fg service run
+#define HOOK_CB_CHILD_INHERITS		(1ull << 3) // TODO - child threads should inherit the hook callbacks
+#define HOOK_CB_FG_THREAD		(1ull << 4) // force fg service run
 
-#define HOOK_CB_PRIORITY		(1ull << 8) // prepend, not append
+#define HOOK_CB_PRIORITY		(1ull << 5) // prepend, not append
 
-#define HOOK_CB_WAIT			(1ull << 9) // block till hook has run, do not free anything
+#define HOOK_CB_WAIT			(1ull << 6) // block till hook has run, do not free anything
 
 #define HOOK_UNIQUE_FUNC		(1ull << 24) // do not add if func already in hooks
 
@@ -205,7 +205,7 @@ void lives_hooks_join(LiVESList **xlist, int type);
 
 typedef struct {
   uint64_t var_uid;
-  int var_id;
+  int var_idx;
   lives_obj_attr_t **var_attributes;
   pthread_t var_self;
   //
@@ -251,7 +251,7 @@ typedef struct {
 } lives_threadvars_t;
 
 struct _lives_thread_data_t {
-  pthread_t pthread;
+  pthread_t self;
   LiVESWidgetContext *ctx;
   int64_t idx; // thread index
   lives_threadvars_t vars;
@@ -294,13 +294,18 @@ typedef struct {
 #define lpt_param_name(i) lives_strdup_printf("%s%d", LIVES_LEAF_THREAD_PARAM, (i))
 
 // work flags
-#define LIVES_THRDFLAG_AUTODELETE	(1 << 0)
-#define LIVES_THRDFLAG_RUNNING		(1 << 1)
-#define LIVES_THRDFLAG_FINISHED		(1 << 2)
-#define LIVES_THRDFLAG_WAIT_SYNC	(1 << 3)
-#define LIVES_THRDFLAG_NO_GUI		(1 << 4)
-#define LIVES_THRDFLAG_TUNING		(1 << 5)
-#define LIVES_THRDFLAG_IGNORE_SYNCPT	(1 << 6)
+
+#define LIVES_THRDFLAG_QUEUED_WAITING  	(1ull << 0)
+#define LIVES_THRDFLAG_RUNNING		(1ull << 1)
+#define LIVES_THRDFLAG_FINISHED		(1ull << 2)
+
+#define LIVES_THRDFLAG_AUTODELETE	(1ull << 8)
+#define LIVES_THRDFLAG_WAIT_SYNC	(1ull << 9)
+#define LIVES_THRDFLAG_WAIT_START	(1ull << 10)
+#define LIVES_THRDFLAG_NO_GUI		(1ull << 11)
+#define LIVES_THRDFLAG_TUNING		(1ull << 12)
+#define LIVES_THRDFLAG_IGNORE_SYNCPT	(1ull << 13)
+#define LIVES_THRDFLAG_NOFREE_LIST	(1ull << 14)
 
 // internals
 
@@ -312,8 +317,8 @@ typedef struct {
 // FUNCSIG_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP
 // are a possibility
 
-#define GEN_SET(thing, wret, funcname, FUNCARGS) err =			\
-    (wret == WEED_SEED_INT ? weed_set_int_value((thing), _RV_, (*funcname->funcint)(FUNCARGS)) : \
+#define GEN_SET(thing, wret, funcname, FUNCARGS) err = \
+  (wret == WEED_SEED_INT ? weed_set_int_value((thing), _RV_, (*funcname->funcint)(FUNCARGS)) : \
      wret == WEED_SEED_DOUBLE ? weed_set_double_value((thing), _RV_, (*funcname->funcdouble)(FUNCARGS)) : \
      wret == WEED_SEED_BOOLEAN ? weed_set_boolean_value((thing), _RV_, (*funcname->funcboolean)(FUNCARGS)) : \
      wret == WEED_SEED_STRING ? weed_set_string_value((thing), _RV_, (*funcname->funcstring)(FUNCARGS)) : \
@@ -418,21 +423,22 @@ typedef struct {
 ////// lives_thread_t
 
 #define LIVES_THRDATTR_NONE		0
-#define LIVES_THRDATTR_PRIORITY		(1 << 0)
-#define LIVES_THRDATTR_AUTODELETE	(1 << 1)
+#define LIVES_THRDATTR_PRIORITY		(1ull << 0)
+#define LIVES_THRDATTR_AUTODELETE	(1ull << 1)
+#define LIVES_THRDATTR_WAIT_SYNC       	(1ull << 2)
 
 // worker pool threads
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);
 
 // lives_threads
-int lives_thread_create(lives_thread_t *, lives_thread_attr_t attr, lives_thread_func_t func, void *arg);
+thrd_work_t *lives_thread_create(lives_thread_t *, lives_thread_attr_t attr, lives_thread_func_t func, void *arg);
 uint64_t lives_thread_done(lives_thread_t thread);
 uint64_t lives_thread_join(lives_thread_t work, void **retval);
 void lives_thread_free(lives_thread_t *thread);
 
 // thread functions
-lives_thread_data_t *get_thread_data_by_id(uint64_t idx);
+lives_thread_data_t *get_thread_data_by_idx(uint64_t idx);
 int get_n_active_threads(void);
 
 lives_thread_data_t *get_thread_data(void);
@@ -462,11 +468,11 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 // when a pool thread picks up the work, states goes to PREPARING, and if wait sync is set, then
 // will get state WAITING
 // state goes to running, then finished : note running continues even after finished
-#define THRD_STATE_UNQUEUED 	(1ull << 1)
-#define THRD_STATE_QUEUED 	(1ull << 2)
-#define THRD_STATE_PREPARING 	(1ull << 3)
-#define THRD_STATE_RUNNING 	(1ull << 4) // check for FINISHED or CANCELLED
-#define THRD_STATE_FINISHED 	(1ull << 5)
+#define THRD_STATE_UNQUEUED 	(1ull << 0)
+#define THRD_STATE_QUEUED 	(1ull << 1)
+#define THRD_STATE_PREPARING 	(1ull << 2)
+#define THRD_STATE_RUNNING 	(1ull << 3) // check for FINISHED or CANCELLED
+#define THRD_STATE_FINISHED 	(1ull << 4)
 
 // temporary states
 #define THRD_STATE_BUSY 	(1ull << 16)
@@ -512,6 +518,7 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_LEAF_THREAD_WORK "thread_work" // refers to underyling lives_thread
 
 #define LIVES_LEAF_STATE_MUTEX "state_mutex" ///< ensures state is accessed atomically
+#define LIVES_LEAF_DESTRUCT_MUTEX "destruct_mutex" ///< prevent thread from being freed as soon as dontcare is set
 #define LIVES_LEAF_THRD_STATE "thread_state" // proc_thread state
 
 #define LIVES_LEAF_SIGNAL_DATA "signal_data"
@@ -520,19 +527,19 @@ uint64_t get_worker_status(uint64_t tid);
 
 // also LIVES_THRDATR_PRIORITY
 // also LIVES_THRDATR_AUTODELETE
-#define LIVES_THRDATTR_WAIT_START	(1 << 2)
-#define LIVES_THRDATTR_WAIT_SYNC	(1 << 3)
-#define LIVES_THRDATTR_FG_THREAD	(1 << 4)
-#define LIVES_THRDATTR_NO_GUI		(1 << 5)
-#define LIVES_THRDATTR_INHERIT_HOOKS   	(1 << 6)
-#define LIVES_THRDATTR_IGNORE_SYNCPT   	(1 << 7)
-#define LIVES_THRDATTR_NOFREE   	(1 << 8)
+//#define LIVES_THRDATTR_WAIT_SYNC		(1ull << 2)
+#define LIVES_THRDATTR_WAIT_START		(1ull << 3)
+#define LIVES_THRDATTR_FG_THREAD		(1ull << 4)
+#define LIVES_THRDATTR_NO_GUI			(1ull << 5)
+#define LIVES_THRDATTR_INHERIT_HOOKS   		(1ull << 6)
+#define LIVES_THRDATTR_IGNORE_SYNCPT   		(1ull << 7)
+#define LIVES_THRDATTR_NOFREE   		(1ull << 8)
 
 // extra info requests
 #define LIVES_LEAF_START_TICKS "_start_ticks"
-#define LIVES_THRDATTR_NOTE_STTIME	(1 << 16)
+#define LIVES_THRDATTR_NOTE_STTIME		(1ull << 16)
 
-#define LIVES_THRDATTR_IS_PROC_THREAD   	(1 << 24)
+#define LIVES_THRDATTR_IS_PROC_THREAD   	(1ull << 24)
 
 #define lives_proc_thread_get_work(tinfo)				\
   ((thrd_work_t *)weed_get_voidptr_value((tinfo), LIVES_LEAF_THREAD_WORK, NULL))
@@ -562,7 +569,7 @@ lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout,
 lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
     int return_type, const char *args_fmt, ...);
 
-void lives_proc_thread_free(lives_proc_thread_t lpt);
+boolean lives_proc_thread_free(lives_proc_thread_t lpt);
 
 // forces fg execution (safe to run in fg or bg)
 boolean main_thread_execute(lives_funcptr_t, int return_type, void *retval, const char *args_fmt, ...);
@@ -591,6 +598,8 @@ boolean lives_proc_thread_is_running(lives_proc_thread_t);
 
 // returns TRUE if state id cancelled or finished
 boolean lives_proc_thread_is_done(lives_proc_thread_t);
+
+boolean lives_proc_thread_exited(lives_proc_thread_t);
 
 /// returns FALSE while the thread is running, TRUE once it has finished
 boolean lives_proc_thread_check_finished(lives_proc_thread_t);
@@ -688,7 +697,7 @@ int weed_refcount_dec(weed_plant_t *);
 int weed_refcount_query(weed_plant_t *);
 void weed_refcounter_unlock(weed_plant_t *);
 
-boolean weed_add_refcounter(weed_plant_t *);
+lives_refcounter_t *weed_add_refcounter(weed_plant_t *);
 boolean weed_remove_refcounter(weed_plant_t *);
 
 #undef ADD_HOOKFUNCS
@@ -699,7 +708,7 @@ boolean weed_remove_refcounter(weed_plant_t *);
 #else
 
 ///////////////////////////
-void make_thrdattrs(void);
+void make_thrdattrs(lives_thread_data_t *);
 
 #define LIVES_WEED_SUBTYPE_FUNCINST 150
 

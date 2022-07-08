@@ -17,6 +17,19 @@
 #include "callbacks.h"
 #include "cvirtual.h"
 
+/**
+   @brief get next free file slot, or -1 if we are full
+   can support MAX_FILES files (default 65536) */
+int get_next_free_file(void) {
+  int idx = mainw->first_free_file++;
+  while ((mainw->first_free_file != ALL_USED) && mainw->files[mainw->first_free_file]) {
+    mainw->first_free_file++;
+    if (mainw->first_free_file >= MAX_FILES) mainw->first_free_file = ALL_USED;
+  }
+  return idx;
+}
+
+
 
 #ifdef ENABLE_OSC
 boolean lives_osc_notify_failure(void) WARN_UNUSED;
@@ -54,14 +67,13 @@ LIVES_GLOBAL_INLINE boolean lives_unsetenv(const char *name) {
 
 
 LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
-  char *xreason = (char *)reason;
-  if (!xreason) xreason = _("Aborting");
+  pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+  if (!reason) reason = _("Aborting");
   lives_set_status(LIVES_STATUS_FATAL);
-  break_me(xreason);
+  break_me(reason);
   if (mainw) lives_hooks_trigger(NULL, mainw->global_hook_closures, ABORT_HOOK);
-  g_printerr("LIVES FATAL: %s\n", xreason);
-  lives_notify(LIVES_OSC_NOTIFY_QUIT, xreason);
-  if (xreason != reason) lives_free(xreason);
+  g_printerr("LIVES FATAL: %s\n", reason);
+  lives_notify(LIVES_OSC_NOTIFY_QUIT, reason);
   abort();
 }
 
@@ -1037,200 +1049,6 @@ boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, co
 }
 
 
-LIVES_GLOBAL_INLINE const char *get_image_ext_for_type(lives_img_type_t imgtype) {
-  switch (imgtype) {
-  case IMG_TYPE_JPEG: return LIVES_FILE_EXT_JPG; // "jpg"
-  case IMG_TYPE_PNG: return LIVES_FILE_EXT_PNG; // "png"
-  default: return "";
-  }
-}
-
-
-LIVES_GLOBAL_INLINE lives_img_type_t lives_image_ext_to_img_type(const char *img_ext) {
-  return lives_image_type_to_img_type(image_ext_to_lives_image_type(img_ext));
-}
-
-
-LIVES_GLOBAL_INLINE const char *image_ext_to_lives_image_type(const char *img_ext) {
-  if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) return LIVES_IMAGE_TYPE_PNG;
-  if (!strcmp(img_ext, LIVES_FILE_EXT_JPG)) return LIVES_IMAGE_TYPE_JPEG;
-  return LIVES_IMAGE_TYPE_UNKNOWN;
-}
-
-
-LIVES_GLOBAL_INLINE lives_img_type_t lives_image_type_to_img_type(const char *lives_img_type) {
-  if (!strcmp(lives_img_type, LIVES_IMAGE_TYPE_PNG)) return IMG_TYPE_PNG;
-  if (!strcmp(lives_img_type, LIVES_IMAGE_TYPE_JPEG)) return IMG_TYPE_JPEG;
-  return IMG_TYPE_UNKNOWN;
-}
-
-
-LIVES_GLOBAL_INLINE char *make_image_file_name(lives_clip_t *sfile, frames_t frame,
-    const char *img_ext) {
-  char *fname, *ret;
-  const char *ximg_ext = img_ext;
-  if (!ximg_ext || !*ximg_ext) {
-    sfile->img_type = resolve_img_type(sfile);
-    ximg_ext = get_image_ext_for_type(sfile->img_type);
-  }
-  fname = lives_strdup_printf("%08d.%s", frame, ximg_ext);
-  ret = lives_build_filename(prefs->workdir, sfile->handle, fname, NULL);
-  lives_free(fname);
-  return ret;
-}
-
-
-LIVES_GLOBAL_INLINE char *make_image_short_name(lives_clip_t *sfile, frames_t frame, const char *img_ext) {
-  const char *ximg_ext = img_ext;
-  if (!ximg_ext) ximg_ext = get_image_ext_for_type(sfile->img_type);
-  return lives_strdup_printf("%08d.%s", frame, ximg_ext);
-}
-
-
-/** @brief check number of frames is correct
-  for files of type CLIP_TYPE_DISK
-  - check the image files (e.g. jpeg or png)
-
-  use a "goldilocks" algorithm (just the right frames, not too few and not too many)
-
-  ignores gaps */
-boolean check_frame_count(int idx, boolean last_checked) {
-  /// make sure nth frame is there...
-  char *frame;
-  if (mainw->files[idx]->frames > 0) {
-    frame = make_image_file_name(mainw->files[idx], mainw->files[idx]->frames,
-                                 get_image_ext_for_type(mainw->files[idx]->img_type));
-    if (!lives_file_test(frame, LIVES_FILE_TEST_EXISTS)) {
-      // not enough frames
-      lives_free(frame);
-      return FALSE;
-    }
-    lives_free(frame);
-  }
-
-  /// ...make sure n + 1 th frame is not
-  frame = make_image_file_name(mainw->files[idx], mainw->files[idx]->frames + 1,
-                               get_image_ext_for_type(mainw->files[idx]->img_type));
-
-  if (lives_file_test(frame, LIVES_FILE_TEST_EXISTS)) {
-    /// too many frames
-    lives_free(frame);
-    return FALSE;
-  }
-  lives_free(frame);
-
-  /// just right
-  return TRUE;
-}
-
-
-/** @brief sets mainw->files[idx]->frames with current framecount
-
-   calls smogrify which physically finds the last frame using a (fast) O(log n) binary search method
-   for CLIP_TYPE_DISK only
-   (CLIP_TYPE_FILE should use the decoder plugin frame count) */
-frames_t get_frame_count(int idx, int start) {
-  ssize_t bytes;
-  char *com = lives_strdup_printf("%s count_frames \"%s\" %s %d", prefs->backend_sync, mainw->files[idx]->handle,
-                                  get_image_ext_for_type(mainw->files[idx]->img_type), start);
-
-  bytes = lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
-  lives_free(com);
-
-  if (THREADVAR(com_failed)) return 0;
-
-  if (bytes > 0) return atoi(mainw->msg);
-  return 0;
-}
-
-
-boolean get_frames_sizes(int fileno, frames_t frame, int *hsize, int *vsize) {
-  // get the actual physical frame size
-  lives_clip_t *sfile = mainw->files[fileno];
-  weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-  char *fname = make_image_file_name(sfile, frame, get_image_ext_for_type(sfile->img_type));
-  weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, LIVES_LAYER_GET_SIZE_ONLY);
-  if (!weed_layer_create_from_file_progressive(layer, fname, 0, 0, WEED_PALETTE_END,
-      get_image_ext_for_type(sfile->img_type))) {
-    lives_free(fname);
-    return FALSE;
-  }
-  lives_free(fname);
-  *hsize = weed_layer_get_width(layer);
-  *vsize = weed_layer_get_height(layer);
-  weed_layer_free(layer);
-  return TRUE;
-}
-
-
-void get_location(const char *exe, char *val, int maxlen) {
-  // find location of "exe" in path
-  // sets it in val which is a char array of maxlen bytes
-
-  char *loc;
-  if ((loc = lives_find_program_in_path(exe)) != NULL) {
-    lives_snprintf(val, maxlen, "%s", loc);
-    lives_free(loc);
-  } else {
-    lives_memset(val, 0, 1);
-  }
-}
-
-
-LIVES_LOCAL_INLINE lives_checkstatus_t has_executable(const char *exe) {
-  char *loc;
-  if ((loc = lives_find_program_in_path(exe)) != NULL) {
-    lives_free(loc);
-    return PRESENT;
-  }
-  // for now we don't return MISSING (requires code update to differentiate MISSING / UNCHECKED / PRESENT)
-  return FALSE;
-}
-
-
-// check if executable is present, missing or unchecked
-// if unchecked, check for it, and if not found ask the user politely to install it
-boolean check_for_executable(lives_checkstatus_t *cap, const char *exec) {
-#ifdef NEW_CHECKSTATUS
-  if (!cap || (*cap)->present == UNCHECKED) {
-    if (!cap || ((*cap)->flags & INSTALL_CANLOCAL)) {
-      /// TODO (next version)
-#else
-  if (!cap || *cap == UNCHECKED) {
-    if (!lives_strcmp(exec, EXEC_YOUTUBE_DL)) {
-#endif
-      char *localv = lives_build_filename(capable->home_dir, LOCAL_HOME_DIR, "bin", exec, NULL);
-      if (lives_file_test(localv, LIVES_FILE_TEST_IS_EXECUTABLE)) {
-        lives_free(localv);
-        if (cap) *cap = LOCAL;
-        return TRUE;
-      }
-      lives_free(localv);
-    }
-    if (has_executable(exec)) {
-      if (cap) *cap = PRESENT;
-      return TRUE;
-    } else {
-      if (!lives_strcmp(exec, EXEC_XDOTOOL) || !lives_strcmp(exec, EXEC_WMCTRL)) {
-        if (cap) *cap = MISSING;
-      }
-      //if (importance == necessary)
-      //do_please_install(exec);
-#ifdef HAS_MISSING_PRESENCE
-      if (cap) *cap = MISSING;
-#endif
-      //do_program_not_found_error(exec);
-      return FALSE;
-    }
-  }
-#if 0
-}
-}
-#endif
-return (*cap == PRESENT || *cap == LOCAL);
-}
-
-
 uint64_t get_version_hash(const char *exe, const char *sep, int piece) {
   /// get version hash output for an executable from the backend
   uint64_t val;
@@ -1287,63 +1105,6 @@ char *unhash_version(uint64_t version) {
     version -= min * VER_MINOR_MULT;
     return lives_strdup_printf("%lu.%lu.%lu", maj, min, version);
   }
-}
-
-
-boolean check_snap(const char *prog) {
-  // not working yet...
-  /* if (!check_for_executable(&capable->has_snap, EXEC_SNAP)) return FALSE; */
-  /* char *com = lives_strdup_printf("%s find %s", EXEC_SNAP, prog); */
-  /* char *res = grep_in_cmd(com, 0, 1, prog, 0, 1, FALSE); */
-  /* if (!res) return FALSE; */
-  /* lives_free(res); */
-  return TRUE;
-}
-
-
-#define SUDO_APT_INSTALL "sudo apt install %s"
-#define SU_PKG_INSTALL "su pkg install %s"
-
-char *get_install_cmd(const char *distro, const char *exe) {
-  char *cmd = NULL;
-  const char *pkgname = NULL;
-
-  if (!distro) distro = capable->distro_name;
-
-  if (!lives_strcmp(exe, EXEC_PIP)) {
-    if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
-      if (capable->python_version >= 3000000) pkgname = "python3-pip";
-      else if (capable->python_version >= 2000000) pkgname = "python-pip";
-      else pkgname = "python3 python3-pip";
-    }
-    if (!lives_strcmp(distro, DISTRO_FREEBSD)) {
-      if (capable->python_version >= 3000000) pkgname = "py3-pip";
-      else if (capable->python_version >= 2000000) pkgname = "py2-pip";
-      else pkgname = "python py3-pip";
-    }
-  }
-  if (!strcmp(exe, EXEC_GZIP)) pkgname = EXEC_GZIP;
-  if (!strcmp(exe, EXEC_YOUTUBE_DL)) pkgname = EXEC_YOUTUBE_DL;
-  if (!strcmp(exe, EXEC_YOUTUBE_DLC)) pkgname = EXEC_YOUTUBE_DLC;
-
-  if (!pkgname) pkgname = exe;
-
-  // TODO - add more, eg. pacman, dpkg
-  if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
-    cmd = lives_strdup_printf(SUDO_APT_INSTALL, pkgname);
-  }
-  if (!lives_strcmp(distro, DISTRO_FREEBSD)) {
-    cmd = lives_strdup_printf(SU_PKG_INSTALL, pkgname);
-  }
-  return cmd;
-}
-
-
-char *get_install_lib_cmd(const char *distro, const char *libname) {
-  char *libpkg = lives_strdup_printf("lib%s-dev", libname);
-  char *cmd = get_install_cmd(NULL, libpkg);
-  lives_free(libpkg);
-  return cmd;
 }
 
 

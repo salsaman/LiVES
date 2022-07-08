@@ -124,6 +124,19 @@ weed_voidptr_t *weed_get_voidptr_array_counted(weed_plant_t *, const char *key, 
 weed_plant_t **weed_get_plantptr_array_counted(weed_plant_t *, const char *key, int *count);
 weed_voidptr_t *weed_get_custom_array_counted(weed_plant_t *, const char *key, uint32_t seed_type, int *count);
 
+  // if state == WEED_TRUE, make the leaf value IMMUTABLE, else make it changeable
+  // may return WEED_SUCCESS or WEED_ERROR_NOSUCH_LEAF
+weed_error_t weed_leaf_set_immutable(weed_plant_t *, const char *key, int state);
+
+  //if state == WEED_TRUE, make the leaf UNDELETABLE, else make it deletable
+weed_error_t weed_leaf_set_undeletable(weed_plant_t *, const char *key, int state);
+
+  // check if leaf value can be changed: returns WEED_ERROR_IMMUTABLE, WEED_SUCCESS, or WEED_ERROR_NOSUCH_LEAF
+weed_error_t weed_leaf_is_immutable(weed_plant_t *, const char *key);
+
+  // check if leaf value can be deleted: returns WEED_ERROR_UNDELETABLE, WEED_SUCCESS, or WEED_ERROR_NOSUCH_LEAF
+weed_error_t weed_leaf_set_undeletable(weed_plant_t *, const char *key, int state);
+
 /* make a copy dest leaf from src leaf. Pointers are copied by reference only, but strings are allocated */
 weed_error_t weed_leaf_copy(weed_plant_t *dest, const char *keyt, weed_plant_t *src, const char *keyf);
 
@@ -169,7 +182,7 @@ FN_TYPE int weed_plant_has_leaf(weed_plant_t *plant, const char *key) {
 #define _WEED_SET_(stype) return weed_leaf_set(plant, key, WEED_SEED_##stype, 1, (weed_voidptr_t)&value);
 #define _WEED_SET_P(stype) return weed_leaf_set(plant, key, WEED_SEED_##stype, 1, value ? (weed_voidptr_t)&value : NULL);
 
-  /*							--- SINGLE VALUE SETTERS ---						*/
+  /*				       		--- SINGLE VALUE SETTERS ---				*/
 FN_TYPE weed_error_t weed_set_int_value(weed_plant_t *plant, const char *key, int32_t value) {_WEED_SET_(INT)}
 FN_TYPE weed_error_t weed_set_uint_value(weed_plant_t *plant, const char *key, uint32_t value) {_WEED_SET_(UINT)}
 FN_TYPE weed_error_t weed_set_double_value(weed_plant_t *plant, const char *key, double value) {_WEED_SET_(DOUBLE)}
@@ -185,7 +198,7 @@ FN_TYPE weed_error_t weed_set_plantptr_value(weed_plant_t *plant, const char *ke
 FN_TYPE weed_error_t __weed_leaf_check__(weed_plant_t *plant, const char *key, uint32_t seed_type) {
   weed_error_t err = __weed_check_leaf__(plant, key);
   return err != WEED_SUCCESS ? err
-    : weed_leaf_seed_type(plant, key) != seed_type ? WEED_ERROR_WRONG_SEED_TYPE : WEED_SUCCESS;}
+    : weed_leaf_seed_type(plant, key) != seed_type ? WEED_ERROR_WRONG_SEED_TYPE : err;}
 
 FN_TYPE weed_voidptr_t __weed_value_get__(weed_plant_t *plant, const char *key, uint32_t seed_type,
     weed_voidptr_t retval, weed_error_t *error) {
@@ -340,6 +353,17 @@ FN_TYPE weed_error_t weed_set_voidptr_array(weed_plant_t *plant, const char *key
 FN_TYPE weed_error_t weed_set_plantptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, weed_plantptr_t *values) {
   _SET_ARRAY_(PLANTPTR)}
 #undef _SET_ARRAY_
+
+  /*			query functions			*/
+#define _WEED_CHECK_FLAGS_(p, k, f, we) {weed_error_t e;		\
+    return (e =  __weed_check_leaf__(p, k)) == WEED_SUCCESS ? (weed_leaf_get_flags(p, k) & f) ? we : e : e;}
+
+FN_TYPE weed_error_t weed_leaf_is_immutable(weed_plant_t *plant, const char *key)
+  _WEED_CHECK_FLAGS_(plant, key, WEED_FLAG_IMMUTABLE, WEED_ERROR_IMMUTABLE)
+
+FN_TYPE weed_error_t weed_leaf_is_undeletable(weed_plant_t *plant, const char *key)
+  _WEED_CHECK_FLAGS_(plant, key, WEED_FLAG_UNDELETABLE, WEED_ERROR_UNDELETABLE)
+
 
 #undef __weed_get_value__
 #undef __weed_check_leaf__

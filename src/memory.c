@@ -27,7 +27,7 @@ memmove_f lives_memmove;
 /* int lives_memcmp(const void *, const void *, size_t); */
 /* void *lives_memmove(void *, const void *, size_t); */
 
-/* #ifdef USE_RPMALLOC */
+/* #if USE_RPMALLOC */
 /* void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size); */
 /* #endif */
 
@@ -346,7 +346,7 @@ livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n
 // functions with fixed pointers that we can pass to plugins ///
 
 void *_ext_malloc(size_t n) {
-#ifdef USE_RPMALLOC
+#if USE_RPMALLOC
   return rpmalloc(n);
 #else
   return (n == 0 ? NULL : _lives_malloc(n));
@@ -370,14 +370,9 @@ void _ext_unmalloc_and_copy(size_t bsize, void *p) {
 #endif
 }
 
-#ifdef USE_RPMALLOC
-/* void *lsd_calloc_aligned(void **memptr, size_t nmemb, size_t size) { */
-/*   return !memptr ? NULL : (!(*memptr = (rpaligned_calloc)(HW_ALIGNMENT, nmemb, size))) ? NULL : *memptr; */
-/* } */
-#endif
 
 void _ext_free(void *p) {
-#ifdef USE_RPMALLOC
+#if USE_RPMALLOC
   rpfree(p);
 #else
   if (p) _lives_free(p);
@@ -395,7 +390,7 @@ void *_ext_memset(void *p, int i, size_t n) {return _lives_memset(p, i, n);}
 void *_ext_memmove(void *dest, const void *src, size_t n) {return _lives_memmove(dest, src, n);}
 
 void *_ext_realloc(void *p, size_t n) {
-#ifdef USE_RPMALLOC
+#if USE_RPMALLOC
   return rprealloc(p, n);
 #else
   return _lives_realloc(p, n);
@@ -403,8 +398,9 @@ void *_ext_realloc(void *p, size_t n) {
 }
 
 void *_ext_calloc(size_t nmemb, size_t msize) {
-#ifdef USE_RPMALLOC
-  return quick_calloc(nmemb, msize);
+#if USE_RPMALLOC
+  size_t align = HW_ALIGNMENT;
+  return rpaligned_calloc(align, nmemb, msize);
 #else
   return _lives_calloc(nmemb, msize);
 #endif
@@ -803,16 +799,6 @@ LIVES_GLOBAL_INLINE void *lives_recalloc(void *op, size_t nmemb, size_t omemb, s
   } while (FALSE);
 }
 
-#ifdef USE_RPMALLOC
-void quick_free(void *p) {rpfree(p);}
-#endif
-
-#ifdef USE_RPMALLOC
-void *quick_calloc(size_t n, size_t s) {
-  size_t align = HW_ALIGNMENT;
-  return rpaligned_calloc(align, n, s);
-}
-#endif
 
 boolean init_memfuncs(int stage) {
   if (stage == 0) {
@@ -825,7 +811,7 @@ boolean init_memfuncs(int stage) {
     lives_memcmp = _lives_memcmp;
     lives_memmove = _lives_memmove;
 
-#ifdef USE_RPMALLOC
+#if USE_RPMALLOC
     //_lsd_calloc_aligned_ = lsd_calloc_aligned;
     rpmalloc_initialize();
 #endif
@@ -838,14 +824,6 @@ boolean init_memfuncs(int stage) {
     bigblock_init();
   }
 
-  return TRUE;
-}
-
-
-boolean init_thread_memfuncs(void) {
-#ifdef USE_RPMALLOC
-  rpmalloc_thread_initialize();
-#endif
   return TRUE;
 }
 
@@ -1060,7 +1038,7 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
   } else {
     if ((chunk & 0x01) || (count % chunk) != 0) return FALSE;
     else {
-#ifdef USE_RPMALLOC
+#if USE_RPMALLOC
       void *tbuff = rpmalloc(chunk);
 #else
       void *tbuff = lives_malloc(chunk);
@@ -1074,7 +1052,7 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
         start += chunk;
         end -= chunk;
       }
-#ifdef USE_RPMALLOC
+#if USE_RPMALLOC
       rpfree(tbuff);
 #else
       lives_free(tbuff);

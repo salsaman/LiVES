@@ -3,14 +3,16 @@
 src/widget-helper.h
 src/main.c
 src/startup.c
+src/settup.c
 src/interface.c
 src/callbacks.c
 src/support.c
 src/merge.c
 src/gui.c
+src/filesystem.c
 src/ce_thumbs.c
 src/utils.c
-src/saveplay.c
+src/ustringfuncs.c
 src/dialogs.c
 src/effects.c
 src/effects-weed.c
@@ -34,8 +36,11 @@ src/cvirtual.c
 src/omc-learn.c
 src/pangotext.c
 src/videodev.c
+src/frameloader.c
+src/user-interface.c
 src/machinestate.c
 src/cliphandler.c
+src/clip_load_save.c
 src/sethandler.c
 src/messaging.c
 src/memory.c
@@ -46,4 +51,5 @@ src/threading.c
 src/intents.c
 src/maths.c
 src/player.c
+src/player=control.c
 src/diagnostics.c

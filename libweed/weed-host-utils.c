@@ -862,10 +862,10 @@ const char *weed_seed_to_ctype(uint32_t st, int add_space) {
 uint32_t ctypes_to_weed_seed(const char *ctype) {
   if (!ctype || !*ctype || !strcmp(ctype, "void")) return 0;
   if (!strcmp(ctype, "int")
-      || !strcmp(ctype, "int32_2"))
+      || !strcmp(ctype, "int32_t"))
     return WEED_SEED_INT;
   if (!strcmp(ctype, "uint")
-      || !strcmp(ctype, "uint32_2"))
+      || !strcmp(ctype, "uint32_t"))
     return WEED_SEED_INT;
   if (!strcmp(ctype, "boolean")
       || !strcmp(ctype, "bool"))

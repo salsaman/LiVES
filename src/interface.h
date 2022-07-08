@@ -298,6 +298,8 @@ boolean do_utube_stream_warn(void);
 lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *);
 boolean youtube_select_format(lives_remote_clip_request_t *);
 
+#define N_LEGENDS 6
+
 typedef struct {
   boolean scanning;
   LiVESWidget *top_label;
@@ -317,6 +319,7 @@ typedef struct {
   LiVESWidget *expander;
   LiVESWidget *exp_vbox;
   LiVESWidget *exp_layout;
+  LiVESWidget *legend_labels[N_LEGENDS];
   boolean setting, visible;
   uint64_t sliderfunc, checkfunc;
   lives_painter_surface_t *dsu_surface;

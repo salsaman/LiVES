@@ -17,13 +17,6 @@
 
 /// parts of this may eventually become libweed-events
 
-/// this struct is used only when physically resampling frames on the disk
-/// we create an array of these and write them to the disk
-typedef struct {
-  int value;
-  int64_t reltime;
-} resample_event;
-
 typedef struct {
   int afile;
   double seek;

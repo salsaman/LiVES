@@ -7547,6 +7547,9 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
         }
         make_play_window();
+
+        if (!mainw->play_window) return;
+
         if (LIVES_IS_PLAYING && !mainw->multitrack && prefs->pb_hide_gui) hide_main_gui();
 
         mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,

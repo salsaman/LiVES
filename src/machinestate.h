@@ -54,6 +54,7 @@
 # define PRIu64		__PRI64_PREFIX "u"
 
 #define LIVES_LEAF_MD5SUM "md5sum"
+#define LIVES_LEAF_MD5_CHKSIZE "md5_chksize"
 
 #define LIVES_LEAF_UID "uid"
 
@@ -166,11 +167,11 @@ char *get_current_timestamp(void);
 
 #define lives_nanosleep(nanosec) do {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
-								     errno != ETIMEDOUT);} while (0);
+								     errno != ETIMEDOUT) pthread_yield();} while (0);
 
 #define lives_nanosleep_times(nanosec, times) do {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
-								     errno != ETIMEDOUT);} while (0);
+								     errno != ETIMEDOUT) pthread_yield();} while (0);
 
 // sleep for 1 msec, regardless of the value returned, sets euqal to cond
 #define _nsleep1(cond) (usleep(1000) ? (cond) :  (cond))

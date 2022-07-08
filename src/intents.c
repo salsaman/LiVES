@@ -2349,17 +2349,16 @@ lives_obj_attr_t *mk_attr(const char *ctype, const char *name, size_t size, void
   return attr;
 }
 
-#define MK_ATTR(ctype, name) mk_attr(QUOTEME(ctype), QUOTEME(name), sizeof(CTHREADVAR(name)), \
-				     (void *)&(CTHREADVAR(name)), 1)
+#define MK_ATTR(ctype, name) mk_attr(QUOTEME(ctype), QUOTEME(name), sizeof(tdata->vars.var_##name), \
+				     (void *)&(tdata->vars.var_##name), 1)
 
 #define MK_ATTR_P(ctype, name) mk_attr(QUOTEME(ctype), QUOTEME(name), sizeof(ctype), \
-				     (void *)CTHREADVAR(name), 1)
+				       (void *)tdata->vars.var_##name), 1)
 
 
-void make_thrdattrs(void) {
-  CACHE_THREADVARS;
+void make_thrdattrs(lives_thread_data_t *tdata) {
   MK_ATTR(uint64_t, uid);
-  MK_ATTR(int, id);
+  MK_ATTR(int, idx);
   MK_ATTR(lives_proc_thread_t, tinfo);
   /* attr = mk_attr("lives_proc_thread_t",  "tinfo", sizeof(THREADVAR(tinfo)), (void *)&(THREADVAR(tinfo)), 1); */
   /* lives_thread_data_t *var_mydata; */

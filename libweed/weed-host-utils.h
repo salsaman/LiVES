@@ -93,13 +93,16 @@ int32_t weed_plant_get_type(weed_plant_t *);
 #define WEED_PLANT_IS_GUI(plant) (weed_plant_get_type(plant) == WEED_PLANT_GUI ? WEED_TRUE : WEED_FALSE)
 
 #define WEED_ERROR_WRONG_PLANT_TYPE	256
-#define WEED_ERROR_NOSUCH_PLANT 257
+#define WEED_ERROR_NOSUCH_PLANT		257
 
-// duplicate leaves of src plant to dst. If add == WEED_FALSE then also delete pther leaves in dst not n src
-// following useal rulse for UNELETABLE, IMMUTABLE;  plants must be same type also
+  // duplicate leaves of src plant to dst. If add == WEED_TRUE, then the original dst leaves will be left or
+  // overwritten, otherwisee all original leaves will be romeved, with the exception od any flagged as UNDELETABEL
+  // leaves comon to both plants will be ovewritten in dst, with the exception of any flagged as IMMUTABLE
 weed_error_t weed_plant_duplicate(weed_plant_t *dst, weed_plant_t *src, int add);
 
-weed_error_t weed_plant_mutate_type(weed_plantptr_t, int32_t newtype);
+  // permits the 'type' of a plant to be altered, i.e. temporarily removes the IMMUTABLE flag
+  // should be used with caution, as the 'type' defines the optional and mandatory leaves
+  weed_error_t weed_plant_mutate_type(weed_plantptr_t, int32_t newtype);
 
 size_t weed_plant_weigh(weed_plant_t *); // get total size in bytes
 

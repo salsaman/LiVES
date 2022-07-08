@@ -14,6 +14,7 @@
 
 #include "rfx-builder.h"
 #include "paramwindow.h"
+#include "startup.h"
 
 #include "lsd-tab.h"
 
@@ -2824,7 +2825,6 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, const lives_clip_data_t *
       if (decoder_plugin) {
         //g_print("trying first with 0X%016lX\n", dec_uid);
         use_fake_cdata = TRUE;
-        break_me("disdec");
         if (lives_list_find_by_data(xdisabled, (void *)decoder_plugin)) {
           char *msg = lives_strdup_printf(_("The %s decoder has been disabled, but was used earlier to open the clip\n"
                                             "%s.\nDo you want to use the disabled edecoder to reopen it ?"),

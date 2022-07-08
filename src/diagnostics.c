@@ -9,6 +9,7 @@
 
 #include "diagnostics.h"
 #include "callbacks.h"
+#include "startup.h"
 
 #define STATS_TC (TICKS_PER_SECOND_DBL)
 static double inst_fps = 0.;
@@ -1715,7 +1716,7 @@ void show_struct_sizes(void) {
   show_size(lives_clip_t);
   show_size(struct _lives_thread_data_t);
   show_size(lives_cc_params);
-  show_size(lives_sw_params);
+  //show_size(lives_sw_params);
   show_size(lives_sigdata_t);
   show_size(lives_object_t);
   g_print("weed data size is %ld\n", weed_get_data_t_size());

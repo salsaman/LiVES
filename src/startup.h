@@ -25,6 +25,17 @@ void print_opthelp(LiVESTextBuffer *, const char *extracmds_file1, const char *e
 
 capabilities *get_capabilities(void);
 
+// checking for executables
+void get_location(const char *exe, char *val, int maxlen);
+boolean check_for_executable(lives_checkstatus_t *cap, const char *exec);
+
+// pacjage mgmt
+
+char *get_install_cmd(const char *distro, const char *exe);
+char *get_install_lib_cmd(const char *distro, const char *libname);
+
+boolean check_snap(const char *prog);
+
 // startup idle funcs
 boolean resize_message_area(livespointer data);
 

@@ -10370,11 +10370,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *layer,
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 0, NULL);
-  weed_leaf_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS);
-  weed_leaf_delete(layer, LIVES_LEAF_PIXBUF_SRC);
-  weed_leaf_delete(layer, LIVES_LEAF_SURFACE_SRC);
-  weed_leaf_delete(layer, LIVES_LEAF_BBLOCKALLOC);
-  weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
+  weed_plant_sanitize(layer, FALSE);
   return layer;
 }
 
@@ -12654,8 +12650,10 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *laye
         int nthreads = 1;
         int dheight;
         double psize = pixel_size(pal);
+
         lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(nfx_threads,
                                     sizeof(lives_cc_params));
+
         int xdheight = CEIL((double)height / (double)nfx_threads, 4);
         uint8_t *end;
 
@@ -13008,7 +13006,7 @@ boolean compact_rowstrides(weed_layer_t *layer) {
 #if USE_THREADS
 static void *swscale_threadfunc(void *arg) {
   lives_sw_params *swparams = (lives_sw_params *)arg;
-#ifdef USE_RESTHREAD
+#if USE_RESTHREAD
   int scan = 0;
   if (swparams->layer) {
     int last = swparams->iheight * (swparams->thread_id + 1);
@@ -13067,7 +13065,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   boolean resolved = FALSE;
   int xpalette, xopal_hint;
 #endif
-#ifdef USE_RESTHREAD
+#if USE_RESTHREAD
   boolean progscan = FALSE;
   if (weed_get_int_value(layer, WEED_LEAF_PROGSCAN, NULL) > 0) progscan = TRUE;
 #endif
@@ -13359,6 +13357,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       iheight >>= 1;
       height >>= 1;
     }
+    if (nthrds < 1) nthrds = 1;
     swparams = (lives_sw_params *)lives_calloc(nthrds, sizeof(lives_sw_params));
 #else
     // TODO - can we set the gamma ?
@@ -13440,9 +13439,10 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         }
         swparams[sl].irw = irw;
         swparams[sl].orw = orw;
-        if (sl < nthrds - 1) lives_thread_create(&threads[sl], LIVES_THRDATTR_NONE,
-              swscale_threadfunc, &swparams[sl]);
-        else swscale_threadfunc(&swparams[sl]);
+        if (sl < nthrds - 1) {
+          lives_thread_create(&threads[sl], LIVES_THRDATTR_NONE,
+                              swscale_threadfunc, &swparams[sl]);
+        } else swscale_threadfunc(&swparams[sl]);
       }
     }
     iheight = height;
@@ -13455,10 +13455,10 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     }
 
     sws_freeblock(ctxblock);
-    lives_free(swparams);
+    //lives_free(swparams);
 
 #else
-#ifdef USE_RESTHREAD
+#if USE_RESTHREAD
     if (progscan)
       while ((scan = weed_get_int_value(layer, WEED_LEAF_PROGSCAN, NULL)) > 0 && scan < iheight)
         lives_nanosleep(100);
@@ -14324,6 +14324,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
     }
   } else {
     /// shallow copy
+    // TODO we should add a ref to the other layer and unref when this one is destroyed
     weed_leaf_dup(layer, slayer, WEED_LEAF_ROWSTRIDES);
     weed_leaf_dup(layer, slayer, WEED_LEAF_PIXEL_DATA);
     weed_leaf_dup(layer, slayer, WEED_LEAF_NATURAL_SIZE);
@@ -14384,6 +14385,13 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 
   weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
 
+  /* if (weed_plant_has_leaf(layer, LIVES_LEAF_MD5SUM)) { */
+  /*   lives_free(weed_get_voidptr_value(layer, LIVES_LEAF_MD5SUM, NULL)); */
+  /*   weed_leaf_delete(layer, LIVES_LEAF_MD5SUM); */
+  /*  } */
+
+  /* // */weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
+
   if (weed_get_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, NULL) == WEED_TRUE) {
     weed_leaf_delete(layer, LIVES_LEAF_BBLOCKALLOC);
     free_bigblock(weed_layer_get_pixel_data(layer));
@@ -14416,12 +14424,11 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
             for (int i = 0; i < pd_elements; i++) {
               if (pixel_data[i]) lives_free(pixel_data[i]);
             }
-          }
-        }
+	    // *INDENT-OFF*
+          }}
         lives_free(pixel_data);
-      }
-    }
-  }
+      }}}
+  // *INDENT-ON*
   weed_layer_nullify_pixel_data(layer);
 }
 
@@ -14439,9 +14446,9 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
 }
 
 int weed_layer_unref(weed_layer_t *layer) {
+  //g_print("unref layer %p\n", layer);
   int refs = weed_refcount_dec(layer);
-  if (refs == -100) lives_abort("layer missing REF_COUNT_MUTEX in weed_layer_unref");
-  if (refs != -1) return refs;
+  if (refs > -1) return refs;
   weed_layer_pixel_data_free(layer);
   weed_refcounter_unlock(layer);
   weed_plant_free(layer);
@@ -14449,6 +14456,8 @@ int weed_layer_unref(weed_layer_t *layer) {
 }
 
 LIVES_GLOBAL_INLINE int weed_layer_ref(weed_layer_t *layer) {
+  if (!layer) break_me("null layer");
+  //g_print("refff layer %p\n", layer);
   return weed_refcount_inc(layer);
 }
 

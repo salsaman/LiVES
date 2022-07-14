@@ -71,7 +71,7 @@ LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
   if (!reason) reason = _("Aborting");
   lives_set_status(LIVES_STATUS_FATAL);
   break_me(reason);
-  if (mainw) lives_hooks_trigger(NULL, mainw->global_hook_closures, ABORT_HOOK);
+  if (mainw) lives_hooks_trigger(NULL, mainw->global_hook_closures, FATAL_HOOK);
   g_printerr("LIVES FATAL: %s\n", reason);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, reason);
   abort();
@@ -106,7 +106,7 @@ void restart_me(LiVESList *extra_argv, const char *xreason) {
   fprintf(stderr, "FAILED TO RESTART LiVES, aborting instead !");
   if (mainw) {
     mainw->error = TRUE;
-    lives_hooks_trigger(NULL, mainw->global_hook_closures, ABORT_HOOK);
+    lives_hooks_trigger(NULL, mainw->global_hook_closures, FATAL_HOOK);
   }
   abort();
 }
@@ -294,9 +294,9 @@ lives_pid_t lives_fork(const char *com) {
 }
 
 
-LIVES_GLOBAL_INLINE void *lives_fork_cb(lives_object_t *dummy, void *com) {
+boolean lives_fork_cb(lives_obj_t *dummy, void *com) {
   IGN_RET(lives_fork((const char *)com));
-  return NULL;
+  return FALSE;
 }
 
 

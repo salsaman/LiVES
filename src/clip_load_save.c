@@ -176,6 +176,24 @@ LIVES_GLOBAL_INLINE void set_default_comment(lives_clip_t *sfile, const char *ex
 }
 
 
+void save_clip_audio_values(int clipno) {
+  lives_clip_t *sfile = RETURN_PHYSICAL_CLIP(clipno);
+  if (sfile) {
+    int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
+    int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
+
+    sfile->header_version = LIVES_CLIP_HEADER_VERSION;
+    save_clip_value(clipno, CLIP_DETAILS_HEADER_VERSION, &sfile->header_version);
+    save_clip_value(clipno, CLIP_DETAILS_ACHANS, &sfile->achans);
+    save_clip_value(clipno, CLIP_DETAILS_ARATE, &sfile->arps);
+    save_clip_value(clipno, CLIP_DETAILS_PB_ARATE, &sfile->arate);
+    save_clip_value(clipno, CLIP_DETAILS_ASAMPS, &sfile->asampsize);
+    save_clip_value(clipno, CLIP_DETAILS_AENDIAN, &aendian);
+    save_clip_value(clipno, CLIP_DETAILS_ASIGNED, &asigned);
+  }
+}
+
+
 void save_file(int clip, frames_t start, frames_t end, const char *filename) {
   // save clip from frame start to frame end
   lives_clip_t *sfile = mainw->files[clip], *nfile = NULL;
@@ -1959,14 +1977,9 @@ ulong restore_file(const char *file_name) {
 /// this is used to record external audio during playback with record on (if the user requests this)
 /// afterwards the audio from it can be rendered/played back
 
-static double ascrap_mb;  // MB written to audio file
-static uint64_t free_mb; // MB free to write
-
-#define SCRAP_CHECK 30
-static ticks_t lscrap_check;
-
-void add_to_ascrap_mb(uint64_t bytes) {ascrap_mb += bytes / 1000000.;}
-double get_ascrap_mb(void) {return ascrap_mb;}
+uint64_t free_mb; // MB free to write
+extern ticks_t lscrap_check;
+extern double ascrap_mb;  // MB written to audio file
 
 boolean open_scrap_file(void) {
   // create a scrap file for recording generated video frames
@@ -2100,180 +2113,6 @@ boolean open_ascrap_file(int clipno) {
   }
   ascrap_mb = 0.;
 
-  return TRUE;
-}
-
-
-boolean load_from_scrap_file(weed_layer_t *layer, frames_t frame) {
-  // load raw frame data from scrap file
-
-  // this will also set cfile width and height - for letterboxing etc.
-
-  // return FALSE if the frame does not exist/we are unable to read it
-
-  char *oname;
-
-  lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
-
-  int fd;
-  if (!IS_VALID_CLIP(mainw->scrap_file)) return FALSE;
-
-  if (!scrapfile->ext_src) {
-    oname = make_image_file_name(scrapfile, 1, LIVES_FILE_EXT_SCRAP);
-    fd = lives_open_buffered_rdonly(oname);
-    lives_free(oname);
-    if (fd < 0) return FALSE;
-#ifdef HAVE_POSIX_FADVISE
-    posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
-#endif
-    scrapfile->ext_src = LIVES_INT_TO_POINTER(fd);
-    scrapfile->ext_src_type = LIVES_EXT_SRC_FILE_BUFF;
-  } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
-
-  if (frame < 0 || !layer) return TRUE; /// just open fd
-
-  if (!weed_plant_deserialise(fd, NULL, layer)) {
-    //g_print("bad scrapfile frame\n");
-    return FALSE;
-  }
-  return TRUE;
-}
-
-
-static boolean sf_writeable = TRUE;
-
-static int64_t _save_to_scrap_file(weed_layer_t *layer) {
-  // returns frame number
-  // dump the raw layer (frame) data to disk
-
-  // TODO: run as bg thread
-
-  size_t pdata_size;
-
-  lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
-
-  //int flags = O_WRONLY | O_CREAT | O_TRUNC;
-  int fd;
-
-  if (!scrapfile->ext_src) {
-    char *oname = make_image_file_name(scrapfile, 1, LIVES_FILE_EXT_SCRAP), *dirname;
-
-#ifdef O_NOATIME
-    //flags |= O_NOATIME;
-#endif
-
-    dirname = get_clip_dir(mainw->scrap_file);
-    lives_mkdir_with_parents(dirname, capable->umask);
-    lives_free(dirname);
-
-    fd = lives_create_buffered_nosync(oname, DEF_FILE_PERMS);
-    lives_free(oname);
-
-    if (fd < 0) {
-      weed_layer_free(layer);
-      return scrapfile->f_size;
-    }
-
-    scrapfile->ext_src = LIVES_INT_TO_POINTER(fd);
-    scrapfile->ext_src_type = LIVES_EXT_SRC_FILE_BUFF;
-
-#ifdef HAVE_POSIX_FADVISE
-    posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
-#endif
-  } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
-
-  // serialise entire frame to scrap file
-  pdata_size = weed_plant_serialise(fd, layer, NULL);
-
-  weed_layer_free(layer);
-
-  // check free space every 2048 frames or after SCRAP_CHECK seconds (whichever comes first)
-  if (lscrap_check == -1) lscrap_check = mainw->clock_ticks;
-  else {
-    if (mainw->clock_ticks - lscrap_check >= SCRAP_CHECK * TICKS_PER_SECOND
-        || (scrapfile->frames & 0x800) == 0x800) {
-      char *dir = get_clip_dir(mainw->scrap_file);
-      free_mb = (double)get_ds_free(dir) / 1000000.;
-      if (free_mb == 0) sf_writeable = is_writeable_dir(dir);
-      lives_free(dir);
-      lscrap_check = mainw->clock_ticks;
-    }
-  }
-
-  return pdata_size;
-}
-
-static lives_proc_thread_t scrap_file_procthrd = NULL;
-
-int save_to_scrap_file(weed_layer_t *layer) {
-  weed_layer_t *orig_layer;
-  lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
-  char *framecount;
-  static boolean checked_disk = FALSE;
-
-  if (!IS_VALID_CLIP(mainw->scrap_file)) return -1;
-  if (!layer) return scrapfile->frames;
-
-  if ((scrapfile->frames & 0x3F) == 0x3F && !checked_disk) {
-    /// check every 64 frames for quota overrun
-    checked_disk = TRUE;
-    if (!check_for_disk_space(TRUE)) return scrapfile->frames;
-  }
-
-  checked_disk = FALSE;
-  check_for_disk_space(FALSE);
-
-  if (scrap_file_procthrd) {
-    // skip saving if still handling the previous one
-    if (mainw->rec_aclip == -1 && mainw->scratch == SCRATCH_NONE) {
-      if (!lives_proc_thread_check_finished(scrap_file_procthrd)) return scrapfile->frames;
-    }
-  }
-
-  orig_layer = weed_layer_copy(NULL, layer);
-  if (scrap_file_procthrd) {
-    scrapfile->f_size += lives_proc_thread_join_int64(scrap_file_procthrd);
-    lives_proc_thread_free(scrap_file_procthrd);
-    scrap_file_procthrd = NULL;
-    g_print("\n\n\nJOINED LPT \n\n\n");
-    if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1))
-        && !prefs->hide_framebar &&
-        !mainw->faded) {
-      double scrap_mb = (double)scrapfile->f_size / 1000000.;
-      if ((scrap_mb + ascrap_mb) < (double)free_mb * .75) {
-        // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-        framecount = lives_strdup_printf(_("rec %.2f MB"), scrap_mb + ascrap_mb);
-      } else {
-        // warn if scrap_file > 3/4 of free space
-        // TRANSLATORS: !rec(ord) %.2f M(ega)B(ytes)
-        if (sf_writeable)
-          framecount = lives_strdup_printf(_("!rec %.2f MB"), scrap_mb + ascrap_mb);
-        else
-          // TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-          framecount = (_("rec ?? MB"));
-      }
-      lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
-      lives_free(framecount);
-    }
-  }
-
-  mainw->scrap_file_size = scrapfile->f_size;
-
-  scrap_file_procthrd = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY,
-                        (lives_funcptr_t)_save_to_scrap_file, WEED_SEED_INT64, "P", orig_layer);
-
-  g_print("\n\n\nCREATED LPT %p\n\n\n", scrap_file_procthrd);
-  return ++scrapfile->frames;
-}
-
-
-LIVES_GLOBAL_INLINE boolean flush_scrap_file(void) {
-  if (!IS_VALID_CLIP(mainw->scrap_file)) return FALSE;
-  if (scrap_file_procthrd) {
-    mainw->files[mainw->scrap_file]->f_size += lives_proc_thread_join_int64(scrap_file_procthrd);
-    lives_proc_thread_free(scrap_file_procthrd);
-    scrap_file_procthrd = NULL;
-  }
   return TRUE;
 }
 
@@ -3113,8 +2952,9 @@ boolean rewrite_recovery_file(void) {
 }
 
 
-static void *rewrite_recovery_file_cb(lives_object_t *obj, void *data) {
-  return LIVES_INT_TO_POINTER(rewrite_recovery_file());
+static boolean rewrite_recovery_file_cb(lives_obj_t *obj, void *data) {
+  rewrite_recovery_file();
+  return FALSE;
 }
 
 
@@ -3211,7 +3051,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
 
   /// CRITICAL: make sure this gets called even on system failure and abort
   if (prefs->crash_recovery && !no_recover)
-    lives_hook_append(mainw->global_hook_closures, ABORT_HOOK, 0, rewrite_recovery_file_cb, NULL);
+    lives_hook_append(mainw->global_hook_closures, FATAL_HOOK, 0, rewrite_recovery_file_cb, NULL);
 
   // check for layout recovery file
   recfname = lives_strdup_printf("%s.%d.%d.%d.%s", LAYOUT_FILENAME, luid, lgid, recpid,
@@ -3343,7 +3183,7 @@ cleanse:
 
   if (THREADVAR(com_failed) && prefs->crash_recovery && !no_recover) {
     rewrite_recovery_file();
-    lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, rewrite_recovery_file_cb, NULL);
+    lives_hook_remove(mainw->global_hook_closures, FATAL_HOOK, rewrite_recovery_file_cb, NULL, mainw->global_hook_mutexes);
     return FALSE;
   }
 
@@ -3394,7 +3234,8 @@ cleanse:
 
   if (prefs->crash_recovery) {
     rewrite_recovery_file();
-    lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, rewrite_recovery_file_cb, NULL);
+    lives_hook_remove(mainw->global_hook_closures, FATAL_HOOK,
+                      rewrite_recovery_file_cb, NULL, mainw->global_hook_mutexes);
   }
 
   if (!mainw->recoverable_layout && !mainw->recording_recovered) {

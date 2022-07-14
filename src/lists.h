@@ -87,6 +87,10 @@ boolean idx_list_get_data(LiVESList *, int idx, void **val_locn);
 #endif
 
 typedef weed_plant_t lives_hash_store_t;
+
+typedef boolean(*lives_hash_match_f)(void *data, void *udata);
+void *get_from_hash_store_cbfunc(lives_hash_store_t *, lives_hash_match_f matchfn, void *udata);
+
 lives_hash_store_t *lives_hash_store_new(const char *id);
 void *get_from_hash_store_i(lives_hash_store_t *, uint64_t ikey);
 void *get_from_hash_store(lives_hash_store_t *, const char *key);
@@ -94,4 +98,5 @@ lives_hash_store_t *add_to_hash_store_i(lives_hash_store_t *, uint64_t key, void
 lives_hash_store_t *add_to_hash_store(lives_hash_store_t *, const char *key, void *data);
 lives_hash_store_t *remove_from_hash_store_i(lives_hash_store_t *, uint64_t key);
 lives_hash_store_t *remove_from_hash_store(lives_hash_store_t *store, const char *key);
+const char *hash_key_from_leaf_name(const char *name);
 #endif

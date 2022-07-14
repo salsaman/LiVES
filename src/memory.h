@@ -229,21 +229,27 @@ void _ext_unmalloc_and_copy(size_t, void *);
 
 boolean init_memfuncs(int stage);
 
+#define copy_if_nonnull(d, s, size) (d ? lives_memcpy(d, s, size) : d)
+
 #define FREE_AND_RETURN(a) lives_free_and_return((a))
 #define FREE_AND_RETURN_VALUE(a, b) (!lives_free_and_return(((a)) ? (b) : (b))
+
+#define lives_nullify_ptr(void_ptr_ptr) do {if (void_ptr_ptr) *void_ptr_ptr = NULL;} while (0);
+
+boolean lives_nullify_ptr_cb(void *dummy, void **vpp);
 
 void *lives_free_and_return(void *p);
 
 boolean lives_freep(void **ptr);
 
 void *lives_slice_alloc(size_t sz);
-void lives_slice_unalloc(size_t sz, void *p);
+void lives_slice_unalloc(size_t sz, void *);
 
 #if GLIB_CHECK_VERSION(2, 14, 0)
-void *lives_slice_alloc_and_copy(size_t sz, void *p);
+void *lives_slice_alloc_and_copy(size_t sz, void *);
 #endif
 
-//////////////// algined pointers
+//////////////// aligned pointers
 
 void *lives_calloc_align(size_t xsize);
 void *lives_calloc_safety(size_t nmemb, size_t xsize);
@@ -253,7 +259,11 @@ void *lives_calloc_safety(size_t nmemb, size_t xsize);
 void swab2(const void *from, const void *to, size_t granularity) 	LIVES_HOT;
 void swab4(const void *from, const void *to, size_t granularity) 	LIVES_HOT;
 void swab8(const void *from, const void *to, size_t granularity) 	LIVES_HOT;
-void reverse_bytes(char *buff, size_t count, size_t granularity) 	LIVES_HOT LIVES_FLATTEN;
+
+#define reverse_bytes(buff, count, granularity) do {\
+  count == 2 ? swab2(buff, buff, 1) : count == 4 ? swab4(buff, buff, granularity) \
+    : count == 8 ? swab8(buff, buff, granularity) : (void)0;} while (0);
+
 boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) 	LIVES_HOT;
 
 ///////////////////////// special allocators //////////
@@ -299,16 +309,18 @@ char *get_memstats(void);
 
 #ifdef ENABLE_ORC
 
-#ifndef NO_ORC_MEMFUNCS
+void *lives_orc_memcpy(void *dest, const void *src, size_t n);
+#if ALLOW_ORC_MEMCPY
 #define _lives_memcpy lives_orc_memcpy
 #endif
 
 #else
 
 #ifdef ENABLE_OIL
-#ifndef NO_OIL_MEMFUNCS
+void *lives_oil_memcpy(void *dest, const void *src, size_t n);
+#if ALLOW_OIL_MEMFUNCS
 #define _lives_memcpy(dest, src, n) {if (n >= 32 && n <= OIL_MEMCPY_MAX_BYTES) { \
-      oil_memcpy((uint8_t *)dest, (const uint8_t *)src, n); return dest;}
+    lives_oil_memcpy((uint8_t *)dest, (const uint8_t *)src, n); return dest;}
 #endif
 #endif
 

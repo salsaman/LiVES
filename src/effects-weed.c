@@ -45,7 +45,7 @@ const char *PIXDATA_NULLIFY_LEAVES[] = {LIVES_LEAF_BBLOCKALLOC,
                                        };
 
 // additional leaves which should be removed / reset after copying
-const char *NO_COPY_LEAVES[] = { LIVES_LEAF_REFCOUNTER, NULL};
+const char *NO_COPY_LEAVES[] = { LIVES_LEAF_REFCOUNTER, WEED_LEAF_HOST_DECODER, NULL};
 
 static int our_plugin_id = 0;
 static weed_plant_t *expected_hi = NULL, *expected_pi = NULL;
@@ -1986,7 +1986,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   for (i = 0; i < num_in_tracks; i++) {
     lives_clip_t *sfile = NULL;
-
     if (weed_palette_is_alpha(weed_channel_get_palette(in_channels[i]))) continue;
     if (weed_get_boolean_value(in_channels[i], WEED_LEAF_DISABLED, NULL) == WEED_TRUE ||
         weed_get_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) {
@@ -12215,7 +12214,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
           weed_layer_set_rowstrides(plant, rs, nplanes);
         }
 
-        values[j] = lives_calloc(ALIGN_CEIL(vlen + EXTRA_BYTES, 16) / 16, 16);
+        values[j] = lives_calloc_align(vlen);
         if (!values[j]) {
           msg = lives_strdup_printf("Could not allocate %d bytes for deserialised frame", vlen);
           LIVES_ERROR(msg);
@@ -12226,7 +12225,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
           goto done;
         }
         if (lives_read_buffered(fd, values[j], vlen, TRUE) != vlen) {
-
+          // TODO...
 
         }
         if (j >= nplanes) lives_free(values[j]);
@@ -12315,19 +12314,14 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
               type = weed_plant_mutate(plant, *ints);
             } else {
               if (*ints != type) {
-                msg = lives_strdup_printf("Type mismatch in deserialization: expected %d, got %d\n",
-                                          type, *ints);
-                lives_free(ints);
-                LIVES_ERROR(msg);
-                lives_free(msg);
+                msg = lives_strdup_printf("Type mismatch in deserialization: expected %d, got %d\n", type, *ints);
+                lives_free(ints); LIVES_ERROR(msg); lives_free(msg);
                 type = -7;
                 goto done;
               }
               // type already OK
             }
-          } else {
-            weed_leaf_set(plant, key, st, ne, (void *)ints);
-          }
+          } else  weed_leaf_set(plant, key, st, ne, (void *)ints);
         } else {
           if (check_ptrs) {
             if (pixdata_nullify_leaf(key) || no_copy_leaf(key)) add_leaf = FALSE;

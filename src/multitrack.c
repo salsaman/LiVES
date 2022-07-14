@@ -7314,7 +7314,7 @@ static track_rect *add_block_start_point(LiVESWidget * eventbox, weed_timecode_t
 
   new_block = (track_rect *)lives_malloc(sizeof(track_rect));
 
-  new_block->uid = lives_random();
+  new_block->uid = gen_unique_id();
   new_block->next = new_block->prev = NULL;
   new_block->state = BLOCK_UNSELECTED;
   new_block->start_anchored = new_block->end_anchored = FALSE;
@@ -9418,7 +9418,7 @@ static void _clear_context(lives_mt * mt) {
 }
 
 void clear_context(lives_mt * mt) {
-  main_thread_execute((lives_funcptr_t)_clear_context, 0, NULL, "v", mt);
+  main_thread_execute(_clear_context, 0, NULL, "v", mt);
 }
 
 
@@ -11882,7 +11882,7 @@ static void _animate_multitrack(lives_mt * mt) {
 
 
 void animate_multitrack(lives_mt * mt) {
-  main_thread_execute((lives_funcptr_t)_animate_multitrack, 0, NULL, "v", mt);
+  main_thread_execute(_animate_multitrack, 0, NULL, "v", mt);
 }
 
 ////////////////////////////////////////////////////
@@ -14740,7 +14740,7 @@ void multitrack_playall(lives_mt * mt) {
     boolean had_audio = mt->has_audio_file;
     mt->pb_start_event = NULL;
     mt->has_audio_file = TRUE;
-    main_thread_execute((lives_funcptr_t)on_preview_clicked, 0, NULL, "vv", mainw->proc_ptr->preview_button, NULL);
+    main_thread_execute(on_preview_clicked, 0, NULL, "vv", mainw->proc_ptr->preview_button, NULL);
     //on_preview_clicked(LIVES_BUTTON(
     mt->has_audio_file = had_audio;
   } else {

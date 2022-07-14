@@ -3891,7 +3891,7 @@ static void jack_make_perm(LiVESWidget * widget, livespointer data) {
 #endif
 
 
-static void *_full_reset(lives_object_t *obj, void *pconfdir) {
+static boolean _full_reset(lives_obj_t *obj, void *pconfdir) {
   char *confdir = *(char **)pconfdir;
   char *config_file = lives_build_filename(confdir, LIVES_DEF_CONFIG_FILE, NULL);
   lives_rmdir(confdir, TRUE);
@@ -3900,7 +3900,7 @@ static void *_full_reset(lives_object_t *obj, void *pconfdir) {
   lives_free(confdir);
   lives_touch(config_file);
   lives_free(config_file);
-  return NULL;
+  return FALSE;
 }
 
 
@@ -3922,7 +3922,7 @@ static void do_full_reset(LiVESWidget * widget, livespointer data) {
     lives_free(config_dir);
     return;
   }
-  lives_hook_append(mainw->global_hook_closures, EXIT_HOOK, 0, _full_reset, (void *)&config_dir);
+  lives_hook_append(mainw->global_hook_closures, FINAL_HOOK, 0, _full_reset, (void *)&config_dir);
   lives_exit(0);
 }
 
@@ -7628,7 +7628,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_widget_set_opacity(prefsw->prefs_dialog, 0.);
   lives_widget_show_all(prefsw->prefs_dialog);
 
-  main_thread_execute((lives_funcptr_t)on_prefs_page_changed, -1, NULL, "vv", prefsw->selection, prefsw);
+  main_thread_execute(on_prefs_page_changed, -1, NULL, "vv", prefsw->selection, prefsw);
   //on_prefs_page_changed(prefsw->selection, prefsw);
 
   lives_widget_show_now(prefsw->prefs_dialog);

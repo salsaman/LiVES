@@ -39,7 +39,7 @@ boolean check_snap(const char *prog);
 // startup idle funcs
 boolean resize_message_area(livespointer data);
 
-boolean lazy_startup_checks(void *data);
+boolean lazy_startup_checks(void);
 
 boolean render_choice_idle(livespointer data);
 //

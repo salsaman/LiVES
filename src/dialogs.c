@@ -1412,26 +1412,8 @@ static void clock_upd(GdkFrameClock * clock, gpointer user_data) {display_ready 
 
 static boolean reset_timebase(void) {
   // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
-#if _POSIX_TIMERS
-  ticks_t originticks = lives_get_current_ticks();
-  originticks *= TICKS_TO_NANOSEC;
-  mainw->origsecs = originticks / ONE_BILLION;
-  mainw->orignsecs = originticks - mainw->origsecs * ONE_BILLION;
-#else
 
-#ifdef USE_MONOTONIC_TIME
-  mainw->origsecs = 0; // not used
-  mainw->orignsecs = lives_get_monotonic_time() * 1000;
-#else
-
-  / \ ***************************************************\ /
-  gettimeofday(&tv, NULL);
-  / \ ***************************************************\ /
-
-  mainw->origsecs = tv.tv_sec;
-  mainw->orignsecs = tv.tv_usec * 1000;
-#endif
-#endif
+  get_current_time_offset(&mainw->origsecs, &mainw->orignsecs);
 
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
@@ -2028,7 +2010,7 @@ finish:
             && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
           notify_user(mainw->proc_ptr->text);
         }
-        lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_DONE_HOOK);
+        lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_FINISHED_HOOK);
         lives_freep((void **)&mainw->proc_ptr->text);
         lives_widget_destroy(mainw->proc_ptr->processing);
       }
@@ -3579,7 +3561,7 @@ void threaded_dialog_spin(double fraction) {
       || !mainw->is_ready || !prefs->show_gui) return;
   if (!mainw->is_exiting && !is_fg_thread()) {
     if (THREADVAR(no_gui)) return;
-    main_thread_execute((lives_funcptr_t)_threaded_dialog_spin, 0,
+    main_thread_execute(_threaded_dialog_spin, 0,
                         NULL, "d", fraction);
   } else _threaded_dialog_spin(fraction);
 }
@@ -3622,10 +3604,10 @@ void threaded_dialog_auto_spin(void) {
   if (!prefs->show_gui) return;
   if (!mainw->threaded_dialog || mainw->dlg_spin_thread) return;
   if (!is_fg_thread()) {
-    main_thread_execute((lives_funcptr_t)threaded_dialog_auto_spin, 0, NULL, NULL);
+    main_thread_execute_rvoid_pvoid(threaded_dialog_auto_spin);
   }
   mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                           (lives_funcptr_t)_thdlg_auto_spin, 0, NULL);
+                           (lives_funcptr_t)_thdlg_auto_spin, 0, "", NULL);
 }
 
 
@@ -3643,7 +3625,7 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   if (!prefs->show_gui) return;
   if (mainw->threaded_dialog || mainw->dlg_spin_thread) return;
   if (!mainw->is_exiting && !is_fg_thread()) {
-    main_thread_execute((lives_funcptr_t)_do_threaded_dialog, 0,
+    main_thread_execute(_do_threaded_dialog, 0,
                         NULL, "sb", trans_text, has_cancel);
   } else _do_threaded_dialog(trans_text, has_cancel);
 }
@@ -3682,7 +3664,7 @@ void end_threaded_dialog(void) {
   if (THREADVAR(no_gui)) return;
   if (!mainw->threaded_dialog) return;
   if (!mainw->is_exiting && !is_fg_thread())
-    main_thread_execute((lives_funcptr_t)_end_threaded_dialog, 0, NULL, "");
+    main_thread_execute_rvoid_pvoid(_end_threaded_dialog);
   else _end_threaded_dialog();
 }
 

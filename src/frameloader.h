@@ -25,6 +25,10 @@ const char *image_ext_to_lives_image_type(const char *img_ext);
 
 ///////////
 
+int save_to_scrap_file(weed_layer_t *);
+boolean load_from_scrap_file(weed_layer_t *, frames_t frame);
+boolean flush_scrap_file(void);
+
 boolean pull_frame(weed_layer_t *, const char *image_ext, ticks_t tc);
 void pull_frame_threaded(weed_layer_t *, const char *img_ext, ticks_t tc, int width, int height);
 boolean is_layer_ready(weed_layer_t *);

@@ -28,10 +28,10 @@ static weed_timecode_t last_rec_start_tc = -1;
 static void **pchains[FX_KEYS_MAX]; // each pchain is an array of void *, these are parameter changes used for rendering
 
 ///////////////////////////////////////////////////////
-static void *transrend_sync(lives_object_t *obj, void *data) {
+static boolean transrend_sync(lives_obj_t *obj, void *data) {
   g_print("in hook cb\n");
   mainw->transrend_waiting = TRUE;
-  return NULL;
+  return TRUE;
 }
 
 
@@ -4798,7 +4798,7 @@ lives_render_error_t render_events_cb(boolean dummy) {
 }
 
 
-static void *do_xdg_opt(lives_object_t *obj, void *data) {
+static boolean do_xdg_opt(lives_obj_t *obj, void *data) {
   LiVESToggleButton *cb = (LiVESToggleButton *)data;
   if (lives_toggle_button_get_active(cb)) {
     char *tmp, *com = lives_strdup_printf("%s \"%s\"", EXEC_XDG_OPEN,
@@ -4807,17 +4807,17 @@ static void *do_xdg_opt(lives_object_t *obj, void *data) {
     lives_free(com); lives_free(tmp);
     lives_widget_object_unref(cb);
   }
-  return NULL;
+  return FALSE;
 }
 
-static void *add_xdg_opt(lives_object_t *obj, livespointer data) {
+static boolean add_xdg_opt(lives_obj_t *obj, livespointer data) {
   if (check_for_executable(&capable->has_xdg_open, EXEC_XDG_OPEN) == PRESENT) {
     LiVESWidget *cb = lives_standard_check_button_new(_("Preview in default video player afterwards"),
                       FALSE, LIVES_BOX(widget_opts.last_container), NULL);
     lives_widget_object_ref(cb);
-    lives_hook_append(THREADVAR(hook_closures), TX_DONE_HOOK, HOOK_CB_SINGLE_SHOT, do_xdg_opt, cb);
+    lives_hook_append(THREADVAR(hook_closures), TX_FINISHED_HOOK, 0, do_xdg_opt, cb);
   }
-  return NULL;
+  return FALSE;
 }
 
 
@@ -4867,7 +4867,7 @@ boolean start_render_effect_events(weed_event_list_t *event_list, boolean render
   if (cfile->old_frames > 0) cfile->nopreview = TRUE; /// FIXME...
 
   if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE && render_vid) {
-    lives_hook_append(THREADVAR(hook_closures), TX_START_HOOK, HOOK_CB_SINGLE_SHOT, add_xdg_opt, NULL);
+    lives_hook_append(THREADVAR(hook_closures), TX_START_HOOK, 0, add_xdg_opt, NULL);
   }
 
   // play back the file as fast as possible, each time calling render_events()
@@ -5360,8 +5360,7 @@ boolean render_to_clip(boolean new_clip) {
     mainw->transrend_waiting = FALSE;
 
     mainw->transrend_proc
-      = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
-                                 (lives_funcptr_t)transcode_clip,
+      = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC, transcode_clip,
                                  WEED_SEED_BOOLEAN, "iibV", 1, 0, TRUE, pname);
 
     work = lives_proc_thread_get_work(mainw->transrend_proc);
@@ -5620,7 +5619,7 @@ static LiVESResponseType _show_rc_dlg(void) {
 
 static LiVESResponseType show_rc_dlg(void) {
   LiVESResponseType resp;
-  main_thread_execute((lives_funcptr_t)_show_rc_dlg, WEED_SEED_INT, &resp, "");
+  main_thread_execute_pvoid(_show_rc_dlg, WEED_SEED_INT, &resp);
   return resp;
 }
 

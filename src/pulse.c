@@ -1248,7 +1248,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
       if (rec_output) {
         float out_scale = (float)pulsed->out_arate / mainw->files[mainw->ascrap_file]->arate;
-        lives_hooks_trigger(pulsed->inst, pulsed->inst->hook_closures, DATA_READY_HOOK);
+        lives_hooks_triggero(pulsed->inst, pulsed->inst->hook_closures, DATA_READY_HOOK);
         // recording internal - resample from out_arate to file arate
         pulse_write_data(out_scale, pulsed->out_achans, mainw->ascrap_file, nbytes, buffer);
       }
@@ -1410,7 +1410,8 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   void *data;
   size_t rbytes = nbytes, zbytes, nframes;;
 
-  lives_hooks_join(pulsed->inst->hook_closures, DATA_READY_HOOK);
+  // actually we should not call join ourselves, but wait for the hooks to be joined
+  lives_hooks_join(pulsed->inst->hook_closures[DATA_READY_HOOK], &pulsed->inst->hook_mutex[DATA_READY_HOOK]);
 
   if (pulsed->is_corked) return;
 
@@ -1478,7 +1479,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   lives_aplayer_set_data_len(pulsed->inst, nframes);
   lives_aplayer_set_data(pulsed->inst, (void *)back_buff);
 
-  lives_hooks_trigger(pulsed->inst, pulsed->inst->hook_closures, DATA_READY_HOOK);
+  lives_hooks_triggero(pulsed->inst, pulsed->inst->hook_closures, DATA_READY_HOOK);
 
   pulsed->seek_pos += rbytes;
 

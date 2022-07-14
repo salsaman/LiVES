@@ -96,7 +96,7 @@ void *struct_from_template_inplace(lives_struct_type st_type, void *thestruct) {
 }
 
 
-LIVES_GLOBAL_INLINE void *copy_struct(lsd_struct_def_t *lsd) {
+; LIVES_GLOBAL_INLINE void *copy_struct(lsd_struct_def_t *lsd) {
   if (lsd) {
     lsd_struct_def_t *xlsd = lsd_struct_copy(lsd);
     return xlsd;

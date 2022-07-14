@@ -506,7 +506,7 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
   if (key && *key) {
     // if hash_ret is set then this is a setter looking for leaf
     // in this case it already has a chain_lock writelock and does not need to check further
-    if (!hash_ret || !*refnode) {
+    if (!hash_ret || !refnode || !*refnode) {
       /// grab chain_lock readlock
       /// if we get a readlock, then remove it
       /// otherwise check flagbits, if op. is !SET, run in checking mode
@@ -595,14 +595,23 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, we
   leaf->seed_type = seed_type;
   leaf->flags = 0;
   leaf->data = NULL;
+#if _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200809
+  pthread_rwlockattr_t attr;
+  pthread_rwlockattr_init(&attr);
+  pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+#define RW_ATTR &attr
+#else
+#define RW_ATTR NULL
+#endif
+
   if (is_plant(leaf)) {
     plant_priv_data_t *pdata = weed_malloc_sizeof(plant_priv_data_t);
     if (!pdata) {
       if (weed_leaf_get_key(leaf) != leaf->padding)
 	weed_unmalloc_and_copy(strlen(leaf->key + 1) + 2, (void *)leaf->key);
       weed_unmalloc_sizeof(weed_leaf_t, leaf); return NULL;}
-    pthread_rwlock_init(&pdata->ldata.chain_lock, NULL);
-    pthread_rwlock_init(&pdata->ldata.data_lock, NULL);
+    pthread_rwlock_init(&pdata->ldata.chain_lock, RW_ATTR);
+    pthread_rwlock_init(&pdata->ldata.data_lock, RW_ATTR);
     pthread_mutex_init(&pdata->ldata.data_mutex, NULL);
 
     pthread_rwlock_init(&pdata->reader_count, NULL);
@@ -616,8 +625,8 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, we
 	weed_unmalloc_and_copy(strlen(leaf->key + 1) + 2, (void *)leaf->key);
       weed_unmalloc_sizeof(weed_leaf_t, leaf); return NULL;}
 
-    pthread_rwlock_init(&ldata->chain_lock, NULL);
-    pthread_rwlock_init(&ldata->data_lock, NULL);
+    pthread_rwlock_init(&ldata->chain_lock, RW_ATTR);
+    pthread_rwlock_init(&ldata->data_lock, RW_ATTR);
     pthread_mutex_init(&ldata->data_mutex, NULL);
     leaf->private_data = (void *)ldata;
   }

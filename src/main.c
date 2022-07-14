@@ -348,12 +348,12 @@ void defer_sigint(int signum) {
 }
 
 
-void *defer_sigint_cb(lives_object_t *obj, void *pdtl) {
+boolean defer_sigint_cb(lives_obj_t *obj, void *pdtl) {
   int crpos = mainw->crash_possible;
   mainw->crash_possible = LIVES_POINTER_TO_INT(pdtl);
   defer_sigint(-1);
   mainw->crash_possible = crpos;
-  return NULL;
+  return FALSE;
 }
 
 
@@ -362,7 +362,7 @@ void catch_sigint(int signum) {
   // trap for ctrl-C and others
   //if (mainw->jackd) lives_jack_end();
 
-  lives_hooks_trigger(NULL, THREADVAR(hook_closures), ABORT_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_closures), FATAL_HOOK);
 
   if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
     // if we are not the main thread, just exit
@@ -381,7 +381,7 @@ void catch_sigint(int signum) {
   exit(signum);
 #endif
   if (mainw) {
-    lives_hooks_trigger(NULL, mainw->global_hook_closures, ABORT_HOOK);
+    lives_hooks_trigger(NULL, mainw->global_hook_closures, FATAL_HOOK);
 
     if (LIVES_MAIN_WINDOW_WIDGET) {
       if (mainw->foreign) {

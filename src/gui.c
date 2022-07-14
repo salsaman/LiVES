@@ -4345,9 +4345,7 @@ static void _make_play_window(void) {
   //lives_grab_add(mainw->play_window);
 }
 
-void make_play_window(void) {
-  main_thread_execute((lives_funcptr_t)_make_play_window, 0, NULL, "");
-}
+void make_play_window(void) {main_thread_execute_rvoid_pvoid(_make_play_window);}
 
 
 LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
@@ -4792,7 +4790,7 @@ static void _resize_play_window(void) {
 
 LIVES_GLOBAL_INLINE void resize_play_window(void) {
   THREADVAR(hook_hints) = HOOK_UNIQUE_FUNC;
-  main_thread_execute((lives_funcptr_t)_resize_play_window, 0, NULL, "");
+  main_thread_execute_rvoid_pvoid(_resize_play_window);
   THREADVAR(hook_hints) = 0;
 }
 
@@ -4831,9 +4829,8 @@ static void _kill_play_window(void) {
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show Play Window"));
 }
 
-void kill_play_window(void) {
-  main_thread_execute((lives_funcptr_t)_kill_play_window, 0, NULL, "");
-}
+
+void kill_play_window(void) {main_thread_execute_rvoid_pvoid(_kill_play_window);}
 
 
 #define ASPECT_DIFF_LMT 0.01625f  // (fabs) ratio differences in aspect ratios within this limit considered irrelevant

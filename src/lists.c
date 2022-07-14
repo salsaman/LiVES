@@ -4,6 +4,7 @@
 // see file ../COPYING for licensing details
 
 #include "main.h"
+#include "maths.h"
 
 
 LIVES_GLOBAL_INLINE boolean lives_list_contains_string(LiVESList *list, const char *strng) {
@@ -392,6 +393,13 @@ LIVES_GLOBAL_INLINE char *lives_list_to_string(LiVESList *list, const char *deli
 }
 
 /////////////////// hash stores  //////
+#define HASH_STORE_PFX "k_"
+#define HS_PFX_LEN 2
+
+#define IS_HASHSTORE_KEY(key) ((key) && lives_strlen_atleast((key), HS_PFX_LEN) \
+			       && !lives_strncmp((key), HASH_STORE_PFX, HS_PFX_LEN))
+#define GET_HASHSTORE_KEY(hkey) (IS_HASHSTORE_KEY((hkey)) ? ((hkey) + HS_PFX_LEN) : NULL)
+#define MAKE_HASHSTORE_KEY(key) ((key) ? lives_strdup_printf("%s%" PRIu64, HASH_STORE_PFX, (key)) : NULL)
 
 LIVES_GLOBAL_INLINE lives_hash_store_t *lives_hash_store_new(const char *id) {
   lives_hash_store_t *store = lives_plant_new(LIVES_WEED_SUBTYPE_HASH_STORE);
@@ -402,7 +410,7 @@ LIVES_GLOBAL_INLINE lives_hash_store_t *lives_hash_store_new(const char *id) {
 LIVES_GLOBAL_INLINE void *get_from_hash_store_i(lives_hash_store_t *store, uint64_t key) {
   if (!store) return NULL;
   else {
-    char *xkey = lives_strdup_printf("k_%lu", key);
+    char *xkey = MAKE_HASHSTORE_KEY(key);
     void *vret = weed_get_voidptr_value(store, xkey, NULL);
     lives_free(xkey);
     return vret;
@@ -410,23 +418,26 @@ LIVES_GLOBAL_INLINE void *get_from_hash_store_i(lives_hash_store_t *store, uint6
 }
 
 LIVES_GLOBAL_INLINE void *get_from_hash_store(lives_hash_store_t *store, const char *key) {
-  uint64_t ikey = fast_hash64(key);
-  return get_from_hash_store_i(store, ikey);
+  return get_from_hash_store_i(store, minimd5((void *)key, lives_strlen(key)));
+}
+
+
+LIVES_GLOBAL_INLINE const char *hash_key_from_leaf_name(const char *name) {
+  return GET_HASHSTORE_KEY(name);
 }
 
 
 LIVES_GLOBAL_INLINE lives_hash_store_t *add_to_hash_store_i(lives_hash_store_t *store, uint64_t key, void *data) {
   if (!store) store = lives_hash_store_new(NULL);
   if (store) {
-    char *xkey = lives_strdup_printf("k_%lu", key);
+    char *xkey = MAKE_HASHSTORE_KEY(key);
     weed_set_voidptr_value(store, xkey, data);
   }
   return store;
 }
 
 LIVES_GLOBAL_INLINE lives_hash_store_t *add_to_hash_store(lives_hash_store_t *store, const char *key, void *data) {
-  uint64_t ikey = fast_hash64(key);
-  return add_to_hash_store_i(store, ikey, data);
+  return add_to_hash_store_i(store, minimd5((void *)key, lives_strlen(key)), data);
 }
 
 
@@ -441,4 +452,27 @@ LIVES_GLOBAL_INLINE lives_hash_store_t *remove_from_hash_store_i(lives_hash_stor
 LIVES_GLOBAL_INLINE lives_hash_store_t *remove_from_hash_store(lives_hash_store_t *store, const char *key) {
   uint64_t ikey = fast_hash64(key);
   return remove_from_hash_store_i(store, ikey);
+}
+
+typedef boolean(*lives_hash_match_f)(void *data, void *udata);
+
+LIVES_GLOBAL_INLINE void *get_from_hash_store_cbfunc(lives_hash_store_t *store, lives_hash_match_f matchfn, void *udata) {
+  void *ret = NULL;
+  if (store) {
+    boolean found = FALSE;
+    char **ll = weed_plant_list_leaves(store, NULL);
+    for (int i = 0; ll[i]; i++) {
+      if (!found) {
+        if (IS_HASHSTORE_KEY(ll[i])) {
+          if ((*matchfn)(weed_get_voidptr_value(store, ll[i], NULL), udata)) {
+            ret = weed_get_voidptr_value(store, ll[i], NULL);
+            found = TRUE;
+          }
+        }
+      }
+      lives_free(ll[i]);
+    }
+    lives_free(ll);
+  }
+  return ret;
 }

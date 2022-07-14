@@ -2651,7 +2651,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * entryw) {
     int woat = widget_opts.apply_theme;
     int lcount = 0, ccount = 0;
 
-    sizinfo = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
+    sizinfo = lives_proc_thread_create(LIVES_THRDATTR_NONE, get_dir_size, WEED_SEED_INT64, "s",
                                        setdir);
 
     layinfo = dir_to_file_details(laylist, ldirname, NULL, 0);
@@ -3600,11 +3600,15 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
 }
 
 
-// this is a little tricky to handle - we want to redraw the timeline in a bg thread, however
-// GUI updates need to be done in the main thread
-
+// this is a little tricky to handle - we want to redraw the timeline in a bg thread so as not to hold up playback,
+// however GUI updates need to be done in the main thread
+// in addition, the user or another thread can switch the current clip in the middle of drawing
+// in which case we need to stop and let another thread take over
 // so: if main thread calls this, we kick off a bg thread to rerun this and then that thread will
 // push the GUI updates back
+// the bg thread running it sets itself cancellable and checks for cancellation
+// calling this from the main thread, it will check if an exisitng bg thread is running, if so cancel it with
+// dontcare_nullify (ie.
 
 // if a bg thread calls this, and there is no current fg_service being run, then continue
 // if an fg_service is being run, we cannot stack calls, so we must defer it till the fg_service finishes
@@ -3664,7 +3668,7 @@ void redraw_timeline(int clipno) {
       pthread_mutex_unlock(&mainw->tlthread_mutex);
 
       THREADVAR(hook_flag_hints) = HOOK_UNIQUE_REPLACE_OR_ADD;
-      main_thread_execute((lives_funcptr_t)redraw_timeline, 0, NULL, "i", clipno);
+      main_thread_execute(redraw_timeline, 0, NULL, "i", clipno);
       THREADVAR(hook_flag_hints) = 0;
 
       return;
@@ -4780,7 +4784,7 @@ rundlg:
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
                   const char *title, LiVESWidget * extra_widget) {
   char *cret;
-  main_thread_execute((lives_funcptr_t)_choose_file, WEED_SEED_STRING,
+  main_thread_execute(_choose_file, WEED_SEED_STRING,
                       &cret, "ssvisv", dir, fname, filt, act, title, extra_widget);
   return cret;
 }
@@ -8433,7 +8437,7 @@ boolean msg_area_config(LiVESWidget * widget) {
 boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
   lives_painter_t *cr2;
   LingoLayout *layout;
-
+  return TRUE;
   if (!prefs->show_msg_area) return TRUE;
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");

@@ -552,7 +552,7 @@ void lives_exit(int signum) {
     unload_decoder_plugins();
   }
 
-  lives_hooks_trigger(NULL, mainw->global_hook_closures, EXIT_HOOK);
+  lives_hooks_trigger(NULL, mainw->global_hook_closures, FINAL_HOOK);
 
   if (prefs->workdir_tx_intent == OBJ_INTENTION_DELETE) {
     // delete the old workdir
@@ -4776,7 +4776,7 @@ void play_all(boolean from_menu) {
     /*   } */
     //}
     if (from_menu) {
-      main_thread_execute((lives_funcptr_t)switch_clip, 0, NULL, "iib", 1, mainw->pre_src_file, TRUE);
+      main_thread_execute(switch_clip, 0, NULL, "iib", 1, mainw->pre_src_file, TRUE);
       mainw->pre_src_file = -2;
     }
   }
@@ -7409,7 +7409,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
 
 
 void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  main_thread_execute((lives_funcptr_t)_on_full_screen_activate, 0, NULL, "vv", menuitem, user_data);
+  main_thread_execute(_on_full_screen_activate, 0, NULL, "vv", menuitem, user_data);
 }
 
 void on_double_size_pressed(LiVESButton * button, livespointer user_data) {
@@ -9880,7 +9880,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
   if (mainw->multitrack) {
     current_file = mainw->current_file;
     mainw->current_file = mainw->multitrack->render_file;
-    main_thread_execute((lives_funcptr_t)mt_post_playback, -1, NULL, "v", mainw->multitrack);
+    main_thread_execute(mt_post_playback, -1, NULL, "v", mainw->multitrack);
     mainw->current_file = current_file;
   }
 
@@ -10670,7 +10670,8 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
     lives_audio_buf_t *abuf = mainw->alock_abuf;
     prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
     if (abuf) {
-      lives_hook_remove(THREADVAR(hook_closures), DATA_READY_HOOK, resample_to_float, &mainw->alock_abuf);
+      lives_hook_remove(THREADVAR(hook_closures), DATA_READY_HOOK, resample_to_float,
+                        &mainw->alock_abuf, mainw->global_hook_mutexes);
       pthread_mutex_lock(&mainw->alock_mutex);
       mainw->alock_abuf = NULL;
       pthread_mutex_unlock(&mainw->alock_mutex);

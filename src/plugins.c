@@ -2704,7 +2704,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
 
     ////////////
     mainw->crash_possible = 16;
-    lives_hook_append(THREADVAR(hook_closures), THREAD_EXIT_HOOK, HOOK_CB_SINGLE_SHOT,
+    lives_hook_append(THREADVAR(hook_closures), TX_EXIT_HOOK, 0,
                       defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
     set_signal_handlers((SignalHandlerPointer)defer_sigint);
@@ -2714,8 +2714,9 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
     cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
     ////
 
-    lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
-                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+    lives_hook_remove(THREADVAR(hook_closures), TX_EXIT_HOOK,
+                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible),
+                      THREADVAR(hook_mutex));
 
     set_signal_handlers((SignalHandlerPointer)catch_sigint);
     mainw->crash_possible = 0;

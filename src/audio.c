@@ -20,7 +20,7 @@ static const int std_arates[] =
 static arec_details *rec_ext_dets = NULL;
 static arec_details *aud_ext_analyse_dets = NULL;
 
-static void *write_aud_data_cb(lives_object_t *aplayer, void *xdets);
+static boolean write_aud_data_cb(lives_object_t *aplayer, void *xdets);
 
 
 #if HAVE_SWRESAMPLE
@@ -29,7 +29,7 @@ void sw_resample(void) {
   struct SwrContext *swr_ctx = swr_alloc();
   int ret;
 
-  if (!swr_ctx) return;
+  if (!swr_ctx) return FALSE;
 
   /* set options */
   av_opt_set_int(swr_ctx, "in_channel_count", inchans, 0);
@@ -2489,8 +2489,6 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 
   if (rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED || rec_type == RECA_MIXED
       || rec_type == RECA_DESKTOP_GRAB_INT || rec_type == RECA_DESKTOP_GRAB_EXT) {
-    int asigned;
-    int aendian;
     off_t fsize = lives_buffered_offset(mainw->aud_rec_fd);
 
     if (rec_type == RECA_EXTERNAL) {
@@ -2501,13 +2499,6 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
       outfile->asampsize = 16;
       outfile->signed_endian = get_signed_endian(TRUE, TRUE);
 
-      asigned = !(outfile->signed_endian & AFORM_UNSIGNED);
-      aendian = !(outfile->signed_endian & AFORM_BIG_ENDIAN);
-
-      mainw->jackd_read->frames_written = fsize / (outfile->achans * (outfile->asampsize >> 3));
-
-      asigned = !(outfile->signed_endian & AFORM_UNSIGNED);
-      aendian = !(outfile->signed_endian & AFORM_BIG_ENDIAN);
       mainw->jackd_read->frames_written = fsize / (outfile->achans * (outfile->asampsize >> 3));
     } else {
       mainw->jackd->reverse_endian = FALSE;
@@ -2516,18 +2507,8 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 
       outfile->asampsize = 16;
       outfile->signed_endian = get_signed_endian(TRUE, TRUE);
-
-      asigned = !(outfile->signed_endian & AFORM_UNSIGNED);
-      aendian = !(outfile->signed_endian & AFORM_BIG_ENDIAN);
     }
-
-    save_clip_value(fileno, CLIP_DETAILS_HEADER_VERSION, &outfile->header_version);
-    save_clip_value(fileno, CLIP_DETAILS_ACHANS, &outfile->achans);
-    save_clip_value(fileno, CLIP_DETAILS_ARATE, &outfile->arps);
-    save_clip_value(fileno, CLIP_DETAILS_PB_ARATE, &outfile->arate);
-    save_clip_value(fileno, CLIP_DETAILS_ASAMPS, &outfile->asampsize);
-    save_clip_value(fileno, CLIP_DETAILS_AENDIAN, &aendian);
-    save_clip_value(fileno, CLIP_DETAILS_ASIGNED, &asigned);
+    save_clip_audio_values(fileno);
   } else {
     int out_bendian = outfile->signed_endian & AFORM_BIG_ENDIAN;
 
@@ -2572,7 +2553,8 @@ void jack_rec_audio_end(boolean close_fd) {
     lives_object_instance_t *aplayer = NULL;
     if (mainw->jackd_read) aplayer = mainw->jackd_read->inst;
     if (aplayer)
-      lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, write_aud_data_cb, rec_ext_dets);
+      lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, (hook_funcptr_t) write_aud_data_cb,
+                        rec_ext_dets, aplayer->hook_mutex);
     if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
     lives_free(rec_ext_dets);
     rec_ext_dets = NULL;
@@ -2645,8 +2627,6 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
 
   if (rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED || rec_type == RECA_MIXED
       || rec_type == RECA_DESKTOP_GRAB_INT || rec_type == RECA_DESKTOP_GRAB_EXT) {
-    int asigned;
-    int aendian;
     off_t fsize = lives_buffered_offset(mainw->aud_rec_fd);
 
     if (rec_type == RECA_EXTERNAL || rec_type == RECA_DESKTOP_GRAB_EXT) {
@@ -2660,9 +2640,6 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
       outfile->signed_endian = get_signed_endian(mainw->pulsed_read->in_signed != AFORM_UNSIGNED,
                                mainw->pulsed_read->in_endian != AFORM_BIG_ENDIAN);
 
-      asigned = !(outfile->signed_endian & AFORM_UNSIGNED);
-      aendian = !(outfile->signed_endian & AFORM_BIG_ENDIAN);
-
       mainw->pulsed_read->frames_written = fsize / (outfile->achans * (outfile->asampsize >> 3));
     } else {
       mainw->pulsed->reverse_endian = FALSE;
@@ -2671,19 +2648,8 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
       outfile->asampsize = mainw->pulsed->out_asamps;
       outfile->signed_endian = get_signed_endian(mainw->pulsed->out_signed != AFORM_UNSIGNED,
                                mainw->pulsed->out_endian != AFORM_BIG_ENDIAN);
-
-      asigned = !(outfile->signed_endian & AFORM_UNSIGNED);
-      aendian = !(outfile->signed_endian & AFORM_BIG_ENDIAN);
     }
-
-    outfile->header_version = LIVES_CLIP_HEADER_VERSION;
-    save_clip_value(fileno, CLIP_DETAILS_HEADER_VERSION, &outfile->header_version);
-    save_clip_value(fileno, CLIP_DETAILS_ACHANS, &outfile->achans);
-    save_clip_value(fileno, CLIP_DETAILS_ARATE, &outfile->arps);
-    save_clip_value(fileno, CLIP_DETAILS_PB_ARATE, &outfile->arate);
-    save_clip_value(fileno, CLIP_DETAILS_ASAMPS, &outfile->asampsize);
-    save_clip_value(fileno, CLIP_DETAILS_AENDIAN, &aendian);
-    save_clip_value(fileno, CLIP_DETAILS_ASIGNED, &asigned);
+    save_clip_audio_values(fileno);
   } else {
     int out_bendian = outfile->signed_endian & AFORM_BIG_ENDIAN;
 
@@ -2729,7 +2695,8 @@ void pulse_rec_audio_end(boolean close_fd) {
     lives_object_instance_t *aplayer = NULL;
     if (mainw->pulsed_read) aplayer = mainw->pulsed_read->inst;
     if (aplayer)
-      lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, write_aud_data_cb, rec_ext_dets);
+      lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, (hook_funcptr_t)write_aud_data_cb,
+                        rec_ext_dets, aplayer->hook_mutex);
     if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
     lives_free(rec_ext_dets);
     rec_ext_dets = NULL;
@@ -2752,7 +2719,7 @@ void pulse_rec_audio_end(boolean close_fd) {
 #endif
 
 
-static void *write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
+static boolean write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
   arec_details *dets = (arec_details *)xdets;
   lives_clip_t *ofile;
   void *holding_buff = NULL, *out_buff;
@@ -2771,13 +2738,13 @@ static void *write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
   if (dets->rec_type == RECA_EXTERNAL &&
       (lives_aplayer_get_source(aplayer) != AUDIO_SRC_EXT
        || mainw->record_paused))
-    return NULL;
+    return FALSE;
 
-  if (dets->bad_aud_file) return NULL;
-  if (dets->rec_samples == 0) return NULL;
-  if (!IS_VALID_CLIP(dets->clipno)) return NULL;
+  if (dets->bad_aud_file) return FALSE;
+  if (dets->rec_samples == 0) return FALSE;
+  if (!IS_VALID_CLIP(dets->clipno)) return FALSE;
   nframes = lives_aplayer_get_data_len(aplayer);
-  if (nframes == 0) return NULL;
+  if (nframes == 0) return FALSE;
 
   in_float = lives_aplayer_get_float(aplayer);
   in_achans = lives_aplayer_get_achans(aplayer);
@@ -2806,7 +2773,7 @@ static void *write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
 
   if (in_float) {
     holding_buff = lives_calloc(frames_out, out_achans * out_sampsize);
-    if (!holding_buff) return NULL;
+    if (!holding_buff) return FALSE;
     if (!in_interleaved) {
       float **in_buffer = (float **)lives_aplayer_get_data(aplayer);
       if (!out_float) {
@@ -2836,7 +2803,7 @@ static void *write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
 
   if (!out_buff) {
     if (holding_buff) lives_free(holding_buff);
-    return NULL;
+    return FALSE;
   }
   if (!holding_buff) holding_buff = lives_aplayer_get_data(aplayer);
 
@@ -2870,24 +2837,24 @@ static void *write_aud_data_cb(lives_object_t *aplayer, void *xdets) {
   lives_free(out_buff);
 
   //return actual_bytes;
-  return NULL;
+  return TRUE;
 }
 
 
-static void *analyse_audio_rt(lives_object_t *aplayer, void *xdets) {
+static boolean analyse_audio_rt(lives_object_t *aplayer, void *xdets) {
   arec_details *dets = (arec_details *)xdets;
   size_t nframes;
   int in_arate, in_achans;
   boolean is_float;
 
-  if (!LIVES_IS_PLAYING || (mainw->event_list && !mainw->record)) return NULL;
+  if (!LIVES_IS_PLAYING || (mainw->event_list && !mainw->record)) return FALSE;
 
   if (dets->rec_type == RECA_EXTERNAL
       && (!AUD_SRC_EXTERNAL || lives_aplayer_get_source(aplayer) != AUDIO_SRC_EXT))
-    return NULL;
+    return FALSE;
 
   nframes = lives_aplayer_get_data_len(aplayer);
-  if (nframes == 0) return NULL;
+  if (nframes == 0) return FALSE;
 
   in_achans = lives_aplayer_get_achans(aplayer);
   in_arate = lives_aplayer_get_arate(aplayer);
@@ -2929,7 +2896,7 @@ static void *analyse_audio_rt(lives_object_t *aplayer, void *xdets) {
       lives_free(in_buffer);
     }
   }
-  return NULL;
+  return TRUE;
 }
 
 
@@ -2943,8 +2910,7 @@ void audio_analyser_start(int source) {
       dets->fd = -1;
       dets->rec_samples = -1;
       aud_ext_analyse_dets = dets;
-      lives_hook_append(aplayer->hook_closures, DATA_READY_HOOK, HOOK_CB_ASYNC_JOIN,
-                        analyse_audio_rt, dets);
+      lives_hook_append(aplayer->hook_closures, DATA_READY_HOOK, 0, (hook_funcptr_t)analyse_audio_rt, dets);
     }
   }
 }
@@ -2954,7 +2920,8 @@ void audio_analyser_end(int source) {
   if (source == AUDIO_SRC_EXT) {
     lives_object_instance_t *aplayer = get_aplayer_instance(source);
     if (aud_ext_analyse_dets) {
-      lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, analyse_audio_rt, aud_ext_analyse_dets);
+      lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, (hook_funcptr_t)analyse_audio_rt, aud_ext_analyse_dets,
+                        aplayer->hook_mutex);
       if (aud_ext_analyse_dets->bad_aud_file) lives_free(aud_ext_analyse_dets->bad_aud_file);
       lives_free(aud_ext_analyse_dets);
       aud_ext_analyse_dets = NULL;
@@ -2998,7 +2965,7 @@ void start_audio_rec(void) {
       mainw->clip_header = NULL;
     }
 
-#endif
+
 #ifdef HAVE_PULSE_AUDIO
     if (prefs->audio_player == AUD_PLAYER_PULSE) {
       char *lives_header = lives_build_filename(prefs->workdir, mainw->files[mainw->ascrap_file]->handle,
@@ -3055,12 +3022,13 @@ void start_audio_rec(void) {
       dets->fd = mainw->aud_rec_fd;
       dets->rec_samples = -1;
       rec_ext_dets = dets;
-      lives_hook_append(aplayer->hook_closures, DATA_READY_HOOK, HOOK_CB_ASYNC_JOIN,
-                        write_aud_data_cb, dets);
+      lives_hook_append(aplayer->hook_closures, DATA_READY_HOOK, 0, (hook_funcptr_t)write_aud_data_cb, dets);
     }
   }
 }
 
+
+#endif
 /////////////////////////////////////////////////////////////////
 
 // playback via memory buffers (e.g. in multitrack)

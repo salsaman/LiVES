@@ -2769,7 +2769,7 @@ static void _mt_tl_move(lives_mt * mt, double pos) {
 
 void mt_tl_move(lives_mt * mt, double pos) {
   if (LIVES_IS_PLAYING) return;
-  main_thread_execute((lives_funcptr_t)_mt_tl_move, -1, NULL, "vd", mt, pos);
+  main_thread_execute(_mt_tl_move, -1, NULL, "vd", mt, pos);
 }
 
 

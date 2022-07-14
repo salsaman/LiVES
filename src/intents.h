@@ -115,7 +115,8 @@ struct _object_t {
   lives_intentcap_t icap;
   lives_obj_attr_t **attributes; // internal parameters (properties)
   lives_object_transform_t *active_tx; // pointer to currently running transform (or NULL)
-  LiVESList *hook_closures[N_HOOK_FUNCS]; /// TODO - these should probably be part of active_tx
+  LiVESList *hook_closures[N_HOOK_POINTS]; /// TODO - these should probably be part of active_tx
+  pthread_mutex_t hook_mutex[N_HOOK_POINTS];
   void *priv; // internal data belonging to the object
 };
 
@@ -175,6 +176,7 @@ typedef struct {
 typedef lives_funcptr_t object_funcptr_t;
 typedef struct _object_t lives_object_t;
 typedef struct _object_t lives_object_instance_t;
+typedef weed_plant_t lives_obj_instance_t;
 typedef struct _obj_status_t lives_transform_status_t;
 
 #undef _BASE_DEFS_ONLY_
@@ -229,10 +231,10 @@ typedef struct {
 lives_object_instance_t *lives_object_instance_create(uint64_t type, uint64_t subtype);
 
 // shorthand for calling OBJ_INTENTION_UNREF in the instance
-boolean lives_object_instance_destroy(lives_object_instance_t *);
+boolean lives_object_instance_destroy(lives_obj_instance_t *);
 
 // shorthand for calling OBJ_INTENTION_UNREF in the instance
-int lives_object_instance_unref(lives_object_instance_t *);
+int lives_object_instance_unref(lives_obj_instance_t *);
 
 // shorthand for calling OBJ_INTENTION_REF in the instance
 int lives_object_instance_ref(lives_object_instance_t *);
@@ -254,6 +256,10 @@ char *lives_attr_get_name(lives_obj_attr_t *);
 int lives_attr_get_value_int(lives_obj_attr_t *);
 char *lives_attr_get_value_string(lives_object_t *, lives_obj_attr_t *);
 uint32_t lives_attr_get_value_type(lives_obj_attr_t *);
+
+// implementation helper funcs
+weed_error_t set_plant_leaf_any_type(weed_plant_t *, const char *key, uint32_t st, weed_size_t ne, ...);
+weed_error_t set_plant_leaf_any_type_funcret(weed_plant_t *pl, const char *key, uint32_t st, weed_funcptr_t func);
 
 // values can be set later
 weed_error_t lives_object_set_attribute_value(lives_object_t *, const char *name, ...);
@@ -388,6 +394,8 @@ char *list_caps(lives_capacities_t *caps);
 /* const lives_funcdef_t *get_template_for_func(funcidx_t funcidx); */
 /* const lives_funcdef_t *get_template_for_func_by_uid(uint64_t uid); */
 /* char *get_argstring_for_func(funcidx_t funcidx); */
+const lives_funcdef_t *get_template_for_func(lives_funcptr_t func);
+char *get_argstring_for_func(lives_funcptr_t func);
 char *lives_funcdef_explain(const lives_funcdef_t *funcdef);
 
 // contracts
@@ -496,6 +504,9 @@ lives_dicto_t *weed_plant_to_dicto(weed_plant_t *);
 
 const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, const char *rtype,
                                      const char *args_fmt, char *file, int linei, void *txmap);
+
+void add_fn_note(int in_out, void *ptr, const char *fname, const char *fref, int lineno);
+void dump_fn_notes(void);
 
 size_t add_weed_plant_to_objstore(weed_plant_t *);
 

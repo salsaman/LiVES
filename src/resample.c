@@ -2663,15 +2663,15 @@ boolean resample_clipboard(double new_fps) {
 }
 
 
-void *resample_to_float(lives_object_t *obj, void *data) {
+boolean resample_to_float(lives_obj_t *obj, void *data) {
   lives_audio_buf_t *abuf = *(lives_audio_buf_t **)data;
   // resample buffer to float
   //
-  if (!abuf || abuf->_fd < 0) return NULL;
+  if (!abuf || abuf->_fd < 0) return FALSE;
   pthread_mutex_lock(&abuf->atomic_mutex);
   if (*(lives_audio_buf_t **)data != abuf) {
     pthread_mutex_unlock(&abuf->atomic_mutex);
-    return NULL;
+    return FALSE;
   }
   abuf->out_achans = 0;
 #ifdef HAVE_PULSE_AUDIO
@@ -2720,5 +2720,5 @@ void *resample_to_float(lives_object_t *obj, void *data) {
   }
   abuf->is_ready = TRUE;
   pthread_mutex_unlock(&abuf->atomic_mutex);
-  return NULL;
+  return FALSE;
 }

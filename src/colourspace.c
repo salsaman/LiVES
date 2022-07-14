@@ -12963,6 +12963,8 @@ boolean compact_rowstrides(weed_layer_t *layer) {
   if (!weed_layer_copy(old_layer, layer)) return FALSE;
 
   THREADVAR(rowstride_alignment_hint) = -1;
+
+
   weed_layer_nullify_pixel_data(layer);
 
   if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
@@ -14390,12 +14392,8 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
   /*   weed_leaf_delete(layer, LIVES_LEAF_MD5SUM); */
   /*  } */
 
-  /* // */weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
-
   if (weed_get_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, NULL) == WEED_TRUE) {
-    weed_leaf_delete(layer, LIVES_LEAF_BBLOCKALLOC);
     free_bigblock(weed_layer_get_pixel_data(layer));
-    weed_layer_nullify_pixel_data(layer);
   } else {
     if ((pixel_data = weed_layer_get_pixel_data_planar(layer, &pd_elements)) != NULL) {
       if (pd_elements > 0) {

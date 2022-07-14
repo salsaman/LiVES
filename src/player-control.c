@@ -371,7 +371,7 @@ void play_file(void) {
 
   init_conversions(OBJ_INTENTION_PLAY);
 
-  lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_PRE_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_PREPARING_HOOK);
 
   if (mainw->pre_src_file == -2) mainw->pre_src_file = mainw->current_file;
   mainw->pre_src_audio_file = mainw->current_file;
@@ -398,6 +398,10 @@ void play_file(void) {
   }
 
   mainw->clip_switched = FALSE;
+
+  proc_thread_kill_lock();
+  if (mainw->lazy_starter) lives_proc_thread_request_pause(mainw->lazy_starter);
+  proc_thread_kill_unlock();
 
   // reinit all active effects
   if (!mainw->preview && !mainw->is_rendering && !mainw->foreign) weed_reinit_all();
@@ -1039,10 +1043,12 @@ void play_file(void) {
     }
 
     if (mainw->alock_abuf) {
-      lives_hook_remove(THREADVAR(hook_closures), DATA_READY_HOOK, resample_to_float, &mainw->alock_abuf);
+      lives_hook_remove(THREADVAR(hook_closures), DATA_READY_HOOK, resample_to_float, &mainw->alock_abuf,
+                        mainw->global_hook_mutexes);
       free_audio_frame_buffer(mainw->alock_abuf);
       mainw->alock_abuf = NULL;
     }
+
     // tell jack client to close audio file
     if (mainw->jackd && mainw->jackd->playing_file > 0) {
       ticks_t timeout = 0;
@@ -1213,7 +1219,7 @@ void play_file(void) {
   mainw->blend_palette = WEED_PALETTE_END;
   mainw->audio_stretch = 1.;
 
-  lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_POST_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_FINISHED_HOOK);
 
   if (!mainw->multitrack) {
     if (mainw->faded || mainw->fs) {
@@ -1333,17 +1339,15 @@ void play_file(void) {
   /// free the last frame image(s)
   if (mainw->frame_layer) {
     check_layer_ready(mainw->frame_layer);
-    weed_layer_free(mainw->frame_layer);
+    weed_layer_unref(mainw->frame_layer);
     mainw->frame_layer = NULL;
   }
 
   if (mainw->blend_layer) {
     check_layer_ready(mainw->blend_layer);
-    weed_layer_free(mainw->blend_layer);
+    weed_layer_unref(mainw->blend_layer);
     mainw->blend_layer = NULL;
   }
-
-  if (mainw->lazy) mainw->lazy = lives_idle_add_simple(lazy_startup_checks, NULL);
 
   cliplist = mainw->cliplist;
   while (cliplist) {
@@ -1473,7 +1477,7 @@ void play_file(void) {
   }
 
   //////
-  main_thread_execute((lives_funcptr_t)post_playback, -1, NULL, "");
+  main_thread_execute_pvoid(post_playback, -1, NULL);
   if (!mainw->multitrack) redraw_timeline(mainw->current_file);
 
   if (CURRENT_CLIP_IS_VALID) {
@@ -1483,6 +1487,10 @@ void play_file(void) {
       lives_widget_queue_draw(mainw->eventbox2);
     }
   }
+
+  proc_thread_kill_lock();
+  if (mainw->lazy_starter) lives_proc_thread_request_resume(mainw->lazy_starter);
+  proc_thread_kill_unlock();
 
   if (prefs->show_msg_area) {
     if (mainw->idlemax == 0) {
@@ -1503,7 +1511,6 @@ void play_file(void) {
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;
 
-  lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_DONE_HOOK);
   /* if (prefs->show_dev_opts) */
   /*   g_print("nrefs = %d\n", check_ninstrefs()); */
 }

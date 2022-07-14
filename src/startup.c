@@ -1319,7 +1319,7 @@ boolean render_choice_idle(livespointer data) {
         mainw->event_list = backup_elist;
       }
 
-      main_thread_execute((lives_funcptr_t)deal_with_render_choice, 0, NULL, "b", is_recovery);
+      main_thread_execute(deal_with_render_choice, 0, NULL, "b", is_recovery);
       //deal_with_render_choice(is_recovery);
       if (is_recovery && mainw->multitrack) rec_recovered = TRUE;
     }
@@ -1330,7 +1330,7 @@ boolean render_choice_idle(livespointer data) {
 }
 
 
-boolean lazy_startup_checks(void *data) {
+boolean lazy_startup_checks(void) {
   static boolean checked_trash = FALSE;
   static boolean mwshown = FALSE;
   static boolean dqshown = FALSE;
@@ -1453,7 +1453,6 @@ boolean lazy_startup_checks(void *data) {
     }
   }
 
-  mainw->lazy = 0;
   return FALSE;
 }
 
@@ -1803,6 +1802,18 @@ static boolean lives_startup(livespointer data) {
 }
 
 
+static boolean lazy_start_fin(void *obj, void *data) {
+  lives_proc_thread_t lpt = (lives_proc_thread_t)data;
+  boolean bret = lives_proc_thread_join_boolean(lpt);
+  if (!bret) {
+    mainw->lazy_starter = NULL;
+    lives_proc_thread_free(lpt);
+    return FALSE;
+  }
+  return TRUE;
+}
+
+
 static boolean lives_startup2(livespointer data) {
   char *ustr;
   boolean layout_recovered = FALSE;
@@ -1828,7 +1839,7 @@ static boolean lives_startup2(livespointer data) {
       //lives_proc_thread_join(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       // must take care to execute this here or in the function itself, otherwise
       // gtk+ may crash later
-      main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
+      main_thread_execute_rvoid_pvoid(set_extra_colours);
     }
     mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
   }
@@ -1943,10 +1954,17 @@ static boolean lives_startup2(livespointer data) {
                                (lives_funcptr_t)add_rfx_effects, WEED_SEED_BOOLEAN, "i", RFX_STATUS_ANY);
   }
 
+  // TODO *** check if still working
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
-  mainw->lazy = lives_idle_add(lazy_startup_checks, NULL);
+  /*  mainw->lazy_starter =  */
+  /*     lives_proc_thread_create_pvoid(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC, */
+  /* 				   lazy_startup_checks, WEED_SEED_BOOLEAN); */
+  /* y */
+  /* lives_proc_thread_hook_append(mainw->lazy_starter,FINISHED_HOOK, 0, lazy_start_fin, (void *)&mainw->lazy_starter); */
+  /* lives_proc_thread_set_pauseable(mainw->lazy_starter, TRUE); */
+  /* lives_proc_thread_sync_ready(mainw->lazy_starter); */
 
   if (!CURRENT_CLIP_IS_VALID) lives_ce_update_timeline(0, 0.);
 
@@ -1975,7 +1993,8 @@ static boolean lives_startup2(livespointer data) {
     lives_widget_context_update();
   }
 
-  mainw->fg_service_handle = lives_idle_add(fg_service_fulfill_cb, NULL);
+  //mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL);
+  g_idle_add(fg_service_fulfill_cb, NULL);
 
   if (!mainw->multitrack)
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
@@ -2055,6 +2074,9 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
   mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
+
+  mainw->wall_ticks = -1;
+  mainw->initial_ticks = lives_get_current_ticks();
 
 #ifdef WEED_STARTUP_TESTS
   run_weed_startup_tests();
@@ -2154,6 +2176,8 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   pthread_mutexattr_init(&mattr);
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
+
+  for (int i = 0; i < N_GLOBAL_HOOKS; i++) pthread_mutex_init(&mainw->global_hook_mutexes[i], NULL);
 
   mainw->prefs_cache = mainw->hdrs_cache = mainw->gen_cache = mainw->meta_cache = NULL;
 
@@ -3144,7 +3168,6 @@ static boolean lives_init(_ign_opts * ign_opts) {
   mainw->num_sets = -1;
 
   mainw->drawsrc = -1;
-  mainw->wall_ticks = -1;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
@@ -3755,8 +3778,7 @@ jack_tcl_try:
       success = TRUE;
       timeout = LIVES_SHORT_TIMEOUT;
       if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
-      if (!(info = LPT_WITH_TIMEOUT(timeout, 0, (lives_funcptr_t)lives_jack_init,
-                                    WEED_SEED_BOOLEAN, "iv",
+      if (!(info = LPT_WITH_TIMEOUT(timeout, 0, lives_jack_init, WEED_SEED_BOOLEAN, "iv",
                                     JACK_CLIENT_TYPE_TRANSPORT, NULL))) {
         if (mainw->cancelled) {
           lives_exit(0);
@@ -4528,7 +4550,7 @@ retry:
         ncols++;
       } else if (!fixed) var = -var;
 #ifndef VALGRIND_ON
-      main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
+      main_thread_execute_rvoid_pvoid(set_extra_colours);
 #endif
     }
   } else {
@@ -4546,7 +4568,7 @@ windup:
   palette->nice3.green = palette->nice2.green;
   palette->nice3.blue = palette->nice2.blue;
   palette->nice3.alpha = 1.;
-  //main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
+  //main_thread_execute(set_extra_colours, 0, NULL, "");
   return var;
 }
 #endif
@@ -4878,9 +4900,9 @@ boolean set_palette_colours(boolean force_reload) {
     double cpvar = get_double_prefd(PREF_CPICK_VAR, DEF_CPICK_VAR);
     prefs->cptime = get_double_prefd(PREF_CPICK_TIME, -DEF_CPICK_TIME);
     if (fabs(prefs->cptime) < .5) prefs->cptime = -1.;
-    mainw->helper_procthreads[PT_CUSTOM_COLOURS]
-      = lives_proc_thread_create(LIVES_THRDATTR_NOTE_STTIME, (lives_funcptr_t)pick_custom_colours,
-                                 WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime);
+    /* mainw->helper_procthreads[PT_CUSTOM_COLOURS] */
+    /*   = lives_proc_thread_create(LIVES_THRDATTR_NOTE_STTIME, (lives_funcptr_t)pick_custom_colours, */
+    /*                              WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime); */
   }
 #endif
   /// set global values

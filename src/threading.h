@@ -17,7 +17,6 @@
 typedef void *(*lives_thread_func_t)(void *);
 typedef struct _lives_thread_data_t lives_thread_data_t;
 typedef weed_plantptr_t lives_proc_thread_t;
-typedef uint64_t funcsig_t;
 
 #ifdef HAVE_PTHREAD
 // etc...
@@ -43,7 +42,7 @@ typedef uint64_t lives_thread_attr_t;
 typedef LiVESList lives_thread_t;
 
 typedef union {
-  weed_funcptr_t func;
+  lives_funcptr_t func;
   funcptr_int_t funcint;
   funcptr_dbl_t funcdouble;
   funcptr_bool_t funcboolean;
@@ -66,6 +65,8 @@ typedef struct {
   char *detsig;
   lives_proc_thread_t proc;
   lives_alarm_t alarm_handle;
+  boolean finished;
+  boolean destroyed;
 } lives_sigdata_t;
 
 #define LIVES_LEAF_TEMPLATE "template"
@@ -84,6 +85,8 @@ typedef weed_plant_t lives_funcinst_t;
 #undef  _THREADING_H_
 #endif
 
+typedef uint64_t funcsig_t;
+
 typedef struct {
   uint64_t uid;
   int category; // category type for function (0 for none)
@@ -91,6 +94,7 @@ typedef struct {
   lives_funcptr_t function;
   uint32_t return_type;
   const char *args_fmt;
+  funcsig_t funcsig;
   const char *file;
   int line;
   void *data; // optional data, may be NULL
@@ -115,22 +119,87 @@ typedef struct {
 #define ____FUNC_EXIT____ do {LiVESList *list = THREADVAR(func_stack);		\
     THREADVAR(func_stack) = list->next; list->next = NULL; lives_list_free(list);} while (0);
 
+// calls (void)func(args), and before or after calling it, adds a fn note with a ptr / file / line
+// if ptr is already noted then will remove it
+// ptr is the result of pre_expn or post_expn cast to void *
+// dump_fn_notes will list all func / file / line entries
+// thus e.g _FUNC_TRACE_(0, get_ptr(), myfunc, args)
+// will call myfunc(args), then on return cast the return from get_ptr() to void * and add or remove a note
+// - can be used to trace allocs / frees by tracing the same pointer, e.g malloc / post_expn == returned ptr
+// free / pre_expn == ptr to be freed...dump_fn_notes will then list all non-freed calls to malloc by file / lineno
+#define _FN_ALLOC 1
+#define _FN_FREE 0
+
+#define _FUNC_ADD_TRACE_(io, expn, func, ...) do {\
+    if ((expn)) add_fn_note(io, (void *)((expn)), #func,  _FILE_REF_, _LINE_REF_); \
+  } while (0);
+
+
+#define _FN_ALLOC_TRACE(fname) do {\
+  THREADVAR(fn_alloc_trace) = #fname; THREADVAR(fn_alloc_triggered) = FALSE;\
+  } while (0);
+
+#define _FN_FREE_TRACE(fname) do {					\
+  THREADVAR(fn_free_trace) = #fname; THREADVAR(fn_free_triggered) = FALSE;\
+  } while (0);
+
+#define _FN_ALLOC_TRACE_END do {\
+  THREADVAR(fn_alloc_trace) = NULL; THREADVAR(fn_alloc_triggered) = FALSE;\
+  } while (0);
+
+#define _FN_FREE_TRACE_END do {\
+  THREADVAR(fn_free_trace) = NULL; THREADVAR(fn_free_triggered) = FALSE;\
+  } while (0);
+
+#define _CHK_FN_ALLOC(expn) do {					\
+    if (THREADVAR(fn_alloc_triggered)) _FUNC_ADD_TRACE_(_FN_ALLOC, expn, THREADVAR(fn_alloc_trace)); \
+    THREADVAR(fn_alloc_triggered) = FALSE;				\
+  } while (0);
+
+
+#define _CHK_FN_FREE(var, expn, func, ...) do {				\
+    void *p = (void *)(expn); var = func(__VA_ARGS__);			\
+    if (THREADVAR(fn_free_triggered))					\
+      _FUNC_ADD_TRACE_(_FN_FREE, p, THREADVAR(fn_free_trace));		\
+    THREADVAR(fn_free_triggered) = FALSE;				\
+  } while (0);
+
+#define _CHK_FN_FREE_VOID(expn, func, ...) do {				\
+    void *p = (void *)(expn);						\
+    func(__VA_ARGS__);							\
+    if (THREADVAR(fn_free_triggered))					\
+      _FUNC_ADD_TRACE_(_FN_FREE, p, THREADVAR(fn_free_trace));		\
+    THREADVAR(fn_free_triggered) = FALSE;				\
+  } while (0);
+
+#define _FN_ALLOC_TARGET(fname) do {\
+  if (!lives_strcmp(THREADVAR(fn_alloc_trace), #fname)) THREADVAR(fn_alloc_triggered) = TRUE; \
+  } while (0);
+
+#define _FN_FREE_TARGET(fname) do {\
+  if (!lives_strcmp(THREADVAR(fn_free_trace), #fname)) THREADVAR(fn_free_triggered) = TRUE; \
+  } while (0);
+
+//////////
+
 /// hook funcs
 
 #define LIVES_SEED_HOOK WEED_SEED_FUNCPTR
 
-#define HOOK_CB_SINGLE_SHOT		(1ull << 0) //< hook function should be called only once then removed
-#define HOOK_CB_ASYNC			(1ull << 1) //< hook function should not block
-#define HOOK_CB_ASYNC_JOIN		(1ull << 2) //< hook function should not block, but the thread should be joined
-///							at the end of processing, or before calling the hook
-///							a subsequent time
-#define HOOK_CB_CHILD_INHERITS		(1ull << 3) // TODO - child threads should inherit the hook callbacks
-#define HOOK_CB_FG_THREAD		(1ull << 4) // force fg service run
+//< caller will block when adding the hook and only return when the hook callback has returned
+#define HOOK_CB_BLOCKING       		(1ull << 0)
 
-#define HOOK_CB_PRIORITY		(1ull << 5) // prepend, not append
+//< any hooks set with this flagbit will be transferred to child threads of the principle thread
+#define HOOK_CB_CHILD_INHERITS		(1ull << 1)
 
-#define HOOK_CB_WAIT			(1ull << 6) // block till hook has run, do not free anything
+// hook is GUI related and must be run by the fg / GUI thread
+#define HOOK_CB_FG_THREAD		(1ull << 2) // force fg service run
 
+// hook should be run as soon as possible when the hook trigger point is reached
+#define HOOK_CB_PRIORITY		(1ull << 3) // prepend, not append
+
+/// the following bits define how hooks should be added to the stack
+// in case of duplicate functions / data
 #define HOOK_UNIQUE_FUNC		(1ull << 24) // do not add if func already in hooks
 
 #define HOOK_UNIQUE_DATA		(1ull << 25) // do not add if data already in hooks (UNIQUE_FUNC assumed)
@@ -152,48 +221,55 @@ typedef struct {
 #define HOOK_STATUS_BLOCKED			(1ull << 32) // hook function should not be called
 #define HOOK_STATUS_RUNNING			(1ull << 33) // hook running, do not recurse
 
-enum {
-  ABORT_HOOK, ///< can be set to point to a function to be run before abort, for critical functions
-  RESTART_HOOK,
-  EXIT_HOOK,
-  THREAD_EXIT_HOOK, // run on thread exit
-  THREAD_INTERNAL_HOOK, /// reserved for internal use, should not be modified
-  N_GLOBAL_HOOKS,
-  ///
-  TX_PRE_HOOK,
-  TX_START_HOOK, /// status -> running
-  TX_POST_HOOK,
-  TX_DONE_HOOK,   /// status -> success
-  WAIT_SYNC_HOOK, /// waiting to receive sync_ready from caller
-  DATA_PREP_HOOK,   // data supplied, may be altered
-  DATA_READY_HOOK, // data ready for processing
-  PRE_VALUE_CHANGED_HOOK, /// attribute value amended
-  POST_VALUE_CHANGED_HOOK, /// attribute value amended
-  FINAL_HOOK, ///< about to be freed
-  N_HOOK_FUNCS,
-};
-
-typedef void *(*hook_funcptr_t)(lives_object_t *, void *);
+typedef boolean(*hook_funcptr_t)(lives_obj_t *, void *);
 typedef void (*attr_listener_f)(lives_object_t *, lives_obj_attr_t *);
 
 typedef struct {
-  hook_funcptr_t func;
+  //hook_funcptr_t func;
+  const lives_funcdef_t *fdef;
   lives_object_t *obj;
   void *attr;
   void *data;
   uint64_t flags;
-  lives_proc_thread_t tinfo; // for async_join
+  lives_proc_thread_t tinfo; // for fg threads
   void *retloc; // pointer to a var to store return val in
 } lives_closure_t;
 
-lives_proc_thread_t lives_hook_append(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func, livespointer data);
-lives_proc_thread_t  lives_hook_prepend(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func, livespointer data);
-void lives_hook_remove(LiVESList **hooks, int type, hook_funcptr_t func, livespointer data);
+int proc_thread_kill_lock(void);
+int proc_thread_kill_unlock(void);
 
-void lives_hooks_clear(LiVESList **xlist, int type);
+lives_proc_thread_t _lives_hook_add(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func,
+                                    const char *fname, livespointer data, boolean is_append);
 
-void lives_hooks_trigger(lives_object_t *obj, LiVESList **xlist, int type);
-void lives_hooks_join(LiVESList **xlist, int type);
+void _lives_proc_thread_hook_append(lives_proc_thread_t lpt, int type, uint64_t flags,
+                                    hook_funcptr_t func, const char *fname, livespointer data);
+
+#define lives_proc_thread_hook_append(lpt, type, flags, func, data)	\
+  (_lives_proc_thread_hook_append((lpt), (type), (flags), (hook_funcptr_t)(func), #func, (data)))
+
+#define lives_hook_append(hooks, type, flags, func, data) _lives_hook_add((hooks), (type), (flags), \
+									  (hook_funcptr_t)(func), #func, (data), TRUE)
+
+#define lives_hook_prepend(hooks, type, flags, func, data) _lives_hook_add((hooks), (type), (flags), \
+									   (hook_funcptr_t)(func), #func, (data), FALSE)
+
+void lives_hook_remove(LiVESList **hooks, int type, hook_funcptr_t func, livespointer data, pthread_mutex_t *mutexes);
+
+void lives_hooks_clear(LiVESList **hooks, int type);
+void lives_hooks_clear_all(LiVESList **hooks, int ntypes);
+
+boolean lives_hooks_trigger(lives_obj_t *, LiVESList **hooks, int type);
+boolean lives_hooks_triggero(lives_object_t *obj, LiVESList **xlist, int type);
+
+void lives_hooks_trigger_async(lives_obj_t *, LiVESList **hooks, int type);
+void lives_hooks_trigger_asynco(lives_object_t *obj, LiVESList **xlist, int type);
+
+void lives_hooks_trigger_async_sequential(lives_obj_t *, LiVESList **hooks, int type, hook_funcptr_t finfunc,
+    void *findata);
+void lives_hooks_trigger_async_sequentialo(lives_object_t *, LiVESList **hooks, int type, hook_funcptr_t finfunc,
+    void *findata);
+
+void lives_hooks_join(LiVESList *hooks, pthread_mutex_t *mutex);
 
 #endif // not def HAS_THREADING_H_HOOKFUNCS
 
@@ -243,11 +319,13 @@ typedef struct {
   char *var_sync_motive; // contains reason why it might be waiting fro sync
 
   int var_hook_match_nparams;
-  pthread_mutex_t var_hook_mutex[N_HOOK_FUNCS];
-  LiVESList *var_hook_closures[N_HOOK_FUNCS];
+  pthread_mutex_t var_hook_mutex[N_HOOK_POINTS];
+  LiVESList *var_hook_closures[N_HOOK_POINTS];
   // hardware - values
   double var_loveliness; // a bit like 'niceness', only better
   volatile float *var_core_load_ptr; // pointer to value that monitors core load
+  const char *var_fn_alloc_trace, *var_fn_free_trace;
+  boolean var_fn_alloc_triggered, var_fn_free_triggered;
 } lives_threadvars_t;
 
 struct _lives_thread_data_t {
@@ -271,7 +349,7 @@ typedef struct {
   volatile uint64_t busy;
   volatile uint64_t done;
   volatile boolean sync_ready;
-  LiVESList *hook_closures[N_HOOK_FUNCS];
+  LiVESList *hook_closures[N_HOOK_POINTS];
 } thrd_work_t;
 
 #define LIVES_LEAF_THREADFUNC "tfunction"
@@ -281,10 +359,9 @@ typedef struct {
 #define _RV_ LIVES_LEAF_RETURN_VALUE
 
 #define LIVES_LEAF_FUNCSIG "funcsig"
+#define LIVES_LEAF_FUNC_NAME "funcname"
 
 #define LIVES_LEAF_THREAD_PARAM "thrd_param"
-
-#define LIVES_LEAF_NULLIFY "nullify_ptr"
 
 #define _LIVES_LEAF_THREAD_PARAM(n) LIVES_LEAF_THREAD_PARAM  n
 #define LIVES_LEAF_THREAD_PARAM0 _LIVES_LEAF_THREAD_PARAM("0")
@@ -326,7 +403,7 @@ typedef struct {
      wret == WEED_SEED_FUNCPTR ? weed_set_funcptr_value((thing), _RV_, (*funcname->funcfuncptr)(FUNCARGS)) : \
      wret == WEED_SEED_VOIDPTR ? weed_set_voidptr_value((thing), _RV_, (*funcname->funcvoidptr)(FUNCARGS)) : \
      wret == WEED_SEED_PLANTPTR ? weed_set_plantptr_value((thing), _RV_, (*funcname->funcplantptr)(FUNCARGS)) : \
-     WEED_ERROR_WRONG_SEED_TYPE)
+   WEED_ERROR_WRONG_SEED_TYPE)
 
 #define ARGS1(thing, t1) GETARG((thing), t1, 0)
 #define ARGS2(thing, t1, t2) ARGS1((thing), t1), GETARG((thing), t2, 1)
@@ -365,7 +442,7 @@ typedef struct {
 #define ACALL_8(thing, wret, funcname, t1, t2, t3, t4, t5, t6, t7, t8)	\
   GEN_SET(thing, wret, funcname, ARGS8((thing), t1, t2, t3, t4, t5, t6, t7, t8))
 #define ACALL_7(thing, wret, funcname, t1, t2, t3, t4, t5, t6, t7) \
-  GEN_SET(thing, wret, funcname, ARGS7((thing), t1, t2, t3, t4, t5, t6, t7))
+h  GEN_SET(thing, wret, funcname, ARGS7((thing), t1, t2, t3, t4, t5, t6, t7))
 #define ACALL_6(thing, wret, funcname, t1, t2, t3, t4, t5, t6) \
   GEN_SET(thing, wret, funcname, ARGS6((thing), t1, t2, t3, t4, t5, t6))
 #define ACALL_5(thing, wret, funcname, t1, t2, t3, t4, t5) \
@@ -406,6 +483,7 @@ typedef struct {
 #define FUNCSIG_VOIDP_VOIDP_BOOL 		        		0X00000DD3
 #define FUNCSIG_STRING_VOIDP_VOIDP 		        		0X000004DD
 #define FUNCSIG_BOOL_BOOL_STRING 		        		0X00000334
+#define FUNCSIG_PLANTP_VOIDP_INT 		        		0X00000ED1
 #define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
 #define FUNCSIG_INT_VOIDP_INT64 		        		0X000001D5
 #define FUNCSIG_INT_INT_BOOL	 		        		0X00000113
@@ -417,6 +495,7 @@ typedef struct {
 #define FUNCSIG_VOIDP_INT_INT_INT_INT					0X000D1111
 #define FUNCSIG_INT_INT_INT_BOOL_VOIDP					0X0001113D
 #define FUNCSIG_VOIDP_STRING_STRING_INT64_INT			       	0X000D4451
+#define FUNCSIG_PLANTP_VOIDP_INT_FUNCP_VOIDP			       	0X000ED1CD
 // 6p
 #define FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP		       	0X0044D14D
 
@@ -447,10 +526,6 @@ lives_thread_data_t *get_global_thread_data(void);
 lives_threadvars_t *get_global_threadvars(void);
 lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 
-#define CACHE_THREADVARS lives_threadvars_t *TDATA = get_threadvars();
-
-#define CTHREADVAR(var) (TDATA->var_##var)
-
 #define THREADVAR(var) (get_threadvars()->var_##var)
 #define FG_THREADVAR(var) (get_global_threadvars()->var_##var)
 
@@ -474,14 +549,20 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 #define THRD_STATE_RUNNING 	(1ull << 3) // check for FINISHED or CANCELLED
 #define THRD_STATE_FINISHED 	(1ull << 4)
 
+#define THRD_STATE_DEFERRED 	(1ull << 8) // will be run later due to resource limitations
+
 // temporary states
 #define THRD_STATE_BUSY 	(1ull << 16)
 // waiting for sync_ready
 #define THRD_STATE_WAITING 	(1ull << 17) // waiting for sync_ready() or mainw->clutch
 // blimit passed, blocked waiting in sync_point
 #define THRD_STATE_BLOCKED 	(1ull << 18)
-// thread doing nothing
-#define THRD_STATE_IDLE 	(1ull << 19)
+// request to pause - ignored for non pauseable threads
+#define THRD_STATE_PAUSE_REQUESTED 	(1ull << 19)
+// paused by request
+#define THRD_STATE_PAUSED 	(1ull << 20)
+// request to pause - ignored for non pauseable threads
+#define THRD_STATE_RESUME_REQUESTED 	(1ull << 21)
 
 // abnormal states
 #define THRD_STATE_CANCELLED 	(1ull << 32)
@@ -494,24 +575,28 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 #define THRD_STATE_TIMED_OUT	(1ull << 36)
 
 // options
-// wait for join, even if return type is void
-#define THRD_OPT_NOTIFY 	(1ull << 48)
 // can be cancelled by calling proc_thread_cancel
-#define THRD_OPT_CANCELLABLE 	(1ull << 49)
+#define THRD_OPT_CANCELLABLE 	(1ull << 48)
+// can be cancelled by calling proc_thread_cancel
+#define THRD_OPT_PAUSEABLE 	(1ull << 49)
+
+// wait for join, even if return type is void
+#define THRD_OPT_NOTIFY 	(1ull << 50)
 // return value irrelevant, thread should simply finish and lcean up its resources
 // calling proc_thread_join after this is bad.
-#define THRD_OPT_DONTCARE 	(1ull << 50)
+#define THRD_OPT_DONTCARE 	(1ull << 51)
+// simulated 'idlefunc'
+#define THRD_OPT_IDLEFUNC	(1ull << 52)
 
 boolean lives_proc_thread_set_state(lives_proc_thread_t lpt, uint64_t state);
 uint64_t lives_proc_thread_get_state(lives_proc_thread_t lpt);
 uint64_t lives_proc_thread_check_states(lives_proc_thread_t lpt, uint64_t state_bits);
+uint64_t lives_proc_thread_has_states(lives_proc_thread_t lpt, uint64_t state_bits);
 uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t state_bits);
 boolean lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t state_bits);
 
 uint64_t get_worker_id(lives_proc_thread_t);
-
 uint64_t get_worker_payload(uint64_t tid);
-
 uint64_t get_worker_status(uint64_t tid);
 
 // proc_thread specific attributes
@@ -523,7 +608,7 @@ uint64_t get_worker_status(uint64_t tid);
 
 #define LIVES_LEAF_SIGNAL_DATA "signal_data"
 
-#define LIVES_LEAF_THREAD_ATTRS "thread_attibutes" // attributes used to create pro_thread
+#define LIVES_LEAF_THREAD_ATTRS "thread_attributes" // attributes used to create pro_thread
 
 // also LIVES_THRDATR_PRIORITY
 // also LIVES_THRDATR_AUTODELETE
@@ -533,7 +618,7 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_THRDATTR_NO_GUI			(1ull << 5)
 #define LIVES_THRDATTR_INHERIT_HOOKS   		(1ull << 6)
 #define LIVES_THRDATTR_IGNORE_SYNCPT   		(1ull << 7)
-#define LIVES_THRDATTR_NOFREE   		(1ull << 8)
+#define LIVES_THRDATTR_IDLEFUNC   		(1ull << 8)
 
 // extra info requests
 #define LIVES_LEAF_START_TICKS "_start_ticks"
@@ -549,48 +634,65 @@ uint64_t get_worker_status(uint64_t tid);
 
 ticks_t lives_proc_thread_get_start_ticks(lives_proc_thread_t);
 
-lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_t,
+lives_proc_thread_t _lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_t, const char *fname,
     int return_type, const char *args_fmt, ...);
 
-lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, lives_funcptr_t func,
-    int return_type, const char *args_fmt, va_list xargs);
+#define lives_proc_thread_create(a, f, r, af, ...) _lives_proc_thread_create(a, (lives_funcptr_t)f, #f, \
+									     r, af, __VA_ARGS__)
 
-lives_proc_thread_t lives_proc_thread_create_nullvargs(lives_thread_attr_t attr, lives_funcptr_t func,
-    int return_type);
+#define lives_proc_thread_create_pvoid(a, f, r) _lives_proc_thread_create(a, (lives_funcptr_t)f, #f, r, "", NULL)
+#define lives_proc_thread_create_rvoid(a, f, af, ...) _lives_proc_thread_create(a, (lives_funcptr_t)f, #f, \
+										0, af, __VA_ARGS__)
+#define lives_proc_thread_create_pvoid_rvoid(a, f) _lives_proc_thread_create(a, (lives_funcptr_t)f, #f, 0, "", NULL)
+#define lives_proc_thread_create_rvoid_pvoid(a, f) _lives_proc_thread_create(a, (lives_funcptr_t)f, #f, 0, "", NULL)
 
-#define LPT_WITH_TIMEOUT(to, attr, func, rtype, args_fmt, ...) \
-      (lives_proc_thread_create_with_timeout_named((to), (attr),	\
-						   (lives_funcptr_t)(func), #func, \
-						   (rtype), (args_fmt), __VA_ARGS__))
+/* #define lives_proc_thread_create_vargs(attr, func, fname, return_type, args_fmt, ...) \ */
+/*   _lives_proc_thread_create_vargs(attr, func, fname, return_type, args_fmt, __VA_ARGS__) */
 
-lives_proc_thread_t lives_proc_thread_create_with_timeout_named(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
-    const char *func_name, int return_type, const char *args_fmt, ...);
+/* lives_proc_thread_t _lives_proc_thread_create_vargs(lives_thread_attr_t attr, lives_funcptr_t func, */
+/* 						   const char *fname, int return_type, */
+/* 						    const char *args_fmt, va_list xargs); */
 
-lives_proc_thread_t lives_proc_thread_create_with_timeout(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
-    int return_type, const char *args_fmt, ...);
+/* #define lives_proc_thread_create_nullvargs(attr, func, return_type) \ */
+/*   _lives_proc_thread_create_vargs(attr, func, #func, return_type) */
+
+/* lives_proc_thread_t _lives_proc_thread_create_nullvargs(lives_thread_attr_t attr, lives_funcptr_t func, */
+/* 							const char *fname, int return_type); */
+
+lives_proc_thread_t _lives_proc_thread_create_with_timeout(ticks_t timeout, lives_thread_attr_t attr, lives_funcptr_t func,
+    const char *funcname, int return_type,
+    const char *args_fmt, ...);
+
+#define lives_proc_thread_create_with_timeout(timeout, attr, func, return_type, args_fmt, ...) \
+  _lives_proc_thread_create_with_timeout((timeout), (attr), (lives_funcptr_t)(func), #func, \
+					 (return_type), (args_fmt), __VA_ARGS__)
+
+#define LPT_WITH_TIMEOUT(t, a, f, r, af, ...)  lives_proc_thread_create_with_timeout(t, a, f, r, af, __VA_ARGS__)
 
 boolean lives_proc_thread_free(lives_proc_thread_t lpt);
 
-// forces fg execution (safe to run in fg or bg)
-boolean main_thread_execute(lives_funcptr_t, int return_type, void *retval, const char *args_fmt, ...);
+boolean _main_thread_execute(lives_funcptr_t, const char *fname, int return_type, void *retval, const char *args_fmt, ...);
+boolean _main_thread_execute_rvoid(lives_funcptr_t func, const char *fname, const char *args_fmt, ...) ;
+boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int return_type, void *retloc);
 
 // safer version which only calls it for bg threads (note that must be retloc instead of &retloc)
-#define MAIN_THREAD_EXECUTE(func, st, retloc, args_fmt, ...) do { \
-  if (is_fg_thread()) (retloc) = (func)(__VA_ARGS__);			\
-  else main_thread_execute((lives_funcptr_t)(func), st, &/**/retloc, args_fmt, __VA_ARGS__); \
-  } while(0);
+#define main_thread_execute(func, return_type, retloc, args_fmt, ...) \
+  ((!args_fmt || !*args_fmt) ?  _main_thread_execute_pvoid((lives_funcptr_t)(func), #func, (return_type), retloc) \
+   : _main_thread_execute((lives_funcptr_t)(func), #func, (return_type), retloc, args_fmt, __VA_ARGS__))
 
+#define main_thread_execute_pvoid(func, return_type, retloc)		\
+  (_main_thread_execute_pvoid((lives_funcptr_t)(func), #func, (return_type), retloc))
 
-#define MAIN_THREAD_EXECUTE_VOID(func, args_fmt, ...) do { \
-  if (is_fg_thread()) (func)(__VA_ARGS__);		  \
-  else main_thread_execute((lives_funcptr_t)(func), 0, NULL, args_fmt, __VA_ARGS__); \
-  } while(0);
+#define main_thread_execute_rvoid(func, args_fmt, ...)			\
+(_main_thread_execute_rvoid((lives_funcptr_t)(func), #func, args_fmt, __VA_ARGS__))
 
-#define MAIN_THREAD_EXECUTE_VOID_VOID(func) do { \
-  if (is_fg_thread()) (func)();		  \
-  else main_thread_execute((lives_funcptr_t)(func), 0, NULL, ""); \
-  } while(0);
+#define main_thread_execute_rvoid_pvoid(func) (_main_thread_execute_pvoid((lives_funcptr_t)(func), #func, 0, NULL))
+#define main_thread_execute_pvoid_rvoid(func) (_main_thread_execute_pvoid((lives_funcptr_t)(func), #func, 0, NULL))
 
+#define MAIN_THREAD_EXECUTE(func, return_type, retloc, args_fmt, ...)	\
+  main_thread_execute(func, return_type, retloc, args_fmt, __VA_ARGS__)
+
+#define MAIN_THREAD_EXECUTE_VOID(func, args_fmt, ...) (main_thread_execute_rvoid(func, args_fmt, __VA_ARGS__))
 
 // returns TRUE once the proc_thread will call the target function
 // the thread can also be cancelled or finished
@@ -610,10 +712,27 @@ int lives_proc_thread_get_signal_data(lives_proc_thread_t, int64_t *tidx_return,
 void lives_proc_thread_set_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
 
+// self function for running proc_threads, sets pausable if not set already
+// then calls sync_point, and waits for paused flagbit to be unset
+void lives_proc_thread_pause(lives_proc_thread_t self);
+
+void lives_proc_thread_set_pauseable(lives_proc_thread_t, boolean state);
+boolean lives_proc_thread_get_pauseable(lives_proc_thread_t);
+
 // set dontcare if the return result is no longer relevant / needed, otherwise the thread should be joined as normal
 // if thread is already set dontcare, value here is ignored. For non-cancellable threads use lives_proc_thread_dontcare instead.
 boolean lives_proc_thread_cancel(lives_proc_thread_t, boolean dontcare);
 boolean lives_proc_thread_get_cancelled(lives_proc_thread_t);
+
+// ask proc_thread to pause, ignored if non-pausable
+// once paused, the paused hooks will be called, only once these have returned and unpause has been called
+// will processing continue (after calling and returning from any unpaused hook callbacks)
+boolean lives_proc_thread_request_pause(lives_proc_thread_t);
+boolean lives_proc_thread_get_paused(lives_proc_thread_t);
+
+// ask a paused proc_thread to resume. Processing only continues after this has been called, and any
+// paused and unpaused hook callbacks have returnes
+boolean lives_proc_thread_request_resume(lives_proc_thread_t);
 
 // low level cancel, which will cause the thread to abort
 boolean lives_proc_thread_cancel_immediate(lives_proc_thread_t);
@@ -622,13 +741,14 @@ boolean lives_proc_thread_cancel_immediate(lives_proc_thread_t);
 /// after setting this, no further operations may be done on the proc_thread
 boolean lives_proc_thread_dontcare(lives_proc_thread_t);
 
-// as above but will set *thing = NULL when finished or cancelled
-void lives_proc_thread_dontcare_nullify(lives_proc_thread_t tinfo, void **thing);
+// as above but takes address of ptr to be nullified when the thread is just about to be freed
+boolean lives_proc_thread_dontcare_nullify(lives_proc_thread_t, void **nullif);
 
 void lives_proc_thread_sync_ready(lives_proc_thread_t);
 
 boolean sync_point(const char *motive);
-boolean thread_wait_loop(lives_proc_thread_t, thrd_work_t *, boolean trigger_sync_hooks, boolean wake_gui);
+//boolean thread_wait_loop(lives_proc_thread_t, thrd_work_t *, boolean trigger_sync_hooks, boolean wake_gui);
+boolean thread_wait_loop(lives_proc_thread_t lpt, thrd_work_t *work, int hook_type, boolean wake_gui);
 
 // WARNING !! version without a return value will free tinfo !
 void lives_proc_thread_join(lives_proc_thread_t);
@@ -651,11 +771,19 @@ lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,
                                 void *data);
 
 void free_funcdef(lives_funcdef_t *);
+
 lives_funcinst_t *create_funcinst(lives_funcdef_t *template, void *retstore, ...);
+
 void free_funcinst(lives_funcinst_t *);
 
 funcsig_t funcsig_from_args_fmt(const char *args_fmt);
+char *args_fmt_from_funcsig(funcsig_t funcsig);
+const char get_typeletter(uint8_t val);
+uint8_t get_typecode(char c);
+
 char *funcsig_to_string(funcsig_t sig);
+char *funcsig_to_symstring(funcsig_t sig);
+char *funcsig_to_param_string(funcsig_t sig);
 
 uint32_t get_seedtype(char c);
 
@@ -678,6 +806,9 @@ int isstck(void *ptr);
 #ifdef ADD_HOOKFUNCS
 
 #define LIVES_LEAF_REFCOUNTER "refcounter" ///< generic
+
+#define LIVES_LEAF_HOOK_CLOSURES "hook_closures"
+#define LIVES_LEAF_HOOK_MUTEXES "hook_mutexes"
 
 typedef struct {
   int count; // if count < 0, object should be destroyed

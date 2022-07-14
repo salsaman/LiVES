@@ -731,7 +731,7 @@ struct _lives_amixer_t {
 
 /// TODO: add scrap_file_offset so we can treat scrapfile like an ordinary clip
 struct _track_rect {
-  ulong uid;
+  uint64_t uid;
 
   track_rect *next;
   track_rect *prev;
@@ -872,8 +872,8 @@ void avel_reverse_toggled(LiVESToggleButton *, livespointer mt);
 void avel_spin_changed(LiVESSpinButton *, livespointer mt);
 
 // block API functions
-track_rect *find_block_by_uid(lives_mt *, ulong uid);
-ulong mt_get_last_block_uid(lives_mt *); ///< get index of last inserted (wallclock time) block for track
+track_rect *find_block_by_uid(lives_mt *, uint64_t uid);
+uint64_t mt_get_last_block_uid(lives_mt *); ///< get index of last inserted (wallclock time) block for track
 int mt_get_block_count(lives_mt *, int ntrack); ///< count blocks in track
 double mt_get_block_sttime(lives_mt *, int ntrack, int iblock); /// get timeline start time of block
 double mt_get_block_entime(lives_mt *, int ntrack, int iblock); /// get timeline end time of block

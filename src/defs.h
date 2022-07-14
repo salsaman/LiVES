@@ -11,10 +11,6 @@
 /// Also there good arguments to be made for using #if as opposed to #ifdef to having a central point of refernce will
 // help to ensure this
 
-#if !USE_STD_MEMFUNCS
-#define USE_RPMALLOC 1
-#endif
-
 #define HW_ALIGNMENT ((capable && capable->hw.cacheline_size > 0) ? capable->hw.cacheline_size \
 		      : DEF_ALIGN)
 
@@ -22,16 +18,25 @@
   || defined (__CYGWIN__) || defined (IS_MINGW)
 #define LIVES_IS_WINDOWS TRUE
 #define LIVES_BOOLEAN_TYPE uint8_t
-#define LIVES_INT64_TYPE long long int
-#define LIVES_UINT64_TYPE unsigned long long int
+#define LIVES_INT64_TYPE long long
+#define LIVES_UINT64_TYPE unsigned long long
 #define LIVES_PID_TYPE int
+
+#ifndef ulong
+#define ulong unsigned long long
+#endif
 
 #else
 #define LIVES_IS_WINDOWS FALSE
 #define LIVES_BOOLEAN_TYPE int32_t
-#define LIVES_INT64_TYPE  long int
-#define LIVES_UINT64_TYPE unsigned long int
-#define LIVES_PID_TYPE ipid_t
+#define LIVES_INT64_TYPE  long
+#define LIVES_UINT64_TYPE unsigned long
+#define LIVES_PID_TYPE pid_t
+
+#ifndef ulong
+#define ulong unsigned long
+#endif
+
 #endif
 
 #ifndef HAVE_BOOLEAN_TYPE
@@ -42,23 +47,58 @@ typedef LIVES_BOOLEAN_TYPE	boolean;
 typedef pid_t lives_pid_t;
 #endif
 
-#ifndef ulong
-#define ulong unsigned long
+#ifdef __cplusplus
+#define __STDC_CONSTANT_MACROS
+#ifdef _STDINT_H
+#undef _STDINT_H
+#endif
 #endif
 
-typedef int64_t ticks_t;
+#include <stdint.h>
+#include <stdarg.h>
 
-typedef int frames_t; // nb. will chenge to int64_t at some future point
-typedef int64_t frames64_t; // will become the new standard
+#include <inttypes.h>
 
-typedef void (*lives_funcptr_t)();
+#undef PRId64
+#undef PRIu64
+
+#ifdef IS_MINGW
+#define LONGSIZE 32
+#else
+
+#ifdef __WORDSIZE
+#define LONGSIZE __WORDSIZE
+#else
+#if defined __x86_64__
+# define LONGSIZE	64
+#ifndef __WORDSIZE_COMPAT32
+# define __WORDSIZE_COMPAT32	1
+#endif
+#else
+# define LONGSIZE	32
+#endif // x86
+#endif // __WORDSIZE
+#endif // mingw
+
+#ifdef __PRI64_PREFIX
+#undef __PRI64_PREFIX
+#endif
+
+# if LONGSIZE == 64
+#  define __PRI64_PREFIX	"l"
+# else
+#  define __PRI64_PREFIX	"ll"
+# endif
+
+#undef PRId64
+#undef PRIu64
+
+# define PRId64		__PRI64_PREFIX "d"
+# define PRIu64		__PRI64_PREFIX "u"
 
 #define QUOTEME(x) #x
 #define QUOTEME_ALL(...) QUOTEME(__VA_ARGS__)
 #define PREFIX_IT(A, B) QUOTEME_ALL(A B)
-
-//#define WEED_STARTUP_TESTS
-#define STD_STRINGFUNCS
 
 #ifdef __GNUC__
 #  define WARN_UNUSED  __attribute__((warn_unused_result))
@@ -130,7 +170,6 @@ typedef void (*lives_funcptr_t)();
 #endif
 #endif // win
 
-
 #define USE_GLIB
 #define LIVES_OS_UNIX G_OS_UNIX
 
@@ -184,14 +223,6 @@ typedef void (*lives_funcptr_t)();
 #endif
 #endif
 
-#if ENABLE_ORC
-#include <orc/orc.h>
-#endif
-
-#if ENABLE_OIL
-#include <liboil/liboil.h>
-#endif
-
 #ifndef IS_SOLARIS
 #define LIVES_INLINE static inline
 #define LIVES_GLOBAL_INLINE inline
@@ -238,8 +269,10 @@ static const int32_t testint = 0x12345678;
 #define IS_BIG_ENDIAN (((char *)&testint)[0] == 0x12)  // runtime test only !
 #endif
 
-// GLOBAL VALUES
-#define MAX_FILES 65535
+typedef int64_t ticks_t;
+typedef int frames_t; // nb. will chenge to int64_t at some future point
+typedef int64_t frames64_t; // will become the new standard
+typedef void (*lives_funcptr_t)();
 
 typedef struct {
   uint16_t red,  green, blue;
@@ -379,7 +412,28 @@ typedef enum {
   N_IMG_TYPES
 } lives_img_type_t;
 
-// OPTIONS
+// global constants
+#define MAX_FILES 65535
+
+// OPTIONS settings
+
+#define USE_STD_MEMFUNCS 0
+
+#if ENABLE_ORC
+#include <orc/orc.h>
+#endif
+
+#if ENABLE_OIL
+#include <liboil/liboil.h>
+#endif
+
+#if !USE_STD_MEMFUNCS
+#define USE_RPMALLOC 1
+#define ALLOW_ORC_MEMCPY 1
+#define ALLOW_OIL_MEMCPY 1
+#endif
+
+#define STD_STRINGFUNCS 1
 
 #define USE_INTERNAL_MD5SUM 1
 
@@ -401,6 +455,18 @@ typedef enum {
 #ifdef HAVE_UNICAP
 #undef HAVE_UNICAP
 #endif
+#endif
+
+// testing / experimental
+#define VSLICES 1
+
+//#define WEED_STARTUP_TESTS
+
+//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#ifdef VALGRIND_ON
+#define QUICK_EXIT 1
+#else
+#define USE_REC_RS 1
 #endif
 
 #endif

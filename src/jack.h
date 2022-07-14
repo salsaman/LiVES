@@ -65,7 +65,7 @@ boolean jack_log_errmsg(jack_driver_t *, const char *errtxt);
 boolean jack_interop_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod,
                               livespointer statep);
 
-void *jack_interop_cleanup(lives_object_t *obj, void *jackd);
+boolean jack_interop_cleanup(lives_obj_t *obj, void *jackd);
 
 // connect client or start server
 boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd);

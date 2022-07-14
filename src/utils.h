@@ -14,7 +14,7 @@ void lives_abort(const char *reason);
 int lives_system(const char *com, boolean allow_error);
 ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t buflen);
 lives_pid_t lives_fork(const char *com);
-void *lives_fork_cb(lives_object_t *dummy, void *com);
+boolean lives_fork_cb(lives_obj_t *dummy, void *com);
 
 int lives_chdir(const char *path, boolean no_error_dlg);
 pid_t lives_getpid(void);

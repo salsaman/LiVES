@@ -52,7 +52,6 @@
 #define HAS_LIVES_MAIN_H 1
 
 #include <sys/types.h>
-#include <inttypes.h>
 #include <string.h>
 
 #include <sys/file.h>
@@ -64,16 +63,6 @@
 #include <signal.h>
 #include <assert.h>
 #include <errno.h>
-
-#ifdef __cplusplus
-#define __STDC_CONSTANT_MACROS
-#ifdef _STDINT_H
-#undef _STDINT_H
-#endif
-#endif
-
-#include <stdint.h>
-#include <stdarg.h>
 
 #define NEED_ENDIANTEST 0
 #include "defs.h"
@@ -632,7 +621,7 @@ typedef void (*SignalHandlerPointer)(int);
 void set_signal_handlers(SignalHandlerPointer sigfunc);
 void catch_sigint(int signum);
 void defer_sigint(int signum);
-void *defer_sigint_cb(lives_object_t *obj, void *pdtl);
+boolean defer_sigint_cb(lives_obj_t *obj, void *pdtl);
 
 // multitrack-gui.c
 void mt_desensitise(lives_mt *);
@@ -715,15 +704,6 @@ void break_me(const char *dtl);
 #define LIVES_FATAL(x)      dummychar = (x)
 #endif // LIVES_NO_FATAL
 #endif // LIVES_FATAL
-
-#define VSLICES 1
-
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
-#ifdef VALGRIND_ON
-#define QUICK_EXIT
-#else
-#define USE_REC_RS
-#endif
 
 #define FINALISE_MEMFUNCS
 #include "memory.h"

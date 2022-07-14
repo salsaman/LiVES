@@ -13,46 +13,6 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
-#undef PRId64
-#undef PRIu64
-
-#ifdef IS_MINGW
-#define LONGSIZE 32
-#else
-
-#ifdef __WORDSIZE
-#define LONGSIZE __WORDSIZE
-#else
-#if defined __x86_64__
-# define LONGSIZE	64
-#ifndef __WORDSIZE_COMPAT32
-# define __WORDSIZE_COMPAT32	1
-#endif
-#else
-# define LONGSIZE	32
-#endif // x86
-#endif // __WORDSIZE
-#endif // mingw
-
-#ifdef __PRI64_PREFIX
-#undef __PRI64_PREFIX
-#endif
-
-# if LONGSIZE == 64
-#  define __PRI64_PREFIX	"l"
-# else
-#  define __PRI64_PREFIX	"ll"
-# endif
-
-#undef PRId64
-#undef PRIu64
-
-# define PRId64		__PRI64_PREFIX "d"
-# define PRIu64		__PRI64_PREFIX "u"
-
 #define LIVES_LEAF_MD5SUM "md5sum"
 #define LIVES_LEAF_MD5_CHKSIZE "md5_chksize"
 
@@ -120,16 +80,6 @@ uint32_t fastrand_int(uint32_t range);
 
 uint64_t gen_unique_id(void);
 
-#ifdef ENABLE_ORC
-void *lives_orc_memcpy(void *dest, const void *src, size_t n);
-#endif
-
-#ifdef ENABLE_OIL
-void *lives_oil_memcpy(void *dest, const void *src, size_t n);
-#endif
-
-void *proxy_realloc(void *ptr, size_t new_size);
-
 char *get_md5sum(const char *filename);
 
 boolean check_mem_status(void);
@@ -154,8 +104,10 @@ char *get_fstype_for(const char *vol);
 
 boolean file_is_ours(const char *fname);
 
+void get_current_time_offset(ticks_t *xsecs, ticks_t *xnsecs);
 ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
 ticks_t lives_get_current_ticks(void);
+double lives_get_session_time(void);
 char *lives_datetime(uint64_t secs, boolean use_local);
 char *lives_datetime_rel(const char *datetime);
 char *get_current_timestamp(void);

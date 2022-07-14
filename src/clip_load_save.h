@@ -6,6 +6,9 @@
 #ifndef _CLIP_LOAD_SAVE_H_
 #define _CLIP_LOAD_SAVE_H_
 
+// metadata
+void save_clip_audio_values(int clipno);
+
 boolean add_file_info(const char *check_handle, boolean aud_only);
 boolean save_file_comments(int fileno);
 void set_default_comment(lives_clip_t *sfile, const char *extract);
@@ -50,9 +53,6 @@ ulong restore_file(const char *filename);
 // scrapfiles
 boolean open_scrap_file(void);
 boolean open_ascrap_file(int clipno);
-int save_to_scrap_file(weed_layer_t *);
-boolean load_from_scrap_file(weed_layer_t *, frames_t frame);
-boolean flush_scrap_file(void);
 void close_ascrap_file(boolean remove);
 void close_scrap_file(boolean remove);
 void add_to_ascrap_mb(uint64_t bytes);

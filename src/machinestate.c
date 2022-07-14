@@ -506,7 +506,7 @@ boolean disk_monitor_running(const char *dir)
 lives_proc_thread_t disk_monitor_start(const char *dir) {
   if (disk_monitor_running(dir)) disk_monitor_forget();
   running = lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                                     (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s", dir);
+                                     get_dir_size, WEED_SEED_INT64, "s", dir);
   mainw->dsu_valid = TRUE;
   running_for = lives_strdup(dir);
   return running;
@@ -734,9 +734,40 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t o
 }
 
 
+LIVES_GLOBAL_INLINE void get_current_time_offset(ticks_t *xsecs, ticks_t *xnsecs) {
+  //TODO deprace and use ticks counter
+#if _POSIX_TIMERS
+  ticks_t originticks = lives_get_current_ticks();
+  originticks *= TICKS_TO_NANOSEC;
+  if (xsecs) *xsecs = originticks / ONE_BILLION;
+  if (xnsecs) *xnsecs = originticks - mainw->origsecs * ONE_BILLION;
+#else
+
+#ifdef USE_MONOTONIC_TIME
+  if (xsecs) *xsecs = 0; // not used
+  if (xnsecs) *xnsecs = lives_get_monotonic_time() * 1000;
+#else
+
+  / \ ***************************************************\ /
+  gettimeofday(&tv, NULL);
+  / \ ***************************************************\ /
+
+  if (xsecs) *xsecs = tv.tv_sec;
+  if (xnsecs) *xnsecs = tv.tv_usec * 1000;
+#endif
+#endif
+}
+
+
 LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
   //  return current (wallclock) time in ticks (units of 10 nanoseconds)
   return lives_get_relative_ticks(0, 0);
+}
+
+
+LIVES_GLOBAL_INLINE double lives_get_session_time(void) {
+  // return time since application was last restarted
+  return (double)(lives_get_current_ticks() - mainw->initial_ticks) / TICKS_PER_SECOND_DBL;
 }
 
 
@@ -1382,6 +1413,9 @@ LIVES_GLOBAL_INLINE uint32_t fast_hash(const char *key, size_t ss) {
 }
 
 LIVES_GLOBAL_INLINE uint64_t fast_hash64(const char *key) {
+#if USE_INTERNAL_MD5SUM
+  return minimd5((void *)key, lives_strlen(key));
+#else
   char *c = (char *)key;
   uint64_t hash64 = 0;
   if (*c) {
@@ -1402,6 +1436,7 @@ LIVES_GLOBAL_INLINE uint64_t fast_hash64(const char *key) {
     free(str1); free(str2);
   }
   return hash64;
+#endif
 }
 
 
@@ -2092,9 +2127,9 @@ char *get_wid_for_name(const char *wname) {
 }
 
 
-static void *enable_ss_cb(lives_object_t *obj, void *data) {
+static boolean enable_ss_cb(lives_obj_t *obj, void *data) {
   lives_reenable_screensaver();
-  return NULL;
+  return FALSE;
 }
 
 boolean lives_reenable_screensaver(void) {
@@ -2126,7 +2161,7 @@ boolean lives_reenable_screensaver(void) {
   } else com = lives_strdup("");
 #endif
 
-  lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, enable_ss_cb, NULL);
+  lives_hook_remove(mainw->global_hook_closures, FATAL_HOOK, enable_ss_cb, NULL, mainw->global_hook_mutexes);
 
   if (com) {
     lives_cancel_t cancelled = mainw->cancelled;
@@ -2181,7 +2216,8 @@ boolean lives_disable_screensaver(void) {
       THREADVAR(com_failed) = FALSE;
     }
     else {
-      lives_hook_prepend(mainw->global_hook_closures, ABORT_HOOK, 0, enable_ss_cb, NULL);
+      lives_hook_prepend(mainw->global_hook_closures, FATAL_HOOK,
+			 0, enable_ss_cb, mainw->global_hook_mutexes);
     }
     return TRUE;
   }
@@ -2392,10 +2428,11 @@ int get_window_stack_level(LiVESXWindow *xwin, int *nwins) {
 }
 
 
-static void *show_dpanel_cb(lives_object_t *obj, void *data) {
+static boolean show_dpanel_cb(lives_obj_t *obj, void *data) {
   show_desktop_panel();
-  return NULL;
+  return FALSE;
 }
+
 
 boolean show_desktop_panel(void) {
   boolean ret = FALSE;
@@ -2404,7 +2441,7 @@ boolean show_desktop_panel(void) {
   if (wid) {
     ret = unhide_x11_window(wid);
     lives_free(wid);
-    lives_hook_remove(mainw->global_hook_closures, ABORT_HOOK, show_dpanel_cb, NULL);
+    lives_hook_remove(mainw->global_hook_closures, FATAL_HOOK, show_dpanel_cb, NULL, mainw->global_hook_mutexes);
   }
 #endif
   return ret;
@@ -2418,7 +2455,7 @@ boolean hide_desktop_panel(void) {
   if (wid) {
     ret = hide_x11_window(wid);
     lives_free(wid);
-    lives_hook_prepend(mainw->global_hook_closures, ABORT_HOOK, 0, show_dpanel_cb, NULL);
+    lives_hook_prepend(mainw->global_hook_closures, FATAL_HOOK, 0, show_dpanel_cb, NULL);
   }
 #endif
   return ret;

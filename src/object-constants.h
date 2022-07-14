@@ -45,29 +45,39 @@ enum {
   // application types
   OBJ_INTENTION_NOTHING = OBJ_INTENTION_NONE,
 
-  // for CHANGE_STATE, CHANGE_SUBTYPE, EDIT_DATA, and MANIPULATE_STREAM, when feasable / possible
-  OBJ_INTENTION_UNDO, // undo effects of previous transform
-  OBJ_INTENTION_REDO, // redo effects of previous transform, after undo
+  // pasive intents
+  // template intents - there are 3 optional passive intents for templates
+  // if an instance wants to run one of these is should do so via a tamplete for the type
 
   // transform which creates an instance of specified subtype, with specified state
+  // will trigger init_hook on the new instance
+  // if it takes an instance of its type as an input atribute, this becomes COPY_INSTANCE
   OBJ_INTENTION_CREATE_INSTANCE = 0x00000100, // create instance of type / subtype
 
-  // transform which creates a copy of an instance, maybe with a different state ot subtype
-  OBJ_INTENTION_COPY_INSTANCE,
-
   // transform which changes the state of an instance (either self or another instance)
+  // will trigger object state change hook
   OBJ_INTENTION_CHANGE_STATE,
 
   // transform which changes the subtype of an instance (either self or another instance)
+  // will trigger object config_changed hook
   OBJ_INTENTION_CHANGE_SUBTYPE,
+
+  // there are 4 passive intents for instances, the first two are mandotaory
 
   // MANDATORY (builtin) for instances (self transform)
   OBJ_INTENTION_ADDREF,
-
   // MANDATORY (builtin) for instances (self transform)
   OBJ_INTENTION_UNREF,
 
+  // specialised intention for attributes
+  // will trigger attr_updated_hook
   OBJ_INTENTION_UPDATE_VALUE, // for attributes with the async flag
+
+  // for EDIT_DATA, and MANIPULATE_STREAM, when feasable / possible
+  OBJ_INTENTION_UNDO, // undo effects of previous transform, calling this again is like REDO
+
+  // active intents - there are 4 optional active intents which an instance can satisfy
+  // the CAPS and atributes futher delineate these
 
   // an intention which takes one or more mutable attributes and produces output
   // either as another mutable attribute
@@ -84,24 +94,11 @@ enum {
   // an intention which takes one or more array attributes and produces altered array output
   OBJ_INTENTION_EDIT_DATA,
 
-  // intentions above 0x200 are for specific intents which may be derived from the generic ones for
-  // convenience
+  // derived intentions
 
-  // an intent which converts an object's STATE from EXTERNAL to NORMAL
-  // caps define LOCAL or REMOTE source
-  OBJ_INTENTION_IMPORT = 0x00000C00,
-
-  // an intent which takes an instance in state INTERNAL and creates an object in state EXTERNAL
-  // with LOCAL - export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
-  // with REMOTE - export raw format to online location, e.g. export audio, save frame
-  OBJ_INTENTION_EXPORT,
-
-  // specialised intentions
-
+  // variety of manipulate_stream
   // an intent which has a data in hook, and data out hooks
   OBJ_INTENTION_PLAY = 0x00000200, // value fixed for all time, order of following must not change (see videoplugin.h)
-
-  //
 
   // like play, but with the REMOTE capacity (can also be an attachment to PLAY)
   OBJ_INTENTION_STREAM,  // encode / data in -> remote stream
@@ -124,17 +121,26 @@ enum {
 
   OBJ_INTENTION_RESTORE, // restore from object -> internal clip
 
+  // an intent which converts an object's STATE from EXTERNAL to NORMAL
+  // caps define LOCAL or REMOTE source
+  OBJ_INTENTION_IMPORT = 0x00000C00,
+
+  // an intent which takes an instance in state INTERNAL and creates an object in state EXTERNAL
+  // with LOCAL - export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
+  // with REMOTE - export raw format to online location, e.g. export audio, save frame
+  OBJ_INTENTION_EXPORT,
+
   // decoders
   // this is a specialized intent for clip objects, for READY objects, produces frame objects from the clip object)
   // media_src with realtime / non-realtime CAPS
   OBJ_INTENTION_DECODE = 0x00001000, // combine with caps to determine e.g. decode_audio, decode_video
 
   // use caps to further refine e.g REALTIME / NON_REALTIME (can be attachment to PLAY ?)
-  // this is a transform of base type MANIPULATE_STREAM, which can be attached to a hook of
-  // another stream manipulation transform, altering the input stream before or after
+  // this is a transform of base type MANIPULATE_STREAM, which can be attached to a data_prepared hook of
+  // a stream manipulation transform, altering the input stream
   OBJ_INTENTION_EFFECT = 0x00001400,
 
-  // do we need so many ? maybe these can become CAPS
+  // specialized effect intents
   OBJ_INTENTION_ANALYSE,
   OBJ_INTENTION_CONVERT,
   OBJ_INTENTION_MIX,
@@ -170,21 +176,26 @@ enum {
 
 #define OBJ_INTENTION_REPLACE OBJ_INTENTION_DELETE
 
+// this state cannot be altered, but instances can be created in state NORMAL or NOT_READY
+// via the CREATE_INSTNACE intent
+#define OBJECT_STATE_TEMPLATE		-1
+#define OBJECT_STATE_UNDEFINED		0
 // generic STATES which can be altered by *transforms*
-#define OBJECT_STATE_UNDEFINED	0
-#define OBJECT_STATE_NORMAL	1
-#define OBJECT_STATE_PREPARE	2
+// NOT_READY can be changed to NORMAL via a transform which sets attributes
+#define OBJECT_STATE_NOT_READY		1
+// ready state (default for instances)
+#define OBJECT_STATE_NORMAL		2
 
-#define OBJECT_STATE_PREVIEW	3 // ???
+// object is updating ints internal state
+#define OBJECT_STATE_UPDATING		3
 
-#define OBJECT_STATE_EXTERNAL	64
+// some async transformss may cause the state to change to this temporarily
+// an object may spontaneously change to this if doing internal updates / reads etc.
+#define OBJECT_STATE_BUSY		4
 
-#define OBJECT_STATE_FINALISED	512
-
-#define OBJECT_STATE_ANY        -1 // match any state
-
-#define OBJECT_STATE_NOT_READY OBJECT_STATE_PREPARE
-#define OBJECT_STATE_READY OBJECT_STATE_NORMAL
+//  IMPORT intent is a CHANGE_STATE intent which can alter or copy an object's state from external to not_ready / normal
+// the EXPORT intent is a CHANGE_STATE intent which can create an object in this state
+#define OBJECT_STATE_EXTERNAL		64
 
 //////////////
 
@@ -217,6 +228,7 @@ enum {
 #define CAPS_OR(a, b) ((a) || (b))
 #define CAPS_XOR(a, b) (CAPS_AND(CAPS_OR(a, b) && !CAPS_AND(a, b)))
 
+// composite icaps (TBD)
 enum {
   _ICAP_IDLE = 0,
   _ICAP_DOWNLOAD,
@@ -285,11 +297,11 @@ enum {
 #define ELEM_BASE_VERSION				ELEM_NAME("BASE", "VERSION")
 #define ELEM_BASE_VERSION_TYPE              		INT, 1, 100
 
+// domain FUNDAMENTAL
 #define ELEM_FUNDAMENTAL_BUNDLE_PTR			ELEM_NAME("FUNDAMENTAL", "BUNDLE_PTR");
 #define ELEM_FUNDAMENTAL_BUNDLE_PTR_TYPE	       	BUNDLEPTR, 1, NULL
 
 // domain GENERIC
-
 #define ELEM_GENERIC_NAME				ELEM_NAME("GENERIC", "NAME")
 #define ELEM_GENERIC_NAME_TYPE              		STRING, 1, NULL
 
@@ -310,7 +322,6 @@ enum {
 #define ELEM_ICAP_CAPACITIES_TYPE              		BUNDLEPTR, 1, NULL // icap_bundle
 
 ////////// domain object
-
 #define ELEM_OBJECT_ATTRIBUTES				ELEM_NAME("OBJECT", "ATTRIBUTES")
 #define ELEM_OBJECT_ATTRIBUTES_TYPE	       		BUNDLEPTR, -1, NULL // attr_bundle
 
@@ -393,25 +404,30 @@ enum {
 
 ///// domain HOOKS
 // status for transform hooks
-#define ELEM_HOOK_STATUS_FROM				ELEM_NAME("HOOK", "STATUS_FROM")
-#define ELEM_HOOK_STATUS_FROM_TYPE       	       	INT, 1, TRANSFORM_STATUS_NONE
+#define ELEM_HOOK_TYPE					ELEM_NAME("HOOK", "TYPE")
+#define ELEM_HOOK_TYPE_TYPE				INT, 1, 0
 
-#define ELEM_HOOK_STATUS_TO				ELEM_NAME("HOOK", "STATUS_TO")
-#define ELEM_HOOK_STATUS_TO_TYPE       	       		INT, 1, TRANSFORM_STATUS_NONE
+// ptr to object providing the hook
+#define ELEM_HOOK_OBJECT	       			ELEM_NAME("HOOK", "OBJECT")
+#define ELEM_HOOK_OBJECT_TYPE				BUNDLEPTR, 1, NULL
 
 #define ELEM_HOOK_ATTRIBUTES				ELEM_NAME("HOOK", "ATTRIBUTES")
 #define ELEM_HOOK_ATTRIBUTES_TYPE       	       	BUNDLEPTR, -1, NULL
 #define ELEM_HOOK_ATTRIBUTES_BUNDLE_TYPE       	       	hook_attr_bundle
 
-// state for object hooks
-#define ELEM_HOOK_STATE_FROM				ELEM_NAME("HOOK", "STATE_FROM")
-#define ELEM_HOOK_STATE_FROM_TYPE       	       	INT, 1, OBJECT_STATE_UNDEFINED
+// extra element for the subtype_changed hook
+#define ELEM_HOOK_SUBTYPE_FROM				ELEM_NAME("HOOK", "SUBTYPE+FROM")
+#define ELEM_HOOK_SUBTYPE_FROM__TYPE        		UINT64, 1, OBJECT_SUBTYPE_NONE
 
-#define ELEM_HOOK_STATE_TO				ELEM_NAME("HOOK", "STATE_TO")
-#define ELEM_HOOK_STATE_TO_TYPE       	       		INT, 1, OBJECT_STATE_UNDEFINED
+// domain THREADS
+#define ELEM_THREADS_THREAD				ELEM_NAME("THREADS", "THREAD")
+#define ELEM_THREADS_THREAD_TYPE				VOIDPTR, -1, NULL
+
+#define ELEM_THREADS_MUTEX				ELEM_NAME("THREADS", "MUTEX")
+#define ELEM_THREADS_MUTEX_TYPE				VOIDPTR, -1, NULL
 
 // domain INTROSPECTION
-// this is an optional item which should be added to ever bundldef, it is designed to allow
+// item which should be added to every bundldef, it is designed to allow
 // the bundle creator to store the pared down quarks used to construct the bundle
 #define ELEM_INTROSPECTION_QUARKS    			ELEM_NAME("INTROSPECTION", "QUARKS")
 #define ELEM_INTROSPECTION_QUARKS_TYPE       	       	STRING, -1, NULL
@@ -578,21 +594,160 @@ enum {
 
 #define OBJ_ERROR_NULL_OBJECT			1
 #define OBJ_ERROR_NULL_ATTRIBUTE		2
-#define OBJ_ERROR_NOSUCH_ATTRIBUTE		3
-#define OBJ_ERROR_ATTRIBUTE_INVALID		4
-#define OBJ_ERROR_ATTRIBUTE_READONLY		5
-#define OBJ_ERROR_NULL_ICAP			6
-#define OBJ_ERROR_NULL_CAP			7
-#define OBJ_ERROR_NOT_OWNER			8
+#define OBJ_ERROR_INVALID_ARGUMENTS		3
+#define OBJ_ERROR_NOSUCH_ATTRIBUTE		4
+#define OBJ_ERROR_ATTRIBUTE_INVALID		5
+#define OBJ_ERROR_ATTRIBUTE_READONLY		6
+#define OBJ_ERROR_NULL_ICAP			7
+#define OBJ_ERROR_NULL_CAP			8
+#define OBJ_ERROR_NOT_OWNER			9
 
 // transform status
 #define TRANSFORM_ERROR_REQ -1 // not all requirements to run the transform have been satisfied
 #define TRANSFORM_STATUS_NONE 0
-#define TRANSFORM_STATUS_SUCCESS 1	///< normal / success
+
+// inital statuses
+#define TRANSFORM_STATUS_PREPARE 1
+
+// runtime statuses
 #define TRANSFORM_STATUS_RUNNING 16	///< transform is "running" and the state cannot be changed
-#define TRANSFORM_STATUS_NEEDS_DATA 32	///< reqmts. need updating
-#define TRANSFORM_STATUS_CANCELLED 256	///< transform was cancelled during running
-#define TRANSFORM_STATUS_ERROR  512	///< transform encountered an error during running
+#define TRANSFORM_STATUS_NEEDS_DATA 17	///< reqmts. need updating
+#define TRANSFORM_STATUS_PAUSED	 18	///< transform has been paused, via a call to the pause_hook
+
+// transaction is blocked, action may be needed to return it to running status
+#define TRANSFORM_STATUS_BLOCKED 18	///< transform is "running" and the state cannot be changed
+
+// final statuses
+#define TRANSFORM_STATUS_SUCCESS 32	///< normal / success
+#define TRANSFORM_STATUS_CANCELLED 33	///< transform was cancelled via a call to the cancel_hook
+#define TRANSFORM_STATUS_ERROR  34	///< transform encountered an error during running
+#define TRANSFORM_STATUS_TIMED_OUT 35	///< timed out waiting for data
+// HOOK types
+
+// hooks will change slightly in the future, each callback will have a single parameter
+// - a bundle of type hook_bundle, which will conatain elements pertaining to the hook
+// type. The hook function may update some elements in the bundle before returning
+// the bundle will passed from callback, so adding a hook callback with PRIORITY
+// will place it at the start of the stack and it can add data to the bundle for subsetquent
+// callbacks
+
+enum {
+  // instance hooks are generated by object instances
+  INIT_HOOK,
+
+  // object suffered a FATAL error
+  FATAL_HOOK,
+
+  // state changing from normal -> not ready
+  RESETTING_HOOK,
+
+  // object is about to be freed
+  DESTROYED_HOOK,
+
+  // object configration changed. Can be chage of subtype and / or state
+  CONFIG_CHANGED_HOOK,
+  N_INSTANCE_HOOKS,
+#define N_GLOBAL_HOOKS N_INSTANCE_HOOKS
+
+  // with the exception of DATA_READY, hook callbacks will be run sequentially and syncronously
+  // DATA_READY will run all callbacks async in parallel
+  //  - processing may continue, provided data will not be changed or freed until all callbacks return
+  // returning FALSE from a callback will remove it from the stack, returng TRUE will keep it on
+  // the stack in case the hooks are triggered again (e.g. for SYNC_WAIT, DATA_READY, ERROR...)
+
+  DEFERRED_HOOK,  /// no status change, but means the process is deferrred for later running
+
+  TX_PREPARING_HOOK,  /// none -> prepare
+
+  TX_PREPARED_HOOK,  /// prepare -> running
+
+  TX_START_HOOK, /// any -> running
+
+  NEED_DATA_HOOK, /// waiting to receive sync_ready from caller - running to needs_data (tx wait)
+
+  // for SYNC_WAIT, TRUE and FALSE do not have their usual meanings
+  //
+  // if any function returns FALSE, then transform will count this as a fail and not call
+  // any further callbacks in the stack for this point. It may wait and retry
+  // if all callbacks return TRUE, the transform may continue.
+  // sinc TRUE / FALSE have alternate meanings, by defaul all callbacks remain in the stack,
+  // and must be manually removed
+  TX_SYNC_WAIT_HOOK, ///< synchronisation point, transform is waitng until all hook functions return
+  ///
+  PAUSED_HOOK, ///< transform was paused via pause_hook
+
+  ///< transform was resumed via resume hook (if it exists), and / or all paused hook callbacks returning
+  RESUMING_HOOK,
+
+  ///< tx is blocked, may be triggered after waiting has surpassed a limit
+  // applies to PAUSED, WAIT_SYNC, NEEDS_DATA, and some internal states
+  TX_BLOCKED_HOOK,
+
+  TX_TIMED_OUT_HOOK, ///< timed out in hook - need_data, sync_wait or paused
+
+  /// tx transition from one trajectory segment to the next
+  // in some cases there may be a choice for the next vector, and an 'abritrator' may be
+  // required in order to decide which route to take
+  // (TBD)
+  TX_TRAJECTORY_HOOK,
+
+  FINISHED_HOOK,   /// running -> finished
+
+  TX_ERROR_HOOK, ///< error occured during the transform
+
+  TX_CANCELLED_HOOK, ///< tx cancelled via cancel_hook
+
+  // thread running the transform received a fatal signal
+  THREAD_EXIT_HOOK,
+
+  // tx hooks not associated ith status changes
+  DATA_PREP_HOOK,   // data supplied, may be readonly or read / write.
+
+  // data ready for processing / readonly. object may run hook cal;backs async,
+  // but must not FREE or ALTER data until all callbacks return
+  DATA_READY_HOOK,
+  //
+
+  // hooks reserved for internal use by instances
+  INTERNAL_HOOK_0,
+  INTERNAL_HOOK_1,
+  INTERNAL_HOOK_2,
+  INTERNAL_HOOK_3,
+  INTERNAL_HOOK_4,
+  INTERNAL_HOOK_5,
+  INTERNAL_HOOK_6,
+  INTERNAL_HOOK_7,
+  INTERNAL_HOOK_8,
+  ///
+
+  // input hooks - tx will provide hook callbacks which another object can trigger
+  //
+  TX_CANCEL_REQUEST_HOOK, // an input hook which can be called to cancel a running tx
+  //
+  // ask the transform to pause processing. May not happen immediately (or ever, so add a callback
+  // for the PAUSED hook)
+  // will wait for all callbacks to return, and for unpause hook (if it exists) to be called
+  TX_PAUSE_REQUEST_HOOK,
+  // if this hook exists, then to unpause a paused transform this must be called and all paused
+  // callbacks must have returned (may be called before the functions return)
+  // after this, the unpaused callbacks will be called and processing will only continue
+  // once all of those have returned. Calling this  when the tx is not paused or running unpaused
+  // hooks will have no effect
+  TX_RESUME_REQUEST_HOOK,
+  //
+  // attribute hooks
+  N_HOOK_POINTS,
+};
+
+#define ATTR_UPDATED_HOOK DATA_READY_HOOK
+#define ATTR_DELETE_HOOK FINAL_HOOK
+#define WAIT_SYNC_HOOK TX_SYNC_WAIT_HOOK
+#define RESTART_HOOK RESETTING_HOOK
+#define TX_EXIT_HOOK THREAD_EXIT_HOOK
+#define TX_FINISHED_HOOK FINISHED_HOOK
+#define TX_RESUMED_HOOK RESUMED_HOOK
+#define TX_PAUSED_HOOK PAUSED_HOOK
+#define FINAL_HOOK DESTROYED_HOOK
 
 /////////////////////////// bundles //
 //
@@ -889,8 +1044,8 @@ typedef char **bundledef_t;
 // a hook bundle - defines the transform status change that triggers it
 // along with an array of hook attributes - each one has a slot for a conneting
 // in or out
-#define _HOOK_BUNDLE ADD_ELEM(HOOK, STATUS_FROM), ADD_ELEM(HOOK, STATUS_TO), \
-    ADD_ELEM(HOOK, ATTRIBUTES)
+#define _HOOK_BUNDLE ADD_ELEM(HOOK, TYPE), ADD_ELEM(HOOK, OBJECT),	\
+    ADD_ELEM(THREADS, MUTEX), ADD_ELEM(HOOK, ATTRIBUTES)
 #define HOOK_BUNDLE _HOOK_BUNDLE, ELEM_END
 
 // attribute type used in input hook functions, connects an object attribute

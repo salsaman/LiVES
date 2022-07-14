@@ -1164,7 +1164,7 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
   // key is 1 based
   boolean ret;
   int key = LIVES_POINTER_TO_INT(user_data);
-  main_thread_execute((lives_funcptr_t)_rte_on_off, WEED_SEED_BOOLEAN, &ret, "bi", (group != NULL), key);
+  main_thread_execute(_rte_on_off, WEED_SEED_BOOLEAN, &ret, "bi", (group != NULL), key);
   return ret;
 }
 

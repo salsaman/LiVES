@@ -211,11 +211,10 @@ weed_layer_t *set_if_md5_valid(int clipno, frames_t frame, weed_layer_t *layer) 
               return layer;
             }
             lives_free(md5sum);
-          }
-        }
-      }
-    }
-  }
+	    // *INDENT-OFF*
+          }}}}}
+  // *INDENT-ON*
+
   return NULL;
 }
 
@@ -521,8 +520,6 @@ check_stcache:
   }
 // *INDENT-ON*
 }
-
-
 
 
 void load_end_image(frames_t frame) {
@@ -1087,6 +1084,185 @@ check_prcache:
   }
 }
 
+
+#define SCRAP_CHECK 30
+ticks_t lscrap_check;
+extern uint64_t free_mb; // MB free to write
+double ascrap_mb;  // MB written to audio file
+
+void add_to_ascrap_mb(uint64_t bytes) {ascrap_mb += bytes / 1000000.;}
+double get_ascrap_mb(void) {return ascrap_mb;}
+
+boolean load_from_scrap_file(weed_layer_t *layer, frames_t frame) {
+  // load raw frame data from scrap file
+
+  // this will also set cfile width and height - for letterboxing etc.
+
+  // return FALSE if the frame does not exist/we are unable to read it
+
+  char *oname;
+
+  lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
+
+  int fd;
+  if (!IS_VALID_CLIP(mainw->scrap_file)) return FALSE;
+
+  if (!scrapfile->ext_src) {
+    oname = make_image_file_name(scrapfile, 1, LIVES_FILE_EXT_SCRAP);
+    fd = lives_open_buffered_rdonly(oname);
+    lives_free(oname);
+    if (fd < 0) return FALSE;
+#ifdef HAVE_POSIX_FADVISE
+    posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+#endif
+    scrapfile->ext_src = LIVES_INT_TO_POINTER(fd);
+    scrapfile->ext_src_type = LIVES_EXT_SRC_FILE_BUFF;
+  } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
+
+  if (frame < 0 || !layer) return TRUE; /// just open fd
+
+  if (!weed_plant_deserialise(fd, NULL, layer)) {
+    //g_print("bad scrapfile frame\n");
+    return FALSE;
+  }
+  return TRUE;
+}
+
+
+static boolean sf_writeable = TRUE;
+
+static int64_t _save_to_scrap_file(weed_layer_t *layer) {
+  // returns frame number
+  // dump the raw layer (frame) data to disk
+
+  // TODO: run as bg thread
+
+  size_t pdata_size;
+
+  lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
+
+  //int flags = O_WRONLY | O_CREAT | O_TRUNC;
+  int fd;
+
+  if (!scrapfile->ext_src) {
+    char *oname = make_image_file_name(scrapfile, 1, LIVES_FILE_EXT_SCRAP), *dirname;
+
+#ifdef O_NOATIME
+    //flags |= O_NOATIME;
+#endif
+
+    dirname = get_clip_dir(mainw->scrap_file);
+    lives_mkdir_with_parents(dirname, capable->umask);
+    lives_free(dirname);
+
+    fd = lives_create_buffered_nosync(oname, DEF_FILE_PERMS);
+    lives_free(oname);
+
+    if (fd < 0) {
+      weed_layer_free(layer);
+      return scrapfile->f_size;
+    }
+
+    scrapfile->ext_src = LIVES_INT_TO_POINTER(fd);
+    scrapfile->ext_src_type = LIVES_EXT_SRC_FILE_BUFF;
+
+#ifdef HAVE_POSIX_FADVISE
+    posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+#endif
+  } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
+
+  // serialise entire frame to scrap file
+  pdata_size = weed_plant_serialise(fd, layer, NULL);
+
+  weed_layer_free(layer);
+
+  // check free space every 2048 frames or after SCRAP_CHECK seconds (whichever comes first)
+  if (lscrap_check == -1) lscrap_check = mainw->clock_ticks;
+  else {
+    if (mainw->clock_ticks - lscrap_check >= SCRAP_CHECK * TICKS_PER_SECOND
+        || (scrapfile->frames & 0x800) == 0x800) {
+      char *dir = get_clip_dir(mainw->scrap_file);
+      free_mb = (double)get_ds_free(dir) / 1000000.;
+      if (free_mb == 0) sf_writeable = is_writeable_dir(dir);
+      lives_free(dir);
+      lscrap_check = mainw->clock_ticks;
+    }
+  }
+
+  return pdata_size;
+}
+
+static lives_proc_thread_t scrap_file_procthrd = NULL;
+
+int save_to_scrap_file(weed_layer_t *layer) {
+  weed_layer_t *orig_layer;
+  lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
+  char *framecount;
+  static boolean checked_disk = FALSE;
+
+  if (!IS_VALID_CLIP(mainw->scrap_file)) return -1;
+  if (!layer) return scrapfile->frames;
+
+  if ((scrapfile->frames & 0x3F) == 0x3F && !checked_disk) {
+    /// check every 64 frames for quota overrun
+    checked_disk = TRUE;
+    if (!check_for_disk_space(TRUE)) return scrapfile->frames;
+  }
+
+  checked_disk = FALSE;
+  check_for_disk_space(FALSE);
+
+  if (scrap_file_procthrd) {
+    // skip saving if still handling the previous one
+    if (mainw->rec_aclip == -1 && mainw->scratch == SCRATCH_NONE) {
+      if (!lives_proc_thread_check_finished(scrap_file_procthrd)) return scrapfile->frames;
+    }
+  }
+
+  orig_layer = weed_layer_copy(NULL, layer);
+  if (scrap_file_procthrd) {
+    scrapfile->f_size += lives_proc_thread_join_int64(scrap_file_procthrd);
+    lives_proc_thread_free(scrap_file_procthrd);
+    scrap_file_procthrd = NULL;
+    if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1))
+        && !prefs->hide_framebar &&
+        !mainw->faded) {
+      double scrap_mb = (double)scrapfile->f_size / 1000000.;
+      if ((scrap_mb + ascrap_mb) < (double)free_mb * .75) {
+        // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
+        framecount = lives_strdup_printf(_("rec %.2f MB"), scrap_mb + ascrap_mb);
+      } else {
+        // warn if scrap_file > 3/4 of free space
+        // TRANSLATORS: !rec(ord) %.2f M(ega)B(ytes)
+        if (sf_writeable)
+          framecount = lives_strdup_printf(_("!rec %.2f MB"), scrap_mb + ascrap_mb);
+        else
+          // TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
+          framecount = (_("rec ?? MB"));
+      }
+      lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
+      lives_free(framecount);
+    }
+  }
+
+  mainw->scrap_file_size = scrapfile->f_size;
+
+  scrap_file_procthrd = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY,
+                        (lives_funcptr_t)_save_to_scrap_file, WEED_SEED_INT64, "P", orig_layer);
+
+  return ++scrapfile->frames;
+}
+
+
+LIVES_GLOBAL_INLINE boolean flush_scrap_file(void) {
+  if (!IS_VALID_CLIP(mainw->scrap_file)) return FALSE;
+  if (scrap_file_procthrd) {
+    mainw->files[mainw->scrap_file]->f_size += lives_proc_thread_join_int64(scrap_file_procthrd);
+    lives_proc_thread_free(scrap_file_procthrd);
+    scrap_file_procthrd = NULL;
+  }
+  return TRUE;
+}
 
 
 #ifndef NO_PROG_LOAD
@@ -2028,7 +2204,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
             timex = lives_get_current_ticks() / TICKS_PER_SECOND_DBL;
             est = (*dplug->dpsys->estimate_delay)(dplug->cdata, iframe);
           } else if (prefs->dev_show_timing) timex = lives_get_current_ticks() / TICKS_PER_SECOND_DBL;
-          if (prefs->dev_show_timing) g_printerr("get_frame pre @ %f\n", timex);
+          if (prefs->dev_show_timing) g_printerr("get_frame pre %d / %d with %p  @ %f\n", clip, iframe, dplug, timex);
 
           if (!(*dplug->dpsys->get_frame)(dplug->cdata, (int64_t)iframe, rowstrides, sfile->vsize, pixel_data)) {
             pthread_mutex_unlock(&dplug->mutex);
@@ -2056,15 +2232,14 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
               timex = xtimex - timex;
               //g_print("\n\nERROR DELTAS: %f and %f\n\n", timex - est, timex / est);
             } else if (prefs->dev_show_timing) xtimex = lives_get_current_ticks() / TICKS_PER_SECOND_DBL;
-            if (prefs->dev_show_timing) g_printerr("get_frame pre @ %f\n", xtimex);
+            if (prefs->dev_show_timing) g_printerr("get_frame post %d / %d with %p  @ %f\n", clip, iframe, dplug,
+                                                     xtimex);
           }
 
           //g_print("ACT %f EST %f\n",  (double)(lives_get_current_ticks() - timex) / TICKS_PER_SECOND_DBL, est_time);
 
           lives_free(pixel_data);
           lives_free(rowstrides);
-          if (prefs->dev_show_timing)
-            g_printerr("get_frame post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
           if (res) {
             if (prefs->apply_gamma && prefs->pb_quality != PB_QUALITY_LOW) {
               if (dplug->cdata->frame_gamma != WEED_GAMMA_UNKNOWN) {

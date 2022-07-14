@@ -758,8 +758,10 @@ typedef struct {
 #define PT_LAZY_RFX 16
 #define PT_LAZY_DSUSED 17
 #define PT_CUSTOM_COLOURS 18
+#define PT_LAZY_STARTUP 19
 #define PT_PERF_MANAGER 32
 
+#define lazy_starter helper_procthreads[PT_LAZY_STARTUP]
 #define drawtl_thread helper_procthreads[PT_DRAWTL]
 #define transrend_proc helper_procthreads[PT_TRANSREND]
 #define dlg_spin_thread helper_procthreads[PT_DLG_SPINNER]
@@ -1104,6 +1106,7 @@ typedef struct {
 
   // for the internal player
   double period; ///< == 1./cfile->pb_fps (unless cfile->pb_fps is 0.)
+  ticks_t initial_ticks; ///< set ASAP when app is (re)started
   volatile ticks_t startticks; ///< effective ticks when current frame was (should have been) displayed
   ticks_t last_startticks; ///< effective ticks when last frame was (should have been) displayed
   ticks_t timeout_ticks; ///< incremented if effect/rendering is paused/previewed
@@ -1595,6 +1598,7 @@ typedef struct {
   boolean msg_area_configed;
 
   LiVESList *global_hook_closures[N_GLOBAL_HOOKS];
+  pthread_mutex_t global_hook_mutexes[N_GLOBAL_HOOKS];
 
   /// jack audio player / transport
 #ifdef ENABLE_JACK
@@ -1953,7 +1957,6 @@ typedef struct {
   boolean suppress_layout_warnings;
 
   volatile lives_proc_thread_t helper_procthreads[N_HLP_PROCTHREADS];
-  uint32_t lazy;
 
   boolean no_configs;
 

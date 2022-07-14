@@ -750,8 +750,9 @@ char *lives_strdup_concat(char *str, const char *sep, const char *fmt, ...) {
   va_start(xargs, fmt);
   tmp = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
-  if (!str || !*str) out = tmp;
-  else {
+  if (!str || !*str) {
+    out = tmp;
+  } else {
     out = lives_strdup_printf("%s%s%s", str, (tmp && *tmp && sep) ? sep : "",
                               (tmp && *tmp) ? tmp : "");
     if (tmp) lives_free(tmp);

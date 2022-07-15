@@ -722,7 +722,7 @@ char *weed_strerror(weed_error_t error) {
   switch (error) {
   case (WEED_ERROR_MEMORY_ALLOCATION):
     return strdup("Memory allocation error");
-    /* case (WEED_ERROR_CONCURRENCY): */
+  case (WEED_ERROR_CONCURRENCY):
     return strdup("Thread concurrency failure");
   case (WEED_ERROR_IMMUTABLE):
     return strdup("Read only property");

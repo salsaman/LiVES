@@ -1806,7 +1806,8 @@ static boolean lazy_start_fin(void *obj, void *data) {
   lives_proc_thread_t lpt = (lives_proc_thread_t)data;
   boolean bret = lives_proc_thread_join_boolean(lpt);
   if (!bret) {
-    mainw->lazy_starter = NULL;
+    // it returned FALSE, we can free this. The destructor will
+    // also set mainw->lazy_starter to NULL
     lives_proc_thread_free(lpt);
     return FALSE;
   }
@@ -1958,13 +1959,16 @@ static boolean lives_startup2(livespointer data) {
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
-  /*  mainw->lazy_starter =  */
-  /*     lives_proc_thread_create_pvoid(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC, */
-  /* 				   lazy_startup_checks, WEED_SEED_BOOLEAN); */
-  /* y */
-  /* lives_proc_thread_hook_append(mainw->lazy_starter,FINISHED_HOOK, 0, lazy_start_fin, (void *)&mainw->lazy_starter); */
-  /* lives_proc_thread_set_pauseable(mainw->lazy_starter, TRUE); */
-  /* lives_proc_thread_sync_ready(mainw->lazy_starter); */
+  mainw->lazy_starter =
+    lives_proc_thread_create_pvoid(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC
+                                   | LIVES_THRDATTR_NULLIFY_ON_DESTRUCTION,
+                                   lazy_startup_checks, WEED_SEED_BOOLEAN);
+
+  lives_proc_thread_hook_append(mainw->lazy_starter, COMPLETED_HOOK, 0,
+                                lazy_start_fin, (void *)&mainw->lazy_starter);
+
+  lives_proc_thread_set_pauseable(mainw->lazy_starter, TRUE);
+  lives_proc_thread_sync_ready(mainw->lazy_starter);
 
   if (!CURRENT_CLIP_IS_VALID) lives_ce_update_timeline(0, 0.);
 
@@ -2030,6 +2034,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef WEED_STARTUP_TESTS
   winitopts |= WEED_INIT_DEBUGMODE;
 #endif
+  winitopts |= 8; // skip un-needed error checks
   werr = libweed_init(weed_abi_version, winitopts);
   if (werr != WEED_SUCCESS) {
     lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
@@ -2037,7 +2042,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     _exit(1);
   }
 
-#ifndef USE_STD_MEMFUNCS
+#if !USE_STD_MEMFUNCS
 #if USE_RPMALLOC
   libweed_set_memory_funcs(rpmalloc, rpfree);
 #else
@@ -2048,10 +2053,10 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   libweed_set_slab_funcs(lives_slice_alloc, lives_slice_unalloc, NULL);
 #endif
 #else
-  libweed_set_memory_funcs(lives_malloc, lives_free);
+  libweed_set_memory_funcs(_lives_malloc, _lives_free);
 #endif // DISABLE_GSLICE
 #endif // USE_RPMALLOC
-  weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
+  weed_utils_set_custom_memfuncs(_lives_malloc, _lives_calloc, _lives_memcpy, NULL, _lives_free);
 #endif // USE_STD_MEMFUNCS
 #endif //IS_LIBLIVES
 
@@ -4892,23 +4897,17 @@ boolean set_palette_colours(boolean force_reload) {
 
 #ifndef VALGRIND_ON
   /// generate some complementary colours
-  // still experimenting...some values may need tweaking
-  // suggested uses for each colour in the process of being defined
-  // TODO - run a bg thread until we create GUI
   if (!prefs->vj_mode && !prefs->startup_phase && !mainw->debug) {
     /// create thread to pick custom colours
     double cpvar = get_double_prefd(PREF_CPICK_VAR, DEF_CPICK_VAR);
     prefs->cptime = get_double_prefd(PREF_CPICK_TIME, -DEF_CPICK_TIME);
     if (fabs(prefs->cptime) < .5) prefs->cptime = -1.;
-    /* mainw->helper_procthreads[PT_CUSTOM_COLOURS] */
-    /*   = lives_proc_thread_create(LIVES_THRDATTR_NOTE_STTIME, (lives_funcptr_t)pick_custom_colours, */
-    /*                              WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime); */
+    mainw->helper_procthreads[PT_CUSTOM_COLOURS]
+      = lives_proc_thread_create(LIVES_THRDATTR_NOTE_STTIME, (lives_funcptr_t)pick_custom_colours,
+                                 WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime);
   }
 #endif
   /// set global values
-
-  //set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "*", "border-width", "0");
-
   set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "toolbutton *", "background-image", "none");
 
   colref = gdk_rgba_to_string(&palette->normal_back);

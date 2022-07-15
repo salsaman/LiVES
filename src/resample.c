@@ -1063,8 +1063,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
           if (weed_plant_has_leaf(frame_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET)) {
             weed_leaf_dup(newframe, frame_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET);
-            g_print("SCRF OFFS %p %p %ld\n", newframe, frame_event,
-                    weed_get_int64_value(frame_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, NULL));
           }
           weed_leaf_dup(newframe, frame_event, WEED_LEAF_OVERLAY_TEXT);
           weed_set_int64_value(newframe, LIVES_LEAF_FAKE_TC,

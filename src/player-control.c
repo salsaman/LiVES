@@ -399,9 +399,14 @@ void play_file(void) {
 
   mainw->clip_switched = FALSE;
 
-  proc_thread_kill_lock();
-  if (mainw->lazy_starter) lives_proc_thread_request_pause(mainw->lazy_starter);
-  proc_thread_kill_unlock();
+  if (!mainw->foreign && mainw->lazy_starter) {
+    // this is like a safe addrref
+    mainw->lazy_starter = lives_proc_thread_secure_ptr(&mainw->lazy_starter);
+    if (mainw->lazy_starter) {
+      lives_proc_thread_request_pause(mainw->lazy_starter);
+      lives_proc_thread_unref(mainw->lazy_starter);
+    }
+  }
 
   // reinit all active effects
   if (!mainw->preview && !mainw->is_rendering && !mainw->foreign) weed_reinit_all();
@@ -1488,9 +1493,13 @@ void play_file(void) {
     }
   }
 
-  proc_thread_kill_lock();
-  if (mainw->lazy_starter) lives_proc_thread_request_resume(mainw->lazy_starter);
-  proc_thread_kill_unlock();
+  if (mainw->lazy_starter) {
+    mainw->lazy_starter = lives_proc_thread_secure_ptr(&mainw->lazy_starter);
+    if (mainw->lazy_starter) {
+      lives_proc_thread_request_resume(mainw->lazy_starter);
+      lives_proc_thread_unref(mainw->lazy_starter);
+    }
+  }
 
   if (prefs->show_msg_area) {
     if (mainw->idlemax == 0) {

@@ -3617,7 +3617,7 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
 
 void redraw_timeline(int clipno) {
   lives_clip_t *sfile;
-  return;
+
   if (mainw->ce_thumbs) return;
   if (!IS_VALID_CLIP(clipno)) return;
   sfile = mainw->files[clipno];
@@ -8437,7 +8437,7 @@ boolean msg_area_config(LiVESWidget * widget) {
 boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
   lives_painter_t *cr2;
   LingoLayout *layout;
-  return TRUE;
+
   if (!prefs->show_msg_area) return TRUE;
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");

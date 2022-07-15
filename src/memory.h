@@ -55,7 +55,7 @@ typedef void (*lives_slice_unalloc_f)(size_t, void *);
 
 // default_malloc and so may be called to use the standard non-overridden versions
 
-// if USE_STD_MEMFUNCS is #defined, this will force LiVES to use only malloc, free, etc. This can be useful for debugging
+// if USE_STD_MEMFUNCS is #defined as 1, this will force LiVES to use only malloc, free, etc. This can be useful for debugging
 // testing, or if there is an isse with overriding memory functions etc.
 
 // if USE_DEFAULT_MEMFUNCS is defined, LiVES will only use the default_ values set below
@@ -74,7 +74,7 @@ typedef void (*lives_slice_unalloc_f)(size_t, void *);
 // slice_unalloc - reverse of above if it needs a special function (takes a size parameter)
 // slice_alloc_and_copy   - may be a single function, otherwise calls slice_alloc / memcpy
 
-#ifdef USE_STD_MEMFUNCS
+#if USE_STD_MEMFUNCS
 
 #ifdef default_malloc
 #undef default_malloc

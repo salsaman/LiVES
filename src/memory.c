@@ -1142,5 +1142,10 @@ livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n
 #endif
   return dest;
 }
+
+
+weed_error_t set_plant_leaf_any_type_vargs(weed_plant_T * pl, const char *key, uint32_t st, int ne, ...) {
+  return WEED_SUCCESS;
+}
 #endif
 

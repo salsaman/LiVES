@@ -236,6 +236,7 @@ lives_exe_SOURCES = \
 	cvirtual.c cvirtual.h \
 	audio.c audio.h \
 	threading.c threading.h \
+	bundles.c bundles.h \
 	intents.c intents.h object-constants.h\
 	preferences.c preferences.h\
 	effects-weed.c effects-weed.h\

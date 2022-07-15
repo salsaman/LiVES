@@ -552,7 +552,7 @@ void lives_exit(int signum) {
     unload_decoder_plugins();
   }
 
-  lives_hooks_trigger(NULL, mainw->global_hook_closures, FINAL_HOOK);
+  lives_hooks_trigger(NULL, mainw->global_hook_closures, DESTRUCTION_HOOK);
 
   if (prefs->workdir_tx_intent == OBJ_INTENTION_DELETE) {
     // delete the old workdir

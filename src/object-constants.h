@@ -428,13 +428,13 @@ enum {
 
 // domain INTROSPECTION
 // item which should be added to every bundldef, it is designed to allow
-// the bundle creator to store the pared down quarks used to construct the bundle
-#define ELEM_INTROSPECTION_QUARKS    			ELEM_NAME("INTROSPECTION", "QUARKS")
-#define ELEM_INTROSPECTION_QUARKS_TYPE       	       	STRING, -1, NULL
+// the bundle creator to store the pared down strands used to construct the bundle
+#define ELEM_INTROSPECTION_BLUEPRINT    		ELEM_NAME("INTROSPECTION", "BLUEPRINT")
+#define ELEM_INTROSPECTION_BLUEPRINT_TYPE              	STRING, -1, NULL
 
-// as an alternative this can be used instead to point to a static copy of the quarks
-#define ELEM_INTROSPECTION_QUARKS_PTR    	       	ELEM_NAME("INTROSPECTION", "QUARKS_PTR")
-#define ELEM_INTROSPECTION_QUARKS_PTR_TYPE            	VOIDPTR, 1, NULL
+// as an alternative this can be used instead to point to a static copy of the strands
+#define ELEM_INTROSPECTION_BLUEPRINT_PTR    	       	ELEM_NAME("INTROSPECTION", "BLUEPRINT_PTR")
+#define ELEM_INTROSPECTION_BLUEPRINT_PTR_TYPE          	VOIDPTR, 1, NULL
 
 #define ELEM_INTROSPECTION_COMMENT    			ELEM_NAME("INTROSPECTION", "COMMENT")
 #define ELEM_INTROSPECTION_COMMENT_TYPE       	       	STRING, 1, NULL
@@ -453,6 +453,9 @@ enum {
 
 #define ELEM_INTROSPECTION_NATIVE_PTR 			ELEM_NAME("INTROSPECTION", "NATIVE_PTR")
 #define ELEM_INTROSPECTION_NATIVE_PTR_TYPE		VOIDPTR, -1, NULL
+
+#define ELEM_INTROSPECTION_PTRTYPE 			ELEM_NAME("INTROSPECTION", "NATIVE_PTR")
+#define ELEM_INTROSPECTION_PTRTYPE_TYPE			VOIDPTR, -1, NULL
 
 ///// domain ATTRIBUTE
 #define ELEM_ATTRIBUTE_LOCAL				ELEM_NAME("ATTRIBUTE", "LOCAL")
@@ -642,7 +645,7 @@ enum {
   RESETTING_HOOK,
 
   // object is about to be freed
-  DESTROYED_HOOK,
+  DESTRUCTION_HOOK,
 
   // object configration changed. Can be chage of subtype and / or state
   CONFIG_CHANGED_HOOK,
@@ -673,6 +676,7 @@ enum {
   // sinc TRUE / FALSE have alternate meanings, by defaul all callbacks remain in the stack,
   // and must be manually removed
   TX_SYNC_WAIT_HOOK, ///< synchronisation point, transform is waitng until all hook functions return
+
   ///
   PAUSED_HOOK, ///< transform was paused via pause_hook
 
@@ -691,7 +695,9 @@ enum {
   // (TBD)
   TX_TRAJECTORY_HOOK,
 
-  FINISHED_HOOK,   /// running -> finished
+  FINISHED_HOOK,   /// running -> finished -> from here we can go to SUCCESS, ERROR, DESTRUCTION, etc.,
+
+  COMPLETED_HOOK,   /// finished with no errors, end results achieved
 
   TX_ERROR_HOOK, ///< error occured during the transform
 
@@ -747,7 +753,6 @@ enum {
 #define TX_FINISHED_HOOK FINISHED_HOOK
 #define TX_RESUMED_HOOK RESUMED_HOOK
 #define TX_PAUSED_HOOK PAUSED_HOOK
-#define FINAL_HOOK DESTROYED_HOOK
 
 /////////////////////////// bundles //
 //
@@ -758,20 +763,20 @@ enum {
    So for example a string "sCOMMENT" could represent a data element of TYPE 's' (string)
    with NAME == "COMMENT".
 
-   The idea here is that by constructing an array of these strings (quarks)
+   The idea here is that by constructing an array of these strings (strands)
    we can then process this, allocate some type of container object (an empty BUNDLE)
-   and then create elements inside it following the template of the quark array
+   and then create elements inside it following the template of the strand array
    which we shall call a BUNDLE DEFINITION or simply BUNDLEDEF) and thus create within
    the container a collection of "data elements", which taken together with the container,
    form a complete bundle.
 
-   Furthermore, we can elaborate on these quarks by adding more information; in this case
-   we say that a quark starting with a '?' character represents an optional element,
-   and we may follow each quark with additional quarks with more information.
-   In this case we will add a second quark, following the first:
-   quark2[0] defines whether the data is a scalar '0', or an array '1'
+   Furthermore, we can elaborate on these strands by adding more information; in this case
+   we say that a strand starting with a '?' character represents an optional element,
+   and we may follow each strand with additional strands with more information.
+   In this case we will add a second strand, following the first:
+   strand2[0] defines whether the data is a scalar '0', or an array '1'
    this is followed by a space ' ' and subsequently the default value as string
-   which can be cast to the type specific to the element. Let us also say that any quark
+   which can be cast to the type specific to the element. Let us also say that any strand
    beginning with the character '#' is a comment and may be skipped past when constructing a bundle.
 
    We can construct a bundledef simply by concatenating these definitions, and specify whether
@@ -817,7 +822,7 @@ enum {
    If an item appears as both optional and non-optional in the same bundle,
    then it shall be considered mandatory, and the instance marking it as optional ignored.
 
-   If so desired, the array of quarks may be "pruned" to remove any duplicate entries,
+   If so desired, the array of strands may be "pruned" to remove any duplicate entries,
    taking care to leave a copy marked as non-optional in the case where optional and non-optional
    variants both exist in the original.
    Comments in the original may optionally be removed for the pruned copy.
@@ -861,7 +866,7 @@ enum {
    name.
 
    To recap:
-   if the FULL NAME in a quark is ELEM_DOMAIN_ITEM, then the SHORTENED name is simply ITEM,
+   if the FULL NAME in a strand is ELEM_DOMAIN_ITEM, then the SHORTENED name is simply ITEM,
    and this should be created as a name / value pair with the shortened name and the specified type.
 
    if the FULL NAME is ATTR_DOMAIN_ITEM, then th SHORTENED name is DOMAIN_ITEM.
@@ -888,10 +893,10 @@ enum {
    After adding the optional items provided in the parameter list by the caller, the creator
    function should include any remaining non optional elements and set their default values.
 
-   Some bundles provide an optional INTROSPECTION_QUARKS element which can (should) be used to
-   hold the "pruned" list of quarks; in this case there will also be an optional
-   INTROSPECTION_QUARKS_PTR element which can be used instead to hold a pointer to
-   a static copy of the pruned quarks.
+   Some bundles provide an optional INTROSPECTION_BLUEPRINT element which can (should) be used to
+   hold the "pruned" list of strands; in this case there will also be an optional
+   INTROSPECTION_BLUEPRINTPTR element which can be used instead to hold a pointer to
+   a static copy of the pruned strands.
 
    Following the bundle creation, the values in a bundle may be updated,
    simply by passing the bundle, shortened name and data of the correct TYPE
@@ -955,7 +960,7 @@ enum {
    they should free their own sub lists.
 **/
 
-typedef const char *bundle_element;
+typedef const char *bundle_strand;
 typedef const char **const_bundledef_t;
 typedef char **bundledef_t;
 
@@ -1003,7 +1008,7 @@ typedef char **bundledef_t;
     BUNDLE_COMMENT("}")
 
 #define _BASE_BUNDLE BUNDLE_COMMENT("BUNDLE BASE"), ADD_OPT_ELEM(BASE, VERSION), \
-    ADD_OPT_ELEM(INTROSPECTION, QUARKS), ADD_OPT_ELEM(INTROSPECTION, QUARKS_PTR), \
+    ADD_OPT_ELEM(INTROSPECTION, BLUEPRINT), ADD_OPT_ELEM(INTROSPECTION, BLUEPRINT_PTR), \
     ADD_OPT_ELEM(GENERIC, UID), ADD_OPT_ELEM(INTROSPECTION, COMMENT),	\
     ADD_OPT_ELEM(INTROSPECTION, PRIVATE_DATA)
 
@@ -1042,6 +1047,7 @@ typedef char **bundledef_t;
 #define ATTR_CONNECTION_BUNDLE _ATTR_CONNECTION_BUNDLE, ELEM_END
 
 // a hook bundle - defines the transform status change that triggers it
+
 // along with an array of hook attributes - each one has a slot for a conneting
 // in or out
 #define _HOOK_BUNDLE ADD_ELEM(HOOK, TYPE), ADD_ELEM(HOOK, OBJECT),	\
@@ -1111,7 +1117,7 @@ typedef char **bundledef_t;
     ADD_OPT_ELEM(CONTRACT, ATTR_POOL)
 #define CONTRACT_BUNDLE _CONTRACT_BUNDLE, ELEM_END
 
-// flag bits may optionally be used to store information derived from the quarks
+// flag bits may optionally be used to store information derived from the strands
 #define ELEM_FLAG_COMMENT 		(1ull << 0)	// denotes a comment entry
 #define ELEM_FLAG_OPTIONAL 		(1ull << 1)	// denotes the entry is optional
 #define ELEM_FLAG_ARRAY 		(iull << 2)	// denotes the data type is array
@@ -1144,7 +1150,7 @@ typedef enum {
 
 #define GET_BUNDLEDEF(btype) (get_bundledef((btype))
 
-#define ADD_BUNDLE(a, b) static const bundle_element a##_bundledef[] = {b##_BUNDLE};
+#define ADD_BUNDLE(a, b) static const bundle_strand a##_bundledef[] = {b##_BUNDLE};
 
 #define CBUN(name) (const_bundledef_t)(name##_bundledef),
 

@@ -3315,6 +3315,7 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
   mainw->cevent_tc = tc;
 
   return_event = get_next_event(next_event);
+
   etype = get_event_type(next_event);
 
   switch (etype) {
@@ -3464,9 +3465,9 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
         mainw->files[new_file]->frameno = mainw->frame_index[i - 1];
         if (new_file != mainw->scrap_file) {
           // switch to a new file
+          // will reset ->next_event for old_file
           do_quick_switch(new_file);
           cfile->next_event = return_event;
-          return_event = NULL;
         } else {
           /// load a frame from the scrap file
           mainw->files[new_file]->hsize = cfile->hsize; // set size of scrap file

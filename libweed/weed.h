@@ -201,6 +201,8 @@ extern "C"
   int32_t libweed_get_abi_min_supported_version(void);
   int32_t libweed_get_abi_max_supported_version(void);
 
+  void libweed_print_init_opts(FILE *);
+
   weed_error_t libweed_init(int32_t abi, uint64_t init_flags);
   int libweed_set_memory_funcs(weed_malloc_f my_malloc, weed_free_f my_free);
 

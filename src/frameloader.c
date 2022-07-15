@@ -3392,9 +3392,6 @@ void do_quick_switch(int new_file) {
     }
   }
 
-  if (mainw->playing_file == mainw->blend_file)
-    track_decoder_free(1, mainw->blend_file);
-
   osc_block = mainw->osc_block;
   mainw->osc_block = TRUE;
 
@@ -3404,19 +3401,7 @@ void do_quick_switch(int new_file) {
 
   mainw->clip_switched = TRUE;
 
-  /* if (mainw->frame_layer) { */
-  /*   check_layer_ready(mainw->frame_layer); */
-  /*   weed_layer_free(mainw->frame_layer); */
-  /*   mainw->frame_layer = NULL; */
-  /* } */
-
-  if (mainw->blend_layer) {
-    check_layer_ready(mainw->blend_layer);
-    weed_layer_free(mainw->blend_layer);
-    mainw->blend_layer = NULL;
-  }
-
-  if (mainw->frame_layer_preload) {
+  if (mainw->frame_layer_preload && mainw->frame_layer_preload != mainw->frame_layer) {
     check_layer_ready(mainw->frame_layer_preload);
     weed_layer_free(mainw->frame_layer_preload);
     mainw->frame_layer_preload = NULL;
@@ -3479,7 +3464,6 @@ void do_quick_switch(int new_file) {
   if (CURRENT_CLIP_HAS_VIDEO) {
     if (!mainw->fs && !mainw->faded) {
       set_start_end_spins(mainw->current_file);
-
       if (!mainw->play_window && mainw->double_size) {
         //frame_size_update();
         resize(2.);
@@ -3489,14 +3473,15 @@ void do_quick_switch(int new_file) {
 
   if (!mainw->fs && !mainw->faded) showclipimgs();
 
-  if (new_file == mainw->blend_file) {
+  if (new_file == mainw->blend_file || old_file == mainw->blend_file) {
     if (mainw->blend_layer) {
       check_layer_ready(mainw->blend_layer);
       weed_layer_free(mainw->blend_layer);
       mainw->blend_layer = NULL;
     }
     track_decoder_free(1, mainw->blend_file);
-    mainw->blend_file = old_file;
+    if (new_file == mainw->blend_file)
+      mainw->blend_file = old_file;
   }
 
   if (mainw->play_window && prefs->show_playwin) {

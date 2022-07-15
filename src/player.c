@@ -1719,7 +1719,6 @@ if (success) {
 
 if (old_frame_layer) {
   int refs;
-  g_print("checking ofl %p\n", old_frame_layer);
   check_layer_ready(old_frame_layer);
   do {
     refs = weed_layer_unref(old_frame_layer);
@@ -2848,9 +2847,13 @@ switch_point:
             get_event_timecode(sfile->next_event) / TICKS_PER_SECOND_DBL >=
             mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
         else {
+          weed_event_t *next_event;
           mainw->noswitch = FALSE;
-          sfile->next_event = process_events(sfile->next_event, FALSE, currticks);
+          next_event = process_events(sfile->next_event, FALSE, currticks);
           mainw->noswitch = TRUE;
+          // need to get this agains, as process_events can switch the current clip
+          sfile = RETURN_VALID_CLIP(mainw->current_file);
+          sfile->next_event = next_event;
           if (!sfile->next_event) mainw->cancelled = CANCEL_EVENT_LIST_END;
         }
       }

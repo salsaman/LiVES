@@ -10,6 +10,7 @@
 #include "diagnostics.h"
 #include "callbacks.h"
 #include "startup.h"
+#include "bundles.h"
 
 #define STATS_TC (TICKS_PER_SECOND_DBL)
 static double inst_fps = 0.;
@@ -1777,7 +1778,7 @@ char *bundle_to_header(lives_bundle_t *bundle, const char *tname) {
 
   bdef = get_bundledef_from_bundle(bundle);
   if (bdef) {
-    bundle_element elem, elem2;
+    bundle_strand elem, elem2;
     for (int i = 0; (elem = bdef[i]); i++) {
       off_t offx = 0;
       uint64_t vflags;

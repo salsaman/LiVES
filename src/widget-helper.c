@@ -1243,8 +1243,8 @@ reloop:
       if (new_sigdata) {
         pthread_mutex_lock(&task_list_mutex);
 
-        lives_proc_thread_hook_append(new_sigdata->proc, DESTROYED_HOOK, 0, sigdata_destroyed, new_sigdata);
-        lives_proc_thread_hook_append(new_sigdata->proc, FINISHED_HOOK, 0, sigdata_finished, new_sigdata);
+        lives_proc_thread_hook_append(new_sigdata->proc, DESTRUCTION_HOOK, 0, sigdata_destroyed, new_sigdata);
+        lives_proc_thread_hook_append(new_sigdata->proc, COMPLETED_HOOK, 0, sigdata_finished, new_sigdata);
 
         if (new_sigdata->alarm_handle == LIVES_NO_ALARM || !task_list) {
           // push a new task to the stack
@@ -1374,8 +1374,8 @@ exit_loop:
     if (!retv && gov_will_run == mysource) gov_will_run = 0;
     gov_running = FALSE;
   }
-  /* if (need_service_handle) */
-  /*   mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL); */
+  if (need_service_handle)
+    mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL);
   in_gov_loop = FALSE;
 #ifdef DEBUG_GOV
   g_print("EXIT point %d, retval %d, gwr %u, gr %d\n", exitpt, retv, gov_will_run, gov_running);
@@ -1964,14 +1964,14 @@ static boolean clutchtrue(lives_obj_t *obj, lives_proc_thread_t lpt) {
 uint32_t wait_for_fg_response(lives_proc_thread_t lpt) {
   int gstat;
   uint32_t mysource = 0;
-  boolean bvar = FALSE;
+  volatile boolean bvar = FALSE;
 
   if (lpt) {
     // should not be necessary, but just in case
     weed_refcount_inc(lpt);
     lives_proc_thread_hook_append(lpt, DEFERRED_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
-    lives_proc_thread_hook_append(lpt, FINISHED_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
-    lives_proc_thread_hook_append(lpt, DESTROYED_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
+    lives_proc_thread_hook_append(lpt, COMPLETED_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
+    lives_proc_thread_hook_append(lpt, DESTRUCTION_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
     lives_hook_append(NULL, WAIT_SYNC_HOOK, 0, (hook_funcptr_t)lptdone, &bvar);
     lpttorun = lpt;
   }
@@ -13289,8 +13289,8 @@ boolean lives_widget_context_update(void) {
         lives_nanosleep(NSLEEP_TIME);
       }
       if (!is_fg_service) THREADVAR(fg_service) = FALSE;
-      /* if (need_service_handle) */
-      /*   mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL); */
+      if (need_service_handle)
+        mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL);
       do_more_stuff();
       pthread_mutex_unlock(&fg_ctx_mutex);
     }

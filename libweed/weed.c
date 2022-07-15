@@ -49,6 +49,16 @@
 #include "weed.h"
 #endif
 
+#ifdef WRITER_PREF_AVAILABLE
+#undef WRITER_PREF_AVAILABLE
+#endif
+
+#if _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200809
+#define WRITER_PREF_AVAILABLE 1
+#else
+#define WRITER_PREF_AVAILABLE 0
+#endif
+
 #define WEED_FLAG_OP_DELETE WEED_FLAG_RESERVED_0
 
 #if defined __GNUC__ && !defined WEED_IGN_GNUC_OPT
@@ -224,6 +234,10 @@ static int chain_lock_upgrade(weed_leaf_t *leaf, int have_rdlock, int is_del) {
 
 static int allbugfixes = 0;
 static int debugmode = 0;
+#if WRITER_PREF_AVAILABLE
+static int pref_writers = 1;
+#endif
+static int skip_errchecks = 0;
 
 static int32_t _abi_ = _WEED_ABI_VERSION_MAX_SUPPORTED;
 
@@ -234,6 +248,8 @@ EXPORTED int32_t libweed_get_abi_version(void) GNU_PURE;
 
 EXPORTED int32_t libweed_get_abi_max_supported(void) GNU_CONST;
 EXPORTED int32_t libweed_get_abi_min_supported(void) GNU_CONST;
+
+EXPORTED void libweed_print_init_opts(FILE *);
 
 EXPORTED weed_error_t libweed_init(int32_t abi, uint64_t init_flags);
 EXPORTED int libweed_set_memory_funcs(weed_malloc_f, weed_free_f);
@@ -338,6 +354,24 @@ EXPORTED int32_t libweed_get_abi_version(void) {return _abi_;}
 EXPORTED int32_t libweed_get_abi_min_supported_version(void) {return _WEED_ABI_VERSION_MAX_SUPPORTED;}
 EXPORTED int32_t libweed_get_abi_max_supported_version(void) {return _WEED_ABI_VERSION_MIN_SUPPORTED;}
 
+EXPORTED void libweed_print_init_opts(FILE *out) {
+  fprintf(out, "%u\t%s\t%s\n", 1, "WEED_INIT_ALLBUGFIXES", "Backport all future non-breaking bug fixes "
+	  "inro the current API version");
+
+  fprintf(out, "%u\t%s\t%s\n", 2, "WEED_INIT_DEBUG", "Run libweed in debug mode.");
+
+#if WRITER_PREF_AVAILABLE
+  fprintf(out, "%u\t%s\t%s\n", 4, "No prefer writers",
+	  "If functionality permits, the  dafault is to force readers to block if there is a writer waiting "
+	  "to update data. This is useful in applications where there are many more readers than writers.\n"
+	  "In applications with more writers than readers, the option can be disabled "
+	  "so that readers are preferred instead.");
+#endif
+
+  fprintf(out, "%u\t%s\t%s\n", 8, "Skip errchecks", "Optimise performance by skipping unnecessary edge case eror checks.");
+}
+
+
 EXPORTED weed_error_t libweed_init(int32_t abi, uint64_t init_flags) {
   // this is called by the host in order for it to set its version of the functions
 
@@ -351,6 +385,12 @@ EXPORTED weed_error_t libweed_init(int32_t abi, uint64_t init_flags) {
   else allbugfixes = 0;
   if (init_flags & WEED_INIT_DEBUGMODE) debugmode = 1;
   else debugmode = 0;
+#if WRITER_PREF_AVAILABLE
+  if (init_flags & 4) pref_writers = 0;
+  else pref_writers = 1;
+#endif
+  if (init_flags & 8) skip_errchecks = 1;
+  else skip_errchecks = 0;
 
   if (_abi_ < 201 && !allbugfixes) nullv = 0;
   if (_abi_ < 202 && !allbugfixes) pptrsize = WEED_SEED_VOIDPTR;
@@ -521,13 +561,12 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
     }
     hash = weed_hash(key);
     if (!checkmode && !refnode) {
-      while (leaf && (hash != leaf->key_hash || weed_strcmp(weed_leaf_get_key(leaf), (char *)key)))
-	leaf = leaf->next;
+      while (hash != leaf->key_hash || (!skip_errchecks && weed_strcmp(weed_leaf_get_key(leaf), (char *)key)))
+	if (!(leaf = leaf->next)) break;
     }
     else {
-      while (leaf && (hash != leaf->key_hash || weed_strcmp(weed_leaf_get_key(leaf), (char *)key))) {
-	leaf = leaf->next;
-	if (!leaf) break;
+      while (hash != leaf->key_hash || (!skip_errchecks && weed_strcmp(weed_leaf_get_key(leaf), (char *)key))) {
+	if (!(leaf = leaf->next)) break;
 	if (refnode) {
 	  if (*refnode) {
 	    if (leaf == *refnode) return NULL;
@@ -535,8 +574,8 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
 	  }
 	  *refnode = leaf;
 	  if (!checkmode) {
-	    while (leaf && (hash != leaf->key_hash
-			    || weed_strcmp(weed_leaf_get_key(leaf), (char *)key))) leaf = leaf->next;
+	    while (hash != leaf->key_hash || (!skip_errchecks && weed_strcmp(weed_leaf_get_key(leaf), (char *)key)))
+	      if (!(leaf = leaf->next)) break;
 	    break;
 	  }
 	  refnode = NULL;
@@ -584,6 +623,10 @@ static inline void *weed_leaf_free(weed_leaf_t *leaf) {
 }
 
 static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, weed_hash_t hash) {
+  pthread_rwlockattr_t *rwattrp = NULL;
+#if WRITER_PREF_AVAILABLE
+  pthread_rwlockattr_t rwattr;
+#endif
   const char *xkey;
   weed_leaf_t *leaf = weed_malloc_sizeof(weed_leaf_t);
   if (!leaf) return NULL;
@@ -595,13 +638,10 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, we
   leaf->seed_type = seed_type;
   leaf->flags = 0;
   leaf->data = NULL;
-#if _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200809
-  pthread_rwlockattr_t attr;
-  pthread_rwlockattr_init(&attr);
-  pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-#define RW_ATTR &attr
-#else
-#define RW_ATTR NULL
+#if WRITER_PREF_AVAILABLE
+  rwattrp = &rwattr;
+  pthread_rwlockattr_init(rwattrp);
+  pthread_rwlockattr_setkind_np(rwattrp, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
 
   if (is_plant(leaf)) {
@@ -610,8 +650,8 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, we
       if (weed_leaf_get_key(leaf) != leaf->padding)
 	weed_unmalloc_and_copy(strlen(leaf->key + 1) + 2, (void *)leaf->key);
       weed_unmalloc_sizeof(weed_leaf_t, leaf); return NULL;}
-    pthread_rwlock_init(&pdata->ldata.chain_lock, RW_ATTR);
-    pthread_rwlock_init(&pdata->ldata.data_lock, RW_ATTR);
+    pthread_rwlock_init(&pdata->ldata.chain_lock, rwattrp);
+    pthread_rwlock_init(&pdata->ldata.data_lock, rwattrp);
     pthread_mutex_init(&pdata->ldata.data_mutex, NULL);
 
     pthread_rwlock_init(&pdata->reader_count, NULL);
@@ -625,8 +665,8 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, we
 	weed_unmalloc_and_copy(strlen(leaf->key + 1) + 2, (void *)leaf->key);
       weed_unmalloc_sizeof(weed_leaf_t, leaf); return NULL;}
 
-    pthread_rwlock_init(&ldata->chain_lock, RW_ATTR);
-    pthread_rwlock_init(&ldata->data_lock, RW_ATTR);
+    pthread_rwlock_init(&ldata->chain_lock, rwattrp);
+    pthread_rwlock_init(&ldata->data_lock, rwattrp);
     pthread_mutex_init(&ldata->data_mutex, NULL);
     leaf->private_data = (void *)ldata;
   }
@@ -729,7 +769,7 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
 
   leaf = plant;
 
-  while (leaf && (leaf->key_hash != hash || weed_strcmp(weed_leaf_get_key(leaf), (char *)key))) {
+  while (leaf->key_hash != hash || (!skip_errchecks && weed_strcmp(weed_leaf_get_key(leaf), (char *)key))) {
     // no match
 
     // still have chain_lock readlock on leafprev
@@ -739,8 +779,8 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
       if (leafprev != plant) chain_lock_unlock(leafprev);
       leafprev = leaf; // leafprev is still locked
     }
-    leaf = leaf->next;
-    chain_lock_readlock(leaf); // does nothing if leaf is NULL
+    if (!(leaf = leaf->next)) break;
+    chain_lock_readlock(leaf);
   }
   // finish with chain_lock readlock on prevprev. prev amd leaf
   if (!leaf || leaf == plant) {

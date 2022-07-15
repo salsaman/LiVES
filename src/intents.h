@@ -78,24 +78,6 @@ typedef weed_plant_t lives_obj_t;
 typedef weed_plant_t lives_contract_t;
 
 #define LIVES_PLANT_BUNDLE 21212
-char *get_short_name(const char *q);
-uint64_t get_vflags(const char *q, off_t *offx);
-uint32_t get_vtype(const char *q, off_t *offx);
-const char *get_vname(const char *q);
-boolean get_is_array(const char *q);
-
-lives_bundle_t *create_bundle(bundle_type btype, ...) LIVES_SENTINEL;
-
-lives_bundle_t *create_object_bundle(uint64_t otype, uint64_t subtype);
-
-bundledef_t get_bundledef_from_bundle(lives_bundle_t *bundle);
-
-boolean bundle_has_item(lives_bundle_t *bundle, const char *item);
-
-char *flatten_bundledef(bundledef_t);
-char *flatten_bundle(lives_bundle_t *);
-uint64_t get_bundledef64sum(bundledef_t bdef, char **flattened);
-uint64_t get_bundle64sum(lives_bundle_t *, char **flattened);
 
 #define HOOKFUNCS_ONLY
 #include "threading.h"
@@ -485,8 +467,15 @@ void lives_intentparams_free(lives_intentparams_t *);
 boolean lives_transform_status_free(lives_transform_status_t *);
 void lives_object_transform_free(lives_object_transform_t *);
 
-////////////////// object broker part ///////////
+weed_error_t _set_plant_leaf_any_type_vargs(weed_plant_t *pl, const char *key, uint32_t st, int ne, va_list args);
+
 typedef lives_hash_store_t lives_objstore_t;
+
+extern lives_objstore_t *main_objstore;
+extern lives_objstore_t *fn_objstore;
+extern lives_objstore_t *bdef_store;
+
+////////////////// object broker part ///////////
 
 // this is now a dictionary
 typedef lives_object_instance_t lives_dicto_t;

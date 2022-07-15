@@ -245,15 +245,19 @@ void _lives_proc_thread_hook_append(lives_proc_thread_t lpt, int type, uint64_t 
                                     hook_funcptr_t func, const char *fname, livespointer data);
 
 #define lives_proc_thread_hook_append(lpt, type, flags, func, data)	\
-  (_lives_proc_thread_hook_append((lpt), (type), (flags), (hook_funcptr_t)(func), #func, (data)))
+  (_lives_proc_thread_hook_append((lpt), (type), (flags), (hook_funcptr_t)(func), #func, (void *)(data)))
 
 #define lives_hook_append(hooks, type, flags, func, data) _lives_hook_add((hooks), (type), (flags), \
-									  (hook_funcptr_t)(func), #func, (data), TRUE)
+									  (hook_funcptr_t)(func), #func, \
+									  (void *)(data), TRUE)
 
 #define lives_hook_prepend(hooks, type, flags, func, data) _lives_hook_add((hooks), (type), (flags), \
-									   (hook_funcptr_t)(func), #func, (data), FALSE)
+									   (hook_funcptr_t)(func), #func, \
+									   (void *)(data), FALSE)
 
-void lives_hook_remove(LiVESList **hooks, int type, hook_funcptr_t func, livespointer data, pthread_mutex_t *mutexes);
+void _lives_hook_remove(LiVESList **hooks, int type, hook_funcptr_t func, livespointer data, pthread_mutex_t *mutexes);
+#define lives_hook_remove(hooks, type, func, data, mutexes) \
+  _lives_hook_remove((hooks), (type), (hook_funcptr_t)(func), (void *)(data), (mutexes))
 
 void lives_hooks_clear(LiVESList **hooks, int type);
 void lives_hooks_clear_all(LiVESList **hooks, int ntypes);
@@ -547,7 +551,8 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 #define THRD_STATE_QUEUED 	(1ull << 1)
 #define THRD_STATE_PREPARING 	(1ull << 2)
 #define THRD_STATE_RUNNING 	(1ull << 3) // check for FINISHED or CANCELLED
-#define THRD_STATE_FINISHED 	(1ull << 4)
+#define THRD_STATE_FINISHED 	(1ull << 4) // finsihed, but may be destroyed
+#define THRD_STATE_COMPLETED 	(1ull << 5) // done - will not be destroyed via lifecycle
 
 #define THRD_STATE_DEFERRED 	(1ull << 8) // will be run later due to resource limitations
 
@@ -619,12 +624,15 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_THRDATTR_INHERIT_HOOKS   		(1ull << 6)
 #define LIVES_THRDATTR_IGNORE_SYNCPT   		(1ull << 7)
 #define LIVES_THRDATTR_IDLEFUNC   		(1ull << 8)
+#define LIVES_THRDATTR_NULLIFY_ON_DESTRUCTION  	(1ull << 9)
 
 // extra info requests
 #define LIVES_LEAF_START_TICKS "_start_ticks"
 #define LIVES_THRDATTR_NOTE_STTIME		(1ull << 16)
 
 #define LIVES_THRDATTR_IS_PROC_THREAD   	(1ull << 24)
+
+LiVESList **lives_proc_thread_get_hook_closures(lives_proc_thread_t);
 
 #define lives_proc_thread_get_work(tinfo)				\
   ((thrd_work_t *)weed_get_voidptr_value((tinfo), LIVES_LEAF_THREAD_WORK, NULL))
@@ -694,6 +702,17 @@ boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int 
 
 #define MAIN_THREAD_EXECUTE_VOID(func, args_fmt, ...) (main_thread_execute_rvoid(func, args_fmt, __VA_ARGS__))
 
+int lives_proc_thread_ref(lives_proc_thread_t);
+boolean lives_proc_thread_unref(lives_proc_thread_t);
+
+int proc_thread_unrefs_block(void);
+int proc_thread_unrefs_unblock(void);
+
+void lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr);
+void lives_proc_thread_auto_nullify(lives_proc_thread_t *lpt);
+
+lives_proc_thread_t lives_proc_thread_secure_ptr(void **ptr);
+
 // returns TRUE once the proc_thread will call the target function
 // the thread can also be cancelled or finished
 boolean lives_proc_thread_is_running(lives_proc_thread_t);
@@ -705,6 +724,8 @@ boolean lives_proc_thread_exited(lives_proc_thread_t);
 
 /// returns FALSE while the thread is running, TRUE once it has finished
 boolean lives_proc_thread_check_finished(lives_proc_thread_t);
+boolean lives_proc_thread_check_completed(lives_proc_thread_t);
+
 boolean lives_proc_thread_get_signalled(lives_proc_thread_t);
 boolean lives_proc_thread_set_signalled(lives_proc_thread_t, int signum, void *data);
 int lives_proc_thread_get_signal_data(lives_proc_thread_t, int64_t *tidx_return, void **data_return);

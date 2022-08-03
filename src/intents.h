@@ -45,6 +45,12 @@
 #ifndef HAS_LIVES_INTENTS_H
 #define HAS_LIVES_INTENTS_H
 
+#define NIRVA_BUNDLE_T weed_plant_t
+
+extern boolean bundle_has_item(NIRVA_BUNDLE_T *, const char *item);
+
+#define IMPL_FUNC_HAS_ITEM bundle_has_item
+
 #include "object-constants.h"
 
 #if defined (_BASE_DEFS_ONLY_) || !defined (HAS_LIVES_INTENTS_H_BASE_DEFS)
@@ -74,7 +80,6 @@ typedef struct _obj_transform_t lives_object_transform_t;
 //
 typedef weed_param_t lives_tx_param_t;
 typedef weed_plant_t lives_obj_attr_t;
-typedef weed_plant_t lives_obj_t;
 typedef weed_plant_t lives_contract_t;
 
 #define LIVES_PLANT_BUNDLE 21212
@@ -87,7 +92,7 @@ typedef weed_plant_t lives_contract_t;
 
 typedef lives_refcounter_t obj_refcounter;
 
-// lives_object_t
+// lives_object_t // DEPRECATED - new code should use lives_obj_t
 struct _object_t {
   uint64_t uid; // unique id for this instnace (const)
   obj_refcounter refcounter;
@@ -113,12 +118,6 @@ struct _objsubdef {
     lives_object_transform_t **tx; // array of transform functions for object type / subtype / state
   } **state_dets;
 };
-
-typedef struct {
-  // for each enumnerated object type, we will define a set of subtypedefs
-  uint64_t type; // object type - from IMkType
-  struct objsubdef **subtypedefs; // NULL term. list
-} lives_obj_template;
 
 /////////////
 
@@ -213,7 +212,9 @@ typedef struct {
 lives_object_instance_t *lives_object_instance_create(uint64_t type, uint64_t subtype);
 
 // shorthand for calling OBJ_INTENTION_UNREF in the instance
-boolean lives_object_instance_destroy(lives_obj_instance_t *);
+boolean lives_obj_instance_destroy(lives_obj_instance_t *);
+
+boolean lives_object_instance_destroy(lives_object_instance_t *);
 
 // shorthand for calling OBJ_INTENTION_UNREF in the instance
 int lives_object_instance_unref(lives_obj_instance_t *);
@@ -266,10 +267,6 @@ weed_error_t lives_attribute_set_leaf_readonly(lives_object_t *, const char *nam
 int lives_attribute_get_param_type(lives_object_t *obj, const char *name);
 weed_error_t lives_attribute_set_param_type(lives_object_t *obj, const char *name,
     const char *label, int ptype);
-
-// listeners can attach to the pre_/ post_ value_changed hooks for the object
-void lives_attribute_append_listener(lives_object_t *obj, const char *name, attr_listener_f func);
-void lives_attribute_prepend_listener(lives_object_t *obj, const char *name, attr_listener_f func);
 
 int lives_object_get_num_attributes(lives_object_t *);
 
@@ -372,14 +369,6 @@ const lives_intentcap_t *get_std_icap(int ref_id);
 int count_caps(lives_capacities_t *icaps);
 char *list_caps(lives_capacities_t *caps);
 
-/////////////// object broker ////
-/* const lives_funcdef_t *get_template_for_func(funcidx_t funcidx); */
-/* const lives_funcdef_t *get_template_for_func_by_uid(uint64_t uid); */
-/* char *get_argstring_for_func(funcidx_t funcidx); */
-const lives_funcdef_t *get_template_for_func(lives_funcptr_t func);
-char *get_argstring_for_func(lives_funcptr_t func);
-char *lives_funcdef_explain(const lives_funcdef_t *funcdef);
-
 // contracts
 
 lives_contract_t *create_contract_instance(lives_intention intent, ...);
@@ -456,18 +445,9 @@ lives_object_transform_t *find_transform_for_intentcaps(lives_object_t *, lives_
 weed_param_t *weed_param_from_attribute(lives_object_instance_t *, const char *name);
 weed_param_t *weed_param_from_attr(lives_obj_attr_t *);
 
-#if 0
-const lives_transform_status_t *get_current_status(lives_object_t *);
-void lives_rules_ref(lives_rules_t *);
-void lives_transform_list_free(LiVESTransformList **);
-void lives_tx_map_free(LiVESTransformList **);
-#endif
-
-void lives_intentparams_free(lives_intentparams_t *);
-boolean lives_transform_status_free(lives_transform_status_t *);
-void lives_object_transform_free(lives_object_transform_t *);
-
-weed_error_t _set_plant_leaf_any_type_vargs(weed_plant_t *pl, const char *key, uint32_t st, int ne, va_list args);
+/* void lives_intentparams_free(lives_intentparams_t *); */
+/* boolean lives_transform_status_free(lives_transform_status_t *); */
+/* void lives_object_transform_free(lives_object_transform_t *); */
 
 typedef lives_hash_store_t lives_objstore_t;
 
@@ -491,17 +471,15 @@ lives_dicto_t  *replace_dicto(lives_dicto_t *, lives_object_t *, ...) LIVES_SENT
 
 lives_dicto_t *weed_plant_to_dicto(weed_plant_t *);
 
-const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, const char *rtype,
-                                     const char *args_fmt, char *file, int linei, void *txmap);
-
-void add_fn_note(int in_out, void *ptr, const char *fname, const char *fref, int lineno);
-void dump_fn_notes(void);
-
 size_t add_weed_plant_to_objstore(weed_plant_t *);
 
 size_t add_object_to_objstore(lives_object_t *);
 
 size_t weigh_object(lives_object_instance_t *obj);
+
+
+const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, int category, const char *rtype,
+                                     const char *args_fmt, char *file, int linei);
 
 #endif // _BASE_DEFS_ONLY_ ! defined
 

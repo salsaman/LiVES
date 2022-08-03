@@ -3628,44 +3628,37 @@ void redraw_timeline(int clipno) {
   if (mainw->drawtl_thread && THREADVAR(tinfo) == mainw->drawtl_thread) {
     // check if this is the thread that was assigned to run this
     if (lives_proc_thread_get_cancelled(mainw->drawtl_thread)) return;
-    lives_proc_thread_set_cancellable(mainw->drawtl_thread);
-    if (lives_proc_thread_get_cancelled(mainw->drawtl_thread)) return;
   } else {
     if (is_fg_thread()) {
       // if this the fg thread, kick off a bg thread to actually run this
-      lives_mutex_lock_carefully(&mainw->tlthread_mutex);
       if (mainw->drawtl_thread) {
-        if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-          lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
-        }
-        pthread_mutex_unlock(&mainw->tlthread_mutex);
-        while (mainw->drawtl_thread) {
-          fg_service_fulfill();
-          lives_nanosleep(1000);
-        }
-      } else pthread_mutex_unlock(&mainw->tlthread_mutex);
-      if (mainw->multitrack || mainw->reconfig) return;
-      lives_mutex_lock_carefully(&mainw->tlthread_mutex);
-      if (!mainw->drawtl_thread) {
-        mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
-                               (lives_funcptr_t)redraw_timeline, -1,
-                               "i", clipno);
-        lives_proc_thread_sync_ready(mainw->drawtl_thread);
-        lives_nanosleep_while_false(lives_proc_thread_get_cancellable(mainw->drawtl_thread));
-        lives_proc_thread_dontcare_nullify(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
+	mainw->drawtl_thread = lives_proc_thread_auto_secure((lives_proc_thread_t *)&mainw->drawtl_thread);
+	if (mainw->drawtl_thread) {
+	  if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+	    lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
+	  }
+	  lives_proc_thread_join(mainw->drawtl_thread);
+	  lives_proc_thread_unref(mainw->drawtl_thread);
+	}
       }
-      pthread_mutex_unlock(&mainw->tlthread_mutex);
+      if (mainw->multitrack || mainw->reconfig) return;
+      if (!mainw->drawtl_thread) {
+        mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_NULLIFY_ON_DESTRUCTION,
+                               (lives_funcptr_t)redraw_timeline, 0, "i", clipno);
+      }
       return;
     } else {
       // if a bg thread, we either call the main thread to run this which will spawn another bg thread,
       // or if we are running it adds to deferral hooks
-      pthread_mutex_lock(&mainw->tlthread_mutex);
       if (mainw->drawtl_thread) {
-        if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-          lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
-        }
+	mainw->drawtl_thread = lives_proc_thread_auto_secure((lives_proc_thread_t *)&mainw->drawtl_thread);
+	if (mainw->drawtl_thread) {
+	  if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+	    lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
+	  }
+	  lives_proc_thread_unref(mainw->drawtl_thread);
+	}
       }
-      pthread_mutex_unlock(&mainw->tlthread_mutex);
 
       THREADVAR(hook_flag_hints) = HOOK_UNIQUE_REPLACE_OR_ADD;
       main_thread_execute(redraw_timeline, 0, NULL, "i", clipno);
@@ -8138,6 +8131,8 @@ boolean msg_area_config(LiVESWidget * widget) {
   int ww, hh, vvmin, hhmin;
   int paisize = 0, opaisize;
 
+  if (g_main_depth() > 1) return FALSE;
+  
   if (norecurse) return FALSE;
 
   if (!mainw->is_ready) return FALSE;

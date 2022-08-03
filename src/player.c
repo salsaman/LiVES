@@ -3815,7 +3815,7 @@ lives_object_instance_t *lives_player_inst_create(uint64_t subtype) {
   weed_plant_t *gui;
   lives_obj_attr_t *attr;
   lives_object_instance_t *inst = lives_object_instance_create(OBJECT_TYPE_PLAYER, subtype);
-  inst->state = OBJECT_STATE_NORMAL;
+  inst->state = OBJECT_STATE_PREPARED;
   attr = lives_object_declare_attribute(inst, ATTR_AUDIO_SOURCE, WEED_SEED_INT);
   lives_attribute_set_param_type(inst, ATTR_AUDIO_SOURCE, _("Source"), WEED_PARAM_INTEGER);
   gui = weed_plant_new(WEED_PLANT_GUI);

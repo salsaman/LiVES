@@ -5152,7 +5152,7 @@ void splash_init(void) {
 
 
 void splash_msg(const char *msg, double pct) {
-  if (mainw->foreign || !mainw->splash_window) return;
+  if (mainw->foreign || !mainw->splash_window || !mainw->splash_label) return;
 
 #ifdef PROGBAR_IS_ENTRY
   else {

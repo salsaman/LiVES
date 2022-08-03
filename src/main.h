@@ -110,6 +110,7 @@
 
 weed_leaf_get_f _weed_leaf_get;
 weed_leaf_set_f _weed_leaf_set;
+weed_leaf_append_elements_f _weed_leaf_append_elements;
 weed_plant_new_f _weed_plant_new;
 weed_plant_list_leaves_f _weed_plant_list_leaves;
 weed_leaf_num_elements_f _weed_leaf_num_elements;
@@ -273,6 +274,8 @@ typedef struct {
 #ifdef  _BASE_DEFS_ONLY_
 #undef _BASE_DEFS_ONLY_
 #endif
+
+#include "functions.h"
 
 #include "colourspace.h"
 

@@ -775,7 +775,7 @@ char *weed_error_to_literal(weed_error_t error) {
 }
 #undef __QUOTEME
 
-char *weed_seed_type_to_text(uint32_t seed_type) {
+char *weed_seed_to_text(uint32_t seed_type) {
   switch (seed_type) {
   case WEED_SEED_INT:
     return strdup("integer");
@@ -804,7 +804,7 @@ char *weed_seed_type_to_text(uint32_t seed_type) {
   }
 }
 
-const char *weed_seed_type_to_short_text(uint32_t seed_type) {
+const char *weed_seed_to_short_text(uint32_t seed_type) {
   switch (seed_type) {
   case WEED_SEED_INT: return "int";
   case WEED_SEED_INT64: return "int64";

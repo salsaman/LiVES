@@ -41,8 +41,6 @@ void lives_list_free_data(LiVESList *);
 void lives_list_free_all(LiVESList **);
 void lives_slist_free_all(LiVESSList **);
 
-#define DATA/**/=  DATAx
-
 #define DATAx(list, x) (list->data == (void *)(x))
 
 #define FIND_BY_DATA(list, xdata) {for (LiVESList *qlist = (list); qlist; qlist = qlist->next) \

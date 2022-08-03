@@ -4816,7 +4816,7 @@ static boolean add_xdg_opt(lives_obj_t *obj, livespointer data) {
     LiVESWidget *cb = lives_standard_check_button_new(_("Preview in default video player afterwards"),
                       FALSE, LIVES_BOX(widget_opts.last_container), NULL);
     lives_widget_object_ref(cb);
-    lives_hook_append(THREADVAR(hook_closures), TX_FINISHED_HOOK, 0, do_xdg_opt, cb);
+    lives_hook_append(THREADVAR(hook_closures), FINISHED_HOOK, 0, do_xdg_opt, cb);
   }
   return FALSE;
 }
@@ -5365,7 +5365,7 @@ boolean render_to_clip(boolean new_clip) {
                                  WEED_SEED_BOOLEAN, "iibV", 1, 0, TRUE, pname);
 
     work = lives_proc_thread_get_work(mainw->transrend_proc);
-    lives_hook_append(work->hook_closures, WAIT_SYNC_HOOK, 0, transrend_sync, NULL);
+    lives_hook_append(work->hook_closures, SYNC_WAIT_HOOK, 0, transrend_sync, NULL);
     lives_proc_thread_sync_ready(mainw->transrend_proc);
 
     g_print("wait for transcoder ready\n");

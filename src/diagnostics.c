@@ -1764,85 +1764,6 @@ char *weed_plant_to_header(weed_plant_t *plant, const char *tname) {
 }
 
 
-char *bundle_to_header(lives_bundle_t *bundle, const char *tname) {
-  bundledef_t bdef;
-  char *hdr, *ar = NULL, *line;
-  uint32_t st;
-  weed_size_t ne;
-  const char *tp;
-
-  if (tname)
-    hdr  = lives_strdup("typedef struct {");
-  else
-    hdr = lives_strdup("struct {");
-
-  bdef = get_bundledef_from_bundle(bundle);
-  if (bdef) {
-    bundle_strand elem, elem2;
-    for (int i = 0; (elem = bdef[i]); i++) {
-      off_t offx = 0;
-      uint64_t vflags;
-      const char *vname;
-      char *sname;
-      uint32_t vtype;
-      boolean addaster = FALSE;
-
-      vflags = get_vflags(elem, &offx);
-      if (vflags & ELEM_FLAG_COMMENT) continue;
-      if (!(elem2 = bdef[++i])) break;
-
-      vtype = get_vtype(elem, &offx);
-      vname = get_vname(elem + offx);
-      sname = get_short_name(vname);
-
-      g_print("ELEM is %s\n", elem);
-
-      if (bundle_has_item(bundle, sname)) {
-        st = weed_leaf_seed_type(bundle, sname);
-        ne = weed_leaf_num_elements(bundle, sname);
-        tp = weed_seed_to_ctype(st, TRUE);
-
-        if (st == WEED_SEED_PLANTPTR) tp = "bundle_t *";
-
-        if (ne > 1) ar = lives_strdup_printf("[%d]", ne);
-        else if (st < 64 && get_is_array(elem2)) addaster = TRUE;
-        line = lives_strdup_printf("\n  %s%s%s%s;", tp, addaster ? "*" : "", sname + 1, ar ? ar : "");
-        hdr = lives_concat(hdr, line);
-        if (ar) {
-          lives_free(ar);
-          ar = NULL;
-        }
-        lives_free(sname);
-      }
-    }
-  } else {
-    char **leaves = weed_plant_list_leaves(bundle, NULL);
-    for (int i = 0; leaves[i]; i++) {
-      if (*leaves[i] == '.') {
-        st = weed_leaf_seed_type(bundle, leaves[i]);
-        ne = weed_leaf_num_elements(bundle, leaves[i]);
-        tp = weed_seed_to_ctype(st, TRUE);
-        if (st == WEED_SEED_PLANTPTR) tp = "bundle_t *";
-        if (ne > 1) ar = lives_strdup_printf("[%d]", ne);
-        line = lives_strdup_printf("\n  %s%s%s;", tp, leaves[i] + 1, ar ? ar : "");
-        hdr = lives_concat(hdr, line);
-        if (ar) {
-          lives_free(ar);
-          ar = NULL;
-        }
-      }
-      lives_free(leaves[i]);
-    }
-    lives_free(leaves);
-  }
-  if (!tname)
-    line = lives_strdup("\n}");
-  else
-    line = lives_strdup_printf("\n} %s;", tname);
-  lives_concat(hdr, line);
-  return hdr;
-}
-
 /* weed_plant_t *header_to_weed_plant(const char *fname, const char *sruct_type) { */
 /*   // we are looking for something like "} structtype;" */
 /*   // the work back from there to something like "typedef struct {" */
@@ -1893,5 +1814,50 @@ void md5test(void) {
 }
 
 
+
+/// any diagnostic tests can be placed in this section - the functional will be called early in
+// startup. If abort_after is TRUE, then the function will abort() after completing all designatedd testing
+//////////////
+lives_result_t do_startup_diagnostics(boolean abort_after) {  
+  boolean ran_test = FALSE;
+  lives_bundle_t *bundle;
+
+#ifdef WEED_STARTUP_TESTS
+  run_weed_startup_tests();
+#if 0
+  fprintf(stderr, "\n\nRetesting with API 200, bugfix mode\n");
+  werr = libweed_init(200, winitopts | WEED_INIT_ALLBUGFIXES);
+  if (werr != WEED_SUCCESS) {
+    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
+    LIVES_FATAL("Failed to init Weed");
+    _exit(1);
+  }
+  run_weed_startup_tests();
+  fprintf(stderr, "\n\nRetesting with API 200, epecting problems in libweed-utils\n");
+  werr = libweed_init(200, winitopts);
+  if (werr != WEED_SUCCESS) {
+    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
+    LIVES_FATAL("Failed to init Weed");
+    _exit(1);
+  }
+  run_weed_startup_tests();
+#endif
+#endif
+
+#ifdef ENABLE_DIAGNOSTICS
+  check_random();
+  lives_struct_test();
+  test_palette_conversions();
+#endif
+
+  init_bundles();
+  bundle = def_bundle_from_bundledef(GET_BDEF(OBJECT_TEMPLATE_BUNDLE_TYPE));
+  g_print(bundle_to_header(bundle, "nirv_object_tmeplate_t"));
+  ran_test = TRUE;
+  
+  if (ran_test && abort_after) abort();
+  
+  return LIVES_RESULT_SUCCESS;
+}
 
 #pragma GCC diagnostic pop

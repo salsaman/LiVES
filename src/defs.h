@@ -11,6 +11,39 @@
 /// Also there good arguments to be made for using #if as opposed to #ifdef to having a central point of refernce will
 // help to ensure this
 
+// first some general purpose macros
+# define EMPTY(...)
+# define DEFER(...) __VA_ARGS__ EMPTY()
+# define OBSTRUCT(...) __VA_ARGS__ DEFER(EMPTY)()
+# define EXPAND(...) __VA_ARGS__
+
+#define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
+#define PRIMITIVE_CAT(a, ...) a ## __VA_ARGS__
+
+#define CHECK_N(x, n, ...) n
+#define CHECK(...) CHECK_N(__VA_ARGS__, 0,)
+
+#define NOT(x) CHECK(PRIMITIVE_CAT(NOT_, x))
+#define NOT_0 ~, 1,
+
+#define COMPL(b) PRIMITIVE_CAT(COMPL_, b)
+#define COMPL_0 1
+#define COMPL_1 0
+
+#define BOOL(x) COMPL(NOT(x))
+
+#define IIF(c) PRIMITIVE_CAT(IIF_, c)
+#define IIF_0(t, ...) __VA_ARGS__
+#define IIF_1(t, ...) t
+
+#define IF(c) IIF(BOOL(c))
+
+#define EAT(...)
+#define EXPAND(...) __VA_ARGS__
+#define WHEN(c) IF(c)(EXPAND, EAT)
+
+//////////////////////
+
 #define HW_ALIGNMENT ((capable && capable->hw.cacheline_size > 0) ? capable->hw.cacheline_size \
 		      : DEF_ALIGN)
 
@@ -147,6 +180,8 @@ typedef pid_t lives_pid_t;
 #define LIVES_RESULT_SUCCESS	1
 #define LIVES_RESULT_FAIL	0
 #define LIVES_RESULT_ERROR	-1
+
+  typedef int lives_result_t;
 
 /// default defs
 
@@ -419,6 +454,7 @@ typedef enum {
 
 #define USE_STD_MEMFUNCS 0
 
+#if !USE_STD_MEMFUNCS
 #if ENABLE_ORC
 #include <orc/orc.h>
 #endif
@@ -427,7 +463,6 @@ typedef enum {
 #include <liboil/liboil.h>
 #endif
 
-#if !USE_STD_MEMFUNCS
 #define USE_RPMALLOC 1
 #define ALLOW_ORC_MEMCPY 1
 #define ALLOW_OIL_MEMCPY 1
@@ -457,12 +492,16 @@ typedef enum {
 #endif
 #endif
 
+/// global (shared) definiitions
+
+#define LIVES_LEAF_THREAD_PARAM "thrd_param"
+
 // testing / experimental
 #define VSLICES 1
 
 //#define WEED_STARTUP_TESTS
 
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT 1
 #else

@@ -17,6 +17,8 @@ void explain_missing_activate(LiVESMenuItem *, livespointer user_data);
 
 void run_diagnostic(LiVESWidget *, const char *testname);
 
+lives_result_t do_startup_diagnostics(boolean abort_after);
+
 char *get_stats_msg(boolean calc_only);
 double get_inst_fps(boolean get_msg);
 
@@ -48,7 +50,6 @@ void do_lsd_tests(void) LIVES_NEVER_INLINE;
 void bundle_test(void);
 
 char *weed_plant_to_header(weed_plant_t *, const char *tname);
-char *bundle_to_header(lives_bundle_t *, const char *tname);
 
 void md5test(void);
 

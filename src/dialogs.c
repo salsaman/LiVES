@@ -2010,7 +2010,7 @@ finish:
             && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
           notify_user(mainw->proc_ptr->text);
         }
-        lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_FINISHED_HOOK);
+        lives_hooks_trigger(NULL, THREADVAR(hook_closures), FINISHED_HOOK);
         lives_freep((void **)&mainw->proc_ptr->text);
         lives_widget_destroy(mainw->proc_ptr->processing);
       }

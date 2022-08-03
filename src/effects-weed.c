@@ -1634,6 +1634,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     int opwidth, int opheight, weed_timecode_t tc) {
 
   void *pdata;
+  lives_proc_thread_t lpt;
 
   weed_plant_t **in_channels = NULL, **out_channels = NULL, *channel, *chantmpl;
   weed_plant_t **in_ctmpls;
@@ -1667,6 +1668,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   int iclamping, isampling, isubspace;
   int clip = -1;
   frames_t frame;
+    int tgamma = WEED_GAMMA_UNKNOWN;
   int num_ctmpl, num_inc, num_outc;
   int osubspace = -1, osampling = -1, oclamping = -1;
   int num_in_alpha = 0, num_out_alpha = 0;
@@ -1711,7 +1713,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   /*     lives_freep((void **)&keystr); */
   /*   } else return FILTER_ERROR_INVALID_INIT_EVENT; */
   /* } */
-
+  
   in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL);
 
   // here, in_tracks and out_tracks map our layers to in_channels and out_channels in the filter
@@ -2312,10 +2314,13 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       after resizing we convert the palette if necessary
   */
   for (i = 0; i < num_in_tracks; i++) {
-    int tgamma = WEED_GAMMA_UNKNOWN;
     if (i > 0) def_palette = weed_channel_get_palette(def_channel);
-
+    
     channel = get_enabled_channel(inst, i, TRUE);
+    layer = layers[in_tracks[i]];
+
+    //run_trajectory(layer, channel);
+
     if (channel) {
       chantmpl = weed_channel_get_template(channel);
       channel_flags = weed_chantmpl_get_flags(chantmpl);
@@ -2329,7 +2334,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (prefs->dev_show_timing)
       g_printerr("clrfx pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-    layer = layers[in_tracks[i]];
+
 
     //check_layer_ready(layer);
 
@@ -2501,12 +2506,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     check_layer_ready(layer);
 
+    
     xwidth = inwidth = weed_layer_get_width_pixels(layer);
     xheight = inheight = weed_layer_get_height(layer);
 
     resized = FALSE;
     letterboxed = FALSE;
-
+    lpt = NULL;
+ 
     // we are comparing the macropixel sizes which is fine because that won't change
     // regardless of the channel / layer palette, but for resize_layer we need the pixel size,
     // which will be width * pixels_per_macropixel of the original channel palette, which is the divisor we used when
@@ -2516,6 +2523,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
                             || (svary && (inwidth > width || inheight > height || letterbox)))) {
       lives_clip_t *sfile = NULL;
       short interp = get_interp_value(pb_quality, TRUE);
+ 
       if (letterbox && !orig_layer) {
         // if we are letterboxing, as well as letterboxing the final output in the player, we will also letterbox each layer into its channel
         // if we only have 1 layer this is irrelevant since the channel size == layer size, (or in high quality, channel size == player size,
@@ -2531,17 +2539,18 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         if (num_in_tracks > 1 && !(sfile && sfile->clip_type == CLIP_TYPE_GENERATOR && prefs->no_lb_gens)) {
           calc_maxspect(width, height, &xwidth, &xheight);
           if (xwidth != width || height != xheight) {
-            if (!letterbox_layer(layer, width, height, xwidth, xheight, interp, opalette, oclamping)) {
-              retval = FILTER_ERROR_UNABLE_TO_RESIZE;
-              goto done_video;
-            }
+            lpt = lives_proc_thread_create(0, letterbox_layer, WEED_SEED_BOOLEAN, "Piiiiiii",
+					   layer, width, height, xwidth, xheight, interp, opalette, oclamping);
+
             resized = TRUE;
             letterboxed = TRUE;
+
             lbvals[0] = (width - xwidth) >> 1;
             lbvals[1] = (height - xheight) >> 1;
             lbvals[2] = xwidth;
             lbvals[3] = xheight;
-            weed_set_int_array(channel, WEED_LEAF_INNER_SIZE, 4, lbvals);
+
+	    weed_set_int_array(channel, WEED_LEAF_INNER_SIZE, 4, lbvals);
             if (!mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
               mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
                                      &mainw->blend_subspace);
@@ -2549,19 +2558,19 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
               mainw->blend_height = xheight;
               mainw->blend_gamma = weed_layer_get_gamma(layer);
             }
-          }
+	  }
         }
       }
+
       if (!resized) {
         if (weed_plant_has_leaf(channel, WEED_LEAF_INNER_SIZE))
           weed_leaf_delete(channel, WEED_LEAF_INNER_SIZE);
         if (!(sfile && sfile->clip_type == CLIP_TYPE_GENERATOR && prefs->no_lb_gens)) {
           if (letterbox && opwidth && opheight) calc_maxspect(opwidth, opheight, &width, &height);
         }
-        if (!resize_layer(layer, width, height, interp, opalette, oclamping)) {
-          retval = FILTER_ERROR_UNABLE_TO_RESIZE;
-          goto done_video;
-        }
+
+	lpt = lives_proc_thread_create(0, resize_layer, WEED_SEED_BOOLEAN, "Piiiii",
+				       layer, width, height, interp, opalette, oclamping);
 
         if (!mainw->is_rendering && !mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
           mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
@@ -2576,30 +2585,72 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         weed_leaf_delete(channel, WEED_LEAF_INNER_SIZE);
     }
 
+    weed_set_boolean_value(layer, "letterboxed", letterboxed);
+    weed_set_plantptr_value(layer, "lpt", lpt);
+  }
+
+  for (i = 0; i <= num_in_tracks; i++) {
+    channel = get_enabled_channel(inst, i, TRUE);
+    inpalette = weed_channel_get_palette(channel);
+    if (weed_palette_is_alpha(inpalette)) continue;
+
+    layer = layers[in_tracks[i]];
+    lpt = weed_get_plantptr_value(layer, "lpt", NULL);
+
+    if (lpt) {
+      boolean bret = lives_proc_thread_join_boolean(lpt);
+      if (!bret) retval = FILTER_ERROR_UNABLE_TO_RESIZE;
+    }
+
+    if (retval == FILTER_ERROR_UNABLE_TO_RESIZE) continue;
+  
     weed_leaf_dup(channel, layer, WEED_LEAF_NATURAL_SIZE);
 
     // check palette again in case it changed during resize
     cpalette = weed_layer_get_palette(layer);
 
-    if (prefs->apply_gamma && weed_palette_is_rgb(opalette)) {
-      // apply gamma conversion if plugin requested it
-      if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
-        tgamma = WEED_GAMMA_LINEAR;
-      else
-        tgamma = cfile->gamma_type;
-    }
+    lpt = NULL;
 
     if (cpalette != opalette) {
       if (prefs->dev_show_timing)
         g_printerr("clpal1 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-      if (!convert_layer_palette_full(layer, opalette, oclamping, osampling, osubspace, tgamma)) {
-        retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
-        goto done_video;
-      }
-      if (prefs->dev_show_timing)
+      lpt = lives_proc_thread_create(0, convert_layer_palette_full, WEED_SEED_BOOLEAN,
+				     "Piiii", layer, opalette, oclamping, osampling, osubspace, tgamma);
+    }
+    weed_set_plantptr_value(layer, "lpt", lpt);
+  }
+
+  if (retval == FILTER_ERROR_UNABLE_TO_RESIZE) goto done_video;;
+  
+  if (prefs->apply_gamma && weed_palette_is_rgb(opalette)) {
+    // apply gamma conversion if plugin requested it
+    if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
+      tgamma = WEED_GAMMA_LINEAR;
+    else
+      tgamma = cfile->gamma_type;
+  }
+
+  for (i = 0; i < num_in_tracks; i++) {
+    channel = get_enabled_channel(inst, i, TRUE);
+    inpalette = weed_channel_get_palette(channel);
+    if (weed_palette_is_alpha(inpalette)) continue;
+
+    layer = layers[in_tracks[i]];
+    lpt = weed_get_plantptr_value(layer, "lpt", NULL);
+
+    if (lpt) {
+      boolean bret = lives_proc_thread_join_boolean(lpt);
+      if (!bret) retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
+    }
+
+    if (retval == FILTER_ERROR_INVALID_PALETTE_CONVERSION) continue;
+
+    if (prefs->dev_show_timing) {
         g_printerr("clpal1 post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     }
 
+    lpt = NULL;
+    
     /// check if the plugin needs reinit
     // at this stage we still haven't updated values in the channel, except for width and height
     channel_rows = weed_channel_get_rowstrides(channel, &nchr);
@@ -2613,23 +2664,47 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (rowstrides_changed && (channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE)) {
       needs_reinit = TRUE;
     }
+
     if (tgamma != WEED_GAMMA_UNKNOWN) {
       if (prefs->dev_show_timing)
         g_printerr("gamma1 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       // if we letterboxed then we can save a few cycles by not gamma converting the blank regions
       // in med, low this seems not to work
+      letterboxed = weed_get_boolean_value(layer, "letterboxed", NULL);
       if (letterboxed) {
-        gamma_convert_sub_layer(tgamma, 1.0, layer, (width - xwidth) / 2, (height - xheight) / 2,
-                                xwidth, xheight, TRUE);
+        lpt = lives_proc_thread_create(0, gamma_convert_sub_layer, WEED_SEED_BOOLEAN, "idPiiiib",
+				       tgamma, 1.0, layer, (width - xwidth) / 2, (height - xheight) / 2,
+					xwidth, xheight, TRUE);
       } else
-        gamma_convert_layer(tgamma, layer);
-      //boooooom
+	  lpt = lives_proc_thread_create(0, gamma_convert_layer, WEED_SEED_BOOLEAN, "iP", tgamma, layer);
 
       if (prefs->dev_show_timing)
         g_printerr("gamma1 post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     }
+    weed_set_plantptr_value(layer, "lpt", lpt);
+  }
+  
+  if (retval == FILTER_ERROR_INVALID_PALETTE_CONVERSION) goto done_video;
 
-    /// since layers and channels are interchangeable, we just call weed_layer_copy(channel, layer)
+
+  for (i = 0; i < num_in_tracks; i++) {
+    channel = get_enabled_channel(inst, i, TRUE);
+    inpalette = weed_channel_get_palette(channel);
+    if (weed_palette_is_alpha(inpalette)) continue;
+
+    layer = layers[in_tracks[i]];
+    lpt = weed_get_plantptr_value(layer, "lpt", NULL);
+
+    if (lpt) {
+      boolean bret = lives_proc_thread_join_boolean(lpt);
+      if (!bret) retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
+    }
+
+    weed_set_plantptr_value(layer, "lpt", NULL);
+
+    if (retval == FILTER_ERROR_INVALID_PALETTE_CONVERSION) continue;
+
+  /// since layers and channels are interchangeable, we just call weed_layer_copy(channel, layer)
     /// the cast to weed_layer_t * is unnecessary, but added for clarity
 
     /// weed_layer_copy() will adjust all the important leaves in the channel:
@@ -2637,7 +2712,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // YUV_*, etc.
     if (!weed_layer_copy((weed_layer_t *)channel, layer)) {
       retval = FILTER_ERROR_COPYING_FAILED;
-      goto done_video;
+      continue;
     }
     if (!resized) {
       if (!mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
@@ -2649,6 +2724,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
     }
   }
+
+  if (retval == FILTER_ERROR_INVALID_PALETTE_CONVERSION
+      || retval == FILTER_ERROR_COPYING_FAILED) goto done_video;
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

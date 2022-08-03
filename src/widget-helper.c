@@ -8,6 +8,7 @@
 
 #include "main.h"
 #include "startup.h"
+#include "functions.h"
 
 extern boolean all_config(LiVESWidget *, LiVESXEventConfigure *, livespointer ppsurf);
 extern boolean all_expose(LiVESWidget *, lives_painter_t *, livespointer psurf);
@@ -1969,10 +1970,10 @@ uint32_t wait_for_fg_response(lives_proc_thread_t lpt) {
   if (lpt) {
     // should not be necessary, but just in case
     weed_refcount_inc(lpt);
-    lives_proc_thread_hook_append(lpt, DEFERRED_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
+    lives_proc_thread_hook_append(lpt, TX_DEFERRED_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
     lives_proc_thread_hook_append(lpt, COMPLETED_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
     lives_proc_thread_hook_append(lpt, DESTRUCTION_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
-    lives_hook_append(NULL, WAIT_SYNC_HOOK, 0, (hook_funcptr_t)lptdone, &bvar);
+    lives_hook_append(NULL, SYNC_WAIT_HOOK, 0, (hook_funcptr_t)lptdone, &bvar);
     lpttorun = lpt;
   }
 
@@ -1989,10 +1990,10 @@ uint32_t wait_for_fg_response(lives_proc_thread_t lpt) {
   } else {
     mainw->clutch = FALSE;
   }
-  lives_hook_append(NULL, WAIT_SYNC_HOOK, 0, (hook_funcptr_t)clutchtrue, lpt);
+  lives_hook_append(NULL, SYNC_WAIT_HOOK, 0, (hook_funcptr_t)clutchtrue, lpt);
   thread_wait_loop(NULL, NULL, FALSE, TRUE);
-  lives_hook_remove(THREADVAR(hook_closures), WAIT_SYNC_HOOK, (hook_funcptr_t)lptdone, &bvar, THREADVAR(hook_mutex));
-  lives_hook_remove(THREADVAR(hook_closures), WAIT_SYNC_HOOK, (hook_funcptr_t)clutchtrue, lpt, THREADVAR(hook_mutex));
+  lives_hook_remove(THREADVAR(hook_closures), SYNC_WAIT_HOOK, (hook_funcptr_t)lptdone, &bvar, THREADVAR(hook_mutex));
+  lives_hook_remove(THREADVAR(hook_closures), SYNC_WAIT_HOOK, (hook_funcptr_t)clutchtrue, lpt, THREADVAR(hook_mutex));
 
   // remove our added ref
   if (lpt) weed_refcount_dec(lpt);
@@ -2162,7 +2163,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
 #ifdef GUI_GTK
   LiVESResponseType resp;
   //resp = gtk_dialog_run(dialog);
-  THREADVAR(hook_hints) = HOOK_CB_BLOCKING | HOOK_CB_PRIORITY;
+  THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute(_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
   THREADVAR(hook_hints) = 0;
   return resp;
@@ -2200,7 +2201,6 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
 #endif
 
   lpt_retval = retval;
-
   if ((mysource = wait_for_fg_response(lpt))) {
     if (!g_source_is_destroyed(g_main_context_find_source_by_id(NULL, mysource))) {
       lives_source_remove(mysource);
@@ -6673,13 +6673,20 @@ WIDGET_HELPER_GLOBAL_INLINE const char *lives_entry_get_text(LiVESEntry *entry) 
   return NULL;
 }
 
+static void lgtk_entry_set_text(LiVESEntry *entry, const char *text) {
+  g_print("ent is %p and t is %s\n", entry, text);
+  gtk_entry_set_text(entry, text);
+
+}
+
 
 boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
 #ifdef GUI_GTK
+  if (!GTK_IS_ENTRY(entry)) return FALSE;
   if (widget_opts.justify == LIVES_JUSTIFY_START) lives_entry_set_alignment(entry, 0.);
   else if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_entry_set_alignment(entry, 0.5);
   if (widget_opts.justify == LIVES_JUSTIFY_END) lives_entry_set_alignment(entry, 1.);
-  MAIN_THREAD_EXECUTE_VOID(gtk_entry_set_text, "vs", entry, text);
+  MAIN_THREAD_EXECUTE_VOID(lgtk_entry_set_text, "vs", entry, text);
   return TRUE;
 #endif
   return FALSE;

@@ -44,7 +44,7 @@
 
 #define PREFSTATUS_UNKNOWN	OBJECT_STATE_UNDEFINED	///< unknown PREF_IDX (use old API)
 #define PREFSTATUS_UNSET	OBJECT_STATE_NOT_READY	///< esists, but value has not been set
-#define PREFSTATUS_PERM		OBJECT_STATE_NORMAL	///< value consistent with config file
+#define PREFSTATUS_PERM		OBJECT_STATE_PREPARED	///< value consistent with config file
 #define PREFSTATUS_TEMP	       	OBJECT_STATE_UPDATING	///< value and config inconsistent; load_pref() may change the value
 
 // for the extended auto-colours

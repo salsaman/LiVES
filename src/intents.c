@@ -264,60 +264,17 @@ lives_dicto_t *weed_plant_to_dicto(weed_plant_t *plant) {
   return dicto;
 }
 
-static lives_hash_store_t *ftrace_store = NULL;
-
-void add_fn_note(int io, void *ptr, const char *fname, const char *fref, int lineno) {
-  weed_plant_t *note;
-  if (!ftrace_store)  ftrace_store = lives_hash_store_new("ftrace");
-  note = (weed_plant_t *)get_from_hash_store_i(ftrace_store, (uintptr_t)ptr);
-  if (note) {
-    int count = weed_get_int_value(note, "count", NULL);
-    if (io == _FN_ALLOC) {
-      if (count > 0) weed_set_int_value(note, "count", ++count);
-    } else {
-      if (count == 1)
-        ftrace_store = remove_from_hash_store_i(ftrace_store, (uintptr_t)ptr);
-      else
-        weed_set_int_value(note, "count", --count);
-    }
-    return;
-  }
-  note = lives_plant_new(LIVES_WEED_SUBTYPE_BAG_OF_HOLDING);
-  weed_set_string_value(note, "func", fname);
-  weed_set_string_value(note, "file", fref);
-  weed_set_int_value(note, "line", lineno);
-  weed_set_int_value(note, "count", io == _FN_ALLOC ? 1 : -1);
-  ftrace_store = add_to_hash_store_i(ftrace_store, (uintptr_t)ptr, (void *)note);
-}
-
-
-void dump_fn_notes(void) {
-  if (ftrace_store) {
-    const char *key;
-    char **items = weed_plant_list_leaves(ftrace_store, NULL);
-    for (int i = 0; items[i]; i++) {
-      if ((key = hash_key_from_leaf_name(items[i]))) {
-        weed_plant_t *note = (weed_plant_t *)get_from_hash_store_i(ftrace_store, lives_strtoul(key));
-        g_print("func %s, called from %s, line %d (%d times)\n", weed_get_string_value(note, "func", NULL),
-                weed_get_string_value(note, "file", NULL), weed_get_int_value(note, "line", NULL),
-                weed_get_int_value(note, "count", NULL));
-      }
-      lives_free(items[i]);
-    }
-    lives_free(items);
-  }
-}
-
-
-const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, const char *rttype,
-                                     const char *args_fmt, char *file, int line, void *txmap) {
+const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, int category, const char *rttype,
+                                     const char *args_fmt, char *file, int line) {
   uint32_t rtype = get_seedtype(rttype[0]);
   const lives_funcdef_t *funcdef = get_from_hash_store(fn_objstore, name);
   if (!funcdef) {
     lives_dicto_t *dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_FUNCDEF);
     lives_obj_attr_t *xattr = lives_object_declare_attribute(dicto, ELEM_INTROSPECTION_NATIVE_PTR,
-                              WEED_SEED_VOIDPTR);
-    funcdef = create_funcdef(name, func, rtype, args_fmt, file, line ? ++line : 0, txmap);
+							     WEED_SEED_VOIDPTR);
+
+    funcdef = create_funcdef(name, func, rtype, args_fmt, file, line ? ++line : 0, NULL);
+
     lives_object_set_attr_value(dicto, xattr, funcdef);
     fn_objstore = add_to_objstore(fn_objstore, funcdef->uid, dicto);
   }
@@ -356,30 +313,6 @@ const lives_funcdef_t *get_template_for_func_by_uid(uint64_t uid) {
   if (dicto && dicto->subtype == DICT_SUBTYPE_FUNCDEF) {
     lives_obj_attr_t *attr = lives_object_get_attribute(dicto, ELEM_INTROSPECTION_NATIVE_PTR);
     return weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
-  }
-  return NULL;
-}
-
-
-LIVES_GLOBAL_INLINE char *get_argstring_for_func(lives_funcptr_t func) {
-  const lives_funcdef_t *fdef = get_template_for_func(func);
-  if (!fdef) return NULL;
-  return funcsig_to_param_string(funcsig_from_args_fmt(fdef->args_fmt));
-}
-
-
-char *lives_funcdef_explain(const lives_funcdef_t *funcdef) {
-  if (funcdef) {
-    char *tmp;
-    char *out = lives_strdup_printf("Function with uid 0X%016lX has prototype:\n"
-                                    "\t%s %s(%s)\n"
-                                    "function category is %d",
-                                    funcdef->uid, weed_seed_to_ctype(funcdef->return_type, FALSE),
-                                    funcdef->funcname ? funcdef->funcname : "??????",
-                                    (tmp = funcsig_to_param_string(funcsig_from_args_fmt(funcdef->args_fmt))),
-                                    funcdef->category);
-    lives_free(tmp);
-    return out;
   }
   return NULL;
 }
@@ -444,9 +377,14 @@ LIVES_GLOBAL_INLINE int lives_object_instance_unref(lives_obj_instance_t *obj) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_object_instance_destroy(lives_obj_instance_t *obj) {
+LIVES_GLOBAL_INLINE boolean lives_obj_instance_destroy(lives_obj_instance_t *obj) {
   // return FALSE if destroyed
   return (lives_object_instance_unref(obj) >= 0);
+}
+
+LIVES_GLOBAL_INLINE boolean lives_object_instance_destroy(lives_object_instance_t *obj) {
+  lives_free(obj);
+  return NULL;
 }
 
 
@@ -606,89 +544,10 @@ static weed_error_t _set_obj_attribute_vargs(lives_obj_attr_t  *attr, const char
   if (!args) return OBJ_ERROR_INVALID_ARGUMENTS;
   if (attr) {
     uint32_t st = lives_attr_get_value_type(attr);
-    return  _set_plant_leaf_any_type_vargs(attr, WEED_LEAF_VALUE, st, ne, args);
+    return  weed_leaf_from_varg(attr, WEED_LEAF_VALUE, st, ne, args);
   }
   return OBJ_ERROR_NOSUCH_ATTRIBUTE;
 }
-
-
-weed_error_t _set_plant_leaf_any_type_vargs(weed_plant_t *pl, const char *key, uint32_t st, int ne, va_list args) {
-  weed_error_t err;
-  if (ne == 1) {
-    switch (st) {
-    case WEED_SEED_INT: {
-      int val = va_arg(args, int);
-      err = weed_set_int_value(pl, key, val); break;
-    }
-    case WEED_SEED_BOOLEAN: {
-      boolean val = va_arg(args, int);
-      err = weed_set_boolean_value(pl, key, val); break;
-    }
-    case WEED_SEED_DOUBLE: {
-      double val = va_arg(args, double);
-      err = weed_set_double_value(pl, key, val); break;
-    }
-    case WEED_SEED_INT64: {
-      int64_t val = va_arg(args, int64_t);
-      err = weed_set_int64_value(pl, key, val); break;
-    }
-    case WEED_SEED_STRING: {
-      char *val = va_arg(args, char *);
-      err = weed_set_string_value(pl, key, val); break;
-    }
-    case WEED_SEED_VOIDPTR: {
-      void *val = va_arg(args, void *);
-      err = weed_set_voidptr_value(pl, key, val); break;
-    }
-    case WEED_SEED_FUNCPTR: {
-      weed_funcptr_t val = va_arg(args, weed_funcptr_t);
-      err = weed_set_funcptr_value(pl, key, val); break;
-    }
-    case WEED_SEED_PLANTPTR: {
-      weed_plantptr_t val = va_arg(args, weed_plantptr_t);
-      err = weed_set_plantptr_value(pl, key, val); break;
-    }
-    default: return OBJ_ERROR_ATTRIBUTE_INVALID;
-    }
-  } else {
-    switch (st) {
-    case WEED_SEED_INT: {
-      int *vals = va_arg(args, int *);
-      err = weed_set_int_array(pl, key, ne, vals); break;
-    }
-    case WEED_SEED_BOOLEAN: {
-      boolean *vals = va_arg(args, int *);
-      err = weed_set_boolean_array(pl, key, ne, vals); break;
-    }
-    case WEED_SEED_DOUBLE: {
-      double *vals = va_arg(args, double *);
-      err = weed_set_double_array(pl, key, ne, vals); break;
-    }
-    case WEED_SEED_INT64: {
-      int64_t *vals = va_arg(args, int64_t *);
-      err = weed_set_int64_array(pl, key, ne, vals); break;
-    }
-    case WEED_SEED_STRING: {
-      char **vals = va_arg(args, char **);
-      err = weed_set_string_array(pl, key, ne, vals); break;
-    }
-    case WEED_SEED_VOIDPTR: {
-      void **vals = va_arg(args, void **);
-      err = weed_set_voidptr_array(pl, key, ne, vals); break;
-    }
-    case WEED_SEED_FUNCPTR: {
-      weed_funcptr_t *vals = va_arg(args, weed_funcptr_t *);
-      err = weed_set_funcptr_array(pl, key, ne, vals); break;
-    }
-    case WEED_SEED_PLANTPTR: {
-      weed_plantptr_t *vals = va_arg(args, weed_plantptr_t *);
-      err = weed_set_plantptr_array(pl, key, ne, vals); break;
-    }
-    default: return OBJ_ERROR_ATTRIBUTE_INVALID;
-    }
-  } return err;
-}
-
 
 
 // special function for funcs with no params..hah
@@ -744,27 +603,6 @@ weed_error_t lives_object_set_attribute_value(lives_object_t *obj, const char *n
   }
   return err;
 }
-
-
-/* weed_error_t lives_object_set_attribute_default(lives_object_t *obj, const char *name, ...) { */
-/*   weed_error_t err = WEED_SUCCESS; */
-/*   if (name && *name) { */
-/*     lives_obj_attr_t *attr = lives_object_get_attribute(obj, name); */
-/*     if (!attr) return OBJ_ERROR_NOSUCH_ATTRIBUTE; */
-/*     else { */
-/*       va_list xargs; */
-/*       va_start(xargs, name); */
-/*       // TODO - hooks should be attached to the attribute itself */
-/*       err = _set_obj_attribute_vargs(attr, WEED_LEAF_DEFAULT,  1, xargs); */
-/*       va_end(xargs); */
-/*     } */
-/*     if (err == WEED_SUCCESS) { */
-/*       lives_hooks_trigger(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), */
-/*                           ATTR_UPDATED_HOOK); */
-/*     } */
-/*   } */
-/*   return err; */
-/* } */
 
 
 weed_error_t lives_object_set_attr_value(lives_object_t *obj, lives_obj_attr_t *attr, ...) {
@@ -1184,24 +1022,6 @@ LIVES_GLOBAL_INLINE int lives_attribute_get_param_type(lives_object_t *obj, cons
 }
 
 
-// TODO - add pre hooks + new_data
-
-LIVES_GLOBAL_INLINE void lives_attribute_append_listener(lives_object_t *obj, const char *name, attr_listener_f func) {
-  if (obj) {
-    lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    lives_hook_append(obj->hook_closures, ATTR_UPDATED_HOOK, 0, (hook_funcptr_t)func, attr);
-  }
-}
-
-
-LIVES_GLOBAL_INLINE void lives_attribute_prepend_listener(lives_object_t *obj, const char *name, attr_listener_f func) {
-  if (obj) {
-    lives_obj_attr_t *attr = lives_object_get_attribute(obj, name);
-    lives_hook_prepend(obj->hook_closures, ATTR_UPDATED_HOOK, 0, (hook_funcptr_t)func, attr);
-  }
-}
-
-
 ////// capacities ///////
 
 LIVES_GLOBAL_INLINE lives_capacities_t *lives_capacities_new(void) {
@@ -1528,10 +1348,9 @@ LiVESList *find_std_icaps(lives_intentcap_t *icap, boolean allow_fuzzy) {
             list = NULL;
           }
           list = lives_list_append(list, (void *)std_icaps[i]);
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+
   return list;
 }
 
@@ -1548,17 +1367,14 @@ static lives_capacities_t *_add_cap(lives_capacities_t *caps, const char *cname)
 void native_type_view(lives_obj_attr_t *attr) {
   /* weed_get_string_value(attr, ELEM_INTROSPECTION_PTRTYPE, ctype); */
   /* weed_get_string_value(attr, ELEM_INTROSPECTION_NATIVE_TYPE, ctype); */
-  /* weed_set_int64_value(attr, ELEM_INTROSPECTION_NATIVE_SIZE, size); */
-
-
-
+  /* weed_set_int64_value(attr, ELEM_INTROSPECTION_NATIVE_SIZE, size); */;
 }
 
 
 lives_obj_attr_t *mk_attr(const char *ctype, const char *name, size_t size, void *vptr, int ne) {
   lives_obj_attr_t *attr = lives_object_declare_attribute(NULL, name, WEED_SEED_VOIDPTR);
   weed_set_string_value(attr, ELEM_INTROSPECTION_NATIVE_TYPE, ctype);
-  weed_set_int_value(attr, ELEM_INTROSPECTION_PTRTYPE, ctypes_to_weed_seed(ctype));
+  //weed_set_int_value(attr, ELEM_INTROSPECTION_PTRTYPE, ctypes_to_weed_seed(ctype));
   weed_set_int64_value(attr, ELEM_INTROSPECTION_NATIVE_SIZE, size);
   lives_object_set_attr_value(NULL, attr, vptr);
   return attr;
@@ -1570,51 +1386,17 @@ lives_obj_attr_t *mk_attr(const char *ctype, const char *name, size_t size, void
 #define MK_ATTR_P(ctype, name) mk_attr(QUOTEME(ctype), QUOTEME(name), sizeof(ctype), \
 				       (void *)tdata->vars.var_##name), 1)
 
-
 void make_thrdattrs(lives_thread_data_t *tdata) {
   MK_ATTR(uint64_t, uid);
   MK_ATTR(int, idx);
   MK_ATTR(lives_proc_thread_t, tinfo);
-  /* attr = mk_attr("lives_proc_thread_t",  "tinfo", sizeof(THREADVAR(tinfo)), (void *)&(THREADVAR(tinfo)), 1); */
-  /* lives_thread_data_t *var_mydata; */
-  /* char *var_read_failed_file, *var_write_failed_file, *var_bad_aud_file; */
-  /* uint64_t var_random_seed; */
-  /* ticks_t var_event_ticks; */
-
   MK_ATTR(lives_intentcap_t, intentcap);
-
-  /* int var_write_failed, var_read_failed; */
-  /* boolean var_com_failed; */
-  /* boolean var_chdir_failed; */
-  /* int var_rowstride_alignment;   // used to align the rowstride bytesize in create_empty_pixel_data */
-  /* int var_rowstride_alignment_hint; */
-  /* int var_last_sws_block; */
-  /* int var_proc_file; */
-  /* int var_cancelled; */
-  /* int var_core_id; */
-  /* boolean var_fx_is_auto; */
-  /* boolean var_fx_is_audio; */
-  /* boolean var_no_gui; */
-  /* boolean var_force_button_image; */
-  /* volatile boolean var_fg_service; */
-  /* uint64_t var_hook_flag_hints; */
-  /* ticks_t var_timerinfo; */
-  /* uint64_t var_thrdnative_flags; */
-  /* uint64_t var_hook_hints; */
-  /* uint64_t var_sync_timeout; */
-  /* uint64_t var_blocked_limit; */
-
+  MK_ATTR(int, core_id);
   MK_ATTR(weed_voidptr_t, stackaddr);
   MK_ATTR(size_t, stacksize);
-
-  /* int var_hook_match_nparams; */
-  /* pthread_mutex_t var_hook_mutex[N_HOOK_POINTS]; */
-  /* LiVESList *var_hook_closures[N_HOOK_POINTS]; */
-  /* // hardware - values */
-  /* double var_loveliness; // a bit like 'niceness', only better */
-  /* volatile float *var_core_load_ptr; // pointer to value that monitors core load */
+  MK_ATTR(int64_t, round_trip_ticks);
+  MK_ATTR(size_t, ticks_to_activate);
 }
-
 
 static void _caps_partition(int op, lives_capacities_t *caps_a, lives_capacities_t *caps_b, lives_capacities_t **a_only,
                             lives_capacities_t **common, lives_capacities_t **b_only, int *na, int *nc, int *nb) {

@@ -163,6 +163,9 @@ extern "C"
   typedef char **(*weed_plant_list_leaves_f)(weed_plant_t *, weed_size_t *nleaves);
   typedef weed_error_t (*weed_leaf_set_f)(weed_plant_t *, const char *key, uint32_t seed_type, weed_size_t num_elems,
 					  weed_voidptr_t values);
+  typedef weed_error_t (*weed_leaf_append_elements_f)(weed_plant_t *, const char *key,
+						      weed_size_t num_new_elems, weed_size_t *tot_elems,
+						      weed_voidptr_t new_values);
   typedef weed_error_t (*weed_leaf_get_f)(weed_plant_t *, const char *key, weed_size_t idx, weed_voidptr_t value);
   typedef weed_size_t (*weed_leaf_num_elements_f)(weed_plant_t *, const char *key);
   typedef weed_size_t (*weed_leaf_element_size_f)(weed_plant_t *, const char *key, weed_size_t idx);
@@ -227,6 +230,7 @@ extern "C"
 
   __WEED_FN_DEF__ weed_leaf_get_f weed_leaf_get;
   __WEED_FN_DEF__ weed_leaf_set_f weed_leaf_set;
+  __WEED_FN_DEF__ weed_leaf_append_elements_f weed_leaf_append_elements;
   __WEED_FN_DEF__ weed_plant_new_f weed_plant_new;
   __WEED_FN_DEF__ weed_plant_list_leaves_f weed_plant_list_leaves;
   __WEED_FN_DEF__ weed_leaf_num_elements_f weed_leaf_num_elements;

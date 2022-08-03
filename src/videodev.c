@@ -665,7 +665,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
     ldev->is_really_grey = TRUE;
   } else ldev->is_really_grey = FALSE;
 
-  lives_attribute_append_listener(obj, VDEV_PROP_PALETTE, set_palette_desc);
+  //lives_attribute_append_listener(obj, VDEV_PROP_PALETTE, set_palette_desc);
   lives_attribute_set_param_type(obj, VDEV_PROP_PALETTE, _("Colourspace"), WEED_PARAM_INTEGER);
   lives_object_set_attribute_value(obj, VDEV_PROP_PALETTE, ldev->palette);
   // lives_attribute_set_readonly(obj, VDEV_PROP_PALETTE, TRUE);
@@ -695,8 +695,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
 void lives_vdev_free(lives_vdev_t *ldev) {
   if (!ldev) return;
   lives_hook_remove(mainw->global_hook_closures, FATAL_HOOK, lives_ldev_free_cb, (void *)&ldev,
-                    mainw->global_hook_mutexes),
-                          mainw->global_hook_mutexes;
+                    mainw->global_hook_mutexes), mainw->global_hook_mutexes;
   if (ldev->format->buffer_type == UNICAP_BUFFER_TYPE_SYSTEM)
     unicap_unregister_callback(ldev->handle, UNICAP_EVENT_NEW_FRAME);
   unicap_stop_capture(ldev->handle);

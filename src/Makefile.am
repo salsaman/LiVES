@@ -230,13 +230,14 @@ endif
 
 lives_exe_SOURCES = \
 	$(rpmalloc_SOURCES)\
+	bundles.c bundles.h \
 	lsd.h lsd-tab.c lsd-tab.h \
 	effects.c effects.h\
 	colourspace.c colourspace.h\
 	cvirtual.c cvirtual.h \
 	audio.c audio.h \
 	threading.c threading.h \
-	bundles.c bundles.h \
+	functions.c functions.h \
 	intents.c intents.h object-constants.h\
 	preferences.c preferences.h\
 	effects-weed.c effects-weed.h\

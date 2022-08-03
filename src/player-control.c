@@ -17,6 +17,7 @@
 
 #include "main.h"
 #include "startup.h"
+#include "functions.h"
 #include "callbacks.h"
 #include "effects-weed.h"
 #include "resample.h"
@@ -371,7 +372,7 @@ void play_file(void) {
 
   init_conversions(OBJ_INTENTION_PLAY);
 
-  lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_PREPARING_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_closures), PREPARING_HOOK);
 
   if (mainw->pre_src_file == -2) mainw->pre_src_file = mainw->current_file;
   mainw->pre_src_audio_file = mainw->current_file;
@@ -401,10 +402,11 @@ void play_file(void) {
 
   if (!mainw->foreign && mainw->lazy_starter) {
     // this is like a safe addrref
-    mainw->lazy_starter = lives_proc_thread_secure_ptr(&mainw->lazy_starter);
+    mainw->lazy_starter = lives_proc_thread_auto_secure((lives_proc_thread_t *)&mainw->lazy_starter);
     if (mainw->lazy_starter) {
       lives_proc_thread_request_pause(mainw->lazy_starter);
-      lives_proc_thread_unref(mainw->lazy_starter);
+      if (lives_proc_thread_unref(mainw->lazy_starter))
+	mainw->lazy_starter = NULL;
     }
   }
 
@@ -1224,7 +1226,7 @@ void play_file(void) {
   mainw->blend_palette = WEED_PALETTE_END;
   mainw->audio_stretch = 1.;
 
-  lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_FINISHED_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_closures), FINISHED_HOOK);
 
   if (!mainw->multitrack) {
     if (mainw->faded || mainw->fs) {
@@ -1494,7 +1496,7 @@ void play_file(void) {
   }
 
   if (mainw->lazy_starter) {
-    mainw->lazy_starter = lives_proc_thread_secure_ptr(&mainw->lazy_starter);
+    mainw->lazy_starter = lives_proc_thread_auto_secure((lives_proc_thread_t *)&mainw->lazy_starter);
     if (mainw->lazy_starter) {
       lives_proc_thread_request_resume(mainw->lazy_starter);
       lives_proc_thread_unref(mainw->lazy_starter);

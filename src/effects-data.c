@@ -3370,7 +3370,7 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
     // if out is boolean, we can link to ACTIVATE, we can choose FALSE -> TRUE (TODO: or TRUE -> FALSE)
     //
     if (nmatchparams == 0 && stype == WEED_SEED_BOOLEAN) {
-      text = lives_strdup_printf(_("False to True -> TRIGGER (%s)"), weed_seed_type_to_text(WEED_SEED_BOOLEAN));
+      text = lives_strdup_printf(_("False to True -> TRIGGER (%s)"), weed_seed_to_text(WEED_SEED_BOOLEAN));
       plist = lives_list_append(plist, text);
     }
   } else {
@@ -3417,7 +3417,7 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
     // populate pcombo with all in params
     for (i = -EXTRA_PARAMS_IN; i < niparams; i++) {
       if (i == FX_DATA_PARAM_ACTIVE) {
-        ptype = weed_seed_type_to_text(WEED_SEED_BOOLEAN);
+        ptype = weed_seed_to_text(WEED_SEED_BOOLEAN);
         text = lives_strdup_printf(_("ACTIVATE (%s)"), ptype);
       } else {
         param = iparams[j++];
@@ -3428,7 +3428,7 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
 
         paramlabel = get_param_label(param, j - 1, TRUE);
 
-        ptype = weed_seed_type_to_text((stype = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT)));
+        ptype = weed_seed_to_text((stype = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT)));
 
         pflags = weed_get_int_value(param, WEED_LEAF_FLAGS, NULL);
 
@@ -4451,7 +4451,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
         if (isfirst) {
           /* TRANSLATORS - as in "Effect ACTIVATED" */
           pname = (_("ACTIVATED"));
-          ptype = weed_seed_type_to_text(WEED_SEED_BOOLEAN);
+          ptype = weed_seed_to_text(WEED_SEED_BOOLEAN);
 
           text = lives_strdup_printf("%s (%s)", pname, ptype);
           widget_opts.mnemonic_label = FALSE;
@@ -4485,7 +4485,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
 
           pname = get_param_label(param, i, FALSE);
 
-          ptype = weed_seed_type_to_text((stype = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT)));
+          ptype = weed_seed_to_text((stype = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT)));
 
           pflags = weed_get_int_value(param, WEED_LEAF_FLAGS, NULL);
 

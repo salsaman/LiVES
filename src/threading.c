@@ -228,13 +228,13 @@ void _proc_thread_params_from_nullvargs(lives_proc_thread_t lpt, lives_funcptr_t
 
 
 void _proc_thread_params_from_vargs(lives_proc_thread_t lpt, lives_funcptr_t func, int return_type,
-    const char *args_fmt, va_list xargs) {
+                                    const char *args_fmt, va_list xargs) {
   if (args_fmt && *args_fmt) {
     weed_set_funcptr_value(lpt, LIVES_LEAF_THREADFUNC, func);
     if (return_type > 0) weed_leaf_set(lpt, _RV_, return_type, 0, NULL);
     else if (return_type == -1) lives_proc_thread_include_states(lpt, THRD_OPT_NOTIFY);
     weed_set_int64_value(lpt, LIVES_LEAF_FUNCSIG, funcsig_from_args_fmt(args_fmt));
-    weed_plant_params_from_vargs(lpt, args_fmt, xargs);  
+    weed_plant_params_from_vargs(lpt, args_fmt, xargs);
   } else _proc_thread_params_from_nullvargs(lpt, func, return_type);
 }
 
@@ -502,7 +502,7 @@ lives_proc_thread_t lives_proc_thread_secure_ptr(lives_proc_thread_t lpt, void *
   if (!lpt || !ptr || !*ptr) return NULL;
 
   proc_thread_unrefs_block();
-  
+
   //lpt = (lives_proc_thread_t)*ptr;
   if (!*ptr) {
     // too late
@@ -518,8 +518,7 @@ lives_proc_thread_t lives_proc_thread_secure_ptr(lives_proc_thread_t lpt, void *
     // thus if we ref lpt, it will prevent it from being freed
     lives_proc_thread_ref(lpt);
     pthread_mutex_unlock(destruct_mutex);
-  }
-  else lpt = NULL;
+  } else lpt = NULL;
   proc_thread_unrefs_unblock();
   return lpt;
 }
@@ -547,7 +546,7 @@ boolean lives_proc_thread_unref(lives_proc_thread_t lpt) {
       // this hook could be called several times if threads add references then remove them
       // we will clear the queue to prevent this
       pthread_mutex_t *destruct_mutex =
-	(pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_MUTEX, NULL);
+        (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_MUTEX, NULL);
 
       // we will do this - lock global mutex - recheck refs (in case any were added while we waited)
       // - lock lpt destruct mutex (this prevents other threads reading 0 refs in a race)
@@ -555,7 +554,7 @@ boolean lives_proc_thread_unref(lives_proc_thread_t lpt) {
 
       // other threads will fo - lock global mutex - trylock destruct mutex - read ptr value
       // if NULL, go away, if non null, add a ref
-      
+
       proc_thread_unrefs_block(); // xxx
 
       // another thread could have freed lpt while we waited for the lock.
@@ -566,72 +565,70 @@ boolean lives_proc_thread_unref(lives_proc_thread_t lpt) {
       refs = weed_refcount_query(lpt);
 
       if (!refs) {
-	// ok, still good, all other threads are blocked at xxx
+        // ok, still good, all other threads are blocked at xxx
 
-	// try to lock the destruct mutex. Then we can unlock the global lock
-	// any other threads waiting on it wont be able to get this lock and will unlock global and go away
-	if (!pthread_mutex_trylock(destruct_mutex)) {
-	  LiVESList **hook_closures = lives_proc_thread_get_hook_closures(lpt);
-	  // ideally we would hold this through the hook callbacks, but they could block and we
-	  // dont want to delay things
-	  proc_thread_unrefs_unblock();
+        // try to lock the destruct mutex. Then we can unlock the global lock
+        // any other threads waiting on it wont be able to get this lock and will unlock global and go away
+        if (!pthread_mutex_trylock(destruct_mutex)) {
+          LiVESList **hook_closures = lives_proc_thread_get_hook_closures(lpt);
+          // ideally we would hold this through the hook callbacks, but they could block and we
+          // dont want to delay things
+          proc_thread_unrefs_unblock();
 
-	  // thread 2 can get unref lock, but cant get destruct lock, so they will unlock global lock and go away
-	  // but 
-	  lives_hooks_trigger(lpt, hook_closures, DESTRUCTION_HOOK);
-	  lives_hooks_clear(hook_closures, DESTRUCTION_HOOK);
+          // thread 2 can get unref lock, but cant get destruct lock, so they will unlock global lock and go away
+          // but
+          lives_hooks_trigger(lpt, hook_closures, DESTRUCTION_HOOK);
+          lives_hooks_clear(hook_closures, DESTRUCTION_HOOK);
 
-	  // another thread might have got global lock and do a trylock of destruct mutex at some point
-	  // so we will block here until the trylock falis and they unlock the global lock
-	  proc_thread_unrefs_block();
-	  proc_thread_unrefs_unblock();
+          // another thread might have got global lock and do a trylock of destruct mutex at some point
+          // so we will block here until the trylock falis and they unlock the global lock
+          proc_thread_unrefs_block();
+          proc_thread_unrefs_unblock();
 
-	  // should be in the clear now - any thread wanting to check destruct lock should have held us at global
-	  // lock either they got the trylock - so we shouldn tbe here
+          // should be in the clear now - any thread wanting to check destruct lock should have held us at global
+          // lock either they got the trylock - so we shouldn tbe here
 
-	  // else they failed to get the trylock and went away, or added a ref, so we will block until they are done
-	  // othe threads grabbing the lock at xxx will also fail to get destruct mutex so they should go away
+          // else they failed to get the trylock and went away, or added a ref, so we will block until they are done
+          // othe threads grabbing the lock at xxx will also fail to get destruct mutex so they should go away
 
-	  // check again, sombody may have added a ref
-	  refs = weed_refcount_query(lpt);
-	  if (!refs) {
-	    // still good
-	    // give threads a chance to read a null value before continuing
-	    // check refs again, other threads could have added more refs with kill_lock held
-	    if (weed_refcount_dec(lpt) == -1) {
-	      // at this point we have kill_lock, the lpt destruct_mutex was not locked and refcount is -1
-	      // plus we triggered the destuction_hook for the proc_thread
-	      // that should be more than enough safeguards
-	      pthread_mutex_t *state_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
-	      thrd_work_t *work = lives_proc_thread_get_work(lpt);
-	      LiVESList **hook_closures = lives_proc_thread_get_hook_closures(lpt);
-		
-	      weed_refcounter_unlock(lpt);
-	      lives_hooks_clear_all(hook_closures, N_HOOK_POINTS);
+          // check again, sombody may have added a ref
+          refs = weed_refcount_query(lpt);
+          if (!refs) {
+            // still good
+            // give threads a chance to read a null value before continuing
+            // check refs again, other threads could have added more refs with kill_lock held
+            if (weed_refcount_dec(lpt) == -1) {
+              // at this point we have kill_lock, the lpt destruct_mutex was not locked and refcount is -1
+              // plus we triggered the destuction_hook for the proc_thread
+              // that should be more than enough safeguards
+              pthread_mutex_t *state_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
+              thrd_work_t *work = lives_proc_thread_get_work(lpt);
+              LiVESList **hook_closures = lives_proc_thread_get_hook_closures(lpt);
 
-	      if (work) work->lpt = NULL;
-	      THREADVAR(tinfo) = NULL;
+              weed_refcounter_unlock(lpt);
+              lives_hooks_clear_all(hook_closures, N_HOOK_POINTS);
 
-	      weed_plant_free(lpt);
-	      lives_free(state_mutex);
-	      pthread_mutex_unlock(destruct_mutex);
-	      lives_free(destruct_mutex);
+              if (work) work->lpt = NULL;
+              THREADVAR(tinfo) = NULL;
 
-	      return TRUE;
-	    }
-	  }
-	}
-	else {
-	  // there is a small chance we failed to get the trylock because a thread was checking
-	  // if the destuct hooks had been called
-	  // so we will wait to get the global lock, which means they should have added a ref
-	  // - if refs is > 0, we should decrement it
-	  refs = weed_refcount_query(lpt);
-	  if (refs > 0) weed_refcount_dec(lpt);
-	  proc_thread_unrefs_unblock();
-	}
-      }
-      else proc_thread_unrefs_unblock();
+              weed_plant_free(lpt);
+              lives_free(state_mutex);
+              pthread_mutex_unlock(destruct_mutex);
+              lives_free(destruct_mutex);
+
+              return TRUE;
+            }
+          }
+        } else {
+          // there is a small chance we failed to get the trylock because a thread was checking
+          // if the destuct hooks had been called
+          // so we will wait to get the global lock, which means they should have added a ref
+          // - if refs is > 0, we should decrement it
+          refs = weed_refcount_query(lpt);
+          if (refs > 0) weed_refcount_dec(lpt);
+          proc_thread_unrefs_unblock();
+        }
+      } else proc_thread_unrefs_unblock();
     }
     return FALSE;
   }
@@ -657,7 +654,7 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
   /* otherwise, the main thread may be busy running a request from a different thread. In this case, */
   /* the request is added to the main thread's deferral stack, which it will process after finishing the current request. */
   /* as a further complication, the bg thread may need to wait for its request to complete, e.g running a dialog where it needs a response, in this case it will refecount the task so it is not freed, and then monitor it to see when it completes. */
-  /* for the main thread, it also needs to service GUI callbacks like key press responses. In this case it will monitor the task until it finsishes, since it must run this in another background thread, and return to the gtk main loop, in this case it may re add itslef via an idel func so it can return and continue monitoring. While doin so it must still be ready to service requests from other threads, as well as more requests from the onitored thread. As well as this if the fg thread is running a service for aidle func or timer, it cannot return to the gtk main loop, as it needs to wait for the final response (TRUE or FALSE) from the subordinate timer task. Thus it will keep looping without returning, but still it needs to be servicing other threads. In particular one thread may be waitng for antother to complete and if not serviced the second thread can hagn waiting and block the first thread, wwhich can in turn block the main thread. */
+  /* for the main thread, it also needs to service GUI callbacks like key press responses. In this case it will monitor the task until it finsishes, since it must run this in another background thread, and return to the gtk main loop, in this case it may re add itslef via an idel func so it can return and continue monitoring. While doin so it must still be ready to service requests from other threads, as well as more requests from the monitored thread. As well as this if the fg thread is running a service for aidle func or timer, it cannot return to the gtk main loop, as it needs to wait for the final response (TRUE or FALSE) from the subordinate timer task. Thus it will keep looping without returning, but still it needs to be servicing other threads. In particular one thread may be waitng for antother to complete and if not serviced the second thread can hagn waiting and block the first thread, wwhich can in turn block the main thread. */
 
   lives_proc_thread_t lpt;
   boolean is_fg_service = FALSE;
@@ -681,23 +678,23 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
   } else {
     if (!is_fg_service) {
       if (!(THREADVAR(hook_hints) & HOOK_CB_PRIORITY)
-	  && get_gov_status() != GOV_RUNNING && FG_THREADVAR(fg_service)) {
+          && get_gov_status() != GOV_RUNNING && FG_THREADVAR(fg_service)) {
         if (THREADVAR(hook_hints) & HOOK_OPT_NO_DEFER) {
           lives_proc_thread_include_states(lpt, THRD_STATE_DESTROYED);
           lives_proc_thread_free(lpt);
-	  return FALSE;
-	}
+          return FALSE;
+        }
 
         if (THREADVAR(hook_hints) & HOOK_CB_BLOCK) lives_proc_thread_ref(lpt);
 
         if (add_to_fg_deferral_stack(FG_THREADVAR(hook_flag_hints), lpt) != lpt) {
-	  // could not be added due to matching restrictions
+          // could not be added due to matching restrictions
           lives_proc_thread_include_states(lpt, THRD_STATE_DESTROYED);
-	  if (THREADVAR(hook_hints) & HOOK_CB_BLOCK) lives_proc_thread_unref(lpt);
+          if (THREADVAR(hook_hints) & HOOK_CB_BLOCK) lives_proc_thread_unref(lpt);
           lives_proc_thread_free(lpt);
         } else {
           if (THREADVAR(hook_hints) & HOOK_CB_BLOCK) {
-	    //
+            //
             while (!lives_proc_thread_check_finished(lpt)
                    && !lives_proc_thread_get_cancelled(lpt)) {
               if (get_gov_status() == GOV_RUNNING) {
@@ -710,17 +707,17 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
         }
       } else {
         // will call fg_run_func() indirectly, so no need to call lives_proc_thread_free
-	lpt = lives_proc_thread_auto_secure(&lpt);
-	if (lpt) {
-	  if (!lives_proc_thread_is_done(lpt))
-	    fg_service_call(lpt, retval);
-	  if (!lives_proc_thread_unref(lpt)) {
-	    if (THREADVAR(hook_hints) & HOOK_CB_BLOCK) {
-	      lives_proc_thread_include_states(lpt, THRD_STATE_DESTROYED);
-	      lives_proc_thread_free(lpt);
-	    }
-	  }
-	}
+        lpt = lives_proc_thread_auto_secure(&lpt);
+        if (lpt) {
+          if (!lives_proc_thread_is_done(lpt))
+            fg_service_call(lpt, retval);
+          if (!lives_proc_thread_unref(lpt)) {
+            if (THREADVAR(hook_hints) & HOOK_CB_BLOCK) {
+              lives_proc_thread_include_states(lpt, THRD_STATE_DESTROYED);
+              lives_proc_thread_free(lpt);
+            }
+          }
+        }
         // some functions may have been deferred, since we cannot stack multiple fg service calls
         lives_hooks_trigger(NULL, THREADVAR(hook_closures), INTERNAL_HOOK_0);
       }
@@ -940,7 +937,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_check_completed(lives_proc_thread_
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_done(lives_proc_thread_t lpt) {
   if (lpt && (lives_proc_thread_check_states(lpt, THRD_STATE_CANCELLED | THRD_STATE_DESTROYED
-						   | THRD_STATE_COMPLETED | THRD_OPT_IDLEFUNC))) return TRUE;
+              | THRD_STATE_COMPLETED | THRD_OPT_IDLEFUNC))) return TRUE;
   return FALSE;
 }
 
@@ -1250,8 +1247,8 @@ static void *proc_thread_worker_func(void *args) {
 }
 
 
-boolean fg_run_func(lives_proc_thread_t lpt, void *rloc) { 
- // rloc should be a pointer to a variable of the correct type. After calling this,
+boolean fg_run_func(lives_proc_thread_t lpt, void *rloc) {
+  // rloc should be a pointer to a variable of the correct type. After calling this,
   int refs;  boolean bret = FALSE;
   if (!lives_proc_thread_get_cancelled(lpt)) {
     refs = weed_refcount_query(lpt);
@@ -1819,7 +1816,7 @@ LIVES_GLOBAL_INLINE int refcount_dec(lives_refcounter_t *refcount) {
 }
 
 
-LIVES_GLOBAL_INLINE int refcount_query(obj_refcounter * refcount) {
+LIVES_GLOBAL_INLINE int refcount_query(obj_refcounter *refcount) {
   if (check_refcnt_init(refcount)) {
     int count;
     pthread_mutex_lock(&refcount->mutex);

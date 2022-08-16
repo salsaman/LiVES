@@ -110,12 +110,16 @@
 
 weed_leaf_get_f _weed_leaf_get;
 weed_leaf_set_f _weed_leaf_set;
-weed_leaf_append_elements_f _weed_leaf_append_elements;
+#if WEED_ABI_CHECK_VERSION(202)
+weed_ext_set_element_size_f _weed_ext_set_element_size;
+weed_ext_append_elements_f _weed_ext_append_elements;
+weed_ext_attach_leaf_f _weed_ext_attach_leaf;
+weed_ext_detach_leaf_f _weed_ext_detach_leaf;
+#endif
 weed_plant_new_f _weed_plant_new;
 weed_plant_list_leaves_f _weed_plant_list_leaves;
 weed_leaf_num_elements_f _weed_leaf_num_elements;
 weed_leaf_element_size_f _weed_leaf_element_size;
-weed_leaf_set_element_size_f _weed_leaf_set_element_size;
 weed_leaf_seed_type_f _weed_leaf_seed_type;
 weed_leaf_get_flags_f _weed_leaf_get_flags;
 weed_plant_free_f _weed_plant_free;

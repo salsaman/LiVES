@@ -256,23 +256,52 @@ LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size
 LIVES_GLOBAL_INLINE boolean lives_str_starts_with(const char *st1, const char *st2) {
   if (!st1 || !st2) return (st1 == st2);
   else {
-    boolean hnb = FALSE;
-    uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
-    while (1) {
-      if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
-        do {
-          d1 = *(ip1++);
-          d2 = *(ip2++);
-        } while (d1 == d2 && !(hnb = hasNulByte(d2)));
-        if (!hnb) return FALSE;
-        st1 = (void *)ip1; st2 = (void *)ip2;
-      }
-      if (*(st1++) != *st2) return FALSE;
-      if (!(*(st1++))) return TRUE;
-    }
+    /* boolean hnb = FALSE; */
+    /* uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2; */
+    /* while (1) { */
+    /*   if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) { */
+    /*     do { */
+    /*       d1 = *(ip1++); */
+    /*       d2 = *(ip2++); */
+    /*     } while (d1 == d2 && !(hnb = hasNulByte(d2))); */
+    /*     if (!hnb) return FALSE; */
+    /*     st1 = (void *)ip1; st2 = (void *)ip2; */
+    /*   } */
+    /*   if (*(st1++) != *st2) return FALSE; */
+    /*   if (!(*(st2++))) return TRUE; */
+
+    size_t srchlen = lives_strlen(st2);
+    if (!lives_strncmp(st1, st2, srchlen)) return TRUE;
+    return FALSE;
   }
-  return (*st1 != *st2);
 }
+
+/// if st1 starts with st2, returns the next char, else NULL
+LIVES_GLOBAL_INLINE const char *lives_str_starts_with_skip(const char *st1, const char *st2) {
+  if (!st1 || !st2) return NULL;
+  else {
+    /* boolean hnb = FALSE; */
+    /* uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2; */
+    /* while (1) { */
+    /*   if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) { */
+    /*     do { */
+    /*       d1 = *(ip1++); */
+    /*       d2 = *(ip2++); */
+    /* 	  g_printf("CFFF %lu and %lu\n", d1, d2); */
+    /*     } while (d1 == d2 && !(hnb = hasNulByte(d2))); */
+    /*     if (!hnb) return NULL; */
+    /*     st1 = (void *)ip1; st2 = (void *)ip2; */
+    /*   } */
+    /*   if (*(st1++) != *st2) return NULL; */
+    /*   if (!(*(st2++))) return st1; */
+    /* } */
+
+    size_t srchlen = lives_strlen(st2);
+    if (!lives_strncmp(st1, st2, srchlen)) return st1 + srchlen;
+    return NULL;
+  }
+}
+
 
 #define HASHROOT 5381
 LIVES_GLOBAL_INLINE uint32_t lives_string_hash(const char *st) {

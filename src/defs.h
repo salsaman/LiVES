@@ -181,7 +181,7 @@ typedef pid_t lives_pid_t;
 #define LIVES_RESULT_FAIL	0
 #define LIVES_RESULT_ERROR	-1
 
-  typedef int lives_result_t;
+typedef int lives_result_t;
 
 /// default defs
 

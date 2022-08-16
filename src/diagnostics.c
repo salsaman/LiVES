@@ -1818,7 +1818,7 @@ void md5test(void) {
 /// any diagnostic tests can be placed in this section - the functional will be called early in
 // startup. If abort_after is TRUE, then the function will abort() after completing all designatedd testing
 //////////////
-lives_result_t do_startup_diagnostics(boolean abort_after) {  
+lives_result_t do_startup_diagnostics(boolean abort_after) {
   boolean ran_test = FALSE;
   lives_bundle_t *bundle;
 
@@ -1851,12 +1851,11 @@ lives_result_t do_startup_diagnostics(boolean abort_after) {
 #endif
 
   init_bundles();
-  bundle = def_bundle_from_bundledef(GET_BDEF(OBJECT_TEMPLATE_BUNDLE_TYPE));
-  g_print(bundle_to_header(bundle, "nirv_object_tmeplate_t"));
+
   ran_test = TRUE;
-  
+
   if (ran_test && abort_after) abort();
-  
+
   return LIVES_RESULT_SUCCESS;
 }
 

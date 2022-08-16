@@ -4,11 +4,12 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-// if usage of BUNDLES is desired,
-// exactly one file should #define NEED_OBJECT_BUNDLES before including this header
-// as well as #define BUNDLE_TYPE to b
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-#define DEBUG_BUNDLE_MAKER
+//#define DEBUG_BUNDLE_MAKER
 
 // the implementation should define its own NIRVA_BUNDLE_T before this header
 #ifndef NIRVA_BUNDLE_T
@@ -24,11 +25,38 @@
 #endif
 #endif
 
-#ifndef OBJECT_CONSTANTS_H 
+#ifndef OBJECT_CONSTANTS_H
 #define OBJECT_CONSTANTS_H
+
+#ifdef NIRVA_IMPL_STYLE_DEFAULT_CPP
+#undef NIRVA_IMPL_STYLE_DEFAULT_CPP
+#endif
+#define NIRVA_IMPL_STYLE_DEFAULT_CPP 10001
+
+#ifdef NIRVA_IMPL_STYLE_DEFAULT_C
+#undef NIRVA_IMPL_STYLE_DEFAULT_C
+#endif
+#define NIRVA_IMPL_STYLE_DEFAULT_C 10002
+
+#ifndef NIRVA_IMPL_STYLE
+#ifdef __cplusplus
+#define NIRVA_IMPL_STYLE NIRVA_IMPL_STYLE_DEFAULT_CPP
+#else
+#define NIRVA_IMPL_STYLE NIRVA_IMPL_STYLE_DEFAULT_C
+#endif
+#endif
+
+#define NIRVA_IMPL_IS(style) (NIRVA_IMPL_STYLE == NIRVA_IMPL_STYLE_##style)
+
+#if NIRVA_IMPL_IS(DEFAULT_CPP) || NIRVA_IMPL_IS(DEFAULT_C)
+#define NIRVA_X_IMPL_C_CPP
+#endif
 
 #ifndef SKIP_MAIN
 
+#define _CALL(MACRO, ...) MACRO(__VA_ARGS__)
+
+#if NIRVA_IMPL_IS(DEFAULT_C)
 #ifndef NO_STD_INCLUDES
 #include <stdio.h>
 #include <string.h>
@@ -37,85 +65,74 @@
 #include <inttypes.h>
 #endif
 
-#define NIRVA_ARRAY_OF(a) a*
-#define NIRVA_PTR_TO(a) a *
-#define NIRVA_EXTERN extern
-#define NIRVA_TYPEDEF(a,...) typedef a __VA_ARGS__;
-#define NIRVA_FUNC_TYPE_DEF(ret_type, funcname, ...) typedef ret_type(* funcname)(__VA_ARGS__);
-#define NIRVA_CONST const
-#define NIRVA_ENUM enum
-#define NIRVA_NULL NULL
-#define NIRVA_VARIADIC ...
+#define __IMPL_ENUM__ enum
+#define __IMPL_EXTERN__ extern
+#define __IMPL_NULL__ NULL
+#define __IMPL_VARIADIC__ ...
+#define __IMPL_CONST__ const
+#define __IMPL_INLINE__ inline
+#define __IMPL_FN_STATIC__ static
+#define __IMPL_FILE_STATIC__ static
+#define __IMPL_STATIC_INLINE__ __IMPL_FN_STATIC__ __IMPL_INLINE__
+#define __IMPL_NO_VAL__ void
+#define __IMPL_LINE_END__ ;
+#define __IMPL_VA_START__(a, b) va_start(a,b)
+#define __IMPL_VA_END__(a) va_end(a)
+#define __IMPL_VA_ARG__(a, b) va_arg(a, b)
+#define __IMPL_TYPEDEF__ typedef
 
-#define NIRVA_BUNDLEPTR NIRVA_PTR_TO(NIRVA_BUNDLE_T)
-#define NIRVA_CONST_BUNDLEPTR NIRVA_CONST NIRVA_BUNDLEPTR
+#define __IMPL_GENPTR__ void *
 
-#define NIRVA_CHAR char
-#define NIRVA_BUNDLE_TYPE bundle_type
-#define NIRVA_VA_LIST va_list
+#define __IMPL_DEF_ARRAY_OF__(a) a*
+#define __IMPL_PTR_TO_TYPE__(a) a *
+#define __IMPL_DECLARE_AS_TYPE_MULTI__(xtype,...) xtype __VA_ARGS__
 
-#define NIRVA_BUNDLEPTR_ARRAY NIRVA_ARRAY_OF(NIRVA_BUNDLEPTR)
-
-#define NIRVA_STRING NIRVA_ARRAY_OF(NIRVA_CHAR)
-#define NIRVA_CONST_STRING NIRVA_CONST NIRVA_STRING
-#define NIRVA_STRING_ARRAY NIRVA_ARRAY_OF(NIRVA_STRING)
-#define NIRVA_CONST_STRING_ARRAY NIRVA_ARRAY_OF(NIRVA_CONST_STRING)
-
-NIRVA_TYPEDEF(int, NIRVA_INT)
-NIRVA_TYPEDEF(int64_t, NIRVA_INT64)
-
-#ifndef NIRVA_FUNC_RETURN
-#define NIRVA_FUNC_RETURN NIRVA_INT64
+#ifndef NIRVA_BOOLEAN
+#define NIRVA_BOOLEAN int
 #endif
+#define NIRVA_INT int
+#define NIRVA_UINT uint32_t
+#define NIRVA_INT64 int64_t
+#define NIRVA_UINT64 uint64_t
+#define NIRVA_STRING char *
+#define NIRVA_DOUBLE double
+#define NIRVA_FLOAT float
+#define NIRVA_VOIDPTR void *
+#define NIRVA_VARIADIC ...
+#define NIRVA_VA_LIST va_list
+#define NIRVA_VA_START(a,b) NIRVA_CMD(__IMPL_VA_START__(a,b))
+#define NIRVA_VA_END(a) NIRVA_CMD(__IMPL_VA_END__(a))
+#define NIRVA_VA_ARG(a,b) __IMPL_VA_ARG__(a,b)
+#define NIRVA_NULL __IMPL_NULL__
+#define NIRVA_ENUM __IMPL_ENUM__
+#define NIRVA_CONST __IMPL_CONST__
+#define NIRVA_STATIC __IMPL_FN_STATIC__
+#define NIRVA_STATIC_INLINE __IMPL_STATIC_INLINE__
+#define NIRVA_EXTERN __IMPL_EXTERN__
+#define NIRVA_NO_RETURN __IMPL_NO_VAL__
+#define NIRVA_VOID __IMPL_NO_VAL__
+#define NIRVA_GENPTR __IMPL_GENPTR__
 
-#define NIRVA_REQUEST_REPSONSE NIRVA_FUNC_RETURN
-#define NIRVA_COND_RETURN NIRVA_FUNC_RETURN
-#define NIRVA_COND_RESULT NIRVA_FUNC_RETURN
+#define NIRVA_EQUAL(a,b) ((a)==(b))
+#define NIRVA_TYPED(a,...) __IMPL_TYPEDEF__ a __VA_ARGS__
+#define NIRVA_TYPEDEF(a,...) NIRVA_TYPED(a,__VA_ARGS__)__IMPL_LINE_END__
+#define NIRVA_TYPEDEF_MULTI(a,...) NIRVA_TYPEDEF(,__VA_ARGS__ a)
+#define NIRVA_TYPEDEF_ENUM(typename,...) __IMPL_TYPEDEF__ NIRVA_ENUM {__VA_ARGS__,} \
+  typename __IMPL_LINE_END__
+#define NIRVA_FUNC_TYPE_DEF(ret_type,funcname,...) __IMPL_TYPEDEF__ \
+  ret_type (* funcname)(__VA_ARGS__)__IMPL_LINE_END__
+#define NIRVA_DEF_VARS(xtype, ...) NIRVA_CMD(__IMPL_DECLARE_AS_TYPE_MULTI__(xtype,__VA_ARGS__))
 
-  NIRVA_TYPEDEF(NIRVA_CONST_STRING, NIRVA_STRAND)
-  NIRVA_TYPEDEF(NIRVA_CONST_STRING_ARRAY, NIRVA_CONST_BUNDLEDEF)
-  NIRVA_TYPEDEF(NIRVA_STRING_ARRAY, NIRVA_BUNDLEDEF)
+#define NIRVA_ARRAY_OF __IMPL_DEF_ARRAY_OF__
+#define NIRVA_PTR_TO __IMPL_PTR_TO_TYPE__
 
-  NIRVA_TYPEDEF(NIRVA_BUNDLE_T, nirva_object_t)
-  NIRVA_TYPEDEF(NIRVA_BUNDLE_T, nirva_instance_t)
-  NIRVA_TYPEDEF(NIRVA_BUNDLE_T, nirva_attr_t)
-  NIRVA_TYPEDEF(NIRVA_BUNDLE_T, nirva_contract_t)
-  NIRVA_TYPEDEF(NIRVA_BUNDLE_T, nirva_transform_t)
-  NIRVA_TYPEDEF(NIRVA_BUNDLE_T, nirva_trajactory_t)
-  NIRVA_TYPEDEF(NIRVA_BUNDLE_T, nirva_tsegment_t)
-  NIRVA_TYPEDEF(NIRVA_BUNDLE_T, nirva_attr_desc_t)
-  NIRVA_TYPEDEF(NIRVA_BUNDLE_T, nirva_thread_t)
-  NIRVA_TYPEDEF(NIRVA_BUNDLE_T, nirva_attr_bundle_t)
-  NIRVA_TYPEDEF(NIRVA_BUNDLE_T, nirva_attr_connect_t)
-
-  NIRVA_FUNC_TYPE_DEF(NIRVA_FUNC_RETURN, nirva_function_t, NIRVA_CONST_BUNDLEPTR input,\
-		      NIRVA_CONST_BUNDLEPTR outputs)
-
-  NIRVA_TYPEDEF(nirva_function_t, nirva_condfunc_t)
-  NIRVA_TYPEDEF(nirva_function_t, nirva_callback_t)
-
-#define NIRVA_NEEDS_EXT_FUNC(funcname, desc, ret_type, ...)	\
-  NIRVA_EXTERN ret_type ext_func_##funcname(__VA_ARGS__);
-
-/// list of functions which the implementation must define ////
-
-  NIRVA_NEEDS_EXT_FUNC(get_int_value, "get integer value from 'item_name' in 'bundle'", NIRVA_INT, \
-		       NIRVA_CONST_BUNDLEPTR bundle, NIRVA_CONST_STRING item_name)
-  NIRVA_NEEDS_EXT_FUNC(get_bundleptr_array, "get bundleptr array from 'item_name' in 'bundle'", \
-		       NIRVA_BUNDLEPTR_ARRAY, NIRVA_CONST_BUNDLEPTR bundle, \
-		       NIRVA_CONST_STRING item_name)
-  NIRVA_NEEDS_EXT_FUNC(create_bundle_vargs, "create and return a bundle from bundledef and "\
-		       "va_list of 'item_name', 'value' in pairs", NIRVA_BUNDLEPTR, NIRVA_BUNDLEDEF, \
-		       NIRVA_VA_LIST)
-
-/////// optional overrides ///////
-#define NIRVA_OPT_EXT_FUNC(funcname, desc, ret_type, ...)	\
-  NIRVA_EXTERN ret_type ext_func_##funcname(__VA_ARGS__);
-
-  NIRVA_OPT_EXT_FUNC(nirva_call, "run a static transform via a function wrapper", \
-		     NIRVA_FUNC_RETURN,	NIRVA_CONST_STRING transform_name, NIRVA_VARIADIC)
+#endif // C style
 
 ////// function return codes ////
+
+#define NIRVA_RESULT_ERROR 			-1
+#define NIRVA_RESULT_FAIL 			0
+#define NIRVA_RESULT_SUCCESS 			1
 
 // error in condition - could not evaluate
 #define NIRVA_COND_ERROR		-1
@@ -127,10 +144,15 @@ NIRVA_TYPEDEF(int64_t, NIRVA_INT64)
 // emulate cond_retry
 #define NIRVA_COND_WAIT_RETRY		2
 
+// value that should be returned if you have no clue what else to do
+#define NIRVA_COND_CLUELESS		8
+
 // these values should only be returned from system callback ////s
-// force conditions to succeed, even if some fail
+// force conditions to succeed, even if some others would fail
+// takes precedence over all other return codes, including NIRV_COND_ERROR
+//exit and return NIRVA_COND_SUCCESS
 #define NIRVA_COND_FORCE		16
-// force condition fail and do not retry
+// force condition fail, exit and do not retry
 #define NIRVA_COND_ABANDON		17
 /////
 
@@ -138,6 +160,9 @@ NIRVA_TYPEDEF(int64_t, NIRVA_INT64)
 #define NIRVA_REQUEST_YES		NIRVA_COND_SUCCESS
 #define NIRVA_REQUEST_WAIT_RETRY	NIRVA_COND_WAIT_RETRY
 #define NIRVA_REQUEST_NEEDS_PRIVILEGE	NIRVA_COND_ABANDON
+
+// life is complicated and sometimes you just don't know what to do
+#define NIRVA_REQUEST_NO_IDEA		NIRVA_COND_CLUELESS
 
 // the request is taking too long, some other object will take over,
 // go and do something else instead
@@ -157,7 +182,7 @@ NIRVA_TYPEDEF(int64_t, NIRVA_INT64)
 // example predefined object TYPES
 
 #define OBJECT_TYPE_STRUCTURAL		IMkType("obj.STUC")
-#define OBJECT_TYPE_CLIP		IMkType("obj.CLIP") 
+#define OBJECT_TYPE_CLIP		IMkType("obj.CLIP")
 #define OBJECT_TYPE_PLUGIN		IMkType("obj.PLUG")
 #define OBJECT_TYPE_WIDGET		IMkType("obj.WDGT")
 #define OBJECT_TYPE_THREAD		IMkType("obj.THRD")
@@ -177,126 +202,129 @@ NIRVA_TYPEDEF(int64_t, NIRVA_INT64)
 #define OBJ_INTENTION_NONE 0
 
 // INTENTIONS
-  NIRVA_ENUM {
-	// some common intentions
-	// internal or (possibly) non-functional types
-	OBJ_INTENTION_UNKNOWN,
+NIRVA_ENUM {
+  // some common intentions
+  // internal or (possibly) non-functional types
+  OBJ_INTENTION_UNKNOWN,
 
-	// application types
-	OBJ_INTENTION_NOTHING = OBJ_INTENTION_NONE,
+  // application types
+  OBJ_INTENTION_NOTHING = OBJ_INTENTION_NONE,
 
-	// pasive intents
-	// template intents - there are 3 optional passive intents for templates
-	// if an instance wants to run one of these is should do so via a tamplete for the type
+  // pasive intents
+  // template intents - there are 3 optional passive intents for templates
+  // if an instance wants to run one of these is should do so via a tamplete for the type
 
-	// transform which creates an instance of specified subtype, with specified state
-	// will trigger init_hook on the new instance
-	// if it takes an instance of same type / subtype  state as an input atribute,
-	// this becomes COPY_INSTANCE
-	OBJ_INTENTION_CREATE_BUNDLE = 0x00000100, // create instance of type / subtype
+  // transform which creates an instance of specified subtype, with specified state
+  // will trigger init_hook on the new instance
+  // if it takes an instance of same type / subtype  state as an input atribute,
+  // this becomes COPY_INSTANCE
+  OBJ_INTENTION_CREATE_BUNDLE = 0x00000100, // create instance of type / subtype
 
-	// there is a single passive intent for instances - actioning this
-	// no negotiate, mandatory intent will trigger the corresponding request hook
-	// in the target. This may be called either on the instance itself or on an attribute
+  // there is a single passive intent for instances - actioning this
+  // no negotiate, mandatory intent will trigger the corresponding request hook
+  // in the target. This may be called either on the instance itself or on an attribute
 
-	OBJ_INTENTION_REQUEST_UPDATE,
+  OBJ_INTENTION_REQUEST_UPDATE,
 
-	// active intents - there is only 1 active intent, which can be further deliniated by
-	// the hoks required / provided:
-	// the CAPS and atributes futher delineate these
+  // active intents - there is only 1 active intent, which can be further deliniated by
+  // the hoks required / provided:
+  // the CAPS and atributes futher delineate these
 
-	// a transform which takes data input and produces data output
-	OBJ_INTENTION_PROCESS,
+  // a transform which takes data input and produces data output
+  OBJ_INTENTION_PROCESS,
 
-	// the following are "synthetic" intents formed by a combination of factors 
-  
-	// transform which changes the state of an instance (either self or another instance)
-	// will trigger object state change hook- This is simply request_update called with target "STATE"
-	OBJ_INTENTION_CHANGE_STATE,
+  // the following are "synthetic" intents formed by a combination of factors
 
-	// transform which changes the subtype of an instance (either self or another instance)
-	// will trigger object config_changed hook. This is simply request_update called with target "SUBTYPE.
-	OBJ_INTENTION_CHANGE_SUBTYPE,
+  // transform which changes the state of an instance (either self or another instance)
+  // will trigger object state change hook- This is simply request_update called with target "STATE"
+  OBJ_INTENTION_CHANGE_STATE,
 
-	// an intention which takes one or more mutable attributes and produces output
-	// either as another mutable attribute
-	// - PLAY is based on this, with CAP realtime
-	//  (this is INTENTION_PROCESS with a a data out hook and need_data hook)
-	OBJ_INTENTION_MANIPULATE_STREAM,
+  // transform which changes the subtype of an instance (either self or another instance)
+  // will trigger object config_changed hook. This is simply request_update called with target "SUBTYPE.
+  OBJ_INTENTION_CHANGE_SUBTYPE,
 
-	// an intent which takes mutable data and produces static array output
-	//(this is INTENTION_PROCESS with a need_data hook, which produces attribute(s) and / or objects as output)
-	OBJ_INTENTION_RECORD,  // record
+  // an intention which takes one or more sequential attributes and produces output
+  // either as another sequential attribute
+  // - PLAY is based on this, with CAP realtime
+  //  (this is INTENTION_PROCESS with a a data out hook and need_data hook)
+  OBJ_INTENTION_MANIPULATE_SEQUENCE,
 
-	// intent INTENTION_PROCESS takes static attribute (array)
-	// and produces an object instance of a different type (c.f create instance, used to create objects of the SAME type)
-	//
-	OBJ_INTENTION_RENDER,
+  // an intent which takes sequential data and produces static array output
+  //(this is INTENTION_PROCESS with a need_data hook, which
+  // produces attribute(s) and / or objects as output)
+  OBJ_INTENTION_RECORD,  // record
 
-	// an INTENT_PROCESS intention which takes one or more array attributes and produces altered array output
-	OBJ_INTENTION_EDIT_DATA,
+  // intent INTENTION_PROCESS takes static attribute (array)
+  // and produces an object instance of a different type
+  // (c.f create instance, used to create objects of the SAME type)
+  //
+  OBJ_INTENTION_RENDER,
 
-	// derived intentions
+  // an INTENT_PROCESS intention which takes one or more array attributes and produces altered array output
+  OBJ_INTENTION_EDIT_DATA,
 
-	// variety of manipulate_stream
-	// an intent which has a data in hook, and data out hooks
-	OBJ_INTENTION_PLAY = 0x00000200, // value fixed for all time, order of following must not change (see videoplugin.h)
+  // derived intentions
 
-	// like play, but with the REMOTE capacity (can also be an attachment to PLAY)
-	OBJ_INTENTION_STREAM,  // encode / data in -> remote stream
+  // variety of manipulate_stream
+  // an intent which has a data in hook, and data out hooks
+  OBJ_INTENTION_PLAY = 0x00000200, // value fixed for all time, order of following must not change (see videoplugin.h)
 
-	// alias for encode but with a weed_layer (frame ?) requirement
-	// rather than a clip object (could also be an attachment to PLAY with realtime == FALSE and display == FALSE caps)
-	// media_output is created with state EXTERNAL
-	OBJ_INTENTION_TRANSCODE,
+  // like play, but with the REMOTE capacity (can also be an attachment to PLAY)
+  OBJ_INTENTION_STREAM,  // encode / data in -> remote stream
 
-	// an intent which creates a new clip object with STATE EXTERNAL
-	// alias for EXPORT for clip objects ?
-	// actually this can just be PLAY but with icaps non-realtime and non-display (like transcode)
-	// and with icap remote for streaming
-	OBJ_INTENTION_ENCODE = 0x00000899,
+  // alias for encode but with a weed_layer (frame ?) requirement
+  // rather than a clip object (could also be an attachment to PLAY
+  // with realtime == FALSE and display == FALSE caps)
+  // media_output is created with state EXTERNAL
+  OBJ_INTENTION_TRANSCODE,
 
-	// these may be specialised for clip objects
+  // an intent which creates a new clip object with STATE EXTERNAL
+  // alias for EXPORT for clip objects ?
+  // actually this can just be PLAY but with icaps non-realtime and non-display (like transcode)
+  // and with icap remote for streaming
+  OBJ_INTENTION_ENCODE = 0x00000899,
 
-	// creates an object with CAP "backup"
-	OBJ_INTENTION_BACKUP, // internal clip -> restorable object
+  // these may be specialised for clip objects
 
-	OBJ_INTENTION_RESTORE, // restore from object -> internal clip
+  // creates an object with CAP "backup"
+  OBJ_INTENTION_BACKUP, // internal clip -> restorable object
 
-	// an intent which converts an object's STATE from EXTERNAL to NORMAL
-	// caps define LOCAL or REMOTE source
-	OBJ_INTENTION_IMPORT = 0x00000C00,
+  OBJ_INTENTION_RESTORE, // restore from object -> internal clip
 
-	// an intent which takes an instance in state INTERNAL and creates an object in state EXTERNAL
-	// with LOCAL - export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
-	// with REMOTE - export raw format to online location, e.g. export audio, save frame
-	OBJ_INTENTION_EXPORT,
+  // an intent which converts an object's STATE from EXTERNAL to NORMAL
+  // caps define LOCAL or REMOTE source
+  OBJ_INTENTION_IMPORT = 0x00000C00,
 
-	// decoders
-	// this is a specialized intent for clip objects, for READY objects, produces frame objects from the clip object)
-	// media_src with realtime / non-realtime CAPS
-	OBJ_INTENTION_DECODE = 0x00001000, // combine with caps to determine e.g. decode_audio, decode_video
+  // an intent which takes an instance in state INTERNAL and creates an object in state EXTERNAL
+  // with LOCAL - export to local filesystem, from internal clip to ext (raw) file format -> e.g. export audio, save frame
+  // with REMOTE - export raw format to online location, e.g. export audio, save frame
+  OBJ_INTENTION_EXPORT,
 
-	// use caps to further refine e.g REALTIME / NON_REALTIME (can be attachment to PLAY ?)
-	// this is a transform of base type MANIPULATE_STREAM, which can be attached to a data_prepared hook of
-	// a stream manipulation transform, altering the input stream
-	OBJ_INTENTION_EFFECT = 0x00001400,
+  // decoders
+  // this is a specialized intent for clip objects, for READY objects, produces frame objects from the clip object)
+  // media_src with realtime / non-realtime CAPS
+  OBJ_INTENTION_DECODE = 0x00001000, // combine with caps to determine e.g. decode_audio, decode_video
 
-	// specialized effect intents
-	OBJ_INTENTION_ANALYSE,
-	OBJ_INTENTION_CONVERT,
-	OBJ_INTENTION_MIX,
-	OBJ_INTENTION_SPLIT,
-	OBJ_INTENTION_DUPLICATE,
-	
-	// - this is now OBJ_INTENTION_REQUEST_UPDATE / dest == taraget_object.refcoucnt.refcount,
-	// value == -1
-	//#define  OBJ_INTENTION_DESTROY_INSTANCE OBJ_INTENTION_UNREF	
+  // use caps to further refine e.g REALTIME / NON_REALTIME (can be attachment to PLAY ?)
+  // this is a transform of base type MANIPULATE_STREAM, which can be attached to a data_prepared hook of
+  // a stream manipulation transform, altering the input stream
+  OBJ_INTENTION_EFFECT = 0x00001400,
+
+  // specialized effect intents
+  OBJ_INTENTION_ANALYSE,
+  OBJ_INTENTION_CONVERT,
+  OBJ_INTENTION_MIX,
+  OBJ_INTENTION_SPLIT,
+  OBJ_INTENTION_DUPLICATE,
+
+  // - this is now OBJ_INTENTION_REQUEST_UPDATE / dest == taraget_object.refcoucnt.refcount,
+  // value == -1
+  //#define  OBJ_INTENTION_DESTROY_INSTANCE OBJ_INTENTION_UNREF
 #define  OBJ_INTENTION_DESTROY_INSTANCE 0x00002000
-	
-	OBJ_INTENTION_FIRST_CUSTOM = 0x80000000,
-	OBJ_INTENTION_MAX = 0xFFFFFFFF
-  };
+
+  OBJ_INTENTION_FIRST_CUSTOM = 0x80000000,
+  OBJ_INTENTION_MAX = 0xFFFFFFFF
+};
 
 // aliases (depending on context, intentions can be used to signify a choice amongst various alternatives)
 #define OBJ_INTENTION_IGNORE OBJ_INTENTION_NOTHING
@@ -343,19 +371,12 @@ NIRVA_TYPEDEF(int64_t, NIRVA_INT64)
 
 // indicates that a (native) thread should be assigned to run the instance
 // communicatuon is via request hooks and status change hooks
-#define TX_FLAG_ACTIVE 	       		(1ull < 4)
+#define TX_FLAG_ACTIVE 	     	  		(1ull < 4)
 
-// indicates that the object has been destroyed, (FINAL_HOOK has been triggerd),
+// indicates that the object has been destroyed, (DESTRUCTION_HOOK has been triggerd),
 // but the 'shell' is left due to being ref counted
-// elements other than flags / destroy_mutex, refcount and uid, are considered invalid
-// reference count may not be increased but may be decreased
-// if the implemntation supports semi or full thread automation then there will be a destruct_mutex
-// to be completely safe
-// This should be locked firs prior to reading the state
-// then only if it is not a zombie,  with the mutex still locked add a hook to the object / instance
-// FINAL_HOOK which sets a pointer to NULL, then unlock teh mutex.
-// once the final ref is removed, all elemnts in the bundle except for uid will be removed.
-// 
+
+// see Developer Docs for more details
 
 // thus when examining an unknown object / instance one should first
 #define NIRVA_OBJ_FLAG_ZOMBIE 	       		(1ull < 16)
@@ -429,612 +450,703 @@ NIRVA_TYPEDEF(int64_t, NIRVA_INT64)
 
 // composite icaps (TBD)
 NIRVA_ENUM {
-      _ICAP_IDLE = 0,
-      _ICAP_DOWNLOAD,
-      _ICAP_LOAD,
-	N_STD_ICAPS,
+  _ICAP_IDLE = 0,
+  _ICAP_DOWNLOAD,
+  _ICAP_LOAD,
+  N_STD_ICAPS,
 };
 
 ////// standard ITEMS ////
 
-/// flags and types start with an "_" so as not to conflict with element names
+/// flags and types start with an "_" so as not to conflict with strand names
 
 // we define types and flags once as string "a", and again as char 'a'
 // when constructing the strands, we make use of automatic string concatenation, and
 // the string versions have to be used.
 // in all other places, the type is a uint32_t, so we use (uint32_t)'a'
 // ATTR_TYPE_* uses a different set of values. This is done deliberately to highlight the
-// fact that element types represent a single data value, whereas ATTR_TYPE is linked to the data
-// type of the "VALUE", "DEFAULT" and "NEW_DEFAULT" elements inside the attribute bundle
-// the biggest difference is that those elements are POINTERS to the underlying variable, rather
-// than representing the variable itself. Doing it this way allows for an attribute to map any native value
-// the type is really a void *, ATTR_TYPE is set in the "TYPE" element, and native_type can be used to
-// indicate the actual "true" undelrying type
+// fact that strand types represent a single data value, whereas ATTR_TYPE is linked to the data
+// type of the "VALUE", "DEFAULT" and "NEW_DEFAULT" strands inside the attribute bundle
+// as well as to make the strand types easier to read
 
-// a void element - do not create until value is set, even if mandatory. When value is set, that defines its type
-#define _ELEM_TYPE_NONE					"0"
+// a void strand - there is no built in default for this strand. It can be set to a value of
+// any permitted type; once the value is set, the type is defined and fixed
+#define _STRAND_TYPE_NONE		       		"0"
 
 // standard types for the first letter of strand0
-#define _ELEM_TYPE_INT					"i"
-#define _ELEM_TYPE_DOUBLE				"d"
-#define _ELEM_TYPE_BOOLEAN				"b"
-#define _ELEM_TYPE_STRING				"s"
-#define _ELEM_TYPE_INT64	       			"I"
-#define _ELEM_TYPE_UINT					"u"
-#define _ELEM_TYPE_UINT64				"U"
+#define _STRAND_TYPE_INT		       		"i"
+#define _STRAND_TYPE_DOUBLE				"d"
+#define _STRAND_TYPE_BOOLEAN				"b"
+#define _STRAND_TYPE_STRING				"s"
+#define _STRAND_TYPE_INT64	       			"I"
+#define _STRAND_TYPE_UINT		       		"u"
+#define _STRAND_TYPE_UINT64				"U"
 
-#define _ELEM_TYPE_VOIDPTR				"V"
+#define _STRAND_TYPE_VOIDPTR				"V"
 
-#define _ELEM_TYPE_FUNCPTR				"F"
-#define _ELEM_TYPE_BUNDLEPTR	       			"B"
-#define _ELEM_TYPE_BUNDLETYPE_PTR	       		"T" // followed by bundlety
+#define _STRAND_TYPE_FUNCPTR				"F"
 
-// these flag values can appear as the first 
-#define _ELEM_TYPE_FLAG_COMMENT				"#"
-#define _ELEM_TYPE_FLAG_DIRECTIVE	       		"@"
-#define _ELEM_TYPE_FLAG_OPTIONAL	       		"?"
+// internal (sub)bundle, should be unreffed / freed with the parent container
+#define _STRAND_TYPE_BUNDLEPTR	       			"B"
 
-// for ptrs to bundles, "!TOP_BUNDLE" means ptr to outermost bundle,
-// "!MY_CONTAINER" == ptr to bundle containg this one
-// "!THIS_BUNDLE" == ptr to current sub-bundle
-#define _ELEM_VALUE_VARIABLE				"!"
+// this is a bunlde pointer to external bundle, should NOT be unreffed / freed
+// when the bundle containing this pointer is freed
+#define _STRAND_TYPE_CONST_BUNDLEPTR	       		"C"
 
-// a value with & in front represents a pointer (void *) to another element in the same (sub)bundle
-#define _ELEM_VALUE_PTR_TO_ELEM				"&"
+// array of bundleptr or far_pointer, with a unique key strand
+// recommended to create as an array of individual bundle *,
+// so each can be indexed externally by the unique key
+#define _STRAND_TYPE_KEYED_ARRAY	       		"K"
 
-// since there is the posisibility that more directives may be added in the future,
-// if a @START directive is not recognised, the bundle maker will skip to the next @END tag and continue from
-// the next strand. However the directiv will be left inside the bundledef if it is stored in a blueprint element
+// 0 or 1 of these flag values can be placed immediately before the type letter
+#define _STRAND_TYPE_FLAG_COMMENT	       		"#"
+#define _STRAND_TYPE_FLAG_DIRECTIVE	       		"@"
+#define _STRAND_TYPE_FLAG_OPTIONAL	       		"?"
 
-#define DIRECTIVE_BEGIN "@BEGIN "
-#define DIRECTIVE_END "@END "
-
-#define DIR_START(dirnm)  DIRECTIVE_BEGIN,#dirnm
-#define DIR_FINISH(dirnm) DIRECTIVE_END,#dirnm
-
-// the name of the item to be overriden follows the opening tag
-// anything between start and end becomes the default for the item
-// it is possible to nest sub bundle and array directives
-// inside this. Invalid values will be ignored and the previosuly defined default used instead
-#define DIRECTIVE_REPLACE_DEFAULT			DIR_START(repl_def) // "item_name"
-// "value_0"
-// "value_1"
-// "value_2"
-// ...
-#define DIRECTIVE_REPLACE_DEFAULT_END			DIR_FINISH(repl_def)
-
-// this is used to connect a system callback to a hook point
-// the system trigger is always run first before any user added callbacks
-// start will be followed by the item name, then the next strand will be flags and data separated by a space
-#define DIRECTIVE_ADD_HOOK_TRIGGER     			DIR_START(add_hook_trigger)  // "item_name"
-// "flags" "data"
-#define DIRECTIVE_ADD_HOOK_TRIGGER_END 		       	DIR_FINISH(add_hook_trigger)
-
-#define ADD_HOOK_TRIGGER(item, hook_type, flags, data) MSTY		\
-  ("%s%s %s",DIRECTIVE_ADD_HOOK_TRIGGER, #item, "%d", (nirva_hook_type)(hook_type), "%lu", \
-   (flags), "%s",  #data, "%s%s", DIRECTIVE_ADD_HOOK_TRIGGER_END)
-
-#define DIRECTIVE_MAKE_EXCLUSIVE     			DIR_START(make_exclusive) // choice_name
-// item_names
-// one per line
-// pick one only
-#define DIRECTIVE_MAKE_EXCLUSIVR_END 		       	DIR_FINISH(make_exclusive)
-
-// when building bundle, add automation hook for each item, which deletes other items
-#define MAKE_EXCLUSIVE(group_name,...) MS(DIRECTIVE_MAKE_EXCLUSIVE #group_name, __VA_ARGS__, \
-					  DIRECTIVE_MAKE_EXCLUSIVR_END)
-
-/* // array start and array end must in pairs. the values in between represent an array of values */
-/* #define DIRECTIVE_ARRAY_START 	       		"@array_start " // followed by array TYPE (e.g. "B") */
-/* #define DIRECTIVE_ARRAY_END 				"@array_end" */
-
-// instructs the bundlemaker to rename-in-place an exsitng element
-// this can be use to create variants on exsitng bundles
-// by renaming alternate choices, or as a measure to prevent naming clashes in cases where this is unvaoidable
-// lines between the type tags will be of the form "old_name new_name"
-// any item mathching old_name should be renamed to new_name, this should be done in the bujndledef
-// and in the bundle. After renaming in the bundledef, the tags and lines between shall be trimmed out
-/* #define DIRECTIVE_RENAME_ELEM 				DIR_START(rename_elem) */
-/* #define DIRECTIVE_RENAME_ELEM_END 		       	DIR_FINSIHrename_elem) */
-
-// it is possible to nest replace_default + pack_start / pack_end immediately following pack_time_end
-// in this case the directives refer to an element inside the previous pack_item
-
-// strand 2
-
-// flag bits, decimal value in strand1
-#define _ELEM2_FLAG_ARRAY				1
-#define _ELEM2_FLAG_PTR_TO_				2
+#define _STRAND_VALUE_SPECIAL_VARIABLE	       		"!"
 
 ////////////////////////////
 
-///////// element types ////////
+///////// strand types ////////
 
-#define ELEM_TYPE_NONE					(uint32_t)'0'	// invalid type
+#define STRAND_TYPE_NONE	       			(uint32_t)'0'	// invalid type
 
 // flag bits
-#define ELEM_TYPE_FLAG_OPTIONAL		      		(uint32_t)'?'	// optional element
-#define ELEM_TYPE_FLAG_COMMENT		      		(uint32_t)'#'	// comment
-#define ELEM_TYPE_FLAG_DIRECTIVE			(uint32_t)'@'	// directive
+#define STRAND_TYPE_FLAG_OPTIONAL      	      		(uint32_t)'?'	// optional strand
+#define STRAND_TYPE_FLAG_COMMENT       	      		(uint32_t)'#'	// comment
+#define STRAND_TYPE_FLAG_DIRECTIVE			(uint32_t)'@'	// directive
 
-#define ELEM_TYPE_INT					(uint32_t)'i'	// 4 byte int
-#define ELEM_TYPE_DOUBLE				(uint32_t)'d'	// 8 byte float
-#define ELEM_TYPE_BOOLEAN				(uint32_t)'b'	// 1 - 4 byte int
-#define ELEM_TYPE_STRING				(uint32_t)'s'	// \0 terminated string
-#define ELEM_TYPE_INT64	       			     	(uint32_t)'I'	// 8 byte int
-#define ELEM_TYPE_UINT					(uint32_t)'u'	// 4 byte int
-#define ELEM_TYPE_UINT64				(uint32_t)'U'	// 8 byte int
+#define STRAND_TYPE_INT					(uint32_t)'i'	// 4 byte int
+#define STRAND_TYPE_DOUBLE				(uint32_t)'d'	// 8 byte float
+#define STRAND_TYPE_BOOLEAN				(uint32_t)'b'	// 1 - 4 byte int
+#define STRAND_TYPE_STRING				(uint32_t)'s'	// \0 terminated string
+#define STRAND_TYPE_INT64              		     	(uint32_t)'I'	// 8 byte int
+#define STRAND_TYPE_UINT	       			(uint32_t)'u'	// 4 byte int
+#define STRAND_TYPE_UINT64				(uint32_t)'U'	// 8 byte int
 
-#define ELEM_TYPE_VOIDPTR				(uint32_t)'V'	// void *
-#define ELEM_TYPE_FUNCPTR				(uint32_t)'F'	// pointer to function
+#define STRAND_TYPE_VOIDPTR				(uint32_t)'V'	// void *
+#define STRAND_TYPE_FUNCPTR				(uint32_t)'F'	// pointer to function
 
 // void * aliases
-#define ELEM_TYPE_BUNDLEPTR	       			(uint32_t)'B' // void * to other bundle
+#define STRAND_TYPE_BUNDLEPTR	       			(uint32_t)'B' // pointer to sub bundle
+#define STRAND_TYPE_CONST_BUNDLEPTR           		(uint32_t)'C' // pointer to extern bundle
+
+// KEYED values - this is a functional extension for bundleptr arrays.
+// The objective is to facilitate lookups, using the "key" as a direct reference
+// rather than having to go through each array item in turn looking for a match.
+// the implementation can choose to implement its own method by setting automation
+// or defining the IMPL_FUNC_find_item_by_key function
+#define STRAND_TYPE_KEYED      				(uint32_t)'K'
 
 #ifdef VERSION
 #undef VERSION
 #endif
 
-#define BUNDLE_NAMEU(a, b) "BUNDLE_" a "_" b
-#define ELEM_NAMEU(a, b) "ELEM_" a "_" b
-#define CUSTOM_NAMEU(a, b)  a "_" b
+#define STRAND_NAME(a, b) STRAND_NAMEU(a, b)
 
-#define ELEM_NAME(a, b) ELEM_NAMEU(a, b)
-
-////////////// standard elements ///
+////////////// standard strands ///
 #define MACROZ(what, va) MACRO(what __##va##__)
 #define MACROX(what) MACROZ(what, VA_ARGS)
 
-/* #define FOR_ALL_DOMAINS(MACRO, ...) MACRO(BASE __VA_ARGS__) MACRO(GENERIC __VA_ARGS__) MACRO(ELEMENT __VA_ARGS__) MACRO(VALUE __VA_ARGS__) MACRO(ATTRIBUTE __VA_ARGS__) MACRO(FUNCTION __VA_ARGS__) \ */
+/* #define FOR_ALL_DOMAINS(MACRO, ...) MACRO(BASE __VA_ARGS__) MACRO(GENERIC __VA_ARGS__) MACRO(STRAND __VA_ARGS__) MACRO(VALUE __VA_ARGS__) MACRO(ATTRIBUTE __VA_ARGS__) MACRO(FUNCTION __VA_ARGS__) \ */
 /*     MACRO(THREADS __VA_ARGS__) MACRO(INTROSPECTION __VA_ARGS__) MACRO(ICAP __VA_ARGS__) MACRO(OBJECT __VA_ARGS__) MACRO(HOOK __VA_ARGS__) MACRO(CONTRACT __VA_ARGS__) MACRO(TRANSFORM __VA_ARGS__) \ */
 /*     MACRO(ATTRBUNDLE __VA_ARGS__) MACRO(CONDITION __VA_ARGS__) MACRO(LOGIC __VA_ARGS__) */
 
-/* #define FOR_ALL_DOMAINS(MACROX, ...) MACROX(BASE) MACROX(GENERIC) MACROX(ELEMENT) MACROX(VALUE) MACROX(ATTRIBUTE) \ */
+/* #define FOR_ALL_DOMAINS(MACROX, ...) MACROX(BASE) MACROX(GENERIC) MACROX(STRAND) MACROX(VALUE) MACROX(ATTRIBUTE) \ */
 /*     MACROX(FUNCTION) MACROX(THREADS) MACROX(INTROSPECTION) MACROX(ICAP) MACROX(OBJECT) MACROX(HOOK) MACROX(CONTRACT) \ */
 /*     MACROX(TRANSFORM) MACROX(ATTRBUNDLE) MACROX(CONDITION) MACROX(LOGIC) */
 
 #define FOR_ALL_DOMAINS(MACROX, ...) MACROX(BASE), MACROX(GENERIC), MACROX(INTROSPECTION)
 // domain BASE
-#define ELEM_SPEC_VERSION				ELEM_NAME("BASE", "VERSION")
-#define ELEM_SPEC_VERSION_TYPE              		INT, 100
+#define STRAND_SPEC_VERSION				STRAND_NAME("SPEC", "VERSION")
+#define STRAND_SPEC_VERSION_TYPE              		INT, 100
 
-#define ELEM_BASE_BUNDLE_TYPE
-#define ELEM_BASE_BUNDLE_TYPE_TYPE
+#define ALL_STRANDS_SPEC "VERSION"
+#define ALL_BUNDLES_SPEC
 
-#define ALL_ELEMS_BASE "VERSION"
+#define STRAND_BASE_BUNDLE_TYPE				STRAND_NAME("BASE", "BUNDLE_TYPE")
+#define STRAND_BASE_BUNDLE_TYPE_TYPE			INT, 0
+
+#define ALL_STRANDS_BASE "BUNDLE_TYPE"
 #define ALL_BUNDLES_BASE
+
+// domain BLUEPRINT
+
+#define STRAND_BLUEPRINT_TEXT				STRAND_NAME("BLUEPRINT", "TEXT")
+#define STRAND_BLUEPRINT_TEXT_TYPE		       	STRING, NULL
+
+#define STRAND_BLUEPRINT_BUNDLE_TYPE	       		STRAND_NAME("BLUEPRINT", "BUNDLE_TYPE")
+#define STRAND_BLUEPRINT_BUNDLE_TYPE_TYPE      	       	UINT64, NULL
+
+#define BUNDLE_BLUEPRINT_STRAND_DESC		      	STRAND_NAME("BLUEPRINT", "STRAND_DESC")
+#define BUNDLE_BLUEPRINT_STRAND_DESC_TYPE      	       	STRAND_DESC, NULL
+
+// domain SPECIAL
+// indicates any strand can be added to / deleted from bundle
+// without a  PRIV_CHECK
+#define STRAND_SPECIAL_OPT_ANY			       	STRAND_NAME("SPECIAL", "*")
+#define STRAND_SPECIAL_OPT_ANY_TYPE	       	       	STRING,"*"
 
 // domain GENERIC
 
 // const
-#define ELEM_GENERIC_NAME				ELEM_NAME("GENERIC", "NAME")
-#define ELEM_GENERIC_NAME_TYPE              		STRING, NULL
+#define STRAND_GENERIC_NAME				STRAND_NAME("GENERIC", "NAME")
+#define STRAND_GENERIC_NAME_TYPE              		STRING, NULL
 
-#define ELEM_GENERIC_FLAGS				ELEM_NAME("GENERIC", "FLAGS")
-#define ELEM_GENERIC_FLAGS_TYPE              		UINT64, 0
+#define STRAND_GENERIC_FLAGS				STRAND_NAME("GENERIC", "FLAGS")
+#define STRAND_GENERIC_FLAGS_TYPE              		UINT64, 0
 
 // const
-#define ELEM_GENERIC_UID				ELEM_NAME("GENERIC", "UID")
-#define ELEM_GENERIC_UID_TYPE				UINT64, 0
+#define STRAND_GENERIC_UID				STRAND_NAME("GENERIC", "UID")
+#define STRAND_GENERIC_UID_TYPE				UINT64, 0
 
-#define ELEM_GENERIC_DESCRIPTION			ELEM_NAME("GENERIC", "DESCRIPTION")
-#define ELEM_GENERIC_DESCRIPTION_TYPE              	STRING, NULL
+#define STRAND_GENERIC_DESCRIPTION			STRAND_NAME("GENERIC", "DESCRIPTION")
+#define STRAND_GENERIC_DESCRIPTION_TYPE              	STRING, NULL
 
-#define ALL_ELEMS_GENERIC "UID", "DESCRIPTION",  "FLAGS", "NAME"
+#define ALL_STRANDS_GENERIC "UID", "DESCRIPTION", "FLAGS", "NAME"
 #define ALL_BUNDLES_GENERIC
 
-//// domain ELEMENT
+//// domain STRAND
 
-#define ELEM_ELEMENT_HIERARCHY	              	       	ELEM_NAME("ELEMENT", "HIERARCHY")
-#define ELEM_ELEMENT_HIERARCHY_TYPE	        	STRING, "ELEM_"
+#define STRAND_STRAND_HIERARCHY	              	       	STRAND_NAME("STRAND", "HIERARCHY")
+#define STRAND_STRAND_HIERARCHY_TYPE	        	STRING, "STRAND_"
 
-#define ELEM_ELEMENT_PTR_TO	              	       	ELEM_NAME("ELEMENT", "PTR_TO")
-#define ELEM_ELEMENT_PTR_TO_TYPE	      		VOIDPTR, NULL
+#define STRAND_STRAND_PTR_TO	              	       	STRAND_NAME("STRAND", "PTR_TO")
+#define STRAND_STRAND_PTR_TO_TYPE	      		VOIDPTR, NULL
 
-#define ALL_ELEMS_ELEMENT "PTR_TO"
-#define ALL_BUNDLES_ELEMENT_TYPE 
+#define ALL_STRANDS_STRAND "PTR_TO", "HIERARCHY"
+#define ALL_BUNDLES_STRAND_TYPE
 
 //// domain STANDARD - some standard bundle types
 
-#define BUNDLE_STANDARD_ATTR_BUNDLE			ELEM_NAME("STANDARD", "ATTRIBUTE")
-#define BUNDLE_STANDARD_ATTR_BUNDLE_TYPE       		ATTR_BUNDLE, NULL
-
-#define BUNDLE_STANDARD_ERROR				ELEM_NAME("STANDARD", "ERROR")
-#define BUNDLE_STANDARD_ERROR_TYPE       		EEROR_BUNDLE, NULL
-
-#define BUNDLE_STANDARD_ATTRIBUTE	       		ELEM_NAME("STANDARD", "ATTRIBUTE")
+#define BUNDLE_STANDARD_ATTRIBUTE	       		STRAND_NAME("STANDARD", "ATTRIBUTE")
 #define BUNDLE_STANDARD_ATTRIBUTE_TYPE			ATTRIBUTE, NULL
 
-#define BUNDLE_STANDARD_ATTR_DESC	       		ELEM_NAME("STANDARD", "ATTR_DESC")
+#define BUNDLE_STANDARD_ATTR_CON			STRAND_NAME("STANDARD", "ATTR_CONTAINER")
+#define BUNDLE_STANDARD_ATTR_CON_TYPE            	ATTR_CON, NULL
+
+#define BUNDLE_STANDARD_ATTR_VALUE			STRAND_NAME("STANDARD", "ATTR_VALUE")
+#define BUNDLE_STANDARD_ATTR_VALUE_TYPE            	ATTR_VALUE, NULL
+
+#define BUNDLE_STANDARD_ERROR				STRAND_NAME("STANDARD", "ERROR")
+#define BUNDLE_STANDARD_ERROR_TYPE       		EEROR_BUNDLE, NULL
+
+#define BUNDLE_STANDARD_ATTR_DESC	       		STRAND_NAME("STANDARD", "ATTR_DESC")
 #define BUNDLE_STANDARD_ATTR_DESC_TYPE			ATTR_DESC, NULL
 
-#define BUNDLE_STANDARD_ATTR_DESC_BUNDLE       		ELEM_NAME("STANDARD", "ATTR_DESC_BUNDLE")
-#define BUNDLE_STANDARD_ATTR_DESC_BUNDLE_TYPE	       	ATTR_DESC, NULL
+#define BUNDLE_STANDARD_ATTR_DESC_CON            	STRAND_NAME("STANDARD", "ATTR_DESC_CONTAINER")
+#define BUNDLE_STANDARD_ATTR_DESC_CON_TYPE      	ATTR_DESC_CON, NULL
 
-#define BUNDLE_STANDARD_CONTRACT	       		ELEM_NAME("STANDARD", "CONTRACT")
+#define BUNDLE_STANDARD_FUNC_DESC	       		STRAND_NAME("STANDARD", "FUNC_DESC")
+#define BUNDLE_STANDARD_FUNC_DESC_TYPE			FUNC_DESC, NULL
+
+#define BUNDLE_STANDARD_FUNC_MAP	       		STRAND_NAME("STANDARD", "FUNC_MAP")
+#define BUNDLE_STANDARD_FUNC_MAP_TYPE			FUNC_MAP, NULL
+
+#define BUNDLE_STANDARD_FUNC_DESC_CON            	STRAND_NAME("STANDARD", "FUNC_DESC_CONTAINER")
+#define BUNDLE_STANDARD_FUNC_DESC_CON_TYPE      	FUNC_DESC_CON, NULL
+
+#define BUNDLE_STANDARD_CONTRACT	       		STRAND_NAME("STANDARD", "CONTRACT")
 #define BUNDLE_STANDARD_CONTRACT_TYPE			CONTRACT, NULL
 
-#define BUNDLE_STANDARD_REFCOUNT       	       		ELEM_NAME("STANDARD", "REFCOUNT")
-#define BUNDLE_STANDARD_REFCOUNT_TYPE			REFCOUNT, NULL
+#define BUNDLE_STANDARD_FUNCTIONAL	       		STRAND_NAME("STANDARD", "FUNCTIONAL")
+#define BUNDLE_STANDARD_FUNCTIONAL_TYPE			FUNCTIONAL, NULL
 
-#define BUNDLE_STANDARD_CONDITION             		ELEM_NAME("STANDARD", "CONDITION")
-#define BUNDLE_STANDARD_CONDITION_TYPE			FUNCTION, NULL
+#define BUNDLE_STANDARD_SELECTOR             		STRAND_NAME("STANDARD", "SELECTOR")
+#define BUNDLE_STANDARD_SELECTOR_TYPE			SELECTOR, NULL
 
-/// domain VALUE - values are common to both attributes and elements
-  
-#define ELEM_VALUE_DATA		               	       	ELEM_NAME("VALUE", "DATA")
-#define ELEM_VALUE_DATA_TYPE	      			NONE,
+#define BUNDLE_STANDARD_LOCATOR             		STRAND_NAME("STANDARD", "LOCATOR")
+#define BUNDLE_STANDARD_LOCATOR_TYPE			LOCATOR, NULL
+
+#define BUNDLE_STANDARD_CASCADE             		STRAND_NAME("STANDARD", "CASCADE")
+#define BUNDLE_STANDARD_CASCADE_TYPE			CASCADE, NULL
+
+#define BUNDLE_STANDARD_REQUEST             		STRAND_NAME("STANDARD", "REQUEST")
+#define BUNDLE_STANDARD_REQUEST_TYPE			REQUEST, NULL
+
+#define BUNDLE_STANDARD_KEY_LOOKUP             		STRAND_NAME("STANDARD", "KEY_LOOKUP")
+#define BUNDLE_STANDARD_KEY_LOOKUP_TYPE			KEY_LOOKUP, NULL
+
+#define BUNDLE_STANDARD_MATRIX_2D             		STRAND_NAME("STANDARD", "MATRIX_2D")
+#define BUNDLE_STANDARD_MATRIX_2D_TYPE			MATRIX_2D, NULL
+
+/// domain VALUE - values are common to both attributes and strands
+
+#define STRAND_VALUE_DATA	               	       	STRAND_NAME("VALUE", "DATA")
+#define STRAND_VALUE_DATA_TYPE	      			NONE,
 
 // const if !none
-#define ELEM_VALUE_TYPE	   	   			ELEM_NAME("VALUE", "VALUE_TYPE")
-#define ELEM_VALUE_TYPE_TYPE	   	   		INT, ATTR_TYPE_NONE
+#define STRAND_VALUE_TYPE	      			STRAND_NAME("VALUE", "VALUE_TYPE")
+#define STRAND_VALUE_TYPE_TYPE	   	   		INT, ATTR_TYPE_NONE
 
-#define ELEM_VALUE_DEFAULT	      			ELEM_NAME("VALUE", "DEFAULT")
-#define ELEM_VALUE_DEFAULT_TYPE	      			NONE,
+#define STRAND_VALUE_DEFAULT	      			STRAND_NAME("VALUE", "DEFAULT")
+#define STRAND_VALUE_DEFAULT_TYPE      			NONE,
 
-#define ELEM_VALUE_NEW_DEFAULT	      			ELEM_NAME("VALUE", "NEW_DEFAULT")
-#define ELEM_VALUE_NEW_DEFAULT_TYPE     	       	NONE,
+#define STRAND_VALUE_NEW_DEFAULT       			STRAND_NAME("VALUE", "NEW_DEFAULT")
+#define STRAND_VALUE_NEW_DEFAULT_TYPE     	       	NONE,
 
 /////////////
 
-#define ELEM_VALUE_MAX_VALUES				ELEM_NAME("VALUE", "MAX_VALUES")
-#define ELEM_VALUE_MAX_VALUES_TYPE     		       	INT, -1
+#define STRAND_VALUE_MAX_VALUES				STRAND_NAME("VALUE", "MAX_VALUES")
+#define STRAND_VALUE_MAX_VALUES_TYPE     	       	INT, -1
 
-#define ELEM_VALUE_INTEGER				ELEM_NAME("VALUE", "DATA")
-#define ELEM_VALUE_INTEGER_TYPE			       	INT, 0
+#define STRAND_VALUE_INTEGER				STRAND_NAME("VALUE", "DATA")
+#define STRAND_VALUE_INTEGER_TYPE	       	       	INT, 0
 
-#define ELEM_VALUE_INT					ELEM_NAME("VALUE", "DATA")
-#define ELEM_VALUE_INT_TYPE			       	INT, 0
+#define STRAND_VALUE_INT			       	STRAND_NAME("VALUE", "DATA")
+#define STRAND_VALUE_INT_TYPE			       	INT, 0
 
-#define ELEM_VALUE_UINT					ELEM_NAME("VALUE", "DATA")
-#define ELEM_VALUE_UINT_TYPE			       	UINT, 0
+#define STRAND_VALUE_UINT		       		STRAND_NAME("VALUE", "DATA")
+#define STRAND_VALUE_UINT_TYPE			       	UINT, 0
 
-#define ELEM_VALUE_DOUBLE				ELEM_NAME("VALUE", "DATA")
-#define ELEM_VALUE_DOUBLE_TYPE			       	DOUBLE, 0.
-  
-#define ELEM_VALUE_BOOLEAN	      			ELEM_NAME("VALUE", "DATA")
-#define ELEM_VALUE_BOOLEAN_TYPE   	  	       	BOOLEAN, FALSE
+#define STRAND_VALUE_DOUBLE				STRAND_NAME("VALUE", "DATA")
+#define STRAND_VALUE_DOUBLE_TYPE	      	       	DOUBLE, 0.
 
-#define ELEM_VALUE_STRING	      			ELEM_NAME("VALUE", "DATA")
-#define ELEM_VALUE_STRING_TYPE   	  	       	STRING, NULL
+#define STRAND_VALUE_BOOLEAN	      			STRAND_NAME("VALUE", "DATA")
+#define STRAND_VALUE_BOOLEAN_TYPE   	  	       	BOOLEAN, FALSE
 
-#define ELEM_VALUE_INT64		       		ELEM_NAME("VALUE", "DATA")
-#define ELEM_VALUE_INT64_TYPE			       	INT64, 0
+#define STRAND_VALUE_STRING	      			STRAND_NAME("VALUE", "DATA")
+#define STRAND_VALUE_STRING_TYPE   	  	       	STRING, NULL
 
-#define ELEM_VALUE_UINT64		       		ELEM_NAME("VALUE", "DATA")
-#define ELEM_VALUE_UINT64_TYPE			       	UINT64, 0
+#define STRAND_VALUE_INT64		       		STRAND_NAME("VALUE", "DATA")
+#define STRAND_VALUE_INT64_TYPE			       	INT64, 0
 
-#define ELEM_VALUE_VOIDPTR      			ELEM_NAME("VALUE", "DATA")
-#define ELEM_VALUE_VOIDPTR_TYPE 	    	       	VOIDPTR, NULL
+#define STRAND_VALUE_UINT64		       		STRAND_NAME("VALUE", "DATA")
+#define STRAND_VALUE_UINT64_TYPE	       	       	UINT64, 0
 
-#define ELEM_VALUE_FUNCPTR      			ELEM_NAME("VALUE", "DATA")
-#define ELEM_VALUE_FUNCPTR_TYPE 	    	       	FUNCPTR, NULL
+#define STRAND_VALUE_VOIDPTR      			STRAND_NAME("VALUE", "DATA")
+#define STRAND_VALUE_VOIDPTR_TYPE 	    	       	VOIDPTR, NULL
 
-#define ELEM_VALUE_BUNDLEPTR      			ELEM_NAME("VALUE", "DATA")
-#define ELEM_VALUE_BUNDLEPTR_TYPE 	    	       	BUNDLEPTR, NULL
+#define STRAND_VALUE_FUNCPTR      			STRAND_NAME("VALUE", "DATA")
+#define STRAND_VALUE_FUNCPTR_TYPE 	    	       	FUNCPTR, NULL
 
-#define BUNDLE_VALUE_MAPPED	              	       	ELEM_NAME("VALUE", "MAPPPED")
+#define STRAND_VALUE_BUNDLEPTR      			STRAND_NAME("VALUE", "DATA")
+#define STRAND_VALUE_BUNDLEPTR_TYPE 	    	       	BUNDLEPTR, NULL
+
+#define STRAND_VALUE_CONST_BUNDLEPTR   	   	       	STRAND_NAME("VALUE", "DATA")
+#define STRAND_VALUE_CONST_BUNDLEPTR_TYPE     	       	CONST_BUNDLEPTR, NULL
+
+#define STRAND_VALUE_KEYED_ARRAY   	   	       	STRAND_NAME("VALUE", "KEYED_ARRAY")
+#define STRAND_VALUE_KEYED_ARRAY_TYPE        	       	KEYED_ARRAY, NULL
+
+#define BUNDLE_VALUE_MAPPED	              	       	STRAND_NAME("VALUE", "MAPPPED")
 #define BUNDLE_VALUE_MAPPED_TYPE              		MAPPED_VALUE, NULL
 
-#define BUNDLE_VALUE_CHANGE	              	       	ELEM_NAME("VALUE", "CHANGE")
+#define BUNDLE_VALUE_CHANGE	              	       	STRAND_NAME("VALUE", "CHANGE")
 #define BUNDLE_VALUE_CHANGE_TYPE              		VALUE_CHANGE, NULL
 
-#define BUNDLE_VALUE_ANY_BUNDLE	              	       	ELEM_NAME("VALUE", "ANY_BUNDLE")
-#define BUNDLE_VALUE_ANY_BUNDLE_TYPE          		ANY_BUNDLE, NULL
+#define STRAND_VALUE_ANY_BUNDLE	              	       	STRAND_NAME("VALUE", "ANY_BUNDLE")
+#define STRAND_VALUE_ANY_BUNDLE_TYPE          		BUNDLEPTR, NULL
 
-#define ELEM_VALUE_USER_DATA      			ELEM_NAME("VALUE", "USER_DATA")
-#define ELEM_VALUE_USER_DATA_TYPE 	    	       	VOIDPTR, NULL
-  
+#define STRAND_VALUE_USER_DATA      			STRAND_NAME("VALUE", "USER_DATA")
+#define STRAND_VALUE_USER_DATA_TYPE 	    	       	VOIDPTR, NULL
+
+#define BUNDLE_VALUE_OLD      				STRAND_NAME("VALUE", "OLD")
+#define BUNDLE_VALUE_OLD_TYPE 	    		       	VALUE, NULL
+
+#define BUNDLE_VALUE_NEW      				STRAND_NAME("VALUE", "NEW")
+#define BUNDLE_VALUE_NEW_TYPE 	    		       	VALUE, NULL
+
 // domain AUTOMATION
 
-#define BUNDLE_AUTOMATION_CONDITION                   	ELEM_NAME("AUTOMATION", "CONDITION")
-#define BUNDLE_AUTOMATION_CONDITION_TYPE      		FUNCTION, NULL
+#define BUNDLE_AUTOMATION_CONDITION  	             	STRAND_NAME("AUTOMATION", "CONDITION")
+#define BUNDLE_AUTOMATION_CONDITION_TYPE      		SCRIPTLET, NULL
 
-#define ELEM_AUTOMATION_SCRIPT                   	ELEM_NAME("AUTOMATION", "SCRIPT")
-#define ELEM_AUTOMATION_SCRIPT_TYPE      		STRING, NULL
+#define BUNDLE_AUTOMATION_SCRIPT                   	STRAND_NAME("AUTOMATION", "SCRIPT")
+#define BUNDLE_AUTOMATION_SCRIPT_TYPE      		SCRIPTLET, NULL
+
+// domain SRIPTLET
+
+#define STRAND_SCRIPTLET_CATEGORY	      		STRAND_NAME("SCRIPTLET", "CATEGORY")
+#define STRAND_SCRIPTLET_CATEGORY_TYPE	      		INT, 0
+
+#define STRAND_SCRIPTLET_STRINGS	      		STRAND_NAME("SCRIPTLET", "STRINGS")
+#define STRAND_SCRIPTLET_STRINGS_TYPE	      		STRING, NULL
+
+// domain LOCATOR
+
+#define STRAND_LOCATOR_UNIT    		               	STRAND_NAME("LOCATOR", "UNIT")
+#define STRAND_LOCATOR_UNIT_TYPE      			STRING, NULL
+
+#define STRAND_LOCATOR_SUB_UNIT    	               	STRAND_NAME("LOCATOR", "SUB_UNIT")
+#define STRAND_LOCATOR_SUB_UNIT_TYPE           		STRING, NULL
+
+#define STRAND_LOCATOR_INDEX           	               	STRAND_NAME("LOCATOR", "INDEX")
+#define STRAND_LOCATOR_INDEX_TYPE      			INT64, NULL
+
+#define STRAND_LOCATOR_SUB_INDEX    	               	STRAND_NAME("LOCATOR", "SUB_INDEX")
+#define STRAND_LOCATOR_SUB_INDEX_TYPE          		INT64, NULL
 
 // domain datetime
-  
-#define ELEM_DATETIME_TIMESTAMP                   	ELEM_NAME("DATETIME", "TIMESTAMP")
-#define ELEM_DATETIME_TIMEPSTAMP_TYPE      		INT64, NULL
 
-#define ELEM_DATETIME_DELTA 	                  	ELEM_NAME("DATETIME", "DELTA")
-#define ELEM_DATETIME_DELTA_TYPE 	     		INT64, NULL
+#define STRAND_DATETIME_TIMESTAMP                   	STRAND_NAME("DATETIME", "TIMESTAMP")
+#define STRAND_DATETIME_TIMESTAMP_TYPE      		INT64, NULL
 
-#define ELEM_DATETIME_START  	                 	ELEM_NAME("DATETIME", "STOP")
-#define ELEM_DATETIME_START_TYPE 	     		INT64, NULL
+#define STRAND_DATETIME_DELTA 	                  	STRAND_NAME("DATETIME", "DELTA")
+#define STRAND_DATETIME_DELTA_TYPE 	     		INT64, NULL
+
+#define STRAND_DATETIME_START  	                 	STRAND_NAME("DATETIME", "START")
+#define STRAND_DATETIME_START_TYPE 	     		INT64, NULL
+
+#define STRAND_DATETIME_END  	                 	STRAND_NAME("DATETIME", "END")
+#define STRAND_DATETIME_END_TYPE 	     		INT64, NULL
+
+#define STRAND_DATETIME_CURENT                        	STRAND_NAME("DATETIME", "CURRENT")
+#define STRAND_DATETIME_CURRENT_TYPE 	     		INT64, NULL
+
+#define STRAND_DATETIME_FIRST                        	STRAND_NAME("DATETIME", "FIRST")
+#define STRAND_DATETIME_FIRST_TYPE 	     		INT64, NULL
+
+#define STRAND_DATETIME_LAST                        	STRAND_NAME("DATETIME", "LAST")
+#define STRAND_DATETIME_LAST_TYPE 	     		INT64, NULL
+
+#define STRAND_DATETIME_DEADLINE                      	STRAND_NAME("DATETIME", "DEADLINE")
+#define STRAND_DATETIME_DEADLINE_TYPE 	     		INT64, NULL
 
 // domain CASCADE
-  
-#define BUNDLE_CASCADE_DECISION_NODE			ELEM_NAME("CASCADE", "DECISION_NODE")
+
+#define BUNDLE_CASCADE_DECISION_NODE			STRAND_NAME("CASCADE", "DECISION_NODE")
 #define BUNDLE_CASCADE_DECISION_NODE_TYPE      		CONDVAL_NODE, NULL
 
-#define BUNDLE_CASCADE_CONSTVAL_MAP			ELEM_NAME("CASCADE", "CONSTVAL_MAP")
+#define STRAND_CASCADE_VALUE				STRAND_NAME("CASCADE", "VALUE")
+#define STRAND_CASCADE_VALUE_TYPE    	      		BUNDLEPTR, NULL
+
+#define BUNDLE_CASCADE_CONSTVAL_MAP			STRAND_NAME("CASCADE", "CONSTVAL_MAP")
 #define BUNDLE_CASCADE_CONSTVAL_MAP_TYPE      		CONSTVAL_MAP, NULL
 
-#define BUNDLE_CASCADE_MATRIX_NODE			ELEM_NAME("CASCADE", "MATRIX_NODE")
+#define BUNDLE_CASCADE_MATRIX_NODE			STRAND_NAME("CASCADE", "MATRIX_NODE")
 #define BUNDLE_CASCADE_MATRIX_NODE_TYPE	      		CASCMATRIX_NODE, NULL
 
-#define BUNDLE_CASCADE_MATRIX				ELEM_NAME("CASCADE", "MATRIX")
+#define BUNDLE_CASCADE_MATRIX				STRAND_NAME("CASCADE", "MATRIX")
 #define BUNDLE_CASCADE_MATRIX_TYPE	      		MATRIX_2D, NULL
 
-#define BUNDLE_CASCADE_CONDLOGIC			ELEM_NAME("CASCADE", "CONDLOGIC")
+#define BUNDLE_CASCADE_CONDLOGIC			STRAND_NAME("CASCADE", "CONDLOGIC")
 #define BUNDLE_CASCADE_CONDLOGIC_TYPE			CONDLOGIC, NULL
 
 // domain CASCMATRIX
 
-#define BUNDLE_CASCMATRIX_ON_SUCCESS			ELEM_NAME("CASCMATRIX", "ON_SCUCCESS")
+#define BUNDLE_CASCMATRIX_ON_SUCCESS			STRAND_NAME("CASCMATRIX", "ON_SCUCCESS")
 #define BUNDLE_CASCMATRIX_ON_SUCCESS_TYPE		CASCMATRIX_NDOE, NULL
 
-#define BUNDLE_CASCMATRIX_ON_FAIL			ELEM_NAME("CASCMATRIX", "ON_FAIL")
+#define BUNDLE_CASCMATRIX_ON_FAIL			STRAND_NAME("CASCMATRIX", "ON_FAIL")
 #define BUNDLE_CASCMATRIX_ON_FAIL_TYPE			CASCMATRIX_NDOE, NULL
 
-#define ELEM_CASCMATRIX_OP_SUCESS			ELEM_NAME("CASCMATRIX", "OP_SUCCESS")
-#define ELEM_CASCMATRIX_OP_SUCESS_TYPE			INT, CASC_MATRIX_NOOP
+#define STRAND_CASCMATRIX_OP_SUCCESS			STRAND_NAME("CASCMATRIX", "OP_SUCCESS")
+#define STRAND_CASCMATRIX_OP_SUCCESS_TYPE      		INT, CASC_MATRIX_NOOP
 
-#define ELEM_CASCMATRIX_OP_FAIL				ELEM_NAME("CASCMATRIX", "OP_FAIL")
-#define ELEM_CASCMATRIX_OP_FAIL_TYPE			INT, CASC_MATRIX_NOOP
+#define STRAND_CASCMATRIX_OP_FAIL	       		STRAND_NAME("CASCMATRIX", "OP_FAIL")
+#define STRAND_CASCMATRIX_OP_FAIL_TYPE			INT, CASC_MATRIX_NOOP
 
-#define ELEM_CASCMATRIX_OTHER_IDX			ELEM_NAME("CASCMATRIX", "OTHER_IDX")
-#define ELEM_CASCMATRIX_OTHER_IDX_TYPE			INT, -1
+#define STRAND_CASCMATRIX_P_SUCESS			STRAND_NAME("CASCMATRIX", "P_SUCCESS")
+#define STRAND_CASCMATRIX_P_SUCESS_TYPE       		DOUBLE, 0.
+
+#define STRAND_CASCMATRIX_P_FAIL			STRAND_NAME("CASCMATRIX", "P_FAIL")
+#define STRAND_CASCMATRIX_P_FAIL_TYPE       		DOUBLE, 0.
+
+#define STRAND_CASCMATRIX_WEIGHT			STRAND_NAME("CASCMATRIX", "WEIGHT")
+#define STRAND_CASCMATRIX_WEIGHT_TYPE       		DOUBLE, 0.
+
+#define STRAND_CASCMATRIX_NRUNS				STRAND_NAME("CASCMATRIX", "NRUNS")
+#define STRAND_CASCMATRIX_NRUNS_TYPE       		INT, 0.
+
+#define STRAND_CASCMATRIX_OTHER_IDX			STRAND_NAME("CASCMATRIX", "OTHER_IDX")
+#define STRAND_CASCMATRIX_OTHER_IDX_TYPE       		INT, -1
 
 // domain MATRIX
 
-#define BUNDLE_MATRIX_ROW				ELEM_NAME("MATRIX", "ROW")
+#define BUNDLE_MATRIX_ROW				STRAND_NAME("MATRIX", "ROW")
 #define BUNDLE_MATRIX_ROW_TYPE				MATRIX_ROW, NULL
 
+// domain CONDVAL
+#define STRAND_CONDVAL_CURRENT				STRAND_NAME("CONDVAL", "CURRENT")
+#define STRAND_CONDVAL_CURRENT_TYPE	       		CONDMAP_NODE, NULL
+
 // domain LOGIC
-#define ELEM_LOGIC_OP
+#define STRAND_LOGIC_OP					STRAND_NAME("LOCIC", "OP")
+#define STRAND_LOGIC_OP_TYPE				INT, LOGIC_LAST
 
-#define ELEM_LOGIC_NOT					ELEM_NAME("LOCIC", "AND")
-#define ELEM_LOGIC_NOT_TYPE			       	INT, LOGICAL_AND
+#define STRAND_LOGIC_NOT	       			STRAND_NAME("LOCIC", "NOT")
+#define STRAND_LOGIC_NOT_TYPE			       	INT, LOGICAL_NOT
 
-#define ELEM_LOGIC_AND					ELEM_NAME("LOCIC", "AND")
-#define ELEM_LOGIC_AND_TYPE			       	INT, LOGICAL_AND
+#define STRAND_LOGIC_AND		       		STRAND_NAME("LOCIC", "AND")
+#define STRAND_LOGIC_AND_TYPE			       	INT, LOGICAL_AND
 
-#define ELEM_LOGIC_OR					ELEM_NAME("LOCIC", "OR")
-#define ELEM_LOGIC_OR_TYPE		    	   	INT, LOGICAL_OR
+#define STRAND_LOGIC_OR					STRAND_NAME("LOCIC", "OR")
+#define STRAND_LOGIC_OR_TYPE		    	   	INT, LOGICAL_OR
 
-#define ELEM_LOGIC_XOR					ELEM_NAME("LOCIC", "XOR")
-#define ELEM_LOGIC_XOR_TYPE		    	   	INT, LOGICAL_XOR
+#define STRAND_LOGIC_XOR		       		STRAND_NAME("LOCIC", "XOR")
+#define STRAND_LOGIC_XOR_TYPE		    	   	INT, LOGICAL_XOR
 
 /// domain ATTRIBUTE
 
-#define BUNDLE_ATTRIBUTE_CONNECTION	       		ELEM_NAME("ATTRIBUTE", "CONNECTION")
+#define STRAND_ATTRIBUTE_VALUE_TYPE	       		STRAND_NAME("ATTRIBUTE", "VALUE_TYPE")
+#define STRAND_ATTRIBUTE_VALUE_TYPE_TYPE  		UINT, ATTR_TYPE_NONE
+
+#define BUNDLE_ATTRIBUTE_CONNECTION	       		STRAND_NAME("ATTRIBUTE", "CONNECTION")
 #define BUNDLE_ATTRIBUTE_CONNECTION_TYPE  		ATTR_CONNECTION, NULL
+
+#define BUNDLE_ATTRIBUTE_HOOK_STACK	       		STRAND_NAME("ATTRIBUTE", "HOOK_STACK")
+#define BUNDLE_ATTRIBUTE_HOOK_STACK_TYPE  		HOOK_STACK, NULL
+
+// emissions are from source in caller object, to dest in target object
+#define BUNDLE_EMISSION_CALLER		       		STRAND_NAME("EMISSION", "CALLER")
+#define BUNDLE_EMISSION_CALLER_TYPE			OBJECT, NULL
+
+#define BUNDLE_EMISSION_SOURCE		       		STRAND_NAME("EMISSION", "SOURCE")
+#define BUNDLE_EMISSION_SOURCE_TYPE			SELECTOR, NULL
+
+#define BUNDLE_EMISSION_TARGET		       		STRAND_NAME("EMISSION", "TARGET")
+#define BUNDLE_EMISSION_TARGET_TYPE			OBJECT, NULL
+
+#define BUNDLE_EMISSION_DEST		       		STRAND_NAME("EMISSION", "DEST")
+#define BUNDLE_EMISSION_DEST_TYPE			SELECTOR, NULL
 
 // domain FUNCTION
 
-#define BUNDLE_FUNCTION_INPUT		       		ELEM_NAME("HOOK", "INPUT_BUNDLE")
+#define STRAND_FUNCTION_CATEGORY	      		STRAND_NAME("FUNCTION", "CATEGORY")
+#define STRAND_FUNCTION_CATEGORY_TYPE	      		INT, 0
+
+#define BUNDLE_FUNCTION_INPUT		       		STRAND_NAME("FUNCTION", "INPUT_BUNDLE")
 #define BUNDLE_FUNCTION_INPUT_TYPE			FN_INPUT, NULL
 
-#define BUNDLE_FUNCTION_OUTPUT		       		ELEM_NAME("FUNCTION", "OUTPUT_BUNDLE")
+#define BUNDLE_FUNCTION_OUTPUT		       		STRAND_NAME("FUNCTION", "OUTPUT_BUNDLE")
 #define BUNDLE_FUNCTION_OUTPUT_TYPE			FN_OUTPUT, NULL
 
-// functions are called from source item in caller object
-// functions are sent to dest item in target object
-#define BUNDLE_FUNCTION_CALLER		       		ELEM_NAME("FUNCTION", "CALLER")
-#define BUNDLE_FUNCTION_CALLER_TYPE			OBJECT, NULL
+#define BUNDLE_FUNCTION_SCRIPT		       		STRAND_NAME("FUNCTION", "SCRIPT")
+#define BUNDLE_FUNCTION_SCRIPT_TYPE			SCRIPTLET, NULL
 
-#define BUNDLE_FUNCTION_SOURCE		       		ELEM_NAME("FUNCTION", "SOURCE")
-#define BUNDLE_FUNCTION_SOURCE_TYPE			SOURCE, NULL
+#define STRAND_FUNCTION_OBJ_FUNCTION	       	     	STRAND_NAME("FUNCTION", "OBJ_FUNCTION")
+#define STRAND_FUNCTION_OBJ_FUNCTION_TYPE      	     	FUNCPTR, NULL
 
-#define BUNDLE_FUNCTION_TARGET		       		ELEM_NAME("FUNCTION", "TARGET")
-#define BUNDLE_FUNCTION_TARGET_TYPE			OBJECT, NULL
+#define STRAND_FUNCTION_NATIVE_FUNCTION		     	STRAND_NAME("FUNCTION", "NATIVE_FUNCTION")
+#define STRAND_FUNCTION_NATIVE_FUNCTION_TYPE           	FUNCPTR, NULL
 
-#define BUNDLE_FUNCTION_DEST		       		ELEM_NAME("FUNCTION", "DEST")
-#define BUNDLE_FUNCTION_DEST_TYPE			ANY_BUNDLE, NULL
+#define STRAND_FUNCTION_PARAM_NUM	      		STRAND_NAME("FUNCTION", "PARAM_NUMBER")
+#define STRAND_FUNCTION_PARAM_NUM_TYPE	      		INT, 0
 
-#define ELEM_FUNCTION_OBJ_FUNCTION	       	     	ELEM_NAME("FUNCTION", "OBJ_FUNCTION")
-#define ELEM_FUNCTION_OBJ_FUNCTION_TYPE		     	FUNCPTR, NULL
+#define STRAND_FUNCTION_RESPONSE	       		STRAND_NAME("FUNCTION", "RESPONSE")
+#define STRAND_FUNCTION_RESPONSE_TYPE         		INT64, 0
 
-#define ELEM_FUNCTION_NATIVE_FUNCTION		     	ELEM_NAME("FUNCTION", "NATIVE_FUNCTION")
-#define ELEM_FUNCTION_NATIVE_FUNCTION_TYPE     	     	FUNCPTR, NULL
-
-#define ELEM_FUNCTION_PARAM_NUM				ELEM_NAME("FUNCTION", "PARAM_NUMBER")
-#define ELEM_FUNCTION_PARAM_NUM_TYPE	      		INT, 0
-
-#define ELEM_FUNCTION_RETURN_VALUE	       		ELEM_NAME("FUNCTION", "RETURN_VALUE")
-#define ELEM_FUNCTION_RETURN_VALUE_TYPE       		INT64, 0
-
-#define BUNDLE_FUNCTION_MAPPING				ELEM_NAME("FUNCTION", "MAPPING")
+#define BUNDLE_FUNCTION_MAPPING				STRAND_NAME("FUNCTION", "MAPPING")
 #define BUNDLE_FUNCTION_MAPPING_TYPE			PMAP_DESC, NULL
 
+#define BUNDLE_FUNCTION_REV_PMAP	       		STRAND_NAME("FUNCTION", "REV_PMAP")
+#define BUNDLE_FUNCTION_REV_PMAP_TYPE			PMAP, NULL
+
+#define BUNDLE_FUNCTION_PMAP_IN				STRAND_NAME("FUNCTION", "PMAP_IN")
+#define BUNDLE_FUNCTION_PMAP_IN_TYPE			PMAP, NULL
+
+#define BUNDLE_FUNCTION_PMAP_OUT	       		STRAND_NAME("FUNCTION", "PMAP_OUT")
+#define BUNDLE_FUNCTION_PMAP_OUT_TYPE			PMAP, NULL
+
 // domain THREADS
-#define ELEM_THREADS_NATIVE_THREAD		       	ELEM_NAME("THREADS", "NATIVE_THREAD")
-#define ELEM_THREADS_NATIVE_THREAD_TYPE        		VOIDPTR, NULL
+#define STRAND_THREADS_NATIVE_THREAD		       	STRAND_NAME("THREADS", "NATIVE_THREAD")
+#define STRAND_THREADS_NATIVE_THREAD_TYPE     		VOIDPTR, NULL
 
-#define ELEM_THREADS_NATIVE_STATE		       	ELEM_NAME("THREADS", "NATIVE_STATE")
-#define ELEM_THREADS_NATIVE_STATE_TYPE        		UINT64, NULL
+#define STRAND_THREADS_NATIVE_STATE		       	STRAND_NAME("THREADS", "NATIVE_STATE")
+#define STRAND_THREADS_NATIVE_STATE_TYPE       		UINT64, NULL
 
-#define ELEM_THREADS_FLAGS			       	ELEM_NAME("THREADS", "FLAGS")
-#define ELEM_THREADS_FLAGS_TYPE 	       		UINT64, NULL
+#define STRAND_THREADS_FLAGS			       	STRAND_NAME("THREADS", "FLAGS")
+#define STRAND_THREADS_FLAGS_TYPE 	       		UINT64, NULL
 
-#define ELEM_THREADS_MUTEX				ELEM_NAME("THREADS", "MUTEX")
-#define ELEM_THREADS_MUTEX_TYPE				VOIDPTR, NULL
+#define STRAND_THREADS_MUTEX				STRAND_NAME("THREADS", "MUTEX")
+#define STRAND_THREADS_MUTEX_TYPE	       		VOIDPTR, NULL
 
-#define BUNDLE_THREAD_INSTANCE				ELEM_NAME("THREAD", "INSTANCE")
+#define BUNDLE_THREAD_INSTANCE				STRAND_NAME("THREAD", "INSTANCE")
 #define BUNDLE_THREAD_INSTANCE_TYPE    			THREAD_INSTANCE, NULL
 
 // domain INTROSPECTION
 // item which should be added to every bundldef, it is designed to allow
 // the bundle creator to store the pared down strands used to construct the bundle
-#define ELEM_INTROSPECTION_BLUEPRINT    		ELEM_NAME("INTROSPECTION", "BLUEPRINT")
-#define ELEM_INTROSPECTION_BLUEPRINT_TYPE              	STRING, NULL
+#define BUNDLE_INTROSPECTION_BLUEPRINT    		STRAND_NAME("INTROSPECTION", "BLUEPRINT")
+#define BUNDLE_INTROSPECTION_BLUEPRINT_TYPE            	BLUEPRINT, NULL
 
 // as an alternative this can be used instead to point to a static copy of the strands
-#define ELEM_INTROSPECTION_BLUEPRINT_PTR    	       	ELEM_NAME("INTROSPECTION", "BLUEPRINT_PTR")
-#define ELEM_INTROSPECTION_BLUEPRINT_PTR_TYPE          	VOIDPTR, NULL
+#define STRAND_INTROSPECTION_BLUEPRINT_PTR    	       	STRAND_NAME("INTROSPECTION", "BLUEPRINT_PTR")
+#define STRAND_INTROSPECTION_BLUEPRINT_PTR_TYPE        	VOIDPTR, NULL
 
-#define ELEM_INTROSPECTION_COMMENT    			ELEM_NAME("INTROSPECTION", "COMMENT")
-#define ELEM_INTROSPECTION_COMMENT_TYPE       	       	STRING, NULL
+#define BUNDLE_INTROSPECTION_REFCOUNT       	       	STRAND_NAME("INTROSPECTION", "REFCOUNT")
+#define BUNDLE_INTROSPECTION_REFCOUNT_TYPE     		REFCOUNT, NULL
 
-#define ELEM_INTROSPECTION_PRIVATE_DATA			ELEM_NAME("INTROSPECTION", "PRIVATE_DATA")
-#define ELEM_INTROSPECTION_PRIVATE_DATA_TYPE		VOIDPTR, NULL
+#define STRAND_INTROSPECTION_COMMENT    	       	STRAND_NAME("INTROSPECTION", "COMMENT")
+#define STRAND_INTROSPECTION_COMMENT_TYPE      	       	STRING, NULL
 
-#define ELEM_INTROSPECTION_NATIVE_TYPE 			ELEM_NAME("INTROSPECTION", "NATIVE_TYPE")
-#define ELEM_INTROSPECTION_NATIVE_TYPE_TYPE 	       	INT, 0
+#define STRAND_INTROSPECTION_PRIVATE_DATA	       	STRAND_NAME("INTROSPECTION", "PRIVATE_DATA")
+#define STRAND_INTROSPECTION_PRIVATE_DATA_TYPE		VOIDPTR, NULL
 
-#define ELEM_INTROSPECTION_NATIVE_SIZE	 	       	ELEM_NAME("INTROSPECTION", "NATIVE_SIZE")
-#define ELEM_INTROSPECTION_NATIVE_SIZE_TYPE		UINT64, 0
+#define STRAND_INTROSPECTION_NATIVE_TYPE 	       	STRAND_NAME("INTROSPECTION", "NATIVE_TYPE")
+#define STRAND_INTROSPECTION_NATIVE_TYPE_TYPE 	       	INT, 0
 
-#define ELEM_INTROSPECTION_NATIVE_PTR 			ELEM_NAME("INTROSPECTION", "NATIVE_PTR")
-#define ELEM_INTROSPECTION_NATIVE_PTR_TYPE		VOIDPTR, NULL
+#define STRAND_INTROSPECTION_NATIVE_SIZE      	       	STRAND_NAME("INTROSPECTION", "NATIVE_SIZE")
+#define STRAND_INTROSPECTION_NATIVE_SIZE_TYPE		UINT64, 0
 
-#define ALL_ELEMS_INTROSPECTION "BLUEPRINT", "BLUEPRINT_PTR", "COMMENT", "REFCOUNT", "PRIVATE_DATA", \
+#define STRAND_INTROSPECTION_NATIVE_PTR        		STRAND_NAME("INTROSPECTION", "NATIVE_PTR")
+#define STRAND_INTROSPECTION_NATIVE_PTR_TYPE		VOIDPTR, NULL
+
+#define ALL_STRANDS_INTROSPECTION "BLUEPRINT", "BLUEPRINT_PTR", "COMMENT", "REFCOUNT", "PRIVATE_DATA", \
     "NATIVE_PTR", "NATIVE_SIZE", "NATIVE_TYPE"
 #define ALL_BUNDLES_INTROSPECTION
 
-//////////// BUNDLE SPECIFIC ELEMENTS /////
+//////////// BUNDLE SPECIFIC STRANDS /////
 
 ///// domain ICAP
 
-#define ELEM_ICAP_INTENTION				ELEM_NAME("ICAP", "INTENTION")
-#define ELEM_ICAP_INTENTION_TYPE              		INT, OBJ_INTENTION_NONE
+#define STRAND_ICAP_INTENTION				STRAND_NAME("ICAP", "INTENTION")
+#define STRAND_ICAP_INTENTION_TYPE             		INT, OBJ_INTENTION_NONE
 
-#define ELEM_ICAP_CAPACITY				ELEM_NAME("ICAP", "CAPACITY")
-#define ELEM_ICAP_CAPACITY_TYPE              		STRING, NULL
+#define STRAND_ICAP_CAPACITY				STRAND_NAME("ICAP", "CAPACITY")
+#define STRAND_ICAP_CAPACITY_TYPE              		STRING, NULL
 
 ////////// domain OBJECT
 
-#define ELEM_OBJECT_TYPE				ELEM_NAME("OBJECT", "TYPE")
-#define ELEM_OBJECT_TYPE_TYPE				UINT64, OBJECT_TYPE_UNDEFINED
+#define STRAND_OBJECT_TYPE				STRAND_NAME("OBJECT", "TYPE")
+#define STRAND_OBJECT_TYPE_TYPE				UINT64, OBJECT_TYPE_UNDEFINED
 
-#define BUNDLE_OBJECT_ACTIVE_TRANSFORMS	       		ELEM_NAME("OBJECT", "ACTIVE_TRANSFORMS")
+#define BUNDLE_OBJECT_ACTIVE_TRANSFORMS	       		STRAND_NAME("OBJECT", "ACTIVE_TRANSFORMS")
 #define BUNDLE_OBJECT_ACTIVE_TRANSFORMS_TYPE	       	TRANSFORM, NULL
 
-#define ELEM_OBJECT_SUBTYPE				ELEM_NAME("OBJECT", "SUBTYPE")
-#define ELEM_OBJECT_SUBTYPE_TYPE	       		UINT64, NO_SUBTYPE
+#define BUNDLE_OBJECT_ATTRIBUTES	       		STRAND_NAME("OBJECT", "ATTRIBUTES")
+#define BUNDLE_OBJECT_ATTRIBUTES_TYPE	  	     	ATTR_CON, NULL
 
-#define ELEM_OBJECT_STATE				ELEM_NAME("OBJECT", "STATE")
-#define ELEM_OBJECT_STATE_TYPE		       		UINT64, OBJ_STATE_TEMPLATE
+#define STRAND_OBJECT_SUBTYPE				STRAND_NAME("OBJECT", "SUBTYPE")
+#define STRAND_OBJECT_SUBTYPE_TYPE	       		UINT64, NO_SUBTYPE
+
+#define STRAND_OBJECT_STATE				STRAND_NAME("OBJECT", "STATE")
+#define STRAND_OBJECT_STATE_TYPE	       		UINT64, OBJ_STATE_TEMPLATE
+
+#define BUNDLE_OBJECT_CONTRACTS	 	      		STRAND_NAME("OBJECT", "CONTRACT")
+#define BUNDLE_OBJECT_CONTRACTS_TYPE			CONTRACT, NULL
 
 ///// domain HOOK
 
 // this is one of three basic patterns
-#define ELEM_HOOK_TYPE					ELEM_NAME("HOOK", "TYPE")
-#define ELEM_HOOK_TYPE_TYPE				INT, 0
+#define STRAND_HOOK_TYPE		       		STRAND_NAME("HOOK", "TYPE")
+#define STRAND_HOOK_TYPE_TYPE				INT, 0
 
 // after the template callback modified by flags is called
 // the value is cascaded by automation, resulting in a differentiatied value
 // the second value is then triggered either during or after the first
 // custom hooks can be added by adding new cascade conditions mapping to a new value
 // depending on the basic pattern the new hook number must be attached to a
-// specific element or attribute value (for data hook) or else must map to an update value
+// specific strand or attribute value (for data hook) or else must map to an update value
 // intent (for request hooks), or for spntaneous hooks, this must map to a structure transform
 // in include in an existing or custom structure subtype
-#define ELEM_HOOK_NUMBER	       			ELEM_NAME("HOOK", "NUMBER")
-#define ELEM_HOOK_NUMBER_TYPE				INT, 0
+#define STRAND_HOOK_NUMBER	       			STRAND_NAME("HOOK", "NUMBER")
+#define STRAND_HOOK_NUMBER_TYPE				INT, 0
 
-#define ELEM_HOOK_HANDLE				ELEM_NAME("HOOK", "HANDLE")
-#define ELEM_HOOK_HANDLE_TYPE				UINT, 0
+#define STRAND_HOOK_HANDLE				STRAND_NAME("HOOK", "HANDLE")
+#define STRAND_HOOK_HANDLE_TYPE				UINT, 0
 
 // the name of the item which triggers the hook
-#define ELEM_HOOK_TARGET				ELEM_NAME("HOOK", "TARGET")
-#define ELEM_HOOK_TARGET_TYPE				STRING, NULL
+#define STRAND_HOOK_TARGET				STRAND_NAME("HOOK", "TARGET")
+#define STRAND_HOOK_TARGET_TYPE				STRING, NULL
 
-#define ELEM_HOOK_FLAGS					ELEM_NAME("HOOK", "FLAGS")
-#define ELEM_HOOK_FLAGS_TYPE				UINT64, 0
+#define STRAND_HOOK_FLAGS		       		STRAND_NAME("HOOK", "FLAGS")
+#define STRAND_HOOK_FLAGS_TYPE				UINT64, 0
 
-#define ELEM_HOOK_CB_DATA		       		ELEM_NAME("HOOK", "CB_DATA")
-#define ELEM_HOOK_CB_DATA_TYPE				VOIDPTR, NULL
+#define STRAND_HOOK_CB_DATA		       		STRAND_NAME("HOOK", "CB_DATA")
+#define STRAND_HOOK_CB_DATA_TYPE       			VOIDPTR, NULL
 
-#define ELEM_HOOK_COND_STATE				ELEM_NAME("HOOK", "COND_STATE")
-#define ELEM_HOOK_COND_STATE_TYPE	       		BOOLEAN, TRUE
+#define STRAND_HOOK_COND_STATE				STRAND_NAME("HOOK", "COND_STATE")
+#define STRAND_HOOK_COND_STATE_TYPE	       		BOOLEAN, TRUE
 
-#define BUNDLE_HOOK_CALLBACK		       		ELEM_NAME("HOOK", "CALLBACK")
+#define BUNDLE_HOOK_CALLBACK		       		STRAND_NAME("HOOK", "CALLBACK")
 #define BUNDLE_HOOK_CALLBACK_TYPE			HOOK_CB_FUNC, NULL
 
-#define BUNDLE_HOOK_DETAILS		       		ELEM_NAME("HOOK", "DETAILS")
+#define BUNDLE_HOOK_DETAILS		       		STRAND_NAME("HOOK", "DETAILS")
 #define BUNDLE_HOOK_DETAILS_TYPE			HOOK_DETAILS, NULL
 
-#define BUNDLE_HOOK_STACK		       		ELEM_NAME("HOOK", "STACK")
+#define BUNDLE_HOOK_STACK		       		STRAND_NAME("HOOK", "STACK")
 #define BUNDLE_HOOK_STACK_TYPE				HOOK_STACK, NULL
 
-#define BUNDLE_HOOK_TRIGGER		       		ELEM_NAME("HOOK", "TRIGGER")
+#define BUNDLE_HOOK_TRIGGER		       		STRAND_NAME("HOOK", "TRIGGER")
 #define BUNDLE_HOOK_TRIGGER_TYPE       			HOOK_TRIGGER, NULL
 
-#define BUNDLE_HOOK_CB_ARRAY		       		ELEM_NAME("HOOK", "CB_STACK")
+#define BUNDLE_HOOK_CB_ARRAY		       		STRAND_NAME("HOOK", "CB_STACK")
 #define BUNDLE_HOOK_CB_ARRAY_TYPE      			COND_ARRAY, NULL
 
 // domain CONTRACT
 
-#define ELEM_CONTRACT_FAKE_FUNCNAME			ELEM_NAME("CONTRACT", "FAKE_FUNCNAME")
-#define ELEM_CONTRACT_FAKE_FUNCNAME_TYPE		STRING, NULL
+// this is to enable mapping static transforms to native function calls
+#define BUNDLE_CONTRACT_FUNC_WRAPPER			STRAND_NAME("CONTRACT", "FUNC_WRAPPER")
+#define BUNDLE_CONTRACT_FUNC_WRAPPER_TYPE	       	FUNC_DESC, NULL
 
-#define BUNDLE_CONTRACT_REVPMAP				ELEM_NAME("CONTRACT", "REVPMAP")
-#define BUNDLE_CONTRACT_REVPMAP_TYPE	       		PMAP, NULL
-
-#define BUNDLE_CONTRACT_REQUIREMENTS	       		ELEM_NAME("CONTRACT", "REQUIREMENTS")
-#define BUNDLE_CONTRACT_REQUIREMENTS_TYPE      		FUNCTION, NULL
+#define BUNDLE_CONTRACT_REQUIREMENTS	       		STRAND_NAME("CONTRACT", "REQUIREMENTS")
+#define BUNDLE_CONTRACT_REQUIREMENTS_TYPE      		CONDITION, NULL
 
 // domain TRANSFORM
 
-#define ELEM_TRANSFORM_STATUS 				ELEM_NAME("TRANSFORM", "STATUS")
-#define ELEM_TRANSFORM_STATUS_TYPE			INT, TRANSFORM_STATUS_NONE
+#define STRAND_TRANSFORM_STATUS 	       		STRAND_NAME("TRANSFORM", "STATUS")
+#define STRAND_TRANSFORM_STATUS_TYPE			INT, TRANSFORM_STATUS_NONE
 
-#define ELEM_TRANSFORM_RESULT 				ELEM_NAME("TRANSFORM", "RESULT")
-#define ELEM_TRANSFORM_RESULT_TYPE			INT, TX_RESULT_NONE
+#define STRAND_TRANSFORM_RESULT 	       		STRAND_NAME("TRANSFORM", "RESULT")
+#define STRAND_TRANSFORM_RESULT_TYPE			INT, TX_RESULT_NONE
 
-#define BUNDLE_TRANSFORM_ICAP 				ELEM_NAME("TRANSFORM", "ICAP")
+#define BUNDLE_TRANSFORM_ICAP 				STRAND_NAME("TRANSFORM", "ICAP")
 #define BUNDLE_TRANSFORM_ICAP_TYPE			ICAP, NULL
 
 // domain TRAJECTORY
 
-#define BUNDLE_TRAJECTORY_NEXT_SEGMENT	       		ELEM_NAME("NEXT", "SEGMENT")
+#define BUNDLE_TRAJECTORY_NEXT_SEGMENT	       		STRAND_NAME("NEXT", "SEGMENT")
 #define BUNDLE_TRAJECTORY_NEXT_SEGMENT_TYPE	     	TSEGMENT, NULL
 
-#define BUNDLE_TRAJECTORY_SEGMENT	       		ELEM_NAME("TRAJECTORY", "SEGMENT")
+#define BUNDLE_TRAJECTORY_SEGMENT	       		STRAND_NAME("TRAJECTORY", "SEGMENT")
 #define BUNDLE_TRAJECTORY_SEGMENT_TYPE	       		TSEGMENT, NULL
 
-/// domain ATTRBUNDLE
+#define BUNDLE_TRAJECTORY_FUNCTIONAL	       		STRAND_NAME("TRAJECTORY", "FUNCTIONAL")
+#define BUNDLE_TRAJECTORY_FUNCTIONAL_TYPE	       	FUNCTIONAL, NULL
 
-#define ELEM_ATTRBUNDLE_MAX_REPEATS 		     	ELEM_NAME("ATTRBUNDLE", "MAX_REPEATS")
-#define ELEM_ATTRBUNDLE_MAX_REPEATS_TYPE       		INT, 1
+/// domain ATTR_CON
 
-#define BUNDLE_ATTRIBUTE_HOOK_STACK	               	ELEM_NAME("ATTRIBUTE", "HOOK_STACK")
-#define BUNDLE_ATTRIBUTE_HOOK_STACK_TYPE       		HOOK_STACK, NULL
+#define STRAND_ATTRCON_MAX_REPEATS 		     	STRAND_NAME("ATTRCON", "MAX_REPEATS")
+#define STRAND_ATTRCON_MAX_REPEATS_TYPE     		INT, 1
+
+#define BUNDLE_ATTRCON_HOOK_STACK	               	STRAND_NAME("ATTR", "HOOK_STACK")
+#define BUNDLE_ATTRCON_HOOK_STACK_TYPE       		HOOK_STACK, NULL
 
 //// domain CONDITION - condiitons are simple functions which produce a TRUE / FALSE result
 
-#define ELEM_CONDITION_RESPONSE		       		ELEM_NAME("CONDITION", "RESPONSE")
-#define ELEM_CONDITION_RESPONSE_TYPE	       		UINT64, NIRVA_COND_SUCCESS
+#define STRAND_CONDITION_RESPONSE	       		STRAND_NAME("CONDITION", "RESPONSE")
+#define STRAND_CONDITION_RESPONSE_TYPE	       		UINT64, NIRVA_COND_SUCCESS
 
-#define BUNDLE_CONDITION_MAX_ITEMS	       		ELEM_NAME("CONDITION", "MAX_ITEMS")
-#define BUNDLE_CONDITION_MAX_ITEMS_TYPE	       		FUNCTION, MAX_ITEMS
+#define STRAND_CONDITION_CURRENT	       		STRAND_NAME("CONDITION", "CURRENT")
+#define STRAND_CONDITION_CURRENT_TYPE	       		CONDVAL_MAP, NULL
 
-#define BUNDLE_CONDITION_HAS_VALUE	       		ELEM_NAME("CONDITION", "HAS_VALUE")
-#define BUNDLE_CONDITION_HAS_VALUE_TYPE   		FUNCTION, VALUE_SET
+/* #define BUNDLE_CONDITION_MAX_ITEMS	       		STRAND_NAME("CONDITION", "MAX_ITEMS") */
+/* #define BUNDLE_CONDITION_MAX_ITEMS_TYPE	       		FUNCTION, MAX_ITEMS */
 
-#define BUNDLE_CONDITION_HAS_ITEM	       		ELEM_NAME("CONDITION", "HAS_ITEM")
-#define BUNDLE_CONDITION_HAS_ITEM_TYPE   		FUNCTION, HAS_ITEM
+/* #define BUNDLE_CONDITION_HAS_VALUE	       		STRAND_NAME("CONDITION", "HAS_VALUE") */
+/* #define BUNDLE_CONDITION_HAS_VALUE_TYPE   		FUNCTION, VALUE_SET */
 
-#define BUNDLE_CONDITION_VALUES_EQUAL	       		ELEM_NAME("CONDITION", "VALUE_MATCH")
-#define BUNDLE_CONDITION_VALUE_MATCH_TYPE   		FUNCTION, VALUE_MATCH
+/* #define BUNDLE_CONDITION_HAS_ITEM	       		STRAND_NAME("CONDITION", "HAS_ITEM") */
+/* #define BUNDLE_CONDITION_HAS_ITEM_TYPE   		FUNCTION, HAS_ITEM */
+
+/* #define BUNDLE_CONDITION_VALUES_EQUAL	       		STRAND_NAME("CONDITION", "VALUE_MATCH") */
+/* #define BUNDLE_CONDITION_VALUE_MATCH_TYPE   		FUNCTION, VALUE_MATCH */
 
 // domain STRUCTURAL
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-// whereas ELEMENTS generally pertain to the internal state of a bundle, ATTRIBUTES
+// whereas STRANDS generally pertain to the internal state of a bundle, ATTRIBUTES
 // (more precisely, variants of the ATTRIBUTE bundle) are desinged for passing and sharing data between
-// bundles. However since both elements can be wrapped by an ELEM bundle, which contains a VALUE bundle,
+// bundles. However since both strands can be wrapped by a strand bundle, which contains a VALUE bundle,
 // and ATTRIBUTES are based around a VALUE bundle, it is possible to treat them similarly in some aspects
-// by wrapping the value bundles in a vale_map bundle. Thes bundles also have a HIEARARCHY element
-// which will be either HIERARCHY_ELEM or HIERARCHY_ATTRIBUTE accordingly.
+// by wrapping the value bundles in a vale_map bundle. Thes bundles also have a HIEARARCHY strand
+// which will be either HIERARCHY_STRAND or HIERARCHY_ATTRIBUTE accordingly.
 
 // The main differences:
-//- ELEMENTS have type, name and data, although these are internal to the element
-// - AATTRIBUTES have elements for DATA, NAME and TYPE
-// - ATTRIBUTES are bundles composed of several elements, whereas elements are not bundles - they are the building blocks
+//- STRANDS have type, name and data, although these are internal to the strand
+// - AATTRIBUTES have strands for DATA, NAME and TYPE
+// - ATTRIBUTES are bundles composed of several strands, whereas strands are not bundles - they are the building blocks
 // for bundles.
-// - Elements cna be scalar values or arrays of unlimited size. Attributes may have "repeats", ie. the value can be
+// - Strands cna be scalar values or arrays of unlimited size. Attributes may have "repeats", ie. the value can be
 // limited to a certain number of data values (i.e. bounded arrays).
-// Although elements have a default value when first created, this is generally 0 or NULL, and is not visible
-// after the element has been created. Attributes have a default value which must be set in the "default" element.
+// Although strands have a default value when first created, this is generally 0 or NULL, and is not visible
+// after the strand has been created. Attributes have a default value which must be set in the "default" strand.
 // - Attributes have flags and an optional description. Attributes can also be refcounted.
-// 
-  
+//
+
 #define ATTR_TYPE_NONE					(uint32_t)'0'	// invalid type
 
 #define ATTR_TYPE_INT					1	// 4 byte int
@@ -1049,8 +1161,12 @@ NIRVA_ENUM {
 #define ATTR_TYPE_VOIDPTR				64	// void *
 #define ATTR_TYPE_FUNCPTR				65	// funcptr
 
-// void * aliase
+// void * alias
 #define ATTR_TYPE_BUNDLEPTR	       			80 // void * to other bundle
+
+// used for variadic function  maps
+// the "VALUE" will be a bundleptr -> sup mapping
+#define ATTR_TYPE_VA_ARGS	       			128 // void * to other bundle
 
 /////////
 
@@ -1060,8 +1176,35 @@ NIRVA_ENUM {
 //////////////////////////
 
 // domain STRUCTURAL
-#define ATTR_STRUCTURAL_SUBTYPES			ATTR_NAME("SRTUCTURAL", "SUBTYPES")
-#define ATTR_STRUCTURAL_SUBTYPES_TYPE			OBJECT_INSTANCE, NULL
+#define ATTR_STRUCTURAL_SUBTYPES			ATTR_NAME("STRUCTURAL", "SUBTYPES")
+#define ATTR_STRUCTURAL_SUBTYPES_TYPE			BUNDLEPTR, OBJECT_INSTANCE
+
+// domain SELF - atributes for thread_instances
+#define ATTR_SELF_THREAD_ID				ATTR_NAME("SELF", "THREAD_ID")
+#define ATTR_SELF_THREAD_ID_TYPE	       	       	UINT64, 0
+
+#define ATTR_SELF_STATUS				ATTR_NAME("SELF", "STATUS")
+#define ATTR_SELF_STATUS_TYPE		       	       	UINT64, 0
+
+#define ATTR_SELF_FLAGS					ATTR_NAME("SELF", "FLAGS")
+#define ATTR_SELF_FLAGS_TYPE	 	      	       	UINT64, 0
+
+#define ATTR_SELF_NATIVE_THREAD				ATTR_NAME("SELF", "NATIVE_THREAD")
+#define ATTR_SELF_NATIVE_THREAD_TYPE		       	NATIVE_PTR, NULL
+
+#define ATTR_SELF_PRIVS					ATTR_NAME("SELF", "PRIVS")
+#define ATTR_SELF_PRIVS_TYPE		       		INT, NULL
+
+#define ATTR_SELF_MANTLE	       			ATTR_NAME("SELF", "MANTLE")
+#define ATTR_SELF_MANTLE_TYPE		       		BUNDLEPTR, OBJECT
+
+#define ATTR_SELF_TRAJECTORY	       			ATTR_NAME("SELF", "TRAJECTORY")
+#define ATTR_SELF_TRAJECTORY_TYPE		       	BUNDLEPTR, TRAJECTORY
+
+#define ATTR_SELF_TSEGMENT	       			ATTR_NAME("SELF", "TSEGMENT")
+#define ATTR_SELF_TSEGMENT_TYPE			       	BUNDLEPTR, TSEGMENT
+
+///
 
 // TODO - attributes should moeve to type specific headers
 
@@ -1087,77 +1230,111 @@ NIRVA_ENUM {
 #define ATTR_AUDIO_DATA_LENGTH				"audio_data_length"
 
 ///// domain VIDEO (incomplete)
-#define ATTR_VIDEO_FRAME_RATE	       			ELEM_NAME(VIDEO, FRAME_RATE)
+#define ATTR_VIDEO_FRAME_RATE	       			STRAND_NAME(VIDEO, FRAME_RATE)
 #define ATTR_VIDEO_FRAME_RATE_TYPE    			DOUBLE, 0.
 
-#define ATTR_VIDEO_DISPLAY_WIDTH  	       		ELEM_NAME(VIDEO, DISPLAY_WIDTH)
+#define ATTR_VIDEO_DISPLAY_WIDTH  	       		STRAND_NAME(VIDEO, DISPLAY_WIDTH)
 #define ATTR_VIDEO_DISPLAY_WIDTH_TYPE    	 	UINT64, 0
 
-#define ATTR_VIDEO_DISPLAY_HEIGHT  	       		ELEM_NAME(VIDEO, DISPLAY_HEIGHT)
+#define ATTR_VIDEO_DISPLAY_HEIGHT  	       		STRAND_NAME(VIDEO, DISPLAY_HEIGHT)
 #define ATTR_VIDEO_DISPLAY_HEIGHT_TYPE    	 	UINT64, 0
 
-#define ATTR_VIDEO_PIXEL_WIDTH  	       		ELEM_NAME(VIDEO, PIXEL_WIDTH)
+#define ATTR_VIDEO_PIXEL_WIDTH  	       		STRAND_NAME(VIDEO, PIXEL_WIDTH)
 #define ATTR_VIDEO_PIXEL_WIDTH_TYPE 	   	 	UINT64, 0
 
-#define ATTR_VIDEO_PIXEL_HEIGHT  	       		ELEM_NAME(VIDEO, PIXEL_HEIGHT)
+#define ATTR_VIDEO_PIXEL_HEIGHT  	       		STRAND_NAME(VIDEO, PIXEL_HEIGHT)
 #define ATTR_VIDEO_PIXEL_HEIGHT_TYPE    	 	UINT64, 0
 
-#define ATTR_VIDEO_COLOR_SPACE  	       		ELEM_NAME(VIDEO, COLOR_SPACE)
+#define ATTR_VIDEO_COLOR_SPACE  	       		STRAND_NAME(VIDEO, COLOR_SPACE)
 #define ATTR_VIDEO_COLOR_SPACE_TYPE 	   	 	INT, 0
 
-#define ATTR_VIDEO_STEREO_MODE  	       		ELEM_NAME(VIDEO, STEREO_MODE)
+#define ATTR_VIDEO_STEREO_MODE  	       		STRAND_NAME(VIDEO, STEREO_MODE)
 #define ATTR_VIDEO_STEREO_MODE_TYPE 	   	 	UINT64, 0
 
-#define ATTR_VIDEO_FLAG_INTERLACED  	       		ELEM_NAME(VIDEO, FLAG_INTERLACED)
+#define ATTR_VIDEO_FLAG_INTERLACED  	       		STRAND_NAME(VIDEO, FLAG_INTERLACED)
 #define ATTR_VIDEO_FLAG_INTERLACED_TYPE    	 	UINT64, 0
 
 // attribute flag bits //
-// these flagbits are for input attributes, for output attributes they are ignored
+// defaults for these flags are usually defined in an attr_desc bundle
+// however the attribute "owner" may adjust these
+//
+// mandatory means that the attribute must be created and have a value set
+// - generally this will create a condition in a conditional
+// until the value is set, it is considered read_write
+// if the atribute has a default then it only needs to be created
+// before running the functional it is associated with
+// and setting the value is optional
+// if there is no default and caller is unable to set a value,
+// it can ask for help via a structural transform
+//
+#define OBJ_ATTR_FLAG_MANDATORY       	0x00001
 
-// when an object contributes an attribute to the pool, gene
-#define OBJ_ATTR_FLAG_READONLY 		0x00001
-#define OBJ_ATTR_FLAG_OPTIONAL        	0x00002
+// the default for attributes is that in input bundles attributes are read/all, write/all
+// for outputs, the default is read/all write/owner
+// adding this flag changes this - inputs become read/all, write/owner
+// outputs become read all/write all
+//  for inputs this can be set during contract negotiations to lock in a value
+// for outputs, this flag only has meaning when combined with STREAM
+// and indicates that that the data can be edited during the data_prepared hook
+// callbacks.
+#define OBJ_ATTR_FLAG_RW_CHANGE       	0x00002
 
-// value is constant and will never change
-#define OBJ_ATTR_FLAG_CONSTANT	 	0x10
+// this flag is for inputs and outputs, for inputs, if it is also mandatory
+// then it creates a condition that the caller must connect it to a provider,
+// who agrees to respond to the data request trigger
+// for outputs it indicates that the value is updated as part of the transform
+// and there will be data_ready and possibly data_prep hooks
+// if the attribute
 
-// attribute is connected to a remote attribute. The remote attribute value should be read
-// in place of this one
-#define OBJ_ATTR_FLAG_REMOTE	 	0x10
+#define OBJ_ATTR_FLAG_SEQUENTIAL    	0x04
 
-// indicates that the value will only update when an update transform is called
-#define OBJ_ATTR_FLAG_UPDATE    	0x20
+// connected to remote val
+#define OBJ_ATTR_FLAG_IS_CONNECTED    	0x10
 
-// for attributes with an update transform, indicates that the value is correct
-// and the update should not be called
-#define OBJ_ATTR_FLAG_CURRENT    	0x40
-
-// output value - indicates that the value will ONLY EVER be updated by a transform
-// at the end of processing, and / or in hooks during the transform
-#define OBJ_ATTR_FLAG_OUTPUT	 	0x100
+// this is for connected attributes,
+// indicates that the value may return REQUEST_WAIT_RETRY from data_request hook
+// in this case the data_request should be done as early as possible
+// so that it will be ready when actually needed
+#define OBJ_ATTR_FLAG_ASYNC_UPDATE    	0x20
 
 // indicates that the value may update spontaneously with it being possible to trigger
 // data hooks
 #define OBJ_ATTR_FLAG_VOLATILE	 	0x200
 
-// each update returns the next value in a sequence, i.e it should only be updated
-// once for each read, otherwise, the value returned is the "current value"
-#define OBJ_ATTR_FLAG_SEQUENTIAL       	0x400
+// indicates the value is known to be out of date, but a a transform is needed to
+// update it
+#define OBJ_ATTR_FLAG_NOT_CURRENT      	0x400
 
 // indicates the value is a "best guess", the actual value of whatever it represents may differ
 #define OBJ_ATTR_FLAG_ESTIMATE       	0x800
 
-// attr connection flags
-  
-// the value of the target attr should be copied to local when the connection is broken
-// if not set, or if copying is not possible, then the attribute will be reset to its default
-// value instead
-#define ATTR_CONX_FLAG_COPY_ON_DISCONNECT (1ull << 0)
+// combinations
+// SEQUENTIAL  for an input indicates an optional input data stream
+// SEQUENTIAL | MANDATORY for an input creates an input data condition
+// SEQUENTIAL  for an output indicates an output stream
+// SEQUENTIAL | RW_CHANGE for an output indicates an editable stream
+
+// if a transform has both input and output streams then INTENT_PROCESS becomes
+// INTENTION_MANIPULATE_SEQUENCE,
+// adding CAP_REALTIME produces INTENTION_PLAY
+// adding CAP_REMOTE produces INTENTION_STREAM, etc.
+//
+// if a transform has input streams inly then INTENT_PROCESS becomes
+// INTENTION_RECORD,  // record
+
+// if a transform has output streams only then INTENT_PROCESS becomes
+// INTENTION_RENDER,
+
+// ATTR CONNECTION flags
+#define CONNECTION_FLAG_COPY_ON_DISCONNECT (1ull << 0)
 
 // for optional attributes, indicates the when the connection is broken, the local attribute
 // should be removed from the bundle rather than left in place
 // in this case any attributes connected to this one will be disconnected first
-#define ATTR_CONX_FLAG_DESTROY_ON_DISCONNECT (1ull << 1)
+#define CONNECTION_FLAG_DESTROY_ON_DISCONNECT (1ull << 1)
+
+// if write connection accepted
+#define CONNECTION_FLAG_READ_WRITE (1ull << 2)
 
 // Transform flags
 
@@ -1180,13 +1357,15 @@ NIRVA_ENUM {
 // as early as possible.
 #define TX_FLAG_ASYNC_DELAY // can take time to run, therefore it is recomended to run in a thread
 
-// function categories
+// function wrappings
 
-#define FUNC_CATEGORY_GENERAL		0ull
+// auto implies the real / wrapper can be determined automatically
+// in case of ambiguity, real and wrapper can be used
+#define FUNC_MAPPING_AUTO		0ull
 // the underlying fn type, can only be one of these
-#define FUNC_CATEGORY_STANDARD 		1ull // nirva_function_t format available
-#define FUNC_CATEGORY_NATIVE 		2ull // native format available
-#define FUNC_CATEGORY_SCRIPT 		3ull // script format available
+#define FUNC_REAL_STANDARD 		1ull // nirva_function_t format available
+#define FUNC_REAL_NATIVE 		2ull // native format available
+#define FUNC_REAL_SCRIPT 		3ull // script format available
 // any mapped versions available, e.g nirva -> native
 //				      native -> nirva for some structurals
 //					script -> native : symbol for IMPL
@@ -1197,15 +1376,31 @@ NIRVA_ENUM {
 // info about the type, we can have segment, structural, automation, external,
 // callback, conditional, placeholder, synthetic
 
-#define FUNC_PURPOSE_OUTSIDE		(1ull << 32) // falls outside of nirva, eg. nirva_init()
-#define FUNC_PURPOSE_SEGMENT		(2ull << 32) // function wrapped by on traj. segment
-#define FUNC_PURPOSE_STRUCTURAL		(3ull << 32) // represents transform in structural
-#define FUNC_PURPOSE_AUTOMATION		(4ull << 32) // some kind of auto script
-#define FUNC_PURPOSE_EXTERNAL		(5ull << 32) // an external "implenetion dependant" fuction
-#define FUNC_PURPOSE_CALLBACK		(6ull << 32) // function added to a hook cb stack
-#define FUNC_PURPOSE_CONDITIONAL       	(7ull << 32) // function which checks a single condition
-#define FUNC_PURPOSE_SYNTHETIC      	(8ull << 32) // "functions" like a trajectory
-#define FUNC_PURPOSE_PLACEHOLDER      	(9ull << 32) // for reference only - do not call
+#define FUNC_CATEGORY_UNKNOWN		0 // marks an IMPL function
+#define FUNC_CATEGORY_INTERNAL		1 // marks an IMPL function
+#define FUNC_CATEGORY_OUTSIDE		2 // falls outside of nirva, eg. nirva_init)
+#define FUNC_CATEGORY_SEGMENT		3 // function wrapped by on traj. segment
+#define FUNC_CATEGORY_STRUCTURAL       	4 // represents transform in structural
+#define FUNC_CATEGORY_AUTOMATION       	5 // some kind of auto script
+#define FUNC_CATEGORY_EXTERNAL   	6 // an external "implenetion dependant" fuction
+#define FUNC_CATEGORY_CALLBACK		7 // function added to a hook cb stack
+// functional which is a wrapper around a CASCADE:
+// each node has a condition, then depending on success or fail, a next node is selected
+// this continues until we reach a "value" node
+// - a node with no exits, and the value or default returned).
+// in technical terms, a binary decision tree)
+#define FUNC_CATEGORY_CASCADE      	8
+// CONDITIONAL is special configuration of CASCADE
+// every fail node is NULL, success goes to the next cond
+// and eventually to the value COND_SUCCESS
+#define FUNC_CATEGORY_CONDITIONAL      	9
+// function which selects an output, this is like a conditional in reverse
+// given a set of conditions, it will try to find something which satisfies them
+// all. or comes closest
+#define FUNC_CATEGORY_SELECTOR       	10
+#define FUNC_CATEGORY_SYNTHETIC      	11 // "functions" like a trajectory
+#define FUNC_CATEGORY_PLACEHOLDER      	12 // for reference / info only - do not call
+#define FUNC_CATEGORY_NATIVE_TEXT      	13 // textual transcription of native code
 
 ///////////// error codes ///////////////
 
@@ -1224,56 +1419,56 @@ NIRVA_ENUM {
 #define TRANSFORM_STATUS_NONE 0
 
 // inital statuses
-#define TRANSFORM_STATUS_DEFERRED 1
-#define TRANSFORM_STATUS_PREPARING 2
+#define TRANSFORM_STATUS_DEFERRED 	1
+#define TRANSFORM_STATUS_PREPARING 	2
 
 // runtime statuses
-#define TRANSFORM_STATUS_RUNNING 16	///< transform is "running" and the state cannot be changed
-#define TRANSFORM_STATUS_WAITING 17	///< transform is waiting for conditions to be satisfied
-#define TRANSFORM_STATUS_PAUSED	 18	///< transform has been paused, via a call to the pause_hook
+#define TRANSFORM_STATUS_RUNNING 	16 ///< transform is "running" and the state cannot be changed
+#define TRANSFORM_STATUS_WAITING 	17	///< transform is waiting for conditions to be satisfied
+#define TRANSFORM_STATUS_PAUSED	 	18///< transform has been paused, via a call to the pause_hook
 
 // transaction is blocked, action may be needed to return it to running status
-#define TRANSFORM_STATUS_BLOCKED 18	///< transform is waitin and has passed the blocked time limit
+#define TRANSFORM_STATUS_BLOCKED 	18///< transform is waitin and has passed the blocked time limit
 
 // final statuses
-#define TRANSFORM_STATUS_SUCCESS 32	///< normal / success
-#define TRANSFORM_STATUS_CANCELLED 33	///< transform was cancelled via a call to the cancel_hook
-#define TRANSFORM_STATUS_ERROR  34	///< transform encountered an error during running
-#define TRANSFORM_STATUS_TIMED_OUT 35	///< timed out waiting for data
+#define TRANSFORM_STATUS_SUCCESS 	32	///< normal / success
+#define TRANSFORM_STATUS_CANCELLED 	33  ///< transform was cancelled via a call to the cancel_hook
+#define TRANSFORM_STATUS_ERROR  	34	///< transform encountered an error during running
+#define TRANSFORM_STATUS_TIMED_OUT 	35	///< timed out waiting for data
 
 // results returned from actioning a transform
 // in the transform RESULTS item
 // negative values indicate error statuses
-#define TX_RESULT_ERROR -1
-#define TX_RESULT_CANCELLED -2
-#define TX_RESULT_DATA_TIMED_OUT -3
-#define TX_RESULT_SYNC_TIMED_OUT -4
+#define TX_RESULT_ERROR        		-1
+#define TX_RESULT_CANCELLED 		-2
+#define TX_RESULT_DATA_TIMED_OUT 	-3
+#define TX_RESULT_SYNC_TIMED_OUT 	-4
 
 // segment was missing some data which should have been specified in the contract
 // the contract should be adjusted to avoid this
 // an ADJUDICATOR object may flag the contract as invalid until updated
-#define TX_RESULT_CONTRACT_WAS_WRONG -5
+#define TX_RESULT_CONTRACT_WAS_WRONG 	-5
 
 // a data connection was broken and not replaced
-#define TX_RESULT_CONTRACT_BROKEN -6
+#define TX_RESULT_CONTRACT_BROKEN 	-6
 
 // SEGMENT_END was not listed as a possible next segment
 // and no conditions were met for any next segment
 // the trajectory or contract should be adjusted to avoid this
 // an ADJUDICATOR object may flag the contract as invalid until updated
-#define TX_RESULT_TRAJECTORY_INVALID -7
+#define TX_RESULT_TRAJECTORY_INVALID 	-7
 
-#define TX_RESULT_INVALID -8
+#define TX_RESULT_INVALID 		-8
 
-#define TX_RESULT_NONE 0
+#define TX_RESULT_NONE 			0
 
-#define TX_RESULT_SUCCESS 1
+#define TX_RESULT_SUCCESS 		1
 
 // failed, but not with error
-#define TX_RESULT_FAILED 2
+#define TX_RESULT_FAILED 		2
 
 // transform is idling and may be continued by trigering the RESUME_REQUEST_HOOK
-#define TX_RESULT_IDLING 3
+#define TX_RESULT_IDLING 		3
 
 //  cascade matrix node values
 
@@ -1291,37 +1486,39 @@ NIRVA_ENUM {
 // for conditional hooks, returning FALSE blocks the value change
 // for other hook types, return TRUE leaves the hook in the stack, FALSE reomvoes it.
 
-#define HOOK_FLAG_SELF			(1ull << 0) // only the object istself may add callbacks
+#define NIRVA_HOOK_FLAG_SELF			(1ull << 0) // only the object istself may add callbacks
 
 // hook caller will continue to rety conditions until they succeed
 // or the hook times out
-#define HOOK_FLAG_COND_RETRY		(1ull << 1)
+#define NIRVA_HOOK_FLAG_COND_RETRY		(1ull << 1)
 
 // conditions will be checked once only on fail the operation triggering the hook
 // will be abandoned. For request hooks, REQUEST_NO will be returned
-#define HOOK_FLAG_COND_ONCE		(1ull << 2)
+#define NIRVA_HOOK_FLAG_COND_ONCE		(1ull << 2)
 
 // for DATA_HOOK_TYPE - this indicate the hook should be tirgger before the change is made
 // if present then this is VALUE_UPDATING, else it is UPDATED_VALUE (the default DATA_HOOK_TYPE)
-#define HOOK_FLAG_BEFORE		(1ull << 3)
+// or VALUE_INITED_VALUE
+// or VALUE_FREEING
+#define NIRVA_HOOK_FLAG_BEFORE		(1ull << 3)
 
 // indicates a request type hook, rather than being triggered by a data change, request some
 // other object change its data or allows some action
 // caller will receive either REQUEST_NO - the request is denied, REQUEST_YES - the request
 // is accepted, or REQUEST_WAIT_RETRY - the requst is denied temporarily, caller can retry
 // and it may be accepted later
-#define HOOK_FLAG_REQUEST	      	(1ull << 4)
+#define NIRVA_HOOK_FLAG_REQUEST	      	(1ull << 4)
 
 // spontaneous
 
 // indicates the data which is in the bundle_in is ready for previewing and or / editing
 // the transform will call hooks in sequence to give each observer a chance to edit
-#define HOOK_FLAG_DATA_PREP     	(1ull << 5)
+#define NIRVA_HOOK_FLAG_DATA_PREP     	(1ull << 5)
 
 // data in bundle_in is in its final format, all hook cbs will be called in parallel
 // if possible. The transform may continue so it can start processing the next data
 // however the data in bundle_in will not be altered or freed until all calbacks have returned
-#define HOOK_FLAG_DATA_READY     	(1ull << 7)
+#define NIRVA_HOOK_FLAG_DATA_READY     	(1ull << 6)
 
 // objects have an "idle" queue where prepared contracts can be added to be run in the background
 // while in this state, the tx statuse will be "QUEUED"
@@ -1333,1058 +1530,462 @@ NIRVA_ENUM {
 // thread-per-instance:
 // fins a transform which creates a duplicate instance
 // thread-on-request model : try asking the structure to create more threads
-#define HOOK_FLAG_IDLE			(1ull << 8)
+#define NIRVA_HOOK_FLAG_IDLE			(1ull << 7)
 
 // hook was triggered by some underlying condition, eg. a native signal rather than being
 // generated by the application
-#define HOOK_FLAG_NATIVE      		(1ull << 9)
+#define NIRVA_HOOK_FLAG_NATIVE      		(1ull << 8)
 
-NIRVA_TYPEDEF(NIRVA_ENUM _hook_patterns, {
-				   DATA_HOOK_TYPE,
-				   REQUEST_HOOK_TYPE,
-				   SPONTANEOUS_HOOK_TYPE,
-				   N_HOOK_PATTERNS,
-				     } nirva_hook_type)
+NIRVA_TYPEDEF_ENUM(nirva_hook_patterns, NIRVA_DATA_HOOK, NIRVA_REQUEST_HOOK, \
+                   NIRVA_SPONTANEOUS_HOOK, NIRVA_N_HOOK_PATTERNS)
 
 NIRVA_ENUM {
-      // The following are the standard hook points in the system
-      // objects and attributes (any bundle with a refcount sub-bundle)
-      // may add a callback function to these
-      // all DATA_HOOKS muts return "immedaitely"
+  // The following are the standard hook points in the system
+  // objects and attributes (any bundle with a refcount sub-bundle)
+  // may add a callback function to these
+  // all DATA_HOOKS muts return "immedaitely"
 
-      // OBJECT STATE and SUBTYPE HOOKS
-      // for an APPLICATION instance, these are GLOBAL HOOKS
-      // these are also passive hooks, provided the system has semi or full hook automation
-      // the structure will call them on behalf of a thread instance
+  // OBJECT STATE and SUBTYPE HOOKS
+  // for an APPLICATION instance, these are GLOBAL HOOKS
+  // these are also passive hooks, provided the system has semi or full hook automation
+  // the structure will call them on behalf of a thread instance
 
-      // when an object instance is created, this hook will be triggered
-      // in the creator template or instance, and will contain a pointer to the freshly created
-      // or copied instance - the new instance ,ay be of a differnet type / subtype
-      // to the creator
-      INIT_HOOK, // obeject state / after
+  // when an object instance is created, this hook will be triggered
+  // in the creator template or instance, and will contain a pointer to the freshly created
+  // or copied instance - the new instance ,ay be of a differnet type / subtype
+  // to the creator
+  OBJECT_CREATED_HOOK, // object state / after
 
-      // conditions:
-      // IS_EQUAL(GET_BUNDLE_VALUE_UINT64(BUNDLE_IN, "FLAGS"), 0)
-      // STRING_MATCH(GET_BUNDLE_VALUE_STRING(BUNDLE_IN, "NAME"), ELEM_OBJECT_STATE)
-      // IS_EQUAL(GET_BUNDLE_VALUE_INT(GET_SUB_BUNDLE(GET_SUB_BUNDLE(BUNDLE_IN, "CHANGED"),
-      // "NEW_VALUE"), OBJ_STATE_NORMAL))
-      // NEW_HOOK_TYPE = INIT_HHOK, PMAP: 0, GET_BUNDLE_VALUE_BUNDLEPTR(BUNDLE_IN, OBJECT), 1,
-      // GET_BUNDLE_VALUE_VOIDPTR(CALLBACK, DATA), -1 GET_PTR_TO(BUNDLE_OUT, RETURN_VALUE) 
+  INSTANCE_COPIED_HOOK,
 
-      // object suffered a FATAL error or was aborted,
-      FATAL_HOOK,
+  // conditions:
+  // IS_EQUAL(GET_BUNDLE_VALUE_UINT64(BUNDLE_IN, "FLAGS"), 0)
+  // STRING_MATCH(GET_BUNDLE_VALUE_STRING(BUNDLE_IN, "NAME"), STRAND_OBJECT_STATE)
+  // IS_EQUAL(GET_BUNDLE_VALUE_INT(GET_SUB_BUNDLE(GET_SUB_BUNDLE(BUNDLE_IN, "CHANGED"),
+  // "NEW_VALUE"), OBJ_STATE_NORMAL))
+  // NEW_HOOK_TYPE = INIT_HHOK, PMAP: 0, GET_BUNDLE_VALUE_BUNDLEPTR(BUNDLE_IN, OBJECT), 1,
+  // GET_BUNDLE_VALUE_VOIDPTR(CALLBACK, DATA), -1 GET_PTR_TO(BUNDLE_OUT, RETURN_VALUE)
 
-      // state changing from normal -> not ready, i.e. restarting
-      RESETTING_HOOK,  // object state / before
+  // object suffered a FATAL error or was aborted,
+  FATAL_HOOK,
 
-      // object is about to be freed
-      DESTRUCTION_HOOK, // object state / before
+  // state changing from normal -> not ready, i.e. restarting
+  RESETTING_HOOK,  // object state / before
 
-      // object subtype changed
-      SUBTYPE_CHANGED_HOOK,
+  // object is about to be freed
+  // THIS IS A VERY IMPORTANT HOOK POINT, anything that wants to be informed when
+  // a bundle is about to be freed should add a callback here
+  // this is actually the HOOK_CB_REMOVED hook for the bundle
+  // all callbacks are force removed when an object is about to be recycled
+  DESTRUCTION_HOOK, // hook_cb_remove, bundle_type == object_instance
 
-      N_OBJECT_HOOKS,
+  // object subtype change
+  MODIFYING_SUBTYPE_HOOK,
+
+  SUBTYPE_MODIFIED_HOOK,
+
+  // object subtype changed
+  ALTERING_STATE_HOOK,
+
+  STATE_ALTERED_HOOK,
+
+  N_OBJECT_HOOKS,
 
 #define N_GLOBAL_HOOKS N_OBJECT_HOOKS
+  ADDING_STRAND_HOOK,
 
-      VALUE_INITING_HOOK,
-      // called when the value being changed does not exist
-      // 
-      //NIRVA_NOT(HAS_VALUE,object,item)
-      //NIRVA_HAS_FLAGBIT(INPUT,"FLAGS",BEFORE)
+  DELETING_STRAND_HOOK,
 
-      INITED_VALUE_HOOK,
-      //NIRVA_NOT(HAS_VALUE,object,item)
-      //NIRVA_NOT(NIRVA_HAS_FLAGBIT,INPUT,"FLAGS",BEFORE)
+  STRAND_ADDED_HOOK,
 
-      VALUE_FREEING_HOOK,
-      // called when the value being changed does not exist
-      //NIRVA_NOT(HAS_ITEM,OUTPUT,VALUE_CHANGE,NEW_VALUE)
-      //NIRVA_HAS_FLAGBIT(INPUT,"FLAGS",BEFORE)
+  STRAND_DELETED_HOOK,
 
-      FREED_VALUE_HOOK,
-      //NIRVA_NOT(HAS_ITEM,OUTPUT,VALUE_CHANGE,NEW_VALUE)
-      //NIRVA_NOT(NIRVA_HAS_FLAGBIT(INPUT,"FLAGS",BEFORE))
+  // this hook is triggered after reading a value.
+  // input.value holds a copy of the value
+  // read., to prevent overloading this requires PRIV_HHOKS > 10 to add a callback
+  VALUE_READ_HOOK,
 
-      // DATA_HHOK + HOOK_FLAG_BEFORE
-      VALUE_UPDATING_HOOK,
+  // DATA_HOOK + NIRVA_HOOK_FLAG_BEFORE
+  APPENDING_ITEM_HOOK,
 
-      UPDATED_VALUE_HOOK,
+  REMOVING_ITEM_HOOK,
 
-      // associated with transaction status change
+  CLEARING_ITEMS_HOOK,
 
-      PREPARING_HOOK,  /// none -> prepare
+  UPDATING_VALUE_HOOK,
 
-      PREPARED_HOOK,  /// prepare -> running
+  VALUE_UPDATED_HOOK,
 
-      TX_START_HOOK, /// any -> running
+  ITEMS_CLEARED_HOOK,
 
-      ///
-      PAUSED_HOOK, ///< transform was paused via pause_hook
+  ITEM_APPENDED_HOOK,
 
-      ///< transform was resumed via resume hook (if it exists),
-      // and / or all paused hook callbacks returning
-      RESUMING_HOOK,
+  ITEM_REMOVED_HOOK,
 
-      TIMED_OUT_HOOK, ///< timed out in hook - need_data, sync_wait or paused
+  // versions with ATTR are cascaded values if the bundle is an ATTR_CONTAINER
+  // and attributes are being added or deleted. In this case multiple
+  // calls of the same type may be combined into one.
+  // to monitor individual values, use the STRAND and DATA hooks
+  ATTRS_ADDED_HOOK,
 
-      /// tx transition from one trajectory segment to the next
-      // in some cases there may be a choice for the next vector, and an 'abritrator' may be
-      // required in order to decide which route to take
-      // (TBD)
-      SEGMENT_END_HOOK,
+  ATTRS_UPDATED_HOOK,
 
-      // this is triggered when a new trajectory segment begins
-      // for the inital segment, TX_START is triggered instead
-      SEGMENT_START_HOOK,
+  ATTRS_DELETED_HOOK,
 
-      FINISHED_HOOK,   /// running -> finished -> from = we can go to SUCCESS, ERROR, DESTRUCTION, etc.,
-      COMPLETED_HOOK,   /// finished with no errors, end results achieved
+  // associated with transaction / thread_instance status change
 
-      ///< error occured during the transform
-      // if the object has a transform to change the status back to running this should be actioned
-      // when the FINISHED_HOOK is called
-      // otherwise if there is a transform to return the status to normal this should be actioned instead
-      // and TX_RESULT_ERROR returned
-      // otherwise do nothing, and let the transform return TX_RESULT_ERROR
-      ERROR_HOOK,
+  PREPARING_HOOK,  /// none -> prepare
 
-      CANCELLED_HOOK, ///< tx cancelled via cancel_hook, transform will return TX_RESULT_CANCELLED
+  PREPARED_HOOK,  /// prepare -> running
 
-      // SPONTANEOUS HOOKS
-      // if for some reason a Transform cannot be started immediately this hook should be triggered
-      // for example, the Transform may be queued and waiting to be processed
-      TX_DEFERRED_HOOK,
+  TX_START_HOOK, /// any -> running
 
-      INSTANCE_COPIED_HOOK, // TBD
+  ///
+  PAUSED_HOOK, ///< transform was paused via pause_hook
 
-      // this is a "self hook" meaning the object running the transform only should append to this
-      // the things appended are not normal hook callbacks, instead they are CONDITION bundles
-      SYNC_WAIT_HOOK, ///< synchronisation point, transform is waitng until all hook functions return
+  ///< transform was resumed via resume hook (if it exists),
+  // and / or all paused hook callbacks returning
+  RESUMING_HOOK,
 
-      ///< tx is blocked, may be triggered after waiting has surpassed a limit
-      // but hasnt yet TIMED_OUT
-      //
-      // applies to SYNC_WAIT, DATA_REQUEST, TSEGMENT
+  TIMED_OUT_HOOK, ///< timed out in hook - need_data, sync_wait or paused
 
-      // an ARBITRATOR object can attempt to remedy the situation,
-      // for SYNC_WAIT this implies finding which Conditions are delaying and attempting to remedy this
-      // for DATA_REQUEST this implies hceking why the data provider is delaying, and possibly finding
-      // a replacement
-      // for SEGMENT, the arbitrator may force the Transform to resume, if multiple next segments are causing the
-      // delay it may select which one to follow next, preferring segment_end if avaialble, to complete the transform
+  FINISHED_HOOK,   /// running -> finished -> from = we can go to SUCCESS,
+  // ERROR, DESTRUCTION, etc.,
+  COMPLETED_HOOK,   /// finished with no errors, end results achieved
 
-      TX_BLOCKED_HOOK,
+  ///< error occured during the transform
+  // if the object has a transform to change the status
+  // back to running this should be actioned
+  // when the FINISHED_HOOK is called
+  // otherwise if there is a transform to return the status to normal
+  // this should be actioned instead
+  // and TX_RESULT_ERROR returned
+  // otherwise do nothing, and let the transform return TX_RESULT_ERROR
+  ERROR_HOOK,
 
-      // calbacks for the following two hooks are allowed to block "briefly" so that data can be copied
-      // or edited. The hook callback will receive a "max_time_target" in input, the value depends
-      // on the caller and for data prep this is divided depending on the number of callbacks remaing
-      // to run. The chronometer may help with the calculation.
-      // objects which delay for too long may be penalized, if they persistently do so
+  CANCELLED_HOOK, ///< tx cancelled via cancel_hook, transform will return TX_RESULT_CANCELLED
 
-      // tx hooks not associated ith status changes
-      // this hook may be triggered in a Transform data in its "raw" state is ready
-      // if the data is read / write then the EDIT_PRE hook is called
-      // if the data is readonly then DATA_PREVIEW_HOOK is called
+  // SPONTANEOUS HOOKS
+  //
+  // spontaneous hooks are not triggered by data changes, but rather as a response to
+  // events, or at fixed points in a transform.
+  //
+  //
+  // thread instances have a special "idle" hook stack,
+  // this will be called continuously when the thread is "idleing", ie. not running
+  // a transform. callbacks can be for instance running a transform, and hence they may
+  // block for some considerable time. It is posible to add any type of callback,
+  // e.g a cascade, condition check, function, script.
+  // the flags provided when adding the callback determine the callback type
+  // cond_once, cond_retry, seqeuential, async, etc
+  // thread_herder if running attaches callbacks to each thread, so it can know
+  // which are idleing, when a contract is actioned in the bg, broker or negotiator
+  // will forward it to thread_herder so that the transform it points to can be assinged
+  // to either a thread of the contract instance or to a pool thread, if none are avaialble
+  // then thread herder may create or ask to borrow more.
+  // if none are available after this, the transform will be "deferred"
+  // note also, some transforms can only be actioned by the object thread (eg. GUI's
+  // transforms) so to aboid overloading the object, flags like HOOK_UNIQUE_TX
+  // can be used to reduce the queue size
+  IDLE_HOOK,
+  //
+  // this is a "self hook" meaning the object running the transform only should append to this
+  // the hook response type is COND_RETRY
+  SYNC_WAIT_HOOK, ///< synchronisation point, transform is waitng until
 
-      EDIT_PREP_HOOK,
+  /// tx transition from one trajectory segment to the next
+  // after this hook returns. a cascade will be run to decide the next segment
+  // this hook provides an opportunity to affect the choice
+  // bundle out will contain an attribute for next segment choice
+  // setting this will require PRIV_TRANSFORMS > 10
+  SEGMENT_END_HOOK,
 
-      DATA_PREP_HOOK,
+  // this is triggered when a new trajectory segment is about to begin
+  // for the inital segment, TX_START is triggered instead
+  // for segment end, FINISHED_HOOK runs instead
+  SEGMENT_START_HOOK,
 
-      // data in its "final" state is ready
-      // data is readonly. The Transform will call all callbacks in parallel and will not block
-      // however it will wait for all callbacks to return before freeing / altering the data
+  // if for some reason a Transform cannot be started immediately
+  // this hook should be triggered
+  // for example, the Transform may be queued and waiting to be processed
+  TX_DEFERRED_HOOK,
 
-      DATA_READY_HOOK,
+  ///< tx is blocked, may be triggered after waiting has surpassed a limit
+  // but hasnt yet TIMED_OUT
+  //
+  // to any hooks with callbacks - callbacks shoudl return quickly
+  // but especilly important for hooks with cb type COND_RETRY
 
-      // 2 hooks which are triggered when a remot obejct attaches hook
-      // these are self hooks, and are not triggered by self hooks
-      // this is to allow automation - attached is sent to the receiver
-      // detached is sent to the caller, so it can remove the local pointers
-      // when an instance is finalized it will release all of its hook stacks, after calling final hook
-      HOOK_ATTACHED_HOOK,
+  // an ARBITRATOR object can attempt to remedy the situation,
+  // for SYNC_WAIT this implies finding which Conditions are delaying and attempting
+  // to remedy this
+  // for DATA_REQUEST this implies hceking why the data provider is delaying,
+  // and possibly finding
+  // a replacement
+  // for SEGMENT, the arbitrator may force the Transform to resume,
+  // if multiple next segments are causing the
+  // delay it may select which one to follow next, preferring segment_end
+  // if avaialble, to complete the transform
 
-      // this hook is triggered in the PASSIVE party, for exmaple if an object is freed
-      // this hook is called for all objects with hooks attached
-      // if an obejct removes a hook callback from a remote object the hook is trigger in remote
-      HOOK_DETACHED_HOOK,
+  TX_BLOCKED_HOOK,
 
-      // hook is triggered in an object if a message bundle has been placed in its
-      // message queue. This normally occurs after successful negotiation of a contract
-      // when the caller would like the target to run the transform itself
-      // if thread_model is on-demand, the queued message will be retrieved by the thread herder
-      // and placed in its own queue instead, where it will wait to be assinged to a pool thread
-      // if chronometry subsystem support is enabeled, contracts may be placed in chronometry;s
-      // message queue, together with an attribute indicate an action time,
-      // whether it repeats and so on.
-      MSG_QUEUED_HOOK,
+  // calbacks for the following two hooks are allowed to block "briefly"
+  // so that data can be copied
+  // or edited. The hook callback will receive a "max_time_target" in input, the value depends
+  // on the caller and for data prep this is divided depending on the number
+  // of callbacks remaing
+  // to run. The chronometer may help with the calculation.
+  // objects which delay for too long may be penalized, if they persistently do so
 
-      // this hook is triggered when a queued contract is processed in from an object's message queue
-      // caller is the object processing and source is the contract
-      // target is the object that originally placed it in the queue
-      MSG_RECEIVED_HOOK,
+  // tx hooks not associated ith status change
+  // if the data is readonly then DATA_PREVIEW_HOOK is cal
+  DATA_PREVIEW_HOOK,
 
-      // this hook triggers when an attribute connection is made
-      // for attributes connected TO anothr, this implies that the remote attribute is
-      // if refcounting is semi or full
-      ATTR_CONNECT_HOOK,
+  // data in its "final" state is ready
+  // data is readonly. The Transform will call all callbacks in parallel and will not block
+  // however it will wait for all callbacks to return before freeing / altering the data
+  DATA_READY_HOOK,
 
-      // this hook triggers when an attribute connection is broken
-      // for attributes connected TO anothr, this implies that the remote attribute is
-      // about to be freed
-      // for attributes connected from another this is for information, however the local
-      // attribute will lose 1 added reference, possibly freeing it
-      ATTR_DISCONNECT_HOOK,
-      
-      // this is triggered during a transform if a breach of contract terms is detected,
-      // generally the arbitrator would attach automatically to this hook
-      // if it fails to correct the situation, it may be passed on to the adjudicator
-      // mark the contract breaker as "untrustworthy" log the incident, and set ERROR
-      // status for the transform
-      CONTRACT_BREACHED_HOOK,
-      
-      // thread running the transform received a fatal signal
-      THREAD_EXIT_HOOK,
+  // this hook is triggered when an object is destructing
+  // data includes the hook stack owner, item, hook number, hook handle and
+  // user data. The callback is also called when the hook_detachimg callback itself
+  // is detached
+  // in fact, DESTRUCTING hook callbacks are HOOK_DETACHING callback for for the DESTUCTING
+  // hook stack
+  HOOK_DETACHING_HOOK,
 
-      // this can be used for debugging, in a function put NIRVA_CALL(tripwire, "Reason")
-      // the hook stack will be held in one or other structural subtypes
-      TRIPWIRE_HOOK,
-      
-      // REQUEST HOOKS - tx will provide hook callbacks which another object can trigger
-      // if the target object is not active, or is busy, the automation may respond as a proxy
+  // hook is triggered in an object if a callback has been placed in its
+  // idle stack
+  IDLE_QUEUED_HOOK,
 
-      // every object instance has a default, no negotiate contract with intent INTENTION_REQUEST_UPDATE
-      // this should b actioned with the hook type passed in the input bundle, elemet "REQUEST_TYPE"
-      // type INT. the response will be in output bundle element "RESPONSE" (UINT64)
-      // if RESPONSE_WAIT_RETRY is received, then the tranform may be rerried after a short
-      // pause
+  // thread running the transform received a fatal signal
+  THREAD_EXIT_HOOK,
 
-      // this is called by autopmation in response to refcount going below zeo
-      // it will set the destruct_request flagbit in the thread
-      // the thread should abort the transform ASAP, put the object in the zobie state and
-      // deliver the object to the recycler for recycling
-      // equivalent to request_update on the bundle;s REFECOUNT.SHOULD_FREE and a target 
-      // value of NIRVA_TRUE
-      // (in this case the "value" becomes an offset)
-      // needs PRIV_LIFECYCLE > 10
-      DESTRUCT_REQUEST_HOOK,
+  // this can be used for debugging, in a function put NIRVA_CALL(tripwire, "Reason")
+  // the hook stack will be held in one or other structural subtypes
+  TRIPWIRE_HOOK,
 
-      // asks the bundle (which must have a refcount sub-bundle) to increase the refcount
-      // automation will add the caller uid to a list, so that only obejcts which added a
-      // ref can remove one.  The initial value of the array contains the UID of the ownere object,
-      // so that it can always unref 1 extra time
-      // equivalent to request_update on the bundle;s REFECOUNT.REFCOUNT and a target 'value' of +1
-      // (in this case the "value" becomes an offset)
-      REF_REQUEST_HOOK,
+  // REQUEST HOOKS - tx will provide hook callbacks which another object can trigger
+  // if the target object is not active, or is busy, the automation may respond as a proxy
 
-      // request the objec decrement the refcount by 1. The caller must previosly have added a ref
-      // (the deafult automation will add a single value with owner object UID
-      // obejct threads should remove 1 ref and if the refcount goes below zero, abort the tx
-      // deliver the instance or attribute to the bundle recycler and withdraw from the instance 
-      // equivalent to request_update on the bundle;s REFECOUNT.REFCOUNT and a target 'value' of -1
-      // (in this case the "value" becomes an offset)
-      UNREF_REQUEST_HOOK,
+  // these hooks are triggered by a structure transform:
+  // nirva_request_hook(fn_input, fn_output)
+  // fn_input should contain at least: caller_object, target_object, target_dest, hook_number,
+  // (or hook_type, hook_flags), and any other strands / attributes specified by the hook
+  // (see documentation for details), the output and reponse depend on the request type
 
-      // if the transform exposes this hook, then this request can be triggered after or
-      // during a transform. If accepted, the target
-      // will reverse the pervious data update either for the attribute of for the previous transform
-      // target / value TBD. If the transform cannot be undone further,
-      // NIRVA_REPSONE_NO should be returned
-      UNDO_REQUEST_HOOK,
+  // this request should be triggered to read the value of any strand (ex.
+  // the data strand of an attribute). if there ar no callbacks then the
+  // value is simply returned
+  // Triggering this hook is normally done automatically in a mcro e.g. NIRVA_GET_VALUE
+  // If there are no callbacks, the reuslt will be simply to retuen the value of the strand.
+  // For added (user or structure) callbacks, the type of callback here is "Oraculor",
+  // the return codes are the same as thos used for conditions, with the followin menaings:
+  // COND_FAIL, COND_SUCCESS - continue to next cb, on COND_FAIL the cb will be removed
+  // COND_FORCE - the callback can povide an override in fn_output.valu.data to be returned
+  // instead. COND_WAIT_RETRY - data not ready, caller should wait and retry.
+  // This is the return code returned during a transform by a data provider when it is not yet
+  // ready to supply new data.
+  // COND_ERROR - if the strand does not exist, or other erro,
+  // Since end caller expects a value
+  // back this can be cehcked for via NIRVA_ERR_CHECK.
+  // When reading a value from an array, optionally fn_in may contain a BUNDLE_MATCH_CONDITION
+  // which can facilitate searching for a specific item in the array.
+  // This is utilised by keyed
+  // arrays to optimise locating strands (attribute by name, bundle by uid and so on).
 
-      // if the transform exposes this hook, then this request can be triggered after or
-      // during a transform. If accepted, the target
-      // will reverse the pervious data undo either for the attribute of for the previous transform
-      // target / value TBD. If the transform cannot be redone further,
-      // NIRVA_REPSONE_NO should be returned
-      REDO_REQUEST_HOOK,
+  DATA_REQUEST_HOOK,
 
-      // this is called BEFORE a remote attribute connects to a local attribute
-      // this is a SELF hook, meaning only the object owning the attribute may add callbacks
-      // returng FALSE blocks the connection rather than removing the callback
-      // so the hook callback must be removed manually
-      //
-      // if the connection is not blocked, the default hook adds a reference to remote_attr and
-      // local_attr
-      // and remote attr maps a pointer to the local attr. The reomote attribute
-      // gets the same flags as the local one
-      // plus the CONNECTED flagbits. The prior data is not freed,
-      // however when the attribute disconnects
-      // target is attribute connections_in. array, data is ptr to local attr
-      ATTR_CONNECT_REQUEST,
+  // asks the structure to check if it is OK to add a strand to a bundle
+  // if the strand is in the blueprint it will always return REQUEST_YES
+  // otherwise a COND_CHECK on PRIV_STRANDS is done,
+  // ormally requires PRIV_STRANDS > 10, to prevent this from happening
+  // accidentally, requests originating from a thread in another object require priv >50
+  // adding a strand to a template requires priv > 100
+  // and to a structural, priv > 200
+  ADD_STRAND_REQUEST_HOOK,
 
-      // requests that the attribute value be updated
-      // if the TX is being run to provide data input for another Transfomr
-      // calling this will request new data in the linkedd attribute
-      // only the object running may call this
-      // target is attribute "value", value is not created
-      UPDATE_REQUEST_HOOK,
-      //
-      // if the app has an arbitrator, an object bound to a contract may tigger this, and on
-      // COND_SUCCESSm the attribute will be disconnected with no penalties
-      // target is local attribute "value", value is NULL
-      SUBSTITUTE_REQUEST_HOOK,
-      //
-      // target is transform "status", value is cancelled
-      CANCEL_REQUEST_HOOK, // an input hook which can be called to cancel a running tx
-      //
-      // ask the transform to pause processing. May not happen immediately (or ever, so add a callback
-      // for the PAUSED hook)
-      // will wait for all callbacks to return, and for unpause hook (if it exists) to be called
-      // target is transform "status", value is pausedd
-      PAUSE_REQUEST_HOOK,
-      // if this hook exists, then to unpause a paused transform this must be called and all paused
-      // callbacks must have returned (may be called before the functions return)
-      // after this, the unpaused callbacks will be called and processing will only continue
-      // once all of those have returned. Calling this  when the tx is not paused or running unpaused
-      // hooks will have no effect
-      // target is transform "status", value is resuming
-      RESUME_REQUEST_HOOK,
-      //
-      // hooks reserved for internal use by instances
-      INTERNAL_HOOK_0,
-      INTERNAL_HOOK_1,
-      INTERNAL_HOOK_2,
-      INTERNAL_HOOK_3,
-      ///
-      N_HOOK_POINTS,
+  // asks the structure if it is OK to delete a strand
+  // if the strand is optional in the blueprint it will always return REQUEST_YES
+  // otherwise a COND_CHECK on PRIV_STRANDS is done,
+  // ormally requires PRIV_STRANDS > 20, to prevent this from happening
+  // accidentally, requests originating from a thread in another object require priv >70
+  // to stop runaway threads from deleting parts of the system
+  // deleting a strand from a template requires priv > 100
+  // and from a structural, priv > 1000
+  DELETE_STRAND_REQUEST_HOOK,
+
+  // this is called by autopmation in response to refcount going below zeo
+  // it will set the destruct_request flagbit in the thread
+  // the thread should abort the transform ASAP, put the object in the zobie state and
+  // deliver the object to the recycler for recycling
+  // equivalent to request_update on the bundle;s REFECOUNT.SHOULD_FREE and a target
+  // value of NIRVA_TRUE
+  // (in this case the "value" becomes an offset)
+  // needs PRIV_LIFECYCLE > 10
+  DESTRUCT_REQUEST_HOOK,
+
+  // asks the bundle (which must have a refcount sub-bundle) to increase the refcount
+  // automation will add the caller uid to a list, so that only obejcts which added a
+  // ref can remove one.  The initial value of the array contains the UID of the ownere object,
+  // so that it can always unref 1 extra time
+  // equivalent to request_update on the bundle;s REFECOUNT.REFCOUNT and a target 'value' of +1
+  // (in this case the "value" becomes an offset)
+  REF_REQUEST_HOOK,
+
+  // request the objec decrement the refcount by 1. The caller must previosly have added a ref
+  // (the deafult automation will add a single value with owner object UID
+  // obejct threads should remove 1 ref and if the refcount goes below zero, abort the tx
+  // deliver the instance or attribute to the bundle recycler and withdraw from the instance
+  // equivalent to request_update on the bundle;s REFECOUNT.REFCOUNT and a target
+  // 'value' of -1
+  // (in this case the "value" becomes an offset)
+  UNREF_REQUEST_HOOK,
+
+
+  // if the transform exposes this hook, then this request can be triggered after or
+  // during a transform. If accepted, the target
+  // will reverse the pervious data update either for the attribute of for
+  // the previous transform
+  // target / value TBD. If the transform cannot be undone further,
+  // NIRVA_REPSONE_NO should be returned
+  UNDO_REQUEST_HOOK,
+
+  // if the transform exposes this hook, then this request can be triggered after or
+  // during a transform. If accepted, the target
+  // will reverse the pervious data undo either for the attribute of
+  // for the previous transform
+  // target / value TBD. If the transform cannot be redone further,
+  // NIRVA_REPSONE_NO should be returned
+  REDO_REQUEST_HOOK,
+
+  // this is called BEFORE a remote attribute connects to a local attribute
+  // this is a SELF hook, meaning only the object owning the attribute may add callbacks
+  // returng RQUEST_NO blocks the connection
+  //
+  // and remote attr maps a pointer to the local attr. The reomote attribute
+  // gets the same flags as the local one
+  // plus the CONNECTED flagbits. The prior data is not freed,
+  // however when the attribute disconnects
+  // target is attribute connections_in. array, data is ptr to local attr
+  ATTR_CONNECT_REQUEST,
+
+  //
+  // if the app has an arbitrator, an object bound to a contract may tigger this, and on
+  // COND_SUCCESSm the attribute will be disconnected with no penalties
+  // target is local attribute "value", value is NULL
+  SUBSTITUTE_REQUEST_HOOK,
+  //
+  // target is transform "status", value is cancelled
+  CANCEL_REQUEST_HOOK, // an input hook which can be called to cancel a running tx
+  //
+  // ask the transform to pause processing. May not happen immediately (or ever,
+  // so add a callback
+  // for the PAUSED hook)
+  // will wait for all callbacks to return, and for unpause hook (if it exists) to be called
+  // target is transform "status", value is pausedd
+  PAUSE_REQUEST_HOOK,
+  // if this hook exists, then to unpause a paused transform this must be called
+  // and all paused
+  // callbacks must have returned (may be called before the functions return)
+  // after this, the unpaused callbacks will be called and processing will only continue
+  // once all of those have returned. Calling this  when the tx is not paused or
+  // running unpaused
+  // hooks will have no effect
+  // target is transform "status", value is resuming
+  RESUME_REQUEST_HOOK,
+  //
+  // hooks reserved for internal use by instances
+  INTERNAL_HOOK_0,
+  INTERNAL_HOOK_1,
+  INTERNAL_HOOK_2,
+  INTERNAL_HOOK_3,
+  ///
+  N_HOOK_POINTS,
 } nirva_hook_number;
 
-#define ATTR_UPDATED_HOOK DATA_READY_HOOK
-#define ATTR_DELETE_HOOK FINAL_HOOK
 #define RESTART_HOOK RESETTING_HOOK
 
-#define UPDATED_VALUE_HOOK DATA_HOOK_TYPE
+// for some hook callbacks a value of true returned means the hook callback will stay in the
+// callback stack. Setting this ensures that it is removed after the first call, even if
+// true is returned
+#define HOOK_CB_FLAG_ONE_SHOT			(1 << 1)
 
-/////////////////////////// bundles //
-/*  SPECIAL RULES: */
-/*  1.	For the items, ELEM_VALUE_DATA, ELEM_VALUE_DEFAULT and ELEM_VALUE_NEW_DEFAULT, */
-/*  the data type is determined by the value of the ELEM_VALUE_TYPE item */
-/*  which MUST be present in the same bundle. The number of data elements which can be set is */
-/*  defined by the ELEM_VALUE_MAX_REPEATS item, which may optionally be present in the same */
-/*  bundle. If ELEM_VALUE_DEFAULT is set and ELEM_VALUE_DATA is not set, then ELEM_VALUE_DEFAULT */
-/*  should copied to ELEM_VALUE_DATA. */
 
-/*  2.	For item ELEM_GENERIC_UID, a randomly generate uint64_t number should be generated */
-/*  as the default value and never changed.	If a bundle containing this element is copied, */
-/*  then a new random value shall be generated for the copy bundle. */
+#define NIRVA_BUNDLEPTR NIRVA_PTR_TO(NIRVA_BUNDLE_T)
+#define NIRVA_CONST_BUNDLEPTR NIRVA_CONST NIRVA_BUNDLEPTR
+#define NIRVA_BUNDLE_TYPE bundle_type
+#define NIRVA_BUNDLEPTR_ARRAY NIRVA_ARRAY_OF(NIRVA_BUNDLEPTR)
+#define NIRVA_CONST_STRING NIRVA_CONST NIRVA_STRING
+#define NIRVA_STRING_ARRAY NIRVA_ARRAY_OF(NIRVA_STRING)
+#define NIRVA_CONST_STRING_ARRAY NIRVA_CONST NIRVA_STRING_ARRAY
 
-/* 3. When setting the value of any element, check if the bundle contains hook_triiger bundles */
-/* if so and target matches, call data hooks before and after. */
-/* if before hook returns NIRVA_COND_FAILED, do not change the value. */
-
-/* // flag bits may optionally be used to store information derived from the strands */
-
-NIRVA_TYPEDEF(NIRVA_ENUM _hook_patterns, nirva_hook_type)
-
-#define ELEM_FLAG_ARRAY 		(iull << 0)	// denotes the data type is array
-#define ELEM_FLAG_PTR_TO_SCALER        	(iull << 1)	// denotes element is a pointer to specified type
-#define ELEM_FLAG_PTR_TO_ARRAY        	(iull << 2)	// denotes element is a pointer to specified type
-#define ELEM_FLAG_OPTIONAL 		(1ull << 3)	// denotes the entry is optional
-#define ELEM_FLAG_CONST 		(1ull << 4)	// value is set to default, then can only be set once more
-#define ELEM_FLAG_COMMENT 		(1ull << 5)
-#define ELEM_FLAG_DIRECTIVE 		(1ull << 6)
-
-#define _GET_TYPE(a, b) _ELEM_TYPE_##a
-#define _GET_ATYPE(a, b) _ATTR_TYPE_##a
-#define _GET_BUNDLE_TYPE(a, b) a##_BUNDLE_TYPE
-#define _GET_DEFAULT(a, b) #b
-#define _CALL(MACRO, ...) MACRO(__VA_ARGS__)
-
-#define GET_ELEM_TYPE(xdomain, xitem) _CALL(_GET_TYPE, ELEM_##xdomain##_##xitem##_TYPE)
-#define GET_DEFAULT(xdomain, xitem) _CALL(_GET_DEFAULT, ELEM_##xdomain##_##xitem##_TYPE)
-
-#define GET_BUNDLE_TYPE(xdomain, xitem) _CALL(_GET_BUNDLE_TYPE, BUNDLE_##xdomain##_##xitem##_TYPE)
-#define GET_BUNDLE_DEFAULT(xdomain, xitem) _CALL(_GET_DEFAULT, BUNDLE_##xdomain##_##xitem##_TYPE)
-
-#define GET_ATTR_TYPE(xdomain, xitem) _CALL(_AGET_TYPE, ATTR_##xdomain##_##xitem##_TYPE)
-#define GET_ATTR_DEFAULT(xdomain, xitem) _CALL(_GET_DEFAULT, ATTR_##xdomain##_##xitem##_TYPE)
-
-#define JOIN(a, b) GET_ELEM_TYPE(a, b) ELEM_##a##_##b  //ELEM_NAMEU(#a, #b)
-#define JOIN2(a, b, c) GET_ELEM_TYPE(a, b) ELEM_NAMEU(#a, #c)
-#define JOIN3(a, b, c, d, e) GET_ELEM_TYPE(a, b) ELEM_NAMEU(#d, #e) " " #c
-
-#define AJOIN(a, b) GET_ATTR_TYPE(a, b) ATTR_##a##_##b  //ELEM_NAMEU(#a, #b)
-#define AJOIN2(a, b, c) GET_ATTR_TYPE(a, b) ATTR_NAMEU(#a, #c)
-#define AJOIN3(a, b, c, d, e) GET_ATTR_TYPE(a, b) ATTR_NAMEU(#d, #e) " " #c
-
-#define PJOIN3(a, b, c, d, e) GET_ELEM_TYPE(a, b) BUNDLE_NAMEU(#d, #e) " " #c
-#define XJOIN3(a, b, c, d, e) GET_ELEM_TYPE(a, b) CUSTOM_NAMEU(#d, #e) " " #c
-#define BJOIN3(a, b, c, d, e) GET_ELEM_TYPE(a, b) BUNDLE_NAMEU(#d, #e) " " #c
-
-#define _ADD_STRAND(domain, item) JOIN(domain, item)
-#define _ADD_ASTRAND(domain, item) AJOIN(domain, item)
-#define _ADD_STRANDn(domain, item, name) JOIN2(domain, item, name)
-#define _ADD_ASTRANDn(domain, item, name) AJOIN2(domain, item, name)
-//#define _ADD_NAMED_STRAND(xd, xi, typename, domain, item) JOIN3(xd, xi, typename, domain, item)
-#define _ADD_NAMED_PSTRAND(xd, xi, typename, domain, item) PJOIN3(xd, xi, typename, domain, item)
-#define _ADD_NAMED_XSTRAND(xd, xi, typename, domain, item) XJOIN3(xd, xi, typename, domain, item)
-#define _ADD_NAMED_BSTRAND(xd, xi, typename, domain, item) BJOIN3(xd, xi, typename, domain, item)  
-#define _ADD_OPT_STRAND(domain, item) "?" JOIN(domain, item)
-#define _ADD_OPT_STRANDn(domain, item, name) "?" JOIN2(domain, item, name)
-#define _ADD_OPT_ASTRAND(domain, item) "?" AJOIN(domain, item)
-#define _ADD_OPT_ASTRANDn(domain, item, name) "?" AJOIN2(domain, item, name)
-
-#define MS(...) make_strands("", __VA_ARGS__, NULL)
-#define MSTY(...) make_strands(__VA_ARGS__, NULL)
-
-//#define RENAME_ELEM(...) MS_PAIR(DIRECTIVE_RENAME_ELEM, __VA_ARGS__, DIRECTIVE_RENAME_ELEM_END);
-//#define MAKE_PACK(...) MS(__VA_ARGS__)
-#define ADD_ATTR(domain, name) INCLUDE_SUB_BUNDLE(domain, name, ATTRIBUTE)
-
-// overwwrite existing default for item
-#define REPL_DEF(elemname, newval, ...) MS(DIRECTIVE_REPLACE_DEFAULT" "#elemname, "" __VA_ARGS__, \
-					   DIRECTIVE_REPLACE_DEFAULT_END)
-
-#define _ADD_STRAND2(domain, item) ("0 " GET_DEFAULT(domain, item))
-#define _ADD_STRAND2a(domain, item) ("1 " GET_DEFAULT(domain, item))
-#define _ADD_STRAND2p(domain, item) ("2 " "((void *)0)")
-#define _ADD_STRAND2pa(domain, item) ("3 " "((void *)0)")
-
-#define ADD_BUNDLE(td, ti, bt, d, i) MS(_ADD_NAMED_PSTRAND(td, ti, bt, d, i), _ADD_STRAND2p(td, ti) )
-#define ADD_BUNDLE_ARR(td, ti, bt, d, i) MS(_ADD_NAMED_XSTRAND(td, ti, bt, d, i), _ADD_STRAND2pa(td, ti) )
-
-#define INC_BUNDLE_ARR(td, ti, d, i, n) MS(_ADD_NAMED_BSTRAND(td, ti, GET_BUNDLE_TYPE(d,i), d, i), \
-					   _ADD_STRAND2a(td, ti))
-
-#define INC_BUNDLE(td, ti, d, i, n) MS(_ADD_NAMED_BSTRAND(td, ti, GET_BUNDLE_TYPE(d,i), d, i), \
-				       _ADD_STRAND2(td, ti))
-
-#define CRE_BUNDLE(td, ti, d, i, n) MS("+" _ADD_NAMED_BSTRAND(td, ti, GET_BUNDLE_TYPE(d,i), d, i), \
-				       _ADD_STRAND2(td, ti))
-
-#define INC_NAMED_BUNDLE_ARR(td, ti, bt, d, i, n) MS(_ADD_NAMED_BSTRAND(td, ti, \
-									GET_BUNDLE_TYPE(d,i), d, n), \
-						     _ADD_STRAND2a(td, ti))
-
-////////////////////////// BUNDLEDEF "DIRECTIVES" ////////////////////////////////////////
-// + ATTRBUNDLE
-#define ADD_ELEM(d, i)			 	    	MS(_ADD_STRAND(d,i),_ADD_STRAND2(d,i))
-#define ADD_ATTR(d, i)			 	    	MS(_ADD_ASTRAND(d,i),_ADD_ASTRAND2(d,i))
-#define ADD_NAMED_ELEM(d, i, n)		       	    	MS(_ADD_STRANDn(d,i,n),_ADD_STRAND2(d,i))
-#define ADD_ARRAY(d, i) 			    	MS(_ADD_STRAND(d,i),_ADD_STRAND2a(d,i))
-#define ADD_NAMED_ARRAY(d, i, n) 	       	    	MS(_ADD_STRANDn(d,i,n),_ADD_STRAND2a(d,i))
-
-#define ADD_OPT_ELEM(d, i) 				MS(_ADD_OPT_STRAND(d,i),_ADD_STRAND2(d,i))
-#define ADD_OPT_ATTR(d, i) 				MS(_ADD_OPT_ASTRAND(d,i),_ADD_ASTRAND2(d,i))
-#define ADD_NAMED_OPT_ELEM(d, i, n)   	       	    	MS(_ADD_OPT_STRANDn(d,i,n),_ADD_STRAND2(d,i))
-#define ADD_OPT_NAMED_ELEM(d, i, n) 			ADD_NAMED_OPT_ELEM(d, i, n)
-#define ADD_OPT_ARRAY(d, i) 				MS(_ADD_OPT_STRAND(d,i),_ADD_STRAND2a(d,i))
-#define ADD_NAMED_OPT_ARRAY(d, i) 	       		MS(_ADD_OPT_STRANDn(d,i,n),_ADD_STRAND2a(d,i))
-#define ADD_OPT_NAMED_ARRAY(d, i)			ADD_NAMED_OPT_ARRAY(d, i)
-#define ADD_COND_ATTR(d, i, ...) 			MS(DIRECTIVE_COND_ATTR, \
-							   _ADD_OPT_ASTRAND(d,i), \
-							   _ADD_ASTRAND2(d,i), \
-							   __VA_ARGS__,DIRECTIVE_COND_ATTR_END))
-
-#define ADD_COMMENT(text)				MS("#" text)
-
-// include all elements from bundle directly
-#define EXTEND_BUNDLE(BNAME) 				BNAME##_BUNDLEDEF
-#define EXTENDS_BUNDLE(BNAME)				EXTEND_BUNDLE(BNAME)
-
-// ptr to bundle and array of ptrs
-#define INCLUDE_BUNDLES(domain, item)			INC_BUNDLE_ARR(VALUE, BUNDLEPTR, domain, item, item)
-#define INCLUDES_BUNDLES(domain, item)			INCLUDE_BUNDLES(domain, item)
-#define INCLUDE_NAMED_BUNDLES(domain, item, name)      	INC_BUNDLE_ARR(VALUE, BUNDLEPTR, domain, item, name)
-#define INCLUDES_NAMED_BUNDLES(domain, item, name)    	INCLUDE_NAMED_BUNDLES(domain, item, name)
-
-#define INCLUDE_BUNDLE(domain, item)  		    	INC_BUNDLE(VALUE, BUNDLEPTR, domain, item, item)
-#define INCLUDES_BUNDLE(domain, item)			INCLUDE_BUNDLE(domain, item)
-#define INCLUDE_NAMED_BUNDLE(domain, item, name)      	INC_BUNDLE(VALUE, BUNDLEPTR, domain, item, name)
-#define INCLUDES_NAMED_BUNDLE(domain, item, name)      	INCLUDE_NAMED_BUNDLE(domain, item, name)
-
-// ptr to bundleptr and ptr to array of bundleptrs
-#define ADD_BUNDLE_PTR(domain, item, btype) 		ADD_BUNDLE(VALUE, BUNDLEPTR, btype##_BUNDLE, domain, item)
-#define ADD_BUNDLE_ARRAY_PTR(domain, item, btype) 	ADD_BUNDLE_ARR(VALUE, BUNDLEPTR, btype##_BUNDLE, domain, item)
+NIRVA_TYPEDEF(NIRVA_BUNDLEPTR, nirva_bundleptr_t)
 
 #endif // !SKIP_MAIN
 
-//// PREDEFINED BUNDLEDEFS //////////////
-
-#ifdef IS_BUNDLE_MAKER
-// bundle_type should be set to the toplevel bundle type
-// uid should be set to a random id
-// optionally can hold API version and a name for the bundledef
-// MUST be extended by ALL bundles either directly or indirectly
-#define _DEF_BUNDLE ADD_NAMED_ELEM(VALUE, UINT64, BUNDLE_TYPE), ADD_ELEM(GENERIC, UID),	\
-    ADD_OPT_ELEM(BASE, VERSION), ADD_OPT_ELEM(GENERIC, NAME)
-
-#define _KERNEL_BUNDLE EXTEND_
-
-// this is for bundles which want to include the bundledef, this is necessary for any bundles
-// with a non standard bundledef, or a pointer to bundledef, which details optional items
-// andy bundles which allow additon or deletion of opt elements need to extend this
-#define _CORE_BUNDLE EXTEND_BUNDLE(DEF),				\
-    ADD_OPT_ELEM(INTROSPECTION, BLUEPRINT), ADD_OPT_ELEM(INTROSPECTION, BLUEPRINT_PTR)
-
-// a little more extensive than core, this also includes API version, comment and priv data
-// useful for bundles which may have many copies created, or for long term storage
-#define _BASE_BUNDLE EXTEND_BUNDLE(CORE),				\
-    ADD_OPT_ELEM(INTROSPECTION, COMMENT), ADD_OPT_ELEM(INTROSPECTION, PRIVATE_DATA)
-
-// wraps a native ptr / size / type
-#define _MAPPED_VALUE_BUNDLE EXTEND_BUNDLE(DEF), ADD_OPT_ELEM(INTROSPECTION, NATIVE_TYPE), \
-    ADD_OPT_ELEM(INTROSPECTION, NATIVE_SIZE), ADD_NAMED_ELEM(INTROSPECTION, NATIVE_PTR, VALUE)
-
-/* A bundle that is used for attribute VALUE. Initially (unless directed otherwise), DATA is not created
-   and VALUE (from the extended MAPPED_VALUE) is set to NULL. Type may have been 
-
-*/
-#define _VALUE_BUNDLE EXTEND_BUNDLE(DEF), EXTEND_BUNDLE(MAPPED_VALUE), ADD_OPT_ELEM(VALUE, DATA)
-
-// may contain "before" and "after" values for data_hook, as well as being useful for
-// comparison functions
-#define _VALUE_CHANGE_BUNDLE ADD_BUNDLE_ARRAY_PTR(VALUE, OLD, VALUE), ADD_BUNDLE_ARRAY_PTR(VALUE, NEW, VALUE)
-
-// maps a single native function paramater to an attr_desc
-#define _PMAP_DESC_BUNDLE EXTEND_BUNDLE(DEF), ADD_ELEM(FUNCTION, PARAM_NUM), \
-    ADD_BUNDLE_PTR(MAPPED, ATRRTIBUTE, ATTR_DESC)
-
-// the "live" version of the preceding, we now link the actual parameter "value"
-// to an atribute
-#define _PMAP_BUNDLE EXTEND_BUNDLE(DEF), ADD_BUNDLE_PTR(PMAP, TEMPLATE, PMAP_DESC) \
-    INCLUDE_BUNDLE(VALUE, MAPPED), INCLUDE_BUNDLE(STANDARD, ATTRUBUTE)
-
-// TODO
-#define _ERROR_BUNDLE EXTEND_BUNDLE(DEF), ADD_ELEM(GENERIC, DESCRIPTION)
-
-#define _CONDVAL_NODE_BUNDLE EXTEND_BUNDLE(DEF), INCLUDE_BUNDLE(AUTOMATION, CONDITION), \
-    ADD_BUNDLE_PTR(CASCADE, CONSTVAL, CONSTVAL_MAP), ADD_BUNDLE_PTR(NEXT, SUCCESS, CONDVAL_NODE) \
-    ADD_BUNDLE_PTR(NEXT, FAIL, CONDVAL_NODE), ADD_NAMED_OPT_ELEM(VALUE, DOUBLE, P_SUCCESS), \
-    ADD_NAMED_OPT_ELEM(VALUE, DOUBLE, P_FAIL)
-
-#define _CONDLOGIC_BUNDLE EXTEND_BUNDLE(DEF), ADD_ELEM(LOGIC, OP),	\
-    ADD_BUNDLE_PTR(CONDITON, CONDA, CONDVAL_NODE), ADD_BUNDLE_PTR(LOGIC, CONDB, CONDVAL_NODE)
-
-// one of these may have NULL for condlogic, this defines a default value
-#define _CONSTVAL_MAP_BUNDLE EXTEND_BUNDLE(DEF), INCLUDE_BUNDLE(VALUE), \
-    INCLUDE_BUNDLES(CASCADE, CONDLOGIC)
-
-#define _CASCMATRIX_NODE_BUNDLE EXTEND_BUNDLE(DEF), ADD_ELEM(CASCMATRIX, OP_SUCCESS), \
-    ADD_ELEM(CASCMATRIX, OP_FAIL), ADD_BUNDLE_PTR(CASCMATRIX, OTHER_IDX), \
-    INCLUDE_BUNDLE(CASCMATRIX, ON_SUCCESS), INCLUDE_BUNDLE(CASCMATRIX, ON_FAIL) 
-
-#define _BUNDLE_ARRAY EXTEND_BUNDLE(DEF) ADD_ARRAY(ELEM_VALUE_BUNDLEPTR)
-
-#define _MATRIX_2D_BUNDLE EXTEND_BUNDLE(DEF), INCLUDE_BUNDLES(MATRIX, ROW)
-  
-#define _CASCADE_BUNDLE EXTEND_BUNDLE(DEF), ADD_ELEM(GENERIC, NAME), ADD_ELEM(GENERIC, UID), \
-    ADD_OPT_ELEM(GENERIC, DESCRIPTION), ADD_ELEM(GENERIC, FLAGS),	\
-    INCLUDE_BUNDLES(CASCADE, DECISION_MAP), INCLUDE_BUNDLES(CASCADE, CONSTVALMAP), \
-    INCLUDE_BUNDLES(STANDARD, MATRIX_2D)
-  
-// this bundle describes an attribute, but is "inert" - has no value or connections
-// attr_desc is to attributes, what object_template is to object instance
-#define _ATTR_DESC_BUNDLE EXTEND_BUNDLE(DEF), ADD_ELEM(GENERIC, NAME), ADD_ELEM(GENERIC, UID), \
-    ADD_OPT_ELEM(GENERIC, DESCRIPTION), ADD_ELEM(GENERIC, FLAGS), ADD_ELEM(VALUE, TYPE), \
-    ADD_OPT_ELEM(VALUE, MAX_VALUES), ADD_ELEM(VALUE, DEFAULT), ADD_OPT_ELEM(VALUE, NEW_DEFAULT)
-
-/* a bundle that defines a standard object attribute */
-/* we extend am attribute_base and include a VALUE sub-bundle. This wraps the actual implementation
-   dependant "actual" value, and adds hooks; "default" and "new_default" are also VALUE bundles,
-   the hook will check the type matches. */
-// when setting item "value", actually we want to set element value in the value_mapped sub bundle of that name
-// the dafault hook stack types are data hooks, attr_connect_request, attr_conect, att_disconnect
-// data request, data_ready. data_prep
-// if several atributes are updated together they can be added to a bundle
-// and the hook stacks embeded in there
-#define _ATTRIBUTE_BUNDLE EXTEND_BUNDLE(ATTR_DESC), EXTEND_BUNDLE(VALUE), \
-    ADD_BUNDLE_PTR(PARENT, TEMPLATE, ATTR_DESC),			\
-    INCLUDE_NAMED_BUNDLES(ATTRIBUTE, CONNECTION, CONNECTIONS_IN),	\
-    INCLUDE_BUNDLE(STANDARD, REFCOUNT), INCLUDE_NAMED_BUNDLE(ATTRIBUTE, CONNECTION, CONNECTION_OUT), \
-    INCLUDE_BUNDLES(ATTRIBUTE, HOOK_STACK)
-
-// this is a sub-bundle of attribute and serves to map a remote attibute
-// when the 'value' of attr is to be read, the value returned is that of the remote attribute
-// the target attribute is itself connected then it is up to the application to follow the chain
-// this is to avoid taking too much time or getting stuck in loops
-// detached hook is a self hook, automation will add a callback which handles this
-// in a manner dependant on flags
-// the automation will also add a data_hook - before, if the value of rremote_attribute will
-// change then detached hook will be triggered in the remote attribute first
-// making a connection also refs local and remote, the ref is removed when detached
-#define _ATTR_CONNECTION_BUNDLE ADD_BUNDLE_PTR(REMOTE, ATTRIBUTE, ATTRIBUTE), \
-    ADD_OPT_ELEM(GENERIC, FLAGS), INCLUDE_NAMED_BUNDLE(HOOK, STACK, DETATCHED_HOOK)
-
-// a bundle comprised of metadata and array of bundle_desc - this can be used as a replacement
-// for the strand based bundledefs
-#define _ATTR_DESC_BUNDLE_BUNDLE EXTEND_BUNDLE(BASE), INCLUDE_NAMED_BUNDLES(STANDARD, ATTR_DESC, ITEMS)
-
-// a bundle comprised of metadata and array of bundles
-#define _ATTR_BUNDLE_BUNDLE EXTEND_BUNDLE(BASE), INCLUDE_NAMED_BUNDLES(STANDARD, ATTRIBUTE, ATTRS)
-
-#define _ATTR_CHANGE_BUNDLE EXTEND_BUNDLE(DEF), ADD_BUNDLE_ARRAY_PTR(ATTRS, SRC, ATTRIBUTE), ADD_BUNDLE_ARRAY_PTR(ATTRS, DEST, ATTRIBUTE)
-
-// data in sent to hook callbacks, and to transform actions
-// for hook callbacks, hook details is used, for data hooks, change, for transform hooks, contract
-// for negociate_contract also conrtract
-#define _FN_INPUT_BUNDLE EXTEND_BUNDLE(DEF), ADD_BUNDLE_PTR(INPUT, TARGET_OBJECT, OBJECT_INSTANCE), \
-    ADD_BUNDLE_PTR(INPUT, CALLER_OBJECT, OBJECT_INSTANCE),		\
-    ADD_BUNDLE_PTR(INPUT, TARGET_DEST, ANY_BUNDLE), ADD_BUNDLE_PTR(INPUT, CALLER_SOURCE, ANY_BUNDLE), \
-    INCLUDES_BUNDLES(FUNCTION, PMAP_IN), INCLUDE_NAMED_BUNDLE(HOOK, DETAILS, HOOK_DETAILS), \
-    INCLUDE_NAMED_BUNDLE(VALUE, CHANGE, VALUE_CHANGE), ADD_BUNDLE_PTR(LINKED, CONTRACT, CONTRACT), \
-    ADD_NAMED_OPT_ELEM(VALUE, VOIDPTR, USER_DATA), ADD_BUNDLE_PTR(INPUT, ATTR_BUNDLE, ATTR_BUNDLE)
-
-// this is the minimal output from a FUNCTION. RESPONSE is COND_FAIL, COND_SUCCESS etc for
-// a condition, REQUEST_YES, REQUEST_NO, etc for a request hook
-// for other hook callbacks response is LAST or AGAIN
-// for Transforms the repsonse for the extend bundle is a transform result
-#define _FN_OUTPUT_BUNDLE EXTEND_BUNDLE(DEF), INCLUDES_BUNDLES(FUCNTION, PMAP_OUT), \
-    ADD_NAMED_ELEM(FUNCTION, RETURN_VALUE, RESPONSE)
-
-#define _LOCATOR_BUNDLE EXTEND_BUNDLE(DEF), ADD_OPT_ELEM(GENERIC, DESCRIPTION),	\
-    ADD_OPT_ELEM(LOCATOR, UNIT), ADD_OPT_ELEM(LOCATOR, SUB_UNIT), ADD_OPT_ELEM(LOCATOR, INDEX), \
-    ADD_OPT_ELEM(LOCATOR, SUB_INDEX), INCLUDE_BUNDLE(STANDARD, VALUE)
-
-// holds  function native or object, mapping can be set to map values to params
-// amongst the possibilities an instance can be used directly to call a function (native or
-// obj. this can map to anctual real function or to a transform
-// in the cas of a real fnction, we take bundle in and map it to native params if necessary
-// in case of a transform "proxy" we can have nirv_call("funcname", params...)
-// nirv_call will find the equivalent transform for "funcname", and use reverse pmapping to
-// create bundle in - this is mainly for simple stucture_instance static transforms
-// prime or some other stuctural can build a cascade for the sting -> tx match
-// then nirv_call will get the tx from cascade passing in funcname and object / contract set in
-// out bundle allows actioning. In case of pmap mismatch nirv_call can set caller in error, and
-// the error bundle will contain the params, the pmap or similar
-
-#define _FUNCTION_BUNDLE EXTEND_BUNDLE(DEF), ADD_OPT_ELEM(FUNCTION, NAME), \
-    ADD_ELEM(FUNCTION, CATEGORY), INCLUDE_NAMED_BUNDLE(STANDARD, LOCATOR, CODE_REF), \
-    ADD_OPT_ELEM(FUNCTION, OBJ_FUNCTION), ADD_OPT_ELEM(FUNCTION, NATIVE_FUNCTION), \
-    ADD_OPT_ELEM(VALUE, SCRIPT), INCLUDE_BUNDLES(FUNCTION, MAPPING)
-
-// each function will be called in the manner depending on the flags in the corresponding stack_header
-// for native_funcs, PMAP also comes from the hook stack header
-// timestamp may be set when the added to the queue
-#define _HOOK_CB_FUNC_BUNDLE EXTEND_BUNDLE(FUNCTION), ADD_ELEM(DATETIME, TIMESTAMP), \
-    ADD_ELEM(HOOK, HANDLE), ADD_ELEM(HOOK, CB_DATA)
-
-// hook stacks are created either in an instance (for self, spontaneous hooks, as well as for data
-// hooks reating to elemnts. For data_hooks of attributes, the hook pair before / after are created in
-// the attribute bundle.
-// type denotes the  basic patterns - data_update, request, and spontaneous
-// in the automations, 
-// the flags combine with this to produce the more detailed "hook number". For transform
-// STATUS,
-// utility bundllee for describing each type of hook function, keyed by hook_number
-#define _HOOK_DETAILS_BUNDLE EXTEND_BUNDLE(DEF), ADD_ELEM(HOOK, TYPE), ADD_ELEM(HOOK, NUMBER), \
-    ADD_ELEM(HOOK, FLAGS), INCLUDE_BUNDLES(FUNCTION, MAPPING)
-
-#define _HOOK_STACK_BUNDLE EXTEND_BUNDLE(DEF), ADD_ELEM(HOOK, TYPE), ADD_ELEM(HOOK, NUMBER), \
-    ADD_NAMED_OPT_ELEM(HOOK, TARGET, ITEM_NAME),			\
-    ADD_ELEM(HOOK, FLAGS), ADD_OPT_ARRAY(AUTOMATION, SCRIPT),		\
-    INCLUDE_BUNDLES(FUNCTION, MAPPING), ADD_ELEM(HOOK, COND_STATE),	\
-    INCLUDE_BUNDLE(FUNCTION, INPUT), INCLUDE_BUNDLE(FUNCTION, OUTPUT)
-
-#define _ANY_BUNDLE_BUNDLE EXTEND_BUNDLE(DEF), ADD_NAMED_ELEM(VALUE, BUNDLEPTR, BUNDLE)
-
-#define _OBJECT_BUNDLE EXTEND_BUNDLE(DEF), ADD_BUNDLE_PTR(OBJECT, TEMPLATE, OBJECT_TEMPLATE), \
-    ADD_BUNDLE_PTR(OBJECT, INSTANCE, OBJECT_INSTANCE), MAKE_EXCLUSIVE(TEMPLATE, INSTANCE)
-  
-// for templates the subtype is always SUBTYPE_NONE, and the state wiil be STATE_NONE */
-// hook stacks should be created when an item is added ffor data_change of any element
-// (before and after) plus init and free, plus the idle_hook stack
-// plus destroy_hook
-#define _OBJECT_TEMPLATE_BUNDLE EXTEND_BUNDLE(BASE), ADD_ELEM(OBJECT, TYPE), \
-    ADD_ELEM(OBJECT, SUBTYPE), ADD_ELEM(OBJECT, STATE),			\
-    INCLUDE_BUNDLES(STANDARD, ATTRIBUTE), INCLUDE_BUNDLES(STANDARD, CONTRACT), \
-    INCLUDE_NAMED_BUNDLES(OBJECT, ACTIVE_TRANSFORMS, TRANSFORMS), ADD_ELEM(GENERIC, FLAGS)
-
-// this bundle is include in object_instance and attribute
-// refcount value starts at 0, and can be increased or decreased by triggering
-// ref_request and unref_request hooks. For passive (no thread_instance) object instances
-// when refcount goes below 0, the object instance will be zombified (see below)
-// if the app enables RECYCLER then it will respond to FINAL_HOOKs
-// for full garbage collection, the object elements will be reset to default values
-// if the bundle is active, and the ref goes below zero, the effects depend on the status
-// if the status is running, then a destroy_request will be triggered, this is a self hook
-// it is up to the thread how to handle the destroy request. either it will cancel the transform
-// or finish it and then
-// generic_uid is a cross check to enure only objects which added a ref can remove one
-// when a ref is added, the caller uid should be added to the array, and on unref, a uid should
-// be removed. If a caller tries to unref withou addind a ref first, this may be reported
-// to the adjudicator who can take appropriate action, including zombifying or recycling
-
-#define _REFCOUNT_BUNDLE EXTEND_BUNDLE(DEF), ADD_ELEM(INTROSPECTION, REFCOUNT), \
-    ADD_NAMED_ELEM(THREADS, MUTEX, COUNTER_MUTEX), ADD_NAMED_ELEM(VALUE, BOOLEAN, SHOULD_FREE), \
-    ADD_HOOK_TRIGGER(REFCOUNT, DATA_HOOK_TYPE, HOOK_FLAG_BEFORE, &SHOULD_FREE),	\
-    INCLUDE_NAMED_ELEM(THREADS, MUTEX, DESTRUCT_MUTEX), ADD_ARRAY(GENERIC, UID), \
-    INCLUDE_NAMED_BUNDLES(HOOK, CB_POINTER, HOOK_CALLBACK)
-
-// base bundle for object instances
-/* subtype and state are created as ATTRIBUTES so we can add hooks to them */
-// these bundles should not be created directly, a template object should do that via a CREATE_INSTANCE intent
-// or an instance may create a copy of itself vie the CREATE_INSTANCE intent.
-// object instances must also have contracts for the ADD_REF and UNREF intents, which should be flagged
-// no-negotiate. The transform for these should simply increase the refcount, or decreas it respectively.
-// If the refcount falls below its default value, the bundle should be freed
-// we add hook_triggers for subtype and state - since these are simple elemnts the triggers
-// will embed in the instance bundle
-// the hook stacks are for request and spontaneous hook types
-// passive lifecycle
-#define _OBJECT_INSTANCE_BUNDLE ADD_BUNDLE_PTR(OBJECT, TEMPLATE, OBJECT_TEMPLATE), \
-    EXTEND_BUNDLE(OBJECT_TEMPLATE), INCLUDE_BUNDLE(STANDARD, REFCOUNT),	\
-    INCLUDE_NAMED_BUNDLES(THREAD, INSTANCE, THREAD_INSTANCE),		\
-    ADD_HOOK_TRIGGER(SUBTYPE, DATA_HOOK_TYPE, 0, NULL),	ADD_HOOK_TRIGGER(STATE, DATA_HOOK_TYPE, 0, NULL)
-
-#define _THREAD_INSTANCE_BUNDLE EXTEND_BUNDLE(OBJECT_INSTANCE), ADD_ELEM(THREADS, NATIVE_THREAD), \
-    ADD_BUNDLE_PTR(ACTIVE, TRANSFORM, TRANSFORM), ADD_ELEM(THREADS, FLAGS), \
-    ADD_ELEM(THREADS, NATIVE_STATE)
-
-#define _STORAGE_BUNDLE ADD_COMMENT("A utility bundle for storing things"), EXTEND_BUNDLE(DEF), \
-    ADD_OPT_ELEM(GENERIC, UID), EXTEND_BUNDLE(MAPPED_VALUE), ADD_OPT_ELEM(INTROSPECTION, COMMENT)
-
-/* // a list 'header' with owner uid and pointer to attr_list_bundle */
-#define _OWNED_ATTRS_BUNDLE EXTEND_BUNDLE(DEF), ADD_BUNDLE_PTR(OWNER, OBJECT, OBJECT), \
-    ADD_BUNDLE_ARRAY_PTR(LIST, DATA, ATTRIBUTE)
-
-#define _ATTR_POOL_BUNDLE EXTEND_BUNDLE(DEF), ADD_BUNDLE_PTR(LIST, NEXT, ATTR_POOL), \
-    ADD_BUNDLE_PTR(OWNED, LIST, OWNED_ATTRS)
-
-/* // intent / capacities bundle */
-#define _ICAP_BUNDLE EXTEND_BUNDLE(DEF), ADD_OPT_ELEM(GENERIC, DESCRIPTION), ADD_ELEM(ICAP, INTENTION), ADD_ARRAY(ICAP, CAPACITY)
-
-// for semi / full automation, the requiremnts are parsed by the automation
-#define _CONTRACT_BUNDLE EXTEND_BUNDLE(OBJECT_INSTANCE), INCLUDE_BUNDLE(TRANSFORM, ICAP), \
-    ADD_BUNDLE_PTR(ATTRIBUTE, POOL, ATTR_POOL), INCLUDE_BUNDLES(CONTRACT, REQUIREMENTS), \
-    ADD_OPT_ELEM(CONTRACT, FAKE_FUNCNAME), INCLUDE_BUNDLE(CONTRACT, REVPMAP)
-
-//** bundle for an array which checks conditions before allowing an item to be added
-#define _COND_ARRAY_BUNDLE EXTEND_BUNDLE(DEF), INCLUDE_BUNDLES(AUTOMATION, CONDITION), \
-    INCLUDE_NAMED_BUNDLES(VALUE, ANY_BUNDLE, ARRAY),			\
-    ADD_HOOK_TRIGGER(ARRAY, DATA_HOOK_TYPE, (HOOK_FLAG_BEFORE | HOOK_FLAG_COND_ONCE), &CONDITIONS) 
-
-// place holder
-// transform result is based on the status after all segments have been actioned
-#define _TRANSFORM_BUNDLE EXTEND_BUNDLE(OBJECT_INSTANCE),		\
-    ADD_BUNDLE_PTR(TRANSFORM, CONTRACT, CONTRACT),			\
-    ADD_ELEM(TRANSFORM, STATUS), ADD_HOOK_TRIGGER(STATUS, DATA_HOOK_TYPE, 0, 0), \
-    ADD_ELEM(TRANSFORM, RESULT)
-
-#define _TRAJECTORY_CONDITION_BUNDLE INCLUDE_BUNDLES(STANDARD, CONDITION), \
-    ADD_BUNDLE_PTR(NEXT, SEGMENT, TSEGMENT)
-
-#define _TSEGMENT_BUNDLE INCLUDE_BUNDLES(TRAJECTORY, CONDITIONAL), ADD_ELEM(GENERIC, FLAGS)
-
-#define _TRAJECTORY_BUNDLE ADD_ELEM(GENERIC, UID), INCLUDE_BUNDLES(TRAJECTORY, SEGMENT), \
-    EXTEND_BUNDLE(FUNCTION)
-
-/// HOOK_CB MACROS
-// CHECK(CONDITIONS_ARRAY_ITEM_NAME) // for cond_once aborts the action / returns request_no
-// CONDITIONS:
 //
-
-/////////////////////////// THE BUNDLE MAKER //////
-
-// takes a sequence of char * and returns a null terminated array
-// strands are copied directly, so only the array itself should be freed
-#ifdef DEBUG_BUNDLE_MAKER
-#define p_debug(...) fprintf(stderr, __VA_ARGS__)
-#endif
-
-#ifndef HAVE_MAKE_STRANDS_FUNC
-#define HAVE_MAKE_STRANDS_FUNC
-#define ADD_MAKE_STRANDS_FUNC static char *make_strand(const char *fmt,va_list ap){ \
-    char *st;size_t strsz;strsz=vsnprintf(0,0,fmt,ap);			\
-    st=malloc(++strsz);vsnprintf(st,strsz,fmt,ap);return st;}		\
-  const char **make_strands(const char*fmt,...){			\
-    const char**sts=0,*xfmt;int ns=1;va_list ap;va_start(ap,fmt);	\
-    while((xfmt=*fmt?fmt=va_arg(ap,char*):xfmt)){vsnprintf(0,0,xfmt,ap);ns++;};va_end(ap); \
-    sts=malloc(ns*sizeof(char*));ns=0;va_start(ap,fmt);			\
-    for((xfmt=*fmt?va_arg(ap,char*):xfmt);(sts[ns]=make_strand(xfmt,ap));ns++); \
-    va_end(ap);sts[ns++]=0;return sts;}
-#endif
-
-// this function should be called with a bundle name, followed by a sequence of char **
-// each char ** array must be NULL terminated
-// the final parameter must be NULL
-// the result will be a const char ** which joins all the other arrays into 1, ignoring te final NULLS
-// if name is not NULL, a comment #name will be prepended
-// and in every case, a terminating NULL string will be appended to the final array
-// and the amalgameted array returned
-// thus it is possible to call, for example:
-// 	const char **bdef = make_bundledef("main bundledef", make_strands(a, b, NULL),
-//	 make_bundledef("sub bundledef", make_strands(c, d, NULL), NULL), NULL);
-// this would return an array {"#main bundledef", a, b, "#sub bundledef", c, d, NULL}
-// in this manner it is possible to nest bundldefs (macro EXTEND_BUNDLE works like this)
-// In the latest version the second param can be NULL or a prefix 
-#ifndef HAVE_MAKE_BUNDLEDEF_FUNC
-#define HAVE_MAKE_BUNDLEDEF_FUNC
-#define ADD_MAKE_BUNDLEDEF_FUNC						\
-  const char **make_bundledef(const char*n,const char*pfx,...){		\
-    char**sT=0;int nsT=0;va_list ap;if(n&&*n){size_t Cln=strlen(n)+2;	\
-      char*str=malloc(Cln);snprintf(str,Cln,"#%s",n);sT=(char**)make_strands("",str,0);nsT++; \
-      p_debug("\nGenerating bundle definition for %s\n",n);va_start(ap,pfx); \
-      while(1){int nC=0;char**newsT=va_arg(ap,char**);if(!newsT)break;	\
-	while(newsT[++nC]);;sT=realloc(sT,(nsT+nC+1)*sizeof(char*));	\
-	for(nC=0;newsT[nC];nC++){size_t strsz=snprintf(0,0,"%s%s",pfx?pfx:"",newsT[nC]); \
-	  p_debug("Adding strand:\t%s\n",newsT[nC]);if(strsz){sT[nsT]=malloc(++strsz); \
-	    snprintf(sT[nsT++],strsz,"%s%s",pfx?pfx:"",newsT[nC]);free(newsT[nC]);}}}va_end(ap); \
-      p_debug("Adding,strand, bundledef complete\n\n");sT[nsT]=0;return(const char**)sT;}return 0;}
-#endif
-
-// pick EXACTLY ONE.c, .cpp file per project to be the "bundle maker"
-// In that file, (re) include this header with IS_BUNDLE_MAKER defined first
-// Then, near the start of the file, outside of all functions, put the lines:
-// 		DEFINE_CORE_BUNDLES
-//
-// then in one function in the same file, (possibly a function like init_bundles()), add
-// 		INIT_CORE_BUNDLES
-
-#define NIRVA_IMPLFUNC "IMPLFUNC"
-#define _IMPL(func, ...) (IMPL_FUNC_##func(__VA_ARGS__))
-
-#ifndef IMP_FUNC_VA_START
-#define IMP_FUNC_VA_START(a, b) va_start(a,b)
-#endif
-#ifndef IMP_FUNC_VA_END
-#define IMP_FUNC_VA_END(a) va_end(a)
-#endif
-
-// find_tx_by_name
-// make_bundle_attr_bundle
-// nirva_recycle
-// nirva_revmap_vargs
-// set_value_bundleptr
-// cond_check_reqs
-// tx_action
-
-//IMPL_nirva_call, IMPL_make_bundle_in, IMPL_make_bundle_out, IMPL_get_value_type
-//IMPL_nirva_recycle, IMPL_va_start, IMPL_va_end, IMPL_va_arg
-// IMPL_get_value_bundleptr
-
-// NIRVA_ERRHCK
-// NIRVA_RETRY_PAUSE
-
-/// condfuncs //
-#define NIRVA_EQUAL(a,b) ((a) == (b))
-#define NIRVA_IF(osp, a, b, c) do {if (op(a,b)) c;} while (0);
-//////////////////
-
-#define NIRVA_DO do {
-#define NIRVA_WHILE(x) } while(x);
-
-#define NIRVA_PAIRS(n, ...) _NIRVA_PAIRS_##n(__VA_ARGS__)
-
-#define _NIRVA_PAIRS_3(a,b, ...) _NIRVA_PAIRS_1(a,b), _NIRVA_PAIRS_2(__VA_ARGS__)
-#define _NIRVA_PAIRS_2(a,b, ...) _NIRVA_PAIRS_1(a,b), _NIRVA_PAIRS_1(__VA_ARGS__)
-#define _NIRVA_PAIRS_1(a,b) a b
-
-#define NIRVA_DEF_FUNC(rtype, fname, np, ...) rtype fname(NIRVA_PAIRS(np, __VA_ARGS__)) {
-#define NIRVA_FUNC_END }
-#define NIRVA_DEF_VARS(type, ...) type __VA_ARGS__;
-#define NIRVA_ASSIGN_EXT(var, func, ...) var = _IMPL(func, __VA_ARGS__);
-#define NIRVA_ASSIGN(var, val) var = val;
-#define NIRVA_ASSERT(val, func, ...) if (!val) func(__VA_ARGS__);
-#define NIRVA_RETURN(res) return res;
-#define NIRVA_ASSIGN_FROM_ARRAY(val, array, idx) val = array[idx];
-#define NIRVA_EXT_FUNC(funcname) ext_func_##funcname
-#define NIRVA_ARRAY_FREE(array) free(array);
-
-#define __INTERNAL_make_bundle(n,...)					\
-  b##n = _IMPL_create_bundle_vargs(bdef##n,_INTERNAL_split_vargs(n,___VA_ARGS__)); \
-#define _INTERNAL_make_3_bundles(b1,b2,b3,bdef1,bdef2,bdef3,...)	\
-  _INTERNAL_make_2_bundles(b1,b2,bdef1,bdef2,__VA_ARGS__);		\
-  __INTERNAL_make_bundle_vargs(3,__VA_ARGS__);
-#define _INTERNAL_make_2_bundles(b1,b2,bdef1,bdef2,...)	\
-  __INTERNAL_make_bundle_vargs(1 __VA_ARGS__);		\
-  __INTERNAL_make_bundle_vargs(2,__VA_ARGS__);
-#define _INTERNAL_make_n_bundles(n,...) _INTERNAL_make_##n##_bundles(__VA_ARGS__)
-#define _INTERNAL_make_func_bundles(b_in,b_out,...)			\
-  _INTERNAL_make_n_bundles(2,b_in,b_out,FN_INPUT,FN_OUTPUT,__VA_ARGS__)
-
-#define INTERNAL_FUNC(name, ...) _INTERNAL_##name(__VAR_ARGS__)
-#define NIRVA_ASSIGN_INTERNAL(var, name, ...) INTERNAL_FUNC(name, var, __VAR_ARGS__)
-
-#define _INTERNAL_get_attribute(attr, bundle, attr_name)		\
-  NIRVA_DO NIRVA_DEF_VARS(NIRVA_BUNDLEPTR_ARRAY, attrs)			\
-    NIRVA_ASSIGN_EXT(attrs, get_bundleptr_array, bundle, ELEM_STANDARD_ATTRIBUTE) \
-    NIRVA_ASSIGN_EXT(attr, find_attr_by_name, attrs, attr) NIRVA_WHILE(0)
-
-#define NIRVA_ASSERT_RANGE(var, min, mx, onfail, ...) if (var < min || var > mx) onfail(__VA_ARGS__)
-
-
-
-#define _INTERNAL_get_subsystem(subsystem, subtype) NIRVA_DO		\
-  NIRVA_ASSERT_RANGE(subtype, 1, N_STRUCT_SUBTYPES - 2, NIRVA_FAIL, NIRVA_NULL)	\
-    NIRVA_DEF_VARS(NIRVA_BUNDLEPTR_ARRAY, structurals, attrs)		\
-    NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, subsystem)				\
-    NIRVA_ASSIGN_INTERNAL(attr, get_attribute, STRUCTURE_PRIME, ATTR_STRUCTURAL_SUBSYSTEM) \
-    NIRVA_ASSIGN_EXT(structurals, get_array_bundleptr, from_attr_value(attr)) \
-    NIRVA_ASSIGN_FROM_ARRAY(subsystem, structurals, subtype)		\
-    NIRVA_ARRAY_FREE(structurals) NIRVA_WHILE(0)
-
-#define NIRVA_DET_IMPLFUNC(substruct, name)			\
-  NIRVA_EXT_FUNC(set_attr_funcptr, substruct,			\
-		 ATTR_NAME(NIRVA_IMPL_FUNC, #name), func)
-
-#define NIRVA_DEF_STRUCTURE_FUNC(substruct)			\
-  NIRVA_EXT_FUNC(set_attr_funcptr, substruct,			\
-		 ATTR_NAME(NIRVA_STRUCT_FUNC, #name), NULL)
-
-#define NIRVA_SET_STRUCTURE_FUNC(substruct, name)		\
-  NIRVA_EXT_FUNC(set_attr_funcptr, substruct,			\
-		 ATTR_NAME(NIRVA_STRUCT_FUNC, #name), name)
-
-////////////////////////////////////////////////////////////////
-///////// IMPL_FUNCS - soft version  
-  
-#define _INTERNAL_set_structural_app_funcs				\
-  NIRVA_DO								\
-  NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, sub, attr)				\
-    NIRVA_ASSIGN_INTERNAL(structure_app, get_subsystem, STRUCTURE_SUBTYPE_APP) \
-    NIRVA_DEF_IMPLFUNC(structure_app, get_int_value)			\
-    NIRVA_DEF_IMPLFUNC(structure_app, get_bundleptr_array)		\
-    NIRVA_DEF_IMPLFUNC(structure_app, create_bundle_vargs)		\
-    NIRVA_DEF_IMPLFUNC(structure_app, get_value_type)			\
-    NIRVA_DEF_IMPLFUNC(structure_app, find_attr_by_name)		\
-    NIRVA_DEF_IMPLFUNC(structure_app, find_attr_by_name)		\
-    NIRVA_DEF_IMPLFUNC(structure_app, set_attr_funcptr)			\
-    NIRVA_DEF_IMPLFUNC(structure_app, split_vargs)			\
-    NIRVA_DEF_IMPLFUNC(structure_app, make_bundle_attr_bundle)		\
-									\
-    NIRVA_SET_STRUCTURE_FUNC(structure_app, IMPL_FUNC_nirva_call)      	\
-    NIRVA_SET_STRUCTURE_FUNC(structure_app, IMPL_FUNC_get_bundledef_for_type) \
-    NIRVA_SET_STRUCTURE_FUNC(structure_app, IMPL_FUNC_tx_action)      	\
-    NIRVA_SET_STRUCTURE_FUNC(structure_app, IMPL_FUNC_nirva_revmap_vargs) \
-    NIRVA_WHILE(0)
-  
-#ifndef IMPL_FUNC_nirva_call
-#define IMPL_FUNC_nirva_call _def_nirva_call
-#define _DEPLOY_def_nirva_call						\
-  NIRVA_DEF_FUNC(NIRVA_FUNC_RETURN, _def_nirva_call, 2, NIRVA_CONST_STRING, \
-		 funcname, NIRVA_VARIADIC,)				\
-    NIRVA_DEF_VARS(NIRVA_BUNDLEPTR, caller, xtarget, b_in, b_out, contract, attrs, revpmap) \
-    NIRVA_DEF_VARS(NIRVA_VA_LIST. vargs)				\
-    NIRVA_DEF_VARS(NIRVA_COND_RESULT, condres)				\
-    NIRVA_DEF_VARS(NIRVA_FUNC_RETURN, response)				\
-    /* self_instance is the thread_instance */				\
-    NIRVA_ASSIGN(caller, self_instance)					\
-    NIRVA_ASSERT(caller, NIRVA_FAIL, NIRVA_NULL)			\
-    INTERNAL_FUNC(make_func_bundles, b_in, b_out, ELEM_FUNTION_NAME,	\
-		  funcname, NIRVA_NULL, NIRVA_NULL)			\
-    NIRVA_ASSERT(b_in, NIRVA_FAIL, NIRVA_NULL)				\
-    NIRVA_ASSERT(b_out, NIRVA_FAIL, NIRVA_NULL)				\
-    /* IMPL_FUNC_find_tx_by_name - takes input "func_name" from input and returns	*/ \
-    /*    "target_object" and "target_dest" in output - in this case target_dest is the contract */ \
-    NIRVA_ASSIGN_EXT(xtarget, get_value_bundleptr, b_out, ELEM_TARGET_OBJECT) \
-    NIRVA_ASSERT(xtarget, NIRVA_FAIL, NIRVA_NULL)			\
-    NIRVA_ASSIGN_EXT(contract, get_value_bundleptr, b_out, ELEM_TARGET_DEST) \
-    NIRVA_ASSERT(contract, NIRVA_FAIL, NIRVA_NULL)			\
-    NIRVA_EXT_FUNC(nirva_recycle, b_in)					\
-    NIRVA_EXT_FUNC(nirva_recycle, b_out)				\
-    NIRVA_ASSIGN_EXT(b_in, make_bundle_fn_input, CALLER_OBJECT, caller, CALLER_SOURCE, \
-		     TARGET_OBJECT, xtarget, CONTRACT, contract, NIRVA_NULL) \
-    NIRVA_ASSERT(b_in, NIRVA_FAIL, NIRVA_NULL)				\
-    /* NIRVA_COMMENT use pmap in tx to map  b_in, if  b_out in parms, */ \
-    /*it rets so we can pass to next */					\
-    /* NIRVA_COMMENT on fail it will set ELEM_STANDARD_ERROR in attrs */ \
-    /*  some contracts (static) have a reverse pmapping, so we can optionally present them */ \
-    /* 	   like native functions via nirv_call */			\
-    NIRVA_ASSIGN_EXT(revpmap, get_value_bundleptr, contract, ELEM_CONTRACT_REVPMAP) \
-    /* we cannot assert revpmap because some tx might not have in / out and just return a value */ \
-    /* make an attr_bundle to receive the params, and point b_in.attrs at it */	\
-    NIRVA_ASSIGN_EXT(attrs, make_bundle_attr_bundle, 0)			\
-    NIRVA_ASSERT(attrs, NIRVA_FAIL, NIRVA_NULL)				\
-    NIRVA_EXT_FUNC(set_value_bundleptr, b_in, ELEM_STANDARD_ATTR_BUNDLE, attrs) \
-    NIRVA_VA_START(vargs, funcname)					\
-    /* if params include output, then it is returned so we can pass it to tx */	\
-    NIRVA_ASSIGN_EXT(b_out, nirva_rev_map_vargs, attrs, revpmap, vargs) \
-    NIRVA_VA_END(vargs)							\
-    NIRVA_ERR_CHK(attrs, ELEM_STANDARD_ERROR, NIRVA_FAIL, NIRVA_NULL)	\
-    /* if it is async, then we ask t_bun to run it (TODO) */		\
-    NIRVA_ERR_CHK(b_in, ELEM_STANDARD_ERROR, NIRVA_FAIL, NIRVA_NULL)	\
-    NIRVA_DO								\
-    /* even though it is no_neg, we need to run a cond_check to see if we can run it */	\
-    NIRVA_CONDCHECK(condres, NIRVA_SUB_BUNDLE(contract, ELEM_CONTRACT_REQUIREMENTS), \
-		    b_in, b_out)					\
-    NIRVA_IF(NIRVA_EQUAL, res, COND_WAIT_RETRY, NIRVA_RETRY_PAUSE)	\
-    NIRVA_WHILE(NIRVA_EQUAL, res, COND_WAIT_RETRY)			\
-    NIRVA_IF(NIRVA_EQUAL, condres, COND_FAIL, NIRVA_FAIL, NIRVA_NULL)	\
-    NIRVA_ASSIGN_EXT(result, tx_action, xtarget, contract, b_in, b_out)	\
-    NIRVA_EXT_FUNC(nirva_recycle, b_in)					\
-    NIRVA_RETURN(result)						\
-    NIRVA_FUNC_END 
-#endif
-
-#define NIRVA_CALL(fname, ...) NIRVA_EXT_FUNC(nirva_call, #fname, __VA_ARGS__)
-
-#define ADDC(text) "#" text
-#define ADDS(text) ADDC(#text)
-
-#define XMB(name, pfx,  ...) make_bundledef(name, pfx,"" __VA_ARGS__)
-#define XMBX(name) XMB(#name, NULL, _##name##_BUNDLE)
-
-#define REG_ALL_ITEMS(DOMAIN)						\
-  make_bundledef(NULL, "ELEM_" #DOMAIN "_", MS("" ALL_ELEMS_##DOMAIN), NULL), \
-    make_bundledef(NULL, "BUNDLE_" #DOMAIN "_", MS("" ALL_BUNDLES_##DOMAIN), NULL)
-
-#define CONCAT_DOMAINS(MACRO) make_bundledef(NULL, NULL, FOR_ALL_DOMAINS(MACRO), NULL)
-#define REG_ALL CONCAT_DOMAINS(REG_ALL_ITEMS)
-
-#define DEFINE_CORE_BUNDLES						\
-  ADD_MAKE_STRANDS_FUNC ADD_MAKE_BUNDLEDEF_FUNC				\
-  const char **all_elems, BUNLIST(BDEF_DEF_CONCAT,**,_BUNDLEDEF = NULL) **LAST_BUNDLEDEF = NULL; \
-  const char ***builtin_bundledefs[] = {BUNLIST(BDEF_DEF_CONCAT, &,_BUNDLEDEF) NULL}; \
-  const char **maker_get_bundledef(bundle_type btype)			\
-  {return (btype >= 0 && btype < n_builtin_bundledefs ? *builtin_bundledefs[btype] : NULL);}
-
-#define BDEF_IGN(a,b,c)
-
-// make BNAME_BUNDLEDEF
-#define BDEF_INIT(BNAME, PRE, EXTRA) BNAME##_BUNDLEDEF = MBX(BNAME);
-
-// make ATTR_BNAME_ATTR_BUNDLE
-// e.g. ASPECT_THREAD_ATTR_BUNDLE
-#define ATTR_BDEF_INIT(ATTR_BNAME, PRE, EXTRA) ATTR_BNAME##_ATTR_BUNDLE = MBAX(ATTR_BNAME);
-
-#define INIT_CORE_DATA_BUNDLES BUNLISTx(BDEF_IGN,BDEF_INIT,,) all_elems = REG_ALL;
-#define INIT_CORE_ATTR_BUNDLES ABUNLIST(BDEF_IGN,ATTR_BDEF_INIT,,) all_attr_bundle = REG_ALL_ATTRS;
-#define INIT_CORE_BUNDLES INIT_CORE_DATA_BUNDLES INIT_CORE_ATTR_BUNDLES 
-#endif
-
 #define BDEF_DEF_CONCAT(BNAME, PRE, EXTRA) PRE BNAME##EXTRA,
-#define ATTR_BDEF_DEF_CONCAT(ATTR_BNAME, PRE, EXTRA) PRE BNAME##EXTRA,
+#define ATTR_BDEF_DEF_CONCAT(ATTR_BNAME, PRE, EXTRA) PRE ATTR_BNAME##EXTRA,
 
 #define BUNLIST(BDEF_DEF, pre, extra) BUNLISTx(BDEF_DEF, BDEF_DEF, pre, extra)
 #define ABUNLIST(ABDEF_DEF, pre, extra) ABUNLISTx(ABDEF_DEF, ABDEF_DEF, pre, extra)
-  
+
 #define BUNLISTx(BDEF_DEFx_, BDEF_DEF_, pre, extra)			\
-  BDEF_DEF_(DEF, pre, extra) BDEF_DEF_(CORE, pre, extra)		\
-    BDEF_DEF_(BASE, pre, extra) BDEF_DEF_(MAPPED_VALUE, pre, extra)	\
-    BDEF_DEF_(VALUE, pre, extra) BDEF_DEF_(VALUE_CHANGE, pre, extra)	\
-    BDEF_DEF_(PMAP_DESC, pre, extra) BDEF_DEF_(PMAP, pre, extra)	\
-    BDEF_DEF_(ATTR_DESC, pre, extra) BDEF_DEF_(ATTRIBUTE, pre, extra)	\
-    BDEF_DEF_(ATTR_CONNECTION, pre, extra) BDEF_DEF_(ATTR_BUNDLE, pre, extra) \
-    BDEF_DEF_(ATTR_DESC_BUNDLE, pre, extra) BDEF_DEF_(ATTR_CHANGE, pre, extra) \
-    BDEF_DEF_(FN_INPUT, pre, extra) BDEF_DEF_(FN_OUTPUT, pre, extra)	\
-    BDEF_DEF_(FUNCTION, pre, extra) BDEF_DEF_(ICAP, pre, extra)		\
-    BDEF_DEF_(ANY_BUNDLE, pre, extra) BDEF_DEF_(STORAGE, pre, extra)	\
-    BDEF_DEF_(HOOK_DETAILS, pre, extra) BDEF_DEF_(HOOK_STACK, pre, extra) \
-    BDEF_DEF_(HOOK_CB_FUNC, pre, extra) BDEF_DEF_(COND_ARRAY, pre, extra) \
-    BDEF_DEF_(TRANSFORM, pre, extra) BDEF_DEF_(OBJECT, pre, extra)	\
-    BDEF_DEF_(OBJECT_TEMPLATE, pre, extra) BDEF_DEF_(OBJECT_INSTANCE, pre, extra) \
-    BDEF_DEF_(THREAD_INSTANCE, pre, extra) BDEF_DEF_(OWNED_ATTRS, pre, extra) \
-    BDEF_DEF_(CONTRACT, pre, extra) BDEF_DEF_(LOCATOR, pre, extra)	\
-    BDEF_DEF_(ERROR, pre, extra) BDEF_DEF_(BUNDLE_ARRAY, pre, extra)	\
-    BDEF_DEF_(MATRIX_2D, pre, extra) BDEF_DEF_(CONDVAL_NODE, pre, extra) \
-    BDEF_DEF_(CONDLOGIC, pre, extra) BDEF_DEF_(CASCADE, pre, extra)	\
-    BDEF_DEF_(CONSTVAL_MAP, pre, extra) BDEF_DEF_(CASCMATRIX_NODE, pre, extra) \
-    BDEF_DEFx_(TSEGMENT, pre, extra) BDEF_DEFx_(TRAJECTORY, pre, extra) \
-    BDEF_DEFx_(TRAJECTORY_CONDITION, pre, extra)	  
+    BDEF_DEF_(STRAND, pre, extra) BDEF_DEF_(DEF, pre, extra)		\
+      BDEF_DEF_(STRAND_DESC, pre, extra)				\
+      BDEF_DEF_(BLUEPRINT, pre, extra) BDEF_DEF_(VALUE, pre, extra)	\
+      BDEF_DEF_(ATTR_VALUE, pre, extra) BDEF_DEF_(VALUE_CHANGE, pre, extra) \
+      BDEF_DEF_(ATTR_DESC, pre, extra) BDEF_DEF_(PMAP, pre, extra)	\
+      BDEF_DEF_(PMAP_DESC, pre, extra) BDEF_DEF_(ATTRIBUTE, pre, extra)	\
+      BDEF_DEF_(ATTR_CONNECTION, pre, extra) BDEF_DEF_(EMISSION, pre, extra) \
+      BDEF_DEF_(FN_INPUT, pre, extra) BDEF_DEF_(FN_OUTPUT, pre, extra)	\
+      BDEF_DEF_(FUNCTIONAL, pre, extra) BDEF_DEF_(FUNC_DESC, pre, extra) \
+      BDEF_DEF_(CAP, pre, extra)  BDEF_DEF_(REQUEST, pre, extra)	\
+      BDEF_DEF_(INDEX, pre, extra) BDEF_DEF_(ERROR, pre, extra)		\
+      BDEF_DEF_(ICAP, pre, extra) BDEF_DEF_(ATTR_POOL, pre, extra)	\
+      BDEF_DEF_(HOOK_DETAILS, pre, extra) BDEF_DEF_(HOOK_STACK, pre, extra) \
+      BDEF_DEF_(HOOK_CB_FUNC, pre, extra) BDEF_DEF_(COND_ARRAY, pre, extra) \
+      BDEF_DEF_(OBJECT_TEMPLATE, pre, extra) BDEF_DEF_(OBJECT_INSTANCE, pre, extra) \
+      BDEF_DEF_(THREAD_INSTANCE, pre, extra) BDEF_DEF_(OWNED_ATTRS, pre, extra) \
+      BDEF_DEF_(TRANSFORM, pre, extra) BDEF_DEF_(OBJECT, pre, extra)	\
+      BDEF_DEF_(CONTRACT, pre, extra) BDEF_DEF_(LOCATOR, pre, extra)	\
+      BDEF_DEF_(MATRIX_2D, pre, extra) BDEF_DEF_(CONDVAL_NODE, pre, extra) \
+      BDEF_DEF_(CONDLOGIC, pre, extra) BDEF_DEF_(CASCADE, pre, extra)	\
+      BDEF_DEF_(CONSTVAL_MAP, pre, extra) BDEF_DEF_(CASCMATRIX_NODE, pre, extra) \
+      BDEF_DEF_(TSEGMENT, pre, extra) BDEF_DEF_(SCRIPTLET, pre, extra) \
+      BDEF_DEF_(TRAJECTORY, pre, extra) BDEF_DEF_(KEY_LOOKUP, pre, extra) \
+      BDEF_DEF_(FUNC_DESC_CON, pre, extra) BDEF_DEF_(ATTR_CON, pre, extra) \
+      BDEF_DEF_(ATTR_DESC_CON, pre, extra) BDEF_DEF_(OBJECT_CON, pre, extra)
 
-#define ABUNLISTx(ABDEF_DEFx_, ABDEF_DEF_, pre, extra)			\
-  ABDEF_DEF_(THREAD_ASPECT, pre, extra) BDEF_DEF_(CORE, pre, extra)
+#define ABUNLISTx(ABDEF_DEFx_, ABDEF_DEF_, pre, extra) ABDEF_DEF_(ASPECT_THREADS, pre, extra)
 
-#ifndef IS_BUNDLE_MAKER
-    NIRVA_TYPEDEF(NIRVA_ENUM {BUNLIST(BDEF_DEF_CONCAT,, _BUNDLE_TYPE) \
-				n_builtin_bundledefs}, bundle_type)
+#ifdef IS_BUNDLE_MAKER
+
+#include "nirva_auto.h"
+
+#else
+
+NIRVA_TYPEDEF_MULTI(bundle_type, \
+                    NIRVA_ENUM {BUNLIST(BDEF_DEF_CONCAT,, _BUNDLE_TYPE) \
+                                n_builtin_bundledefs});
+
+NIRVA_TYPEDEF_MULTI(attr_bundle_type, \
+                    NIRVA_ENUM {ABUNLIST(ATTR_BDEF_DEF_CONCAT,, _ATTR_BUNDLE_TYPE) \
+                                n_builtin_attr_bundles});
+#ifdef BDEF_DEF
 #undef BDEF_DEF
+#endif
+#ifdef ABDEF_DEF
+#undef ABDEF_DEF
+#endif
 
-NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY all_elems;
-NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_strands(NIRVA_CONST_STRING fmt,...);
-NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name, NIRVA_CONST_STRING pfx,...);
+NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY all_strands;
+NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_strands(NIRVA_CONST_STRING fmt, ...);
+NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name,	\
+    NIRVA_CONST_STRING pfx, ...);
+NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY maker_get_bundledef(bundle_type btype);
+
 #define GET_BDEF(btype) maker_get_bundledef(btype)
 
 #ifndef MB
@@ -2396,13 +1997,10 @@ NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name, NI
 #ifndef MABX
 #define MABX(name) MB(#name, NULL, _##name##_ATTR_BUNDLE)
 #endif
-
-#define BDEF_DEFINE(BNAME) NIRVA_CONST_STING_ARRAY BNAME##_BUNDLEDEF
-///#define BDEF_INIT(BNAME) BNAME##_BUNDLEDEF = MBX(BNAME);
+#define BDEF_DEFINE(BNAME) NIRVA_CONST_STRING_ARRAY BNAME##_BUNDLEDEF
 
 // these values may be adjusted during inial bootstrap - see the documentation for more details
-
-// values here define the level
+// values here define the level of automation for each "aspect"
 #define NIRVA_AUTOMATION_NONE 			0
 #define NIRVA_AUTOMATION_MANUAL 	       	1
 #define NIRVA_AUTOMATION_SEMI 			2
@@ -2410,15 +2008,20 @@ NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name, NI
 
 #define NIRVA_AUTOMATION_DEFAULT 		NIRVA_AUTOMATION_SEMI
 
-// NIRVA_ASPECT_STRANDS
-// NIRVA_ASPECT_FUNCTION_SHAPING
+// NIRVA_ASPECT_BUNDLE_MAKING
+// NIRVA_ASPECT_NEGOTIATING
+// NIRVA_ASPECT_FUNCTION_BENDING
+// NIRVA_ASPECT_OPTIMISATION
+// NIRVA_ASPECT_SELF_ORGANISATION
+
+#define NIRVA_ASPECT(m) NIRVA_ASPECT_NAME_##n
 
 // automation for these "aspects"
 #define NIRVA_ASPECT_NONE			0
 
-
 #define NIRVA_ASPECT_THREADS			1
-// attributes created intially in STRUCTURE_APP
+#define NIRVA_ASPECT_NAME_1 "THREADS"
+// attributes created intially in STRUCTURE_PRIME
 // preferred subtypes: THREAD_HERDER
 // the attributes are transfered to preferred subtypes in order of preference
 // changing these after structure_app is in PREPARED state requires PRIV_STRUCTURE > 100
@@ -2433,25 +2036,25 @@ NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name, NI
 // other atttributes //////////////////
 
 #define ATTR_THREADS_MODEL				ATTR_NAME("THREADS", "MODEL")
-#define ATTR_THREADS_MODEL_TYPE				INT, 
+#define ATTR_THREADS_MODEL_TYPE				INT,
 
 // no model - this is the default for autmoation levels none and manual
 #define NIRVA_THREAD_MODEL_NONE				0
 
 // this is the default for semi and full, threads are in a pool and assigned as needed
 // to negotiaite, run transforms and monitor timeouts
-#define _NIRVA_THREAD_MODEL_ON_DEMAND				1
+#define _NIRVA_THREAD_MODEL_ON_DEMAND		       	1
 
 // a thread is assigned to each instance with active transforms
 // the thread remains bound to the instance but will idle while the instance is "dormant"
 // the thread will be destroyed when the instance is recycled
 // this is best for applications with a small number of active instances which need to interact
 // with each other at all times
-#define NIRVA_THREAD_MODEL_ONE_PER_INSTANCE		       	2
+#define NIRVA_THREAD_MODEL_ONE_PER_INSTANCE    	       	2
 
 // implementation functions (NEED defining)
 // for automation level semi, these funcitons need to be defined externally
-// for thread model ON_DEMANS
+// for thread model ON_DEMAND
 // these functions should return a native thread from a pool, and then return them later
 // thread must not be passed again until it returns
 // the amount of time the Thread will be borrowed for cannot be detrmined
@@ -2462,7 +2065,7 @@ NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name, NI
 #define ATTR_IMPLFUNC_RETURN_NATIVE_THREAD    	      ATTR_NAME("IMPLFUNC", "RETURN_NATIVE_THREAD")
 #define ATTR_IMPLFUNC_RETURN_NATIVE_THREAD_TYPE       FUCNPTR, NULL
 
-// for FULL automation, the structure will handle all aspedcts of threead management itself
+// for FULL automation, the structure will handle all aspects of thread management itself
 
 #define ATTR_IMPLFUNC_CREATE_NATIVE_THREAD    	      ATTR_NAME("IMPLFUNC", "CREATE_NATIVE_THREAD")
 #define ATTR_IMPLFUNC_CREATE_NATIVE_THREAD_TYPE       FUCNPTR, NULL
@@ -2470,26 +2073,42 @@ NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name, NI
 #define ATTR_IMPLFUNC_DESTROY_NATIVE_THREAD    	      ATTR_NAME("IMPLFUNC", "DESTROY_NATIVE_THREAD")
 #define ATTR_IMPLFUNC_DESTROY_NATIVE_THREAD_TYPE      FUCNPTR, NULL
 
-#define _ASPECT_THREADS_ATTRBUNDLE "THREADS_ASPECT", ADD_ATTR(AUTOLEVEL, THREADS), \
-    ADD_ATTR(THREADS, MODEL), ADD_COND_ATTR(IMPLFUNC, BORROW_NATIVE_THREAD, NIRVA_EQUALS,\
-    ATTR_AUTOLEVEL_THREADS, NIRVA_AUTOMATION_SEMI, NIRVA_EQUALS, ATTR_THREADS_MODEL,\
-					    NIRVA_THREAD_MODEL_ON_DEMAND),\
-    ADD_COND_ATTR(IMPLFUNC, RETURN_NATIVE_THREAD, NIRVA_COND_EQUALS,	\
-		  ATTR_AUTOLEVEL_THREADS, NIRVA_AUTOMATION_SEMI, NIRVA_EQUALS, ATTR_THREADS_MODEL, \
-		  NIRVA_THREAD_MODEL_ON_DEMAND),			\
-     ADD_COND_ATTR(IMPLFUNC, CREATE_NATIVE_THREAD, NIRVA_EQUALS,\
-    ATTR_AUTOLEVEL_THREADS, NIRVA_AUTOMATION_SEMI, NIRVA_EQUALS, ATTR_THREADS_MODEL,\
-		   NIRVA_THREAD_MODEL_INSTANCE_PER_THREAD,\
-		   NIRVA_LOGIC_OR, ATTR_AUTOLEVEL_THREADS,	\
-		   NIRVA_AUTOMATION_FULL),				\
-    ADD_COND_ATTR(IMPLFUNC, DESTROY_NATIVE_THREAD, NIRVA_EQUALS,	\
-    ATTR_AUTOLEVEL_THREADS, NIRVA_AUTOMATION_SEMI, NIRVA_EQUALS, ATTR_THREADS_MODEL, \
-    NIRVA_THREAD_MODEL_INSTANCE_PER_THREAD, NIRVA_LOGIC_OR, ATTR_AUTOLEVEL_THREADS, \
-    NIRVA_AUTOMATION_FULL)
+// this is a condition to be checked, on NIRV_COND_SUCCESS, the atribute becomes mandatory
+#define __COND_THREADS_1 NIRVA_VAL_EQUALS, _COND_ATTR_VAL(ATTR_AUTOLEVEL_THREADS), \
+    _COND_INT_VAL(NIRVA_AUTOMATION_SEMI), NIRVA_VAL_EQUALS,		\
+    _COND_ATTR_VAL(ATTR_THREADS_MODEL), _COND_INT_VAL(NIRVA_THREAD_MODEL_ON_DEMAND))
+
+// this is a condition to be checked, on NIRV_COND_SUCCESS, the attribute becomes mandatory
+#define __COND_THREADS_2 NIRVA_VAL_EQUALS, _COND_ATTR_VAL(ATTR_AUTOLEVEL_THREADS), \
+    _COND_INT_VAL(NIRVA_AUTOMATION_SEMI), NIRVA_VAL_EQUALS,		\
+    _COND_ATTR_VAL(ATTR_THREADS_MODEL),					\
+    _COND_INT_VAL(NIRVA_THREAD_MODEL_INSTANCE_PER_THREAD),		\
+    NIRVA_OP_OR, NIRVA_VAL_EQUALS, _COND_ATTR_VAL(ATTR_AUTOLEVEL_THREADS), \
+    _COND_INT_VAL(NIRVA_AUTOMATION_FULL))
+
+#define _ASPECT_THREADS_ATTRBUNDLE #THREADS_ASPECT, ADD_ATTR(AUTOLEVEL, THREADS), \
+    ADD_ATTR(THREADS, MODEL), ADD_COND_ATTR(IMPLFUNC, 101, NIRVA_EQUALS, \
+					    ATTR_AUTOLEVEL_THREADS, NIRVA_AUTOMATION_SEMI, \
+					    NIRVA_EQUALS, ATTR_THREADS_MODEL, \
+					    NIRVA_THREAD_MODEL_ON_DEMAND), \
+    ADD_COND_ATTR(IMPLFUNC, 102, ADD_COND_ATTR(IMPLFUNC, 103, _COND(THREADS, 2)), \
+    ADD_COND_ATTR(IMPLFUNC, 104, _COND(THREADS, 2))
+
+#define NIRVA_OPT_FUNC_101 borrow_native_thread,			\
+    "request a native thread from application thread pool",RETURN_NATIVE_THREAD,0
+#define NIRVA_OPT_FUNC_102 return_native_thread,"return a native thread to  application thread pool", \
+    NIRVA_NO_RETURN,1,NIRVA_NATIVE_THREAD,thread
+
+#define _MAKE_IMPL_COND_FUNC_1_DESC(n)					\
+  (n == 101 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_101) : n == 102 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_102) : \
+   n == 103 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_103) : n == 104 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_104) : NULL)
 
 ////////////////////////////////////////////////
 
 #define NIRVA_ASPECT_HOOKS			2
+
+#define NIRVA_ASPECT_NAME_2 "HOOKS"
+
 // attributes created intially in STRUCTURE_APP
 // preferred subtypes: AUTOMATION
 // the attributes are transfered to preferred subtypes in order of preference
@@ -2500,25 +2119,78 @@ NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name, NI
 //  - semi - system hooks will run automatically, but the application will run user_callbacks
 //  - manual - the automation will signal when to trigger hooks and wait for return, but nothing more
 
+// this is a condition to be checked, on NIRV_COND_SUCCESS, the atribute becomes mandatory
+#define __COND_HOOKS_1 NIRVA_VAL_EQUALS, _COND_ATTR_VAL(ATTR_AUTOLEVEL_HOOKS), \
+    _COND_INT_VAL(NIRVA_AUTOMATION_SEMI)
+#define __COND_HOOKS_2 NIRVA_VAL_NOT_EQUALS, _COND_ATTR_VAL(ATTR_AUTOLEVEL_THREADS), \
+    _COND_INT_VAL(NIRVA_AUTOMATION_FULL)
+
 #define ATTR_AUTOLEVEL_HOOKS				ATTR_NAME("AUTOLEVEL", "HOOKS")
 #define ATTR_AUTOLEVEL_HOOKS_TYPE 		       	INT, NIRVA_AUTOMATION_DEFAULT
+
+#define _ASPECT_HOOKS_ATTRBUNDLE #HOOKS_ASPECT, ADD_ATTR(AUTOLEVEL, HOOKS), \
+    ADD_COND_ATTR(IMPLFUNC, 201,_COND(HOOKS, 1)),			\
+    ADD_COND_ATTR(IMPLFUNC, 202,_COND(HOOKS, 1)),			\
+    ADD_COND_ATTR(IMPLFUNC, 203,_COND(HOOKS, 1)),			\
+    ADD_COND_ATTR(IMPLFUNC, 204,_COND(HOOKS, 1)),			\
+    ADD_COND_ATTR(IMPLFUNC, 205,_COND(HOOKS, 1)),			\
+    ADD_COND_ATTR(IMPLFUNC, 206,_COND(HOOKS, 1)),			\
+    ADD_COND_ATTR(IMPLFUNC, 207,_COND(HOOKS, 1), _COND_(HOOKS, 2)),	\
+    ADD_COND_ATTR(IMPLFUNC, 208,_COND(HOOKS, 1), _COND_(HOOKS, 2)),	\
+    ADD_COND_ATTR(IMPLFUNC, 209,_COND(HOOKS, 1), _COND(HOOKS, 2))
+
+#define NIRVA_OPT_FUNC_201 add_hook_callback // etc
+#define NIRVA_OPT_FUNC_202 remove_hook_callback // etc
+#define NIRVA_OPT_FUNC_203 trigger_hook_callback // etc
+#define NIRVA_OPT_FUNC_204 clear_hook_stackk // etc
+#define NIRVA_OPT_FUNC_205 clear_all_stacks // etc
+#define NIRVA_OPT_FUNC_206 list_hook_stacks // etc
+#define NIRVA_OPT_FUNC_207 join_async_hooks // etc
+#define NIRVA_OPT_FUNC_208 run_hooks_async // etc
+#define NIRVA_OPT_FUNC_209 run_hooks_aync_seq
+
+
+#define _MAKE_IMPL_COND_FUNC_2_DESC(n)			\
+  (n == 201 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_201) :	\
+   n == 202 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_202) :	\
+   n == 203 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_203) :	\
+   n == 204 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_204) :	\
+   n == 205 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_205) :	\
+   n == 206 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_206) :	\
+   n == 207 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_207) :	\
+   n == 208 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_208) :	\
+   n == 209 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_209) : NULL)
 
 ////////////////////////////////////////////////
 
 #define NIRVA_ASPECT_REFCOUNTING		3
+#define NIRVA_ASPECT_NAME_3 "REFCOUNTING"
 
 // level of automation for refcounting
 //  - full, the structure will manage every aspect,including freeing bundles when refcount reaches -1
 //  - semi - the structure will manage reffing and unreffing, but will only indicate when a bundle
 //		should be free
-//  - manual - the automation will signal when to ref / =unref somthing 
+//  - manual - the automation will signal when to ref / =unref somthing
 
 #define ATTR_AUTOLEVEL_REFCOUNTING	       		ATTR_NAME("AUTOLEVEL", "REFCOUNTING")
 #define ATTR_AUTOLEVEL_REFCOUNTING_TYPE        	       	INT, NIRVA_AUTOMATION_DEFAULT
 
+#define __COND_REFCOUNTING_1 NIRVA_VAL_EQUALS, _COND_ATTR_VAL(ATTR_AUTOLEVEL_REFCOUNTING), \
+    _COND_INT_VAL(NIRVA_AUTOMATION_SEMI)
+
+#define _ASPECT_REFCOUNTING_ATTRBUNDLE #REFCOUNTING_ASPECT, ADD_ATTR(AUTOLEVEL, REFCOUNTING, \
+    ADD_COND_ATTR(IMPLFUNC, REF_BUNDLE_301,_COND(REFCOUNTING, 1)),	\
+    ADD_COND_ATTR(IMPLFUNC, UNREF_BUNDLE_302,_COND(REFCOUNTING, 1))
+
+// add mutex_trylock, mutex_unlock
+
+#define _MAKE_IMPL_COND_FUNC_3_DESC(n)			\
+  (n == 301 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_301) :	\
+   NULL)
 ////////////////////////////////
 
 #define NIRVA_ASPECT_RECYCLING			4
+#define NIRVA_ASPECT_NAME_4 "RECYCLING"
 
 // level of automation for bundle recycling bundle memory and connectiosn
 //  - full, the structure will manage every aspect, including recycling bundles as instructed
@@ -2530,9 +2202,19 @@ NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name, NI
 #define ATTR_AUTOLEVEL_RECYCLING	       		ATTR_NAME("AUTOLEVEL", "RECYCLING")
 #define ATTR_AUTOLEVEL_RECYCLING_TYPE        	       	INT, NIRVA_AUTOMATION_DEFAULT
 
+#define __COND_RECYCLINGING_1 NIRVA_VAL_EQUALS, _COND_ATTR_VAL(ATTR_AUTOLEVEL_RECYCLING), \
+    _COND_INT_VAL(NIRVA_AUTOMATION_SEMI)
+
+#define _ASPECT_RECYCLING_ATTRBUNDLE #RECYCLING_ASPECT, ADD_ATTR(AUTOLEVEL, RECYCLING),	\
+    ADD_COND_ATTR(IMPLFUNC, FREE_BUNDLE_401,_COND(RECYCLING, 1))
+
+#define _MAKE_IMPL_COND_FUNC_4_DESC(n)			\
+  (n == 401 ? NIRVA_PRFUNC(NIRVA_OPT_FUNC_401) : NULL)
+
 ////////////////////////////////
-  
+
 #define NIRVA_ASPECT_TRANSFORMS			5
+#define NIRVA_ASPECT_NAME_5 "TRANSFORMS"
 
 // level of automation for running monitoring transforms
 //  - full, the structure will manage every aspect, including transform trajectories
@@ -2543,6 +2225,8 @@ NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name, NI
 
 #define ATTR_AUTOLEVEL_TRANSFORMS	       		ATTR_NAME("AUTOLEVEL", "TRANSFORMS")
 #define ATTR_AUTOLEVEL_TRANSFORMS_TYPE        	       	INT, NIRVA_AUTOMATION_DEFAULT
+
+#define _ASPECT_TRANSFORMS_ATTRBUNDLE #TRANSFORMS_ASPECT, ADD_ATTR(AUTOLEVEL, TRANSFORMS)
 
 ////////////////////////
 // list of structural subtypes
@@ -2579,7 +2263,7 @@ NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name, NI
 //
 /// STARTUP and enabling / disabling subsytems
 // to bootstrap the NIRVA structure, call:
-  
+
 // NIRVA_BNUNDLE_T structure_app = nirva_init();
 
 // after this,
@@ -2592,197 +2276,178 @@ NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name, NI
 
 // then:
 // NIRVA_CALL(satisfy_intent, NIRVA_INTENT_UPDATE_VALUE, structure_app,
-//		ELEM_OBJECT_STATE, NIRVA_OBJ_STATE_PREPARED);
+//		STRAND_OBJECT_STATE, NIRVA_OBJ_STATE_PREPARED);
 // or just simply:
 // NIRVA_CALL(change_object_state, structure_app, NIRVA_OBJ_STATE_PREPARED);
 
-//
-  NIRVA_ENUM {
-	STRUCTURE_SUBTYPE_PRIME = 0,
-	// structure subtype which represents an application - ie process
+#define _ASPECT_AFFINITY(n) ASPECT_AFFINITY_##n
+#define _SUBSYS_NAME(n) SUBSYS_NAME_##n
+#define _SUBSYS_DESC(n) SUBSYS_DESC_##n
+#define _SUBSYS_REQUIRES(n) SUBSYS_REQUIRES_##n
 
-	STRUCTURE_SUBTYPE_APP = 1,
+#define ASPECT_AFFINITY(n) _ASPECT_AFFINITY(STRUCTURE_SUBTYPE_##n)
+#define SUBSYS_NAME(n) _SUBSYS_NAME(STRUCTURE_SUBTYPE_##n)
+#define SUBSYS_DESC(n) _SUBSYS_DESC(STRUCTURE_SUBTYPE_##n)
+#define SUBSYS_REQUIRES(n) _SUBSYS_REQUIRES(STRUCTURE_SUBTYPE_##n)
 
-	// role which handles user interface interactions - acts as proxy for
-	// the end_user. Essential for applications that want to include UI
-	// automation.
-	// It can act as proxy to an Oracle instance, and its proxy functions include
-	// Helping broker or more especially negotiator to fill in missing attribute values during
-	// negotiation, can advise help arbitrator choose
-	// between alternatives. 
+#define	STRUCTURE_SUBTYPE_PRIME 		0
+#define ASPECT_AFFINITY_0 ASPECT_NONE
+#define SUBSYS_NAME_0 "PRIME"
+#define SUBSYS_DESC_0 "This object represents the structure itself, and is the first object created." \
+  "It performs the structure bootstrap operations and is the template used to create all the other " \
+  "structure subtypes. It oversees the activites of all other subsystems, fullfilling the role of " \
+  "administrator. Destroying this object requires PRIV_STRUCTURE > 200, and will result in " \
+  "an immediate abort of the application."
 
-	STRUCTURE_SUBTYPE_GUI,
+#define	STRUCTURE_SUBTYPE_APP 			1
+#define ASPECT_AFFINITY_1 ASPECT_THREADS, 1, ASPECT_HOOKS, 1, ASPECT_REFCOUNTING, 1, \
+    ASPECT_RECYCLING, 1, ASPECT_TRANSFORMS, 1, ASPECT_NONE
+#define SUBSYS_NAME_1 "APP"
+#define SUBSYS_DESC_1 "Structure subtype which represents an application - ie process. Its state " \
+  "reflects the state of the application overall, and it can be used to manage and control the " \
+  "application process itself"
+#define SUBSYS_REQUIRES_1 STRUCTURE_SUBTYPE_PRIME
 
-	// role which involves creating and managing the the thrread pool
-	// essential for any kiknd of automation
+#define STRUCTURE_SUBTYPE_GUI			2
+#define ASPECT_AFFINITY_2 ASPECT_NONE
+#define SUBSYS_REQUIRES_2 STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_2 "GUI"
+#define SUBSYS_DESC_2 "GUI is an expert system designed to manage the user interface elements, " \
+  "essential for any application which has a graphical front end."
 
-	STRUCTURE_SUBTYPE_THREAD_HERDER,
+#define	STRUCTURE_SUBTYPE_THREAD_HERDER		3
+#define ASPECT_AFFINITY_3 ASPECT_THREADS, 100, ASPECT_NONE
+#define SUBSYS_REQUIRES_3 STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_3 "THREAD_HERDER"
+#define SUBSYS_DESC_3 "Thread_herder is an expert subsytem designed to, depending on its " \
+  "level of automation, manage and monitor native threads and thread instances created from these," \
+  "as well as interfacing thread_instances with transform status, trajectory segments, " \
+  "hook triggers and callbacks, in short acting as liason between thereads and the rest of the " \
+  "structure."
 
-	// instance which is responsible for automatic actions
-	// triggering hooks and running system hook functions
-	// requires thread_herder to function 
+#define	STRUCTURE_SUBTYPE_AUTOMATION		4
+#define ASPECT_AFFINITY_4 ASPECT_THREADS, 50, ASPECT_HOOKS, 100, ASPECT_REFCOUNTING, 50, \
+    ASPECT_RECYCLING, 50, ASPECT_TRANSFORMS, 50, ASPECT_NONE
+#define SUBSYS_REQUIRES_4 STRUCTURE_SUBTYPE_THREAD_HERDER, STRUCTURE_SUBTYPE_APP, \
+    STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_4 "AUTOMATION"
+#define SUBSYS_DESC_4 "Automation is an expert system which can be programmed to carry out tasks " \
+  "according to triggers and conditions. Automations can be used for example to add hook " \
+  "callbacks when a bundle or item is created, to perform actions on hook triggers, or to " \
+  "check conditions at specific points. The trigger is normally a hook callback or a structure " \
+  "transform, conditions are a COND_CHECK script or a function call, and actions may be to call a " \
+  "structure transform or run a Scriptlet. Depending on the levels of automation selected, the " \
+  "the subsystem may trigger hooks, activate hook callbacks, and mange reference counting."
 
-	STRUCTURE_SUBTYPE_AUTOMATOR,
+#define	STRUCTURE_SUBTYPE_BROKER		5
+#define ASPECT_AFFINITY_5 ASPECT_TRANSFORMS, 50, ASPECT_NONE
+#define SUBSYS_REQUIRES_5 STRUCTURE_SUBTYPE_THREAD_HERDER, STRUCTURE_SUBTYPE_APP, \
+    STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_5 "BROKER"
+#define SUBSYS_DESC_5 "Broker is an expert system designed to match intentcaps and requirements with " \
+  "contracts, and thus with the objects holding those contracts. Broker will thus maintain a " \
+  "an index of all contracts, the intencaps they satisfy, their side effects. Iin addition it will " \
+  "keep a database of the attributes of each object type / subtype. Given an intentcap to satisfy, " \
+  "broker will map out sequences of transforms to be actioned, possibly providing multiple solutions" \
+  "In the case where no solution can be found, broker may indicate the missing steps, as well as " \
+  "providing the the nearest alternative resolutions"
 
-	// role which involves finding transforms for intents and trajectory navigation
-	// requires threed_herder, and can benefit from archivist for larger applications
-	// using a negotiator can help it find third party objects for supplying transform
-	// side-data. The arbitrator may also consult it when searching for alternatives.
+#define STRUCTURE_SUBTYPE_LIFECYCLE		6
+#define ASPECT_AFFINITY_6 ASPECT_RECYCLING, 100, ASPECT_REFCOUNTING, 100, ASPECT_NONE
+#define SUBSYS_REQUIRES_6 STRUCTURE_SUBTYPE_THREAD_HERDER, STRUCTURE_SUBTYPE_APP, \
+    STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_6 "LIFECYCLE"
+#define SUBSYS_DESC_6 "This will be an expert system designed to track and monitor the states "	\
+  "of objects from the monet they are created until they are no longer required. Objects which " \
+  "idle for too long may be recycled and their threads redeployed. Objects which lock up system " \
+  "resources unnecessarily may be flagged. Runaway objects which create too many instances or " \
+  "use up thereads unnecesarily will be flagged and blocked if necessary"
 
-	STRUCTURE_SUBTYPE_BROKER,
+#define	STRUCTURE_SUBTYPE_ARBITRATOR		7
+#define ASPECT_AFFINITY_7 ASPECT_NONE
+#define SUBSYS_REQUIRES_7 SRTUCTURE_SUBTYPE_AUTOMATION, STRUCTURE_SUBTYPE_THREAD_HERDER, \
+    STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_7 "ARBITRATOR"
+#define SUBSYS_DESC_7 "Arbitrator will be an expert system specifally designed fo resolving " \
+  "failed condition checks. It will use a vareity of methods depending on the nature of the " \
+  "check, as well as the condition itself. For example if the check is rqueirements check " \
+  "for a contract, this may be passed on to NEGOTIATOR to resolve."
 
-	// subtype which specializes in tracking bundle lifescycles
-	// noting whne instances are created and handling the destruction process
-	// - recycling the elements - for exmaple disconnecting connetceted attributes
-	// recalling hook callbacks and so on. If not enabled,
-	// these tasks will be handled by automation
-	// If lifecycle is enabled it will moitor objects, and those which are idle for too
-	// long and not flagged as retain, will be sent for recycling, freeing up the resources.
+#define	STRUCTURE_SUBTYPE_NEGOTIATOR		8
+#define ASPECT_AFFINITY_8 ASPETCT_TRANSFORMS, 100, ASPECT_NONE
+#define SUBSYS_REQUIRES_8 STRUCTURE_SUBTYPE_ARBITRATOR, STRUCTURE_SUBTYPE_BROKER, \
+    STRUCTURE_SUBTYPE_THREAD_HERDER, STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_8 "NEGOTIATOR"
+#define SUBSYS_DESC_8 "Negotiator will be an expert system specifially designed to resolve " \
+  "failed conditions checks realting to a contract. Depending on the particular condition it may " \
+  "search for a means to provide missing attributes, to run parallel transforms to supply streamed " \
+  "data, or action pre-transforms to bring objectsto the correct state / subtype"
 
-	STRUCTURE_SUBTYPE_LIFECYCLE,
+#define	STRUCTURE_SUBTYPE_ADJUDICATOR		9
+#define ASPECT_AFFINITY_9 ASPECT_NONE
+#define SUBSYS_REQUIRES_9 SRTUCTURE_SUBTYPE_ARBITRATOR, STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_9 "ADJUDICATOR"
+#define SUBSYS_DESC_9 "Adjudicator will be an expert system designed to flag and possibly remove " \
+  "anything from the application which may cause errors or timeouts."
 
-	// role which involves attempting to recover from errors and blocked states
-	// as well as deciding choosing between alternatives if needed
-      
-	STRUCTURE_SUBTYPE_ARBITRATOR,
+#define STRUCTURE_SUBTYPE_CHRONOMETRY			10
+#define ASPECT_AFFINITY_10 ASPECT_NONE
+#define SUBSYS_REQUIRES_10 STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_10 "CHRONOMETRY"
+#define SUBSYS_DESC_10 "Chronometry will be an expert system desinged to handle features such as " \
+  "high precision timeing, thread synchronisation, time realted instrumentation, as well as " \
+  "mainatinaing queues for actioning events at specific intervals or absolute times"
 
-	// role which involves helping out in contract negotioations
-	// can act as a proxy negotiator, working with the broker to help fulfill contract conditions
-	// it can perform such as tasks as finding providers for data requrements,
-	// and if necessary, negociate side contracst to receive side data. In addition,
-	// it can map data output streams and interacting with broker can offer to make use of
-	// or edit the data
+#define	STRUCTURE_SUBTYPE_ARCHIVER		11
+#define ASPECT_AFFINITY_11 ASPECT_NONE
+#define SUBSYS_REQUIRES_11 STRUCTURE_SUBTYPE_LIFECYCLE, STRUCTURE_SUBTYPE_BROKER, \
+    STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_11 "ARCHIVER"
+#define SUBSYS_DESC_11 "Archiver will be an expert subsystem designed specifially for rapid data " \
+  "storage, indexing and retrieval. It will have features for dealing with arrays, lists, " \
+  "hash tables, lookup tables as well as managing offline stroage, backups and restores, " \
+  "crash recovery and so on"
 
-	STRUCTURE_SUBTYPE_NEGOTIATOR,
+#define	STRUCTURE_SUBTYPE_OPTIMISATION 		12
+#define ASPECT_AFFINITY_12 ASPECT_NONE
+#define SUBSYS_REQUIRES_12 STRUCTURE_SUBTYPE_CHRONOMETRY, STRUCTURE_SUBTYPE_THREAD_HERDER, \
+    STRUCTURE_SUBTYPE_BROKER, STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_12 "OPTIMISATION"
+#define SUBSYS_DESC_12 "This will be an expert system designed to montor the application and " \
+  "overall system state, optimising performance"
 
-	// role whcih involves taking actions for misbehaviour, flagging occurences
-	// marking things as untrustworthy and so on
-	// called in when the arbitrator is unable to remedy a problem
-	// also takes on the role of managing privileges when there is no SECURITY sub system
-	// or whne SECURITY is busy.
+#define	STRUCTURE_SUBTYPE_SECURITY		13
+#define ASPECT_AFFINITY_13 ASPECT_NONE
+#define SUBSYS_REQUIRES_13 STRUCTURE_SUBTYPE_ADJUDICATOR, STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_13 "SECURITY"
+#define SUBSYS_DESC_13 "This subsystem will be an expert system designed to manage credentials and " \
+  "privilege levels to ensure the integrity of the application and the environment it runs in"
 
-	STRUCTURE_SUBTYPE_ADJUDICATOR,
+#define	STRUCTURE_SUBTYPE_HARMONY		14
+#define ASPECT_AFFINITY_14 ASPECT_NONE
+#define SUBSYS_REQUIRES_14 STRUCTURE_SUBTYPE_ADJUDICATOR, STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_14 "HARMONY"
+#define SUBSYS_DESC_14 "This is an expert system desing to interface with the underlying operating " \
+  "system, as well as interacting with exernal systems, applications and Oracles"
 
-	// role which reloves around keeping track of time, synchronising activites
-	// monitoring how long tasks take and so on. Sends reports to the OPTIMSATION.
+#define	N_STRUCTURE_SUBTYPES 15
 
-	// if enabled it will also take on the role of timing out blocked threads,
-	// triggering the hooks, as well as monitoring sync points
+// this subtype cannot be created but can be discovered. An Oracle is able
+// to supply missing contract
+// attribute values, provided they are of simple types (non array, non binary data).
+// end users are a type of oracle, the user prefs instance may be able to help constuct a
+// more accurat model
 
-	// if a part of the application is blocked, it may call upon the ARNITRATOR to
-	// investigate
+#define STRUCTURE_SUBTYPE_ORACLE 128
+#define ASPECT_AFFINITY_128 ASPECT_NONE
+#define SUBSYS_REQUIRES_128 STRUCTURE_SUBTYPE_APP, STRUCTURE_SUBTYPE_PRIME
+#define SUBSYS_NAME_128 "ORACLE"
+#define SUBSYS_DESC_128 "If you are reading this, this is you."
 
-	// it will supply application time / date information
-	// if enabled also exposes a message queue for receiving timed actions
-	// if a negotiator is avaialble it can also action contracts involving negotiating
-
-	STRUCTURE_SUBTYPE_CHRONOMETRY,
-
-	// role whcih involves storage and retrieval of object, fn, data etc
-	// as well as loading and saving meta data. It is designed to provide quick lookups and
-	// cross-referencing, as well as being able to restore the system to a stored state.
-	// Also manages crash recovery, checksuming,  and error checking
-
-	STRUCTURE_SUBTYPE_ARCHIVER,
-
-	// role which invloves advising on resource usage. Receives updates from various
-	// parts of the system and monitors performance Performs realtime optimisation using the
-	// values it knows. Tuning may forward updates about ideal values.
-
-	STRUCTURE_SUBTYPE_OPTIMISATION,
-
-	// role which involves monitoring and adjsuting hardaware
-	// as well as system tuning. Shares data with OPTIMISATION and HARMONY
-
-	STRUCTURE_SUBTYPE_TUNING,
-
-	// this role involves maintaining and checking PRIVelege levels for threads
-	// and transforms. If not present, these tasks are handled by threadherder.
-	// threads are created with default PRIV_ levels, usually 0.
-	// some structural transform functions require higher PRIV levels in one or more
-	// ASPECCTS. A thread_instance can change its PRIV level by passing a condcheck
-	// this may involve receiving permision from an Oracle.
-	// Failing a conditional PRIV check will result in some action - arbitrator may try to
-	// ask an Oracle, adjudicator may flag an error and mark the transform as questionable
-	// the oreacle can force_succeed to the condition once, always for the thread or always for
-	// the transform. User interaction may be available to act as a substitute Oracle, after
-	// observing another Oreacle's behaviour.
-
-	STRUCTURE_SUBTYPE_SECURITY,
-
-	// this role involves interacting with the underlying operating system, as well as with
-	// other software components
-	// may operate in conjunction with hadware contoller, performance_manage,
-	// and the threader herder
-
-	STRUCTURE_SUBTYPE_HARMONY,
-
-	// this role involves introspecting the state of the applicationm and
-	// testing and comparing alternative possibilites.
-	//
-	// consulting with STRATEGIST it may devise strategies to fine tune the parameters of the
-	// infrastrucutre itself, adjusting or creating, bundles, making adjustments
-	// to automation rules and so on. For exmaple STRATEGY may model an abstraction of some
-	// portion of the application to be optimised. EVOUTION can test  these strategies
-	// in the running system, and feed the results back to STRATEGY.
-	// May share data with TUNING when testing alternatives and discovering optimal values.
-
-	STRUCTURE_SUBTYPE_EVOLUTION,
-
-	// role that involves planning and finding solutions to abstract issues,
-	// given a problem it will try to find an optimal solution, may consuit with
-	// any other structural compnents in order to do so
-	// EVOLUTION and BEHAVIOR can wokr together to improve ewach others models
-	// while strategy will employ abstract methods to optimise and improve the models
-
-	STRUCTURE_SUBTYPE_STRATEGY,
-
-	// role which includes analysing Oracles,
-	// attempting to discern patterns in their responses, reducing the frequency at which
-	// they are consulted. The subsytem will attempt to predict Oracle responses and adjust
-	// internal modules to replicate their choices as closely as possible.
-	// It will provide the Oracle a means to inform it when its predicted choices differ from
-	// those it would have supplied and when they align with or are superior to its.
-	// Such feedback will be used to adjust the internal models.
-
-	STRUCTURE_SUBTYPE_BEHAVIOUR,
-
-	// this subtype, if enabled, imposes an economic model on objects. This is intended for
-	// advanced, self optimising code applications. In this mode, each object has an "account"
-	// and can earn credit for performing transforms and producing data. These credits can
-	// then be "spent" to advertise contracts, outsouce processing and to "rent" more threads.
-	// an purchase more resources. Objects which run out of credits will eventually "starve"
-	// and be sent for recycling. Objects can also pay to be modified, to purchase clones and so on.
-	// Objects can transfer credits to another object. In addition when an object is sent for
-	// recylcing, its attributes are auctioned off. Broker will pay for intents being satisified.
-	// In addition, objects can pay to attach their own attributes to a remote attibute of
-	// another object.
-
-	// the banker monitors the state of the economy and may lend out at negotiated interest rates
-	// it also maintains the accounts of each object, and faciliates transactions.
-	// in addition, objects may specify an "heir" to receive their credits in case they are recycled.
-      
-	STRUCTURE_SUBTYPE_BANKER,
-
-	// this subtype provides objects with a space to store scripts
-	// an object may request that a script be run at any time,
-	// the effects of the scrips are to be determined, but objects may produce copies of themselves
-	// with a partner object, and the scripts will be co-mingled. Scripts which are dormant for
-	// too long are sent for recycling, and their offspring may continue.
-
-	STRUCTURE_SUBTYPE_GENETIC,
-      
-
-	N_STRUCTURE_SUBTYPES,
-
-	// this subtype cannot be created but can be discovered. An Oracle is able
-	// to supply missing contract
-	// attribute values, provided they are of simple types (non array, non binary data).
-	// end users are a type of oracle, the user prefs instance may be able to help constuct a
-	// more accurat model
-
-	STRUCTURE_SUBTYPE_ORACLE,
-};
 #endif
 
 #endif
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */

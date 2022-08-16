@@ -11,7 +11,7 @@
 LiVESList *array_to_string_list(const char **y, int offset, int len);
 char *lives_list_to_string(LiVESList *list, const char *delim);
 
-boolean lives_list_contains_string(LiVESList *, const char *);
+LiVESList *lives_list_locate_string(LiVESList *, const char *);
 
 LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) WARN_UNUSED;
 LiVESList *lives_list_delete_string(LiVESList *, const char *string) WARN_UNUSED;

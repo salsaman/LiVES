@@ -406,7 +406,7 @@ void play_file(void) {
     if (mainw->lazy_starter) {
       lives_proc_thread_request_pause(mainw->lazy_starter);
       if (lives_proc_thread_unref(mainw->lazy_starter))
-	mainw->lazy_starter = NULL;
+        mainw->lazy_starter = NULL;
     }
   }
 

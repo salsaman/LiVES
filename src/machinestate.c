@@ -2895,6 +2895,8 @@ boolean get_machine_dets(void) {
 				  "%s -e \"s/.*: //\" -e \"s:\\s\\+:/:g\"",
 				  capable->grep_cmd, capable->sed_cmd);
 #endif
+  // TODO - clock_getres()
+
   capable->hw.cpu_name = mini_popen(com);
 
   com = lives_strdup("uname -o");
@@ -3323,8 +3325,8 @@ static int do_nothing(int what_type_of_nothing_did_you_expect, ticks_t the_start
 ticks_t check_thrd_latency(void) {
   // ask a thread to do nothing, and then time how long i takes
   ticks_t alpha = lives_get_current_ticks(), *omega;
-  lives_proc_thread_t lpt = lives_proc_thread_create(0, do_nothing, WEED_SEED_INT, "iIV",
-						     THE_TIMEY_WIMEY_KIND, alpha, &omega);
+  /* lives_proc_thread_t lpt = lives_proc_thread_create(0, do_nothing, WEED_SEED_INT, "iIV", */
+  /* 						     THE_TIMEY_WIMEY_KIND, alpha, &omega); */
   *omega = lives_get_current_ticks() - alpha;
   return *omega;
 }

@@ -205,10 +205,11 @@ typedef struct {
 #define _LINE_REF_ 0
 #endif
 
-#define ____FUNC_ENTRY____(func, rettype, args_fmt) ((THREADVAR(func_stack) = lives_list_prepend(THREADVAR(func_stack), \
-											 QUOTEME(func))) \
-					     ? add_fn_lookup((lives_funcptr_t)(func), QUOTEME(func), rettype, args_fmt, \
-							     _FILE_REF_, _LINE_REF_, NULL) : NULL)
+#define ____FUNC_ENTRY____(func, rettype, args_fmt) \
+  ((THREADVAR(func_stack) = lives_list_prepend(THREADVAR(func_stack),	\
+					       QUOTEME(func)))		\
+   ? add_fn_lookup((lives_funcptr_t)(func), QUOTEME(func), 0, rettype, args_fmt, \
+		   _FILE_REF_, _LINE_REF_) : NULL)
 
 #define ____FUNC_EXIT____ do {LiVESList *list = THREADVAR(func_stack);		\
     THREADVAR(func_stack) = list->next; list->next = NULL; lives_list_free(list);} while (0);
@@ -297,7 +298,7 @@ typedef struct {
 // hook should be run as soon as possible when the hook trigger point is reached
 #define HOOK_CB_PRIORITY		(1ull << 3) // prepend, not append
 
- // for fg requests, if it cannot be run immediately then drop it rather than deferring
+// for fg requests, if it cannot be run immediately then drop it rather than deferring
 #define HOOK_OPT_NO_DEFER		(1ull << 4)
 
 /// the following bits define how hooks should be added to the stack

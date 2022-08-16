@@ -7,9 +7,9 @@
 #include "maths.h"
 
 
-LIVES_GLOBAL_INLINE boolean lives_list_contains_string(LiVESList *list, const char *strng) {
-  for (; list; list = list->next) if (!lives_strcmp(strng, (const char *)list->data)) return TRUE;
-  return FALSE;
+LIVES_GLOBAL_INLINE LiVESList *lives_list_locate_string(LiVESList *list, const char *strng) {
+  for (; list; list = list->next) if (!lives_strcmp(strng, (const char *)list->data)) return list;
+  return NULL;
 }
 
 

@@ -118,11 +118,11 @@ char *get_current_timestamp(void);
 #define LIVES_WAIT_A_SEC 1000000000. // 1 second
 
 #define lives_nanosleep(nanosec) do {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
-    ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
+    ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (clock_nanosleep(CLOCK_REALTIME, 0, &ts, &ts) == -1 && \
 								     errno != ETIMEDOUT) pthread_yield();} while (0);
 
 #define lives_nanosleep_times(nanosec, times) do {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
-    ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
+    ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (clock_nanosleep(CLOCK_REALTIME, 0, &ts, &ts) == -1 && \
 								     errno != ETIMEDOUT) pthread_yield();} while (0);
 
 // sleep for 1 msec, regardless of the value returned, sets euqal to cond

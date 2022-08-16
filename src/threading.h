@@ -276,10 +276,10 @@ uint64_t get_worker_status(uint64_t tid);
 
 ticks_t lives_proc_thread_get_start_ticks(lives_proc_thread_t);
 
-void _proc_thread_params_from_vargs(lives_proc_thread_t , lives_funcptr_t func, int return_type,
-				    const char *args_fmt, va_list xargs);
+void _proc_thread_params_from_vargs(lives_proc_thread_t, lives_funcptr_t func, int return_type,
+                                    const char *args_fmt, va_list xargs);
 
-void _proc_thread_params_from_nullvargs(lives_proc_thread_t , lives_funcptr_t func, int return_type);
+void _proc_thread_params_from_nullvargs(lives_proc_thread_t, lives_funcptr_t func, int return_type);
 
 lives_proc_thread_t _lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_t, const char *fname,
     int return_type, const char *args_fmt, ...);

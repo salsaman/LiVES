@@ -3632,14 +3632,14 @@ void redraw_timeline(int clipno) {
     if (is_fg_thread()) {
       // if this the fg thread, kick off a bg thread to actually run this
       if (mainw->drawtl_thread) {
-	mainw->drawtl_thread = lives_proc_thread_auto_secure((lives_proc_thread_t *)&mainw->drawtl_thread);
-	if (mainw->drawtl_thread) {
-	  if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-	    lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
-	  }
-	  lives_proc_thread_join(mainw->drawtl_thread);
-	  lives_proc_thread_unref(mainw->drawtl_thread);
-	}
+        mainw->drawtl_thread = lives_proc_thread_auto_secure((lives_proc_thread_t *)&mainw->drawtl_thread);
+        if (mainw->drawtl_thread) {
+          if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+            lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
+          }
+          lives_proc_thread_join(mainw->drawtl_thread);
+          lives_proc_thread_unref(mainw->drawtl_thread);
+        }
       }
       if (mainw->multitrack || mainw->reconfig) return;
       if (!mainw->drawtl_thread) {
@@ -3651,13 +3651,13 @@ void redraw_timeline(int clipno) {
       // if a bg thread, we either call the main thread to run this which will spawn another bg thread,
       // or if we are running it adds to deferral hooks
       if (mainw->drawtl_thread) {
-	mainw->drawtl_thread = lives_proc_thread_auto_secure((lives_proc_thread_t *)&mainw->drawtl_thread);
-	if (mainw->drawtl_thread) {
-	  if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-	    lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
-	  }
-	  lives_proc_thread_unref(mainw->drawtl_thread);
-	}
+        mainw->drawtl_thread = lives_proc_thread_auto_secure((lives_proc_thread_t *)&mainw->drawtl_thread);
+        if (mainw->drawtl_thread) {
+          if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+            lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
+          }
+          lives_proc_thread_unref(mainw->drawtl_thread);
+        }
       }
 
       THREADVAR(hook_flag_hints) = HOOK_UNIQUE_REPLACE_OR_ADD;
@@ -8132,7 +8132,7 @@ boolean msg_area_config(LiVESWidget * widget) {
   int paisize = 0, opaisize;
 
   if (g_main_depth() > 1) return FALSE;
-  
+
   if (norecurse) return FALSE;
 
   if (!mainw->is_ready) return FALSE;

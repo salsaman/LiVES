@@ -1722,7 +1722,7 @@ static void quit_from_tests(LiVESWidget * dialog, livespointer button) {
 }
 
 static void back_from_tests(LiVESWidget * dialog, livespointer button) {
-  SET_INT_DATA(dialog, INTENTION_KEY, OBJ_INTENTION_UNDO);
+  SET_INT_DATA(dialog, INTENTION_KEY, UNDO_REQUEST_HOOK);
   mainw->cancelled = CANCEL_USER;
 }
 
@@ -2421,7 +2421,7 @@ jpgdone:
   }
 
   if (response == LIVES_RESPONSE_RETRY) {
-    SET_INT_DATA(dialog, INTENTION_KEY, OBJ_INTENTION_UNDO);
+    SET_INT_DATA(dialog, INTENTION_KEY, UNDO_REQUEST_HOOK);
     goto cancld;
   }
 
@@ -2450,7 +2450,7 @@ cancld:
 
   lives_freep((void **)&temp_backend);
 
-  if (intent == OBJ_INTENTION_UNDO) {
+  if (intent == UNDO_REQUEST_HOOK) {
     if (do_workdir_query()) goto rerun;
   }
 

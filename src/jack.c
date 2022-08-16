@@ -125,7 +125,7 @@ static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int file
 LIVES_GLOBAL_INLINE const char *jack_get_best_client(lives_jack_port_type type, LiVESList *clients) {
   switch (type) {
   case JACK_PORT_TYPE_DEF_IN:
-    if (lives_list_contains_string(clients, JACK_PULSE_OUT_CLIENT))
+    if (lives_list_locate_string(clients, JACK_PULSE_OUT_CLIENT))
       return JACK_PULSE_OUT_CLIENT;
     break;
   default:

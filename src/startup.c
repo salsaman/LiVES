@@ -2034,7 +2034,8 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef WEED_STARTUP_TESTS
   winitopts |= WEED_INIT_DEBUGMODE;
 #endif
-  winitopts |= 8; // skip un-needed error checks
+  winitopts |= (1ull << 33); // skip un-needed error checks
+  winitopts |= WEED_INIT_EXTENDED_FUNCS;
   werr = libweed_init(weed_abi_version, winitopts);
   if (werr != WEED_SUCCESS) {
     lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
@@ -2064,7 +2065,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_plant_new = weed_plant_new;
   _weed_plant_free = weed_plant_free;
   _weed_leaf_set = weed_leaf_set;
-  _weed_leaf_append_elements = weed_leaf_append_elements;
   _weed_leaf_get = weed_leaf_get;
   _weed_leaf_delete = weed_leaf_delete;
   _weed_plant_list_leaves = weed_plant_list_leaves;
@@ -2072,7 +2072,10 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_element_size = weed_leaf_element_size;
 
 #if WEED_ABI_CHECK_VERSION(202)
-  _weed_leaf_set_element_size = weed_leaf_set_element_size;
+  _weed_ext_set_element_size = weed_ext_set_element_size;
+  _weed_ext_append_elements = weed_ext_append_elements;
+  _weed_ext_attach_leaf = weed_ext_attach_leaf;
+  _weed_ext_detach_leaf = weed_ext_detach_leaf;
 #endif
 
   _weed_leaf_seed_type = weed_leaf_seed_type;
@@ -3757,7 +3760,7 @@ jack_tcl_try:
       timeout = LIVES_SHORT_TIMEOUT;
       if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
       if (!(info = lives_proc_thread_create_with_timeout(timeout, 0, lives_jack_init, WEED_SEED_BOOLEAN, "iv",
-							 JACK_CLIENT_TYPE_TRANSPORT, NULL))) {
+                   JACK_CLIENT_TYPE_TRANSPORT, NULL))) {
         if (mainw->cancelled) {
           lives_exit(0);
         }
@@ -3856,7 +3859,7 @@ jack_acl_try:
         timeout = LIVES_SHORTEST_TIMEOUT;
         if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) timeout <<= 2;
         if (!(info = lives_proc_thread_create_with_timeout(timeout, 0, (lives_funcptr_t)jack_create_client_writer,
-                                      WEED_SEED_BOOLEAN, "v", mainw->jackd))) return FALSE;
+                     WEED_SEED_BOOLEAN, "v", mainw->jackd))) return FALSE;
 
         success = lives_proc_thread_join_boolean(info);
         lives_proc_thread_free(info);
@@ -3897,8 +3900,8 @@ jack_acl_try:
               mainw->jackd->cancelled = &mainw->cancelled;
               mainw->jackd->in_use = FALSE;
               if (!(info =
-		    lives_proc_thread_create_with_timeout(timeout, 0, (lives_funcptr_t)jack_write_client_activate,
-							  WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
+                      lives_proc_thread_create_with_timeout(timeout, 0, (lives_funcptr_t)jack_write_client_activate,
+                          WEED_SEED_BOOLEAN, "v", mainw->jackd))) {
                 success = FALSE;
               } else {
                 success = lives_proc_thread_join_boolean(info);

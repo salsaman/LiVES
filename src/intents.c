@@ -104,8 +104,8 @@ char *interpret_uid(uint64_t uid) {
       //else dump_obdesc(dicto);
       info = lives_object_dump_attributes(dicto);
     } else if (sub == DICT_SUBTYPE_FUNCDEF) {
-      //lives_obj_attr_t *attr = lives_object_get_attribute(dicto, ELEM_INTROSPECTION_NATIVE_PTR);
-      lives_obj_attr_t *attr = lives_object_get_attribute(dicto, ELEM_INTROSPECTION_NATIVE_PTR);
+      //lives_obj_attr_t *attr = lives_object_get_attribute(dicto, STRAND_INTROSPECTION_NATIVE_PTR);
+      lives_obj_attr_t *attr = lives_object_get_attribute(dicto, STRAND_INTROSPECTION_NATIVE_PTR);
       lives_funcdef_t *funcdef = (lives_funcdef_t *)weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
       info = lives_funcdef_explain(funcdef);
     }
@@ -270,8 +270,8 @@ const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, int
   const lives_funcdef_t *funcdef = get_from_hash_store(fn_objstore, name);
   if (!funcdef) {
     lives_dicto_t *dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_FUNCDEF);
-    lives_obj_attr_t *xattr = lives_object_declare_attribute(dicto, ELEM_INTROSPECTION_NATIVE_PTR,
-							     WEED_SEED_VOIDPTR);
+    lives_obj_attr_t *xattr = lives_object_declare_attribute(dicto, STRAND_INTROSPECTION_NATIVE_PTR,
+                              WEED_SEED_VOIDPTR);
 
     funcdef = create_funcdef(name, func, rtype, args_fmt, file, line ? ++line : 0, NULL);
 
@@ -286,7 +286,7 @@ static boolean fdef_funcmatch(void *data, void *pfunc) {
   lives_dicto_t *dicto = (lives_dicto_t *)data;
   if (dicto && dicto->subtype == DICT_SUBTYPE_FUNCDEF) {
     lives_funcptr_t func = *(lives_funcptr_t *)pfunc;
-    lives_obj_attr_t *attr = lives_object_get_attribute(dicto, ELEM_INTROSPECTION_NATIVE_PTR);
+    lives_obj_attr_t *attr = lives_object_get_attribute(dicto, STRAND_INTROSPECTION_NATIVE_PTR);
     lives_funcdef_t *fdef = (lives_funcdef_t *)weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
     return fdef->function == func;
   }
@@ -300,7 +300,7 @@ const lives_funcdef_t *get_template_for_func(lives_funcptr_t func) {
   if (data) {
     lives_dicto_t *dicto = (lives_dicto_t *)data;
     if (dicto && dicto->subtype == DICT_SUBTYPE_FUNCDEF) {
-      lives_obj_attr_t *attr = lives_object_get_attribute(dicto, ELEM_INTROSPECTION_NATIVE_PTR);
+      lives_obj_attr_t *attr = lives_object_get_attribute(dicto, STRAND_INTROSPECTION_NATIVE_PTR);
       fdef = (lives_funcdef_t *)weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
     }
   }
@@ -311,7 +311,7 @@ const lives_funcdef_t *get_template_for_func(lives_funcptr_t func) {
 const lives_funcdef_t *get_template_for_func_by_uid(uint64_t uid) {
   lives_dicto_t *dicto = lookup_entry(uid);
   if (dicto && dicto->subtype == DICT_SUBTYPE_FUNCDEF) {
-    lives_obj_attr_t *attr = lives_object_get_attribute(dicto, ELEM_INTROSPECTION_NATIVE_PTR);
+    lives_obj_attr_t *attr = lives_object_get_attribute(dicto, STRAND_INTROSPECTION_NATIVE_PTR);
     return weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
   }
   return NULL;
@@ -384,7 +384,7 @@ LIVES_GLOBAL_INLINE boolean lives_obj_instance_destroy(lives_obj_instance_t *obj
 
 LIVES_GLOBAL_INLINE boolean lives_object_instance_destroy(lives_object_instance_t *obj) {
   lives_free(obj);
-  return NULL;
+  return FALSE;
 }
 
 
@@ -405,8 +405,8 @@ size_t weigh_object(lives_object_instance_t *obj) {
 LIVES_GLOBAL_INLINE uint64_t lives_object_get_type(weed_plant_t *obj) {
   uint64_t otype = 0;
   if (obj) {
-    lives_bundle_t *vb = weed_get_plantptr_value(obj, ELEM_OBJECT_TYPE, NULL);
-    otype = (uint64_t)weed_get_uint64_value(vb, ELEM_VALUE_DATA, NULL);
+    lives_bundle_t *vb = weed_get_plantptr_value(obj, STRAND_OBJECT_TYPE, NULL);
+    otype = (uint64_t)weed_get_uint64_value(vb, STRAND_VALUE_DATA, NULL);
   }
   return otype;
 }
@@ -415,8 +415,8 @@ LIVES_GLOBAL_INLINE uint64_t lives_object_get_type(weed_plant_t *obj) {
 LIVES_GLOBAL_INLINE uint64_t lives_object_get_subtype(weed_plant_t *obj) {
   uint64_t osubtype = 0;
   if (obj) {
-    lives_bundle_t *vb = weed_get_plantptr_value(obj, ELEM_OBJECT_SUBTYPE, NULL);
-    osubtype = (uint64_t)weed_get_int64_value(vb, ELEM_VALUE_DATA, NULL);
+    lives_bundle_t *vb = weed_get_plantptr_value(obj, STRAND_OBJECT_SUBTYPE, NULL);
+    osubtype = (uint64_t)weed_get_int64_value(vb, STRAND_VALUE_DATA, NULL);
   }
   return osubtype;
 }
@@ -425,8 +425,8 @@ LIVES_GLOBAL_INLINE uint64_t lives_object_get_subtype(weed_plant_t *obj) {
 LIVES_GLOBAL_INLINE int lives_object_get_state(weed_plant_t *obj) {
   int ostate = 0;
   if (obj) {
-    lives_bundle_t *vb = weed_get_plantptr_value(obj, ELEM_OBJECT_STATE, NULL);
-    ostate = (uint64_t)weed_get_int64_value(vb, ELEM_VALUE_DATA, NULL);
+    lives_bundle_t *vb = weed_get_plantptr_value(obj, STRAND_OBJECT_STATE, NULL);
+    ostate = (uint64_t)weed_get_int64_value(vb, STRAND_VALUE_DATA, NULL);
   }
   return ostate;
 }
@@ -598,7 +598,8 @@ weed_error_t lives_object_set_attribute_value(lives_object_t *obj, const char *n
       va_end(xargs);
     }
     if (err == WEED_SUCCESS) {
-      lives_hooks_triggero(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
+      //lives_hooks_triggero(obj, obj ? obj->hook_closures
+      //: THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
     }
   }
   return err;
@@ -614,7 +615,7 @@ weed_error_t lives_object_set_attr_value(lives_object_t *obj, lives_obj_attr_t *
     va_end(xargs);
   }
   if (err == WEED_SUCCESS) {
-    lives_hooks_triggero(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
+    //lives_hooks_triggero(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
   }
   return err;
 }
@@ -629,7 +630,7 @@ weed_error_t lives_object_set_attr_default(lives_object_t *obj, lives_obj_attr_t
     va_end(xargs);
   }
   if (err == WEED_SUCCESS) {
-    lives_hooks_triggero(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
+    //lives_hooks_triggero(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
   }
   return err;
 }
@@ -647,7 +648,7 @@ weed_error_t lives_object_set_attribute_array(lives_object_t *obj, const char *n
       va_end(xargs);
     }
     if (err == WEED_SUCCESS) {
-      lives_hooks_triggero(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
+      //lives_hooks_triggero(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
     }
   }
   return err;
@@ -667,7 +668,7 @@ weed_error_t lives_object_set_attribute_def_array(lives_object_t *obj,
       va_end(xargs);
     }
     if (err == WEED_SUCCESS) {
-      lives_hooks_triggero(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
+      //lives_hooks_triggero(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
     }
   }
   return err;
@@ -683,7 +684,7 @@ weed_error_t lives_object_set_attr_array(lives_object_t *obj, lives_obj_attr_t *
     va_end(xargs);
   }
   if (err == WEED_SUCCESS) {
-    lives_hooks_triggero(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
+    //lives_hooks_triggero(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
   }
   return err;
 }
@@ -698,7 +699,7 @@ weed_error_t lives_object_set_attr_def_array(lives_object_t *obj, lives_obj_attr
     va_end(xargs);
   }
   if (err == WEED_SUCCESS) {
-    lives_hooks_triggero(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
+    //lives_hooks_triggero(obj, obj ? obj->hook_closures : THREADVAR(hook_closures), ATTR_UPDATED_HOOK);
   }
   return err;
 }
@@ -1365,17 +1366,17 @@ static lives_capacities_t *_add_cap(lives_capacities_t *caps, const char *cname)
 
 
 void native_type_view(lives_obj_attr_t *attr) {
-  /* weed_get_string_value(attr, ELEM_INTROSPECTION_PTRTYPE, ctype); */
-  /* weed_get_string_value(attr, ELEM_INTROSPECTION_NATIVE_TYPE, ctype); */
-  /* weed_set_int64_value(attr, ELEM_INTROSPECTION_NATIVE_SIZE, size); */;
+  /* weed_get_string_value(attr, STRAND_INTROSPECTION_PTRTYPE, ctype); */
+  /* weed_get_string_value(attr, STRAND_INTROSPECTION_NATIVE_TYPE, ctype); */
+  /* weed_set_int64_value(attr, STRAND_INTROSPECTION_NATIVE_SIZE, size); */;
 }
 
 
 lives_obj_attr_t *mk_attr(const char *ctype, const char *name, size_t size, void *vptr, int ne) {
   lives_obj_attr_t *attr = lives_object_declare_attribute(NULL, name, WEED_SEED_VOIDPTR);
-  weed_set_string_value(attr, ELEM_INTROSPECTION_NATIVE_TYPE, ctype);
-  //weed_set_int_value(attr, ELEM_INTROSPECTION_PTRTYPE, ctypes_to_weed_seed(ctype));
-  weed_set_int64_value(attr, ELEM_INTROSPECTION_NATIVE_SIZE, size);
+  weed_set_string_value(attr, STRAND_INTROSPECTION_NATIVE_TYPE, ctype);
+  //weed_set_int_value(attr, STRAND_INTROSPECTION_PTRTYPE, ctypes_to_weed_seed(ctype));
+  weed_set_int64_value(attr, STRAND_INTROSPECTION_NATIVE_SIZE, size);
   lives_object_set_attr_value(NULL, attr, vptr);
   return attr;
 }

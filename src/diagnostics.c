@@ -357,8 +357,6 @@ void disinform_perfmgr(uint64_t handle, const char *dir) {
 
 /// TRASH area /////
 
-#ifdef WEED_STARTUP_TESTS
-
 #define NITERS 1024
 #define DTHRESH 8
 #define PMISS 0.99609375
@@ -432,7 +430,6 @@ void check_random(void) {
   }
 }
 
-#endif
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
@@ -1450,7 +1447,8 @@ int run_weed_startup_tests(void) {
     double time1, time2 = 0., dly = -1., tot1 = 0., totx = 0.;
     int rnds = 3;
     char *key;
-    int mm, count = 0, cval = 1000;
+    int count = 0, cval = 1000;
+    int mm = CYCLES;
 
     THREADVAR(timerinfo) = lives_get_current_ticks();
     for (int i = 1; i <= BPLANT_LEAVES; i++) {
@@ -1465,13 +1463,22 @@ int run_weed_startup_tests(void) {
     }
 
     g_print("done in %.2f sec\n", totx);
+
+    g_print("Find delay  to generate n random keys\n");
     show_timer_info();
+    for (int i = 0; i < mm; i++) {
+      int x = fastrand_int(BPLANT_LEAVES);
+      char *key = lives_strdup_printf("%d%d", x * 917, x % 13);
+      free(key);
+    }
+    dly = show_timer_info();
+    g_print("Delay is %.2f sec\n", dly);
+
     for (int vv = 0; vv < rnds; vv++) {
-      mm = CYCLES;
       g_print("test %d random reads\n", mm);
       for (int i = 0; i < mm; i++) {
         int z;
-        int x = fastrand_int(BPLANT_LEAVES);
+        int x = fastrand_int(BPLANT_LEAVES / 100);
         char *key = lives_strdup_printf("%d%d", x * 917, x % 13);
         z = weed_get_int_value(plant, key, &werr);
         if (werr == WEED_SUCCESS) {
@@ -1484,15 +1491,6 @@ int run_weed_startup_tests(void) {
       time1 = show_timer_info();
 
       g_print("done, subtracting time to make random leaves\n");
-
-      if (dly < 0.) {
-        for (int i = 0; i < mm; i++) {
-          int x = fastrand_int(BPLANT_LEAVES);
-          char *key = lives_strdup_printf("%d%d", x * 917, x % 13);
-          free(key);
-        }
-        dly = show_timer_info();
-      }
 
       time1 -= dly;
       tot1 += time1;
@@ -1818,43 +1816,26 @@ void md5test(void) {
 /// any diagnostic tests can be placed in this section - the functional will be called early in
 // startup. If abort_after is TRUE, then the function will abort() after completing all designatedd testing
 //////////////
-lives_result_t do_startup_diagnostics(boolean abort_after) {
+lives_result_t do_startup_diagnostics(uint64_t tests_to_run) {
   boolean ran_test = FALSE;
   lives_bundle_t *bundle;
+  
+  if (tests_to_run & TEST_WEED)
+    run_weed_startup_tests();
 
-#ifdef WEED_STARTUP_TESTS
-  run_weed_startup_tests();
-#if 0
-  fprintf(stderr, "\n\nRetesting with API 200, bugfix mode\n");
-  werr = libweed_init(200, winitopts | WEED_INIT_ALLBUGFIXES);
-  if (werr != WEED_SUCCESS) {
-    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
-    LIVES_FATAL("Failed to init Weed");
-    _exit(1);
-  }
-  run_weed_startup_tests();
-  fprintf(stderr, "\n\nRetesting with API 200, epecting problems in libweed-utils\n");
-  werr = libweed_init(200, winitopts);
-  if (werr != WEED_SUCCESS) {
-    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
-    LIVES_FATAL("Failed to init Weed");
-    _exit(1);
-  }
-  run_weed_startup_tests();
-#endif
-#endif
+  if (tests_to_run & TEST_RNG)
+    check_random();
 
-#ifdef ENABLE_DIAGNOSTICS
-  check_random();
-  lives_struct_test();
-  test_palette_conversions();
-#endif
+  if (tests_to_run & TEST_LSD)
+    lives_struct_test();
+  
+  if (tests_to_run & TEST_PAL_CONV)
+    test_palette_conversions();
 
-  init_bundles();
+  if (tests_to_run & TEST_BUNDLES)
+    init_bundles();
 
-  ran_test = TRUE;
-
-  if (ran_test && abort_after) abort();
+  if (tests_to_run & ABORT_AFTER) abort();
 
   return LIVES_RESULT_SUCCESS;
 }

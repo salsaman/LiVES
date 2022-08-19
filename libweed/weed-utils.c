@@ -171,7 +171,7 @@ int32_t weed_get_int_value(weed_plant_t *plant, const char *key, weed_error_t *e
 
 uint32_t weed_get_uint_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
   uint32_t retval = 0;
-  weed_error_t err = weed_value_get(plant, key, WEED_SEED_INT, &retval);
+  weed_error_t err = weed_value_get(plant, key, WEED_SEED_UINT, &retval);
   if (error) *error = err;
   return retval;
 }

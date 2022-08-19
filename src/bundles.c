@@ -10,16 +10,31 @@
 
 #include "bundles.h"
 
+typedef char *(*nscope_hdr_f)(int i);
+typedef boolean(*nscope_cond_f)(int i, int idx, void *data);
+typedef char *(*nscope_text_f)(int i, int idx, void *data, char **sep, char **fmt);
+typedef char *(*nscope_ftr_f)(int i);
+
+static char *nirvascope(int i, nscope_hdr_f head_func, nscope_cond_f cond_func, void *cdata,
+		       nscope_text_f text_func, void *tdata, nscope_ftr_f foot_func);
+static char *nirvascope_print_str_array(char **arr);
+
 #define N_BUNDLE_DEFS n_builtin_bundledefs
+static bundle_t *create_gen2_bundle_with_vargs(uint64_t btype, blueprint_t *, va_list vargs);
+
+static bundle_t *create_bundle_by_type(bundle_type bt, ...);
 
 static uint32_t weed_seed_to_strand_type(uint32_t st);
-static void lives_bundle_free(bundle_t *bundle);
+static void lives_bundle_free(bundle_t *);
 
 /////// gen 1 functions ////
-static boolean set_bundle_val_varg(bundle_t *bundle, const char *iname, uint32_t vtype,
+static boolean set_bundle_val_varg(bundle_t *, const char *iname, uint32_t vtype,
                                    uint32_t ne, int array_op, va_list vargs);
-static boolean set_bundle_val(bundle_t *bundle, const char *name, uint32_t vtype,
+static boolean set_bundle_val(bundle_t *, const char *name, uint32_t vtype,
                               uint32_t ne, int array_op, ...);
+
+static boolean lives_strand_is_comment(strand_def_t *);
+
 /////////////////////////////////
 
 static bundledef_t new_bdefs[N_BUNDLE_DEFS];
@@ -54,26 +69,42 @@ const bundle_t *init_bundles(void) {
   validate_bdefs();
 
   // the next step is to recteate all the bundle defs as "blueprints"
-  // step 1 is to create strand_desc bundles. We will use these to cteate the blueprint
+  // step 1 is to create strand_def bundles. We will use these to cteate the blueprint
   // for "blueprint"
 
   for (int i = 0; i < N_BUNDLE_DEFS; i++) blueprints[i] = NULL;
 
-  // since we dont yet have a blueprint for strand_desc, we will use the bundledefs to create
-  // the blueprint bundle and the strand_desc array for it.
-  // first strand_desc.
-  make_blueprint_for(STRAND_DESC_BUNDLE_TYPE);
-
-  // now we have a blueprint for strand_def, but it is not complete, we need a blueprint for
-  // blueprint
+  // since we dont yet have a blueprint for strand_def, we will use the bundledefs to create
+  // the blueprint bundle and the strand_def array for it.
+  make_blueprint_for(STRAND_DEF_BUNDLE_TYPE);
+  make_blueprint_for(DEF_BUNDLE_TYPE);
+  make_blueprint_for(STRAND_DEF_BUNDLE_TYPE);
+  make_blueprint_for(BLUEPRINT_BUNDLE_TYPE);
+  make_blueprint_for(DEF_BUNDLE_TYPE);
+  make_blueprint_for(STRAND_DEF_BUNDLE_TYPE);
   make_blueprint_for(BLUEPRINT_BUNDLE_TYPE);
 
-  // now we can use blueprint's blueprint to recreate the blueprint for strand_desc
-  make_blueprint_for(STRAND_DESC_BUNDLE_TYPE);
+  // now we have blueprints for strand_def and scriptlet,
+  // created with strand defs created from blueprints,
+  // we will now creatre all blueprints, including remaking the ones we just made
 
-  // we could keep on going, but that is enough. Now we can create blueprints for the remaining
-  // standard bundles
-  for (int i = 0; i < N_BUNDLE_DEFS; i++) make_blueprint_for(i);
+  // create blueprints for all standard bundles
+  for (int i = 0; i < N_BUNDLE_DEFS; i++) {
+    make_blueprint_for(i);
+  }
+
+  for (int i = 0; i < N_BUNDLE_DEFS; i++) {
+    make_blueprint_for(i);
+    g_print("\n%s\nn", nirvascope_bundle_to_header(blueprints[i], "", 0));
+  }
+
+  for (int i = 0; i < N_BUNDLE_DEFS; i++) {
+    bundle_t *b = create_bundle_by_type(i, NULL);
+    g_print("\n\ncreated bundle type %d\n", i);
+    g_print("%s\n", nirvascope_bundle_to_header(b, NULL, 0));
+    g_print("bsize == %lu\n", nirvascope_get_bundle_weight(b));
+    lives_bundle_free(b);
+  }
 
   // now we have prepared the way,
   // what we need do now is locate structure_prime,
@@ -101,15 +132,15 @@ LIVES_GLOBAL_INLINE char *get_short_name(const char *q) {
     char *z;
     if (*p != '.') {
       //g_print("NOW %s\n", p);
-      if ((p = lives_str_starts_with_skip(q, "STRAND_"))) {
+      if ((p = (char *)lives_str_starts_with_skip(q, "STRAND_"))) {
         //g_print("parse %s\n", p);
         for (; *p && *p != '_'; p++);
-      } else if ((p = lives_str_starts_with_skip(q, "CONST_"))) {
+      } else if ((p = (char *)lives_str_starts_with_skip(q, "CONST_"))) {
         //g_print("parse2 %s\n", p);
         for (; *p && *p != '_'; p++);
-      } else if ((p = lives_str_starts_with_skip(q, "BUNDLE_"))) for (; *p && *p != '_'; p++);
-      else if ((p = lives_str_starts_with_skip(q, "ATTR_"))) for (; *p && *p != '_'; p++);
-      if (!p) p = q;
+      } else if ((p = (char *)lives_str_starts_with_skip(q, "BUNDLE_"))) for (; *p && *p != '_'; p++);
+      else if ((p = (char *)lives_str_starts_with_skip(q, "ATTR_"))) for (; *p && *p != '_'; p++);
+      if (!p) p = (char *)q;
       if (p != q && *p) p++;
       if (*p) {
         //g_print("NOW3 %s\n", p);
@@ -134,8 +165,8 @@ LIVES_GLOBAL_INLINE char *get_short_name(const char *q) {
 // these functions are for stage 1 bootstrap. Once bundledefs are remade as BLUEPRINTS
 // then we move to gen 2
 
-const_bundledef_t get_bundledef(bundle_type btype) {
-  return maker_get_bundledef(btype);
+const bundledef_t get_bundledef(bundle_type btype) {
+  return (const bundledef_t)maker_get_bundledef(btype);
 }
 
 
@@ -184,6 +215,7 @@ static uint64_t get_vflags(const char *q, off_t *offx, int *ii, bundledef_t bdef
   if (ii)(*ii)++;
   return vflags;
 }
+
 
 uint32_t get_vtype(const char *q, off_t *offx) {
   off_t op = 0;
@@ -262,7 +294,7 @@ static uint32_t get_bundle_strand_type(bundle_t *bundle, const char *name) {
 }
 
 
-static boolean set_def_value(bundle_t *bundle, const char *overrd_name, \
+static boolean set_def_value_gen1(bundle_t *bundle, const char *overrd_name, \
                              bundle_strand strand, bundle_strand strand2) {
   const char *vname;
   char *sname;
@@ -336,13 +368,12 @@ static bundledef_t get_obj_bundledef(uint64_t otype, uint64_t osubtype) {
 }
 
 
-#define DEBUG_BUNDLES 1
 static bundledef_t validate_bdef(bundledef_t bdef) {
   // check bundledefs to make sure they contain only valid elements
   // any duplicate item names are removed. If we have an optional version and mandatory then
   // we retain the mandatory one
   // we are going do this TWICE. The first time we will validate all
-  // then the second time we recreate the bundledefs as attr_desc containers
+  // then the second time we recreate the bundledefs as attr_def containers
   bundledef_t newq = NULL;
   bundle_strand stranda;
   boolean err = FALSE;
@@ -443,29 +474,29 @@ static bundledef_t validate_bdef(bundledef_t bdef) {
       lives_free(snamea);
       continue;
     } else {
-      strandb2 = newq[++j];
+      strandb2 = newq[j];
       //
       if (lives_strcmp(vnamea, vnameb)) {
         // dupl from2 domains
-#if DEBUG_BUNDLES
+	//#if DEBUG_BUNDLES
         g_print("Duplicate items found: %s and %s cannot co-exist in same bundledef !\n",
                 vnamea, vnameb);
-#endif
+	//#endif
         err = TRUE;
       } else {
-#if DEBUG_BUNDLES
+	//#if DEBUG_BUNDLES
         g_print("Duplicate item found for %s [%s]\n", snamea, vnamea);
-#endif
+	//#endif
         if (vtypea != vtypeb) {
-#if DEBUG_BUNDLES
+	  //#if DEBUG_BUNDLES
           g_print("ERROR: types do not match, we had %d and now we have %d\n",
                   vtypeb, vtypea);
-#endif
+	  //#endif
           err = TRUE;
         } else {
           if (lives_strcmp(stranda2, strandb2)) {
             g_print("Mismatch in strand2: we had %s and now we have %s\n",
-                    strandb2, stranda2);
+                    stranda2, strandb2);
             err = TRUE;
           } else {
             g_print("This is normal due to the extendable nature of bundles\n");
@@ -479,9 +510,9 @@ static bundledef_t validate_bdef(bundledef_t bdef) {
               g_print("Ignoring duplicate\n");
 	      // *INDENT-OFF*
 	    }}}}}
+    // *INDENT-ON*
     lives_free(snameb);
   }
-  // *INDENT-ON*
   if (err) {
     g_print("ERRORS found in bundledef - INVALID - please correct its definition\n");
     if (newq) {
@@ -506,88 +537,22 @@ static void validate_bdefs(void) {
     char *name;
     bundledef_t bdef = new_bdefs[i];
     bundle_t *bundle;
-    g_print("\n\n\nbundledef number %d is:\n", i);
-    name = lives_strdup_printf("NIRVA_%s", bdef[0] + 1);
-    bundle = create_gen1_bundle_by_type(i, NULL);
-    g_print("%s", nirvascope_bundle_to_header(bundle, name));
-    lives_free(name);
-  }
-}
-
-
-/* static lives_objstore_t *add_to_bdef_store(uint64_t fixed, lives_obj_t *bstore) { */
-/*   // if intent == REPLACE replace existing entry, otherwise do not add if already there */
-/*   if (!bdef_store) bdef_store = lives_hash_store_new("flat_bundledef store"); */
-/*   else if (get_from_hash_store_i(bdef_store, fixed)) return bdef_store; */
-/*   return add_to_hash_store_i(bdef_store, fixed, (void *)bstore); */
-/* } */
-
-static boolean bundledef_has_item(bundledef_t bundledef,
-                                  const char *item, boolean exact) {
-  if (bundledef_get_item_idx(bundledef, item, exact) >= 0) return TRUE;
-  return FALSE;
-}
-
-
-static boolean add_item_to_bundle(bundle_type btype, bundledef_t bundledef,
-                                  boolean base_only, bundle_t *bundle,
-                                  const char *item, boolean add_value) {
-  // check if ITEM is in bundledef, if so && add_value: add it to bundle, if not already there
-  // if exact then match by full name, else by short name
-  bundle_strand strand, strand2;
-  //off_t offx;
-  //const char *vname;
-  char *sname = NULL, *sname2 = NULL, *etext = NULL;
-  boolean err = FALSE;
-  int idx = bundledef_get_item_idx(bundledef, item, FALSE);
-
-  //is_std_item(item);
-  //g_print("ADD ITEM %s, idx %d\n", item, idx);
-
-  if (idx < 0) {
-    etext = lives_strdup_concat(etext, "\n", "%s is not a base element.", item);
-    err = TRUE;
-    goto endit;
-  }
-
-  if (!(strand2 = bundledef[idx + 1])) {
-    etext = lives_strdup_concat(etext, "\n",
-                                "strand2 for %s not found in bundledef !", bundledef[--idx]);
-    err = TRUE;
-    goto endit;
-  }
-
-  if (!bundle_has_item(bundle, item)) {
-    //g_print("ITEM %s not found in bundle\n", item);
-    strand = bundledef[idx];
-    if (add_value) {
-      //g_print("SETTING to default\n");
-      err = set_def_value(bundle, NULL, strand, strand2);
-      if (err) goto endit;
+    //g_print("\n\n\nbundledef number %d is:\n", i);
+    if (bdef) {
+      // check we can create and free all types
+      //name = lives_strdup_printf("NIRVA_%s", bdef[0] + 1);
+      bundle = create_bundle_by_type(i, NULL);
+      //g_print("%s", nirvascope_bundle_to_header(bundle, name, 0));
+      //lives_free(name);
+      lives_bundle_free(bundle);
     }
   }
-endit:
-  if (err) {
-    if (etext) {
-#if DEBUG_BUNDLES
-      g_printerr("\nERROR: %s\n", etext);
-#endif
-      lives_free(etext);
-    }
-  }
-  if (sname) lives_free(sname);
-  if (sname2) lives_free(sname2);
-  return err;
 }
 
 
-static bundle_t *create_gen1_bundle_with_vargs(bundledef_t bundledef, va_list vargs) {
+static bundle_t *create_gen1_bundle_with_vargs(uint64_t bt, bundledef_t bundledef, va_list vargs) {
   bundle_t *bundle = weed_plant_new(LIVES_PLANT_BUNDLE);
   if (bundle) {
-    // it the latest iteration, we are handed a "blueprint", a static bundle with
-    // an array of strand_desc. We use this to construct any type of bundle
-    // for custom bundles we may attach the bluprint as an array in the bundle
-    // for standard bundles we just add a
     boolean err = FALSE;
     bundle_strand strand;
     const char *vname;
@@ -595,17 +560,6 @@ static bundle_t *create_gen1_bundle_with_vargs(bundledef_t bundledef, va_list va
     off_t offx;
     uint64_t vflags;
     uint32_t vtype;
-
-    // step 0, add default optional things
-    /* if (bundledef_has_item(bundledef, STRAND_INTROSPECTION_BLUEPRINT_PTR, TRUE)) { */
-    /*   err = add_item_to_bundle(0, bundledef, TRUE, bundle, STRAND_INTROSPECTION_BLUEPRINT_PTR, */
-    /* 			       FALSE); */
-    /* } */
-
-    /* if (bundledef_has_item(bundledef, STRAND_GENERIC_UID, TRUE)) { */
-    /*   set_bundle_value(bundle, STRAND_GENERIC_UID, STRAND_TYPE_UINT64, 1, FALSE, gen_unique_id()); */
-    /*   err = add_item_to_bundle(0, bundledef, TRUE, bundle, STRAND_GENERIC_UID, FALSE); */
-    /* } */
 
     if (!err) {
       // step 1, go through params
@@ -619,10 +573,10 @@ static bundle_t *create_gen1_bundle_with_vargs(bundledef_t bundledef, va_list va
           iname = va_arg(vargs, char *);
           if (!iname) break; // done parsing params
           //g_print("WILL add %s\n",iname);
-          if (!strcmp(iname, "type")) break_me("typ");
-          idx = bundledef_get_item_idx(bundledef, iname, FALSE);
-          if (idx < 0) {
 
+          idx = bundledef_get_item_idx(bundledef, iname, FALSE);
+
+          if (idx < 0) {
             err_item = iname;
             err = TRUE;
             break;
@@ -635,10 +589,18 @@ static bundle_t *create_gen1_bundle_with_vargs(bundledef_t bundledef, va_list va
             break;
           }
           vtype = get_vtype(strand, &offx);
-          lives_set_strand_value(bundle, iname, vtype, vargs);
+	  //// we need to handle a few items manually here since we have not yet reached
+	  // full automation
+	  if (bt == STRAND_DEF_BUNDLE_TYPE) {
+	    if (!lives_strcmp(iname, "default")) {
+	      vtype = lives_strand_get_value_uint32(bundle, "strand_type");
+	    }
+	  }
+	  lives_set_strand_value_gen1(bundle, iname, vtype, vargs);
         }
         if (err) {
           g_printerr("ERROR adding item '%s' to bundle, invalid item name\n", err_item);
+	  break_me("invname 1");
           err = FALSE;
         }
       }
@@ -649,16 +611,17 @@ static bundle_t *create_gen1_bundle_with_vargs(bundledef_t bundledef, va_list va
           vflags = get_vflags(strand, &offx, &i, bundledef);
           if (offx < 0) continue;
           vtype = get_vtype(strand, &offx);
-          if (vtype == STRAND_TYPE_NONE) continue;
+          //if (vtype == STRAND_TYPE_NONE) continue;
           vname = get_vname(strand + offx);
           //g_print("DO WE need defs for %s ?\n", vname);
           sname = get_short_name(vname);
           if (!(vflags & STRAND_TYPE_FLAG_OPTIONAL)) {
             //g_print("%s is mando\n", sname);
-            if (!bundle_has_item(bundle, sname)) {
+            if (!bundle_has_strand(bundle, sname)) {
               //g_print("%s is absent\n", sname);
-              err = add_item_to_bundle(0, bundledef, TRUE, bundle, vname,
-                                       TRUE);
+	      //g_print("SETTING to default\n");
+	      err = set_def_value_gen1(bundle, NULL, strand, bundledef[i]);
+	      if (err) goto endit;
             }
           }
           if (sname) {
@@ -668,6 +631,244 @@ static bundle_t *create_gen1_bundle_with_vargs(bundledef_t bundledef, va_list va
           if (err) break;
 	  // *INDENT-OFF*
 	}}}
+    // *INDENT-ON*
+  endit:
+    if (err) {
+#if DEBUG_BUNDLES
+      g_printerr("\nERROR: adding item to bundle\n");
+#endif
+      lives_bundle_free(bundle);
+      bundle = NULL;
+    } else {
+      // reverse the leaves
+      return weed_plant_copy(bundle);
+    }
+  }
+  return NULL;
+}
+
+//////////////////////////////////
+
+
+void bundle_strand_copy(bundle_t *bundle, const char *shname, bundle_t *stdef,
+			const char *defname) {
+  weed_leaf_copy(bundle, shname, stdef, defname);
+}
+
+
+uint64_t stdef_get_flags(strand_def_t *stdef) {
+  return lives_strand_get_value_uint64(stdef, "flags");
+}
+
+uint32_t stdef_get_type(strand_def_t *stdef) {
+  return lives_strand_get_value_uint32(stdef, "strand_type");
+}
+
+char *stdef_get_comment(strand_def_t *stdef) {
+  if (lives_strand_is_comment(stdef))
+    return lives_strand_get_value_string(stdef, "default");
+  return NULL;
+}
+
+boolean lives_strand_is_directive(strand_def_t *stdef) {
+  return !!(stdef_get_flags(stdef) & BLUEPRINT_FLAG_DIRECTIVE);
+}
+
+static boolean lives_strand_is_comment(strand_def_t *stdef) {
+  return !!(stdef_get_flags(stdef) & BLUEPRINT_FLAG_COMMENT);
+}
+
+boolean lives_strand_is_value(strand_def_t *stdef) {
+  return !(stdef_get_flags(stdef) & (BLUEPRINT_FLAG_COMMENT | BLUEPRINT_FLAG_DIRECTIVE));
+}
+
+boolean lives_strand_is_optional(strand_def_t *stdef) {
+  return !!(stdef_get_flags(stdef) & BLUEPRINT_FLAG_OPTIONAL);
+}
+
+boolean lives_strand_is_readonly(strand_def_t *stdef) {
+  return !!(stdef_get_flags(stdef) & BLUEPRINT_FLAG_READONLY);
+}
+
+boolean lives_strand_is_array(strand_def_t *stdef) {
+  return !!(stdef_get_flags(stdef) & BLUEPRINT_FLAG_ARRAY);
+}
+
+boolean lives_strand_is_pointer_to(strand_def_t *stdef) {
+  return !!(stdef_get_flags(stdef) & (BLUEPRINT_FLAG_PTR_TO_SCALAR
+					| BLUEPRINT_FLAG_PTR_TO_ARRAY));
+}
+
+boolean lives_strands_exclude(strand_def_t *stdef, const char *oname) {
+  return FALSE;
+}
+
+boolean lives_strand_excluded_by(strand_def_t *stdef) {
+  return FALSE;
+}
+
+boolean lives_strand_is_pointer_to_array(strand_def_t *stdef) {
+  return !!(stdef_get_flags(stdef) & (BLUEPRINT_FLAG_PTR_TO_ARRAY));
+}
+
+boolean is_value_strand(strand_def_t *stdef) {
+  return (!(lives_strand_is_comment(stdef)) && !lives_strand_is_directive(stdef));
+}
+
+char *stdef_get_name(strand_def_t *stdef) {
+  return lives_strand_get_value_string(stdef, "name");
+}
+
+strand_t *lives_blueprint_get_strand(blueprint_t *bp, const char *name) {
+  return NULL;
+}
+
+
+strand_def_t *get_strand_def(blueprint_t *bp, const char *name) {
+  int ns;
+  strand_def_t **sds = weed_get_plantptr_array_counted(bp, ".strand_def", &ns);
+  strand_def_t *stdef = NULL;
+  char *sname1 = get_short_name(name), *sname2, *xname;
+  for (weed_size_t i = 0; i < ns; i++) {
+    if (!sds[i]) continue;
+    if (!is_value_strand(sds[i])) continue;
+    xname = stdef_get_name(sds[i]);
+    sname2 = get_short_name(xname);
+    if (!lives_strcmp(sname2, sname1)) {
+      stdef = sds[i];
+      break;
+    }
+    lives_free(xname); lives_free(sname2);
+  }
+  if (sds) lives_free(sds);
+  lives_free(sname1);
+  return stdef;
+}
+
+
+const blueprint_t *get_blueprint_for_btype(bundle_type btype) {
+  if (btype >= 0 && btype < n_builtin_bundledefs) return blueprints[btype];
+  return NULL;
+}
+
+
+blueprint_t *get_blueprint_from_bundle(bundle_t *b) {
+  return (blueprint_t *)
+    lives_strand_get_value_const_bundleptr(b, STRAND_INTROSPECTION_BLUEPRINT_PTR);
+}
+
+
+strand_def_t *get_mand_strand_def(blueprint_t *bp, int idx) {
+  int ns, i;
+  strand_def_t **sds = weed_get_plantptr_array_counted(bp, ".strand_def", &ns), *stdef = NULL;
+  for (i = 0; i < ns; i++) {
+    stdef = sds[i];
+    if (!lives_strand_is_value(stdef) || lives_strand_is_optional(stdef)) continue;
+    if (!(idx--)) break;
+  }
+  if (sds) lives_free(sds);
+  if (i < ns) return stdef;
+  return NULL;
+}
+
+
+void load_hook_automations(blueprint_t *bp, bundle_t *b) {
+
+
+}
+
+
+static boolean blueprint_has_strand(blueprint_t *bp, const char *sname, boolean exact) {
+  return TRUE;
+}
+
+// create a bundle, using a blueprint instead of a bdef
+// there are two ways this can be done - with a static blueprint - we add a pointer in blueprint_ptr
+// or with a custom blueprinte, we store this in bluprint strand and add ptrs in strand_def to strands
+static bundle_t *create_gen2_bundle_with_vargs(uint64_t btype, blueprint_t *blueprint, va_list vargs) {
+  bundle_t *bundle = weed_plant_new(LIVES_PLANT_BUNDLE);
+  if (bundle) {
+    boolean err = FALSE;
+    strand_def_t *stdef;
+    const char *stname;
+    char *shname;
+    char *defname = get_short_name(STRAND_VALUE_DEFAULT);
+    uint64_t stflags;
+    uint32_t vtype;
+
+    stdef = get_strand_def(blueprint, STRAND_GENERIC_UID);
+    if (stdef) {
+      vtype = stdef_get_type(stdef);
+      set_bundle_val(bundle, STRAND_GENERIC_UID, vtype, 1, 0, gen_unique_id());
+    }
+
+    stdef = get_strand_def(blueprint, STRAND_BLUEPRINT_BUNDLE_TYPE);
+    if (stdef) {
+      vtype = stdef_get_type(stdef);
+      set_bundle_val(bundle, STRAND_BLUEPRINT_BUNDLE_TYPE, vtype, 1, 0, btype);
+    }
+
+    stdef = get_strand_def(blueprint, STRAND_INTROSPECTION_BLUEPRINT_PTR);
+    if (stdef) {
+      vtype = stdef_get_type(stdef);
+      set_bundle_val(bundle, STRAND_INTROSPECTION_BLUEPRINT_PTR, vtype, 1, 0, blueprint);
+    }
+
+    if (!err) {
+      // step 1, go through params
+      if (vargs) {
+        const char *err_item = NULL;
+        while (1) {
+          // caller should provide vargs, list of optional items to be initialized
+          stname = va_arg(vargs, char *);
+          if (!stname) break; // done parsing params
+          //g_print("2WILL add %s\n",stname);
+	  //g_print("ptr stname is %p\n", stname);
+	  stdef = get_strand_def(blueprint, stname);
+	  if (!lives_strand_is_value(stdef)) {
+	    if (!stdef) {
+	      // this is possible if adding a comment or directive
+	      err_item = stname;
+	      err = TRUE;
+	      break;
+	    }
+	  }
+	  vtype = stdef_get_type(stdef);
+	  lives_set_strand_value_gen1(bundle, stname, vtype, vargs);
+	}
+        if (err) {
+          g_printerr("2ERROR adding item '%s' to bundle, invalid item name\n", err_item);
+          err = FALSE;
+        }
+      }
+      if (!err) {
+        // add any missing mandos
+	// TODO -check for EXCLUSIVE
+        for (int i = 0; (stdef = get_mand_strand_def(blueprint, i)); i++) {
+          uint32_t sttype = stdef_get_type(stdef);
+          stflags = stdef_get_flags(stdef);
+          //if (sttype == STRAND_TYPE_NONE) continue;
+          stname = stdef_get_name(stdef);
+          //g_print("DO WE need defs for %s ?\n", stname);
+          shname = get_short_name(stname);
+	  if (!bundle_has_strand(bundle, shname)) {
+	    //load_automation_for(blueprint, bundle, stname);
+	    if (sttype != STRAND_TYPE_NONE) {
+	      //g_print("%s is mando\n", shname);
+              //g_print("%s is absent\n", shname);
+	      if (bundle_has_strand(stdef, defname))
+		bundle_strand_copy(bundle, shname, stdef, defname);
+            }
+          }
+          if (shname) {
+            lives_free(shname);
+            shname = NULL;
+          }
+          if (err) break;
+	  // *INDENT-OFF*
+	}
+	//if (!err) load_hook_automations(blueprint, bundle);
+      }}
     // *INDENT-ON*
     if (err) {
 #if DEBUG_BUNDLES
@@ -684,21 +885,25 @@ static bundle_t *create_gen1_bundle_with_vargs(bundledef_t bundledef, va_list va
 }
 
 
-LIVES_SENTINEL bundle_t *create_gen1_bundle_by_type(bundle_type btype, ...) {
-  const_bundledef_t cbundledef;
-  bundle_t *bundle;
-  va_list xargs;
-  if (btype >= 0 || btype < n_builtin_bundledefs) {
-    cbundledef = (const_bundledef_t)get_bundledef(btype);
-  } else return NULL;
-  va_start(xargs, btype);
-  //if (0 && blueprints[btype]) bundle = create_gen2_bundle_with_vargs(blueprints[btype], xargs);
-  bundle = create_gen1_bundle_with_vargs((bundledef_t)cbundledef, xargs);
-  va_end(xargs);
-  return bundle;
+LIVES_SENTINEL bundle_t *create_bundle_by_type(bundle_type bt, ...) {
+bundle_t *bun = NULL;
+if (bt >= 0 && bt < n_builtin_bundledefs) {
+    va_list vargs;
+    const blueprint_t *bp = blueprints[bt];
+    va_start(vargs, bt);
+    if (bp) bun = create_gen2_bundle_with_vargs((uint64_t)bt, (blueprint_t *)bp, vargs);
+    else {
+      const_bundledef_t cbundledef = (const_bundledef_t)get_bundledef(bt);
+      if (cbundledef) bun = create_gen1_bundle_with_vargs((uint64_t)bt, (bundledef_t)cbundledef, vargs);
+    }
+    va_end(vargs);
+  }
+  return bun;
 }
 
-//////////////////////////////////
+
+////////////////////
+
 
 uint32_t weed_seed_to_attr_type(uint32_t st) {
   switch (st) {
@@ -755,7 +960,7 @@ uint32_t strand_type_to_weed_seed(uint32_t st) {
 }
 
 
-boolean set_bundle_value(bundle_t *bundle, const char *name, ...) {
+boolean set_bundle_value_gen1(bundle_t *bundle, const char *name, ...) {
   uint32_t vtype = get_bundle_strand_type(bundle, name);
   va_list varg;
   char *sname = get_short_name(name);
@@ -766,9 +971,22 @@ boolean set_bundle_value(bundle_t *bundle, const char *name, ...) {
 #endif
   } else {
     va_start(varg, name);
-    lives_set_strand_value(bundle, name, vtype, varg);
+    lives_set_strand_value_gen1(bundle, name, vtype, varg);
     va_end(varg);
   }
+  lives_free(sname);
+  return bval;
+}
+
+
+boolean set_bundle_value(bundle_t *bundle, const char *name, ...) {
+  blueprint_t *bp = get_blueprint_from_bundle(bundle);
+  va_list varg;
+  char *sname = get_short_name(name);
+  boolean bval = FALSE;
+  va_start(varg, name);
+  lives_set_strand_value_gen2(bundle, name, varg);
+  va_end(varg);
   lives_free(sname);
   return bval;
 }
@@ -780,17 +998,12 @@ static boolean set_bundle_values(bundle_t *bundle, ...) {
   boolean bval;
   va_start(vargs, bundle);
   while (1) {
-    va_list xargs;
     uint32_t vtype;
     name = va_arg(vargs, char *);
     if (!name) break;
     sname = get_short_name(name);
-    va_copy(xargs, vargs);
     vtype = get_bundle_strand_type(bundle, name);
-    bval = set_bundle_val_varg(bundle, name, vtype, 1, 0, xargs);
-    va_end(vargs);
-    va_copy(vargs, xargs);
-    va_end(xargs);
+    bval = set_bundle_val_varg(bundle, name, vtype, 1, 0, vargs);
     lives_free(sname);
     if (bval) break;
   }
@@ -829,8 +1042,11 @@ static boolean set_bundle_val_varg(bundle_t *bundle, const char *iname, uint32_t
   // INT, UINT, DOUBLE, FLOAT, BOOLEAN, STRING, CHAR, INT64, UINT64
   // VOIDPTR, BUNDLEPTR or FUNCPTR
 
+  //g_print("VTYPE is %d\n", vtype);
+  
   char *etext = NULL, *xiname = lives_strdup(".");
   boolean err = FALSE;
+  weed_error_t werr;
   xiname = get_short_name(iname);
   if (!vargs) {
     etext = lives_strdup_concat(etext, "\n", "missing value setting item %s [%s] in bundle.",
@@ -850,10 +1066,16 @@ static boolean set_bundle_val_varg(bundle_t *bundle, const char *iname, uint32_t
       break;
       case (STRAND_TYPE_UINT): {
         uint val = va_arg(vargs, uint);
-        if (array_op == 2)
-          weed_ext_append_elements(bundle, xiname, stype, 1, &val);
-        else
-          weed_set_uint_value(bundle, xiname, val);
+        if (array_op == 2) {
+          werr = weed_ext_append_elements(bundle, xiname, stype, 1, &val);
+	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+	    weed_ext_append_elements(bundle, xiname, WEED_SEED_INT, 1, &val);
+	}
+        else {
+          werr = weed_set_uint_value(bundle, xiname, val);
+	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+	    weed_set_int_value(bundle, xiname, val);
+	}
       }
       break;
       case STRAND_TYPE_BOOLEAN: {
@@ -888,15 +1110,34 @@ static boolean set_bundle_val_varg(bundle_t *bundle, const char *iname, uint32_t
           weed_set_int64_value(bundle, xiname, val);
       }
       break;
-      case STRAND_TYPE_UINT64: {
+      case (STRAND_TYPE_UINT64): {
         uint64_t val = va_arg(vargs, uint64_t);
-        if (array_op == 2)
-          weed_ext_append_elements(bundle, xiname, stype, 1, &val);
-        else
-          weed_set_uint64_value(bundle, xiname, (uint64_t)val);
+        if (array_op == 2) {
+          werr = weed_ext_append_elements(bundle, xiname, stype, 1, &val);
+	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+	    weed_ext_append_elements(bundle, xiname, WEED_SEED_INT64, 1, &val);
+	}
+        else {
+          werr = weed_set_uint64_value(bundle, xiname, val);
+	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+	    weed_set_int64_value(bundle, xiname, val);
+	}
       }
       break;
-      case STRAND_TYPE_CONST_BUNDLEPTR:
+      case STRAND_TYPE_CONST_BUNDLEPTR: {
+        void *val = va_arg(vargs, void *);
+        if (array_op == 2) {
+          werr = weed_ext_append_elements(bundle, xiname, WEED_SEED_VOIDPTR, 1, &val);
+	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+	    weed_ext_append_elements(bundle, xiname, WEED_SEED_PLANTPTR, 1, &val);
+	}
+        else {
+          werr = weed_set_voidptr_value(bundle, xiname, val);
+	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+	    weed_set_plantptr_value(bundle, xiname, val);
+	}
+      }
+	break;
       case STRAND_TYPE_BUNDLEPTR: {
         weed_plant_t *val = va_arg(vargs, weed_plant_t *);
         if (array_op == 2)
@@ -938,10 +1179,16 @@ static boolean set_bundle_val_varg(bundle_t *bundle, const char *iname, uint32_t
       break;
       case STRAND_TYPE_UINT: {
         uint32_t *val = va_arg(vargs, uint32_t *);
-        if (array_op == 2)
-          weed_ext_append_elements(bundle, xiname, stype, ne, val);
-        else
-          weed_set_uint_array(bundle, xiname, ne, val);
+        if (array_op == 2) {
+          werr = weed_ext_append_elements(bundle, xiname, stype, ne, val);
+	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+	    weed_ext_append_elements(bundle, xiname, WEED_SEED_INT, ne, val);
+	}
+        else {
+          werr = weed_set_uint_array(bundle, xiname, ne, val);
+	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+	    weed_set_int_array(bundle, xiname, ne, (int *)val);
+	}
       }
       break;
       case STRAND_TYPE_BOOLEAN: {
@@ -986,13 +1233,32 @@ static boolean set_bundle_val_varg(bundle_t *bundle, const char *iname, uint32_t
       break;
       case STRAND_TYPE_UINT64: {
         uint64_t *val = va_arg(vargs, uint64_t *);
-        if (array_op == 2)
-          weed_ext_append_elements(bundle, xiname, stype, ne, val);
-        else
-          weed_set_uint64_array(bundle, xiname, ne, val);
+        if (array_op == 2) {
+          werr = weed_ext_append_elements(bundle, xiname, stype, ne, val);
+	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+	    weed_ext_append_elements(bundle, xiname, WEED_SEED_INT64, ne, val);
+	}
+        else {
+          werr = weed_set_uint64_array(bundle, xiname, ne, val);
+	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+	    weed_set_int64_array(bundle, xiname, ne, (int64_t *)val);
+	}
       }
       break;
-      case STRAND_TYPE_CONST_BUNDLEPTR:
+      case STRAND_TYPE_CONST_BUNDLEPTR: {
+        void **val = va_arg(vargs, void **);
+        if (array_op == 2) {
+          werr = weed_ext_append_elements(bundle, xiname, WEED_SEED_VOIDPTR, ne, val);
+	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+	    weed_ext_append_elements(bundle, xiname, WEED_SEED_PLANTPTR, ne, val);
+	}
+        else {
+          werr = weed_set_voidptr_array(bundle, xiname, ne, val);
+	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+	    weed_set_plantptr_array(bundle, xiname, ne, (weed_plant_t **)val);
+	}
+      }
+	break;
       case STRAND_TYPE_BUNDLEPTR: {
         weed_plant_t **val = va_arg(vargs, weed_plant_t **);
         if (array_op == 2)
@@ -1067,8 +1333,35 @@ size_t lives_strand_array_append(bundle_t *bundle, const char *name, uint32_t vt
 }
 
 
-void lives_set_strand_value(bundle_t *bundle, const char *name, uint32_t vtype, va_list val) {
+void lives_set_strand_value_gen1(bundle_t *bundle, const char *name, uint32_t vtype, va_list val) {
   set_bundle_val_varg(bundle, name, vtype, 1, 0, val);
+}
+
+
+void lives_set_strand_value_gen2(bundle_t *bundle, const char *name, va_list val) {
+  blueprint_t *blueprint = get_blueprint_from_bundle(bundle);
+  strand_def_t *stdef = get_strand_def(blueprint, name);
+  uint32_t vtype = stdef_get_type(stdef);
+  set_bundle_val_varg(bundle, name, vtype, 1, 0, val);
+}
+
+
+void lives_strand_include_sub_bundles(bundle_t *bundle, const char *name, int ns, bundle_t **subs) {
+  set_bundle_val(bundle, name, STRAND_TYPE_BUNDLEPTR, ns, 1, subs);
+  for (int i = 0; i < ns; i++)
+    set_bundle_val(subs[i], "container", STRAND_TYPE_VOIDPTR, 1, 0, bundle);
+  // TODO - check for automation migration. if bundle has hook_stacks,
+  // - recursively parse sub bundles. If we find a strand_def, then any hook automations shall
+  // be added the hook stacks at this level
+}
+
+
+void lives_strand_include_sub_bundle(bundle_t *bundle, const char *name, bundle_t *sub) {
+  set_bundle_val(bundle, name, STRAND_TYPE_BUNDLEPTR, 1, 0, sub);
+  set_bundle_val(sub, "container", STRAND_TYPE_VOIDPTR, 1, 0, bundle);
+  // TODO - check for automation migration. if bundle has hook_stacks,
+  // - recursively parse sub bundles. If we find a strand_def, then any hook automations shall
+  // be added the hook stacks at this level
 }
 
 
@@ -1099,8 +1392,8 @@ static void lives_bundle_free(bundle_t *bundle) {
 }
 
 
-boolean bundle_has_item(bundle_t *bundle, const char *item) {
-  char *sname = get_short_name(item);
+boolean bundle_has_strand(bundle_t *bundle, const char *iname) {
+  char *sname = get_short_name(iname);
   boolean bval;
   bval = weed_plant_has_leaf(bundle, sname);
   lives_free(sname);
@@ -1110,18 +1403,17 @@ boolean bundle_has_item(bundle_t *bundle, const char *item) {
 
 static boolean is_std_item(const char *item) {
   const char *ename;
-  for (int i = 0; (ename = all_strands[i++]); g_print("NOW: %s", ename));
+  for (int i = 0; (ename = all_def_strands[i++]); g_print("NOW: %s", ename));
   return TRUE;
 }
 
 
 bundle_t *create_object_bundle(uint64_t otype, uint64_t subtype) {
-  bundledef_t bundledef;
   bundle_t *bundle;
 
   // we ought to create the template first then use it to create instance,
   //but for now we will just create the instance directly
-  bundle = create_gen1_bundle_by_type(OBJECT_INSTANCE_BUNDLE_TYPE, "type", otype, "subtype", subtype, NULL);
+  bundle = create_bundle_by_type(OBJECT_INSTANCE_BUNDLE_TYPE, "type", otype, "subtype", subtype, NULL);
 
   // after this, we need to create contracts for the object
   // - (1) call get_contracts on a contract template with "create instance" intent
@@ -1139,16 +1431,19 @@ static void make_blueprint_for(bundle_type btype) {
   // create a blueprint for whatever bundle type from a bundledef
   // first time through we will not have blueprints for blueprint of strand_def
   // so we create from bdef
-  // after 1 pass we have blueprint for strand_desc, so we can create those from the blueprint
+  // after 1 pass we have blueprint for strand_def, so we can create those from the blueprint
   // we then create a blueprint for blueprint using strand_defs from blueprint
-  // we can now create blueprints and strand_desc from blueprints
+  // we can now create blueprints and strand_def from blueprints
   // the remining process is to create bluprints for all the other bundle types
-  int make_as_pp_array = 1, nstr = 1;
-  bundle_t **st_descarr = NULL, *stdesc = NULL, *bluep;
-  if (btype >= 0 || btype < n_builtin_bundledefs) {
+  int nstr = 0;
+  bundle_t **st_defarr = NULL, *stdef = NULL, *bluep;
+  const blueprint_t *bp;
+  scriptlet_t *scriptlet = NULL;
+  boolean err = FALSE;
+  if (btype >= 0 && btype < n_builtin_bundledefs) {
     bundledef_t bdef;
     bundle_strand strand, strand2;
-    const char *vname;
+    char *vname;
     size_t dblen = lives_strlen(DIRECTIVE_BEGIN);
     size_t delen = lives_strlen(DIRECTIVE_END);
     uint64_t vflags;
@@ -1159,62 +1454,83 @@ static void make_blueprint_for(bundle_type btype) {
     uint64_t bflags;
     int tflags;
     int i, j = 0, dirx = 0;
-    // we will pass through th bdef and create strand_desc for each entry or directive
+    // we will pass through th bdef and create strand_def for each entry or directive
     // we will set name, flags and for values we will set type and default
     // for comments and directives we set text
-    // (make_mandatory will clear the optional flag, and we wont store it)
+    // (make_mandatory will clear the optional flag, and we won't store it)
+    // (make_readonly will set the readonly flag, and we won't store it)
     // for other directives we store each atom in a string array
-    LiVESList *dismands = NULL, *xl;
-    g_print("\n\n\n\n**************************\n\nBLUEPRINT FOR %d\n\n\n\n", btype);
-    bdef = (bundledef_t)get_bundledef(btype);
-    bluep = create_gen1_bundle_by_type(BLUEPRINT_BUNDLE_TYPE, NULL);
-    for (i = 0; bdef[i]; i++) {
+    LiVESList *dismands = NULL, *disreads = NULL, *xl;
+    g_print("\n**************************MAKE BLUEPRINT FOR %d\n", btype);
+    bluep = create_bundle_by_type(BLUEPRINT_BUNDLE_TYPE, NULL);
+    if ((bp = blueprints[btype])) {
+      // if we already have a blueprint we will reacreate it
+      char *defname = get_short_name(STRAND_VALUE_DEFAULT);
+      int ns, i;
+      strand_def_t **sds = weed_get_plantptr_array_counted((weed_plant_t *)bp, ".strand_def",
+							   &ns), *stdef = NULL;
+      bundle_t *stdef_old;
+      for (i = 0; i < ns; i++) {
+	stdef_old = sds[i];
+	vtype = stdef_get_type(stdef_old);
+	//if (vtype == STRAND_TYPE_NONE) continue;
+	vname = (char *)stdef_get_name(stdef_old);
+	bflags = stdef_get_flags(stdef_old);
+        stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "name", vname,
+				       "flags", bflags, "strand_type", vtype, NULL);
+	lives_free(vname);
+	// copy default
+	if (bundle_has_strand(stdef_old, defname))
+	  bundle_strand_copy(stdef, defname, stdef_old, defname);
+        st_defarr = lives_realloc(st_defarr, ++nstr * sizeof(bundle_t *));
+        st_defarr[nstr - 1] = stdef;
+      }
+      if (sds) lives_free(sds);
+      lives_free(defname);
+    }
+    else {
+      bdef = (bundledef_t)get_bundledef(btype);
+      for (i = 0; bdef[i]; i++) {
       off_t offx = 0;
       bflags = 0;
       strand = bdef[i];
+      //g_print("STRAND ------------ %s\n", strand);
       vflags = get_vflags(strand, &offx, NULL, bdef);
-      if (dirx && stdesc) bundle_array_append_n(stdesc, "text", STRAND_TYPE_STRING, 1, &strand);
-      else {
-        if (vflags == STRAND_TYPE_FLAG_COMMENT) {
-          bflags = BLUEPRINT_FLAG_COMMENT;
-          stdesc = create_gen1_bundle_by_type(STRAND_DESC_BUNDLE_TYPE, "name", "#", "flags", bflags,
-                                              "text", strand, NULL);
-          st_descarr = lives_realloc(st_descarr, ++nstr * sizeof(bundle_t *));
-          st_descarr[nstr - 2] = stdesc;
-          st_descarr[nstr - 1] = NULL;
-          //g_print("GOT comment: %s\n", strand);
-          stdesc = NULL;
-          continue;
-        }
-      }
+
+      if (vflags == STRAND_TYPE_FLAG_COMMENT) continue;
+
       if (vflags == STRAND_TYPE_FLAG_DIRECTIVE) {
         if (!lives_strncmp(strand, DIRECTIVE_END, delen)) {
           //g_print("END dirx %s\n", strand + delen);
           dirx--;
-          if (stdesc) {
-            st_descarr = lives_realloc(st_descarr, ++nstr * sizeof(bundle_t *));
-            st_descarr[nstr - 2] = stdesc;
-            st_descarr[nstr - 1] = NULL;
-            stdesc = NULL;
-          }
+          /* if (stdef) { */
+          /*   st_defarr = lives_realloc(st_defarr, ++nstr * sizeof(bundle_t *)); */
+          /*   st_defarr[nstr - 1] = stdef; */
+          /*   stdef = NULL; */
+          /* } */
           continue;
         }
         if (!lives_strncmp(strand, DIRECTIVE_BEGIN, dblen)) {
-          if (!strcmp(strand + dblen, "make_mandatory")) {
+	  boolean mm = FALSE, mr = FALSE;
+	  dirx++;
+          if ((mm = !strcmp(strand + dblen, "make_mandatory"))
+	      || (mr = !strcmp(strand + dblen, "make_readonly"))) {
             // clear opt from flag
             strand = bdef[++i];
             if (strand) {
               char *str;
               for (j = 0; j < nstr; j++) {
-                bundle_t *stddsc = st_descarr[j];
+                bundle_t *stddsc = st_defarr[j];
                 char *xname = find_strand_by_name(stddsc, "name");
                 if (xname) {
                   str = lives_strand_get_value_string(stddsc, xname);
                   if (!lives_strcmp(strand, str)) {
                     uint64_t oflags;
                     oflags = lives_strand_get_value_uint64(stddsc, "flags");
-                    oflags &= ~BLUEPRINT_FLAG_OPTIONAL;
-                    lives_free(str);
+		    if (mm) oflags &= ~BLUEPRINT_FLAG_OPTIONAL;
+		    else if (mr) oflags |= BLUEPRINT_FLAG_READONLY;
+		    set_bundle_val(stddsc, "flags", STRAND_TYPE_UINT64, 1, 0,  oflags);
+		    lives_free(str);
                     lives_free(xname);
                     break;
                   }
@@ -1222,30 +1538,30 @@ static void make_blueprint_for(bundle_type btype) {
                   lives_free(xname);
                 }
               }
-              if (j >= nstr) dismands = lives_list_append(dismands, lives_strdup(strand));
-              // pass end directive
-              i++;
-            }
-            continue;
-          }
-          if (!dirx) {
-            bflags = BLUEPRINT_FLAG_DIRECTIVE;
-            stdesc = create_gen1_bundle_by_type(STRAND_DESC_BUNDLE_TYPE, "name", "@",
-                                                "flags", bflags, "text", lives_strdup(strand), NULL);
-            //g_print("START dirx %s\n", strand + dblen);
-          }
-          dirx++;
-        }
+              if (j >= nstr) {
+		if (mm) dismands = lives_list_append(dismands, lives_strdup(strand));
+		else if (mr) disreads = lives_list_append(disreads, lives_strdup(strand));
+		// pass end directive
+		i++;
+	      }
+	    }
+	    continue;
+	  }
+	}
       }
       if (dirx) continue;
       //
       // remaining strands are values
       if (vflags == STRAND_TYPE_FLAG_OPTIONAL) bflags |= BLUEPRINT_FLAG_OPTIONAL;
       vtype = get_vtype(strand, &offx);
-      vname = get_vname(strand + offx);
+      vname = (char *)get_vname(strand + offx);
       if ((xl = lives_list_locate_string(dismands, vname))) {
         bflags &= ~BLUEPRINT_FLAG_OPTIONAL;
         dismands = lives_list_remove_node(dismands, xl, TRUE);
+      }
+      if ((xl = lives_list_locate_string(disreads, vname))) {
+        bflags |= BLUEPRINT_FLAG_READONLY;
+        disreads = lives_list_remove_node(disreads, xl, TRUE);
       }
       strand2 = bdef[++i];
       tflags = atoi(strand2);
@@ -1254,119 +1570,251 @@ static void make_blueprint_for(bundle_type btype) {
         if (tflags & STRAND2_FLAG_ARRAY_OF) bflags |= BLUEPRINT_FLAG_ARRAY;
         if (tflags & STRAND2_FLAG_PTR_TO) bflags |= BLUEPRINT_FLAG_PTR_TO_SCALAR;
 
-        stdesc = create_gen1_bundle_by_type(STRAND_DESC_BUNDLE_TYPE, "name", vname,
-                                            "flags", bflags, "value_type", vtype, NULL);
-        set_def_value(stdesc, shdef, strand, strand2);
-        st_descarr = lives_realloc(st_descarr, ++nstr * sizeof(bundle_t *));
-        st_descarr[nstr - 2] = stdesc;
-        st_descarr[nstr - 1] = NULL;
-        stdesc = NULL;
-      }
-    }
-    lives_free(shname); lives_free(shflags); lives_free(shdef);
-  }
+        stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "name", vname,
+				       "flags", bflags, "strand_type", vtype, NULL);
 
-  // we will set bundleptr arrays as voidptr to weed_plant_t * NULL termined
-  // or we can create plantptr_array
+	bflags = 0;
+	if (vtype != STRAND_TYPE_NONE) {
+	  err = set_def_value_gen1(stdef, shdef, strand, strand2);
+	  if (err) goto endit2;
+	}
+        st_defarr = lives_realloc(st_defarr, ++nstr * sizeof(bundle_t *));
+        st_defarr[nstr - 1] = stdef;
+        stdef = NULL;
+      }
+      }
+      lives_free(shname); lives_free(shflags); lives_free(shdef);
+    }
 
   if (nstr > 1) {
-    if (make_as_pp_array) {
-      set_bundle_val(bluep, "strand_desc", STRAND_TYPE_BUNDLEPTR, nstr - 1, 1, st_descarr);
-      lives_free(st_descarr[nstr - 1]);
-      lives_free(st_descarr);
-    } else {
-      set_bundle_val(bluep, "strand_desc", STRAND_TYPE_VOIDPTR, nstr, 0, st_descarr);
+    lives_strand_include_sub_bundles(bluep, "strand_def", nstr, st_defarr);
+    lives_free(st_defarr);
+  }
+
+endit2:
+  if (err) {
+#if DEBUG_BUNDLES
+      g_printerr("\nERROR creating blueprint for type %d\n", btype);
+#endif
+    if (bluep) {
+      lives_bundle_free(bluep);
+      bluep = NULL;
     }
   }
-  if (blueprints[btype]) lives_bundle_free(blueprints[btype]);
+  if (blueprints[btype]) lives_bundle_free((bundle_t *)blueprints[btype]);
   blueprints[btype] = bluep;
+  }
 }
 
+
+/////////// nirvascope
+
+static char *nirvascope(int i, nscope_hdr_f head_func, nscope_cond_f cond_func, void *cdata,
+		       nscope_text_f text_func, void *tdata, nscope_ftr_f foot_func) {
+  char *hdr;
+  if (!head_func) hdr = lives_strdup("");
+  else hdr = (*head_func)(i);
+  for (int j = 0; (*cond_func)(i, j, cdata); j++) {
+    char *sep = NULL, *fmt = "", *res;
+    res = text_func(i, j, tdata, &sep, &fmt);
+    if (res) {
+      hdr = lives_strdup_concat(hdr, sep, fmt, res);
+      lives_free(res);
+    }
+  }
+  if (foot_func) {
+    char *line = (*foot_func)(i);
+    hdr = lives_strdup_concat(hdr, NULL, "%s", line);
+  }
+  return hdr;
+}
+
+// cond funcs
+static boolean non_null_elem(int i, int idx, void *data) {
+  char **arr = (char **)data;
+  return arr[idx] != NULL;
+}
+
+// text fmt funcs
+static char *elem_nl(int i, int idx, void *data, char **sep, char **fmt) {
+  char **arr = (char **)data;
+  *sep = "\n";
+  *fmt = "%s";
+  return lives_strdup(arr[idx]);
+}
+
+static char *nirvascope_print_str_array(char **arr) {
+  return nirvascope(0, NULL, non_null_elem, arr, elem_nl, arr, NULL);
+}
 
 // show what a bundle would look like as a 'C/C++' header
 // input: any bundle [target_obj]
 // output: scriptlet, FUNC CATEGORY_NATIVE_TEXT
-char *nirvascope_bundle_to_header(bundle_t *bundle, const char *tname) {
-  bundledef_t bdef;
+char *nirvascope_blueprint_to_header(bundle_t *bundle, const char *tname) {
+  blueprint_t *bp;
   char *hdr, *ar = NULL, *line;
   uint32_t st;
   weed_size_t ne;
   const char *tp;
 
-  if (tname)
-    hdr  = lives_strdup("typedef struct {");
-  else
-    hdr = lives_strdup("struct {");
+  if (tname) hdr  = lives_strdup("typedef struct {");
+  else hdr = lives_strdup("struct {");
 
-  bdef = get_bundledef_from_bundle(bundle);
-  if (bdef) {
-    bundle_strand strand, strand2;
-    for (int i = 0; (strand = bdef[i]); i++) {
-      off_t offx = 0;
-      const char *vname;
-      char *sname;
-      boolean addaster = FALSE;
-
-      get_vflags(strand, &offx, &i, bdef);
-      if (offx < 0) continue;
-
-      if (!(strand2 = bdef[i])) break;
-
-      get_vtype(strand, &offx);
-      vname = get_vname(strand + offx);
-      sname = get_short_name(vname);
+  bp = get_blueprint_from_bundle(bundle);
+  if (bp) {
+    int ns;
+    char *comment = NULL;
+    strand_def_t **sds = weed_get_plantptr_array_counted(bp, ".strand_def", &ns);
+    boolean is_arr, is_ptr_to;
+    for (int i = 0; i < ns; i++) {
+      char *stname, *sname;
+      uint32_t st, sttype;
+      strand_def_t * stdef = sds[i];
+      if (!lives_strand_is_value(stdef)) continue;
+      sttype = stdef_get_type(stdef);
+      stname = stdef_get_name(stdef);
+      sname = get_short_name(stname);
 
       //g_print("STRAND is %s\n", strand);
 
-      if (bundle_has_item(bundle, sname)) {
-        st = weed_leaf_seed_type(bundle, sname);
-        ne = weed_leaf_num_elements(bundle, sname);
-        tp = weed_seed_to_ctype(st, TRUE);
-
-        if (st == WEED_SEED_PLANTPTR) tp = "bundle_t *";
-
-        if (ne > 1) ar = lives_strdup_printf("[%d]", ne);
-        else if (st < 64 && get_is_array(strand2)) addaster = TRUE;
-        line = lives_strdup_printf("\n  %s%s%s%s;", tp, addaster ? "*" : "", sname + 1, ar ? ar : "");
-        hdr = lives_concat(hdr, line);
-        if (ar) {
-          lives_free(ar);
-          ar = NULL;
-        }
-        lives_free(sname);
+      st = strand_type_to_weed_seed(sttype);
+      is_arr = lives_strand_is_array(stdef);
+      tp = weed_seed_to_ctype(st, TRUE);
+      is_ptr_to = lives_strand_is_pointer_to(stdef);
+      if (!is_ptr_to) {
+	if (sttype == WEED_SEED_PLANTPTR) tp = "bundle_t *";
+	if (is_arr) ar = lives_strdup_printf("[]");
       }
-    }
-  } else {
-    char **leaves = weed_plant_list_leaves(bundle, NULL);
-    for (int i = 0; leaves[i]; i++) {
-      if (*leaves[i] == '.') {
-        st = weed_leaf_seed_type(bundle, leaves[i]);
-        ne = weed_leaf_num_elements(bundle, leaves[i]);
-        tp = weed_seed_to_ctype(st, TRUE);
-        if (st == WEED_SEED_PLANTPTR) tp = "bundle_t *";
-        if (ne > 1) ar = lives_strdup_printf("[%d]", ne);
-        line = lives_strdup_printf("\n  %s%s%s;", tp, leaves[i] + 1, ar ? ar : "");
-        hdr = lives_concat(hdr, line);
-        if (ar) {
-          lives_free(ar);
-          ar = NULL;
-        }
+      else {
+	if (sttype == STRAND_TYPE_BUNDLEPTR || sttype == STRAND_TYPE_CONST_BUNDLEPTR) {
+	  if (lives_strand_is_pointer_to_array(stdef)) {
+	    tp = "const bundlearray_t *";
+	  }
+	  else {
+	    tp = "const bundle_t **";
+	    if (is_arr) ar = lives_strdup_printf("[]");
+	  }
+	}
       }
-      lives_free(leaves[i]);
+      if (lives_strand_is_optional(stdef)) comment = lives_strdup("// optional");
+      line = lives_strdup_printf("\n  %s%s%s;\t%s", tp, sname + 1, ar ? ar : "",
+				 comment);
+      lives_freep((void **)&comment);
+      hdr = lives_concat(hdr, line);
+      if (ar) {
+	lives_free(ar);
+	ar = NULL;
+      }
+      lives_free(sname);
+      lives_free(stname);
     }
-    lives_free(leaves);
   }
-  if (!tname)
-    line = lives_strdup("\n}");
-  else
-    line = lives_strdup_printf("\n} %s;", tname);
+  if (!tname) line = lives_strdup("\n}");
+  else line = lives_strdup_printf("\n} %s;", tname);
   hdr = lives_concat(hdr, line);
   return hdr;
 }
 
 
-LIVES_GLOBAL_INLINE bundle_t *get_bundleptr_value(bundle_t *bundle, const char *item) {
-  return weed_get_plantptr_value(bundle, item, NULL);
+char *nirvascope_bundle_to_header(bundle_t *bundle, const char *tname, int idx) {
+  blueprint_t *bp;
+  const char *tabs;
+  char *hdr, *ar = NULL, *line, *xline, *val = NULL;
+  uint32_t st;
+  weed_size_t ne;
+  char **leaves = weed_plant_list_leaves(bundle, NULL);
+  const char *tp;
+
+  if (!idx) {
+    if (tname) hdr = lives_strdup("typedef struct {");
+    else hdr = lives_strdup("struct {");
+    tabs = "";
+  }
+  else {
+    hdr = lives_strdup_printf("    [%d]", idx - 1);
+    tabs = "\t";
+  }
+  for (int i = 0; leaves[i]; i++) {
+    if (*leaves[i] == '.') {
+      st = weed_leaf_seed_type(bundle, leaves[i]);
+      ne = weed_leaf_num_elements(bundle, leaves[i]);
+      tp = weed_seed_to_ctype(st, TRUE);
+      if (st == WEED_SEED_PLANTPTR) tp = "bundle_t *";
+      if (ne > 1) ar = lives_strdup_printf("[%d]", ne);
+      else {
+	switch (st) {
+	case WEED_SEED_STRING: {
+	  char *vs = weed_get_string_value(bundle, leaves[i], NULL);
+	  val = lives_strdup_printf("\t (\"%s\")", vs);
+	  lives_free(vs);
+	}
+	break;
+	case WEED_SEED_INT: {
+	  int vs = weed_get_int_value(bundle, leaves[i], NULL);
+	  val = lives_strdup_printf("\t (%d)", vs);
+	}
+	break;
+	case WEED_SEED_UINT: {
+	  uint32_t vs = weed_get_uint_value(bundle, leaves[i], NULL);
+	  val = lives_strdup_printf("\t (%u)", vs);
+	}
+	break;
+	case WEED_SEED_INT64: {
+	  int64_t vs = weed_get_int64_value(bundle, leaves[i], NULL);
+	  val = lives_strdup_printf("\t (0X%016lX)", vs);
+	}
+	break;
+	case WEED_SEED_UINT64: {
+	  uint64_t vs = weed_get_uint64_value(bundle, leaves[i], NULL);
+	  val = lives_strdup_printf("\t (0X%016lX)", vs);
+	}
+	break;
+	case WEED_SEED_VOIDPTR: {
+	  void *vs = weed_get_voidptr_value(bundle, leaves[i], NULL);
+	  val = lives_strdup_printf("\t (%p)", vs);
+	}
+	break;
+	case WEED_SEED_PLANTPTR: {
+	  weed_plant_t *vs = weed_get_plantptr_value(bundle, leaves[i], NULL);
+	  val = lives_strdup_printf("\t (%p)", vs);
+	}
+	break;
+    default: break;
+    }
+      }
+      xline = lives_strdup_printf("\n  %s%s%s%s;", tabs, tp, leaves[i] + 1,
+				  ar ? ar : "");
+      line = lives_strdup_printf("%-40s%s", xline, val ? val : "");
+      lives_free(xline);
+      lives_freep((void **)&val);
+      hdr = lives_concat(hdr, line);
+      if (ar) {
+	if (st == WEED_SEED_PLANTPTR) {
+	  weed_plant_t **pp = weed_get_plantptr_array(bundle, leaves[i], NULL);
+	  if (pp) {
+	    for (int j = 0; j < ne; j++) {
+	      xline = nirvascope_bundle_to_header(pp[j], NULL, j + 1);
+	      line = lives_strdup_printf("\n%s", xline);
+	      lives_free(xline);
+	      hdr = lives_concat(hdr, line);
+	    }
+	    lives_free(pp);
+	  }
+	}
+	lives_free(ar);
+	ar = NULL;
+      }
+    }
+    lives_free(leaves[i]);
+  }
+  lives_free(leaves);
+  if (idx) line = lives_strdup("\n");
+  else {
+    if (!tname) line = lives_strdup("\n}");
+    else line = lives_strdup_printf("\n} %s;", tname);
+  }
+  hdr = lives_concat(hdr, line);
+  return hdr;
 }
 
 
@@ -1420,26 +1868,107 @@ bundle_t *lives_attr_get_value_bundleptr(lives_attr_t *attr) {
 
 //
 
-bundle_t *lives_strand_get_value_bundletptr(bundle_t *bundle, const char *item) {
-  return weed_get_plantptr_value(bundle, item, NULL);
-}
-int lives_strand_get_value_int(bundle_t *bundle, const char *item) {
-  return weed_get_int_value(bundle, item, NULL);
-}
-int64_t lives_strand_get_value_int64(bundle_t *bundle, const char *item) {
-  return weed_get_int64_value(bundle, item, NULL);
-}
-uint64_t lives_strand_get_value_uint64(bundle_t *bundle, const char *item) {
-  return weed_get_uint64_value(bundle, item, NULL);
-}
-char *lives_strand_get_value_string(bundle_t *bundle, const char *item) {
-  return weed_get_string_value(bundle, item, NULL);
+bundle_t *lives_strand_get_value_bundleptr(bundle_t *bundle, const char *item) {
+  char *sname = get_short_name(item);
+  weed_plant_t *val = weed_get_plantptr_value(bundle, sname, NULL);
+  lives_free(sname);
+  return (bundle_t *)val;
 }
 
+bundle_t *lives_strand_get_value_const_bundleptr(bundle_t *bundle, const char *item) {
+  char *sname = get_short_name(item);
+  weed_error_t err;
+  void *val = weed_get_voidptr_value(bundle, sname, &err);
+  if (err == WEED_ERROR_WRONG_SEED_TYPE)
+    val = (void *)weed_get_plantptr_value(bundle, sname, NULL);
+  lives_free(sname);
+  return (bundle_t *)val;
+}
+
+void *lives_strand_get_value_voidptr(bundle_t *bundle, const char *item) {
+  char *sname = get_short_name(item);
+  void *val = weed_get_voidptr_value(bundle, sname, NULL);
+  lives_free(sname);
+  return val;
+}
+
+int lives_strand_get_value_int(bundle_t *bundle, const char *item) {
+  char *sname = get_short_name(item);
+  int val = weed_get_int_value(bundle, sname, NULL);
+  lives_free(sname);
+  return val;
+}
+
+uint32_t lives_strand_get_value_uint32(bundle_t *bundle, const char *item) {
+  char *sname = get_short_name(item);
+  uint32_t val;
+  weed_error_t err;
+  val = weed_get_uint_value(bundle, sname, &err);
+  if (err == WEED_ERROR_WRONG_SEED_TYPE)
+    val = (uint32_t)weed_get_int_value(bundle, sname, NULL);
+  lives_free(sname);
+  return val;
+}
+
+int64_t lives_strand_get_value_int64(bundle_t *bundle, const char *item) {
+  char *sname = get_short_name(item);
+  int64_t val = weed_get_int64_value(bundle, sname, NULL);
+  lives_free(sname);
+  return val;
+}
+
+uint64_t lives_strand_get_value_uint64(bundle_t *bundle, const char *item) {
+  char *sname = get_short_name(item);
+  weed_error_t err;
+  uint64_t val = weed_get_uint64_value(bundle, sname, &err);
+  if (err == WEED_ERROR_WRONG_SEED_TYPE)
+    val = (uint64_t)weed_get_int64_value(bundle, sname, NULL);
+  lives_free(sname);
+  return val;
+}
+
+char *lives_strand_get_value_string(bundle_t *bundle, const char *item) {
+  char *sname = get_short_name(item);
+  char *val = weed_get_string_value(bundle, sname, NULL);
+  lives_free(sname);
+  return val;
+}
 
 bundle_t **lives_strand_get_array_bundletptr(bundle_t *bundle, const char *item) {
-  return weed_get_plantptr_array(bundle, item, NULL);
+  char *sname = get_short_name(item);
+  weed_error_t err;
+  weed_plant_t **vals = weed_get_plantptr_array(bundle, sname, &err);
+  if (err == WEED_ERROR_WRONG_SEED_TYPE)
+    vals = (weed_plant_t **)weed_get_voidptr_array(bundle, sname, NULL);
+  lives_free(sname);
+  return (bundle_t **)vals;
 }
+
 char **lives_strand_get_array_string(bundle_t *bundle, const char *item) {
-  return weed_get_string_array(bundle, item, NULL);
+  char *sname = get_short_name(item);
+  char **vals = weed_get_string_array(bundle, sname, NULL);
+  lives_free(sname);
+  return vals;
+}
+
+
+size_t nirvascope_get_bundle_weight(bundle_t *b) {
+  if (!b) return 0;
+  else {
+    size_t tot = weed_plant_get_byte_size(b);
+    char **ll = weed_plant_list_leaves(b, NULL), *l;
+    for (int i = 0; (l = ll[i]); i++) {
+      if (weed_leaf_seed_type(b, l) == WEED_SEED_PLANTPTR) {
+	int np;
+	weed_plant_t **pp = weed_get_plantptr_array_counted(b, l, &np);
+	for (int j = 0; j < np; j++) {
+	  if (pp[j] != b) tot += nirvascope_get_bundle_weight(pp[j]);
+	}
+	if (pp) lives_free(pp);
+      }
+      lives_free(l);
+    }
+    if (ll) lives_free(ll);
+    return tot;
+  }
 }

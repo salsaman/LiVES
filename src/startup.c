@@ -2021,18 +2021,20 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   boolean toolong = FALSE;
   int xargc = argc;
   weed_error_t werr;
+  uint64_t test_opts = 			 TEST_BUNDLES | ABORT_AFTER;
+//0;
   int winitopts = 0;
 
 #ifndef IS_LIBLIVES
   weed_plant_t *test_plant;
 #endif
-
 #ifndef IS_LIBLIVES
   // start up the Weed system
   weed_abi_version = libweed_get_abi_version();
   if (weed_abi_version > WEED_ABI_VERSION) weed_abi_version = WEED_ABI_VERSION;
 #ifdef WEED_STARTUP_TESTS
   winitopts |= WEED_INIT_DEBUGMODE;
+  test_opts |= TEST_WEED;
 #endif
   winitopts |= (1ull << 33); // skip un-needed error checks
   winitopts |= WEED_INIT_EXTENDED_FUNCS;
@@ -2087,7 +2089,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->wall_ticks = -1;
   mainw->initial_ticks = lives_get_current_ticks();
 
-  do_startup_diagnostics(TRUE);
+  do_startup_diagnostics(test_opts);
 
   // allow us to set immutable values (plugins can't)
   weed_leaf_set = weed_leaf_set_host;

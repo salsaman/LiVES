@@ -556,30 +556,24 @@ NIRVA_ENUM {
 /*     MACROX(FUNCTION) MACROX(THREADS) MACROX(INTROSPECTION) MACROX(ICAP) MACROX(OBJECT) MACROX(HOOK) MACROX(CONTRACT) \ */
 /*     MACROX(TRANSFORM) MACROX(ATTRBUNDLE) MACROX(CONDITION) MACROX(LOGIC) */
 
-#define FOR_ALL_DOMAINS(MACROX, ...) MACROX(BASE), MACROX(GENERIC), MACROX(INTROSPECTION)
-// domain BASE
+#define FOR_ALL_DOMAINS(MACROX, ...) MACROX(GENERIC), MACROX(INTROSPECTION)
+// domain SPEC
 #define STRAND_SPEC_VERSION				STRAND_NAME("SPEC", "VERSION")
 #define STRAND_SPEC_VERSION_TYPE              		INT, 100
 
 #define ALL_STRANDS_SPEC "VERSION"
 #define ALL_BUNDLES_SPEC
 
-#define STRAND_BASE_BUNDLE_TYPE				STRAND_NAME("BASE", "BUNDLE_TYPE")
-#define STRAND_BASE_BUNDLE_TYPE_TYPE			INT, 0
-
-#define ALL_STRANDS_BASE "BUNDLE_TYPE"
-#define ALL_BUNDLES_BASE
-
 // domain BLUEPRINT
 
-#define STRAND_BLUEPRINT_TEXT				STRAND_NAME("BLUEPRINT", "TEXT")
-#define STRAND_BLUEPRINT_TEXT_TYPE		       	STRING, NULL
+#define BUNDLE_BLUEPRINT_AUTOMATIONS		      	STRAND_NAME("BLUEPRINT", "AUTOMATIONS")
+#define BUNDLE_BLUEPRINT_AUTOMATIONS_TYPE      	       	SCRIPTLET, NULL
 
 #define STRAND_BLUEPRINT_BUNDLE_TYPE	       		STRAND_NAME("BLUEPRINT", "BUNDLE_TYPE")
 #define STRAND_BLUEPRINT_BUNDLE_TYPE_TYPE      	       	UINT64, NULL
 
-#define BUNDLE_BLUEPRINT_STRAND_DESC		      	STRAND_NAME("BLUEPRINT", "STRAND_DESC")
-#define BUNDLE_BLUEPRINT_STRAND_DESC_TYPE      	       	STRAND_DESC, NULL
+#define BUNDLE_BLUEPRINT_STRAND_DEF		      	STRAND_NAME("BLUEPRINT", "STRAND_DEF")
+#define BUNDLE_BLUEPRINT_STRAND_DEF_TYPE      	       	STRAND_DEF, NULL
 
 // domain SPECIAL
 // indicates any strand can be added to / deleted from bundle
@@ -622,8 +616,8 @@ NIRVA_ENUM {
 #define BUNDLE_STANDARD_ATTRIBUTE	       		STRAND_NAME("STANDARD", "ATTRIBUTE")
 #define BUNDLE_STANDARD_ATTRIBUTE_TYPE			ATTRIBUTE, NULL
 
-#define BUNDLE_STANDARD_ATTR_CON			STRAND_NAME("STANDARD", "ATTR_CONTAINER")
-#define BUNDLE_STANDARD_ATTR_CON_TYPE            	ATTR_CON, NULL
+#define BUNDLE_STANDARD_ATTR_GROUP			STRAND_NAME("STANDARD", "ATTR_GROUP")
+#define BUNDLE_STANDARD_ATTR_GROUP_TYPE            	ATTR_GROUP, NULL
 
 #define BUNDLE_STANDARD_ATTR_VALUE			STRAND_NAME("STANDARD", "ATTR_VALUE")
 #define BUNDLE_STANDARD_ATTR_VALUE_TYPE            	ATTR_VALUE, NULL
@@ -631,20 +625,20 @@ NIRVA_ENUM {
 #define BUNDLE_STANDARD_ERROR				STRAND_NAME("STANDARD", "ERROR")
 #define BUNDLE_STANDARD_ERROR_TYPE       		EEROR_BUNDLE, NULL
 
-#define BUNDLE_STANDARD_ATTR_DESC	       		STRAND_NAME("STANDARD", "ATTR_DESC")
-#define BUNDLE_STANDARD_ATTR_DESC_TYPE			ATTR_DESC, NULL
+#define BUNDLE_STANDARD_ATTR_DEF	       		STRAND_NAME("STANDARD", "ATTR_DEF")
+#define BUNDLE_STANDARD_ATTR_DEF_TYPE			ATTR_DEF, NULL
 
-#define BUNDLE_STANDARD_ATTR_DESC_CON            	STRAND_NAME("STANDARD", "ATTR_DESC_CONTAINER")
-#define BUNDLE_STANDARD_ATTR_DESC_CON_TYPE      	ATTR_DESC_CON, NULL
+#define BUNDLE_STANDARD_ATTR_DEF_HOLDER            	STRAND_NAME("STANDARD", "ATTR_DEF_HOLDNER")
+#define BUNDLE_STANDARD_ATTR_DEF_HOLDER_TYPE      	ATTR_DEF_HOLDER, NULL
 
-#define BUNDLE_STANDARD_FUNC_DESC	       		STRAND_NAME("STANDARD", "FUNC_DESC")
-#define BUNDLE_STANDARD_FUNC_DESC_TYPE			FUNC_DESC, NULL
+#define BUNDLE_STANDARD_FUNC_DEF	       		STRAND_NAME("STANDARD", "FUNC_DEF")
+#define BUNDLE_STANDARD_FUNC_DEF_TYPE			FUNC_DEF, NULL
 
 #define BUNDLE_STANDARD_FUNC_MAP	       		STRAND_NAME("STANDARD", "FUNC_MAP")
 #define BUNDLE_STANDARD_FUNC_MAP_TYPE			FUNC_MAP, NULL
 
-#define BUNDLE_STANDARD_FUNC_DESC_CON            	STRAND_NAME("STANDARD", "FUNC_DESC_CONTAINER")
-#define BUNDLE_STANDARD_FUNC_DESC_CON_TYPE      	FUNC_DESC_CON, NULL
+#define BUNDLE_STANDARD_FUNC_DEF_HOLDER            	STRAND_NAME("STANDARD", "FUNC_DEF_HOLDER")
+#define BUNDLE_STANDARD_FUNC_DEF_HOLDER_TYPE      	FUNC_DEF_HOLDER, NULL
 
 #define BUNDLE_STANDARD_CONTRACT	       		STRAND_NAME("STANDARD", "CONTRACT")
 #define BUNDLE_STANDARD_CONTRACT_TYPE			CONTRACT, NULL
@@ -664,8 +658,11 @@ NIRVA_ENUM {
 #define BUNDLE_STANDARD_REQUEST             		STRAND_NAME("STANDARD", "REQUEST")
 #define BUNDLE_STANDARD_REQUEST_TYPE			REQUEST, NULL
 
-#define BUNDLE_STANDARD_KEY_LOOKUP             		STRAND_NAME("STANDARD", "KEY_LOOKUP")
-#define BUNDLE_STANDARD_KEY_LOOKUP_TYPE			KEY_LOOKUP, NULL
+#define BUNDLE_STANDARD_KEY_LOOKUP             		STRAND_NAME("STANDARD", "LOOKUP")
+#define BUNDLE_STANDARD_KEY_LOOKUP_TYPE			LOOKUP, NULL
+
+#define BUNDLE_STANDARD_INDEX             		STRAND_NAME("STANDARD", "INDEX")
+#define BUNDLE_STANDARD_INDEX_TYPE			INDEX, NULL
 
 #define BUNDLE_STANDARD_MATRIX_2D             		STRAND_NAME("STANDARD", "MATRIX_2D")
 #define BUNDLE_STANDARD_MATRIX_2D_TYPE			MATRIX_2D, NULL
@@ -676,8 +673,8 @@ NIRVA_ENUM {
 #define STRAND_VALUE_DATA_TYPE	      			NONE,
 
 // const if !none
-#define STRAND_VALUE_TYPE	      			STRAND_NAME("VALUE", "VALUE_TYPE")
-#define STRAND_VALUE_TYPE_TYPE	   	   		INT, ATTR_TYPE_NONE
+#define STRAND_VALUE_STRAND_TYPE      			STRAND_NAME("VALUE", "STRAND_TYPE")
+#define STRAND_VALUE_STRAND_TYPE_TYPE          		UINT, STRAND_TYPE_NONE
 
 #define STRAND_VALUE_DEFAULT	      			STRAND_NAME("VALUE", "DEFAULT")
 #define STRAND_VALUE_DEFAULT_TYPE      			NONE,
@@ -732,6 +729,9 @@ NIRVA_ENUM {
 #define BUNDLE_VALUE_MAPPED	              	       	STRAND_NAME("VALUE", "MAPPPED")
 #define BUNDLE_VALUE_MAPPED_TYPE              		MAPPED_VALUE, NULL
 
+#define BUNDLE_VALUE_RESTRICIONS               	       	STRAND_NAME("VALUE", "MAPPPED")
+#define BUNDLE_VALUE_RESTRICTIONS_TYPE         		MAPPED_VALUE, NULL
+
 #define BUNDLE_VALUE_CHANGE	              	       	STRAND_NAME("VALUE", "CHANGE")
 #define BUNDLE_VALUE_CHANGE_TYPE              		VALUE_CHANGE, NULL
 
@@ -746,6 +746,9 @@ NIRVA_ENUM {
 
 #define BUNDLE_VALUE_NEW      				STRAND_NAME("VALUE", "NEW")
 #define BUNDLE_VALUE_NEW_TYPE 	    		       	VALUE, NULL
+
+#define STRAND_VALUE_COUNT             			STRAND_NAME("VALUE", "COUNT")
+#define STRAND_VALUE_COUNT_TYPE                       	INT64, NULL
 
 // domain AUTOMATION
 
@@ -868,6 +871,9 @@ NIRVA_ENUM {
 #define STRAND_LOGIC_NOT	       			STRAND_NAME("LOCIC", "NOT")
 #define STRAND_LOGIC_NOT_TYPE			       	INT, LOGICAL_NOT
 
+#define STRAND_LOGIC_NOT	       			STRAND_NAME("LOCIC", "NOT")
+#define STRAND_LOGIC_NOT_TYPE			       	INT, LOGICAL_NOT
+
 #define STRAND_LOGIC_AND		       		STRAND_NAME("LOCIC", "AND")
 #define STRAND_LOGIC_AND_TYPE			       	INT, LOGICAL_AND
 
@@ -877,16 +883,28 @@ NIRVA_ENUM {
 #define STRAND_LOGIC_XOR		       		STRAND_NAME("LOCIC", "XOR")
 #define STRAND_LOGIC_XOR_TYPE		    	   	INT, LOGICAL_XOR
 
+#define STRAND_LOGIC_CORRELATION       			STRAND_NAME("LOCIC", "CORRELATION")
+#define STRAND_LOGIC_CORRELATION_TYPE	       	       	DOUBLE, 0.5
+
+#define STRAND_LOGIC_WEIGHTING       			STRAND_NAME("LOCIC", "WEIGHTING")
+#define STRAND_LOGIC_WEIGHTING_TYPE	       	       	DOUBLE, 1.
+
+#define STRAND_LOGIC_PROBABILIY       			STRAND_NAME("LOCIC", "PROBABILITY")
+#define STRAND_LOGIC_PROBABILITY_TYPE	       	       	DOUBLE, 0.
+
+#define STRAND_LOGIC_CONFIDENCE       			STRAND_NAME("LOCIC", "CONFIDENCE")
+#define STRAND_LOGIC_CONFIDENCE_TYPE	       	       	DOUBLE, 0.
+
 /// domain ATTRIBUTE
 
-#define STRAND_ATTRIBUTE_VALUE_TYPE	       		STRAND_NAME("ATTRIBUTE", "VALUE_TYPE")
-#define STRAND_ATTRIBUTE_VALUE_TYPE_TYPE  		UINT, ATTR_TYPE_NONE
+#define STRAND_ATTRIBUTE_ATTR_TYPE	       		STRAND_NAME("ATTRIBUTE", "ATTR_TYPE")
+#define STRAND_ATTRIBUTE_ATTR_TYPE_TYPE  		UINT, ATTR_TYPE_NONE
 
 #define BUNDLE_ATTRIBUTE_CONNECTION	       		STRAND_NAME("ATTRIBUTE", "CONNECTION")
 #define BUNDLE_ATTRIBUTE_CONNECTION_TYPE  		ATTR_CONNECTION, NULL
 
-#define BUNDLE_ATTRIBUTE_HOOK_STACK	       		STRAND_NAME("ATTRIBUTE", "HOOK_STACK")
-#define BUNDLE_ATTRIBUTE_HOOK_STACK_TYPE  		HOOK_STACK, NULL
+#define BUNDLE_ATTRIBUTE_HOOK_STACKS	       		STRAND_NAME("ATTRIBUTE", "HOOK_STACKS")
+#define BUNDLE_ATTRIBUTE_HOOK_STACKS_TYPE  		HOOK_STACK, NULL
 
 // emissions are from source in caller object, to dest in target object
 #define BUNDLE_EMISSION_CALLER		       		STRAND_NAME("EMISSION", "CALLER")
@@ -928,7 +946,7 @@ NIRVA_ENUM {
 #define STRAND_FUNCTION_RESPONSE_TYPE         		INT64, 0
 
 #define BUNDLE_FUNCTION_MAPPING				STRAND_NAME("FUNCTION", "MAPPING")
-#define BUNDLE_FUNCTION_MAPPING_TYPE			PMAP_DESC, NULL
+#define BUNDLE_FUNCTION_MAPPING_TYPE			PMAP_DEF, NULL
 
 #define BUNDLE_FUNCTION_REV_PMAP	       		STRAND_NAME("FUNCTION", "REV_PMAP")
 #define BUNDLE_FUNCTION_REV_PMAP_TYPE			PMAP, NULL
@@ -1006,7 +1024,7 @@ NIRVA_ENUM {
 #define BUNDLE_OBJECT_ACTIVE_TRANSFORMS_TYPE	       	TRANSFORM, NULL
 
 #define BUNDLE_OBJECT_ATTRIBUTES	       		STRAND_NAME("OBJECT", "ATTRIBUTES")
-#define BUNDLE_OBJECT_ATTRIBUTES_TYPE	  	     	ATTR_CON, NULL
+#define BUNDLE_OBJECT_ATTRIBUTES_TYPE	  	     	ATTR_GROUP, NULL
 
 #define STRAND_OBJECT_SUBTYPE				STRAND_NAME("OBJECT", "SUBTYPE")
 #define STRAND_OBJECT_SUBTYPE_TYPE	       		UINT64, NO_SUBTYPE
@@ -1016,6 +1034,9 @@ NIRVA_ENUM {
 
 #define BUNDLE_OBJECT_CONTRACTS	 	      		STRAND_NAME("OBJECT", "CONTRACT")
 #define BUNDLE_OBJECT_CONTRACTS_TYPE			CONTRACT, NULL
+
+#define BUNDLE_OBJECT_HOOK_STACKS	               	STRAND_NAME("OBJECT", "HOOK_STACKS")
+#define BUNDLE_OBJECT_HOOK_STACKS_TYPE      		HOOK_STACK, NULL
 
 ///// domain HOOK
 
@@ -1056,9 +1077,6 @@ NIRVA_ENUM {
 #define BUNDLE_HOOK_DETAILS		       		STRAND_NAME("HOOK", "DETAILS")
 #define BUNDLE_HOOK_DETAILS_TYPE			HOOK_DETAILS, NULL
 
-#define BUNDLE_HOOK_STACK		       		STRAND_NAME("HOOK", "STACK")
-#define BUNDLE_HOOK_STACK_TYPE				HOOK_STACK, NULL
-
 #define BUNDLE_HOOK_TRIGGER		       		STRAND_NAME("HOOK", "TRIGGER")
 #define BUNDLE_HOOK_TRIGGER_TYPE       			HOOK_TRIGGER, NULL
 
@@ -1069,7 +1087,7 @@ NIRVA_ENUM {
 
 // this is to enable mapping static transforms to native function calls
 #define BUNDLE_CONTRACT_FUNC_WRAPPER			STRAND_NAME("CONTRACT", "FUNC_WRAPPER")
-#define BUNDLE_CONTRACT_FUNC_WRAPPER_TYPE	       	FUNC_DESC, NULL
+#define BUNDLE_CONTRACT_FUNC_WRAPPER_TYPE	       	FUNC_DEF, NULL
 
 #define BUNDLE_CONTRACT_REQUIREMENTS	       		STRAND_NAME("CONTRACT", "REQUIREMENTS")
 #define BUNDLE_CONTRACT_REQUIREMENTS_TYPE      		CONDITION, NULL
@@ -1096,13 +1114,13 @@ NIRVA_ENUM {
 #define BUNDLE_TRAJECTORY_FUNCTIONAL	       		STRAND_NAME("TRAJECTORY", "FUNCTIONAL")
 #define BUNDLE_TRAJECTORY_FUNCTIONAL_TYPE	       	FUNCTIONAL, NULL
 
-/// domain ATTR_CON
+/// domain ATTRGROUP
 
-#define STRAND_ATTRCON_MAX_REPEATS 		     	STRAND_NAME("ATTRCON", "MAX_REPEATS")
-#define STRAND_ATTRCON_MAX_REPEATS_TYPE     		INT, 1
+#define STRAND_ATTRGRP_MAX_REPEATS 		     	STRAND_NAME("ATTRGRP", "MAX_REPEATS")
+#define STRAND_ATTRGRP_MAX_REPEATS_TYPE     		INT, 1
 
-#define BUNDLE_ATTRCON_HOOK_STACK	               	STRAND_NAME("ATTR", "HOOK_STACK")
-#define BUNDLE_ATTRCON_HOOK_STACK_TYPE       		HOOK_STACK, NULL
+#define BUNDLE_ATTRGRP_HOOK_STACKS	               	STRAND_NAME("ATTRGRP", "HOOK_STACKS")
+#define BUNDLE_ATTRGRP_HOOK_STACKS_TYPE      		HOOK_STACK, NULL
 
 //// domain CONDITION - condiitons are simple functions which produce a TRUE / FALSE result
 
@@ -1113,7 +1131,7 @@ NIRVA_ENUM {
 #define STRAND_CONDITION_CURRENT_TYPE	       		CONDVAL_MAP, NULL
 
 /* #define BUNDLE_CONDITION_MAX_ITEMS	       		STRAND_NAME("CONDITION", "MAX_ITEMS") */
-/* #define BUNDLE_CONDITION_MAX_ITEMS_TYPE	       		FUNCTION, MAX_ITEMS */
+/* #define BUNDLE_CONDITION_MAX_ITEMS_TYPE     	     	FUNCTION, MAX_ITEMS */
 
 /* #define BUNDLE_CONDITION_HAS_VALUE	       		STRAND_NAME("CONDITION", "HAS_VALUE") */
 /* #define BUNDLE_CONDITION_HAS_VALUE_TYPE   		FUNCTION, VALUE_SET */
@@ -1121,7 +1139,7 @@ NIRVA_ENUM {
 /* #define BUNDLE_CONDITION_HAS_ITEM	       		STRAND_NAME("CONDITION", "HAS_ITEM") */
 /* #define BUNDLE_CONDITION_HAS_ITEM_TYPE   		FUNCTION, HAS_ITEM */
 
-/* #define BUNDLE_CONDITION_VALUES_EQUAL	       		STRAND_NAME("CONDITION", "VALUE_MATCH") */
+/* #define BUNDLE_CONDITION_VALUES_EQUAL	       	STRAND_NAME("CONDITION", "VALUE_MATCH") */
 /* #define BUNDLE_CONDITION_VALUE_MATCH_TYPE   		FUNCTION, VALUE_MATCH */
 
 // domain STRUCTURAL
@@ -1254,8 +1272,19 @@ NIRVA_ENUM {
 #define ATTR_VIDEO_FLAG_INTERLACED  	       		STRAND_NAME(VIDEO, FLAG_INTERLACED)
 #define ATTR_VIDEO_FLAG_INTERLACED_TYPE    	 	UINT64, 0
 
+/// attribute "packs" for object instances /// temporary ///
+  
+#define _CONTRACT_ATTR_PACK MAKE_ATTR_PACK(ATTR_CONTRACT_ICAP, ATTR_CONTRACT_ATTR_POOL, \
+    ATTR_CONTRACT_FLAGS, ATTR_CONTRACT_REQUREMENTS, ATTR_CONTRACT_FUNC_WRAPPER) 
+  
+//#define _THREAD_INSTANCE_ATTR_PACK SELF_ATTRS
+
+#define _TRANSFORM_ATTR_PACK MAKE_ATTR_PACK(ATTR_TRANSFORM_CONTRACT, ATTR_TRANSFORM_STATUS, \
+    ATTR_TRANSFORM_RESULT, 
+
+  
 // attribute flag bits //
-// defaults for these flags are usually defined in an attr_desc bundle
+// defaults for these flags are usually defined in an attr_def bundle
 // however the attribute "owner" may adjust these
 //
 // mandatory means that the attribute must be created and have a value set
@@ -1352,10 +1381,6 @@ NIRVA_ENUM {
 
 // the transform uses system resources, therefore should be runsparingly
 #define TX_FLAG_COSTLY
-
-// this flag bit is a hint for transforns which produce sequential data
-// as early as possible.
-#define TX_FLAG_ASYNC_DELAY // can take time to run, therefore it is recomended to run in a thread
 
 // function wrappings
 
@@ -1754,9 +1779,16 @@ NIRVA_ENUM {
   // hook stack
   HOOK_DETACHING_HOOK,
 
-  // hook is triggered in an object if a callback has been placed in its
+    // this is called for the target object when a callback is added
+    // to a hook stack
+    // all request hooks are cascaded versions of this, depending on the stack
+    // added to
+    HOOK_ATTACHED_HOOK,
+
+    // cascaded version of hook_attached
+    // hook is triggered in an object if a callback has been placed in its
   // idle stack
-  IDLE_QUEUED_HOOK,
+    IDLE_QUEUED_HOOK,
 
   // thread running the transform received a fatal signal
   THREAD_EXIT_HOOK,
@@ -1768,51 +1800,27 @@ NIRVA_ENUM {
   // REQUEST HOOKS - tx will provide hook callbacks which another object can trigger
   // if the target object is not active, or is busy, the automation may respond as a proxy
 
-  // these hooks are triggered by a structure transform:
-  // nirva_request_hook(fn_input, fn_output)
-  // fn_input should contain at least: caller_object, target_object, target_dest, hook_number,
-  // (or hook_type, hook_flags), and any other strands / attributes specified by the hook
-  // (see documentation for details), the output and reponse depend on the request type
+    // requests are cascade values of the HOOK_ATTACHED_HOOK
+    // a request is made by addeding a request_bundle to the target's request hook
+    // the result is to trgiger a hook_attached_hook. If this is not reponded to, then wait_retry
+    // will be returned. The object will respond later and action the callback.
 
-  // this request should be triggered to read the value of any strand (ex.
-  // the data strand of an attribute). if there ar no callbacks then the
-  // value is simply returned
-  // Triggering this hook is normally done automatically in a mcro e.g. NIRVA_GET_VALUE
-  // If there are no callbacks, the reuslt will be simply to retuen the value of the strand.
-  // For added (user or structure) callbacks, the type of callback here is "Oraculor",
-  // the return codes are the same as thos used for conditions, with the followin menaings:
-  // COND_FAIL, COND_SUCCESS - continue to next cb, on COND_FAIL the cb will be removed
-  // COND_FORCE - the callback can povide an override in fn_output.valu.data to be returned
-  // instead. COND_WAIT_RETRY - data not ready, caller should wait and retry.
-  // This is the return code returned during a transform by a data provider when it is not yet
-  // ready to supply new data.
-  // COND_ERROR - if the strand does not exist, or other erro,
-  // Since end caller expects a value
-  // back this can be cehcked for via NIRVA_ERR_CHECK.
-  // When reading a value from an array, optionally fn_in may contain a BUNDLE_MATCH_CONDITION
-  // which can facilitate searching for a specific item in the array.
-  // This is utilised by keyed
-  // arrays to optimise locating strands (attribute by name, bundle by uid and so on).
+  // this request should be triggered to request an update of an attribute or attr_group
+    // in cases where this is marked as neccessary
+    // request_yes means the data has been updated, request_no means there is no new data
+    // request_wait_retry means the data will be updated async
+    // the response can be connected to and the reply updated when ready
 
   DATA_REQUEST_HOOK,
 
   // asks the structure to check if it is OK to add a strand to a bundle
-  // if the strand is in the blueprint it will always return REQUEST_YES
-  // otherwise a COND_CHECK on PRIV_STRANDS is done,
-  // ormally requires PRIV_STRANDS > 10, to prevent this from happening
-  // accidentally, requests originating from a thread in another object require priv >50
-  // adding a strand to a template requires priv > 100
-  // and to a structural, priv > 200
+  // if the strand is a self strand and in the blueprint it will always return REQUEST_YES
+    // for custom strands or in  other bundles, a priv check is required
   ADD_STRAND_REQUEST_HOOK,
 
   // asks the structure if it is OK to delete a strand
-  // if the strand is optional in the blueprint it will always return REQUEST_YES
-  // otherwise a COND_CHECK on PRIV_STRANDS is done,
-  // ormally requires PRIV_STRANDS > 20, to prevent this from happening
-  // accidentally, requests originating from a thread in another object require priv >70
-  // to stop runaway threads from deleting parts of the system
-  // deleting a strand from a template requires priv > 100
-  // and from a structural, priv > 1000
+    // for optional self strands, will always return REQUEST_YES
+    // for mandatory strands, or strands in other bundles, a priv check is required
   DELETE_STRAND_REQUEST_HOOK,
 
   // this is called by autopmation in response to refcount going below zeo
@@ -1822,7 +1830,7 @@ NIRVA_ENUM {
   // equivalent to request_update on the bundle;s REFECOUNT.SHOULD_FREE and a target
   // value of NIRVA_TRUE
   // (in this case the "value" becomes an offset)
-  // needs PRIV_LIFECYCLE > 10
+  // PRIV_LIFECYCLE will be checked before reokying
   DESTRUCT_REQUEST_HOOK,
 
   // asks the bundle (which must have a refcount sub-bundle) to increase the refcount
@@ -1831,6 +1839,8 @@ NIRVA_ENUM {
   // so that it can always unref 1 extra time
   // equivalent to request_update on the bundle;s REFECOUNT.REFCOUNT and a target 'value' of +1
   // (in this case the "value" becomes an offset)
+    // target can be any bundle with a refcount sub bundle - in the default case this would
+    // be an object or an attribute / attribute group
   REF_REQUEST_HOOK,
 
   // request the objec decrement the refcount by 1. The caller must previosly have added a ref
@@ -1849,7 +1859,8 @@ NIRVA_ENUM {
   // the previous transform
   // target / value TBD. If the transform cannot be undone further,
   // NIRVA_REPSONE_NO should be returned
-  UNDO_REQUEST_HOOK,
+    // target is a transform with completed status
+    UNDO_REQUEST_HOOK,
 
   // if the transform exposes this hook, then this request can be triggered after or
   // during a transform. If accepted, the target
@@ -1857,18 +1868,17 @@ NIRVA_ENUM {
   // for the previous transform
   // target / value TBD. If the transform cannot be redone further,
   // NIRVA_REPSONE_NO should be returned
-  REDO_REQUEST_HOOK,
+    // target is a transform with completed status
+    REDO_REQUEST_HOOK,
 
-  // this is called BEFORE a remote attribute connects to a local attribute
-  // this is a SELF hook, meaning only the object owning the attribute may add callbacks
-  // returng RQUEST_NO blocks the connection
-  //
-  // and remote attr maps a pointer to the local attr. The reomote attribute
-  // gets the same flags as the local one
-  // plus the CONNECTED flagbits. The prior data is not freed,
-  // however when the attribute disconnects
-  // target is attribute connections_in. array, data is ptr to local attr
-  ATTR_CONNECT_REQUEST,
+    // this request may be made before or after connect a local attribute to a remote one
+    // when an attribute is connected, it becomes readonly by default
+    // in case the object connecting wants write access, it must call this with a callback as data
+    // if the request is accepted, the callback is added to to the data_preview hook
+    // whenevr data is ready for editing, the callback will be triggered with the attribute
+    // marked rw. The target_dest is an attr_group which the attribute is part of,
+
+  ATTR_CONNECT_RW_REQUEST,
 
   //
   // if the app has an arbitrator, an object bound to a contract may tigger this, and on
@@ -1933,30 +1943,28 @@ NIRVA_TYPEDEF(NIRVA_BUNDLEPTR, nirva_bundleptr_t)
 
 #define BUNLISTx(BDEF_DEFx_, BDEF_DEF_, pre, extra)			\
     BDEF_DEF_(STRAND, pre, extra) BDEF_DEF_(DEF, pre, extra)		\
-      BDEF_DEF_(STRAND_DESC, pre, extra)				\
+      BDEF_DEF_(STRAND_DEF, pre, extra) BDEF_DEF_(SUPER_ARRAY, pre, extra) \
       BDEF_DEF_(BLUEPRINT, pre, extra) BDEF_DEF_(VALUE, pre, extra)	\
       BDEF_DEF_(ATTR_VALUE, pre, extra) BDEF_DEF_(VALUE_CHANGE, pre, extra) \
-      BDEF_DEF_(ATTR_DESC, pre, extra) BDEF_DEF_(PMAP, pre, extra)	\
-      BDEF_DEF_(PMAP_DESC, pre, extra) BDEF_DEF_(ATTRIBUTE, pre, extra)	\
+      BDEF_DEF_(ATTR_DEF, pre, extra) BDEF_DEF_(PMAP, pre, extra)	\
+      BDEF_DEF_(PMAP_DEF, pre, extra) BDEF_DEF_(ATTRIBUTE, pre, extra)	\
       BDEF_DEF_(ATTR_CONNECTION, pre, extra) BDEF_DEF_(EMISSION, pre, extra) \
       BDEF_DEF_(FN_INPUT, pre, extra) BDEF_DEF_(FN_OUTPUT, pre, extra)	\
-      BDEF_DEF_(FUNCTIONAL, pre, extra) BDEF_DEF_(FUNC_DESC, pre, extra) \
+      BDEF_DEF_(FUNCTIONAL, pre, extra) BDEF_DEF_(FUNC_DEF, pre, extra) \
       BDEF_DEF_(CAP, pre, extra)  BDEF_DEF_(REQUEST, pre, extra)	\
       BDEF_DEF_(INDEX, pre, extra) BDEF_DEF_(ERROR, pre, extra)		\
       BDEF_DEF_(ICAP, pre, extra) BDEF_DEF_(ATTR_POOL, pre, extra)	\
       BDEF_DEF_(HOOK_DETAILS, pre, extra) BDEF_DEF_(HOOK_STACK, pre, extra) \
-      BDEF_DEF_(HOOK_CB_FUNC, pre, extra) BDEF_DEF_(COND_ARRAY, pre, extra) \
+      BDEF_DEF_(HOOK_CB_FUNC, pre, extra) BDEF_DEF_(LOCATOR, pre, extra)	\
       BDEF_DEF_(OBJECT_TEMPLATE, pre, extra) BDEF_DEF_(OBJECT_INSTANCE, pre, extra) \
-      BDEF_DEF_(THREAD_INSTANCE, pre, extra) BDEF_DEF_(OWNED_ATTRS, pre, extra) \
-      BDEF_DEF_(TRANSFORM, pre, extra) BDEF_DEF_(OBJECT, pre, extra)	\
-      BDEF_DEF_(CONTRACT, pre, extra) BDEF_DEF_(LOCATOR, pre, extra)	\
+      BDEF_DEF_(OWNED_ATTRS, pre, extra) BDEF_DEF_(OBJECT, pre, extra)	\
       BDEF_DEF_(MATRIX_2D, pre, extra) BDEF_DEF_(CONDVAL_NODE, pre, extra) \
       BDEF_DEF_(CONDLOGIC, pre, extra) BDEF_DEF_(CASCADE, pre, extra)	\
       BDEF_DEF_(CONSTVAL_MAP, pre, extra) BDEF_DEF_(CASCMATRIX_NODE, pre, extra) \
       BDEF_DEF_(TSEGMENT, pre, extra) BDEF_DEF_(SCRIPTLET, pre, extra) \
-      BDEF_DEF_(TRAJECTORY, pre, extra) BDEF_DEF_(KEY_LOOKUP, pre, extra) \
-      BDEF_DEF_(FUNC_DESC_CON, pre, extra) BDEF_DEF_(ATTR_CON, pre, extra) \
-      BDEF_DEF_(ATTR_DESC_CON, pre, extra) BDEF_DEF_(OBJECT_CON, pre, extra)
+      BDEF_DEF_(TRAJECTORY, pre, extra) BDEF_DEF_(LOOKUP, pre, extra) \
+      BDEF_DEF_(FUNC_DEF_HOLDER, pre, extra) BDEF_DEF_(ATTR_GROUP, pre, extra) \
+      BDEF_DEF_(ATTR_DEF_HOLDER, pre, extra) BDEF_DEF_(OBJECT_HOLDER, pre, extra)
 
 #define ABUNLISTx(ABDEF_DEFx_, ABDEF_DEF_, pre, extra) ABDEF_DEF_(ASPECT_THREADS, pre, extra)
 
@@ -1971,7 +1979,7 @@ NIRVA_TYPEDEF_MULTI(bundle_type, \
                                 n_builtin_bundledefs});
 
 NIRVA_TYPEDEF_MULTI(attr_bundle_type, \
-                    NIRVA_ENUM {ABUNLIST(ATTR_BDEF_DEF_CONCAT,, _ATTR_BUNDLE_TYPE) \
+                    NIRVA_ENUM {ABUNLIST(ATTR_BDEF_DEF_CONCAT,, _ATTR_GROUP_TYPE) \
                                 n_builtin_attr_bundles});
 #ifdef BDEF_DEF
 #undef BDEF_DEF
@@ -1980,7 +1988,7 @@ NIRVA_TYPEDEF_MULTI(attr_bundle_type, \
 #undef ABDEF_DEF
 #endif
 
-NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY all_strands;
+NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY all_def_strands;
 NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_strands(NIRVA_CONST_STRING fmt, ...);
 NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY make_bundledef(NIRVA_CONST_STRING name,	\
     NIRVA_CONST_STRING pfx, ...);
@@ -1995,7 +2003,7 @@ NIRVA_EXTERN NIRVA_CONST_STRING_ARRAY maker_get_bundledef(bundle_type btype);
 #define MBX(name) MB(#name, NULL, _##name##_BUNDLE)
 #endif
 #ifndef MABX
-#define MABX(name) MB(#name, NULL, _##name##_ATTR_BUNDLE)
+#define MABX(name) MB(#name, NULL, _##name##_ATTR_GROUP)
 #endif
 #define BDEF_DEFINE(BNAME) NIRVA_CONST_STRING_ARRAY BNAME##_BUNDLEDEF
 

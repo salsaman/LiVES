@@ -280,22 +280,6 @@ LIVES_GLOBAL_INLINE boolean lives_str_starts_with(const char *st1, const char *s
 LIVES_GLOBAL_INLINE const char *lives_str_starts_with_skip(const char *st1, const char *st2) {
   if (!st1 || !st2) return NULL;
   else {
-    /* boolean hnb = FALSE; */
-    /* uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2; */
-    /* while (1) { */
-    /*   if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) { */
-    /*     do { */
-    /*       d1 = *(ip1++); */
-    /*       d2 = *(ip2++); */
-    /* 	  g_printf("CFFF %lu and %lu\n", d1, d2); */
-    /*     } while (d1 == d2 && !(hnb = hasNulByte(d2))); */
-    /*     if (!hnb) return NULL; */
-    /*     st1 = (void *)ip1; st2 = (void *)ip2; */
-    /*   } */
-    /*   if (*(st1++) != *st2) return NULL; */
-    /*   if (!(*(st2++))) return st1; */
-    /* } */
-
     size_t srchlen = lives_strlen(st2);
     if (!lives_strncmp(st1, st2, srchlen)) return st1 + srchlen;
     return NULL;
@@ -773,7 +757,7 @@ LIVES_GLOBAL_INLINE const char *lives_strappendf(const char *string, int len, co
 
 char *lives_strdup_concat(char *str, const char *sep, const char *fmt, ...) {
   // appends to a, freeing old ptr and returning new string
-  // if sep, str and fmted string are all non NULL / non empty, inserts sep aftee str
+  // if sep, str and fmted string are all non NULL / non empty, inserts sep after str
   va_list xargs;
   char *tmp, *out;
   va_start(xargs, fmt);

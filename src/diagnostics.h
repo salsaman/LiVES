@@ -10,6 +10,17 @@
 #include "main.h"
 #include "mainwindow.h"
 
+#define TEST_WEED		(1ull << 0)
+#define TEST_RNG		(1ull << 1)
+#define TEST_LSD		(1ull << 2)
+#define TEST_PAL_CONV		(1ull << 3)
+#define TEST_BUNDLES		(1ull << 4)
+#define ABORT_AFTER		(1ull << 60)
+
+lives_result_t do_startup_diagnostics(uint64_t tests_to_run);
+
+//
+
 boolean debug_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod,
                        livespointer statep);
 
@@ -17,7 +28,6 @@ void explain_missing_activate(LiVESMenuItem *, livespointer user_data);
 
 void run_diagnostic(LiVESWidget *, const char *testname);
 
-lives_result_t do_startup_diagnostics(boolean abort_after);
 
 char *get_stats_msg(boolean calc_only);
 double get_inst_fps(boolean get_msg);

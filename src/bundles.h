@@ -17,24 +17,28 @@ typedef bundle_t lives_contract_t;
 typedef bundle_t lives_transform_t;
 typedef bundle_t lives_trajactory_t;
 typedef bundle_t lives_tsegment_t;
-typedef bundle_t lives_attr_desc_t;
+typedef bundle_t lives_attr_def_t;
 typedef bundle_t lives_attr_container_t;
-typedef bundle_t lives_attr_desc_container_t;
+typedef bundle_t lives_attr_def_container_t;
 typedef bundle_t lives_attr_connect_t;
+typedef bundle_t blueprint_t;
+typedef bundle_t strand_def_t;
+typedef bundle_t strand_t;
+typedef bundle_t scriptlet_t;
 
 // implementation defaults and overrides
 #define NIRVA_BUNDLE_T weed_plant_t
 
 // type, ...
-#define IMPL_FUNC_create_bundle_by_type create_gen1_bundle_by_type
+#define IMPL_FUNC_create_bundle_by_type create_gen2_bundle_by_type
 
-// bdef, ...
-#define IMPL_FUNC_create_bundle_from_bdef create_bundle_with_vargs
+// TODO - does not pass btype
+#define IMPL_FUNC_create_bundle_from_blueprint create_gen2_bundle_with_vargs
 
 #define IMPL_FUNC_nirva_value_set lives_strand_value_set
 #define IMPL_FUNC_nirva_array_append lives_strand_array_append
 
-// free an strand and the data it contains
+// free a strand and the data it contains
 #define IMPL_FUNC_nirva_strand_delete lives_strand_free
 
 // free an empty bundle after all strands have been removed
@@ -71,12 +75,11 @@ typedef bundle_t lives_attr_connect_t;
 #define IMPL_FUNC_nirva_array_count lives_array_count
 
 // optional optimisation; else we will check list_strands
-#define IMPL_FUNC_nirva_bundle_has_strand bundle_has_item
+#define IMPL_FUNC_nirva_bundle_has_strand bundle_has_strand
 
 // recommended
-#define IMPL_FUNC_nirva_bundle_request_blueprint lives_bundle_request_blueprint
-
-//#define IMPL_FUNC_nirva_strand_copy bundle_array_append
+#define IMPL_FUNC_nirva_bundle_request_blueprint get_blueprint_from_bundle
+#define IMPL_FUNC_nirva_strand_copy bundle_strand_copy
 
 /* //#define IMPL_FUNC_get_bundle_strand_type get_bundle_strand_type */
 /* //#define IMPL_FUNC_bundle_list_opt_strands bundle_list_opt_items */
@@ -118,9 +121,10 @@ bundle_t *def_bundle_from_bundledef(bundledef_t bdef);
 
 bundle_t *create_object_bundle(uint64_t otype, uint64_t subtype);
 
-boolean bundle_has_item(bundle_t *, const char *item);
+boolean bundle_has_strand(bundle_t *, const char *stname);
 
 bundledef_t get_bundledef_from_bundle(bundle_t *);
+blueprint_t *get_blueprint_from_bundle(bundle_t *);
 
 size_t bundle_array_append(bundle_t *bundle, const char *name, void *thing);
 size_t bundle_array_append_n(bundle_t *bundle, const char *name, uint32_t vtype, int ne, ...);
@@ -130,7 +134,9 @@ uint64_t get_bundle64sum(bundle_t *, char **flattened);
 
 boolean set_bundle_value(bundle_t *, const char *name, ...);
 
-char *nirvascope_bundle_to_header(bundle_t *, const char *tname);
+char *nirvascope_bundle_to_header(bundle_t *, const char *tname, int idx);
+char *nirvascope_blueprint_to_header(bundle_t *, const char *tname);
+size_t nirvascope_get_bundle_weight(bundle_t *b);
 
 bundle_t *lookup_item_in_array(bundle_t *con, const char *aname);
 
@@ -140,17 +146,19 @@ uint32_t get_attr_type(nirva_attr_t *attr);
 int lives_attr_get_value_int(lives_attr_t *attr);
 int64_t lives_attr_get_value_int64(lives_attr_t *attr);
 
-bundle_t *lives_strand_get_value_bundletptr(bundle_t *bundle, const char *item);
-int lives_strand_get_value_int(bundle_t *bundle, const char *item);
-char *lives_strand_get_value_string(bundle_t *bundle, const char *item);
-int64_t lives_strand_get_value_int64(bundle_t *bundle, const char *item);
-uint64_t lives_strand_get_value_uint64(bundle_t *bundle, const char *item);
+bundle_t *lives_strand_get_value_bundleptr(bundle_t *, const char *item);
+bundle_t *lives_strand_get_value_const_bundleptr(bundle_t *, const char *item);
+void *lives_strand_get_value_voidptr(bundle_t *, const char *item);
+int lives_strand_get_value_int(bundle_t *, const char *item);
+uint32_t lives_strand_get_value_uint32(bundle_t *, const char *item);
+char *lives_strand_get_value_string(bundle_t *, const char *item);
+int64_t lives_strand_get_value_int64(bundle_t *, const char *item);
+uint64_t lives_strand_get_value_uint64(bundle_t *, const char *item);
 
-char **lives_strand_get_array_string(bundle_t *bundle, const char *item);
+char **lives_strand_get_array_string(bundle_t *, const char *item);
 char **bundle_list_items(bundle_t *);
 void set_strand_value(bundle_t *, const char *, ...);
 
-void lives_set_strand_value(bundle_t *bundle, const char *name, uint32_t vtype, va_list val);
-
-//bundle_t ** lives_strand_get_array_bundletptr(bundle_t *bundle, const char *item);
+void lives_set_strand_value_gen1(bundle_t *bundle, const char *name, uint32_t vtype, va_list val);
+void lives_set_strand_value_gen2(bundle_t *bundle, const char *name, va_list val);
 #endif

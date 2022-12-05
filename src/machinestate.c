@@ -2161,7 +2161,7 @@ boolean lives_reenable_screensaver(void) {
   } else com = lives_strdup("");
 #endif
 
-  lives_hook_remove(mainw->global_hook_closures, FATAL_HOOK, enable_ss_cb, NULL, mainw->global_hook_mutexes);
+  lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, enable_ss_cb, NULL);
 
   if (com) {
     lives_cancel_t cancelled = mainw->cancelled;
@@ -2216,8 +2216,8 @@ boolean lives_disable_screensaver(void) {
       THREADVAR(com_failed) = FALSE;
     }
     else {
-      lives_hook_prepend(mainw->global_hook_closures, FATAL_HOOK,
-			 0, enable_ss_cb, mainw->global_hook_mutexes);
+      lives_hook_prepend(mainw->global_hook_stacks, FATAL_HOOK,
+			 0, enable_ss_cb, NULL);
     }
     return TRUE;
   }
@@ -2441,7 +2441,7 @@ boolean show_desktop_panel(void) {
   if (wid) {
     ret = unhide_x11_window(wid);
     lives_free(wid);
-    lives_hook_remove(mainw->global_hook_closures, FATAL_HOOK, show_dpanel_cb, NULL, mainw->global_hook_mutexes);
+    lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, show_dpanel_cb, NULL);
   }
 #endif
   return ret;
@@ -2455,7 +2455,7 @@ boolean hide_desktop_panel(void) {
   if (wid) {
     ret = hide_x11_window(wid);
     lives_free(wid);
-    lives_hook_prepend(mainw->global_hook_closures, FATAL_HOOK, 0, show_dpanel_cb, NULL);
+    lives_hook_prepend(mainw->global_hook_stacks, FATAL_HOOK, 0, show_dpanel_cb, NULL);
   }
 #endif
   return ret;

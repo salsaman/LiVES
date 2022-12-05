@@ -937,7 +937,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
       munmap(p, fsize);
 #endif
     }
-    if (run_hooks) lives_hooks_trigger(NULL, THREADVAR(hook_closures), DATA_READY_HOOK);
+    if (run_hooks) lives_hooks_trigger(NULL, THREADVAR(hook_stacks), DATA_READY_HOOK);
   } else {
     // if there is not enough data to even try reading, we must set EOF
     // else clllaer wil not relinquish the sync_mutes

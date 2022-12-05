@@ -350,6 +350,10 @@ extern "C"
     else {lsd = lsd_create_p(#type, thestruct, sizeof(type), &thestruct->lsd); \
       (*_lsd_free)(thestruct);}} while (0);
 
+#define ADD_SPCL_FIELD(field, flags, nfuncs, ...)			\
+  lsd_add_special_field(thestruct->lsd, #field, flags, &thestruc->##field, nfuncs, \
+			thestruct, __VA_ARGS__, NULL);
+
 #define LSD_CREATE(lsd, type) do {type *thestruct; lsd = 0;		\
     if (!(*_lsd_calloc_aligned_)((void **)&thestruct, 1, sizeof(type)))	\
       {lsd_memerr_print(sizeof(type), "all fields", #type);}		\
@@ -374,7 +378,7 @@ extern "C"
   // if a callback is not used, then it MUST be set to lsd_null_cb, and the following data parameter omitted
   // all three callbacks MUST be defined.
   //
-  static void add_special_field(lsd_struct_def_t *, const char *field_name, uint64_t flags, void *ptr_to_field,
+  static void lsd_add_special_field(lsd_struct_def_t *, const char *field_name, uint64_t flags, void *ptr_to_field,
 				size_t data_size, void *sample_struct, ...) ALLOW_UNUSED;
 
   /// creates a new instance of struct. lsd must  be one returned from create_lsd / lsd_struct_init
@@ -1186,7 +1190,7 @@ extern "C"
     if (!lsd) return 0;
     if (!lsd->generation && !lsd->owner_uid && !lsd->top) ((lsd_struct_def_t *)lsd)->owner_uid = owner_uid;
     return lsd->owner_uid; }
-  static void add_special_field(lsd_struct_def_t *lsd, const char *field_name, uint64_t flags, void *ptr_to_field,
+  static void lsd_add_special_field(lsd_struct_def_t *lsd, const char *field_name, uint64_t flags, void *ptr_to_field,
 				size_t data_size, void *sample_struct, ...) {
     va_list vargs; va_start(vargs, sample_struct);
     _lsd_add_special_field(&lsd->special_fields, field_name, flags, (char *)ptr_to_field, data_size,

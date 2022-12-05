@@ -1597,8 +1597,7 @@ typedef struct {
   ulong pw_scroll_func;
   boolean msg_area_configed;
 
-  LiVESList *global_hook_closures[N_GLOBAL_HOOKS];
-  pthread_mutex_t global_hook_mutexes[N_GLOBAL_HOOKS];
+  lives_hook_stack_t *global_hook_stacks[N_GLOBAL_HOOKS];
 
   /// jack audio player / transport
 #ifdef ENABLE_JACK

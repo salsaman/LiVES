@@ -45,9 +45,9 @@
 #ifndef HAS_LIVES_INTENTS_H
 #define HAS_LIVES_INTENTS_H
 
-#define NIRVA_BUNDLE_T weed_plant_t
+#define NIRVA_BUNDLEPTR_T weed_plantptr_t
 
-extern boolean bundle_has_item(NIRVA_BUNDLE_T *, const char *item);
+extern boolean bundle_has_item(NIRVA_BUNDLEPTR_T, const char *item);
 
 #define IMPL_FUNC_HAS_ITEM bundle_has_item
 
@@ -102,8 +102,7 @@ struct _object_t {
   lives_intentcap_t icap;
   lives_obj_attr_t **attributes; // internal parameters (properties)
   lives_object_transform_t *active_tx; // pointer to currently running transform (or NULL)
-  LiVESList *hook_closures[N_HOOK_POINTS]; /// TODO - these should probably be part of active_tx
-  pthread_mutex_t hook_mutex[N_HOOK_POINTS];
+  lives_hook_stack_t *hook_stacks[N_HOOK_POINTS]; /// TODO - these should probably be part of active_tx
   void *priv; // internal data belonging to the object
 };
 

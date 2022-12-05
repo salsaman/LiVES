@@ -987,7 +987,7 @@ boolean fg_service_fulfill(void) {
   if (!is_fg_thread()) return FALSE;
 
   if (!lpttorun) {
-    lives_hooks_trigger(NULL, THREADVAR(hook_closures), INTERNAL_HOOK_0);
+    lives_hooks_trigger(NULL, THREADVAR(hook_stacks), INTERNAL_HOOK_0);
     return FALSE;
   }
 
@@ -1012,7 +1012,7 @@ boolean fg_service_fulfill(void) {
       g_print("FGSF 14 %d\n", is_fg_service);
 #endif
       fg_run_func(lpttorun, lpt_retval);
-      if (!is_fg_service) THREADVAR(fg_service) = FALSE;
+       if (!is_fg_service) THREADVAR(fg_service) = FALSE;
     }
 #ifdef DEBUG_GUI_THREADS
     g_print("FGSF 15\n");
@@ -1031,7 +1031,7 @@ boolean fg_service_fulfill_cb(void *dummy) {
     lives_source_remove(mainw->fg_service_handle);
     mainw->fg_service_handle = 0;
   }
-  lives_widget_context_update();
+  //lives_widget_context_update();
   mainw->fg_service_handle = g_idle_add(fg_service_fulfill_cb, NULL);
   return FALSE;
 }
@@ -1946,17 +1946,16 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget *w
 }
 
 
-static boolean lptgone(lives_obj_t *obj, boolean *var) {
-  *var = TRUE;
+static boolean lptgone(lives_obj_t *obj, void *data) {
+  *(boolean *)data = TRUE;
   return TRUE;
 }
 
 
-static boolean lptdone(lives_obj_t *obj, boolean *var) {
-  if (!lpttorun) return TRUE;
-  return *var;
+static boolean lptdone(lives_obj_t *obj, lives_proc_thread_t lpt) {
+  if (!lpttorun || lpttorun != lpt) return TRUE;
+  return FALSE;
 }
-
 
 static boolean clutchtrue(lives_obj_t *obj, lives_proc_thread_t lpt) {
   return mainw->clutch;
@@ -1969,11 +1968,11 @@ uint32_t wait_for_fg_response(lives_proc_thread_t lpt) {
 
   if (lpt) {
     // should not be necessary, but just in case
-    weed_refcount_inc(lpt);
-    lives_proc_thread_hook_append(lpt, TX_DEFERRED_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
-    lives_proc_thread_hook_append(lpt, COMPLETED_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
+    lives_proc_thread_ref(lpt);
+    //lives_proc_thread_hook_append(lpt, TX_QUEUED_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
+    //lives_proc_thread_hook_append(lpt, COMPLETED_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
     lives_proc_thread_hook_append(lpt, DESTRUCTION_HOOK, 0, (hook_funcptr_t)lptgone, &bvar);
-    lives_hook_append(NULL, SYNC_WAIT_HOOK, 0, (hook_funcptr_t)lptdone, &bvar);
+    lives_hook_append(NULL, SYNC_WAIT_HOOK, 0, (hook_funcptr_t)lptdone, lpt);
     lpttorun = lpt;
   }
 
@@ -1990,13 +1989,21 @@ uint32_t wait_for_fg_response(lives_proc_thread_t lpt) {
   } else {
     mainw->clutch = FALSE;
   }
-  lives_hook_append(NULL, SYNC_WAIT_HOOK, 0, (hook_funcptr_t)clutchtrue, lpt);
-  thread_wait_loop(NULL, NULL, FALSE, TRUE);
-  lives_hook_remove(THREADVAR(hook_closures), SYNC_WAIT_HOOK, (hook_funcptr_t)lptdone, &bvar, THREADVAR(hook_mutex));
-  lives_hook_remove(THREADVAR(hook_closures), SYNC_WAIT_HOOK, (hook_funcptr_t)clutchtrue, lpt, THREADVAR(hook_mutex));
+  lives_hook_append(NULL, SYNC_WAIT_HOOK, 0, (hook_funcptr_t)clutchtrue, &bvar);
 
+  thread_wait_loop(NULL, NULL, FALSE, TRUE, &bvar);
+
+  lives_hook_remove(THREADVAR(hook_stacks), SYNC_WAIT_HOOK, (hook_funcptr_t)lptdone, &bvar);
+  lives_hook_remove(THREADVAR(hook_stacks), SYNC_WAIT_HOOK, (hook_funcptr_t)clutchtrue, lpt);
+  
   // remove our added ref
-  if (lpt) weed_refcount_dec(lpt);
+  if (lpt) {
+    lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(lpt);
+    //lives_hook_remove(hook_stacks, TX_QUEUED_HOOK, (hook_funcptr_t)lptgone, &bvar);
+    //lives_hook_remove(hook_stacks, COMPLETED_HOOK, (hook_funcptr_t)lptgone, &bvar);
+    lives_hook_remove(hook_stacks, DESTRUCTION_HOOK, (hook_funcptr_t)lptgone, &bvar);
+    lives_proc_thread_unref(lpt);
+  }
   return mysource;
 }
 

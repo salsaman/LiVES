@@ -850,15 +850,17 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   // finish with chain_lock readlock on prevprev. prev amd leaf
 
   if (!leaf || leaf == plant) err = WEED_ERROR_NOSUCH_LEAF;
+  else {
 #ifdef ENABLE_PROXIES
-  if (leaf->flags & WEED_FLAG_PROXY) err = _weed_ext_detatch_leaf_int(leaf);
+    if (leaf->flags & WEED_FLAG_PROXY) err = _weed_ext_detatch_leaf_int(leaf);
 #endif
-  if (leaf->flags & WEED_FLAG_UNDELETABLE) err = WEED_ERROR_UNDELETABLE;
+    if (leaf->flags & WEED_FLAG_UNDELETABLE) err = WEED_ERROR_UNDELETABLE;
+  }
 
   if (err != WEED_SUCCESS) {
     chain_lock_unlock(plant);
     if (leafprev != leaf && leafprev != plant) chain_lock_unlock(leafprev);
-    if (leaf != plant) chain_lock_unlock(leaf);
+    if (leaf && leaf != plant) chain_lock_unlock(leaf);
     structure_mutex_unlock(plant);
     return err;
   }

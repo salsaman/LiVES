@@ -58,7 +58,7 @@ boolean jack_warn(boolean is_trans, boolean is_con) {
       }
     }
     if (com) {
-      lives_hook_append(mainw->global_hook_closures, RESTART_HOOK, 0, lives_fork_cb, com);
+      lives_hook_append(mainw->global_hook_stacks, RESTART_HOOK, 0, lives_fork_cb, com);
     }
   }
   // TODO - if we have backup config, restore from it
@@ -66,8 +66,7 @@ boolean jack_warn(boolean is_trans, boolean is_con) {
     maybe_abort(TRUE, mainw->restart_params);
   }
   if (com) {
-    lives_hook_remove(mainw->global_hook_closures, RESTART_HOOK, lives_fork_cb, com,
-                      mainw->global_hook_mutexes);
+    lives_hook_remove(mainw->global_hook_stacks, RESTART_HOOK, lives_fork_cb, com);
   }
   return ret;
 }
@@ -1426,7 +1425,7 @@ retry_connect:
     jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
 
     mainw->crash_possible = 1;
-    lives_hook_append(THREADVAR(hook_closures), THREAD_EXIT_HOOK, 0,
+    lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0,
                       defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
     if (!mainw->signals_deferred) {
@@ -1442,9 +1441,8 @@ retry_connect:
 
     jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
 
-    lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
-                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible),
-                      mainw->global_hook_mutexes);
+    lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK,
+                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
@@ -1470,7 +1468,7 @@ retry_connect:
     // if server name is NULL, then use 'default' or $JACK_DEFAULT_SERVER
     jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
     mainw->crash_possible = 2;
-    lives_hook_append(THREADVAR(hook_closures), THREAD_EXIT_HOOK, 0,
+    lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0,
                       defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (!mainw->signals_deferred) {
       // try to handle crashes in jack_client_open()
@@ -1483,9 +1481,8 @@ retry_connect:
     jack_log_errmsg(jackd, logmsg);
     lives_free(logmsg);
     jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
-    lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
-                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible),
-                      mainw->global_hook_mutexes);
+    lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK,
+                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
       mainw->crash_possible = 0;
@@ -1824,7 +1821,7 @@ retry_connect:
   } else {
     mainw->crash_possible = 4;
   }
-  lives_hook_append(THREADVAR(hook_closures), THREAD_EXIT_HOOK, 0, defer_sigint_cb,
+  lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0, defer_sigint_cb,
                     LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   if (!mainw->signals_deferred) {
@@ -1836,9 +1833,8 @@ retry_connect:
   if (lpt) lives_proc_thread_exclude_states(lpt, THRD_STATE_BUSY);
 
   if (!jackctl_server_open(jackserver, driver)) {
-    lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
-                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible),
-                      mainw->global_hook_mutexes);
+    lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK,
+                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
       mainw->crash_possible = 0;
@@ -1853,22 +1849,20 @@ retry_connect:
     goto ret_failed;
   }
 
-  lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
-                    defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible),
-                    mainw->global_hook_mutexes);
+  lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK,
+                    defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
   if (is_trans) {
     mainw->crash_possible = 5;
   } else {
     mainw->crash_possible = 6;
   }
 
-  lives_hook_append(THREADVAR(hook_closures), THREAD_EXIT_HOOK, 0, defer_sigint_cb,
+  lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0, defer_sigint_cb,
                     LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   if (!jackctl_server_start(jackserver)) {
-    lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
-                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible),
-                      mainw->global_hook_mutexes);
+    lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK,
+                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
       mainw->crash_possible = 0;
@@ -1889,7 +1883,7 @@ retry_connect:
   } else {
     mainw->crash_possible = 6;
   }
-  lives_hook_append(THREADVAR(hook_closures), THREAD_EXIT_HOOK, HOOK_CB_SINGLE_SHOT,
+  lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, HOOK_CB_SINGLE_SHOT,
                     defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   if (!mainw->signals_deferred) {
@@ -1899,7 +1893,7 @@ retry_connect:
   }
 
   if (!jackctl_server_start(jackserver, driver)) {
-    lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
+    lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK,
                       defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
@@ -1918,9 +1912,8 @@ retry_connect:
 
 #endif
 
-  lives_hook_remove(THREADVAR(hook_closures), THREAD_EXIT_HOOK,
-                    defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible),
-                    mainw->global_hook_mutexes);
+  lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK,
+                    defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   if (needs_sigs) {
     set_signal_handlers((SignalHandlerPointer)catch_sigint);
@@ -3536,7 +3529,7 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
   int nch = jackd->num_input_channels;
   int i;
 
-  lives_hooks_join(jackd->inst->hook_closures[DATA_READY_HOOK], &jackd->inst->hook_mutex[DATA_READY_HOOK]);
+  lives_hooks_join(jackd->inst->hook_stacks[DATA_READY_HOOK]);
 
   if (!jackd->in_use) return 0;
 
@@ -3583,7 +3576,7 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
   lives_aplayer_set_data_len(jackd->inst, nframes);
   lives_aplayer_set_data(jackd->inst, (void *)back_buff);
 
-  lives_hooks_triggero(jackd->inst, jackd->inst->hook_closures, DATA_READY_HOOK);
+  lives_hooks_triggero(jackd->inst, jackd->inst->hook_stacks, DATA_READY_HOOK);
 
   rbytes = nframes * jackd->num_input_channels * 4;
   jackd->seek_pos += rbytes;
@@ -4489,7 +4482,7 @@ retry:
         }
       }
 #endif
-      lives_hook_append(THREADVAR(hook_closures), FINISHED_HOOK, 0, jack_interop_cleanup, jackd);
+      lives_hook_append(THREADVAR(hook_stacks), FINISHED_HOOK, 0, jack_interop_cleanup, jackd);
       need_clnup = TRUE;
     } else {
       jack_interop_cleanup(NULL, jackd);

@@ -33,17 +33,17 @@ const lsd_struct_def_t *get_lsd(lives_struct_type st_type) {
     lsd = lsd_create_p("lives_clip_data_t", cdata, sizeof(lives_clip_data_t), &cdata->lsd);
     if (lsd) {
       lives_clip_data_t *cdata = (lives_clip_data_t *)lives_calloc(1, sizeof(lives_clip_data_t));
-      add_special_field((lsd_struct_def_t *)lsd, "priv", LSD_FIELD_FLAG_ZERO_ON_COPY |
+      lsd_add_special_field((lsd_struct_def_t *)lsd, "priv", LSD_FIELD_FLAG_ZERO_ON_COPY |
                         LSD_FIELD_FLAG_FREE_ON_DELETE, &cdata->priv, 0, cdata, NULL);
-      add_special_field((lsd_struct_def_t *)lsd, "URI", LSD_FIELD_CHARPTR, &cdata->URI,
+      lsd_add_special_field((lsd_struct_def_t *)lsd, "URI", LSD_FIELD_CHARPTR, &cdata->URI,
                         0, cdata, NULL);
-      add_special_field((lsd_struct_def_t *)lsd, "title", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->title,
+      lsd_add_special_field((lsd_struct_def_t *)lsd, "title", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->title,
                         1024, cdata, NULL);
-      add_special_field((lsd_struct_def_t *)lsd, "author", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->author,
+      lsd_add_special_field((lsd_struct_def_t *)lsd, "author", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->author,
                         1024, cdata, NULL);
-      add_special_field((lsd_struct_def_t *)lsd, "comment", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->comment,
+      lsd_add_special_field((lsd_struct_def_t *)lsd, "comment", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->comment,
                         1024, cdata, NULL);
-      add_special_field((lsd_struct_def_t *)lsd, "palettes", LSD_FIELD_ARRAY, &cdata->palettes,
+      lsd_add_special_field((lsd_struct_def_t *)lsd, "palettes", LSD_FIELD_ARRAY, &cdata->palettes,
                         4, cdata, NULL);
       lives_free(cdata);
     }
@@ -53,11 +53,11 @@ const lsd_struct_def_t *get_lsd(lives_struct_type st_type) {
     lives_file_dets_t *fdets = (lives_file_dets_t *)lives_calloc(1, sizeof(lives_file_dets_t));
     lsd = lsd_create_p("lives_file_dets_t", fdets, sizeof(lives_file_dets_t), &fdets->lsd);
     if (lsd) {
-      add_special_field((lsd_struct_def_t *)lsd, "name", LSD_FIELD_CHARPTR, &fdets->name,
+      lsd_add_special_field((lsd_struct_def_t *)lsd, "name", LSD_FIELD_CHARPTR, &fdets->name,
                         0, fdets, NULL);
-      add_special_field((lsd_struct_def_t *)lsd, "md5sum", LSD_FIELD_CHARPTR, &fdets->md5sum,
+      lsd_add_special_field((lsd_struct_def_t *)lsd, "md5sum", LSD_FIELD_CHARPTR, &fdets->md5sum,
                         0, fdets, NULL);
-      add_special_field((lsd_struct_def_t *)lsd, "extra_details", LSD_FIELD_CHARPTR, &fdets->extra_details,
+      lsd_add_special_field((lsd_struct_def_t *)lsd, "extra_details", LSD_FIELD_CHARPTR, &fdets->extra_details,
                         0, fdets, NULL);
       lives_free(fdets);
     }

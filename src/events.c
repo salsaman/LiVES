@@ -4816,7 +4816,7 @@ static boolean add_xdg_opt(lives_obj_t *obj, livespointer data) {
     LiVESWidget *cb = lives_standard_check_button_new(_("Preview in default video player afterwards"),
                       FALSE, LIVES_BOX(widget_opts.last_container), NULL);
     lives_widget_object_ref(cb);
-    lives_hook_append(THREADVAR(hook_closures), FINISHED_HOOK, 0, do_xdg_opt, cb);
+    lives_hook_append(THREADVAR(hook_stacks), FINISHED_HOOK, 0, do_xdg_opt, cb);
   }
   return FALSE;
 }
@@ -4868,7 +4868,7 @@ boolean start_render_effect_events(weed_event_list_t *event_list, boolean render
   if (cfile->old_frames > 0) cfile->nopreview = TRUE; /// FIXME...
 
   if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE && render_vid) {
-    lives_hook_append(THREADVAR(hook_closures), TX_START_HOOK, 0, add_xdg_opt, NULL);
+    lives_hook_append(THREADVAR(hook_stacks), TX_START_HOOK, 0, add_xdg_opt, NULL);
   }
 
   // play back the file as fast as possible, each time calling render_events()
@@ -5243,36 +5243,54 @@ boolean render_to_clip(boolean new_clip) {
       return FALSE;
     } else {
       lives_contract_t *contract;
-      /// this part normally would be done by plugin
       lives_intentcap_t *icap;
       lives_obj_attr_t *attr, *attr1, *attr2;
+      weed_plant_t *attr_group;
       if (rendvid) {
         if (rendaud) icap = make_icap(OBJ_INTENTION_TRANSCODE, CAP_VIDEO, CAP_AUDIO, NULL);
         else icap = make_icap(OBJ_INTENTION_TRANSCODE, CAP_VIDEO, NULL);
       }
-      icap = make_icap(OBJ_INTENTION_TRANSCODE, CAP_AUDIO, NULL);
+      else icap = make_icap(OBJ_INTENTION_TRANSCODE, CAP_AUDIO, NULL);
+      // normally we would ask Nirva to find a contract for the icap
+      // we would then get a transform for the contract, and asjust icaps if necessary
+      // then we would 'prime' the transform by finding a trajectory for the icaps
+      // mandatory input attributes are created in the transform, now we need to set values,
+      // for mandatory attrs, and if we wish, for optional attrs
+      // if the transform needs negotiation, then it is passed back (TBD) and we must recheck the attrs 
       //contract = create_contract(icap);
       //////
 
-      attr = lives_contract_declare_attribute(contract, ATTR_AUDIO_RATE, WEED_SEED_INT);
-      lives_object_set_attr_value(contract, attr, cfile->arate);
-      //lives_attr_set_readonly(attr, TRUE);
+      // TODO ////////////////////
+      attr_group = NULL;
+      
+      // for now we just have an attr_group bundle, and we will add attributes to that
+      /* attr = get_attr(attr_group, ATTR_AUDIO_RATE); */
+      /* set_attr_value(attr, cfile->arate); */
 
-      attr = lives_contract_declare_attribute(contract, ATTR_AUDIO_CHANNELS, WEED_SEED_INT);
-      lives_object_set_attr_value(contract, attr, cfile->achans);
-      //lives_attr_set_readonly(attr, TRUE);
+      /* attr = get_attr(attr_group, ATTR_AUDIO_CHANNELS); */
+      /* set_attr_value(attr, cfile->arate); */
 
-      attr = lives_contract_declare_attribute(contract, ATTR_URI_FILENAME, WEED_SEED_STRING);
+      /* // normally we would ask the structure to help filling in missing attr values, and */
+      /* // it would consult an oracle - normally via the GUI subsystem which acts as a mediator for the 'user' oracle */
+      /* transcode_get_params(attr_group); */
 
-      // normally, we would fill in the values we know then call get_attrs_from_user(contract);
-      // and allow the user to set any missing values (via the UI object)
-      transcode_get_params(contract);
-      //pname = contract_attribute_get_value_string(contract, ATTR_URI_FILENAME);
+      /* attr = get_attr(attr_group, ATTR_URI_FILENAME); */
+      /* pname = attr_value_string(attr); */
+      pname = NULL;
+      ////////////////////
+
+      // the transform attrs also include a sequential type, frame data
+      // we will create a producer attribute and flag it a async_updates
+
+      // there are three parties to te contract, this function, representing the stream producer
+      // the transcoder plugin, which will action the transform (via an adaptor)
+      // the transcode function in transcode.c, which acts as a buffer instance
+      // normally the structure would set up the buffer automatically, since the seq. attr
+      // will be flagged as async_receiver
 
       if (!pname) {
-        lives_object_attribute_unref(NULL, attr1);
-        lives_object_attribute_unref(NULL, attr2);
-        transcode_cleanup(mainw->vpp);
+	// TODO - clean up / recycle the transform
+	transcode_cleanup(mainw->vpp);
         if (!mainw->multitrack) close_current_file(current_file);
         prefs->enc_letterbox = enc_lb;
         prefs->pb_quality = pbq;
@@ -5365,7 +5383,7 @@ boolean render_to_clip(boolean new_clip) {
                                  WEED_SEED_BOOLEAN, "iibV", 1, 0, TRUE, pname);
 
     work = lives_proc_thread_get_work(mainw->transrend_proc);
-    lives_hook_append(work->hook_closures, SYNC_WAIT_HOOK, 0, transrend_sync, NULL);
+    lives_hook_append(work->hook_stacks, SYNC_WAIT_HOOK, 0, transrend_sync, NULL);
     lives_proc_thread_sync_ready(mainw->transrend_proc);
 
     g_print("wait for transcoder ready\n");

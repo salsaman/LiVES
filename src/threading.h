@@ -66,8 +66,9 @@ typedef struct {
   char *var_sync_motive; // contains reason why it might be waiting fro sync
 
   int var_hook_match_nparams;
-  pthread_mutex_t var_hook_mutex[N_HOOK_POINTS];
-  LiVESList *var_hook_closures[N_HOOK_POINTS];
+
+  lives_hook_stack_t *var_hook_stacks[N_HOOK_POINTS];
+
   // hardware - values
   double var_loveliness; // a bit like 'niceness', only better
   volatile float *var_core_load_ptr; // pointer to value that monitors core load
@@ -96,7 +97,7 @@ typedef struct {
   volatile uint64_t busy;
   volatile uint64_t done;
   volatile boolean sync_ready;
-  LiVESList *hook_closures[N_HOOK_POINTS];
+  lives_hook_stack_t *hook_stacks[N_HOOK_POINTS];
 } thrd_work_t;
 
 typedef struct {
@@ -259,7 +260,6 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_THRDATTR_INHERIT_HOOKS   		(1ull << 6)
 #define LIVES_THRDATTR_IGNORE_SYNCPT   		(1ull << 7)
 #define LIVES_THRDATTR_IDLEFUNC   		(1ull << 8)
-#define LIVES_THRDATTR_NULLIFY_ON_DESTRUCTION  	(1ull << 9)
 
 // extra info requests
 #define LIVES_LEAF_START_TICKS "_start_ticks"
@@ -331,11 +331,7 @@ int lives_proc_thread_ref(lives_proc_thread_t);
 boolean lives_proc_thread_unref(lives_proc_thread_t);
 boolean lives_proc_thread_unref_check(lives_proc_thread_t);
 
-void lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr);
-void lives_proc_thread_auto_nullify(lives_proc_thread_t *lpt);
-
-lives_proc_thread_t lives_proc_thread_secure_ptr(lives_proc_thread_t, void **);
-lives_proc_thread_t lives_proc_thread_auto_secure(lives_proc_thread_t *);
+boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr);
 
 // returns TRUE once the proc_thread will call the target function
 // the thread can also be cancelled or finished
@@ -392,8 +388,10 @@ boolean lives_proc_thread_dontcare_nullify(lives_proc_thread_t, void **nullif);
 void lives_proc_thread_sync_ready(lives_proc_thread_t);
 
 boolean sync_point(const char *motive);
-//boolean thread_wait_loop(lives_proc_thread_t, thrd_work_t *, boolean trigger_sync_hooks, boolean wake_gui);
-boolean thread_wait_loop(lives_proc_thread_t lpt, thrd_work_t *work, int hook_type, boolean wake_gui);
+
+// set control to TRUE to return - if all SYNC_WAIT_HOOK funcs return TRUE (polled for), control is also set to TRUE
+// if control is NULL, an internal variable will be used
+boolean thread_wait_loop(lives_proc_thread_t lpt, thrd_work_t *work, boolean full_sync, boolean wake_gui, volatile boolean *control);
 
 // WARNING !! version without a return value will free tinfo !
 void lives_proc_thread_join(lives_proc_thread_t);

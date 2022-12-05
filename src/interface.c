@@ -1068,7 +1068,7 @@ xprocess *create_processing(const char *text) {
   add_procdlg_opts(procw, LIVES_VBOX(vbox3));
 
   widget_opts.last_container = vbox3;
-  lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_START_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_stacks), TX_START_HOOK);
 
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 8);
@@ -3617,6 +3617,8 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
 
 void redraw_timeline(int clipno) {
   lives_clip_t *sfile;
+  static int calls = 0;
+  int mylevel;
 
   if (mainw->ce_thumbs) return;
   if (!IS_VALID_CLIP(clipno)) return;
@@ -3631,27 +3633,33 @@ void redraw_timeline(int clipno) {
   } else {
     if (is_fg_thread()) {
       // if this the fg thread, kick off a bg thread to actually run this
+      mylevel = ++calls;
+      lives_proc_thread_ref(mainw->drawtl_thread);
       if (mainw->drawtl_thread) {
-        mainw->drawtl_thread = lives_proc_thread_auto_secure((lives_proc_thread_t *)&mainw->drawtl_thread);
-        if (mainw->drawtl_thread) {
-          if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-            lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
-          }
-          lives_proc_thread_join(mainw->drawtl_thread);
-          lives_proc_thread_unref(mainw->drawtl_thread);
-        }
+	if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+	  lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
+	}
+	lives_proc_thread_unref(mainw->drawtl_thread);
       }
+
       if (mainw->multitrack || mainw->reconfig) return;
-      if (!mainw->drawtl_thread) {
-        mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_NULLIFY_ON_DESTRUCTION,
-                               (lives_funcptr_t)redraw_timeline, 0, "i", clipno);
+
+      if (mainw->drawtl_thread) {
+	lives_nanosleep_while_true(mainw->drawtl_thread != NULL && calls == mylevel);
       }
+
+      if (calls > mylevel) return;
+
+      mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
+						      (lives_funcptr_t)redraw_timeline, 0, "i", clipno);
+      lives_proc_thread_nullify_on_destruction(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
+      lives_proc_thread_sync_ready(mainw->drawtl_thread);
       return;
     } else {
       // if a bg thread, we either call the main thread to run this which will spawn another bg thread,
       // or if we are running it adds to deferral hooks
       if (mainw->drawtl_thread) {
-        mainw->drawtl_thread = lives_proc_thread_auto_secure((lives_proc_thread_t *)&mainw->drawtl_thread);
+	lives_proc_thread_ref(mainw->drawtl_thread);
         if (mainw->drawtl_thread) {
           if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
             lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
@@ -8038,11 +8046,12 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   //g_print("GET  LINGO xx %d %d\n", width, height);
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout", NULL);
+
   if (layout) {
     if (LINGO_IS_LAYOUT(layout)) lingo_layout_set_text(layout, "", -1);
     lives_widget_object_unref(layout);
   }
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout", NULL);
 
   if (width < LAYOUT_SIZE_MIN || height < LAYOUT_SIZE_MIN) return FALSE;
 
@@ -8053,6 +8062,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   lives_widget_set_text_size(widget, LIVES_WIDGET_STATE_NORMAL, lives_textsize_to_string(prefs->msg_textsize));
 
   layout = layout_nth_message_at_bottom(msgno, width, height, LIVES_WIDGET(widget), &nlines);
+
   if (!LINGO_IS_LAYOUT(layout) || !layout) {
     return FALSE;
   }

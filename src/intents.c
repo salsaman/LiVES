@@ -7,7 +7,7 @@
 #define NEED_OBJECT_BUNDLES
 
 #include "main.h"
-#include "bundles.h"
+//#include "bundles.h"
 
 static boolean icaps_inited = FALSE;
 
@@ -25,53 +25,6 @@ lives_objstore_t *fn_objstore = NULL;
 lives_objstore_t *bdef_store = NULL;
 
 static size_t dict_size = 0;
-
-// create a contract for negociating a "transform"
-// negotiation steps:
-// - remove unecessary capacties
-// call negotiate for target object, object will respond by either
-//   readjusting the caps, or
-// adding (more) mandatory / optional attributes / hooks,
-// and marking exisiting ones optional / mandatory
-// or updating contract state
-// - host can readjust caps again,
-// or set values for mandatory / opt attrs and hooks and try again
-static lives_contract_t *create_contract_instance_vargs(lives_intention intent, va_list caps) {
-  // TODO: call get_contracts on a contract template with "create instance" intent
-  // the transform for that should call this function to create the output attribute
-  // the created object should be in state "preview"
-  // and should have its own contracts
-  // - one to convert from state preview to prepare
-  // -- either:
-  // - one to convert from state prepare to state ready (a.k.a negotiate contract), or
-  // - one to convert from state preview to ready, (IF the transform is flagged "no negociate")
-  lives_bundle_t *contract = create_object_bundle(OBJECT_TYPE_CONTRACT, NO_SUBTYPE);
-  if (contract) {
-    //set_bundle_value(contract, "intention", intent);
-    if (caps) {
-      lives_capacities_t *cap = lives_capacities_new();
-      while (1) {
-        char *cname = va_arg(caps, char *);
-        if (cname == CAP_END) break;
-        lives_capacity_set(cap, cname);
-      }
-      set_bundle_value(contract, "capacities", cap);
-    }
-    // TODO - should be PREVIEW
-    set_bundle_value(contract, "state", OBJECT_STATE_NOT_READY);
-  }
-  return contract;
-}
-
-
-lives_obj_attr_t *lives_contract_declare_attribute(lives_contract_t *contract, const char *name,
-    uint32_t atype) {
-  // TODO
-
-
-  return NULL;
-}
-
 
 void *lookup_entry_full(uint64_t uid) {
   // check dictionary objects (objects and plant snapshots)
@@ -104,8 +57,7 @@ char *interpret_uid(uint64_t uid) {
       //else dump_obdesc(dicto);
       info = lives_object_dump_attributes(dicto);
     } else if (sub == DICT_SUBTYPE_FUNCDEF) {
-      //lives_obj_attr_t *attr = lives_object_get_attribute(dicto, STRAND_INTROSPECTION_NATIVE_PTR);
-      lives_obj_attr_t *attr = lives_object_get_attribute(dicto, STRAND_INTROSPECTION_NATIVE_PTR);
+      lives_obj_attr_t *attr = lives_object_get_attribute(dicto, "native_ptr");
       lives_funcdef_t *funcdef = (lives_funcdef_t *)weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
       info = lives_funcdef_explain(funcdef);
     }
@@ -270,7 +222,7 @@ const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, int
   const lives_funcdef_t *funcdef = get_from_hash_store(fn_objstore, name);
   if (!funcdef) {
     lives_dicto_t *dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_FUNCDEF);
-    lives_obj_attr_t *xattr = lives_object_declare_attribute(dicto, STRAND_INTROSPECTION_NATIVE_PTR,
+    lives_obj_attr_t *xattr = lives_object_declare_attribute(dicto, "native_ptr",
                               WEED_SEED_VOIDPTR);
 
     funcdef = create_funcdef(name, func, rtype, args_fmt, file, line ? ++line : 0, NULL);
@@ -286,7 +238,7 @@ static boolean fdef_funcmatch(void *data, void *pfunc) {
   lives_dicto_t *dicto = (lives_dicto_t *)data;
   if (dicto && dicto->subtype == DICT_SUBTYPE_FUNCDEF) {
     lives_funcptr_t func = *(lives_funcptr_t *)pfunc;
-    lives_obj_attr_t *attr = lives_object_get_attribute(dicto, STRAND_INTROSPECTION_NATIVE_PTR);
+    lives_obj_attr_t *attr = lives_object_get_attribute(dicto, "native_ptr");
     lives_funcdef_t *fdef = (lives_funcdef_t *)weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
     return fdef->function == func;
   }
@@ -300,7 +252,7 @@ const lives_funcdef_t *get_template_for_func(lives_funcptr_t func) {
   if (data) {
     lives_dicto_t *dicto = (lives_dicto_t *)data;
     if (dicto && dicto->subtype == DICT_SUBTYPE_FUNCDEF) {
-      lives_obj_attr_t *attr = lives_object_get_attribute(dicto, STRAND_INTROSPECTION_NATIVE_PTR);
+      lives_obj_attr_t *attr = lives_object_get_attribute(dicto, "native_ptr");
       fdef = (lives_funcdef_t *)weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
     }
   }
@@ -311,7 +263,7 @@ const lives_funcdef_t *get_template_for_func(lives_funcptr_t func) {
 const lives_funcdef_t *get_template_for_func_by_uid(uint64_t uid) {
   lives_dicto_t *dicto = lookup_entry(uid);
   if (dicto && dicto->subtype == DICT_SUBTYPE_FUNCDEF) {
-    lives_obj_attr_t *attr = lives_object_get_attribute(dicto, STRAND_INTROSPECTION_NATIVE_PTR);
+    lives_obj_attr_t *attr = lives_object_get_attribute(dicto, "native_ptr");
     return weed_get_voidptr_value(attr, WEED_LEAF_VALUE, NULL);
   }
   return NULL;
@@ -350,12 +302,12 @@ LIVES_GLOBAL_INLINE int lives_attribute_get_value_int(lives_obj_attr_t *attr) {
 
 static void lives_object_instance_free(lives_obj_instance_t *obj) {
   // TODO - use some other name, EXIT for processes
-  LiVESList **hook_closures = (LiVESList **)weed_get_voidptr_array(obj, LIVES_LEAF_HOOK_CLOSURES, NULL);
-  lives_hooks_trigger(obj, hook_closures, DESTRUCTION_HOOK);
+  lives_hook_stack_t **hook_stacks = (lives_hook_stack_t **)weed_get_voidptr_array(obj, LIVES_LEAF_HOOK_STACKS, NULL);
+  lives_hooks_trigger(obj, hook_stacks, DESTRUCTION_HOOK);
 
   // invalidate hooks
   for (int type = N_GLOBAL_HOOKS + 1; type < N_HOOK_POINTS; type++) {
-    lives_hooks_clear(hook_closures, type);
+    lives_hooks_clear(hook_stacks, type);
   }
 
   // unref attributes
@@ -405,8 +357,8 @@ size_t weigh_object(lives_object_instance_t *obj) {
 LIVES_GLOBAL_INLINE uint64_t lives_object_get_type(weed_plant_t *obj) {
   uint64_t otype = 0;
   if (obj) {
-    lives_bundle_t *vb = weed_get_plantptr_value(obj, STRAND_OBJECT_TYPE, NULL);
-    otype = (uint64_t)weed_get_uint64_value(vb, STRAND_VALUE_DATA, NULL);
+    lives_bundle_t *vb = weed_get_plantptr_value(obj, ".type", NULL);
+    otype = (uint64_t)weed_get_uint64_value(vb, ".data", NULL);
   }
   return otype;
 }
@@ -415,8 +367,8 @@ LIVES_GLOBAL_INLINE uint64_t lives_object_get_type(weed_plant_t *obj) {
 LIVES_GLOBAL_INLINE uint64_t lives_object_get_subtype(weed_plant_t *obj) {
   uint64_t osubtype = 0;
   if (obj) {
-    lives_bundle_t *vb = weed_get_plantptr_value(obj, STRAND_OBJECT_SUBTYPE, NULL);
-    osubtype = (uint64_t)weed_get_int64_value(vb, STRAND_VALUE_DATA, NULL);
+    lives_bundle_t *vb = weed_get_plantptr_value(obj, ".subtype", NULL);
+    osubtype = (uint64_t)weed_get_int64_value(vb, ".data", NULL);
   }
   return osubtype;
 }
@@ -425,56 +377,11 @@ LIVES_GLOBAL_INLINE uint64_t lives_object_get_subtype(weed_plant_t *obj) {
 LIVES_GLOBAL_INLINE int lives_object_get_state(weed_plant_t *obj) {
   int ostate = 0;
   if (obj) {
-    lives_bundle_t *vb = weed_get_plantptr_value(obj, STRAND_OBJECT_STATE, NULL);
-    ostate = (uint64_t)weed_get_int64_value(vb, STRAND_VALUE_DATA, NULL);
+    lives_bundle_t *vb = weed_get_plantptr_value(obj, ".state", NULL);
+    ostate = (uint64_t)weed_get_int64_value(vb, ".data", NULL);
   }
   return ostate;
 }
-
-
-LIVES_GLOBAL_INLINE const lives_contract_t *create_contract_template(void) {
-  // a contract template will have a static contract "create instance"
-  // no negociate, creates new instance in state preview, mandatory attrs intent / capacities
-
-  // the create instance transform will create an instancem with a single
-  // contract of its own for transform copy / no negoiate with new state == prepare
-
-  return create_object_bundle(OBJECT_TYPE_CONTRACT, NO_SUBTYPE);
-}
-
-// - (1) call this on object to get contracts for various intents, these will all be in state preview
-// - if the contract is flagged "no negociate" then the transform can be called directly, it just needs
-//   mandatory attributes set
-//
-// - (2) otherwise, call the object with intent "negotiate" to find an object's negotiate function
-//     (flagged no negotiate)
-//  note that the negotiate transform only accepts contract instances in state prepare
-///
-//  (3) call this on a contract instance to get a second contract to convert preview to prepare
-///        (flagged no negociate)
-//    (call the transform in the contract instance to  create a copy instance
-///   which can be passed to the negotiate transform)
-//
-
-lives_contract_t *get_contract_for(lives_obj_t *object, lives_intention intention) {
-  //return create_object_bundle(OBJECT_TYPE_CONTRACT, NO_SUBTYPE, OBJECT_STATE_NOT_READY);
-  return NULL;
-}
-
-
-// this will get (or create) the static contract object template, get the contract in it
-// for create instance, create the instance in state preview, and then return it
-// for testing, this is short circuited, we return an instance already in state prepare
-
-LIVES_GLOBAL_INLINE lives_contract_t *create_contract_instance(lives_intention intent, ...) {
-  lives_contract_t *contract;
-  va_list vargs;
-  va_start(vargs, intent);
-  contract = create_contract_instance_vargs(intent, vargs);
-  va_end(vargs);
-  return contract;
-}
-
 
 LIVES_GLOBAL_INLINE lives_object_instance_t *lives_object_instance_create(uint64_t type, uint64_t subtype) {
   lives_object_instance_t *obj_inst = lives_calloc(1, sizeof(lives_object_instance_t));
@@ -482,7 +389,6 @@ LIVES_GLOBAL_INLINE lives_object_instance_t *lives_object_instance_create(uint64
   obj_inst->type = type;
   obj_inst->subtype = subtype;
   obj_inst->state = OBJECT_STATE_UNDEFINED;
-  for (int i = 0; i < N_HOOK_POINTS; i++) pthread_mutex_init(&obj_inst->hook_mutex[i], NULL);
   check_refcnt_init(&obj_inst->refcounter);
   return obj_inst;
 }
@@ -708,21 +614,18 @@ weed_error_t lives_object_set_attr_def_array(lives_object_t *obj, lives_obj_attr
 lives_obj_attr_t *lives_object_get_attribute(lives_object_t *obj, const char *name) {
   if (name && *name) {
     lives_obj_attr_t **attrs;
-    char *xname = get_short_name(name);
     if (obj) attrs = obj->attributes;
     else attrs = THREADVAR(attributes);
     if (attrs) {
       for (int count = 0; attrs[count]; count++) {
         char *pname = weed_get_string_value(attrs[count], WEED_LEAF_NAME, NULL);
         if (!lives_strcmp(name, pname)) {
-          lives_free(pname); lives_free(xname);
+          lives_free(pname);
           return attrs[count];
         }
         lives_free(pname);
       }
     }
-    lives_free(xname);
-    xname = NULL;
   }
   return NULL;
 }
@@ -1092,10 +995,10 @@ LIVES_LOCAL_INLINE lives_intentcap_t *lives_icap_new(lives_intention intent, liv
   lsd = get_lsd(LIVES_STRUCT_INTENTCAP_T);
   if (!lsd) {
     icap = (lives_intentcap_t *)lives_calloc(1, sizeof(lives_intentcap_t));
-    add_special_field((lsd_struct_def_t *)lsd,
-                      "capacities", LSD_FIELD_FLAG_ZERO_ON_COPY, &icap->capacities,
-                      0, icap, lsd_null_cb, (lsd_field_copy_cb)icap_caps_copy_cb, NULL,
-                      (lsd_field_delete_cb)icap_caps_delete_cb, NULL);
+    lsd_add_special_field((lsd_struct_def_t *)lsd,
+			  "capacities", LSD_FIELD_FLAG_ZERO_ON_COPY, &icap->capacities,
+			  0, icap, lsd_null_cb, (lsd_field_copy_cb)icap_caps_copy_cb, NULL,
+			  (lsd_field_delete_cb)icap_caps_delete_cb, NULL);
     lives_free(icap);
     icap = NULL;
   }
@@ -1374,9 +1277,9 @@ void native_type_view(lives_obj_attr_t *attr) {
 
 lives_obj_attr_t *mk_attr(const char *ctype, const char *name, size_t size, void *vptr, int ne) {
   lives_obj_attr_t *attr = lives_object_declare_attribute(NULL, name, WEED_SEED_VOIDPTR);
-  weed_set_string_value(attr, STRAND_INTROSPECTION_NATIVE_TYPE, ctype);
+  weed_set_string_value(attr, ".native_type", ctype);
   //weed_set_int_value(attr, STRAND_INTROSPECTION_PTRTYPE, ctypes_to_weed_seed(ctype));
-  weed_set_int64_value(attr, STRAND_INTROSPECTION_NATIVE_SIZE, size);
+  weed_set_int64_value(attr, ".native_size", size);
   lives_object_set_attr_value(NULL, attr, vptr);
   return attr;
 }

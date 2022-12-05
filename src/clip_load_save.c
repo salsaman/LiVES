@@ -3051,7 +3051,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
 
   /// CRITICAL: make sure this gets called even on system failure and abort
   if (prefs->crash_recovery && !no_recover)
-    lives_hook_append(mainw->global_hook_closures, FATAL_HOOK, 0, rewrite_recovery_file_cb, NULL);
+    lives_hook_append(mainw->global_hook_stacks, FATAL_HOOK, 0, rewrite_recovery_file_cb, NULL);
 
   // check for layout recovery file
   recfname = lives_strdup_printf("%s.%d.%d.%d.%s", LAYOUT_FILENAME, luid, lgid, recpid,
@@ -3183,7 +3183,7 @@ cleanse:
 
   if (THREADVAR(com_failed) && prefs->crash_recovery && !no_recover) {
     rewrite_recovery_file();
-    lives_hook_remove(mainw->global_hook_closures, FATAL_HOOK, rewrite_recovery_file_cb, NULL, mainw->global_hook_mutexes);
+    lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, rewrite_recovery_file_cb, NULL);
     return FALSE;
   }
 
@@ -3234,8 +3234,8 @@ cleanse:
 
   if (prefs->crash_recovery) {
     rewrite_recovery_file();
-    lives_hook_remove(mainw->global_hook_closures, FATAL_HOOK,
-                      rewrite_recovery_file_cb, NULL, mainw->global_hook_mutexes);
+    lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK,
+                      rewrite_recovery_file_cb, NULL);
   }
 
   if (!mainw->recoverable_layout && !mainw->recording_recovered) {

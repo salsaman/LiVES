@@ -332,6 +332,8 @@ void play_file(void) {
   boolean mute;
   boolean needsadone = FALSE;
 
+  boolean lazy_start = FALSE;
+
 #ifdef RT_AUDIO
   boolean exact_preview = FALSE;
 #endif
@@ -372,7 +374,7 @@ void play_file(void) {
 
   init_conversions(OBJ_INTENTION_PLAY);
 
-  lives_hooks_trigger(NULL, THREADVAR(hook_closures), PREPARING_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_stacks), PREPARING_HOOK);
 
   if (mainw->pre_src_file == -2) mainw->pre_src_file = mainw->current_file;
   mainw->pre_src_audio_file = mainw->current_file;
@@ -402,11 +404,11 @@ void play_file(void) {
 
   if (!mainw->foreign && mainw->lazy_starter) {
     // this is like a safe addrref
-    mainw->lazy_starter = lives_proc_thread_auto_secure((lives_proc_thread_t *)&mainw->lazy_starter);
+    lives_proc_thread_ref(mainw->lazy_starter);
     if (mainw->lazy_starter) {
       lives_proc_thread_request_pause(mainw->lazy_starter);
-      if (lives_proc_thread_unref(mainw->lazy_starter))
-        mainw->lazy_starter = NULL;
+      lives_proc_thread_unref(mainw->lazy_starter);
+      lazy_start = TRUE;
     }
   }
 
@@ -800,7 +802,7 @@ void play_file(void) {
 
     mainw->abufs_to_fill = 0;
 
-    lives_hooks_trigger(NULL, THREADVAR(hook_closures), TX_START_HOOK);
+    lives_hooks_trigger(NULL, THREADVAR(hook_stacks), TX_START_HOOK);
 
     //lives_widget_context_update();
     //play until stopped or a stream finishes
@@ -1050,8 +1052,7 @@ void play_file(void) {
     }
 
     if (mainw->alock_abuf) {
-      lives_hook_remove(THREADVAR(hook_closures), DATA_READY_HOOK, resample_to_float, &mainw->alock_abuf,
-                        mainw->global_hook_mutexes);
+      lives_hook_remove(THREADVAR(hook_stacks), DATA_READY_HOOK, resample_to_float, &mainw->alock_abuf);
       free_audio_frame_buffer(mainw->alock_abuf);
       mainw->alock_abuf = NULL;
     }
@@ -1226,7 +1227,7 @@ void play_file(void) {
   mainw->blend_palette = WEED_PALETTE_END;
   mainw->audio_stretch = 1.;
 
-  lives_hooks_trigger(NULL, THREADVAR(hook_closures), FINISHED_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_stacks), FINISHED_HOOK);
 
   if (!mainw->multitrack) {
     if (mainw->faded || mainw->fs) {
@@ -1495,8 +1496,8 @@ void play_file(void) {
     }
   }
 
-  if (mainw->lazy_starter) {
-    mainw->lazy_starter = lives_proc_thread_auto_secure((lives_proc_thread_t *)&mainw->lazy_starter);
+  if (lazy_start) {
+    lives_proc_thread_ref(mainw->lazy_starter);
     if (mainw->lazy_starter) {
       lives_proc_thread_request_resume(mainw->lazy_starter);
       lives_proc_thread_unref(mainw->lazy_starter);

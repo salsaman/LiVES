@@ -2553,8 +2553,8 @@ void jack_rec_audio_end(boolean close_fd) {
     lives_object_instance_t *aplayer = NULL;
     if (mainw->jackd_read) aplayer = mainw->jackd_read->inst;
     if (aplayer)
-      lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, (hook_funcptr_t) write_aud_data_cb,
-                        rec_ext_dets, aplayer->hook_mutex);
+      lives_hook_remove(aplayer->hook_stacks, DATA_READY_HOOK, (hook_funcptr_t) write_aud_data_cb,
+                        rec_ext_dets);
     if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
     lives_free(rec_ext_dets);
     rec_ext_dets = NULL;
@@ -2695,8 +2695,8 @@ void pulse_rec_audio_end(boolean close_fd) {
     lives_object_instance_t *aplayer = NULL;
     if (mainw->pulsed_read) aplayer = mainw->pulsed_read->inst;
     if (aplayer)
-      lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, (hook_funcptr_t)write_aud_data_cb,
-                        rec_ext_dets, aplayer->hook_mutex);
+      lives_hook_remove(aplayer->hook_stacks, DATA_READY_HOOK, (hook_funcptr_t)write_aud_data_cb,
+                        rec_ext_dets);
     if (rec_ext_dets->bad_aud_file) lives_free(rec_ext_dets->bad_aud_file);
     lives_free(rec_ext_dets);
     rec_ext_dets = NULL;
@@ -2910,7 +2910,7 @@ void audio_analyser_start(int source) {
       dets->fd = -1;
       dets->rec_samples = -1;
       aud_ext_analyse_dets = dets;
-      lives_hook_append(aplayer->hook_closures, DATA_READY_HOOK, 0, (hook_funcptr_t)analyse_audio_rt, dets);
+      lives_hook_append(aplayer->hook_stacks, DATA_READY_HOOK, 0, (hook_funcptr_t)analyse_audio_rt, dets);
     }
   }
 }
@@ -2920,8 +2920,7 @@ void audio_analyser_end(int source) {
   if (source == AUDIO_SRC_EXT) {
     lives_object_instance_t *aplayer = get_aplayer_instance(source);
     if (aud_ext_analyse_dets) {
-      lives_hook_remove(aplayer->hook_closures, DATA_READY_HOOK, (hook_funcptr_t)analyse_audio_rt, aud_ext_analyse_dets,
-                        aplayer->hook_mutex);
+      lives_hook_remove(aplayer->hook_stacks, DATA_READY_HOOK, (hook_funcptr_t)analyse_audio_rt, aud_ext_analyse_dets);
       if (aud_ext_analyse_dets->bad_aud_file) lives_free(aud_ext_analyse_dets->bad_aud_file);
       lives_free(aud_ext_analyse_dets);
       aud_ext_analyse_dets = NULL;
@@ -3022,7 +3021,7 @@ void start_audio_rec(void) {
       dets->fd = mainw->aud_rec_fd;
       dets->rec_samples = -1;
       rec_ext_dets = dets;
-      lives_hook_append(aplayer->hook_closures, DATA_READY_HOOK, 0, (hook_funcptr_t)write_aud_data_cb, dets);
+      lives_hook_append(aplayer->hook_stacks, DATA_READY_HOOK, 0, (hook_funcptr_t)write_aud_data_cb, dets);
     }
   }
 }

@@ -336,7 +336,7 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_detatch_node(LiVESList *list, LiVESLis
   if (!node || !list) return list;
   if (node->prev) node->prev->next = node->next;
   if (node->next) node->next->prev = node->prev;
-  if (node == list) list = list->next;
+  if (node == list) list = node->next;
   node->prev = node->next = NULL;
   return list;
 }

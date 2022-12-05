@@ -278,8 +278,7 @@ typedef struct {
 
 /// HOOK FUNCTIONS ///////
 
-#define LIVES_LEAF_HOOK_CLOSURES "hook_closures"
-#define LIVES_LEAF_HOOK_MUTEXES "hook_mutexes"
+#define LIVES_LEAF_HOOK_STACKS "hook_stacks"
 
 #define LIVES_SEED_HOOK WEED_SEED_FUNCPTR
 
@@ -324,6 +323,8 @@ typedef struct {
 #define HOOK_STATUS_BLOCKED			(1ull << 32) // hook function should not be called
 #define HOOK_STATUS_RUNNING			(1ull << 33) // hook running, do not recurse
 
+#define HOOK_STATUS_REMOVE			(1ull << 34) // hook was 'removed' whilst running, delay removal until return
+
 typedef weed_plant_t lives_obj_t;
 typedef boolean(*hook_funcptr_t)(lives_obj_t *, void *);
 typedef char *(*make_key_f)(int pnum);
@@ -343,7 +344,13 @@ typedef struct {
 // closure designed more for storing, it has ptr to owner object, flags and a space for a procthread
 // -> combine both as object instance
 
-lives_proc_thread_t _lives_hook_add(LiVESList **hooks, int type, uint64_t flags, hook_funcptr_t func,
+typedef struct {
+  pthread_mutex_t *mutex;
+  LiVESList *stack;
+} lives_hook_stack_t;
+
+
+lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hooks, int type, uint64_t flags, hook_funcptr_t func,
                                     const char *fname, livespointer data, boolean is_append);
 
 void _lives_proc_thread_hook_append(lives_proc_thread_t lpt, int type, uint64_t flags,
@@ -360,30 +367,30 @@ void _lives_proc_thread_hook_append(lives_proc_thread_t lpt, int type, uint64_t 
 									   (hook_funcptr_t)(func), #func, \
 									   (void *)(data), FALSE)
 
-void _lives_hook_remove(LiVESList **hooks, int type, hook_funcptr_t func, livespointer data, pthread_mutex_t *mutexes);
+void _lives_hook_remove(lives_hook_stack_t **hooks, int type, hook_funcptr_t func, livespointer data);
 
-#define lives_hook_remove(hooks, type, func, data, mutexes)		\
-  _lives_hook_remove((hooks), (type), (hook_funcptr_t)(func), (void *)(data), (mutexes))
+#define lives_hook_remove(hooks, type, func, data)		\
+  _lives_hook_remove((hooks), (type), (hook_funcptr_t)(func), (void *)(data))
 
-void lives_hooks_clear(LiVESList **hooks, int type);
-void lives_hooks_clear_all(LiVESList **hooks, int ntypes);
+void lives_hooks_clear(lives_hook_stack_t **hooks, int type);
+void lives_hooks_clear_all(lives_hook_stack_t **hooks, int ntypes);
 
-boolean lives_hooks_trigger(lives_obj_t *, LiVESList **hooks, int type);
-boolean lives_hooks_triggero(lives_object_t *obj, LiVESList **xlist, int type);
+boolean lives_hooks_trigger(lives_obj_t *, lives_hook_stack_t **hooks, int type);
+boolean lives_hooks_triggero(lives_object_t *obj, lives_hook_stack_t **xlist, int type);
 
-void lives_hooks_transfer(LiVESList **dest, LiVESList **src, boolean include_glob);
+void lives_hooks_transfer(lives_hook_stack_t **dest, lives_hook_stack_t **src, boolean include_glob);
 
-void lives_hooks_trigger_async(lives_obj_t *, LiVESList **hooks, int type);
-void lives_hooks_trigger_asynco(lives_object_t *obj, LiVESList **xlist, int type);
+void lives_hooks_trigger_async(lives_obj_t *, lives_hook_stack_t **hooks, int type);
+void lives_hooks_trigger_asynco(lives_object_t *obj, lives_hook_stack_t **xlist, int type);
 
-void lives_hooks_trigger_async_sequential(lives_obj_t *, LiVESList **hooks, int type, hook_funcptr_t finfunc,
+lives_proc_thread_t lives_hooks_trigger_async_sequential(lives_obj_t *lpt, lives_hook_stack_t **xlist, int type,
+							 hook_funcptr_t finfunc, void *findata);
+void lives_hooks_trigger_async_sequentialo(lives_object_t *, lives_hook_stack_t **hooks, int type, hook_funcptr_t finfunc,
     void *findata);
-void lives_hooks_trigger_async_sequentialo(lives_object_t *, LiVESList **hooks, int type, hook_funcptr_t finfunc,
-    void *findata);
 
-void lives_hooks_join(LiVESList *hooks, pthread_mutex_t *mutex);
+void lives_hooks_join(lives_hook_stack_t *);
 
-LiVESList **lives_proc_thread_get_hook_closures(lives_proc_thread_t);
+lives_hook_stack_t **lives_proc_thread_get_hook_stacks(lives_proc_thread_t);
 
 ///////////// funcdefs, funcinsts and funcsigs /////
 

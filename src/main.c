@@ -362,7 +362,7 @@ void catch_sigint(int signum) {
   // trap for ctrl-C and others
   //if (mainw->jackd) lives_jack_end();
 
-  lives_hooks_trigger(NULL, THREADVAR(hook_closures), FATAL_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_stacks), FATAL_HOOK);
 
   if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
     // if we are not the main thread, just exit
@@ -381,7 +381,7 @@ void catch_sigint(int signum) {
   exit(signum);
 #endif
   if (mainw) {
-    lives_hooks_trigger(NULL, mainw->global_hook_closures, FATAL_HOOK);
+    lives_hooks_trigger(NULL, mainw->global_hook_stacks, FATAL_HOOK);
 
     if (LIVES_MAIN_WINDOW_WIDGET) {
       if (mainw->foreign) {

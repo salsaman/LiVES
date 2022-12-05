@@ -552,7 +552,7 @@ void lives_exit(int signum) {
     unload_decoder_plugins();
   }
 
-  lives_hooks_trigger(NULL, mainw->global_hook_closures, DESTRUCTION_HOOK);
+  lives_hooks_trigger(NULL, mainw->global_hook_stacks, DESTRUCTION_HOOK);
 
   if (prefs->workdir_tx_intent == OBJ_INTENTION_DELETE) {
     // delete the old workdir
@@ -10670,8 +10670,8 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
     lives_audio_buf_t *abuf = mainw->alock_abuf;
     prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
     if (abuf) {
-      lives_hook_remove(THREADVAR(hook_closures), DATA_READY_HOOK, resample_to_float,
-                        &mainw->alock_abuf, mainw->global_hook_mutexes);
+      lives_hook_remove(THREADVAR(hook_stacks), DATA_READY_HOOK, resample_to_float,
+                        &mainw->alock_abuf);
       pthread_mutex_lock(&mainw->alock_mutex);
       mainw->alock_abuf = NULL;
       pthread_mutex_unlock(&mainw->alock_mutex);
@@ -10697,7 +10697,7 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
         mainw->alock_abuf->_fd = lives_open_buffered_rdonly(filename);
         if (mainw->alock_abuf->_fd >= 0) {
           mainw->alock_abuf->fileno = mainw->playing_file;
-          lives_hook_append(THREADVAR(hook_closures), DATA_READY_HOOK, HOOK_CB_CHILD_INHERITS,
+          lives_hook_append(THREADVAR(hook_stacks), DATA_READY_HOOK, HOOK_CB_CHILD_INHERITS,
                             resample_to_float, &mainw->alock_abuf);
           lives_buffered_rdonly_slurp(mainw->alock_abuf->_fd, 0);
         }

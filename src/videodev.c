@@ -450,7 +450,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   int prop_count, nprops;
 
   // make sure we close the stream even on abort
-  lives_hook_append(mainw->global_hook_closures, FATAL_HOOK, 0, lives_ldev_free_cb, (void *)&ldev);
+  lives_hook_append(mainw->global_hook_stacks, FATAL_HOOK, 0, lives_ldev_free_cb, (void *)&ldev);
 
   // open dev
   unicap_open(&ldev->handle, device);
@@ -471,8 +471,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
                                        matmet, DEF_GEN_WIDTH, DEF_GEN_HEIGHT);
 
   if (!ldev->format) {
-    lives_hook_remove(mainw->global_hook_closures, FATAL_HOOK, lives_ldev_free_cb, (void *)&ldev,
-                      mainw->global_hook_mutexes);
+    lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, lives_ldev_free_cb, (void *)&ldev);
     LIVES_INFO("No useful formats found");
     unicap_unlock_stream(ldev->handle);
     unicap_close(ldev->handle);
@@ -508,8 +507,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
 #endif
 
   if (!SUCCESS(unicap_set_format(ldev->handle, ldev->format))) {
-    lives_hook_remove(mainw->global_hook_closures, FATAL_HOOK, lives_ldev_free_cb, (void *)&ldev,
-                      mainw->global_hook_mutexes);
+    lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, lives_ldev_free_cb, (void *)&ldev);
     LIVES_ERROR("Unicap error setting format");
     unicap_unlock_stream(ldev->handle);
     unicap_close(ldev->handle);
@@ -694,8 +692,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
 
 void lives_vdev_free(lives_vdev_t *ldev) {
   if (!ldev) return;
-  lives_hook_remove(mainw->global_hook_closures, FATAL_HOOK, lives_ldev_free_cb, (void *)&ldev,
-                    mainw->global_hook_mutexes), mainw->global_hook_mutexes;
+  lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, lives_ldev_free_cb, (void *)&ldev);
   if (ldev->format->buffer_type == UNICAP_BUFFER_TYPE_SYSTEM)
     unicap_unregister_callback(ldev->handle, UNICAP_EVENT_NEW_FRAME);
   unicap_stop_capture(ldev->handle);

@@ -1960,13 +1960,14 @@ static boolean lives_startup2(livespointer data) {
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
   mainw->lazy_starter =
-    lives_proc_thread_create_pvoid(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC
-                                   | LIVES_THRDATTR_NULLIFY_ON_DESTRUCTION,
-                                   lazy_startup_checks, WEED_SEED_BOOLEAN);
+    lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC,
+			     WEED_SEED_BOOLEAN, lazy_startup_checks, "", NULL); 
 
   lives_proc_thread_hook_append(mainw->lazy_starter, COMPLETED_HOOK, 0,
-                                lazy_start_fin, (void *)&mainw->lazy_starter);
+                                lazy_start_fin, (void *)mainw->lazy_starter);
 
+  lives_proc_thread_nullify_on_destruction(mainw->lazy_starter, (void **)&mainw->lazy_starter);
+  
   lives_proc_thread_set_pauseable(mainw->lazy_starter, TRUE);
   lives_proc_thread_sync_ready(mainw->lazy_starter);
 
@@ -2021,8 +2022,8 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   boolean toolong = FALSE;
   int xargc = argc;
   weed_error_t werr;
-  uint64_t test_opts = 			 TEST_BUNDLES | ABORT_AFTER;
-//0;
+  uint64_t test_opts = 0;//TEST_WEED | ABORT_AFTER;
+
   int winitopts = 0;
 
 #ifndef IS_LIBLIVES
@@ -2160,8 +2161,11 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   pthread_mutexattr_init(&mattr);
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
 
-  for (int i = 0; i < N_GLOBAL_HOOKS; i++) pthread_mutex_init(&mainw->global_hook_mutexes[i], NULL);
-
+  for (int i = 0; i < N_GLOBAL_HOOKS; i++) {
+    mainw->global_hook_stacks[i] = (lives_hook_stack_t *)lives_calloc(1, sizeof(lives_hook_stack_t));
+    mainw->global_hook_stacks[i]->mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
+    pthread_mutex_init(mainw->global_hook_stacks[i]->mutex, NULL);
+  }
   mainw->prefs_cache = mainw->hdrs_cache = mainw->gen_cache = mainw->meta_cache = NULL;
 
   // mainw->foreign is set if we are grabbing an external window

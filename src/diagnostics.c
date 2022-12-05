@@ -10,7 +10,6 @@
 #include "diagnostics.h"
 #include "callbacks.h"
 #include "startup.h"
-#include "bundles.h"
 
 #define STATS_TC (TICKS_PER_SECOND_DBL)
 static double inst_fps = 0.;
@@ -533,11 +532,10 @@ void lives_struct_test(void) {
   lives_clip_data_t *cdata = (lives_clip_data_t *)lives_calloc(1, sizeof(lives_clip_data_t));
   //LSD_CREATE_P(lsd, lives_clip_data_t);
   lsd = lsd_create_p("lives_test_t", tt, sizeof(lives_test_t), &tt->lsd);
-
-  add_special_field((lsd_struct_def_t *)lsd, "strg", LSD_FIELD_CHARPTR,
-                    &tt->strg, 0, tt, NULL);
+  lsd_add_special_field((lsd_struct_def_t *)lsd, "strg", LSD_FIELD_CHARPTR,
+			&tt->strg, 0, tt, NULL);
   lives_free(tt);
-
+  
   lsd_struct_create(lsd);
 
   THREADVAR(timerinfo) = lives_get_current_ticks();
@@ -1819,7 +1817,7 @@ void md5test(void) {
 lives_result_t do_startup_diagnostics(uint64_t tests_to_run) {
   boolean ran_test = FALSE;
   lives_bundle_t *bundle;
-  
+
   if (tests_to_run & TEST_WEED)
     run_weed_startup_tests();
 
@@ -1828,7 +1826,7 @@ lives_result_t do_startup_diagnostics(uint64_t tests_to_run) {
 
   if (tests_to_run & TEST_LSD)
     lives_struct_test();
-  
+
   if (tests_to_run & TEST_PAL_CONV)
     test_palette_conversions();
 

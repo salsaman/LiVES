@@ -91,7 +91,7 @@ bundle_t **lives_strand_get_array_bundleptr(bundle_t *, const char *strand_name)
 boolean bundle_has_strand(bundle_t *bundle, const char *iname);
 
 int64_t lives_strand_copy(bundle_t *dest, const char *dname, bundle_t *src,
-			  const char *sname);
+                          const char *sname);
 
 #define NIRVA_IMPL_FUNC_strand_copy lives_strand_copy
 
@@ -110,7 +110,7 @@ int64_t lives_strand_copy(bundle_t *dest, const char *dname, bundle_t *src,
 // strlen, - else look for 0
 // strcmp // else compare bytes
 // strncmp // else strlen + cmp
-// 
+//
 
 #define IS_BUNDLE_MAKER
 #include "object-constants.h"
@@ -143,7 +143,7 @@ char *nirvascope_blueprint_to_header(bundle_t *, const char *tname);
 size_t nirvascope_get_bundle_weight(bundle_t *b);
 
 int lives_strand_append_sub_bundles(bundle_t *bundle, const char *name, int ns, bundle_t **subs);
-   //void lives_strand_append_sub_bundles(bundle_t *, const char *name, int ns, bundle_t **subs);
+//void lives_strand_append_sub_bundles(bundle_t *, const char *name, int ns, bundle_t **subs);
 //void lives_strand_include_sub_bundle(bundle_t *, const char *name, bundle_t *sub);
 int lives_strand_include_sub_bundle(bundle_t *bundle, const char *name, bundle_t *sub);
 /* void lives_strand_add_const_bundles(bundle_t *, const char *name, int ns, bundle_t **ptrs); */
@@ -170,7 +170,7 @@ uint64_t stdef_get_flags(strand_def_t *);
 //uint32_t stdef_get_strand_type(strand_def_t *);
 scriptlet_t *stdef_get_restrictions(strand_def_t *);
 
-		      ///
+///
 /* void lives_set_strand_value_gen1(bundle_t *bundle, const char *name, uint32_t vtype, va_list val); */
 /* void lives_set_strand_value_gen2(bundle_t *bundle, const char *name, va_list val); */
 #endif

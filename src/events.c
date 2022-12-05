@@ -5249,20 +5249,19 @@ boolean render_to_clip(boolean new_clip) {
       if (rendvid) {
         if (rendaud) icap = make_icap(OBJ_INTENTION_TRANSCODE, CAP_VIDEO, CAP_AUDIO, NULL);
         else icap = make_icap(OBJ_INTENTION_TRANSCODE, CAP_VIDEO, NULL);
-      }
-      else icap = make_icap(OBJ_INTENTION_TRANSCODE, CAP_AUDIO, NULL);
+      } else icap = make_icap(OBJ_INTENTION_TRANSCODE, CAP_AUDIO, NULL);
       // normally we would ask Nirva to find a contract for the icap
       // we would then get a transform for the contract, and asjust icaps if necessary
       // then we would 'prime' the transform by finding a trajectory for the icaps
       // mandatory input attributes are created in the transform, now we need to set values,
       // for mandatory attrs, and if we wish, for optional attrs
-      // if the transform needs negotiation, then it is passed back (TBD) and we must recheck the attrs 
+      // if the transform needs negotiation, then it is passed back (TBD) and we must recheck the attrs
       //contract = create_contract(icap);
       //////
 
       // TODO ////////////////////
       attr_group = NULL;
-      
+
       // for now we just have an attr_group bundle, and we will add attributes to that
       /* attr = get_attr(attr_group, ATTR_AUDIO_RATE); */
       /* set_attr_value(attr, cfile->arate); */
@@ -5289,8 +5288,8 @@ boolean render_to_clip(boolean new_clip) {
       // will be flagged as async_receiver
 
       if (!pname) {
-	// TODO - clean up / recycle the transform
-	transcode_cleanup(mainw->vpp);
+        // TODO - clean up / recycle the transform
+        transcode_cleanup(mainw->vpp);
         if (!mainw->multitrack) close_current_file(current_file);
         prefs->enc_letterbox = enc_lb;
         prefs->pb_quality = pbq;

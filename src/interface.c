@@ -3636,22 +3636,22 @@ void redraw_timeline(int clipno) {
       mylevel = ++calls;
       lives_proc_thread_ref(mainw->drawtl_thread);
       if (mainw->drawtl_thread) {
-	if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-	  lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
-	}
-	lives_proc_thread_unref(mainw->drawtl_thread);
+        if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+          lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
+        }
+        lives_proc_thread_unref(mainw->drawtl_thread);
       }
 
       if (mainw->multitrack || mainw->reconfig) return;
 
       if (mainw->drawtl_thread) {
-	lives_nanosleep_while_true(mainw->drawtl_thread != NULL && calls == mylevel);
+        lives_nanosleep_while_true(mainw->drawtl_thread != NULL && calls == mylevel);
       }
 
       if (calls > mylevel) return;
 
       mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
-						      (lives_funcptr_t)redraw_timeline, 0, "i", clipno);
+                             (lives_funcptr_t)redraw_timeline, 0, "i", clipno);
       lives_proc_thread_nullify_on_destruction(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
       lives_proc_thread_sync_ready(mainw->drawtl_thread);
       return;
@@ -3659,7 +3659,7 @@ void redraw_timeline(int clipno) {
       // if a bg thread, we either call the main thread to run this which will spawn another bg thread,
       // or if we are running it adds to deferral hooks
       if (mainw->drawtl_thread) {
-	lives_proc_thread_ref(mainw->drawtl_thread);
+        lives_proc_thread_ref(mainw->drawtl_thread);
         if (mainw->drawtl_thread) {
           if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
             lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);

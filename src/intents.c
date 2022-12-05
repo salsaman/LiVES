@@ -996,9 +996,9 @@ LIVES_LOCAL_INLINE lives_intentcap_t *lives_icap_new(lives_intention intent, liv
   if (!lsd) {
     icap = (lives_intentcap_t *)lives_calloc(1, sizeof(lives_intentcap_t));
     lsd_add_special_field((lsd_struct_def_t *)lsd,
-			  "capacities", LSD_FIELD_FLAG_ZERO_ON_COPY, &icap->capacities,
-			  0, icap, lsd_null_cb, (lsd_field_copy_cb)icap_caps_copy_cb, NULL,
-			  (lsd_field_delete_cb)icap_caps_delete_cb, NULL);
+                          "capacities", LSD_FIELD_FLAG_ZERO_ON_COPY, &icap->capacities,
+                          0, icap, lsd_null_cb, (lsd_field_copy_cb)icap_caps_copy_cb, NULL,
+                          (lsd_field_delete_cb)icap_caps_delete_cb, NULL);
     lives_free(icap);
     icap = NULL;
   }

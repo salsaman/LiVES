@@ -1961,13 +1961,13 @@ static boolean lives_startup2(livespointer data) {
 
   mainw->lazy_starter =
     lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC,
-			     WEED_SEED_BOOLEAN, lazy_startup_checks, "", NULL); 
+                             WEED_SEED_BOOLEAN, lazy_startup_checks, "", NULL);
 
   lives_proc_thread_hook_append(mainw->lazy_starter, COMPLETED_HOOK, 0,
                                 lazy_start_fin, (void *)mainw->lazy_starter);
 
   lives_proc_thread_nullify_on_destruction(mainw->lazy_starter, (void **)&mainw->lazy_starter);
-  
+
   lives_proc_thread_set_pauseable(mainw->lazy_starter, TRUE);
   lives_proc_thread_sync_ready(mainw->lazy_starter);
 

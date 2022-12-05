@@ -384,7 +384,7 @@ void lives_hooks_trigger_async(lives_obj_t *, lives_hook_stack_t **hooks, int ty
 void lives_hooks_trigger_asynco(lives_object_t *obj, lives_hook_stack_t **xlist, int type);
 
 lives_proc_thread_t lives_hooks_trigger_async_sequential(lives_obj_t *lpt, lives_hook_stack_t **xlist, int type,
-							 hook_funcptr_t finfunc, void *findata);
+    hook_funcptr_t finfunc, void *findata);
 void lives_hooks_trigger_async_sequentialo(lives_object_t *, lives_hook_stack_t **hooks, int type, hook_funcptr_t finfunc,
     void *findata);
 

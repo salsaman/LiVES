@@ -533,9 +533,9 @@ void lives_struct_test(void) {
   //LSD_CREATE_P(lsd, lives_clip_data_t);
   lsd = lsd_create_p("lives_test_t", tt, sizeof(lives_test_t), &tt->lsd);
   lsd_add_special_field((lsd_struct_def_t *)lsd, "strg", LSD_FIELD_CHARPTR,
-			&tt->strg, 0, tt, NULL);
+                        &tt->strg, 0, tt, NULL);
   lives_free(tt);
-  
+
   lsd_struct_create(lsd);
 
   THREADVAR(timerinfo) = lives_get_current_ticks();

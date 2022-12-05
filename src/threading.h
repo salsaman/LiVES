@@ -391,7 +391,8 @@ boolean sync_point(const char *motive);
 
 // set control to TRUE to return - if all SYNC_WAIT_HOOK funcs return TRUE (polled for), control is also set to TRUE
 // if control is NULL, an internal variable will be used
-boolean thread_wait_loop(lives_proc_thread_t lpt, thrd_work_t *work, boolean full_sync, boolean wake_gui, volatile boolean *control);
+boolean thread_wait_loop(lives_proc_thread_t lpt, thrd_work_t *work, boolean full_sync, boolean wake_gui,
+                         volatile boolean *control);
 
 // WARNING !! version without a return value will free tinfo !
 void lives_proc_thread_join(lives_proc_thread_t);

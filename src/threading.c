@@ -103,7 +103,8 @@ static boolean sync_hooks_done(lives_obj_t *obj, void *data) {
 // on exit the states WAITING and  BLOCKED will be cleared. BUSY will be cleared unless it was already set when the thread
 // entered.
 
-boolean thread_wait_loop(lives_proc_thread_t lpt, thrd_work_t *work, boolean full_sync, boolean wake_gui, volatile boolean *control) {
+boolean thread_wait_loop(lives_proc_thread_t lpt, thrd_work_t *work, boolean full_sync, boolean wake_gui,
+                         volatile boolean *control) {
   ticks_t timeout;
   uint64_t ltimeout;
   lives_proc_thread_t poller;
@@ -239,13 +240,13 @@ void _proc_thread_params_from_nullvargs(lives_proc_thread_t lpt, lives_funcptr_t
 
 void _proc_thread_params_from_vargs(lives_proc_thread_t lpt, lives_funcptr_t func, int return_type,
                                     const char *args_fmt, va_list xargs) {
-    if (args_fmt && *args_fmt) {
-      weed_set_funcptr_value(lpt, LIVES_LEAF_THREADFUNC, func);
-      if (return_type > 0) weed_leaf_set(lpt, _RV_, return_type, 0, NULL);
-      else if (return_type == -1) lives_proc_thread_include_states(lpt, THRD_OPT_NOTIFY);
-      weed_set_int64_value(lpt, LIVES_LEAF_FUNCSIG, funcsig_from_args_fmt(args_fmt));
-      weed_plant_params_from_vargs(lpt, args_fmt, xargs);
-    } else _proc_thread_params_from_nullvargs(lpt, func, return_type);
+  if (args_fmt && *args_fmt) {
+    weed_set_funcptr_value(lpt, LIVES_LEAF_THREADFUNC, func);
+    if (return_type > 0) weed_leaf_set(lpt, _RV_, return_type, 0, NULL);
+    else if (return_type == -1) lives_proc_thread_include_states(lpt, THRD_OPT_NOTIFY);
+    weed_set_int64_value(lpt, LIVES_LEAF_FUNCSIG, funcsig_from_args_fmt(args_fmt));
+    weed_plant_params_from_vargs(lpt, args_fmt, xargs);
+  } else _proc_thread_params_from_nullvargs(lpt, func, return_type);
 }
 
 
@@ -600,24 +601,24 @@ boolean lives_proc_thread_unref(lives_proc_thread_t lpt) {
               // that should be more than enough safeguards
               pthread_mutex_t *state_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
               thrd_work_t *work = lives_proc_thread_get_work(lpt);
-	      lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(lpt);
+              lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(lpt);
 
               weed_refcounter_unlock(lpt);
               lives_hooks_clear_all(hook_stacks, N_HOOK_POINTS);
-	      for (int i = 0; i < N_HOOK_POINTS; i++) {
-		lives_free(hook_stacks[i]->mutex);
-		lives_free(hook_stacks[i]);
-	      }
+              for (int i = 0; i < N_HOOK_POINTS; i++) {
+                lives_free(hook_stacks[i]->mutex);
+                lives_free(hook_stacks[i]);
+              }
 
               if (work) work->lpt = NULL;
               THREADVAR(tinfo) = NULL;
 
               weed_plant_free(lpt);
               lives_free(state_mutex);
-	      if (destruct_mutex) {
-		pthread_mutex_unlock(destruct_mutex);
-		lives_free(destruct_mutex);
-	      }
+              if (destruct_mutex) {
+                pthread_mutex_unlock(destruct_mutex);
+                lives_free(destruct_mutex);
+              }
               return TRUE;
             }
           }
@@ -997,10 +998,10 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t lpt, bo
       (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_MUTEX, NULL);
     if (!pthread_mutex_trylock(destruct_mutex)) {
       if (lives_proc_thread_check_completed(lpt)) {
-	// if the proc_thread runner already checked and exited we need to do the free
-	pthread_mutex_unlock(destruct_mutex);
-	lives_proc_thread_unref(lpt);
-	return TRUE;
+        // if the proc_thread runner already checked and exited we need to do the free
+        pthread_mutex_unlock(destruct_mutex);
+        lives_proc_thread_unref(lpt);
+        return TRUE;
       }
       lives_proc_thread_include_states(lpt, THRD_STATE_CANCELLED);
       pthread_mutex_unlock(destruct_mutex);

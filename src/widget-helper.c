@@ -1012,7 +1012,7 @@ boolean fg_service_fulfill(void) {
       g_print("FGSF 14 %d\n", is_fg_service);
 #endif
       fg_run_func(lpttorun, lpt_retval);
-       if (!is_fg_service) THREADVAR(fg_service) = FALSE;
+      if (!is_fg_service) THREADVAR(fg_service) = FALSE;
     }
 #ifdef DEBUG_GUI_THREADS
     g_print("FGSF 15\n");
@@ -1995,7 +1995,7 @@ uint32_t wait_for_fg_response(lives_proc_thread_t lpt) {
 
   lives_hook_remove(THREADVAR(hook_stacks), SYNC_WAIT_HOOK, (hook_funcptr_t)lptdone, &bvar);
   lives_hook_remove(THREADVAR(hook_stacks), SYNC_WAIT_HOOK, (hook_funcptr_t)clutchtrue, lpt);
-  
+
   // remove our added ref
   if (lpt) {
     lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(lpt);

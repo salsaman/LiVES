@@ -81,7 +81,7 @@ const bundle_t *init_bundles(void) {
   // BEGIN STAGE 2 BOOTSTRAP
   // we are now able to create bundles from bundledefs
   NIRVA_FUNC_GENERATION = 2;
-  
+
   for (int i = 0; i < N_BUNDLE_DEFS; i++) blueprints[i] = NULL;
 
   // recreate all the bundle defs as "blueprints"
@@ -123,7 +123,7 @@ const bundle_t *init_bundles(void) {
 
   // we have reached bootstrap level 3, we can now build bundles from their blueprint bundles
   NIRVA_FUNC_GENERATION = 3;
-  
+
   // the default intent is to create an object template type structural
   // in the Satisfaction Cascade, there will be default contract, for intent CREATE_BUNDLE, CAPS_SEL bndle type
   // which wraps a single standard functional, no in params, but one out param "TX_RESULT"
@@ -168,12 +168,12 @@ const bundle_t *init_bundles(void) {
   //
   // it will pull contracts from bp templ and store in ctx strore
   // it will add a hook to bp created inst for bp, each inst is added to obj_store ?
-  // it will find ctx for obj_tmpl and action it 
+  // it will find ctx for obj_tmpl and action it
   //
   // obj tmplt is returned to NIRVA_LOAD
   // NIRVA_LOAD will action this
   //
-  
+
   // tx in prime will call nirva_init in each object in store blueprint instance
   // and get contracts for each instance.
   // it will find the one for object store and grab one, then store all contracts in it
@@ -186,7 +186,7 @@ const bundle_t *init_bundles(void) {
   //  STRUCTURE_PRIME = NIRVA_LOAD(plugname);
 
   // grab the default INTENTCAP, we need to satisfy this and return the output
- 
+
   /* NIRVA_DECLARE_ORACLE(NIRVA_PRIORITY_DEFAULT, NIRVA_EQUALS, _TARGET_ITEM(NAME), \ */
   /* 		       ATTR_STRUCTURAL_BLUEPRINT, _COND_FIN,  ATTR_TYPE_CONST_BUNDLEPTR, \ */
   /* 		       get_blueprint_for_btype, ATTR_TYPE_UINT64); */
@@ -331,9 +331,9 @@ bundledef_t get_bundledef_fraom_bundle(bundle_t *bundle) {
 // gen 1
 
 // this should only be called if all checks have been performed - restrictions, readonly, proxy
-// etc 
+// etc
 static boolean set_strand_val(bundle_t *bundle, const char *name, uint32_t vtype,
-			      uint32_t ne, int array_op,  ...) {
+                              uint32_t ne, int array_op,  ...) {
   // if array_op > 0 and ne == 1, then idx tells us the source is vargs[idx]
   va_list vargs;
   boolean bval;
@@ -353,7 +353,7 @@ void set_strand_value(bundle_t *bundle, const char *name, uint32_t vtype, ...) {
 
 
 static boolean set_def_value_gen1(bundle_t *bundle, const char *overrd_name, \
-				  bundle_strand strand, bundle_strand strand2) {
+                                  bundle_strand strand, bundle_strand strand2) {
   const char *vname;
   const char *sname;
   off_t offx = 0;
@@ -385,9 +385,9 @@ static boolean set_def_value_gen1(bundle_t *bundle, const char *overrd_name, \
     case (STRAND_TYPE_BUNDLEPTR):
     case (STRAND_TYPE_CONST_BUNDLEPTR):
       if (!lives_strcmp(defval, "NULL") || !lives_strcmp(defval, "((void *)0)"))
-	err = set_strand_val(bundle, sname, vtype, 1, is_array, NULL);
+        err = set_strand_val(bundle, sname, vtype, 1, is_array, NULL);
       else if (vtype == STRAND_TYPE_STRING)
-	err = set_strand_val(bundle, sname, vtype, 1, is_array, defval);
+        err = set_strand_val(bundle, sname, vtype, 1, is_array, defval);
       break;
     case (STRAND_TYPE_INT):
     case (STRAND_TYPE_UINT):
@@ -501,16 +501,16 @@ static bundledef_t validate_bdef(bundledef_t bdef) {
     else {
       //check for duplicates
       for (j = 0; (strandb = newq[j]); j++) {
-	offx = 0;
-	vflagsb = get_vflags(strandb, &offx, &j, bdef);
-	if (offx < 0) continue;
-	//g_print("PARSExx %s\n", strandb);
-	vtypeb = get_vtype(strandb, &offx);
-	vnameb = get_vname(strandb + offx);
-	//g_print("PARSE2x %s\n", vnameb);
-	snameb = get_short_name(vnameb);
-	//g_print("PARSE3x %s\n", snameb);
-	if (!lives_strcmp(snamea, snameb)) break;
+        offx = 0;
+        vflagsb = get_vflags(strandb, &offx, &j, bdef);
+        if (offx < 0) continue;
+        //g_print("PARSExx %s\n", strandb);
+        vtypeb = get_vtype(strandb, &offx);
+        vnameb = get_vname(strandb + offx);
+        //g_print("PARSE2x %s\n", vnameb);
+        snameb = get_short_name(vnameb);
+        //g_print("PARSE3x %s\n", snameb);
+        if (!lives_strcmp(snamea, snameb)) break;
       }
     }
     if (!strandb) {
@@ -522,7 +522,7 @@ static bundledef_t validate_bdef(bundledef_t bdef) {
       newq[nq] = NULL;
 #if DEBUG_BUNDLES
       if (!(vflagsa & STRAND_TYPE_FLAG_OPTIONAL)) {
-	g_print("mandatory");
+        g_print("mandatory");
       } else g_print("optional");
       if (!atoi(stranda2)) g_print(" scalar");
       else g_print(" array");
@@ -534,37 +534,37 @@ static bundledef_t validate_bdef(bundledef_t bdef) {
       strandb2 = newq[j];
       //
       if (lives_strcmp(vnamea, vnameb)) {
-	// dupl from2 domains
-	//#if DEBUG_BUNDLES
-	g_print("Duplicate items found: %s and %s cannot co-exist in same bundledef !\n",
-		vnamea, vnameb);
-	//#endif
-	err = TRUE;
+        // dupl from2 domains
+        //#if DEBUG_BUNDLES
+        g_print("Duplicate items found: %s and %s cannot co-exist in same bundledef !\n",
+                vnamea, vnameb);
+        //#endif
+        err = TRUE;
       } else {
-	//#if DEBUG_BUNDLES
-	g_print("Duplicate item found for %s [%s]\n", snamea, vnamea);
-	//#endif
-	if (vtypea != vtypeb) {
-	  //#if DEBUG_BUNDLES
-	  g_print("ERROR: types do not match, we had %d and now we have %d\n",
-		  vtypeb, vtypea);
-	  //#endif
-	  err = TRUE;
-	} else {
-	  if (lives_strcmp(stranda2, strandb2)) {
-	    g_print("Mismatch in strand2: we had %s and now we have %s\n",
-		    stranda2, strandb2);
-	    err = TRUE;
-	  } else {
-	    g_print("This is normal due to the extendable nature of bundles\n");
-	    if ((vflagsb & STRAND_TYPE_FLAG_OPTIONAL)
-		&& !(vflagsa & STRAND_TYPE_FLAG_OPTIONAL)) {
-	      g_print("Replacing optional value with mandatory\n");
-	      lives_free(newq[j]); lives_free(newq[j + 1]);
-	      newq[j] = lives_strdup(stranda);
-	      newq[j + 1] = lives_strdup(stranda2);
-	    } else {
-	      g_print("Ignoring duplicate\n");
+        //#if DEBUG_BUNDLES
+        g_print("Duplicate item found for %s [%s]\n", snamea, vnamea);
+        //#endif
+        if (vtypea != vtypeb) {
+          //#if DEBUG_BUNDLES
+          g_print("ERROR: types do not match, we had %d and now we have %d\n",
+                  vtypeb, vtypea);
+          //#endif
+          err = TRUE;
+        } else {
+          if (lives_strcmp(stranda2, strandb2)) {
+            g_print("Mismatch in strand2: we had %s and now we have %s\n",
+                    stranda2, strandb2);
+            err = TRUE;
+          } else {
+            g_print("This is normal due to the extendable nature of bundles\n");
+            if ((vflagsb & STRAND_TYPE_FLAG_OPTIONAL)
+                && !(vflagsa & STRAND_TYPE_FLAG_OPTIONAL)) {
+              g_print("Replacing optional value with mandatory\n");
+              lives_free(newq[j]); lives_free(newq[j + 1]);
+              newq[j] = lives_strdup(stranda);
+              newq[j + 1] = lives_strdup(stranda2);
+            } else {
+              g_print("Ignoring duplicate\n");
 	      // *INDENT-OFF*
 	    }}}}}
     // *INDENT-ON*
@@ -620,63 +620,63 @@ bundle_t *create_gen1_bundle_with_vargs(uint64_t bt, bundledef_t bundledef, va_l
     if (!err) {
       // step 1, go through params
       if (vargs) {
-	char *err_item = NULL;
-	while (1) {
-	  // caller should provide vargs, list of optional items to be initialized
-	  char *iname;
-	  int idx;
-	  offx = 0;
-	  iname = va_arg(vargs, char *);
-	  if (!iname) break; // done parsing params
-	  //g_print("WILL add %s\n",iname);
+        char *err_item = NULL;
+        while (1) {
+          // caller should provide vargs, list of optional items to be initialized
+          char *iname;
+          int idx;
+          offx = 0;
+          iname = va_arg(vargs, char *);
+          if (!iname) break; // done parsing params
+          //g_print("WILL add %s\n",iname);
 
-	  idx = bundledef_get_item_idx(bundledef, iname, FALSE);
+          idx = bundledef_get_item_idx(bundledef, iname, FALSE);
 
-	  if (idx < 0) {
-	    err_item = iname;
-	    err = TRUE;
-	    break;
-	  }
-	  strand = bundledef[idx];
-	  vflags = get_vflags(strand, &offx, NULL, bundledef);
-	  if (offx < 0) {
-	    err_item = iname;
-	    err = TRUE;
-	    break;
-	  }
-	  vtype = get_vtype(strand, &offx);
-	  set_strand_val(bundle, iname, vtype, 1, 0, vargs, 0);
-	}
-	if (err) {
-	  g_printerr("ERROR adding item '%s' to bundle, invalid item name\n", err_item);
-	  break_me("invname 1");
-	  err = FALSE;
-	}
+          if (idx < 0) {
+            err_item = iname;
+            err = TRUE;
+            break;
+          }
+          strand = bundledef[idx];
+          vflags = get_vflags(strand, &offx, NULL, bundledef);
+          if (offx < 0) {
+            err_item = iname;
+            err = TRUE;
+            break;
+          }
+          vtype = get_vtype(strand, &offx);
+          set_strand_val(bundle, iname, vtype, 1, 0, vargs, 0);
+        }
+        if (err) {
+          g_printerr("ERROR adding item '%s' to bundle, invalid item name\n", err_item);
+          break_me("invname 1");
+          err = FALSE;
+        }
       }
       if (!err) {
-	// add any missing mandos
-	for (int i = 0; (strand = bundledef[i]); i++) {
-	  offx = 0;
-	  vflags = get_vflags(strand, &offx, &i, bundledef);
-	  if (offx < 0) continue;
-	  vtype = get_vtype(strand, &offx);
-	  //if (vtype == STRAND_TYPE_NONE) continue;
-	  vname = get_vname(strand + offx);
-	  //g_print("DO WE need defs for %s ?\n", vname);
-	  if (!(vflags & STRAND_TYPE_FLAG_OPTIONAL)) {
-	    //g_print("%s is mando\n", sname);
-	    if (!bundle_has_strand(bundle, vname)) {
-	      //g_print("%s is absent\n", sname);
-	      //g_print("SETTING to default\n");
-	      err = set_def_value_gen1(bundle, NULL, strand, bundledef[i]);
-	      if (err) goto endit;
-	    }
-	  }
-	  if (err) break;
+        // add any missing mandos
+        for (int i = 0; (strand = bundledef[i]); i++) {
+          offx = 0;
+          vflags = get_vflags(strand, &offx, &i, bundledef);
+          if (offx < 0) continue;
+          vtype = get_vtype(strand, &offx);
+          //if (vtype == STRAND_TYPE_NONE) continue;
+          vname = get_vname(strand + offx);
+          //g_print("DO WE need defs for %s ?\n", vname);
+          if (!(vflags & STRAND_TYPE_FLAG_OPTIONAL)) {
+            //g_print("%s is mando\n", sname);
+            if (!bundle_has_strand(bundle, vname)) {
+              //g_print("%s is absent\n", sname);
+              //g_print("SETTING to default\n");
+              err = set_def_value_gen1(bundle, NULL, strand, bundledef[i]);
+              if (err) goto endit;
+            }
+          }
+          if (err) break;
 	  // *INDENT-OFF*
 	}}}
     // *INDENT-ON*
-  endit:
+endit:
     if (err) {
 #if DEBUG_BUNDLES
       g_printerr("\nERROR: adding item to bundle\n");
@@ -704,7 +704,7 @@ void lives_strand_delete(bundle_t *bundle, const char *stname) {
 
 
 int64_t lives_strand_copy(bundle_t *dest, const char *dname, bundle_t *src,
-			  const char *sname) {
+                          const char *sname) {
   char *shname = get_short_name(dname);
   char *shname2 = get_short_name(sname);
   weed_leaf_copy(dest, shname, src, shname2);
@@ -798,7 +798,7 @@ const blueprint_t *get_blueprint_for_btype(bundle_type btype) {
 
 blueprint_t *get_blueprint_from_bundle(bundle_t *b) {
   return (blueprint_t *)
-    lives_strand_get_value_const_bundleptr(b, "blueprint");
+         lives_strand_get_value_const_bundleptr(b, "blueprint");
 }
 
 
@@ -842,59 +842,59 @@ static bundle_t *create_gen2_bundle_with_vargs(uint64_t btype, blueprint_t *blue
     if (!err) {
       // step 1, go through params
       if (vargs) {
-	while (1) {
-	  // caller should provide vargs, list of optional items to be initialized
-	  stname = va_arg(vargs, char *);
-	  if (!stname) break; // done parsing params
-	  //g_print("2WILL add %s\n",stname);
-	  //g_print("ptr stname is %p\n", stname);
-	  stdef = get_strand_def_by_name(blueprint, stname);
-	  if (!stdef) {
-	    err_item = stname;
-	    err = TRUE;
-	    break;
-	  }
-	  vtype = stdef_get_strand_type(stdef, bundle);
-	  if (vtype == STRAND_TYPE_NONE || vtype == STRAND_TYPE_UNDEFINED) {
-	    err_item = stname;
-	    err = TRUE;
-	    break;
-	  }
-	  set_strand_val(bundle, stname, vtype, 1, 0, vargs);
-	}
-	if (err) {
-	  g_printerr("2ERROR adding item '%s' to bundle, item name or type invalid\n", err_item);
-	  err = FALSE;
-	}
+        while (1) {
+          // caller should provide vargs, list of optional items to be initialized
+          stname = va_arg(vargs, char *);
+          if (!stname) break; // done parsing params
+          //g_print("2WILL add %s\n",stname);
+          //g_print("ptr stname is %p\n", stname);
+          stdef = get_strand_def_by_name(blueprint, stname);
+          if (!stdef) {
+            err_item = stname;
+            err = TRUE;
+            break;
+          }
+          vtype = stdef_get_strand_type(stdef, bundle);
+          if (vtype == STRAND_TYPE_NONE || vtype == STRAND_TYPE_UNDEFINED) {
+            err_item = stname;
+            err = TRUE;
+            break;
+          }
+          set_strand_val(bundle, stname, vtype, 1, 0, vargs);
+        }
+        if (err) {
+          g_printerr("2ERROR adding item '%s' to bundle, item name or type invalid\n", err_item);
+          err = FALSE;
+        }
       }
       if (!err) {
-	// add any missing mandos
-	// TODO -check for EXCLUSIVE
-	for (int i = 0; (stdef = get_mand_strand_def(blueprint, i)); i++) {
-	  uint32_t sttype = stdef_get_strand_type(stdef, blueprint);
-	  stflags = stdef_get_flags(stdef);
-	  //if (sttype == STRAND_TYPE_NONE) continue;
-	  stname = stdef_get_name(stdef);
-	  //g_print("DO WE need defs for %s ?\n", stname);
-	  if (!bundle_has_strand(bundle, stname)) {
-	    if ((stflags & BLUEPRINT_FLAG_READONLY)
-		&& !(stflags & BLUEPRINT_FLAG_OPTIONAL)) {
-	      err_item = stname;
-	      err = TRUE;
-	      break;
-	    }
-	    if (sttype != STRAND_TYPE_NONE && sttype != STRAND_TYPE_UNDEFINED) {
-	      //g_print("%s is mando\n", shname);
-	      //g_print("%s is absent\n", shname);
-	      if (bundle_has_strand(stdef, "default"))
-		lives_strand_copy(bundle, stname, stdef, "default");
-	    }
-	  }
-	}
-	if (err) {
-	  g_printerr("3ERROR adding item '%s' to bundle, "
-		     "readonly item must have value set in vargs\n", err_item);
-	}
+        // add any missing mandos
+        // TODO -check for EXCLUSIVE
+        for (int i = 0; (stdef = get_mand_strand_def(blueprint, i)); i++) {
+          uint32_t sttype = stdef_get_strand_type(stdef, blueprint);
+          stflags = stdef_get_flags(stdef);
+          //if (sttype == STRAND_TYPE_NONE) continue;
+          stname = stdef_get_name(stdef);
+          //g_print("DO WE need defs for %s ?\n", stname);
+          if (!bundle_has_strand(bundle, stname)) {
+            if ((stflags & BLUEPRINT_FLAG_READONLY)
+                && !(stflags & BLUEPRINT_FLAG_OPTIONAL)) {
+              err_item = stname;
+              err = TRUE;
+              break;
+            }
+            if (sttype != STRAND_TYPE_NONE && sttype != STRAND_TYPE_UNDEFINED) {
+              //g_print("%s is mando\n", shname);
+              //g_print("%s is absent\n", shname);
+              if (bundle_has_strand(stdef, "default"))
+                lives_strand_copy(bundle, stname, stdef, "default");
+            }
+          }
+        }
+        if (err) {
+          g_printerr("3ERROR adding item '%s' to bundle, "
+                     "readonly item must have value set in vargs\n", err_item);
+        }
       }
     }
     if (err) {
@@ -963,7 +963,7 @@ uint32_t attr_type_to_weed_seed(uint32_t st) {
   case ATTR_TYPE_VOIDPTR: return WEED_SEED_VOIDPTR;
   case ATTR_TYPE_FUNCPTR: return WEED_SEED_FUNCPTR;
   case ATTR_TYPE_BUNDLEPTR: return WEED_SEED_PLANTPTR;
-    //case ATTR_TYPE_CONST_BUNDLEPTR: return WEED_SEED_VOIDPTR;
+  //case ATTR_TYPE_CONST_BUNDLEPTR: return WEED_SEED_VOIDPTR;
   default: return WEED_SEED_INVALID;
   }
 }
@@ -1000,14 +1000,14 @@ uint32_t strand_type_to_weed_seed(uint32_t st) {
   case STRAND_TYPE_BUNDLEPTR: return WEED_SEED_PLANTPTR;
   case STRAND_TYPE_CONST_BUNDLEPTR: return WEED_SEED_VOIDPTR;
   default: return WEED_SEED_INVALID;
-  }  
+  }
 }
 
 
 // should not be called directly, only through set_strand_val, set_strand_value
 // or array_append
 static boolean set_strand_val_varg(bundle_t *bundle, const char *iname, uint32_t vtype,
-				   uint32_t ne, int array_op, va_list vargs) {
+                                   uint32_t ne, int array_op, va_list vargs) {
   // THIS IS FOR STRAND_* values, for ATTR_bundles this is called for the "DATA" element
   // set a value / array in bundle, element with name "name"
   // ne holds (new) number of elements, array tells us whether value is array or scalar
@@ -1025,230 +1025,230 @@ static boolean set_strand_val_varg(bundle_t *bundle, const char *iname, uint32_t
   xiname = get_short_name(iname);
   if (!vargs) {
     etext = lives_strdup_concat(etext, "\n", "missing value setting item %s [%s] in bundle.",
-				xiname, iname);
+                                xiname, iname);
     err = TRUE;
   } else {
     uint32_t stype = strand_type_to_weed_seed(vtype);
     if (!array_op) {
       switch (vtype) {
       case (STRAND_TYPE_INT): {
-	int val = va_arg(vargs, int);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, 1, &val);
-	else
-	  weed_set_int_value(bundle, xiname, val);
+        int val = va_arg(vargs, int);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, 1, &val);
+        else
+          weed_set_int_value(bundle, xiname, val);
       }
-	break;
+      break;
       case (STRAND_TYPE_UINT): {
-	uint val = va_arg(vargs, uint);
-	if (array_op == 2) {
-	  werr = weed_ext_append_elements(bundle, xiname, stype, 1, &val);
-	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
-	    weed_ext_append_elements(bundle, xiname, WEED_SEED_INT, 1, &val);
-	} else {
-	  werr = weed_set_uint_value(bundle, xiname, val);
-	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
-	    weed_set_int_value(bundle, xiname, val);
-	}
+        uint val = va_arg(vargs, uint);
+        if (array_op == 2) {
+          werr = weed_ext_append_elements(bundle, xiname, stype, 1, &val);
+          if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+            weed_ext_append_elements(bundle, xiname, WEED_SEED_INT, 1, &val);
+        } else {
+          werr = weed_set_uint_value(bundle, xiname, val);
+          if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+            weed_set_int_value(bundle, xiname, val);
+        }
       }
-	break;
+      break;
       case STRAND_TYPE_BOOLEAN: {
-	int val = va_arg(vargs, int);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, 1, &val);
-	else
-	  weed_set_boolean_value(bundle, xiname, val);
+        int val = va_arg(vargs, int);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, 1, &val);
+        else
+          weed_set_boolean_value(bundle, xiname, val);
       }
-	break;
+      break;
       case STRAND_TYPE_DOUBLE: {
-	double val = va_arg(vargs, double);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, 1, &val);
-	else
-	  weed_set_double_value(bundle, xiname, val);
+        double val = va_arg(vargs, double);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, 1, &val);
+        else
+          weed_set_double_value(bundle, xiname, val);
       }
-	break;
+      break;
       case STRAND_TYPE_STRING: {
-	char *val = lives_strdup(va_arg(vargs, char *));
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, 1, &val);
-	else
-	  weed_set_string_value(bundle, xiname, val);
+        char *val = lives_strdup(va_arg(vargs, char *));
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, 1, &val);
+        else
+          weed_set_string_value(bundle, xiname, val);
       }
-	break;
+      break;
       case STRAND_TYPE_INT64: {
-	int64_t val = va_arg(vargs, int64_t);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, 1, &val);
-	else
-	  weed_set_int64_value(bundle, xiname, val);
+        int64_t val = va_arg(vargs, int64_t);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, 1, &val);
+        else
+          weed_set_int64_value(bundle, xiname, val);
       }
-	break;
+      break;
       case (STRAND_TYPE_UINT64): {
-	uint64_t val = va_arg(vargs, uint64_t);
-	if (array_op == 2) {
-	  werr = weed_ext_append_elements(bundle, xiname, stype, 1, &val);
-	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
-	    weed_ext_append_elements(bundle, xiname, WEED_SEED_INT64, 1, &val);
-	} else {
-	  werr = weed_set_uint64_value(bundle, xiname, val);
-	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
-	    weed_set_int64_value(bundle, xiname, val);
-	}
+        uint64_t val = va_arg(vargs, uint64_t);
+        if (array_op == 2) {
+          werr = weed_ext_append_elements(bundle, xiname, stype, 1, &val);
+          if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+            weed_ext_append_elements(bundle, xiname, WEED_SEED_INT64, 1, &val);
+        } else {
+          werr = weed_set_uint64_value(bundle, xiname, val);
+          if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+            weed_set_int64_value(bundle, xiname, val);
+        }
       }
-	break;
+      break;
       case STRAND_TYPE_CONST_BUNDLEPTR: {
-	void *val = va_arg(vargs, void *);
-	if (array_op == 2) {
-	  werr = weed_ext_append_elements(bundle, xiname, WEED_SEED_VOIDPTR, 1, &val);
-	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
-	    weed_ext_append_elements(bundle, xiname, WEED_SEED_PLANTPTR, 1, &val);
-	} else {
-	  werr = weed_set_voidptr_value(bundle, xiname, val);
-	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
-	    weed_set_plantptr_value(bundle, xiname, val);
-	}
+        void *val = va_arg(vargs, void *);
+        if (array_op == 2) {
+          werr = weed_ext_append_elements(bundle, xiname, WEED_SEED_VOIDPTR, 1, &val);
+          if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+            weed_ext_append_elements(bundle, xiname, WEED_SEED_PLANTPTR, 1, &val);
+        } else {
+          werr = weed_set_voidptr_value(bundle, xiname, val);
+          if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+            weed_set_plantptr_value(bundle, xiname, val);
+        }
       }
-	break;
+      break;
       case STRAND_TYPE_BUNDLEPTR: {
-	weed_plant_t *val = va_arg(vargs, weed_plant_t *);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, 1, &val);
-	else
-	  weed_set_plantptr_value(bundle, xiname, val);
+        weed_plant_t *val = va_arg(vargs, weed_plant_t *);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, 1, &val);
+        else
+          weed_set_plantptr_value(bundle, xiname, val);
       }
-	break;
+      break;
       case STRAND_TYPE_VOIDPTR: {
-	void *val = va_arg(vargs, void *);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, 1, &val);
-	else
-	  weed_set_voidptr_value(bundle, xiname, val);
+        void *val = va_arg(vargs, void *);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, 1, &val);
+        else
+          weed_set_voidptr_value(bundle, xiname, val);
       }
-	break;
+      break;
       case STRAND_TYPE_FUNCPTR: {
-	weed_funcptr_t val = va_arg(vargs, weed_funcptr_t);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, 1, &val);
-	else
-	  weed_set_funcptr_value(bundle, xiname, val);
+        weed_funcptr_t val = va_arg(vargs, weed_funcptr_t);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, 1, &val);
+        else
+          weed_set_funcptr_value(bundle, xiname, val);
       }
-	break;
+      break;
       default:
-	etext = lives_strdup_concat(etext, "\n", "type %d invalid for %s in bundle.", vtype, xiname);
-	err = TRUE;
-	break;
+        etext = lives_strdup_concat(etext, "\n", "type %d invalid for %s in bundle.", vtype, xiname);
+        err = TRUE;
+        break;
       }
     } else {
       switch (vtype) {
       case STRAND_TYPE_INT: {
-	int *val = va_arg(vargs, int *);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, ne, val);
-	else
-	  weed_set_int_array(bundle, xiname, ne, val);
+        int *val = va_arg(vargs, int *);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, ne, val);
+        else
+          weed_set_int_array(bundle, xiname, ne, val);
       }
-	break;
+      break;
       case STRAND_TYPE_UINT: {
-	uint32_t *val = va_arg(vargs, uint32_t *);
-	if (array_op == 2) {
-	  werr = weed_ext_append_elements(bundle, xiname, stype, ne, val);
-	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
-	    weed_ext_append_elements(bundle, xiname, WEED_SEED_INT, ne, val);
-	} else {
-	  werr = weed_set_uint_array(bundle, xiname, ne, val);
-	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
-	    weed_set_int_array(bundle, xiname, ne, (int *)val);
-	}
+        uint32_t *val = va_arg(vargs, uint32_t *);
+        if (array_op == 2) {
+          werr = weed_ext_append_elements(bundle, xiname, stype, ne, val);
+          if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+            weed_ext_append_elements(bundle, xiname, WEED_SEED_INT, ne, val);
+        } else {
+          werr = weed_set_uint_array(bundle, xiname, ne, val);
+          if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+            weed_set_int_array(bundle, xiname, ne, (int *)val);
+        }
       }
-	break;
+      break;
       case STRAND_TYPE_BOOLEAN: {
-	int *val = va_arg(vargs, int *);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, ne, val);
-	else
-	  weed_set_boolean_array(bundle, xiname, ne, val);
+        int *val = va_arg(vargs, int *);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, ne, val);
+        else
+          weed_set_boolean_array(bundle, xiname, ne, val);
       }
-	break;
-	//
+      break;
+      //
       case STRAND_TYPE_DOUBLE: {
-	double *val = va_arg(vargs, double *);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, ne, val);
-	else
-	  weed_set_double_array(bundle, xiname, ne, val);
+        double *val = va_arg(vargs, double *);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, ne, val);
+        else
+          weed_set_double_array(bundle, xiname, ne, val);
       }
-	break;
+      break;
       case STRAND_TYPE_STRING: {
-	char **val = va_arg(vargs, char **);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, ne, val);
-	else
-	  weed_set_string_array(bundle, xiname, ne, val);
+        char **val = va_arg(vargs, char **);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, ne, val);
+        else
+          weed_set_string_array(bundle, xiname, ne, val);
       }
-	break;
+      break;
       case STRAND_TYPE_INT64: {
-	int64_t *val = va_arg(vargs, int64_t *);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, ne, val);
-	else
-	  weed_set_int64_array(bundle, xiname, ne, val);
+        int64_t *val = va_arg(vargs, int64_t *);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, ne, val);
+        else
+          weed_set_int64_array(bundle, xiname, ne, val);
       }
-	break;
+      break;
       case STRAND_TYPE_UINT64: {
-	uint64_t *val = va_arg(vargs, uint64_t *);
-	if (array_op == 2) {
-	  werr = weed_ext_append_elements(bundle, xiname, stype, ne, val);
-	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
-	    weed_ext_append_elements(bundle, xiname, WEED_SEED_INT64, ne, val);
-	} else {
-	  werr = weed_set_uint64_array(bundle, xiname, ne, val);
-	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
-	    weed_set_int64_array(bundle, xiname, ne, (int64_t *)val);
-	}
+        uint64_t *val = va_arg(vargs, uint64_t *);
+        if (array_op == 2) {
+          werr = weed_ext_append_elements(bundle, xiname, stype, ne, val);
+          if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+            weed_ext_append_elements(bundle, xiname, WEED_SEED_INT64, ne, val);
+        } else {
+          werr = weed_set_uint64_array(bundle, xiname, ne, val);
+          if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+            weed_set_int64_array(bundle, xiname, ne, (int64_t *)val);
+        }
       }
-	break;
+      break;
       case STRAND_TYPE_CONST_BUNDLEPTR: {
-	void **val = va_arg(vargs, void **);
-	if (array_op == 2) {
-	  werr = weed_ext_append_elements(bundle, xiname, WEED_SEED_VOIDPTR, ne, val);
-	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
-	    weed_ext_append_elements(bundle, xiname, WEED_SEED_PLANTPTR, ne, val);
-	} else {
-	  werr = weed_set_voidptr_array(bundle, xiname, ne, val);
-	  if (werr == WEED_ERROR_WRONG_SEED_TYPE)
-	    weed_set_plantptr_array(bundle, xiname, ne, (weed_plant_t **)val);
-	}
+        void **val = va_arg(vargs, void **);
+        if (array_op == 2) {
+          werr = weed_ext_append_elements(bundle, xiname, WEED_SEED_VOIDPTR, ne, val);
+          if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+            weed_ext_append_elements(bundle, xiname, WEED_SEED_PLANTPTR, ne, val);
+        } else {
+          werr = weed_set_voidptr_array(bundle, xiname, ne, val);
+          if (werr == WEED_ERROR_WRONG_SEED_TYPE)
+            weed_set_plantptr_array(bundle, xiname, ne, (weed_plant_t **)val);
+        }
       }
-	break;
+      break;
       case STRAND_TYPE_BUNDLEPTR: {
-	weed_plant_t **val = va_arg(vargs, weed_plant_t **);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, ne, val);
-	else
-	  weed_set_plantptr_array(bundle, xiname, ne, val);
+        weed_plant_t **val = va_arg(vargs, weed_plant_t **);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, ne, val);
+        else
+          weed_set_plantptr_array(bundle, xiname, ne, val);
       }
-	break;
+      break;
       case STRAND_TYPE_VOIDPTR: {
-	void **val = va_arg(vargs, void **);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, ne, val);
-	else
-	  weed_set_voidptr_array(bundle, xiname, ne, val);
+        void **val = va_arg(vargs, void **);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, ne, val);
+        else
+          weed_set_voidptr_array(bundle, xiname, ne, val);
       }
-	break;
+      break;
       case STRAND_TYPE_FUNCPTR: {
-	weed_funcptr_t *val = va_arg(vargs, weed_funcptr_t *);
-	if (array_op == 2)
-	  weed_ext_append_elements(bundle, xiname, stype, ne, val);
-	else
-	  weed_set_funcptr_array(bundle, xiname, ne, val);
+        weed_funcptr_t *val = va_arg(vargs, weed_funcptr_t *);
+        if (array_op == 2)
+          weed_ext_append_elements(bundle, xiname, stype, ne, val);
+        else
+          weed_set_funcptr_array(bundle, xiname, ne, val);
       }
-	break;
+      break;
       default:
-	etext = lives_strdup_concat(etext, "\n", "type %d invalid for %s in bundle.", vtype, xiname);
-	err = TRUE;
-	break;
+        etext = lives_strdup_concat(etext, "\n", "type %d invalid for %s in bundle.", vtype, xiname);
+        err = TRUE;
+        break;
       }
     }
   }
@@ -1269,7 +1269,7 @@ static boolean set_strand_val_varg(bundle_t *bundle, const char *iname, uint32_t
 
 
 int32_t lives_strand_array_append(bundle_t *bundle, const char *name,
-				  uint32_t vtype, uint32_t ne, ...) {
+                                  uint32_t vtype, uint32_t ne, ...) {
   va_list va;
   int op = 2;
   va_start(va, ne);
@@ -1312,47 +1312,47 @@ uint32_t lives_array_get_size(bundle_t *bundle, const char *stname) {
 
 
 // set_strand_value_bundleptr should only be used to set the DATA in a value bundle
- // (or bundles which extend value, such as strand_replacement, attribute)
- // everything else must use include_sub_bundle(s) or add/append const bundleptr(s)
+// (or bundles which extend value, such as strand_replacement, attribute)
+// everything else must use include_sub_bundle(s) or add/append const bundleptr(s)
 
- int lives_strand_append_sub_bundles(bundle_t *bundle, const char *name, int ns, bundle_t **subs) {
-   if (bundle) {
-     set_strand_val(bundle, name, STRAND_TYPE_BUNDLEPTR, ns, 1, subs);
-     for (int i = 0; i < ns; i++) {
-       bundle_t *sub = subs[i];
-       set_strand_val(sub, "container", STRAND_TYPE_VOIDPTR, 1, 0, bundle);
-       set_strand_val(sub, "container_strand", STRAND_TYPE_STRING, 1, 0, name);
-     }
-     return LIVES_RESULT_SUCCESS;
-   }
-   return LIVES_RESULT_ERROR;
- }
-
-
- int lives_strand_include_sub_bundle(bundle_t *bundle, const char *name, bundle_t *sub) {
-   if (bundle) {
-     set_strand_val(bundle, name, STRAND_TYPE_BUNDLEPTR, 1, 0, sub);
-     set_strand_val(sub, "container", STRAND_TYPE_VOIDPTR, 1, 0, bundle);
-     set_strand_val(sub, "container_strand", STRAND_TYPE_STRING, 1, 0, name);
-     return LIVES_RESULT_SUCCESS;
-   }
-   return LIVES_RESULT_ERROR;
- }
+int lives_strand_append_sub_bundles(bundle_t *bundle, const char *name, int ns, bundle_t **subs) {
+  if (bundle) {
+    set_strand_val(bundle, name, STRAND_TYPE_BUNDLEPTR, ns, 1, subs);
+    for (int i = 0; i < ns; i++) {
+      bundle_t *sub = subs[i];
+      set_strand_val(sub, "container", STRAND_TYPE_VOIDPTR, 1, 0, bundle);
+      set_strand_val(sub, "container_strand", STRAND_TYPE_STRING, 1, 0, name);
+    }
+    return LIVES_RESULT_SUCCESS;
+  }
+  return LIVES_RESULT_ERROR;
+}
 
 
+int lives_strand_include_sub_bundle(bundle_t *bundle, const char *name, bundle_t *sub) {
+  if (bundle) {
+    set_strand_val(bundle, name, STRAND_TYPE_BUNDLEPTR, 1, 0, sub);
+    set_strand_val(sub, "container", STRAND_TYPE_VOIDPTR, 1, 0, bundle);
+    set_strand_val(sub, "container_strand", STRAND_TYPE_STRING, 1, 0, name);
+    return LIVES_RESULT_SUCCESS;
+  }
+  return LIVES_RESULT_ERROR;
+}
 
- int lives_strand_add_const_bundles(bundle_t *bundle, const char *name, int ns, bundle_t **ptrs) {
-   // if the data to be added does not have a container, we will add it via include_sub_bundles
-   // this is possible since the strand_type for strand_replacement may vary from the strand_def
-   // doing it like this ensures that a bundle is always included as a sub bundle somewhere so that
-   // it will get unreffed with the container, and not leaked
 
-   if (bundle) {
-     set_strand_val(bundle, name, STRAND_TYPE_VOIDPTR, ns, 2, ptrs);
-     return LIVES_RESULT_SUCCESS;
-   }
-   return LIVES_RESULT_ERROR;
- }
+
+int lives_strand_add_const_bundles(bundle_t *bundle, const char *name, int ns, bundle_t **ptrs) {
+  // if the data to be added does not have a container, we will add it via include_sub_bundles
+  // this is possible since the strand_type for strand_replacement may vary from the strand_def
+  // doing it like this ensures that a bundle is always included as a sub bundle somewhere so that
+  // it will get unreffed with the container, and not leaked
+
+  if (bundle) {
+    set_strand_val(bundle, name, STRAND_TYPE_VOIDPTR, ns, 2, ptrs);
+    return LIVES_RESULT_SUCCESS;
+  }
+  return LIVES_RESULT_ERROR;
+}
 
 
 int lives_strand_add_const_bundle(bundle_t *bundle, const char *name, bundle_t *ptr) {
@@ -1375,15 +1375,14 @@ char **lives_bundle_list_strands(bundle_t *bun) {
       lives_free(leaves[i]);
       j = i + 1;
       while (leaves[j]) {
-	if (leaves[j][0] == '.') {
-	  leaves[filled++] = leaves[j];
-	  i = j;
-	  break;
-	}
-	lives_free(leaves[j]);
+        if (leaves[j][0] == '.') {
+          leaves[filled++] = leaves[j];
+          i = j;
+          break;
+        }
+        lives_free(leaves[j]);
       }
-    }
-    else filled++;
+    } else filled++;
   }
   leaves[filled] = NULL;
   return leaves;
@@ -1493,120 +1492,120 @@ static void make_blueprint_for(bundle_type btype) {
       bundle_t *stdef_old;
       lives_free(sname);
       for (i = 0; i < ns; i++) {
-	stdef_old = sds[i];
-	vtype = stdef_get_strand_type(stdef_old, NULL);
-	vname = (char *)stdef_get_name(stdef_old);
-	bflags = stdef_get_flags(stdef_old);
-	stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "name", vname,
-				      "flags", bflags, "strand_type", vtype, NULL);
-	lives_free(vname);
-	// copy default
-	if (bundle_has_strand(stdef_old, "default"))
-	  lives_strand_copy(stdef, "default", stdef_old, "default");
-	st_defarr = lives_realloc(st_defarr, ++nstr * sizeof(bundle_t *));
-	st_defarr[nstr - 1] = stdef;
+        stdef_old = sds[i];
+        vtype = stdef_get_strand_type(stdef_old, NULL);
+        vname = (char *)stdef_get_name(stdef_old);
+        bflags = stdef_get_flags(stdef_old);
+        stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "name", vname,
+                                      "flags", bflags, "strand_type", vtype, NULL);
+        lives_free(vname);
+        // copy default
+        if (bundle_has_strand(stdef_old, "default"))
+          lives_strand_copy(stdef, "default", stdef_old, "default");
+        st_defarr = lives_realloc(st_defarr, ++nstr * sizeof(bundle_t *));
+        st_defarr[nstr - 1] = stdef;
       }
       if (sds) lives_free(sds);
     } else {
       bdef = (bundledef_t)get_bundledef(btype);
       for (i = 0; bdef[i]; i++) {
-	off_t offx = 0;
-	bflags = 0;
-	strand = bdef[i];
-	//g_print("STRAND ------------ %s\n", strand);
-	vflags = get_vflags(strand, &offx, NULL, bdef);
-	if (vflags == STRAND_TYPE_FLAG_COMMENT) continue;
-	/* if (vflags == STRAND_TYPE_FLAG_DIRECTIVE) { */
-	/*   // any directives are simply copied verbatime */
-	/*   // when creating bundles in gen1, directives are simply skipped over */
-	/*   // for gen2 directive strands are ignored */
-	/*   // only in gen3 will these be recast as hook automations etc. */
-	/*   // */
-	/*   // here we flag them, set type to directive, and set name to @nnnnn */
-	/*   // where nnnn = 0... unique for blueprint */
-	/*   // the directive itself is stored in default, with implied strand_type STRAND_TYPE_STIRNG */
-	/*   bflags = BLUEPRINT_FLAG_DIRECTIVE; */
-	/*   vtype = STRAND_TYPE_FLAG_DIRECTIVE; */
-	/*   vname = lives_strdup_printf("%c%d", STRAND_TYPE_FLAG_DIRECTIVE); */
-	/*   stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "name", vname, */
-	/* 				"flags", bflags, "strand_type", vtype, NULL); */
-	/*   set_def_value_gen1(stdef, shdef, strand, NULL); */
-	//}
-	if (1) {
-	  int array_size = 0;
-	  //int restrnum = 0;
-	  if (vflags == STRAND_TYPE_FLAG_OPTIONAL) bflags |= BLUEPRINT_FLAG_OPTIONAL;
-	  vtype = get_vtype(strand, &offx);
-	  vname = (char *)get_vname(strand + offx);
-	  strand2 = bdef[++i];
-	  tflags = atoi(strand2);
-	  // for arrays we set array_size to -1, for scalars it is not created
-	  if (tflags & STRAND2_FLAG_ARRAY) array_size = -1;
+        off_t offx = 0;
+        bflags = 0;
+        strand = bdef[i];
+        //g_print("STRAND ------------ %s\n", strand);
+        vflags = get_vflags(strand, &offx, NULL, bdef);
+        if (vflags == STRAND_TYPE_FLAG_COMMENT) continue;
+        /* if (vflags == STRAND_TYPE_FLAG_DIRECTIVE) { */
+        /*   // any directives are simply copied verbatime */
+        /*   // when creating bundles in gen1, directives are simply skipped over */
+        /*   // for gen2 directive strands are ignored */
+        /*   // only in gen3 will these be recast as hook automations etc. */
+        /*   // */
+        /*   // here we flag them, set type to directive, and set name to @nnnnn */
+        /*   // where nnnn = 0... unique for blueprint */
+        /*   // the directive itself is stored in default, with implied strand_type STRAND_TYPE_STIRNG */
+        /*   bflags = BLUEPRINT_FLAG_DIRECTIVE; */
+        /*   vtype = STRAND_TYPE_FLAG_DIRECTIVE; */
+        /*   vname = lives_strdup_printf("%c%d", STRAND_TYPE_FLAG_DIRECTIVE); */
+        /*   stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "name", vname, */
+        /* 				"flags", bflags, "strand_type", vtype, NULL); */
+        /*   set_def_value_gen1(stdef, shdef, strand, NULL); */
+        //}
+        if (1) {
+          int array_size = 0;
+          //int restrnum = 0;
+          if (vflags == STRAND_TYPE_FLAG_OPTIONAL) bflags |= BLUEPRINT_FLAG_OPTIONAL;
+          vtype = get_vtype(strand, &offx);
+          vname = (char *)get_vname(strand + offx);
+          strand2 = bdef[++i];
+          tflags = atoi(strand2);
+          // for arrays we set array_size to -1, for scalars it is not created
+          if (tflags & STRAND2_FLAG_ARRAY) array_size = -1;
 
-	  // for readonly, we do not set any default, the value must be specified when the
-	  // bundle is created, then cannot be changed
-	  // gen3 will add automation for this, for now we just treat it as
-	  // mandatory in vargs
-	  if (tflags & STRAND2_FLAG_READONLY) bflags |= BLUEPRINT_FLAG_READONLY;
-	  if (tflags & STRAND2_FLAG_RDONLY_SUB) bflags |= BLUEPRINT_FLAG_RDONLY_SUB;
-	  if (tflags & STRAND2_FLAG_KEYED) bflags |= BLUEPRINT_FLAG_KEYED_ARRAY;
+          // for readonly, we do not set any default, the value must be specified when the
+          // bundle is created, then cannot be changed
+          // gen3 will add automation for this, for now we just treat it as
+          // mandatory in vargs
+          if (tflags & STRAND2_FLAG_READONLY) bflags |= BLUEPRINT_FLAG_READONLY;
+          if (tflags & STRAND2_FLAG_RDONLY_SUB) bflags |= BLUEPRINT_FLAG_RDONLY_SUB;
+          if (tflags & STRAND2_FLAG_KEYED) bflags |= BLUEPRINT_FLAG_KEYED_ARRAY;
 
-	  if (tflags & STRAND2_FLAG_TEMPLATE) {
-	    bflags |= BLUEPRINT_FLAG_READONLY | BLUEPRINT_FLAG_OPTIONAL;
-	    stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "flags", bflags, "strand_type", vtype, !array_size ? NULL :
-					"max_size", array_size, NULL);
-	    NIRVA_VALUE_SET(bluep, "multi", STRAND_TYPE_BUNDLEPTR, stdef);
-	    continue;
+          if (tflags & STRAND2_FLAG_TEMPLATE) {
+            bflags |= BLUEPRINT_FLAG_READONLY | BLUEPRINT_FLAG_OPTIONAL;
+            stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "flags", bflags, "strand_type", vtype, !array_size ? NULL :
+                                          "max_size", array_size, NULL);
+            NIRVA_VALUE_SET(bluep, "multi", STRAND_TYPE_BUNDLEPTR, stdef);
+            continue;
 
-	  }
-	  stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "name", vname,
-					"flags", bflags, "strand_type", vtype, !array_size ? NULL :
-					"max_size", array_size, NULL);
+          }
+          stdef = create_bundle_by_type(STRAND_DEF_BUNDLE_TYPE, "name", vname,
+                                        "flags", bflags, "strand_type", vtype, !array_size ? NULL :
+                                        "max_size", array_size, NULL);
 
-	  if (vtype == STRAND_TYPE_PROXIED) {
-	    NIRVA_VALUE_SET(stdef, "type_proxy", STRAND_TYPE_STRING, "strand_type");
-	    NIRVA_VALUE_SET(stdef, "restrict_proxy", STRAND_TYPE_STRING, "restrictions");
-	  }
-	  
-	  else if (vtype == STRAND_TYPE_BUNDLEPTR || vtype == STRAND_TYPE_CONST_BUNDLEPTR) {
-	    int restrnum = get_restrnum(strand + offx + strlen(vname) + 1);
-	    NIRVA_VALUE_SET(stdef, "restrictions", STRAND_TYPE_STRING, nirva_restrictions[restrnum]);
-	  }
+          if (vtype == STRAND_TYPE_PROXIED) {
+            NIRVA_VALUE_SET(stdef, "type_proxy", STRAND_TYPE_STRING, "strand_type");
+            NIRVA_VALUE_SET(stdef, "restrict_proxy", STRAND_TYPE_STRING, "restrictions");
+          }
 
-	  if (vtype != STRAND_TYPE_NONE && vtype != STRAND_TYPE_UNDEFINED && !(bflags & BLUEPRINT_FLAG_READONLY)) {
-	    err = set_def_value_gen1(stdef, "default", strand, strand2);
-	    if (err) goto endit2;
-	  }
-	}
-	st_defarr = lives_realloc(st_defarr, ++nstr * sizeof(bundle_t *));
-	st_defarr[nstr - 1] = stdef;
+          else if (vtype == STRAND_TYPE_BUNDLEPTR || vtype == STRAND_TYPE_CONST_BUNDLEPTR) {
+            int restrnum = get_restrnum(strand + offx + strlen(vname) + 1);
+            NIRVA_VALUE_SET(stdef, "restrictions", STRAND_TYPE_STRING, nirva_restrictions[restrnum]);
+          }
+
+          if (vtype != STRAND_TYPE_NONE && vtype != STRAND_TYPE_UNDEFINED && !(bflags & BLUEPRINT_FLAG_READONLY)) {
+            err = set_def_value_gen1(stdef, "default", strand, strand2);
+            if (err) goto endit2;
+          }
+        }
+        st_defarr = lives_realloc(st_defarr, ++nstr * sizeof(bundle_t *));
+        st_defarr[nstr - 1] = stdef;
       }
     }
- 
+
     if (nstr > 0) {
       // because strand_defs in blueprint is a keyed_array, we need to add keys for each strand_def "name"
       if (bluep) {
-      for (i = 0; i < nstr; i++) {
-	char *stname = NIRVA_GET_VALUE_STRING(st_defarr[i], "name");
-	NIRVA_ADD_VALUE_BY_KEY(bluep, "strand_defs", stname, STRAND_TYPE_BUNDLEPTR, st_defarr[i]);
-	lives_free(stname);
+        for (i = 0; i < nstr; i++) {
+          char *stname = NIRVA_GET_VALUE_STRING(st_defarr[i], "name");
+          NIRVA_ADD_VALUE_BY_KEY(bluep, "strand_defs", stname, STRAND_TYPE_BUNDLEPTR, st_defarr[i]);
+          lives_free(stname);
+        }
+        lives_free(st_defarr);
       }
-      lives_free(st_defarr);
-    }
 
-  endit2:
-    if (err) {
+endit2:
+      if (err) {
 #if DEBUG_BUNDLES
-      g_printerr("\nERROR creating blueprint for type %d\n", btype);
+        g_printerr("\nERROR creating blueprint for type %d\n", btype);
 #endif
-      if (bluep) {
-	lives_bundle_free(bluep);
-	bluep = NULL;
+        if (bluep) {
+          lives_bundle_free(bluep);
+          bluep = NULL;
+        }
       }
+      if (blueprints[btype]) lives_bundle_free((bundle_t *)blueprints[btype]);
+      blueprints[btype] = bluep;
     }
-    if (blueprints[btype]) lives_bundle_free((bundle_t *)blueprints[btype]);
-    blueprints[btype] = bluep;
-  }
   }
 }
 
@@ -1614,7 +1613,7 @@ static void make_blueprint_for(bundle_type btype) {
 /////////// nirvascope
 
 static char *nirvascope(int i, nscope_hdr_f head_func, nscope_cond_f cond_func, void *cdata,
-			nscope_text_f text_func, void *tdata, nscope_ftr_f foot_func) {
+                        nscope_text_f text_func, void *tdata, nscope_ftr_f foot_func) {
   char *hdr;
   if (!head_func) hdr = lives_strdup("");
   else hdr = (*head_func)(i);
@@ -1679,26 +1678,25 @@ char *nirvascope_blueprint_to_header(bundle_t *bundle, const char *tname) {
       stname = stdef_get_name(stdef);
 
       //g_print("STRAND is %s\n", strand);
-      
+
       is_arr = stdef_is_array(stdef);
       if (sttype == STRAND_TYPE_CONST_BUNDLEPTR) {
-	tp = "const bundle_t **";
-	if (is_arr) ar = lives_strdup_printf("[]");
-      }
-      else {
-	st = strand_type_to_weed_seed(sttype);
-	tp = weed_seed_to_ctype(st, TRUE);
-	if (sttype == WEED_SEED_PLANTPTR) tp = "bundle_t *";
-	if (is_arr) ar = lives_strdup_printf("[]");
+        tp = "const bundle_t **";
+        if (is_arr) ar = lives_strdup_printf("[]");
+      } else {
+        st = strand_type_to_weed_seed(sttype);
+        tp = weed_seed_to_ctype(st, TRUE);
+        if (sttype == WEED_SEED_PLANTPTR) tp = "bundle_t *";
+        if (is_arr) ar = lives_strdup_printf("[]");
       }
       if (stdef_is_optional(stdef)) comment = lives_strdup("// optional");
       line = lives_strdup_printf("\n  %s%s%s;\t%s", tp, stname, ar ? ar : "",
-				 comment);
+                                 comment);
       lives_freep((void **)&comment);
       hdr = lives_concat(hdr, line);
       if (ar) {
-	lives_free(ar);
-	ar = NULL;
+        lives_free(ar);
+        ar = NULL;
       }
       lives_free(stname);
     }
@@ -1735,67 +1733,67 @@ char *nirvascope_bundle_to_header(bundle_t *bundle, const char *tname, int idx) 
       if (st == WEED_SEED_PLANTPTR) tp = "bundle_t *";
       if (ne > 1) ar = lives_strdup_printf("[%d]", ne);
       else {
-	switch (st) {
-	case WEED_SEED_STRING: {
-	  char *vs = weed_get_string_value(bundle, leaves[i], NULL);
-	  val = lives_strdup_printf("\t (\"%s\")", vs);
-	  lives_free(vs);
-	}
-	  break;
-	case WEED_SEED_INT: {
-	  int vs = weed_get_int_value(bundle, leaves[i], NULL);
-	  val = lives_strdup_printf("\t (%d)", vs);
-	}
-	  break;
-	case WEED_SEED_UINT: {
-	  uint32_t vs = weed_get_uint_value(bundle, leaves[i], NULL);
-	  val = lives_strdup_printf("\t (%u)", vs);
-	}
-	  break;
-	case WEED_SEED_INT64: {
-	  int64_t vs = weed_get_int64_value(bundle, leaves[i], NULL);
-	  val = lives_strdup_printf("\t (0X%016lX)", vs);
-	}
-	  break;
-	case WEED_SEED_UINT64: {
-	  uint64_t vs = weed_get_uint64_value(bundle, leaves[i], NULL);
-	  val = lives_strdup_printf("\t (0X%016lX)", vs);
-	}
-	  break;
-	case WEED_SEED_VOIDPTR: {
-	  void *vs = weed_get_voidptr_value(bundle, leaves[i], NULL);
-	  val = lives_strdup_printf("\t (%p)", vs);
-	}
-	  break;
-	case WEED_SEED_PLANTPTR: {
-	  weed_plant_t *vs = weed_get_plantptr_value(bundle, leaves[i], NULL);
-	  val = lives_strdup_printf("\t (%p)", vs);
-	}
-	  break;
-	default: break;
-	}
+        switch (st) {
+        case WEED_SEED_STRING: {
+          char *vs = weed_get_string_value(bundle, leaves[i], NULL);
+          val = lives_strdup_printf("\t (\"%s\")", vs);
+          lives_free(vs);
+        }
+        break;
+        case WEED_SEED_INT: {
+          int vs = weed_get_int_value(bundle, leaves[i], NULL);
+          val = lives_strdup_printf("\t (%d)", vs);
+        }
+        break;
+        case WEED_SEED_UINT: {
+          uint32_t vs = weed_get_uint_value(bundle, leaves[i], NULL);
+          val = lives_strdup_printf("\t (%u)", vs);
+        }
+        break;
+        case WEED_SEED_INT64: {
+          int64_t vs = weed_get_int64_value(bundle, leaves[i], NULL);
+          val = lives_strdup_printf("\t (0X%016lX)", vs);
+        }
+        break;
+        case WEED_SEED_UINT64: {
+          uint64_t vs = weed_get_uint64_value(bundle, leaves[i], NULL);
+          val = lives_strdup_printf("\t (0X%016lX)", vs);
+        }
+        break;
+        case WEED_SEED_VOIDPTR: {
+          void *vs = weed_get_voidptr_value(bundle, leaves[i], NULL);
+          val = lives_strdup_printf("\t (%p)", vs);
+        }
+        break;
+        case WEED_SEED_PLANTPTR: {
+          weed_plant_t *vs = weed_get_plantptr_value(bundle, leaves[i], NULL);
+          val = lives_strdup_printf("\t (%p)", vs);
+        }
+        break;
+        default: break;
+        }
       }
       xline = lives_strdup_printf("\n  %s%s%s%s;", tabs, tp, leaves[i] + 1,
-				  ar ? ar : "");
+                                  ar ? ar : "");
       line = lives_strdup_printf("%-40s%s", xline, val ? val : "");
       lives_free(xline);
       lives_freep((void **)&val);
       hdr = lives_concat(hdr, line);
       if (ar) {
-	if (st == WEED_SEED_PLANTPTR) {
-	  weed_plant_t **pp = weed_get_plantptr_array(bundle, leaves[i], NULL);
-	  if (pp) {
-	    for (int j = 0; j < ne; j++) {
-	      xline = nirvascope_bundle_to_header(pp[j], NULL, j + 1);
-	      line = lives_strdup_printf("\n%s", xline);
-	      lives_free(xline);
-	      hdr = lives_concat(hdr, line);
-	    }
-	    lives_free(pp);
-	  }
-	}
-	lives_free(ar);
-	ar = NULL;
+        if (st == WEED_SEED_PLANTPTR) {
+          weed_plant_t **pp = weed_get_plantptr_array(bundle, leaves[i], NULL);
+          if (pp) {
+            for (int j = 0; j < ne; j++) {
+              xline = nirvascope_bundle_to_header(pp[j], NULL, j + 1);
+              line = lives_strdup_printf("\n%s", xline);
+              lives_free(xline);
+              hdr = lives_concat(hdr, line);
+            }
+            lives_free(pp);
+          }
+        }
+        lives_free(ar);
+        ar = NULL;
       }
     }
     lives_free(leaves[i]);
@@ -1843,7 +1841,7 @@ void add_array_item_by_key(bundle_t *con, const char *kname, bundle_t *b) {
 }
 
 
- void remove_array_item_by_key(bundle_t *con, const char *kname) {
+void remove_array_item_by_key(bundle_t *con, const char *kname) {
   // array mut be a keyed_array. So all we do is open up the container and find
   // a sub bundle called "index" The items will be held in index with a prefixed name.
   // The (const bundlptr) entries point to elements in the array
@@ -2050,12 +2048,12 @@ size_t nirvascope_get_bundle_weight(bundle_t *b) {
     char **ll = weed_plant_list_leaves(b, NULL), *l;
     for (int i = 0; (l = ll[i]); i++) {
       if (weed_leaf_seed_type(b, l) == WEED_SEED_PLANTPTR) {
-	int np;
-	weed_plant_t **pp = weed_get_plantptr_array_counted(b, l, &np);
-	for (int j = 0; j < np; j++) {
-	  if (pp[j] != b) tot += nirvascope_get_bundle_weight(pp[j]);
-	}
-	if (pp) lives_free(pp);
+        int np;
+        weed_plant_t **pp = weed_get_plantptr_array_counted(b, l, &np);
+        for (int j = 0; j < np; j++) {
+          if (pp[j] != b) tot += nirvascope_get_bundle_weight(pp[j]);
+        }
+        if (pp) lives_free(pp);
       }
       lives_free(l);
     }

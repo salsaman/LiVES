@@ -1038,7 +1038,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
   lives_clip_t *sfile;
   LiVESPixbuf *pixbuf = NULL;
   weed_layer_t *layer = NULL;
-  lives_proc_thread_t tinfo = THREADVAR(tinfo);
+  lives_proc_thread_t tinfo = THREADVAR(proc_thread);
   savethread_priv_t *saveargs = NULL;
   lives_thread_t *saver_thread = NULL;
   int progress = 1, count = 0;

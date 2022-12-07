@@ -7286,11 +7286,14 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
     if (mainw->fs) {
       // switch TO full screen during pb
       if (!mainw->multitrack && !mainw->sep_win) {
-        fade_background();
-        fullscreen_internal();
+        main_thread_execute_rvoid_pvoid(fullscreen_internal);
+        main_thread_execute_rvoid_pvoid(fade_background);
+        //fullscreen_internal();
+        //fade_background();
       }
       if (mainw->sep_win) {
-        resize_play_window();
+        //resize_play_window();
+        main_thread_execute_rvoid_pvoid(resize_play_window);
 
         if (!mainw->vpp || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))
           lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
@@ -9464,7 +9467,7 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
   }
 #endif
 
-  clear_widget_bg(widget, *psurf);
+  //clear_widget_bg(widget, *psurf);
 
   if (widget == mainw->start_image)
     load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);
@@ -10696,10 +10699,12 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
       if (mainw->alock_abuf) {
         mainw->alock_abuf->_fd = lives_open_buffered_rdonly(filename);
         if (mainw->alock_abuf->_fd >= 0) {
+          lives_proc_thread_t lpt;
           mainw->alock_abuf->fileno = mainw->playing_file;
-          lives_hook_append(THREADVAR(hook_stacks), DATA_READY_HOOK, HOOK_CB_CHILD_INHERITS,
+          lpt = lives_buffered_rdonly_slurp_prep(mainw->alock_abuf->_fd, 0);
+          lives_hook_append(lives_proc_thread_get_hook_stacks(lpt), DATA_READY_HOOK, 0,
                             resample_to_float, &mainw->alock_abuf);
-          lives_buffered_rdonly_slurp(mainw->alock_abuf->_fd, 0);
+          lives_buffered_rdonly_slurp_ready(lpt);
         }
       }
       lives_free(filename);

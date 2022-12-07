@@ -105,7 +105,8 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {return  _start_playback(LI
 
 
 LIVES_GLOBAL_INLINE void start_playback_async(int type) {
-  lives_idle_priority(_start_playback, LIVES_INT_TO_POINTER(type));
+  //lives_idle_priority(_start_playback, LIVES_INT_TO_POINTER(type));
+  lives_proc_thread_create(0, _start_playback, 0, "v", LIVES_INT_TO_POINTER(type));
 }
 
 
@@ -514,7 +515,8 @@ void play_file(void) {
     if ((mainw->faded || (prefs->show_playwin && !prefs->show_gui)
          || (mainw->fs && (!mainw->sep_win))) && (cfile->frames > 0 ||
              mainw->foreign)) {
-      fade_background();
+      main_thread_execute_rvoid_pvoid(fade_background);
+      //fade_background();
     }
 
     if ((!mainw->sep_win || (!mainw->faded && (prefs->sepwin_type != SEPWIN_TYPE_STICKY)))
@@ -1227,11 +1229,12 @@ void play_file(void) {
   mainw->blend_palette = WEED_PALETTE_END;
   mainw->audio_stretch = 1.;
 
-  lives_hooks_trigger(NULL, THREADVAR(hook_stacks), FINISHED_HOOK);
+  lives_hooks_trigger(NULL, THREADVAR(hook_stacks), COMPLETED_HOOK);
 
   if (!mainw->multitrack) {
     if (mainw->faded || mainw->fs) {
-      unfade_background();
+      main_thread_execute_rvoid_pvoid(unfade_background);
+      //unfade_background();
     }
 
     if (mainw->sep_win) add_to_playframe();

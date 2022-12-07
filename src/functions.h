@@ -282,14 +282,10 @@ typedef struct {
 
 #define LIVES_SEED_HOOK WEED_SEED_FUNCPTR
 
-// this combination may be use for hggh priority GUI updates which need to be run before the thread cna continue
-#define HOOK_CB_IMMEDIATE (HOOK_CB_FG_THREAD | HOOK_CB_PRIORITY | HOOK_CB_BLOCK)
-
 //< caller will block when adding the hook and only return when the hook callback has returned
+// if the cb function is barred by another (due to unqiqueness constraints), the the thread will block until
+// the imposing function returns
 #define HOOK_CB_BLOCK       		(1ull << 0)
-
-//< any hooks set with this flagbit will be transferred to child threads of the principle thread
-#define HOOK_CB_CHILD_INHERITS		(1ull << 1)
 
 // hook is GUI related and must be run ONLY by the fg / GUI thread
 #define HOOK_CB_FG_THREAD		(1ull << 2) // force fg service run
@@ -297,18 +293,25 @@ typedef struct {
 // hook should be run as soon as possible when the hook trigger point is reached
 #define HOOK_CB_PRIORITY		(1ull << 3) // prepend, not append
 
-// for fg requests, if it cannot be run immediately then drop it rather than deferring
+// for fg requests, if it cannot be run immediately then destroy it rather than deferring
 #define HOOK_OPT_NO_DEFER		(1ull << 4)
+
+// callback will only be run at most one time, and then removed from the stack
+#define HOOK_OPT_ONESHOT		(1ull << 5)
+
+// this combination may be use for hggh priority GUI updates which need to be run before the thread can continue
+#define HOOK_CB_IMMEDIATE (HOOK_CB_FG_THREAD | HOOK_CB_PRIORITY | HOOK_CB_BLOCK)
 
 /// the following bits define how hooks should be added to the stack
 // in case of duplicate functions / data
 #define HOOK_UNIQUE_FUNC		(1ull << 24) // do not add if func already in hooks
 
-#define HOOK_UNIQUE_DATA		(1ull << 25) // do not add if data already in hooks (UNIQUE_FUNC assumed)
+#define HOOK_UNIQUE_DATA		(1ull << 25) // do not add if func / data already in hooks (UNIQUE_FUNC assumed)
 
 // change data of first func of same type but leave func inplace,
 // remove others of same func, but never add, only replace
 #define HOOK_UNIQUE_REPLACE		(1ull << 26)
+
 
 // change data of first func of same type but leave func inplace,
 // remove others of same func, add if no other copies of the func
@@ -319,11 +322,21 @@ typedef struct {
 
 // replace (remove) other entries having same func and data, and add
 #define HOOK_UNIQUE_REPLACE_MATCH	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE)
+/* // remove any entries of this func from the stack, do not add */
+/* #define HOOK_REMOVE_FUNC	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_REPLACE) */
+
+/* //  */
+/* #define HOOK_REMOVE_FUNC_DATA 	(HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE) */
+
+/* //  */
+/* #define HOOK_UNIQUE_REPLACE_DATA	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE) */
 
 #define HOOK_STATUS_BLOCKED			(1ull << 32) // hook function should not be called
 #define HOOK_STATUS_RUNNING			(1ull << 33) // hook running, do not recurse
 
 #define HOOK_STATUS_REMOVE			(1ull << 34) // hook was 'removed' whilst running, delay removal until return
+
+#define HOOK_CB_LPT				(1ull << 40) // hook cb func is lpt
 
 typedef weed_plant_t lives_obj_t;
 typedef boolean(*hook_funcptr_t)(lives_obj_t *, void *);
@@ -345,13 +358,56 @@ typedef struct {
 // -> combine both as object instance
 
 typedef struct {
-  pthread_mutex_t *mutex;
   LiVESList *stack;
+  pthread_mutex_t *mutex;
+  uint64_t flags;
 } lives_hook_stack_t;
 
+// only thread owning the stack may add callbacks
+#define HOOK_DTL_SELF			(1ull < 0)
 
-lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hooks, int type, uint64_t flags, hook_funcptr_t func,
+// hook callbacks should be run asyncronously in parallel
+// if combined with REMOVE_FALSE:
+// they will not be removed from the stack, that must be done when joined
+#define HOOK_DTL_ASYNC_CALLBACKS     	(1ull < 1)
+
+// hook callbacks should be run with async caller, but the trigger must then run them syncronously in sequence
+#define HOOK_DTL_ASYNC_TRIGGER	       	(1ull < 2)
+
+// the return type of the callbacks must be be boolean, any which return FALSE should be removed from the stack
+// combined with ASYNC, the callbacks must be joined and removed if they return FALSE
+#define HOOK_DTL_REMOVE_FALSE      	(1ull < 3)
+
+// the return type of the callbacks must be boolean, the callbacks are to be triggered in sequence
+// the hook trigger function should return TRUE if and only if all callbacks return TRUE
+// otherwise it should return FALSE
+#define HOOK_DTL_COMBINED_BOOL      	(1ull < 4)
+
+// the return type of the callbacks must be boolean, the callbacks are to be triggered in sequence
+// hook callbacks are to be triggered, then after a short pause, triggered again
+// this continues until all callbacks return TRUE
+// - the trigger thread MUST be cancellable and must return between triggering if cancelled
+// - the trigger thread MUST be pausable and can pause between hook triggereing
+#define HOOK_DTL_BOOL_LOOP	       	(1ull < 5)
+
+// callback payload should be passed to the main thread to be run
+#define HOOK_DTL_MAIN_THREAD	       	(1ull < 6)
+
+// this flagbit denotes that triggering the hooks will run only the first callback on the stack and return
+// otherwise all callbacks are triggered in sequence or in parallel
+#define HOOK_DTL_SINGLE	 	      	(1ull < 7)
+
+/* #define HSTACK_FLAGS(DATA_READY_HOOK) HOOK_DTL_ASYNC_CALLBACKS */
+/* #define HSTACK_FLAGS(SYNC_WAIT_HOOK) HOOK_DTL_SELF | HOOK_DTL_ASYNC_TRIGGER | HOOK_DETAIL_COMBINED_BOOL | HOOK_DTL_BOOL_LOOP */
+/* #define HSTACK_FLAGS(INTERNAL_HOOK_0) HOOK_DETAIL_MAIN_THREAD | HOOK_DTL_SINGLE */
+
+// TODO - add retloc as param to hook_add
+
+lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hooks, int type, uint64_t flags, lives_funcptr_t func,
                                     const char *fname, livespointer data, boolean is_append);
+
+lives_proc_thread_t _lives_hook_add_full(lives_hook_stack_t **hooks, int type, uint64_t flags, boolean is_append,
+    lives_funcptr_t func, const char *fname, int return_type, const char *args_fmt, ...);
 
 void _lives_proc_thread_hook_append(lives_proc_thread_t lpt, int type, uint64_t flags,
                                     hook_funcptr_t func, const char *fname, livespointer data);
@@ -360,17 +416,26 @@ void _lives_proc_thread_hook_append(lives_proc_thread_t lpt, int type, uint64_t 
   (_lives_proc_thread_hook_append((lpt), (type), (flags), (hook_funcptr_t)(func), #func, (void *)(data)))
 
 #define lives_hook_append(hooks, type, flags, func, data) _lives_hook_add((hooks), (type), (flags), \
-									  (hook_funcptr_t)(func), #func, \
+									  (lives_funcptr_t)(func), #func, \
 									  (void *)(data), TRUE)
+#define lives_hook_append_full(hooks, type, flags, func, rtype, args_fmt, ...) \
+  _lives_hook_add_full((hooks), (type), (flags), TRUE, (lives_funcptr_t)(func), #func, rtype, args_fmt, __VA_ARGS__)
 
 #define lives_hook_prepend(hooks, type, flags, func, data) _lives_hook_add((hooks), (type), (flags), \
-									   (hook_funcptr_t)(func), #func, \
+									   (lives_funcptr_t)(func), #func, \
 									   (void *)(data), FALSE)
+
+#define lives_hook_prepend_full(hooks, type, flags, func, rtype, args_fmt, ...) \
+  _lives_hook_add_full((hooks), (type), (flags), FALSE, (lives_funcptr_t)(func), #func, rtype, args_fmt, __VA_ARGS__)
 
 void _lives_hook_remove(lives_hook_stack_t **hooks, int type, hook_funcptr_t func, livespointer data);
 
 #define lives_hook_remove(hooks, type, func, data)		\
   _lives_hook_remove((hooks), (type), (hook_funcptr_t)(func), (void *)(data))
+
+void _lives_hook_remove_full(lives_hook_stack_t **hooks, int type, lives_proc_thread_t);
+
+#define lives_hook_remove_full(hooks, type, lpt)_lives_hook_remove_full((hooks),(type),lpt)
 
 void lives_hooks_clear(lives_hook_stack_t **hooks, int type);
 void lives_hooks_clear_all(lives_hook_stack_t **hooks, int ntypes);

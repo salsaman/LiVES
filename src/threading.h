@@ -32,7 +32,7 @@ typedef struct {
   lives_obj_attr_t **var_attributes;
   pthread_t var_self;
   //
-  lives_proc_thread_t var_tinfo;
+  lives_proc_thread_t var_proc_thread;
   lives_thread_data_t *var_mydata;
   char *var_read_failed_file, *var_write_failed_file, *var_bad_aud_file;
   uint64_t var_random_seed;
@@ -55,12 +55,11 @@ typedef struct {
   boolean var_no_gui;
   boolean var_force_button_image;
   volatile boolean var_fg_service;
-  uint64_t var_hook_flag_hints;
+  uint64_t var_hook_hints;
   ticks_t var_timerinfo, var_round_trip_ticks, var_ticks_to_activate;
   uint64_t var_thrdnative_flags;
   void *var_stackaddr;
   size_t var_stacksize;
-  uint64_t var_hook_hints;
   uint64_t var_sync_timeout;
   uint64_t var_blocked_limit;
   char *var_sync_motive; // contains reason why it might be waiting fro sync
@@ -131,21 +130,25 @@ typedef struct {
 // work flags
 
 #define LIVES_THRDFLAG_QUEUED_WAITING  	(1ull << 0)
-#define LIVES_THRDFLAG_RUNNING		(1ull << 1)
-#define LIVES_THRDFLAG_FINISHED		(1ull << 2)
+#define LIVES_THRDFLAG_HOLD		(1ull << 1)
+#define LIVES_THRDFLAG_RUNNING		(1ull << 2)
+#define LIVES_THRDFLAG_FINISHED		(1ull << 3)
 
 #define LIVES_THRDFLAG_AUTODELETE	(1ull << 8)
 #define LIVES_THRDFLAG_WAIT_SYNC	(1ull << 9)
 #define LIVES_THRDFLAG_WAIT_START	(1ull << 10)
 #define LIVES_THRDFLAG_NO_GUI		(1ull << 11)
 #define LIVES_THRDFLAG_TUNING		(1ull << 12)
-#define LIVES_THRDFLAG_IGNORE_SYNCPT	(1ull << 13)
+#define LIVES_THRDFLAG_IGNORE_SYNCPTS	(1ull << 13)
 #define LIVES_THRDFLAG_NOFREE_LIST	(1ull << 14)
+
+#define LIVES_THRDFLAG_NOTE_TIMINGS	(1ull << 32)
 
 #define LIVES_THRDATTR_NONE		0
 #define LIVES_THRDATTR_PRIORITY		(1ull << 0)
 #define LIVES_THRDATTR_AUTODELETE	(1ull << 1)
 #define LIVES_THRDATTR_WAIT_SYNC       	(1ull << 2)
+#define LIVES_THRDATTR_UNQUEUED       	(1ull << 3)
 
 // worker pool threads
 void lives_threadpool_init(void);
@@ -255,25 +258,31 @@ uint64_t get_worker_status(uint64_t tid);
 // also LIVES_THRDATR_AUTODELETE
 //#define LIVES_THRDATTR_WAIT_SYNC		(1ull << 2)
 #define LIVES_THRDATTR_WAIT_START		(1ull << 3)
-#define LIVES_THRDATTR_FG_THREAD		(1ull << 4)
+#define LIVES_THRDATTR_START_UNQUEUED		(1ull << 4)
 #define LIVES_THRDATTR_NO_GUI			(1ull << 5)
-#define LIVES_THRDATTR_INHERIT_HOOKS   		(1ull << 6)
-#define LIVES_THRDATTR_IGNORE_SYNCPT   		(1ull << 7)
-#define LIVES_THRDATTR_IDLEFUNC   		(1ull << 8)
+#define LIVES_THRDATTR_IGNORE_SYNCPTS  		(1ull << 6)
+#define LIVES_THRDATTR_IDLEFUNC   		(1ull << 7)
+#define LIVES_THRDATTR_FG_THREAD   		(1ull << 8)
+
+// non function attrs
+#define LIVES_THRDATTR_NOTE_TIMINGS		(1ull << 16)
 
 // extra info requests
+#define LIVES_LEAF_QUEUED_TICKS "_queue_ticks"
+#define LIVES_LEAF_SYNC_WAIT_TICKS "_s_wait_ticks"
 #define LIVES_LEAF_START_TICKS "_start_ticks"
+#define LIVES_LEAF_END_TICKS "_end_ticks"
 
-#define LIVES_THRDATTR_NOTE_STTIME		(1ull << 16)
-
+// internal value
 #define LIVES_THRDATTR_IS_PROC_THREAD   	(1ull << 24)
 
-#define lives_proc_thread_get_work(tinfo)				\
-  ((thrd_work_t *)weed_get_voidptr_value((tinfo), LIVES_LEAF_THREAD_WORK, NULL))
+#define lives_proc_thread_get_work(lpt)				\
+  ((thrd_work_t *)weed_get_voidptr_value((lpt), LIVES_LEAF_THREAD_WORK, NULL))
 
-#define lives_proc_thread_set_work(tinfo, work)				\
-  weed_set_voidptr_value((tinfo), LIVES_LEAF_THREAD_WORK, (work))
+#define lives_proc_thread_set_work(lpt, work)				\
+  weed_set_voidptr_value((lpt), LIVES_LEAF_THREAD_WORK, (work))
 
+// ---> get timing info
 ticks_t lives_proc_thread_get_start_ticks(lives_proc_thread_t);
 
 void _proc_thread_params_from_vargs(lives_proc_thread_t, lives_funcptr_t func, int return_type,
@@ -286,6 +295,13 @@ lives_proc_thread_t _lives_proc_thread_create(lives_thread_attr_t, lives_funcptr
 
 #define lives_proc_thread_create(a, f, r, af, ...) _lives_proc_thread_create(a, (lives_funcptr_t)f, #f, \
 									     r, af, __VA_ARGS__)
+
+lives_proc_thread_t _lives_proc_thread_create_vargs(lives_thread_attr_t attr, lives_funcptr_t func,
+    const char *fname, int return_type,
+    const char *args_fmt, va_list xargs);
+
+lives_proc_thread_t _lives_proc_thread_create_nullvargs(lives_thread_attr_t attr, lives_funcptr_t func,
+    const char *fname, int return_type);
 
 #define lives_proc_thread_create_pvoid(a, f, r) _lives_proc_thread_create(a, (lives_funcptr_t)f, #f, r, "", NULL)
 #define lives_proc_thread_create_rvoid(a, f, af, ...) _lives_proc_thread_create(a, (lives_funcptr_t)f, #f, \
@@ -300,8 +316,10 @@ lives_proc_thread_t _lives_proc_thread_create_with_timeout(ticks_t timeout, live
 #define lives_proc_thread_create_with_timeout(timeout, attr, func, return_type, args_fmt, ...) \
   _lives_proc_thread_create_with_timeout((timeout), (attr), (lives_funcptr_t)(func), #func, \
 					 (return_type), (args_fmt), __VA_ARGS__)
-
+// aka unref
 boolean lives_proc_thread_free(lives_proc_thread_t lpt);
+
+void lives_proc_thread_queue(lives_proc_thread_t lpt, lives_thread_attr_t);
 
 boolean _main_thread_execute(lives_funcptr_t, const char *fname, int return_type, void *retval, const char *args_fmt, ...);
 boolean _main_thread_execute_rvoid(lives_funcptr_t func, const char *fname, const char *args_fmt, ...) ;
@@ -329,21 +347,21 @@ boolean fg_run_func(lives_proc_thread_t lpt, void *rloc);
 
 int lives_proc_thread_ref(lives_proc_thread_t);
 boolean lives_proc_thread_unref(lives_proc_thread_t);
+
+// NO !!
 boolean lives_proc_thread_unref_check(lives_proc_thread_t);
 
 boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr);
 
 // returns TRUE once the proc_thread will call the target function
-// the thread can also be cancelled or finished
+// the thread can also be cancelled, paused
 boolean lives_proc_thread_is_running(lives_proc_thread_t);
 
-// returns TRUE if state id cancelled or finished
+// returns TRUE if state is cancelled or completed
 boolean lives_proc_thread_is_done(lives_proc_thread_t);
 
 boolean lives_proc_thread_exited(lives_proc_thread_t);
 
-/// returns FALSE while the thread is running, TRUE once it has finished
-boolean lives_proc_thread_check_finished(lives_proc_thread_t);
 boolean lives_proc_thread_check_completed(lives_proc_thread_t);
 
 boolean lives_proc_thread_get_signalled(lives_proc_thread_t);
@@ -394,7 +412,7 @@ boolean sync_point(const char *motive);
 boolean thread_wait_loop(lives_proc_thread_t lpt, thrd_work_t *work, boolean full_sync, boolean wake_gui,
                          volatile boolean *control);
 
-// WARNING !! version without a return value will free tinfo !
+// WARNING !! version without a return value will free lpt !
 void lives_proc_thread_join(lives_proc_thread_t);
 
 // with return value should free proc_thread

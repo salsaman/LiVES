@@ -43,6 +43,8 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 
 #define NSLEEP_TIME 500 // nanosec to wait in loops - a value of about 500 seems to be optimal
 
+static boolean ign_idlefuncs = FALSE;
+
 /// internal data keys
 #define STD_KEY "_wh_is_standard"
 #define EXCL_KEY "_wh_excl"
@@ -894,7 +896,6 @@ LIVES_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext *c
   if (!is_fg_thread()) return FALSE;
   if (!norecurse) {
     boolean ret;
-    //norecurse = TRUE;
     if (mainw->fg_service_handle) {
       need_service_handle = TRUE;
       lives_source_remove(mainw->fg_service_handle);
@@ -903,12 +904,13 @@ LIVES_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext *c
     ret = g_main_context_iteration(ctx, may_block);
     if (need_service_handle)
       mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL);
-    //norecurse = FALSE;
     return ret;
   }
   return FALSE;
 }
 
+static pthread_mutex_t task_list_mutex = PTHREAD_MUTEX_INITIALIZER;
+static LiVESList *task_list = NULL;
 
 static volatile boolean gov_running = FALSE;
 static volatile boolean in_gov_loop = FALSE;
@@ -943,15 +945,18 @@ int get_gov_status(void) {
 static void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
   lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
   if (cl) active_sigdets = lives_list_remove(active_sigdets, sigdata);
+  //  if (sigdata->proc) {
+  pthread_mutex_lock(&task_list_mutex);
+  task_list = lives_list_remove_data(task_list, sigdata, FALSE);
+  // must not free sigdata->proc after this
+  lives_proc_thread_dontcare(sigdata->proc);
+  pthread_mutex_unlock(&task_list_mutex);
+  //}
   if (sigdata->detsig) lives_free(sigdata->detsig);
   lives_free(sigdata);
 }
 
 static boolean timer_running = FALSE;
-
-static pthread_mutex_t task_list_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-static LiVESList *task_list = NULL;
 
 static lives_sigdata_t *tasks_running(void) {
   pthread_mutex_lock(&task_list_mutex);
@@ -1026,12 +1031,13 @@ boolean fg_service_fulfill(void) {
 }
 
 boolean fg_service_fulfill_cb(void *dummy) {
-  fg_service_fulfill();
   if (mainw->fg_service_handle) {
     lives_source_remove(mainw->fg_service_handle);
     mainw->fg_service_handle = 0;
   }
-  //lives_widget_context_update();
+  if (!fg_service_fulfill())
+    lives_widget_context_update();
+
   mainw->fg_service_handle = g_idle_add(fg_service_fulfill_cb, NULL);
   return FALSE;
 }
@@ -1144,6 +1150,7 @@ boolean governor_loop(livespointer data) {
   uint32_t mysource = gov_will_run;
   int exitpt = 0;
 
+  if (ign_idlefuncs) return TRUE;
 
   //if (!lpttorun && g_main_depth() > 1) return FALSE;
 
@@ -1277,9 +1284,19 @@ once_more:
       }
       if (!clutch) {
         int count = 0;
-        while (count++ < EV_LIM && lives_widget_context_iteration(NULL, FALSE))
+        boolean need_service_handle = FALSE;
+        if (mainw->fg_service_handle) {
+          lives_source_remove(mainw->fg_service_handle);
+          mainw->fg_service_handle = 0;
+          need_service_handle = TRUE;
+        }
+
+        while (count++ < EV_LIM && g_main_context_iteration(NULL, FALSE))//lives_widget_context_iteration(NULL, FALSE))
           lives_nanosleep(NSLEEP_TIME);
+
         clutch = mainw->clutch = TRUE;
+        if (need_service_handle)
+          mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL);
         goto once_more;
       }
     }
@@ -1361,10 +1378,6 @@ once_more:
       /// timer handler will free sigdata
     } else {
       // make sure this is removed from tasklist
-      pthread_mutex_lock(&task_list_mutex);
-      task_list = lives_list_remove_data(task_list, sigdata, FALSE);
-      lives_proc_thread_dontcare(sigdata->proc);
-      pthread_mutex_unlock(&task_list_mutex);
       sigdata_free(sigdata, NULL);
     }
   }
@@ -1449,13 +1462,6 @@ static boolean async_timer_handler(livespointer data) {
     while (1) {
       int count = 0;
       if (!governor_loop(sigdata->added ? NULL : (livespointer)sigdata)) {
-        if (sigdata->proc) {
-          pthread_mutex_lock(&task_list_mutex);
-          task_list = lives_list_remove_data(task_list, sigdata, FALSE);
-          // must not free sigdata->proc after this
-          lives_proc_thread_dontcare(sigdata->proc);
-          pthread_mutex_unlock(&task_list_mutex);
-        }
         sigdata_free(sigdata, NULL);
         break;
       }
@@ -2151,6 +2157,7 @@ static LiVESResponseType _dialog_run(LiVESDialog *dialog) {
   lives_widget_object_ref(dialog);
   lives_widget_show_all(LIVES_WIDGET(dialog));
   if (!mainw->is_ready) pop_to_front(LIVES_WIDGET(dialog), NULL);
+  //ign_idlefuncs = TRUE;
   do {
     lives_widget_context_iteration(NULL, FALSE);
     lives_nanosleep(NSLEEP_TIME);
@@ -2162,6 +2169,7 @@ static LiVESResponseType _dialog_run(LiVESDialog *dialog) {
   }
   SET_INT_DATA(dialog, RESPONSE_KEY, LIVES_RESPONSE_INVALID);
   lives_widget_object_unref(dialog);
+  //ign_idlefuncs = FALSE;
   return resp;
 }
 
@@ -2214,6 +2222,8 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
       if (gov_will_run == mysource) gov_will_run = 0;
     }
   }
+  if (lpttorun == lpt) lpttorun = NULL;
+  // caller should unref lpt
 }
 
 
@@ -5514,7 +5524,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_value(LiVESSpinButton 
       value = lives_spin_button_get_snapval(button, value);
   }
 #ifdef GUI_GTK
-  gtk_spin_button_set_value(button, value);
+  MAIN_THREAD_EXECUTE_VOID(gtk_spin_button_set_value, "vd", button, value);
+  //gtk_spin_button_set_value(
   return TRUE;
 #endif
   return FALSE;
@@ -6681,16 +6692,15 @@ WIDGET_HELPER_GLOBAL_INLINE const char *lives_entry_get_text(LiVESEntry *entry) 
 }
 
 static void lgtk_entry_set_text(LiVESEntry *entry, const char *text) {
-  g_print("ent is %p and t is %s\n", entry, text);
   gtk_entry_set_text(entry, text);
-
 }
 
 
 boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
 #ifdef GUI_GTK
   if (!GTK_IS_ENTRY(entry)) return FALSE;
-  if (widget_opts.justify == LIVES_JUSTIFY_START) lives_entry_set_alignment(entry, 0.);
+  if (widget_opts
+      .justify == LIVES_JUSTIFY_START) lives_entry_set_alignment(entry, 0.);
   else if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_entry_set_alignment(entry, 0.5);
   if (widget_opts.justify == LIVES_JUSTIFY_END) lives_entry_set_alignment(entry, 1.);
   MAIN_THREAD_EXECUTE_VOID(lgtk_entry_set_text, "vs", entry, text);
@@ -13274,6 +13284,7 @@ boolean lives_widget_context_update(void) {
   if (1) {
     if (!is_fg_thread() && !gov_will_run && !gov_running) {
       THREADVAR(hook_hints) = HOOK_UNIQUE_FUNC;
+      THREADVAR(hook_hints) |= HOOK_CB_BLOCK;
       main_thread_execute_rvoid_pvoid(lives_widget_context_update);
       THREADVAR(hook_hints) = 0;
       return TRUE;

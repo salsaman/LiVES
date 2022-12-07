@@ -4682,12 +4682,14 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
 // Weed function overrides /////////////////
 
 boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
-  boolean bret = FALSE;
+  boolean bret = TRUE;
   if (plant && weed_plant_has_leaf(plant, key)) {
     int flags = weed_leaf_get_flags(plant, key);
-    if ((flags & WEED_FLAG_FREE_ON_DELETE) && !(flags & WEED_FLAG_UNDELETABLE)) {
+    if (flags & WEED_FLAG_UNDELETABLE) return FALSE;
+    if (flags & WEED_FLAG_FREE_ON_DELETE) {
       uint32_t st = weed_leaf_seed_type(plant, key);
       int nvals;
+      bret = FALSE;
       switch (st) {
       case WEED_SEED_PLANTPTR: {
         weed_plantptr_t *pls = weed_get_plantptr_array_counted(plant, key, &nvals);
@@ -4720,9 +4722,8 @@ void  weed_plant_autofree(weed_plant_t *plant) {
     char **leaves = weed_plant_list_leaves(plant, NULL);
     if (leaves) {
       for (int i = 0; leaves[i]; i++) {
-        if (!weed_leaf_autofree(plant, leaves[i])) {
-          weed_leaf_clear_flagbits(plant, leaves[i], WEED_FLAG_UNDELETABLE);
-        }
+        weed_leaf_set_undeletable(plant, leaves[i], WEED_FALSE);
+        weed_leaf_autofree(plant, leaves[i]);
         free(leaves[i]);
       }
       free(leaves);
@@ -4761,10 +4762,9 @@ weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key) {
   if (!plant) return WEED_ERROR_NOSUCH_PLANT;
   err = _weed_leaf_delete(plant, key);
   if (err == WEED_ERROR_UNDELETABLE) {
-    if (!weed_leaf_autofree(plant, key)) {
-      weed_leaf_clear_flagbits(plant, key, WEED_FLAG_UNDELETABLE);
-      err = _weed_leaf_delete(plant, key);
-    }
+    weed_leaf_set_undeletable(plant, key, WEED_FALSE);
+    weed_leaf_autofree(plant, key);
+    err = _weed_leaf_delete(plant, key);
     if (err != WEED_SUCCESS) lives_abort("Unable to delete weed leaf - internal error detected");
   }
   return err;

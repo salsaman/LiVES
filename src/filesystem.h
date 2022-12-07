@@ -108,6 +108,9 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 #define FB_FLAG_BG_OP		(1ull << 16)
 #define FB_FLAG_PREALLOC	(1ull << 17)
 #define FB_FLAG_TUNING		(1ull << 18)
+#define FB_FLAG_MMAP		(1ull << 19)
+
+#define FB_FLAG_SLURPING	(1ull << 20)
 
 // status bits
 #define FB_FLAG_EOF		(1ull << 32)
@@ -164,6 +167,8 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
 ssize_t lives_read_buffered_line(int fd, void *buf, const char sep, size_t maxlen);
 ssize_t lives_read_le_buffered(int fd, void *buf, ssize_t count, boolean allow_less);
 void lives_buffered_rdonly_slurp(int fd, off_t skip);
+lives_proc_thread_t lives_buffered_rdonly_slurp_prep(int fd, off_t skip);
+boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt);
 boolean lives_buffered_rdonly_is_slurping(int fd);
 
 off_t lives_buffered_flush(int fd);

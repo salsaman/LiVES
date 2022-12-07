@@ -534,7 +534,7 @@ boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
     tstamp = get_current_timestamp();
     if (!textwindow) tstwin = NULL;
     if (tstwin) {
-      lives_proc_thread_t lpt = THREADVAR(tinfo);
+      lives_proc_thread_t lpt = THREADVAR(proc_thread);
       char *logmsg;
       uint64_t ostate = 0;
       if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
@@ -571,7 +571,7 @@ boolean jack_log_errmsg(jack_driver_t *jackd, const char *errtxt) {
 
 static void add_test_textwin(jack_driver_t *jackd) {
   char *logmsg;
-  lives_proc_thread_t lpt = THREADVAR(tinfo);
+  lives_proc_thread_t lpt = THREADVAR(proc_thread);
   char *title = lives_strdup(_("Jack configuration test"));
   uint64_t ostate = 0;
   if (lpt) ostate = lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
@@ -1279,7 +1279,7 @@ static void finish_test(jack_driver_t *jackd, boolean success, boolean is_trans,
 // -- resolutions: on fatal error, restore previous (working). abort
 // --              on less sever errors, allow choice of reverting settings or altering current ones
 boolean lives_jack_init(lives_jack_client_type client_type, jack_driver_t *jackd) {
-  lives_proc_thread_t lpt = THREADVAR(tinfo);
+  lives_proc_thread_t lpt = THREADVAR(proc_thread);
   jack_options_t options = JackNullOption |  JackServerName;
   jack_status_t status;
   jackctl_driver_t *driver = NULL;
@@ -3618,7 +3618,7 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
   // it must return within 2 seconds (LIVES_SHORTEST_TIMEOUT)
   // else it will be terminated
   // if the function is going to block for a known reason, e.g getting driver list frim user then
-  // - obtain the mointoring thread (THREADVAR(tinfo)), include the THRD_STATE_BUSY state
+  // - obtain the mointoring thread (THREADVAR(proc_thread)), include the THRD_STATE_BUSY state
   // lives_proc_thread_include_states(). This will have the effect of causing the timout to be continuously reset
   // After return, clear the BUSY state with lives_proc_thread_exclude_states(), which will retstart the timer
   lives_proc_thread_t lpt;
@@ -3657,7 +3657,7 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
     }
   }
 
-  lpt = THREADVAR(tinfo);
+  lpt = THREADVAR(proc_thread);
   if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
 
   for (int i = 0; i < nch; i++) {
@@ -3753,7 +3753,7 @@ boolean jack_create_client_reader(jack_driver_t *jackd) {
     if (!res) return FALSE;
   }
 
-  lpt = THREADVAR(tinfo);
+  lpt = THREADVAR(proc_thread);
   if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
 
   jackd->sample_in_rate = jackd->sample_out_rate = jack_get_sample_rate(jackd->client);
@@ -4482,7 +4482,7 @@ retry:
         }
       }
 #endif
-      lives_hook_append(THREADVAR(hook_stacks), FINISHED_HOOK, 0, jack_interop_cleanup, jackd);
+      lives_hook_append(THREADVAR(hook_stacks), COMPLETED_HOOK, 0, jack_interop_cleanup, jackd);
       need_clnup = TRUE;
     } else {
       jack_interop_cleanup(NULL, jackd);

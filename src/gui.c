@@ -999,9 +999,13 @@ void create_LiVES(void) {
   mainw->play_menu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->play_menu);
 
-  mainw->playall = lives_standard_image_menu_item_new_with_label(_("_Play All"));
-  lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                               LIVES_KEY_p, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
+  mainw->playall = lives_standard_image_menu_item_new_with_label(_("_Play All (P)"));
+
+  /* lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
+  /*                              LIVES_KEY_p, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
+
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_p, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(play_callback), NULL, NULL));
 
   lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->playall);
   lives_widget_set_sensitive(mainw->playall, FALSE);
@@ -3322,6 +3326,8 @@ void create_LiVES(void) {
   lives_widget_set_can_focus(mainw->spinbutton_start, FALSE);
   lives_widget_set_can_focus(mainw->spinbutton_end, FALSE);
 
+  detach_accels(FALSE);
+
   if (RFX_LOADED) {
     if (mainw->ldg_menuitem) {
       lives_widget_destroy(mainw->ldg_menuitem);
@@ -3579,9 +3585,9 @@ void detach_accels(boolean connect) {
       lives_widget_add_accelerator(mainw->full_screen, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                    LIVES_KEY_f, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
 
-      lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), sepwin_closure);
-      lives_widget_add_accelerator(mainw->sepwin, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                   LIVES_KEY_s, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
+      /* lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), play_closure); */
+      /* lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
+      /*                              LIVES_KEY_p, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
 
       lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), mute_audio_closure);
       lives_widget_add_accelerator(mainw->mute_audio, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -3644,6 +3650,8 @@ void detach_accels(boolean connect) {
         lives_widget_remove_accelerator(mainw->sepwin, mainw->accel_group, LIVES_KEY_s, (LiVESXModifierType)0);
         lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_s, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                   (sepwin_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(sepwin_callback), NULL, NULL)));
+
+        //lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
 
         if (!CURRENT_CLIP_HAS_AUDIO || mainw->mute || mainw->loop_cont || is_realtime_aplayer(prefs->audio_player)) {
           lives_widget_remove_accelerator(mainw->loop_video, mainw->accel_group, LIVES_KEY_l, (LiVESXModifierType)0);
@@ -3728,7 +3736,7 @@ void fade_background(void) {
 
   // since the hidden menu buttons are not activatable on some window managers
   // we need to remove the accelerators and add accelerator keys instead
-  detach_accels(FALSE);
+  //detach_accels(FALSE);
 
   lives_widget_queue_draw(mainw->top_vbox);
   lives_widget_set_sensitive(mainw->custom_tools_separator, FALSE);
@@ -3786,7 +3794,7 @@ void unfade_background(void) {
     lives_widget_set_opacity(mainw->playframe, 1.);
   }
 
-  if (prefs->show_gui) detach_accels(TRUE);
+  //if (prefs->show_gui) detach_accels(TRUE);
 
   if (mainw->double_size && !mainw->play_window) resize(2.);
   else resize(1.);
@@ -4067,7 +4075,7 @@ void make_preview_box(void) {
 
 
 LIVES_GLOBAL_INLINE void hide_main_gui(void) {
-  detach_accels(FALSE);
+  //detach_accels(FALSE);
   if (mainw->play_window) {
 #ifdef GUI_GTK
     gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE);
@@ -4081,7 +4089,7 @@ LIVES_GLOBAL_INLINE void hide_main_gui(void) {
 
 LIVES_GLOBAL_INLINE void unhide_main_gui(void) {
   char *wid = NULL;
-  detach_accels(TRUE);
+  //detach_accels(TRUE);
   if (mainw->play_window) {
 #ifdef GUI_GTK
     gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), TRUE);
@@ -4362,7 +4370,7 @@ LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
       /// TODO: no doubt this is wrong and should be done taking into account vertical monitor layouts as well
       *opheight = mainw->mgeom[0].height;
       *opwidth = 0;
-      for (register int i = 0; i < capable->nmonitors; i++) {
+      for (int i = 0; i < capable->nmonitors; i++) {
         *opwidth += mainw->mgeom[i].width;
       }
 #endif
@@ -4643,7 +4651,7 @@ static void _resize_play_window(void) {
         if (!mainw->vpp->init_screen || ((*mainw->vpp->init_screen)
                                          (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
                                           mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
-                                          fullscreen, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
+                                          TRUE, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
           mainw->force_show = TRUE;
           mainw->ext_playback = TRUE;
           // the play window is still visible (in case it was 'always on top')

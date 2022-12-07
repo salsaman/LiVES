@@ -1215,7 +1215,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
   if (scrap_file_procthrd) {
     // skip saving if still handling the previous one
     if (mainw->rec_aclip == -1 && mainw->scratch == SCRATCH_NONE) {
-      if (!lives_proc_thread_check_finished(scrap_file_procthrd)) return scrapfile->frames;
+      if (!lives_proc_thread_check_completed(scrap_file_procthrd)) return scrapfile->frames;
     }
   }
 
@@ -2096,15 +2096,15 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       if (clip_type == CLIP_TYPE_FILE && sfile->frame_index && frame > 0 &&
           frame <= sfile->frames && is_virtual_frame(clip, frame)) {
         if (prefs->vj_mode && mainw->loop_locked && mainw->ping_pong && sfile->pb_fps >= 0. && !norecurse) {
-          lives_proc_thread_t tinfo = THREADVAR(tinfo);
+          lives_proc_thread_t tinfo = THREADVAR(proc_thread);
           LiVESPixbuf *pixbuf = NULL;
-          THREADVAR(tinfo) = NULL;
+          THREADVAR(proc_thread) = NULL;
           norecurse = TRUE;
           virtual_to_images(clip, frame, frame, FALSE, &pixbuf);
           pthread_mutex_unlock(&sfile->frame_index_mutex);
           need_unlock = FALSE;
           norecurse = FALSE;
-          THREADVAR(tinfo) = tinfo;
+          THREADVAR(proc_thread) = tinfo;
           if (pixbuf) {
             if (!pixbuf_to_layer(layer, pixbuf)) {
               lives_widget_object_unref(pixbuf);

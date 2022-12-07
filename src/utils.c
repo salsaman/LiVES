@@ -1144,7 +1144,7 @@ void update_play_times(void) {
   if (cfile->audio_waveform) {
     lives_mutex_lock_carefully(&mainw->tlthread_mutex);
     if (mainw->drawtl_thread) {
-      if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+      if (!lives_proc_thread_check_completed(mainw->drawtl_thread)) {
         lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
       }
       lives_proc_thread_join(mainw->drawtl_thread);

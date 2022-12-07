@@ -517,7 +517,7 @@ int64_t disk_monitor_check_result(const char *dir) {
   int64_t bytes;
   if (!disk_monitor_running(dir)) disk_monitor_start(dir);
   if (!lives_strcmp(dir, running_for)) {
-    if (!lives_proc_thread_check_finished(running)) {
+    if (!lives_proc_thread_check_completed(running)) {
       return -1;
     }
     bytes = lives_proc_thread_join_int64(running);
@@ -1217,7 +1217,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
   char *subdirname;
   boolean empty = TRUE;
 
-  tinfo = THREADVAR(tinfo);
+  tinfo = THREADVAR(proc_thread);
   if (tinfo) lives_proc_thread_set_cancellable(tinfo);
 
   switch (type) {
@@ -1877,7 +1877,7 @@ void rec_desk(void *args) {
   savethread_priv_t *saveargs = NULL;
   lives_thread_t *saver_thread = NULL;
   lives_painter_surface_t *csurf = NULL;
-  lives_proc_thread_t lpt = THREADVAR(tinfo);
+  lives_proc_thread_t lpt = THREADVAR(proc_thread);
   rec_args *recargs = (rec_args *)args;
   LiVESWidget *win;
   lives_clip_t *sfile;
@@ -3340,7 +3340,7 @@ void perf_manager(void) {
   boolean second_trigger = FALSE, minute_trigger = FALSE;
   boolean halfmin_trigger = FALSE;
 
-  lives_proc_thread_t self = THREADVAR(tinfo);
+  lives_proc_thread_t self = THREADVAR(proc_thread);
   lives_proc_thread_set_cancellable(self);
   while (!lives_proc_thread_get_cancelled(self)) {
     if (second_trigger) {

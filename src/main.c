@@ -366,7 +366,7 @@ void catch_sigint(int signum) {
 
   if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
     // if we are not the main thread, just exit
-    lives_proc_thread_t lpt = THREADVAR(tinfo);
+    lives_proc_thread_t lpt = THREADVAR(proc_thread);
     lives_thread_data_t *mydata = THREADVAR(mydata);
     //if (mydata) {
     lives_proc_thread_set_signalled(lpt, signum, mydata);

@@ -31,6 +31,7 @@ mainwindow *mainw;
 
 #ifndef DISABLE_DIAGNOSTICS
 #include "diagnostics.h"
+uint64_t test_opts = 0;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
 #endif
 
 #ifdef ENABLE_OSC
@@ -1821,7 +1822,7 @@ static boolean lives_startup2(livespointer data) {
 
 #ifndef VALGRIND_ON
   if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
-    if (lives_proc_thread_check_finished(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) {
+    if (lives_proc_thread_check_completed(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) {
       double cpvar = lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       lives_proc_thread_free(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       if (prefs->cptime <= 0. && cpvar < MAX_CPICK_VAR) {
@@ -1961,7 +1962,7 @@ static boolean lives_startup2(livespointer data) {
 
   mainw->lazy_starter =
     lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC,
-                             WEED_SEED_BOOLEAN, lazy_startup_checks, "", NULL);
+                             lazy_startup_checks, WEED_SEED_BOOLEAN, "", NULL);
 
   lives_proc_thread_hook_append(mainw->lazy_starter, COMPLETED_HOOK, 0,
                                 lazy_start_fin, (void *)mainw->lazy_starter);
@@ -2022,7 +2023,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   boolean toolong = FALSE;
   int xargc = argc;
   weed_error_t werr;
-  uint64_t test_opts = 0;//TEST_WEED | ABORT_AFTER;
 
   int winitopts = 0;
 
@@ -2090,6 +2090,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->wall_ticks = -1;
   mainw->initial_ticks = lives_get_current_ticks();
 
+  // early tests (no prefs, no threadpool, no random, no gtk)
   do_startup_diagnostics(test_opts);
 
   // allow us to set immutable values (plugins can't)
@@ -2161,7 +2162,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   pthread_mutexattr_init(&mattr);
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
 
-  for (int i = 0; i < N_GLOBAL_HOOKS; i++) {
+  for (int i = 0; i < N_HOOK_POINTS; i++) {
     mainw->global_hook_stacks[i] = (lives_hook_stack_t *)lives_calloc(1, sizeof(lives_hook_stack_t));
     mainw->global_hook_stacks[i]->mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
     pthread_mutex_init(mainw->global_hook_stacks[i]->mutex, NULL);
@@ -2887,6 +2888,9 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // get capabilities and if OK set some initial prefs
   theme_error = pre_init();
 
+  // late tests (has prefs, has threadpool, has random, has gtk)
+  do_startup_diagnostics(test_opts);
+
   //set_meta("status", "running");
 
   /* widget_helper_suggest_icons("filter"); */
@@ -2932,7 +2936,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
   if (!gtk_thread) {
     gtk_main();
-    printf("LUVERLY !\n");
   }
 #endif
 
@@ -4883,7 +4886,7 @@ boolean set_palette_colours(boolean force_reload) {
     prefs->cptime = get_double_prefd(PREF_CPICK_TIME, -DEF_CPICK_TIME);
     if (fabs(prefs->cptime) < .5) prefs->cptime = -1.;
     mainw->helper_procthreads[PT_CUSTOM_COLOURS]
-      = lives_proc_thread_create(LIVES_THRDATTR_NOTE_STTIME, (lives_funcptr_t)pick_custom_colours,
+      = lives_proc_thread_create(LIVES_THRDATTR_NOTE_TIMINGS, (lives_funcptr_t)pick_custom_colours,
                                  WEED_SEED_DOUBLE, "dd", cpvar, prefs->cptime);
   }
 #endif

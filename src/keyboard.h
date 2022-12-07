@@ -34,6 +34,11 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod); ///< a
 
 //////////////////////// callbacks ////////////////////////////////////////////
 
+#define ADD_CB(name) \
+  boolean name##_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
+
+ADD_CB(play)
+
 boolean faster_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
 boolean slower_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);

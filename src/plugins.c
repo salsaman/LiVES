@@ -2848,7 +2848,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, const lives_clip_data_t *
                                   WEED_SEED_VOIDPTR, "sVV", (!fake_cdata || !use_fake_cdata) ? sfile->file_name
                                   : NULL, xdisabled, use_fake_cdata ? fake_cdata : NULL);
 
-  while (!lives_proc_thread_check_finished(info)) {
+  while (!lives_proc_thread_check_completed(info)) {
     threaded_dialog_spin(0.);
     lives_nanosleep(LIVES_FORTY_WINKS);
   }

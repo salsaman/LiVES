@@ -1810,30 +1810,56 @@ void md5test(void) {
 }
 
 
+static void pth_testfunc(void *var) {
+  g_print("in test pth, got %s\n", (char *)var);
+}
+
+
+void test_procthreads(void) {
+  void *testv = lives_malloc(100);
+  lives_proc_thread_t pth;
+  lives_snprintf((char *)testv, 100, "hi there");
+  pth = lives_proc_thread_create(0, pth_testfunc, -1, "V", testv);
+  lives_proc_thread_join(pth);
+}
+
+
+
 
 /// any diagnostic tests can be placed in this section - the functional will be called early in
 // startup. If abort_after is TRUE, then the function will abort() after completing all designatedd testing
 //////////////
 lives_result_t do_startup_diagnostics(uint64_t tests_to_run) {
+  static int testpoint = 0;
   boolean ran_test = FALSE;
   lives_bundle_t *bundle;
 
-  if (tests_to_run & TEST_WEED)
-    run_weed_startup_tests();
+  testpoint++;
 
-  if (tests_to_run & TEST_RNG)
-    check_random();
+  if (testpoint == 1) {
+    if (tests_to_run & TEST_WEED)
+      run_weed_startup_tests();
 
-  if (tests_to_run & TEST_LSD)
-    lives_struct_test();
+    if (tests_to_run & TEST_RNG)
+      check_random();
 
-  if (tests_to_run & TEST_PAL_CONV)
-    test_palette_conversions();
+    if (tests_to_run & TEST_LSD)
+      lives_struct_test();
 
-  if (tests_to_run & TEST_BUNDLES)
-    init_bundles();
+    if (tests_to_run & TEST_PAL_CONV)
+      test_palette_conversions();
 
-  if (tests_to_run & ABORT_AFTER) abort();
+    if (tests_to_run & TEST_BUNDLES)
+      init_bundles();
+  }
+  if (testpoint == 2) {
+    if (tests_to_run & TEST_PROCTHRDS)
+      test_procthreads();
+  }
+
+  if (tests_to_run & ABORT_AFTER
+      && (testpoint > 1 || !(tests_to_run & TEST_POINT_2)))
+    abort();
 
   return LIVES_RESULT_SUCCESS;
 }

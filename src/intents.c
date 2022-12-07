@@ -1293,7 +1293,7 @@ lives_obj_attr_t *mk_attr(const char *ctype, const char *name, size_t size, void
 void make_thrdattrs(lives_thread_data_t *tdata) {
   MK_ATTR(uint64_t, uid);
   MK_ATTR(int, idx);
-  MK_ATTR(lives_proc_thread_t, tinfo);
+  MK_ATTR(lives_proc_thread_t, proc_thread);
   MK_ATTR(lives_intentcap_t, intentcap);
   MK_ATTR(int, core_id);
   MK_ATTR(weed_voidptr_t, stackaddr);

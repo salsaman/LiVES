@@ -330,22 +330,22 @@ static lives_clip_data_t *cdata_create(void) {
     lives_clip_data_t *cdata = (lives_clip_data_t *)calloc(1, sizeof(lives_clip_data_t));
     cdata_lsd = lsd_create_p("lives_clip_data_t", cdata, sizeof(lives_clip_data_t), &cdata->lsd);
     if (!cdata_lsd) return NULL;
-    add_special_field((lsd_struct_def_t *)cdata_lsd, "priv", LSD_FIELD_FLAG_ZERO_ON_COPY |
-                      LSD_FIELD_FLAG_FREE_ON_DELETE, &cdata->priv, 0, cdata, NULL);
-    add_special_field((lsd_struct_def_t *)cdata_lsd, "URI", LSD_FIELD_CHARPTR, &cdata->URI,
-                      0, cdata, NULL);
-    add_special_field((lsd_struct_def_t *)cdata_lsd, "title", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->title,
-                      1024, cdata, NULL);
-    add_special_field((lsd_struct_def_t *)cdata_lsd, "author", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->author,
-                      1024, cdata, NULL);
-    add_special_field((lsd_struct_def_t *)cdata_lsd, "comment", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->comment,
-                      1024, cdata, NULL);
-    add_special_field((lsd_struct_def_t *)cdata_lsd, "palettes", LSD_FIELD_ARRAY, &cdata->palettes,
-                      4, cdata, NULL);
-    add_special_field((lsd_struct_def_t *)cdata_lsd, "last_frame_decoded", LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY,
-                      &cdata->last_frame_decoded, 0, cdata, (lsd_field_init_cb)lfd_setdef, NULL, lsd_null_cb, lsd_null_cb);
-    add_special_field((lsd_struct_def_t *)cdata_lsd, "adv_timing", LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY, &cdata->adv_timing,
-                      0, cdata, (lsd_field_init_cb)adv_timing_init, NULL, lsd_null_cb, lsd_null_cb);
+    lsd_add_special_field((lsd_struct_def_t *)cdata_lsd, "priv", LSD_FIELD_FLAG_ZERO_ON_COPY |
+                          LSD_FIELD_FLAG_FREE_ON_DELETE, &cdata->priv, 0, cdata, NULL);
+    lsd_add_special_field((lsd_struct_def_t *)cdata_lsd, "URI", LSD_FIELD_CHARPTR, &cdata->URI,
+                          0, cdata, NULL);
+    lsd_add_special_field((lsd_struct_def_t *)cdata_lsd, "title", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->title,
+                          1024, cdata, NULL);
+    lsd_add_special_field((lsd_struct_def_t *)cdata_lsd, "author", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->author,
+                          1024, cdata, NULL);
+    lsd_add_special_field((lsd_struct_def_t *)cdata_lsd, "comment", LSD_FIELD_FLAG_ZERO_ON_COPY, &cdata->comment,
+                          1024, cdata, NULL);
+    lsd_add_special_field((lsd_struct_def_t *)cdata_lsd, "palettes", LSD_FIELD_ARRAY, &cdata->palettes,
+                          4, cdata, NULL);
+    lsd_add_special_field((lsd_struct_def_t *)cdata_lsd, "last_frame_decoded", LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY,
+                          &cdata->last_frame_decoded, 0, cdata, (lsd_field_init_cb)lfd_setdef, NULL, lsd_null_cb, lsd_null_cb);
+    lsd_add_special_field((lsd_struct_def_t *)cdata_lsd, "adv_timing", LSD_FIELD_FLAG_CALL_INIT_FUNC_ON_COPY, &cdata->adv_timing,
+                          0, cdata, (lsd_field_init_cb)adv_timing_init, NULL, lsd_null_cb, lsd_null_cb);
     free(cdata);
     lsd_struct_set_owner_uid((lsd_struct_def_t *)cdata_lsd, PLUGIN_UID);
   }

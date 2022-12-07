@@ -2351,16 +2351,16 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     cdata = init_cdata(NULL);
   }
 
-  if (!cdata->URI || strcmp(URI, cdata->URI)) {
+  if (URI && (!cdata->URI || strcmp(URI, cdata->URI))) {
     if (cdata->URI) {
       detach_stream(cdata);
       free(cdata->URI);
     }
     cdata->URI = strdup(URI);
-    if (!attach_stream(cdata, FALSE)) {
-      clip_data_free(cdata);
-      return NULL;
-    }
+    /* if (!attach_stream(cdata, FALSE)) { */
+    /*   clip_data_free(cdata); */
+    /*   return NULL; */
+    /* } */
     //cdata->current_palette=cdata->palettes[0];
     cdata->current_clip = 0;
   }

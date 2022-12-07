@@ -4178,8 +4178,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 lives_nanosleep_while_false(mainw->transrend_waiting
                                             || lives_proc_thread_check_states(mainw->transrend_proc,
                                                 THRD_STATE_INVALID)
-                                            || lives_proc_thread_check_finished(mainw->transrend_proc));
-                if (lives_proc_thread_check_finished(mainw->transrend_proc)
+                                            || lives_proc_thread_check_completed(mainw->transrend_proc));
+                if (lives_proc_thread_check_completed(mainw->transrend_proc)
                     || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID))
                   return LIVES_RENDER_ERROR;
                 mainw->transrend_waiting = FALSE;
@@ -4229,8 +4229,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               // transcoder will wait for the next frame
               lives_nanosleep_while_false(mainw->transrend_waiting
                                           || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID)
-                                          || lives_proc_thread_check_finished(mainw->transrend_proc));
-              if (lives_proc_thread_check_finished(mainw->transrend_proc)
+                                          || lives_proc_thread_check_completed(mainw->transrend_proc));
+              if (lives_proc_thread_check_completed(mainw->transrend_proc)
                   || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID))
                 return LIVES_RENDER_ERROR;
 
@@ -4816,7 +4816,7 @@ static boolean add_xdg_opt(lives_obj_t *obj, livespointer data) {
     LiVESWidget *cb = lives_standard_check_button_new(_("Preview in default video player afterwards"),
                       FALSE, LIVES_BOX(widget_opts.last_container), NULL);
     lives_widget_object_ref(cb);
-    lives_hook_append(THREADVAR(hook_stacks), FINISHED_HOOK, 0, do_xdg_opt, cb);
+    lives_hook_append(THREADVAR(hook_stacks), COMPLETED_HOOK, 0, do_xdg_opt, cb);
   }
   return FALSE;
 }

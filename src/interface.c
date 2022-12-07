@@ -305,7 +305,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
     goto bail;
   }
 
-  if (mainw->drawtl_thread && THREADVAR(tinfo) == mainw->drawtl_thread) {
+  if (mainw->drawtl_thread && THREADVAR(proc_thread) == mainw->drawtl_thread) {
     is_thread = TRUE;
   }
 
@@ -2661,7 +2661,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * entryw) {
                               EXTRA_DETAILS_CLIPHDR | EXTRA_DETAILS_DIRSIZE
                               | EXTRA_DETAILS_CHECK_MISSING);
 
-    if (lives_proc_thread_check_finished(sizinfo)) totsize = lives_proc_thread_join_int64(sizinfo);
+    if (lives_proc_thread_check_completed(sizinfo)) totsize = lives_proc_thread_join_int64(sizinfo);
     txt = mkszlabel(set, totsize, -1, -1);
     widget_opts.use_markup = TRUE;
     lives_label_set_text(LIVES_LABEL(entryw->exp_label), txt);
@@ -2691,7 +2691,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * entryw) {
     if (!lives_expander_get_expanded(LIVES_EXPANDER(exp))) goto thrdjoin;
 
     if (totsize == -1) {
-      if (lives_proc_thread_check_finished(sizinfo)) totsize = lives_proc_thread_join_int64(sizinfo);
+      if (lives_proc_thread_check_completed(sizinfo)) totsize = lives_proc_thread_join_int64(sizinfo);
       txt = mkszlabel(set, totsize, -1, -1);
       widget_opts.use_markup = TRUE;
       lives_label_set_text(LIVES_LABEL(entryw->exp_label), txt);
@@ -2728,7 +2728,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * entryw) {
           if (lives_expander_get_expanded(LIVES_EXPANDER(exp))) {
             if (!filedets->extra_details) lives_nanosleep(1000);
             if (totsize == -1) {
-              if (lives_proc_thread_check_finished(sizinfo)) {
+              if (lives_proc_thread_check_completed(sizinfo)) {
                 totsize = lives_proc_thread_join_int64(sizinfo);
                 txt = mkszlabel(set, totsize, -1, lcount);
                 widget_opts.use_markup = TRUE;
@@ -2755,7 +2755,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * entryw) {
           lives_widget_process_updates(entryw->dialog);
           if (lives_expander_get_expanded(LIVES_EXPANDER(exp))) {
             if (totsize == -1) {
-              if (lives_proc_thread_check_finished(sizinfo)) {
+              if (lives_proc_thread_check_completed(sizinfo)) {
                 totsize = lives_proc_thread_join_int64(sizinfo);
                 txt = mkszlabel(set, totsize, -1, lcount);
                 widget_opts.use_markup = TRUE;
@@ -2779,7 +2779,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * entryw) {
       lives_widget_process_updates(entryw->dialog);
       if (lives_expander_get_expanded(LIVES_EXPANDER(exp))) {
         if (totsize == -1) {
-          if (lives_proc_thread_check_finished(sizinfo)) {
+          if (lives_proc_thread_check_completed(sizinfo)) {
             totsize = lives_proc_thread_join_int64(sizinfo);
             txt = mkszlabel(set, totsize, lcount, -1);
             widget_opts.use_markup = TRUE;
@@ -2921,7 +2921,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * entryw) {
           lives_widget_process_updates(entryw->dialog);
           if (lives_expander_get_expanded(LIVES_EXPANDER(exp)) && !pass && !list->next) lives_nanosleep(1000);
           if (totsize == -1) {
-            if (lives_proc_thread_check_finished(sizinfo)) {
+            if (lives_proc_thread_check_completed(sizinfo)) {
               totsize = lives_proc_thread_join_int64(sizinfo);
               txt = mkszlabel(set, totsize, ccount, lcount);
               widget_opts.use_markup = TRUE;
@@ -2942,7 +2942,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * entryw) {
       }
     }
     while (lives_expander_get_expanded(LIVES_EXPANDER(exp)) && totsize == -1) {
-      if (lives_proc_thread_check_finished(sizinfo)) {
+      if (lives_proc_thread_check_completed(sizinfo)) {
         totsize = lives_proc_thread_join_int64(sizinfo);
       }
       if (lives_expander_get_expanded(LIVES_EXPANDER(exp))) lives_widget_process_updates(entryw->dialog);
@@ -3627,7 +3627,7 @@ void redraw_timeline(int clipno) {
 
   if (LIVES_IS_PLAYING && (mainw->fs || mainw->faded)) return;
 
-  if (mainw->drawtl_thread && THREADVAR(tinfo) == mainw->drawtl_thread) {
+  if (mainw->drawtl_thread && THREADVAR(proc_thread) == mainw->drawtl_thread) {
     // check if this is the thread that was assigned to run this
     if (lives_proc_thread_get_cancelled(mainw->drawtl_thread)) return;
   } else {
@@ -3636,7 +3636,7 @@ void redraw_timeline(int clipno) {
       mylevel = ++calls;
       lives_proc_thread_ref(mainw->drawtl_thread);
       if (mainw->drawtl_thread) {
-        if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+        if (!lives_proc_thread_check_completed(mainw->drawtl_thread)) {
           lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
         }
         lives_proc_thread_unref(mainw->drawtl_thread);
@@ -3661,16 +3661,16 @@ void redraw_timeline(int clipno) {
       if (mainw->drawtl_thread) {
         lives_proc_thread_ref(mainw->drawtl_thread);
         if (mainw->drawtl_thread) {
-          if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+          if (!lives_proc_thread_check_completed(mainw->drawtl_thread)) {
             lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
           }
           lives_proc_thread_unref(mainw->drawtl_thread);
         }
       }
 
-      THREADVAR(hook_flag_hints) = HOOK_UNIQUE_REPLACE_OR_ADD;
+      THREADVAR(hook_hints) = HOOK_UNIQUE_REPLACE_OR_ADD;
       main_thread_execute(redraw_timeline, 0, NULL, "i", clipno);
-      THREADVAR(hook_flag_hints) = 0;
+      THREADVAR(hook_hints) = 0;
 
       return;
     }

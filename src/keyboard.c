@@ -123,7 +123,7 @@ boolean ext_triggers_poll(livespointer data) {
 
 boolean key_press_or_release(LiVESWidget *widget, LiVESXEventKey *event, livespointer user_data) {
   boolean ret = pl_key_function(event->type == LIVES_KEY_PRESS, event->keyval, event->state);
-  //if (ckey !=0 && cached_key == 0) g_print("unaching key\n");
+  if (widget == mainw->play_window && event->type == LIVES_KEY_RELEASE) return TRUE;
   return ret;
 }
 
@@ -350,6 +350,8 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
 
 
 // key callback functions - ones which have keys and need wrappers
+// NOTE: by eturning TRUE, we prevent the vent from being propgated further, this is important, else
+// it might be sent to the player window or another widget which may be destroyed during the callback
 
 boolean slower_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                         livespointer user_data) {
@@ -442,6 +444,13 @@ boolean fullscreen_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
 boolean sepwin_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                         livespointer user_data) {
   on_sepwin_pressed(NULL, NULL);
+  return TRUE;
+}
+
+
+boolean play_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                      livespointer user_data) {
+  start_playback_async(0);
   return TRUE;
 }
 

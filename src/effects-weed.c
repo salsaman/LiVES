@@ -3807,6 +3807,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
   else {
     weed_plant_t *gui;
     int myeaseval = -1;
+    pthread_rwlock_wrlock(&mainw->rte_rwlock);
 
     for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
       if (orig_inst) weed_instance_unref(orig_inst);
@@ -3933,6 +3934,7 @@ apply_inst3:
         }}}
     // *INDENT-ON*
     if (orig_inst) weed_instance_unref(orig_inst);
+    pthread_rwlock_unlock(&mainw->rte_rwlock);
   }
 
   // TODO - set mainw->vpp->play_params from connected out params and out alphas
@@ -4765,7 +4767,10 @@ weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key) {
     weed_leaf_set_undeletable(plant, key, WEED_FALSE);
     weed_leaf_autofree(plant, key);
     err = _weed_leaf_delete(plant, key);
-    if (err != WEED_SUCCESS) lives_abort("Unable to delete weed leaf - internal error detected");
+    if (err != WEED_SUCCESS) {
+      char *msg = lives_strdup_printf("Unable to delete weed leaf - internal error detected (%d)", err);
+      lives_abort(msg);
+    }
   }
   return err;
 }
@@ -6544,17 +6549,13 @@ int check_ninstrefs(void) {
 
 LIVES_GLOBAL_INLINE int _weed_instance_unref(weed_plant_t *inst) {
   // return new refcount
-  // return value of -1 indicates the instance was freed
-  // -2 if the inst was NULL
+  // return value of 0 indicates the instance was freed
+  // -1 if the inst was NULL
   int nrefs = weed_refcount_dec(inst);
-
-  if (nrefs == -200) return -2;
-
-  if (nrefs == -1) {
+  if (!nrefs) {
 #ifdef DEBUG_REFCOUNT
     g_print("FREE %p\n", inst);
 #endif
-    weed_refcounter_unlock(inst);
     lives_free_instance(inst);
   }
   return nrefs;
@@ -6762,7 +6763,7 @@ static weed_plant_t *weed_create_instance(weed_plant_t *filter, weed_plant_t **i
     weed_plant_t **inp, weed_plant_t **outp) {
   // here we create a new filter_instance from the ingredients:
   // filter_class, in_channels, out_channels, in_parameters, out_parameters
-  // inst is returned with a refcount of 1
+  // inst is returned with a refcount of 2
   weed_plant_t *inst = weed_plant_new(WEED_PLANT_FILTER_INSTANCE);
 
   int flags = WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, n;
@@ -8616,7 +8617,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   int new_file = 0;
   boolean is_bg = FALSE;
 
-  if (LIVES_IS_PLAYING) mainw->ignore_clipswitch = TRUE;
+  //if (LIVES_IS_PLAYING) mainw->ignore_clipswitch = TRUE;
 
   if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && mainw->num_tr_applied == 0) {
     close_current_file(0);
@@ -8639,7 +8640,8 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
     ////////////////////////// switching background generator: stop the old one first
     weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
-    mainw->current_file = mainw->blend_file;
+    //mainw->current_file = mainw->blend_file;
+    mainw->new_clip = mainw->blend_file;
   }
 
   // old_file can also be -1 if we are doing a fg_modeswitch
@@ -8854,8 +8856,6 @@ void weed_generator_end(weed_plant_t *inst) {
   boolean clip_switched = mainw->clip_switched;
   int current_file = mainw->current_file, pre_src_file = mainw->pre_src_file;
 
-  if (LIVES_IS_PLAYING) mainw->ignore_clipswitch = TRUE;
-
   if (!inst) {
     LIVES_WARN("inst was NULL !");
   }
@@ -8919,6 +8919,8 @@ void weed_generator_end(weed_plant_t *inst) {
     }
   }
 
+  //mainw->ignore_clipswitch = TRUE;
+  
   if (inst) wge_inner(inst); // unref inst + compound parts
 
   // if the param window is already open, show any reinits now
@@ -8995,6 +8997,12 @@ void weed_generator_end(weed_plant_t *inst) {
   }
 
   if (mainw->current_file == -1) mainw->cancelled = CANCEL_GENERATOR_END;
+  else {
+    if (mainw->current_file != current_file) {
+      mainw->new_clip = mainw->current_file;
+      mainw->current_file = current_file;
+    }
+  }
 }
 
 

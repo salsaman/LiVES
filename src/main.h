@@ -281,6 +281,8 @@ typedef struct {
 
 #include "functions.h"
 
+#include "layers.h"
+
 #include "colourspace.h"
 
 #include "frameloader.h"

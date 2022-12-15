@@ -58,9 +58,12 @@ typedef struct {
 #include "widget-helper-gtk.h"
 #endif
 
+/////////////// GUI threading parts ////////////////
+
 typedef weed_plantptr_t lives_proc_thread_t;
 
 boolean governor_loop(livespointer data) LIVES_RETURNS_TWICE;
+void sigdata_free(livespointer, LiVESWidgetClosure *);
 
 void fg_service_call(lives_proc_thread_t lpt, void *retval);
 boolean fg_service_fulfill(void);
@@ -76,6 +79,8 @@ boolean will_gov_run(void);
 #define GOV_LONGTIME 4
 
 int get_gov_status(void);
+
+////////////////////////////////////////
 
 // basic functions (wrappers for Toolkit functions)
 

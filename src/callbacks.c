@@ -98,6 +98,7 @@ void lives_exit(int signum) {
     pthread_mutex_trylock(&mainw->alock_mutex);
     pthread_mutex_unlock(&mainw->alock_mutex);
     pthread_mutex_unlock(&mainw->tlthread_mutex);
+    pthread_mutex_unlock(&mainw->all_hstacks_mutex);
     // filter mutexes are unlocked in weed_unload_all
 
     if (pthread_mutex_trylock(&mainw->exit_mutex)) pthread_exit(NULL);
@@ -552,7 +553,7 @@ void lives_exit(int signum) {
     unload_decoder_plugins();
   }
 
-  lives_hooks_trigger(NULL, mainw->global_hook_stacks, DESTRUCTION_HOOK);
+  lives_hooks_trigger(mainw->global_hook_stacks, DESTRUCTION_HOOK);
 
   if (prefs->workdir_tx_intent == OBJ_INTENTION_DELETE) {
     // delete the old workdir
@@ -2279,6 +2280,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     lives_rm(cfile->info_file);
     if (cfile->achans != cfile->undo_achans) {
       if (cfile->audio_waveform) {
+	cancel_tl_redraw(mainw->current_file);
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
         lives_freep((void **)&cfile->aw_sizes);
@@ -2434,6 +2436,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     if (reset_achans > 0) {
       reget_afilesize(mainw->current_file);
       if (cfile->audio_waveform) {
+	cancel_tl_redraw(mainw->current_file);
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
         lives_freep((void **)&cfile->aw_sizes);
@@ -2703,6 +2706,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
 
     if (cfile->achans != cfile->undo_achans) {
       if (cfile->audio_waveform) {
+	cancel_tl_redraw(mainw->current_file);
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
         lives_freep((void **)&cfile->aw_sizes);
@@ -2931,6 +2935,7 @@ void on_redo_activate(LiVESWidget * menuitem, livespointer user_data) {
 
   if (cfile->undo_action == UNDO_REC_AUDIO) {
     if (cfile->audio_waveform) {
+      cancel_tl_redraw(mainw->current_file);
       for (int i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
       lives_freep((void **)&cfile->audio_waveform);
       lives_freep((void **)&cfile->aw_sizes);
@@ -3321,6 +3326,7 @@ void on_paste_as_new_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   if (mainw->ccpd_with_sound) {
     if (cfile->audio_waveform) {
+      cancel_tl_redraw(mainw->current_file);
       for (int i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
       lives_freep((void **)&cfile->audio_waveform);
       lives_freep((void **)&cfile->aw_sizes);
@@ -5349,8 +5355,7 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   if (!LIVES_IS_INTERACTIVE) return TRUE;
   if (mainw->go_away) return TRUE;
 
-  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||
-      !mainw->cliplist) return TRUE;
+  if (CLIPSWITCH_BLOCKED) return TRUE;
 
   if (user_data) type = LIVES_POINTER_TO_INT(user_data);
 
@@ -5402,8 +5407,8 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   if (mainw->go_away) return TRUE;
   // next clip
   // if the effect is a transition, this will change the background clip
-  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||
-      !mainw->cliplist) return TRUE;
+
+  if (CLIPSWITCH_BLOCKED) return TRUE;
 
   if (user_data) type = LIVES_POINTER_TO_INT(user_data);
 
@@ -5849,9 +5854,9 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       goto cleanup;
     }
 
-    lives_proc_thread_cancel(recinfo, TRUE);
-    lives_proc_thread_cancel(reminfo, TRUE);
-    lives_proc_thread_cancel(leaveinfo, TRUE);
+    lives_proc_thread_request_cancel(recinfo, TRUE);
+    lives_proc_thread_request_cancel(reminfo, TRUE);
+    lives_proc_thread_request_cancel(leaveinfo, TRUE);
 
     if (retval == LIVES_RESPONSE_CANCEL) {
       com = lives_strdup_printf("%s restore_trash %s", temp_backend, trashdir);
@@ -6406,8 +6411,7 @@ void switch_clip(int type, int newclip, boolean force) {
 
 void switch_clip_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // switch clips from the clips menu
-  if (!(LIVES_CE_PLAYBACK || LIVES_IS_IDLE)) return;
-  switch_clip(0, GET_INT_DATA(menuitem, "clipno"), FALSE);
+  if (!CLIPSWITCH_BLOCKED) switch_clip(0, GET_INT_DATA(menuitem, "clipno"), FALSE);
 }
 
 
@@ -7292,9 +7296,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
         //fade_background();
       }
       if (mainw->sep_win) {
-        //resize_play_window();
-        main_thread_execute_rvoid_pvoid(resize_play_window);
-
+	resize_play_window();
         if (!mainw->vpp || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))
           lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
       }
@@ -9467,7 +9469,7 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
   }
 #endif
 
-  //clear_widget_bg(widget, *psurf);
+  clear_widget_bg(widget, *psurf);
 
   if (widget == mainw->start_image)
     load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);
@@ -10673,8 +10675,11 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
     lives_audio_buf_t *abuf = mainw->alock_abuf;
     prefs->audio_opts &= ~AUDIO_OPTS_IS_LOCKED;
     if (abuf) {
-      lives_hook_remove(THREADVAR(hook_stacks), DATA_READY_HOOK, resample_to_float,
-                        &mainw->alock_abuf);
+      if (mainw->alock_abuf->_fd != -1) {
+        if (!lives_buffered_rdonly_is_slurping(mainw->alock_abuf->_fd)) {
+          lives_close_buffered(mainw->alock_abuf->_fd);
+        }
+      }
       pthread_mutex_lock(&mainw->alock_mutex);
       mainw->alock_abuf = NULL;
       pthread_mutex_unlock(&mainw->alock_mutex);
@@ -10702,7 +10707,7 @@ boolean aud_lock_act(LiVESToggleToolButton * w, livespointer statep) {
           lives_proc_thread_t lpt;
           mainw->alock_abuf->fileno = mainw->playing_file;
           lpt = lives_buffered_rdonly_slurp_prep(mainw->alock_abuf->_fd, 0);
-          lives_hook_append(lives_proc_thread_get_hook_stacks(lpt), DATA_READY_HOOK, 0,
+          lives_hook_append(lives_proc_thread_get_hook_stacks(lpt), DATA_PREVIEW_HOOK, 0,
                             resample_to_float, &mainw->alock_abuf);
           lives_buffered_rdonly_slurp_ready(lpt);
         }
@@ -10817,11 +10822,7 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   // ctrl-fn key will store a clip for higher switching
   int clip = LIVES_POINTER_TO_INT(clip_number) - 1;
 
-  if (!LIVES_IS_INTERACTIVE) return TRUE;
-  if (is_transport_locked()) return TRUE;
-
-  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (LIVES_IS_PLAYING && mainw->event_list && !mainw->record)
-      || (mainw->is_processing && cfile->is_loaded) || !mainw->cliplist) return TRUE;
+  if (CLIPSWITCH_BLOCKED) return TRUE;
 
   if (clip >= FN_KEYS - 1) {
     // last fn key will clear all
@@ -10846,21 +10847,23 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
       else mainw->clipstore[clip][1] = 1;
     }
   } else {
-    lives_clip_t *sfile = mainw->files[mainw->clipstore[clip][0]];
-    if (LIVES_CE_PLAYBACK) {
-      if (mainw->clipstore[clip][0] != mainw->playing_file) {
-        // player will call do_quick_switch, and possiblt switch_audio_clip()
-        sfile->frameno = mainw->clipstore[clip][1];
-        mainw->new_clip = mainw->clipstore[clip][0];
+    if (CLIPSWITCH_BLOCKED) return TRUE;
+    else {
+      lives_clip_t *sfile = mainw->files[mainw->clipstore[clip][0]];
+      if (LIVES_CE_PLAYBACK) {
+	if (mainw->clipstore[clip][0] != mainw->playing_file) {
+	  // player will call do_quick_switch, and possiblt switch_audio_clip()
+	  sfile->frameno = mainw->clipstore[clip][1];
+	  mainw->new_clip = mainw->clipstore[clip][0];
+	}
+      } else {
+	if (mainw->clipstore[clip][0] != mainw->current_file)
+	  switch_clip(0, mainw->clipstore[clip][0], TRUE);
+	cfile->real_pointer_time = (mainw->clipstore[clip][1] - 1.) / cfile->fps;
+	lives_ce_update_timeline(0, cfile->real_pointer_time);
       }
-    } else {
-      if (mainw->clipstore[clip][0] != mainw->current_file)
-        switch_clip(0, mainw->clipstore[clip][0], TRUE);
-      cfile->real_pointer_time = (mainw->clipstore[clip][1] - 1.) / cfile->fps;
-      lives_ce_update_timeline(0, cfile->real_pointer_time);
+      if (mainw->loop_locked) unlock_loop_lock();
     }
-
-    if (mainw->loop_locked) unlock_loop_lock();
   }
   return TRUE;
 }
@@ -10908,7 +10911,7 @@ void rec_desktop(LiVESMenuItem * menuitem, livespointer user_data) {
     if (lpt) {
       // if running, just send a cancel, the bg thread will add an idlefunc before exiting
       lives_widget_set_sensitive(mainw->desk_rec, FALSE);
-      lives_proc_thread_cancel(lpt, TRUE);
+      lives_proc_thread_request_cancel(lpt, TRUE);
       lpt = NULL;
     }
     return;
@@ -11910,6 +11913,7 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   if (cfile->laudio_time == 0. || cfile->raudio_time == 0.) {
     if (cfile->audio_waveform) {
+      cancel_tl_redraw(mainw->current_file);
       for (int i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
       lives_freep((void **)&cfile->audio_waveform);
       lives_freep((void **)&cfile->aw_sizes);
@@ -12280,6 +12284,7 @@ boolean on_ins_silence_activate(LiVESMenuItem * menuitem, livespointer user_data
     // redo
     if (sfile->achans != sfile->undo_achans) {
       if (sfile->audio_waveform) {
+	cancel_tl_redraw(clipno);
         for (int i = 0; i < sfile->achans; lives_freep((void **)&sfile->audio_waveform[i++]));
         lives_freep((void **)&sfile->audio_waveform);
         lives_freep((void **)&sfile->aw_sizes);

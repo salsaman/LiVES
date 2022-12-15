@@ -30,7 +30,6 @@ int get_next_free_file(void) {
 }
 
 
-
 #ifdef ENABLE_OSC
 boolean lives_osc_notify_failure(void) WARN_UNUSED;
 #endif
@@ -71,7 +70,7 @@ LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
   if (!reason) reason = _("Aborting");
   lives_set_status(LIVES_STATUS_FATAL);
   break_me(reason);
-  if (mainw) lives_hooks_trigger(NULL, mainw->global_hook_stacks, FATAL_HOOK);
+  if (mainw) lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
   g_printerr("LIVES FATAL: %s\n", reason);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, reason);
   abort();
@@ -97,7 +96,7 @@ void restart_me(LiVESList *extra_argv, const char *xreason) {
     }
     new_argv[i] = NULL;
   }
-  if (mainw) lives_hooks_trigger(NULL, mainw->global_hook_stacks, RESTART_HOOK);
+  if (mainw) lives_hooks_trigger(mainw->global_hook_stacks, RESTART_HOOK);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, xreason ? xreason : "");
   execve(orig_argv()[0], argv, environ);
 #ifdef ENABLE_OSC
@@ -106,7 +105,7 @@ void restart_me(LiVESList *extra_argv, const char *xreason) {
   fprintf(stderr, "FAILED TO RESTART LiVES, aborting instead !");
   if (mainw) {
     mainw->error = TRUE;
-    lives_hooks_trigger(NULL, mainw->global_hook_stacks, FATAL_HOOK);
+    lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
   }
   abort();
 }
@@ -1142,20 +1141,9 @@ void update_play_times(void) {
   // force a redraw, reread audio
   if (!CURRENT_CLIP_IS_PHYSICAL) return;
   if (cfile->audio_waveform) {
-    lives_mutex_lock_carefully(&mainw->tlthread_mutex);
-    if (mainw->drawtl_thread) {
-      if (!lives_proc_thread_check_completed(mainw->drawtl_thread)) {
-        lives_proc_thread_cancel(mainw->drawtl_thread, FALSE);
-      }
-      lives_proc_thread_join(mainw->drawtl_thread);
-      mainw->drawtl_thread = NULL;
-    }
-    for (int i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
-    lives_freep((void **)&cfile->audio_waveform);
-    lives_freep((void **)&cfile->aw_sizes);
-    pthread_mutex_unlock(&mainw->tlthread_mutex);
+    cancel_tl_redraw(mainw->current_file);
   }
-  get_play_times();
+  redraw_timeline(mainw->current_file);
 }
 
 

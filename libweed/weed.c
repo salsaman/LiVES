@@ -208,10 +208,42 @@ static int data_lock_upgrade(weed_leaf_t *leaf, int block) {
 }
 
 static int chain_lock_upgrade(weed_leaf_t *leaf, int have_rdlock, int is_del) {
-  // grab the mutex, release the readlock held, grab a write lock, release the mutex,
-  // release the writelock
-  // if blocking is 0, then we return if we cannot get the mutex
-  // return 0 if we got the write lock, otherwise
+  // there are two possibilites here:
+  // have_readlock == FALSE
+  //  (this is ALWAYS called with leaf == plant)
+  //  - obtain the structure lock
+  //  - obtain a writelock on the chainlock for the leaf (plant)
+  // - (if deleting, set flag bit on leaf) (plant)
+  // - release structure lock
+  // --- this ensures we have a chainlock writelock on plant, use of the structure lock
+  //     restricts access to the chain lock.
+  //     This achieves various things - only one thread may have the writelock on plant chainlock
+  //					- if the writelock can be obtained, this means there are threads reading th chain at plant
+  //					- if no threads are reading the chain at plant, it is safe to append a new leaf after plant
+  //					- additionally, with structure_mutex held, a thread can set a flagbit for plant
+  //					- to indicate a deletion is in progress.
+  //   		                           - all threads traversing the linked list first try to obtain a chain lock read lock
+  //						on plant. Should they fail, and the deletion bit is set in flags for plant,
+  //					-- failing the readlock and reading the delete flag bit causes a reader thread to
+  //						enter a special "checking mode"
+  // 
+  
+  // have_readlock == TRUE
+  // this is only called with leaf != plant, the leaf must have a chainlock readlock
+  // this means if threads are checking ahead by trying to obtain a chainlock readlock on the next leaf, they will block at that
+  // point in list, until the wchainlock writelock is released
+  // in this mode:
+  // - drop chain lock readlock for leaf
+  // - get chainlock write lock
+  // combining these two concepts, when a thread enters "checking mode", it does not increment the "list readers" counter
+  // - thus the readers counter becomes a measure of how many threads are traversing the list without being in "checking mode"
+  // - when the count falls to zere as exiting threads not in checking mode decremtn it as they leave, then one can
+  // be certain that any threads currently traversing the list are doing so in checking mode
+  // once a deletion thread is certain that all threads traversing are in checking mode, it can create a temporay roadblock
+  // by getting a chain lock write lock on a leaf
+  // the comments below explain this
+  //
+  // return value: always 9
   if (leaf) {
     if (have_rdlock) chain_lock_unlock(leaf);
     else structure_mutex_lock(leaf);
@@ -833,21 +865,22 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   // structure_mutex locked
 
   leaf = plant;
-
+  // we want to end with a lock on matghing leaf, and leaf before (prevleaf)
   while (leaf->key_hash != hash || (!skip_errchecks && weed_strcmp(weed_leaf_get_key(leaf), (char *)key))) {
     // no match
 
+    // unlock prevleaf, but this leaf then becomes new prevleaf, and we get a new leaf 
+    if (leafprev != plant) chain_lock_unlock(leafprev);
+    // this leaf should be locked from last time
+    // we will unlock it next time
+    leafprev = leaf;
     // still have chain_lock readlock on leafprev
-    // still have chain_lock readlock on leaf
     // we will grab chain_lock readlock on next leaf
-    if (leaf != plant) {
-      if (leafprev != plant) chain_lock_unlock(leafprev);
-      leafprev = leaf; // leafprev is still locked
-    }
-    if (!(leaf = leaf->next)) break;
+    leaf = leaf->next;
+    if (!leaf) break;
     chain_lock_readlock(leaf);
   }
-  // finish with chain_lock readlock on prevprev. prev amd leaf
+  // finish with chain_lock readlock on prev and leaf
 
   if (!leaf || leaf == plant) err = WEED_ERROR_NOSUCH_LEAF;
   else {
@@ -882,11 +915,12 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   // and that is it, job done. Now we can free leaf at leisure
   plant->flags ^= WEED_FLAG_OP_DELETE;
   chain_lock_unlock(plant);
+
   if (leafprev != leaf && leafprev != plant) chain_lock_unlock(leafprev);
   structure_mutex_unlock(plant);
 
-  // get a trans write link on leaf, once we have this, all readers have moved to the next
-  // leaf, and we are almost done
+  // get a chain_lock write link on leaf, once we have this, all readers have moved to the next
+  // leaf, unless they are reading / wiritng to this leaf, and we are almost done
   chain_lock_upgrade(leaf, 1, 0);
   chain_lock_unlock(leaf);
 

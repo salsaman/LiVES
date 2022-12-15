@@ -3466,7 +3466,9 @@ weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, we
         if (new_file != mainw->scrap_file) {
           // switch to a new file
           // will reset ->next_event for old_file
+          mainw->noswitch = FALSE;
           do_quick_switch(new_file);
+          mainw->noswitch = TRUE;
           cfile->next_event = return_event;
         } else {
           /// load a frame from the scrap file
@@ -4183,7 +4185,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                     || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID))
                   return LIVES_RENDER_ERROR;
                 mainw->transrend_waiting = FALSE;
-                lives_proc_thread_sync_ready(mainw->transrend_proc);
+                lives_proc_thread_sync_continue(mainw->transrend_proc);
                 g_print("trans processed\n");
                 if (mainw->transrend_layer != mainw->scrap_layer)
                   weed_layer_free((weed_layer_t *)mainw->transrend_layer);
@@ -4235,7 +4237,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 return LIVES_RENDER_ERROR;
 
               mainw->transrend_waiting = FALSE;
-              lives_proc_thread_sync_ready(mainw->transrend_proc);
+              lives_proc_thread_sync_continue(mainw->transrend_proc);
               g_print("sent syn\n");
 
               // sig_progress...
@@ -5383,12 +5385,12 @@ boolean render_to_clip(boolean new_clip) {
 
     work = lives_proc_thread_get_work(mainw->transrend_proc);
     lives_hook_append(work->hook_stacks, SYNC_WAIT_HOOK, 0, transrend_sync, NULL);
-    lives_proc_thread_sync_ready(mainw->transrend_proc);
+    lives_proc_thread_sync_continue(mainw->transrend_proc);
 
     g_print("wait for transcoder ready\n");
 
     lives_nanosleep_while_false(mainw->transrend_waiting);
-    lives_proc_thread_sync_ready(mainw->transrend_proc);
+    lives_proc_thread_sync_continue(mainw->transrend_proc);
 
     mainw->transrend_waiting = FALSE;
 
@@ -5543,7 +5545,7 @@ rtc_done:
 
   if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE) {
     if (mainw->transrend_proc) {
-      lives_proc_thread_cancel(mainw->transrend_proc, FALSE);
+      lives_proc_thread_request_cancel(mainw->transrend_proc, FALSE);
       lives_proc_thread_join(mainw->transrend_proc);
       mainw->transrend_proc = NULL;
     }

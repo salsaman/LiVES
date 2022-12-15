@@ -305,7 +305,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   if (!do_progress_dialog(TRUE, TRUE, effectstring) || mainw->error) {
     if (cfile->pumper) {
-      lives_proc_thread_cancel(cfile->pumper, FALSE);
+      lives_proc_thread_request_cancel(cfile->pumper, FALSE);
       lives_proc_thread_join(cfile->pumper);
       cfile->pumper = NULL;
     }
@@ -1164,7 +1164,9 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
   // key is 1 based
   boolean ret;
   int key = LIVES_POINTER_TO_INT(user_data);
+  pthread_rwlock_rdlock(&mainw->rte_rwlock);
   main_thread_execute(_rte_on_off, WEED_SEED_BOOLEAN, &ret, "bi", (group != NULL), key);
+  pthread_rwlock_unlock(&mainw->rte_rwlock);
   return ret;
 }
 

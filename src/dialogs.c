@@ -2010,7 +2010,7 @@ finish:
             && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
           notify_user(mainw->proc_ptr->text);
         }
-        lives_hooks_trigger(NULL, THREADVAR(hook_stacks), COMPLETED_HOOK);
+        lives_hooks_trigger(THREADVAR(hook_stacks), COMPLETED_HOOK);
         lives_freep((void **)&mainw->proc_ptr->text);
         lives_widget_destroy(mainw->proc_ptr->processing);
       }
@@ -3586,10 +3586,10 @@ static void _do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 static void _thdlg_auto_spin(void) {
   lives_proc_thread_set_cancellable(mainw->dlg_spin_thread);
   while (mainw->threaded_dialog
-         && !lives_proc_thread_get_cancelled(mainw->dlg_spin_thread)) {
+         && !lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread)) {
     int count = 10000;
     boolean spun = FALSE;
-    while (!lives_proc_thread_get_cancelled(mainw->dlg_spin_thread) && --count) {
+    while (!lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread) && --count) {
       if (mainw->threaded_dialog && !mainw->cancelled && !spun && !FG_THREADVAR(fg_service)) {
         threaded_dialog_spin(xfraction);
         spun = TRUE;
@@ -3613,7 +3613,7 @@ void threaded_dialog_auto_spin(void) {
 
 void threaded_dialog_stop_spin(void) {
   if (mainw->dlg_spin_thread  && is_fg_thread()) {
-    if (!lives_proc_thread_get_cancelled(mainw->dlg_spin_thread)) {
+    if (!lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread)) {
       while (fg_service_fulfill()) lives_widget_context_update();
       lives_nanosleep(1000);
     }

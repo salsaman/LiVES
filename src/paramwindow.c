@@ -147,7 +147,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
       lives_kill_subprocesses(cfile->handle, TRUE);
 
       if (cfile->pumper) {
-        lives_proc_thread_cancel(cfile->pumper, FALSE);
+        lives_proc_thread_request_cancel(cfile->pumper, FALSE);
         lives_proc_thread_join(cfile->pumper);
         cfile->pumper = NULL;
       }
@@ -1024,7 +1024,7 @@ static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param, int idx) 
     param->hidden |= HIDDEN_UNDISPLAYABLE;
   if (!mainw->multitrack && (param->reinit & REINIT_FUNCTIONAL)
       && weed_get_boolean_value(inst, WEED_LEAF_HOST_REINITING, NULL) == WEED_FALSE
-      && weed_refcount_query(inst) >= 2) {
+      && weed_refcount_query(inst) >= 3) {
     // effect is running and user is editing the params, we should hide reinit params
     // so as not to disturb the flow !
     param->hidden |= HIDDEN_NEEDS_REINIT;

@@ -234,6 +234,9 @@ boolean init_memfuncs(int stage);
 #define FREE_AND_RETURN(a) lives_free_and_return((a))
 #define FREE_AND_RETURN_VALUE(a, b) (!lives_free_and_return(((a)) ? (b) : (b))
 
+#define LIVES_MALLOC_AND_COPY(src, size) \
+  lives_memcpy(lives_malloc(size), src, size)
+
 #define lives_nullify_ptr(void_ptr_ptr) do {if (void_ptr_ptr) *void_ptr_ptr = NULL;} while (0);
 
 boolean lives_nullify_ptr_cb(void *dummy, void **vpp);

@@ -120,16 +120,22 @@ retry:
   pa_context_connect(pcon, NULL, (pa_context_flags_t)0, NULL);
   pa_threaded_mainloop_start(pa_mloop);
 
+  pa_mloop_lock();
   pa_state = pa_context_get_state(pcon);
+  pa_mloop_unlock();
 
   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
   while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pa_state != PA_CONTEXT_READY) {
     lives_nanosleep(LIVES_QUICK_NAP);
+    pa_mloop_lock();
     pa_state = pa_context_get_state(pcon);
+    pa_mloop_unlock();
   }
   lives_alarm_clear(alarm_handle);
 
+  pa_mloop_lock();
   if (pa_context_get_state(pcon) == PA_CONTEXT_READY) timeout = 1;
+  pa_mloop_unlock();
 
   if (timeout == 0) {
     pa_context_unref(pcon);
@@ -476,9 +482,12 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   /// this is the value we will return from pulse_get_rec_avals
   fwd_seek_pos = pulsed->real_seek_pos;
 
-  pulsed->state = pa_stream_get_state(pulsed->pstream);
+  /* pa_mloop_lock(); */
+  /* pulsed->state = pa_stream_get_state(pulsed->pstream); */
+  /* pa_mloop_unlock(); */
 
-  if (pulsed->state == PA_STREAM_READY) {
+  /* if (pulsed->state == PA_STREAM_READY) { */
+  if (1) {
     int16_t *fbdata = NULL;
     float **fltbuf = NULL;
     uint64_t pulseFramesAvailable = nsamples;
@@ -1245,7 +1254,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
       if (rec_output) {
         float out_scale = (float)pulsed->out_arate / mainw->files[mainw->ascrap_file]->arate;
-        lives_hooks_triggero(pulsed->inst, pulsed->inst->hook_stacks, DATA_READY_HOOK);
+        lives_hooks_trigger(pulsed->inst->hook_stacks, DATA_READY_HOOK);
         // recording internal - resample from out_arate to file arate
         pulse_write_data(out_scale, pulsed->out_achans, mainw->ascrap_file, nbytes, buffer);
       }
@@ -1315,13 +1324,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       sample_silence_pulse(pulsed, pulseFramesAvailable * pulsed->out_achans * (pulsed->out_asamps >> 3));
       if (!pulsed->is_paused) pulsed->frames_written += pulseFramesAvailable;
     }
-  } else {
-#ifdef DEBUG_PULSE
-    if (pulsed->state == PA_STREAM_UNCONNECTED || pulsed->state == PA_STREAM_CREATING)
-      LIVES_INFO("pulseaudio stream UNCONNECTED or CREATING");
-    else
-      LIVES_WARN("pulseaudio stream FAILED or TERMINATED");
-#endif
   }
   if (pulsed->playing_file > -1) {
     afile->aseek_pos = pulsed->seek_pos;
@@ -1476,7 +1478,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   lives_aplayer_set_data_len(pulsed->inst, nframes);
   lives_aplayer_set_data(pulsed->inst, (void *)back_buff);
 
-  lives_hooks_triggero(pulsed->inst, pulsed->inst->hook_stacks, DATA_READY_HOOK);
+  lives_hooks_trigger(pulsed->inst->hook_stacks, DATA_READY_HOOK);
 
   pulsed->seek_pos += rbytes;
 
@@ -1750,19 +1752,21 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                &pdriver->volume, NULL);
 #endif
     pa_mloop_unlock();
-    lives_nanosleep_while_false(pa_stream_get_state(pdriver->pstream) == PA_STREAM_READY);
 
-    pdriver->volume_linear = -1.;
+    lives_nanosleep_while_false(pa_stream_get_state(pdriver->pstream) == PA_STREAM_READY);
 
 #if PA_SW_CONNECTION
     // get the volume from the server
+
     pa_op = pa_context_get_sink_info(pdriver->con, info_cb, &pdriver);
 
     while (pa_operation_get_state(pa_op) == PA_OPERATION_RUNNING) {
       pa_threaded_mainloop_wait(pa_mloop);
     }
+
     pa_operation_unref(pa_op);
 #endif
+    pdriver->volume_linear = -1.;
   } else {
     // set read callback
     pdriver->frames_written = 0;
@@ -2087,7 +2091,6 @@ boolean pulse_try_reconnect(void) {
   } else lives_system("pulseaudio -k", TRUE);
   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
   while (lives_alarm_check(alarm_handle) > 0) {
-    sched_yield();
     lives_usleep(prefs->sleep_time);
     threaded_dialog_spin(0.);
   }

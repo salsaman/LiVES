@@ -1078,16 +1078,16 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
 #endif
 
   for (i = sframe; i <= eframe; i++) {
-    if (lives_proc_thread_get_cancelled(tinfo)) break;
+    if (lives_proc_thread_get_cancel_requested(tinfo)) break;
 
     retval = i;
 
     if (sfile->pumper) {
       if (mainw->effects_paused || mainw->preview) {
         lives_nanosleep_while_true((mainw->effects_paused || mainw->preview)
-                                   && !lives_proc_thread_get_cancelled(sfile->pumper));
+                                   && !lives_proc_thread_get_cancel_requested(sfile->pumper));
       }
-      if (lives_proc_thread_get_cancelled(sfile->pumper)) break;
+      if (lives_proc_thread_get_cancel_requested(sfile->pumper)) break;
     }
 
     if (update_progress) {
@@ -1240,6 +1240,9 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
       lives_widget_object_unref(pixbuf);
     }
   } else if (layer) weed_layer_free(layer);
+
+  if (lives_proc_thread_get_cancel_requested(sfile->pumper))
+    lives_proc_thread_cancel(sfile->pumper);
 
   return retval;
 }

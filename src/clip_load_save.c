@@ -2957,6 +2957,7 @@ static boolean rewrite_recovery_file_cb(lives_obj_t *obj, void *data) {
   return FALSE;
 }
 
+static lives_proc_thread_t rewrite_recovery_lpt = NULL;
 
 boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
   uint32_t recpid = 0;
@@ -3051,7 +3052,7 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
 
   /// CRITICAL: make sure this gets called even on system failure and abort
   if (prefs->crash_recovery && !no_recover)
-    lives_hook_append(mainw->global_hook_stacks, FATAL_HOOK, 0, rewrite_recovery_file_cb, NULL);
+    rewrite_recovery_lpt = lives_hook_append(mainw->global_hook_stacks, FATAL_HOOK, 0, rewrite_recovery_file_cb, NULL);
 
   // check for layout recovery file
   recfname = lives_strdup_printf("%s.%d.%d.%d.%s", LAYOUT_FILENAME, luid, lgid, recpid,
@@ -3183,7 +3184,7 @@ cleanse:
 
   if (THREADVAR(com_failed) && prefs->crash_recovery && !no_recover) {
     rewrite_recovery_file();
-    lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, rewrite_recovery_file_cb, NULL);
+    lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, rewrite_recovery_lpt);
     return FALSE;
   }
 
@@ -3235,7 +3236,7 @@ cleanse:
   if (prefs->crash_recovery) {
     rewrite_recovery_file();
     lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK,
-                      rewrite_recovery_file_cb, NULL);
+                      rewrite_recovery_lpt);
   }
 
   if (!mainw->recoverable_layout && !mainw->recording_recovered) {
@@ -3796,11 +3797,9 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
 
     if (!cfile->ext_src && mainw->toy_type != LIVES_TOY_TV) {
       end_threaded_dialog();
-      mainw->cs_permitted = TRUE;
       mainw->disk_mon = MONITOR_QUOTA;
       if (!do_progress_dialog(TRUE, TRUE, msgstr)) {
         // user cancelled or switched to another clip
-        mainw->cs_permitted = FALSE;
         mainw->disk_mon = 0;
 
         lives_free(msgstr);
@@ -3836,7 +3835,6 @@ ulong open_file_sel(const char *file_name, double start, frames_t frames) {
         showclipimgs();
         return 0;
       }
-      mainw->cs_permitted = FALSE;
       mainw->disk_mon = 0;
     }
     lives_free(msgstr);

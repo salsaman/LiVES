@@ -524,6 +524,7 @@ void create_LiVES(void) {
   //                                 - pl_eventbox
   //                                       - playarea           --> can be reparented to multitrack play_box (or anywhere)
   //                                             - plug
+  //									play_surface
   //                                                    - play_image
   //                           - eventbox4 (ditto)
   //                                 - frame2  (ditto)
@@ -4416,6 +4417,8 @@ static void _resize_play_window(void) {
 
   if (!mainw->play_window) return;
 
+  //THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+  
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
 
   scr_width_safety += 2 * abs(bx);
@@ -4599,7 +4602,10 @@ static void _resize_play_window(void) {
           if (mainw->play_window) {
             if (prefs->show_playwin) {
               xwinid = lives_widget_get_xwinid(mainw->play_window, "Unsupported display type for playback plugin");
-              if (!xwinid) return;
+              if (!xwinid) {
+		THREADVAR(hook_hints) = 0;
+		return;
+	      }
             } else xwinid = 0;
           }
         }
@@ -4651,7 +4657,7 @@ static void _resize_play_window(void) {
         if (!mainw->vpp->init_screen || ((*mainw->vpp->init_screen)
                                          (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
                                           mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
-                                          TRUE, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
+                                          fullscreen, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
           mainw->force_show = TRUE;
           mainw->ext_playback = TRUE;
           // the play window is still visible (in case it was 'always on top')
@@ -4797,7 +4803,7 @@ static void _resize_play_window(void) {
 
 
 LIVES_GLOBAL_INLINE void resize_play_window(void) {
-  THREADVAR(hook_hints) = HOOK_UNIQUE_FUNC;
+  THREADVAR(hook_hints) = HOOK_UNIQUE_FUNC | HOOK_CB_BLOCK;
   main_thread_execute_rvoid_pvoid(_resize_play_window);
   THREADVAR(hook_hints) = 0;
 }
@@ -4863,7 +4869,7 @@ void get_letterbox_sizes(int *pwidth, int *pheight, int *lb_width, int *lb_heigh
 
 
 void add_to_playframe(void) {
-  if (LIVES_IS_PLAYING) lives_widget_show(mainw->playframe);
+  if (LIVES_IS_PLAYING) lives_widget_show_all(mainw->playframe);
 
   if (!mainw->plug && !mainw->foreign) {
     mainw->plug = lives_event_box_new();

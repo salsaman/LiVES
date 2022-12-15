@@ -480,6 +480,8 @@ size_t weigh_object(lives_object_instance_t *obj);
 const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, int category, const char *rtype,
                                      const char *args_fmt, char *file, int linei);
 
+boolean add_fdef_lookup(lives_funcdef_t *);
+
 #endif // _BASE_DEFS_ONLY_ ! defined
 
 #endif

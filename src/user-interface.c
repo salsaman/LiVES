@@ -595,6 +595,8 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   xwin = lives_widget_get_xwindow(widget);
   if (!LIVES_IS_XWINDOW(xwin)) return;
 
+  lives_painter_surface_flush(surface);
+
   cr = lives_painter_create_from_surface(surface);
 
   if (!cr) return;
@@ -694,8 +696,10 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   update_rect.width = rwidth;
   update_rect.height = rheight;
 
+  cairo_surface_mark_dirty(surface);
+
   if (!LIVES_IS_XWINDOW(xwin)) return;
-  lives_xwindow_invalidate_rect(xwin, &update_rect, FALSE);
+  //lives_xwindow_invalidate_rect(xwin, &update_rect, FALSE);
 }
 
 

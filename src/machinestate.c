@@ -497,7 +497,7 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
   return LIVES_STORAGE_STATUS_NORMAL;
 }
 
-static lives_proc_thread_t running = NULL;
+static volatile lives_proc_thread_t running = NULL;
 static char *running_for = NULL;
 
 boolean disk_monitor_running(const char *dir)
@@ -521,7 +521,7 @@ int64_t disk_monitor_check_result(const char *dir) {
       return -1;
     }
     bytes = lives_proc_thread_join_int64(running);
-    lives_proc_thread_free(running);
+    lives_proc_thread_unref(running);
     running = NULL;
   } else bytes = (int64_t)get_dir_size(dir);
   return bytes;
@@ -1101,7 +1101,7 @@ static char *file_to_file_details(const char *filename, lives_file_dets_t *fdets
   if (!stat_to_file_dets(filename, fdets)) {
     // if stat fails, we have set set size to -2, type to LIVES_FILE_TYPE_UNKNOWN
     // and here we set extra_details to ""
-    if (tinfo && lives_proc_thread_get_cancelled(tinfo)) {
+    if (tinfo && lives_proc_thread_get_cancel_requested(tinfo)) {
       lives_free(extra_details);
       return NULL;
     }
@@ -1116,7 +1116,7 @@ static char *file_to_file_details(const char *filename, lives_file_dets_t *fdets
           lives_free(extra_details);
           extra_details = tmp2;
         }
-        if (tinfo && lives_proc_thread_get_cancelled(tinfo)) {
+        if (tinfo && lives_proc_thread_get_cancel_requested(tinfo)) {
           lives_free(extra_details);
           return NULL;
         }
@@ -1235,9 +1235,9 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
 
     while (1) {
       tdirent = readdir(tldir);
-      if (lives_proc_thread_get_cancelled(tinfo) || !tdirent) {
+      if (lives_proc_thread_get_cancel_requested(tinfo) || !tdirent) {
         closedir(tldir);
-        if (lives_proc_thread_get_cancelled(tinfo)) return NULL;
+        if (lives_proc_thread_get_cancel_requested(tinfo)) return NULL;
         break;
       }
       if (tdirent->d_name[0] == '.'
@@ -1247,7 +1247,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
       //g_print("GOT %s\n", fdets->name);
       fdets->size = -1;
       *listp = lives_list_append(*listp, fdets);
-      if (lives_proc_thread_get_cancelled(tinfo)) {
+      if (lives_proc_thread_get_cancel_requested(tinfo)) {
         closedir(tldir);
         return NULL;
       }
@@ -1261,7 +1261,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
 
     if (!(orderfile = fopen(ofname, "r"))) return NULL;
     while (1) {
-      if (lives_proc_thread_get_cancelled(tinfo) || !orderfile) {
+      if (lives_proc_thread_get_cancel_requested(tinfo) || !orderfile) {
         if (orderfile) {
           fclose(orderfile);
         }
@@ -1278,7 +1278,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
       fdets->name = lives_strdup(buff);
       fdets->size = -1;
       *listp = lives_list_append(*listp, fdets);
-      if (lives_proc_thread_get_cancelled(tinfo)) {
+      if (lives_proc_thread_get_cancel_requested(tinfo)) {
         fclose(orderfile);
         return NULL;
       }
@@ -1291,12 +1291,12 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
   if (*listp) empty = FALSE;
   *listp = lives_list_append(*listp, NULL);
 
-  if (empty || lives_proc_thread_get_cancelled(tinfo)) return NULL;
+  if (empty || lives_proc_thread_get_cancel_requested(tinfo)) return NULL;
 
   // listing done, now get details for each entry
   list = *listp;
   while (list && list->data) {
-    if (lives_proc_thread_get_cancelled(tinfo)) return NULL;
+    if (lives_proc_thread_get_cancel_requested(tinfo)) return NULL;
 
     extra_details = lives_strdup("");
     fdets = (lives_file_dets_t *)list->data;
@@ -1313,7 +1313,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
 
     lives_free(subdirname);
 
-    if (tinfo && lives_proc_thread_get_cancelled(tinfo)) {
+    if (tinfo && lives_proc_thread_get_cancel_requested(tinfo)) {
       lives_free(extra_details);
       return NULL;
     }
@@ -1912,10 +1912,10 @@ void rec_desk(void *args) {
   lives_widget_set_sensitive(mainw->desk_rec, TRUE);
   alarm_handle = lives_alarm_set(TICKS_PER_SECOND_DBL * recargs->delay_time);
   lives_nanosleep_while_false(!lives_alarm_check(alarm_handle) == 0
-			      || (lpt && lives_proc_thread_get_cancelled(lpt)));
+			      || (lpt && lives_proc_thread_get_cancel_requested(lpt)));
   lives_alarm_clear(alarm_handle);
 
-  if (lpt && lives_proc_thread_get_cancelled(lpt)) goto done;
+  if (lpt && lives_proc_thread_get_cancel_requested(lpt)) goto done;
   //lives_widget_set_sensitive(mainw->desk_rec, FALSE);
 
   saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
@@ -1942,7 +1942,7 @@ void rec_desk(void *args) {
 
   while (1) {
     if ((recargs->rec_time && !lives_alarm_check(alarm_handle))
-	|| (lpt && (cancelled = lives_proc_thread_get_cancelled(lpt))))
+	|| (lpt && (cancelled = lives_proc_thread_get_cancel_requested(lpt))))
       break;
 
     fps_alarm = lives_alarm_set(TICKS_PER_SECOND_DBL / recargs->fps);
@@ -1951,7 +1951,7 @@ void rec_desk(void *args) {
       lives_thread_join(*saver_thread, NULL);
       if (saveargs->error
 	  || ((recargs->rec_time && !lives_alarm_check(alarm_handle))
-	      || (lpt && lives_proc_thread_get_cancelled(lpt)))) {
+	      || (lpt && lives_proc_thread_get_cancel_requested(lpt)))) {
 	lives_alarm_clear(fps_alarm);
 	break;
       }
@@ -2015,7 +2015,7 @@ void rec_desk(void *args) {
 
     // TODO - check for timeout / cancel here too
     lives_nanosleep_until_zero(lives_alarm_check(fps_alarm) && (!recargs->rec_time || lives_alarm_check(alarm_handle))
-			       && (!lpt || !(cancelled = lives_proc_thread_get_cancelled(lpt))));
+			       && (!lpt || !(cancelled = lives_proc_thread_get_cancel_requested(lpt))));
     lives_alarm_clear(fps_alarm);
   }
   lives_alarm_clear(alarm_handle);
@@ -2127,6 +2127,8 @@ char *get_wid_for_name(const char *wname) {
 }
 
 
+static lives_proc_thread_t enable_ss_lpt = NULL;
+
 static boolean enable_ss_cb(lives_obj_t *obj, void *data) {
   lives_reenable_screensaver();
   return FALSE;
@@ -2161,7 +2163,7 @@ boolean lives_reenable_screensaver(void) {
   } else com = lives_strdup("");
 #endif
 
-  lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, enable_ss_cb, NULL);
+  lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, enable_ss_lpt);
 
   if (com) {
     lives_cancel_t cancelled = mainw->cancelled;
@@ -2216,8 +2218,8 @@ boolean lives_disable_screensaver(void) {
       THREADVAR(com_failed) = FALSE;
     }
     else {
-      lives_hook_prepend(mainw->global_hook_stacks, FATAL_HOOK,
-			 0, enable_ss_cb, NULL);
+      enable_ss_lpt = lives_hook_prepend(mainw->global_hook_stacks, FATAL_HOOK,
+					 0, enable_ss_cb, NULL);
     }
     return TRUE;
   }
@@ -2428,6 +2430,8 @@ int get_window_stack_level(LiVESXWindow *xwin, int *nwins) {
 }
 
 
+static lives_proc_thread_t show_dpanel_lpt = NULL;
+
 static boolean show_dpanel_cb(lives_obj_t *obj, void *data) {
   show_desktop_panel();
   return FALSE;
@@ -2441,7 +2445,7 @@ boolean show_desktop_panel(void) {
   if (wid) {
     ret = unhide_x11_window(wid);
     lives_free(wid);
-    lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, show_dpanel_cb, NULL);
+    lives_hook_remove(mainw->global_hook_stacks, FATAL_HOOK, show_dpanel_lpt);
   }
 #endif
   return ret;
@@ -2455,7 +2459,7 @@ boolean hide_desktop_panel(void) {
   if (wid) {
     ret = hide_x11_window(wid);
     lives_free(wid);
-    lives_hook_prepend(mainw->global_hook_stacks, FATAL_HOOK, 0, show_dpanel_cb, NULL);
+    show_dpanel_lpt = lives_hook_prepend(mainw->global_hook_stacks, FATAL_HOOK, 0, show_dpanel_cb, NULL);
   }
 #endif
   return ret;
@@ -3342,7 +3346,7 @@ void perf_manager(void) {
 
   lives_proc_thread_t self = THREADVAR(proc_thread);
   lives_proc_thread_set_cancellable(self);
-  while (!lives_proc_thread_get_cancelled(self)) {
+  while (!lives_proc_thread_get_cancel_requested(self)) {
     if (second_trigger) {
       second_trigger = FALSE;
     }

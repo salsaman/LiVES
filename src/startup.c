@@ -731,10 +731,13 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->trcount_mutex, &mattr);
   pthread_mutex_init(&mainw->alock_mutex, &mattr);
   pthread_mutex_init(&mainw->tlthread_mutex, &mattr);
+  pthread_mutex_init(&mainw->all_hstacks_mutex, &mattr);
 
   // conds
   pthread_cond_init(&mainw->avseek_cond, NULL);
 
+  pthread_rwlock_init(&mainw->rte_rwlock, NULL);
+  
   if (prefs->vj_mode)
     prefs->load_rfx_builtin = FALSE;
   else
@@ -743,6 +746,8 @@ static boolean pre_init(void) {
   mainw->vrfx_update = NULL;
 
   mainw->kb_timer = -1;
+
+  mainw->overlay_alarm = lives_alarm_set(0);
 
   prefs->sleep_time = 1000;
 
@@ -1149,17 +1154,9 @@ static boolean pre_init(void) {
   prefs->show_asrc = get_boolean_prefd(PREF_SHOW_ASRC, TRUE);
   prefs->hfbwnp = get_boolean_prefd(PREF_HFBWNP, FALSE);
 
-  mainw->next_free_alarm = 0;
-
-  for (i = 0; i < LIVES_MAX_ALARMS; i++) {
-    mainw->alarms[i].lastcheck = 0;
-  }
-
   if (lives_ascii_strcasecmp(prefs->theme, future_prefs->theme)) return TRUE;
   return FALSE;
 }
-
-
 
 
 LIVES_LOCAL_INLINE void outp_help(LiVESTextBuffer * textbuf, const char *fmt, ...) {
@@ -1433,7 +1430,7 @@ boolean lazy_startup_checks(void) {
     if (!RFX_LOADED) return TRUE;
     if (mainw->helper_procthreads[PT_LAZY_RFX]) {
       if (!lives_proc_thread_join_boolean(mainw->helper_procthreads[PT_LAZY_RFX])) {
-        lives_proc_thread_free(mainw->helper_procthreads[PT_LAZY_RFX]);
+        lives_proc_thread_unref(mainw->helper_procthreads[PT_LAZY_RFX]);
         mainw->helper_procthreads[PT_LAZY_RFX] = NULL;
         if (capable->has_plugins_libdir == UNCHECKED) {
           if (check_for_plugins(prefs->lib_dir, FALSE)) {
@@ -1444,7 +1441,7 @@ boolean lazy_startup_checks(void) {
           }
         }
       } else {
-        lives_proc_thread_free(mainw->helper_procthreads[PT_LAZY_RFX]);
+        lives_proc_thread_unref(mainw->helper_procthreads[PT_LAZY_RFX]);
         mainw->helper_procthreads[PT_LAZY_RFX] = NULL;
         lives_widget_destroy(mainw->ldg_menuitem);
         mainw->ldg_menuitem = NULL;
@@ -1453,7 +1450,6 @@ boolean lazy_startup_checks(void) {
       }
     }
   }
-
   return FALSE;
 }
 
@@ -1803,19 +1799,6 @@ static boolean lives_startup(livespointer data) {
 }
 
 
-static boolean lazy_start_fin(void *obj, void *data) {
-  lives_proc_thread_t lpt = (lives_proc_thread_t)data;
-  boolean bret = lives_proc_thread_join_boolean(lpt);
-  if (!bret) {
-    // it returned FALSE, we can free this. The destructor will
-    // also set mainw->lazy_starter to NULL
-    lives_proc_thread_free(lpt);
-    return FALSE;
-  }
-  return TRUE;
-}
-
-
 static boolean lives_startup2(livespointer data) {
   char *ustr;
   boolean layout_recovered = FALSE;
@@ -1824,7 +1807,7 @@ static boolean lives_startup2(livespointer data) {
   if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
     if (lives_proc_thread_check_completed(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) {
       double cpvar = lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-      lives_proc_thread_free(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+      lives_proc_thread_unref(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       if (prefs->cptime <= 0. && cpvar < MAX_CPICK_VAR) {
         prefs->cptime *= 1.1 + .2;
         set_double_pref(PREF_CPICK_TIME, prefs->cptime);
@@ -1837,7 +1820,7 @@ static boolean lives_startup2(livespointer data) {
         / TICKS_PER_SECOND_DBL * .9;
       set_double_pref(PREF_CPICK_TIME, prefs->cptime);
       set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
-      lives_proc_thread_cancel(mainw->helper_procthreads[PT_CUSTOM_COLOURS], FALSE);
+      lives_proc_thread_request_cancel(mainw->helper_procthreads[PT_CUSTOM_COLOURS], FALSE);
       //lives_proc_thread_join(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       // must take care to execute this here or in the function itself, otherwise
       // gtk+ may crash later
@@ -1948,8 +1931,6 @@ static boolean lives_startup2(livespointer data) {
     lives_idle_add_simple(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
   }
 
-  mainw->overlay_alarm = lives_alarm_set(0);
-
   if (!prefs->vj_mode && !prefs->startup_phase) {
     mainw->helper_procthreads[PT_LAZY_RFX] =
       lives_proc_thread_create(LIVES_THRDATTR_NONE,
@@ -1961,11 +1942,8 @@ static boolean lives_startup2(livespointer data) {
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
   mainw->lazy_starter =
-    lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC,
+    lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC | LIVES_THRDATTR_DETACHED,
                              lazy_startup_checks, WEED_SEED_BOOLEAN, "", NULL);
-
-  lives_proc_thread_hook_append(mainw->lazy_starter, COMPLETED_HOOK, 0,
-                                lazy_start_fin, (void *)mainw->lazy_starter);
 
   lives_proc_thread_nullify_on_destruction(mainw->lazy_starter, (void **)&mainw->lazy_starter);
 
@@ -2047,7 +2025,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   }
 
 #if !USE_STD_MEMFUNCS
-#if USE_RPMALLOC
+#if USE_RPMALLOCx
   libweed_set_memory_funcs(rpmalloc, rpfree);
 #else
 #ifndef DISABLE_GSLICE
@@ -3776,7 +3754,7 @@ jack_tcl_try:
         return FALSE;
       }
       success = lives_proc_thread_join_boolean(info);
-      lives_proc_thread_free(info);
+      lives_proc_thread_unref(info);
 
       if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
         if (prefs->startup_phase) {
@@ -3871,7 +3849,7 @@ jack_acl_try:
                      WEED_SEED_BOOLEAN, "v", mainw->jackd))) return FALSE;
 
         success = lives_proc_thread_join_boolean(info);
-        lives_proc_thread_free(info);
+        lives_proc_thread_unref(info);
 
         if (future_prefs->jack_opts & JACK_INFO_TEST_SETUP) {
           // dont clear TEST till here
@@ -3914,7 +3892,7 @@ jack_acl_try:
                 success = FALSE;
               } else {
                 success = lives_proc_thread_join_boolean(info);
-                lives_proc_thread_free(info);
+                lives_proc_thread_unref(info);
 		// *INDENT-OFF*
               }}}}
 	// *INDENT-ON*
@@ -4499,7 +4477,7 @@ retry:
     ncols++;
 
     if (mainw->helper_procthreads[PT_CUSTOM_COLOURS] &&
-        lives_proc_thread_get_cancelled(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) goto windup;
+        lives_proc_thread_get_cancel_requested(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) goto windup;
 
     if (pick_nice_colour(timeout, palette->nice1.red * 255., palette->nice1.green * 255.,
                          palette->nice1.blue * 255., &ncr, &ncg, &ncb, .1 * var, lmin, lmax)) {
@@ -4518,7 +4496,7 @@ retry:
       ncols++;
 
       if (mainw->helper_procthreads[PT_CUSTOM_COLOURS] &&
-          lives_proc_thread_get_cancelled(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) goto windup;
+          lives_proc_thread_get_cancel_requested(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) goto windup;
 
       if (!(palette->style & STYLE_LIGHT)) {
         lmin = .6; lmax = .8;

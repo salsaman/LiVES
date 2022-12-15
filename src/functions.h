@@ -37,6 +37,7 @@ typedef struct {
   uint32_t seed_type;
   uint8_t sigbits;
   const char *symname;
+  const char *fmtstr;
 } lookup_tab;
 
 extern const lookup_tab crossrefs[];
@@ -50,6 +51,32 @@ extern const lookup_tab crossrefs[];
 // it is also possible to pass functions as parameters, using _FUNCP, so things like
 // FUNCSIG_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP_FUNCP
 // are a possibility
+
+#ifdef WEED_SEED_UINT
+#define _CASE_UINT(pre, pre2, pre3, post, post2, post3, post4)\
+  case(WEED_SEED_UINT):pre(pre2,pre3##uint##post(post2,post3,post4));break;
+#else
+#define _CASE_UINT(pre, pre2, pre3, post, post2, post3, post4)
+#endif
+#ifdef WEED_SEED_UINT64
+#define _CASE_UINT64(pre, pre2, pre3, post, post2, post3, post4) \
+  case(WEED_SEED_UINT64):pre(pre2,pre3##uint64##post(post2,post3,post4));break;
+#else
+#define _CASE_UINT64(pre, pre2, pre3, post, post2, post3, post4)
+#endif
+
+#define FOR_ALL_SEED_TYPES(var, pre, pre2, pre3, post, post2, post3, post4)	\
+  do{switch(var){case(WEED_SEED_INT):pre(pre2,pre3##int##post(post2,post3,post4));break; \
+  case(WEED_SEED_INT64):pre(pre2,pre3##int64##post(post2,post3,post4));break;	\
+ case(WEED_SEED_BOOLEAN):pre(pre2,pre3##boolean##post(post2,post3,post4));break; \
+    case(WEED_SEED_DOUBLE):pre(pre2,pre3##double##post(post2,post3,post4));break; \
+ case(WEED_SEED_STRING):pre(pre2,pre3##string##post(post2,post3,post4));break; \
+    case(WEED_SEED_VOIDPTR):pre(pre2,pre3##voidptr##post(post2,post3,post4));break; \
+ case(WEED_SEED_FUNCPTR):pre(pre2,pre3##funcptr##post(post2,post3,post4));break; \
+    case(WEED_SEED_PLANTPTR):pre(pre2,pre3##plantptr##post(post2,post3,post4));break; \
+      _CASE_UINT(pre, pre2, pre3, post, post2, post3, post4)		\
+	_CASE_UINT64(pre, pre2, pre3, post, post2, post3, post4)	\
+    default:break;}}while(0);
 
 #define GEN_SET(thing, wret, funcname, FUNCARGS) err = \
   (wret == WEED_SEED_INT ? weed_set_int_value((thing), _RV_, (*funcname->funcint)(FUNCARGS)) : \
@@ -134,6 +161,7 @@ h  GEN_SET(thing, wret, funcname, ARGS7((thing), t1, t2, t3, t4, t5, t6, t7))
 #define FUNCSIG_VOIDP_INT64 				       		0X000000D5
 #define FUNCSIG_DOUBLE_DOUBLE 				       		0X00000022
 #define FUNCSIG_PLANTP_BOOL 				       		0X000000E3
+#define FUNCSIG_PLANTP_VOIDP						0X000000ED
 // 3p
 #define FUNCSIG_VOIDP_DOUBLE_INT 		        		0X00000D21
 #define FUNCSIG_VOIDP_STRING_STRING 		        		0X00000D44
@@ -158,6 +186,7 @@ h  GEN_SET(thing, wret, funcname, ARGS7((thing), t1, t2, t3, t4, t5, t6, t7))
 #define FUNCSIG_PLANTP_INT_INT_INT_INT					0X000E1111
 // 6p
 #define FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP		       	0X0044D14D
+#define FUNCSIG_PLANTP_INT_INT_INT_INT_INT	       			0X00E11111 
 // 8p
 #define FUNCSIG_PLANTP_INT_INT_INT_INT_INT_INT_INT     			0XE1111111
 #define FUNCSIG_INT_DOUBLE_PLANTP_INT_INT_INT_INT_BOOL			0X12E11113
@@ -168,31 +197,22 @@ boolean call_funcsig(lives_proc_thread_t);
 
 typedef uint64_t funcsig_t;
 
-#define LIVES_LEAF_TEMPLATE "template"
-#define LIVES_LEAF_FUNCSIG "funcsig"
-#define LIVES_LEAF_FUNC_NAME "funcname"
-#define LIVES_LEAF_CLOSURE "closure"
+#define LIVES_LEAF_TEMPLATE "_template"
+#define LIVES_LEAF_FUNCSIG "_funcsig"
+#define LIVES_LEAF_FUNC_NAME "_funcname"
+#define LIVES_LEAF_CLOSURE "_closure"
+#define LIVES_LEAF_FUNCDEF "_funcdef"
+#define LIVES_LEAF_REPLACEMENT "_replacement"
 
+#define LIVES_LEAF_XLIST_STACKS "xlist_stacks"
 #define LIVES_LEAF_XLIST_TYPE "xlist_type"
 #define LIVES_LEAF_XLIST_LIST "xlist_list"
 
 #define LIVES_WEED_SUBTYPE_FUNCINST 150
 
-#define FUNC_CATEGORY_HOOK_COMMON 	256
-#define FUNC_CATEGORY_HOOK_SYNC 	257
-
-typedef struct {
-  uint64_t uid;
-  int category; // category type for function (0 for none)
-  const char *funcname; // optional
-  lives_funcptr_t function;
-  uint32_t return_type;
-  const char *args_fmt;
-  funcsig_t funcsig;
-  const char *file;
-  int line;
-  void *data; // optional data, may be NULL
-} lives_funcdef_t;
+#define FUNC_CATEGORY_HOOK_COMMON 	(N_STD_FUNC_CATEGORIES + 100)
+#define FUNC_CATEGORY_HOOK_SYNC 	(N_STD_FUNC_CATEGORIES + 101)
+#define FUNC_CATEGORY_HOOK_GUI	 	(N_STD_FUNC_CATEGORIES + 102)
 
 #ifdef __FILE__
 #define _FILE_REF_ __FILE__
@@ -304,58 +324,132 @@ typedef struct {
 
 /// the following bits define how hooks should be added to the stack
 // in case of duplicate functions / data
-#define HOOK_UNIQUE_FUNC		(1ull << 24) // do not add if func already in hooks
+// after adding, ensure only a single copy of FUNC in the stack, with whatever data
+#define HOOK_UNIQUE_FUNC		(1ull << 16) // do not add if func already in hooks
 
-#define HOOK_UNIQUE_DATA		(1ull << 25) // do not add if func / data already in hooks (UNIQUE_FUNC assumed)
+// after adding, ensure only a single copy of FUNC  / DATA in stack
+// may be other copies of func with other data
+
+// NOTE: for data matching, it is sometimes desirable to match only the first n paramaeters, with the remainder
+// being the data to be replaced
+// in this case,   THREADVAR(hook_match_nparams) can be set to the number to match. If set to 0, the default,
+// all params must be matched. Thus HOOK_UNIQUE_REPLACE only makes sense with a non zero value
+// else all parameters would be matched, and there would be no "data" to be replaced
+
+#define HOOK_UNIQUE_DATA		(1ull << 17) // do not add if func / data already in hooks (UNIQUE_FUNC assumed)
 
 // change data of first func of same type but leave func inplace,
-// remove others of same func, but never add, only replace
-#define HOOK_UNIQUE_REPLACE		(1ull << 26)
+// (after adding, there will be only one copy of FUNC, with our data)
+// * copies of the func in linked_stacks must also be removed
+#define HOOK_UNIQUE_REPLACE		(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_DATA)
 
+// NOTEs:
+//
+// 1) when prepending, for uniqueness purposes, the prepended callback can replace (and remove) others already in the stack
+// including in linked stacks
+//
+// 2) when appending unique_func and/or unique_data to the main GUI stack,
+// the new callback can be blocked or added
+// Regardless, all matching callbacks must be replaced (but not removed) in linked stacks,
+// as if the callback were being prepended to them.
+//
+// If the replaced callback is subsequently to be appended to fg stack it should be removed instead
+// if to be prepended, the replacmeent marker is removed, and the callback is prepended as normal
+//
+// 1) if a TRIGGERED callback has uniqueness flags, we can replace (and remove)
+// callbacks in the fg_thread stack, + linked stacks, in an equivalent manner to if the callback was prepended
+//
+// 4) when replacing a callback, check if it was added with HOOK_CB_BLOCK
+// if so, it cannot be removed directly, instead we must add a reference to the new callback, on behalf of the blocked thread
+// and set a leaf LIVES_LEAF_REPLACEMENT in the proc thread being replaced, pointing the newly added callback
+// we also add
+// the blocked thread should detect this, unref the original blocker, and continue waiting instead for the new callback
+// the replacement callback can also be replaced, so the sequence must be followed until reaching a non replaced cb, or one which has
+// completed / been destroyed
+// - replace (remove) means replace the proc_thread and remove the closure form the stack
+// - replace (no remove) means mark the proc_thread as replaced, but leave in the stack
+//
 
-// change data of first func of same type but leave func inplace,
-// remove others of same func, add if no other copies of the func
-#define HOOK_UNIQUE_REPLACE_OR_ADD 	(HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE)
+// first, remove any callbacks (globally) with matching data, any function
+// then run this callback - this is designed for functions which
+// functions which free the data, - preventing any older callbacks from trying to access older data
+// - callbacks marked as BLOCK will be replaced by this one
+#define HOOK_INVALIDATE_DATA		((1ull << 18) | HOOK_CB_PRIORITY | HOOK_CB_BLOCK) 
 
-// replace (remove) other entries with same func and add
-#define HOOK_UNIQUE_REPLACE_FUNC	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_REPLACE)
+///////////////////
 
-// replace (remove) other entries having same func and data, and add
-#define HOOK_UNIQUE_REPLACE_MATCH	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE)
-/* // remove any entries of this func from the stack, do not add */
-/* #define HOOK_REMOVE_FUNC	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_REPLACE) */
+#define HOOK_STATUS_BLOCKED			(1ull << 20) // hook function should not be called
+#define HOOK_STATUS_RUNNING			(1ull << 21) // hook cb running, do not recurse
 
-/* //  */
-/* #define HOOK_REMOVE_FUNC_DATA 	(HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE) */
+// hook cb has been replaced by another closure (due to uniqueness)
+// callback should be ignored
+#define HOOK_STATUS_REPLACED			(1ull << 22)
 
-/* //  */
-/* #define HOOK_UNIQUE_REPLACE_DATA	(HOOK_UNIQUE_FUNC | HOOK_UNIQUE_DATA | HOOK_UNIQUE_REPLACE) */
+#define HOOK_STATUS_REMOVE			(1ull << 28) // hook was 'removed' whilst running, delay removal until return
 
-#define HOOK_STATUS_BLOCKED			(1ull << 32) // hook function should not be called
-#define HOOK_STATUS_RUNNING			(1ull << 33) // hook running, do not recurse
+ // test uniquenes conditions to see if we can add, but do not add, remove or replace anything
+#define HOOK_CB_TEST_ADD			(1ull << 30)
 
-#define HOOK_STATUS_REMOVE			(1ull << 34) // hook was 'removed' whilst running, delay removal until return
-
-#define HOOK_CB_LPT				(1ull << 40) // hook cb func is lpt
+// values higher than this are reserved for closure flags
+#define HOOK_CB_FLAG_MAX			(1ull << 31)
 
 typedef weed_plant_t lives_obj_t;
 typedef boolean(*hook_funcptr_t)(lives_obj_t *, void *);
 typedef char *(*make_key_f)(int pnum);
 
 typedef struct {
-  //hook_funcptr_t func;
+  uint64_t uid;
+  uint64_t flags; // flags can include static (do not free)
+  int category; // category type for function (0 for general)
+  const char *funcname; // optional
+  //
+  lives_funcptr_t function;
+  uint32_t return_type;
+  // these are equivalent, but we add both for convenience
+  const char *args_fmt;
+  funcsig_t funcsig; // 
+  // locator
+  const char *file;
+  int line;
+  //
+  void *data; // optional data, may be NULL
+} lives_funcdef_t;
+
+// when adding a hook callback, there are several methods
+// use a registered funcname, in this case the funcdef_t is looed up from funcname, and
+// we create a lpt using funcdef as a template, and including the function va_args
+//
+// alternately, we can create a lpt from function args
+// finally, we can create an unqueued lpt directly, then include this
+//
+// 
+typedef struct {
+  // proc_thread intially in unqueued state - either supplied directly
+  // or created from param args / hook_type
+  lives_proc_thread_t proc_thread;
+  // func def describing hook cb, this can be created from the lpt
+  // or it can be a pointer to a static funcdef
+  // once registered, then we can simply add hooks using funcname, params
+  // it also had a field for category
   const lives_funcdef_t *fdef;
-  lives_object_t *obj;
-  void *attr;
-  void *data;
-  uint64_t flags;
-  lives_proc_thread_t tinfo; // for fg threads
+  uint64_t flags; // HOOK_CB flags
+  // how many params must be identical to count as a data match ?
+  // default is 0, all params
+  int nmatch_params;
   void *retloc; // pointer to a var to store return val in
 } lives_closure_t;
 
-// funcinst has: funcdef, func, returm type, args_fmt and xargs
-// closure designed more for storing, it has ptr to owner object, flags and a space for a procthread
-// -> combine both as object instance
+#define LIVES_FDEF_STATIC		(1ull << 0)
+
+
+/* lives_closure_t *lives_hook_closure_new(lives_funcptr_t func, const char *fname, uint64_t flags, */
+/* 					int hook_type, void *data); */
+
+lives_closure_t *lives_hook_closure_new_for_lpt(lives_proc_thread_t lpt, uint64_t flags, int hook_type);
+
+void lives_closure_free(lives_closure_t *closure);
+
+#define LIVES_GUI_HOOK INTERNAL_HOOK_0
 
 typedef struct {
   LiVESList *stack;
@@ -403,59 +497,66 @@ typedef struct {
 
 // TODO - add retloc as param to hook_add
 
-lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hooks, int type, uint64_t flags, lives_funcptr_t func,
-                                    const char *fname, livespointer data, boolean is_append);
+#define DTYPE_PREPEND (1ull << 0) // unset == append
+#define DTYPE_CLOSURE (1ull << 1) // unset == lpt
 
+// all dtypes
+lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hooks, int type, uint64_t flags, livespointer data, uint64_t dtype);
+
+// lpt like
 lives_proc_thread_t _lives_hook_add_full(lives_hook_stack_t **hooks, int type, uint64_t flags, boolean is_append,
     lives_funcptr_t func, const char *fname, int return_type, const char *args_fmt, ...);
 
-void _lives_proc_thread_hook_append(lives_proc_thread_t lpt, int type, uint64_t flags,
-                                    hook_funcptr_t func, const char *fname, livespointer data);
 
-#define lives_proc_thread_hook_append(lpt, type, flags, func, data)	\
-  (_lives_proc_thread_hook_append((lpt), (type), (flags), (hook_funcptr_t)(func), #func, (void *)(data)))
+#define lives_proc_thread_append_hook(lpt, type, flags, func, data)	\
+  _lives_hook_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), TRUE, \
+		       (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
+		       "vv", NULL, (void *)(data))
 
-#define lives_hook_append(hooks, type, flags, func, data) _lives_hook_add((hooks), (type), (flags), \
-									  (lives_funcptr_t)(func), #func, \
-									  (void *)(data), TRUE)
+#define lives_proc_thread_append_hook_full(lpt, type, flags, func, rtype, args_fmt, ...) \
+  _lives_hook_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), TRUE, \
+		       (lives_funcptr_t)(func), #func, rtype, args_fmt, __VA_ARGS__)
+
+// all dtype
+#define lives_hook_test_add(hooks, type, flags, data, dtype) _lives_hook_add((hooks), (type), (flags) | HOOK_CB_TEST_ADD, \
+									     data, dtype)
+//(void *)(data), lpt like
 #define lives_hook_append_full(hooks, type, flags, func, rtype, args_fmt, ...) \
   _lives_hook_add_full((hooks), (type), (flags), TRUE, (lives_funcptr_t)(func), #func, rtype, args_fmt, __VA_ARGS__)
 
-#define lives_hook_prepend(hooks, type, flags, func, data) _lives_hook_add((hooks), (type), (flags), \
-									   (lives_funcptr_t)(func), #func, \
-									   (void *)(data), FALSE)
-
+// scalar
+#define lives_hook_append(hooks, type, flags, func, data) _lives_hook_add_full((hooks), (type), (flags), TRUE, \
+									       (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
+									       "vv", NULL, (void *)(data))
+// lpt like
 #define lives_hook_prepend_full(hooks, type, flags, func, rtype, args_fmt, ...) \
   _lives_hook_add_full((hooks), (type), (flags), FALSE, (lives_funcptr_t)(func), #func, rtype, args_fmt, __VA_ARGS__)
 
-void _lives_hook_remove(lives_hook_stack_t **hooks, int type, hook_funcptr_t func, livespointer data);
+// scalar
+#define lives_hook_prepend(hooks, type, flags, func, data) _lives_hook_add_full((hooks), (type), (flags), FALSE, \
+										(lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
+										"vv", NULL, (void *)(data))
 
-#define lives_hook_remove(hooks, type, func, data)		\
-  _lives_hook_remove((hooks), (type), (hook_funcptr_t)(func), (void *)(data))
+void lives_hook_remove(lives_hook_stack_t **hstacks, int type, lives_proc_thread_t lpt);
 
-void _lives_hook_remove_full(lives_hook_stack_t **hooks, int type, lives_proc_thread_t);
-
-#define lives_hook_remove_full(hooks, type, lpt)_lives_hook_remove_full((hooks),(type),lpt)
+#define lives_proc_thread_remove_hook(lpt, type, cb_lpt) \
+  lives_hook_remove(lives_proc_thread_get_hook_stacks(lpt), type, cb_lpt)
 
 void lives_hooks_clear(lives_hook_stack_t **hooks, int type);
 void lives_hooks_clear_all(lives_hook_stack_t **hooks, int ntypes);
 
-boolean lives_hooks_trigger(lives_obj_t *, lives_hook_stack_t **hooks, int type);
-boolean lives_hooks_triggero(lives_object_t *obj, lives_hook_stack_t **xlist, int type);
+boolean lives_hooks_trigger(lives_hook_stack_t **hooks, int type);
 
-void lives_hooks_transfer(lives_hook_stack_t **dest, lives_hook_stack_t **src, boolean include_glob);
+void lives_hooks_trigger_async(lives_hook_stack_t **hooks, int type);
 
-void lives_hooks_trigger_async(lives_obj_t *, lives_hook_stack_t **hooks, int type);
-void lives_hooks_trigger_asynco(lives_object_t *obj, lives_hook_stack_t **xlist, int type);
-
-lives_proc_thread_t lives_hooks_trigger_async_sequential(lives_obj_t *lpt, lives_hook_stack_t **xlist, int type,
-    hook_funcptr_t finfunc, void *findata);
-void lives_hooks_trigger_async_sequentialo(lives_object_t *, lives_hook_stack_t **hooks, int type, hook_funcptr_t finfunc,
-    void *findata);
+lives_proc_thread_t lives_hooks_trigger_async_sequential(lives_proc_thread_t lpt, lives_hook_stack_t **hstacks, int type,
+							 hook_funcptr_t finfunc, void *findata);
 
 void lives_hooks_join(lives_hook_stack_t *);
 
 lives_hook_stack_t **lives_proc_thread_get_hook_stacks(lives_proc_thread_t);
+
+char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt);
 
 ///////////// funcdefs, funcinsts and funcsigs /////
 
@@ -475,6 +576,8 @@ funcsig_t funcsig_from_args_fmt(const char *args_fmt);
 char *args_fmt_from_funcsig(funcsig_t funcsig);
 const char get_typeletter(uint8_t val);
 uint8_t get_typecode(char c);
+const char get_char_for_st(uint32_t st);
+const char *get_fmtstr_for_st(uint32_t st);
 
 char *funcsig_to_string(funcsig_t sig);
 char *funcsig_to_symstring(funcsig_t sig);

@@ -1213,6 +1213,7 @@ recheck:
       }
 
       // RENDER VIA PLUGIN
+      lives_painter_surface_flush(mainw->play_surface);
       if (!player_v2) pd_array = weed_layer_get_pixel_data_planar(frame_layer, NULL);
       if ((player_v2 && !(*mainw->vpp->play_frame)(frame_layer, mainw->currticks - mainw->stream_ticks, return_layer))
           || (!player_v2 && !(*mainw->vpp->render_frame)(lwidth, weed_layer_get_height(frame_layer),
@@ -1224,6 +1225,7 @@ recheck:
           return_layer = NULL;
         }
       } else success = TRUE;
+      cairo_surface_mark_dirty(mainw->play_surface);
       if (!player_v2) lives_free(pd_array);
       if (prefs->dev_show_timing)
         g_printerr("rend fr done @ %f\n\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -1455,6 +1457,7 @@ recheck:
         gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
       }
 
+      lives_painter_surface_flush(mainw->play_surface);
       if (!player_v2) pd_array = weed_layer_get_pixel_data_planar(frame_layer, NULL);
       if ((player_v2 && !(*mainw->vpp->play_frame)(frame_layer,
            mainw->currticks - mainw->stream_ticks, return_layer))
@@ -1470,6 +1473,7 @@ recheck:
         }
         goto lfi_done;
       } else success = TRUE;
+      cairo_surface_mark_dirty(mainw->play_surface);
       if (!player_v2) lives_free(pd_array);
       if (prefs->dev_show_timing)
         g_printerr("rend done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -1722,7 +1726,7 @@ if (old_frame_layer) {
   check_layer_ready(old_frame_layer);
   do {
     refs = weed_layer_unref(old_frame_layer);
-  } while (refs >= 0);
+  } while (refs > 0);
   if (mainw->frame_layer == old_frame_layer) mainw->frame_layer = NULL;
 }
 
@@ -1731,7 +1735,7 @@ if (old_frame_layer2) {
   check_layer_ready(old_frame_layer2);
   do {
     refs = weed_layer_unref(old_frame_layer2);
-  } while (refs >= 0);
+  } while (refs > 0);
   if (mainw->frame_layer == old_frame_layer2) mainw->frame_layer = NULL;
 }
 
@@ -2421,6 +2425,18 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
 #define DROPFRAME_TRIGGER 4
 #define JUMPFRAME_TRIGGER 16
 
+// player will create this as 
+static boolean update_gui(void) {
+  static lives_proc_thread_t lpt = NULL;
+  if (!lpt) {
+    lpt = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_START_UNQUEUED,
+				   lives_widget_context_update, 0, "", NULL);
+  }
+  fg_service_call(lpt, NULL);
+  g_print("upd gui !!!\n");
+  return TRUE;
+}
+
 int process_one(boolean visible) {
   // INTERNAL PLAYER
   // here we handle playback, as well as the "processing dialog"
@@ -2442,6 +2458,7 @@ int process_one(boolean visible) {
   /*   static off_t last_aplay_offset = 0; */
   /* #endif */
   volatile float *cpuload;
+  static lives_proc_thread_t gui_lpt = NULL;
   //double cpu_pressure;
   lives_clip_t *sfile = cfile;
   _vid_playback_plugin *old_vpp;
@@ -2648,13 +2665,8 @@ int process_one(boolean visible) {
   // we allow an exception only when starting or stopping a generator
 
   if (mainw->current_file != old_current_file || mainw->playing_file != old_playing_file || mainw->vpp != old_vpp) {
-    if (!mainw->ignore_clipswitch) {
-      mainw->cancelled = CANCEL_INTERNAL_ERROR;
-      return FALSE;
-    }
-    old_current_file = mainw->current_file;
-    old_playing_file = mainw->playing_file;
-    mainw->ignore_clipswitch = FALSE;
+    mainw->cancelled = CANCEL_INTERNAL_ERROR;
+    return FALSE;
   }
 
   if (mainw->new_vpp) {
@@ -2669,8 +2681,6 @@ switch_point:
     if (AV_CLIPS_EQUAL && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
       sfile->frameno = sfile->last_frameno = requested_frame;
     }
-
-    mainw->noswitch = FALSE;
 
     if (IS_VALID_CLIP(mainw->playing_file)) {
       if (mainw->frame_layer_preload) {
@@ -2720,7 +2730,9 @@ switch_point:
 
     mainw->switch_during_pb = TRUE;
     sfile->last_play_sequence = mainw->play_sequence;
+    mainw->noswitch = FALSE;
     do_quick_switch(mainw->new_clip);
+    mainw->noswitch = TRUE;
     did_switch = TRUE;
     mainw->switch_during_pb = FALSE;
 
@@ -2817,8 +2829,6 @@ switch_point:
     //g_print("SWITCH %d %d %d %d\n", sfile->frameno, requested_frame, sfile->last_frameno, mainw->actual_frame);
   }
 
-  mainw->noswitch = TRUE;
-
   /// end SWITCH POINT
 
   // playing back an event_list
@@ -2848,9 +2858,7 @@ switch_point:
             mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
         else {
           weed_event_t *next_event;
-          mainw->noswitch = FALSE;
           next_event = process_events(sfile->next_event, FALSE, currticks);
-          mainw->noswitch = TRUE;
           // need to get this agains, as process_events can switch the current clip
           sfile = RETURN_VALID_CLIP(mainw->current_file);
           sfile->next_event = next_event;
@@ -3743,16 +3751,21 @@ proc_dialog:
       // the audio thread wants to update the parameter scroll(s)
       if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
-      /// we are permitted to switch clips here under very restricitive circumstances, e.g when opening a clip
-      if (mainw->cs_permitted) {
-        mainw->cs_is_permitted = TRUE;
-        old_current_file = mainw->current_file;
-      }
-
-      if (mainw->currticks - last_anim_ticks > ANIM_LIM || mainw->currticks < last_anim_ticks) {
-        // a segfault here can indicate memory corruption in an FX plugin
-        last_anim_ticks = mainw->currticks;
-        lives_widget_context_update();
+      //if (mainw->currticks - last_anim_ticks > ANIM_LIM || mainw->currticks < last_anim_ticks) {
+      // a segfault here can indicate memory corruption in an FX plugin
+      //last_anim_ticks = mainw->currticks;
+      if (!gui_lpt)  gui_lpt = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC, update_gui, WEED_SEED_BOOLEAN, 0, NULL);
+      else {
+	if (lives_proc_thread_is_idling(gui_lpt)) {
+	  lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
+	  g_print("pt zz1\n");
+	  lives_proc_thread_queue(gui_lpt, 0);
+	  g_print("pt zz2\n");
+	}
+	//}
+	g_print("gui_lpt state %lu\n", lives_proc_thread_get_state(gui_lpt));
+	//fg_service_call(closure->tinfo, closure->retloc);
+	//lives_widget_context_update();
       }
 
       //#define LOAD_ANALYSE_TICKS MILLIONS(10)
@@ -3762,11 +3775,7 @@ proc_dialog:
       /*   last_ana_ticks = mainw->currticks; */
       /* } */
 
-      /// if we did switch clips then cancel the dialog without cancelling the background process
-      if (mainw->cs_is_permitted) {
-        mainw->cs_is_permitted = FALSE;
-        if (mainw->current_file != old_current_file) mainw->cancelled = CANCEL_NO_PROPOGATE;
-      }
+      if (mainw->current_file != old_current_file) mainw->cancelled = CANCEL_NO_PROPOGATE;
 
       if (!CURRENT_CLIP_IS_VALID) {
         if (IS_VALID_CLIP(mainw->new_clip)) goto switch_point;

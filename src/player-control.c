@@ -28,6 +28,7 @@ static boolean _start_playback(livespointer data) {
   int play_type = LIVES_POINTER_TO_INT(data);
   if (play_type != 8 && mainw->noswitch) return TRUE;
   player_desensitize();
+
   switch (play_type) {
   case 8: case 6: case 0:
     /// normal play
@@ -101,12 +102,27 @@ static boolean _start_playback(livespointer data) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean start_playback(int type) {return  _start_playback(LIVES_INT_TO_POINTER(type));}
+LIVES_GLOBAL_INLINE boolean start_playback(int type) {
+  if (!is_fg_thread()) {
+    mainw->player_proc = THREADVAR(proc_thread);
+    break_me("PPROC1");
+    return _start_playback(LIVES_INT_TO_POINTER(type));
+  }
+  start_playback_async(type);
+  return FALSE;
+}
 
 
-LIVES_GLOBAL_INLINE void start_playback_async(int type) {
-  //lives_idle_priority(_start_playback, LIVES_INT_TO_POINTER(type));
-  lives_proc_thread_create(0, _start_playback, 0, "v", LIVES_INT_TO_POINTER(type));
+void start_playback_async(int type) {
+  lives_sigdata_t *sigdata;
+  mainw->player_proc = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
+						_start_playback, WEED_SEED_BOOLEAN,
+						"v", LIVES_INT_TO_POINTER(type));
+  lives_proc_thread_nullify_on_destruction(mainw->player_proc, (void **)&(mainw->player_proc));
+
+  // ask the main thread to concentrate on service GUI requests from a specific proc_thread
+  sigdata = lives_sigdata_new(mainw->player_proc, FALSE);
+  governor_loop(sigdata);
 }
 
 
@@ -375,7 +391,7 @@ void play_file(void) {
 
   init_conversions(OBJ_INTENTION_PLAY);
 
-  lives_hooks_trigger(NULL, THREADVAR(hook_stacks), PREPARING_HOOK);
+  lives_hooks_trigger(THREADVAR(hook_stacks), PREPARING_HOOK);
 
   if (mainw->pre_src_file == -2) mainw->pre_src_file = mainw->current_file;
   mainw->pre_src_audio_file = mainw->current_file;
@@ -804,7 +820,7 @@ void play_file(void) {
 
     mainw->abufs_to_fill = 0;
 
-    lives_hooks_trigger(NULL, THREADVAR(hook_stacks), TX_START_HOOK);
+    lives_hooks_trigger(THREADVAR(hook_stacks), TX_START_HOOK);
 
     //lives_widget_context_update();
     //play until stopped or a stream finishes
@@ -1054,7 +1070,11 @@ void play_file(void) {
     }
 
     if (mainw->alock_abuf) {
-      lives_hook_remove(THREADVAR(hook_stacks), DATA_READY_HOOK, resample_to_float, &mainw->alock_abuf);
+      if (mainw->alock_abuf->_fd != -1) {
+        if (!lives_buffered_rdonly_is_slurping(mainw->alock_abuf->_fd)) {
+          lives_close_buffered(mainw->alock_abuf->_fd);
+        }
+      }
       free_audio_frame_buffer(mainw->alock_abuf);
       mainw->alock_abuf = NULL;
     }
@@ -1229,7 +1249,7 @@ void play_file(void) {
   mainw->blend_palette = WEED_PALETTE_END;
   mainw->audio_stretch = 1.;
 
-  lives_hooks_trigger(NULL, THREADVAR(hook_stacks), COMPLETED_HOOK);
+  lives_hooks_trigger(THREADVAR(hook_stacks), COMPLETED_HOOK);
 
   if (!mainw->multitrack) {
     if (mainw->faded || mainw->fs) {

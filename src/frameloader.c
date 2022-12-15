@@ -1222,7 +1222,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
   orig_layer = weed_layer_copy(NULL, layer);
   if (scrap_file_procthrd) {
     scrapfile->f_size += lives_proc_thread_join_int64(scrap_file_procthrd);
-    lives_proc_thread_free(scrap_file_procthrd);
+    lives_proc_thread_unref(scrap_file_procthrd);
     scrap_file_procthrd = NULL;
     if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1))
         && !prefs->hide_framebar &&
@@ -1258,7 +1258,7 @@ LIVES_GLOBAL_INLINE boolean flush_scrap_file(void) {
   if (!IS_VALID_CLIP(mainw->scrap_file)) return FALSE;
   if (scrap_file_procthrd) {
     mainw->files[mainw->scrap_file]->f_size += lives_proc_thread_join_int64(scrap_file_procthrd);
-    lives_proc_thread_free(scrap_file_procthrd);
+    lives_proc_thread_unref(scrap_file_procthrd);
     scrap_file_procthrd = NULL;
   }
   return TRUE;
@@ -2435,11 +2435,11 @@ boolean check_layer_ready(weed_layer_t *layer) {
     lives_proc_thread_t lpt = (lives_proc_thread_t)weed_get_voidptr_value(layer, LIVES_LEAF_PROC_THREAD, NULL);
     if (lpt) {
 #if USE_RESTHREAD
-      if (lives_proc_thread_get_cancelled(lpt)) {
+      if (lives_proc_thread_get_cancel_requested(lpt)) {
         cancelled = TRUE;
         resthread = weed_get_voidptr_value(layer, LIVES_LEAF_RESIZE_THREAD, NULL);
-        if (resthread && !lives_proc_thread_get_cancelled(resthread))
-          lives_proc_thread_cancel(resthread);
+        if (resthread && !lives_proc_thread_get_cancel_requested(resthread))
+          lives_proc_thread_request_cancel(resthread);
       }
 #endif
 
@@ -2450,8 +2450,8 @@ boolean check_layer_ready(weed_layer_t *layer) {
 
 #if USE_RESTHREAD
   if ((resthread = weed_get_voidptr_value(layer, LIVES_LEAF_RESIZE_THREAD, NULL))) {
-    if (resthread && cancelled && !lives_proc_thread_get_cancelled(resthread))
-      lives_proc_thread_cancel(resthread);
+    if (resthread && cancelled && !lives_proc_thread_get_cancel_requested(resthread))
+      lives_proc_thread_request_cancel(resthread);
     ready = FALSE;
     weed_set_voidptr_value(layer, LIVES_LEAF_RESIZE_THREAD, NULL);
     lives_proc_thread_join(resthread);
@@ -2500,12 +2500,12 @@ static boolean pft_thread(weed_layer_t *layer, const char *img_ext) {
     int tgamma = WEED_GAMMA_UNKNOWN;
     short interp = get_interp_value(prefs->pb_quality, TRUE);
     pull_frame_at_size(layer, img_ext, tc, mainw->blend_width, mainw->blend_height, mainw->blend_palette);
-    if (lives_proc_thread_get_cancelled(lpt)) return FALSE;
+    if (lives_proc_thread_get_cancel_requested(lpt)) return FALSE;
     if (is_layer_ready(layer)) {
       resize_layer(layer, mainw->blend_width,
                    mainw->blend_height, interp, mainw->blend_palette, mainw->blend_clamping);
     }
-    if (lives_proc_thread_get_cancelled(lpt)) return FALSE;
+    if (lives_proc_thread_get_cancel_requested(lpt)) return FALSE;
     if (mainw->blend_palette != WEED_PALETTE_END) {
       if (weed_palette_is_rgb(mainw->blend_palette))
         tgamma = mainw->blend_gamma;
@@ -2517,7 +2517,7 @@ static boolean pft_thread(weed_layer_t *layer, const char *img_ext) {
                                    mainw->blend_subspace, tgamma);
       }
     }
-    if (lives_proc_thread_get_cancelled(lpt)) return FALSE;
+    if (lives_proc_thread_get_cancel_requested(lpt)) return FALSE;
     if (tgamma != WEED_GAMMA_UNKNOWN && is_layer_ready(layer)
         && weed_layer_get_width(layer) == mainw->blend_width
         && weed_layer_get_height(layer) == mainw->blend_height
@@ -2813,6 +2813,7 @@ void close_current_file(int file_to_switch_to) {
     }
 
     if (cfile->audio_waveform) {
+      cancel_tl_redraw(mainw->current_file);
       for (i = 0; i < cfile->achans; i++) lives_freep((void **)&cfile->audio_waveform[i]);
       lives_freep((void **)&cfile->audio_waveform);
       lives_freep((void **)&cfile->aw_sizes);

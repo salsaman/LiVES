@@ -1960,96 +1960,96 @@ void init_colour_engine(void) {
 }
 
 // internal thread fns
-static void *convert_rgb_to_uyvy_frame_thread(void *cc_params);
-static void *convert_bgr_to_uyvy_frame_thread(void *cc_params);
-static void *convert_rgb_to_yuyv_frame_thread(void *cc_params);
-static void *convert_bgr_to_yuyv_frame_thread(void *cc_params);
-static void *convert_argb_to_uyvy_frame_thread(void *cc_params);
-static void *convert_argb_to_yuyv_frame_thread(void *cc_params);
+static void *convert_rgb_to_uyvy_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_bgr_to_uyvy_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_rgb_to_yuyv_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_bgr_to_yuyv_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_argb_to_uyvy_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_argb_to_yuyv_frame_thread(void *cc_params) LIVES_HOT;
 
-static void *convert_rgb_to_yuv_frame_thread(void *cc_params);
-static void *convert_bgr_to_yuv_frame_thread(void *cc_params);
-static void *convert_argb_to_yuv_frame_thread(void *cc_params);
-static void *convert_rgb_to_yuvp_frame_thread(void *cc_params);
-static void *convert_bgr_to_yuvp_frame_thread(void *cc_params);
-static void *convert_argb_to_yuvp_frame_thread(void *cc_params);
+static void *convert_rgb_to_yuv_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_bgr_to_yuv_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_argb_to_yuv_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_rgb_to_yuvp_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_bgr_to_yuvp_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_argb_to_yuvp_frame_thread(void *cc_params) LIVES_HOT;
 
-static void *convert_uyvy_to_rgb_frame_thread(void *cc_params);
-static void *convert_uyvy_to_bgr_frame_thread(void *cc_params);
-static void *convert_uyvy_to_argb_frame_thread(void *cc_params);
-static void *convert_yuyv_to_rgb_frame_thread(void *cc_params);
-static void *convert_yuyv_to_bgr_frame_thread(void *cc_params);
-static void *convert_yuyv_to_argb_frame_thread(void *cc_params);
+static void *convert_uyvy_to_rgb_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_uyvy_to_bgr_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_uyvy_to_argb_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_yuyv_to_rgb_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_yuyv_to_bgr_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_yuyv_to_argb_frame_thread(void *cc_params) LIVES_HOT;
 
-static void *convert_yuv_planar_to_rgb_frame_thread(void *cc_params);
-static void *convert_yuv_planar_to_bgr_frame_thread(void *cc_params);
-static void *convert_yuv_planar_to_argb_frame_thread(void *cc_params);
+static void *convert_yuv_planar_to_rgb_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_yuv_planar_to_bgr_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_yuv_planar_to_argb_frame_thread(void *cc_params) LIVES_HOT;
 
-static void *convert_yuv420p_to_rgb_frame_thread(void *cc_params);
-static void *convert_yuv420p_to_bgr_frame_thread(void *cc_params);
-static void *convert_yuv420p_to_argb_frame_thread(void *cc_params);
+static void *convert_yuv420p_to_rgb_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_yuv420p_to_bgr_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_yuv420p_to_argb_frame_thread(void *cc_params) LIVES_HOT;
 
-static void *convert_yuv888_to_rgb_frame_thread(void *cc_params);
-static void *convert_yuv888_to_bgr_frame_thread(void *cc_params);
-static void *convert_yuv888_to_argb_frame_thread(void *cc_params);
-static void *convert_yuva8888_to_rgba_frame_thread(void *cc_params);
-static void *convert_yuva8888_to_bgra_frame_thread(void *cc_params);
-static void *convert_yuva8888_to_argb_frame_thread(void *cc_params);
+static void *convert_yuv888_to_rgb_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_yuv888_to_bgr_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_yuv888_to_argb_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_yuva8888_to_rgba_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_yuva8888_to_bgra_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_yuva8888_to_argb_frame_thread(void *cc_params) LIVES_HOT;
 
-static void *convert_swap3_frame_thread(void *cc_params);
-static void *convert_swap4_frame_thread(void *cc_params);
-static void *convert_swap3addpost_frame_thread(void *cc_params);
-static void *convert_swap3addpre_frame_thread(void *cc_params);
-static void *convert_swap3delpost_frame_thread(void *cc_params);
-static void *convert_swap3delpre_frame_thread(void *cc_params);
-static void *convert_addpre_frame_thread(void *cc_params);
-static void *convert_addpost_frame_thread(void *cc_params);
-static void *convert_delpre_frame_thread(void *cc_params);
-static void *convert_delpost_frame_thread(void *cc_params);
-static void *convert_swap3postalpha_frame_thread(void *cc_params);
+static void *convert_swap3_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_swap4_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_swap3addpost_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_swap3addpre_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_swap3delpost_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_swap3delpre_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_addpre_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_addpost_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_delpre_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_delpost_frame_thread(void *cc_params) LIVES_HOT;
+static void *convert_swap3postalpha_frame_thread(void *cc_params) LIVES_HOT;
 #ifdef WEED_ADVANCED_PALETTES
-static void *convert_swap3prealpha_frame_thread(void *cc_params);
+static void *convert_swap3prealpha_frame_thread(void *cc_params) LIVES_HOT;
 #endif
-static void *convert_swapprepost_frame_thread(void *cc_params);
+static void *convert_swapprepost_frame_thread(void *cc_params) LIVES_HOT;
 
-static void *convert_swab_frame_thread(void *cc_params);
+static void *convert_swab_frame_thread(void *cc_params) LIVES_HOT;
 
 #if 0
-static void rgb2yuv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v, uint8_t *lut) LIVES_HOT;
+static void rgb2yuv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v, uint8_t *lut) LIVES_HOT LIVES_HOT;
 #endif
 static void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
-                     uyvy_macropixel *uyvy) LIVES_FLATTEN LIVES_HOT;
+                     uyvy_macropixel *uyvy) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
 static void rgb2uyvy_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
-                                uyvy_macropixel *uyvy, uint8_t *lut) LIVES_FLATTEN LIVES_HOT;
+                                uyvy_macropixel *uyvy, uint8_t *lut) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
 static void rgb16_2uyvy(uint16_t r0, uint16_t g0, uint16_t b0, uint16_t r1, uint16_t g1, uint16_t b1,
-                        uyvy_macropixel *uyvy) LIVES_FLATTEN LIVES_HOT;
+                        uyvy_macropixel *uyvy) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
 #if 0
 static void rgb16_2uyvy_with_gamma(uint16_t r0, uint16_t g0, uint16_t b0, uint16_t r1, uint16_t g1, uint16_t b1,
-                                   uyvy_macropixel *uyvy, uint8_t *lut) LIVES_FLATTEN LIVES_HOT;
+                                   uyvy_macropixel *uyvy, uint8_t *lut) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
 #endif
 
 static void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
-                     yuyv_macropixel *yuyv) LIVES_FLATTEN LIVES_HOT;
+                     yuyv_macropixel *yuyv) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
 #if 0
 static void rgb2yuyv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
-                                yuyv_macropixel *yuyv, uint8_t *lut) LIVES_FLATTEN LIVES_HOT;
+                                yuyv_macropixel *yuyv, uint8_t *lut) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
 #endif
 static void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
-                     uint8_t r2, uint8_t g2, uint8_t b2, uint8_t r3, uint8_t g3, uint8_t b3, yuv411_macropixel *yuv) LIVES_HOT;
+                     uint8_t r2, uint8_t g2, uint8_t b2, uint8_t r3, uint8_t g3, uint8_t b3, yuv411_macropixel *yuv) LIVES_HOT LIVES_HOT;
 
-static void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *lut) LIVES_HOT;
+static void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *lut) LIVES_HOT LIVES_HOT;
 static void uyvy2rgb(uyvy_macropixel *uyvy, uint8_t *r0, uint8_t *g0, uint8_t *b0,
-                     uint8_t *r1, uint8_t *g1, uint8_t *b1) LIVES_FLATTEN LIVES_HOT;
+                     uint8_t *r1, uint8_t *g1, uint8_t *b1) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
 static void yuyv2rgb(yuyv_macropixel *yuyv, uint8_t *r0, uint8_t *g0, uint8_t *b0,
-                     uint8_t *r1, uint8_t *g1, uint8_t *b1) LIVES_FLATTEN LIVES_HOT;
-static void yuv888_2_rgb(uint8_t *yuv, uint8_t *rgb, boolean add_alpha) LIVES_FLATTEN LIVES_HOT;
-static void yuva8888_2_rgba(uint8_t *yuva, uint8_t *rgba, boolean del_alpha) LIVES_FLATTEN LIVES_HOT;
-static void yuv888_2_bgr(uint8_t *yuv, uint8_t *bgr, boolean add_alpha) LIVES_FLATTEN LIVES_HOT;
-static void yuva8888_2_bgra(uint8_t *yuva, uint8_t *bgra, boolean del_alpha) LIVES_FLATTEN LIVES_HOT;
-static void yuv888_2_argb(uint8_t *yuv, uint8_t *argb) LIVES_FLATTEN LIVES_HOT;
-static void yuva8888_2_argb(uint8_t *yuva, uint8_t *argb) LIVES_FLATTEN LIVES_HOT;
-static void uyvy_2_yuv422(uyvy_macropixel *uyvy, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) LIVES_HOT;
-static void yuyv_2_yuv422(yuyv_macropixel *yuyv, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) LIVES_HOT;
+                     uint8_t *r1, uint8_t *g1, uint8_t *b1) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
+static void yuv888_2_rgb(uint8_t *yuv, uint8_t *rgb, boolean add_alpha) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
+static void yuva8888_2_rgba(uint8_t *yuva, uint8_t *rgba, boolean del_alpha) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
+static void yuv888_2_bgr(uint8_t *yuv, uint8_t *bgr, boolean add_alpha) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
+static void yuva8888_2_bgra(uint8_t *yuva, uint8_t *bgra, boolean del_alpha) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
+static void yuv888_2_argb(uint8_t *yuv, uint8_t *argb) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
+static void yuva8888_2_argb(uint8_t *yuva, uint8_t *argb) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
+static void uyvy_2_yuv422(uyvy_macropixel *uyvy, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) LIVES_HOT LIVES_HOT;
+static void yuyv_2_yuv422(yuyv_macropixel *yuyv, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) LIVES_HOT LIVES_HOT;
 
 #define avg_chroma(x, y) ((uint8_t)(*(cavg + ((int)(x) << 8) + (int)(y))))
 #define avg_chroma_3_1(x, y) ((uint8_t)(avg_chroma(x, avg_chroma(x, y))))
@@ -2515,6 +2515,48 @@ static boolean is_all_black_ish(int width, int height, int rstride, boolean has_
     }
   }
   return TRUE;
+}
+
+
+LIVES_INLINE boolean weed_palette_is_resizable(int pal, int clamped, boolean in_out) {
+  // in_out is TRUE for input, FALSE for output
+
+  // in future we may also have resize candidates/delegates for other palettes
+  // we will need to check for these
+
+  if (pal == WEED_PALETTE_YUV888 && clamped == WEED_YUV_CLAMPING_UNCLAMPED) pal = WEED_PALETTE_RGB24;
+  if (pal == WEED_PALETTE_YUVA8888 && clamped == WEED_YUV_CLAMPING_UNCLAMPED) pal = WEED_PALETTE_RGBA32;
+
+#ifdef USE_SWSCALE
+  if (in_out && sws_isSupportedInput(weed_palette_to_avi_pix_fmt(pal, &clamped))) return TRUE;
+  else if (sws_isSupportedOutput(weed_palette_to_avi_pix_fmt(pal, &clamped))) return TRUE;
+#endif
+  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGR24 ||
+      pal == WEED_PALETTE_BGRA32) return TRUE;
+  return FALSE;
+}
+
+
+void lives_pixbuf_set_opaque(LiVESPixbuf * pixbuf) {
+  unsigned char *pdata = lives_pixbuf_get_pixels(pixbuf);
+  int row = lives_pixbuf_get_rowstride(pixbuf);
+  int height = lives_pixbuf_get_height(pixbuf);
+  int offs;
+#ifdef GUI_GTK
+  offs = 3;
+#endif
+
+#ifdef GUI_QT
+  offs = 0;
+#endif
+
+  register int i, j;
+  for (i = 0; i < height; i++) {
+    for (j = offs; j < row; j += 4) {
+      pdata[j] = 255;
+    }
+    pdata += row;
+  }
 }
 
 
@@ -10215,322 +10257,11 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 }
 
 
-/**
-   @brief fills layer with default values.
-
-   If either width or height are zero, then dimensions will be taken from the layer or
-   defaults used
-   if layer has a palette set, that will be maintained, else it will be set to target_palette
-   if targette palette is WEED_PALETTE_NONE then default will be set depending on image_ext
-   if this is "jpg" then it will be RGB24, otherwise RGBA32
-   finally we create the pixel data for layer */
-weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext,
-                                 int width, int height, int target_palette) {
-  if (!layer) layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-  else {
-    if (!width) width = weed_layer_get_width(layer);
-    if (!height) height = weed_layer_get_height(layer);
-    if (!width || !height) {
-      int clip = lives_layer_get_clip(layer);
-      if (clip && IS_VALID_CLIP(clip)) {
-        width = mainw->files[clip]->hsize;
-        height = mainw->files[clip]->vsize;
-      }
-    }
-  }
-  if (!width) width = DEF_FRAME_HSIZE_UNSCALED;
-  if (!height) height = DEF_FRAME_VSIZE_UNSCALED;
-  weed_layer_set_size(layer, width, height);
-  if (weed_layer_get_palette(layer) == WEED_PALETTE_NONE) {
-    if (target_palette != WEED_PALETTE_NONE) weed_layer_set_palette(layer, target_palette);
-    else {
-      if (!image_ext || !strcmp(image_ext, LIVES_FILE_EXT_JPG))
-        weed_layer_set_palette(layer, WEED_PALETTE_RGB24);
-      else weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
-    }
-  }
-  if (!create_empty_pixel_data(layer, TRUE, TRUE)) weed_layer_nullify_pixel_data(layer);
-  if (!weed_plant_has_leaf(layer, WEED_LEAF_GAMMA_TYPE)) {
-    int clip = lives_layer_get_clip(layer);
-    if (clip && IS_VALID_CLIP(clip))
-      weed_layer_set_gamma(layer, mainw->files[clip]->gamma_type);
-    else
-      weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
-  }
-  return layer;
-}
-
-
 LIVES_GLOBAL_INLINE boolean rowstrides_differ(int n1, int *n1_array, int n2, int *n2_array) {
   // returns TRUE if the rowstrides differ
   if (!n1_array || !n2_array || n1 != n2) return TRUE;
   for (int i = 0; i < n1; i++) if (n1_array[i] != n2_array[i]) return TRUE;
   return FALSE;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new(int layer_type) {
-  weed_layer_t *layer = weed_plant_new(WEED_PLANT_LAYER);
-  weed_set_int_value(layer, WEED_LEAF_LAYER_TYPE, layer_type);
-  weed_add_refcounter(layer);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_type(weed_layer_t *layer) {
-  if (!layer || !WEED_IS_LAYER(layer)) return WEED_LAYER_TYPE_NONE;
-  return weed_get_int_value(layer, WEED_LEAF_LAYER_TYPE, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_is_video(weed_layer_t *layer) {
-  if (layer && WEED_IS_LAYER(layer) && weed_layer_get_type(layer) == WEED_LAYER_TYPE_VIDEO) return WEED_TRUE;
-  return WEED_FALSE;
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_is_audio(weed_layer_t *layer) {
-  if (layer && WEED_IS_LAYER(layer) && weed_layer_get_type(layer) == WEED_LAYER_TYPE_AUDIO) return WEED_TRUE;
-  return WEED_FALSE;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_data(weed_layer_t *layer, float **data,
-    int arate, int naudchans, weed_size_t nsamps) {
-  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
-  if (data) weed_set_voidptr_array(layer, WEED_LEAF_AUDIO_DATA, naudchans, (void **)data);
-  weed_set_int_value(layer, WEED_LEAF_AUDIO_RATE, arate);
-  weed_set_int_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, nsamps);
-  weed_set_int_value(layer, WEED_LEAF_AUDIO_CHANNELS, naudchans);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_flags(weed_layer_t *layer, int flags) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
-  weed_set_int_value(layer, LIVES_LEAF_HOST_FLAGS, flags);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_flags(weed_layer_t *layer) {
-  if (!layer || !WEED_IS_LAYER(layer)) return 0;
-  return weed_get_int_value(layer, LIVES_LEAF_HOST_FLAGS, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int lives_layer_get_clip(weed_layer_t *layer) {
-  if (!layer || !WEED_IS_LAYER(layer)) return 0;
-  return weed_get_int_value(layer, WEED_LEAF_CLIP, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE frames_t lives_layer_get_frame(weed_layer_t *layer) {
-  if (!layer || !WEED_IS_LAYER(layer)) return 0;
-  return weed_get_int_value(layer, WEED_LEAF_FRAME, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_width(weed_layer_t *layer, int width) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
-  weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_height(weed_layer_t *layer, int height) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
-  weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_size(weed_layer_t *layer, int width, int height) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
-  weed_layer_set_width(layer, width);
-  weed_layer_set_height(layer, height);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t *layer, void **pixel_data, int nplanes) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
-  weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, nplanes, pixel_data);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *layer, void *pixel_data) {
-  if (!layer || !WEED_IS_LAYER(layer)) return NULL;
-  weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {
-  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
-  weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 0, NULL);
-  weed_plant_sanitize(layer, FALSE);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_rowstrides(weed_layer_t *layer, int *rowstrides, int nplanes) {
-  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
-  weed_set_int_array(layer, WEED_LEAF_ROWSTRIDES, nplanes, rowstrides);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_rowstride(weed_layer_t *layer, int rowstride) {
-  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
-  weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_palette(weed_layer_t *layer, int palette) {
-  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
-  weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, palette);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_gamma(weed_layer_t *layer, int gamma_type) {
-  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
-  weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, gamma_type);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_yuv_clamping(weed_layer_t *layer, int clamping) {
-  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
-  weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, clamping);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_yuv_sampling(weed_layer_t *layer, int sampling) {
-  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
-  weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, sampling);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_yuv_subspace(weed_layer_t *layer, int subspace) {
-  if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
-  weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, subspace);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_palette_yuv(weed_layer_t *layer, int palette,
-    int clamping, int sampling, int subspace) {
-  if (!weed_layer_set_palette(layer, palette)) return NULL;
-  weed_layer_set_yuv_clamping(layer, clamping);
-  weed_layer_set_yuv_sampling(layer, sampling);
-  weed_layer_set_yuv_subspace(layer, subspace);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE void lives_layer_set_frame(weed_layer_t *layer, frames_t frame) {
-  // TODO -> int64
-  weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
-}
-
-
-LIVES_GLOBAL_INLINE void lives_layer_set_clip(weed_layer_t *layer, int clip) {
-  weed_set_int_value(layer, WEED_LEAF_CLIP, clip);
-}
-
-
-LIVES_GLOBAL_INLINE weed_layer_t *lives_layer_new_for_frame(int clip, frames_t frame) {
-  // create a layer ready to receive a frame from a clip
-  weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-  lives_layer_set_clip(layer, clip);
-  lives_layer_set_frame(layer, frame);
-  return layer;
-}
-
-
-// returns TRUE on success
-boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t alignment) {
-  // copy (deep) old_layer -> layer
-
-  int numplanes, xheight, xwidth;
-  int *orowstrides, *rowstrides;;
-  void **pixel_data, **npixel_data;
-  int pal = weed_layer_get_palette(layer);
-  int width = weed_layer_get_width(layer);
-  int height = weed_layer_get_height(layer);
-  int i = numplanes, j;
-  boolean newdata = FALSE;
-  double psize = pixel_size(pal);
-
-  if (alignment != 0 && !old_layer) {
-    rowstrides = weed_layer_get_rowstrides(layer, &i);
-    while (i > 0) if (rowstrides[--i] % alignment != 0) i = -1;
-    lives_free(rowstrides);
-    if (i == 0) return TRUE;
-  }
-
-  if (!old_layer) {
-    newdata = TRUE;
-    old_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-    weed_layer_copy(old_layer, layer);
-  }
-
-  pixel_data = weed_layer_get_pixel_data_planar(old_layer, &numplanes);
-  if (!pixel_data || !pixel_data[0]) {
-    if (newdata) {
-      weed_layer_nullify_pixel_data(old_layer);
-      weed_layer_free(old_layer);
-    }
-    return FALSE;
-  }
-
-  orowstrides = weed_layer_get_rowstrides(old_layer, &numplanes);
-  weed_layer_nullify_pixel_data(layer);
-
-  if (alignment != 0) THREADVAR(rowstride_alignment_hint) = alignment;
-
-  if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
-    if (newdata) {
-      weed_layer_copy(layer, old_layer);
-      weed_layer_nullify_pixel_data(old_layer);
-      weed_layer_free(old_layer);
-    }
-    return FALSE;
-  }
-
-  rowstrides = weed_layer_get_rowstrides(layer, &numplanes);
-  npixel_data = weed_layer_get_pixel_data_planar(layer, &numplanes);
-  width = weed_layer_get_width(layer);
-  height = weed_layer_get_height(layer);
-
-  for (i = 0; i < numplanes; i++) {
-    xheight = height * weed_palette_get_plane_ratio_vertical(pal, i);
-    if (rowstrides[i] == orowstrides[i])
-      lives_memcpy(npixel_data[i], pixel_data[i], xheight *  rowstrides[i]);
-    else {
-      uint8_t *dst = (uint8_t *)npixel_data[i];
-      uint8_t *src = (uint8_t *)pixel_data[i];
-      xwidth = width * psize * weed_palette_get_plane_ratio_horizontal(pal, i);
-      for (j = 0; j < xheight; j++) {
-        lives_memcpy(&dst[rowstrides[i] * j], &src[orowstrides[i] * j], xwidth);
-      }
-    }
-  }
-
-  weed_leaf_dup(layer, old_layer, WEED_LEAF_NATURAL_SIZE);
-
-  if (newdata) weed_layer_free(old_layer);
-  lives_freep((void **)&npixel_data);
-  lives_freep((void **)&pixel_data);
-  lives_freep((void **)&orowstrides);
-  lives_freep((void **)&rowstrides);
-  return TRUE;
 }
 
 
@@ -10745,6 +10476,8 @@ LIVES_LOCAL_INLINE boolean can_inline_gamma(int inpl, int opal) {
   return FALSE;
 }
 
+
+/// layer pixel ops ////
 
 /**
    @brief convert the palette of a layer
@@ -12847,48 +12580,6 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
 }
 
 
-LIVES_INLINE boolean weed_palette_is_resizable(int pal, int clamped, boolean in_out) {
-  // in_out is TRUE for input, FALSE for output
-
-  // in future we may also have resize candidates/delegates for other palettes
-  // we will need to check for these
-
-  if (pal == WEED_PALETTE_YUV888 && clamped == WEED_YUV_CLAMPING_UNCLAMPED) pal = WEED_PALETTE_RGB24;
-  if (pal == WEED_PALETTE_YUVA8888 && clamped == WEED_YUV_CLAMPING_UNCLAMPED) pal = WEED_PALETTE_RGBA32;
-
-#ifdef USE_SWSCALE
-  if (in_out && sws_isSupportedInput(weed_palette_to_avi_pix_fmt(pal, &clamped))) return TRUE;
-  else if (sws_isSupportedOutput(weed_palette_to_avi_pix_fmt(pal, &clamped))) return TRUE;
-#endif
-  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGR24 ||
-      pal == WEED_PALETTE_BGRA32) return TRUE;
-  return FALSE;
-}
-
-
-void lives_pixbuf_set_opaque(LiVESPixbuf * pixbuf) {
-  unsigned char *pdata = lives_pixbuf_get_pixels(pixbuf);
-  int row = lives_pixbuf_get_rowstride(pixbuf);
-  int height = lives_pixbuf_get_height(pixbuf);
-  int offs;
-#ifdef GUI_GTK
-  offs = 3;
-#endif
-
-#ifdef GUI_QT
-  offs = 0;
-#endif
-
-  register int i, j;
-  for (i = 0; i < height; i++) {
-    for (j = offs; j < row; j += 4) {
-      pdata[j] = 255;
-    }
-    pdata += row;
-  }
-}
-
-
 void lives_layer_set_opaque(weed_layer_t *layer) {
   int offs;
   boolean planar = FALSE;
@@ -13451,7 +13142,9 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
     for (int sl = 0; sl < nthrds - 1; sl++) {
       if (swparams[sl].swscale) {
+	////
         lives_thread_join(threads[sl], NULL);
+	///
         height += swparams[sl].ret;
       } else height += iheight;
     }
@@ -14262,105 +13955,6 @@ uint64_t *hash_cmp_rows(uint64_t *crows, int clipno, frames_t frame) {
 }
 
 
-
-/**
-   @brief create a layer, setting the most important properties */
-weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int palette) {
-  weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-
-  weed_layer_set_width(layer, width);
-  weed_layer_set_height(layer, height);
-
-  if (palette != WEED_PALETTE_END) {
-    weed_layer_set_palette(layer, palette);
-    if (rowstrides) weed_layer_set_rowstrides(layer, rowstrides, weed_palette_get_nplanes(palette));
-  }
-  return layer;
-}
-
-
-weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int palette,
-                                     int YUV_clamping, int YUV_sampling, int YUV_subspace, int gamma_type) {
-  weed_layer_t *layer = weed_layer_create(width, height, rowstrides, palette);
-  weed_layer_set_palette_yuv(layer, palette, YUV_clamping, YUV_sampling, YUV_subspace);
-  weed_layer_set_gamma(layer, gamma_type);
-  return layer;
-}
-
-
-/**
-   @brief copy source layer slayer to dest layer dlayer
-
-   if dlayer is NULL, we return a new layer, otherwise we return dlayer
-   for a newly created layer, this is a deep copy, since the pixel_data array is also copied
-   for an existing dlayer, we copy pixel_data by reference.
-   all the other relevant attributes are also copied
-*/
-weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
-  weed_layer_t *layer;
-  void **pd_array = NULL;
-
-  if (!slayer || !WEED_IS_XLAYER(slayer)) return NULL;
-
-  if (dlayer) {
-    if (!WEED_IS_XLAYER(dlayer)) return NULL;
-    layer = dlayer;
-  }
-
-  pd_array = weed_layer_get_pixel_data_planar(slayer, NULL);
-
-  if (!dlayer) {
-    /// deep copy
-    int height = weed_layer_get_height(slayer);
-    int width = weed_layer_get_width(slayer);
-    int palette = weed_layer_get_palette(slayer);
-    int *rowstrides = weed_layer_get_rowstrides(slayer, NULL);
-    if (height <= 0 || width < 0 || !rowstrides || !weed_palette_is_valid(palette)) {
-      if (pd_array) lives_free(pd_array);
-      return NULL;
-    } else {
-      layer = weed_layer_create(width, height, rowstrides, palette);
-      if (!pd_array) weed_layer_nullify_pixel_data(layer);
-      else copy_pixel_data(layer, slayer, 0);
-      lives_free(rowstrides);
-    }
-  } else {
-    /// shallow copy
-    // TODO we should add a ref to the other layer and unref when this one is destroyed
-    weed_leaf_dup(layer, slayer, WEED_LEAF_ROWSTRIDES);
-    weed_leaf_dup(layer, slayer, WEED_LEAF_PIXEL_DATA);
-    weed_leaf_dup(layer, slayer, WEED_LEAF_NATURAL_SIZE);
-    weed_leaf_copy_or_delete(layer, WEED_LEAF_HEIGHT, slayer);
-    weed_leaf_copy_or_delete(layer, WEED_LEAF_WIDTH, slayer);
-    weed_leaf_copy_or_delete(layer, WEED_LEAF_CURRENT_PALETTE, slayer);
-    if (pd_array) {
-      weed_leaf_copy_or_delete(layer, LIVES_LEAF_BBLOCKALLOC, slayer);
-      weed_leaf_copy_or_delete(layer, LIVES_LEAF_PIXBUF_SRC, slayer);
-      weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_ORIG_PDATA, slayer);
-      weed_leaf_copy_or_delete(layer, LIVES_LEAF_SURFACE_SRC, slayer);
-      weed_leaf_copy_or_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, slayer);
-      if (weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA,
-                              weed_leaf_get_flags(slayer, WEED_LEAF_PIXEL_DATA)));
-    } else weed_layer_nullify_pixel_data(layer);
-  }
-
-  weed_leaf_copy_or_delete(layer, WEED_LEAF_GAMMA_TYPE, slayer);
-  weed_leaf_copy_or_delete(layer, LIVES_LEAF_HOST_FLAGS, slayer);
-  weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_CLAMPING, slayer);
-  weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_SUBSPACE, slayer);
-  weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_SAMPLING, slayer);
-  weed_leaf_copy_or_delete(layer, WEED_LEAF_PIXEL_ASPECT_RATIO, slayer);
-
-  if (pd_array) lives_free(pd_array);
-  return layer;
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_count_refs(weed_layer_t *layer) {
-  return weed_refcount_query(layer);
-}
-
-
 /**
    @brief free pixel_data from layer
 
@@ -14428,138 +14022,6 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
       }}}
   // *INDENT-ON*
   weed_layer_nullify_pixel_data(layer);
-}
-
-
-/**
-   @brief frees pixel_data for a layer, then the layer itself
-
-   if plant is freed
-   returns (void *)NULL for convenience
-*/
-
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
-  if (layer) weed_layer_unref(layer);
-  return NULL;
-}
-
-int weed_layer_unref(weed_layer_t *layer) {
-  //g_print("unref layer %p\n", layer);
-  int refs = weed_refcount_dec(layer);
-  if (refs > -1) return refs;
-  weed_layer_pixel_data_free(layer);
-  weed_refcounter_unlock(layer);
-  weed_plant_free(layer);
-  return refs;
-}
-
-LIVES_GLOBAL_INLINE int weed_layer_ref(weed_layer_t *layer) {
-  if (!layer) break_me("null layer");
-  //g_print("refff layer %p\n", layer);
-  return weed_refcount_inc(layer);
-}
-
-
-LIVES_GLOBAL_INLINE void **weed_layer_get_pixel_data_planar(weed_layer_t *layer, int *nplanes) {
-  if (nplanes) *nplanes = 0;
-  if (!layer)  return NULL;
-  return weed_get_voidptr_array_counted(layer, WEED_LEAF_PIXEL_DATA, nplanes);
-}
-
-
-LIVES_GLOBAL_INLINE uint8_t *weed_layer_get_pixel_data(weed_layer_t *layer) {
-  if (!layer)  return NULL;
-  return (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE float **weed_layer_get_audio_data(weed_layer_t *layer, int *naudchans) {
-  if (naudchans) *naudchans = 0;
-  if (!layer)  return NULL;
-  return (float **)weed_get_voidptr_array_counted(layer, WEED_LEAF_AUDIO_DATA, naudchans);
-}
-
-
-LIVES_GLOBAL_INLINE int *weed_layer_get_rowstrides(weed_layer_t *layer, int *nplanes) {
-  if (nplanes) *nplanes = 0;
-  if (!layer)  return NULL;
-  return weed_get_int_array_counted(layer, WEED_LEAF_ROWSTRIDES, nplanes);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_rowstride(weed_layer_t *layer) {
-  if (!layer)  return 0;
-  return weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_width(weed_layer_t *layer) {
-  if (!layer)  return -1;
-  return weed_get_int_value(layer, WEED_LEAF_WIDTH, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_width_pixels(weed_layer_t *layer) {
-  if (!layer)  return -1;
-  int pal = weed_layer_get_palette(layer);
-  return weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(pal);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_height(weed_layer_t *layer) {
-  if (!layer)  return -1;
-  return weed_get_int_value(layer, WEED_LEAF_HEIGHT, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_yuv_clamping(weed_layer_t *layer) {
-  if (!layer)  return 0;
-  return weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_yuv_sampling(weed_layer_t *layer) {
-  if (!layer)  return 0;
-  return weed_get_int_value(layer, WEED_LEAF_YUV_SAMPLING, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_yuv_subspace(weed_layer_t *layer) {
-  if (!layer)  return 0;
-  return weed_get_int_value(layer, WEED_LEAF_YUV_SUBSPACE, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_palette(weed_layer_t *layer) {
-  if (!layer)  return WEED_PALETTE_END;
-  return weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_palette_yuv(weed_layer_t *layer, int *clamping, int *sampling, int *subspace) {
-  if (!layer)  return WEED_PALETTE_END;
-  if (clamping) *clamping = weed_layer_get_yuv_clamping(layer);
-  if (sampling) *sampling = weed_layer_get_yuv_sampling(layer);
-  if (subspace) *subspace = weed_layer_get_yuv_subspace(layer);
-  return weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_audio_rate(weed_layer_t *layer) {
-  if (!WEED_IS_LAYER(layer)) return 0;
-  return weed_get_int_value(layer, WEED_LEAF_AUDIO_RATE, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_naudchans(weed_layer_t *layer) {
-  if (!WEED_IS_LAYER(layer)) return 0;
-  return weed_get_int_value(layer, WEED_LEAF_AUDIO_CHANNELS, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE int weed_layer_get_audio_length(weed_layer_t *layer) {
-  if (!WEED_IS_LAYER(layer)) return 0;
-  return weed_get_int_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
 }
 
 

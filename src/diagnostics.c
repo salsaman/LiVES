@@ -1201,6 +1201,7 @@ int run_weed_startup_tests(void) {
           WEED_FLAG_UNDELETABLE);
 
   werr = weed_leaf_delete(plant, "string2");
+
   fprintf(stderr, "del aaa leaf returned %d, should be %d\n", werr,
           WEED_ERROR_UNDELETABLE);
   str = weed_get_string_value(plant, "string2", &werr);
@@ -1208,7 +1209,8 @@ int run_weed_startup_tests(void) {
   werr_expl(werr);
 
   fprintf(stderr, "clearing flags\n");
-  weed_leaf_set_flags(plant, "string2", 0);
+  weed_leaf_set_undeletable(plant, "string2", WEED_FALSE);
+  //weed_leaf_set_flags(plant, "string2", 0);
   flags = weed_leaf_get_flags(plant, "string2");
   fprintf(stderr, "set flags returned %d\n", flags);
   werr = weed_leaf_delete(plant, "string2");

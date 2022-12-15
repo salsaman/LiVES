@@ -291,7 +291,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     // indicate ready status
     lives_proc_thread_set_cancellable(mainw->transrend_proc);
     sync_point("transcoder: ready");
-    if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) goto tr_err2;
+    if (lives_proc_thread_get_cancel_requested(mainw->transrend_proc)) goto tr_err2;
   }
 
   // (re)set these for the current clip
@@ -427,12 +427,12 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       }
     } else {
       sync_point("transcode: waiting for frame");
-      if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) goto tr_err;
+      if (lives_proc_thread_get_cancel_requested(mainw->transrend_proc)) goto tr_err;
       if (mainw->cancelled != CANCEL_NONE) break;
       frame_layer = (weed_layer_t *)mainw->transrend_layer;
       weed_layer_ref(frame_layer);
       sync_point("transcode: processed frame");
-      if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) break;
+      if (lives_proc_thread_get_cancel_requested(mainw->transrend_proc)) break;
     }
 
 #ifdef MATCH_PALETTES
@@ -540,7 +540,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
 
     if (coder) {
       error = lives_proc_thread_join_boolean(coder);
-      lives_proc_thread_free(coder);
+      lives_proc_thread_unref(coder);
       coder = NULL;
     } else error = FALSE;
 
@@ -569,7 +569,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     } else {
       frame_layer = NULL;
       /* sync_point("transcode: processed frame"); */
-      /* if (lives_proc_thread_get_cancelled(mainw->transrend_proc)) break; */
+      /* if (lives_proc_thread_get_cancel_requested(mainw->transrend_proc)) break; */
     }
     if (mainw->cancelled != CANCEL_NONE) break;
   }
@@ -587,7 +587,7 @@ tr_err:
   if (coder) {
     // do b4 exit_screen
     error = lives_proc_thread_join_boolean(coder);
-    lives_proc_thread_free(coder);
+    lives_proc_thread_unref(coder);
   }
 
   // flush streams, write headers, plugin cleanup

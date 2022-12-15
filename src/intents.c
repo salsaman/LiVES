@@ -216,21 +216,37 @@ lives_dicto_t *weed_plant_to_dicto(weed_plant_t *plant) {
   return dicto;
 }
 
+// if "name" is registered in the func store, return the const fdef
+// otherwise we create a new fdef, register it as static, and return the new entry
 const lives_funcdef_t *add_fn_lookup(lives_funcptr_t func, const char *name, int category, const char *rttype,
                                      const char *args_fmt, char *file, int line) {
-  uint32_t rtype = get_seedtype(rttype[0]);
   const lives_funcdef_t *funcdef = get_from_hash_store(fn_objstore, name);
   if (!funcdef) {
     lives_dicto_t *dicto = lives_object_instance_create(OBJECT_TYPE_DICTIONARY, DICT_SUBTYPE_FUNCDEF);
     lives_obj_attr_t *xattr = lives_object_declare_attribute(dicto, "native_ptr",
                               WEED_SEED_VOIDPTR);
+    uint32_t rtype = get_seedtype(rttype[0]);
 
     funcdef = create_funcdef(name, func, rtype, args_fmt, file, line ? ++line : 0, NULL);
+    ((lives_funcdef_t *)funcdef)->flags |= LIVES_FDEF_STATIC;
 
     lives_object_set_attr_value(dicto, xattr, funcdef);
     fn_objstore = add_to_objstore(fn_objstore, funcdef->uid, dicto);
   }
   return funcdef;
+}
+
+
+// add a copy of fdef to store, if not already registered
+boolean add_fdef_lookup(lives_funcdef_t *fdef) {
+  if (fdef) {
+    char *rt = lives_strdup_printf("%c", get_char_for_st(fdef->return_type));
+    add_fn_lookup(fdef->function, fdef->funcname, fdef->category, (const char *)rt,
+		  fdef->args_fmt, (char *)fdef->file, fdef->line);
+    lives_free(rt);
+    return TRUE;
+  }
+  return FALSE;
 }
 
 
@@ -303,7 +319,7 @@ LIVES_GLOBAL_INLINE int lives_attribute_get_value_int(lives_obj_attr_t *attr) {
 static void lives_object_instance_free(lives_obj_instance_t *obj) {
   // TODO - use some other name, EXIT for processes
   lives_hook_stack_t **hook_stacks = (lives_hook_stack_t **)weed_get_voidptr_array(obj, LIVES_LEAF_HOOK_STACKS, NULL);
-  lives_hooks_trigger(obj, hook_stacks, DESTRUCTION_HOOK);
+  lives_hooks_trigger(hook_stacks, DESTRUCTION_HOOK);
 
   // invalidate hooks
   for (int type = N_GLOBAL_HOOKS + 1; type < N_HOOK_POINTS; type++) {
@@ -321,8 +337,7 @@ static void lives_object_instance_free(lives_obj_instance_t *obj) {
 
 LIVES_GLOBAL_INLINE int lives_object_instance_unref(lives_obj_instance_t *obj) {
   int count;
-  if ((count = weed_refcount_dec(obj)) < 0) {
-    weed_refcounter_unlock(obj);
+  if (!(count = weed_refcount_dec(obj))) {
     lives_object_instance_free(obj);
   }
   return count;
@@ -331,7 +346,7 @@ LIVES_GLOBAL_INLINE int lives_object_instance_unref(lives_obj_instance_t *obj) {
 
 LIVES_GLOBAL_INLINE boolean lives_obj_instance_destroy(lives_obj_instance_t *obj) {
   // return FALSE if destroyed
-  return (lives_object_instance_unref(obj) >= 0);
+  return (lives_object_instance_unref(obj) > 0);
 }
 
 LIVES_GLOBAL_INLINE boolean lives_object_instance_destroy(lives_object_instance_t *obj) {
@@ -410,7 +425,6 @@ static void lives_object_attribute_free(lives_object_t *obj, lives_obj_attr_t *a
   else attrs = THREADVAR(attributes);
   for (i = 0; attrs[i]; i++) if (attrs[i] == attr) break;
 
-  weed_refcounter_unlock(attr);
   weed_plant_free(attr);
 
   if (attrs[i] == attr) {
@@ -426,9 +440,7 @@ static void lives_object_attribute_free(lives_object_t *obj, lives_obj_attr_t *a
 
 LIVES_GLOBAL_INLINE boolean lives_object_attribute_unref(lives_object_t *obj, lives_obj_attr_t *attr) {
   int refs = weed_refcount_dec(attr);
-  if (refs == -100) lives_abort("attr missing REFCOUNTER in weed_layer_unref");
-  if (refs != -1) return TRUE;
-  weed_refcounter_unlock(attr);
+  if (refs > 0) return TRUE;
   lives_object_attribute_free(obj, attr);
   return FALSE;
 }
@@ -946,8 +958,7 @@ LIVES_GLOBAL_INLINE void lives_capacities_free(lives_capacities_t *caps) {
 // ret TRUE if freed
 LIVES_GLOBAL_INLINE boolean lives_capacities_unref(lives_capacities_t *caps) {
   if (caps) {
-    if (weed_refcount_dec(caps) == -1) {
-      weed_refcounter_unlock(caps);
+    if (!weed_refcount_dec(caps)) {
       _lives_capacities_free(caps);
       return TRUE;
     }
@@ -1443,9 +1454,8 @@ weed_param_t *weed_param_from_attribute(lives_object_instance_t *obj, const char
 
 
 static boolean lives_transform_status_unref(lives_transform_status_t *st) {
-  // return FALSE if destroyed
-  if (refcount_dec(&st->refcounter) < 0) {
-    refcount_unlock(&st->refcounter);
+  // return FALSE if destroyedy
+  if (!refcount_dec(&st->refcounter)) {
     lives_free(st);
     return FALSE;
   }

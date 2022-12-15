@@ -913,7 +913,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
         fbuff->ptr = fbuff->buffer = lives_calloc_align(fsize);
         lseek(fd, offs, SEEK_SET);
         mlock(fbuff->buffer, fsize);
-        lives_hooks_trigger(self, lives_proc_thread_get_hook_stacks(self), SYNC_ANNOUNCE_HOOK);
+        lives_hooks_trigger(lives_proc_thread_get_hook_stacks(self), SYNC_ANNOUNCE_HOOK);
         //fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
         //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
         while (fsize > 0) {
@@ -948,11 +948,11 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 #ifdef TEST_MMAP
     }
 #endif
-    lives_hooks_trigger(self, lives_proc_thread_get_hook_stacks(self), DATA_PREVIEW_HOOK);
+    lives_hooks_trigger(lives_proc_thread_get_hook_stacks(self), DATA_PREVIEW_HOOK);
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;
-    lives_hooks_trigger(self, lives_proc_thread_get_hook_stacks(self), SYNC_ANNOUNCE_HOOK);
+    lives_hooks_trigger(lives_proc_thread_get_hook_stacks(self), SYNC_ANNOUNCE_HOOK);
   }
   fbuff->fd = -1;
   IGN_RET(close(fd));
@@ -992,12 +992,11 @@ boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
     fbuff->bufsztype = BUFF_SIZE_READ_SLURP;
     fbuff->flags |= FB_FLAG_BG_OP;
     fbuff->bytes = fbuff->offset = 0;
-    lives_hook_append_full(lives_proc_thread_get_hook_stacks(lpt), SYNC_ANNOUNCE_HOOK, 0,
-                           (lives_funcptr_t)slurp_starting, 0, "v", (void *)&is_ready);
+    lives_proc_thread_append_hook_full(lpt, SYNC_ANNOUNCE_HOOK, HOOK_OPT_ONESHOT,
+				       (lives_funcptr_t)slurp_starting, 0, "v", (void *)&is_ready);
     pthread_mutex_lock(&fbuff->sync_mutex);
     lives_proc_thread_queue(lpt, 0);
     lives_nanosleep_while_false(is_ready);
-    lives_hook_remove_full(lives_proc_thread_get_hook_stacks(lpt), SYNC_ANNOUNCE_HOOK, lpt);
     pthread_mutex_unlock(&fbuff->sync_mutex);
     return TRUE;
   }

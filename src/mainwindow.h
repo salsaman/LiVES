@@ -760,11 +760,13 @@ typedef struct {
 #define PT_CUSTOM_COLOURS 18
 #define PT_LAZY_STARTUP 19
 #define PT_PERF_MANAGER 32
+#define PT_PLAYER 64
 
 #define lazy_starter helper_procthreads[PT_LAZY_STARTUP]
 #define drawtl_thread helper_procthreads[PT_DRAWTL]
 #define transrend_proc helper_procthreads[PT_TRANSREND]
 #define dlg_spin_thread helper_procthreads[PT_DLG_SPINNER]
+#define player_proc helper_procthreads[PT_PLAYER]
 
 typedef struct {
   char *name;
@@ -1043,6 +1045,8 @@ typedef struct {
   // for jack transport
   boolean jack_can_stop, jack_can_start, lives_can_stop, jack_master;
 
+  pthread_rwlock_t rte_rwlock;
+  
   // a/v seek synchronisation
   pthread_cond_t avseek_cond;
   pthread_mutex_t avseek_mutex;
@@ -1130,11 +1134,10 @@ typedef struct {
 
   int size_warn; ///< warn the user that incorrectly sized frames were found (threshold count)
 
-  boolean noswitch; ///< value set automatically to prevent 'inopportune' clip switching
-  boolean cs_permitted; ///< set to TRUE to allow overriding of noswitch in limited circumstances
-  boolean cs_is_permitted; ///< set automatically when cs_permitted can update the clip
+  boolean noswitch; /// set during playback, ensures that user clip switches change only mainw->new_clip 
   int new_clip; ///< clip we should switch to during playback; switch will happen at the designated SWITCH POINT
-  boolean ignore_clipswitch;
+
+  //boolean ignore_clipswitch;
   boolean preview_req; // preview requested
 
   volatile short scratch;
@@ -1417,6 +1420,8 @@ typedef struct {
   weed_plant_t *fd_layer_orig; ///< original layer uneffected
   weed_plant_t *fd_layer; ///< framedraw preview layer
 
+  boolean needs_tl_redraw;
+  
   int framedraw_frame; ///< current displayed frame
   int fd_max_frame; ///< max effected / generated frame
 
@@ -1598,6 +1603,7 @@ typedef struct {
   boolean msg_area_configed;
 
   lives_hook_stack_t *global_hook_stacks[N_HOOK_POINTS];
+  LiVESList *all_hstacks;
 
   /// jack audio player / transport
 #ifdef ENABLE_JACK
@@ -1665,6 +1671,7 @@ typedef struct {
   pthread_mutex_t trcount_mutex; /// transition count mutex
   pthread_mutex_t alock_mutex; /// audio lock / unlock
   pthread_mutex_t tlthread_mutex; /// timeline redraw thread
+  pthread_mutex_t all_hstacks_mutex; /// 
 
   pthread_mutex_t fx_key_mutex[FX_KEYS_MAX_VIRTUAL];
   int fx_mutex_nlocks[FX_KEYS_MAX_VIRTUAL];

@@ -49,6 +49,12 @@ lives_object_instance_t *lives_player_inst_create(uint64_t subtype);
 
 // resizing ??
 
+// multitrack mode
+#define LIVES_MODE_MT (mainw && mainw->multitrack)
+
+// clip edit mode
+#define LIVES_MODE_CE (mainw && !mainw->multitrack)
+
 int lives_set_status(int status);
 int lives_unset_status(int status);
 boolean lives_has_status(int status);

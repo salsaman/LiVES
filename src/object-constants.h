@@ -674,6 +674,9 @@ NIRVA_ENUM(_ICAP_IDLE = 0, _ICAP_DOWNLOAD, _ICAP_LOAD, N_STD_ICAPS)
 #define BUNDLE_STANDARD_ERROR				STRAND_NAME("STANDARD", "ERROR")
 #define BUNDLE_STANDARD_ERROR_TYPE       		ERROR, NULL
 
+#define BUNDLE_STANDARD_EMISSION			STRAND_NAME("STANDARD", "EMISSION")
+#define BUNDLE_STANDARD_EMISSION_TYPE       		EMISSION, NULL
+
 #define BUNDLE_STANDARD_SCRIPTLET		       	STRAND_NAME("STANDARD", "SCRIPTLET")
 #define BUNDLE_STANDARD_SCRIPTLET_TYPE       		SCRIPTLET, NULL
 
@@ -1108,9 +1111,6 @@ NIRVA_ENUM(_ICAP_IDLE = 0, _ICAP_DOWNLOAD, _ICAP_LOAD, N_STD_ICAPS)
 
 #define STRAND_HOOK_FLAGS		       		STRAND_NAME("HOOK", "FLAGS")
 #define STRAND_HOOK_FLAGS_TYPE				UINT64, 0
-
-#define STRAND_HOOK_CB_DATA		       		STRAND_NAME("HOOK", "CB_DATA")
-#define STRAND_HOOK_CB_DATA_TYPE       			VOIDPTR, NULL
 
 #define STRAND_HOOK_COND_STATE				STRAND_NAME("HOOK", "COND_STATE")
 #define STRAND_HOOK_COND_STATE_TYPE	       		INT, NIRVA_COND_SUCCESS
@@ -1553,20 +1553,19 @@ NIRVA_ENUM(
   FUNC_CATEGORY_TRANSFORM,	// "function" is a trajectory which can action a transform
   FUNC_CATEGORY_AUTOMATION,	// any kind of auto script
   FUNC_CATEGORY_CALLBACK,	// function added to a hook cb stack
-  // functional which returns an item from a selection, depending on conditions
+  // functional which divides a set of candidates into subsets, discrete (either or) or by affinity (-1. to + 1.)
+  FUNC_CATEGORY_CLASSIFIER,
+  // a subtype of classifier, which divides candidates into two discrete subsets, valid and invalid for example
   FUNC_CATEGORY_SELECTOR,
-  // conditional SUCCESS or FAIL
+  // a subtype of selector which operates on a single candidate at a time
   FUNC_CATEGORY_CONDITIONAL,
-  // equivalent to cascade, but acting on a set of candidates, divides into pass and fail
-  // subsets
-  FUNC_CATEGORY_SELECTION,
-  // ranks items depending on a "score" from 0. to 1.
-  // bisects into two subsets, those >= threshold and those < threshold
+  // a subtype of classifier which assigns candidate affinities to two subsets, positive and negative
   FUNC_CATEGORY_RANKING,
   FUNC_CATEGORY_SYNTHETIC,	// "functions" that wrap around non functions - e.g macros
   FUNC_CATEGORY_INTERNAL,	// internal utility
-  FUNC_CATEGORY_WRAPPER,	// a wrapper function which acts like an interface to other function(s)
-  FUNC_CATEGORY_EXTERNAL,	// an external "implementation dependant" fuction
+  FUNC_CATEGORY_WRAPPER,	// a function shell, interface to other fuctions
+  FUNC_CATEGORY_EXTERNAL,	// an external "native" function which can be called directly or indirectly
+  FUNC_CATEGORY_UTIL, 		// for small general fuctions . macros which do not fit in any other category
   FUNC_CATEGORY_OUTSIDE,	// falls outside of nirva, eg. library or system call
   FUNC_CATEGORY_PLACEHOLDER,// for reference / info only - do not call
   FUNC_CATEGORY_NATIVE_TEXT,// textual transcription of native code
@@ -1711,56 +1710,58 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_patterns, NIRVA_HOOK_MODEL_CONFIG,	\
 #define NIRVA_HOOK_DTL_NATIVE         	(1ull << 7)
 
 NIRVA_TYPEDEF_ENUM(nirva_hook_number,
+		   NO_HOOK = 0,
+                   /// CONFIG hook model
+		   // config hooks - these are based on other models, but given an omportant significance
+
+                   // transform suffered a FATAL error or was aborted, (HOOK_DTL_NATIVE)
+		   // hook_stack specifc to structure_app
+                   FATAL_HOOK,
+
+                   // state changing from normal -> not ready, i.e. restarting
+		   // this is specific to structure_app
+                   RESETTING_HOOK,  // object state / before
+
+                   // bundle is about to be freed
+                   // THIS IS A VERY IMPORTANT HOOK POINT, anything that wants to be informed when
+                   // a bundle is about to be freed should add a callback here
+                   // this is actually the HOOK_CB_REMOVED hook for the stack
+                   // - all callbacks are force removed when an object is about to be recycled
+		   // hook_stack is created on demand when a callback is added
+                   DESTRUCTION_HOOK, // hook_cb_remove, bundle_type == object_instance
+
+                   // for an APPLICATION instance, these are GLOBAL HOOKS
+                   N_GLOBAL_HOOKS,// 3
+
                    // The following are the standard hook points in the system
                    // all DATA_HOOKS must return "immedaitely"
-
-                   /// CONFIG hook model
-                   // these hooks are triggered when a bundle changes
 
                    // OBJECT STATE and SUBTYPE HOOKS
                    // these passive hooks, provided the system has semi or full hook automation
                    // the structure will call them on behalf of a thread instance
 
-                   // when an object instance is created, this hook will be triggered
-                   // in the creator template or instance, and will contain a pointer to the freshly created
-                   // or copied instance - the new instance ,ay be of a differnet type / subtype
-                   // to the creator
+		   // these are spontaneous hooks, triggered when a transform with intent
+		   // create bundle or copy bundle complete susccesfully and create a bundle
+		   // of type object_template or object_instance
+
+		   // the hook_stacks for these are in the structure, adding removing, triggering
+		   // is done via a structure transform
                    OBJECT_CREATED_HOOK, // object state / after
 
                    INSTANCE_COPIED_HOOK,
 
-                   // conditions:
-                   // IS_EQUAL(GET_BUNDLE_VALUE_UINT64(BUNDLE_IN, "FLAGS"), 0)
-                   // STRING_MATCH(GET_BUNDLE_VALUE_STRING(BUNDLE_IN, "NAME"), STRAND_OBJECT_STATE)
-                   // IS_EQUAL(GET_BUNDLE_VALUE_INT(GET_SUB_BUNDLE(GET_SUB_BUNDLE(BUNDLE_IN, "CHANGED"),
-                   // "NEW_VALUE"), OBJ_STATE_NORMAL))
-                   // NEW_HOOK_TYPE = INIT_HOOK, PMAP: 0, GET_BUNDLE_VALUE_BUNDLEPTR(BUNDLE_IN, OBJECT), 1,
-                   // GET_BUNDLE_VALUE_VOIDPTR(CALLBACK, DATA), -1 GET_PTR_TO(BUNDLE_OUT, RETURN_VALUE)
-
-                   // object suffered a FATAL error or was aborted, (HOOK_DTL_NATIVE)
-                   FATAL_HOOK,
-
-                   // state changing from normal -> not ready, i.e. restarting
-                   RESETTING_HOOK,  // object state / before
-
-                   // object is about to be freed
-                   // THIS IS A VERY IMPORTANT HOOK POINT, anything that wants to be informed when
-                   // a bundle is about to be freed should add a callback here
-                   // this is actually the HOOK_CB_REMOVED hook for the bundle
-                   // all callbacks are force removed when an object is about to be recycled
-                   DESTRUCTION_HOOK, // hook_cb_remove, bundle_type == object_instance
-
-                   // for an APPLICATION instance, these are GLOBAL HOOKS
-                   N_GLOBAL_HOOKS,//6
-
                    // these hooks are specific to bundle_type object_template, object_instance
-                   // object subtype change
+		   // they are data hooks for specific strands
+		   // hook_stacks are contained in the bundle
                    MODIFYING_SUBTYPE_HOOK,
                    // object subtype changed
                    SUBTYPE_MODIFIED_HOOK,
                    ALTERING_STATE_HOOK,
                    STATE_ALTERED_HOOK,
 
+		   // add strand is triggered when data is to be appended to a non existent strand, ie old value is absent
+		   // delete strand is triggered from delete_strand, ie. new_value is absent
+		   
                    ADDING_STRAND_HOOK, // 10
 
                    DELETING_STRAND_HOOK,
@@ -1805,6 +1806,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // finally, COMPLETED
                    // after this, the transform will be returned to the caller with TX_RESULT updated
 
+		   // these hook stacks are created on demand when a callback is added to a transform bundle
 
                    PREPARING_HOOK,  /// none or queued -> prepare
 
@@ -1834,12 +1836,6 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    ERROR_HOOK,
 
                    CANCELLED_HOOK, ///< tx cancelled via cancel_hook, transform will return TX_RESULT_CANCELLED
-
-                   // this hook is triggered whenever some contract condition is found to be broken
-                   // for example, an attr connectin being broken, a missing input attribute
-                   // if ARBITRATOR is enabled, then it will handle callbacks for this hook
-                   // if due to mising attrs, then the transform will end with reeult TX_RESULT_CONTRACT_WAS_WRONG
-                   CONTRACT_BREACHED_HOOK,
 
                    // transform is waiting for some external event. If it reamins in this state too long it
                    // may become BLOCKED and then eventually TIMED_OUT
@@ -1874,14 +1870,27 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    //
                    //
 
+                   // this hook is triggered whenever some contract condition is found to be broken
+                   // for example, an attr connectin being broken, a missing input attribute
+                   // if ARBITRATOR is enabled, then it will handle callbacks for this hook
+                   // if due to mising attrs, then the transform will end with reeult TX_RESULT_CONTRACT_WAS_WRONG
+		   // this is a spntaneous hook, the stack is held in the structure, adding, removing or
+		   // triggering is done via structural transform, triggering requires priveleges
+		   // attributes include the transform bundle, and details of the breach
+                   CONTRACT_BREACHED_HOOK,
+
                    //
                    // this is a "self hook" meaning the object running the transform only should append to this
                    // the calling thread will block until either: all callbacks return TRUE, or a "control variable" is set to TRUE
                    // callbacks for this hook number must return boolean
+		   // hook_stack is in the thread instance, as it is a self hook, callbacks are added via functional code
+		   // and triggered by functional code
                    SYNC_WAIT_HOOK, ///< synchronisation point, transform is waitng until
 
                    // functionals may trigger sync announcements at key points during their processing
                    // other threads can add callbacks for this and be advised when such a point is reached
+		   // hook_stack is in the thread instance
+		   // hook is triggered by functional code
                    SYNC_ANNOUNCE_HOOK, ///< synchronisation point, transform is waitng until
 
                    /// tx transition from one trajectory segment to the next
@@ -1889,11 +1898,13 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // this hook provides an opportunity to affect the choice
                    // trajectory may have a next segment which can be overwritten
                    // setting this will require PRIV_TRANSFORMS > 10
+		   // hook_stack is in the transform bundle
                    SEGMENT_END_HOOK,
 
                    // this is triggered when a new trajectory segment is about to begin
                    // for the inital segment, TX_START is triggered instead
                    // for segment end, FINISHED_HOOK runs instead
+		   // hook_stack is in the transform bundle
                    SEGMENT_START_HOOK,
 
                    // this hook may be triggered after a transform completes
@@ -1901,6 +1912,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // and any OUTPUT attrs which may have been created
                    // i.e it collates any hook_callbacks for the array in TX_ATTRS
                    // for the FUNC_DATA bundle
+		   // hook_stack is in the attr_group bundle
                    ATTRS_UPDATED_HOOK,
 
                    // calbacks for the following two hooks are allowed to block "briefly"
@@ -1911,30 +1923,38 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // to run. The chronometer may help with the calculation.
                    // objects which delay for too long may be penalized, if they persistently do so
 
-                   // tx hooks not associated ith status change
+                   // tx hooks not associated with status change
                    // if the data is readonly then DATA_PREVIEW_HOOK is cal
                    // DATA_READY + BEFORE
-
+		   // this hook_stack is held in the transform bundle
                    DATA_PREVIEW_HOOK,
 
                    // data in its "final" state is ready
                    // data is readonly. The Transform will call all callbacks in parallel and will not block
                    // however it will wait for all callbacks to return before freeing / altering the data
+		   // this hook_stack is held in the transform bundle
                    DATA_READY_HOOK,
 
-                   // this hook is triggered when an object is destructing
-                   // data includes the hook stack owner, item, hook number, hook handle and
-                   // user data. The callback is also called when the hook_detachimg callback itself
-                   // is detached
-                   // in fact, DESTRUCTING hook callbacks are HOOK_DETACHING callback for the DESTUCTING
-                   // hook stack
-                   HOOK_DETACHING_HOOK,
+		   // adding a callback here will cause it to be called when a callback is removed (detached) from
+		   // a hook stack in the same bundle, the target_hook_type can be specified ot can be all
+                   HOOK_CB_DETACHING_HOOK,
 
-                   // this is called for the target object when a callback is added
-                   // to a hook stack
+                   // this is called automatically when a callback is added to any hook_stack
                    // all request hooks are cascaded versions of this, depending on the stack
-                   // added to
-                   HOOK_ATTACHED_HOOK,
+                   // added to, e.g add a callback (request) to the data request queue
+		   // this triggers hook attached callback
+		   // there is an automation callback (run last),
+		   // which when triggered, cascades the trigger using the
+		   // hook_stack parameter, and triggers a follow on trigger "data_request"
+		   //
+		   // which is a virutal hook, that in turn toggles a flag bit for the attribute
+		   // thus the thread actioning the transform can add a callback to the hook_cb_attached hook
+		   // a.k.a REQUEST_HOOK, specifying the request_type (e.g. data_request), target_item (attribute_name)
+		   // and respond directly, otherwise, the structure will repsond on the thread's behalf
+		   // the request will remain in the data_request hook_stack. At some later point, the thread
+		   // can trigger data_ready, and all appropriate cllbacks in the data_request stack are actioned
+		   // in this way, threads can be notified instantly of requests, or async via 
+                   HOOK_CB_ATTACHED_HOOK,
 
                    // thread running the transform received a fatal signal
                    // (cascaded value of DESTRUCTING_HOOK for a thread object_instance)
@@ -1963,69 +1983,47 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // add a callback (although the request may be rejected, and some requests require PRIV levels)
 
                    // requests are cascade values of the HOOK_ATTACHED_HOOK
-                   // a request is made by addeding a request_bundle to the target's request hook
-                   // the result is to trigger a hook_attached_hook. If this is not reponded to, then wait_retry
-                   // will be returned. The object will respond later and action the callback.
-
-                   // after a contract has been agreed, the caller may either carry out the transform itself
-                   // (unless flagged as "no self run")
-                   // or may add the transform as a request to the contract owner's
-                   // ACTION_REQUEST_HOOK stack.
-                   // while in this state, the tx status will be "QUEUED", after passing a certain amount of time in
-                   // the queue the status may become "DEFERRED"
-                   //
-                   // to reduce the wait time, it may be possible to do one or more of the following, depending on
-                   // ATTR_STRUCTURAL_THREAD_MODEL
-                   // thread-per-instance:
-                   // find a transform which creates a duplicate instance
-                   // thread-on-request model : try asking the structure to create more threads
-
-                   // this request should be triggered to request an update of an attribute or attr_group
-                   // in cases where this is marked as neccessary
-                   // request_yes means the data has been updated, request_no means there is no new data
-                   // request_wait_retry means the data will be updated async
-                   // the response can be connected to and the reply updated when ready
+                   // a request is made by adding a request_bundle to the target's request hook
+                   // the result is to trigger a hook_attached_hook. If this is not reponded to (ie. no callbacks exist),
+		   // then wait_retry
+                   // will be returned. The object thread will at some later point, check the request stacks,
+		   // and respond by changing transform state, or triggering another hook (e.g. data_ready)
+		   // at that point, any requests in the request stacks will be responded to (request_yes)
+		   // thus when making a request, the requester can provide a callback function - if the response is
+		   // wait_retry or proxied, the caller can do something else until the callback is triggered
+		   // this is simailar to adding a callback except that the automation will ensure only the most recent
+		   // request for a particular emmision is retained in the request stack. In addition the running thread
+		   // will know to trigger something becuase there are callbacks in a request stack
 
                    DATA_REQUEST_HOOK,
 
-                   // asks the structure to check if it is OK to add a strand to a bundle
-                   // if the strand is a self strand and in the blueprint it will always return REQUEST_YES
-                   // for custom strands or in  other bundles, a priv check is required
-                   ADD_STRAND_REQUEST_HOOK,
-
-                   // asks the structure if it is OK to delete a strand
-                   // for optional self strands, will always return REQUEST_YES
-                   // for mandatory strands, or strands in other bundles, a priv check is required
-                   DELETE_STRAND_REQUEST_HOOK,
-
-                   // this is called by autopmation in response to refcount going below zeo
-                   // it will set the destruct_request flagbit in the thread
-                   // the thread should abort the transform ASAP, put the object in the zobie state and
-                   // deliver the object to the recycler for recycling
-                   // equivalent to request_update on the bundle;s REFECOUNT.SHOULD_FREE and a target
-                   // value of NIRVA_TRUE
-                   // (in this case the "value" becomes an offset)
-                   // PRIV_LIFECYCLE will be checked before reokying
+                   // this is called by autopmation in response to refcount reaching (explicitly or implicitly) zero
+		   // objects can add callbacks here, if request_yes is returned, the bundle will be recycled
+		   // it is possible to return request_no (all object templates will return this, as well as structural instances)
+		   // in this case a privelege is required to recycle the bundle
+		   // the responder can also return request_wait_retry if the object / bundle needs to free resources for example
+		   // the recycler will then wait and try at a later time
                    DESTRUCT_REQUEST_HOOK,
 
-                   // asks the bundle (which must have a refcount sub-bundle) to increase the refcount
-                   // automation will add the caller uid to a list, so that only obejcts which added a
-                   // ref can remove one.  The initial value of the array contains the UID of the owner object,
-                   // so that it can always unref 1 extra time
-                   // equivalent to request_update on the bundle;s REFECOUNT.REFCOUNT and a target 'value' of +1
-                   // (in this case the "value" becomes an offset)
-                   // target can be any bundle with a refcount sub bundle - in the default case this would
-                   // be an object or an attribute / attribute group
-                   REF_REQUEST_HOOK,
+                   // target is transform "status", value is cancelled
+                   CANCEL_REQUEST_HOOK, // an input hook which can be called to cancel a running tx
+                   //
+                   // ask the transform to pause processing. May not happen immediately (or ever,
+                   // so add a callback
+                   // for the PAUSED hook)
+                   // will wait for all callbacks to return, and for unpause hook (if it exists) to be called
+                   // target is transform "status", value is pausedd
+                   PAUSE_REQUEST_HOOK,
 
-                   // request the objec decrement the refcount by 1. The caller must previosly have added a ref
-                   // (the deafult automation will add a single value with owner object UID
-                   // obejct threads should remove 1 ref and if the refcount goes below zero, abort the tx
-                   // deliver the instance or attribute to the bundle recycler and withdraw from the instance
-                   // equivalent to request_update on the bundle;s REFECOUNT.REFCOUNT and a target
-                   // 'value' of -1
-                   // (in this case the "value" becomes an offset)
-                   UNREF_REQUEST_HOOK,
+                   // if this hook exists, then to unpause a paused transform this must be called
+                   // and all paused
+                   // callbacks must have returned (may be called before the functions return)
+                   // after this, the unpaused callbacks will be called and processing will only continue
+                   // once all of those have returned. Calling this  when the tx is not paused or
+                   // running unpaused
+                   // hooks will have no effect
+                   // target is transform "status", value is resuming
+                   RESUME_REQUEST_HOOK, //61
 
                    // normally, sub bundles cannot be reparented from one bundle to another;
                    // UNLESS they are contained in attribute owned by the caller
@@ -2068,24 +2066,6 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // target is local attribute "value", value is NULL
                    SUBSTITUTE_REQUEST_HOOK,
                    //
-                   // target is transform "status", value is cancelled
-                   CANCEL_REQUEST_HOOK, // an input hook which can be called to cancel a running tx
-                   //
-                   // ask the transform to pause processing. May not happen immediately (or ever,
-                   // so add a callback
-                   // for the PAUSED hook)
-                   // will wait for all callbacks to return, and for unpause hook (if it exists) to be called
-                   // target is transform "status", value is pausedd
-                   PAUSE_REQUEST_HOOK,
-                   // if this hook exists, then to unpause a paused transform this must be called
-                   // and all paused
-                   // callbacks must have returned (may be called before the functions return)
-                   // after this, the unpaused callbacks will be called and processing will only continue
-                   // once all of those have returned. Calling this  when the tx is not paused or
-                   // running unpaused
-                   // hooks will have no effect
-                   // target is transform "status", value is resuming
-                   RESUME_REQUEST_HOOK, //61
                    //
                    // hooks reserved for internal use by instances
                    INTERNAL_HOOK_0,
@@ -2102,6 +2082,22 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 // callback stack. Setting this ensures that it is removed after the first call, even if
 // true is returned
 #define HOOK_CB_FLAG_ONE_SHOT			(1 << 1)
+
+// abstraction levels - these may be used to denote the level that some fucntion operates at
+
+NIRVA_ENUM(
+	   NIRVA_ABSTRACTION_DATA_NODES, // level dealing with individual pieces of data: naem, type, value, array_size
+	   NIRVA_ABSTRACTION_STRANDS, // data plus and abstract definition (strand_def in blueprint)
+	   NIRVA_ABSTRACTION_BUNDLES, // grouping of strands, defined in a blueprint
+	   NIRVA_ABSTRACTION_BUNDLE_TYPES, // differentiation of bundles, assignment to specific roles
+	   NIRVA_ABSTRACTION_OPERATIONAL, // hook triggers and callbacks, attributes, functional threads
+	   NIRVA_ABSTRACTION_TRAJECTORY, // abstract thread instances, states, segments, differentiation of hook types
+	   NIRVA_ABSTRACTION_TRANSFORMS, // input data, output data, transform results, specific for intent / caps
+	   NIRVA_ABSTRACTION_CONTRACTS, // linking of intentcaps to specific transforms, requirements, negotiation
+	   NIRVA_ABSTRACTION_INTENTCAPS, // level dealing with intentcaps, mapping of these to contracts or sequences
+	   NIRVA_ABSTRACTION_APPLICATION, // a mechanism for satisfying intentcaps, includes standalone and plugin extensions
+	   NIRVA_ABSTRACTION_UNIVERSE // the entire set of known applications / plugins
+	   )	     
 
 //#define NIRVA_BUNDLE_TYPE bundle_type
 #define NIRVA_BUNDLE_TYPE NIRVA_UINT64
@@ -2147,13 +2143,12 @@ NIRVA_TYPEDEF(NIRVA_STRING_ARRAY, NIRVA_BUNDLEDEF)
     BDEF_DEF_(STRAND_DEF, pre, extra) BDEF_DEF_(VALUE, pre, extra)	\
     BDEF_DEF_(BLUEPRINT, pre, extra) BDEF_DEF_(VALUE_CHANGE, pre, extra) \
     BDEF_DEF_(ATTR_DEF, pre, extra) BDEF_DEF_(SEGMENT, pre, extra)	\
-    BDEF_DEF_(REFCOUNTER, pre, extra)	BDEF_DEF_(ATTRIBUTE, pre, extra) \
-    BDEF_DEF_(FUNCTIONAL, pre, extra)	BDEF_DEF_(ATTR_MAP, pre, extra) \
+    BDEF_DEF_(REFCOUNTER, pre, extra) BDEF_DEF_(ATTRIBUTE, pre, extra)	\
+    BDEF_DEF_(FUNCTIONAL, pre, extra) BDEF_DEF_(ATTR_MAP, pre, extra)	\
     BDEF_DEF_(ATTR_CONNECTION, pre, extra) BDEF_DEF_(EMISSION, pre, extra) \
-    BDEF_DEF_(REQUEST, pre, extra) BDEF_DEF_(ATTR_GROUP, pre, extra)	\
+    BDEF_DEF_(ATTR_GROUP, pre, extra) BDEF_DEF_(CAPS, pre, extra)	\
     BDEF_DEF_(INDEX, pre, extra) BDEF_DEF_(SCRIPTLET_HOLDER, pre, extra) \
     BDEF_DEF_(ERROR, pre, extra) BDEF_DEF_(ICAP, pre, extra)		\
-    BDEF_DEF_(CAPS, pre, extra)						\
     BDEF_DEF_(HOOK_DETAILS, pre, extra) BDEF_DEF_(HOOK_STACK, pre, extra) \
     BDEF_DEF_(HOOK_CB_FUNC, pre, extra) BDEF_DEF_(LOCATOR, pre, extra)	\
     BDEF_DEF_(OBJECT_TEMPLATE, pre, extra) BDEF_DEF_(OBJECT_INSTANCE, pre, extra) \

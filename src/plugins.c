@@ -2675,6 +2675,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
   // when reloading clips we try the decoder which last opened them first, otherwise they could get picked up by another
   // decoder and the frames could come out different
 
+  lives_proc_thread_t defer_sigint_lpt;
   lives_decoder_t *dplug = NULL;
   pthread_mutexattr_t mattr;
   lives_clip_data_t *cdata = NULL;
@@ -2704,8 +2705,8 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
 
     ////////////
     mainw->crash_possible = 16;
-    lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0,
-                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+    defer_sigint_lpt = lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0,
+					 defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
     set_signal_handlers((SignalHandlerPointer)defer_sigint);
 
@@ -2714,8 +2715,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
     cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
     ////
 
-    lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK,
-                      defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+    lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, defer_sigint_lpt);
 
     set_signal_handlers((SignalHandlerPointer)catch_sigint);
     mainw->crash_possible = 0;
@@ -2854,7 +2854,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, const lives_clip_data_t *
   }
 
   dplug = (lives_decoder_t *)lives_proc_thread_join_voidptr(info);
-  lives_proc_thread_free(info);
+  lives_proc_thread_unref(info);
 
   if (xdisabled) lives_list_free(xdisabled);
 

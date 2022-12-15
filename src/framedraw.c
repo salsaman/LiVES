@@ -699,7 +699,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   if (mainw->cancelled) {
     if (cfile->pumper) {
-      lives_proc_thread_cancel(cfile->pumper, FALSE);
+      lives_proc_thread_request_cancel(cfile->pumper, FALSE);
       lives_proc_thread_join(cfile->pumper);
       cfile->pumper = NULL;
     }
@@ -725,7 +725,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     if (infofile) fclose(infofile);
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     if (cfile->pumper) {
-      lives_proc_thread_cancel(cfile->pumper, FALSE);
+      lives_proc_thread_request_cancel(cfile->pumper, FALSE);
       lives_proc_thread_join(cfile->pumper);
       cfile->pumper = NULL;
     }

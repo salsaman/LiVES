@@ -794,7 +794,7 @@ char *dir_to_pieces(const char *dirnm) {
 
 char *md5_print(void *md5sum) {
   char *cc = (char *)md5sum;
-  char *qq = "0x";
-  for (int i = 0; i < 16; i++) lives_strdup_concat(qq, "", "%02x", cc++);
+  char *qq = lives_strdup("0x");
+  for (int i = 0; i < 16; i++) qq = lives_strdup_concat(qq, "", "%02x", cc++);
   return qq;
 }

@@ -19923,18 +19923,19 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
     }
 
     event = event_list;
-    leaves = weed_plant_list_leaves(event, NULL);
-    tot += 4;
-    for (i = 0; leaves[i]; i++) {
-      tot += 4 * 3 + strlen(leaves[i]);
-      ne = weed_leaf_num_elements(event, leaves[i]);
-      st = weed_leaf_seed_type(event, leaves[i]);
-      // sum data_len + data
-      for (j = 0; j < ne; j++) tot += 4 + (st > 64 ? 8 : weed_leaf_element_size(event, leaves[i], j));
-      lives_free(leaves[i]);
+    if (event) {
+      leaves = weed_plant_list_leaves(event, NULL);
+      tot += 4;
+      for (i = 0; leaves[i]; i++) {
+	tot += 4 * 3 + strlen(leaves[i]);
+	ne = weed_leaf_num_elements(event, leaves[i]);
+	st = weed_leaf_seed_type(event, leaves[i]);
+	// sum data_len + data
+	for (j = 0; j < ne; j++) tot += 4 + (st > 64 ? 8 : weed_leaf_element_size(event, leaves[i], j));
+	lives_free(leaves[i]);
+      }
+      lives_free(leaves);
     }
-    lives_free(leaves);
-
     if (num_events) *num_events = tot_events;
     return tot;
   }

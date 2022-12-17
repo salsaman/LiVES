@@ -114,7 +114,7 @@ typedef struct {
   unsigned long funcid;
   char *detsig;
   lives_proc_thread_t proc;
-  lives_proc_thread_t del_cb, compl_cb;
+  lives_proc_thread_t compl_cb;
   lives_alarm_t alarm_handle;
   volatile boolean finished;
   volatile boolean destroyed;
@@ -162,9 +162,9 @@ void lives_threadpool_init(void);
 void lives_threadpool_finish(void);
 
 // lives_threads
-thrd_work_t *lives_thread_create(lives_thread_t *, lives_thread_attr_t attr, lives_thread_func_t func, void *arg);
-uint64_t lives_thread_done(lives_thread_t thread);
-uint64_t lives_thread_join(lives_thread_t work, void **retval);
+thrd_work_t *lives_thread_create(lives_thread_t **, lives_thread_attr_t attr, lives_thread_func_t func, void *arg);
+uint64_t lives_thread_done(lives_thread_t *thread);
+uint64_t lives_thread_join(lives_thread_t *thrd, void **retval);
 void lives_thread_free(lives_thread_t *thread);
 
 // thread functions
@@ -191,27 +191,24 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 // lives_proc_thread state flags
 #define THRD_STATE_NONE		0
 
-// LIFECYCLE - proc_threads created in state UNQUEUED,
-// will either be rteurned in this state if requested, or go to QUEUED or DEFERRED
-// if returned in state UNQUEUED or DEFERRED, can be queued with proc_thread_queue - again goes to ququeud or deferred
-// when a pool thread picks up the work, states goes to PREPARING, and if wait sync is set, then
-// will get state WAITING
-// state goes to running, then finished : note running continues even after finished
 #define THRD_STATE_UNQUEUED 	(1ull << 0)
 #define THRD_STATE_IDLING 	(1ull << 1) // for IDLEFUNCS, combined with unqueued implies the proc_thread can be requued
-#define THRD_STATE_QUEUED 	(1ull << 2)
-#define THRD_STATE_DEFERRED 	(1ull << 3) // will be run later due to resource limitations, wait and try requeuing
-#define THRD_STATE_PREPARING 	(1ull << 4)
-#define THRD_STATE_RUNNING 	(1ull << 5) // check for FINISHED or CANCELLED
-#define THRD_STATE_COMPLETED 	(1ull << 6) // done - will not be destroyed via lifecycle
-#define THRD_STATE_DESTROYED 	(1ull << 9) // proc_thread is about to be freed
+#define THRD_STATE_QUEUED 	(1ull << 2) // indicates the proc_thread is in the pool thread work queue
+#define THRD_STATE_DEFERRED 	(1ull << 3) // will be run later due to resource limitations
+#define THRD_STATE_STACKED 	(1ull << 4) // is held in a hook stack
+#define THRD_STATE_PREPARING 	(1ull << 5) // has been assigned from queue, but not yet running
+#define THRD_STATE_RUNNING 	(1ull << 6) // thread is processing
+#define THRD_STATE_COMPLETED 	(1ull << 7) // processing finished
+#define THRD_STATE_DESTROYED 	(1ull << 8) // proc_thread is about to be freed
 
 // temporary states
 #define THRD_STATE_BUSY 	(1ull << 16)
 // waiting for sync_ready
-#define THRD_STATE_WAITING 	(1ull << 17) // waiting for sync_ready() or mainw->clutch
+#define THRD_STATE_WAITING 	(1ull << 17) // waiting for sync_ready
 // blimit passed, blocked waiting in sync_point
 #define THRD_STATE_BLOCKED 	(1ull << 18)
+
+// requested states
 // request to pause - ignored for non pauseable threads
 #define THRD_STATE_PAUSE_REQUESTED 	(1ull << 19)
 // paused by request
@@ -221,7 +218,7 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 // request to pause - ignored for non pauseable threads
 #define THRD_STATE_CANCEL_REQUESTED 	(1ull << 22)
 // paused by request
-#define THRD_TRANSIENT_STATES	0x00000000FFFFFFFF
+#define THRD_TRANSIENT_STATES	0xFF
 
 // for proc_threads created with attr IDLEFUNC, after completing and returning TRUE
 // the proc_thread will be returned in state UNQUEUED | IDLING
@@ -264,6 +261,8 @@ funcsig_t lives_proc_thread_get_funcsig(lives_proc_thread_t lpt);
 uint64_t lives_proc_thread_get_state(lives_proc_thread_t lpt);
 uint64_t lives_proc_thread_check_states(lives_proc_thread_t lpt, uint64_t state_bits);
 uint64_t lives_proc_thread_has_states(lives_proc_thread_t lpt, uint64_t state_bits);
+
+#define GET_PROC_THREAD_SELF(self) lives_proc_thread_t self = THREADVAR(proc_thread);
 
 // because of hook triggers, there is no set_state, instead use lives_proc_thread_include_states(lives_proc_t
 // i.e.
@@ -404,6 +403,7 @@ boolean fg_run_func(lives_proc_thread_t lpt, void *rloc);
 
 int lives_proc_thread_ref(lives_proc_thread_t);
 boolean lives_proc_thread_unref(lives_proc_thread_t);
+int lives_proc_thread_count_refs(lives_proc_thread_t);
 
 boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr);
 
@@ -473,6 +473,8 @@ boolean thread_wait_loop(lives_proc_thread_t lpt, boolean full_sync, boolean wak
 
 // WARNING !! version without a return value will free lpt !
 void lives_proc_thread_join(lives_proc_thread_t);
+
+int lives_proc_thread_wait_done(lives_proc_thread_t lpt, double timeout);
 
 // with return value should free proc_thread
 int lives_proc_thread_join_int(lives_proc_thread_t);

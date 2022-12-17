@@ -1376,7 +1376,7 @@ static void *thread_process_func(void *arg) {
 static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timecode_t tc) {
   // split output(s) into horizontal slices
   struct _procvals *procvals;
-  lives_thread_t *dthreads = NULL;
+  lives_thread_t **dthreads = NULL;
   weed_plant_t **xinst = NULL;
   weed_plant_t **xchannels, *xchan;
   weed_plant_t *filter = weed_instance_get_filter(inst, FALSE);
@@ -1439,7 +1439,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
   procvals = (struct _procvals *)lives_calloc(to_use, sizeof(struct _procvals));
   procvals->ret = WEED_SUCCESS;
   xinst = (weed_plant_t **)lives_calloc(to_use, sizeof(weed_plant_t *));
-  dthreads = (lives_thread_t *)lives_calloc(to_use, sizeof(lives_thread_t));
+  dthreads = (lives_thread_t **)lives_calloc(to_use, sizeof(lives_thread_t *));
 
   for (i = 0; i < nchannels; i++) {
     heights[1] = height = weed_get_int_value(out_channels[i], WEED_LEAF_HEIGHT, NULL);

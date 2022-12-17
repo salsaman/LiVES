@@ -839,7 +839,7 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
         rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H * 2. * widget_opts.scale;
     else scrw = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
 
-    fx_dialog[didx] = (_fx_dialog *)lives_malloc(sizeof(_fx_dialog));
+    fx_dialog[didx] = (_fx_dialog *)lives_calloc(1, sizeof(_fx_dialog));
     fx_dialog[didx]->okbutton = fx_dialog[didx]->cancelbutton = fx_dialog[didx]->resetbutton = NULL;
     fx_dialog[didx]->rfx = NULL;
     fx_dialog[didx]->key = fx_dialog[didx]->mode = -1;
@@ -2163,7 +2163,7 @@ LiVESWidget *add_param_label_to_box(LiVESBox * box, boolean do_trans, const char
 
 
 LiVESSList *add_usrgrp_to_livesgrp(LiVESSList * u2l, LiVESSList * rbgroup, int usr_number) {
-  lives_widget_group_t *wgroup = (lives_widget_group_t *)lives_malloc(sizeof(lives_widget_group_t));
+  lives_widget_group_t *wgroup = (lives_widget_group_t *)lives_calloc(1, sizeof(lives_widget_group_t));
   wgroup->usr_number = usr_number;
   wgroup->rbgroup = rbgroup;
   wgroup->active_param = 0;
@@ -3426,7 +3426,7 @@ char **param_marshall_to_argv(lives_rfx_t *rfx) {
 
   lives_colRGB48_t rgb;
 
-  char **argv = (char **)lives_malloc((rfx->num_params + 1) * (sizeof(char *)));
+  char **argv = (char **)lives_calloc((rfx->num_params + 1), (sizeof(char *)));
 
   char *tmp;
 

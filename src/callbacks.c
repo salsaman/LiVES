@@ -9448,7 +9448,7 @@ boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livesp
 
 
 /// generic func. to create surfaces
-boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
+static boolean _all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
   lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
   static boolean no_recurse = FALSE;
   if (mainw->no_configs) return TRUE;
@@ -9500,6 +9500,13 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
     }
   }
   return FALSE;
+}
+
+
+boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
+  boolean bret;
+  main_thread_execute(_all_config, WEED_SEED_BOOLEAN, &bret, "vvv", widget, event, ppsurf);
+  return bret;
 }
 
 
@@ -9800,7 +9807,9 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     //resize(1);
 
     // play the clip
-    on_playsel_activate(NULL, LIVES_INT_TO_POINTER(TRUE));
+    //on_playsel_activate(NULL, LIVES_INT_TO_POINTER(1));
+
+    on_playsel_activate(NULL, LIVES_INT_TO_POINTER(0));
 
     if (current_file != mainw->current_file) {
       if (mainw->is_rendering) {

@@ -1131,7 +1131,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
         saveargs->height = sfile->vsize;
         saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
       } else {
-        lives_thread_join(*saver_thread, NULL);
+        lives_thread_join(saver_thread, NULL);
         while (saveargs->error || THREADVAR(write_failed)) {
           THREADVAR(write_failed) = 0;
           check_storage_space(-1, TRUE);
@@ -1176,10 +1176,10 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
       saveargs->fname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
       if (intimg) {
         saveargs->layer = layer;
-        lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
+        lives_thread_create(&saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
       } else {
         saveargs->pixbuf = pixbuf;
-        lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs);
+        lives_thread_create(&saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs);
       }
 
       if (++count == STRG_CHECK) {
@@ -1206,7 +1206,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
   pthread_mutex_unlock(&sfile->frame_index_mutex);
 
   if (saver_thread) {
-    lives_thread_join(*saver_thread, NULL);
+    lives_thread_join(saver_thread, NULL);
     if (intimg) {
       if (saveargs->layer != layer)
         weed_layer_free(saveargs->layer);

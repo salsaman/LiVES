@@ -3606,17 +3606,19 @@ void threaded_dialog_auto_spin(void) {
   if (!is_fg_thread()) {
     main_thread_execute_rvoid_pvoid(threaded_dialog_auto_spin);
   }
-  mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                           (lives_funcptr_t)_thdlg_auto_spin, 0, "", NULL);
+  else {
+    mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
+						      (lives_funcptr_t)_thdlg_auto_spin, -1, "", NULL);
+  }
 }
 
 
 void threaded_dialog_stop_spin(void) {
-  if (mainw->dlg_spin_thread  && is_fg_thread()) {
-    if (!lives_proc_thread_get_cancel_requested(mainw->dlg_spin_thread)) {
-      while (fg_service_fulfill()) lives_widget_context_update();
-      lives_nanosleep(1000);
-    }
+  if (mainw->dlg_spin_thread && is_fg_thread()) {
+    lives_proc_thread_request_cancel(mainw->dlg_spin_thread, FALSE);
+    lives_proc_thread_wait_done(mainw->dlg_spin_thread, 0);
+    lives_proc_thread_join(mainw->dlg_spin_thread);
+    mainw->dlg_spin_thread = NULL;
   }
 }
 

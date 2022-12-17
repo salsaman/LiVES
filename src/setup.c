@@ -499,6 +499,7 @@ boolean do_workdir_query(void) {
                == LIVES_RESPONSE_RETRY));
 
   lives_widget_destroy(wizard->dialog);
+  lives_freep((void **)&wizard);
 
   mp = get_mountpoint_for(dirname);
   if (lives_strcmp(mp, capable->mountpoint) || !strcmp(mp, "??????")) {
@@ -508,9 +509,6 @@ boolean do_workdir_query(void) {
     if (capable->mountpoint) lives_free(capable->mountpoint);
     capable->mountpoint = mp;
   }
-
-  lives_widget_destroy(wizard->dialog);
-  lives_freep((void **)&wizard);
 
   if (mainw->splash_window) lives_widget_show(mainw->splash_window);
 

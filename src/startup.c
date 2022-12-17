@@ -776,7 +776,7 @@ static boolean pre_init(void) {
   prefs->autotrans_amt = -1.;
 
   info_only = FALSE;
-  palette = (_palette *)(lives_malloc(sizeof(_palette)));
+  palette = (_palette *)(lives_calloc(1, sizeof(_palette)));
 
   prefs->sepwin_type = future_prefs->sepwin_type = get_int_prefd(PREF_SEPWIN_TYPE, SEPWIN_TYPE_STICKY);
 
@@ -2025,7 +2025,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   }
 
 #if !USE_STD_MEMFUNCS
-#if USE_RPMALLOCx
+#if USE_RPMALLOC
   libweed_set_memory_funcs(rpmalloc, rpfree);
 #else
 #ifndef DISABLE_GSLICE
@@ -3117,7 +3117,7 @@ static boolean lives_init(_ign_opts * ign_opts) {
   mainw->sepwin_minheight = PREVIEW_BOX_HT;
 
   mainw->n_screen_areas = SCREEN_AREA_USER_DEFINED1;
-  mainw->screen_areas = (lives_screen_area_t *)lives_malloc(mainw->n_screen_areas * sizeof(lives_screen_area_t));
+  mainw->screen_areas = (lives_screen_area_t *)lives_calloc(mainw->n_screen_areas, sizeof(lives_screen_area_t));
   mainw->screen_areas[SCREEN_AREA_FOREGROUND].name = (_("Foreground"));
   mainw->screen_areas[SCREEN_AREA_BACKGROUND].name = (_("Background"));
 

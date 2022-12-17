@@ -23,9 +23,8 @@
 #include "resample.h"
 #include "clip_load_save.h"
 
-static boolean _start_playback(livespointer data) {
+static boolean _start_playback(int play_type) {
   int new_file, old_file;
-  int play_type = LIVES_POINTER_TO_INT(data);
   if (play_type != 8 && mainw->noswitch) return TRUE;
   player_desensitize();
 
@@ -98,6 +97,7 @@ static boolean _start_playback(livespointer data) {
     player_sensitize();
     break;
   }
+  if (mainw->player_proc) lives_proc_thread_unref(mainw->player_proc);
   return FALSE;
 }
 
@@ -106,7 +106,7 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
   if (!is_fg_thread()) {
     mainw->player_proc = THREADVAR(proc_thread);
     break_me("PPROC1");
-    return _start_playback(LIVES_INT_TO_POINTER(type));
+    return _start_playback(type);
   }
   start_playback_async(type);
   return FALSE;
@@ -117,11 +117,12 @@ void start_playback_async(int type) {
   lives_sigdata_t *sigdata;
   mainw->player_proc = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
 						_start_playback, WEED_SEED_BOOLEAN,
-						"v", LIVES_INT_TO_POINTER(type));
+						"i", type);
   lives_proc_thread_nullify_on_destruction(mainw->player_proc, (void **)&(mainw->player_proc));
 
   // ask the main thread to concentrate on service GUI requests from a specific proc_thread
   sigdata = lives_sigdata_new(mainw->player_proc, FALSE);
+  //sigdata->is_timer = TRUE;
   governor_loop(sigdata);
 }
 
@@ -1352,7 +1353,9 @@ void play_file(void) {
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
             // need to recheck mainw->play_window after this
             lives_widget_show_all(mainw->preview_box);
+
             lives_widget_grab_focus(mainw->preview_spinbutton);
+
             lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
             if (mainw->play_window) {
               lives_widget_process_updates(mainw->play_window);

@@ -4446,7 +4446,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
         }
       } else {
-        lives_thread_join(*saver_thread, NULL);
+        lives_thread_join(saver_thread, NULL);
         while (saveargs->error || THREADVAR(write_failed)) {
           if (saveargs->error) {
             retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);
@@ -4488,10 +4488,10 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
         if (intimg) {
           saveargs->layer = layer;
-          lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
+          lives_thread_create(&saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
         } else {
           saveargs->pixbuf = pixbuf;
-          lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs);
+          lives_thread_create(&saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs);
         }
       }
 #endif
@@ -4722,7 +4722,7 @@ filterinit2:
     /// no more events or audio to flush, rendering complete
 #ifdef SAVE_THREAD
     if (saver_thread) {
-      lives_thread_join(*saver_thread, NULL);
+      lives_thread_join(saver_thread, NULL);
       while (saveargs->error) {
         retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);
         lives_error_free(saveargs->error);

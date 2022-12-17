@@ -584,16 +584,11 @@ void procw_desensitize(void) {
 
 void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
                                   lives_painter_surface_t *surface) {
-  LiVESXWindow *xwin;
-  lives_rect_t update_rect;
   lives_painter_t *cr;
   int cx, cy;
   int rwidth, rheight, width, height, owidth, oheight;
 
   if (!surface || !widget) return;
-
-  xwin = lives_widget_get_xwindow(widget);
-  if (!LIVES_IS_XWINDOW(xwin)) return;
 
   lives_painter_surface_flush(surface);
 
@@ -690,16 +685,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   lives_painter_fill(cr);
   lives_painter_destroy(cr);
 
-  if (widget == mainw->play_window && rheight > mainw->pheight) rheight = mainw->pheight;
-
-  update_rect.x = update_rect.y = 0;
-  update_rect.width = rwidth;
-  update_rect.height = rheight;
-
   cairo_surface_mark_dirty(surface);
-
-  if (!LIVES_IS_XWINDOW(xwin)) return;
-  //lives_xwindow_invalidate_rect(xwin, &update_rect, FALSE);
 }
 
 

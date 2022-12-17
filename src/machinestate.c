@@ -913,6 +913,7 @@ LiVESList *check_for_subdirs(const char *dirname, LiVESList * subdirs) {
 
         // get next level of subdirs
         xxdirname = lives_build_path(xdirname, xtdirent->d_name, NULL);
+
         if (xdirname != dirname) lives_free(xdirname);
         xdirname = xxdirname;
         xsubdir = opendir(xdirname);
@@ -921,8 +922,9 @@ LiVESList *check_for_subdirs(const char *dirname, LiVESList * subdirs) {
           if (!lives_strcmp(array[part], xtdirent->d_name)) break;
         }
 
-        closedir(xsubdir);
         if (xtdirent) continue;
+        closedir(xsubdir);
+
         lives_strfreev(array);
         if (xdirname != dirname) lives_free(xdirname);
         break; // no match for array[part]
@@ -1948,7 +1950,7 @@ void rec_desk(void *args) {
     fps_alarm = lives_alarm_set(TICKS_PER_SECOND_DBL / recargs->fps);
 
     if (saver_thread) {
-      lives_thread_join(*saver_thread, NULL);
+      lives_thread_join(saver_thread, NULL);
       if (saveargs->error
 	  || ((recargs->rec_time && !lives_alarm_check(alarm_handle))
 	      || (lpt && lives_proc_thread_get_cancel_requested(lpt)))) {
@@ -1956,7 +1958,6 @@ void rec_desk(void *args) {
 	break;
       }
     }
-    else saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
 
     tc = lives_get_current_ticks();
     layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
@@ -2011,7 +2012,7 @@ void rec_desk(void *args) {
     if (saveargs->fname) lives_free(saveargs->fname);
     saveargs->fname = imname;
 
-    lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
+    lives_thread_create(&saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
 
     // TODO - check for timeout / cancel here too
     lives_nanosleep_until_zero(lives_alarm_check(fps_alarm) && (!recargs->rec_time || lives_alarm_check(alarm_handle))
@@ -2030,7 +2031,7 @@ void rec_desk(void *args) {
   mainw->ext_layer = NULL;
 #endif
 
-  if (saver_thread) lives_free(saver_thread);
+  if (saver_thread) lives_thread_join(saver_thread, NULL);
 
   if (saveargs) {
     if (saveargs->layer) weed_layer_unref(saveargs->layer);

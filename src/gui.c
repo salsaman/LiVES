@@ -3582,9 +3582,9 @@ void detach_accels(boolean connect) {
       lives_widget_add_accelerator(mainw->record_perf, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                    LIVES_KEY_r, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
 
-      lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), fullscreen_closure);
-      lives_widget_add_accelerator(mainw->full_screen, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                   LIVES_KEY_f, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
+      /* lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), fullscreen_closure); */
+      /* lives_widget_add_accelerator(mainw->full_screen, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */
+      /*                              LIVES_KEY_f, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
 
       /* lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), play_closure); */
       /* lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, */

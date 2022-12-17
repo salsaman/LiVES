@@ -2646,7 +2646,7 @@ static void convert_yuv888_to_rgb_frame(uint8_t *src, int hsize, int vsize, int 
 
   if (thread_id == -1) {
     if (prefs->nfx_threads > 1) {
-      lives_thread_t threads[prefs->nfx_threads];
+      lives_thread_t *threads[prefs->nfx_threads];
       uint8_t *end = src + vsize * irowstride;
       int nthreads = 1;
       int dheight, xdheight;
@@ -2731,7 +2731,7 @@ static void convert_yuva8888_to_rgba_frame(uint8_t *src, int hsize, int vsize, i
 #endif
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     uint8_t *end = src + vsize * irowstride;
     int nthreads = 1;
     int dheight, xdheight;
@@ -2814,7 +2814,7 @@ static void convert_yuv888_to_bgr_frame(uint8_t *src, int hsize, int vsize, int 
 #endif
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     uint8_t *end = src + vsize * irowstride;
     int nthreads = 1;
     int dheight, xdheight;
@@ -2898,7 +2898,7 @@ static void convert_yuva8888_to_bgra_frame(uint8_t *src, int hsize, int vsize, i
 #endif
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     uint8_t *end = src + vsize * irowstride;
     int nthreads = 1;
     int dheight, xdheight;
@@ -2981,7 +2981,7 @@ static void convert_yuv888_to_argb_frame(uint8_t *src, int hsize, int vsize, int
 #endif
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     uint8_t *end = src + vsize * irowstride;
     int nthreads = 1;
     int dheight, xdheight;
@@ -3063,7 +3063,7 @@ static void convert_yuva8888_to_argb_frame(uint8_t *src, int hsize, int vsize, i
 #endif
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     uint8_t *end = src + vsize * irowstride;
     int nthreads = 1;
     int dheight, xdheight;
@@ -3156,7 +3156,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **LIVES_RESTRICT src, int width
 
   if (thread_id == -1) {
     if (prefs->nfx_threads > 1) {
-      lives_thread_t threads[prefs->nfx_threads];
+      lives_thread_t *threads[prefs->nfx_threads];
       uint8_t *end = src[0] + height * istrides[0];
       int nthreads = 1;
       int dheight, xdheight;
@@ -3333,7 +3333,7 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **LIVES_RESTRICT src, int width
 
   if (thread_id == -1) {
     if (prefs->nfx_threads > 1) {
-      lives_thread_t threads[prefs->nfx_threads];
+      lives_thread_t *threads[prefs->nfx_threads];
       uint8_t *end = src[0] + height * istrides[0];
       int nthreads = 1;
       int dheight, xdheight;
@@ -3512,7 +3512,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **LIVES_RESTRICT src, int widt
 
   if (thread_id == -1) {
     if (prefs->nfx_threads > 1) {
-      lives_thread_t threads[prefs->nfx_threads];
+      lives_thread_t *threads[prefs->nfx_threads];
       uint8_t *end = src[0] + height * istrides[0];
       int nthreads = 1;
       int dheight, xdheight;
@@ -3737,7 +3737,7 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
   end = rgbdata + rowstride * vsize;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -3836,7 +3836,7 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 #endif
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -3934,7 +3934,7 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
 #endif
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -4028,7 +4028,7 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
     set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -4120,7 +4120,7 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
   hsize = (hsize >> 1) << 1;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -4204,7 +4204,7 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
   hsize = (hsize >> 1) << 1;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -4285,7 +4285,7 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
     set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -4376,7 +4376,7 @@ static void convert_rgb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
   if (out_has_alpha) a = yuvp[3];
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -4468,7 +4468,7 @@ static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
     set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -4557,7 +4557,7 @@ static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
   if (out_has_alpha) a = yuvp[3];
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -4648,7 +4648,7 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
     set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -4735,7 +4735,7 @@ static void convert_argb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, i
   if (out_has_alpha) a = yuvp[3];
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -5185,7 +5185,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
     set_conversion_arrays(clamping, subspace);
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -5271,7 +5271,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
     set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -5353,7 +5353,7 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
     set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -5428,7 +5428,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
     set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -5510,7 +5510,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
     set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -5592,7 +5592,7 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
     set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -5770,7 +5770,7 @@ static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height
   if (in_alpha) a = src[3];
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -5870,7 +5870,7 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
   if (in_alpha) a = src[3];
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -5968,7 +5968,7 @@ static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int heigh
   if (in_alpha) a = src[3];
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -7800,7 +7800,7 @@ static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstr
   register int i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -7918,7 +7918,7 @@ static void convert_swap4_frame(uint8_t *src, int width, int height, int irowstr
   register int i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -8012,7 +8012,7 @@ static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int 
   int i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -8089,7 +8089,7 @@ static void convert_swap3addpre_frame(uint8_t *src, int width, int height, int i
   register int i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -8166,7 +8166,7 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
   register int i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -8230,7 +8230,7 @@ static void convert_swap3prealpha_frame(uint8_t *src, int width, int height, int
   register int i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -8294,7 +8294,7 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
   int i, end = height * irowstride, j = 0;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     uint8_t *end = src + height * irowstride;
     int nthreads = 1;
     int dheight, xdheight;
@@ -8390,7 +8390,7 @@ static void convert_addpre_frame(uint8_t *src, int width, int height, int irowst
   register int i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -8466,7 +8466,7 @@ static void convert_swap3delpost_frame(uint8_t *src, int width, int height, int 
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
     uint8_t *end = src + height * irowstride;
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -8541,7 +8541,7 @@ static void convert_delpost_frame(uint8_t *src, int width, int height, int irows
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
     uint8_t *end = src + height * irowstride;
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -8634,7 +8634,7 @@ static void convert_delpre_frame(uint8_t *src, int width, int height, int irowst
   register int i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -8710,7 +8710,7 @@ static void convert_swap3delpre_frame(uint8_t *src, int width, int height, int i
   register int i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -8787,7 +8787,7 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
   register int i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -8890,7 +8890,7 @@ static void convert_swab_frame(uint8_t *src, int width, int height, int irow, in
   uint8_t *end = src + height * irow;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -12375,7 +12375,7 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *laye
       //g_print("gam from %d to %d with fileg %f\n", lgamma_type, gamma_type, fileg);
       if (gamma_type == lgamma_type && fileg == 1.0) return TRUE;
       else {
-        lives_thread_t threads[prefs->nfx_threads];
+        lives_thread_t *threads[prefs->nfx_threads];
         int nfx_threads = may_thread ? prefs->nfx_threads : 1;
         uint8_t *pixels = weed_layer_get_pixel_data(layer);
         uint8_t *gamma_lut;
@@ -12944,7 +12944,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     int offset;
 #if USE_THREADS
     lives_sw_params *swparams;
-    lives_thread_t threads[prefs->nfx_threads];
+    lives_thread_t *threads[prefs->nfx_threads];
     int nthrds = 1;
 #else
     struct SwsContext *swscale;
@@ -12952,6 +12952,10 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     int subspace = WEED_YUV_SUBSPACE_YUV;
     int inplanes, oplanes;
 
+#if USE_THREADS
+    g_print("INIT %d threads\n", prefs->nfx_threads);
+    for (int i = 0; i < prefs->nfx_threads; threads[i++] = NULL);
+#endif    
     /// old layer will hold a ref to the original pixel_data. We will free it at the end since the pixel_data
     /// of layer will be recreated when we calll create_empty_pixel_data()
 
@@ -13087,6 +13091,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
                             subspace, iclamping, oclamp_hint);
     offset = ctxblock->offset;
 
+    g_print("NTRHRDS is %d\n", nthrds);
     for (int sl = 0; sl < nthrds; sl++) {
       swparams[sl].thread_id = sl;
       swparams[sl].iheight = iheight;
@@ -13133,6 +13138,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         swparams[sl].irw = irw;
         swparams[sl].orw = orw;
         if (sl < nthrds - 1) {
+	  g_print("CREATE thrd %d\n", sl);
           lives_thread_create(&threads[sl], LIVES_THRDATTR_NONE,
                               swscale_threadfunc, &swparams[sl]);
         } else swscale_threadfunc(&swparams[sl]);
@@ -13140,11 +13146,12 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     }
     iheight = height;
 
-    for (int sl = 0; sl < nthrds - 1; sl++) {
+    height = 0;
+
+    for (int sl = 0; sl < nthrds; sl++) {
       if (swparams[sl].swscale) {
-	////
-        lives_thread_join(threads[sl], NULL);
-	///
+	g_print("JOINE thrd %d\n", sl);
+        if (sl < nthrds - 1) lives_thread_join(threads[sl], NULL);
         height += swparams[sl].ret;
       } else height += iheight;
     }

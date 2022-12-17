@@ -661,21 +661,28 @@ boolean load_frame_image(frames_t frame) {
 recheck:
 
         if (!mainw->multitrack) {
-          mainw->num_tracks = 1;
-          mainw->active_track_list[0] = mainw->playing_file;
-          mainw->clip_index[0] = mainw->playing_file;
-          mainw->frame_index[0] = mainw->actual_frame;
-
-          if (mainw->num_tr_applied && IS_VALID_CLIP(mainw->blend_file)) {
-            mainw->num_tracks = 2;
-            mainw->active_track_list[1] = mainw->blend_file;
-            mainw->clip_index[1] = mainw->blend_file;
-            mainw->frame_index[1] = mainw->files[mainw->blend_file]->frameno;;
-          }
-        }
-        if (rndr) {
-          layers =
-            (weed_layer_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_layer_t *));
+	  lives_freep((void **)&mainw->clip_index);
+	  lives_freep((void **)&mainw->frame_index);
+	  if (mainw->num_tr_applied && IS_VALID_CLIP(mainw->blend_file)) {
+	    mainw->num_tracks = 2;
+	    mainw->clip_index = (int *)lives_calloc(2, sizint);
+	    mainw->frame_index = (frames64_t *)lives_calloc(2, sizeof(frames64_t));
+	    mainw->active_track_list[1] = mainw->blend_file;
+	    mainw->clip_index[1] = mainw->blend_file;
+	    mainw->frame_index[1] = mainw->files[mainw->blend_file]->frameno;;
+	  }
+	  else {
+	    mainw->num_tracks = 1;
+	    mainw->clip_index = (int *)lives_calloc(1, sizint);
+	    mainw->frame_index = (frames64_t *)lives_calloc(1, sizeof(frames64_t));
+	  }
+	  mainw->active_track_list[0] = mainw->playing_file;
+	  mainw->clip_index[0] = mainw->playing_file;
+	  mainw->frame_index[0] = mainw->actual_frame;
+	}
+	if (rndr) {
+	  layers =
+		(weed_layer_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_layer_t *));
           // get list of active tracks from mainw->filter map
           if (mainw->multitrack)
             get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);
@@ -2427,13 +2434,7 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
 
 // player will create this as 
 static boolean update_gui(void) {
-  static lives_proc_thread_t lpt = NULL;
-  if (!lpt) {
-    lpt = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_START_UNQUEUED,
-				   lives_widget_context_update, 0, "", NULL);
-  }
-  fg_service_call(lpt, NULL);
-  g_print("upd gui !!!\n");
+  lives_widget_context_update();
   return TRUE;
 }
 
@@ -3751,21 +3752,20 @@ proc_dialog:
       // the audio thread wants to update the parameter scroll(s)
       if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
-      //if (mainw->currticks - last_anim_ticks > ANIM_LIM || mainw->currticks < last_anim_ticks) {
-      // a segfault here can indicate memory corruption in an FX plugin
-      //last_anim_ticks = mainw->currticks;
-      if (!gui_lpt)  gui_lpt = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC, update_gui, WEED_SEED_BOOLEAN, 0, NULL);
+      /* if (mainw->currticks - last_anim_ticks > ANIM_LIM || mainw->currticks < last_anim_ticks) { */
+      /* 	//a segfault here can indicate memory corruption in an FX plugin */
+      /* 	last_anim_ticks = mainw->currticks; */
+      /* 	lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK); */
+      /* 	lives_widget_context_update(); */
+      /* } */
+
+      if (!gui_lpt)  gui_lpt = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC,
+							update_gui, WEED_SEED_BOOLEAN, 0, NULL);
       else {
-	if (lives_proc_thread_is_idling(gui_lpt)) {
+      	if (lives_proc_thread_is_idling(gui_lpt)) {
 	  lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
-	  g_print("pt zz1\n");
-	  lives_proc_thread_queue(gui_lpt, 0);
-	  g_print("pt zz2\n");
-	}
-	//}
-	g_print("gui_lpt state %lu\n", lives_proc_thread_get_state(gui_lpt));
-	//fg_service_call(closure->tinfo, closure->retloc);
-	//lives_widget_context_update();
+      	  lives_proc_thread_queue(gui_lpt, 0);
+      	}
       }
 
       //#define LOAD_ANALYSE_TICKS MILLIONS(10)

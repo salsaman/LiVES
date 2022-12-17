@@ -632,8 +632,8 @@ LIVES_GLOBAL_INLINE void *lives_recalloc(void *op, size_t nmemb, size_t omemb, s
     if (op && omemb > 0) {
       if (omemb > nmemb) omemb = nmemb;
       lives_memcpy(np, op, omemb * xsize);
+      lives_free(op);
     }
-    if (op) lives_free(op);
     return np;
   } while (FALSE);
 }

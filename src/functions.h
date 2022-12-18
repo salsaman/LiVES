@@ -186,7 +186,7 @@ h  GEN_SET(thing, wret, funcname, ARGS7((thing), t1, t2, t3, t4, t5, t6, t7))
 #define FUNCSIG_PLANTP_INT_INT_INT_INT					0X000E1111
 // 6p
 #define FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP		       	0X0044D14D
-#define FUNCSIG_PLANTP_INT_INT_INT_INT_INT	       			0X00E11111 
+#define FUNCSIG_PLANTP_INT_INT_INT_INT_INT	       			0X00E11111
 // 8p
 #define FUNCSIG_PLANTP_INT_INT_INT_INT_INT_INT_INT     			0XE1111111
 #define FUNCSIG_INT_DOUBLE_PLANTP_INT_INT_INT_INT_BOOL			0X12E11113
@@ -374,7 +374,7 @@ typedef uint64_t funcsig_t;
 // then run this callback - this is designed for functions which
 // functions which free the data, - preventing any older callbacks from trying to access older data
 // - callbacks marked as BLOCK will be replaced by this one
-#define HOOK_INVALIDATE_DATA		((1ull << 18) | HOOK_CB_PRIORITY | HOOK_CB_BLOCK) 
+#define HOOK_INVALIDATE_DATA		((1ull << 18) | HOOK_CB_PRIORITY | HOOK_CB_BLOCK)
 
 ///////////////////
 
@@ -387,7 +387,7 @@ typedef uint64_t funcsig_t;
 
 #define HOOK_STATUS_REMOVE			(1ull << 28) // hook was 'removed' whilst running, delay removal until return
 
- // test uniquenes conditions to see if we can add, but do not add, remove or replace anything
+// test uniquenes conditions to see if we can add, but do not add, remove or replace anything
 #define HOOK_CB_TEST_ADD			(1ull << 30)
 
 // values higher than this are reserved for closure flags
@@ -407,7 +407,7 @@ typedef struct {
   uint32_t return_type;
   // these are equivalent, but we add both for convenience
   const char *args_fmt;
-  funcsig_t funcsig; // 
+  funcsig_t funcsig; //
   // locator
   const char *file;
   int line;
@@ -422,7 +422,7 @@ typedef struct {
 // alternately, we can create a lpt from function args
 // finally, we can create an unqueued lpt directly, then include this
 //
-// 
+//
 typedef struct {
   // proc_thread intially in unqueued state - either supplied directly
   // or created from param args / hook_type
@@ -550,7 +550,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hooks, int type);
 void lives_hooks_trigger_async(lives_hook_stack_t **hooks, int type);
 
 lives_proc_thread_t lives_hooks_trigger_async_sequential(lives_proc_thread_t lpt, lives_hook_stack_t **hstacks, int type,
-							 hook_funcptr_t finfunc, void *findata);
+    hook_funcptr_t finfunc, void *findata);
 
 void lives_hooks_join(lives_hook_stack_t *);
 

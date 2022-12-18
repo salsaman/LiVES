@@ -2015,7 +2015,8 @@ static void *convert_swapprepost_frame_thread(void *cc_params) LIVES_HOT;
 static void *convert_swab_frame_thread(void *cc_params) LIVES_HOT;
 
 #if 0
-static void rgb2yuv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v, uint8_t *lut) LIVES_HOT LIVES_HOT;
+static void rgb2yuv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v,
+                               uint8_t *lut) LIVES_HOT LIVES_HOT;
 #endif
 static void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                      uyvy_macropixel *uyvy) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
@@ -2037,7 +2038,8 @@ static void rgb2yuyv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, 
 static void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                      uint8_t r2, uint8_t g2, uint8_t b2, uint8_t r3, uint8_t g3, uint8_t b3, yuv411_macropixel *yuv) LIVES_HOT LIVES_HOT;
 
-static void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *lut) LIVES_HOT LIVES_HOT;
+static void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b,
+                               uint8_t *lut) LIVES_HOT LIVES_HOT;
 static void uyvy2rgb(uyvy_macropixel *uyvy, uint8_t *r0, uint8_t *g0, uint8_t *b0,
                      uint8_t *r1, uint8_t *g1, uint8_t *b1) LIVES_FLATTEN LIVES_HOT LIVES_HOT;
 static void yuyv2rgb(yuyv_macropixel *yuyv, uint8_t *r0, uint8_t *g0, uint8_t *b0,
@@ -2537,7 +2539,7 @@ LIVES_INLINE boolean weed_palette_is_resizable(int pal, int clamped, boolean in_
 }
 
 
-void lives_pixbuf_set_opaque(LiVESPixbuf * pixbuf) {
+void lives_pixbuf_set_opaque(LiVESPixbuf *pixbuf) {
   unsigned char *pdata = lives_pixbuf_get_pixels(pixbuf);
   int row = lives_pixbuf_get_rowstride(pixbuf);
   int height = lives_pixbuf_get_height(pixbuf);
@@ -12953,9 +12955,8 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     int inplanes, oplanes;
 
 #if USE_THREADS
-    g_print("INIT %d threads\n", prefs->nfx_threads);
     for (int i = 0; i < prefs->nfx_threads; threads[i++] = NULL);
-#endif    
+#endif
     /// old layer will hold a ref to the original pixel_data. We will free it at the end since the pixel_data
     /// of layer will be recreated when we calll create_empty_pixel_data()
 
@@ -13091,7 +13092,6 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
                             subspace, iclamping, oclamp_hint);
     offset = ctxblock->offset;
 
-    g_print("NTRHRDS is %d\n", nthrds);
     for (int sl = 0; sl < nthrds; sl++) {
       swparams[sl].thread_id = sl;
       swparams[sl].iheight = iheight;
@@ -13138,7 +13138,6 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         swparams[sl].irw = irw;
         swparams[sl].orw = orw;
         if (sl < nthrds - 1) {
-	  g_print("CREATE thrd %d\n", sl);
           lives_thread_create(&threads[sl], LIVES_THRDATTR_NONE,
                               swscale_threadfunc, &swparams[sl]);
         } else swscale_threadfunc(&swparams[sl]);
@@ -13150,14 +13149,13 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
     for (int sl = 0; sl < nthrds; sl++) {
       if (swparams[sl].swscale) {
-	g_print("JOINE thrd %d\n", sl);
         if (sl < nthrds - 1) lives_thread_join(threads[sl], NULL);
         height += swparams[sl].ret;
       } else height += iheight;
     }
 
     sws_freeblock(ctxblock);
-    //lives_free(swparams);
+    lives_free(swparams);
 
 #else
 #if USE_RESTHREAD

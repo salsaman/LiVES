@@ -1428,7 +1428,7 @@ retry_connect:
 
     mainw->crash_possible = 1;
     defer_lpt = lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0,
-				  defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+                                  defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
     if (!mainw->signals_deferred) {
       // try to handle crashes in jack_client_open()
@@ -1470,7 +1470,7 @@ retry_connect:
     jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
     mainw->crash_possible = 2;
     defer_lpt = lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0,
-				  defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+                                  defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (!mainw->signals_deferred) {
       // try to handle crashes in jack_client_open()
       set_signal_handlers((SignalHandlerPointer)defer_sigint);
@@ -1823,7 +1823,7 @@ retry_connect:
     mainw->crash_possible = 4;
   }
   defer_lpt = lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0, defer_sigint_cb,
-				LIVES_INT_TO_POINTER(mainw->crash_possible));
+                                LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   if (!mainw->signals_deferred) {
     // try to handle crashes in jack_server_open()
@@ -1859,7 +1859,7 @@ retry_connect:
   }
 
   defer_lpt = lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0, defer_sigint_cb,
-				LIVES_INT_TO_POINTER(mainw->crash_possible));
+                                LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   if (!jackctl_server_start(jackserver)) {
     lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, defer_lpt);
@@ -1885,7 +1885,7 @@ retry_connect:
     mainw->crash_possible = 6;
   }
   defer_lpt = lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, HOOK_CB_SINGLE_SHOT,
-				defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+                                defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   if (!mainw->signals_deferred) {
     // try to handle crashes in jack_client_open()
@@ -4488,7 +4488,7 @@ retry:
       }
 #endif
       interop_lpt =
-	lives_hook_append(THREADVAR(hook_stacks), COMPLETED_HOOK, HOOK_OPT_ONESHOT | HOOK_UNIQUE_FUNC, jack_interop_cleanup, jackd);
+        lives_hook_append(THREADVAR(hook_stacks), COMPLETED_HOOK, HOOK_OPT_ONESHOT | HOOK_UNIQUE_FUNC, jack_interop_cleanup, jackd);
       need_clnup = TRUE;
     } else {
       jack_interop_cleanup(NULL, jackd);

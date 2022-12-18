@@ -3605,10 +3605,9 @@ void threaded_dialog_auto_spin(void) {
   if (!mainw->threaded_dialog || mainw->dlg_spin_thread) return;
   if (!is_fg_thread()) {
     main_thread_execute_rvoid_pvoid(threaded_dialog_auto_spin);
-  }
-  else {
+  } else {
     mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
-						      (lives_funcptr_t)_thdlg_auto_spin, -1, "", NULL);
+                             (lives_funcptr_t)_thdlg_auto_spin, -1, "", NULL);
   }
 }
 

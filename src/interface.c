@@ -294,7 +294,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
   int i;
 
   if (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread)) return FALSE;
-  
+
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) {
     mainw->current_file = cfile->cb_src;
     sfile = cfile;
@@ -384,7 +384,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
     offset_left = ROUND_I((double)(sfile->start - 1.) / sfile->fps * scalex);
     offset_right = ROUND_I((double)(sfile->end) / sfile->fps * scalex);
     offset_end = ROUND_I(sfile->laudio_time * scalex);
- 
+
     pthread_mutex_lock(&mainw->tlthread_mutex);
     if (!sfile->audio_waveform) {
       sfile->audio_waveform = (float **)lives_calloc(sfile->achans, sizeof(float *));
@@ -3609,8 +3609,8 @@ void cancel_tl_redraw(int clipno) {
     lives_proc_thread_ref(mainw->drawtl_thread);
     if (mainw->drawtl_thread) {
       if (!lives_proc_thread_check_completed(mainw->drawtl_thread)) {
-	lives_proc_thread_request_cancel(mainw->drawtl_thread, FALSE);
-	lives_nanosleep_until_zero(mainw->drawtl_thread && lives_proc_thread_is_done(mainw->drawtl_thread));
+        lives_proc_thread_request_cancel(mainw->drawtl_thread, FALSE);
+        lives_nanosleep_until_zero(mainw->drawtl_thread && lives_proc_thread_is_done(mainw->drawtl_thread));
       }
       lives_proc_thread_unref(mainw->drawtl_thread);
     }
@@ -3649,7 +3649,7 @@ void redraw_timeline(int clipno) {
   }
   norecurse = TRUE;
   pthread_mutex_unlock(&mainw->tlthread_mutex);
-  
+
   if (mainw->ce_thumbs || !IS_VALID_CLIP(clipno)
       || (LIVES_IS_PLAYING && (mainw->fs || mainw->faded))) {
     norecurse = FALSE;
@@ -3674,12 +3674,12 @@ void redraw_timeline(int clipno) {
           lives_proc_thread_request_cancel(mainw->drawtl_thread, FALSE);
         }
         lives_proc_thread_unref(mainw->drawtl_thread);
-	lives_nanosleep_until_zero(mainw->drawtl_thread && !lives_proc_thread_is_done(mainw->drawtl_thread));
+        lives_nanosleep_until_zero(mainw->drawtl_thread && !lives_proc_thread_is_done(mainw->drawtl_thread));
       }
 
       if (mainw->multitrack || mainw->reconfig) {
-	norecurse = FALSE;
-	return;
+        norecurse = FALSE;
+        return;
       }
       pthread_mutex_lock(&mainw->tlthread_mutex);
       mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
@@ -8479,7 +8479,7 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
   LingoLayout *layout;
 
   if (gtk_widget_get_state_flags(widget) & GTK_STATE_FLAG_BACKDROP) return FALSE;
-  
+
   if (!prefs->show_msg_area) return TRUE;
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");

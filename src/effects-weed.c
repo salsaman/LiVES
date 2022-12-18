@@ -4703,7 +4703,11 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
       break;
       case WEED_SEED_VOIDPTR: {
         void **data = weed_get_voidptr_array_counted(plant, key, &nvals);
-        for (int i = 0; i < nvals; i++) if (data[i]) lives_free(data[i]);
+        for (int i = 0; i < nvals; i++) {
+          if (data[i]) {
+            lives_free(data[i]);
+          }
+        }
         if (data) lives_free(data);
         weed_set_voidptr_value(plant, key, NULL);
         bret = TRUE;
@@ -8920,7 +8924,7 @@ void weed_generator_end(weed_plant_t *inst) {
   }
 
   //mainw->ignore_clipswitch = TRUE;
-  
+
   if (inst) wge_inner(inst); // unref inst + compound parts
 
   // if the param window is already open, show any reinits now
@@ -11927,7 +11931,18 @@ LIVES_GLOBAL_INLINE void weed_plant_sanitize(weed_plant_t *plant, boolean steril
     for (int i = 0; leaves[i]; i++) {
       // remove things like the refcounter, pixel data sources, that could cause problems
       // if left intact
-      weed_leaf_clear_flagbits(plant, leaves[i], WEED_FLAG_FREE_ON_DELETE);
+      if (sterilize) {
+        uint32_t flags = weed_leaf_get_flags(plant, leaves[i]);
+        if (flags & WEED_FLAG_FREE_ON_DELETE) {
+          // clearflagbi
+          weed_leaf_clear_flagbits(plant, leaves[i], WEED_FLAG_FREE_ON_DELETE | WEED_FLAG_UNDELETABLE);
+          // delet leaf
+          weed_leaf_delete(plant, leaves[i]);
+          // cont
+          lives_free(leaves[i]);
+          continue;
+        }
+      }
       if (pixdata_nullify_leaf(leaves[i])) weed_leaf_delete(plant, leaves[i]);
       else if (sterilize && no_copy_leaf(leaves[i])) weed_leaf_delete(plant, leaves[i]);
       lives_free(leaves[i]);

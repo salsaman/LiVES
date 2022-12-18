@@ -4418,7 +4418,7 @@ static void _resize_play_window(void) {
   if (!mainw->play_window) return;
 
   //THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-  
+
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
 
   scr_width_safety += 2 * abs(bx);
@@ -4603,28 +4603,16 @@ static void _resize_play_window(void) {
             if (prefs->show_playwin) {
               xwinid = lives_widget_get_xwinid(mainw->play_window, "Unsupported display type for playback plugin");
               if (!xwinid) {
-		THREADVAR(hook_hints) = 0;
-		return;
-	      }
+                THREADVAR(hook_hints) = 0;
+                return;
+              }
             } else xwinid = 0;
           }
         }
         if (mainw->ext_playback) {
           //lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
-#ifdef RT_AUDIO
-          stop_audio_stream();
-#endif
-          pthread_mutex_lock(&mainw->vpp_stream_mutex);
-          mainw->ext_audio = FALSE;
-          pthread_mutex_unlock(&mainw->vpp_stream_mutex);
-
-          if (mainw->vpp->exit_screen) {
-            (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
-          }
-          if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && pmonitor == 0)
-            lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window), FALSE);
+          vid_playback_plugin_exit();
         }
-
 #ifdef RT_AUDIO
         if (mainw->vpp->audio_codec != AUDIO_CODEC_NONE && prefs->stream_audio_out) {
           start_audio_stream();
@@ -4632,7 +4620,6 @@ static void _resize_play_window(void) {
           //clear_audio_stream();
         }
 #endif
-
         if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && pmonitor == 0)
           lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window), TRUE);
 
@@ -4670,6 +4657,7 @@ static void _resize_play_window(void) {
             lives_grab_add(LIVES_MAIN_WINDOW_WIDGET);
           }
 
+          // HIDE MAINWINDOW option
           /* if (1) { */
           /*   gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), FALSE); */
           /*   gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), FALSE); */
@@ -4779,7 +4767,10 @@ static void _resize_play_window(void) {
       if (mainw->preview_image) lives_widget_set_size_request(mainw->preview_image, nwidth, nheight);
       lives_widget_hide(mainw->play_window);
     }
+
+
     lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
+
     if (!rte_window_hidden()) {
       lives_widget_show(mainw->play_window);
       lives_window_uncenter(LIVES_WINDOW(mainw->play_window));
@@ -4803,7 +4794,7 @@ static void _resize_play_window(void) {
 
 
 LIVES_GLOBAL_INLINE void resize_play_window(void) {
-  THREADVAR(hook_hints) = HOOK_UNIQUE_FUNC | HOOK_CB_BLOCK;
+  THREADVAR(hook_hints) = HOOK_UNIQUE_FUNC | HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute_rvoid_pvoid(_resize_play_window);
   THREADVAR(hook_hints) = 0;
 }

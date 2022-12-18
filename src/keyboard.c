@@ -438,8 +438,8 @@ boolean fullscreen_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
                             livespointer user_data) {
   if (LIVES_IS_PLAYING)
     lives_proc_thread_append_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-				  HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_PRIORITY | HOOK_UNIQUE_FUNC,
-				  on_full_screen_pressed, NULL);
+                                  HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_PRIORITY | HOOK_UNIQUE_FUNC,
+                                  _on_full_screen_activate, NULL);
   else on_full_screen_pressed(NULL, NULL);
   return TRUE;
 }

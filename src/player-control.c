@@ -116,9 +116,9 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
 void start_playback_async(int type) {
   lives_sigdata_t *sigdata;
   mainw->player_proc = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
-						_start_playback, WEED_SEED_BOOLEAN,
-						"i", type);
-  lives_proc_thread_nullify_on_destruction(mainw->player_proc, (void **)&(mainw->player_proc));
+                       _start_playback, WEED_SEED_BOOLEAN,
+                       "i", type);
+  lives_proc_thread_nullify_on_destruction(mainw->player_proc, (void **) & (mainw->player_proc));
 
   // ask the main thread to concentrate on service GUI requests from a specific proc_thread
   sigdata = lives_sigdata_new(mainw->player_proc, FALSE);

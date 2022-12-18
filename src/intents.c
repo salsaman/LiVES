@@ -242,7 +242,7 @@ boolean add_fdef_lookup(lives_funcdef_t *fdef) {
   if (fdef) {
     char *rt = lives_strdup_printf("%c", get_char_for_st(fdef->return_type));
     add_fn_lookup(fdef->function, fdef->funcname, fdef->category, (const char *)rt,
-		  fdef->args_fmt, (char *)fdef->file, fdef->line);
+                  fdef->args_fmt, (char *)fdef->file, fdef->line);
     lives_free(rt);
     return TRUE;
   }

@@ -25,11 +25,13 @@
 
 #include "main.h"
 #include "effects-weed.h"
- 
+
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new(int layer_type) {
+  lives_refcounter_t *refcount = NULL;
   weed_layer_t *layer = weed_plant_new(WEED_PLANT_LAYER);
   weed_set_int_value(layer, WEED_LEAF_LAYER_TYPE, layer_type);
-  weed_add_refcounter(layer);
+  refcount = weed_add_refcounter(layer);
+  g_print("RCO is %p\n", refcount);
   return layer;
 }
 

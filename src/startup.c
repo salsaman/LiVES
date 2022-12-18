@@ -737,7 +737,7 @@ static boolean pre_init(void) {
   pthread_cond_init(&mainw->avseek_cond, NULL);
 
   pthread_rwlock_init(&mainw->rte_rwlock, NULL);
-  
+
   if (prefs->vj_mode)
     prefs->load_rfx_builtin = FALSE;
   else

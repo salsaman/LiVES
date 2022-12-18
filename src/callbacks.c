@@ -2280,7 +2280,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     lives_rm(cfile->info_file);
     if (cfile->achans != cfile->undo_achans) {
       if (cfile->audio_waveform) {
-	cancel_tl_redraw(mainw->current_file);
+        cancel_tl_redraw(mainw->current_file);
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
         lives_freep((void **)&cfile->aw_sizes);
@@ -2436,7 +2436,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     if (reset_achans > 0) {
       reget_afilesize(mainw->current_file);
       if (cfile->audio_waveform) {
-	cancel_tl_redraw(mainw->current_file);
+        cancel_tl_redraw(mainw->current_file);
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
         lives_freep((void **)&cfile->aw_sizes);
@@ -2706,7 +2706,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
 
     if (cfile->achans != cfile->undo_achans) {
       if (cfile->audio_waveform) {
-	cancel_tl_redraw(mainw->current_file);
+        cancel_tl_redraw(mainw->current_file);
         for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
         lives_freep((void **)&cfile->audio_waveform);
         lives_freep((void **)&cfile->aw_sizes);
@@ -7268,7 +7268,7 @@ void on_full_screen_pressed(LiVESButton * button, livespointer user_data) {
 }
 
 
-static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // ignore if audio only clip
   if (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_HAS_VIDEO && LIVES_IS_PLAYING && !mainw->multitrack) return;
 
@@ -7296,7 +7296,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
         //fade_background();
       }
       if (mainw->sep_win) {
-	resize_play_window();
+        resize_play_window();
         if (!mainw->vpp || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))
           lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
       }
@@ -7336,7 +7336,9 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
           lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
         }
 
-        if (!mainw->faded) unfade_background();
+        //unfade_background();
+        if (!mainw->faded) main_thread_execute_rvoid_pvoid(unfade_background);
+
         resize_play_window();
 
         if (!mainw->multitrack && mainw->opwx > -1) {
@@ -7366,7 +7368,8 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
               lives_widget_hide(mainw->sep_image);
               if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
             } else lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
-            unfade_background();
+            main_thread_execute_rvoid_pvoid(unfade_background);
+            //unfade_background();
           } else {
             lives_widget_hide(mainw->frame1);
             lives_widget_hide(mainw->frame2);
@@ -7585,13 +7588,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         if (mainw->jackd) jack_interop_cleanup(NULL, mainw->jackd);
 #endif
         if (mainw->ext_playback) {
-#ifndef IS_MINGW
           vid_playback_plugin_exit();
-          lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
-#else
-          lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
-          vid_playback_plugin_exit();
-#endif
         }
         if (mainw->fs) {
           mainw->ignore_screen_size = TRUE;
@@ -10860,16 +10857,16 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     else {
       lives_clip_t *sfile = mainw->files[mainw->clipstore[clip][0]];
       if (LIVES_CE_PLAYBACK) {
-	if (mainw->clipstore[clip][0] != mainw->playing_file) {
-	  // player will call do_quick_switch, and possiblt switch_audio_clip()
-	  sfile->frameno = mainw->clipstore[clip][1];
-	  mainw->new_clip = mainw->clipstore[clip][0];
-	}
+        if (mainw->clipstore[clip][0] != mainw->playing_file) {
+          // player will call do_quick_switch, and possiblt switch_audio_clip()
+          sfile->frameno = mainw->clipstore[clip][1];
+          mainw->new_clip = mainw->clipstore[clip][0];
+        }
       } else {
-	if (mainw->clipstore[clip][0] != mainw->current_file)
-	  switch_clip(0, mainw->clipstore[clip][0], TRUE);
-	cfile->real_pointer_time = (mainw->clipstore[clip][1] - 1.) / cfile->fps;
-	lives_ce_update_timeline(0, cfile->real_pointer_time);
+        if (mainw->clipstore[clip][0] != mainw->current_file)
+          switch_clip(0, mainw->clipstore[clip][0], TRUE);
+        cfile->real_pointer_time = (mainw->clipstore[clip][1] - 1.) / cfile->fps;
+        lives_ce_update_timeline(0, cfile->real_pointer_time);
       }
       if (mainw->loop_locked) unlock_loop_lock();
     }
@@ -12293,7 +12290,7 @@ boolean on_ins_silence_activate(LiVESMenuItem * menuitem, livespointer user_data
     // redo
     if (sfile->achans != sfile->undo_achans) {
       if (sfile->audio_waveform) {
-	cancel_tl_redraw(clipno);
+        cancel_tl_redraw(clipno);
         for (int i = 0; i < sfile->achans; lives_freep((void **)&sfile->audio_waveform[i++]));
         lives_freep((void **)&sfile->audio_waveform);
         lives_freep((void **)&sfile->aw_sizes);

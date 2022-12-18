@@ -661,28 +661,27 @@ boolean load_frame_image(frames_t frame) {
 recheck:
 
         if (!mainw->multitrack) {
-	  lives_freep((void **)&mainw->clip_index);
-	  lives_freep((void **)&mainw->frame_index);
-	  if (mainw->num_tr_applied && IS_VALID_CLIP(mainw->blend_file)) {
-	    mainw->num_tracks = 2;
-	    mainw->clip_index = (int *)lives_calloc(2, sizint);
-	    mainw->frame_index = (frames64_t *)lives_calloc(2, sizeof(frames64_t));
-	    mainw->active_track_list[1] = mainw->blend_file;
-	    mainw->clip_index[1] = mainw->blend_file;
-	    mainw->frame_index[1] = mainw->files[mainw->blend_file]->frameno;;
-	  }
-	  else {
-	    mainw->num_tracks = 1;
-	    mainw->clip_index = (int *)lives_calloc(1, sizint);
-	    mainw->frame_index = (frames64_t *)lives_calloc(1, sizeof(frames64_t));
-	  }
-	  mainw->active_track_list[0] = mainw->playing_file;
-	  mainw->clip_index[0] = mainw->playing_file;
-	  mainw->frame_index[0] = mainw->actual_frame;
-	}
-	if (rndr) {
-	  layers =
-		(weed_layer_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_layer_t *));
+          lives_freep((void **)&mainw->clip_index);
+          lives_freep((void **)&mainw->frame_index);
+          if (mainw->num_tr_applied && IS_VALID_CLIP(mainw->blend_file)) {
+            mainw->num_tracks = 2;
+            mainw->clip_index = (int *)lives_calloc(2, sizint);
+            mainw->frame_index = (frames64_t *)lives_calloc(2, sizeof(frames64_t));
+            mainw->active_track_list[1] = mainw->blend_file;
+            mainw->clip_index[1] = mainw->blend_file;
+            mainw->frame_index[1] = mainw->files[mainw->blend_file]->frameno;;
+          } else {
+            mainw->num_tracks = 1;
+            mainw->clip_index = (int *)lives_calloc(1, sizint);
+            mainw->frame_index = (frames64_t *)lives_calloc(1, sizeof(frames64_t));
+          }
+          mainw->active_track_list[0] = mainw->playing_file;
+          mainw->clip_index[0] = mainw->playing_file;
+          mainw->frame_index[0] = mainw->actual_frame;
+        }
+        if (rndr) {
+          layers =
+            (weed_layer_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_layer_t *));
           // get list of active tracks from mainw->filter map
           if (mainw->multitrack)
             get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);
@@ -2262,7 +2261,6 @@ static short scratch = SCRATCH_NONE;
 #define ANIM_LIM 100000 // ( divide by  100 000 000 get seconds, default is 5 msec)
 
 // processing
-static ticks_t last_anim_ticks;
 static uint64_t spare_cycles, last_spare_cycles;
 static ticks_t last_kbd_ticks;
 static frames_t getahead = 0, test_getahead = -0, bungle_frames;
@@ -2432,7 +2430,7 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
 #define DROPFRAME_TRIGGER 4
 #define JUMPFRAME_TRIGGER 16
 
-// player will create this as 
+// player will create this as
 static boolean update_gui(void) {
   lives_widget_context_update();
   return TRUE;
@@ -2563,14 +2561,12 @@ int process_one(boolean visible) {
   if (time_source != last_time_source && last_time_source != LIVES_TIME_SOURCE_NONE
       && reset_on_tsource_change) {
     reset_on_tsource_change = FALSE;
-    mainw->last_startticks = mainw->startticks = last_anim_ticks
-                             = mainw->fps_mini_ticks = mainw->currticks;
+    mainw->last_startticks = mainw->startticks = mainw->fps_mini_ticks = mainw->currticks;
   }
 
   if (init_timers) {
     init_timers = FALSE;
-    mainw->last_startticks = mainw->startticks = last_anim_ticks
-                             = mainw->fps_mini_ticks = mainw->currticks;
+    mainw->last_startticks = mainw->startticks = mainw->fps_mini_ticks = mainw->currticks;
     mainw->last_startticks--;
     mainw->fps_mini_measure = 0;
     last_req_frame = sfile->frameno - 1;
@@ -3752,20 +3748,13 @@ proc_dialog:
       // the audio thread wants to update the parameter scroll(s)
       if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
-      /* if (mainw->currticks - last_anim_ticks > ANIM_LIM || mainw->currticks < last_anim_ticks) { */
-      /* 	//a segfault here can indicate memory corruption in an FX plugin */
-      /* 	last_anim_ticks = mainw->currticks; */
-      /* 	lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK); */
-      /* 	lives_widget_context_update(); */
-      /* } */
-
       if (!gui_lpt)  gui_lpt = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC,
-							update_gui, WEED_SEED_BOOLEAN, 0, NULL);
+                                 update_gui, WEED_SEED_BOOLEAN, 0, NULL);
       else {
-      	if (lives_proc_thread_is_idling(gui_lpt)) {
-	  lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
-      	  lives_proc_thread_queue(gui_lpt, 0);
-      	}
+        if (lives_proc_thread_is_idling(gui_lpt)) {
+          lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
+          lives_proc_thread_queue(gui_lpt, 0);
+        }
       }
 
       //#define LOAD_ANALYSE_TICKS MILLIONS(10)

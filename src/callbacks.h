@@ -153,6 +153,9 @@ void on_full_screen_pressed(LiVESButton *, livespointer);
 
 void on_full_screen_activate(LiVESMenuItem *, livespointer);
 
+// internal version
+void _on_full_screen_activate(LiVESMenuItem *, livespointer);
+
 void on_double_size_pressed(LiVESButton *, livespointer);
 
 void on_double_size_activate(LiVESMenuItem *, livespointer);

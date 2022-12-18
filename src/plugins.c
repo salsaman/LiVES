@@ -1663,7 +1663,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 }
 
 
-void vid_playback_plugin_exit(void) {
+static void _vid_playback_plugin_exit(void) {
   // external plugin
   if (mainw->ext_playback) {
     mainw->ext_playback = FALSE;
@@ -1688,6 +1688,17 @@ void vid_playback_plugin_exit(void) {
   if (mainw->play_window) {
     play_window_set_title();
   }
+}
+
+
+void vid_playback_plugin_exit(void) {
+#ifndef IS_MINGW
+  _vid_playback_plugin_exit();
+  lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+#else
+  lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+  _vid_playback_plugin_exit();
+#endif
 }
 
 
@@ -2706,7 +2717,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
     ////////////
     mainw->crash_possible = 16;
     defer_sigint_lpt = lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0,
-					 defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
+                                         defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
     set_signal_handlers((SignalHandlerPointer)defer_sigint);
 

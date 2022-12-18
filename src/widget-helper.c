@@ -905,7 +905,6 @@ LIVES_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext *c
     ret = g_main_context_iteration(ctx, may_block);
     if (need_service_handle)
       ign_idlefuncs = FALSE;
-    //mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL);
     return ret;
   }
   return FALSE;
@@ -958,7 +957,7 @@ void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
       lives_proc_thread_remove_hook(sigdata->proc, COMPLETED_HOOK, sigdata->compl_cb);
       sigdata->compl_cb = NULL;
     }
-  
+
     if (sigdata->callback) {
       // do NOT for external addd lpt
       lives_proc_thread_dontcare(sigdata->proc);
@@ -1021,7 +1020,7 @@ boolean fg_service_fulfill(void) {
     else {
       boolean is_fg_service = FALSE;
       // check if there is a foreground task to run
-      // call fg task directly, bg thread will wait for lpttorun == NULL and read lpt_result
+      // call fg task directly, bg thread will wait for lpttorun == NULL
       // we should not free it, just set it to NULL
       if (THREADVAR(fg_service)) {
         is_fg_service = TRUE;
@@ -1147,15 +1146,12 @@ boolean governor_loop(livespointer data) {
   static boolean lpt_recurse = FALSE;
   static boolean lpt_recurse2 = FALSE;
   static int copies = 0;
-  boolean is_timer = FALSE;
   boolean retv = FALSE;
   boolean need_service_handle = FALSE;
   lives_sigdata_t *sigdata = NULL;
   lives_sigdata_t *new_sigdata = (lives_sigdata_t *)data;
   uint32_t mysource = gov_will_run;
   int exitpt = 0;
-
-  //if (ign_idlefuncs) return TRUE;
 
   //if (!lpttorun && g_main_depth() > 1) return FALSE;
 
@@ -1174,7 +1170,7 @@ boolean governor_loop(livespointer data) {
   copies++;
   //g_print("DEPTH is %d\n", g_main_depth());
 #define DEBUG_GOV
-  
+
 #ifdef DEBUG_GOV
   g_print("IN gov, lpttorun %p, r %d r2 %d nsd %p cop %d, clutch %d\n", lpttorun, lpt_recurse, lpt_recurse2,
           new_sigdata, copies, mainw->clutch);
@@ -1203,19 +1199,12 @@ reloop:
     // sigdata is set when called from a (retouted) signal handler callback
     // here we ar either re-entering as an idlefunc, or we are in a timer and looped back
     if (lpttorun) {
-      break_me("galoop");
-      boolean needz = FALSE;
       lpt_recurse2 = TRUE;
-      if (ign_idlefuncs) needz = TRUE;
-      break_me("galoop2");
       fg_service_fulfill();
-      break_me("galoop4");
       lpt_recurse2 = FALSE;
 
-      break_me("galoop5");
       if (!(sigdata && sigdata->is_timer) && !(new_sigdata && new_sigdata->is_timer)) {
         // some handling that needed to be added to prevent multiple idlefuncs
-      break_me("galoop6");
         if (!lpt_recurse) {
           exitpt = 4;
           goto exit_loop;
@@ -1267,13 +1256,13 @@ reloop:
         pthread_mutex_lock(&task_list_mutex);
 
         new_sigdata->compl_cb = lives_proc_thread_append_hook(new_sigdata->proc, COMPLETED_HOOK, HOOK_OPT_ONESHOT | HOOK_UNIQUE_FUNC,
-							      sigdata_finished, new_sigdata);
+                                sigdata_finished, new_sigdata);
 
         if (new_sigdata->alarm_handle == LIVES_NO_ALARM || !task_list) {
           // push a new task to the stack
           // signal bg that it can start now...
           lives_proc_thread_sync_ready(new_sigdata->proc);
-	  //lives_nanosleep(100000000);
+          //lives_nanosleep(100000000);
           task_list = lives_list_prepend(task_list, new_sigdata);
           if (new_sigdata->alarm_handle == LIVES_NO_ALARM) new_sigdata = NULL;
         }
@@ -1301,23 +1290,22 @@ once_more:
         int count = 0;
         boolean need_service_handle = FALSE;
         if (!ign_idlefuncs) {
-	  ign_idlefuncs = TRUE;
-	  /* lives_source_remove(mainw->fg_service_handle); */
+          ign_idlefuncs = TRUE;
+          /* lives_source_remove(mainw->fg_service_handle); */
           /* mainw->fg_service_handle = 0; */
           need_service_handle = TRUE;
         }
-	//if (!mainw->clutch) {
-	while (count++ < EV_LIM && g_main_context_iteration(NULL, FALSE)) {
-	  lives_nanosleep(NSLEEP_TIME);
-	}
+
+        while (count++ < EV_LIM && lives_widget_context_iteration(NULL, FALSE)) {
+          lives_nanosleep(NSLEEP_TIME);
+        }
         clutch = mainw->clutch = TRUE;
-	if (!lpttorun) {
-	  lives_hooks_trigger(THREADVAR(hook_stacks), LIVES_GUI_HOOK);
-	}
+        if (!lpttorun) {
+          lives_hooks_trigger(THREADVAR(hook_stacks), LIVES_GUI_HOOK);
+        }
         if (need_service_handle) {
-	  ign_idlefuncs = FALSE;
-          //mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL);
-	}
+          ign_idlefuncs = FALSE;
+        }
         goto once_more;
       }
     }
@@ -1343,7 +1331,6 @@ once_more:
     if (task_list) sigdata = (lives_sigdata_t *)lives_list_last(task_list)->data;
     if (sigdata && sigdata->is_timer) {
       // this is also complicated. We are running in a timer and we need to run mainloop
-      is_timer = TRUE;
       // here we try to simulate the effect of exiting with TRUE after re-adding
       is_idle = FALSE;
       while (!sigdata->finished && !sigdata->destroyed && lives_widget_context_iteration(NULL, FALSE) && !is_idle);
@@ -1367,8 +1354,8 @@ once_more:
     if (lpttorun) lpt_recurse = TRUE;
     if (!(!lpttorun && sigdata && (sigdata->finished || sigdata->destroyed))) {
       gov_will_run = lives_idle_priority(governor_loop, (sigdata && sigdata->alarm_handle) ? sigdata
-					 : NULL);
-    
+                                         : NULL);
+
       exitpt = 11;
       goto exit_loop;
     }
@@ -1498,7 +1485,7 @@ static boolean async_timer_handler(livespointer data) {
         // get bool result and return
         boolean res = lives_proc_thread_join_boolean(sigdata->proc);
         if (sigdata->proc) lives_proc_thread_unref(sigdata->proc);
-	sigdata->proc = NULL;
+        sigdata->proc = NULL;
         sigdata_free(sigdata, NULL);
         return res;
       }
@@ -1991,23 +1978,16 @@ static boolean retfalse(lives_obj_t *obj, void *data) {
   return FALSE;
 }
 
-static boolean lptdone(lives_obj_t *obj, lives_proc_thread_t lpt) {
-  if (!lpttorun || lpttorun != lpt) {
-  g_print("LPTD %p and %p\n", lpt, lpttorun);
-    return TRUE;
-  }
-  return FALSE;
-}
 
 static boolean clutchtrue(lives_obj_t *obj, void *data) {
-  boolean *bvar =  (boolean *)data;
+  boolean *bvar = (boolean *)data;
   if (mainw->clutch && bvar) *bvar = TRUE;
   if (debug && mainw->clutch) g_print("CLUTCHTRUE\n");
   return mainw->clutch;
 }
 
 uint32_t wait_for_fg_response(lives_proc_thread_t lpt) {
-  lives_proc_thread_t destr_lpt, xxlpt;
+  lives_proc_thread_t destr_lpt;
   int gstat;
   uint32_t mysource = 0;
   volatile boolean bvar = FALSE;
@@ -2025,22 +2005,20 @@ uint32_t wait_for_fg_response(lives_proc_thread_t lpt) {
     lives_free(fn);
   }
 
-    gstat = get_gov_status();
-    //#define DEBUG_GUI_THREADS
+  gstat = get_gov_status();
+  //#define DEBUG_GUI_THREADS
 #ifdef DEBUG_GUI_THREADS
-    g_print("gstat is %d\n", gstat);
+  g_print("gstat is %d\n", gstat);
 #endif
-    if (gstat == GOV_NOT_RUNNING) {
-      //mysource = gov_will_run = lives_timer_immediate(governor_loop, NULL);
+  if (gstat == GOV_NOT_RUNNING) {
+    //mysource = gov_will_run = lives_timer_immediate(governor_loop, NULL);
 #ifdef DEBUG_GUI_THREADS
-      g_print("ADD source %u\n", mysource);
+    g_print("ADD source %u\n", mysource);
 #endif
-    }
-    else {
-      mainw->clutch = FALSE;
-      if (!debug) lives_hook_append(NULL, SYNC_WAIT_HOOK, 0, (hook_funcptr_t)clutchtrue, &bvar);
-    }
-
+  } else {
+    mainw->clutch = FALSE;
+    if (!debug) lives_hook_append(NULL, SYNC_WAIT_HOOK, 0, (hook_funcptr_t)clutchtrue, &bvar);
+  }
 
   // setting this, we trigger the main thread to run lpt (eitherin governor_loop, or fg_service_fulfill)
   if (lpt) lpttorun = lpt;
@@ -2261,9 +2239,9 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
 #endif
     while (lpttorun) {
       if (lives_proc_thread_get_cancel_requested(lpt)
-	  || lives_proc_thread_get_cancel_requested(self)) {
-	lives_proc_thread_cancel(lpt);
-	return;
+          || lives_proc_thread_get_cancel_requested(self)) {
+        lives_proc_thread_cancel(lpt);
+        return;
       }
 
       lives_nanosleep(NSLEEP_TIME);
@@ -2278,8 +2256,8 @@ void fg_service_call(lives_proc_thread_t lpt, void *retval) {
 
     if ((mysource = wait_for_fg_response(lpt))) {
       if (!g_source_is_destroyed(g_main_context_find_source_by_id(NULL, mysource))) {
-	lives_source_remove(mysource);
-	if (gov_will_run == mysource) gov_will_run = 0;
+        lives_source_remove(mysource);
+        if (gov_will_run == mysource) gov_will_run = 0;
       }
     }
     if (lpttorun == lpt) lpttorun = NULL;
@@ -13349,10 +13327,10 @@ boolean lives_widget_context_update(void) {
     if (!is_fg_thread()) {
       if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
       if (get_gov_status() == GOV_RUNNING) {
-	mainw->clutch = FALSE;
-	lives_nanosleep_while_false(mainw->clutch);
-	pthread_mutex_unlock(&ctx_mutex);
-	return TRUE;
+        mainw->clutch = FALSE;
+        lives_nanosleep_while_false(mainw->clutch);
+        pthread_mutex_unlock(&ctx_mutex);
+        return TRUE;
       }
       wait_for_fg_response(NULL);
       pthread_mutex_unlock(&ctx_mutex);
@@ -13366,9 +13344,7 @@ boolean lives_widget_context_update(void) {
       } else THREADVAR(fg_service) = TRUE;
       if (!ign_idlefuncs) {
         need_service_handle = TRUE;
-	ign_idlefuncs = TRUE;
-        //lives_source_remove(mainw->fg_service_handle);
-        //mainw->fg_service_handle = 0;
+        ign_idlefuncs = TRUE;
       }
       while (count++ < EV_LIM && !mainw->is_exiting && lives_widget_context_pending(NULL)) {
         //LiVESXEvent *ev = lives_widgets_get_current_event();
@@ -13378,7 +13354,7 @@ boolean lives_widget_context_update(void) {
         lives_nanosleep(NSLEEP_TIME);
       }
       if (!lpttorun) {
-	lives_hooks_trigger(THREADVAR(hook_stacks), LIVES_GUI_HOOK);
+        lives_hooks_trigger(THREADVAR(hook_stacks), LIVES_GUI_HOOK);
       }
       if (!is_fg_service) THREADVAR(fg_service) = FALSE;
       if (need_service_handle) ign_idlefuncs = FALSE;

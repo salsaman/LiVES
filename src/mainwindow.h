@@ -1046,7 +1046,7 @@ typedef struct {
   boolean jack_can_stop, jack_can_start, lives_can_stop, jack_master;
 
   pthread_rwlock_t rte_rwlock;
-  
+
   // a/v seek synchronisation
   pthread_cond_t avseek_cond;
   pthread_mutex_t avseek_mutex;
@@ -1134,7 +1134,7 @@ typedef struct {
 
   int size_warn; ///< warn the user that incorrectly sized frames were found (threshold count)
 
-  boolean noswitch; /// set during playback, ensures that user clip switches change only mainw->new_clip 
+  boolean noswitch; /// set during playback, ensures that user clip switches change only mainw->new_clip
   int new_clip; ///< clip we should switch to during playback; switch will happen at the designated SWITCH POINT
 
   //boolean ignore_clipswitch;
@@ -1421,7 +1421,7 @@ typedef struct {
   weed_plant_t *fd_layer; ///< framedraw preview layer
 
   boolean needs_tl_redraw;
-  
+
   int framedraw_frame; ///< current displayed frame
   int fd_max_frame; ///< max effected / generated frame
 
@@ -1671,7 +1671,7 @@ typedef struct {
   pthread_mutex_t trcount_mutex; /// transition count mutex
   pthread_mutex_t alock_mutex; /// audio lock / unlock
   pthread_mutex_t tlthread_mutex; /// timeline redraw thread
-  pthread_mutex_t all_hstacks_mutex; /// 
+  pthread_mutex_t all_hstacks_mutex; ///
 
   pthread_mutex_t fx_key_mutex[FX_KEYS_MAX_VIRTUAL];
   int fx_mutex_nlocks[FX_KEYS_MAX_VIRTUAL];

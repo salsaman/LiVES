@@ -8,7 +8,7 @@
 // this can then be appended / prepended to the task list for the actual threads (pool threads)
 //
 // then there are lives_proc_threads - this is a data structure which wraps the work packet, adding things like monitoring, hook points
-// 
+//
 
 #ifndef _THREADING_H_
 #define _THREADING_H_
@@ -141,7 +141,7 @@ lives_sigdata_t *lives_sigdata_new(lives_proc_thread_t lpt, boolean is_timer);
 #define LIVES_THRDFLAG_FINISHED		(1ull << 3)
 
 #define LIVES_THRDFLAG_AUTODELETE	(1ull << 8)
-#define LIVES_THRDFLAG_DETACH		(1ull << 9)	
+#define LIVES_THRDFLAG_DETACH		(1ull << 9)
 #define LIVES_THRDFLAG_WAIT_SYNC	(1ull << 10)
 #define LIVES_THRDFLAG_WAIT_START	(1ull << 11)
 #define LIVES_THRDFLAG_NO_GUI		(1ull << 12)
@@ -315,13 +315,13 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_LEAF_END_TICKS "_end_ticks"
 
 enum {
-      TIME_STAMP_QUEUED,
-      TIME_STAMP_START,
-      TIME_STAMP_END,
-      TIME_TOT_QUEUE,
-      TIME_TOT_SYNC_START,
-      TIME_TOT_PROC,
-      N_TIME_DTLS,
+  TIME_STAMP_QUEUED,
+  TIME_STAMP_START,
+  TIME_STAMP_END,
+  TIME_TOT_QUEUE,
+  TIME_TOT_SYNC_START,
+  TIME_TOT_PROC,
+  N_TIME_DTLS,
 };
 
 ticks_t lives_proc_thread_get_timing_info(lives_proc_thread_t lpt, int info_type);

@@ -496,79 +496,130 @@ uint64_t minimd5(void *data, size_t dsize) {
   return ret;
 }
 
-///////////////////////////////////////////////////////// end md5sum code /////////////
 
-// statistics
+#if LIVES_SH512
+LIVES_LOCAL_INLINE void lives_sha512_start(md5priv *priv) {
+  priv->H[0] = (const uint64_t)(0x6a09e667f3bcc908);
+  priv->H[1] = (const uint64_t)(0xbb67ae8584caa73b);
+  priv->H[2] = (const uint64_t)(0x3c6ef372fe94f82b);
+  priv->H[3] = (const uint64_t)(0xa54ff53a5f1d36f1);
+  priv->H[4] = (const uint64_t)(0x510e527fade682d1);
+  priv->H[5] = (const uint64_t)(0x9b05688c2b3e6c1f);
+  priv->H[6] = (const uint64_t)(0x1f83d9abfb41bd6b);
+  priv->H[7] = (const uint64_t)(0x5be0cd19137e2179);
+  priv->block_len = 0;
+  priv->data_len[0] = 0;
+  priv->data_len[1] = 0;
+}
 
-/* static boolean inited = FALSE; */
-/* //static const lives_object_template_t tmpls[1]; */
+LIVES_LOCAL_INLINE  void lives_sha512_calc(uint64_t H[8], uint8 const data[SHA2_BLOCK_LEN)) {
+  int i, t;
+  uint64_t a, b, c, d, e, f, g, h, M[16], W[80];
+  for (i = 0; i < 16; i++) {
+    gint p = i * 8;
+    M[i] = ((uint64_t) data[p + 0] << 56) | ((uint64_t) data[p + 1] << 48) |
+           ((uint64_t) data[p + 2] << 40) | ((uint64_t) data[p + 3] << 32) |
+           ((uint64_t) data[p + 4] << 24) | ((uint64_t) data[p + 5] << 16) |
+           ((uint64_t) data[p + 6] <<  8) | ((uint64_t) data[p + 7]);
+    for (t = 0; t < 80; t++)
+      if (t < 16) W[t] = M[t];
+      else W[t] = sigma1(W[t - 2]) + W[t - 7] + sigma0(W[t - 15]) + W[t - 16];
 
-/* static void init_templates(void) { */
-/*   lives_object_template_t tmpl; */
-/*   if (inited) return; */
-/*   inited = TRUE; */
-/*   tmpl = tmpls[0]; */
-/*   tmpl.uid = tmpl.subtype = SUBTYPE_STATS; */
-/*   tmpl.type = OBJECT_TYPE_MATH; */
-/* } */
+    a = H[0]; b = H[1]; c = H[2]; d = H[3];
+    e = H[4]; f = H[5]; g = H[6];   h = H[7];
 
-
-typedef struct {
-  int nvals, maxsize;
-  size_t fill;
-  float **res;
-} tab_data;
-
-// to init, call twice with newval NULL, 1st call sets nvals from idx, second sets maxsize
-// the call with data in newval and idx from 0 - nvals, neval will be replaced withh running avg.
-// tab_data is used by the functionand not to be messed with
-size_t running_average(float *newval, int idx, void **data) {
-  size_t nfill;
-  if (!data) return 0;
-  else {
-    tab_data **tdatap = (tab_data **)data;
-    tab_data *tdata = *tdatap;
-    float tot = 0.;
-    if (!newval) {
-      if (!tdata) {
-        tdata = (tab_data *)lives_calloc(sizeof(tab_data), 1);
-        *tdatap = tdata;
-      }
-      if (!tdata->nvals) {
-        tdata->nvals = idx;
-        tdata->res = (float **)lives_calloc(sizeof(float *), tdata->nvals);
-      } else {
-        tdata->maxsize = idx;
-        for (int i = 0; i < tdata->nvals; i++) {
-          tdata->res[i] = (float *)lives_calloc(4, tdata->maxsize + 1);
-        }
-      }
-      return 0;
+    for (t = 0; t < 80; t++) {
+      uint64_t T1, T2;
+      T1 = h + SIGMA1(e) + Ch(e, f, g) + SHA2_K[t] + W[t];
+      T2 = SIGMA0(a) + Maj(a, b, c);
+      h = g; g = f; f = e; e = d + T1;
+      d = c; c = b; b = a; a = T1 + T2;
     }
-    tot = tdata->res[idx][tdata->maxsize];
-    if (tdata->fill > tdata->maxsize - 2) {
-      tot -= tdata->res[idx][0];
-      lives_memmove(&tdata->res[idx][0], &tdata->res[idx][1], (tdata->maxsize - 1) * 4);
-    }
-    tot += *newval;
-    tdata->res[idx][tdata->fill] = *newval;
-    tdata->res[idx][tdata->maxsize] = tot;
-    *newval = tot / (tdata->fill + 1);
-    nfill = tdata->fill + 1;
-    if (idx == tdata->nvals - 1 && tdata->fill < tdata->maxsize - 1) tdata->fill++;
+    H[0] += a; H[1] += b; H[2] += c;  H[3] += d;
+    H[4] += e; H[5] += f; H[6] += g; H[7] += h;
   }
-  return nfill;
-}
+
+  LIVES_LOCAL_INLINE void *lives_sha512_make(const char *p, size_t len, void *ret) {
+    sha512priv priv;
+    lives_sha512_start(&priv);
+    lives_sha512_calc(p, len, &priv);
+    return lives_sha512_end(&priv, ret);
+  }
+#endif
+
+  ///////////////////////////////////////////////////////// end md5sum code /////////////
+
+  // statistics
+
+  /* static boolean inited = FALSE; */
+  /* //static const lives_object_template_t tmpls[1]; */
+
+  /* static void init_templates(void) { */
+  /*   lives_object_template_t tmpl; */
+  /*   if (inited) return; */
+  /*   inited = TRUE; */
+  /*   tmpl = tmpls[0]; */
+  /*   tmpl.uid = tmpl.subtype = SUBTYPE_STATS; */
+  /*   tmpl.type = OBJECT_TYPE_MATH; */
+  /* } */
 
 
-lives_object_transform_t *math_transform_for_intent(lives_object_t *obj, lives_intention intent) {
-  return NULL;
-}
+  typedef struct {
+    int nvals, maxsize;
+    size_t fill;
+    float **res;
+  } tab_data;
+
+  // to init, call twice with newval NULL, 1st call sets nvals from idx, second sets maxsize
+  // the call with data in newval and idx from 0 - nvals, neval will be replaced withh running avg.
+  // tab_data is used by the functionand not to be messed with
+  size_t running_average(float * newval, int idx, void **data) {
+    size_t nfill;
+    if (!data) return 0;
+    else {
+      tab_data **tdatap = (tab_data **)data;
+      tab_data *tdata = *tdatap;
+      float tot = 0.;
+      if (!newval) {
+        if (!tdata) {
+          tdata = (tab_data *)lives_calloc(sizeof(tab_data), 1);
+          *tdatap = tdata;
+        }
+        if (!tdata->nvals) {
+          tdata->nvals = idx;
+          tdata->res = (float **)lives_calloc(sizeof(float *), tdata->nvals);
+        } else {
+          tdata->maxsize = idx;
+          for (int i = 0; i < tdata->nvals; i++) {
+            tdata->res[i] = (float *)lives_calloc(4, tdata->maxsize + 1);
+          }
+        }
+        return 0;
+      }
+      tot = tdata->res[idx][tdata->maxsize];
+      if (tdata->fill > tdata->maxsize - 2) {
+        tot -= tdata->res[idx][0];
+        lives_memmove(&tdata->res[idx][0], &tdata->res[idx][1], (tdata->maxsize - 1) * 4);
+      }
+      tot += *newval;
+      tdata->res[idx][tdata->fill] = *newval;
+      tdata->res[idx][tdata->maxsize] = tot;
+      *newval = tot / (tdata->fill + 1);
+      nfill = tdata->fill + 1;
+      if (idx == tdata->nvals - 1 && tdata->fill < tdata->maxsize - 1) tdata->fill++;
+    }
+    return nfill;
+  }
 
 
-/* const lives_object_template_t *maths_object_with_subtype(uint64_t subtype) { */
-/*   if (!inited) init_templates(); */
-/*   if (subtype == MATH_OBJECT_SUBTYPE_STATS) return &tmpls[SUBTYPE_STATS]; */
-/*   return NULL; */
-/* } */
+  lives_object_transform_t *math_transform_for_intent(lives_object_t *obj, lives_intention intent) {
+    return NULL;
+  }
+
+
+  /* const lives_object_template_t *maths_object_with_subtype(uint64_t subtype) { */
+  /*   if (!inited) init_templates(); */
+  /*   if (subtype == MATH_OBJECT_SUBTYPE_STATS) return &tmpls[SUBTYPE_STATS]; */
+  /*   return NULL; */
+  /* } */
 

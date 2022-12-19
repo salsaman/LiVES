@@ -57,7 +57,7 @@ typedef struct {
   boolean var_no_gui;
   boolean var_force_button_image;
   volatile boolean var_fg_service;
-  uint64_t var_hook_hints;
+  uint64_t var_hook_hints, var_perm_hook_hints;
   ticks_t var_timerinfo, var_round_trip_ticks, var_ticks_to_activate;
   uint64_t var_thrdnative_flags;
   void *var_stackaddr;
@@ -139,6 +139,7 @@ lives_sigdata_t *lives_sigdata_new(lives_proc_thread_t lpt, boolean is_timer);
 #define LIVES_THRDFLAG_HOLD		(1ull << 1)
 #define LIVES_THRDFLAG_RUNNING		(1ull << 2)
 #define LIVES_THRDFLAG_FINISHED		(1ull << 3)
+#define LIVES_THRDFLAG_TIMEOUT		(1ull << 4)
 
 #define LIVES_THRDFLAG_AUTODELETE	(1ull << 8)
 #define LIVES_THRDFLAG_DETACH		(1ull << 9)
@@ -461,19 +462,34 @@ boolean lives_proc_thread_dontcare(lives_proc_thread_t);
 // as above but takes address of ptr to be nullified when the thread is just about to be freed
 boolean lives_proc_thread_dontcare_nullify(lives_proc_thread_t, void **nullif);
 
+// pthread level waiting
+// hard wait, thread can only continue by either timedwait timing out, or another thread calling
+// lives_proc_thread_sync_ready on its behalf
+// essentially the proc_thread is "frozen"
 void lives_proc_thread_sync_ready(lives_proc_thread_t);
+boolean lives_proc_thread_timedwait(int sec);
+boolean lives_proc_thread_wait(void);
 
-void lives_proc_thread_sync_continue(lives_proc_thread_t lpt);
-boolean sync_point(const char *motive);
+// soft wait (waiting thread remains active while waiting, can update state to blocked,
+// check if it has been cancelled, poll multiple functions, abort waiting by setting controlvar)
 
 // set control to TRUE to return - if all SYNC_WAIT_HOOK funcs return TRUE (polled for), control is also set to TRUE
 // if control is NULL, an internal variable will be used
+// proc_thread can either add hook_callbacks to its SYNC_WAIT hook stack, or set othr hook callabcks which set
+// control to TRUE
 boolean thread_wait_loop(lives_proc_thread_t lpt, boolean full_sync, boolean wake_gui,
                          volatile boolean *control);
+
+// a specialized version of thread_wait_loop, thread will wait until another thread calls sync_continue
+boolean sync_point(const char *motive);
+void lives_proc_thread_sync_continue(lives_proc_thread_t lpt);
 
 // WARNING !! version without a return value will free lpt !
 void lives_proc_thread_join(lives_proc_thread_t);
 
+// wait until a proc thread signals COMPLETED | DESTROYED | IDLING
+// or timeout (seconds) has elapsed (timeout == 0. means unlimited)
+// if caller id the fg thread, it will service fg requests while waiting
 int lives_proc_thread_wait_done(lives_proc_thread_t lpt, double timeout);
 
 // with return value should free proc_thread

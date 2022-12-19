@@ -418,7 +418,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
     if (!extra_params) {
       lives_free(fps_string);
       if (!mainw->multitrack) {
-        switch_to_file(clip, current_file);
+        switch_clip(1, current_file, TRUE);
       }
       lives_freep((void **)&mainw->subt_save_file);
       return;
@@ -493,7 +493,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
       lives_freep((void **)&sfile);
       if (mainw->first_free_file == ALL_USED || mainw->first_free_file > new_file)
         mainw->first_free_file = new_file;
-      if (!mainw->multitrack) switch_to_file(clip, current_file);
+      if (!mainw->multitrack) switch_clip(1, current_file, TRUE);
       d_print_cancelled();
       lives_freep((void **)&mainw->subt_save_file);
       return;
@@ -509,7 +509,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
         mainw->first_free_file = new_file;
 
       if (!mainw->multitrack) {
-        switch_to_file(clip, current_file);
+        switch_clip(1, current_file, TRUE);
       }
       if (mainw->error) d_print_failed();
       else d_print_cancelled();
@@ -548,7 +548,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
       if (mainw->first_free_file == ALL_USED || new_file) mainw->first_free_file = new_file;
     }
     if (!mainw->multitrack) {
-      switch_to_file(clip, current_file);
+      switch_clip(1, current_file, TRUE);
     }
     d_print_cancelled();
     lives_freep((void **)&mainw->subt_save_file);
@@ -601,7 +601,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
       lives_free(com);
       sfile->nopreview = FALSE;
       if (!mainw->multitrack) {
-        switch_to_file(clip, current_file);
+        switch_clip(1, current_file, TRUE);
       }
       d_print_cancelled();
       lives_freep((void **)&mainw->subt_save_file);
@@ -615,7 +615,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
       lives_free(com);
       sfile->nopreview = FALSE;
       if (!mainw->multitrack) {
-        switch_to_file(clip, current_file);
+        switch_clip(1, current_file, TRUE);
       }
       if (mainw->error) d_print_failed();
       else d_print_cancelled();
@@ -649,7 +649,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
         lives_freep((void **)&mainw->subt_save_file);
         if (ret > 0) d_print_cancelled();
         if (!mainw->multitrack) {
-          switch_to_file(clip, current_file);
+          switch_clip(1, current_file, TRUE);
         }
         return;
       }
@@ -880,7 +880,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
         lives_free(com);
       }
 
-      switch_to_file(clip, current_file);
+      switch_clip(1, current_file, TRUE);
 
       lives_freep((void **)&mainw->subt_save_file);
       sensitize();
@@ -914,7 +914,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
       }
 
       if (!mainw->multitrack) {
-        switch_to_file(clip, current_file);
+        switch_clip(1, current_file, TRUE);
       }
       retval = do_error_dialog(_("\n\nEncoder error - output file was not created !\n"));
 
@@ -1011,7 +1011,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
   }
 
   if (!mainw->multitrack) {
-    switch_to_file(clip, current_file);
+    switch_clip(1, current_file, TRUE);
   }
   if (mainw->iochan) {
     save_log_file("encoder_log");
@@ -1960,7 +1960,7 @@ ulong restore_file(const char *file_name) {
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
 
   if (!mainw->multitrack) {
-    switch_to_file((mainw->current_file = old_file), current_file);
+    switch_clip(1, current_file, TRUE);
   }
   lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
 
@@ -2441,8 +2441,9 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   if (!auto_recover) {
     char *tmp;
-    lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
-    lives_widget_context_update();
+    //lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
+
     if (!do_yesno_dialogf_with_countdown
         (2, FALSE, (tmp = _("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n")))) {
       lives_free(tmp);
@@ -2826,7 +2827,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
     if (start_file != mainw->current_file) {
       rec_cleanup = TRUE;
-      switch_to_file(mainw->current_file, start_file);
+      switch_clip(1, start_file, TRUE);
       showclipimgs();
     }
   } else {
@@ -2857,6 +2858,8 @@ recovery_done:
 
   if (ngoodclips && *mainw->set_name) recover_layout_map();
   mainw->recovering_files = FALSE;
+
+  switch_clip(1, mainw->current_file, TRUE);
 
   return retb;
 }
@@ -4138,7 +4141,7 @@ load_done:
 
   if (!mainw->multitrack) {
     // update widgets
-    switch_to_file((mainw->current_file = 0), current_file);
+    switch_clip(1, mainw->current_file, TRUE);
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
   } else {
     lives_mt *multi = mainw->multitrack;

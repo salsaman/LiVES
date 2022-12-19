@@ -230,15 +230,16 @@ static void pulse_set_rec_avals(pulse_driver_t *pulsed) {
 static void pulse_buff_free(void *ptr) {lives_free(ptr);}
 #endif
 
+static uint8_t *silbuff = NULL;
+static size_t silbufsz = 0;
 
 static void sample_silence_pulse(pulse_driver_t *pulsed, ssize_t nbytes) {
-  uint8_t *buff = NULL;
 #if HAVE_PA_STREAM_BEGIN_WRITE
   size_t xbytes;
+  uint8_t *pa_buff;
 #endif
   size_t nsamples;
   int ret = 0;
-  boolean do_free = FALSE;
   boolean no_add = !mainw->audio_seek_ready;
 
   if (!nbytes) return;
@@ -253,27 +254,31 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, ssize_t nbytes) {
   if (!pulsed->is_corked) {
     xbytes = -1;
     // returns a buffer and size for us to write to
-    ret = pa_stream_begin_write(pulsed->pstream, (void **)&buff, &xbytes);
+    ret = pa_stream_begin_write(pulsed->pstream, (void **)&pa_buff, &xbytes);
     if (xbytes < nbytes) nbytes = xbytes;
   }
+  if (ret != 0) goto done;
 #endif
-  if (!buff) {
-    buff = (uint8_t *)lives_calloc(1, nbytes);
-    do_free = TRUE;
+
+  if (nbytes > silbufsz) {
+    if (silbufsz) lives_free(silbuff);
+    silbufsz = 0;
+    silbuff = (uint8_t *)lives_calloc(1, nbytes);
+    if (!silbuff) goto done;
+    silbufsz = nbytes;
   }
-  if (!buff || ret != 0) goto done;
 
   if (!pulsed->is_corked) {
 #if !HAVE_PA_STREAM_BEGIN_WRITE
-    pa_stream_write(pulsed->pstream, buff, nbytes, pulse_buff_free, 0, PA_SEEK_RELATIVE);
+    pa_stream_write(pulsed->pstream, silbuff, nbytes, pulse_buff_free, 0, PA_SEEK_RELATIVE);
     do_free = FALSE;
 #else
-    lives_memset(buff, 0, nbytes);
-    pa_stream_write(pulsed->pstream, buff, nbytes, NULL, 0, PA_SEEK_RELATIVE);
+    lives_memset(pa_buff, 0, nbytes);
+    pa_stream_write(pulsed->pstream, pa_buff, nbytes, NULL, 0, PA_SEEK_RELATIVE);
 #endif
   }
 
-  if (pulsed->astream_fd != -1) audio_stream(buff, nbytes, pulsed->astream_fd); // old streaming API
+  if (pulsed->astream_fd != -1) audio_stream(silbuff, nbytes, pulsed->astream_fd); // old streaming API
 
   nsamples = nbytes / pulsed->out_achans / (pulsed->out_asamps >> 3);
 
@@ -287,9 +292,9 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, ssize_t nbytes) {
 
   if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT
       && (!mainw->event_list || mainw->record || mainw->record_paused))  {
-    // buffer audio for any generators
+    // silbuffer audio for any generators
     // interleaved, so we paste all to channel 0
-    append_to_audio_buffer16(buff, nsamples, 2);
+    append_to_audio_buffer16(silbuff, nsamples, 2);
   }
 
   if (!pulsed->is_paused) pulsed->frames_written += nsamples;
@@ -300,7 +305,7 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, ssize_t nbytes) {
     afile->aseek_pos = pulsed->seek_pos;
 
 done:
-  if (buff && do_free) lives_free(buff);
+  return;
 }
 
 
@@ -334,6 +339,9 @@ static volatile boolean in_ap = FALSE;
 
    During playback we always send audio, even if it is silence, since the video timings may be derived from the
    audio sample count.
+
+   TODO !! - if we have begin_write, and we are not resampling, read directly into sound_buffer
+
 */
 static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *arg) {
   pulse_driver_t *pulsed = (pulse_driver_t *)arg;
@@ -940,7 +948,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #ifdef DEBUG_PULSE
               lives_printerr("inputFramesAvailable after conversion2u %ld\n", numFramesToWrite);
 #endif
-
               if (numFramesToWrite > pulseFramesAvailable) {
 #ifdef DEBUG_PULSE
                 lives_printerr("dropping last %ld samples\n", numFramesToWrite - pulseFramesAvailable);

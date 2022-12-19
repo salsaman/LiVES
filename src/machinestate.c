@@ -2130,7 +2130,7 @@ char *get_wid_for_name(const char *wname) {
 
 static lives_proc_thread_t enable_ss_lpt = NULL;
 
-static boolean enable_ss_cb(lives_obj_t *obj, void *data) {
+static boolean enable_ss_cb(void) {
   lives_reenable_screensaver();
   return FALSE;
 }
@@ -2219,8 +2219,8 @@ boolean lives_disable_screensaver(void) {
       THREADVAR(com_failed) = FALSE;
     }
     else {
-      enable_ss_lpt = lives_hook_prepend(mainw->global_hook_stacks, FATAL_HOOK,
-					 0, enable_ss_cb, NULL);
+      enable_ss_lpt = lives_hook_prepend_full(mainw->global_hook_stacks, FATAL_HOOK,
+					      0, enable_ss_cb, 0, "", NULL);
     }
     return TRUE;
   }
@@ -2433,7 +2433,7 @@ int get_window_stack_level(LiVESXWindow *xwin, int *nwins) {
 
 static lives_proc_thread_t show_dpanel_lpt = NULL;
 
-static boolean show_dpanel_cb(lives_obj_t *obj, void *data) {
+static boolean show_dpanel_cb(void) {
   show_desktop_panel();
   return FALSE;
 }
@@ -2460,7 +2460,8 @@ boolean hide_desktop_panel(void) {
   if (wid) {
     ret = hide_x11_window(wid);
     lives_free(wid);
-    show_dpanel_lpt = lives_hook_prepend(mainw->global_hook_stacks, FATAL_HOOK, 0, show_dpanel_cb, NULL);
+    show_dpanel_lpt = lives_hook_prepend_full(mainw->global_hook_stacks, FATAL_HOOK,
+					      0, show_dpanel_cb, 0, "", NULL);
   }
 #endif
   return ret;

@@ -922,6 +922,7 @@ typedef struct {
   volatile boolean fatal; ///< got fatal signal --> status
 
   uint32_t fg_service_handle;
+  GSource *fg_service_source;
 
   boolean is_processing;
   boolean is_rendering;

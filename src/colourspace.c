@@ -12611,12 +12611,11 @@ void lives_layer_set_opaque(weed_layer_t *layer) {
       rowstride = weed_layer_get_rowstride(layer);
       frsize = height * rowstride;
       width *= psize;
-      for (register int i = 0; i < frsize; i += rowstride) {
-        for (register int j = offs; j < width; j += psize) {
+      for (int i = 0; i < frsize; i += rowstride)
+        for (int j = offs; j < width; j += psize)
           pixel_data[i + j] = 255;
-	  // *INDENT-OFF*
-	}}}}
-  // *INDENT-ON*
+    }
+  }
 }
 
 
@@ -13944,17 +13943,18 @@ uint64_t *hash_cmp_rows(uint64_t *crows, int clipno, frames_t frame) {
 
       if (crows || hashes) {
         for (int i = 0; i < height; i++) {
-          if (!crows) hashes[i] = lives_bin_hash(&pd[row * i], width);
-          else {
+          if (crows) {
             if (crows[i] != lives_bin_hash(&pd[row * i], width)) {
               weed_layer_free(layer);
               return NULL;
-	      // *INDENT-OFF*
-	    }}}}}
-    // *INDENT-ON*
-    if (layer) weed_layer_free(layer);
-    if (!crows) return hashes;
-    return crows;
+            }
+          } else hashes[i] = lives_bin_hash(&pd[row * i], width);
+        }
+      }
+      if (layer) weed_layer_free(layer);
+      if (!crows) return hashes;
+      return crows;
+    }
   }
   return NULL;
 }

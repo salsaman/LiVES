@@ -926,7 +926,9 @@ static boolean replace_hook(lives_closure_t *cl, lives_closure_t *repl) {
       /* // instead we will mark it as replaced */
       lives_proc_thread_t lpt2 = repl->proc_thread;
       repl->flags |= HOOK_CB_BLOCK;
+
       lives_proc_thread_ref(lpt);
+
       lives_proc_thread_ref(lpt2);
       weed_set_plantptr_value(lpt, LIVES_LEAF_REPLACEMENT, lpt2);
     }
@@ -950,16 +952,23 @@ lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hstacks, int type, uint
   if (dtype & DTYPE_PREPEND) is_append = FALSE;
   if (dtype & DTYPE_CLOSURE) is_close = TRUE;
 
-  if (is_test && is_close) {
-    is_mark = TRUE;
-    is_test = is_close = FALSE;
-  }
-
   if (is_test & !is_append) {
     // test + prepend - we can remove stuff but will not add
+    // remove from other thrread stacks
+    // add / prepend (with is_close)
+    // also trigger (no is_close)
     is_remove = TRUE;
     is_test = FALSE;
   }
+
+  if (is_append && is_close) {
+    // append_all
+    is_mark = TRUE;
+    is_test = FALSE;
+  }
+
+  // test + append - purely testing
+  // !test and !prepend and !closure ---> normal append
 
   if (!hstacks) hstacks = THREADVAR(hook_stacks);
 
@@ -969,7 +978,8 @@ lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hstacks, int type, uint
   } else {
     lpt = (lives_proc_thread_t)data;
     if (!is_append) {
-      if (is_test || is_mark || is_remove) xclosure = (lives_closure_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_CLOSURE, NULL);
+      if (is_test || is_mark || is_remove)
+        xclosure = (lives_closure_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_CLOSURE, NULL);
       else xclosure = lives_hook_closure_new_for_lpt(lpt, flags, type);
     }
   }
@@ -977,7 +987,7 @@ lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hstacks, int type, uint
   // invalidate data only works when prepended
   if (is_append && (flags & HOOK_INVALIDATE_DATA) == HOOK_INVALIDATE_DATA) return lpt;
 
-  if (!is_append) ret_closure = xclosure;
+  if (!is_append || is_close) ret_closure = xclosure;
 
   hmutex = hstacks[type]->mutex;
 
@@ -996,8 +1006,9 @@ lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hstacks, int type, uint
       if (!lpt2) break_me("null procthread in closure\n");
       if (!lpt2 || lpt2 == lpt) continue;
 
-      if (!((xflags & HOOK_INVALIDATE_DATA) == HOOK_INVALIDATE_DATA)
-          && fn_func_match(lpt, lpt2) < 0) continue;
+      if (fn_func_match(lpt, lpt2) < 0 &&
+          (!((xflags & HOOK_INVALIDATE_DATA) == HOOK_INVALIDATE_DATA)))
+        continue;
 
       if (xflags & HOOK_UNIQUE_FUNC) {
         // either unique_func -> maintain only 1st fn match
@@ -1006,7 +1017,8 @@ lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hstacks, int type, uint
           if (is_test) return closure->proc_thread;
           ret_closure = closure;
           if (xflags & HOOK_UNIQUE_DATA) {
-            if (fn_data_match(lpt2, lpt, maxp)) continue;
+            if (!fn_data_match(lpt2, lpt, maxp)) continue;
+            if (fn_data_match(lpt2, lpt, 0)) continue;
             fn_data_replace(lpt2, lpt);
           }
           continue;
@@ -1043,8 +1055,6 @@ lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hstacks, int type, uint
         if (closure->flags & HOOK_CB_BLOCK) replace_hook(closure, ret_closure);
         else if (is_remove) lives_closure_free(closure);
       }
-      hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, cblist, FALSE);
-      replace_hook(closure, ret_closure);
     }
     pthread_mutex_unlock(hmutex);
   }
@@ -1058,19 +1068,18 @@ lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hstacks, int type, uint
       lives_hook_stack_t **xhs = (lives_hook_stack_t **)links->data;
       if (xhs == mystacks) continue;
 
-      // act as if we are prepending to thread hook_stacks for the puurposes of replacing
+      // act as if we are prepending to thread hook_stacks for the purposes of replacing
       // mathing funcs / data. If dtype & PREPEND we replace / remove, otherwise mark as replaced but leave in stack
       // this operation is denoted by the combination (HOOK_CB_TEST_ADD / DTYPE_CLOSURE)
       // (since we never actually test_add closures, only proc_threads)
 
-
       _lives_hook_add(xhs, LIVES_GUI_HOOK, flags | HOOK_CB_TEST_ADD, ret_closure
-                      ? (void *)ret_closure->proc_thread : (void *)lpt, DTYPE_PREPEND | DTYPE_CLOSURE);
+                      ? (void *)ret_closure->proc_thread : (void *)lpt, (dtype & DTYPE_PREPEND) | DTYPE_CLOSURE);
     }
     pthread_mutex_unlock(&mainw->all_hstacks_mutex);
   }
 
-  if (ret_closure) {
+  if (ret_closure && ret_closure != xclosure) {
     if (!is_test || !is_append) lives_proc_thread_ref(ret_closure->proc_thread);
     return ret_closure->proc_thread;
   }

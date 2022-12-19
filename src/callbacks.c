@@ -3015,7 +3015,7 @@ void on_redo_activate(LiVESWidget * menuitem, livespointer user_data) {
     cfile->hsize += cfile->ohsize;
     cfile->ohsize = cfile->hsize - cfile->ohsize;
     cfile->hsize -= cfile->ohsize;
-    switch_to_file((mainw->current_file = 0), current_file);
+    switch_clip(1, mainw->current_file, TRUE);
   } else {
     if (cfile->end <= cfile->undo_end) load_end_image(cfile->end);
     if (cfile->start >= cfile->undo_start) load_start_image(cfile->start);
@@ -8087,7 +8087,7 @@ void on_load_subs_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (!mainw->multitrack) {
     // force update
-    switch_to_file(0, mainw->current_file);
+    switch_clip(1, mainw->current_file, TRUE);
   }
 
   d_print(_("Loaded subtitle file: %s\n"), isubfname);
@@ -8148,7 +8148,7 @@ void on_erase_subs_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (menuitem) {
     // force update
     if (!mainw->multitrack) {
-      switch_to_file(0, mainw->current_file);
+      switch_clip(1, mainw->current_file, TRUE);
     }
     d_print(_("Subtitles were erased.\n"));
   }
@@ -8995,7 +8995,7 @@ void on_toy_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       save_clip_values(current_file);
       if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
       if (!mainw->multitrack) {
-        switch_to_file((mainw->current_file = 0), current_file);
+        switch_clip(1, mainw->current_file, TRUE);
         sensitize();
       }
     }
@@ -9814,7 +9814,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
         cfile->next_event = NULL;
         mainw->current_file = current_file;
       } else if (!mainw->multitrack) {
-        switch_to_file((mainw->current_file = 0), current_file);
+        switch_clip(1, mainw->current_file, TRUE);
       }
     }
 
@@ -12024,7 +12024,7 @@ void on_recaudclip_ok_clicked(LiVESButton * button, livespointer user_data) {
   boolean backr = FALSE;
 
   int asigned = 1, aendian = 1;
-  int old_file = mainw->current_file, new_file;
+  int old_file = mainw->current_file;
   int type = LIVES_POINTER_TO_INT(user_data);
   int oachans = 0, oarate = 0, oarps = 0, ose = 0, oasamps = 0;
 
@@ -12243,10 +12243,9 @@ void on_recaudclip_ok_clicked(LiVESButton * button, livespointer user_data) {
 
   mainw->cancelled = CANCEL_NONE;
 
-  new_file = mainw->current_file;
   if (type == 0) {
     if (!mainw->multitrack) {
-      switch_to_file((mainw->current_file = 0), new_file);
+      switch_clip(1, mainw->current_file, TRUE);
     }
   } else {
     if (!prefs->conserve_space) {

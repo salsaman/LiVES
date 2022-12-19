@@ -5477,8 +5477,8 @@ static void make_fx_defs_menu(int num_weed_compounds) {
       else menu_list = lives_list_prepend(menu_list, (livespointer)menuitem);
     }
 
-    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(rte_set_defs_activate), LIVES_INT_TO_POINTER(i));
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                              LIVES_GUI_CALLBACK(rte_set_defs_activate), LIVES_INT_TO_POINTER(i));
 
     lives_freep((void **)&filter_name);
   }

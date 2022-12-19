@@ -645,12 +645,11 @@ void play_file(void) {
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
         } else {
           /// this doesn't get called if we don't call resize_play_window()
-          if (mainw->play_window) {
-            if (prefs->show_playwin) {
-              lives_window_present(LIVES_WINDOW(mainw->play_window));
-              lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+          if (mainw->play_window && prefs->show_playwin) {
+            lives_window_present(LIVES_WINDOW(mainw->play_window));
+            lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
 	      // *INDENT-OFF*
-	    }}}}}
+	  }}}}
     // *INDENT-ON*
 
     if (mainw->play_window) {
@@ -1511,7 +1510,10 @@ void play_file(void) {
   }
 
   //////
+  THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute_pvoid(post_playback, -1, NULL);
+  THREADVAR(hook_hints) = 0;
+
   if (!mainw->multitrack) redraw_timeline(mainw->current_file);
 
   if (CURRENT_CLIP_IS_VALID) {

@@ -134,19 +134,29 @@ char *get_current_timestamp(void);
 // etc
 #define _nsleep8(cond) _nsleep4(cond) ? _nsleep4(cond) : (cond)
 #define _nsleep16(cond) _nsleep8(cond) ? _nsleep8(cond) : (cond)
-#define _nsleep32(cond) _nsleep16(cond) ? _nsleep16(cond) : (cond)
+#define _nsleep32(cond) _nsleep16(cond) ? _nsleep16(cond) : (cond) // 5
 #define _nsleep64(cond) _nsleep32(cond) ? _nsleep32(cond) : (cond)
 #define _nsleep128(cond) _nsleep64(cond) ? _nsleep64(cond) : (cond)
 #define _nsleep256(cond) _nsleep128(cond) ? _nsleep128(cond) : (cond)
 #define _nsleep512(cond) _nsleep256(cond) ? _nsleep256(cond) : (cond)
-#define _nsleep1024(cond) _nsleep512(cond) ? _nsleep512(cond) : (cond)
+#define _nsleep1024(cond) _nsleep512(cond) ? _nsleep512(cond) : (cond) // bit 10
 #define _nsleep2048(cond) _nsleep1024(cond) ? _nsleep1024(cond) : (cond)
-#define _nsleep4096(cond) _nsleep2048(cond) ? _nsleep2048(cond) : (cond)
+#define _nsleep4096(cond) _nsleep2048(cond) ? _nsleep2048(cond) : (cond) // 12
+#define _nsleep8192(cond) _nsleep4096(cond) ? _nsleep4096(cond) : (cond)
+#define _nsleep16384(cond) _nsleep8192(cond) ? _nsleep8192(cond) : (cond) // 14
+#define _nsleep32768(cond) _nsleep16384(cond) ? _nsleep16384(cond) : (cond)
 
 // sleep for up to 5 seconds whil cond is TRUE
 // -- construction of value 5000 in binary digits
 #define lives_five_second_check(cond) _nsleep4096(cond) ? _nsleep512(cond) ? _nsleep256(cond) ? _nsleep128(cond) ? \
     _nsleep8(cond) : (cond) : (cond) : (cond) : (cond)
+
+// bits 14, 13, 12, 10, 8, 5, 4
+#define lives_thirty_second_check(cond) _nsleep16384(cond) ? _nsleep8192(cond) ? _nsleep4096(cond) ? _nsleep1024(cond) ? \
+     _nsleep256(cond) ?  _nsleep32(cond) ?  _nsleep16(cond) : (cond) : (cond) : (cond) : (cond) : (cond) : (cond)
+
+// cancelation point for threads with deferred cancel type
+#define lives_cancel_point pthread_testcancel();
 
 // sleep fo 1usec
 #define lives_nanosleep_until_nonzero(condition) \

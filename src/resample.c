@@ -50,7 +50,6 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
 
   // TODO: check if we still need to letterbox here, or if the encoders handle that now
 
-  int current_file = mainw->current_file;
   boolean audio_resampled = FALSE;
   boolean video_resampled = FALSE;
   boolean video_resized = FALSE;
@@ -226,7 +225,7 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
       }
       video_resized = TRUE;
       if (!mainw->multitrack) {
-        switch_to_file((mainw->current_file = 0), current_file);
+        switch_clip(1, mainw->current_file, TRUE);
       }
     }
   }
@@ -1506,7 +1505,7 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
 
   save_clip_values(mainw->current_file);
 
-  switch_to_file(mainw->current_file, mainw->current_file);
+  switch_clip(1, mainw->current_file, TRUE);
 
   d_print("");  // force printing of switch message
 

@@ -1795,7 +1795,10 @@ uint64_t get_best_audio(_vid_playback_plugin * vpp) {
 void do_plugin_encoder_error(const char *plugin_name) {
   char *path = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, NULL);
   if (!plugin_name || !*plugin_name) {
-    if (capable->has_plugins_libdir == UNCHECKED) check_for_plugins(prefs->lib_dir, FALSE);
+    if (capable->has_plugins_libdir == UNCHECKED) {
+      if (!check_for_plugins(prefs->lib_dir, FALSE)) capable->has_plugins_libdir = MISSING;
+      else capable->has_plugins_libdir = PRESENT;
+    }
   } else {
     widget_opts.non_modal = TRUE;
     do_error_dialogf(_("LiVES did not receive a response from the encoder plugin called '%s'.\n"

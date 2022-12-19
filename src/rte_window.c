@@ -1711,8 +1711,8 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
 
   lives_button_grab_default_special(ok_button);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
 
   lives_free(filter_name);
   lives_free(filter_author);
@@ -2274,8 +2274,8 @@ static LiVESWidget *create_rte_window(boolean reshow) {
     lives_free(tmp2);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_grabs[i]), mainw->rte_keys == i);
 
-    gr_fns[i] = lives_signal_connect_after(LIVES_GUI_OBJECT(key_grabs[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                           LIVES_GUI_CALLBACK(grabkeys_callback_hook), LIVES_INT_TO_POINTER(i));
+    gr_fns[i] = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(key_grabs[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
+                LIVES_GUI_CALLBACK(grabkeys_callback_hook), LIVES_INT_TO_POINTER(i));
 
     mode_group = NULL;
 
@@ -2433,22 +2433,22 @@ static LiVESWidget *create_rte_window(boolean reshow) {
   lives_widget_add_accelerator(ok_button, LIVES_WIDGET_CLICKED_SIGNAL, rtew_accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(irte_window), LIVES_WIDGET_DELETE_EVENT,
-                       LIVES_GUI_CALLBACK(on_rtew_ok_clicked), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(irte_window), LIVES_WIDGET_DELETE_EVENT,
+                            LIVES_GUI_CALLBACK(on_rtew_ok_clicked), NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_rtew_ok_clicked), NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(save_keymap_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_save_keymap_clicked), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(save_keymap_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_save_keymap_clicked), NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(load_keymap_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_load_keymap_clicked),
-                       LIVES_INT_TO_POINTER(1));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(load_keymap_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_load_keymap_clicked),
+                            LIVES_INT_TO_POINTER(1));
 
-  lives_signal_connect(LIVES_GUI_OBJECT(clear_all_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_clear_all_clicked),
-                       LIVES_INT_TO_POINTER(1));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(clear_all_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_clear_all_clicked),
+                            LIVES_INT_TO_POINTER(1));
 
 rte_window_ready:
   // TODO: ignore button clicks until window is fully shown

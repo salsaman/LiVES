@@ -308,16 +308,16 @@ typedef uint64_t funcsig_t;
 #define HOOK_CB_BLOCK       		(1ull << 0)
 
 // hook is GUI related and must be run ONLY by the fg / GUI thread
-#define HOOK_CB_FG_THREAD		(1ull << 2) // force fg service run
+#define HOOK_CB_FG_THREAD		(1ull << 1) // force fg service run
 
 // hook should be run as soon as possible when the hook trigger point is reached
-#define HOOK_CB_PRIORITY		(1ull << 3) // prepend, not append
+#define HOOK_CB_PRIORITY		(1ull << 2) // prepend, not append
 
 // for fg requests, if it cannot be run immediately then destroy it rather than deferring
-#define HOOK_OPT_NO_DEFER		(1ull << 4)
+#define HOOK_OPT_NO_DEFER		(1ull << 3)
 
 // callback will only be run at most one time, and then removed from the stack
-#define HOOK_OPT_ONESHOT		(1ull << 5)
+#define HOOK_OPT_ONESHOT		(1ull << 4)
 
 // this combination may be use for hggh priority GUI updates which need to be run before the thread can continue
 #define HOOK_CB_IMMEDIATE (HOOK_CB_FG_THREAD | HOOK_CB_PRIORITY | HOOK_CB_BLOCK)
@@ -517,7 +517,7 @@ lives_proc_thread_t _lives_hook_add_full(lives_hook_stack_t **hooks, int type, u
   _lives_hook_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), TRUE, \
 		       (lives_funcptr_t)(func), #func, rtype, args_fmt, __VA_ARGS__)
 
-// all dtype
+// all dtypes
 #define lives_hook_test_add(hooks, type, flags, data, dtype) _lives_hook_add((hooks), (type), (flags) | HOOK_CB_TEST_ADD, \
 									     data, dtype)
 //(void *)(data), lpt like
@@ -525,17 +525,16 @@ lives_proc_thread_t _lives_hook_add_full(lives_hook_stack_t **hooks, int type, u
   _lives_hook_add_full((hooks), (type), (flags), TRUE, (lives_funcptr_t)(func), #func, rtype, args_fmt, __VA_ARGS__)
 
 // scalar
-#define lives_hook_append(hooks, type, flags, func, data) _lives_hook_add_full((hooks), (type), (flags), TRUE, \
-									       (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
-									       "vv", NULL, (void *)(data))
+#define lives_hook_append(hooks, type, flags, func, data) \
+  _lives_hook_add_full((hooks), (type), (flags), TRUE,			\
+		       (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
+		       "vv", NULL, (void *)(data))
 // lpt like
 #define lives_hook_prepend_full(hooks, type, flags, func, rtype, args_fmt, ...) \
   _lives_hook_add_full((hooks), (type), (flags), FALSE, (lives_funcptr_t)(func), #func, rtype, args_fmt, __VA_ARGS__)
 
-// scalar
-#define lives_hook_prepend(hooks, type, flags, func, data) _lives_hook_add_full((hooks), (type), (flags), FALSE, \
-										(lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
-										"vv", NULL, (void *)(data))
+// lpt
+#define lives_hook_prepend(hooks, type, flags, lpt) _lives_hook_add((hooks), (type), (flags), lpt, DTYPE_PREPEND)
 
 void lives_hook_remove(lives_hook_stack_t **hstacks, int type, lives_proc_thread_t lpt);
 

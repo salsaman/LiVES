@@ -3610,7 +3610,7 @@ void cancel_tl_redraw(int clipno) {
     if (mainw->drawtl_thread) {
       if (!lives_proc_thread_check_completed(mainw->drawtl_thread)) {
         lives_proc_thread_request_cancel(mainw->drawtl_thread, FALSE);
-        lives_nanosleep_until_zero(mainw->drawtl_thread && lives_proc_thread_is_done(mainw->drawtl_thread));
+        lives_nanosleep_until_zero(mainw->drawtl_thread && !lives_proc_thread_is_done(mainw->drawtl_thread));
       }
       lives_proc_thread_unref(mainw->drawtl_thread);
     }

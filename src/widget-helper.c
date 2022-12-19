@@ -898,6 +898,7 @@ LIVES_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext *c
   if (!is_fg_thread()) return FALSE;
   if (!norecurse) {
     boolean ret;
+    norecurse = TRUE;
     if (!ign_idlefuncs) {
       need_service_handle = TRUE;
       ign_idlefuncs = TRUE;
@@ -905,6 +906,7 @@ LIVES_GLOBAL_INLINE boolean lives_widget_context_iteration(LiVESWidgetContext *c
     ret = g_main_context_iteration(ctx, may_block);
     if (need_service_handle)
       ign_idlefuncs = FALSE;
+    norecurse = FALSE;
     return ret;
   }
   return FALSE;
@@ -982,12 +984,12 @@ static lives_sigdata_t *tasks_running(void) {
         pthread_mutex_unlock(&task_list_mutex);
         return sigdata;
       }
+      pthread_mutex_unlock(&task_list_mutex);
       if (sigdata && sigdata->alarm_handle == LIVES_NO_ALARM) {
         sigdata_free(sigdata, NULL);
       }
-    }
-  }
-  pthread_mutex_unlock(&task_list_mutex);
+    } else pthread_mutex_unlock(&task_list_mutex);
+  } else pthread_mutex_unlock(&task_list_mutex);
   return NULL;
 }
 
@@ -997,6 +999,7 @@ LIVES_LOCAL_INLINE boolean sigdata_check_alarm(lives_sigdata_t *sigdata) {
           || lives_alarm_check(sigdata->alarm_handle) > 0);
 }
 
+static lives_hook_stack_t **fg_hook_stacks = NULL;
 
 boolean fg_service_fulfill(void) {
   // does not call lives_proc_thread_unref(), caller will do that
@@ -1004,8 +1007,16 @@ boolean fg_service_fulfill(void) {
   if (!is_fg_thread()) return FALSE;
 
   if (!lpttorun) {
-    lives_hooks_trigger(THREADVAR(hook_stacks), LIVES_GUI_HOOK);
-    return TRUE;
+    if (!fg_hook_stacks) fg_hook_stacks = THREADVAR(hook_stacks);
+    if (!pthread_mutex_trylock(fg_hook_stacks[LIVES_GUI_HOOK]->mutex)) {
+      if (fg_hook_stacks[LIVES_GUI_HOOK]->stack) {
+        pthread_mutex_unlock(fg_hook_stacks[LIVES_GUI_HOOK]->mutex);
+        lives_hooks_trigger(fg_hook_stacks, LIVES_GUI_HOOK);
+        return TRUE;
+      }
+      pthread_mutex_unlock(fg_hook_stacks[LIVES_GUI_HOOK]->mutex);
+    }
+    return FALSE;
   }
 
 #ifdef DEBUG_GUI_THREADS
@@ -1044,10 +1055,16 @@ boolean fg_service_fulfill(void) {
 
 boolean fg_service_fulfill_cb(void *dummy) {
   if (ign_idlefuncs) {
+    lives_source_set_priority(mainw->fg_service_source, LIVES_WIDGET_PRIORITY_LOW);
     is_idle = TRUE;
     return TRUE;
   }
-  if (!fg_service_fulfill()) lives_widget_context_update();
+  if (fg_service_fulfill()) lives_source_set_priority(mainw->fg_service_source, LIVES_WIDGET_PRIORITY_HIGH);
+  else {
+    lives_source_set_priority(mainw->fg_service_source, LIVES_WIDGET_PRIORITY_LOW);
+    lives_widget_context_update();
+    lives_nanosleep(10000000);
+  }
   return TRUE;
 }
 
@@ -1201,11 +1218,12 @@ reloop:
     if (lpttorun) {
       lpt_recurse2 = TRUE;
       fg_service_fulfill();
+      lives_widget_context_iteration(NULL, FALSE);
       lpt_recurse2 = FALSE;
 
-      if (!(sigdata && sigdata->is_timer) && !(new_sigdata && new_sigdata->is_timer)) {
+      if (!LIVES_IS_PLAYING && !(sigdata && sigdata->is_timer) && !(new_sigdata && new_sigdata->is_timer)) {
         // some handling that needed to be added to prevent multiple idlefuncs
-        if (!lpt_recurse) {
+        if (!lpt_recurse && !lpttorun) {
           exitpt = 4;
           goto exit_loop;
         } else {
@@ -1253,11 +1271,11 @@ reloop:
       // if caller set alarm_handle the we dont push it to the stack, because that task has to be
       // kept under the spotlight so we can know whether to terminate it
       if (new_sigdata) {
-        pthread_mutex_lock(&task_list_mutex);
-
-        new_sigdata->compl_cb = lives_proc_thread_append_hook(new_sigdata->proc, COMPLETED_HOOK, HOOK_OPT_ONESHOT | HOOK_UNIQUE_FUNC,
+        new_sigdata->compl_cb = lives_proc_thread_append_hook(new_sigdata->proc,
+                                COMPLETED_HOOK, HOOK_OPT_ONESHOT | HOOK_UNIQUE_FUNC,
                                 sigdata_finished, new_sigdata);
 
+        pthread_mutex_lock(&task_list_mutex);
         if (new_sigdata->alarm_handle == LIVES_NO_ALARM || !task_list) {
           // push a new task to the stack
           // signal bg that it can start now...
@@ -1799,7 +1817,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show(LiVESWidget *widget) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_hide(LiVESWidget *widget) {
 #ifdef GUI_GTK
-  gtk_widget_hide(widget);
+  //THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+  MAIN_THREAD_EXECUTE_VOID(gtk_widget_hide, "v", widget);
+  //THREADVAR(hook_hints) = 0;
+  //gtk_widget_hide(widget);
   return TRUE;
 #endif
   return FALSE;
@@ -1851,7 +1872,7 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_show_now(LiVESWidget *widget) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget *widget) {
   // run in main thread as it seems to give a smoother result
   boolean ret;
-  THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY;
+  THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_PRIORITY | HOOK_CB_BLOCK;
   main_thread_execute(_lives_widget_show_now, WEED_SEED_BOOLEAN, &ret, "v", widget);
   THREADVAR(hook_hints) = 0;
   return ret;
@@ -2188,20 +2209,25 @@ static LiVESResponseType _dialog_run(LiVESDialog *dialog) {
   lives_widget_object_ref(dialog);
   SET_INT_DATA(dialog, RESPONSE_KEY, LIVES_RESPONSE_INVALID);
   lives_widget_show_all(LIVES_WIDGET(dialog));
+
   if (!mainw->is_ready) pop_to_front(LIVES_WIDGET(dialog), NULL);
-  //ign_idlefuncs = TRUE;
+
+  ign_idlefuncs = TRUE;
+
   do {
     lives_widget_context_iteration(NULL, FALSE);
     lives_nanosleep(NSLEEP_TIME);
     resp = GET_INT_DATA(dialog, RESPONSE_KEY);
   } while (!(dest = GET_INT_DATA(dialog, DESTROYED_KEY)) && resp == LIVES_RESPONSE_INVALID);
+  ign_idlefuncs = FALSE;
+
   if (!dest) {
     if (dialog) lives_signal_handler_disconnect(dialog, dfunc);
     if (dialog) lives_signal_handler_disconnect(dialog, func);
   }
   SET_INT_DATA(dialog, RESPONSE_KEY, LIVES_RESPONSE_INVALID);
   lives_widget_object_unref(dialog);
-  //ign_idlefuncs = FALSE;
+
   g_print("DLG RESPaa %d\n", resp);
   return resp;
 }
@@ -3106,7 +3132,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_title(LiVESWindow *window, 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_transient_for(LiVESWindow *window, LiVESWindow *parent) {
 #ifdef GUI_GTK
+  lives_widget_object_ref(window);
   gtk_window_set_transient_for(window, parent);
+  lives_widget_object_unref(window);
   return TRUE;
 #endif
   return FALSE;
@@ -7947,6 +7975,12 @@ WIDGET_HELPER_GLOBAL_INLINE uint32_t lives_timer_add(uint32_t interval, LiVESWid
 #endif
 
   return sigdata->funcid;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_source_set_priority(GSource *source, int32_t prio) {
+  g_source_set_priority(source, prio);
+  return TRUE;
 }
 
 
@@ -13353,9 +13387,9 @@ boolean lives_widget_context_update(void) {
         lives_widget_context_iteration(NULL, FALSE);
         lives_nanosleep(NSLEEP_TIME);
       }
-      if (!lpttorun) {
-        lives_hooks_trigger(THREADVAR(hook_stacks), LIVES_GUI_HOOK);
-      }
+      /* if (!lpttorun) { */
+      /*   lives_hooks_trigger(THREADVAR(hook_stacks), LIVES_GUI_HOOK); */
+      /* } */
       if (!is_fg_service) THREADVAR(fg_service) = FALSE;
       if (need_service_handle) ign_idlefuncs = FALSE;
       do_more_stuff();

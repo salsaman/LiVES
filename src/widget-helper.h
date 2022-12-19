@@ -1070,6 +1070,7 @@ uint32_t lives_idle_priority(LiVESWidgetSourceFunc function, livespointer data);
 uint32_t lives_timer_immediate(LiVESWidgetSourceFunc function, livespointer data);
 
 boolean lives_source_remove(uint32_t handle);
+boolean lives_source_set_priority(GSource *source, int32_t prio);
 
 uint32_t lives_accelerator_get_default_mod_mask();
 

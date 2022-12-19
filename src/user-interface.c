@@ -410,19 +410,16 @@ void desensitize(void) {
     lives_widget_set_sensitive(mainw->playall, FALSE);
   }
   lives_widget_set_sensitive(mainw->rewind, FALSE);
-  if (!prefs->vj_mode) {
-    if (mainw->rfx_loaded) {
-      if (!mainw->foreign) {
-        for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
-             mainw->num_rendered_effects_test; i++) {
-          if (i == mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate) continue;
-          //if (mainw->rendered_fx[i]->props & RFX_PROPS_MAY_RESIZE) continue;
-          if (mainw->rendered_fx[i]->num_in_channels == 2) continue;
-          if (mainw->rendered_fx[i]->menuitem && mainw->rendered_fx[i]->min_frames >= 0)
-            lives_widget_set_sensitive(mainw->rendered_fx[i]->menuitem, FALSE);
-	  // *INDENT-OFF*
-	}}}}
-  // *INDENT-ON*
+  if (!prefs->vj_mode && mainw->rfx_loaded && !mainw->foreign) {
+    for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
+         mainw->num_rendered_effects_test; i++) {
+      if (i == mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate) continue;
+      //if (mainw->rendered_fx[i]->props & RFX_PROPS_MAY_RESIZE) continue;
+      if (mainw->rendered_fx[i]->num_in_channels == 2) continue;
+      if (mainw->rendered_fx[i]->menuitem && mainw->rendered_fx[i]->min_frames >= 0)
+        lives_widget_set_sensitive(mainw->rendered_fx[i]->menuitem, FALSE);
+    }
+  }
 
   if (mainw->resize_menuitem) {
     lives_widget_set_sensitive(mainw->resize_menuitem, FALSE);

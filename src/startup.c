@@ -1834,7 +1834,17 @@ static boolean lives_startup2(livespointer data) {
   /*    lives_proc_thread_create(LIVES_THRDATTR_NONE, */
   /* 			     (lives_funcptr_t)perf_manager, -1, ""); */
 
+  //lives_widget_context_update();
+
   if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
+
+  mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL);
+  mainw->fg_service_source = g_main_context_find_source_by_id(NULL, mainw->fg_service_handle);
+
+  if (prefs->show_gui) {
+    switch_clip(1, mainw->current_file, TRUE);
+    lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
+  }
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
     d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));
@@ -1971,14 +1981,6 @@ static boolean lives_startup2(livespointer data) {
 
   mainw->is_ready = TRUE;
   lives_window_set_auto_startup_notification(TRUE);
-
-  if (prefs->show_gui) {
-    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-    lives_widget_context_update();
-  }
-
-  //mainw->fg_service_handle = lives_idle_priority(fg_service_fulfill_cb, NULL);
-  g_idle_add(fg_service_fulfill_cb, NULL);
 
   if (!mainw->multitrack)
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);

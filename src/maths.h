@@ -52,7 +52,22 @@ uint64_t minimd5(void *data, size_t dsize) LIVES_PURE;
 void *lives_md5_sum(const char *filename, int64_t *size);
 ////////////////////////////////////////
 
-#define squared(a) ((a) * (a))
+#define SHA512_SIZE	64
+#define SHA512_BSIZE	128
+typedef struct {
+  uint64_t H[8], data_len[2];
+  uint8_t block_len, block[SHA512_BSIZE], digest[SHA512_SIZE];
+} sha512priv;
+
+#define Ch(x,y,z)((x&y)^(~x&z))
+#define Maj(x,y,z)((x&y)^(x&z)^(y&z))
+#define SHR(n,x)(x>>n)
+#define ROTR(n,x)(SHR(n,x)|(x<<(64-n)))
+#define SIGMA0(x)(ROTR(28,x)^ROTR(34,x)^ROTR(39,x))
+#define SIGMA1(x)(ROTR(14,x)^ROTR(18,x)^ROTR(41,x))
+#define sigma0(x)(ROTR(1,x)^ROTR(8,x)^SHR(7,x))
+#define sigma1(x)(ROTR(19,x)^ROTR(61,x)^SHR(6,x))
+#define squared(a)((a)*(a))
 
 #define sig(a) ((a) < 0. ? -1.0 : 1.0)
 

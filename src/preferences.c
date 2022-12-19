@@ -2588,8 +2588,7 @@ boolean apply_prefs(boolean skip_warn) {
     set_boolean_pref(PREF_CE_MAXSPECT, ce_maxspect);
     if (mainw->multitrack == NULL) {
       if (mainw->current_file > -1) {
-        int current_file = mainw->current_file;
-        switch_to_file((mainw->current_file = 0), current_file);
+        switch_clip(1, mainw->current_file, TRUE);
       }
     }
   }
@@ -3729,7 +3728,7 @@ void on_prefs_page_changed(LiVESTreeSelection * widget, _prefsw * prefsw) {
   Function makes apply button sensitive
 */
 void apply_button_set_enabled(LiVESWidget * widget, livespointer func_data) {
-  if (prefsw->ignore_apply) return;
+  if (!prefsw || prefsw->ignore_apply) return;
   lives_button_grab_default_special(prefsw->applybutton); // need to do this first or the button doesn't get its colour
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->revertbutton), TRUE);
@@ -3931,11 +3930,15 @@ static void do_full_reset(LiVESWidget * widget, livespointer data) {
 
 static void callibrate_paned(LiVESPaned * p, LiVESWidget * w) {
   int pos;
+  //lives_widget_show_now(w);
   lives_widget_context_update();
   pos = lives_paned_get_position(p);
   while (!gtk_widget_get_mapped(w)) {
+    //while (!gtk_widget_get_visible(w)) {
     if (pos > PANED_MIN) lives_paned_set_position(p, --pos);
     lives_nanosleep(LIVES_SHORT_SLEEP);
+    //lives_widget_show_now(w);
+    //lives_widget_queue_draw_and_update(lives_widget_get_toplevel(w));
     lives_widget_context_update();
   }
   lives_paned_set_position(p, ++pos);
@@ -4204,6 +4207,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #endif
 
   lives_widget_show_all(dialog_table);
+  lives_widget_process_updates(dialog_table);
   lives_widget_set_no_show_all(dialog_table, TRUE);
 
   // Create preferences list with invisible headers
@@ -7628,19 +7632,19 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_widget_set_opacity(prefsw->prefs_dialog, 0.);
   lives_widget_show_all(prefsw->prefs_dialog);
 
-  main_thread_execute(on_prefs_page_changed, -1, NULL, "vv", prefsw->selection, prefsw);
-  //on_prefs_page_changed(prefsw->selection, prefsw);
-
-  lives_widget_show_now(prefsw->prefs_dialog);
-
+  on_prefs_page_changed(prefsw->selection, prefsw);
   callibrate_paned(LIVES_PANED(prefsw->dialog_hpaned),
                    lives_scrolled_window_get_hscrollbar(LIVES_SCROLLED_WINDOW(prefsw->list_scroll)));
   lives_widget_set_opacity(prefsw->prefs_dialog, 1.);
 
+  lives_widget_show_all(prefsw->prefs_dialog);
+  lives_widget_process_updates(prefsw->prefs_dialog);
+
   if (sel_last)
     lives_scrolled_window_scroll_to(LIVES_SCROLLED_WINDOW(prefsw->list_scroll), LIVES_POS_BOTTOM);
 
-  lives_widget_queue_draw(prefsw->prefs_list);
+  lives_widget_show_all(prefsw->prefs_dialog);
+  lives_widget_queue_draw_and_update(prefsw->prefs_dialog);
 
   return prefsw;
 }

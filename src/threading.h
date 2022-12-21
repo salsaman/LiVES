@@ -200,7 +200,17 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 #define THRD_STATE_PREPARING 	(1ull << 5) // has been assigned from queue, but not yet running
 #define THRD_STATE_RUNNING 	(1ull << 6) // thread is processing
 #define THRD_STATE_COMPLETED 	(1ull << 7) // processing finished
-#define THRD_STATE_DESTROYED 	(1ull << 8) // proc_thread is about to be freed
+#define THRD_STATE_DESTROYING 	(1ull << 8) // proc_thread will be destroyed as soon as all extra refs are removed
+#define THRD_STATE_FINISHED 	(1ull << 9) // processing finished and all hooks have been triggered
+#define THRD_STATE_DESTROYED 	(1ull << 10) // proc_thread is about to be freed; must not be reffed or unreffed
+
+// destroyed is also a final state, but it should not be checked for, the correct way is to add a callback
+// to the DESTRUCTION_HOOK. If the state is IDLING, the proc_thread mya be requeued
+#define THRD_FINAL_STATES (THRD_STATE_IDLING | THRD_STATE_FINISHED)
+
+#define THRD_STATE_WILL_DESTROY (THRD_STATE_COMPLETED | THRD_STATE_DESTROYING)
+
+#define THRD_STATES_FIXED (THRD_STATE_COMPLETED | THRD_STATE_DESTROYING)
 
 // temporary states
 #define THRD_STATE_BUSY 	(1ull << 16)
@@ -221,22 +231,26 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 // paused by request
 #define THRD_TRANSIENT_STATES	0xFF
 
-// for proc_threads created with attr IDLEFUNC, after completing and returning TRUE
+// for proc_threads created with attr IDLEFUNC: after processing and returning TRUE
 // the proc_thread will be returned in state UNQUEUED | IDLING
 // at a later time, the idlefunc can be restarted via lives_proc_thread_queue()
-// this process continue until either the idlefunc returns false, or if cancelable, the idelfunc proc_thread
-// gets a cancel request, and acts on it
-// when requeud, the IDLING flag bit is removed, and the status will chenge to QUEUED
+//
+// this process continues until either the idlefunc returns FALSE, or if cancellable, the idlefunc proc_thread
+// gets a cancel request, and acts on it, in this case the COMPLETED hook is called and final state includes FINISHED
+// when requeud, the UNQUEUED / IDLING flag bits are removed, and the status will change to QUEUED
 
 // abnormal states
-#define THRD_STATE_CANCELLED 	(1ull << 32) // -ctually CANCEL_REQUESTED -> CANCELLED
-// received system signal
-#define THRD_STATE_SIGNALLED 	(1ull << 33)
-#define THRD_STATE_ERROR 	(1ull << 34)
-// called with invalid args_fmt
-#define THRD_STATE_INVALID 	(1ull << 35)
+#define THRD_STATE_CANCELLED 	(1ull << 32)
 // timed out waiting for sync_ready
-#define THRD_STATE_TIMED_OUT	(1ull << 36)
+#define THRD_STATE_TIMED_OUT	(1ull << 33)
+// other unspeficified error
+#define THRD_STATE_ERROR 	(1ull << 34)
+
+// received system signal
+#define THRD_STATE_SIGNALLED 	(1ull << 38)
+
+// called with invalid args_fmt
+#define THRD_STATE_INVALID 	(1ull << 40)
 
 // options
 // can be cancelled by calling proc_thread_cancel
@@ -412,12 +426,13 @@ boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr
 // the thread can also be cancelled, paused
 boolean lives_proc_thread_is_running(lives_proc_thread_t);
 
-// returns TRUE if state is cancelled or completed
+// returns TRUE if state is FINISHED or IDLING
 boolean lives_proc_thread_is_done(lives_proc_thread_t);
 boolean lives_proc_thread_is_idling(lives_proc_thread_t);
 boolean lives_proc_thread_exited(lives_proc_thread_t);
+boolean lives_proc_thread_will_destroy(lives_proc_thread_t);
 
-boolean lives_proc_thread_check_completed(lives_proc_thread_t);
+boolean lives_proc_thread_check_finished(lives_proc_thread_t);
 
 boolean lives_proc_thread_get_signalled(lives_proc_thread_t);
 boolean lives_proc_thread_set_signalled(lives_proc_thread_t, int signum, void *data);
@@ -487,9 +502,9 @@ void lives_proc_thread_sync_continue(lives_proc_thread_t lpt);
 // WARNING !! version without a return value will free lpt !
 void lives_proc_thread_join(lives_proc_thread_t);
 
-// wait until a proc thread signals COMPLETED | DESTROYED | IDLING
+// wait until a proc thread signals FINISHED | IDLING
 // or timeout (seconds) has elapsed (timeout == 0. means unlimited)
-// if caller id the fg thread, it will service fg requests while waiting
+// if caller is the fg thread, it will service fg requests while waiting
 int lives_proc_thread_wait_done(lives_proc_thread_t lpt, double timeout);
 
 // with return value should free proc_thread

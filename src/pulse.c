@@ -1417,7 +1417,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   size_t rbytes = nbytes, zbytes, nframes;;
 
   // actually we should not call join ourselves, but wait for the hooks to be joined
-  lives_hooks_join(pulsed->inst->hook_stacks[DATA_READY_HOOK]);
+  lives_hooks_async_join(pulsed->inst->hook_stacks[DATA_READY_HOOK]);
 
   if (pulsed->is_corked) return;
 

@@ -517,7 +517,7 @@ int64_t disk_monitor_check_result(const char *dir) {
   int64_t bytes;
   if (!disk_monitor_running(dir)) disk_monitor_start(dir);
   if (!lives_strcmp(dir, running_for)) {
-    if (!lives_proc_thread_check_completed(running)) {
+    if (!lives_proc_thread_check_finished(running)) {
       return -1;
     }
     bytes = lives_proc_thread_join_int64(running);

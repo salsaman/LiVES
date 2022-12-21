@@ -54,7 +54,7 @@ void on_export_rfx_activate(LiVESMenuItem *, livespointer status);
 #define PREF_RFXDIALOG_H ((int)(650.*widget_opts.scale))
 
 #define RFX_LOADED (mainw->helper_procthreads[PT_LAZY_RFX] ?		\
-		    lives_proc_thread_check_completed(mainw->helper_procthreads[PT_LAZY_RFX]) : FALSE)
+		    lives_proc_thread_check_finished(mainw->helper_procthreads[PT_LAZY_RFX]) : FALSE)
 
 /// maximum decimal places allowed (should correspond to precision of a "float")
 #define RFXBUILD_MAX_DP 16

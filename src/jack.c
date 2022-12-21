@@ -3546,7 +3546,7 @@ static int audio_read(jack_nframes_t nframes, void *arg) {
   int nch = jackd->num_input_channels;
   int i;
 
-  lives_hooks_join(jackd->inst->hook_stacks[DATA_READY_HOOK]);
+  lives_hooks_async_join(jackd->inst->hook_stacks[DATA_READY_HOOK]);
 
   if (!jackd->in_use) return 0;
 

@@ -1730,8 +1730,12 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // hook_stack is created on demand when a callback is added
                    DESTRUCTION_HOOK, // hook_cb_remove, bundle_type == object_instance
 
+                   // thread running the transform received a fatal signal
+                   // DTL_NATIVE
+                   THREAD_EXIT_HOOK,
+
                    // for an APPLICATION instance, these are GLOBAL HOOKS
-                   N_GLOBAL_HOOKS,// 3
+                   N_GLOBAL_HOOKS,// 4
 
                    // The following are the standard hook points in the system
                    // all DATA_HOOKS must return "immedaitely"
@@ -1822,6 +1826,10 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    RESUMING_HOOK,
 
                    COMPLETED_HOOK,   /// 27 running -> finished
+
+		   /// this is for IDLEFUNC transforms, indicates the transform completed one cycle
+		   // and mey be actioned again
+		   IDLE_HOOK,
 
                    TIMED_OUT_HOOK, ///< timed out in hook - need_data, sync_wait or paused
 
@@ -1955,11 +1963,6 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // can trigger data_ready, and all appropriate cllbacks in the data_request stack are actioned
                    // in this way, threads can be notified instantly of requests, or async via
                    HOOK_CB_ATTACHED_HOOK,
-
-                   // thread running the transform received a fatal signal
-                   // (cascaded value of DESTRUCTING_HOOK for a thread object_instance)
-                   // DTL_NATIVE
-                   THREAD_EXIT_HOOK,
 
                    // this can be used for debugging, in a function put NIRVA_CALL(trace, "Reason")
                    // the hook stack will be held in one or other structural subtypes

@@ -297,7 +297,8 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   }
 
   orowstrides = weed_layer_get_rowstrides(old_layer, &numplanes);
-  weed_layer_nullify_pixel_data(layer);
+
+  //weed_layer_nullify_pixel_data(layer);
 
   if (alignment != 0) THREADVAR(rowstride_alignment_hint) = alignment;
 

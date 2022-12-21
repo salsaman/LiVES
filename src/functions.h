@@ -551,7 +551,7 @@ void lives_hooks_trigger_async(lives_hook_stack_t **hooks, int type);
 lives_proc_thread_t lives_hooks_trigger_async_sequential(lives_proc_thread_t lpt, lives_hook_stack_t **hstacks, int type,
     hook_funcptr_t finfunc, void *findata);
 
-void lives_hooks_join(lives_hook_stack_t *);
+void lives_hooks_async_join(lives_hook_stack_t *);
 
 lives_hook_stack_t **lives_proc_thread_get_hook_stacks(lives_proc_thread_t);
 
@@ -587,7 +587,7 @@ uint32_t get_seedtype(char c);
 
 int fn_func_match(lives_proc_thread_t lpt1, lives_proc_thread_t lpt2);
 boolean fn_data_match(lives_proc_thread_t lpt1, lives_proc_thread_t lpt2, int maxp);
-boolean fn_data_replace(lives_proc_thread_t src, lives_proc_thread_t dst);
+//boolean fn_data_replace(lives_proc_thread_t src, lives_proc_thread_t dst);
 
 int get_funcsig_nparms(funcsig_t sig);
 

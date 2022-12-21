@@ -2835,15 +2835,15 @@ switch_point:
     if (0) {
       // TODO -retest
 #ifdef ENABLE_JACK
-      if (mainw->scratch != SCRATCH_NONE && mainw->multitrack && mainw->jackd_trans
-          && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)
-          && (prefs->jack_opts & JACK_OPTS_TRANSPORT_SLAVE)
-          && (prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE)) {
-        // handle transport jump in multitrack : end current playback and restart it from the new position
-        ticks_t transtc = q_gint64(jack_transport_get_current_ticks(mainw->jackd_trans), sfile->fps);
-        mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE);
-        if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
-      }
+      /* if (mainw->scratch != SCRATCH_NONE && mainw->multitrack && mainw->jackd_trans */
+      /*     && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) */
+      /*     && (prefs->jack_opts & JACK_OPTS_TRANSPORT_SLAVE) */
+      /*     && (prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE)) { */
+      /*   // handle transport jump in multitrack : end current playback and restart it from the new position */
+      /*   ticks_t transtc = q_gint64(jack_transport_get_current_ticks(mainw->jackd_trans), sfile->fps); */
+      /*   mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE); */
+      /*   if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END; */
+      /* } */
 #endif
     } else {
       ticks_t currticks = mainw->currticks;

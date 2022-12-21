@@ -2195,13 +2195,17 @@ boolean move_event_left(weed_event_list_t *event_list, weed_event_t *event, bool
 //////////////////////////////////////////////////////
 // rendering
 
-void set_render_choice(LiVESToggleButton * togglebutton, livespointer choice) {
-  if (lives_toggle_button_get_active(togglebutton)) render_choice = LIVES_POINTER_TO_INT(choice);
+static void set_render_choice(LiVESToggleButton * togglebutton, livespointer choice) {
+  if (lives_toggle_button_get_active(togglebutton)) {
+    render_choice = LIVES_POINTER_TO_INT(choice);
+    lives_widget_destroy(lives_widget_get_toplevel(togglebutton));
+  }
 }
 
 
-void set_render_choice_button(LiVESButton * button, livespointer choice) {
+static void set_render_choice_button(LiVESButton * button, livespointer choice) {
   render_choice = LIVES_POINTER_TO_INT(choice);
+  lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
 }
 
 
@@ -4180,8 +4184,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                 lives_nanosleep_while_false(mainw->transrend_waiting
                                             || lives_proc_thread_check_states(mainw->transrend_proc,
                                                 THRD_STATE_INVALID)
-                                            || lives_proc_thread_check_completed(mainw->transrend_proc));
-                if (lives_proc_thread_check_completed(mainw->transrend_proc)
+                                            || lives_proc_thread_check_finished(mainw->transrend_proc));
+                if (lives_proc_thread_check_finished(mainw->transrend_proc)
                     || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID))
                   return LIVES_RENDER_ERROR;
                 mainw->transrend_waiting = FALSE;
@@ -4231,8 +4235,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               // transcoder will wait for the next frame
               lives_nanosleep_while_false(mainw->transrend_waiting
                                           || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID)
-                                          || lives_proc_thread_check_completed(mainw->transrend_proc));
-              if (lives_proc_thread_check_completed(mainw->transrend_proc)
+                                          || lives_proc_thread_check_finished(mainw->transrend_proc));
+              if (lives_proc_thread_check_finished(mainw->transrend_proc)
                   || lives_proc_thread_check_states(mainw->transrend_proc, THRD_STATE_INVALID))
                 return LIVES_RENDER_ERROR;
 
@@ -5678,10 +5682,9 @@ void event_list_add_end_events(weed_event_list_t *event_list, boolean is_final) 
           if (prefs->audio_player == AUD_PLAYER_PULSE) {
             if (prefs->audio_src == AUDIO_SRC_INT) {
               if (mainw->pulsed) pulse_get_rec_avals(mainw->pulsed);
-            } else {
+            } else
               if (mainw->pulsed_read) pulse_get_rec_avals(mainw->pulsed_read);
-            }
-          }
+	  }
 #endif
 #if 0
           if (prefs->audio_player == AUD_PLAYER_NONE) {

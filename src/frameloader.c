@@ -1215,7 +1215,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
   if (scrap_file_procthrd) {
     // skip saving if still handling the previous one
     if (mainw->rec_aclip == -1 && mainw->scratch == SCRATCH_NONE) {
-      if (!lives_proc_thread_check_completed(scrap_file_procthrd)) return scrapfile->frames;
+      if (!lives_proc_thread_check_finished(scrap_file_procthrd)) return scrapfile->frames;
     }
   }
 

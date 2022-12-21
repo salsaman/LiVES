@@ -1805,7 +1805,7 @@ static boolean lives_startup2(livespointer data) {
 
 #ifndef VALGRIND_ON
   if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
-    if (lives_proc_thread_check_completed(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) {
+    if (lives_proc_thread_check_finished(mainw->helper_procthreads[PT_CUSTOM_COLOURS])) {
       double cpvar = lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       lives_proc_thread_unref(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       if (prefs->cptime <= 0. && cpvar < MAX_CPICK_VAR) {

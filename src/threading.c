@@ -21,7 +21,7 @@
    - proc_threads can be cancelled, either at the code points, or the underlying pthread level
 	a running thread can disable or enable code level cancellation;; pthread level cancellation cannot be blocked
 	a cleanup function ensures even in case of pthread level cancellation, the pthread terminates cleanly
-   - proc_threads with a timeout can be created. If the task does not complete before the timer expires, the thread will be
+   - proc_threads with a timeout can be created. If the task does not finish before the timer expires, the thread will be
 	instantly cancelled. The thread can request a temporary stay of execution by setting the BUSY state flag, then clearing
 	it later.
    - specifying a return type of 0 causes the proc_thread to automatically be freed when it completes
@@ -43,10 +43,9 @@
 			 the worker thread reaches the waiting state, and caller must subsequently call sync_ready
 
 	- IDLEFUNC - the proc_thread will run as normal, but after finishing succesfully,
-			 the return value (which must be int or boolean), will be checked. If the value is FALSE / 0
-			the thread will complete as normal, and can be joined and unreffed
-			however, if the reurn value is true, the status completed will not be set, instead
-
+			 the return value (which must be int or boolean), will be checked. If the value is TRUE,
+			the thread will return with state IDLING | UNQUEUED
+			however, if the return value is FALSE, the state will be COMPLETED / FINISHED
 
 	additionally, some functions may have sync_points, the caller should attach a function
 	to the thread's SYNC_WAIT_HOOKs, and send sync_ready so the thread can continue.
@@ -63,7 +62,8 @@
 
 	- NOTE_TIMINGS - thread will record timestanps in ticks in 3 or 4 values, the time when added to the worker queue
 			the time when the workload is picked up and run by a thread, and the time when the task completes
-			in addition, if the proc_thread was set SYN_CWAIT, the time spent waiting will be stroed in sync_wait_ticks
+			in addition, if the proc_thread was set SYN_CWAIT, the time spent waiting will be stored
+			 in sync_wait_ticks
 			the true time spent waiting in the queue is thus: queue_ticks - start_ticks - sync_wait_ticks
 			and the time spent running the task is end_ticks - start_ticks
 			this can be useful as statistical information
@@ -460,8 +460,9 @@ lives_proc_thread_t lives_proc_thread_create_from_funcinst(lives_thread_attr_t a
    will free its own resources and NULL is returned from this function (fire and forget)
    return_type of -1 has a special meaning, in this case no result is returned, but the thread can be monitored by calling:
    lives_proc_thread_check_done() with the return : - this function is guaranteed to return FALSE whilst the thread is running
-   and TRUE thereafter, the proc_thread should be freed once TRUE id returned and not before.
-   for the other return_types, the appropriate join function should be called and it will block until the thread has completed its
+   and TRUE thereafter, the proc_thread should be freed once TRUE is returned and not before.
+   for the other return_types, the appropriate join function should be called
+	 and it will block until the thread has completed its
    task and return a copy of the actual return value of the func
    alternatively, if return_type is non-zero,
    then the returned value from this function may be reutlised by passing it as the parameter
@@ -516,7 +517,7 @@ lives_proc_thread_t _lives_proc_thread_create_with_timeout_vargs(ticks_t timeout
 
   alarm_handle = lives_alarm_set(timeout);
 
-  while (!lives_proc_thread_check_completed(lpt)
+  while (!lives_proc_thread_check_finished(lpt)
          && (timeout == 0 || (xtimeout = lives_alarm_check(alarm_handle)) > 0)) {
     lives_nanosleep(LIVES_QUICK_NAP);
 
@@ -656,10 +657,6 @@ boolean lives_proc_thread_unref(lives_proc_thread_t lpt) {
           append_all_to_fg_deferral_stack(thread_hook_stacks);
           THREADVAR(proc_thread) = NULL;
         }
-
-        pthread_mutex_lock(&mainw->all_hstacks_mutex);
-        mainw->all_hstacks = lives_list_remove_data(mainw->all_hstacks, thread_hook_stacks, FALSE);
-        pthread_mutex_unlock(&mainw->all_hstacks_mutex);
 
         lives_hooks_clear_all(lpt_hook_stacks, N_HOOK_POINTS);
 
@@ -976,9 +973,13 @@ uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t stat
       pthread_mutex_t *state_mutex = weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_MUTEX, NULL);
       if (state_mutex) {
         uint64_t tstate, new_state;
-        boolean do_refs = !!(lives_proc_thread_count_refs(lpt));
 
-        if (!do_refs) lives_proc_thread_ref(lpt);
+	// if new state includes DESTROYED, refccount will be zero
+	// so we do not want to ref it and unref it, else this would cause recursion when refcount
+	// goes back to zero
+	boolean do_refs = lives_proc_thread_count_refs(lpt) > 0;
+
+        if (do_refs) lives_proc_thread_ref(lpt);
 
         pthread_mutex_lock(state_mutex);
         tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
@@ -998,6 +999,10 @@ uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t stat
 
           if (state_bits & THRD_STATE_RUNNING) {
             lives_hooks_trigger(hook_stacks, TX_START_HOOK);
+          }
+
+	  if (state_bits & THRD_STATE_IDLING) {
+            lives_hooks_trigger(hook_stacks, IDLE_HOOK);
           }
 
           if (state_bits & THRD_STATE_BLOCKED) {
@@ -1022,13 +1027,25 @@ uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t stat
 
           if (state_bits & THRD_STATE_COMPLETED) {
             lives_hooks_trigger(hook_stacks, COMPLETED_HOOK);
-          }
+
+	    if (!(new_state & THRD_STATE_DESTROYING)) {
+	      // set state to include FINISHED. This is not a hook trigger, so by checking for this state
+	      // we can be certain that all hook callbacks have been run and it is safe to unref the proc_thread
+	      pthread_mutex_lock(state_mutex);
+	      tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
+	      weed_set_int64_value(lpt, LIVES_LEAF_THRD_STATE, tstate | THRD_STATE_FINISHED);
+	      pthread_mutex_unlock(state_mutex);
+	      new_state = tstate | THRD_STATE_FINISHED;
+	    }
+	  }
 
           if (state_bits & THRD_STATE_DESTROYED) {
+	    // this hook type is triggered when refcount is zero
+	    // the proc_thread must not be reffed or unreffed
             lives_hooks_trigger(hook_stacks, DESTRUCTION_HOOK);
           }
         }
-        if (!do_refs) lives_proc_thread_unref(lpt);
+        if (do_refs) lives_proc_thread_unref(lpt);
         return new_state;
       }
     }
@@ -1067,21 +1084,35 @@ uint64_t lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t stat
   return THRD_STATE_INVALID;
 }
 
+// the following functions should NEVER be called if there is a possibility that the proc_thread
+// may be destroyed (state includes DONTACARE, return type is 0, or it is a hook callback with options
+// ONESHOT or stack_type REMOVE_IF_FALSE)
+//
+// however if the caller holds a reference on the proc_thread, then these are safe to call
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_check_completed(lives_proc_thread_t lpt) {
-  return (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_COMPLETED)));
+// check if thread finished normally
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_check_finished(lives_proc_thread_t lpt) {
+  return (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_FINISHED)));
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_done(lives_proc_thread_t lpt) {
-  if (lpt && (lives_proc_thread_check_states(lpt, THRD_STATE_DESTROYED
-              | THRD_STATE_COMPLETED | THRD_STATE_IDLING))) return TRUE;
+// check if thread is idling (only set if idlefunc was queued at least once already)
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_idling(lives_proc_thread_t lpt) {
+  if (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_IDLING))) return TRUE;
   return FALSE;
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_idling(lives_proc_thread_t lpt) {
-  if (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_IDLING))) return TRUE;
+// check if thread finished normally, is idling or will be destroyed
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_done(lives_proc_thread_t lpt) {
+  if (lpt && (lives_proc_thread_check_states(lpt, THRD_STATE_FINISHED | THRD_STATE_IDLING))) return TRUE;
+  return lives_proc_thread_will_destroy(lpt);
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_will_destroy(lives_proc_thread_t lpt) {
+  if (lpt && (lives_proc_thread_check_states(lpt, THRD_STATE_WILL_DESTROY))
+      == THRD_STATE_WILL_DESTROY) return TRUE;
   return FALSE;
 }
 
@@ -1281,6 +1312,8 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_sync_ready(lives_proc_thread_t lpt) {
 }
 
 
+// this function is safe to call even in case
+// timeout is in seconds
 int lives_proc_thread_wait_done(lives_proc_thread_t lpt, double timeout) {
   if (lpt) {
     ticks_t slptime = LIVES_QUICK_NAP * 10;
@@ -1356,19 +1389,17 @@ boolean lives_proc_thread_dontcare(lives_proc_thread_t lpt) {
   // otherwise leave it
   // return TRUE if we set the state
 
-  pthread_mutex_t *destruct_mutex =
-    (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_MUTEX, NULL);
+  lives_proc_thread_ref(lpt);
 
   // stop proc_thread from being freed as soon as we set the flagbit
-  pthread_mutex_lock(destruct_mutex);
-  if (lives_proc_thread_check_completed(lpt)) {
+  if (lives_proc_thread_check_finished(lpt)) {
     // if the proc_thread already completed, we just unref it
-    pthread_mutex_unlock(destruct_mutex);
+    lives_proc_thread_unref(lpt);
     lives_proc_thread_unref(lpt);
     return FALSE;
   }
   lives_proc_thread_include_states(lpt, THRD_OPT_DONTCARE);
-  pthread_mutex_unlock(destruct_mutex);
+  lives_proc_thread_unref(lpt);
   return TRUE;
 }
 
@@ -1397,31 +1428,30 @@ static void pthread_cleanup_func(void *args) {
 //	the state will first go to COMPLETED, then DESTROYED
 //	(if the thread was reffed, then the state will stay at COMPLETED unreffed)
 // - IDLING - proc_thread was flagged as idlefunc, and the function returned TRUE
-// - COMPLETED - in all other cases
+// - FINISHED - in all other cases
 //
 // thus adding a hook callback for COMPLETED will work in all cases, except for idlefuncs
-// in the latter case there is no hook, but the state should be checked for IDLING
+// where we can add a hook for IDLING
 // after requeueing the idlefunc, the idling state will be removed
 //
 // state may be combined with: - unqueued (for idling), cancelled, error, timed_out, etc.
 // paused is not a final state, the proc_thread should be cancel_requested first, then resume_requested
 // for cancel_immediate, there will be no final state, but thread_exit will be triggered
 static void lives_proc_thread_set_final_state(lives_proc_thread_t lpt, boolean is_hook_cb) {
-  pthread_mutex_t *destruct_mutex = (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_MUTEX, NULL);
   uint64_t attrs = (uint64_t)weed_get_int64_value(lpt, LIVES_LEAF_THREAD_ATTRS, NULL);
   uint64_t state;
   uint32_t ret_type = weed_leaf_seed_type(lpt, _RV_);
 
   weed_set_voidptr_value(lpt, LIVES_LEAF_PTHREAD_SELF, NULL);
 
-  if (destruct_mutex) pthread_mutex_lock(destruct_mutex);
+  //if (destruct_mutex) pthread_mutex_lock(destruct_mutex);
 
   state = lives_proc_thread_get_state(lpt);
 
   if (state & THRD_OPT_IDLEFUNC) {
     if (weed_get_boolean_value(lpt, _RV_, 0)) {
-      if (destruct_mutex) pthread_mutex_unlock(destruct_mutex);
       lives_proc_thread_exclude_states(lpt, THRD_TRANSIENT_STATES);
+      // will trigger IDLE hook
       lives_proc_thread_include_states(lpt, THRD_STATE_UNQUEUED | THRD_STATE_IDLING);
       return;
     }
@@ -1431,17 +1461,20 @@ static void lives_proc_thread_set_final_state(lives_proc_thread_t lpt, boolean i
     // if dontcare, or there is no return type then we should unref the proc_thread
     // unless it is a hook callback, then we justput it back in the stack
     // TODO - check this
-    if (destruct_mutex) pthread_mutex_unlock(destruct_mutex);
-    lives_proc_thread_include_states(lpt, THRD_STATE_COMPLETED);
 
+    // call the COMPLETED hook, but with DESTROYING set
+    lives_proc_thread_include_states(lpt, THRD_STATE_WILL_DESTROY);
+
+    // TODO - check this, now we have is_hook_cb
     if (!(attrs & LIVES_THRDATTR_NO_UNREF)) {
       // if called via a hook trigger or fg_service_call, we set attr to avoid freeing
       lives_proc_thread_unref(lpt);
     }
   } else {
     // once a proc_thread reaches this state it is guaranteed not to be freed
+    // provided DESTROYING is not set
+    // this is a hook trigger, the final state to check for is FINISHED
     lives_proc_thread_include_states(lpt, THRD_STATE_COMPLETED);
-    if (destruct_mutex) pthread_mutex_unlock(destruct_mutex);
   }
 }
 
@@ -1615,9 +1648,13 @@ LIVES_GLOBAL_INLINE int isstck(void *ptr) {
 
 static void lives_thread_data_destroy(void *data) {
   lives_thread_data_t *tdata = (lives_thread_data_t *)data;
+  pthread_mutex_lock(&mainw->all_hstacks_mutex);
+  mainw->all_hstacks = lives_list_remove_data(mainw->all_hstacks, tdata->vars.var_hook_stacks, FALSE);
+  pthread_mutex_unlock(&mainw->all_hstacks_mutex);
   for (int i = 0; i < N_HOOK_POINTS; i++) {
-    lives_list_free(tdata->vars.var_hook_stacks[i]->stack);
+    lives_hooks_clear(tdata->vars.var_hook_stacks, i);
     lives_free(tdata->vars.var_hook_stacks[i]->mutex);
+    lives_free(tdata->vars.var_hook_stacks[i]);
   }
   pthread_rwlock_wrlock(&allctx_rwlock);
   allctxs = lives_list_remove_data(allctxs, tdata, TRUE);
@@ -1761,6 +1798,10 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
 
   // RUN TASK
   widget_context_wrapper(mywork);
+
+  for (int i = 0; i < N_HOOK_POINTS; i++) {
+    lives_hooks_clear(tdata->vars.var_hook_stacks, i);
+  }
 
   // make sure caller has noted that thread finished
   lives_nanosleep_until_zero(mywork->flags & LIVES_THRDFLAG_WAIT_START);

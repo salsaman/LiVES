@@ -321,6 +321,8 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
   if (mainw->current_file != fileno
       || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
 
+  if (!is_thread && pthread_mutex_trylock(&mainw->tlthread_mutex)) goto bail;
+  
   // draw timer bars
   // first the background
   clear_tbar_bgs(posx, posy, width, height, which);
@@ -688,6 +690,9 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
 
   mainw->current_file = current_file;
+
+  if (!is_thread) pthread_mutex_unlock(&mainw->tlthread_mutex);
+
   if (which == 0 || which == 1)
     lives_widget_queue_draw_if_visible(mainw->video_draw);
   if (which == 0 || which == 2)
@@ -701,6 +706,8 @@ bail:
   if (afd >= 0) lives_close_buffered(afd);
   if (mainw->current_file == fileno && fileno != current_file)
     mainw->current_file = current_file;
+
+  if (!is_thread) pthread_mutex_unlock(&mainw->tlthread_mutex);
   return FALSE;
 }
 
@@ -720,10 +727,13 @@ void redraw_timer_bars(double oldx, double newx, int which) {
 
   scalex = allocwidth / CURRENT_CLIP_TOTAL_TIME;
 
-  if (newx > oldx) {
-    update_timer_bars(ROUND_I(oldx * scalex - .5), 0, ROUND_I((newx - oldx) * scalex + .5), 0, which);
-  } else {
-    update_timer_bars(ROUND_I(newx * scalex - .5), 0, ROUND_I((oldx - newx) * scalex + .5), 0, which);
+  if (!pthread_mutex_trylock(&mainw->tlthread_mutex)) {
+    if (newx > oldx) {
+      update_timer_bars(ROUND_I(oldx * scalex - .5), 0, ROUND_I((newx - oldx) * scalex + .5), 0, which);
+    } else {
+      update_timer_bars(ROUND_I(newx * scalex - .5), 0, ROUND_I((oldx - newx) * scalex + .5), 0, which);
+    }
+    pthread_mutex_unlock(&mainw->tlthread_mutex);
   }
 }
 
@@ -3602,24 +3612,17 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
 }
 
 
-void cancel_tl_redraw(int clipno) {
-  lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
-  if (sfile) {
-    pthread_mutex_lock(&mainw->tlthread_mutex);
-    lives_proc_thread_ref(mainw->drawtl_thread);
-    if (mainw->drawtl_thread) {
-      if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-        lives_proc_thread_request_cancel(mainw->drawtl_thread, FALSE);
-        lives_nanosleep_until_zero(mainw->drawtl_thread && !lives_proc_thread_is_done(mainw->drawtl_thread));
-      }
-      lives_proc_thread_unref(mainw->drawtl_thread);
+void cancel_tl_redraw(void) {
+  pthread_mutex_lock(&mainw->tlthread_mutex);
+  lives_proc_thread_ref(mainw->drawtl_thread);
+  if (mainw->drawtl_thread) {
+    if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
+      lives_proc_thread_request_cancel(mainw->drawtl_thread, FALSE);
+      lives_nanosleep_until_zero(mainw->drawtl_thread && !lives_proc_thread_is_done(mainw->drawtl_thread));
     }
-    for (int i = 0; i < sfile->achans; lives_freep((void **)&sfile->audio_waveform[i++]));
-    lives_freep((void **)&sfile->audio_waveform);
-    lives_freep((void **)&sfile->aw_sizes);
-    mainw->needs_tl_redraw = TRUE;
-    pthread_mutex_unlock(&mainw->tlthread_mutex);
+    lives_proc_thread_unref(mainw->drawtl_thread);
   }
+  pthread_mutex_unlock(&mainw->tlthread_mutex);
 }
 
 

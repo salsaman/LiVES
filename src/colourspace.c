@@ -10520,6 +10520,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   int new_gamma_type = WEED_GAMMA_UNKNOWN, gamma_type = WEED_GAMMA_UNKNOWN;
   int iclamping;
   boolean contig = FALSE;
+  boolean do_check = FALSE;
 
   if (!layer || !weed_layer_get_pixel_data(layer)) return FALSE;
 
@@ -10670,6 +10671,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
 
   orig_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   weed_layer_copy(orig_layer, layer);
+  if (weed_get_boolean_value(orig_layer, LIVES_LEAF_BBLOCKALLOC, NULL)) do_check = TRUE;
 
 #ifdef WEED_ADVANCED_PALETTES
   // all RGB -> RGB conversions are now handled here
@@ -10728,6 +10730,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
               convert_swap3delpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
                                          -USE_THREADS);
             } else {
+	      // check if freeing
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
@@ -12136,8 +12139,10 @@ conv_done:
 
   //lives_freep((void **)&gudest_array);
 
-  if (orig_layer) weed_layer_free(orig_layer);
-
+  if (orig_layer) {
+    if (do_check && !weed_get_boolean_value(orig_layer, LIVES_LEAF_BBLOCKALLOC, NULL)) break_me("bballocX2");
+    weed_layer_free(orig_layer);
+  }
   if (new_gamma_type != WEED_GAMMA_UNKNOWN && can_inline_gamma(inpl, outpl)) {
     weed_layer_set_gamma(layer, new_gamma_type);
     gamma_type = weed_layer_get_gamma(layer);

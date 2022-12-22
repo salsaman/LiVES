@@ -83,6 +83,30 @@ LIVES_GLOBAL_INLINE float LEFloat_to_BEFloat(float f) {
   return f;
 }
 
+
+LIVES_GLOBAL_INLINE int get_onescount_8(uint8_t num) {
+  int tot = 0;
+  for (uint8_t x = 128; x; x >>= 1) if (num & x) tot++;
+  return tot;
+}
+
+
+LIVES_GLOBAL_INLINE int get_onescount_16(uint16_t num) {
+  return get_onescount_8((uint16_t)((num & 0xFF00) >> 8))
+    + get_onescount_8((uint16_t)((num & 0xFF)));
+}
+
+LIVES_GLOBAL_INLINE int get_onescount_32(uint32_t num) {
+  return get_onescount_16((uint16_t)((num & 0xFFFF0000) >> 16))
+    + get_onescount_16((uint16_t)((num & 0xFFFF)));
+}
+
+LIVES_GLOBAL_INLINE int get_onescount_64(uint64_t num) {
+  return get_onescount_32((uint32_t)((num & 0xFFFFFFFF00000000) >> 32))
+    + get_onescount_32((uint32_t)((num & 0xFFFFFFFF)));
+}
+
+
 static LIVES_CONST int get_hex_digit(const char c) {
   switch (c) {
   case 'a': case 'A': return 10;

@@ -70,7 +70,8 @@ LIVES_GLOBAL_INLINE void lives_abort(const char *reason) {
   if (!reason) reason = _("Aborting");
   lives_set_status(LIVES_STATUS_FATAL);
   break_me(reason);
-  if (mainw) lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
+  if (mainw && mainw->global_hook_stacks[FATAL_HOOK])
+    lives_hooks_trigger(mainw->global_hook_stacks, FATAL_HOOK);
   g_printerr("LIVES FATAL: %s\n", reason);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, reason);
   abort();
@@ -1141,7 +1142,10 @@ void update_play_times(void) {
   // force a redraw, reread audio
   if (!CURRENT_CLIP_IS_PHYSICAL) return;
   if (cfile->audio_waveform) {
-    cancel_tl_redraw(mainw->current_file);
+    cancel_tl_redraw();
+    for (int i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
+    lives_freep((void **)&cfile->audio_waveform);
+    lives_freep((void **)&cfile->aw_sizes);
   }
   redraw_timeline(mainw->current_file);
 }

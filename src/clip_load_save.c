@@ -2600,11 +2600,11 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         break;
       }
 
-      if (is_scrap || is_ascrap) {
-        pthread_mutex_lock(&mainw->clip_list_mutex);
-        mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
-        pthread_mutex_unlock(&mainw->clip_list_mutex);
-      }
+      /* if (is_scrap || is_ascrap) { */
+      /*   pthread_mutex_lock(&mainw->clip_list_mutex); */
+      /*   mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file)); */
+      /*   pthread_mutex_unlock(&mainw->clip_list_mutex); */
+      /* } */
 
       if (is_scrap) {
         mainw->scrap_file = mainw->current_file;
@@ -2795,6 +2795,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   //if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
   ngoodclips = lives_list_length(mainw->cliplist);
+  if (mainw->scrap_file != -1) ngoodclips--;
   if (!ngoodclips) {
     d_print(_("No clips were recovered.\n"));
   } else

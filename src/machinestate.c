@@ -101,44 +101,22 @@ LIVES_GLOBAL_INLINE uint32_t fastrand_int(uint32_t range) {return (uint32_t)(fas
 
 LIVES_GLOBAL_INLINE void lives_srandom(unsigned int seed) {srandom(seed);}
 
+static boolean rng32 = FALSE;
+  static int strikes = 0;
+
 LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
   static uint64_t last_rnum = 0;
-  static int strikes = 0;
-  static boolean is_32bit = FALSE;
   uint64_t rnum;
 
-  /// if we have a genuine RNG for 64 bits, then the probability of generating
-  // two sequential numbers with difference < 1 trillion is approx. 2 ^ 40 / 2 ^ 64 or about 1 chance in 17 billion
-  // and the probability of it happening twice is < 0.000000000000000000001
-
   rnum = random();
-
-  if (!is_32bit) {
-    if (rnum < 0x100000000) {
-      is_32bit = TRUE;
-      if (1) {
-        uint64_t diff1 = lives_random() - lives_random();
-        uint64_t diff2 = lives_random() - lives_random();
-        uint64_t rbits = get_log2_64((diff1 >> 1) + (diff2 >> 1));
-        char *tmp;
-        if (rbits <= 32) strikes++;
-
-        tmp = lives_strdup_printf(_("RNG seems to be 32 bit only, injecting extra randomness...\n"
-                                    "...increased it from 32 bits to at least %ld bits\n"), rbits);
-        add_messages_to_list(tmp);
-        lives_free(tmp);
-        if (labs(diff1) < BILLIONS(1000)) strikes++;
-        if (labs(diff2) < BILLIONS(1000)) strikes++;
-      }
-    }
-  }
-
-  if (is_32bit) {
-    rnum = (rnum << 19) ^ (random() << 40);
-    rnum = (rnum << 7) ^ (random() & 0xFFFF);
+  
+  if (rng32) {
+    rnum = (rnum << 22) ^ (random() << 39) ^ random();
   }
 
   if (labs(rnum - last_rnum) < BILLIONS(1000)) strikes++;
+
+  if (!rng32) strikes = 0;
 
   if (strikes > 1) {
     char *msg = lives_strdup_printf("Insufficient entropy for RNG (last numbers were %ld and %ld), cannot continue.\n"
@@ -159,11 +137,16 @@ void lives_get_randbytes(void *ptr, size_t size) {
 }
 
 
+static void badrand(uint64_t last_rnum, uint64_t rnum) {
+  char *msg = lives_strdup_printf("Insufficient entropy for RNG (%ld and %ld), cannot continue", last_rnum, rnum);
+  lives_abort(msg);
+}
+
+
 uint64_t gen_unique_id(void) {
   static uint64_t last_rnum = 0;
-  static int strikes = 0;
   uint64_t rnum;
-#if HAVE_GETENTROPY
+#if HAVE_GETENTROPYx
   int randres = getentropy(&rnum, 8);
 #else
   int randres = 1;
@@ -180,14 +163,79 @@ uint64_t gen_unique_id(void) {
   // two sequential numbers with difference < 1 trillion is approx. 2 ^ 40 / 2 ^ 64 or about 1 chance in 17 billion
   // and the probability of it happening twice is < 0.000000000000000000001
   // this is checked in lives_random(), but we will check here to ensure the uid algo is sound
-  if (labs(rnum - last_rnum) < BILLIONS(1000)) {
-    if (strikes++) {
-      char *msg = lives_strdup_printf("Insufficient entropy for RNG (%ld and %ld), cannot continue", last_rnum, rnum);
-      lives_abort(msg);
-    }
+
+  if (get_log2_64(rnum ^ last_rnum) < 40) {
+    if (strikes++) badrand(last_rnum, rnum);
   }
   last_rnum = rnum;
   return rnum;
+}
+
+
+static void check_random(void) {
+  uint64_t rnum = 0, xrnum, last_rnum = 0;
+  uint64_t inrbits, maxbits = 0, rbits;
+  uint64_t tdifs = 0;
+  char *tmp;
+  int i;
+  tdifs = 0;
+  for (i = 0; i < 101; i++) {
+    rnum = lives_random();
+    if (i > 0) {
+      inrbits = get_onescount_64(rnum ^ last_rnum);
+      tdifs += inrbits;
+      inrbits = get_onescount_64(rnum & last_rnum);
+      tdifs += inrbits << 1;
+      inrbits = get_onescount_64(rnum | last_rnum);
+      tdifs += (inrbits << 1) / 3;
+    }
+    last_rnum = rnum;
+  }
+
+  inrbits = (uint64_t)((tdifs / 300. + .5)) * 2;
+
+  if (inrbits < 40) {
+    char *tmp;
+    rng32 = TRUE;
+    tdifs = 0;
+    for (i = 0; i < 1001; i++) {
+      rnum = lives_random();
+      if (i > 0) {
+	maxbits = get_onescount_64(rnum ^ last_rnum);
+	tdifs += maxbits;
+	maxbits = get_onescount_64(rnum & last_rnum);
+	tdifs += maxbits << 1;
+	maxbits = get_onescount_64(rnum | last_rnum);
+	tdifs += (maxbits << 1) / 3;
+      }
+      last_rnum = rnum;
+    }
+    maxbits = (uint64_t)((tdifs / 3000. + .5) * 2);
+    tmp = lives_strdup_printf(_("RNG seems to be %d bit only, injecting extra randomness...\n"
+				"...increased it from %d bits to at least %d bits\n"),
+			      get_2pow_64(inrbits) << 1, inrbits, maxbits > 64 ? 64 : maxbits);
+    add_messages_to_list(tmp);
+    lives_free(tmp);
+  }
+  tdifs = 0;
+  fastrand_val = lives_random();
+  for (i = 0; i < 1001; i++) {
+    rnum = gen_unique_id();
+    if (i > 0) {
+	maxbits = get_onescount_64(rnum ^ last_rnum);
+	tdifs += maxbits;
+	maxbits = get_onescount_64(rnum & last_rnum);
+	tdifs += maxbits << 1;
+	maxbits = get_onescount_64(rnum | last_rnum);
+	tdifs += (maxbits << 1) / 3;
+    }
+    last_rnum = rnum;
+  }
+  maxbits = (uint64_t)((tdifs / 3000. + .5) * 2);
+  tmp = lives_strdup_printf("Tested RNG, generated 1000 uids, entropy is %lu bits\n",
+			    maxbits > 64 ? 64 : maxbits);
+  add_messages_to_list(tmp);
+  lives_free(tmp); 
 }
 
 
@@ -199,6 +247,7 @@ void init_random() {
   rseed = (gen_unique_id() & 0xFFFFFFFF);
 #endif
   lives_srandom(rseed);
+  check_random();
   fastrand_val = gen_unique_id();
 }
 

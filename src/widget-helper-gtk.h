@@ -198,8 +198,11 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #endif
 
 #define lives_markup_escape_text(a, b) g_markup_escape_text(a, b)
+
 #define lives_markup_printf_escaped(...) g_markup_printf_escaped(__VA_ARGS__)
 
+#define lives_print(...) g_print(__VA_ARGS__)
+#define lives_fprintf(...) fprintf(__VA_ARGS__)
 #define lives_printerr(...) g_printerr(__VA_ARGS__)
 #define lives_strdup_printf(...) g_strdup_printf(__VA_ARGS__)
 #define lives_strdup_free(a, b) (lives_free_and_return((a)) ? NULL : lives_strdup(b))

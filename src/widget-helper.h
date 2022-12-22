@@ -63,7 +63,6 @@ typedef struct {
 typedef weed_plantptr_t lives_proc_thread_t;
 
 boolean governor_loop(livespointer data) LIVES_RETURNS_TWICE;
-void sigdata_free(livespointer, LiVESWidgetClosure *);
 
 void fg_service_call(lives_proc_thread_t lpt, void *retval);
 boolean fg_service_fulfill(void);
@@ -409,6 +408,7 @@ boolean lives_widget_destroy(LiVESWidget *);
 boolean lives_widget_realize(LiVESWidget *);
 
 boolean lives_widget_queue_draw(LiVESWidget *);
+boolean lives_widget_queue_draw_noblock(LiVESWidget *);
 boolean lives_widget_queue_draw_area(LiVESWidget *, int x, int y, int width, int height);
 boolean lives_widget_queue_resize(LiVESWidget *);
 boolean lives_widget_set_size_request(LiVESWidget *, int width, int height);

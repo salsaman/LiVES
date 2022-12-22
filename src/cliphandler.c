@@ -2080,74 +2080,27 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
 
   cfile->is_loaded = is_loaded;
 
-  // any cfile (clip) initialisation goes in here
+  // any (non-zero) cfile (clip) initialisation goes in here
   lives_memcpy((void *)&cfile->binfmt_check.chars, BINFMT_CHECK_CHARS, 8);
   cfile->binfmt_version.num = make_version_hash(LiVES_VERSION);
   cfile->binfmt_bytes.size = (size_t)(offsetof(lives_clip_t, binfmt_end));
-  cfile->menuentry = NULL;
-  cfile->start = cfile->end = 0;
-  cfile->old_frames = cfile->opening_frames = cfile->frames = 0;
   lives_snprintf(cfile->type, 40, "%s", _("Unknown"));
-  cfile->f_size = 0l;
-  cfile->achans = 0;
-  cfile->arate = 0;
-  cfile->arps = 0;
-  cfile->afilesize = 0l;
-  cfile->asampsize = 0;
   cfile->adirection = LIVES_DIRECTION_FORWARD;
   cfile->aplay_fd = -1;
-  cfile->undoable = FALSE;
-  cfile->redoable = FALSE;
-  cfile->changed = FALSE;
-  cfile->was_in_set = FALSE;
-  cfile->hsize = cfile->vsize = cfile->ohsize = cfile->ovsize = 0;
   cfile->fps = cfile->pb_fps = prefs->default_fps;
-  cfile->resample_events = NULL;
-  cfile->insert_start = cfile->insert_end = 0;
   cfile->is_untitled = TRUE;
-  cfile->was_renamed = FALSE;
   cfile->undo_action = UNDO_NONE;
   cfile->delivery = LIVES_DELIVERY_PULL;
-  cfile->opening_audio = cfile->opening = cfile->opening_only_audio = FALSE;
-  cfile->pointer_time = 0.;
-  cfile->real_pointer_time = 0.;
-  cfile->restoring = cfile->opening_loc = cfile->nopreview = FALSE;
-  cfile->video_time = cfile->laudio_time = cfile->raudio_time = 0.;
-  cfile->freeze_fps = 0.;
-  cfile->last_vframe_played = 0;
   cfile->frameno = cfile->last_frameno = cfile->saved_frameno = 1;
-  cfile->progress_start = cfile->progress_end = 0;
-  cfile->play_paused = cfile->nokeep = FALSE;
-  cfile->undo_start = cfile->undo_end = 0;
-  cfile->ext_src = NULL;
   cfile->ext_src_type = LIVES_EXT_SRC_NONE;
   cfile->clip_type = CLIP_TYPE_DISK;
-  cfile->ratio_fps = FALSE;
-  cfile->aseek_pos = 0;
-  cfile->async_delta = 0;
   cfile->unique_id = gen_unique_id();
-  cfile->layout_map = NULL;
-  cfile->frame_index = cfile->frame_index_back = NULL;
   pthread_mutex_init(&cfile->frame_index_mutex, &mattr);
-  cfile->pumper = NULL;
-  cfile->stored_layout_frame = 0;
-  cfile->stored_layout_audio = 0.;
-  cfile->stored_layout_fps = 0.;
   cfile->stored_layout_idx = -1;
   cfile->interlace = LIVES_INTERLACE_NONE;
-  cfile->subt = NULL;
-  cfile->no_proc_sys_errors = cfile->no_proc_read_errors = cfile->no_proc_write_errors = FALSE;
-  cfile->keep_without_preview = FALSE;
   cfile->cb_src = -1;
-  cfile->needs_update = cfile->needs_silent_update = FALSE;
-  cfile->audio_waveform = NULL;
   cfile->md5sum[0] = 0;
   cfile->gamma_type = WEED_GAMMA_SRGB;
-  cfile->last_play_sequence = 0;
-  cfile->tcache_dubious_from = 0;
-  cfile->tcache_height = 0;
-  cfile->tcache = NULL;
-  cfile->checked = FALSE;
   cfile->has_binfmt = TRUE;
 
   pthread_mutex_init(&cfile->transform_mutex, NULL);
@@ -2155,24 +2108,10 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->img_type = lives_image_ext_to_img_type(prefs->image_ext);
 
   cfile->bpp = (cfile->img_type == IMG_TYPE_JPEG) ? 24 : 32;
-  cfile->deinterlace = FALSE;
 
-  cfile->play_paused = FALSE;
   cfile->header_version = LIVES_CLIP_HEADER_VERSION;
 
-  cfile->event_list = cfile->event_list_back = NULL;
-  cfile->next_event = NULL;
   cfile->vol = 1.;
-
-  lives_memset(cfile->name, 0, 1);
-  lives_memset(cfile->mime_type, 0, 1);
-  lives_memset(cfile->file_name, 0, 1);
-  lives_memset(cfile->save_file_name, 0, 1);
-
-  lives_memset(cfile->comment, 0, 1);
-  lives_memset(cfile->author, 0, 1);
-  lives_memset(cfile->title, 0, 1);
-  lives_memset(cfile->keywords, 0, 1);
 
   cfile->signed_endian = AFORM_UNKNOWN;
   lives_snprintf(cfile->undo_text, 32, "%s", _("_Undo"));
@@ -2184,10 +2123,6 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
 
   lives_snprintf(cfile->info_file, PATH_MAX, "%s", stfile);
   lives_free(stfile);
-
-  // backwards compat.
-  cfile->checked_for_old_header = FALSE;
-  cfile->has_old_header = FALSE;
 
   return cfile;
 }

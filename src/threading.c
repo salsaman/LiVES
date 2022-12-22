@@ -592,9 +592,12 @@ LIVES_LOCAL_INLINE void append_all_to_fg_deferral_stack(lives_hook_stack_t **hst
   pthread_mutex_lock(hmutex);
   for (LiVESList *cblist = hstacks[LIVES_GUI_HOOK]->stack; cblist; cblist = cblist->next) {
     lives_closure_t *cl = (lives_closure_t *)cblist->data;
+    // need to set this first, because as soon as unlock fg thread mutex it can be triggered and cl free
+    lives_proc_thread_t lpt = cl->proc_thread;
+
     if ((cl->flags & HOOK_STATUS_REPLACED) ||
         _lives_hook_add(FG_THREADVAR(hook_stacks), LIVES_GUI_HOOK,
-                        cl->flags, (void *)cl, DTYPE_CLOSURE) != cl->proc_thread)
+                        cl->flags, (void *)cl, DTYPE_CLOSURE) != lpt)
       lives_closure_free(cl);
   }
   lives_list_free(hstacks[LIVES_GUI_HOOK]->stack);
@@ -609,9 +612,10 @@ LIVES_LOCAL_INLINE void prepend_all_to_fg_deferral_stack(lives_hook_stack_t **hs
   pthread_mutex_lock(hmutex);
   for (LiVESList *cblist = lives_list_last(hstacks[LIVES_GUI_HOOK]->stack); cblist; cblist = cblist->prev) {
     lives_closure_t *cl = (lives_closure_t *)cblist->data;
+    lives_proc_thread_t lpt = cl->proc_thread;
     cl->flags &= ~HOOK_STATUS_REPLACED;
     if (_lives_hook_add(fghs, LIVES_GUI_HOOK, cl->flags, (void *)cl, DTYPE_CLOSURE | DTYPE_PREPEND)
-        != cl->proc_thread)
+        != lpt)
       lives_closure_free(cl);
   }
   lives_list_free(hstacks[LIVES_GUI_HOOK]->stack);
@@ -627,6 +631,7 @@ LIVES_GLOBAL_INLINE lives_hook_stack_t **lives_proc_thread_get_hook_stacks(lives
 
 
 LIVES_GLOBAL_INLINE int lives_proc_thread_ref(lives_proc_thread_t lpt) {
+  if (lpt == mainw->player_proc) g_print("pproc ref\n");
   return weed_refcount_inc(lpt);
 }
 
@@ -639,6 +644,7 @@ LIVES_GLOBAL_INLINE int lives_proc_thread_count_refs(lives_proc_thread_t lpt) {
 boolean lives_proc_thread_unref(lives_proc_thread_t lpt) {
   if (lpt) {
     int refs;
+    if (lpt == mainw->player_proc) g_print("pproc unref\n");
     if (!(refs = weed_refcount_dec(lpt))) {
       pthread_mutex_t *destruct_mutex =
         (pthread_mutex_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_MUTEX, NULL);
@@ -980,6 +986,7 @@ uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t stat
 	boolean do_refs = lives_proc_thread_count_refs(lpt) > 0;
 
         if (do_refs) lives_proc_thread_ref(lpt);
+	if (lpt == mainw->player_proc) g_print("pproc states inc\n");
 
         pthread_mutex_lock(state_mutex);
         tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
@@ -1063,6 +1070,7 @@ uint64_t lives_proc_thread_exclude_states(lives_proc_thread_t lpt, uint64_t stat
       if (state_mutex) {
         uint64_t tstate;
         lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(lpt);
+	if (lpt == mainw->player_proc) g_print("pproc states exc\n");
         pthread_mutex_lock(state_mutex);
         tstate = weed_get_int64_value(lpt, LIVES_LEAF_THRD_STATE, NULL);
         new_state = tstate & ~state_bits;
@@ -1489,10 +1497,6 @@ static void *proc_thread_worker_func(void *args) {
   THREADVAR(proc_thread) = lpt;
   weed_set_voidptr_value(lpt, LIVES_LEAF_PTHREAD_SELF, (void *)pthread_self());
 
-  pthread_mutex_lock(&mainw->all_hstacks_mutex);
-  mainw->all_hstacks = lives_list_append(mainw->all_hstacks, THREADVAR(hook_stacks));
-  pthread_mutex_unlock(&mainw->all_hstacks_mutex);
-
   // if pthread_cancel is called, the cleanup_func will be called and pthread will exit
   // this makes sure we trigger the THREAD_EXIT hook callbacks
   pthread_cleanup_push(pthread_cleanup_func, args);
@@ -1711,6 +1715,13 @@ lives_thread_data_t *lives_thread_data_create(uint64_t idx) {
     tdata->vars.var_hook_stacks[i]->mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
     pthread_mutex_init(tdata->vars.var_hook_stacks[i]->mutex, NULL);
   }
+
+  if (idx) {
+    pthread_mutex_lock(&mainw->all_hstacks_mutex);
+    mainw->all_hstacks = lives_list_append(mainw->all_hstacks, THREADVAR(hook_stacks));
+    pthread_mutex_unlock(&mainw->all_hstacks_mutex);
+  }
+
   pthread_rwlock_wrlock(&allctx_rwlock);
   allctxs = lives_list_prepend(allctxs, (livespointer)tdata);
   pthread_rwlock_unlock(&allctx_rwlock);
@@ -2040,14 +2051,11 @@ thrd_work_t *lives_thread_create(lives_thread_t **threadptr, lives_thread_attr_t
     for (int i = rnpoolthreads; i < rnpoolthreads + extrs; i++) {
       poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
       pthread_create(poolthrds[i], NULL, thrdpool, LIVES_INT_TO_POINTER(i + 1));
-      /* pthread_mutex_lock(&tcond_mutex); */
-      /* pthread_cond_signal(&tcond); */
-      /* pthread_mutex_unlock(&tcond_mutex); */
+      pthread_mutex_lock(&tcond_mutex);
+      pthread_cond_signal(&tcond);
+      pthread_mutex_unlock(&tcond_mutex);
     }
     rnpoolthreads += extrs;
-    pthread_mutex_lock(&tcond_mutex);
-    pthread_cond_broadcast(&tcond);
-    pthread_mutex_unlock(&tcond_mutex);
     npoolthreads = rnpoolthreads;
   }
 

@@ -171,13 +171,16 @@ LIVES_GLOBAL_INLINE boolean lives_freep(void **ptr) {
   // free a pointer and nullify it, only if it is non-null to start with
   // pass the address of the pointer in
   // WARNING !! if ptr == WEAK(other_ptr) then other_ptr will not be set to NULL !!
-
-  if (ptr && *ptr) {
+  static pthread_mutex_t freep_mutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_mutex_lock(&freep_mutex);
+  if (ptr && (volatile void *)*ptr) {
     lives_free(*ptr);
     //lives_nullify_weak_check(ptr);
     *ptr = NULL;
+    pthread_mutex_unlock(&freep_mutex);
     return TRUE;
   }
+  pthread_mutex_unlock(&freep_mutex);
   return FALSE;
 }
 

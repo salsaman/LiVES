@@ -1979,6 +1979,10 @@ static boolean lives_startup2(livespointer data) {
   mainw->jack_can_start = TRUE;
 #endif
 
+#ifndef DUMPMSGS
+  dump_messages(NULL);
+#endif
+  
   mainw->is_ready = TRUE;
   lives_window_set_auto_startup_notification(TRUE);
 

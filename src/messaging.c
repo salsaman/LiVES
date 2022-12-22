@@ -41,7 +41,7 @@ weed_plant_t *get_nth_info_message(int n) {
 }
 
 
-char *dump_messages(int start, int end) {
+char *_dump_messages(int start, int end) {
   weed_plant_t *msg = mainw->msg_list;
   char *text = lives_strdup(""), *tmp, *msgtext;
   boolean needs_newline = FALSE;
@@ -68,6 +68,15 @@ char *dump_messages(int start, int end) {
   }
   return text;
 }
+
+
+void dump_messages(FILE *stream) {
+  char *msgs;
+  if (!stream) stream = stderr;
+  lives_fprintf(stream, "%s", (msgs = _dump_messages(-1, -1)));
+  lives_free(msgs);
+}
+  
 
 
 static int log_msg(FILE *logfile, const char *text) {

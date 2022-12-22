@@ -962,7 +962,6 @@ lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hstacks, int type, uint
   pthread_mutex_t *hmutex;
   boolean is_test = !!(flags & HOOK_CB_TEST_ADD);
   boolean is_close = FALSE, is_append = TRUE, is_remove = FALSE, is_mark = FALSE;
-  boolean debug = FALSE;
 
   if (dtype & DTYPE_PREPEND) is_append = FALSE;
   if (dtype & DTYPE_CLOSURE) is_close = TRUE;
@@ -999,11 +998,6 @@ lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hstacks, int type, uint
     }
   }
 
-  if (!is_test && (xflags & HOOK_UNIQUE_REPLACE) == HOOK_UNIQUE_REPLACE) {
-    debug = TRUE;
-    g_print("add uniqueue data %p\n", lpt);
-  }
-
   // invalidate data only works when prepended
   if (is_append && (flags & HOOK_INVALIDATE_DATA) == HOOK_INVALIDATE_DATA) return lpt;
 
@@ -1021,6 +1015,8 @@ lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hstacks, int type, uint
       cblistnext = cblist->next;
       closure = (lives_closure_t *)cblist->data;
       if (!closure) continue;
+      /// ??
+      if (!closure->fdef) continue;
       if (closure->flags & (HOOK_STATUS_BLOCKED | HOOK_STATUS_RUNNING)) continue;
       if ((is_test || is_mark) && (closure->flags & HOOK_STATUS_REPLACED)) continue;
       lpt2 = closure->proc_thread;
@@ -1038,7 +1034,6 @@ lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hstacks, int type, uint
           if (xflags & HOOK_UNIQUE_DATA) {
             if (!fn_data_match(lpt2, lpt, maxp)) continue;
             if (!fn_data_match(lpt2, lpt, 0)) {
-	      if (debug) g_print("change data for %p %p\n", lpt, lpt2);
 	      if (!is_test) fn_data_replace(lpt2, lpt);
 	    }
 	  }
@@ -1089,7 +1084,9 @@ lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hstacks, int type, uint
     pthread_mutex_unlock(hmutex);
   }
 
-  if (is_mark || is_remove) return xclosure->proc_thread;
+  if (is_mark || is_remove) {
+    return xclosure->proc_thread;
+  }
 
   if (!(is_test && is_append) && type == LIVES_GUI_HOOK && xflags && hstacks == FG_THREADVAR(hook_stacks)) {
     lives_hook_stack_t **mystacks = THREADVAR(hook_stacks);
@@ -1129,8 +1126,6 @@ lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hstacks, int type, uint
   if (is_append) hstacks[type]->stack = lives_list_append(hstacks[type]->stack, closure);
   else hstacks[type]->stack = lives_list_prepend(hstacks[type]->stack, closure);
   pthread_mutex_unlock(hmutex);
-
-  if (debug) g_print("add uni %p\n", lpt);
 
   attrs = (uint64_t)weed_get_int64_value(lpt, LIVES_LEAF_THREAD_ATTRS, NULL);
   if (attrs & LIVES_THRDATTR_NOTE_TIMINGS)
@@ -1186,7 +1181,8 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
     listnext = list->next;
     closure = (lives_closure_t *)list->data;
     if (!closure) continue;
-    if (closure->flags & (HOOK_STATUS_BLOCKED | HOOK_STATUS_REMOVE | HOOK_STATUS_RUNNING)) continue;
+    if (closure->flags & (HOOK_STATUS_BLOCKED | HOOK_STATUS_REPLACED
+			  | HOOK_STATUS_REMOVE | HOOK_STATUS_RUNNING)) continue;
     if (!closure->proc_thread) continue;
 
     closure->flags |= HOOK_STATUS_RUNNING;
@@ -1292,23 +1288,6 @@ static void _lives_hooks_tr_seq(lives_proc_thread_t lpt, lives_hook_stack_t **hs
     }
     lives_nanosleep(SYNC_CHECK_TIME);
   }
-}
-
-
-static boolean remifalse(lives_obj_t *xlpt, void *Xlpt) {
-  lives_proc_thread_t self = THREADVAR(proc_thread);
-  if (weed_get_boolean_value(self, _RV_, NULL) == FALSE) {
-    lives_hook_stack_t **hstacks = (lives_hook_stack_t **)weed_get_voidptr_value(self, LIVES_LEAF_XLIST_STACKS, NULL);
-    int type = weed_get_int_value(self, LIVES_LEAF_XLIST_TYPE, NULL);
-    LiVESList *cb = weed_get_voidptr_value(self, LIVES_LEAF_XLIST_LIST, NULL);
-    lives_hook_stack_t *hstack = hstacks[type];
-    pthread_mutex_t *hmutex = hstack->mutex;
-    pthread_mutex_lock(hmutex);
-    hstacks[type]->stack = lives_list_remove_node(hstack->stack, cb, TRUE);
-    pthread_mutex_unlock(hmutex);
-  }
-  lives_proc_thread_dontcare(self);
-  return FALSE;
 }
 
 

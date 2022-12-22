@@ -9,11 +9,16 @@
 
 // message collection
 void d_print(const char *fmt, ...);
-char *dump_messages(int start, int end); // utils.c
-weed_plant_t *get_nth_info_message(int n); // utils.c
+char *_dump_messages(int start, int end);
+
+void dump_messages(FILE *stream);
+
+weed_plant_t *get_nth_info_message(int n);
 weed_error_t add_messages_to_list(const char *text);
 weed_error_t add_messages_first(const char *text);
 weed_error_t free_n_msgs(int frval);
+
+#define msg_print(...) d_print(__VA_ARGS__)
 
 FILE *open_logfile(const char *logfilename);
 void close_logfile(FILE *logfile);

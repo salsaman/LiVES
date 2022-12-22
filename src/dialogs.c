@@ -2531,7 +2531,7 @@ boolean do_comments_dialog(int fileno, char *filename) {
 
 LIVES_GLOBAL_INLINE void do_messages_window(boolean is_startup) {
   text_window *textwindow;
-  char *text = dump_messages(-1, -1);
+  char *text = _dump_messages(-1, -1);
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   textwindow = create_text_window(_("Message History"), text, NULL, TRUE);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;

@@ -118,12 +118,26 @@ void start_playback_async(int type) {
   mainw->player_proc = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
                        _start_playback, WEED_SEED_BOOLEAN,
                        "i", type);
-  lives_proc_thread_nullify_on_destruction(mainw->player_proc, (void **) & (mainw->player_proc));
+  //lives_proc_thread_nullify_on_destruction(mainw->player_proc, (void **) & (mainw->player_proc));
+
+  g_print("pre-ref\n");
+  lives_proc_thread_ref(mainw->player_proc);
+  g_print("post-ref\n");
 
   // ask the main thread to concentrate on service GUI requests from a specific proc_thread
   sigdata = lives_sigdata_new(mainw->player_proc, FALSE);
-  //sigdata->is_timer = TRUE;
+  sigdata->is_timer = TRUE;
   governor_loop(sigdata);
+
+  while (mainw->player_proc && !(lives_proc_thread_check_finished(mainw->player_proc))
+	   && get_gov_status() == GOV_WILL_RUN) {
+    lives_widget_context_iteration(NULL, FALSE);
+  }
+  if (mainw->player_proc) {
+    lives_proc_thread_join_boolean(mainw->player_proc);
+    lives_proc_thread_unref(mainw->player_proc);
+    mainw->player_proc = NULL;
+  }
 }
 
 
@@ -351,6 +365,7 @@ void play_file(void) {
   boolean needsadone = FALSE;
 
   boolean lazy_start = FALSE;
+  boolean lazy_rfx = FALSE;
 
 #ifdef RT_AUDIO
   boolean exact_preview = FALSE;
@@ -420,7 +435,7 @@ void play_file(void) {
 
   mainw->clip_switched = FALSE;
 
-  if (!mainw->foreign && mainw->lazy_starter) {
+  if (!mainw->foreign) {
     // this is like a safe addrref
     lives_proc_thread_ref(mainw->lazy_starter);
     if (mainw->lazy_starter) {
@@ -428,7 +443,15 @@ void play_file(void) {
       lives_proc_thread_unref(mainw->lazy_starter);
       lazy_start = TRUE;
     }
+    
+    lives_proc_thread_ref(mainw->helper_procthreads[PT_LAZY_RFX]);
+    if (mainw->helper_procthreads[PT_LAZY_RFX]) {
+      lives_proc_thread_request_pause(mainw->helper_procthreads[PT_LAZY_RFX]);
+      lives_proc_thread_unref(mainw->helper_procthreads[PT_LAZY_RFX]);
+      lazy_rfx = TRUE;
+    }
   }
+
 
   // reinit all active effects
   if (!mainw->preview && !mainw->is_rendering && !mainw->foreign) weed_reinit_all();
@@ -546,6 +569,7 @@ void play_file(void) {
     /// plug the plug into the playframe socket if we need to
     add_to_playframe();
   }
+  lives_widget_context_update();
 
   arate = cfile->arate;
 
@@ -1529,6 +1553,14 @@ void play_file(void) {
     if (mainw->lazy_starter) {
       lives_proc_thread_request_resume(mainw->lazy_starter);
       lives_proc_thread_unref(mainw->lazy_starter);
+    }
+  }
+  if (lazy_rfx) {
+    lives_proc_thread_ref(mainw->helper_procthreads[PT_LAZY_RFX]);
+    if (mainw->helper_procthreads[PT_LAZY_RFX]) {
+      lives_proc_thread_request_pause(mainw->helper_procthreads[PT_LAZY_RFX]);
+      lives_proc_thread_unref(mainw->helper_procthreads[PT_LAZY_RFX]);
+      lazy_rfx = TRUE;
     }
   }
 

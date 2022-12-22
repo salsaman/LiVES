@@ -34,7 +34,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which);
 void redraw_timer_bars(double oldx, double newx, int which); ///< paint a damage region
 void show_playbar_labels(int clipno);
 void redraw_timeline(int clipno);
-void cancel_tl_redraw(int clipno);
+void cancel_tl_redraw(void);
 
 void msg_area_scroll(LiVESAdjustment *, livespointer userdata);
 void msg_area_scroll_to_end(LiVESWidget *, LiVESAdjustment *);

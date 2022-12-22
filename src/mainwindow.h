@@ -1421,8 +1421,6 @@ typedef struct {
   weed_plant_t *fd_layer_orig; ///< original layer uneffected
   weed_plant_t *fd_layer; ///< framedraw preview layer
 
-  boolean needs_tl_redraw;
-
   int framedraw_frame; ///< current displayed frame
   int fd_max_frame; ///< max effected / generated frame
 

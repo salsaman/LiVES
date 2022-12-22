@@ -4225,6 +4225,7 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
   // 4) copy sorted list -> mainw->rendered_fx
 
   // 5) recreate menus (add_rfx_effects2)
+  lives_proc_thread_t self;
   LiVESList *rfx_builtin_list = NULL, *rfx_custom_list = NULL, *rfx_test_list = NULL;
   LiVESList *list;
   lives_rfx_t *rfx = NULL;
@@ -4232,10 +4233,17 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
 
   int i, plugin_idx;
 
+  boolean is_startup = FALSE;
   int llen;
   int rfx_builtin_list_length, rfx_custom_list_length, rfx_test_list_length;
   int rfx_list_length, old_list_length;
 
+  if (mainw->helper_procthreads[PT_LAZY_RFX] != NULL
+      && (self = THREADVAR(proc_thread)) == mainw->helper_procthreads[PT_LAZY_RFX]) {
+    is_startup = TRUE;
+    lives_proc_thread_set_pauseable(self, TRUE);
+  }
+  
   old_list_length = mainw->num_rendered_effects_builtin
     + mainw->num_rendered_effects_custom + mainw->num_rendered_effects_test;
 
@@ -4357,6 +4365,9 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
     }
 
     for (;; rfx_list = rfx_list->next) {
+      if (is_startup && lives_proc_thread_get_pause_requested(self))
+	lives_proc_thread_pause(self);
+
       if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 #if !BG_LOAD_RFX
       if (!mainw->splash_window) lives_widget_context_update();

@@ -93,17 +93,17 @@ LIVES_GLOBAL_INLINE int get_onescount_8(uint8_t num) {
 
 LIVES_GLOBAL_INLINE int get_onescount_16(uint16_t num) {
   return get_onescount_8((uint16_t)((num & 0xFF00) >> 8))
-    + get_onescount_8((uint16_t)((num & 0xFF)));
+         + get_onescount_8((uint16_t)((num & 0xFF)));
 }
 
 LIVES_GLOBAL_INLINE int get_onescount_32(uint32_t num) {
   return get_onescount_16((uint16_t)((num & 0xFFFF0000) >> 16))
-    + get_onescount_16((uint16_t)((num & 0xFFFF)));
+         + get_onescount_16((uint16_t)((num & 0xFFFF)));
 }
 
 LIVES_GLOBAL_INLINE int get_onescount_64(uint64_t num) {
   return get_onescount_32((uint32_t)((num & 0xFFFFFFFF00000000) >> 32))
-    + get_onescount_32((uint32_t)((num & 0xFFFFFFFF)));
+         + get_onescount_32((uint32_t)((num & 0xFFFFFFFF)));
 }
 
 

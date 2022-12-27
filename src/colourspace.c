@@ -9654,7 +9654,7 @@ boolean weed_layer_clear_pixel_data(weed_layer_t *layer) {
    either DEF_ALIGN or the machine cacheline size if known.
 */
 
-boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean may_contig) {
+boolean _create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean may_contig) {
   int palette = weed_layer_get_palette(layer);
   int width = weed_layer_get_width(layer);
   int height = weed_layer_get_height(layer);
@@ -10442,6 +10442,7 @@ static void swap_chroma_planes(weed_layer_t *layer) {
   void **pd_array = weed_layer_get_pixel_data_planar(layer, &nplanes);
   int *rowstrides, rtmp;
   uint8_t *tmp;
+
   if (nplanes < 3) return;
   tmp = pd_array[1];
   pd_array[1] = pd_array[2];
@@ -10520,7 +10521,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   int new_gamma_type = WEED_GAMMA_UNKNOWN, gamma_type = WEED_GAMMA_UNKNOWN;
   int iclamping;
   boolean contig = FALSE;
-  boolean do_check = FALSE;
+  boolean no_free_orig = FALSE;
 
   if (!layer || !weed_layer_get_pixel_data(layer)) return FALSE;
 
@@ -10671,7 +10672,12 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
 
   orig_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   weed_layer_copy(orig_layer, layer);
-  if (weed_get_boolean_value(orig_layer, LIVES_LEAF_BBLOCKALLOC, NULL)) do_check = TRUE;
+
+  if (mainw->frame_layer && layer != mainw->frame_layer
+      && weed_layer_get_pixel_data(mainw->frame_layer) ==
+      weed_layer_get_pixel_data(orig_layer))
+    /// retain orig pixel_data if it belongs to mainw->frame_layer
+    no_free_orig = TRUE;
 
 #ifdef WEED_ADVANCED_PALETTES
   // all RGB -> RGB conversions are now handled here
@@ -10730,7 +10736,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
               convert_swap3delpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
                                          -USE_THREADS);
             } else {
-	      // check if freeing
+              // check if freeing
               if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
               orowstride = weed_layer_get_rowstride(layer);
               gudest = weed_layer_get_pixel_data(layer);
@@ -10795,7 +10801,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
 
   switch (inpl) {
   case WEED_PALETTE_BGR24:
-    gusrc = weed_layer_get_pixel_data(layer);
+    gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
@@ -10877,7 +10883,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     }
     break;
   case WEED_PALETTE_RGBA32:
-    gusrc = weed_layer_get_pixel_data(layer);
+    gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
@@ -10950,7 +10956,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     }
     break;
   case WEED_PALETTE_RGB24:
-    gusrc = weed_layer_get_pixel_data(layer);
+    gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
@@ -11024,7 +11030,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     }
     break;
   case WEED_PALETTE_BGRA32:
-    gusrc = weed_layer_get_pixel_data(layer);
+    gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
@@ -11097,7 +11103,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     }
     break;
   case WEED_PALETTE_ARGB32:
-    gusrc = weed_layer_get_pixel_data(layer);
+    gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
@@ -11170,7 +11176,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     }
     break;
   case WEED_PALETTE_YUV444P:
-    gusrc_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
+    gusrc_array = (uint8_t **)weed_layer_get_pixel_data_planar(orig_layer, NULL);
     switch (outpl) {
     case WEED_PALETTE_YUV422P:
       if (!create_empty_pixel_data(layer, FALSE, FALSE)) goto memfail;
@@ -11270,7 +11276,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     }
     break;
   case WEED_PALETTE_YUVA4444P:
-    gusrc_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
+    gusrc_array = (uint8_t **)weed_layer_get_pixel_data_planar(orig_layer, NULL);
     switch (outpl) {
     case WEED_PALETTE_YUV422P:
       if (!create_empty_pixel_data(layer, FALSE, FALSE)) goto memfail;
@@ -11370,7 +11376,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     }
     break;
   case WEED_PALETTE_UYVY8888:
-    gusrc = weed_layer_get_pixel_data(layer);
+    gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_YUYV8888:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
@@ -11473,7 +11479,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     }
     break;
   case WEED_PALETTE_YUYV8888:
-    gusrc = weed_layer_get_pixel_data(layer);
+    gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_UYVY8888:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
@@ -11577,7 +11583,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     break;
   case WEED_PALETTE_YUV888:
     // need to check rowstrides (may have been resized)
-    gusrc = weed_layer_get_pixel_data(layer);
+    gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_YUVA8888:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
@@ -11669,7 +11675,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     }
     break;
   case WEED_PALETTE_YUVA8888:
-    gusrc = weed_layer_get_pixel_data(layer);
+    gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_YUV888:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
@@ -11762,7 +11768,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     break;
   case WEED_PALETTE_YVU420P:
   case WEED_PALETTE_YUV420P:
-    gusrc_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
+    gusrc_array = (uint8_t **)weed_layer_get_pixel_data_planar(orig_layer, NULL);
     switch (outpl) {
     case WEED_PALETTE_RGB24:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
@@ -11915,7 +11921,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     }
     break;
   case WEED_PALETTE_YUV422P:
-    gusrc_array = (uint8_t **)weed_layer_get_pixel_data_planar(layer, NULL);
+    gusrc_array = (uint8_t **)weed_layer_get_pixel_data_planar(orig_layer, NULL);
     switch (outpl) {
     case WEED_PALETTE_RGB24:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
@@ -12027,7 +12033,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     }
     break;
   case WEED_PALETTE_YUV411:
-    gusrc = weed_layer_get_pixel_data(layer);
+    gusrc = weed_layer_get_pixel_data(orig_layer);
     switch (outpl) {
     case WEED_PALETTE_RGB24:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 2);
@@ -12140,7 +12146,9 @@ conv_done:
   //lives_freep((void **)&gudest_array);
 
   if (orig_layer) {
-    if (do_check && !weed_get_boolean_value(orig_layer, LIVES_LEAF_BBLOCKALLOC, NULL)) break_me("bballocX2");
+    if (no_free_orig) {
+      weed_layer_nullify_pixel_data(orig_layer);
+    }
     weed_layer_free(orig_layer);
   }
   if (new_gamma_type != WEED_GAMMA_UNKNOWN && can_inline_gamma(inpl, outpl)) {
@@ -12661,19 +12669,20 @@ boolean compact_rowstrides(weed_layer_t *layer) {
 
   THREADVAR(rowstride_alignment_hint) = -1;
 
-
-  weed_layer_nullify_pixel_data(layer);
-
   if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
     weed_layer_copy(layer, old_layer);
     weed_layer_nullify_pixel_data(old_layer);
     weed_layer_free(old_layer);
+    lives_free(pixel_data);
+    lives_free(rowstrides);
     return FALSE;
   }
 
   new_pixel_data = weed_layer_get_pixel_data_planar(layer, &nplanes);
 
   if (!new_pixel_data) {
+    weed_layer_copy(layer, old_layer);
+    weed_layer_nullify_pixel_data(old_layer);
     weed_layer_free(old_layer);
     lives_free(pixel_data);
     lives_free(rowstrides);
@@ -12692,6 +12701,8 @@ boolean compact_rowstrides(weed_layer_t *layer) {
   }
 
   if (nplanes > 1) weed_set_boolean_value(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
+
+  // pixel_data in layer was replaced, so we are safe to free old_layer without nullifying
   weed_layer_free(old_layer);
   lives_free(pixel_data);
   lives_free(new_pixel_data);
@@ -12742,6 +12753,10 @@ static void *swscale_threadfunc(void *arg) {
 
    NOTE: swscale may crash if widths are not even,
    and likes to have width in multiples of 8 (may only be when changing palettes ?)
+
+   NOTE: if input layer is a shallow copy of mainw->frame_layer, orig pixel_data is not freed
+
+
 
    @return FALSE if we were unable to resize */
 boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint) {
@@ -12961,8 +12976,8 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 #if USE_THREADS
     for (int i = 0; i < prefs->nfx_threads; threads[i++] = NULL);
 #endif
-    /// old layer will hold a ref to the original pixel_data. We will free it at the end since the pixel_data
-    /// of layer will be recreated when we calll create_empty_pixel_data()
+    /// old layer will hold the original pixel_data. We hold this in case we need to recover
+    /// or read orig values
 
     // get current values
     in_pixel_data = weed_layer_get_pixel_data_planar(layer, &inplanes);
@@ -13017,7 +13032,6 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     if (weed_palette_is_yuv(opal_hint)) weed_layer_set_yuv_clamping(layer, oclamp_hint);
     //weed_layer_set_size(layer, width, height);
     weed_layer_set_size(layer, width / weed_palette_get_pixels_per_macropixel(opal_hint), height);
-    weed_layer_nullify_pixel_data(layer);
 
     if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
       weed_layer_copy(layer, old_layer);
@@ -13038,6 +13052,16 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
           subspace = WEED_YUV_SUBSPACE_BT709;
       }
     }
+
+    if (mainw->frame_layer && layer != mainw->frame_layer
+        && weed_layer_get_pixel_data(mainw->frame_layer) == in_pixel_data[0]) {
+      /// retain orig pixel_data if it belongs to mainw->frame_layer
+      weed_layer_nullify_pixel_data(old_layer);
+    }
+
+    // no longer needed
+    weed_layer_free(old_layer);
+    old_layer = NULL;
 
     for (i = 0; i < 4; i++) {
       // swscale always likes 4 elements, even if fewer planes are used
@@ -13184,8 +13208,6 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     /*   memset(&((uint8_t *)out_pixel_data[0])[gg * orowstrides[0]], 255, width * 3 / 2); */
     /* } */
 
-    // this will properly free() in_pixel_data
-    weed_layer_unref(old_layer);
     lives_free(out_pixel_data);
     lives_free(orowstrides);
     lives_free(irowstrides);
@@ -13291,18 +13313,13 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     lheight = weed_layer_get_height(layer);
   }
 
+  pixel_data = weed_layer_get_pixel_data_planar(layer, NULL);
+
   // old layer will hold pointers to the original pixel data for layer
   old_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
 
   if (!old_layer) return FALSE;
   if (!weed_layer_copy(old_layer, layer)) return FALSE;
-
-  pixel_data = weed_layer_get_pixel_data_planar(old_layer, NULL);
-
-  if (!pixel_data) {
-    weed_layer_free(old_layer);
-    return FALSE;
-  }
 
   width = lwidth;
   height = lheight;
@@ -13310,7 +13327,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
 
   /// create the outer rectangle in layer
   weed_layer_set_size(layer, nwidth / weed_palette_get_pixels_per_macropixel(pal), nheight);
-  weed_layer_nullify_pixel_data(layer);
+
   if (!create_empty_pixel_data(layer, TRUE, TRUE)) goto memfail2;
 
   new_pixel_data = weed_layer_get_pixel_data_planar(layer, NULL);
@@ -13500,10 +13517,12 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     break;
   }
 
-  if (mainw->frame_layer && weed_layer_get_pixel_data(mainw->frame_layer) == pixel_data[0]) {
-    /// retain pixel_data if it belongs to mainw->frame_layer
+  if (mainw->frame_layer && layer != mainw->frame_layer
+      && weed_layer_get_pixel_data(mainw->frame_layer) == pixel_data[0]) {
+    /// retain orig pixel_data if it belongs to mainw->frame_layer
     weed_layer_nullify_pixel_data(old_layer);
   }
+
   /// otherwise do not nullify, as we want to free old pixel_data
   weed_layer_free(old_layer);
   lives_free(pixel_data);

@@ -163,17 +163,16 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     if (cfile->clip_type == CLIP_TYPE_FILE && rfx->status != RFX_STATUS_WEED) {
       // start decoding frames for the rendered effect plugins to start processing
       if (!cfile->pumper) {
-        if (rfx->props & RFX_PROPS_MAY_RESIZE) {
+        if (rfx->props & RFX_PROPS_MAY_RESIZE)
           cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_WAIT_START,
                           (lives_funcptr_t)virtual_to_images,
                           -1, "iiibV", mainw->current_file,
                           1, cfile->frames, FALSE, NULL);
-        } else {
+        else
           cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_PRIORITY | LIVES_THRDATTR_WAIT_START,
                           (lives_funcptr_t)virtual_to_images,
                           -1, "iiibV", mainw->current_file,
                           cfile->undo_start, cfile->undo_end, FALSE, NULL);
-        }
       }
     }
   }
@@ -1018,9 +1017,12 @@ static boolean _rte_on_off(boolean from_menu, int key) {
   // if non-automode, the user overrides effect toggling
   weed_plant_t *inst;
   uint64_t new_rte;
+  g_print("RTExxx\n");
 
   if (mainw->go_away) return TRUE;
   if (!LIVES_IS_INTERACTIVE && from_menu) return TRUE;
+
+  g_print("RTE\n");
 
   if (key == EFFECT_NONE) {
     // switch off real time effects
@@ -1070,16 +1072,13 @@ static boolean _rte_on_off(boolean from_menu, int key) {
 
       filter_mutex_unlock(key);
 
-      if (!LIVES_IS_PLAYING) {
+      if (!LIVES_IS_PLAYING)
         // if anything is connected to ACTIVATE, the fx may be activated
         // during playback this is checked when we play a frame
-        for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
-          if (rte_key_valid(i + 1, TRUE)) {
-            if (!rte_key_is_enabled(i, FALSE)) {
+        for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
+          if (rte_key_valid(i + 1, TRUE))
+            if (!rte_key_is_enabled(i, FALSE))
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
-	      // *INDENT-OFF*
-	    }}}}
-      // *INDENT-ON*
     } else {
       // effect is OFF
       if (key == prefs->autotrans_key - 1 && prefs->autotrans_amt >= 0.) {
@@ -1101,9 +1100,8 @@ static boolean _rte_on_off(boolean from_menu, int key) {
         if ((inst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) != NULL) {
           weed_set_boolean_value(inst, LIVES_LEAF_SOFT_DEINIT, WEED_TRUE);
           if ((xinst = rte_keymode_get_instance(key + 1, rte_key_getmode(key + 1))) == inst) {
-            if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+            if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS))
               record_filter_deinit(key);
-            }
             mainw->rte &= ~new_rte;
             weed_instance_unref(xinst);
           }
@@ -1111,37 +1109,34 @@ static boolean _rte_on_off(boolean from_menu, int key) {
         }
       }
 
-      if (!THREADVAR(fx_is_auto)) {
+      if (!THREADVAR(fx_is_auto))
         if (weed_deinit_effect(key)) {
           mainw->rte &= ~new_rte;
           if (rte_window) rtew_set_keych(key, FALSE);
           if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         }
-      }
 
       filter_mutex_unlock(key);
 
       if (!LIVES_IS_PLAYING) {
         // if anything is connected to ACTIVATE, the fx may be de-activated
         // during playback this is checked when we play a frame
-        for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
-          if (rte_key_valid(i + 1, TRUE)) {
-            if (rte_key_is_enabled(i, FALSE)) {
+        for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
+          if (rte_key_valid(i + 1, TRUE))
+            if (rte_key_is_enabled(i, FALSE))
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
-	      // *INDENT-OFF*
-	    }}}}}}
-  // *INDENT-ON*
-
-  if (mainw->rendered_fx) {
+      }
+    }
+  }
+  if (mainw->rendered_fx)
     if (mainw->rendered_fx[0]->menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0]->menuitem)) {
       if (!LIVES_IS_PLAYING
           && mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE))
                                          || (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
-                                             && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0)) {
+                                             && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0))
         lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, TRUE);
-      } else lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, FALSE);
+      else lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, FALSE);
     }
-  }
 
   if (key > 0 && !THREADVAR(fx_is_auto)) {
     // user override any ACTIVATE data connection
@@ -1162,12 +1157,13 @@ static boolean _rte_on_off(boolean from_menu, int key) {
 boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                             livespointer user_data) {
   // key is 1 based
-  boolean ret;
   int key = LIVES_POINTER_TO_INT(user_data);
-  pthread_rwlock_rdlock(&mainw->rte_rwlock);
-  main_thread_execute(_rte_on_off, WEED_SEED_BOOLEAN, &ret, "bi", (group != NULL), key);
-  pthread_rwlock_unlock(&mainw->rte_rwlock);
-  return ret;
+  if (LIVES_IS_PLAYING)
+    lives_proc_thread_append_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
+                                       HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
+                                       _rte_on_off, WEED_SEED_BOOLEAN, NULL, "bi", (group != NULL), key);
+  else _rte_on_off((group != NULL), key);
+  return TRUE;
 }
 
 boolean rte_on_off_callback_fg(LiVESToggleButton * button, livespointer user_data) {

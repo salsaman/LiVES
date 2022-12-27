@@ -121,6 +121,7 @@ typedef struct {
 } lives_sigdata_t;
 
 lives_sigdata_t *lives_sigdata_new(lives_proc_thread_t lpt, boolean is_timer);
+
 #define LIVES_LEAF_THREADFUNC "tfunction"
 #define LIVES_LEAF_PTHREAD_SELF "pthread_self"
 #define LIVES_LEAF_RETURN_VALUE "return_value"
@@ -152,15 +153,11 @@ lives_sigdata_t *lives_sigdata_new(lives_proc_thread_t lpt, boolean is_timer);
 
 #define LIVES_THRDFLAG_NOTE_TIMINGS	(1ull << 32)
 
-#define LIVES_THRDATTR_NONE		0
-#define LIVES_THRDATTR_PRIORITY		(1ull << 0)
-#define LIVES_THRDATTR_AUTODELETE	(1ull << 1)
-#define LIVES_THRDATTR_WAIT_SYNC       	(1ull << 2)
-#define LIVES_THRDATTR_UNQUEUED       	(1ull << 3)
-
 // worker pool threads
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);
+
+void check_pool_threads(void);
 
 // lives_threads
 thrd_work_t *lives_thread_create(lives_thread_t **, lives_thread_attr_t attr, lives_thread_func_t func, void *arg);
@@ -174,12 +171,14 @@ int get_n_active_threads(void);
 
 lives_thread_data_t *get_thread_data(void);
 lives_threadvars_t *get_threadvars(void);
+lives_threadvars_t *get_threadvars_bg_only(void);
 lives_thread_data_t *get_global_thread_data(void);
 lives_threadvars_t *get_global_threadvars(void);
 lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 
 #define THREADVAR(var) (get_threadvars()->var_##var)
 #define FG_THREADVAR(var) (get_global_threadvars()->var_##var)
+#define BG_THREADVAR(var) (get_threadvars_bg_only()->var_##var)
 
 // lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -196,21 +195,23 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 #define THRD_STATE_IDLING 	(1ull << 1) // for IDLEFUNCS, combined with unqueued implies the proc_thread can be requued
 #define THRD_STATE_QUEUED 	(1ull << 2) // indicates the proc_thread is in the pool thread work queue
 #define THRD_STATE_DEFERRED 	(1ull << 3) // will be run later due to resource limitations
-#define THRD_STATE_STACKED 	(1ull << 4) // is held in a hook stack
-#define THRD_STATE_PREPARING 	(1ull << 5) // has been assigned from queue, but not yet running
-#define THRD_STATE_RUNNING 	(1ull << 6) // thread is processing
-#define THRD_STATE_COMPLETED 	(1ull << 7) // processing finished
-#define THRD_STATE_DESTROYING 	(1ull << 8) // proc_thread will be destroyed as soon as all extra refs are removed
-#define THRD_STATE_FINISHED 	(1ull << 9) // processing finished and all hooks have been triggered
-#define THRD_STATE_DESTROYED 	(1ull << 10) // proc_thread is about to be freed; must not be reffed or unreffed
+
+#define THRD_STATE_PREPARING 	(1ull << 4) // has been assigned from queue, but not yet running
+#define THRD_STATE_RUNNING 	(1ull << 5) // thread is processing
+
+#define THRD_STATE_COMPLETED 	(1ull << 8) // processing finished
+#define THRD_STATE_DESTROYING 	(1ull << 9) // proc_thread will be destroyed as soon as all extra refs are removed
+
+#define THRD_STATE_FINISHED 	(1ull << 10) // processing finished and all hooks have been triggered
+#define THRD_STATE_DESTROYED 	(1ull << 11) // proc_thread is about to be freed; must not be reffed or unreffed
+
+#define THRD_STATE_STACKED 	(1ull << 14) // is held in a hook stack
 
 // destroyed is also a final state, but it should not be checked for, the correct way is to add a callback
 // to the DESTRUCTION_HOOK. If the state is IDLING, the proc_thread mya be requeued
 #define THRD_FINAL_STATES (THRD_STATE_IDLING | THRD_STATE_FINISHED)
 
 #define THRD_STATE_WILL_DESTROY (THRD_STATE_COMPLETED | THRD_STATE_DESTROYING)
-
-#define THRD_STATES_FIXED (THRD_STATE_COMPLETED | THRD_STATE_DESTROYING)
 
 // temporary states
 #define THRD_STATE_BUSY 	(1ull << 16)
@@ -229,7 +230,8 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 // request to pause - ignored for non pauseable threads
 #define THRD_STATE_CANCEL_REQUESTED 	(1ull << 22)
 // paused by request
-#define THRD_TRANSIENT_STATES	0xFF
+
+#define THRD_TRANSIENT_STATES  0X7F003F
 
 // for proc_threads created with attr IDLEFUNC: after processing and returning TRUE
 // the proc_thread will be returned in state UNQUEUED | IDLING
@@ -254,7 +256,7 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 
 // options
 // can be cancelled by calling proc_thread_cancel
-#define THRD_OPT_CANCELLABLE 	(1ull << 48)
+#define THRD_OPT_CANCELABLE 	(1ull << 48)
 // can be cancelled by calling proc_thread_cancel
 #define THRD_OPT_PAUSEABLE 	(1ull << 49)
 
@@ -297,19 +299,19 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_LEAF_THREAD_WORK "thread_work" // refers to underyling lives_thread
 
 #define LIVES_LEAF_STATE_MUTEX "state_mutex" ///< ensures state is accessed atomically
-#define LIVES_LEAF_DESTRUCT_MUTEX "destruct_mutex" ///< prevent thread from being freed as soon as dontcare is set
+#define LIVES_LEAF_DESTRUCT_MUTEX "destruct_mutex" ///< ensures destruct is accessed atomically
 #define LIVES_LEAF_THRD_STATE "thread_state" // proc_thread state
 #define LIVES_LEAF_SIGNAL_DATA "signal_data"
 #define LIVES_LEAF_THREAD_ATTRS "thread_attributes" // attributes used to create pro_thread
 
-#define LIVES_THRDATTR_NONE		0
+#define LIVES_THRDATTR_NONE			0
 // worker flagbits
-#define LIVES_THRDATTR_PRIORITY		(1ull << 0)
-#define LIVES_THRDATTR_AUTODELETE	(1ull << 1)
-#define LIVES_THRDATTR_WAIT_SYNC       	(1ull << 2)
+#define LIVES_THRDATTR_PRIORITY			(1ull << 0)
+#define LIVES_THRDATTR_AUTODELETE		(1ull << 1)
+#define LIVES_THRDATTR_WAIT_SYNC   	    	(1ull << 2)
+#define LIVES_THRDATTR_WAIT_START		(1ull << 3)
 
 // lpt flagbits
-#define LIVES_THRDATTR_WAIT_START		(1ull << 3)
 #define LIVES_THRDATTR_START_UNQUEUED		(1ull << 4)
 #define LIVES_THRDATTR_NO_GUI			(1ull << 5)
 #define LIVES_THRDATTR_IGNORE_SYNCPTS  		(1ull << 6)
@@ -390,8 +392,6 @@ lives_proc_thread_t _lives_proc_thread_create_with_timeout(ticks_t timeout, live
 
 boolean lives_proc_thread_unref(lives_proc_thread_t lpt);
 
-void lives_proc_thread_queue(lives_proc_thread_t lpt, lives_thread_attr_t);
-
 boolean _main_thread_execute(lives_funcptr_t, const char *fname, int return_type, void *retval, const char *args_fmt, ...);
 boolean _main_thread_execute_rvoid(lives_funcptr_t func, const char *fname, const char *args_fmt, ...) ;
 boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int return_type, void *retloc);
@@ -414,23 +414,32 @@ boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int 
 
 #define MAIN_THREAD_EXECUTE_VOID(func, args_fmt, ...) (main_thread_execute_rvoid(func, args_fmt, __VA_ARGS__))
 
-boolean fg_run_func(lives_proc_thread_t lpt, void *rloc);
+boolean lives_proc_thread_execute(lives_proc_thread_t lpt, void *rloc);
+// see also: void fg_service_call(lives_proc_thread_t lpt, void *retval);
+void lives_proc_thread_queue(lives_proc_thread_t lpt, lives_thread_attr_t);
 
 int lives_proc_thread_ref(lives_proc_thread_t);
 boolean lives_proc_thread_unref(lives_proc_thread_t);
 int lives_proc_thread_count_refs(lives_proc_thread_t);
 
 boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr);
+lives_proc_thread_t lives_proc_thread_auto_nullify(lives_proc_thread_t *);
 
 // returns TRUE once the proc_thread will call the target function
 // the thread can also be cancelled, paused
 boolean lives_proc_thread_is_running(lives_proc_thread_t);
+
+boolean lives_proc_thread_is_queued(lives_proc_thread_t);
+
+boolean lives_proc_thread_is_invalid(lives_proc_thread_t);
 
 // returns TRUE if state is FINISHED or IDLING
 boolean lives_proc_thread_is_done(lives_proc_thread_t);
 boolean lives_proc_thread_is_idling(lives_proc_thread_t);
 boolean lives_proc_thread_exited(lives_proc_thread_t);
 boolean lives_proc_thread_will_destroy(lives_proc_thread_t);
+
+boolean lives_proc_thread_sync_waiting(lives_proc_thread_t);
 
 boolean lives_proc_thread_check_finished(lives_proc_thread_t);
 
@@ -516,6 +525,8 @@ int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 weed_funcptr_t lives_proc_thread_join_funcptr(lives_proc_thread_t);
 void *lives_proc_thread_join_voidptr(lives_proc_thread_t);
 weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t) ;
+
+char *lives_proc_thread_state_desc(uint64_t state);
 
 char *get_threadstats(void);
 

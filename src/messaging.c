@@ -76,7 +76,7 @@ void dump_messages(FILE *stream) {
   lives_fprintf(stream, "%s", (msgs = _dump_messages(-1, -1)));
   lives_free(msgs);
 }
-  
+
 
 
 static int log_msg(FILE *logfile, const char *text) {

@@ -774,7 +774,7 @@ check_encache:
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_queue_resize(mainw->end_image);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   } while (rwidth != lives_widget_get_allocation_width(mainw->end_image) ||
            rheight != lives_widget_get_allocation_height(mainw->end_image));
 #if 0
@@ -2172,6 +2172,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
             }
           }
 #endif
+          // TODO - free this after playback
           if (create_empty_pixel_data(layer, TRUE, TRUE)) {
             if (need_unlock) pthread_mutex_unlock(&sfile->frame_index_mutex);
             need_unlock = FALSE;

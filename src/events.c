@@ -4822,7 +4822,7 @@ static boolean add_xdg_opt(lives_obj_t *obj, livespointer data) {
     LiVESWidget *cb = lives_standard_check_button_new(_("Preview in default video player afterwards"),
                       FALSE, LIVES_BOX(widget_opts.last_container), NULL);
     lives_widget_object_ref(cb);
-    lives_hook_append(THREADVAR(hook_stacks), COMPLETED_HOOK, 0, do_xdg_opt, cb);
+    lives_hook_append(NULL, COMPLETED_HOOK, 0, do_xdg_opt, cb);
   }
   return FALSE;
 }
@@ -4874,7 +4874,7 @@ boolean start_render_effect_events(weed_event_list_t *event_list, boolean render
   if (cfile->old_frames > 0) cfile->nopreview = TRUE; /// FIXME...
 
   if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE && render_vid) {
-    lives_hook_append(THREADVAR(hook_stacks), TX_START_HOOK, 0, add_xdg_opt, NULL);
+    lives_hook_append(NULL, SYNC_ANNOUNCE_HOOK, 0, add_xdg_opt, NULL);
   }
 
   // play back the file as fast as possible, each time calling render_events()
@@ -5682,9 +5682,8 @@ void event_list_add_end_events(weed_event_list_t *event_list, boolean is_final) 
           if (prefs->audio_player == AUD_PLAYER_PULSE) {
             if (prefs->audio_src == AUDIO_SRC_INT) {
               if (mainw->pulsed) pulse_get_rec_avals(mainw->pulsed);
-            } else
-              if (mainw->pulsed_read) pulse_get_rec_avals(mainw->pulsed_read);
-	  }
+            } else if (mainw->pulsed_read) pulse_get_rec_avals(mainw->pulsed_read);
+          }
 #endif
 #if 0
           if (prefs->audio_player == AUD_PLAYER_NONE) {

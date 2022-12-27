@@ -10726,7 +10726,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
       lives_container_set_border_width(LIVES_CONTAINER(mt->poly_box), widget_opts.border_width);
       filenum = get_audio_frame_clip(block->start_event, track);
       lives_box_pack_start(LIVES_BOX(mt->poly_box), mt->avel_box, TRUE, TRUE, 0);
-      lives_widget_show_all_from_bg(mt->avel_box);
+      lives_widget_show_all(mt->avel_box);
       avel = get_audio_frame_vel(block->start_event, track);
       offset_end = block->offset_start + q_gint64((weed_timecode_t)((double)(track >= 0) * TICKS_PER_SECOND_DBL / mt->fps) +
                    ((get_event_timecode(block->end_event) - get_event_timecode(block->start_event)) * ABS(avel)), mt->fps);
@@ -10821,7 +10821,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     lives_signal_handler_unblock(mt->checkbutton_end_anchored, mt->check_end_func);
     lives_box_pack_start(LIVES_BOX(mt->poly_box), mt->in_out_box, TRUE, TRUE, 0);
 
-    lives_widget_show_all_from_bg(mt->in_out_box);
+    lives_widget_show_all(mt->in_out_box);
     if (track > -1) {
       lives_widget_hide(mt->avel_box);
     } else {
@@ -10900,7 +10900,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     } else {
       add_context_label(mt, _("Effect has no parameters.\n"));
     }
-    lives_widget_show_all_from_bg(mt->fx_base_box);
+    lives_widget_show_all(mt->fx_base_box);
     if (!has_params) {
       lives_widget_hide(mt->apply_fx_button);
       lives_widget_hide(mt->resetp_button);
@@ -11118,7 +11118,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
       lives_box_pack_start(LIVES_BOX(mt->fx_list_box), label, TRUE, TRUE, 0);
     }
 
-    lives_widget_show_all_from_bg(mt->fx_list_box);
+    lives_widget_show_all(mt->fx_list_box);
 
     if (!has_effect) {
       lives_widget_hide(mt->fx_list_scroll);

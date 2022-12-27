@@ -1827,9 +1827,9 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
 
                    COMPLETED_HOOK,   /// 27 running -> finished
 
-		   /// this is for IDLEFUNC transforms, indicates the transform completed one cycle
-		   // and mey be actioned again
-		   IDLE_HOOK,
+                   /// this is for IDLEFUNC transforms, indicates the transform completed one cycle
+                   // and mey be actioned again
+                   IDLE_HOOK,
 
                    TIMED_OUT_HOOK, ///< timed out in hook - need_data, sync_wait or paused
 

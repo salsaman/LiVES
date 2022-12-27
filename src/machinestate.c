@@ -102,14 +102,14 @@ LIVES_GLOBAL_INLINE uint32_t fastrand_int(uint32_t range) {return (uint32_t)(fas
 LIVES_GLOBAL_INLINE void lives_srandom(unsigned int seed) {srandom(seed);}
 
 static boolean rng32 = FALSE;
-  static int strikes = 0;
+static int strikes = 0;
 
 LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
   static uint64_t last_rnum = 0;
   uint64_t rnum;
 
   rnum = random();
-  
+
   if (rng32) {
     rnum = (rnum << 22) ^ (random() << 39) ^ random();
   }
@@ -201,19 +201,19 @@ static void check_random(void) {
     for (i = 0; i < 1001; i++) {
       rnum = lives_random();
       if (i > 0) {
-	maxbits = get_onescount_64(rnum ^ last_rnum);
-	tdifs += maxbits;
-	maxbits = get_onescount_64(rnum & last_rnum);
-	tdifs += maxbits << 1;
-	maxbits = get_onescount_64(rnum | last_rnum);
-	tdifs += (maxbits << 1) / 3;
+        maxbits = get_onescount_64(rnum ^ last_rnum);
+        tdifs += maxbits;
+        maxbits = get_onescount_64(rnum & last_rnum);
+        tdifs += maxbits << 1;
+        maxbits = get_onescount_64(rnum | last_rnum);
+        tdifs += (maxbits << 1) / 3;
       }
       last_rnum = rnum;
     }
     maxbits = (uint64_t)((tdifs / 3000. + .5) * 2);
     tmp = lives_strdup_printf(_("RNG seems to be %d bit only, injecting extra randomness...\n"
-				"...increased it from %d bits to at least %d bits\n"),
-			      get_2pow_64(inrbits) << 1, inrbits, maxbits > 64 ? 64 : maxbits);
+                                "...increased it from %d bits to at least %d bits\n"),
+                              get_2pow_64(inrbits) << 1, inrbits, maxbits > 64 ? 64 : maxbits);
     add_messages_to_list(tmp);
     lives_free(tmp);
   }
@@ -222,20 +222,20 @@ static void check_random(void) {
   for (i = 0; i < 1001; i++) {
     rnum = gen_unique_id();
     if (i > 0) {
-	maxbits = get_onescount_64(rnum ^ last_rnum);
-	tdifs += maxbits;
-	maxbits = get_onescount_64(rnum & last_rnum);
-	tdifs += maxbits << 1;
-	maxbits = get_onescount_64(rnum | last_rnum);
-	tdifs += (maxbits << 1) / 3;
+      maxbits = get_onescount_64(rnum ^ last_rnum);
+      tdifs += maxbits;
+      maxbits = get_onescount_64(rnum & last_rnum);
+      tdifs += maxbits << 1;
+      maxbits = get_onescount_64(rnum | last_rnum);
+      tdifs += (maxbits << 1) / 3;
     }
     last_rnum = rnum;
   }
   maxbits = (uint64_t)((tdifs / 3000. + .5) * 2);
   tmp = lives_strdup_printf("Tested RNG, generated 1000 uids, entropy is %lu bits\n",
-			    maxbits > 64 ? 64 : maxbits);
+                            maxbits > 64 ? 64 : maxbits);
   add_messages_to_list(tmp);
-  lives_free(tmp); 
+  lives_free(tmp);
 }
 
 

@@ -10,7 +10,7 @@
 #ifndef _MEMORY_H_
 #define _MEMORY_H_
 
-#ifdef USE_RPMALLOC
+#if USE_RPMALLOC
 #include "rpmalloc.h"
 #endif
 
@@ -392,13 +392,13 @@ void *speedy_calloc(size_t, size_t);
 static void *(*_lsd_memcpy)(void *dest, const void *src, size_t n) = _ext_memcpy;
 static void *(*_lsd_memset)(void *s, int c, size_t n) = _ext_memset;
 
-#ifdef USE_RPMALLOC
+#if USE_RPMALLOC
 static void (*_lsd_free)(void *ptr) = rpfree;
 #else
 static void (*_lsd_free)(void *ptr) = _ext_free;
 #endif
 
-/* #ifdef USE_RPMALLOC */
+/* #if USE_RPMALLOC */
 /* #define OVERRIDE_CALLOC_ALIGNED */
 /* extern capabilities *capable; */
 /* extern void *(*_lsd_calloc_aligned_)(void **memptr, size_t nmemb, size_t size); */
@@ -412,7 +412,7 @@ static void (*_lsd_free)(void *ptr) = _ext_free;
 
 #undef OVERRIDE_MEMFUNCS
 
-/* #ifdef USE_RPMALLOC */
+/* #if USE_RPMALLOC */
 /* #define OVERRIDE_CALLOC_ALIGNED */
 /* #endif */
 

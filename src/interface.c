@@ -272,7 +272,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
   // refresh = reread audio waveforms
 
   // which 0 = all, 1 = vidbar, 2 = laudbar, 3 = raudbar
-
+  GET_PROC_THREAD_SELF(self);
   lives_painter_t *cr = NULL;
   lives_clip_t *sfile = cfile;
   char *filename;
@@ -282,7 +282,8 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
 
   double y = 0., scalex;
 
-  boolean is_thread = FALSE;
+  boolean mutex_locked = FALSE;
+
   int start, offset_left = 0, offset_right = 0, offset_end;
   int lpos = -9999, pos;
 
@@ -293,7 +294,10 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
 
   int i;
 
-  if (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread)) return FALSE;
+  if (self && lives_proc_thread_get_cancel_requested(self)) {
+    lives_proc_thread_cancel(self);
+    return FALSE;
+  }
 
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) {
     mainw->current_file = cfile->cb_src;
@@ -307,24 +311,24 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
     goto bail;
   }
 
-  if (mainw->drawtl_thread && THREADVAR(proc_thread) == mainw->drawtl_thread) {
-    is_thread = TRUE;
-  }
-
   if (mainw->current_file != fileno
-      || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
   if (!LIVES_IS_PLAYING) get_total_time(sfile);
 
   if (!mainw->is_ready || !prefs->show_gui) goto bail;
 
   if (mainw->current_file != fileno
-      || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
-  if (!is_thread && pthread_mutex_trylock(&mainw->tlthread_mutex)) goto bail;
-  
+  if (!self) {
+    if (pthread_mutex_trylock(&mainw->tlthread_mutex)) goto bail;
+  } else pthread_mutex_lock(&mainw->tlthread_mutex);
+
+  mutex_locked = TRUE;
+
   // draw timer bars
-  // first the background
+  // first them background
   clear_tbar_bgs(posx, posy, width, height, which);
 
   // empirically we need to draw wider
@@ -387,7 +391,6 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
     offset_right = ROUND_I((double)(sfile->end) / sfile->fps * scalex);
     offset_end = ROUND_I(sfile->laudio_time * scalex);
 
-    pthread_mutex_lock(&mainw->tlthread_mutex);
     if (!sfile->audio_waveform) {
       sfile->audio_waveform = (float **)lives_calloc(sfile->achans, sizeof(float *));
       sfile->aw_sizes = (size_t *)lives_calloc(sfile->achans, sizeof(size_t));
@@ -397,10 +400,12 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
     if (!sfile->audio_waveform[0]) {
       // re-read the audio
       sfile->audio_waveform[0] = (float *)lives_calloc((int)offset_end, sizeof(float));
-      start = sfile->aw_sizes[0] = 0;
+      start = 0;
+      sfile->aw_sizes[0] = offset_end;
     } else if (sfile->aw_sizes[0] != offset_end) {
       start = 0;
-      (float *)lives_recalloc(sfile->audio_waveform[0], (int)offset_end, sfile->aw_sizes[0],  sizeof(float));
+      sfile->audio_waveform[0] =
+        (float *)lives_recalloc(sfile->audio_waveform[0], (int)offset_end, sfile->aw_sizes[0],  sizeof(float));
       sfile->aw_sizes[0] = offset_end;
     }
 
@@ -410,26 +415,22 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
         afd = lives_open_buffered_rdonly(filename);
         lives_free(filename);
         if (afd < 0) {
-          pthread_mutex_unlock(&mainw->tlthread_mutex);
           THREADVAR(read_failed) = -2;
           goto bail;
         }
 
         if (mainw->current_file != fileno
-            || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) {
-          pthread_mutex_unlock(&mainw->tlthread_mutex);
+            || (self && lives_proc_thread_get_cancel_requested(self))) {
           goto bail;
         }
         lives_buffered_rdonly_slurp(afd, 0);
         if (mainw->current_file != fileno
-            || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) {
-          pthread_mutex_unlock(&mainw->tlthread_mutex);
+            || (self && lives_proc_thread_get_cancel_requested(self))) {
           goto bail;
         }
         for (i = start; i < offset_end; i++) {
           if (mainw->current_file != fileno
-              || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) {
-            pthread_mutex_unlock(&mainw->tlthread_mutex);
+              || (self && lives_proc_thread_get_cancel_requested(self))) {
             goto bail;
           }
           atime = (double)i / scalex;
@@ -439,10 +440,9 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
         }
         //lives_close_buffered(afd);
       }
-      pthread_mutex_unlock(&mainw->tlthread_mutex);
 
       if (mainw->current_file != fileno
-          || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
       cr = lives_painter_create_from_surface(mainw->laudio_drawable);
       offset_right = NORMAL_CLAMP(offset_right, sfile->laudio_time * scalex);
@@ -453,7 +453,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       lives_painter_move_to(cr, posx, bar_height);
       for (i = posx; i < offset_left && i < offset_end; i++) {
         if (mainw->current_file != fileno
-            || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
         pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
         if (pos != lpos) {
           lpos = pos;
@@ -468,7 +468,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       lives_painter_stroke(cr);
 
       if (mainw->current_file != fileno
-          || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
       lpos = -9999;
@@ -476,7 +476,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       lives_painter_move_to(cr, i, bar_height);
       for (; i < offset_right && i < offset_end; i++) {
         if (mainw->current_file != fileno
-            || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
         pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
         if (pos != lpos) {
           lpos = pos;
@@ -495,7 +495,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       lives_painter_move_to(cr, offset_right, bar_height);
       for (; i < offset_end; i++) {
         if (mainw->current_file != fileno
-            || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
         pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
         if (pos != lpos) {
@@ -515,7 +515,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
   }
 
   if (mainw->current_file != fileno
-      || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
   if (sfile->achans > 1 && mainw->raudio_drawable && mainw->raudio_drawable == sfile->raudio_drawable
       && (which == 0 || which == 3)) {
@@ -525,12 +525,12 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
     offset_right = ROUND_I((double)(sfile->end) / sfile->fps * scalex);
     offset_end = ROUND_I(sfile->raudio_time * scalex);
 
-    pthread_mutex_lock(&mainw->tlthread_mutex);
     start = offset_end;
     if (!sfile->audio_waveform[1]) {
       // re-read the audio and force a redraw
       sfile->audio_waveform[1] = (float *)lives_calloc((int)offset_end, sizeof(float));
-      start = sfile->aw_sizes[1] = 0;
+      start = 0;
+      sfile->aw_sizes[1] = offset_end;
     } else if (sfile->aw_sizes[1] != offset_end) {
       start = 0;
       sfile->audio_waveform[1] =
@@ -545,27 +545,23 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
           afd = lives_open_buffered_rdonly(filename);
           lives_free(filename);
           if (afd < 0) {
-            pthread_mutex_unlock(&mainw->tlthread_mutex);
             THREADVAR(read_failed) = -2;
             goto bail;
           }
           if (mainw->current_file != fileno
-              || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) {
-            pthread_mutex_unlock(&mainw->tlthread_mutex);
+              || (self && lives_proc_thread_get_cancel_requested(self))) {
             goto bail;
           }
           lives_buffered_rdonly_slurp(afd, 0);
           if (mainw->current_file != fileno
-              || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) {
-            pthread_mutex_unlock(&mainw->tlthread_mutex);
+              || (self && lives_proc_thread_get_cancel_requested(self))) {
             goto bail;
           }
         }
 
         for (i = start; i < offset_end; i++) {
           if (mainw->current_file != fileno
-              || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) {
-            pthread_mutex_unlock(&mainw->tlthread_mutex);
+              || (self && lives_proc_thread_get_cancel_requested(self))) {
             goto bail;
           }
           atime = (double)i / scalex;
@@ -574,7 +570,6 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
                 afd, atime, 1, sfile->achans) * 2.;
         }
       }
-      pthread_mutex_unlock(&mainw->tlthread_mutex);
 
       offset_right = NORMAL_CLAMP(offset_right, sfile->raudio_time * scalex);
       xwidth = UTIL_CLAMP(width, allocwidth);
@@ -586,7 +581,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       lives_painter_move_to(cr, posx, bar_height);
       for (i = posx; i < offset_left && i < offset_end; i++) {
         if (mainw->current_file != fileno
-            || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
         pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
         if (pos != lpos) {
           lpos = pos;
@@ -601,7 +596,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       lives_painter_stroke(cr);
 
       if (mainw->current_file != fileno
-          || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
       lpos = -9999;
@@ -609,7 +604,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       lives_painter_move_to(cr, i, bar_height);
       for (; i < offset_right && i < offset_end; i++) {
         if (mainw->current_file != fileno
-            || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
         pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
         if (pos != lpos) {
           lpos = pos;
@@ -624,14 +619,14 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       lives_painter_stroke(cr);
 
       if (mainw->current_file != fileno
-          || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
       lpos = -9999;
       lives_painter_move_to(cr, offset_right, bar_height);
       for (; i < offset_end; i++) {
         if (mainw->current_file != fileno
-            || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+            || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
         pos = ROUND_I((double)(i * sfile->fps / scalex) / sfile->fps * scalex);
         if (pos != lpos) {
           lpos = pos;
@@ -653,7 +648,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
   }
 
   if (mainw->current_file != fileno
-      || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
   if (which == 0) {
     // playback cursors
@@ -666,7 +661,7 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       }
 
       if (mainw->current_file != fileno
-          || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+          || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
       if (!lives_widget_is_visible(mainw->video_draw)) {
         lives_widget_show(mainw->hruler);
@@ -682,16 +677,16 @@ boolean update_timer_bars(int posx, int posy, int width, int height, int which) 
       lives_widget_queue_draw(mainw->hruler);
     }
     if (mainw->current_file != fileno
-        || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+        || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
     show_playbar_labels(fileno);
   }
 
   if (mainw->current_file != fileno
-      || (is_thread && lives_proc_thread_get_cancel_requested(mainw->drawtl_thread))) goto bail;
+      || (self && lives_proc_thread_get_cancel_requested(self))) goto bail;
 
   mainw->current_file = current_file;
 
-  if (!is_thread) pthread_mutex_unlock(&mainw->tlthread_mutex);
+  pthread_mutex_unlock(&mainw->tlthread_mutex);
 
   if (which == 0 || which == 1)
     lives_widget_queue_draw_if_visible(mainw->video_draw);
@@ -707,7 +702,14 @@ bail:
   if (mainw->current_file == fileno && fileno != current_file)
     mainw->current_file = current_file;
 
-  if (!is_thread) pthread_mutex_unlock(&mainw->tlthread_mutex);
+  if (self) {
+    if (lives_proc_thread_get_cancel_requested(self)) {
+      lives_proc_thread_cancel(self);
+    }
+  }
+  if (mutex_locked)
+    pthread_mutex_unlock(&mainw->tlthread_mutex);
+
   return FALSE;
 }
 
@@ -727,15 +729,13 @@ void redraw_timer_bars(double oldx, double newx, int which) {
 
   scalex = allocwidth / CURRENT_CLIP_TOTAL_TIME;
 
-  if (!pthread_mutex_trylock(&mainw->tlthread_mutex)) {
-    if (newx > oldx) {
-      update_timer_bars(ROUND_I(oldx * scalex - .5), 0, ROUND_I((newx - oldx) * scalex + .5), 0, which);
-    } else {
-      update_timer_bars(ROUND_I(newx * scalex - .5), 0, ROUND_I((oldx - newx) * scalex + .5), 0, which);
-    }
-    pthread_mutex_unlock(&mainw->tlthread_mutex);
+  if (newx > oldx) {
+    update_timer_bars(ROUND_I(oldx * scalex - .5), 0, ROUND_I((newx - oldx) * scalex + .5), 0, which);
+  } else {
+    update_timer_bars(ROUND_I(newx * scalex - .5), 0, ROUND_I((oldx - newx) * scalex + .5), 0, which);
   }
 }
+
 
 
 static boolean on_fsp_click(LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
@@ -1080,7 +1080,8 @@ xprocess *create_processing(const char *text) {
   add_procdlg_opts(procw, LIVES_VBOX(vbox3));
 
   widget_opts.last_container = vbox3;
-  lives_hooks_trigger(THREADVAR(hook_stacks), TX_START_HOOK);
+
+  lives_hooks_trigger(NULL, SYNC_ANNOUNCE_HOOK);
 
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 8);
@@ -3613,16 +3614,15 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
 
 
 void cancel_tl_redraw(void) {
-  pthread_mutex_lock(&mainw->tlthread_mutex);
   lives_proc_thread_ref(mainw->drawtl_thread);
   if (mainw->drawtl_thread) {
     if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
       lives_proc_thread_request_cancel(mainw->drawtl_thread, FALSE);
-      lives_nanosleep_until_zero(mainw->drawtl_thread && !lives_proc_thread_is_done(mainw->drawtl_thread));
+      lives_proc_thread_wait_done(mainw->drawtl_thread, 0.);
     }
     lives_proc_thread_unref(mainw->drawtl_thread);
+    mainw->drawtl_thread = NULL;
   }
-  pthread_mutex_unlock(&mainw->tlthread_mutex);
 }
 
 
@@ -3641,71 +3641,73 @@ void cancel_tl_redraw(void) {
 
 // if there is a bg thread running this then we first cancel it, so it should be cancelled on return here
 
-void redraw_timeline(int clipno) {
-  lives_clip_t *sfile;
-  static boolean norecurse = FALSE;
+#define RECURSE_GUARD_START static volatile boolean norecurse = FALSE
+#define RETURN_RECURSION(val) do {if (is_recurse(&norecurse)) return val;} while (0);
+#define RECURSE_GUARD_END norecurse = FALSE
 
-  pthread_mutex_lock(&mainw->tlthread_mutex);
-  if (norecurse) {
-    return;
-    pthread_mutex_unlock(&mainw->tlthread_mutex);
+boolean is_recurse(volatile boolean * var) {
+  static pthread_mutex_t recursion_mutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_mutex_lock(&recursion_mutex);
+  if (*var) {
+    pthread_mutex_unlock(&recursion_mutex);
+    return TRUE;
   }
-  norecurse = TRUE;
-  pthread_mutex_unlock(&mainw->tlthread_mutex);
+  *var = TRUE;
+  pthread_mutex_unlock(&recursion_mutex);
+  return FALSE;
+}
+
+
+
+void redraw_timeline(int clipno) {
+  //static pthread_mutex_t recursion_mutex = PTHREAD_MUTEX_INITIALIZER;
+  RECURSE_GUARD_START;
+  GET_PROC_THREAD_SELF(self);
+  lives_clip_t *sfile;
+
+  RETURN_RECURSION();
 
   if (mainw->ce_thumbs || !IS_VALID_CLIP(clipno)
       || (LIVES_IS_PLAYING && (mainw->fs || mainw->faded))) {
-    norecurse = FALSE;
+    RECURSE_GUARD_END;
     return;
   }
   sfile = mainw->files[clipno];
   if (sfile->clip_type == CLIP_TYPE_TEMP) {
-    norecurse = FALSE;
+    RECURSE_GUARD_END;
     return;
   }
 
-  if (mainw->drawtl_thread && THREADVAR(proc_thread) == mainw->drawtl_thread) {
+  if (mainw->drawtl_thread && self == mainw->drawtl_thread) {
     // check if this is the thread that was assigned to run this
-    norecurse = FALSE;
-    if (lives_proc_thread_get_cancel_requested(mainw->drawtl_thread)) return;
+    RECURSE_GUARD_END;
+    if (lives_proc_thread_get_cancel_requested(self)) {
+      lives_proc_thread_cancel(self);
+      return;
+    }
   } else {
     if (is_fg_thread()) {
       // if this the fg thread, kick off a bg thread to actually run this
-      lives_proc_thread_ref(mainw->drawtl_thread);
-      if (mainw->drawtl_thread) {
-        if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-          lives_proc_thread_request_cancel(mainw->drawtl_thread, FALSE);
-        }
-        lives_proc_thread_unref(mainw->drawtl_thread);
-        lives_nanosleep_until_zero(mainw->drawtl_thread && !lives_proc_thread_is_done(mainw->drawtl_thread));
-      }
+      cancel_tl_redraw();
 
       if (mainw->multitrack || mainw->reconfig) {
-        norecurse = FALSE;
+        RECURSE_GUARD_END;
         return;
       }
+
       pthread_mutex_lock(&mainw->tlthread_mutex);
       mainw->drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
                              (lives_funcptr_t)redraw_timeline, 0, "i", clipno);
       lives_proc_thread_nullify_on_destruction(mainw->drawtl_thread, (void **)&mainw->drawtl_thread);
       lives_proc_thread_set_cancellable(mainw->drawtl_thread);
       lives_proc_thread_sync_ready(mainw->drawtl_thread);
-      norecurse = FALSE;
+      RECURSE_GUARD_END;
       pthread_mutex_unlock(&mainw->tlthread_mutex);
       return;
     } else {
-      norecurse = FALSE;
+      RECURSE_GUARD_END;
       // if a bg thread, we either call the main thread to run this which will spawn another bg thread,
       // or if we are running it adds to deferral hooks
-      if (mainw->drawtl_thread) {
-        lives_proc_thread_ref(mainw->drawtl_thread);
-        if (mainw->drawtl_thread) {
-          if (!lives_proc_thread_check_finished(mainw->drawtl_thread)) {
-            lives_proc_thread_request_cancel(mainw->drawtl_thread, FALSE);
-          }
-          lives_proc_thread_unref(mainw->drawtl_thread);
-        }
-      }
 
       THREADVAR(hook_hints) = HOOK_UNIQUE_REPLACE | HOOK_CB_PRIORITY;
       main_thread_execute(redraw_timeline, 0, NULL, "i", clipno);
@@ -3713,7 +3715,7 @@ void redraw_timeline(int clipno) {
       return;
     }
   }
-  norecurse = FALSE;
+  RECURSE_GUARD_END;
 
   mainw->drawsrc = clipno;
 

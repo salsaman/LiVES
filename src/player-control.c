@@ -97,7 +97,11 @@ static boolean _start_playback(int play_type) {
     player_sensitize();
     break;
   }
-  if (mainw->player_proc) lives_proc_thread_unref(mainw->player_proc);
+
+  if (mainw->player_proc) {
+    mainw->player_proc = NULL;
+  }
+
   return FALSE;
 }
 
@@ -116,28 +120,9 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
 void start_playback_async(int type) {
   lives_sigdata_t *sigdata;
   mainw->player_proc = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
-                       _start_playback, WEED_SEED_BOOLEAN,
-                       "i", type);
-  //lives_proc_thread_nullify_on_destruction(mainw->player_proc, (void **) & (mainw->player_proc));
-
-  g_print("pre-ref\n");
-  lives_proc_thread_ref(mainw->player_proc);
-  g_print("post-ref\n");
-
-  // ask the main thread to concentrate on service GUI requests from a specific proc_thread
+                       _start_playback, 0, "i", type);
   sigdata = lives_sigdata_new(mainw->player_proc, FALSE);
-  sigdata->is_timer = TRUE;
-  governor_loop(sigdata);
-
-  while (mainw->player_proc && !(lives_proc_thread_check_finished(mainw->player_proc))
-	   && get_gov_status() == GOV_WILL_RUN) {
-    lives_widget_context_iteration(NULL, FALSE);
-  }
-  if (mainw->player_proc) {
-    lives_proc_thread_join_boolean(mainw->player_proc);
-    lives_proc_thread_unref(mainw->player_proc);
-    mainw->player_proc = NULL;
-  }
+  lives_idle_priority(governor_loop, sigdata);
 }
 
 
@@ -235,6 +220,7 @@ static char *prep_audio_player(frames_t audio_end, int arate, int asigned, int a
 static double fps_med = 0.;
 
 static void post_playback(void) {
+  g_print("POSTPB\n");
   if (prefs->show_player_stats && mainw->fps_measure > 0) {
     d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"), fps_med, mainw->fps_measure,
             (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs)
@@ -311,6 +297,7 @@ static void post_playback(void) {
   }
 
   player_sensitize();
+  g_print("DONE POSTPB\n");
 }
 
 
@@ -407,7 +394,7 @@ void play_file(void) {
 
   init_conversions(OBJ_INTENTION_PLAY);
 
-  lives_hooks_trigger(THREADVAR(hook_stacks), PREPARING_HOOK);
+  lives_hooks_trigger(NULL, PREPARING_HOOK);
 
   if (mainw->pre_src_file == -2) mainw->pre_src_file = mainw->current_file;
   mainw->pre_src_audio_file = mainw->current_file;
@@ -443,7 +430,7 @@ void play_file(void) {
       lives_proc_thread_unref(mainw->lazy_starter);
       lazy_start = TRUE;
     }
-    
+
     lives_proc_thread_ref(mainw->helper_procthreads[PT_LAZY_RFX]);
     if (mainw->helper_procthreads[PT_LAZY_RFX]) {
       lives_proc_thread_request_pause(mainw->helper_procthreads[PT_LAZY_RFX]);
@@ -844,7 +831,7 @@ void play_file(void) {
 
     mainw->abufs_to_fill = 0;
 
-    lives_hooks_trigger(THREADVAR(hook_stacks), TX_START_HOOK);
+    lives_proc_thread_trigger_hooks(mainw->player_proc, SEGMENT_START_HOOK);
 
     //lives_widget_context_update();
     //play until stopped or a stream finishes
@@ -1000,6 +987,9 @@ void play_file(void) {
     } while (mainw->multitrack && mainw->loop_cont &&
              (mainw->cancelled == CANCEL_NONE || mainw->cancelled == CANCEL_EVENT_LIST_END));
   }
+
+  // signal to governor loop that it can now exit
+  lives_proc_thread_trigger_hooks(mainw->player_proc, SEGMENT_END_HOOK);
 
   mainw->osc_block = TRUE;
   mainw->rte_textparm = NULL;
@@ -1273,7 +1263,7 @@ void play_file(void) {
   mainw->blend_palette = WEED_PALETTE_END;
   mainw->audio_stretch = 1.;
 
-  lives_hooks_trigger(THREADVAR(hook_stacks), COMPLETED_HOOK);
+  lives_hooks_trigger(NULL, COMPLETED_HOOK);
 
   if (!mainw->multitrack) {
     if (mainw->faded || mainw->fs) {
@@ -1533,10 +1523,15 @@ void play_file(void) {
     }
   }
 
+  int state;
+  lives_nanosleep_while_true((state = get_gov_status()) == GOV_RUNNING || state == GOV_WILL_RUN);
+
   //////
-  THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-  main_thread_execute_pvoid(post_playback, -1, NULL);
-  THREADVAR(hook_hints) = 0;
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
+  g_print("\n\n\nwant to run post_play\n");
+  main_thread_execute_pvoid_rvoid(post_playback);
+  g_print("ran post_play\n\n\n");
+  BG_THREADVAR(hook_hints) = 0;
 
   if (!mainw->multitrack) redraw_timeline(mainw->current_file);
 
@@ -1558,9 +1553,8 @@ void play_file(void) {
   if (lazy_rfx) {
     lives_proc_thread_ref(mainw->helper_procthreads[PT_LAZY_RFX]);
     if (mainw->helper_procthreads[PT_LAZY_RFX]) {
-      lives_proc_thread_request_pause(mainw->helper_procthreads[PT_LAZY_RFX]);
+      lives_proc_thread_request_resume(mainw->helper_procthreads[PT_LAZY_RFX]);
       lives_proc_thread_unref(mainw->helper_procthreads[PT_LAZY_RFX]);
-      lazy_rfx = TRUE;
     }
   }
 

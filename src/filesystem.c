@@ -993,7 +993,7 @@ boolean lives_buffered_rdonly_slurp_ready(lives_proc_thread_t lpt) {
     fbuff->flags |= FB_FLAG_BG_OP;
     fbuff->bytes = fbuff->offset = 0;
     lives_proc_thread_append_hook_full(lpt, SYNC_ANNOUNCE_HOOK, HOOK_OPT_ONESHOT,
-                                       (lives_funcptr_t)slurp_starting, 0, "v", (void *)&is_ready);
+                                       (lives_funcptr_t)slurp_starting, 0, NULL, "v", (void *)&is_ready);
     pthread_mutex_lock(&fbuff->sync_mutex);
     lives_proc_thread_queue(lpt, 0);
     lives_nanosleep_while_false(is_ready);

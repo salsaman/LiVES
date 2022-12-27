@@ -4243,7 +4243,7 @@ boolean add_rfx_effects(lives_rfx_status_t status) {
     is_startup = TRUE;
     lives_proc_thread_set_pauseable(self, TRUE);
   }
-  
+
   old_list_length = mainw->num_rendered_effects_builtin
     + mainw->num_rendered_effects_custom + mainw->num_rendered_effects_test;
 

@@ -97,6 +97,10 @@ extern const lookup_tab crossrefs[];
 #define ARGS6(thing, t1, t2, t3, t4, t5, t6) ARGS5((thing), t1, t2, t3, t4, t5), GETARG((thing), t6, 5)
 #define ARGS7(thing, t1, t2, t3, t4, t5, t6, t7) ARGS6((thing), t1, t2, t3, t4, t5, t6), GETARG((thing), t7, 6)
 #define ARGS8(thing, t1, t2, t3, t4, t5, t6, t7, t8) ARGS7((thing), t1, t2, t3, t4, t5, t6, t7), GETARG((thing), t8, 7)
+
+// e.g ARGS(7, lpt, t8, t1, ,,,)
+#define _ARGS(n, thing, tn, ...) ARGS##n(thing, __VA_ARGS__), GETARG(thing, tn, n)
+
 #define CALL_VOID_8(thing, t1, t2, t3, t4, t5, t6, t7, t8) (*thefunc->func)(ARGS8((thing), t1, t2, t3, t4, t5, t6, t7, t8))
 #define CALL_VOID_7(thing, t1, t2, t3, t4, t5, t6, t7) (*thefunc->func)(ARGS7((thing), t1, t2, t3, t4, t5, t6, t7))
 #define CALL_VOID_6(thing, t1, t2, t3, t4, t5, t6) (*thefunc->func)(ARGS6((thing), t1, t2, t3, t4, t5, t6))
@@ -105,38 +109,22 @@ extern const lookup_tab crossrefs[];
 #define CALL_VOID_3(thing, t1, t2, t3) (*thefunc->func)(ARGS3((thing), t1, t2, t3))
 #define CALL_VOID_2(thing, t1, t2) (*thefunc->func)(ARGS2((thing), t1, t2))
 #define CALL_VOID_1(thing, t1) (*thefunc->func)(ARGS1((thing), t1))
-#define XCALL_VOID_1(t1) CALL_VOID_1((info), t1)
-#define XCALL_VOID_2(t1, t2) CALL_VOID_2((info), t1, t2)
-#define XCALL_VOID_3(t1, t2, t3) CALL_VOID_3((info), t1, t2, t3)
-#define XCALL_VOID_4(t1, t2, t3, t4) CALL_VOID_4((info), t1, t2, t3, t4)
-#define XCALL_VOID_5(t1, t2, t3, t4, t5) CALL_VOID_5((info), t1, t2, t3, t4, t5)
-#define XCALL_VOID_6(t1, t2, t3, t4, t5, t6) CALL_VOID_6((info), t1, t2, t3, t4, t5, t6)
-#define XCALL_VOID_0() (*thefunc->func)()
-#define XCALL_VOID_7(t1, t2, t3, t4, t5, t6, t7) CALL_VOID_7((info), t1, t2, t3, t4, t5, t6, t7)
-#define XCALL_VOID_8(t1, t2, t3, t4, t5, t6, t7, t8) CALL_VOID_8((info), t1, t2, t3, t4, t5, t6, t7, t8)
-#define XCALL_8(t1, t2, t3, t4, t5, t6, t7, t8) ACALL_8(info, ret_type, thefunc, t1, t2, t3, t4, t5, t6, t7, t8)
-#define XCALL_7(t1, t2, t3, t4, t5, t6, t7) ACALL_7(info, ret_type, thefunc, t1, t2, t3, t4, t5, t6, t7)
-#define XCALL_6(t1, t2, t3, t4, t5, t6) ACALL_6(info, ret_type, thefunc, t1, t2, t3, t4, t5, t6)
-#define XCALL_5(t1, t2, t3, t4, t5) ACALL_5(info, ret_type, thefunc, t1, t2, t3, t4, t5)
-#define XCALL_4(t1, t2, t3, t4) ACALL_4(info, ret_type, thefunc, t1, t2, t3, t4)
-#define XCALL_3(t1, t2, t3) ACALL_3(info, ret_type, thefunc, t1, t2, t3)
-#define XCALL_2(t1, t2) ACALL_2(info, ret_type, thefunc, t1, t2)
-#define XCALL_1(t1) ACALL_1(info, ret_type, thefunc, t1)
-#define XCALL_0() ACALL_0(info, ret_type, thefunc)
-#define ACALL_8(thing, wret, funcname, t1, t2, t3, t4, t5, t6, t7, t8)	\
+#define CALL_VOID_0(thing, dummy) (*thefunc->func)()
+#define XCALL_8(thing, wret, funcname, t1, t2, t3, t4, t5, t6, t7, t8)	\
   GEN_SET(thing, wret, funcname, ARGS8((thing), t1, t2, t3, t4, t5, t6, t7, t8))
-#define ACALL_7(thing, wret, funcname, t1, t2, t3, t4, t5, t6, t7) \
-h  GEN_SET(thing, wret, funcname, ARGS7((thing), t1, t2, t3, t4, t5, t6, t7))
-#define ACALL_6(thing, wret, funcname, t1, t2, t3, t4, t5, t6) \
+#define XCALL_7(thing, wret, funcname, t1, t2, t3, t4, t5, t6, t7)	\
+  h  GEN_SET(thing, wret, funcname, ARGS7((thing), t1, t2, t3, t4, t5, t6, t7))
+#define XCALL_6(thing, wret, funcname, t1, t2, t3, t4, t5, t6)		\
   GEN_SET(thing, wret, funcname, ARGS6((thing), t1, t2, t3, t4, t5, t6))
-#define ACALL_5(thing, wret, funcname, t1, t2, t3, t4, t5) \
+#define XCALL_5(thing, wret, funcname, t1, t2, t3, t4, t5)		\
   GEN_SET(thing, wret, funcname, ARGS5((thing), t1, t2, t3, t4, t5))
-#define ACALL_4(thing, wret, funcname, t1, t2, t3, t4) \
-  GEN_SET(thing, wret, funcname, ARGS4((thing), t1, t2, t3, t4))
-#define ACALL_3(thing, wret, funcname, t1, t2, t3) GEN_SET(thing, wret, funcname, ARGS3((thing), t1, t2, t3))
-#define ACALL_2(thing, wret, funcname, t1, t2) GEN_SET(thing, wret, funcname, ARGS2((thing), t1, t2))
-#define ACALL_1(thing, wret, funcname, t1) GEN_SET(thing, wret, funcname, ARGS1((thing), t1))
-#define ACALL_0(thing, wret, funcname) GEN_SET(thing, wret, funcname, )
+#define XCALL_4(thing, wret, funcname, t1, t2, t3, t4)			\
+  GEN_SET(thing, wret, funcname, _ARGS(3, (thing), t4, t1, t2, t3))
+#define XCALL_3(thing, wret, funcname, t1, t2, t3)		\
+  GEN_SET(thing, wret, funcname, ARGS3((thing), t1, t2, t3))
+#define XCALL_2(thing, wret, funcname, t1, t2) GEN_SET(thing, wret, funcname, ARGS2((thing), t1, t2))
+#define XCALL_1(thing, wret, funcname, t1) GEN_SET(thing, wret, funcname, ARGS1((thing), t1))
+#define XCALL_0(thing, wret, funcname, dummy) GEN_SET(thing, wret, funcname, )
 
 // 0p
 #define FUNCSIG_VOID				       			0X00000000
@@ -245,54 +233,36 @@ typedef uint64_t funcsig_t;
 #define _FN_ALLOC 1
 #define _FN_FREE 0
 
-#define _FUNC_ADD_TRACE_(io, expn, func, ...) do {\
-    if ((expn)) add_fn_note(io, (void *)((expn)), #func,  _FILE_REF_, _LINE_REF_); \
-  } while (0);
+#define _FN_ALLOC_TRACE(fname) do {THREADVAR(fn_alloc_trace) = #fname;} while (0);
+#define _FN_FREE_TRACE(fname) do {THREADVAR(fn_free_trace) = #fname;} while (0);
+
+#define _FN_ALLOC_TRACE_END do {THREADVAR(fn_alloc_trace) = NULL;} while (0);
+#define _FN_FREE_TRACE_END do {THREADVAR(fn_free_trace) = NULL;} while (0);
+
+#define _FUNCREF(fn, f, l)((void *)(create_funcdef(#fn, (lives_funcptr_t)fn, 0, NULL, f, l, NULL)))
+
+// append func / file / line to THREADVAR(func_stack)
+#define ADD_TO_FN_STACK(fn)						\
+  !(THREADVAR(func_stack) =						\
+    lives_list_append(THREADVAR(func_stack), _FUNCREF(fn, _FILE_REF_, _LINE_REF_)))?1:1
+
+// example that appends to func_stack
+#define create_empty_pixel_data(...) \
+  ((ADD_TO_FN_STACK(_create_empty_pixel_data) && FALSE) || _create_empty_pixel_data(__VA_ARGS__))
+
+// macro for alloc func, after allocating p
+// will add p, funcname, func_stack name, file, line
+#define FN_ALLOC_TARGET(fname, p) do {				\
+  if (!lives_strcmp(THREADVAR(fn_alloc_trace), #fname)) {		\
+  add_fn_note(_FN_ALLOC, p, THREADVAR(func_stack)->data);		\
+  lives_list_free(THREADVAR(func_stack)); THREADVAR(func_stack) = NULL; \
+  }} while (0);
 
 
-#define _FN_ALLOC_TRACE(fname) do {\
-  THREADVAR(fn_alloc_trace) = #fname; THREADVAR(fn_alloc_triggered) = FALSE;\
-  } while (0);
-
-#define _FN_FREE_TRACE(fname) do {					\
-  THREADVAR(fn_free_trace) = #fname; THREADVAR(fn_free_triggered) = FALSE;\
-  } while (0);
-
-#define _FN_ALLOC_TRACE_END do {\
-  THREADVAR(fn_alloc_trace) = NULL; THREADVAR(fn_alloc_triggered) = FALSE;\
-  } while (0);
-
-#define _FN_FREE_TRACE_END do {\
-  THREADVAR(fn_free_trace) = NULL; THREADVAR(fn_free_triggered) = FALSE;\
-  } while (0);
-
-#define _CHK_FN_ALLOC(expn) do {					\
-    if (THREADVAR(fn_alloc_triggered)) _FUNC_ADD_TRACE_(_FN_ALLOC, expn, THREADVAR(fn_alloc_trace)); \
-    THREADVAR(fn_alloc_triggered) = FALSE;				\
-  } while (0);
-
-#define _CHK_FN_FREE(var, expn, func, ...) do {				\
-    void *p = (void *)(expn); var = func(__VA_ARGS__);			\
-    if (THREADVAR(fn_free_triggered))					\
-      _FUNC_ADD_TRACE_(_FN_FREE, p, THREADVAR(fn_free_trace));		\
-    THREADVAR(fn_free_triggered) = FALSE;				\
-  } while (0);
-
-#define _CHK_FN_FREE_VOID(expn, func, ...) do {				\
-    void *p = (void *)(expn);						\
-    func(__VA_ARGS__);							\
-    if (THREADVAR(fn_free_triggered))					\
-      _FUNC_ADD_TRACE_(_FN_FREE, p, THREADVAR(fn_free_trace));		\
-    THREADVAR(fn_free_triggered) = FALSE;				\
-  } while (0);
-
-#define _FN_ALLOC_TARGET(fname) do {\
-  if (!lives_strcmp(THREADVAR(fn_alloc_trace), #fname)) THREADVAR(fn_alloc_triggered) = TRUE; \
-  } while (0);
-
-#define _FN_FREE_TARGET(fname) do {\
-  if (!lives_strcmp(THREADVAR(fn_free_trace), #fname)) THREADVAR(fn_free_triggered) = TRUE; \
-  } while (0);
+// place in free func, will remove entry with p
+#define FN_FREE_TARGET(fname, p)do{				\
+    if (!lives_strcmp(THREADVAR(fn_free_trace), #fname))	\
+      add_fn_note(_FN_FREE, p);}while (0);
 
 //////////
 
@@ -302,9 +272,23 @@ typedef uint64_t funcsig_t;
 
 #define LIVES_SEED_HOOK WEED_SEED_FUNCPTR
 
+// some flag bits operate when adding the callback, others operate when the callback is triggered
+// some operate in both actions
+
+// the following are ADD options: PRIORITY, BLOCK, NODEFER, UNIQUE_FUNC, UNIQUE_DATA, INVALIDATE_DATA
+// the following are TRIGGER options: FG_THREAD, ONESHOT
+
+// for the LIVES_GUI_HOOK, the rules are altered a little:
+// FG_THREAD can affect the ADD operation, and UNIQUE_FUNC, UNIQUE_DATA, INVALIDATE_DATA
+// are extended to all threads when the callback is triggered.
+// NODEFER is also specifically for the GUI stack
+
+// when adding to the LIVES_GUI_STACK, generally the callback is actioned immediately
+//
+
 //< caller will block when adding the hook and only return when the hook callback has returned
-// if the cb function is barred by another (due to unqiqueness constraints), the the thread will block until
-// the imposing function returns
+// if the cb function is barred by another (due to uniqueness constraints),
+// the the thread will block until the imposing function returns
 #define HOOK_CB_BLOCK       		(1ull << 0)
 
 // hook is GUI related and must be run ONLY by the fg / GUI thread
@@ -374,16 +358,18 @@ typedef uint64_t funcsig_t;
 // then run this callback - this is designed for functions which
 // functions which free the data, - preventing any older callbacks from trying to access older data
 // - callbacks marked as BLOCK will be replaced by this one
-#define HOOK_INVALIDATE_DATA		((1ull << 18) | HOOK_CB_PRIORITY | HOOK_CB_BLOCK)
+
+#define HOOK_INVALIDATE_DATA			(1ull << 18)
+
+#define HOOK_REMOVE_DATA       	((1ull << 18) | HOOK_CB_PRIORITY | HOOK_CB_BLOCK)
 
 ///////////////////
 
 #define HOOK_STATUS_BLOCKED			(1ull << 20) // hook function should not be called
 #define HOOK_STATUS_RUNNING			(1ull << 21) // hook cb running, do not recurse
 
-// hook cb has been replaced by another closure (due to uniqueness)
-// callback should be ignored
-#define HOOK_STATUS_REPLACED			(1ull << 22)
+// when triggering, mark the callbacks already actioned, and on a recheck we skip over them
+#define HOOK_STATUS_ACTIONED			(1ull << 22)
 
 #define HOOK_STATUS_REMOVE			(1ull << 28) // hook was 'removed' whilst running, delay removal until return
 
@@ -497,44 +483,48 @@ typedef struct {
 
 // TODO - add retloc as param to hook_add
 
-#define DTYPE_PREPEND (1ull << 0) // unset == append
-#define DTYPE_CLOSURE (1ull << 1) // unset == lpt
+#define DTYPE_PREPEND 		(1ull << 0) // unset == append
+#define DTYPE_CLOSURE 		(1ull << 1) // unset == lpt
+#define DTYPE_REMOVE 		(1ull << 2) // remove others only, no add
+#define DTYPE_RELAXED 		(1ull << 3) // only mutex_trylock
+#define DTYPE_HAVE_LOCK 	(1ull << 4) // already locked
 
 // all dtypes
-lives_proc_thread_t _lives_hook_add(lives_hook_stack_t **hooks, int type, uint64_t flags, livespointer data, uint64_t dtype);
+lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hooks, int type, uint64_t flags, livespointer data, uint64_t dtype);
 
 // lpt like
-lives_proc_thread_t _lives_hook_add_full(lives_hook_stack_t **hooks, int type, uint64_t flags, boolean is_append,
-    lives_funcptr_t func, const char *fname, int return_type, const char *args_fmt, ...);
-
+lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **hooks, int type, uint64_t flags, boolean is_append,
+                                        lives_funcptr_t func, const char *fname, int return_type, void *retloc,
+                                        const char *args_fmt, ...);
 
 #define lives_proc_thread_append_hook(lpt, type, flags, func, data)	\
-  _lives_hook_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), TRUE, \
-		       (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
+  lives_hook_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), TRUE, \
+		       (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, NULL,	\
 		       "vv", NULL, (void *)(data))
 
-#define lives_proc_thread_append_hook_full(lpt, type, flags, func, rtype, args_fmt, ...) \
-  _lives_hook_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), TRUE, \
-		       (lives_funcptr_t)(func), #func, rtype, args_fmt, __VA_ARGS__)
+#define lives_proc_thread_append_hook_full(lpt, type, flags, func, rtype, retloc, args_fmt, ...) \
+  lives_hook_add_full(lives_proc_thread_get_hook_stacks(lpt), (type), (flags), TRUE, \
+		       (lives_funcptr_t)(func), #func, rtype, NULL, args_fmt, __VA_ARGS__)
 
 // all dtypes
-#define lives_hook_test_add(hooks, type, flags, data, dtype) _lives_hook_add((hooks), (type), (flags) | HOOK_CB_TEST_ADD, \
+#define lives_hook_test_add(hooks, type, flags, data, dtype) lives_hook_add((hooks), (type), (flags) | HOOK_CB_TEST_ADD, \
 									     data, dtype)
 //(void *)(data), lpt like
 #define lives_hook_append_full(hooks, type, flags, func, rtype, args_fmt, ...) \
-  _lives_hook_add_full((hooks), (type), (flags), TRUE, (lives_funcptr_t)(func), #func, rtype, args_fmt, __VA_ARGS__)
+  lives_hook_add_full((hooks), (type), (flags), TRUE, (lives_funcptr_t)(func), #func, rtype, NULL, args_fmt, __VA_ARGS__)
 
 // scalar
 #define lives_hook_append(hooks, type, flags, func, data) \
-  _lives_hook_add_full((hooks), (type), (flags), TRUE,			\
+  lives_hook_add_full((hooks), (type), (flags), TRUE,			\
 		       (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
-		       "vv", NULL, (void *)(data))
+		       NULL, "vv", NULL, (void *)(data))
 // lpt like
 #define lives_hook_prepend_full(hooks, type, flags, func, rtype, args_fmt, ...) \
-  _lives_hook_add_full((hooks), (type), (flags), FALSE, (lives_funcptr_t)(func), #func, rtype, args_fmt, __VA_ARGS__)
+ lives_hook_add_full((hooks), (type), (flags), FALSE, (lives_funcptr_t)(func), #func, rtype, \
+		       NULL, args_fmt, __VA_ARGS__)
 
 // lpt
-#define lives_hook_prepend(hooks, type, flags, lpt) _lives_hook_add((hooks), (type), (flags), lpt, DTYPE_PREPEND)
+#define lives_hook_prepend(hooks, type, flags, lpt) lives_hook_add((hooks), (type), (flags), lpt, DTYPE_PREPEND)
 
 void lives_hook_remove(lives_hook_stack_t **hstacks, int type, lives_proc_thread_t lpt);
 
@@ -546,6 +536,8 @@ void lives_hooks_clear_all(lives_hook_stack_t **hooks, int ntypes);
 
 boolean lives_hooks_trigger(lives_hook_stack_t **hooks, int type);
 
+boolean lives_proc_thread_trigger_hooks(lives_proc_thread_t, int type);
+
 void lives_hooks_trigger_async(lives_hook_stack_t **hooks, int type);
 
 lives_proc_thread_t lives_hooks_trigger_async_sequential(lives_proc_thread_t lpt, lives_hook_stack_t **hstacks, int type,
@@ -556,6 +548,8 @@ void lives_hooks_async_join(lives_hook_stack_t *);
 lives_hook_stack_t **lives_proc_thread_get_hook_stacks(lives_proc_thread_t);
 
 char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt);
+
+void dump_hook_stack(lives_hook_stack_t **, int type);
 
 ///////////// funcdefs, funcinsts and funcsigs /////
 
@@ -595,7 +589,7 @@ const lives_funcdef_t *get_template_for_func(lives_funcptr_t func);
 char *get_argstring_for_func(lives_funcptr_t func);
 char *lives_funcdef_explain(const lives_funcdef_t *funcdef);
 
-void add_fn_note(int in_out, void *ptr, const char *fname, const char *fref, int lineno);
+void add_fn_note(int in_out, void *ptr, ...);
 
 void dump_fn_notes(void);
 

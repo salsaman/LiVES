@@ -36,8 +36,6 @@
 #include "ldvgrab.h"
 #endif
 
-static void _resize_play_window(void);
-
 static boolean pb_added = FALSE;
 
 LIVES_GLOBAL_INLINE int get_vspace(void) {
@@ -4305,7 +4303,7 @@ static void _make_play_window(void) {
     if (!(mainw->fs && LIVES_IS_PLAYING && mainw->vpp)) {
       lives_widget_show_all(mainw->play_window);
     }
-    _resize_play_window();
+    resize_play_window();
   }
 
   if (!mainw->play_window) return;
@@ -4391,7 +4389,7 @@ LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
 
 #define TEST_CE_THUMBS 0
 
-static void _resize_play_window(void) {
+void resize_play_window(void) {
   int opwx, opwy, pmonitor = prefs->play_monitor;
   boolean fullscreen = TRUE;
   boolean ext_audio = FALSE;
@@ -4792,12 +4790,6 @@ static void _resize_play_window(void) {
   clear_widget_bg(mainw->play_image, mainw->play_surface);
 }
 
-
-LIVES_GLOBAL_INLINE void resize_play_window(void) {
-  THREADVAR(hook_hints) = HOOK_UNIQUE_FUNC | HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
-  main_thread_execute_rvoid_pvoid(_resize_play_window);
-  THREADVAR(hook_hints) = 0;
-}
 
 
 static void _kill_play_window(void) {

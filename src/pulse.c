@@ -366,7 +366,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
   in_ap = TRUE;
 
-#ifdef USE_RPMALLOC
+#if USE_RPMALLOC
   if (!rpmalloc_is_thread_initialized()) {
     rpmalloc_thread_initialize();
   }

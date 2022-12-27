@@ -467,6 +467,7 @@ static boolean pre_init(void) {
 
   /// create context data for main thread; must be called before get_capabilities()
   lives_thread_data_create(0);
+  mainw->global_hook_stacks = THREADVAR(hook_stacks);
 
 #ifdef VALGRIND_ON
   prefs->nfx_threads = 8;
@@ -1982,7 +1983,7 @@ static boolean lives_startup2(livespointer data) {
 #ifndef DUMPMSGS
   dump_messages(NULL);
 #endif
-  
+
   mainw->is_ready = TRUE;
   lives_window_set_auto_startup_notification(TRUE);
 

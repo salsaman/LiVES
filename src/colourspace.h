@@ -251,7 +251,7 @@ boolean lives_painter_to_layer(lives_painter_t *cairo, weed_layer_t *);
 // pixel_data
 /// layer should be pre-set with palette, width in MACROPIXELS, and height
 /// gamma_type will be set WEED_GAMMA_SRGB, old pixel_data will not be freed.
-boolean create_empty_pixel_data(weed_layer_t *, boolean black_fill, boolean may_contig);
+boolean _create_empty_pixel_data(weed_layer_t *, boolean black_fill, boolean may_contig);
 void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette, boolean dest_contig);
 void weed_layer_pixel_data_free(weed_layer_t *);
 

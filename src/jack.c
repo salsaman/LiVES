@@ -1427,7 +1427,7 @@ retry_connect:
     jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
 
     mainw->crash_possible = 1;
-    defer_lpt = lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0,
+    defer_lpt = lives_hook_append(NULL, THREAD_EXIT_HOOK, 0,
                                   defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
     if (!mainw->signals_deferred) {
@@ -1446,7 +1446,7 @@ retry_connect:
     jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 
-    lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, defer_lpt);
+    lives_hook_remove(NULL, THREAD_EXIT_HOOK, defer_lpt);
 
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
@@ -1472,7 +1472,7 @@ retry_connect:
     // if server name is NULL, then use 'default' or $JACK_DEFAULT_SERVER
     jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
     mainw->crash_possible = 2;
-    defer_lpt = lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0,
+    defer_lpt = lives_hook_append(NULL, THREAD_EXIT_HOOK, 0,
                                   defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
     if (!mainw->signals_deferred) {
       // try to handle crashes in jack_client_open()
@@ -1488,7 +1488,7 @@ retry_connect:
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-    lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, defer_lpt);
+    lives_hook_remove(NULL, THREAD_EXIT_HOOK, defer_lpt);
 
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
@@ -1828,7 +1828,7 @@ retry_connect:
   } else {
     mainw->crash_possible = 4;
   }
-  defer_lpt = lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0, defer_sigint_cb,
+  defer_lpt = lives_hook_append(NULL, THREAD_EXIT_HOOK, 0, defer_sigint_cb,
                                 LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   if (!mainw->signals_deferred) {
@@ -1844,7 +1844,7 @@ retry_connect:
 
   if (!jackctl_server_open(jackserver, driver)) {
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-    lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, defer_lpt);
+    lives_hook_remove(NULL, THREAD_EXIT_HOOK, defer_lpt);
 
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
@@ -1861,7 +1861,7 @@ retry_connect:
   }
 
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-  lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, defer_lpt);
+  lives_hook_remove(NULL, THREAD_EXIT_HOOK, defer_lpt);
 
   if (is_trans) {
     mainw->crash_possible = 5;
@@ -1869,14 +1869,14 @@ retry_connect:
     mainw->crash_possible = 6;
   }
 
-  defer_lpt = lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, 0, defer_sigint_cb,
+  defer_lpt = lives_hook_append(NULL, THREAD_EXIT_HOOK, 0, defer_sigint_cb,
                                 LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
   pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
   if (!jackctl_server_start(jackserver)) {
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-    lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, defer_lpt);
+    lives_hook_remove(NULL, THREAD_EXIT_HOOK, defer_lpt);
 
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
@@ -1898,7 +1898,7 @@ retry_connect:
   } else {
     mainw->crash_possible = 6;
   }
-  defer_lpt = lives_hook_append(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, HOOK_CB_SINGLE_SHOT,
+  defer_lpt = lives_hook_append(NULL, THREAD_EXIT_HOOK, HOOK_CB_SINGLE_SHOT,
                                 defer_sigint_cb, LIVES_INT_TO_POINTER(mainw->crash_possible));
 
   if (!mainw->signals_deferred) {
@@ -1911,7 +1911,7 @@ retry_connect:
   pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
   if (!jackctl_server_start(jackserver, driver)) {
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-    lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, defer_lpt);
+    lives_hook_remove(NULL, THREAD_EXIT_HOOK, defer_lpt);
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
       mainw->crash_possible = 0;
@@ -1930,7 +1930,7 @@ retry_connect:
 #endif
 
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-  lives_hook_remove(THREADVAR(hook_stacks), THREAD_EXIT_HOOK, defer_lpt);
+  lives_hook_remove(NULL, THREAD_EXIT_HOOK, defer_lpt);
 
   if (needs_sigs) {
     set_signal_handlers((SignalHandlerPointer)catch_sigint);
@@ -4380,7 +4380,7 @@ static lives_proc_thread_t interop_lpt = NULL;
 boolean jack_interop_cleanup(lives_obj_t *obj, void *data) {
   jack_driver_t *jackd = (jack_driver_t *)data;
   if (interop_lpt) {
-    lives_hook_remove(THREADVAR(hook_stacks), COMPLETED_HOOK, interop_lpt);
+    lives_hook_remove(NULL, COMPLETED_HOOK, interop_lpt);
     interop_lpt = NULL;
   }
   // reconnect
@@ -4506,7 +4506,7 @@ retry:
       }
 #endif
       interop_lpt =
-        lives_hook_append(THREADVAR(hook_stacks), COMPLETED_HOOK, HOOK_OPT_ONESHOT | HOOK_UNIQUE_FUNC, jack_interop_cleanup, jackd);
+        lives_hook_append(NULL, COMPLETED_HOOK, HOOK_OPT_ONESHOT | HOOK_UNIQUE_FUNC, jack_interop_cleanup, jackd);
       need_clnup = TRUE;
     } else {
       jack_interop_cleanup(NULL, jackd);

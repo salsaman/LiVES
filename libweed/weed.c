@@ -218,19 +218,20 @@ static int chain_lock_upgrade(weed_leaf_t *leaf, int have_rdlock, int is_del) {
   // --- this ensures we have a chainlock writelock on plant, use of the structure lock
   //     restricts access to the chain lock.
   //     This achieves various things - only one thread may have the writelock on plant chainlock
-  //					- if the writelock can be obtained, this means there are threads reading th chain at plant
-  //					- if no threads are reading the chain at plant, it is safe to append a new leaf after plant
-  //					- additionally, with structure_mutex held, a thread can set a flagbit for plant
-  //					- to indicate a deletion is in progress.
-  //   		                           - all threads traversing the linked list first try to obtain a chain lock read lock
-  //						on plant. Should they fail, and the deletion bit is set in flags for plant,
-  //					-- failing the readlock and reading the delete flag bit causes a reader thread to
-  //						enter a special "checking mode"
+  //				- if the writelock can be obtained, this means there are threads reading th chain at plant
+  //				- if no threads are reading the chain at plant, it is safe to append a new leaf after plant
+  //				- additionally, with structure_mutex held, a thread can set a flagbit for plant
+  //				- to indicate a deletion is in progress.
+  //   	                           - all threads traversing the linked list first try to obtain a chain lock read lock
+  //					on plant. Should they fail, and the deletion bit is set in flags for plant,
+  //				-- failing the readlock and reading the delete flag bit causes a reader thread to
+  //					enter a special "checking mode"
   // 
   
   // have_readlock == TRUE
   // this is only called with leaf != plant, the leaf must have a chainlock readlock
-  // this means if threads are checking ahead by trying to obtain a chainlock readlock on the next leaf, they will block at that
+  // this means if threads are checking ahead by trying to obtain a chainlock readlock
+  // on the next leaf, they will block at that
   // point in list, until the wchainlock writelock is released
   // in this mode:
   // - drop chain lock readlock for leaf
@@ -254,8 +255,10 @@ static int chain_lock_upgrade(weed_leaf_t *leaf, int have_rdlock, int is_del) {
 
     // there are two reasons why we would want this. If setting a leaf value we lock out other setters, thus avoiding the
     // possibility that two threads might both add the same leaf. With the lock held, we check if the leaf already exists,
-    // and if so we get a write lock on data lock before releasing this; otherwise the lock is held until after the new leaf is added.
-    // since readers only use try_readlock, they are not blocked at all, the only overhead is that they will check leaf->flags
+    // and if so we get a write lock on data lock before releasing this;
+    // otherwise the lock is held until after the new leaf is added.
+    // since readers only use try_readlock, they are not blocked at all, the only overhead
+    // is that they will check leaf->flags
 
     // when deleting a leaf, as well as locking out any setters or other deleters,
     // we ensure that any readers from now on traverse the list in check-mode
@@ -682,7 +685,9 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
 	  chain_lock_readlock(leaf);
 	  chain_lock_unlock(chain_leaf); // does nothing if chain_leaf is NULL
 	  chain_leaf = leaf;
-	}}}
+	}}
+      if (refnode && !*refnode) *refnode = plant;
+    }
 
     if (leaf) data_lock_readlock(leaf);
     if (!is_writer) {
@@ -1029,8 +1034,7 @@ static weed_error_t _weed_leaf_set_or_append(int append, weed_plant_t *plant, co
   // with deletion threads.
   // In addition, the new data is prepared before we even start the first scan. We either switch it with
   // the old data, or else insert it.
-  if (plant->next) leaf = weed_find_leaf(plant, key, &hash, &refleaf);
-  else refleaf = plant;
+  leaf = weed_find_leaf(plant, key, &hash, &refleaf);
   if (!leaf) {
     chain_lock_upgrade(plant, 0, 0);
     // search only until we reach refnode

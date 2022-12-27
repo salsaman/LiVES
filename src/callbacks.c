@@ -7290,8 +7290,8 @@ void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) 
     if (mainw->fs) {
       // switch TO full screen during pb
       if (!mainw->multitrack && !mainw->sep_win) {
-        main_thread_execute_rvoid_pvoid(fullscreen_internal);
-        main_thread_execute_rvoid_pvoid(fade_background);
+        fullscreen_internal();
+        fade_background();
         //fullscreen_internal();
         //fade_background();
       }
@@ -7337,7 +7337,7 @@ void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) 
         }
 
         //unfade_background();
-        if (!mainw->faded) main_thread_execute_rvoid_pvoid(unfade_background);
+        if (!mainw->faded) unfade_background();
 
         resize_play_window();
 
@@ -7368,7 +7368,7 @@ void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) 
               lives_widget_hide(mainw->sep_image);
               if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
             } else lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
-            main_thread_execute_rvoid_pvoid(unfade_background);
+            unfade_background();
             //unfade_background();
           } else {
             lives_widget_hide(mainw->frame1);
@@ -7417,7 +7417,7 @@ void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
 
 void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  main_thread_execute(_on_full_screen_activate, 0, NULL, "vv", menuitem, user_data);
+  _on_full_screen_activate(menuitem, user_data);
 }
 
 void on_double_size_pressed(LiVESButton * button, livespointer user_data) {
@@ -7441,7 +7441,6 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if ((LIVES_IS_PLAYING && !mainw->fs) || (!LIVES_IS_PLAYING && mainw->play_window)) {
     if (mainw->play_window) {
       resize_play_window();
-      sched_yield();
       if (!mainw->double_size) lives_window_center(LIVES_WINDOW(mainw->play_window));
     } else {
       // in-frame
@@ -9502,7 +9501,11 @@ static boolean _all_config(LiVESWidget * widget, LiVESXEventConfigure * event, l
 
 boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
   boolean bret;
+  BG_THREADVAR(hook_match_nparams) = 1;
+  BG_THREADVAR(hook_hints) = HOOK_UNIQUE_DATA | HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute(_all_config, WEED_SEED_BOOLEAN, &bret, "vvv", widget, event, ppsurf);
+  BG_THREADVAR(hook_hints) = 0;
+  BG_THREADVAR(hook_match_nparams) = 0;
   return bret;
 }
 

@@ -217,6 +217,7 @@ lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *da
     int width, int height, int stride);
 
 boolean lives_painter_surface_flush(lives_painter_surface_t *);
+boolean lives_painter_surface_mark_dirty(lives_painter_surface_t *);
 
 boolean lives_painter_destroy(lives_painter_t *);
 

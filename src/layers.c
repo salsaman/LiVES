@@ -272,10 +272,10 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   int height = weed_layer_get_height(layer);
   int i, j;
   boolean newdata = FALSE;
-  boolean do_check = FALSE;
   double psize = pixel_size(pal);
 
   if (alignment != 0 && !old_layer) {
+    // check if we need to align memory
     rowstrides = weed_layer_get_rowstrides(layer, &i);
     while (i > 0) if (rowstrides[--i] % alignment != 0) i = -1;
     lives_free(rowstrides);
@@ -283,8 +283,7 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   }
 
   if (!old_layer) {
-    // if bballoc, both layers get this
-    if (weed_get_boolean_value(layer, LIVES_LEAF_BBLOCKALLOC, NULL)) do_check = TRUE;
+    // do alginment
     newdata = TRUE;
     old_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
     weed_layer_copy(old_layer, layer);
@@ -301,11 +300,10 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
 
   orowstrides = weed_layer_get_rowstrides(old_layer, &numplanes);
 
-  //weed_layer_nullify_pixel_data(layer);
-
   if (alignment != 0) THREADVAR(rowstride_alignment_hint) = alignment;
 
-  // bballoc removed from layer, then re-added
+  if (!newdata) weed_layer_pixel_data_free(layer);
+
   if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
     if (newdata) {
       weed_layer_copy(layer, old_layer);
@@ -336,9 +334,12 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
 
   weed_leaf_dup(layer, old_layer, WEED_LEAF_NATURAL_SIZE);
 
-  // should delete bblock
   if (newdata) {
-    if (do_check && !weed_get_boolean_value(old_layer, LIVES_LEAF_BBLOCKALLOC, NULL)) break_me("bballocX1");
+    if (mainw->frame_layer && layer != mainw->frame_layer
+        && weed_layer_get_pixel_data(mainw->frame_layer) == pixel_data[0]) {
+      /// retain orig pixel_data if it belongs to mainw->frame_layer
+      weed_layer_nullify_pixel_data(old_layer);
+    }
     weed_layer_free(old_layer);
   }
   lives_freep((void **)&npixel_data);
@@ -381,6 +382,10 @@ weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int
    for a newly created layer, this is a deep copy, since the pixel_data array is also copied
    for an existing dlayer, we copy pixel_data by reference.
    all the other relevant attributes are also copied
+
+   For shallow copy, both layers share the same pixel_data. Thus we must be careful NOT to call weed_layer_free
+   on both layers without first nullifying the pixel_data of one or other of the copies,
+   or replacing its pixel_data via a call to create_rmpty_pixel_data
 */
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
   weed_layer_t *layer;
@@ -436,8 +441,6 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
   weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_SUBSPACE, slayer);
   weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_SAMPLING, slayer);
   weed_leaf_copy_or_delete(layer, WEED_LEAF_PIXEL_ASPECT_RATIO, slayer);
-
-  if (dlayer) weed_layer_nullify_pixel_data(slayer);
 
   if (pd_array) lives_free(pd_array);
   return layer;

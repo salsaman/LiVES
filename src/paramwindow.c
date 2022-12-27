@@ -1614,7 +1614,9 @@ fin:
 
 boolean make_param_box(LiVESVBox * top_vbox, lives_rfx_t *rfx) {
   boolean ret;
+  BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   main_thread_execute(_make_param_box, WEED_SEED_BOOLEAN, &ret, "vv", top_vbox, rfx);
+  BG_THREADVAR(hook_hints) = 0;
   return ret;
 }
 

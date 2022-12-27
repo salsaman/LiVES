@@ -1404,7 +1404,6 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
 
   weed_process_f process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
 
-  filter = weed_instance_get_filter(inst, TRUE);
   if (weed_plant_has_leaf(filter, WEED_LEAF_VSTEP)) {
     minh = weed_get_int_value(filter, WEED_LEAF_VSTEP, NULL);
     if (minh > vstep) vstep = minh;
@@ -1434,7 +1433,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
   slices_per_thread = ALIGN_CEIL(slices, prefs->nfx_threads) / prefs->nfx_threads;
 
   to_use = ALIGN_CEIL(slices, slices_per_thread) / slices_per_thread;
-  if (--to_use < 1) return FILTER_ERROR_DONT_THREAD;
+  if (to_use < 0) return FILTER_ERROR_DONT_THREAD;
 
   procvals = (struct _procvals *)lives_calloc(to_use, sizeof(struct _procvals));
   procvals->ret = WEED_SUCCESS;
@@ -2710,10 +2709,13 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     /// weed_layer_copy() will adjust all the important leaves in the channel:
     // width, height, rowstrides, current palette, pixel_data,
     // YUV_*, etc.
+    // be careful, as chanel and layer share the same pixel_data
+    // only one or othere may be freed, the other needs to be freed or nullified
     if (!weed_layer_copy((weed_layer_t *)channel, layer)) {
       retval = FILTER_ERROR_COPYING_FAILED;
       continue;
     }
+    weed_layer_nullify_pixel_data(layer);
     if (!resized) {
       if (!mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
         mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
@@ -2944,7 +2946,11 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     layer = layers[out_tracks[i]];
     weed_set_boolean_value(layer, "letterboxed", letterbox);
 
-    if (weed_get_boolean_value(channel, WEED_LEAF_HOST_INPLACE, NULL) == WEED_TRUE) continue;
+    if (weed_get_boolean_value(channel, WEED_LEAF_HOST_INPLACE, NULL) == WEED_TRUE) {
+      /* weed_layer_copy(layer, channel); */
+      /* weed_layer_nullify_pixel_data(channel); */
+      continue;
+    }
 
     if (weed_palette_is_alpha(weed_channel_get_palette(channel))) {
       // out chan data for alpha is freed after all fx proc - in case we need for in chans
@@ -2959,6 +2965,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         retval = FILTER_ERROR_COPYING_FAILED;
         goto done_video;
       }
+      weed_layer_nullify_pixel_data(in_channel);
     } else {
       // free any existing pixel_data, we will replace it with the channel data
       weed_layer_pixel_data_free(layer);
@@ -2966,6 +2973,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         retval = FILTER_ERROR_COPYING_FAILED;
         goto done_video;
       }
+      weed_layer_nullify_pixel_data(channel);
       weed_leaf_copy(layer, WEED_LEAF_HOST_WIDTH, layer, WEED_LEAF_WIDTH);
       weed_leaf_copy(layer, WEED_LEAF_HOST_HEIGHT, layer, WEED_LEAF_HEIGHT);
     }
@@ -7164,6 +7172,7 @@ boolean weed_init_effect(int hotkey) {
         }}}
     // *INDENT-ON*
     if (inc_count == 2) {
+
       pthread_mutex_lock(&mainw->trcount_mutex);
       mainw->num_tr_applied++; // increase trans count
       pthread_mutex_unlock(&mainw->trcount_mutex);
@@ -8644,7 +8653,6 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
     ////////////////////////// switching background generator: stop the old one first
     weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
-    //mainw->current_file = mainw->blend_file;
     mainw->new_clip = mainw->blend_file;
   }
 

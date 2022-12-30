@@ -251,7 +251,8 @@ double lives_ce_update_timeline(int frame, double x) {
     }
   }
 
-  if (mainw->is_ready && !LIVES_IS_PLAYING && !prefs->hide_framebar && mainw->current_file != last_current_file) {
+  if (mainw->is_ready && !LIVES_IS_PLAYING && !prefs->hide_framebar
+      && CURRENT_CLIP_IS_VALID && mainw->current_file != last_current_file) {
     lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
     lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
@@ -260,7 +261,7 @@ double lives_ce_update_timeline(int frame, double x) {
   //do_tl_redraw(NULL, LIVES_INT_TO_POINTER(mainw->current_file));
 
   last_current_file = mainw->current_file;
-  return cfile->pointer_time;
+  return CURRENT_CLIP_IS_VALID ? cfile->pointer_time : 0;
 }
 
 
@@ -3641,9 +3642,6 @@ void cancel_tl_redraw(void) {
 
 // if there is a bg thread running this then we first cancel it, so it should be cancelled on return here
 
-#define RECURSE_GUARD_START static volatile boolean norecurse = FALSE
-#define RETURN_RECURSION(val) do {if (is_recurse(&norecurse)) return val;} while (0);
-#define RECURSE_GUARD_END norecurse = FALSE
 
 boolean is_recurse(volatile boolean * var) {
   static pthread_mutex_t recursion_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -3656,7 +3654,6 @@ boolean is_recurse(volatile boolean * var) {
   pthread_mutex_unlock(&recursion_mutex);
   return FALSE;
 }
-
 
 
 void redraw_timeline(int clipno) {

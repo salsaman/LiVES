@@ -178,6 +178,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_size(weed_layer_t *layer, int w
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t *layer, void **pixel_data, int nplanes) {
   if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  if (layer == mainw->debug_ptr) break_me("FLPD2");
   weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, nplanes, pixel_data);
   return layer;
 }
@@ -185,6 +186,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data_planar(weed_layer_t 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *layer, void *pixel_data) {
   if (!layer || !WEED_IS_LAYER(layer)) return NULL;
+  if (layer == mainw->debug_ptr) break_me("FLPD");
   weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
   return layer;
 }
@@ -194,6 +196,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *la
   if (!layer || !WEED_IS_XLAYER(layer)) return NULL;
   weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 0, NULL);
   weed_plant_sanitize(layer, FALSE);
+  //g_print("LAYERS: %p nullfied, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
   return layer;
 }
 
@@ -302,7 +305,11 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
 
   if (alignment != 0) THREADVAR(rowstride_alignment_hint) = alignment;
 
-  if (!newdata) weed_layer_pixel_data_free(layer);
+  /// should we free ?
+  weed_layer_nullify_pixel_data(layer);
+
+  weed_layer_set_palette(layer, pal);
+  weed_layer_set_size(layer, width / weed_palette_get_pixels_per_macropixel(pal), height);
 
   if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
     if (newdata) {
@@ -335,6 +342,8 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   weed_leaf_dup(layer, old_layer, WEED_LEAF_NATURAL_SIZE);
 
   if (newdata) {
+
+    // CHECK THIS
     if (mainw->frame_layer && layer != mainw->frame_layer
         && weed_layer_get_pixel_data(mainw->frame_layer) == pixel_data[0]) {
       /// retain orig pixel_data if it belongs to mainw->frame_layer
@@ -417,7 +426,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
     }
   } else {
     /// shallow copy
-    // TODO we should add a ref to the other layer and unref when this one is destroyed
+    weed_layer_pixel_data_free(layer);
     weed_leaf_dup(layer, slayer, WEED_LEAF_ROWSTRIDES);
     weed_leaf_dup(layer, slayer, WEED_LEAF_PIXEL_DATA);
     weed_leaf_dup(layer, slayer, WEED_LEAF_NATURAL_SIZE);
@@ -432,7 +441,9 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
       weed_leaf_copy_or_delete(layer, LIVES_LEAF_PIXEL_DATA_CONTIGUOUS, slayer);
       if (weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA,
                               weed_leaf_get_flags(slayer, WEED_LEAF_PIXEL_DATA)));
-    } else weed_layer_nullify_pixel_data(layer);
+    }
+    //g_print("LAYERS: %p duplicated to %p, bb %d %d\n", slayer, layer, weed_plant_has_leaf(slayer, LIVES_LEAF_BBLOCKALLOC),
+    //	    weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
   }
 
   weed_leaf_copy_or_delete(layer, WEED_LEAF_GAMMA_TYPE, slayer);
@@ -465,10 +476,12 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
 }
 
 int weed_layer_unref(weed_layer_t *layer) {
-  //g_print("unref layer %p\n", layer);
+  // g_print("unref layer %p\n", layer);
+  if (layer == mainw->debug_ptr) break_me("unref ofl");
   int refs = weed_refcount_dec(layer);
   if (!refs) {
     weed_layer_pixel_data_free(layer);
+    //g_print("LAYERS: %p freed, bb %d\n", layer, weed_plant_has_leaf(layer, LIVES_LEAF_BBLOCKALLOC));
     weed_plant_free(layer);
   }
   return refs;

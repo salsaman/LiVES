@@ -492,6 +492,10 @@ typedef enum {
 #endif
 #endif
 
+#define RECURSE_GUARD_START static volatile boolean norecurse = FALSE
+#define RETURN_RECURSION(val) do {if (is_recurse(&norecurse)) return val;} while (0);
+#define RECURSE_GUARD_END norecurse = FALSE
+
 /// global (shared) definiitions
 
 #define LIVES_LEAF_THREAD_PARAM "thrd_param"

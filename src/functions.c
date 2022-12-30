@@ -162,6 +162,8 @@ LIVES_GLOBAL_INLINE const char *get_symbolname(uint8_t val) {
   return "";
 }
 
+static boolean is_child_of(LiVESWidget *w, LiVESContainer *C);
+static boolean fn_match_child(lives_proc_thread_t lpt1, lives_proc_thread_t lpt2);
 
 static char *make_std_pname(int pn) {return lives_strdup_printf("%s%d", LIVES_LEAF_THREAD_PARAM, pn);}
 
@@ -276,6 +278,7 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
   lives_closure_t *closure;
   const lives_funcdef_t *funcdef;
 #endif
+
   lives_proc_thread_ref(lpt);
 
   if (!lpt) {
@@ -802,48 +805,31 @@ char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt) {
   return NULL;
 }
 
-/*   static lives_closure_t *_lives_hook_closure_new(lives_funcptr_t func, const char *fname, uint64_t flags, */
-/* 					 int cat, int hook_type, void *data) { */
-/*   lives_closure_t *closure = (lives_closure_t *)lives_calloc(1, sizeof(lives_closure_t)); */
-/*   int category = FUNC_CATEGORY_GENERAL; */
-/*   switch (cat) { */
-/*   case FUNC_CATEGORY_CALLBACK: */
-/*     switch (hook_type) { */
-/*     case LIVES_GUI_HOOK: */
-/*     case SYNC_WAIT_HOOK: */
-/*       switch (hook_type) { */
-/*       case LIVES_GUI_HOOK: category = FUNC_CATEGORY_UTIL; break; */
-/*       case SYNC_WAIT_HOOK: category = FUNC_CATEGORY_HOOK_SYNC; break; */
-/*       default: break; */
-/*       } */
-/*       closure->fdef = create_funcdef(fname, (lives_funcptr_t)func, category, "b", "vv", 0, NULL); */
-/*       break; */
-/*     default: */
-/*       closure->fdef = get_template_for_func((lives_funcptr_t)func); */
-/*       if (!closure->fdef) { */
-/* 	if (hook_type != NO_HOOK) category = FUNC_CATEGORY_UTIL; */
-/* 	closure->fdef = add_fn_lookup((lives_funcptr_t)func, fname, category, "b", "vv", NULL, 0); */
-/*       } */
-/*       break; */
-/*     } */
-/*   default: break;     */
-/*   } */
-/*   closure->proc_thread = data; */
-/*   closure->flags = flags; */
-/*   return closure; */
-/* } */
+
+static int lives_fdef_get_category(int cat, int dtl) {
+  int category = FUNC_CATEGORY_GENERAL;
+  switch (cat) {
+  case FUNC_CATEGORY_CALLBACK:
+    switch (dtl) {
+    case LIVES_GUI_HOOK:
+      category = FUNC_CATEGORY_UTIL; break;
+    case SYNC_WAIT_HOOK:
+      category = FUNC_CATEGORY_HOOK_SYNC; break;
+    default: break;
+    }
+  default: break;
+  }
+  return category;
+}
 
 
-/* lives_closure_t *lives_hook_closure_new(lives_funcptr_t func, const char *fname, uint64_t flags, */
-/*     int hook_type, void *data) { */
-/*   return _lives_hook_closure_new(func, fname, flags, FUNC_CATEGORY_CALLBACK, hook_type, data); */
-/* } */
-
-
-lives_closure_t *lives_hook_closure_new_for_lpt(lives_proc_thread_t lpt, uint64_t flags, int hook_type) {
+lives_closure_t *lives_hook_closure_new_for_lpt(lives_proc_thread_t lpt,
+						uint64_t flags, int hook_type) {
   if (lpt) {
     lives_closure_t *closure  = (lives_closure_t *)lives_calloc(1, sizeof(lives_closure_t));
     closure->fdef = lives_proc_thread_make_funcdef(lpt);
+    ((lives_funcdef_t *)closure->fdef)->category
+      = lives_fdef_get_category(FUNC_CATEGORY_CALLBACK, hook_type);
     closure->proc_thread = lpt;
     closure->flags = flags;
     closure->retloc = weed_get_voidptr_value(lpt, "retloc", NULL);
@@ -913,10 +899,9 @@ static boolean replace_hook(lives_closure_t *cl, lives_closure_t *repl) {
       lives_proc_thread_t lpt2 = repl->proc_thread;
       repl->flags |= HOOK_CB_BLOCK;
 
-      // add a ref to lpt and lpt2
-      // lpt ref will be removed in closure_free, then blocked thread will also unref,
-      // and keep its ref on lpt2 instead
-      lives_proc_thread_ref(lpt);
+      // add a ref to lpt2
+      // lpt ref will be removed in closure_free, so if wating on it
+      // it should havebeen reffed - caller can unref it to free and will have the ref on lpt2
       lives_proc_thread_ref(lpt2);
       weed_set_plantptr_value(lpt, LIVES_LEAF_REPLACEMENT, lpt2);
     }
@@ -939,17 +924,13 @@ static boolean fn_data_replace(lives_proc_thread_t dst, lives_proc_thread_t src)
   return FALSE;
 }
 
-
-// we have 4 valid combinations of flags:
-//
-// !is_remove and !is_test
-// prepend - remove + prepend (normal prepend)
-// append - update or ignore or append (normal append)
-
-// is_remove - remove, no prepend,  with forced, wait for mutex, else use trylock
-// is_test - only test, exit when we know if we will add or not (called from what_to_wait_for)
-
-// test + prepend -
+// for the GUI stacks:
+// things to note - for dtype != DTYPE_CLOSURE (ie. lpt) we only ever add when appending
+// when prepending the type is always DTYPE_CLOSURE, with or without DTYPE_NOADD
+// DTYPE_NOADD only gets set with prepend
+// generally we append to thread stack, then at some point append or prepend to fg thread stack
+// uniquenes tests are applied when adding. Invalidate_data is tested when adding (same stack)
+// and when triggering (all thread stacks with deferal queues)
 lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint64_t flags,
                                    livespointer data, uint64_t dtype) {
   lives_proc_thread_t lpt = NULL;
@@ -958,31 +939,32 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
   uint64_t xflags = flags & (HOOK_UNIQUE_REPLACE | HOOK_INVALIDATE_DATA);
   uint64_t attrs;
   pthread_mutex_t *hmutex;
-  boolean is_test = !!(flags & HOOK_CB_TEST_ADD);
   boolean is_close = FALSE, is_append = TRUE, is_remove = FALSE, is_relaxed = FALSE;
   boolean have_lock = FALSE;
 
   if (!hstacks) {
-    GET_PROC_THREAD_SELF(self);
-    if (!self) return NULL;
-    hstacks = lives_proc_thread_get_hook_stacks(self);
-    if (!hstacks) return NULL;
+    if (type == SYNC_WAIT_HOOK) hstacks = THREADVAR(hook_stacks);
+    else {
+      GET_PROC_THREAD_SELF(self);
+      if (!self) return NULL;
+      hstacks = lives_proc_thread_get_hook_stacks(self);
+      if (!hstacks) return NULL;
+    }
   }
 
   if (dtype & DTYPE_CLOSURE) is_close = TRUE;
-  if (dtype & DTYPE_HAVE_LOCK) have_lock = TRUE;
 
-  if (!is_test) {
-    if (dtype & DTYPE_PREPEND) is_append = FALSE;
-    if (dtype & DTYPE_REMOVE) is_remove = TRUE;
-    if (dtype & DTYPE_RELAXED) is_relaxed = TRUE;
-  }
+  if (dtype & DTYPE_PREPEND) is_append = FALSE;
+  if (dtype & DTYPE_NOADD) is_remove = TRUE;
+
+  if (dtype & DTYPE_HAVE_LOCK) have_lock = TRUE;
+  if (dtype & DTYPE_RELAXED) is_relaxed = TRUE;
 
   // append, then everything else will check
   if (is_append) xflags &= ~HOOK_INVALIDATE_DATA;
 
   // is_close, is_relaxed are dealt with early on
-  // the important flags for cehcking are ia_append, is_remove, is_test
+  // the important flags for cehcking are ia_append, is_remove
 
   if (is_close) {
     xclosure = (lives_closure_t *)data;
@@ -995,9 +977,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
     }
   } else {
     lpt = (lives_proc_thread_t)data;
-    if (!is_test)
-      xclosure = lives_hook_closure_new_for_lpt(lpt, flags, type);
-  }
+   }
 
   if (!is_append) ret_closure = xclosure;
 
@@ -1024,9 +1004,10 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
     lives_proc_thread_t lpt2 = NULL;
     LiVESList *cblist, *cblistnext;
     int maxp = THREADVAR(hook_match_nparams);
-    boolean cfinv = FALSE, fmatch;
+    boolean fmatch;
 
     for (cblist = hstacks[type]->stack; cblist; cblist = cblistnext) {
+      uint64_t cfinv = 0;
       cblistnext = cblist->next;
       closure = (lives_closure_t *)cblist->data;
       if (!closure) continue;
@@ -1038,19 +1019,17 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
       if (!lpt2) break_me("null procthread in closure\n");
       if (!lpt2 || lpt2 == lpt) continue;
 
-      if (is_append && (closure->flags & HOOK_INVALIDATE_DATA)) cfinv = TRUE;
-      else cfinv = FALSE;
+      if (is_append) {
+	cfinv = closure->flags & (HOOK_INVALIDATE_DATA | HOOK_OPT_MATCH_CHILD);
+	if (!(cfinv & HOOK_INVALIDATE_DATA)) cfinv = 0;
+      }
 
       if (!(fmatch = fn_func_match(lpt, lpt2) < 0)
-          && !((xflags & HOOK_INVALIDATE_DATA) || cfinv))continue;
+          && !((xflags & HOOK_INVALIDATE_DATA) || cfinv != 0))continue;
 
       if (fmatch && (xflags & HOOK_UNIQUE_FUNC)) {
         // unique_func -> maintain only 1st fn match
         // with unique replace -> also replace 1st with our data
-        if (is_test) {
-          if (!have_lock) pthread_mutex_unlock(hmutex);
-          return closure->proc_thread;
-        }
         if (!ret_closure) {
           if (xflags & HOOK_UNIQUE_DATA) {
             if (!fn_data_match(lpt2, lpt, maxp)) continue;
@@ -1068,11 +1047,12 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
       }
 
       if (!(cfinv || (xflags & (HOOK_INVALIDATE_DATA | HOOK_UNIQUE_DATA)))) continue;
-      if (!fn_data_match(lpt2, lpt, maxp)) continue;
 
-      if (is_test) {
-        if (!have_lock) pthread_mutex_unlock(hmutex);
-        return closure->proc_thread;
+      if (!fn_data_match(lpt2, lpt, maxp)) {
+	if (!((cfinv | flags) & HOOK_OPT_MATCH_CHILD)) continue;
+	if (!(((flags & HOOK_OPT_MATCH_CHILD) && fn_match_child(lpt, lpt2))
+	      || ((cfinv & HOOK_OPT_MATCH_CHILD) && fn_match_child(lpt2, lpt))))
+	  continue;
       }
 
       // if we reach here it means that xflags == HOOK_UNIQUE_DATA, or closure->flags
@@ -1083,7 +1063,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
     }
   }
 
-  if (is_remove || is_test) {
+  if (is_remove) {
     if (!have_lock) pthread_mutex_unlock(hmutex);
     return lpt;
   }
@@ -1095,9 +1075,10 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
 
   if (is_append) {
     if (is_close) closure = (lives_closure_t *)data;
-    else closure = lives_hook_closure_new_for_lpt(lpt, flags, type);
   } else closure = xclosure;
 
+  if (!closure) closure = lives_hook_closure_new_for_lpt(lpt, flags, type);
+  
   lives_proc_thread_include_states(closure->proc_thread, THRD_STATE_STACKED);
 
   if (is_append) hstacks[type]->stack = lives_list_append(hstacks[type]->stack, closure);
@@ -1114,11 +1095,12 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
 }
 
 
-lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **hooks, int type, uint64_t flags, boolean is_append,
+lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **hooks, int type, uint64_t flags,
                                         lives_funcptr_t func, const char *fname, int return_type,
-                                        void *retloc, const char *args_fmt, ...) {
+                                        const char *args_fmt, ...) {
   lives_proc_thread_t lpt;
-  uint64_t attrs =  LIVES_THRDATTR_START_UNQUEUED;
+  uint64_t attrs = LIVES_THRDATTR_START_UNQUEUED;
+  uint64_t dtype = 0;
   // test should be async_callbacks
   if (type == DATA_READY_HOOK) {
     // for async callbacks, we treat each callback as an idlefunc and queue it instead of running
@@ -1129,6 +1111,8 @@ lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **hooks, int type, ui
     attrs |= LIVES_THRDATTR_IDLEFUNC;
   }
 
+  if (flags & HOOK_CB_PRIORITY) dtype |= DTYPE_PREPEND;
+  
   if (args_fmt) {
     va_list xargs;
     va_start(xargs, args_fmt);
@@ -1136,12 +1120,12 @@ lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **hooks, int type, ui
     va_end(xargs);
   } else lpt = _lives_proc_thread_create_nullvargs(attrs, func, fname, return_type);
 
-  return lives_hook_add(hooks, type, flags, (void *)lpt, is_append ? 0 : DTYPE_PREPEND);
+  return lives_hook_add(hooks, type, flags, (void *)lpt, dtype);
 }
 
 
 static void update_linked_stacks(lives_closure_t *cl, uint64_t flags, boolean forced) {
-  uint64_t dflags = DTYPE_REMOVE | DTYPE_PREPEND | DTYPE_CLOSURE;
+  uint64_t dflags = DTYPE_NOADD | DTYPE_PREPEND | DTYPE_CLOSURE;
   if (!forced) dflags |= DTYPE_RELAXED;
   pthread_mutex_lock(&mainw->all_hstacks_mutex);
   if (!is_fg_thread()) {
@@ -1176,10 +1160,14 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
   boolean have_rdlock = FALSE;
 
   if (!hstacks) {
-    GET_PROC_THREAD_SELF(self);
-    if (!self) return TRUE;
-    hstacks = lives_proc_thread_get_hook_stacks(self);
-    if (!hstacks) return TRUE;
+    // test should be HOOK_TYPE_SELF
+    if (type == SYNC_WAIT_HOOK) hstacks = THREADVAR(hook_stacks);
+    else {
+      GET_PROC_THREAD_SELF(self);
+      if (!self) return TRUE;
+      hstacks = lives_proc_thread_get_hook_stacks(self);
+      if (!hstacks) return TRUE;
+    }
   }
 
   if (type == DATA_READY_HOOK) {
@@ -1188,168 +1176,154 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
   }
 
   hmutex = hstacks[type]->mutex;
+  //if (type == SYNC_WAIT_HOOK) dump_hook_stack(hstacks, type);
 
-recheck:
+  do {
+    if (is_fg_thread()) {
+      if (pthread_mutex_trylock(hmutex)) break;
+    } else pthread_mutex_lock(hmutex);
 
-  if (is_fg_thread()) {
-    if (pthread_mutex_trylock(hmutex)) return FALSE;
-  } else pthread_mutex_lock(hmutex);
+    list = hstacks[type]->stack;
 
-  for (list = hstacks[type]->stack; list; list = listnext) {
-    listnext = list->next;
-    closure = (lives_closure_t *)list->data;
-    if (!closure || !closure->proc_thread) continue;
-    if (closure->flags & (HOOK_STATUS_BLOCKED | HOOK_STATUS_REMOVE
-                          | HOOK_STATUS_RUNNING | HOOK_STATUS_ACTIONED)) continue;
-    lpt = closure->proc_thread;
+    if (!list) {
+      pthread_mutex_unlock(hmutex);
+      break;
+    }
 
-    if (weed_plant_has_leaf(lpt, LIVES_LEAF_REPLACEMENT)) continue;
+    for (; list; list = listnext) {
+      listnext = list->next;
 
-    lives_proc_thread_ref(lpt);
-    if (!lpt) continue;
+      closure = (lives_closure_t *)list->data;
+      if (!closure || !closure->proc_thread) continue;
+      if (closure->flags & (HOOK_STATUS_BLOCKED | HOOK_STATUS_REMOVE
+			    | HOOK_STATUS_RUNNING | HOOK_STATUS_ACTIONED)) continue;
 
-    //g_print("trigger: %s\n", lives_proc_thread_show_func_call(lpt));
-    // test should be hook_dtl_main_thread
-    if (closure->flags & HOOK_CB_FG_THREAD) {
+      lpt = closure->proc_thread;
+      if (weed_plant_has_leaf(lpt, LIVES_LEAF_REPLACEMENT)) continue;
+
+      lives_proc_thread_ref(lpt);
+      if (!lpt) continue;
+
       if (type == LIVES_GUI_HOOK) {
-        uint64_t xflags = closure->flags & (HOOK_UNIQUE_REPLACE | HOOK_INVALIDATE_DATA);
-        if (xflags) {
-          if (xflags & HOOK_INVALIDATE_DATA) {
-            if (!have_special_mutex) {
-              if (pthread_mutex_trylock(&special_mutex)) {
-                // this means some other thread also has invalidate_data, we must let it run then recheck
-                lives_proc_thread_unref(lpt);
-                pthread_mutex_unlock(hmutex);
-                lives_nanosleep_until_zero(pthread_mutex_trylock(&special_mutex));
-                have_special_mutex = TRUE;
-                goto recheck;
-              }
-            }
-            pthread_rwlock_wrlock(&stacks_rwlock);
-            update_linked_stacks(closure, xflags, TRUE);
-            pthread_rwlock_unlock(&stacks_rwlock);
-            pthread_rwlock_rdlock(&stacks_rwlock);
-            have_rdlock = TRUE;
-          } else {
-            if (!have_rdlock) {
-              if (pthread_rwlock_tryrdlock(&stacks_rwlock)) {
-                lives_proc_thread_unref(lpt);
-                pthread_mutex_unlock(hmutex);
-                lives_nanosleep_until_zero(pthread_rwlock_tryrdlock(&stacks_rwlock));
-                have_rdlock = TRUE;
-                goto recheck;
-              }
-            }
-            update_linked_stacks(closure, xflags, FALSE);
-          }
-        }
+	uint64_t xflags = closure->flags & (HOOK_UNIQUE_REPLACE | HOOK_INVALIDATE_DATA);
+	if (xflags) {
+	  if (xflags & HOOK_INVALIDATE_DATA) {
+	    if (!have_special_mutex) {
+	      if (pthread_mutex_trylock(&special_mutex)) {
+		// this means some other thread also has invalidate_data, we must let it run then recheck
+		lives_proc_thread_unref(lpt);
+		pthread_mutex_unlock(hmutex);
+		lives_nanosleep_until_zero(pthread_mutex_trylock(&special_mutex));
+		have_special_mutex = TRUE;
+		break;
+	      }
+	    }
+	    pthread_rwlock_wrlock(&stacks_rwlock);
+	    update_linked_stacks(closure, xflags, TRUE);
+	    pthread_rwlock_unlock(&stacks_rwlock);
+	    pthread_rwlock_rdlock(&stacks_rwlock);
+	    have_rdlock = TRUE;
+	  } else {
+	    if (!have_rdlock) {
+	      if (pthread_rwlock_tryrdlock(&stacks_rwlock)) {
+		lives_proc_thread_unref(lpt);
+		pthread_mutex_unlock(hmutex);
+		lives_nanosleep_until_zero(pthread_rwlock_tryrdlock(&stacks_rwlock));
+		have_rdlock = TRUE;
+		break;
+	      }
+	    }
+	    update_linked_stacks(closure, xflags, FALSE);
+	  }
+	  closure->flags &= ~HOOK_UNIQUE_REPLACE;
+	}
 
-        if (have_special_mutex) {
-          pthread_mutex_unlock(&special_mutex);
-          have_special_mutex = FALSE;
-        }
+	if (have_special_mutex) {
+	  pthread_mutex_unlock(&special_mutex);
+	  have_special_mutex = FALSE;
+	}
 
-        if (!have_rdlock) {
-          if (pthread_rwlock_tryrdlock(&stacks_rwlock)) {
-            lives_proc_thread_unref(lpt);
-            pthread_mutex_unlock(hmutex);
-            lives_nanosleep_until_zero(pthread_rwlock_tryrdlock(&stacks_rwlock));
-            have_rdlock = TRUE;
-            goto recheck;
-          }
-        }
+	if (!have_rdlock) {
+	  if (pthread_rwlock_tryrdlock(&stacks_rwlock)) {
+	    lives_proc_thread_unref(lpt);
+	    pthread_mutex_unlock(hmutex);
+	    lives_nanosleep_until_zero(pthread_rwlock_tryrdlock(&stacks_rwlock));
+	    have_rdlock = TRUE;
+	    break;
+	  }
+	}
       }
 
-      closure->flags |= HOOK_STATUS_RUNNING | HOOK_STATUS_ACTIONED;
-      g_print("\nrun hook cb %s %p %p\n", lives_proc_thread_show_func_call(closure->proc_thread),
-              lpt, closure->proc_thread);
+      closure->flags |= (HOOK_STATUS_RUNNING | HOOK_STATUS_ACTIONED);
 
-      if (is_fg_thread()) {
-        lives_proc_thread_execute(lpt, closure->retloc);
+      pthread_mutex_unlock(hmutex);
+
+      /* g_print("\nrun hook cb %s %p %p\n", lives_proc_thread_show_func_call(lpt), */
+      /* 	      lpt, lpt); */
+
+      lives_proc_thread_include_states(lpt, THRD_STATE_STACKED);
+      lives_proc_thread_exclude_states(lpt, THRD_STATE_IDLING | THRD_STATE_UNQUEUED
+				       | THRD_TRANSIENT_STATES | THRD_STATE_COMPLETED
+				       | THRD_STATE_FINISHED | THRD_STATE_DEFERRED);
+
+      if (type == SYNC_WAIT_HOOK) {
+	// test should be boolean_combined
+	bret = TRUE; // set in case func is cancelled
+	closure->retloc = &bret;
+	//g_print("sync run: %s\n", lives_proc_thread_show_func_call(lpt));
+      }
+
+      if (!(closure->flags & HOOK_CB_FG_THREAD) || is_fg_thread()) {
+	lives_proc_thread_execute(lpt, closure->retloc);
       } else {
-        if (type == SYNC_ANNOUNCE_HOOK) {
-          g_print("GROOVY %s\n", lives_proc_thread_show_func_call(lpt));
-          break_me("sann");
-        }
-        lives_proc_thread_exclude_states(lpt, THRD_STATE_UNQUEUED | THRD_STATE_DEFERRED);
-        lives_proc_thread_include_states(lpt, THRD_STATE_QUEUED);
-        fg_service_call(lpt, closure->retloc);
-        if (type == SYNC_ANNOUNCE_HOOK) g_print("GROOVY\n");
+	if (type == SYNC_ANNOUNCE_HOOK) {
+	  g_print("GROOVY %s\n", lives_proc_thread_show_func_call(lpt));
+	  break_me("sann");
+	}
+	lives_proc_thread_include_states(lpt, THRD_STATE_QUEUED);
+	fg_service_call(lpt, closure->retloc);
+	if (type == SYNC_ANNOUNCE_HOOK) g_print("GROOVY\n");
       }
 
-      if (closure->proc_thread) {
-        lpt = closure->proc_thread;
-        lives_proc_thread_exclude_states(lpt, THRD_TRANSIENT_STATES);
-        lives_proc_thread_include_states(lpt, THRD_STATE_STACKED);
-        lives_proc_thread_unref(closure->proc_thread);
+      closure->flags &= ~HOOK_STATUS_RUNNING;
+
+      //if (type == SYNC_WAIT_HOOK) g_print("sync run res: %d\n", bret);
+
+      if (closure->flags & (HOOK_OPT_ONESHOT | HOOK_STATUS_REMOVE)) {
+	pthread_mutex_lock(hmutex);
+	hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, list, FALSE);
+	pthread_mutex_unlock(hmutex);
+	// for oneshot triggers, we remove a ref, so caller should ref anything important before
+	// triggering hooks
+	//g_print("free one-shot hook %s\n", lives_proc_thread_show_func_call(lpt));
+	lives_proc_thread_unref(lpt);
+	lives_closure_free(closure);
       }
 
-      if (closure->flags & HOOK_OPT_ONESHOT) {
-        hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, list, FALSE);
-        // for oneshot trigeers, we remove a ref, so caller should ref anything important before
-        // triggering hooks
-        g_print("free one-shot hook %s\n", lives_proc_thread_show_func_call(closure->proc_thread));
-        lives_closure_free(closure);
+      if (type == SYNC_WAIT_HOOK && !bret) {
+	// combined bool / exit on false
+	lives_proc_thread_unref(lpt);
+	retval = FALSE;
+	goto finished;
       }
 
       // actually should be HOOK_DTL_SINGLE
       if (type == LIVES_GUI_HOOK) {
-        if (have_rdlock) {
-          pthread_rwlock_unlock(&stacks_rwlock);
-          have_rdlock = FALSE;
-        }
-        if (is_fg_thread()) {
-          g_print("done single\n");
-          break;
-        }
+	if (have_rdlock) {
+	  pthread_rwlock_unlock(&stacks_rwlock);
+	  have_rdlock = FALSE;
+	}
+	if (is_fg_thread()) {
+	  //g_print("done single\n");
+	  lives_proc_thread_unref(lpt);
+	  break;
+	}
       }
-      continue;
+      lives_proc_thread_unref(lpt);
     }
-
-    // normal (non GUI) callbacks [not hook_cb_main_thread
-
-    bret = TRUE; // set in case func is cancelled
-    lives_proc_thread_execute(lpt, &bret);
-    //if (type == SYNC_WAIT_HOOK) g_print("sync run res: %d\n", bret);
-
-    // test should be !bret && hook_dtl remove false
-    // && !hook_dtl_async
-
-    // combined bool / exit on false / rem on false
-    if ((!bret && type == SYNC_WAIT_HOOK)
-        || (closure->flags & (HOOK_STATUS_REMOVE | HOOK_OPT_ONESHOT))) {
-      if (type == SYNC_WAIT_HOOK) {
-        if (closure->flags & (HOOK_STATUS_REMOVE | HOOK_OPT_ONESHOT)) {
-          hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, list, FALSE);
-          lives_proc_thread_unref(lpt);
-          lives_closure_free(closure);
-        } else {
-          lives_proc_thread_exclude_states(lpt, THRD_TRANSIENT_STATES | THRD_STATE_UNQUEUED);
-          lives_proc_thread_include_states(lpt, THRD_STATE_STACKED);
-          lives_proc_thread_unref(lpt);
-        }
-        retval = FALSE;
-        goto finished;
-      }
-      if (closure->flags & (HOOK_STATUS_REMOVE | HOOK_OPT_ONESHOT)) {
-        hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, list, FALSE);
-        lives_proc_thread_unref(lpt);
-        lives_closure_free(closure);
-        continue;
-      }
-    }
-    lives_proc_thread_exclude_states(lpt, THRD_TRANSIENT_STATES | THRD_STATE_UNQUEUED);
-    lives_proc_thread_include_states(lpt, THRD_STATE_STACKED);
-    lives_proc_thread_unref(lpt);
-  }
+  } while (list);
 
 finished:
-  for (list = hstacks[type]->stack; list; list = list->next) {
-    closure = (lives_closure_t *)list->data;
-    if (closure) closure->flags &= ~HOOK_STATUS_ACTIONED;
-  }
-
-  pthread_mutex_unlock(hmutex);
 
   if (have_special_mutex) {
     pthread_mutex_unlock(&special_mutex);
@@ -1358,6 +1332,15 @@ finished:
   if (have_rdlock) {
     pthread_rwlock_unlock(&stacks_rwlock);
   }
+
+  pthread_mutex_lock(hmutex);
+  for (list = hstacks[type]->stack; list; list = list->next) {
+    closure = (lives_closure_t *)list->data;
+    if (closure) closure->flags &= ~HOOK_STATUS_ACTIONED;
+  }
+  pthread_mutex_unlock(hmutex);
+
+  //if (type == SYNC_WAIT_HOOK) g_print("sync all res: %d\n", retval);
   return retval;
 }
 
@@ -1445,30 +1428,70 @@ void lives_hooks_trigger_async(lives_hook_stack_t **hstacks, int type) {
 
 
 void lives_hook_remove(lives_hook_stack_t **hstacks, int type, lives_proc_thread_t lpt) {
+  lives_proc_thread_ref(lpt);
   if (lpt) {
     if (!hstacks) {
-      GET_PROC_THREAD_SELF(self);
-      if (!self) return;
-      hstacks = lives_proc_thread_get_hook_stacks(self);
-      if (!hstacks) return;
+      // test should be HOOK_TYPE_SELF
+      if (type == SYNC_WAIT_HOOK) hstacks = THREADVAR(hook_stacks);
+      else {
+	GET_PROC_THREAD_SELF(self);
+	if (!self) return;
+	hstacks = lives_proc_thread_get_hook_stacks(self);
+	if (!hstacks) return;
+      }
     } else {
+      lives_closure_t *closure;
       lives_hook_stack_t *hstack = hstacks[type];
       pthread_mutex_t *mutex = hstack->mutex;
       LiVESList *cblist;
-      pthread_mutex_lock(mutex);
-      for (cblist = hstack->stack; cblist; cblist = cblist->next) {
-        lives_closure_t *closure = (lives_closure_t *)cblist->data;
-        if (closure->proc_thread == lpt) {
-          if (closure->flags & HOOK_STATUS_RUNNING) closure->flags |= HOOK_STATUS_REMOVE;
-          else {
-            hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, cblist, FALSE);
-            lives_closure_free(closure);
-          }
-          break;
-        }
+      if (!pthread_mutex_trylock(mutex)) {
+	for (cblist = hstack->stack; cblist; cblist = cblist->next) {
+	  closure = (lives_closure_t *)cblist->data;
+	  if (closure->proc_thread == lpt || (closure->flags & HOOK_STATUS_REMOVE)) {
+	    if (closure->flags & HOOK_STATUS_RUNNING) closure->flags |= HOOK_STATUS_REMOVE;
+	    else {
+	      hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, cblist, FALSE);
+	      lives_closure_free(closure);
+	    }
+	    break;
+	  }
+	}
+	pthread_mutex_unlock(mutex);
       }
-      pthread_mutex_unlock(mutex);
+      else {
+	closure = weed_get_voidptr_value(lpt, LIVES_LEAF_CLOSURE, NULL);
+	closure->flags |= HOOK_STATUS_REMOVE;
+      }
     }
+    lives_proc_thread_unref(lpt);
+  }
+}
+
+
+void lives_hook_remove_by_data(lives_hook_stack_t **hstacks, int type,
+			       lives_funcptr_t func, void *data) {
+  if (!hstacks) {
+    GET_PROC_THREAD_SELF(self);
+    if (!self) return;
+    hstacks = lives_proc_thread_get_hook_stacks(self);
+    if (!hstacks) return;
+  } else {
+    lives_hook_stack_t *hstack = hstacks[type];
+    pthread_mutex_t *mutex = hstack->mutex;
+    LiVESList *cblist, *cbnext;
+    pthread_mutex_lock(mutex);
+    for (cblist = hstack->stack; cblist; cblist = cbnext) {
+      lives_closure_t *closure = (lives_closure_t *)cblist->data;
+      lives_proc_thread_t lpt = closure->proc_thread;
+      cbnext = cblist->next;
+      if (!lpt) continue;
+      if (!closure || !closure->fdef) continue;
+      if (closure->fdef->function != func) continue;
+      if (data == weed_get_voidptr_value(lpt, PROC_THREAD_PARAM(1), NULL)) continue;
+      hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, cblist, FALSE);
+      lives_closure_free(closure);
+    }
+    pthread_mutex_unlock(mutex);
   }
 }
 
@@ -1512,6 +1535,41 @@ boolean fn_data_match(lives_proc_thread_t lpt1, lives_proc_thread_t lpt2, int ma
 }
 
 
+static boolean is_child_of(LiVESWidget *w, LiVESContainer *C) {
+  if ((LiVESWidget *)w == (LiVESWidget *)C) return TRUE;
+  for (LiVESList *list = lives_container_get_children(C); list; list = list->next) {
+    LiVESWidget *x = (LiVESWidget *)list->data;
+    if (LIVES_IS_CONTAINER(x) && is_child_of(w, LIVES_CONTAINER(x))) return TRUE;
+  }
+  return FALSE;
+}
+
+
+static boolean fn_match_child(lives_proc_thread_t lpt1, lives_proc_thread_t lpt2) {
+  LiVESWidget *w, *C;
+  funcsig_t fsig = weed_get_int64_value(lpt1, LIVES_LEAF_FUNCSIG, NULL);
+  char *pname, *args_fmt = args_fmt_from_funcsig(fsig);
+  if (!args_fmt || get_seedtype(args_fmt[0]) != WEED_SEED_VOIDPTR) {
+    if (args_fmt) lives_free(args_fmt);
+    return FALSE;
+  }
+  lives_free(args_fmt);
+  pname = make_std_pname(0);
+  C = (LiVESWidget *)(weed_get_voidptr_value(lpt2, pname, NULL));
+  if (!LIVES_IS_WIDGET(C) || !LIVES_IS_CONTAINER(C)) {
+    lives_free(pname);
+    return FALSE;
+  }
+  w = (LiVESWidget *)(weed_get_voidptr_value(lpt1, pname, NULL));
+  if (!LIVES_IS_WIDGET(w)) {
+    lives_free(pname);
+    return FALSE;
+  }
+  lives_free(pname);
+  return is_child_of(w, LIVES_CONTAINER(C));
+}
+
+
 // return -ve value on mismatch-, or nparams on match
 // -1 == NULL or fn mismatch
 // -2 == return_type mismatch
@@ -1532,18 +1590,24 @@ static char *cl_flags_desc(uint64_t clflags) {
   char *fstr = lives_strdup("");
   if (clflags & HOOK_CB_BLOCK)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "BLOCKING");
-  if (clflags & HOOK_CB_FG_THREAD)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "FG_THREAD");
   if (clflags & HOOK_CB_PRIORITY)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "PRIORITY");
   if (clflags & HOOK_OPT_ONESHOT)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "ONESHOT");
+  if (clflags & HOOK_CB_FG_THREAD)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "FG_THREAD");
+  if (clflags & HOOK_OPT_FG_LIGHT)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "FG_LIGHT");
+  if (clflags & HOOK_OPT_FG_HEAVY)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "FG_HEAVY");
   if (clflags & HOOK_UNIQUE_FUNC)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "UNIQUE_FUNC");
   if (clflags & HOOK_UNIQUE_DATA)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "UNIQUE_DATA");
   if (clflags & HOOK_INVALIDATE_DATA)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "INVALIDATE_DATA");
+  if (clflags & HOOK_OPT_MATCH_CHILD)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "MATCH_CHILD");
   if (clflags & HOOK_STATUS_BLOCKED)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "BLOCKED");
   if (clflags & HOOK_STATUS_RUNNING)
@@ -1610,10 +1674,9 @@ void dump_hook_stack(lives_hook_stack_t **hstacks, int type) {
             fdef->funcname, fdef->args_fmt, fdef->return_type);
 #endif
   }
-
 done:
-  0;
   //  pthread_mutex_unlock(hmutex);
+  return;
 }
 
 //////////////////////////// funcdefs & funcinsts /////////////////////////////////
@@ -1703,6 +1766,8 @@ void add_fn_note(int io, void *ptr, ...) {
   va_list va;
   lives_funcdef_t *fdef;
   weed_plant_t *note;
+  static pthread_mutex_t ftrace_mutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_mutex_lock(&ftrace_mutex);
   if (!ftrace_store)  ftrace_store = lives_hash_store_new("ftrace");
   note = (weed_plant_t *)get_from_hash_store_i(ftrace_store, (uintptr_t)ptr);
   if (note) {
@@ -1715,6 +1780,7 @@ void add_fn_note(int io, void *ptr, ...) {
       else
         weed_set_int_value(note, "count", count);
     }
+    pthread_mutex_unlock(&ftrace_mutex);
     return;
   }
   va_start(va, ptr);
@@ -1727,6 +1793,7 @@ void add_fn_note(int io, void *ptr, ...) {
   weed_set_int_value(note, "count", io == _FN_ALLOC ? 1 : -1);
   free_funcdef(fdef);
   ftrace_store = add_to_hash_store_i(ftrace_store, (uintptr_t)ptr, (void *)note);
+  pthread_mutex_unlock(&ftrace_mutex);
 }
 
 

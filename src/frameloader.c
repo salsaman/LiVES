@@ -2341,12 +2341,18 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
       filter_mutex_lock(key);
       if (!IS_VALID_CLIP(clip)) {
+	g_print("INVVVVVVVVVVVVVVVVVVVVVVVVVV\n");
         // gen was switched off
         create_blank_layer(layer, image_ext, width, height, target_palette);
       } else {
         vlayer = weed_layer_create_from_generator(inst, tc, clip);
+	g_print("NXXX EW pixdata %p %p\n", vlayer, weed_layer_get_pixel_data(vlayer));
         weed_layer_copy(layer, vlayer); // layer is non-NULL, so copy by reference
+	g_print("NXdsdXX EW pixdata %p %p %p %p\n", vlayer, layer, weed_layer_get_pixel_data(vlayer),
+		weed_layer_get_pixel_data(layer));
         weed_layer_nullify_pixel_data(vlayer);
+	g_print("NXdsdXX EW pixdata %p %p %p %p\n", vlayer, layer, weed_layer_get_pixel_data(vlayer),
+		weed_layer_get_pixel_data(layer));
       }
       filter_mutex_unlock(key);
       weed_instance_unref(inst);

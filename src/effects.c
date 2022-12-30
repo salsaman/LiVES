@@ -1159,9 +1159,9 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
   // key is 1 based
   int key = LIVES_POINTER_TO_INT(user_data);
   if (LIVES_IS_PLAYING)
-    lives_proc_thread_append_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
-                                       HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
-                                       _rte_on_off, WEED_SEED_BOOLEAN, NULL, "bi", (group != NULL), key);
+    lives_proc_thread_add_hook_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
+				    HOOK_OPT_ONESHOT | HOOK_CB_BLOCK | HOOK_CB_FG_THREAD,
+				    _rte_on_off, WEED_SEED_BOOLEAN, "bi", (group != NULL), key);
   else _rte_on_off((group != NULL), key);
   return TRUE;
 }

@@ -128,9 +128,9 @@ lives_sigdata_t *lives_sigdata_new(lives_proc_thread_t lpt, boolean is_timer);
 
 #define _RV_ LIVES_LEAF_RETURN_VALUE
 
-#define LIVES_LEAF_THREAD_PARAM0 _LIVES_LEAF_THREAD_PARAM(0)
-#define LIVES_LEAF_THREAD_PARAM1 _LIVES_LEAF_THREAD_PARAM(1)
-#define LIVES_LEAF_THREAD_PARAM2 _LIVES_LEAF_THREAD_PARAM(2)
+#define LIVES_LEAF_THREAD_PARAM0 LIVES_LEAF_THREAD_PARAM(0)
+#define LIVES_LEAF_THREAD_PARAM1 LIVES_LEAF_THREAD_PARAM(1)
+#define LIVES_LEAF_THREAD_PARAM2 LIVES_LEAF_THREAD_PARAM(2)
 
 #define lpt_param_name(i) lives_strdup_printf("%s%d", LIVES_LEAF_THREAD_PARAM, (i))
 
@@ -317,7 +317,24 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_THRDATTR_IGNORE_SYNCPTS  		(1ull << 6)
 #define LIVES_THRDATTR_IDLEFUNC   		(1ull << 7)
 #define LIVES_THRDATTR_DETACHED   		(1ull << 8)
+
+// create a proc thread for the gui thread to run
+// instead of being pushed to the poolthread queue, it will be pushed to
+// the main thread's stack
 #define LIVES_THRDATTR_FG_THREAD   		(1ull << 9)
+
+// thread wieghts - these are used in combination with FG_THREAD
+// light - indicates a trivial request, such as updating a spinbutton which can be carried out quickly
+// this will block and get executed as soon as possible
+#define LIVES_THRDATTR_LIGHT	   		(1ull << 10)
+
+// this is for callbacks for the main thread to monitor, for example preview, player, dialgo_run
+// these are activities that are longer running and may require a lot of back and forth between a background
+// thread and the main thread. When the mian thread is running and monitoring such tasks, the GUI loop will
+// only be run when specifically requested (by lives_widget_context_update for example)
+#define LIVES_THRDATTR_HEAVY	   		(1ull << 11)
+
+// (NB. setting both heavy and light will result in undefined behaviour)
 
 // non function attrs
 #define LIVES_THRDATTR_NOTE_TIMINGS		(1ull << 16)
@@ -424,6 +441,7 @@ int lives_proc_thread_count_refs(lives_proc_thread_t);
 
 boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr);
 lives_proc_thread_t lives_proc_thread_auto_nullify(lives_proc_thread_t *);
+void lives_proc_thread_remove_nullify(lives_proc_thread_t, void **ptr);
 
 // returns TRUE once the proc_thread will call the target function
 // the thread can also be cancelled, paused

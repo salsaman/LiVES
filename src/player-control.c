@@ -297,6 +297,7 @@ static void post_playback(void) {
   }
 
   player_sensitize();
+  break_me("end ppb");
   g_print("DONE POSTPB\n");
 }
 
@@ -522,6 +523,23 @@ void play_file(void) {
   }
 
   if (!mainw->multitrack) {
+    /// blank the background if asked to
+    if ((mainw->faded || (prefs->show_playwin && !prefs->show_gui)
+         || (mainw->fs && (!mainw->sep_win))) && (cfile->frames > 0 ||
+						  mainw->foreign)) {
+      main_thread_execute_rvoid_pvoid(fade_background);
+      //fade_background();
+    }
+
+    if ((!mainw->sep_win || (!mainw->faded && (prefs->sepwin_type != SEPWIN_TYPE_STICKY)))
+        && (cfile->frames > 0 || mainw->preview_rendering || mainw->foreign)) {
+      /// show the frame in the main window
+      lives_widget_set_opacity(mainw->playframe, 1.);
+      lives_widget_show_all(mainw->playframe);
+    }
+
+
+    // NB make sure playframe is mapped
     if (!mainw->preview) {
       lives_frame_set_label(LIVES_FRAME(mainw->playframe), _("Play"));
     } else {
@@ -538,24 +556,10 @@ void play_file(void) {
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     }
 
-    /// blank the background if asked to
-    if ((mainw->faded || (prefs->show_playwin && !prefs->show_gui)
-         || (mainw->fs && (!mainw->sep_win))) && (cfile->frames > 0 ||
-             mainw->foreign)) {
-      main_thread_execute_rvoid_pvoid(fade_background);
-      //fade_background();
-    }
-
-    if ((!mainw->sep_win || (!mainw->faded && (prefs->sepwin_type != SEPWIN_TYPE_STICKY)))
-        && (cfile->frames > 0 || mainw->preview_rendering || mainw->foreign)) {
-      /// show the frame in the main window
-      lives_widget_set_opacity(mainw->playframe, 1.);
-      lives_widget_show_all(mainw->playframe);
-    }
-
     /// plug the plug into the playframe socket if we need to
     add_to_playframe();
   }
+
   lives_widget_context_update();
 
   arate = cfile->arate;

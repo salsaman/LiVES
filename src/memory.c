@@ -81,7 +81,8 @@ void *lives_slice_alloc_and_copy(size_t sz, void *p) {
 #endif
 
 // a version which can a calback target
-boolean lives_nullify_ptr_cb(void *dummy, void **vpp) {
+boolean lives_nullify_ptr_cb(void *dummy, void *xvpp) {
+  void **vpp = (void **)xvpp;
   lives_nullify_ptr(vpp);
   return FALSE;
 }
@@ -747,7 +748,7 @@ void *calloc_bigblock(size_t xsize) {
       bbused++;
 #endif
       pthread_mutex_unlock(&bigblock_mutex);
-      //g_print("CALLOBIG %p %d\n", bigblocks[i], i);
+      g_print("CALLOBIG %p %d\n", bigblocks[i], i);
       //break_me("callobig");
       nbads = 0;
       start = bigblocks[i];
@@ -759,6 +760,7 @@ void *calloc_bigblock(size_t xsize) {
     }
   }
   pthread_mutex_unlock(&bigblock_mutex);
+  //  dump_fn_notes();
   break_me("bblock");
   g_print("OUT OF BIGBLOCKS !!\n");
   if (++nbads > NBAD_LIM) lives_abort("Aborting due to probable internal memory errors");
@@ -769,8 +771,8 @@ void *free_bigblock(void *bstart) {
   for (int i = 0; i < NBBLOCKS; i++) {
     if ((char *)bstart >= (char *)bigblocks[i]
         && (char *)bstart - (char *)bigblocks[i] < bmemsize + EXTRA_BYTES) {
-      if (used[i] == -1) lives_abort("Bigblock freed twice, Aborting due to probable internal memory errors");
       FN_FREE_TARGET(free_bigblock, bigblocks[i]);
+      if (used[i] == -1) lives_abort("Bigblock freed twice, Aborting due to probable internal memory errors");
       used[i] = -1;
 #ifdef BBL_TEST
       pthread_mutex_lock(&bigblock_mutex);
@@ -778,7 +780,7 @@ void *free_bigblock(void *bstart) {
       bbused--;
       pthread_mutex_unlock(&bigblock_mutex);
 #endif
-      //g_print("FREEBIG %p %d\n", bigblocks[i], i);
+      g_print("FREEBIG %p %d\n", bigblocks[i], i);
       return NULL;
     }
   }

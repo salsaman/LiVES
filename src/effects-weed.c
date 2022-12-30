@@ -8232,12 +8232,14 @@ weed_layer_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     - if the channel template flags have WEED_FILTER_REINIT_ON_PALETTE_CHANGE, then we want to minimise palette changes,
     in this case because reinit may disrupt the output flow from the generator, causing unnecessary visual changes.
     thus unless forced to, we will leave the palette as is. However as with filters,
-    There are two points where we can voluntariily alter the palette:
+    There are two points where we can voluntarily alter the palette:
     when the instance has just been inited (since it would be reset anyway)
     and if we are going to reinit anyway due to some other factor (e.g size change).
 
+    TODO:
     when setting the palette we will consider the following:
-    - if there are no filters active then look at the player palette. If the player can change palettes then find the best pair.
+    - if there are no filters active then look at the player palette.
+    If the player can change palettes then find the best match
     else
     - if the gen. is fg,  check the filters to be applied, If 1st filter has reinit on pal. change then try to match its palette
     - otherwise check the longest running palette, ie. intersection of gen. palette(s), filter_n  palettes, filter_n+1 pal. list untiil
@@ -8249,8 +8251,13 @@ weed_layer_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
 
     IF the template has WEED_FILTER_REINIT_ON_ROWSTRIDES_CHANGE or WEED_FILTER_REINIT_ON_SIZE_CHANGE
     then similar rules apply for those values
-  */
 
+    TODO2: the player should kick off a proc_thread to fetch frames from the generator, the thread will init it
+    and grab 1 or 2 bigblocks if possible, then one block will be pushed to process func, and on return, the second and so 
+    on, like a ring buffer.
+
+  */
+  // tl;dr
   /// if we have a choice of palettes, try to match with the first filter, if not, with the player
   // unless it says reinit on palette change. Then as with normal filters we only change after an init / reinit
 
@@ -8470,12 +8477,13 @@ recheck:
   }
 
   if (!weed_channel_get_pixel_data(channel)) {
-    weed_leaf_delete(channel, WEED_LEAF_NATURAL_SIZE);
     if (!create_empty_pixel_data(channel, FALSE, TRUE)) {
       // create pixel data with new vals, so we get rowstrides
+      g_print("NO PIXDATA\n");
       weed_instance_unref(inst);
       return NULL;
     }
+    g_print("NEW pixdata %p %p\n", channel, weed_channel_get_pixel_data(channel));
   }
 
   if (!weed_channel_get_pixel_data(channel)) lives_abort("Unable to allocate channel pixel_data");
@@ -8523,6 +8531,7 @@ recheck:
   gui = weed_channel_get_gui(channel, TRUE);
 
 procfunc1:
+  // get the current video data, then we will push an audio packet for the following frame
   ret = run_process_func(inst, tc);
 
   if (achan) {
@@ -8595,18 +8604,6 @@ procfunc1:
   lives_chdir(cwd, FALSE);
   lives_free(cwd);
 
-#ifdef NEW_SCRAPFILE
-  // TODO: it would be better perhaps to save the original input frame(s) to the (a) scrapfile
-  // so that rendering could be done at higher quality and with more continuity,
-  // however we would need one file per 'ephemeral' input, and disk throughput becomes an even bigger issue
-  if (mainw->record && !mainw->record_paused) {
-    if (!((prefs->rec_opts & REC_AFTER_PB) && mainw->ext_playback &&
-          (mainw->vpp->capabilities & VPP_CAN_RETURN))) {
-      save_to_scrap_file(channel, clipno);
-      /// need to record scrap_file offset for the input clip
-    }
-  }
-#endif
   /* g_print("get from gen done %d %d %d %p\n", weed_channel_get_width(channel), weed_channel_get_height(channel), */
   /* 	  weed_channel_get_palette(channel), weed_channel_get_pixel_data(channel)); */
   return channel;

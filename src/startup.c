@@ -1953,7 +1953,7 @@ static boolean lives_startup2(livespointer data) {
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
   mainw->lazy_starter =
-    lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC | LIVES_THRDATTR_DETACHED,
+    lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC,
                              lazy_startup_checks, WEED_SEED_BOOLEAN, "", NULL);
 
   lives_proc_thread_nullify_on_destruction(mainw->lazy_starter, (void **)&mainw->lazy_starter);
@@ -2147,11 +2147,6 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   pthread_mutexattr_init(&mattr);
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
 
-  for (int i = 0; i < N_HOOK_POINTS; i++) {
-    mainw->global_hook_stacks[i] = (lives_hook_stack_t *)lives_calloc(1, sizeof(lives_hook_stack_t));
-    mainw->global_hook_stacks[i]->mutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
-    pthread_mutex_init(mainw->global_hook_stacks[i]->mutex, NULL);
-  }
   mainw->prefs_cache = mainw->hdrs_cache = mainw->gen_cache = mainw->meta_cache = NULL;
 
   // mainw->foreign is set if we are grabbing an external window

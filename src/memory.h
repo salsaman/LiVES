@@ -239,7 +239,8 @@ boolean init_memfuncs(int stage);
 
 #define lives_nullify_ptr(void_ptr_ptr) do {if (void_ptr_ptr) *void_ptr_ptr = NULL;} while (0);
 
-boolean lives_nullify_ptr_cb(void *dummy, void **vpp);
+// xvpp is cast from void **
+boolean lives_nullify_ptr_cb(void *dummy, void *xvpp);
 
 void *lives_free_and_return(void *p);
 

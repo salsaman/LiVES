@@ -216,13 +216,13 @@ boolean thread_wait_loop(lives_proc_thread_t lpt, boolean full_sync, boolean wak
   timeout = THREADVAR(sync_timeout);
   ltimeout = labs(timeout);
 
-  if (lpt) {
-    if (lives_proc_thread_has_states(lpt, THRD_STATE_BUSY)) exclude_busy = 0;
-    if (lives_proc_thread_has_states(lpt, THRD_STATE_BLOCKED)) exclude_blocked = 0;
-
+  if (self) {
+    if (lives_proc_thread_has_states(self, THRD_STATE_BUSY)) exclude_busy = 0;
+    if (lives_proc_thread_has_states(self, THRD_STATE_BLOCKED)) exclude_blocked = 0;
     // STATE CHANGE - > adds BUSY
-    if (lpt) lives_proc_thread_include_states(lpt, THRD_STATE_BUSY);
+    lives_proc_thread_include_states(self, THRD_STATE_BUSY);
   }
+
   hook_stacks = THREADVAR(hook_stacks);
 
   // launch a bg thread which will call all SYNC_WAIT_HOOK callbacks in turn repetedly
@@ -238,7 +238,7 @@ boolean thread_wait_loop(lives_proc_thread_t lpt, boolean full_sync, boolean wak
     poller = lives_hooks_trigger_async_sequential(lpt, hook_stacks, SYNC_WAIT_HOOK,
              (hook_funcptr_t)sync_hooks_done, (void *)control);
   if (wake_gui) {
-    if (get_gov_status() == GOV_RUNNING && mainw->clutch)
+    if (is_gov_running() && mainw->clutch)
       mainw->clutch = FALSE;
     g_main_context_wakeup(NULL);
   }
@@ -272,7 +272,7 @@ boolean thread_wait_loop(lives_proc_thread_t lpt, boolean full_sync, boolean wak
   }
   weed_leaf_delete(lpt, "_control");
   if (debug) g_print("cntrol is %d\n", *control);
-  if (lpt) lives_proc_thread_exclude_states(lpt, exclude_waiting | exclude_busy | exclude_blocked);
+  if (lpt) lives_proc_thread_exclude_states(self, exclude_waiting | exclude_busy | exclude_blocked);
   if (debug) g_print("CALLR state is %s\n", lives_proc_thread_state_desc(lives_proc_thread_get_state(lpt)));
   if (poller) {
     lives_proc_thread_request_cancel(poller, FALSE);
@@ -359,8 +359,12 @@ static lives_proc_thread_t lives_proc_thread_run(lives_thread_attr_t attr, lives
       // add to the pool
       lives_proc_thread_queue(lpt, attr);
     }
-    else lives_proc_thread_include_states(lpt, THRD_STATE_UNQUEUED);
+    else {
+      lives_proc_thread_include_states(lpt, THRD_STATE_UNQUEUED);
+      if (attr & LIVES_THRDATTR_IDLEFUNC) lives_proc_thread_include_states(lpt, THRD_STATE_IDLING | THRD_OPT_IDLEFUNC);
+    }
   }
+  
   return lpt;
 }
 
@@ -607,7 +611,7 @@ lives_proc_thread_t _lives_proc_thread_create_with_timeout(ticks_t timeout, live
 
 boolean is_fg_thread(void) {
   if (!mainw || !capable || !capable->gui_thread) return TRUE;
-  return !THREADVAR(idx);
+  return pthread_equal(pthread_self(), capable->gui_thread);
 }
 
 
@@ -825,7 +829,7 @@ static lives_proc_thread_t lpt_wait_with_repl(lives_proc_thread_t lpt) {
     // get retval
     if (lives_proc_thread_is_done(lpt)) break;
 
-    if (get_gov_status() == GOV_RUNNING) {
+    if (is_gov_running()) {
       mainw->clutch = FALSE;
       lives_nanosleep_until_nonzero(mainw->clutch);
     } else lives_nanosleep(1000);
@@ -867,6 +871,8 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
   uint64_t hook_hints = 0;
   boolean is_fg_service = FALSE;
   boolean retval = TRUE;
+  boolean is_fg = is_fg_thread();
+
   // create a lives_proc_thread, which will either be run directly (fg thread)
   // passed to the fg thread
   // or queued for sequential execution (since we need to avoid nesting calls)
@@ -875,23 +881,22 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
                                           func, fname, return_type, args_fmt, xargs);
   } else lpt = _lives_proc_thread_create_nullvargs(LIVES_THRDATTR_FG_THREAD | LIVES_THRDATTR_START_UNQUEUED,
                  func, fname, return_type);
-
+  
   // this is necessary, because if caller thread is cancelled it MUST cancel the hook callback
   // or it will block waiting
   lives_proc_thread_set_cancellable(lpt);
   if (retval) weed_set_voidptr_value(lpt, "retloc", retloc);
-
+  
   if (THREADVAR(fg_service)) {
     is_fg_service = TRUE;
   } else THREADVAR(fg_service) = TRUE;
 
-  if (is_fg_thread()) {
+  if (is_fg) {
     // run direct
     retval = lives_proc_thread_execute(lpt, retloc);
     goto mte_done2;
   } else {
-    uint64_t attrs = (uint64_t)weed_get_int64_value(lpt, LIVES_LEAF_THREAD_ATTRS, NULL);
-
+    uint64_t attrs;
     if (THREADVAR(perm_hook_hints))
       hook_hints = THREADVAR(perm_hook_hints);
     else {
@@ -899,18 +904,20 @@ static boolean _main_thread_execute_vargs(lives_funcptr_t func, const char *fnam
     }
     THREADVAR(hook_hints) = 0;
 
-    if ((hook_hints & HOOK_CB_IMMEDIATE) == HOOK_CB_IMMEDIATE){
-      fg_service_call(lpt, retloc);
-      goto mte_done;
-    }
-
+    attrs = (uint64_t)weed_get_int64_value(lpt, LIVES_LEAF_THREAD_ATTRS, NULL);
+      
     if (attrs & LIVES_THRDATTR_NOTE_TIMINGS)
       weed_set_int64_value(lpt, LIVES_LEAF_QUEUED_TICKS, lives_get_current_ticks());
+
+    if (hook_hints & HOOK_OPT_FG_LIGHT) {
+      lives_proc_thread_queue(lpt, attrs | LIVES_THRDATTR_FG_LIGHT);
+      goto mte_done;
+    }
 
     if (!is_fg_service || (hook_hints & HOOK_CB_BLOCK) || (hook_hints & HOOK_CB_PRIORITY)) {
       // first level service call
       if (!(hook_hints & HOOK_CB_PRIORITY)
-          && get_gov_status() != GOV_RUNNING && FG_THREADVAR(fg_service)) {
+          && !is_gov_running() && FG_THREADVAR(fg_service)) {
         // call is not priority, governor loop not running and main thread is already performing
         // a service call - in this case we will add the request to main thread's deferral stack
         if (hook_hints & HOOK_CB_BLOCK) lives_proc_thread_ref(lpt);
@@ -1715,27 +1722,33 @@ boolean lives_proc_thread_execute(lives_proc_thread_t lpt, void *rloc) {
 void lives_proc_thread_queue(lives_proc_thread_t lpt, lives_thread_attr_t attr) {
   /// run any function as a lives_thread
   thrd_work_t *mywork;
+  uint64_t state = lives_proc_thread_get_state(lpt);
 
   /// tell the thread to clean up after itself [but it won't delete lpt]
   attr |= LIVES_THRDATTR_AUTODELETE;
   attr |= LIVES_THRDATTR_IS_PROC_THREAD;
 
   // STATE CHANGE -> unqueued / idling -> queued
-  lives_proc_thread_exclude_states(lpt, THRD_STATE_UNQUEUED | THRD_STATE_IDLING);
-  lives_proc_thread_include_states(lpt, THRD_STATE_QUEUED);
+  state &= ~(THRD_STATE_UNQUEUED | THRD_STATE_IDLING);
+  state |= THRD_STATE_QUEUED;
 
   if (attr & LIVES_THRDATTR_DETACHED) {
-    lives_proc_thread_exclude_states(lpt, THRD_OPT_NOTIFY);
-    lives_proc_thread_include_states(lpt, THRD_OPT_DONTCARE);
+    state &= ~THRD_OPT_NOTIFY;
+    state |= THRD_OPT_DONTCARE;
   }
 
+  if (attr & LIVES_THRDATTR_IDLEFUNC) {
+    state |= (THRD_STATE_IDLING | THRD_OPT_IDLEFUNC);
+  }
+
+  lives_proc_thread_set_state(lpt, state);
+  
   if (attr & (LIVES_THRDATTR_FG_THREAD)) {
-    if (attr & LIVES_THRDATTR_LIGHT) {
+    if (attr & LIVES_THRDATTR_FG_LIGHT) {
       fg_service_call(lpt, NULL);
       return;
     }
-    if (attr & LIVES_THRDATTR_HEAVY) {
-      
+    if (attr & LIVES_THRDATTR_FG_HEAVY) {
       if (get_gov_status() == GOV_NOT_RUNNING) {
 	lives_sigdata_t *sigdata = lives_sigdata_new(lpt, FALSE);
 	lives_idle_priority(governor_loop, sigdata);

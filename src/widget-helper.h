@@ -70,6 +70,7 @@ boolean fg_service_fulfill_cb(void *dummy);
 boolean has_lpttorun(void);
 
 boolean will_gov_run(void);
+boolean is_gov_running(void);
 
 #define GOV_NOT_RUNNING 0
 #define GOV_RUNNING 1

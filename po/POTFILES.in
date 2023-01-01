@@ -3,7 +3,7 @@
 src/widget-helper.h
 src/main.c
 src/startup.c
-src/settup.c
+src/setup.c
 src/interface.c
 src/callbacks.c
 src/support.c
@@ -12,7 +12,7 @@ src/gui.c
 src/filesystem.c
 src/ce_thumbs.c
 src/utils.c
-src/ustringfuncs.c
+src/stringfuncs.c
 src/dialogs.c
 src/effects.c
 src/effects-weed.c
@@ -23,12 +23,15 @@ src/paramwindow.c
 src/plugins.c
 src/rfx-builder.c
 src/preferences.c
+src/lsd-tab.c
 src/osc.c
 src/htmsocket.c
 src/resample.c
 src/rte_window.c
 src/lives-yuv4mpeg.c
 src/multitrack.c
+src/multitrack-gui.c
+src/transcode.c
 src/jack.c
 src/pulse.c
 src/colourspace.c
@@ -52,5 +55,11 @@ src/threading.c
 src/intents.c
 src/maths.c
 src/player.c
-src/player=control.c
+src/layers.c
+src/functions.c
+src/ldvinterface.c
+src/ldvgrab.c
+src/ldvcallbacks.c
+src/player.c
+src/player-control.c
 src/diagnostics.c

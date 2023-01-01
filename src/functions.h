@@ -146,6 +146,7 @@ extern const lookup_tab crossrefs[];
 #define FUNCSIG_STRING_INT 			      			0X00000041
 #define FUNCSIG_STRING_BOOL 			      			0X00000043
 #define FUNCSIG_VOIDP_VOIDP 				       		0X000000DD
+#define FUNCSIG_VOIDP_BOOL 				       		0X000000D3
 #define FUNCSIG_VOIDP_STRING 				       		0X000000D4
 #define FUNCSIG_VOIDP_DOUBLE 				       		0X000000D2
 #define FUNCSIG_VOIDP_INT64 				       		0X000000D5
@@ -309,9 +310,6 @@ typedef uint64_t funcsig_t;
 #define HOOK_OPT_FG_LIGHT		(1ull << 9)
 #define HOOK_OPT_FG_HEAVY		(1ull << 10)
 
-// this combination may be use for hggh priority GUI updates which need to be run before the thread can continue
-#define HOOK_CB_IMMEDIATE (HOOK_CB_FG_THREAD | HOOK_OPT_FG_LIGHT | HOOK_CB_PRIORITY | HOOK_CB_BLOCK)
-
 /// the following bits define how hooks should be added to the stack
 // in case of duplicate functions / data
 // after adding, ensure only a single copy of FUNC in the stack, with whatever data
@@ -375,7 +373,7 @@ typedef uint64_t funcsig_t;
 #define HOOK_INVALIDATE_DATA			(1ull << 16)
 
 // should only be used in this combination
-#define HOOK_REMOVE_DATA       	((1ull << 18) | HOOK_CB_PRIORITY | HOOK_CB_BLOCK)
+#define HOOK_REMOVE_DATA       	((1ull << 18) | HOOK_CB_BLOCK)
 
 // this is a special modifier for INVALIDATE_DATA for the GUI,
 // if set then data will also match child widgets
@@ -503,8 +501,7 @@ typedef struct {
 #define DTYPE_CLOSURE 		(1ull << 1) // unset == lpt
 #define DTYPE_NOADD 		(1ull << 2) // remove others only, no add
 //
-#define DTYPE_RELAXED 		(1ull << 3) // only mutex_trylock
-#define DTYPE_HAVE_LOCK 	(1ull << 4) // mutex already locked
+#define DTYPE_HAVE_LOCK 	(1ull << 8) // mutex already locked
 
 // all dtypes
 lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hooks, int type, uint64_t flags, livespointer data, uint64_t dtype);

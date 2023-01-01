@@ -280,7 +280,7 @@ lives_exe_SOURCES = \
 	rte_window.c rte_window.h\
 	user-interface.c user-interface.h \
 	frameloader.c frameloader.h \
-	setup.c setup,h \
+	setup.c setup.h \
 	stringfuncs.c stringfuncs.h \
 	ce_thumbs.c ce_thumbs.h \
 	pangotext.c pangotext.h \

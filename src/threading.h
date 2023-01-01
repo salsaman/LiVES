@@ -326,13 +326,13 @@ uint64_t get_worker_status(uint64_t tid);
 // thread wieghts - these are used in combination with FG_THREAD
 // light - indicates a trivial request, such as updating a spinbutton which can be carried out quickly
 // this will block and get executed as soon as possible
-#define LIVES_THRDATTR_LIGHT	   		(1ull << 10)
+#define LIVES_THRDATTR_FG_LIGHT	   		(1ull << 10)
 
 // this is for callbacks for the main thread to monitor, for example preview, player, dialgo_run
 // these are activities that are longer running and may require a lot of back and forth between a background
 // thread and the main thread. When the mian thread is running and monitoring such tasks, the GUI loop will
 // only be run when specifically requested (by lives_widget_context_update for example)
-#define LIVES_THRDATTR_HEAVY	   		(1ull << 11)
+#define LIVES_THRDATTR_FG_HEAVY	   		(1ull << 11)
 
 // (NB. setting both heavy and light will result in undefined behaviour)
 
@@ -545,6 +545,8 @@ void *lives_proc_thread_join_voidptr(lives_proc_thread_t);
 weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t) ;
 
 char *lives_proc_thread_state_desc(uint64_t state);
+
+#define lpt_desc_state(lpt) lives_proc_thread_state_desc(lives_proc_thread_get_state(lpt))
 
 char *get_threadstats(void);
 

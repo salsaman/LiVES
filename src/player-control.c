@@ -1231,6 +1231,23 @@ void play_file(void) {
     mainw->cancelled = cancelled;
   }
 
+  if (IS_VALID_CLIP(mainw->close_this_clip)) {
+    // need to keep blend_file around until we check if it is a generator to close
+    int blend_file = mainw->blend_file;
+    
+    current_file = mainw->current_file;
+    mainw->can_switch_clips = TRUE;
+    mainw->current_file = mainw->close_this_clip;
+    if (mainw->blend_file == mainw->current_file) blend_file = -1;
+    mainw->new_clip = close_current_file(current_file);
+    if (!IS_VALID_CLIP(current_file)) mainw->current_file = mainw->new_clip;
+    mainw->can_switch_clips = FALSE;
+    if (IS_VALID_CLIP(blend_file)) mainw->blend_file = blend_file;
+    else mainw->blend_file = -1;
+  }
+
+  mainw->close_this_clip = mainw->new_clip = -1;
+
   if (CURRENT_CLIP_IS_NORMAL) {
     char *clipdir = get_clip_dir(mainw->current_file);
     stfile = lives_build_filename(clipdir, LIVES_STATUS_FILE_NAME, NULL);
@@ -1341,6 +1358,7 @@ void play_file(void) {
           mainw->preview_frame = 0;
         }
       }
+
       if (!mainw->multitrack) {
         mainw->playing_file = -2;
         if (mainw->fs) mainw->ignore_screen_size = TRUE;
@@ -1418,12 +1436,14 @@ void play_file(void) {
 
   if (CURRENT_CLIP_IS_VALID) cfile->play_paused = FALSE;
 
-  if (mainw->blend_file != -1 && mainw->blend_file != mainw->current_file
+  if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->current_file
       && mainw->files[mainw->blend_file] &&
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
-    int xcurrent_file = mainw->current_file;
+    current_file = mainw->current_file;
+    mainw->can_switch_clips = TRUE;
     weed_bg_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
-    mainw->current_file = xcurrent_file;
+    mainw->can_switch_clips = FALSE;
+    if (IS_VALID_CLIP(current_file)) mainw->current_file = current_file;
   }
 
   mainw->filter_map = mainw->afilter_map = mainw->audio_event = NULL;
@@ -1542,7 +1562,9 @@ void play_file(void) {
   if (CURRENT_CLIP_IS_VALID) {
     if (!mainw->multitrack) {
       lives_ce_update_timeline(0, cfile->real_pointer_time);
-      mainw->ptrtime = cfile->real_pointer_time;
+      if (CURRENT_CLIP_IS_VALID) {
+	mainw->ptrtime = cfile->real_pointer_time;
+      }
       lives_widget_queue_draw(mainw->eventbox2);
     }
   }

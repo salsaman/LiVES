@@ -2710,12 +2710,16 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // width, height, rowstrides, current palette, pixel_data,
     // YUV_*, etc.
     // be careful, as chanel and layer share the same pixel_data
-    // only one or othere may be freed, the other needs to be freed or nullified
+    // only one or other may be freed, the other needs to be freed or nullified
+    // however, for inplace operation, provided there is resize, we can do:
+    // copy laer -> channel --> run effect --> nullify channel
+    // as opposed to: copy layer -> in_channel -> nullify layer --> run fx
+    // --> free in_chnnel -> copy out_channel -> layer ---> nullify out_chan 
     if (!weed_layer_copy((weed_layer_t *)channel, layer)) {
       retval = FILTER_ERROR_COPYING_FAILED;
       continue;
     }
-    weed_layer_nullify_pixel_data(layer);
+    if (!inplace) weed_layer_nullify_pixel_data(layer);
     if (!resized) {
       if (!mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
         mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
@@ -2792,6 +2796,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
 
     if (!inplace) {
+      // if not inplace then we need to nullify the layer that sharedp pixel_data with the in_channel
+      layer = layers[in_tracks[i]];
+      weed_layer_nullify_pixel_data(layer);
+      
       /// try to match palettes with first enabled in channel
       /// According to the spec, if the plugin permits we can match out channel n with in channel n
       /// but we'll skip that for now
@@ -2947,8 +2955,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     weed_set_boolean_value(layer, "letterboxed", letterbox);
 
     if (weed_get_boolean_value(channel, WEED_LEAF_HOST_INPLACE, NULL) == WEED_TRUE) {
-      /* weed_layer_copy(layer, channel); */
-      /* weed_layer_nullify_pixel_data(channel); */
+      // for inplace, the pixel_data is still in the layer, so we just need to nullify this copy
+      weed_layer_nullify_pixel_data(channel);
       continue;
     }
 
@@ -7172,7 +7180,6 @@ boolean weed_init_effect(int hotkey) {
         }}}
     // *INDENT-ON*
     if (inc_count == 2) {
-
       pthread_mutex_lock(&mainw->trcount_mutex);
       mainw->num_tr_applied++; // increase trans count
       pthread_mutex_unlock(&mainw->trcount_mutex);
@@ -8879,6 +8886,8 @@ void weed_generator_end(weed_plant_t *inst) {
       mainw->files[mainw->blend_file]->ext_src == inst) is_bg = TRUE;
   else mainw->new_blend_file = mainw->blend_file;
 
+  if ((!is_bg && fg_generator_key == 1) || (is_bg && bg_generator_key == -1)) return;
+
   if (LIVES_IS_PLAYING && !is_bg && mainw->whentostop == STOP_ON_VID_END) {
     // we will close the file after playback stops
     // and also unref the instance
@@ -8923,12 +8932,13 @@ void weed_generator_end(weed_plant_t *inst) {
     filter_mutex_unlock(fg_generator_key);
     fg_gen_to_start = fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
     if (mainw->blend_file == mainw->current_file) {
-      track_decoder_free(1, mainw->blend_file);
-      mainw->blend_file = -1;
+      if (mainw->noswitch) mainw->new_blend_file = mainw->current_file;
+      else {
+	track_decoder_free(1, mainw->blend_file);
+	mainw->blend_file = -1;
+      }
     }
   }
-
-  //mainw->ignore_clipswitch = TRUE;
 
   if (inst) wge_inner(inst); // unref inst + compound parts
 
@@ -8954,62 +8964,59 @@ void weed_generator_end(weed_plant_t *inst) {
     return;
   }
 
-  /// here we must be very careful, because we are about to close the clip which is either playing as fg or bg
-  /// in the case of background, we just switch to it very briefly to close it, then back to the fg clip
-  /// in case the generator was ended by a change of bg clip, we restore the new bg clip
-  ///
-  /// in the case of the fg clip we close it and try to switch to another valid clip
-  /// we switch back to the old (invalid) clip after this, while setting mainw->new_clip to the new one
-  /// the player will detect the invalid clip and jump to the switch point to handle the changeover cleanly
   if (is_bg) {
     mainw->pre_src_file = mainw->current_file;
-    mainw->current_file = mainw->blend_file;
-    if (mainw->blend_file != mainw->new_blend_file) {
-      track_decoder_free(1, mainw->blend_file);
-      mainw->blend_file = mainw->new_blend_file;
+    if (mainw->noswitch) {
+      mainw->new_clip = mainw->blend_file;
     }
-    mainw->new_blend_file = -1;
+    else {
+      mainw->current_file = mainw->blend_file;
+      if (mainw->blend_file != mainw->new_blend_file) {
+	track_decoder_free(1, mainw->blend_file);
+	mainw->blend_file = mainw->new_blend_file;
+	mainw->new_blend_file = -1;
+      }
+    }
+  } else {
     // close generator file and switch to original file if possible
     if (!cfile || cfile->clip_type != CLIP_TYPE_GENERATOR) {
       break_me("close non-gen file");
       LIVES_WARN("Close non-generator file 2");
-      mainw->current_file = mainw->pre_src_file;
-    } else {
-      cfile->ext_src = NULL;
-      cfile->ext_src_type = LIVES_EXT_SRC_NONE;
-      close_current_file(mainw->pre_src_file);
-    }
-    if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_update_current_clip();
-  } else {
-    // close generator file and switch to original file if possible
-    if (!cfile || cfile->clip_type != CLIP_TYPE_GENERATOR) {
-      LIVES_WARN("Close non-generator file 1");
-    } else {
-      cfile->ext_src = NULL;
-      cfile->ext_src_type = LIVES_EXT_SRC_NONE;
+      if (mainw->noswitch) {
+	mainw->new_clip = mainw->pre_src_file;
+	mainw->close_this_clip = mainw->current_file;
+      }
+      else {
+	cfile->ext_src = NULL;
+	cfile->ext_src_type = LIVES_EXT_SRC_NONE;
+	close_current_file(mainw->pre_src_file);
+      }
+      if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_update_current_clip();
       if (cfile->achans == 0) {
-        current_file = mainw->current_file;
-        close_current_file(mainw->pre_src_file);
-        if (LIVES_IS_PLAYING) {
+	if (mainw->noswitch) {
           mainw->new_clip = mainw->pre_src_file;
-          mainw->current_file = current_file;
-        }
+	  mainw->close_this_clip = mainw->current_file;
+	}
+	else {
+	  close_current_file(mainw->pre_src_file);
+	  if (mainw->current_file == current_file) mainw->clip_switched = clip_switched;
+	}
       }
     }
-    if (mainw->current_file == current_file) mainw->clip_switched = clip_switched;
   }
-
-  if (is_bg) {
-    mainw->current_file = current_file;
-    mainw->pre_src_file = pre_src_file;
-    mainw->whentostop = wts;
-  }
-
-  if (mainw->current_file == -1) mainw->cancelled = CANCEL_GENERATOR_END;
-  else {
-    if (mainw->current_file != current_file) {
-      mainw->new_clip = mainw->current_file;
+  if (!mainw->noswitch) {
+    if (is_bg) {
       mainw->current_file = current_file;
+      mainw->pre_src_file = pre_src_file;
+      mainw->whentostop = wts;
+    }
+
+    if (mainw->current_file == -1) mainw->cancelled = CANCEL_GENERATOR_END;
+    else {
+      if (mainw->current_file != current_file) {
+	mainw->new_clip = mainw->current_file;
+	mainw->current_file = current_file;
+      }
     }
   }
 }

@@ -3034,7 +3034,7 @@ void create_LiVES(void) {
                             LIVES_GUI_CALLBACK(on_boolean_toggled), &mainw->ccpd_with_sound); // TODO - make pref
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->dsize), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_double_size_activate), NULL);
-  mainw->sepwin_cb_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->sepwin), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  mainw->sepwin_cb_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->sepwin), LIVES_WIDGET_ACTIVATE_SIGNAL,
                           LIVES_GUI_CALLBACK(on_sepwin_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->fade), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_fade_activate), NULL);

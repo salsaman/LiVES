@@ -414,6 +414,10 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
       void *p0; int64_t p1;
       DO_CALL(2, voidptr, int64);
     } break;
+    case FUNCSIG_VOIDP_BOOL: {
+      void *p0; boolean p1;
+      DO_CALL(2, voidptr, boolean);
+    } break;
     case FUNCSIG_VOIDP_VOIDP: {
       void *p0, *p1;
       DO_CALL(2, voidptr, voidptr);
@@ -843,15 +847,16 @@ lives_closure_t *lives_hook_closure_new_for_lpt(lives_proc_thread_t lpt,
 LIVES_GLOBAL_INLINE void lives_closure_free(lives_closure_t *closure) {
   if (closure) {
     lives_proc_thread_t lpt = closure->proc_thread;
+    lives_proc_thread_ref(lpt);
     if (lpt) {
       weed_leaf_delete(lpt, LIVES_LEAF_CLOSURE);
+      lives_proc_thread_unref(lpt);
       lives_proc_thread_unref(lpt);
     }
     free_funcdef((lives_funcdef_t *)closure->fdef);
     lives_free(closure);
   }
 }
-
 
 
 ////// hook functions /////
@@ -939,7 +944,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
   uint64_t xflags = flags & (HOOK_UNIQUE_REPLACE | HOOK_INVALIDATE_DATA);
   uint64_t attrs;
   pthread_mutex_t *hmutex;
-  boolean is_close = FALSE, is_append = TRUE, is_remove = FALSE, is_relaxed = FALSE;
+  boolean is_close = FALSE, is_append = TRUE, is_remove = FALSE;
   boolean have_lock = FALSE;
 
   if (!hstacks) {
@@ -958,12 +963,11 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
   if (dtype & DTYPE_NOADD) is_remove = TRUE;
 
   if (dtype & DTYPE_HAVE_LOCK) have_lock = TRUE;
-  if (dtype & DTYPE_RELAXED) is_relaxed = TRUE;
 
   // append, then everything else will check
   if (is_append) xflags &= ~HOOK_INVALIDATE_DATA;
 
-  // is_close, is_relaxed are dealt with early on
+  // is_close,is for here
   // the important flags for cehcking are ia_append, is_remove
 
   if (is_close) {
@@ -985,7 +989,6 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
 
   if (!have_lock) {
     if (pthread_mutex_trylock(hmutex)) {
-      if (is_relaxed) return lpt;
       if (is_fg_thread()) {
         // it is possible for the main thread to be adding callbacks
         // at the same time as the target is triggering hooks
@@ -1073,19 +1076,19 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
     return ret_closure->proc_thread;
   }
 
+  closure = NULL;
   if (is_append) {
     if (is_close) closure = (lives_closure_t *)data;
-  } else closure = xclosure;
-
+    else closure = xclosure;
+  }
   if (!closure) closure = lives_hook_closure_new_for_lpt(lpt, flags, type);
-  
+
   lives_proc_thread_include_states(closure->proc_thread, THRD_STATE_STACKED);
 
   if (is_append) hstacks[type]->stack = lives_list_append(hstacks[type]->stack, closure);
   else hstacks[type]->stack = lives_list_prepend(hstacks[type]->stack, closure);
 
-  if (!have_lock)
-    pthread_mutex_unlock(hmutex);
+  if (!have_lock) pthread_mutex_unlock(hmutex);
 
   attrs = (uint64_t)weed_get_int64_value(lpt, LIVES_LEAF_THREAD_ATTRS, NULL);
   if (attrs & LIVES_THRDATTR_NOTE_TIMINGS)
@@ -1124,9 +1127,8 @@ lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **hooks, int type, ui
 }
 
 
-static void update_linked_stacks(lives_closure_t *cl, uint64_t flags, boolean forced) {
+static lives_proc_thread_t update_linked_stacks(lives_closure_t *cl, uint64_t flags) {
   uint64_t dflags = DTYPE_NOADD | DTYPE_PREPEND | DTYPE_CLOSURE;
-  if (!forced) dflags |= DTYPE_RELAXED;
   pthread_mutex_lock(&mainw->all_hstacks_mutex);
   if (!is_fg_thread()) {
     GET_PROC_THREAD_SELF(self);
@@ -1144,20 +1146,19 @@ static void update_linked_stacks(lives_closure_t *cl, uint64_t flags, boolean fo
     }
   }
   pthread_mutex_unlock(&mainw->all_hstacks_mutex);
+  return NULL;
 }
 
 
 boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
-  static pthread_mutex_t special_mutex = PTHREAD_MUTEX_INITIALIZER;
-  static pthread_rwlock_t stacks_rwlock = PTHREAD_RWLOCK_INITIALIZER;
-  lives_proc_thread_t lpt;
+  static pthread_mutex_t recheck_mutex = PTHREAD_MUTEX_INITIALIZER;
+  lives_proc_thread_t lpt, wait_parent;
   LiVESList *list, *listnext;
   lives_closure_t *closure;
   pthread_mutex_t *hmutex;
   boolean bret;
   boolean retval = TRUE;
-  boolean have_special_mutex = FALSE;
-  boolean have_rdlock = FALSE;
+  boolean have_recheck_mutex = FALSE;
 
   if (!hstacks) {
     // test should be HOOK_TYPE_SELF
@@ -1205,55 +1206,27 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       if (!lpt) continue;
 
       if (type == LIVES_GUI_HOOK) {
-	uint64_t xflags = closure->flags & (HOOK_UNIQUE_REPLACE | HOOK_INVALIDATE_DATA);
+	uint64_t xflags = closure->flags & (HOOK_INVALIDATE_DATA | HOOK_OPT_MATCH_CHILD);
 	if (xflags) {
-	  if (xflags & HOOK_INVALIDATE_DATA) {
-	    if (!have_special_mutex) {
-	      if (pthread_mutex_trylock(&special_mutex)) {
-		// this means some other thread also has invalidate_data, we must let it run then recheck
-		lives_proc_thread_unref(lpt);
-		pthread_mutex_unlock(hmutex);
-		lives_nanosleep_until_zero(pthread_mutex_trylock(&special_mutex));
-		have_special_mutex = TRUE;
-		break;
-	      }
+	  if (!have_recheck_mutex) {
+	    if (pthread_mutex_trylock(&recheck_mutex)) {
+	      // this means some other thread also has invalidate_data, we must let it run then recheck
+	      lives_proc_thread_unref(lpt);
+	      pthread_mutex_unlock(hmutex);
+	      lives_nanosleep_until_zero(pthread_mutex_trylock(&recheck_mutex));
+	      have_recheck_mutex = TRUE;
+	      break;
 	    }
-	    pthread_rwlock_wrlock(&stacks_rwlock);
-	    update_linked_stacks(closure, xflags, TRUE);
-	    pthread_rwlock_unlock(&stacks_rwlock);
-	    pthread_rwlock_rdlock(&stacks_rwlock);
-	    have_rdlock = TRUE;
-	  } else {
-	    if (!have_rdlock) {
-	      if (pthread_rwlock_tryrdlock(&stacks_rwlock)) {
-		lives_proc_thread_unref(lpt);
-		pthread_mutex_unlock(hmutex);
-		lives_nanosleep_until_zero(pthread_rwlock_tryrdlock(&stacks_rwlock));
-		have_rdlock = TRUE;
-		break;
-	      }
-	    }
-	    update_linked_stacks(closure, xflags, FALSE);
 	  }
-	  closure->flags &= ~HOOK_UNIQUE_REPLACE;
-	}
+	  wait_parent = update_linked_stacks(closure, xflags);
+	  pthread_mutex_unlock(&recheck_mutex);
 
-	if (have_special_mutex) {
-	  pthread_mutex_unlock(&special_mutex);
-	  have_special_mutex = FALSE;
-	}
-
-	if (!have_rdlock) {
-	  if (pthread_rwlock_tryrdlock(&stacks_rwlock)) {
-	    lives_proc_thread_unref(lpt);
-	    pthread_mutex_unlock(hmutex);
-	    lives_nanosleep_until_zero(pthread_rwlock_tryrdlock(&stacks_rwlock));
-	    have_rdlock = TRUE;
+	  if (wait_parent) {
+	    lives_proc_thread_wait_done(wait_parent, 0.);
 	    break;
 	  }
 	}
       }
-
       closure->flags |= (HOOK_STATUS_RUNNING | HOOK_STATUS_ACTIONED);
 
       pthread_mutex_unlock(hmutex);
@@ -1292,12 +1265,12 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       if (closure->flags & (HOOK_OPT_ONESHOT | HOOK_STATUS_REMOVE)) {
 	pthread_mutex_lock(hmutex);
 	hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, list, FALSE);
-	pthread_mutex_unlock(hmutex);
 	// for oneshot triggers, we remove a ref, so caller should ref anything important before
 	// triggering hooks
 	//g_print("free one-shot hook %s\n", lives_proc_thread_show_func_call(lpt));
-	lives_proc_thread_unref(lpt);
 	lives_closure_free(closure);
+	lives_proc_thread_unref(lpt);
+	pthread_mutex_unlock(hmutex);
       }
 
       if (type == SYNC_WAIT_HOOK && !bret) {
@@ -1309,10 +1282,6 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
 
       // actually should be HOOK_DTL_SINGLE
       if (type == LIVES_GUI_HOOK) {
-	if (have_rdlock) {
-	  pthread_rwlock_unlock(&stacks_rwlock);
-	  have_rdlock = FALSE;
-	}
 	if (is_fg_thread()) {
 	  //g_print("done single\n");
 	  lives_proc_thread_unref(lpt);
@@ -1325,12 +1294,8 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
 
 finished:
 
-  if (have_special_mutex) {
-    pthread_mutex_unlock(&special_mutex);
-  }
-
-  if (have_rdlock) {
-    pthread_rwlock_unlock(&stacks_rwlock);
+  if (have_recheck_mutex) {
+    pthread_mutex_unlock(&recheck_mutex);
   }
 
   pthread_mutex_lock(hmutex);

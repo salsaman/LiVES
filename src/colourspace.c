@@ -14203,6 +14203,9 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
   if (weed_get_boolean_value(layer, WEED_LEAF_HOST_ORIG_PDATA, NULL) == WEED_TRUE)
     return;
 
+  if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, 0)) break_me("inpl_free");
+
+
   weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
 
   /* if (weed_plant_has_leaf(layer, LIVES_LEAF_MD5SUM)) { */

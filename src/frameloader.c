@@ -2662,8 +2662,6 @@ boolean lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_img_type_t im
 }
 
 
-
-
 /**
    @brief save frame to pixbuf in a thread.
    The renderer uses this now so that it can be saving the current output frame
@@ -2677,247 +2675,260 @@ void *lives_pixbuf_save_threaded(void *args) {
 }
 
 
-void close_current_file(int file_to_switch_to) {
+static int find_next_clip(int index, int old_file) {
+  // when a clip becomes invalid, find another clip to switch to
+  if (IS_VALID_CLIP(index)) {
+    if (mainw->multitrack) {
+      if (old_file != mainw->multitrack->render_file) {
+	mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
+	mt_clip_select(mainw->multitrack, TRUE);
+      }
+      return mainw->current_file;
+    }
+    if (!mainw->noswitch) {
+      switch_clip(1, index, TRUE);
+      if (mainw->blend_file == old_file)
+	switch_clip(SCREEN_AREA_BACKGROUND, mainw->current_file, FALSE);
+      d_print("");
+    }
+    return index;
+  }
+
+  if (mainw->clips_available > 0) {
+    for (int i = mainw->current_file; --i;) {
+      if (mainw->files[i]) {
+	if (!mainw->noswitch) {
+	  switch_clip(1, i, TRUE);
+	  if (mainw->blend_file == old_file)
+	    switch_clip(SCREEN_AREA_BACKGROUND, mainw->current_file, FALSE);
+	  d_print("");
+	}
+	return i;
+      }
+    }
+
+    for (int i = 1; i < MAX_FILES; i++) {
+      if (mainw->files[i]) {
+	if (!mainw->noswitch) {
+	  switch_clip(1, i, TRUE);
+	  if (mainw->blend_file == old_file)
+	    switch_clip(SCREEN_AREA_BACKGROUND, mainw->current_file, FALSE);
+	  d_print("");
+	}
+	return i;
+      }
+    }
+  }
+  return -1;
+}
+
+
+// return the new current_file - if the player is active then we do not switch, but let the player do that
+int close_current_file(int file_to_switch_to) {
   // close the current file, and free the file struct and all sub storage
   LiVESList *list_index;
   char *com;
   boolean need_new_blend_file = FALSE;
+  boolean noswitch = mainw->noswitch;
   int index = -1;
   int old_file = mainw->current_file;
+  int i;
 
-  //update the bar text
-  if (CURRENT_CLIP_IS_VALID) {
-    int i;
-    if (cfile->clip_type == CLIP_TYPE_TEMP) {
-      close_temp_handle(file_to_switch_to);
-      return;
-    }
-    if (cfile->clip_type != CLIP_TYPE_GENERATOR && mainw->current_file != mainw->scrap_file &&
-        mainw->current_file != mainw->ascrap_file && mainw->current_file != 0 &&
-        (!mainw->multitrack || mainw->current_file != mainw->multitrack->render_file)) {
-      d_print(_("Closed clip %s\n"), cfile->file_name);
-      lives_notify(LIVES_OSC_NOTIFY_CLIP_CLOSED, "");
-    }
+  if (mainw->close_this_clip == mainw->current_file) mainw->close_this_clip = -1;
+  
+  if (!CURRENT_CLIP_IS_VALID) return -1;
 
-    cfile->hsize = mainw->def_width;
-    cfile->vsize = mainw->def_height;
+  if (cfile->clip_type == CLIP_TYPE_TEMP) {
+    close_temp_handle(file_to_switch_to);
+    return file_to_switch_to;
+  }
+ 
+  if (mainw->noswitch && !mainw->can_switch_clips) {
+    mainw->new_clip = file_to_switch_to;
+    mainw->close_this_clip = mainw->current_file;
+    return mainw->new_clip;
+  }
 
-    if (cfile->laudio_drawable) {
-      if (mainw->laudio_drawable == cfile->laudio_drawable
-          || mainw->drawsrc == mainw->current_file) mainw->laudio_drawable = NULL;
-      if (cairo_surface_get_reference_count(cfile->laudio_drawable))
-        lives_painter_surface_destroy(cfile->laudio_drawable);
-      cfile->laudio_drawable = NULL;
-    }
-    if (cfile->raudio_drawable) {
-      if (mainw->raudio_drawable == cfile->raudio_drawable
-          || mainw->drawsrc == mainw->current_file) mainw->raudio_drawable = NULL;
-      if (cairo_surface_get_reference_count(cfile->raudio_drawable))
-        lives_painter_surface_destroy(cfile->raudio_drawable);
-      cfile->raudio_drawable = NULL;
-    }
-    if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
+  if (cfile->clip_type != CLIP_TYPE_GENERATOR && mainw->current_file != mainw->scrap_file &&
+      mainw->current_file != mainw->ascrap_file && mainw->current_file != 0 &&
+      (!mainw->multitrack || mainw->current_file != mainw->multitrack->render_file)) {
+    d_print(_("Closed clip %s\n"), cfile->file_name);
+    lives_notify(LIVES_OSC_NOTIFY_CLIP_CLOSED, "");
+  }
 
-    if (mainw->st_fcache) {
-      if (mainw->en_fcache == mainw->st_fcache) mainw->en_fcache = NULL;
-      if (mainw->pr_fcache == mainw->st_fcache) mainw->pr_fcache = NULL;
-      weed_layer_free(mainw->st_fcache);
-      mainw->st_fcache = NULL;
-    }
-    if (mainw->en_fcache) {
-      if (mainw->pr_fcache == mainw->en_fcache) mainw->pr_fcache = NULL;
-      weed_layer_free(mainw->en_fcache);
-      mainw->en_fcache = NULL;
-    }
-    if (mainw->pr_fcache) {
-      weed_layer_free(mainw->pr_fcache);
-      mainw->pr_fcache = NULL;
-    }
+  cfile->hsize = mainw->def_width;
+  cfile->vsize = mainw->def_height;
 
-    for (i = 0; i < FN_KEYS - 1; i++) {
-      if (mainw->clipstore[i][0] == mainw->current_file) mainw->clipstore[i][0] = -1;
-    }
+  if (cfile->laudio_drawable) {
+    if (mainw->laudio_drawable == cfile->laudio_drawable
+	|| mainw->drawsrc == mainw->current_file) mainw->laudio_drawable = NULL;
+    if (cairo_surface_get_reference_count(cfile->laudio_drawable))
+      lives_painter_surface_destroy(cfile->laudio_drawable);
+    cfile->laudio_drawable = NULL;
+  }
+  if (cfile->raudio_drawable) {
+    if (mainw->raudio_drawable == cfile->raudio_drawable
+	|| mainw->drawsrc == mainw->current_file) mainw->raudio_drawable = NULL;
+    if (cairo_surface_get_reference_count(cfile->raudio_drawable))
+      lives_painter_surface_destroy(cfile->raudio_drawable);
+    cfile->raudio_drawable = NULL;
+  }
+  if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
 
-    // this must all be done last...
-    if (cfile->menuentry) {
-      // c.f. on_prevclip_activate
-      list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
-      do {
-        if (!(list_index = lives_list_previous(list_index))) list_index = lives_list_last(mainw->cliplist);
-        index = LIVES_POINTER_TO_INT(lives_list_nth_data(list_index, 0));
-      } while ((mainw->files[index] || mainw->files[index]->opening || mainw->files[index]->restoring ||
-                (index == mainw->scrap_file && index > -1) || (index == mainw->ascrap_file && index > -1)
-                || (mainw->files[index]->frames == 0 &&
-                    LIVES_IS_PLAYING)) &&
-               index != mainw->current_file);
-      if (index == mainw->current_file) index = -1;
-      if (mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) remove_from_clipmenu();
-    }
+  if (mainw->st_fcache) {
+    if (mainw->en_fcache == mainw->st_fcache) mainw->en_fcache = NULL;
+    if (mainw->pr_fcache == mainw->st_fcache) mainw->pr_fcache = NULL;
+    weed_layer_free(mainw->st_fcache);
+    mainw->st_fcache = NULL;
+  }
+  if (mainw->en_fcache) {
+    if (mainw->pr_fcache == mainw->en_fcache) mainw->pr_fcache = NULL;
+    weed_layer_free(mainw->en_fcache);
+    mainw->en_fcache = NULL;
+  }
+  if (mainw->pr_fcache) {
+    weed_layer_free(mainw->pr_fcache);
+    mainw->pr_fcache = NULL;
+  }
 
-    if (mainw->current_file == mainw->blend_file) {
-      need_new_blend_file = TRUE;
-      // set blend_file to -1. This in case the file is a generator - we need to distinguish between the cases where
-      // the generator is the blend file and we switch because it was deinited, and when we switch fg <-> bg
-      // in the former case the generator is killed off, in the latter it survives
-      track_decoder_free(1, mainw->blend_file);
-      mainw->blend_file = -1;
-      weed_layer_free(mainw->blend_layer);
-      mainw->blend_layer = NULL;
-    }
+  for (i = 0; i < FN_KEYS - 1; i++) {
+    if (mainw->clipstore[i][0] == mainw->current_file) mainw->clipstore[i][0] = -1;
+  }
 
-    if (CURRENT_CLIP_IS_PHYSICAL && (cfile->ext_src || cfile->old_ext_src)) {
-      if (!cfile->ext_src && cfile->old_ext_src_type == LIVES_EXT_SRC_DECODER) {
-        cfile->ext_src = cfile->old_ext_src;
-        cfile->ext_src_type = cfile->old_ext_src_type;
+  // this must all be done last...
+  if (cfile->menuentry) {
+    // c.f. on_prevclip_activate
+    list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
+    do {
+      if (!(list_index = lives_list_previous(list_index))) list_index = lives_list_last(mainw->cliplist);
+      index = LIVES_POINTER_TO_INT(lives_list_nth_data(list_index, 0));
+    } while ((mainw->files[index] || mainw->files[index]->opening || mainw->files[index]->restoring ||
+	      (index == mainw->scrap_file && index > -1) || (index == mainw->ascrap_file && index > -1)
+	      || (mainw->files[index]->frames == 0 &&
+		  LIVES_IS_PLAYING)) &&
+	     index != mainw->current_file);
+    if (index == mainw->current_file) index = -1;
+    if (mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) remove_from_clipmenu();
+  }
+
+  if (mainw->blend_file == mainw->current_file) {
+    // set blend_file to -1. This is in case the file is a generator - we need to distinguish between the cases where
+    // the generator is the blend file and we switch because it was deinited, and when we switch fg <-> bg
+    // in the former case the generator is killed off, in the latter it survives
+    need_new_blend_file = TRUE;
+    track_decoder_free(1, mainw->blend_file);
+    mainw->blend_file = -1;
+    weed_layer_free(mainw->blend_layer);
+    mainw->blend_layer = NULL;
+  }
+
+  if (CURRENT_CLIP_IS_PHYSICAL && (cfile->ext_src || cfile->old_ext_src)) {
+    if (!cfile->ext_src && cfile->old_ext_src_type == LIVES_EXT_SRC_DECODER) {
+      cfile->ext_src = cfile->old_ext_src;
+      cfile->ext_src_type = cfile->old_ext_src_type;
+    }
+    if (cfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
+      close_clip_decoder(mainw->current_file);
+    }
+  }
+  free_thumb_cache(mainw->current_file, 0);
+  lives_freep((void **)&cfile->frame_index);
+  lives_freep((void **)&cfile->frame_index_back);
+
+  if (cfile->clip_type != CLIP_TYPE_GENERATOR && !mainw->close_keep_frames) {
+    char *clipd = get_clip_dir(mainw->current_file);
+    if (lives_file_test(clipd, LIVES_FILE_TEST_EXISTS)) {
+      // as a safety feature we create a special file which allows the back end to delete the directory
+      char *temp_backend;
+      char *permitname = lives_build_filename(clipd, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
+      lives_touch(permitname);
+      lives_free(permitname);
+      temp_backend = use_staging_dir_for(mainw->current_file);
+      com = lives_strdup_printf("%s close \"%s\"", temp_backend, cfile->handle);
+      lives_free(temp_backend);
+      lives_system(com, TRUE);
+      lives_free(com);
+      temp_backend = lives_build_path(LIVES_DEVICE_DIR, LIVES_SHM_DIR, cfile->handle, NULL);
+      if (!lives_file_test(temp_backend, LIVES_FILE_TEST_IS_DIR)) {
+	lives_rmdir_with_parents(temp_backend);
       }
-      if (cfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
-        close_clip_decoder(mainw->current_file);
-      }
+      lives_free(temp_backend);
     }
-    free_thumb_cache(mainw->current_file, 0);
-    lives_freep((void **)&cfile->frame_index);
-    lives_freep((void **)&cfile->frame_index_back);
+    lives_free(clipd);
+    if (cfile->event_list_back) event_list_free(cfile->event_list_back);
+    if (cfile->event_list) event_list_free(cfile->event_list);
 
-    if (cfile->clip_type != CLIP_TYPE_GENERATOR && !mainw->close_keep_frames) {
-      char *clipd = get_clip_dir(mainw->current_file);
-      if (lives_file_test(clipd, LIVES_FILE_TEST_EXISTS)) {
-        // as a safety feature we create a special file which allows the back end to delete the directory
-        char *temp_backend;
-        char *permitname = lives_build_filename(clipd, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
-        lives_touch(permitname);
-        lives_free(permitname);
-        temp_backend = use_staging_dir_for(mainw->current_file);
-        com = lives_strdup_printf("%s close \"%s\"", temp_backend, cfile->handle);
-        lives_free(temp_backend);
-        lives_system(com, TRUE);
-        lives_free(com);
-        temp_backend = lives_build_path(LIVES_DEVICE_DIR, LIVES_SHM_DIR, cfile->handle, NULL);
-        if (!lives_file_test(temp_backend, LIVES_FILE_TEST_IS_DIR)) {
-          lives_rmdir_with_parents(temp_backend);
-        }
-        lives_free(temp_backend);
-      }
-      lives_free(clipd);
-      if (cfile->event_list_back) event_list_free(cfile->event_list_back);
-      if (cfile->event_list) event_list_free(cfile->event_list);
+    lives_list_free_all(&cfile->layout_map);
+  }
 
-      lives_list_free_all(&cfile->layout_map);
-    }
+  if (cfile->subt) subtitles_free(cfile);
 
-    if (cfile->subt) subtitles_free(cfile);
-
-    if (cfile->clip_type == CLIP_TYPE_YUV4MPEG) {
+  if (cfile->clip_type == CLIP_TYPE_YUV4MPEG) {
 #ifdef HAVE_YUV4MPEG
-      lives_yuv_stream_stop_read((lives_yuv4m_t *)cfile->ext_src);
-      lives_free(cfile->ext_src);
+    lives_yuv_stream_stop_read((lives_yuv4m_t *)cfile->ext_src);
+    lives_free(cfile->ext_src);
 #endif
-    }
+  }
 
-    if (cfile->clip_type == CLIP_TYPE_VIDEODEV) {
+  if (cfile->clip_type == CLIP_TYPE_VIDEODEV) {
 #ifdef HAVE_UNICAP
-      if (cfile->ext_src) lives_vdev_free((lives_vdev_t *)cfile->ext_src);
+    if (cfile->ext_src) lives_vdev_free((lives_vdev_t *)cfile->ext_src);
 #endif
-    }
+  }
 
-    if (cfile->audio_waveform) {
-      cancel_tl_redraw();
-      for (i = 0; i < cfile->achans; i++) lives_freep((void **)&cfile->audio_waveform[i]);
-      lives_freep((void **)&cfile->audio_waveform);
-      lives_freep((void **)&cfile->aw_sizes);
-      cfile->aw_sizes = NULL;
-    }
+  if (cfile->audio_waveform) {
+    cancel_tl_redraw();
+    for (i = 0; i < cfile->achans; i++) lives_freep((void **)&cfile->audio_waveform[i]);
+    lives_freep((void **)&cfile->audio_waveform);
+    lives_freep((void **)&cfile->aw_sizes);
+    cfile->aw_sizes = NULL;
+  }
 
-    lives_freep((void **)&cfile);
+  if (mainw->files[mainw->current_file]) {
+    lives_free(mainw->files[mainw->current_file]);
+    mainw->files[mainw->current_file] = NULL;
+  }
+  
+  if (mainw->multitrack && mainw->current_file != mainw->multitrack->render_file) {
+    mt_delete_clips(mainw->multitrack, mainw->current_file);
+  }
+  
+  if ((mainw->first_free_file == ALL_USED || mainw->first_free_file > mainw->current_file) && mainw->current_file > 0)
+    mainw->first_free_file = mainw->current_file;
 
-    if (mainw->multitrack && mainw->current_file != mainw->multitrack->render_file) {
-      mt_delete_clips(mainw->multitrack, mainw->current_file);
-    }
-
-    if ((mainw->first_free_file == ALL_USED || mainw->first_free_file > mainw->current_file) && mainw->current_file > 0)
-      mainw->first_free_file = mainw->current_file;
-
-    if (!mainw->only_close) {
-      if (IS_VALID_CLIP(file_to_switch_to) && file_to_switch_to > 0) {
-        if (!mainw->multitrack) {
-          if (!LIVES_IS_PLAYING) {
-            mainw->current_file = file_to_switch_to;
-            switch_clip(1, file_to_switch_to, TRUE);
-            d_print("");
-          } else {
-            if (file_to_switch_to != mainw->playing_file) mainw->new_clip = file_to_switch_to;
-          }
-        } else if (old_file != mainw->multitrack->render_file) {
-          mt_clip_select(mainw->multitrack, TRUE);
-        }
-        return;
+  if (!mainw->only_close) {
+    if (IS_VALID_CLIP(file_to_switch_to) && file_to_switch_to > 0) {
+      if (!mainw->multitrack) {
+	if (!mainw->noswitch) {
+	  mainw->current_file = file_to_switch_to;
+	  switch_clip(1, file_to_switch_to, TRUE);
+	  d_print("");
+	} else {
+	  if (file_to_switch_to != mainw->playing_file) mainw->new_clip = file_to_switch_to;
+	}
+      } else if (old_file != mainw->multitrack->render_file) {
+	mt_clip_select(mainw->multitrack, TRUE);
       }
+      return file_to_switch_to;
     }
-    // file we were asked to switch to is invalid, thus we must find one
+  }
+  // file we were asked to switch to is invalid, thus we must find one
 
-    mainw->preview_frame = 0;
+  if (mainw->only_close) mainw->noswitch = TRUE;
+			   
+  file_to_switch_to = find_next_clip(index, old_file);
 
-    if (!mainw->only_close) {
-      // find another clip to switch to
-      if (index > -1) {
-        if (!mainw->multitrack) {
-          if (!LIVES_IS_PLAYING) {
-            switch_clip(1, index, TRUE);
-            d_print("");
-          } else mainw->new_clip = index;
-          if (need_new_blend_file) {
-            mainw->blend_file = mainw->current_file;
-          }
-        } else {
-          if (old_file != mainw->multitrack->render_file) {
-            mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
-            mt_clip_select(mainw->multitrack, TRUE);
-          }
-        }
-        return;
-      }
-      if (mainw->clips_available > 0) {
-        for (i = mainw->current_file; --i;) {
-          if (mainw->files[i]) {
-            if (!mainw->multitrack) {
-              if (!LIVES_IS_PLAYING) {
-                switch_clip(1, i, TRUE);
-                d_print("");
-              } else mainw->new_clip = index;
-              if (need_new_blend_file) {
-                mainw->blend_file = mainw->current_file;
-              }
-            } else {
-              if (old_file != mainw->multitrack->render_file) {
-                mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
-                mt_clip_select(mainw->multitrack, TRUE);
-              }
-            }
-            return;
-          }
-        }
-        for (i = 1; i < MAX_FILES; i++) {
-          if (mainw->files[i]) {
-            if (!mainw->multitrack) {
-              if (!LIVES_IS_PLAYING) {
-                switch_clip(1, i, TRUE);
-                d_print("");
-              } else mainw->new_clip = index;
-              if (need_new_blend_file) {
-                track_decoder_free(1, mainw->blend_file);
-                mainw->blend_file = mainw->current_file;
-              }
-            } else {
-              if (old_file != mainw->multitrack->render_file) {
-                mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
-                mt_clip_select(mainw->multitrack, TRUE);
-              }
-            }
-            return;
-	    // *INDENT-OFF*
-	  }}}}}
-  // *INDENT-ON*
+  if (mainw->noswitch) {
+    mainw->noswitch = noswitch;
+    return file_to_switch_to;
+  }
+
+  if (need_new_blend_file) mainw->blend_file = mainw->current_file;
+
+  if (CURRENT_CLIP_IS_VALID) return mainw->current_file;
 
   // no other clips
+  mainw->preview_frame = 0;
   mainw->current_file = mainw->blend_file = -1;
   set_main_title(NULL, 0);
 
@@ -2941,7 +2952,7 @@ void close_current_file(int file_to_switch_to) {
   lives_widget_show(mainw->undo);
   lives_widget_set_sensitive(mainw->undo, FALSE);
 
-  if (!mainw->is_ready || mainw->recovering_files) return;
+  if (!mainw->is_ready || mainw->recovering_files) return -1;
 
   if (LIVES_IS_PLAYING) mainw->cancelled = CANCEL_GENERATOR_END;
 
@@ -2953,7 +2964,7 @@ void close_current_file(int file_to_switch_to) {
     load_end_image(0);
     if (prefs->show_msg_area && !mainw->only_close) {
       if (mainw->idlemax == 0) {
-        lives_idle_add_simple(resize_message_area, NULL);
+	lives_idle_add_simple(resize_message_area, NULL);
       }
       mainw->idlemax = DEF_IDLE_MAX;
     }
@@ -2970,20 +2981,20 @@ void close_current_file(int file_to_switch_to) {
 
     if (mainw->multitrack) {
       if (old_file != mainw->multitrack->render_file) {
-        mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
-        mt_clip_select(mainw->multitrack, TRUE);
+	mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
+	mt_clip_select(mainw->multitrack, TRUE);
       }
     }
   }
   if (!LIVES_IS_PLAYING && !mainw->is_processing && !mainw->preview) {
     if (mainw->multitrack) {
       if (old_file != mainw->multitrack->render_file) {
-        mt_sensitise(mainw->multitrack);
+	mt_sensitise(mainw->multitrack);
       }
     } else sensitize();
   }
+  return mainw->current_file;
 }
-
 
 
 void switch_to_file(int old_file, int new_file) {
@@ -3013,7 +3024,7 @@ void switch_to_file(int old_file, int new_file) {
 
   if (mainw->multitrack) return;
 
-  if (LIVES_IS_PLAYING) {
+  if (mainw->noswitch) {
     mainw->new_clip = new_file;
     return;
   }
@@ -3157,7 +3168,6 @@ void switch_to_file(int old_file, int new_file) {
 }
 
 
-
 boolean switch_audio_clip(int new_file, boolean activate) {
   //ticks_t cticks;
   lives_clip_t *sfile;
@@ -3254,7 +3264,6 @@ boolean switch_audio_clip(int new_file, boolean activate) {
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed) {
-
       if (!activate) mainw->pulsed->in_use = FALSE;
 
       if (new_file != aplay_file) {
@@ -3370,7 +3379,7 @@ void do_quick_switch(int new_file) {
       || (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_CLIPS)) ||
       mainw->foreign || (mainw->preview && !mainw->is_rendering)) return;
 
-  if (mainw->noswitch) {
+  if (mainw->noswitch && !mainw->can_switch_clips) {
     mainw->new_clip = new_file;
     return;
   }
@@ -3463,8 +3472,8 @@ void do_quick_switch(int new_file) {
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   if (LIVES_IS_PLAYING && !mainw->play_window && (!IS_VALID_CLIP(old_file)
-      || !CURRENT_CLIP_IS_VALID || cfile->hsize != mainw->files[old_file]->hsize
-      || cfile->vsize != mainw->files[old_file]->vsize)) {
+						  || !CURRENT_CLIP_IS_VALID || cfile->hsize != mainw->files[old_file]->hsize
+						  || cfile->vsize != mainw->files[old_file]->vsize)) {
     clear_widget_bg(mainw->play_image, mainw->play_surface);
   }
 #endif

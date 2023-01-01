@@ -545,7 +545,6 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
     return FALSE;
   }
 
-
   if (mainw->num_sets == -1) {
     mainw->set_list = get_set_list(prefs->workdir, TRUE);
     mainw->num_sets = lives_list_length(mainw->set_list);
@@ -1227,8 +1226,6 @@ boolean reload_set(const char *set_name) {
     threaded_dialog_spin(0.);
     add_to_clipmenu();
 
-
-
     cfile->start = cfile->frames > 0 ? 1 : 0;
     cfile->end = cfile->frames;
     cfile->is_loaded = TRUE;
@@ -1249,7 +1246,6 @@ boolean reload_set(const char *set_name) {
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
       mt_clip_select(mainw->multitrack, TRUE);
     }
-
     lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
   }
 

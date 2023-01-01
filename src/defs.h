@@ -134,7 +134,8 @@ typedef pid_t lives_pid_t;
 #define PREFIX_IT(A, B) QUOTEME_ALL(A B)
 
 #ifdef __GNUC__
-#  define WARN_UNUSED  __attribute__((warn_unused_result))
+#  define LIVES_WARN_UNUSED  __attribute__((warn_unused_result))
+#  define LIVES_ALLOW_UNUSED  __attribute__((unused))
 #  define LIVES_PURE  __attribute__((pure))
 #  define LIVES_DEPRE1CATED(msg)  __attribute__((deprecated(msg)))
 #  define LIVES_CONST  __attribute__((const))
@@ -153,7 +154,8 @@ typedef pid_t lives_pid_t;
 #  define LIVES_IGNORE_DEPRECATIONS G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 #  define LIVES_IGNORE_DEPRECATIONS_END G_GNUC_END_IGNORE_DEPRECATIONS
 #else
-#  define WARN_UNUSED
+#  define LIVES_WARN_UNUSED
+#  define LIVES_ALLOW_UNUSED
 #  define LIVES_PURE
 #  define LIVES_CONST
 #  define LIVES_MALLOC
@@ -505,7 +507,7 @@ typedef enum {
 
 //#define WEED_STARTUP_TESTS
 
-#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT 1
 #else

@@ -1672,7 +1672,7 @@ boolean load_frame_image(frames_t frame) {
 
     if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
       set_drawing_area_from_pixbuf(mainw->preview_image, pixbuf, mainw->pi_surface);
-      lives_widget_queue_draw(mainw->preview_image);
+      lives_widget_queue_draw_noblock(mainw->preview_image);
     } else {
       pwidth = lives_widget_get_allocation_width(mainw->play_image);
       pheight = lives_widget_get_allocation_height(mainw->play_image);
@@ -1681,7 +1681,7 @@ boolean load_frame_image(frames_t frame) {
       old_pwidth = pwidth;
       old_pheight = pheight;
       set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->play_surface);
-      lives_widget_queue_draw(mainw->play_image);
+      lives_widget_queue_draw_noblock(mainw->play_image);
     }
 
     //can we save pixbufs ?;
@@ -1791,7 +1791,7 @@ boolean load_frame_image(frames_t frame) {
 	&& mainw->current_file != mainw->scrap_file) {
       double ptrtime = ((double)mainw->actual_frame - 1.) / cfile->fps;
       mainw->ptrtime = ptrtime;
-      lives_widget_queue_draw(mainw->eventbox2);
+      lives_widget_queue_draw_noblock(mainw->eventbox2);
     }
     if (LIVES_IS_PLAYING && mainw->multitrack && !cfile->opening) animate_multitrack(mainw->multitrack);
   }
@@ -2495,8 +2495,18 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
 
 // player will create this as
 static boolean update_gui(void) {
-  //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+  /* if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) { */
+  /*   lives_widget_queue_draw_and_update(mainw->preview_image); */
+  /* } else { */
+  /*   lives_widget_queue_draw_and_update(mainw->play_image); */
+  /* } */
+
+  g_print("UPD\n");
+  mainw->debug = TRUE;
   lives_widget_context_update();
+  mainw->debug = FALSE;
+  g_print("UPD 2\n");
+  
   return TRUE;
 }
 
@@ -2678,7 +2688,7 @@ int process_one(boolean visible) {
   // adjust audio rate slightly if we are behind or ahead
   // shouldn't need this since normally we sync video to soundcard
   // - unless we are controlled externally (e.g. jack transport) or system clock is forced
-  if (1 || time_source != LIVES_TIME_SOURCE_SOUNDCARD) {
+  if (time_source != LIVES_TIME_SOURCE_SOUNDCARD) {
 #ifdef ENABLE_JACK
     if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd &&
         IS_VALID_CLIP(mainw->playing_file)  &&
@@ -2745,7 +2755,30 @@ int process_one(boolean visible) {
 
  switch_point:
 
-  if (IS_VALID_CLIP(mainw->new_clip)) {
+  if (IS_VALID_CLIP(mainw->close_this_clip)) {
+    // first deal with the case where we are asked to close a clip, and the
+    // clip to switch to is invalid, or is the playing clip
+    // - -we do the close but the clip will not be switched, instead when can_switch_clips is TREU
+    // and noseek is also TRUE, the function returns the new clip
+    // if this is the clip being played then we need do nothing more
+    if (mainw->new_clip == mainw->close_this_clip || !IS_VALID_CLIP(mainw->new_clip)
+	|| mainw->new_clip == mainw->playing_file) {
+      mainw->can_switch_clips = TRUE;
+      mainw->current_file = mainw->close_this_clip;
+      mainw->new_clip = close_current_file(mainw->playing_file);
+      mainw->can_switch_clips = FALSE;
+      if (!IS_VALID_CLIP(mainw->new_clip) && !IS_VALID_CLIP(mainw->playing_file)) {
+	mainw->cancelled = CANCEL_INTERNAL_ERROR;
+	cancel_process(FALSE);
+	return ONE_MILLION + mainw->cancelled;
+      }
+      if (mainw->new_clip == mainw->playing_file || !IS_VALID_CLIP(mainw->new_clip))
+	mainw->new_clip = -1;
+      mainw->close_this_clip = -1;
+    }
+  }
+
+  if (IS_VALID_CLIP(mainw->new_clip) && mainw->new_clip != mainw->playing_file) {
     if (AV_CLIPS_EQUAL && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
       sfile->frameno = sfile->last_frameno = requested_frame;
     }
@@ -2759,6 +2792,14 @@ int process_one(boolean visible) {
         mainw->pred_clip = 0;
         cleanup_preload = FALSE;
       }
+    }
+    
+    if (IS_VALID_CLIP(mainw->new_blend_file)
+      || (mainw->blend_file != -1 && !IS_VALID_CLIP(mainw->blend_file))) {
+      if (IS_VALID_CLIP(mainw->new_blend_file))
+	track_decoder_free(1, mainw->blend_file);
+      mainw->blend_file = mainw->new_blend_file;
+      if (!IS_VALID_CLIP(mainw->blend_file)) mainw->blend_file = -1;
     }
 
 #ifdef ENABLE_JACK
@@ -2795,14 +2836,23 @@ int process_one(boolean visible) {
       }
     }
 #endif
+    // we cannot here simply have mainw->noswitch = FALSE,
+    // as this might allow other threads to change current clip
+    // so here we use mainw->can_switch_clips
 
-    mainw->switch_during_pb = TRUE;
     sfile->last_play_sequence = mainw->play_sequence;
-    mainw->noswitch = FALSE;
+    if (IS_VALID_CLIP(mainw->close_this_clip)) {
+      mainw->can_switch_clips = TRUE;
+      mainw->current_file = mainw->close_this_clip;
+      mainw->new_clip = close_current_file(mainw->new_clip);
+      mainw->can_switch_clips = FALSE;
+    }
+
+    mainw->can_switch_clips = TRUE;
     do_quick_switch(mainw->new_clip);
-    mainw->noswitch = TRUE;
+    mainw->can_switch_clips = FALSE;
+
     did_switch = TRUE;
-    mainw->switch_during_pb = FALSE;
 
     if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
         && (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP)
@@ -2870,6 +2920,7 @@ int process_one(boolean visible) {
     cache_hits = cache_misses = 0;
 
     mainw->new_clip = -1;
+    mainw->close_this_clip = -1;
 
     if (prefs->pbq_adaptive) reset_effort();
     // TODO: add a few to bungle_frames in case of decoder unchilling
@@ -2935,10 +2986,12 @@ int process_one(boolean visible) {
       }
     }
 
-    if (lives_proc_thread_is_idling(gui_lpt)) {
-      lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
-      lives_proc_thread_queue(gui_lpt, 0);
-    }
+    //    if (lives_proc_thread_is_idling(gui_lpt)) {
+    lives_nanosleep_while_false(lives_proc_thread_is_idling(gui_lpt));
+
+    lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
+    lives_proc_thread_queue(gui_lpt, 0);
+    // }
 
     //lives_widget_context_update();
 
@@ -3824,7 +3877,10 @@ int process_one(boolean visible) {
       // the audio thread wants to update the parameter scroll(s)
       if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
+      g_print("check gui lpt, stats ie %s\n", lpt_desc_state(gui_lpt));
       if (lives_proc_thread_is_idling(gui_lpt)) {
+      g_print("idlington\n");
+
         lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
         lives_proc_thread_queue(gui_lpt, 0);
       }

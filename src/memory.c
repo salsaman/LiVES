@@ -82,8 +82,7 @@ void *lives_slice_alloc_and_copy(size_t sz, void *p) {
 
 // a version which can a calback target
 boolean lives_nullify_ptr_cb(void *dummy, void *xvpp) {
-  void **vpp = (void **)xvpp;
-  lives_nullify_ptr(vpp);
+  lives_nullify_ptr((void **)xvpp);
   return FALSE;
 }
 

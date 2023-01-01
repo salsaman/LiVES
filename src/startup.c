@@ -1956,7 +1956,7 @@ static boolean lives_startup2(livespointer data) {
     lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_WAIT_SYNC,
                              lazy_startup_checks, WEED_SEED_BOOLEAN, "", NULL);
 
-  lives_proc_thread_nullify_on_destruction(mainw->lazy_starter, (void **)&mainw->lazy_starter);
+  lives_proc_thread_nullify_on_destruction(mainw->lazy_starter, (void **)&(mainw->lazy_starter));
 
   lives_proc_thread_set_pauseable(mainw->lazy_starter, TRUE);
   lives_proc_thread_sync_ready(mainw->lazy_starter);
@@ -3074,11 +3074,11 @@ static boolean lives_init(_ign_opts * ign_opts) {
   prefs->rec_opts |= (REC_FPS + REC_FRAMES);
 
   mainw->new_clip = -1;
+  mainw->close_this_clip = -1;
+
   mainw->scrap_file = -1;
   mainw->ascrap_file = -1;
   mainw->scrap_file_size = -1;
-
-  mainw->did_rfx_preview = FALSE;
 
   prefsw = NULL;
   rdet = NULL;
@@ -3096,7 +3096,6 @@ static boolean lives_init(_ign_opts * ign_opts) {
 
   mainw->stream_ticks = -1;
 
-  mainw->osc_auto = 0;
   mainw->osc_enc_width = mainw->osc_enc_height = 0;
   mainw->stored_layout_save_all_vals = TRUE;
 

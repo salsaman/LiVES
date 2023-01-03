@@ -747,7 +747,7 @@ void *calloc_bigblock(size_t xsize) {
       bbused++;
 #endif
       pthread_mutex_unlock(&bigblock_mutex);
-      g_print("CALLOBIG %p %d\n", bigblocks[i], i);
+      //g_print("CALLOBIG %p %d\n", bigblocks[i], i);
       //break_me("callobig");
       nbads = 0;
       start = bigblocks[i];
@@ -779,7 +779,7 @@ void *free_bigblock(void *bstart) {
       bbused--;
       pthread_mutex_unlock(&bigblock_mutex);
 #endif
-      g_print("FREEBIG %p %d\n", bigblocks[i], i);
+      //g_print("FREEBIG %p %d\n", bigblocks[i], i);
       return NULL;
     }
   }

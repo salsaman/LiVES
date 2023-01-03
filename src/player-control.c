@@ -526,7 +526,7 @@ void play_file(void) {
     /// blank the background if asked to
     if ((mainw->faded || (prefs->show_playwin && !prefs->show_gui)
          || (mainw->fs && (!mainw->sep_win))) && (cfile->frames > 0 ||
-						  mainw->foreign)) {
+             mainw->foreign)) {
       main_thread_execute_rvoid_pvoid(fade_background);
       //fade_background();
     }
@@ -1234,7 +1234,7 @@ void play_file(void) {
   if (IS_VALID_CLIP(mainw->close_this_clip)) {
     // need to keep blend_file around until we check if it is a generator to close
     int blend_file = mainw->blend_file;
-    
+
     current_file = mainw->current_file;
     mainw->can_switch_clips = TRUE;
     mainw->current_file = mainw->close_this_clip;
@@ -1563,7 +1563,7 @@ void play_file(void) {
     if (!mainw->multitrack) {
       lives_ce_update_timeline(0, cfile->real_pointer_time);
       if (CURRENT_CLIP_IS_VALID) {
-	mainw->ptrtime = cfile->real_pointer_time;
+        mainw->ptrtime = cfile->real_pointer_time;
       }
       lives_widget_queue_draw(mainw->eventbox2);
     }

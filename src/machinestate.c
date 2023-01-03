@@ -760,7 +760,7 @@ LIVES_GLOBAL_INLINE uint64_t get_blocksize(const char *dir) {
 
 
 LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs) {
-  ticks_t ret = -1;
+  ticks_t ret, wall_ticks;
 #if _POSIX_TIMERS
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -776,35 +776,18 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t o
          - (origsecs * ONE_MILLION + orignsecs / 1000)) * USEC_TO_TICKS;
 #endif
 #endif
-  mainw->wall_ticks = ret;
-  if (ret >= 0)
-    mainw->wall_ticks += (origsecs * ONE_BILLION + orignsecs) / TICKS_TO_NANOSEC;
+  if (ret < 0) ret = 0;
+  wall_ticks = ret + (origsecs * ONE_BILLION + orignsecs) / TICKS_TO_NANOSEC;
+  if (wall_ticks > mainw->wall_ticks) mainw->wall_ticks = wall_ticks;
   return ret;
 }
 
 
 LIVES_GLOBAL_INLINE void get_current_time_offset(ticks_t *xsecs, ticks_t *xnsecs) {
-  //TODO deprace and use ticks counter
-#if _POSIX_TIMERS
   ticks_t originticks = lives_get_current_ticks();
   originticks *= TICKS_TO_NANOSEC;
   if (xsecs) *xsecs = originticks / ONE_BILLION;
   if (xnsecs) *xnsecs = originticks - mainw->origsecs * ONE_BILLION;
-#else
-
-#ifdef USE_MONOTONIC_TIME
-  if (xsecs) *xsecs = 0; // not used
-  if (xnsecs) *xnsecs = lives_get_monotonic_time() * 1000;
-#else
-
-  / \ ***************************************************\ /
-  gettimeofday(&tv, NULL);
-  / \ ***************************************************\ /
-
-  if (xsecs) *xsecs = tv.tv_sec;
-  if (xnsecs) *xnsecs = tv.tv_usec * 1000;
-#endif
-#endif
 }
 
 

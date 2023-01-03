@@ -300,6 +300,7 @@ uint64_t get_worker_status(uint64_t tid);
 
 #define LIVES_LEAF_STATE_MUTEX "state_mutex" ///< ensures state is accessed atomically
 #define LIVES_LEAF_DESTRUCT_MUTEX "destruct_mutex" ///< ensures destruct is accessed atomically
+#define LIVES_LEAF_DESTRUCT_RWLOCK "destruct_rwlock" ///< ensures destruct is accessed atomically
 #define LIVES_LEAF_THRD_STATE "thread_state" // proc_thread state
 #define LIVES_LEAF_SIGNAL_DATA "signal_data"
 #define LIVES_LEAF_THREAD_ATTRS "thread_attributes" // attributes used to create pro_thread

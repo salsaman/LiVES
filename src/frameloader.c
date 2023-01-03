@@ -2341,18 +2341,13 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
       filter_mutex_lock(key);
       if (!IS_VALID_CLIP(clip)) {
-	g_print("INVVVVVVVVVVVVVVVVVVVVVVVVVV\n");
+        g_print("INVVVVVVVVVVVVVVVVVVVVVVVVVV\n");
         // gen was switched off
         create_blank_layer(layer, image_ext, width, height, target_palette);
       } else {
         vlayer = weed_layer_create_from_generator(inst, tc, clip);
-	g_print("NXXX EW pixdata %p %p\n", vlayer, weed_layer_get_pixel_data(vlayer));
         weed_layer_copy(layer, vlayer); // layer is non-NULL, so copy by reference
-	g_print("NXdsdXX EW pixdata %p %p %p %p\n", vlayer, layer, weed_layer_get_pixel_data(vlayer),
-		weed_layer_get_pixel_data(layer));
         weed_layer_nullify_pixel_data(vlayer);
-	g_print("NXdsdXX EW pixdata %p %p %p %p\n", vlayer, layer, weed_layer_get_pixel_data(vlayer),
-		weed_layer_get_pixel_data(layer));
       }
       filter_mutex_unlock(key);
       weed_instance_unref(inst);
@@ -2680,15 +2675,15 @@ static int find_next_clip(int index, int old_file) {
   if (IS_VALID_CLIP(index)) {
     if (mainw->multitrack) {
       if (old_file != mainw->multitrack->render_file) {
-	mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
-	mt_clip_select(mainw->multitrack, TRUE);
+        mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
+        mt_clip_select(mainw->multitrack, TRUE);
       }
       return mainw->current_file;
     }
     if (!mainw->noswitch) {
       switch_clip(1, index, TRUE);
       if (mainw->blend_file == old_file)
-	switch_clip(SCREEN_AREA_BACKGROUND, mainw->current_file, FALSE);
+        switch_clip(SCREEN_AREA_BACKGROUND, mainw->current_file, FALSE);
       d_print("");
     }
     return index;
@@ -2697,25 +2692,25 @@ static int find_next_clip(int index, int old_file) {
   if (mainw->clips_available > 0) {
     for (int i = mainw->current_file; --i;) {
       if (mainw->files[i]) {
-	if (!mainw->noswitch) {
-	  switch_clip(1, i, TRUE);
-	  if (mainw->blend_file == old_file)
-	    switch_clip(SCREEN_AREA_BACKGROUND, mainw->current_file, FALSE);
-	  d_print("");
-	}
-	return i;
+        if (!mainw->noswitch) {
+          switch_clip(1, i, TRUE);
+          if (mainw->blend_file == old_file)
+            switch_clip(SCREEN_AREA_BACKGROUND, mainw->current_file, FALSE);
+          d_print("");
+        }
+        return i;
       }
     }
 
     for (int i = 1; i < MAX_FILES; i++) {
       if (mainw->files[i]) {
-	if (!mainw->noswitch) {
-	  switch_clip(1, i, TRUE);
-	  if (mainw->blend_file == old_file)
-	    switch_clip(SCREEN_AREA_BACKGROUND, mainw->current_file, FALSE);
-	  d_print("");
-	}
-	return i;
+        if (!mainw->noswitch) {
+          switch_clip(1, i, TRUE);
+          if (mainw->blend_file == old_file)
+            switch_clip(SCREEN_AREA_BACKGROUND, mainw->current_file, FALSE);
+          d_print("");
+        }
+        return i;
       }
     }
   }
@@ -2735,14 +2730,14 @@ int close_current_file(int file_to_switch_to) {
   int i;
 
   if (mainw->close_this_clip == mainw->current_file) mainw->close_this_clip = -1;
-  
+
   if (!CURRENT_CLIP_IS_VALID) return -1;
 
   if (cfile->clip_type == CLIP_TYPE_TEMP) {
     close_temp_handle(file_to_switch_to);
     return file_to_switch_to;
   }
- 
+
   if (mainw->noswitch && !mainw->can_switch_clips) {
     mainw->new_clip = file_to_switch_to;
     mainw->close_this_clip = mainw->current_file;
@@ -2761,14 +2756,14 @@ int close_current_file(int file_to_switch_to) {
 
   if (cfile->laudio_drawable) {
     if (mainw->laudio_drawable == cfile->laudio_drawable
-	|| mainw->drawsrc == mainw->current_file) mainw->laudio_drawable = NULL;
+        || mainw->drawsrc == mainw->current_file) mainw->laudio_drawable = NULL;
     if (cairo_surface_get_reference_count(cfile->laudio_drawable))
       lives_painter_surface_destroy(cfile->laudio_drawable);
     cfile->laudio_drawable = NULL;
   }
   if (cfile->raudio_drawable) {
     if (mainw->raudio_drawable == cfile->raudio_drawable
-	|| mainw->drawsrc == mainw->current_file) mainw->raudio_drawable = NULL;
+        || mainw->drawsrc == mainw->current_file) mainw->raudio_drawable = NULL;
     if (cairo_surface_get_reference_count(cfile->raudio_drawable))
       lives_painter_surface_destroy(cfile->raudio_drawable);
     cfile->raudio_drawable = NULL;
@@ -2803,10 +2798,10 @@ int close_current_file(int file_to_switch_to) {
       if (!(list_index = lives_list_previous(list_index))) list_index = lives_list_last(mainw->cliplist);
       index = LIVES_POINTER_TO_INT(lives_list_nth_data(list_index, 0));
     } while ((mainw->files[index] || mainw->files[index]->opening || mainw->files[index]->restoring ||
-	      (index == mainw->scrap_file && index > -1) || (index == mainw->ascrap_file && index > -1)
-	      || (mainw->files[index]->frames == 0 &&
-		  LIVES_IS_PLAYING)) &&
-	     index != mainw->current_file);
+              (index == mainw->scrap_file && index > -1) || (index == mainw->ascrap_file && index > -1)
+              || (mainw->files[index]->frames == 0 &&
+                  LIVES_IS_PLAYING)) &&
+             index != mainw->current_file);
     if (index == mainw->current_file) index = -1;
     if (mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) remove_from_clipmenu();
   }
@@ -2850,7 +2845,7 @@ int close_current_file(int file_to_switch_to) {
       lives_free(com);
       temp_backend = lives_build_path(LIVES_DEVICE_DIR, LIVES_SHM_DIR, cfile->handle, NULL);
       if (!lives_file_test(temp_backend, LIVES_FILE_TEST_IS_DIR)) {
-	lives_rmdir_with_parents(temp_backend);
+        lives_rmdir_with_parents(temp_backend);
       }
       lives_free(temp_backend);
     }
@@ -2888,26 +2883,26 @@ int close_current_file(int file_to_switch_to) {
     lives_free(mainw->files[mainw->current_file]);
     mainw->files[mainw->current_file] = NULL;
   }
-  
+
   if (mainw->multitrack && mainw->current_file != mainw->multitrack->render_file) {
     mt_delete_clips(mainw->multitrack, mainw->current_file);
   }
-  
+
   if ((mainw->first_free_file == ALL_USED || mainw->first_free_file > mainw->current_file) && mainw->current_file > 0)
     mainw->first_free_file = mainw->current_file;
 
   if (!mainw->only_close) {
     if (IS_VALID_CLIP(file_to_switch_to) && file_to_switch_to > 0) {
       if (!mainw->multitrack) {
-	if (!mainw->noswitch) {
-	  mainw->current_file = file_to_switch_to;
-	  switch_clip(1, file_to_switch_to, TRUE);
-	  d_print("");
-	} else {
-	  if (file_to_switch_to != mainw->playing_file) mainw->new_clip = file_to_switch_to;
-	}
+        if (!mainw->noswitch) {
+          mainw->current_file = file_to_switch_to;
+          switch_clip(1, file_to_switch_to, TRUE);
+          d_print("");
+        } else {
+          if (file_to_switch_to != mainw->playing_file) mainw->new_clip = file_to_switch_to;
+        }
       } else if (old_file != mainw->multitrack->render_file) {
-	mt_clip_select(mainw->multitrack, TRUE);
+        mt_clip_select(mainw->multitrack, TRUE);
       }
       return file_to_switch_to;
     }
@@ -2915,7 +2910,7 @@ int close_current_file(int file_to_switch_to) {
   // file we were asked to switch to is invalid, thus we must find one
 
   if (mainw->only_close) mainw->noswitch = TRUE;
-			   
+
   file_to_switch_to = find_next_clip(index, old_file);
 
   if (mainw->noswitch) {
@@ -2964,7 +2959,7 @@ int close_current_file(int file_to_switch_to) {
     load_end_image(0);
     if (prefs->show_msg_area && !mainw->only_close) {
       if (mainw->idlemax == 0) {
-	lives_idle_add_simple(resize_message_area, NULL);
+        lives_idle_add_simple(resize_message_area, NULL);
       }
       mainw->idlemax = DEF_IDLE_MAX;
     }
@@ -2981,15 +2976,15 @@ int close_current_file(int file_to_switch_to) {
 
     if (mainw->multitrack) {
       if (old_file != mainw->multitrack->render_file) {
-	mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
-	mt_clip_select(mainw->multitrack, TRUE);
+        mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
+        mt_clip_select(mainw->multitrack, TRUE);
       }
     }
   }
   if (!LIVES_IS_PLAYING && !mainw->is_processing && !mainw->preview) {
     if (mainw->multitrack) {
       if (old_file != mainw->multitrack->render_file) {
-	mt_sensitise(mainw->multitrack);
+        mt_sensitise(mainw->multitrack);
       }
     } else sensitize();
   }
@@ -3472,8 +3467,8 @@ void do_quick_switch(int new_file) {
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   if (LIVES_IS_PLAYING && !mainw->play_window && (!IS_VALID_CLIP(old_file)
-						  || !CURRENT_CLIP_IS_VALID || cfile->hsize != mainw->files[old_file]->hsize
-						  || cfile->vsize != mainw->files[old_file]->vsize)) {
+      || !CURRENT_CLIP_IS_VALID || cfile->hsize != mainw->files[old_file]->hsize
+      || cfile->vsize != mainw->files[old_file]->vsize)) {
     clear_widget_bg(mainw->play_image, mainw->play_surface);
   }
 #endif
@@ -3652,7 +3647,7 @@ void resize(double scale) {
     load_end_image(0);
   }
 
-  update_sel_menu();
+  //  update_sel_menu();
 
   if (scale != oscale) {
     lives_widget_context_update();

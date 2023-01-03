@@ -1139,7 +1139,7 @@ typedef struct {
   volatile int new_clip; ///< clip we should switch to during playback; switch will happen at the designated SWITCH POINT
   volatile int close_this_clip; // if not -1, when we switch clip at the player switch point, we also close the old clip
   boolean can_switch_clips; // temp override for noswitch
-  
+
   boolean preview_req; // preview requested
 
   volatile short scratch;

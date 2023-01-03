@@ -4455,6 +4455,7 @@ void resize_play_window(void) {
 
   if ((mainw->double_size || mainw->multitrack) && (!mainw->fs || !LIVES_IS_PLAYING)) {
     // double size: maxspect to the screen size
+
     mainw->pwidth = cfile->hsize;
     mainw->pheight = cfile->vsize;
     if (LIVES_IS_PLAYING) {

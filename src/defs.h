@@ -249,7 +249,7 @@ typedef int lives_result_t;
 #endif
 
 #define LIVES_DIR_SEP "/"
-#define LIVES_COPYRIGHT_YEARS "2002 - 2022"
+#define LIVES_COPYRIGHT_YEARS "2002 - 2023"
 
 #if defined (IS_DARWIN) || defined (IS_FREEBSD)
 #ifndef off64_t

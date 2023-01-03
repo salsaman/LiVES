@@ -1122,8 +1122,14 @@ int check_filter_api_compat(int32_t higher, int32_t lower) {
     lower = higher;
     higher = tmp;
   }
-  if (higher > WEED_FILTER_API_VERSION) return WEED_FALSE; // we cant possibly know about future versions
-  if (higher < 100) return WEED_FALSE;
+  if (higher > WEED_FILTER_API_VERSION) {
+    fprintf(stderr, "fail3\n");
+    return WEED_FALSE; // we cant possibly know about future versions
+  }
+  if (higher < 100) {
+    fprintf(stderr, "fail4\n");
+    return WEED_FALSE;
+  }
   return WEED_TRUE;
 }
 
@@ -1134,13 +1140,17 @@ static int check_version_compat(int host_weed_api_version,
                                 int host_filter_api_version,
                                 int plugin_filter_api_min_version,
                                 int plugin_filter_api_max_version) {
-  if (plugin_weed_api_min_version > host_weed_api_version || plugin_filter_api_min_version > host_filter_api_version)
+  if (plugin_weed_api_min_version > host_weed_api_version || plugin_filter_api_min_version > host_filter_api_version) {
+    fprintf(stderr, "fail1\n");
     return WEED_FALSE;
-
-  if (host_weed_api_version > plugin_weed_api_max_version) {
-    if (check_weed_abi_compat(host_weed_api_version, plugin_weed_api_max_version) == 0) return 0;
   }
 
+  if (host_weed_api_version > plugin_weed_api_max_version) {
+    if (check_weed_abi_compat(host_weed_api_version, plugin_weed_api_max_version) == 0) {
+    fprintf(stderr, "fail22\n");
+      return WEED_FALSE;
+    }
+  }
   if (host_filter_api_version > plugin_filter_api_max_version) {
     return check_filter_api_compat(host_filter_api_version, plugin_filter_api_max_version);
   }

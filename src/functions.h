@@ -387,7 +387,7 @@ typedef uint64_t funcsig_t;
 // when triggering, mark the callbacks already actioned, and on a recheck we skip over them
 #define HOOK_STATUS_ACTIONED			(1ull << 34)
 
- // hook was 'removed' whilst running, delay removal until return
+// hook was 'removed' whilst running, delay removal until return
 #define HOOK_STATUS_REMOVE			(1ull << 35)
 
 // values higher than this are reserved for closure flags
@@ -508,7 +508,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hooks, int type, uint64_
 
 // lpt like
 lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **hooks, int type, uint64_t flags, lives_funcptr_t func,
-					const char *fname, int return_type, const char *args_fmt, ...);
+                                        const char *fname, int return_type, const char *args_fmt, ...);
 
 
 // fixed cb type
@@ -536,7 +536,7 @@ lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **hooks, int type, ui
 		       args_fmt, __VA_ARGS__)
 
 // lpt arg
-  
+
 #define lives_hook_prepend(hooks, type, flags, lpt) lives_hook_add((hooks), (type), (flags),lpt, DTYPE_PREPEND)
 
 ////////////////////////////

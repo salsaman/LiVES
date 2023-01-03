@@ -55,7 +55,7 @@ void showclipimgs(void);
 
 void load_preview_image(boolean update_always);
 
-int close_current_file(int file_to_switch_to); 
+int close_current_file(int file_to_switch_to);
 
 void switch_to_file(int old_file, int new_file);
 

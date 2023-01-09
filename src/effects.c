@@ -1130,7 +1130,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
       }
     }
-    }
+  }
   if (mainw->rendered_fx)
     if (mainw->rendered_fx[0]->menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0]->menuitem)) {
       if (!LIVES_IS_PLAYING

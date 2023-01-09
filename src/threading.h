@@ -335,14 +335,6 @@ uint64_t get_worker_status(uint64_t tid);
 // this will block and get executed as soon as possible
 #define LIVES_THRDATTR_FG_LIGHT	   		(1ull << 10)
 
-// this is for callbacks for the main thread to monitor, for example preview, player, dialgo_run
-// these are activities that are longer running and may require a lot of back and forth between a background
-// thread and the main thread. When the mian thread is running and monitoring such tasks, the GUI loop will
-// only be run when specifically requested (by lives_widget_context_update for example)
-#define LIVES_THRDATTR_FG_HEAVY	   		(1ull << 11)
-
-// (NB. setting both heavy and light will result in undefined behaviour)
-
 // non function attrs
 #define LIVES_THRDATTR_NOTE_TIMINGS		(1ull << 16)
 
@@ -557,8 +549,7 @@ boolean lives_proc_thread_wait(void);
 // if control is NULL, an internal variable will be used
 // proc_thread can either add hook_callbacks to its SYNC_WAIT hook stack, or set othr hook callabcks which set
 // control to TRUE
-boolean thread_wait_loop(lives_proc_thread_t lpt, boolean full_sync, boolean wake_gui,
-                         volatile boolean *control);
+boolean thread_wait_loop(lives_proc_thread_t lpt, boolean full_sync, volatile boolean *control);
 
 // a specialized version of thread_wait_loop, thread will wait until another thread calls sync_continue
 boolean sync_point(const char *motive);

@@ -69,17 +69,6 @@ boolean fg_service_fulfill(void);
 boolean fg_service_fulfill_cb(void *dummy);
 boolean has_lpttorun(void);
 
-boolean will_gov_run(void);
-boolean is_gov_running(void);
-
-#define GOV_NOT_RUNNING 0
-#define GOV_RUNNING 1
-#define GOV_FREEWHEEL 2
-#define GOV_WILL_RUN 3
-#define GOV_LONGTIME 4
-
-int get_gov_status(void);
-
 ////////////////////////////////////////
 
 // basic functions (wrappers for Toolkit functions)

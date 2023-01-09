@@ -2890,9 +2890,9 @@ void create_LiVES(void) {
     lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_DELETE_EVENT,
                          LIVES_GUI_CALLBACK(on_LiVES_delete_event), NULL);
     lives_signal_sync_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_KEY_PRESS_EVENT,
-                         LIVES_GUI_CALLBACK(key_press_or_release), NULL);
+                              LIVES_GUI_CALLBACK(key_press_or_release), NULL);
     lives_signal_sync_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_KEY_RELEASE_EVENT,
-                         LIVES_GUI_CALLBACK(key_press_or_release), NULL);
+                              LIVES_GUI_CALLBACK(key_press_or_release), NULL);
   }
   mainw->pb_fps_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_pb_fps),
                        LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -3035,7 +3035,7 @@ void create_LiVES(void) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->dsize), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_double_size_activate), NULL);
   mainw->sepwin_cb_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->sepwin), LIVES_WIDGET_TOGGLED_SIGNAL,
-						    LIVES_GUI_CALLBACK(on_sepwin_activate), NULL);
+                          LIVES_GUI_CALLBACK(on_sepwin_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->fade), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_fade_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->loop_video), LIVES_WIDGET_TOGGLED_SIGNAL,

@@ -369,7 +369,7 @@ void play_file(void) {
   int audio_end = 0;
 
   ____FUNC_ENTRY____(play_file, "", "");
-  
+
 
   if (!mainw->preview || !cfile->opening) {
     enable_record();
@@ -1553,10 +1553,6 @@ void play_file(void) {
     }
   }
 
-  int state;
-  lives_nanosleep_while_true((state = get_gov_status()) == GOV_RUNNING || state == GOV_WILL_RUN);
-
-  //////
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   g_print("\n\n\nwant to run post_play\n");
   main_thread_execute_void(post_playback, 0);

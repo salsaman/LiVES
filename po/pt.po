@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-01-03 13:43-0300\n"
+"POT-Creation-Date: 2023-01-09 18:24-0300\n"
 "PO-Revision-Date: 2020-10-12 19:43+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -83,7 +83,7 @@ msgstr ""
 msgid "Preserving set.\n"
 msgstr "Preservando conjunto de clipes\n"
 
-#: src/startup.c:340 src/startup.c:2334
+#: src/startup.c:340 src/startup.c:2335
 msgid "working directory"
 msgstr "diretório de trabalho"
 
@@ -642,12 +642,12 @@ msgstr ""
 "LiVES não conseguiu localizar 'sox'. Alguns recursos de áudio podem não "
 "funcionar. Voce deveria instalar 'sox'.\n"
 
-#: src/startup.c:1851
+#: src/startup.c:1852
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "Carregando automaticamente o conjunto de clipes %s..."
 
-#: src/startup.c:1913
+#: src/startup.c:1914
 #, c-format
 msgid ""
 "\n"
@@ -657,105 +657,105 @@ msgstr ""
 "Bem-vindo à versão LiVES %s%s!\n"
 
 #. TRANSLATORS: localised name may be used here
-#: src/startup.c:2118
+#: src/startup.c:2119
 msgid "LiVES"
 msgstr "LiVES"
 
-#: src/startup.c:2310
+#: src/startup.c:2311
 #, c-format
 msgid "Invalid option %s on commandline\n"
 msgstr "Opção inválida %s na linha de comando\n"
 
-#: src/startup.c:2370
+#: src/startup.c:2371
 #, fuzzy
 msgid "plugins lib directory"
 msgstr "esta pasta"
 
-#: src/startup.c:2401
+#: src/startup.c:2402
 msgid "config data directory"
 msgstr "pasta de dados de configuração"
 
-#: src/startup.c:2424
+#: src/startup.c:2425
 msgid "configuration file"
 msgstr "arquivo de configuração"
 
-#: src/startup.c:2469
+#: src/startup.c:2470
 msgid "Must have mjpegtools installed for -yuvin to work"
 msgstr "Deve ter o mjpegtools instalado para que o -yuvin funcione"
 
-#: src/startup.c:2512
+#: src/startup.c:2513
 msgid "Abort and retry or continue ?"
 msgstr "Abortar e tentar novamente ou continuar ?"
 
-#: src/startup.c:2638
+#: src/startup.c:2639
 #, c-format
 msgid "Invalid audio player %s"
 msgstr "Tocador de áudio %s inválido"
 
-#: src/startup.c:2657
+#: src/startup.c:2658
 msgid "external"
 msgstr "externa"
 
-#: src/startup.c:2660
+#: src/startup.c:2661
 msgid "internal"
 msgstr "interna"
 
-#: src/startup.c:2661
+#: src/startup.c:2662
 #, c-format
 msgid "Invalid audio source %s\n"
 msgstr "Fonte de áudio inválida %s\n"
 
-#: src/startup.c:3122
+#: src/startup.c:3123
 msgid "Foreground"
 msgstr "Primeiro plano"
 
-#: src/startup.c:3123
+#: src/startup.c:3124
 msgid "Background"
 msgstr "Plano de fundo"
 
-#: src/startup.c:3654
+#: src/startup.c:3655
 msgid "Loading realtime effect plugins..."
 msgstr "Carregando plugins de efeitos em tempo real..."
 
-#: src/startup.c:3674
+#: src/startup.c:3675
 #, c-format
 msgid "System default transition (%s from package %s by %s) not found."
 msgstr "Transição padrão do sistema (%s do pacote %s por %s) não encontrada."
 
-#: src/startup.c:3690
+#: src/startup.c:3691
 #, c-format
 msgid "User default transition (%s from package %s by %s) not found."
 msgstr "Transição padrão do usuário (%s do pacote %s por %s) não encontrada"
 
-#: src/startup.c:3745
+#: src/startup.c:3746
 #, fuzzy
 msgid "Connecting to jack transport server..."
 msgstr "Conectando ao servidor jack..."
 
-#: src/startup.c:3833
+#: src/startup.c:3834
 #, fuzzy
 msgid "Connecting to jack audio server..."
 msgstr "Conectando ao servidor jack..."
 
-#: src/startup.c:4018
+#: src/startup.c:4019
 msgid "Starting pulseaudio server..."
 msgstr "Iniciando o servidor pulseaudio..."
 
-#: src/startup.c:4107
+#: src/startup.c:4108
 #, c-format
 msgid "%s...detected... "
 msgstr "%s...detectado... "
 
-#: src/startup.c:4108
+#: src/startup.c:4109
 #, c-format
 msgid "%s...NOT DETECTED... "
 msgstr "%s...NÃO DETECTADO... "
 
-#: src/startup.c:4123
+#: src/startup.c:4124
 msgid "Starting in VJ MODE: Skipping most startup checks\n"
 msgstr ""
 
-#: src/startup.c:4133
+#: src/startup.c:4134
 msgid ""
 "\n"
 "Machine details:\n"
@@ -763,60 +763,60 @@ msgstr ""
 "\n"
 "Detalhes da máquina:\n"
 
-#: src/startup.c:4135
+#: src/startup.c:4136
 #, c-format
 msgid "OS is %s %s, running on %s\n"
 msgstr "SO é %s %s, rodando em %s\n"
 
-#: src/startup.c:4136 src/dialogs.c:1250 src/effects.c:120 src/plugins.c:3027
+#: src/startup.c:4137 src/dialogs.c:1250 src/effects.c:120 src/plugins.c:3027
 #: src/plugins.c:3041
 msgid "unknown"
 msgstr "desconhecido"
 
-#: src/startup.c:4141
+#: src/startup.c:4142
 #, c-format
 msgid " (VendorID: %s)"
 msgstr ""
 
-#: src/startup.c:4144
+#: src/startup.c:4145
 #, fuzzy, c-format
 msgid "CPU type is %s%s"
 msgstr "O tipo de CPU é %s "
 
-#: src/startup.c:4148 src/multitrack.c:3177
+#: src/startup.c:4149 src/multitrack.c:3177
 msgid "little endian"
 msgstr "little endian"
 
-#: src/startup.c:4149 src/multitrack.c:3176
+#: src/startup.c:4150 src/multitrack.c:3176
 msgid "big endian"
 msgstr "big endian"
 
-#: src/startup.c:4150
+#: src/startup.c:4151
 #, c-format
 msgid "%d bits, %s)\n"
 msgstr "%d bits, %s)\n"
 
-#: src/startup.c:4154
+#: src/startup.c:4155
 #, fuzzy
 msgid "CPU features detected:"
 msgstr "Conjuntos detectados: "
 
-#: src/startup.c:4160
+#: src/startup.c:4161
 #, fuzzy, c-format
 msgid "Cacheline size is %d bytes.\n"
 msgstr " com tmanho de %ld bytes "
 
-#: src/startup.c:4163
+#: src/startup.c:4164
 #, c-format
 msgid "Machine name is '%s'\n"
 msgstr "O nome da máquina é  %s\n"
 
-#: src/startup.c:4165
+#: src/startup.c:4166
 #, c-format
 msgid "Number of monitors detected: %d: "
 msgstr "Número de monitores detectados %d :: "
 
-#: src/startup.c:4167
+#: src/startup.c:4168
 #, c-format
 msgid ""
 "GUI screen size is %d X %d (usable: %d X %d); %d dpi.\n"
@@ -825,66 +825,66 @@ msgstr ""
 "O tamanho da tela da IG é %dX %d(utilizável: %dX %d); %ddpi. \n"
 "A escala do widget foi definida como %.3f.\n"
 
-#: src/startup.c:4174
+#: src/startup.c:4175
 #, c-format
 msgid "Actual usable size appears to be %d X %d\n"
 msgstr "O tamanho real utilizável parece ser %d X %d\n"
 
-#: src/startup.c:4179
+#: src/startup.c:4180
 #, c-format
 msgid "Window manager reports as \"%s\" (%s)"
 msgstr "O gerenciador de janelas relata como \" %s\" ( %s)"
 
-#: src/startup.c:4180
+#: src/startup.c:4181
 msgid "UNKNOWN - please patch me !"
 msgstr "DESCONHECIDO - por favor manda um patch !"
 
-#: src/startup.c:4184
+#: src/startup.c:4185
 #, c-format
 msgid ", running on %s"
 msgstr ", correndo em %s"
 
-#: src/startup.c:4186
+#: src/startup.c:4187
 #, c-format
 msgid "; compositing is %s.\n"
 msgstr "; composição é %s.\n"
 
-#: src/startup.c:4186
+#: src/startup.c:4187
 msgid "supported"
 msgstr "suportado"
 
-#: src/startup.c:4186
+#: src/startup.c:4187
 msgid "not supported"
 msgstr "não suportado"
 
-#: src/startup.c:4193
+#: src/startup.c:4194
 #, c-format
 msgid "Distro is %s %s %s\n"
 msgstr ""
 
-#: src/startup.c:4197
+#: src/startup.c:4198
 msgid "GUI type is: "
 msgstr "O tipo de interface gráfica é: "
 
-#: src/startup.c:4201
+#: src/startup.c:4202
 #, c-format
 msgid "GTK+ version %d.%d.%d (compiled with %d.%d.%d)"
 msgstr "Versão do GTK+ %d.%d.%d (compilado com %d.%d.%d)"
 
-#: src/startup.c:4208
+#: src/startup.c:4209
 #, c-format
 msgid "GTK+ (compiled with %d.%d.%d)"
 msgstr "GTK+ (compilado com %d.%d.%d)"
 
-#: src/startup.c:4214
+#: src/startup.c:4215
 msgid ", with cairo support\n"
 msgstr ", com suporte a cairo\n"
 
-#: src/startup.c:4216
+#: src/startup.c:4217
 msgid "\n"
 msgstr "\n"
 
-#: src/startup.c:4229
+#: src/startup.c:4230
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulseaudio support.\n"
@@ -894,23 +894,23 @@ msgstr ""
 "suporte jack ou pulseaudio.\n"
 "Muitos recursos de áudio estarão indisponíveis.\n"
 
-#: src/startup.c:4233
+#: src/startup.c:4234
 msgid "Compiled with jack support, good !\n"
 msgstr "Compilado com suporte jack, bom!\n"
 
-#: src/startup.c:4236
+#: src/startup.c:4237
 msgid "Compiled with pulseaudio support, wonderful !\n"
 msgstr "Compilado com suporte pulseaudio, maravilhoso !\n"
 
-#: src/startup.c:4241
+#: src/startup.c:4242
 msgid "set via -configfile commandline option"
 msgstr "definido via opção de linha de comando -configfile"
 
-#: src/startup.c:4243
+#: src/startup.c:4244
 msgid "default value"
 msgstr "valor padrão"
 
-#: src/startup.c:4245
+#: src/startup.c:4246
 #, c-format
 msgid ""
 "\n"
@@ -919,12 +919,12 @@ msgstr ""
 "\n"
 "O arquivo de configuração é %s( %s)\n"
 
-#: src/startup.c:4250
+#: src/startup.c:4251
 #, c-format
 msgid ", contained in volume %s"
 msgstr ", contido em volume %s"
 
-#: src/startup.c:4253
+#: src/startup.c:4254
 #, c-format
 msgid ""
 "\n"
@@ -933,66 +933,66 @@ msgstr ""
 "\n"
 "O diretório de trabalho é %s%s\n"
 
-#: src/startup.c:4257
+#: src/startup.c:4258
 msgid "(Set by -workdir commandline option)\n"
 msgstr "(Definir pela opção de linha de comando -workdir)\n"
 
-#: src/startup.c:4264
+#: src/startup.c:4265
 #, c-format
 msgid "(Retrieved from %s, version %s)\n"
 msgstr "(Recuperado de %s, versão %s)\n"
 
-#: src/startup.c:4266
+#: src/startup.c:4267
 msgid "(Set by user during setup phase)\n"
 msgstr "(Definido pelo usuário durante a fase de configuração)\n"
 
-#: src/startup.c:4272
+#: src/startup.c:4273
 msgid "STARTUP ERROR OCCURRED - FORCED REINSTALL"
 msgstr "ERRO DE INICIALIZAÇÃO OCORRIDO - REINSTALAÇÃO FORÇADA"
 
-#: src/startup.c:4275
+#: src/startup.c:4276
 #, c-format
 msgid "upgrade from version %s. Welcome !"
 msgstr "atualizado da versão %s. Bem vindo !"
 
-#: src/startup.c:4277
+#: src/startup.c:4278
 #, c-format
 msgid "downgrade from version %s !"
 msgstr "feito downgrade da versão %s!"
 
-#: src/startup.c:4282
+#: src/startup.c:4283
 msgid "REINSTALL AFTER FAILED RECOVERY"
 msgstr "REINSTALAR APÓS FALHA DE RECUPERAÇÃO"
 
-#: src/startup.c:4285
+#: src/startup.c:4286
 #, c-format
 msgid "%s; check %s for possible errors before re-running LiVES"
 msgstr ""
 "%s; verifique %s para possíveis erros antes de executar novamente o LiVES"
 
-#: src/startup.c:4292
+#: src/startup.c:4293
 msgid "fresh install. Welcome !"
 msgstr "nova instalação. Bem vindo(a) !"
 
-#: src/startup.c:4295
+#: src/startup.c:4296
 msgid "continue with installation"
 msgstr "continue com a instalação"
 
-#: src/startup.c:4297
+#: src/startup.c:4298
 msgid "normal startup"
 msgstr "inicialização normal"
 
-#: src/startup.c:4298
+#: src/startup.c:4299
 #, c-format
 msgid "Initial startup phase was %d: (%s)\n"
 msgstr "A fase inicial de inicialização foi %d: (%s)\n"
 
-#: src/startup.c:4305
+#: src/startup.c:4306
 #, fuzzy, c-format
 msgid "%s WAS POSSIBLY RECOVERED FROM %s.\n"
 msgstr "%s POSSIVELMENTE RECUPERADO DE %s.recovery\n"
 
-#: src/startup.c:4313
+#: src/startup.c:4314
 msgid ""
 "\n"
 "Checking RECOMMENDED dependencies: "
@@ -1000,7 +1000,7 @@ msgstr ""
 "\n"
 "Verificando dependências RECOMENDADAS: "
 
-#: src/startup.c:4331
+#: src/startup.c:4332
 msgid ""
 "\n"
 "\n"
@@ -1010,11 +1010,11 @@ msgstr ""
 "\n"
 "Verificando dependências OPCIONAIS: "
 
-#: src/startup.c:4921
+#: src/startup.c:4923
 msgid "Resizing"
 msgstr "Redimensionando"
 
-#: src/startup.c:4928
+#: src/startup.c:4930
 msgid "_Resize All Frames..."
 msgstr "_Redimensionar Todos os Quadros..."
 
@@ -1952,7 +1952,7 @@ msgstr "(Sem áudio)"
 #: src/interface.c:775 src/callbacks.c:9846 src/callbacks.c:9868
 #: src/callbacks.c:9869 src/gui.c:3759 src/gui.c:4321 src/dialogs.c:1558
 #: src/dialogs.c:1559 src/dialogs.c:1877 src/dialogs.c:1878 src/framedraw.c:321
-#: src/framedraw.c:384 src/multitrack.c:6014 src/player-control.c:546
+#: src/framedraw.c:384 src/multitrack.c:6014 src/player-control.c:550
 msgid "Preview"
 msgstr "Visualizar"
 
@@ -6563,7 +6563,7 @@ msgid "First Frame"
 msgstr "Primeiro Quadro"
 
 #: src/gui.c:2254 src/gui.c:3757 src/player.c:741 src/player.c:742
-#: src/player-control.c:544
+#: src/player-control.c:548
 msgid "Play"
 msgstr "Tocar"
 
@@ -8303,25 +8303,25 @@ msgstr ""
 "\n"
 "echo %d > /proc/sys/net/core/rmem_max\n"
 
-#: src/dialogs.c:3708 src/dialogs.c:3790 src/dialogs.c:3823
+#: src/dialogs.c:3706 src/dialogs.c:3788 src/dialogs.c:3821
 #, c-format
 msgid "Additional info: %s\n"
 msgstr "Informação adicional: %s\n"
 
-#: src/dialogs.c:3711
+#: src/dialogs.c:3709
 #, c-format
 msgid "The error value was %d%s\n"
 msgstr "O valor do erro foi %d %s\n"
 
-#: src/dialogs.c:3716
+#: src/dialogs.c:3714
 msgid "before clicking 'Retry'"
 msgstr "antes de clicar em 'Tentar novamente'"
 
-#: src/dialogs.c:3717
+#: src/dialogs.c:3715
 msgid "before retrying the operation"
 msgstr "antes de repetir a operação"
 
-#: src/dialogs.c:3719
+#: src/dialogs.c:3717
 #, c-format
 msgid ""
 "\n"
@@ -8336,7 +8336,7 @@ msgstr ""
 "  %s %s\n"
 "da linha de comando %s"
 
-#: src/dialogs.c:3729
+#: src/dialogs.c:3727
 #, c-format
 msgid ""
 "\n"
@@ -8351,7 +8351,7 @@ msgstr ""
 "Verifique se há erros no sistema.\n"
 "%s%s%s"
 
-#: src/dialogs.c:3798 src/dialogs.c:3877
+#: src/dialogs.c:3796 src/dialogs.c:3875
 #, c-format
 msgid ""
 "\n"
@@ -8366,7 +8366,7 @@ msgstr ""
 "Por favor, verifique possíveis causas de erro.\n"
 "%s"
 
-#: src/dialogs.c:3826
+#: src/dialogs.c:3824
 #, c-format
 msgid ""
 "\n"
@@ -8381,7 +8381,7 @@ msgstr ""
 "Por favor, verifique possíveis causas de erro.\n"
 "%s"
 
-#: src/dialogs.c:3882
+#: src/dialogs.c:3880
 #, c-format
 msgid ""
 "\n"
@@ -8398,7 +8398,7 @@ msgstr ""
 "%s.\n"
 "%s"
 
-#: src/dialogs.c:3916
+#: src/dialogs.c:3914
 #, c-format
 msgid ""
 "\n"
@@ -8411,7 +8411,7 @@ msgstr ""
 "%s\n"
 "Por favor, verifique possíveis causas de erro.\n"
 
-#: src/dialogs.c:3920
+#: src/dialogs.c:3918
 #, c-format
 msgid ""
 "\n"
@@ -8426,12 +8426,12 @@ msgstr ""
 "O erro foi\n"
 "%s.\n"
 
-#: src/dialogs.c:3989
+#: src/dialogs.c:3987
 #, c-format
 msgid "Value for \"%s\" could not be read."
 msgstr "O valor para \"%s\" não pôde ser lido."
 
-#: src/dialogs.c:4004
+#: src/dialogs.c:4002
 #, c-format
 msgid ""
 "\n"
@@ -8444,12 +8444,12 @@ msgstr ""
 "%s\n"
 "Por favor, verifique o seu sistema em busca de erros.\n"
 
-#: src/dialogs.c:4016
+#: src/dialogs.c:4014
 #, fuzzy, c-format
 msgid ", click %s to continue regardless,\n"
 msgstr ", clique em Cancelar para continuar independentemente,\n"
 
-#: src/dialogs.c:4021
+#: src/dialogs.c:4019
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -8464,12 +8464,12 @@ msgstr ""
 "verifique as permissões do arquivo e tente novamente. %sou clique em Abortar "
 "para sair do LiVES"
 
-#: src/dialogs.c:4038
+#: src/dialogs.c:4036
 #, fuzzy, c-format
 msgid "click %s to continue regardless, "
 msgstr "clique em Cancelar para continuar independentemente, "
 
-#: src/dialogs.c:4043
+#: src/dialogs.c:4041
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -8484,7 +8484,7 @@ msgstr ""
 "verifique as permissões da pasta e tente novamente \n"
 "%sou clique em Abortar para sair do LiVES"
 
-#: src/dialogs.c:4060
+#: src/dialogs.c:4058
 #, c-format
 msgid ""
 "\n"
@@ -8495,7 +8495,7 @@ msgstr ""
 "LiVES não conseguiu ler do diretório:\n"
 "%s\n"
 
-#: src/dialogs.c:4072
+#: src/dialogs.c:4070
 msgid ""
 "\n"
 "Abort and exit immediately from LiVES\n"
@@ -8505,55 +8505,55 @@ msgstr ""
 "Abortar e sair imediatamente do LiVES\n"
 "Você tem certeza ?\n"
 
-#: src/dialogs.c:4074
+#: src/dialogs.c:4072
 msgid ""
 "\n"
 "Are are you sure you would like to exit from LiVES setup ?\n"
 msgstr ""
 
-#: src/dialogs.c:4081
+#: src/dialogs.c:4079
 #, c-format
 msgid "The following options will be appended to the commandline: %s\n"
 msgstr ""
 
-#: src/dialogs.c:4087
+#: src/dialogs.c:4085
 msgid "Would you like to exit from LiVES or attempt to restart it ?"
 msgstr ""
 
-#: src/dialogs.c:4110
+#: src/dialogs.c:4108
 msgid ""
 ",\n"
 "and "
 msgstr ""
 
-#: src/dialogs.c:4113
+#: src/dialogs.c:4111
 #, c-format
 msgid "%d effect key slots (current setting is %d)%s"
 msgstr ""
 
-#: src/dialogs.c:4119
+#: src/dialogs.c:4117
 #, c-format
 msgid "%d modes per key (current setting is %d)"
 msgstr ""
 
-#: src/dialogs.c:4123
+#: src/dialogs.c:4121
 #, c-format
 msgid ""
 "The effect keymap could not be completely loaded as it requires %s%s\n"
 "Should I update %s in Preferences and try again ?\n"
 msgstr ""
 
-#: src/dialogs.c:4125
+#: src/dialogs.c:4123
 #, fuzzy
 msgid "these values"
 msgstr "_Resetar valores"
 
-#: src/dialogs.c:4126
+#: src/dialogs.c:4124
 #, fuzzy
 msgid "this value"
 msgstr "este arquivo"
 
-#: src/dialogs.c:4133
+#: src/dialogs.c:4131
 #, c-format
 msgid ""
 "\n"
@@ -8564,7 +8564,7 @@ msgstr ""
 "O %s não pode codificar clipes com o tipo de imagem %s.\n"
 "Por favor, selecione outro codificador da lista.\n"
 
-#: src/dialogs.c:4140
+#: src/dialogs.c:4138
 msgid ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
@@ -8572,7 +8572,7 @@ msgstr ""
 "\n"
 "Esta placa já está em uso e não pode ser aberto várias vezes.\n"
 
-#: src/dialogs.c:4145
+#: src/dialogs.c:4143
 #, c-format
 msgid ""
 "\n"
@@ -8587,7 +8587,7 @@ msgstr ""
 "- Verifique se este dispositivo está sendo usado por outro programa.\n"
 "- Verifique se o dispositivo realmente existe.\n"
 
-#: src/dialogs.c:4153
+#: src/dialogs.c:4151
 msgid ""
 "\n"
 "This file already has subtitles loaded.\n"
@@ -8597,7 +8597,7 @@ msgstr ""
 "Este arquivo já tem legendas carregadas.\n"
 "Deseja substituir as legendas existentes ?\n"
 
-#: src/dialogs.c:4159
+#: src/dialogs.c:4157
 msgid ""
 "\n"
 "LiVES currently only supports subtitles of type"
@@ -8605,7 +8605,7 @@ msgstr ""
 "\n"
 "LiVES atualmente suporta apenas legendas do tipo"
 
-#: src/dialogs.c:4185
+#: src/dialogs.c:4183
 msgid ""
 "\n"
 "Erase all subtitles from this clip.\n"
@@ -8615,7 +8615,7 @@ msgstr ""
 "Apagar todas as legendas deste clipe.\n"
 "Você tem certeza ?\n"
 
-#: src/dialogs.c:4192
+#: src/dialogs.c:4190
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -8628,7 +8628,7 @@ msgstr ""
 "Clique em Cancelar para definir outro nome de arquivo\n"
 "ou OK para continuar e salvar como tipo \"%s\"\n"
 
-#: src/dialogs.c:4202
+#: src/dialogs.c:4200
 #, c-format
 msgid ""
 "\n"
@@ -8641,13 +8641,13 @@ msgid ""
 "prior to transferring them ?"
 msgstr ""
 
-#: src/dialogs.c:4211
+#: src/dialogs.c:4209
 msgid ""
 "You must choose an action in order to change to the new work directory.\n"
 "Do you still want to proceed with the directory change ?\n"
 msgstr ""
 
-#: src/dialogs.c:4217
+#: src/dialogs.c:4215
 msgid ""
 "Possible lost clips were detected within the LiVES working directory.\n"
 "What would you like me to do with them ?\n"
@@ -8656,19 +8656,19 @@ msgstr ""
 "LiVES. \n"
 "O que você gostaria que eu fizesse com eles?\n"
 
-#: src/dialogs.c:4219
+#: src/dialogs.c:4217
 msgid "Missing Clips Detected"
 msgstr "Clipes ausentes detectados"
 
-#: src/dialogs.c:4225
+#: src/dialogs.c:4223
 msgid "Maybe later"
 msgstr "Talvez mais tarde"
 
-#: src/dialogs.c:4227
+#: src/dialogs.c:4225
 msgid "Try to recover them"
 msgstr "Tente recuperá-los"
 
-#: src/dialogs.c:4240
+#: src/dialogs.c:4238
 msgid ""
 "\n"
 "No video input devices could be found.\n"
@@ -8676,7 +8676,7 @@ msgstr ""
 "\n"
 "Nenhum dispositivo de entrada de vídeo foi encontrado.\n"
 
-#: src/dialogs.c:4245
+#: src/dialogs.c:4243
 msgid ""
 "\n"
 "All video input devices are already in use.\n"
@@ -8684,7 +8684,7 @@ msgstr ""
 "\n"
 "Todos os dispositivos de entrada de vídeo já estão em uso.\n"
 
-#: src/dialogs.c:4250
+#: src/dialogs.c:4248
 msgid ""
 "\n"
 "\n"
@@ -8696,7 +8696,7 @@ msgstr ""
 "LIMPANDO E COPIANDO ARQUIVOS. PODE TOMAR ALGUM TEMPO.\n"
 "NÃO DESLIGA OU FECHA O LIVES !\n"
 
-#: src/dialogs.c:4260
+#: src/dialogs.c:4258
 #, c-format
 msgid ""
 "Some frames in this clip may be wrongly sized.\n"
@@ -8707,23 +8707,23 @@ msgstr ""
 "O tamanho do clipe é %d X %d, mas pelo menos um quadro tem tamanho %d X %d\n"
 "O que você gostaria de fazer?"
 
-#: src/dialogs.c:4264 src/dialogs.c:4296 src/dialogs.c:4509
+#: src/dialogs.c:4262 src/dialogs.c:4294 src/dialogs.c:4507
 msgid "Problem Detected"
 msgstr "Problema Detectado"
 
-#: src/dialogs.c:4269 src/dialogs.c:4301
+#: src/dialogs.c:4267 src/dialogs.c:4299
 msgid "Continue anyway"
 msgstr "Continuar mesmo assim"
 
-#: src/dialogs.c:4272
+#: src/dialogs.c:4270
 msgid "Use the image size"
 msgstr "Use o tamanho da imagem"
 
-#: src/dialogs.c:4276
+#: src/dialogs.c:4274
 msgid "Resize images to clip size"
 msgstr "Redimensionar imagens para o tamanho do clipe"
 
-#: src/dialogs.c:4291
+#: src/dialogs.c:4289
 #, c-format
 msgid ""
 "Some frames in this clip have the wrong image format.\n"
@@ -8734,11 +8734,11 @@ msgstr ""
 "O formato da imagem deve ser %s\n"
 "O que você gostaria de fazer?"
 
-#: src/dialogs.c:4304
+#: src/dialogs.c:4302
 msgid "Correct the images"
 msgstr "Corrija as imagens"
 
-#: src/dialogs.c:4315
+#: src/dialogs.c:4313
 #, c-format
 msgid ""
 "\n"
@@ -8750,7 +8750,7 @@ msgstr ""
 "O tema não pôde ser carregado corretamente.\n"
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
-#: src/dialogs.c:4323
+#: src/dialogs.c:4321
 #, c-format
 msgid ""
 "\n"
@@ -8767,7 +8767,7 @@ msgstr ""
 "\n"
 "Arquivos -> Limpar espaço em disco\n"
 
-#: src/dialogs.c:4331
+#: src/dialogs.c:4329
 #, c-format
 msgid ""
 "\n"
@@ -8778,7 +8778,7 @@ msgstr ""
 "Você deve ter %s instalado e no seu caminho para usar este brinquedo.\n"
 "Consulte o seu distribuidor de pacotes.\n"
 
-#: src/dialogs.c:4339
+#: src/dialogs.c:4337
 #, c-format
 msgid ""
 "\n"
@@ -8791,7 +8791,7 @@ msgstr ""
 "LiVES não conseguiu encontrar o programa %s.\n"
 "Por favor confirme se este programa está no PATH e é executável.\n"
 
-#: src/dialogs.c:4346
+#: src/dialogs.c:4344
 #, fuzzy
 msgid ""
 "\n"
@@ -8800,7 +8800,7 @@ msgstr ""
 "\n"
 "Você deve ter no mínimo um clipe carregado para usar este brinquedo.\n"
 
-#: src/dialogs.c:4351
+#: src/dialogs.c:4349
 msgid ""
 "\n"
 "LiVES lost its connection to jack and was unable to reconnect.\n"
@@ -8810,7 +8810,7 @@ msgstr ""
 "LiVES perdeu sua conexão com o jack e não conseguiu se reconectar.\n"
 "Recomenda-se reiniciar o LiVES.\n"
 
-#: src/dialogs.c:4358
+#: src/dialogs.c:4356
 msgid ""
 "\n"
 "LiVES lost its connection to pulseaudio and was unable to reconnect.\n"
@@ -8820,13 +8820,13 @@ msgstr ""
 "LiVES perdeu sua conexão com pulseaudio e foi incapaz de se reconectar.\n"
 "Recomenda-se reiniciar o LiVES.\n"
 
-#: src/dialogs.c:4364
+#: src/dialogs.c:4362
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr ""
 "Por favor configure seu tocador de CD em 'Ferramentas | Preferências | "
 "Misc'\n"
 
-#: src/dialogs.c:4369
+#: src/dialogs.c:4367
 #, c-format
 msgid ""
 "\n"
@@ -8839,7 +8839,7 @@ msgstr ""
 "%s\n"
 "(Nome do tema não encontrado).\n"
 
-#: src/dialogs.c:4376
+#: src/dialogs.c:4374
 msgid ""
 "Changes made to this clip have not been saved or backed up.\n"
 "\n"
@@ -8850,7 +8850,7 @@ msgstr ""
 "\n"
 "Realmente deseja fechar?"
 
-#: src/dialogs.c:4382
+#: src/dialogs.c:4380
 #, c-format
 msgid ""
 "All files will be irrevocably deleted from the working directory\n"
@@ -8859,7 +8859,7 @@ msgid ""
 "Click 3 times on the 'Yes' button to confirm you understand\n"
 msgstr ""
 
-#: src/dialogs.c:4390
+#: src/dialogs.c:4388
 #, fuzzy
 msgid ""
 "<big>You have chosen to change the working directory.\n"
@@ -8880,7 +8880,7 @@ msgstr ""
 "Como alternativa, pressione Cancelar para restaurar o diretório de trabalho "
 "para a sua configuração original."
 
-#: src/dialogs.c:4400
+#: src/dialogs.c:4398
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -8893,7 +8893,7 @@ msgstr ""
 "preferências entrem em vigor. \n"
 "Clique em OK para continuar.\n"
 
-#: src/dialogs.c:4406
+#: src/dialogs.c:4404
 #, c-format
 msgid ""
 "\n"
@@ -8906,7 +8906,7 @@ msgstr ""
 "%s\n"
 "já existe. Você gostaria de rescrevê-lo?\n"
 
-#: src/dialogs.c:4419
+#: src/dialogs.c:4417
 msgid ""
 "\n"
 "\n"
@@ -8929,7 +8929,7 @@ msgstr ""
 "e taxas de processamento.\n"
 "\n"
 
-#: src/dialogs.c:4437
+#: src/dialogs.c:4435
 #, c-format
 msgid ""
 "\n"
@@ -8942,7 +8942,7 @@ msgstr ""
 "para permitir que outros aplicativos se conectem a ele.\n"
 "Deseja permitir isso (somente para esta sessão) ?\n"
 
-#: src/dialogs.c:4474
+#: src/dialogs.c:4472
 #, c-format
 msgid ""
 "Alternately, you can try running\n"
@@ -8953,7 +8953,7 @@ msgstr ""
 "  %s %s\n"
 " de um terminal de linha de comando\n"
 
-#: src/dialogs.c:4485
+#: src/dialogs.c:4483
 #, c-format
 msgid ""
 "The following error occurred when running %s:\n"
@@ -8962,32 +8962,32 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/dialogs.c:4488
+#: src/dialogs.c:4486
 #, fuzzy, c-format
 msgid "LiVES was not able to run the programe %s\n"
 msgstr "O LiVES não conseguiu abrir o arquivo"
 
-#: src/dialogs.c:4493
+#: src/dialogs.c:4491
 #, fuzzy
 msgid "download"
 msgstr "Baixando clipe"
 
-#: src/dialogs.c:4494
+#: src/dialogs.c:4492
 #, fuzzy
 msgid "by downloading"
 msgstr "Baixando clipe"
 
-#: src/dialogs.c:4496
+#: src/dialogs.c:4494
 #, fuzzy
 msgid "local installation"
 msgstr "continue com a instalação"
 
-#: src/dialogs.c:4497
+#: src/dialogs.c:4495
 #, fuzzy
 msgid "by creating"
 msgstr "Negando"
 
-#: src/dialogs.c:4500
+#: src/dialogs.c:4498
 #, c-format
 msgid ""
 "%sYou may need to reinstall or update %s\n"
@@ -8998,12 +8998,12 @@ msgid ""
 "Please consider the options and then decide how to proceed.\n"
 msgstr ""
 
-#: src/dialogs.c:4521
+#: src/dialogs.c:4519
 #, c-format
 msgid "Proceed with %s"
 msgstr ""
 
-#: src/dialogs.c:4544
+#: src/dialogs.c:4542
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"
@@ -9013,7 +9013,7 @@ msgstr ""
 "O LiVES detetou um esboço multipista de uma sessão antiga.\n"
 "Você gostaria tentar recuperar-o ?\n"
 
-#: src/dialogs.c:4561
+#: src/dialogs.c:4559
 #, c-format
 msgid ""
 "No Sets could be found in the directory\n"
@@ -9030,7 +9030,7 @@ msgstr ""
 " - mude o diretório de trabalho em Preferências, ou\n"
 " - reinicie vidas com a opção -workdir para configurá-lo temporariamente"
 
-#: src/dialogs.c:4579
+#: src/dialogs.c:4577
 #, fuzzy
 msgid "The audio playback speed has been altered for this clip.\n"
 msgstr ""
@@ -9040,12 +9040,12 @@ msgstr ""
 "Clique em 'OK' para exportar na nova velocidade, ou 'Cancelar' para exportar "
 "na velocidade original.\n"
 
-#: src/dialogs.c:4582
+#: src/dialogs.c:4580
 #, c-format
 msgid "The current audio rate (%d) uses a non-standard value\n"
 msgstr ""
 
-#: src/dialogs.c:4587
+#: src/dialogs.c:4585
 #, c-format
 msgid ""
 "\n"
@@ -9054,17 +9054,17 @@ msgid ""
 "What would you like to do ?"
 msgstr ""
 
-#: src/dialogs.c:4603
+#: src/dialogs.c:4601
 #, fuzzy, c-format
 msgid "Use original rate (%d Hz)"
 msgstr "Use uma taxa de áudio de %d Hz%s%s\n"
 
-#: src/dialogs.c:4607
+#: src/dialogs.c:4605
 #, fuzzy, c-format
 msgid "Use adjusted rate (%d Hz)"
 msgstr "Use uma taxa de áudio de %d Hz%s%s\n"
 
-#: src/dialogs.c:4622 src/dialogs.c:4631
+#: src/dialogs.c:4620 src/dialogs.c:4629
 #, fuzzy, c-format
 msgid "Resample to standard rate (%d Hz)"
 msgstr "Use uma taxa de áudio de %d Hz%s%s\n"
@@ -9282,7 +9282,7 @@ msgstr ""
 "\n"
 "Nenhum frame foi gerado.\n"
 
-#: src/effects-weed.c:5149
+#: src/effects-weed.c:5154
 #, c-format
 msgid ""
 "Unable to load plugin %s\n"
@@ -9291,12 +9291,12 @@ msgstr ""
 "Não foi possível carregar o plugin %s\n"
 "O erro foi: %s\n"
 
-#: src/effects-weed.c:5155
+#: src/effects-weed.c:5160
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Erro: plugin %s não tem a função weed_setup().\n"
 
-#: src/effects-weed.c:5188
+#: src/effects-weed.c:5193
 #, c-format
 msgid ""
 "No usable filters found in plugin:\n"
@@ -9305,87 +9305,87 @@ msgstr ""
 "Nenhum filtro utilizável encontrado no plugin:\n"
 "%s\n"
 
-#: src/effects-weed.c:5274
+#: src/effects-weed.c:5279
 #, c-format
 msgid "Plugin %s returned an empty filter !"
 msgstr "O plug-in %s retornou um filtro vazio!"
 
-#: src/effects-weed.c:5304
+#: src/effects-weed.c:5309
 #, c-format
 msgid "%sskipping blacklisted filter %s\n"
 msgstr "%spulando filtro da lista negra %s\n"
 
-#: src/effects-weed.c:5333
+#: src/effects-weed.c:5338
 #, c-format
 msgid "Found duplicate plugin %s"
 msgstr "Plugin duplicado encontrado %s"
 
-#: src/effects-weed.c:5366
+#: src/effects-weed.c:5371
 #, c-format
 msgid "Loaded filter %s in plugin %s"
 msgstr "Filtro %s carregado no plug-in %s"
 
-#: src/effects-weed.c:5389 src/effects-weed.c:6468
+#: src/effects-weed.c:5394 src/effects-weed.c:6473
 msgid "Some plugin directories"
 msgstr "Alguns diretórios de plugins"
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:5447 src/rte_window.c:2089
+#: src/effects-weed.c:5452 src/rte_window.c:2089
 #, c-format
 msgid " - %s plugins -"
 msgstr " -%s plugins -"
 
-#: src/effects-weed.c:5639
+#: src/effects-weed.c:5644
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Carregados com sucesso %d filtros Weed\n"
 
-#: src/effects-weed.c:5756
+#: src/effects-weed.c:5761
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr "Efeito composto %s inválido - tem alvo conflitante_qps\n"
 
-#: src/effects-weed.c:5776
+#: src/effects-weed.c:5781
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr "Efeito composto inválido %s - tem vários parâmetros de transição\n"
 
-#: src/effects-weed.c:5793
+#: src/effects-weed.c:5798
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr ""
 "Efeito composto inválido %s - tem vários parâmetros de volume principal\n"
 
-#: src/effects-weed.c:5913
+#: src/effects-weed.c:5918
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr "Efeito composto inválido %s - deve ter >1 sub-filtro\n"
 
-#: src/effects-weed.c:5935
+#: src/effects-weed.c:5940
 #, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr "Efeito inválido %s encontrado no efeito composto %s, linha %d\n"
 
-#: src/effects-weed.c:5953
+#: src/effects-weed.c:5958
 #, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr "Padrão inválido encontrado no efeito composto %s, linha %d\n"
 
-#: src/effects-weed.c:5966
+#: src/effects-weed.c:5971
 #, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 "Filtro inválido %d para os padrões encontrados no efeito composto %s, linha "
 "%d\n"
 
-#: src/effects-weed.c:5983
+#: src/effects-weed.c:5988
 #, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 "Par. %d inválido para os padrões encontrados no efeito composto% s, linha"
 "% d\n"
 
-#: src/effects-weed.c:6013
+#: src/effects-weed.c:6018
 #, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
@@ -9393,7 +9393,7 @@ msgstr ""
 "Número de valores  inválido para padrões encontrados no efeito composto %s, "
 "linha %d\n"
 
-#: src/effects-weed.c:6050
+#: src/effects-weed.c:6055
 #, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
@@ -9401,12 +9401,12 @@ msgstr ""
 "Valor não booleano inválido para os padrões encontrados no efeito composto "
 "%s, linha %d\n"
 
-#: src/effects-weed.c:6084
+#: src/effects-weed.c:6089
 #, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr "Parâmetro inválido encontrado no efeito composto %s, linha %d\n"
 
-#: src/effects-weed.c:6098
+#: src/effects-weed.c:6103
 #, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
@@ -9414,7 +9414,7 @@ msgstr ""
 "Filtro de saída inválido %d para parâmetros de link encontrados no efeito "
 "composto %s, linha %d\n"
 
-#: src/effects-weed.c:6119
+#: src/effects-weed.c:6124
 #, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
@@ -9422,7 +9422,7 @@ msgstr ""
 "Par. de saída %d inválido para os parâmetros de link encontrados no efeito "
 "composto %s, linha %d\n"
 
-#: src/effects-weed.c:6134
+#: src/effects-weed.c:6139
 #, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
@@ -9431,7 +9431,7 @@ msgstr ""
 "Valor não booleano inválido para escala automática encontrado no efeito "
 "composto %s, linha %d\n"
 
-#: src/effects-weed.c:6147
+#: src/effects-weed.c:6152
 #, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
@@ -9439,7 +9439,7 @@ msgstr ""
 "Inválido filtro de entrada %d para os parâmetros de link encontrado no "
 "efeito composto %s, linha %d\n"
 
-#: src/effects-weed.c:6164
+#: src/effects-weed.c:6169
 #, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
@@ -9447,12 +9447,12 @@ msgstr ""
 "Inválido parâmetro  de entrada %d para parâmetros de link encontrado no "
 "efeito composto %s, linha %d\n"
 
-#: src/effects-weed.c:6196
+#: src/effects-weed.c:6201
 #, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr "Link de canal inválido encontrado no efeito composto %s, linha %d\n"
 
-#: src/effects-weed.c:6210
+#: src/effects-weed.c:6215
 #, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
@@ -9461,7 +9461,7 @@ msgstr ""
 "Filtro de saída %d inválido para canais de link encontrados no efeito "
 "composto %s, linha %d\n"
 
-#: src/effects-weed.c:6231
+#: src/effects-weed.c:6236
 #, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
@@ -9469,7 +9469,7 @@ msgstr ""
 "Canal de saída %d inválido para parâmetros de link encontradosno efeito "
 "composto %s, linha %d\n"
 
-#: src/effects-weed.c:6244
+#: src/effects-weed.c:6249
 #, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
@@ -9477,7 +9477,7 @@ msgstr ""
 "Filtro de entrada %d inválido para canais de link encontrado no efeito "
 "composto %s, linha %d\n"
 
-#: src/effects-weed.c:6265
+#: src/effects-weed.c:6270
 #, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
@@ -9485,42 +9485,42 @@ msgstr ""
 "Canal de entrada %d inválido para os parâmetros de link encontrado no efeito "
 "composto %s, linha %d\n"
 
-#: src/effects-weed.c:6303
+#: src/effects-weed.c:6308
 #, c-format
 msgid "Compound:%s"
 msgstr "Composto:%s"
 
-#: src/effects-weed.c:6364
+#: src/effects-weed.c:6369
 #, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr "%d filtros compostos carregados com sucesso\n"
 
-#: src/effects-weed.c:7117
+#: src/effects-weed.c:7125
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr "O efeito %s não pode ser usado com este reprodutor de áudio.\n"
 
-#: src/effects-weed.c:7296
+#: src/effects-weed.c:7304
 #, c-format
 msgid "Failed to start instance %s, (%s)\n"
 msgstr "Falha ao iniciar a instância %s, (%s)\n"
 
-#: src/effects-weed.c:7373
+#: src/effects-weed.c:7385
 #, c-format
 msgid "Unable to start generator %s (error code: %d)\n"
 msgstr "Não foi possível iniciar o gerador %s (código de erro: %d)\n"
 
-#: src/effects-weed.c:9072
+#: src/effects-weed.c:9086
 #, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr "Falha ao iniciar o gerador %s (%s)\n"
 
-#: src/effects-weed.c:9191
+#: src/effects-weed.c:9205
 #, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr "Falha ao iniciar o gerador %s, (%s)\n"
 
-#: src/effects-weed.c:10110
+#: src/effects-weed.c:10124
 #, c-format
 msgid "%s [unstable]"
 msgstr "%s  [instável]"
@@ -12628,7 +12628,7 @@ msgstr "Atual"
 msgid "Rate (Hz) "
 msgstr "Taxa (Hz) "
 
-#: src/resample.c:1895 src/resample.c:2032 src/player.c:3951
+#: src/resample.c:1895 src/resample.c:2032 src/player.c:3948
 msgid "Channels"
 msgstr "Canais"
 
@@ -12636,7 +12636,7 @@ msgstr "Canais"
 msgid "Sample Size "
 msgstr "Tamanho da Amostra "
 
-#: src/resample.c:1918 src/resample.c:2095 src/player.c:3956
+#: src/resample.c:1918 src/resample.c:2095 src/player.c:3953
 msgid "Signed"
 msgstr "Assinalado"
 
@@ -15529,17 +15529,17 @@ msgstr "grv ?? MB"
 msgid "Closed clip %s\n"
 msgstr "Clipe %s fechado\n"
 
-#: src/user-interface.c:51 src/user-interface.c:59
+#: src/user-interface.c:50 src/user-interface.c:58
 #, c-format
 msgid "<%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "<%s> %dx%d : %d quadros %d bpp %.3f qps"
 
-#: src/user-interface.c:56
+#: src/user-interface.c:55
 #, c-format
 msgid "<%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "<%s> %dx%d : ??? quadros ??? bpp %.3f qps"
 
-#: src/user-interface.c:66
+#: src/user-interface.c:65
 msgid "<No File>"
 msgstr "<Nenhum arquivo>"
 
@@ -16420,31 +16420,31 @@ msgstr ""
 "LiVES não conseguiu capturar esta imagem\n"
 "\n"
 
-#: src/player.c:3941
+#: src/player.c:3938
 #, fuzzy
 msgid "Source"
 msgstr "Fonte: %s"
 
-#: src/player.c:3949
+#: src/player.c:3946
 #, fuzzy
 msgid "Rate Hz"
 msgstr "Taxa (Hz) "
 
-#: src/player.c:3953
+#: src/player.c:3950
 #, fuzzy
 msgid "Sample size (bits)"
 msgstr "Tamanho da Amostra "
 
-#: src/player.c:3958
+#: src/player.c:3955
 #, fuzzy
 msgid "Endian"
 msgstr "Big Endian"
 
-#: src/player.c:3966
+#: src/player.c:3963
 msgid "Is float"
 msgstr ""
 
-#: src/player.c:3968
+#: src/player.c:3965
 #, fuzzy
 msgid "Interleaved"
 msgstr "Desentrelaçar"
@@ -16564,24 +16564,24 @@ msgid ""
 "Directory.\n"
 msgstr ""
 
-#: src/player-control.c:225
+#: src/player-control.c:226
 #, c-format
 msgid "Average FPS was %.4f (%d frames in clock time of %f)\n"
 msgstr "O QPS médio era %.4f (%d quadros no tempo do relógio de %f)\n"
 
-#: src/player-control.c:450
+#: src/player-control.c:454
 msgid "recording aborted by preview.\n"
 msgstr "gravação cancelada pela visualização.\n"
 
-#: src/player-control.c:453
+#: src/player-control.c:457
 msgid "recording aborted by clipboard playback.\n"
 msgstr "gravação cancelada pela visualização.\n"
 
-#: src/player-control.c:455
+#: src/player-control.c:459
 msgid "Recording performance..."
 msgstr "Gravando performance..."
 
-#: src/player-control.c:1469
+#: src/player-control.c:1475
 #, c-format
 msgid ""
 "\n"

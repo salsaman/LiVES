@@ -911,20 +911,20 @@ LIVES_GLOBAL_INLINE void lives_hooks_clear(lives_hook_stack_t **hstacks, int typ
 
 LIVES_GLOBAL_INLINE void lives_hooks_clear_all(lives_hook_stack_t **hstacks, int ntypes) {
   if (hstacks)
-  for (int i = 0; i < ntypes; i++) {
-    pthread_mutex_t *hmutex = hstacks[i]->mutex;
-    lives_hooks_clear(hstacks, i);
-    while (1) {
-      lives_nanosleep_until_zero(hstacks[i]->flags & STACK_TRIGGERING);
-      PTMLH;
-      if (hstacks[i]->flags & STACK_TRIGGERING) PTMUH;
-      else break;
+    for (int i = 0; i < ntypes; i++) {
+      pthread_mutex_t *hmutex = hstacks[i]->mutex;
+      lives_hooks_clear(hstacks, i);
+      while (1) {
+        lives_nanosleep_until_zero(hstacks[i]->flags & STACK_TRIGGERING);
+        PTMLH;
+        if (hstacks[i]->flags & STACK_TRIGGERING) PTMUH;
+        else break;
+      }
+      PTMUH;
+      pthread_mutex_destroy(hstacks[i]->mutex);
+      lives_free(hstacks[i]->mutex);
+      lives_free(hstacks[i]);
     }
-    PTMUH;
-    pthread_mutex_destroy(hstacks[i]->mutex);
-    lives_free(hstacks[i]->mutex);
-    lives_free(hstacks[i]);
-  }
 }
 
 
@@ -1057,37 +1057,37 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
           && !((xflags & HOOK_INVALIDATE_DATA) || cfinv != 0)) continue;
 
       if (fmatch && (xflags & HOOK_UNIQUE_FUNC)) {
-	// skip over if the target stack is triggering
-	if (!(hstacks[type]->flags & STACK_TRIGGERING)) {
-	  // unique_func -> maintain only 1st fn match
-	  // with unique replace -> also replace 1st with our data
-	  if (!ret_closure) {
-	    if (xflags & HOOK_UNIQUE_DATA) {
-	      if (!fn_data_match(lpt2, lpt, maxp)) continue;
-	      if (!fn_data_match(lpt2, lpt, 0)) {
-		fn_data_replace(lpt2, lpt);
-	      }
-	    }
-	    ret_closure = closure;
-	    continue;
-	  }
-	  if (closure->flags & HOOK_STATUS_RUNNING) closure->flags |= HOOK_STATUS_REMOVE;
-	  else {
-	    boolean isblock = FALSE;
-	    hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, cblist, FALSE);
-	    if (closure->flags & HOOK_CB_BLOCK) {
-	      isblock = TRUE;
-	      lives_proc_thread_ref(lpt2);
-	    }
-	    
-	    lives_closure_free(closure);
+        // skip over if the target stack is triggering
+        if (!(hstacks[type]->flags & STACK_TRIGGERING)) {
+          // unique_func -> maintain only 1st fn match
+          // with unique replace -> also replace 1st with our data
+          if (!ret_closure) {
+            if (xflags & HOOK_UNIQUE_DATA) {
+              if (!fn_data_match(lpt2, lpt, maxp)) continue;
+              if (!fn_data_match(lpt2, lpt, 0)) {
+                fn_data_replace(lpt2, lpt);
+              }
+            }
+            ret_closure = closure;
+            continue;
+          }
+          if (closure->flags & HOOK_STATUS_RUNNING) closure->flags |= HOOK_STATUS_REMOVE;
+          else {
+            boolean isblock = FALSE;
+            hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, cblist, FALSE);
+            if (closure->flags & HOOK_CB_BLOCK) {
+              isblock = TRUE;
+              lives_proc_thread_ref(lpt2);
+            }
 
-	    if (isblock) {
-	      ret_closure->flags |= HOOK_CB_BLOCK;
-	      replace_hook(lpt2, ret_closure->proc_thread);
-	    }
-	  }
-	}
+            lives_closure_free(closure);
+
+            if (isblock) {
+              ret_closure->flags |= HOOK_CB_BLOCK;
+              replace_hook(lpt2, ret_closure->proc_thread);
+            }
+          }
+        }
         continue;
       }
 
@@ -1249,7 +1249,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
     if (!closure || !closure->proc_thread) continue;
     closure->flags |= HOOK_STATUS_ACTIONED;
   }
-  
+
   do {
     // since it would affect performance to hold the mutex lock across callbacks,
     // we release the lock whilst running them. This implies that entries can be removed or added
@@ -1262,7 +1262,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
     retval = FALSE;
     if (!hmulocked) {
       if (type == LIVES_GUI_HOOK && is_fg_thread()) {
-	if (PTMTLH) goto trigdone;
+        if (PTMTLH) goto trigdone;
       } else PTMLH;
       hmulocked = TRUE;
     }
@@ -1285,14 +1285,14 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       if (!lpt) continue;
 
       if (closure->flags & HOOK_STATUS_REMOVE) {
-	hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, list, FALSE);
-	// for oneshot triggers, we remove a ref, so caller should ref anything important before
-	// triggering hooks
-	//g_print("free one-shot hook %s\n", lives_proc_thread_show_func_call(lpt));
-	PTMUH;
-	lives_proc_thread_unref(lpt);
-	lives_closure_free(closure);
-	break;
+        hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, list, FALSE);
+        // for oneshot triggers, we remove a ref, so caller should ref anything important before
+        // triggering hooks
+        //g_print("free one-shot hook %s\n", lives_proc_thread_show_func_call(lpt));
+        PTMUH;
+        lives_proc_thread_unref(lpt);
+        lives_closure_free(closure);
+        break;
       }
 
       if (weed_plant_has_leaf(lpt, LIVES_LEAF_REPLACEMENT)) {
@@ -1359,22 +1359,22 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       //if (type == SYNC_WAIT_HOOK) g_print("sync run res: %d\n", bret);
 
       if (closure->flags & (HOOK_OPT_ONESHOT | HOOK_STATUS_REMOVE)) {
-	if (weed_plant_has_leaf(lpt, LIVES_LEAF_REPLACEMENT)) abort();
+        if (weed_plant_has_leaf(lpt, LIVES_LEAF_REPLACEMENT)) abort();
         PTMLH;
         hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, list, FALSE);
         // for oneshot triggers, we remove a ref, so caller should ref anything important before
         // triggering hooks
         //g_print("free one-shot hook %s\n", lives_proc_thread_show_func_call(lpt));
         PTMUH;
-	closure->flags &= ~HOOK_STATUS_REMOVE;
+        closure->flags &= ~HOOK_STATUS_REMOVE;
 
-	if (!(closure->flags & HOOK_CB_BLOCK))
-	  lives_proc_thread_unref(lpt);
-	else
-	  lives_proc_thread_ref(lpt);
+        if (!(closure->flags & HOOK_CB_BLOCK))
+          lives_proc_thread_unref(lpt);
+        else
+          lives_proc_thread_ref(lpt);
 
         lives_closure_free(closure);
-	break;
+        break;
       }
 
       closure->flags &= ~HOOK_STATUS_RUNNING;
@@ -1383,8 +1383,8 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         // combined bool / exit on false
         lives_proc_thread_unref(lpt);
         retval = FALSE;
-	list = NULL;
-	break;
+        list = NULL;
+        break;
       }
 
       // actually should be HOOK_DTL_SINGLE
@@ -1392,29 +1392,28 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
         if (is_fg_thread()) {
           //g_print("done single\n");
           lives_proc_thread_unref(lpt);
-	  list = NULL;
+          list = NULL;
           break;
         }
       }
       lives_proc_thread_unref(lpt);
       break;
     }
-    
+
     if (!list) {
       list = hstacks[type]->stack;
       if (!list) {
-	if (!is_fg_thread() && type == LIVES_GUI_HOOK) {
-	  pthread_mutex_lock(&mainw->all_hstacks_mutex);
-	  mainw->all_hstacks =
-	    lives_list_remove_data(mainw->all_hstacks, hstacks, FALSE);
-	  pthread_mutex_unlock(&mainw->all_hstacks_mutex);
-	}
-      }
-      else {
-	for (; list; list = list->next) {
-	  closure = (lives_closure_t *)list->data;
-	  if (closure) closure->flags &= ~HOOK_STATUS_ACTIONED;
-	}
+        if (!is_fg_thread() && type == LIVES_GUI_HOOK) {
+          pthread_mutex_lock(&mainw->all_hstacks_mutex);
+          mainw->all_hstacks =
+            lives_list_remove_data(mainw->all_hstacks, hstacks, FALSE);
+          pthread_mutex_unlock(&mainw->all_hstacks_mutex);
+        }
+      } else {
+        for (; list; list = list->next) {
+          closure = (lives_closure_t *)list->data;
+          if (closure) closure->flags &= ~HOOK_STATUS_ACTIONED;
+        }
       }
     }
     if (hmulocked) {
@@ -1423,7 +1422,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
     }
   } while (list);
 
- trigdone:
+trigdone:
   hstacks[type]->flags &= ~STACK_TRIGGERING;
 
   if (have_recheck_mutex) {
@@ -1565,15 +1564,15 @@ void lives_hook_remove_by_data(lives_hook_stack_t **hstacks, int type,
       lives_closure_t *closure = (lives_closure_t *)cblist->data;
       cbnext = cblist->next;
       if (closure) {
-	lives_proc_thread_t lpt = closure->proc_thread;
-	if (!lpt || !closure->fdef) continue;
-	if (closure->fdef->function != func) continue;
-	if (data != weed_get_voidptr_value(lpt, PROC_THREAD_PARAM(1), NULL)) continue;
-	if (closure->flags & HOOK_STATUS_RUNNING) closure->flags |= HOOK_STATUS_REMOVE;
-	else {
-	  hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, cblist, FALSE);
-	  lives_closure_free(closure);
-	}
+        lives_proc_thread_t lpt = closure->proc_thread;
+        if (!lpt || !closure->fdef) continue;
+        if (closure->fdef->function != func) continue;
+        if (data != weed_get_voidptr_value(lpt, PROC_THREAD_PARAM(1), NULL)) continue;
+        if (closure->flags & HOOK_STATUS_RUNNING) closure->flags |= HOOK_STATUS_REMOVE;
+        else {
+          hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, cblist, FALSE);
+          lives_closure_free(closure);
+        }
       }
     }
     PTMUH;
@@ -1582,7 +1581,7 @@ void lives_hook_remove_by_data(lives_hook_stack_t **hstacks, int type,
 
 // invalidates cblpt
 void lives_hook_remove_by_lpt(lives_hook_stack_t **hstacks, int type,
-			      lives_proc_thread_t cblpt) {
+                              lives_proc_thread_t cblpt) {
   if (!hstacks) {
     GET_PROC_THREAD_SELF(self);
     if (!self) return;
@@ -1603,9 +1602,9 @@ void lives_hook_remove_by_lpt(lives_hook_stack_t **hstacks, int type,
       lives_proc_thread_t lpt2 = closure->proc_thread;
       cbnext = cblist->next;
       if (cblpt == lpt2) {
-	hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, cblist, FALSE);
-	lives_closure_free(closure);
-	break;
+        hstacks[type]->stack = lives_list_remove_node((LiVESList *)hstacks[type]->stack, cblist, FALSE);
+        lives_closure_free(closure);
+        break;
       }
     }
     PTMUH;
@@ -1715,8 +1714,6 @@ char *cl_flags_desc(uint64_t clflags) {
     fstr = lives_strdup_concat(fstr, ", ", "%s", "FG_THREAD");
   if (clflags & HOOK_OPT_FG_LIGHT)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "FG_LIGHT");
-  if (clflags & HOOK_OPT_FG_HEAVY)
-    fstr = lives_strdup_concat(fstr, ", ", "%s", "FG_HEAVY");
   if (clflags & HOOK_UNIQUE_FUNC)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "UNIQUE_FUNC");
   if (clflags & HOOK_UNIQUE_DATA)

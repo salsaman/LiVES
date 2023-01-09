@@ -312,9 +312,8 @@ typedef uint64_t funcsig_t;
 // hook is GUI related and must be run ONLY by the fg / GUI thread
 #define HOOK_CB_FG_THREAD		(1ull << 8) // force fg service run
 
-// the following correspond directly to LIVES_THRDATTR_LIGHT and LIVES_THRDATTR_HEAVY
+// the following corresponds directly to LIVES_THRDATTR_LIGHT
 #define HOOK_OPT_FG_LIGHT		(1ull << 9)
-#define HOOK_OPT_FG_HEAVY		(1ull << 10)
 
 /// the following bits define how hooks should be added to the stack
 // in case of duplicate functions / data
@@ -607,7 +606,7 @@ boolean lives_proc_thread_trigger_hooks(lives_proc_thread_t, int type);
 void lives_hooks_trigger_async(lives_hook_stack_t **hooks, int type);
 
 lives_proc_thread_t lives_hooks_trigger_async_sequential(lives_hook_stack_t **hstacks, int type, hook_funcptr_t finfunc,
-							 void *findata);
+    void *findata);
 
 void lives_hooks_async_join(lives_hook_stack_t *);
 

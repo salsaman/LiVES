@@ -1822,10 +1822,11 @@ static boolean lives_startup2(livespointer data) {
       set_double_pref(PREF_CPICK_TIME, prefs->cptime);
       set_double_pref(PREF_CPICK_VAR, DEF_CPICK_VAR);
       lives_proc_thread_request_cancel(mainw->helper_procthreads[PT_CUSTOM_COLOURS], FALSE);
-      //lives_proc_thread_join(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+      lives_proc_thread_join_double(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+      lives_proc_thread_unref(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
       // must take care to execute this here or in the function itself, otherwise
       // gtk+ may crash later
-      main_thread_execute_rvoid_pvoid(set_extra_colours);
+      main_thread_execute_void(set_extra_colours, 0);
     }
     mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
   }
@@ -4519,9 +4520,7 @@ retry:
         ncols++;
       } else if (!fixed) var = -var;
 #ifndef VALGRIND_ON
-      //BG_THREADVAR(hook_hints) = HOOK_OPT_FG_HEAVY;
-      main_thread_execute_rvoid_pvoid(set_extra_colours);
-      //BG_THREADVAR(hook_hints) = 0;
+      main_thread_execute_void(set_extra_colours, 0);
 #endif
     }
   } else {
@@ -4539,7 +4538,6 @@ windup:
   palette->nice3.green = palette->nice2.green;
   palette->nice3.blue = palette->nice2.blue;
   palette->nice3.alpha = 1.;
-  //main_thread_execute(set_extra_colours, 0, NULL, "");
   return var;
 }
 #endif

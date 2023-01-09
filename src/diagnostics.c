@@ -1439,12 +1439,11 @@ int run_weed_startup_tests(void) {
     else if (act < 4) {
       weed_set_int_value(plant, key, x);
       fprintf(stderr, "set %s to %d\n", key, x);
-    }
-    else {
+    } else {
       z = weed_get_int_value(plant, key, &werr);
       if (werr == WEED_SUCCESS) {
-	n++;
-	if (z != x) abort();
+        n++;
+        if (z != x) abort();
       }
     }
     free(key);

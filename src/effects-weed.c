@@ -8637,7 +8637,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   // start "playing" but receive frames from a plugin
 
   // RETURNS: 0 on success, or error code. -1 if playback started.
-  
+
   weed_plant_t **out_channels, *channel, *filter, *achan;
   char *filter_name;
   int error, num_channels;

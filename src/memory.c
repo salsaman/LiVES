@@ -754,7 +754,7 @@ void *calloc_bigblock(size_t xsize) {
       /* start = (void *)((size_t)((size_t)((char *)bigblocks[i] + align - 1) / align) * align); */
       /* used[i] = (char *)start - (char *)bigblocks[i]; */
       lives_memset(start, 0, xsize + EXTRA_BYTES);
-      FN_ALLOC_TARGET(calloc_bigblock, start);
+      //FN_ALLOC_TARGET(calloc_bigblock, start);
       return start;
     }
   }
@@ -770,7 +770,7 @@ void *free_bigblock(void *bstart) {
   for (int i = 0; i < NBBLOCKS; i++) {
     if ((char *)bstart >= (char *)bigblocks[i]
         && (char *)bstart - (char *)bigblocks[i] < bmemsize + EXTRA_BYTES) {
-      FN_FREE_TARGET(free_bigblock, bigblocks[i]);
+      //FN_FREE_TARGET(free_bigblock, bigblocks[i]);
       if (used[i] == -1) lives_abort("Bigblock freed twice, Aborting due to probable internal memory errors");
       used[i] = -1;
 #ifdef BBL_TEST

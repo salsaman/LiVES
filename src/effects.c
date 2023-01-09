@@ -1047,7 +1047,8 @@ static boolean _rte_on_off(boolean from_menu, int key) {
         }
         weed_instance_unref(inst);
       } else {
-        //if (!LIVES_IS_PLAYING) {
+        if (!LIVES_IS_PLAYING) mainw->gen_started_play = FALSE;
+
         if (!(weed_init_effect(key))) {
           // ran out of instance slots, no effect assigned, or some other error
           mainw->rte &= ~new_rte;
@@ -1071,6 +1072,8 @@ static boolean _rte_on_off(boolean from_menu, int key) {
       }
 
       filter_mutex_unlock(key);
+
+      if (mainw->gen_started_play) return TRUE;
 
       if (!LIVES_IS_PLAYING)
         // if anything is connected to ACTIVATE, the fx may be activated
@@ -1127,7 +1130,7 @@ static boolean _rte_on_off(boolean from_menu, int key) {
               pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
       }
     }
-  }
+    }
   if (mainw->rendered_fx)
     if (mainw->rendered_fx[0]->menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0]->menuitem)) {
       if (!LIVES_IS_PLAYING

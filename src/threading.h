@@ -109,16 +109,22 @@ typedef struct {
   livespointer user_data;
   uint8_t has_returnval;
   uint8_t is_timer;
-  uint8_t added;
   volatile uint8_t swapped;
   unsigned long funcid;
   char *detsig;
   lives_proc_thread_t proc;
   lives_proc_thread_t compl_cb;
   lives_alarm_t alarm_handle;
-  volatile boolean finished;
-  volatile boolean destroyed;
+  int depth; // governor_loop depth when added
+  volatile int state;
 } lives_sigdata_t;
+
+#define SIGDATA_STATE_NEW	1
+#define SIGDATA_STATE_ADDED	2
+#define SIGDATA_STATE_RUNNING	3
+#define SIGDATA_STATE_POSTPONED	4
+#define SIGDATA_STATE_FINISHED	5
+#define SIGDATA_STATE_DESTROYED 6
 
 lives_sigdata_t *lives_sigdata_new(lives_proc_thread_t lpt, boolean is_timer);
 
@@ -414,23 +420,45 @@ boolean _main_thread_execute(lives_funcptr_t, const char *fname, int return_type
 boolean _main_thread_execute_rvoid(lives_funcptr_t func, const char *fname, const char *args_fmt, ...) ;
 boolean _main_thread_execute_pvoid(lives_funcptr_t func, const char *fname, int return_type, void *retloc);
 
-#define main_thread_execute(func, return_type, retloc, args_fmt, ...) \
-  ((!args_fmt || !*args_fmt) ?  _main_thread_execute_pvoid((lives_funcptr_t)(func), #func, (return_type), retloc) \
-   : _main_thread_execute((lives_funcptr_t)(func), #func, (return_type), retloc, args_fmt, __VA_ARGS__))
+// real params, real ret_tpye
+#define MAIN_THREAD_EXECUTE(func, return_type, retloc, args_fmt, ...) do { \
+    if (!is_fg_thread())						\
+      _main_thread_execute((lives_funcptr_t)func, #func, return_type, retloc, args_fmt, __VA_ARGS__); \
+    else *retloc = func(__VA_ARGS__);					\
+  } while (0)
 
-#define main_thread_execute_pvoid(func, return_type, retloc)		\
-  (_main_thread_execute_pvoid((lives_funcptr_t)(func), #func, (return_type), retloc))
+// real params, ret_type 0 or -1
+#define MAIN_THREAD_EXECUTE_RVOID(func, return_type, args_fmt, ...) do { \
+    if (!is_fg_thread())						\
+      _main_thread_execute((lives_funcptr_t)func, #func, return_type, NULL, args_fmt, __VA_ARGS__); \
+    else func(__VA_ARGS__);						\
+  } while (0)
 
-#define main_thread_execute_rvoid(func, args_fmt, ...)			\
-(_main_thread_execute_rvoid((lives_funcptr_t)(func), #func, args_fmt, __VA_ARGS__))
+// void params, real return_type
+#define MAIN_THREAD_EXECUTE_PVOID(func, return_type, retloc) do {	\
+    if (!is_fg_thread())					\
+      _main_thread_execute((lives_funcptr_t)func, #func, return_type, retloc, "", NULL); \
+    else *retloc = func();						\
+    } while (0)
 
-#define main_thread_execute_rvoid_pvoid(func) (_main_thread_execute_pvoid((lives_funcptr_t)(func), #func, 0, NULL))
-#define main_thread_execute_pvoid_rvoid(func) (_main_thread_execute_pvoid((lives_funcptr_t)(func), #func, 0, NULL))
+// void params, ret_type 0 or 1
+#define MAIN_THREAD_EXECUTE_VOID(func, return_type) do {				\
+    if (!is_fg_thread())						\
+      _main_thread_execute((lives_funcptr_t)func, #func, return_type, NULL, "", NULL); \
+    else func();						\
+  } while (0)
 
-#define MAIN_THREAD_EXECUTE(func, return_type, retloc, args_fmt, ...)	\
-  main_thread_execute(func, return_type, retloc, args_fmt, __VA_ARGS__)
+#define main_thread_execute(func, return_type, retloc, args_fmt, ...)	\
+  do {MAIN_THREAD_EXECUTE(func, return_type, retloc, args_fmt, __VA_ARGS__);} while (0)
 
-#define MAIN_THREAD_EXECUTE_VOID(func, args_fmt, ...) (main_thread_execute_rvoid(func, args_fmt, __VA_ARGS__))
+#define main_thread_execute_rvoid(func, return_type, args_fmt, ...) \
+  do {MAIN_THREAD_EXECUTE_RVOID(func, return_type, args_fmt, __VA_ARGS__);} while (0)
+
+#define main_thread_execute_pvoid(func, return_type, retloc)	\
+  do {MAIN_THREAD_EXECUTE_PVOID(func, return_type, retloc);} while (0)
+
+#define main_thread_execute_void(func, return_type)			\
+  do {MAIN_THREAD_EXECUTE_VOID(func, return_type);} while (0)
 
 boolean lives_proc_thread_execute(lives_proc_thread_t lpt, void *rloc);
 // see also: void fg_service_call(lives_proc_thread_t lpt, void *retval);
@@ -448,7 +476,13 @@ void lives_proc_thread_remove_nullify(lives_proc_thread_t, void **ptr);
 // the thread can also be cancelled, paused
 boolean lives_proc_thread_is_running(lives_proc_thread_t);
 
+// test if lpt is queued for execution
 boolean lives_proc_thread_is_queued(lives_proc_thread_t);
+
+boolean lives_proc_thread_is_paused(lives_proc_thread_t);
+
+// test if lpt is in a hook stack
+boolean lives_proc_thread_is_stacked(lives_proc_thread_t);
 
 boolean lives_proc_thread_is_invalid(lives_proc_thread_t);
 
@@ -456,8 +490,11 @@ boolean lives_proc_thread_is_invalid(lives_proc_thread_t);
 boolean lives_proc_thread_is_done(lives_proc_thread_t);
 boolean lives_proc_thread_is_idling(lives_proc_thread_t);
 boolean lives_proc_thread_exited(lives_proc_thread_t);
+
+// this test is ONLY valid inside the COMPLETED hook callbacks
 boolean lives_proc_thread_will_destroy(lives_proc_thread_t);
 
+//test if lpt is wating for sync_ready()
 boolean lives_proc_thread_sync_waiting(lives_proc_thread_t);
 
 boolean lives_proc_thread_check_finished(lives_proc_thread_t);
@@ -486,7 +523,7 @@ boolean lives_proc_thread_get_pauseable(lives_proc_thread_t);
 // will processing continue (after calling and returning from any unpaused hook callbacks)
 boolean lives_proc_thread_request_pause(lives_proc_thread_t);
 void lives_proc_thread_pause(lives_proc_thread_t self);
-boolean lives_proc_thread_get_paused(lives_proc_thread_t);
+// cf. is_paused
 boolean lives_proc_thread_get_pause_requested(lives_proc_thread_t);
 
 // ask a paused proc_thread to resume. Processing only continues after this has been called, and any

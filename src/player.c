@@ -2492,13 +2492,14 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
 
 // player will create this as
 static boolean update_gui(void) {
+  g_print("UPD st is %d\n", get_gov_status());
+
   /* if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) { */
   /*   lives_widget_queue_draw_and_update(mainw->preview_image); */
   /* } else { */
   /*   lives_widget_queue_draw_and_update(mainw->play_image); */
   /* } */
 
-  g_print("UPD st is %d\n", get_gov_status());
   mainw->debug = TRUE;
   if (is_gov_running()) {
     mainw->clutch = FALSE;

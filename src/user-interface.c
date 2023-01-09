@@ -36,8 +36,7 @@ static void _pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
 
 void pop_to_front(LiVESWidget *dialog, LiVESWidget *extra) {
   if (!mainw->is_ready && !is_fg_thread()) {
-    main_thread_execute(_pop_to_front, 0, NULL, "VV",
-                        dialog, extra);
+    main_thread_execute_rvoid(_pop_to_front, 0, "vv", dialog, extra);
   } else _pop_to_front(dialog, extra);
 }
 

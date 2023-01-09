@@ -2198,7 +2198,6 @@ boolean move_event_left(weed_event_list_t *event_list, weed_event_t *event, bool
 static void set_render_choice(LiVESToggleButton * togglebutton, livespointer choice) {
   if (lives_toggle_button_get_active(togglebutton)) {
     render_choice = LIVES_POINTER_TO_INT(choice);
-    lives_widget_destroy(lives_widget_get_toplevel(togglebutton));
   }
 }
 
@@ -5642,8 +5641,8 @@ static LiVESResponseType _show_rc_dlg(void) {
 
 
 static LiVESResponseType show_rc_dlg(void) {
-  LiVESResponseType resp;
-  main_thread_execute_pvoid(_show_rc_dlg, WEED_SEED_INT, &resp);
+  LiVESResponseType resp, *presp = &resp;
+  main_thread_execute_pvoid(_show_rc_dlg, WEED_SEED_INT, presp);
   return resp;
 }
 

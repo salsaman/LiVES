@@ -1913,7 +1913,7 @@ NIRVA_TYPEDEF_ENUM(nirva_hook_number,
                    // for the inital segment, TX_START is triggered instead
                    // for segment end, FINISHED_HOOK runs instead
                    // hook_stack is in the transform bundle
-                   SEGMENT_START_HOOK,
+                   SEGMENT_START_HOOK, // 40
 
                    // this hook may be triggered after a transform completes
                    // it will highlight any IN_OUT attrs which have been altered

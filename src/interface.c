@@ -3707,7 +3707,7 @@ void redraw_timeline(int clipno) {
       // or if we are running it adds to deferral hooks
 
       THREADVAR(hook_hints) = HOOK_UNIQUE_REPLACE | HOOK_CB_PRIORITY;
-      main_thread_execute(redraw_timeline, 0, NULL, "i", clipno);
+      main_thread_execute_rvoid(redraw_timeline, 0, "i", clipno);
       THREADVAR(hook_hints) = 0;
       return;
     }

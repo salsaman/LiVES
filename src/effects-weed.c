@@ -4759,7 +4759,7 @@ LIVES_GLOBAL_INLINE weed_error_t weed_leaf_set_autofree(weed_plant_t *plant, con
   return weed_leaf_clear_flagbits(plant, key, WEED_FLAG_FREE_ON_DELETE);
 }
 
-
+static int nplants = 0;
 weed_error_t weed_plant_free_host(weed_plant_t *plant) {
   // delete even undeletable plants
   weed_error_t err;
@@ -4767,15 +4767,20 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant) {
   err = _weed_plant_free(plant);
   if (err == WEED_ERROR_UNDELETABLE) {
     weed_plant_autofree(plant);
+    nplants--;
     return _weed_plant_free(plant);
   }
+  nplants--;
   return err;
 }
 
 
-/* weed_plant_t *weed_plant_new_host(int type) { */
-/*   return _weed_plant_new(type); */
-/* } */
+weed_plant_t *weed_plant_new_host(int type) {
+  nplants++;
+  //g_print("nplants is %d\n", nplants);
+  //if (nplants > 200) break_me("more plants");
+  return _weed_plant_new(type);
+}
 
 
 weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key) {
@@ -6857,7 +6862,9 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
 
   char *key;
 
-  int nfilters, ninpar = 0, error;
+  int nfilters, ninpar = 0;
+
+  weed_error_t error;
 
   int xcnumx = 0, x, poffset = 0;
 
@@ -7075,6 +7082,7 @@ boolean weed_init_effect(int hotkey) {
   int rte_keys = mainw->rte_keys;
   int inc_count, outc_count;
   int idx, ch, flags = 0;
+  int retcode;
 
   mainw->error = FALSE;
 
@@ -7356,8 +7364,12 @@ deinit2:
     // enable param recording, in case the instance was obtained from a param window
     if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD)) weed_leaf_delete(inst, WEED_LEAF_HOST_NORECORD);
 
-    error = weed_generator_start(inst, hotkey);
-    if (error != WEED_SUCCESS) {
+    retcode = weed_generator_start(inst, hotkey);
+    if (retcode == -1) {
+      // playback triggered
+
+    }
+    if (retcode != 0) {
       int weed_error;
       char *filter_name;
       if (fg_modeswitch) {
@@ -7368,9 +7380,9 @@ deinit2:
       weed_call_deinit_func(inst);
       weed_instance_unref(inst);
 
-      if (error != 2) {
+      if (retcode != 2) {
         filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &weed_error);
-        d_print(_("Unable to start generator %s (error code: %d)\n"), filter_name, error);
+        d_print(_("Unable to start generator %s (error code: %d)\n"), filter_name, retcode);
         lives_free(filter_name);
       } else mainw->error = TRUE;
       if (mainw->num_tr_applied && mainw->current_file > -1) {
@@ -8624,6 +8636,8 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   // cf. yuv4mpeg.c
   // start "playing" but receive frames from a plugin
 
+  // RETURNS: 0 on success, or error code. -1 if playback started.
+  
   weed_plant_t **out_channels, *channel, *filter, *achan;
   char *filter_name;
   int error, num_channels;
@@ -8715,7 +8729,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   }
 
   out_channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_OUT_CHANNELS, &num_channels);
-  if (num_channels  == 0) {
+  if (num_channels == 0) {
     cfile->ext_src = NULL;
     cfile->ext_src_type = LIVES_EXT_SRC_NONE;
     close_current_file(mainw->pre_src_file);
@@ -8800,7 +8814,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       // also stops the (now defunct) instance being unreffed
       mainw->gen_started_play = TRUE;
     }
-    return 0;
+    return -1;
   } else {
     // already playing
     if (old_file != -1 && mainw->files[old_file]) {
@@ -11851,6 +11865,8 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
   char *prop;
   int i = (int)nleaves;
   int pd_needed = 0, pd_reqs = 0;
+
+  if (!proplist) break_me("null proplist");
 
   if (WEED_IS_LAYER(plant)) pd_needed = 1;
 

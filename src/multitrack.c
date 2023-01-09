@@ -1847,7 +1847,7 @@ static boolean on_drag_filter_end(LiVESWidget * widget, LiVESXEventButton * even
     nb_ignore = FALSE;
     // apply to block
     mt->putative_block = NULL;
-    lives_timer_add(0, mt_add_block_effect_idle, mt); // work around issue in gtk+
+    lives_timer_add_simple(0, mt_add_block_effect_idle, mt); // work around issue in gtk+
   } else if (nins == 2) {
     // transition
     if (lives_list_length(mt->selected_tracks) == 2 && mt->region_start != mt->region_end) {
@@ -5556,11 +5556,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->quit), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(mt_quit_activate), (livespointer)mt);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->load_vals), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->load_vals), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(mt_load_vals_toggled), (livespointer)mt);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->ac_audio_check), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->ac_audio_check), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(mt_ac_audio_toggled), (livespointer)mt);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->aload_subs), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->aload_subs), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_boolean_toggled), &prefs->autoload_subs);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->clipedit), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(multitrack_end_cb), (livespointer)mt);
@@ -5598,11 +5598,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                             LIVES_GUI_CALLBACK(on_rewind_activate), NULL);
   mt->sepwin_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->sepwin), LIVES_WIDGET_ACTIVATE_SIGNAL,
                     LIVES_GUI_CALLBACK(on_sepwin_activate), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(full_screen), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(full_screen), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_full_screen_activate), NULL);
-  mt->loop_cont_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->loop_continue), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  mt->loop_cont_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->loop_continue), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_loop_cont_activate), NULL);
-  mt->mute_audio_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->mute_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  mt->mute_audio_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->mute_audio), LIVES_WIDGET_TOGGLED_SIGNAL,
                         LIVES_GUI_CALLBACK(on_mute_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->rename_track), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_rename_track_activate), (livespointer)mt);
@@ -5642,21 +5642,21 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                             LIVES_GUI_CALLBACK(on_clear_event_list_activate), (livespointer)mt);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->view_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(mt_view_audio_toggled), (livespointer)mt);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->change_max_disp), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->change_max_disp), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(mt_change_max_disp_tracks), (livespointer)mt);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->render_vid), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->render_vid), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(mt_render_vid_toggled), (livespointer)mt);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->render_aud), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->render_aud), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(mt_render_aud_toggled), (livespointer)mt);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->normalise_aud), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->normalise_aud), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(mt_norm_aud_toggled), (livespointer)mt);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(ign_ins_sel), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(ign_ins_sel), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(mt_ign_ins_sel_toggled), (livespointer)mt);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(show_frame_events), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(show_frame_events), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(show_frame_events_activate), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(ccursor), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(ccursor), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(mt_center_on_cursor), (livespointer)mt);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->follow_play), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->follow_play), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(mt_fplay_toggled), (livespointer)mt);
   lives_signal_connect(LIVES_GUI_OBJECT(zoom_in), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(mt_zoom_in), (livespointer)mt);
@@ -9418,7 +9418,7 @@ static void _clear_context(lives_mt * mt) {
 }
 
 void clear_context(lives_mt * mt) {
-  main_thread_execute(_clear_context, 0, NULL, "v", mt);
+  main_thread_execute_rvoid(_clear_context, 0, "v", mt);
 }
 
 
@@ -11882,7 +11882,7 @@ static void _animate_multitrack(lives_mt * mt) {
 
 
 void animate_multitrack(lives_mt * mt) {
-  main_thread_execute(_animate_multitrack, 0, NULL, "v", mt);
+  main_thread_execute_rvoid(_animate_multitrack, 0, "v", mt);
 }
 
 ////////////////////////////////////////////////////
@@ -14740,7 +14740,7 @@ void multitrack_playall(lives_mt * mt) {
     boolean had_audio = mt->has_audio_file;
     mt->pb_start_event = NULL;
     mt->has_audio_file = TRUE;
-    main_thread_execute(on_preview_clicked, 0, NULL, "vv", mainw->proc_ptr->preview_button, NULL);
+    main_thread_execute_rvoid(on_preview_clicked, 0, "vv", LIVES_BUTTON(mainw->proc_ptr->preview_button), NULL);
     //on_preview_clicked(LIVES_BUTTON(
     mt->has_audio_file = had_audio;
   } else {

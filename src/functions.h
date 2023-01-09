@@ -145,8 +145,8 @@ extern const lookup_tab crossrefs[];
 #define FUNCSIG_INT_PLANTP 			       			0X0000001E
 #define FUNCSIG_STRING_INT 			      			0X00000041
 #define FUNCSIG_STRING_BOOL 			      			0X00000043
-#define FUNCSIG_VOIDP_VOIDP 				       		0X000000DD
 #define FUNCSIG_VOIDP_BOOL 				       		0X000000D3
+#define FUNCSIG_VOIDP_VOIDP 				       		0X000000DD
 #define FUNCSIG_VOIDP_STRING 				       		0X000000D4
 #define FUNCSIG_VOIDP_DOUBLE 				       		0X000000D2
 #define FUNCSIG_VOIDP_INT64 				       		0X000000D5
@@ -169,11 +169,11 @@ extern const lookup_tab crossrefs[];
 #define FUNCSIG_STRING_STRING_VOIDP_INT					0X000044D1
 #define FUNCSIG_STRING_DOUBLE_INT_STRING       				0X00004214
 #define FUNCSIG_INT_INT_BOOL_VOIDP					0X0000113D
+#define FUNCSIG_VOIDP_INT_FUNCP_VOIDP				       	0X0000D1CD
 // 5p
 #define FUNCSIG_VOIDP_INT_INT_INT_INT					0X000D1111
 #define FUNCSIG_INT_INT_INT_BOOL_VOIDP					0X0001113D
 #define FUNCSIG_VOIDP_STRING_STRING_INT64_INT			       	0X000D4451
-#define FUNCSIG_PLANTP_VOIDP_INT_FUNCP_VOIDP			       	0X000ED1CD
 #define FUNCSIG_PLANTP_INT_INT_INT_INT					0X000E1111
 // 6p
 #define FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP		       	0X0044D14D
@@ -216,13 +216,19 @@ typedef uint64_t funcsig_t;
 #define _LINE_REF_ 0
 #endif
 
+#define FN_DEBUG_OUT(func) g_print("Thread %d in func %s at %s, line %d\n", \
+				   THREADVAR(idx), #func, _FILE_REF_, _LINE_REF_)
+#define FN_DEBUG_EXIT_OUT g_print("Thread %d exiting func at %s, line %d\n", \
+				  THREADVAR(idx), _FILE_REF_, _LINE_REF_)
+
 #define ____FUNC_ENTRY____(func, rettype, args_fmt) \
-  ((THREADVAR(func_stack) = lives_list_prepend(THREADVAR(func_stack),	\
-					       QUOTEME(func)))		\
-   ? add_fn_lookup((lives_funcptr_t)(func), QUOTEME(func), 0, rettype, args_fmt, \
-		   _FILE_REF_, _LINE_REF_) : NULL)
+  do {THREADVAR(func_stack) = lives_list_prepend(THREADVAR(func_stack),	 #func); \
+    FN_DEBUG_OUT(func);							\
+    add_fn_lookup((lives_funcptr_t)(func), QUOTEME(func), 0, rettype, args_fmt, \
+		  _FILE_REF_, _LINE_REF_);} while (0);
 
 #define ____FUNC_EXIT____ do {LiVESList *list = THREADVAR(func_stack);		\
+    FN_DEBUG_EXIT_OUT;							\
     THREADVAR(func_stack) = list->next; list->next = NULL; lives_list_free(list);} while (0);
 
 // calls (void)func(args), and before or after calling it, adds a fn note with a ptr / file / line
@@ -301,7 +307,7 @@ typedef uint64_t funcsig_t;
 #define HOOK_CB_PRIORITY		(1ull << 1) // prepend, not append
 
 // callback will only be run at most one time, and then removed from the stack
-#define HOOK_OPT_ONESHOT		(1ull << 3)
+#define HOOK_OPT_ONESHOT		(1ull << 2)
 
 // hook is GUI related and must be run ONLY by the fg / GUI thread
 #define HOOK_CB_FG_THREAD		(1ull << 8) // force fg service run
@@ -347,7 +353,7 @@ typedef uint64_t funcsig_t;
 // as if the callback were being prepended to them.
 //
 // If the replaced callback is subsequently to be appended to fg stack it should be removed instead
-// if to be prepended, the replacmeent marker is removed, and the callback is prepended as normal
+// if to be prepended, the replacment marker is removed, and the callback is prepended as normal
 //
 // 1) if a TRIGGERED callback has uniqueness flags, we can replace (and remove)
 // callbacks in the fg_thread stack, + linked stacks, in an equivalent manner to if the callback was prepended
@@ -370,14 +376,14 @@ typedef uint64_t funcsig_t;
 // this can be especially useful when the matching entries are not flagged as PRIORITY
 // as they may be triggered after this
 
-#define HOOK_INVALIDATE_DATA			(1ull << 16)
+#define HOOK_INVALIDATE_DATA			(1ull << 18)
 
 // should only be used in this combination
-#define HOOK_REMOVE_DATA       	((1ull << 18) | HOOK_CB_BLOCK)
+#define HOOK_REMOVE_DATA       	(HOOK_INVALIDATE_DATA | HOOK_CB_BLOCK)
 
 // this is a special modifier for INVALIDATE_DATA for the GUI,
 // if set then data will also match child widgets
-#define HOOK_OPT_MATCH_CHILD			(1ull << 17)
+#define HOOK_OPT_MATCH_CHILD			(1ull << 19)
 
 ///////////////////
 
@@ -423,7 +429,14 @@ typedef struct {
 // finally, we can create an unqueued lpt directly, then include this
 //
 //
+
+typedef struct _hstack_t lives_hook_stack_t;
+
 typedef struct {
+  // which hook stacks it is added to, and which hook_type
+  lives_hook_stack_t **hook_stacks;
+  int hook_type;
+
   // proc_thread intially in unqueued state - either supplied directly
   // or created from param args / hook_type
   lives_proc_thread_t proc_thread;
@@ -432,7 +445,7 @@ typedef struct {
   // once registered, then we can simply add hooks using funcname, params
   // it also had a field for category
   const lives_funcdef_t *fdef;
-  uint64_t flags; // HOOK_CB flags
+  volatile uint64_t flags; // HOOK_CB flags
   // how many params must be identical to count as a data match ?
   // default is 0, all params
   int nmatch_params;
@@ -451,56 +464,83 @@ void lives_closure_free(lives_closure_t *closure);
 
 #define LIVES_GUI_HOOK INTERNAL_HOOK_0
 
-typedef struct {
-  LiVESList *stack;
+typedef struct _hstack_t {
+  volatile LiVESList *stack;
   pthread_mutex_t *mutex;
-  uint64_t flags;
+  volatile uint64_t flags;
 } lives_hook_stack_t;
 
-// only thread owning the stack may add callbacks
+// hook_stack_flags
+
+// callbacks are running now - used to prevnet multiple trigger instances
+#define STACK_TRIGGERING		(1ull < 0)
+
+
+// HOOK DETAILS - each hook stack TYPE (by enumeration) can have a hook details flag,
+// describing the operation of that hook_type
+
+typedef struct {
+  int htype; // the hook type (e.g. COMPLETED, PREPARING)
+  // (data hooks are trigger before and after some item of data is added, altered or removed)
+  // spontaneous hooks are triggered on demand, by the same proc_thread holding the stack
+  // request hooks are in two parts - a callback is added to the request stack of another proc_thread
+  // the target proc_thread responds to the request, accepting or denying it
+  int model; // data, spontaneous, request
+  // conditional - for data hooks, defines the conditions which cause the hook to be triggered
+  // - the specific item triggering it, before or after, old value, new value
+  uint64_t trigger_details; // flags defining trigger operation
+  lives_funcdef_t *cb_proto; // defines the callback function prototype
+} hook_descriptor_t;
+
+// flagbits for trigger_details
+
+// denotes that the hook stack is in the thread, rather than in the proc_thread
+// only the thread itself may add / remove callbacks and trigger this
 #define HOOK_DTL_SELF			(1ull < 0)
 
 // hook callbacks should be run asyncronously in parallel
-// if combined with REMOVE_FALSE:
-// they will not be removed from the stack, that must be done when joined
-#define HOOK_DTL_ASYNC_CALLBACKS     	(1ull < 1)
+#define HOOK_DTL_ASYNC_PARALLEL	     	(1ull < 1)
 
-// hook callbacks should be run with async caller, but the trigger must then run them syncronously in sequence
-#define HOOK_DTL_ASYNC_TRIGGER	       	(1ull < 2)
+// the return type of the callbacks must be be boolean,
+// any which return FALSE will be blocked (ignored)
+// blocked callbacks can then either be reomved, or unblocked
+#define HOOK_DTL_BLOCK_FALSE      	(1ull < 2)
 
-// the return type of the callbacks must be be boolean, any which return FALSE should be removed from the stack
-// combined with ASYNC, the callbacks must be joined and removed if they return FALSE
-#define HOOK_DTL_REMOVE_FALSE      	(1ull < 3)
+// the return type of the callbacks must be boolean,
+// the callbacks are run as normal (depending on other flags)
+// the hook trigger function will return TRUE if and only if ALL callbacks return TRUE
+// FALSE if any return FALSE
+#define HOOK_DTL_COMBINED_BOOL      	(1ull < 3)
 
-// the return type of the callbacks must be boolean, the callbacks are to be triggered in sequence
-// the hook trigger function should return TRUE if and only if all callbacks return TRUE
-// otherwise it should return FALSE
-#define HOOK_DTL_COMBINED_BOOL      	(1ull < 4)
+// this flagbit denotes that triggering the hooks will run only the first callback on the stack and return
+// (when combined with ASYNC_POLL, the effect is to run a single iteration, all callbacks)
+// note:
+// the default stack order is  FIFO, however callbacks may be prepended in case LIFO is needed
+#define HOOK_DTL_SINGLE	 	      	(1ull < 4)
 
-// the return type of the callbacks must be boolean, the callbacks are to be triggered in sequence
-// hook callbacks are to be triggered, then after a short pause, triggered again
-// this continues until all callbacks return TRUE
-// - the trigger thread MUST be cancellable and must return between triggering if cancelled
-// - the trigger thread MUST be pausable and can pause between hook triggereing
-#define HOOK_DTL_BOOL_LOOP	       	(1ull < 5)
+// an async poller is created, it will trigger all callbacks in sequence, then after a short pause
+// repeat this process
+// the poller itself has hooks, so adding a callback to COMPLETED_HOOK can determine when it returns
+// - if COMBINED_BOOL is also in flags, polling will stop when TRUE is returned
+// - if SINGLE is in flags, the effect is to run a single iteration (all callbacks) once and return
+// - the poller MUST be cancellable and must return between triggering if cancelled
+// - the poller MUST be pausable and can pause between hook triggereing
+#define HOOK_DTL_ASYNC_POLL		       	(1ull < 5)
 
 // callback payload should be passed to the main thread to be run
 #define HOOK_DTL_MAIN_THREAD	       	(1ull < 6)
 
-// this flagbit denotes that triggering the hooks will run only the first callback on the stack and return
-// otherwise all callbacks are triggered in sequence or in parallel
-#define HOOK_DTL_SINGLE	 	      	(1ull < 7)
+//
 
 /* #define HSTACK_FLAGS(DATA_READY_HOOK) HOOK_DTL_ASYNC_CALLBACKS */
 /* #define HSTACK_FLAGS(SYNC_WAIT_HOOK) HOOK_DTL_SELF | HOOK_DTL_ASYNC_TRIGGER | HOOK_DETAIL_COMBINED_BOOL | HOOK_DTL_BOOL_LOOP */
 /* #define HSTACK_FLAGS(INTERNAL_HOOK_0) HOOK_DETAIL_MAIN_THREAD | HOOK_DTL_SINGLE */
 
-// TODO - add retloc as param to hook_add
+// low level flags used internally when adding callbacks
 
 #define DTYPE_PREPEND 		(1ull << 0) // unset == append
 #define DTYPE_CLOSURE 		(1ull << 1) // unset == lpt
 #define DTYPE_NOADD 		(1ull << 2) // remove others only, no add
-//
 #define DTYPE_HAVE_LOCK 	(1ull << 8) // mutex already locked
 
 // all dtypes
@@ -509,7 +549,6 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hooks, int type, uint64_
 // lpt like
 lives_proc_thread_t lives_hook_add_full(lives_hook_stack_t **hooks, int type, uint64_t flags, lives_funcptr_t func,
                                         const char *fname, int return_type, const char *args_fmt, ...);
-
 
 // fixed cb type
 #define lives_hook_append(hooks, type, flags, func, data) \
@@ -545,11 +584,16 @@ void lives_hook_remove(lives_hook_stack_t **, int type, lives_proc_thread_t lpt)
 
 void lives_hook_remove_by_data(lives_hook_stack_t **, int type, lives_funcptr_t func, void *data);
 
+void lives_hook_remove_by_lpt(lives_hook_stack_t **, int type, lives_proc_thread_t cblpt);
+
 #define lives_proc_thread_remove_hook(lpt, type, cb_lpt) \
   lives_hook_remove(lives_proc_thread_get_hook_stacks(lpt), type, cb_lpt)
 
 #define lives_proc_thread_remove_hook_by_data(lpt, type, func, data)	\
   lives_hook_remove_by_data(lives_proc_thread_get_hook_stacks(lpt), type, (lives_funcptr_t)func, data)
+
+#define lives_proc_thread_remove_hook_by_lpt(lpt, type, cblpt)	\
+  lives_hook_remove_by_lpt(lives_proc_thread_get_hook_stacks(lpt), type, cblpt)
 
 void lives_proc_thread_remove_nullify(lives_proc_thread_t lpt, void **ptr);
 
@@ -562,14 +606,16 @@ boolean lives_proc_thread_trigger_hooks(lives_proc_thread_t, int type);
 
 void lives_hooks_trigger_async(lives_hook_stack_t **hooks, int type);
 
-lives_proc_thread_t lives_hooks_trigger_async_sequential(lives_proc_thread_t lpt, lives_hook_stack_t **hstacks, int type,
-    hook_funcptr_t finfunc, void *findata);
+lives_proc_thread_t lives_hooks_trigger_async_sequential(lives_hook_stack_t **hstacks, int type, hook_funcptr_t finfunc,
+							 void *findata);
 
 void lives_hooks_async_join(lives_hook_stack_t *);
 
 lives_hook_stack_t **lives_proc_thread_get_hook_stacks(lives_proc_thread_t);
 
 char *lives_proc_thread_show_func_call(lives_proc_thread_t lpt);
+
+char *cl_flags_desc(uint64_t clflags);
 
 void dump_hook_stack(lives_hook_stack_t **, int type);
 

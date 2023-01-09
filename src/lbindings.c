@@ -1203,12 +1203,12 @@ boolean idle_show_info(const char *text, boolean blocking, ulong id) {
       mainw->is_processing ||
       LIVES_IS_PLAYING) return FALSE;
   if (text == NULL) return FALSE;
-  if (!blocking) lives_idle_add(call_osc_show_info, (livespointer)text);
+  if (!blocking) lives_idle_add_simple(call_osc_show_info, (livespointer)text);
   else {
     msginfo *minfo = (msginfo *)lives_malloc(sizeof(msginfo));
     minfo->msg = lives_strdup(text);
     minfo->id = id;
-    lives_idle_add(call_osc_show_blocking_info, (livespointer)minfo);
+    lives_idle_add_simple(call_osc_show_blocking_info, (livespointer)minfo);
   }
   return TRUE;
 }
@@ -1226,7 +1226,7 @@ boolean idle_switch_clip(int type, int cnum, ulong id) {
   info->id = id;
   info->val = cnum;
   info->integ = type;
-  lives_idle_add(call_switch_clip, (livespointer)info);
+  lives_idle_add_simple(call_switch_clip, (livespointer)info);
   return TRUE;
 }
 
@@ -1240,7 +1240,7 @@ boolean idle_mt_set_track(int tnum, ulong id) {
   info = (iipref *)lives_malloc(sizeof(iipref));
   info->id = id;
   info->val = tnum;
-  lives_idle_add(call_mt_set_track, (livespointer)info);
+  lives_idle_add_simple(call_mt_set_track, (livespointer)info);
   return TRUE;
 }
 
@@ -1256,7 +1256,7 @@ boolean idle_set_track_label(int tnum, const char *label, ulong id) {
   data->val = tnum;
   if (label != NULL) data->string = lives_strdup(label);
   else data->string = NULL;
-  lives_idle_add(call_mt_set_track_label, (livespointer)data);
+  lives_idle_add_simple(call_mt_set_track_label, (livespointer)data);
   return TRUE;
 }
 
@@ -1269,7 +1269,7 @@ boolean idle_insert_vtrack(boolean in_front, ulong id) {
 
   data = (ibpref *)lives_malloc(sizeof(ibpref));
   data->val = in_front;
-  lives_idle_add(call_insert_vtrack, (livespointer)data);
+  lives_idle_add_simple(call_insert_vtrack, (livespointer)data);
   return TRUE;
 }
 
@@ -1284,7 +1284,7 @@ boolean idle_set_current_time(double time, ulong id) {
   info = (opfidata *)lives_malloc(sizeof(opfidata));
   info->id = id;
   info->stime = time;
-  lives_idle_add(call_set_current_time, (livespointer)info);
+  lives_idle_add_simple(call_set_current_time, (livespointer)info);
   return TRUE;
 }
 
@@ -1299,7 +1299,7 @@ boolean idle_set_current_audio_time(double time, ulong id) {
     info = (opfidata *)lives_malloc(sizeof(opfidata));
     info->id = id;
     info->stime = time;
-    lives_idle_add(call_set_current_audio_time, (livespointer)info);
+    lives_idle_add_simple(call_set_current_audio_time, (livespointer)info);
     return TRUE;
   }
   return FALSE;
@@ -1311,7 +1311,7 @@ boolean idle_unmap_effects(ulong id) {
                         !LIVES_IS_PLAYING))) ||
       mainw->go_away || mainw->is_processing) return FALSE;
 
-  lives_idle_add(call_unmap_effects, (livespointer)id);
+  lives_idle_add_simple(call_unmap_effects, (livespointer)id);
 
   return TRUE;
 }
@@ -1320,7 +1320,7 @@ boolean idle_unmap_effects(ulong id) {
 boolean idle_stop_playback(ulong id) {
   if (mainw == NULL || mainw->go_away || mainw->is_processing) return FALSE;
 
-  lives_idle_add(call_stop_playback, (livespointer)id);
+  lives_idle_add_simple(call_stop_playback, (livespointer)id);
 
   return TRUE;
 }
@@ -1329,7 +1329,7 @@ boolean idle_stop_playback(ulong id) {
 boolean idle_quit(pthread_t *gtk_thread) {
   if (mainw == NULL) return FALSE;
 
-  lives_idle_add(call_quit_app, NULL);
+  lives_idle_add_simple(call_quit_app, NULL);
 
   pthread_join(*gtk_thread, NULL);
 
@@ -1358,7 +1358,7 @@ boolean idle_save_set(const char *name, boolean force_append, ulong id) {
   data->id = id;
   data->arglen = arglen;
   data->vargs = vargs;
-  lives_idle_add(call_osc_save_set, (livespointer)data);
+  lives_idle_add_simple(call_osc_save_set, (livespointer)data);
 
   return TRUE;
 }
@@ -1381,7 +1381,7 @@ boolean idle_choose_file_with_preview(const char *dirname, const char *title, in
   else data->title = NULL;
 
   data->preview_type = preview_type;
-  lives_idle_add(call_file_choose_with_preview, (livespointer)data);
+  lives_idle_add_simple(call_file_choose_with_preview, (livespointer)data);
   return TRUE;
 }
 
@@ -1396,7 +1396,7 @@ boolean idle_choose_set(ulong id) {
 
   data = (udata *)lives_malloc(sizeof(udata));
   data->id = id;
-  lives_idle_add(call_choose_set, (livespointer)data);
+  lives_idle_add_simple(call_choose_set, (livespointer)data);
   return TRUE;
 }
 
@@ -1405,7 +1405,7 @@ boolean idle_set_set_name(ulong id) {
   if (mainw == NULL || (mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL)) || mainw->go_away ||
       mainw->is_processing ||
       mainw->playing_file) return FALSE;
-  lives_idle_add(call_set_set_name, (livespointer)id);
+  lives_idle_add_simple(call_set_set_name, (livespointer)id);
   return TRUE;
 }
 
@@ -1424,7 +1424,7 @@ boolean idle_open_file(const char *fname, double stime, int frames, ulong id) {
   data->stime = stime;
   data->frames = frames;
 
-  lives_idle_add(call_open_file, (livespointer)data);
+  lives_idle_add_simple(call_open_file, (livespointer)data);
   return TRUE;
 }
 
@@ -1445,7 +1445,7 @@ boolean idle_reload_set(const char *setname, ulong id) {
   data->id = id;
   data->msg = lives_strdup(setname);
 
-  lives_idle_add(call_reload_set, (livespointer)data);
+  lives_idle_add_simple(call_reload_set, (livespointer)data);
   return TRUE;
 }
 
@@ -1458,7 +1458,7 @@ boolean idle_set_interactive(boolean setting, ulong id) {
   data = (sintdata *)lives_malloc(sizeof(sintdata));
   data->id = id;
   data->setting = setting;
-  lives_idle_add(call_set_interactive, (livespointer)data);
+  lives_idle_add_simple(call_set_interactive, (livespointer)data);
   return TRUE;
 }
 
@@ -1471,7 +1471,7 @@ boolean idle_set_sepwin(boolean setting, ulong id) {
   data = (sintdata *)lives_malloc(sizeof(sintdata));
   data->id = id;
   data->setting = setting;
-  lives_idle_add(call_set_sepwin, (livespointer)data);
+  lives_idle_add_simple(call_set_sepwin, (livespointer)data);
   return TRUE;
 }
 
@@ -1484,7 +1484,7 @@ boolean idle_set_fullscreen(boolean setting, ulong id) {
   data = (sintdata *)lives_malloc(sizeof(sintdata));
   data->id = id;
   data->setting = setting;
-  lives_idle_add(call_set_fullscreen, (livespointer)data);
+  lives_idle_add_simple(call_set_fullscreen, (livespointer)data);
   return TRUE;
 }
 
@@ -1497,7 +1497,7 @@ boolean idle_set_fullscreen_sepwin(boolean setting, ulong id) {
   data = (sintdata *)lives_malloc(sizeof(sintdata));
   data->id = id;
   data->setting = setting;
-  lives_idle_add(call_set_fullscreen_sepwin, (livespointer)data);
+  lives_idle_add_simple(call_set_fullscreen_sepwin, (livespointer)data);
   return TRUE;
 }
 
@@ -1510,7 +1510,7 @@ boolean idle_set_ping_pong(boolean setting, ulong id) {
   data = (sintdata *)lives_malloc(sizeof(sintdata));
   data->id = id;
   data->setting = setting;
-  lives_idle_add(call_set_ping_pong, (livespointer)data);
+  lives_idle_add_simple(call_set_ping_pong, (livespointer)data);
   return TRUE;
 }
 
@@ -1523,7 +1523,7 @@ boolean idle_set_gravity(int grav, ulong id) {
   data = (iipref *)lives_malloc(sizeof(iipref));
   data->id = id;
   data->val = grav;
-  lives_idle_add(call_set_gravity, (livespointer)data);
+  lives_idle_add_simple(call_set_gravity, (livespointer)data);
   return TRUE;
 }
 
@@ -1536,7 +1536,7 @@ boolean idle_set_insert_mode(int mode, ulong id) {
   data = (iipref *)lives_malloc(sizeof(iipref));
   data->id = id;
   data->val = mode;
-  lives_idle_add(call_set_insert_mode, (livespointer)data);
+  lives_idle_add_simple(call_set_insert_mode, (livespointer)data);
   return TRUE;
 }
 
@@ -1553,7 +1553,7 @@ boolean idle_map_fx(int key, int mode, int idx, ulong id) {
   data->mode = mode;
   data->idx = idx;
   data->id = id;
-  lives_idle_add(call_map_effect, (livespointer)data);
+  lives_idle_add_simple(call_map_effect, (livespointer)data);
   return TRUE;
 }
 
@@ -1571,7 +1571,7 @@ boolean idle_unmap_fx(int key, int mode, ulong id) {
   data->key = key;
   data->mode = mode;
   data->id = id;
-  lives_idle_add(call_unmap_effect, (livespointer)data);
+  lives_idle_add_simple(call_unmap_effect, (livespointer)data);
   return TRUE;
 }
 
@@ -1588,7 +1588,7 @@ boolean idle_fx_setmode(int key, int mode, ulong id) {
   data->mode = mode;
   data->id = id;
 
-  lives_idle_add(call_fx_setmode, (livespointer)data);
+  lives_idle_add_simple(call_fx_setmode, (livespointer)data);
   return TRUE;
 }
 
@@ -1605,7 +1605,7 @@ boolean idle_fx_enable(int key, boolean setting, ulong id) {
   data->mode = setting;
   data->id = id;
 
-  lives_idle_add(call_fx_enable, (livespointer)data);
+  lives_idle_add_simple(call_fx_enable, (livespointer)data);
   return TRUE;
 }
 
@@ -1621,7 +1621,7 @@ boolean idle_set_pref_bool(const char *prefidx, boolean val, ulong id) {
   data->id = id;
   data->prefidx = lives_strdup(prefidx);
   data->val = val;
-  lives_idle_add(call_set_pref_bool, (livespointer)data);
+  lives_idle_add_simple(call_set_pref_bool, (livespointer)data);
   return TRUE;
 }
 
@@ -1637,7 +1637,7 @@ boolean idle_set_pref_int(const char *prefidx, int val, ulong id) {
   data->id = id;
   data->prefidx = lives_strdup(prefidx);
   data->val = val;
-  lives_idle_add(call_set_pref_int, (livespointer)data);
+  lives_idle_add_simple(call_set_pref_int, (livespointer)data);
   return TRUE;
 }
 
@@ -1654,7 +1654,7 @@ boolean idle_set_pref_bitmapped(const char *prefidx, int bitfield, boolean val, 
   data->prefidx = lives_strdup(prefidx);
   data->bitfield = bitfield;
   data->val = val;
-  lives_idle_add(call_set_pref_bitmapped, (livespointer)data);
+  lives_idle_add_simple(call_set_pref_bitmapped, (livespointer)data);
   return TRUE;
 }
 
@@ -1669,7 +1669,7 @@ boolean idle_set_if_mode(lives_interface_mode_t mode, ulong id) {
   data = (iipref *)lives_malloc(sizeof(iipref));
   data->id = id;
   data->val = (int)mode;
-  lives_idle_add(call_set_if_mode, (livespointer)data);
+  lives_idle_add_simple(call_set_if_mode, (livespointer)data);
   return TRUE;
 }
 
@@ -1687,7 +1687,7 @@ boolean idle_insert_block(int clipno, boolean ign_sel, boolean with_audio, ulong
   data->clip = clipno;
   data->ign_sel = ign_sel;
   data->with_audio = with_audio;
-  lives_idle_add(call_insert_block, (livespointer)data);
+  lives_idle_add_simple(call_insert_block, (livespointer)data);
   return TRUE;
 }
 
@@ -1707,7 +1707,7 @@ boolean idle_remove_block(ulong uid, ulong id) {
   data = (mblockdata *)lives_malloc(sizeof(mblockdata));
   data->id = id;
   data->block = tr;
-  lives_idle_add(call_remove_block, (livespointer)data);
+  lives_idle_add_simple(call_remove_block, (livespointer)data);
   return TRUE;
 }
 
@@ -1734,7 +1734,7 @@ boolean idle_move_block(ulong uid, int track, double time, ulong id) {
   data->block = tr;
   data->track = track;
   data->time = time;
-  lives_idle_add(call_move_block, (livespointer)data);
+  lives_idle_add_simple(call_move_block, (livespointer)data);
   return TRUE;
 }
 
@@ -1750,7 +1750,7 @@ boolean idle_wipe_layout(boolean force, ulong id) {
   data = (iblock *)lives_malloc(sizeof(iblock));
   data->ign_sel = force;
   data->id = id;
-  lives_idle_add(call_wipe_layout, (livespointer)data);
+  lives_idle_add_simple(call_wipe_layout, (livespointer)data);
   return TRUE;
 }
 
@@ -1765,7 +1765,7 @@ boolean idle_choose_layout(ulong id) {
 
   data = (iblock *)lives_malloc(sizeof(iblock));
   data->id = id;
-  lives_idle_add(call_choose_layout, (livespointer)data);
+  lives_idle_add_simple(call_choose_layout, (livespointer)data);
   return TRUE;
 }
 
@@ -1781,7 +1781,7 @@ boolean idle_reload_layout(const char *lname, ulong id) {
   data = (msginfo *)lives_malloc(sizeof(msginfo));
   data->id = id;
   data->msg = lives_strdup(lname);
-  lives_idle_add(call_reload_layout, (livespointer)data);
+  lives_idle_add_simple(call_reload_layout, (livespointer)data);
   return TRUE;
 }
 
@@ -1798,7 +1798,7 @@ boolean idle_save_layout(const char *lname, ulong id) {
   data->id = id;
   if (lname != NULL) data->msg = lives_strdup(lname);
   else data->msg = NULL;
-  lives_idle_add(call_save_layout, (livespointer)data);
+  lives_idle_add_simple(call_save_layout, (livespointer)data);
   return TRUE;
 }
 
@@ -1815,7 +1815,7 @@ boolean idle_render_layout(boolean with_aud, boolean normalise_aud, ulong id) {
   data->with_audio = with_aud;
   data->ign_sel = normalise_aud;
   data->id = id;
-  lives_idle_add(call_render_layout, (livespointer)data);
+  lives_idle_add_simple(call_render_layout, (livespointer)data);
   return TRUE;
 }
 
@@ -1831,7 +1831,7 @@ boolean idle_select_all(int cnum, ulong id) {
   data = (iipref *)lives_malloc(sizeof(iipref));
   data->id = id;
   data->val = cnum;
-  lives_idle_add(call_select_all, (livespointer)data);
+  lives_idle_add_simple(call_select_all, (livespointer)data);
   return TRUE;
 }
 
@@ -1848,7 +1848,7 @@ boolean idle_select_start(int cnum, int frame, ulong id) {
   data->id = id;
   data->val = cnum;
   data->integ = frame;
-  lives_idle_add(call_select_start, (livespointer)data);
+  lives_idle_add_simple(call_select_start, (livespointer)data);
   return TRUE;
 }
 
@@ -1865,7 +1865,7 @@ boolean idle_select_end(int cnum, int frame, ulong id) {
   data->id = id;
   data->val = cnum;
   data->integ = frame;
-  lives_idle_add(call_select_end, (livespointer)data);
+  lives_idle_add_simple(call_select_end, (livespointer)data);
   return TRUE;
 }
 
@@ -1880,7 +1880,7 @@ boolean idle_set_current_fps(double fps, ulong id) {
   data = (opfidata *)lives_malloc(sizeof(opfidata));
   data->id = id;
   data->stime = fps;
-  lives_idle_add(call_set_current_fps, (livespointer)data);
+  lives_idle_add_simple(call_set_current_fps, (livespointer)data);
   return TRUE;
 }
 
@@ -1894,7 +1894,7 @@ boolean idle_set_current_frame(int frame, boolean bg, ulong id) {
   data = (ibpref *)lives_malloc(sizeof(ibpref));
   data->integ = frame;
   data->val = bg;
-  lives_idle_add(call_set_current_frame, (livespointer)data);
+  lives_idle_add_simple(call_set_current_frame, (livespointer)data);
   return TRUE;
 }
 
@@ -1907,7 +1907,7 @@ boolean idle_set_loop_mode(int mode, ulong id) {
   data = (iipref *)lives_malloc(sizeof(iipref));
   data->id = id;
   data->val = mode;
-  lives_idle_add(call_set_loop_mode, (livespointer)data);
+  lives_idle_add_simple(call_set_loop_mode, (livespointer)data);
   return TRUE;
 }
 
@@ -1919,7 +1919,7 @@ boolean idle_resync_fps(ulong id) {
 
   data = (iipref *)lives_malloc(sizeof(iipref));
   data->id = id;
-  lives_idle_add(call_resync_fps, (livespointer)data);
+  lives_idle_add_simple(call_resync_fps, (livespointer)data);
   return TRUE;
 }
 
@@ -1932,7 +1932,7 @@ boolean idle_cancel_proc(ulong id) {
 
   data = (iipref *)lives_malloc(sizeof(iipref));
   data->id = id;
-  lives_idle_add(call_cancel_proc, (livespointer)data);
+  lives_idle_add_simple(call_cancel_proc, (livespointer)data);
   return TRUE;
 }
 

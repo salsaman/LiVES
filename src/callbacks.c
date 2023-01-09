@@ -4782,7 +4782,7 @@ void play_all(boolean from_menu) {
     /*   } */
     //}
     if (from_menu) {
-      main_thread_execute(switch_clip, 0, NULL, "iib", 1, mainw->pre_src_file, TRUE);
+      main_thread_execute_rvoid(switch_clip, 0, "iib", 1, mainw->pre_src_file, TRUE);
       mainw->pre_src_file = -2;
     }
   }
@@ -9894,7 +9894,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
   if (mainw->multitrack) {
     current_file = mainw->current_file;
     mainw->current_file = mainw->multitrack->render_file;
-    main_thread_execute(mt_post_playback, -1, NULL, "v", mainw->multitrack);
+    main_thread_execute_rvoid(mt_post_playback, -1, "v", mainw->multitrack);
     mainw->current_file = current_file;
   }
 

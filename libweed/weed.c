@@ -196,9 +196,9 @@ static int data_lock_upgrade(weed_leaf_t *leaf, int block) {
       data_lock_unlock(leaf);
       pthread_mutex_lock(get_data_mutex(leaf));
     }
-    else data_lock_unlock(leaf);
     // now we can wait for the writelock and then unlock mutex
     // subsequent writers will drop their readlocks and block on the mutex
+    if (!ret) data_lock_unlock(leaf);
     data_lock_writelock(leaf);
     pthread_mutex_unlock(get_data_mutex(leaf));
   }
@@ -665,10 +665,14 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
     }
     else {
       while (hash != leaf->key_hash || (!skip_errchecks && weed_strcmp(weed_leaf_get_key(leaf), (char *)key))) {
-	if (!(leaf = leaf->next)) break;
 	if (refnode) {
+	  if (leaf == plant) {
+	    if (!(leaf = leaf->next)) break;
+	    continue;
+	  }
 	  if (*refnode) {
 	    if (leaf == *refnode) return NULL;
+	    if (!(leaf = leaf->next)) break;
 	    continue;
 	  }
 	  *refnode = leaf;
@@ -685,7 +689,9 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
 	  chain_lock_readlock(leaf);
 	  chain_lock_unlock(chain_leaf); // does nothing if chain_leaf is NULL
 	  chain_leaf = leaf;
-	}}
+	}
+	if (!(leaf = leaf->next)) break;
+      }
     }
 
     if (leaf) data_lock_readlock(leaf);

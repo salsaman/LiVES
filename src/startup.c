@@ -31,7 +31,7 @@ mainwindow *mainw;
 
 #ifndef DISABLE_DIAGNOSTICS
 #include "diagnostics.h"
-uint64_t test_opts = 0;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
+uint64_t test_opts = 0;//TEST_WEED | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
 #endif
 
 #ifdef ENABLE_OSC
@@ -717,7 +717,7 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->abuf_mutex, &mattr);
 
   // non-recursive
-  pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK);
+  //pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK);
   pthread_mutex_init(&mainw->abuf_aux_frame_mutex, &mattr);
   pthread_mutex_init(&mainw->fxd_active_mutex, &mattr);
   pthread_mutex_init(&mainw->event_list_mutex, &mattr);
@@ -1318,7 +1318,7 @@ boolean render_choice_idle(livespointer data) {
         mainw->event_list = backup_elist;
       }
 
-      main_thread_execute(deal_with_render_choice, 0, NULL, "b", is_recovery);
+      main_thread_execute_rvoid(deal_with_render_choice, 0, "b", is_recovery);
       //deal_with_render_choice(is_recovery);
       if (is_recovery && mainw->multitrack) rec_recovered = TRUE;
     }
@@ -2075,6 +2075,8 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->wall_ticks = -1;
   mainw->initial_ticks = lives_get_current_ticks();
 
+  init_random();
+
   // early tests (no prefs, no threadpool, no random, no gtk)
   do_startup_diagnostics(test_opts);
 
@@ -2089,9 +2091,7 @@ int run_the_program(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   // allow us to free undeletable plants (plugins cant')
   weed_plant_free = weed_plant_free_host;
-  // weed_plant_new = weed_plant_new_host;
-
-  init_random();
+  weed_plant_new = weed_plant_new_host;
 
   init_colour_engine();
 
@@ -4404,6 +4404,7 @@ static void set_toolkit_theme(int prefer) {
 
 #ifndef VALGRIND_ON
 static void set_extra_colours(void) {
+  g_print("SETX\n");
   if (!mainw->debug && prefs->extra_colours && mainw->pretty_colours) {
     char *colref, *tmp;
     colref = gdk_rgba_to_string(&palette->nice1);
@@ -4427,6 +4428,7 @@ static void set_extra_colours(void) {
     lives_free(tmp);
     lives_free(colref);
   }
+  g_print("SETX done\n");
 }
 
 
@@ -4517,7 +4519,9 @@ retry:
         ncols++;
       } else if (!fixed) var = -var;
 #ifndef VALGRIND_ON
+      //BG_THREADVAR(hook_hints) = HOOK_OPT_FG_HEAVY;
       main_thread_execute_rvoid_pvoid(set_extra_colours);
+      //BG_THREADVAR(hook_hints) = 0;
 #endif
     }
   } else {

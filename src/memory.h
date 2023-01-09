@@ -468,7 +468,7 @@ static LIVES_ALLOW_UNUSED void WEAK_FREE(void *val) {_WEAK_FREE(val);}
 static void *(*_lsd_memcpy)(void *dest, const void *src, size_t n) = _ext_memcpy;
 static void *(*_lsd_memset)(void *s, int c, size_t n) = _ext_memset;
 
-#if USE_RPMALLOC
+#if USE_RPMALLOCx
 static void (*_lsd_free)(void *ptr) = rpfree;
 #else
 static void (*_lsd_free)(void *ptr) = _ext_free;

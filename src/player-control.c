@@ -118,11 +118,12 @@ LIVES_GLOBAL_INLINE boolean start_playback(int type) {
 
 
 void start_playback_async(int type) {
-  lives_sigdata_t *sigdata;
-  mainw->player_proc = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC,
-                       _start_playback, 0, "i", type);
-  sigdata = lives_sigdata_new(mainw->player_proc, FALSE);
-  lives_idle_priority(governor_loop, sigdata);
+  mainw->player_proc = lives_proc_thread_create(0, _start_playback, 0, "i", type);
+  /* lives_sigdata_t *sigdata; */
+  /* mainw->player_proc = lives_proc_thread_create(LIVES_THRDATTR_WAIT_SYNC, */
+  /*                      _start_playback, 0, "i", type); */
+  /* sigdata = lives_sigdata_new(mainw->player_proc, FALSE); */
+  /* lives_idle_priority(governor_loop, sigdata); */
 }
 
 
@@ -367,6 +368,9 @@ void play_file(void) {
   int current_file = mainw->current_file;
   int audio_end = 0;
 
+  ____FUNC_ENTRY____(play_file, "", "");
+  
+
   if (!mainw->preview || !cfile->opening) {
     enable_record();
     desensitize();
@@ -395,7 +399,7 @@ void play_file(void) {
 
   init_conversions(OBJ_INTENTION_PLAY);
 
-  lives_hooks_trigger(NULL, PREPARING_HOOK);
+  //lives_hooks_trigger(NULL, PREPARING_HOOK);
 
   if (mainw->pre_src_file == -2) mainw->pre_src_file = mainw->current_file;
   mainw->pre_src_audio_file = mainw->current_file;
@@ -527,7 +531,7 @@ void play_file(void) {
     if ((mainw->faded || (prefs->show_playwin && !prefs->show_gui)
          || (mainw->fs && (!mainw->sep_win))) && (cfile->frames > 0 ||
              mainw->foreign)) {
-      main_thread_execute_rvoid_pvoid(fade_background);
+      main_thread_execute_void(fade_background, 0);
       //fade_background();
     }
 
@@ -560,7 +564,7 @@ void play_file(void) {
     add_to_playframe();
   }
 
-  lives_widget_context_update();
+  //lives_widget_context_update();
 
   arate = cfile->arate;
 
@@ -1275,6 +1279,8 @@ void play_file(void) {
 
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
+    ____FUNC_EXIT____;
+
     return;
   }
 
@@ -1288,7 +1294,7 @@ void play_file(void) {
 
   if (!mainw->multitrack) {
     if (mainw->faded || mainw->fs) {
-      main_thread_execute_rvoid_pvoid(unfade_background);
+      main_thread_execute_void(unfade_background, 0);
       //unfade_background();
     }
 
@@ -1553,7 +1559,7 @@ void play_file(void) {
   //////
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   g_print("\n\n\nwant to run post_play\n");
-  main_thread_execute_pvoid_rvoid(post_playback);
+  main_thread_execute_void(post_playback, 0);
   g_print("ran post_play\n\n\n");
   BG_THREADVAR(hook_hints) = 0;
 
@@ -1605,5 +1611,7 @@ void play_file(void) {
 
   /* if (prefs->show_dev_opts) */
   /*   g_print("nrefs = %d\n", check_ninstrefs()); */
+
+  ____FUNC_EXIT____;
 }
 

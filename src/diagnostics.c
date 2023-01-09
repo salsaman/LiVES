@@ -1424,6 +1424,47 @@ int run_weed_startup_tests(void) {
   fprintf(stderr, "wpf returned %d\n", werr);
   werr_expl(werr);
 
+  show_timer_info();
+
+  THREADVAR(timerinfo) = lives_get_current_ticks();
+  fprintf(stderr, "test random reads, writes and deletes\n");
+  plant = weed_plant_new(123);
+  for (int i = 0; i < 100000; i++) {
+    int z;
+    int x = fastrand_int(1000);
+    char *key = lives_strdup_printf("%d%d", x * 917, x % 13);
+    int act = fastrand_int(10);
+    g_print("ACT is %d\n", act);
+    if (act < 2) werr = weed_leaf_delete(plant, key);
+    else if (act < 4) {
+      weed_set_int_value(plant, key, x);
+      fprintf(stderr, "set %s to %d\n", key, x);
+    }
+    else {
+      z = weed_get_int_value(plant, key, &werr);
+      if (werr == WEED_SUCCESS) {
+	n++;
+	if (z != x) abort();
+      }
+    }
+    free(key);
+  }
+  fprintf(stderr, "tested random reads, writes and deletes\n");
+  fprintf(stderr, "100000 random read/writes/deletes with set of 1000 leaves\n");
+  show_timer_info();
+
+  fprintf(stderr, "final state is:\n");
+
+  keys = weed_plant_list_leaves(plant, &nleaves);
+  fprintf(stderr, "Plant has %d leaves\n", nleaves);
+  n = 0;
+  for (n = 0; keys[n]; n++) {
+    //fprintf(stderr, "key %d is %s with val %d\n", n, keys[n], weed_get_int_value(plant, keys[n], NULL));
+    free(keys[n]);
+  }
+  free(keys);
+  weed_plant_free(plant);
+
   /// will crash on freed plant
 
   /* keys = weed_plant_list_leaves(plant, &nleaves); */
@@ -1434,8 +1475,6 @@ int run_weed_startup_tests(void) {
   /*   n++; */
   /* } */
   /* free(keys); */
-
-  show_timer_info();
 
 #define BPLANT_LEAVES 100000
 #define CYCLES 1000
@@ -1824,8 +1863,6 @@ void test_procthreads(void) {
   pth = lives_proc_thread_create(0, pth_testfunc, -1, "V", testv);
   lives_proc_thread_join(pth);
 }
-
-
 
 
 /// any diagnostic tests can be placed in this section - the functional will be called early in

@@ -2509,7 +2509,7 @@ lives_decoder_t *clone_decoder(int fileno) {
   dplug2 = (lives_decoder_t *)lives_calloc(1, sizeof(lives_decoder_t));
   dplug2->dpsys = dpsys;
   pthread_mutexattr_init(&mattr);
-  pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK);
+  //pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK);
   pthread_mutex_init(&dplug2->mutex, &mattr);
   dplug2->cdata = cdata;
   set_cdata_memfuncs((lives_clip_data_t *)cdata);
@@ -2765,7 +2765,7 @@ static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabl
       dplug->dpsys = dpsys;
       dplug->cdata = cdata;
       pthread_mutexattr_init(&mattr);
-      pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK);
+      //pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK);
       pthread_mutex_init(&dplug->mutex, &mattr);
       dplug->cdata->rec_rowstrides = NULL;
       set_cdata_memfuncs(cdata);

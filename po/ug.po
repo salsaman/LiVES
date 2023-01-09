@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2023-01-01 19:46-0300\n"
+"POT-Creation-Date: 2023-01-03 13:43-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Uyghur <ug@li.org>\n"
@@ -5395,13 +5395,13 @@ msgid "_Edit"
 msgstr "تەھرىر(_E)"
 
 #: src/gui.c:771 src/multitrack.c:2790 src/multitrack.c:4575
-#: src/frameloader.c:2949 src/cliphandler.c:1887 src/cliphandler.c:1918
+#: src/frameloader.c:2944 src/cliphandler.c:1887 src/cliphandler.c:1918
 #: src/cliphandler.c:2117
 msgid "_Undo"
 msgstr "يېنىۋال(_U)"
 
 #: src/gui.c:786 src/multitrack.c:2809 src/multitrack.c:4598
-#: src/frameloader.c:2950 src/cliphandler.c:1888 src/cliphandler.c:1919
+#: src/frameloader.c:2945 src/cliphandler.c:1888 src/cliphandler.c:1919
 #: src/cliphandler.c:2118
 msgid "_Redo"
 msgstr "قايتىلا(_R)"
@@ -6213,7 +6213,7 @@ msgstr ""
 msgid "First Frame"
 msgstr "بىرىنچى كاندۇك"
 
-#: src/gui.c:2254 src/gui.c:3757 src/player.c:739 src/player.c:740
+#: src/gui.c:2254 src/gui.c:3757 src/player.c:741 src/player.c:742
 #: src/player-control.c:544
 msgid "Play"
 msgstr "قوي"
@@ -8497,215 +8497,215 @@ msgid ""
 "No frames were generated.\n"
 msgstr ""
 
-#: src/effects-weed.c:5148
+#: src/effects-weed.c:5149
 #, c-format
 msgid ""
 "Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:5154
+#: src/effects-weed.c:5155
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:5187
+#: src/effects-weed.c:5188
 #, c-format
 msgid ""
 "No usable filters found in plugin:\n"
 "%s\n"
 msgstr ""
 
-#: src/effects-weed.c:5273
+#: src/effects-weed.c:5274
 #, c-format
 msgid "Plugin %s returned an empty filter !"
 msgstr ""
 
-#: src/effects-weed.c:5303
+#: src/effects-weed.c:5304
 #, c-format
 msgid "%sskipping blacklisted filter %s\n"
 msgstr ""
 
-#: src/effects-weed.c:5332
+#: src/effects-weed.c:5333
 #, c-format
 msgid "Found duplicate plugin %s"
 msgstr ""
 
-#: src/effects-weed.c:5365
+#: src/effects-weed.c:5366
 #, c-format
 msgid "Loaded filter %s in plugin %s"
 msgstr ""
 
-#: src/effects-weed.c:5388 src/effects-weed.c:6467
+#: src/effects-weed.c:5389 src/effects-weed.c:6468
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "مۇندەرىجىلەر"
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:5446 src/rte_window.c:2089
+#: src/effects-weed.c:5447 src/rte_window.c:2089
 #, c-format
 msgid " - %s plugins -"
 msgstr ""
 
-#: src/effects-weed.c:5638
+#: src/effects-weed.c:5639
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:5755
+#: src/effects-weed.c:5756
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr ""
 
-#: src/effects-weed.c:5775
+#: src/effects-weed.c:5776
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:5792
+#: src/effects-weed.c:5793
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:5912
+#: src/effects-weed.c:5913
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr ""
 
-#: src/effects-weed.c:5934
+#: src/effects-weed.c:5935
 #, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5952
+#: src/effects-weed.c:5953
 #, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5965
+#: src/effects-weed.c:5966
 #, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5982
+#: src/effects-weed.c:5983
 #, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6012
+#: src/effects-weed.c:6013
 #, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6049
+#: src/effects-weed.c:6050
 #, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6083
+#: src/effects-weed.c:6084
 #, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6097
+#: src/effects-weed.c:6098
 #, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6118
+#: src/effects-weed.c:6119
 #, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6133
+#: src/effects-weed.c:6134
 #, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:6146
+#: src/effects-weed.c:6147
 #, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6163
+#: src/effects-weed.c:6164
 #, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6195
+#: src/effects-weed.c:6196
 #, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6209
+#: src/effects-weed.c:6210
 #, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:6230
+#: src/effects-weed.c:6231
 #, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6243
+#: src/effects-weed.c:6244
 #, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6264
+#: src/effects-weed.c:6265
 #, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6302
+#: src/effects-weed.c:6303
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:6363
+#: src/effects-weed.c:6364
 #, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:7116
+#: src/effects-weed.c:7117
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:7295
+#: src/effects-weed.c:7296
 #, c-format
 msgid "Failed to start instance %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:7372
+#: src/effects-weed.c:7373
 #, c-format
 msgid "Unable to start generator %s (error code: %d)\n"
 msgstr ""
 
-#: src/effects-weed.c:9075
+#: src/effects-weed.c:9072
 #, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:9194
+#: src/effects-weed.c:9191
 #, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:10113
+#: src/effects-weed.c:10110
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
@@ -11633,7 +11633,7 @@ msgstr "نۆۋەتتىكى"
 msgid "Rate (Hz) "
 msgstr ""
 
-#: src/resample.c:1895 src/resample.c:2032 src/player.c:3958
+#: src/resample.c:1895 src/resample.c:2032 src/player.c:3951
 #, fuzzy
 msgid "Channels"
 msgstr "قانال  "
@@ -11643,7 +11643,7 @@ msgstr "قانال  "
 msgid "Sample Size "
 msgstr "كاندۇك چوڭلۇقى"
 
-#: src/resample.c:1918 src/resample.c:2095 src/player.c:3963
+#: src/resample.c:1918 src/resample.c:2095 src/player.c:3956
 #, fuzzy
 msgid "Signed"
 msgstr "ئىمزاسىز"
@@ -14469,7 +14469,7 @@ msgstr ""
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/frameloader.c:2755
+#: src/frameloader.c:2750
 #, c-format
 msgid "Closed clip %s\n"
 msgstr ""
@@ -14540,41 +14540,41 @@ msgstr ""
 msgid "Processing has been paused."
 msgstr ""
 
-#: src/machinestate.c:832
+#: src/machinestate.c:815
 #, c-format
 msgid "Today %s"
 msgstr ""
 
-#: src/machinestate.c:834
+#: src/machinestate.c:817
 #, c-format
 msgid "Yesterday %s"
 msgstr ""
 
-#: src/machinestate.c:1165
+#: src/machinestate.c:1148
 msgid "(empty)"
 msgstr ""
 
-#: src/machinestate.c:1192
+#: src/machinestate.c:1175
 #, c-format
 msgid "Header version %d (%s)"
 msgstr ""
 
-#: src/machinestate.c:1195
+#: src/machinestate.c:1178
 #, fuzzy
 msgid "Same as current"
 msgstr " سېكۇنت  "
 
-#: src/machinestate.c:1197
+#: src/machinestate.c:1180
 #, fuzzy, c-format
 msgid "Current is %d"
 msgstr "نۆۋەتتىكى"
 
-#: src/machinestate.c:1199
+#: src/machinestate.c:1182
 #, c-format
 msgid "Current is %d; consider updating before loading"
 msgstr ""
 
-#: src/machinestate.c:1206
+#: src/machinestate.c:1189
 #, c-format
 msgid ""
 "Source: %s\n"
@@ -14582,33 +14582,33 @@ msgid ""
 "Frames: %d, size: %d X %d, fps: %.3f"
 msgstr ""
 
-#: src/machinestate.c:1243
+#: src/machinestate.c:1226
 msgid "(ABSENT)"
 msgstr ""
 
-#: src/machinestate.c:1767
+#: src/machinestate.c:1750
 #, c-format
 msgid "%s was not found\n"
 msgstr ""
 
-#: src/machinestate.c:1805 src/machinestate.c:1810
+#: src/machinestate.c:1788 src/machinestate.c:1793
 #, c-format
 msgid "Could not write to %s\n"
 msgstr ""
 
-#: src/machinestate.c:1833
+#: src/machinestate.c:1816
 #, c-format
 msgid ""
 "LiVES was unable to send the item to trash.\n"
 "%s"
 msgstr ""
 
-#: src/machinestate.c:1877
+#: src/machinestate.c:1860
 #, c-format
 msgid "Grabbed %d frames in %s (average %.3f fps)"
 msgstr ""
 
-#: src/machinestate.c:1918
+#: src/machinestate.c:1901
 msgid "Screen grab failed"
 msgstr ""
 
@@ -15258,45 +15258,45 @@ msgid "error in file. Failed.\n"
 msgstr ""
 
 #. TRANSLATORS: rec(ord)
-#: src/player.c:907
+#: src/player.c:909
 #, c-format
 msgid "rec %9d / %d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/player.c:913
+#: src/player.c:915
 #, c-format
 msgid "!rec %9d / %d"
 msgstr ""
 
-#: src/player.c:1750
+#: src/player.c:1746
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
 
-#: src/player.c:3948
+#: src/player.c:3941
 #, fuzzy
 msgid "Source"
 msgstr "مەنبە: %s"
 
-#: src/player.c:3956
+#: src/player.c:3949
 msgid "Rate Hz"
 msgstr ""
 
-#: src/player.c:3960
+#: src/player.c:3953
 msgid "Sample size (bits)"
 msgstr ""
 
-#: src/player.c:3965
+#: src/player.c:3958
 msgid "Endian"
 msgstr ""
 
-#: src/player.c:3973
+#: src/player.c:3966
 msgid "Is float"
 msgstr ""
 
-#: src/player.c:3975
+#: src/player.c:3968
 #, fuzzy
 msgid "Interleaved"
 msgstr "Deinterlacing"

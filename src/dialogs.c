@@ -3561,8 +3561,7 @@ void threaded_dialog_spin(double fraction) {
       || !mainw->is_ready || !prefs->show_gui) return;
   if (!mainw->is_exiting && !is_fg_thread()) {
     if (THREADVAR(no_gui)) return;
-    main_thread_execute(_threaded_dialog_spin, 0,
-                        NULL, "d", fraction);
+    main_thread_execute_rvoid(_threaded_dialog_spin, 0, "d", fraction);
   } else _threaded_dialog_spin(fraction);
 }
 
@@ -3604,7 +3603,7 @@ void threaded_dialog_auto_spin(void) {
   if (!prefs->show_gui) return;
   if (!mainw->threaded_dialog || mainw->dlg_spin_thread) return;
   if (!is_fg_thread()) {
-    main_thread_execute_rvoid_pvoid(threaded_dialog_auto_spin);
+    main_thread_execute_void(threaded_dialog_auto_spin, 0);
   } else {
     mainw->dlg_spin_thread = lives_proc_thread_create(LIVES_THRDATTR_NONE,
                              (lives_funcptr_t)_thdlg_auto_spin, -1, "", NULL);
@@ -3626,8 +3625,7 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   if (!prefs->show_gui) return;
   if (mainw->threaded_dialog || mainw->dlg_spin_thread) return;
   if (!mainw->is_exiting && !is_fg_thread()) {
-    main_thread_execute(_do_threaded_dialog, 0,
-                        NULL, "sb", trans_text, has_cancel);
+    main_thread_execute_rvoid(_do_threaded_dialog, 0, "sb", trans_text, has_cancel);
   } else _do_threaded_dialog(trans_text, has_cancel);
 }
 
@@ -3665,7 +3663,7 @@ void end_threaded_dialog(void) {
   if (THREADVAR(no_gui)) return;
   if (!mainw->threaded_dialog) return;
   if (!mainw->is_exiting && !is_fg_thread())
-    main_thread_execute_rvoid_pvoid(_end_threaded_dialog);
+    main_thread_execute_void(_end_threaded_dialog, 0);
   else _end_threaded_dialog();
 }
 

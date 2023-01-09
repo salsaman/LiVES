@@ -155,7 +155,6 @@ typedef LingoEllipsizeMode LiVESEllipsizeMode;
 #define LIVES_ELLIPSIZE_MIDDLE LINGO_ELLIPSIZE_MIDDLE
 #define LIVES_ELLIPSIZE_END LINGO_ELLIPSIZE_END
 
-
 #ifdef LIVES_PAINTER_IS_CAIRO
 // ...likewise with cairo
 #ifndef GUI_GTK
@@ -795,6 +794,7 @@ boolean lives_container_add(LiVESContainer *, LiVESWidget *);
 boolean lives_container_set_border_width(LiVESContainer *, uint32_t width);
 
 boolean lives_container_foreach(LiVESContainer *, LiVESWidgetCallback callback, livespointer cb_data);
+boolean lives_container_foreach_int(LiVESContainer *, LiVESWidgetCallback callback, int cb_data);
 LiVESList *lives_container_get_children(LiVESContainer *);
 boolean lives_container_set_focus_child(LiVESContainer *, LiVESWidget *child);
 LiVESWidget *lives_container_get_focus_child(LiVESContainer *);
@@ -1065,11 +1065,18 @@ boolean lives_scrolled_window_set_min_content_width(LiVESScrolledWindow *, int w
 boolean lives_xwindow_raise(LiVESXWindow *);
 boolean lives_xwindow_set_cursor(LiVESXWindow *, LiVESXCursor *);
 
-uint32_t lives_timer_add(uint32_t interval, LiVESWidgetSourceFunc function, livespointer data);
 boolean lives_timer_remove(uint32_t timer);
-uint32_t lives_idle_add(LiVESWidgetSourceFunc function, livespointer data);
+
 uint32_t lives_idle_priority(LiVESWidgetSourceFunc function, livespointer data);
 uint32_t lives_timer_immediate(LiVESWidgetSourceFunc function, livespointer data);
+
+uint32_t lives_idle_priority_longrun(LiVESWidgetSourceFunc function, livespointer data);
+
+#ifdef GUI_GTK
+#define IDLEFUNC_VALID (!g_source_is_destroyed (g_main_current_source ()))
+#else
+#define IFLEFUNC_VALID 1
+#endif
 
 boolean lives_source_remove(uint32_t handle);
 boolean lives_source_set_priority(GSource *source, int32_t prio);

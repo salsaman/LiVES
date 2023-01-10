@@ -1013,6 +1013,11 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   weed_free(inparams);
 
+  if (!sd) {
+    projectM_init(inst);
+    sd = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  }
+
   if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
     projectM_deinit(inst);
     return WEED_ERROR_MEMORY_ALLOCATION;

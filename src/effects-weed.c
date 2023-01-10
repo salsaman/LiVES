@@ -5611,6 +5611,11 @@ void weed_load_all(void) {
       lives_free(plugin_ext);
       list = listnext;
       threaded_dialog_spin(0.);
+#if USE_RPMALLOC
+      if (rpmalloc_is_thread_initialized()) {
+        rpmalloc_thread_collect();
+      }
+#endif
     }
 
     // get 1 level of subdirs
@@ -7367,7 +7372,10 @@ deinit2:
     retcode = weed_generator_start(inst, hotkey);
     if (retcode == -1) {
       // playback triggered
-
+      filter_mutex_lock(hotkey);
+      key_to_instance[hotkey][key_modes[hotkey]] = inst;
+      filter_mutex_unlock(hotkey);
+      return TRUE;
     }
     if (retcode != 0) {
       int weed_error;
@@ -8455,6 +8463,7 @@ recheck:
   xheight = weed_channel_get_height(channel);
 
   if (xwidth != width || xheight != height) {
+    //
     weed_layer_pixel_data_free(channel);
     if (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE) {
       if (!needs_reinit) {
@@ -8525,6 +8534,7 @@ recheck:
     if (retval == FILTER_ERROR_COULD_NOT_REINIT || retval == FILTER_ERROR_INVALID_PLUGIN
         || retval == FILTER_ERROR_INVALID_FILTER) {
       weed_instance_unref(inst);
+      weed_layer_pixel_data_free(channel);
       return NULL;
     }
     goto matchvals;
@@ -8564,13 +8574,15 @@ procfunc1:
   if (ret == WEED_ERROR_REINIT_NEEDED) {
     if (reinits == 1) {
       weed_instance_unref(inst);
-      return channel;
+      weed_layer_pixel_data_free(channel);
+      return NULL;
     }
     retval = weed_reinit_effect(inst, FALSE);
     if (retval == FILTER_ERROR_COULD_NOT_REINIT || retval == FILTER_ERROR_INVALID_PLUGIN
         || retval == FILTER_ERROR_INVALID_FILTER) {
       weed_instance_unref(inst);
-      return channel;
+      weed_layer_pixel_data_free(channel);
+      return NULL;
     }
     reinits = 1;
     goto procfunc1;
@@ -8989,47 +9001,33 @@ void weed_generator_end(weed_plant_t *inst) {
         mainw->blend_file = mainw->new_blend_file;
         mainw->new_blend_file = -1;
       }
+      mainw->current_file = current_file;
+      mainw->pre_src_file = pre_src_file;
+      mainw->whentostop = wts;
+
     }
   } else {
     // close generator file and switch to original file if possible
     if (!cfile || cfile->clip_type != CLIP_TYPE_GENERATOR) {
       break_me("close non-gen file");
       LIVES_WARN("Close non-generator file 2");
-      if (mainw->noswitch) {
-        mainw->new_clip = mainw->pre_src_file;
-        mainw->close_this_clip = mainw->current_file;
-      } else {
-        cfile->ext_src = NULL;
-        cfile->ext_src_type = LIVES_EXT_SRC_NONE;
-        close_current_file(mainw->pre_src_file);
-      }
-      if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_update_current_clip();
+    } else {
       if (cfile->achans == 0) {
+        if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND)
+          ce_thumbs_update_current_clip();
         if (mainw->noswitch) {
           mainw->new_clip = mainw->pre_src_file;
           mainw->close_this_clip = mainw->current_file;
         } else {
+          cfile->ext_src = NULL;
+          cfile->ext_src_type = LIVES_EXT_SRC_NONE;
           close_current_file(mainw->pre_src_file);
           if (mainw->current_file == current_file) mainw->clip_switched = clip_switched;
         }
       }
     }
   }
-  if (!mainw->noswitch) {
-    if (is_bg) {
-      mainw->current_file = current_file;
-      mainw->pre_src_file = pre_src_file;
-      mainw->whentostop = wts;
-    }
-
-    if (mainw->current_file == -1) mainw->cancelled = CANCEL_GENERATOR_END;
-    else {
-      if (mainw->current_file != current_file) {
-        mainw->new_clip = mainw->current_file;
-        mainw->current_file = current_file;
-      }
-    }
-  }
+  if (!CURRENT_CLIP_IS_VALID) mainw->cancelled = CANCEL_GENERATOR_END;
 }
 
 

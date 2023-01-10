@@ -65,9 +65,11 @@ typedef weed_plantptr_t lives_proc_thread_t;
 boolean governor_loop(livespointer data) LIVES_RETURNS_TWICE;
 
 void fg_service_call(lives_proc_thread_t lpt, void *retval);
+
 boolean fg_service_fulfill(void);
 boolean fg_service_fulfill_cb(void *dummy);
-boolean has_lpttorun(void);
+
+boolean is_fg_busy(void);
 
 ////////////////////////////////////////
 
@@ -1059,7 +1061,12 @@ boolean lives_timer_remove(uint32_t timer);
 uint32_t lives_idle_priority(LiVESWidgetSourceFunc function, livespointer data);
 uint32_t lives_timer_immediate(LiVESWidgetSourceFunc function, livespointer data);
 
-uint32_t lives_idle_priority_longrun(LiVESWidgetSourceFunc function, livespointer data);
+uint32_t lives_thrd_idle_priority(LiVESWidgetSourceFunc function, livespointer data);
+
+int ctx_mutex_lock(void);
+int ctx_mutex_unlock(void);
+
+//uint32_t lives_idle_priority_longrun(LiVESWidgetSourceFunc function, livespointer data);
 
 #ifdef GUI_GTK
 #define IDLEFUNC_VALID (!g_source_is_destroyed (g_main_current_source ()))

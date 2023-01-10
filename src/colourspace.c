@@ -13256,16 +13256,6 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       }
     }
 
-    if (mainw->frame_layer && layer != mainw->frame_layer
-        && weed_layer_get_pixel_data(mainw->frame_layer) == in_pixel_data[0]) {
-      /// retain orig pixel_data if it belongs to mainw->frame_layer
-      weed_layer_nullify_pixel_data(old_layer);
-    }
-
-    // no longer needed
-    weed_layer_free(old_layer);
-    old_layer = NULL;
-
     for (i = 0; i < 4; i++) {
       // swscale always likes 4 elements, even if fewer planes are used
       if (i < oplanes) {
@@ -13342,6 +13332,16 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         LIVES_DEBUG("swscale is NULL !!");
       } else {
         //if (progscan) {
+        for (i = 0; i < 4; i++) {
+          // swscale always likes 4 elements, even if fewer planes are used
+          if (i < oplanes) {
+            orw[i] = orowstrides[i];
+          } else {
+            opd[i] = NULL;
+            orw[i] = 0;
+          }
+        }
+
         swparams[sl].layer = layer;
         swparams[sl].file_gamma = weed_get_double_value(layer, "file_gamma", NULL);
         if (swparams[sl].file_gamma == 0.) swparams[sl].file_gamma = 1.;
@@ -13353,16 +13353,17 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
                                      ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 65536, 65536);
         for (i = 0; i < 4; i++) {
           if (i < inplanes)
-            swparams[sl].ipd[i] =
-              ipd[i] + (size_t)(sl * irw[i] * iheight
-                                * weed_palette_get_plane_ratio_vertical(palette, i));
+            /* opd[i] + (size_t)(sl * orw[i] * height */
+            swparams[sl].ipd[i] = ipd[i];
+          /* ipd[i] + (size_t)(sl * irw[i] * iheight */
+          /*                   * weed_palette_get_plane_ratio_vertical(palette, i)); */
           else
             swparams[sl].ipd[i] = NULL;
 
           if (i < oplanes)
-            swparams[sl].opd[i] =
-              opd[i] + (size_t)(sl * orw[i] * height
-                                * weed_palette_get_plane_ratio_vertical(opal_hint, i));
+            swparams[sl].opd[i] = opd[i];
+          /* opd[i] + (size_t)(sl * orw[i] * height */
+          /*                   * weed_palette_get_plane_ratio_vertical(opal_hint, i)); */
           else
             swparams[sl].opd[i] = NULL;
         }
@@ -13410,6 +13411,19 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     /* for (int gg = 0; gg < height; gg++) { */
     /*   memset(&((uint8_t *)out_pixel_data[0])[gg * orowstrides[0]], 255, width * 3 / 2); */
     /* } */
+
+    if (mainw->frame_layer && layer != mainw->frame_layer
+        && weed_layer_get_pixel_data(mainw->frame_layer) == in_pixel_data[0]) {
+      /// retain orig pixel_data if it belongs to mainw->frame_layer
+      weed_layer_nullify_pixel_data(old_layer);
+    } else {
+      if (weed_layer_get_pixel_data(old_layer) == weed_layer_get_pixel_data(layer)) {
+        weed_layer_nullify_pixel_data(old_layer);
+      }
+    }
+
+    weed_layer_free(old_layer);
+    old_layer = NULL;
 
     lives_free(out_pixel_data);
     lives_free(orowstrides);
@@ -13510,7 +13524,9 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
 
   if (lwidth != width || lheight != height) {
     /// resize the inner rectangle
+
     if (!resize_layer(layer, width, height, interp, tpal, tclamp)) return FALSE;
+
     pal = weed_layer_get_palette(layer);
     lwidth = weed_layer_get_width_pixels(layer);
     lheight = weed_layer_get_height(layer);

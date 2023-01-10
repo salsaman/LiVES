@@ -31,6 +31,7 @@ typedef pthread_attr_t native_attr_t;
 typedef struct {
   uint64_t var_uid;
   int var_idx;
+  LiVESWidgetContext *var_guictx;
   lives_obj_attr_t **var_attributes;
   pthread_t var_self;
   //
@@ -79,7 +80,6 @@ typedef struct {
 
 struct _lives_thread_data_t {
   pthread_t self;
-  LiVESWidgetContext *ctx;
   int64_t idx; // thread index
   lives_threadvars_t vars;
   boolean exited;
@@ -197,20 +197,24 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 // lives_proc_thread state flags
 #define THRD_STATE_NONE		0
 
-#define THRD_STATE_UNQUEUED 	(1ull << 0)
-#define THRD_STATE_IDLING 	(1ull << 1) // for IDLEFUNCS, combined with unqueued implies the proc_thread can be requued
-#define THRD_STATE_QUEUED 	(1ull << 2) // indicates the proc_thread is in the pool thread work queue
+#define THRD_STATE_UNQUEUED 	(1ull << 0) // intial state for all proc_threads
 #define THRD_STATE_DEFERRED 	(1ull << 3) // will be run later due to resource limitations
-
+#define THRD_STATE_QUEUED 	(1ull << 2) // queued for execution (eithr in worker ppol, or as fg reequst)
 #define THRD_STATE_PREPARING 	(1ull << 4) // has been assigned from queue, but not yet running
 #define THRD_STATE_RUNNING 	(1ull << 5) // thread is processing
 
+// final states
+// for IDLEFUNCS, combined with unqueued implies the proc_thread can be requued
+// combined instead with paused means the thread can be resumed rather than requeud
+#define THRD_STATE_IDLING 	(1ull << 1)
+
 #define THRD_STATE_COMPLETED 	(1ull << 8) // processing finished
-#define THRD_STATE_DESTROYING 	(1ull << 9) // proc_thread will be destroyed as soon as all extra refs are removed
+#define THRD_STATE_DESTROYING 	(1ull << 9) // proc_thread will be destroyed as soon as all refs are removed
 
 #define THRD_STATE_FINISHED 	(1ull << 10) // processing finished and all hooks have been triggered
 #define THRD_STATE_DESTROYED 	(1ull << 11) // proc_thread is about to be freed; must not be reffed or unreffed
 
+// permanet state
 #define THRD_STATE_STACKED 	(1ull << 14) // is held in a hook stack
 
 // destroyed is also a final state, but it should not be checked for, the correct way is to add a callback
@@ -219,7 +223,7 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 
 #define THRD_STATE_WILL_DESTROY (THRD_STATE_COMPLETED | THRD_STATE_DESTROYING)
 
-// temporary states
+// temporary states (with PREPARING or RUNNING)
 #define THRD_STATE_BUSY 	(1ull << 16)
 // waiting for sync_ready
 #define THRD_STATE_WAITING 	(1ull << 17) // waiting for sync_ready
@@ -236,6 +240,7 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 // request to pause - ignored for non pauseable threads
 #define THRD_STATE_CANCEL_REQUESTED 	(1ull << 22)
 // paused by request
+#define THRD_STATE_CANCELLED 	(1ull << 32)
 
 #define THRD_TRANSIENT_STATES  0X7F003F
 
@@ -248,7 +253,7 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 // when requeud, the UNQUEUED / IDLING flag bits are removed, and the status will change to QUEUED
 
 // abnormal states
-#define THRD_STATE_CANCELLED 	(1ull << 32)
+
 // timed out waiting for sync_ready
 #define THRD_STATE_TIMED_OUT	(1ull << 33)
 // other unspeficified error
@@ -260,7 +265,7 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 // called with invalid args_fmt
 #define THRD_STATE_INVALID 	(1ull << 40)
 
-// options
+// options - TODO - these should be retained as ATTRs instead
 // can be cancelled by calling proc_thread_cancel
 #define THRD_OPT_CANCELABLE 	(1ull << 48)
 // can be cancelled by calling proc_thread_cancel
@@ -268,11 +273,23 @@ lives_thread_data_t *lives_thread_data_create(uint64_t thread_id);
 
 // wait for join, even if return type is void
 #define THRD_OPT_NOTIFY 	(1ull << 50)
+
 // return value irrelevant, thread should simply finish and lcean up its resources
-// calling proc_thread_join after this is bad.
+// doing anything with lpt after this may cause undefined behaviour
+// - adding a hook callback to either the completed and/or destruction hooks is valid however
+// however this must be done before setting dontcare. Dontcare can be set when creating the lpt, during execution, or
+// as an option when reequesting cancel
 #define THRD_OPT_DONTCARE 	(1ull << 51)
+
 // simulated 'idlefunc'
 #define THRD_OPT_IDLEFUNC	(1ull << 52)
+
+// if combined with IDLEFUNC, instead of being dqueued when a cycel is done,
+// the proc_thread will pause. Then instead of queueing it, it can be restarted with
+// request_resume. (in effect, the proc_thread is pausable and has a permenate pause_request)
+// To terminate teh proc_thread it is necessary to senda cancel_request before the resume_request,
+// then on resuming the proc_thread will cancel itself and return with the completed (or be destroyed)
+#define THRD_OPT_IDLE_PAUSE	(1ull << 53)
 
 // can be set to prevent state change hooks from being triggered
 #define THRD_BLOCK_HOOKS	(1ull << 60)
@@ -323,14 +340,14 @@ uint64_t get_worker_status(uint64_t tid);
 #define LIVES_THRDATTR_NO_GUI			(1ull << 5)
 #define LIVES_THRDATTR_IGNORE_SYNCPTS  		(1ull << 6)
 #define LIVES_THRDATTR_IDLEFUNC   		(1ull << 7)
-#define LIVES_THRDATTR_DETACHED   		(1ull << 8)
+#define LIVES_THRDATTR_IDLE_PAUSE   		(1ull << 8)
+#define LIVES_THRDATTR_DETACHED   		(1ull << 9)
 
 // create a proc thread for the gui thread to run
 // instead of being pushed to the poolthread queue, it will be pushed to
 // the main thread's stack
 #define LIVES_THRDATTR_FG_THREAD   		(1ull << 9)
 
-// thread wieghts - these are used in combination with FG_THREAD
 // light - indicates a trivial request, such as updating a spinbutton which can be carried out quickly
 // this will block and get executed as soon as possible
 #define LIVES_THRDATTR_FG_LIGHT	   		(1ull << 10)
@@ -471,7 +488,11 @@ boolean lives_proc_thread_is_running(lives_proc_thread_t);
 // test if lpt is queued for execution
 boolean lives_proc_thread_is_queued(lives_proc_thread_t);
 
+boolean lives_proc_thread_is_unqueued(lives_proc_thread_t);
+
 boolean lives_proc_thread_is_paused(lives_proc_thread_t);
+
+boolean lives_proc_thread_idle_paused(lives_proc_thread_t);
 
 // test if lpt is in a hook stack
 boolean lives_proc_thread_is_stacked(lives_proc_thread_t);
@@ -489,6 +510,38 @@ boolean lives_proc_thread_will_destroy(lives_proc_thread_t);
 //test if lpt is wating for sync_ready()
 boolean lives_proc_thread_sync_waiting(lives_proc_thread_t);
 
+#if 0
+- - TODO
+// this function works in two parts - a callback is added to the lpt sync_announce hooks
+// caller is
+// passing the address of a static volatile int set to 0
+// for sync_announce, the lpt will trigger the hooks async sequential
+// the callback seeing val 0, will set the value to 1, and seeing 1, will always return FALSE.
+// After doing whatever processing, the value can be set to 2, seeing 2
+// the callback will reset the value to 0, and return TRUE
+// setting value to 3 or higher, the callback will always return TRUE but will not change the value
+// the value can be set to -1, in this case the callback will remove itself from the stack and return TRUE
+// beofre exiting the lpt will set the value to -1
+// thus we have:
+
+#define SYNC_AN_PRIME			0
+#define SYNC_AN_ALERT			1
+#define SYNC_AN_CONTINUE		2
+#define SYNC_AN_IGNORE			3
+#define SYNC_AN_LAST			-1
+//
+// part 2 is here, it simply waits for the value to be set to 1,
+//block until lpt triggers sync_announce hook with announcement id idx
+// or until (non zero) timeout seconds elapses
+// if FALSE is returned, thr function timed out.
+// If TRUE returned, lpt will be reffed and sync_waiting until
+// lives_proc_thread_sync_ready(lpt) is called
+// - will also return TRUE if the lpt completes (normally, cancelled, error, will destroy etc)
+// so state should be checked, (sync_ready will unref)
+// before calling sync_ready
+boolean lives_proc_thread_wait_sync_announce(lives_proc_thread_t, int an_idx, double timeout);
+#endif
+
 boolean lives_proc_thread_check_finished(lives_proc_thread_t);
 
 boolean lives_proc_thread_get_signalled(lives_proc_thread_t);
@@ -498,8 +551,10 @@ int lives_proc_thread_get_signal_data(lives_proc_thread_t, int64_t *tidx_return,
 void lives_proc_thread_set_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
 
-// set dontcare if the return result is no longer relevant / needed, otherwise the thread should be joined as normal
-// if thread is already set dontcare, value here is ignored. For non-cancellable threads use lives_proc_thread_dontcare instead.
+// set dontcare if the return result is no longer relevant / needed, o
+// therwise the thread should be joined as normal
+// if thread is already set dontcare, value here is ignored.
+// For non-cancellable threads, this is ignored;  use lives_proc_thread_dontcare instead.
 boolean lives_proc_thread_request_cancel(lives_proc_thread_t lpt, boolean dontcare);
 boolean lives_proc_thread_cancel(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancelled(lives_proc_thread_t);
@@ -525,13 +580,14 @@ boolean lives_proc_thread_get_resume_requested(lives_proc_thread_t);
 boolean lives_proc_thread_resume(lives_proc_thread_t self);
 
 // low level cancel, which will cause the thread to abort
+// WARING - quite likely will result in the entire app exiting
 boolean lives_proc_thread_cancel_immediate(lives_proc_thread_t);
 
 /// tell a thread with return value that we no longer need the value so it can free itself
 /// after setting this, no further operations may be done on the proc_thread
 boolean lives_proc_thread_dontcare(lives_proc_thread_t);
 
-// as above but takes address of ptr to be nullified when the thread is just about to be freed
+// as above but takes address of ptr to be nullified when the thread is about to be freed
 boolean lives_proc_thread_dontcare_nullify(lives_proc_thread_t, void **nullif);
 
 // pthread level waiting
@@ -545,6 +601,7 @@ boolean lives_proc_thread_wait(void);
 // soft wait (waiting thread remains active while waiting, can update state to blocked,
 // check if it has been cancelled, poll multiple functions, abort waiting by setting controlvar)
 
+// this is a self function for sync_wait hook
 // set control to TRUE to return - if all SYNC_WAIT_HOOK funcs return TRUE (polled for), control is also set to TRUE
 // if control is NULL, an internal variable will be used
 // proc_thread can either add hook_callbacks to its SYNC_WAIT hook stack, or set othr hook callabcks which set
@@ -552,7 +609,11 @@ boolean lives_proc_thread_wait(void);
 boolean thread_wait_loop(lives_proc_thread_t lpt, boolean full_sync, volatile boolean *control);
 
 // a specialized version of thread_wait_loop, thread will wait until another thread calls sync_continue
+// (similar to PAUSE, but done spontaneosly rather than as a response to pause_request)
 boolean sync_point(const char *motive);
+
+// similar to request_resume, but works when the status is sync_waitin rather than paused
+// (the main difference is that the waiting thread may timeout waiting)
 void lives_proc_thread_sync_continue(lives_proc_thread_t lpt);
 
 // WARNING !! version without a return value will free lpt !

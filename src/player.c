@@ -2490,20 +2490,27 @@ static frames_t find_best_frame(frames_t requested_frame, frames_t dropped, int6
 #define DROPFRAME_TRIGGER 4
 #define JUMPFRAME_TRIGGER 16
 
+static void widget_ct_upd(void) {
+  while (g_main_context_iteration(NULL, FALSE));
+}
+
 // player will create this as
 static boolean update_gui(void) {
-  /* if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) { */
-  /*   lives_widget_queue_draw_and_update(mainw->preview_image); */
-  /* } else { */
-  /*   lives_widget_queue_draw_and_update(mainw->play_image); */
-  /* } */
+  static lives_proc_thread_t lpt = NULL;
 
+  if (!lpt) lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED, widget_ct_upd,
+                    -1, "", NULL);
+  /*   if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) { */
+  /*     lives_widget_queue_draw_and_update(mainw->preview_image); */
+  /*   } else { */
+  /*     lives_widget_queue_draw_and_update(mainw->play_image); */
+  /*   } */
+  /* y */
   g_print("UPD 1\n");
   mainw->debug = TRUE;
-  lives_widget_context_update();
+  g_main_context_iteration(g_main_context_default(), FALSE);
   mainw->debug = FALSE;
   g_print("UPD 2\n");
-
   return TRUE;
 }
 
@@ -2556,6 +2563,7 @@ int process_one(boolean visible) {
 #endif
   lives_clip_data_t *cdata = NULL;
   int64_t jumplim = 0;
+  int retval = 0;
 
   // current video playback direction
   lives_direction_t dir = LIVES_DIRECTION_NONE;
@@ -2604,9 +2612,8 @@ int process_one(boolean visible) {
 
   // here we create and "idlefunc" proc_thread, the proc_thread is queued, runs once, and then can be
   // triggered later simp[y by requeeuing it
-  if (!gui_lpt) gui_lpt = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC
-                            | LIVES_THRDATTR_START_UNQUEUED,
-                            update_gui, WEED_SEED_BOOLEAN, "", NULL);
+  if (!gui_lpt) gui_lpt = lives_proc_thread_create(LIVES_THRDATTR_IDLEFUNC | LIVES_THRDATTR_IDLE_PAUSE
+                            | LIVES_THRDATTR_START_UNQUEUED, update_gui, WEED_SEED_BOOLEAN, "", NULL);
 
   // time is obtained as follows:
   // -  if there is an external transport or clock active, we take our time from that
@@ -2633,7 +2640,8 @@ int process_one(boolean visible) {
   if (mainw->currticks == -1) {
     if (time_source == LIVES_TIME_SOURCE_SOUNDCARD) handle_audio_timeout();
     mainw->cancelled = CANCEL_ERROR;
-    return mainw->cancelled;
+    retval = mainw->cancelled;
+    goto err_end;
   }
 
   if (time_source != last_time_source && last_time_source != LIVES_TIME_SOURCE_NONE
@@ -2697,7 +2705,8 @@ int process_one(boolean visible) {
         if (mainw->cancelled == CANCEL_NONE) {
           if (IS_VALID_CLIP(mainw->playing_file)  && !sfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
           else mainw->cancelled = CANCEL_AUDIO_ERROR;
-          return mainw->cancelled;
+          retval = mainw->cancelled;
+          goto err_end;
         }
       }
       if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) /
@@ -2741,7 +2750,8 @@ int process_one(boolean visible) {
 
   if (mainw->current_file != old_current_file || mainw->playing_file != old_playing_file || mainw->vpp != old_vpp) {
     mainw->cancelled = CANCEL_INTERNAL_ERROR;
-    return FALSE;
+    retval = mainw->cancelled;
+    goto err_end;
   }
 
   if (mainw->new_vpp) {
@@ -2766,8 +2776,8 @@ switch_point:
       mainw->can_switch_clips = FALSE;
       if (!IS_VALID_CLIP(mainw->new_clip) && !IS_VALID_CLIP(mainw->playing_file)) {
         mainw->cancelled = CANCEL_INTERNAL_ERROR;
-        cancel_process(FALSE);
-        return ONE_MILLION + mainw->cancelled;
+        retval = ONE_MILLION + mainw->cancelled;
+        goto err_end;
       }
       if (mainw->new_clip == mainw->playing_file || !IS_VALID_CLIP(mainw->new_clip))
         mainw->new_clip = -1;
@@ -2860,8 +2870,8 @@ switch_point:
     if (!IS_VALID_CLIP(mainw->playing_file)) {
       if (IS_VALID_CLIP(mainw->new_clip)) goto switch_point;
       mainw->cancelled = CANCEL_INTERNAL_ERROR;
-      cancel_process(FALSE);
-      return ONE_MILLION + mainw->cancelled;
+      retval = ONE_MILLION + mainw->cancelled;
+      goto err_end;
     }
 
     sfile = mainw->files[mainw->playing_file];
@@ -2983,15 +2993,26 @@ switch_point:
       }
     }
 
-    //    if (lives_proc_thread_is_idling(gui_lpt)) {
-    lives_nanosleep_while_false(lives_proc_thread_is_idling(gui_lpt));
-
-    lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
-    lives_proc_thread_queue(gui_lpt, 0);
+    if (lives_proc_thread_is_unqueued(gui_lpt)) {
+      lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
+      lives_proc_thread_queue(gui_lpt, 0);
+    } else {
+      lives_nanosleep_while_false(lives_proc_thread_idle_paused(gui_lpt));
+      lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
+      lives_proc_thread_request_resume(gui_lpt);
+    }
 
     if (mainw->cancelled == CANCEL_NONE) return 0;
-    cancel_process(FALSE);
-    return mainw->cancelled;
+
+    if (!lives_proc_thread_is_unqueued(gui_lpt)) {
+      lives_proc_thread_request_cancel(gui_lpt, FALSE);
+      lives_nanosleep_while_false(lives_proc_thread_idle_paused(gui_lpt));
+      lives_proc_thread_request_resume(gui_lpt);
+    }
+    gui_lpt = NULL;
+
+    retval = mainw->cancelled;
+    goto err_end;
   }
 
   // free playback
@@ -3178,7 +3199,10 @@ switch_point:
           load_frame_image(sfile->frameno);
         }
         lives_widget_context_update();
-        if (mainw->cancelled != CANCEL_NONE) return mainw->cancelled;
+        if (mainw->cancelled != CANCEL_NONE) {
+          retval = mainw->cancelled;
+          goto err_end;
+        }
         return 0;
       }
 
@@ -3309,8 +3333,8 @@ play_frame:
           if (!fixed_frame) {
             sfile->frameno = clamp_frame(mainw->playing_file, TRUE, sfile->frameno);
             if (mainw->cancelled != CANCEL_NONE) {
-              cancel_process(FALSE);
-              return ONE_MILLION + mainw->cancelled;
+              retval = ONE_MILLION + mainw->cancelled;
+              goto err_end;
             }
 
             if (mainw->scratch == SCRATCH_REALIGN) {
@@ -3328,8 +3352,8 @@ play_frame:
 
           if (!check_audio_limits(mainw->playing_file, sfile->frameno)) {
             if (mainw->cancelled != CANCEL_NONE) {
-              cancel_process(FALSE);
-              return ONE_MILLION + mainw->cancelled;
+              retval = ONE_MILLION + mainw->cancelled;
+              goto err_end;
             }
             if (can_realign) {
               if (fixed_frame) {
@@ -3521,7 +3545,10 @@ play_frame:
                       if (1 || !did_switch) {
                         if (!await_audio_queue(LIVES_SHORT_TIMEOUT)) {
                           mainw->cancelled = handle_audio_timeout();
-                          if (mainw->cancelled != CANCEL_NONE) return ONE_MILLION + mainw->cancelled;
+                          if (mainw->cancelled != CANCEL_NONE) {
+                            retval = ONE_MILLION + mainw->cancelled;
+                            goto err_end;
+                          }
                         }
 #ifdef ENABLE_JACK
                         if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK) {
@@ -3871,11 +3898,14 @@ proc_dialog:
       // the audio thread wants to update the parameter scroll(s)
       if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
-      g_print("check gui lpt, stats ie %s\n", lpt_desc_state(gui_lpt));
-      lives_nanosleep_while_false(lives_proc_thread_is_idling(gui_lpt));
-
-      lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
-      lives_proc_thread_queue(gui_lpt, 0);
+      if (lives_proc_thread_is_unqueued(gui_lpt)) {
+        lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
+        lives_proc_thread_queue(gui_lpt, 0);
+      } else {
+        lives_nanosleep_while_false(lives_proc_thread_idle_paused(gui_lpt));
+        lives_hooks_trigger(lives_proc_thread_get_hook_stacks(mainw->player_proc), SYNC_ANNOUNCE_HOOK);
+        lives_proc_thread_request_resume(gui_lpt);
+      }
 
       //#define LOAD_ANALYSE_TICKS MILLIONS(10)
 
@@ -3892,8 +3922,14 @@ proc_dialog:
       }
     }
     if (mainw->cancelled != CANCEL_NONE) {
-      cancel_process(FALSE);
-      return ONE_MILLION + mainw->cancelled;
+      if (!lives_proc_thread_is_unqueued(gui_lpt)) {
+        lives_proc_thread_request_cancel(gui_lpt, FALSE);
+        lives_nanosleep_while_false(lives_proc_thread_idle_paused(gui_lpt));
+        lives_proc_thread_request_resume(gui_lpt);
+      }
+      gui_lpt = NULL;
+      retval = ONE_MILLION + mainw->cancelled;
+      goto err_end;
     }
     return 0;
   }
@@ -3902,10 +3938,18 @@ proc_dialog:
     mainw->jack_can_stop = FALSE;
   }
 
-  cancel_process(visible);
-  //skipit:
+  if (!lives_proc_thread_is_unqueued(gui_lpt)) {
+    lives_proc_thread_request_cancel(gui_lpt, FALSE);
+    lives_nanosleep_while_false(lives_proc_thread_idle_paused(gui_lpt));
+    lives_proc_thread_request_resume(gui_lpt);
+  }
+  gui_lpt = NULL;
 
-  return 2000000 + mainw->cancelled;
+  retval = MILLIONS(2) + mainw->cancelled;
+  goto err_end;
+
+err_end:
+  return retval;
 }
 
 

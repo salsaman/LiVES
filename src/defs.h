@@ -507,7 +507,7 @@ typedef enum {
 
 //#define WEED_STARTUP_TESTS
 
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT 1
 #else

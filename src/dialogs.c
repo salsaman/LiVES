@@ -1211,39 +1211,6 @@ void pump_io_chan(LiVESIOChannel *iochan) {
 }
 
 
-static boolean accelerators_swapped;
-
-void cancel_process(boolean visible) {
-  if (visible) {
-    if (mainw->preview_box && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
-    if (accelerators_swapped) {
-      if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
-      lives_widget_remove_accelerator(mainw->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-      lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p,
-                                   (LiVESXModifierType)0,
-                                   LIVES_ACCEL_VISIBLE);
-    }
-    if (mainw->proc_ptr) {
-      lives_freep((void **)&mainw->proc_ptr->text);
-      lives_widget_destroy(LIVES_WIDGET(mainw->proc_ptr->processing));
-      lives_free(mainw->proc_ptr);
-      mainw->proc_ptr = NULL;
-    }
-    mainw->is_processing = FALSE;
-    if (!(cfile->menuentry == NULL)) {
-      sensitize();
-    }
-  } else {
-    /// ????
-    mainw->is_processing = TRUE;
-  }
-  if (visible && mainw->current_file > -1 && cfile->clip_type == CLIP_TYPE_DISK && ((mainw->cancelled != CANCEL_NO_MORE_PREVIEW
-      && mainw->cancelled != CANCEL_PREVIEW_FINISHED && mainw->cancelled != CANCEL_USER) || !cfile->opening)) {
-    lives_rm(cfile->info_file);
-  }
-}
-
-
 static char *remtime_string(double timerem) {
   char *fmtstr, *tstr, *tmp;
   if (timerem < 0.) {
@@ -1403,6 +1370,8 @@ void update_progress(boolean visible, int clipno) {
 }
 
 
+// TODO - these functions should be moved to another file
+
 #ifdef USE_GDK_FRAME_CLOCK
 static boolean using_gdk_frame_clock;
 static GdkFrameClock *gclock;
@@ -1452,6 +1421,64 @@ static boolean reset_timebase(void) {
 
   reset_playback_clock();
   return TRUE;
+}
+
+
+static boolean accelerators_swapped;
+
+boolean get_accels_swapped(void) {return accelerators_swapped;}
+
+void cancel_process(boolean visible) {
+  if (visible) {
+    if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK
+        && ((mainw->cancelled != CANCEL_NO_MORE_PREVIEW && mainw->cancelled != CANCEL_PREVIEW_FINISHED
+             && mainw->cancelled != CANCEL_USER) || !cfile->opening)) {
+      lives_rm(cfile->info_file);
+    }
+    if (mainw->preview_box && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
+    if (accelerators_swapped) {
+      if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
+      if (mainw->proc_ptr) lives_widget_remove_accelerator(mainw->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p,
+            (LiVESXModifierType)0);
+      /* lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p, */
+      /*                              (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE); */
+      accelerators_swapped = FALSE;
+    }
+
+    if (mainw->proc_ptr) {
+      const char *btext = NULL;
+      if (mainw->iochan) btext = lives_text_view_get_text(mainw->optextview);
+      if (mainw->proc_ptr->processing) {
+        if (mainw->proc_ptr->rte_off_cb
+            && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->rte_off_cb))) {
+          weed_deinit_all(FALSE);
+        }
+        if (mainw->proc_ptr->audint_cb
+            && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->audint_cb))) {
+          pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
+        }
+        if (mainw->proc_ptr->notify_cb
+            && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
+          notify_user(mainw->proc_ptr->text);
+        }
+        lives_hooks_trigger(NULL, COMPLETED_HOOK);
+        lives_freep((void **)&mainw->proc_ptr->text);
+        lives_widget_destroy(mainw->proc_ptr->processing);
+      }
+      lives_free(mainw->proc_ptr);
+      mainw->proc_ptr = NULL;
+      if (btext) {
+        lives_text_view_set_text(mainw->optextview, btext, -1);
+        lives_free((char *)btext);
+      }
+    }
+    mainw->is_processing = FALSE;
+    if (cfile->menuentry) {
+      // note - for operations to/from clipboard (file 0) we
+      // should manually call sensitize() after operation
+      sensitize();
+    }
+  } else mainw->is_processing = TRUE; // ???
 }
 
 
@@ -1557,8 +1584,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
                            (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed)) && !LIVES_IS_PLAYING) {
       if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
       lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
-      lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-      lives_widget_add_accelerator(mainw->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group, LIVES_KEY_p,
+      //lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
+      lives_widget_add_accelerator(mainw->proc_ptr->preview_button,
+                                   LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group, LIVES_KEY_p,
                                    (LiVESXModifierType)0, (LiVESAccelFlags)0);
       accelerators_swapped = TRUE;
     }
@@ -1876,7 +1904,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         lives_widget_grab_focus(mainw->proc_ptr->preview_button);
         if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
         lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
-        lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
+        //lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
         lives_widget_add_accelerator(mainw->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL,
                                      mainw->accel_group, LIVES_KEY_p,
                                      (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -1981,55 +2009,7 @@ finish:
   if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
 
   //play/operation ended
-  if (visible) {
-    if (cfile->clip_type == CLIP_TYPE_DISK && (mainw->cancelled != CANCEL_NO_MORE_PREVIEW || !cfile->opening)) {
-      lives_rm(cfile->info_file);
-    }
-    if (mainw->preview_box && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
-    if (accelerators_swapped) {
-      if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
-      if (mainw->proc_ptr) lives_widget_remove_accelerator(mainw->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p,
-            (LiVESXModifierType)0);
-      lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p,
-                                   (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
-      accelerators_swapped = FALSE;
-    }
-    if (mainw->proc_ptr) {
-      const char *btext = NULL;
-      if (mainw->iochan) btext = lives_text_view_get_text(mainw->optextview);
-      if (mainw->proc_ptr->processing) {
-        if (mainw->proc_ptr->rte_off_cb
-            && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->rte_off_cb))) {
-          weed_deinit_all(FALSE);
-        }
-        if (mainw->proc_ptr->audint_cb
-            && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->audint_cb))) {
-          pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
-        }
-        if (mainw->proc_ptr->notify_cb
-            && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
-          notify_user(mainw->proc_ptr->text);
-        }
-        lives_hooks_trigger(NULL, COMPLETED_HOOK);
-        lives_freep((void **)&mainw->proc_ptr->text);
-        lives_widget_destroy(mainw->proc_ptr->processing);
-      }
-      lives_free(mainw->proc_ptr);
-      mainw->proc_ptr = NULL;
-      if (btext) {
-        lives_text_view_set_text(mainw->optextview, btext, -1);
-        lives_free((char *)btext);
-      }
-    }
-    mainw->is_processing = FALSE;
-    if (cfile->menuentry) {
-      // note - for operations to/from clipboard (file 0) we
-      // should manually call sensitize() after operation
-      sensitize();
-    }
-  } else {
-    mainw->is_processing = TRUE;
-  }
+  cancel_process(visible);
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   // get error message (if any)

@@ -454,7 +454,7 @@ boolean sepwin_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t
   if (LIVES_IS_PLAYING)
     lives_proc_thread_add_hook(mainw->player_proc, SYNC_ANNOUNCE_HOOK,
                                HOOK_OPT_ONESHOT | HOOK_CB_FG_THREAD | HOOK_UNIQUE_FUNC,
-                               on_sepwin_activate, NULL);
+                               on_sepwin_pressed, NULL);
   else on_sepwin_pressed(NULL, NULL);
   return TRUE;
 }
@@ -462,7 +462,7 @@ boolean sepwin_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t
 
 boolean play_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                       livespointer user_data) {
-  start_playback_async(0);
+  if (!get_accels_swapped() && !LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID) start_playback_async(0);
   return TRUE;
 }
 

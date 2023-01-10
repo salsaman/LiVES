@@ -14,6 +14,10 @@ alpha_to_grey|alpha to grey
 salsaman
 </author>
 
+<unique_id>
+0XC54D97FB4F78A3C8
+</unique_id>
+
 <description>
 Sets the Red, Green and Blue values of each output pixel equal to the alpha value of the input.
 </description>

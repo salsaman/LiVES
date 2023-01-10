@@ -46,6 +46,7 @@
 			 the return value (which must be int or boolean), will be checked. If the value is TRUE,
 			the thread will return with state IDLING | UNQUEUED
 			however, if the return value is FALSE, the state will be COMPLETED / FINISHED
+	- IDLE_PAUSE - see header
 
 	additionally, some functions may have sync_points, the caller should attach a function
 	to the thread's SYNC_ANNOUNCE_HOOK, and send sync_ready so the thread can continue.
@@ -55,8 +56,11 @@
 	IGNORE_SYNCPT - setting this flagbit tells the thread to not wait at sync points, this
 
 
-	- NO_GUI:    - this has no functional effect, but will set a flag in the worker thread's environment, and this may be
+	- NO_GUI:    - this has no predefined functional effect,
+			but will set a flag in the worker thread's environment (?); this may be
 			checked for in the function code and used to bypass graphical updates
+			This is intended for functions which are dual purpose and can be run in the foreground
+			with interface, or in the background with no interface.
 
 	- START_UNQUEUED: - create the thread but do not queue it for executuion. lives_proc_thread_queue(lpt) can be called
 			later to add the
@@ -369,6 +373,7 @@ static lives_proc_thread_t lives_proc_thread_run(lives_thread_attr_t attr, lives
       lives_proc_thread_queue(lpt, attr);
     } else {
       lives_proc_thread_include_states(lpt, THRD_STATE_UNQUEUED);
+      if (attr & LIVES_THRDATTR_IDLE_PAUSE) lives_proc_thread_include_states(lpt,  THRD_OPT_IDLE_PAUSE);
       if (attr & LIVES_THRDATTR_IDLEFUNC) lives_proc_thread_include_states(lpt, THRD_STATE_IDLING | THRD_OPT_IDLEFUNC);
     }
   }
@@ -1192,7 +1197,9 @@ uint64_t lives_proc_thread_include_states(lives_proc_thread_t lpt, uint64_t stat
         }
 
         if (state_bits & THRD_STATE_IDLING) {
-          lives_hooks_trigger(hook_stacks, IDLE_HOOK);
+          if (!lives_proc_thread_has_states(lpt, THRD_STATE_UNQUEUED)) {
+            lives_hooks_trigger(hook_stacks, IDLE_HOOK);
+          }
         }
 
         if (state_bits & THRD_STATE_BLOCKED) {
@@ -1287,6 +1294,12 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_queued(lives_proc_thread_t lpt)
 }
 
 
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_unqueued(lives_proc_thread_t lpt) {
+  if (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_UNQUEUED))) return TRUE;
+  return FALSE;
+}
+
+
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_paused(lives_proc_thread_t lpt) {
   if (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_PAUSED))) return TRUE;
   return FALSE;
@@ -1308,7 +1321,14 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_check_finished(lives_proc_thread_t
 
 // check if thread is idling (only set if idlefunc was queued at least once already)
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_idling(lives_proc_thread_t lpt) {
-  if (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_IDLING | THRD_STATE_UNQUEUED))) return TRUE;
+  if (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_IDLING))) return TRUE;
+  return FALSE;
+}
+
+
+// check if thread is idling (only set if idlefunc was queued at least once already)
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_idle_paused(lives_proc_thread_t lpt) {
+  if (lpt && (lives_proc_thread_has_states(lpt, THRD_STATE_IDLING | THRD_STATE_PAUSED))) return TRUE;
   return FALSE;
 }
 
@@ -1683,7 +1703,10 @@ static void lives_proc_thread_set_final_state(lives_proc_thread_t lpt) {
       lives_proc_thread_exclude_states(lpt, THRD_TRANSIENT_STATES);
       // will trigger IDLE hook
       // STATE change -> transient states -> unququed / idling
-      lives_proc_thread_include_states(lpt, THRD_STATE_UNQUEUED | THRD_STATE_IDLING);
+      lives_proc_thread_include_states(lpt, THRD_STATE_IDLING);
+      if (state & THRD_OPT_IDLE_PAUSE) {
+        lives_proc_thread_set_state(lpt, (lives_proc_thread_get_state(lpt) | THRD_STATE_PAUSED));
+      }
       return;
     }
   }
@@ -1724,15 +1747,31 @@ static void *proc_thread_worker_func(void *args) {
   THREADVAR(proc_thread) = lpt;
   weed_set_voidptr_value(lpt, LIVES_LEAF_PTHREAD_SELF, (void *)pthread_self());
 
-  // if pthread_cancel is called, the cleanup_func will be called and pthread will exit
-  // this makes sure we trigger the THREAD_EXIT hook callbacks
-  pthread_cleanup_push(pthread_cleanup_func, args);
+  while (1) {
+    // if pthread_cancel is called, the cleanup_func will be called and pthread will exit
+    // this makes sure we trigger the THREAD_EXIT hook callbacks
+    pthread_cleanup_push(pthread_cleanup_func, args);
 
-  call_funcsig(lpt);
+    call_funcsig(lpt);
 
-  pthread_cleanup_pop(0);
+    pthread_cleanup_pop(0);
 
-  lives_proc_thread_set_final_state(lpt);
+    lives_proc_thread_set_final_state(lpt);
+
+    if (!lives_proc_thread_idle_paused(lpt)) break;
+
+    lives_proc_thread_wait();
+
+    // another thread must call lives_proc_thread_request_resume()
+    // but we can also be cancelled
+    lives_proc_thread_resume(lpt);
+
+    if (lives_proc_thread_get_cancel_requested(lpt)) {
+      lives_proc_thread_exclude_states(lpt, THRD_OPT_IDLEFUNC | THRD_OPT_IDLE_PAUSE);
+      lives_proc_thread_set_final_state(lpt);
+      break;
+    }
+  }
 
   if (lpt == mainw->player_proc) g_print("play UN %p\n", lpt);
 
@@ -1798,8 +1837,12 @@ void lives_proc_thread_queue(lives_proc_thread_t lpt, lives_thread_attr_t attr) 
     state |= THRD_OPT_DONTCARE;
   }
 
+  if (attr & LIVES_THRDATTR_IDLE_PAUSE) {
+    state |= THRD_OPT_IDLE_PAUSE;
+  }
+
   if (attr & LIVES_THRDATTR_IDLEFUNC) {
-    state |= (THRD_STATE_IDLING | THRD_OPT_IDLEFUNC);
+    state |= THRD_OPT_IDLEFUNC;
   }
 
   lives_proc_thread_set_state(lpt, state);
@@ -1891,6 +1934,8 @@ char *lives_proc_thread_state_desc(uint64_t state) {
     fstr = lives_strdup_concat(fstr, ", ", "%s", "will exit when finished");
   if (state & THRD_OPT_IDLEFUNC)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "is idlefunc");
+  if (state & THRD_OPT_IDLE_PAUSE)
+    fstr = lives_strdup_concat(fstr, ", ", "%s", "will pause on idle");
   if (state & THRD_BLOCK_HOOKS)
     fstr = lives_strdup_concat(fstr, ", ", "%s", "hooks blocked");
 
@@ -2022,8 +2067,8 @@ lives_thread_data_t *lives_thread_data_create(uint64_t idx) {
 
   (void) pthread_setspecific(tdata_key, tdata);
 
-  if (idx) tdata->ctx = lives_widget_context_new();
-  else tdata->ctx = lives_widget_context_default();
+  if (idx) tdata->vars.var_guictx = lives_widget_context_new();
+  else tdata->vars.var_guictx = lives_widget_context_default();
 
   tdata->vars.var_idx = tdata->idx = idx;
   tdata->vars.var_rowstride_alignment = RS_ALIGN_DEF;
@@ -2179,9 +2224,6 @@ skip_over:
     lives_hooks_clear(tdata->vars.var_hook_stacks, i);
   }
 
-  // make sure caller has noted that thread finished
-  lives_nanosleep_until_zero(mywork->flags & LIVES_THRDFLAG_WAIT_START);
-
   if (mywork->flags & LIVES_THRDFLAG_AUTODELETE) {
     lives_thread_free((lives_thread_t *)list);
   } else mywork->done = tdata->idx;
@@ -2212,7 +2254,7 @@ static void *thrdpool(void *arg) {
   // must do before anything else
   tdata = lives_thread_data_create(tid);
 
-  lives_widget_context_push_thread_default(tdata->ctx);
+  lives_widget_context_push_thread_default(tdata->vars.var_guictx);
 
   while (!threads_die) {
     if (!skip_wait) {
@@ -2230,15 +2272,15 @@ static void *thrdpool(void *arg) {
           //g_print("thrd %d (0x%lx) leaving\n", tid, pself);
           npoolthreads--;
           tdata->exited = TRUE;
-          lives_widget_context_pop_thread_default(tdata->ctx);
-          lives_widget_context_unref(tdata->ctx);
+          lives_widget_context_pop_thread_default(tdata->vars.var_guictx);
+          lives_widget_context_unref(tdata->vars.var_guictx);
           pthread_mutex_unlock(&pool_mutex);
           break;
         }
       }
     }
     if (LIVES_UNLIKELY(threads_die)) {
-      lives_widget_context_pop_thread_default(tdata->ctx);
+      lives_widget_context_pop_thread_default(tdata->vars.var_guictx);
       break;
     }
     //g_print("thrd %d (0x%lx) check for owrk\n", tid, pself);
@@ -2292,8 +2334,8 @@ void lives_threadpool_finish(void) {
       pthread_cond_broadcast(&tcond);
       pthread_mutex_unlock(&tcond_mutex);
       pthread_join(*(poolthrds[i]), NULL);
-      if (tdata->ctx && tdata->ctx != lives_widget_context_default())
-        lives_widget_context_unref(tdata->ctx);
+      if (tdata->vars.var_guictx && tdata->vars.var_guictx != lives_widget_context_default())
+        lives_widget_context_unref(tdata->vars.var_guictx);
       lives_free(tdata);
       lives_free(poolthrds[i]);
     }
@@ -2397,6 +2439,9 @@ thrd_work_t *lives_thread_create(lives_thread_t **threadptr, lives_thread_attr_t
     }
     if (attr & LIVES_THRDATTR_IDLEFUNC) {
       lives_proc_thread_include_states(lpt, THRD_OPT_IDLEFUNC);
+      if (attr & LIVES_THRDATTR_IDLE_PAUSE) {
+        lives_proc_thread_include_states(lpt, THRD_OPT_IDLE_PAUSE);
+      }
     }
     lives_proc_thread_set_work(lpt, work);
     if (attr & LIVES_THRDATTR_NOTE_TIMINGS) {

@@ -1538,6 +1538,7 @@ LiVESWidget *scrolled_textview(const char *text, LiVESTextBuffer *textbuffer, in
     int woex = widget_opts.expand;
     int height = RFX_WINSIZE_V;
     if (!LIVES_SHOULD_EXPAND_HEIGHT) height >>= 1;
+    lives_widget_show(textview);
     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
     scrolledwindow = lives_standard_scrolled_window_new(window_width, height, textview);
     widget_opts.expand = woex;

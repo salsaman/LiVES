@@ -25,13 +25,22 @@
 
 static boolean _start_playback(int play_type) {
   int new_file, old_file;
+  lives_proc_thread_t lpt;
+  boolean flag = FALSE;
+
   if (play_type != 8 && mainw->noswitch) return TRUE;
   player_desensitize();
 
   switch (play_type) {
   case 8: case 6: case 0:
     /// normal play
-    play_all(play_type == 8);
+    if (play_type == 0) flag = TRUE;
+    lpt = lives_proc_thread_create(LIVES_THRDATTR_START_UNQUEUED,
+                                   play_all, 0, "b", flag);
+
+    lives_thrd_idle_priority((LiVESWidgetSourceFunc)call_funcsig, lpt);
+
+    /* play_all(play_type == 8); */
     if (play_type == 6) {
       /// triggered by generator
       // need to set this after playback ends; this stops the key from being activated (again) in effects.c
@@ -1553,6 +1562,10 @@ void play_file(void) {
     }
   }
 
+
+  /// re-enable generic clip switching
+  mainw->noswitch = FALSE;
+
   BG_THREADVAR(hook_hints) = HOOK_CB_BLOCK | HOOK_CB_PRIORITY;
   g_print("\n\n\nwant to run post_play\n");
   main_thread_execute_void(post_playback, 0);
@@ -1601,9 +1614,6 @@ void play_file(void) {
   mainw->record_paused = mainw->record_starting = mainw->record = FALSE;
 
   mainw->ignore_screen_size = FALSE;
-
-  /// re-enable generic clip switching
-  mainw->noswitch = FALSE;
 
   /* if (prefs->show_dev_opts) */
   /*   g_print("nrefs = %d\n", check_ninstrefs()); */

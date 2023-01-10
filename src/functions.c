@@ -533,6 +533,10 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
       void *p0, *p3; int p1; weed_funcptr_t p2;
       DO_CALL(4, voidptr, int, funcptr, voidptr);
     } break;
+    case FUNCSIG_VOIDP_VOIDP_VOIDP_VOIDP: {
+      void *p0, *p1, *p2, *p3;
+      DO_CALL(4, voidptr, voidptr, voidptr, voidptr);
+    } break;
     // undefined funcsig
     default: goto funcerr;
     }
@@ -553,6 +557,10 @@ static boolean _call_funcsig_inner(lives_proc_thread_t lpt, lives_funcptr_t func
     case FUNCSIG_VOIDP_INT_INT_INT_INT: {
       void *p0; int p1, p2, p3, p4;
       DO_CALL(5, voidptr, int, int, int, int);
+    } break;
+    case FUNCSIG_VOIDP_VOIDP_BOOL_BOOL_INT: {
+      void *p0, *p1; int p2, p3, p4;
+      DO_CALL(5, voidptr, voidptr, boolean, boolean, int);
     } break;
     case FUNCSIG_PLANTP_INT_INT_INT_INT: {
       weed_plant_t *p0; int p1, p2, p3, p4;
@@ -682,7 +690,7 @@ boolean call_funcsig(lives_proc_thread_t lpt) {
   if (func) {
     uint32_t ret_type = weed_leaf_seed_type(lpt, _RV_);
     funcsig_t sig = weed_get_int64_value(lpt, LIVES_LEAF_FUNCSIG, NULL);
-    return _call_funcsig_inner(lpt, func, ret_type, sig);
+    _call_funcsig_inner(lpt, func, ret_type, sig);
   }
   return FALSE;
 }
@@ -1035,7 +1043,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
     int maxp = THREADVAR(hook_match_nparams);
     boolean fmatch;
 
-    for (cblist = hstacks[type]->stack; cblist; cblist = cblistnext) {
+    for (cblist = (LiVESList *)hstacks[type]->stack; cblist; cblist = cblistnext) {
       uint64_t cfinv = 0;
       cblistnext = cblist->next;
       closure = (lives_closure_t *)cblist->data;
@@ -1074,7 +1082,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
           if (closure->flags & HOOK_STATUS_RUNNING) closure->flags |= HOOK_STATUS_REMOVE;
           else {
             boolean isblock = FALSE;
-            hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, cblist, FALSE);
+            hstacks[type]->stack = lives_list_remove_node((LiVESList *)hstacks[type]->stack, cblist, FALSE);
             if (closure->flags & HOOK_CB_BLOCK) {
               isblock = TRUE;
               lives_proc_thread_ref(lpt2);
@@ -1127,7 +1135,7 @@ lives_proc_thread_t lives_hook_add(lives_hook_stack_t **hstacks, int type, uint6
 
   lives_proc_thread_include_states(closure->proc_thread, THRD_STATE_STACKED);
 
-  if (is_append) hstacks[type]->stack = lives_list_append(hstacks[type]->stack, closure);
+  if (is_append) hstacks[type]->stack = lives_list_append((LiVESList *)hstacks[type]->stack, closure);
   else hstacks[type]->stack = lives_list_prepend(hstacks[type]->stack, closure);
 
   closure->hook_stacks = hstacks;
@@ -1285,7 +1293,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       if (!lpt) continue;
 
       if (closure->flags & HOOK_STATUS_REMOVE) {
-        hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, list, FALSE);
+        hstacks[type]->stack = lives_list_remove_node((LiVESList *)hstacks[type]->stack, list, FALSE);
         // for oneshot triggers, we remove a ref, so caller should ref anything important before
         // triggering hooks
         //g_print("free one-shot hook %s\n", lives_proc_thread_show_func_call(lpt));
@@ -1361,7 +1369,7 @@ boolean lives_hooks_trigger(lives_hook_stack_t **hstacks, int type) {
       if (closure->flags & (HOOK_OPT_ONESHOT | HOOK_STATUS_REMOVE)) {
         if (weed_plant_has_leaf(lpt, LIVES_LEAF_REPLACEMENT)) abort();
         PTMLH;
-        hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, list, FALSE);
+        hstacks[type]->stack = lives_list_remove_node((LiVESList *)hstacks[type]->stack, list, FALSE);
         // for oneshot triggers, we remove a ref, so caller should ref anything important before
         // triggering hooks
         //g_print("free one-shot hook %s\n", lives_proc_thread_show_func_call(lpt));
@@ -1526,7 +1534,7 @@ void lives_hook_remove(lives_hook_stack_t **hstacks, int type, lives_proc_thread
           if (closure->proc_thread == lpt || (closure->flags & HOOK_STATUS_REMOVE)) {
             if (closure->flags & HOOK_STATUS_RUNNING) closure->flags |= HOOK_STATUS_REMOVE;
             else {
-              hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, cblist, FALSE);
+              hstacks[type]->stack = lives_list_remove_node((LiVESList *)hstacks[type]->stack, cblist, FALSE);
               lives_closure_free(closure);
             }
             break;
@@ -1570,7 +1578,7 @@ void lives_hook_remove_by_data(lives_hook_stack_t **hstacks, int type,
         if (data != weed_get_voidptr_value(lpt, PROC_THREAD_PARAM(1), NULL)) continue;
         if (closure->flags & HOOK_STATUS_RUNNING) closure->flags |= HOOK_STATUS_REMOVE;
         else {
-          hstacks[type]->stack = lives_list_remove_node(hstacks[type]->stack, cblist, FALSE);
+          hstacks[type]->stack = lives_list_remove_node((LiVESList *)hstacks[type]->stack, cblist, FALSE);
           lives_closure_free(closure);
         }
       }
@@ -1597,7 +1605,7 @@ void lives_hook_remove_by_lpt(lives_hook_stack_t **hstacks, int type,
       if (hstack->flags & STACK_TRIGGERING) PTMUH;
       else break;
     }
-    for (cblist = hstack->stack; cblist; cblist = cbnext) {
+    for (cblist = (LiVESList *)hstack->stack; cblist; cblist = cbnext) {
       lives_closure_t *closure = (lives_closure_t *)cblist->data;
       lives_proc_thread_t lpt2 = closure->proc_thread;
       cbnext = cblist->next;
